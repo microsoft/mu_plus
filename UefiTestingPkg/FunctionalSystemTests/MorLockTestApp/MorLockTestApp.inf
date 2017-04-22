@@ -57,6 +57,7 @@
   UnitTestLogLib
   UnitTestPersistenceLib
   UnitTestAssertLib
+  PrintLib
 
 [Guids]
   gEfiMemoryOverwriteControlDataGuid                  ## CONSUMES

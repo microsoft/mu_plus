@@ -31,6 +31,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Uefi.h>
 #include <Library/UefiLib.h>
+#include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 
@@ -44,7 +45,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define UNIT_TEST_APP_NAME        L"XML Query Lib Unit Test Application"
-#define UNIT_TEST_APP_SHORT_NAME  L"XML_Query_Lib_Unit_Test_App"
 #define UNIT_TEST_APP_VERSION     L"0.1"
 
 //global node tree so we only have to create once

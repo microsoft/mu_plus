@@ -56,6 +56,7 @@
   UefiApplicationEntryPoint
   DebugLib
   UnitTestLib
+  PrintLib
 
 [Guids]
   gEfiMemoryAttributesTableGuid                 ## CONSUMES # Used to locate the MAT table.

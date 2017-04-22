@@ -62,6 +62,7 @@
   UefiRuntimeServicesTableLib
   BaseMemoryLib
   TestCapsuleHelperLib
+  PrintLib
 
 [Guids]
   gEfiMemoryOverwriteControlDataGuid                  ## CONSUMES

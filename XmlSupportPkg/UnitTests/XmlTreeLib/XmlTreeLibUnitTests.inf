@@ -58,6 +58,7 @@
   XmlTreeLib
   UnitTestLib
   UnitTestAssertLib
+  PrintLib
 
 [Protocols]
   

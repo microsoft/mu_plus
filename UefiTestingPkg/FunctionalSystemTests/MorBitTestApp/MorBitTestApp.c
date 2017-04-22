@@ -32,6 +32,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Private/Library/TestCapsuleHelperLib.h>
 #include <Library/UefiLib.h>
 #include <Library/BaseLib.h>
+#include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UnitTestLib.h>
 #include <Library/UnitTestLogLib.h>
@@ -44,7 +45,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <IndustryStandard/MemoryOverwriteRequestControlLock.h>
 
 #define UNIT_TEST_APP_NAME        L"MOR Bit Test"
-#define UNIT_TEST_APP_SHORT_NAME  L"MOR_Bit_Test"
 #define UNIT_TEST_APP_VERSION     L"0.1"
 
 #define TEST_CAPSULE_SIZE (0x1000)
@@ -384,9 +384,11 @@ MorBitTestApp (
   UNIT_TEST_FRAMEWORK* Fw;
   UNIT_TEST_SUITE* MorBitTests;
   EFI_STATUS Status;
+  CHAR16  ShortName[100];
+  ShortName[0] = L'\0';
 
   Fw = NULL;
-
+  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName); 
   DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
@@ -394,7 +396,7 @@ MorBitTestApp (
   //
   Status = InitUnitTestFramework(&Fw, 
                                  UNIT_TEST_APP_NAME, 
-                                 UNIT_TEST_APP_SHORT_NAME, 
+                                 ShortName, 
                                  UNIT_TEST_APP_VERSION);
 
   if (EFI_ERROR(Status) != FALSE) {

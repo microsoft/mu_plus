@@ -60,6 +60,7 @@
   XmlTreeQueryLib
   UnitTestLib
   UnitTestAssertLib
+  PrintLib
 
 [Protocols]
   

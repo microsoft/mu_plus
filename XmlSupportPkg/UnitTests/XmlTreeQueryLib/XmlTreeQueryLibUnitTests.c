@@ -77,13 +77,16 @@ UefiMain(
   EFI_STATUS                Status;
   UNIT_TEST_FRAMEWORK       *Fw = NULL;
   UNIT_TEST_SUITE           *TestSuite;
+  CHAR16  ShortName[100];
+  ShortName[0] = L'\0';
 
+  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName); 
     DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, UNIT_TEST_APP_SHORT_NAME, UNIT_TEST_APP_VERSION);
+  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));

@@ -29,6 +29,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Uefi.h>
 #include <Library/UefiLib.h>
 #include <Library/DebugLib.h>
+#include <Library/PrintLib.h>
 #include <UnitTestTypes.h>
 #include <Private/Library/TestCapsuleHelperLib.h>
 #include <Library/UnitTestLib.h>
@@ -40,7 +41,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/BaseMemoryLib.h>
 
 #define UNIT_TEST_APP_NAME        L"Capsule Test"
-#define UNIT_TEST_APP_SHORT_NAME  L"Capsule_Test"
 #define UNIT_TEST_APP_VERSION     L"0.1"
 
 
@@ -66,7 +66,7 @@ TestSGListGoodRtn(
   EFI_RESET_TYPE ResetType;
   EFI_CAPSULE_BLOCK_DESCRIPTOR* SgList;
   EFI_STATUS Status;
-  UINTN Layout[] = { 0x1000, 0x0, 0x400, 0x2000, 0x0, 0xC00 };
+  UINTN Layout[] = { 0x1000, 0x0, 0x400, 0x2000, 0x0, 0xC00, 0x0 };
 
 
   //
@@ -167,7 +167,7 @@ TestSGListWithLargeContinuationPointerRtn(
   EFI_CAPSULE_BLOCK_DESCRIPTOR* SgList;
   EFI_CAPSULE_BLOCK_DESCRIPTOR* Temp;
   EFI_STATUS Status;
-  UINTN Layout[] = { 0x1000, 0x0, 0x400, 0x2000, 0x0, 0xC00 };
+  UINTN Layout[] = { 0x1000, 0x0, 0x400, 0x2000, 0x0, 0xC00, 0x0 };
 
   Phase = 0;
 
@@ -292,14 +292,17 @@ CapsuleTestApp(
   UNIT_TEST_FRAMEWORK* Fw;
   UNIT_TEST_SUITE* PersistenceTests;
   EFI_STATUS Status;
+  CHAR16  ShortName[100];
+  ShortName[0] = L'\0';
   Fw = NULL;
 
+  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);  
   DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, UNIT_TEST_APP_SHORT_NAME, UNIT_TEST_APP_VERSION);
+  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
     goto EXIT;

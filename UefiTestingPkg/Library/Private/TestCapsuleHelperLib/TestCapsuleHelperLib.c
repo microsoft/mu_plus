@@ -115,6 +115,76 @@ GetTestCapsuleCountFromSystemTable()
 }
 
 
+EFI_CAPSULE_BLOCK_DESCRIPTOR*
+EFIAPI
+AllocateAndPopulateDescriptorBlock(
+  IN  EFI_PHYSICAL_ADDRESS NextBlockAddress,  //if no more blocks the address can be 0
+  IN  INTN  Count,
+  IN  UINTN Sizes[]
+  )
+{
+  EFI_CAPSULE_BLOCK_DESCRIPTOR* Group = NULL;
+  INTN Index = 0;
+
+  if (Count < 1)
+  {
+    DEBUG((DEBUG_ERROR, __FUNCTION__ " Invalid Count Parameter\n"));
+    return NULL;
+  }
+
+  //make sure not continuation pointers in the set until the end
+  for (Index = 0; Index < (Count - 1); Index++)
+  {
+    if (Sizes[Index] == 0)
+    {
+      DEBUG((DEBUG_ERROR, __FUNCTION__ " Invalid Sizes.  Can't have zero element in array except at end.\n"));
+      return NULL;
+    }
+  }
+
+  if (Sizes[Count - 1] != 0)
+  {
+    DEBUG((DEBUG_ERROR, __FUNCTION__ " Invalid Sizes.  Must end with zero\n"));
+    return NULL;
+  }
+
+  //
+  // Should be good data now allocate and setup the block(s)
+  //
+  Group = AllocateRuntimeZeroPool(Count * sizeof(EFI_CAPSULE_BLOCK_DESCRIPTOR));
+  if (Group == NULL)
+  {
+    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for capsule descriptors\n"));
+    return NULL;
+  }
+  Index = 0;
+  //Now allocate each block and set the continuation pointer to the next group
+  while (Index < Count)
+  {
+    Group[Index].Length = (UINT64)Sizes[Index];
+
+    if (Sizes[Index] == 0)
+    { //continuation
+      Group[Index].Union.ContinuationPointer = NextBlockAddress;
+    }
+    else
+    { //data
+      Group[Index].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)(UINTN)AllocateRuntimeZeroPool(Sizes[Index]);
+      if (Group[Index].Union.DataBlock == 0)
+      {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate data block\n"));
+        //Error - free up memory allocated and return null
+        //goto Cleanup;
+        FreeSgList(Group);
+        return NULL;  
+      }
+    }
+    Index++;
+  }
+  return Group;
+}
+
+
 EFI_STATUS
 EFIAPI
 BuildTestCapsule(
@@ -126,12 +196,11 @@ BuildTestCapsule(
 {
   EFI_CAPSULE_HEADER* Header = NULL;
   TEST_CAPSULE_PAYLOAD* Payload = NULL;
-  EFI_CAPSULE_BLOCK_DESCRIPTOR *Previous = NULL;
+  EFI_CAPSULE_BLOCK_DESCRIPTOR *Next = NULL;
   EFI_STATUS Status = EFI_SUCCESS;
   INTN Index;
-  INTN NextGroupIndex;
-
-  *SgList = NULL;
+  INTN BlockLen;
+  EFI_CAPSULE_BLOCK_DESCRIPTOR* Group = NULL;
 
   if (SgList == NULL)
   {
@@ -139,8 +208,11 @@ BuildTestCapsule(
     goto Cleanup;
   }
 
+  *SgList = NULL;
+
   if (Count < 2)
   {
+    DEBUG((DEBUG_ERROR, __FUNCTION__ " Count must be at least 2\n"));
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -180,7 +252,7 @@ BuildTestCapsule(
           DEBUG((DEBUG_ERROR, __FUNCTION__ " Next data block must be large enough to hold the entire payload structure\n"));
           Status = EFI_INVALID_PARAMETER;
           goto Cleanup;
-        }
+        } 
         break;
       }
     } //end for loop 
@@ -188,51 +260,35 @@ BuildTestCapsule(
 
   //Loop thru the sizes in reverse order.  Create scatter gather list and allocate
   //datablocks
-  //
-  for (Index = Count - 1, NextGroupIndex = Index - 1; NextGroupIndex >= -1; NextGroupIndex--)
+  Index = Count - 2; //skip the end node
+  BlockLen = 1;
+  while (Index >= 0)
   {
-    //determine how many are in the group of datablocks
-    if ((Sizes[NextGroupIndex] == 0) || (NextGroupIndex == -1))
+    BlockLen++;
+    if ((Index == 0) || (Sizes[Index] == 0))
     {
-      UINTN Blocks = Index - NextGroupIndex;
-      //found the end of the group
-      EFI_CAPSULE_BLOCK_DESCRIPTOR* Group = NULL;
-      Group = AllocateRuntimeZeroPool(Blocks * sizeof(EFI_CAPSULE_BLOCK_DESCRIPTOR));
+      INTN tempindex = Index;
+      if (tempindex != 0) {
+        tempindex += 1;
+        BlockLen -= 1;
+      }
+      Group = AllocateAndPopulateDescriptorBlock((EFI_PHYSICAL_ADDRESS)(UINTN)Next, BlockLen, &Sizes[tempindex]);
       if (Group == NULL)
       {
         Status = EFI_OUT_OF_RESOURCES;
         DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for capsule descriptors\n"));
         goto Cleanup;
       }
-      //Now allocate each block and set the continuation pointer to the next group
-      while (Index > NextGroupIndex)
+      //Reset for next
+      BlockLen = 1;
+      Next = Group;  //setup next continuation pointer
+      if (Index == 0)
       {
-        if (Index == 0)
-        { //catch special case for head
-          *SgList = Group;
-        }
-
-        if (Sizes[Index] == 0)
-        {
-          Group[Index - NextGroupIndex].Union.ContinuationPointer = (EFI_PHYSICAL_ADDRESS)Previous;
-          Previous = Group;
-        }
-        else
-        {
-          Group[Index - NextGroupIndex].Union.DataBlock = (EFI_PHYSICAL_ADDRESS)(UINTN)AllocateRuntimeZeroPool(Sizes[Index]);
-          if (Group[Index - NextGroupIndex].Union.DataBlock == 0)
-          {
-            Status = EFI_OUT_OF_RESOURCES;
-            DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate data block\n"));
-            goto Cleanup;
-          }
-        }
-        Group[Index - NextGroupIndex].Length = (UINT64)Sizes[Index];
-        Index--;
+        *SgList = Group;  //special case for head
       }
-    } //close the if case for group block processing
-  } //close for loop for processing all block descriptors and Sizes array
-
+    } //close if loop
+    Index--;
+  } //close while loop
 
 
   //
@@ -241,10 +297,7 @@ BuildTestCapsule(
   Header = (EFI_CAPSULE_HEADER*)(UINTN)((*SgList)->Union.DataBlock);
   CopyGuid(&Header->CapsuleGuid, &gTestCapsuleGuid);
   Header->HeaderSize = sizeof(*Header);
-  for (Index = 0; Index < Count; Index++)
-  {
-    Header->CapsuleImageSize += (UINT32)Sizes[Index];
-  }
+  Header->CapsuleImageSize = (UINT32)GetLayoutTotalSize(Count, Sizes);
   Header->Flags = CapsuleFlags;
 
   //
@@ -252,19 +305,21 @@ BuildTestCapsule(
   //
   if (Sizes[0] < (sizeof(EFI_CAPSULE_HEADER) + sizeof(TEST_CAPSULE_PAYLOAD)))
   { //special case where capsule header and payload are in different scatter gather list blocks
-    Previous = *SgList;
+    //go find the 2nd datablock...the Header or payload can not be spread across blocks.  
+    //always skip the first block as that is the header
+    Next = *SgList;
     do
     {
-      if (Previous->Length == 0)
+      if (Next->Length == 0)
       {
-        Previous = (EFI_CAPSULE_BLOCK_DESCRIPTOR*)(UINTN)(Previous->Union.ContinuationPointer);
+        Next = (EFI_CAPSULE_BLOCK_DESCRIPTOR*)(UINTN)(Next->Union.ContinuationPointer);
       }
       else
       {
-        Previous = Previous++;
+        Next += 1;
       }
-    } while (Previous->Length == 0);
-    Payload = (TEST_CAPSULE_PAYLOAD*)(UINTN)(Previous->Union.DataBlock);
+    } while (Next->Length == 0);
+    Payload = (TEST_CAPSULE_PAYLOAD*)(UINTN)(Next->Union.DataBlock);
   }
   else
   {
@@ -279,15 +334,14 @@ BuildTestCapsule(
   goto Done;
 
 Cleanup:
-  //TODO: in some error conditions we can leak memory
-
   FreeSgList(*SgList);
   *SgList = NULL;
+  FreeSgList(Group);
+  Group = NULL;
 
 Done:
   return Status;
 }
-
 
 VOID
 EFIAPI
@@ -303,11 +357,13 @@ FreeSgList(EFI_CAPSULE_BLOCK_DESCRIPTOR* List)
   {
     //datablock
     FreePool((VOID*)(UINTN)List[i].Union.DataBlock);
+    List[i].Union.DataBlock = 0;
     i++;
   }
 
   //its a continuation block
   FreeSgList((EFI_CAPSULE_BLOCK_DESCRIPTOR*)(UINTN)(List[i].Union.ContinuationPointer));
+  List[i].Union.ContinuationPointer = 0;
   FreePool(List);
   return;
 }

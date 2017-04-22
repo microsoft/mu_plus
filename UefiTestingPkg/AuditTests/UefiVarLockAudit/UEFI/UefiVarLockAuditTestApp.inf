@@ -1,5 +1,13 @@
+
 ## @file
-# This application will test the UpdateCapsule feature.
+#  A UEFI Audit test app that enumerates all variables in NV ram
+#  collects the attribute information and then attempts to make changes
+#  to the variable in order to gather variable protection information.  
+#
+#  If the variable is successfully deleted it will be recreated with the
+#  same data value.  
+#
+#  The result data is output in XML
 #
 # Copyright (c) 2016, Microsoft Corporation
 #
@@ -24,14 +32,13 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 
-
 [Defines]
-  INF_VERSION                    = 0x00010006
-  BASE_NAME                      = CapsuleFunctionalTestApp
-  FILE_GUID                      = 2EB62B87-C103-4425-A14B-0D253849173D
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UefiVarLockAuditTestApp
+  FILE_GUID                      = f9b66f10-1b91-4388-91a8-773f6413e543
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = CapsuleTestApp
+  ENTRY_POINT                    = LockTestEntry
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -40,28 +47,27 @@
 #
 
 [Sources]
-  CapsuleTestApp.c
+  LockTest.c
+  LockTestXml.h
+  LockTestXml.c
+  InternalFunctions.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
-  UefiTestingPkg/UefiTestingPkg.dec
-  UefiTestingPkg/UefiTestingPkgPrivate.dec
-
-[Protocols]
+  XmlSupportPkg/XmlSupportPkg.dec
+  ShellPkg/ShellPkg.dec
 
 
 [LibraryClasses]
-  BaseLib
   UefiApplicationEntryPoint
-  DebugLib
-  UnitTestLib
-  UnitTestLogLib
-  UnitTestPersistenceLib
-  UnitTestAssertLib
+  UefiLib
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib
+  DebugLib
+  BaseLib
   BaseMemoryLib
-  TestCapsuleHelperLib
+  ShellLib
   PrintLib
+  XmlTreeLib
+  XmlTreeQueryLib
