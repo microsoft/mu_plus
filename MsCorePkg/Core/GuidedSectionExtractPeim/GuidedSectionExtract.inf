@@ -1,0 +1,62 @@
+## @file
+#
+// This module produces a PPI that extracts GUIDed flash sections.
+#
+#  Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution.  The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = GuidedSectionExtract
+  MODULE_UNI_FILE                = GuidedSectionExtract.uni
+  FILE_GUID                      = 10D70125-BAA3-4296-A62F-602BEBBB9010
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+
+  ENTRY_POINT                    = PeimInitializeGuidedSectionExtract
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC (EBC is for build only) AARCH64
+#
+
+[Sources]
+  GuidedSectionExtract.h
+  GuidedSectionExtract.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  PcdLib
+  ExtractGuidedSectionLib
+  UefiDecompressLib
+  ReportStatusCodeLib
+  PeiServicesLib
+  HobLib
+  BaseLib
+  PeimEntryPoint
+  DebugLib
+  DebugAgentLib
+
+[Ppis]
+  gEfiPeiDecompressPpiGuid          ## PRODUCES
+
+[FeaturePcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeIplSupportUefiDecompress ## CONSUMES
+
+[Depex]
+  gEfiPeiMemoryDiscoveredPpiGuid AND gEfiPeiLoadFilePpiGuid AND gEfiPeiMasterBootModePpiGuid
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  DxeIplExtra.uni
