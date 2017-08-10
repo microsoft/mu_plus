@@ -734,7 +734,8 @@ EFI_STATUS code.
   //
   if (Version < mDesc.LowestSupportedImageVersion)
   {
-    DEBUG((DEBUG_ERROR, "CheckTheImage - Version Lower than lowest supported version.\n"));
+    DEBUG((DEBUG_ERROR, "CheckTheImage - Version Lower than lowest supported version. 0x%08X < 0x%08X\n",
+            Version, mDesc.LowestSupportedImageVersion));
     *ImageUpdateable = IMAGE_UPDATABLE_INVALID_OLD;
     status = EFI_SUCCESS;
     goto cleanup;

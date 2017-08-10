@@ -40,7 +40,7 @@ if not exist GenTools\GenFmpImageAuth.py goto ERROR
 if not exist GenTools\GenFmpCap.exe goto ERROR
 if not exist GenTools\GenFv.exe goto ERROR
 if not exist SamplePayload\Payload.bin goto ERROR
-if not exist SAMPLE_DEVELOPMENT.pfx goto ERROR
+if not exist SAMPLE_PRODUCTION.pfx goto ERROR
 if not exist Guid.txt goto ERROR
 
 GenTools\GenMsPayloadHeader.exe -o PayloadS1.bin --version 0x01000002 --lsv 0x01000000 -p SamplePayload\Payload.bin -v
