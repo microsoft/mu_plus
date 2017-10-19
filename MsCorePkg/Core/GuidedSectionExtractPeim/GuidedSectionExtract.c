@@ -267,8 +267,6 @@ Decompress (
   OUT       UINTN                   *OutputSize
   )
 {
-	ASSERT(FALSE);
-#if 0
   EFI_STATUS                      Status;
   UINT8                           *DstBuffer;
   UINT8                           *ScratchBuffer;
@@ -393,6 +391,5 @@ Decompress (
 
   *OutputSize = DstBufferSize;
   *OutputBuffer = DstBuffer;
-#endif
   return EFI_SUCCESS;
 }
