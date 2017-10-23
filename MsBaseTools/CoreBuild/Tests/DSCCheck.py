@@ -30,7 +30,7 @@ class DSCCheckClass(BaseTestLibClass):
 
         #Check if INF in lib or component section
         for INF in INFFiles:
-            if not any(INF.lower().strip() in x for x in self.dp.Libs) and not any(INF.lower().strip() in x for x in self.dp.ThreeMods) \
+            if not any(INF.lower().strip() in x for x in self.dp.ThreeMods) \
             and not any(INF.lower().strip() in x for x in self.dp.SixMods) and not any(INF.lower().strip() in x for x in self.dp.OtherMods):
                 if self.summary is not None:
                     self.summary.AddError("DSC: " + INF + " not in " + AP, 2)

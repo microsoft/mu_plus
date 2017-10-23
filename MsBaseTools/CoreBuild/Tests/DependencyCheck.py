@@ -34,6 +34,8 @@ class DependencyCheckClass(BaseTestLibClass):
                 Packages = copy.copy(self.ip.PackagesUsed)
                 Libraries = copy.copy(self.ip.LibrariesUsed)
                 Guids = copy.copy(self.ip.GuidsUsed)
+                PCDs = copy.copy(self.ip.PCDsUsed)
+
 
                 #Get text of DECs used and add to dictionary for later use
                 for DEC in Packages:
@@ -43,7 +45,8 @@ class DependencyCheckClass(BaseTestLibClass):
                             self.decp.ParseFile(os.path.join(self.ws, DEC)),
                             DEC_Dict[DEC] = (copy.copy(self.decp.ProtocolsUsed), 
                                             copy.copy(self.decp.LibrariesUsed),
-                                            copy.copy(self.decp.GuidsUsed))
+                                            copy.copy(self.decp.GuidsUsed),
+                                            copy.copy(self.decp.PCDsUsed))
 
                 #Make sure libraries exist within DEC
                 for Library in Libraries:
@@ -88,6 +91,23 @@ class DependencyCheckClass(BaseTestLibClass):
                             logging.critical(GUID + " defined in " + file + " but not found in packages")
                             if self.summary is not None:
                                 self.summary.AddError("DEPENDENCY: " + GUID + " defined in " + file + " but not found in packages", 2)
+                            overall_status = overall_status + 1
+
+                #Make sure PCD exist within DEC
+                for PCD in PCDs:
+                    if not PCD.lower().strip() in self.ignorelist:
+                        if('|' in PCD.lower().strip()):
+                            continue #This is a PCD line that is setting the value. No dependency to check
+                        found = False
+                        for Package in Packages:
+                            if any(s.startswith(PCD.strip()) for s in DEC_Dict[Package][3]):
+                                found = True
+                                if Package not in DEC_Used:
+                                    DEC_Used.append(Package)
+                        if not found:
+                            logging.critical(PCD + " defined in " + file + " but not found in packages")
+                            if self.summary is not None:
+                                self.summary.AddError("DEPENDENCY: " + PCD + " defined in " + file + " but not found in packages", 2)
                             overall_status = overall_status + 1
 
         #List all packages used in Pkg
