@@ -24,9 +24,13 @@ IgnoreList = [  "nt32pkg.dsc",                      #NT32 pkg requires windows h
                 "openssllib",                       #Third party lib that does not follow library header practice
                 "intrinsiclib",                     #Lib that does not follow library header practice
                 "logodxe.inf",                      #Temporarily ignored due to idf file
-                "IntSafeLibUnitTests.inf",          #Temporarily ignored until bug closure
                 "opalpassworddxe.inf",              #Temproarily ignored awaiting refactor
-                "tcg2configdxe.inf"]                #Temproarily ignored awaiting refactor
+                "tcg2configdxe.inf",                #Temproarily ignored awaiting refactor
+                "IntSafeLibUnitTests.inf",          #Ignore this unit test for now, in future we'll ignore all of them
+                "ArmMmuLib",                        #Remove this once ArmPkg is added to code tree
+                "ArmPkg/ArmPkg.dec"                 #Remove this once ArmPkg is added to code tree
+]
+
 
 Test_List = list() #Default test list
 
@@ -60,6 +64,9 @@ pp = ws
 #setup python path for build modules
 sys.path.append(os.path.join(ws, "MsBaseTools", "PythonTools", "Build"))
 sys.path.append(os.path.join(ws, "MsBaseTools", "CoreBuild"))
+
+#setup python lib on path
+sys.path.append(os.path.join(os.path.dirname(sp), "PythonLibrary"))
 
 from UefiBuild import UefiBuilder
 import Tests.BaseTestLib

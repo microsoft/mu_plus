@@ -5,6 +5,11 @@ import subprocess
 import time
 from Tests.XmlArtifact import XmlOutput
 
+#assume PythonLibrary already on path....required by consumer of this
+from Uefi.EdkII.Parsers.DecParser import *
+from Uefi.EdkII.Parsers.InfParser import *
+from Uefi.EdkII.Parsers.DscParser import *
+
 
 
 class BaseTestLibClass(object):
@@ -20,9 +25,6 @@ class BaseTestLibClass(object):
             self.xmlartifact = XmlOutput()
         else:
             self.xmlartifact = xmlartifact
-        
-        sys.path.append(os.path.join(self.ws, "MsBaseTools", "PythonTools", "parsers"))
-        from baseparser import InfParser, DscParser, DecParser
 
         #INF Parser
         self.ip = InfParser()
