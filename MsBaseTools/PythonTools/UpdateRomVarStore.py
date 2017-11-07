@@ -34,6 +34,7 @@ import os
 import uuid
 import argparse
 import xml.etree.ElementTree as ET
+import binascii
 
 def GatherArguments():
   parser = argparse.ArgumentParser(description='Process a command script to alter a ROM image varstore.')
@@ -62,7 +63,10 @@ def load_variable_xml(xml_file_path):
 
     # Update the node data.
     if node.find('Data').get('type') == 'hex':
-      new_var['data'] = node.find('Data').text.decode('hex')
+      # NOTE: Switched to using binascii for Python2/3 code flexibility
+      # bytes.fromhex() works for Python3 and "".decode('hex') works for Python2
+      # new_var['data'] = bytes.fromhex(node.find('Data').text)
+      new_var['data'] = binascii.unhexlify(node.find('Data').text)
 
     # Add the var to the list.
     loaded_vars.append(new_var)

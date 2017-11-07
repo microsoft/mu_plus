@@ -122,7 +122,7 @@ class VariableStore(object):
       var_offset += var_buffer_size
 
     # Add a terminating Variable Header.
-    self.rom_file_map[var_offset:(var_offset + dummy_var.StructSize)] = bytes('\xFF' * dummy_var.StructSize)
+    self.rom_file_map[var_offset:(var_offset + dummy_var.StructSize)] = b'\xFF' * dummy_var.StructSize
 
     # Now we have to flush the mmap to the file.
     self.rom_file_map.flush()

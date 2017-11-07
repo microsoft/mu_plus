@@ -95,6 +95,12 @@ class VariableStoreHeader(object):
     return self
 
 #
+# TODO: VariableHeader and AuthenticatedVariableHeader are not truly
+#       header structures. They're entire variables. This code should be
+#       cleaned up.
+#
+
+#
 # VARIABLE_HEADER
 # Can parse or produce an VARIABLE_HEADER structure/byte buffer.
 #
@@ -188,15 +194,17 @@ class VariableHeader(object):
 
   def get_packed_name(self):
     # Make sure to replace the terminating char.
-    name_bytes = b"\x00".join([char for char in (self.Name + '\x00')])
+    # name_bytes = b"\x00".join([char for char in (self.Name + b'\x00')])
+    name_bytes = self.Name.encode('utf-16')
 
-    # Adjust for byte order.
-    if sys.byteorder == 'big':
-      name_bytes = b"\x00" + name_bytes
-    else:
-      name_bytes = name_bytes + b"\x00"
+    # Python encode will leave an "0xFFFE" on the front
+    # to declare the encoding type. UEFI does not use this.
+    name_bytes = name_bytes[2:]
 
-    return bytes(name_bytes)
+    # Python encode skips the terminating character, so let's add that.
+    name_bytes += b"\x00\x00"
+
+    return name_bytes
 
   def set_name(self, new_name):
     self.Name = new_name
@@ -220,7 +228,7 @@ class VariableHeader(object):
 
     # Add padding if necessary.
     if with_padding:
-      bytes += "\xFF" * self.get_buffer_padding_size()
+      bytes += b"\xFF" * self.get_buffer_padding_size()
 
     return bytes
 
@@ -246,7 +254,7 @@ class AuthenticatedVariableHeader(VariableHeader):
     self.StructString = "=HBBLQ16sLLL16s"
     self.StructSize = struct.calcsize(self.StructString)
     self.MonotonicCount = 0
-    self.TimeStamp = ''
+    self.TimeStamp = b''
     self.PubKeyIndex = 0
 
   def populate_structure_fields(self, in_bytes):

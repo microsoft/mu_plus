@@ -37,7 +37,7 @@ EfiSystemNvDataFvGuid = uuid.UUID(fields=(0xFFF12B8D, 0x7696, 0x4C8B, 0xA9, 0x85
 #
 # UEFI #Defines
 #
-EFI_FVH_SIGNATURE     = "_FVH"
+EFI_FVH_SIGNATURE     = b"_FVH"
 
 #
 # EFI_FIRMWARE_VOLUME_HEADER
