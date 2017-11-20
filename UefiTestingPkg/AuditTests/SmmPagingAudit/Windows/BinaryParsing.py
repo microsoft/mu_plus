@@ -27,18 +27,15 @@ import struct
 from ctypes import *
 from collections import namedtuple
 from MemoryRangeObjects import *
+import logging
 
 ADDRESS_BITS = 0x0000007FFFFFF000
 
 def ParseFileToBytes(fileName):
     file = open(fileName, "rb")
-    ByteArray = []
-    MemoryRanges = []
-    for chunk in file:
-        for byte in chunk:
-            ByteArray.append(ord(byte))
+    d = memoryview(file.read())
     file.close()
-    return ByteArray
+    return d.tolist()
 
 
 def ParseInfoFile(fileName):
@@ -46,6 +43,12 @@ def ParseInfoFile(fileName):
     num = 0
     MemoryRanges = []
     for line in file:
+        line = line.strip()
+        if(len(line) < 1):
+            continue
+        if(line.count(",") == 0):
+            logging.debug("Invalid line in file.  No comma.  Line is: %s" % line)
+            continue
         try:
             args = line.strip().split(',')
             if len(args) == 5:
@@ -54,11 +57,12 @@ def ParseInfoFile(fileName):
                 mr = MemoryRange(int(args[0], 16), int(args[1], 16), str(args[2]))
             MemoryRanges.append(mr)
             num += 1
-        except: 
+        except Exception as e: 
             # print line
-            pass
+            
+            raise Exception("Unknown line in file %s.  Line: %s Exception: %s" % (fileName, line, str(e)))
     file.close()
-    print fileName,"number of entries:",num 
+    logging.debug("%d entries found in file %s" % (num, fileName))
     return MemoryRanges
 
 
@@ -81,8 +85,8 @@ def Parse4kPages(fileName):
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange(fileName[2:4].lower(), ReadWrite, Nx, 1, (PageTableBaseAddress)))
-    print fileName,"num entries:",num 
+        pages.append(MemoryRange("4k", ReadWrite, Nx, 1, (PageTableBaseAddress)))
+    logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
 
@@ -104,8 +108,8 @@ def Parse2mPages(fileName):
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange(fileName[2:4].lower(), ReadWrite, Nx, MustBe1, (PageTableBaseAddress)))
-    print fileName,"num entries:",num 
+        pages.append(MemoryRange("2m", ReadWrite, Nx, MustBe1, (PageTableBaseAddress)))
+    logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
 
@@ -126,7 +130,7 @@ def Parse1gPages(fileName):
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
 
         byteZeroIndex += 8
-        pages.append(MemoryRange(fileName[2:4].lower(), ReadWrite, Nx, MustBe1, PageTableBaseAddress))
+        pages.append(MemoryRange("1g", ReadWrite, Nx, MustBe1, PageTableBaseAddress))
         num += 1
-    print fileName,"number of entries:",num 
+    logging.debug("%d entries found in file %s" % (num, fileName))
     return pages

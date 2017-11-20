@@ -24,18 +24,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 class MemoryRange(object):
-    # header for output CSV file
-    pteFieldNames = [
-        "Page Size",
-        "Read/Write",
-        "Execute",
-        "Start",
-        "End",
-        "Number of Entries",
-        "Memory Type",
-        "Memory Contents"]
-
-    # MemmoryMap type list + TSEG
+    # MemmoryMap type list
     MemoryMapTypes = [
         "EfiReservedMemoryType",
         "EfiLoaderCode",
@@ -52,8 +41,12 @@ class MemoryRange(object):
         "EfiMemoryMappedIOPortSpace",
         "EfiPalCode",
         "EfiPersistentMemory",
-        "EfiMaxMemoryType",
-        "TSEG"]
+        "EfiMaxMemoryType"
+        ]
+
+    SystemMemoryTypes = [
+        "TSEG"
+    ]
 
     PageSize = {
         "1g" : 1 * 1024 * 1024 * 1024,
@@ -63,6 +56,7 @@ class MemoryRange(object):
 
     def __init__(self, *args, **kwargs):
         self.MemoryType = None
+        self.SystemMemoryType = None
         self.MustBe1 = None
         self.ImageName = None
         self.NumberOfEntries = 1
@@ -96,13 +90,28 @@ class MemoryRange(object):
             return self.MemoryRangeToString()
         elif self.ImageName is not None:
             return self.LoadedImageEntryToString()
+    
     __repr__ = __str__
 
+
+    def GetSystemMemoryType(self):
+        if self.SystemMemoryType is None:
+            return "None"
+        try:
+            return MemoryRange.SystemMemoryTypes[self.SystemMemoryType]
+        except:
+            raise Exception("System Memory Type is invalid %d" % self.SystemMemoryType)
+
+    
     # 
     # Initializes memory descriptions
     # 
     def MemoryMapEntryInit(self, Type, PhysicalStart, VirtualStart, NumberOfPages, Attribute):
-        self.MemoryType = Type
+        if(Type < 16):
+            self.MemoryType = Type
+        else:
+            #set it as tseg
+            self.SystemMemoryType = 0
         self.PhysicalStart = PhysicalStart
         self.VirtualStart = VirtualStart
         self.PhysicalSize = NumberOfPages * 4 * 1024
@@ -136,7 +145,6 @@ class MemoryRange(object):
     PhysicalSize            : 0x%010X
     Name                    : %s
 """ % (self.PhysicalStart, (self.PhysicalEnd), self.PhysicalSize, self.ImageName)
-
     # 
     # Initializes page table entries
     # 
@@ -150,9 +158,11 @@ class MemoryRange(object):
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
 
+
     def PteToString(self):
         return """%s,%X,%X,%X,0x%010X,0x%010X,%d,%s,%s""" % (self.getPageSizeStr(), self.ReadWrite, self.Nx, self.MustBe1, self.PhysicalStart, self.PhysicalEnd, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
     
+   
     def getPageSize(self):
         return MemoryRange.PageSize[self.PageSize]
 
@@ -170,8 +180,9 @@ class MemoryRange(object):
     PhysicalSize            : 0x%010X
     Number                  : 0x%010X
     Type                    : %s
+    System Type             : %s
     LoadedImage             : %s
-""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
+""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.GetSystemMemoryType() ,self.ImageName )
     
     # Used to combine two page table entries with the same attributes
     def grow(self, other):
@@ -179,9 +190,9 @@ class MemoryRange(object):
         self.PhysicalSize += other.PhysicalSize
         self.CalculateEnd()
 
-    # Returns dict describing this page table entry representing a csv row
-    def toCsvRow(self):
-        row = {
+    # Returns dict describing this object
+    def toDictionary(self):
+        return {
             "Page Size" : self.getPageSizeStr(),
             "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Diabled",
             "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
@@ -189,6 +200,50 @@ class MemoryRange(object):
             "End" : "0x{0:010X}".format(self.PhysicalEnd),
             "Number of Entries" : self.NumberOfEntries,
             "Memory Type" : self.GetMemoryTypeDescription(),
+            "System Memory": self.GetSystemMemoryType(),
             "Memory Contents" : self.ImageName}
 
-        return row
+    def overlap(self, compare):
+        if(self.PhysicalStart >= compare.PhysicalStart) and (self.PhysicalStart <= compare.PhysicalEnd):
+            return True
+
+        if(compare.PhysicalStart >= self.PhysicalStart) and (compare.PhysicalStart <= self.PhysicalEnd):
+            return True
+
+        return False
+        
+    def eq(self, compare):
+        if (self.PhysicalStart == compare.PhysicalStart) and (self.PhysicalEnd == compare.PhysicalEnd):
+            return True
+
+        return False
+
+    def sameAttributes(self, compare):
+        if compare is None:
+            return False
+
+        if not (((self.PhysicalEnd + 1) == compare.PhysicalStart) or ((compare.PhysicalEnd + 1) == self.PhysicalStart)):
+            return False
+
+        if (self.PageSize != compare.PageSize):
+            return False
+
+        if (self.ReadWrite != compare.ReadWrite):
+            return False
+
+        if (self.MustBe1 != compare.MustBe1):
+            return False
+
+        if (self.Nx != compare.Nx):
+            return False
+
+        if (self.ImageName != compare.ImageName):
+            return False
+
+        if (self.MemoryType != compare.MemoryType): 
+            return False
+        
+        if (self.SystemMemoryType != compare.SystemMemoryType):
+            return False
+        
+        return True
