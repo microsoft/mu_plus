@@ -58,13 +58,18 @@ EFI_FVH_SIGNATURE     = b"_FVH"
 # } EFI_FIRMWARE_VOLUME_HEADER;
 class EfiFirmwareVolumeHeader(object):
   def __init__(self):
-    self.StructString = "=16s16sQ4sLHHHBB"
+    self.StructString = "=16s16sQ4sLHHHBBQQ"
+    self.ZeroVector = None
     self.FileSystemGuid = None
     self.FvLength = None
     self.Attributes = None
     self.HeaderLength = None
+    self.Checksum = None
     self.ExtHeaderOffset = None
+    self.Reserved = None
     self.Revision = None
+    self.Blockmap0 = None
+    self.Blockmap1 = None
 
   def load_from_file(self, file):
     # This function assumes that the file has been seeked
@@ -74,8 +79,8 @@ class EfiFirmwareVolumeHeader(object):
     file.seek(orig_seek)
 
     # Load this object with the contents of the data.
-    (zero_vector, self.FileSystemGuid, self.FvLength, self.Signature, self.Attributes, self.HeaderLength,
-      checksum, self.ExtHeaderOffset, reserved, self.Revision) = struct.unpack(self.StructString, struct_bytes)
+    (self.ZeroVector, file_system_guid_bin, self.FvLength, self.Signature, self.Attributes, self.HeaderLength,
+      self.Checksum, self.ExtHeaderOffset, self.Reserved, self.Revision, self.Blockmap0, self.Blockmap1) = struct.unpack(self.StructString, struct_bytes)
 
     # Make sure that this structure is what we think it is.
     if self.Signature != EFI_FVH_SIGNATURE:
@@ -83,11 +88,16 @@ class EfiFirmwareVolumeHeader(object):
 
     # Update the GUID to be a UUID object.
     if sys.byteorder == 'big':
-      self.FileSystemGuid = uuid.UUID(bytes=self.FileSystemGuid)
+      self.FileSystemGuid = uuid.UUID(bytes=file_system_guid_bin)
     else:
-      self.FileSystemGuid = uuid.UUID(bytes_le=self.FileSystemGuid)
+      self.FileSystemGuid = uuid.UUID(bytes_le=file_system_guid_bin)
 
     return self
+
+  def serialize(self):
+    file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == 'big' else self.FileSystemGuid.bytes_le
+    return struct.pack(self.StructString, self.ZeroVector, file_system_guid_bin, self.FvLength, self.Signature, self.Attributes,
+                        self.HeaderLength, self.Checksum, self.ExtHeaderOffset, self.Reserved, self.Revision, self.Blockmap0, self.Blockmap1)
 
 if __name__ == '__main__':
     pass

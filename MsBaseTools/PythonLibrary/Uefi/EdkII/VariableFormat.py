@@ -68,6 +68,8 @@ class VariableStoreHeader(object):
     self.Size = None
     self.Format = None
     self.State = None
+    self.Reserved0 = None
+    self.Reserved1 = None
     self.Type = 'Var'
 
   def load_from_file(self, file):
@@ -78,13 +80,13 @@ class VariableStoreHeader(object):
     file.seek(orig_seek)
 
     # Load this object with the contents of the data.
-    (self.Signature, self.Size, self.Format, self.State, reserved, Reserved1) = struct.unpack(self.StructString, struct_bytes)
+    (signature_bin, self.Size, self.Format, self.State, self.Reserved0, self.Reserved1) = struct.unpack(self.StructString, struct_bytes)
 
     # Update the GUID to be a UUID object.
     if sys.byteorder == 'big':
-      self.Signature = uuid.UUID(bytes=self.Signature)
+      self.Signature = uuid.UUID(bytes=signature_bin)
     else:
-      self.Signature = uuid.UUID(bytes_le=self.Signature)
+      self.Signature = uuid.UUID(bytes_le=signature_bin)
 
     # Check one last thing.
     if self.Signature != EfiVariableGuid and self.Signature != EfiAuthenticatedVariableGuid:
@@ -93,6 +95,10 @@ class VariableStoreHeader(object):
       self.Type = 'AuthVar'
 
     return self
+
+  def serialize(self):
+    signature_bin = self.Signature.bytes if sys.byteorder == 'big' else self.Signature.bytes_le
+    return struct.pack(self.StructString, signature_bin, self.Size, self.Format, self.State, self.Reserved0, self.Reserved1)
 
 #
 # TODO: VariableHeader and AuthenticatedVariableHeader are not truly
