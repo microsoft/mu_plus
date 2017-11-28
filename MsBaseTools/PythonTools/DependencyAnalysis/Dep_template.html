@@ -5,13 +5,20 @@
     <meta http-equiv="X-UA-Compatible">
     <title>Dependency Analysis</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css" />
+    <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"> 
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css" integrity="sha384-DgpuBgmxMoEJnP/pccStiQeTHwqKcsuL22TmqYVw43N/k83XfGNmU+tKpz9+5Zpz" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.2.2/css/select.bootstrap.min.css" integrity="sha384-sahALaBKeFOiKYf3ARSnFLn4CBzA+XwenbSUp+PDD4ak5o6X1T6tfgcc8reLSSsf" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css" integrity="sha384-u4bCcN0S9upsb7D8S4IKXV9qmKh7bJrJbKa+jqcIPwQsk/dV+QHB/JyI/BXR3pNo" crossorigin="anonymous"> 
+
     <style>
         div.attribution {
             border: 1px solid #ddd;
             background-color: #bbb;
             padding-left: 20px;
+        }
+
+        div.graph {
+            border: 1px solid #ddd;
         }
     </style>
 </head>
@@ -20,49 +27,241 @@
         <h1>Dependency Analysis</h1>
         <ul class="nav nav-tabs">
             <li class="active"><a data-toggle="tab" href="#tabs-1">Basic Info</a></li>
-            <li><a data-toggle="tab" href="#tabs-3">List</a></li>
-            <li><a data-toggle="tab" href="#tabs-4">Messages</a></li>
+            <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Dependency Explorer<b class="caret"></b></a>
+                <ul class="dropdown-menu">  
+                    <li><a data-toggle="tab" href="#tabs-3">Explorer</a></li>                          
+                    <li><a data-toggle="tab" href="#tabs-6">Module To Package Graph</a></li>
+                    <li><a data-toggle="tab" href="#tabs-9">Module To Dependency Graph</a></li>
+                </ul>
+            </li>
+            <li><a data-toggle="tab" href="#tabs-2">Package Dependencies</a></li>
+            <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">Module Dependencies<b class="caret"></b></a>
+                <ul class="dropdown-menu">  
+                    <li><a data-toggle="tab" href="#tabs-10">Module List</a></li>                          
+                    <li><a data-toggle="tab" href="#tabs-11">Module Package Dependency Graph</a></li>
+                    <li><a data-toggle="tab" href="#tabs-12">Module Dependency Graph</a></li>
+                </ul>
+            </li>
+            <li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" href="#">As Built Compiled Dependencies<b class="caret"></b></a>
+                <ul class="dropdown-menu"> 
+                    <li><a data-toggle="tab" href="#tabs-8">List</a></li>
+                    <li><a data-toggle="tab" href="#tabs-7">Graph</a></li>
+                </ul>
+            </li>
+            <li><a data-toggle="tab" href="#tabs-4">Parsing Errors</a></li>
             <li><a data-toggle="tab" href="#tabs-5">About</a></li>
         </ul>
         <div class="tab-content">
+            <!-- Basic - Start  -->
             <div id="tabs-1" class="tab-pane fade in active">
-                <h2>Date Collected: <span id='RunDate'></span></h2>
+                <h4>Name: <span id='CodebaseName'></span></h4>
+                <h4>Version: <span id='CodebaseVersion'></span></h4>
+                <h4>Date Collected: <span id='RunDate'></span></h4>
+                <h4>Parser Cmd Line Options: <br /><samp><span id='ParserCmdLine'></span></samp></h4>
+                
+                <hr />
+                <h2>Usage/Help</h2>
+                <p>For viewing general code base dependencies navigate to the <b>Dependency Explorer</b> tab
+                   and then adjust the filters to allow analysis of INF declared depedencies.  <b>Note:</b> For free form 
+                   text filters you must press "enter" to activate the filter.    
+                   If you want to see a graph of the selected dependencies select them (Multiselect using "Shift" or "Ctrl") and then choose one of the
+                   graph options.  
+                   This explorer can take a little while to use due to very large datasets (often a few seconds).</p>
+                <p>For simple Package to Package dependencies use the <b>Package Dependency</b> tab and then set the filtering to get the desired behavior</p>
+                <p>For review of module dependencies based on INF you can use the <b>Module Dependency</b> tab and graph options.  First go to the list and chose 
+                which INFs you want to view and then choose the desired graph</p>
+
+                <p>Finally, If you supplied a build report when generating the report you can see each module
+                    and its compile time dependencies as built.  This means all the libraries are resolved
+                    based on how the build was configured.  Use the <b>As Built</b> list to select the desired module and then the graph
+                    for viewing.</p>
+
+                <p>On the <b>Parsing Errors</b> tab you will find issues discovered during report generation that impact the accurracy of the data.  It 
+                is advised that issues listed there be evaluated and resolved</p>
             </div>
+            <!-- Basic - End  -->
+
+            <!-- Package To Package - Start  -->
+            <div id="tabs-2" class="tab-pane">
+                <h2>Package To Package Dependencies</h2>
+                <div class="row">
+                    <div class="col-xs-3">
+                        <div class="input-group">
+                            <span class="input-group-addon" id="p2pbasic-addon1">Source Package</span>
+                            <select id="p2pSrcPackageFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="p2pbasic-addon1"></select> 
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="input-group">
+                            <span class="input-group-addon" id="p2pbasic-addon2">Dependent Package</span>
+                            <select id="p2pDepPackageFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="p2pbasic-addon2"></select> 
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <div class="input-group">
+                                <span class="input-group-addon" id="p2pbasic-addon3">Dependency Type</span>
+                                <select id="p2pDepTypeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="p2pbasic-addon3"></select>                            
+                        </div>
+                    </div>
+                    <div class="col-xs-3">
+                        <button id="p2pGraphIt" class="btn btn-success">Update Graph</button>
+                        <button id="p2pClearFilters" class="btn btn-danger">Clear All Filters</button>
+                    </div>
+                </div>
+                <div id="p2pGraph" class="graph"></div>
+            </div>
+            <!-- Package To Package - End  -->
+
+            <!-- Dependency Explorer - Start  -->
             <div id="tabs-3" class="tab-pane">
+                <div class="row">
+                    <div class="col-xs-4">
+                        <header>Source Filter</header>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon1">Package</span>
+                            <select id="SrcPackageFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon1"></select> 
+                        </div>
+                        <p></p>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon2">Module</span>
+                            <input id="SrcModuleFilter" type="string" class="form-control" placeholder="Src Module Name" aria-describedby="basic-addon2" />
+                        </div>
+                        <p></p>
+                        <p>
+                            <button id="ClearSrcFilter" class="btn btn-danger">Clear Source Filters</button>
+                        </p>
+                    </div>
+                    <div id="DepFilterWrapper" class="col-xs-4">
+                        <header>Dependency Filter</header>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon3">Package</span>
+                            <select id="DepPackageFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon3"></select>
+                        </div>
+                        <p></p>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon4">Type</span>
+                            <select id="DepTypeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon4"></select>                            
+                        </div>
+                        <p></p>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon5">Global</span>
+                            <input id="DepGlobalFilter" type="string" class="form-control" placeholder="Global Name" aria-describedby="basic-addon5" />
+                        </div>
+                        <p></p>
+                        <p>
+                            <button id="ClearDepFilter" class="btn btn-danger">Clear Dependency Filters</button>
+                        </p>
+                    </div>
+                    <div class="col-xs-4">
+                        <header>Actions</header>
+                        Filters: <button id="ClearAllFilter" class="btn btn-danger">Clear All</button>
+                        <p></p>
+                        Table Entries: <button id="SelectAll" type="button" class="btn btn-success">Select All</button> <button id="ClearAll" class="btn btn-danger">Clear Selection</button><br />
+                    </div>
+                </div>
                 <table id="deps" class="table table-striped table-bordered table-hover" cellspacing="0">
                     <thead>
                         <tr>
-                            <th>SrcPkg</th>
-                            <th>SrcModule</th>
-                            <th>Dependency Type</th>
+                            <th>Source Pkg</th>
+                            <th>Source Module</th>
                             <th>Dependency Pkg</th>
+                            <th>Dependency Type</th>
                             <th>Dependency</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
-                    <tfoot>
-                        <tr>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
-            <div id="tabs-4" class="tab-pane">
-                <h2>Tool Messages</h2>
-                <div id="messages">
-                    <ol></ol>
-                </div>
+            <div id="tabs-6" class="tab-pane">
+                <h2>Module To Package Dependency Graph</h2>
+                <div id="moduleGraphMessageNo"><h3>No dependencies selected.  Nothing to display!</h3></div>
+                <div id="moduleGraphMessageTooMany"><h3>Too many modules selected.  Can't display!</h3></div>
+                <div id="moduleGraph" class="graph"></div>
             </div>
+
+            <div id="tabs-9" class="tab-pane">
+                <h2>Module To Dependency Graph</h2>
+                <div id="module2GraphMessageNo"><h3>No dependencies selected.  Nothing to display!</h3></div>
+                <div id="module2GraphMessageTooMany"><h3>Too many modules selected.  Can't display!</h3></div>
+                <div id="module2Graph" class="graph"></div>
+            </div>
+            <!-- Dependency Explorer - End  -->
+
+            <!-- Module Dependencies - Start -->
+            <div id="tabs-10" class="tab-pane">
+                <h2>Module List</h2>
+                <table id="ModuleList" class="table table-striped table-bordered table-hover" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Package</th>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Library Class</th>
+                            <th>Path</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="tabs-11" class="tab-pane">
+                <h2>Module Package Dependencies Graph</h2>
+                <div id="m2pGraph" class="graph"></div>
+            </div>
+
+            <div id="tabs-12" class="tab-pane">
+                <h2>Module Dependency Graph</h2>
+                <div id="mdGraph" class="graph"></div>
+            </div>
+            <!-- Module Dependencies - End -->
+
+            <!-- As Built/Build Report Dependencies - Start -->
+            <div id="tabs-8" class="tab-pane">
+                <h2>Module Dependencies As Built</h2>
+                <p>
+                    As Built Info From Build Report: <span id="BuildReport">No Build Report supplied during parsing.</span>
+                </p>
+                <p id="NoBuildReportHelp">
+                    Use <code>--BuildReport &lt;Path to Build Report To Parse&gt;</code>
+                </p>
+                <table id="AsBuiltMods" class="table table-striped table-bordered table-hover" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Source Module</th>
+                            <th>Source Mod Path</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="tabs-7" class="tab-pane">
+                <h2>As Built Graph: <span id="AsBuiltInf"></span></h2>
+                <div id="AsBuiltMessage"><h3>No as built selected.  Nothing to display!</h3></div>
+                <div id="AsBuiltGraph" class="graph"></div>
+            </div>
+            <!-- As Built/Build Report Dependencies - End -->
+
+            <!-- Error / Msg Tab - Start -->
+            <div id="tabs-4" class="tab-pane">
+                <h2>Parsing Tool Errors</h2>
+                <table id="ParsingErrors" class="table table-striped table-bordered table-hover" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Error Msg</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot></tfoot>
+                </table>
+            </div>
+            <!-- Error / Msg Tab - End -->
+
+            <!-- About/License/Attribution - Start -->
             <div id="tabs-5" class="tab-pane">
                 <div class="row">
                     <div class="col-xs-7">
                         <p></p>
                         <p>
-                            Dependency Template Version: <span id="TemplateVersion">1.00</span><br />
+                            Dependency Template Version: <span id="TemplateVersion">3.00</span><br />
                             Dependency Tool Version: <span id='ToolVersion'></span><br />
                         </p>
                         <h3>License</h3>
@@ -94,6 +293,7 @@
                     </div>
                 </div>
             </div>
+            <!-- About/License/Attribution - End -->
         </div>
     </div>
 
@@ -102,52 +302,229 @@
     </script>
 
     <!-- Javascript libraries -->
-    <script type="text/javascript" charset="utf8" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"></script>
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.15/js/dataTables.bootstrap.min.js"></script>
-
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script> 
+    <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js" integrity="sha384-NHtbx1Hf6ctHNdZmU28YfhGjB63gcU1YU64ttM+c0RxMKNBj67j+N/axpqTfdffo" crossorigin="anonymous"></script> 
+    <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> 
+    <script src="https://cdn.datatables.net/1.10.15/js/dataTables.bootstrap.min.js" integrity="sha384-7PXRkl4YJnEpP8uU4ev9652TTZSxrqC8uOpcV1ftVEC7LVyLZqqDUAaq+Y+lGgr9" crossorigin="anonymous"></script> 
+    <script src="https://cdn.datatables.net/select/1.2.2/js/dataTables.select.min.js" integrity="sha384-pJc9IjlndgbycFjL1qXkH/YZNI2c1+pof+gylmfe1b83QkJCGYruAliOzvYyofxz" crossorigin="anonymous"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js" integrity="sha384-7RnKw5sMIle5aza0DbXRxSFziONgSQKq4/v0JGJnfrCIMWMyasw3n7w2IW4HK7Ss" crossorigin="anonymous"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-growl/1.0.0/jquery.bootstrap-growl.min.js" integrity="sha384-HitlARW+6c0IF2m5pcwV3x64ooKVvQsiTuCxKU9cRKVOVrYNopTqkeEoXclgAWqE" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.2.6/cytoscape.min.js" integrity="sha384-/P0zpHoZgS+cWt3z4o/wei5VHU+n0r9z+/v6K6lVYQX127B4Jha8mYPVlh9GcNVW" crossorigin="anonymous"></script>     
     <!-- Add javascript here -->
     <script>
-        var DATA_TABLE_OFFSET = 400;
+        var SVG_HEIGHT_PADDING = 200;
+        var SVG_HEIGHT = $(window).height() - SVG_HEIGHT_PADDING;
+        var DATA_TABLE_OFFSET = 410;
+        var PackageToColorMap = {}
         $(document).ready(function () {
+
+            //TAB - Basic
+            $('#CodebaseName').text(EmbeddedJd.CodebaseName);
+            $('#CodebaseVersion').text(EmbeddedJd.CodebaseVersion);
             $('#RunDate').text(EmbeddedJd.DateCollected);
+            $("span#ParserCmdLine").text(EmbeddedJd.ParserCmd);
+
+            //TAB - About
             $('span#ToolVersion').text(EmbeddedJd.ToolVersion);
-
-            //To support tabs and correct column width we need this change
-            $('a[data-toggle="tab"][href="#tabs-3"]').on('shown.bs.tab', function (e) {
-                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
-            });
-
-            //
-            //Write out errors or warnings in the data processing
-            //
-            EmbeddedJd.errors.forEach(function (element, index, array) {
-                $("div#messages > ol").append("<li>" + element +"</li>");
-            });  //end forEach
-
-          
-            $('#fvtablist a:first').tab('show'); //set the first one active
             //
             // Create Attribution List for all external libraries used
             //
             [
                 { Title: "JQuery", Copyright: "Copyright 2017 The jQuery Foundation", Version: $.fn.jquery, LicenseType: "MIT", LicenseLink: "https://jquery.org/license/" },
                 { Title: "DataTables", Copyright: "DataTables designed and created by SpryMedia Ltd Copyright 2007-2017", Version: $.fn.dataTable.version, LicenseType: "MIT", LicenseLink: "https://datatables.net/license/mit" },
-                { Title: "BootStrap", Copyright: "Code and documentation copyright 2011-2017 the Bootstrap Authors and Twitter, Inc.", Version: "3.3.7", LicenseType: "MIT", LicenseLink: "https://github.com/twbs/bootstrap/blob/master/LICENSE" },            ].forEach(function (element) {
+                { Title: "BootStrap", Copyright: "Code and documentation copyright 2011-2017 the Bootstrap Authors and Twitter, Inc.", Version: "3.3.7", LicenseType: "MIT", LicenseLink: "https://github.com/twbs/bootstrap/blob/master/LICENSE" },
+                { Title: "Cytoscape.Js", Copyright: "Copyright (c) 2016 The Cytoscape Consortium", Version: "3.2.6", LicenseType: "MIT", LicenseLink:"https://github.com/cytoscape/cytoscape.js/blob/master/LICENSE"},
+                { Title: "bootstrap-select", Copyright: "Copyright (C) 2013-2015 bootstrap-select", Version: "1.12.4", LicenseType: "MIT", LicenseLink: "https://github.com/silviomoreto/bootstrap-select/blob/master/LICENSE" },
+                { Title: "bootstrap-growl", Copyright: "Copyright (c) Nick Larson, http://github.com/ifightcrime", Version: "1.0.0", LicenseType: "MIT", LicenseLink: "https://github.com/ifightcrime/bootstrap-growl/blob/master/LICENSE.md" }
+            ].forEach(function (element) {
                 $("<div class='attribution'><h4>" + element.Title + "</h4><p>Version: <span class='version'>" + element.Version + "</span><br /><span class='copyright'>" +
                     element.Copyright + "</span><br />License: <a class='license' href='" + element.LicenseLink + "'>" + element.LicenseType + "</a></p></div>").appendTo("div#AttributionListWrapper");
-            });
-           
+            }); 
 
-
-             //table for modules
-             var mTable = $('table#deps').dataTable({
-                "aaData": EmbeddedJd.deps,
+            //TAB - Errors/Messages
+            EmbeddedJd.errors.forEach(function (element, index, array) {
+                $("table#ParsingErrors tbody").append("<tr><td>" + element +"</td></tr>");
+            });  //end forEach
+          
+            var errorTable = $('table#ParsingErrors').dataTable({
                 "paginate": false,
+                "autoWidth": false,
+                "processing": true,
+                "scrollY": ($(window).height() - DATA_TABLE_OFFSET) + "px",
+                "language": {
+                    "emptyTable": "No parsing errors"
+                }
+            }); //end errors datatable
+
+            $('a[data-toggle="tab"][href="#tabs-4"]').on('shown.bs.tab', function (e) {
+                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+            });
+
+            //TAB - Package To Package
+            //Create Package 2 Package filter values
+            const uniqueSrcPkg = [...new Set(EmbeddedJd.deps.map(item => item.SrcPkg))];
+            const uniqueDepPkg = [...new Set(EmbeddedJd.deps.map(item => item.DepPkg))];
+            const uniqueDepType = [...new Set(EmbeddedJd.deps.map(item => item.DepType))];
+
+            uniqueSrcPkg.forEach(function(element, index, array) {
+                $("select#p2pSrcPackageFilter").append('<option value="'+element+'">'+element +'</option>');
+            });
+            uniqueDepPkg.forEach(function(element, index, array) {
+                $("select#p2pDepPackageFilter").append('<option value="'+element+'">'+element +'</option>');
+            });
+            uniqueDepType.forEach(function(element, index, array) {
+                $("select#p2pDepTypeFilter").append('<option value="'+element+'">'+element +'</option>');
+            });
+
+            $('button#p2pGraphIt').click(GraphPackage2PackageDependencies);
+            $('button#p2pClearFilters').click(function () {
+                $("select#p2pSrcPackageFilter, select#p2pDepPackageFilter, select#p2pDepTypeFilter").selectpicker('deselectAll');
+                $("select#p2pSrcPackageFilter, select#p2pDepPackageFilter, select#p2pDepTypeFilter").selectpicker("refresh");  
+            });
+
+            //
+            // Package to Package Graph tab set active
+            //
+            $("a[href='#tabs-2']").on('shown.bs.tab', function (e) {
+                $("div#p2pGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+                GraphPackage2PackageDependencies();
+            }); //on Package graph tab load
+
+            //TAB - Module Dependencices
+
+            const uniqueModPkg = [...new Set(EmbeddedJd.ModList.map(item => item.Pkg))];
+            // Handle Module List
+            var ModuleList = $('table#ModuleList').dataTable({
+                "aaData": EmbeddedJd.ModList,
+                "paginate": false,
+                "processing": true,
                 "autoWidth": false,
                 "scrollY": ($(window).height() - DATA_TABLE_OFFSET) + "px",
                 "aaSorting": [[0, "desc"]],
+                "select": {
+                    "style": 'os'
+                },
+                "language": {
+                    "emptyTable": "No Modules Found In Workspace"
+                },
+                //For now we must set the DOM to avoid the filter input box
+                //"dom": "<'row'<'col-sm-6'l><'col-sm-6'>>" +"<'row'<'col-sm-12'tr>>" +"<'row'<'col-sm-5'i><'col-sm-7'p>>",
+                "aoColumnDefs": [
+                    {
+                        "mData": "Pkg",
+                        "aTargets": [0]
+                    },
+                    {
+                        "mData": "Name",
+                        "aTargets": [1]
+                    },
+                    {
+                        "mData": "Type",
+                        "aTargets": [2],
+                    },
+                    {
+                        "mData": "LibraryClass",
+                        "aTargets": [3]
+                    },
+                    {
+                        "mData": "Edk2Path",
+                        "aTargets": [4],
+                    }
+                ] //end of column def
+            }); //end datatable
+
+            $('a[data-toggle="tab"][href="#tabs-10"]').on('shown.bs.tab', function (e) {
+                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+            });
+
+            //Graph for Module to Package based on Module List. Tab 11
+            $("a[href='#tabs-11']").on('shown.bs.tab', function (e) {
+                $("div#m2pGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+                var ModuleInfs = $("table#ModuleList").DataTable().rows({ selected: true }).data().toArray(); 
+                if(ModuleInfs.length == 0) {
+                    AddAlert("No Modules Selected!  Use the Module List to select the modules you want graphed.");
+                } else {
+                    GraphModule2PackageDependencies(ModuleInfs, "m2pGraph");
+                }
+                
+            }); //on Package graph tab load
+
+            //Graph for Module to Package based on Module List. Tab 11
+            $("a[href='#tabs-12']").on('shown.bs.tab', function (e) {
+                $("div#mdGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+                var ModuleInfs = $("table#ModuleList").DataTable().rows({ selected: true }).data().toArray(); 
+                if(ModuleInfs.length == 0) {
+                    AddAlert("No Modules Selected!  Use the Module List to select the modules you want graphed.");
+                } else {
+                    GraphModuleDependencies(ModuleInfs, "mdGraph");
+                }
+                
+            }); //on Package graph tab load
+            
+            //To support tabs and correct column width we need this change
+            $('a[data-toggle="tab"][href="#tabs-3"]').on('shown.bs.tab', function (e) {
+                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+            });
+             //To support tabs and correct column width we need this change
+            $('a[data-toggle="tab"][href="#tabs-7"]').on('shown.bs.tab', function (e) {
+                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+            });
+            //To support tabs and correct column width we need this change
+            $('a[data-toggle="tab"][href="#tabs-8"]').on('shown.bs.tab', function (e) {
+                $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+            });
+
+
+
+            // filter
+            $('button#ClearAll').click(function () {
+                $('table#deps').DataTable().rows({ selected: true }).deselect();
+            });
+
+            $('button#SelectAll').click(function () {
+                $('table#deps').DataTable().rows({ selected: false, search: 'applied' }).select();
+            });
+
+            $('button#ClearSrcFilter').click(function () {
+                $("input#SrcModuleFilter").val("").change();
+                $("select#SrcPackageFilter").selectpicker('deselectAll');
+                $("select#SrcPackageFilter").selectpicker("refresh");
+                $("select#SrcPackageFilter").change();
+            });
+            $('button#ClearDepFilter').click(function () {
+                $("input#DepGlobalFilter").val("").change();
+                $("div#DepFilterWrapper select.selectpicker").selectpicker('deselectAll');
+                $("div#DepFilterWrapper select.selectpicker").selectpicker("refresh");
+                $("div#DepFilterWrapper select.selectpicker").change();
+            });
+
+            $('button#ClearAllFilter').click(function () {
+                $('button#ClearSrcFilter').click();
+                $('button#ClearDepFilter').click();  
+            });
+
+            //Global Initialization - Must be done here after the unique Sets are initialized based on data
+            [...new Set(uniqueDepPkg.concat(uniqueSrcPkg).concat(uniqueModPkg))].forEach( function(d) {
+                var color = {BackgroundColor:MakeRandomColor()};
+                color.TextColor = GetTextColor(color.BackgroundColor);
+                PackageToColorMap[d] = color;
+            });
+
+
+
+             //table for dependencies
+             var mTable = $('table#deps').dataTable({
+                "aaData": EmbeddedJd.deps,
+                "paginate": false,
+                "processing": true,
+                "autoWidth": false,
+                "scrollY": ($(window).height() - DATA_TABLE_OFFSET) + "px",
+                "aaSorting": [[0, "desc"]],
+                "select": {
+                    "style": 'os'
+                },
+                //For now we must set the DOM to avoid the filter input box
+                "dom": "<'row'<'col-sm-6'l><'col-sm-6'>>" +"<'row'<'col-sm-12'tr>>" +"<'row'<'col-sm-5'i><'col-sm-7'p>>",
                 "aoColumnDefs": [
                     {
                         "mData": "SrcPkg",
@@ -159,11 +536,11 @@
                     },
                     {
                         "mData": "DepType",
-                        "aTargets": [2],
+                        "aTargets": [3],
                     },
                     {
                         "mData": "DepPkg",
-                        "aTargets": [3],
+                        "aTargets": [2],
                     },
                     {
                         "mData": "Dep",
@@ -172,48 +549,1127 @@
                 ], //end of column def
 
                 initComplete: function () {
-                    this.api().columns([0, 2, 3]).every( function () {
-                    var column = this;
-                    var select = $('<select><option value=""></option></select>')
-                        .appendTo( $(column.footer()).empty() )
-                        .on( 'change', function () {
-                            var val = $.fn.dataTable.util.escapeRegex(
-                                $(this).val()
-                            );
-     
-                            column
-                                .search( val ? '^'+val+'$' : '', true, false )
+                    //Setup the filters
+                    this.api().column(0).every( function() {
+                        var column = this;
+                        var select = $("#SrcPackageFilter").on( 'change', function () {     
+                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                             column
+                                .search(SearchRegex, true, false)
                                 .draw();
-                        } );
- 
-                        column.data().unique().sort().each( function ( d, j ) {
+                        }); // on change
+                        
+                        //populate with options
+                        column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    });  //columns 0,2,3
+                    }); //column 0 - Src Package
 
-                    this.api().columns([1,4]).every(function() {
+                    this.api().column(2).every( function() {
                         var column = this;
-                        $(this.footer()).html('<input type="text" placeholder="Search" />');
-                        $( 'input', this.footer() ).on( 'keyup change', function () {
-                            if ( column.search() !== this.value ) {
+                        var select = $("#DepPackageFilter").on( 'change', function () {
+                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                             column
+                                .search(SearchRegex, true, false)
+                                .draw();
+                        }); // on change
+                        
+                        //populate with options
+                        column.data().unique().sort().each( function ( d, j ) {
+                            select.append( '<option value="'+d+'">'+d+'</option>' )
+                        });
+                    }); //column 2 - Dep Package
+
+                    this.api().column(3).every( function() {
+                        var column = this;
+                        var select = $("#DepTypeFilter").on( 'change', function () {
+                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                             column
+                                .search(SearchRegex, true, false)
+                                .draw();
+                        }); // on change
+                        
+                        //populate with options
+                        column.data().unique().sort().each( function ( d, j ) {
+                            select.append( '<option value="'+d+'">'+d+'</option>' )
+                        });
+                    }); //column 3 - Dep Type
+
+                    this.api().column(1).every( function() {
+                        var column = this;
+                        //$("#SrcModuleFilter").on('keyup change paste input', function () {
+                        $("#SrcModuleFilter").on('keyup input', function(e) {
+                            if((e.keyCode == 13) || (this.value == '')) {
+                                if ( column.search() !== this.value ) {
+                                    column
+                                        .search(this.value, true)
+                                        .draw();
+                                }
+                            }
+                        });
+                    }); //column 1 - Src Module
+
+                    this.api().column(4).every( function() {
+                        var column = this;
+                        $("#DepGlobalFilter").on( 'keyup change paste input', function () {
+                            if ( column.search() !== this.value ) {
                                 column
-                                .search( this.value )
+                                .search( this.value, true )
                                 .draw();
                             }
                         } );
-                    });  //column 1,4
-                    $('table#deps tfoot tr').appendTo('table#deps thead');
+                    }); //column 4 - Global Filter
                 } //end init complete func
             }) //end of modules table
-            
+
+
+            //
+            // Mod to mod Graph tab set active
+            //
+            $("a[href='#tabs-6']").on('shown.bs.tab', function (e) {
+                $("div#moduleGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+
+                var ListOfPackages = []
+                var ListOfModules = []
+                var nodes = [];
+                var edges = [];
+
+                //get selected from table
+                var Data = $("table#deps").DataTable().rows({ selected: true }).data(); 
+
+                //get unique nodes and links
+                var Index = 0
+                while (Index < Data.length) {
+                    var dep = Data[Index++];
+
+                    var SrcIndex = ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf)
+                    if (SrcIndex == -1)
+                    {
+                        ListOfModules.push(dep.SrcPkg + ":" + dep.SrcInf);
+                        SrcIndex = "Mod" + ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf);
+                        nodes.push({ data: { id: SrcIndex, label: dep.SrcInf, srcInf: true, color: PackageToColorMap[dep.SrcPkg], spe: "rectangle"}});
+                    } else {
+                        SrcIndex = "Mod" + SrcIndex;
+                    }
+
+                    var DepIndex = ListOfPackages.indexOf(dep.DepPkg)
+                    if (DepIndex == -1) {
+                        ListOfPackages.push(dep.DepPkg);
+                        DepIndex = "Pkg" + ListOfPackages.indexOf(dep.DepPkg);
+                        nodes.push({ data:{ id: DepIndex, label: dep.DepPkg, color: PackageToColorMap[dep.DepPkg], spe:'barrel'}});
+                    } else {
+                        DepIndex = "Pkg" + DepIndex;
+                    }
+
+                    //Edges
+                    var InEdgeListIndex = edges.findIndex(function(e,i, a) {
+                        return ((e.data.source == SrcIndex) && (e.data.target == DepIndex));
+                    });
+
+                    if (InEdgeListIndex === -1) {
+                        var EdgeIndex = "Edge" + edges.length;
+                        edges.push({
+                            data: {id: EdgeIndex, 
+                            source: SrcIndex, 
+                            target: DepIndex,
+                            lc: PackageToColorMap[dep.DepPkg].BackgroundColor, 
+                            ec: PackageToColorMap[dep.SrcPkg].BackgroundColor, 
+                            count: 1}
+                        });
+                    } else {
+                        //change it
+                        edges[InEdgeListIndex].data.count += 1; 
+                    }
+                } //finished checking the Dep
+
+                if (nodes.length == 0) {
+                    $("div#moduleGraphMessageNo").show();
+                    $("div#moduleGraphMessageTooMany").hide();
+                } else if(nodes.length > 100) {
+                    $("div#moduleGraphMessageNo").hide();
+                    $("div#moduleGraphMessageTooMany").show();
+                } else {
+                    $("div#moduleGraphMessageNo").hide();
+                    $("div#moduleGraphMessageTooMany").hide();
+                    var dy = cytoscape({
+                        container: $('#moduleGraph'),
+                        elements: nodes.concat(edges),
+                        style: [ // the stylesheet for the graph
+                            {
+                            selector: 'node',
+                            style: {
+                                'background-color': 'data(color.BackgroundColor)',
+                                'label': 'data(label)',
+                                'color': 'data(color.TextColor)',
+                                'width': 'label',
+                                'height': 'label',
+                                'padding': '15px',
+                                'text-valign': 'center',
+                                'text-halign': 'center'
+                                }
+                            },
+                            {
+                            selector: 'node[srcInf]',
+                            style: {
+                                'shape': 'ellipse'
+                                }
+                            },
+                            {
+                            selector: 'node[^srcInf]',
+                            style: {
+                                'shape': 'octagon'
+                                }
+                            },
+                            {
+                            selector: 'edge',
+                            style: {
+                                'width': 1,
+                                'line-color': 'data(lc)',
+                                'curve-style': 'bezier',
+                                'target-arrow-color': 'data(ec)',
+                                'target-arrow-shape': 'triangle',
+                                'label': 'data(count)'
+                                }
+                            }
+                        ],
+
+                        layout: {
+                            name: 'breadthfirst',
+                            directed: true,
+                            padding: 10
+                        }
+                    });
+                }
+    
+            }); //on mod graph tab load
+
+            //
+            // Mod to dep Graph tab set active
+            //
+            $("a[href='#tabs-9']").on('shown.bs.tab', function (e) {
+                 $("div#module2Graph").height($(window).height() - SVG_HEIGHT_PADDING);
+                var ListOfDeps = []
+                var ListOfModules = []
+                var nodes = [];
+                var edges = [];
+
+                //get selected from table
+                var Data = $("table#deps").DataTable().rows({ selected: true }).data(); 
+
+                //get unique nodes and links
+                var Index = 0
+                while (Index < Data.length) {
+                    var dep = Data[Index++];
+
+                    var SrcIndex = ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf)
+                    if (SrcIndex == -1)
+                    {
+                        ListOfModules.push(dep.SrcPkg + ":" + dep.SrcInf);
+                        SrcIndex = "Mod" + ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf);
+                        nodes.push({ data: { id: SrcIndex, label: dep.SrcInf, color: PackageToColorMap[dep.SrcPkg]}});
+                    } else {
+                        SrcIndex = "Mod" + SrcIndex;
+                    }
+
+                    var DepIndex = ListOfDeps.indexOf(dep.DepPkg + ":" + dep.Dep)
+                    if (DepIndex == -1) {
+                        ListOfDeps.push(dep.DepPkg + ":" + dep.Dep);
+                        DepIndex = "Dep" + ListOfDeps.indexOf(dep.DepPkg + ":" + dep.Dep);
+                        nodes.push({ data:{ id: DepIndex, label: dep.Dep, color: PackageToColorMap[dep.DepPkg], type: dep.DepType}});
+                    } else {
+                        DepIndex = "Dep" + DepIndex;
+                    }
+
+                    //Edges
+                    var InEdgeListIndex = edges.findIndex(function(e,i, a) {
+                        return ((e.data.source == SrcIndex) && (e.data.target == DepIndex));
+                    });
+
+                    if (InEdgeListIndex === -1) {
+                        var EdgeIndex = "Edge" + edges.length;
+                        edges.push({
+                            data: {id: EdgeIndex, 
+                            source: SrcIndex, 
+                            target: DepIndex,
+                            lc: PackageToColorMap[dep.DepPkg].BackgroundColor, 
+                            ec: PackageToColorMap[dep.SrcPkg].BackgroundColor, 
+                            count: 1}
+                        });
+                    } else {
+                        //change it
+                        edges[InEdgeListIndex].data.count += 1; 
+                    }
+                    
+                } //finished checking the Dep
+                if (nodes.length == 0) {
+                    $("div#module2GraphMessageNo").show();
+                    $("div#module2GraphMessageTooMany").hide();
+                } else if(nodes.length > 300) {
+                    $("div#module2GraphMessageNo").hide();
+                    $("div#module2GraphMessageTooMany").show();
+                } else {
+                    $("div#module2GraphMessageNo").hide();
+                    $("div#module2GraphMessageTooMany").hide();
+                    var ey = cytoscape({
+                        container: $('#module2Graph'),
+                        elements: nodes.concat(edges),
+                        style: [ // the stylesheet for the graph
+                            {
+                            selector: 'node',
+                            style: {
+                                'background-color': 'data(color.BackgroundColor)',
+                                'label': 'data(label)',
+                                'color': 'data(color.TextColor)',
+                                'width': 'label',
+                                'height': 'label',
+                                'padding': '15px',
+                                'text-valign': 'center',
+                                'text-halign': 'center'
+                                }
+                            },
+                            {
+                            selector: 'node[^type]',
+                            style: {
+                                'shape': 'ellipse'
+                                }
+                            },
+                            {
+                            selector: 'node[type="Protocol"]',
+                            style: {
+                                'shape': 'cutrectangle'
+                                }
+                            },
+                            {
+                            selector: 'node[type="Guid"]',
+                            style: {
+                                'shape': 'barrel'
+                                }
+                            },
+                            {
+                            selector: 'node[type="Ppi"]',
+                            style: {
+                                'shape': 'bottomroundrectangle'
+                                }
+                            },
+                            {
+                            selector: 'node[type="Library"]',
+                            style: {
+                                'shape': 'rectangle'
+                                }
+                            },
+                            {
+                            selector: 'node[type="Pcd"]',
+                            style: {
+                                'shape': 'roundrectangle'
+                                }
+                            },
+                            {
+                            selector: 'edge',
+                            style: {
+                                'width': 1,
+                                'line-color': 'data(lc)',
+                                'curve-style': 'bezier',
+                                'target-arrow-color': 'data(ec)',
+                                'target-arrow-shape': 'triangle'
+                                }
+                            }
+                        ],
+
+                        layout: {
+                            name: 'random'
+                        }
+                    });
+
+                    if(ListOfModules.length == 1)
+                    {
+                        /*
+                        var myl = ey.layout({
+                        name: 'concentric',
+                        concentric: function( node ){ // returns numeric value for each node, placing higher nodes in levels towards the centre
+                            if( node.degree() > 1)
+                            {
+                                return 1;
+                            } else {
+                                return 0;
+                            } 
+                        },
+                        levelWidth: function(node) {
+                            return 1;
+                        }               
+                        
+                        });
+                        myl.run();
+                        */
+                    }
+                }
+            }); //on mod graph tab load
+
+            //asbuilt page
+            var AsBuiltTable = $('table#AsBuiltMods').dataTable({
+                "aaData": EmbeddedJd.AsBuiltMappings,
+                "paginate": false,
+                "autoWidth": false,
+                "processing": true,
+                "scrollY": ($(window).height() - DATA_TABLE_OFFSET) + "px",
+                "aaSorting": [[0, "asc"]],
+                "select": {
+                    "style": 'single'
+                },
+                "language": {
+                    "emptyTable": "No As Built Data"
+                },
+                "aoColumnDefs": [
+                    {
+                        "mData": "ModuleName",
+                        "aTargets": [0]
+                    },
+                    {
+                        "mData": "ModuleInf",
+                        "aTargets": [1]
+                    }
+                ] //end of column def
+            }); //end of table
+
+            if(EmbeddedJd.BuildReport.length > 5) 
+            {
+                $("span#BuildReport").text(EmbeddedJd.BuildReport);
+                $("#NoBuildReportHelp").hide();
+            } else {
+                $("div#tabs-7").hide();
+                $('[href="#tabs-7"]').closest('li').hide();
+            }
+            //end of as built page
+
+            //start of as built graph
+            //
+            // Mod as built Graph tab set active
+            //
+            $("a[href='#tabs-7']").on('shown.bs.tab', function (e) {
+                $("div#AsBuiltGraph").show();
+                $("span#AsBuiltInf").text("No Module Selected");
+                $("div#AsBuiltGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+
+                var ListOfPackages = []
+                var ListOfModules = []
+                var ListOfLibraries = []
+                var ListOfLibraryInstances = []
+                var nodes = [];
+                var edges = [];
+
+                //get selected from table
+                var Data = $("table#AsBuiltMods").DataTable().rows({ selected: true }).data();
+
+                if(Data.length != 1) {
+                    $("div#AsBuiltMessage").show();
+                    $("div#AsBuiltGraph").hide(); 
+                    return;
+                } 
+                
+                $("div#AsBuiltMessage").hide(); 
+
+                var AsBuiltObj = Data[0];
+                $("span#AsBuiltInf").text(AsBuiltObj.ModuleName);
+
+                //Make node for the Module INF
+                var m = GetModuleInfoForInf(AsBuiltObj.ModuleInf);
+                nodes.push({ data: { id: "Module", label: m.SrcInf, color: PackageToColorMap[m.Pkg], type:"Module"}});
+                
+
+                //Make nodes for all Lib Instances
+                for (const [key, val] of Object.entries(AsBuiltObj.LibMappings)) {
+                    var dep = GetModuleInfoForInf(val);
+
+                    if(dep === undefined) {
+                        AddAlert("Dep (key - " + key + ") (Value: -" + val + ") not found in dep list");
+                        continue;
+                    }
+                    //add to get src index
+                    ListOfLibraries.push(key);
+                    ListOfLibraryInstances.push(val);
+                    SrcIndex = "Lib" + ListOfLibraries.indexOf(key);
+                    nodes.push({data: { id: SrcIndex, label: dep.SrcInf, color: PackageToColorMap[dep.Pkg], type:"LibraryInstance"}});
+                }
+
+                //Now Make all the edges for the main module
+                var ModDeps = GetDepsForInf(AsBuiltObj.ModuleInf, "Library");
+                ModDeps.forEach(function(element, index, array) {
+                    var DepIndex = ListOfLibraries.indexOf(element.Dep);
+                    var EdgeIndex = "Edge" + edges.length;
+                    var SrcIndex = "Module";
+                    if(DepIndex === -1){
+                        AddAlert("Failed to find library for " + element.Dep);
+                        return;
+                    } else {
+                        DepIndex = "Lib" + DepIndex;
+                    }
+                    edges.push({
+                            data: {id: EdgeIndex, 
+                            source: SrcIndex, 
+                            target: DepIndex,
+                            lc: PackageToColorMap[element.DepPkg].BackgroundColor, 
+                            ec: PackageToColorMap[element.SrcPkg].BackgroundColor, 
+                            count: 1}
+                        });
+                });
+
+                //now make all the edges for all the library instances
+                for (const [key, val] of Object.entries(AsBuiltObj.LibMappings)) {
+                    GetDepsForInf(val, "Library").forEach(function(element, index, array) {
+                        var SrcIndex = ListOfLibraryInstances.indexOf(element.Edk2Path);
+                        var DepIndex = ListOfLibraries.indexOf(element.Dep);
+                        var EdgeIndex = "Edge" + edges.length;
+                        if(DepIndex === -1){
+                            AddAlert("Failed to find library for " + element.Dep);
+                            return;
+                        }
+                        if(SrcIndex === -1) {
+                            AddAlert("Failed to find library instance " + element.Edk2Path);
+                            return;
+                        }
+                        DepIndex = "Lib" + DepIndex;
+                        SrcIndex = "Lib" + SrcIndex;
+                        edges.push({
+                            data: {id: EdgeIndex, 
+                            source: SrcIndex, 
+                            target: DepIndex,
+                            lc: PackageToColorMap[element.DepPkg].BackgroundColor, 
+                            ec: PackageToColorMap[element.SrcPkg].BackgroundColor, 
+                            count: 1}
+                        });
+
+                    });
+                } //end for loop
+                
+                var fy = cytoscape({
+                    container: $('#AsBuiltGraph'),
+                    elements: nodes.concat(edges),
+                    style: [ // the stylesheet for the graph
+                        {
+                        selector: 'node',
+                        style: {
+                            'background-color': 'data(color.BackgroundColor)',
+                            'label': 'data(label)',
+                            'color': 'data(color.TextColor)',
+                            'width': 'label',
+                            'height': 'label',
+                            'padding': '15px',
+                            'text-valign': 'center',
+                            'text-halign': 'center'
+                            }
+                        },
+                        {
+                        selector: 'node[type="Module"]',
+                        style: {
+                            'shape': 'ellipse'
+                            }
+                        },
+                        {
+                        selector: 'node[type="LibraryInstance"]',
+                        style: {
+                            'shape': 'rectangle'
+                            }
+                        },
+                        {
+                        selector: 'edge',
+                        style: {
+                            'width': 1,
+                            'line-color': 'data(lc)',
+                            'curve-style': 'bezier',
+                            'target-arrow-color': 'data(ec)',
+                            'target-arrow-shape': 'triangle'
+                            }
+                        }
+                    ],
+
+                    layout: {
+                        name: 'random'
+                    }
+                });   
+            }); //on mod graph tab load
+
+            $('select.selectpicker').selectpicker("refresh").change();
         }); //end on ready
-                //
+        //
         //To handle scroll tables adjust the height based on the window height.
         //
         $(window).resize(function() {
             var newHd = $(window).height() - DATA_TABLE_OFFSET;
             $("#deps_wrapper .dataTables_scrollBody").height(newHd);
+            $("#AsBuiltMods_wrapper .dataTables_scrollBody").height(newHd);
+            $('#ParsingErrors_wrapper .dataTables_scrollBody').height(newHd);
+            $("div#moduleGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+            $("div#mainGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+            $("div#AsBuiltGraph").height($(window).height() - SVG_HEIGHT_PADDING);
+            $("div#p2pGraph").height($(window).height() - SVG_HEIGHT_PADDING);
         });
+
+        //
+        // Generate a hex string that is a random color
+        //
+        function MakeRandomColor() {
+            var possible = '0123456789ABCDEF'.split('');
+            var color = '#';
+            for (var i = 0; i < 6; i++) {
+                color += possible[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        //
+        //Calculating the text color based on input background color.  
+        //information from
+        //https://stackoverflow.com/questions/1855884/determine-font-color-based-on-background-color
+        function GetTextColor (InputHexColorString) {
+
+            rgb = HexToRgb(InputHexColorString)
+  
+            // Counting the perceptive luminance
+            // human eye favors green color... 
+            var a = 1 - (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+            return (a > 0.5)? "#FFFFFF":"#000000"
+        }
+
+        //
+        // Convert Hex color string to object with RGB values
+        // 
+        //https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+        function HexToRgb(hex) {
+            // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+            var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+            hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+                return r + r + g + g + b + b;
+            });
+
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        } 
+
+        /**
+        Get all the dependencies of a given type for a given INF.  
+        @param Inf: Edk2 relative path to Inf
+        @param DependencyType: Type of dependency or "" for all 
+
+        @return a List of depdencies for the given module
+        **/
+        function GetDepsForInf(Inf, DependencyType){
+            return EmbeddedJd.deps.filter(function(element, index, array) {
+                    if(Inf !== element.Edk2Path){
+                        return false;
+                    }
+                    if((DependencyType !== "") && (element.DepType !== DependencyType)) {
+                        return false
+                    }
+                    return true;
+                });
+        } 
+
+        /** 
+        Get the first dependency in the list for a given INF
+
+        **/
+        function GetFirstDepForInf(Inf) {
+            return EmbeddedJd.deps.find(function(element, index, array) {
+                if(Inf === element.Edk2Path) { return true;}
+                
+                return false;
+            });
+        } 
+
+        /** 
+        Get the first ModuleInfo object for a given INF
+        **/
+        function GetModuleInfoForInf(Inf) {
+            return EmbeddedJd.ModList.find(function(element, index, array) {
+                if(Inf === element.Edk2Path) { return true;}
+                return false;
+            });
+        }
+
+        /**
+        Create a Datatables.net search compatibile RegEx string.  Search uses inverse
+        filter logic so it displays only those things not matching. 
+        **/
+        function CreateRegexForSearchMultiselect(mylist){
+            var re = '';
+            mylist.forEach(function(v,i,a) {
+                if(i > 0) {
+                    re += "|";
+                } else {
+                    re += "("
+                }
+                re += '^' + $.fn.dataTable.util.escapeRegex(v) + '?';
+            });
+            if(re !== '') {
+                re += ")"
+            }
+            return re;
+        }
+
+        /** 
+        Create match RegEx string for a given multislect value list
+        Will return an empty string if nothing selected.  
+        **/
+        function CreateRegexForMultiselect(mylist){
+            var re = '';
+            mylist.forEach(function(v,i,a) {
+                if(i > 0) {
+                    re += "|";
+                } else {
+                    re += "("
+                }
+                re += v + '?';
+            });
+            if(re !== '') {
+                re += ")"
+            }
+            return re;
+        }
+
+        /**
+        Set the multiselect selected options to the inverse of the provided list.  
+
+        @param selectName: id of the select element to set
+        @param listOfValuesNotSelected: array of values to not select
+        **/
+        function SetMultiselectToAllExcept(selectName, listOfValuesNotSelected )
+        {
+            var all = [];
+            //get all options except reserved
+            $.each($("select#" + selectName +" option"), function(i,v) {
+                if(!listOfValuesNotSelected.includes($(v).val())){
+                    all.push($(v).val());
+                }
+            });
+            $("select#" + selectName).val(all).change();
+            $("select#" + selectName).selectpicker('refresh');
+        }
+
+        /**
+            Set the multiselect selected options to the list provided.
+
+            @param selectName: id of the select element to set
+            @param listOfValuesSelected: array of values to select
+            @ret boolean status of setting all requested values
+        **/
+        function SetMultiselectTo(selectName, listOfValuesSelected)
+        {
+            //var allOptions = $("select#" + selectName +" > option").map(function() { return $(this).val(); }).get(); //create array
+            $.each($("select#" + selectName +" option"), function(i,v) {
+                var index = listOfValuesSelected.indexOf($(v).text());
+                if(index > -1){
+                    $(v).prop('selected', true);
+                    listOfValuesSelected.splice(index, 1);  //remove from array so we can check at the end
+                }
+                else
+                {
+                    $(v).prop('selected', false);
+                }
+            });
+            $("select#" + selectName).change();
+            $("select#" + selectName).selectpicker('refresh');
+            listOfValuesSelected.forEach(function(v, i, a) {
+                AddAlert("Can't set " + selectName + " value to " + v, "warning");
+            });
+            return (listOfValuesSelected.length === 0); 
+        }
+
+        /**
+        Add dismissable alert for user
+        **/
+        function AddAlert(msg, level="danger"){
+            $.bootstrapGrowl(msg, {
+                ele: 'body', // which element to append to
+                type: level, // (null, 'info', 'danger', 'success')
+                offset: {from: 'top', amount: 20}, // 'top', or 'bottom'
+                align: 'right', // ('left', 'right', or 'center')
+                width: 'auto', // (integer, or 'auto')
+                delay: 10000, // Time while the message will be displayed.
+                allow_dismiss: true, // If true then will display a cross to close the popup.
+                stackup_spacing: 10 // spacing between consecutively stacked growls.
+            });
+        }
+
+        /**
+        Function draws the Package To Package graph based on 
+        the filters set in the multiselects
+        **/
+        function GraphPackage2PackageDependencies() {
+            var ListOfPackages = []
+            var nodes = [];
+            var edges = [];
+
+            var SrcRegx = CreateRegexForMultiselect($("#p2pSrcPackageFilter").val());
+            var DepRegx = CreateRegexForMultiselect($("#p2pDepPackageFilter").val());
+            var TypeRegx = CreateRegexForMultiselect($("#p2pDepTypeFilter").val());
+
+            //get selected from table
+            var Data = EmbeddedJd.deps.filter(function(element, index, array) {
+                if(SrcRegx !== '') {
+                    let re = RegExp(SrcRegx, '');
+                    if(!re.test(element.SrcPkg)){
+                        return false;
+                    }
+                }
+                if(DepRegx !== '') {
+                    let re = RegExp(DepRegx, '');
+                    if(!re.test(element.DepPkg)){
+                        return false;
+                    }
+                }
+                if(TypeRegx !='') {
+                    let re = RegExp(TypeRegx, '');
+                    if(!re.test(element.DepType)){
+                        return false;
+                    }
+                }
+                return true;
+            }); 
+
+            //get unique nodes and links
+            var Index = 0
+            while (Index < Data.length) {
+                var dep = Data[Index++];
+
+                //Check Src Package
+                var SrcIndex = ListOfPackages.indexOf(dep.SrcPkg)
+                if (SrcIndex == -1)
+                {
+                    ListOfPackages.push(dep.SrcPkg);
+                    SrcIndex = ListOfPackages.indexOf(dep.SrcPkg);
+                    nodes.push({data: { id: SrcIndex, label: dep.SrcPkg, color: PackageToColorMap[dep.SrcPkg]}});
+                
+                }
+
+                var DepIndex = ListOfPackages.indexOf(dep.DepPkg)
+                if (DepIndex == -1) {
+                    ListOfPackages.push(dep.DepPkg);
+                    DepIndex = ListOfPackages.indexOf(dep.DepPkg);
+                    nodes.push({ data:{ id: DepIndex, label: dep.DepPkg, color: PackageToColorMap[dep.DepPkg]}});
+                }
+
+                //Edges
+                var InEdgeListIndex = edges.findIndex(function(e,i, a) {
+                    return ((e.data.source == SrcIndex) && (e.data.target == DepIndex));
+                });
+
+                if (InEdgeListIndex === -1) {
+                    var EdgeIndex = "Edge" + edges.length;
+                    edges.push({
+                        data: {id: EdgeIndex, 
+                        source: SrcIndex, 
+                        target: DepIndex,
+                        lc: PackageToColorMap[dep.DepPkg].BackgroundColor, 
+                        ec: PackageToColorMap[dep.SrcPkg].BackgroundColor, 
+                        count: 1}
+                    });
+                } else {
+                    //change it
+                    edges[InEdgeListIndex].data.count += 1; 
+                }
+            } //finished checking the Dep
+
+            if (nodes.length == 0) {
+                // $("div#mainGraphMessage").show();
+
+            } else {
+                //$("div#mainGraphMessage").hide();
+                var cy = cytoscape({
+                    container: $('#p2pGraph'),
+                    elements: nodes.concat(edges),
+                    style: [ // the stylesheet for the graph
+                        {
+                        selector: 'node',
+                        style: {
+                            'background-color': 'data(color.BackgroundColor)',
+                            'label': 'data(label)',
+                            'color': 'data(color.TextColor)',
+                            'shape': 'bottomroundrectangle',
+                            'width': 'label',
+                            'height': 'label',
+                            'padding': '15px',
+                            'text-valign': 'center',
+                            'text-halign': 'center'
+                            }
+                        },
+                        {
+                        selector: 'edge',
+                        style: {
+                            'width': 1,
+                            'line-color': 'data(lc)',
+                            'curve-style': 'bezier',
+                            'target-arrow-color': 'data(ec)',
+                            'target-arrow-shape': 'triangle',
+                            'label': 'data(count)'
+                            }
+                        }
+                    ],
+
+                    layout: {
+                        name: 'random'
+                    }
+                });
+            }
+        } //End Function for P2P
+
+        function GraphModule2PackageDependencies(Modules, IdOfGraphNode) {
+            var GraphNode = $("div#" + IdOfGraphNode);
+            GraphNode.height($(window).height() - SVG_HEIGHT_PADDING);
+            var ListOfPackages = []
+            var ListOfModules = []
+            var nodes = [];
+            var edges = [];
+
+            var Deps = [];
+            Modules.forEach(function(element, index, array) {
+                Deps = Deps.concat(GetDepsForInf(element.Edk2Path, ""));
+                ListOfModules.push(element.Pkg + ":" + element.SrcInf);
+                var i = "Mod" + ListOfModules.indexOf(element.Pkg + ":" + element.SrcInf);
+                nodes.push({ data: { id: i, label: element.SrcInf, srcInf: true, color: PackageToColorMap[element.Pkg]}});
+            });
+
+            //get unique nodes and links
+            Index = 0;
+            while (Index < Deps.length) {
+                var dep = Deps[Index++];
+                var SrcIndex = ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf)
+                if (SrcIndex == -1)
+                {
+                    ListOfModules.push(dep.SrcPkg + ":" + dep.SrcInf);
+                    SrcIndex = "Mod" + ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf);
+                    nodes.push({ data: { id: SrcIndex, label: dep.SrcInf, srcInf: true, color: PackageToColorMap[dep.SrcPkg]}});
+                } else {
+                    SrcIndex = "Mod" + SrcIndex;
+                }
+
+                var DepIndex = ListOfPackages.indexOf(dep.DepPkg)
+                if (DepIndex == -1) {
+                    ListOfPackages.push(dep.DepPkg);
+                    DepIndex = "Pkg" + ListOfPackages.indexOf(dep.DepPkg);
+                    nodes.push({ data:{ id: DepIndex, label: dep.DepPkg, color: PackageToColorMap[dep.DepPkg]}});
+                } else {
+                    DepIndex = "Pkg" + DepIndex;
+                }
+
+                //Edges
+                var InEdgeListIndex = edges.findIndex(function(e,i, a) {
+                    return ((e.data.source == SrcIndex) && (e.data.target == DepIndex));
+                });
+
+                if (InEdgeListIndex === -1) {
+                    var EdgeIndex = "Edge" + edges.length;
+                    edges.push({
+                        data: {id: EdgeIndex, 
+                        source: SrcIndex, 
+                        target: DepIndex,
+                        lc: PackageToColorMap[dep.DepPkg].BackgroundColor, 
+                        ec: PackageToColorMap[dep.SrcPkg].BackgroundColor, 
+                        count: 1}
+                    });
+                } else {
+                    //change it
+                    edges[InEdgeListIndex].data.count += 1; 
+                }
+            } //finished checking the Dep
+
+            if (nodes.length == 0) {
+                AddAlert("No modules selected");
+            } else if(nodes.length > 100) {
+                AddAlert("Too many modules selected");
+            } else {
+                var dy = cytoscape({
+                    container: GraphNode,
+                    elements: nodes.concat(edges),
+                    style: [ // the stylesheet for the graph
+                        {
+                        selector: 'node',
+                        style: {
+                            'background-color': 'data(color.BackgroundColor)',
+                            'label': 'data(label)',
+                            'color': 'data(color.TextColor)',
+                            'width': 'label',
+                            'height': 'label',
+                            'padding': '15px',
+                            'text-valign': 'center',
+                            'text-halign': 'center'
+                            }
+                        },
+                        {
+                        selector: 'node[srcInf]',
+                        style: {
+                            'shape': 'ellipse',
+                            'padding': '15px',
+                            }
+                        },
+                        {
+                        selector: 'node[^srcInf]',
+                        style: {
+                            'shape': 'octagon'
+                            }
+                        },
+                        {
+                        selector: 'edge',
+                        style: {
+                            'width': 1,
+                            'line-color': 'data(lc)',
+                            'curve-style': 'bezier',
+                            'target-arrow-color': 'data(ec)',
+                            'target-arrow-shape': 'triangle',
+                            'label': 'data(count)'
+                            }
+                        }
+                    ],
+
+                    layout: {
+                        name: 'breadthfirst',
+                        directed: true,
+                        padding: 10
+                    }
+                });
+            }
+        } //close function
+
+        function GraphModuleDependencies(Modules, IdOfGraphNode) {
+            var GraphNode = $("div#" + IdOfGraphNode);
+            GraphNode.height($(window).height() - SVG_HEIGHT_PADDING);
+            var ListOfDeps = []
+            var ListOfModules = []
+            var nodes = [];
+            var edges = [];
+
+            var Deps = [];
+            Modules.forEach(function(element, index, array) {
+                Deps = Deps.concat(GetDepsForInf(element.Edk2Path, ""));
+                ListOfModules.push(element.Pkg + ":" + element.SrcInf);
+                var i = "Mod" + ListOfModules.indexOf(element.Pkg + ":" + element.SrcInf);
+                nodes.push({ data: { id: i, label: element.SrcInf, srcInf: true, color: PackageToColorMap[element.Pkg]}});
+            });
+
+            //get unique nodes and links
+            Index = 0;
+            while (Index < Deps.length) {
+                var dep = Deps[Index++];
+                var SrcIndex = ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf)
+                if (SrcIndex == -1)
+                {
+                    ListOfModules.push(dep.SrcPkg + ":" + dep.SrcInf);
+                    SrcIndex = "Mod" + ListOfModules.indexOf(dep.SrcPkg + ":" + dep.SrcInf);
+                    nodes.push({ data: { id: SrcIndex, label: dep.SrcInf, srcInf: true, color: PackageToColorMap[dep.SrcPkg]}});
+                } else {
+                    SrcIndex = "Mod" + SrcIndex;
+                }
+
+                var DepIndex = ListOfDeps.indexOf(dep.DepPkg + ":" + dep.Dep)
+                if (DepIndex == -1) {
+                    ListOfDeps.push(dep.DepPkg + ":" + dep.Dep);
+                    DepIndex = "Dep" + ListOfDeps.indexOf(dep.DepPkg + ":" + dep.Dep);
+                    nodes.push({ data:{ id: DepIndex, label: dep.Dep, color: PackageToColorMap[dep.DepPkg], type: dep.DepType}});
+                } else {
+                    DepIndex = "Dep" + DepIndex;
+                }
+
+                //Edges
+                var InEdgeListIndex = edges.findIndex(function(e,i, a) {
+                    return ((e.data.source == SrcIndex) && (e.data.target == DepIndex));
+                });
+
+                if (InEdgeListIndex === -1) {
+                    var EdgeIndex = "Edge" + edges.length;
+                    edges.push({
+                        data: {id: EdgeIndex, 
+                        source: SrcIndex, 
+                        target: DepIndex,
+                        lc: PackageToColorMap[dep.DepPkg].BackgroundColor, 
+                        ec: PackageToColorMap[dep.SrcPkg].BackgroundColor, 
+                        count: 1}
+                    });
+                } else {
+                    //change it
+                    edges[InEdgeListIndex].data.count += 1; 
+                }
+            } //finished checking the Dep
+
+            if (nodes.length == 0) {
+                AddAlert("No modules selected");
+            } else if(nodes.length > 100) {
+                AddAlert("Too many modules selected");
+            } else {
+                var dy = cytoscape({
+                    container: GraphNode,
+                    elements: nodes.concat(edges),
+                    style: [ // the stylesheet for the graph
+                        {
+                        selector: 'node',
+                        style: {
+                            'background-color': 'data(color.BackgroundColor)',
+                            'label': 'data(label)',
+                            'color': 'data(color.TextColor)',
+                            'width': 'label',
+                            'height': 'label',
+                            'padding': '15px',
+                            'text-valign': 'center',
+                            'text-halign': 'center'
+                            }
+                        },
+                        {
+                        selector: 'node[^type]',
+                        style: {
+                            'shape': 'ellipse'
+                            }
+                        },
+                        {
+                        selector: 'node[type="Protocol"]',
+                        style: {
+                            'shape': 'cutrectangle'
+                            }
+                        },
+                        {
+                        selector: 'node[type="Guid"]',
+                        style: {
+                            'shape': 'barrel'
+                            }
+                        },
+                        {
+                        selector: 'node[type="Ppi"]',
+                        style: {
+                            'shape': 'bottomroundrectangle'
+                            }
+                        },
+                        {
+                        selector: 'node[type="Library"]',
+                        style: {
+                            'shape': 'rectangle'
+                            }
+                        },
+                        {
+                        selector: 'node[type="Pcd"]',
+                        style: {
+                            'shape': 'roundrectangle'
+                            }
+                        },
+                        {
+                        selector: 'edge',
+                        style: {
+                            'width': 1,
+                            'line-color': 'data(lc)',
+                            'curve-style': 'bezier',
+                            'target-arrow-color': 'data(ec)',
+                            'target-arrow-shape': 'triangle',
+                            'label': 'data(count)'
+                            }
+                        }
+                    ],
+
+                    layout: {
+                        name: 'random',
+                        directed: true
+                    }
+                });
+            }
+        } //close function
 
     </script>
 </body>

@@ -56,10 +56,42 @@ class Edk2Path(object):
         
         return None
 
+    # Find the package this path belongs to using
+    # some Heuristic.  This isn't perfect but at least 
+    # identifies the directory consistently
+    #
+    # @param InputPath:  absolute path to module
+    #
+    # @ret Name of Package that the module is in. 
     def GetContainingPackage(self, InputPath):
-        for x in reversed(InputPath.split(os.path.sep)):
+        logging.debug("GetContainingPackage: %s" % InputPath)
+        previous = None
+        rp = InputPath.split(os.path.sep)
+        rp.reverse()
+        i = 0
+
+        #loop in reverse to find the package
+        while i < len(rp):
+            x = rp[i]
             if x.lower().endswith("pkg"):
+                logging.debug("Found using pkg heuristic")
                 return x
+
+            #to catch cases where the package doesn't end with PKG
+            #if current path equals the workspace or a packagepath then assume
+            # the package is 1 level deeper (stored previous)
+            fp = InputPath.rsplit(os.path.sep, i)[0]
+            if(fp in self.PackagePathList):
+                logging.debug("Reached Package Path.  Using previous directory: %s" % previous)
+                return previous
+            if(fp == self.WorkspacePath):
+                logging.debug("Reached Workspace Path.  Using previous directory: %s" % previous)
+                return previous
+            previous = x
+            i+= 1
+        logging.error("Failed to find containing package for %s" % InputPath)
+        logging.info("PackagePath is: %s" % ";".join(self.PackagePathList))
+        logging.info("Workspace path is : %s" % self.WorkspacePath)
         return None
 
 

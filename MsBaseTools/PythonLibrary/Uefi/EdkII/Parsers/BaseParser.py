@@ -38,8 +38,10 @@ class BaseParser(object):
             Path = os.path.join(self.RootPath, *p)
              
         else:
-            # log invalid file path
-            self.Logger.error("Invalid file path %s" % Path)
+            return Path
+
+        # log invalid file path
+        self.Logger.error("Invalid file path %s" % Path)
 
         return Path
 
