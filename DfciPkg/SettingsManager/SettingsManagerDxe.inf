@@ -1,0 +1,76 @@
+## @file
+#
+#
+#
+# THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+# ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+# PARTICULAR PURPOSE.
+#
+#
+# Copyright (C) 2015, Microsoft Corporation. All rights reserved.<BR>
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SettingsManagerDxe
+  FILE_GUID                      = 0CCF27CF-E68D-4279-96B0-8A4E1CDFF10C
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = Init
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  SettingsManagerProvider.c
+  SettingsManager.c
+  SettingsManager.h
+  SettingsManagerTransportXml.c
+  SettingsManagerDxe.c
+  SettingsManagerCurrentSettingXml.c
+  SettingsManagerProvisionedData.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  DfciPkg/DfciPkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  BaseLib
+  DfciXmlSettingSchemaSupportLib
+  DfciSettingPermissionLib
+  DfciBaseStringLib
+
+[Guids]
+ gDfciStartOfBdsNotifyGuid
+ gDfciSettingsManagerVarNamespace
+ gDfciInternalVariableGuid
+ gEfiEventPreReadyToBootGuid
+
+[Protocols]
+  gDfciSettingsProviderSupportProtocolGuid  #produces
+  gDfciSettingAccessProtocolGuid #produces
+  gDfciSettingPermissionsProtocolGuid #produces
+  gDfciAuthenticationProtocolGuid  #sometimes consumes
+  gDfciAuthenticationProvisioningPendingGuid
+
+[FeaturePcd]
+
+
+[Pcd]
+
+
+
+[Depex]
+   gEfiVariableWriteArchProtocolGuid
+   AND gEfiVariableArchProtocolGuid
+   AND gEdkiiVariableLockProtocolGuid
+

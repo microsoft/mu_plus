@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<SettingsPacket xmlns="urn:UefiSettings-Schema">
+  <CreatedBy>UserName</CreatedBy>
+  <CreatedOn>2015-10-26</CreatedOn>
+  <Version>1</Version>
+  <LowestSupportedVersion>1</LowestSupportedVersion>
+  <Settings>
+    <Setting Type="AssetTag">
+      <!-- Asset Tag -->
+      <Id>100</Id>
+      <Value>7897897890</Value>
+    </Setting>
+    <Setting Type="SecureBootKey">
+      <!-- Secure Boot Key Enum -->
+      <Id>200</Id>
+      <Value>MsOnly</Value>
+    </Setting>
+    <Setting Type="Enable">
+      <!-- TPM Enable -->
+      <Id>300</Id>
+      <Value>Enabled</Value>
+    </Setting>
+    <Setting Type="Enable">
+      <!-- Docking Station USB -->
+      <Id>301</Id>
+      <Value>Enabled</Value>
+    </Setting>
+  </Settings>
+</SettingsPacket>
+

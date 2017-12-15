@@ -1,0 +1,41 @@
+## @file
+# Library to support getting the device serial number.
+# Copyright (c) 2016 - Microsoft Corporation.  All rights reserved. 
+#
+# THE PROGRAM IS LICENSED ON AN "AS IS" BASIS,
+# WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciSerialNumberSupportLib
+  FILE_GUID                      = 191d0ad4-469a-4d62-b526-29abe84d6af2
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DfciSerialNumberSupportLib|DXE_DRIVER UEFI_APPLICATION
+
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  DfciSerialNumberSupportLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  DfciPkg/DfciPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  UefiLib
+  MemoryAllocationLib
+
+[Guids]
+
+[Depex]  

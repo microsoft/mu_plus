@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- 
+This document contains every setting supported on the Surface Platforms and should be used 
+by tools to provide name, id, help information.  
+
+-->
+<AllSettings xmlns="urn:UefiSettings-Schema">
+  <Version>1</Version>
+  <Date>2015-10-06</Date>
+  <Settings>
+    <Setting>
+      <Id>100</Id>
+      <Name>Asset Tag</Name>
+      <Help>Holds a IT/Admin defined asset tag value</Help>
+    </Setting>
+    <Setting>
+      <Id>200</Id>
+      <Name>Secure Boot Keys</Name>
+      <Help>Controls the state of UEFI Secure Boot and which keys to use. Changing this can cause your system to fail to boot</Help>
+    </Setting>
+    <Setting>
+      <Id>300</Id>
+      <Name>Trusted Platform Module (TPM)</Name>
+      <Help>TPM device enabled or disabled</Help>
+    </Setting>
+    <Setting>
+      <Id>301</Id>
+      <Name>Docking Usb Port</Name>
+      <Help>Docking USB Port enabled or disabled</Help>
+    </Setting>
+    <Setting>
+      <Id>302</Id>
+      <Name>Front Camera</Name>
+      <Help>Front Camera enabled or disabled</Help>
+    </Setting>
+    <Setting>
+      <Id>303</Id>
+      <Name>Bluetooth</Name>
+      <Help>Bluetooth radio enabled or disabled</Help>
+    </Setting>
+    
+    <!--  
+    
+    For testing purposes we don't need a complete set.  
+    Add this in once we have verified a working prototype
+    
+    <EnableSetting>
+      <Name>Audio</Name>
+      <Help>Audio enabled or disabled</Help>
+      <Value>Enabled</Value>
+    </EnableSetting>
+    <EnableSetting>
+      <Name>AlternateBoot</Name>
+      <Help>Volume Down button pressed during boot up triggers an alternate boot sequence of USB, PXE, Internal Storage.  This setting can enabled or disabled this feature</Help>
+      <Value>Enabled</Value>
+    </EnableSetting>
+    <EnableSetting>
+      <Name>IPv4Pxe</Name>
+      <Help>When Pxe boot is tried IPv4 will be tried first if enabled.</Help>
+      <Value>Enabled</Value>
+    </EnableSetting>
+    <EnableSetting>
+      <Name>IPv6Pxe</Name>
+      <Help>When Pxe boot is tried IPv6 will be tried if enabled.</Help>
+      <Value>Enabled</Value>
+    </EnableSetting>
+    <EnableSetting>
+      <Name>BootFromUsb</Name>
+      <Help>Support booting from USB mass storage.</Help>
+      <Value>Enabled</Value>
+    </EnableSetting>
+    <EnableSetting>
+      <Name>AllowAssetTagSetFromLegacyTool</Name>
+      <Help>Support Legacy Surface IT Asset Tag Tool to configure AssetTag.</Help>
+      <Value>Disabled</Value>
+    </EnableSetting>
+    -->
+    <!-- Need to define binary blob for Hash of Admin Key so key can be changed if desired. -->
+    <!-- Need to define binary blob for Hash of Local Key so key can be set or changed if desired -->
+    <!-- Need to figure out boot order and authenticated boot order -->
+    <!-- Boot order should be changable when in local mode using local data but in offline mode only generic boot targets can be used.  (Pxe, Usb Mass Storage, Interal Drive) -->
+  </Settings>
+</AllSettings>
+

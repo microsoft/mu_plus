@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<ResultsPacket xmlns="urn:UefiSettings-Schema">
+  <AppliedOn>%Date%</AppliedOn>
+  <Settings>
+    <SettingResult>
+      <!-- Asset Tag -->
+      <Id>100</Id>
+      <Result>0x8000000000000001</Result>
+    </SettingResult>
+    <SettingResult>
+      <!-- TPM Enable -->
+      <Id>300</Id>
+      <Flags>0x0000000000000001</Flags>
+      <Result>0x0</Result>
+    </SettingResult>
+  </Settings>
+</ResultsPacket>

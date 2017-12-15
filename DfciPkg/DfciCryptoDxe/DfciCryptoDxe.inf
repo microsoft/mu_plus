@@ -1,0 +1,58 @@
+## @file
+#  This module consolidates all crypto needed for Surface UEFI and provides 
+#  protocol for those functions.  These protocols will be uninstalled
+#  before 3rd party code is run
+#
+#  Copyright (c) 2015, Microsoft Corporation. All rights reserved.<BR>
+#  
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#  
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SurfaceCryptoDxe
+  FILE_GUID                      = 44F34344-33B5-43E2-881B-6FABF32C859C
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SurfaceCryptoDxeEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  DfciCryptoDxe.c
+  Pkcs7Support.c
+  Pkcs5Support.c
+  DfciCryptoDxe.h
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  DfciPkg/DfciPkg.dec
+
+[LibraryClasses]
+  UefiBootServicesTableLib
+  DebugLib
+  BaseCryptLib
+  UefiDriverEntryPoint
+
+[Protocols]
+  gDfciPKCS7ProtocolGuid
+  gDfciPKCS5PasswordHashProtocolGuid
+
+
+[Guids]
+  gEfiEndOfDxeEventGroupGuid
+  gEfiEventReadyToBootGuid
+
+[Depex]
+  TRUE
+
+[BuildOptions.AARCH64]
+    MSFT:*_VS2015x86_AARCH64_DLINK_FLAGS = /include:_fltused

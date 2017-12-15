@@ -1,0 +1,67 @@
+## @file
+#  DfciSettingPermissionLib
+#
+# This library provides all the logic for the SettingsManager to use for Permission Management. 
+# This library should not be linked in by other modules as it used only by the Settings Manager.
+# If modules want to find out a permission value they should use the SettingAccessProtocol which will return
+# flags indicating write access
+#
+#
+# This library has a very small public interface but it has a lot of 
+# logic required to support Permissions, Provioning Permissions from tool thru variable interface, etc
+#
+#  Copyright (c) 2015, Microsoft Corporation. All rights reserved.<BR>
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciSettingPermissionLib
+  FILE_GUID                      = 659801E4-4729-4461-86F6-19E0942CCA5C
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0 
+  LIBRARY_CLASS                  = DfciSettingPermissionLib|DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER
+  CONSTRUCTOR                    = DfciPermissionInit
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 
+#
+
+[Sources]
+  DfciSettingPermission.c
+  DfciSettingPermissionProvisioned.c  #support loaded saved/already provisioned data into internal stores for usage
+  DfciSettingPermission.h
+  PermissionStoreSupport.c
+  DfciSettingPermissionProvisionXml.c #Support reading a Permission Packet in XML format and appling to Permission Store
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+  DfciPkg/DfciPkg.dec
+   
+[LibraryClasses]
+  DebugLib
+  XmlTreeLib
+  XmlTreeQueryLib
+  DfciXmlPermissionSchemaSupportLib
+  PrintLib
+  BaseLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiLib
+  BaseMemoryLib
+  DfciSerialNumberSupportLib
+
+[Protocols]
+gDfciAuthenticationProtocolGuid
+
+[Guids]
+gDfciPermissionManagerVarNamespace
+gDfciInternalVariableGuid
+
+[Depex]
+

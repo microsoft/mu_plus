@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PermissionsPacket xmlns="urn:UefiSettings-Schema">
+  <CreatedBy>UserName</CreatedBy>
+  <CreatedOn>2015-10-26</CreatedOn>
+  <Version>1</Version>
+  <LowestSupportedVersion>1</LowestSupportedVersion>
+  <Permissions Default="0x80" Append="False">
+    <Permission>
+      <Id>100</Id>
+      <PMask>0xFF</PMask>
+    </Permission>
+    <Permission>
+      <Id>300</Id>
+      <PMask>0x81</PMask>
+    </Permission>
+  </Permissions>
+</PermissionsPacket>
+

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns="urn:UefiSettings-Schema"
+    elementFormDefault="qualified"
+    targetNamespace="urn:UefiSettings-Schema"
+  >
+  <!-- ######################################################################################### -->
+  <!-- ############################### Describe the documents ################################## -->
+  <!-- ######################################################################################### -->
+  <xs:element name="SettingsPacket" type="ConfigPacket" />        <!-- packet to set/get settings between Tool and FW -->
+  <xs:element name="ResultsPacket" type="ResultConfigPacket" />   <!-- Packet used to send results of set/verify operation from FW to Tool -->
+
+  <xs:element name="AllSettings" type="AllSettingsType" />        <!-- Xml Doc used to describe all settings for tool consumption -->
+
+
+
+  <!-- ######################################################################################### -->
+  <!-- ##################### Describe some simple and complex types ############################ -->
+  <!-- ######################################################################################### -->
+  <xs:complexType name="ConfigPacket">
+    <xs:sequence>
+      <xs:element name="CreatedBy" type="xs:string" />
+      <xs:element name="CreatedOn" type="xs:date" />
+      <xs:element name="Version" type="xs:unsignedInt" />
+      <xs:element name="LowestSupportedVersion" type="xs:unsignedInt" />
+      <xs:element name="Settings">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Setting" maxOccurs="unbounded" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ResultConfigPacket">
+    <xs:sequence>
+      <xs:element name="AppliedOn" type="xs:date" />
+      <xs:element name="Settings">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="SettingResult" type="ResultType" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="ResultType">
+    <xs:sequence>
+      <xs:group ref="SettingGroup"/>
+      <xs:element name="Flags" type="xs:unsignedLong" minOccurs="0" maxOccurs="1" />
+      <xs:element name="Result" type="xs:unsignedLong" minOccurs="1" maxOccurs="1" />
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name="EnableSettingType">
+    <xs:sequence>
+      <xs:group ref="SettingGroup"/>
+      <xs:element name="Value" type="EnableType" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AssetTagSettingType">
+    <xs:sequence>
+      <xs:group ref="SettingGroup"/>
+      <xs:element name="Value" type="AssetTagType" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SecureBootSettingType">
+    <xs:sequence>
+      <xs:group ref="SettingGroup"/>
+      <xs:element name="Value" type="SecureBootKeyEnumType" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:group name="SettingGroup">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:unsignedLong" />
+    </xs:sequence>
+  </xs:group>
+
+  <!-- Simple On / Off types -->
+  <xs:simpleType name="EnableType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="Enabled|Disabled"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="AssetTagType">
+    <xs:restriction base="xs:string">
+      <xs:length value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="SecureBootKeyEnumType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="None"/>
+      <xs:enumeration value="MsOnly"/>
+      <xs:enumeration value="MsPlus3rdParty"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+
+
+
+
+  <xs:complexType name="AllSettingsType">
+    <xs:sequence>
+      <xs:element name="Version" type="xs:unsignedInt" />
+      <xs:element name="Date" type="xs:date" />
+      <xs:element name="Settings">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="Setting" maxOccurs="unbounded" type="SettingDescType"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name="SettingDescType">
+    <xs:sequence>
+      <xs:element name="Id" type="xs:unsignedLong"/>
+      <xs:element name="Name" type="xs:string" />
+      <xs:element name="Help" type="xs:string" />
+    </xs:sequence>
+  </xs:complexType>
+ 
+  
+</xs:schema>

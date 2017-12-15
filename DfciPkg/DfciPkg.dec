@@ -1,0 +1,95 @@
+## @file  DfciPkg.dec
+#
+# This Package provides all definitions(including functions, MACROs, structures and library classes)
+# and libraries instances, which are defined and created by the DFCI Package.
+#
+# Copyright (c) 2017, Microsoft Corporation. All rights reserved.
+#
+#
+##
+
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = DfciPkg
+  PACKAGE_GUID                   = a9e44171-b829-4344-8c54-45d2ad784b49
+  PACKAGE_VERSION                = 1.00
+
+[Includes]
+  Include
+
+[LibraryClasses]
+
+[Protocols]
+  ## DFCI Setting Permission Protocol
+  # {83FB5B14-8FBA-4D55-9578-A5314F3633A5}
+  gDfciSettingPermissionsProtocolGuid = { 0x83fb5b14, 0x8fba, 0x4d55, { 0x95, 0x78, 0xa5, 0x31, 0x4f, 0x36, 0x33, 0xa5 } }
+
+  ## DFCI Setting Access Protocol
+  # {7B9CC1A0-218D-4C1C-9FCF-99F3A34D35F8}
+  gDfciSettingAccessProtocolGuid = {0x7b9cc1a0, 0x218d, 0x4c1c, { 0x9f, 0xcf, 0x99, 0xf3, 0xa3, 0x4d, 0x35, 0xf8 } }
+
+  ##  DFCI Authentication and Identity Protocol
+  #
+  gDfciAuthenticationProtocolGuid = { 0x8b3638f0, 0x6aa7, 0x4443, { 0x8b, 0x8b, 0xd3, 0xef, 0x32, 0x44, 0x42, 0xec }}
+
+  ## DFCI Settings Provider Support
+  #
+  gDfciSettingsProviderSupportProtocolGuid = { 0xc16c7ed8, 0x3751, 0x45a5, {0xa8, 0x93, 0x29, 0x6a, 0x3, 0xb8, 0x8f, 0x9d } }
+
+  ##  DFCI Authentication Provision Update Pending
+  # NULL / Flag Protocol to tell other modules in the system that Auth Provisioning is Pending
+  #
+  gDfciAuthenticationProvisioningPendingGuid = { 0x530f2603, 0x2d78, 0x48a7, { 0xb2, 0x4b, 0xab, 0xb, 0x6, 0x43, 0x61, 0x88 }}
+
+  ## DFCI Pkcs7 protocol
+  #
+  gDfciPKCS7ProtocolGuid =  { 0x93cdb916, 0x7608, 0x4f1f, { 0xb5, 0x16, 0xc, 0x61, 0xbb, 0x24, 0x5c, 0x4f }}
+
+  ## DFCI PKCS5 Password Hashing Protocol
+  #
+  gDfciPKCS5PasswordHashProtocolGuid = { 0x959b7ec7, 0x1857, 0x4551, { 0xaa, 0xfb, 0x1b, 0x7a, 0xe9, 0x48, 0x20, 0x2d }}
+
+
+[Guids]
+  ## DFCI Package token space guid
+  #  Include/Guid/DfciPkgTokenSpace.h
+  #  {3E8B05F6-DD48-413C-87B9-057E6A0C0F93}
+  gDfciPkgTokenSpaceGuid = { 0x3e8b05f6, 0xdd48, 0x413c, { 0x87, 0xb9, 0x5, 0x7e, 0x6a, 0xc, 0xf, 0x93 }}
+
+  ## GUID for DFCI Settings Manager communication variables
+  #  {D41C8C24-3F5E-4EF4-8FDD-073E1866CD01}
+  #  Include/Guid/DfciSettingsManagerVariable.h
+  gDfciSettingsManagerVarNamespace    = { 0xD41C8C24, 0x3F5E, 0x4EF4, { 0x8F, 0xDD, 0x07, 0x3E, 0x18, 0x66, 0xCD, 0x01 }}
+
+  ## GUID for DFCI Identity and Authentication Manager provision variables
+  #  {DE6A8726-05DF-43CE-B600-92BD5D286CFD}
+  #  Include/Guid/DfciIdentityAndAuthManagerVariables.h
+  gDfciAuthProvisionVarNamespace      = { 0xDE6A8726, 0x05DF, 0x43CE, { 0xB6, 0x00, 0x92, 0xBD, 0x5D, 0x28, 0x6C, 0xFD }}
+
+  ## GUID for DFCI Permission Manager (Setting Policy)
+  #
+  # Include/Guid/DfciPermissionManagerVariables.h
+  gDfciPermissionManagerVarNamespace  = { 0x3a9777ea, 0xd9f, 0x4b65, { 0x9e, 0xf3, 0x7c, 0xaa, 0x7c, 0x41, 0x99, 0x4b}}
+
+  ## DFCI Private/Internal Variable Guid
+  # This is needed so that VarCheckLib can do advanced locking for these variables
+  #
+  # Include/Guid/DfciInternalVariableGuid.h
+  gDfciInternalVariableGuid = { 0xc6bbd941, 0xbfe0, 0x44b8, { 0xbe, 0xdc, 0x4, 0xd3, 0xa7, 0xe9, 0xa, 0xd9}}
+
+  ## DFCI notification that Bds is starting (main DXE dispatch cycle complete)
+  #  Still within PlatformAuth
+  gDfciStartOfBdsNotifyGuid = { 0xc9341466, 0x1a6c, 0x4ded, { 0x89, 0xc2, 0x78, 0x12, 0xb0, 0x29, 0x9c, 0x45}}
+
+  ## Guid to use for DFCI Variables
+  #
+  # {17FEA8D4-51EE-49B0-8460-11AD2FCA9D4F}
+  gDfciNVRAMVariableGuid = { 0x17fea8d4, 0x51ee, 0x49b0, { 0x84, 0x60, 0x11, 0xad, 0x2f, 0xca, 0x9d, 0x4f }}
+
+[PcdsFeatureFlag]
+  ## Our Setting design pattern creates a single library for setting access (get/set)
+  # and install setting provider.  But we only want to install 1 setting provider per setting
+  # and therefore using this PCD only a driver that overrides to TRUE will do the install of the provider.
+  #
+  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|FALSE|BOOLEAN|0x40000014

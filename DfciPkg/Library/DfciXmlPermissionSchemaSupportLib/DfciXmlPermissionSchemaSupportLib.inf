@@ -1,0 +1,38 @@
+## @file
+#  DfciXmlPermissionSchemaSupportLib  - Supports Version 1.0
+#
+# This library supports the schema used for the Permission Input XML files. 
+#
+#  Copyright (c) 2015, Microsoft Corporation. All rights reserved.<BR>
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciXmlPermissionSchemaSupportV1Lib
+  FILE_GUID                      = 82EF6134-3BF2-4CAF-BFC5-79CFAC5768C7
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0 
+  LIBRARY_CLASS                  = DfciXmlPermissionSchemaSupportLib|DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER
+# CONSTRUCTOR                    = NONE
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 
+#
+
+[Sources]
+  DfciXmlPermissionSchemaSupport.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+  DfciPkg/DfciPkg.dec
+   
+[LibraryClasses]
+  DebugLib
+  XmlTreeLib
+  XmlTreeQueryLib
+  PrintLib
+  BaseLib

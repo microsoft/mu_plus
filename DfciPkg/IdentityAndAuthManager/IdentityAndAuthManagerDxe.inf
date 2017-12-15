@@ -1,0 +1,99 @@
+## @file
+#
+#
+#
+# THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
+# ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+# PARTICULAR PURPOSE.
+#
+#
+# Copyright (C) 2015, Microsoft Corporation. All rights reserved.<BR>
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IdentityAndAuthManagerDxe
+  FILE_GUID                      = F8126429-7B88-4AD2-98C4-402CBE26F9A8
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = Init
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AuthManager.c
+  AuthManagerProvision.c
+  AuthManagerProvisionedData.c
+  IdentityAndAuthManager.h
+  IdentityAndAuthManagerDxe.c
+  IdentityManager.c
+  AuthManager_PKCS1Support.c
+  RecoverySupport.c
+  CertSupport.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  DfciPkg/DfciPkg.dec
+
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  BaseLib
+  UefiBootServicesTableLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  PrintLib
+  UefiLib
+  BaseCryptLib
+  BaseLib
+  DfciPasswordLib
+  OpensslLib
+  DfciSerialNumberSupportLib
+  DfciRecoveryLib
+  DfciUiSupportLib
+
+[Guids]
+ gEfiCertPkcs7Guid
+ gDfciAuthProvisionVarNamespace
+ gEfiHashAlgorithmSha256Guid
+ gDfciInternalVariableGuid
+ gEfiEndOfDxeEventGroupGuid
+
+[Protocols]
+  gDfciAuthenticationProtocolGuid  #produces
+  gEfiRngProtocolGuid  #SOMETIMES CONSUMES
+  gDfciPKCS7ProtocolGuid  #consumes
+  gDfciSettingPermissionsProtocolGuid #sometimes consumes
+  gDfciAuthenticationProvisioningPendingGuid 
+  gDfciSettingAccessProtocolGuid  #sometimes consumes 
+
+[FeaturePcd]
+
+[Pcd]
+
+[Depex]
+   gEfiVariableWriteArchProtocolGuid 
+   AND gEfiVariableArchProtocolGuid 
+   AND gEdkiiVariableLockProtocolGuid 
+   AND gDfciSettingPermissionsProtocolGuid
+   AND gDfciPKCS7ProtocolGuid
+   AND gEfiRngProtocolGuid
+
+[BuildOptions]
+  # MS-Change - pulling in OpenSSL headers exposes us to several compiler warnings. Disable them for now.
+  #   Disable C4005: macro redefinition
+  #   Disable C4090: 'function': different 'const' qualifiers
+  MSFT:*_*_IA32_CC_FLAGS   = /wd4005 /wd4090
+  MSFT:*_*_X64_CC_FLAGS    = /wd4005 /wd4090
+
+
+[BuildOptions.AARCH64]
+    MSFT:*_VS2015x86_AARCH64_DLINK_FLAGS = /include:_fltused  
