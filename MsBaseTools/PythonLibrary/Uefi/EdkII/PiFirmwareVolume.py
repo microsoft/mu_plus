@@ -98,6 +98,31 @@ class EfiFirmwareVolumeHeader(object):
     file_system_guid_bin = self.FileSystemGuid.bytes if sys.byteorder == 'big' else self.FileSystemGuid.bytes_le
     return struct.pack(self.StructString, self.ZeroVector, file_system_guid_bin, self.FvLength, self.Signature, self.Attributes,
                         self.HeaderLength, self.Checksum, self.ExtHeaderOffset, self.Reserved, self.Revision, self.Blockmap0, self.Blockmap1)
+#
+# EFI_FIRMWARE_VOLUME_EXT_HEADER
+# Can parse or produce an EFI_FIRMWARE_VOLUME_EXT_HEADER structure/byte buffer.
+#
+# typedef struct {
+#   EFI_GUID                  FileSystemGuid;
+#   UINT32                    ExtHeaderSize;
+# } EFI_FIRMWARE_VOLUME_EXT_HEADER;
+class EfiFirmwareVolumeExtHeader(object):
+  def __init__(self):
+    self.StructString = "=16sL"
+    self.FileSystemGuid = None
+    self.ExtHeaderSize = None
+
+  def load_from_file(self, file):
+    # This function assumes that the file has been seeked
+    # to the correct starting location.
+    orig_seek = file.tell()
+    struct_bytes = file.read(struct.calcsize(self.StructString))
+    file.seek(orig_seek)
+
+    # Load this object with the contents of the data.
+    (self.FileSystemGuid, self.ExtHeaderSize) = struct.unpack(self.StructString, struct_bytes)
+
+    return self
 
 if __name__ == '__main__':
     pass
