@@ -44,6 +44,11 @@
   #
   CapsuleResetLib|Include/Library/CapsuleResetLib.h
 
+  ## @libraryclass Provides the device/family subset of Uefi PlatformBootManagerLib
+  #
+  DeviceBootManagerLib|Include/Library/DeviceBootManagerLib.h
+
+
 [Guids]
 
 [Ppis]

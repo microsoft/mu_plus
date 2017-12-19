@@ -74,6 +74,9 @@
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf 
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
 
+  DeviceBootManagerLib|MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
+  PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
@@ -113,6 +116,8 @@
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
 
 [Components.X64]
+  MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
+  MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
 
 [BuildOptions]
 #force deprecated interaces off
