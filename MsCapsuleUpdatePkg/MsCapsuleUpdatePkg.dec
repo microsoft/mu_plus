@@ -1,0 +1,141 @@
+##
+# Copyright (c) 2016, Microsoft Corporation
+
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = MsCapsuleUpdatePkg
+  PACKAGE_GUID                   = 41336A45-672F-4C0F-9A29-05D6B81EA54E
+  PACKAGE_VERSION                = 0.1
+
+[Includes]
+  Include
+
+[LibraryClasses]
+  ##  @libraryclass  Library to implement custom policy to check system
+  # requirements before applying capsule update.
+  ##
+  CapsuleUpdatePolicyLib|Include/Library/CapsuleUpdatePolicyLib.h
+
+  MsSafeBaseLib|Include/Library/MsSafeBaseLib.h
+
+  ##  @libraryclass  Interface to allow subsystem device vendors to write
+  # a simplified interface and allow Platform fw to wrap in a
+  # FMP instance drvier
+  ##
+  FmpDeviceLib|Include/Library/FmpDeviceLib.h
+
+  ##  @libraryclass  Helper functions to work with MsFmp Payload header.
+  # The definition of the MsFmpPayloadHeader is not public and can be changed
+  # as long as an instance of this library is created to support it.
+  ##
+  MsFmpPayloadHeaderLib|Include/Library/MsFmpPayloadHeaderLib.h
+
+  ##  @libraryclass  Helper functions for working with Firmware Management Protocol
+  #
+  ##
+  FmpHelperLib|Include/Library/FmpHelperLib.h
+
+  ##  @libraryclass  Raw cert data for the keys for the capsule update
+  #
+  ##
+  CapsuleKeyLib|Include/Library/CapsuleKeyLib.h
+
+  ##  @libraryclass  Library to indicate the current completion progress of the 
+  #                  firmware update
+  #
+  ##
+  DisplayUpdateProgressLib|Include/Library/DisplayUpdateProgressLib.h
+
+  ##  @libraryclass  Interface to allow FMP drivers to call
+  # FMP wrapper driver
+  ##
+  FmpWrapperDeviceLib|Include/Library/FmpWrapperDeviceLib.h
+
+  ##  @libraryclass  Library to implement FMP policies
+  # FMP wrapper driver
+  ##
+  FmpPolicyLib|Include/Library/FmpPolicyLib.h
+
+[Guids]
+  #
+  # <description of purpose for the guids found in the file>
+  #
+  ## <Path to the header file>
+  #<global guid name (ie. gEfiGlobalVariableGuid)> = <Guid value (ie { 0x8BE4DF61, 0x93CA, 0x11D2, { 0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B, 0x8C }} )>
+
+  ## Capsule Update Package token space guid
+  #  Include/Guid/MsCapsuleUpdatePkgTokenSpace.h
+  #  {B9576283-D4E1-44E4-9531-B0258467F140}
+  gMsCapsuleUpdatePkgTokenSpaceGuid = { 0xb9576283, 0xd4e1, 0x44e4, { 0x95, 0x31, 0xb0, 0x25, 0x84, 0x67, 0xf1, 0x40 }}
+
+  ## GUID for Test Update Recovery namespace
+  #
+  # Include/Guid/MsTestUpdateRecoveryVariable.h
+  gMsTestUpdateRecoveryVarNamespace = { 0x8976dbf6, 0x2c04, 0x4c38, { 0x80, 0x72, 0x4d, 0x6c, 0x50, 0x22, 0xef, 0xb7 }}
+
+[PcdsDynamicEx]
+
+[PcdsFixedAtBuild]
+  ## ProgressColor for the DeviceLib Wrapper
+  #  THIS SHOULD BE LOCALLY OVERRIDDEN FOR EACH INSTANCE.  Default is white.
+  #
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdProgressColor|0xFFFFFFFF|UINT32|0x40000004
+
+  ## GUID for the DeviceLib Wrapper
+  #  THIS SHOULD BE LOCALLY OVERRIDDEN FOR EACH INSTANCE
+  #
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdDeviceLibWrapperDeviceGuid|{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}|VOID*|0x40000006
+
+  ## Unicode String for the FMP Image Name
+  # THIS SHOULD BE LOCALLY OVERRIDDEN FOR EACH INSTANCE
+  #
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdDeviceLibWrapperDeviceImageName|L"UNSET DEVICE IMAGE NAME                                  "|VOID*|0x40000007
+
+  ## Build time lowest supported version
+  # THIS SHOULD BE LOCALLY OVERRIDDEN FOR EACH INSTANCE
+  #
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdBuildTimeLowestSupportedVersion|0x0|UINT32|0x4000000C
+
+  ##
+  # A watchdog is armed while doing capsule update.  The watchdog is PET on each % update (call to progress function)
+  # If the watchdog goes off then system will reboot.  A value of zero will disable the watchdog timer (default).
+  #
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdCapsuleUpdateWatchdogTimeInSeconds|0x0|UINT8|0x40000119
+
+  ## Initial Max Entries in ESRT - Can grow dynamically
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdInitialMaxEsre|5|UINT8|0x40000005
+
+  ## GUID for System device FMP instance
+  #
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdEsrtSystemDeviceFmp |{ 0x21, 0x73 ,0xB4, 0xE3,0x87, 0xD0, 0x6F, 0x4D, 0x9B, 0x85, 0x1D, 0x24, 0x37, 0x6A, 0x53, 0x07 }|VOID*|0x40000003
+
+  ## Max number of capsules to be processed - currently set to 10
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdMaxCapsules|10|UINT8|0x40000009
+
+[PcdsFeatureFlag]
+  ## Boolean to determine if device needs full system reboot before update takes effect
+  #  THIS SHOULD BE LOCALLY OVERRIDDEN FOR EACH INSTANCE
+  #
+  gMsCapsuleUpdatePkgTokenSpaceGuid.PcdDeviceLibWrapperSystemResetRequired|FALSE|BOOLEAN|0x40000008

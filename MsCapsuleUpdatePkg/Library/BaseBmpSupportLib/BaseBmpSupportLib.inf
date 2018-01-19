@@ -1,0 +1,37 @@
+##
+#Copyright (c) 2016, Microsoft Corporation<BR>
+#Copyright (c) 2011 - 2013, Intel Corporation. All rights reserved.<BR>
+#This software and associated documentation (if any) is furnished
+#under a license and may only be used or copied in accordance
+#with the terms of the license.  Except as permitted by such
+#license, no part of this software or documentation may be
+#reproduced, stored in a retrieval system, or transmitted in any
+#form or by any means without the express written consent of
+#Intel Corporation.
+##
+
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = BaseBmpSupportLib
+FILE_GUID = CF5F650B-C208-409A-B889-0755172E2B0C
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = BmpSupportLib
+
+
+[LibraryClasses]
+DebugLib
+BaseMemoryLib
+MemoryAllocationLib
+MsSafeBaseLib
+
+
+[Packages]
+MdePkg/MdePkg.dec
+MdeModulePkg/MdeModulePkg.dec
+MsCapsuleUpdatePkg/MsCapsuleUpdatePkg.dec
+
+
+[Sources]
+BmpSupportLib.c
