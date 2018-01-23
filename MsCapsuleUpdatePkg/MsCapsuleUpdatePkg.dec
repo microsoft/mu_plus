@@ -38,8 +38,6 @@
   ##
   CapsuleUpdatePolicyLib|Include/Library/CapsuleUpdatePolicyLib.h
 
-  MsSafeBaseLib|Include/Library/MsSafeBaseLib.h
-
   ##  @libraryclass  Interface to allow subsystem device vendors to write
   # a simplified interface and allow Platform fw to wrap in a
   # FMP instance drvier

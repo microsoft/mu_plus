@@ -24,7 +24,7 @@ LIBRARY_CLASS = BmpSupportLib
 DebugLib
 BaseMemoryLib
 MemoryAllocationLib
-MsSafeBaseLib
+IntSafeLib
 
 
 [Packages]
