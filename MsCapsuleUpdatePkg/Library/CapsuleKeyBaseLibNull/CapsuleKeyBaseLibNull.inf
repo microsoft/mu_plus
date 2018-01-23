@@ -1,11 +1,6 @@
-## @file  MsCorePkg.dec
-# This Package provides all definitions, library classes and libraries instances for MsCore. 
-# MsCore is common code used in the Microsoft UEFI Core code base
-# This is targetted at promoting to open source and should be aligned with
-# Tianocore standards
-#
-# Copyright (c) 2017, Microsoft Corporation
-#
+##
+# Copyright (c) 2016, Microsoft Corporation
+
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without 
 # modification, are permitted provided that the following conditions are met:
@@ -27,32 +22,26 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 
+
 [Defines]
-  DEC_SPECIFICATION              = 0x00010005
-  PACKAGE_NAME                   = MsCorePkg
-  PACKAGE_UNI_FILE               = MsCorePkg.uni
-  PACKAGE_GUID                   = C5278380-3276-469B-AE19-C840440367C5
-  PACKAGE_VERSION                = 0.10
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CapsuleKeyBaseLibNull
+  FILE_GUID                      = 7841AF46-5C6D-49F1-98CC-00307A1E871B
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = CapsuleKeyLib
 
 
-[Includes]
-  Include
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
 
-[LibraryClasses]
+[Sources]
+  CapsuleKeyBaseLib.c
 
-  ## @libraryclass Provides a way to Reset the system after capsule udpate
-  #
-  CapsuleResetLib|Include/Library/CapsuleResetLib.h
+[Packages]
+  MdePkg/MdePkg.dec
+  MsCapsuleUpdatePkg/MsCapsuleUpdatePkg.dec
 
-[Guids]
-
-[Ppis]
-  
-[Protocols]
-
-[PcdsFeatureFlag]
-
-[PcdsFixedAtBuild]
-
-[UserExtensions.TianoCore."ExtraFiles"]
-  MsCorePkgExtra.uni

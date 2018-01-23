@@ -75,7 +75,7 @@
   # For update progress bar (graphics) display:
   DisplayUpdateProgressLib|MsCapsuleUpdatePkg/Library/DisplayUpdateProgressGraphicsLib/DisplayUpdateProgressGraphicsLib.inf
   FmpWrapperDeviceLib|MsCapsuleUpdatePkg/Library/FmpWrapperDeviceLib/FmpWrapperDeviceLib.inf
-  CapsuleKeyLib|MsCapsuleUpdatePkg/Library/CapsuleKeyBaseLib/CapsuleKeyBaseLib.inf
+  CapsuleKeyLib|MsSampleFmpDevicePkg/Library/CapsuleKeyBaseLib/CapsuleKeyBaseLib.inf
 
 
 [LibraryClasses.X64]
@@ -126,10 +126,10 @@
     gMsCapsuleUpdatePkgTokenSpaceGuid.PcdProgressColor|0xFFFFFFFF
     #Take note - GUIDs/UUIDs have different formatting.  To get them all align can be challenging.
     #When doing byte array the last 8 bytes are MSB while the previous bytes are in LSB
-    #UUID HEX FMT:   11223344-5566-7788-99AA-BBCCDDEEFF00   for EV2
+    #UUID HEX FMT:   11223344-5566-7788-99AA-BBCCDDEEFF00
     #gMsCapsuleUpdatePkgTokenSpaceGuid.PcdDeviceLibWrapperDeviceGuid|{0x44, 0x33, 0x22, 0x11, 0x66, 0x55, 0x88, 0x77, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00}
     #Populate GUID (from MsSampleFmpDevicePkg\Tools\Guid.txt) below as per the example above
-    #UUID HEX FMT:   ########-####-####-####-############   for >=EV2.5
+    #UUID HEX FMT:   ########-####-####-####-############
     gMsCapsuleUpdatePkgTokenSpaceGuid.PcdDeviceLibWrapperDeviceGuid|{0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##, 0x##}
   <PcdsFeatureFlag>
     gMsCapsuleUpdatePkgTokenSpaceGuid.PcdDeviceLibWrapperSystemResetRequired|TRUE

@@ -74,7 +74,15 @@
   #DisplayUpdateProgressLib|MsCapsuleUpdatePkg/Library/DisplayUpdateProgressTextLib/DisplayUpdateProgressTextLib.inf
   # For update progress bar (graphics) display:
   DisplayUpdateProgressLib|MsCapsuleUpdatePkg/Library/DisplayUpdateProgressGraphicsLib/DisplayUpdateProgressGraphicsLib.inf
+  CapsuleResetLib|MsCorePkg/Library/CapsuleResetLibNull/CapsuleResetLibNull.inf ##MSCHANGE
 
+##MSCHANGE Begin
+!if $(TARGET) == DEBUG
+  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+!endif
+##MSCHANGE End
 
 [LibraryClasses.X64]
   #
@@ -111,9 +119,10 @@
 ###################################################################################################
 
 [Components]
+  MsCapsuleUpdatePkg\Library\DisplayUpdateProgressTextLib\DisplayUpdateProgressTextLib.inf
   MsCapsuleUpdatePkg\Library\BaseBmpSupportLib\BaseBmpSupportLib.inf
   MsCapsuleUpdatePkg\Library\DxeCapsuleLib\DxeCapsuleLib.inf
-  MsCapsuleUpdatePkg\Library\CapsuleKeyBaseLib\CapsuleKeyBaseLib.inf
+  MsCapsuleUpdatePkg\Library\CapsuleKeyBaseLibNull\CapsuleKeyBaseLibNull.inf
   MsCapsuleUpdatePkg\Library\FmpHelperLib\FmpHelperDxeLib.inf
   MsCapsuleUpdatePkg\Library\CapsuleUpdatePolicyLibNull\CapsuleUpdatePolicyLibNull.inf
   MsCapsuleUpdatePkg\Library\MsFmpPayloadHeaderV1DxeLib\MsFmpPayloadHeaderV1DxeLib.inf

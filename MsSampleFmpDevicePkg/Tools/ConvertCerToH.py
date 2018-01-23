@@ -114,4 +114,4 @@ HeaderFile.write("};\n\n")
 # Close header file
 HeaderFile.close()
 
-print "\nCopy the output file Certs.h to folder MsCapsuleUpdatePkg\Library\CapsuleKeyBaseLib"
+print "\nCopy the output file Certs.h to folder MsSampleFmpDevicePkg\Library\CapsuleKeyBaseLib"
