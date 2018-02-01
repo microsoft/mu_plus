@@ -4,3 +4,7 @@ tags/
 .DS_Store
 *.pyc
 *.bak
+
+# Ignore SelfDescribingEnvironment artifacts.
+*_extdep/
+
