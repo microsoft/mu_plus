@@ -274,6 +274,9 @@ ProviderIdAsAscii(DFCI_SETTING_ID_ENUM Id)
 
   case DFCI_SETTING_ID__PASSWORD:
     return "System Password";
+
+  case DFCI_SETTING_ID__DGPU_PCIE_LANES:
+    return "Discrete GPU Enable";
   }
 
   if ((Id >= DFCI_SETTING_ID__USER_USB_PORT1) &&
