@@ -64,3 +64,4 @@
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
+  gEfiMemoryAttributesTableGuid

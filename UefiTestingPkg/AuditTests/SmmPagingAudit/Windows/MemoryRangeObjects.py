@@ -44,6 +44,23 @@ class MemoryRange(object):
         "EfiMaxMemoryType"
         ]
 
+    # Definitions from Uefi\UefiSpec.h
+    MemoryAttributes = {
+        0x0000000000000001 : "EFI_MEMORY_UC",
+        0x0000000000000002 : "EFI_MEMORY_WC",
+        0x0000000000000004 : "EFI_MEMORY_WT",
+        0x0000000000000008 : "EFI_MEMORY_WB",
+        0x0000000000000010 : "EFI_MEMORY_UCE",
+        0x0000000000001000 : "EFI_MEMORY_WP",
+        0x0000000000002000 : "EFI_MEMORY_RP",
+        0x0000000000004000 : "EFI_MEMORY_XP",
+        0x0000000000020000 : "EFI_MEMORY_RO",
+        0x0000000000008000 : "EFI_MEMORY_NV",
+        0x8000000000000000 : "EFI_MEMORY_RUNTIME",
+        0x0000000000010000 : "EFI_MEMORY_MORE_RELIABLE"
+    }
+
+
     SystemMemoryTypes = [
         "TSEG"
     ]
@@ -54,6 +71,15 @@ class MemoryRange(object):
         "4k" : 4 * 1024,
         }
 
+
+    @staticmethod
+    def attributes_to_flags(attributes):
+        # Walk through each of the attribute bit masks defined in MemoryAttributes.
+        # If one of them is set in the attributes parameter, add the textual representation
+        # to a list and return it.
+        return [MemoryRange.MemoryAttributes[attr] for attr in MemoryRange.MemoryAttributes if (attributes & attr) > 0]
+
+
     def __init__(self, *args, **kwargs):
         self.MemoryType = None
         self.SystemMemoryType = None
@@ -61,6 +87,7 @@ class MemoryRange(object):
         self.ImageName = None
         self.NumberOfEntries = 1
         self.Found = False
+        self.Attribute = 0
 
         # Initializes depending on number and type arguments passed in
         if len(args) == 3:
@@ -170,7 +197,7 @@ class MemoryRange(object):
         return self.PageSize
 
     def pteDebugStr(self):
-        return """\n  %s
+        s = """\n  %s
 ------------------------------------------------------------------
     MustBe1                 : 0x%010X
     ReadWrite               : 0x%010X
@@ -179,11 +206,18 @@ class MemoryRange(object):
     PhysicalEnd             : 0x%010X
     PhysicalSize            : 0x%010X
     Number                  : 0x%010X
+    Attribute               : 0x%010X
     Type                    : %s
     System Type             : %s
     LoadedImage             : %s
-""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.GetSystemMemoryType() ,self.ImageName )
-    
+""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.Attribute, self.GetMemoryTypeDescription(), self.GetSystemMemoryType() ,self.ImageName )
+
+        for att in MemoryRange.MemoryAttributes.keys():
+            if att & self.Attribute:
+                s += " " + MemoryRange.MemoryAttributes[att]
+
+        return s
+
     # Used to combine two page table entries with the same attributes
     def grow(self, other):
         self.NumberOfEntries += other.NumberOfEntries
@@ -192,14 +226,31 @@ class MemoryRange(object):
 
     # Returns dict describing this object
     def toDictionary(self):
+        # Pre-process the Section Type
+        # Set a reasonable default.
+        section_type = "UNEXPECTED VALUE"
+        # If there are no attributes, we're done.
+        if not self.Attribute:
+            section_type = "Not Tracked"
+        else:
+            attribute_names = MemoryRange.attributes_to_flags(self.Attribute)
+            # If the attributes are both XP and RO, that's not good.
+            if "EFI_MEMORY_XP" in attribute_names and "EFI_MEMORY_RO" in attribute_names:
+                section_type = "ERROR"
+            elif "EFI_MEMORY_XP" in attribute_names:
+                section_type = "DATA"
+            elif "EFI_MEMORY_RO" in attribute_names:
+                section_type = "CODE"
+
         return {
             "Page Size" : self.getPageSizeStr(),
-            "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Diabled",
+            "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
             "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
             "Start" : "0x{0:010X}".format(self.PhysicalStart),
             "End" : "0x{0:010X}".format(self.PhysicalEnd),
             "Number of Entries" : self.NumberOfEntries,
             "Memory Type" : self.GetMemoryTypeDescription(),
+            "Section Type" : section_type,
             "System Memory": self.GetSystemMemoryType(),
             "Memory Contents" : self.ImageName}
 
@@ -244,6 +295,9 @@ class MemoryRange(object):
             return False
         
         if (self.SystemMemoryType != compare.SystemMemoryType):
+            return False
+
+        if (self.Attribute != compare.Attribute):
             return False
         
         return True

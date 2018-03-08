@@ -39,15 +39,17 @@ def ParseFileToBytes(fileName):
 
 
 def ParseInfoFile(fileName):
+    logging.debug("-- Processing file '%s'..." % fileName)
     file = open(fileName, "r")
     num = 0
     MemoryRanges = []
-    for line in file:
+    for linenum, line in enumerate(file):
         line = line.strip()
         if(len(line) < 1):
             continue
         if(line.count(",") == 0):
-            logging.debug("Invalid line in file.  No comma.  Line is: %s" % line)
+            line_debug = str(line[:10].encode('utf8')) + ("..." if len(line) > 10 else "")
+            logging.debug("Invalid line in file.  No comma.  Line # %d: '%s'" % (linenum+1, line_debug))
             continue
         try:
             args = line.strip().split(',')
@@ -69,6 +71,7 @@ def ParseInfoFile(fileName):
 def Parse4kPages(fileName):
     num = 0
     pages = []
+    logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
     while (byteZeroIndex + 7) < len(ByteArray):
@@ -93,6 +96,7 @@ def Parse4kPages(fileName):
 def Parse2mPages(fileName):
     num = 0
     pages = []
+    logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
     while (byteZeroIndex + 7) < len(ByteArray):
@@ -116,6 +120,7 @@ def Parse2mPages(fileName):
 def Parse1gPages(fileName):
     num = 0
     pages = []
+    logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
     while (byteZeroIndex + 7) < len(ByteArray):

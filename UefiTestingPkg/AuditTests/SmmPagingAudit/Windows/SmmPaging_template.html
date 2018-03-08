@@ -44,7 +44,7 @@
             </div>
             <div id="tabs-3" class="tab-pane">
                 <div class="row">
-                    <div id="PageAttributeFilterWrapper" class="col-xs-3">
+                    <div id="PageAttributeFilterWrapper" class="col-xs-6">
                         <header>Page Filter</header>
                         <div class="input-group">
                             <span class="input-group-addon" id="basic-addon1">Page Size</span>
@@ -59,6 +59,11 @@
                         <div class="input-group">
                                 <span class="input-group-addon" id="basic-addon3">Read/Write Attribute</span>
                                 <select id="RWFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon3"></select>
+                        </div>
+                        <p></p>
+                        <div class="input-group">
+                                <span class="input-group-addon" id="basic-addon4">Section Type</span>
+                                <select id="SectionFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon4"></select>
                         </div>
                         <p></p>
                         <p>
@@ -102,6 +107,7 @@
                             <th>Read/Write</th>
                             <th>Execute</th>
                             <th>UEFI Memory Type</th>
+                            <th>Section Type</th>
                             <th>Special Memory Usage</th>
                             <th>UEFI Memory Contents</th>
                         </tr>
@@ -175,7 +181,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-growl/1.0.0/jquery.bootstrap-growl.min.js" integrity="sha384-HitlARW+6c0IF2m5pcwV3x64ooKVvQsiTuCxKU9cRKVOVrYNopTqkeEoXclgAWqE" crossorigin="anonymous"></script>
     <!-- Add javascript here -->
     <script>
-        var DATA_TABLE_OFFSET = 440;
+        var DATA_TABLE_OFFSET = 500;
         $(document).ready(function () {
             $('#PlatformName').text(EmbeddedJd.PlatformName);
             $('#PlatformVersion').text(EmbeddedJd.PlatformVersion);
@@ -278,13 +284,17 @@
                         "defaultContent": "None"
                     },
                     {
+                        "data": "Section Type",
+                        "targets": [7]
+                    },
+                    {
                         "data": "System Memory",
-                        "targets": [7],
+                        "targets": [8],
                         "defaultContent": "SYSTEM"
                     },
                     {
                         "data": "Memory Contents",
-                        "targets": [8],
+                        "targets": [9],
                         "defaultContent": "Nothing Found"
                     }
                 ], //end of column def
@@ -293,7 +303,7 @@
                     this.api().column(2).every( function() {
                         var column = this;
                         var select = $("#PageSizeFilter").on( 'change', function () { 
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
                                 .search(SearchRegex, true, false)
                                 .draw();
@@ -309,7 +319,7 @@
                         var column = this;
                         var select = $("#ExecuteFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
                                 //.search( val ? '^'+val+'$' : '', true, false )
                                 .search(SearchRegex, true, false)
@@ -326,7 +336,7 @@
                         var column = this;
                         var select = $("#RWFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
                                 //.search( val ? '^'+val+'$' : '', true, false )
                                 .search(SearchRegex, true, false)
@@ -339,10 +349,22 @@
                         });
                     }); //column 4 - RW attribute
 
+                    this.api().column(7).every( function() {
+                        var column = this;
+                        var select = $("#SectionFilter").on( 'change', function () {
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
+                            column.search(SearchRegex, true, false).draw();
+                        }); // on change
+
+                        column.data().unique().sort().each( function ( d, j ) {
+                            select.append( '<option value="'+d+'">'+d+'</option>' )
+                        });
+                    }); //column 7 - Section Type for code/data sections
+
                     this.api().column(6).every( function() {
                         var column = this;
                         var select = $("#MemoryTypeFilter").on( 'change', function () { 
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
                                 .search(SearchRegex, true, false)
                                 .draw();
@@ -354,11 +376,11 @@
                         });
                     }); //column 6 - Memory Type
 
-                    this.api().column(7).every( function() {
+                    this.api().column(8).every( function() {
                         var column = this;
                         var select = $("#SpecialMemoryRegionsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
                                 //.search( val ? '^'+val+'$' : '', true, false )
                                 .search(SearchRegex, true, false)
@@ -369,14 +391,14 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 7 - special Memory Type
+                    }); //column 8 - special Memory Type
                     
 
-                    this.api().column(8).every( function() {
+                    this.api().column(9).every( function() {
                         var column = this;
                         var select = $("#MemoryContentsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val()); 
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
                                 //.search( val ? '^'+val+'$' : '', true, false )
                                 .search(SearchRegex, true, false)
@@ -390,7 +412,7 @@
                             }
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 8 - Memory Contents
+                    }); //column 9 - Memory Contents
                 } //end init complete func
             }) //end of modules table 
 
@@ -402,6 +424,7 @@
             "End": "0x0000058FFF", 
             "Number of Entries": 1, 
             "Memory Type": "EfiReservedMemoryType", 
+            "Attributes": "EFI_MEMORY_RO, EFI_MEMORY_RUNTIME"
             "System Memory": "hy"
             "Memory Contents": null}
             **/
@@ -460,8 +483,8 @@
                 } //end of configuring filter inputs
             });
 
-            SavedFilters.push({"Name": "Runtime Code RO", "Description": "Runtime code should be read-only in SMM", "Filter": function(mrObject) {
-                    if((mrObject["Read/Write"] === "Enabled") && (mrObject["Memory Type"] === "EfiRuntimeServicesCode")) {
+            SavedFilters.push({"Name": "Runtime Code RO", "Description": "Runtime code should be read-only or non-executable in SMM", "Filter": function(mrObject) {
+                    if((mrObject["Read/Write"] === "Enabled") && (mrObject["Memory Type"] === "EfiRuntimeServicesCode") && (mrObject["Section Type"] == "CODE")) {
                         return true;
                     }
                     return false;
@@ -469,6 +492,10 @@
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
                     if(!SetMultiselectTo("RWFilter", ["Enabled"]))
+                    {
+                        return false;
+                    }
+                    if(!SetMultiselectTo("SectionFilter", ["CODE"]))
                     {
                         return false;
                     }
@@ -511,11 +538,13 @@
         $(window).resize(function() {
             var newHd = $(window).height() - DATA_TABLE_OFFSET;
             $("#MemoryRanges_wrapper .dataTables_scrollBody").height(newHd);
-            $('#ParsingErrors_wrapper .dataTables_scrollBody').height(newhd);
+            $('#ParsingErrors_wrapper .dataTables_scrollBody').height(newHd);
+            $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         });
 
         function CreateRegexForSearchMultiselect(mylist){
             var re = '';
+            // console.log(mylist);
             mylist.forEach(function(v,i,a) {
                 if(i > 0) {
                     re += "|";
@@ -527,6 +556,7 @@
             if(re !== '') {
                 re += ")"
             }
+            // console.log(re);
             return re;
         }
 

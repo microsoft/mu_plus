@@ -47,6 +47,7 @@ class SmmParsingTool(object):
 
     def __init__(self, DatFolderPath, PlatformName, PlatformVersion):
         self.Logger = logging.getLogger("SmmParsingTool")
+        self.MemoryAttributesTable = []
         self.MemoryRangeInfo = []
         self.PageDirectoryInfo = []
         self.DatFolderPath = DatFolderPath
@@ -60,11 +61,13 @@ class SmmParsingTool(object):
         Pte1gbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*1G*.dat"))
         Pte2mbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*2M*.dat"))
         Pte4kbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*4K*.dat"))
+        MatFileList =  glob.glob(os.path.join(self.DatFolderPath, "*MAT*.dat"))
 
         logging.debug("Found %d Info Files" % len(InfoFileList))
         logging.debug("Found %d 1gb Page Files" % len(Pte1gbFileList))
         logging.debug("Found %d 2mb Page Files" % len(Pte2mbFileList))
         logging.debug("Found %d 4kb Page Files" % len(Pte4kbFileList))
+        logging.debug("Found %d MAT Files" % len(MatFileList))
 
 
         # Parse each file, keeping PTEs and "Memory Ranges" seperate
@@ -81,6 +84,9 @@ class SmmParsingTool(object):
 
         for pte4k in Pte4kbFileList:
             self.PageDirectoryInfo.extend(Parse4kPages(pte4k))
+
+        for mat in MatFileList:
+            self.MemoryAttributesTable.extend(ParseInfoFile(mat))
 
         if len(self.PageDirectoryInfo) == 0:
             self.ErrorMsg.append("No Memory Range info found in PTE files")
@@ -115,6 +121,10 @@ class SmmParsingTool(object):
                             self.ErrorMsg.append("Multiple System Memory types found for one region.  Base: 0x%X.  EFI Memory Type: %s and %s."% (pte.PhysicalStart,pte.SystemMemoryType, mr.SystemMemoryType))
                             logging.error("Multiple system memory types found for one region " +pte.pteDebugStr() + " " +  mr.LoadedImageEntryToString())
 
+            for MatEntry in self.MemoryAttributesTable:
+                if pte.overlap(MatEntry):
+                    pte.Attribute = MatEntry.Attribute
+
         # Combining adjacent PTEs that have the same attributes.
         index = 0
         while index < (len(self.PageDirectoryInfo) - 1):
@@ -132,16 +142,27 @@ class SmmParsingTool(object):
         self.ErrorMsg.append(msg)
 
     def OutputHtmlReport(self, ToolVersion, OutputFilePath):
-        #make json string
-        js = '{"ToolVersion": "' + ToolVersion + '"'
-        js += ', "PlatformVersion": "' + self.PlatformVersion + '"'
-        js += ', "PlatformName": "' + self.PlatformName + '"'
-        js += ', "DateCollected": "' + datetime.datetime.strftime(datetime.datetime.now(), "%A, %B %d, %Y %I:%M%p" ) + '"'
-        js += ', "errors": ' + json.dumps(self.ErrorMsg)
-        js += ', "MemoryRanges": [' 
-        for a in self.PageDirectoryInfo:
-            js += json.dumps(a.toDictionary()) + ","
-        js += "]}"
+        # Create the dictionary to produce a JSON string.
+        json_dict = {
+            'ToolVersion': ToolVersion,
+            'PlatformVersion': self.PlatformVersion,
+            'PlatformName': self.PlatformName,
+            'DateCollected': datetime.datetime.strftime(datetime.datetime.now(), "%A, %B %d, %Y %I:%M%p" ),
+        }
+
+        # Process all of the Page Infos and add them to the JSON.
+        pde_infos = []
+        for pde in self.PageDirectoryInfo:
+            info_dict = pde.toDictionary()
+            # Check for errors.
+            if info_dict['Section Type'] == "ERROR":
+                self.AddErrorMsg("Page Descriptor at %s has an error parsing the Section Type." % info_dict['Start'])
+            pde_infos.append(info_dict)
+        json_dict['MemoryRanges'] = pde_infos
+
+        # Finally, add any errors and produce the JSON string.
+        json_dict['errors'] = self.ErrorMsg
+        js = json.dumps(json_dict)
 
         #
         # Open template and replace placeholder with json

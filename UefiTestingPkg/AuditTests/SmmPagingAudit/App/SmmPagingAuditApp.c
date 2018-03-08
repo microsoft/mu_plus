@@ -46,6 +46,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Register/Msr.h>
 
 #include <Guid/DebugImageInfoTable.h>
+#include <Guid/MemoryAttributesTable.h>
 #include <Guid/PiSmmCommunicationRegionTable.h>
 
 #include "../SmmPagingAuditCommon.h"
@@ -95,13 +96,79 @@ VOID
 EFIAPI
 ConcatBufferOnWriteString()
 {
-  while ((strlen(mWriteString) + strlen(mBuffer)) >= MAX_STRING_SIZE)
+  while ((AsciiStrLen(mWriteString) + AsciiStrLen(mBuffer)) >= MAX_STRING_SIZE)
   {
     WriteBufferToFile(mLogFileName, mWriteString, MAX_STRING_SIZE, (mWriteCount ++));
     ZeroMem(mWriteString, MAX_STRING_SIZE * sizeof(CHAR8));
   }
   AsciiStrCatS(mWriteString, MAX_STRING_SIZE, mBuffer);
   ZeroMem(mBuffer, MAX_STRING_SIZE * sizeof(CHAR8));
+}
+
+
+/**
+ * @brief      Writes the MemoryAttributesTable to a file.
+ */
+VOID
+EFIAPI
+MemoryAttributesTableDump (
+)
+{
+  EFI_MEMORY_ATTRIBUTES_TABLE     *MatMap;
+  EFI_MEMORY_DESCRIPTOR           *Map;
+  EFI_STATUS                       Status;
+  UINT64                           MapSize;
+  UINT64                           EntrySize;
+  UINT64                           EntryCount;
+  CHAR16                          *LogFileName = L"MAT";
+  UINTN                            WriteCount = 0;
+  CHAR8                           *WriteString;
+  CHAR8                           *Buffer;
+  UINT64                           Index;
+
+  WriteString = AllocateZeroPool(MAX_STRING_SIZE * sizeof(CHAR8));
+  Buffer = AllocateZeroPool(MAX_STRING_SIZE * sizeof(CHAR8));
+
+  Status = EfiGetSystemConfigurationTable(&gEfiMemoryAttributesTableGuid, &MatMap);
+
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "Failed to retrieve MAT %r", Status));
+    return;
+  }
+
+  // MAT should now be at the pointer.
+  MapSize      = MatMap->NumberOfEntries * MatMap->DescriptorSize;
+  EntrySize    = MatMap->DescriptorSize;
+  EntryCount   = MatMap->NumberOfEntries;
+  Map          = (VOID*)((UINT8*)MatMap + sizeof( *MatMap ));
+
+
+  for (Index = 0; Index < EntryCount; Index ++)
+  {
+    AsciiSPrint(Buffer, MAX_STRING_SIZE,
+              "%lx,%lx,%lx,%lx,%lx\n",
+              Map->Type,
+              Map->PhysicalStart,
+              Map->VirtualStart,
+              Map->NumberOfPages,
+              Map->Attribute);
+
+    while ((AsciiStrLen(WriteString) + AsciiStrLen(Buffer)) >= MAX_STRING_SIZE)
+    {
+      WriteBufferToFile(LogFileName, WriteString, MAX_STRING_SIZE, (WriteCount ++));
+      ZeroMem(WriteString, MAX_STRING_SIZE * sizeof(CHAR8));
+    }
+    AsciiStrCatS(WriteString, MAX_STRING_SIZE, Buffer);
+    ZeroMem(Buffer, MAX_STRING_SIZE * sizeof(CHAR8));
+
+    Map = NEXT_MEMORY_DESCRIPTOR (Map, EntrySize);
+  }
+
+  WriteBufferToFile(LogFileName, WriteString, MAX_STRING_SIZE, (WriteCount ++));
+
+  FreePool(WriteString);
+  FreePool(Buffer);
 }
 
 
@@ -133,6 +200,7 @@ LoadedImageTableDump (
            );
   if (EFI_ERROR(Status))
   {
+    DEBUG((DEBUG_ERROR, "Failed to retrieve loaded image table %r", Status));
     return;
   }
 
@@ -248,7 +316,7 @@ MemoryMapDumpHandler (
   // Loop to allocate space for the memory map and then copy it in.
   //
   do {
-    EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *) AllocatePool (EfiMemoryMapSize);
+    EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *) AllocateZeroPool (EfiMemoryMapSize);
     ASSERT (EfiMemoryMap != NULL);
     Status = gBS->GetMemoryMap (
                &EfiMemoryMapSize,
@@ -524,14 +592,13 @@ SmmPagingAuditAppEntryPoint (
 )
 {
 
-  mWriteString = AllocatePool(MAX_STRING_SIZE * sizeof(CHAR8));
-  mBuffer = AllocatePool(MAX_STRING_SIZE * sizeof(CHAR8));
-  ZeroMem(mWriteString, MAX_STRING_SIZE * sizeof(CHAR8));
-  ZeroMem(mBuffer, MAX_STRING_SIZE * sizeof(CHAR8));
+  mWriteString = AllocateZeroPool(MAX_STRING_SIZE * sizeof(CHAR8));
+  mBuffer = AllocateZeroPool(MAX_STRING_SIZE * sizeof(CHAR8));
 
   TSEGDumpHandler();
   MemoryMapDumpHandler();
   LoadedImageTableDump();
+  MemoryAttributesTableDump();
 
   if (EFI_ERROR(LocateSmmCommonCommBuffer()))
   {
