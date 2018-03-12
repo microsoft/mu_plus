@@ -84,6 +84,7 @@ class MemoryRange(object):
         self.MemoryType = None
         self.SystemMemoryType = None
         self.MustBe1 = None
+        self.UserPrivilege = None
         self.ImageName = None
         self.NumberOfEntries = 1
         self.Found = False
@@ -175,12 +176,13 @@ class MemoryRange(object):
     # 
     # Initializes page table entries
     # 
-    def PteInit(self, PageSize, ReadWrite, Nx, MustBe1, VA):    
+    def PteInit(self, PageSize, ReadWrite, Nx, MustBe1, User, VA):    
         self.MustBe1 = MustBe1
         self.PageSize = PageSize if self.MustBe1 == 1 else "pde"
         self.PhysicalStart = VA
         self.ReadWrite = ReadWrite
         self.Nx = Nx
+        self.UserPrivilege = 1
         self.PhysicalSize = self.getPageSize()
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
@@ -202,6 +204,7 @@ class MemoryRange(object):
     MustBe1                 : 0x%010X
     ReadWrite               : 0x%010X
     Nx                      : 0x%010X
+    User Privilege          : 0x%010X
     PhysicalStart           : 0x%010X
     PhysicalEnd             : 0x%010X
     PhysicalSize            : 0x%010X
@@ -210,7 +213,7 @@ class MemoryRange(object):
     Type                    : %s
     System Type             : %s
     LoadedImage             : %s
-""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.Attribute, self.GetMemoryTypeDescription(), self.GetSystemMemoryType() ,self.ImageName )
+""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.UserPrivilege, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.Attribute, self.GetMemoryTypeDescription(), self.GetSystemMemoryType() ,self.ImageName )
 
         for att in MemoryRange.MemoryAttributes.keys():
             if att & self.Attribute:
@@ -246,6 +249,7 @@ class MemoryRange(object):
             "Page Size" : self.getPageSizeStr(),
             "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
             "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
+            "Privilege" : "User" if (self.UserPrivilege == 1) else "Supervisor",
             "Start" : "0x{0:010X}".format(self.PhysicalStart),
             "End" : "0x{0:010X}".format(self.PhysicalEnd),
             "Number of Entries" : self.NumberOfEntries,
@@ -286,6 +290,9 @@ class MemoryRange(object):
             return False
 
         if (self.Nx != compare.Nx):
+            return False
+
+        if(self.UserPrivilege != compare.UserPrivilege):
             return False
 
         if (self.ImageName != compare.ImageName):

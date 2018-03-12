@@ -80,6 +80,7 @@ def Parse4kPages(fileName):
             continue
         Present = ((ByteArray[byteZeroIndex + 0] & 0x1))
         ReadWrite = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
+        User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
         # PageTableBaseAddress is 40 bits long
         PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & ADDRESS_BITS)
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
@@ -88,7 +89,7 @@ def Parse4kPages(fileName):
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange("4k", ReadWrite, Nx, 1, (PageTableBaseAddress)))
+        pages.append(MemoryRange("4k", ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
@@ -106,13 +107,14 @@ def Parse2mPages(fileName):
         Present = ((ByteArray[byteZeroIndex + 0] & 0x1) >> 0)
         ReadWrite = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
         MustBe1 = ((ByteArray[byteZeroIndex + 0] & 0x80) >> 7)
+        User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
         # PageTableBaseAddress is 31 bits long
         PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 2] & 0xE0) >> 5)) + (ByteArray[byteZeroIndex + 3] << 3) + (ByteArray[byteZeroIndex + 4] << 11) + (ByteArray[byteZeroIndex + 5] << 19) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 27) << 21) & ADDRESS_BITS)
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange("2m", ReadWrite, Nx, MustBe1, (PageTableBaseAddress)))
+        pages.append(MemoryRange("2m", ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
@@ -130,12 +132,13 @@ def Parse1gPages(fileName):
         Present = ((ByteArray[byteZeroIndex + 0] & 0x1))
         ReadWrite = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
         MustBe1 = ((ByteArray[byteZeroIndex + 0] & 0x80) >> 7)
+        User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
         # PageTableBaseAddress is 22 bits long
         PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 3] & 0xC0) >> 6)) + (ByteArray[byteZeroIndex + 4] << 2) + (ByteArray[byteZeroIndex + 5] << 10) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 18) << 30) & ADDRESS_BITS) # shift and address bits
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
 
         byteZeroIndex += 8
-        pages.append(MemoryRange("1g", ReadWrite, Nx, MustBe1, PageTableBaseAddress))
+        pages.append(MemoryRange("1g", ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
         num += 1
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages

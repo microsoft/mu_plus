@@ -62,8 +62,8 @@
                         </div>
                         <p></p>
                         <div class="input-group">
-                                <span class="input-group-addon" id="basic-addon4">Section Type</span>
-                                <select id="SectionFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon4"></select>
+                                <span class="input-group-addon" id="basic-addon8">Privilege Level</span>
+                                <select id="PrivilegeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon8"></select>
                         </div>
                         <p></p>
                         <p>
@@ -87,6 +87,11 @@
                             <select id="MemoryContentsFilter" class="form-control selectpicker" data-actions-box="true" data-selected-text-format="count > 2" title="No Filter Active." data-style="btn-primary" multiple aria-describedby="basic-addon5"></select>
                         </div>
                         <p></p>
+                        <div class="input-group">
+                                <span class="input-group-addon" id="basic-addon7">Section Type</span>
+                                <select id="SectionFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon7"></select>
+                        </div>
+                        <p></p>
                         <p>
                             <button id="ClearMemoryFilter" class="btn btn-danger">Clear Memory Filters</button>
                         </p>
@@ -106,6 +111,7 @@
                             <th># of Pages</th>
                             <th>Read/Write</th>
                             <th>Execute</th>
+                            <th>Privilege</th>
                             <th>UEFI Memory Type</th>
                             <th>Section Type</th>
                             <th>Special Memory Usage</th>
@@ -279,22 +285,26 @@
                         "targets": [5],
                     },
                     {
-                        "data": "Memory Type",
+                        "data": "Privilege",
                         "targets": [6],
+                    },
+                    {
+                        "data": "Memory Type",
+                        "targets": [7],
                         "defaultContent": "None"
                     },
                     {
                         "data": "Section Type",
-                        "targets": [7]
+                        "targets": [8]
                     },
                     {
                         "data": "System Memory",
-                        "targets": [8],
+                        "targets": [9],
                         "defaultContent": "SYSTEM"
                     },
                     {
                         "data": "Memory Contents",
-                        "targets": [9],
+                        "targets": [10],
                         "defaultContent": "Nothing Found"
                     }
                 ], //end of column def
@@ -348,8 +358,20 @@
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
                     }); //column 4 - RW attribute
+                    
+                    this.api().column(6).every( function() {
+                        var column = this;
+                        var select = $("#PrivilegeFilter").on( 'change', function () {
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
+                            column.search(SearchRegex, true, false).draw();
+                        }); // on change
 
-                    this.api().column(7).every( function() {
+                        column.data().unique().sort().each( function ( d, j ) {
+                            select.append( '<option value="'+d+'">'+d+'</option>' )
+                        });
+                    }); //column 6 - Privilege (User / Supervisor)
+
+                    this.api().column(8).every( function() {
                         var column = this;
                         var select = $("#SectionFilter").on( 'change', function () {
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -359,9 +381,9 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 7 - Section Type for code/data sections
+                    }); //column 8 - Section Type for code/data sections
 
-                    this.api().column(6).every( function() {
+                    this.api().column(7).every( function() {
                         var column = this;
                         var select = $("#MemoryTypeFilter").on( 'change', function () { 
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -374,9 +396,9 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 6 - Memory Type
+                    }); //column 7 - Memory Type
 
-                    this.api().column(8).every( function() {
+                    this.api().column(9).every( function() {
                         var column = this;
                         var select = $("#SpecialMemoryRegionsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -391,10 +413,10 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 8 - special Memory Type
+                    }); //column 9 - special Memory Type
                     
 
-                    this.api().column(9).every( function() {
+                    this.api().column(10).every( function() {
                         var column = this;
                         var select = $("#MemoryContentsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -412,7 +434,7 @@
                             }
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 9 - Memory Contents
+                    }); //column 10 - Memory Contents
                 } //end init complete func
             }) //end of modules table 
 
