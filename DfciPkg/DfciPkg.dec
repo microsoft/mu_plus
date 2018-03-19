@@ -87,6 +87,16 @@
   # {17FEA8D4-51EE-49B0-8460-11AD2FCA9D4F}
   gDfciNVRAMVariableGuid = { 0x17fea8d4, 0x51ee, 0x49b0, { 0x84, 0x60, 0x11, 0xad, 0x2f, 0xca, 0x9d, 0x4f }}
 
+  ## Guid to use for DFCI Spinner Start event
+  #
+  # {a56178b0-57a3-42d4-ac05-f2ebb588b876}
+  gDfciConfigStartEventGroupGuid = { 0xa56178b0, 0x57a3, 0x42d4, { 0xac, 0x05, 0xf2, 0xeb, 0xb5, 0x88, 0xb8, 0x76 }}
+
+  ## Guid to use for DFCI Spinner Stop event
+  #
+  # {bca42a0c-0a80-4d51-a2ee-430bec2230dd}
+  gDfciConfigCompleteEventGroupGuid = { 0xbca42a0c, 0x0a80, 0x4d51, { 0xa2, 0xee, 0x43, 0x0b, 0xec, 0x22, 0x30, 0xdd }}
+
 [PcdsFeatureFlag]
   ## Our Setting design pattern creates a single library for setting access (get/set)
   # and install setting provider.  But we only want to install 1 setting provider per setting
