@@ -28,6 +28,7 @@ from ctypes import *
 from collections import namedtuple
 from MemoryRangeObjects import *
 import logging
+import csv
 
 ADDRESS_BITS = 0x0000007FFFFFF000
 
@@ -40,31 +41,12 @@ def ParseFileToBytes(fileName):
 
 def ParseInfoFile(fileName):
     logging.debug("-- Processing file '%s'..." % fileName)
-    file = open(fileName, "r")
-    num = 0
     MemoryRanges = []
-    for linenum, line in enumerate(file):
-        line = line.strip()
-        if(len(line) < 1):
-            continue
-        if(line.count(",") == 0):
-            line_debug = str(line[:10].encode('utf8')) + ("..." if len(line) > 10 else "")
-            logging.debug("Invalid line in file.  No comma.  Line # %d: '%s'" % (linenum+1, line_debug))
-            continue
-        try:
-            args = line.strip().split(',')
-            if len(args) == 5:
-                mr = MemoryRange(int(args[0], 16), int(args[1], 16), int(args[2], 16), int(args[3], 16), int(args[4], 16))
-            else:
-                mr = MemoryRange(int(args[0], 16), int(args[1], 16), str(args[2]))
-            MemoryRanges.append(mr)
-            num += 1
-        except Exception as e: 
-            # print line
-            
-            raise Exception("Unknown line in file %s.  Line: %s Exception: %s" % (fileName, line, str(e)))
-    file.close()
-    logging.debug("%d entries found in file %s" % (num, fileName))
+    with open(fileName, "r") as file:
+        database_reader = csv.reader(file)
+        for row in database_reader:
+            MemoryRanges.append(MemoryRange(row[0], *row[1:]))
+    logging.debug("%d entries found in file %s" % (len(MemoryRanges), fileName))
     return MemoryRanges
 
 
@@ -89,7 +71,7 @@ def Parse4kPages(fileName):
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange("4k", ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
+        pages.append(MemoryRange("PTEntry", "4k", ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
@@ -114,7 +96,7 @@ def Parse2mPages(fileName):
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange("2m", ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
+        pages.append(MemoryRange("PTEntry", "2m", ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
@@ -138,7 +120,7 @@ def Parse1gPages(fileName):
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
 
         byteZeroIndex += 8
-        pages.append(MemoryRange("1g", ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
+        pages.append(MemoryRange("PTEntry", "1g", ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
         num += 1
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages

@@ -60,6 +60,7 @@
   DebugLib
   SmmMemLib
   BaseMemoryLib
+  SmmPagingAuditSmmLib
 
 
 [Protocols]

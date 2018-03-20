@@ -80,7 +80,8 @@ class MemoryRange(object):
         return [MemoryRange.MemoryAttributes[attr] for attr in MemoryRange.MemoryAttributes if (attributes & attr) > 0]
 
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, record_type, *args, **kwargs):
+        self.RecordType = record_type
         self.MemoryType = None
         self.SystemMemoryType = None
         self.MustBe1 = None
@@ -90,15 +91,21 @@ class MemoryRange(object):
         self.Found = False
         self.Attribute = 0
 
-        # Initializes depending on number and type arguments passed in
-        if len(args) == 3:
-            self.LoadedImageEntryInit(*args)
-        else:
-            try:
-                int(args[0])
-                self.MemoryMapEntryInit(*args)
-            except:   
-                self.PteInit(*args)
+        # Check to see whether we're a type that we recognize.
+        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT"):
+            print(self.RecordType, args)
+            raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
+
+        # Continue processing according to the data type.
+        if self.RecordType in ("LoadedImage", "SmmLoadedImage"):
+            self.LoadedImageEntryInit(int(args[0], 16), int(args[1], 16), args[2])
+        elif self.RecordType in ("MemoryMap", "TSEG", "MAT"):
+            self.MemoryMapEntryInit(*(int(arg, 16) for arg in args))
+        elif self.RecordType in ("PDE", "GDT", "IDT"):
+            self.LoadedImageEntryInit(int(args[0], 16), int(args[1], 16), self.RecordType)
+        elif self.RecordType in ("PTEntry"):
+            self.PteInit(*args)
+
         self.CalculateEnd()
 
     def CalculateEnd(self):
@@ -110,17 +117,6 @@ class MemoryRange(object):
         else:
             try: return MemoryRange.MemoryMapTypes[self.MemoryType]
             except: raise Exception("Memory type is invalid")
-
-    def __str__(self):
-        if self.MustBe1 is not None:
-            return self.PteToString()
-        elif self.MemoryType is not None:
-            return self.MemoryRangeToString()
-        elif self.ImageName is not None:
-            return self.LoadedImageEntryToString()
-    
-    __repr__ = __str__
-
 
     def GetSystemMemoryType(self):
         if self.SystemMemoryType is None:
@@ -146,17 +142,6 @@ class MemoryRange(object):
         self.Attribute = Attribute
         self.NumberOfPages = NumberOfPages
 
-    def MemoryRangeToString(self):
-        return """\n  Memory Map Entry
-------------------------------------------------------------------
-    Type                    : %s
-    PhysicalStart           : 0x%010X
-    VirtualStart            : 0x%010X
-    NumberOfPages           : 0x%010X
-    Attribute               : 0x%010X
-    PhysicalSize            : 0x%010X
-""" % (self.GetMemoryTypeDescription(), self.PhysicalStart, self.VirtualStart, self.NumberOfPages, self.Attribute, 0)
-
     # 
     # Intializes memory contents description
     # 
@@ -165,14 +150,6 @@ class MemoryRange(object):
         self.PhysicalSize = Size
         self.ImageName = Name
 
-    def LoadedImageEntryToString(self):
-        return """\n  Loaded Image
-------------------------------------------------------------------
-    PhysicalStart           : 0x%010X
-    PhysicalEnd             : 0x%010X
-    PhysicalSize            : 0x%010X
-    Name                    : %s
-""" % (self.PhysicalStart, (self.PhysicalEnd), self.PhysicalSize, self.ImageName)
     # 
     # Initializes page table entries
     # 
@@ -186,40 +163,12 @@ class MemoryRange(object):
         self.PhysicalSize = self.getPageSize()
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
-
-
-    def PteToString(self):
-        return """%s,%X,%X,%X,0x%010X,0x%010X,%d,%s,%s""" % (self.getPageSizeStr(), self.ReadWrite, self.Nx, self.MustBe1, self.PhysicalStart, self.PhysicalEnd, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
-    
    
     def getPageSize(self):
         return MemoryRange.PageSize[self.PageSize]
 
     def getPageSizeStr(self):
         return self.PageSize
-
-    def pteDebugStr(self):
-        s = """\n  %s
-------------------------------------------------------------------
-    MustBe1                 : 0x%010X
-    ReadWrite               : 0x%010X
-    Nx                      : 0x%010X
-    User Privilege          : 0x%010X
-    PhysicalStart           : 0x%010X
-    PhysicalEnd             : 0x%010X
-    PhysicalSize            : 0x%010X
-    Number                  : 0x%010X
-    Attribute               : 0x%010X
-    Type                    : %s
-    System Type             : %s
-    LoadedImage             : %s
-""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.UserPrivilege, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.Attribute, self.GetMemoryTypeDescription(), self.GetSystemMemoryType() ,self.ImageName )
-
-        for att in MemoryRange.MemoryAttributes.keys():
-            if att & self.Attribute:
-                s += " " + MemoryRange.MemoryAttributes[att]
-
-        return s
 
     # Used to combine two page table entries with the same attributes
     def grow(self, other):

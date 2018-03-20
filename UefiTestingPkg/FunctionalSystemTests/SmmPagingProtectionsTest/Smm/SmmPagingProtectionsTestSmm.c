@@ -40,6 +40,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../SmmPagingProtectionsTestCommon.h"
 
+// Init for the audit portion of the test.
+EFI_STATUS
+EFIAPI
+SmmPagingAuditSmmEntryPoint (
+  IN EFI_HANDLE         ImageHandle,
+  IN EFI_SYSTEM_TABLE   *SystemTable
+);
+
 
 //=============================================================================
 // TEST HELPERS
@@ -368,6 +376,12 @@ SmmPagingProtectionsTestEntryPoint (
   //
   DiscardedHandle = NULL;
   Status = gSmst->SmiHandlerRegister( MemoryProtectionTestHandler, &gSmmPagingProtectionsTestSmiHandlerGuid, &DiscardedHandle );
+  ASSERT_EFI_ERROR( Status );
+
+  //
+  // Add the SMM Audit Functionality.
+  //
+  Status = SmmPagingAuditSmmEntryPoint( ImageHandle, SystemTable );
   ASSERT_EFI_ERROR( Status );
 
   return Status;
