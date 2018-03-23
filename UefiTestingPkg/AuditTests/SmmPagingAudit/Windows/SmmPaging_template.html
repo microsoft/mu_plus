@@ -27,8 +27,8 @@
         <ul class="nav nav-tabs">
             <li class="active"><a data-toggle="tab" href="#tabs-1">Basic Info</a></li>
             <li><a data-toggle="tab" href="#tabs-2">Results</a></li>
-            <li><a data-toggle="tab" href="#tabs-3">List</a></li>
-            <li><a data-toggle="tab" href="#tabs-4">Messages</a></li>
+            <li><a data-toggle="tab" href="#tabs-3">Memory Data</a></li>
+            <li><a data-toggle="tab" href="#tabs-4">Parsing Errors</a></li>
             <li><a data-toggle="tab" href="#tabs-5">About</a></li>
         </ul>
         <div class="tab-content">
@@ -188,6 +188,7 @@
     <!-- Add javascript here -->
     <script>
         var DATA_TABLE_OFFSET = 500;
+        var PARSING_TOOL_TABLE_OFFSET = 350;
         $(document).ready(function () {
             $('#PlatformName').text(EmbeddedJd.PlatformName);
             $('#PlatformVersion').text(EmbeddedJd.PlatformVersion);
@@ -208,7 +209,8 @@
             var errorTable = $('table#ParsingErrors').dataTable({
                 "paginate": false,
                 "autoWidth": false,
-                "scrollY": ($(window).height() - DATA_TABLE_OFFSET) + "px",
+                "order": [],
+                "scrollY": ($(window).height() - PARSING_TOOL_TABLE_OFFSET) + "px",
                 "language": {
                     "emptyTable": "No parsing errors"
                 }
@@ -553,14 +555,29 @@
             });
 
             $('div#tabs-3 select.selectpicker').selectpicker("refresh").change();
+
+            //Show warning if there are parsing errors
+            if(EmbeddedJd.errors.length > 0) {
+                $.bootstrapGrowl("Data Parsing Errors identified.  Please look at Parsing Errors tab as Results and Memory Data might not be accurate.", {
+                    ele: 'body', // which element to append to
+                    type: 'danger', // (null, 'info', 'danger', 'success')
+                    offset: {from: 'top', amount: 20}, // 'top', or 'bottom'
+                    align: 'right', // ('left', 'right', or 'center')
+                    width: 'auto', // (integer, or 'auto')
+                    delay: 3600000, // Time while the message will be displayed.  1 hour
+                    allow_dismiss: true, // If true then will display a cross to close the popup.
+                    stackup_spacing: 10 // spacing between consecutively stacked growls.
+                });
+            }
         }); //end on ready
         //
         //To handle scroll tables adjust the height based on the window height.
         //
         $(window).resize(function() {
             var newHd = $(window).height() - DATA_TABLE_OFFSET;
+            var newParsingHeight = $(window).height() - PARSING_TOOL_TABLE_OFFSET;
             $("#MemoryRanges_wrapper .dataTables_scrollBody").height(newHd);
-            $('#ParsingErrors_wrapper .dataTables_scrollBody').height(newHd);
+            $('#ParsingErrors_wrapper .dataTables_scrollBody').height(newParsingHeight);
             $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         });
 

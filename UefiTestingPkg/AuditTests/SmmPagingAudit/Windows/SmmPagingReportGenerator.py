@@ -90,12 +90,21 @@ class SmmParsingTool(object):
 
         if len(self.PageDirectoryInfo) == 0:
             self.ErrorMsg.append("No Memory Range info found in PTE files")
+        else:
+            # Sort in descending order
+            self.PageDirectoryInfo.sort(key=operator.attrgetter('PhysicalStart'))
+            #check for Page Table Overlap - this is an error
+            index =0
+            maxindex = len(self.PageDirectoryInfo) -1
+            while index < maxindex:  #this will allow all comparisions to work
+                if(self.PageDirectoryInfo[index].overlap(self.PageDirectoryInfo[index+1])):
+                    self.ErrorMsg.append("Page Table Entry Overlap.  Index %d Overlapping %d at StartAddress 0x%X" % 
+                    (index, index+1, self.PageDirectoryInfo[index].PhysicalStart))
+                    logging.error("PTE overlap index %d and %d.  Base Address = 0x%x", index, index+1, self.PageDirectoryInfo[index].PhysicalStart)
+                index += 1
         
         if len(self.MemoryRangeInfo) == 0:
             self.ErrorMsg.append("No Memory Range info found in Info files")
-
-        # Sort in descending order
-        self.PageDirectoryInfo.sort(key=operator.attrgetter('PhysicalStart'))
 
         # Matching memory ranges up to page table entries
         for pte in self.PageDirectoryInfo:
