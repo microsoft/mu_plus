@@ -44,6 +44,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/SmmCommunication.h>
 
 #include <Register/Msr.h>
+#include <Register/Cpuid.h>
 
 #include <Guid/DebugImageInfoTable.h>
 #include <Guid/MemoryAttributesTable.h>
@@ -514,6 +515,41 @@ MemoryMapDumpHandler (
 }
 
 
+/**
+  Initializes the valid bits mask and valid address mask for MTRRs.
+
+  This function initializes the valid bits mask and valid address mask for MTRRs.
+
+  Copied from UefiCpuPkg MtrrLib
+
+  @param[out]  MtrrValidBitsMask     The mask for the valid bit of the MTRR
+  @param[out]  MtrrValidAddressMask  The valid address mask for the MTRR
+
+**/
+STATIC
+VOID
+InitializeMtrrMask (
+  OUT UINT64 *MtrrValidBitsMask,
+  OUT UINT64 *MtrrValidAddressMask
+  )
+{
+  UINT32                          MaxExtendedFunction;
+  CPUID_VIR_PHY_ADDRESS_SIZE_EAX  VirPhyAddressSize;
+
+
+  AsmCpuid( CPUID_EXTENDED_FUNCTION, &MaxExtendedFunction, NULL, NULL, NULL );
+
+  if (MaxExtendedFunction >= CPUID_VIR_PHY_ADDRESS_SIZE) {
+    AsmCpuid( CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL );
+  } else {
+    VirPhyAddressSize.Bits.PhysicalAddressBits = 36;
+  }
+
+  *MtrrValidBitsMask = LShiftU64( 1, VirPhyAddressSize.Bits.PhysicalAddressBits ) - 1;
+  *MtrrValidAddressMask = *MtrrValidBitsMask & 0xfffffffffffff000ULL;
+}
+
+
 STATIC
 EFI_STATUS
 TSEGDumpHandler (
@@ -522,26 +558,41 @@ TSEGDumpHandler (
 {
   UINT64      SmrrBase;
   UINT64      SmrrMask;
-
-  // Might use FindSmramInfo() in PiSmmCpuDxeSmm.c to determine the Size. Might have to add to "Misc" data.
-  UINT32      SmmCodeSize = 0x1000000; // TODO: SMM might change size?
-
+  UINT64      Length; 
+  UINT64      MtrrValidBitsMask; 
+  UINT64      MtrrValidAddressMask;  
   CHAR8       TempString[MAX_STRING_SIZE];
 
   DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
 
+  MtrrValidBitsMask = 0;
+  MtrrValidAddressMask = 0;
+
+  InitializeMtrrMask( &MtrrValidBitsMask, &MtrrValidAddressMask );
+
+  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", MtrrValidBitsMask , MtrrValidAddressMask ));
+
+  // This is a 64-bit read, but the SMRR registers bits 63:32 are reserved.
   SmrrBase = AsmReadMsr64( MSR_IA32_SMRR_PHYSBASE );
   SmrrMask = AsmReadMsr64( MSR_IA32_SMRR_PHYSMASK );
+  // Extend the mask to account for the reserved bits.
+  SmrrMask |= 0xffffffff00000000ULL;
 
-  DEBUG(( DEBUG_ERROR, __FUNCTION__"TSEG base 0x%016lx mask: 0x%016x\n", SmrrBase , SmrrMask ));
+  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"SMRR base 0x%016lx, mask: 0x%016lx\n", SmrrBase , SmrrMask ));
+
+  // Extend the top bits of the mask to account for the reserved
+
+  Length = ((~(SmrrMask & MtrrValidAddressMask)) & MtrrValidBitsMask) + 1;
+
+  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"Calculated length: 0x%016lx\n", Length ));
 
   // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
   AsciiSPrint( TempString, MAX_STRING_SIZE,
                "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
                16,
-               (SmrrBase & (SmrrMask & 0xFFFFF000)),
+               (SmrrBase & MtrrValidAddressMask),
                0,
-               EFI_SIZE_TO_PAGES( SmmCodeSize ),
+               EFI_SIZE_TO_PAGES( Length ),
                0 );
   AppendToMemoryInfoDatabase( TempString );
 
@@ -958,7 +1009,7 @@ SmmPagingAuditAppEntryPoint (
 
   FlushAndClearMemoryInfoDatabase( L"MemoryInfoDatabase" );
 
-  DEBUG(( DEBUG_ERROR, __FUNCTION__" the app's done!\n" ));
+  DEBUG(( DEBUG_INFO, __FUNCTION__" the app's done!\n" ));
 
   return EFI_SUCCESS;
 } // SmmPagingAuditAppEntryPoint()

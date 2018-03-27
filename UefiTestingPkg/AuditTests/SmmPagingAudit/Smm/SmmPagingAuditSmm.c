@@ -630,7 +630,7 @@ SmmPagingAuditHandler (
 }
 
 /**
-  The module Entry Point of the driver.
+  The library constructor / Entry Point.
 
   @param[in]  ImageHandle    The firmware allocated handle for the EFI image.
   @param[in]  SystemTable    A pointer to the EFI System Table.
@@ -641,7 +641,7 @@ SmmPagingAuditHandler (
 **/
 EFI_STATUS
 EFIAPI
-SmmPagingAuditSmmEntryPoint (
+SmmPagingAuditSmmLibConstructor (
   IN EFI_HANDLE         ImageHandle,
   IN EFI_SYSTEM_TABLE   *SystemTable
 )

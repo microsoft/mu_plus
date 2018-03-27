@@ -1,4 +1,5 @@
-/**
+/** @file -- TpmEventLogAudit.c
+Audit test code to collect tpm event log for offline processing or validation
 
 Copyright (c) 2017, Microsoft Corporation
 
