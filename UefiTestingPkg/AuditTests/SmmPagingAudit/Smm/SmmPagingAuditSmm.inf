@@ -31,12 +31,11 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = SmmPagingAuditSmmLib
+  BASE_NAME                      = SmmPagingAuditSmm
   FILE_GUID                      = 8D474447-F773-4E46-9C5D-0B6DEC141E46
   MODULE_TYPE                    = DXE_SMM_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = NULL|DXE_SMM_DRIVER
-  CONSTRUCTOR                    = SmmPagingAuditSmmLibConstructor
+  ENTRY_POINT                    = SmmPagingAuditSmmEntryPoint
 
 #
 # The following information is for reference only and not required by the build tools.
