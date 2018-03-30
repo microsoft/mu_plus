@@ -96,6 +96,17 @@ DumpDescriptor (
 ///================================================================================================
 ///================================================================================================
 
+UNIT_TEST_STATUS
+EFIAPI
+MemoryMapShouldHaveFewEntries (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  return (mLegacyMapMeta.EntryCount <= 500) ?
+         UNIT_TEST_PASSED :
+         UNIT_TEST_ERROR_TEST_FAILED;
+} // MemoryMapShouldHaveFewEntries()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -783,6 +794,7 @@ MemmapAndMatTestApp (
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
+  AddTestCase( TableStructureTests, L"Memory Maps should not have more than 500 entries", L"Security.MAT.NumEntries", MemoryMapShouldHaveFewEntries, NULL, NULL, NULL);
   AddTestCase( TableStructureTests, L"Memory Maps should have the same Descriptor size", L"Security.MAT.DescriptorSize", ListsShouldHaveTheSameDescriptorSize, NULL, NULL, NULL);
   AddTestCase( TableStructureTests, L"Standard MemoryMap size should be a multiple of the Descriptor size", L"Security.MAT.MemMapSize", LegacyMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
   AddTestCase( TableStructureTests, L"MAT size should be a multiple of the Descriptor size", L"Security.MAT.Size", MatMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
