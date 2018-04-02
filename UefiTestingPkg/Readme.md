@@ -47,7 +47,7 @@ this that can be tested are the number of events in some PCRs, confirm that all 
 should be capped, etc.  
 
 ### SMMPagingAudit
-Audit tool creates a human readable description of the SMM page tables.
+Audit tool creates a human readable description of the SMM page tables and memory environment.
 #### App
 UEFI shell application collects information from SMM and writes it to files.
 #### SMM

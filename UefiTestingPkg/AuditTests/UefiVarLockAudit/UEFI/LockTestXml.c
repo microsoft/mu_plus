@@ -1,7 +1,7 @@
 /** @file
   Support using XML as the File format for var report data
 
-  Copyright (c) 2016, Microsoft Corporation
+  Copyright (c) 2017, Microsoft Corporation
 
   All rights reserved.
   Redistribution and use in source and binary forms, with or without
