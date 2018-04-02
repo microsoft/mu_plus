@@ -1,7 +1,7 @@
 ## @file SmmPagingProtectionsTestSmm.inf
 # This is the SMM portion of the SmmPagingProtectionsTest driver.
-# This librry should be linked into a smm driver.  It will be signalled by the DXE portion 
-# and will perform requested operations to probe the extent of the SMM memory protections (like NX).
+# This driver will be signalled by the DXE portion and will perform requested operations
+# to probe the extent of the SMM memory protections (like NX).
 #
 ##
 # Copyright (c) 2017, Microsoft Corporation
@@ -35,6 +35,7 @@
   FILE_GUID                      = 8D474447-F773-4E46-9C5D-0B6DEC141E46
   MODULE_TYPE                    = DXE_SMM_DRIVER
   VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x0001000A
   ENTRY_POINT                    = SmmPagingAuditSmmEntryPoint
 
 #
