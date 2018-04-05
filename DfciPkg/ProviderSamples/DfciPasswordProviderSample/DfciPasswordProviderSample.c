@@ -21,11 +21,14 @@ Copyright (c) 2015 Microsoft Corporation. All rights reserved
 EFI_EVENT  mPasswordProviderSupportInstallEvent;
 VOID       *mPasswordProviderSupportInstallEventRegistration = NULL;
 
+#define DFCI_SETTING_ID__PASSWORD  "oem.Password.Password"
+
 EFI_STATUS
 EFIAPI
 SamplePasswordGetDefault (
-  IN  CONST DFCI_SETTING_PROVIDER* This,
-  OUT UINT8* Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       UINT8                  *Value
   )
 {
 
@@ -33,13 +36,13 @@ SamplePasswordGetDefault (
 
   DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
 
-  if ((This == NULL) || (Value == NULL)) {
+  if ((This == NULL) || (This->Id == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  if (This->Id != DFCI_SETTING_ID__PASSWORD) {
-    DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (0x%X)\n", This->Id));
+  if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
+    DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
     Status = EFI_UNSUPPORTED;
     goto Cleanup;
   }
@@ -54,8 +57,9 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 SamplePasswordGet (
-  IN  CONST DFCI_SETTING_PROVIDER* This,
-  OUT UINT8* Value
+  IN  CONST DFCI_SETTING_PROVIDER *This,
+  IN  OUT   UINTN                 *ValueSize,
+  OUT       UINT8                 *Value
   )
 {
 
@@ -63,12 +67,12 @@ SamplePasswordGet (
 
   DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
 
-  if ((This == NULL) || (Value == NULL)) {
+  if ((This == NULL) || (Value == NULL) || ((Value == NULL) && (*ValueSize != 0)) || (This->Id == NULL)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  if (This->Id != DFCI_SETTING_ID__PASSWORD) {
+  if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
     DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (0x%X)\n", This->Id));
     Status = EFI_UNSUPPORTED;
     goto Cleanup;
@@ -87,9 +91,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 SamplePasswordSet (
-  IN  CONST DFCI_SETTING_PROVIDER* This,
-  IN  CONST UINT8* Value,
-  OUT DFCI_SETTING_FLAGS* Flags
+  IN  CONST DFCI_SETTING_PROVIDER *This,
+  IN        UINTN                  ValueSize,
+  IN  CONST UINT8                 *Value,
+  OUT       DFCI_SETTING_FLAGS    *Flags
   )
 {
 
@@ -97,15 +102,15 @@ SamplePasswordSet (
     
   DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
 
-  if ((This == NULL) || (Flags == NULL) || (Value == NULL)) {
+  if ((This == NULL) || (Flags == NULL) || (Value == NULL) || (This->Id == NULL) || (ValueSize > DFCI_SETTING_MAXIMUM_SIZE)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
   *Flags = 0;
 
-  if (This->Id != DFCI_SETTING_ID__PASSWORD) {
-    DEBUG((DEBUG_ERROR, "PasswordSet was called with incorrect Provider Id (0x%X)\n", This->Id));
+  if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
+    DEBUG((DEBUG_ERROR, "PasswordSet was called with incorrect Provider Id (%a)\n", This->Id));
     Status = EFI_UNSUPPORTED;
     goto Cleanup;
   }
@@ -131,13 +136,13 @@ SamplePasswordSetDefault (
 
   DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
 
-  if (This == NULL) {
+  if ((This == NULL) || (This->Id == NULL)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  if (This->Id != DFCI_SETTING_ID__PASSWORD) {
-    DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (0x%X)\n", This->Id));
+  if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
+    DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
     Status = EFI_UNSUPPORTED;
     goto Cleanup;
   }

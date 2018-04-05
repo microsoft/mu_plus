@@ -1,13 +1,11 @@
 
 #include "IdentityAndAuthManager.h"
 #include <Library/BaseCryptLib.h>
-#include <openssl/x509v3.h>
 #include <Library/BaseLib.h>
 #include <Library/PrintLib.h>
-#include <Library/DfciSerialNumberSupportLib.h>
+#include <Library/DfciDeviceIdSupportLib.h>
 
 #define MAX_SUBJECT_ISSUER_LENGTH 300
-
 
 /**
 Function to Get the Subject Name from an X509 cert.  Will return a dynamically
@@ -15,6 +13,7 @@ allocated Unicode string.  Caller must free once finished
 
 @param[in] TrustedCert - Raw DER encoded Certificate
 @param     CertLength  - Length of the raw cert buffer
+@param     MaxStringLength - Limit for the number of characters
 
 @retval Unicode String or NULL
 **/
@@ -26,11 +25,11 @@ GetSubjectName(
   UINTN    MaxStringLength
   )
 {
-  CHAR8     *q = NULL;
-  CHAR16    *SubjectName = NULL;
-  CHAR8     *Start = NULL;
-  CHAR8     *End = NULL;
-  UINTN     SubjectSize;
+  CHAR16      *NameBuffer = NULL;
+  CHAR8       *AsciiName = NULL;
+  UINTN       NameBufferSize;
+  UINTN       AsciiNameSize;
+  EFI_STATUS  Status;
 
   if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
   {
@@ -38,54 +37,51 @@ GetSubjectName(
     goto CLEANUP;
   }
 
-  //Get subject name line from Cert
-  q = X509GetUTF8SubjectName(TrustedCert, CertLength);
-
-  if (q == NULL)
+  Status = X509GetCommonName (TrustedCert, CertLength, NULL, &AsciiNameSize);
+  if (Status != EFI_BUFFER_TOO_SMALL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" X509_NAME_oneline failed. result == NULL\n"));
-    goto CLEANUP;
+      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get CommonName size\n"));
+      return NULL;
   }
 
-  //Loop thru and find the CN (common name)
-  Start = AsciiStrStr(q, "CN = ");
-  if (Start == NULL)
+  AsciiName = AllocatePool (AsciiNameSize);
+  if (AsciiName == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't find CN \n"));
-    goto CLEANUP;
+     DEBUG((DEBUG_ERROR, __FUNCTION__ "Unable to allocate memory for common name Ascii.\n"));
+     return NULL;
   }
 
-  Start += 5;  //Move past "CN = "
-  End = AsciiStrStr(Start, ",");
-  if (End != NULL)
+  Status = X509GetCommonName (TrustedCert, CertLength, AsciiName, &AsciiNameSize);
+  if (EFI_ERROR(Status ))
   {
-    *End = '\0';  //insert NULL to end string early
+      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get CommonName\n"));
+      return NULL;
   }
 
   //allocate CHAR16 and convert
-  SubjectSize = (AsciiStrLen(Start) + 1);
+  NameBufferSize = AsciiNameSize * sizeof(CHAR16);
   
-  if (SubjectSize > MaxStringLength) {
-    Start[MaxStringLength - 1] = '\0'; 
-    SubjectSize = MaxStringLength;
+  if (AsciiNameSize >= MaxStringLength) {
+    AsciiName[MaxStringLength -1] = '\0';
+    AsciiNameSize = MaxStringLength;
   }
-  SubjectName = (CHAR16 *)AllocatePool(SubjectSize * sizeof(CHAR16));
-  if (SubjectName == NULL)
+  NameBuffer = (CHAR16 *)AllocatePool(AsciiNameSize * sizeof(CHAR16));
+  if (NameBuffer == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for SubjectName\n"));
+    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for NameBuffer\n"));
     goto CLEANUP;
   }
 
-  AsciiStrToUnicodeStr(Start, SubjectName); 
+  AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize * sizeof(CHAR16));
 
  CLEANUP:
-  if (q)
+  if (AsciiName)
   {
     //This covers start and end ptrs
-    FreePool(q);
+    FreePool(AsciiName);
   }
 
-  return SubjectName;
+  return NameBuffer;
 }
 
 /**
@@ -106,12 +102,11 @@ GetIssuerName(
   UINTN    MaxStringLength
   )
 {
-  X509      *Cert = NULL;
-  CHAR8     *q = NULL;
-  CHAR16    *Name = NULL;
-  CHAR8     *Start = NULL;
-  CHAR8     *End = NULL;
-  UINTN     Size;
+  CHAR16      *NameBuffer = NULL;
+  CHAR8       *AsciiName = NULL;
+  UINTN       NameBufferSize;
+  UINTN       AsciiNameSize;
+  EFI_STATUS  Status;
 
   if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
   {
@@ -119,65 +114,51 @@ GetIssuerName(
     goto CLEANUP;
   }
 
-  //Convert Raw DER Cert into OpenSSL Cert Object 
-  Cert = d2i_X509(NULL, &TrustedCert, (UINT32)CertLength);
-  if (Cert == NULL)
+  Status = X509GetOrganizationName (TrustedCert, CertLength, NULL, &AsciiNameSize);
+  if (Status != EFI_BUFFER_TOO_SMALL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" d2i_X509 failed. Cert == NULL\n"));
-    goto CLEANUP;
+      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get OrganizationName size\n"));
+      return NULL;
   }
 
-  //Get subject name line from Cert
-  q = X509_NAME_oneline(X509_get_issuer_name(Cert), 0, 0);
-  if (q == NULL)
+  AsciiName = AllocatePool (AsciiNameSize);
+  if (AsciiName == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" X509_NAME_oneline failed. result == NULL\n"));
-    goto CLEANUP;
+     DEBUG((DEBUG_ERROR, __FUNCTION__ "Unable to allocate memory for OrganizationName Ascii.\n"));
+     return NULL;
   }
 
-  //Loop thru and find the /O (Organization name)
-  Start = AsciiStrStr(q, "/O");
-  if (Start == NULL)
+  Status = X509GetOrganizationName (TrustedCert, CertLength, AsciiName, &AsciiNameSize);
+  if (EFI_ERROR(Status ))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't find Org\n"));
-    goto CLEANUP;
-  }
-
-  Start += 3;  //Move past "/O "
-  End = AsciiStrStr(Start, "/");
-  if (End != NULL)
-  {
-    *End = '\0';  //insert NULL to end string early
+      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get CommonName\n"));
+      return NULL;
   }
 
   //allocate CHAR16 and convert
-  Size = (AsciiStrLen(Start) + 1);
+  NameBufferSize = AsciiNameSize * sizeof(CHAR16);
 
-  if (Size > MaxStringLength) {
-    Start[MaxStringLength - 1] = '\0';
-    Size = MaxStringLength;
+  if (AsciiNameSize >= MaxStringLength) {
+    AsciiName[MaxStringLength -1] = '\0';
+    AsciiNameSize = MaxStringLength;
   }
-  Name = (CHAR16 *)AllocatePool(Size * sizeof(CHAR16));
-  if (Name == NULL)
+  NameBuffer = (CHAR16 *)AllocatePool(AsciiNameSize * sizeof(CHAR16));
+  if (NameBuffer == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for Name\n"));
+    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for NameBuffer\n"));
     goto CLEANUP;
   }
 
-  AsciiStrToUnicodeStr(Start, Name);
+  AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize * sizeof(CHAR16));
 
-CLEANUP:
-  if (q)
+ CLEANUP:
+  if (AsciiName)
   {
     //This covers start and end ptrs
-    FreePool(q);
-  }
-  if (Cert)
-  {
-    FreePool(Cert);
+    FreePool(AsciiName);
   }
 
-  return Name;
+  return NameBuffer;
 }
 
 /**
@@ -253,7 +234,9 @@ GetSha1Thumbprint(
       *Temp = L' ';
       Temp++;
     }
-    UnicodeValueToString(Temp, PREFIX_ZERO | RADIX_HEX, Digest[i], 2);
+    // Temp is within the result string as computed.  There will always be at least
+    // 3 characters left in Temp
+    UnicodeValueToStringS(Temp, 3 * sizeof(CHAR16), PREFIX_ZERO | RADIX_HEX, Digest[i], 2);
     Temp += 2;
   }
   *Temp = L'\0';

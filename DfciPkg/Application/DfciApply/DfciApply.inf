@@ -1,0 +1,50 @@
+
+## @file
+#  A simple UEFI Application to obtain new DFCI configuration data from server.
+#
+#  Copyright (c) 2017, Microsoft Corporation. All rights reserved.<BR>
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciApply
+  FILE_GUID                      = 255fc784-9ae7-4734-82b6-88f9e845fe43
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DfciApplyEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  DfciApply.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  ShellPkg/ShellPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  ShellLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+
+[Guids]
+  gDfciSettingsGuid
+
+#[BuildOptions]
+#  DEBUG_*_*_CC_FLAGS  = /Od /FAcs

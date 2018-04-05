@@ -1,0 +1,42 @@
+## @file
+#  V1 support Library - NULL version Translate V1 setting ID to V2 Setting string.
+#
+#  Copyright (c) 2014-2015, Microsoft Corporation. All rights reserved.<BR>
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciSupportLib
+  FILE_GUID                      = eaa7ea2a-bee2-4c30-986a-3c529ef1b01f
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0 
+  LIBRARY_CLASS                  = DfciSupportLib|DXE_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  DfciV1SupportLibNull.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  MdePkg/MdePkg.dec
+   
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  
+[Guids]
+
+[Protocols]
+
+[FeaturePcd]
+
+[Pcd]
+
+[Depex]
+  TRUE

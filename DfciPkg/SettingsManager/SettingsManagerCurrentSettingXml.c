@@ -96,7 +96,7 @@ CreateXmlStringFromCurrentSettings(
   // Add the Lowest Supported Version Node
   //
   ZeroMem(LsvString, sizeof(LsvString));
-  AsciiValueToString(&(LsvString[0]), 0, (UINT32)Lsv, 19); 
+  AsciiValueToStringS(&(LsvString[0]), sizeof(LsvString), 0, (UINT32)Lsv, 19);
   Status = AddLsvNode(CurrentSettingsNode, LsvString);
   if (EFI_ERROR(Status))
   {
@@ -121,16 +121,13 @@ CreateXmlStringFromCurrentSettings(
   for (LIST_ENTRY* Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) 
   {
     CHAR8 *Value = NULL;
-    CHAR8 IdString[20];
-    ZeroMem(IdString, sizeof(IdString));
     DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
     Value = ProviderValueAsAscii(&(Prov->Provider), TRUE);
-    AsciiValueToString(&(IdString[0]), 0, (UINT32)(Prov->Provider.Id), 19);  //20 is size of string - 1 for null terminator
-    Status = SetCurrentSettings(CurrentSettingsListNode, &(IdString[0]), Value);
+    Status = SetCurrentSettings(CurrentSettingsListNode, Prov->Provider.Id, Value);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Error from Set Current Settings.  Status = %r\n", __FUNCTION__, Status));
-      DEBUG((DEBUG_ERROR, "ID %a (%d)\nValue %a\n", IdString, Prov->Provider.Id, Value));
+      DEBUG((DEBUG_ERROR, "ID %a\nValue %a\n", Prov->Provider.Id, Value));
     }
     if (Value != NULL)
     {

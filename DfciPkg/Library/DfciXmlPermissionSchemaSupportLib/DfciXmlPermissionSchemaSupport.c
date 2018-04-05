@@ -40,12 +40,6 @@ ConvertAsciiDecimalToPermissionMask(
   IN CONST CHAR8         *PermAscii, 
   OUT DFCI_PERMISSION_MASK *Mask);
 
-EFI_STATUS
-EFIAPI
-ConvertAsciiDecimalToSystemSettingId(
-  IN CONST CHAR8                *IdAscii,
-  OUT DFCI_SETTING_ID_ENUM *Id);
-
 
 // LIBRARY CLASS FUNCTIONS //
 XmlNode*
@@ -164,11 +158,11 @@ EFI_STATUS
 EFIAPI
 GetInputPermission(
 IN CONST XmlNode* ParentPermissionNode,
-OUT DFCI_SETTING_ID_ENUM *Id,
+OUT DFCI_SETTING_ID_STRING *Id,
 OUT DFCI_PERMISSION_MASK *PMask)
 {
   XmlNode  *Temp = NULL;
-  EFI_STATUS Status; 
+
   //Given the parent node go get
   //the value of the Id node and the value
   //of the Permission Mask node
@@ -190,12 +184,8 @@ OUT DFCI_PERMISSION_MASK *PMask)
     DEBUG((DEBUG_INFO, "%a - Failed to find Id Element\n", __FUNCTION__));
     return EFI_NOT_FOUND;
   }
-  Status = ConvertAsciiDecimalToSystemSettingId(Temp->Value, Id);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to covert Xml ascii to System Setting Id %a\n", __FUNCTION__, Temp->Value));
-    return Status;
-  }
+
+  *Id = Temp->Value;
 
   Temp = FindFirstChildNodeByName(ParentPermissionNode, PERMISSION_MASK_VALUE_ELEMENT_NAME);
   if (Temp == NULL)
@@ -230,28 +220,6 @@ ConvertAsciiDecimalToPermissionMask(
 
 
   *Mask = (DFCI_PERMISSION_MASK)t;
-  return EFI_SUCCESS;
-}
-
-
-EFI_STATUS
-EFIAPI
-ConvertAsciiDecimalToSystemSettingId(
-  IN CONST CHAR8                *IdAscii,
-  OUT DFCI_SETTING_ID_ENUM *Id)
-{
-  UINTN t = 0;
-  if ((IdAscii == NULL) || (Id == NULL))
-  {
-    return EFI_INVALID_PARAMETER;
-  }
-  t = AsciiStrDecimalToUintn(IdAscii);
-  if (t > (UINTN)DFCI_SETTING_ID__MAX_AND_UNSUPPORTED)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Invalid Setting ID %a\n", __FUNCTION__, IdAscii));
-    return EFI_INVALID_PARAMETER;
-  }
-  *Id = (DFCI_SETTING_ID_ENUM)t;
   return EFI_SUCCESS;
 }
 

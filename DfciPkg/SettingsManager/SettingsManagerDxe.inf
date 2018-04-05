@@ -48,6 +48,7 @@
   DfciXmlSettingSchemaSupportLib
   DfciSettingPermissionLib
   DfciBaseStringLib
+  DfciV1SupportLib
 
 [Guids]
  gDfciStartOfBdsNotifyGuid

@@ -23,9 +23,10 @@ EFI_STATUS
 EFIAPI 
 SystemSettingAccessSet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL    *This,
-  IN  DFCI_SETTING_ID_ENUM                   Id,
+  IN  DFCI_SETTING_ID_STRING                 Id,
   IN  CONST DFCI_AUTH_TOKEN                 *AuthToken,
   IN  DFCI_SETTING_TYPE                      Type,
+  IN  UINTN                                  ValueSize,
   IN  CONST VOID                            *Value,
   IN OUT DFCI_SETTING_FLAGS                 *Flags
   )
@@ -34,7 +35,7 @@ SystemSettingAccessSet (
   EFI_STATUS Status;
   BOOLEAN AuthStatus = FALSE;
   //Check parameters
-  if ((This == NULL) || (Value == NULL) || (AuthToken == NULL) || (Flags == NULL))
+  if ((This == NULL) || (Value == NULL) || (AuthToken == NULL) || (Flags == NULL) | (Id == NULL))
   {
     return EFI_INVALID_PARAMETER;
   }
@@ -44,7 +45,7 @@ SystemSettingAccessSet (
 
   if (prov == NULL)
   {
-    DEBUG((DEBUG_ERROR, "%a - Requested ID (%d) not found.\n", __FUNCTION__, Id));
+    DEBUG((DEBUG_ERROR, "%a - Requested ID (%a) not found.\n", __FUNCTION__, Id));
     return EFI_NOT_FOUND;
   }
 
@@ -66,11 +67,11 @@ SystemSettingAccessSet (
   //if no write access return access denied
   if (!AuthStatus)
   {
-    DEBUG((DEBUG_INFO, "%a - No Permission to write setting %d\n", __FUNCTION__, Id));
+    DEBUG((DEBUG_INFO, "%a - No Permission to write setting %a\n", __FUNCTION__, Id));
     return EFI_ACCESS_DENIED;
   }
   //Set
-  Status = prov->SetSettingValue(prov, Value, Flags);
+  Status = prov->SetSettingValue(prov, ValueSize, Value, Flags);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed to Set Settings\n"));
@@ -107,9 +108,10 @@ EFI_STATUS
 EFIAPI
 SystemSettingAccessGet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_ENUM                Id,
+  IN  DFCI_SETTING_ID_STRING              Id,
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken, OPTIONAL
   IN  DFCI_SETTING_TYPE                   Type,
+  IN OUT UINTN                           *ValueSize,
   OUT VOID                               *Value,
   IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
   )
@@ -127,7 +129,7 @@ SystemSettingAccessGet (
 
   if (prov == NULL)
   {
-    DEBUG((DEBUG_ERROR, "%a - Requested ID (%d) not found.\n", __FUNCTION__, Id));
+    DEBUG((DEBUG_ERROR, "%a - Requested ID (%a) not found.\n", __FUNCTION__, Id));
     return EFI_NOT_FOUND;
   }
 
@@ -153,7 +155,7 @@ SystemSettingAccessGet (
     Status = HasWritePermissions(Id, AuthToken, &AuthStatus);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Id %d Status %r\n", __FUNCTION__, Id, Status));
+      DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Id %a Status %r\n", __FUNCTION__, Id, Status));
       AuthStatus = FALSE;
     }
     if (AuthStatus)
@@ -161,7 +163,7 @@ SystemSettingAccessGet (
       *Flags |= DFCI_SETTING_FLAGS_OUT_WRITE_ACCESS;  //add write access if AuthStatus is TRUE
     } 
   }
-  return prov->GetSettingValue(prov, Value);
+  return prov->GetSettingValue(prov, ValueSize, Value);
 }
 
 /*
@@ -238,7 +240,7 @@ EFI_STATUS
 EFIAPI
 SystemSettingPermissionGetPermission (
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_ENUM                     Id,
+  IN  DFCI_SETTING_ID_STRING                   Id,
   OUT DFCI_PERMISSION_MASK                    *PermissionMask
   )
 {

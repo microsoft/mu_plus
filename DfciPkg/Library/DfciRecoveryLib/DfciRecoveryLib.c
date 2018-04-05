@@ -25,7 +25,7 @@ Copyright (C) 2016 Microsoft Corporation. All Rights Reserved.
 #include <Library/UefiBootServicesTableLib.h>       // gBS
 #include <Library/UefiRuntimeServicesTableLib.h>    // gRT
 #include <Library/BaseCryptLib.h>                   // Pkcs1v2Encrypt
-#include <Library/DfciSerialNumberSupportLib.h>       // Provide device info for recovery operator
+#include <Library/DfciDeviceIdSupportLib.h>         // Provide device info for recovery operator
 
 #include <Protocol/Rng.h>               // EFI_RNG_PROTOCOL
 

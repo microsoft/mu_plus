@@ -18,8 +18,11 @@
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DfciSettingPermissionLib.h>
+#include <Library/DfciSettingsLib.h>  // Library not used, just the defines
 
 #include <Guid/DfciInternalVariableGuid.h>
+
+#include <Settings/DfciSettings.h>
 
 typedef enum {
   DfciUsbPortEnabled = 0,   //Port Enabled and Usable in preboot and os.  Including Boot  
@@ -63,7 +66,7 @@ RegisterProvider (
 
 DFCI_SETTING_PROVIDER*
 FindProviderById (
-  DFCI_SETTING_ID_ENUM Id
+  DFCI_SETTING_ID_STRING Id
   );
 
 /**
@@ -161,9 +164,10 @@ EFI_STATUS
 EFIAPI
 SystemSettingAccessSet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL    *This,
-  IN  DFCI_SETTING_ID_ENUM                   Id,
+  IN  DFCI_SETTING_ID_STRING                 Id,
   IN  CONST DFCI_AUTH_TOKEN                 *AuthToken,
   IN  DFCI_SETTING_TYPE                      Type,
+  IN  UINTN                                  ValueSize,
   IN  CONST VOID                            *Value,
   IN OUT DFCI_SETTING_FLAGS                 *Flags
   );
@@ -189,9 +193,10 @@ EFI_STATUS
 EFIAPI
 SystemSettingAccessGet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_ENUM                Id,
+  IN  DFCI_SETTING_ID_STRING              Id,
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken OPTIONAL,
   IN  DFCI_SETTING_TYPE                   Type,
+  IN  OUT UINTN                          *ValueSize,
   OUT VOID                               *Value,
   IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
   );
@@ -222,7 +227,7 @@ EFI_STATUS
 EFIAPI
 SystemSettingPermissionGetPermission (
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_ENUM                     Id,
+  IN  DFCI_SETTING_ID_STRING                   Id,
   OUT DFCI_PERMISSION_MASK                    *PermissionMask
   );
 

@@ -50,7 +50,7 @@
 [LibraryClasses]
   DebugLib
   BaseCryptLib          ## Ultimately, try to remove this.
-  DfciSerialNumberSupportLib
+  DfciDeviceIdSupportLib
 
 
 [Protocols]

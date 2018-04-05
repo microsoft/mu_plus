@@ -1,0 +1,78 @@
+## @file
+#  Application that presents & manages the Dfci settings page in the Surface Setup Front Page.
+#
+#  Copyright (c) 2018, Microsoft Corporation. All rights reserved.<BR>
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciMenu
+  FILE_GUID                      = ae8f0389-6ba2-47d3-9e55-80b3dd9b8a98
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DfciMenuEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  DfciMenu.c
+  DfciMenu.h
+  DfciMenuVfr.Vfr
+  DfciMenuStrings.uni
+  DfciRequest.h
+  DfciRequest.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  NetworkPkg/NetworkPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  DfciBaseStringLib
+  DfciDeviceIdSupportLib
+  DfciSettingsLib
+  DfciUiSupportLib
+  HiiLib
+  HttpLib
+  MemoryAllocationLib
+  PrintLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiHiiServicesLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gDfciAuthProvisionVarNamespace
+  gDfciConfigCompleteEventGroupGuid
+  gDfciConfigStartEventGroupGuid
+  gDfciMenuFormsetGuid
+  gDfciPermissionManagerVarNamespace
+  gDfciSettingsGuid
+  gDfciSettingsManagerVarNamespace
+  gEfiTlsCaCertificateGuid
+
+[Protocols]
+  gDfciSettingAccessProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiHttpProtocolGuid
+  gEfiHttpServiceBindingProtocolGuid
+
+[FeaturePcd]
+
+[Pcd]
+
+[Depex]
+  gEfiVariableArchProtocolGuid  AND
+  gDfciSettingAccessProtocolGuid
+

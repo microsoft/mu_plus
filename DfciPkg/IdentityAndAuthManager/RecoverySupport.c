@@ -1,10 +1,13 @@
 
 #include "IdentityAndAuthManager.h"
 #include <Library/BaseLib.h>
+#include <Library/DfciSettingsLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DfciRecoveryLib.h>
 #include <Library/BaseMemoryLib.h>
+
+#include <Settings/DfciSettings.h>
  
 #define MAX_TRIES_FOR_RECOVERY (3)
 

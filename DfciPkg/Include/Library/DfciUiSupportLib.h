@@ -19,6 +19,7 @@ PARTICULAR PURPOSE.
 
 #define DFCI_MB_OK                   0x00000000  // The message box contains one push button: OK. This is the default.
 #define DFCI_MB_OKCANCEL             0x00000001  // The message box contains two push buttons: OK and Cancel.
+#define DFCI_MB_RESTART              0x00000009  // The message box contains one push button: Restart (ID_OK).
 
 // Message Box Default Button Configuration Types
 //
@@ -104,18 +105,6 @@ DfciUiIsUiAvailable (
   );
 
 /**
-  This routine allows the library to make preperations to use the UI.
- 
-  @retval  Returns an EFI_STATUS.
-    
-**/
-EFI_STATUS
-EFIAPI
-DfciUiPrepareToUseUi (
-  VOID
-  );
-
-/**
   This routine is called by DFCI to check if certificate provisioning needs to
   be delayed. If components needed for a user to approve a provisioning request
   are not available, DFCI will delay the processing.
@@ -133,7 +122,7 @@ DfciUiPrepareToUseUi (
 **/
 EFI_STATUS
 EFIAPI
-CheckForDelayProcessingNeeded (
+DfciUiCheckForDelayProcessingNeeded (
   IN BOOLEAN Unenroll,
   IN BOOLEAN LocalAuthNeeded
   );
@@ -157,11 +146,12 @@ CheckForDelayProcessingNeeded (
 **/
 EFI_STATUS
 EFIAPI
-GetAnswerFromUser(
+DfciUiGetAnswerFromUser(
   DFCI_AUTHENTICATION_PROTOCOL* AuthMgrProtocol,
   UINT8* TrustedCert,
   UINT16 TrustedCertSize,
   OUT DFCI_AUTH_TOKEN* AuthToken
   );
+
 
 #endif //__DFCI_UI_SUPPORT_LIB_H__

@@ -30,7 +30,7 @@ typedef
 EFI_STATUS
 (EFIAPI *DFCI_SETTING_PERMISSIONS_GET_PERMISSION) (
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_ENUM                     Id,
+  IN  DFCI_SETTING_ID_STRING                   Id,
   OUT DFCI_PERMISSION_MASK                    *PermissionMask
 );
 

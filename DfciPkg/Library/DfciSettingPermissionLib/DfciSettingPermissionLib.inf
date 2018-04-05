@@ -54,14 +54,16 @@
   UefiRuntimeServicesTableLib
   UefiLib
   BaseMemoryLib
-  DfciSerialNumberSupportLib
+  DfciDeviceIdSupportLib
+  DfciV1SupportLib
 
 [Protocols]
-gDfciAuthenticationProtocolGuid
+  gDfciAuthenticationProtocolGuid
 
 [Guids]
-gDfciPermissionManagerVarNamespace
-gDfciInternalVariableGuid
+  gDfciPermissionManagerVarNamespace
+  gDfciInternalVariableGuid
+  gZeroGuid
 
 [Depex]
 

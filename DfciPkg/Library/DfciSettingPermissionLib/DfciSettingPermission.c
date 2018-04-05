@@ -9,10 +9,10 @@ Copyright (c) 2015, Microsoft Corporation.
 #include "DfciSettingPermission.h"
 
 
-DFCI_PERMISSION_STORE *mPermStore = NULL;
+DFCI_PERMISSION_STORE        *mPermStore = NULL;
 DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
-EFI_EVENT mAuthInstallEvent;
-VOID		  *mAuthInstallEventRegistration = NULL;
+EFI_EVENT                     mAuthInstallEvent;
+VOID                         *mAuthInstallEventRegistration = NULL;
 
 
 EFI_STATUS
@@ -96,8 +96,8 @@ FALSE - user has read only access
 EFI_STATUS
 EFIAPI
 HasWritePermissions(
-IN  DFCI_SETTING_ID_ENUM        SettingId,
-IN  CONST DFCI_AUTH_TOKEN         *AuthToken,
+IN  DFCI_SETTING_ID_STRING       SettingId,
+IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
 OUT BOOLEAN                     *Result
 )
 {
@@ -106,7 +106,7 @@ OUT BOOLEAN                     *Result
   DFCI_IDENTITY_PROPERTIES Properties;
   DFCI_PERMISSION_ENTRY *Temp = NULL;
 
-  if ((AuthToken == NULL) || (Result == NULL))
+  if ((AuthToken == NULL) || (Result == NULL) || (SettingId == NULL))
   {
     return EFI_INVALID_PARAMETER;
   }
@@ -114,13 +114,6 @@ OUT BOOLEAN                     *Result
   if (!mPermStore)
   {
     return EFI_NOT_READY;
-  }
-
-  //
-  // Check for our special INVALID ID
-  if (SettingId == DFCI_SETTING_ID__MAX_AND_UNSUPPORTED)
-  {
-    return EFI_INVALID_PARAMETER;
   }
 
   if (mAuthenticationProtocol == NULL)
@@ -145,7 +138,7 @@ OUT BOOLEAN                     *Result
   Temp = FindPermissionEntry(mPermStore, SettingId);
   if (Temp != NULL)
   {
-    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %d\n", __FUNCTION__, SettingId));
+    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %a\n", __FUNCTION__, SettingId));
     Perm = Temp->Perm;
   }
 
@@ -158,8 +151,8 @@ OUT BOOLEAN                     *Result
 EFI_STATUS
 EFIAPI
 QueryPermission(
-IN  DFCI_SETTING_ID_ENUM   SettingId,
-OUT DFCI_PERMISSION_MASK  *Permissions
+IN  DFCI_SETTING_ID_STRING  SettingId,
+OUT DFCI_PERMISSION_MASK   *Permissions
 )
 {
   DFCI_PERMISSION_MASK Perm = 0;
@@ -174,7 +167,7 @@ OUT DFCI_PERMISSION_MASK  *Permissions
     return EFI_NOT_READY;
   }
 
-  if (SettingId == DFCI_SETTING_ID__MAX_AND_UNSUPPORTED)
+  if (SettingId == NULL)
   {
     return EFI_INVALID_PARAMETER;
   }
@@ -185,7 +178,7 @@ OUT DFCI_PERMISSION_MASK  *Permissions
   Temp = FindPermissionEntry(mPermStore, SettingId);
   if (Temp != NULL)
   {
-    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %d\n", __FUNCTION__, SettingId));
+    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %a\n", __FUNCTION__, SettingId));
     Perm = Temp->Perm;
   }
 

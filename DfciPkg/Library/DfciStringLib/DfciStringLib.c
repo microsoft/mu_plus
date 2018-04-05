@@ -45,23 +45,52 @@ BOOLEAN IsHexaDecimal(CHAR8 Char){
 }
 
 /**
-Converts a Ascii encoded Hex array into a byte array
+Converts an Ascii encoded Hex array into a byte array
 
-@param  Value      Pointer to a ascii char buffer that holds as hex value as a ascii char.
+@param  Value      Pointer to an ascii char buffer that holds a hex value as a ascii char.
 @param  ByteArray  Pointer to a UINT8 buffer to return the hex output.
 @param  Size       Size of char array.
+                   ByteArray size must be at least 1/2 the StrLen(AsciiString)
 @retval Status     Returns Invalid parameter if the input char array has characters other than 0-9 or A-F
 
 **/
 RETURN_STATUS AsciitoHexByteArray(CONST CHAR8 *Value, UINT8* ByteArray, UINTN Size)
 {
-    UINT8 i;
+    UINTN i;
 
     for (i = 0; i < Size; i++){
         if (!(IsHexaDecimal(*(Value + (2 * i))) && IsHexaDecimal(*(Value + (2 * i) + 1)))){
             return RETURN_INVALID_PARAMETER;
         }
         *(ByteArray + i) = (HexLookUp(*(Value + (2 * i))) << 4) | (HexLookUp(*(Value + (2 * i) + 1)));
+    }
+
+    return RETURN_SUCCESS;
+}
+
+/**
+Converts a byte array into an Ascii encoded Hex array
+
+@param  ByteArray  Pointer to a UINT8 buffer to return the hex output.
+@param  Size       Size of ByteArray.
+@param  Value      Pointer to an ascii char buffer to hold the Ascii string
+                   -- must be ((2 * size of ByteArray) + 1) for a terminating NULL.
+@retval Status     Returns Invalid Parameter if the size is odd or zero
+
+**/
+RETURN_STATUS HexByteArraytoAscii(IN  CONST UINT8 *ByteArray,
+                                  IN  UINTN        Size,
+                                  OUT CHAR8       *Value)
+{
+        UINTN  i;
+static  CHAR8  HexChar[] = "0123456789abcdef";
+
+    if ((Size < 2) || (Size & 0x01)) {
+        return RETURN_INVALID_PARAMETER;
+    }
+    for (i = 0; i < Size; i++){
+        *(Value + (2 * i    )) = HexChar[(*(ByteArray + i) & 0xf0) >> 4];
+        *(Value + (2 * i + 1)) = HexChar[(*(ByteArray + i) & 0x0f)];
     }
 
     return RETURN_SUCCESS;

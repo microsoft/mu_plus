@@ -1,0 +1,95 @@
+#include "DfciMenu.h"
+
+formset
+  guid      = DFCI_MENU_FORMSET_GUID,
+  title     = STRING_TOKEN(STR_DFCI_MENU_TITLE),
+  help      = STRING_TOKEN(STR_NULL_STRING),
+  classguid = DFCI_MENU_FORMSET_GUID,
+  class     = EFI_OTHER_DEVICE_CLASS,
+  subclass  = EFI_GENERAL_APPLICATION_SUBCLASS,
+
+/*------------------------------------------------------------------------------------*/
+/*     DFCI Menu Form                                                                 */
+/*------------------------------------------------------------------------------------*/
+  form formid = DFCI_MENU_FORM_ID,                                            // FORM 0x1000
+    title  = STRING_TOKEN(STR_DFCI_MENU_TITLE);
+
+    suppressif TRUE;
+       text
+         help   = STRING_TOKEN(STR_NULL_STRING),
+         text   = STRING_TOKEN(STR_NULL_STRING),
+         flags  = INTERACTIVE,
+         key    = DFCI_MENU_INIT_QUESTION_ID;                                 // Used for FormOpen notification
+    endif;
+
+    //
+    //  Start of DFCI ENABLED form
+    //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                // DFCI Enabled Header
+      text    = STRING_TOKEN(STR_DFCI_HEADER);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                // SPACING
+      text    = STRING_TOKEN(STR_NULL_STRING);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                // DFCI Enabled Info
+      text    = STRING_TOKEN(STR_DFCI_INFO);                                  //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                // SPACING
+      text    = STRING_TOKEN(STR_NULL_STRING);                                //
+
+
+    guidop
+      guid     = SURFACE_GRID_START_OPCODE_GUID,                              // Custom UI Grid opcode - START
+      datatype = UINT32,                                                      //
+      data     = 70,                                                          // Grid cell height in pixels.
+    endguidop;
+
+        subtitle
+           text    = STRING_TOKEN(STR_NULL_STRING),                           // Group of horizontal text blocks
+           flags   = HORIZONTAL;
+
+          text
+            help    = STRING_TOKEN(STR_NULL_STRING),                          // Url:
+            text    = STRING_TOKEN(STR_DFCI_URL);
+
+          text
+            help    = STRING_TOKEN(STR_NULL_STRING),                          // Url String
+            text    = STRING_TOKEN(STR_DFCI_URL_FIELD);
+
+          text
+            help    = STRING_TOKEN(STR_NULL_STRING),                          // SPACING
+           text    = STRING_TOKEN(STR_NULL_STRING);                           //
+
+          text
+            help    = STRING_TOKEN(STR_NULL_STRING),                          // SPACING
+           text    = STRING_TOKEN(STR_NULL_STRING);                           //
+
+          text
+            help    = STRING_TOKEN(STR_NULL_STRING),                          // SPACING
+           text    = STRING_TOKEN(STR_NULL_STRING);                           //
+
+    guidop
+      guid     = SURFACE_GRID_END_OPCODE_GUID,                                // Custom UI Grid opcode - END
+    endguidop;
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                // SPACING
+      text    = STRING_TOKEN(STR_NULL_STRING);
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                // SPACING
+      text    = STRING_TOKEN(STR_NULL_STRING);                                //
+
+    text
+      help    = STRING_TOKEN(STR_NULL_STRING),                                // DFCI Update Now button
+      text    = STRING_TOKEN(STR_DFCI_UPDATE_NOW),                            //
+      flags   = INTERACTIVE,                                                  // INTERACTIVE = Button
+      key     = DFCI_MENU_UPDATE_NOW_QUESTION_ID;
+  endform;
+
+endformset;

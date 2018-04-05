@@ -13,6 +13,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/UefiLib.h>
 #include <Library/DfciUiSupportLib.h>
+#include <Library/DfciDeviceIdSupportLib.h>
 #include <Library/BaseCryptLib.h>
 #include <Protocol/DfciPkcs7.h>
 #include <Protocol/DfciSettingPermissions.h>
@@ -54,8 +55,6 @@ typedef struct {
   INTERNAL_CERT_DETAILS   Certs[MAX_NUMBER_OF_CERTS];
 } INTERNAL_CERT_STORE;
 
-
-
 #define DFCI_AUTH_TO_ID_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','S','A','I')
 //
 // Internal structure to be used for the link list.
@@ -84,23 +83,26 @@ typedef enum {
 
 //Internal object def to handle incoming request
 typedef struct {
-    DFCI_SIGNER_PROVISION_APPLY_VAR   *Var;
-    UINTN                           VarSize;
-    UINT32                          SessionId;
-    AUTH_MAN_PROV_STATE             State;
-    EFI_STATUS                      StatusCode;
-    DFCI_IDENTITY_ID                  Identity;
-    BOOLEAN                         UserConfirmationRequired;
-    BOOLEAN                         RebootRequired;
-    DFCI_AUTH_TOKEN                   AuthToken;
+    DFCI_SIGNER_PROVISION_APPLY_VAR *Var;
+    UINTN                            VarSize;
+    UINT32                           SessionId;
+    AUTH_MAN_PROV_STATE              State;
+    EFI_STATUS                       StatusCode;
+    UINT8                            VarIdentity;
+    DFCI_IDENTITY_ID                 Identity;
+    BOOLEAN                          UserConfirmationRequired;
+    BOOLEAN                          RebootRequired;
+    DFCI_AUTH_TOKEN                  AuthToken;
+    DFCI_DEVICE_ID_ELEMENTS         *DeviceId;
+    UINT16                           TrustedCertOffset;
+    UINT16                           TrustedCertSize;
+    UINT8                           *TrustedCert;
 } AUTH_MAN_PROV_INSTANCE_DATA;
 
-extern LIST_ENTRY                   mAuthHandlesToIdentity;   //list
-extern INTERNAL_CERT_STORE          mInternalCertStore;       //Internal Cert Store
-extern DFCI_AUTHENTICATION_PROTOCOL   mAuthProtocol;            //Auth Protocol
+extern LIST_ENTRY                    mAuthHandlesToIdentity;   //list
+extern INTERNAL_CERT_STORE           mInternalCertStore;       //Internal Cert Store
+extern DFCI_AUTHENTICATION_PROTOCOL  mAuthProtocol;            //Auth Protocol
 extern DFCI_SETTING_PERMISSIONS_PROTOCOL *mDfciSettingsPermissionProtocol; //Permission Protocol
-
-
 
 
 

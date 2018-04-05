@@ -28,14 +28,14 @@ FindListEntryByAuthToken(
     Entry = CR(Link, DFCI_AUTH_TO_ID_LIST_ENTRY, Link, DFCI_AUTH_TO_ID_LIST_ENTRY_SIGNATURE);
     if (Entry->AuthToken == *Token)
     {
-      DEBUG((DEBUG_INFO, "%a - Found (%d)\n",__FUNCTION__, *Token));
+      DEBUG((DEBUG_INFO, "%a - Found (0x%X)\n",__FUNCTION__, *Token));
 
       //TODO: add any security filtering here.  For example if we add a Auth Timeout or max access count
 
       return Entry;
     }
   }
-  DEBUG((DEBUG_INFO, "%a - Failed to find (%d)\n", __FUNCTION__, *Token));
+  DEBUG((DEBUG_INFO, "%a - Failed to find (0x%X)\n", __FUNCTION__, *Token));
   return NULL;
 }
 

@@ -29,8 +29,8 @@ FALSE - user has read only access
 EFI_STATUS
 EFIAPI
 HasWritePermissions(
-  IN  DFCI_SETTING_ID_ENUM        SettingId,
-  IN  CONST DFCI_AUTH_TOKEN         *AuthToken,
+  IN  DFCI_SETTING_ID_STRING      SettingId,
+  IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
   OUT BOOLEAN                     *Result
   );
 
@@ -54,7 +54,7 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
 EFI_STATUS
 EFIAPI
 QueryPermission(
-  IN  DFCI_SETTING_ID_ENUM   SettingId,
+  IN  DFCI_SETTING_ID_STRING   SettingId,
   OUT DFCI_PERMISSION_MASK    *Permissions
   );
 

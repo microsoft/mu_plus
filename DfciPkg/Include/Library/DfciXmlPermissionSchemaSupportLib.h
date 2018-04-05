@@ -60,7 +60,7 @@ EFI_STATUS
 EFIAPI
 GetInputPermission(
   IN CONST XmlNode* ParentPermissionNode,
-  OUT DFCI_SETTING_ID_ENUM *Id,
+  OUT DFCI_SETTING_ID_STRING *Id,
   OUT DFCI_PERMISSION_MASK *PMask);
 
 

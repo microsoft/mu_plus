@@ -86,19 +86,30 @@ FreePermissionStore(IN DFCI_PERMISSION_STORE *Store)
 **/
 UINTN
 EFIAPI
-GetNumberOfPermissionEntires(IN CONST DFCI_PERMISSION_STORE *Store)
+GetNumberOfPermissionEntires(IN CONST DFCI_PERMISSION_STORE *Store, OPTIONAL OUT UINTN *TotalIdSize)
 {
   UINTN Count = 0;
+  DFCI_PERMISSION_ENTRY *Temp = NULL;
+
   if (Store == NULL)
   {
     DEBUG((DEBUG_ERROR, "%a Can't get number of entires from NULL Store\n", __FUNCTION__));
     ASSERT(Store != NULL);
     return Count;
   }
+  if (TotalIdSize != NULL)
+  {
+    *TotalIdSize = 0;
+  }
 
   for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)
   {
     Count++;
+    if (TotalIdSize != NULL)
+    {
+      Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
+      *TotalIdSize += Temp->IdSize;
+    }
   }
   DEBUG((DEBUG_VERBOSE, "%a - %d Permission Entries in Store.\n", __FUNCTION__, Count));
   return Count;
@@ -114,17 +125,31 @@ EFI_STATUS
 EFIAPI
 AddPermissionEntry(
 IN DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_ENUM Id,
+IN DFCI_SETTING_ID_STRING Id,
 IN DFCI_PERMISSION_MASK Perm)
 {
   DFCI_PERMISSION_ENTRY* Temp = NULL;
+  UINTN                  IdSize;
   if (Store == NULL)
   {
     DEBUG((DEBUG_ERROR, "%a - NULL Store pointer\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
-  Temp = AllocatePool(sizeof(DFCI_PERMISSION_ENTRY));
+  if (Id == NULL)
+  {
+      DEBUG((DEBUG_ERROR, "%a - NULL Id pointer\n", __FUNCTION__));
+      return EFI_INVALID_PARAMETER;
+  }
+
+  IdSize = AsciiStrnSizeS(Id, DFCI_MAX_ID_SIZE);
+  if ((IdSize < 1) || (IdSize > DFCI_MAX_ID_SIZE))
+  {
+      DEBUG((DEBUG_ERROR, "%a - Invalid ID length %d for %a\n", __FUNCTION__, IdSize, Id));
+      return EFI_INVALID_PARAMETER;
+  }
+
+  Temp = AllocatePool(sizeof(DFCI_PERMISSION_ENTRY) + IdSize);
   if (Temp == NULL)
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to allocate Memory for entry\n", __FUNCTION__));
@@ -132,7 +157,11 @@ IN DFCI_PERMISSION_MASK Perm)
   }
 
   Temp->Signature = DFCI_PERMISSION_LIST_ENTRY_SIGNATURE;
-  Temp->Id = Id;
+  Temp->Id = (DFCI_SETTING_ID_STRING) &Temp->IdStore;
+  Temp->IdSize = (UINT8) IdSize;    // Validated as < 255
+
+  CopyMem (Temp->IdStore, Id, IdSize);
+
   Temp->Perm = Perm;
   InsertTailList(&(Store->PermissionsListHead), &(Temp->Link));
   return EFI_SUCCESS;
@@ -147,28 +176,37 @@ DFCI_PERMISSION_ENTRY*
 EFIAPI
 FindPermissionEntry(
 IN CONST DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_ENUM Id)
+IN DFCI_SETTING_ID_STRING Id)
 {
+  UINTN     IdSize;
   if (Store == NULL)
   {
     DEBUG((DEBUG_ERROR, "%a - NULL Store pointer\n", __FUNCTION__));
     return NULL;
   }
-
-  if (Id == DFCI_SETTING_ID__MAX_AND_UNSUPPORTED)
+  if (Id == NULL)
   {
-    DEBUG((DEBUG_ERROR, "%a - Permission requested for UNSUPPORTED ID.\n", __FUNCTION__));
-    return NULL;
+      DEBUG((DEBUG_ERROR, "%a - NULL Id pointer\n", __FUNCTION__));
+      return NULL;
+  }
+  IdSize = AsciiStrnSizeS(Id, DFCI_MAX_ID_SIZE);
+  if ((IdSize < 1) || (IdSize > DFCI_MAX_ID_SIZE))
+  {
+      DEBUG((DEBUG_ERROR, "%a - Invalid ID length\n", __FUNCTION__));
+      return NULL;
   }
 
   for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)
   {
-    DFCI_PERMISSION_ENTRY *Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
-    if (Temp->Id == Id)
-    {
-      DEBUG((DEBUG_VERBOSE, "%a - Found Permission Entry\n", __FUNCTION__));
-      return Temp;
-    }
+      DFCI_PERMISSION_ENTRY *Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
+      if (IdSize == Temp->IdSize)
+      {
+          if (0 == AsciiStrnCmp(Temp->Id, Id, IdSize))
+          {
+              DEBUG((DEBUG_VERBOSE, "%a - Found Permission Entry\n", __FUNCTION__));
+              return Temp;
+          }
+      }
   }
   DEBUG((DEBUG_VERBOSE, "%a - Didn't find Permission Entry\n", __FUNCTION__));
   return NULL;
@@ -192,7 +230,7 @@ DebugPrintPermissionStore(IN CONST DFCI_PERMISSION_STORE *Store)
   DEBUG((DEBUG_INFO, " Default Permission: 0x%X\n", Store->Default));
   DEBUG((DEBUG_INFO, " Created On:    %d-%02d-%02d %02d:%02d:%02d\n", Store->CreatedOn.Year, Store->CreatedOn.Month, Store->CreatedOn.Day, Store->CreatedOn.Hour, Store->CreatedOn.Minute, Store->CreatedOn.Second));
   DEBUG((DEBUG_INFO, " Last saved On: %d-%02d-%02d %02d:%02d:%02d\n", Store->SavedOn.Year, Store->SavedOn.Month, Store->SavedOn.Day, Store->SavedOn.Hour, Store->SavedOn.Minute, Store->SavedOn.Second));
-  DEBUG((DEBUG_INFO, " Number Of Permission Entries: %d\n", GetNumberOfPermissionEntires(Store)));
+  DEBUG((DEBUG_INFO, " Number Of Permission Entries: %d\n", GetNumberOfPermissionEntires(Store, NULL)));
   for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)
   {
     // 
@@ -200,7 +238,7 @@ DebugPrintPermissionStore(IN CONST DFCI_PERMISSION_STORE *Store)
     // USE #define so that compiler doens't complain on RELEASE build.  
     //
     #define Temp (CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE))
-    DEBUG((DEBUG_INFO, "   PERM ENTRY - Id: %d  Permission: 0x%X\n", Temp->Id, Temp->Perm));
+    DEBUG((DEBUG_INFO, "   PERM ENTRY - Id: %a  Permission: 0x%X\n", Temp->Id, Temp->Perm));
   }
   DEBUG((DEBUG_INFO, "---------- END PRINTING DFCI_PERMISSION_STORE ---------\n\n"));
 }

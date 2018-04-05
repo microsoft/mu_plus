@@ -17,6 +17,8 @@ Copyright (c) 2015, Microsoft Corporation.
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
 #include <Library/BaseLib.h>
+#include <Library/DfciSettingsLib.h>
+#include <Library/DfciV1SupportLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DfciSettingPermissionLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -26,13 +28,17 @@ Copyright (c) 2015, Microsoft Corporation.
 #include <Protocol/DfciAuthentication.h>
 #include <Guid/DfciInternalVariableGuid.h>
 
+#include <Settings/DfciSettings.h>
+
 #define DFCI_PERMISSION_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','P','L','S')
 
 typedef struct {
   UINTN Signature;
   LIST_ENTRY Link;
-  DFCI_SETTING_ID_ENUM Id;
-  DFCI_PERMISSION_MASK Perm;
+  DFCI_SETTING_ID_STRING Id;              // Pointer to IdStore
+  DFCI_PERMISSION_MASK   Perm;
+  UINT8                  IdSize;
+  CHAR8                  IdStore[];
 } DFCI_PERMISSION_ENTRY;
 
 
@@ -80,7 +86,7 @@ Get the number of permission entires in the linked list
 **/
 UINTN
 EFIAPI
-GetNumberOfPermissionEntires(IN CONST DFCI_PERMISSION_STORE *Store);
+GetNumberOfPermissionEntires(IN CONST DFCI_PERMISSION_STORE *Store, OPTIONAL OUT UINTN *TotalIdSize);
 
 /**
 Add a new Permission entry to the list at the end.
@@ -92,7 +98,7 @@ EFI_STATUS
 EFIAPI
 AddPermissionEntry(
 IN DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_ENUM Id,
+IN DFCI_SETTING_ID_STRING Id,
 IN DFCI_PERMISSION_MASK Perm);
 
 /**
@@ -104,7 +110,7 @@ DFCI_PERMISSION_ENTRY*
 EFIAPI
 FindPermissionEntry(
 IN CONST DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_ENUM Id);
+IN DFCI_SETTING_ID_STRING Id);
 
 /**
 Print the current state of the Permission Store using Debug

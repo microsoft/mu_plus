@@ -19,6 +19,46 @@
   Include
 
 [LibraryClasses]
+  ##  @libraryclass  Library to implement basic string operations.
+  ##
+  DfciBaseStringLib|Include/Library/DfciBaseStringLib.h
+
+  ##  @libraryclass  Library to used to optain platform device
+  ##                 information (serial number, UUID etc)
+  ##
+  DfciDeviceIdSupportLib|Include/Library/DfciDeviceIdSupportLib.h
+
+  ##  @libraryclass  Library for querying, setting, and verifying user passwords.
+  ##
+  DfciPasswordLib|Include/Library/DfciPasswordLib.h
+
+  ##  @libraryclass  Library contains crypto support functions for the DFCI recovery feature.
+  ##
+  DfciRecoveryLib|Include/Library/DfciRecoveryLib.h
+
+  ##  @libraryclass  Library supports Permissions for Settings based on Identity.
+  ##
+  DfciSettingPermissionLib|Include/Library/DfciSettingPermissionLib.h
+
+  ##  @libraryclass  Library  provides a method for DXE drivers to access Dfci Settings.
+  ##
+  DfciSettingsLib|Include/Library/DfciSettingsLib.h
+
+  ##  @libraryclass  Library  supports UI components associated with DFCI.
+  ##
+  DfciUiSupportLib|Include/Library/DfciUiSupportLib.h
+
+  ##  @libraryclass  Library contains translation from V1 setting ID's to V2 Setting Strings.
+  ##
+  DfciV1SupportLib|Include/Library/DfciV1SupportLib.h
+
+  ##  @libraryclass  Library supports the SettingPermission Lib and the Permission XML schema
+  ##
+  DfciXmlPermissionSchemaSupportLib|Include/Library/DfciXmlPermissionSchemaSupportLib.h
+
+  ##  @libraryclass  Library supports the SettingsManager XML schema
+  ##
+  DfciXmlSettingSchemaSupportLib|Include/Library/DfciXmlSettingSchemaSupportLib.h
 
 [Protocols]
   ## DFCI Setting Permission Protocol
@@ -96,6 +136,16 @@
   #
   # {bca42a0c-0a80-4d51-a2ee-430bec2230dd}
   gDfciConfigCompleteEventGroupGuid = { 0xbca42a0c, 0x0a80, 0x4d51, { 0xa2, 0xee, 0x43, 0x0b, 0xec, 0x22, 0x30, 0xdd }}
+
+  ## DFCI Menu Formset Guid
+  #
+  # Include/Guid/DfciMenuGuid.h
+  gDfciMenuFormsetGuid = {0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9 }}
+
+  ## DFCI Settings GUID
+  # Include/Guid/DfciSettingsGuid
+  gDfciSettingsGuid = { 0x9548f732, 0xd482, 0x4a39, { 0x8b, 0x27, 0xcd, 0x99, 0x18, 0x11, 0xba, 0x6a }}
+
 
 [PcdsFeatureFlag]
   ## Our Setting design pattern creates a single library for setting access (get/set)

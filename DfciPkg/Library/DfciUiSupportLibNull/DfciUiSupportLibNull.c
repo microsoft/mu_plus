@@ -51,23 +51,6 @@ DfciUiDisplayMessageBox (
 
 /**
 
-  This routine allows the library to make preperations to use the UI.
- 
-  @retval  Returns an EFI_STATUS.
-    
-**/
-EFI_STATUS
-EFIAPI
-DfciUiPrepareToUseUi (
-    VOID
-    )
-{
-
-  return EFI_SUCCESS;
-}
-
-/**
-
   This routine indicates if the UI is ready and can be used.
  
   @retval  TRUE if the UI is ready to use, else FALSE.
@@ -101,7 +84,7 @@ DfciUiIsUiAvailable (
 **/
 EFI_STATUS
 EFIAPI
-CheckForDelayProcessingNeeded(
+DfciUiCheckForDelayProcessingNeeded(
   IN BOOLEAN Unenroll,
   IN BOOLEAN LocalAuthNeeded
   )
@@ -129,7 +112,7 @@ CheckForDelayProcessingNeeded(
 **/
 EFI_STATUS
 EFIAPI
-GetAnswerFromUser(
+DfciUiGetAnswerFromUser(
   DFCI_AUTHENTICATION_PROTOCOL* AuthMgrProtocol,    
   UINT8* TrustedCert,
   UINT16 TrustedCertSize,
@@ -139,3 +122,4 @@ GetAnswerFromUser(
 
   return EFI_SUCCESS;
 }
+

@@ -5,8 +5,8 @@ Copyright (c) 2015, Microsoft Corporation. All rights reserved.
 
 **/
 
-#include <MsSystemSettingTypes.h>
-#include <Library/MsPasswordLib.h>      // Public header for declaring interfaces, prototypes.
+#include <DfciSystemSettingTypes.h>
+#include <Library/DfciPasswordLib.h>      // Public header for declaring interfaces, prototypes.
 
 /**
   Performs any initialization that is necessary for the functions in this

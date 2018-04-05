@@ -1,0 +1,53 @@
+
+## @file
+#  A simple UEFI Application to obtain new DFCI configuration data from server.
+#
+#  Copyright (c) 2017, Microsoft Corporation. All rights reserved.<BR>
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = EnrollInDfci
+  FILE_GUID                      = 48a294cd-540f-4240-9fbc-a8720095588c
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = EnrollInDfciEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  EnrollInDfci.c
+  Compress.h
+  Compress.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  ShellPkg/ShellPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  ShellLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+
+[Guids]
+  gDfciSettingsGuid
+  gEfiCertX509Guid
+
+#[BuildOptions]
+#  DEBUG_*_*_CC_FLAGS     = /Od

@@ -16,7 +16,8 @@ Copyright (c) 2015, Microsoft Corporation.
 
 #define VAR_NAME  L"_SPP"
 #define VAR_HEADER_SIG SIGNATURE_32('S', 'B', 'C', 'Z')
-#define VAR_VERSION (1)
+#define VAR_VERSION_V1 (1)
+#define VAR_VERSION_V2 (2)
 #define MAX_SIZE_FOR_VAR (1024 * 2)  
 
 #pragma warning(push)
@@ -24,9 +25,9 @@ Copyright (c) 2015, Microsoft Corporation.
 #pragma pack (push, 1)
 
 typedef struct {
-  UINT32 Id;
-  DFCI_PERMISSION_MASK Permissions;
-} DFCI_PERM_INTERNAL_TABLE_ENTRY;
+  DFCI_SETTING_ID_V1_ENUM Id;     // DFCI_SETTING_ID_ENUM is no longer
+  DFCI_PERMISSION_MASK    Permissions;
+} DFCI_PERM_INTERNAL_TABLE_ENTRY_V1;
 
 typedef struct {
   UINT32 HeaderSignature;     // 'S', 'B', 'C', 'Z'
@@ -37,7 +38,25 @@ typedef struct {
   EFI_TIME SavedOn;
   DFCI_PERMISSION_MASK Default; //For any ID not found in the entry list this is the permission
   UINT16 NumberOfEntries;     // Number of entris in the PermTable 
-  DFCI_PERM_INTERNAL_TABLE_ENTRY PermTable[];
+  DFCI_PERM_INTERNAL_TABLE_ENTRY_V1 PermTable[];
+} DFCI_PERM_INTERNAL_PROVISONED_VAR_V1;
+
+typedef struct {
+  DFCI_PERMISSION_MASK Permissions;
+  UINT8                IdSize;          // Setting ID's have a max length of 97
+  CHAR8                Id[];            // Must be variable in length;
+} DFCI_PERM_INTERNAL_TABLE_ENTRY;
+
+typedef struct {
+  UINT32 HeaderSignature;     // 'S', 'B', 'C', 'Z'
+  UINT8  HeaderVersion;       // 2
+  UINT32 Version;
+  UINT32 LowestSupportedVersion; // 2
+  EFI_TIME CreatedOn;
+  EFI_TIME SavedOn;
+  DFCI_PERMISSION_MASK Default; //For any ID not found in the entry list this is the permission
+  UINT16 NumberOfEntries;     // Number of entris in the PermTable
+  DFCI_PERM_INTERNAL_TABLE_ENTRY PermTableStart; // First variable lenght entry
 } DFCI_PERM_INTERNAL_PROVISONED_VAR;
 
 #pragma pack (pop)
@@ -49,16 +68,24 @@ EFIAPI
 LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
 {
   EFI_STATUS Status;
-  DFCI_PERM_INTERNAL_PROVISONED_VAR *Var = NULL;
+  DFCI_PERM_INTERNAL_PROVISONED_VAR_V1 *Var1 = NULL;
+  DFCI_PERM_INTERNAL_PROVISONED_VAR    *Var = NULL;
   UINTN VarSize = 0;
   UINTN ComputedSize = 0;
   UINT32 VarAttributes = 0;
+  DFCI_SETTING_ID_STRING Id;
+  UINTN                           Count;
+  CHAR8                          *PermPtr;
+  CHAR8                          *EndPtr;
+  DFCI_PERM_INTERNAL_TABLE_ENTRY *PermEntry;
 
   if (Store == NULL)
   {
     ASSERT(Store != NULL);
     return EFI_INVALID_PARAMETER;
   }
+
+  *Store = NULL;
 
   //1. Load Variable
   Status = GetVariable3(VAR_NAME, &gDfciInternalVariableGuid, &Var, &VarSize, &VarAttributes);
@@ -101,21 +128,10 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
     Status = EFI_COMPROMISED_DATA;
     goto EXIT;
   }
-  if (Var->HeaderVersion != VAR_VERSION)
-  {
-    DEBUG((DEBUG_INFO, "%a - Var Header Version Wrong %d.\n", __FUNCTION__, Var->HeaderVersion));
-    Status = EFI_COMPROMISED_DATA;
-    goto EXIT;
-  }
 
-  ComputedSize = sizeof(DFCI_PERM_INTERNAL_PROVISONED_VAR) + (Var->NumberOfEntries * sizeof(DFCI_PERM_INTERNAL_TABLE_ENTRY));
-  if (VarSize != ComputedSize)
-  {
-    DEBUG((DEBUG_ERROR, "%a - VarSize (0x%X) != ComputedSize (0x%X)\n", __FUNCTION__, VarSize, ComputedSize));
-    ASSERT(VarSize == ComputedSize);
-    Status = EFI_COMPROMISED_DATA;
-    goto EXIT;
-  }
+  // Two possibilities here.  V1 has old setting ENUMs, and we have to convert these to
+  // V2 setting strings here if we run into a V1 provisioned system. All fields except the
+  // PermTable are the same between V1 and V2.
 
   if (Var->Version < Var->LowestSupportedVersion)
   {
@@ -125,18 +141,16 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
     goto EXIT;
   }
 
-  DEBUG((DEBUG_INFO, "%a - Loaded valid variable\n", __FUNCTION__));
-
-  //4. Process variable to load it into Store
+  // Allocate new permission store;
   ComputedSize = sizeof(DFCI_PERMISSION_STORE);
-  *Store = (DFCI_PERMISSION_STORE *) AllocateZeroPool(ComputedSize);
+  *Store = (DFCI_PERMISSION_STORE *) AllocateZeroPool(sizeof(DFCI_PERMISSION_STORE));
   if (*Store == NULL)
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to allocate memory for Store\n", __FUNCTION__));
     Status= EFI_ABORTED;
     goto EXIT;
   }
-  
+
   (*Store)->Version = Var->Version;
   (*Store)->Lsv = Var->LowestSupportedVersion;
   (*Store)->Modified = FALSE;  //since flash matches store modified is false
@@ -144,23 +158,87 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
   (*Store)->CreatedOn = Var->CreatedOn;
   (*Store)->SavedOn = Var->SavedOn;
   InitializeListHead(&((*Store)->PermissionsListHead));
-  for (UINT16 i = 0; i < Var->NumberOfEntries; i++)
+
+  switch (Var->HeaderVersion)
   {
-    Status = AddPermissionEntry(*Store, Var->PermTable[i].Id, Var->PermTable[i].Permissions);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "%a - Failed to add a permission entry. %r\n", __FUNCTION__, Status));
-      ASSERT_EFI_ERROR(Status);
-      //continue anyway and hope for the best :) 
-    }
+    case VAR_VERSION_V1:
+      Var1 = (DFCI_PERM_INTERNAL_PROVISONED_VAR_V1 *) Var;
+      ComputedSize = sizeof(DFCI_PERM_INTERNAL_PROVISONED_VAR_V1) + (Var->NumberOfEntries * sizeof(DFCI_PERM_INTERNAL_TABLE_ENTRY_V1));
+      if (VarSize != ComputedSize)
+      {
+        DEBUG((DEBUG_ERROR, "%a - VarSize (0x%X) != ComputedSize (0x%X)\n", __FUNCTION__, VarSize, ComputedSize));
+        ASSERT(VarSize == ComputedSize);
+        Status = EFI_COMPROMISED_DATA;
+        goto EXIT;
+      }
+      for (UINT16 i = 0; i < Var->NumberOfEntries; i++)
+      {
+        Id = DfciV1TranslateEnum(Var1->PermTable[i].Id);
+        Status = AddPermissionEntry(*Store, Id, Var1->PermTable[i].Permissions);
+        if (EFI_ERROR(Status))
+        {
+          DEBUG((DEBUG_ERROR, "%a - Failed to add a permission entry. %r\n", __FUNCTION__, Status));
+          ASSERT_EFI_ERROR(Status);
+          //continue anyway and hope for the best :)
+        }
+      }
+      (*Store)->Version = VAR_VERSION_V2;
+      (*Store)->Lsv = VAR_VERSION_V2;
+      SaveToFlash (*Store);  // Complete the translation from V1 to V2
+      DEBUG((DEBUG_INFO, "%a - Permission store converted to V2.\n", __FUNCTION__));
+      break;
+
+    case VAR_VERSION_V2:
+      PermPtr = (CHAR8 *) &Var->PermTableStart;
+      EndPtr = (CHAR8 *) Var;
+      EndPtr += VarSize;
+      Count = 0;
+      for (UINT16 i = 0; (i < Var->NumberOfEntries) && (PermPtr < EndPtr); i++)
+      {
+        Count++;
+        PermEntry = (DFCI_PERM_INTERNAL_TABLE_ENTRY *) PermPtr;
+        PermPtr += (sizeof(DFCI_PERM_INTERNAL_TABLE_ENTRY) + PermEntry->IdSize);
+
+        if (PermPtr > EndPtr)
+        {
+          DEBUG((DEBUG_ERROR, "%a - Poor calculation for variable size.\n", __FUNCTION__));
+          ASSERT(FALSE);
+          break;
+        }
+        Status = AddPermissionEntry(*Store, (DFCI_SETTING_ID_STRING)PermEntry->Id, PermEntry->Permissions);
+        if (EFI_ERROR(Status))
+        {
+          DEBUG((DEBUG_ERROR, "%a - Failed to add a permission entry for %a. %r\n", __FUNCTION__, PermEntry->Id, Status));
+          ASSERT_EFI_ERROR(Status);
+          //continue anyway and hope for the best :)
+        }
+      }
+      if (Count != Var->NumberOfEntries)
+      {
+        DEBUG((DEBUG_ERROR, "%a - Failed to process all permission entries. %r\n", __FUNCTION__, Status));
+        Status = EFI_COMPROMISED_DATA;
+        ASSERT_EFI_ERROR(Status);
+        goto EXIT;
+      }
+      break;
+    default:
+      DEBUG((DEBUG_INFO, "%a - Var Header Version %d not supported.\n", __FUNCTION__, Var->HeaderVersion));
+      Status = EFI_COMPROMISED_DATA;
+      goto EXIT;
+      break;
   }
-  DEBUG((DEBUG_INFO, "%a - Loaded from flash successfully.\n", __FUNCTION__));
-  Status = EFI_SUCCESS;
+
+  DEBUG((DEBUG_INFO, "%a - Loaded valid variable. Version %d.  Code=%r\n", __FUNCTION__, Var->HeaderVersion, Status));
 
 EXIT:
   if (Var != NULL)
   {
     FreePool(Var);
+  }
+  if (EFI_ERROR(Status) && (*Store != NULL))
+  {
+    FreePool (*Store);
+    *Store = NULL;
   }
   return Status;
 }
@@ -173,8 +251,10 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
   DFCI_PERM_INTERNAL_PROVISONED_VAR *Var = NULL;
   UINTN VarSize = 0;
   UINTN NumEntries = 0;
-  UINT16 i = 0;
   EFI_TIME t;
+  UINTN                           TotalIdSize;
+  DFCI_PERM_INTERNAL_TABLE_ENTRY *PermEntry;
+  CHAR8                          *PermPtr;
 
   if (Store == NULL)
   {
@@ -186,9 +266,10 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
     DEBUG((DEBUG_INFO, "%a - Not Modified.  No action needed.\n", __FUNCTION__));
     return EFI_SUCCESS;
   }
-  NumEntries = GetNumberOfPermissionEntires(Store);
+  NumEntries = GetNumberOfPermissionEntires(Store, &TotalIdSize);
+
   //Figure out our size
-  VarSize = sizeof(DFCI_PERM_INTERNAL_PROVISONED_VAR) + (NumEntries * sizeof(DFCI_PERM_INTERNAL_TABLE_ENTRY));
+  VarSize = sizeof(DFCI_PERM_INTERNAL_PROVISONED_VAR) + ((NumEntries -1) * sizeof(DFCI_PERM_INTERNAL_TABLE_ENTRY) + TotalIdSize);
   //Check the size
   if (VarSize > MAX_SIZE_FOR_VAR)
   {
@@ -205,20 +286,25 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
     goto EXIT;
   }
   Var->HeaderSignature = VAR_HEADER_SIG;
-  Var->HeaderVersion = VAR_VERSION;
+  Var->HeaderVersion = VAR_VERSION_V2;
   Var->Version = Store->Version;
   Var->LowestSupportedVersion = Store->Lsv;  
   Var->Default = Store->Default;
   CopyMem(&(Var->CreatedOn), &(Store->CreatedOn), sizeof(Var->CreatedOn));
-  
+
+  PermEntry = &Var->PermTableStart;
+  PermPtr = (CHAR8 *) PermEntry;
+
   Var->NumberOfEntries = (UINT16)NumEntries;  //can't exceed UINT16 size because of var size requirements and previous checks
   for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)
   {
-    ASSERT(i < NumEntries);
     DFCI_PERMISSION_ENTRY *Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
-    Var->PermTable[i].Id = Temp->Id;
-    Var->PermTable[i].Permissions = Temp->Perm;
-    i++;
+
+    PermEntry->Permissions = Temp->Perm;
+    PermEntry->IdSize = Temp->IdSize;
+    CopyMem (PermEntry->Id, Temp->Id, Temp->IdSize);
+    PermPtr += (sizeof(DFCI_PERM_INTERNAL_TABLE_ENTRY) + Temp->IdSize);
+    PermEntry = (DFCI_PERM_INTERNAL_TABLE_ENTRY *) PermPtr;
   }
 
   Status = gRT->GetTime(&(t), NULL);

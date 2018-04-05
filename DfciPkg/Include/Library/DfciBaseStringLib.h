@@ -33,6 +33,22 @@ RETURN_STATUS
 AsciitoHexByteArray (CONST CHAR8 *Value,
                      UINT8* ByteArray,
                      UINTN Size);
+
+/**
+Converts a byte array into an Ascii encoded Hex array
+
+@param  ByteArray  Pointer to a UINT8 buffer to return the hex output.
+@param  Size       Size of ByteArray.
+@param  Value      Pointer to an ascii char buffer to hold the Ascii string
+                   -- must be ((2 * size of ByteArray) + 1) for a terminating NULL.
+@retval Status     Returns Invalid Parameter if the size is odd or zero
+
+**/
+RETURN_STATUS
+HexByteArraytoAscii(IN  CONST UINT8 *ByteArray,
+                    IN  UINTN        Size,
+                    OUT CHAR8       *Value);
+
 /**
 Convert a Unicode character to upper case only if
 it maps to a valid small-case ASCII character.

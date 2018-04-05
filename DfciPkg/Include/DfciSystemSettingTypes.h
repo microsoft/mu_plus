@@ -14,95 +14,13 @@
 // Platform team must review and add code to support the setting
 //
 //
-typedef enum {
-  DFCI_SETTING_ID__OWNER_KEY = 1,
-  DFCI_SETTING_ID__USER_KEY  = 2,
-  DFCI_SETTING_ID__USER1_KEY = 3,
-  DFCI_SETTING_ID__USER2_KEY = 4,
 
-  //This is used for permission only - Identity can perform recovery challenge/response operation
-  DFCI_SETTING_ID__DFCI_RECOVERY = 25,
-
-  DFCI_SETTING_ID__ASSET_TAG                  = 100,
-
-  DFCI_SETTING_ID__SECURE_BOOT_KEYS_ENUM      = 200,
-
-  DFCI_SETTING_ID__TPM_ENABLE                 = 300,
-  DFCI_SETTING_ID__DOCKING_USB_PORT           = 301,
-  DFCI_SETTING_ID__FRONT_CAMERA               = 302,
-  DFCI_SETTING_ID__BLUETOOTH                  = 303,
-  DFCI_SETTING_ID__REAR_CAMERA                = 304,
-  DFCI_SETTING_ID__IR_CAMERA                  = 305,
-  DFCI_SETTING_ID__ALL_CAMERAS                = 306,
-  DFCI_SETTING_ID__WIFI_ONLY                  = 307,
-  DFCI_SETTING_ID__WIFI_AND_BLUETOOTH         = 308,
-  DFCI_SETTING_ID__WIRED_LAN                  = 309,
-  DFCI_SETTING_ID__BLADE_USB_PORT             = 310,
-  DFCI_SETTING_ID__ACCESSORY_RADIO_USB_PORT   = 311,
-  DFCI_SETTING_ID__LTE_MODEM_USB_PORT         = 312,
-  DFCI_SETTING_ID__WFOV_CAMERA                = 313,
-  DFCI_SETTING_ID__DGPU_PCIE_LANES            = 314,
-
-  DFCI_SETTING_ID__ONBOARD_AUDIO              = 320,
-  DFCI_SETTING_ID__MICRO_SDCARD               = 330,
-
-  //
-  //These are virtual mappings of external user accessable
-  // standard usb ports.  Each
-  // platform will map them differently.
-  // Internal devices on USB should be disable using
-  // friendly names (ie. Bluetooth).  DFCI OS tools will need
-  // to handle naming them for each supported platform.
-  //
-  DFCI_SETTING_ID__USER_USB_PORT1             = 370,  //NO Preboot UI
-  DFCI_SETTING_ID__USER_USB_PORT2,
-  DFCI_SETTING_ID__USER_USB_PORT3,
-  DFCI_SETTING_ID__USER_USB_PORT4,
-  DFCI_SETTING_ID__USER_USB_PORT5,
-  DFCI_SETTING_ID__USER_USB_PORT6,
-  DFCI_SETTING_ID__USER_USB_PORT7,
-  DFCI_SETTING_ID__USER_USB_PORT8,
-  DFCI_SETTING_ID__USER_USB_PORT9,
-  DFCI_SETTING_ID__USER_USB_PORT10,
-
-  DFCI_SETTING_ID__IPV6                       = 400,
-  DFCI_SETTING_ID__ALT_BOOT                   = 401,
-  DFCI_SETTING_ID__BOOT_ORDER_LOCK            = 402,
-  DFCI_SETTING_ID__ENABLE_USB_BOOT            = 403,
-  DFCI_SETTING_ID__AUTO_POWERON_AFTER_LOSS    = 404,
-  DFCI_SETTING_ID__DISABLE_BATTERY            = 405,
-  DFCI_SETTING_ID__START_NETWORK              = 406,
-
-  DFCI_SETTING_ID__TPM_ADMIN_CLEAR_PREAUTH    = 500, //NO Preboot UI
-  DFCI_SETTING_ID__PASSWORD                   = 501,
-  DFCI_SETTING_ID__SECURITY_PAGE_DISPLAY      = 600, // NO Preboot UI
-  DFCI_SETTING_ID__DEVICES_PAGE_DISPLAY       = 601, // NO Preboot UI
-  DFCI_SETTING_ID__BOOTMGR_PAGE_DISPLAY       = 602, // NO Preboot UI
-  DFCI_SETTING_ID__SET_TIME_PAGE_DISPLAY      = 603, // NO Preboot UI
-
-  // For VPRO/AMT
-#ifdef VPRO_SUPPORT
-  DFCI_SETTING_ID__VPRO                       = 700,
-  DFCI_SETTING_ID__TXT                        = 701,
-  DFCI_SETTING_ID__SGX                        = 702,
-  DFCI_SETTING_ID__SEC_ERASE                  = 703,
-  DFCI_SETTING_ID__AMT                        = 704,
-  DFCI_SETTING_ID__CIRA                       = 705,
-  DFCI_SETTING_ID__ASF                        = 706,
-  DFCI_SETTING_ID__KVM                        = 707,
-  DFCI_SETTING_ID__USB_R                      = 708,
-  DFCI_SETTING_ID__USB_PROV                   = 709,
-  DFCI_SETTING_ID__AMT_UNCONFIG               = 710,
-#endif
-  
-  //
-  //PERMISSION is based on these IDs and PERMISSION allows
-  //PERMISSIONS for unknown IDs.  So to support error flows we need
-  //1 ID value that is known as bad.
-  //
-  DFCI_SETTING_ID__MAX_AND_UNSUPPORTED        = 0xFFFFFFFF  //force to UINT32 type
-} DFCI_SETTING_ID_ENUM;  //THIS IS a UINT32
-
+// Settings are a CHAR8 string
+typedef CONST CHAR8 * DFCI_SETTING_ID_STRING;
+// Maximum number of characters is 96 + a NULL character
+#define DFCI_MAX_ID_SIZE (97)
+#define DFCI_MAX_ID_LEN  (96)
+typedef UINT32        DFCI_SETTING_ID_V1_ENUM;    // Only used for V1 support and Translate routines
 
 //
 // Each system setting needs a type.
@@ -114,8 +32,16 @@ typedef enum {
   DFCI_SETTING_TYPE_ASSETTAG,
   DFCI_SETTING_TYPE_SECUREBOOTKEYENUM,
   DFCI_SETTING_TYPE_PASSWORD,
-  DFCI_SETTING_TYPE_USBPORTENUM
+  DFCI_SETTING_TYPE_USBPORTENUM,
+  DFCI_SETTING_TYPE_STRING,             // CHAR8 string
+  DFCI_SETTING_TYPE_BINARY              // Opaque Binary Data
 } DFCI_SETTING_TYPE;
+
+//
+// Most of the settings types have a fixed length.  Limit the String and Binary
+// settings types to a maximum size of 16KB
+//
+#define DFCI_SETTING_MAXIMUM_SIZE (1024 * 16)
 
 // type of the authentication token
 typedef UINTN DFCI_AUTH_TOKEN;

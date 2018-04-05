@@ -35,9 +35,10 @@ typedef
 EFI_STATUS
 (EFIAPI *DFCI_SETTING_ACCESS_SET) (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL   *This,
-  IN  DFCI_SETTING_ID_ENUM                  Id,
+  IN  DFCI_SETTING_ID_STRING                Id,
   IN  CONST DFCI_AUTH_TOKEN                *AuthToken,
   IN  DFCI_SETTING_TYPE                     Type,
+  IN  UINTN                                 ValueSize,
   IN  CONST VOID                           *Value,
   IN OUT DFCI_SETTING_FLAGS                *Flags
   );
@@ -46,14 +47,16 @@ EFI_STATUS
 /*
 Get a single setting
 
-@param[in] This:        Access Protocol
-@param[in] Id:          Setting ID to Get
-@param[in] AuthToken:   An optional auth token* to use to check permission of setting.  This auth token will be validated
-                        to check permissions for changing the setting which will be reported in flags if valid.
-@param[in] Type:        Type that caller expects this setting to be.
-@param[out] Value:      A pointer to a datatype defined by the Type for this setting. 
-@param[IN OUT] Flags    Optional Informational flags passed back from the Get operation.  If the Auth Token is valid write access will be set in
-                        flags for the given auth.  
+@param[in] This:         Access Protocol
+@param[in] Id:           Setting ID to Get
+@param[in] AuthToken:    An optional auth token* to use to check permission of setting.  This auth token will be validated
+                         to check permissions for changing the setting which will be reported in flags if valid.
+@param[in] Type:         Type that caller expects this setting to be.
+@param[in,out] ValueSize IN=Size of location to store value
+                         OUT=Size of value stored
+@param[out] Value:       A pointer to a datatype defined by the Type for this setting.
+@param[IN OUT] Flags     Optional Informational flags passed back from the Get operation.  If the Auth Token is valid write access will be set in
+                         flags for the given auth.
 
 @retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
 @retval Error - couldn't get setting.
@@ -63,11 +66,12 @@ typedef
 EFI_STATUS
 (EFIAPI *DFCI_SETTING_ACCESS_GET) (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_ENUM                Id,
+  IN  DFCI_SETTING_ID_STRING              Id,
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken  OPTIONAL, 
   IN  DFCI_SETTING_TYPE                   Type,
-  OUT VOID                               *Value,
-  IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
+  IN  OUT UINTN                          *ValueSize,
+  OUT     VOID                           *Value,
+  IN  OUT DFCI_SETTING_FLAGS             *Flags OPTIONAL
   );
 
 /*

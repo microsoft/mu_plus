@@ -1,7 +1,9 @@
 
 #include "SettingsManager.h"
+#include <Guid/DfciSettingsManagerVariables.h>
 #include <Library/DfciPasswordLib.h>
 #include <Library/DfciBaseStringLib.h>
+#include <Library/DfciV1SupportLib.h>
 
 #define DFCI_PASSWORD_STORE_SIZE sizeof(DFCI_PASSWORD_STORE)
 
@@ -30,6 +32,12 @@ ProviderTypeAsAscii(DFCI_SETTING_TYPE Type)
 
     case DFCI_SETTING_TYPE_USBPORTENUM:
       return "USB PORT STATE TYPE";
+
+    case DFCI_SETTING_TYPE_STRING:
+      return "STRING TYPE";
+
+    case DFCI_SETTING_TYPE_BINARY:
+      return "BINARY TYPE";
   }
 
   return "UNKNOWN TYPE";
@@ -41,13 +49,12 @@ Helper function to set a setting based on ASCII input
 EFI_STATUS
 EFIAPI
 SetSettingFromAscii(
-  IN CONST CHAR8*  Id,
+  IN DFCI_SETTING_ID_STRING  Id,
   IN CONST CHAR8*  Value,
   IN CONST DFCI_AUTH_TOKEN *AuthToken,
   IN OUT DFCI_SETTING_FLAGS *Flags)
 {
   DFCI_SETTING_PROVIDER *Provider = NULL;  //need provider to get type
-  DFCI_SETTING_ID_ENUM IdNumber = DFCI_SETTING_ID__MAX_AND_UNSUPPORTED;
 
   if (Id == NULL)
   {
@@ -70,12 +77,10 @@ SetSettingFromAscii(
   }
   DEBUG((DEBUG_INFO, "%a - AuthToken is 0x%X\n", __FUNCTION__, *AuthToken));
 
-  //Convert ID to DFCI_SETTINGS_ID_ENUM (UINT64)
-  IdNumber = (DFCI_SETTING_ID_ENUM) AsciiStrDecimalToUintn(Id);
-  Provider = FindProviderById(IdNumber);
+  Provider = FindProviderById(Id);
   if (Provider == NULL)
   {
-    DEBUG((DEBUG_INFO, "%a - Provider for Id (%d) not found in system\n", __FUNCTION__, IdNumber));
+    DEBUG((DEBUG_INFO, "%a - Provider for Id (%a) not found in system\n", __FUNCTION__, Id));
     return EFI_NOT_FOUND;
   }
   
@@ -97,8 +102,9 @@ SetProviderValueFromAscii(
   CONST VOID* SetValue = NULL;
   BOOLEAN            v = FALSE;
   UINT8              b = 0;  
-  UINT8             *ByteArray;
-  EFI_STATUS        Status;
+  UINT8             *ByteArray = NULL;
+  UINTN              ValueSize;
+  EFI_STATUS         Status;
 
   switch (Provider->Type)
   {
@@ -123,11 +129,13 @@ SetProviderValueFromAscii(
     }
 
     SetValue = &v;
+    ValueSize = sizeof(v);
     break;
 
   /* ASSET Tag Type (Ascii String)*/
   case DFCI_SETTING_TYPE_ASSETTAG:
     SetValue = &Value;
+    ValueSize = AsciiStrSize(Value);
     DEBUG((DEBUG_INFO, "Setting Asset Tag to %a\n", Value));
     break;
 
@@ -153,6 +161,7 @@ SetProviderValueFromAscii(
       return EFI_INVALID_PARAMETER;
     }
     SetValue = &b;
+    ValueSize = sizeof(b);
     break;
 
   case DFCI_SETTING_TYPE_PASSWORD:  
@@ -163,21 +172,24 @@ SetProviderValueFromAscii(
           return EFI_INVALID_PARAMETER;
       }
 
-      ByteArray = (UINT8 *)AllocateZeroPool(DFCI_PASSWORD_STORE_SIZE);      
+      ByteArray = (UINT8 *)AllocateZeroPool(DFCI_PASSWORD_STORE_SIZE);
+      if (NULL == ByteArray)
+      {
+          return EFI_OUT_OF_RESOURCES;
+      }
 
       Status = AsciitoHexByteArray(Value, ByteArray, DFCI_PASSWORD_STORE_SIZE);
 
-      if (!EFI_ERROR(Status))
-      {
-          DEBUG((DEBUG_INFO, "Setting Password. %a\n", Value));
-          SetValue = ByteArray;
-      }
-      else
+      if (EFI_ERROR(Status))
       {
           DEBUG((DEBUG_ERROR, "Cannot set password. Invalid Character Present \n"));
           return EFI_INVALID_PARAMETER;
       }
-      
+
+      DEBUG((DEBUG_INFO, "Setting Password. %a\n", Value));
+
+      SetValue = ByteArray;
+      ValueSize = DFCI_PASSWORD_STORE_SIZE;
       break;
 
   case DFCI_SETTING_TYPE_USBPORTENUM:
@@ -197,99 +209,60 @@ SetProviderValueFromAscii(
       return EFI_INVALID_PARAMETER;
     }
     SetValue = &b;
+    ValueSize = sizeof(b);
     break;
 
+  case DFCI_SETTING_TYPE_STRING:
+
+      ValueSize = AsciiStrnLenS (Value, MAX_ALLOWABLE_VAR_INPUT_SIZE);
+
+      if ('\0' != Value[ValueSize])     // String is longer than allowed
+      {
+        DEBUG((DEBUG_ERROR, "String too long for String type\n"));
+        return EFI_INVALID_PARAMETER;
+      }
+      ValueSize++;           // NULL is part of the setting.
+
+      DEBUG((DEBUG_INFO, "Setting String. %a\n", Value));
+      SetValue = Value;
+
+      break;
+
+  case DFCI_SETTING_TYPE_BINARY:
+
+      ValueSize = AsciiStrnLenS (Value, MAX_ALLOWABLE_VAR_INPUT_SIZE) / 2;
+
+      ByteArray = (UINT8 *)AllocateZeroPool(ValueSize);
+      if (NULL == ByteArray)
+      {
+        return EFI_OUT_OF_RESOURCES;
+      }
+
+      Status = AsciitoHexByteArray(Value, ByteArray, ValueSize);
+
+      if (EFI_ERROR(Status))
+      {
+          DEBUG((DEBUG_ERROR, "Cannot set binary data. Invalid Character Present \n"));
+          return EFI_INVALID_PARAMETER;
+      }
+
+      DEBUG((DEBUG_INFO, "Setting BINARY data\n", Value));
+      DEBUG_BUFFER(DEBUG_ERROR, Value, ValueSize, DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII);
+      SetValue = ByteArray;
+      break;
+
   default:
-    DEBUG((DEBUG_ERROR, "Failed - SetProviderValueFromAscii for ID 0x%X Unsupported Type = 0x%X\n", Provider->Id, Provider->Type));
-    return EFI_INVALID_PARAMETER;
-  }
-  return mSystemSettingAccessProtocol.Set(&mSystemSettingAccessProtocol, Provider->Id, AuthToken, Provider->Type, SetValue, Flags);
-}
-
-/**
-Helper function to return a friendly name for the ID. 
-Strings are static and should not be Freed
-**/
-CHAR8*
-ProviderIdAsAscii(DFCI_SETTING_ID_ENUM Id)
-{
-  switch(Id){
-
-  case DFCI_SETTING_ID__TPM_ENABLE:
-    return "TPM Enable";
-
-  case DFCI_SETTING_ID__TPM_ADMIN_CLEAR_PREAUTH:
-    return "TPM Admin Clear Authorization";
-
-  case DFCI_SETTING_ID__SECURE_BOOT_KEYS_ENUM:
-    return "Secure Boot Keys Enum";
-
-  case DFCI_SETTING_ID__ASSET_TAG:
-    return "Asset Tag";
-
-  case DFCI_SETTING_ID__DOCKING_USB_PORT:
-    return "Docking Station USB Port Enable";
-
-  case DFCI_SETTING_ID__BLADE_USB_PORT:
-    return "Blade USB Port Enable";
-
-  case DFCI_SETTING_ID__ACCESSORY_RADIO_USB_PORT:
-    return "Accessory Radio Enable";
-
-  case DFCI_SETTING_ID__LTE_MODEM_USB_PORT:
-    return "LTE Modem Enable";
-
-  case DFCI_SETTING_ID__FRONT_CAMERA:
-    return "Front Camera Enable";
-
-  case DFCI_SETTING_ID__REAR_CAMERA:
-    return "Rear Camera Enable";
-
-  case DFCI_SETTING_ID__IR_CAMERA:
-    return "IR Camera Enable";
-
-  case DFCI_SETTING_ID__WFOV_CAMERA:
-    return "WFOV Camera Enable";
-
-  case DFCI_SETTING_ID__ALL_CAMERAS:
-    return "All Cameras Enable";
-
-  case DFCI_SETTING_ID__WIFI_ONLY:
-    return "Wifi Enable";
-
-  case DFCI_SETTING_ID__WIFI_AND_BLUETOOTH:
-    return "Wifi & Bluetooth Enable";
-
-  case DFCI_SETTING_ID__WIRED_LAN:
-    return "Wired LAN Enable";
-
-  case DFCI_SETTING_ID__BLUETOOTH:
-    return "Bluetooth Enable";
-
-  case DFCI_SETTING_ID__ONBOARD_AUDIO:
-    return "Onboard Audio Enable";
-  
-  case DFCI_SETTING_ID__MICRO_SDCARD:
-    return "Micro SD-Card Enable";
-
-  case DFCI_SETTING_ID__PASSWORD:
-    return "System Password";
-
-  case DFCI_SETTING_ID__DGPU_PCIE_LANES:
-    return "Discrete GPU Enable";
+      DEBUG((DEBUG_ERROR, "Failed - SetProviderValueFromAscii for ID %a Unsupported Type = 0x%X\n", Provider->Id, Provider->Type));
+      return EFI_INVALID_PARAMETER;
   }
 
-  if ((Id >= DFCI_SETTING_ID__USER_USB_PORT1) &&
-    (Id <= DFCI_SETTING_ID__USER_USB_PORT10))
+  Status = mSystemSettingAccessProtocol.Set(&mSystemSettingAccessProtocol, Provider->Id, AuthToken, Provider->Type, ValueSize, SetValue, Flags);
+  if (NULL != ByteArray)
   {
-    return "User Accessable Usb Port State";
+      FreePool (ByteArray);
   }
-
-
-
-  return "Unsupported Setting Id";
+  return Status;
 }
-
 
 #define ENABLED_STRING_SIZE  (9)
 #define ASSET_TAG_STRING_MAX_SIZE  (22)
@@ -313,26 +286,27 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
 {
 
   EFI_STATUS Status;
-  CHAR8* Value = NULL;
-  BOOLEAN v = FALSE; //Boolean Types
-  CHAR8* s = NULL;   //String types
-  UINT8 b = 0xFF;    //Byte types (small enum)
-  UINTN Length = 0;
+  CHAR8     *Value = NULL;
+  UINT8     *Buffer;
+  BOOLEAN    v = FALSE; //Boolean Types
+  UINT8      b = 0xFF;    //Byte types (small enum)
+  UINTN      ValueSize;
 
   switch (Provider->Type)
   {
-    case DFCI_SETTING_TYPE_ENABLE:
+  case DFCI_SETTING_TYPE_ENABLE:
+      ValueSize = sizeof(v);
       if (Current)
       {
-        Status = Provider->GetSettingValue(Provider, &v);
+        Status = Provider->GetSettingValue(Provider, &ValueSize, &v);
       }
       else 
       {
-        Status = Provider->GetDefaultValue(Provider, &v);
+        Status = Provider->GetDefaultValue(Provider, &ValueSize, &v);
       }
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID 0x%X Status = %r\n", Provider->Id, Status));
+        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
         break;
       }
 
@@ -350,36 +324,64 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       break;
 
     case DFCI_SETTING_TYPE_ASSETTAG:
+      ValueSize = 0;
       if (Current)
       {
-        Status = Provider->GetSettingValue(Provider, &s);
+        Status = Provider->GetSettingValue(Provider, &ValueSize, &v);
       }
       else
       {
-        Status = Provider->GetDefaultValue(Provider, &s);
+        Status = Provider->GetDefaultValue(Provider, &ValueSize, &v);
       }
-      if (EFI_ERROR(Status))
+
+      if (EFI_BUFFER_TOO_SMALL != Status)
       {
-        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID 0x%X Status = %r\n", Provider->Id, Status));
+        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
         break;
       }
-      Length = AsciiStrnLenS(s, ASSET_TAG_STRING_MAX_SIZE) + 1;  //max size of asset tag
-      Value = AllocateZeroPool(Length);  //for null
-      AsciiStrnCpyS(Value, Length, s, Length);
+
+      if (ValueSize > ASSET_TAG_STRING_MAX_SIZE)
+      {
+        DEBUG((DEBUG_ERROR, "Value too large - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
+        break;
+      }
+
+      Value = AllocateZeroPool (ValueSize+1);
+      if (Value == NULL)
+      {
+        DEBUG((DEBUG_ERROR, "Out of resources - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
+        break;
+      }
+      if (Current)
+      {
+        Status = Provider->GetSettingValue(Provider, &ValueSize, Value);
+      }
+      else
+      {
+        Status = Provider->GetDefaultValue(Provider, &ValueSize, Value);
+      }
+
+      if (EFI_ERROR(Status))
+      {
+        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
+        FreePool (Value);
+        break;
+      }
       break;
 
     case DFCI_SETTING_TYPE_SECUREBOOTKEYENUM:
+      ValueSize = sizeof(b);
       if (Current)
       {
-        Status = Provider->GetSettingValue(Provider, &b);
+        Status = Provider->GetSettingValue(Provider, &ValueSize, &b);
       }
       else
       {
-        Status = Provider->GetDefaultValue(Provider, &b);
+        Status = Provider->GetDefaultValue(Provider, &ValueSize, &b);
       }
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID 0x%X Status = %r\n", Provider->Id, Status));
+        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
         break;
       }
 
@@ -404,19 +406,21 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
         AsciiStrCpyS(Value, SECURE_BOOT_ENUM_STRING_SIZE, "None");
       }
       break;
+
     case DFCI_SETTING_TYPE_PASSWORD:
+       ValueSize = sizeof (v);
         if (Current)
         {
-            Status = Provider->GetSettingValue(Provider, &v);
+            Status = Provider->GetSettingValue(Provider, &ValueSize, &v);
         }
         else
         {
-            Status = Provider->GetDefaultValue(Provider, &v);
+            Status = Provider->GetDefaultValue(Provider, &ValueSize, &v);
         }
 
         if (EFI_ERROR(Status))
         {
-            DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID 0x%X Status = %r\n", Provider->Id, Status));
+            DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
             break;
         }
         Value = AllocateZeroPool(SYSTEM_PASSWORD_STATE_STRING_SIZE);
@@ -433,17 +437,18 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
         break;
 
     case DFCI_SETTING_TYPE_USBPORTENUM:
+      ValueSize = sizeof (b);
       if (Current)
       {
-        Status = Provider->GetSettingValue(Provider, &b);
+        Status = Provider->GetSettingValue(Provider, &ValueSize, &b);
       }
       else
       {
-        Status = Provider->GetDefaultValue(Provider, &b);
+        Status = Provider->GetDefaultValue(Provider, &ValueSize, &b);
       }
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID 0x%X Status = %r\n", Provider->Id, Status));
+        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
         break;
       }
 
@@ -465,8 +470,112 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       }
       break;
 
+  case DFCI_SETTING_TYPE_STRING:
+
+      ValueSize = 0;
+      Value = NULL;
+      if (Current) {
+          Status = Provider->GetSettingValue(Provider, &ValueSize, NULL);
+      } else {
+          Status = Provider->GetDefaultValue(Provider, &ValueSize, NULL);
+      }
+      if (EFI_BUFFER_TOO_SMALL != Status) {
+          DEBUG((DEBUG_ERROR, "Failed - Expected Buffer Too Small for ID %a Status = %r\n", Provider->Id, Status));
+          break;
+      }
+
+      if (0 == ValueSize ) {
+        break;                   // Return NULL for Value silently
+      }
+
+      if (ValueSize > MAX_ALLOWABLE_VAR_INPUT_SIZE) {
+          DEBUG((DEBUG_ERROR, "Failed - ValueSize invalid for ID %a. Size=%ld\n", Provider->Id, ValueSize));
+          break;
+      }
+
+      Value = AllocatePool (ValueSize);
+
+      if (Current) {
+          Status = Provider->GetSettingValue(Provider, &ValueSize, Value);
+      } else {
+          Status = Provider->GetDefaultValue(Provider, &ValueSize, Value);
+      }
+
+      if (EFI_ERROR(Status)) {
+          FreePool (Value);
+          Value = NULL;
+          DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
+          break;
+      }
+
+      if (ValueSize == AsciiStrnLenS (Value, ValueSize)) {
+          FreePool (Value);
+          Value = NULL;
+          DEBUG((DEBUG_ERROR, "String too long for String type\n"));
+          break;
+      }
+
+      break;
+
+    case DFCI_SETTING_TYPE_BINARY:
+
+        ValueSize = 0;
+        Buffer = NULL;
+        Value = NULL;
+        if (Current) {
+            Status = Provider->GetSettingValue(Provider, &ValueSize, NULL);
+        } else {
+            Status = Provider->GetDefaultValue(Provider, &ValueSize, NULL);
+        }
+        if (EFI_BUFFER_TOO_SMALL != Status) {
+            DEBUG((DEBUG_ERROR, "Failed - Expected Buffer Too Small for ID %a Status = %r\n", Provider->Id, Status));
+            break;
+        }
+
+        if (0 == ValueSize ) {
+          break;                   // Return NULL for Value silently
+        }
+
+        if (ValueSize > MAX_ALLOWABLE_VAR_INPUT_SIZE)
+        {
+          DEBUG((DEBUG_ERROR, "Failed - Incorrect size for ID %a\n", Provider->Id));
+          break;
+        }
+
+        Buffer = AllocatePool (ValueSize);
+        if (NULL == Buffer) {
+            DEBUG((DEBUG_ERROR, "Failed - to allocate buffer for ID %a\n", Provider->Id));
+            break;
+        }
+
+        if (Current) {
+            Status = Provider->GetSettingValue(Provider, &ValueSize, Buffer);
+        } else {
+            Status = Provider->GetDefaultValue(Provider, &ValueSize, Buffer);
+        }
+
+        if (EFI_ERROR(Status )) {
+            FreePool (Buffer);
+            DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
+            break;
+        }
+
+        Value = AllocatePool (ValueSize * 2 + 1 );
+
+        Status = HexByteArraytoAscii(Buffer, ValueSize, Value);
+
+        FreePool (Buffer);
+        if (EFI_ERROR(Status)) {
+            FreePool (Value);
+            Value = NULL;
+            DEBUG((DEBUG_ERROR, "Error converting Binary to Ascii for ID %a. Status = %r\n", Provider->Id, Status));
+            break;
+        }
+
+        break;
+
     default: 
-      DEBUG((DEBUG_ERROR, "Failed - ProviderValueAsAscii for ID 0x%X Unsupported Type = 0x%X\n", Provider->Id, Provider->Type));
+      DEBUG((DEBUG_ERROR, "Failed - ProviderValueAsAscii for ID %a Unsupported Type = 0x%X\n", Provider->Id, Provider->Type));
       break;
   }
   return Value;
@@ -483,12 +592,13 @@ DebugPrintProviderEntry(DFCI_SETTING_PROVIDER *Provider)
   CHAR8 *DefaultValue = ProviderValueAsAscii(Provider, FALSE);
 
   DEBUG((DEBUG_INFO, "Printing Provider @ 0x%X\n", (UINTN)Provider));
-  DEBUG((DEBUG_INFO, "Id:            %d\n", Provider->Id));
-  DEBUG((DEBUG_INFO, "Friendly Name: %a\n", ProviderIdAsAscii(Provider->Id)));
+  DEBUG((DEBUG_INFO, "Id:            %a\n", Provider->Id));
   DEBUG((DEBUG_INFO, "Type:          %a\n", ProviderTypeAsAscii(Provider->Type)));
   DEBUG((DEBUG_INFO, "Flags:         0x%X\n", Provider->Flags));
-  DEBUG((DEBUG_INFO, "Current Value: %a\n", Value));
-  DEBUG((DEBUG_INFO, "Default Value: %a\n", DefaultValue));
+  DEBUG((DEBUG_INFO, "Current Value: %a", Value));   // Split \n to separate DEBUG in case value is too long
+  DEBUG((DEBUG_INFO, "\n"));
+  DEBUG((DEBUG_INFO, "Default Value: %a", DefaultValue));
+  DEBUG((DEBUG_INFO, "\n"));
 
   if (DefaultValue != NULL)
   {
@@ -523,27 +633,40 @@ DebugPrintProviderList()
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
 }
 
-
 /*
 Function to find a setting provider given an ID
 If it isn't found a NULL will be returned
 */
 DFCI_SETTING_PROVIDER*
-FindProviderById(DFCI_SETTING_ID_ENUM Id)
+FindProviderById(DFCI_SETTING_ID_STRING Id)
 {
   LIST_ENTRY* Link = NULL;
   DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = NULL;
+  DFCI_SETTING_ID_STRING RealId;
+
+  if ((Id[0] >= '0') && (Id[0] <= '9')) { // If first character is numeric
+    RealId = DfciV1TranslateString (Id);
+    if (RealId == NULL)
+    {
+      DEBUG((DEBUG_ERROR, "FindProviderById - Failed to translate (%a)\n", Id));
+      return NULL;
+    }
+  } else
+  {
+    RealId = Id;
+  }
 
   for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) {
     //Convert Link Node into object stored
     Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
-    if (Prov->Provider.Id == Id)
+
+    if (0 == AsciiStrnCmp (Prov->Provider.Id, RealId, DFCI_MAX_ID_LEN))
     {
-      DEBUG((DEBUG_VERBOSE, "FindProviderById - Found (%d)\n", Id));
+      DEBUG((DEBUG_VERBOSE, "FindProviderById - Found (%a)\n", Id));
       return &Prov->Provider;
     }
   }
-  DEBUG((DEBUG_VERBOSE, "FindProviderById - Failed to find (%d)\n", Id));
+  DEBUG((DEBUG_VERBOSE, "FindProviderById - Failed to find (%a)\n", Id));
   return NULL;
 }
 
@@ -575,14 +698,19 @@ IN DFCI_SETTING_PROVIDER                         *Provider
     return EFI_INVALID_PARAMETER;
   }
 
+  if ((Provider->Id[0] >= '0') && (Provider->Id[0] <= '9')) // If first character is numeric
+  {
+    DEBUG((DEBUG_ERROR, "Invalid Provider Id %a\n",Provider->Id));
+    return EFI_INVALID_PARAMETER;
+  }
 
-  DEBUG((DEBUG_INFO, "Registering Provider with ID 0x%X\n", Provider->Id));
+  DEBUG((DEBUG_INFO, "Registering Provider with ID %a\n", Provider->Id));
 
   //check to make sure it doesn't already exist. 
   ExistingProvider = FindProviderById(Provider->Id);
   if (ExistingProvider != NULL)
   {
-    DEBUG((DEBUG_ERROR, "Error - Can't register a provider more than once.  id(%d)\n", Provider->Id));
+    DEBUG((DEBUG_ERROR, "Error - Can't register a provider more than once.  id(%a)\n", Provider->Id));
     ASSERT(ExistingProvider == NULL);
     return EFI_INVALID_PARAMETER;
   }
@@ -634,11 +762,11 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
     Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
     if (Prov->Provider.Flags & FilterFlag)
     {
-      DEBUG((DEBUG_INFO, "%a - Setting Provider %d to defaults as part of a Reset request. \n", __FUNCTION__, Prov->Provider.Id));
+      DEBUG((DEBUG_INFO, "%a - Setting Provider %a to defaults as part of a Reset request. \n", __FUNCTION__, Prov->Provider.Id));
       Status = Prov->Provider.SetDefaultValue(&(Prov->Provider));
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, "%a - Failed to Set Provider (%d) To Default Value. Status = %r\n", __FUNCTION__, Prov->Provider.Id, Status));
+        DEBUG((DEBUG_ERROR, "%a - Failed to Set Provider (%a) To Default Value. Status = %r\n", __FUNCTION__, Prov->Provider.Id, Status));
       }
     }
   }

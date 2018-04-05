@@ -9,11 +9,11 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = DfciSerialNumberSupportLib
+  BASE_NAME                      = DfciDeviceIdSupportLib
   FILE_GUID                      = 191d0ad4-469a-4d62-b526-29abe84d6af2
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = DfciSerialNumberSupportLib|DXE_DRIVER UEFI_APPLICATION
+  LIBRARY_CLASS                  = DfciDeviceIdSupportLib|DXE_DRIVER UEFI_APPLICATION
 
 
 #
@@ -23,7 +23,7 @@
 #
 
 [Sources]
-  DfciSerialNumberSupportLib.c
+  DfciDeviceIdSupportLibNull.c
 
 [Packages]
   MdePkg/MdePkg.dec

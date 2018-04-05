@@ -1,13 +1,24 @@
+/** @file
+SettingsManagerTransportXml.c
 
+Thsi file supports the tool input path for setting settings.
+Settings are set using XML.  That xml is written to a variable and then passed to UEFI to be applied.
+This code supports that.
+
+Copyright (c) 2015, Microsoft Corporation.
+
+**/
 #include "SettingsManager.h"
 #include <XmlTypes.h>
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
 #include <Library/DfciXmlSettingSchemaSupportLib.h>
 #include <Library/PrintLib.h>
-#include <Library/DfciSerialNumberSupportLib.h>
+#include <Library/DfciDeviceIdSupportLib.h>
 #include <Guid/WinCertificate.h>
 #include <Guid/DfciSettingsManagerVariables.h>
+#include <Guid/ZeroGuid.h>
+#include <Private/DfciGlobalPrivate.h>
 
 
 //Internal state tracking of incoming request
@@ -29,15 +40,17 @@ typedef enum {
 //Internal global object to handle incoming request
 typedef struct {
   DFCI_SECURED_SETTINGS_APPLY_VAR  *Var;
-  UINTN                          VarSize;
-  UINT32                         SessionId;
-  SETTING_STATE                  State;
-  DFCI_SETTING_INTERNAL_DATA *InternalData;
-  EFI_STATUS                     StatusCode;
-  BOOLEAN                        ResetRequired; 
-  DFCI_AUTH_TOKEN                  IdentityToken;
-  CHAR8                          *ResultXml; 
-  UINTN                          ResultXmlSize;
+  UINTN                             VarSize;
+  UINT32                            SessionId;
+  SETTING_STATE                     State;
+  DFCI_SETTING_INTERNAL_DATA       *InternalData;
+  EFI_STATUS                        StatusCode;
+  BOOLEAN                           ResetRequired;
+  DFCI_AUTH_TOKEN                   IdentityToken;
+  UINT32                            PayloadSize;
+  UINT8                            *Payload;
+  CHAR8                            *ResultXml;
+  UINTN                             ResultXmlSize;
 } SETTING_INSTANCE_DATA;
 
 //
@@ -55,10 +68,11 @@ GetPendingInputSettings(
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = GetVariable2(XML_SETTINGS_APPLY_INPUT_VAR_NAME,
+  Status = GetVariable3(XML_SETTINGS_APPLY_INPUT_VAR_NAME,
     &gDfciSettingsManagerVarNamespace,
     &Data->Var,
-    &Data->VarSize
+    &Data->VarSize,
+    NULL
     );
 
   if (EFI_ERROR(Status))
@@ -100,10 +114,13 @@ EFIAPI
 ValidateAndAuthenticateSettings(
   IN SETTING_INSTANCE_DATA *Data)
 {
-  UINTN SignedDataLength  = 0;
-  UINTN SigLen = 0;
-  WIN_CERTIFICATE   *SignaturePtr;
-  EFI_STATUS Status; 
+  UINTN                     MinSize = 0;
+  UINTN                     SignedDataLength  = 0;
+  UINTN                     SigLen = 0;
+  WIN_CERTIFICATE          *SignaturePtr;
+  EFI_STATUS                Status;
+  EFI_GUID                  SystemUuid;
+  DFCI_DEVICE_ID_ELEMENTS  *DeviceId;
 
   if (Data == NULL)
   {
@@ -118,8 +135,16 @@ ValidateAndAuthenticateSettings(
     return Data->StatusCode;
   }
 
+  if (Data->VarSize < sizeof(DFCI_SECURED_SETTINGS_APPLY_VAR_HEADER))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Size too small for Header Signature\n", __FUNCTION__));
+    Data->State = SETTING_STATE_DATA_INVALID;
+    Data->StatusCode = EFI_BAD_BUFFER_SIZE;
+    return EFI_BAD_BUFFER_SIZE;
+  }
+
   //verify variable header signature
-  if (Data->Var->HeaderSignature != DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE)
+  if (Data->Var->vh.HeaderSignature != DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE)
   {
     DEBUG((DEBUG_ERROR, "%a - Bad Header Signature\n", __FUNCTION__));
     Data->State = SETTING_STATE_DATA_INVALID;
@@ -127,35 +152,57 @@ ValidateAndAuthenticateSettings(
     return EFI_INCOMPATIBLE_VERSION;
   }
 
-  //Verify variable header version
-  if (Data->Var->HeaderVersion != DFCI_SECURED_SETTINGS_VAR_VERSION)
+  //Verify variable payload size vs varsize.  can't be larger.
+  switch (Data->Var->vh.HeaderVersion)
   {
-    DEBUG((DEBUG_ERROR, "%a - Bad Header Version.  %d\n", __FUNCTION__, Data->Var->HeaderVersion));
-    Data->State = SETTING_STATE_DATA_INVALID;
-    Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
-    return EFI_INCOMPATIBLE_VERSION;
+    case DFCI_SECURED_SETTINGS_VAR_VERSION_V1:
+      MinSize = sizeof(DFCI_SECURED_SETTINGS_APPLY_VAR_V1);
+      break;
+    case DFCI_SECURED_SETTINGS_VAR_VERSION_V2:
+      MinSize = sizeof(DFCI_SECURED_SETTINGS_APPLY_VAR_V2);
+      break;
+    default:
+      DEBUG((DEBUG_ERROR, "%a - Bad Header Version.  %d\n", __FUNCTION__, Data->Var->vh.HeaderVersion));
+      Data->State = SETTING_STATE_DATA_INVALID;
+      Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
+      return EFI_INCOMPATIBLE_VERSION;
+      break;
   }
 
-  //Verify variable payload size vs varsize.  can't be larger. 
-  if ((UINTN)(Data->Var->PayloadSize) > Data->VarSize)
+  if (Data->VarSize < MinSize)
   {
-    DEBUG((DEBUG_ERROR, "%a - Bad Payload Size(0x%x).  Larger than VarSize.\n", __FUNCTION__, Data->Var->PayloadSize));
+    DEBUG((DEBUG_ERROR, "%a - Bad Packet Size(0x%x).  Too small.\n", __FUNCTION__, Data->VarSize));
     Data->State = SETTING_STATE_DATA_INVALID;
     Data->StatusCode = EFI_BAD_BUFFER_SIZE;
     return EFI_BAD_BUFFER_SIZE;
   }
 
-  //do basic size checking here.  Do enough that we can claim the pointers are valid...but don't 
-  //check the WIN CERT.  Leave that to auth manager. 
-  SignedDataLength = sizeof(DFCI_SECURED_SETTINGS_APPLY_VAR) + Data->Var->PayloadSize;
-  DEBUG((DEBUG_INFO, "%a - SignedDataLength = 0x%X\n", __FUNCTION__, SignedDataLength));
+  switch (Data->Var->vh.HeaderVersion)
+  {
+    case DFCI_SECURED_SETTINGS_VAR_VERSION_V1:
+      Data->PayloadSize =  Data->Var->v1.PayloadSize;
+      Data->Payload = Data->Var->v1.Payload;
+      SignedDataLength = (UINTN)(OFFSET_OF(DFCI_SECURED_SETTINGS_APPLY_VAR_V1,Payload) + Data->PayloadSize);
+      break;
+    case DFCI_SECURED_SETTINGS_VAR_VERSION_V2:
+      Data->PayloadSize =  Data->Var->v2.PayloadSize;
+      Data->Payload = PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.PayloadOffset);
+      SignedDataLength = Data->Var->v2.PayloadOffset + Data->PayloadSize;
+      break;
+    default:
+      break;
+  }
+
+  //Verify variable payload size vs varsize.  can't be larger.
   if (SignedDataLength > (Data->VarSize - sizeof(WIN_CERTIFICATE_UEFI_GUID)))
   {
-    DEBUG((DEBUG_ERROR, "%a - SignedDataLength is too long compared to VarSize\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "%a - Bad Payload Size(0x%x).  Larger than VarSize.\n", __FUNCTION__, SignedDataLength));
     Data->State = SETTING_STATE_DATA_INVALID;
     Data->StatusCode = EFI_BAD_BUFFER_SIZE;
     return EFI_BAD_BUFFER_SIZE;
   }
+
+  DEBUG((DEBUG_INFO, "%a - SignedDataLength = 0x%X\n", __FUNCTION__, SignedDataLength));
 
   SignaturePtr = (WIN_CERTIFICATE *)(((UINT8*)Data->Var) + SignedDataLength); //first byte after payload
   SigLen = Data->VarSize - SignedDataLength;  //find out the max size of sig data based on var size and start of sig data.  
@@ -168,38 +215,84 @@ ValidateAndAuthenticateSettings(
   }
 
   //Get the session Id from the variable and then zero it before signature validation
-  Data->SessionId = Data->Var->SessionId;
-  Data->Var->SessionId = 0;
+  switch (Data->Var->vh.HeaderVersion)
+  {
+    case DFCI_SECURED_SETTINGS_VAR_VERSION_V1:
+      Data->SessionId = Data->Var->v1.SessionId;
+      Data->Var->v1.SessionId = 0;
+      //Lets check for device specific targetting using Serial Number
+      if (Data->Var->v1.SerialNumber != 0)
+      {
+        UINTN DeviceSerialNumber = 0;
+        DEBUG((DEBUG_INFO, "%a - Target Packet with sn %ld\n", __FUNCTION__, Data->Var->v1.SerialNumber));
+        Status = GetSerialNumber(&DeviceSerialNumber);
+        if (EFI_ERROR(Status))
+        {
+          DEBUG((DEBUG_ERROR, "Failed to get device serial number %r\n", Status));
+          Data->StatusCode = EFI_OUT_OF_RESOURCES;
+          Data->State = SETTING_STATE_SYSTEM_ERROR;
+          return Data->StatusCode;
+        }
+
+        DEBUG((DEBUG_INFO, "%a - Device SN: %ld\n", __FUNCTION__, DeviceSerialNumber));
+
+        //have serial number now compare to packet
+        if (Data->Var->v1.SerialNumber != (UINT64)DeviceSerialNumber)
+        {
+          DEBUG((DEBUG_ERROR, "Permission Packet not for this device.  Packet SN Target: %ld\n", Data->Var->v1.SerialNumber));
+          Data->StatusCode = EFI_ABORTED;
+          Data->State = SETTING_STATE_NOT_CORRECT_TARGET;
+          return Data->StatusCode;
+        }
+      }
+      break;
+    case DFCI_SECURED_SETTINGS_VAR_VERSION_V2:
+      Data->SessionId = Data->Var->v2.SessionId;
+      Data->Var->v2.SessionId = 0;
+      // Check if the packet is for this DeviceId.  For V2, must be an exact match for all componentes of
+      // the device Id.
+
+      Status = DfciSupportGetDeviceId ( &DeviceId );
+      if (EFI_ERROR(Status))
+      {
+        Data->StatusCode = EFI_ABORTED;
+        Data->State = SETTING_STATE_SYSTEM_ERROR;
+        return Data->StatusCode;
+      }
+
+      CopyGuid (&SystemUuid, &gZeroGuid);  // Insure ZeroGuid if no string guid
+      Status = AsciiStrToGuid (DeviceId->Uuid, &SystemUuid);
+      if (EFI_ERROR(Status))
+      {
+        DEBUG((DEBUG_ERROR, "[AM] %a - Error convertion Uuid to Guid. Ignored. %r\n", __FUNCTION__, Status));
+      }
+
+      DEBUG((DEBUG_ERROR, "[AM] %a - Current -- Target\n", __FUNCTION__));
+      DEBUG((DEBUG_ERROR, "Mfg  %a - %a\n",  DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset)));
+      DEBUG((DEBUG_ERROR, "Pn   %a - %a\n",  DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset)));
+      DEBUG((DEBUG_ERROR, "Sn   %a - %a\n",  DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset)));
+      DEBUG((DEBUG_ERROR, "Uuid %g - %g\n",  &SystemUuid, Data->Var->v2.SystemUuid));
+      if ((0 != CompareMem (DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset),     DeviceId->ManufacturerSize)) ||
+          (0 != CompareMem (DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset), DeviceId->ProductNameSize )) ||
+          (0 != CompareMem (DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset),  DeviceId->SerialNumberSize)) ||
+          (!CompareGuid (&SystemUuid, &Data->Var->v2.SystemUuid)))
+      {
+        Data->StatusCode = EFI_ABORTED;
+        Data->State = SETTING_STATE_NOT_CORRECT_TARGET;
+        return Data->StatusCode;
+      }
+      break;
+    default:
+      ASSERT(FALSE);      // Cannot get here
+      Data->State = SETTING_STATE_DATA_INVALID;
+      Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
+      return EFI_INCOMPATIBLE_VERSION;
+      break;
+  }
 
   DEBUG((DEBUG_INFO, "%a - Session ID = 0x%X\n", __FUNCTION__, Data->SessionId));
 
   //Lets check for device specific targetting using Serial Number
-  if (Data->Var->SerialNumber != 0)
-  {
-    UINTN DeviceSerialNumber = 0;
-    DEBUG((DEBUG_INFO, "%a - Target Packet with sn %ld\n", __FUNCTION__, Data->Var->SerialNumber));
-    Status = GetSerialNumber(&DeviceSerialNumber);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "Failed to get device serial number %r\n", Status));
-      Data->StatusCode = EFI_OUT_OF_RESOURCES;
-      Data->State = SETTING_STATE_SYSTEM_ERROR;
-      return Data->StatusCode;
-    }
-
-    DEBUG((DEBUG_INFO, "%a - Device SN: %ld\n", __FUNCTION__, DeviceSerialNumber));
-
-    //have serial number now compare to packet
-    if (Data->Var->SerialNumber != (UINT64)DeviceSerialNumber)
-    {
-      DEBUG((DEBUG_ERROR, "Setting Packet not for this device.  Packet SN Target: %ld\n", Data->Var->SerialNumber));
-      Data->StatusCode = EFI_ABORTED;
-      Data->State = SETTING_STATE_NOT_CORRECT_TARGET;
-      return Data->StatusCode;
-    }
-  }
-
-  
   Status = CheckAuthAndGetToken((UINT8*) Data->Var, SignedDataLength, SignaturePtr, &(Data->IdentityToken));
   if (EFI_ERROR(Status))
   {
@@ -234,7 +327,7 @@ ApplySettings(
 
   EFI_STATUS                  Status;
   UINTN                       StrLen = 0;
-  DFCI_SETTING_FLAGS     Flags = 0;
+  DFCI_SETTING_FLAGS          Flags = 0;
   EFI_TIME                    ApplyTime;
 
   UINTN                       Version = 0;
@@ -254,13 +347,13 @@ ApplySettings(
     return Data->StatusCode;
   }
 
-  StrLen = AsciiStrnLenS( (CHAR8*)(&(Data->Var->Payload)), Data->Var->PayloadSize);
-  DEBUG((DEBUG_INFO, "%a - StrLen = 0x%X PayloadSize = 0x%X\n", __FUNCTION__, StrLen, Data->Var->PayloadSize));
+  StrLen = AsciiStrnLenS( (CHAR8*)(Data->Payload), Data->PayloadSize);
+  DEBUG((DEBUG_INFO, "%a - StrLen = 0x%X PayloadSize = 0x%X\n", __FUNCTION__, StrLen, Data->PayloadSize));
 
   //
   // Create Node List from input
   //
-  Status = CreateXmlTree((CONST CHAR8 *)Data->Var->Payload, StrLen, &InputRootNode);
+  Status = CreateXmlTree((CONST CHAR8 *)Data->Payload, StrLen, &InputRootNode);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Couldn't create a node list from the payload xml  %r\n", __FUNCTION__, Status));
@@ -442,8 +535,8 @@ ApplySettings(
     FlagString[0] = '0';
     FlagString[1] = 'x';
 
-    AsciiValueToString(&(StatusString[2]), RADIX_HEX, (INT64)Status, 18);
-    AsciiValueToString(&(FlagString[2]), RADIX_HEX, (INT64)Flags, 18);
+    AsciiValueToStringS(&(StatusString[2]), sizeof(StatusString)-2, RADIX_HEX, (INT64)Status, 18);
+    AsciiValueToStringS(&(FlagString[2]), sizeof(FlagString)-2, RADIX_HEX, (INT64)Flags, 18);
     Status = SetOutputSettingsStatus(ResultSettingsNode, Id, &(StatusString[0]), &(FlagString[0]));
     if (EFI_ERROR(Status))
     {
@@ -536,7 +629,7 @@ UpdateSettingsResult(
   }
 
   ResultVar->HeaderSignature = DFCI_SECURED_SETTINGS_RESULT_VAR_SIGNATURE;
-  ResultVar->HeaderVersion = DFCI_SECURED_SETTINGS_VAR_VERSION;
+  ResultVar->HeaderVersion = DFCI_SECURED_SETTINGS_RESULTS_VERSION;
   ResultVar->Status = Data->StatusCode;
   ResultVar->SessionId = Data->SessionId;
   ResultVar->PayloadSize = (UINT16)Data->ResultXmlSize;
@@ -626,7 +719,7 @@ CheckForPendingUpdates()
   EFI_STATUS Status;
   DFCI_SETTING_INTERNAL_DATA *InternalData = NULL;
 
-  SETTING_INSTANCE_DATA InstanceData = { NULL, 0, 0, SETTING_STATE_UNINITIALIZED, NULL, EFI_SUCCESS, FALSE, DFCI_AUTH_TOKEN_INVALID, NULL, 0 };
+  SETTING_INSTANCE_DATA InstanceData = { NULL, 0, 0, SETTING_STATE_UNINITIALIZED, NULL, EFI_SUCCESS, FALSE, DFCI_AUTH_TOKEN_INVALID, 0, NULL, NULL, 0 };
 
   //check if incomming settings
   Status = GetPendingInputSettings(&InstanceData);

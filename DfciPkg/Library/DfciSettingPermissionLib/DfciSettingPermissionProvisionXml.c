@@ -10,8 +10,10 @@ Copyright (c) 2015, Microsoft Corporation.
 **/
 #include "DfciSettingPermission.h"
 #include <Guid/DfciPermissionManagerVariables.h>
+#include <Guid/ZeroGuid.h>
+#include <Private/DfciGlobalPrivate.h>
 #include <Library/DfciXmlPermissionSchemaSupportLib.h>
-#include <Library/DfciSerialNumberSupportLib.h>
+#include <Library/DfciDeviceIdSupportLib.h>
 
 
 //Internal state tracking of incoming request
@@ -34,12 +36,14 @@ typedef enum {
 //Internal global object to handle incoming request
 typedef struct {
   DFCI_PERMISSION_POLICY_APPLY_VAR *Var;
-  UINTN                          VarSize;
-  UINT32                         SessionId;
-  BOOLEAN                        NewStore; 
-  PERMISSION_STATE               State;
-  EFI_STATUS                     StatusCode;
-  DFCI_AUTH_TOKEN                  IdentityToken;
+  UINTN                             VarSize;
+  UINT32                            SessionId;
+  BOOLEAN                           NewStore;
+  PERMISSION_STATE                  State;
+  EFI_STATUS                        StatusCode;
+  DFCI_AUTH_TOKEN                   IdentityToken;
+  UINT32                            PayloadSize;
+  UINT8                            *Payload;
   DFCI_PERMISSION_STORE            *Store;  //this is just pointer to externally managed data..dont free it.
 } PERMISSION_INSTANCE_DATA;
 
@@ -59,10 +63,11 @@ IN PERMISSION_INSTANCE_DATA *Data)
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = GetVariable2(DFCI_PERMISSION_POLICY_APPLY_VAR_NAME,
+  Status = GetVariable3(DFCI_PERMISSION_POLICY_APPLY_VAR_NAME,
     &gDfciPermissionManagerVarNamespace,
     &Data->Var,
-    &Data->VarSize
+    &Data->VarSize,
+    NULL
     );
 
   if (EFI_ERROR(Status))
@@ -103,10 +108,13 @@ EFIAPI
 ValidateAndAuthenticatePermissions(
 IN PERMISSION_INSTANCE_DATA *Data)
 {
-  UINTN SignedDataLength = 0;
-  UINTN SigLen = 0;
-  WIN_CERTIFICATE   *SignaturePtr;
-  EFI_STATUS Status;
+  UINTN                     MinSize = 0;
+  UINTN                     SignedDataLength = 0;
+  UINTN                     SigLen = 0;
+  WIN_CERTIFICATE          *SignaturePtr;
+  EFI_STATUS                Status;
+  EFI_GUID                  SystemUuid;
+  DFCI_DEVICE_ID_ELEMENTS  *DeviceId;
 
   if (Data == NULL)
   {
@@ -121,9 +129,16 @@ IN PERMISSION_INSTANCE_DATA *Data)
     return Data->StatusCode;
   }
 
+  if (Data->VarSize < sizeof(DFCI_PERMISSION_POLICY_APPLY_VAR_HEADER))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Size too small for Header Signature\n", __FUNCTION__));
+    Data->State = PERMISSION_STATE_DATA_INVALID;
+    Data->StatusCode = EFI_BAD_BUFFER_SIZE;
+    return EFI_BAD_BUFFER_SIZE;
+  }
 
   //verify variable header signature
-  if (Data->Var->HeaderSignature != DFCI_PERMISSION_POLICY_APPLY_VAR_SIGNATURE)
+  if (Data->Var->vh.HeaderSignature != DFCI_PERMISSION_POLICY_APPLY_VAR_SIGNATURE)
   {
     DEBUG((DEBUG_ERROR, "%a - Bad Header Signature\n", __FUNCTION__));
     Data->State = PERMISSION_STATE_DATA_INVALID;
@@ -131,35 +146,57 @@ IN PERMISSION_INSTANCE_DATA *Data)
     return EFI_INCOMPATIBLE_VERSION;
   }
 
-  //Verify variable header version
-  if (Data->Var->HeaderVersion != DFCI_PERMISSION_POLICY_VAR_VERSION)
+  //Verify variable payload size vs varsize.  can't be larger.
+  switch (Data->Var->vh.HeaderVersion)
   {
-    DEBUG((DEBUG_ERROR, "%a - Bad Header Version.  %d\n", __FUNCTION__, Data->Var->HeaderVersion));
-    Data->State = PERMISSION_STATE_DATA_INVALID;
-    Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
-    return EFI_INCOMPATIBLE_VERSION;
+    case DFCI_PERMISSION_POLICY_VAR_VERSION_V1:
+      MinSize = sizeof(DFCI_PERMISSION_POLICY_APPLY_VAR_V1);
+      break;
+    case DFCI_PERMISSION_POLICY_VAR_VERSION_V2:
+      MinSize = sizeof(DFCI_PERMISSION_POLICY_APPLY_VAR_V2);
+      break;
+    default:
+      DEBUG((DEBUG_ERROR, "%a - Bad Header Version.  %d\n", __FUNCTION__, Data->Var->vh.HeaderVersion));
+      Data->State = PERMISSION_STATE_DATA_INVALID;
+      Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
+      return EFI_INCOMPATIBLE_VERSION;
+      break;
   }
 
-  //Verify variable payload size vs varsize.  can't be larger. 
-  if ((UINTN)(Data->Var->PayloadSize) > Data->VarSize)
+  if (Data->VarSize < MinSize)
   {
-    DEBUG((DEBUG_ERROR, "%a - Bad Payload Size(0x%x).  Larger than VarSize.\n", __FUNCTION__, Data->Var->PayloadSize));
+    DEBUG((DEBUG_ERROR, "%a - Bad Packet Size(0x%x).  Too small.\n", __FUNCTION__, Data->VarSize));
     Data->State = PERMISSION_STATE_DATA_INVALID;
     Data->StatusCode = EFI_BAD_BUFFER_SIZE;
     return EFI_BAD_BUFFER_SIZE;
   }
 
-  //do basic size checking here.  Do enough that we can claim the pointers are valid...but don't 
-  //check the WIN CERT.  Leave that to auth manager. 
-  SignedDataLength = sizeof(DFCI_PERMISSION_POLICY_APPLY_VAR) + Data->Var->PayloadSize;
-  DEBUG((DEBUG_INFO, "%a - SignedDataLength = 0x%X\n", __FUNCTION__, SignedDataLength));
+  switch (Data->Var->vh.HeaderVersion)
+  {
+    case DFCI_PERMISSION_POLICY_VAR_VERSION_V1:
+      Data->PayloadSize =  Data->Var->v1.PayloadSize;
+      Data->Payload = Data->Var->v1.Payload;
+      SignedDataLength = (UINTN)(OFFSET_OF(DFCI_PERMISSION_POLICY_APPLY_VAR_V1,Payload) + Data->PayloadSize);
+      break;
+    case DFCI_PERMISSION_POLICY_VAR_VERSION_V2:
+      Data->PayloadSize =  Data->Var->v2.PayloadSize;
+      Data->Payload = PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.PayloadOffset);
+      SignedDataLength = Data->Var->v2.PayloadOffset + Data->PayloadSize;
+      break;
+    default:
+      break;
+  }
+
+  //Verify variable payload size vs varsize.  can't be larger.
   if (SignedDataLength > (Data->VarSize - sizeof(WIN_CERTIFICATE_UEFI_GUID)))
   {
-    DEBUG((DEBUG_ERROR, "%a - SignedDataLength is too long compared to VarSize\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "%a - Bad Payload Size(0x%x).  Larger than VarSize.\n", __FUNCTION__, SignedDataLength));
     Data->State = PERMISSION_STATE_DATA_INVALID;
     Data->StatusCode = EFI_BAD_BUFFER_SIZE;
     return EFI_BAD_BUFFER_SIZE;
   }
+
+  DEBUG((DEBUG_INFO, "%a - SignedDataLength = 0x%X\n", __FUNCTION__, SignedDataLength));
 
   SignaturePtr = (WIN_CERTIFICATE *)(((UINT8*)Data->Var) + SignedDataLength); //first byte after payload
   SigLen = Data->VarSize - SignedDataLength;  //find out the max size of sig data based on var size and start of sig data.  
@@ -172,37 +209,82 @@ IN PERMISSION_INSTANCE_DATA *Data)
   }
 
   //Get the session Id from the variable and then zero it before signature validation
-  Data->SessionId = Data->Var->SessionId;
-  Data->Var->SessionId = 0;
-
-  DEBUG((DEBUG_INFO, "%a - Session ID = 0x%X\n", __FUNCTION__, Data->SessionId));
-
-  //Lets check for device specific targetting using Serial Number
-  if (Data->Var->SerialNumber != 0)
+  switch (Data->Var->vh.HeaderVersion)
   {
-    UINTN DeviceSerialNumber = 0;
-    DEBUG((DEBUG_INFO, "%a - Target Packet with sn %ld\n", __FUNCTION__, Data->Var->SerialNumber));
-    Status = GetSerialNumber(&DeviceSerialNumber);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "Failed to get device serial number %r\n", Status));
-      Data->StatusCode = EFI_OUT_OF_RESOURCES;
-      Data->State = PERMISSION_STATE_SYSTEM_ERROR;
-      return Data->StatusCode;
-    }
+    case DFCI_PERMISSION_POLICY_VAR_VERSION_V1:
+      Data->SessionId = Data->Var->v1.SessionId;
+      Data->Var->v1.SessionId = 0;
+      //Lets check for device specific targetting using Serial Number
+      if (Data->Var->v1.SerialNumber != 0)
+      {
+        UINTN DeviceSerialNumber = 0;
+        DEBUG((DEBUG_INFO, "%a - Target Packet with sn %ld\n", __FUNCTION__, Data->Var->v1.SerialNumber));
+        Status = GetSerialNumber(&DeviceSerialNumber);
+        if (EFI_ERROR(Status))
+        {
+          DEBUG((DEBUG_ERROR, "Failed to get device serial number %r\n", Status));
+          Data->StatusCode = EFI_OUT_OF_RESOURCES;
+          Data->State = PERMISSION_STATE_SYSTEM_ERROR;
+          return Data->StatusCode;
+        }
 
-    DEBUG((DEBUG_INFO, "%a - Device SN: %ld\n", __FUNCTION__, DeviceSerialNumber));
+        DEBUG((DEBUG_INFO, "%a - Device SN: %ld\n", __FUNCTION__, DeviceSerialNumber));
 
-    //have serial number now compare to packet
-    if (Data->Var->SerialNumber != (UINT64)DeviceSerialNumber)
-    {
-      DEBUG((DEBUG_ERROR, "Permission Packet not for this device.  Packet SN Target: %ld\n", Data->Var->SerialNumber));
-      Data->StatusCode = EFI_ABORTED;
-      Data->State = PERMISSION_STATE_NOT_CORRECT_TARGET;
-      return Data->StatusCode;
-    }
+        //have serial number now compare to packet
+        if (Data->Var->v1.SerialNumber != (UINT64)DeviceSerialNumber)
+        {
+          DEBUG((DEBUG_ERROR, "Permission Packet not for this device.  Packet SN Target: %ld\n", Data->Var->v1.SerialNumber));
+          Data->StatusCode = EFI_ABORTED;
+          Data->State = PERMISSION_STATE_NOT_CORRECT_TARGET;
+          return Data->StatusCode;
+        }
+      }
+      break;
+    case DFCI_PERMISSION_POLICY_VAR_VERSION_V2:
+      Data->SessionId = Data->Var->v2.SessionId;
+      Data->Var->v2.SessionId = 0;
+      // Check if the packet is for this DeviceId.  For V2, must be an exact match for all componentes of
+      // the device Id.
+
+      Status = DfciSupportGetDeviceId ( &DeviceId );
+      if (EFI_ERROR(Status))
+      {
+        Data->StatusCode = EFI_ABORTED;
+        Data->State = PERMISSION_STATE_SYSTEM_ERROR;
+        return Data->StatusCode;
+      }
+
+      CopyGuid (&SystemUuid, &gZeroGuid);  // Insure ZeroGuid if no string guid
+      Status = AsciiStrToGuid (DeviceId->Uuid, &SystemUuid);
+      if (EFI_ERROR(Status))
+      {
+        DEBUG((DEBUG_ERROR, "[AM] %a - Error convertion Uuid to Guid. Ignored. %r\n", __FUNCTION__, Status));
+      }
+
+      DEBUG((DEBUG_ERROR, "[AM] %a - Current -- Target\n", __FUNCTION__));
+      DEBUG((DEBUG_ERROR, "Mfg  %a - %a\n",  DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset)));
+      DEBUG((DEBUG_ERROR, "Pn   %a - %a\n",  DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset)));
+      DEBUG((DEBUG_ERROR, "Sn   %a - %a\n",  DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset)));
+      DEBUG((DEBUG_ERROR, "Uuid %g - %g\n",  &SystemUuid, Data->Var->v2.SystemUuid));
+      if ((0 != CompareMem (DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset),     DeviceId->ManufacturerSize)) ||
+          (0 != CompareMem (DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset), DeviceId->ProductNameSize )) ||
+          (0 != CompareMem (DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset),  DeviceId->SerialNumberSize)) ||
+          (!CompareGuid (&SystemUuid, &Data->Var->v2.SystemUuid)))
+      {
+        Data->StatusCode = EFI_ABORTED;
+        Data->State = PERMISSION_STATE_NOT_CORRECT_TARGET;
+        return Data->StatusCode;
+      }
+      break;
+    default:
+      ASSERT(FALSE);      // Cannot get here
+      Data->State = PERMISSION_STATE_DATA_INVALID;
+      Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
+      return EFI_INCOMPATIBLE_VERSION;
+      break;
   }
 
+  DEBUG((DEBUG_INFO, "%a - Session ID = 0x%X\n", __FUNCTION__, Data->SessionId));
 
   Status = mAuthenticationProtocol->AuthWithSignedData(mAuthenticationProtocol, (UINT8*)Data->Var, SignedDataLength, SignaturePtr, &(Data->IdentityToken));
   if (EFI_ERROR(Status))
@@ -237,9 +319,9 @@ IN PERMISSION_INSTANCE_DATA *Data)
   UINTN                       Version = 0;
   UINTN                       Lsv = 0;
   UINTN                       NewLsv = 0;
-  DFCI_IDENTITY_PROPERTIES      IdProps;
+  DFCI_IDENTITY_PROPERTIES    IdProps;
   BOOLEAN                     AppendToExistingPermission = FALSE;
-  DFCI_PERMISSION_MASK          PMask = 0;
+  DFCI_PERMISSION_MASK        PMask = 0;
 
   if (Data == NULL)
   {
@@ -272,13 +354,13 @@ IN PERMISSION_INSTANCE_DATA *Data)
     return Data->StatusCode;
   }
 
-  StrLen = AsciiStrnLenS((CHAR8*)(&(Data->Var->Payload)), Data->Var->PayloadSize);
-  DEBUG((DEBUG_INFO, "%a - StrLen = 0x%X PayloadSize = 0x%X\n", __FUNCTION__, StrLen, Data->Var->PayloadSize));
+  StrLen = AsciiStrnLenS((CHAR8*)(Data->Payload), Data->PayloadSize);
+  DEBUG((DEBUG_INFO, "%a - StrLen = 0x%X PayloadSize = 0x%X\n", __FUNCTION__, StrLen, Data->PayloadSize));
 
   //
   // Create Node List from input
   //
-  Status = CreateXmlTree((CONST CHAR8 *)Data->Var->Payload, StrLen, &InputRootNode);
+  Status = CreateXmlTree((CONST CHAR8 *)Data->Payload, StrLen, &InputRootNode);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Couldn't create a node list from the payload xml  %r\n", __FUNCTION__, Status));
@@ -419,7 +501,7 @@ IN PERMISSION_INSTANCE_DATA *Data)
   for (Link = InputPermissionsListNode->ChildrenListHead.ForwardLink; Link != &(InputPermissionsListNode->ChildrenListHead); Link = Link->ForwardLink)
   {
     XmlNode *NodeThis = NULL;
-    DFCI_SETTING_ID_ENUM Id = 0;
+    DFCI_SETTING_ID_STRING Id = 0;
     DFCI_PERMISSION_MASK  Mask = 0;  
     DFCI_PERMISSION_ENTRY *Entry = NULL;
 
@@ -434,7 +516,7 @@ IN PERMISSION_INSTANCE_DATA *Data)
       goto EXIT;
     }
 
-    DEBUG((DEBUG_INFO, "%a - Setting Permission for ID %d to 0x%X\n", __FUNCTION__, Id, Mask));
+    DEBUG((DEBUG_INFO, "%a - Setting Permission for ID %a to 0x%X\n", __FUNCTION__, Id, Mask));
 
     //Check if it already exists
     Entry = FindPermissionEntry(Data->Store, Id);
@@ -506,12 +588,12 @@ IN PERMISSION_INSTANCE_DATA *Data
   }
 
   ResultVar->HeaderSignature = DFCI_PERMISSION_POLICY_RESULT_VAR_SIGNATURE;
-  ResultVar->HeaderVersion = DFCI_PERMISSION_POLICY_VAR_VERSION;
+  ResultVar->HeaderVersion = DFCI_PERMISSION_POLICY_RESULT_VERSION;
   ResultVar->Status = Data->StatusCode;
   ResultVar->SessionId = Data->SessionId;
   
   //save var to var store
-  Status = gRT->SetVariable(DFCI_PERMISSION_POLICY_RESULT_VAR_NAME, &gDfciPermissionManagerVarNamespace, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES, VarSize, ResultVar);
+  Status = gRT->SetVariable(DFCI_PERMISSION_POLICY_RESULT_VAR_NAME, &gDfciPermissionManagerVarNamespace, DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES, VarSize, ResultVar);
   DEBUG((DEBUG_INFO, "%a - Writing Variable for Results %r\n", __FUNCTION__, Status));
 
   if (ResultVar)
@@ -578,7 +660,7 @@ CheckForPendingPermissionChanges()
 
   EFI_STATUS Status;
 
-  PERMISSION_INSTANCE_DATA InstanceData = { NULL, 0, 0, FALSE, PERMISSION_STATE_UNINITIALIZED, EFI_SUCCESS, DFCI_AUTH_TOKEN_INVALID, NULL };
+  PERMISSION_INSTANCE_DATA InstanceData = { NULL, 0, 0, FALSE, PERMISSION_STATE_UNINITIALIZED, EFI_SUCCESS, DFCI_AUTH_TOKEN_INVALID, 0, NULL, NULL };
   InstanceData.Store = mPermStore;
 
   if (mAuthenticationProtocol == NULL)
