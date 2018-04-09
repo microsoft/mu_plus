@@ -310,25 +310,35 @@ MorControlVariableShouldHaveCorrectAttributes (
 
 UNIT_TEST_STATUS
 EFIAPI
+MorControlShouldNotBeDeletable (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  EFI_STATUS        Status;
+
+  Status  = gRT->SetVariable( MEMORY_OVERWRITE_REQUEST_VARIABLE_NAME,
+                              &gEfiMemoryOverwriteControlDataGuid,
+                              0,
+                              0,
+                              NULL );
+
+  UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
+  return UNIT_TEST_PASSED;
+	
+} // MorControlShouldNotBeDeletable()
+
+
+UNIT_TEST_STATUS
+EFIAPI
 MorControlShouldEnforceCorrectAttributes (
   IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
   EFI_STATUS        Status;
-  UINT8             Data;
-
-  // First, we have to try to delete the Control variable,
-  // given that it should exist.
-  Status    = gRT->SetVariable( MEMORY_OVERWRITE_REQUEST_VARIABLE_NAME,
-                                &gEfiMemoryOverwriteControlDataGuid,
-                                0,
-                                0,
-                                NULL );
-  UT_ASSERT_NOT_EFI_ERROR( Status );
-
-  // Then we want to try to set it with bad attributes.
-  Data    = FALSE;
+  UINT8             Data = FALSE;
+  
   Status  = gRT->SetVariable( MEMORY_OVERWRITE_REQUEST_VARIABLE_NAME,
                               &gEfiMemoryOverwriteControlDataGuid,
                               MOR_VARIABLE_BAD_ATTRIBUTES1,
@@ -1282,6 +1292,7 @@ MorLockTestApp (
   AddTestCase( EnvironmentalTests, L"On any given boot, the MOR control variable should exist", L"Security.MOR.ControlExists", MorControlVariableShouldExist, NULL, NULL, NULL );
   AddTestCase( EnvironmentalTests, L"MOR control variable should be the correct size", L"Security.MOR.ControlSize", MorControlVariableShouldHaveCorrectSize, NULL, NULL, NULL );
   AddTestCase( EnvironmentalTests, L"MOR control variable should have correct attributes", L"Security.MOR.ControlAttributesCorrect", MorControlVariableShouldHaveCorrectAttributes, NULL, NULL, NULL );
+  AddTestCase( EnvironmentalTests, L"Should not be able to delete MOR control variable", L"Security.MOR.ControlCannotDelete", MorControlShouldNotBeDeletable, NULL, NULL, NULL );
   AddTestCase( EnvironmentalTests, L"Should not be able to create MOR control variable with incorrect attributes", L"Security.MOR.ControlAttributesCreate", MorControlShouldEnforceCorrectAttributes, NULL, UnitTestCleanupReboot, NULL );
 
   // IMPORTANT NOTE: On a reboot test, currently, prereqs will be run each time the test is continued. Ergo, a prereq that may be
