@@ -182,8 +182,6 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
           //continue anyway and hope for the best :)
         }
       }
-      (*Store)->Version = VAR_VERSION_V2;
-      (*Store)->Lsv = VAR_VERSION_V2;
       SaveToFlash (*Store);  // Complete the translation from V1 to V2
       DEBUG((DEBUG_INFO, "%a - Permission store converted to V2.\n", __FUNCTION__));
       break;
