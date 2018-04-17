@@ -45,7 +45,6 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   ShellPkg/ShellPkg.dec
-  MsSurfaceModulePkg/MsSurfaceModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
 
 
