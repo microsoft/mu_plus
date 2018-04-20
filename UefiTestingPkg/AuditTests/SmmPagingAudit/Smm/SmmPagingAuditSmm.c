@@ -262,7 +262,7 @@ GetFlatPageTableData (
     PdeEntries[MyPdeCount-1] = (UINT64)Pml4;
   }
 
-  for (Index4 = 0x0; Index4 < 0x1FF; Index4 ++) {
+  for (Index4 = 0x0; Index4 < 0x200; Index4 ++) {
     if (!Pml4[Index4].Bits.Present) {
       continue;
     }
@@ -273,7 +273,7 @@ GetFlatPageTableData (
     if (MyPdeCount <= *PdeCount) {
       PdeEntries[MyPdeCount-1] = (UINT64)Pte1G;
     }
-    for (Index3 = 0x0;  Index3 < 0x1FF; Index3 ++ ) {
+    for (Index3 = 0x0;  Index3 < 0x200; Index3 ++ ) {
       if (!Pte1G[Index3].Bits.Present) {
         NumPage1GNotPresent++;
         continue;
@@ -295,7 +295,7 @@ GetFlatPageTableData (
         if (MyPdeCount <= *PdeCount) {
           PdeEntries[MyPdeCount-1] = (UINT64)Pte2M;
         }
-        for (Index2 = 0x0; Index2 < 0x1FF; Index2 ++ ) {
+        for (Index2 = 0x0; Index2 < 0x200; Index2 ++ ) {
           if (!Pte2M[Index2].Bits.Present) {
             NumPage2MNotPresent++;
             continue;
@@ -309,7 +309,7 @@ GetFlatPageTableData (
             if (MyPdeCount <= *PdeCount) {
               PdeEntries[MyPdeCount-1] = (UINT64)Pte4K;
             }
-            for (Index1 = 0x0; Index1 < 0x1FF; Index1 ++ ) {
+            for (Index1 = 0x0; Index1 < 0x200; Index1 ++ ) {
               if (!Pte4K[Index1].Bits.Present) {
                 NumPage4KNotPresent++;
                 continue;

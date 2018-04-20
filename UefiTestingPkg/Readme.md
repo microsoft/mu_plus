@@ -1,7 +1,6 @@
 
 # UEFI Testing Package
-## &#x1F539; Copyright
-Copyright (c) 2017, Microsoft Corporation
+Copyright (c) 2018, Microsoft Corporation
 
 All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -22,6 +21,10 @@ requirements.  The MAT has strict requirements to allow OS usage and page protec
 ### MorLockTestApp
 This test verifies the UEFI variable store handling of MorLock v1 and v2 behavior. 
 
+### SmmPagingProtections
+This test verifies the SMM paging attributes by invoking operations that should cause cpu exceptions if the memory protections are in place.  The SMM cpu exception handler needs to be configured to force reset on trap to allow automated testing.  
+See _UefiCpuPkg/Include/Protocol/SmmExceptionTestProtocol.h_, _gUefiCpuPkgTokenSpaceGuid.PcdSmmExceptionRebootInsteadOfHaltDefault_, and _gUefiCpuPkgTokenSpaceGuid.PcdSmmExceptionTestModeSupport_.  
+
 ## &#x1F539; System Audit tests 
 UEFI applications that collect data from the system and then that data can be used to
 compare against known good values.  
@@ -30,7 +33,7 @@ compare against known good values.
 Audit collection tool that gathers information about UEFI variables.  This allows
 auditing the variables within a system, checking attributes, and confirming
 read/write status.  This information is put into an XML file that allows for
-easy comparison and programatic auditing.  
+easy comparison and programmatic auditing.  
 #### UEFI
 UEFI shell application that gets the current variable information from the UEFI 
 shell and creates an XML file. 
