@@ -124,7 +124,7 @@ SetProviderValueFromAscii(
     }
     else
     {
-      DEBUG((DEBUG_ERROR, "Invalid Settings Ascii Value for Type Eanble (%a)\n", Value));
+      DEBUG((DEBUG_ERROR, "Invalid Settings Ascii Value for Type Enable (%a)\n", Value));
       return EFI_INVALID_PARAMETER;
     }
 

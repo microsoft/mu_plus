@@ -1023,7 +1023,7 @@ GetRequestUrl (
         return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = AsciiStrToUnicodeStrS (Dfci->DeviceId->SerialNumber, MachineId, MachineIdSize);
+    Status = AsciiStrToUnicodeStrS (Dfci->DeviceId->SerialNumber, MachineId, Dfci->DeviceId->SerialNumberSize);
     if (EFI_ERROR(Status)) {
         FreePool (MachineId);
         DEBUG((DEBUG_ERROR,"Unable to convert Ascii SerialNumber to Unicode. Code=%r\n",Status));
@@ -1043,7 +1043,7 @@ GetRequestUrl (
         return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = AsciiStrToUnicodeStrS (Dfci->Url, WorkUrl, WorkUrlSize);
+    Status = AsciiStrToUnicodeStrS (Dfci->Url, WorkUrl, Dfci->UrlSize);
     if (EFI_ERROR(Status)) {
         FreePool (MachineId);
         FreePool (WorkUrl);

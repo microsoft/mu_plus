@@ -165,7 +165,7 @@ SetStringEntry (
         return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = AsciiStrToUnicodeStrS (StringValue, WideString, WideStringSize);
+    Status = AsciiStrToUnicodeStrS (StringValue, WideString, StringSize);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Unable to conver Ascii to Unicode. Code=%r\n", Status));
     } else if (IdName != HiiSetString (gDfciMenuPrivate.HiiHandle, IdName, WideString, NULL)) {

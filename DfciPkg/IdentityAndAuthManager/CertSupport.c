@@ -72,7 +72,7 @@ GetSubjectName(
     goto CLEANUP;
   }
 
-  AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize * sizeof(CHAR16));
+  AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize);
 
  CLEANUP:
   if (AsciiName)
@@ -149,7 +149,7 @@ GetIssuerName(
     goto CLEANUP;
   }
 
-  AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize * sizeof(CHAR16));
+  AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize);
 
  CLEANUP:
   if (AsciiName)

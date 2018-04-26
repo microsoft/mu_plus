@@ -37,9 +37,9 @@
 //This is used for permission only - Identity can perform recovery challenge/response operation
 #define DFCI_SETTING_ID__DFCI_RECOVERY  "Dfci.SemmRecovery.Enable"
 
-#define DFCI_SETTING_ID__DFCI_URL       "Dfci.RecoveryUrl.String"        // NO Preboot UI
-#define DFCI_SETTING_ID__DFCI_URL_CERT  "Dfci.HttpsCert.String_Binary"   // NO Preboot UI
-#define DFCI_SETTING_ID__DFCI_HWID      "Dfci.Hwid.String"               // NO Preboot UI
+#define DFCI_SETTING_ID__DFCI_URL       "Dfci.RecoveryUrl.String"
+#define DFCI_SETTING_ID__DFCI_URL_CERT  "Dfci.HttpsCert.String_Binary"
+#define DFCI_SETTING_ID__DFCI_HWID      "Dfci.Hwid.String"
 
 
 
