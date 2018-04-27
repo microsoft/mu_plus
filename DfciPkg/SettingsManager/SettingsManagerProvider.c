@@ -9,7 +9,9 @@
 
 LIST_ENTRY  mProviderList = INITIALIZE_LIST_HEAD_VARIABLE(mProviderList);  //linked list for the providers
 
+static DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
 
+#define CERT_STRING_SIZE (200)
 
 /**
 Helper function to return the string describing the type enum
@@ -38,6 +40,9 @@ ProviderTypeAsAscii(DFCI_SETTING_TYPE Type)
 
     case DFCI_SETTING_TYPE_BINARY:
       return "BINARY TYPE";
+
+  case DFCI_SETTING_TYPE_CERT:
+    return "CERT TYPE";
   }
 
   return "UNKNOWN TYPE";
@@ -105,6 +110,7 @@ SetProviderValueFromAscii(
   UINT8             *ByteArray = NULL;
   UINTN              ValueSize;
   EFI_STATUS         Status;
+  UINTN              b64Size;
 
   switch (Provider->Type)
   {
@@ -229,26 +235,30 @@ SetProviderValueFromAscii(
       break;
 
   case DFCI_SETTING_TYPE_BINARY:
+  case DFCI_SETTING_TYPE_CERT:    // On writes, CERTS are binary blobs
 
-      ValueSize = AsciiStrnLenS (Value, MAX_ALLOWABLE_VAR_INPUT_SIZE) / 2;
+      b64Size = AsciiStrnLenS (Value, MAX_ALLOWABLE_VAR_INPUT_SIZE);
 
-      ByteArray = (UINT8 *)AllocateZeroPool(ValueSize);
-      if (NULL == ByteArray)
+      Status = Base64_Decode (Value, b64Size, NULL, &ValueSize);
+      if (Status != EFI_BUFFER_TOO_SMALL)
       {
-        return EFI_OUT_OF_RESOURCES;
+        DEBUG((DEBUG_ERROR, "Cannot query binary blob size. Code = %r\n",Status));
+        return EFI_INVALID_PARAMETER;
       }
 
-      Status = AsciitoHexByteArray(Value, ByteArray, ValueSize);
+      ByteArray = (UINT8 *) AllocatePool (ValueSize);
 
+      Status = Base64_Decode (Value, b64Size, ByteArray, &ValueSize);
       if (EFI_ERROR(Status))
       {
-          DEBUG((DEBUG_ERROR, "Cannot set binary data. Invalid Character Present \n"));
-          return EFI_INVALID_PARAMETER;
+          FreePool (ByteArray);
+          DEBUG((DEBUG_ERROR, "Cannot set binary data. Code=%r\n",Status));
+          return Status;
       }
 
-      DEBUG((DEBUG_INFO, "Setting BINARY data\n", Value));
-      DEBUG_BUFFER(DEBUG_ERROR, Value, ValueSize, DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII);
       SetValue = ByteArray;
+      DEBUG((DEBUG_INFO, "Setting BINARY data\n"));
+      DEBUG_BUFFER(DEBUG_ERROR, SetValue, ValueSize, DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII);
       break;
 
   default:
@@ -287,10 +297,14 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
 
   EFI_STATUS Status;
   CHAR8     *Value = NULL;
+  UINTN      AsciiSize;
   UINT8     *Buffer;
   BOOLEAN    v = FALSE; //Boolean Types
   UINT8      b = 0xFF;    //Byte types (small enum)
   UINTN      ValueSize;
+  UINTN      ThumbprintLen;
+  DFCI_CERT_STRINGS CertInfo;
+
 
   switch (Provider->Type)
   {
@@ -480,7 +494,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
           Status = Provider->GetDefaultValue(Provider, &ValueSize, NULL);
       }
       if (EFI_BUFFER_TOO_SMALL != Status) {
-          DEBUG((DEBUG_ERROR, "Failed - Expected Buffer Too Small for ID %a Status = %r\n", Provider->Id, Status));
+          DEBUG((DEBUG_ERROR, "Failed - Expected Buffer Too Small Current=%d for ID %a Status = %r\n", Current, Provider->Id, Status));
           break;
       }
 
@@ -513,6 +527,113 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
           Value = NULL;
           DEBUG((DEBUG_ERROR, "String too long for String type\n"));
           break;
+      }
+
+      break;
+
+    case DFCI_SETTING_TYPE_CERT:
+
+      ValueSize = 0;
+      Buffer = NULL;
+      Value = NULL;
+      if (Current) {
+          Status = Provider->GetSettingValue(Provider, &ValueSize, NULL);
+      } else {
+          Status = Provider->GetDefaultValue(Provider, &ValueSize, NULL);
+      }
+      if (EFI_BUFFER_TOO_SMALL != Status) {
+          DEBUG((DEBUG_ERROR, "Failed - Expected Buffer Too Small for Current=%d, ID %a Status = %r\n", Current, Provider->Id, Status));
+          break;
+      }
+
+      if (0 == ValueSize ) {
+        break;                   // Return NULL for Value silently
+      }
+
+      if (ValueSize > MAX_ALLOWABLE_VAR_INPUT_SIZE)
+      {
+        DEBUG((DEBUG_ERROR, "Failed - Incorrect size for ID %a\n", Provider->Id));
+        break;
+      }
+
+      Buffer = AllocatePool (ValueSize);
+      if (NULL == Buffer) {
+          DEBUG((DEBUG_ERROR, "Failed - to allocate buffer for ID %a\n", Provider->Id));
+          break;
+      }
+
+      if (Current) {
+          Status = Provider->GetSettingValue (Provider, &ValueSize, Buffer);
+      } else {
+          Status = Provider->GetDefaultValue (Provider, &ValueSize, Buffer);
+      }
+
+      if (EFI_ERROR(Status )) {
+          FreePool (Buffer);
+          DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
+          break;
+      }
+
+      if (mAuthenticationProtocol == NULL)  {
+          Status = gBS->LocateProtocol(&gDfciAuthenticationProtocolGuid,
+                                       NULL,
+                                       (VOID **)&mAuthenticationProtocol);
+          if (EFI_ERROR(Status))
+          {
+              DEBUG((DEBUG_ERROR, "%a - Failed to locate Authentication Protocol. Code=%r\n", __FUNCTION__, Status));
+              mAuthenticationProtocol = NULL;
+              FreePool (Buffer);
+              return NULL;
+          }
+      }
+
+      CertInfo.IssuerString = NULL;
+      CertInfo.SubjectString = NULL;
+      CertInfo.ThumbprintString = NULL;
+
+      Status = mAuthenticationProtocol->GetCertInfo (mAuthenticationProtocol, 0, Buffer, ValueSize, &CertInfo);
+      if (EFI_ERROR(Status)) {
+          FreePool (Buffer);
+          Value = NULL;
+          DEBUG((DEBUG_ERROR, "Error cgetting certificate infor. Status = %r\n", Status));
+          break;
+      }
+      FreePool (Buffer);
+
+      ValueSize = 0;
+      ThumbprintLen = 0;
+      if (NULL != CertInfo.ThumbprintString) {
+          ValueSize = StrnLenS(CertInfo.ThumbprintString, CERT_STRING_SIZE);
+      }
+
+      Value = NULL;
+      if (ValueSize > 0) {
+          ValueSize += sizeof(CHAR8); // Allow for a terminating NULL
+
+          Value = AllocatePool(ValueSize);
+          Status = UnicodeStrToAsciiStrS(CertInfo.ThumbprintString, Value, ValueSize);
+          if (EFI_ERROR(Status)){
+              FreePool (Value);
+              DEBUG((DEBUG_ERROR,"Unable to build Cert Identifier string.\n"));
+              Value = NULL;
+          }
+      } else {
+          DEBUG((DEBUG_ERROR, "Unable to get any strings from the certificate\n"));
+          ValueSize = sizeof("No Cert information available");
+          Value = AllocatePool (ValueSize);
+          if (NULL != Value) {
+              AsciiStrnCpyS(Value, ValueSize, "No Cert information available", ValueSize-1);
+          }
+      }
+
+      if (NULL != CertInfo.SubjectString) {
+          FreePool (CertInfo.SubjectString);
+      }
+      if (NULL != CertInfo.IssuerString) {
+          FreePool(CertInfo.IssuerString);
+      }
+      if (NULL != CertInfo.ThumbprintString) {
+          FreePool(CertInfo.ThumbprintString);
       }
 
       break;
@@ -559,19 +680,23 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
             DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
             break;
         }
-
-        Value = AllocatePool (ValueSize * 2 + 1 );
-
-        Status = HexByteArraytoAscii(Buffer, ValueSize, Value);
-
-        FreePool (Buffer);
-        if (EFI_ERROR(Status)) {
-            FreePool (Value);
-            Value = NULL;
-            DEBUG((DEBUG_ERROR, "Error converting Binary to Ascii for ID %a. Status = %r\n", Provider->Id, Status));
-            break;
+        Status = Base64_Encode(Buffer, ValueSize, NULL, &AsciiSize);
+        if (Status != EFI_BUFFER_TOO_SMALL) {
+            DEBUG((DEBUG_ERROR,"Cannot query ascii String size. Code = %r\n", Status) );
+            return NULL;
         }
 
+        Value = (CHAR8 *)AllocatePool(ValueSize);
+
+        Status = Base64_Encode(Buffer, ValueSize, Value, &AsciiSize);
+        if (EFI_ERROR(Status)) {
+            FreePool(Value);
+            FreePool(Buffer);
+            DEBUG((DEBUG_ERROR,"Cannot set ascii data. Code=%r\n", Status));
+            return NULL;
+        }
+
+        FreePool (Buffer);
         break;
 
     default: 

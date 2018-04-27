@@ -42,6 +42,4 @@
 #define DFCI_SETTING_ID__DFCI_HWID      "Dfci.Hwid.String"
 
 
-
-
 #endif //  __DFCI_SETTINGS_H__

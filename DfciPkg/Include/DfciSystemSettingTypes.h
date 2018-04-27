@@ -34,7 +34,8 @@ typedef enum {
   DFCI_SETTING_TYPE_PASSWORD,
   DFCI_SETTING_TYPE_USBPORTENUM,
   DFCI_SETTING_TYPE_STRING,             // CHAR8 string
-  DFCI_SETTING_TYPE_BINARY              // Opaque Binary Data
+  DFCI_SETTING_TYPE_BINARY,             // Opaque Binary Data
+  DFCI_SETTING_TYPE_CERT                // Opaque Binary Data on write, Thumbprint text on read
 } DFCI_SETTING_TYPE;
 
 //

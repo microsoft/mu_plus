@@ -204,42 +204,44 @@ DfciSettingsSet (
     BufferSize = 0;
     Status = DfciSettingsGet (This, &BufferSize, NULL);
 
-    if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Error getting %s. Code=%r\n", VariableName, Status));
-        return Status;
-    }
-
-    if ((BufferSize == 0) && (ValueSize == 0)) {
-        *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-        DEBUG((DEBUG_INFO, "Setting %s ignored, sizes are 0\n", VariableName));
-        return EFI_SUCCESS;
-    }
-
-    if (BufferSize == ValueSize) {
-        Buffer = AllocatePool (BufferSize);
-        if (NULL == Buffer) {
-            DEBUG((DEBUG_ERROR, __FUNCTION__ " - Cannot allocate %d bytes.%r\n", BufferSize));
-            return EFI_OUT_OF_RESOURCES;
-        }
-
-        Status = gRT->GetVariable (VariableName,
-                                  &gDfciSettingsGuid,
-                                   NULL,
-                                  &BufferSize,
-                                   Buffer );
-        if (EFI_ERROR(Status)) {
-            FreePool (Buffer);
-            DEBUG((DEBUG_ERROR, __FUNCTION__ " - Error getting variable %s. Code=%r\n", VariableName, Status));
+    if (Status != EFI_NOT_FOUND) {
+        if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
+            DEBUG((DEBUG_ERROR, __FUNCTION__ " - Error getting %s. Code=%r\n", VariableName, Status));
             return Status;
         }
 
-        if (0 == CompareMem(Buffer, Value, BufferSize)) {
-            FreePool (Buffer);
+        if ((BufferSize == 0) && (ValueSize == 0)) {
             *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-            DEBUG((DEBUG_INFO, "Setting %s ignored, value didn't change\n", VariableName));
+            DEBUG((DEBUG_INFO, "Setting %s ignored, sizes are 0\n", VariableName));
             return EFI_SUCCESS;
         }
-        FreePool (Buffer);
+
+        if (BufferSize == ValueSize) {
+            Buffer = AllocatePool (BufferSize);
+            if (NULL == Buffer) {
+                DEBUG((DEBUG_ERROR, __FUNCTION__ " - Cannot allocate %d bytes.%r\n", BufferSize));
+                return EFI_OUT_OF_RESOURCES;
+            }
+
+            Status = gRT->GetVariable (VariableName,
+                                      &gDfciSettingsGuid,
+                                       NULL,
+                                      &BufferSize,
+                                       Buffer );
+            if (EFI_ERROR(Status)) {
+                FreePool (Buffer);
+                DEBUG((DEBUG_ERROR, __FUNCTION__ " - Error getting variable %s. Code=%r\n", VariableName, Status));
+                return Status;
+            }
+
+            if (0 == CompareMem(Buffer, Value, BufferSize)) {
+                FreePool (Buffer);
+                *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+                DEBUG((DEBUG_INFO, "Setting %s ignored, value didn't change\n", VariableName));
+                return EFI_SUCCESS;
+            }
+            FreePool (Buffer);
+        }
     }
 
     Status = gRT->SetVariable (VariableName,
@@ -477,7 +479,7 @@ DfciSettingsProviderSupportProtocolNotify (
     }
 
     mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__DFCI_URL_CERT;
-    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_BINARY;
+    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_CERT;
     mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
     Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
     if (EFI_ERROR(Status)) {

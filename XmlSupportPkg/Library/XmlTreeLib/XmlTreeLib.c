@@ -1094,7 +1094,21 @@ BuildNodeList(
     else if (Next.State == XTSS_STREAM_HYPERSPACE)
     {
       BOOLEAN NotWhiteSpace = FALSE;
-      Status = AsciiStrnCpyS(HyperSpace, ARRAYSIZE(HyperSpace), (CHAR8*)Next.Run.pvData, (UINTN)Next.Run.ulCharacters);
+// MS_CHANGE  [begin]
+      CHAR8   *LocalHyperSpace;
+      UINTN   LocalSize;
+      UINTN    TempSize;
+      LocalHyperSpace = (CHAR8 *)Next.Run.pvData;
+
+      LocalSize =  (UINTN)Next.Run.ulCharacters;
+      TempSize = LocalSize;
+      if (TempSize >= MAX_PATH)
+      {
+        TempSize = MAX_PATH - 1 ;
+      }
+
+      Status = AsciiStrnCpyS(HyperSpace, ARRAYSIZE(HyperSpace), (CHAR8*)Next.Run.pvData, TempSize);
+// MS_CHANGE [end]
       if (EFI_ERROR(Status))
       {
         goto Exit;
@@ -1105,20 +1119,32 @@ BuildNodeList(
       //
       for (UINT32 i = 0; i < Next.Run.ulCharacters; i++)
       {
-        if (!IsWhiteSpace(HyperSpace[i]))
+        if (!IsWhiteSpace(LocalHyperSpace[i]))                    // MS_CHANGE
         {
           NotWhiteSpace = TRUE;
           break;
+        } else {                                                  // MS_CHANGE
+          LocalSize--;           // Trim leading whitespace       // MS_CHANGE
+          LocalHyperSpace++;                                      // MS_CHANGE
         }
       }
 
       if (NotWhiteSpace)
-      {
+      {                                                           // MS_CHANGE
+        for (UINTN i = LocalSize-1; i > 0; i--)                   // MS_CHANGE
+        {                                                         // MS_CHANGE
+          if (!IsWhiteSpace(LocalHyperSpace[i]))                  // MS_CHANGE
+          {                                                       // MS_CHANGE
+            break;                                                // MS_CHANGE
+          } else {                                                // MS_CHANGE
+            LocalSize--;       // Trim trailing whitespace        // MS_CHANGE
+          }                                                       // MS_CHANGE
+        }                                                         // MS_CHANGE
         //
         // Allocate memory for the value.  This will be cleaned up when the
         // node is deleted when FreeXmlTree() is called.
         //
-        CHAR8* Value = AllocateZeroPool((UINTN)Next.Run.ulCharacters + 1);
+        CHAR8* Value = AllocateZeroPool(LocalSize + 1);           // MS_CHANGE
         if (Value == NULL)
         {
           Status = EFI_OUT_OF_RESOURCES;
@@ -1126,7 +1152,7 @@ BuildNodeList(
         }
 
         DEBUG((DEBUG_VERBOSE, "Found value %a\n", HyperSpace));
-        Status = AsciiStrCpyS(Value, (UINTN)Next.Run.ulCharacters + 1, HyperSpace);
+        Status = AsciiStrnCpyS(Value, LocalSize + 1, LocalHyperSpace, LocalSize); // MS_CHANGE
         if (EFI_ERROR(Status))
         {
           goto Exit;

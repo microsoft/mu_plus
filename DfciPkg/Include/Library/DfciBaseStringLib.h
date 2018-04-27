@@ -70,5 +70,46 @@ CharToUpper(
 IN      CHAR16                    Char
 );
 
+/**
+ * Convert binary blob to a b64 encoded ascii string
+ *
+ *
+ * @param dataPtr     Input UINT8 data
+ * @param dataLen     Number of UINT8 bytes of data
+ * @param asciiPtr    Pointer to output string buffer.
+ *                    Caller is responsible for passing in buffer of asciiSize
+ * @param asciiSize   Size of ascii buffer.  Set to 0 to get the size needed
+ *
+ * @return EFI_STATUS EFI_SUCCESS             ascii buffer filled in.
+ *                    EFI_INVALID_PARAMETER   dataPtr NULL, asciiSize NULL, dataLen 0.
+ *                    EFI_INVALID_PARAMETER   asciiPtr NULL and asciiSize != 0
+ *                    EFI_BUFFER_TOO_SMALL    asciiSize too small - asciiize set to required size
+ */
+EFI_STATUS
+Base64_Encode(IN  CONST UINT8  *dataPtr,
+              IN        UINTN   dataLen,
+     OPTIONAL OUT       CHAR8  *asciiPtr,
+              IN        UINTN  *asciiSize);
 
+/**
+ * Convert b64 ascii string to binary blob
+ *
+ *
+ * @param dataPtr     Input ASCII characters
+ * @param dataLen     Number of ASCII characters
+ * @param binPtr      Pointer to output buffer.
+ *                    Caller is responsible for passing in buffer of binSize
+ * @param binSize     0 to get the size needed
+ *
+ * @return EFI_STATUS EFI_SUCCESS             binary buffer filled in.
+ *                    EFI_INVALID_PARAMETER   dataPtr NULL, binSize NULL, dataLen 0.
+ *                    EFI_INVALID_PARAMETER   binPtr NULL and binSize != 0
+ *                    EFI_INVALID_PARAMETER   Invalid character in input stream
+ *                    EFI_BUFFER_TOO_SMALL    Buffer length too small - binSize set to required size;
+ */
+EFI_STATUS
+Base64_Decode(IN  CONST UINT8  *dataPtr,
+              IN        UINTN   dataLen,
+     OPTIONAL OUT       UINT8  *binPtr,
+              IN        UINTN  *binSize);
 
