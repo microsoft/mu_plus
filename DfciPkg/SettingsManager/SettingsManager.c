@@ -74,6 +74,10 @@ SystemSettingAccessSet (
   Status = prov->SetSettingValue(prov, ValueSize, Value, Flags);
   if (EFI_ERROR(Status))
   {
+    if (Status == EFI_BAD_BUFFER_SIZE) {
+      DEBUG(( DEBUG_ERROR, __FUNCTION__" - Bad size requested for setting provider!\n" ));
+      ASSERT_EFI_ERROR( Status );
+    }
     DEBUG((DEBUG_ERROR, "Failed to Set Settings\n"));
     return Status;
   }
