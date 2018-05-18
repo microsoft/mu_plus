@@ -27,7 +27,7 @@
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = HeapGuardTestApp
+  BASE_NAME           = HeapGuardFunctionalTestApp
   FILE_GUID           = 0C187938-97DE-4B98-AFBB-A71C43A55F0E
   VERSION_STRING      = 1.0
   MODULE_TYPE         = UEFI_APPLICATION
