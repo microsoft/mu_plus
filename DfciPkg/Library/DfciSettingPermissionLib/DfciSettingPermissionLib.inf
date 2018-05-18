@@ -34,6 +34,7 @@
   DfciSettingPermission.h
   PermissionStoreSupport.c
   DfciSettingPermissionProvisionXml.c #Support reading a Permission Packet in XML format and appling to Permission Store
+  DfciSettingPermissionCurrentPermissionXml.c #Support convertion of current permissions to XML format and
 
 
 [Packages]
@@ -64,6 +65,7 @@
   gDfciPermissionManagerVarNamespace
   gDfciInternalVariableGuid
   gZeroGuid
+
 
 [Depex]
 

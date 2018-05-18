@@ -115,7 +115,7 @@ New_CurrentSettingsPacketNodeList(EFI_TIME *Date);
 EFI_STATUS
 EFIAPI
 SetCurrentSettings(
-  IN CONST XmlNode *ParsentSettingsListNode,
+  IN CONST XmlNode *ParentSettingsListNode,
   IN CONST CHAR8* Id,
   IN CONST CHAR8* Value);
 
@@ -126,7 +126,7 @@ GetCurrentSettingsPacketNode(
 
 EFI_STATUS
 EFIAPI
-AddLsvNode(
+AddSettingsLsvNode(
   IN CONST XmlNode* CurrentSettingsPacketNode,
   IN CONST CHAR8* Lsv);
 

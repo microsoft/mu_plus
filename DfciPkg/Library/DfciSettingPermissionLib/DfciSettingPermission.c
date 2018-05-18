@@ -11,8 +11,6 @@ Copyright (c) 2015, Microsoft Corporation.
 
 DFCI_PERMISSION_STORE        *mPermStore = NULL;
 DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
-EFI_EVENT                     mAuthInstallEvent;
-VOID                         *mAuthInstallEventRegistration = NULL;
 
 
 EFI_STATUS
@@ -239,6 +237,8 @@ DfciPermissionInit(
   )
 {
   EFI_STATUS Status;
+  EFI_EVENT  InitEvent;
+  VOID      *InitRegistration;
 
   //Load Permission Store
   Status = LoadFromFlash(&mPermStore);
@@ -266,12 +266,12 @@ DfciPermissionInit(
 
   //Register notify function for Auth Protocol installed. Auth Protocol will not be installed
   //provisioning is ready to be checked.
-  mAuthInstallEvent = EfiCreateProtocolNotifyEvent(
+  InitEvent = EfiCreateProtocolNotifyEvent(
     &gDfciAuthenticationProtocolGuid,
     TPL_CALLBACK,
     CheckForPermissionUpdate,
     NULL,
-    &mAuthInstallEventRegistration
+    &InitRegistration
     );
 
   DebugPrintPermissionStore(mPermStore);

@@ -22,11 +22,19 @@ PARTICULAR PURPOSE.
 #define PERMISSIONS_LIST_ELEMENT_NAME    "Permissions"
 #define PERMISSIONS_LIST_DEFAULT_ATTRIBUTE_NAME "Default"
 #define PERMISSIONS_LIST_APPEND_ATTRIBUTE_NAME  "Append"
+#define PERMISSIONS_LIST_APPEND_ATTRIBUTE_TRUE_VALUE  "True"
 #define PERMISSION_ELEMENT_NAME          "Permission"
 #define PERMISSION_ID_ELEMENT_NAME       "Id"
 #define PERMISSION_MASK_VALUE_ELEMENT_NAME    "PMask"
 
 
+#define CURRENT_PERMISSION_PACKET_ELEMENT_NAME  "CurrentPermissionsPacket"
+#define CURRENT_PERMISSION_DATE_ELEMENT_NAME    "Date"
+#define CURRENT_PERMISSION_LSV_ELEMENT_NAME     "LSV"
+#define CURRENT_PERMISSION_LIST_ELEMENT_NAME    PERMISSIONS_LIST_ELEMENT_NAME
+#define CURRENT_PERMISSION_ELEMENT_NAME         "PermissionCurrent"
+#define CURRENT_PERMISSION_ID_ELEMENT_NAME      "Id"
+#define CURRENT_PERMISSION_VALUE_ELEMENT_NAME   "PMask"
 
 
 XmlNode*
@@ -34,25 +42,28 @@ EFIAPI
 GetPermissionPacketNode(
   IN CONST XmlNode* RootNode);
 
+XmlNode*
+EFIAPI
+GetCurrentPermissionsPacketNode(
+    IN CONST XmlNode* RootNode);
 
 XmlNode*
 EFIAPI
 GetPermissionsListNodeFromPacketNode(
-  IN CONST XmlNode* PacketNode);
+    IN CONST XmlNode* PacketNode);
 
 EFI_STATUS
 EFIAPI
 GetPermissionsListDefaultPMask(
-  IN CONST XmlNode      *PermissionListNode,
-  OUT DFCI_PERMISSION_MASK  *PMask);
-
-  /**
+    IN CONST XmlNode      *PermissionListNode,
+    OUT DFCI_PERMISSION_MASK  *PMask);
+/**
   Returns true if Permission Entries should be
   appended to existing Permission List
   **/
-  EFI_STATUS
-  EFIAPI
-  PermissionListEntriesAppend(
+EFI_STATUS
+EFIAPI
+PermissionListEntriesAppend(
     IN CONST XmlNode *PermissionListNode,
     OUT BOOLEAN        *Result);
 
@@ -86,5 +97,25 @@ GetInputPermission(
   </Permissions>
 </PermissionPacket>
 */
+
+/**
+Create a new Current Permissions Packet Node List
+**/
+XmlNode *
+EFIAPI
+New_CurrentPermissionsPacketNodeList(EFI_TIME *Date);
+
+EFI_STATUS
+EFIAPI
+SetCurrentPermissions(
+  IN CONST XmlNode *ParentPermissionsListNode,
+  IN CONST CHAR8* Id,
+  IN CONST UINT8  Value);
+
+EFI_STATUS
+EFIAPI
+AddPermissionsLsvNode(
+  IN CONST XmlNode* CurrentPermissionsPacketNode,
+  IN CONST CHAR8* Lsv);
 
 #endif //__DFCI_XML_PERMISSION_SCHEMA_SUPPORT_LIB__

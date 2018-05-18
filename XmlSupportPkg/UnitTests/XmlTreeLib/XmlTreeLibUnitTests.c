@@ -550,6 +550,8 @@ UefiMain(
   AddTestCase(InputTestSuite, L"Fail parsing string with no XML Tags", L"Common.Xml.ParseInvalidString", ParseInValidXml1, NULL, NULL, NULL);
   AddTestCase(InputTestSuite, L"Fail parsing string missing closing element", L"Common.Xml.ParseInvalidString", ParseInValidXml2, NULL, NULL, NULL);
   AddTestCase(InputTestSuite, L"Fail parsing string missing nested closing element", L"Common.Xml.ParseInvalidString", ParseInValidXml3, NULL, NULL, NULL);
+
+  AddTestCase(InputTestSuite, L"Parse Valid XML with a long data element", L"Common.Xml.ParseLongElement", ParseValidXml, NULL, CleanUpXmlTestContext, &LongElementContext);
   //
   // Execute the tests.
   //

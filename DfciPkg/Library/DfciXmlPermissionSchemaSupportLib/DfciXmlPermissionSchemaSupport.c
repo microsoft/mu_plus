@@ -1,7 +1,7 @@
 /** @file
-XmlSettingSchemaSupport
+XmlPermissionSchemaSupport
 
-This library supports the schema used for the Settings Input and Result XML files. 
+This library supports the schema used for the Permissions Input, Current, and Result XML files.
 
 Copyright (c) 2015, Microsoft Corporation. 
 
@@ -13,23 +13,13 @@ Copyright (c) 2015, Microsoft Corporation.
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
 #include <DfciSystemSettingTypes.h>
-#include <Library/DfciXmlSettingSchemaSupportLib.h>
+#include <Library/DfciXmlPermissionSchemaSupportLib.h>
 #include <Library/BaseLib.h>
 
+// YYYY-MM-DDTHH:MM:SS
+#define DATE_STRING_SIZE 20
 
-
-
-
-#define PERMISSIONS_PACKET_ELEMENT_NAME  "PermissionsPacket"
-#define PERMISSIONS_VERSION_ELEMENT_NAME "Version"
-#define PERMISSIONS_LSV_ELEMENT_NAME     "LowestSupportedVersion"
-#define PERMISSIONS_LIST_ELEMENT_NAME    "Permissions"
-#define PERMISSIONS_LIST_DEFAULT_ATTRIBUTE_NAME "Default"
-#define PERMISSIONS_LIST_APPEND_ATTRIBUTE_NAME  "Append"
-#define PERMISSIONS_LIST_APPEND_ATTRIBUTE_TRUE_VALUE  "True"
-#define PERMISSION_ELEMENT_NAME          "Permission"
-#define PERMISSION_ID_ELEMENT_NAME       "Id"
-#define PERMISSION_MASK_VALUE_ELEMENT_NAME    "PMask"
+#define CURRENT_XML_TEMPLATE "<?xml version=\"1.0\" encoding=\"utf-8\"?><CurrentPermissionsPacket xmlns=\"urn:UefiSettings-Schema\"></CurrentPermissionsPacket>"
 
 /**
 INTERNAL FUNCTION to covert decimal XML string to permission mask
@@ -69,6 +59,32 @@ IN CONST XmlNode* RootNode)
   return (XmlNode*)RootNode;
 }
 
+XmlNode*
+EFIAPI
+GetCurrentPermissionsPacketNode(
+  IN CONST XmlNode* RootNode)
+{
+  if (RootNode == NULL)
+  {
+    DEBUG((DEBUG_ERROR, "%a - RootNode is NULL\n", __FUNCTION__));
+    return NULL;
+  }
+
+  if (RootNode->XmlDeclaration.Declaration == NULL)
+  {
+    DEBUG((DEBUG_ERROR, "%a - RootNode is not the root node\n", __FUNCTION__));
+    ASSERT(RootNode->XmlDeclaration.Declaration != NULL);
+    return NULL;
+  }
+
+  if (AsciiStrnCmp(RootNode->Name, CURRENT_PERMISSION_PACKET_ELEMENT_NAME, sizeof(CURRENT_PERMISSION_PACKET_ELEMENT_NAME)) != 0)
+  {
+    DEBUG((DEBUG_ERROR, "%a - RootNode is not Current Permissions Packet Element\n", __FUNCTION__));
+    return NULL;
+  }
+  // From root node there should only be 1 sibling which is the Packet Node
+  return (XmlNode*)RootNode;
+}
 
 XmlNode*
 EFIAPI
@@ -196,8 +212,141 @@ OUT DFCI_PERMISSION_MASK *PMask)
   return ConvertAsciiDecimalToPermissionMask(Temp->Value, PMask);
 }
 
+XmlNode *
+EFIAPI
+New_CurrentPermissionsPacketNodeList(EFI_TIME *Date)
+{
+  EFI_STATUS Status;
+  XmlNode *Root = NULL;
+  XmlNode *Temp = NULL;
+  CHAR8  DateString[DATE_STRING_SIZE];
 
 
+  Status = CreateXmlTree(CURRENT_XML_TEMPLATE, sizeof(CURRENT_XML_TEMPLATE) - 1, &Root);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed.  Status %r\n", __FUNCTION__, Status));
+    goto ERROR;
+  }
+
+  // Add current date Node
+  AsciiSPrint(&DateString[0], DATE_STRING_SIZE, "%d-%02d-%02dT%02d:%02d:%02d", Date->Year, Date->Month, Date->Day, Date->Hour, Date->Minute, Date->Second);
+  Status = AddNode(Root, CURRENT_PERMISSION_DATE_ELEMENT_NAME, &DateString[0], &Temp);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to add node for date. %r\n", __FUNCTION__, Status));
+    goto ERROR;
+  }
+
+  // Add PermissionsList Node
+  Status = AddNode(Root, CURRENT_PERMISSION_LIST_ELEMENT_NAME, NULL, &Temp);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to add node for Permissions. %r\n", __FUNCTION__, Status));
+    goto ERROR;
+  }
+
+  //Return the root
+  return Root;
+
+ERROR:
+  if (Root)
+  {
+    FreeXmlTree(&Root);
+    //root will be NULL and null returned
+  }
+  return Root;
+}
+
+///// CURRENT PERMISSIONS
+
+EFI_STATUS
+EFIAPI
+SetCurrentPermissions(
+  IN CONST XmlNode *ParentPermissionsListNode,
+  IN CONST CHAR8* Id,
+  IN CONST UINT8  Value)
+{
+  XmlNode   *Temp = NULL;
+  XmlNode   *Setting = NULL;
+  EFI_STATUS Status;
+  CHAR8      PermString[8];
+
+  if ((ParentPermissionsListNode == NULL) || (Id == NULL))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (AsciiStrnCmp(ParentPermissionsListNode->Name, CURRENT_PERMISSION_LIST_ELEMENT_NAME, sizeof(CURRENT_PERMISSION_LIST_ELEMENT_NAME)) != 0)
+  {
+    DEBUG((DEBUG_ERROR, "%a - Parent Setting Node is not Setting Node List\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //Make the <PermissionCurrent>
+  Status = AddNode((XmlNode*)ParentPermissionsListNode, CURRENT_PERMISSION_ELEMENT_NAME, NULL, &Setting);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to create PermissionCurrent node %r\n", __FUNCTION__, Status));
+    return EFI_DEVICE_ERROR;
+  }
+
+  //Make the <Id>
+  Status = AddNode((XmlNode*)Setting, CURRENT_PERMISSION_ID_ELEMENT_NAME, Id, &Temp);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to create Id node %r\n", __FUNCTION__, Status));
+    return EFI_DEVICE_ERROR;
+  }
+
+  //Make the <Value>
+  Status = AsciiValueToStringS ( PermString,
+                                 sizeof(PermString),
+                                 0,
+                                 Value,
+                                 5);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to convert PMask to integer string %r\n", __FUNCTION__, Status));
+    return EFI_DEVICE_ERROR;
+  }
+
+  Status = AddNode((XmlNode*)Setting, CURRENT_PERMISSION_VALUE_ELEMENT_NAME, PermString, &Temp);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to create Value node %r\n", __FUNCTION__, Status));
+    return EFI_DEVICE_ERROR;
+  }
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+EFIAPI
+AddPermissionsLsvNode(
+  IN CONST XmlNode* CurrentPermissionsPacketNode,
+  IN CONST CHAR8* Lsv)
+{
+  EFI_STATUS Status;
+  if ((CurrentPermissionsPacketNode == NULL) || (Lsv == NULL))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+  //Make sure its our expected node
+  if (AsciiStrnCmp(CurrentPermissionsPacketNode->Name, CURRENT_PERMISSION_PACKET_ELEMENT_NAME, sizeof(CURRENT_PERMISSION_PACKET_ELEMENT_NAME)) != 0)
+  {
+    DEBUG((DEBUG_ERROR, "%a - CurrentPermissionsPacketNode is not Current Permissions Packet Element\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //Add LSV Node
+  Status = AddNode((XmlNode*)CurrentPermissionsPacketNode, CURRENT_PERMISSION_LSV_ELEMENT_NAME, Lsv, NULL);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to create Lsv node %r\n", __FUNCTION__, Status));
+  }
+  return Status;
+}
 
 ////// _ INTERNAL FUNCTIONS - ///////
 EFI_STATUS

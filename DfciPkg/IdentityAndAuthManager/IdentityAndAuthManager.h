@@ -34,6 +34,7 @@ typedef struct {
 }INTERNAL_CERT_DETAILS;
 
 #define MAX_NUMBER_OF_CERTS         (4)
+#define CERT_STRING_SIZE            (200)
 //
 // Because of how nv is stored it is hard to add a new
 // cert index later.  Therefore create two open slots
@@ -360,5 +361,17 @@ EFIAPI
 GetSha1Thumbprint(
   IN CONST UINT8    *TrustedCert,
   UINTN    CertLength);
+
+/**
+ * Populate current identities.  Due to this being new, every boot
+ * needs
+ *
+ * @param Force        TRUE - A change may have occurred. Rebuild current XML
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+PopulateCurrentIdentities(BOOLEAN  Force);
 
 #endif // IDENTITY_AND_AUTH_MANAGER_H

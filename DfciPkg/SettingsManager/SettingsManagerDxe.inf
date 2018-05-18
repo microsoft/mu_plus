@@ -47,7 +47,6 @@
   BaseLib
   DfciXmlSettingSchemaSupportLib
   DfciSettingPermissionLib
-  DfciBaseStringLib
   DfciV1SupportLib
 
 [Guids]

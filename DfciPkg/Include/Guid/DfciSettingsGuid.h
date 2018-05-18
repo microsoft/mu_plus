@@ -15,8 +15,8 @@
 
 **/
 
-#ifndef _DFCI_SETTINGS_H_
-#define _DFCI_SETTINGS_H_
+#ifndef __DFCI_SETTINGS_GUID_H__
+#define __DFCI_SETTINGS_GUID_H__
 
 
 #define DFCI_SETTINGS_URL_NAME       L"DfciUrl"
@@ -31,6 +31,6 @@
 
 extern EFI_GUID gDfciSettingsGuid;
 
-#endif //  _MS_DFCI_SETTINGS_H_
+#endif //  __DFCI_SETTINGS_GUID_H__
 
 

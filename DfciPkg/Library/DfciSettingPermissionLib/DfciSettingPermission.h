@@ -129,4 +129,8 @@ VOID
 EFIAPI
 CheckForPendingPermissionChanges();
 
+EFI_STATUS
+EFIAPI
+PopulateCurrentPermissions(BOOLEAN Force);
+
 #endif // DFCI_SETTING_PERMISSION_H

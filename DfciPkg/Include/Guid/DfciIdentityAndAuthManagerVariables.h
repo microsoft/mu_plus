@@ -17,6 +17,7 @@ extern EFI_GUID gDfciAuthProvisionVarNamespace;
 
 #define DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_NAME          L"SignerProvision"
 #define DFCI_IDENTITY_AUTH_PROVISION_SIGNER_RESULT_VAR_NAME   L"SignerProvisionResult"
+#define DFCI_IDENTITY_AUTH_PROVISION_SIGNER_CURRENT_VAR_NAME  L"SignerProvisionCurrent"
 #define DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES    (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS) 
 
 
@@ -66,7 +67,8 @@ typedef struct {
   UINT32 HeaderSignature;     // 'M', 'S', 'P', 'A'
   UINT8  HeaderVersion;       // 2
   UINT8  Identity;            // Owner = 1, User = 2, User1 = 3, User2 = 4
-  UINT8  rsvd[2];             // Not used - Should be 0
+  UINT8  rsvd1;               // Not used - Should be 0
+  UINT8  rsvd2;               // Not used - Should be 0
   EFI_GUID SystemUuid;        // From SmbiosUuid
   UINT32 SessionId;           // Unique id for this attempt.  This is zero when hashed
   UINT16 SystemMfgOffset;     // Offset to Mfg string in this structure. From SmbiosSystemManufacturer

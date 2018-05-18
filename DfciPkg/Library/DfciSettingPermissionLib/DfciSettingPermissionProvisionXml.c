@@ -674,6 +674,7 @@ CheckForPendingPermissionChanges()
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_INFO, "No Valid Pending Input Permissions\n"));
+    PopulateCurrentPermissions(FALSE);
     goto CLEANUP;
   }
 
@@ -702,6 +703,8 @@ CheckForPendingPermissionChanges()
      }
     
     goto CLEANUP;
+  } else {
+    PopulateCurrentPermissions(TRUE);
   }
   
   //NO Errors. 

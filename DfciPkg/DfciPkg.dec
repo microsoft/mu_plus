@@ -19,10 +19,6 @@
   Include
 
 [LibraryClasses]
-  ##  @libraryclass  Library to implement basic string operations.
-  ##
-  DfciBaseStringLib|Include/Library/DfciBaseStringLib.h
-
   ##  @libraryclass  Library to used to optain platform device
   ##                 information (serial number, UUID etc)
   ##
@@ -59,6 +55,14 @@
   ##  @libraryclass  Library supports the SettingsManager XML schema
   ##
   DfciXmlSettingSchemaSupportLib|Include/Library/DfciXmlSettingSchemaSupportLib.h
+
+  ##  @libraryclass  Library supports the Device Id XML schema
+  ##
+  DfciXmlDeviceIdSchemaSupportLib|Include/Library/DfciXmlDeviceIdSchemaSupportLib.h
+
+  ##  @libraryclass  Library supports the Device Id XML schema
+  ##
+  DfciXmlIdentitySchemaSupportLib|Include/Library/DfciXmlIdentitySchemaSupportLib.h
 
 [Protocols]
   ## DFCI Setting Permission Protocol
@@ -142,9 +146,16 @@
   # Include/Guid/DfciMenuGuid.h
   gDfciMenuFormsetGuid = {0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9 }}
 
+  ## Include/Guid/DfciMenuGuid.h
+  gDfciRecoveryFormsetGuid = {0xcf9873b2, 0xce63, 0x4f63, {0x9a, 0x5f, 0x16, 0x54, 0xe4, 0x01, 0x61, 0xc6 }}
+
   ## DFCI Settings GUID
   # Include/Guid/DfciSettingsGuid
   gDfciSettingsGuid = { 0x9548f732, 0xd482, 0x4a39, { 0x8b, 0x27, 0xcd, 0x99, 0x18, 0x11, 0xba, 0x6a }}
+
+  ## DFCI Device ID Variable GUID
+  # Include/Guid/DfciDeviceIdVariable.h
+  gDfciDeviceIdVarNamespace = { 0x4123a1a9, 0x6f50, 0x4b58, { 0x9c, 0x3d, 0x56, 0xfc, 0x24, 0xc6, 0xc8, 0x9e }}
 
 
 [PcdsFeatureFlag]

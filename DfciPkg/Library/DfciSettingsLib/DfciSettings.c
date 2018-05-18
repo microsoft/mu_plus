@@ -35,6 +35,22 @@ VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
 #define ID_IS_HWID 3
 
 // Forward declarations needed
+/**
+ * Settings Provider GetDefault routine
+ *
+ * @param This
+ * @param ValueSize
+ * @param Value
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+DfciSettingsGetDefault (
+    IN  CONST DFCI_SETTING_PROVIDER     *This,
+    IN  OUT   UINTN                     *ValueSize,
+    OUT       VOID                      *Value
+  );
 
 /**
  * Settings Provider Get routine
@@ -91,16 +107,15 @@ ValidateNvVariable (
 {
     EFI_STATUS  Status;
     UINT32      Attributes = 0;
-    UINTN       BufferSize;
-    VOID       *Buffer;
+    UINTN       ValueSize = 0;
 
-    Status = GetVariable3 (VariableName,
-                           &gDfciSettingsGuid,
-                           &Buffer,
-                           &BufferSize,
-                           &Attributes);
-    if (!EFI_ERROR(Status)) {                             // We have a variable
-        FreePool (Buffer);                                // Don't need it anymore.
+
+    Status = gRT->GetVariable (VariableName,
+                              &gDfciSettingsGuid,
+                              &Attributes,
+                              &ValueSize,
+                               NULL );
+    if (!EFI_ERROR(Status)) {                          // We have a variable
         if (DFCI_SETTINGS_ATTRIBUTES != Attributes) {  // Check if Attributes are wrong
             // Delete invalid URL variable
             Status = gRT->SetVariable (VariableName,
@@ -108,7 +123,7 @@ ValidateNvVariable (
                                        0,
                                        0,
                                        NULL);
-            if (EFI_ERROR(Status)) {                      // What???
+            if (EFI_ERROR(Status)) {                   // What???
                 DEBUG((DEBUG_ERROR, __FUNCTION__ ": Unable to delete invalid variable %s\n",VariableName));
             }
         }
@@ -118,7 +133,7 @@ ValidateNvVariable (
 }
 
 /**
- * Internal function used to initialize the non volatile varialbes.
+ * Internal function used to initialize the non volatile variables.
  *
  * @param
  *
@@ -147,7 +162,7 @@ InitializeNvVariables (
     if (CertOK && UrlOK && HwidOK) {
         Status = EFI_SUCCESS;
     } else {
-        DEBUG((DEBUG_ERROR,"Error initializing DFCI variables. %d:%d:%d\n", (UINTN) UrlOK, (UINTN) CertOK, (UINTN) HwidOK));
+        DEBUG((DEBUG_ERROR,"%a Error initializing DFCI variables. %d:%d:%d\n", __FUNCTION__, (UINTN) UrlOK, (UINTN) CertOK, (UINTN) HwidOK));
         Status = EFI_NOT_FOUND;
     }
 
@@ -182,11 +197,13 @@ DfciSettingsSet (
     INTN            Id;
 
     if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize > DFCI_SETTING_MAXIMUM_SIZE)) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid parameter.\n"));
         return EFI_INVALID_PARAMETER;
     }
 
     Id = IsIdSupported(This->Id);
     if (Id == ID_IS_BAD) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid id(%s).\n",This->Id));
         return EFI_UNSUPPORTED;
     }
 
@@ -216,7 +233,7 @@ DfciSettingsSet (
             return EFI_SUCCESS;
         }
 
-        if (BufferSize == ValueSize) {
+        if ((ValueSize != 0) && (BufferSize == ValueSize)) {
             Buffer = AllocatePool (BufferSize);
             if (NULL == Buffer) {
                 DEBUG((DEBUG_ERROR, __FUNCTION__ " - Cannot allocate %d bytes.%r\n", BufferSize));
@@ -305,8 +322,7 @@ DfciSettingsGet (
                                ValueSize,
                                Value );
     if (EFI_NOT_FOUND == Status) {
-        *ValueSize = 0;
-        Status = EFI_SUCCESS;
+        Status = DfciSettingsGetDefault (This, ValueSize, Value);
     }
 
     if (EFI_ERROR(Status)) {
@@ -346,8 +362,17 @@ DfciSettingsGetDefault (
         return EFI_UNSUPPORTED;
     }
 
-    // DFCI Settings have no default value.
-    *ValueSize = 0;  // Indicate no default
+    if (This->Type == DFCI_SETTING_TYPE_CERT) {
+        *ValueSize = 0;  // Indicate no default
+    } else {
+        if (*ValueSize < sizeof(CHAR8)) {
+            *ValueSize = sizeof(CHAR8);
+            return EFI_BUFFER_TOO_SMALL;
+        }
+        *ValueSize = sizeof(CHAR8);
+        *((CHAR8 *)Value) = '\0';
+    }
+    // DFCI Strings default to "", and CERTs default to not present.
 
     return EFI_SUCCESS;
 }

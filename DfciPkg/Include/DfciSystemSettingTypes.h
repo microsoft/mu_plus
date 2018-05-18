@@ -15,6 +15,8 @@
 //
 //
 
+#define DFCI_FEATURE_VERSION "2"
+
 // Settings are a CHAR8 string
 typedef CONST CHAR8 * DFCI_SETTING_ID_STRING;
 // Maximum number of characters is 96 + a NULL character

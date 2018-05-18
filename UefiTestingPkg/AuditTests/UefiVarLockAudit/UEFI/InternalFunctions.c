@@ -29,25 +29,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LockTestXml.h"
 
 //---------------------------------------------------------------
-// THESE NEXT 3 FUNCTIONs WERE COPIED FROM 
+// THESE NEXT 2 FUNCTIONs WERE COPIED FROM
 // UEFISHELLDEBUG1COMMANDSLIB.  CAN NOT FIND THE FUNCTIONS
 // IN A PUBLIC LIBRARY CLASS. 
 //---------------------------------------------------------------
-
-CHAR16
-EFIAPI
-CharToUpper(
-IN      CHAR16                    Char
-)
-{
-	if (Char >= L'a' && Char <= L'z') {
-		return (CHAR16)(Char - (L'a' - L'A'));
-	}
-
-	return Char;
-}
-
-
 
 UINTN
 EFIAPI

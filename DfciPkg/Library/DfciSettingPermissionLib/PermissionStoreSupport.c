@@ -43,6 +43,13 @@ InitPermStore(DFCI_PERMISSION_STORE **Store)
     //Leave time zeroed by allocate zero pool
   }
   //SavedOn will be zero until it is saved.
+
+  Status = AddPermissionEntry (*Store, DFCI_SETTING_ID__DFCI_RECOVERY, 0);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to disable SemmRecovery. %r\n", __FUNCTION__, Status));
+  }
+
   Status = EFI_SUCCESS;
 
 EXIT:

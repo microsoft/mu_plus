@@ -506,11 +506,10 @@ ValidateAndAuthenticatePendingProvisionData_V2 (
     return Data->StatusCode;
   }
 
-  CopyGuid (&SystemUuid, &gZeroGuid);  // Insure ZeroGuid if no string guid
   Status = AsciiStrToGuid (DeviceId->Uuid, &SystemUuid);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "[AM] %a - Error convertion Uuid to Guid. Ignored. %r\n", __FUNCTION__, Status));
+      DEBUG((DEBUG_ERROR, "[AM] %a - Error convertion Uuid to Guid. Ignored. %r\n", __FUNCTION__, Status));
   }
 
   DEBUG((DEBUG_ERROR, "[AM] %a - Current -- Target\n", __FUNCTION__));
@@ -781,6 +780,7 @@ CheckForNewProvisionInput (
   Status = GetPendingProvisionData(&Data);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_INFO, "No valid pending Input settings\n"));
+    PopulateCurrentIdentities(FALSE);
     goto CLEANUP;
   }
 
@@ -883,6 +883,7 @@ CheckForNewProvisionInput (
     DEBUG((DEBUG_ERROR, "ApplyProvisionData failed %r\n", Status));
     goto CLEANUP;
   }
+  PopulateCurrentIdentities (TRUE);
 
 CLEANUP:
   DeleteProvisionVariable(&Data);

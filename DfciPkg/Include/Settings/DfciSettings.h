@@ -38,7 +38,7 @@
 #define DFCI_SETTING_ID__DFCI_RECOVERY  "Dfci.SemmRecovery.Enable"
 
 #define DFCI_SETTING_ID__DFCI_URL       "Dfci.RecoveryUrl.String"
-#define DFCI_SETTING_ID__DFCI_URL_CERT  "Dfci.HttpsCert.String_Binary"
+#define DFCI_SETTING_ID__DFCI_URL_CERT  "Dfci.HttpsCert.Cert"
 #define DFCI_SETTING_ID__DFCI_HWID      "Dfci.Hwid.String"
 
 

@@ -79,7 +79,27 @@ CONST CHAR8 SimpleElementsOnly[] =
 "  </Gen1Node>"
 "</RootNode>";
 
+CONST CHAR8 LongElement[] =
+"<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+"<RootNode>"
+"  <Gen1Node>Gen1Node1 contents</Gen1Node>"
+"  <Gen1Node>Gen1Node2 contents "
+"    <Gen2Node>Gen2Node1 contents</Gen2Node>"
+"    <LongNodeData>"
+"       MIIDrjCCApqgAwIBAgIQc0nOztwB5qNLayWxmLzFhTAJBgUrDgMCHQUAMEwxCzAJBgNVBAYTAlVTMR4wHAYDVQQKExVNaWNyb3NvZnQgQ29ycG9yYXRpb24xHTAbBgNVBAMeFABEAEYAQwBJAF8ASABUAFQAUABTMB4XDTE4MDUwMjE1NDczMVoXDTM5MTIzMTIzNTk1OVowTDELMAkGA1UEBhMCVVMxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEdMBsGA1UEAx4UAEQARgBDAEkAXwBIAFQAVABQAFMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC50eVITBEA5akSD1yode1hAA77q8FGQcpAhc3yCD5TwmPJdFd0H/51zWAYLqOgP2cu+GhZQn0sZNT1YRZS5HXnTxMBd1GYI6fPEYY9pu4PdD+Olc1z1D2qk+ItFyBXsXDWRMYUbeHeY++cUni2815OacC055pTJrLpVbqsoavPjswT6UxHmTFZ9PJVXiYdlcSVb4r8xLxfreDhl00vG6QPU/hE16cFLpCIzsZDZ+o4YqAfeTu0W9TMxMfFGeYKAG56DqY15Q5nSo04LOY3Z8OjnaeekohCN1gRV5QlIM6hGs09pRnNC5Qb54bpsAdnNJJBM7H0pB/FIr5dH2n1XM/ZAgMBAAGjgZMwgZAwDwYDVR0TAQH/BAUwAwIBADB9BgNVHQEEdjB0gBB08GR9c43yJ6xq+3luFHgpoU4wTDELMAkGA1UEBhMCVVMxHjAcBgNVBAoTFU1pY3Jvc29mdCBDb3Jwb3JhdGlvbjEdMBsGA1UEAx4UAEQARgBDAEkAXwBIAFQAVABQAFOCEHNJzs7cAeajS2slsZi8xYUwCQYFKw4DAh0FAAOCAQEABeIS7s+wYZaWfMOOuPcOSWyTGyKBjFgm6EI6F+/JoKlUth1uSyjJb2UM6n8ZkEnTnm5crm/txHdRbG/q7ccmRhN9+LDukWq9gm9F3ciFodXDwRhDq9rDWGyXkXV4mz/rrlckBWpM4iYCrYoJsg6FL7wQLbpiFdbGbmVWIaN3Q2jsOJ7xcJtt56xYZZ1sAn4PMcX8KkoUnpqH+/+c97bEUqC8414ljng1yC2+Ja+/SHJAKFj9TefN2v0k3dW7X1woP0xG9wZy9G8CtTJSPyKbD9S0Ps+/nxUPHHbyEdfdO0wct50eN/GNzYEyMjLeMc/klsW3V+0S0j895uKjU+CPgQ=="
+"    </LongNodeData>"
+"  </Gen1Node>"
+"  <Gen1Node>Gen1Node3 contents "
+"    <Gen2Node>Gen2Node1 contents"
+"      <Gen3Node>Gen3Node1 contents</Gen3Node>"
+"      <Gen3Node>Gen2Node2 contents</Gen3Node>"
+"    </Gen2Node>"
+"    <Gen2Node>Gen2Node2 Long Contents Here Long Contents Here Long Contents Here</Gen2Node>"
+"  </Gen1Node>"
+"</RootNode>";
+
 XmlTestContext SimpleElementsOnlyContext = { 9, 0, 4, 0, SimpleElementsOnly, NULL, NULL };
+XmlTestContext LongElementContext = { 10, 0, 4, 0, LongElement, NULL, NULL };
 
 
 CONST CHAR8 SimpleElementsAttributes[] =

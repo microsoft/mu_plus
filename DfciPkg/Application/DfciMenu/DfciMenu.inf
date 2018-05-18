@@ -38,7 +38,6 @@
   BaseMemoryLib
   DebugLib
   DevicePathLib
-  DfciBaseStringLib
   DfciDeviceIdSupportLib
   DfciSettingsLib
   DfciUiSupportLib
@@ -57,16 +56,19 @@
   gDfciConfigCompleteEventGroupGuid
   gDfciConfigStartEventGroupGuid
   gDfciMenuFormsetGuid
+  gDfciRecoveryFormsetGuid
   gDfciPermissionManagerVarNamespace
   gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
   gEfiTlsCaCertificateGuid
 
 [Protocols]
+  gDfciAuthenticationProtocolGuid
   gDfciSettingAccessProtocolGuid
   gEfiHiiConfigAccessProtocolGuid
   gEfiHttpProtocolGuid
   gEfiHttpServiceBindingProtocolGuid
+  gDfciSettingPermissionsProtocolGuid
 
 [FeaturePcd]
 
@@ -74,5 +76,7 @@
 
 [Depex]
   gEfiVariableArchProtocolGuid  AND
-  gDfciSettingAccessProtocolGuid
+  gDfciSettingAccessProtocolGuid AND
+  gDfciAuthenticationProtocolGuid AND
+  gDfciSettingPermissionsProtocolGuid
 

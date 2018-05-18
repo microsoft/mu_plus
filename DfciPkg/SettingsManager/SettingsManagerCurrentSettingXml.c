@@ -97,7 +97,7 @@ CreateXmlStringFromCurrentSettings(
   //
   ZeroMem(LsvString, sizeof(LsvString));
   AsciiValueToStringS(&(LsvString[0]), sizeof(LsvString), 0, (UINT32)Lsv, 19);
-  Status = AddLsvNode(CurrentSettingsNode, LsvString);
+  Status = AddSettingsLsvNode(CurrentSettingsNode, LsvString);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_INFO, "Failed to set LSV Node for current settings. %r\n", Status));

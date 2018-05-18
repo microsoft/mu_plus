@@ -2,7 +2,6 @@
 #include "SettingsManager.h"
 #include <Guid/DfciSettingsManagerVariables.h>
 #include <Library/DfciPasswordLib.h>
-#include <Library/DfciBaseStringLib.h>
 #include <Library/DfciV1SupportLib.h>
 
 #define DFCI_PASSWORD_STORE_SIZE sizeof(DFCI_PASSWORD_STORE)
@@ -68,13 +67,6 @@ SetSettingFromAscii(
   }
   DEBUG((DEBUG_INFO, "%a - Id is %a\n", __FUNCTION__, Id));
 
-  if (Value == NULL)
-  {
-    DEBUG((DEBUG_INFO, "%a - Value is NULL\n", __FUNCTION__));
-    return EFI_UNSUPPORTED;
-  }
-  DEBUG((DEBUG_INFO, "%a - Value is %a\n", __FUNCTION__, Value));
-
   if (AuthToken == NULL)
   {
     DEBUG((DEBUG_INFO, "%a - AuthToken is NULL\n", __FUNCTION__));
@@ -88,7 +80,26 @@ SetSettingFromAscii(
     DEBUG((DEBUG_INFO, "%a - Provider for Id (%a) not found in system\n", __FUNCTION__, Id));
     return EFI_NOT_FOUND;
   }
-  
+
+  // STRING and CERT types can be set to <NULL>.  The XML parser return NULL when
+  // the value is <Value></Value>.  This prints in prettyXml as <Value/>
+  // For these types, convert the set value to a null string.
+  if ((Provider->Type != DFCI_SETTING_TYPE_STRING) &&
+      (Provider->Type != DFCI_SETTING_TYPE_CERT))
+  {
+    if (Value == NULL)
+    {
+      DEBUG((DEBUG_INFO, "%a - Value is NULL\n", __FUNCTION__));
+      return EFI_UNSUPPORTED;
+    }
+  } else {
+    if (Value == NULL)
+    {
+      Value = "";
+    }
+  }
+  DEBUG((DEBUG_INFO, "%a - Value is %a\n", __FUNCTION__, Value));
+
   return SetProviderValueFromAscii(Provider, Value, AuthToken, Flags);
 }
 
@@ -172,7 +183,8 @@ SetProviderValueFromAscii(
 
   case DFCI_SETTING_TYPE_PASSWORD:  
 
-      if ((HexLookUp(*(Value + (DFCI_PASSWORD_STORE_SIZE * 2))) != 0x0E) || (HexLookUp(*(Value + (DFCI_PASSWORD_STORE_SIZE * 2) + 1)) != 0x0B))
+      if ((AsciiStrLen(Value) < ((DFCI_PASSWORD_STORE_SIZE * 2) + 1)) ||
+          (0 != AsciiStriCmp(Value + (DFCI_PASSWORD_STORE_SIZE * 2), "eb")))
       {
           DEBUG((DEBUG_ERROR, "End Byte 'EB' is missing. Not a valid store format . %a\n", Value));
           return EFI_INVALID_PARAMETER;
@@ -184,7 +196,7 @@ SetProviderValueFromAscii(
           return EFI_OUT_OF_RESOURCES;
       }
 
-      Status = AsciitoHexByteArray(Value, ByteArray, DFCI_PASSWORD_STORE_SIZE);
+      Status = AsciiStrHexToBytes(Value, AsciiStrLen(Value), ByteArray, DFCI_PASSWORD_STORE_SIZE);
 
       if (EFI_ERROR(Status))
       {
@@ -238,8 +250,8 @@ SetProviderValueFromAscii(
   case DFCI_SETTING_TYPE_CERT:    // On writes, CERTS are binary blobs
 
       b64Size = AsciiStrnLenS (Value, MAX_ALLOWABLE_VAR_INPUT_SIZE);
-
-      Status = Base64_Decode (Value, b64Size, NULL, &ValueSize);
+      ValueSize = 0;
+      Status = Base64Decode(Value, b64Size, NULL, &ValueSize);
       if (Status != EFI_BUFFER_TOO_SMALL)
       {
         DEBUG((DEBUG_ERROR, "Cannot query binary blob size. Code = %r\n",Status));
@@ -248,7 +260,7 @@ SetProviderValueFromAscii(
 
       ByteArray = (UINT8 *) AllocatePool (ValueSize);
 
-      Status = Base64_Decode (Value, b64Size, ByteArray, &ValueSize);
+      Status = Base64Decode (Value, b64Size, ByteArray, &ValueSize);
       if (EFI_ERROR(Status))
       {
           FreePool (ByteArray);
@@ -541,13 +553,20 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       } else {
           Status = Provider->GetDefaultValue(Provider, &ValueSize, NULL);
       }
-      if (EFI_BUFFER_TOO_SMALL != Status) {
+      if ((ValueSize != 0) && (EFI_BUFFER_TOO_SMALL != Status)) {
           DEBUG((DEBUG_ERROR, "Failed - Expected Buffer Too Small for Current=%d, ID %a Status = %r\n", Current, Provider->Id, Status));
           break;
       }
 
       if (0 == ValueSize ) {
-        break;                   // Return NULL for Value silently
+        ValueSize = sizeof("");
+        Value = AllocatePool (ValueSize);
+        if (NULL != Value) {
+            AsciiStrnCpyS(Value, ValueSize, "", ValueSize-1);
+        } else {
+            DEBUG((DEBUG_ERROR, "Unable to allocate return value for ID %a\n", Provider->Id));
+        }
+        break;
       }
 
       if (ValueSize > MAX_ALLOWABLE_VAR_INPUT_SIZE)
@@ -680,7 +699,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
             DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
             break;
         }
-        Status = Base64_Encode(Buffer, ValueSize, NULL, &AsciiSize);
+        Status = Base64Encode(Buffer, ValueSize, NULL, &AsciiSize);
         if (Status != EFI_BUFFER_TOO_SMALL) {
             DEBUG((DEBUG_ERROR,"Cannot query ascii String size. Code = %r\n", Status) );
             return NULL;
@@ -688,7 +707,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
 
         Value = (CHAR8 *)AllocatePool(ValueSize);
 
-        Status = Base64_Encode(Buffer, ValueSize, Value, &AsciiSize);
+        Status = Base64Encode(Buffer, ValueSize, Value, &AsciiSize);
         if (EFI_ERROR(Status)) {
             FreePool(Value);
             FreePool(Buffer);

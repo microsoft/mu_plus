@@ -413,7 +413,7 @@ ERROR:
 
 EFI_STATUS
 EFIAPI
-AddLsvNode(
+AddSettingsLsvNode(
   IN CONST XmlNode* CurrentSettingsPacketNode, 
   IN CONST CHAR8* Lsv)
 {

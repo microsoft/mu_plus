@@ -32,6 +32,7 @@
   IdentityAndAuthManager.h
   IdentityAndAuthManagerDxe.c
   IdentityManager.c
+  IdentityCurrentSettingsXml.c
   AuthManager_PKCS1Support.c
   RecoverySupport.c
   CertSupport.c
@@ -40,6 +41,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   CryptoPkg/CryptoPkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
   DfciPkg/DfciPkg.dec
 
 
@@ -59,6 +61,7 @@
   DfciDeviceIdSupportLib
   DfciRecoveryLib
   DfciUiSupportLib
+  DfciXmlIdentitySchemaSupportLib
 
 [Guids]
  gEfiCertPkcs7Guid

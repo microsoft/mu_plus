@@ -18,13 +18,14 @@ Copyright (c) 2018, Microsoft Corporation.
 #include <DfciSystemSettingTypes.h>
 
 #include <Protocol/DevicePath.h>
+#include <Protocol/DfciAuthentication.h>
+#include <Protocol/DfciSettingPermissions.h>
 #include <Protocol/GraphicsOutput.h>
 #include <Protocol/HiiConfigAccess.h>
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
-#include <Library/DfciBaseStringLib.h>
 #include <Library/DfciSettingsLib.h>
 #include <Library/DfciUiSupportLib.h>
 #include <Library/HiiLib.h>
@@ -87,13 +88,22 @@ HII_VENDOR_DEVICE_PATH                  mHiiVendorDevicePath = {
 //*---------------------------------------------------------------------------------------*
 static EFI_HII_HANDLE                          mHiiHandle;
 static EFI_GUID                                mDfciPackageListGuid = DFCI_HII_PACKAGE_LIST_GUID;
+static DFCI_AUTHENTICATION_PROTOCOL           *mAuthenticationProtocol = NULL;
+static DFCI_MENU_CONFIGURATION                 mDfciMenuConfiguration;
+static DFCI_SETTING_PERMISSIONS_PROTOCOL      *mDfciSettingsPermissionProtocol = NULL;
 
 //* Dfci Settings
+static DFCI_CERT_STRINGS                       mOwnerCert;        // Owner information
+static DFCI_IDENTITY_MASK                      mIdMask;           // Identities installed
 static CHAR8                                  *mDfciUrl = NULL;
 static UINTN                                   mDfciUrlSize;
 static VOID                                   *mHttpsCert = NULL;
 static UINTN                                   mHttpsCertSize;
+static CHAR16                                 *mHttpsThumbprint = NULL;
 
+//*---------------------------------------------------------------------------------------*
+//* Hii Config Access functions                                                                  *
+//*---------------------------------------------------------------------------------------*
 EFI_STATUS
 EFIAPI
 ExtractConfig (
@@ -129,7 +139,7 @@ typedef struct {
     EFI_HII_CONFIG_ACCESS_PROTOCOL  ConfigAccess;
 } DFCI_MENU_PRIVATE;
 
-DFCI_MENU_PRIVATE  gDfciMenuPrivate = {
+DFCI_MENU_PRIVATE  mDfciMenuPrivate = {
     DFCI_MENU_SIGNATURE,
     NULL,
     NULL,
@@ -141,7 +151,30 @@ DFCI_MENU_PRIVATE  gDfciMenuPrivate = {
 };
 
 /**
- * SetStringEntry - sets the HiiString, and verify that it was accepted.
+ * SetStringEntry16 - sets the HiiString, and verify that it was accepted.
+ *
+ * @param IdName
+ * @param StringValue
+ *
+ * @return EFI_STATUS
+ */
+EFI_STATUS
+SetString16Entry (
+    EFI_STRING_ID IdName,
+    CHAR16 *StringValue
+  ) {
+    EFI_STATUS  Status = EFI_SUCCESS;
+
+    if (IdName != HiiSetString(mDfciMenuPrivate.HiiHandle,IdName, StringValue, NULL)) {
+       DEBUG((DEBUG_ERROR, __FUNCTION__ " - Failed to set string for %d: %s. \n", IdName, StringValue));
+       Status = EFI_NO_MAPPING;
+    }
+
+    return Status;
+}
+
+/**
+ * SetStringEntry - Converts the string to CHAR16, and calls SetString16Entry
  *
  * @param IdName
  * @param StringValue
@@ -151,26 +184,28 @@ DFCI_MENU_PRIVATE  gDfciMenuPrivate = {
 EFI_STATUS
 SetStringEntry (
     EFI_STRING_ID  IdName,
-    CHAR8         *StringValue,
-    UINTN          StringSize
+    CHAR8         *StringValue
   )
 {
     EFI_STATUS  Status = EFI_SUCCESS;
     CHAR16     *WideString;
+    UINTN       WideStringLen;
     UINTN       WideStringSize;
 
-    WideStringSize = StringSize * sizeof(CHAR16);
+
+    WideStringLen = AsciiStrnLenS (StringValue, MAX_MSG_SIZE) + 1;
+    WideStringSize = (WideStringLen + 1) * sizeof(CHAR16);
+
     WideString = AllocatePool (WideStringSize);
     if (NULL == WideString) {
         return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = AsciiStrToUnicodeStrS (StringValue, WideString, StringSize);
+    Status = AsciiStrToUnicodeStrS (StringValue, WideString, WideStringLen);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Unable to conver Ascii to Unicode. Code=%r\n", Status));
-    } else if (IdName != HiiSetString (gDfciMenuPrivate.HiiHandle, IdName, WideString, NULL)) {
-       DEBUG((DEBUG_ERROR, __FUNCTION__ " - Failed to set string for %d: %s. \n", IdName, StringValue));
-       Status = EFI_NO_MAPPING;
+    } else {
+        Status = SetString16Entry (IdName, WideString);
     }
 
     FreePool (WideString);
@@ -179,28 +214,97 @@ SetStringEntry (
 }
 
 /**
- * Check if Dfci is enabledded
+ * Check if Dfci is enabled
  * 
- * @return UINTN        0 == No Dfci settings 
- *                      0 != Dfci Settings present 
+ * @return BOOLEAN      FALSE == No Dfci present
+ *                      TRUE  == Dfci Present
  */
 BOOLEAN
 CheckIfDfciEnrolled (
     VOID
   ) {
-    EFI_STATUS      Status;
-    UINTN           ValueSize;
+    EFI_STATUS         Status;
 
-    ValueSize = 0;
-    Status = GetDfciSetting (DFCI_SETTING_ID__DFCI_URL,
-                            &ValueSize,
+
+    Status =  mAuthenticationProtocol->GetEnrolledIdentities ( mAuthenticationProtocol, &mIdMask);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Failed to get owner ids. %r\n", Status));
+        return FALSE;
+    }
+    if (!IS_OWNER_IDENTITY_ENROLLED(mIdMask)) {
+        DEBUG((DEBUG_INFO, __FUNCTION__ " DFCI is not enabled\n"));
+        return FALSE;
+    }
+    Status =  mAuthenticationProtocol->GetCertInfo ( mAuthenticationProtocol, DFCI_IDENTITY_SIGNER_OWNER , NULL, 0, &mOwnerCert);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Failed to get owner cert. %r\n", Status));
+        return FALSE;
+    }
+    // Dfci is enabled.
+
+    return TRUE;
+}
+
+/**
+ * Get A Setting
+ *
+ * @param IdName
+ * @param ValuePtr
+ * @param ValueSize
+ *
+ * @return EFI_STATUS
+ */
+EFI_STATUS
+GetASetting (
+    IN  DFCI_SETTING_ID_STRING  IdName,
+    IN  VOID                  **ValuePtr,
+    OUT UINTN                  *ValueSize
+    )
+{
+    EFI_STATUS      Status;
+
+
+    *ValuePtr = NULL;
+    *ValueSize = 0;
+    Status = GetDfciSetting (IdName,
+                             ValueSize,
                              NULL);
     if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Dfci Appears UnEnrolled. Code = %r\n", Status));
-        ValueSize = 0;
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to check %a. %r\n", IdName, Status));
+        *ValueSize = 0;
     }
 
-    return (0 != ValueSize);
+    if (0 == *ValueSize) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid size for %a.\n", IdName));
+        goto CLEANUP_SETTING_EXIT;
+    }
+
+    *ValuePtr = (UINT8 *) AllocatePool (*ValueSize);
+    if (NULL == *ValuePtr) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to allocate memory for %a. %r\n", IdName, Status));
+        goto CLEANUP_SETTING_EXIT;
+    }
+
+    Status = GetDfciSetting (IdName,
+                             ValueSize,
+                             *ValuePtr);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get %a. %r\n", IdName, Status));
+        goto CLEANUP_SETTING_EXIT;
+    }
+
+    if (*ValueSize == AsciiStrnLenS (*ValuePtr, *ValueSize)) { // No terminating NULL
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " No terminating NULL in URL string\n"));
+        goto CLEANUP_SETTING_EXIT;
+    }
+
+    return Status;
+
+CLEANUP_SETTING_EXIT:
+    if (*ValuePtr != NULL) {
+        FreePool (*ValuePtr);
+    }
+    return EFI_NOT_FOUND;
 }
 
 /**
@@ -214,81 +318,109 @@ GetDfciParameters (
     VOID
   ) 
 {
-    EFI_STATUS      Status;
-    UINTN           ValueSize;
+    EFI_STATUS         Status;
+    UINTN              i;
+    DFCI_IDENTITY_MASK DfciMask;
+    DFCI_CERT_STRINGS  Cert;
+    VOID              *dummy;
+    static BOOLEAN     AlreadyRun = FALSE;
 
-    ValueSize = 0;
-    Status = GetDfciSetting (DFCI_SETTING_ID__DFCI_URL,
-                            &ValueSize,
-                             NULL);
-    if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to check DFCI_URL. %r\n", Status));
-        ValueSize = 0;
+
+    if (!AlreadyRun) {
+        AlreadyRun = TRUE;
+
+        mDfciMenuConfiguration.DfciHttpsRecoveryEnabled = FALSE;
+        mDfciMenuConfiguration.DfciRecoveryEnabled = FALSE;
+
+        //
+        // Get Cert information
+        //
+        if (mOwnerCert.SubjectString != NULL) {
+            SetString16Entry (STRING_TOKEN(STR_DFCI_SUBJECT_FIELD), mOwnerCert.SubjectString);
+        }
+        if (mOwnerCert.IssuerString != NULL) {
+            SetString16Entry(STRING_TOKEN(STR_DFCI_ISSUER_FIELD), mOwnerCert.IssuerString);
+        }
+        if (mOwnerCert.ThumbprintString != NULL) {
+            SetString16Entry(STRING_TOKEN(STR_DFCI_THUMBPRINT_FIELD), mOwnerCert.ThumbprintString);
+        }
+
+        //
+        // Check if hard unenroll is enabled
+        //
+        Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_SETTING_ID__DFCI_RECOVERY, &DfciMask);
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "%a - Failed to get permission for recovery %r\n", __FUNCTION__, Status));
+            return TRUE;
+        }
+
+        DEBUG((DEBUG_INFO, __FUNCTION__ " - mIdMask=%x, DfciMask=%x\n",mIdMask,DfciMask));
+        mIdMask &= DfciMask;
+
+        if (mIdMask == 0) {
+            DEBUG((DEBUG_INFO, __FUNCTION__ " - No Identities have DFCI Recovery Permissions\n"));
+            return TRUE;
+        }
+
+        // Insure there is at least one certificate for any of the Id's that have recovery permission
+        for (i = DFCI_IDENTITY_SIGNER_OWNER; i != 0; i>>=1) {
+            if (i & mIdMask) {
+                Status =  mAuthenticationProtocol->GetCertInfo(mAuthenticationProtocol, i, NULL, 0, &Cert);
+                if (EFI_ERROR(Status)) {
+                    DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get the cert info for %x. %r\n", i, Status));
+                } else {
+                    Status = gBS->LocateProtocol (&gDfciRecoveryFormsetGuid, NULL, (VOID **) &dummy);
+                    if (!EFI_ERROR(Status)) {
+                        mDfciMenuConfiguration.DfciRecoveryEnabled = TRUE;
+                        DEBUG((DEBUG_ERROR,"Dfci Recovery is enabled\n"));
+                    }
+                    if (Cert.SubjectString != NULL) {
+                        FreePool(Cert.SubjectString);
+                    }
+                    if (Cert.IssuerString != NULL) {
+                        FreePool(Cert.IssuerString);
+                    }
+                    if (Cert.ThumbprintString != NULL) {
+                        FreePool(Cert.ThumbprintString);
+                    }
+                    break;
+                }
+            }
+        }
+
+        Status = GetASetting (DFCI_SETTING_ID__DFCI_URL,      &mDfciUrl,   &mDfciUrlSize);
+        if (EFI_ERROR(Status) || (mDfciUrlSize == 0)) {
+            goto CLEANUP_EXIT;
+        }
+
+        Status = GetASetting (DFCI_SETTING_ID__DFCI_URL_CERT, &mHttpsCert, &mHttpsCertSize);
+        if (EFI_ERROR(Status) || (mHttpsCertSize == 0)) {
+            goto CLEANUP_EXIT;
+        }
+
+        SetStringEntry (STRING_TOKEN(STR_DFCI_ISSUER_FIELD), mDfciUrl);
+        Status = mAuthenticationProtocol->GetCertInfo (mAuthenticationProtocol, 0, mHttpsCert, mHttpsCertSize, &Cert);
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "Error cgetting thumbprint for HTTPS certificate. Status = %r\n", Status));
+        } else {
+            if (Cert.SubjectString != NULL) {
+                FreePool(Cert.SubjectString);
+            }
+            if (Cert.IssuerString != NULL) {
+                FreePool(Cert.IssuerString);
+            }
+            if (Cert.ThumbprintString != NULL) {
+                SetString16Entry(STRING_TOKEN(STR_DFCI_HTTPS_THUMBPRINT_FIELD), Cert.ThumbprintString);
+                FreePool(Cert.ThumbprintString);
+            }
+        }
+        mDfciMenuConfiguration.DfciHttpsRecoveryEnabled = TRUE;
+        DEBUG((DEBUG_ERROR,"Dfci Https Recovery is enabled\n"));
     }
-
-    if (0 == ValueSize) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid size for URL.\n"));
-        return EFI_NOT_FOUND;
-    }
-
-    mDfciUrl = AllocatePool (ValueSize);
-    if (NULL == mDfciUrl) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to allocate memory for DFCI_URL. %r\n", Status));
-        return EFI_NOT_FOUND;
-    }
-
-    Status = GetDfciSetting (DFCI_SETTING_ID__DFCI_URL,
-                            &ValueSize,
-                             mDfciUrl);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get DFCI_URL. %r\n", Status));
-        goto CLEANUP_EXIT;
-    }
-
-    if (ValueSize == AsciiStrnLenS (mDfciUrl, ValueSize)) { // No terminating NULL
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " No terminating NULL in URL string\n"));
-        goto CLEANUP_EXIT;
-    }
-    mDfciUrlSize = ValueSize;
-
-    ValueSize = 0;
-    Status = GetDfciSetting (DFCI_SETTING_ID__DFCI_URL_CERT,
-                            &ValueSize,
-                             NULL);
-    if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get DFCI_URL_CERT. %r\n", Status));
-        goto CLEANUP_EXIT;
-    }
-
-    if (ValueSize == 0) {  // No value set
-        return EFI_SUCCESS;   // Cert is not required.... goto CLEANUP_EXIT if required later
-    }
-
-    mHttpsCert = AllocatePool (ValueSize);
-    if (NULL == mHttpsCert) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to allocate memory for DFCI_URL_CERT. %r\n", Status));
-        goto CLEANUP_EXIT;
-    }
-
-    Status = GetDfciSetting (DFCI_SETTING_ID__DFCI_URL_CERT,
-                            &ValueSize,
-                             mHttpsCert);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get DFCI_URL_CERT(2). %r\n", Status));
-        goto CLEANUP_EXIT;
-    }
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get SmBios Info. %r\n", Status));
-        goto CLEANUP_EXIT;
-    }
-
-    mHttpsCertSize = ValueSize;
 
     return EFI_SUCCESS;
 
 CLEANUP_EXIT:
-
     if (NULL != mDfciUrl) {
         FreePool (mDfciUrl);
         mDfciUrl = NULL;
@@ -297,12 +429,13 @@ CLEANUP_EXIT:
         FreePool (mHttpsCert);
         mHttpsCert = NULL;
     }
+    mHttpsCertSize = 0;
+    mDfciUrlSize = 0;
     return EFI_NOT_FOUND;
 }
 
 /**
-  This function is the main entry of the Semm Menu application.
-  The function will present the SEMM menu of SurfaceFrontPage.
+  This function is the main entry of the Dfci Menu application.
 **/
 EFI_STATUS
 EFIAPI
@@ -313,6 +446,25 @@ DfciMenuEntry(
     EFI_STATUS      Status;
 
 
+    Status = gBS->LocateProtocol(&gDfciAuthenticationProtocolGuid,
+                                 NULL,
+                                 (VOID **)&mAuthenticationProtocol);
+    if (EFI_ERROR(Status) || (mAuthenticationProtocol == NULL)) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " -  DfciAuthentication protocol not available. %r\n", Status));
+        ASSERT(FALSE);  // Fatal error - There is a Depex for this protocol
+        return FALSE;
+    }
+
+    // Get all Id's that have Dfci Recovery permission.
+    Status = gBS->LocateProtocol(&gDfciSettingPermissionsProtocolGuid,
+                                 NULL,
+                                 &mDfciSettingsPermissionProtocol);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, __FUNCTION__ " - DfciSettingPermissionsProtocolGuid not available. %r\n", Status));
+        ASSERT(FALSE); // Fatal error - again, there is a Depex for this protocol
+        return FALSE;
+    }
+
     if (!CheckIfDfciEnrolled ()) {        // Check if system is managed by DFCI
         DEBUG((DEBUG_INFO,__FUNCTION__ ": Dfci not enrolled.  Exiting.\n"));
         Status = EFI_NOT_FOUND;
@@ -322,11 +474,11 @@ DfciMenuEntry(
     // Install Device Path Protocol and Config Access protocol to driver handle
     //
     Status = gBS->InstallMultipleProtocolInterfaces (
-        &gDfciMenuPrivate.DriverHandle,
+        &mDfciMenuPrivate.DriverHandle,
         &gEfiDevicePathProtocolGuid,
         &mHiiVendorDevicePath,
         &gEfiHiiConfigAccessProtocolGuid,
-        &gDfciMenuPrivate.ConfigAccess,
+        &mDfciMenuPrivate.ConfigAccess,
         NULL
         );
 
@@ -336,22 +488,23 @@ DfciMenuEntry(
         //
         // Publish our HII data
         //
-        gDfciMenuPrivate.HiiHandle = HiiAddPackages (
+        mDfciMenuPrivate.HiiHandle = HiiAddPackages (
             &gDfciMenuFormsetGuid,
-            gDfciMenuPrivate.DriverHandle,
+            mDfciMenuPrivate.DriverHandle,
             DfciMenuVfrBin,
             DfciMenuStrings,
             NULL
             );
-        if (gDfciMenuPrivate.HiiHandle == NULL) {
+
+        if (mDfciMenuPrivate.HiiHandle == NULL) {
             DEBUG((DEBUG_ERROR,__FUNCTION__ ": Error on HiiAddPackages. Code=%r\n", Status));
 
             Status = EFI_OUT_OF_RESOURCES;
         }
-        mHiiHandle = gDfciMenuPrivate.HiiHandle;
+        mHiiHandle = mDfciMenuPrivate.HiiHandle;
         if (!EFI_ERROR(Status)) {
             // Signal SurfaceFrontPage that DfciMenu is loaded and available.
-            Status = gBS->InstallProtocolInterface (&gDfciMenuPrivate.DriverHandle,
+            Status = gBS->InstallProtocolInterface (&mDfciMenuPrivate.DriverHandle,
                                                     &gDfciMenuFormsetGuid,
                                                      EFI_NATIVE_INTERFACE,
                                                      NULL);
@@ -359,11 +512,11 @@ DfciMenuEntry(
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR,__FUNCTION__ ": Error during init - Uninstalling DfciMenu. Code=%r\n", Status));
             gBS->UninstallMultipleProtocolInterfaces (
-                 gDfciMenuPrivate.DriverHandle,
+                 mDfciMenuPrivate.DriverHandle,
                 &gEfiDevicePathProtocolGuid,
                 &mHiiVendorDevicePath,
                 &gEfiHiiConfigAccessProtocolGuid,
-                &gDfciMenuPrivate.ConfigAccess,
+                &mDfciMenuPrivate.ConfigAccess,
                 NULL
                 );
             if (NULL != mHiiHandle) {
@@ -376,7 +529,7 @@ EXIT_DFCI:
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,__FUNCTION__ ": Unloading DfciMenu due to error. Code=%r\n",Status));
     } else {
-        DEBUG((DEBUG_INFO,__FUNCTION__ ": Exit. Code=%r.\n", Status));
+        DEBUG((DEBUG_LOAD,__FUNCTION__ ": Dfci Menu Loaded.\n"));
     }
 
     return Status;
@@ -407,11 +560,11 @@ DisplayMessageBox (
 
     MessageBoxType = DFCI_MB_OK;
     SwmResult = DFCI_MB_IDOK;
-    pTitle   = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_TITLE), NULL);
-    pCaption = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_CAPTION_FAIL), NULL);
+    pTitle   = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_TITLE), NULL);
+    pCaption = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_CAPTION_FAIL), NULL);
 
     if (EFI_ERROR(StatusIn) && (EFI_NOT_FOUND != StatusIn)) {
-        pBody    = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_INTERNAL_ERROR), NULL);
+        pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_INTERNAL_ERROR), NULL);
         if (NULL != pBody) {
             pTmp = AllocatePool(MAX_MSG_SIZE);
             if (NULL != pTmp) {
@@ -426,21 +579,21 @@ DisplayMessageBox (
             if (NULL != pCaption) {  // Free the "Fail" Caption
                 FreePool (pCaption);
             }
-            pCaption = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_CAPTION), NULL);
-            pBody    = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NULL);
+            pCaption = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_CAPTION), NULL);
+            pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NULL);
             MessageBoxType = DFCI_MB_RESTART;
             break;
 
         case USER_STATUS_NO_NIC:
-            pBody    = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_NIC), NULL);
+            pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_NIC), NULL);
             break;
 
         case USER_STATUS_NO_MEDIA:
-            pBody    = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_MEDIA), NULL);
+            pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_MEDIA), NULL);
             break;
 
         case USER_STATUS_NO_SETTINGS:
-            pBody    = HiiGetString(gDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_SETTINGS), NULL);
+            pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_SETTINGS), NULL);
             break;
 
         default:
@@ -470,6 +623,13 @@ DisplayMessageBox (
     return Status;
 }
 
+/**
+ * Issue DfciRequest
+ *
+ * @param
+ *
+ * @return EFI_STATUS
+ */
 EFI_STATUS
 IssueDfciRequest (
     VOID
@@ -477,20 +637,31 @@ IssueDfciRequest (
     EFI_STATUS                      Status;
     UINT64                          UserStatus = USER_STATUS_SUCCESS;
 
+    //
+    // Start UI Spinner if one is present
+    //
     EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
 
+    //
+    // Process request
+    //
     Status = DfciRequestProcess (mDfciUrl,   mDfciUrlSize,
                                  mHttpsCert, mHttpsCertSize,
                                  &UserStatus);
-
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Error processing Dfci Request. Code=%r\n", Status));
     } else {
         DEBUG((DEBUG_INFO,"Dfci Request processed normally\n"));
     }
 
+    //
+    // Stop UI Spinner
+    //
     EfiEventGroupSignal (&gDfciConfigCompleteEventGroupGuid);
 
+    //
+    // Inform user that operation is complete
+    //
     DisplayMessageBox (Status, UserStatus);
 
     return Status;
@@ -539,12 +710,8 @@ DriverCallback (
         case EFI_BROWSER_ACTION_FORM_OPEN:
             switch (QuestionId) {
             case DFCI_MENU_INIT_QUESTION_ID:
-                Status = GetDfciParameters ();
-                if (EFI_ERROR(Status)) {
-                    DEBUG((DEBUG_ERROR,"Unable to get Dfci Parameters. Code=%r\n"));
-                    return Status;
-                }
-                Status = SetStringEntry (STR_DFCI_URL_FIELD, mDfciUrl, mDfciUrlSize);
+                DEBUG((DEBUG_ERROR," HttpsRecovery is %d\n", mDfciMenuConfiguration.DfciHttpsRecoveryEnabled));
+                DEBUG((DEBUG_ERROR," SemmRecovery is %d\n",  mDfciMenuConfiguration.DfciRecoveryEnabled));
                 break;
             default:
                 break;
@@ -554,8 +721,22 @@ DriverCallback (
 
         case EFI_BROWSER_ACTION_CHANGED:
             switch (QuestionId) {
-            case DFCI_MENU_UPDATE_NOW_QUESTION_ID:
+            case DFCI_MENU_HTTPS_UPDATE_NOW_QUESTION_ID:
+                DEBUG((DEBUG_ERROR," Https Recovery was selected\n"));
                 IssueDfciRequest ();
+                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
+                Status = EFI_SUCCESS;
+                break;
+            case DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID:
+                DEBUG((DEBUG_ERROR," Usb Recovery was selected\n"));
+
+                DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
+
+                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
+                Status = EFI_SUCCESS;
+                break;
+            case DFCI_MENU_RECOVERY_NOW_QUESTION_ID:
+                DEBUG((DEBUG_ERROR," Full Recovery was selected\n"));
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
                 Status = EFI_SUCCESS;
                 break;
@@ -661,6 +842,23 @@ ExtractConfig (
     DEBUG((DEBUG_INFO,__FUNCTION__ " - Request=%s\n"));
     DEBUG((DEBUG_INFO,"%s",Request));
     DEBUG((DEBUG_INFO,"\n"));
+
+    Status = GetDfciParameters ();
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR,"Unable to get Dfci Parameters. Code=%r\n"));
+    }
+
+    if (HiiIsConfigHdrMatch(Request, &gDfciMenuFormsetGuid, L"DfciMenuConfig")) {
+        Status = gHiiConfigRouting->BlockToConfig(
+            gHiiConfigRouting,
+            Request,
+            (UINT8 *)&mDfciMenuConfiguration,
+            sizeof(mDfciMenuConfiguration),
+            Results,
+            Progress
+            );
+        DEBUG((DEBUG_INFO,__FUNCTION__ " Size is %d, Code=%r\n",sizeof(mDfciMenuConfiguration),Status));
+    }
 
     Status = EFI_SUCCESS;
     DEBUG((DEBUG_INFO,__FUNCTION__ " complete. Code = %r\n",Status));
