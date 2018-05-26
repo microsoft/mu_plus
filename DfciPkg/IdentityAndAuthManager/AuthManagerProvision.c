@@ -432,16 +432,8 @@ ValidateAndAuthenticatePendingProvisionData_V1 (
     UINTN DeviceSerialNumber = 0;
 
     DEBUG((DEBUG_INFO, "[AM] %a - Targetted Packet for sn %ld\n", __FUNCTION__, Data->Var->v1.SerialNumber));
-    Status = DfciSupportGetDeviceId (&Data->DeviceId);
 
-    if (EFI_ERROR(Status))
-    {
-      Data->StatusCode = EFI_ABORTED;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR;
-      return Data->StatusCode;
-    }
-
-    Status = GetSerialNumber(&DeviceSerialNumber);
+    Status = DfciIdSupportV1GetSerialNumber(&DeviceSerialNumber);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "[AM] - Failed to get device serial number %r\n", Status));
@@ -482,7 +474,9 @@ ValidateAndAuthenticatePendingProvisionData_V2 (
   UINTN                      SignedDataLength = 0;    //length of the hashed data for signature validation
   EFI_STATUS                 Status;
   EFI_GUID                   SystemUuid;
-  DFCI_DEVICE_ID_ELEMENTS   *DeviceId;
+  CHAR8                     *PktMfg;
+  CHAR8                     *PktProductName;
+  CHAR8                     *PktSerialNumber;
 
   //Save the session id
   Data->SessionId = Data->Var->v2.SessionId;
@@ -498,7 +492,11 @@ ValidateAndAuthenticatePendingProvisionData_V2 (
   // Check if the packet is for this DeviceId.  For V2, must be an exact match for all componentes of
   // the device Id.
 
-  Status = DfciSupportGetDeviceId ( &DeviceId );
+  Status = DfciIdSupportGetManufacturer (&Data->Manufacturer, &Data->ManufacturerSize);
+  Status |= DfciIdSupportGetProductName (&Data->ProductName, &Data->ProductNameSize);
+  Status |= DfciIdSupportGetSerialNumber (&Data->SerialNumber, &Data->SerialNumberSize);
+  Status |= DfciIdSupportGetUuid (&Data->Uuid, &Data->UuidSize);
+
   if (EFI_ERROR(Status))
   {
     Data->StatusCode = EFI_ABORTED;
@@ -506,25 +504,90 @@ ValidateAndAuthenticatePendingProvisionData_V2 (
     return Data->StatusCode;
   }
 
-  Status = AsciiStrToGuid (DeviceId->Uuid, &SystemUuid);
+  Status = AsciiStrToGuid (Data->Uuid, &SystemUuid);
   if (EFI_ERROR(Status))
   {
       DEBUG((DEBUG_ERROR, "[AM] %a - Error convertion Uuid to Guid. Ignored. %r\n", __FUNCTION__, Status));
   }
 
-  DEBUG((DEBUG_ERROR, "[AM] %a - Current -- Target\n", __FUNCTION__));
-  DEBUG((DEBUG_ERROR, "Mfg  %a - %a\n",  DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset)));
-  DEBUG((DEBUG_ERROR, "Pn   %a - %a\n",  DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset)));
-  DEBUG((DEBUG_ERROR, "Sn   %a - %a\n",  DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset)));
-  DEBUG((DEBUG_ERROR, "Uuid %g - %g\n",  &SystemUuid, Data->Var->v2.SystemUuid));
-  if ((0 != CompareMem (DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset),     DeviceId->ManufacturerSize)) ||
-      (0 != CompareMem (DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset), DeviceId->ProductNameSize )) ||
-      (0 != CompareMem (DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset),  DeviceId->SerialNumberSize)) ||
-      (!CompareGuid (&SystemUuid, &Data->Var->v2.SystemUuid)))
+  // Here are the special cases
+  //
+  // 1. Recovery Certificate
+  //
+  //    A Recovery Certificate an be installed during manufacturing to enable Zero Touch
+  //    management.  When there is no owner certificate installed, This Recovery Certificate can be unenrolled by the local user.  The
+  //    local user will be allowed to enroll a Recovery Certificate.
+  //
+  // 2. Packets with no target information.
+  //
+  //    Are required to be signed by the Recovery Certificate.
+  //
+  //    Identity Packets:
+  //
+  //    When a packet is received with no target information, and the system does not does
+  //    not have an owner certificate, and the provisioning packet is signed by the Recovery
+  //    Certificate, then this packet will be allowed to entroll a new owner certificate
+  //    regardless of permissions with Zero Touch.  If the Recovery Certificate is not
+  //    installed, the permission will be deferred to the Local User via thumprint
+  //    verification. If the Recovery Certificate is installed, and the packet fails
+  //    authentication, it is discarded.
+  //
+  //    Settings Packets: NONE - only the user
+  //
+  // 3. UUID is gZeroGuid.
+  //
+  //    Only available on Settings Packets as these are dependent upon the Settings Manager.
+  //    The Settings Manaager has not been initialized when Identity and Permission packets
+  //    are processed.
+  //
+  //    This enables parsing of the strings for "setting = value" (NOT Implemented Yet)
+  //
+  //    When this is enabled, and the field does not match the corresponding DeviceId value,
+  //    the string is parsed for "setting = value".  The setting is obtained, and compared
+  //    with "value". A TRUE is returned if the setting is found, and its value == the value
+  //    in the expression.
+  //
+
+  PktMfg = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset);
+  PktProductName = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset);
+  PktSerialNumber = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset);
+  do
   {
-    Data->StatusCode = EFI_ABORTED;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_NOT_CORRECT_TARGET;
-    return Data->StatusCode;
+    // If an owner cert is installed, cannot provision with Recovery Cert
+    if (mInternalCertStore.Certs[CERT_OWNER_INDEX].Cert != NULL) {
+      break;
+    }
+
+    // Any DeviceId string or UUID in the packet indicates not a special packet
+    if ((*PktMfg != '\0') ||
+        (*PktProductName != '\0') ||
+        (*PktSerialNumber != '\0')) {
+      break;
+    }
+    if (!CompareGuid (&gZeroGuid, &Data->Var->v2.SystemUuid)) {
+      break;
+    }
+
+    Data->RecoverySigned = TRUE;
+  } while (FALSE);
+  // TODO: Parse strings for setting content
+
+  if (!Data->RecoverySigned)
+  {
+    DEBUG((DEBUG_ERROR, "[AM] %a - Current -- Target\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "Mfg  %a - %a\n",  Data->Manufacturer, PktMfg));
+    DEBUG((DEBUG_ERROR, "Pn   %a - %a\n",  Data->ProductName,  PktProductName));
+    DEBUG((DEBUG_ERROR, "Sn   %a - %a\n",  Data->SerialNumber, PktSerialNumber));
+    DEBUG((DEBUG_ERROR, "Uuid %g - %g\n",  &SystemUuid, Data->Var->v2.SystemUuid));
+    if ((0 != CompareMem (Data->Manufacturer, PktMfg,          Data->ManufacturerSize)) ||
+        (0 != CompareMem (Data->ProductName,  PktProductName,  Data->ProductNameSize )) ||
+        (0 != CompareMem (Data->SerialNumber, PktSerialNumber, Data->SerialNumberSize)) ||
+        (!CompareGuid (&SystemUuid, &Data->Var->v2.SystemUuid)))
+    {
+      Data->StatusCode = EFI_ABORTED;
+      Data->State = AUTH_MAN_PROV_STATE_DATA_NOT_CORRECT_TARGET;
+      return Data->StatusCode;
+    }
   }
 
   SignedDataLength = Data->TrustedCertOffset + Data->TrustedCertSize;  //SignedData will be this big.
@@ -773,6 +836,9 @@ CheckForNewProvisionInput (
   Data.SessionId = 0;
   Data.RebootRequired = FALSE;
   Data.AuthToken = DFCI_AUTH_TOKEN_INVALID;
+  Data.Manufacturer = NULL;
+  Data.ProductName = NULL;
+  Data.SerialNumber = NULL;
 
   //
   // 1 - Check mailbox for data.
@@ -902,6 +968,18 @@ CLEANUP:
 
   if (Data.Var != NULL) {
     FreePool(Data.Var);
+  }
+
+  if (Data.Manufacturer != NULL) {
+    FreePool (Data.Manufacturer);
+  }
+
+  if (Data.ProductName != NULL) {
+    FreePool (Data.ProductName);
+  }
+
+  if (Data.SerialNumber != NULL) {
+    FreePool (Data.SerialNumber);
   }
 
   return;

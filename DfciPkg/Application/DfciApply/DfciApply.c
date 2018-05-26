@@ -1,6 +1,6 @@
 
 /** @file
-  This application will request new DFCI configuration data from server.
+  This application will load the DFCI mailboxes from the shell.
 
 
   Copyright (c) 2017, Microsoft Corporation. All rights reserved.<BR>
@@ -65,6 +65,7 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
     SHELL_FILE_HANDLE               FileHandle;
     UINT64                          ReadSize;
     EFI_STATUS                      Status;
+    UINT8                          *LocalBuffer;
 
     if ((NULL == FileName) || (NULL == Buffer) || (NULL == BufferSize)) {
         AsciiPrint("Internal error in SetDfciVariable\n");
@@ -77,8 +78,8 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
 
     Status = ShellOpenFileByName(FileName,
                                  &FileHandle,
-                                  EFI_FILE_MODE_READ,
-                                  0);
+                                 EFI_FILE_MODE_READ,
+                                 0);
     if (EFI_ERROR(Status)) {
         AsciiPrint ("Failed to open %s file. Status = %r\n", FileName, Status);
         return Status;
@@ -91,18 +92,21 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
         return Status;
     }
 
-    *Buffer = AllocatePool (*BufferSize);
-
     if (gFlagVerbose) {
-        AsciiPrint ("Reading %.\n", FileName);
+        AsciiPrint ("Size of  %s id %d.\n", FileName, *BufferSize);
     }
 
-    if (NULL == *Buffer) {
+    LocalBuffer = AllocatePool (*BufferSize);
+
+    if (NULL == LocalBuffer) {
         AsciiPrint ("Unable to allocate buffer for %s\n", FileName);
         Status = EFI_OUT_OF_RESOURCES;
     } else {
+        if (gFlagVerbose) {
+            AsciiPrint ("Reading %s into %p.\n", FileName, LocalBuffer);
+        }
         ReadSize = *BufferSize;
-        Status = ShellReadFile (FileHandle, &ReadSize, Buffer);
+        Status = ShellReadFile (FileHandle, &ReadSize, LocalBuffer);
         ShellCloseFile (&FileHandle);
 
         if (EFI_ERROR(Status)) {
@@ -114,15 +118,15 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
     }
 
     if (gFlagVerbose) {
-        AsciiPrint ("Finished Reading %. Code=%r\n", FileName, Status);
+        AsciiPrint ("Finished Reading %s, size=%d. Code=%r\n", FileName, ReadSize, Status);
     }
 
     if (EFI_ERROR(Status)) {
-        if (NULL != *Buffer) {
-            FreePool (*Buffer);
-            *Buffer = NULL;
+        if (NULL != LocalBuffer) {
+            FreePool (LocalBuffer);
         }
     }
+    *Buffer = LocalBuffer;
 
     return Status;
 }
@@ -137,8 +141,11 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
  */
 EFI_STATUS
 SetDfciVariable (
-    IN CONST CHAR16 *FileName,
-    IN CONST CHAR16 *VariableName) {
+    IN CONST CHAR16   *FileName,
+    IN CONST CHAR16   *VariableName,
+    IN CONST EFI_GUID *VariableGuid,
+    IN       UINT32    Attributes
+  ) {
 
     EFI_STATUS  Status;
     CHAR8      *Buffer;
@@ -156,8 +163,12 @@ SetDfciVariable (
     Status = ReadFileIntoMemory (FileName, &Buffer, &FileSize);
 
     if (EFI_ERROR(Status)) {
-        AsciiPrint ("Error reading file %s. COde=%r\n", FileName, Status);
+        AsciiPrint ("Error reading file %s. Code=%r\n", FileName, Status);
         return Status;
+    }
+    if ((Buffer == NULL) || (FileSize == 0)) {
+        AsciiPrint ("Error reading file %s. Buffer=%p, Size=%d\n", FileName, Buffer, FileSize);
+        return EFI_UNSUPPORTED;
     }
 
     if (gFlagVerbose) {
@@ -165,15 +176,15 @@ SetDfciVariable (
     }
 
     Status = gRT->SetVariable ((CHAR16 *)VariableName,
-                              &gDfciSettingsGuid,
-                               EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+                               (EFI_GUID *)VariableGuid,
+                               Attributes,
                                FileSize,
                                Buffer);
 
     if (EFI_ERROR(Status)) {
         AsciiPrint ("Error setting variable %s. Code=%r\n", VariableName, Status);
     } else if (gFlagVerbose) {
-        AsciiPrint ("Finished Setting %s. Code=%r\n", VariableName, Status);
+        AsciiPrint ("Finished Setting %s\n", VariableName);
     }
 
     FreePool (Buffer);
@@ -189,7 +200,11 @@ SetDfciVariable (
  * @return EFI_STATUS
  */
 EFI_STATUS
-PrintResults (IN CONST CHAR16 *VariableName) {
+PrintResults (
+    IN CONST CHAR16 *VariableName,
+    IN CONST EFI_GUID *VariableGuid,
+    IN       UINT32    Attributes
+  ) {
 
     if (gFlagVerbose) {
         AsciiPrint ("Processing results for %s\n",VariableName);
@@ -206,7 +221,11 @@ PrintResults (IN CONST CHAR16 *VariableName) {
  * @return EFI_STATUS
  */
 EFI_STATUS
-PrintCurrent (IN CONST CHAR16 *VariableName) {
+PrintCurrent (
+    IN CONST CHAR16 *VariableName,
+    IN CONST EFI_GUID *VariableGuid,
+    IN       UINT32    Attributes
+  ) {
 
     if (gFlagVerbose) {
         AsciiPrint ("Processing current settings for %s\n",VariableName);
@@ -277,23 +296,23 @@ DfciApplyEntry(
     }
 
     if (gFlagResults) {
-        PrintResults (DFCI_IDENTITY_AUTH_PROVISION_SIGNER_RESULT_VAR_NAME);
-        PrintResults (DFCI_PERMISSION_POLICY_RESULT_VAR_NAME);
-        PrintResults (XML_SETTINGS_APPLY_OUTPUT_VAR_NAME);
+        PrintResults (DFCI_IDENTITY_AUTH_PROVISION_SIGNER_RESULT_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES);
+        PrintResults (DFCI_PERMISSION_POLICY_RESULT_VAR_NAME, &gDfciPermissionManagerVarNamespace,DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES);
+        PrintResults (XML_SETTINGS_APPLY_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
     }
 
     if (gFlagCurrent) {
-        PrintCurrent (XML_SETTINGS_CURRENT_OUTPUT_VAR_NAME);
+        PrintCurrent (XML_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
     }
 
     if (gIdentityFileName) {
-        SetDfciVariable (gIdentityFileName, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_NAME);
+        SetDfciVariable (gIdentityFileName, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES);
     }
     if (gPermissionsFileName) {
-        SetDfciVariable (gPermissionsFileName, DFCI_PERMISSION_POLICY_APPLY_VAR_NAME);
+        SetDfciVariable (gPermissionsFileName, DFCI_PERMISSION_POLICY_APPLY_VAR_NAME, &gDfciPermissionManagerVarNamespace, DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES);
     }
     if (gSettingsFileName) {
-        SetDfciVariable (gSettingsFileName, XML_SETTINGS_APPLY_INPUT_VAR_NAME);
+        SetDfciVariable (gSettingsFileName, XML_SETTINGS_APPLY_INPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
     }
 
     return 0;

@@ -11,10 +11,12 @@ Copyright (c) 2018, Microsoft Corporation. All rights reserved.
 #define DFCI_GLOBAL_PRIVATE_H
 
 //
-//  PKT_OFFSET (Structure Base Address, Offset to field)
+//  PKT_FIELD_FROM_OFFSET (Packet Base Address, Offset to field)
 //
-#define PKT_FIELD_FROM_OFFSET(Data, Field) ((UINT8 *) (((UINT8 *) Data ) + Field))
-#define PKT_FIELD_OFFSET(Field, Base) ((UINT16) ((UINT8 *) Field - (UINT8 *) Base))
+//  This macro returns a UINT8 * to the field at offet in the packet.
+//
+
+#define PKT_FIELD_FROM_OFFSET(Data, Offset) ((UINT8 *) (((UINT8 *) Data ) + Offset))
 
 
 #endif // DFCI_GLOBAL_PRIVATE_H

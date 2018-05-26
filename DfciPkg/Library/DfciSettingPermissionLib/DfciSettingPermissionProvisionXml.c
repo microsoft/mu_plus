@@ -114,7 +114,14 @@ IN PERMISSION_INSTANCE_DATA *Data)
   WIN_CERTIFICATE          *SignaturePtr;
   EFI_STATUS                Status;
   EFI_GUID                  SystemUuid;
-  DFCI_DEVICE_ID_ELEMENTS  *DeviceId;
+  CHAR8                    *Manufacturer = NULL;
+  UINTN                     ManufacturerSize;
+  CHAR8                    *ProductName = NULL;
+  UINTN                     ProductNameSize;
+  CHAR8                    *SerialNumber = NULL;
+  UINTN                     SerialNumberSize;
+  CHAR8                    *Uuid = NULL;
+  UINTN                     UuidSize;
 
   if (Data == NULL)
   {
@@ -219,7 +226,7 @@ IN PERMISSION_INSTANCE_DATA *Data)
       {
         UINTN DeviceSerialNumber = 0;
         DEBUG((DEBUG_INFO, "%a - Target Packet with sn %ld\n", __FUNCTION__, Data->Var->v1.SerialNumber));
-        Status = GetSerialNumber(&DeviceSerialNumber);
+        Status = DfciIdSupportV1GetSerialNumber(&DeviceSerialNumber);
         if (EFI_ERROR(Status))
         {
           DEBUG((DEBUG_ERROR, "Failed to get device serial number %r\n", Status));
@@ -246,41 +253,50 @@ IN PERMISSION_INSTANCE_DATA *Data)
       // Check if the packet is for this DeviceId.  For V2, must be an exact match for all componentes of
       // the device Id.
 
-      Status = DfciSupportGetDeviceId ( &DeviceId );
+      Status = DfciIdSupportGetManufacturer (&Manufacturer, &ManufacturerSize);
+      Status |= DfciIdSupportGetProductName (&ProductName, &ProductNameSize);
+      Status |= DfciIdSupportGetSerialNumber (&SerialNumber, &SerialNumberSize);
+      Status |= DfciIdSupportGetUuid (&Uuid, &UuidSize);
       if (EFI_ERROR(Status))
       {
         Data->StatusCode = EFI_ABORTED;
         Data->State = PERMISSION_STATE_SYSTEM_ERROR;
-        return Data->StatusCode;
+        Status = Data->StatusCode;
+        goto CLEANUP;
       }
 
       CopyGuid (&SystemUuid, &gZeroGuid);  // Insure ZeroGuid if no string guid
-      Status = AsciiStrToGuid (DeviceId->Uuid, &SystemUuid);
+      Status = AsciiStrToGuid (Uuid, &SystemUuid);
       if (EFI_ERROR(Status))
       {
         DEBUG((DEBUG_ERROR, "[AM] %a - Error convertion Uuid to Guid. Ignored. %r\n", __FUNCTION__, Status));
+        goto CLEANUP;
       }
 
       DEBUG((DEBUG_ERROR, "[AM] %a - Current -- Target\n", __FUNCTION__));
-      DEBUG((DEBUG_ERROR, "Mfg  %a - %a\n",  DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset)));
-      DEBUG((DEBUG_ERROR, "Pn   %a - %a\n",  DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset)));
-      DEBUG((DEBUG_ERROR, "Sn   %a - %a\n",  DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset)));
+      DEBUG((DEBUG_ERROR, "Mfg  %a - %a\n",  Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset)));
+      DEBUG((DEBUG_ERROR, "Pn   %a - %a\n",  ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset)));
+      DEBUG((DEBUG_ERROR, "Sn   %a - %a\n",  SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset)));
       DEBUG((DEBUG_ERROR, "Uuid %g - %g\n",  &SystemUuid, Data->Var->v2.SystemUuid));
-      if ((0 != CompareMem (DeviceId->Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset),     DeviceId->ManufacturerSize)) ||
-          (0 != CompareMem (DeviceId->ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset), DeviceId->ProductNameSize )) ||
-          (0 != CompareMem (DeviceId->SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset),  DeviceId->SerialNumberSize)) ||
+      if ((0 != CompareMem (Manufacturer, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset),     ManufacturerSize)) ||
+          (0 != CompareMem (ProductName,  PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset), ProductNameSize )) ||
+          (0 != CompareMem (SerialNumber, PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset),  SerialNumberSize)) ||
           (!CompareGuid (&SystemUuid, &Data->Var->v2.SystemUuid)))
       {
         Data->StatusCode = EFI_ABORTED;
         Data->State = PERMISSION_STATE_NOT_CORRECT_TARGET;
-        return Data->StatusCode;
+        Status = Data->StatusCode;
+        goto CLEANUP;
       }
+
+
       break;
     default:
       ASSERT(FALSE);      // Cannot get here
       Data->State = PERMISSION_STATE_DATA_INVALID;
       Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
-      return EFI_INCOMPATIBLE_VERSION;
+      Status = Data->StatusCode;
+      goto CLEANUP;
       break;
   }
 
@@ -292,11 +308,33 @@ IN PERMISSION_INSTANCE_DATA *Data)
     DEBUG((DEBUG_ERROR, "%a - Failed to Authenticate Permissions Packet %r\n", __FUNCTION__, Status));
     Data->State = PERMISSION_STATE_DATA_AUTH_FAILED;  //Auth Error
     Data->StatusCode = EFI_SECURITY_VIOLATION;
-    return Data->StatusCode;
+    Status = Data->StatusCode;
+    goto CLEANUP;
   }
 
   Data->State = PERMISSION_STATE_DATA_AUTHENTICATED; //authenticated
-  return EFI_SUCCESS;
+  Status = EFI_SUCCESS;
+
+CLEANUP:
+
+  if (Manufacturer != NULL) {
+    FreePool (Manufacturer);
+  }
+
+  if (ProductName != NULL) {
+    FreePool (ProductName);
+  }
+
+  if (SerialNumber != NULL) {
+    FreePool (SerialNumber);
+  }
+
+  if (Uuid != NULL) {
+    FreePool (Uuid);
+  }
+
+  return Status;
+
 }
 
 //

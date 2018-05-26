@@ -4,7 +4,10 @@
 #define SETTINGS_MANAGER_H
 
 #include <PiDxe.h>
+
+#include <XmlTypes.h>
 #include <DfciSystemSettingTypes.h>
+
 #include <Protocol/DfciAuthentication.h>
 #include <Protocol/DfciSettingAccess.h>
 #include <Protocol/DfciSettingsProvider.h>
@@ -19,8 +22,13 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DfciSettingPermissionLib.h>
 #include <Library/DfciSettingsLib.h>  // Library not used, just the defines
+#include <Library/DfciDeviceIdSupportLib.h>
+#include <Library/DfciXmlDeviceIdSchemaSupportLib.h>
+#include <Library/XmlTreeLib.h>
+#include <Library/XmlTreeQueryLib.h>
 
 #include <Guid/DfciInternalVariableGuid.h>
+#include <Guid/DfciDeviceIdVariables.h>
 
 #include <Settings/DfciSettings.h>
 

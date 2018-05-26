@@ -45,13 +45,17 @@
   UefiDriverEntryPoint
   DebugLib
   BaseLib
+  DfciXmlDeviceIdSchemaSupportLib
   DfciXmlSettingSchemaSupportLib
   DfciSettingPermissionLib
   DfciV1SupportLib
+  XmlTreeLib
+  XmlTreeQueryLib
 
 [Guids]
  gDfciStartOfBdsNotifyGuid
  gDfciSettingsManagerVarNamespace
+ gDfciDeviceIdVarNamespace
  gDfciInternalVariableGuid
  gEfiEventPreReadyToBootGuid
 

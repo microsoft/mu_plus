@@ -69,7 +69,14 @@ typedef struct {
     //
     // Device Id
     //
-    DFCI_DEVICE_ID_ELEMENTS        *DeviceId;
+    CHAR8                           *Manufacturer;
+    UINTN                            ManufacturerSize;
+    CHAR8                           *ProductName;
+    UINTN                            ProductNameSize;
+    CHAR8                           *SerialNumber;
+    UINTN                            SerialNumberSize;
+    CHAR8                           *Uuid;
+    UINTN                            UuidSize;
 
     //
     // Common section  -- From here to the end cleared before each NIC attempt
@@ -1015,7 +1022,7 @@ GetRequestUrl (
     // TBD, the exact string needed to access InTune.  This is set up for a
     // test server mikeytbds3
 
-    MachineIdSize = Dfci->DeviceId->SerialNumberSize * sizeof(CHAR16);
+    MachineIdSize = Dfci->SerialNumberSize * sizeof(CHAR16);
     MachineId = AllocatePool (MachineIdSize);
 
     if (NULL == MachineId) {
@@ -1023,7 +1030,7 @@ GetRequestUrl (
         return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = AsciiStrToUnicodeStrS (Dfci->DeviceId->SerialNumber, MachineId, Dfci->DeviceId->SerialNumberSize);
+    Status = AsciiStrToUnicodeStrS (Dfci->SerialNumber, MachineId, Dfci->SerialNumberSize);
     if (EFI_ERROR(Status)) {
         FreePool (MachineId);
         DEBUG((DEBUG_ERROR,"Unable to convert Ascii SerialNumber to Unicode. Code=%r\n",Status));
@@ -1370,11 +1377,16 @@ DfciRequestProcess (
     Dfci->UrlSize = UrlSize;
     Dfci->HttpsCert = HttpsCert;
     Dfci->HttpsCertSize = HttpsCertSize;
-
-    Status = DfciSupportGetDeviceId ( &Dfci->DeviceId );
+    HandleBuffer = NULL;
+    Status = DfciIdSupportGetManufacturer (&Dfci->Manufacturer, &Dfci->ManufacturerSize);
+    Status |= DfciIdSupportGetProductName (&Dfci->ProductName, &Dfci->ProductNameSize);
+    Status |= DfciIdSupportGetSerialNumber (&Dfci->SerialNumber, &Dfci->SerialNumberSize);
+    Status |= DfciIdSupportGetUuid (&Dfci->Uuid, &Dfci->UuidSize);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get SmBios Info. %r\n", Status));
-        return EFI_UNSUPPORTED;
+        // Status is mangled - just return EFI_UNSUPPORTED
+        Status = EFI_UNSUPPORTED;
+        goto CLEANUP;
     }
 
     DoneProcessing = FALSE;
@@ -1388,9 +1400,10 @@ DfciRequestProcess (
         &HandleCount,
         &HandleBuffer);
     if (EFI_ERROR(Status) || (0 == HandleCount)) {
-        *UserStatus = USER_STATUS_NO_NIC;
+        mUserStatus = USER_STATUS_NO_NIC;
         DEBUG((DEBUG_ERROR,"Unable to locate any NIC's for HTTP file access\n") );
-        return EFI_NOT_FOUND;
+        Status = EFI_NOT_FOUND;
+        goto CLEANUP;
     }
 
     for (NicIndex = 0; (NicIndex < HandleCount) && !DoneProcessing; NicIndex++) {
@@ -1403,8 +1416,9 @@ DfciRequestProcess (
 
         Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiHttpServiceBindingProtocolGuid, &Dfci->HttpSbProtocol);
         if (EFI_ERROR(Status)) {
+            mUserStatus = USER_STATUS_NO_NIC;
             DEBUG((DEBUG_ERROR,"Error locating HttpServiceBinding protocol. Code=%r\n",Status));
-            return Status;
+            goto CLEANUP;
         }
 
         // Verify Media is present before doing any work.  We don't really care about the error cases.  On
@@ -1452,7 +1466,12 @@ EARLY_EXIT:
         }
     }
 
-    FreePool(HandleBuffer);
+CLEANUP:
+    if (NULL != HandleBuffer) {
+        FreePool(HandleBuffer);
+    }
+
+    FreePool (Dfci);
 
     *UserStatus = mUserStatus;
 

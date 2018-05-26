@@ -44,7 +44,9 @@
 [Protocols]
 
 [Guids]
-  gDfciSettingsGuid
+  gDfciAuthProvisionVarNamespace
+  gDfciPermissionManagerVarNamespace
+  gDfciSettingsManagerVarNamespace
 
 #[BuildOptions]
 #  DEBUG_*_*_CC_FLAGS  = /Od /FAcs

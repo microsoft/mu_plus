@@ -93,7 +93,7 @@ GetRecoveryChallenge (
   // Grab the system UUID...
   if (!EFI_ERROR( Status ))
   {
-    Status = GetSerialNumber(&NewChallenge->SerialNumber);
+    Status = DfciIdSupportV1GetSerialNumber(&NewChallenge->SerialNumber);
     DEBUG((DEBUG_VERBOSE, __FUNCTION__" - GetSerialNumber = %r\n", Status));
     if (EFI_ERROR(Status))
     {

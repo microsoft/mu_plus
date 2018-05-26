@@ -15,28 +15,88 @@ Gets the serial number for this device.
 **/
 EFI_STATUS
 EFIAPI
-GetSerialNumber(
+DfciIdSupportV1GetSerialNumber(
   OUT UINTN*  SerialNumber
   ) {
 
    return EFI_UNSUPPORTED;
 }
 
-
 /**
- * Get the Device Id elements for the Dfci Packets
+ * Get the Manufacturer Name
  *
  * @param Manufacturer
- * @param ProductName
- * @param SerialNumber
- * @param UUID
+ * @param ManufacturerSize
+ *
+ * It is the callers responsibility to free the buffer returned.
  *
  * @return EFI_STATUS EFIAPI
  */
 EFI_STATUS
 EFIAPI
-DfciSupportGetDeviceId (
-    OUT DFCI_DEVICE_ID_ELEMENTS **DeviceId
+DfciIdSupportGetManufacturer (
+    CHAR8   **Manufacturer,
+    UINTN    *ManufacturerSize   OPTIONAL
+  ) {
+
+    return EFI_UNSUPPORTED;
+}
+
+/**
+ * Get the ProductName
+ *
+ * @param ProductName
+ * @param ProductNameSize
+ *
+ * It is the callers responsibility to free the buffer returned.
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+DfciIdSupportGetProductName (
+    CHAR8   **ProductName,
+    UINTN    *ProductNameSize  OPTIONAL
+  ) {
+
+    return EFI_UNSUPPORTED;
+}
+
+/**
+ * Get the SerialNumber
+ *
+ * @param SerialNumber
+ * @param SerialNumberSize
+ *
+ * It is the callers responsibility to free the buffer returned.
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+DfciIdSupportGetSerialNumber (
+    CHAR8   **SerialNumber,
+    UINTN    *SerialNumberSize  OPTIONAL
+  ) {
+
+    return EFI_UNSUPPORTED;
+}
+
+/**
+ * Get the Uuid
+ *
+ * @param Uuid
+ * @param UuidSize
+ *
+ * It is the callers responsibility to free the buffer returned.
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+DfciIdSupportGetUuid (
+    CHAR8   **Uuid,
+    UINTN    *UuidSize  OPTIONAL
   ) {
 
     return EFI_UNSUPPORTED;

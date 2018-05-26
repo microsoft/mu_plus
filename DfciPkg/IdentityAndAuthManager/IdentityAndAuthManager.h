@@ -93,8 +93,16 @@ typedef struct {
     DFCI_IDENTITY_ID                 Identity;
     BOOLEAN                          UserConfirmationRequired;
     BOOLEAN                          RebootRequired;
+    BOOLEAN                          RecoverySigned;
     DFCI_AUTH_TOKEN                  AuthToken;
-    DFCI_DEVICE_ID_ELEMENTS         *DeviceId;
+    CHAR8                           *Manufacturer;
+    UINTN                            ManufacturerSize;
+    CHAR8                           *ProductName;
+    UINTN                            ProductNameSize;
+    CHAR8                           *SerialNumber;
+    UINTN                            SerialNumberSize;
+    CHAR8                           *Uuid;
+    UINTN                            UuidSize;
     UINT16                           TrustedCertOffset;
     UINT16                           TrustedCertSize;
     UINT8                           *TrustedCert;
