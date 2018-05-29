@@ -34,8 +34,8 @@ CreateXmlStringFromCurrentIdentities(
     XmlNode       *List = NULL;
     XmlNode       *CurrentIdentitiesNode = NULL;
     XmlNode       *CurrentIdentitiesListNode = NULL;
-    CONST CHAR16  *Thumbprint16;
-          CHAR8   *Thumbprint;
+    CHAR16        *Thumbprint16;
+    CHAR8         *Thumbprint;
     CONST CHAR8   *Id;
     BOOLEAN        FreeThumbprint;
     UINTN          ThumbprintLen;
