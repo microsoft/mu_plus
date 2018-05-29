@@ -183,10 +183,16 @@ SetProviderValueFromAscii(
 
   case DFCI_SETTING_TYPE_PASSWORD:  
 
-      if ((AsciiStrLen(Value) < ((DFCI_PASSWORD_STORE_SIZE * 2) + 1)) ||
+      //
+      // DFCI_PW_STORE_SIZE is 74.  *2=148. +"eb".len == 150.  So, < 150 is not enough
+      // characters, and > 150 is too many for the password size buffer.  Also, the last
+      // two characters must be "eb"
+      //
+      DEBUG((DEBUG_ERROR,"Value + StoreSize(%d) %a\n", (DFCI_PASSWORD_STORE_SIZE * 2), Value + (DFCI_PASSWORD_STORE_SIZE * 2) ));
+      if ((AsciiStrLen(Value) != ((DFCI_PASSWORD_STORE_SIZE * 2) + 2)) ||
           (0 != AsciiStriCmp(Value + (DFCI_PASSWORD_STORE_SIZE * 2), "eb")))
       {
-          DEBUG((DEBUG_ERROR, "End Byte 'EB' is missing. Not a valid store format . %a\n", Value));
+          DEBUG((DEBUG_ERROR, "End Byte 'EB' is missing. Not a valid store format. %a\n", Value));
           return EFI_INVALID_PARAMETER;
       }
 
@@ -195,8 +201,8 @@ SetProviderValueFromAscii(
       {
           return EFI_OUT_OF_RESOURCES;
       }
-
-      Status = AsciiStrHexToBytes(Value, AsciiStrLen(Value), ByteArray, DFCI_PASSWORD_STORE_SIZE);
+      // - 2 to account for the "eb" at the end
+      Status = AsciiStrHexToBytes(Value, AsciiStrLen(Value) - 2, ByteArray, DFCI_PASSWORD_STORE_SIZE);
 
       if (EFI_ERROR(Status))
       {

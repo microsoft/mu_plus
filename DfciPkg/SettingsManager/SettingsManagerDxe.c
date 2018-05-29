@@ -14,8 +14,6 @@
 DFCI_SETTING_ACCESS_PROTOCOL            mSystemSettingAccessProtocol = { SystemSettingAccessSet, SystemSettingAccessGet, SystemSettingsAccessReset };
 DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  mProviderProtocol = { RegisterProvider };
 DFCI_SETTING_PERMISSIONS_PROTOCOL       mPermissionProtocol = { SystemSettingPermissionGetPermission, SystemSettingPermissionResetPermission };
-EFI_EVENT                               mSmDxeEvent;
-EFI_EVENT                               mSmReadyToBootEvent;
 DFCI_AUTHENTICATION_PROTOCOL           *mAuthProtocol = NULL;
 
 typedef struct {
@@ -40,7 +38,7 @@ Notify function for running and acting on the requests (input, debug, etc)
 **/
 VOID
 EFIAPI
-SettingManagerDxeEventNotify(
+SettingManagerOnStartOfBds(
   IN EFI_EVENT        Event,
   IN VOID             *Context
   )
@@ -69,7 +67,6 @@ SettingManagerDxeEventNotify(
     DEBUG((DEBUG_ERROR, "Failed to Install DFCI Settings Access Protocol. %r\n", Status));
   }
 
-
   if (!EFI_ERROR(gBS->LocateProtocol(&gDfciAuthenticationProvisioningPendingGuid, NULL, &AuthPendingProtocol)))
   {
     DEBUG((DEBUG_INFO, "%a - Auth Provisioning Pending Protocol Installed.  Skip Checking for Pending Updates\n", __FUNCTION__));
@@ -87,12 +84,12 @@ SettingManagerDxeEventNotify(
 }
 
 /**
- * Install UefiDeviceId at pre ReadyToBoot before the late locking variables are locked.
+ * Install UefiDeviceId at ReadyToBoot before the late locking variables are locked.
  *
  */
 VOID
 EFIAPI
-SettingsManagerOnPreReadyToBoot (
+SettingsManagerOnReadyToBoot (
     IN EFI_EVENT        Event,
     IN VOID             *Context
     ) {
@@ -297,7 +294,6 @@ Init (
   )
 {
   EFI_EVENT  InitEvent;
-  VOID      *InitRegistration;
   EFI_STATUS Status;
   
   
@@ -323,10 +319,10 @@ Init (
   Status = gBS->CreateEventEx(
     EVT_NOTIFY_SIGNAL,
     TPL_CALLBACK,
-    SettingManagerDxeEventNotify,
+    SettingManagerOnStartOfBds,
     ImageHandle,  //set the context to the image handle
     &gDfciStartOfBdsNotifyGuid,
-    &mSmDxeEvent
+    &InitEvent
     );
 
   if (EFI_ERROR(Status))
@@ -337,13 +333,14 @@ Init (
   //
   // Register notify function to re-publish Settings at ReadyToBoot so current settings can be placed in FACS.
   //
-  InitEvent = EfiCreateProtocolNotifyEvent(
-      &gEfiEventPreReadyToBootGuid,
-      TPL_CALLBACK,
-      SettingsManagerOnPreReadyToBoot,
-      NULL,
-      &InitRegistration
-      );
+  Status = gBS->CreateEventEx(
+    EVT_NOTIFY_SIGNAL,
+    TPL_CALLBACK,
+    SettingsManagerOnReadyToBoot,
+    ImageHandle,  //set the context to the image handle
+    &gEfiEventReadyToBootGuid,
+    &InitEvent
+    );
 
   if (InitEvent == NULL)
   {

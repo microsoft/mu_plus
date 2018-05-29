@@ -7,11 +7,15 @@ Copyright (c) 2015, Microsoft Corporation.
 
 **/
 #include <PiDxe.h>
+
+#include <DfciSystemSettingTypes.h>
+#include <XmlTypes.h>
+
 #include <Library/DebugLib.h>
 #include <Library/PrintLib.h>
-#include <XmlTypes.h>
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
+#include <Library/DfciV1SupportLib.h>
 #include <Library/DfciXmlSettingSchemaSupportLib.h>
 #include <Library/BaseLib.h>
 
@@ -171,8 +175,8 @@ EFI_STATUS
 EFIAPI
 GetInputSettings(
   IN CONST XmlNode* ParentSettingNode,
-  OUT CHAR8** Id,
-  OUT CHAR8** Value)
+  OUT CONST CHAR8** Id,
+  OUT CONST CHAR8** Value)
 {
   XmlNode  *Temp = NULL;
   //Given the parent node go get
@@ -196,7 +200,12 @@ GetInputSettings(
     DEBUG((DEBUG_INFO, "%a - Failed to find Id Element\n", __FUNCTION__));
     return EFI_NOT_FOUND;
   }
-  *Id = Temp->Value;
+  if ((Temp->Value[0] >= '0') && (Temp->Value[0] <= '9'))
+  {
+      *Id = DfciV1TranslateString (Temp->Value);
+  } else {
+      *Id = Temp->Value;
+  }
   Temp = FindFirstChildNodeByName(ParentSettingNode, SETTING_VALUE_ELEMENT_NAME);
   if (Temp == NULL)
   {

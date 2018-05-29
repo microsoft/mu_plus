@@ -93,8 +93,8 @@ EFI_STATUS
 EFIAPI
 GetInputSettings(
   IN CONST XmlNode* ParentSettingNode,
-  OUT CHAR8** Id, 
-  OUT CHAR8** Value);
+  OUT CONST CHAR8** Id,
+  OUT CONST CHAR8** Value);
 
 EFI_STATUS
 EFIAPI
