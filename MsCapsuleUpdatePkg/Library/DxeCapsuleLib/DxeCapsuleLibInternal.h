@@ -37,6 +37,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MemoryAllocationLib.h>
 #include <Library/CapsuleLib.h>
 #include <Library/CapsuleResetLib.h>
+#include <Library/CapsulePersistLib.h>
 #include <Library/UefiBootManagerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>

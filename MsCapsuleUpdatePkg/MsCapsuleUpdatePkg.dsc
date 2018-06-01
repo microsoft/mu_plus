@@ -68,6 +68,7 @@
   BmpSupportLib|MsCapsuleUpdatePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   IntSafeLib|MdePkg/Library/IntSafeLib/IntSafeLib.inf
   CapsuleLib|MsCapsuleUpdatePkg/Library/DxeCapsuleLib/DxeCapsuleLib.inf
+  CapsulePersistLib|MsCapsuleUpdatePkg/Library/CapsulePersistLibNull/CapsulePersistLibNull.inf
   FmpHelperLib|MsCapsuleUpdatePkg/Library/FmpHelperLib/FmpHelperDxeLib.inf
   FmpPolicyLib|MsCapsuleUpdatePkg/Library/FmpPolicyLib/FmpPolicyDxeLib.inf
   # For update progress text display:
@@ -123,6 +124,7 @@
   MsCapsuleUpdatePkg\Library\BaseBmpSupportLib\BaseBmpSupportLib.inf
   MsCapsuleUpdatePkg\Library\DxeCapsuleLib\DxeCapsuleLib.inf
   MsCapsuleUpdatePkg\Library\CapsuleKeyBaseLibNull\CapsuleKeyBaseLibNull.inf
+  MsCapsuleUpdatePkg\Library\CapsulePersistLibNull\CapsulePersistLibNull.inf
   MsCapsuleUpdatePkg\Library\FmpHelperLib\FmpHelperDxeLib.inf
   MsCapsuleUpdatePkg\Library\CapsuleUpdatePolicyLibNull\CapsuleUpdatePolicyLibNull.inf
   MsCapsuleUpdatePkg\Library\MsFmpPayloadHeaderV1DxeLib\MsFmpPayloadHeaderV1DxeLib.inf

@@ -51,6 +51,7 @@
   PrintLib
   DisplayUpdateProgressLib
   CapsuleResetLib
+  CapsulePersistLib
 
 
 [Protocols]

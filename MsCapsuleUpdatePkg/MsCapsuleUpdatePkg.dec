@@ -76,6 +76,11 @@
   ##
   FmpPolicyLib|Include/Library/FmpPolicyLib.h
 
+  ## @libraryclass Library to implement capsule persistence if needed
+  #
+  #
+  ##
+  CapsulePersistLib|Include/Library/CapsulePersistLib.h
 [Guids]
   #
   # <description of purpose for the guids found in the file>

@@ -820,6 +820,28 @@ ProcessCapsuleImage(
   return EFI_UNSUPPORTED;
 }
 
+/**
+  The firmware implements to process the capsule image.
+
+  @param  CapsuleHeader         Points to a capsule header.
+
+  @retval EFI_SUCESS            Process Capsule Image successfully.
+  @retval EFI_UNSUPPORTED       Capsule image is not supported by the firmware.
+  @retval EFI_DEVICE_ERROR      Something went wrong staging the capsule
+**/
+EFI_STATUS
+EFIAPI
+StageCapsuleImage(
+  IN EFI_CAPSULE_HEADER *CapsuleHeader
+  )
+{
+  if (SupportCapsuleImage(CapsuleHeader) != EFI_SUCCESS) {
+    return EFI_UNSUPPORTED;
+  }
+
+  return PersistCapsule(CapsuleHeader);
+}
+
 
 /**
  Library function used to look thru the hob list 
@@ -835,6 +857,9 @@ ProcessCapsules (
 {
   EFI_STATUS                  Status;
   EFI_PEI_HOB_POINTERS        HobPointer;
+  EFI_CAPSULE_HEADER          *PersistedCapsuleBuffer;
+  EFI_CAPSULE_HEADER          *CurrentPersistedCapsule;
+  UINTN                       PersistedCapsuleBufferSize;
   EFI_CAPSULE_HEADER          *CapsuleHeader;
   UINT32                      CapsuleTotalNumber;
   UINT32                      Index;
@@ -845,6 +870,8 @@ ProcessCapsules (
   CapsuleTotalNumber = 0;
   Status = EFI_SUCCESS;
   CapArray = NULL;
+  PersistedCapsuleBufferSize = 0;
+  PersistedCapsuleBuffer = NULL;
 
   //
   // Clear all of the capsule variables.
@@ -895,11 +922,38 @@ ProcessCapsules (
     HobPointer.Raw = GET_NEXT_HOB(HobPointer);
   }
 
+  //
+  // Find all persisted capsules
+  //
+  Status = GetPersistedCapsules(PersistedCapsuleBuffer, &PersistedCapsuleBufferSize);
+  if (Status == EFI_BUFFER_TOO_SMALL) {
+    PersistedCapsuleBuffer = AllocatePool(PersistedCapsuleBufferSize);
+    Status = GetPersistedCapsules(PersistedCapsuleBuffer, &PersistedCapsuleBufferSize);
+  }
+  //success from first call just means no capsules to look at.
+  if (EFI_ERROR(Status)) {
+    goto Cleanup;
+  }
+
+  if (PersistedCapsuleBuffer != NULL) {
+    CurrentPersistedCapsule = PersistedCapsuleBuffer;
+    while((UINT8 *)CurrentPersistedCapsule < ((UINT8 *)PersistedCapsuleBuffer + PersistedCapsuleBufferSize)) {
+      CapArray[CapsuleTotalNumber].Capsule = CurrentPersistedCapsule;
+      CapArray[CapsuleTotalNumber].Processed = FALSE;
+      CapsuleTotalNumber++;
+      if (CapsuleTotalNumber == CapsuleMaxNumber) {
+        DEBUG((DEBUG_INFO, "ProcessCapsules - Reached Max Capsule Supported in a single pass\n"));
+        break;
+      }
+      CurrentPersistedCapsule = (EFI_CAPSULE_HEADER *)((UINT8 *)CurrentPersistedCapsule + CurrentPersistedCapsule->CapsuleImageSize);
+    }
+  }
+
   DEBUG((DEBUG_INFO, "Total Number of Capsules to process: %d\n", CapsuleTotalNumber));
 
   if (CapsuleTotalNumber == 0) {
     //
-    // We didn't find a hob, so had no errors.
+    // We didn't find any capsules, so had no errors.
     //
     Status = EFI_SUCCESS;
     goto Cleanup;
@@ -955,7 +1009,8 @@ ProcessCapsules (
   //
   //once finished processing we will reset.  
   //
-  Status = ResetAfterCapsuleUpdate();  
+
+  Status = ResetAfterCapsuleUpdate();
   if (EFI_ERROR(Status))
   {
 
@@ -966,6 +1021,10 @@ ProcessCapsules (
 Cleanup:
   if (CapArray != NULL) {
     FreePool(CapArray);
+  }
+
+  if (PersistedCapsuleBuffer != NULL) {
+    FreePool(PersistedCapsuleBuffer);
   }
 
   return Status;
