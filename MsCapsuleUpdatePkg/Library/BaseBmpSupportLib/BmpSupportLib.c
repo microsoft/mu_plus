@@ -17,7 +17,7 @@ Intel Corporation.
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
-#include <Library/IntSafeLib.h>
+#include <Library/SafeIntLib.h>
 #include <IndustryStandard/Bmp.h>
 
 
@@ -101,7 +101,7 @@ OUT UINTN     *PixelWidth
   //
   // The data size in each line must be 4 byte alignment.
   //
-  Status = SafeUInt32Mult(BmpHeader->PixelWidth,
+  Status = SafeUint32Mult(BmpHeader->PixelWidth,
                        BmpHeader->BitPerPixel,
                        &DataSizePerLine);
 
@@ -113,7 +113,7 @@ OUT UINTN     *PixelWidth
     return RETURN_INVALID_PARAMETER;
   }
 
-  Status = SafeUInt32Add(DataSizePerLine, 31, &DataSizePerLine);
+  Status = SafeUint32Add(DataSizePerLine, 31, &DataSizePerLine);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR,
       "TranslateBmpToGopBlt: invalid BmpImage... DataSizePerLine:0x%x\n",
@@ -123,7 +123,7 @@ OUT UINTN     *PixelWidth
   }
 
   DataSizePerLine = (DataSizePerLine >> 3) & (~0x3);
-  Status = SafeUInt32Mult( DataSizePerLine,
+  Status = SafeUint32Mult( DataSizePerLine,
                         BmpHeader->PixelHeight,
                         &BltBufferSize);
 
@@ -135,7 +135,7 @@ OUT UINTN     *PixelWidth
     return RETURN_INVALID_PARAMETER;
   }
 
-  Status = SafeUInt32Mult( BmpHeader->PixelHeight,
+  Status = SafeUint32Mult( BmpHeader->PixelHeight,
                         DataSizePerLine,
                         &DataSize);
 
@@ -201,7 +201,7 @@ OUT UINTN     *PixelWidth
   //
   // Calculate the BltBuffer needed size.
   //
-  Status = SafeUInt32Mult(BmpHeader->PixelWidth,
+  Status = SafeUint32Mult(BmpHeader->PixelWidth,
                        BmpHeader->PixelHeight,
                        &BltBufferSize);
 
@@ -214,7 +214,7 @@ OUT UINTN     *PixelWidth
   }
 
   Temp = BltBufferSize;
-  Status = SafeUInt32Mult( BltBufferSize,
+  Status = SafeUint32Mult( BltBufferSize,
                         sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL),
                         &BltBufferSize);
 

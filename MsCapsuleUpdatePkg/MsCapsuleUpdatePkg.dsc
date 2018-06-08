@@ -66,7 +66,7 @@
   CapsuleUpdatePolicyLib|MsCapsuleUpdatePkg/Library/CapsuleUpdatePolicyLibNull/CapsuleUpdatePolicyLibNull.inf
   MsFmpPayloadHeaderLib|MsCapsuleUpdatePkg/Library/MsFmpPayloadHeaderV1DxeLib/MsFmpPayloadHeaderV1DxeLib.inf
   BmpSupportLib|MsCapsuleUpdatePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
-  IntSafeLib|MdePkg/Library/IntSafeLib/IntSafeLib.inf
+  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
   CapsuleLib|MsCapsuleUpdatePkg/Library/DxeCapsuleLib/DxeCapsuleLib.inf
   CapsulePersistLib|MsCapsuleUpdatePkg/Library/CapsulePersistLibNull/CapsulePersistLibNull.inf
   FmpHelperLib|MsCapsuleUpdatePkg/Library/FmpHelperLib/FmpHelperDxeLib.inf

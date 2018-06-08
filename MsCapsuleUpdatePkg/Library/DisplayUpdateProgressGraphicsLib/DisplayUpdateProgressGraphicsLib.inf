@@ -56,7 +56,7 @@
 
 [Protocols]
   gEfiGraphicsOutputProtocolGuid	  # CONSUMES
-  gEfiBootLogoProtocol2Guid               # CONSUMES
+  gEdkiiBootLogo2ProtocolGuid       # CONSUMES
 
 [Guids]
 

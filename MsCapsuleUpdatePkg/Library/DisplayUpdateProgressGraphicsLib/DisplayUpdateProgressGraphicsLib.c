@@ -80,7 +80,8 @@ FindDim()
   UINTN width, height;     //size of logo in pixels
 
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Logo = NULL;
-  EFI_BOOT_LOGO_PROTOCOL2 *BootLogoProt = NULL;  //get bounds of logo so we can minize our screen grab and looking for logo
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *CurrentLogo = NULL;
+  EDKII_BOOT_LOGO2_PROTOCOL *BootLogoProt = NULL;  //get bounds of logo so we can minize our screen grab and looking for logo
 
   //check gop
   if (mGop == NULL)
@@ -90,14 +91,14 @@ FindDim()
   }
 
   //get boot logo protocol so we know where on the screen to grab
-  Status = gBS->LocateProtocol(&gEfiBootLogoProtocol2Guid, NULL, (VOID **)&BootLogoProt);
+  Status = gBS->LocateProtocol(&gEdkiiBootLogo2ProtocolGuid, NULL, (VOID **)&BootLogoProt);
   if ((BootLogoProt == NULL) || (EFI_ERROR(Status)))
   {
-    DEBUG((DEBUG_ERROR, "Failed to locate gEfiBootLogoProtocol2Guid.  No Progress bar support. \n", Status));
+    DEBUG((DEBUG_ERROR, "Failed to locate gEdkiiBootLogo2ProtocolGuid.  No Progress bar support. \n", Status));
     return;
   }
   //get logo location and size
-  Status = BootLogoProt->GetBootLogo(BootLogoProt, &OffsetX, &OffsetY, &width, &height);
+  Status = BootLogoProt->GetBootLogo(BootLogoProt, &CurrentLogo, &OffsetX, &OffsetY, &width, &height);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed to Get Boot Logo Status = %r.  No Progress bar support. \n", Status));

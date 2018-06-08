@@ -47,10 +47,10 @@ Update_Image_Progress(
   IN UINTN Completion
 )
 {
-  EFI_STATUS                     Status;
-  UINT32                         Color;
+  EFI_STATUS                            Status;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL_UNION   Color;
 
-  Color = (UINT32)((Completion >> 8) & 0xFFFFFF);
+  Color.Raw = (UINT32)((Completion >> 8) & 0xFFFFFF);
   Completion &= 0xFF;  //only the lower 8bits matter for percentage.  
 
   DEBUG((DEBUG_INFO, "Update Progress - %d%%\n", Completion));
@@ -68,7 +68,7 @@ Update_Image_Progress(
     gBS->SetWatchdogTimer((UINTN)PcdGet8(PcdCapsuleUpdateWatchdogTimeInSeconds), 0x0000, 0x00, NULL);
   }
 
-  Status = DisplayUpdateProgress(Completion, Color);
+  Status = DisplayUpdateProgress(Completion, &Color);
 
   return Status;
 }
