@@ -1,0 +1,44 @@
+## @file
+# Library to support outputting the unit test report in JUnit xml format to a file
+# 
+#
+# @copyright
+# Copyright (c) 2016 Microsoft Corporation. All rights reserved
+#
+# @par Specification Reference:
+#
+##
+
+
+[Defines]
+INF_VERSION     = 0x00010017
+BASE_NAME       = UnitTestResultReportJUnitLogFileLib
+FILE_GUID       = 40726C0E-0B6D-4D85-9D14-03ABB6F94855
+VERSION_STRING  = 1.0
+MODULE_TYPE     = DXE_DRIVER
+LIBRARY_CLASS   = UnitTestResultReportLib|DXE_DRIVER UEFI_APPLICATION
+
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  XmlTreeLib
+  ShellLib
+  MemoryAllocationLib
+  PrintLib
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsUnitTestPkg/MsUnitTestPkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+  ShellPkg/ShellPkg.dec # shell lib for writing file
+
+
+[Guids]
+
+
+[Sources]
+  UnitTestResultReportLib.c
+  JUnitXmlSupport.c
+  JUnitXmlSupport.h
