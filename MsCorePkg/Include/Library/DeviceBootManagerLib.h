@@ -117,4 +117,14 @@ DeviceBootManagerPriorityBoot (
   EFI_BOOT_MANAGER_LOAD_OPTION   *BootOption
   );
 
+/**
+ This is called from BDS right before going into front page 
+ when no bootable devices/options found
+*/
+VOID
+EFIAPI
+DeviceBootManagerUnableToBoot (
+  VOID
+  );
+
 #endif

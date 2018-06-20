@@ -258,20 +258,15 @@ PlatformBootManagerPriorityBoot (
 
 
 /**
- PlatformBootManagerDeadloop
-
- BDS has given up, and would deadloop. In our case, restart the syste to setup
+ This is called from BDS right before going into front page 
+ when no bootable devices/options found
 */
 VOID
 EFIAPI
-PlatformBootManagerDeadloop (
+PlatformBootManagerUnableToBoot (
     VOID
     )
 {
-
-    //
-    // If we didn't boot anything at all, then restart to frontpage.
-    //
-    RebootToFrontPage ();
+    DeviceBootManagerUnableToBoot();
 }
 
