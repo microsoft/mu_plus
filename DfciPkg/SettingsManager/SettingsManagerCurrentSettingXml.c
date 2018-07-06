@@ -3,6 +3,7 @@
 #include <XmlTypes.h>
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
+#include <Library/DfciV1SupportLib.h>
 #include <Library/DfciXmlSettingSchemaSupportLib.h>
 #include <Library/PrintLib.h>
 #include <Guid/DfciSettingsManagerVariables.h>
@@ -123,7 +124,15 @@ CreateXmlStringFromCurrentSettings(
     CHAR8 *Value = NULL;
     DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
     Value = ProviderValueAsAscii(&(Prov->Provider), TRUE);
-    Status = SetCurrentSettings(CurrentSettingsListNode, Prov->Provider.Id, Value);
+
+// TEMP Set XML to Number string for compatibility
+    {
+        DFCI_SETTING_ID_STRING NumberString;
+        NumberString = DfciV1NumberFromId (Prov->Provider.Id);
+        Status = SetCurrentSettings(CurrentSettingsListNode, NumberString, Value);
+    }
+//     Status = SetCurrentSettings(CurrentSettingsListNode, Prov->Provider.Id, Value);
+
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Error from Set Current Settings.  Status = %r\n", __FUNCTION__, Status));

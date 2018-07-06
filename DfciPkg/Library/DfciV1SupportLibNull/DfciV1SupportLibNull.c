@@ -62,3 +62,21 @@ DfciV1TranslateEnum (DFCI_SETTING_ID_V1_ENUM V1Id) {
     DEBUG((DEBUG_INFO,__FUNCTION__ " Called - NULL library returns NULL\n"));
     return NULL;
 }
+
+/**
+ * Return V1 number string from V2 string Id
+ *
+ * @param V2 String Id
+ *
+ * @return DFCI_SETTING_ID_STRING EFIAPI.  Return string version of number
+ *
+ * Value returned is only valid until the next call to this function
+ *
+ */
+DFCI_SETTING_ID_STRING
+EFIAPI
+DfciV1NumberFromId (DFCI_SETTING_ID_STRING Id) {
+
+    DEBUG((DEBUG_INFO,__FUNCTION__ " Called - NULL library returns NULL\n"));
+    return NULL;
+}

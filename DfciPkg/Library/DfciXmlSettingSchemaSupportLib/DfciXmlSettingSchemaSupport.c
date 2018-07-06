@@ -200,12 +200,14 @@ GetInputSettings(
     DEBUG((DEBUG_INFO, "%a - Failed to find Id Element\n", __FUNCTION__));
     return EFI_NOT_FOUND;
   }
-  if ((Temp->Value[0] >= '0') && (Temp->Value[0] <= '9'))
-  {
-      *Id = DfciV1TranslateString (Temp->Value);
-  } else {
+
+//  Disable translating settings response to strings.
+//  if ((Temp->Value[0] >= '0') && (Temp->Value[0] <= '9'))
+//  {
+//      *Id = DfciV1TranslateString (Temp->Value);
+//  } else {
       *Id = Temp->Value;
-  }
+//  }
   Temp = FindFirstChildNodeByName(ParentSettingNode, SETTING_VALUE_ELEMENT_NAME);
   if (Temp == NULL)
   {
