@@ -199,16 +199,13 @@ EFIAPI
 PlatformBootManagerProcessBootCompletion (
   IN EFI_BOOT_MANAGER_LOAD_OPTION *BootOption
 ) {
-    BOOLEAN  Reboot;
 
     if ((EFI_SUCCESS == BootOption->Status) && (mSecViolation)) {
         mSecViolation = FALSE;
         BootOption->Status = OEM_PREVIOUS_SECURITY_VIOLATION;
     }
-    Reboot = DeviceBootManagerProcessBootCompletion (BootOption);
-    if (Reboot) {
-        RebootToFrontPage ();
-    }
+
+    DeviceBootManagerProcessBootCompletion (BootOption);
 }
 
 
@@ -255,8 +252,6 @@ PlatformBootManagerPriorityBoot (
     return;
 }
 
-
-
 /**
  This is called from BDS right before going into front page 
  when no bootable devices/options found
@@ -267,6 +262,7 @@ PlatformBootManagerUnableToBoot (
     VOID
     )
 {
+
     DeviceBootManagerUnableToBoot();
 }
 

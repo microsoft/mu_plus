@@ -94,7 +94,7 @@ DeviceBootManagerAfterConsole (
 /**
 ProcessBootCompletion
 */
-BOOLEAN
+VOID
 EFIAPI
 DeviceBootManagerProcessBootCompletion (
   IN EFI_BOOT_MANAGER_LOAD_OPTION *BootOption
