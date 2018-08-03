@@ -61,7 +61,7 @@ GetStringForFailureType(
   }
   if (Result == mUnknownFailureType)
   {
-    DEBUG((DEBUG_INFO, __FUNCTION__ " Failure Type does not have string defined 0x%X\n", (UINT32)Failure));
+    DEBUG((DEBUG_INFO, "%a Failure Type does not have string defined 0x%X\n", __FUNCTION__, (UINT32)Failure));
   }
   return Result;
 }
@@ -176,7 +176,7 @@ WriteXmlNodeToLogFile(
     Status = ShellDeleteFile(&FileHandle);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to delete file %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a failed to delete file %r\n", __FUNCTION__, Status));
     }
   }
 
@@ -222,7 +222,7 @@ OutputUnitTestFrameworkReport(
 
   if (Framework == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed. Framework is NULL\n"));
+    DEBUG((DEBUG_ERROR, "%a Failed. Framework is NULL\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto EXIT;
   }
@@ -230,7 +230,7 @@ OutputUnitTestFrameworkReport(
   Doc = New_JUnitXmlDocNodeList();
   if (Doc == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to create new xml doc\n"));
+    DEBUG((DEBUG_ERROR, "%a Failed to create new xml doc\n", __FUNCTION__));
     Status = EFI_DEVICE_ERROR;
     goto EXIT;
   }
@@ -254,13 +254,13 @@ OutputUnitTestFrameworkReport(
     SuitePackage = ConvertAndAllocateUnicodeStringToAsciiString(Suite->UTS.Package);
     if (SuiteName == NULL)
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " ConvertAndAllocateUnicodeStringToAsciiString returned NULL for SuiteName \n"));
+      DEBUG((DEBUG_ERROR, "%a ConvertAndAllocateUnicodeStringToAsciiString returned NULL for SuiteName \n", __FUNCTION__));
       Status = EFI_DEVICE_ERROR;
       goto EXIT;
     }
     if (SuitePackage == NULL)
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " ConvertAndAllocateUnicodeStringToAsciiString returned NULL for SuitePackage \n"));
+      DEBUG((DEBUG_ERROR, "%a ConvertAndAllocateUnicodeStringToAsciiString returned NULL for SuitePackage \n", __FUNCTION__));
       Status = EFI_DEVICE_ERROR;
       goto EXIT;
     }
@@ -270,7 +270,7 @@ OutputUnitTestFrameworkReport(
     FreePool(SuitePackage);
     if (SuiteNode == NULL)
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to create new test suite\n"));
+      DEBUG((DEBUG_ERROR, "%a Failed to create new test suite\n", __FUNCTION__));
       Status = EFI_DEVICE_ERROR;
       goto EXIT;
     }
@@ -322,7 +322,7 @@ OutputUnitTestFrameworkReport(
     Status = AddTestSuiteStats(SuiteNode, TotalTests, TotalFailures, TotalSkips, TotalErrors);
     if(EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed in AddTestSuiteStats.  Status = %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a Failed in AddTestSuiteStats.  Status = %r\n", __FUNCTION__, Status));
       goto EXIT;
     }
   }//End Suite iteration
@@ -331,7 +331,7 @@ OutputUnitTestFrameworkReport(
   Status = WriteXmlNodeToLogFile(Framework, Doc);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to Write Xml Node To LogFile.  Status = %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a Failed to Write Xml Node To LogFile.  Status = %r\n", __FUNCTION__, Status));
     goto EXIT;
   }
 

@@ -273,13 +273,13 @@ New_FailureForTestCase(
   //1 - do we need to create a failure node??
   if (Msg == NULL)
   {
-    DEBUG((DEBUG_VERBOSE, __FUNCTION__ " - Msg is NULL\n"));
+    DEBUG((DEBUG_VERBOSE, "%a - Msg is NULL\n", __FUNCTION__));
     //This isn't a bug...easier code if we just allow this function to get called unconditionally and return if parameters are null
     return NULL;
   }
   if (Type == NULL)
   {
-    DEBUG((DEBUG_VERBOSE, __FUNCTION__ " - Type is NULL\n"));
+    DEBUG((DEBUG_VERBOSE, "%a - Type is NULL\n", __FUNCTION__));
     //This isn't a bug...easier code if we just allow this function to get called unconditionally and return if parameters are null
     return NULL;
   }

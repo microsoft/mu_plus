@@ -1022,6 +1022,11 @@ TryAgain:
                         pTargetExtent = NULL;
                     }
                     break;
+                default:
+                    // shouldn't reach this case, but need this code to prevent compiler error
+                    DEBUG((DEBUG_ERROR, "%a - unexpected state\n", __FUNCTION__));
+                    ASSERT(FALSE);
+                    break;
                 }
             }
             while (TRUE);
@@ -1633,7 +1638,11 @@ TryAgain:
                         }
                     }
                     break;
-
+                default:
+                    // shouldn't reach this case, but need this code to prevent compiler error
+                    DEBUG((DEBUG_ERROR, "%a - unexpected state\n", __FUNCTION__));
+                    ASSERT(FALSE);
+                    break;
                 }
             }
             while (TRUE);
@@ -1919,6 +1928,11 @@ TryAgain:
             pDocumentPiece->item.Error.Location = CurrentLocation;
             goto Exit;
         }
+        break;
+    default:
+        // shouldn't reach this case, but need this code to prevent compiler error
+        DEBUG((DEBUG_ERROR, "%a - unexpected state\n", __FUNCTION__));
+        ASSERT(FALSE);
         break;
     }
 

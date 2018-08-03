@@ -119,13 +119,13 @@ ParseValidXml(
 
   if (XmlContext == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " Context is NULL.  Test is not valid\n"));
+    DEBUG((DEBUG_ERROR, "%a Context is NULL.  Test is not valid\n", __FUNCTION__));
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
   if (XmlContext->InputXmlString == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " InputXmlString in the context struct is NULL.  Test is not valid!\n"));
+    DEBUG((DEBUG_ERROR, "%a InputXmlString in the context struct is NULL.  Test is not valid!\n", __FUNCTION__));
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -134,7 +134,7 @@ ParseValidXml(
   XmlContext->Node = ResultData;  //set dynamic memory pointer in struct so memory gets cleanup in cleanup function
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to create xml tree node\n"));
+    DEBUG((DEBUG_ERROR, "%a Failed to create xml tree node\n", __FUNCTION__));
   }
   
   UT_ASSERT_NOT_NULL(ResultData);

@@ -420,7 +420,7 @@ DeleteNode(IN XmlNode* Node)
     Status = DeleteNode((XmlNode*)Link);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to delete node.  Status = %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a Failed to delete node.  Status = %r\n", __FUNCTION__, Status));
       ASSERT_EFI_ERROR(Status);
     }
 
@@ -439,7 +439,7 @@ DeleteNode(IN XmlNode* Node)
     Status = DeleteAttribute((XmlAttribute*)Link);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to delete attribute.  Status = %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a Failed to delete attribute.  Status = %r\n", __FUNCTION__, Status));
       ASSERT_EFI_ERROR(Status);
     }
 
@@ -1456,7 +1456,7 @@ _GetXmlUnEscapedLength(
 
   if (Len > MaxStringLength)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " String is too big or not NULL terminated.  MaxLen = 0x%LX\n", (UINT64)MaxStringLength));
+    DEBUG((DEBUG_ERROR, "%a String is too big or not NULL terminated.  MaxLen = 0x%LX\n", __FUNCTION__, (UINT64)MaxStringLength));
     ASSERT(Len <= MaxStringLength);
     return 0;
   }
@@ -1498,7 +1498,7 @@ _GetXmlUnEscapedLength(
       }
       else
       {
-        DEBUG((DEBUG_INFO, __FUNCTION__ " found an & char that is not valid xml escape sequence\n"));
+        DEBUG((DEBUG_INFO, "%a found an & char that is not valid xml escape sequence\n", __FUNCTION__));
       }
     }
     i++; 
@@ -1523,7 +1523,7 @@ _GetXmlEscapedLength(
 
   if (Len > MaxStringLength)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " String is too big or not NULL terminated\n"));
+    DEBUG((DEBUG_ERROR, "%a String is too big or not NULL terminated\n", __FUNCTION__));
     ASSERT(Len <= MaxStringLength);
     return 0;
   }
@@ -1588,7 +1588,7 @@ XmlEscape(
   EscapedLength = _GetXmlEscapedLength(String, MaxStringLength);
   if (EscapedLength == 0)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to get valid escaped length\n"));
+    DEBUG((DEBUG_ERROR, "%a failed to get valid escaped length\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1605,7 +1605,7 @@ XmlEscape(
       case '<': //&lt;
         if (j + 4 > EscapedLength)
         {
-          DEBUG((DEBUG_ERROR, __FUNCTION__ " invalid parsing <.  J+4 will cause overflow\n"));
+          DEBUG((DEBUG_ERROR, "%a invalid parsing <.  J+4 will cause overflow\n", __FUNCTION__));
           j = EscapedLength; //cause error to force break without corrupting memory 
           break;
         }
@@ -1618,7 +1618,7 @@ XmlEscape(
       case '>': //&gt;
         if (j + 4 > EscapedLength)
         {
-          DEBUG((DEBUG_ERROR, __FUNCTION__ " invalid parsing >.  J + 4 will cause overflow\n"));
+          DEBUG((DEBUG_ERROR, "%a invalid parsing >.  J + 4 will cause overflow\n", __FUNCTION__));
           j = EscapedLength + 1; //cause error to force break without corrupting memory 
           break;
         }
@@ -1631,7 +1631,7 @@ XmlEscape(
       case '\"': //&quot;
         if (j + 6 > EscapedLength)
         {
-          DEBUG((DEBUG_ERROR, __FUNCTION__ " invalid parsing \".  J+6 will cause overflow\n"));
+          DEBUG((DEBUG_ERROR, "%a invalid parsing \".  J+6 will cause overflow\n", __FUNCTION__));
           j = EscapedLength +1 ; //cause error to force break without corrupting memory 
           break;
         }
@@ -1646,7 +1646,7 @@ XmlEscape(
       case '\'': //&apos;
         if (j + 6 > EscapedLength)
         {
-          DEBUG((DEBUG_ERROR, __FUNCTION__ " invalid parsing '.  J+6 will cause overflow\n"));
+          DEBUG((DEBUG_ERROR, "%a invalid parsing '.  J+6 will cause overflow\n", __FUNCTION__));
           j = EscapedLength; //cause error to force break without corrupting memory 
           break;
         }
@@ -1661,7 +1661,7 @@ XmlEscape(
       case '&': //&amp;
         if (j + 5 > EscapedLength)
         {
-          DEBUG((DEBUG_ERROR, __FUNCTION__ " invalid parsing &.  J+5 will cause overflow\n"));
+          DEBUG((DEBUG_ERROR, "%a invalid parsing &.  J+5 will cause overflow\n", __FUNCTION__));
           j = EscapedLength +1 ; //cause error to force break without corrupting memory 
           break;
         }
@@ -1684,12 +1684,12 @@ XmlEscape(
     //report unique messages for easier debug
     if (j != EscapedLength) 
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " escape string process failed.  New String index counter (j = %d EscapedLength = %d) not at end point\n", j, EscapedLength));
+      DEBUG((DEBUG_ERROR, "%a escape string process failed.  New String index counter (j = %d EscapedLength = %d) not at end point\n", __FUNCTION__, j, EscapedLength));
       ASSERT(j == EscapedLength);
     }
     else
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " escape string process failed.  Input String index counter (i = %d String[i] = %c) not at NULL terminator\n", i, (CHAR16)String[i]));
+      DEBUG((DEBUG_ERROR, "%a escape string process failed.  Input String index counter (i = %d String[i] = %c) not at NULL terminator\n", __FUNCTION__, i, (CHAR16)String[i]));
       ASSERT(String[i] == '\0');
     }
 
@@ -1737,7 +1737,7 @@ XmlUnEscape(
   Length = _GetXmlUnEscapedLength(EscapedString, MaxEscapedStringLength);
   if (Length == 0)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to get valid unescaped length\n"));
+    DEBUG((DEBUG_ERROR, "%a failed to get valid unescaped length\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -1779,7 +1779,7 @@ XmlUnEscape(
       }
       else
       {
-        DEBUG((DEBUG_INFO, __FUNCTION__ " found an & char that is not valid xml escape sequence\n"));
+        DEBUG((DEBUG_INFO, "%a found an & char that is not valid xml escape sequence\n", __FUNCTION__));
       }
     }
 	else  //not an escape character
@@ -1794,12 +1794,12 @@ XmlUnEscape(
     //report unique messages for easier debug
     if (j != Length)
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " unescape string process failed.  New String index counter (j = %d Length = %d) not at end point\n", j, Length));
+      DEBUG((DEBUG_ERROR, "%a unescape string process failed.  New String index counter (j = %d Length = %d) not at end point\n", __FUNCTION__, j, Length));
       ASSERT(j == Length);
     }
     else
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " unescape string process failed.  Input String index counter (i = %d EscapedString[i] = %c) not at NULL terminator\n", i, (CHAR16)EscapedString[i]));
+      DEBUG((DEBUG_ERROR, "%a unescape string process failed.  Input String index counter (i = %d EscapedString[i] = %c) not at NULL terminator\n", __FUNCTION__, i, (CHAR16)EscapedString[i]));
       ASSERT(EscapedString[i] == '\0');
     }
 

@@ -108,7 +108,7 @@ UefiMain(
   Status = CreateXmlTree(XmlString, AsciiStrLen(XmlString), &mNode);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " test setup error.  CreateXmlTree failed. %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a test setup error.  CreateXmlTree failed. %r\n", __FUNCTION__, Status));
   }
   
   //Run Tests
