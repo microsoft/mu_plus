@@ -41,7 +41,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define UNIT_TEST_APP_NAME        L"XML Lib Unit Test Application"
-#define UNIT_TEST_APP_VERSION     L"0.1"
+#define UNIT_TEST_APP_VERSION     L"0.2"
 
 
 /**
@@ -255,6 +255,52 @@ TestStringParsing(
 
   FreePool(XmlContext->String);
   XmlContext->String = NULL;
+
+  //Test UnEscape Function
+  Status = XmlUnEscape(XmlContext->StringEscaped, XmlContext->EscapedLength + 1, &(XmlContext->String));
+  UT_ASSERT_NOT_EFI_ERROR(Status);
+  Length = AsciiStrLen(XmlContext->String);
+  UT_ASSERT_EQUAL(Length, XmlContext->NotEscapedLength);
+  UT_ASSERT_MEM_EQUAL(XmlContext->String, XmlContext->StringNotEscaped, Length + 1);
+
+  FreePool(XmlContext->String);
+  XmlContext->String = NULL;
+
+  return UNIT_TEST_PASSED;
+}
+
+/**
+Verify UnEscape works on strings with no escape codes
+**/
+UNIT_TEST_STATUS
+EFIAPI
+TestStringUnescapeErrorTest(
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+)
+{
+  UINTN Length = 0;
+  XmlStringParseContext *XmlContext = (XmlStringParseContext*)Context;
+  EFI_STATUS Status;
+
+  //Test the data input - these are test errors not failures
+  if (XmlContext->StringEscaped == NULL)
+  {
+    DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (StringEscaped == NULL)\n"));
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+  }
+  Length = AsciiStrLen(XmlContext->StringEscaped);
+  if (Length != XmlContext->EscapedLength)
+  {
+    DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (EscapedLength Incorrect %d Test Data EscapedLength %d)\n", Length, XmlContext->EscapedLength));
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+  }
+
+  if (XmlContext->String != NULL)
+  {
+    DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (String Not NULL Before Test)\n"));
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+  }
 
   //Test UnEscape Function
   Status = XmlUnEscape(XmlContext->StringEscaped, XmlContext->EscapedLength + 1, &(XmlContext->String));
@@ -513,6 +559,7 @@ UefiMain(
   AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with three Apostrophe escape characters", L"Common.Xml.ParseEscapeApostrophe", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextApostrophe);
   AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with three Ampersand escape characters", L"Common.Xml.ParseEscapeAmpersand", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextAmp);
   AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with all escape characters and other inputs", L"Common.Xml.ParseEscapeMany", TestStringParsing, NULL, CleanUpXmlStringParseContext, &Context7Esc);
+  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with Ampersand but no escape", L"Common.Xml.ParseAmpersand", TestStringUnescapeErrorTest, NULL, CleanUpXmlStringParseContext, &ContextAmpNoEsc);
 
 
   //

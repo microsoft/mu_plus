@@ -46,6 +46,7 @@ XmlStringParseContext ContextGT         = { 75, 66,  "Hello &gt;There Are&gt; 3 
 XmlStringParseContext ContextQuote      = { 74, 59,  "Hello &quot;There Are&quot; 3 Quote Escape &quot; Sequences In This String",                      "Hello \"There Are\" 3 Quote Escape \" Sequences In This String", NULL };
 XmlStringParseContext ContextApostrophe = { 79, 64,  "Hello &apos;There Are&apos; 3 Apostrophe Escape &apos; Sequences In This String",                 "Hello 'There Are' 3 Apostrophe Escape ' Sequences In This String", NULL };
 XmlStringParseContext ContextAmp        = { 75, 63,  "Hello &amp;There Are&amp; 3 Ampersand Escape &amp; Sequences In This String",                     "Hello &There Are& 3 Ampersand Escape & Sequences In This String", NULL };
+XmlStringParseContext ContextAmpNoEsc   = { 15, 15,  "Hello & Goodbye", "Hello & Goodbye", NULL };
 
 
 

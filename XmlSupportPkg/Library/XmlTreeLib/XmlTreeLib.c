@@ -1780,6 +1780,7 @@ XmlUnEscape(
       else
       {
         DEBUG((DEBUG_INFO, "%a found an & char that is not valid xml escape sequence\n", __FUNCTION__));
+        RawString[j++] = EscapedString[i++];
       }
     }
 	else  //not an escape character
