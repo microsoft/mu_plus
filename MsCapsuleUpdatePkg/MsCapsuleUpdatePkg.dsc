@@ -67,14 +67,9 @@
   MsFmpPayloadHeaderLib|MsCapsuleUpdatePkg/Library/MsFmpPayloadHeaderV1DxeLib/MsFmpPayloadHeaderV1DxeLib.inf
   BmpSupportLib|MsCapsuleUpdatePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
-  CapsuleLib|MsCapsuleUpdatePkg/Library/DxeCapsuleLib/DxeCapsuleLib.inf
   CapsulePersistLib|MsCapsuleUpdatePkg/Library/CapsulePersistLibNull/CapsulePersistLibNull.inf
   FmpHelperLib|MsCapsuleUpdatePkg/Library/FmpHelperLib/FmpHelperDxeLib.inf
   FmpPolicyLib|MsCapsuleUpdatePkg/Library/FmpPolicyLib/FmpPolicyDxeLib.inf
-  # For update progress text display:
-  #DisplayUpdateProgressLib|MsCapsuleUpdatePkg/Library/DisplayUpdateProgressTextLib/DisplayUpdateProgressTextLib.inf
-  # For update progress bar (graphics) display:
-  DisplayUpdateProgressLib|MsCapsuleUpdatePkg/Library/DisplayUpdateProgressGraphicsLib/DisplayUpdateProgressGraphicsLib.inf
   CapsuleResetLib|MsCorePkg/Library/CapsuleResetLibNull/CapsuleResetLibNull.inf ##MSCHANGE
 
 ##MSCHANGE Begin
@@ -120,9 +115,7 @@
 ###################################################################################################
 
 [Components]
-  MsCapsuleUpdatePkg\Library\DisplayUpdateProgressTextLib\DisplayUpdateProgressTextLib.inf
   MsCapsuleUpdatePkg\Library\BaseBmpSupportLib\BaseBmpSupportLib.inf
-  MsCapsuleUpdatePkg\Library\DxeCapsuleLib\DxeCapsuleLib.inf
   MsCapsuleUpdatePkg\Library\CapsuleKeyBaseLibNull\CapsuleKeyBaseLibNull.inf
   MsCapsuleUpdatePkg\Library\CapsulePersistLibNull\CapsulePersistLibNull.inf
   MsCapsuleUpdatePkg\Library\FmpHelperLib\FmpHelperDxeLib.inf
@@ -130,8 +123,6 @@
   MsCapsuleUpdatePkg\Library\MsFmpPayloadHeaderV1DxeLib\MsFmpPayloadHeaderV1DxeLib.inf
   MsCapsuleUpdatePkg\Library\FmpWrapperDeviceLib\FmpWrapperDeviceLib.inf
   MsCapsuleUpdatePkg\Library\FmpPolicyLib\FmpPolicyDxeLib.inf
-  #MsCapsuleUpdatePkg\Library\DisplayUpdateProgressTextLib\DisplayUpdateProgressTextLib.inf
-  MsCapsuleUpdatePkg\Library\DisplayUpdateProgressGraphicsLib\DisplayUpdateProgressGraphicsLib.inf
 
   MsCapsuleUpdatePkg\Universal\EsrtDxe\EfiSystemResourceTableDxe.inf
 
