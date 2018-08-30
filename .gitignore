@@ -1,0 +1,6 @@
+# Ignore build artifacts.
+/Build
+tags/
+.DS_Store
+*.pyc
+*.bak
