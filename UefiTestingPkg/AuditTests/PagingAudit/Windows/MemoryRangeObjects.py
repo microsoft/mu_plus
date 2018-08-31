@@ -62,7 +62,8 @@ class MemoryRange(object):
 
 
     SystemMemoryTypes = [
-        "TSEG"
+        "TSEG",
+        "GuardPage"
     ]
 
     PageSize = {
@@ -92,8 +93,7 @@ class MemoryRange(object):
         self.Attribute = 0
 
         # Check to see whether we're a type that we recognize.
-        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT"):
-            print(self.RecordType, args)
+        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT", "GuardPage"):
             raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
 
         # Continue processing according to the data type.
@@ -105,6 +105,8 @@ class MemoryRange(object):
             self.LoadedImageEntryInit(int(args[0], 16), int(args[1], 16), self.RecordType)
         elif self.RecordType in ("PTEntry"):
             self.PteInit(*args)
+        elif self.RecordType in ("GuardPage"):
+            self.GuardPageInit(*args)
 
         self.CalculateEnd()
 
@@ -142,6 +144,17 @@ class MemoryRange(object):
         self.Attribute = Attribute
         self.NumberOfPages = NumberOfPages
 
+    def MemoryRangeToString(self):
+        return """\n  Memory Map Entry
+------------------------------------------------------------------
+    Type                    : %s
+    PhysicalStart           : 0x%010X
+    VirtualStart            : 0x%010X
+    NumberOfPages           : 0x%010X
+    Attribute               : 0x%010X
+    PhysicalSize            : 0x%010X
+""" % (self.GetMemoryTypeDescription(), self.PhysicalStart, self.VirtualStart, self.NumberOfPages, self.Attribute, 0)
+
     # 
     # Intializes memory contents description
     # 
@@ -149,6 +162,23 @@ class MemoryRange(object):
         self.PhysicalStart = Base
         self.PhysicalSize = Size
         self.ImageName = Name
+    def LoadedImageEntryToString(self):
+        return """\n  Loaded Image
+------------------------------------------------------------------
+    PhysicalStart           : 0x%010X
+    PhysicalEnd             : 0x%010X
+    PhysicalSize            : 0x%010X
+    Name                    : %s
+""" % (self.PhysicalStart, (self.PhysicalEnd), self.PhysicalSize, self.ImageName)
+
+    def GuardPageInit(self, VA):
+        self.SystemMemoryType = 1
+        self.PhysicalStart = int(VA, 16)
+        self.PageSize = "4k"
+        self.PhysicalSize = self.getPageSize()
+        self.ReadWrite = 0
+        self.UserPrivilege = 1
+        self.Nx = 0
 
     # 
     # Initializes page table entries
@@ -163,7 +193,20 @@ class MemoryRange(object):
         self.PhysicalSize = self.getPageSize()
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
-   
+    def pteDebugStr(self):
+        return """\n  %s
+------------------------------------------------------------------
+    MustBe1                 : 0x%010X
+    ReadWrite               : 0x%010X
+    Nx                      : 0x%010X
+    PhysicalStart           : 0x%010X
+    PhysicalEnd             : 0x%010X
+    PhysicalSize            : 0x%010X
+    Number                  : 0x%010X
+    Type                    : %s
+    LoadedImage             : %s
+""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
+
     def getPageSize(self):
         return MemoryRange.PageSize[self.PageSize]
 

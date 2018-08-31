@@ -43,10 +43,10 @@ from BinaryParsing import *
 VERSION = "0.80"
 
 
-class SmmParsingTool(object):
+class ParsingTool(object):
 
-    def __init__(self, DatFolderPath, PlatformName, PlatformVersion):
-        self.Logger = logging.getLogger("SmmParsingTool")
+    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type):
+        self.Logger = logging.getLogger("ParsingTool")
         self.MemoryAttributesTable = []
         self.MemoryRangeInfo = []
         self.PageDirectoryInfo = []
@@ -54,6 +54,7 @@ class SmmParsingTool(object):
         self.ErrorMsg = []
         self.PlatformName = PlatformName
         self.PlatformVersion = PlatformVersion
+        self.Type = Type
 
     def Parse(self):
         #Get Info Files
@@ -62,12 +63,14 @@ class SmmParsingTool(object):
         Pte2mbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*2M*.dat"))
         Pte4kbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*4K*.dat"))
         MatFileList =  glob.glob(os.path.join(self.DatFolderPath, "*MAT*.dat"))
+        GuardPageFileList =  glob.glob(os.path.join(self.DatFolderPath, "*GuardPage*.dat"))
 
         logging.debug("Found %d Info Files" % len(InfoFileList))
         logging.debug("Found %d 1gb Page Files" % len(Pte1gbFileList))
         logging.debug("Found %d 2mb Page Files" % len(Pte2mbFileList))
         logging.debug("Found %d 4kb Page Files" % len(Pte4kbFileList))
         logging.debug("Found %d MAT Files" % len(MatFileList))
+        logging.debug("Found %d GuardPage Files" % len(GuardPageFileList))
 
 
         # Parse each file, keeping PTEs and "Memory Ranges" seperate
@@ -84,6 +87,9 @@ class SmmParsingTool(object):
 
         for pte4k in Pte4kbFileList:
             self.PageDirectoryInfo.extend(Parse4kPages(pte4k))
+
+        for guardpage in GuardPageFileList:
+            self.PageDirectoryInfo.extend(ParseInfoFile(guardpage))
 
         for mat in MatFileList:
             self.MemoryAttributesTable.extend(ParseInfoFile(mat))
@@ -111,6 +117,9 @@ class SmmParsingTool(object):
             for mr in self.MemoryRangeInfo:
                 if pte.overlap(mr):
                     if mr.MemoryType is not None:
+                        if (pte.PhysicalEnd > mr.PhysicalEnd) or (pte.PhysicalStart < mr.PhysicalStart):
+                            logging.error("Memory range attribute does not cover entire page " + pte.pteDebugStr() +" " + mr.MemoryRangeToString())
+                            self.ErrorMsg.append("Memory range attribute does not cover entire page.  Base: 0x%X. "% (pte.PhysicalStart))
                         if pte.MemoryType is None:
                             pte.MemoryType = mr.MemoryType
                         else:
@@ -177,7 +186,11 @@ class SmmParsingTool(object):
         # Open template and replace placeholder with json
         #
         f = open(OutputFilePath, "w")
-        template = open(os.path.join(sp, "SmmPaging_template.html"), "r")
+        if self.Type == 'DXE':
+            template = open(os.path.join(sp, "DxePaging_template.html"), "r")
+        else:
+            template = open(os.path.join(sp, "SmmPaging_template.html"), "r")
+
         for line in template.readlines():
             if "%TO_BE_FILLED_IN_BY_PYTHON_SCRIPT%" in line:
                 line = line.replace("%TO_BE_FILLED_IN_BY_PYTHON_SCRIPT%", js)
@@ -191,10 +204,11 @@ class SmmParsingTool(object):
 #
 def main():
 
-    parser = argparse.ArgumentParser(description='Parse SMM Paging information and generate HTML report')
+    parser = argparse.ArgumentParser(description='Parse Paging information and generate HTML report')
     parser.add_argument('-i', "--InputFolderPath", dest="InputFolder", help="Path to folder containing the DAT files from the UEFI shell tool (default is CWD)", default=os.getcwd())
     parser.add_argument('-o', "--OutputReport", dest="OutputReport", help="Path to output html report (default is report.html)", default=os.path.join(os.getcwd(), "report.html"))
     parser.add_argument('-p', "--PlatformName", dest="PlatformName", help="Name of Platform.  Will show up on report", default="Test Platform")
+    parser.add_argument('-t', "--type", choices=['SMM', 'DXE'], dest="Type", help="SMM or DXE Paging Report", required=True)
     parser.add_argument("--PlatformVersion", dest="PlatformVersion", help="Version of Platform.  Will show up report", default="1.0.0")
 
     #Turn on dubug level logging
@@ -222,7 +236,7 @@ def main():
 
     logging.info("Log Started: " + datetime.datetime.strftime(datetime.datetime.now(), "%A, %B %d, %Y %I:%M%p" ))
 
-    #Do parameter validation 
+    #Do parameter validation
     if(options.InputFolder is None or not os.path.isdir(options.InputFolder)):
         logging.critical("Invalid Input Folder Path to folder containing DAT files")
         return -5
@@ -234,7 +248,7 @@ def main():
     logging.debug("Input Folder Path is: %s" % options.InputFolder)
     logging.debug("Output Report is: %s" % options.OutputReport)
 
-    spt = SmmParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion)
+    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type)
     spt.Parse()
     return spt.OutputHtmlReport(VERSION, options.OutputReport)
 
