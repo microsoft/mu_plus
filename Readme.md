@@ -12,7 +12,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ## About
 
-This repo Project Mu common code that should only take Basecore as a dependency and be applicable to almost any FW project. For full documentation, please see the Project Mu [parent repo](https://github.com/Microsoft/mu) and the [wiki](https://github.com/Microsoft/mu/wiki).
+This repo contains Project Mu common code that should only take Basecore as a dependency and be applicable to almost any FW project. For full documentation, please see the Project Mu [parent repo](https://github.com/Microsoft/mu) and the [wiki](https://github.com/Microsoft/mu/wiki).
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 
