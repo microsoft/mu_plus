@@ -43,6 +43,14 @@
 [Sources]
   HeapGuardTestApp.c
 
+[Sources.X64]
+  X64/Efer.c
+
+[Sources.ARM]
+  Arm/Efer.c
+
+[Sources.AARCH64]
+  Arm/Efer.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -84,3 +92,4 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask   ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                      ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy        ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack                      ## CONSUMES

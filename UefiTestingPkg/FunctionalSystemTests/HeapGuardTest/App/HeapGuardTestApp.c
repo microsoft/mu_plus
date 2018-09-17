@@ -45,6 +45,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UnitTestBootUsbLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
+#include <Register\ArchitecturalMsr.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
 
@@ -81,7 +82,7 @@ InterruptHandler (
   IN EFI_SYSTEM_CONTEXT   SystemContext
   )
 {
-  DEBUG((DEBUG_ERROR, __FUNCTION__" InterruptType - %x \n", InterruptType));
+  DEBUG((DEBUG_ERROR, __FUNCTION__" SystemContextX64->ExceptionData: %x - InterruptType: %x\n", SystemContext.SystemContextX64->ExceptionData, InterruptType));
   gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
 } // InterruptHandler()
 
@@ -287,7 +288,6 @@ VOID
   VOID
 );
 
-
 /**
   This is a function that serves as a placeholder in the driver code region.
   This function address will be written to by the SmmMemoryProtectionsSelfTestCode()
@@ -302,7 +302,6 @@ DummyFunctionForCodeSelfTest (
 {
   volatile UINT8    DontCompileMeOut = 0;
   DontCompileMeOut++;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" failure \n"));
   return;
 } // DummyFunctionForCodeSelfTest()
 
@@ -334,6 +333,40 @@ NxTest (
 
 UNIT_TEST_STATUS
 EFIAPI
+UefiHardwareNxProtectionEnabledPreReq (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  if (PcdGetBool(PcdSetNxForStack) || PcdGet64(PcdDxeNxMemoryProtectionPolicy)) {
+    return UNIT_TEST_PASSED;
+  }
+  return UNIT_TEST_SKIPPED;
+}
+
+
+UNIT_TEST_STATUS
+EFIAPI
+UefiNxStackPreReq (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  if (PcdGetBool(PcdSetNxForStack) == FALSE) {
+    return UNIT_TEST_SKIPPED;
+  }
+  if (UefiHardwareNxProtectionEnabled(Framework, Context) != UNIT_TEST_PASSED) {
+    UT_LOG_WARNING("HardwareNxProtection bit not on. NX Test would not be accurate.");
+    return UNIT_TEST_SKIPPED;
+  }
+  return UNIT_TEST_PASSED;
+} // UefiNxStackPreReq()
+
+
+UNIT_TEST_STATUS
+EFIAPI
 UefiNxProtectionPreReq (
   IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
@@ -341,9 +374,13 @@ UefiNxProtectionPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
-  if ((PcdGet64(PcdDxeNxMemoryProtectionPolicy) & TestBit) == 0)
-  {
+  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  if ((PcdGet64(PcdDxeNxMemoryProtectionPolicy) & TestBit) == 0) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %s", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+    return UNIT_TEST_SKIPPED;
+  }
+  if (UefiHardwareNxProtectionEnabled(Framework, Context) != UNIT_TEST_PASSED) {
+    UT_LOG_WARNING("HardwareNxProtection bit not on. NX Test would not be accurate.");
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -359,8 +396,7 @@ UefiPageGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
-  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT0) == 0) || ((PcdGet64(PcdHeapGuardPageType) & TestBit) == 0))
-  {
+  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT0) == 0) || ((PcdGet64(PcdHeapGuardPageType) & TestBit) == 0)) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %s", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
@@ -377,8 +413,7 @@ UefiPoolGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
-  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT1) == 0) || ((PcdGet64(PcdHeapGuardPoolType) & TestBit) == 0))
-  {
+  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT1) == 0) || ((PcdGet64(PcdHeapGuardPoolType) & TestBit) == 0)) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %s", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
@@ -393,8 +428,7 @@ UefiStackGuardPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (PcdGetBool(PcdCpuStackGuard) == FALSE)
-  {
+  if (PcdGetBool(PcdCpuStackGuard) == FALSE) {
     UT_LOG_WARNING("PCD for this feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -409,8 +443,7 @@ UefiNullPointerPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if ((PcdGet8(PcdNullPointerDetectionPropertyMask) & BIT0) == 0)
-  {
+  if ((PcdGet8(PcdNullPointerDetectionPropertyMask) & BIT0) == 0) {
     UT_LOG_WARNING("PCD for this feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -431,6 +464,11 @@ SmmNxProtectionPreReq (
     UT_LOG_WARNING("PCD for this memory type is disabled: %s", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
+  if (UefiHardwareNxProtectionEnabled(Framework, Context) != UNIT_TEST_PASSED) {
+    UT_LOG_WARNING("HardwareNxProtection bit not on. NX Test would not be accurate.");
+    return UNIT_TEST_SKIPPED;
+  }
+
   return UNIT_TEST_PASSED;
 } // SmmNxProtectionPreReq()
 
@@ -476,9 +514,6 @@ SmmNullPointerPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  DEBUG((DEBUG_ERROR, __FUNCTION__" %x %x different\n",HeapGuardContext.TargetMemoryType, HeapGuardContext.TestProgress));
-  LocateSmmCommonCommBuffer();
   if (((PcdGet8(PcdNullPointerDetectionPropertyMask) & BIT1) == 0)) {
     UT_LOG_WARNING("PCD for this feature is disabled");
     return UNIT_TEST_SKIPPED;
@@ -583,7 +618,7 @@ UefiPoolGuard (
     SetUsbBootNext();
 
     //
-    // Memory type refers to the bitmask for the PcdHeapGuardPoolType,
+    // Memory type rHardwareNxProtections to the bitmask for the PcdHeapGuardPoolType,
     // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
     //
     Status = gBS->AllocatePool((EFI_MEMORY_TYPE) HeapGuardContext.TargetMemoryType, AllocationSize, &ptr);
@@ -688,6 +723,48 @@ UefiNullPointerDetection (
 
   return UNIT_TEST_PASSED;
 } // UefiNullPointerDetection()
+
+
+UNIT_TEST_STATUS
+EFIAPI
+UefiNxStackGuard (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  UINT8 CodeRegionToCopyTo[512];
+  #pragma warning(suppress:4054)
+  UINT8   *CodeRegionToCopyFrom = (UINT8*)DummyFunctionForCodeSelfTest;
+
+  if (HeapGuardContext.TestProgress < 1) {
+    //
+    // Context.TestProgress 0 indicates the test hasn't started yet.
+    //
+    // We need to indicate we are working on the test and save our progress.
+    //
+    HeapGuardContext.TestProgress ++;
+    SetUsbBootNext();
+    SaveFrameworkState( Framework, &HeapGuardContext, sizeof(HEAP_GUARD_TEST_CONTEXT));
+
+    CopyMem( CodeRegionToCopyTo, CodeRegionToCopyFrom, 512);
+    #pragma warning(suppress:4055)
+    ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
+
+
+    //
+    // At this point, the test has failed. Reset test progress so failure gets recorded.
+    //
+    HeapGuardContext.TestProgress = 0;
+    SaveFrameworkState( Framework, &HeapGuardContext, sizeof(HEAP_GUARD_TEST_CONTEXT));
+    UT_LOG_ERROR("NX Test failed.");
+  }
+
+  UT_ASSERT_TRUE(HeapGuardContext.TestProgress == 1);
+
+  return UNIT_TEST_PASSED;
+} // UefiNxStackGuard()
 
 
 UNIT_TEST_STATUS
@@ -915,7 +992,7 @@ AddUefiNxTest(
       StrCatS(TestDescription, UNIT_TEST_MAX_STRING_LENGTH, DescriptionStub);
       StrCatS(TestDescription, UNIT_TEST_MAX_STRING_LENGTH, MEMORY_TYPES[Index]);
 
-      AddTestCase( TestSuite, TestDescription, TestName, UefiPageGuard, UefiPageGuardPreReq, NULL, HeapGuardContext);
+      AddTestCase( TestSuite, TestDescription, TestName, UefiNxProtection, UefiPageGuardPreReq, NULL, HeapGuardContext);
 
       FreePool(TestName);
       FreePool(TestDescription);
@@ -1188,10 +1265,12 @@ HeapGuardTestAppEntryPoint (
 
   CHAR16  ShortName[100];
   ShortName[0] = L'\0';
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
+  DEBUG((DEBUG_ERROR, __FUNCTION__ "()\n"));
 
   UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
   DEBUG(( DEBUG_ERROR, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+
+  LocateSmmCommonCommBuffer();
 
   //
   // Find the CPU Arch protocol, we're going to install our own interrupt handler
@@ -1236,9 +1315,11 @@ HeapGuardTestAppEntryPoint (
   AddSmmPoolTest(PoolGuard);
   AddUefiNxTest(NxProtection);
 
-  AddTestCase( Misc, L"Null pointer access should trigger a page fault", L"Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, HeapGuardContext );
-  AddTestCase( Misc, L"Null pointer access in SMM should trigger a page fault", L"Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, HeapGuardContext );
-  AddTestCase( Misc, L"Blowing the stack should trigger a page fault", L"Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, HeapGuardContext );
+  AddTestCase( Misc, L"Null pointer access should trigger a page fault", L"Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, NULL );
+  AddTestCase( Misc, L"Null pointer access in SMM should trigger a page fault", L"Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, NULL );
+  AddTestCase( Misc, L"Blowing the stack should trigger a page fault", L"Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, NULL );
+  AddTestCase( NxProtection, L"Check hardware configuration of HardwareNxProtection bit", L"Security.HeapGuardMisc.UefiHardwareNxProtectionEnabled", UefiHardwareNxProtectionEnabled, UefiHardwareNxProtectionEnabledPreReq, NULL, HeapGuardContext );
+  AddTestCase( NxProtection, L"Stack NX Protection", L"Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, UefiNxStackPreReq, NULL, HeapGuardContext );
 
   //
   // Install an interrupt handler to reboot on page faults.
