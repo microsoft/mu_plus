@@ -1,24 +1,36 @@
-/** @file
-DfciSettingPermissionurrentSettingXml
+/**@file
+DfciSettingPermissionCurrentPermissionXml.c
 
-Thsi file supports setting the current permissions xml.
-
-Copyright (c) 2018, Microsoft Corporation.
-
-**/
-#include "DfciSettingPermission.h"
-#include <Guid/DfciPermissionManagerVariables.h>
-#include <XmlTypes.h>
-#include <Library/XmlTreeLib.h>
-#include <Library/XmlTreeQueryLib.h>
-#include <Library/DfciXmlPermissionSchemaSupportLib.h>
-#include <Library/PrintLib.h>
-
-
-/**
 Create an XML string from all the current settings
 
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 **/
+
+#include "DfciSettingPermission.h"
+
 static
 EFI_STATUS
 CreateXmlStringFromCurrentPermissions(
@@ -64,13 +76,12 @@ CreateXmlStringFromCurrentPermissions(
     goto EXIT;
   }
 
-
   //Record Status result
   //
   // Add the Lowest Supported Version Node
   //
   ZeroMem(LsvString, sizeof(LsvString));
-  AsciiValueToStringS(&(LsvString[0]), sizeof(LsvString), 0, (UINT32)Lsv, sizeof(LsvString-1));
+  AsciiValueToStringS(&(LsvString[0]), sizeof(LsvString), 0, (UINT32)Lsv, sizeof(LsvString)-1);
   Status = AddPermissionsLsvNode(CurrentPermissionsNode, LsvString);
   if (EFI_ERROR(Status))
   {
@@ -102,12 +113,19 @@ CreateXmlStringFromCurrentPermissions(
       goto EXIT;
   }
 
+  Status = AddCurrentAttributes(CurrentPermissionsNode, mPermStore->DefaultPMask, mPermStore->DefaultDMask);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "Unable to add permissions attributes. Code=%r\n",Status));
+    goto EXIT;
+  }
+
   for (LIST_ENTRY *Link = mPermStore->PermissionsListHead.ForwardLink; Link != &(mPermStore->PermissionsListHead); Link = Link->ForwardLink)
   {
       DFCI_PERMISSION_ENTRY *Temp;
       Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
-      DEBUG((DEBUG_INFO, "   PERM ENTRY - Id: %a  Permission: 0x%X\n", Temp->Id, Temp->Perm));
-      Status = SetCurrentPermissions(CurrentPermissionsListNode, Temp->Id, Temp->Perm);
+      DEBUG((DEBUG_INFO, "   PERM ENTRY - Id: %a  Permission: 0x%X  DelegatedPermission: 0x%X\n", Temp->Id, Temp->PMask, Temp->DMask));
+      Status = SetCurrentPermissions(CurrentPermissionsListNode, Temp->Id, Temp->PMask, Temp->DMask);
   } //end for loop
 
   //print the list
@@ -160,7 +178,7 @@ PopulateCurrentPermissions(BOOLEAN Force)
   if ((EFI_BUFFER_TOO_SMALL == Status) &&
       (DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES == Attributes))
   {
-      DEBUG((DEBUG_INFO, "%a - Current Identity Xml already set\n", __FUNCTION__));
+      DEBUG((DEBUG_INFO, "%a - Current Permissions Xml already set\n", __FUNCTION__));
       if (!Force)
       {
           return EFI_SUCCESS;
@@ -181,7 +199,7 @@ PopulateCurrentPermissions(BOOLEAN Force)
   Status = CreateXmlStringFromCurrentPermissions(&Var, &VarSize);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "%a - Failed to create xml string from current %r\n", __FUNCTION__, Status));
+    DEBUG((DEBUG_ERROR, "%a - Failed to create xml string from current permissions %r\n", __FUNCTION__, Status));
     goto EXIT;
   }
 
@@ -189,11 +207,11 @@ PopulateCurrentPermissions(BOOLEAN Force)
   Status = gRT->SetVariable(DFCI_PERMISSION_POLICY_CURRENT_VAR_NAME, &gDfciPermissionManagerVarNamespace, DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES, VarSize, Var);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "%a - Failed to write current setting Xml variable %r\n", __FUNCTION__, Status));
+    DEBUG((DEBUG_ERROR, "%a - Failed to write current permissions Xml variable %r\n", __FUNCTION__, Status));
     goto EXIT;
   }
   //Success
-  DEBUG((DEBUG_INFO, "%a - Current Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
+  DEBUG((DEBUG_INFO, "%a - Current Permissions Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
   Status = EFI_SUCCESS;
 
 EXIT:

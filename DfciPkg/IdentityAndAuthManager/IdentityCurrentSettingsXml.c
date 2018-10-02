@@ -1,13 +1,31 @@
 /** @file
+IdentityCurrentSettingsXml.c
 
 This library supports the setting the Identity Current XML
 
-Copyright (C) 2018 Microsoft Corporation. All Rights Reserved.
+Copyright (c) 2018, Microsoft Corporation
 
-THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-PARTICULAR PURPOSE.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
@@ -17,6 +35,7 @@ PARTICULAR PURPOSE.
 #include <Library/XmlTreeQueryLib.h>
 #include <Library/DfciXmlIdentitySchemaSupportLib.h>
 #include <Library/PrintLib.h>
+#include <Guid/DfciPacketHeader.h>
 #include <Guid/DfciIdentityAndAuthManagerVariables.h>
 
 /**
@@ -109,6 +128,9 @@ CreateXmlStringFromCurrentIdentities(
         }
         switch (CertIndexToDfciIdentity(i))
         {
+            case DFCI_IDENTITY_SIGNER_ZTD :
+                Id = IDENTITY_CURRENT_ZTD_CERT_NAME;
+                break;
             case DFCI_IDENTITY_SIGNER_OWNER:
                 Id = IDENTITY_CURRENT_OWNER_CERT_NAME;
                 break;
@@ -122,8 +144,6 @@ CreateXmlStringFromCurrentIdentities(
                 Id = IDENTITY_CURRENT_USER2_CERT_NAME;
                 break;
             default:
-                DEBUG((DEBUG_ERROR,"%a - Invalid DfciIdentity %x\n", __FUNCTION__, CertIndexToDfciIdentity(i)));
-                ASSERT(FALSE);    // Internal error
                 if (TRUE == FreeThumbprint)
                 {
                     FreePool (Thumbprint);
@@ -198,13 +218,13 @@ PopulateCurrentIdentities(BOOLEAN   Force)
 
 
     VarSize = 0;
-    Status = gRT->GetVariable(DFCI_IDENTITY_AUTH_PROVISION_SIGNER_CURRENT_VAR_NAME,
+    Status = gRT->GetVariable(DFCI_IDENTITY_CURRENT_VAR_NAME,
                              &gDfciAuthProvisionVarNamespace,
                              &Attributes,
                              &VarSize,
                               NULL);
     if ((EFI_BUFFER_TOO_SMALL == Status) &&
-        (DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES == Attributes))
+        (DFCI_IDENTITY_VAR_ATTRIBUTES  == Attributes))
     {
         DEBUG((DEBUG_INFO, "%a - Current Identity Xml already set\n", __FUNCTION__));
         if (!Force)
@@ -213,10 +233,10 @@ PopulateCurrentIdentities(BOOLEAN   Force)
         }
     }
     if ((EFI_SUCCESS == Status) &&
-        (DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES != Attributes))
+        (DFCI_IDENTITY_VAR_ATTRIBUTES  != Attributes))
     {
         // Delete the current variable if it has incorrect attributes
-        Status = gRT->SetVariable(DFCI_IDENTITY_AUTH_PROVISION_SIGNER_CURRENT_VAR_NAME,
+        Status = gRT->SetVariable(DFCI_IDENTITY_CURRENT_VAR_NAME,
                                  &gDfciAuthProvisionVarNamespace,
                                  0,
                                  0,
@@ -232,7 +252,7 @@ PopulateCurrentIdentities(BOOLEAN   Force)
     }
 
     //Save variable
-    Status = gRT->SetVariable(DFCI_IDENTITY_AUTH_PROVISION_SIGNER_CURRENT_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES, VarSize, Var);
+    Status = gRT->SetVariable(DFCI_IDENTITY_CURRENT_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES , VarSize, Var);
     if (EFI_ERROR(Status))
     {
         DEBUG((DEBUG_ERROR, "%a - Failed to write current identities Xml variable %r\n", __FUNCTION__, Status));

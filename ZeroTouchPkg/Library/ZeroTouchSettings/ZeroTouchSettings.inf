@@ -1,0 +1,53 @@
+## @file
+#  Library to support Zero Touch Settings  (get/set)
+#
+#  Copyright (c) 2018, Microsoft Corporation. All rights reserved.<BR>
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = ZeroTouchSettingsLib
+  FILE_GUID                      = a0499b85-e965-460a-a576-d9e37dea62b4
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ZeroTouchSettingsLib | DXE_DRIVER
+  CONSTRUCTOR                    = ZeroTouchSettingsConstructor
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  ZeroTouchSettings.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  MdePkg/MdePkg.dec
+  ZeroTouchPkg/ZeroTouchPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  DxeServicesLib
+  MemoryAllocationLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gEfiEventReadyToBootGuid
+  gZeroTouchSettingsGuid
+  gZeroTouchVariableGuid
+
+[Protocols]
+  gDfciSettingsProviderSupportProtocolGuid
+
+[Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider
+  gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile
+
+[Depex]
+  TRUE

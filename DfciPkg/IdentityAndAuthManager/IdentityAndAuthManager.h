@@ -1,10 +1,45 @@
+/**@file
+IdentityAndAuthManager.h
 
+Identity and Auth Manager defines
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #ifndef IDENTITY_AND_AUTH_MANAGER_H
 #define IDENTITY_AND_AUTH_MANAGER_H
 
 #include <PiDxe.h>
 #include <DfciSystemSettingTypes.h>
+
+#include <Guid/ImageAuthentication.h>
+#include <Guid/DfciPacketHeader.h>
+#include <Guid/DfciIdentityAndAuthManagerVariables.h>
+#include <Guid/DfciInternalVariableGuid.h>
+
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -15,15 +50,17 @@
 #include <Library/DfciUiSupportLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
 #include <Library/BaseCryptLib.h>
+#include <Library/ZeroTouchSettingsLib.h>
+
 #include <Protocol/DfciPkcs7.h>
 #include <Protocol/DfciSettingPermissions.h>
 #include <Protocol/DfciSettingAccess.h>
-#include <Guid/ImageAuthentication.h>
-#include <Guid/DfciIdentityAndAuthManagerVariables.h>
-#include <Guid/DfciInternalVariableGuid.h>
+#include <Protocol/DfciApplyPacket.h>
 #include <Protocol/DfciAuthentication.h>
 
 
+extern EFI_HANDLE                 mImageHandle;
+extern DFCI_APPLY_PACKET_PROTOCOL mApplyIdentityProtocol;
 //
 // Internal structure to be used to hold cert details
 // of provisioned data
@@ -33,7 +70,8 @@ typedef struct {
   UINTN   CertSize;
 }INTERNAL_CERT_DETAILS;
 
-#define MAX_NUMBER_OF_CERTS         (4)
+#define MAX_NUMBER_OF_CERTS_V1      (4)
+#define MAX_NUMBER_OF_CERTS         (7)
 #define CERT_STRING_SIZE            (200)
 //
 // Because of how nv is stored it is hard to add a new
@@ -44,15 +82,20 @@ typedef struct {
 #define CERT_USER1_INDEX            (1)
 #define CERT_USER2_INDEX            (2)
 #define CERT_OWNER_INDEX            (3)
+#define CERT_ZTD_INDEX              (4)
+#define CERT_RSVD1_INDEX            (5)
+#define CERT_RSVD2_INDEX            (6)
 #define CERT_INVALID_INDEX          (0xFF)
 
 
 #define DFCI_IDENTITY_MASK_LOCAL_PW             (DFCI_IDENTITY_LOCAL)
-#define DFCI_IDENTITY_MASK_KEYS                 (DFCI_IDENTITY_SIGNER_USER |DFCI_IDENTITY_SIGNER_USER1 | DFCI_IDENTITY_SIGNER_USER2| DFCI_IDENTITY_SIGNER_OWNER)
-
+#define DFCI_IDENTITY_MASK_KEYS                 (DFCI_IDENTITY_SIGNER_USER | DFCI_IDENTITY_SIGNER_USER1 | DFCI_IDENTITY_SIGNER_USER2 | DFCI_IDENTITY_SIGNER_OWNER | DFCI_IDENTITY_SIGNER_ZTD )
+#define DFCI_IDENTITY_MASK_USER_KEYS            (DFCI_IDENTITY_SIGNER_USER | DFCI_IDENTITY_SIGNER_USER1 | DFCI_IDENTITY_SIGNER_USER2)
 
 typedef struct {
-  DFCI_IDENTITY_MASK        PopulatedIdentities;  //bitmask with all identities
+  UINT32                  Version;
+  UINT32                  Lsv;
+  DFCI_IDENTITY_MASK      PopulatedIdentities;  //bitmask with all identities
   INTERNAL_CERT_DETAILS   Certs[MAX_NUMBER_OF_CERTS];
 } INTERNAL_CERT_STORE;
 
@@ -67,53 +110,10 @@ typedef struct {
   DFCI_IDENTITY_PROPERTIES  *Identity;
 } DFCI_AUTH_TO_ID_LIST_ENTRY;
 
-typedef enum {
-    AUTH_MAN_PROV_STATE_UNINITIALIZED = 0x00,
-    AUTH_MAN_PROV_STATE_DATA_PRESENT = 0x01,
-    AUTH_MAN_PROV_STATE_DATA_AUTHENTICATED = 0x02,
-    AUTH_MAN_PROV_STATE_DATA_USER_APPROVED = 0x03,
-    AUTH_MAN_PROV_STATE_DATA_COMPLETE = 0x0F,   //Complete
-    AUTH_MAN_PROV_STATE_DATA_NO_OWNER = 0xF9,  //Can't provision User Auth before having valid Owner Auth
-    AUTH_MAN_PROV_STATE_DATA_NOT_CORRECT_TARGET = 0xFA,  //SN target doesn't match device
-    AUTH_MAN_PROV_STATE_DATA_DELAYED_PROCESSING = 0xFB,  //needs delayed processing for ui or other reasons
-    AUTH_MAN_PROV_STATE_DATA_USER_REJECTED = 0xFC,
-    AUTH_MAN_PROV_STATE_DATA_INVALID = 0xFD,   //Need to delete var because of error condition
-    AUTH_MAN_PROV_STATE_DATA_AUTH_FAILED = 0xFE,
-    AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR = 0xFF
-}AUTH_MAN_PROV_STATE;
-
-//Internal object def to handle incoming request
-typedef struct {
-    DFCI_SIGNER_PROVISION_APPLY_VAR *Var;
-    UINTN                            VarSize;
-    UINT32                           SessionId;
-    AUTH_MAN_PROV_STATE              State;
-    EFI_STATUS                       StatusCode;
-    UINT8                            VarIdentity;
-    DFCI_IDENTITY_ID                 Identity;
-    BOOLEAN                          UserConfirmationRequired;
-    BOOLEAN                          RebootRequired;
-    BOOLEAN                          RecoverySigned;
-    DFCI_AUTH_TOKEN                  AuthToken;
-    CHAR8                           *Manufacturer;
-    UINTN                            ManufacturerSize;
-    CHAR8                           *ProductName;
-    UINTN                            ProductNameSize;
-    CHAR8                           *SerialNumber;
-    UINTN                            SerialNumberSize;
-    CHAR8                           *Uuid;
-    UINTN                            UuidSize;
-    UINT16                           TrustedCertOffset;
-    UINT16                           TrustedCertSize;
-    UINT8                           *TrustedCert;
-} AUTH_MAN_PROV_INSTANCE_DATA;
-
 extern LIST_ENTRY                    mAuthHandlesToIdentity;   //list
 extern INTERNAL_CERT_STORE           mInternalCertStore;       //Internal Cert Store
 extern DFCI_AUTHENTICATION_PROTOCOL  mAuthProtocol;            //Auth Protocol
 extern DFCI_SETTING_PERMISSIONS_PROTOCOL *mDfciSettingsPermissionProtocol; //Permission Protocol
-
-
 
 //****//  EXTERNAL FUNCTIONS - Protocol implementation //****//
 
@@ -132,14 +132,13 @@ IN  CONST DFCI_AUTHENTICATION_PROTOCOL        *This,
 IN OUT DFCI_AUTH_TOKEN                        *IdentityToken
 );
 
-
 EFI_STATUS
 EFIAPI
 AuthWithSignedData(
   IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
-  IN  CONST UINT8                          *SignedData,
-  IN  UINTN                                SignedDataLength,
-  IN  CONST WIN_CERTIFICATE                *Signature,
+  IN  CONST UINT8                            *SignedData,
+  IN  UINTN                                   SignedDataLength,
+  IN  CONST WIN_CERTIFICATE                  *Signature,
   IN OUT DFCI_AUTH_TOKEN                     *IdentityToken
 );
 
@@ -147,11 +146,10 @@ EFI_STATUS
 EFIAPI
 AuthWithPW(
 IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
-IN  CONST CHAR16                         *Password OPTIONAL,
-IN  UINTN                                PasswordLength,
+IN  CONST CHAR16                           *Password OPTIONAL,
+IN  UINTN                                   PasswordLength,
 OUT DFCI_AUTH_TOKEN                        *IdentityToken
 );
-
 
 EFI_STATUS
 EFIAPI
@@ -165,8 +163,8 @@ EFI_STATUS
 EFIAPI
 SetRecoveryResponse(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
-  IN CONST UINT8                            *RecoveryResponse,
-  IN       UINTN                            Size
+  IN CONST UINT8                              *RecoveryResponse,
+  IN       UINTN                               Size
   );
 
 EFI_STATUS
@@ -180,13 +178,33 @@ EFI_STATUS
 EFIAPI
 GetCertInfo(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
-  IN       DFCI_IDENTITY_ID                   Identity,
-  IN       UINT8*                           Cert,
-  IN       UINTN                            CertSize,
+  IN       DFCI_IDENTITY_ID                    Identity,
+  IN       UINT8*                              Cert,
+  IN       UINTN                               CertSize,
   OUT      DFCI_CERT_STRINGS                  *CertInfo
   );
 
+EFI_STATUS
+EFIAPI
+ApplyNewIdentityPacket (
+    IN CONST DFCI_APPLY_PACKET_PROTOCOL *This,
+    IN       DFCI_INTERNAL_PACKET       *ApplyPacket
+  );
 
+EFI_STATUS
+EFIAPI
+SetIdentityResponse(
+  IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN        DFCI_INTERNAL_PACKET        *Data
+  );
+
+EFI_STATUS
+EFIAPI
+LKG_Handler(
+    IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+    IN        DFCI_INTERNAL_PACKET        *ApplyPacket,
+    IN        UINT8                        Operation
+  );
 
 //*****// INTERNAL FUNCTIONS //*******//
 
@@ -381,5 +399,29 @@ GetSha1Thumbprint(
 EFI_STATUS
 EFIAPI
 PopulateCurrentIdentities(BOOLEAN  Force);
+
+/**
+  This routine is called by DFCI to prompt a local user to confirm certificate
+  provisioning operations.
+
+  @param  TrustedCert            Supplies a pointer to a trusted certificate.
+  @param  TrustedCertSize        Supplies the size in bytes of the trusted
+                                 certificate.
+  @param  AuthToken              Supplies a pointer that will receive an auth-
+                                 entication token.
+
+  @return EFI_NOT_READY          Indicates that UI components are not available.
+  @return EFI_ACCESS_DENIED      The user rejected the operation.
+  @return EFI_SUCCESS            The user approved the operation.
+
+**/
+EFI_STATUS
+EFIAPI
+LocalGetAnswerFromUser (
+  UINT8* TrustedCert,
+  UINTN  TrustedCertSize,
+  OUT DFCI_AUTH_TOKEN* AuthToken
+  );
+
 
 #endif // IDENTITY_AND_AUTH_MANAGER_H

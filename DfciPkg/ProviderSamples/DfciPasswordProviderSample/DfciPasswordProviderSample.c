@@ -1,10 +1,35 @@
-/**
+/** @file
+DfciPasswordProviderSample.c
+
  Library Instance for DXE to support getting, setting, defaults,
- and support SystemSettings for Tool/Application/Ui interface. 
+ and support SystemSettings for Tool/Application/Ui interface.
 
-The UEFI System Password set/delete interface  
+The UEFI System Password set/delete interface
 
-Copyright (c) 2015 Microsoft Corporation. All rights reserved
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 **/
 
 #include <PiDxe.h>
@@ -32,12 +57,15 @@ SamplePasswordGetDefault (
   )
 {
 
-  EFI_STATUS Status;
+  EFI_STATUS Status = EFI_INVALID_PARAMETER;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_ERROR, "%a: enter...\n", __FUNCTION__));
 
-  if ((This == NULL) || (This->Id == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
-    Status = EFI_INVALID_PARAMETER;
+  if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (ValueSize == NULL)) {
+    goto Cleanup;
+  }
+
+  if ((This->Id == NULL) || (*ValueSize < 1)) {
     goto Cleanup;
   }
 
@@ -48,6 +76,7 @@ SamplePasswordGetDefault (
   }
 
   *Value = FALSE;
+  *ValueSize = 1;
   Status = EFI_SUCCESS;
 
 Cleanup:
@@ -65,7 +94,7 @@ SamplePasswordGet (
 
   EFI_STATUS Status;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_ERROR, "%a: enter...\n", __FUNCTION__));
 
   if ((This == NULL) || (Value == NULL) || ((Value == NULL) && (*ValueSize != 0)) || (This->Id == NULL)) {
     Status = EFI_INVALID_PARAMETER;
@@ -100,7 +129,7 @@ SamplePasswordSet (
 
   EFI_STATUS Status;
     
-  DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_ERROR, "%a: enter...\n", __FUNCTION__));
 
   if ((This == NULL) || (Flags == NULL) || (Value == NULL) || (This->Id == NULL) || (ValueSize > DFCI_SETTING_MAXIMUM_SIZE)) {
     Status = EFI_INVALID_PARAMETER;
@@ -134,7 +163,7 @@ SamplePasswordSetDefault (
 
   EFI_STATUS Status;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_ERROR, "%a: enter...\n", __FUNCTION__));
 
   if ((This == NULL) || (This->Id == NULL)) {
     Status = EFI_INVALID_PARAMETER;
@@ -190,7 +219,7 @@ SamplePasswordProviderSupportProtocolNotify (
   EFI_STATUS Status;
   DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL* SettingsProvider;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_ERROR, "%a: enter...\n", __FUNCTION__));
 
   //
   // locate the settings provider protocol.

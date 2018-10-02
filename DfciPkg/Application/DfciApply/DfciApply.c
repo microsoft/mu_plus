@@ -1,16 +1,38 @@
-
 /** @file
-  This application will load the DFCI mailboxes from the shell.
+DfciApply.c
 
+This application will load the DFCI mailboxes from the shell.
 
-  Copyright (c) 2017, Microsoft Corporation. All rights reserved.<BR>
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
-
 
 #include <Uefi.h>
 
 #include <Guid/DfciSettingsGuid.h>
+#include <Guid/DfciPacketHeader.h>
 #include <Guid/DfciIdentityAndAuthManagerVariables.h>
 #include <Guid/DfciPermissionManagerVariables.h>
 #include <Guid/DfciSettingsManagerVariables.h>
@@ -101,6 +123,7 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
     if (NULL == LocalBuffer) {
         AsciiPrint ("Unable to allocate buffer for %s\n", FileName);
         Status = EFI_OUT_OF_RESOURCES;
+        ReadSize = 0;
     } else {
         if (gFlagVerbose) {
             AsciiPrint ("Reading %s into %p.\n", FileName, LocalBuffer);
@@ -296,23 +319,23 @@ DfciApplyEntry(
     }
 
     if (gFlagResults) {
-        PrintResults (DFCI_IDENTITY_AUTH_PROVISION_SIGNER_RESULT_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES);
+        PrintResults (DFCI_IDENTITY_RESULT_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES );
         PrintResults (DFCI_PERMISSION_POLICY_RESULT_VAR_NAME, &gDfciPermissionManagerVarNamespace,DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES);
-        PrintResults (XML_SETTINGS_APPLY_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
+        PrintResults (DFCI_SETTINGS_APPLY_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
     }
 
     if (gFlagCurrent) {
-        PrintCurrent (XML_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
+        PrintCurrent (DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
     }
 
     if (gIdentityFileName) {
-        SetDfciVariable (gIdentityFileName, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES);
+        SetDfciVariable (gIdentityFileName, DFCI_IDENTITY_APPLY_VAR_NAME  , &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES );
     }
     if (gPermissionsFileName) {
         SetDfciVariable (gPermissionsFileName, DFCI_PERMISSION_POLICY_APPLY_VAR_NAME, &gDfciPermissionManagerVarNamespace, DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES);
     }
     if (gSettingsFileName) {
-        SetDfciVariable (gSettingsFileName, XML_SETTINGS_APPLY_INPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
+        SetDfciVariable (gSettingsFileName, DFCI_SETTINGS_APPLY_INPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES);
     }
 
     return 0;

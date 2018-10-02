@@ -1,37 +1,51 @@
+/** @file
+DfciUiSupportLibNull.c
+
+NULL instance of the UiSupportLib.
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
+
 #include <Library/DfciUiSupportLib.h>
 
-EFI_STATUS
+/**
+
+  This routine indicates if the UI is ready and can be used.
+
+  @retval  TRUE if the UI is ready to use, else FALSE.
+
+**/
+BOOLEAN
 EFIAPI
-DfciUiDisplayDfciAuthDialog (
-  IN  CHAR16                              *TitleText,
-  IN  CHAR16                              *CaptionText,
-  IN  CHAR16                              *BodyText,
-  IN  CHAR16                              *CertText,
-  IN  CHAR16                              *ConfirmText,
-  IN  CHAR16                              *ErrorText,
-  IN  BOOLEAN                             PasswordType,
-  OUT DFCI_MB_RESULT                      *Result,
-  OUT CHAR16                              **Password OPTIONAL,
-  OUT CHAR16                              **Thumbprint OPTIONAL
+DfciUiIsUiAvailable (
+  VOID
   )
 {
 
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS
-EFIAPI
-DfciUiDisplayPasswordDialog (
-  IN  CHAR16                              *TitleText,
-  IN  CHAR16                              *CaptionText,
-  IN  CHAR16                              *BodyText,
-  IN  CHAR16                              *ErrorText,
-  OUT DFCI_MB_RESULT                      *Result,
-  OUT CHAR16                              **Password
-  )
-{
-
-  return EFI_SUCCESS;
+  return TRUE;
 }
 
 EFI_STATUS
@@ -49,48 +63,53 @@ DfciUiDisplayMessageBox (
   return EFI_SUCCESS;
 }
 
-/**
-
-  This routine indicates if the UI is ready and can be used.
- 
-  @retval  TRUE if the UI is ready to use, else FALSE.
-    
-**/
-BOOLEAN
-EFIAPI
-DfciUiIsUiAvailable (
-  VOID
-  )
-{
-
-  return TRUE;
-}
-
-/**
-  This routine is called by DFCI to check if certificate provisioning needs to
-  be delayed. If components needed for a user to approve a provisioning request
-  are not available, DFCI will delay the processing.
-
-  @param  Unenroll               Supplies a value that indicates if the
-                                 provisioning request is for unenrolling the
-                                 device from DFCI.
-  @param  LocalAuthNeeded        Supplies a value that idicates if the
-                                 provisioning operation requires local user
-                                 authentication.
-
-  @return EFI_SUCCESS            Delayed processing is not needed.
-  @return other status           Delayed processing is needed.
-
-**/
 EFI_STATUS
 EFIAPI
-DfciUiCheckForDelayProcessingNeeded(
-  IN BOOLEAN Unenroll,
-  IN BOOLEAN LocalAuthNeeded
-  )
-{
+DfciUiDisplayPasswordDialog (
+  IN  CHAR16                              *TitleText,
+  IN  CHAR16                              *CaptionText,
+  IN  CHAR16                              *BodyText,
+  IN  CHAR16                              *ErrorText,
+  OUT DFCI_MB_RESULT                      *Result,
+  OUT CHAR16                              **Password
+  ) {
 
-  return EFI_SUCCESS;
+    return EFI_SUCCESS;
+}
+
+
+/**
+ * DfciUiDisplayDfciAuthDialog
+ *
+ * @param TitleText
+ * @param CaptionText
+ * @param BodyText
+ * @param CertText
+ * @param ConfirmText
+ * @param ErrorText
+ * @param PasswordType
+ * @param Result
+ * @param OPTIONAL
+ * @param OPTIONAL
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+DfciUiDisplayAuthDialog (
+  IN  CHAR16                              *TitleText,
+  IN  CHAR16                              *CaptionText,
+  IN  CHAR16                              *BodyText,
+  IN  CHAR16                              *CertText,
+  IN  CHAR16                              *ConfirmText,
+  IN  CHAR16                              *ErrorText,
+  IN  BOOLEAN                             PasswordType,
+  IN  CHAR16                              *Thumbprint,
+  OUT DFCI_MB_RESULT                      *Result,
+  OUT CHAR16                              **Password OPTIONAL,
+)  {
+
+    return EFI_UNSUPPORTED;
 }
 
 /**

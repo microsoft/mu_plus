@@ -1,7 +1,38 @@
+/**@file
+AuthManager.c
+
+Implements the Auth Manager Protocol - Verifies all signatures
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #include "IdentityAndAuthManager.h"
 #include <Protocol/Rng.h>       //protocol based rng support
 #include <Library/DfciPasswordLib.h>
+#include <Library/ZeroTouchSettingsLib.h>
 
 //Statically allocate the supported identities.  
 DFCI_IDENTITY_PROPERTIES mIdentityProperties_Local              = { DFCI_IDENTITY_LOCAL        };
@@ -9,6 +40,7 @@ DFCI_IDENTITY_PROPERTIES mIdentityProperties_SIGNER_USER1       = { DFCI_IDENTIT
 DFCI_IDENTITY_PROPERTIES mIdentityProperties_SIGNER_USER2       = { DFCI_IDENTITY_SIGNER_USER2 };
 DFCI_IDENTITY_PROPERTIES mIdentityProperties_SIGNER_USER        = { DFCI_IDENTITY_SIGNER_USER  };
 DFCI_IDENTITY_PROPERTIES mIdentityProperties_SIGNER_OWNER       = { DFCI_IDENTITY_SIGNER_OWNER };
+DFCI_IDENTITY_PROPERTIES mIdentityProperties_SIGNER_ZTD         = { DFCI_IDENTITY_SIGNER_ZTD    };
 
 //Random Number Protocol
 EFI_RNG_PROTOCOL* mRngGenerator = NULL;
@@ -91,8 +123,12 @@ CreateAuthTokenWithMapping(DFCI_IDENTITY_ID Id)
     Props = &mIdentityProperties_SIGNER_OWNER;
     break;
 
+  case DFCI_IDENTITY_SIGNER_ZTD :
+    Props = &mIdentityProperties_SIGNER_ZTD;
+    break;
+
   default:
-    DEBUG((DEBUG_ERROR, __FUNCTION__" invalid Id\n"));
+    DEBUG((DEBUG_ERROR, "%a: invalid Id\n", __FUNCTION__));
     return DFCI_AUTH_TOKEN_INVALID;
   }
 
@@ -217,11 +253,11 @@ EXIT:
 EFI_STATUS
 EFIAPI
 AuthWithSignedData(
-  IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
+  IN  CONST DFCI_AUTHENTICATION_PROTOCOL   *This,
   IN  CONST UINT8                          *SignedData,
   IN  UINTN                                SignedDataLength,
   IN  CONST WIN_CERTIFICATE                *Signature,
-  IN OUT DFCI_AUTH_TOKEN                     *IdentityToken
+  IN OUT DFCI_AUTH_TOKEN                   *IdentityToken
   )
 {
 
@@ -254,6 +290,30 @@ AuthWithSignedData(
   }
 
   //All Signature data will be validated in VerifySignature function
+
+  //
+  //If ID still DFCI_IDENTITY_INVALID then check ZTD Key
+  //
+  if ((Id == DFCI_IDENTITY_INVALID) && (IdMask & DFCI_IDENTITY_SIGNER_ZTD ))
+  {
+    UINT8* OwnerCertData = NULL;
+    UINTN  OwnerCertSize = 0;
+
+    Status = GetProvisionedCertDataAndSize(&OwnerCertData, &OwnerCertSize, DFCI_IDENTITY_SIGNER_ZTD );
+    if (EFI_ERROR(Status))
+    {
+      DEBUG((DEBUG_ERROR, "%a - Couldn't Get ZTD Key Data or Size. (%r)\n", __FUNCTION__, Status));
+    }
+    else
+    {
+      Status = VerifySignature(SignedData, SignedDataLength, Signature, OwnerCertData, OwnerCertSize);
+      if (!EFI_ERROR(Status))
+      {
+        DEBUG((DEBUG_INFO, "%a Input Data validated with ZTD Cert.\n", __FUNCTION__));
+        Id = DFCI_IDENTITY_SIGNER_ZTD ;
+      }
+    }
+  }
 
   //
   //If ID still DFCI_IDENTITY_INVALID then check Owner Key

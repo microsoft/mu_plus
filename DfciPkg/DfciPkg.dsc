@@ -1,16 +1,20 @@
 ## @file
 # DfciPkg Package Localized Strings and Content
 #
+# All of the elements of the implementation of Dfci are documented here.
+#
 # Copyright (c) 2018, Microsoft Corporation
-
+#
 # All rights reserved.
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
+#
 # 1. Redistributions of source code must retain the above copyright notice,
-# this list of conditions and the following disclaimer.
+#    this list of conditions and the following disclaimer.
 # 2. Redistributions in binary form must reproduce the above copyright notice,
-# this list of conditions and the following disclaimer in the documentation
-# and/or other materials provided with the distribution.
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -76,7 +80,6 @@
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
 
-
   DfciPasswordLib|DfciPkg/Library/DfciPasswordLibNull/DfciPasswordLibNull.inf
   DfciXmlSettingSchemaSupportLib|DfciPkg/Library/DfciXmlSettingSchemaSupportLib/DfciXmlSettingSchemaSupportLib.inf
   DfciXmlPermissionSchemaSupportLib|DfciPkg/Library/DfciXmlPermissionSchemaSupportLib/DfciXmlPermissionSchemaSupportLib.inf
@@ -87,6 +90,7 @@
   DfciUiSupportLib|DfciPkg/Library/DfciUiSupportLibNull/DfciUiSupportLibNull.inf
   DfciV1SupportLib|DfciPkg/Library/DfciV1SupportLibNull/DfciV1SupportLibNull.inf
   DfciSettingsLib|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
+  ZeroTouchSettingsLib|ZeroTouchPkg/Library/ZeroTouchSettings/ZeroTouchSettings.inf
 
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
@@ -103,6 +107,13 @@
 [LibraryClasses.X64.UEFI_APPLICATION]
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
+
+  UnitTestLib|MsUnitTestPkg/Library/UnitTestLib/UnitTestLib.inf
+  UnitTestLogLib|MsUnitTestPkg/Library/UnitTestLogLib/UnitTestLogLib.inf
+  UnitTestAssertLib|MsUnitTestPkg/Library/UnitTestAssertLib/UnitTestAssertLib.inf
+  UnitTestPersistenceLib|MsUnitTestPkg/Library/UnitTestPersistenceFileSystemLib/UnitTestPersistenceFileSystemLib.inf
+  UnitTestBootUsbLib|MsUnitTestPkg/Library/UnitTestBootUsbClassLib/UnitTestBootUsbClassLib.inf
+  UnitTestResultReportLib|XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf
 
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
@@ -164,14 +175,15 @@
   }
 
   DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf
+  DfciPkg/DfciManager/DfciManager.inf
 
   # Device Firmware Configuration Interface (Menu) application
   DfciPkg/Application/DfciMenu/DfciMenu.inf
 
   #test tools
   DfciPkg/Application/DfciApply/DfciApply.inf
-  DfciPkg/Application/EnrollInDfci/EnrollInDfci.inf
   DfciPkg/DfciCryptoDxe/DfciCryptoDxe.inf
+  DfciPkg/UnitTests/XmlB64Test/XmlB64TestApp.inf
 
 [BuildOptions]
 #force deprecated interaces off

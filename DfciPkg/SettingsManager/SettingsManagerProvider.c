@@ -1,8 +1,35 @@
+/**@file
+SettingsManagerProvider.c
+
+Setting Manger Provider manager
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #include "SettingsManager.h"
-#include <Guid/DfciSettingsManagerVariables.h>
-#include <Library/DfciPasswordLib.h>
-#include <Library/DfciV1SupportLib.h>
 
 #define DFCI_PASSWORD_STORE_SIZE sizeof(DFCI_PASSWORD_STORE)
 
@@ -238,7 +265,7 @@ SetProviderValueFromAscii(
 
   case DFCI_SETTING_TYPE_STRING:
 
-      ValueSize = AsciiStrnLenS (Value, MAX_ALLOWABLE_VAR_INPUT_SIZE);
+      ValueSize = AsciiStrnLenS (Value, MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE);
 
       if ('\0' != Value[ValueSize])     // String is longer than allowed
       {
@@ -255,7 +282,7 @@ SetProviderValueFromAscii(
   case DFCI_SETTING_TYPE_BINARY:
   case DFCI_SETTING_TYPE_CERT:    // On writes, CERTS are binary blobs
 
-      b64Size = AsciiStrnLenS (Value, MAX_ALLOWABLE_VAR_INPUT_SIZE);
+      b64Size = AsciiStrnLenS (Value, MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE);
       ValueSize = 0;
       Status = Base64Decode(Value, b64Size, NULL, &ValueSize);
       if (Status != EFI_BUFFER_TOO_SMALL)
@@ -520,7 +547,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
         break;                   // Return NULL for Value silently
       }
 
-      if (ValueSize > MAX_ALLOWABLE_VAR_INPUT_SIZE) {
+      if (ValueSize > MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE) {
           DEBUG((DEBUG_ERROR, "Failed - ValueSize invalid for ID %a. Size=%ld\n", Provider->Id, ValueSize));
           break;
       }
@@ -575,7 +602,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
         break;
       }
 
-      if (ValueSize > MAX_ALLOWABLE_VAR_INPUT_SIZE)
+      if (ValueSize > MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE)
       {
         DEBUG((DEBUG_ERROR, "Failed - Incorrect size for ID %a\n", Provider->Id));
         break;
@@ -682,7 +709,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
           break;                   // Return NULL for Value silently
         }
 
-        if (ValueSize > MAX_ALLOWABLE_VAR_INPUT_SIZE)
+        if (ValueSize > MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE)
         {
           DEBUG((DEBUG_ERROR, "Failed - Incorrect size for ID %a\n", Provider->Id));
           break;
@@ -916,7 +943,7 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
       Status = Prov->Provider.SetDefaultValue(&(Prov->Provider));
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, "%a - Failed to Set Provider (%a) To Default Value. Status = %r\n", __FUNCTION__, Prov->Provider.Id, Status));
+        DEBUG((DEBUG_ERROR, "%a - Failed to Set Provider (%a) To DefaultPMask Value. Status = %r\n", __FUNCTION__, Prov->Provider.Id, Status));
       }
     }
   }

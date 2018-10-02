@@ -1,4 +1,33 @@
+/**@file
+SettingsManager.h
 
+Common header file for Settings Manager
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #ifndef SETTINGS_MANAGER_H
 #define SETTINGS_MANAGER_H
@@ -8,27 +37,38 @@
 #include <XmlTypes.h>
 #include <DfciSystemSettingTypes.h>
 
+#include <Guid/DfciInternalVariableGuid.h>
+#include <Guid/DfciDeviceIdVariables.h>
+#include <Guid/DfciPacketHeader.h>
+#include <Guid/DfciSettingsManagerVariables.h>
+#include <Guid/WinCertificate.h>
+
+#include <Protocol/DfciApplyPacket.h>
 #include <Protocol/DfciAuthentication.h>
 #include <Protocol/DfciSettingAccess.h>
 #include <Protocol/DfciSettingsProvider.h>
 #include <Protocol/DfciSettingPermissions.h>
 
-#include <Library/UefiLib.h>
-#include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/DebugLib.h>
+#include <Library/DfciDeviceIdSupportLib.h>
+#include <Library/DfciPasswordLib.h>
 #include <Library/DfciSettingPermissionLib.h>
 #include <Library/DfciSettingsLib.h>  // Library not used, just the defines
-#include <Library/DfciDeviceIdSupportLib.h>
+#include <Library/DfciV1SupportLib.h>
 #include <Library/DfciXmlDeviceIdSchemaSupportLib.h>
+#include <Library/DfciXmlSettingSchemaSupportLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/Performance2Lib.h>
+#include <Library/PrintLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
 
-#include <Guid/DfciInternalVariableGuid.h>
-#include <Guid/DfciDeviceIdVariables.h>
+#include <Private/DfciGlobalPrivate.h>
 
 #include <Settings/DfciSettings.h>
 
@@ -54,6 +94,7 @@ typedef struct {
 extern LIST_ENTRY  mProviderList; 
 
 extern DFCI_SETTING_ACCESS_PROTOCOL             mSystemSettingAccessProtocol;
+extern DFCI_APPLY_PACKET_PROTOCOL               mApplySettingsProtocol;
 
 // 
 // Internal Data struct
@@ -91,10 +132,6 @@ DebugPrintProviderList();
 
 VOID
 EFIAPI
-CheckForPendingUpdates();
-
-VOID
-EFIAPI
 ClearCacheOfCurrentSettings();
 
 EFI_STATUS
@@ -113,7 +150,6 @@ SetProviderValueFromAscii(
   IN OUT DFCI_SETTING_FLAGS *Flags
   );
 
-
 EFI_STATUS
 EFIAPI
 SetSettingFromAscii(
@@ -122,6 +158,27 @@ SetSettingFromAscii(
   IN CONST DFCI_AUTH_TOKEN *AuthToken,
   IN OUT DFCI_SETTING_FLAGS *Flags);
 
+EFI_STATUS
+EFIAPI
+ApplyNewSettingsPacket (
+    IN CONST DFCI_APPLY_PACKET_PROTOCOL *This,
+    IN       DFCI_INTERNAL_PACKET       *ApplyPacket
+  );
+
+EFI_STATUS
+EFIAPI
+SetSettingsResponse(
+  IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN        DFCI_INTERNAL_PACKET        *Data
+  );
+
+EFI_STATUS
+EFIAPI
+SettingsLKG_Handler(
+    IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+    IN        DFCI_INTERNAL_PACKET        *ApplyPacket,
+    IN        UINT8                        Operation
+  );
 
 /**
 Pass thru function for using the Auth Protocol to get auth and token
@@ -135,8 +192,8 @@ Pass thru function for using the Auth Protocol to get auth and token
 EFI_STATUS
 EFIAPI
 CheckAuthAndGetToken(
-  IN     UINT8          *SignedData,
-  IN     UINTN          SignedDataLen,
+  IN     UINT8           *SignedData,
+  IN     UINTN            SignedDataLen,
   IN     WIN_CERTIFICATE *Signature,
   IN OUT DFCI_AUTH_TOKEN  *AuthToken
   );
@@ -244,6 +301,15 @@ EFIAPI
 SystemSettingPermissionResetPermission (
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
   IN  CONST DFCI_AUTH_TOKEN                   *AuthToken OPTIONAL
+  );
+
+EFI_STATUS
+EFIAPI
+SystemSettingPermissionIdentityChange (
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
+  IN  CONST DFCI_AUTH_TOKEN                   *AuthToken,
+  IN        DFCI_IDENTITY_ID                   CertIdentity,
+  IN        BOOLEAN                            Enroll
   );
 
 //functions to support internal data store management

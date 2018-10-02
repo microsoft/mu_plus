@@ -1,13 +1,35 @@
-## @file  DfciPkg.dec
+## @file
+# DfciPkg.dec
 #
-# This Package provides all definitions(including functions, MACROs, structures and library classes)
-# and libraries instances, which are defined and created by the DFCI Package.
+# This Package provides all definitions(including functions, MACROs, structures
+# and library classes) # and libraries instances, which are defined and created
+# by the DFCI Package.
 #
-# Copyright (c) 2017, Microsoft Corporation. All rights reserved.
+# Copyright (c) 2018, Microsoft Corporation
 #
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ##
-
 
 [Defines]
   DEC_SPECIFICATION              = 0x00010005
@@ -81,10 +103,17 @@
   #
   gDfciSettingsProviderSupportProtocolGuid = { 0xc16c7ed8, 0x3751, 0x45a5, {0xa8, 0x93, 0x29, 0x6a, 0x3, 0xb8, 0x8f, 0x9d } }
 
-  ##  DFCI Authentication Provision Update Pending
-  # NULL / Flag Protocol to tell other modules in the system that Auth Provisioning is Pending
-  #
-  gDfciAuthenticationProvisioningPendingGuid = { 0x530f2603, 0x2d78, 0x48a7, { 0xb2, 0x4b, 0xab, 0xb, 0x6, 0x43, 0x61, 0x88 }}
+  ## DFCI Apply Permission Protocol
+  # {d701b10f-9e95-4d6d-9685-b8a910cfbf3f}
+  gDfciApplyPermissionsProtocolGuid = { 0xd701b10f, 0x9e95, 0x4d6d, {0x96, 0x85, 0xb8, 0xa9, 0x10, 0xcf, 0xbf, 0x3f} }
+
+  ## DFCI Apply Settings Protocol
+  # {91b3bf34-6db1-4e3c-808f-bb615b3aaf08}
+  gDfciApplySettingsProtocolGuid = { 0x91b3bf34, 0x6db1, 0x4e3c, {0x80, 0x8f, 0xbb, 0x61, 0x5b, 0x3a, 0xaf, 0x08} }
+
+  ## DFCI Apply Identity Protocol
+  # {74f90a71-cfea-4842-8a45-f79823459d4a}
+  gDfciApplyIdentityProtocolGuid = { 0x74f90a71, 0xcfea, 0x4842, {0x8a, 0x45, 0xf7, 0x98, 0x23, 0x45, 0x9d, 0x4a} }
 
   ## DFCI Pkcs7 protocol
   #
@@ -146,6 +175,8 @@
   # Include/Guid/DfciMenuGuid.h
   gDfciMenuFormsetGuid = {0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9 }}
 
+  ## DFCI Recovery Formset Guid
+  #
   ## Include/Guid/DfciMenuGuid.h
   gDfciRecoveryFormsetGuid = {0xcf9873b2, 0xce63, 0x4f63, {0x9a, 0x5f, 0x16, 0x54, 0xe4, 0x01, 0x61, 0xc6 }}
 

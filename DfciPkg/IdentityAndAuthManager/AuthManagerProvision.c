@@ -1,49 +1,43 @@
+/**@file
+AuthManagerProvision.c
+
+Processes new Identity Packets
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #include "IdentityAndAuthManager.h"
 #include <Guid/EventGroup.h>
+#include <Guid/DfciPacketHeader.h>
 #include <Guid/DfciIdentityAndAuthManagerVariables.h>
 #include <Guid/ZeroGuid.h>
 #include <Private/DfciGlobalPrivate.h>
 #include <Library/BaseLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
 #include <Settings/DfciSettings.h>
-
-EFI_EVENT                          mWMProtocolEvent;
-
-
-/**
-Event callback for Window Manager Protocol.
-This is needed when a privisioning request that requires
-user confirmation.
-**/
-VOID
-EFIAPI
-WindowManagerCallback (
-  IN EFI_EVENT Event,
-  IN VOID* Context
-  )
-{
-
-  EFI_TPL OldTpl;
-
-  //
-  // Check if the UI components we need are available. If not, bail.
-  //
-  if (DfciUiIsUiAvailable() == FALSE) {
-    DEBUG((DEBUG_ERROR, "%a - Callback trigggered. UI not available\n", __FUNCTION__));
-    return;
-  }
-
-  //
-  // Try again to process provisioning input.
-  //
-  OldTpl = gBS->RaiseTPL(TPL_NOTIFY);
-  gBS->RestoreTPL(TPL_APPLICATION);
-  CheckForNewProvisionInput();
-  gBS->RaiseTPL(OldTpl);
-  gBS->CloseEvent(Event);
-}
-
 
 /**
  Convert the Identity values used in the Provisioning Variable
@@ -54,9 +48,9 @@ VarIdentityToDfciIdentity(
   IN UINT8 VarIdentity
   )
 {
-  if (VarIdentity == DFCI_SIGNER_PROVISION_IDENTITY_USER)
+  if (VarIdentity == DFCI_SIGNER_PROVISION_IDENTITY_ZTD)
   {
-    return DFCI_IDENTITY_SIGNER_USER;
+    return DFCI_IDENTITY_SIGNER_ZTD ;
   }
 
   if (VarIdentity == DFCI_SIGNER_PROVISION_IDENTITY_OWNER)
@@ -64,6 +58,10 @@ VarIdentityToDfciIdentity(
     return DFCI_IDENTITY_SIGNER_OWNER;
   }
 
+  if (VarIdentity == DFCI_SIGNER_PROVISION_IDENTITY_USER)
+  {
+    return DFCI_IDENTITY_SIGNER_USER;
+  }
 
   if (VarIdentity == DFCI_SIGNER_PROVISION_IDENTITY_USER1)
   {
@@ -82,14 +80,20 @@ UINT8
 DfciIdentityToVarIdentity(
   IN DFCI_IDENTITY_ID DfciIdentity)
 {
-  if (DfciIdentity == DFCI_IDENTITY_SIGNER_USER)
+
+  if (DfciIdentity == DFCI_IDENTITY_SIGNER_ZTD )
   {
-    return DFCI_SIGNER_PROVISION_IDENTITY_USER;
+    return DFCI_SIGNER_PROVISION_IDENTITY_ZTD;
   }
 
   if (DfciIdentity == DFCI_IDENTITY_SIGNER_OWNER)
   {
     return DFCI_SIGNER_PROVISION_IDENTITY_OWNER;
+  }
+
+  if (DfciIdentity == DFCI_IDENTITY_SIGNER_USER)
+  {
+    return DFCI_SIGNER_PROVISION_IDENTITY_USER;
   }
 
   if (DfciIdentity == DFCI_IDENTITY_SIGNER_USER1)
@@ -109,6 +113,11 @@ DFCI_SETTING_ID_STRING
 DfciIdentityToSettingId(
   IN DFCI_IDENTITY_ID Identity)
 {
+  if (Identity == DFCI_IDENTITY_SIGNER_ZTD )
+  {
+    return DFCI_SETTING_ID__ZTD_KEY;
+  }
+
   if (Identity == DFCI_IDENTITY_SIGNER_USER)
   {
     return DFCI_SETTING_ID__USER_KEY;
@@ -136,8 +145,10 @@ DfciIdentityToSettingId(
 Write the provisioning response variable with parameter info
 **/
 EFI_STATUS
-SetProvisionResponse(
-  IN AUTH_MAN_PROV_INSTANCE_DATA* Data
+EFIAPI
+SetIdentityResponse(
+  IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN DFCI_INTERNAL_PACKET *Data
   )
 {
   DFCI_SIGNER_PROVISION_RESULT_VAR Var;
@@ -149,117 +160,81 @@ SetProvisionResponse(
   //
   //Don't want to write a status when we didn't have any data
   //
-  if (Data->State == AUTH_MAN_PROV_STATE_UNINITIALIZED)
+  if (Data->State == DFCI_PACKET_STATE_UNINITIALIZED)
   {
     return EFI_SUCCESS;
   }
 
   //If user confirmation pending..don't write status as this should be run again once user input is enabled
-  if (Data->State == AUTH_MAN_PROV_STATE_DATA_DELAYED_PROCESSING)
+  if (Data->State == DFCI_PACKET_STATE_DATA_DELAYED_PROCESSING)
   {
     return EFI_SUCCESS;
   }
 
-  Var.HeaderSignature = DFCI_IDENTITY_AUTH_PROVISION_RESULT_VAR_SIGNATURE;
-  Var.HeaderVersion = DFCI_IDENTITY_AUTH_PROVISION_RESULT_VERSION;
-  Var.Identity = DfciIdentityToVarIdentity(Data->Identity);
-  DEBUG((DEBUG_INFO, "%a - Set Result Var Identity 0x%X.  DFCI Identity 0x%X\n", __FUNCTION__, Var.Identity, Data->Identity));
+  Var.Header.Signature = DFCI_IDENTITY_RESULT_VAR_SIGNATURE;
+  Var.Header.Version = DFCI_IDENTITY_RESULT_VERSION;
+  Var.Identity = DfciIdentityToVarIdentity(Data->DfciIdentity);
+  DEBUG((DEBUG_INFO, "%a - Set Result Var Identity 0x%X.  DFCI Identity 0x%X\n", __FUNCTION__, Var.Identity, Data->DfciIdentity));
   Var.StatusCode = (UINT64)(Data->StatusCode);
   Var.SessionId = Data->SessionId;
 
-  return gRT->SetVariable(DFCI_IDENTITY_AUTH_PROVISION_SIGNER_RESULT_VAR_NAME, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES, sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR), &Var);
-}
-
-
-EFI_STATUS
-EFIAPI
-GetPendingProvisionData(
-  IN AUTH_MAN_PROV_INSTANCE_DATA* Data
-  )
-{
-  EFI_STATUS Status;
-
-  if (Data == NULL)
-  {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  //Get the variable
-  Status = GetVariable3(DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_NAME,
-    &gDfciAuthProvisionVarNamespace,
-    &Data->Var,
-    &Data->VarSize,
-    NULL
-    );
-
-  if (EFI_ERROR(Status))
-  {
-    if (Status == EFI_NOT_FOUND)
-    {
-      DEBUG((DEBUG_INFO, "Auth Manager - No Pending Provision Data.\n"));
-    }
-    else
-    {
-      DEBUG((DEBUG_ERROR, "%a - Error getting variable - %r\n", __FUNCTION__, Status));
-      Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
-      Data->StatusCode = Status;
-    }
-    return Status;
-  }
-
-  //Check incomming size
-  if (Data->VarSize > MAX_ALLOWABLE_DFCI_IDENTITY_AUTH_PROVISION_APPLY_VAR_SIZE)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Incomming Provision apply var is too big (%d bytes)\n", __FUNCTION__, Data->VarSize));
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
-    Data->StatusCode = EFI_BAD_BUFFER_SIZE;
-    return EFI_NOT_FOUND;
-  }
-
-  Data->State = AUTH_MAN_PROV_STATE_DATA_PRESENT;
-  DEBUG((DEBUG_INFO, "%a - Provision Variable Size: 0x%X\n", __FUNCTION__, Data->VarSize));
-  return Status;
+  return gRT->SetVariable(Data->ResultName, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES , sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR), &Var);
 }
 
 /**
- * CHeck signature of the packet
+ * Perform basic checks on packet
  *
  * @param Data
- * @param SignedDataLength
  *
  * @return EFI_STATUS
  */
 EFI_STATUS
-SignChecks (
-    IN       AUTH_MAN_PROV_INSTANCE_DATA       *Data,
-    IN CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *SettingPermissionProtocol,
-    UINTN                                       SignedDataLength
+ValidateAndAuthenticatePendingProvisionData (
+    IN       DFCI_INTERNAL_PACKET              *Data,
+    IN CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *SettingsPermissionProtocol
   )
 {
   EFI_STATUS                      Status;
   DFCI_PERMISSION_MASK            PermMask = 0;
+  DFCI_PERMISSION_MASK            ZtdUnenrollPermMask = 0;
   DFCI_IDENTITY_PROPERTIES        Properties;
-  WIN_CERTIFICATE                *Signature = NULL;  //Ptr to UEFI cert structure
   WIN_CERTIFICATE                *TestSignature = NULL;
+  WIN_CERTIFICATE                *Signature = NULL;
+  UINTN                           SignedDataLength;
 
-  Data->Identity = VarIdentityToDfciIdentity(Data->VarIdentity);  //Set the Identity
 
-  //Lets check that the auth packet is either 1. Owner Identity or if not owner identity then an Owner already exists.
-  //Can't provision User Key without Owner key already provisioned.
-  if ((Data->VarIdentity != DFCI_SIGNER_PROVISION_IDENTITY_OWNER) && (!(Provisioned() & DFCI_IDENTITY_SIGNER_OWNER)))
+  SignedDataLength = Data->SignedDataLength;
+
+  Data->DfciIdentity = VarIdentityToDfciIdentity(*Data->VarIdentity);  //Set the Identity
+
+  //Check the Identity to make sure it's supported
+  if (Data->DfciIdentity == DFCI_IDENTITY_INVALID)
   {
-    DEBUG((DEBUG_ERROR, "[AM] - Can't provision User Auth Packet when Owner auth isn't already provisioned.\n"));
+    DEBUG((DEBUG_ERROR, "%a - Identity is not supported 0x%X\n", __FUNCTION__, Data->DfciIdentity));
     Data->StatusCode = EFI_UNSUPPORTED;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_NO_OWNER;
+    Data->State = DFCI_PACKET_STATE_DATA_INVALID;
     return Data->StatusCode;
   }
 
-  //Lets check that if its an unenroll packet that this system is DFCI enrolled.
-  if ((Data->TrustedCertSize == 0) && (!(Provisioned() & DFCI_IDENTITY_SIGNER_OWNER)))
+  //Lets check that the auth packet is either 1. ZTD Identity, Owner Identity or that an Owner already exists.
+  //Can't provision User Key without Owner key already provisioned.
+  if ((*Data->VarIdentity != DFCI_SIGNER_PROVISION_IDENTITY_OWNER) &&
+      (*Data->VarIdentity != DFCI_SIGNER_PROVISION_IDENTITY_ZTD) &&
+      (!(Provisioned() & DFCI_IDENTITY_SIGNER_OWNER)))
+  {
+    DEBUG((DEBUG_ERROR, "[AM] - Can't provision User Auth Packet when Owner auth isn't already provisioned.\n"));
+    Data->StatusCode = EFI_UNSUPPORTED;
+    Data->State = DFCI_PACKET_STATE_DATA_NO_OWNER;
+    return Data->StatusCode;
+  }
+
+  // Lets check that if its an unenroll packet, that identity must be enrolled already.
+  if ((Data->PayloadSize == 0) && ((Data->DfciIdentity & Provisioned()) == 0))
+//  if ((Data->PayloadSize == 0) && (*Data->VarIdentity != DFCI_SIGNER_PROVISION_IDENTITY_ZTD) && (!(Provisioned() & DFCI_IDENTITY_SIGNER_OWNER)))
   {
     DEBUG((DEBUG_ERROR, "[AM] - %a - Can't un-enroll a device that isn't enrolled in DFCI (no owner).\n", __FUNCTION__));
     Data->StatusCode = EFI_UNSUPPORTED;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_NO_OWNER;
+    Data->State = DFCI_PACKET_STATE_DATA_NO_OWNER;
     return Data->StatusCode;
   }
 
@@ -267,36 +242,36 @@ SignChecks (
   // - this is to confirm new Cert Data (Trusted Cert) isn't in bad format (user/tool error) which would cause future validation errors and possible "brick"
   // - This is not present when this is a unenroll request (no New Trusted Cert)
   //
-  if (Data->TrustedCertSize > 0)
+  if (Data->PayloadSize > 0)
   {
-    if (Data->VarSize <= (SignedDataLength + sizeof(WIN_CERTIFICATE)))
+    if (Data->PacketSize <= (SignedDataLength + sizeof(WIN_CERTIFICATE)))
     {
       //Invalid....Where the signature data???
       DEBUG((DEBUG_ERROR, "[AM] %a - Variable isn't big enough to hold any signature data\n", __FUNCTION__));
       Data->StatusCode = EFI_COMPROMISED_DATA;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
+      Data->State = DFCI_PACKET_STATE_DATA_INVALID;
       return Data->StatusCode;
     }
     //Now we can check if we have a WIN_CERT
-    TestSignature = (WIN_CERTIFICATE*)(((UINT8*)(Data->Var)) + SignedDataLength);
+    TestSignature = (WIN_CERTIFICATE*) PKT_FIELD_FROM_OFFSET(Data->Packet, SignedDataLength);
     //check Test Signature length
-    if ((TestSignature->dwLength + SignedDataLength) > Data->VarSize)
+    if ((TestSignature->dwLength + SignedDataLength) > Data->PacketSize)
     {
       //Invalid....Where the signature data???
       DEBUG((DEBUG_ERROR, "[AM] %a - Variable isn't big enough to hold the declared test signature data\n", __FUNCTION__));
       Data->StatusCode = EFI_COMPROMISED_DATA;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
+      Data->State = DFCI_PACKET_STATE_DATA_INVALID;
       return Data->StatusCode;
     }
 
     //Check the test signature
-    Status = VerifySignature(PKT_FIELD_FROM_OFFSET(Data->Var,Data->TrustedCertOffset), Data->TrustedCertSize, TestSignature, PKT_FIELD_FROM_OFFSET(Data->Var,Data->TrustedCertOffset), Data->TrustedCertSize);
+    Status = VerifySignature(Data->Payload, Data->PayloadSize, TestSignature, Data->Payload, Data->PayloadSize);
     if (EFI_ERROR(Status))
     {
       //Test Signature Fails Validation
       DEBUG((DEBUG_ERROR, "[AM] %a - Test Signature Failed Validation.  %r\n", __FUNCTION__, Status));
       Data->StatusCode = EFI_CRC_ERROR;  //special return code for this case.  Probably should create a new status code
-      Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
+      Data->State = DFCI_PACKET_STATE_DATA_INVALID;
       return Data->StatusCode;
     }
 
@@ -306,44 +281,36 @@ SignChecks (
 
   //Check Signed Data length vs variable Length
   DEBUG((DEBUG_INFO, "[AM] %a - SignedDataLength = 0x%X\n", __FUNCTION__, SignedDataLength));
-  if ((SignedDataLength + sizeof(WIN_CERTIFICATE_UEFI_GUID)) >= Data->VarSize)
+  if ((SignedDataLength + sizeof(WIN_CERTIFICATE_UEFI_GUID)) >= Data->PacketSize)
   {
     //Where is the cert data?
     DEBUG((DEBUG_ERROR, "[AM] %a - Variable isn't big enough to hold the declared var signature data\n", __FUNCTION__));
     Data->StatusCode = EFI_COMPROMISED_DATA;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
-    return Data->StatusCode;
-  }
-  //Check the Identity to make sure it's supported
-  if (Data->Identity == DFCI_IDENTITY_INVALID)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Identity is not supported 0x%X\n", __FUNCTION__, Data->Identity));
-    Data->StatusCode = EFI_UNSUPPORTED;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
+    Data->State = DFCI_PACKET_STATE_DATA_INVALID;
     return Data->StatusCode;
   }
 
   //Get Permissions for this provisioned data
-  Status = SettingPermissionProtocol->GetPermission(SettingPermissionProtocol, DfciIdentityToSettingId(Data->Identity), &PermMask);
+  Status = SettingsPermissionProtocol->GetPermission(SettingsPermissionProtocol, DfciIdentityToSettingId(Data->DfciIdentity), &PermMask);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "%a - Failed to get Permission for Identity 0x%X.  Status = %r\n", __FUNCTION__, Data->Identity, Status));
+    DEBUG((DEBUG_ERROR, "%a - Failed to get Permission for Identity 0x%X.  Status = %r\n", __FUNCTION__, Data->DfciIdentity, Status));
     Data->StatusCode = Status;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
+    Data->State = DFCI_PACKET_STATE_DATA_INVALID;
     return Data->StatusCode;
   }
 
-  DEBUG((DEBUG_INFO, "%a - Permission for this Key is 0x%X\n", __FUNCTION__, PermMask));
+  DEBUG((DEBUG_INFO, "%a - Permission for 0x%2.2x, %a, is 0x%X\n", __FUNCTION__, Data->DfciIdentity, DfciIdentityToSettingId(Data->DfciIdentity), PermMask));
 
-  Signature = (WIN_CERTIFICATE*)(((UINT8*)Data->Var + SignedDataLength));
+  Signature = (WIN_CERTIFICATE*) PKT_FIELD_FROM_OFFSET(Data->Packet, SignedDataLength); 
 
   //Check to make sure Signature is contained within Var Data
-  if (Data->VarSize != (Signature->dwLength + SignedDataLength))
+  if (Data->PacketSize != (Signature->dwLength + SignedDataLength))
   {
     //Var Length isn't correct
-    DEBUG((DEBUG_ERROR, "[AM] %a - Variable Size (0x%X) doesn't match calculated size (0x%X)\n", __FUNCTION__, Data->VarSize, (Signature->dwLength + SignedDataLength)));
+    DEBUG((DEBUG_ERROR, "[AM] %a - Variable Size (0x%X) doesn't match calculated size (0x%X)\n", __FUNCTION__, Data->PacketSize, (Signature->dwLength + SignedDataLength)));
     Data->StatusCode = EFI_COMPROMISED_DATA;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
+    Data->State = DFCI_PACKET_STATE_DATA_INVALID;
     return Data->StatusCode;
   }
 
@@ -351,7 +318,7 @@ SignChecks (
 
   //Now lets ask the auth manager to verify
   Status = AuthWithSignedData(&mAuthProtocol,
-    (UINT8*)Data->Var,        //signed data ptr
+    (UINT8*)Data->Packet,        //signed data ptr
     SignedDataLength, //signed data length
     Signature,       //Win Cert ptr
     &(Data->AuthToken));
@@ -364,19 +331,44 @@ SignChecks (
     {
       DEBUG((DEBUG_INFO, "%a - Auth Passed but Identity failed. Should never happen. %r\n", Status));
       Data->StatusCode = EFI_ABORTED;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_FAILED;
+      Data->State = DFCI_PACKET_STATE_DATA_AUTH_FAILED;
       return Data->StatusCode;
     }
 
-    //Auth is valid.  Now check if auth has permission
-    if ((Properties.Identity & PermMask) != 0)
+    // Handle UnEnroll via ZTD signed differently.
+    if ((Data->PayloadSize == 0) && (Properties.Identity == DFCI_IDENTITY_SIGNER_ZTD))
     {
-      //Permission is good.  Apply
-      DEBUG((DEBUG_INFO, "%a - Permission is good. Applying without requiring user interaction.\n", __FUNCTION__));
-      Data->UserConfirmationRequired = FALSE;
-      Data->StatusCode = EFI_SUCCESS;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_AUTHENTICATED;
-      return Data->StatusCode;
+      //Get Permissions Dfci.ZtdUnenroll.Enable
+      Status = SettingsPermissionProtocol->GetPermission(SettingsPermissionProtocol, DFCI_SETTING_ID__ZTD_UNENROLL, &ZtdUnenrollPermMask);
+      if (EFI_ERROR(Status))
+      {
+        DEBUG((DEBUG_ERROR, "%a - Failed to get Permission for Identity 0x%X.  Status = %r\n", __FUNCTION__, Data->DfciIdentity, Status));
+        Data->StatusCode = Status;
+        Data->State = DFCI_PACKET_STATE_DATA_INVALID;
+        return Data->StatusCode;
+      }
+      // If the cert being unenrolled is allowed by ZtdUnenroll, allow the unenroll.
+      if ((Data->DfciIdentity & ZtdUnenrollPermMask) != 0)
+      {
+        //Permission is good.  Apply
+        DEBUG((DEBUG_INFO, "%a - Permission by Ztd Unenroll is good. Applying without requiring user interaction.\n", __FUNCTION__));
+        Data->UserConfirmationRequired = FALSE;
+        Data->StatusCode = EFI_SUCCESS;
+        Data->State = DFCI_PACKET_STATE_DATA_AUTHENTICATED;
+        return Data->StatusCode;
+      }
+    }
+    else
+    {
+      if ((Properties.Identity & PermMask) != 0)
+      {
+        //Permission is good.  Apply
+        DEBUG((DEBUG_INFO, "%a - Permission is good. Applying without requiring user interaction.\n", __FUNCTION__));
+        Data->UserConfirmationRequired = FALSE;
+        Data->StatusCode = EFI_SUCCESS;
+        Data->State = DFCI_PACKET_STATE_DATA_AUTHENTICATED;
+        return Data->StatusCode;
+      }
     }
 
     //Auth was good but Permission wasn't
@@ -390,7 +382,7 @@ SignChecks (
     DEBUG((DEBUG_INFO, "%a - Local User Auth allowed.  Will prompt for User approval.\n", __FUNCTION__));
     Data->UserConfirmationRequired = TRUE;
     Data->StatusCode = EFI_SUCCESS;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_AUTHENTICATED;
+    Data->State = DFCI_PACKET_STATE_DATA_AUTHENTICATED;
     return Data->StatusCode;
   }
 
@@ -398,281 +390,8 @@ SignChecks (
   //FAIL - Unsupported Identity
   DEBUG((DEBUG_INFO, "%a - Unsupported Key Provision\n", __FUNCTION__));
   Data->StatusCode = EFI_ACCESS_DENIED;
-  Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_FAILED;
+  Data->State = DFCI_PACKET_STATE_DATA_AUTH_FAILED;
   return Data->StatusCode;
-}
-
-/**
-Check for provision data variable is valid and then check authentication if required.
-**/
-EFI_STATUS
-EFIAPI
-ValidateAndAuthenticatePendingProvisionData_V1 (
-  IN AUTH_MAN_PROV_INSTANCE_DATA             *Data,
-  IN CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *SettingPermissionProtocol
-  )
-{
-  UINTN SignedDataLength = 0;    //length of the hashed data for signature validation
-  EFI_STATUS Status;
-
-  //Save the session id
-  Data->SessionId = Data->Var->v1.SessionId;
-  Data->Var->v1.SessionId = 0;  //zero out the var data so signature validation works
-
-  //Save the Identity early in case of error so response packet has valid response
-  Data->VarIdentity = Data->Var->v1.Identity;
-
-  Data->TrustedCertOffset = OFFSET_OF(DFCI_SIGNER_PROVISION_APPLY_VAR_V1, TrustedCert);
-  Data->TrustedCertSize = Data->Var->v1.TrustedCertSize;
-  Data->TrustedCert = Data->Var->v1.TrustedCert;
-
-  //Lets check for device specific targetting using Serial Number
-  if (Data->Var->v1.SerialNumber != 0)
-  {
-    UINTN DeviceSerialNumber = 0;
-
-    DEBUG((DEBUG_INFO, "[AM] %a - Targetted Packet for sn %ld\n", __FUNCTION__, Data->Var->v1.SerialNumber));
-
-    Status = DfciIdSupportV1GetSerialNumber(&DeviceSerialNumber);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "[AM] - Failed to get device serial number %r\n", Status));
-      Data->StatusCode = EFI_OUT_OF_RESOURCES;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR;
-      return Data->StatusCode;
-    }
-
-    DEBUG((DEBUG_INFO, "[AM] %a - Device SN: %ld\n", __FUNCTION__, DeviceSerialNumber));
-
-    //have serial number now compare to packet
-    if (Data->Var->v1.SerialNumber != (UINT64)DeviceSerialNumber)
-    {
-      DEBUG((DEBUG_ERROR, "[AM] - Auth Packet not for this device.  Packet SN Target: %ld\n", Data->Var->v1.SerialNumber));
-      Data->StatusCode = EFI_ABORTED;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_NOT_CORRECT_TARGET;
-      return Data->StatusCode;
-    }
-  }
-
-  SignedDataLength = sizeof(DFCI_SIGNER_PROVISION_APPLY_VAR_V1) + Data->Var->v1.TrustedCertSize;  //SignedData will be at least this big.
-
-  Status = SignChecks (Data, SettingPermissionProtocol, SignedDataLength);
-
-  return Status;
-}
-
-/**
-Check for provision data variable is valid and then check authentication if required.
-**/
-EFI_STATUS
-EFIAPI
-ValidateAndAuthenticatePendingProvisionData_V2 (
-  IN       AUTH_MAN_PROV_INSTANCE_DATA       *Data,
-  IN CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *SettingPermissionProtocol
-  )
-{
-  UINTN                      SignedDataLength = 0;    //length of the hashed data for signature validation
-  EFI_STATUS                 Status;
-  EFI_GUID                   SystemUuid;
-  CHAR8                     *PktMfg;
-  CHAR8                     *PktProductName;
-  CHAR8                     *PktSerialNumber;
-
-  //Save the session id
-  Data->SessionId = Data->Var->v2.SessionId;
-  Data->Var->v2.SessionId = 0;  //zero out the var data so signature validation works
-
-  //Save the Identity early in case of error so response packet has valid response
-  Data->VarIdentity = Data->Var->v2.Identity;
-
-  Data->TrustedCertOffset = Data->Var->v2.TrustedCertOffset;
-  Data->TrustedCertSize = Data->Var->v2.TrustedCertSize;
-  Data->TrustedCert = PKT_FIELD_FROM_OFFSET(Data->Var,Data->TrustedCertOffset);
-
-  // Check if the packet is for this DeviceId.  For V2, must be an exact match for all componentes of
-  // the device Id.
-
-  Status = DfciIdSupportGetManufacturer (&Data->Manufacturer, &Data->ManufacturerSize);
-  Status |= DfciIdSupportGetProductName (&Data->ProductName, &Data->ProductNameSize);
-  Status |= DfciIdSupportGetSerialNumber (&Data->SerialNumber, &Data->SerialNumberSize);
-  Status |= DfciIdSupportGetUuid (&Data->Uuid, &Data->UuidSize);
-
-  if (EFI_ERROR(Status))
-  {
-    Data->StatusCode = EFI_ABORTED;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR;
-    return Data->StatusCode;
-  }
-
-  Status = AsciiStrToGuid (Data->Uuid, &SystemUuid);
-  if (EFI_ERROR(Status))
-  {
-      DEBUG((DEBUG_ERROR, "[AM] %a - Error convertion Uuid to Guid. Ignored. %r\n", __FUNCTION__, Status));
-  }
-
-  // Here are the special cases
-  //
-  // 1. Recovery Certificate
-  //
-  //    A Recovery Certificate an be installed during manufacturing to enable Zero Touch
-  //    management.  When there is no owner certificate installed, This Recovery Certificate can be unenrolled by the local user.  The
-  //    local user will be allowed to enroll a Recovery Certificate.
-  //
-  // 2. Packets with no target information.
-  //
-  //    Are required to be signed by the Recovery Certificate.
-  //
-  //    Identity Packets:
-  //
-  //    When a packet is received with no target information, and the system does not does
-  //    not have an owner certificate, and the provisioning packet is signed by the Recovery
-  //    Certificate, then this packet will be allowed to entroll a new owner certificate
-  //    regardless of permissions with Zero Touch.  If the Recovery Certificate is not
-  //    installed, the permission will be deferred to the Local User via thumprint
-  //    verification. If the Recovery Certificate is installed, and the packet fails
-  //    authentication, it is discarded.
-  //
-  //    Settings Packets: NONE - only the user
-  //
-  // 3. UUID is gZeroGuid.
-  //
-  //    Only available on Settings Packets as these are dependent upon the Settings Manager.
-  //    The Settings Manaager has not been initialized when Identity and Permission packets
-  //    are processed.
-  //
-  //    This enables parsing of the strings for "setting = value" (NOT Implemented Yet)
-  //
-  //    When this is enabled, and the field does not match the corresponding DeviceId value,
-  //    the string is parsed for "setting = value".  The setting is obtained, and compared
-  //    with "value". A TRUE is returned if the setting is found, and its value == the value
-  //    in the expression.
-  //
-
-  PktMfg = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemMfgOffset);
-  PktProductName = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemProductOffset);
-  PktSerialNumber = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Data->Var,Data->Var->v2.SystemSerialOffset);
-  do
-  {
-    // If an owner cert is installed, cannot provision with Recovery Cert
-    if (mInternalCertStore.Certs[CERT_OWNER_INDEX].Cert != NULL) {
-      break;
-    }
-
-    // Any DeviceId string or UUID in the packet indicates not a special packet
-    if ((*PktMfg != '\0') ||
-        (*PktProductName != '\0') ||
-        (*PktSerialNumber != '\0')) {
-      break;
-    }
-    if (!CompareGuid (&gZeroGuid, &Data->Var->v2.SystemUuid)) {
-      break;
-    }
-
-    Data->RecoverySigned = TRUE;
-  } while (FALSE);
-  // TODO: Parse strings for setting content
-
-  if (!Data->RecoverySigned)
-  {
-    DEBUG((DEBUG_ERROR, "[AM] %a - Current -- Target\n", __FUNCTION__));
-    DEBUG((DEBUG_ERROR, "Mfg  %a - %a\n",  Data->Manufacturer, PktMfg));
-    DEBUG((DEBUG_ERROR, "Pn   %a - %a\n",  Data->ProductName,  PktProductName));
-    DEBUG((DEBUG_ERROR, "Sn   %a - %a\n",  Data->SerialNumber, PktSerialNumber));
-    DEBUG((DEBUG_ERROR, "Uuid %g - %g\n",  &SystemUuid, Data->Var->v2.SystemUuid));
-    if ((0 != CompareMem (Data->Manufacturer, PktMfg,          Data->ManufacturerSize)) ||
-        (0 != CompareMem (Data->ProductName,  PktProductName,  Data->ProductNameSize )) ||
-        (0 != CompareMem (Data->SerialNumber, PktSerialNumber, Data->SerialNumberSize)) ||
-        (!CompareGuid (&SystemUuid, &Data->Var->v2.SystemUuid)))
-    {
-      Data->StatusCode = EFI_ABORTED;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_NOT_CORRECT_TARGET;
-      return Data->StatusCode;
-    }
-  }
-
-  SignedDataLength = Data->TrustedCertOffset + Data->TrustedCertSize;  //SignedData will be this big.
-
-  Status = SignChecks (Data, SettingPermissionProtocol, SignedDataLength);
-
-  return Status;
-}
-
-/**
- * Perform basic checks on packet
- *
- * @param Data
- *
- * @return EFI_STATUS
- */
-EFI_STATUS
-ValidateAndAuthenticatePendingProvisionData (
-    IN       AUTH_MAN_PROV_INSTANCE_DATA       *Data,
-    IN CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *SettingPermissionProtocol
-  )
-{
-  EFI_STATUS  Status;
-  UINTN       MinSize;
-
-  if (Data == NULL)
-  {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Data->State != AUTH_MAN_PROV_STATE_DATA_PRESENT)
-  {
-    DEBUG((DEBUG_ERROR, "%a called with data in wrong state 0x%x\n", __FUNCTION__, Data->State));
-    return EFI_UNSUPPORTED;
-  }
-
-  if ((Data->Var == NULL) || (Data->VarSize == 0))
-  {
-    Data->StatusCode = EFI_INVALID_PARAMETER;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
-    return Data->StatusCode;
-  }
-
-  MinSize = sizeof(DFCI_SIGNER_PROVISION_APPLY_VAR_V1);
-  if ( (Data->VarSize > sizeof(DFCI_SIGNER_PROVISION_APPLY_VAR_HEADER)) &&
-       (Data->Var->vh.HeaderVersion == DFCI_IDENTITY_AUTH_PROVISION_VAR_VERSION_V2) )
-  {
-    MinSize = sizeof(DFCI_SIGNER_PROVISION_APPLY_VAR_V2);
-  }
-
-  if (Data->VarSize < MinSize)
-  {
-    DEBUG((DEBUG_ERROR, "[AM] Auth Provision VarSize too small. Size: 0x%X MinSize: 0x%X\n", Data->VarSize, MinSize));
-    Data->StatusCode = EFI_COMPROMISED_DATA;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
-    return Data->StatusCode;
-  }
-
-  //Check ascii signature to make sure var looks as expected.
-  if (Data->Var->vh.HeaderSignature != DFCI_IDENTITY_AUTH_PROVISION_APPLY_VAR_SIGNATURE)
-  {
-    DEBUG((DEBUG_ERROR, "[AM] Auth Provision Var HeaderSignature not valid.\n"));
-    Data->StatusCode = EFI_COMPROMISED_DATA;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
-    return Data->StatusCode;
-  }
-  //Check Version
-
-  switch (Data->Var->vh.HeaderVersion)
-  {
-    case DFCI_IDENTITY_AUTH_PROVISION_VAR_VERSION_V1:
-      Status = ValidateAndAuthenticatePendingProvisionData_V1 (Data, SettingPermissionProtocol);
-      break;
-    case DFCI_IDENTITY_AUTH_PROVISION_VAR_VERSION_V2:
-      Status = ValidateAndAuthenticatePendingProvisionData_V2 (Data, SettingPermissionProtocol);
-      break;
-    default:
-      DEBUG((DEBUG_INFO, "[AM] Auth Provision Var Version not current.\n"));
-      Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
-      Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
-      return Data->StatusCode;
-    break;
-  }
-
-  return Status;
 }
 
 /**
@@ -681,7 +400,7 @@ Function sets the new data into the Internal Cert Store and save to NV ram
 EFI_STATUS
 EFIAPI
 ApplyProvisionData(
-  IN AUTH_MAN_PROV_INSTANCE_DATA* Data
+  IN DFCI_INTERNAL_PACKET* Data
   )
 {
   UINT8 Index = CERT_INVALID_INDEX;
@@ -693,50 +412,50 @@ ApplyProvisionData(
     return EFI_INVALID_PARAMETER;
   }
 
-  if (Data->State != AUTH_MAN_PROV_STATE_DATA_USER_APPROVED)
+  if (Data->State != DFCI_PACKET_STATE_DATA_USER_APPROVED)
   {
     DEBUG((DEBUG_ERROR, "ApplyProvisionData called with data in wrong state 0x%x\n", Data->State));
     return EFI_UNSUPPORTED;
   }
 
-  DEBUG((DEBUG_INFO, "Applying Provision Data for Identity %d\n", Data->Identity));
+  DEBUG((DEBUG_INFO, "Applying Provision Data for Identity %d\n", Data->DfciIdentity));
 
   // Special case for when a user is unenrolling in DFCI - which is done by removing owner key
-  if ((Data->TrustedCertSize == 0) && (Data->Identity == DFCI_IDENTITY_SIGNER_OWNER))
+  if ((Data->PayloadSize == 0) && (Data->DfciIdentity == DFCI_IDENTITY_SIGNER_OWNER))
   {
     Status = ClearDFCI(&(Data->AuthToken));
 
-    Data->RebootRequired = TRUE;  //After clear force reboot...even in error case
+    Data->ResetRequired = TRUE;  //After clear force reboot...even in error case
     Data->StatusCode = Status;
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "[AM] - Failed to Clear DFCI.  System in bad state. %r\n", Status));
-      Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR;
+      Data->State = DFCI_PACKET_STATE_DATA_SYSTEM_ERROR;
       ASSERT_EFI_ERROR(Status);
       return Status;
     }
-    Data->State = AUTH_MAN_PROV_STATE_DATA_COMPLETE;
+    Data->State = DFCI_PACKET_STATE_DATA_COMPLETE;
     return Status;
   }
 
   
-  Index = DfciIdentityToCertIndex(Data->Identity);
+  Index = DfciIdentityToCertIndex(Data->DfciIdentity);
   if (Index == CERT_INVALID_INDEX)
   {
     DEBUG((DEBUG_INFO, "Invalid Cert Index\n"));
-    Data->State = AUTH_MAN_PROV_STATE_DATA_INVALID;
+    Data->State = DFCI_PACKET_STATE_DATA_INVALID;
     Data->StatusCode = EFI_UNSUPPORTED;
     return Data->StatusCode;
   }
 
   //Only allocate new memory if this request has new cert data
-  if (Data->TrustedCertSize > 0)
+  if (Data->PayloadSize > 0)
   {
     //allocate new data just in case of error we will not delete old yet
-    NewCertData = AllocatePool(Data->TrustedCertSize);
+    NewCertData = AllocatePool(Data->PayloadSize);
     if (NewCertData == NULL)
     {
-      Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR;
+      Data->State = DFCI_PACKET_STATE_DATA_SYSTEM_ERROR;
       Data->StatusCode = EFI_OUT_OF_RESOURCES;
       return EFI_OUT_OF_RESOURCES;
     }
@@ -749,43 +468,33 @@ ApplyProvisionData(
     mInternalCertStore.Certs[Index].Cert = NULL;
     mInternalCertStore.Certs[Index].CertSize = 0;
 
-    mInternalCertStore.PopulatedIdentities &= ~(Data->Identity); //unset the PopulatedIdentities
+    mInternalCertStore.PopulatedIdentities &= ~(Data->DfciIdentity); //unset the PopulatedIdentities
     //Destroy any auth handle that is using the old Identity
   }
 
   //Dont try to copy if it was a delete operation
-  if (Data->TrustedCertSize > 0)
+  if (Data->Payload > 0)
   {
     mInternalCertStore.Certs[Index].Cert = NewCertData;
-    mInternalCertStore.Certs[Index].CertSize = Data->TrustedCertSize;
+    mInternalCertStore.Certs[Index].CertSize = Data->PayloadSize;
 
-    CopyMem(mInternalCertStore.Certs[Index].Cert, PKT_FIELD_FROM_OFFSET(Data->Var,Data->TrustedCertOffset), mInternalCertStore.Certs[Index].CertSize);
-    mInternalCertStore.PopulatedIdentities |= (Data->Identity);  //Set the populatedIdentities
+    CopyMem(mInternalCertStore.Certs[Index].Cert, Data->Payload, mInternalCertStore.Certs[Index].CertSize);
+    mInternalCertStore.PopulatedIdentities |= (Data->DfciIdentity);  //Set the populatedIdentities
   }
 
   //Dispose of all mappings for the Identity that changed
-  Status = DisposeAllIdentityMappings(Data->Identity);
+  Status = DisposeAllIdentityMappings(Data->DfciIdentity);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identites for Id 0x%X.  Status = %r\n", Data->Identity, Status));
+    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identites for Id 0x%X.  Status = %r\n", Data->DfciIdentity, Status));
     //continue on.  
   }
 
-  //Save it
-  Status = SaveProvisionedData();
-  if (EFI_ERROR(Status))
-  {
-    Data->StatusCode = Status;
-    Data->State = AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR;
-    if (NewCertData != NULL)
-    {
-      FreePool(NewCertData);
-    }
-    return Status;
-  }
+  // Data will be saved after all identities have been set
+  Data->LKGDirty = TRUE;
 
   Data->StatusCode = EFI_SUCCESS;
-  Data->State = AUTH_MAN_PROV_STATE_DATA_COMPLETE;
+  Data->State = DFCI_PACKET_STATE_DATA_COMPLETE;
   return EFI_SUCCESS;
 }
 
@@ -795,111 +504,169 @@ Delete the variable for NV space
 **/
 VOID
 DeleteProvisionVariable(
-  IN AUTH_MAN_PROV_INSTANCE_DATA* Data)
+  IN DFCI_INTERNAL_PACKET* Data)
 {
-  if ((Data == NULL) || (Data->State == AUTH_MAN_PROV_STATE_UNINITIALIZED))
+  if ((Data == NULL) || (Data->State == DFCI_PACKET_STATE_UNINITIALIZED))
   {
     return;
   }
 
-  if (Data->State == AUTH_MAN_PROV_STATE_DATA_DELAYED_PROCESSING)
+  if (Data->State == DFCI_PACKET_STATE_DATA_DELAYED_PROCESSING)
   {
     //don't delete the variable since we should come and try again later
     return;
   }
 
-  gRT->SetVariable(DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_NAME, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
+  gRT->SetVariable(Data->MailboxName, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
 }
 
-/*
-Check for incoming provisioning request for User Cert or Owner Cert
-Provision request could be Provision or Change/Delete.
-
-*/
-VOID
-CheckForNewProvisionInput (
-  VOID
-  )
+/**
+ * Validate that all secure information points within the
+ * signed data.
+ *
+ * @param Data
+ *
+ * @return EFI_STATUS
+ */
+EFI_STATUS
+ValidateIdentityPacket (
+    IN       DFCI_INTERNAL_PACKET       *Data)
 {
+    UINT8   *EndData;
 
-  AUTH_MAN_PROV_INSTANCE_DATA Data;
-  BOOLEAN LocalAuthNeeded;
+    if (Data->PacketSize > MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE)
+    {
+        DEBUG((DEBUG_ERROR, "%a - MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE.\n", __FUNCTION__));
+        return EFI_COMPROMISED_DATA;
+    }
+
+    if (Data->SignedDataLength >= Data->PacketSize)
+    {
+        DEBUG((DEBUG_ERROR, "%a - Signed Data too large. %d >= %d.\n", __FUNCTION__,Data->SignedDataLength,Data->PacketSize));
+        return EFI_COMPROMISED_DATA;
+    }
+
+    EndData = &Data->Packet->Pkt[Data->SignedDataLength];
+
+    if ((UINT8 *) Data->Signature != EndData)
+    {
+        DEBUG((DEBUG_ERROR, "%a - Addr of Signatue not at EndData. %p != %p.\n", __FUNCTION__,Data->Signature, EndData));
+        return EFI_COMPROMISED_DATA;
+    }
+
+    if (((UINT8 *)Data->VarIdentity <= Data->Packet->Pkt) ||
+        ((UINT8 *)Data->VarIdentity >= EndData))
+    {
+        DEBUG((DEBUG_ERROR, "%a - VarIdentity outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->VarIdentity, EndData));
+        return EFI_COMPROMISED_DATA;
+    }
+
+    if ((Data->Packet->Version >= DFCI_IDENTITY_VAR_VERSION) && (Data->Version == 0))
+    {
+      if (((UINT8 *)Data->Version <= Data->Packet->Pkt) ||
+          ((UINT8 *)Data->Version >= EndData))
+      {
+          DEBUG((DEBUG_ERROR, "%a - Version outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Version, EndData));
+          return EFI_COMPROMISED_DATA;
+      }
+    }
+
+    if ((Data->Packet->Version >= DFCI_IDENTITY_VAR_VERSION) && (Data->LSV == 0))
+    {
+      if (((UINT8 *)Data->LSV <= Data->Packet->Pkt) ||
+          ((UINT8 *)Data->LSV >= EndData))
+      {
+          DEBUG((DEBUG_ERROR, "%a - Lsv outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Version, EndData));
+          return EFI_COMPROMISED_DATA;
+      }
+    }
+
+    if ((Data->PayloadSize != 0) || (Data->Payload != NULL))
+    {
+      if (((UINT8 *)Data->Payload <= Data->Packet->Pkt) ||
+          ((UINT8 *)Data->Payload+Data->PayloadSize > EndData))
+      {
+          DEBUG((DEBUG_ERROR, "%a - Payload outside Pkt. %p <= %p <= %p < %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Payload,Data->Payload+Data->PayloadSize, EndData));
+          return EFI_COMPROMISED_DATA;
+      }
+    }
+
+    return EFI_SUCCESS;
+}
+
+/**
+ *  Apply an Identity packet
+ *
+ * @param[in]  This:           Apply Packet Protocol
+ * @param[in]  Data:           Pointer to buffer containing packet
+ *
+ * @retval EFI_SUCCESS -       Packet processed normally
+ * @retval Error -             Severe error processing packet
+ */
+EFI_STATUS
+EFIAPI
+ApplyNewIdentityPacket (
+    IN CONST DFCI_APPLY_PACKET_PROTOCOL *This,
+    IN       DFCI_INTERNAL_PACKET       *Data
+  ) {
+
   EFI_STATUS Status;
-  BOOLEAN Unenroll;
 
-  Data.Var = NULL;
-  Data.VarSize = 0;
-  Data.State = AUTH_MAN_PROV_STATE_UNINITIALIZED;
-  Data.StatusCode = 0;
-  Data.Identity = DFCI_IDENTITY_INVALID;
-  Data.UserConfirmationRequired = TRUE;
-  Data.SessionId = 0;
-  Data.RebootRequired = FALSE;
-  Data.AuthToken = DFCI_AUTH_TOKEN_INVALID;
-  Data.Manufacturer = NULL;
-  Data.ProductName = NULL;
-  Data.SerialNumber = NULL;
+  if ((This != &mApplyIdentityProtocol) || (Data == NULL))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Bad parameters received.\n", __FUNCTION__));
+    ASSERT(FALSE);
+    return EFI_INVALID_PARAMETER;
+  }
 
-  //
-  // 1 - Check mailbox for data.
-  //
-  Status = GetPendingProvisionData(&Data);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_INFO, "No valid pending Input settings\n"));
-    PopulateCurrentIdentities(FALSE);
+  if (Data->State != DFCI_PACKET_STATE_DATA_PRESENT)
+  {
+    DEBUG((DEBUG_ERROR, "%a - Error detected by caller.\n", __FUNCTION__));
+    Status = EFI_ABORTED;
     goto CLEANUP;
   }
+
+  // 1 - Validate the internal packet contents are valid
+  Status = ValidateIdentityPacket (Data);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Invalid packet.\n", __FUNCTION__));
+    Data->State = DFCI_PACKET_STATE_DATA_SYSTEM_ERROR;  // Code error. this shouldn't happen.
+    Data->StatusCode = EFI_ABORTED;
+    goto CLEANUP;
+  }
+
+  DEBUG((DEBUG_INFO, "%a - Session ID = 0x%X\n", __FUNCTION__, Data->SessionId));
 
   //
   // 2 - Validate mailbox data.
   //
   Status = ValidateAndAuthenticatePendingProvisionData(
-             &Data, 
+             Data,
              mDfciSettingsPermissionProtocol);
 
-  if (EFI_ERROR(Status) != FALSE) {
+  if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "ValidateAndAuthenticatePendingProvisionData failed %r\n", Status));
     goto CLEANUP;
   }
 
   //
   // 3 - Check if delayed processing is required.
-  // 
-  // If handling this provisioning request cannot be completed at this time,
-  // register a callback to take care of it at end of DXE.
   //
-  Unenroll = FALSE;
-  LocalAuthNeeded = FALSE;
-  if ((Data.TrustedCertSize == 0) && (Data.Identity == DFCI_IDENTITY_SIGNER_OWNER)) {
-    Unenroll = TRUE;
+  // If handling this provisioning request cannot be completed at this time,
+  // let the DFciManager know to try again at end of DXE.
+  //
+  // There are two reasons to wait for the UI to become present:
+  //     1 Unenroll of the Owner
+  //     2 UserConfirmation is required
 
-  } else if (Data.UserConfirmationRequired != FALSE) {
-    LocalAuthNeeded = TRUE;
-  }
+  if (!DfciUiIsUiAvailable()) {
 
-  Status = DfciUiCheckForDelayProcessingNeeded(Unenroll, LocalAuthNeeded);
-  if (EFI_ERROR(Status)) {
-
-    //
-    // If a delay is needed, setup the delay callback.
-    // 
-    // NOTE: If this fails, the provisioning instance data object is left in the
-    //       DELAYED_PROCESSING state.
-    //
-    Data.State = AUTH_MAN_PROV_STATE_DATA_DELAYED_PROCESSING;
-    Status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
-                                TPL_CALLBACK,
-                                WindowManagerCallback,
-                                NULL,
-                                &gEfiEndOfDxeEventGroupGuid,
-                                &mWMProtocolEvent );
-
-    if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, "ERROR %a - EndOfDxe callback registration failed! %r\n", __FUNCTION__, Status ));
+    // If User Confirmation is required
+    if (Data->UserConfirmationRequired) {    //     UserConfirmation is
+      Data->State = DFCI_PACKET_STATE_DATA_DELAYED_PROCESSING;
+      goto CLEANUP;
     }
-
-    DEBUG((DEBUG_INFO, "Delay Processing %r\n", Status));
-    goto CLEANUP;
   }
 
   //
@@ -907,36 +674,35 @@ CheckForNewProvisionInput (
   //
   // If user confirmation is required, get the answer from the user.
   //
-  if (Data.UserConfirmationRequired == FALSE) {
+  if (Data->UserConfirmationRequired == FALSE) {
     DEBUG((DEBUG_VERBOSE, "USER APPROVAL NOT NECESSARY\n"));
-    Data.State = AUTH_MAN_PROV_STATE_DATA_USER_APPROVED;
+    Data->State = DFCI_PACKET_STATE_DATA_USER_APPROVED;
 
   } else {
-    Status = DfciUiGetAnswerFromUser(&mAuthProtocol,
-                                     PKT_FIELD_FROM_OFFSET(Data.Var,Data.TrustedCertOffset),
-                                     Data.TrustedCertSize,
-                                     &Data.AuthToken);
+    Status = LocalGetAnswerFromUser(Data->Payload,
+                                    Data->PayloadSize,
+                                   &Data->AuthToken);
 
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, "DfciUiGetAnswerFromUser failed %r\n", Status));
       if (Status == EFI_NOT_READY) {
-        Data.State = AUTH_MAN_PROV_STATE_DATA_AUTH_SYSTEM_ERROR;
-        Data.StatusCode = EFI_NOT_READY;
+        Data->State = DFCI_PACKET_STATE_DATA_SYSTEM_ERROR;
+        Data->StatusCode = EFI_NOT_READY;
 
       } else {
-        Data.State = AUTH_MAN_PROV_STATE_DATA_USER_REJECTED;
-        Data.StatusCode = EFI_ABORTED;
+        Data->State = DFCI_PACKET_STATE_DATA_USER_REJECTED;
+        Data->StatusCode = EFI_ABORTED;
       }
 
       goto CLEANUP;
 
     } else {
-      Data.RebootRequired = TRUE;
-      Data.State = AUTH_MAN_PROV_STATE_DATA_USER_APPROVED;
+      Data->ResetRequired = TRUE;
+      Data->State = DFCI_PACKET_STATE_DATA_USER_APPROVED;
     }
   }
 
-  if (Data.State != AUTH_MAN_PROV_STATE_DATA_USER_APPROVED) {
+  if (Data->State != DFCI_PACKET_STATE_DATA_USER_APPROVED) {
     DEBUG((DEBUG_ERROR, "DfciUiGetAnswerFromUser - User Rejected Change\n"));
     goto CLEANUP;
   }
@@ -944,45 +710,121 @@ CheckForNewProvisionInput (
   //
   // 5 - Apply the change
   //
-  Status = ApplyProvisionData(&Data);
+  Status = ApplyProvisionData(Data);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "ApplyProvisionData failed %r\n", Status));
     goto CLEANUP;
   }
-  PopulateCurrentIdentities (TRUE);
+
+  //
+  // 6 - Notify Permissions of Identity Change
+  //
+  Status = mDfciSettingsPermissionProtocol->IdentityChange (
+               mDfciSettingsPermissionProtocol,
+               &(Data->AuthToken),
+               Data->DfciIdentity,
+               (Data->PayloadSize != 0));    // Send TRUE for Enroll
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a: IdentityChange notification failed. Status = %r\n", __FUNCTION__, Status));
+    Data->StatusCode = Status;
+    Data->State = DFCI_PACKET_STATE_DATA_INVALID;
+    goto CLEANUP;
+  }
+
 
 CLEANUP:
-  DeleteProvisionVariable(&Data);
-  Status = SetProvisionResponse(&Data);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "SetProvisionResponse failed %r\n", Status));
   }
 
-  if (Data.RebootRequired) {
-    gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+  if (Data->AuthToken != DFCI_AUTH_TOKEN_INVALID) {
+    DisposeAuthToken(&mAuthProtocol, &(Data->AuthToken));
+    Data->AuthToken = DFCI_AUTH_TOKEN_INVALID;
   }
 
-  if (Data.AuthToken != DFCI_AUTH_TOKEN_INVALID) {
-    DisposeAuthToken(&mAuthProtocol, &(Data.AuthToken));
-  }
+  return Status;
+}
 
-  if (Data.Var != NULL) {
-    FreePool(Data.Var);
-  }
+/**
+ *  Last Known Good handler
+ *
+ *  Applying identities does NOT change the internal variable, just the internal memory.
+ *  After applying Identities, and LKG_COMMIT or LKG_DISCARD must be called
+ *
+ * @param[in] This:            Apply Packet Protocol
+ * @param[in] Operation
+ *                        DISCARD   discards the in memory changes, and retores from NV STORE
+ *                        COMMIT    Saves the current settings to NV Store
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+LKG_Handler (
+    IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+    IN        DFCI_INTERNAL_PACKET        *Data,
+    IN        UINT8                        Operation
+  ) {
+  EFI_STATUS    Status;
 
-  if (Data.Manufacturer != NULL) {
-    FreePool (Data.Manufacturer);
-  }
 
-  if (Data.ProductName != NULL) {
-    FreePool (Data.ProductName);
-  }
+  Status = EFI_SUCCESS;
 
-  if (Data.SerialNumber != NULL) {
-    FreePool (Data.SerialNumber);
-  }
+  DeleteProvisionVariable(Data);
 
-  return;
+  if ((This != &mApplyIdentityProtocol) || (Data == NULL))
+  {
+    DEBUG((DEBUG_ERROR, "[AM] - Invalid parameters to LKG Handler.\n"));
+    Status = EFI_INVALID_PARAMETER;
+  } else {
+    switch (Operation)
+    {
+      case DFCI_LKG_RESTORE:
+        if (Data->LKGDirty)
+        {
+          Status = LoadProvisionedData();
+          if (EFI_ERROR(Status))
+          {
+            DEBUG((DEBUG_ERROR, "[AM] - LKG Unable to load provisioned data. Code=%r.\n",Status));
+          } else {
+            DEBUG((DEBUG_INFO, "[AM] - LKG Identities restored.\n"));
+          }
+          Data->LKGDirty = FALSE;
+        }
+        break;
+
+      case DFCI_LKG_COMMIT:
+        if (Data->LKGDirty)
+        {
+          Status = SaveProvisionedData();
+          if (EFI_ERROR(Status))
+          {
+            DEBUG((DEBUG_ERROR, "[AM] - Unable to save provisioned data. Code=%r.\n",Status));
+            if (EFI_ERROR(LoadProvisionedData()))
+            {
+              DEBUG((DEBUG_ERROR, "[AM] - Unable to restore current provisioned data after save failed.\n"));
+            }
+          } else {
+            DEBUG((DEBUG_INFO, "[AM] - LKG Identities committed.\n"));
+            PopulateCurrentIdentities (TRUE);
+          }
+          Data->LKGDirty = FALSE;
+        }
+        break;
+
+      default:
+        DEBUG((DEBUG_ERROR, "[AM] - Invalid operation to LKG Handler(%d) in state (%d).\n",Operation,Data->LKGDirty));
+        Status = EFI_INVALID_PARAMETER;
+        break;
+    }
+    if (EFI_ERROR(Status))
+    {
+      Data->StatusCode = Status;
+      Data->State = DFCI_PACKET_STATE_DATA_SYSTEM_ERROR;
+    }
+  }
+  return Status;
 }
 
 /**

@@ -1,8 +1,35 @@
+/**@file
+SettingsManager.c
+
+Implements the SettingAccess Provider
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #include "SettingsManager.h"
-#include <Library/PrintLib.h>
-
-
 
 /*
 Set a single setting
@@ -75,7 +102,7 @@ SystemSettingAccessSet (
   if (EFI_ERROR(Status))
   {
     if (Status == EFI_BAD_BUFFER_SIZE) {
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" - Bad size requested for setting provider!\n" ));
+      DEBUG((DEBUG_ERROR, "%a: Bad size requested for setting provider!\n", __FUNCTION__));
       ASSERT_EFI_ERROR( Status );
     }
     DEBUG((DEBUG_ERROR, "Failed to Set Settings\n"));
@@ -274,6 +301,30 @@ SystemSettingPermissionResetPermission (
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to Reset Permissions Status = %r\n", __FUNCTION__, Status));
+  }
+
+  return Status;
+}
+
+EFI_STATUS
+EFIAPI
+SystemSettingPermissionIdentityChange (
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
+  IN  CONST DFCI_AUTH_TOKEN                   *AuthToken,
+  IN        DFCI_IDENTITY_ID                   CertIdentity,
+  IN        BOOLEAN                            Enroll
+  )
+{
+  EFI_STATUS Status;
+  if ((This == NULL) || (AuthToken == NULL))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = IdentityChange(AuthToken, CertIdentity, Enroll);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to Reset Permissions. Status = %r\n", __FUNCTION__, Status));
   }
 
   return Status;

@@ -1,34 +1,40 @@
-/** @file -- Xmlb64TestApp.c
+/** @file
+Xmlb64TestApp.c
+
 This is an EFI Shell application to test the b64 conversion routines.
 
+Copyright (c) 2018, Microsoft Corporation
 
-Copyright (c) 2018, Microsoft Corporation.
+All rights reserved.
 
-RFC 4648  https://tools.ietf.org/html/rfc4648 test vectors
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
 
-   BASE64("") = ""
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
 
-   BASE64("f") = "Zg=="
-
-   BASE64("fo") = "Zm8="
-
-   BASE64("foo") = "Zm9v"
-
-   BASE64("foob") = "Zm9vYg=="
-
-   BASE64("fooba") = "Zm9vYmE="
-
-   BASE64("foobar") = "Zm9vYmFy"
-
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
+
 #include <Uefi.h>
 #include <UnitTestTypes.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/DfciBaseStringLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiLib.h>
@@ -159,7 +165,7 @@ RfcEncodeTest(
     ReturnSize = b64StringSize;
     UT_ASSERT_NOT_NULL(b64WorkString);
 
-    Status = Base64_Encode(binString, BinSize, b64WorkString, &ReturnSize);
+    Status = Base64Encode(binString, BinSize, b64WorkString, &ReturnSize);
 
     UT_ASSERT_NOT_EFI_ERROR(Status);
 
@@ -218,7 +224,7 @@ RfcDecodeTest(
     b64StringLen = AsciiStrnLenS(b64String, MAX_TEST_STRING_SIZE);
 
     ReturnSize = BinSize;
-    Status = Base64_Decode(b64String, b64StringLen, BinData, &ReturnSize);
+    Status = Base64Decode(b64String, b64StringLen, BinData, &ReturnSize);
 
     UT_ASSERT_NOT_EFI_ERROR(Status);
 
@@ -275,7 +281,7 @@ RfcDecodeErrorTest(
     b64StringLen = AsciiStrnLenS(b64String, MAX_TEST_STRING_SIZE);
 
     ReturnSize = BinSize;
-    Status = Base64_Decode(b64String, b64StringLen, BinData, &ReturnSize);
+    Status = Base64Decode(b64String, b64StringLen, BinData, &ReturnSize);
     UT_ASSERT_STATUS_EQUAL(Status, ExpectedStatus);
 
     FreePool (BinData);

@@ -1,17 +1,50 @@
-/** @file
-DfciSettingPermission
+/**@file
+  DfciSettingPermission.c
 
-Main file for the lib.  Implements the library class routines as well as constructor.  
+Main file for the library.  Implements the library class routines as well as constructor.
 
-Copyright (c) 2015, Microsoft Corporation. 
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
-#include "DfciSettingPermission.h"
 
+#include "DfciSettingPermission.h"
 
 DFCI_PERMISSION_STORE        *mPermStore = NULL;
 DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
 
+// Apply Permissions Protocol
+DFCI_APPLY_PACKET_PROTOCOL mApplyPermissionsProtocol = {
+       DFCI_APPLY_PACKET_SIGNATURE,
+       DFCI_APPLY_PACKET_VERSION,
+       0,
+       0,
+       0,
+       ApplyNewPermissionsPacket,
+       SetPermissionsResponse,
+       LKG_Handler
+};
 
 EFI_STATUS
 EFIAPI
@@ -100,7 +133,7 @@ OUT BOOLEAN                     *Result
 )
 {
   EFI_STATUS Status;
-  DFCI_PERMISSION_MASK Perm = 0;
+  DFCI_PERMISSION_MASK PMask = 0;
   DFCI_IDENTITY_PROPERTIES Properties;
   DFCI_PERMISSION_ENTRY *Temp = NULL;
 
@@ -130,18 +163,20 @@ OUT BOOLEAN                     *Result
 
   
   //2. set to default. 
-  Perm = mPermStore->Default;
+  PMask = mPermStore->DefaultPMask;
 
-  //3. Set Perm to specific value if in list
-  Temp = FindPermissionEntry(mPermStore, SettingId);
+  //3. Set PMask to specific value if in list
+  Temp = FindPermissionEntry(mPermStore, SettingId, NULL, NULL);
   if (Temp != NULL)
   {
-    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %a\n", __FUNCTION__, SettingId));
-    Perm = Temp->Perm;
+    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %a (0x%x), (0x%x)\n", __FUNCTION__, SettingId, Temp->PMask, Properties.Identity));
+    PMask = Temp->PMask;
+  } else {
+      DEBUG((DEBUG_INFO, "%a - Using default permission %a (0x%x), (0x%x)\n", __FUNCTION__, SettingId, PMask, Properties.Identity));
   }
 
   //3. Permission and Identity use the same bits so they can be logically anded together
-  *Result = (Perm & Properties.Identity)? TRUE: FALSE;
+  *Result = (PMask & Properties.Identity)? TRUE: FALSE;
 
   return EFI_SUCCESS;
 }
@@ -153,7 +188,7 @@ IN  DFCI_SETTING_ID_STRING  SettingId,
 OUT DFCI_PERMISSION_MASK   *Permissions
 )
 {
-  DFCI_PERMISSION_MASK Perm = 0;
+  DFCI_PERMISSION_MASK PMask = 0;
   DFCI_PERMISSION_ENTRY *Temp = NULL;
   if (Permissions == NULL)
   {
@@ -170,61 +205,173 @@ OUT DFCI_PERMISSION_MASK   *Permissions
     return EFI_INVALID_PARAMETER;
   }
 
-  Perm = mPermStore->Default;
+  PMask = mPermStore->DefaultPMask;
 
-  //3. Set Perm to specific value if in list
-  Temp = FindPermissionEntry(mPermStore, SettingId);
+  //3. Set PMask to specific value if in list
+  Temp = FindPermissionEntry(mPermStore, SettingId, NULL, NULL);
   if (Temp != NULL)
   {
-    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %a\n", __FUNCTION__, SettingId));
-    Perm = Temp->Perm;
+    PMask = Temp->PMask;
+    DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %a (0x%x)\n", __FUNCTION__, SettingId, PMask));
+  } else {
+    DEBUG((DEBUG_INFO, "%a - Using default permission %a (0x%x)\n", __FUNCTION__, SettingId, PMask));
   }
 
-  *Permissions = Perm;
+  *Permissions = PMask;
   return EFI_SUCCESS;
 }
 
-
-VOID
+/**
+ *
+ * IdentityChange notification
+ *
+ * @param AuthToken
+ * @param CertIdentity
+ * @param Enroll
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
 EFIAPI
-CheckForPermissionUpdate(
-  IN  EFI_EVENT       Event,
-  IN  VOID            *Context
-  )
-  {
-    DFCI_AUTHENTICATION_PROTOCOL *pro = NULL;
-    VOID *AuthPendingProtocol = NULL;
-    EFI_STATUS Status;
+IdentityChange (
+    IN  CONST DFCI_AUTH_TOKEN     *AuthToken,
+    IN        DFCI_IDENTITY_ID     CertIdentity,
+    IN        BOOLEAN              Enroll
+) {
+    EFI_STATUS                   Status;
+    DFCI_IDENTITY_PROPERTIES     Properties;
 
-    Status = gBS->LocateProtocol(
-      &gDfciAuthenticationProtocolGuid,
-      NULL,
-      (VOID **)&pro
-      );
 
-    if (EFI_ERROR(Status))
+    DEBUG((DEBUG_INFO, "%a: Entry\n", __FUNCTION__));
+
+    if (AuthToken == NULL)
     {
-      //this happens at least once 
-      //on register
-      return;
+      DEBUG((DEBUG_ERROR, "%a: AuthToken is NULL.\n", __FUNCTION__));
+      return EFI_INVALID_PARAMETER;
+    }
+
+    // 1. If the action is not Enroll, do nothing as owner unenroll has alreay reset permissions.
+    if (!Enroll)
+    {
+      return EFI_SUCCESS;
     }
 
     if (mAuthenticationProtocol == NULL)
     {
-      mAuthenticationProtocol = pro;
+      DEBUG((DEBUG_ERROR, "%a: Trying to access Auth Protocol too early.\n", __FUNCTION__));
+      return EFI_NOT_READY;
     }
 
-    gBS->CloseEvent(Event);  //close the event so we don't get signalled again
-
-    if (!EFI_ERROR(gBS->LocateProtocol(&gDfciAuthenticationProvisioningPendingGuid, NULL, &AuthPendingProtocol)))
+    // 2. Get Identity from Auth Token
+    Status = mAuthenticationProtocol->GetIdentityProperties(mAuthenticationProtocol, AuthToken, &Properties);
+    if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_INFO, "%a - Auth Provisioning Pending Protocol Installed.  Skip Checking for Pending Updates\n", __FUNCTION__));
-      return;
+      DEBUG((DEBUG_ERROR, "%a: Faled to get properties for auth token %r\n", __FUNCTION__, Status));
+      return EFI_ACCESS_DENIED;
+    }
+    DEBUG((DEBUG_INFO, "%a: Signer=0x%2.2x, Identity=0x%2.2x, Enroll=%d\n", __FUNCTION__, Properties.Identity, CertIdentity, Enroll));
+
+    // 3. See if Owner is being enrolled
+    if (CertIdentity == DFCI_IDENTITY_SIGNER_OWNER)
+    {
+      //  Disallow any future ZTD signing while an owner is applied.
+      Status  = AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_KEY,      DFCI_IDENTITY_INVALID,    DFCI_PERMISSION_MASK__NONE);
     }
 
-    CheckForPendingPermissionChanges(); //Check for permission provisioning
+    // 4. When an Owner is entrolled and the signer is ZTD:
+    if (Properties.Identity == DFCI_IDENTITY_SIGNER_ZTD)
+    {
+      //    a. Allow ZTD to UnEnroll.
+      //    b. Allow ZTD to use hard reset Recovery
+      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_RECOVERY, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
+      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_UNENROLL, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
+      return EFI_SUCCESS;
+    }
+
+    if (EFI_ERROR(Status))
+    {
+      DEBUG((DEBUG_ERROR, "%a: Failed to reset required permissions. Status = %r\n", __FUNCTION__, Status));
+      return Status;
+    }
+
+    DEBUG((DEBUG_INFO, "%a: Updated permissions\n", __FUNCTION__));
+
+    return Status;
 }
 
+/**
+ * Get AuthenticationProtocol when published
+ *
+ * @param Event
+ * @param Context
+ *
+ * @return VOID EFIAPI
+ */
+VOID
+EFIAPI
+CheckForAuthenticationProtocol (
+  IN  EFI_EVENT       Event,
+  IN  VOID            *Context
+  )
+  {
+  EFI_STATUS Status;
+  DFCI_IDENTITY_MASK  IdMask;           // Identities installed
+
+  if (mAuthenticationProtocol == NULL) {
+    Status = gBS->LocateProtocol(&gDfciAuthenticationProtocolGuid, NULL, (VOID **)&mAuthenticationProtocol);
+    if (EFI_ERROR(Status))
+    {
+      //this happens at least once
+      //on register
+      return;
+    }
+    DEBUG((DEBUG_INFO,"Located Authentication Protocol after Notify. Code=%r\n",Status));
+
+    Status =  mAuthenticationProtocol->GetEnrolledIdentities ( mAuthenticationProtocol, &IdMask);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "%a: Failed to get owner ids. %r\n", __FUNCTION__, Status));
+    } else {
+
+      Status = EFI_NOT_FOUND;
+      if (IS_OWNER_IDENTITY_ENROLLED(IdMask))
+      {
+        //Load Permission Store
+        Status = LoadFromFlash(&mPermStore);
+      }
+      else
+      {
+        DEBUG((DEBUG_ERROR,"No Owner Identity installed, re-initializing Permissions. Code=%r\n",Status));
+      }
+      if (EFI_ERROR(Status))
+      {
+        if (Status != EFI_NOT_FOUND)
+        {
+          DEBUG((DEBUG_ERROR, "%a - Failed to load Permission Store. %r\n", __FUNCTION__, Status));
+        }
+
+        //If load failed, or no Owner Identity was installed, init store
+        Status = InitPermStore(&mPermStore);
+        if (EFI_ERROR(Status))
+        {
+          DEBUG((DEBUG_ERROR, "%a - Couldn't Init PMask Store %r\n", __FUNCTION__, Status));
+          mPermStore = NULL;
+        }
+        else
+        {
+          //save the newly initialized permissions
+          Status = SaveToFlash(mPermStore);
+        }
+      }
+      if (mPermStore != NULL)
+      {
+        DebugPrintPermissionStore(mPermStore);
+
+        PopulateCurrentPermissions(FALSE);   // If no CurrentPermissions, publish the default.
+      }
+    }
+  }
+  gBS->CloseEvent(Event);  //close the event so we don't get signalled again
+}
 
 //
 //Constructor
@@ -240,40 +387,26 @@ DfciPermissionInit(
   EFI_EVENT  InitEvent;
   VOID      *InitRegistration;
 
-  //Load Permission Store
-  Status = LoadFromFlash(&mPermStore);
-  if (EFI_ERROR(Status))
-  {
-    if (Status != EFI_NOT_FOUND)
-    {
-      DEBUG((DEBUG_ERROR, "%a - Failed to load Permission Store. %r\n", __FUNCTION__, Status));
-    }
-
-    //If load failed - init store 
-    Status = InitPermStore(&mPermStore);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "%a - Couldn't Init Perm Store %r\n", __FUNCTION__, Status));
-      mPermStore = NULL;
-      return Status;  //failed to load the lib
-    }
-    else
-    {
-      //save the newly initialized permissions
-      Status = SaveToFlash(mPermStore);
-    }
-  }
-
-  //Register notify function for Auth Protocol installed. Auth Protocol will not be installed
-  //provisioning is ready to be checked.
   InitEvent = EfiCreateProtocolNotifyEvent(
     &gDfciAuthenticationProtocolGuid,
     TPL_CALLBACK,
-    CheckForPermissionUpdate,
+    CheckForAuthenticationProtocol,
     NULL,
     &InitRegistration
     );
 
-  DebugPrintPermissionStore(mPermStore);
+  //Install Permission Apply Protocol
+  Status = gBS->InstallMultipleProtocolInterfaces(
+    &ImageHandle,
+    &gDfciApplyPermissionsProtocolGuid,
+    &mApplyPermissionsProtocol,
+    NULL
+    );
+
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "Failed to Install DFCI Permissions Protocol. %r\n", Status));
+  }
+
   return Status;
 }

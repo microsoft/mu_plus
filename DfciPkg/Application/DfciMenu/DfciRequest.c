@@ -1,17 +1,39 @@
-
 /** @file
-  This application will request new DFCI configuration data from server.
+DfciRequest.c
 
+This module will request new DFCI configuration data from server.
 
-  Copyright (c) 2017, Microsoft Corporation. All rights reserved.<BR>
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
-
 
 #include <Uefi.h>
 
 #include <IndustryStandard/Http11.h>
 
+#include <Guid/DfciPacketHeader.h>
 #include <Guid/DfciIdentityAndAuthManagerVariables.h>
 #include <Guid/DfciPermissionManagerVariables.h>
 #include <Guid/DfciSettingsManagerVariables.h>
@@ -64,8 +86,6 @@ typedef struct {
     //
     CHAR8                          *Url;
     UINTN                           UrlSize;
-    VOID                           *HttpsCert;
-    UINTN                           HttpsCertSize;
     //
     // Device Id
     //
@@ -123,7 +143,7 @@ DumpHeaders (UINTN            Count,
 
 
         for (Index = 0; Index < Count; Index++) {
-            DEBUG((DEBUG_ERROR,"  %d - %a = %a\n",Index + 1,
+            DEBUG((DEBUG_ERROR,"  %d - %a = %a\n", Index + 1,
                                Headers[Index].FieldName,
                                Headers[Index].FieldValue));
         }
@@ -220,7 +240,7 @@ EventWait (DFCI_PRIVATE_DATA   *Dfci,
     } while (FALSE);
 
     if (Failed){
-        DEBUG((DEBUG_ERROR,"Wait error at step %d - code=%r\n",Step, Status));
+        DEBUG((DEBUG_ERROR, "Wait error at step %d - code=%r\n", Step, Status));
     }
     return Status;
 }
@@ -253,11 +273,11 @@ EFIAPI TimerTick (
                                        &DataSize,
                                        &Info);
     if (EFI_BUFFER_TOO_SMALL != Status) {
-        DEBUG((DEBUG_ERROR,"Error obtaining IP4 Interface Info size. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Error obtaining IP4 Interface Info size. Code=%r\n", Status));
     } else {
         Info = AllocatePool (DataSize);
         if (NULL == Info) {
-            DEBUG((DEBUG_ERROR,"Error allocating %d bytes for Info\n",DataSize));
+            DEBUG((DEBUG_ERROR, "Error allocating %d bytes for Info\n", DataSize));
         } else {
             Info->StationAddress.Addr[0] = 0;
             Status = Dfci->Ip4Config2->GetData (Dfci->Ip4Config2,
@@ -265,8 +285,8 @@ EFIAPI TimerTick (
                                                &DataSize,
                                                 Info);
             if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR,"Error obtaining IP4 Interface Info. Code=%r\n",Status));
-                DEBUG((DEBUG_ERROR," DataSize=%d, StructSize=%d\n",
+                DEBUG((DEBUG_ERROR, "Error obtaining IP4 Interface Info. Code=%r\n", Status));
+                DEBUG((DEBUG_ERROR, " DataSize=%d, StructSize=%d\n",
                                      DataSize,
                                      sizeof(EFI_IP4_CONFIG2_INTERFACE_INFO) ));
             } else {
@@ -308,7 +328,7 @@ ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
                                   sizeof(EFI_IP4_CONFIG2_POLICY),
                                   &Policy);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to set policy to static.. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to set policy to static.. Code=%r\n", Status));
         return Status;
     }
 
@@ -317,7 +337,7 @@ ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
     //
     Status = gBS->CreateEvent(0,0,NULL,NULL,&AddressEvent);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to create wait event. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to create wait event. Code=%r\n", Status));
         return Status;
     }
 
@@ -325,7 +345,7 @@ ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
                                              Ip4Config2DataTypeManualAddress,
                                              AddressEvent);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to register for Dhcp Events. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to register for Dhcp Events. Code=%r\n", Status));
         gBS->CloseEvent (AddressEvent);
         return Status;
     }
@@ -336,11 +356,11 @@ ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
                                   sizeof(EFI_IP4_CONFIG2_MANUAL_ADDRESS),
                                   &Address);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to set manual address. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to set manual address. Code=%r\n", Status));
     } else {
         Status = EventWait (Dfci, AddressEvent, DHCP_TIMEOUT);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error from wait for SetData->Static. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error from wait for SetData->Static. Code=%r\n", Status));
         }
     }
 
@@ -348,7 +368,7 @@ ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
                                                 Ip4Config2DataTypeManualAddress,
                                                 AddressEvent);
     if (EFI_ERROR(Status2)) {
-        DEBUG((DEBUG_ERROR,"Error from Unregister. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Error from Unregister. Code=%r\n", Status));
     }
 
     gBS->CloseEvent (AddressEvent);
@@ -362,7 +382,7 @@ ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
                                   sizeof(EFI_IPv4_ADDRESS),
                                   &Gateway);
     if (EFI_ERROR(Status2)) {
-        DEBUG((DEBUG_ERROR,"Error setting GateWay address. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Error setting GateWay address. Code=%r\n", Status));
     }
 
     return Status;
@@ -387,7 +407,7 @@ ConfigureDHCP (DFCI_PRIVATE_DATA *Dfci) {
     //
     Status = gBS->CreateEvent(0,0,NULL,NULL,&Dfci->WaitEvent);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to create wait event. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to create wait event. Code=%r\n", Status));
         return Status;
     }
 
@@ -409,7 +429,7 @@ ConfigureDHCP (DFCI_PRIVATE_DATA *Dfci) {
                                       sizeof(EFI_IP4_CONFIG2_POLICY),
                                       &Policy);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error from SetData->Dhcp. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error from SetData->Dhcp. Code=%r\n", Status));
             break;
         }
         Dfci->DhcpRequested = TRUE;    // Remember to set back to STATIC
@@ -423,7 +443,7 @@ ConfigureDHCP (DFCI_PRIVATE_DATA *Dfci) {
                                    (VOID *) Dfci,
                                    &TimerEvent);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Unable to create event DHCP Completion. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Unable to create event DHCP Completion. Code=%r\n", Status));
             break;
         }
 
@@ -435,14 +455,14 @@ ConfigureDHCP (DFCI_PRIVATE_DATA *Dfci) {
                                 TIMER_PERIOD_1s
                                 );
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Unable to set timer for DHCP Completion. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Unable to set timer for DHCP Completion. Code=%r\n", Status));
             break;
         }
         Status = EventWait (Dfci, Dfci->WaitEvent, DHCP_TIMEOUT);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error from wait on DHCP address. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error from wait on DHCP address. Code=%r\n", Status));
         } else {
-            DEBUG((DEBUG_INFO,"DHCP Address satisfied.\n"));
+            DEBUG((DEBUG_INFO, "DHCP Address satisfied.\n"));
         }
         gBS->SetTimer (TimerEvent,
                        TimerCancel,
@@ -472,7 +492,7 @@ ConfigureHTTP (DFCI_PRIVATE_DATA *Dfci) {
     EFI_STATUS                       Status;
 
     if (Dfci->ConfigData.LocalAddressIsIPv6) {
-        DEBUG((DEBUG_ERROR,"IPv6 is not supported yet\n"));
+        DEBUG((DEBUG_ERROR, "IPv6 is not supported yet\n"));
         Status = EFI_UNSUPPORTED;
     } else {
         //
@@ -491,7 +511,7 @@ ConfigureHTTP (DFCI_PRIVATE_DATA *Dfci) {
         //
         Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiIp4Config2ProtocolGuid, &Dfci->Ip4Config2);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error locating IPv4 Config2 protocol. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error locating IPv4 Config2 protocol. Code=%r\n", Status));
             return Status;
         }
 
@@ -501,13 +521,13 @@ ConfigureHTTP (DFCI_PRIVATE_DATA *Dfci) {
                                            &DataSize,
                                            &Address);
         if (EFI_ERROR(Status) || (Address.Address.Addr[0] == 0)) {
-            DEBUG((DEBUG_ERROR,"Configuring DHCP for DFCI. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Configuring DHCP for DFCI. Code=%r\n", Status));
             Status = ConfigureDHCP(Dfci);
         }
     }
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Error configuring HTTP. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Error configuring HTTP. Code=%r\n", Status));
         return Status;
     }
 
@@ -517,21 +537,21 @@ ConfigureHTTP (DFCI_PRIVATE_DATA *Dfci) {
 
     Status = Dfci->HttpSbProtocol->CreateChild(Dfci->HttpSbProtocol, &Dfci->HttpChildHandle);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Error creating worker child. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Error creating worker child. Code=%r\n", Status));
         return Status;
     }
 
     Dfci->HttpProtocol = NULL;
     Status = gBS->HandleProtocol(Dfci->HttpChildHandle, &gEfiHttpProtocolGuid, &Dfci->HttpProtocol);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to locate HTTP protocol. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to locate HTTP protocol. Code=%r\n", Status));
         return Status;
     }
 
 
     Status = Dfci->HttpProtocol->Configure(Dfci->HttpProtocol, &Dfci->ConfigData);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to configure HTTP Protocol. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to configure HTTP Protocol. Code=%r\n", Status));
         return Status;
     }
     return Status;
@@ -598,7 +618,7 @@ DfciBuildRequestHeaders (IN CHAR16            *Url,
 
     Status = HttpUrlGetHostName (AsciiUrl, UrlParser, &RequestHeaders[0].FieldValue);
     if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to get Host Name from URL\n"));
+        DEBUG((DEBUG_ERROR, "Unable to get Host Name from URL\n"));
     }
 
     if (0 != BodyLength){
@@ -636,26 +656,26 @@ DfciIssueRequest (DFCI_PRIVATE_DATA  *Dfci,
     EFI_STATUS              Status2;
 
 
-    Status = gBS->CreateEvent(0,0,NULL,NULL,&RequestToken->Event);
+    Status = gBS->CreateEvent(0, 0, NULL, NULL, &RequestToken->Event);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to create callback event. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to create callback event. Code=%r\n", Status));
         return Status;
     }
 
     RequestMessage = RequestToken->Message;
     RequestData = RequestMessage->Data.Request;
 
-    DEBUG((DEBUG_ERROR,"Making Request - Headers:\n"));
+    DEBUG((DEBUG_ERROR, "Making Request - Headers:\n"));
     DumpHeaders (RequestMessage->HeaderCount, RequestMessage->Headers);
-    DEBUG((DEBUG_ERROR,"HttpRequestToken:\n"));
+    DEBUG((DEBUG_ERROR, "HttpRequestToken:\n"));
     DEBUG_BUFFER(DEBUG_ERROR, RequestToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     DEBUG_BUFFER(DEBUG_ERROR, RequestMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     DEBUG_BUFFER(DEBUG_ERROR, RequestData, sizeof(EFI_HTTP_REQUEST_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG((DEBUG_ERROR,"%p Url=%s\n",RequestData->Url,RequestData->Url));
+    DEBUG((DEBUG_ERROR, "%p Url=%s\n", RequestData->Url,RequestData->Url));
 
     Status = Dfci->HttpProtocol->Request(Dfci->HttpProtocol, RequestToken);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Http Request failed. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Http Request failed. Code=%r\n", Status));
         gBS->CloseEvent(RequestToken->Event);
         return Status;
     }
@@ -663,14 +683,14 @@ DfciIssueRequest (DFCI_PRIVATE_DATA  *Dfci,
     Status = EventWait (Dfci, RequestToken->Event, HTTP_TIMEOUT);
     gBS->CloseEvent(RequestToken->Event);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Http request timed out\n"));
+        DEBUG((DEBUG_ERROR, "Http request timed out\n"));
         Status2 = Dfci->HttpProtocol->Cancel(Dfci->HttpProtocol, RequestToken);
         if (EFI_ERROR(Status2)) {
-            DEBUG((DEBUG_ERROR,"Http Cancel failed. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Http Cancel failed. Code=%r\n", Status));
         }
     }
-    DEBUG((DEBUG_ERROR,"Request Token status = %r\n",RequestToken->Status));
-    DEBUG((DEBUG_INFO,"DfciIssueRequest status = %r\n",Status));
+    DEBUG((DEBUG_ERROR, "Request Token status = %r\n", RequestToken->Status));
+    DEBUG((DEBUG_INFO, "DfciIssueRequest status = %r\n", Status));
 
     return Status;
 }
@@ -696,14 +716,14 @@ DfciGetResponse (DFCI_PRIVATE_DATA  *Dfci,
 
     Status = gBS->CreateEvent(0,0,NULL,NULL,&ResponseToken->Event);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to create callback event. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to create callback event. Code=%r\n", Status));
         return Status;
     }
 
     ResponseMessage = ResponseToken->Message;
     ResponseData = ResponseMessage->Data.Response;
 
-    DEBUG((DEBUG_ERROR,"HttpResponseToken:\n"));
+    DEBUG((DEBUG_ERROR, "HttpResponseToken:\n"));
     DEBUG_BUFFER(DEBUG_ERROR, ResponseToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     DEBUG_BUFFER(DEBUG_ERROR, ResponseMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     if (NULL != ResponseData) {
@@ -712,25 +732,25 @@ DfciGetResponse (DFCI_PRIVATE_DATA  *Dfci,
 
     Status = Dfci->HttpProtocol->Response(Dfci->HttpProtocol, ResponseToken);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Http Response failed. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Http Response failed. Code=%r\n", Status));
         return Status;
     }
 
     Status = EventWait (Dfci, ResponseToken->Event, HTTP_TIMEOUT);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Http Response timeout.\n"));
+        DEBUG((DEBUG_ERROR, "Http Response timeout.\n"));
         Status2 = Dfci->HttpProtocol->Cancel(Dfci->HttpProtocol, ResponseToken);
         if (EFI_ERROR(Status2)) {
-            DEBUG((DEBUG_ERROR,"Http HttpCancel failed. Code=%r",Status));
+            DEBUG((DEBUG_ERROR, "Http HttpCancel failed. Code=%r", Status));
         }
     }
 
     if (NULL != ResponseData) {
-        DEBUG((DEBUG_ERROR,"Response status is %d\n",ResponseData->StatusCode));
+        DEBUG((DEBUG_ERROR, "Response status is %d\n", ResponseData->StatusCode));
     }
-    DEBUG((DEBUG_ERROR,"Received %d headers\n",ResponseMessage->HeaderCount));
+    DEBUG((DEBUG_ERROR, "Received %d headers\n", ResponseMessage->HeaderCount));
 
-    DumpHeaders (ResponseMessage->HeaderCount,ResponseMessage->Headers );
+    DumpHeaders (ResponseMessage->HeaderCount, ResponseMessage->Headers);
 
     return Status;
 }
@@ -816,23 +836,23 @@ DfciGetSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
         ContentLength = AsciiStrDecimalToUintn(ContentLengthHeader->FieldValue);
     }
 
-    DEBUG((DEBUG_ERROR,"ContentLength=%d,ActualLength=%d\n",ContentLength,ResponseMessage.BodyLength));
+    DEBUG((DEBUG_ERROR, "ContentLength=%d,ActualLength=%d\n", ContentLength, ResponseMessage.BodyLength));
 
-    FreeHeaders (ResponseMessage.HeaderCount,ResponseMessage.Headers);
+    FreeHeaders (ResponseMessage.HeaderCount, ResponseMessage.Headers);
 
     ResponseMessage.HeaderCount = 0;
     ResponseMessage.Headers = NULL;
     ResponseMessage.Data.Response = NULL;
 
     if (0 == ContentLength) {
-        DEBUG((DEBUG_ERROR,"No content available\n"));
+        DEBUG((DEBUG_ERROR, "No content available\n"));
         Status = EFI_NOT_FOUND;
         goto S_EXIT1;
     }
 
     Packet = AllocatePool (ContentLength);
     if (NULL == Packet) {
-        DEBUG((DEBUG_ERROR,"Unable to allocate return buffer\n"));
+        DEBUG((DEBUG_ERROR, "Unable to allocate return buffer\n"));
         Status = EFI_OUT_OF_RESOURCES;
         goto S_EXIT1;
     }
@@ -843,7 +863,7 @@ DfciGetSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
         ResponseMessage.BodyLength = ContentLength - CurrentLength;
         Status = DfciGetResponse (Dfci, &ResponseToken);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error from additional response data. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error from additional response data. Code=%r\n", Status));
             FreePool (Packet);
             goto S_EXIT1;
         }
@@ -941,7 +961,7 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
         ContentLength = AsciiStrDecimalToUintn(ContentLengthHeader->FieldValue);
     }
 
-    DEBUG((DEBUG_ERROR,"ContentLength=%d,ActualLength=%d\n",ContentLength,ResponseMessage.BodyLength));
+    DEBUG((DEBUG_ERROR, "ContentLength=%d,ActualLength=%d\n", ContentLength, ResponseMessage.BodyLength));
 
     FreeHeaders (ResponseMessage.HeaderCount,ResponseMessage.Headers);
 
@@ -950,14 +970,14 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
     ResponseMessage.Data.Response = NULL;
 
     if (0 == ContentLength) {
-        DEBUG((DEBUG_ERROR,"No content available\n"));
+        DEBUG((DEBUG_ERROR, "No content available\n"));
         Status = EFI_NOT_FOUND;
         goto P_EXIT1;
     }
 
     Packet = AllocatePool (ContentLength);
     if (NULL == Packet) {
-        DEBUG((DEBUG_ERROR,"Unable to allocate return buffer\n"));
+        DEBUG((DEBUG_ERROR, "Unable to allocate return buffer\n"));
         Status = EFI_OUT_OF_RESOURCES;
         goto P_EXIT1;
     }
@@ -968,7 +988,7 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
         ResponseMessage.BodyLength = ContentLength - CurrentLength;
         Status = DfciGetResponse (Dfci, &ResponseToken);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error from additional response data. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error from additional response data. Code=%r\n", Status));
             FreePool (Packet);
             goto P_EXIT1;
         }
@@ -1026,14 +1046,14 @@ GetRequestUrl (
     MachineId = AllocatePool (MachineIdSize);
 
     if (NULL == MachineId) {
-        DEBUG((DEBUG_ERROR,"Unable to allocate memory for MachineId\n"));
+        DEBUG((DEBUG_ERROR, "Unable to allocate memory for MachineId\n"));
         return EFI_OUT_OF_RESOURCES;
     }
 
     Status = AsciiStrToUnicodeStrS (Dfci->SerialNumber, MachineId, Dfci->SerialNumberSize);
     if (EFI_ERROR(Status)) {
         FreePool (MachineId);
-        DEBUG((DEBUG_ERROR,"Unable to convert Ascii SerialNumber to Unicode. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to convert Ascii SerialNumber to Unicode. Code=%r\n", Status));
         return Status;
     }
 
@@ -1046,7 +1066,7 @@ GetRequestUrl (
     WorkUrl = AllocatePool (WorkUrlSize);
     if (NULL == WorkUrl) {
         FreePool (MachineId);
-        DEBUG((DEBUG_ERROR,"Unable to allocate memory for WorkUrl\n"));
+        DEBUG((DEBUG_ERROR, "Unable to allocate memory for WorkUrl\n"));
         return EFI_OUT_OF_RESOURCES;
     }
 
@@ -1054,7 +1074,7 @@ GetRequestUrl (
     if (EFI_ERROR(Status)) {
         FreePool (MachineId);
         FreePool (WorkUrl);
-        DEBUG((DEBUG_ERROR,"Unable to convert Ascii URL to Unicode. Code=%r\n",Status));
+        DEBUG((DEBUG_ERROR, "Unable to convert Ascii URL to Unicode. Code=%r\n", Status));
         return Status;
     }
 
@@ -1069,8 +1089,8 @@ GetRequestUrl (
     FreePool (MachineId);
 
     *RequestUrl = WorkUrl;
-    DEBUG((DEBUG_INFO,"Url        = %a\n",Dfci->Url));
-    DEBUG((DEBUG_INFO,"RequestUrl = %s\n",WorkUrl));
+    DEBUG((DEBUG_INFO, "Url        = %a\n", Dfci->Url));
+    DEBUG((DEBUG_INFO, "RequestUrl = %s\n", WorkUrl));
 
     return EFI_SUCCESS;
 }
@@ -1151,11 +1171,11 @@ ProcessRequestItem (IN  DFCI_PRIVATE_DATA  *Dfci,
                     IN  EFI_GUID           *VariableNameSpace,
                     OUT BOOLEAN            *SettingApplied) {
 
-    DFCI_SIGNER_PROVISION_APPLY_VAR_HEADER *SettingsInfo;
-    VOID                                   *SettingsPkt;
-    UINTN                                   SettingsPktSize;
-    EFI_STATUS                              Status;
-    CHAR16                                 *Url;
+    DFCI_PACKET_SIGNATURE   *SettingsInfo;
+    VOID                    *SettingsPkt;
+    UINTN                    SettingsPktSize;
+    EFI_STATUS               Status;
+    CHAR16                  *Url;
 
 
 
@@ -1179,24 +1199,24 @@ ProcessRequestItem (IN  DFCI_PRIVATE_DATA  *Dfci,
     //
     // All of the structures are the same with respect to the location of the signature field.
     //
-    SettingsInfo = (DFCI_SIGNER_PROVISION_APPLY_VAR_HEADER *) SettingsPkt;
+    SettingsInfo = (DFCI_PACKET_SIGNATURE *) SettingsPkt;
 
     //
     // Validate the correct signature is in the packet before setting the variable.
     //
-    if (Signature == SettingsInfo->HeaderSignature) {
+    if (Signature == SettingsInfo->Signature) {
         Status = gRT->SetVariable(VariableName,
                                   VariableNameSpace,
                                   VariableAttributes,
                                   SettingsPktSize,
                                   SettingsPkt);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Unable to set %s. Code=%r\n",VariableName, Status));
+            DEBUG((DEBUG_ERROR, "Unable to set %s. Code=%r\n", VariableName, Status));
         } else {
             *SettingApplied = TRUE;
         }
     } else {
-        DEBUG((DEBUG_ERROR, "SettingsInfo->HeaderSignature not as expected. Expected %x, got %x\n",Signature,SettingsInfo->HeaderSignature));
+        DEBUG((DEBUG_ERROR, "SettingsInfo->Signature not as expected. Expected %x, got %x\n", Signature, SettingsInfo->Signature));
         Status = EFI_NOT_FOUND;
     }
     FreePool (Url);
@@ -1242,7 +1262,7 @@ ProcessDfciRequests (DFCI_PRIVATE_DATA  *Dfci)  {
     Status = ProcessSendResultItem (Dfci,
                                     DFCI_IDENTITY,
                                     HEADER_CONTENT_BIN,
-                                    DFCI_IDENTITY_AUTH_PROVISION_SIGNER_RESULT_VAR_NAME,
+                                    DFCI_IDENTITY_APPLY_VAR_NAME,
                                    &gDfciAuthProvisionVarNamespace);
     if (EFI_ERROR(Status)) {
         return Status;
@@ -1266,7 +1286,7 @@ ProcessDfciRequests (DFCI_PRIVATE_DATA  *Dfci)  {
     Status = ProcessSendResultItem (Dfci,
                                     DFCI_SETTINGS,
                                     HEADER_CONTENT_BIN,
-                                    XML_SETTINGS_APPLY_OUTPUT_VAR_NAME,
+                                    DFCI_SETTINGS_APPLY_OUTPUT_VAR_NAME,
                                    &gDfciSettingsManagerVarNamespace);
     if (EFI_ERROR(Status)) {
         return Status;
@@ -1278,7 +1298,7 @@ ProcessDfciRequests (DFCI_PRIVATE_DATA  *Dfci)  {
     Status = ProcessSendResultItem (Dfci,
                                     DFCI_CURRENT,
                                     HEADER_CONTENT_XML,
-                                    XML_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
+                                    DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
                                    &gDfciSettingsManagerVarNamespace);
     if (EFI_ERROR(Status)) {
         return Status;
@@ -1289,9 +1309,9 @@ ProcessDfciRequests (DFCI_PRIVATE_DATA  *Dfci)  {
     //
     Status = ProcessRequestItem (Dfci,
                                  DFCI_IDENTITY,
-                                 DFCI_IDENTITY_AUTH_PROVISION_APPLY_VAR_SIGNATURE,
-                                 DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_ATTRIBUTES,
-                                 DFCI_IDENTITY_AUTH_PROVISION_SIGNER_VAR_NAME,
+                                 DFCI_IDENTITY_APPLY_VAR_SIGNATURE,
+                                 DFCI_IDENTITY_VAR_ATTRIBUTES,
+                                 DFCI_IDENTITY_APPLY_VAR_NAME,
                                 &gDfciAuthProvisionVarNamespace,
                                 &SettingApplied);
     if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
@@ -1319,7 +1339,7 @@ ProcessDfciRequests (DFCI_PRIVATE_DATA  *Dfci)  {
                                  DFCI_SETTINGS,
                                  DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE,
                                  DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES,
-                                 XML_SETTINGS_APPLY_INPUT_VAR_NAME,
+                                 DFCI_SETTINGS_APPLY_INPUT_VAR_NAME,
                                 &gDfciSettingsManagerVarNamespace,
                                 &SettingApplied);
     if (Status == EFI_NOT_FOUND) {
@@ -1347,8 +1367,6 @@ EFIAPI
 DfciRequestProcess (
     IN CHAR8      *Url,
     IN UINTN       UrlSize,
-    IN VOID       *HttpsCert OPTIONAL,
-    IN UINTN       HttpsCertSize,
     OUT UINT64    *UserStatus
                   //  Ip Config Info: TBD
                   // IPv4 or IPv6
@@ -1369,21 +1387,19 @@ DfciRequestProcess (
     //
     Dfci = AllocateZeroPool (sizeof(DFCI_PRIVATE_DATA));
     if (NULL == Dfci) {
-        DEBUG((DEBUG_ERROR,"Unable to allocate Dfci private data\n"));
+        DEBUG((DEBUG_ERROR, "Unable to allocate Dfci private data\n"));
         return EFI_OUT_OF_RESOURCES;
     }
 
     Dfci->Url = Url;
     Dfci->UrlSize = UrlSize;
-    Dfci->HttpsCert = HttpsCert;
-    Dfci->HttpsCertSize = HttpsCertSize;
     HandleBuffer = NULL;
     Status = DfciIdSupportGetManufacturer (&Dfci->Manufacturer, &Dfci->ManufacturerSize);
     Status |= DfciIdSupportGetProductName (&Dfci->ProductName, &Dfci->ProductNameSize);
     Status |= DfciIdSupportGetSerialNumber (&Dfci->SerialNumber, &Dfci->SerialNumberSize);
     Status |= DfciIdSupportGetUuid (&Dfci->Uuid, &Dfci->UuidSize);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Unable to get SmBios Info. %r\n", Status));
+        DEBUG((DEBUG_ERROR, "%a: Unable to get SmBios Info. %r\n", __FUNCTION__, Status));
         // Status is mangled - just return EFI_UNSUPPORTED
         Status = EFI_UNSUPPORTED;
         goto CLEANUP;
@@ -1401,7 +1417,7 @@ DfciRequestProcess (
         &HandleBuffer);
     if (EFI_ERROR(Status) || (0 == HandleCount)) {
         mUserStatus = USER_STATUS_NO_NIC;
-        DEBUG((DEBUG_ERROR,"Unable to locate any NIC's for HTTP file access\n") );
+        DEBUG((DEBUG_ERROR, "Unable to locate any NIC's for HTTP file access\n"));
         Status = EFI_NOT_FOUND;
         goto CLEANUP;
     }
@@ -1417,7 +1433,7 @@ DfciRequestProcess (
         Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiHttpServiceBindingProtocolGuid, &Dfci->HttpSbProtocol);
         if (EFI_ERROR(Status)) {
             mUserStatus = USER_STATUS_NO_NIC;
-            DEBUG((DEBUG_ERROR,"Error locating HttpServiceBinding protocol. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error locating HttpServiceBinding protocol. Code=%r\n", Status));
             goto CLEANUP;
         }
 
@@ -1426,7 +1442,7 @@ DfciRequestProcess (
         MediaPresent = TRUE;
         Status = NetLibDetectMedia (Dfci->NicHandle,&MediaPresent);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_INFO,"NetLibDetectMedi returned %r. Assuming Media Present\n",Status));
+            DEBUG((DEBUG_INFO, "NetLibDetectMedi returned %r. Assuming Media Present\n", Status));
         }
         if (!MediaPresent) {
             mUserStatus = USER_STATUS_NO_MEDIA;
@@ -1456,13 +1472,13 @@ EARLY_EXIT:
         if (NULL != Dfci->HttpProtocol) {
             Status = Dfci->HttpProtocol->Configure(Dfci->HttpProtocol, NULL);
             if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR,"Unable to cleanup HTTP Protocol. Code=%r\n",Status));
+                DEBUG((DEBUG_ERROR, "Unable to cleanup HTTP Protocol. Code=%r\n", Status));
             }
         }
 
         Status = Dfci->HttpSbProtocol->DestroyChild(Dfci->HttpSbProtocol, Dfci->HttpChildHandle);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error destroying worker child. Code=%r\n",Status));
+            DEBUG((DEBUG_ERROR, "Error destroying worker child. Code=%r\n", Status));
         }
     }
 

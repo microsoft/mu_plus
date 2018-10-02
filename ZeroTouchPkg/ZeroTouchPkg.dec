@@ -1,0 +1,82 @@
+## @file
+# ZeroTouchPkg.dec
+#
+# This Package provides all definitions, library classes and libraries instances for ZeroTouch.
+# ZeroTouch is common code used in the Microsoft UEFI Core code base
+#
+# This is targetted at promoting to open source and should be aligned with
+# Tianocore standards
+#
+# Copyright (c) 2018, Microsoft Corporation
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = ZeroTouchPkg
+  PACKAGE_UNI_FILE               = ZeroTouchPkg.uni
+  PACKAGE_GUID                   = 80061278-f44e-45b5-be81-1acc13362a7e
+  PACKAGE_VERSION                = 0.20
+
+[Includes]
+  Include
+
+[LibraryClasses]
+  ##  @libraryclass  Library to used to obtain the zero touch certificate
+  ##
+  ZeroTouchSettingsLib|Include/Library/ZeroTouchSettings.h
+
+[Guids]
+  ## ZeroTouch Package token space guid
+  # Include/Guid/ZeroTouchTokenSpace.h
+  # { 353455c8-b2ec-44f3-91cf-0f7633c2de6b }
+  gZeroTouchPkgTokenSpaceGuid = { 0x353455c8, 0xb2ec, 0x44f3, { 0x91, 0xcf, 0x0f, 0x76, 0x33, 0xc2, 0xde, 0x6b } }
+
+  ## Zero Touch Settings GUID
+  # Include/Guid/ZeroTouchSettingsGuid.h
+  # { be023d3e-5f0e-4ce0-805c-06b70aa24fe7 }
+  gZeroTouchSettingsGuid = { 0x6ad2a914, 0xdb04, 0x4a22, { 0xbe, 0x45, 0xd0, 0x5f, 0xde, 0x38, 0x1d, 0xd1 }}
+
+  ## Zero Touch Variable GUID
+  # Include/Guid/ZeroTouchVariables.h
+  # { be023d3e-5f0e-4ce0-805c-06b70aa24fe7 }
+  gZeroTouchVariableGuid = { 0xbe023d3e, 0x5f0e, 0x4ce0, { 0x80, 0x5c, 0x06, 0xb7, 0x0a, 0xa2, 0x4f, 0xe7 }}
+
+[Ppis]
+    
+[Protocols]
+
+[PcdsFeatureFlag]
+
+[PcdsFixedAtBuild]
+  ## FFS filename of the Zero Touch certificate file.
+  # {ba8e0276-1ec6-4eac-b78f-612fe7694438 ae2d011c-4128-4960-a536-b424ccc3d1ea}
+  gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile |{ 0x76, 0x02, 0x8e, 0xba, 0xc6, 0x1e, 0xac, 0x4e, 0xb7, 0x8f, 0x61, 0x2f, 0xe7, 0x69, 0x44, 0x38 }|VOID*|0x10000001
+
+[PcdsFixedAtBuild, PcdsPatchableInModule]
+
+[PcdsDynamic, PcdsDynamicEx]
+ 
+[UserExtensions.TianoCore."ExtraFiles"]
+  ZeroTouchPkgExtra.uni

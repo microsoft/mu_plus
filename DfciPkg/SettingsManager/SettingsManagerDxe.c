@@ -1,19 +1,39 @@
-/*++ @file
+/**@file
+SettingsManagerDxe.c
+
+Entry code for Settings Manager
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
     
-    Copyright (C) 2014 Microsoft Corporation. All Rights Reserved. 
-
-    THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-    ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-    THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-    PARTICULAR PURPOSE.
-
---*/
-
 #include "SettingsManager.h"
 
 DFCI_SETTING_ACCESS_PROTOCOL            mSystemSettingAccessProtocol = { SystemSettingAccessSet, SystemSettingAccessGet, SystemSettingsAccessReset };
 DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  mProviderProtocol = { RegisterProvider };
-DFCI_SETTING_PERMISSIONS_PROTOCOL       mPermissionProtocol = { SystemSettingPermissionGetPermission, SystemSettingPermissionResetPermission };
+DFCI_SETTING_PERMISSIONS_PROTOCOL       mPermissionProtocol = { SystemSettingPermissionGetPermission, SystemSettingPermissionResetPermission, SystemSettingPermissionIdentityChange };
 DFCI_AUTHENTICATION_PROTOCOL           *mAuthProtocol = NULL;
 
 typedef struct {
@@ -21,13 +41,70 @@ typedef struct {
     CHAR8   *Value;
 } INIT_TABLE_ENTRY;
 
-static INIT_TABLE_ENTRY                 mInitTable[] = {
-                                                        DEVICE_ID_MANUFACTURER,  NULL,
-                                                        DEVICE_ID_PRODUCT_NAME,  NULL,
-                                                        DEVICE_ID_SERIAL_NUMBER, NULL,
-                                                        DEVICE_ID_UUID,          NULL };
+static INIT_TABLE_ENTRY    mInitTable[] = {
+                              DEVICE_ID_MANUFACTURER,  NULL,
+                              DEVICE_ID_PRODUCT_NAME,  NULL,
+                              DEVICE_ID_SERIAL_NUMBER, NULL,
+                              DEVICE_ID_UUID,          NULL };
 
+// Settings manager does not support "Atomic" operations at this time.  That means
+// the delayed response and LKG handler are ignored, and the settings cannot be
+// undone.
+//
+// Apply Settings Protocol
+DFCI_APPLY_PACKET_PROTOCOL mApplySettingsProtocol = {
+       DFCI_APPLY_PACKET_SIGNATURE,
+       DFCI_APPLY_PACKET_VERSION,
+       0,
+       0,
+       0,
+       ApplyNewSettingsPacket,
+       SetSettingsResponse,        // Not used by settings manager -
+       SettingsLKG_Handler         // Not supported by settings manager
+};
 
+/**
+ * SetSettingsResponse
+ *
+ * Settings Manager doesn't support delayed response
+ *
+ * @param This
+ * @param Data
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+SetSettingsResponse(
+  IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN        DFCI_INTERNAL_PACKET        *Data
+  ) {
+
+    return EFI_SUCCESS;
+}
+
+/**
+ *  Last Known Good handler
+ *
+ *  Not supported in Settings manager at this time..
+ *
+ * @param[in] This:            Apply Packet Protocol
+ * @param[in] Operation
+ *                        DISCARD   discards the in memory changes, and retores from NV STORE
+ *                        COMMIT    Saves the current settings to NV Store
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+EFI_STATUS
+EFIAPI
+SettingsLKG_Handler (
+    IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+    IN        DFCI_INTERNAL_PACKET        *Data,
+    IN        UINT8                        Operation
+  ) {
+
+    return EFI_SUCCESS;
+}
 
 /**
 Notify function for running and acting on the requests (input, debug, etc)
@@ -43,7 +120,6 @@ SettingManagerOnStartOfBds(
   IN VOID             *Context
   )
 {
-  VOID *AuthPendingProtocol = NULL;
   EFI_STATUS Status;
 
   DEBUG_CODE_BEGIN();
@@ -65,21 +141,6 @@ SettingManagerOnStartOfBds(
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed to Install DFCI Settings Access Protocol. %r\n", Status));
-  }
-
-  if (!EFI_ERROR(gBS->LocateProtocol(&gDfciAuthenticationProvisioningPendingGuid, NULL, &AuthPendingProtocol)))
-  {
-    DEBUG((DEBUG_INFO, "%a - Auth Provisioning Pending Protocol Installed.  Skip Checking for Pending Updates\n", __FUNCTION__));
-    return;
-  }
-
-  CheckForPendingUpdates();
-
-  //Check for Settings Provisioning
-  Status = PopulateCurrentSettingsIfNeeded();
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Populate Current Settings If Needed returned an error. %r\n", __FUNCTION__, Status));
   }
 }
 
@@ -304,12 +365,14 @@ Init (
     &mProviderProtocol,
     &gDfciSettingPermissionsProtocolGuid,
     &mPermissionProtocol,
+    &gDfciApplySettingsProtocolGuid,
+    &mApplySettingsProtocol,
     NULL
     );
 
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "Failed to Install DFCI Settings Provider Support/Permission Protocol. %r\n", Status));
+    DEBUG((DEBUG_ERROR, "Failed to Install DFCI Settings Provider Support/Permission Protocol/Settings Apply. %r\n", Status));
     goto EXIT;
   }
 

@@ -1,3 +1,33 @@
+/**@file
+CertSupport.c
+
+Functions to extract certain information from certificates
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #include "IdentityAndAuthManager.h"
 #include <Library/BaseCryptLib.h>
@@ -33,28 +63,28 @@ GetSubjectName(
 
   if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Invalid input parameters.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
   Status = X509GetCommonName (TrustedCert, CertLength, NULL, &AsciiNameSize);
   if (Status != EFI_BUFFER_TOO_SMALL)
   {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get CommonName size\n"));
+      DEBUG((DEBUG_ERROR, "%a: Couldn't get CommonName size\n", __FUNCTION__));
       return NULL;
   }
 
   AsciiName = AllocatePool (AsciiNameSize);
   if (AsciiName == NULL)
   {
-     DEBUG((DEBUG_ERROR, __FUNCTION__ "Unable to allocate memory for common name Ascii.\n"));
+     DEBUG((DEBUG_ERROR, "%a: Unable to allocate memory for common name Ascii.\n", __FUNCTION__));
      return NULL;
   }
 
   Status = X509GetCommonName (TrustedCert, CertLength, AsciiName, &AsciiNameSize);
   if (EFI_ERROR(Status ))
   {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get CommonName\n"));
+      DEBUG((DEBUG_ERROR, "%a: Couldn't get CommonName\n", __FUNCTION__));
       return NULL;
   }
 
@@ -68,7 +98,7 @@ GetSubjectName(
   NameBuffer = (CHAR16 *)AllocatePool(AsciiNameSize * sizeof(CHAR16));
   if (NameBuffer == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for NameBuffer\n"));
+    DEBUG((DEBUG_ERROR, "%a: failed to allocate memory for NameBuffer\n", __FUNCTION__));
     goto CLEANUP;
   }
 
@@ -110,28 +140,28 @@ GetIssuerName(
 
   if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Invalid input parameters.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
   Status = X509GetOrganizationName (TrustedCert, CertLength, NULL, &AsciiNameSize);
   if (Status != EFI_BUFFER_TOO_SMALL)
   {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get OrganizationName size\n"));
+      DEBUG((DEBUG_ERROR, "%a: Couldn't get OrganizationName size\n", __FUNCTION__));
       return NULL;
   }
 
   AsciiName = AllocatePool (AsciiNameSize);
   if (AsciiName == NULL)
   {
-     DEBUG((DEBUG_ERROR, __FUNCTION__ "Unable to allocate memory for OrganizationName Ascii.\n"));
+     DEBUG((DEBUG_ERROR, "%a: Unable to allocate memory for OrganizationName Ascii.\n", __FUNCTION__));
      return NULL;
   }
 
   Status = X509GetOrganizationName (TrustedCert, CertLength, AsciiName, &AsciiNameSize);
   if (EFI_ERROR(Status ))
   {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Couldn't get CommonName\n"));
+      DEBUG((DEBUG_ERROR, "%a: Couldn't get CommonName\n", __FUNCTION__));
       return NULL;
   }
 
@@ -145,7 +175,7 @@ GetIssuerName(
   NameBuffer = (CHAR16 *)AllocatePool(AsciiNameSize * sizeof(CHAR16));
   if (NameBuffer == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to allocate memory for NameBuffer\n"));
+    DEBUG((DEBUG_ERROR, "%a: failed to allocate memory for NameBuffer\n", __FUNCTION__));
     goto CLEANUP;
   }
 
@@ -185,7 +215,7 @@ GetSha1Thumbprint(
 
   if ((TrustedCert == NULL) || (CertLength == 0))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Invalid input parameters.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
@@ -194,35 +224,35 @@ GetSha1Thumbprint(
   Sha1Ctx = AllocatePool(CtxSize);
   if (Sha1Ctx == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to allocate Sha1Ctx.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Failed to allocate Sha1Ctx.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
   Flag = Sha1Init(Sha1Ctx);
   if (!Flag)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to Sha1Init.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Failed to Sha1Init.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
   Flag = Sha1Update(Sha1Ctx, TrustedCert, CertLength);
   if (!Flag)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to Sha1Update.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Failed to Sha1Update.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
   Flag = Sha1Final(Sha1Ctx, Digest);
   if (!Flag)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to Sha1Final.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Failed to Sha1Final.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
   Result = AllocateZeroPool(((sizeof(Digest) * 3) + 1) * sizeof(CHAR16));  //each byte is 2 hex char and then a space between each char + finally a NULL terminator
   if (Result == NULL)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to allocate Result string.\n"));
+    DEBUG((DEBUG_ERROR, "%a: Failed to allocate Result string.\n", __FUNCTION__));
     goto CLEANUP;
   }
 

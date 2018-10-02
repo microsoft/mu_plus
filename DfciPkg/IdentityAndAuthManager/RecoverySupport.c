@@ -1,3 +1,33 @@
+/** @file
+RecoverySupport.c
+
+Manage the brute force recovery to unlock a provisioned system that fails to boot.
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved. 
+ 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met: 
+ 
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 
 #include "IdentityAndAuthManager.h"
 #include <Library/BaseLib.h>
@@ -47,7 +77,7 @@ DoDfciRecovery()
   mRecoveryId = DFCI_IDENTITY_INVALID;
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" DFCI Recovery FAILED!!!! Status = %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: DFCI Recovery FAILED!!!! Status = %r\n", __FUNCTION__, Status));
   }
 
   return Status;
@@ -94,6 +124,7 @@ GetRecoveryPacket(
   UINTN LocalSize = 0;
   UINT8 *CertData = NULL;  //DONT FREE THIS AS IT POINTS TO MODULE DATA
   UINTN CertDataSize = 0;
+  UINTN ChallengeSize = 0;
 
   //Check input parameters
   if ((This == NULL) || (Packet == NULL))
@@ -158,7 +189,7 @@ GetRecoveryPacket(
   }
 
   //Make the Challenge Packet
-  Status = GetRecoveryChallenge(&Challenge);
+  Status = GetRecoveryChallenge(&Challenge, &ChallengeSize);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to get Recovery Challenge %r\n", __FUNCTION__, Status));
@@ -166,7 +197,7 @@ GetRecoveryPacket(
   }
 
   //Encrypt Challenge
-  Status = EncryptRecoveryChallenge(Challenge, CertData, CertDataSize, &EData, &EDataSize);
+  Status = EncryptRecoveryChallenge(Challenge, ChallengeSize, CertData, CertDataSize, &EData, &EDataSize);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to Encrypt Recovery Challenge %r\n", __FUNCTION__, Status));
@@ -201,7 +232,7 @@ GetRecoveryPacket(
   mRecoveryId = Identity;
 
   //TODO: remove this code once tool is written to decode
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": DEBUG FEATURE - Print response.  todo: remove before production\n"));
+  DEBUG((DEBUG_INFO, "%a: DEBUG FEATURE - Print response.  todo: remove before production\n", __FUNCTION__));
   DEBUG_BUFFER(DEBUG_INFO, &(Challenge->Nonce.Parts.Key), sizeof(Challenge->Nonce.Parts.Key), DEBUG_DM_PRINT_ASCII);
 
 
@@ -288,7 +319,7 @@ CLEANUP:
 
   if (mResponseValidationCount > MAX_TRIES_FOR_RECOVERY)
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Hammering detected.  Shutdown now!\n"));
+    DEBUG((DEBUG_ERROR, "%a: Hammering detected.  Shutdown now!\n", __FUNCTION__));
     ShutdownDueToHammering();
   }
 

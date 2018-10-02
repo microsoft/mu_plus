@@ -1,14 +1,31 @@
 /** @file
+DfciXmlPermissionSchemaSupport.h
 
-This library supports the SettingPermission Lib and the   
-Permission XML schema  
+This library supports the SettingPermission Lib and the Permission XML schema
 
-Copyright (C) 2015 Microsoft Corporation. All Rights Reserved.
+Copyright (c) 2018, Microsoft Corporation
 
-THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-PARTICULAR PURPOSE.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
@@ -20,12 +37,31 @@ PARTICULAR PURPOSE.
 #define PERMISSIONS_VERSION_ELEMENT_NAME "Version"
 #define PERMISSIONS_LSV_ELEMENT_NAME     "LowestSupportedVersion"
 #define PERMISSIONS_LIST_ELEMENT_NAME    "Permissions"
+#define PERMISSIONS_LIST_DELEGATED_ATTRIBUTE_NAME "Delegated"
 #define PERMISSIONS_LIST_DEFAULT_ATTRIBUTE_NAME "Default"
 #define PERMISSIONS_LIST_APPEND_ATTRIBUTE_NAME  "Append"
 #define PERMISSIONS_LIST_APPEND_ATTRIBUTE_TRUE_VALUE  "True"
 #define PERMISSION_ELEMENT_NAME          "Permission"
 #define PERMISSION_ID_ELEMENT_NAME       "Id"
 #define PERMISSION_MASK_VALUE_ELEMENT_NAME    "PMask"
+#define PERMISSION_DELEGATED_MASK_VALUE_ELEMENT_NAME    "DMask"
+
+/**
+<Permissions>
+<PermissionResult>
+<Id>%Id%</Id>
+<Flags>%HEX_FLAGS_VALUE%</Flags>
+<Result>%HEX_STATUS_VALUE%</Result>
+</PermissionResult>
+...
+</Permissions>
+**/
+#define RESULTS_PACKET_ELEMENT_NAME             "ResultsPacket"
+#define RESULTS_APPLIED_ON_ELEMENT_NAME         "AppliedOn"
+#define RESULTS_PERMISSIONS_LIST_ELEMENT_NAME   PERMISSIONS_LIST_ELEMENT_NAME
+#define RESULTS_PERMISSIONS_ELEMENT_NAME        "PermissionResult"
+#define RESULTS_PERMISSIONS_ID_ELEMENT_NAME     "Id"
+#define RESULTS_PERMISSIONS_STATUS_ELEMENT_NAME "Result"
 
 
 #define CURRENT_PERMISSION_PACKET_ELEMENT_NAME  "CurrentPermissionsPacket"
@@ -52,11 +88,25 @@ EFIAPI
 GetPermissionsListNodeFromPacketNode(
     IN CONST XmlNode* PacketNode);
 
+/**
+ * Get Permissin attributes DefaultPMask and DefaultMask
+ *
+ * Set the input values to theri default before calling this function.  If the
+ * values are not defined in the XML, the PMask or DMask will not be disturbed.
+ *
+ * @param PermissionListNode
+ * @param PMask
+ * @param DMask
+ *
+ * @return EFI_STATUS EFIAPI
+ */
 EFI_STATUS
 EFIAPI
 GetPermissionsListDefaultPMask(
     IN CONST XmlNode      *PermissionListNode,
-    OUT DFCI_PERMISSION_MASK  *PMask);
+    OUT DFCI_PERMISSION_MASK  *PMask,
+    OUT DFCI_PERMISSION_MASK  *DMask);
+
 /**
   Returns true if Permission Entries should be
   appended to existing Permission List
@@ -72,7 +122,8 @@ EFIAPI
 GetInputPermission(
   IN CONST XmlNode* ParentPermissionNode,
   OUT DFCI_SETTING_ID_STRING *Id,
-  OUT DFCI_PERMISSION_MASK *PMask);
+  OUT DFCI_PERMISSION_MASK *PMask,
+  OUT DFCI_PERMISSION_MASK *DMask);
 
 
 
@@ -110,12 +161,48 @@ EFIAPI
 SetCurrentPermissions(
   IN CONST XmlNode *ParentPermissionsListNode,
   IN CONST CHAR8* Id,
-  IN CONST UINT8  Value);
+  IN CONST UINT8  Value,
+  IN CONST UINT8  DelegatedValue);
 
 EFI_STATUS
 EFIAPI
 AddPermissionsLsvNode(
   IN CONST XmlNode* CurrentPermissionsPacketNode,
   IN CONST CHAR8* Lsv);
+
+EFI_STATUS
+EFIAPI
+AddCurrentAttributes(
+  IN CONST XmlNode *CurrentPermissionsPacketNode,
+  IN CONST UINT8  Value,
+  IN CONST UINT8  DelegatedValue);
+
+
+/**
+Creates a new XmlNode list following the ResultPacket
+format.
+
+Return NULL if error occurs. Otherwise return a pointer to xml doc root element
+of a ResultPacketNodeList.
+
+List must be freed using FreeNodeList
+
+**/
+XmlNode *
+EFIAPI
+New_ResultPermissionPacketNodeList(EFI_TIME *Date);
+
+XmlNode*
+EFIAPI
+GetResultsPermissionPacketNode(CONST XmlNode* RootNode);
+
+EFI_STATUS
+EFIAPI
+SetOutputPermissionStatus(
+  IN CONST XmlNode* ParentPermissionsListNode,
+  IN CONST CHAR8* Id,
+  IN CONST CHAR8* Result
+  );
+
 
 #endif //__DFCI_XML_PERMISSION_SCHEMA_SUPPORT_LIB__

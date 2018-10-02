@@ -1,16 +1,20 @@
 /** @file
- *Dfci V1 Id support
+DfciV1SupportLibNull.c
+
+NULL Library for V1Upport
 
 Copyright (c) 2018, Microsoft Corporation
 
 All rights reserved.
+
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
+
 1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
+   this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions and the following disclaimer in the documentation
- and/or other materials provided with the distribution.
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -44,7 +48,7 @@ DFCI_SETTING_ID_STRING
 EFIAPI
 DfciV1TranslateString (DFCI_SETTING_ID_STRING V1Id) {
 
-    DEBUG((DEBUG_INFO,__FUNCTION__ " Called - NULL library returns NULL\n"));
+    DEBUG((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
     return NULL;
 }
 
@@ -59,7 +63,7 @@ DFCI_SETTING_ID_STRING
 EFIAPI
 DfciV1TranslateEnum (DFCI_SETTING_ID_V1_ENUM V1Id) {
 
-    DEBUG((DEBUG_INFO,__FUNCTION__ " Called - NULL library returns NULL\n"));
+    DEBUG((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
     return NULL;
 }
 
@@ -77,6 +81,6 @@ DFCI_SETTING_ID_STRING
 EFIAPI
 DfciV1NumberFromId (DFCI_SETTING_ID_STRING Id) {
 
-    DEBUG((DEBUG_INFO,__FUNCTION__ " Called - NULL library returns NULL\n"));
+    DEBUG((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
     return NULL;
 }

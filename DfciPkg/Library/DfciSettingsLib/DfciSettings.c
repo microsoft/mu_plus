@@ -1,11 +1,33 @@
-/**
+/** @file
+DfciSettings.c
+
 Library Instance for DXE to support getting, setting, defaults, and support Dfci settings.
 
-The Dfci settings
+Copyright (c) 2018, Microsoft Corporation
 
-Copyright (c) 2018 Microsoft Corporation. All rights reserved
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 **/
-
 
 #include <Uefi.h>
 
@@ -31,8 +53,7 @@ VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
 
 #define ID_IS_BAD  0
 #define ID_IS_URL  1
-#define ID_IS_CERT 2
-#define ID_IS_HWID 3
+#define ID_IS_HWID 2
 
 // Forward declarations needed
 /**
@@ -81,12 +102,10 @@ IsIdSupported (DFCI_SETTING_ID_STRING Id)
 
     if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_URL, DFCI_MAX_ID_LEN)) {
         return ID_IS_URL;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_URL_CERT, DFCI_MAX_ID_LEN)) {
-        return ID_IS_CERT;
     } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_HWID, DFCI_MAX_ID_LEN)) {
         return ID_IS_HWID;
     } else {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Called with Invalid ID (%a)\n", Id));
+        DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
     }
 
     return ID_IS_BAD;
@@ -124,7 +143,7 @@ ValidateNvVariable (
                                        0,
                                        NULL);
             if (EFI_ERROR(Status)) {                   // What???
-                DEBUG((DEBUG_ERROR, __FUNCTION__ ": Unable to delete invalid variable %s\n",VariableName));
+                DEBUG((DEBUG_ERROR, "%a: Unable to delete invalid variable %s\n", __FUNCTION__, VariableName));
             }
         }
     }
@@ -145,7 +164,6 @@ InitializeNvVariables (
     VOID
   )
 {
-    BOOLEAN     CertOK;
     BOOLEAN     UrlOK;
     BOOLEAN     HwidOK;
     EFI_STATUS  Status;
@@ -153,16 +171,13 @@ InitializeNvVariables (
     Status = ValidateNvVariable (DFCI_SETTINGS_URL_NAME);
     UrlOK = !EFI_ERROR(Status);
 
-    Status = ValidateNvVariable (DFCI_SETTINGS_URL_CERT_NAME);
-    CertOK = !EFI_ERROR(Status);
-
     Status = ValidateNvVariable (DFCI_SETTINGS_HWID_NAME);
     HwidOK = !EFI_ERROR(Status);
 
-    if (CertOK && UrlOK && HwidOK) {
+    if (UrlOK && HwidOK) {
         Status = EFI_SUCCESS;
     } else {
-        DEBUG((DEBUG_ERROR,"%a Error initializing DFCI variables. %d:%d:%d\n", __FUNCTION__, (UINTN) UrlOK, (UINTN) CertOK, (UINTN) HwidOK));
+        DEBUG((DEBUG_ERROR,"%a Error initializing DFCI variables. %d:%d\n", __FUNCTION__, (UINTN) UrlOK, (UINTN) HwidOK));
         Status = EFI_NOT_FOUND;
     }
 
@@ -197,20 +212,18 @@ DfciSettingsSet (
     INTN            Id;
 
     if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize > DFCI_SETTING_MAXIMUM_SIZE)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid parameter.\n"));
+        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
         return EFI_INVALID_PARAMETER;
     }
 
     Id = IsIdSupported(This->Id);
     if (Id == ID_IS_BAD) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid id(%s).\n",This->Id));
+        DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
         return EFI_UNSUPPORTED;
     }
 
     if (Id == ID_IS_URL) {
         VariableName = DFCI_SETTINGS_URL_NAME;
-    } else  if (Id == ID_IS_CERT) {
-        VariableName = DFCI_SETTINGS_URL_CERT_NAME;
     } else if (Id == ID_IS_HWID) {
         VariableName = DFCI_SETTINGS_HWID_NAME;
     } else {
@@ -223,7 +236,7 @@ DfciSettingsSet (
 
     if (Status != EFI_NOT_FOUND) {
         if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-            DEBUG((DEBUG_ERROR, __FUNCTION__ " - Error getting %s. Code=%r\n", VariableName, Status));
+            DEBUG((DEBUG_ERROR, "%a: Error getting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
             return Status;
         }
 
@@ -236,7 +249,7 @@ DfciSettingsSet (
         if ((ValueSize != 0) && (BufferSize == ValueSize)) {
             Buffer = AllocatePool (BufferSize);
             if (NULL == Buffer) {
-                DEBUG((DEBUG_ERROR, __FUNCTION__ " - Cannot allocate %d bytes.%r\n", BufferSize));
+                DEBUG((DEBUG_ERROR, "%a: Cannot allocate %d bytes.%r\n", __FUNCTION__, BufferSize));
                 return EFI_OUT_OF_RESOURCES;
             }
 
@@ -247,7 +260,7 @@ DfciSettingsSet (
                                        Buffer );
             if (EFI_ERROR(Status)) {
                 FreePool (Buffer);
-                DEBUG((DEBUG_ERROR, __FUNCTION__ " - Error getting variable %s. Code=%r\n", VariableName, Status));
+                DEBUG((DEBUG_ERROR, "%a: Error getting variable %s. Code=%r\n", __FUNCTION__, VariableName, Status));
                 return Status;
             }
 
@@ -307,8 +320,6 @@ DfciSettingsGet (
 
     if (Id == ID_IS_URL) {
         VariableName = DFCI_SETTINGS_URL_NAME;
-    } else if (Id == ID_IS_CERT) {
-        VariableName = DFCI_SETTINGS_URL_CERT_NAME;
     } else if (Id == ID_IS_HWID) {
         VariableName = DFCI_SETTINGS_HWID_NAME;
     } else {
@@ -322,13 +333,14 @@ DfciSettingsGet (
                                ValueSize,
                                Value );
     if (EFI_NOT_FOUND == Status) {
+        DEBUG((DEBUG_INFO, "%a - Variable %s not found. Getting default value.\n", __FUNCTION__, VariableName));
         Status = DfciSettingsGetDefault (This, ValueSize, Value);
     }
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Error from GetVariable for var %s. Code=%r\n", VariableName, Status));
+        DEBUG((DEBUG_ERROR, "%a - Error retrieving setting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
     } else {
-        DEBUG((DEBUG_INFO, "Variable %s retrieved.\n", VariableName));
+        DEBUG((DEBUG_INFO, "%a - Setting %s retrieved.\n",__FUNCTION__ , VariableName));
     }
 
     return Status;
@@ -503,14 +515,6 @@ DfciSettingsProviderSupportProtocolNotify (
         DEBUG((DEBUG_ERROR, "Failed to Register DFCI_URL.  Status = %r\n", Status));
     }
 
-    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__DFCI_URL_CERT;
-    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_CERT;
-    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_CERT.  Status = %r\n", Status));
-    }
-
     mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__DFCI_HWID;
     mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_STRING;
     mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
@@ -555,12 +559,12 @@ DfciSettingsConstructor (
             &mDfciSettingsProviderSupportInstallEventRegistration
             );
 
-        DEBUG((DEBUG_INFO, __FUNCTION__ " - Event Registered.\n"));
+        DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
 
         //Init nv var
         Status = InitializeNvVariables ();
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, __FUNCTION__ " - Initialize Nv Var failed. %r.\n", Status));
+            DEBUG((DEBUG_ERROR, "%a: Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
         }
     }
     return EFI_SUCCESS;

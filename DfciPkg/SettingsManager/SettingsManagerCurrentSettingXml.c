@@ -1,12 +1,34 @@
+/**@file
+SettingsManagerCurrentSettingXml.c
 
+Settings Mnager component to create the Current Settings variable
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
 #include "SettingsManager.h"
-#include <XmlTypes.h>
-#include <Library/XmlTreeLib.h>
-#include <Library/XmlTreeQueryLib.h>
-#include <Library/DfciV1SupportLib.h>
-#include <Library/DfciXmlSettingSchemaSupportLib.h>
-#include <Library/PrintLib.h>
-#include <Guid/DfciSettingsManagerVariables.h>
 
 /**
 Clear the cached Current Settings string 
@@ -17,7 +39,7 @@ EFIAPI
 ClearCacheOfCurrentSettings()
 {
   EFI_STATUS Status;
-  Status = gRT->SetVariable(XML_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, 0, 0, NULL);
+  Status = gRT->SetVariable(DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, 0, 0, NULL);
   DEBUG((DEBUG_INFO, "Delete Current Xml Settings %r\n", Status));
 }
 
@@ -30,7 +52,8 @@ EFI_STATUS
 EFIAPI
 CreateXmlStringFromCurrentSettings(
   OUT CHAR8** XmlString,
-  OUT UINTN*  StringSize
+  OUT UINTN*  StringSize,
+  IN  BOOLEAN V1Compatible
   )
 {
   EFI_STATUS Status;
@@ -46,6 +69,8 @@ CreateXmlStringFromCurrentSettings(
   {
     return EFI_INVALID_PARAMETER;
   }
+
+  PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD);
 
   Status = SMID_LoadFromFlash(&InternalData);
   if (EFI_ERROR(Status))
@@ -71,7 +96,7 @@ CreateXmlStringFromCurrentSettings(
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to get time. %r\n", __FUNCTION__, Status));
-    return Status;
+    goto EXIT;
   }
 
   List = New_CurrentSettingsPacketNodeList(&Time);
@@ -125,13 +150,14 @@ CreateXmlStringFromCurrentSettings(
     DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
     Value = ProviderValueAsAscii(&(Prov->Provider), TRUE);
 
-// TEMP Set XML to Number string for compatibility
+    if (V1Compatible)
     {
-        DFCI_SETTING_ID_STRING NumberString;
-        NumberString = DfciV1NumberFromId (Prov->Provider.Id);
-        Status = SetCurrentSettings(CurrentSettingsListNode, NumberString, Value);
+      DFCI_SETTING_ID_STRING NumberString;
+      NumberString = DfciV1NumberFromId (Prov->Provider.Id);
+      Status = SetCurrentSettings(CurrentSettingsListNode, NumberString, Value);
+    } else {
+      Status = SetCurrentSettings(CurrentSettingsListNode, Prov->Provider.Id, Value);
     }
-//     Status = SetCurrentSettings(CurrentSettingsListNode, Prov->Provider.Id, Value);
 
     if (EFI_ERROR(Status))
     {
@@ -173,6 +199,7 @@ EXIT:
       *StringSize = 0;
     }
   }
+  PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD);
   return Status;
 }
 
@@ -183,7 +210,7 @@ PopulateCurrentSettingsIfNeeded()
   EFI_STATUS Status;
   CHAR8* Var = NULL;
   UINTN  VarSize = 0;
-  Status = GetVariable2(XML_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
+  Status = GetVariable2(DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
     &gDfciSettingsManagerVarNamespace,
     &Var,
     &VarSize
@@ -210,7 +237,7 @@ PopulateCurrentSettingsIfNeeded()
   }
   
   //Create string of Xml
-  Status = CreateXmlStringFromCurrentSettings(&Var, &VarSize);
+  Status = CreateXmlStringFromCurrentSettings(&Var, &VarSize, FALSE);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to create xml string from current %r\n", __FUNCTION__, Status));
@@ -218,7 +245,7 @@ PopulateCurrentSettingsIfNeeded()
   }
 
   //Save variable
-  Status = gRT->SetVariable(XML_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES, VarSize, Var);
+  Status = gRT->SetVariable(DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES, VarSize, Var);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to write current setting Xml variable %r\n", __FUNCTION__, Status));
@@ -227,6 +254,35 @@ PopulateCurrentSettingsIfNeeded()
   //Success
   DEBUG((DEBUG_INFO, "%a - Current Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
   Status = EFI_SUCCESS;
+
+  //
+  //
+  // TEMP HACK Set V1 Current Settings
+  //
+  //
+
+  FreePool (Var);
+  Var = NULL;
+
+  //Create string of Xml
+  Status = CreateXmlStringFromCurrentSettings(&Var, &VarSize, TRUE);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to create xml string from current %r\n", __FUNCTION__, Status));
+    goto EXIT;
+  }
+
+  //Save variable
+  Status = gRT->SetVariable(L"UEFISettingsCurrent", &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES, VarSize, Var);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to write current setting Xml variable %r\n", __FUNCTION__, Status));
+    goto EXIT;
+  }
+  //Success
+  DEBUG((DEBUG_INFO, "%a - Current Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
+  Status = EFI_SUCCESS;
+
 
 
 EXIT:
