@@ -67,11 +67,4 @@ STATIC CONST UINT16 mPoolSizeTable[] = {
 
 #define NUM_POOL_SIZES 13
 
-UNIT_TEST_STATUS
-EFIAPI
-UefiHardwareNxProtectionEnabled (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
-  IN UNIT_TEST_CONTEXT           Context
-  );
-
 #endif // _HEAP_GUARD_TEST_COMMON_H_

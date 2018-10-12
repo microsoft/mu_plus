@@ -1,8 +1,12 @@
 
 #include <Uefi.h>
 
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Register\ArchitecturalMsr.h>
+#include <UnitTestTypes.h>
+#include <Library/UnitTestLib.h>
+#include <Library/UnitTestLogLib.h>
 #include "../HeapGuardTestCommon.h"
 
 UNIT_TEST_STATUS

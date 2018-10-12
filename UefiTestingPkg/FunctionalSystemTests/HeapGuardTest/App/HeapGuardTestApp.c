@@ -50,6 +50,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/PiSmmCommunicationRegionTable.h>
 
 #include "../HeapGuardTestCommon.h"
+#include "UefiHardwareNxProtectionStub.h"
 
 
 #define UNIT_TEST_APP_NAME        L"Heap Guard Test"
