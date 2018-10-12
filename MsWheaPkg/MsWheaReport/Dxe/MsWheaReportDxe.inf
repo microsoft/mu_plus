@@ -82,6 +82,7 @@
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportTestEnable
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
+  gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
 
 [Guids]
   gEfiHardwareErrorVariableGuid       ## CONSUMES

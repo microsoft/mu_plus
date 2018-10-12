@@ -96,7 +96,7 @@ CreateCperHdrDefaultMin (
   CperHdr->RecordLength = (UINT32)(sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + sizeof(EFI_ERROR_SECTION_DESCRIPTOR) + PayloadSize);
 
   CperHdr->ValidationBits &= (~EFI_ERROR_RECORD_HEADER_TIME_STAMP_VALID);
-  CopyGuid(&CperHdr->PlatformID, &gMsWheaReportServiceGuid);
+  CopyGuid(&CperHdr->PlatformID, (EFI_GUID*)PcdGetPtr(PcdDeviceIdentifierGuid));
   //SetMem(&CperHdr->PartitionID, sizeof(EFI_GUID), 0); // Not used, left zero.
   if (RecordIDGuid != NULL) {
     CopyGuid(&CperHdr->CreatorID, RecordIDGuid);

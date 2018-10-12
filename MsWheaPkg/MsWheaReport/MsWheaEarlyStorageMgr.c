@@ -28,6 +28,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Uefi/UefiBaseType.h>
 #include <Library/MsWheaEarlyStorageLib.h>
+#include <Library/PcdLib.h>
 #include "MsWheaEarlyStorageMgr.h"
 
 typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
@@ -477,6 +478,7 @@ MsWheaESGetV0Info (
   MsWheaEntryMD->MsWheaErrorHdr.ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
   MsWheaEntryMD->ErrorStatusCode = WheaV0.ErrorStatusCode;
   MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD) + sizeof(MS_WHEA_ERROR_HDR);
+  CopyGuid(&MsWheaEntryMD->CallerID, &gEfiCallerIdGuid);
 
   Status = MsWheaESClearData(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
@@ -534,6 +536,7 @@ MsWheaESGetV1Info (
   MsWheaEntryMD->MsWheaErrorHdr.ReporterID = WheaV1.ReporterID;
   MsWheaEntryMD->ErrorStatusCode = WheaV1.ErrorStatusCode;
   MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD) + sizeof(MS_WHEA_ERROR_HDR);
+  CopyGuid(&MsWheaEntryMD->CallerID, &gEfiCallerIdGuid);
 
   Status = MsWheaESClearData(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
@@ -637,6 +640,7 @@ MsWheaESCheckHeader (
   MsWheaEntryMD->MsWheaErrorHdr.ErrorSeverity = EFI_GENERIC_ERROR_RECOVERABLE;
   MsWheaEntryMD->ErrorStatusCode = MS_WHEA_ERROR_EARLY_STORAGE_STORE_FULL;
   MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD) + sizeof(MS_WHEA_ERROR_HDR);
+  CopyGuid(&MsWheaEntryMD->CallerID, &gEfiCallerIdGuid);
 
   // Reset the header after processing
   SetMem(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
