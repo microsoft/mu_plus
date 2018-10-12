@@ -208,7 +208,7 @@ PlatformBootManagerBeforeConsole (
   // Update ConOut variable accordign to the Console Handle
   //
   ConsoleOut = NULL;
-  GetEfiGlobalVariable2 (L"ConOut",&ConsoleOut,NULL);
+  GetEfiGlobalVariable2 (L"ConOut", (VOID **) &ConsoleOut,NULL);
 
   if (Handle != NULL) {
     if (TempDevicePath != NULL) {
@@ -243,12 +243,12 @@ PlatformBootManagerBeforeConsole (
 
 
     VarConOut = NULL;
-    GetEfiGlobalVariable2 (L"ConOut", &VarConOut, NULL);
+    GetEfiGlobalVariable2 (L"ConOut", (VOID **) &VarConOut, NULL);
     if (VarConOut != NULL) {
         FreePool (VarConOut);
     }
     VarConIn = NULL;
-    GetEfiGlobalVariable2 (L"ConIn", &VarConIn, NULL);
+    GetEfiGlobalVariable2 (L"ConIn", (VOID **) &VarConIn, NULL);
     if (VarConIn  != NULL) {
         FreePool (VarConIn);
     }

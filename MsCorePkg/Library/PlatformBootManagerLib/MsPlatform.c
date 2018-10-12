@@ -44,7 +44,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UefiRuntimeServicesTableLib.h>
 
 static BOOLEAN   mSecViolation         = FALSE;
-static BOOLEAN   mModeTableInitialized = FALSE;
 
 /**
   OnDemandConInCOnnect
@@ -134,7 +133,7 @@ PlatformBootManagerBdsEntry (
                     NULL
                     );
     if (EFI_NOT_FOUND != Status) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " leftover PlatformRecovery0000 was deleted\n"));
+        DEBUG((DEBUG_ERROR,"%a leftover PlatformRecovery0000 was deleted\n", __FUNCTION__));
     }
 
     // Delete DriverOrder before locking it.  We do not support DriverOrder
@@ -149,7 +148,7 @@ PlatformBootManagerBdsEntry (
 
     Status = gBS->LocateProtocol(&gEdkiiVariableLockProtocolGuid, NULL, (VOID**)&VarLockProtocol);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Failed to locate var lock protocol (%r).  Can't lock driver order variable\n", Status));
+        DEBUG((DEBUG_ERROR, "%a - Failed to locate var lock protocol (%r).  Can't lock driver order variable\n", __FUNCTION__, Status));
     } else {
         Status = VarLockProtocol->RequestToLock(VarLockProtocol, EFI_DRIVER_ORDER_VARIABLE_NAME, &gEfiGlobalVariableGuid);
         if (EFI_ERROR(Status)) {
@@ -185,7 +184,7 @@ RebootToFrontPage (
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Unable to set OsIndications\n"));
     }
-    DEBUG((DEBUG_INFO, __FUNCTION__ " Resetting system.\n"));
+    DEBUG((DEBUG_INFO, "%a Resetting system.\n", __FUNCTION__));
     gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
 
     CpuDeadLoop ();
