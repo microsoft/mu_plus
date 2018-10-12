@@ -1,4 +1,6 @@
-# Device Firmware Configuration Interface (DFCI) 
+# **Beta Feature**: Device Firmware Configuration Interface (DFCI) 
+
+## Note that this feature is currently in **Beta** 
 
 ## About
 
@@ -7,3 +9,4 @@ The Device Firmware Configuration Interface (**DFCI**) is a standard for managin
 Note that for management of servers in a datacenter, DFCI does not presume to be the solution.  [Redfish](https://www.dmtf.org/standards/redfish) may be a more suitable solution for this environment. 
 
 ### More content is in the works...
+
