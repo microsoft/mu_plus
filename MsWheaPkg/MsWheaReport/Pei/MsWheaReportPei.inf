@@ -70,7 +70,7 @@
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportTestEnable
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportPcatCapacity
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
 
 [Ppis]

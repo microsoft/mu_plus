@@ -43,7 +43,7 @@ typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
 
 /**
 
-This routine returns the maximum number of bytes that can be stored in the PEI event store.
+This is a helper function that returns the maximal capacity for header excluded data.
 
 @retval Count    The maximum number of bytes that can be stored in the MS WHEA store.
 
@@ -59,12 +59,12 @@ MsWheaESGetMaxDataCount (
 
 /**
 
-This routine reads the specified data region from the MS WHEA store.
+This is a helper function that reads the early storage region with an offset of header size.
 
 @param[in]  Ptr                       The pointer to hold intended read data
 @param[in]  Size                      The size of intended read data
-@param[in]  Offset                    The offset of read data, starting from 
-                                      Early MS_WHEA_EARLY_STORAGE_DATA_OFFSET
+@param[in]  Offset                    The offset of read data, ranging from 0 to 
+                                      PcdMsWheaReportEarlyStorageCapacity - MS_WHEA_EARLY_STORAGE_DATA_OFFSET
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
@@ -93,12 +93,12 @@ Cleanup:
 
 /**
 
-This routine writes the specified data region from the MS WHEA store.
+This is a helper function that writes the early storage region with an offset of header size.
 
 @param[in]  Ptr                       The pointer to hold intended written data
 @param[in]  Size                      The size of intended written data
-@param[in]  Offset                    The offset of written data, starting from 
-                                      MS_WHEA_EARLY_STORAGE_DATA_OFFSET
+@param[in]  Offset                    The offset of written data, ranging from 0 to 
+                                      PcdMsWheaReportEarlyStorageCapacity - MS_WHEA_EARLY_STORAGE_DATA_OFFSET
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
@@ -126,11 +126,11 @@ Cleanup:
 
 /**
 
-This routine clears the specified data region from the MS WHEA store.
+This is a helper function that clears the early storage region with an offset of header size.
 
 @param[in]  Size                      The size of intended clear data
-@param[in]  Offset                    The offset of clear data, starting from 
-                                      Early MS_WHEA_EARLY_STORAGE_DATA_OFFSET
+@param[in]  Offset                    The offset of clear data, ranging from 0 to 
+                                      PcdMsWheaReportEarlyStorageCapacity - MS_WHEA_EARLY_STORAGE_DATA_OFFSET
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
@@ -172,7 +172,7 @@ MsWheaESDump (
 
   DEBUG((DEBUG_INFO, "CMOS MS WHEA Store..."));
   for (Index = 0; Index < MsWheaEarlyStorageGetMaxSize(); Index ++) {
-    Status = MsWheaESReadData(&Data, sizeof(Data), Index);
+    Status = MsWheaEarlyStorageRead(&Data, sizeof(Data), Index);
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, __FUNCTION__": Reading Early Storage %d failed %r", Index, Status));
       goto Cleanup;
@@ -201,7 +201,7 @@ MsWheaESClearAllData (
   VOID
   )
 {
-  MsWheaESClearData(MsWheaESGetMaxDataCount(), MS_WHEA_EARLY_STORAGE_DATA_OFFSET);
+  MsWheaESClearData(MsWheaESGetMaxDataCount(), 0);
 }
 
 /**

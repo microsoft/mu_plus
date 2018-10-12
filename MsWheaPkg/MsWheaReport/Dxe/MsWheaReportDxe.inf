@@ -80,7 +80,7 @@
 
 [Pcd]
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportTestEnable
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportPcatCapacity
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
 
 [Guids]

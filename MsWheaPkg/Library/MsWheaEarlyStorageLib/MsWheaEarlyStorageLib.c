@@ -67,7 +67,7 @@ __MsWheaCMOSRawRead (
   mBuf = Ptr;
   if ((mBuf == NULL) || 
       (Size == 0) || 
-      ((UINT8)(PcdGet32(PcdMsWheaReportPcatCapacity) - Size) < Offset)) {
+      ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -117,7 +117,7 @@ __MsWheaCMOSRawWrite (
   mBuf = Ptr;
   if ((mBuf == NULL) || 
       (Size == 0) || 
-      ((UINT8)(PcdGet32(PcdMsWheaReportPcatCapacity) - Size) < Offset)) {
+      ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -162,7 +162,7 @@ __MsWheaCMOSRawClear (
   EFI_STATUS  Status;
 
   if ((Size == 0) || 
-      ((UINT8)(PcdGet32(PcdMsWheaReportPcatCapacity) - Size) < Offset)) {
+      ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -199,7 +199,7 @@ MsWheaCMOSStoreClearAll (
 
 /**
 
-This routine returns the maximum number of bytes that can be stored in the PEI event store.
+This routine returns the maximum number of bytes that can be stored in the early storage area.
 
 @retval Count    The maximum number of bytes that can be stored in the MS WHEA store.
 
@@ -210,7 +210,7 @@ MsWheaEarlyStorageGetMaxSize (
   VOID
   )
 {
-  return (UINT8)((PcdGet32(PcdMsWheaReportPcatCapacity) - (MS_WHEA_EARLY_STORAGE_OFFSET)) & 0xFF);
+  return (UINT8)((PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - (MS_WHEA_EARLY_STORAGE_OFFSET)) & 0xFF);
 }
 
 /**
@@ -219,8 +219,7 @@ This routine reads the specified data region from the MS WHEA store.
 
 @param[in]  Ptr                       The pointer to hold intended read data
 @param[in]  Size                      The size of intended read data
-@param[in]  Offset                    The offset of read data, starting from 
-                                      MS_WHEA_EARLY_STORAGE_OFFSET
+@param[in]  Offset                    The offset of read data, ranging from 0 to PcdMsWheaReportEarlyStorageCapacity
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
@@ -252,8 +251,7 @@ This routine writes the specified data region from the MS WHEA store.
 
 @param[in]  Ptr                       The pointer to hold intended written data
 @param[in]  Size                      The size of intended written data
-@param[in]  Offset                    The offset of written data, starting from 
-                                      MS_WHEA_EARLY_STORAGE_OFFSET
+@param[in]  Offset                    The offset of written data, ranging from 0 to PcdMsWheaReportEarlyStorageCapacity
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
@@ -284,8 +282,7 @@ Cleanup:
 This routine clears the specified data region from the MS WHEA store to PcdMsWheaEarlyStorageDefaultValue.
 
 @param[in]  Size                      The size of intended clear data
-@param[in]  Offset                    The offset of clear data, starting from 
-                                      MS_WHEA_EARLY_STORAGE_OFFSET
+@param[in]  Offset                    The offset of clear data, ranging from 0 to PcdMsWheaReportEarlyStorageCapacity
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected

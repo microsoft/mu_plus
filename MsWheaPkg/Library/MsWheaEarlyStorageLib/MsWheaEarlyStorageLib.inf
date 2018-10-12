@@ -59,6 +59,6 @@
 
 [Pcd]
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportPcatCapacity
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
 
 [Guids]

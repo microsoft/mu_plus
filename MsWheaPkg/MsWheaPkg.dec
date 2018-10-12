@@ -49,5 +49,5 @@
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportTestEnable|FALSE|BOOLEAN|0x00000001
 
 [PcdsFixedAtBuild]
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportPcatCapacity|0x00000100|UINT32|0x00000002
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity|0x00000100|UINT32|0x00000002
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue|0xFF|UINT8|0x00000003
