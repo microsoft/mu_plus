@@ -1,15 +1,5 @@
 # Capsule Update Feature
 
-## Copyright
-
-Copyright (c) 2016, Microsoft Corporation
-
-All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 ## About
 
 **MsCapsuleUpdatePkg** Package is an environment that implements:
@@ -22,7 +12,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 7.	Support for multiple capsule verification certificates
 8.  ESRT support
 
-Note: this package provides the entire framework for updating device firmwares via capsules.  No actual device firmware is updated or attempted to be updated by this implementation.
+Note: this package provides the entire framework for updating device firmware via capsules.  No actual device firmware is updated or attempted to be updated by this implementation.
 
 ## Modules/Drivers
 
@@ -32,7 +22,7 @@ Implementation: MsCapsuleUpdatePkg\Universal\EsrtDxe
 
 This driver adds EFI System Resource Table (ESRT) to the System Configuration Tables.  It prints the entire ESRT table at debug output.  This driver is added to the DSC and FDF files.
 
-This driver implementation differs from EDK2's implementation in that it simply cosumes all FMP instances (`gEfiFirmwareManagementProtocolGuid`) and creates an ESRT entry for each FMP instance.
+This driver implementation differs from EDK2's implementation in that it simply consumes all FMP instances (`gEfiFirmwareManagementProtocolGuid`) and creates an ESRT entry for each FMP instance.
 
 ## Libraries
 
@@ -160,6 +150,12 @@ Following are the limitations of this implementation:
 1.	Drivers embedded in the capsule are not supported/run.  The reason for not supporting it is that this design assumes closed-system architecture where these drivers would run within trusted boundaries and the firmware is unprotected.  So, any such driver approved by secure boot (or when secure boot is off), if allowed to run, can jeopardize the security of the system.
 2.	Only one payload per capsule is supported.
 
-## Feedback
+## Copyright
 
-**TBD**
+Copyright (c) 2016, Microsoft Corporation
+
+All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
