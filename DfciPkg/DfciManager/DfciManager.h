@@ -50,7 +50,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DfciDeviceIdSupportLib.h>
 #include <Library/DfciUiSupportLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/Performance2Lib.h>
+#include <Library/PerformanceLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiLib.h>

@@ -124,7 +124,7 @@ EndOfDxeCallback (
   ) {
 
 
-    PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD);
+    PERF_FUNCTION_BEGIN ();
 
     DEBUG((DEBUG_INFO, "[DM] %a: ProcessMailboxes at EndOfDxe\n", __FUNCTION__));
 
@@ -145,7 +145,7 @@ EndOfDxeCallback (
 
     gBS->CloseEvent(Event);
 
-    PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD);
+    PERF_FUNCTION_END ();
 }
 
 /**
@@ -166,7 +166,7 @@ SettingAccessCallback (
   ) {
 
 
-    PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD);
+    PERF_FUNCTION_BEGIN ();
     DEBUG((DEBUG_INFO, "[DM] %a: ProcessMailboxes at SettingsAccess\n", __FUNCTION__));
     //
     // Try again to process provisioning input.
@@ -175,7 +175,7 @@ SettingAccessCallback (
 
     gBS->CloseEvent(Event);
 
-    PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD);
+    PERF_FUNCTION_END ();
 }
 
 /**
@@ -966,7 +966,7 @@ DfciManagerEntry(
     EFI_STATUS  Status = EFI_DEVICE_ERROR;
 
 
-    PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD);
+    PERF_FUNCTION_BEGIN ();
 
     Status = gBS->LocateProtocol(&gDfciApplyIdentityProtocolGuid, NULL, &mApplyIdentityProtocol);
     if (EFI_ERROR(Status) || NULL == mApplyIdentityProtocol) {
@@ -1025,7 +1025,7 @@ DfciManagerEntry(
         goto ERROR_EXIT;
     }
 
-    PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD);
+    PERF_FUNCTION_END ();
 
     return EFI_SUCCESS;
 
@@ -1035,7 +1035,7 @@ ERROR_EXIT:
 
     FreeManagerData ();
 
-    PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD);
+    PERF_FUNCTION_END ();
 
     return EFI_SUCCESS;
 }

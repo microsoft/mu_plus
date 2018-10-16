@@ -60,7 +60,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DfciXmlDeviceIdSchemaSupportLib.h>
 #include <Library/DfciXmlSettingSchemaSupportLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/Performance2Lib.h>
+#include <Library/PerformanceLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>

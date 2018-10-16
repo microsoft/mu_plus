@@ -44,7 +44,7 @@ ExitPmAuth (
   EFI_STATUS                  Status;
 
 
-  PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD); // MS_CHANGE
+  PERF_FUNCTION_BEGIN (); // MS_CHANGE
 
   DEBUG((DEBUG_INFO,"ExitPmAuth ()- Start\n"));
 
@@ -71,7 +71,7 @@ ExitPmAuth (
   ASSERT_EFI_ERROR (Status);
   DEBUG((DEBUG_INFO,"ExitPmAuth ()- End\n"));
 
-  PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD); // MS_CHANGE
+  PERF_FUNCTION_END (); // MS_CHANGE
 }
 
 VOID
@@ -83,7 +83,7 @@ ConnectRootBridge (
   EFI_HANDLE                       *RootBridgeHandleBuffer;
   UINTN                            RootBridgeIndex;
 
-  PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD); // MS_CHANGE
+  PERF_FUNCTION_BEGIN (); // MS_CHANGE
 
   RootBridgeHandleCount = 0;
   gBS->LocateHandleBuffer (
@@ -97,7 +97,7 @@ ConnectRootBridge (
     gBS->ConnectController (RootBridgeHandleBuffer[RootBridgeIndex], NULL, NULL, Recursive);
   }
 
-  PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD); // MS_CHANGE
+  PERF_FUNCTION_END (); // MS_CHANGE
 }
 
 
@@ -299,7 +299,7 @@ ConnectSequence (
   EFI_STATUS               Status;
   EFI_DEVICE_PATH_PROTOCOL **PlatformConnectSequence;
 
-  PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD); // MS_CHANGE
+  PERF_FUNCTION_BEGIN (); // MS_CHANGE
 
   //
   // Here we can get the customized platform connect sequence
@@ -325,7 +325,7 @@ ConnectSequence (
   //
   gDS->Dispatch ();
 
-  PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD); // MS_CHANGE
+  PERF_FUNCTION_END (); // MS_CHANGE
 }
 
 STATIC

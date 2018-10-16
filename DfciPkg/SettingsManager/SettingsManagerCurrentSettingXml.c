@@ -70,7 +70,7 @@ CreateXmlStringFromCurrentSettings(
     return EFI_INVALID_PARAMETER;
   }
 
-  PERF_FUNCTION_BEGIN (PERF_VERBOSITY_STANDARD);
+  PERF_FUNCTION_BEGIN ();
 
   Status = SMID_LoadFromFlash(&InternalData);
   if (EFI_ERROR(Status))
@@ -199,7 +199,7 @@ EXIT:
       *StringSize = 0;
     }
   }
-  PERF_FUNCTION_END (PERF_VERBOSITY_STANDARD);
+  PERF_FUNCTION_END ();
   return Status;
 }
 

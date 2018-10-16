@@ -67,7 +67,7 @@
   DfciXmlSettingSchemaSupportLib
   DfciSettingPermissionLib
   DfciV1SupportLib
-  Performance2Lib
+  PerformanceLib
   XmlTreeLib
   XmlTreeQueryLib
 

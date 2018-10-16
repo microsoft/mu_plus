@@ -59,7 +59,7 @@
   DfciDeviceIdSupportLib
   DfciUiSupportLib
   MemoryAllocationLib
-  Performance2Lib
+  PerformanceLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   UefiLib
