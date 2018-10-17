@@ -1,15 +1,5 @@
 # Sample Drivers, Libraries and Tools for the Capsule Update Feature
 
-## Copyright
-
-Copyright (c) 2017, Microsoft Corporation
-
-All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 ## About
 
 **MsSampleFmpDevicePkg** Package is an environment that provides:
@@ -47,7 +37,7 @@ Implementation: MsSampleFmpDevicePkg\Library\SampleFmpDeviceLib.inf
 
 Implements a sample FMP instance included by the SampleDeviceLibWrapperFMP.inf driver above.
 
-This library defines a set of functions called by MsCapsuleUpdatePkg's FmpWrapperDeviceLib.inf library, which in turn is included by FMP wrapper drivers.  Each FMP wrapper driver will include a unique FMP library instance.
+This library defines a set of functions called by MsCapsuleUpdatePkg FmpWrapperDeviceLib.inf library, which in turn is included by FMP wrapper drivers.  Each FMP wrapper driver will include a unique FMP library instance.
 
 Following is an example of relationship between an FMP driver and libraries:
 
@@ -55,7 +45,7 @@ Following is an example of relationship between an FMP driver and libraries:
 SampleDeviceLibWrapperFMP.inf   (FMP driver which is just a wrapper)
            |
            v
-FmpWrapperDeviceLib.inf         (MsCapsuleUpdatePkg's common-code library included by the FMP driver)
+FmpWrapperDeviceLib.inf         (MsCapsuleUpdatePkg common-code library included by the FMP driver)
            |
            v
 SampleFmpDeviceLib.inf          (FMP instance unique to this FMP driver and implements all the required hooks)
@@ -83,7 +73,7 @@ MsSampleFmpDevicePkg.dec lists of the libraries, GUIDs and PCDs used in the `MsS
 
 An example of an FMP wrapper driver including SampleDeviceLibWrapperFMP.inf in the DSC file:
 
-```c
+```python
 MsSampleFmpDevicePkg/SampleDeviceLibWrapperFmpDxeDriver/SampleDeviceLibWrapperFMP.inf {
 <LibraryClasses>
   FmpDeviceLib|MsSampleFmpDevicePkg/Library/SampleFmpDeviceLib/SampleFmpDeviceLib.inf
@@ -124,9 +114,9 @@ Note: all sample tools provided in MsSampleFmpDevicePkg\Tools should not be used
 
 After booting nt32 platform (Nt32PkgMsCapsule.dsc) to UEFI shell, the capsules generated above can be loaded and updated in UEFI shell by MsSampleFmpDevicePkg\Tools\IA32\FMPTestApp.efi.
 
-Example: “fs0:>FMPTestApp.efi -l -c 3rdPartyProductionCapsule.cap”
+Example: fs0:>FMPTestApp.efi -l -c 3rdPartyProductionCapsule.cap
 
-Option -l above is required when using MsCapsuleUpdatePkg's `DisplayUpdateProgressGraphicsLib` library in the nt32 platform.  This option displays the logo first and then displays the update progress bar relative to that logo. 
+Option -l above is required when using MsCapsuleUpdatePkg `DisplayUpdateProgressGraphicsLib` library in the nt32 platform.  This option displays the logo first and then displays the update progress bar relative to that logo. 
 
 In order for these capsules to work successfully in nt32 platform, the capsules generated above do not set `CAPSULE_FLAGS_PERSIST_ACROSS_RESET` or `CAPSULE_FLAGS_INITIATE_RESET` flags and thus do not require warm reset.  For production systems, these flags may need to be set (see the capsule generating batch files for more info).
 
@@ -139,7 +129,13 @@ Windows capsules can be created by running MsSampleFmpDevicePkg\Tools\CreateWind
 Following are the limitations of this implementation:
 1.	When using nt32 platform, the capsules cannot be tested on the next reboot (see above for more info).
 
-## Feedback
+## Copyright
 
-**TBD**
+Copyright (c) 2017, Microsoft Corporation
+
+All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
