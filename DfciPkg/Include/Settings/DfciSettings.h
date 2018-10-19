@@ -67,6 +67,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DFCI_SETTING_ID__DFCI_HWID                  "Dfci.Hwid.String"
 
 //
+// Second user settings
+//
+#define DFCI_SETTING_ID__MDM_FRIENDLY_NAME          "MDM.FriendlyName.String"
+#define DFCI_SETTING_ID__MDM_TENANT_NAME            "MDM.TenantName.String"
+
+//
 // Group Settings, and their individual settings
 //
 

@@ -51,9 +51,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 EFI_EVENT  mDfciSettingsProviderSupportInstallEvent;
 VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
 
-#define ID_IS_BAD  0
-#define ID_IS_URL  1
-#define ID_IS_HWID 2
+typedef enum {
+    ID_IS_BAD,          
+    ID_IS_URL,          
+    ID_IS_HWID,         
+    ID_IS_FRIENDLY_NAME,
+    ID_IS_TENANT_NAME, 
+}  ID_IS;
 
 // Forward declarations needed
 /**
@@ -96,7 +100,7 @@ DfciSettingsGet (
 @retval FALSE - Not supported
 **/
 STATIC
-INTN
+ID_IS
 IsIdSupported (DFCI_SETTING_ID_STRING Id)
 {
 
@@ -104,6 +108,10 @@ IsIdSupported (DFCI_SETTING_ID_STRING Id)
         return ID_IS_URL;
     } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_HWID, DFCI_MAX_ID_LEN)) {
         return ID_IS_HWID;
+    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__MDM_FRIENDLY_NAME, DFCI_MAX_ID_LEN)) {
+        return ID_IS_FRIENDLY_NAME;
+    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__MDM_TENANT_NAME, DFCI_MAX_ID_LEN)) {
+        return ID_IS_TENANT_NAME;
     } else {
         DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
     }
@@ -164,22 +172,12 @@ InitializeNvVariables (
     VOID
   )
 {
-    BOOLEAN     UrlOK;
-    BOOLEAN     HwidOK;
     EFI_STATUS  Status;
 
-    Status = ValidateNvVariable (DFCI_SETTINGS_URL_NAME);
-    UrlOK = !EFI_ERROR(Status);
-
-    Status = ValidateNvVariable (DFCI_SETTINGS_HWID_NAME);
-    HwidOK = !EFI_ERROR(Status);
-
-    if (UrlOK && HwidOK) {
-        Status = EFI_SUCCESS;
-    } else {
-        DEBUG((DEBUG_ERROR,"%a Error initializing DFCI variables. %d:%d\n", __FUNCTION__, (UINTN) UrlOK, (UINTN) HwidOK));
-        Status = EFI_NOT_FOUND;
-    }
+    Status  = ValidateNvVariable (DFCI_SETTINGS_URL_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_HWID_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_FRIENDLY_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_TENANT_NAME);
 
     return Status;
 }
@@ -209,7 +207,7 @@ DfciSettingsSet (
     UINTN           BufferSize;
     EFI_STATUS      Status;
     CHAR16         *VariableName;
-    INTN            Id;
+    ID_IS           Id;
 
     if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize > DFCI_SETTING_MAXIMUM_SIZE)) {
         DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
@@ -217,18 +215,27 @@ DfciSettingsSet (
     }
 
     Id = IsIdSupported(This->Id);
-    if (Id == ID_IS_BAD) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
-        return EFI_UNSUPPORTED;
-    }
+    switch (Id) {
+        case ID_IS_URL:
+            VariableName = DFCI_SETTINGS_URL_NAME;
+            break;
 
-    if (Id == ID_IS_URL) {
-        VariableName = DFCI_SETTINGS_URL_NAME;
-    } else if (Id == ID_IS_HWID) {
-        VariableName = DFCI_SETTINGS_HWID_NAME;
-    } else {
-        ASSERT(FALSE);      // Really cannot get here.
-        return EFI_ABORTED;
+        case ID_IS_HWID:
+            VariableName = DFCI_SETTINGS_HWID_NAME;
+            break;
+
+        case ID_IS_FRIENDLY_NAME:
+            VariableName = DFCI_SETTINGS_FRIENDLY_NAME;
+            break
+            ;
+        case ID_IS_TENANT_NAME:
+            VariableName = DFCI_SETTINGS_TENANT_NAME;
+            break;
+
+        default:
+            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+            return EFI_UNSUPPORTED;
+            break;
     }
 
     BufferSize = 0;
@@ -305,7 +312,7 @@ DfciSettingsGet (
     OUT       VOID                     *Value
   )
 {
-    INTN                Id;
+    ID_IS               Id;
     EFI_STATUS          Status;
     CHAR16             *VariableName;
 
@@ -314,18 +321,29 @@ DfciSettingsGet (
     }
 
     Id = IsIdSupported(This->Id);
-    if (Id == ID_IS_BAD) {
-        return EFI_UNSUPPORTED;
+    switch (Id) {
+        case ID_IS_URL:
+            VariableName = DFCI_SETTINGS_URL_NAME;
+            break;
+
+        case ID_IS_HWID:
+            VariableName = DFCI_SETTINGS_HWID_NAME;
+            break;
+
+        case ID_IS_FRIENDLY_NAME:
+            VariableName = DFCI_SETTINGS_FRIENDLY_NAME;
+            break
+            ;
+        case ID_IS_TENANT_NAME:
+            VariableName = DFCI_SETTINGS_TENANT_NAME;
+            break;
+
+        default:
+            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+            return EFI_UNSUPPORTED;
+            break;
     }
 
-    if (Id == ID_IS_URL) {
-        VariableName = DFCI_SETTINGS_URL_NAME;
-    } else if (Id == ID_IS_HWID) {
-        VariableName = DFCI_SETTINGS_HWID_NAME;
-    } else {
-        ASSERT(FALSE);
-        return EFI_ABORTED;
-    }
 
     Status = gRT->GetVariable (VariableName,
                               &gDfciSettingsGuid,
@@ -363,7 +381,7 @@ DfciSettingsGetDefault (
     OUT       VOID                      *Value
   )
 {
-    INTN    Id;
+    ID_IS    Id;
 
     if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
         return EFI_INVALID_PARAMETER;
@@ -521,6 +539,22 @@ DfciSettingsProviderSupportProtocolNotify (
     Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Failed to Register DFCI_HWID.  Status = %r\n", Status));
+    }
+
+    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__MDM_FRIENDLY_NAME;
+    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_STRING;
+    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
+    Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_MDM_FRIENDLY_NAME.  Status = %r\n", Status));
+    }
+
+    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__MDM_TENANT_NAME;
+    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_STRING;
+    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
+    Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_MDM_TENANT_NAME.  Status = %r\n", Status));
     }
 
     //We got here, this means all protocols were installed and we didn't exit early.

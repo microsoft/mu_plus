@@ -388,7 +388,7 @@ ApplyPermissionsInXml(
       {
         if (DMask == DFCI_IDENTITY_NOT_SPECIFIED)  // If not specified, use default
         {
-          Entry->DMask = Store->DefaultDMask;
+          DMask = Store->DefaultDMask;
         }
         //Doesn't exist.  Add new
         Status = AddPermissionEntry(Store, Id, Mask, DMask);
