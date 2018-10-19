@@ -1316,9 +1316,9 @@ HeapGuardTestAppEntryPoint (
   AddSmmPoolTest(PoolGuard);
   AddUefiNxTest(NxProtection);
 
-  AddTestCase( Misc, L"Null pointer access should trigger a page fault", L"Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, NULL );
-  AddTestCase( Misc, L"Null pointer access in SMM should trigger a page fault", L"Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, NULL );
-  AddTestCase( Misc, L"Blowing the stack should trigger a page fault", L"Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, NULL );
+  AddTestCase( Misc, L"Null pointer access should trigger a page fault", L"Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, HeapGuardContext );
+  AddTestCase( Misc, L"Null pointer access in SMM should trigger a page fault", L"Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, HeapGuardContext );
+  AddTestCase( Misc, L"Blowing the stack should trigger a page fault", L"Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, HeapGuardContext );
   AddTestCase( NxProtection, L"Check hardware configuration of HardwareNxProtection bit", L"Security.HeapGuardMisc.UefiHardwareNxProtectionEnabled", UefiHardwareNxProtectionEnabled, UefiHardwareNxProtectionEnabledPreReq, NULL, HeapGuardContext );
   AddTestCase( NxProtection, L"Stack NX Protection", L"Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, UefiNxStackPreReq, NULL, HeapGuardContext );
 
