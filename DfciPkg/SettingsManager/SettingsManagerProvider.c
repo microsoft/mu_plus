@@ -839,11 +839,11 @@ FindProviderById(DFCI_SETTING_ID_STRING Id)
 
     if (0 == AsciiStrnCmp (Prov->Provider.Id, RealId, DFCI_MAX_ID_LEN))
     {
-      DEBUG((DEBUG_VERBOSE, "FindProviderById - Found (%a)\n", Id));
+      DEBUG((DEBUG_INFO, "FindProviderById - Found (%a)\n", Id));
       return &Prov->Provider;
     }
   }
-  DEBUG((DEBUG_VERBOSE, "FindProviderById - Failed to find (%a)\n", Id));
+  DEBUG((DEBUG_ERROR, "FindProviderById - Failed to find (%a)\n", Id));
   return NULL;
 }
 

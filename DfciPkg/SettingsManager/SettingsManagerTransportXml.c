@@ -183,7 +183,7 @@ ApplySettings(
     Status = EFI_NO_MAPPING;
     goto EXIT;
   }
-  DEBUG((DEBUG_INFO, "Incomming Version: %a\n", InputTempNode->Value));
+  DEBUG((DEBUG_INFO, "Incoming Version: %a\n", InputTempNode->Value));
   Version = AsciiStrDecimalToUintn(InputTempNode->Value);
 
   if (Version > 0xFFFFFFFF)
@@ -195,7 +195,7 @@ ApplySettings(
   }
   
   //check against lsv
-  if (*Data->LSV > (UINT32)Version)
+  if (InternalData->LSV > (UINT32)Version)
   {
     DEBUG((DEBUG_INFO, "Setting Version Less Than System LSV\n"));
     Data->State = DFCI_PACKET_STATE_VERSION_ERROR;
@@ -244,7 +244,7 @@ ApplySettings(
   if ((UINT32)Lsv > InternalData->LSV)
   {
     DEBUG((DEBUG_INFO, "%a - Setting New LSV (0x%X)\n", __FUNCTION__, Lsv));
-    *Data->LSV = (UINT32)Lsv;
+    InternalData->LSV = (UINT32)Lsv;
     InternalData->Modified = TRUE;
   }
 
