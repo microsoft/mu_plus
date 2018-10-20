@@ -1,0 +1,155 @@
+## @file
+# Component declaration file for PC BDS package.
+#
+# Copyright (c) 2018, Microsoft Corporation
+
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+[Defines]
+    DEC_SPECIFICATION   = 0x00010005
+    PACKAGE_NAME        = PcBdsPkg
+    PACKAGE_GUID        = 394D14C6-8C75-4A83-BFE0-969EFB5AF0AA
+    PACKAGE_VERSION     = 0.1
+
+[Includes]
+    Include
+
+[LibraryClasses]
+  ##  @libraryclass  Library to display the platform specific debug messages on the display
+  ##
+  ConsoleMsgLib|Include/Library/ConsoleMsgLib.h
+
+  ##  @libraryclass  Library to provide a method of DXE driver read access to boot manager settings
+  ##
+  MsBootManagerSettingsLib|Include/Library/MsBootManagerSettingsLib.h
+
+  ##  @libraryclass  Library to configure boot options
+  ##
+  MsBootOptionsLib|Include/Library/MsBootOptionsLib.h
+
+  ##  @libraryclass  Library to specific platform implementation for acquiring platform specific policy information
+  ##
+  MsBootPolicyLib|Include/Library/MsBootPolicyLib.h
+
+  ##  @libraryclass  Library to set specific console to output necessary text or graphics
+  ##
+  MsNetworkDependencyLib|Include/Library/MsNetworkDependencyLib.h
+
+  ##  @libraryclass  BdsPlatform specific device abstraction library
+  ##
+  MsPlatformDevicesLib|Include/Library/MsPlatformDevicesLib.h
+
+  ##  @libraryclass  Library interface allowing Platform code to configure CPU Power Limits
+  ##
+  MsPlatformPowerCheckLib|Include/Library/MsPlatformPowerCheckLib.h
+
+  ##  @libraryclass  Platform specific library to check or mitigate power cases
+  ##
+  PowerServicesLib|Include/Library/PowerServicesLib.h
+
+  ##  @libraryclass  Platform specific library to check or mitigate thermal cases
+  ##
+  ThermalServicesLib|Include/Library/ThermalServicesLib.h
+
+  ##  @libraryclass  Platform specific library to check uefi version information
+  ##
+  MsUefiVersionLib|PcBdsPkg/Include/Library/MsUefiVersionLib.h
+
+  ##  @libraryclass  Platform specific library to set or get reboot reasons
+  ##
+  MsNVBootReasonLib|PcBdsPkg/Include/Library/MsNVBootReasonLib.h
+
+  ##  @libraryclass  Platform specific library to set or clear altboot flag
+  ##
+  MsAltBootLib|PcBdsPkg/Include/Library/MsAltBootLib.h
+
+  ##  @libraryclass  Library to set console mode low_res or native_res
+  ##
+  GraphicConsoleHelperLib|PcBdsPkg/Include/Library/GraphicConsoleHelperLib.h
+
+[Guids]
+  # {394D14C6-8C75-4A83-BFE0-969EFB5AF0AA}
+  gPcBdsPkgTokenSpaceGuid = { 0x394D14C6, 0x8C75, 0x4A83, { 0xBF, 0xE0, 0x96, 0x9E, 0xFB, 0x5A, 0xF0, 0xAA } }
+
+  ## Microsoft Boot Manager Settings GUID
+  #
+  gMsBootManagerSettingsGuid = { 0x5f95741e, 0xcd01, 0x441c, { 0x8f, 0xab, 0xad, 0x05, 0xfb, 0x79, 0x39, 0x19 }}
+
+  gMsBootPolicyFileGuid = {0x50670071, 0x478f, 0x4be7, {0xad, 0x13, 0x87, 0x54, 0xf3, 0x79, 0xc6, 0x2f }}
+
+  ## Microsoft notification that Bds is starting (main DXE dispatch cycle complete)
+  #  Still within PlatformAuth
+  #
+  gMsStartOfBdsNotifyGuid = { 0x056e730a, 0x2ac9, 0x4f9c, {0xa7, 0x92, 0x1f, 0x3f, 0x1a, 0x48, 0xa2, 0x4d}}
+
+  ## Include/Guid/MsBootMenuGuid.h
+  gMsBootMenuFormsetGuid = {0x4123defc, 0x3eb8, 0x433c, {0x89, 0x19, 0x12, 0x79, 0x00, 0xcc, 0x26, 0x0f }}
+
+[Protocols]
+  ## Microsoft Network Delay Protocol
+  #
+  gMsNetworkDelayProtocolGuid = { 0xff7d36aa, 0x96a5, 0x46c4, { 0xb1, 0x66, 0xfe, 0x18, 0xd2, 0x93, 0x26, 0x06 }}
+
+  # Protocol GUID for the Physical Presence confirmation protocol.
+  gTpmPpProtocolGuid           = { 0x4cebaa75, 0x2ebc, 0x4cc2, { 0x9b, 0xb3, 0x87, 0x1e, 0x3d, 0x2c, 0x18, 0x75 }}
+
+[PcdsFixedAtBuild]
+  ##
+  # Boot Configuration switch defaults
+
+  # EnableIPv6Boot - Allows PXE Network boot to try IPv6 if IPv4 fails
+  gPcBdsPkgTokenSpaceGuid.PcdEnableIPv6Boot|0x1|UINT8|0x4000011A
+
+  # EnableAltBoot - Allows Vol/- to follow a platform specific boot sequence
+  gPcBdsPkgTokenSpaceGuid.PcdEnableAltBoot|0x1|UINT8|0x4000011B
+
+  # EnableBootOrderLock - 1 = BootOrder is locked, 0 BootOrder is unlocked by default
+  gPcBdsPkgTokenSpaceGuid.PcdEnableBootOrderLock|0x0|UINT8|0x4000011C
+
+  # EnableUsbBoot - 1 = Alllow boot from USB devices, 0 Don't allow boot from USB devices
+  gPcBdsPkgTokenSpaceGuid.PcdEnableUsbBoot|0x1|UINT8|0x4000012C
+
+  # StartNetworking - 1 = Enable and start the network stack at boot time, 0 Don't enable and start the network stack at boot time
+  gPcBdsPkgTokenSpaceGuid.PcdStartNetwork|0x0|UINT8|0x4000012D
+
+  # Display Memory Map in the debug log
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapOutput|0x0|UINT8|0x4000011D
+# gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapTypes|0x0600|UINT32|0x4000011E  #// Only display ACPI types
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapTypes|0x3FFF|UINT32|0x4000011E  #// Display all memory types 0-13
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapDumpOutput|0x0|UINT8|0x4000011F #// Display memory from entry
+
+  ## FFS filename to find the shell application.
+  # @Prompt FFS Name of Shell Application
+  gPcBdsPkgTokenSpaceGuid.PcdShellFile|{ 0xB7, 0xD6, 0x7A, 0xC5, 0x15, 0x05, 0xA8, 0x40, 0x9D, 0x21, 0x55, 0x16, 0x52, 0x85, 0x4E, 0x37 }|VOID*|0x40000129
+
+  ## This fixed at build flag tells MsBootPolicyLib that it is part of BDS
+  gPcBdsPkgTokenSpaceGuid.PcdBdsBootPolicy|FALSE|BOOLEAN|0x40000141
+
+  ## Maximum tries to get to a cool system and good battery state
+  gPcBdsPkgTokenSpaceGuid.PcdPowerAndThermalRetries|0|UINT32|0x40000010
+
+  ## Display the shutdown graphic picture for this many 100ns units of time before shutting down
+  gPcBdsPkgTokenSpaceGuid.PcdShutdownGraphicDisplayTime|50000000|UINT32|0x40000020
+
+  ## Wait for this many 100ns units of time for cooling to have an effect
+  gPcBdsPkgTokenSpaceGuid.PcdThermalControlRetryWait|600000000|UINT32|0x40000030
+
