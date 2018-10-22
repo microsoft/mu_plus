@@ -1,0 +1,37 @@
+## @file
+# Library to get and set the device state
+#
+# @copyright
+# Copyright (c) 2018 Microsoft Corporation. All rights reserved
+#
+# @par Specification Reference:
+#
+##
+
+
+[Defines]
+INF_VERSION = 0x00010017
+BASE_NAME = DeviceStateLib
+FILE_GUID = 49F18455-FE0D-4DFC-B88B-BEC283BB46DD
+VERSION_STRING = 1.0
+MODULE_TYPE = BASE
+LIBRARY_CLASS = DeviceStateLib
+
+
+[LibraryClasses]
+DebugLib
+MemoryAllocationLib
+BaseMemoryLib
+PcdLib
+
+
+[Packages]
+MdePkg/MdePkg.dec
+MsCorePkg/MsCorePkg.dec
+
+
+[Sources]
+DeviceStateLib.c
+
+[Pcd]
+gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask
