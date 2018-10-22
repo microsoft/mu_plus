@@ -1,0 +1,68 @@
+## @file
+#
+# Implements a Graphics Software Compositor as a filter driver that connects to the
+# Intel GOP driver and produces its own GOP protocol.
+#
+# Copyright (c) 2015 - 2018, Microsoft Corporation.
+#
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = RenderingEngineDxe
+  FILE_GUID                      = 02AA389E-CA29-43BF-BE05-A4CA038812F2
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DriverInit
+  UNLOAD_IMAGE                   = DriverUnload
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  RenderingEngine.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  DebugLib
+  BaseLib
+  MemoryAllocationLib
+  DxeServicesTableLib
+
+[Protocols]
+  gEfiDevicePathProtocolGuid          # CONSUMES
+  gMsSREProtocolGuid                  # PRODUCES
+  gEfiGraphicsOutputProtocolGuid      # PRODUCES
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
+
+[Depex]
+  TRUE

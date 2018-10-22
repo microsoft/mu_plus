@@ -1,0 +1,90 @@
+## @file
+# The DXE driver produces FORM DISPLAY ENGINE protocol.
+#
+# Copyright (c) 2007 - 2018, Intel Corporation. All rights reserved.<BR>
+# Copyright (c) 2015 - 2018, Microsoft Corporation.
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+#
+#
+##
+
+#Override : 00000001 | MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf | 85efdd346b2efe6cb4b007f618582eac | 2018-10-05T21-43-51
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DisplayEngine
+  FILE_GUID                      = E660EA85-058E-4b55-A54B-F02F83A24707
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = InitializeDisplayEngine
+  UNLOAD_IMAGE                   = UnloadDisplayEngine
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC AARCH64
+#
+
+[Sources]
+  FormDisplayStr.uni
+  FormDisplay.c
+  FormDisplay.h
+  ProcessOptions.c
+  InputHandler.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  DebugLib
+  BaseMemoryLib
+  BaseLib
+  PrintLib
+  HiiLib
+  MemoryAllocationLib
+  DxeServicesTableLib
+  UIToolKitLib
+  DxeServicesLib
+  BmpSupportLib
+  MsUiThemeLib
+  MsColorTableLib
+  SwmDialogsLib
+
+[Protocols]
+  gEdkiiFormDisplayEngineProtocolGuid   ## PRODUCES
+  gEdkiiFormBrowserEx2ProtocolGuid      ## CONSUMES
+  gMsSWMProtocolGuid                    ## CONSUMES
+  gEfiGraphicsOutputProtocolGuid        ## CONSUMES
+  gEfiHiiFontProtocolGuid               ## CONSUMES
+  gEfiSimpleTextInputExProtocolGuid     ## CONSUMES
+  gMsOSKProtocolGuid                    ## CONSUMES
+
+[Depex]
+  gEfiHiiDatabaseProtocolGuid AND gEfiHiiConfigRoutingProtocolGuid AND gEdkiiFormBrowserEx2ProtocolGuid AND gMsSWMProtocolGuid
+
+[FeaturePcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBrowserGrayOutTextStatement     ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdBrowerGrayOutReadOnlyMenu       ## CONSUMES
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  DisplayEngineExtra.uni
+
+[Guids]
+    gMsEventMasterFrameNotifyGroupGuid                              ## CONSUMES
+    gEfiEventReadyToBootGuid                                        ## CONSUMES
+
+[BuildOptions]
+#  *_VS2015x86_*_CC_FLAGS       = /Od /FAcs
