@@ -1,0 +1,134 @@
+## @file  MsGraphicsPkg.dec
+# This Package provides all definitions, library classes and libraries instances for MsGraphics. 
+# MsGraphics is common code used in the Microsoft UEFI Core code base
+#
+# Copyright (c) 2017 - 2018, Microsoft Corporation
+#
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = MsGraphicsPkg
+  PACKAGE_UNI_FILE               = MsGraphicsPkg.uni
+  PACKAGE_GUID                   = 4034F365-208B-43E3-8C05-442772E215B5
+  PACKAGE_VERSION                = 0.20
+
+[Includes]
+  Include
+
+[LibraryClasses]
+  MsUiThemeCopyLib|Include/Library/MsUiThemeCopyLib.h
+  MsUiThemeLib|Include/Library/MsUiThemeLib.h
+  UIToolKitLib|Include/UIToolKit/SimpleUIToolKit.h
+  MsPlatformEarlyGraphicsLib|Include/Library/MsPlatformEarlyGraphicsLib.h
+  UiProgressCircleLib|Include/Library/UiProgressCircleLib.h
+  UiRectangleLib|Include/Library/UiRectangleLib.h
+  PlatformThemeLib|Include/Library/PlatformThemeLib.h
+  DisplayDeviceStateLib|Include/Library/DisplayDeviceStateLib.h
+  MsColorTableLib|Include/Library/MsColorTableLib.h
+  BootGraphicsProviderLib|Include/Library/BootGraphicsProviderLib.h
+  BootGraphicsLib|MsGraphicsPkg/Include/Library/BootGraphicsLib.h
+  SwmDialogsLib|MsGraphicsPkg/Include/Library/SwmDialogsLib.h
+
+[Guids]
+  ## Microsoft Core Package token space guid
+  #  Include/Guid/MsCorePkgTokenSpace.h
+  #  {89D2DAE8-FB96-4E83-9860-5CDF279DF3C1}
+  gMsGraphicsPkgTokenSpaceGuid = { 0x89d2dae8, 0xfb96, 0x4e83, { 0x98, 0x60, 0x5c, 0xdf, 0x27, 0x9d, 0xf3, 0xc1 } }
+
+  ## Guid for touch Panel. Guid Value will be the same as gEfiTouchPanelGuid so Me could use it in the SiliconPkg
+  #
+  #
+  gMsTouchPanelGuid  =  {0x91b1d27b, 0xe126, 0x48d1, {0x82, 0x34, 0xd2, 0x8b, 0x81, 0xc8, 0x83, 0x62}}
+
+  ## Microsoft On Screen Keyboard Device Path GUID
+  #
+  gOSKDevicePathGuid = {0xad603516, 0xd94a, 0x425e, {0x9b, 0x42, 0x0b, 0x55, 0xfd, 0xdb, 0xd8, 0xa1}}
+
+  ## Microsoft Boot Manager Settings GUID
+  #
+  gMsUiThemeHobGuid = {  0xb07c8481, 0xb02f, 0x44ca, {0xa9, 0x09, 0x64, 0xf8, 0xcd, 0x47, 0x0b, 0x6f }}
+  
+  # {B24FD789-0ADF-46B6-B385-7003E83654D2}
+  gMsEventMasterFrameNotifyGroupGuid    = { 0xb24fd789, 0xadf, 0x46b6, { 0xb3, 0x85, 0x70, 0x3, 0xe8, 0x36, 0x54, 0xd2 } }
+
+  # Early Graphics HOG
+  gMsEarlyGraphicsHobGuid           = { 0x3dfb90f2, 0x9e22, 0x4ae6, { 0xb8, 0xdf, 0x79, 0x35, 0x30, 0xb5, 0xdc, 0x25 }}
+
+[Ppis]
+  ## <Path to the header file>
+  #<global guid name>  = <GUID VALUE>
+
+  # Include/Protocol/MsUiThemeProtocol.h ## Yes, Protocol, not Ppi
+  gMsUiThemePpiGuid = { 0x74367a5b, 0x27fb, 0x45e2, {0xa5, 0x92, 0x01, 0x7b, 0x63, 0x03, 0x9d, 0x51 }}
+    
+[Protocols]
+  ## On-Screen Keyboard protocol guid
+  #
+  gMsOSKProtocolGuid = { 0x3c4ca20d, 0xc95a, 0x4b8b, { 0x81, 0xaf, 0x94, 0xa9, 0x83, 0x09, 0x23, 0xe2 }}
+
+  ## Simple Window Manager protocol guid
+  #
+  gMsSWMProtocolGuid = { 0x9d400d20, 0x6f35, 0x4268, { 0x90, 0x4f, 0xdc, 0x04, 0xb1, 0x87, 0x7b, 0x62 }}
+
+  ## Simple Rendering Engine protocol guid
+  #
+  gMsSREProtocolGuid = { 0x7768969c, 0x1d94, 0x4d19, { 0xb0, 0xcf, 0x9f, 0x66, 0xcc, 0x59, 0x34, 0xb4 }}
+
+  ## Microsoft UiTheme protocol guid
+  #
+  gMsUiThemeProtolGuid = { 0xfc111ae5, 0xf073, 0x4348, { 0xaa, 0x5c, 0x49, 0x12, 0x4b, 0xbf, 0xed, 0x7b }}
+
+  ## Microsoft Early Dxe Graphics protocol
+  #
+  gMsEarlyGraphicsProtocolGuid = {  0xe357ab3b, 0x5a12, 0x4f57, { 0x8e, 0x08, 0x6d, 0xc8, 0x1a, 0x1a, 0x70, 0x55 }}
+
+[PcdsFeatureFlag]
+
+[PcdsFixedAtBuild]
+  ## PcdMsGopOverrideProtocolGuid
+  #  BE8EE323-184C-4E24-8E18-2E6DADD70160
+  gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid|{0x23, 0xE3, 0x8E, 0xBE, 0x4C, 0x18, 0x24, 0x4E, 0x8E, 0x18, 0x2E, 0x6D, 0xAD, 0xD7, 0x01, 0x60}|VOID*|0x4000012f
+
+  ## This fixed at build flag defines whether the MsUiTheme is built into the PPI or the DXE
+  #  If this PCD is set to TRUE then the Ui Theme data is not installed in the PPI and
+  #  no theme guid hob is inserted into the HOB list.  This is for system that do not use PPI
+  gMsGraphicsPkgTokenSpaceGuid.PcdUiThemeInDxe|FALSE|BOOLEAN|0x40000015
+
+  ##
+  # POST background coloring skip counter's initial/default value.
+  # Background is colored in DXE only when this counter reaches 0
+  # Default is 1, meaning background will not be colored on first invocation of Logo rendering library in DXE
+  #
+  gMsGraphicsPkgTokenSpaceGuid.PcdPostBackgroundColoringSkipCount|0x01|UINT8|0x40000187
+
+[PcdsFixedAtBuild, PcdsPatchableInModule]
+  ## Power Off Delay and Hold time.  Delay is how long to wait before prompting the user, and
+  #  hold is how long to display the power down dialog before shutting down
+  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|300|UINT32|0x4000012A    # Default is 5 * 60 Seconds (5 minutes)
+  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffHold|30|UINT16|0x4000012B      # Default is 30 seconds
+
+[PcdsDynamic, PcdsDynamicEx]
+  gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009
+ 
+[UserExtensions.TianoCore."ExtraFiles"]
+  MsGraphicsPkgExtra.uni

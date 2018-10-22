@@ -1,0 +1,79 @@
+## @file
+#  ManufacturingModeLib.inf
+#
+#  Description:    Library for determining if Manufacturing mode should be
+#                  enabled on this boot.  This libray is what everyone should
+#                  use to determine which mode we are in.  It can be called from
+#                  PEI or DXE.
+#
+#  Copyright (c) 2015 - 2018, Microsoft Corporation.
+#
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without 
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = UIToolKitLib
+  FILE_GUID                      = 4042708A-0F2D-4823-AC60-0D77B311188A
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = UIToolKitLib|DXE_DRIVER DXE_RUNTIME_DRIVER DXE_SAL_DRIVER DXE_SMM_DRIVER UEFI_APPLICATION UEFI_DRIVER
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  Bitmap.c
+  Button.c
+  Canvas.c
+  EditBox.c
+  Grid.c
+  Label.c
+  ListBox.c
+  SimpleUIToolKit.c
+  ToggleSwitch.c
+  Utilities.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseMemoryLib
+  MathLib
+  MsUiThemeLib
+  PcdLib
+
+[Protocols]
+  gMsOSKProtocolGuid
+
+[Guids]
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
+
+[BuildOptions]
+  *_VS2013x86_*_CC_FLAGS       = /Oi /Og /fp:fast /arch:SSE
+#  *_VS2015x86_*_CC_FLAGS       = /Od /FAcs
