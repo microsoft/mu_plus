@@ -77,6 +77,16 @@
   DeviceBootManagerLib|MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
   PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
 
+  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
+  UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
+
+  !if $(TARGET) == DEBUG
+    #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
+    RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+    NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+  !endif
+
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
@@ -88,6 +98,9 @@
 [LibraryClasses.common.DXE_CORE]
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
+
+[LibraryClasses.common.DXE_SMM_DRIVER]
+  SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
 
 
 ###################################################################################################
@@ -117,10 +130,15 @@
  
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
+  MsCorePkg/Universal/StatusCodeHandler/Serial/Pei/SerialStatusCodeHandlerPei.inf
 
 [Components.X64]
   MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
   MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+  MsCorePkg/Library/DxeDebugLibRouter/DxeDebugLibRouter.inf
+  MsCorePkg/Library/DebugPortProtocolInstallLib/DebugPortProtocolInstallLib.inf
+  MsCorePkg/Universal/StatusCodeHandler/Serial/Dxe/SerialStatusCodeHandlerDxe.inf
+  MsCorePkg/Universal/StatusCodeHandler/Serial/Smm/SerialStatusCodeHandlerSmm.inf  
 
 [BuildOptions]
 #force deprecated interaces off
