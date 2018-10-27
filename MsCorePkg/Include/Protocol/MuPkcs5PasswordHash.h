@@ -1,20 +1,17 @@
 /** @file
-DfciPkcs5PasswordHash.h
+This driver supports Pkcs 5 crypto operations
 
-This protocol to provide password hashing.
 
 Copyright (c) 2018, Microsoft Corporation
 
 All rights reserved.
-
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
-
 1. Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
+this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,15 +26,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#ifndef __DFCI_PKCS5_PW_HASH_H__
-#define __DFCI_PKCS5_PW_HASH_H__
+#ifndef __MU_PKCS5_PASSWORD_HASH_H__
+#define __MU_PKCS5_PASSWORD_HASH_H__
 
-typedef struct _DFCI_PKCS5_PASSWORD_HASH_PROTOCOL  DFCI_PKCS5_PASSWORD_HASH_PROTOCOL;
+typedef struct _MU_PKCS5_PASSWORD_HASH_PROTOCOL  MU_PKCS5_PASSWORD_HASH_PROTOCOL;
 
 
 /**
   Uses PKCS5 Defined algorithm to Hash a password string
-  Wrapper function for OpenSSL's PKCS5_PBKDF2_HMAC
 
   @param[in]  PasswordSize    Size of input password in # of bytes.
   @param[in]  Password        Pointer to the char array for the password.
@@ -57,8 +53,8 @@ typedef struct _DFCI_PKCS5_PASSWORD_HASH_PROTOCOL  DFCI_PKCS5_PASSWORD_HASH_PROT
 **/
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_PKCS5_PW_HASH) (
-  IN CONST DFCI_PKCS5_PASSWORD_HASH_PROTOCOL   *This,   
+(EFIAPI *MU_PKCS5_PW_HASH) (
+  IN CONST MU_PKCS5_PASSWORD_HASH_PROTOCOL   *This,   
   IN UINTN                                      PasswordSize,
   IN CONST  CHAR8                              *Password,
   IN UINTN                                      SaltSize,
@@ -72,11 +68,11 @@ EFI_STATUS
 ///
 /// PKCS5 protocol
 ///
-struct _DFCI_PKCS5_PASSWORD_HASH_PROTOCOL
+struct _MU_PKCS5_PASSWORD_HASH_PROTOCOL
 {
-  DFCI_PKCS5_PW_HASH HashPassword;
+  MU_PKCS5_PW_HASH HashPassword;
 };
 
-extern EFI_GUID gDfciPKCS5PasswordHashProtocolGuid;
+extern EFI_GUID gMuPKCS5PasswordHashProtocolGuid;
 
-#endif // __DFCI_PKCS5_PW_HASH_H__
+#endif // __MU_PKCS5_PW_HASH_H__

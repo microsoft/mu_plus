@@ -455,7 +455,7 @@ VerifySignature(
   )
 {
   EFI_STATUS Status = EFI_SUCCESS;
-  DFCI_PKCS7_PROTOCOL *Pkcs7Prot = NULL;
+  MU_PKCS7_PROTOCOL *Pkcs7Prot = NULL;
   UINTN CertSize = 0;
   BOOLEAN PKCS7 = FALSE;
   BOOLEAN PKCS1 = FALSE;
@@ -527,7 +527,7 @@ VerifySignature(
     CertSize = Signature->dwLength - OFFSET_OF(WIN_CERTIFICATE_UEFI_GUID, CertData);
 
     //Get our protocol for PKCS7
-    Status = gBS->LocateProtocol(&gDfciPKCS7ProtocolGuid, NULL, (VOID **)&Pkcs7Prot);
+    Status = gBS->LocateProtocol(&gMuPKCS7ProtocolGuid, NULL, (VOID **)&Pkcs7Prot);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "[AM] Failed to locate PKCS7 Support Protocol. Status = %r\n", Status));

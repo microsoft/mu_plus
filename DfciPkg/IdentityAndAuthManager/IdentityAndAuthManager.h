@@ -52,7 +52,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/BaseCryptLib.h>
 #include <Library/ZeroTouchSettingsLib.h>
 
-#include <Protocol/DfciPkcs7.h>
+#include <Protocol/MuPkcs7.h>
 #include <Protocol/DfciSettingPermissions.h>
 #include <Protocol/DfciSettingAccess.h>
 #include <Protocol/DfciApplyPacket.h>

@@ -60,6 +60,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
   CryptoPkg/CryptoPkg.dec
   XmlSupportPkg/XmlSupportPkg.dec
   DfciPkg/DfciPkg.dec
@@ -94,7 +95,7 @@
   gEfiRngProtocolGuid  #SOMETIMES CONSUMES
   gDfciApplyIdentityProtocolGuid
   gDfciAuthenticationProtocolGuid  #produces
-  gDfciPKCS7ProtocolGuid  #consumes
+  gMuPKCS7ProtocolGuid  #consumes
   gDfciSettingPermissionsProtocolGuid #sometimes consumes
   gDfciSettingAccessProtocolGuid  #sometimes consumes 
 
@@ -107,7 +108,7 @@
    AND gEfiVariableArchProtocolGuid 
    AND gEdkiiVariableLockProtocolGuid 
    AND gDfciSettingPermissionsProtocolGuid
-   AND gDfciPKCS7ProtocolGuid
+   AND gMuPKCS7ProtocolGuid
    AND gEfiRngProtocolGuid
 
 [BuildOptions]
