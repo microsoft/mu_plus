@@ -182,7 +182,6 @@
 
   #test tools
   DfciPkg/Application/DfciApply/DfciApply.inf
-  DfciPkg/DfciCryptoDxe/DfciCryptoDxe.inf
   DfciPkg/UnitTests/XmlB64Test/XmlB64TestApp.inf
 
 [BuildOptions]
