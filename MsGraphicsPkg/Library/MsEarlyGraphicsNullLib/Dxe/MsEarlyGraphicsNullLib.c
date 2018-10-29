@@ -53,5 +53,5 @@ MsEarlyGraphicsGetFrameBufferInfo(
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE **GraphicsMode
 )
 {
-  return EFI_SUCCESS;
+  return EFI_NOT_FOUND;
 }
