@@ -170,7 +170,7 @@ DriverInit (IN EFI_HANDLE         ImageHandle,
     // Graphics Output Protocol isn't availble now. Register for Graphics Output Protocol registration notifications.
     //
     Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL,
-                               TPL_CALLBACK,
+                               TPL_NOTIFY,
                                GopRegisteredCallback,
                                NULL,
                                &mGopRegisterEvent
