@@ -241,9 +241,9 @@ MS_COLOR_TABLE  gMsColorTable = {
   .TitleBarBackgroundColor = MS_GRAPHICS_LIGHT_GRAY_2_COLOR,
   .TitleBarTextColor = MS_GRAPHICS_BLACK_COLOR,
   .MasterFrameBackgroundColor = MS_GRAPHICS_LIGHT_GRAY_1_COLOR,
-  .MsterFrameCellNormalColor = MS_GRAPHICS_LIGHT_GRAY_1_COLOR,
-  .MsterFrameCellHoverColor = MS_GRAPHICS_LIGHT_GRAY_2_COLOR,
-  .MsterFrameCellSelectColor = MS_GRAPHICS_MED_BLUE_COLOR,
-  .MsterFrameCellGrayoutColor = MS_GRAPHICS_LIGHT_GRAY_2_COLOR,
+  .MasterFrameCellNormalColor = MS_GRAPHICS_LIGHT_GRAY_1_COLOR,
+  .MasterFrameCellHoverColor = MS_GRAPHICS_LIGHT_GRAY_2_COLOR,
+  .MasterFrameCellSelectColor = MS_GRAPHICS_MED_BLUE_COLOR,
+  .MasterFrameCellGrayoutColor = MS_GRAPHICS_LIGHT_GRAY_2_COLOR,
   .FormCanvasBackgroundColor = MS_GRAPHICS_WHITE_COLOR
 };

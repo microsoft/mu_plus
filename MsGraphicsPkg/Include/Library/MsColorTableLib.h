@@ -210,10 +210,10 @@ typedef struct MS_COLOR_TABLE_T_DEF {
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL   TitleBarBackgroundColor;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL   TitleBarTextColor;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MasterFrameBackgroundColor;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MsterFrameCellNormalColor;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MsterFrameCellHoverColor;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MsterFrameCellSelectColor;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MsterFrameCellGrayoutColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MasterFrameCellNormalColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MasterFrameCellHoverColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MasterFrameCellSelectColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   MasterFrameCellGrayoutColor;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL   FormCanvasBackgroundColor;
 
 } MS_COLOR_TABLE;
