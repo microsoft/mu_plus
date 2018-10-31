@@ -131,6 +131,8 @@
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
   MsCorePkg/Universal/StatusCodeHandler/Serial/Pei/SerialStatusCodeHandlerPei.inf
+  MsCorePkg/Library/DebugPortPei/DebugPortPei.inf
+  MsCorePkg/Library/PeiDebugLib/PeiDebugLib.inf
 
 [Components.X64]
   MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf

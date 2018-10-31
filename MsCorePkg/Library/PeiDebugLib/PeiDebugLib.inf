@@ -1,0 +1,63 @@
+### @file
+# Debug Library to be used with DebugPortPEI library
+# Routes all DebugPrint and DebugAssert calls through PPI
+#
+# Copyright (c) 2018, Microsoft Corporation
+#
+# Copyright (C) 2013 - 2015, Intel Corporation. All rights reserved.<BR>
+# This software and associated documentation (if any) is furnished
+# under a license and may only be used or copied in accordance with
+# the terms of the license. Except as permitted by the license, no
+# part of this software or documentation may be reproduced, stored in
+# a retrieval system, or transmitted in any form or by any means
+# without the express written consent of Intel Corporation.
+# This file contains 'Framework Code' and is licensed as such under
+# the terms of your license agreement with Intel or your vendor. This
+# file may not be modified, except as allowed by additional terms of
+# your license agreement.
+#
+# @par Specification Reference:
+#
+# @par Glossary:
+###
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = PeiDebugLib
+  FILE_GUID                      = 8ec54b67-63ed-418a-b845-06ef1297499f
+  VERSION_STRING                 = 1.0
+  MODULE_TYPE                    = PEIM
+  LIBRARY_CLASS                  = DebugLib|PEIM
+#
+# The following information is for reference only and not required by the build tools.
+#
+# VALID_ARCHITECTURES = IA32 X64 IPF EBC
+#
+
+[LibraryClasses]
+  PcdLib
+  ReportStatusCodeLib
+  BaseMemoryLib
+  BaseLib
+  DebugPrintErrorLevelLib
+  PeiServicesLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask
+  gEfiMdePkgTokenSpaceGuid.PcdFixedDebugPrintErrorLevel
+
+[Sources]
+  DebugLib.c
+
+[Ppis]
+  gDebugPortPpiGuid                          ## SOMETIMES_CONSUMES
+
+[Depex]
+  gDebugPortPpiGuid
+
