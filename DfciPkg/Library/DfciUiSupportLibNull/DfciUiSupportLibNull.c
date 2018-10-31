@@ -106,7 +106,7 @@ DfciUiDisplayAuthDialog (
   IN  BOOLEAN                             PasswordType,
   IN  CHAR16                              *Thumbprint,
   OUT DFCI_MB_RESULT                      *Result,
-  OUT CHAR16                              **Password OPTIONAL,
+  OUT CHAR16                              **Password OPTIONAL
 )  {
 
     return EFI_UNSUPPORTED;
