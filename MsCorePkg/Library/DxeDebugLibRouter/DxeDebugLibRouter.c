@@ -29,6 +29,7 @@
 
 static volatile BOOLEAN       mIsRscAvailable = FALSE;
 EFI_EVENT                     mReportStatusCodeRegisterEvent;
+static EFI_BOOT_SERVICES     *mBS = NULL;
 
 /**
   Report Status Code Callback Handler
@@ -46,13 +47,20 @@ ReportStatusCodeHandlerCallback(
     IN  VOID    *Context
 ) {
     mIsRscAvailable = TRUE;
-    gBS->CloseEvent (mReportStatusCodeRegisterEvent);
+    mBS->CloseEvent (mReportStatusCodeRegisterEvent);
     return;
 }
 
 
 /**
-  
+* The constructor sets up the callback routine for ReportStatusCode if
+* it is not already installed
+*
+* @param  ImageHandle   The firmware allocated handle for the EFI image.
+* @param  SystemTable   A pointer to the EFI System Table.
+*
+* @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
+*
 **/
 EFI_STATUS
 EFIAPI
@@ -64,7 +72,16 @@ DxeDebugLibConstructor(
     VOID*                      *mRscHandlerProtocol;
     VOID*                      Registration;
 
-    Status = gBS->LocateProtocol(&gMsSerialStatusCodeHandlerDxeProtocolGuid,
+
+    //
+    // Get BootServices Table
+    //
+    mBS = SystemTable->BootServices;
+
+    //
+    // Check if Report Status Code handler is installed
+    //
+    Status = mBS->LocateProtocol(&gMsSerialStatusCodeHandlerDxeProtocolGuid,
                                  NULL,
                                  (VOID**)&mRscHandlerProtocol);
 
@@ -72,7 +89,7 @@ DxeDebugLibConstructor(
     // Report Status Code may become available later
     //
     if(EFI_ERROR(Status)){
-      Status = gBS->CreateEvent(EVT_NOTIFY_SIGNAL,
+      Status = mBS->CreateEvent(EVT_NOTIFY_SIGNAL,
                                 TPL_NOTIFY,
                                 ReportStatusCodeHandlerCallback,
                                 NULL,
@@ -82,7 +99,7 @@ DxeDebugLibConstructor(
         // If tag GUID is installed switch over to Report Status Code
         //
         if (!EFI_ERROR(Status)) {
-            Status = gBS->RegisterProtocolNotify(&gMsSerialStatusCodeHandlerDxeProtocolGuid,
+            Status = mBS->RegisterProtocolNotify(&gMsSerialStatusCodeHandlerDxeProtocolGuid,
                                                  mReportStatusCodeRegisterEvent,
                                                  &Registration);
         }
