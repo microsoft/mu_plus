@@ -38,7 +38,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/MdeModuleHii.h>
 #include <Guid/DfciSettingsGuid.h>
 #include <Guid/DfciEventGroup.h>
-#include <Guid/TlsAuthentication.h>
 
 #include <DfciSystemSettingTypes.h>
 
@@ -386,27 +385,27 @@ GetDfciParameters (
         if (mZeroTouchCert.SubjectString != NULL) {
             SetString16Entry (STRING_TOKEN(STR_DFCI_ZTD_SUBJECT_FIELD), mZeroTouchCert.SubjectString);
         }
-        if (mZeroTouchCert.IssuerString != NULL) {
-            SetString16Entry(STRING_TOKEN(STR_DFCI_ZTD_ISSUER_FIELD), mZeroTouchCert.IssuerString);
-        }
+//        if (mZeroTouchCert.IssuerString != NULL) {
+//            SetString16Entry(STRING_TOKEN(STR_DFCI_ZTD_ISSUER_FIELD), mZeroTouchCert.IssuerString);
+//        }
         if (mZeroTouchCert.ThumbprintString != NULL) {
             SetString16Entry(STRING_TOKEN(STR_DFCI_ZTD_THUMBPRINT_FIELD), mZeroTouchCert.ThumbprintString);
         }
         if (mOwnerCert.SubjectString != NULL) {
             SetString16Entry (STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD), mOwnerCert.SubjectString);
         }
-        if (mOwnerCert.IssuerString != NULL) {
-            SetString16Entry(STRING_TOKEN(STR_DFCI_OWNER_ISSUER_FIELD), mOwnerCert.IssuerString);
-        }
+//        if (mOwnerCert.IssuerString != NULL) {
+//            SetString16Entry(STRING_TOKEN(STR_DFCI_OWNER_ISSUER_FIELD), mOwnerCert.IssuerString);
+//        }
         if (mOwnerCert.ThumbprintString != NULL) {
             SetString16Entry(STRING_TOKEN(STR_DFCI_OWNER_THUMBPRINT_FIELD), mOwnerCert.ThumbprintString);
         }
         if (mUserCert.SubjectString != NULL) {
             SetString16Entry (STRING_TOKEN(STR_DFCI_USER_SUBJECT_FIELD), mUserCert.SubjectString);
         }
-        if (mUserCert.IssuerString != NULL) {
-            SetString16Entry(STRING_TOKEN(STR_DFCI_USER_ISSUER_FIELD), mUserCert.IssuerString);
-        }
+//        if (mUserCert.IssuerString != NULL) {
+//            SetString16Entry(STRING_TOKEN(STR_DFCI_USER_ISSUER_FIELD), mUserCert.IssuerString);
+//        }
         if (mUserCert.ThumbprintString != NULL) {
             SetString16Entry(STRING_TOKEN(STR_DFCI_USER_THUMBPRINT_FIELD), mUserCert.ThumbprintString);
         }
@@ -438,7 +437,7 @@ GetDfciParameters (
                     Status = gBS->LocateProtocol (&gDfciRecoveryFormsetGuid, NULL, (VOID **) &dummy);
                     if (!EFI_ERROR(Status)) {
                         mDfciMenuConfiguration.DfciRecoveryEnabled = TRUE;
-                        DEBUG((DEBUG_ERROR, "Dfci Recovery is enabled\n"));
+                        DEBUG((DEBUG_INFO, "Dfci Recovery is enabled\n"));
                     }
                     if (Cert.SubjectString != NULL) {
                         FreePool(Cert.SubjectString);
@@ -461,7 +460,7 @@ GetDfciParameters (
 
         SetStringEntry (STRING_TOKEN(STR_DFCI_URL_FIELD), mDfciUrl);
         mDfciMenuConfiguration.DfciHttpRecoveryEnabled = TRUE;
-        DEBUG((DEBUG_ERROR, "Dfci Http Recovery is enabled\n"));
+        DEBUG((DEBUG_INFO, "Dfci Http Recovery is enabled\n"));
     }
 
     return EFI_SUCCESS;
@@ -748,8 +747,8 @@ DriverCallback (
         case EFI_BROWSER_ACTION_FORM_OPEN:
             switch (QuestionId) {
             case DFCI_MENU_INIT_QUESTION_ID:
-                DEBUG((DEBUG_ERROR," HttpRecovery is %d\n", mDfciMenuConfiguration.DfciHttpRecoveryEnabled));
-                DEBUG((DEBUG_ERROR," DfciRecovery is %d\n", mDfciMenuConfiguration.DfciRecoveryEnabled));
+                DEBUG((DEBUG_INFO," HttpRecovery is %d\n", mDfciMenuConfiguration.DfciHttpRecoveryEnabled));
+                DEBUG((DEBUG_INFO," DfciRecovery is %d\n", mDfciMenuConfiguration.DfciRecoveryEnabled));
                 break;
             default:
                 break;
@@ -760,24 +759,52 @@ DriverCallback (
         case EFI_BROWSER_ACTION_CHANGED:
             switch (QuestionId) {
             case DFCI_MENU_HTTP_UPDATE_NOW_QUESTION_ID:
-                DEBUG((DEBUG_ERROR," Http Recovery was selected\n"));
+                DEBUG((DEBUG_INFO," Http Recovery was selected\n"));
                 IssueDfciRequest ();
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
                 Status = EFI_SUCCESS;
                 break;
+
             case DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID:
-                DEBUG((DEBUG_ERROR," Usb Recovery was selected\n"));
+                DEBUG((DEBUG_INFO," Usb Recovery was selected\n"));
 
                 DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
                 Status = EFI_SUCCESS;
                 break;
+
+            case DFCI_MENU_RECOVERY_INFO_QUESTION_ID:
             case DFCI_MENU_RECOVERY_NOW_QUESTION_ID:
-                DEBUG((DEBUG_ERROR," Full Recovery was selected\n"));
+                DEBUG((DEBUG_INFO," Full Recovery was selected\n"));
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
                 Status = EFI_SUCCESS;
                 break;
+
+            case DFCI_MENU_CONFIGURE_QUESTION_ID:
+                DEBUG((DEBUG_INFO," Move to Configure Menu\n"));
+                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_SUBMIT_EXIT;
+                Status = EFI_SUCCESS;
+                break;
+
+            case DFCI_MENU_ZUM_OPT_IN_QUESTION_ID:
+                DEBUG((DEBUG_INFO," Opt In selected\n"));
+
+                DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
+
+                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_SUBMIT_EXIT;
+                Status = EFI_SUCCESS;
+                break;
+
+            case DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID:
+                DEBUG((DEBUG_INFO," Opt Out selected\n"));
+
+                DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
+          
+                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_SUBMIT_EXIT;
+                Status = EFI_SUCCESS;
+                break;
+
             default:
                 break;
             }

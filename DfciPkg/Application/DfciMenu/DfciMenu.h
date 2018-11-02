@@ -41,14 +41,22 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // The following defines are from DfciMenuGuid.h.  Keep these in mind when altering
 // the values used in this formset.
 //
-// #define DFCI_MENU_FORM_ID       0x1000
+// #define DFCI_MENU_FORM_ID       0x2000
 // #define DFCI_MENU_FORMSET_GUID  0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9} \
 
-#define DFCI_MENU_VARID                         0x0900
-#define DFCI_MENU_INIT_QUESTION_ID              0x1100
-#define DFCI_MENU_HTTP_UPDATE_NOW_QUESTION_ID   0x1200
-#define DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID    0x1300
-#define DFCI_MENU_RECOVERY_NOW_QUESTION_ID      0x1400
+#define DFCI_MENU_VARID                         0x2100
+#define DFCI_MENU_CONFIGURE_FORM_ID             0x2200
+#define DFCI_MENU_RECOVERY_INFO_FORM_ID         0x2300
+#define DFCI_MENU_INIT_QUESTION_ID              0x2400
+#define DFCI_MENU_INIT2_QUESTION_ID             0x2500
+#define DFCI_MENU_INIT3_QUESTION_ID             0x2600
+#define DFCI_MENU_HTTP_UPDATE_NOW_QUESTION_ID   0x2700
+#define DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID    0x2800
+#define DFCI_MENU_RECOVERY_INFO_QUESTION_ID     0x2900
+#define DFCI_MENU_RECOVERY_NOW_QUESTION_ID      0x2A00
+#define DFCI_MENU_ZUM_OPT_IN_QUESTION_ID        0x2B00
+#define DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID       0x2C00
+#define DFCI_MENU_CONFIGURE_QUESTION_ID         0x2D00
 
 // These are the VFR compiler generated data representing our VFR data.
 //
@@ -60,10 +68,13 @@ typedef struct {
     UINT8    DfciZeroTouchEnabled;
     UINT8    DfciOwnerEnabled;
     UINT8    DfciUserEnabled;
+    UINT8    DfciUser1Enabled;
+    UINT8    DfciUser2Enabled;
+    UINT8    DfciFriendlyName;
 } DFCI_MENU_CONFIGURATION;
 
 // Grid class form browser extensions.  These should be ignored
-// by any browser not implementing the Grid Class ignores these hints
+// by any browser not implementing the Grid Class.
 //
 //
 #define GRID_CLASS_START_OPCODE_GUID                                             \

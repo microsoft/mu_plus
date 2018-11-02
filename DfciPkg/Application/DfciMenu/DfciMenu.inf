@@ -84,15 +84,16 @@
   gDfciPermissionManagerVarNamespace
   gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
-  gEfiTlsCaCertificateGuid
+  gEfiBootManagerPolicyNetworkGuid
 
 [Protocols]
   gDfciAuthenticationProtocolGuid
   gDfciSettingAccessProtocolGuid
+  gDfciSettingPermissionsProtocolGuid
+  gEfiBootManagerPolicyProtocolGuid
   gEfiHiiConfigAccessProtocolGuid
   gEfiHttpProtocolGuid
   gEfiHttpServiceBindingProtocolGuid
-  gDfciSettingPermissionsProtocolGuid
 
 [FeaturePcd]
 

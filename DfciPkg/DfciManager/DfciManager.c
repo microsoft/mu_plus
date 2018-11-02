@@ -31,6 +31,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DfciManager.h"
 
+#define _DBGMSGID_  "[DM]"
+
 typedef
 EFI_STATUS
 (EFIAPI *DECODE_PACKET) (
@@ -126,13 +128,13 @@ EndOfDxeCallback (
 
     PERF_FUNCTION_BEGIN ();
 
-    DEBUG((DEBUG_INFO, "[DM] %a: ProcessMailboxes at EndOfDxe\n", __FUNCTION__));
+    DEBUG((DEBUG_INFO, "%a %a: ProcessMailboxes at EndOfDxe\n", _DBGMSGID_, __FUNCTION__));
 
     //
     // Check if the UI components we need are available. If not, bail.
     //
     if (DfciUiIsUiAvailable() == FALSE) {
-        DEBUG((DEBUG_ERROR, "[DM] %a - Callback trigggered. UI not available\n", __FUNCTION__));
+        DEBUG((DEBUG_ERROR, "%a %a: Callback trigggered. UI not available\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);
         return;
     }
@@ -167,7 +169,7 @@ SettingAccessCallback (
 
 
     PERF_FUNCTION_BEGIN ();
-    DEBUG((DEBUG_INFO, "[DM] %a: ProcessMailboxes at SettingsAccess\n", __FUNCTION__));
+    DEBUG((DEBUG_INFO, "%a %a: ProcessMailboxes at SettingsAccess\n", _DBGMSGID_, __FUNCTION__));
     //
     // Try again to process provisioning input.
     //
@@ -251,31 +253,31 @@ DecodePacket (
 
     //Check incomming size
     if (Data->PacketSize > MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE) {
-      DEBUG((DEBUG_ERROR, "[DM] %a: %s Incomming Apply var is too big (%d bytes)\n", __FUNCTION__, Data->MailboxName, Data->PacketSize));
+      DEBUG((DEBUG_ERROR, "%a %a: %s Incomming Apply var is too big (%d bytes)\n", _DBGMSGID_, __FUNCTION__, Data->MailboxName, Data->PacketSize));
       Data->State = DFCI_PACKET_STATE_DATA_INVALID;
       Data->StatusCode = EFI_BAD_BUFFER_SIZE;
       return Data->StatusCode;
     }
 
     Data->State = DFCI_PACKET_STATE_DATA_PRESENT;
-    DEBUG((DEBUG_INFO, "[DM] %a: %s Variable Size: 0x%X\n", __FUNCTION__, Data->MailboxName, Data->PacketSize));
+    DEBUG((DEBUG_INFO, "%a %a: %s Variable Size: 0x%X\n", _DBGMSGID_, __FUNCTION__, Data->MailboxName, Data->PacketSize));
 
     if (Data->PacketSize < sizeof(DFCI_PACKET_HEADER)) {
-        DEBUG((DEBUG_ERROR, "[DM] Apply VarSize too small. Size: 0x%X MinSize: 0x%X\n", Data->PacketSize, sizeof(DFCI_SIGNER_PROVISION_APPLY_VAR)));
+        DEBUG((DEBUG_ERROR, "%a Apply VarSize too small. Size: 0x%X MinSize: 0x%X\n", _DBGMSGID_, Data->PacketSize, sizeof(DFCI_SIGNER_PROVISION_APPLY_VAR)));
         Data->StatusCode = EFI_COMPROMISED_DATA;
         Data->State = DFCI_PACKET_STATE_DATA_INVALID;
         return Data->StatusCode;
     }
 
     if (Data->Packet->Signature != Data->Expected.Signature) {
-        DEBUG((DEBUG_ERROR, "[DM] Var Signature not valid. Sig=%x, Exp=%x\n", Data->Packet->Signature, Data->Expected.Signature));
+        DEBUG((DEBUG_ERROR, "%a Var Signature not valid. Sig=%x, Exp=%x\n", _DBGMSGID_, Data->Packet->Signature, Data->Expected.Signature));
         Data->StatusCode = EFI_COMPROMISED_DATA;
         Data->State = DFCI_PACKET_STATE_DATA_INVALID;
         return Data->StatusCode;
     }
 
     if (Data->Packet->Version != Data->Expected.Version) {
-        DEBUG((DEBUG_ERROR, "[DM] Var Version not current. Sig=%x, Exp=%x\n", Data->Packet->Version, Data->Expected.Version));
+        DEBUG((DEBUG_INFO, "%a Var Version not current. Sig=%x, Exp=%x\n", _DBGMSGID_, Data->Packet->Version, Data->Expected.Version));
         Data->StatusCode = EFI_INCOMPATIBLE_VERSION;
         Data->State = DFCI_PACKET_STATE_DATA_INVALID;
         return Data->StatusCode;
@@ -427,14 +429,14 @@ QueueMailboxAtSettingAccess () {
                                    &Event
                                   );
         if (EFI_ERROR (Status)) {
-            DEBUG((DEBUG_INFO, "[DM] %a: Failed to create SettingAccess registration event (%r).\r\n", __FUNCTION__, Status));
+            DEBUG((DEBUG_INFO, "%a %a: Failed to create SettingAccess registration event (%r).\r\n", _DBGMSGID_, __FUNCTION__, Status));
         } else {
             Status = gBS->RegisterProtocolNotify (&gDfciSettingAccessProtocolGuid,
                                                    Event,
                                                   &NotUsed
                                                  );
             if (EFI_ERROR (Status)) {
-                DEBUG((DEBUG_INFO,  "[DM] %a: Failed to register for Setting Access notifications (%r).\r\n", __FUNCTION__, Status));
+                DEBUG((DEBUG_INFO,  "%a %a: Failed to register for Setting Access notifications (%r).\r\n", _DBGMSGID_, __FUNCTION__, Status));
             } else {
                 Status = EFI_MEDIA_CHANGED;
             }
@@ -461,11 +463,11 @@ ProcessApplyPacket (
     EFI_STATUS Status;
 
 
-    DEBUG((DEBUG_INFO, "[DM] Dfci Manager - Processing Apply Packet for %s.\n", Data->MailboxName));
+    DEBUG((DEBUG_INFO, "%a Semm Manager - Processing Apply Packet for %s.\n", _DBGMSGID_, Data->MailboxName));
     Status = ApplyProtocol->ApplyPacket(ApplyProtocol, Data);
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "[DM] %a: Error applying packet for variable %s - %r\n", __FUNCTION__, Data->MailboxName, Status));
+        DEBUG((DEBUG_ERROR, "%a %a: Error applying packet for variable %s - %r\n", _DBGMSGID_, __FUNCTION__, Data->MailboxName, Status));
     } else {
         // Only Identity packets can set DFCI_PACKET_STATE_DATA_DELAYED_PROCESSING
         if (Data->State == DFCI_PACKET_STATE_DATA_DELAYED_PROCESSING) {
@@ -511,13 +513,13 @@ InitializePacket (IN     CHAR16                     *VariableName,
 
 
     if (MgrData == NULL) {
-      DEBUG((DEBUG_ERROR, "[DM] %a: ManagerData not provided\n", __FUNCTION__));
+      DEBUG((DEBUG_ERROR, "%a %a: ManagerData not provided\n", _DBGMSGID_, __FUNCTION__));
       return EFI_INVALID_PARAMETER;
     }
 
     MgrData->Data = AllocateZeroPool (sizeof(DFCI_INTERNAL_PACKET));
     if (MgrData->Data == NULL) {
-        DEBUG((DEBUG_INFO, "[DM] Dfci Manager out of resources.\n"));
+        DEBUG((DEBUG_INFO, "%a Dfci Manager out of resources.\n", _DBGMSGID_));
         return EFI_OUT_OF_RESOURCES;
     }
 
@@ -538,9 +540,9 @@ InitializePacket (IN     CHAR16                     *VariableName,
         MgrData->Data->StatusCode = Status;
         MgrData->DecodeStatus = Status;
         if (Status == EFI_NOT_FOUND) {
-            DEBUG((DEBUG_INFO, "[DM] Dfci Manager - No Pending Data for %s.\n", MgrData->Data->MailboxName));
+            DEBUG((DEBUG_INFO, "%a Dfci Manager - No Pending Data for %s.\n", _DBGMSGID_, MgrData->Data->MailboxName));
         } else {
-            DEBUG((DEBUG_ERROR, "[DM] %a: Error getting variable %s - %r\n", __FUNCTION__, MgrData->Data->MailboxName, Status));
+            DEBUG((DEBUG_ERROR, "%a %a: Error getting variable %s - %r\n", _DBGMSGID_, __FUNCTION__, MgrData->Data->MailboxName, Status));
         }
         MgrData->Data->Packet = NULL;
     } else {
@@ -548,7 +550,7 @@ InitializePacket (IN     CHAR16                     *VariableName,
         Status = Decoder(MgrData->Data);
         MgrData->DecodeStatus = Status;
 
-        DEBUG((DEBUG_INFO, "[DM] Dfci Manager - Processing queued for %s - %r\n", MgrData->Data->MailboxName, Status));
+        DEBUG((DEBUG_INFO, "%a Dfci Manager - Processing queued for %s - %r\n", _DBGMSGID_, MgrData->Data->MailboxName, Status));
     }
 
     return EFI_SUCCESS;
@@ -691,11 +693,11 @@ ProcessPacket (IN DFCI_MANAGER_DATA *MgrData
     Data = MgrData->Data;
 
     if (Data->Packet == NULL) {
-        DEBUG((DEBUG_INFO, "[DM] Process Packet - No pending Data for %s.\n", Data->MailboxName));
+        DEBUG((DEBUG_INFO, "%a Process Packet - No pending Data for %s.\n", _DBGMSGID_, Data->MailboxName));
         return EFI_SUCCESS;
     }
 
-    DEBUG((DEBUG_INFO, "[DM] Process Packet - Processing pending Data for %s.\n", Data->MailboxName));
+    DEBUG((DEBUG_INFO, "%a Process Packet - Processing pending Data for %s.\n", _DBGMSGID_, Data->MailboxName));
 
     // Get the results from the packet decode
     Status = MgrData->DecodeStatus;
@@ -708,7 +710,7 @@ ProcessPacket (IN DFCI_MANAGER_DATA *MgrData
     }
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "[DM] Process Packet failed for %s. Code=%r\n", Data->MailboxName, Status));
+        DEBUG((DEBUG_ERROR, "%a Process Packet failed for %s. Code=%r\n", _DBGMSGID_, Data->MailboxName, Status));
     }
 
     return Status;
@@ -733,30 +735,30 @@ ProcessUnEnrollPacket (IN DFCI_MANAGER_DATA *MgrData
     Status = ProcessPacket (MgrData);
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "[DM] %a: Error processing unenroll. Code=%r\n", __FUNCTION__, Status));
+        DEBUG((DEBUG_ERROR, "%a %a: Error processing unenroll. Code=%r\n", _DBGMSGID_, __FUNCTION__, Status));
     } else {
         Data = MgrData->Data;
         if (Data->Packet != NULL) {
             if (Data->Unenroll) {
                 Status = QueueMailboxAtSettingAccess ();
-                DEBUG((DEBUG_INFO, "[DM] QueueMailboxAtSettingsAccess - code=%r\n",Status));
+                DEBUG((DEBUG_INFO, "%a QueueMailboxAtSettingsAccess - code=%r\n", _DBGMSGID_, Status));
                 if (Status == EFI_MEDIA_CHANGED) {
                     return Status;
                 }
 
                 if (!EFI_ERROR(Status)) {
                     Status = ProcessApplyPacket (Data, mApplyIdentityProtocol);
-                    DEBUG((DEBUG_INFO, "[DM] Applied Packet, code=%r, state=%d\n", Data->StatusCode, Data->State));
+                    DEBUG((DEBUG_INFO, "%a Applied Packet, code=%r, state=%d\n", _DBGMSGID_, Data->StatusCode, Data->State));
                     if (Status == EFI_MEDIA_CHANGED) {
                         return Status;
                     } else if (EFI_ERROR(Status)) {
-                        DEBUG((DEBUG_ERROR, "[DM] %a: Error applying results for variable %s - %r\n", __FUNCTION__, Data->ResultName, Status));
+                        DEBUG((DEBUG_ERROR, "%a %a: Error applying results for variable %s - %r\n", _DBGMSGID_, __FUNCTION__, Data->ResultName, Status));
                     }
                 }
 
                 mRebootRequired = TRUE;
             } else {
-                DEBUG((DEBUG_INFO, "[DM] Invalid internal state. Should never have Enroll here.\n"));
+                DEBUG((DEBUG_INFO, "%a Invalid internal state. Should never have Enroll here.\n", _DBGMSGID_));
                 ASSERT(FALSE);
             }
         }
@@ -801,18 +803,18 @@ CompletePacket(
         Data->StatusCode = ApplyStatus;
     }
 
-    DEBUG((DEBUG_INFO, "[DM] Dfci Manager - CompletePacket for %s, Lkg=%d,State=%d, Code=%r.\n", Data->MailboxName, LkgOperation, Data->State, Data->StatusCode));
+    DEBUG((DEBUG_INFO, "%a Dfci Manager - CompletePacket for %s, Lkg=%d,State=%d, Code=%r.\n", _DBGMSGID_, Data->MailboxName, LkgOperation, Data->State, Data->StatusCode));
 
     Status = MgrData->ApplyProtocol->Lkg(MgrData->ApplyProtocol, Data, LkgOperation);
     if (!EFI_ERROR(Status)) {
 
         Status = MgrData->ApplyProtocol->ApplyResult(MgrData->ApplyProtocol, Data);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "[DM] %a: Error applying results for variable %s - %r\n", __FUNCTION__, Data->ResultName, Status));
+            DEBUG((DEBUG_ERROR, "%a %a: Error applying results for variable %s - %r\n", _DBGMSGID_, __FUNCTION__, Data->ResultName, Status));
         }
 
     } else {
-        DEBUG((DEBUG_ERROR, "[DM] %a: Error completing Lkg for packet variable %s - %r\n", __FUNCTION__, Data->ResultName, Status));
+        DEBUG((DEBUG_ERROR, "%a %a: Error completing Lkg for packet variable %s - %r\n", _DBGMSGID_, __FUNCTION__, Data->ResultName, Status));
     }
 
     return Status;
@@ -835,7 +837,7 @@ ProcessMailBoxes (
     EFI_STATUS         Status;
 
 
-    DEBUG((DEBUG_INFO, "[DM] %a: ProcessMailboxes Entry\n", __FUNCTION__));
+    DEBUG((DEBUG_INFO, "%a %a: ProcessMailboxes Entry\n", _DBGMSGID_, __FUNCTION__));
 
     // Process all packets in this order.  If any identity packet state is set to
     // DFCI_PACKET_STATE_DATA_DELAYED_PROCESSING, ProcessPacket will register an EndOfDxe
@@ -917,22 +919,24 @@ COMPLETE_AS_FAILED:
     // Now, re-process the identity mailboxes for possible un-enroll operations
 
     MgrData = &mManagerData[MGR_IDENTITY2];
-    Status = ProcessUnEnrollPacket (MgrData);
-    if (Status == EFI_MEDIA_CHANGED) {
-        goto EARLY_EXIT;
-    }
-
-    CompletePacket(MgrData, Status);
+    if (MgrData->Data->Unenroll) {
+        Status = ProcessUnEnrollPacket (MgrData);
+        if (Status == EFI_MEDIA_CHANGED) {
+            goto EARLY_EXIT;
+        }
+        CompletePacket(MgrData, Status);
+    } 
 
     MgrData = &mManagerData[MGR_IDENTITY];
-    Status = ProcessUnEnrollPacket (MgrData);
-    if (Status == EFI_MEDIA_CHANGED) {
-        goto EARLY_EXIT;
+    if (MgrData->Data->Unenroll) {
+        Status = ProcessUnEnrollPacket (MgrData);
+        if (Status == EFI_MEDIA_CHANGED) {
+            goto EARLY_EXIT;
+        }
+        CompletePacket(MgrData, Status);
     }
 
-    CompletePacket(MgrData, Status);
-
-    DEBUG((DEBUG_INFO, "[DM] ProcessMailboxes Final Exit\n"));
+    DEBUG((DEBUG_INFO, "%a ProcessMailboxes Final Exit\n", _DBGMSGID_));
 
     FreeManagerData ();
 
@@ -944,7 +948,7 @@ COMPLETE_AS_FAILED:
 
 EARLY_EXIT:
 
-    DEBUG((DEBUG_INFO, "[DM] ProcessMailboxes Early Exit\n"));
+    DEBUG((DEBUG_INFO, "%a ProcessMailboxes Early Exit\n", _DBGMSGID_));
 
     return Status;
 }
@@ -970,21 +974,21 @@ DfciManagerEntry(
 
     Status = gBS->LocateProtocol(&gDfciApplyIdentityProtocolGuid, NULL, &mApplyIdentityProtocol);
     if (EFI_ERROR(Status) || NULL == mApplyIdentityProtocol) {
-        DEBUG((DEBUG_ERROR, "[DM] %a: Cannot find Apply Identity Protocol.\n", __FUNCTION__));
+        DEBUG((DEBUG_ERROR, "%a %a: Cannot find Apply Identity Protocol.\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);
         goto ERROR_EXIT;
     }
 
     Status = gBS->LocateProtocol(&gDfciApplyPermissionsProtocolGuid, NULL, &mApplyPermissionsProtocol);
     if (EFI_ERROR(Status) || NULL == mApplyPermissionsProtocol) {
-        DEBUG((DEBUG_ERROR, "[DM] %a: Cannot find Apply Permission Protocol.\n", __FUNCTION__));
+        DEBUG((DEBUG_ERROR, "%a %a: Cannot find Apply Permission Protocol.\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);
         goto ERROR_EXIT;
     }
 
     Status = gBS->LocateProtocol(&gDfciApplySettingsProtocolGuid, NULL, &mApplySettingsProtocol);
     if (EFI_ERROR(Status) || NULL == mApplySettingsProtocol) {
-        DEBUG((DEBUG_ERROR, "[DM] %a: Cannot find Apply Settings Protocol.\n", __FUNCTION__));
+        DEBUG((DEBUG_ERROR, "%a %a: Cannot find Apply Settings Protocol.\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);
         goto ERROR_EXIT;
     }
@@ -1009,11 +1013,11 @@ DfciManagerEntry(
                                 &mEndOfDxeEvent );
 
     if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, "[DM] %a: EndOfDxe callback registration failed! %r\n", __FUNCTION__, Status ));
+      DEBUG(( DEBUG_ERROR, "%a %a: EndOfDxe callback registration failed! %r\n", _DBGMSGID_, __FUNCTION__, Status ));
       goto ERROR_EXIT;
     } else {
         Status = ProcessMailBoxes ();
-        DEBUG((DEBUG_INFO, "[DM] %a: Processing mailbox complete. Code = %r.\n", __FUNCTION__, Status));
+        DEBUG((DEBUG_INFO, "%a %a: Processing mailbox complete. Code = %r.\n", _DBGMSGID_, __FUNCTION__, Status));
 
         if (Status != EFI_MEDIA_CHANGED) {
             gBS->CloseEvent(mEndOfDxeEvent);
@@ -1031,7 +1035,7 @@ DfciManagerEntry(
 
 ERROR_EXIT:
 
-    DEBUG((DEBUG_ERROR, "[DM] %a: Exiting with error. Code = %r\n",Status));
+    DEBUG((DEBUG_ERROR, "%a %a: Exiting with error. Code = %r\n", _DBGMSGID_, Status));
 
     FreeManagerData ();
 

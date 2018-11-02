@@ -38,6 +38,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/DfciPermissionManagerVariables.h>
 #include <Guid/DfciSettingsManagerVariables.h>
 
+#include <Protocol/BootManagerPolicy.h>
 #include <Protocol/Http.h>
 #include <Protocol/Ip4Config2.h>
 #include <Protocol/ServiceBinding.h>
@@ -1373,13 +1374,29 @@ DfciRequestProcess (
                   // Local IP is DHCP, or fixed etc
     ) {
 
-    DFCI_PRIVATE_DATA               *Dfci;
-    BOOLEAN                         DoneProcessing;
-    EFI_HANDLE                     *HandleBuffer;
-    UINTN                           HandleCount;
-    UINTN                           NicIndex;
-    EFI_STATUS                      Status;
-    BOOLEAN                         MediaPresent;
+    EFI_BOOT_MANAGER_POLICY_PROTOCOL *BootPolicy;
+    DFCI_PRIVATE_DATA                *Dfci;
+    BOOLEAN                           DoneProcessing;
+    EFI_HANDLE                       *HandleBuffer;
+    UINTN                             HandleCount;
+    BOOLEAN                           MediaPresent;
+    UINTN                             NicIndex;
+    EFI_STATUS                        Status;
+
+
+    Status = gBS->LocateProtocol(&gEfiBootManagerPolicyProtocolGuid,
+                                 NULL,
+                                 (VOID **)&BootPolicy);
+
+    // If the platform chose to publish a Boot Manager Policy, ask it to start the
+    // networking stack.  Ignore any errors, and attempt to access the network even if
+    // the BootPolicy returns an error.
+    if (!EFI_ERROR(Status)) {
+        Status = BootPolicy->ConnectDeviceClass (BootPolicy, &gEfiBootManagerPolicyNetworkGuid);
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR,"Error starting the network. Code = %r\n",Status));
+        }
+    }
 
     mUserStatus = USER_STATUS_SUCCESS;
     //

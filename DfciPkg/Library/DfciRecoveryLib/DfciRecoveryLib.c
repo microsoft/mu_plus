@@ -63,8 +63,8 @@ GetRecoveryChallenge (
   OUT UINTN                       *ChallengeSize
   )
 {
-  EFI_STATUS                    Status;
-  DFCI_RECOVERY_CHALLENGE    *NewChallenge;
+  EFI_STATUS                     Status;
+  DFCI_RECOVERY_CHALLENGE       *NewChallenge;
   EFI_RNG_PROTOCOL              *RngProtocol;
 
   DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__));
@@ -95,7 +95,7 @@ GetRecoveryChallenge (
   // Allocate the buffer...
   if (!EFI_ERROR( Status ))
   {
-    NewChallenge = AllocatePool( sizeof( *NewChallenge ) );
+    NewChallenge = AllocatePool( sizeof( DFCI_RECOVERY_CHALLENGE ) + 1 );
     if (NewChallenge == NULL)
     {
       Status = EFI_OUT_OF_RESOURCES;

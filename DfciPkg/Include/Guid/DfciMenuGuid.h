@@ -38,7 +38,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9} \
   }
 
-#define DFCI_MENU_FORM_ID           0x1000
+#define DFCI_MENU_FORM_ID           0x2000
 
 extern EFI_GUID gDfciMenuFormsetGuid;
 

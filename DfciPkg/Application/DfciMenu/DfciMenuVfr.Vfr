@@ -45,9 +45,9 @@ formset
         guid  = DFCI_MENU_FORMSET_GUID;
 
 /*------------------------------------------------------------------------------------*/
-/*     DFCI Menu Form                                                                 */
+/*     DFCI Management                                                                */
 /*------------------------------------------------------------------------------------*/
-    form formid = DFCI_MENU_FORM_ID,                                           // FORM 0x1000
+    form formid = DFCI_MENU_FORM_ID,                                            // Main form
         title  = STRING_TOKEN(STR_DFCI_MENU_TITLE);
 
         suppressif TRUE;
@@ -55,7 +55,7 @@ formset
                 help   = STRING_TOKEN(STR_NULL_STRING),
                 text   = STRING_TOKEN(STR_NULL_STRING),
                 flags  = INTERACTIVE,
-                key    = DFCI_MENU_INIT_QUESTION_ID;                           // Used for FormOpen notification
+                key    = DFCI_MENU_INIT_QUESTION_ID;                            // Used for FormOpen notification
         endif;
 
         //
@@ -63,253 +63,589 @@ formset
         //
 
         text
-            help    = STRING_TOKEN(STR_NULL_STRING),                           // DFCI Enabled Header
-            text    = STRING_TOKEN(STR_DFCI_HEADER);                           //
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // DFCI Enabled Header
+            text    = STRING_TOKEN(STR_DFCI_MANAGEMENT_HEADER);                 //
 
         text
-            help    = STRING_TOKEN(STR_NULL_STRING),                           // SPACING
-            text    = STRING_TOKEN(STR_NULL_STRING);                           //
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
-        text
-            help    = STRING_TOKEN(STR_NULL_STRING),                           // DFCI Enabled Info
-            text    = STRING_TOKEN(STR_DFCI_INFO);                             //
+        suppressif   NOT ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;      // ZUM menu when no Owner
 
-        text
-            help    = STRING_TOKEN(STR_NULL_STRING),                           // SPACING
-            text    = STRING_TOKEN(STR_NULL_STRING);                           //
+            suppressif ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // 
+                    text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_READY);          // ZeroTouchStatus: Ready
 
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // 
+                    text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_OUT),               // Opt Out
+                    flags   = INTERACTIVE,                                      // INTERACTIVE = Button
+                    key     = DFCI_MENU_ZUM_OPT_IN_QUESTION_ID;
+            endif;
 
-        guidop
-            guid     = GRID_CLASS_START_OPCODE_GUID,                           // Custom UI Grid opcode - START
-            datatype = UINT32,                                                 //
-            data     = 60,                                                     // Grid cell height in pixels.
-        endguidop;
+            suppressif NOT ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
+                    text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_NOT_READY);      // ZeroTouchStatus: Not Ready
 
-        suppressif ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // 
+                    text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_IN),                // Opt In
+                    flags   = INTERACTIVE,                                      // INTERACTIVE = Button
+                    key     = DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID;
+            endif;
+
+        endif; 
+
+        suppressif   ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;          // DFCI Menu when Owner 
+
+            guidop
+                guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
+                datatype = UINT32,                                              //
+                data     = 48,                                                  // Grid cell height in pixels.
+            endguidop;
 
             subtitle
-                text    = STRING_TOKEN(STR_NULL_STRING),                       // Group of horizontal text blocks
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
                 flags   = HORIZONTAL;
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                   // Subject:
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
+                    text    = STRING_TOKEN(STR_DFCI_MANAGED_BY);
+
+                suppressif  ideqval DfciMenuConfig.DfciFriendlyName == 0x00;    // If no friendly name, just 
+                    text
+                        help    = STRING_TOKEN(STR_NULL_STRING),                // managed by owner
+                        text    = STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD);
+                endif;
+
+                suppressif  NOT ideqval DfciMenuConfig.DfciFriendlyName == 0x00; // If friendly name,  
+                    text
+                        help    = STRING_TOKEN(STR_NULL_STRING),                // managed by MDM
+                        text    = STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME);
+
+                    subtitle
+                        text    = STRING_TOKEN(STR_NULL_STRING),                // Group of horizontal text blocks
+                        flags   = HORIZONTAL;
+
+                        text
+                            help    = STRING_TOKEN(STR_NULL_STRING),            // On behalf of MDM Tenant name
+                            text    = STRING_TOKEN(STR_DFCI_ON_BEHALF_OF);
+
+                        text
+                            help    = STRING_TOKEN(STR_NULL_STRING),             
+                            text    = STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME);
+                endif;
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+            
+            guidop
+                guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
+            endguidop;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+
+            goto DFCI_MENU_CONFIGURE_FORM_ID,                                   // External reference to recovery menu
+                prompt   = STRING_TOKEN(STR_DFCI_MENU_CONFIGURE),               //
+                help     = STRING_TOKEN(STR_NULL_STRING),                       // HTTP Update Now button
+                flags    = INTERACTIVE,
+                key      = DFCI_MENU_CONFIGURE_QUESTION_ID;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+        endif;
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                 
+            text    = STRING_TOKEN(STR_DETAILS);                     
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        suppressif ideqval  DfciMenuConfig.DfciUser2Enabled == 0x00;
+
+            guidop
+                guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
+                datatype = UINT32,                                              //
+                data     = 48,                                                  // Grid cell height in pixels.
+            endguidop;
+
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
                     text    = STRING_TOKEN(STR_DFCI_SUBJECT);
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                   // Subject field
-                    text    = STRING_TOKEN(STR_DFCI_ZTD_SUBJECT_FIELD);
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject field
+                    text    = STRING_TOKEN(STR_DFCI_USER2_SUBJECT_FIELD);
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                   // SPACING
-                    text    = STRING_TOKEN(STR_NULL_STRING);                   //
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                   // SPACING
-                    text    = STRING_TOKEN(STR_NULL_STRING);                   //
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                   // SPACING
-                    text    = STRING_TOKEN(STR_NULL_STRING);                   //
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
             subtitle
-                text    = STRING_TOKEN(STR_NULL_STRING),                       // Group of horizontal text blocks
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
                 flags   = HORIZONTAL;
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                   // Issuer:
-                    text    = STRING_TOKEN(STR_DFCI_ISSUER);
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint:
+                    text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                   // Issuer name field
-                    text    = STRING_TOKEN(STR_DFCI_ZTD_ISSUER_FIELD);
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
+                    text    = STRING_TOKEN(STR_DFCI_USER2_THUMBPRINT_FIELD);
 
-            subtitle
-                text    = STRING_TOKEN(STR_NULL_STRING),                       // Group of horizontal text blocks
-                flags   = HORIZONTAL;
+            guidop
+                guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
+            endguidop;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint
-                   text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
-
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint field
-                   text    = STRING_TOKEN(STR_DFCI_ZTD_THUMBPRINT_FIELD);
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
 
         endif;
 
-        suppressif ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciUser1Enabled == 0x00;
+
+            guidop
+                guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
+                datatype = UINT32,                                              //
+                data     = 48,                                                  // Grid cell height in pixels.
+            endguidop;
 
             subtitle
-                text    = STRING_TOKEN(STR_NULL_STRING),                       // Group of horizontal text blocks
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
                 flags   = HORIZONTAL;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
-                   text    = STRING_TOKEN(STR_DFCI_SUBJECT);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
+                    text    = STRING_TOKEN(STR_DFCI_SUBJECT);
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject field
-                   text    = STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject field
+                    text    = STRING_TOKEN(STR_DFCI_USER1_SUBJECT_FIELD);
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-           subtitle
-               text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
-               flags   = HORIZONTAL;
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Issuer:
-                   text    = STRING_TOKEN(STR_DFCI_ISSUER);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint:
+                    text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Issuer name field
-                   text    = STRING_TOKEN(STR_DFCI_OWNER_ISSUER_FIELD);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
+                    text    = STRING_TOKEN(STR_DFCI_USER1_THUMBPRINT_FIELD);
+        
+            guidop
+                guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
+            endguidop;
 
-           subtitle
-               text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
-               flags   = HORIZONTAL;
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+        
+        endif;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint
-                   text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
+        suppressif ideqval  DfciMenuConfig.DfciUserEnabled == 0x00;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint field
-                   text    = STRING_TOKEN(STR_DFCI_OWNER_THUMBPRINT_FIELD);
+            guidop
+                guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
+                datatype = UINT32,                                              //
+                data     = 48,                                                  // Grid cell height in pixels.
+            endguidop;
 
-       endif;
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
 
-       suppressif ideqval  DfciMenuConfig.DfciUserEnabled == 0x00;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
+                    text    = STRING_TOKEN(STR_DFCI_SUBJECT);
 
-           subtitle
-               text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
-               flags   = HORIZONTAL;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject field
+                    text    = STRING_TOKEN(STR_DFCI_USER_SUBJECT_FIELD);
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
-                   text    = STRING_TOKEN(STR_DFCI_SUBJECT);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject field
-                   text    = STRING_TOKEN(STR_DFCI_USER_SUBJECT_FIELD);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint:
+                    text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
 
-           subtitle
-               text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
-               flags   = HORIZONTAL;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
+                    text    = STRING_TOKEN(STR_DFCI_USER_THUMBPRINT_FIELD);
+        
+            guidop
+                guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
+            endguidop;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Issuer:
-                   text    = STRING_TOKEN(STR_DFCI_ISSUER);
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Issuer name field
-                   text    = STRING_TOKEN(STR_DFCI_USER_ISSUER_FIELD);
+        endif;
 
-               subtitle
-                   text    = STRING_TOKEN(STR_NULL_STRING),                    // Group of horizontal text blocks
-                   flags   = HORIZONTAL;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint
-                   text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
+        suppressif ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint field
-                   text    = STRING_TOKEN(STR_DFCI_USER_THUMBPRINT_FIELD);
-       endif;
+            guidop
+                guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
+                datatype = UINT32,                                              //
+                data     = 48,                                                  // Grid cell height in pixels.
+            endguidop;
 
-       guidop
-           guid     = GRID_CLASS_END_OPCODE_GUID,                              // Custom UI Grid opcode - END
-       endguidop;
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
 
-       suppressif ideqval  DfciMenuConfig.DfciHttpRecoveryEnabled == 0x00;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
+                    text    = STRING_TOKEN(STR_DFCI_SUBJECT);
 
-           guidop
-               guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
-               datatype = UINT32,                                              //
-               data     = 70,                                                  // Grid cell height in pixels.
-           endguidop;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject field
+                    text    = STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD);
 
-           subtitle
-               text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
-               flags   = HORIZONTAL;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Url:
-                   text    = STRING_TOKEN(STR_DFCI_URL);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // Url String
-                   text    = STRING_TOKEN(STR_DFCI_URL_FIELD);
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint:
+                    text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
 
-               text
-                   help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                   text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
+                    text    = STRING_TOKEN(STR_DFCI_OWNER_THUMBPRINT_FIELD);
+        
+            guidop
+                guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
+            endguidop;
 
-           guidop
-               guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
-           endguidop;
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
 
-           text
-               help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
-               text    = STRING_TOKEN(STR_NULL_STRING);
+        endif;
 
-           text
-               help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
-               text    = STRING_TOKEN(STR_NULL_STRING);                        //
+        suppressif ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
 
-           text
-               help    = STRING_TOKEN(STR_NULL_STRING),                        // HTTP Update Now button
-               text    = STRING_TOKEN(STR_DFCI_HTTP_UPDATE_NOW),               //
-               flags   = INTERACTIVE,                                          // INTERACTIVE = Button
-               key     = DFCI_MENU_HTTP_UPDATE_NOW_QUESTION_ID;
-           endif;
+            guidop
+                guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
+                datatype = UINT32,                                              //
+                data     = 48,                                                  // Grid cell height in pixels.
+            endguidop;
 
-       suppressif ideqval  DfciMenuConfig.DfciRecoveryEnabled == 0x00;
-           goto                                                                // External reference to recovery menu
-               formsetguid = DFCI_RECOVERY_FORMSET_GUID,
-               formid      = DFCI_RECOVERY_FORM_ID,
-               question    = DFCI_RECOVERY_QUESTION_ID,
-               prompt      = STRING_TOKEN(STR_DFCI_MENU_RECOVERY_NOW),
-               help        = STRING_TOKEN(STR_NULL_STRING);
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
 
-       endif;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
+                    text    = STRING_TOKEN(STR_DFCI_SUBJECT);
 
-       suppressif NOT ideqval  DfciMenuConfig.DfciRecoveryEnabled == 0x00;
-           text
-               help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Reset Permission Info
-               text    = STRING_TOKEN(STR_DFCI_RESET_PERMISSION_INFO);         //
-       endif;
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject field
+                    text    = STRING_TOKEN(STR_DFCI_ZTD_SUBJECT_FIELD);
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint:
+                    text    = STRING_TOKEN(STR_DFCI_THUMBPRINT);
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
+                    text    = STRING_TOKEN(STR_DFCI_ZTD_THUMBPRINT_FIELD);
+        
+            guidop
+                guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
+            endguidop;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+                    
+        endif;
+
+    endform;
+
+/*------------------------------------------------------------------------------------*/
+/*     DFCI Configure form                                                            */
+/*------------------------------------------------------------------------------------*/
+    form formid = DFCI_MENU_CONFIGURE_FORM_ID,                                  // Configure Form
+        title  = STRING_TOKEN(STR_DFCI_MENU_TITLE);
+
+        suppressif TRUE;
+            text
+                help   = STRING_TOKEN(STR_NULL_STRING),
+                text   = STRING_TOKEN(STR_NULL_STRING),
+                flags  = INTERACTIVE,
+                key    = DFCI_MENU_INIT2_QUESTION_ID;   
+        endif;
+
+        //
+        //  Start of DFCI ENABLED form
+        //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // DFCI Enabled Header
+            text    = STRING_TOKEN(STR_DFCI_CONFIGURATION_HEADER);              //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        suppressif ideqval  DfciMenuConfig.DfciHttpRecoveryEnabled == 0x00;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Enabled Header
+                text    = STRING_TOKEN(STR_DFCI_HTTP_RECOVERY);                 //
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+
+            guidop
+                guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
+                datatype = UINT32,                                              //
+                data     = 70,                                                  // Grid cell height in pixels.
+            endguidop;
+
+            subtitle
+                text    = STRING_TOKEN(STR_NULL_STRING),                        // Group of horizontal text blocks
+                flags   = HORIZONTAL;
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Url:
+                    text    = STRING_TOKEN(STR_DFCI_URL);
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Url String
+                    text    = STRING_TOKEN(STR_DFCI_URL_FIELD);
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+            guidop
+                guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
+            endguidop;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Update Now button
+                text    = STRING_TOKEN(STR_DFCI_HTTP_UPDATE_NOW),               //
+                flags   = INTERACTIVE,                                          // INTERACTIVE = Button
+                key     = DFCI_MENU_HTTP_UPDATE_NOW_QUESTION_ID;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+        endif;    
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_DFCI_USB_RECOVERY);
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // DFCI Update Now button
+            text    = STRING_TOKEN(STR_DFCI_USB_UPDATE_NOW),                    //
+            flags   = INTERACTIVE,                                              // INTERACTIVE = Button
+            key     = DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID;
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+        
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        suppressif ideqval  DfciMenuConfig.DfciRecoveryEnabled == 0x00;
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Reset Permission Info
+                text    = STRING_TOKEN(STR_DFCI_RESET_INFO);                    //
+        
+             text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+        
+           goto                                                                 // External reference to recovery menu
+                formid      = DFCI_MENU_RECOVERY_INFO_FORM_ID,
+                question    = DFCI_MENU_RECOVERY_INFO_QUESTION_ID,
+                prompt      = STRING_TOKEN(STR_DFCI_MENU_RECOVERY_NOW),
+                help        = STRING_TOKEN(STR_NULL_STRING);
+        endif;
+
+        suppressif NOT ideqval  DfciMenuConfig.DfciRecoveryEnabled == 0x00;
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Reset Permission Info
+                text    = STRING_TOKEN(STR_DFCI_RESET_PERMISSION_INFO);         //
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+        endif;
+
+
+    endform;
+
+/*------------------------------------------------------------------------------------*/
+/*     DFCI Recovery Information form                                                 */
+/*------------------------------------------------------------------------------------*/
+    form formid = DFCI_MENU_RECOVERY_INFO_FORM_ID,                              // Configure Form
+        title  = STRING_TOKEN(STR_DFCI_MENU_TITLE);
+
+        suppressif TRUE;
+            text
+                help   = STRING_TOKEN(STR_NULL_STRING),
+                text   = STRING_TOKEN(STR_NULL_STRING),
+                flags  = INTERACTIVE,
+                key    = DFCI_MENU_INIT3_QUESTION_ID;   
+        endif;
+
+        //
+        //  Start of DFCI ENABLED form
+        //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // DFCI Enabled Header
+            text    = STRING_TOKEN(STR_DFCI_CONFIGURATION_HEADER);              //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_DFCI_RECOVERY_INFO);                     //
+
+        text
+            help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
+            text    = STRING_TOKEN(STR_NULL_STRING);                            //
+        
+        goto                                                                    // External reference to recovery menu
+            formsetguid = DFCI_RECOVERY_FORMSET_GUID,
+            formid      = DFCI_RECOVERY_FORM_ID,
+            question    = DFCI_RECOVERY_QUESTION_ID,
+            prompt      = STRING_TOKEN(STR_DFCI_MENU_CONTINUE_NOW),
+            help        = STRING_TOKEN(STR_NULL_STRING);
 
     endform;
 
