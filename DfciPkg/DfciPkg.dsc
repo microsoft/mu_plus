@@ -161,12 +161,9 @@
   DfciPkg/Library/DfciXmlDeviceIdSchemaSupportLib/DfciXmlDeviceIdSchemaSupportLib.inf
   DfciPkg/Library/DfciXmlIdentitySchemaSupportLib/DfciXmlIdentitySchemaSupportLib.inf
 
-  DfciPkg/ProviderSamples/DfciPasswordProviderSample/DfciPasswordProviderSample.inf
-
   DfciPkg/SettingsManager/SettingsManagerDxe.inf {
         #Platform should add all it settings libs here
   <LibraryClasses>
-        NULL|DfciPkg/ProviderSamples/DfciPasswordProviderSample/DfciPasswordProviderSample.inf
         NULL|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
         DfciSettingPermissionLib|DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   <PcdsFeatureFlag>
