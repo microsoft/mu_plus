@@ -141,6 +141,7 @@
   MsCorePkg/Library/DebugPortProtocolInstallLib/DebugPortProtocolInstallLib.inf
   MsCorePkg/Universal/StatusCodeHandler/Serial/Dxe/SerialStatusCodeHandlerDxe.inf
   MsCorePkg/Universal/StatusCodeHandler/Serial/Smm/SerialStatusCodeHandlerSmm.inf  
+  MsCorePkg/IncompatiblePciDevices/NoOptionRomsAllowed/NoOptionRomsAllowed.inf
 
 [BuildOptions]
 #force deprecated interaces off
