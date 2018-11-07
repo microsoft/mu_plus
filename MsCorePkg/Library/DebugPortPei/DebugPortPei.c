@@ -44,11 +44,7 @@ DebugPortPrint (
   IN  CONST CHAR8  *Format,
   VA_LIST          VaListMarker
 ) {
-  VA_LIST  Marker;
-
-  VA_START (Marker, Format);
-  DebugPrint (ErrorLevel, Format, Marker);
-  VA_END (Marker);
+  DebugPrintValist (ErrorLevel, Format, VaListMarker);
 }
 
 /**
@@ -123,7 +119,10 @@ EFI_PEI_PPI_DESCRIPTOR mPpiList[] = {
 **/
 EFI_STATUS
 EFIAPI
-DebugPortInitialize ()
+DebugPortInitialize (
+  IN       EFI_PEI_FILE_HANDLE  FileHandle,
+  IN CONST EFI_PEI_SERVICES     **PeiServices
+  )
 {
   EFI_STATUS               Status;
 

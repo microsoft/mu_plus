@@ -35,7 +35,7 @@
   VERSION_STRING                 = 1.0
   MODULE_TYPE                    = PEIM
   LIBRARY_CLASS                  = NULL|PEIM
-  LIBRARY_CONSTRUCTOR            = DebugPortInitialize
+  CONSTRUCTOR                    = DebugPortInitialize
 #
 # The following information is for reference only and not required by the build tools.
 #
