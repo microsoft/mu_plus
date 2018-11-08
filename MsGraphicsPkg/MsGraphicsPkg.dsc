@@ -177,6 +177,9 @@
   # Rectangle Library
   MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
 
+  # Print screen module
+  MsGraphicsPkg/PrintScreenLogger/PrintScreenLogger.inf
+
 [BuildOptions]
 #force deprecated interaces off
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES

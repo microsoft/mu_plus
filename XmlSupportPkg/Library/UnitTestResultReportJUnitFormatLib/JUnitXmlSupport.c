@@ -102,7 +102,7 @@ New_TestSuiteNodeInList(
 
   //Create the Id attribute
   //Convert int to string
-  AsciiValueToString(IntString, 0, Id, 0);
+  AsciiValueToStringS(IntString, sizeof(IntString), 0, Id, 0);
   Status = AddAttributeToNode(NewSuiteNode, "id", IntString);
   if (EFI_ERROR(Status))
   {
@@ -206,7 +206,7 @@ New_TestCaseInSuite(
 
   //Create the time attribute
   //Convert int to string
-  AsciiValueToString(IntString, 0, TimeInSeconds, 0);
+  AsciiValueToStringS(IntString, sizeof(IntString), 0, TimeInSeconds, 0);
   Status = AddAttributeToNode(NewTestNode, "time", IntString);
   if (EFI_ERROR(Status))
   {
@@ -371,7 +371,7 @@ AddTestSuiteStats(
 
   //Create the total errors attribute
   //Convert int to string
-  AsciiValueToString(IntString, 0, TotalErrors, 0);
+  AsciiValueToStringS(IntString, sizeof(IntString), 0, TotalErrors, 0);
   Status = AddAttributeToNode(TestSuite, "errors", IntString);
   if (EFI_ERROR(Status))
   {
@@ -381,7 +381,7 @@ AddTestSuiteStats(
 
   //Create the total tests attribute
   //Convert int to string
-  AsciiValueToString(IntString, 0, TotalTests, 0);
+  AsciiValueToStringS(IntString, sizeof(IntString), 0, TotalTests, 0);
   Status = AddAttributeToNode(TestSuite, "tests", IntString);
   if (EFI_ERROR(Status))
   {
@@ -391,7 +391,7 @@ AddTestSuiteStats(
 
   //Create the total failures attribute
   //Convert int to string
-  AsciiValueToString(IntString, 0, TotalFailures, 0);
+  AsciiValueToStringS(IntString, sizeof(IntString), 0, TotalFailures, 0);
   Status = AddAttributeToNode(TestSuite, "failures", IntString);
   if (EFI_ERROR(Status))
   {
@@ -401,7 +401,7 @@ AddTestSuiteStats(
 
   //Create the total skipped attribute
   //Convert int to string
-  AsciiValueToString(IntString, 0, TotalSkips, 0);
+  AsciiValueToStringS(IntString, sizeof(IntString), 0, TotalSkips, 0);
   Status = AddAttributeToNode(TestSuite, "skipped", IntString);
   if (EFI_ERROR(Status))
   {

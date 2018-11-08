@@ -76,10 +76,15 @@
 
   DeviceBootManagerLib|MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
   PlatformBootManagerLib|MsCorePkg/Library/PlatformBootManagerLib/PlatformBootManagerLib.inf
+  MathLib|MsCorePkg/Library/MathLib/MathLib.inf
 
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   UefiDriverEntryPoint|MdePkg/Library/UefiDriverEntryPoint/UefiDriverEntryPoint.inf
+
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
 
   !if $(TARGET) == DEBUG
     #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
@@ -94,6 +99,7 @@
   ExtractGuidedSectionLib|MdePkg/Library/PeiExtractGuidedSectionLib/PeiExtractGuidedSectionLib.inf
   PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
 
 [LibraryClasses.common.DXE_CORE]
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
@@ -101,6 +107,7 @@
 
 [LibraryClasses.common.DXE_SMM_DRIVER]
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
+  BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
 
 
 ###################################################################################################
@@ -142,6 +149,7 @@
   MsCorePkg/Universal/StatusCodeHandler/Serial/Dxe/SerialStatusCodeHandlerDxe.inf
   MsCorePkg/Universal/StatusCodeHandler/Serial/Smm/SerialStatusCodeHandlerSmm.inf  
   MsCorePkg/IncompatiblePciDevices/NoOptionRomsAllowed/NoOptionRomsAllowed.inf
+  MsCorePkg/UnitTests/MathLibUnitTest/MathLibUnitTest.inf
 
 [BuildOptions]
 #force deprecated interaces off

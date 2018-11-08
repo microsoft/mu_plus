@@ -1,0 +1,17 @@
+{
+    "CompilerPlugin": {
+        "IgnoreInf": []
+    },
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "MsUnitTestPkg/MsUnitTestPkg.dec",
+            "MsGraphicsPkg/MsGraphicsPkg.dec"
+        ],
+        "IgnoreInf": []
+    },
+    "DSCCheck": {
+        "IgnoreInf": []
+    }
+}

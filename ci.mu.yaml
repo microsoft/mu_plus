@@ -1,0 +1,60 @@
+{
+    "Name": "Project Mu Plus Repo CI Build",
+    "GroupName": "MuPlus",
+    
+    #Workspace path relative to this file
+    "RelativeWorkspaceRoot": "",
+    "Scopes": [ "corebuild" ],
+
+    # Other Repos that are dependencies
+    "Dependencies": [
+        #FileSystem Path relative to workspace
+        #Url
+        #Branch
+        #Commit
+         {
+            "Path": "MU_BUILD",
+            "Url": "https://github.com/Microsoft/mu_build.git",
+            "Branch": "release/201808"
+        },
+        { 
+            "Path": "MU_BASECORE", 
+            "Url": "https://github.com/Microsoft/mu_basecore.git",
+            "Branch": "release/201808"
+        },
+        {
+            "Path": "Common/MU_TIANO",
+            "Url": "https://github.com/Microsoft/mu_tiano_plus.git",
+            "Branch": "release/201808"
+        }
+    ],
+
+    # Edk2 style PackagesPath for resolving dependencies.
+    # Only needed if it isn't this package and isn't a dependency
+    "PackagesPath": [],
+
+    # Packages in this repo
+    "Packages": [
+        "DfciPkg",
+        "MsCorePkg",
+        "MsGraphicsPkg",
+        "MsWheaPkg",
+        "PcBdsPkg",
+        "SourceLevelDebugPkg",
+        "UefiTestingPkg",
+        "XmlSupportPkg",
+        "ZeroTouchPkg"
+    ],
+    "ArchSupported": [
+        "IA32",
+        "X64",
+        "AARCH64"
+    ],
+    "Targets": [
+        "DEBUG",
+        "RELEASE"
+    ],
+    "DependencyCheck": {
+        "skip":true
+    }
+}

@@ -180,6 +180,9 @@
   DfciPkg/Application/DfciApply/DfciApply.inf
   DfciPkg/UnitTests/XmlB64Test/XmlB64TestApp.inf
 
+  DfciPkg/Application/EnrollInDfci/EnrollInDfci.inf
+  DfciPkg/Application/SetRecovery/SetRecovery.inf
+
 [BuildOptions]
 #force deprecated interaces off
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
