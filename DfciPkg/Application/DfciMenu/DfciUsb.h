@@ -1,7 +1,7 @@
 /** @file
-DfciRequest.h
+DfciUsb.h
 
-Defines the Request function to get the configuration from the server
+DfciUsb loads Dfci Configuration from a USB drive
 
 Copyright (c) 2018, Microsoft Corporation
 
@@ -29,32 +29,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#ifndef __DFCI_REQUEST_H__
-#define __DFCI_REQUEST_H__
+#ifndef __DFCI_USB_H__
+#define __DFCI_USB_H__
 
-/**
- *  Dfci Request from Network
- *
- *  @param[in] Url            A pointer to the EFI System Table.
- *  @param[in] UrlSize
- *  @param[out] UserStatus
- *
- *  @retval EFI_SUCCESS       The entry point is executed successfully.
- *  @retval other             Some error occurs when executing this entry point.
- *
- **/
 EFI_STATUS
 EFIAPI
-DfciRequestProcess(
-    IN  CHAR8    *Url,
-    IN  UINTN     UrlSize,
+DfciUsbRequestProcess (
+	IN  EFI_HII_HANDLE   HiiHandle,
+	OUT CHAR16         **StatusText);
 
-    // Ip Config Info: TBD
-    // IPv4 or IPv6                  // IPv4 only right now
-    // Local IP is DHCP, or fixed etc
-
-    OUT UINT64   *UserStatus
-    );
-
-#endif // __DFCI_REQUEST_H__
-
+#endif  // __DFCI_USB_H__

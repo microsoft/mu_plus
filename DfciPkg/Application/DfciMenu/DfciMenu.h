@@ -57,6 +57,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DFCI_MENU_ZUM_OPT_IN_QUESTION_ID        0x2B00
 #define DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID       0x2C00
 #define DFCI_MENU_CONFIGURE_QUESTION_ID         0x2D00
+#define DFCI_MENU_USB_INSTALL_NOW_QUESTION_ID   0x2E00
 
 // These are the VFR compiler generated data representing our VFR data.
 //
@@ -95,6 +96,12 @@ typedef struct {
   {                                                                                \
     0x3147b040, 0xeac3, 0x4b9f, { 0xb5, 0xec, 0xc2, 0xe2, 0x88, 0x45, 0x17, 0x4e } \
   }
+
+#define USER_STATUS_SUCCESS       0x0000000000000000L
+#define USER_STATUS_NO_NIC        0x0000000000000001L
+#define USER_STATUS_NO_MEDIA      0x0000000000000002L
+#define USER_STATUS_NO_SETTINGS   0x0000000000000003L
+#define USER_STATUS_NO_FILE       0x0000000000000004L
 
 
 #endif // __DFCI_MENU_H__

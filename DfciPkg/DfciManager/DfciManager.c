@@ -463,7 +463,7 @@ ProcessApplyPacket (
     EFI_STATUS Status;
 
 
-    DEBUG((DEBUG_INFO, "%a Semm Manager - Processing Apply Packet for %s.\n", _DBGMSGID_, Data->MailboxName));
+    DEBUG((DEBUG_INFO, "%a Dfci Manager - Processing Apply Packet for %s.\n", _DBGMSGID_, Data->MailboxName));
     Status = ApplyProtocol->ApplyPacket(ApplyProtocol, Data);
 
     if (EFI_ERROR(Status)) {
@@ -925,7 +925,7 @@ COMPLETE_AS_FAILED:
             goto EARLY_EXIT;
         }
         CompletePacket(MgrData, Status);
-    } 
+    }
 
     MgrData = &mManagerData[MGR_IDENTITY];
     if (MgrData->Data->Unenroll) {

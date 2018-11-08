@@ -64,8 +64,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DfciMenu.h"
 #include "DfciRequest.h"
+#include "DfciUsb.h"
 
 #pragma pack(1)
+
 ///
 /// HII specific Vendor Device Path definition.
 ///
@@ -110,20 +112,20 @@ HII_VENDOR_DEVICE_PATH                  mHiiVendorDevicePath = {
 //*---------------------------------------------------------------------------------------*
 //* Global Variables                                                                      *
 //*---------------------------------------------------------------------------------------*
-static EFI_HII_HANDLE                          mHiiHandle;
-static EFI_GUID                                mDfciPackageListGuid = DFCI_HII_PACKAGE_LIST_GUID;
-static DFCI_AUTHENTICATION_PROTOCOL           *mAuthenticationProtocol = NULL;
-static DFCI_MENU_CONFIGURATION                 mDfciMenuConfiguration;
-static DFCI_SETTING_PERMISSIONS_PROTOCOL      *mDfciSettingsPermissionProtocol = NULL;
+STATIC EFI_HII_HANDLE                          mHiiHandle;
+STATIC EFI_GUID                                mDfciPackageListGuid = DFCI_HII_PACKAGE_LIST_GUID;
+STATIC DFCI_AUTHENTICATION_PROTOCOL           *mAuthenticationProtocol = NULL;
+STATIC DFCI_MENU_CONFIGURATION                 mDfciMenuConfiguration;
+STATIC DFCI_SETTING_PERMISSIONS_PROTOCOL      *mDfciSettingsPermissionProtocol = NULL;
 
 //* Dfci Settings
-static DFCI_CERT_STRINGS                       mZeroTouchCert;    // ZeroTouch information
-static DFCI_CERT_STRINGS                       mOwnerCert;        // Owner information
-static DFCI_CERT_STRINGS                       mUserCert;         // User information
-static DFCI_IDENTITY_MASK                      mIdMask;           // Identities installed
-static CHAR8                                  *mDfciUrl = NULL;
-static UINTN                                   mDfciUrlSize;
-static CHAR16                                 *mHttpThumbprint = NULL;
+STATIC DFCI_CERT_STRINGS                       mZeroTouchCert;    // ZeroTouch information
+STATIC DFCI_CERT_STRINGS                       mOwnerCert;        // Owner information
+STATIC DFCI_CERT_STRINGS                       mUserCert;         // User information
+STATIC DFCI_IDENTITY_MASK                      mIdMask;           // Identities installed
+STATIC CHAR8                                  *mDfciUrl = NULL;
+STATIC UINTN                                   mDfciUrlSize;
+STATIC CHAR16                                 *mHttpThumbprint = NULL;
 
 //*---------------------------------------------------------------------------------------*
 //* Hii Config Access functions                                                                  *
@@ -156,6 +158,9 @@ DriverCallback (
     OUT EFI_BROWSER_ACTION_REQUEST             *ActionRequest
     );
 
+//
+// Private internal data
+//
 typedef struct {
     UINTN                           Signature;
     EFI_HANDLE                      DriverHandle;
@@ -177,17 +182,20 @@ DFCI_MENU_PRIVATE  mDfciMenuPrivate = {
 /**
  * SetStringEntry16 - sets the HiiString, and verify that it was accepted.
  *
- * @param IdName
- * @param StringValue
+ * @param[in]  IdName
+ * @param[in]  StringValue
  *
  * @return EFI_STATUS
  */
+STATIC
 EFI_STATUS
 SetString16Entry (
-    EFI_STRING_ID IdName,
-    CHAR16 *StringValue
+    IN  EFI_STRING_ID  IdName,
+    IN  CHAR16        *StringValue
   ) {
+
     EFI_STATUS  Status = EFI_SUCCESS;
+
 
     if (IdName != HiiSetString(mDfciMenuPrivate.HiiHandle,IdName, StringValue, NULL)) {
        DEBUG((DEBUG_ERROR, "%a - Failed to set string for %d: %s. \n", __FUNCTION__,  IdName, StringValue));
@@ -200,17 +208,18 @@ SetString16Entry (
 /**
  * SetStringEntry - Converts the string to CHAR16, and calls SetString16Entry
  *
- * @param IdName
- * @param StringValue
+ * @param[in]  IdName
+ * @param[in]  StringValue
  *
  * @return EFI_STATUS
  */
+STATIC
 EFI_STATUS
 SetStringEntry (
-    EFI_STRING_ID  IdName,
-    CHAR8         *StringValue
-  )
-{
+    IN  EFI_STRING_ID  IdName,
+    IN  CHAR8         *StringValue
+  ) {
+
     EFI_STATUS  Status = EFI_SUCCESS;
     CHAR16     *WideString;
     UINTN       WideStringLen;
@@ -239,19 +248,22 @@ SetStringEntry (
 
 /**
  * Check if Dfci is enabled
- * 
+ *
  * @return BOOLEAN      FALSE == No Dfci present
  *                      TRUE  == Dfci Present
  *
  *  Dfci requires more than just the OwnerKey installed.
  *
  */
+STATIC
 BOOLEAN
 CheckIfDfciEnrolled (
     VOID
   ) {
+
     EFI_STATUS         Status;
     BOOLEAN            IsDfciMenuEnabled = FALSE;
+
 
     mDfciMenuConfiguration.DfciZeroTouchEnabled = FALSE;
     mDfciMenuConfiguration.DfciOwnerEnabled = FALSE;
@@ -296,19 +308,20 @@ CheckIfDfciEnrolled (
 /**
  * Get A Setting
  *
- * @param IdName
- * @param ValuePtr
- * @param ValueSize
+ * @param[in]   IdName
+ * @param[in]   ValuePtr
+ * @param[out]  ValueSize
  *
  * @return EFI_STATUS
  */
+STATIC
 EFI_STATUS
 GetASetting (
     IN  DFCI_SETTING_ID_STRING  IdName,
     IN  VOID                  **ValuePtr,
     OUT UINTN                  *ValueSize
-    )
-{
+  ) {
+
     EFI_STATUS      Status;
 
 
@@ -358,20 +371,22 @@ CLEANUP_SETTING_EXIT:
 /**
  * Get Dfci Parameters.
  *
+ * @param    NONE
  *
  * @return EFI_STATUS
  */
+STATIC
 EFI_STATUS
 GetDfciParameters (
     VOID
-  ) 
-{
+  ) {
+
     EFI_STATUS         Status;
     UINTN              i;
     DFCI_IDENTITY_MASK DfciMask;
     DFCI_CERT_STRINGS  Cert;
     VOID              *dummy;
-    static BOOLEAN     AlreadyRun = FALSE;
+    STATIC BOOLEAN     AlreadyRun = FALSE;
 
 
     if (!AlreadyRun) {
@@ -385,27 +400,23 @@ GetDfciParameters (
         if (mZeroTouchCert.SubjectString != NULL) {
             SetString16Entry (STRING_TOKEN(STR_DFCI_ZTD_SUBJECT_FIELD), mZeroTouchCert.SubjectString);
         }
-//        if (mZeroTouchCert.IssuerString != NULL) {
-//            SetString16Entry(STRING_TOKEN(STR_DFCI_ZTD_ISSUER_FIELD), mZeroTouchCert.IssuerString);
-//        }
+
         if (mZeroTouchCert.ThumbprintString != NULL) {
             SetString16Entry(STRING_TOKEN(STR_DFCI_ZTD_THUMBPRINT_FIELD), mZeroTouchCert.ThumbprintString);
         }
+
         if (mOwnerCert.SubjectString != NULL) {
             SetString16Entry (STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD), mOwnerCert.SubjectString);
         }
-//        if (mOwnerCert.IssuerString != NULL) {
-//            SetString16Entry(STRING_TOKEN(STR_DFCI_OWNER_ISSUER_FIELD), mOwnerCert.IssuerString);
-//        }
+
         if (mOwnerCert.ThumbprintString != NULL) {
             SetString16Entry(STRING_TOKEN(STR_DFCI_OWNER_THUMBPRINT_FIELD), mOwnerCert.ThumbprintString);
         }
+
         if (mUserCert.SubjectString != NULL) {
             SetString16Entry (STRING_TOKEN(STR_DFCI_USER_SUBJECT_FIELD), mUserCert.SubjectString);
         }
-//        if (mUserCert.IssuerString != NULL) {
-//            SetString16Entry(STRING_TOKEN(STR_DFCI_USER_ISSUER_FIELD), mUserCert.IssuerString);
-//        }
+
         if (mUserCert.ThumbprintString != NULL) {
             SetString16Entry(STRING_TOKEN(STR_DFCI_USER_THUMBPRINT_FIELD), mUserCert.ThumbprintString);
         }
@@ -475,14 +486,19 @@ CLEANUP_EXIT:
 }
 
 /**
-  This function is the main entry of the Dfci Menu application.
+*  This function is the main entry of the Dfci Menu application.
+*
+* @param[in]   ImageHandle
+* @param[in]   SystemTable
+*
 **/
 EFI_STATUS
 EFIAPI
 DfciMenuEntry(
     IN EFI_HANDLE        ImageHandle,
     IN EFI_SYSTEM_TABLE  *SystemTable
-    ) {
+  ) {
+
     EFI_STATUS      Status;
 
 
@@ -578,15 +594,18 @@ DfciMenuEntry(
  *                       Dfci request appears normal, allow a restart to apply the new settings
  *
  * @param StatusIn
- * @param UserStatusIn
+ * @param UserStatusIn   Used for selecting a standard message
+ * @param StatusText     Used when a specific message is required
  *
  * @return EFI_STATUS
  */
+STATIC
 EFI_STATUS
 DisplayMessageBox (
     IN EFI_STATUS StatusIn,
-    IN UINT64     UserStatusIn
-) {
+    IN UINT64     UserStatusIn,
+    IN CHAR16    *StatusText   OPTIONAL
+  ) {
 
     UINT32                    MessageBoxType;
     EFI_STRING                pTitle;
@@ -618,7 +637,11 @@ DisplayMessageBox (
                 FreePool (pCaption);
             }
             pCaption = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_CAPTION), NULL);
-            pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NULL);
+            if (StatusText != NULL) {
+                pBody = StatusText;
+            } else {
+                pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NULL);
+            }
             MessageBoxType = DFCI_MB_RESTART;
             break;
 
@@ -632,6 +655,10 @@ DisplayMessageBox (
 
         case USER_STATUS_NO_SETTINGS:
             pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_SETTINGS), NULL);
+            break;
+
+        case USER_STATUS_NO_FILE:
+            pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NO_FILE), NULL);
             break;
 
         default:
@@ -658,22 +685,36 @@ DisplayMessageBox (
         gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
     }
 
+    if (NULL != pTitle) {
+        FreePool (pTitle);
+    }
+
+    if (NULL != pCaption) {
+        FreePool (pTitle);
+    }
+
+    if (NULL != pBody) {
+        FreePool (pTitle);
+    }
+
     return Status;
 }
 
 /**
- * Issue DfciRequest
+ * Issue DfciRequest to the network
  *
- * @param
+ * @param   NONE
  *
  * @return EFI_STATUS
  */
+STATIC
 EFI_STATUS
 IssueDfciRequest (
     VOID
   ) {
-    EFI_STATUS                      Status;
-    UINT64                          UserStatus = USER_STATUS_SUCCESS;
+
+    EFI_STATUS     Status;
+    UINT64         UserStatus = USER_STATUS_SUCCESS;
 
     //
     // Start UI Spinner if one is present
@@ -681,7 +722,7 @@ IssueDfciRequest (
     EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
 
     //
-    // Process request
+    // Process request updates from the network
     //
     Status = DfciRequestProcess (mDfciUrl,   mDfciUrlSize,
                                  &UserStatus);
@@ -699,31 +740,79 @@ IssueDfciRequest (
     //
     // Inform user that operation is complete
     //
-    DisplayMessageBox (Status, UserStatus);
+    DisplayMessageBox (Status, UserStatus, NULL);
 
     return Status;
 }
 
 /**
-  This function processes the results of changes in configuration.
+ * Issue DfciUsbRequest - load settings from a USB drive
+ *
+ * @param  NONE
+ *
+ * @return EFI_STATUS
+ */
+STATIC
+EFI_STATUS
+IssueDfciUsbRequest (
+    VOID
+  ) {
+    EFI_STATUS    Status;
+    CHAR16       *StatusText;
 
-  @param  This                   Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
-  @param  Action                 Specifies the type of action taken by the browser.
-  @param  QuestionId             A unique value which is sent to the original
-                                 exporting driver so that it can identify the type
-                                 of data to expect.
-  @param  Type                   The type of value for the question.
-  @param  Value                  A pointer to the data being sent to the original
-                                 exporting driver.
-  @param  ActionRequest          On return, points to the action requested by the
-                                 callback function.
+    //
+    // Start UI Spinner if one is present
+    //
+    EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
 
-  @retval EFI_SUCCESS            The callback successfully handled the action.
-  @retval EFI_OUT_OF_RESOURCES   Not enough storage is available to hold the
-                                 variable and its data.
-  @retval EFI_DEVICE_ERROR       The variable could not be saved.
-  @retval EFI_UNSUPPORTED        The specified Action is not supported by the
-                                 callback.
+    //
+    // Process request
+    //
+    StatusText = NULL;
+    Status = DfciUsbRequestProcess (mDfciMenuPrivate.HiiHandle, &StatusText);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "Error processing DfciUsb Request. Code=%r\n", Status));
+    } else {
+        DEBUG((DEBUG_INFO, "DfciUsb Request processed normally\n"));
+    }
+
+    //
+    // Stop UI Spinner
+    //
+    EfiEventGroupSignal (&gDfciConfigCompleteEventGroupGuid);
+
+    //
+    // Inform user that operation is complete
+    //
+    DisplayMessageBox (Status, USER_STATUS_SUCCESS, StatusText);
+
+    if (StatusText != NULL) {
+        FreePool (StatusText);
+    }
+
+    return Status;
+}
+
+/**
+ *  This function processes the results of changes in configuration.
+ *
+ *  @param[in]  This               Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
+ *  @param in] Action              Specifies the type of action taken by the browser.
+ *  @param[in]  QuestionId         A unique value which is sent to the original
+ *                                 exporting driver so that it can identify the type
+ *                                 of data to expect.
+ *  @param[in]  Type               The type of value for the question.
+ *  @param[in]  Value              A pointer to the data being sent to the original
+ *                                 exporting driver.
+ *  @param[out] ActionRequest      On return, points to the action requested by the
+ *                                 callback function.
+ *
+ *  @retval EFI_SUCCESS            The callback successfully handled the action.
+ *  @retval EFI_OUT_OF_RESOURCES   Not enough storage is available to hold the
+ *                                 variable and its data.
+ *  @retval EFI_DEVICE_ERROR       The variable could not be saved.
+ *  @retval EFI_UNSUPPORTED        The specified Action is not supported by the
+ *                                 callback.
 **/
 EFI_STATUS
 EFIAPI
@@ -750,11 +839,14 @@ DriverCallback (
                 DEBUG((DEBUG_INFO," HttpRecovery is %d\n", mDfciMenuConfiguration.DfciHttpRecoveryEnabled));
                 DEBUG((DEBUG_INFO," DfciRecovery is %d\n", mDfciMenuConfiguration.DfciRecoveryEnabled));
                 break;
+
+            case DFCI_MENU_INIT2_QUESTION_ID:
+            case DFCI_MENU_INIT3_QUESTION_ID:
             default:
                 break;
             }
-            break;
 
+            break;
 
         case EFI_BROWSER_ACTION_CHANGED:
             switch (QuestionId) {
@@ -766,10 +858,9 @@ DriverCallback (
                 break;
 
             case DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID:
+            case DFCI_MENU_USB_INSTALL_NOW_QUESTION_ID:
                 DEBUG((DEBUG_INFO," Usb Recovery was selected\n"));
-
-                DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
-
+                IssueDfciUsbRequest ();
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
                 Status = EFI_SUCCESS;
                 break;
@@ -800,7 +891,7 @@ DriverCallback (
                 DEBUG((DEBUG_INFO," Opt Out selected\n"));
 
                 DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
-          
+
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_SUBMIT_EXIT;
                 Status = EFI_SUCCESS;
                 break;
@@ -817,23 +908,23 @@ DriverCallback (
 }
 
 /**
-  This function processes the results of changes in configuration.
-
-  @param  This                   Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
-  @param  Configuration          A null-terminated Unicode string in <ConfigResp>
-                                 format.
-  @param  Progress               A pointer to a string filled in with the offset of
-                                 the most recent '&' before the first failing
-                                 name/value pair (or the beginning of the string if
-                                 the failure is in the first name/value pair) or
-                                 the terminating NULL if all was successful.
-
-  @retval EFI_SUCCESS            The Results is processed successfully.
-  @retval EFI_INVALID_PARAMETER  Configuration is NULL.
-  @retval EFI_NOT_FOUND          Routing data doesn't match any storage in this
-                                 driver.
-
-**/
+ *  This function processes the results of changes in configuration.
+ *
+ *  @param[in]  This               Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
+ *  @param[in]  Configuration      A null-terminated Unicode string in <ConfigResp>
+ *                                 format.
+ *  @param[out]  Progress          A pointer to a string filled in with the offset of
+ *                                 the most recent '&' before the first failing
+ *                                 name/value pair (or the beginning of the string if
+ *                                 the failure is in the first name/value pair) or
+ *                                 the terminating NULL if all was successful.
+ *
+ *  @retval EFI_SUCCESS            The Results is processed successfully.
+ *  @retval EFI_INVALID_PARAMETER  Configuration is NULL.
+ *  @retval EFI_NOT_FOUND          Routing data doesn't match any storage in this
+ *                                 driver.
+ *
+ **/
 EFI_STATUS
 EFIAPI
 RouteConfig (
@@ -859,31 +950,31 @@ RouteConfig (
 }
 
 /**
-  This function allows a caller to extract the current configuration for one
-  or more named elements from the target driver.
-
-  @param  This                   Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
-  @param  Request                A null-terminated Unicode string in
-                                 <ConfigRequest> format.
-  @param  Progress               On return, points to a character in the Request
-                                 string. Points to the string's null terminator if
-                                 request was successful. Points to the most recent
-                                 '&' before the first failing name/value pair (or
-                                 the beginning of the string if the failure is in
-                                 the first name/value pair) if the request was not
-                                 successful.
-  @param  Results                A null-terminated Unicode string in
-                                 <ConfigAltResp> format which has all values filled
-                                 in for the names in the Request string. String to
-                                 be allocated by the called function.
-
-  @retval EFI_SUCCESS            The Results is filled with the requested values.
-  @retval EFI_OUT_OF_RESOURCES   Not enough memory to store the results.
-  @retval EFI_INVALID_PARAMETER  Request is illegal syntax, or unknown name.
-  @retval EFI_NOT_FOUND          Routing data doesn't match any storage in this
-                                 driver.
-
-**/
+ *  This function allows a caller to extract the current configuration for one
+ *  or more named elements from the target driver.
+ *
+ *  @param[in]  This               Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
+ *  @param[in]  Request            A null-terminated Unicode string in
+ *                                 <ConfigRequest> format.
+ *  @param[out]  Progress          On return, points to a character in the Request
+ *                                 string. Points to the string's null terminator if
+ *                                 request was successful. Points to the most recent
+ *                                 '&' before the first failing name/value pair (or
+ *                                 the beginning of the string if the failure is in
+ *                                 the first name/value pair) if the request was not
+ *                                 successful.
+ *  @param[out]  Results           A null-terminated Unicode string in
+ *                                 <ConfigAltResp> format which has all values filled
+ *                                 in for the names in the Request string. String to
+ *                                 be allocated by the called function.
+ *
+ *  @retval EFI_SUCCESS            The Results is filled with the requested values.
+ *  @retval EFI_OUT_OF_RESOURCES   Not enough memory to store the results.
+ *  @retval EFI_INVALID_PARAMETER  Request is illegal syntax, or unknown name.
+ *  @retval EFI_NOT_FOUND          Routing data doesn't match any storage in this
+ *                                 driver.
+ *
+ **/
 EFI_STATUS
 EFIAPI
 ExtractConfig (
@@ -930,4 +1021,3 @@ ExtractConfig (
     DEBUG((DEBUG_INFO, "%a: complete. Code = %r\n", __FUNCTION__, Status));
     return Status;
 }
-

@@ -56,31 +56,104 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 
+#include "DfciMenu.h"
 #include "DfciRequest.h"
 
+#define URL_STR_MAX_SIZE      255
+#define TIMER_PERIOD_1ms     (1000 * 10)    // 1ms value for relative timer.
+#define TIMER_PERIOD_1s      (1000 * TIMER_PERIOD_1ms)
+#define DHCP_TIMEOUT         (120 * TIMER_PERIOD_1s)
+#define HTTP_TIMEOUT         (60 * TIMER_PERIOD_1s)
 
-#define URL_STR_MAX_SIZE             255
-#define TIMER_PERIOD_1ms            (1000 * 10)    // 1ms value for relative timer.
-#define TIMER_PERIOD_1s             (1000 * TIMER_PERIOD_1ms)
-#define DHCP_TIMEOUT                (120 * TIMER_PERIOD_1s)
-#define HTTP_TIMEOUT                (60 * TIMER_PERIOD_1s)
-
-#define DFCI_REQUEST     L"DfciRequest/"
-#define DFCI_IDENTITY    L"/Identity"
-#define DFCI_PERMISSIONS L"/Permissions"
-#define DFCI_SETTINGS    L"/Settings"
-#define DFCI_CURRENT     L"/Current"
+#define DFCI_REQUEST         L"DfciRequest/"
+#define DFCI_IDENTITY        L"/Identity"
+#define DFCI_IDENTITY2       L"/Identity2"
+#define DFCI_PERMISSIONS     L"/Permissions"
+#define DFCI_PERMISSIONS2    L"/Permissions2"
+#define DFCI_SETTINGS        L"/Settings"
+#define DFCI_SETTINGS2       L"/Settings2"
+#define DFCI_CURRENT         L"/Current"
 
 #define HEADER_AGENT_VALUE   "DFCI-Agent"
 #define HEADER_ACCEPT_VALUE  "*/*"
 #define HEADER_CONTENT_BIN   "application/octet-stream"
 #define HEADER_CONTENT_XML   "application/xml"
 
-static  UINT64      mUserStatus = USER_STATUS_SUCCESS;
+typedef struct {
+    CHAR16     *RequestType;
+    UINT32      Signature;
+    UINT32      VariableAttributes;
+    CHAR16     *VariableName;
+    CHAR16     *ResultsVariableName;
+    EFI_GUID   *VariableNameSpace;
+    CHAR8      *ContentType;
+} PROCESS_REQUEST_ENTRY;
+
+STATIC UINT64                mUserStatus = USER_STATUS_SUCCESS;
+STATIC PROCESS_REQUEST_ENTRY mRequestTable[] = {
+
+    {DFCI_IDENTITY,
+     DFCI_IDENTITY_APPLY_VAR_SIGNATURE,
+     DFCI_IDENTITY_VAR_ATTRIBUTES,
+     DFCI_IDENTITY_APPLY_VAR_NAME,
+     DFCI_IDENTITY_RESULT_VAR_NAME,
+   &gDfciAuthProvisionVarNamespace,
+     HEADER_CONTENT_BIN},
+
+    {DFCI_IDENTITY2,
+     DFCI_IDENTITY_APPLY_VAR_SIGNATURE,
+     DFCI_IDENTITY_VAR_ATTRIBUTES,
+     DFCI_IDENTITY2_APPLY_VAR_NAME,
+     DFCI_IDENTITY2_RESULT_VAR_NAME,
+    &gDfciAuthProvisionVarNamespace,
+     HEADER_CONTENT_BIN},
+
+    {DFCI_PERMISSIONS,
+     DFCI_PERMISSION_POLICY_APPLY_VAR_SIGNATURE,
+     DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES,
+     DFCI_PERMISSION_POLICY_APPLY_VAR_NAME,
+     DFCI_PERMISSION_POLICY_RESULT_VAR_NAME,
+    &gDfciPermissionManagerVarNamespace,
+     HEADER_CONTENT_BIN},
+
+    {DFCI_PERMISSIONS2,
+     DFCI_PERMISSION_POLICY_APPLY_VAR_SIGNATURE,
+     DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES,
+     DFCI_PERMISSION2_POLICY_APPLY_VAR_NAME,
+     DFCI_PERMISSION2_POLICY_RESULT_VAR_NAME,
+    &gDfciPermissionManagerVarNamespace,
+     HEADER_CONTENT_BIN},
+
+    {DFCI_SETTINGS,
+     DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE,
+     DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES,
+     DFCI_SETTINGS_APPLY_INPUT_VAR_NAME,
+     DFCI_SETTINGS_APPLY_OUTPUT_VAR_NAME,
+    &gDfciSettingsManagerVarNamespace,
+     HEADER_CONTENT_BIN},
+
+    {DFCI_SETTINGS2,
+     DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE,
+     DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES,
+     DFCI_SETTINGS2_APPLY_INPUT_VAR_NAME,
+     DFCI_SETTINGS2_APPLY_OUTPUT_VAR_NAME,
+    &gDfciSettingsManagerVarNamespace,
+     HEADER_CONTENT_BIN},
+
+    {DFCI_CURRENT,
+     0,
+     0,
+     NULL,
+     DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
+    &gDfciSettingsManagerVarNamespace,
+     HEADER_CONTENT_XML}
+};
+
+#define REQUEST_TABLE_COUNT (sizeof(mRequestTable)/sizeof(mRequestTable[0]))
 
 /**
  * DFCI Private Data
- */
+ **/
 typedef struct {
     //
     // Parameters
@@ -130,21 +203,25 @@ typedef struct {
 /**
  * Dump the HTTP Headers
  *
- * @param Count
- * @param Headers
+ * @param[in] Count
+ * @param[out] Headers
  *
  * @return VOID
+ *
  */
+STATIC
 VOID
-DumpHeaders (UINTN            Count,
-             EFI_HTTP_HEADER *Headers) {
+DumpHeaders (
+    IN  UINTN            Count,
+    IN  EFI_HTTP_HEADER *Headers
+  ) {
 
     DEBUG_CODE (
         UINTN   Index;
 
 
         for (Index = 0; Index < Count; Index++) {
-            DEBUG((DEBUG_ERROR,"  %d - %a = %a\n", Index + 1,
+            DEBUG((DEBUG_INFO,"  %d - %a = %a\n", Index + 1,
                                Headers[Index].FieldName,
                                Headers[Index].FieldValue));
         }
@@ -158,10 +235,15 @@ DumpHeaders (UINTN            Count,
  * @param Headers  - Array of HTTP Headers
  *
  * @return VOID
- */
+ *
+ **/
+STATIC
 VOID
-FreeHeaders (UINTN            Count,
-             EFI_HTTP_HEADER *Headers) {
+FreeHeaders (
+    IN  UINTN            Count,
+    IN  EFI_HTTP_HEADER *Headers
+  ) {
+
     UINTN   Index;
 
     if (Headers != NULL) {
@@ -174,20 +256,24 @@ FreeHeaders (UINTN            Count,
 }
 
 /**
- * Wait for a eventd to be signaled.  While waiting, Poll the HTTP operation
+ * Wait for an event to be signaled.  While waiting, Poll the HTTP operation
  *
- *
- * @param MainEvent  - The event to wait on
- * @param Timeout    - Timeout in SetTimer units
+ * @param[in]  Dfci       - Private data
+ * @param[in]  MainEvent  - The event to wait on
+ * @param[in]  Timeout    - Timeout in SetTimer units
  *
  * @return EFI_STATUS  - EFI_SUCCESS - Wait completed normally
  *                       EFI_TIMEOUT - Event Timed out
  *                       Other       - Wait failed for other reasons
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-EventWait (DFCI_PRIVATE_DATA   *Dfci,
-           EFI_EVENT            MainEvent,
-           UINTN                Timeout) {
+EventWait (
+    IN  DFCI_PRIVATE_DATA   *Dfci,
+    IN  EFI_EVENT            MainEvent,
+    IN  UINTN                Timeout
+  ) {
 
     BOOLEAN     Failed;
     EFI_STATUS  Status;
@@ -243,29 +329,31 @@ EventWait (DFCI_PRIVATE_DATA   *Dfci,
     if (Failed){
         DEBUG((DEBUG_ERROR, "Wait error at step %d - code=%r\n", Step, Status));
     }
+
     return Status;
 }
 
 /**
-  Timer Tick handler  - Update the list of devices
-
-  @param[in] Event      Event that signalled the callback.
-  @param[in] Context    Pointer to an optional event contxt.
-
-  @retval None.
-
-
-
-**/
-static
+ *  Timer Tick handler  - Update the list of devices
+ *
+ *  @param[in] Event      Event that signaled the callback.
+ *  @param[in] Context    Pointer to an optional event context.
+ *
+ *  @retval None.
+ *
+ **/
+STATIC
 VOID
 EFIAPI TimerTick (
-    IN EFI_EVENT Event,
-    IN VOID *Context) {
+    IN EFI_EVENT  Event,
+    IN VOID      *Context
+  ) {
+
     EFI_IP4_CONFIG2_INTERFACE_INFO  *Info;
     UINTN                            DataSize;
     DFCI_PRIVATE_DATA               *Dfci;
     EFI_STATUS                       Status;
+
 
     Dfci = (DFCI_PRIVATE_DATA *) Context;
     DataSize = 0;
@@ -303,12 +391,17 @@ EFIAPI TimerTick (
 /**
  * Configure Static address of IP=0.0.0.0 SubNet=0.0.0.0 GateWay=0.0.0.0
  *
- * @param Dfci
+ * @param Dfci  - Internal data
  *
  * @retval EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
+ConfigureSTATIC (
+    IN DFCI_PRIVATE_DATA *Dfci
+  ) {
+
     EFI_IP4_CONFIG2_MANUAL_ADDRESS   Address;
     EFI_EVENT                        AddressEvent;
     EFI_IPv4_ADDRESS                 Gateway;
@@ -392,16 +485,26 @@ ConfigureSTATIC (DFCI_PRIVATE_DATA *Dfci) {
 /**
  * Configure DHCP address
  *
- * @param Dfci
+ * @param[in]  Dfci
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-ConfigureDHCP (DFCI_PRIVATE_DATA *Dfci) {
+ConfigureDHCP (
+    IN DFCI_PRIVATE_DATA *Dfci
+  ) {
+
     EFI_IP4_CONFIG2_PROTOCOL        *Ip4Config2;
     EFI_IP4_CONFIG2_POLICY           Policy;
     EFI_STATUS                       Status;
     EFI_EVENT                        TimerEvent;
+
+
+    if (NULL == Dfci) {
+        return EFI_INVALID_PARAMETER;
+    }
 
     //
     // 1. Set state back to Static
@@ -465,6 +568,7 @@ ConfigureDHCP (DFCI_PRIVATE_DATA *Dfci) {
         } else {
             DEBUG((DEBUG_INFO, "DHCP Address satisfied.\n"));
         }
+
         gBS->SetTimer (TimerEvent,
                        TimerCancel,
                        0);
@@ -485,12 +589,22 @@ ConfigureDHCP (DFCI_PRIVATE_DATA *Dfci) {
  * @param Dfci
  *
  * @return EFI_STATUS
+ *
  */
+STATIC
 EFI_STATUS
-ConfigureHTTP (DFCI_PRIVATE_DATA *Dfci) {
+ConfigureHTTP (
+    IN DFCI_PRIVATE_DATA *Dfci
+  ) {
+
     EFI_IP4_CONFIG2_MANUAL_ADDRESS   Address;
     UINTN                            DataSize;
     EFI_STATUS                       Status;
+
+
+    if (NULL == Dfci) {
+        return EFI_INVALID_PARAMETER;
+    }
 
     if (Dfci->ConfigData.LocalAddressIsIPv6) {
         DEBUG((DEBUG_ERROR, "IPv6 is not supported yet\n"));
@@ -561,19 +675,25 @@ ConfigureHTTP (DFCI_PRIVATE_DATA *Dfci) {
 /**
  * DfciBuildRequestHeaders
  *
+ * @param[in]  Url
+ * @param[in]  BodyLength
+ * @param[in]  ContentType
+ * @param[out] Headers
+ * @param[out] Count
  *
- * @param Url
- * @param Headers
- * @param Count
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-DfciBuildRequestHeaders (IN CHAR16            *Url,
-                         IN UINTN              BodyLength,
-                         IN CONST CHAR8       *ContentType,
-                         OUT EFI_HTTP_HEADER **Headers,
-                         OUT UINTN            *Count) {
+DfciBuildRequestHeaders (
+    IN  CHAR16           *Url,
+    IN  UINTN             BodyLength,
+    IN  CONST CHAR8      *ContentType,
+    OUT EFI_HTTP_HEADER **Headers,
+    OUT UINTN            *Count
+  ) {
 
     EFI_STATUS            Status;
     VOID                 *UrlParser;
@@ -583,22 +703,22 @@ DfciBuildRequestHeaders (IN CHAR16            *Url,
     UINTN                 HeaderCount;
     CHAR8                 ContentLengthString[21];    //2**64 is 1.8E19, or 20 digits. +1 for a NULL.
 
-    if ((NULL == Url) || (NULL == Headers) || (NULL == Count)) {
+
+    if ((NULL == Url) ||
+        (NULL == ContentType) ||
+        (NULL == Headers) ||
+        (NULL == Count)) {
         return EFI_INVALID_PARAMETER;
     }
 
     AsciiUrlLen = StrLen (Url);
     AsciiUrl = (CHAR8 *) AllocatePool (AsciiUrlLen + 1);
-    Status = UnicodeStrToAsciiStrS (Url, AsciiUrl, AsciiUrlLen + 1);
-    if (EFI_ERROR(Status)) {
-        FreePool (AsciiUrl);
-        return Status;
+    if (NULL == AsciiUrl) {
+        return EFI_OUT_OF_RESOURCES;
     }
 
-    UrlParser = NULL;
-
-    Status = HttpParseUrl (AsciiUrl, (UINT32) AsciiUrlLen, FALSE, &UrlParser);
-    if (EFI_ERROR (Status)) {
+    Status = UnicodeStrToAsciiStrS (Url, AsciiUrl, AsciiUrlLen + 1);
+    if (EFI_ERROR(Status)) {
         FreePool (AsciiUrl);
         return Status;
     }
@@ -610,7 +730,23 @@ DfciBuildRequestHeaders (IN CHAR16            *Url,
     }
 
     RequestHeaders = AllocateZeroPool (sizeof(EFI_HTTP_HEADER) * HeaderCount);  // Allocate headers
+    if (NULL == RequestHeaders) {
+        FreePool (AsciiUrl);
+        return EFI_OUT_OF_RESOURCES;
+    }
 
+    UrlParser = NULL;
+
+    Status = HttpParseUrl (AsciiUrl, (UINT32) AsciiUrlLen, FALSE, &UrlParser);
+    if (EFI_ERROR (Status)) {
+        FreePool (AsciiUrl);
+        return Status;
+    }
+
+    //
+    // Don't check each AllocateCopyPool.  All of the pointers are initialized as NULL, and those that work
+    // will be freed by FreeHeaders.  Leave the failure detection to the HTTP operation failing.
+    //
     RequestHeaders[0].FieldName  = AllocateCopyPool (AsciiStrSize (HTTP_HEADER_HOST), HTTP_HEADER_HOST);
     RequestHeaders[1].FieldName  = AllocateCopyPool (AsciiStrSize (HTTP_HEADER_USER_AGENT), HTTP_HEADER_USER_AGENT);
     RequestHeaders[1].FieldValue = AllocateCopyPool (AsciiStrSize (HEADER_AGENT_VALUE), HEADER_AGENT_VALUE);
@@ -635,27 +771,36 @@ DfciBuildRequestHeaders (IN CHAR16            *Url,
     *Count = HeaderCount;
     HttpUrlFreeParser(UrlParser);
 
-    return EFI_SUCCESS;
+    return Status;
 }
 
 /**
  * DfciIssueRequest
  *
  *
- * @param Dfci
- * @param RequestToken
+ * @param[in]  Dfci
+ * @param[in]  RequestToken
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-DfciIssueRequest (DFCI_PRIVATE_DATA  *Dfci,
-                  EFI_HTTP_TOKEN     *RequestToken) {
+DfciIssueRequest (
+    IN  DFCI_PRIVATE_DATA  *Dfci,
+    IN  EFI_HTTP_TOKEN     *RequestToken
+  ) {
 
     EFI_HTTP_REQUEST_DATA  *RequestData;
     EFI_HTTP_MESSAGE       *RequestMessage;
     EFI_STATUS              Status;
     EFI_STATUS              Status2;
 
+
+    if ((NULL == Dfci) ||
+        (NULL == RequestToken)) {
+        return EFI_INVALID_PARAMETER;
+    }
 
     Status = gBS->CreateEvent(0, 0, NULL, NULL, &RequestToken->Event);
     if (EFI_ERROR(Status)) {
@@ -666,13 +811,13 @@ DfciIssueRequest (DFCI_PRIVATE_DATA  *Dfci,
     RequestMessage = RequestToken->Message;
     RequestData = RequestMessage->Data.Request;
 
-    DEBUG((DEBUG_ERROR, "Making Request - Headers:\n"));
+    DEBUG((DEBUG_INFO, "Making Request - Headers:\n"));
     DumpHeaders (RequestMessage->HeaderCount, RequestMessage->Headers);
-    DEBUG((DEBUG_ERROR, "HttpRequestToken:\n"));
-    DEBUG_BUFFER(DEBUG_ERROR, RequestToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG_BUFFER(DEBUG_ERROR, RequestMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG_BUFFER(DEBUG_ERROR, RequestData, sizeof(EFI_HTTP_REQUEST_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG((DEBUG_ERROR, "%p Url=%s\n", RequestData->Url,RequestData->Url));
+    DEBUG((DEBUG_INFO, "HttpRequestToken:\n"));
+    DEBUG_BUFFER(DEBUG_INFO, RequestToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DEBUG_BUFFER(DEBUG_INFO, RequestMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DEBUG_BUFFER(DEBUG_INFO, RequestData, sizeof(EFI_HTTP_REQUEST_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DEBUG((DEBUG_INFO, "%p Url=%s\n", RequestData->Url,RequestData->Url));
 
     Status = Dfci->HttpProtocol->Request(Dfci->HttpProtocol, RequestToken);
     if (EFI_ERROR(Status)) {
@@ -690,7 +835,7 @@ DfciIssueRequest (DFCI_PRIVATE_DATA  *Dfci,
             DEBUG((DEBUG_ERROR, "Http Cancel failed. Code=%r\n", Status));
         }
     }
-    DEBUG((DEBUG_ERROR, "Request Token status = %r\n", RequestToken->Status));
+    DEBUG((DEBUG_INFO, "Request Token status = %r\n", RequestToken->Status));
     DEBUG((DEBUG_INFO, "DfciIssueRequest status = %r\n", Status));
 
     return Status;
@@ -700,20 +845,29 @@ DfciIssueRequest (DFCI_PRIVATE_DATA  *Dfci,
  * DfciGetResponse
  *
  *
- * @param Dfci
- * @param ResponseToken
+ * @param[in]  Dfci
+ * @param[in]  ResponseToken
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-DfciGetResponse (DFCI_PRIVATE_DATA  *Dfci,
-                 EFI_HTTP_TOKEN     *ResponseToken) {
+DfciGetResponse (
+    IN  DFCI_PRIVATE_DATA  *Dfci,
+    IN  EFI_HTTP_TOKEN     *ResponseToken
+  ) {
 
     EFI_HTTP_RESPONSE_DATA *ResponseData;
     EFI_HTTP_MESSAGE       *ResponseMessage;
     EFI_STATUS              Status;
     EFI_STATUS              Status2;
 
+
+    if ((NULL == Dfci) ||
+        (NULL == ResponseToken)) {
+        return EFI_INVALID_PARAMETER;
+    }
 
     Status = gBS->CreateEvent(0,0,NULL,NULL,&ResponseToken->Event);
     if (EFI_ERROR(Status)) {
@@ -724,11 +878,11 @@ DfciGetResponse (DFCI_PRIVATE_DATA  *Dfci,
     ResponseMessage = ResponseToken->Message;
     ResponseData = ResponseMessage->Data.Response;
 
-    DEBUG((DEBUG_ERROR, "HttpResponseToken:\n"));
-    DEBUG_BUFFER(DEBUG_ERROR, ResponseToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG_BUFFER(DEBUG_ERROR, ResponseMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DEBUG((DEBUG_INFO, "HttpResponseToken:\n"));
+    DEBUG_BUFFER(DEBUG_INFO, ResponseToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DEBUG_BUFFER(DEBUG_INFO, ResponseMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     if (NULL != ResponseData) {
-        DEBUG_BUFFER(DEBUG_ERROR, ResponseData, sizeof(EFI_HTTP_RESPONSE_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+        DEBUG_BUFFER(DEBUG_INFO, ResponseData, sizeof(EFI_HTTP_RESPONSE_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     }
 
     Status = Dfci->HttpProtocol->Response(Dfci->HttpProtocol, ResponseToken);
@@ -747,9 +901,9 @@ DfciGetResponse (DFCI_PRIVATE_DATA  *Dfci,
     }
 
     if (NULL != ResponseData) {
-        DEBUG((DEBUG_ERROR, "Response status is %d\n", ResponseData->StatusCode));
+        DEBUG((DEBUG_INFO, "Response status is %d\n", ResponseData->StatusCode));
     }
-    DEBUG((DEBUG_ERROR, "Received %d headers\n", ResponseMessage->HeaderCount));
+    DEBUG((DEBUG_INFO, "Received %d headers\n", ResponseMessage->HeaderCount));
 
     DumpHeaders (ResponseMessage->HeaderCount, ResponseMessage->Headers);
 
@@ -760,18 +914,22 @@ DfciGetResponse (DFCI_PRIVATE_DATA  *Dfci,
  * DfciGetSettingsPacket
  *
  *
- * @param Dfci
- * @param Url
- * @param SettingsPkt
- * @param SettingsPktSize
+ * @param[in]  Dfci
+ * @param[in]  Url
+ * @param[out] SettingsPkt
+ * @param[out] SettingsPktSize
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-DfciGetSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
-                       IN  CHAR16            *Url,
-                       OUT VOID             **SettingsPkt,
-                       OUT UINTN             *SettingsPktSize) {
+DfciGetSettingsPacket (
+    IN  DFCI_PRIVATE_DATA *Dfci,
+    IN  CHAR16            *Url,
+    OUT VOID             **SettingsPkt,
+    OUT UINTN             *SettingsPktSize
+  ) {
 
     UINTN                           ContentLength;
     EFI_HTTP_HEADER                *ContentLengthHeader;
@@ -786,7 +944,10 @@ DfciGetSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
     EFI_STATUS                      Status;
 
 
-    if ((NULL == Dfci) || (NULL == Url) || (NULL == SettingsPkt) || (NULL == SettingsPktSize)) {
+    if ((NULL == Dfci) ||
+        (NULL == Url) ||
+        (NULL == SettingsPkt) ||
+        (NULL == SettingsPktSize)) {
         return EFI_INVALID_PARAMETER;
     }
 
@@ -837,7 +998,7 @@ DfciGetSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
         ContentLength = AsciiStrDecimalToUintn(ContentLengthHeader->FieldValue);
     }
 
-    DEBUG((DEBUG_ERROR, "ContentLength=%d,ActualLength=%d\n", ContentLength, ResponseMessage.BodyLength));
+    DEBUG((DEBUG_INFO, "ContentLength=%d,ActualLength=%d\n", ContentLength, ResponseMessage.BodyLength));
 
     FreeHeaders (ResponseMessage.HeaderCount, ResponseMessage.Headers);
 
@@ -846,7 +1007,7 @@ DfciGetSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
     ResponseMessage.Data.Response = NULL;
 
     if (0 == ContentLength) {
-        DEBUG((DEBUG_ERROR, "No content available\n"));
+        DEBUG((DEBUG_INFO, "No content available\n"));
         Status = EFI_NOT_FOUND;
         goto S_EXIT1;
     }
@@ -884,19 +1045,24 @@ S_EXIT1:
  * DfciSendSettingsPacket
  *
  *
- * @param Dfci
- * @param Url
- * @param SettingsResult
- * @param SettingsResultSize
+ * @param[in]  Dfci
+ * @param[in]  Url
+ * @param[in]  ContentType
+ * @param[in]  SettingsResult
+ * @param[in]  SettingsResultSize
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
-                        IN  CHAR16            *Url,
-                        IN  CONST CHAR8       *ContentType,
-                        IN  VOID              *SettingsResult,
-                        IN  UINTN              SettingsResultSize) {
+DfciSendSettingsPacket (
+    IN  DFCI_PRIVATE_DATA *Dfci,
+    IN  CHAR16            *Url,
+    IN  CONST CHAR8       *ContentType,
+    IN  VOID              *SettingsResult,
+    IN  UINTN              SettingsResultSize
+  ) {
 
     UINTN                           ContentLength;
     EFI_HTTP_HEADER                *ContentLengthHeader;
@@ -911,7 +1077,10 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
     EFI_STATUS                      Status;
 
 
-    if ((NULL == Dfci) || (NULL == Url) || (NULL == SettingsResult)) {
+    if ((NULL == Dfci) ||
+        (NULL == Url) ||
+        (NULL == ContentType) ||
+        (NULL == SettingsResult)) {
         return EFI_INVALID_PARAMETER;
     }
 
@@ -921,6 +1090,9 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
     RequestMessage.BodyLength = SettingsResultSize;
     RequestMessage.Body = SettingsResult;
     RequestMessage.Data.Request = &RequestData;
+
+    DEBUG((DEBUG_INFO, "Content being sent\n"));
+    DEBUG_BUFFER(DEBUG_INFO, SettingsResult, MIN (512, SettingsResultSize), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
 
     RequestToken.Event = NULL;
     RequestToken.Status = EFI_SUCCESS;
@@ -962,7 +1134,7 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
         ContentLength = AsciiStrDecimalToUintn(ContentLengthHeader->FieldValue);
     }
 
-    DEBUG((DEBUG_ERROR, "ContentLength=%d,ActualLength=%d\n", ContentLength, ResponseMessage.BodyLength));
+    DEBUG((DEBUG_INFO, "ContentLength=%d,ActualLength=%d\n", ContentLength, ResponseMessage.BodyLength));
 
     FreeHeaders (ResponseMessage.HeaderCount,ResponseMessage.Headers);
 
@@ -971,7 +1143,7 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
     ResponseMessage.Data.Response = NULL;
 
     if (0 == ContentLength) {
-        DEBUG((DEBUG_ERROR, "No content available\n"));
+        DEBUG((DEBUG_INFO, "No content available\n"));
         Status = EFI_NOT_FOUND;
         goto P_EXIT1;
     }
@@ -996,7 +1168,7 @@ DfciSendSettingsPacket (IN  DFCI_PRIVATE_DATA *Dfci,
         CurrentLength += ResponseMessage.BodyLength;
     }
 
-    DEBUG_BUFFER(DEBUG_ERROR, Packet, MIN (1504, CurrentLength), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DEBUG_BUFFER(DEBUG_INFO, Packet, MIN (1504, CurrentLength), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
 
     FreePool (Packet);
 
@@ -1015,12 +1187,15 @@ P_EXIT1:
  * @param RequestUrl    - New URL (caller must free)
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
 GetRequestUrl (
-    DFCI_PRIVATE_DATA  *Dfci,
-    CHAR16             *RequestType,
-    CHAR16            **RequestUrl){
+    IN  DFCI_PRIVATE_DATA  *Dfci,
+    IN  CHAR16             *RequestType,
+    OUT CHAR16            **RequestUrl
+  ) {
 
     CHAR16     *MachineId;
     UINTN       MachineIdSize;
@@ -1029,11 +1204,10 @@ GetRequestUrl (
     UINTN       WorkUrlSize;
 
 
-    if ((NULL == Dfci) || (NULL == RequestType) || (NULL == RequestUrl)) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    if (Dfci->UrlSize < sizeof(CHAR16)) {
+    if ((NULL == Dfci) ||
+        (NULL == RequestType) ||
+        (NULL == RequestUrl) ||
+        (Dfci->UrlSize < sizeof(CHAR16))) {
         return EFI_INVALID_PARAMETER;
     }
 
@@ -1101,19 +1275,18 @@ GetRequestUrl (
  *
  * Send one Dfci Result packet to the server
  *
- * @param Dfci
- * @param RequestType
- * @param VariableName
- * @param VariableNameSpace
+ * @param[in]  Dfci
+ * @param[in]  RequestEntry - Contains request type, variable name, etc
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-ProcessSendResultItem (IN DFCI_PRIVATE_DATA  *Dfci,
-                       IN CHAR16             *RequestType,
-                       IN CONST CHAR8        *ContentType,
-                       IN CHAR16             *VariableName,
-                       IN EFI_GUID           *VariableNameSpace) {
+ProcessSendResultItem (
+    IN DFCI_PRIVATE_DATA     *Dfci,
+    IN PROCESS_REQUEST_ENTRY *RequestEntry
+  ) {
 
     VOID       *SettingsResult;
     UINTN       SettingsResultSize;
@@ -1121,27 +1294,37 @@ ProcessSendResultItem (IN DFCI_PRIVATE_DATA  *Dfci,
     CHAR16     *Url;
 
 
-    if ((NULL == Dfci) || (NULL == RequestType) ||
-        (NULL == VariableName) || (NULL == VariableNameSpace)) {
+    if ((NULL == Dfci) ||
+        (NULL == RequestEntry) ||
+        (NULL == RequestEntry->RequestType) ||
+        (NULL == RequestEntry->ResultsVariableName) ||
+        (NULL == RequestEntry->VariableNameSpace)) {
         return EFI_INVALID_PARAMETER;
     }
 
-    Status = GetVariable3(VariableName, VariableNameSpace, &SettingsResult, &SettingsResultSize, NULL);
+    Status = GetVariable3(RequestEntry->ResultsVariableName,
+                          RequestEntry->VariableNameSpace,
+                         &SettingsResult,
+                         &SettingsResultSize,
+                          NULL);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "GetVariable failed for %s. Code = %r\n", VariableName, Status));
+        DEBUG((DEBUG_ERROR, "GetVariable failed for %s. Code = %r\n", RequestEntry->ResultsVariableName, Status));
         if (EFI_NOT_FOUND == Status) {
             return EFI_SUCCESS;            // No results, SUCCESS.
         }
         return Status;
     }
 
-    Status = GetRequestUrl(Dfci, RequestType, &Url);
+    Status = GetRequestUrl(Dfci, RequestEntry->RequestType, &Url);
     if (EFI_ERROR(Status)) {
         FreePool (SettingsResult);
         return Status;
     }
 
-    Status = DfciSendSettingsPacket (Dfci, Url, ContentType, SettingsResult, SettingsResultSize);
+    Status = DfciSendSettingsPacket (Dfci,
+                                     Url, RequestEntry->ContentType,
+                                     SettingsResult,
+                                     SettingsResultSize);
     FreePool (Url);
     FreePool (SettingsResult);
 
@@ -1153,24 +1336,20 @@ ProcessSendResultItem (IN DFCI_PRIVATE_DATA  *Dfci,
  *
  * Request one Dfci Settings packet from the server
  *
- * @param Dfci
- * @param RequestType
- * @param Signature
- * @param VariableAttributes
- * @param VariableName
- * @param VariableNameSpace
- * @param SettingApplied  -- Only set to TRUE if Setting applied, else not set
+ * @param[in]  Dfci
+ * @param[in]  RequestEntry
+ * @param[out] SettingApplied  -- Only set to TRUE if Setting applied, else not set
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-ProcessRequestItem (IN  DFCI_PRIVATE_DATA  *Dfci,
-                    IN  CHAR16             *RequestType,
-                    IN  UINT32              Signature,
-                    IN  UINT32              VariableAttributes,
-                    IN  CHAR16             *VariableName,
-                    IN  EFI_GUID           *VariableNameSpace,
-                    OUT BOOLEAN            *SettingApplied) {
+ProcessRequestItem (
+    IN  DFCI_PRIVATE_DATA     *Dfci,
+    IN  PROCESS_REQUEST_ENTRY *RequestEntry,
+    OUT BOOLEAN               *SettingApplied
+  ) {
 
     DFCI_PACKET_SIGNATURE   *SettingsInfo;
     VOID                    *SettingsPkt;
@@ -1179,23 +1358,26 @@ ProcessRequestItem (IN  DFCI_PRIVATE_DATA  *Dfci,
     CHAR16                  *Url;
 
 
-
-    if ((NULL == Dfci) || (NULL == RequestType) ||
-        (NULL == VariableName) || (NULL == VariableNameSpace)) {
+    if ((NULL == Dfci) ||
+        (NULL == RequestEntry) ||
+        (NULL == RequestEntry->RequestType) ||
+        (NULL == RequestEntry->VariableName) ||
+        (NULL == RequestEntry->VariableNameSpace)) {
         return EFI_INVALID_PARAMETER;
     }
 
-    Status = GetRequestUrl(Dfci, RequestType, &Url);
+    Status = GetRequestUrl(Dfci, RequestEntry->RequestType, &Url);
     if (EFI_ERROR(Status)) {
         return Status;
     }
+
     Status = DfciGetSettingsPacket (Dfci, Url, &SettingsPkt, &SettingsPktSize);
     if (EFI_ERROR(Status)) {
         FreePool (Url);
         return Status;
     }
 
-    DEBUG_BUFFER(DEBUG_ERROR, SettingsPkt, MIN (1504, SettingsPktSize), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DEBUG_BUFFER(DEBUG_INFO, SettingsPkt, MIN (1504, SettingsPktSize), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
 
     //
     // All of the structures are the same with respect to the location of the signature field.
@@ -1205,19 +1387,19 @@ ProcessRequestItem (IN  DFCI_PRIVATE_DATA  *Dfci,
     //
     // Validate the correct signature is in the packet before setting the variable.
     //
-    if (Signature == SettingsInfo->Signature) {
-        Status = gRT->SetVariable(VariableName,
-                                  VariableNameSpace,
-                                  VariableAttributes,
+    if (RequestEntry->Signature == SettingsInfo->Signature) {
+        Status = gRT->SetVariable(RequestEntry->VariableName,
+                                  RequestEntry->VariableNameSpace,
+                                  RequestEntry->VariableAttributes,
                                   SettingsPktSize,
                                   SettingsPkt);
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "Unable to set %s. Code=%r\n", VariableName, Status));
+            DEBUG((DEBUG_ERROR, "Unable to set %s. Code=%r\n", RequestEntry->VariableName, Status));
         } else {
             *SettingApplied = TRUE;
         }
     } else {
-        DEBUG((DEBUG_ERROR, "SettingsInfo->Signature not as expected. Expected %x, got %x\n", Signature, SettingsInfo->Signature));
+        DEBUG((DEBUG_ERROR, "SettingsInfo->Signature not as expected. Expected %x, got %x\n", RequestEntry->Signature, SettingsInfo->Signature));
         Status = EFI_NOT_FOUND;
     }
     FreePool (Url);
@@ -1226,123 +1408,60 @@ ProcessRequestItem (IN  DFCI_PRIVATE_DATA  *Dfci,
     return Status;
 }
 
-
 /**
  * Process Dfci Requests
  *
- * Dfci requests are a sequence of request:
+ * Dfci requests are a sequence of requests - See the mRequestTable for the sequence:
  *
- * 1. Send Provision Results,    if present (MsIdentityAndAuthManager)   "Identity"
- * 2. Send Permission Results,   if present (MsPermissionManager)        "Permissions"
- * 3. Send Settings Results,     if present (MsSettingsManager)          "Settings"
- * 4. Send Current Settings xml, if present (MsSettingsManager)          "Current"
- * 5. Request Provision packet,  if present (MsIdentityAndAuthManager)   "Identity"
- * 6. Request Permission packet, if present (MsPermissionManager)        "Permissions"
- * 7. Request Settings packet,   if present (MsSettingsManager)          "Settings"
  *
  * The url for these requests are:
  *
  * <hosturl>/DfciRequest/<MachineId>/<request>
  *
  *
- * @param Dfci
- * @param Url
+ * @param[in]  Dfci
  *
  * @return EFI_STATUS
- */
+ *
+ **/
+STATIC
 EFI_STATUS
-ProcessDfciRequests (DFCI_PRIVATE_DATA  *Dfci)  {
+ProcessDfciRequests (
+    IN  DFCI_PRIVATE_DATA  *Dfci
+  )  {
 
+    UINTN       i;
     EFI_STATUS  Status;
-    BOOLEAN     SettingApplied = FALSE;
+    BOOLEAN     SettingApplied;
 
 
+    if (NULL == Dfci) {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    SettingApplied = FALSE;
     //
-    // 1. Sent Provision Results
+    // Send Results and Current to Settings Manager
     //
-    Status = ProcessSendResultItem (Dfci,
-                                    DFCI_IDENTITY,
-                                    HEADER_CONTENT_BIN,
-                                    DFCI_IDENTITY_APPLY_VAR_NAME,
-                                   &gDfciAuthProvisionVarNamespace);
-    if (EFI_ERROR(Status)) {
-        return Status;
+    for (i=0; i < REQUEST_TABLE_COUNT; i++) {
+        Status = ProcessSendResultItem (Dfci, &mRequestTable[i]);
+        if (EFI_ERROR(Status)) {
+            return Status;
+        }
     }
 
     //
-    // 2. Sent Permission Results
+    // Get new settings from Settings Manager
     //
-    Status = ProcessSendResultItem (Dfci,
-                                    DFCI_PERMISSIONS,
-                                    HEADER_CONTENT_BIN,
-                                    DFCI_PERMISSION_POLICY_RESULT_VAR_NAME,
-                                   &gDfciPermissionManagerVarNamespace);
-    if (EFI_ERROR(Status)) {
-        return Status;
+    for (i=0; i < REQUEST_TABLE_COUNT; i++) {
+        if (mRequestTable[i].Signature != 0) {
+            Status = ProcessRequestItem (Dfci, &mRequestTable[i], &SettingApplied);
+            if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
+                return Status;
+            }
+        }
     }
 
-    //
-    // 3. Sent Settings Results
-    //
-    Status = ProcessSendResultItem (Dfci,
-                                    DFCI_SETTINGS,
-                                    HEADER_CONTENT_BIN,
-                                    DFCI_SETTINGS_APPLY_OUTPUT_VAR_NAME,
-                                   &gDfciSettingsManagerVarNamespace);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    //
-    // 4. Sent Current Settings
-    //
-    Status = ProcessSendResultItem (Dfci,
-                                    DFCI_CURRENT,
-                                    HEADER_CONTENT_XML,
-                                    DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
-                                   &gDfciSettingsManagerVarNamespace);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    //
-    // 5. Get new Provision packet
-    //
-    Status = ProcessRequestItem (Dfci,
-                                 DFCI_IDENTITY,
-                                 DFCI_IDENTITY_APPLY_VAR_SIGNATURE,
-                                 DFCI_IDENTITY_VAR_ATTRIBUTES,
-                                 DFCI_IDENTITY_APPLY_VAR_NAME,
-                                &gDfciAuthProvisionVarNamespace,
-                                &SettingApplied);
-    if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
-        return Status;
-    }
-
-    //
-    // 6. Get new Permissions packet
-    //
-    Status = ProcessRequestItem (Dfci,
-                                 DFCI_PERMISSIONS,
-                                 DFCI_PERMISSION_POLICY_APPLY_VAR_SIGNATURE,
-                                 DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES,
-                                 DFCI_PERMISSION_POLICY_APPLY_VAR_NAME,
-                                &gDfciPermissionManagerVarNamespace,
-                                &SettingApplied);
-    if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
-        return Status;
-    }
-
-    //
-    // 7. Get new Settings packet
-    //
-    Status = ProcessRequestItem (Dfci,
-                                 DFCI_SETTINGS,
-                                 DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE,
-                                 DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES,
-                                 DFCI_SETTINGS_APPLY_INPUT_VAR_NAME,
-                                &gDfciSettingsManagerVarNamespace,
-                                &SettingApplied);
     if (Status == EFI_NOT_FOUND) {
         Status = EFI_SUCCESS;
     }
@@ -1355,24 +1474,23 @@ ProcessDfciRequests (DFCI_PRIVATE_DATA  *Dfci)  {
 }
 
 /**
-  Process the Dfci request
-
-  @param[in] SystemTable    A pointer to the EFI System Table.
-
-  @retval EFI_SUCCESS       The entry point is executed successfully.
-  @retval other             Some error occurs when executing this entry point.
-
-**/
+ *  Dfci Request from Network
+ *
+ *  @param[in] Url            A pointer to the EFI System Table.
+ *  @param[in] UrlSize
+ *  @param[out] UserStatus
+ *
+ *  @retval EFI_SUCCESS       The entry point is executed successfully.
+ *  @retval other             Some error occurs when executing this entry point.
+ *
+ **/
 EFI_STATUS
 EFIAPI
 DfciRequestProcess (
     IN CHAR8      *Url,
     IN UINTN       UrlSize,
     OUT UINT64    *UserStatus
-                  //  Ip Config Info: TBD
-                  // IPv4 or IPv6
-                  // Local IP is DHCP, or fixed etc
-    ) {
+  ) {
 
     EFI_BOOT_MANAGER_POLICY_PROTOCOL *BootPolicy;
     DFCI_PRIVATE_DATA                *Dfci;
@@ -1383,6 +1501,11 @@ DfciRequestProcess (
     UINTN                             NicIndex;
     EFI_STATUS                        Status;
 
+
+    if ((NULL == Url) ||
+        (NULL == UserStatus)) {
+        return EFI_INVALID_PARAMETER;
+    }
 
     Status = gBS->LocateProtocol(&gEfiBootManagerPolicyProtocolGuid,
                                  NULL,
@@ -1510,4 +1633,3 @@ CLEANUP:
 
     return Status;
 }
-

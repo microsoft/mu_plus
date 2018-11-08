@@ -32,7 +32,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 /** @file
-Contains definitions for SettingsManager variables.   
+Contains definitions for SettingsManager variables.
 
 Copyright (c) 2015, Microsoft Corporation. All rights reserved.
 
@@ -54,7 +54,7 @@ extern EFI_GUID gDfciSettingsManagerVarNamespace;
 #define DFCI_SETTINGS2_APPLY_OUTPUT_VAR_NAME  L"DfciSettings2Result"
 #define DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME L"DfciSettingsCurrent"
 
-#define DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES    (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS) 
+#define DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES    (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS)
 
 #define DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE     SIGNATURE_32('M','S','S','A')
 #define DFCI_SECURED_SETTINGS_RESULT_VAR_SIGNATURE    SIGNATURE_32('M','S','S','R')

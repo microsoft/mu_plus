@@ -44,12 +44,14 @@
 #
 
 [Sources]
-  DfciMenu.c
   DfciMenu.h
+  DfciMenu.c
   DfciMenuVfr.Vfr
   DfciMenuStrings.uni
   DfciRequest.h
   DfciRequest.c
+  DfciUsb.h
+  DfciUsb.c
 
 [Packages]
   DfciPkg/DfciPkg.dec
@@ -65,6 +67,7 @@
   DfciDeviceIdSupportLib
   DfciSettingsLib
   DfciUiSupportLib
+  FileHandleLib
   HiiLib
   HttpLib
   MemoryAllocationLib
@@ -90,10 +93,13 @@
   gDfciAuthenticationProtocolGuid
   gDfciSettingAccessProtocolGuid
   gDfciSettingPermissionsProtocolGuid
+  gEfiBlockIoProtocolGuid
   gEfiBootManagerPolicyProtocolGuid
   gEfiHiiConfigAccessProtocolGuid
   gEfiHttpProtocolGuid
   gEfiHttpServiceBindingProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid
+  gEfiUsbIoProtocolGuid
 
 [FeaturePcd]
 

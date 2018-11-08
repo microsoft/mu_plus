@@ -78,9 +78,13 @@ formset
                     text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_READY);          // ZeroTouchStatus: Ready
 
                 text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // 
                     text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_OUT),               // Opt Out
-                    flags   = INTERACTIVE,                                      // INTERACTIVE = Button
+                    flags   = INTERACTIVE | RESET_REQUIRED,                     // INTERACTIVE = Button
                     key     = DFCI_MENU_ZUM_OPT_IN_QUESTION_ID;
             endif;
 
@@ -90,11 +94,41 @@ formset
                     text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_NOT_READY);      // ZeroTouchStatus: Not Ready
 
                 text
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
+                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+
+                text
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // 
                     text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_IN),                // Opt In
-                    flags   = INTERACTIVE,                                      // INTERACTIVE = Button
+                    flags   = INTERACTIVE | RESET_REQUIRED,                     // INTERACTIVE = Button
                     key     = DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID;
             endif;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_DFCI_USB_INSTALL);
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Update Now button
+                text    = STRING_TOKEN(STR_DFCI_USB_INSTALL_NOW),               //
+                flags   = INTERACTIVE,                                          // INTERACTIVE = Button
+                key     = DFCI_MENU_USB_INSTALL_NOW_QUESTION_ID;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
 
         endif; 
 
