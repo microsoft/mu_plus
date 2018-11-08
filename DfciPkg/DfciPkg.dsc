@@ -94,10 +94,9 @@
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [LibraryClasses.X64]
-
-#!if $(TARGET) == DEBUG
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
+#!if $(TARGET) == DEBUG
   #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
   NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
