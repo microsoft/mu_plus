@@ -40,10 +40,6 @@
 
 [LibraryClasses]
 
-  ## @libraryclass Provides a way to Reset the system after capsule udpate
-  #
-  CapsuleResetLib|Include/Library/CapsuleResetLib.h
-
   MathLib|Include/Library/MathLib.h
 
   ## @libraryclass Provides the device/family subset of Uefi PlatformBootManagerLib

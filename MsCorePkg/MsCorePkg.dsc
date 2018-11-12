@@ -130,7 +130,6 @@
 ###################################################################################################
 
 [Components]
-  MsCorePkg/Library/CapsuleResetLibNull/CapsuleResetLibNull.inf
   MsCorePkg/Library/MathLib/MathLib.inf
   MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
   MsCorePkg/MuCryptoDxe/MuCryptoDxe.inf
