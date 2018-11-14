@@ -33,31 +33,19 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __ZERO_TOUCH_VARIABLES_H__
 
 /**
-* The Zero Touch certificate is baked into the library.  _ZT_CERT_OPT_OUT, if present,
-* indicates that the user has opted out of Zero Touch.
+* The Zero Touch certificate is baked into the firmware volume by including something like
+* this in the platformpkg.fdf:
 *
-* This implementation counts on non standard variable locking. _ZT_CERT_OPT_OUT requires
-* LOCK_ON_CREATE and LOCK_AT_END_OF_DXE, and _ZT_CERT_INSTALL requires LOCK_AT_END_OF_DXE.
-* Both require theses variable to be unlocked in manufacturing mode.
+*  FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
+*      SECTION RAW = ZeroTouchPkg/Certs/ZeroTouch/ZTD_Leaf.cer
+*  }
 *
-* _ZT_CERT_OPT_OUT is lock on create.  Once set, Mfg mode is needed to clear
-*
-* On every boot:
-*
-* 1. Delete _ZT_CERT_OPT_OUT. This will only succeed if in Mfg mode
-* 2. At ReadyToBoot, if _ZT_CERT_INSTALL is NOT_FOUND, install _ZT_CERT_INSTALL
-*    with a value = 1. This will only succeed if in Mfg mode.
-* 3. IdentityAndAuth manager will install the ZT Certificate into DFCI if
-*    _ZT_CERT_INSTALL has a value of 1.  After installing the ZT Certificate,
-*    IdentityAndAuth manager will set the value of _ZT_CERT_INSTALL to 0;
-*
-* Library access will only return the cert if the certificate is installable according
-* to the state of these variables.
+* This implementation counts on non standard variable locking. _ZT_CERT_OPT_IN requires
+* requires LOCK_AT_READY_TO_BOOT
 *
 */
 
-#define ZERO_TOUCH_VARIABLE_OPT_OUT_VAR_NAME   L"_ZT_CERT_OPT_OUT"
-#define ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME   L"_ZT_CERT_INSTALL"
+#define ZERO_TOUCH_VARIABLE_OPT_IN_VAR_NAME   L"_ZT_OPT_IN"
 #define ZERO_TOUCH_VARIABLE_ATTRIBUTES (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE )
 
 #define ZERO_TOUCH_VARIABLE_GUID  \

@@ -32,9 +32,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Uefi.h>
 
-#include <DfciSystemSettingTypes.h>
-
-#include <Guid/ZeroTouchSettingsGuid.h>
 #include <Guid/ZeroTouchVariables.h>
 
 #include <Library/BaseMemoryLib.h>
@@ -47,140 +44,18 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/ZeroTouchSettingsLib.h>   // Just for header information, no library access.
 
-#include <Settings/ZeroTouchSettings.h>
-
 ///// --- Inernal functions ------
 
-/**
- * Install _ZT_CERT_INSTALL variable if the variable is not locked.
- *
- */
-VOID
-EFIAPI
-ZeroTouchOnReadyToBoot (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
-    ) {
-
-    UINT8   State;
-    EFI_STATUS Status;
-
-    State = 1;
-
-    Status = gRT->SetVariable (ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME,
-                              &gZeroTouchVariableGuid,
-                               ZERO_TOUCH_VARIABLE_ATTRIBUTES,
-                               sizeof(State),
-                              &State);
-
-    switch (Status) {
-    case EFI_SUCCESS:
-        DEBUG((DEBUG_INFO,"%a - Enabling install of Zero touch certificate.\n", __FUNCTION__));
-        break;
-    case EFI_ACCESS_DENIED:
-        DEBUG((DEBUG_INFO,"%a - Unable to install Zero touch certificate.\n", __FUNCTION__));
-        break;
-    default:
-        DEBUG((DEBUG_ERROR,"%a - Error setting %s. Code=%r\n", __FUNCTION__, ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME, Status));
-        break;
-    }
-
-    gBS->CloseEvent(Event);
-}
-
-
-///// --- No Dfci Settings.  Must be linked with SettingsManager to get a proper constructor call.
+///// --- No Dfci Settings.  Must not be linked with SettingsManager.
+/////                        Should be linked with IdentityAndAuthManager
+/////                        and DfciMenu
 
 /////---------------------Interface for Library  ---------------------//////
 
 /**
- * GetZeroTouchState
- *
- * Checks to see if Zero Touch can be installed..
- *
- * @author miketur (7/18/2018)
- * @param
- *
- * @return BOOLEAN EFIAPI
- */
-BOOLEAN
-EFIAPI
-GetZeroTouchInstallState (VOID)
-{
-    EFI_STATUS      Status;
-    UINTN           ValueSize;
-    UINT8           OptOutState;
-    UINT8           InstallState;
-    UINT32          Attributes;
-    BOOLEAN         Installable;
-
-
-    OptOutState = 0;
-    ValueSize = sizeof(OptOutState);
-    Status = gRT->GetVariable (ZERO_TOUCH_VARIABLE_OPT_OUT_VAR_NAME,
-                              &gZeroTouchVariableGuid,
-                              &Attributes,
-                              &ValueSize,
-                              &OptOutState );
-    if (!EFI_ERROR(Status)) {                          // We have a variable
-        if (ZERO_TOUCH_VARIABLE_ATTRIBUTES != Attributes) {  // Check if Attributes are wrong
-            OptOutState = 0;               // Don't trust value received
-            // Delete invalid variable
-            Status = gRT->SetVariable (ZERO_TOUCH_VARIABLE_OPT_OUT_VAR_NAME,
-                                      &gZeroTouchVariableGuid,
-                                       0,
-                                       0,
-                                       NULL);
-            if (EFI_ERROR(Status)) {                   // What???
-                DEBUG((DEBUG_ERROR,"%a - Unable to delete invalid variable %s\n", __FUNCTION__, ZERO_TOUCH_VARIABLE_OPT_OUT_VAR_NAME));
-            }
-        } else {
-            OptOutState = 1;
-        }
-    } else {
-        DEBUG((DEBUG_ERROR,"%a - error getting %s. Code=%r\n", __FUNCTION__, ZERO_TOUCH_VARIABLE_OPT_OUT_VAR_NAME, Status));
-    }
-
-    InstallState = 0;
-    ValueSize = sizeof(InstallState);
-    Status = gRT->GetVariable (ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME,
-                              &gZeroTouchVariableGuid,
-                              &Attributes,
-                              &ValueSize,
-                              &InstallState );
-    if (!EFI_ERROR(Status)) {                          // We have a variable
-        if (ZERO_TOUCH_VARIABLE_ATTRIBUTES != Attributes) {  // Check if Attributes are wrong
-            InstallState = 0;                          // Don't trust the setting obtained
-            // Delete invalid URL variable
-            Status = gRT->SetVariable (ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME,
-                                      &gZeroTouchVariableGuid,
-                                       0,
-                                       0,
-                                       NULL);
-            if (EFI_ERROR(Status)) {                   // What???
-                DEBUG((DEBUG_ERROR,"%a - Unable to delete invalid variable %s\n", __FUNCTION__, ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME));
-            }
-        }
-    } else {
-        DEBUG((DEBUG_ERROR,"%a - error getting %s. Code=%r\n", __FUNCTION__, ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME, Status));
-    }
-
-    if ((OptOutState == 0) && (InstallState == 1)) {
-        Installable = TRUE;
-    } else {
-        Installable = FALSE;
-    }
-
-    return Installable;
-}
-
-/**
  * GetZeroTouchCertificate
  *
- * Checks if the user has opted out of Zero Touch enrollment. If
- * opted out, return EFI_NOT_FOUND to indicate no Certificate;
- *
- * Otherwize, the Zero Touch certificate is returned.
+ * Returns the built in Zero Touch certificate
  *
  * @param Certificate
  * @param CertificateSize
@@ -193,13 +68,7 @@ GetZeroTouchCertificate(UINT8 **Certificate, UINTN *CertificateSize) {
 
     EFI_STATUS Status;
     EFI_GUID  *CertFile;
-    BOOLEAN    Installable;
 
-    Installable =  GetZeroTouchInstallState();
-
-    if (!Installable) {
-        return EFI_NOT_FOUND;
-    }
 
     CertFile = (EFI_GUID *) PcdGetPtr(PcdZeroTouchCertificateFile);
 
@@ -218,155 +87,96 @@ GetZeroTouchCertificate(UINT8 **Certificate, UINTN *CertificateSize) {
 }
 
 /**
-Function to Set Zero Touch Installed.
-
-Calling this function set the variable state to Installed.
-
-@retval: Success - State recorded
-@retval: EFI_ERROR.  Error occurred.
-**/
-EFI_STATUS
-EFIAPI
-SetZeroTouchInstalled (VOID)
-{
-    EFI_STATUS      Status;
-    UINT8           State;
-
-    State = 0;
-    Status = EFI_SUCCESS;
-
-    Status = gRT->SetVariable (ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME,
-                              &gZeroTouchVariableGuid,
-                               ZERO_TOUCH_VARIABLE_ATTRIBUTES,
-                               sizeof(State),
-                              &State);
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"%a - Unable to set Install to 0. Code=%r\n", __FUNCTION__, Status));
-    } else {
-        DEBUG((DEBUG_INFO,"%a - Zero touch marked installed.\n", __FUNCTION__));
-    }
-
-    return Status;
-}
-
-/**
-Function to Set Zero Touch OptOut.
-
-SetZeroTouchOptOut sets the _ZT_CERT_OPT_OUT variable. Once it is set, it can only be
-deleted if in MFG mode.
-
-@retval: Success - Zero Touch is disabled
-@retval: EFI_ERROR.  Error occurred.
-**/
-EFI_STATUS
-EFIAPI
-SetZeroTouchOptOut (VOID)
-{
-    EFI_STATUS      Status;
-    UINT8           State;
-
-
-    State = 0;
-    Status = EFI_SUCCESS;
-
-    Status = gRT->SetVariable (ZERO_TOUCH_VARIABLE_OPT_OUT_VAR_NAME,
-                              &gZeroTouchVariableGuid,
-                               ZERO_TOUCH_VARIABLE_ATTRIBUTES,
-                               sizeof(State),
-                              &State);
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"%a - Unable to disable Zero Touch. Code=%r\n", __FUNCTION__, Status));
-    } else {
-        DEBUG((DEBUG_INFO,"%a - Zero touch disabled.\n", __FUNCTION__));
-    }
-
-    return Status;
-}
-
-/**
- * The constructor function initializes the Lib for Dxe.
+ * Function to Get Zero Touch OptOut.
  *
- * This constructor is only needed for DfciSettingsManager support.
- * The design is to have the PCD false for all modules except the 1 anonymously liked to the DfciettingsManager.
- *
- * @param  ImageHandle   The firmware allocated handle for the EFI image.
- * @param  SystemTable   A pointer to the EFI System Table.
- *
- * @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
+ * @retval: TRUE    User has NOT opted out of Zero Touch.
+ * @retval: FALSE   User has opted out of Zero Touch.
  *
  **/
-EFI_STATUS
+ZERO_TOUCH_STATE
 EFIAPI
-ZeroTouchSettingsConstructor (
-  IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable
-  )
-{
+GetZeroTouchState (
+    VOID
+  ) {
+    UINT32            Attributes;
+    EFI_STATUS        Status;
+    UINT8             State;
+    UINTN             StateSize;
+    ZERO_TOUCH_STATE  CurrentState;
 
-    EFI_EVENT  InitEvent;
-    EFI_STATUS Status;
-    UINT8      State;
-    UINT32     Attributes;
-    UINTN      ValueSize;
+    State = 0;
+    StateSize = sizeof(State);
+    CurrentState = ZERO_TOUCH_INACTIVE;
+    Status = gRT->GetVariable (ZERO_TOUCH_VARIABLE_OPT_IN_VAR_NAME,
+                              &gZeroTouchVariableGuid,
+                              &Attributes,
+                              &StateSize,
+                              &State);
 
-    if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
-
-        // Only do these things once.  This is accomplished by only running this code
-        // when attached to the Settings Manager.
-
-        // Try to delete the _ZT_CERT_OPT_OUT variable
-
-        Status = gRT->SetVariable(ZERO_TOUCH_VARIABLE_OPT_OUT_VAR_NAME, &gZeroTouchVariableGuid, 0, 0, NULL);
-
-        switch (Status) {
-        case EFI_SUCCESS:
-            DEBUG((DEBUG_ERROR, "Zero Touch re-enabled.\n"));
-            break;
-        case EFI_ACCESS_DENIED:
-            DEBUG((DEBUG_ERROR, "Zero Touch is disabled.\n"));
-            break;
-        case EFI_NOT_FOUND:
-            DEBUG((DEBUG_ERROR, "Zero Touch is enabled.\n"));
-            break;
-        default:
-            DEBUG((DEBUG_ERROR, "%a - Initialize Zero Touch Var failed. %r.\n", __FUNCTION__, Status));
-            break;
-        }
-
-        ValueSize = sizeof(State);
-        Status = gRT->GetVariable (ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME,
-                                  &gZeroTouchVariableGuid,
-                                  &Attributes,
-                                  &ValueSize,
-                                  &State );
-        switch (Status) {
-        case EFI_NOT_FOUND:
-            //
-            // Register notify function to set _ZT_CERT_INSTALL variable at ReadyToBoot.
-            //
-            Status = gBS->CreateEventEx(
-              EVT_NOTIFY_SIGNAL,
-              TPL_CALLBACK,
-              ZeroTouchOnReadyToBoot,
-              ImageHandle,  //set the context to the image handle
-              &gEfiEventReadyToBootGuid,
-              &InitEvent
-              );
-
-            if (InitEvent == NULL) {
-              DEBUG((DEBUG_ERROR, "%a - Create Event Ex for Ready to Boot failed\n", __FUNCTION__));
+    if (EFI_ERROR(Status) && Status != EFI_BUFFER_TOO_SMALL) {
+        DEBUG((DEBUG_ERROR,"%a - retrieving ZTD State. Code=%r\n", __FUNCTION__, Status));
+    } else {
+        if ((Status == EFI_BUFFER_TOO_SMALL) || (Attributes != ZERO_TOUCH_VARIABLE_ATTRIBUTES)) {
+            DEBUG((DEBUG_ERROR,"%a - Invalid variable size or attributes.\n", __FUNCTION__, Status));
+            Status = gRT->SetVariable (ZERO_TOUCH_VARIABLE_OPT_IN_VAR_NAME,
+                                      &gZeroTouchVariableGuid,
+                                       0,
+                                       0,
+                                       NULL);
+            if (EFI_ERROR(Status)) {
+                DEBUG((DEBUG_ERROR,"%a - error deleting invalid variable. Code=%r\n", __FUNCTION__, Status));
             }
-            break;
-        case EFI_SUCCESS:
-            DEBUG((DEBUG_INFO, "%a - %s state = %d\n", __FUNCTION__, ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME, State));
-            break;
-        default:
-            DEBUG((DEBUG_ERROR, "%a - Error checking %s. Code=%r\n", __FUNCTION__, ZERO_TOUCH_VARIABLE_INSTALL_VAR_NAME, Status));
+        } else {
+            if (State == 0) {
+                CurrentState = ZERO_TOUCH_OPT_OUT;
+            } else {
+                CurrentState = ZERO_TOUCH_OPT_IN;
+            }
+            DEBUG((DEBUG_INFO,"%a - Zero touch marked as %d.\n", __FUNCTION__, State));
         }
     }
 
-    return EFI_SUCCESS;
+    return CurrentState;
 }
 
+/**
+Function to Set Zero Touch State.
+
+Sets Zero Touch state to Opt in or Opt Out
+
+@retval: Success - Zero Touch state set
+@retval: EFI_INVALID_PARAMETER  - Attempt to set state to InActive.
+**/
+EFI_STATUS
+EFIAPI
+SetZeroTouchState (
+    IN  ZERO_TOUCH_STATE NewState
+  ) {
+    EFI_STATUS      Status;
+    UINT8           State;
+
+    switch (NewState) {
+        case ZERO_TOUCH_OPT_IN:
+            State = 1;
+            break;
+        case ZERO_TOUCH_OPT_OUT:
+            State = 0;
+            break;
+        default:
+            return EFI_INVALID_PARAMETER;
+    }
+
+    Status = gRT->SetVariable (ZERO_TOUCH_VARIABLE_OPT_IN_VAR_NAME,
+                              &gZeroTouchVariableGuid,
+                               ZERO_TOUCH_VARIABLE_ATTRIBUTES,
+                               sizeof(State),
+                              &State);
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR,"%a - Unable to set state of Zero Touch. Code=%r\n", __FUNCTION__, Status));
+    } else {
+        DEBUG((DEBUG_INFO,"%a - Zero touch marked as %d.\n", __FUNCTION__, State));
+    }
+
+    return Status;
+}

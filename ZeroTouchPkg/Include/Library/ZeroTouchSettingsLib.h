@@ -32,64 +32,51 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __ZERO_TOUCH_SETTINGS_LIB_H__
 #define __ZERO_TOUCH_SETTINGS_LIB_H__
 
-/**
- * GetZeroTouchState
- *
- * Checks to see if Zero Touch has been opted out.
- *
- * @author miketur (7/18/2018)
- * @param
- *
- * @return BOOLEAN EFIAPI
- */
-BOOLEAN
-EFIAPI
-GetZeroTouchInstallState (VOID);
+typedef enum {
+    ZERO_TOUCH_INACTIVE,
+    ZERO_TOUCH_OPT_IN,
+    ZERO_TOUCH_OPT_OUT
+} ZERO_TOUCH_STATE;
 
 /**
  * GetZeroTouchCertificate
  *
- * Checks if the user has opted out of Zero Touch enrollment. If
- * opted out, return EFI_NOT_FOUND to indicate no Certificate;
- *
- * Otherwize, the Zero Touch certificate is returned.
+ * Returns the built in ZeroTouch certificate.
  *
  * @param Certificate
  * @param CertificateSize
  *
  * @return EFI_STATUS EFIAPI
+ *
  */
 EFI_STATUS
 EFIAPI
 GetZeroTouchCertificate(UINT8 **Certificate, UINTN *CertificateSize);
 
 /**
-Function to Set Zero Touch State.
-
-Actually, only SetZeroTouchState(FALSE) is supported as the variable
-is locked when created.  SetZeroTouchState(FALSE) will create the _ZT_CERT_INVALID
-variable.  Once it is set, it can only be deleted if in MFG mode.
-
-@retval: Success - Zero Touch is disabled
-@retval: EFI_ERROR.  Error occurred.
-**/
-EFI_STATUS
+ * Function to Get Zero Touch State.
+ *
+ * @retval: ZERO_TOUCH_INACTIVE   User has never selected a state.
+ * @retval: ZERO_TOUCH_OPT_IN     User has selected Opt In.
+ * @retval: ZERO_TOUCH_OPT_OUT    User has selected Opt Out.
+ *
+ **/
+ZERO_TOUCH_STATE
 EFIAPI
-SetZeroTouchInstalled (VOID);
+GetZeroTouchState (VOID);
 
 /**
-Function to Set Zero Touch OptOut.
+Function to Set Zero Touch State.
 
-SetZeroTouchOptOut sets the _ZT_CERT_OPT_OUT variable. Once it is set, it can only be
-deleted if in MFG mode.
+@param[in]  NewState
 
-
-@retval: Success - Zero Touch is disabled
-@retval: EFI_ERROR.  Error occurred.
+@retval: Success                 ZERO_TOUCH_STATE has been set
+@retval: EFI_INVALID_PARAMETER.  ZERO_TOUCH_INACTIVE as NewState.
 **/
 EFI_STATUS
 EFIAPI
-SetZeroTouchOptOut (VOID);
-
+SetZeroTouchState (
+    IN  ZERO_TOUCH_STATE NewState
+  );
 
 #endif  // __ZERO_TOUCH_SETTINGS_LIB_H__
