@@ -30,7 +30,7 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MathLib
   FILE_GUID                      = 485F46E6-7E5D-4E05-BDBE-CBBAE5E7EFB7
-  MODULE_TYPE                    = DXE_DRIVER
+  MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MathLib
 
