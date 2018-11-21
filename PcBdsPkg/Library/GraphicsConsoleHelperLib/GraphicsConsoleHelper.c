@@ -1,5 +1,5 @@
 /** @file
-This GraphicConsoleHelper is only intended to be used by BDS to configure 
+This GraphicsConsoleHelper is only intended to be used by BDS to configure 
 the console mode / graphic mode
 
 Copyright (c) 2018, Microsoft Corporation
@@ -36,7 +36,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/DebugLib.h>
-#include <Library/GraphicConsoleHelperLib.h>
+#include <Library/GraphicsConsoleHelperLib.h>
 
 //
 // Platform defined native resolution.
@@ -117,7 +117,7 @@ InitializeModeTable(
 
 EFI_STATUS
 EFIAPI
-SetGraphicsConsoleMode(GRAPHIC_CONSOLE_MODE Mode)
+SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode)
 {
   EFI_GRAPHICS_OUTPUT_PROTOCOL          *GraphicsOutput;
   EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *SimpleTextOut;

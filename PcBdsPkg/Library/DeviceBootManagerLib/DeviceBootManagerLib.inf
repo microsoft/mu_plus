@@ -67,7 +67,7 @@
   MsNVBootReasonLib
   BootGraphicsLib
   BootGraphicsProviderLib
-  GraphicConsoleHelperLib
+  GraphicsConsoleHelperLib
 
 [Guids]
   gUefiShellFileGuid

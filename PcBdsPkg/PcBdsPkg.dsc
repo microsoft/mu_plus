@@ -87,7 +87,7 @@
   ConsoleMsgLib|PcBdsPkg/Library/ConsoleMsgNullLib/ConsoleMsgNullLib.inf
   MsPlatformPowerCheckLib|PcBdsPkg/Library/MsPlatformPowerCheckNullLib/MsPlatformPowerCheckNullLib.inf
   MsAltBootLib|PcBdsPkg/Library/MsAltBootNullLib/MsAltBootNullLib.inf
-  GraphicConsoleHelperLib|PcBdsPkg/Library/GraphicConsoleHelperNullLib/GraphicConsoleHelperNullLib.inf
+  GraphicsConsoleHelperLib|PcBdsPkg/Library/GraphicsConsoleHelperNullLib/GraphicsConsoleHelperNullLib.inf
 
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
@@ -135,8 +135,8 @@
   PcBdsPkg/Library/MsAltBootNullLib/MsAltBootNullLib.inf
   PcBdsPkg/Library/MsNVBootReasonNullLib/MsNVBootReasonNullLib.inf
   PcBdsPkg/Library/MsUefiVersionNullLib/MsUefiVersionNullLib.inf
-  PcBdsPkg/Library/GraphicConsoleHelperLib/GraphicConsoleHelper.inf
-  PcBdsPkg/Library/GraphicConsoleHelperNullLib/GraphicConsoleHelperNullLib.inf
+  PcBdsPkg/Library/GraphicsConsoleHelperLib/GraphicsConsoleHelper.inf
+  PcBdsPkg/Library/GraphicsConsoleHelperNullLib/GraphicsConsoleHelperNullLib.inf
 
 [Components.X64]
   PcBdsPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf

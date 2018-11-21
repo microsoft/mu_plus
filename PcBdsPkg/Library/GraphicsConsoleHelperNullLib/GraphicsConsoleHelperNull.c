@@ -1,5 +1,5 @@
 /** @file
-This GraphicConsoleHelper is only intended to be used by BDS to configure 
+This GraphicsConsoleHelper is only intended to be used by BDS to configure 
 the console mode / graphic mode
 
 Null Instance which is just for compiling
@@ -31,11 +31,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <Uefi.h>
-#include <Library/GraphicConsoleHelperLib.h>
+#include <Library/GraphicsConsoleHelperLib.h>
 
 EFI_STATUS
 EFIAPI
-SetGraphicsConsoleMode(GRAPHIC_CONSOLE_MODE Mode)
+SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode)
 {
   return EFI_UNSUPPORTED;
 }

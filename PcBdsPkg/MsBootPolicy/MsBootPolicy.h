@@ -50,7 +50,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MsBootPolicyLib.h>
 #include <Library/BootGraphicsProviderLib.h>
 #include <Library/BootGraphicsLib.h>
-#include <Library/GraphicConsoleHelperLib.h>
+#include <Library/GraphicsConsoleHelperLib.h>
 #include <Library/MsNetworkDependencyLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PrintLib.h>

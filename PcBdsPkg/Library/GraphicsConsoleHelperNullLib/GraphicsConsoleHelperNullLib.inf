@@ -1,7 +1,7 @@
 ## @file
-# Library to help set the console to known points (low res, native res)
+# GraphicsConsoleHelperNullLib - Null instance for compiling
 #
-# Copyright (c) 2016, Microsoft Corporation
+# Copyright (c) 2018, Microsoft Corporation
 #
 # All rights reserved.
 #
@@ -29,11 +29,11 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = GraphicsConsoleHelperLib
-  FILE_GUID                      = f7ea5f4e-78cb-46f6-91a2-15f094ec8ce5
+  BASE_NAME                      = GraphicsConsoleHelperNull
+  FILE_GUID                      = 57038927-e7a2-4e52-94dc-8b3857830ff8
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = GraphicsConsoleHelperLib|DXE_DRIVER UEFI_APPLICATION
+  LIBRARY_CLASS                  = GraphicsConsoleHelperLib
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -42,7 +42,7 @@
 #
 
 [Sources]
-  GraphicConsoleHelper.c
+  GraphicsConsoleHelperNull.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -50,16 +50,7 @@
   PcBdsPkg/PcBdsPkg.dec
 
 [LibraryClasses]
-  UefiBootServicesTableLib
-  DebugLib
-  PcdLib
-  MemoryAllocationLib
 
 [Protocols]
-  gEfiGraphicsOutputProtocolGuid                ## SOMETIMES_CONSUMES
 
-[Pcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
+[FeaturePcd]

@@ -54,7 +54,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MsBootPolicyLib.h>
 #include <Library/BootGraphicsProviderLib.h>
 #include <Library/BootGraphicsLib.h>
-#include <Library/GraphicConsoleHelperLib.h>
+#include <Library/GraphicsConsoleHelperLib.h>
 #include <Library/MsPlatformDevicesLib.h>
 #include <Library/MsPlatformPowerCheckLib.h>
 #include <Library/MsNetworkDependencyLib.h>
