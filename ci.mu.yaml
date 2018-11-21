@@ -1,7 +1,7 @@
 {
     "Name": "Project Mu Plus Repo CI Build",
     "GroupName": "MuPlus",
-    
+
     #Workspace path relative to this file
     "RelativeWorkspaceRoot": "",
     "Scopes": [ "corebuild" ],
@@ -12,13 +12,8 @@
         #Url
         #Branch
         #Commit
-         {
-            "Path": "MU_BUILD",
-            "Url": "https://github.com/Microsoft/mu_build.git",
-            "Branch": "release/201808"
-        },
-        { 
-            "Path": "MU_BASECORE", 
+        {
+            "Path": "MU_BASECORE",
             "Url": "https://github.com/Microsoft/mu_basecore.git",
             "Branch": "release/201808"
         },
