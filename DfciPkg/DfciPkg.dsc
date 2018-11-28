@@ -94,6 +94,7 @@
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [LibraryClasses.X64]
+  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
 #!if $(TARGET) == DEBUG
   #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
@@ -105,7 +106,6 @@
 
 [LibraryClasses.X64.UEFI_APPLICATION]
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
-  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
   UnitTestLib|MsUnitTestPkg/Library/UnitTestLib/UnitTestLib.inf
   UnitTestLogLib|MsUnitTestPkg/Library/UnitTestLogLib/UnitTestLogLib.inf
