@@ -27,20 +27,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef UI_RECTANGLE_H
 #define UI_RECTANGLE_H
 
-
-
-#pragma warning (push)
-#pragma warning(disable:4200)
-
 typedef struct {
   UI_RECTANGLE Public;
   INTN FillDataSize;
   UINT8  FillData[0];
 } PRIVATE_UI_RECTANGLE;
-
-
-#pragma warning (pop)
-
 
 /***  PRIVATE METHODS ***/
 
