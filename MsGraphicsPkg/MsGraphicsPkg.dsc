@@ -77,7 +77,7 @@
   UiProgressCircleLib|MsGraphicsPkg/Library/BaseUiProgressCircleLib/UiProgressCircleLib.inf
   UiRectangleLib|MsGraphicsPkg/Library/BaseUiRectangleLib/BaseUiRectangleLib.inf
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
-  MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsNullLib/Dxe/MsEarlyGraphicsNullLib.inf
+  MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Dxe/MsEarlyGraphicsLibNull.inf
   DisplayDeviceStateLib|MsGraphicsPkg/Library/DisplayDeviceStateLibNull/DisplayDeviceStateLibNull.inf
   MsColorTableLib|MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
   SwmDialogsLib|MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
@@ -96,7 +96,7 @@
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
-  MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsNullLib/Pei/MsEarlyGraphicsNullLib.inf
+  MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Pei/MsEarlyGraphicsLibNull.inf
 
 [LibraryClasses.IA32]
 
@@ -141,10 +141,10 @@
   # Early Graphics driver.
   MsGraphicsPkg/MsEarlyGraphics/Pei/MsEarlyGraphics.inf
   MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
-  MsGraphicsPkg/Library/MsEarlyGraphicsNullLib/Pei/MsEarlyGraphicsNullLib.inf
+  MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Pei/MsEarlyGraphicsLibNull.inf
 
 [Components.X64, Components.AARCH64]
-  MsGraphicsPkg/Library/MsEarlyGraphicsNullLib/Dxe/MsEarlyGraphicsNullLib.inf
+  MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Dxe/MsEarlyGraphicsLibNull.inf
   MsGraphicsPkg/Library/SimpleUIToolKit/SimpleUIToolKit.inf
   
   # Graphics (GOP) Override driver.

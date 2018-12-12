@@ -26,7 +26,7 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = MsPlatformEarlyGraphicsNullLib
+  BASE_NAME                      = MsPlatformEarlyGraphicsLibNull
   FILE_GUID                      = C24D06EC-4F1F-4A1C-BB0B-FE75828A3556
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
@@ -39,7 +39,7 @@
 #
 
 [Sources]
-  MsEarlyGraphicsNullLib.c
+  MsEarlyGraphicsLibNull.c
 
 [Packages]
   MdePkg/MdePkg.dec
