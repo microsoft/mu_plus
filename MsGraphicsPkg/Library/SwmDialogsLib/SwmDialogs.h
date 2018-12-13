@@ -52,7 +52,6 @@
 
 extern EFI_GRAPHICS_OUTPUT_PROTOCOL      *gGop;
 extern EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *gSimpleTextInEx;
-extern EFI_HANDLE                         gImageHandle;
 extern EFI_HANDLE                         gPriorityHandle;
 extern EFI_HII_HANDLE                     gSwmDialogsHiiHandle;
 

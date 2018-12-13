@@ -52,11 +52,11 @@ EFI_EVENT  mDfciSettingsProviderSupportInstallEvent;
 VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
 
 typedef enum {
-    ID_IS_BAD,          
-    ID_IS_URL,          
-    ID_IS_HWID,         
+    ID_IS_BAD,
+    ID_IS_URL,
+    ID_IS_HWID,
     ID_IS_FRIENDLY_NAME,
-    ID_IS_TENANT_NAME, 
+    ID_IS_TENANT_NAME,
 }  ID_IS;
 
 // Forward declarations needed
@@ -317,6 +317,7 @@ DfciSettingsGet (
     CHAR16             *VariableName;
 
     if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
         return EFI_INVALID_PARAMETER;
     }
 
@@ -384,6 +385,7 @@ DfciSettingsGetDefault (
     ID_IS    Id;
 
     if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
         return EFI_INVALID_PARAMETER;
     }
 

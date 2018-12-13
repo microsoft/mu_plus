@@ -12,7 +12,6 @@
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = ZeroTouchSettingsLib | DXE_DRIVER
-  CONSTRUCTOR                    = ZeroTouchSettingsConstructor
 #
 # The following information is for reference only and not required by the build tools.
 #
@@ -23,7 +22,6 @@
   ZeroTouchSettings.c
 
 [Packages]
-  DfciPkg/DfciPkg.dec
   MdePkg/MdePkg.dec
   ZeroTouchPkg/ZeroTouchPkg.dec
 
@@ -38,15 +36,11 @@
   UefiRuntimeServicesTableLib
 
 [Guids]
-  gEfiEventReadyToBootGuid
-  gZeroTouchSettingsGuid
   gZeroTouchVariableGuid
 
 [Protocols]
-  gDfciSettingsProviderSupportProtocolGuid
 
 [Pcd]
-  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider
   gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile
 
 [Depex]

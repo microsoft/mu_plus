@@ -69,6 +69,10 @@ DisplayBootGraphic(
   EDKII_BOOT_LOGO2_PROTOCOL *BootLogo2;
   BOOLEAN IsLandscape = FALSE;
 
+  // Initialize pointers to prevent CleanUp failure
+  ImageData = NULL;
+  Blt = NULL;
+
   //
   // Try to open GOP first
   //

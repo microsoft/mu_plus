@@ -70,11 +70,23 @@ formset
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
+        suppressif   ideqval  DfciMenuConfig.DfciOptInChanged == 0x00;          // Warning message if OptIn/Out
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Enabled Header
+                text    = STRING_TOKEN(STR_DFCI_OPT_IN_CHANGED);                //
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
+                text    = STRING_TOKEN(STR_NULL_STRING);                        //
+
+        endif;
+
         suppressif   NOT ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;      // ZUM menu when no Owner
 
             suppressif ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    // 
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    //
                     text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_READY);          // ZeroTouchStatus: Ready
 
                 text
@@ -82,10 +94,10 @@ formset
                     text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    // 
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    //
                     text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_OUT),               // Opt Out
                     flags   = INTERACTIVE | RESET_REQUIRED,                     // INTERACTIVE = Button
-                    key     = DFCI_MENU_ZUM_OPT_IN_QUESTION_ID;
+                    key     = DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID;
             endif;
 
             suppressif NOT ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
@@ -98,10 +110,10 @@ formset
                     text    = STRING_TOKEN(STR_NULL_STRING);                    //
 
                 text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    // 
+                    help    = STRING_TOKEN(STR_NULL_STRING),                    //
                     text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_IN),                // Opt In
                     flags   = INTERACTIVE | RESET_REQUIRED,                     // INTERACTIVE = Button
-                    key     = DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID;
+                    key     = DFCI_MENU_ZUM_OPT_IN_QUESTION_ID;
             endif;
 
             text
@@ -130,9 +142,9 @@ formset
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
                 text    = STRING_TOKEN(STR_NULL_STRING);                        //
 
-        endif; 
+        endif;
 
-        suppressif   ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;          // DFCI Menu when Owner 
+        suppressif   ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;          // DFCI Menu when Owner
 
             guidop
                 guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
@@ -148,13 +160,13 @@ formset
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
                     text    = STRING_TOKEN(STR_DFCI_MANAGED_BY);
 
-                suppressif  ideqval DfciMenuConfig.DfciFriendlyName == 0x00;    // If no friendly name, just 
+                suppressif  ideqval DfciMenuConfig.DfciFriendlyName == 0x00;    // If no friendly name, just
                     text
                         help    = STRING_TOKEN(STR_NULL_STRING),                // managed by owner
                         text    = STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD);
                 endif;
 
-                suppressif  NOT ideqval DfciMenuConfig.DfciFriendlyName == 0x00; // If friendly name,  
+                suppressif  NOT ideqval DfciMenuConfig.DfciFriendlyName == 0x00; // If friendly name,
                     text
                         help    = STRING_TOKEN(STR_NULL_STRING),                // managed by MDM
                         text    = STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME);
@@ -168,7 +180,7 @@ formset
                             text    = STRING_TOKEN(STR_DFCI_ON_BEHALF_OF);
 
                         text
-                            help    = STRING_TOKEN(STR_NULL_STRING),             
+                            help    = STRING_TOKEN(STR_NULL_STRING),
                             text    = STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME);
                 endif;
 
@@ -183,7 +195,7 @@ formset
                 text
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
                     text    = STRING_TOKEN(STR_NULL_STRING);                    //
-            
+
             guidop
                 guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
             endguidop;
@@ -212,8 +224,8 @@ formset
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
         text
-            help    = STRING_TOKEN(STR_NULL_STRING),                 
-            text    = STRING_TOKEN(STR_DETAILS);                     
+            help    = STRING_TOKEN(STR_NULL_STRING),
+            text    = STRING_TOKEN(STR_DETAILS);
 
         text
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
@@ -316,7 +328,7 @@ formset
                 text
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
                     text    = STRING_TOKEN(STR_DFCI_USER1_THUMBPRINT_FIELD);
-        
+
             guidop
                 guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
             endguidop;
@@ -324,7 +336,7 @@ formset
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
                 text    = STRING_TOKEN(STR_NULL_STRING);                        //
-        
+
         endif;
 
         suppressif ideqval  DfciMenuConfig.DfciUserEnabled == 0x00;
@@ -370,7 +382,7 @@ formset
                 text
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
                     text    = STRING_TOKEN(STR_DFCI_USER_THUMBPRINT_FIELD);
-        
+
             guidop
                 guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
             endguidop;
@@ -425,7 +437,7 @@ formset
                 text
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
                     text    = STRING_TOKEN(STR_DFCI_OWNER_THUMBPRINT_FIELD);
-        
+
             guidop
                 guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
             endguidop;
@@ -479,7 +491,7 @@ formset
                 text
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // Thumbprint from certificate
                     text    = STRING_TOKEN(STR_DFCI_ZTD_THUMBPRINT_FIELD);
-        
+
             guidop
                 guid     = GRID_CLASS_END_OPCODE_GUID,                          // Custom UI Grid opcode - END
             endguidop;
@@ -487,7 +499,7 @@ formset
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
                 text    = STRING_TOKEN(STR_NULL_STRING);                        //
-                    
+
         endif;
 
     endform;
@@ -503,7 +515,7 @@ formset
                 help   = STRING_TOKEN(STR_NULL_STRING),
                 text   = STRING_TOKEN(STR_NULL_STRING),
                 flags  = INTERACTIVE,
-                key    = DFCI_MENU_INIT2_QUESTION_ID;   
+                key    = DFCI_MENU_INIT2_QUESTION_ID;
         endif;
 
         //
@@ -575,7 +587,7 @@ formset
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
                 text    = STRING_TOKEN(STR_NULL_STRING);                        //
-        endif;    
+        endif;
 
         text
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
@@ -602,7 +614,7 @@ formset
         text
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
-        
+
         text
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
@@ -611,11 +623,11 @@ formset
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Reset Permission Info
                 text    = STRING_TOKEN(STR_DFCI_RESET_INFO);                    //
-        
+
              text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
                 text    = STRING_TOKEN(STR_NULL_STRING);                        //
-        
+
            goto                                                                 // External reference to recovery menu
                 formid      = DFCI_MENU_RECOVERY_INFO_FORM_ID,
                 question    = DFCI_MENU_RECOVERY_INFO_QUESTION_ID,
@@ -647,7 +659,7 @@ formset
                 help   = STRING_TOKEN(STR_NULL_STRING),
                 text   = STRING_TOKEN(STR_NULL_STRING),
                 flags  = INTERACTIVE,
-                key    = DFCI_MENU_INIT3_QUESTION_ID;   
+                key    = DFCI_MENU_INIT3_QUESTION_ID;
         endif;
 
         //
@@ -673,7 +685,7 @@ formset
         text
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
-        
+
         goto                                                                    // External reference to recovery menu
             formsetguid = DFCI_RECOVERY_FORMSET_GUID,
             formid      = DFCI_RECOVERY_FORM_ID,

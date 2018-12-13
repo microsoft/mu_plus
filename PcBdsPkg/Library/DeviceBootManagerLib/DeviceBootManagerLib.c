@@ -54,7 +54,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MsBootPolicyLib.h>
 #include <Library/BootGraphicsProviderLib.h>
 #include <Library/BootGraphicsLib.h>
-#include <Library/GraphicConsoleHelperLib.h>
+#include <Library/GraphicsConsoleHelperLib.h>
 #include <Library/MsPlatformDevicesLib.h>
 #include <Library/MsPlatformPowerCheckLib.h>
 #include <Library/MsNetworkDependencyLib.h>
@@ -257,7 +257,7 @@ MsPreBootChecks (
             // change - error retrieving thermal should not stop boot
             ThermalGood = TRUE;
         }
-    } while ((RetryCount-- > 0) && (!ThermalGood) || (!PowerGood));
+    } while ((RetryCount-- > 0) && ((!ThermalGood) || (!PowerGood)));
 
 CleanUp:
 
@@ -301,18 +301,18 @@ BdsBootLockBootVariables ( VOID ) {
                                     &EnableBootOrderLock
                                     );
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ "Unable to get BootOrderLock setting\n"));
+        DEBUG((DEBUG_ERROR, "%a Unable to get BootOrderLock setting\n", __FUNCTION__));
         return;
     }
 
     if (!EnableBootOrderLock) {
-        DEBUG((DEBUG_INFO,__FUNCTION__ " - BootOrder is not locked\n"));
+        DEBUG((DEBUG_INFO, "%a - BootOrder is not locked\n", __FUNCTION__));
         return;
     }
     Status = gBS->LocateProtocol(&gEdkiiVariableLockProtocolGuid, NULL, (VOID**)&VarLockProtocol);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " - Failed to locate var lock protocol (%r).  Can't lock variables\n", Status));
+      DEBUG((DEBUG_ERROR, "%a - Failed to locate var lock protocol (%r).  Can't lock variables\n", __FUNCTION__, Status));
       return;
     }
     Status = VarLockProtocol->RequestToLock(VarLockProtocol, EFI_BOOT_ORDER_VARIABLE_NAME, &gEfiGlobalVariableGuid);
@@ -340,11 +340,11 @@ BdsBootLockBootVariables ( VOID ) {
     GetVariable2 (
                   L"BootOrder",
                   &gEfiGlobalVariableGuid,
-                  &BootOrder,
+                  (VOID **) &BootOrder,
                   &BootOrderSize
                   );
     if (BootOrder == NULL) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Failed to locate BootOrder (%r).  Can't lock Boot####\n", Status));
+        DEBUG((DEBUG_ERROR, "%a - Failed to locate BootOrder (%r).  Can't lock Boot####\n", __FUNCTION__, Status));
         return;
     }
     for (i=0; i < (BootOrderSize / sizeof(UINT16)); i++) {
@@ -473,14 +473,14 @@ UpdateFACSHardwareSignature () {
                 &Handle
                 );
     if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Unable to locate FADT\n"));
+        DEBUG((DEBUG_ERROR, " Unable to locate FADT\n", __FUNCTION__));
         return;  //Table not found.
     }
 
     FacsPtr = (EFI_ACPI_2_0_FIRMWARE_ACPI_CONTROL_STRUCTURE *)(UINTN)pFADT->FirmwareCtrl;
 
     if (NULL == FacsPtr) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Unable to locate FacsPtr\n"));
+        DEBUG((DEBUG_ERROR, " Unable to locate FacsPtr\n", __FUNCTION__));
         return;
     }
 
@@ -498,7 +498,7 @@ UpdateFACSHardwareSignature () {
                     &PciHandleBuffer
                     );
     if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Unable to locate any Pci I/O devices\n"));
+        DEBUG((DEBUG_ERROR, "%a Unable to locate any Pci I/O devices\n", __FUNCTION__));
         return;
     }
 
@@ -531,7 +531,7 @@ UpdateFACSHardwareSignature () {
                                &SettingsDataSize,
                                NULL);
     if (EFI_BUFFER_TOO_SMALL != Status) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Unable to locate the settings variable\n"));
+        DEBUG((DEBUG_ERROR, "%a Unable to locate the settings variable\n", __FUNCTION__));
         return;
     }
     BufferCount += (SettingsDataSize + sizeof(UINT32) - 1) / sizeof(UINT32);  // Round up to UINT32 alignment
@@ -544,7 +544,7 @@ UpdateFACSHardwareSignature () {
     MemoryMapSize = 0;
     Status = gBS->GetMemoryMap (&MemoryMapSize,MemoryMap,&MapKey,&DescriptorSize,&DescriptorVersion);
     if (EFI_BUFFER_TOO_SMALL != Status) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Unable to obtain the memory map\n"));
+        DEBUG((DEBUG_ERROR, "%a Unable to obtain the memory map\n", __FUNCTION__));
         return;
     }
     BufferCount += (MemoryMapSize + sizeof(UINT32) - 1 ) / sizeof (UINT32);
@@ -555,7 +555,7 @@ UpdateFACSHardwareSignature () {
     //
     Buffer = (UINT32 *) AllocateZeroPool (BufferCount * sizeof(UINT32));   // Insure alignment voids are zero
     if (NULL == Buffer) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Unable to obtain the memory for FACS HardwareSignature\n"));
+        DEBUG((DEBUG_ERROR, "%a Unable to obtain the memory for FACS HardwareSignature\n", __FUNCTION__));
         return;
     }
 
@@ -577,7 +577,7 @@ UpdateFACSHardwareSignature () {
     Buffer[i++] = (UINT32)(pFADT->XDsdt >> 32);
 
     if (i > IndexPart2) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Buffer overrun computing FACS HardwareSignature\n"));
+        DEBUG((DEBUG_ERROR, "%a Buffer overrun computing FACS HardwareSignature\n", __FUNCTION__));
         return;
     }
 
@@ -603,7 +603,7 @@ UpdateFACSHardwareSignature () {
                                &Buffer[IndexPart3]
                                 );
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,__FUNCTION__ " Unable to obtain the settings\n"));
+        DEBUG((DEBUG_ERROR, "%a Unable to obtain the settings\n", __FUNCTION__));
         return;
     }
 
@@ -959,10 +959,10 @@ PostReadyToBoot (
                                       &StartNetworkStack
                                       );
       if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ "Unable to get Start Network setting\n"));
+        DEBUG((DEBUG_ERROR, "%a Unable to get Start Network setting\n", __FUNCTION__));
       } else {
         if (StartNetworkStack) {
-          DEBUG((DEBUG_INFO,__FUNCTION__ " - Starting the network stack\n"));
+          DEBUG((DEBUG_INFO, "%a - Starting the network stack\n", __FUNCTION__));
           // This will unblock the network stack.
           StartNetworking ();
 
@@ -994,7 +994,7 @@ DeviceBootManagerConstructor (
     // Install Pre-ReadyToBoot callback to note when the variables need to be locked
     Status = gBS->CreateEventEx (
           EVT_NOTIFY_SIGNAL,
-          TPL_NOTIFY,
+          TPL_CALLBACK, // TODO: commit this!
           PreReadyToBoot,
           NULL,
           &gEfiEventPreReadyToBootGuid,
@@ -1124,7 +1124,7 @@ DeviceBootManagerAfterConsole (
       Status = gBS->LocateProtocol(&gTpmPpProtocolGuid, NULL, (VOID **)&TpmPp);
       if (!EFI_ERROR(Status) && (TpmPp != NULL)) {
           Status = TpmPp->PromptForConfirmation(TpmPp);
-          DEBUG((DEBUG_ERROR,__FUNCTION__ ": Unexpected return from Tpm Pyhsical Presence. Code=%r\n",Status));
+          DEBUG((DEBUG_ERROR, "%a: Unexpected return from Tpm Pyhsical Presence. Code=%r\n", __FUNCTION__, Status));
       }
     }
     return GetPlatformConnectList ();
@@ -1151,7 +1151,7 @@ RebootToFrontPage (
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Unable to set OsIndications\n"));
     }
-    DEBUG((DEBUG_INFO, __FUNCTION__ " Resetting system.\n"));
+    DEBUG((DEBUG_INFO, "%a Resetting system.\n", __FUNCTION__));
     gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
 
     CpuDeadLoop ();

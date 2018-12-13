@@ -44,6 +44,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #string STR_DFCI_MANAGEMENT_HEADER          #language en-US  "\fh!48!Management"
 
+#string STR_DFCI_OPT_IN_CHANGED             #language en-US  "\fc!Red!The opt in state has been changed. Restart the system to apply the setting."
+
 #string STR_DFCI_ZUM_STATUS_READY           #language en-US  "Zero-touch UEFI Management: Ready"
 
 #string STR_DFCI_ZUM_OPT_OUT                #language en-US  "Opt Out"

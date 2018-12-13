@@ -59,6 +59,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UefiHiiServicesLib.h>
+#include <Library/ZeroTouchSettingsLib.h>
 
 #include <Settings/DfciSettings.h>
 
@@ -381,12 +382,14 @@ GetDfciParameters (
     VOID
   ) {
 
-    EFI_STATUS         Status;
-    UINTN              i;
-    DFCI_IDENTITY_MASK DfciMask;
-    DFCI_CERT_STRINGS  Cert;
-    VOID              *dummy;
     STATIC BOOLEAN     AlreadyRun = FALSE;
+    DFCI_CERT_STRINGS  Cert;
+    DFCI_IDENTITY_MASK DfciMask;
+    VOID              *dummy;
+    UINTN              i;
+    CHAR8             *Name;
+    UINTN              NameSize;
+    EFI_STATUS         Status;
 
 
     if (!AlreadyRun) {
@@ -464,7 +467,7 @@ GetDfciParameters (
             }
         }
 
-        Status = GetASetting (DFCI_SETTING_ID__DFCI_URL,      &mDfciUrl,   &mDfciUrlSize);
+        Status = GetASetting (DFCI_SETTING_ID__DFCI_URL, &mDfciUrl, &mDfciUrlSize);
         if (EFI_ERROR(Status) || (mDfciUrlSize <= 1)) {
             goto CLEANUP_EXIT;
         }
@@ -472,6 +475,21 @@ GetDfciParameters (
         SetStringEntry (STRING_TOKEN(STR_DFCI_URL_FIELD), mDfciUrl);
         mDfciMenuConfiguration.DfciHttpRecoveryEnabled = TRUE;
         DEBUG((DEBUG_INFO, "Dfci Http Recovery is enabled\n"));
+
+        Status = GetASetting (DFCI_SETTING_ID__MDM_FRIENDLY_NAME, &Name, &NameSize);
+        if (!EFI_ERROR(Status) && (NameSize >= 1)) {
+            SetStringEntry (STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME), Name);
+            mDfciMenuConfiguration.DfciFriendlyName = TRUE;
+            DEBUG((DEBUG_INFO, "Dfci MDM.FriendlyName is enabled\n"));
+        }
+
+        Status = GetASetting (DFCI_SETTING_ID__MDM_TENANT_NAME, &Name, &NameSize);
+        if (!EFI_ERROR(Status) && (NameSize >= 1)) {
+            SetStringEntry (STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME), Name);
+            mDfciMenuConfiguration.DfciFriendlyName = TRUE;
+            DEBUG((DEBUG_INFO, "Dfci MDM.Tenant is enabled\n"));
+        }
+
     }
 
     return EFI_SUCCESS;
@@ -881,7 +899,8 @@ DriverCallback (
             case DFCI_MENU_ZUM_OPT_IN_QUESTION_ID:
                 DEBUG((DEBUG_INFO," Opt In selected\n"));
 
-                DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
+                SetZeroTouchState (ZERO_TOUCH_OPT_IN);
+                mDfciMenuConfiguration.DfciOptInChanged = TRUE;
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_SUBMIT_EXIT;
                 Status = EFI_SUCCESS;
@@ -890,7 +909,8 @@ DriverCallback (
             case DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID:
                 DEBUG((DEBUG_INFO," Opt Out selected\n"));
 
-                DEBUG((DEBUG_ERROR," NOT IMPLEMENTED YET\n"));
+                SetZeroTouchState (ZERO_TOUCH_OPT_OUT);
+                mDfciMenuConfiguration.DfciOptInChanged = TRUE;
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_SUBMIT_EXIT;
                 Status = EFI_SUCCESS;

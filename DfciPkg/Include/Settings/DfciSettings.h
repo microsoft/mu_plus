@@ -80,44 +80,31 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // AllCameras Enable allows the cameras to be enabled.  AllCameras disabled
 // insures all cameras are disabled.  When received as a setting, all cameras
 // will be disabled, and individual settings will be disabled, and grayed out.
-#define DFCI_SETTING_ID__ALL_CAMERAS                "Device.AllCameras.Enable"
+#define DFCI_SETTING_ID__ALL_CAMERAS                "Dfci.OnboardCameras.Enable"
 
-#define DFCI_SETTING_ID__FRONT_CAMERA               "Device.FrontCamera.Enable"
-#define DFCI_SETTING_ID__IR_CAMERA                  "Device.IRCamera.Enable"
-#define DFCI_SETTING_ID__REAR_CAMERA                "Device.RearCamera.Enable"
-#define DFCI_SETTING_ID__WFOV_CAMERA                "Device.WfovCamera.Enable"
+// Cpu and I/O Virtualization Settings
+//
+#define DFCI_SETTING_ID__ALL_CPU_IO_VIRT            "Dfci.CpuAndIoVirtualizaiont.Enable"
 
 //
-// Generic device settings
+// Onboard Audio devices settings
 //
-#define DFCI_SETTING_ID__ASSET_TAG                  "Device.AssetTag.AssetTag"
-#define DFCI_SETTING_ID__AUTO_POWERON_AFTER_LOSS    "Device.AutoPowerOn.Enable"
-#define DFCI_SETTING_ID__BLUETOOTH                  "Device.BlueTooth.Enable"
-#define DFCI_SETTING_ID__BOOT_ORDER_LOCK            "Device.BootOrderLock.Enable"
-#define DFCI_SETTING_ID__DISABLE_BATTERY            "Device.DisableBattery.Enable"
-#define DFCI_SETTING_ID__ENABLE_USB_BOOT            "Device.USBBoot.Enable"
-#define DFCI_SETTING_ID__IPV6                       "Device.IPv6Pxe.Enable"
-#define DFCI_SETTING_ID__LTE_MODEM_USB_PORT         "Device.LteModemUsbPort.Enable"
-#define DFCI_SETTING_ID__MICRO_SDCARD               "Device.Sdcard.Enable"
-#define DFCI_SETTING_ID__SECURE_BOOT_KEYS_ENUM      "Device.SecureBootKeys.Enum"
-#define DFCI_SETTING_ID__ONBOARD_AUDIO              "Device.OnboardAudio.Enable"
-#define DFCI_SETTING_ID__PASSWORD                   "Device.Password.Password"
-#define DFCI_SETTING_ID__SECURE_BOOT_KEYS_ENUM      "Device.SecureBootKeys.Enum"
-#define DFCI_SETTING_ID__TPM_ADMIN_CLEAR_PREAUTH    "Device.TpmAdminClear.Enable"      //NO Preboot UI
-#define DFCI_SETTING_ID__TPM_ENABLE                 "Device.Tpm.Enable"
-#define DFCI_SETTING_ID__WIFI_AND_BLUETOOTH         "Device.WiFiAndBluetooth.Enable"
-#define DFCI_SETTING_ID__WIFI_ONLY                  "Device.WiFiOnly.Enable"
-#define DFCI_SETTING_ID__WIRED_LAN                  "Device.WiredLan.Enable"
+#define DFCI_SETTING_ID__ALL_AUDIO                  "Dfci.OnBoardAudio.Enable"
 
-#define DFCI_SETTING_ID__USER_USB_PORT1             "Device.UserUsbPort1.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT2             "Device.UserUsbPort2.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT3             "Device.UserUsbPort3.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT4             "Device.UserUsbPort4.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT5             "Device.UserUsbPort5.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT6             "Device.UserUsbPort6.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT7             "Device.UserUsbPort7.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT8             "Device.UserUsbPort8.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT9             "Device.UserUsbPort9.Enable"  //NO Preboot UI
-#define DFCI_SETTING_ID__USER_USB_PORT10            "Device.UserUsbPort10.Enable" //NO Preboot UI
+//
+//  Onboard radios
+//
+#define DFCI_SETTING_ID__ALL_RADIOS                 "Dfci.OnboardRadios.Enable"
+
+//
+// Boot External Media
+//
+#define DFCI_SETTING_ID__EXTERNAL_MEDIA             "Dfci.BootExternalMedia.Enable"
+
+//
+// Boot On Board Network
+//
+#define DFCI_SETTING_ID__ENABLE_NETWORK             "Dfci.BootOnboardNetwork.Enable"
+
 
 #endif //  __DFCI_SETTINGS_H__

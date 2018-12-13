@@ -151,6 +151,29 @@ STATIC PROCESS_REQUEST_ENTRY mRequestTable[] = {
 
 #define REQUEST_TABLE_COUNT (sizeof(mRequestTable)/sizeof(mRequestTable[0]))
 
+typedef struct {
+    CHAR8  *FieldName;
+    UINTN   FieldSize;
+} JSON_REQUEST_ENTRY;
+
+#define JSON_REQUEST_MFG        1
+#define JSON_REQUEST_MODEL      3
+#define JSON_REQUEST_SERIAL     5
+#define JSON_REQUEST_THUMBPRINT 7
+
+JSON_REQUEST_ENTRY mJsonRequest[] = {
+    { "{\"oenManufacturer\":", sizeof ("{\"oenManufacturer\":") },
+    { NULL, 0 },
+    { "{\"modelName\":", sizeof ("{\"modelName\":") },
+    { NULL, 0 },
+    { "{\"serialNumber\":", sizeof ("{\"serialNumber\":") },
+    { NULL, 0 },
+    { "{\"thumbprint\":", sizeof ("{\"oenManufacturer\":") },
+    { NULL, 0 },
+    { NULL, 0 }                            // Terminator
+};
+
+
 /**
  * DFCI Private Data
  **/
@@ -1440,6 +1463,22 @@ ProcessDfciRequests (
     }
 
     SettingApplied = FALSE;
+
+
+    // 1. Build JSON Request
+
+
+
+// Request:
+// {"oemManufacturer":null,"modelName":null,"serialNumber":null,"thumbprint":null}
+//
+// Response:
+//  {"settingsPacket":null,"provisioningPacket":null,"permissionsPacket":null}
+
+
+
+
+
     //
     // Send Results and Current to Settings Manager
     //

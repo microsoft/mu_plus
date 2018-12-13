@@ -84,7 +84,7 @@
 
   ##  @libraryclass  Library to set console mode low_res or native_res
   ##
-  GraphicConsoleHelperLib|PcBdsPkg/Include/Library/GraphicConsoleHelperLib.h
+  GraphicsConsoleHelperLib|PcBdsPkg/Include/Library/GraphicsConsoleHelperLib.h
 
 [Guids]
   # {394D14C6-8C75-4A83-BFE0-969EFB5AF0AA}

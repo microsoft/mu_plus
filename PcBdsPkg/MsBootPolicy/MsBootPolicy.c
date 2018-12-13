@@ -39,14 +39,6 @@ static BOOT_SEQUENCE mUsbBootSequence[] = {
     MsBootUSB,
     MsBootDone
 };
-static BOOT_SEQUENCE mPXE4BootSequence[] = {
-    MsBootPXE4,
-    MsBootDone
-};
-static BOOT_SEQUENCE mPXE6BootSequence[] = {
-    MsBootPXE6,
-    MsBootDone
-};
 static BOOT_SEQUENCE mPXEBootSequence[] = {
     MsBootPXE4,
     MsBootPXE6,

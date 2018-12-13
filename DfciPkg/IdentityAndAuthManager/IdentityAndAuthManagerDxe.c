@@ -73,7 +73,9 @@ Init(
   IN EFI_SYSTEM_TABLE             *SystemTable
   )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
+  BOOLEAN          SaveState;
+  EFI_STATUS       Status = EFI_SUCCESS;
+  ZERO_TOUCH_STATE ZeroTouchState;
 
   Status = gBS->LocateProtocol(&gDfciSettingPermissionsProtocolGuid, NULL, &mDfciSettingsPermissionProtocol);
   if (EFI_ERROR(Status))
@@ -89,24 +91,52 @@ Init(
     DEBUG((DEBUG_ERROR, "PopulateInternalCertStore failed %r\n", Status));
   }
 
-  // Special case for importing ZeroTouch key in Mfg mode
-
-  if (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert == NULL)
-  {
-    Status = GetZeroTouchCertificate( &mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert,
-                                      &mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize);
-    if (Status == EFI_SUCCESS)
-    {
-      Status = SaveProvisionedData();
-      DEBUG((DEBUG_ERROR, "%a - Added ZTD\n", __FUNCTION__));
-      if (EFI_ERROR(Status))
+  SaveState = TRUE;
+  ZeroTouchState = GetZeroTouchState();
+  switch (ZeroTouchState) {
+    case ZERO_TOUCH_OPT_IN:
+      if ((mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert == NULL) &&
+          (mInternalCertStore.Certs[CERT_OWNER_INDEX].Cert == NULL))
       {
-        DEBUG((DEBUG_ERROR, "[AM] - Unable to save provisioned data with ZTD. Code=%r.\n",Status));
-      } else {
-        SetZeroTouchInstalled();
+        Status = GetZeroTouchCertificate( &mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert,
+                                          &mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize);
+        if (EFI_ERROR(Status))
+        {
+          DEBUG((DEBUG_ERROR, "[AM] - Unable to obtain built in cert. Code=%r.\n",Status));
+          SaveState = FALSE;
+        } else {
+          mInternalCertStore.PopulatedIdentities |= DFCI_IDENTITY_SIGNER_ZTD;
+        }
       }
-      PopulateCurrentIdentities(TRUE);       // Force updating Current XML when adding ZTD
+      break;
+
+    case ZERO_TOUCH_OPT_OUT:
+      if (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert != NULL)
+      {
+         FreePool (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert);
+         mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert = NULL;
+         mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize = 0;
+         mInternalCertStore.PopulatedIdentities &= ~DFCI_IDENTITY_SIGNER_ZTD;
+
+      }
+      break;
+
+    default:
+      SaveState = FALSE;
+      break;
+  }
+
+  if (SaveState) {
+    Status = SaveProvisionedData();
+    if (EFI_ERROR(Status))
+    {
+      DEBUG((DEBUG_ERROR, "[AM] - Unable to save provisioned data with ZTD. Code=%r.\n",Status));
     }
+    else
+    {
+      DEBUG((DEBUG_INFO, "%a - Added or removed ZTD\n", __FUNCTION__));
+    }
+    PopulateCurrentIdentities(TRUE);       // Force updating Current XML when changing ZTD
   }
 
   // Print the current internal store.

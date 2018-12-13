@@ -1,4 +1,4 @@
-## @file MsThemeCopyLib.inf
+## @file MsUiThemeCopyLib.inf
 #
 # This library contains access functions for dealing with the
 # Copying of an MS_UI_THEME
@@ -7,7 +7,7 @@
 # Copyright (c) 2016 - 2018, Microsoft Corporation.
 #
 # All rights reserved.
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 # 1. Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
@@ -20,20 +20,20 @@
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 # INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = MsThemeCopyLib
+  BASE_NAME           = MsUiThemeCopyLib
   FILE_GUID           = 7A6722F7-4446-4112-9802-F6B7DEE04824
   VERSION_STRING      = 1.0
   MODULE_TYPE         = BASE
-  LIBRARY_CLASS       = MsThemeCopyLib
+  LIBRARY_CLASS       = MsUiThemeCopyLib
 
 [Sources]
   MsUiThemeCopyLib.c
@@ -46,3 +46,6 @@
   BaseLib
   BaseMemoryLib
   DebugLib
+
+[BuildOptions]
+#  DEBUG_*_*_CC_FLAGS  = /FAcs /P

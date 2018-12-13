@@ -72,6 +72,7 @@ typedef struct {
     UINT8    DfciUser1Enabled;
     UINT8    DfciUser2Enabled;
     UINT8    DfciFriendlyName;
+    UINT8    DfciOptInChanged;
 } DFCI_MENU_CONFIGURATION;
 
 // Grid class form browser extensions.  These should be ignored
