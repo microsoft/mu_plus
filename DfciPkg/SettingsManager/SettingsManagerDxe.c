@@ -28,7 +28,7 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
-    
+
 #include "SettingsManager.h"
 
 DFCI_SETTING_ACCESS_PROTOCOL            mSystemSettingAccessProtocol = { SystemSettingAccessSet, SystemSettingAccessGet, SystemSettingsAccessReset };
@@ -44,8 +44,7 @@ typedef struct {
 static INIT_TABLE_ENTRY    mInitTable[] = {
                               DEVICE_ID_MANUFACTURER,  NULL,
                               DEVICE_ID_PRODUCT_NAME,  NULL,
-                              DEVICE_ID_SERIAL_NUMBER, NULL,
-                              DEVICE_ID_UUID,          NULL };
+                              DEVICE_ID_SERIAL_NUMBER, NULL };
 
 // Settings manager does not support "Atomic" operations at this time.  That means
 // the delayed response and LKG handler are ignored, and the settings cannot be
@@ -187,11 +186,6 @@ SettingsManagerOnReadyToBoot (
         goto NO_XML;
     }
 
-    Status = DfciIdSupportGetUuid (&mInitTable[3].Value, NULL);
-    if (EFI_ERROR(Status)) {
-        goto NO_XML;
-    }
-
     Status = EFI_OUT_OF_RESOURCES;
     List = New_DeviceIdPacketNodeList();
     if (List == NULL) {
@@ -278,8 +272,8 @@ Pass thru function for using the Auth Protocol to get auth and token
 
 @param[in]  SignedData      - Pointer to signed data
 @param[in]  SignedDataLen   - Length of signed data
-@param[in]  Signature       - Pointer to WIN_CERT_UEFI_GUID that contains the signature  
-@param[in,out] AuthToken - returned Auth Token.  Caller must allocate.  data only valid if success. 
+@param[in]  Signature       - Pointer to WIN_CERT_UEFI_GUID that contains the signature
+@param[in,out] AuthToken - returned Auth Token.  Caller must allocate.  data only valid if success.
 
 **/
 EFI_STATUS
@@ -292,7 +286,7 @@ CheckAuthAndGetToken(
   )
 {
   EFI_STATUS Status;
-  //get mAuthProtocol 
+  //get mAuthProtocol
   if (mAuthProtocol == NULL)
   {
     Status = gBS->LocateProtocol(
@@ -313,8 +307,8 @@ CheckAuthAndGetToken(
 }
 
 /**
-Pass thru function for using the Auth Protocol to dispose of an auth token 
-so it can no longer be used in the system. 
+Pass thru function for using the Auth Protocol to dispose of an auth token
+so it can no longer be used in the system.
 
 @param[in]  AuthToken - Pointer to auth token to dispose of
 **/
@@ -330,7 +324,7 @@ AuthTokenDispose(
   }
 
   //Can't get here if mAuthProtocol is NULL
-  if (mAuthProtocol != NULL) 
+  if (mAuthProtocol != NULL)
   {
     return mAuthProtocol->DisposeAuthToken(mAuthProtocol, AuthToken);
   }
@@ -356,8 +350,7 @@ Init (
 {
   EFI_EVENT  InitEvent;
   EFI_STATUS Status;
-  
-  
+
   //Install Setting Provider Support Protocol and Permission Protocol
   Status = gBS->InstallMultipleProtocolInterfaces(
     &ImageHandle,
