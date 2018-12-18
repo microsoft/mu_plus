@@ -1,7 +1,7 @@
 /** @file
-DfciRequest.h
+DfciUpdate.h
 
-Defines the Request function to get the configuration from the server
+DfciUpdate parses the Json String and applies each element
 
 Copyright (c) 2018, Microsoft Corporation
 
@@ -29,35 +29,53 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#ifndef __DFCI_REQUEST_H__
-#define __DFCI_REQUEST_H__
+#ifndef __DFCI_UPDATE_H__
+#define __DFCI_UPDATE_H__
 
 /**
- *  Dfci Request from Network
+ * BuildUsbRequest
  *
- *  @param[in]  Url             A pointer to the EFI System Table.
- *  @param[in]  UrlSize
- *  @param[in]  DfciIdString      The Dfci Identity Json to send to server
- *  @param[in]  DfciIdStringSize  Size of the Dfci Identity Json
- *  @param[out] JsonStringSize    Where to store a pointer to JsonString
- *  @param[out] JsonStringSize    Size of the JsonString
- *
- *  @retval EFI_SUCCESS        The entry point is executed successfully.
- *  @retval other              Some error occurred.
- *
- *  Caller must free JsonString
+ * @param[in]   FileNameExtension - Extension for file name
+ * @param[out]  filename   - Name of the file on USB to retrieve
  *
  **/
 EFI_STATUS
 EFIAPI
-DfciRequestJsonFromNETWORK (
-    IN  CHAR8    *Url,
-    IN  UINTN     UrlSize,
-    IN  CHAR8    *DfciIdString,
-    IN  UINTN     DfciIdStringSize,
-    OUT CHAR8   **JsonString,
-    OUT UINTN    *JsonStringSize
+BuildUsbRequest (
+    IN  CHAR16       *FileExtension,
+    OUT CHAR16      **FileName
+  );
+
+/**
+ *  Build Json Request.  For a network request, the current system information
+ *                       needs to be provided.
+ *
+ * @param[in]    Dfci 			- Dfci Privates data for
+ *  @param[out]  JsonString
+ *  @param[out]  JsonStringSize
+ *
+ **/
+EFI_STATUS
+EFIAPI
+BuildJsonRequest (
+    OUT CHAR8             **JsonString,
+    OUT UINTN              *JsonStringSize
+  );
+
+/**
+ * UpdateDfciFromJson
+ *
+ * Parse the Json String and update DFCI with each element parsed.
+ *
+ * @param [in]  JsonString      - Dfci Update Json string
+ * @param [in]  JsonStringSize  - Size of Json String
+ *
+ **/
+EFI_STATUS
+EFIAPI
+UpdateDfciFromJson (
+    IN  CHAR8   *JsonString,
+    IN  UINTN    JsonStringSize
     );
 
-#endif // __DFCI_REQUEST_H__
-
+#endif  // __DFCI_UPDATE_H__

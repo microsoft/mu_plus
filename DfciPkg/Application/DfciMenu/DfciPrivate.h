@@ -1,7 +1,7 @@
 /** @file
-DfciRequest.h
+DfciPrivate.h
 
-Defines the Request function to get the configuration from the server
+Header file for Dfci Private Data
 
 Copyright (c) 2018, Microsoft Corporation
 
@@ -29,35 +29,53 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#ifndef __DFCI_REQUEST_H__
-#define __DFCI_REQUEST_H__
+#ifndef __DFCI_PRIVATE_H__
+#define __DFCI_PRIVATE_H__
+
+#include <Protocol/ServiceBinding.h>
+#include <Protocol/Http.h>
+#include <Protocol/Ip4Config2.h>
 
 /**
- *  Dfci Request from Network
- *
- *  @param[in]  Url             A pointer to the EFI System Table.
- *  @param[in]  UrlSize
- *  @param[in]  DfciIdString      The Dfci Identity Json to send to server
- *  @param[in]  DfciIdStringSize  Size of the Dfci Identity Json
- *  @param[out] JsonStringSize    Where to store a pointer to JsonString
- *  @param[out] JsonStringSize    Size of the JsonString
- *
- *  @retval EFI_SUCCESS        The entry point is executed successfully.
- *  @retval other              Some error occurred.
- *
- *  Caller must free JsonString
- *
+ * DFCI Private Data
  **/
-EFI_STATUS
-EFIAPI
-DfciRequestJsonFromNETWORK (
-    IN  CHAR8    *Url,
-    IN  UINTN     UrlSize,
-    IN  CHAR8    *DfciIdString,
-    IN  UINTN     DfciIdStringSize,
-    OUT CHAR8   **JsonString,
-    OUT UINTN    *JsonStringSize
-    );
+typedef struct {
+    //
+    // Parameters
+    //
+    CHAR8                          *Url;
+    UINTN                           UrlSize;
+    CHAR8                          *DfciIdString;
+    UINTN                           DfciIdStringSize;
+    //
+    // Common section  -- From here to the end cleared before each NIC attempt
+    //
+    EFI_HANDLE                      NicHandle;
+    EFI_SERVICE_BINDING_PROTOCOL   *HttpSbProtocol;
+    EFI_HTTP_CONFIG_DATA            ConfigData;
+    EFI_HTTP_PROTOCOL              *HttpProtocol;
+    EFI_HANDLE                      HttpChildHandle;
+    BOOLEAN                         DhcpRequested;
+    EFI_IP4_CONFIG2_PROTOCOL       *Ip4Config2;
 
-#endif // __DFCI_REQUEST_H__
+    //
+    // Fields valid during DHCP delay
+    //
+    EFI_EVENT                       WaitEvent;
 
+    //
+    // IPv4 Sspecific section
+    //
+    EFI_HTTPv4_ACCESS_POINT         IPv4Node;
+
+    //
+    // IPv6 Specific section
+    //
+    EFI_HTTPv6_ACCESS_POINT         IPv6Node;
+
+} DFCI_PRIVATE_DATA;
+
+extern DFCI_PRIVATE_DATA   mDfciPrivateData;
+
+
+#endif // __DFCI_PRIVATE_H__

@@ -138,22 +138,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #string STR_DFCI_MB_CAPTION_FAIL            #language en-US  "Refresh settings request failed"
 
-#string STR_DFCI_MB_NEW_SETTINGS            #language en-US  "Refresh settings request applied new settings.  Restart now to apply those settings."
-
-#string STR_DFCI_MB_NO_SETTINGS             #language en-US  "No new settings have been appled."
-
-#string STR_DFCI_MB_NO_NIC                  #language en-US  "No network device detected."
+#string STR_DFCI_MB_NEW_SETTINGS            #language en-US  "Refresh settings request applied new settings from\n%s\nRestart now to apply those settings."
 
 #string STR_DFCI_MB_NO_MEDIA                #language en-US  "Unable to detect network cable."
 
-#string STR_DFCI_MB_NO_FILE                 #language en-US  "File not found."
+#string STR_DFCI_MB_NOT_FOUND               #language en-US  "%s not found."
 
-#string STR_DFCI_MB_SUCCESS                 #language en-US  " Success"
-
-#string STR_DFCI_MB_FAILED                  #language en-US  " Failed"
-
-#string STR_DFCI_MB_NOT_FOUND               #language en-US  " Not Found"
-
-#string STR_DFCI_MB_INTERNAL_ERROR          #language en-US  "Internal error. Reason=%ld. Code=%r."
-
-#string STR_DFCI_RESET_BUTTON_TEXT          #language en-US  "Get started"
+#string STR_DFCI_MB_INTERNAL_ERROR          #language en-US  "Internal error. Code=%r."

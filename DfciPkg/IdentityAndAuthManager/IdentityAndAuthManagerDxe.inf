@@ -76,7 +76,6 @@
   PrintLib
   UefiLib
   BaseCryptLib
-  BaseLib
   DfciPasswordLib
   OpensslLib
   DfciDeviceIdSupportLib

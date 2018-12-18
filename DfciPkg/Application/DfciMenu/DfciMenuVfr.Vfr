@@ -204,9 +204,9 @@ formset
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // SPACING
                 text    = STRING_TOKEN(STR_NULL_STRING);                        //
 
-            goto DFCI_MENU_CONFIGURE_FORM_ID,                                   // External reference to recovery menu
+            goto DFCI_MENU_CONFIGURE_FORM_ID,                                   // Go to configuration menu
                 prompt   = STRING_TOKEN(STR_DFCI_MENU_CONFIGURE),               //
-                help     = STRING_TOKEN(STR_NULL_STRING),                       // HTTP Update Now button
+                help     = STRING_TOKEN(STR_NULL_STRING),                       //
                 flags    = INTERACTIVE,
                 key      = DFCI_MENU_CONFIGURE_QUESTION_ID;
 

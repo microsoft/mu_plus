@@ -58,170 +58,18 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DfciMenu.h"
 #include "DfciRequest.h"
+#include "DfciPrivate.h"
 
-#define URL_STR_MAX_SIZE      255
 #define TIMER_PERIOD_1ms     (1000 * 10)    // 1ms value for relative timer.
 #define TIMER_PERIOD_1s      (1000 * TIMER_PERIOD_1ms)
 #define DHCP_TIMEOUT         (120 * TIMER_PERIOD_1s)
 #define HTTP_TIMEOUT         (60 * TIMER_PERIOD_1s)
 
-#define DFCI_REQUEST         L"DfciRequest/"
-#define DFCI_IDENTITY        L"/Identity"
-#define DFCI_IDENTITY2       L"/Identity2"
-#define DFCI_PERMISSIONS     L"/Permissions"
-#define DFCI_PERMISSIONS2    L"/Permissions2"
-#define DFCI_SETTINGS        L"/Settings"
-#define DFCI_SETTINGS2       L"/Settings2"
-#define DFCI_CURRENT         L"/Current"
-
 #define HEADER_AGENT_VALUE   "DFCI-Agent"
 #define HEADER_ACCEPT_VALUE  "*/*"
-#define HEADER_CONTENT_BIN   "application/octet-stream"
-#define HEADER_CONTENT_XML   "application/xml"
+#define HEADER_CONTENT_JSON  "application/json"
 
-typedef struct {
-    CHAR16     *RequestType;
-    UINT32      Signature;
-    UINT32      VariableAttributes;
-    CHAR16     *VariableName;
-    CHAR16     *ResultsVariableName;
-    EFI_GUID   *VariableNameSpace;
-    CHAR8      *ContentType;
-} PROCESS_REQUEST_ENTRY;
-
-STATIC UINT64                mUserStatus = USER_STATUS_SUCCESS;
-STATIC PROCESS_REQUEST_ENTRY mRequestTable[] = {
-
-    {DFCI_IDENTITY,
-     DFCI_IDENTITY_APPLY_VAR_SIGNATURE,
-     DFCI_IDENTITY_VAR_ATTRIBUTES,
-     DFCI_IDENTITY_APPLY_VAR_NAME,
-     DFCI_IDENTITY_RESULT_VAR_NAME,
-   &gDfciAuthProvisionVarNamespace,
-     HEADER_CONTENT_BIN},
-
-    {DFCI_IDENTITY2,
-     DFCI_IDENTITY_APPLY_VAR_SIGNATURE,
-     DFCI_IDENTITY_VAR_ATTRIBUTES,
-     DFCI_IDENTITY2_APPLY_VAR_NAME,
-     DFCI_IDENTITY2_RESULT_VAR_NAME,
-    &gDfciAuthProvisionVarNamespace,
-     HEADER_CONTENT_BIN},
-
-    {DFCI_PERMISSIONS,
-     DFCI_PERMISSION_POLICY_APPLY_VAR_SIGNATURE,
-     DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES,
-     DFCI_PERMISSION_POLICY_APPLY_VAR_NAME,
-     DFCI_PERMISSION_POLICY_RESULT_VAR_NAME,
-    &gDfciPermissionManagerVarNamespace,
-     HEADER_CONTENT_BIN},
-
-    {DFCI_PERMISSIONS2,
-     DFCI_PERMISSION_POLICY_APPLY_VAR_SIGNATURE,
-     DFCI_PERMISSION_POLICY_APPLY_VAR_ATTRIBUTES,
-     DFCI_PERMISSION2_POLICY_APPLY_VAR_NAME,
-     DFCI_PERMISSION2_POLICY_RESULT_VAR_NAME,
-    &gDfciPermissionManagerVarNamespace,
-     HEADER_CONTENT_BIN},
-
-    {DFCI_SETTINGS,
-     DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE,
-     DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES,
-     DFCI_SETTINGS_APPLY_INPUT_VAR_NAME,
-     DFCI_SETTINGS_APPLY_OUTPUT_VAR_NAME,
-    &gDfciSettingsManagerVarNamespace,
-     HEADER_CONTENT_BIN},
-
-    {DFCI_SETTINGS2,
-     DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE,
-     DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES,
-     DFCI_SETTINGS2_APPLY_INPUT_VAR_NAME,
-     DFCI_SETTINGS2_APPLY_OUTPUT_VAR_NAME,
-    &gDfciSettingsManagerVarNamespace,
-     HEADER_CONTENT_BIN},
-
-    {DFCI_CURRENT,
-     0,
-     0,
-     NULL,
-     DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
-    &gDfciSettingsManagerVarNamespace,
-     HEADER_CONTENT_XML}
-};
-
-#define REQUEST_TABLE_COUNT (sizeof(mRequestTable)/sizeof(mRequestTable[0]))
-
-typedef struct {
-    CHAR8  *FieldName;
-    UINTN   FieldSize;
-} JSON_REQUEST_ENTRY;
-
-#define JSON_REQUEST_MFG        1
-#define JSON_REQUEST_MODEL      3
-#define JSON_REQUEST_SERIAL     5
-#define JSON_REQUEST_THUMBPRINT 7
-
-JSON_REQUEST_ENTRY mJsonRequest[] = {
-    { "{\"oenManufacturer\":", sizeof ("{\"oenManufacturer\":") },
-    { NULL, 0 },
-    { "{\"modelName\":", sizeof ("{\"modelName\":") },
-    { NULL, 0 },
-    { "{\"serialNumber\":", sizeof ("{\"serialNumber\":") },
-    { NULL, 0 },
-    { "{\"thumbprint\":", sizeof ("{\"oenManufacturer\":") },
-    { NULL, 0 },
-    { NULL, 0 }                            // Terminator
-};
-
-
-/**
- * DFCI Private Data
- **/
-typedef struct {
-    //
-    // Parameters
-    //
-    CHAR8                          *Url;
-    UINTN                           UrlSize;
-    //
-    // Device Id
-    //
-    CHAR8                           *Manufacturer;
-    UINTN                            ManufacturerSize;
-    CHAR8                           *ProductName;
-    UINTN                            ProductNameSize;
-    CHAR8                           *SerialNumber;
-    UINTN                            SerialNumberSize;
-    CHAR8                           *Uuid;
-    UINTN                            UuidSize;
-
-    //
-    // Common section  -- From here to the end cleared before each NIC attempt
-    //
-    EFI_HANDLE                      NicHandle;
-    EFI_SERVICE_BINDING_PROTOCOL   *HttpSbProtocol;
-    EFI_HTTP_CONFIG_DATA            ConfigData;
-    EFI_HTTP_PROTOCOL              *HttpProtocol;
-    EFI_HANDLE                      HttpChildHandle;
-    BOOLEAN                         DhcpRequested;
-    EFI_IP4_CONFIG2_PROTOCOL       *Ip4Config2;
-
-    //
-    // Fields valid during DHCP delay
-    //
-    EFI_EVENT                       WaitEvent;
-
-    //
-    // IPv4 Sspecific section
-    //
-    EFI_HTTPv4_ACCESS_POINT         IPv4Node;
-
-    //
-    // IPv6 Specific section
-    //
-    EFI_HTTPv6_ACCESS_POINT         IPv6Node;
-
-} DFCI_PRIVATE_DATA;
+       DFCI_PRIVATE_DATA     mDfciPrivateData;
 
 /**
  * Dump the HTTP Headers
@@ -949,43 +797,59 @@ STATIC
 EFI_STATUS
 DfciGetSettingsPacket (
     IN  DFCI_PRIVATE_DATA *Dfci,
-    IN  CHAR16            *Url,
-    OUT VOID             **SettingsPkt,
-    OUT UINTN             *SettingsPktSize
+    IN  CHAR8             *DfciIdString,
+    IN  UINTN              DfciIdStringSize,
+    OUT CHAR8            **JsonString,
+    OUT UINTN             *JsonStringSize
   ) {
 
-    UINTN                           ContentLength;
-    EFI_HTTP_HEADER                *ContentLengthHeader;
-    UINTN                           CurrentLength;
-    CHAR8                          *Packet;
-    EFI_HTTP_REQUEST_DATA           RequestData;
-    EFI_HTTP_MESSAGE                RequestMessage;
-    EFI_HTTP_TOKEN                  RequestToken;
-    EFI_HTTP_RESPONSE_DATA          ResponseData;
-    EFI_HTTP_MESSAGE                ResponseMessage;
-    EFI_HTTP_TOKEN                  ResponseToken;
-    EFI_STATUS                      Status;
+    UINTN                    ContentLength;
+    EFI_HTTP_HEADER         *ContentLengthHeader;
+    UINTN                    CurrentLength;
+    CHAR8                   *Packet;
+    EFI_HTTP_REQUEST_DATA    RequestData;
+    EFI_HTTP_MESSAGE         RequestMessage;
+    EFI_HTTP_TOKEN           RequestToken;
+    EFI_HTTP_RESPONSE_DATA   ResponseData;
+    EFI_HTTP_MESSAGE         ResponseMessage;
+    EFI_HTTP_TOKEN           ResponseToken;
+    EFI_STATUS               Status;
+    CHAR16                  *WorkUrl;
 
 
     if ((NULL == Dfci) ||
-        (NULL == Url) ||
-        (NULL == SettingsPkt) ||
-        (NULL == SettingsPktSize)) {
+        (NULL == DfciIdString) ||
+        (NULL == JsonString) ||
+        (NULL == JsonStringSize)) {
         return EFI_INVALID_PARAMETER;
     }
 
-    RequestData.Method = HttpMethodGet;     // Only get the headers to determine the body length
-    RequestData.Url = Url;
+    WorkUrl = AllocatePool (Dfci->UrlSize * sizeof(CHAR16));
+    if (NULL == WorkUrl) {
+        DEBUG((DEBUG_ERROR, "Unable to allocate memory for WorkUrl\n"));
+        return EFI_OUT_OF_RESOURCES;
+    }
 
-    RequestMessage.BodyLength = 0;
-    RequestMessage.Body = NULL;
+    Status = AsciiStrToUnicodeStrS (Dfci->Url, WorkUrl, Dfci->UrlSize);
+    if (EFI_ERROR(Status)) {
+        FreePool (WorkUrl);
+        DEBUG((DEBUG_ERROR, "Unable to convert Ascii URL to Unicode. Code=%r\n", Status));
+        return Status;
+    }
+
+    RequestData.Method = HttpMethodGet;     // Only get the headers to determine the body length
+    RequestData.Url = WorkUrl;
+
+    RequestMessage.BodyLength = DfciIdStringSize;
+    RequestMessage.Body = DfciIdString;
     RequestMessage.Data.Request = &RequestData;
 
     RequestToken.Event = NULL;
     RequestToken.Status = EFI_SUCCESS;
     RequestToken.Message = &RequestMessage;
 
-    Status = DfciBuildRequestHeaders (Url, RequestMessage.BodyLength, HEADER_CONTENT_BIN, &RequestMessage.Headers, &RequestMessage.HeaderCount);
+    Status = DfciBuildRequestHeaders (WorkUrl, RequestMessage.BodyLength, HEADER_CONTENT_JSON, &RequestMessage.Headers, &RequestMessage.HeaderCount);
+    FreePool (WorkUrl);
     if (EFI_ERROR(Status)) {
         return Status;
     }
@@ -1035,7 +899,7 @@ DfciGetSettingsPacket (
         goto S_EXIT1;
     }
 
-    Packet = AllocatePool (ContentLength);
+    Packet = AllocatePool (ContentLength + sizeof(CHAR8));  // Add 1 for a NULL
     if (NULL == Packet) {
         DEBUG((DEBUG_ERROR, "Unable to allocate return buffer\n"));
         Status = EFI_OUT_OF_RESOURCES;
@@ -1054,9 +918,9 @@ DfciGetSettingsPacket (
         }
         CurrentLength += ResponseMessage.BodyLength;
     }
-
-    *SettingsPkt = Packet;
-    *SettingsPktSize = ContentLength;
+    Packet[ContentLength] = '\0';   // Add terminating NULL
+   *JsonString = Packet;
+   *JsonStringSize = ContentLength + sizeof(CHAR8);
     ResponseMessage.Body = NULL;
 
 S_EXIT1:
@@ -1065,459 +929,13 @@ S_EXIT1:
 }
 
 /**
- * DfciSendSettingsPacket
- *
- *
- * @param[in]  Dfci
- * @param[in]  Url
- * @param[in]  ContentType
- * @param[in]  SettingsResult
- * @param[in]  SettingsResultSize
- *
- * @return EFI_STATUS
- *
- **/
-STATIC
-EFI_STATUS
-DfciSendSettingsPacket (
-    IN  DFCI_PRIVATE_DATA *Dfci,
-    IN  CHAR16            *Url,
-    IN  CONST CHAR8       *ContentType,
-    IN  VOID              *SettingsResult,
-    IN  UINTN              SettingsResultSize
-  ) {
-
-    UINTN                           ContentLength;
-    EFI_HTTP_HEADER                *ContentLengthHeader;
-    UINTN                           CurrentLength;
-    CHAR8                          *Packet;
-    EFI_HTTP_REQUEST_DATA           RequestData;
-    EFI_HTTP_MESSAGE                RequestMessage;
-    EFI_HTTP_TOKEN                  RequestToken;
-    EFI_HTTP_RESPONSE_DATA          ResponseData;
-    EFI_HTTP_MESSAGE                ResponseMessage;
-    EFI_HTTP_TOKEN                  ResponseToken;
-    EFI_STATUS                      Status;
-
-
-    if ((NULL == Dfci) ||
-        (NULL == Url) ||
-        (NULL == ContentType) ||
-        (NULL == SettingsResult)) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    RequestData.Method = HttpMethodPut;     // Put the file on the server
-    RequestData.Url = Url;
-
-    RequestMessage.BodyLength = SettingsResultSize;
-    RequestMessage.Body = SettingsResult;
-    RequestMessage.Data.Request = &RequestData;
-
-    DEBUG((DEBUG_INFO, "Content being sent\n"));
-    DEBUG_BUFFER(DEBUG_INFO, SettingsResult, MIN (512, SettingsResultSize), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-
-    RequestToken.Event = NULL;
-    RequestToken.Status = EFI_SUCCESS;
-    RequestToken.Message = &RequestMessage;
-
-    Status = DfciBuildRequestHeaders (Url, RequestMessage.BodyLength, ContentType, &RequestMessage.Headers, &RequestMessage.HeaderCount);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    Status = DfciIssueRequest (Dfci, &RequestToken);
-    if (EFI_ERROR(Status)) {
-        goto P_EXIT1;
-    }
-
-    ResponseData.StatusCode = HTTP_STATUS_UNSUPPORTED_STATUS;
-
-    ResponseMessage.Data.Response = &ResponseData;
-    ResponseMessage.HeaderCount = 0;
-    ResponseMessage.Headers = NULL;
-
-    ResponseMessage.BodyLength = 0;
-    ResponseMessage.Body = NULL;
-
-    ResponseToken.Event = NULL;
-    ResponseToken.Status = EFI_SUCCESS;
-    ResponseToken.Message = &ResponseMessage;
-
-    Status = DfciGetResponse (Dfci, &ResponseToken);
-    if (EFI_ERROR(Status)) {
-        goto P_EXIT1;
-    }
-
-    ContentLengthHeader = HttpFindHeader (ResponseMessage.HeaderCount,
-                                          ResponseMessage.Headers,
-                                          HTTP_HEADER_CONTENT_LENGTH);
-    ContentLength = 0;
-    if (NULL != ContentLengthHeader) {
-        ContentLength = AsciiStrDecimalToUintn(ContentLengthHeader->FieldValue);
-    }
-
-    DEBUG((DEBUG_INFO, "ContentLength=%d,ActualLength=%d\n", ContentLength, ResponseMessage.BodyLength));
-
-    FreeHeaders (ResponseMessage.HeaderCount,ResponseMessage.Headers);
-
-    ResponseMessage.HeaderCount = 0;
-    ResponseMessage.Headers = NULL;
-    ResponseMessage.Data.Response = NULL;
-
-    if (0 == ContentLength) {
-        DEBUG((DEBUG_INFO, "No content available\n"));
-        Status = EFI_NOT_FOUND;
-        goto P_EXIT1;
-    }
-
-    Packet = AllocatePool (ContentLength);
-    if (NULL == Packet) {
-        DEBUG((DEBUG_ERROR, "Unable to allocate return buffer\n"));
-        Status = EFI_OUT_OF_RESOURCES;
-        goto P_EXIT1;
-    }
-    CurrentLength = 0;
-
-    while (CurrentLength < ContentLength) {
-        ResponseMessage.Body = &Packet[CurrentLength];
-        ResponseMessage.BodyLength = ContentLength - CurrentLength;
-        Status = DfciGetResponse (Dfci, &ResponseToken);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "Error from additional response data. Code=%r\n", Status));
-            FreePool (Packet);
-            goto P_EXIT1;
-        }
-        CurrentLength += ResponseMessage.BodyLength;
-    }
-
-    DEBUG_BUFFER(DEBUG_INFO, Packet, MIN (1504, CurrentLength), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-
-    FreePool (Packet);
-
-P_EXIT1:
-    FreeHeaders(RequestMessage.HeaderCount, RequestMessage.Headers);
-    return Status;
-}
-
-/**
- * GetRequestUrl
- *
- * Build a Url from <BaseUrl>/DfciRequest/<MachineId>/<RequestType>
- *
- * @param Url
- * @param Type
- * @param RequestUrl    - New URL (caller must free)
- *
- * @return EFI_STATUS
- *
- **/
-STATIC
-EFI_STATUS
-GetRequestUrl (
-    IN  DFCI_PRIVATE_DATA  *Dfci,
-    IN  CHAR16             *RequestType,
-    OUT CHAR16            **RequestUrl
-  ) {
-
-    CHAR16     *MachineId;
-    UINTN       MachineIdSize;
-    EFI_STATUS  Status;
-    CHAR16     *WorkUrl;
-    UINTN       WorkUrlSize;
-
-
-    if ((NULL == Dfci) ||
-        (NULL == RequestType) ||
-        (NULL == RequestUrl) ||
-        (Dfci->UrlSize < sizeof(CHAR16))) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    //
-    //  For now, just use the string serialnumber for the MachineId
-    //
-    // TBD, the exact string needed to access InTune.  This is set up for a
-    // test server mikeytbds3
-
-    MachineIdSize = Dfci->SerialNumberSize * sizeof(CHAR16);
-    MachineId = AllocatePool (MachineIdSize);
-
-    if (NULL == MachineId) {
-        DEBUG((DEBUG_ERROR, "Unable to allocate memory for MachineId\n"));
-        return EFI_OUT_OF_RESOURCES;
-    }
-
-    Status = AsciiStrToUnicodeStrS (Dfci->SerialNumber, MachineId, Dfci->SerialNumberSize);
-    if (EFI_ERROR(Status)) {
-        FreePool (MachineId);
-        DEBUG((DEBUG_ERROR, "Unable to convert Ascii SerialNumber to Unicode. Code=%r\n", Status));
-        return Status;
-    }
-
-    WorkUrlSize = Dfci->UrlSize * sizeof(CHAR16);              // BaseUrl size - includes terminating NULL
-    WorkUrlSize += StrLen (DFCI_REQUEST) * sizeof(CHAR16);     // and "DfciRequest/" size
-    WorkUrlSize += StrLen (MachineId) * sizeof(CHAR16);        // <MachineId> size
-    WorkUrlSize += StrLen (RequestType) * sizeof(CHAR16);      // <RequestType> size
-    WorkUrlSize += sizeof(CHAR16);                             // Possible extra "/"
-
-    WorkUrl = AllocatePool (WorkUrlSize);
-    if (NULL == WorkUrl) {
-        FreePool (MachineId);
-        DEBUG((DEBUG_ERROR, "Unable to allocate memory for WorkUrl\n"));
-        return EFI_OUT_OF_RESOURCES;
-    }
-
-    Status = AsciiStrToUnicodeStrS (Dfci->Url, WorkUrl, Dfci->UrlSize);
-    if (EFI_ERROR(Status)) {
-        FreePool (MachineId);
-        FreePool (WorkUrl);
-        DEBUG((DEBUG_ERROR, "Unable to convert Ascii URL to Unicode. Code=%r\n", Status));
-        return Status;
-    }
-
-    if ('/' != Dfci->Url[Dfci->UrlSize - 2]) {
-        StrCatS  (WorkUrl, WorkUrlSize, L"/");         // Add '/' if necessary
-    }
-
-    StrCatS  (WorkUrl, WorkUrlSize, DFCI_REQUEST);     // Add DfciRequest/
-    StrCatS  (WorkUrl, WorkUrlSize, MachineId);        // Add MachineID
-    StrCatS  (WorkUrl, WorkUrlSize, RequestType);      // Add /<RequestType>
-
-    FreePool (MachineId);
-
-    *RequestUrl = WorkUrl;
-    DEBUG((DEBUG_INFO, "Url        = %a\n", Dfci->Url));
-    DEBUG((DEBUG_INFO, "RequestUrl = %s\n", WorkUrl));
-
-    return EFI_SUCCESS;
-}
-
-/**
- * ProcessSendResultItem
- *
- * Send one Dfci Result packet to the server
- *
- * @param[in]  Dfci
- * @param[in]  RequestEntry - Contains request type, variable name, etc
- *
- * @return EFI_STATUS
- *
- **/
-STATIC
-EFI_STATUS
-ProcessSendResultItem (
-    IN DFCI_PRIVATE_DATA     *Dfci,
-    IN PROCESS_REQUEST_ENTRY *RequestEntry
-  ) {
-
-    VOID       *SettingsResult;
-    UINTN       SettingsResultSize;
-    EFI_STATUS  Status;
-    CHAR16     *Url;
-
-
-    if ((NULL == Dfci) ||
-        (NULL == RequestEntry) ||
-        (NULL == RequestEntry->RequestType) ||
-        (NULL == RequestEntry->ResultsVariableName) ||
-        (NULL == RequestEntry->VariableNameSpace)) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    Status = GetVariable3(RequestEntry->ResultsVariableName,
-                          RequestEntry->VariableNameSpace,
-                         &SettingsResult,
-                         &SettingsResultSize,
-                          NULL);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "GetVariable failed for %s. Code = %r\n", RequestEntry->ResultsVariableName, Status));
-        if (EFI_NOT_FOUND == Status) {
-            return EFI_SUCCESS;            // No results, SUCCESS.
-        }
-        return Status;
-    }
-
-    Status = GetRequestUrl(Dfci, RequestEntry->RequestType, &Url);
-    if (EFI_ERROR(Status)) {
-        FreePool (SettingsResult);
-        return Status;
-    }
-
-    Status = DfciSendSettingsPacket (Dfci,
-                                     Url, RequestEntry->ContentType,
-                                     SettingsResult,
-                                     SettingsResultSize);
-    FreePool (Url);
-    FreePool (SettingsResult);
-
-    return Status;
-}
-
-/**
- * ProcessRequestItem
- *
- * Request one Dfci Settings packet from the server
- *
- * @param[in]  Dfci
- * @param[in]  RequestEntry
- * @param[out] SettingApplied  -- Only set to TRUE if Setting applied, else not set
- *
- * @return EFI_STATUS
- *
- **/
-STATIC
-EFI_STATUS
-ProcessRequestItem (
-    IN  DFCI_PRIVATE_DATA     *Dfci,
-    IN  PROCESS_REQUEST_ENTRY *RequestEntry,
-    OUT BOOLEAN               *SettingApplied
-  ) {
-
-    DFCI_PACKET_SIGNATURE   *SettingsInfo;
-    VOID                    *SettingsPkt;
-    UINTN                    SettingsPktSize;
-    EFI_STATUS               Status;
-    CHAR16                  *Url;
-
-
-    if ((NULL == Dfci) ||
-        (NULL == RequestEntry) ||
-        (NULL == RequestEntry->RequestType) ||
-        (NULL == RequestEntry->VariableName) ||
-        (NULL == RequestEntry->VariableNameSpace)) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    Status = GetRequestUrl(Dfci, RequestEntry->RequestType, &Url);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    Status = DfciGetSettingsPacket (Dfci, Url, &SettingsPkt, &SettingsPktSize);
-    if (EFI_ERROR(Status)) {
-        FreePool (Url);
-        return Status;
-    }
-
-    DEBUG_BUFFER(DEBUG_INFO, SettingsPkt, MIN (1504, SettingsPktSize), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-
-    //
-    // All of the structures are the same with respect to the location of the signature field.
-    //
-    SettingsInfo = (DFCI_PACKET_SIGNATURE *) SettingsPkt;
-
-    //
-    // Validate the correct signature is in the packet before setting the variable.
-    //
-    if (RequestEntry->Signature == SettingsInfo->Signature) {
-        Status = gRT->SetVariable(RequestEntry->VariableName,
-                                  RequestEntry->VariableNameSpace,
-                                  RequestEntry->VariableAttributes,
-                                  SettingsPktSize,
-                                  SettingsPkt);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "Unable to set %s. Code=%r\n", RequestEntry->VariableName, Status));
-        } else {
-            *SettingApplied = TRUE;
-        }
-    } else {
-        DEBUG((DEBUG_ERROR, "SettingsInfo->Signature not as expected. Expected %x, got %x\n", RequestEntry->Signature, SettingsInfo->Signature));
-        Status = EFI_NOT_FOUND;
-    }
-    FreePool (Url);
-    FreePool (SettingsPkt);
-
-    return Status;
-}
-
-/**
- * Process Dfci Requests
- *
- * Dfci requests are a sequence of requests - See the mRequestTable for the sequence:
- *
- *
- * The url for these requests are:
- *
- * <hosturl>/DfciRequest/<MachineId>/<request>
- *
- *
- * @param[in]  Dfci
- *
- * @return EFI_STATUS
- *
- **/
-STATIC
-EFI_STATUS
-ProcessDfciRequests (
-    IN  DFCI_PRIVATE_DATA  *Dfci
-  )  {
-
-    UINTN       i;
-    EFI_STATUS  Status;
-    BOOLEAN     SettingApplied;
-
-
-    if (NULL == Dfci) {
-        return EFI_INVALID_PARAMETER;
-    }
-
-    SettingApplied = FALSE;
-
-
-    // 1. Build JSON Request
-
-
-
-// Request:
-// {"oemManufacturer":null,"modelName":null,"serialNumber":null,"thumbprint":null}
-//
-// Response:
-//  {"settingsPacket":null,"provisioningPacket":null,"permissionsPacket":null}
-
-
-
-
-
-    //
-    // Send Results and Current to Settings Manager
-    //
-    for (i=0; i < REQUEST_TABLE_COUNT; i++) {
-        Status = ProcessSendResultItem (Dfci, &mRequestTable[i]);
-        if (EFI_ERROR(Status)) {
-            return Status;
-        }
-    }
-
-    //
-    // Get new settings from Settings Manager
-    //
-    for (i=0; i < REQUEST_TABLE_COUNT; i++) {
-        if (mRequestTable[i].Signature != 0) {
-            Status = ProcessRequestItem (Dfci, &mRequestTable[i], &SettingApplied);
-            if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
-                return Status;
-            }
-        }
-    }
-
-    if (Status == EFI_NOT_FOUND) {
-        Status = EFI_SUCCESS;
-    }
-
-    if (!SettingApplied) {
-        mUserStatus = USER_STATUS_NO_SETTINGS;
-    }
-
-    return Status;
-}
-
-/**
  *  Dfci Request from Network
  *
  *  @param[in] Url            A pointer to the EFI System Table.
  *  @param[in] UrlSize
- *  @param[out] UserStatus
+ *  @param[out] JsonString     Where to store a pointer to Json String
+ *  @param[out] JsonStringSize Where to store the size of the JsonS tring
+ *  @param[out] UserStatus     Specific error code for error dialog
  *
  *  @retval EFI_SUCCESS       The entry point is executed successfully.
  *  @retval other             Some error occurs when executing this entry point.
@@ -1525,10 +943,13 @@ ProcessDfciRequests (
  **/
 EFI_STATUS
 EFIAPI
-DfciRequestProcess (
-    IN CHAR8      *Url,
-    IN UINTN       UrlSize,
-    OUT UINT64    *UserStatus
+DfciRequestJsonFromNETWORK (
+    IN  CHAR8    *Url,
+    IN  UINTN     UrlSize,
+    IN  CHAR8    *DfciIdString,
+    IN  UINTN     DfciIdStringSize,
+    OUT CHAR8   **JsonString,
+    OUT UINTN    *JsonStringSize
   ) {
 
     EFI_BOOT_MANAGER_POLICY_PROTOCOL *BootPolicy;
@@ -1539,10 +960,13 @@ DfciRequestProcess (
     BOOLEAN                           MediaPresent;
     UINTN                             NicIndex;
     EFI_STATUS                        Status;
+    EFI_STATUS                        Status2;
 
 
     if ((NULL == Url) ||
-        (NULL == UserStatus)) {
+        (NULL == DfciIdString) ||
+        (NULL == JsonString) ||
+        (NULL == JsonStringSize)) {
         return EFI_INVALID_PARAMETER;
     }
 
@@ -1552,7 +976,7 @@ DfciRequestProcess (
 
     // If the platform chose to publish a Boot Manager Policy, ask it to start the
     // networking stack.  Ignore any errors, and attempt to access the network even if
-    // the BootPolicy returns an error.
+    // the BootPolicy is not found, or BootPolicy returns an error.
     if (!EFI_ERROR(Status)) {
         Status = BootPolicy->ConnectDeviceClass (BootPolicy, &gEfiBootManagerPolicyNetworkGuid);
         if (EFI_ERROR(Status)) {
@@ -1560,29 +984,17 @@ DfciRequestProcess (
         }
     }
 
-    mUserStatus = USER_STATUS_SUCCESS;
     //
     // Try each connected NIC until a successful settings transfer.
     //
-    Dfci = AllocateZeroPool (sizeof(DFCI_PRIVATE_DATA));
-    if (NULL == Dfci) {
-        DEBUG((DEBUG_ERROR, "Unable to allocate Dfci private data\n"));
-        return EFI_OUT_OF_RESOURCES;
-    }
+    Dfci = &mDfciPrivateData;
+    ZeroMem (&mDfciPrivateData, sizeof(mDfciPrivateData));
 
     Dfci->Url = Url;
     Dfci->UrlSize = UrlSize;
+    Dfci->DfciIdString = DfciIdString;
+    Dfci->DfciIdStringSize = DfciIdStringSize;
     HandleBuffer = NULL;
-    Status = DfciIdSupportGetManufacturer (&Dfci->Manufacturer, &Dfci->ManufacturerSize);
-    Status |= DfciIdSupportGetProductName (&Dfci->ProductName, &Dfci->ProductNameSize);
-    Status |= DfciIdSupportGetSerialNumber (&Dfci->SerialNumber, &Dfci->SerialNumberSize);
-    Status |= DfciIdSupportGetUuid (&Dfci->Uuid, &Dfci->UuidSize);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Unable to get SmBios Info. %r\n", __FUNCTION__, Status));
-        // Status is mangled - just return EFI_UNSUPPORTED
-        Status = EFI_UNSUPPORTED;
-        goto CLEANUP;
-    }
 
     DoneProcessing = FALSE;
     //
@@ -1595,7 +1007,6 @@ DfciRequestProcess (
         &HandleCount,
         &HandleBuffer);
     if (EFI_ERROR(Status) || (0 == HandleCount)) {
-        mUserStatus = USER_STATUS_NO_NIC;
         DEBUG((DEBUG_ERROR, "Unable to locate any NIC's for HTTP file access\n"));
         Status = EFI_NOT_FOUND;
         goto CLEANUP;
@@ -1611,7 +1022,6 @@ DfciRequestProcess (
 
         Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiHttpServiceBindingProtocolGuid, &Dfci->HttpSbProtocol);
         if (EFI_ERROR(Status)) {
-            mUserStatus = USER_STATUS_NO_NIC;
             DEBUG((DEBUG_ERROR, "Error locating HttpServiceBinding protocol. Code=%r\n", Status));
             goto CLEANUP;
         }
@@ -1623,8 +1033,9 @@ DfciRequestProcess (
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_INFO, "NetLibDetectMedi returned %r. Assuming Media Present\n", Status));
         }
+
         if (!MediaPresent) {
-            mUserStatus = USER_STATUS_NO_MEDIA;
+            Status = EFI_NO_MEDIA;
             continue;
         }
 
@@ -1635,9 +1046,12 @@ DfciRequestProcess (
             goto EARLY_EXIT;
         }
 
-        mUserStatus = USER_STATUS_SUCCESS;
-
-        Status = ProcessDfciRequests (Dfci);
+        Status = DfciGetSettingsPacket (
+                    Dfci,
+                    DfciIdString,
+                    DfciIdStringSize,
+                    JsonString,
+                    JsonStringSize);
         if (EFI_ERROR(Status)) {
             goto EARLY_EXIT;
         }
@@ -1648,27 +1062,31 @@ EARLY_EXIT:
         if (Dfci->DhcpRequested) {
             ConfigureSTATIC (Dfci);
         }
+
+        //
+        // Don't let success or fail of cleanup from disturbing the return status.
+        //
         if (NULL != Dfci->HttpProtocol) {
-            Status = Dfci->HttpProtocol->Configure(Dfci->HttpProtocol, NULL);
-            if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "Unable to cleanup HTTP Protocol. Code=%r\n", Status));
+            Status2 = Dfci->HttpProtocol->Configure(Dfci->HttpProtocol, NULL);
+            if (EFI_ERROR(Status2)) {
+                DEBUG((DEBUG_ERROR, "Unable to cleanup HTTP Protocol. Code=%r\n", Status2));
             }
         }
 
-        Status = Dfci->HttpSbProtocol->DestroyChild(Dfci->HttpSbProtocol, Dfci->HttpChildHandle);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "Error destroying worker child. Code=%r\n", Status));
+        Status2 = Dfci->HttpSbProtocol->DestroyChild(Dfci->HttpSbProtocol, Dfci->HttpChildHandle);
+        if (EFI_ERROR(Status2)) {
+            DEBUG((DEBUG_ERROR, "Error destroying worker child. Code=%r\n", Status2));
         }
+    }
+
+    if (DoneProcessing) {
+        Status = EFI_SUCCESS;
     }
 
 CLEANUP:
     if (NULL != HandleBuffer) {
         FreePool(HandleBuffer);
     }
-
-    FreePool (Dfci);
-
-    *UserStatus = mUserStatus;
 
     return Status;
 }
