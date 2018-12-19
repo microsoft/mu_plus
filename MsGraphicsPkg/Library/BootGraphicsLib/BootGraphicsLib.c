@@ -100,7 +100,11 @@ DisplayBootGraphic(
   //
   // Erase Cursor from screen
   //
-  gST->ConOut->EnableCursor (gST->ConOut, FALSE);
+  if (gST->ConOut != NULL) {
+    gST->ConOut->EnableCursor (gST->ConOut, FALSE);
+  } else {
+    DEBUG((DEBUG_WARN, "%a - ConOut is NULL, will not disable cursor\n", __FUNCTION__));
+  }
 
   SizeOfX = GraphicsOutput->Mode->Info->HorizontalResolution;
   SizeOfY = GraphicsOutput->Mode->Info->VerticalResolution;
