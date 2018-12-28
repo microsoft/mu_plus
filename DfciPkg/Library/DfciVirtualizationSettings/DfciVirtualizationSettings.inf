@@ -1,7 +1,7 @@
 ## @file
-# DfciMenu.inf
+# DfciSettingsLib.inf
 #
-# DfciMenu is an application that presents & manages the Dfci settings page.
+#  Library to support Dfci Setting  (get/set)
 #
 # Copyright (c) 2018, Microsoft Corporation
 #
@@ -30,94 +30,47 @@
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
-  BASE_NAME                      = DfciMenu
-  FILE_GUID                      = ae8f0389-6ba2-47d3-9e55-80b3dd9b8a98
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = DfciVirtualizationSettingsLib
+  FILE_GUID                      = a6987668-2f26-48d6-979b-369a3b49a9a5
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = DfciMenuEntry
-
+  LIBRARY_CLASS                  = DfciVirtualizationSettingsLib | DXE_DRIVER
+  CONSTRUCTOR                    = DfciVirtualizationSettingsConstructor
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
 #
 
 [Sources]
-  DfciPrivate.h
-  DfciMenu.h
-  DfciMenu.c
-  DfciMenuVfr.Vfr
-  DfciMenuStrings.uni
-  DfciRequest.h
-  DfciRequest.c
-  DfciUsb.h
-  DfciUsb.c
-  DfciUpdate.h
-  DfciUpdate.c
+  DfciVirtualizationSettings.c
 
 [Packages]
   DfciPkg/DfciPkg.dec
-  NetworkPkg/NetworkPkg.dec
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
-  MsCorePkg/MsCorePkg.dec
-  ZeroTouchPkg/ZeroTouchPkg.dec
 
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
   DebugLib
-  DevicePathLib
-  DfciDeviceIdSupportLib
-  DfciSettingsLib
-  DfciUiSupportLib
-  FileHandleLib
-  HiiLib
-  HttpLib
   MemoryAllocationLib
-  JsonLiteParserLib
-  PrintLib
-  UefiBootServicesTableLib
-  UefiDriverEntryPoint
-  UefiHiiServicesLib
+  PcdLib
   UefiLib
+  UefiBootServicesTableLib
   UefiRuntimeServicesTableLib
-  ZeroTouchSettingsLib
 
 [Guids]
-  gDfciAuthProvisionVarNamespace
-  gDfciConfigCompleteEventGroupGuid
-  gDfciConfigStartEventGroupGuid
-  gDfciMenuFormsetGuid
-  gDfciRecoveryFormsetGuid
-  gDfciPermissionManagerVarNamespace
-  gDfciSettingsGuid
-  gDfciSettingsManagerVarNamespace
-  gEfiBootManagerPolicyNetworkGuid
-  gEfiEventPreReadyToBootGuid
 
 [Protocols]
-  gDfciAuthenticationProtocolGuid
-  gDfciSettingAccessProtocolGuid
-  gDfciSettingPermissionsProtocolGuid
-  gEfiBlockIoProtocolGuid
-  gEfiBootManagerPolicyProtocolGuid
-  gEfiHiiConfigAccessProtocolGuid
-  gEfiHttpProtocolGuid
-  gEfiHttpServiceBindingProtocolGuid
-  gEfiSimpleFileSystemProtocolGuid
-  gEfiUsbIoProtocolGuid
-
-[FeaturePcd]
+  gDfciSettingsProviderSupportProtocolGuid
 
 [Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider
 
 [Depex]
-  gEfiVariableArchProtocolGuid  AND
-  gDfciSettingAccessProtocolGuid AND
-  gDfciAuthenticationProtocolGuid AND
-  gDfciSettingPermissionsProtocolGuid
+  TRUE
 
 [BuildOptions]
-#  DEBUG_*_*_CC_FLAGS  = /FAcs
+#  DEBUG_*_*_CC_FLAGS  = /Od /FAcs
+  DEBUG_*_*_CC_FLAGS  = /analyze

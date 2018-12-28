@@ -64,7 +64,7 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
       return EFI_NOT_READY;
     }
 
-    //User is trying to reset.  Check if auth token is valid for this operation.   
+    //User is trying to reset.  Check if auth token is valid for this operation.
     // Permission is based on who can change the Owner Cert and/or who can do recovery.
     Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, AuthToken, &CanChange);
     if (EFI_ERROR(Status))
@@ -86,7 +86,7 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
       return EFI_ACCESS_DENIED;
     }
   }
- 
+
   DEBUG((DEBUG_INFO, "%a - Auth Token good.  Lets clear the permissions.\n", __FUNCTION__));
 
   // 1. Free existing PermissionStore
@@ -95,7 +95,7 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
     FreePermissionStore(mPermStore);
     mPermStore = NULL;
   }
-  
+
   // 2. Set it to defaults which is all access to all settings
   Status = InitPermStore(&mPermStore);
   if (EFI_ERROR(Status))
@@ -161,8 +161,7 @@ OUT BOOLEAN                     *Result
     return Status;
   }
 
-  
-  //2. set to default. 
+  //2. set to default.
   PMask = mPermStore->DefaultPMask;
 
   //3. Set PMask to specific value if in list
@@ -278,13 +277,15 @@ IdentityChange (
       Status  = AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_KEY,      DFCI_IDENTITY_INVALID,    DFCI_PERMISSION_MASK__NONE);
     }
 
-    // 4. When an Owner is entrolled and the signer is ZTD:
+    // 4. When an Owner is enrolled and the signer is ZTD:
     if (Properties.Identity == DFCI_IDENTITY_SIGNER_ZTD)
     {
       //    a. Allow ZTD to UnEnroll.
       //    b. Allow ZTD to use hard reset Recovery
+      //    c. Remove SEMM recovery permission
       Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_RECOVERY, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
       Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_UNENROLL, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
+      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__DFCI_RECOVERY, DFCI_PERMISSION_MASK__NONE, DFCI_PERMISSION_MASK__NONE);
       return EFI_SUCCESS;
     }
 

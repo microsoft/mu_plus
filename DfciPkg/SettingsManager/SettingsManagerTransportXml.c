@@ -1,7 +1,7 @@
 /**@file
 SettingsManagerTransportXml.c
 
-Thsi file supports the tool input path for setting settings.
+This file supports the tool input path for setting settings.
 Settings are set using XML.  That xml is written to a variable and then passed to UEFI to be applied.
 This code supports that.
 
@@ -449,7 +449,7 @@ FreeSettings(
 
 //
 // Free locally allocated memory
-//  -- this function only gets called when system is not resetting. 
+//  -- this function only gets called when system is not resetting.
 //
 VOID
 EFIAPI
@@ -572,7 +572,7 @@ ApplyNewSettingsPacket (
       DEBUG((DEBUG_ERROR, "%a - Failed to load Settings Manager Internal Data. %r\n", __FUNCTION__, Status));
     }
 
-    //If load failed - init store 
+    //If load failed - init store
     Status = SMID_InitInternalData(&InternalData);
     if (EFI_ERROR(Status))
     {
@@ -601,7 +601,9 @@ ApplyNewSettingsPacket (
   ClearCacheOfCurrentSettings();
 
 CLEANUP:
-  UpdateSettingsResult(Data, InternalData);
+  if (InternalData != NULL) {
+    UpdateSettingsResult(Data, InternalData);
+  }
   FreeSettings(Data);
   AuthTokenDispose(&Data->AuthToken);
   FreeInstanceMemory(Data, &InternalData);

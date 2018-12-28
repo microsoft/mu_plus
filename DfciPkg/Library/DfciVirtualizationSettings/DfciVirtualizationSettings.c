@@ -1,0 +1,437 @@
+/** @file
+DfciSettings.c
+
+Library Instance for DXE to support getting, setting, defaults, and support the
+Dfci.CpuAndIoVirtualization.Enable setting.
+
+Copyright (c) 2018, Microsoft Corporation
+
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice,
+   this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+**/
+
+#include <Uefi.h>
+
+#include <DfciSystemSettingTypes.h>
+
+#include <Guid/DfciSettingsGuid.h>
+
+#include <Protocol/DfciSettingsProvider.h>
+
+#include <Library/BaseMemoryLib.h>
+#include <Library/DfciSettingsLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/DebugLib.h>
+#include <Library/PcdLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
+
+#include <Settings/DfciSettings.h>
+
+EFI_EVENT  mDfciSettingsProviderSupportInstallEvent;
+VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
+
+typedef enum {
+    ID_IS_BAD,
+    ID_IS_VIRTUALIZATION,
+}  ID_IS;
+
+// There are no setting to change the support for CPU and I/O virtualization
+
+#define HARD_CODED_VIRTUALIZAION 1
+
+// Forward declarations needed
+/**
+ * Settings Provider GetDefault routine
+ *
+ * @param This
+ * @param ValueSize
+ * @param Value
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+STATIC
+EFI_STATUS
+EFIAPI
+DfciSettingsGetDefault (
+    IN  CONST DFCI_SETTING_PROVIDER     *This,
+    IN  OUT   UINTN                     *ValueSize,
+    OUT       VOID                      *Value
+  );
+
+/**
+ * Settings Provider Get routine
+ *
+ * @param This
+ * @param ValueSize
+ * @param Value
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+STATIC
+EFI_STATUS
+EFIAPI
+DfciSettingsGet (
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
+  );
+
+/**
+@param Id - Setting ID to check for support status
+@retval ID_IS_xx  - of the supported settings
+@retval ID_IS_BAD - Not supported
+**/
+STATIC
+ID_IS
+IsIdSupported (
+	IN  DFCI_SETTING_ID_STRING Id
+  ) {
+
+    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALL_CPU_IO_VIRT, DFCI_MAX_ID_LEN)) {
+        return ID_IS_VIRTUALIZATION;
+    } else {
+        DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
+    }
+
+    return ID_IS_BAD;
+}
+
+/////---------------------Interface for Settings Provider ---------------------//////
+
+/**
+ * Settings Provider Set Routine
+ *
+ * @param This
+ * @param ValueSize
+ * @param Value
+ * @param Flags
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+STATIC
+EFI_STATUS
+EFIAPI
+DfciSettingsSet (
+    IN  CONST DFCI_SETTING_PROVIDER    *This,
+    IN        UINTN                     ValueSize,
+    IN  CONST VOID                     *Value,
+    OUT       DFCI_SETTING_FLAGS       *Flags
+  ) {
+
+    EFI_STATUS      Status;
+    ID_IS           Id;
+    UINT8           NewValue;
+
+    if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize < sizeof(UINT8))) {
+        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+        return EFI_INVALID_PARAMETER;
+    }
+
+    NewValue = *((UINT8 *) Value);
+
+    Id = IsIdSupported(This->Id);
+    switch (Id) {
+        case ID_IS_VIRTUALIZATION:
+            if (NewValue != HARD_CODED_VIRTUALIZAION) {
+                Status = EFI_ACCESS_DENIED;
+            } else {
+                *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+                Status = EFI_SUCCESS;
+            }
+            break;
+
+        default:
+            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+            Status = EFI_UNSUPPORTED;
+            break;
+    }
+
+    return Status;
+}
+
+/**
+ * Settings Provider Get routine
+ *
+ * @param This
+ * @param ValueSize
+ * @param Value
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+STATIC
+EFI_STATUS
+EFIAPI
+DfciSettingsGet (
+    IN  CONST DFCI_SETTING_PROVIDER    *This,
+    IN  OUT   UINTN                    *ValueSize,
+    OUT       VOID                     *Value
+  ) {
+
+    ID_IS               Id;
+    EFI_STATUS          Status;
+    CHAR8              *CurrentValue;
+
+    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
+        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+        return EFI_INVALID_PARAMETER;
+    }
+
+    if (*ValueSize < sizeof(CHAR8)) {
+        *ValueSize = sizeof(CHAR8);
+        return EFI_BUFFER_TOO_SMALL;
+    }
+
+    CurrentValue = (CHAR8 *) Value;
+
+    Id = IsIdSupported(This->Id);
+    Status = EFI_SUCCESS;
+
+    switch (Id) {
+
+        // Current setting is hard coded to Enabled.
+        case ID_IS_VIRTUALIZATION:
+            *CurrentValue = HARD_CODED_VIRTUALIZAION;
+            *ValueSize = sizeof(CHAR8);
+            break;
+
+        default:
+            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+            Status = EFI_UNSUPPORTED;
+            break;
+    }
+
+    return Status;
+}
+
+/**
+ * Settings Provider GetDefault routine
+ *
+ * @param This
+ * @param ValueSize
+ * @param Value
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+STATIC
+EFI_STATUS
+EFIAPI
+DfciSettingsGetDefault (
+    IN  CONST DFCI_SETTING_PROVIDER     *This,
+    IN  OUT   UINTN                     *ValueSize,
+    OUT       VOID                      *Value
+  ) {
+
+    ID_IS    Id;
+    CHAR8   *DefaultValue;
+
+    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
+        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+        return EFI_INVALID_PARAMETER;
+    }
+
+    if (*ValueSize < sizeof(CHAR8)) {
+        *ValueSize = sizeof(CHAR8);
+        return EFI_BUFFER_TOO_SMALL;
+    }
+
+    Id = IsIdSupported(This->Id);
+    if (Id == ID_IS_BAD) {
+        return EFI_UNSUPPORTED;
+    }
+
+    DefaultValue = (CHAR8 *) Value;
+    *ValueSize = sizeof(CHAR8);
+    *DefaultValue = HARD_CODED_VIRTUALIZAION;
+
+    return EFI_SUCCESS;
+}
+
+/**
+ * Settings Provider Set Default routine
+ *
+ * @param This
+ *
+ * @return EFI_STATUS EFIAPI
+ */
+STATIC
+EFI_STATUS
+EFIAPI
+DfciSettingsSetDefault (
+    IN  CONST DFCI_SETTING_PROVIDER     *This
+  ) {
+
+    DFCI_SETTING_FLAGS Flags = 0;
+    EFI_STATUS         Status;
+    CHAR8              Value;
+    UINTN              ValueSize;
+
+    if (This == NULL) {
+        return EFI_INVALID_PARAMETER;
+    }
+
+    ValueSize = sizeof(ValueSize);
+    Status = DfciSettingsGetDefault (This, &ValueSize, &Value);
+    if (EFI_ERROR(Status)) {
+        return Status;
+    }
+
+    return DfciSettingsSet (This, ValueSize, &Value, &Flags);
+}
+
+//
+// Since ProviderSupport Registration copies the provider to its own
+// allocated memory this code can use a single "template" and just change
+// the id, type, and flags field as needed for registration.
+//
+DFCI_SETTING_PROVIDER mDfciSettingsProviderTemplate = {
+  0,
+  0,
+  0,
+  DfciSettingsSet,
+  DfciSettingsGet,
+  DfciSettingsGetDefault,
+  DfciSettingsSetDefault
+};
+
+/////---------------------Interface for Library  ---------------------//////
+
+/**
+Function to Get a Dfci Setting.
+If the setting has not been previously set this function will return the default.  However it will
+not cause the default to be set.
+
+@param Id:          The DFCI_SETTING_ID_ENUM of the Dfci
+@param ValueSize:   IN=Size Of Buffer or 0 to get size, OUT=Size of returned Value
+@param Value:       Ptr to a buffer for the setting to be returned.
+
+
+@retval: Success - Setting was returned in Value
+@retval: EFI_ERROR.  Settings was not returned in Value.
+**/
+EFI_STATUS
+EFIAPI
+GetVirtualizationSetting (
+    IN      DFCI_SETTING_ID_STRING   Id,
+    IN  OUT UINTN                   *ValueSize,
+    OUT     VOID                    *Value
+  ) {
+
+    EFI_STATUS      Status;
+
+    mDfciSettingsProviderTemplate.Id = Id;
+    Status = DfciSettingsGet (&mDfciSettingsProviderTemplate, ValueSize, Value);
+    if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
+        Status = DfciSettingsGetDefault (&mDfciSettingsProviderTemplate, ValueSize, Value);
+    }
+    return Status;
+}
+
+/**
+ * Library design is such that a dependency on gDfciSettingsProviderSupportProtocolGuid
+ * is not desired.  So to resolve that a ProtocolNotify is used.
+ *
+ * This function gets triggered once on install and 2nd time when the Protocol gets installed.
+ *
+ * When the gDfciSettingsProviderSupportProtocolGuid protocol is available the function will
+ * loop thru all the Dfci settings (using PCD) and install the settings
+ *
+ * Context is NULL.
+ *
+ *
+ * @param Event
+ * @param Context
+ *
+ * @return VOID EFIAPI
+ */
+STATIC
+VOID
+EFIAPI
+DfciSettingsProviderSupportProtocolNotify (
+    IN  EFI_EVENT       Event,
+    IN  VOID            *Context
+  ) {
+
+    STATIC UINT8                            CallCount = 0;
+    DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
+    EFI_STATUS                              Status;
+
+    //locate protocol
+    Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
+    if (EFI_ERROR(Status)) {
+      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
+        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
+      }
+      return;
+    }
+
+    //
+    // Register items that are NOT in the PREBOOT_UI
+    //
+    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__ALL_CPU_IO_VIRT;
+    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_ENABLE;
+    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
+    Status = sp->RegisterProvider (sp, &mDfciSettingsProviderTemplate);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_URL.  Status = %r\n", Status));
+    }
+
+    //We got here, this means all protocols were installed and we didn't exit early.
+    //close the event as we dont' need to be signaled again. (shouldn't happen anyway)
+    gBS->CloseEvent(Event);
+}
+
+/**
+ * The constructor function initializes the Lib for Dxe.
+ *
+ * This constructor is only needed for DfciSettingsManager support.
+ * The design is to have the PCD false for all modules except the 1 anonymously liked to the DfciettingsManager.
+ *
+ * @param  ImageHandle   The firmware allocated handle for the EFI image.
+ * @param  SystemTable   A pointer to the EFI System Table.
+ *
+ * @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
+ *
+ **/
+EFI_STATUS
+EFIAPI
+DfciVirtualizationSettingsConstructor (
+    IN EFI_HANDLE        ImageHandle,
+    IN EFI_SYSTEM_TABLE  *SystemTable
+  ) {
+
+    if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
+        //Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
+        mDfciSettingsProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+            &gDfciSettingsProviderSupportProtocolGuid,
+             TPL_CALLBACK,
+             DfciSettingsProviderSupportProtocolNotify,
+             NULL,
+            &mDfciSettingsProviderSupportInstallEventRegistration
+            );
+
+        DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
+    }
+    return EFI_SUCCESS;
+}

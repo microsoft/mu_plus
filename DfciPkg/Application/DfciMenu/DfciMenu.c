@@ -519,7 +519,7 @@ GetDfciParameters (
 
         Status = GetASetting (DFCI_SETTING_ID__MDM_TENANT_NAME, &Name, &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
-            mDfciMenuConfiguration.DfciFriendlyName = TRUE;
+            mDfciMenuConfiguration.DfciTennantName = TRUE;
             SetStringEntry (STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME), Name);
             DEBUG((DEBUG_INFO, "Dfci MDM.Tenant is enabled\n"));
         }
@@ -643,8 +643,9 @@ DfciMenuEntry(
 STATIC
 EFI_STATUS
 DisplayMessageBox (
+    EFI_STRING_ID MsgToken,
     IN EFI_STATUS StatusIn,
-    IN CHAR16    *MessageText
+    IN CHAR16    *MessageText  OPTIONAL
   ) {
 
     UINT32                    MessageBoxType;
@@ -655,10 +656,6 @@ DisplayMessageBox (
     EFI_STATUS                Status;
     DFCI_MB_RESULT            SwmResult;
 
-
-    if (NULL == MessageText) {
-        return EFI_INVALID_PARAMETER;
-    }
 
     MessageBoxType = DFCI_MB_OK;
     SwmResult = DFCI_MB_IDOK;
@@ -672,8 +669,8 @@ DisplayMessageBox (
         }
 
         pCaption = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_CAPTION), NULL);
-        pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NULL);
-        if (NULL != pBody) {
+        pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, MsgToken, NULL);
+        if ((NULL != pBody) && (NULL != MessageText)) {
             pTmp = AllocatePool(MAX_MSG_SIZE);
             if (NULL != pTmp) {
                 UnicodeSPrint(pTmp, MAX_MSG_SIZE, pBody, MessageText);
@@ -687,7 +684,7 @@ DisplayMessageBox (
 
     case EFI_NOT_FOUND:
         pBody    = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_NOT_FOUND), NULL);
-        if (NULL != pBody) {
+        if ((NULL != pBody) && (NULL != MessageText)) {
             pTmp = AllocatePool(MAX_MSG_SIZE);
             if (NULL != pTmp) {
                 UnicodeSPrint(pTmp, MAX_MSG_SIZE, pBody, MessageText);
@@ -773,6 +770,10 @@ IssueDfciNetworkRequest (
     //
     EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
 
+    // Platform Late Locking event.  For now, just signal
+    // ReadyToBoot().
+    EfiEventGroupSignal (&gEfiEventPreReadyToBootGuid);
+
     JsonString = NULL;
     DfciIdString = NULL;
     //
@@ -812,7 +813,7 @@ IssueDfciNetworkRequest (
     //
     Url = ConvertToCHAR16 (mDfciUrl);
 
-    DisplayMessageBox (Status, Url);
+    DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), Status, Url);
 
     if (NULL != Url) {
         FreePool (Url);
@@ -843,6 +844,10 @@ IssueDfciUsbRequest (
     // Start UI Spinner if one is present
     //
     EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
+
+    // Platform Late Locking event.  For now, just signal
+    // ReadyToBoot().
+    EfiEventGroupSignal (&gEfiEventPreReadyToBootGuid);
 
     FileName = NULL;
     JsonString = NULL;
@@ -889,7 +894,7 @@ IssueDfciUsbRequest (
     //
     // Inform user that operation is complete
     //
-    DisplayMessageBox (Status, FileName);
+    DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), Status, FileName);
 
     if (NULL != JsonString) {
         FreePool (JsonString);
@@ -995,6 +1000,7 @@ DriverCallback (
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
                 Status = EFI_SUCCESS;
+                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, NULL);
                 break;
 
             case DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID:
@@ -1005,6 +1011,7 @@ DriverCallback (
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
                 Status = EFI_SUCCESS;
+                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, NULL);
                 break;
 
             default:

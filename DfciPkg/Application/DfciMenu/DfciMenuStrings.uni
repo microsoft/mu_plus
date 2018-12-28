@@ -145,3 +145,5 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #string STR_DFCI_MB_NOT_FOUND               #language en-US  "%s not found."
 
 #string STR_DFCI_MB_INTERNAL_ERROR          #language en-US  "Internal error. Code=%r."
+
+#string STR_DFCI_MB_OPT_CHANGE              #language en-US  "ZTD Opt In changed. Restart now to apply the change."

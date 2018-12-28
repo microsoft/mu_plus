@@ -160,28 +160,32 @@ formset
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
                     text    = STRING_TOKEN(STR_DFCI_MANAGED_BY);
 
-                suppressif  ideqval DfciMenuConfig.DfciFriendlyName == 0x00;    // If no friendly name, just
+                suppressif  NOT ideqval DfciMenuConfig.DfciFriendlyName == 0x00; // If no friendly name, just
                     text
                         help    = STRING_TOKEN(STR_NULL_STRING),                // managed by owner
                         text    = STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD);
                 endif;
 
-                suppressif  NOT ideqval DfciMenuConfig.DfciFriendlyName == 0x00; // If friendly name,
+                suppressif  ideqval DfciMenuConfig.DfciFriendlyName == 0x00;    // If friendly name,
                     text
                         help    = STRING_TOKEN(STR_NULL_STRING),                // managed by MDM
                         text    = STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME);
 
-                    subtitle
-                        text    = STRING_TOKEN(STR_NULL_STRING),                // Group of horizontal text blocks
-                        flags   = HORIZONTAL;
+                    suppressif  ideqval DfciMenuConfig.DfciTennantName == 0x00; // If Tennant Name name,
 
-                        text
-                            help    = STRING_TOKEN(STR_NULL_STRING),            // On behalf of MDM Tenant name
-                            text    = STRING_TOKEN(STR_DFCI_ON_BEHALF_OF);
+	                    subtitle
+	                        text    = STRING_TOKEN(STR_NULL_STRING),            // Group of horizontal text blocks
+	                        flags   = HORIZONTAL;
 
-                        text
-                            help    = STRING_TOKEN(STR_NULL_STRING),
-                            text    = STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME);
+	                        text
+	                            help    = STRING_TOKEN(STR_NULL_STRING),        // On behalf of MDM Tenant name
+	                            text    = STRING_TOKEN(STR_DFCI_ON_BEHALF_OF);
+
+	                        text
+	                            help    = STRING_TOKEN(STR_NULL_STRING),
+	                            text    = STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME);
+	                endif;
+
                 endif;
 
                 text
