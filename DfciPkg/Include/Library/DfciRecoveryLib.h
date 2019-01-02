@@ -61,8 +61,8 @@ typedef struct _DFCI_RECOVERY_CHALLENGE
 
 /**
   This function will attempr to allocate and populate a buffer
-  with a DFCI recovery challenge structure. If unsuccessful, 
-  will return an error and set pointer to NULL. 
+  with a DFCI recovery challenge structure. If unsuccessful,
+  will return an error and set pointer to NULL.
 
   @param[out] Challenge    Allocated buffer containing recovery challenge. NULL on error.
   @param[out] ChallengeSize Pointer to UINTN to receive the Size of Challenge object.
@@ -71,7 +71,7 @@ typedef struct _DFCI_RECOVERY_CHALLENGE
   @retval     EFI_INVALID_PARAMETER Nuff said.
   @retval     EFI_NOT_FOUND         Could not locate a required protocol or resource.
   @retval     EFI_OUT_OF_RESOURCES  Could not allocate a buffer for the challenge.
-  @retval     Others                Error returned from LocateProtocol, GetVariable, GetTime, or GetRNG. 
+  @retval     Others                Error returned from LocateProtocol, GetVariable, GetTime, or GetRNG.
 
 **/
 EFI_STATUS

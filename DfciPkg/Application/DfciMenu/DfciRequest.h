@@ -35,25 +35,28 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  *  Dfci Request from Network
  *
- *  @param[in] Url            A pointer to the EFI System Table.
- *  @param[in] UrlSize
- *  @param[out] UserStatus
+ *  @param[in]  Url             A pointer to the EFI System Table.
+ *  @param[in]  UrlSize
+ *  @param[in]  DfciIdString      The Dfci Identity Json to send to server
+ *  @param[in]  DfciIdStringSize  Size of the Dfci Identity Json
+ *  @param[out] JsonStringSize    Where to store a pointer to JsonString
+ *  @param[out] JsonStringSize    Size of the JsonString
  *
- *  @retval EFI_SUCCESS       The entry point is executed successfully.
- *  @retval other             Some error occurs when executing this entry point.
+ *  @retval EFI_SUCCESS        The entry point is executed successfully.
+ *  @retval other              Some error occurred.
+ *
+ *  Caller must free JsonString
  *
  **/
 EFI_STATUS
 EFIAPI
-DfciRequestProcess(
+DfciRequestJsonFromNETWORK (
     IN  CHAR8    *Url,
     IN  UINTN     UrlSize,
-
-    // Ip Config Info: TBD
-    // IPv4 or IPv6                  // IPv4 only right now
-    // Local IP is DHCP, or fixed etc
-
-    OUT UINT64   *UserStatus
+    IN  CHAR8    *DfciIdString,
+    IN  UINTN     DfciIdStringSize,
+    OUT CHAR8   **JsonString,
+    OUT UINTN    *JsonStringSize
     );
 
 #endif // __DFCI_REQUEST_H__

@@ -30,6 +30,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
+#include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DfciRecoveryLib.h>
 #include <Library/MemoryAllocationLib.h>            // AllocatePool
@@ -44,8 +45,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
   This function will attempr to allocate and populate a buffer
-  with a DFCI recovery challenge structure. If unsuccessful, 
-  will return an error and set pointer to NULL. 
+  with a DFCI recovery challenge structure. If unsuccessful,
+  will return an error and set pointer to NULL.
 
   @param[out] Challenge     Allocated buffer containing recovery challenge. NULL on error.
   @param[out] ChallengeSize Pointer to UINTN to receive the Size of Challenge object.
@@ -66,6 +67,8 @@ GetRecoveryChallenge (
   EFI_STATUS                     Status;
   DFCI_RECOVERY_CHALLENGE       *NewChallenge;
   EFI_RNG_PROTOCOL              *RngProtocol;
+  CHAR8                         *Element;
+  UINTN                          ElementSize;
 
   DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__));
 
@@ -95,7 +98,7 @@ GetRecoveryChallenge (
   // Allocate the buffer...
   if (!EFI_ERROR( Status ))
   {
-    NewChallenge = AllocatePool( sizeof( DFCI_RECOVERY_CHALLENGE ) + 1 );
+    NewChallenge = AllocatePool( sizeof( DFCI_RECOVERY_CHALLENGE ) + DFCI_MULTI_STRING_MAX_SIZE);
     if (NewChallenge == NULL)
     {
       Status = EFI_OUT_OF_RESOURCES;
@@ -143,18 +146,49 @@ GetRecoveryChallenge (
   //
   // Always put away your toys...
   // If there was an error, but the buffer was allocated, free it.
-  if (EFI_ERROR( Status ) && NewChallenge != NULL)
+  if (EFI_ERROR(Status ))
   {
-    FreePool( NewChallenge );
+    if (NULL != NewChallenge) {
+      FreePool (NewChallenge);
+    }
     NewChallenge = NULL;
   }
-  else
+
+  if (NewChallenge != NULL)
   {
-      if (NewChallenge != NULL)
-      {
-          NewChallenge->MultiString[0] = '\0';
+    //
+    // There is only room for about 100 characters of identifier.  This should be enough to identify
+    // the system that is being recovered.
+    //
+    NewChallenge->MultiString[0] = '\0';
+    Status = DfciIdSupportGetSerialNumber (&Element, &ElementSize);
+    if (!EFI_ERROR(Status)) {
+      Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof(CHAR8));
+      FreePool (Element);
+    }
+
+    if (!EFI_ERROR(Status)) {
+      Status = DfciIdSupportGetProductName (&Element, &ElementSize);
+      if (!EFI_ERROR(Status)) {
+        Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof(CHAR8));
+        FreePool (Element);
       }
-    *ChallengeSize = sizeof(DFCI_RECOVERY_CHALLENGE);
+    }
+
+    if (!EFI_ERROR(Status)) {
+      Status = DfciIdSupportGetManufacturer (&Element, &ElementSize);
+      if (!EFI_ERROR(Status)) {
+        Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof(CHAR8));
+        FreePool (Element);
+      }
+    }
+
+    // Print a debug message, but it isn't a big issue if the identification
+    // doesn't get added to the recovery packet.
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "Error getting system identifier for recovery packet\n"));
+    }
+    *ChallengeSize = sizeof(DFCI_RECOVERY_CHALLENGE) + AsciiStrnSizeS (&NewChallenge->MultiString[0],DFCI_MULTI_STRING_MAX_SIZE);
   }
 
   return Status;

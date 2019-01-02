@@ -123,6 +123,7 @@
 ################################################################################
 [Components]
   MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
+  MsWheaPkg/Library/MsWheaEarlyStorageLibNull/MsWheaEarlyStorageLibNull.inf
 
 [Components.IA32]
   MsWheaPkg/MsWheaReport/Pei/MsWheaReportPei.inf {

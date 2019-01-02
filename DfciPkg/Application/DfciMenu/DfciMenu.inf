@@ -44,6 +44,7 @@
 #
 
 [Sources]
+  DfciPrivate.h
   DfciMenu.h
   DfciMenu.c
   DfciMenuVfr.Vfr
@@ -52,12 +53,15 @@
   DfciRequest.c
   DfciUsb.h
   DfciUsb.c
+  DfciUpdate.h
+  DfciUpdate.c
 
 [Packages]
   DfciPkg/DfciPkg.dec
   NetworkPkg/NetworkPkg.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
   ZeroTouchPkg/ZeroTouchPkg.dec
 
 [LibraryClasses]
@@ -72,6 +76,7 @@
   HiiLib
   HttpLib
   MemoryAllocationLib
+  JsonLiteParserLib
   PrintLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
@@ -90,6 +95,7 @@
   gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
   gEfiBootManagerPolicyNetworkGuid
+  gEfiEventPreReadyToBootGuid
 
 [Protocols]
   gDfciAuthenticationProtocolGuid
@@ -114,5 +120,4 @@
   gDfciSettingPermissionsProtocolGuid
 
 [BuildOptions]
-#  DEBUG_*_*_CC_FLAGS  = /Od /FAcs
-  DEBUG_*_*_CC_FLAGS  = /analyze
+#  DEBUG_*_*_CC_FLAGS  = /FAcs

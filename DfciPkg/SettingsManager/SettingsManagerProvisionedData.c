@@ -37,7 +37,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define VAR_NAME  L"_SMID"
 #define VAR_HEADER_SIG SIGNATURE_32('S', 'M', 'I', 'D')
-#define VAR_VERSION (1)  
+#define VAR_VERSION (1)
 
 //determine min size to make sure variable is big enough to evaluate.  This is headersignature plus Headerversion
 #define MIN_VAR_SIZE (sizeof(UINT32) + sizeof(UINT8))
@@ -108,15 +108,15 @@ SMID_TransitionInternalVariableData(
     goto Exit;
   }
 
-  //Basically get version and transition 
+  //Basically get version and transition
   //Need to free the original var after done copying
   //Need to update the varsize to match new size
 
-  // At the moment we don't have more than 1 version so this should never happen  
+  // At the moment we don't have more than 1 version so this should never happen
   DEBUG((DEBUG_ERROR, "%a - Unsupported Version.  No conversion method set. 0x%X\n", __FUNCTION__, (*VarPtr)->Version));
   Status = EFI_UNSUPPORTED;
 
-Exit: 
+Exit:
   ASSERT_EFI_ERROR(Status);
   return Status;
 }
@@ -279,7 +279,7 @@ SMID_SaveToFlash(IN DFCI_SETTING_INTERNAL_DATA *InternalData)
     DEBUG((DEBUG_INFO, "%a - Not Modified.  No action needed.\n", __FUNCTION__));
     return EFI_SUCCESS;
   }
-  
+
   VarSize = sizeof(DFCI_INTERNAL_DATA_VAR);
   Var = (DFCI_INTERNAL_DATA_VAR *)AllocateZeroPool(VarSize);
   if (Var == NULL)
@@ -330,10 +330,10 @@ SMID_ResetInFlash()
   Status = gRT->SetVariable(VAR_NAME, &gDfciInternalVariableGuid, DFCI_INTERNAL_VAR_ATTRIBUTES, 0, NULL);
   if (Status == EFI_NOT_FOUND)
   {
-    //Special case for not found.  If var doesn't exist then our job has been done successfully.  
+    //Special case for not found.  If var doesn't exist then our job has been done successfully.
     Status = EFI_SUCCESS;
   }
-  
+
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - failed to Reset the internal data variable.  Status %r\n", __FUNCTION__, Status));

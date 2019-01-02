@@ -27,7 +27,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#include <Library/Uefi.h>
+#include <Uefi.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 
 /**

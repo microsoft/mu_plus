@@ -382,7 +382,7 @@ PlatformBootManagerAfterConsole (
   //
   // Boot Mode obtained in BeforeConsole action.
   //
-  DEBUG((DEBUG_INFO,"BootMode -%x\n", mBootMode));
+  DEBUG((DEBUG_INFO,"BootMode 0x%x\n", mBootMode));
 
   //
   // Go the different platform policy with different boot mode

@@ -14,7 +14,7 @@ Environment:
   Copyright (c) 2018, Microsoft Corporation
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -27,10 +27,10 @@ Environment:
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -41,16 +41,16 @@ Environment:
 #include <Library/PlatformThemeLib.h>
 
 
-#define FONT_DECL(TABLE, NAME )                       \
-                                                      \
-    static MS_UI_FONT_DESCRIPTION TABLE = {           \
-        MS_UI_CUSTOM_FONT_ ## NAME ## _CELL_HEIGHT,   \
-        MS_UI_CUSTOM_FONT_ ## NAME ## _CELL_WIDTH,    \
-        MS_UI_CUSTOM_FONT_ ## NAME ## _MAX_ADVANCE,   \
-        sizeof (mMsUiFontPackageHdr_ ## NAME ## ),    \
-        sizeof (mMsUiFontPackageGlyphs_ ## NAME ## ), \
-        FONT_PTR_SET &mMsUiFontPackageHdr_ ## NAME ## ,            \
-        GLYPH_PTR_SET &mMsUiFontPackageGlyphs_ ## NAME ## \
+#define FONT_DECL(TABLE, NAME ) \
+  \
+    static MS_UI_FONT_DESCRIPTION TABLE = { \
+        MS_UI_CUSTOM_FONT_ ## NAME ## _CELL_HEIGHT, \
+        MS_UI_CUSTOM_FONT_ ## NAME ## _CELL_WIDTH, \
+        MS_UI_CUSTOM_FONT_ ## NAME ## _MAX_ADVANCE, \
+        sizeof (mMsUiFontPackageHdr_ ## NAME), \
+        sizeof (mMsUiFontPackageGlyphs_ ## NAME), \
+        FONT_PTR_SET &mMsUiFontPackageHdr_ ## NAME, \
+        GLYPH_PTR_SET &mMsUiFontPackageGlyphs_ ## NAME \
     };
 
 // The fonts for this platform are:

@@ -550,7 +550,7 @@ ValidateIdentityPacket (
 
     if ((UINT8 *) Data->Signature != EndData)
     {
-        DEBUG((DEBUG_ERROR, "%a - Addr of Signatue not at EndData. %p != %p.\n", __FUNCTION__,Data->Signature, EndData));
+        DEBUG((DEBUG_ERROR, "%a - Addr of Signature not at EndData. %p != %p.\n", __FUNCTION__,Data->Signature, EndData));
         return EFI_COMPROMISED_DATA;
     }
 

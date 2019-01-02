@@ -42,16 +42,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#define COPY_FONT(target,bufptr,source,font)                                                                              \
-    target-> ## font = FONT_PTR_SET bufptr;                                                      \
-    CopyMem (bufptr, (FONT_PTR_GET source-> ## font), sizeof(MS_UI_FONT_DESCRIPTION));    \
-    bufptr += sizeof(MS_UI_FONT_DESCRIPTION);                                                      \
-    (FONT_PTR_GET target-> ## font ## )->Package = PACKAGE_PTR_SET bufptr;                       \
-    CopyMem (bufptr, PACKAGE_PTR_GET (FONT_PTR_GET source-> ## font ## )->Package, (FONT_PTR_GET source-> ## font ## )->PackageSize);  \
-    bufptr += (FONT_PTR_GET source-> ## font ## )->PackageSize;                            \
-    (FONT_PTR_GET target-> ## font ## )->Glyphs = GLYPH_PTR_SET bufptr;                          \
-    CopyMem (bufptr, GLYPH_PTR_GET (FONT_PTR_GET source-> ## font ## )->Glyphs, (FONT_PTR_GET source-> ## font ## )->GlyphsSize);  \
-    bufptr += (FONT_PTR_GET source-> ## font ## )->GlyphsSize;
+#define COPY_FONT(target,bufptr,source,font) \
+    target->font = FONT_PTR_SET bufptr; \
+    CopyMem (bufptr, (FONT_PTR_GET source->font), sizeof(MS_UI_FONT_DESCRIPTION)); \
+    bufptr += sizeof(MS_UI_FONT_DESCRIPTION); \
+    (FONT_PTR_GET target->font )->Package = PACKAGE_PTR_SET bufptr; \
+    CopyMem (bufptr, PACKAGE_PTR_GET (FONT_PTR_GET source->font)->Package, (FONT_PTR_GET source->font)->PackageSize); \
+    bufptr += (FONT_PTR_GET source->font)->PackageSize; \
+    (FONT_PTR_GET target->font)->Glyphs = GLYPH_PTR_SET bufptr; \
+    CopyMem (bufptr, GLYPH_PTR_GET (FONT_PTR_GET source->font)->Glyphs, (FONT_PTR_GET source->font)->GlyphsSize); \
+    bufptr += (FONT_PTR_GET source->font)->GlyphsSize;
 
 UINT32
 EFIAPI

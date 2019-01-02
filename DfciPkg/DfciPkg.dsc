@@ -78,6 +78,7 @@
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
+  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
   DfciPasswordLib|DfciPkg/Library/DfciPasswordLibNull/DfciPasswordLibNull.inf
   DfciXmlSettingSchemaSupportLib|DfciPkg/Library/DfciXmlSettingSchemaSupportLib/DfciXmlSettingSchemaSupportLib.inf
@@ -89,11 +90,14 @@
   DfciUiSupportLib|DfciPkg/Library/DfciUiSupportLibNull/DfciUiSupportLibNull.inf
   DfciV1SupportLib|DfciPkg/Library/DfciV1SupportLibNull/DfciV1SupportLibNull.inf
   DfciSettingsLib|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
+  DfciVirtualizationSettingsLib|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
   ZeroTouchSettingsLib|ZeroTouchPkg/Library/ZeroTouchSettings/ZeroTouchSettings.inf
+  JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
 
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [LibraryClasses.X64]
+  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
 #!if $(TARGET) == DEBUG
   #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
@@ -105,7 +109,6 @@
 
 [LibraryClasses.X64.UEFI_APPLICATION]
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
-  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
   UnitTestLib|MsUnitTestPkg/Library/UnitTestLib/UnitTestLib.inf
   UnitTestLogLib|MsUnitTestPkg/Library/UnitTestLogLib/UnitTestLogLib.inf
@@ -160,11 +163,13 @@
   DfciPkg/Library/DfciXmlSettingSchemaSupportLib/DfciXmlSettingSchemaSupportLib.inf
   DfciPkg/Library/DfciXmlDeviceIdSchemaSupportLib/DfciXmlDeviceIdSchemaSupportLib.inf
   DfciPkg/Library/DfciXmlIdentitySchemaSupportLib/DfciXmlIdentitySchemaSupportLib.inf
+  DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
 
   DfciPkg/SettingsManager/SettingsManagerDxe.inf {
         #Platform should add all it settings libs here
   <LibraryClasses>
         NULL|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
+        NULL|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
         DfciSettingPermissionLib|DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   <PcdsFeatureFlag>
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE

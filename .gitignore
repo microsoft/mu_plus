@@ -9,3 +9,6 @@ BuildConfig.conf
 # Ignore SelfDescribingEnvironment artifacts.
 *_extdep/
 
+# Ignore cloned dependencies
+/Common
+/MU_BASECORE

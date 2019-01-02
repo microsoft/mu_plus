@@ -43,7 +43,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEVICE_ID_MANUFACTURER                  "Manufacturer"
 #define DEVICE_ID_PRODUCT_NAME                  "Product Name"
 #define DEVICE_ID_SERIAL_NUMBER                 "Serial Number"
-#define DEVICE_ID_UUID                          "UUID"
 
 
 XmlNode*

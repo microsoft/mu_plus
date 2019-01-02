@@ -35,7 +35,6 @@
         "MsGraphicsPkg",
         "MsWheaPkg",
         "PcBdsPkg",
-        "SourceLevelDebugPkg",
         "UefiTestingPkg",
         "XmlSupportPkg",
         "ZeroTouchPkg"

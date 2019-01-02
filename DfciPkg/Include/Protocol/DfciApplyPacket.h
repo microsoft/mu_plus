@@ -101,7 +101,7 @@ typedef struct {
 
     // The Payload.  TrustedCert for Idenity Packets, XML for Permissions and Settings Packets
     UINTN                  PayloadSize;
-    CONST CHAR8           *Payload;           // (Pkt) Payload is in the Packet
+    CONST UINT8           *Payload;           // (Pkt) Payload is in the Packet
 
     // Global State for the packet during processing, not an input or an output
     DFCI_AUTH_TOKEN        AuthToken;         // Temp Auth Token

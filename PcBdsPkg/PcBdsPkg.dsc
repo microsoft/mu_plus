@@ -83,11 +83,11 @@
   MsNetworkDependencyLib|PcBdsPkg/Library/MsNetworkDependencyLib/MsNetworkDependencyLib.inf
   PowerServicesLib|PcBdsPkg/Library/PowerServicesLibNull/PowerServicesLibNull.inf
   ThermalServicesLib|PcBdsPkg/Library/ThermalServicesLibNull/ThermalServicesLibNull.inf
-  MsPlatformDevices|PcBdsPkg/Library/MsPlatformDevicesNullLib/MsPlatformDevicesNullLib.inf
-  ConsoleMsgLib|PcBdsPkg/Library/ConsoleMsgNullLib/ConsoleMsgNullLib.inf
-  MsPlatformPowerCheckLib|PcBdsPkg/Library/MsPlatformPowerCheckNullLib/MsPlatformPowerCheckNullLib.inf
-  MsAltBootLib|PcBdsPkg/Library/MsAltBootNullLib/MsAltBootNullLib.inf
-  GraphicsConsoleHelperLib|PcBdsPkg/Library/GraphicsConsoleHelperNullLib/GraphicsConsoleHelperNullLib.inf
+  MsPlatformDevices|PcBdsPkg/Library/MsPlatformDevicesLibNull/MsPlatformDevicesLibNull.inf
+  ConsoleMsgLib|PcBdsPkg/Library/ConsoleMsgLibNull/ConsoleMsgLibNull.inf
+  MsPlatformPowerCheckLib|PcBdsPkg/Library/MsPlatformPowerCheckLibNull/MsPlatformPowerCheckLibNull.inf
+  MsAltBootLib|PcBdsPkg/Library/MsAltBootLibNull/MsAltBootLibNull.inf
+  GraphicsConsoleHelperLib|PcBdsPkg/Library/GraphicsConsoleHelperLibNull/GraphicsConsoleHelperLibNull.inf
 
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
@@ -129,14 +129,14 @@
   PcBdsPkg/Library/PowerServicesLibNull/PowerServicesLibNull.inf
   PcBdsPkg/Library/ThermalServicesLibNull/ThermalServicesLibNull.inf
   PcBdsPkg/Library/MsBootPolicyLibNull/MsBootPolicyLibNull.inf
-  PcBdsPkg/Library/ConsoleMsgNullLib/ConsoleMsgNullLib.inf
-  PcBdsPkg/Library/MsPlatformDevicesNullLib/MsPlatformDevicesNullLib.inf
-  PcBdsPkg/Library/MsPlatformPowerCheckNullLib/MsPlatformPowerCheckNullLib.inf
-  PcBdsPkg/Library/MsAltBootNullLib/MsAltBootNullLib.inf
-  PcBdsPkg/Library/MsNVBootReasonNullLib/MsNVBootReasonNullLib.inf
-  PcBdsPkg/Library/MsUefiVersionNullLib/MsUefiVersionNullLib.inf
+  PcBdsPkg/Library/ConsoleMsgLibNull/ConsoleMsgLibNull.inf
+  PcBdsPkg/Library/MsPlatformDevicesLibNull/MsPlatformDevicesLibNull.inf
+  PcBdsPkg/Library/MsPlatformPowerCheckLibNull/MsPlatformPowerCheckLibNull.inf
+  PcBdsPkg/Library/MsAltBootLibNull/MsAltBootLibNull.inf
+  PcBdsPkg/Library/MsNVBootReasonLibNull/MsNVBootReasonLibNull.inf
+  PcBdsPkg/Library/MsUefiVersionLibNull/MsUefiVersionLibNull.inf
   PcBdsPkg/Library/GraphicsConsoleHelperLib/GraphicsConsoleHelper.inf
-  PcBdsPkg/Library/GraphicsConsoleHelperNullLib/GraphicsConsoleHelperNullLib.inf
+  PcBdsPkg/Library/GraphicsConsoleHelperLibNull/GraphicsConsoleHelperLibNull.inf
 
 [Components.X64]
   PcBdsPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf

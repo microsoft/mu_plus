@@ -33,7 +33,6 @@
 }
 
        EFI_GRAPHICS_OUTPUT_PROTOCOL      *gGop = NULL;
-       EFI_HANDLE                         gImageHandle = NULL;
        EFI_HANDLE                         gPriorityHandle = NULL;
        EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *gSimpleTextInEx = NULL;
        EFI_HII_HANDLE                     gSwmDialogsHiiHandle = NULL;
@@ -318,8 +317,6 @@ SwmDialogsConstructor (
     IN EFI_SYSTEM_TABLE      *SystemTable
     ) {
     EFI_STATUS                          Status;
-
-    gImageHandle = ImageHandle;
 
     Status = gBS->LocateProtocol (&gMsSWMProtocolGuid, NULL, (VOID **) &gSwmProtocol);
 
