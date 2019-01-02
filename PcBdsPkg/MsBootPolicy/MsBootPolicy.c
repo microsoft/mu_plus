@@ -118,7 +118,7 @@ VOID FilterHandles(EFI_HANDLE *HandleBuffer, UINTN *HandleCount, FILTER_ROUTINE 
         if (EFI_ERROR(Status) ||            // Remove handles that don't have device path
             (!KeepHandleFilter(DevicePath))) {  // TRUE keeps handle, FALSE deletes handle
             (*HandleCount)--;
-            CopyMem(&HandleBuffer[Index], &HandleBuffer[Index + 1], *HandleCount * sizeof(EFI_HANDLE *));
+            CopyMem(&HandleBuffer[Index], &HandleBuffer[Index + 1], (*HandleCount-Index) * sizeof(EFI_HANDLE *));
             continue;
         }
         Index++;
