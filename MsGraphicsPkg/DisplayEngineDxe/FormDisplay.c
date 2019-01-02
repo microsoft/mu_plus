@@ -1094,7 +1094,10 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
                     // Signal that the current grid no longer has scope. Controls added from this point forward will be added
                     // directly to the canvas (unless another grid is created).
                     //
-                    if (LocalGrid->m_GridInitialHeight != LocalGrid->m_GridCellHeight) {
+                    if (LocalGrid == NULL) {
+                        DEBUG ((DEBUG_ERROR, "ERROR [DE]: GridEndOp without valid StartGridOp\n"));
+                    }
+                    if (LocalGrid != NULL && LocalGrid->m_GridInitialHeight != LocalGrid->m_GridCellHeight) {
                         DEBUG ((DEBUG_ERROR, "ERROR [DE]: Grid elements larger than initial grid height.  Correct VFR StartGridOp value.\r\n"));
                     }
                     GridScope = FALSE;
