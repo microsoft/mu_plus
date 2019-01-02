@@ -590,7 +590,7 @@ WINMGR_CLIENT * FilterPointerState (IN MS_SWM_ABSOLUTE_POINTER_STATE *PointerSta
     // * If it doesn't and there's an active default client, it's theirs.
     // * If none of the above, we give it to the current caller.
     //
-    DEBUG((DEBUG_INFO, __FUNCTION__ " - X=%5d, Y=%5d, Buttons=%x\n",PointerState->CurrentX, PointerState->CurrentY, PointerState->ActiveButtons));
+    DEBUG((DEBUG_INFO, "%a - X=%5d, Y=%5d, Buttons=%x\n", __FUNCTION__ ,PointerState->CurrentX, PointerState->CurrentY, PointerState->ActiveButtons));
 
     pList = mSWM.Clients;
     while (pList != NULL)
@@ -618,7 +618,7 @@ WINMGR_CLIENT * FilterPointerState (IN MS_SWM_ABSOLUTE_POINTER_STATE *PointerSta
         pList = pList->pNext;
     }
 
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " No WINMGR_CLIENT found for PointerState\n"));
+    DEBUG((DEBUG_ERROR, "%a No WINMGR_CLIENT found for PointerState\n", __FUNCTION__));
 
     ASSERT(FALSE);
 
