@@ -42,8 +42,8 @@
 [Sources]
   MsEarlyGraphics.c
   MsEarlyGraphics.h
-  ..\MsEarlyGraphicsCommon.c
-  ..\MsEarlyGraphicsCommon.h
+  ../MsEarlyGraphicsCommon.c
+  ../MsEarlyGraphicsCommon.h
 
 [Packages]
   MdePkg/MdePkg.dec

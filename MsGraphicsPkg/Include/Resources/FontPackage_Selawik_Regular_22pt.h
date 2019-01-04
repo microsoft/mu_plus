@@ -68,9 +68,9 @@ MS_UI_FONT_PACKAGE_HEADER mMsUiFontPackageHdr_Selawik_Regular_22pt =
             MS_UI_CUSTOM_FONT_Selawik_Regular_22pt_MAX_ADVANCE,       // Number of pixels to advance horizontally when moving from origin to next glyph.
         },
         EFI_HII_FONT_STYLE_NORMAL,                          // Font style (i.e., normal, bold, italic, etc.)
-        L'S',                                               // Font Family name.
+        L"S",                                               // Font Family name.
     },
-    L"urfaceSelawik_Regular_22pt"                                        // Font Family name continued.
+    L"urfaceSelawik_Regular_22pt",                                        // Font Family name continued.
 };
 
 

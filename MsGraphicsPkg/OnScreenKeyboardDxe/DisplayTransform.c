@@ -83,7 +83,7 @@ POINT3D
 TransformPoint (IN POINT3D InPoint)
 {
     int j, k;
-    POINT3D pt = {0.0, 0.0, 0.0, 0.0};
+    POINT3D pt = { {0.0, 0.0, 0.0, 0.0} };
 
     // Apply scale, rotation, and translation transform (multiplication)
     //
