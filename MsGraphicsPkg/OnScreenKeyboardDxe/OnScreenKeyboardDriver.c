@@ -57,8 +57,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/ConsoleInDevice.h>
 #include <Guid/OSKDevicePath.h>
 
-#include "OnscreenKeyboard.h"
-#include "OnscreenKeyboardProtocol.h"
+#include "OnScreenKeyboard.h"
+#include "OnScreenKeyboardProtocol.h"
 #include "DisplayTransform.h"
 #include "KeyMapping.h"
 
@@ -74,19 +74,23 @@ static EFI_HANDLE mControllerHandle = NULL;
 //
 static OSK_DEVICE_PATH mPlatformOSKDevice = {
     {
+      {
         HARDWARE_DEVICE_PATH,
         HW_VENDOR_DP,
         {
             (UINT8)(sizeof(VENDOR_DEVICE_PATH)),
             (UINT8)((sizeof(VENDOR_DEVICE_PATH)) >> 8)
-        },
-        OSK_DEVICE_PATH_GUID
+        }
+      },
+      OSK_DEVICE_PATH_GUID
     },
     {
         END_DEVICE_PATH_TYPE,
         END_ENTIRE_DEVICE_PATH_SUBTYPE,
-        END_DEVICE_PATH_LENGTH,
-        0
+        {
+            END_DEVICE_PATH_LENGTH,
+            0
+        }
     }
 };
 
@@ -2867,6 +2871,7 @@ Exit:
 }
 
 EFI_STATUS
+EFIAPI
 OSKResetInputDevice (IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
 IN BOOLEAN                          ExtendedVerification)
 {
@@ -2881,6 +2886,7 @@ IN BOOLEAN                          ExtendedVerification)
 
 
 EFI_STATUS
+EFIAPI
 OSKReadKeyStroke (IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL     *This,
 OUT EFI_INPUT_KEY                      *pKey)
 {
@@ -2913,6 +2919,7 @@ OUT EFI_INPUT_KEY                      *pKey)
 
 
 EFI_STATUS
+EFIAPI
 OSKResetInputDeviceEx (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN BOOLEAN                             ExtendedVerification)
 {
@@ -2921,6 +2928,7 @@ IN BOOLEAN                             ExtendedVerification)
 
 
 EFI_STATUS
+EFIAPI
 OSKReadKeyStrokeEx (IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL     *This,
 OUT EFI_KEY_DATA                          *pKey)
 {
@@ -2934,6 +2942,7 @@ OUT EFI_KEY_DATA                          *pKey)
 
 
 EFI_STATUS
+EFIAPI
 OSKSetState (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_KEY_TOGGLE_STATE               *KeyToggleState)
 {
@@ -2942,6 +2951,7 @@ IN EFI_KEY_TOGGLE_STATE               *KeyToggleState)
 
 
 EFI_STATUS
+EFIAPI
 OSKRegisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_KEY_DATA                       *KeyData,
 IN EFI_KEY_NOTIFY_FUNCTION            KeyNotificationFunction,
@@ -2952,6 +2962,7 @@ OUT EFI_HANDLE                        *NotifyHandle)
 
 
 EFI_STATUS
+EFIAPI
 OSKUnregisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_HANDLE                         NotificationHandle)
 {
@@ -3340,7 +3351,7 @@ IN EFI_SYSTEM_TABLE  *SystemTable
         );
     ASSERT_EFI_ERROR(Status);
 
-    DEBUG((DEBUG_INFO, __FUNCTION__"OSK DEVICE Handle %x\n", mControllerHandle));
+    DEBUG((DEBUG_INFO, "%a OSK DEVICE Handle %x\n", __FUNCTION__, mControllerHandle));
     //
     // Install UEFI Driver Model protocol(s).
     //

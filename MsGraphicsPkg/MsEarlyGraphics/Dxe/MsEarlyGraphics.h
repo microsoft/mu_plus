@@ -43,6 +43,6 @@
 #include <Library/MsPlatformEarlyGraphicsLib.h>
 #include <Library/MsUiThemeLib.h>
 
-#include "..\MsEarlyGraphicsCommon.h"
+#include "../MsEarlyGraphicsCommon.h"
 
 #endif
