@@ -183,7 +183,6 @@
 
   #test tools
   DfciPkg/Application/DfciApply/DfciApply.inf
-  DfciPkg/UnitTests/XmlB64Test/XmlB64TestApp.inf
 
   DfciPkg/Application/EnrollInDfci/EnrollInDfci.inf
   DfciPkg/Application/SetRecovery/SetRecovery.inf

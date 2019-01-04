@@ -133,7 +133,7 @@ GetRecoveryPacket(
     goto CLEANUP;
   }
 
-  //Check to make sure not already started. 
+  //Check to make sure not already started.
   if (mRecoveryChallenge != NULL)
   {
     DEBUG((DEBUG_ERROR, "%a - Recovery Process already started.  Only 1 process per boot.\n", __FUNCTION__));
@@ -170,6 +170,16 @@ GetRecoveryPacket(
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to get permission for recovery %r\n", __FUNCTION__, Status));
     goto CLEANUP;
+  }
+
+  // If DFCI_RECOVERY_MASK is 0, this is a DFCI recovery request.  Get permissions for ZTD_RECOVERY
+  if (Mask == 0) {
+    Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_SETTING_ID__ZTD_RECOVERY, &Mask);
+    if (EFI_ERROR(Status))
+    {
+      DEBUG((DEBUG_ERROR, "%a - Failed to get permission for Dfci recovery %r\n", __FUNCTION__, Status));
+      goto CLEANUP;
+    }
   }
 
   if ((Mask & Identity) == 0)
