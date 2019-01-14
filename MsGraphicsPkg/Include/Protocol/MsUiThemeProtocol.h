@@ -43,7 +43,6 @@ typedef struct _SWM_FONT_PACKAGE_tag_
     EFI_HII_FONT_PACKAGE_HDR FontHeader;
     CHAR16 FontFamilyNameContd[35];
 } MS_UI_FONT_PACKAGE_HEADER;
-#pragma pack (pop)
 
 #define FONT_PTR_GET    (MS_UI_FONT_DESCRIPTION *) (UINTN)
 #define FONT_PTR_SET    (EFI_PHYSICAL_ADDRESS) (UINTN)
@@ -63,6 +62,8 @@ typedef struct {
     EFI_PHYSICAL_ADDRESS       Package;
     EFI_PHYSICAL_ADDRESS       Glyphs;
 } MS_UI_FONT_DESCRIPTION;
+
+#pragma pack (pop)
 
 #define MS_UI_THEME_PROTOCOL_SIGNATURE SIGNATURE_64('U', 'I', ' ', 'T', 'H', 'E', 'M', 'E')
 #define MS_UI_THEME_PROTOCOL_VERSION   1
