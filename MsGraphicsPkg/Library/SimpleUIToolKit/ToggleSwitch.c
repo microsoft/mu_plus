@@ -27,18 +27,13 @@
 **/
 
 #include "SimpleUIToolKitInternal.h"
-
+#include <Library/FltUsedLib.h>
 
 
 #define UIT_TS_HIGHLIGHT_RING_WIDTH     MsUiScaleByTheme(4)   // Number of pixels making up the toggle switch's highlight outer border (ring).
 #define UIT_TS_HIGHTLIGHT_GAP_WIDTH     MsUiScaleByTheme(5)   // Number of pixels making up the gap between the switch and its highlight ring.
 #define UIT_TS_OUTER_BORDER_WIDTH       MsUiScaleByTheme(6)   // Number of pixels making up the switch's outer border.
 #define UIT_TS_INNER_GAP_WIDTH          MsUiScaleByTheme(6)   // Number of pixels between the outer border and inner switch "bullet".
-
-// Floating point support for SQRT.
-//
-int _fltused = 0x9875;  
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Private

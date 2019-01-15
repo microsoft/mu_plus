@@ -57,8 +57,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/ConsoleInDevice.h>
 #include <Guid/OSKDevicePath.h>
 
-#include "OnscreenKeyboard.h"
-#include "OnscreenKeyboardProtocol.h"
+#include "OnScreenKeyboard.h"
+#include "OnScreenKeyboardProtocol.h"
 #include "DisplayTransform.h"
 #include "KeyMapping.h"
 
@@ -67,26 +67,30 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // *** Small format ***
 #include <Resources/KeyboardIcon_Small.h>
 
-static EFI_HANDLE mControllerHandle = NULL;
+STATIC EFI_HANDLE mControllerHandle = NULL;
 
 //
 // Onscreen Keyboard Vendor Device Path
 //
-static OSK_DEVICE_PATH mPlatformOSKDevice = {
+STATIC OSK_DEVICE_PATH mPlatformOSKDevice = {
     {
-        HARDWARE_DEVICE_PATH,
-        HW_VENDOR_DP,
         {
-            (UINT8)(sizeof(VENDOR_DEVICE_PATH)),
-            (UINT8)((sizeof(VENDOR_DEVICE_PATH)) >> 8)
+            HARDWARE_DEVICE_PATH,
+            HW_VENDOR_DP,
+            {
+                (UINT8)(sizeof(VENDOR_DEVICE_PATH)),
+                (UINT8)((sizeof(VENDOR_DEVICE_PATH)) >> 8)
+            }
         },
         OSK_DEVICE_PATH_GUID
     },
     {
         END_DEVICE_PATH_TYPE,
         END_ENTIRE_DEVICE_PATH_SUBTYPE,
-        END_DEVICE_PATH_LENGTH,
-        0
+        {
+            END_DEVICE_PATH_LENGTH,
+            0
+        }
     }
 };
 
@@ -160,7 +164,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     Status = gBS->OpenProtocol(
         Controller,
         &gEfiDevicePathProtocolGuid,
-        (OSK_DEVICE_PATH **)&OskDevicePath,
+        (VOID **)&OskDevicePath,
         This->DriverBindingHandle,
         Controller,
         EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -212,7 +216,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     Status = gBS->OpenProtocol(
         Controller,
         &gEfiDevicePathProtocolGuid,
-        (OSK_DEVICE_PATH **)&OskDevicePath,
+        (VOID **)&OskDevicePath,
         This->DriverBindingHandle,
         Controller,
         EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -232,7 +236,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     if (EFI_ERROR(Status))
     {
         mSWMProtocol = NULL;
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
         goto ErrorExit;
     }
 
@@ -246,7 +250,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     if (EFI_ERROR(Status))
     {
         mGop = NULL;
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Failed to find GOP protocol (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to find GOP protocol (%r).\r\n", Status));
         goto ErrorExit;
     }
 
@@ -254,7 +258,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     Status = OSKDriverInit();
     if (EFI_ERROR(Status))
     {
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Init OSK Failed (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Init OSK Failed (%r).\r\n", Status));
 
         if (mKeyRepeatTimerEvent != NULL){
             // you would be here if the driver init failed
@@ -324,7 +328,7 @@ IN EFI_HANDLE                   *ChildHandleBuffer OPTIONAL
 )
 {
     EFI_STATUS Status;
-    DEBUG((DEBUG_INFO, "[OSK]: DriverBindingStop. \r\n"));
+    DEBUG((DEBUG_INFO, "INFO [OSK]: DriverBindingStop. \r\n"));
     Status = gBS->UninstallMultipleProtocolInterfaces(ControllerHandle,
         &gEfiSimpleTextInProtocolGuid,
         (VOID**)&mOSK.SimpleTextIn,
@@ -429,7 +433,7 @@ Calculates the bitmap width and height of the specified text string based on the
 
 @retval     EFI_SUCCESS     Successfully calculated all key label sizes
 **/
-static
+STATIC
 EFI_STATUS
 GetTextStringBitmapSize (IN CHAR16    *pString,
 OUT UINTN    *Width,
@@ -509,7 +513,7 @@ Calculates the width and height of all key labels based on current font size/sty
 
 @retval     EFI_SUCCESS     Successfully calculated all key label sizes
 **/
-static
+STATIC
 EFI_STATUS
 CalculateKeyLabelSizes (VOID)
 {
@@ -555,7 +559,7 @@ Calculates the width and height of all special OSK button labels based on curren
 
 @retval     EFI_SUCCESS     Successfully calculated all key label sizes
 **/
-static
+STATIC
 EFI_STATUS
 CalculateSpecialButtonSizes (VOID)
 {
@@ -1532,13 +1536,13 @@ IN OSK_DOCKED_STATE     DockedState)
     EFI_STATUS Status    = EFI_SUCCESS;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "INFO[OSK] Cannot set keyboardposition GOP not yet initialized %x %x\n", Position, DockedState));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, GOP not yet initialized %x %x\n", Position, DockedState));
         mOSK.KeyboardPosition = Position;
         mOSK.DockedState      = DockedState;
         goto Exit;
     }
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "INFO[OSK] Cannot set keyboardposition mSWMProtocol not yet initialized %x %x\n", Position, DockedState));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, SWM protocol not yet initialized %x %x\n", Position, DockedState));
         mOSK.KeyboardPosition = Position;
         mOSK.DockedState = DockedState;
         goto Exit;
@@ -1768,12 +1772,12 @@ SetKeyboardSize (IN float    PercentOfScreenWidth)
     SWM_RECT Rect;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "[ERROR] OSK not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] GOP not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
         mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
         goto Exit;
     }
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "[ERROR] OSK not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] SWM protocol not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
         mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
         goto Exit;
     }
@@ -1959,7 +1963,7 @@ ShowKeyboard (IN BOOLEAN bShowKeyboard)
     }
 
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "ERROR [OSK]: Cannot change ShowKeyboard mode 0x%08x.  Status = \n", bShowKeyboard));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboard mode 0x%08x.\n", bShowKeyboard));
         mOSK.bDisplayKeyboard = bShowKeyboard;
         goto Exit;
     }
@@ -2017,13 +2021,13 @@ ShowKeyboardIcon (IN BOOLEAN bShowKeyboardIcon)
     EFI_STATUS Status   = EFI_SUCCESS;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "ERROR[OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x.  = \n", bShowKeyboardIcon));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x\n", bShowKeyboardIcon));
         mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
         goto Exit;
     }
 
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "ERROR[OSK]: Cannot change ShowKeyboardIcon 0x%08x.  Status = \n", bShowKeyboardIcon));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboardIcon 0x%08x\n", bShowKeyboardIcon));
         mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
         goto Exit;
     }
@@ -2394,7 +2398,7 @@ RotateKeyboard(IN SCREEN_ANGLE    Angle)
     float Zang = 0.0;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "ERROR[OSK] Failed to find GOP protocol \n"));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] Failed to find GOP protocol \n"));
         mOSK.KeyboardAngle = Angle;
         goto Exit;
     }
@@ -2545,7 +2549,7 @@ BOOLEAN
 KeyModifierStateMachine (IN EFI_KEY Key)
 {
     BOOLEAN bModifierKey = FALSE;
-    static BOOLEAN bDelayedTransitionfromShiftState = FALSE;    // Delays the transition from shift state until after the next key press
+    STATIC BOOLEAN bDelayedTransitionfromShiftState = FALSE;    // Delays the transition from shift state until after the next key press
 
     // Was a modifier key pressed?
     //
@@ -3043,7 +3047,7 @@ OSKProcessPointerCallback (IN VOID     *Context)
     EFI_STATUS                     Status = EFI_SUCCESS;
     MS_SWM_ABSOLUTE_POINTER_STATE  TouchState;
     SWM_RECT                       Rect;
-    static BOOLEAN                 WatchForFirstFingerUpEvent = FALSE;
+    STATIC BOOLEAN                 WatchForFirstFingerUpEvent = FALSE;
     BOOLEAN                        WatchForFirstFingerUpEvent2;
 
 
@@ -3340,7 +3344,7 @@ IN EFI_SYSTEM_TABLE  *SystemTable
         );
     ASSERT_EFI_ERROR(Status);
 
-    DEBUG((DEBUG_INFO, __FUNCTION__"OSK DEVICE Handle %x\n", mControllerHandle));
+    DEBUG((DEBUG_INFO, "%a OSK DEVICE Handle %x\n", __FUNCTION__, mControllerHandle));
     //
     // Install UEFI Driver Model protocol(s).
     //

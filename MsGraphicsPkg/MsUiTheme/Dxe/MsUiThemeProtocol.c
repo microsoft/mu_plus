@@ -91,7 +91,7 @@ MsUiThemeProtocolEntry(
         return Status;
     }
 
-    Status = gBS->InstallProtocolInterface (&ImageHandle,& gMsUiThemeProtolGuid, EFI_NATIVE_INTERFACE, ThemeCopy);
+    Status = gBS->InstallProtocolInterface (&ImageHandle,& gMsUiThemeProtocolGuid, EFI_NATIVE_INTERFACE, ThemeCopy);
     ASSERT_EFI_ERROR(Status);
     
     return Status;
@@ -125,7 +125,7 @@ MsUiThemeProtocolEntry(
         PlatformTheme = * ((MS_UI_THEME_DESCRIPTION **) (UINTN)(GET_GUID_HOB_DATA(GuidHob)));
         if (PlatformTheme != NULL) {
             ASSERT (PlatformTheme->Signature == MS_UI_THEME_PROTOCOL_SIGNATURE );
-            Status = gBS->InstallProtocolInterface (&ImageHandle,& gMsUiThemeProtolGuid, EFI_NATIVE_INTERFACE, PlatformTheme);
+            Status = gBS->InstallProtocolInterface (&ImageHandle,& gMsUiThemeProtocolGuid, EFI_NATIVE_INTERFACE, PlatformTheme);
         }
     }
     ASSERT_EFI_ERROR( Status );

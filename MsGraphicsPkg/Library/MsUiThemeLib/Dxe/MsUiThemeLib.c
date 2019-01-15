@@ -60,7 +60,7 @@ MsUiThemeLibConstructor (
     EFI_STATUS                          Status;
 
 
-    Status = gBS->LocateProtocol (&gMsUiThemeProtolGuid, NULL, (VOID **) &gPlatformTheme);
+    Status = gBS->LocateProtocol (&gMsUiThemeProtocolGuid, NULL, (VOID **) &gPlatformTheme);
     ASSERT_EFI_ERROR (Status);
 
     return EFI_SUCCESS;

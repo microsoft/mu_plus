@@ -92,7 +92,7 @@ typedef struct {
 
 } MS_UI_THEME_DESCRIPTION;
 
-extern EFI_GUID gMsUiThemeProtolGuid;
+extern EFI_GUID gMsUiThemeProtocolGuid;
 extern EFI_GUID gMsUiThemePpiGuid;
 extern EFI_GUID gMsUiThemeHobGuid;
 

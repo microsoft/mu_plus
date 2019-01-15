@@ -46,6 +46,7 @@
   MdePkg/MdePkg.dec
   
 [LibraryClasses]
+  FltUsedLib
 
 [Protocols]
 

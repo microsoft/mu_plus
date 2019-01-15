@@ -29,10 +29,10 @@
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MathLib.h>
+#include <Library/FltUsedLib.h>
 #include "DisplayTypes.h"
 #include "DisplayTransform.h"
 
-int   _fltused = 0x9875;   
 float CompositeMatrix[4][4];
 
 /**
@@ -83,7 +83,7 @@ POINT3D
 TransformPoint (IN POINT3D InPoint)
 {
     int j, k;
-    POINT3D pt = {0.0, 0.0, 0.0, 0.0};
+    POINT3D pt = {{0.0, 0.0, 0.0, 0.0}};
 
     // Apply scale, rotation, and translation transform (multiplication)
     //

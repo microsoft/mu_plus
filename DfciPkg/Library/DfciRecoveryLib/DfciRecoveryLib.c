@@ -87,7 +87,7 @@ GetRecoveryChallenge (
 
   //
   // Locate the RNG Protocol. This will be needed for the nonce.
-  Status = gBS->LocateProtocol( &gEfiRngProtocolGuid, NULL, &RngProtocol);
+  Status = gBS->LocateProtocol( &gEfiRngProtocolGuid, NULL, (VOID **) &RngProtocol);
   DEBUG(( DEBUG_VERBOSE, "%a: LocateProtocol(RNG) = %r\n", __FUNCTION__, Status));
 
   //
@@ -248,7 +248,7 @@ EncryptRecoveryChallenge (
   // NOTE: This *could* be done with a direct call to RandomSeed() rather than
   //       passing it into the Pkcs1v2Encrypt() function. There are merits to
   //       each implementation.
-  Status = gBS->LocateProtocol( &gEfiRngProtocolGuid, NULL, &RngProtocol );
+  Status = gBS->LocateProtocol( &gEfiRngProtocolGuid, NULL, (VOID **) &RngProtocol );
   DEBUG(( DEBUG_VERBOSE, "%a: LocateProtocol(RNG) = %r\n", __FUNCTION__, Status));
   // Assuming we found the protocol, let's grab a seed.
   if (!EFI_ERROR( Status ))

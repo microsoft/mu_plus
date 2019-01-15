@@ -495,7 +495,7 @@ ConfigureHTTP (
         //
         // Check the current IP Address.  If an IP address not present, ConfigureDHCP
         //
-        Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiIp4Config2ProtocolGuid, &Dfci->Ip4Config2);
+        Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiIp4Config2ProtocolGuid, (VOID **) &Dfci->Ip4Config2);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "Error locating IPv4 Config2 protocol. Code=%r\n", Status));
             return Status;
@@ -528,7 +528,7 @@ ConfigureHTTP (
     }
 
     Dfci->HttpProtocol = NULL;
-    Status = gBS->HandleProtocol(Dfci->HttpChildHandle, &gEfiHttpProtocolGuid, &Dfci->HttpProtocol);
+    Status = gBS->HandleProtocol(Dfci->HttpChildHandle, &gEfiHttpProtocolGuid, (VOID **) &Dfci->HttpProtocol);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Unable to locate HTTP protocol. Code=%r\n", Status));
         return Status;
@@ -1020,7 +1020,7 @@ DfciRequestJsonFromNETWORK (
 
         Dfci->NicHandle = HandleBuffer[NicIndex];
 
-        Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiHttpServiceBindingProtocolGuid, &Dfci->HttpSbProtocol);
+        Status = gBS->HandleProtocol(Dfci->NicHandle, &gEfiHttpServiceBindingProtocolGuid, (VOID **) &Dfci->HttpSbProtocol);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "Error locating HttpServiceBinding protocol. Code=%r\n", Status));
             goto CLEANUP;

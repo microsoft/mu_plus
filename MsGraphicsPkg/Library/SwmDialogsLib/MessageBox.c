@@ -748,7 +748,7 @@ ProcessDialogInput (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
             if (SWM_MB_IDCANCEL == ButtonResult || SWM_MB_IDOK == ButtonResult ||
                 SWM_MB_IDRETRY == ButtonResult || SWM_MB_IDCONTINUE == ButtonResult ||
                 SWM_MB_IDYES   == ButtonResult || SWM_MB_IDNO  == ButtonResult ||
-                SWM_MB_IDNEXT  == ButtonResult || SWM_MB_IDRESTART)
+                SWM_MB_IDNEXT  == ButtonResult || SWM_MB_IDRESTART == ButtonResult)
             {
                 break;
             }

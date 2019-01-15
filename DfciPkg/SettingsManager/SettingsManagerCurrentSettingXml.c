@@ -212,7 +212,7 @@ PopulateCurrentSettingsIfNeeded()
   UINTN  VarSize = 0;
   Status = GetVariable2(DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
     &gDfciSettingsManagerVarNamespace,
-    &Var,
+    (VOID **) &Var,
     &VarSize
     );
 

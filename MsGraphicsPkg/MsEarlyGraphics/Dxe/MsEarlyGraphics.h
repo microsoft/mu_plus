@@ -25,8 +25,8 @@
 
 **/
 
-#ifndef _MS_EARLY_GRAPHICS_DXE_H_
-#define _MS_EARLY_GRAPHICS_DXE_H
+#ifndef __MS_EARLY_GRAPHICS_DXE_H__
+#define __MS_EARLY_GRAPHICS_DXE_H__
 
 #include <Uefi.h>
 
@@ -45,4 +45,4 @@
 
 #include "..\MsEarlyGraphicsCommon.h"
 
-#endif
+#endif // __MS_EARLY_GRAPHICS_DXE_H__
