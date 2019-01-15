@@ -590,7 +590,7 @@ WINMGR_CLIENT * FilterPointerState (IN MS_SWM_ABSOLUTE_POINTER_STATE *PointerSta
     // * If it doesn't and there's an active default client, it's theirs.
     // * If none of the above, we give it to the current caller.
     //
-    DEBUG((DEBUG_INFO, "%a - X=%5d, Y=%5d, Buttons=%x\n", __FUNCTION__ ,PointerState->CurrentX, PointerState->CurrentY, PointerState->ActiveButtons));
+    DEBUG((DEBUG_INFO, "%a - X=%5d, Y=%5d, Buttons=%x\n", __FUNCTION__, PointerState->CurrentX, PointerState->CurrentY, PointerState->ActiveButtons));
 
     pList = mSWM.Clients;
     while (pList != NULL)
@@ -1659,7 +1659,7 @@ DriverInit (IN EFI_HANDLE         ImageHandle,
 
     if (EFI_ERROR (Status))
     {
-        DEBUG((DEBUG_INFO, "INFO [SWM]: Failed to create GOP registration event (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "INFO [SWM]: Failed to create GOP registration event (%r).\r\n", Status));
         goto Exit;
     }
 
@@ -1670,7 +1670,7 @@ DriverInit (IN EFI_HANDLE         ImageHandle,
 
     if (EFI_ERROR (Status))
     {
-        DEBUG((DEBUG_INFO, "INFO [SWM]: Failed to register for GOP registration notifications (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "INFO [SWM]: Failed to register for GOP registration notifications (%r).\r\n", Status));
         goto Exit;
     }
 

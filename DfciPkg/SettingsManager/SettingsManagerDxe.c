@@ -42,9 +42,10 @@ typedef struct {
 } INIT_TABLE_ENTRY;
 
 static INIT_TABLE_ENTRY    mInitTable[] = {
-                              DEVICE_ID_MANUFACTURER,  NULL,
-                              DEVICE_ID_PRODUCT_NAME,  NULL,
-                              DEVICE_ID_SERIAL_NUMBER, NULL };
+                              { DEVICE_ID_MANUFACTURER,  NULL },
+                              { DEVICE_ID_PRODUCT_NAME,  NULL },
+                              { DEVICE_ID_SERIAL_NUMBER, NULL }
+                           };
 
 // Settings manager does not support "Atomic" operations at this time.  That means
 // the delayed response and LKG handler are ignored, and the settings cannot be
@@ -54,9 +55,11 @@ static INIT_TABLE_ENTRY    mInitTable[] = {
 DFCI_APPLY_PACKET_PROTOCOL mApplySettingsProtocol = {
        DFCI_APPLY_PACKET_SIGNATURE,
        DFCI_APPLY_PACKET_VERSION,
-       0,
-       0,
-       0,
+       {
+           0,
+           0,
+           0
+       },
        ApplyNewSettingsPacket,
        SetSettingsResponse,        // Not used by settings manager -
        SettingsLKG_Handler         // Not supported by settings manager

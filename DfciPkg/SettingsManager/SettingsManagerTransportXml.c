@@ -111,13 +111,13 @@ ApplySettings(
     return Data->StatusCode;
   }
 
-  StrLen = AsciiStrnLenS(Data->Payload, Data->PayloadSize);
+  StrLen = AsciiStrnLenS((CHAR8 *) Data->Payload, Data->PayloadSize);
   DEBUG((DEBUG_INFO, "%a - StrLen = 0x%X PayloadSize = 0x%X\n", __FUNCTION__, StrLen, Data->PayloadSize));
 
   //
   // Create Node List from input
   //
-  Status = CreateXmlTree(Data->Payload, StrLen, &InputRootNode);
+  Status = CreateXmlTree((CHAR8 *) Data->Payload, StrLen, &InputRootNode);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Couldn't create a node list from the payload xml  %r\n", __FUNCTION__, Status));
@@ -274,9 +274,9 @@ ApplySettings(
   {
     XmlNode *NodeThis = NULL;
     DFCI_SETTING_ID_STRING Id = NULL;
-    CHAR8*    Value = NULL;
-    CHAR8     StatusString[25];   //0xFFFFFFFFFFFFFFFF\n
-    CHAR8     FlagString[25];
+    CONST CHAR8* Value = NULL;
+    CHAR8        StatusString[25];   //0xFFFFFFFFFFFFFFFF\n
+    CHAR8        FlagString[25];
     Flags = 0;
     
     NodeThis = (XmlNode*)Link;   //Link is first member so just cast it.  this is the <Setting> node

@@ -59,20 +59,6 @@ EFI_DRIVER_BINDING_PROTOCOL     mSREDriverBinding =
     NULL
 };
 
-// Rendering Engine device path.
-static
-VENDOR_DEVICE_PATH  mRenderingEngineDevicePath =
-{
-    {
-        HARDWARE_DEVICE_PATH,
-        HW_VENDOR_DP,
-        sizeof(VENDOR_DEVICE_PATH),
-    },
-    // {FC5A6D66-1DB0-4165-98DC-BC747941F0CE}
-    { 0xfc5a6d66, 0x1db0, 0x4165, { 0x98, 0xdc, 0xbc, 0x74, 0x79, 0x41, 0xf0, 0xce } }
-};
-
-
 // ****** Local function prototypes ******
 //
 static

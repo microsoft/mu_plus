@@ -92,7 +92,7 @@ InitPermStore(DFCI_PERMISSION_STORE **Store)
   Status = gBS->LocateProtocol (&gEfiRegularExpressionProtocolGuid, NULL, (VOID **) &mRegExp);
   if (EFI_ERROR(Status))
   {
-     DEBUG((DEBUG_ERROR, "%a: RegExp protocol not found.  RegExp is not supported\n"));
+     DEBUG((DEBUG_ERROR, "%a: RegExp protocol not found.  RegExp is not supported\n", __FUNCTION__));
   }
 
   *Store = (DFCI_PERMISSION_STORE *)AllocateZeroPool(sizeof(DFCI_PERMISSION_STORE));
@@ -261,7 +261,7 @@ IN DFCI_IDENTITY_ID       Id
 
   if (Store == NULL)
   {
-    DEBUG((DEBUG_ERROR,"%a - Invalid Perm Store\n"));
+    DEBUG((DEBUG_ERROR,"%a - Invalid Perm Store\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -350,7 +350,7 @@ IN DFCI_PERMISSION_MASK        *DefaultDMask  OPTIONAL
                                     &MatchCount);
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR," %a: Error in RegExp %a. Code = %r\n", Temp->Id, Status));
+        DEBUG((DEBUG_ERROR," %a: Error in RegExp %a. Code = %r\n", __FUNCTION__, Temp->Id, Status));
       }
       else
       {

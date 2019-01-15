@@ -60,3 +60,7 @@
 
 [Guids]
 
+[BuildOptions.AARCH64]
+  # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
+  # such pragma found in fasterxml/xml_fasterxml.c (prefast-related)
+  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas

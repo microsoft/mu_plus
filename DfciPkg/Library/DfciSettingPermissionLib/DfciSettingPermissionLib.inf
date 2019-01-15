@@ -91,6 +91,7 @@
 [Depex]
   TRUE
 
-[BuildOptions]
-#  DEBUG_*_*_CC_FLAGS  = /Od /FAcs
-  DEBUG_*_*_CC_FLAGS  = /analyze
+[BuildOptions.AARCH64]
+  # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
+  # such pragmas found in included header DfciPacketHeader.h
+  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas

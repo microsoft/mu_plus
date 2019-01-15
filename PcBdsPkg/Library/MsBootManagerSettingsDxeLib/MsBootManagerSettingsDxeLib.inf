@@ -71,8 +71,8 @@
   gPcBdsPkgTokenSpaceGuid.PcdEnableBootOrderLock
   gPcBdsPkgTokenSpaceGuid.PcdEnableUsbBoot
   gPcBdsPkgTokenSpaceGuid.PcdStartNetwork
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapOutput
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapTypes
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapOutput
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapTypes
 
 [Depex]
   TRUE

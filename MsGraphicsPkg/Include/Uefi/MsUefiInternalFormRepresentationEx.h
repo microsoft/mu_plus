@@ -43,4 +43,3 @@
 #define ORDERED_LIST_BOOT_VALUE_32         ((UINT32)0x80000000)   // Currently, only value type UINT32 is supported
 
 #endif
-

@@ -1,7 +1,7 @@
 ## @file
-# Implements a simple on-screen virtual keyboard for text input.
+#  Lib to include if using floats
 #
-# Copyright (c) 2014 - 2018, Microsoft Corporation.
+#  Copyright (c) 2018, Microsoft Corporation.
 #
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without 
@@ -26,57 +26,36 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = OnScreenKeyboardDxe
-  FILE_GUID                      = 917C56F2-2FE3-498F-AFFB-87AC0E19FE5E
-  MODULE_TYPE                    = UEFI_DRIVER
+  BASE_NAME                      = FltUsedLib
+  FILE_GUID                      = C004F180-9FE2-4D2B-8318-BADC2A231774
+  MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = OSKDriverEntryPoint
-  UNLOAD_IMAGE                   = DriverUnload
+  LIBRARY_CLASS                  = FltUsedLib
 
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
 [Sources]
-  OnScreenKeyboardDriver.c
-  OnScreenKeyboardProtocol.c
-  DisplayTransform.c
+  FltUsedLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
-  MsGraphicsPkg/MsGraphicsPkg.dec
   MsCorePkg/MsCorePkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
-  DebugLib
-  BaseLib
-  HiiLib
-  MemoryAllocationLib
-  DxeServicesTableLib
-  MsUiThemeLib
-  MsColorTableLib
-  MathLib
-  FltUsedLib
 
 [Guids]
-  gEfiConsoleInDeviceGuid
-  gOSKDevicePathGuid
 
 [Protocols]
-  gEfiGraphicsOutputProtocolGuid    # CONSUMES
-  gEfiHiiFontProtocolGuid           # CONSUMES
-  gMsSWMProtocolGuid                # CONSUMES
-
-  gMsOSKProtocolGuid                # PRODUCES
-  gEfiSimpleTextInProtocolGuid      # PRODUCES
-  gEfiSimpleTextInputExProtocolGuid # PRODUCES
-
-[Depex]
 
 [BuildOptions]
-  *_VS2013x86_IA32_CC_FLAGS       = /Oi /Og /fp:fast /arch:SSE
-  *_VS2013x86_X64_CC_FLAGS       = /Oi /Og /fp:fast /arch:SSE
+  # Disable GL due to linker error LNK1237
+  # https://docs.microsoft.com/en-us/cpp/error-messages/tool-errors/linker-tools-error-lnk1237?view=vs-2017
+  MSFT:*_*_*_CC_FLAGS = /GL-
+
+[Depex]
+  TRUE
+

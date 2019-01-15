@@ -2535,7 +2535,7 @@ UiDisplayMenu (IN FORM_DISPLAY_ENGINE_FORM *FormData) {
                             DebugDumpMemory(DEBUG_ERROR,((CHAR8 *)ReturnValue) - 0x18, Statement->CurrentValue.BufferLen + 0x20,DEBUG_DM_PRINT_ASCII);
 #endif
                             if (CompareMem (ReturnValue, ValueArray, Statement->CurrentValue.BufferLen) == 0) {
-                                DEBUG ((DEBUG_ERROR,"%a no change detected\n", __FUNCTION__ ));
+                                DEBUG ((DEBUG_ERROR, "%a no change detected\n", __FUNCTION__));
                                 // ** Error condition ***
                                 FreePool (ReturnValue);
                             } else {
@@ -2877,7 +2877,7 @@ RegisterWithSimpleWindowManager (
     //
     Status = gBS->LocateProtocol (&gMsSWMProtocolGuid,
                                   NULL,
-                                  &mSWMProtocol);
+                                  (VOID **) &mSWMProtocol);
 
     if (EFI_ERROR (Status)) {
         mSWMProtocol = NULL;
@@ -2930,7 +2930,7 @@ FormDisplayOnReadyToBoot (
     IN VOID *Context
     ) {
 
-    DEBUG ((DEBUG_INFO, "%a \n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a\n", __FUNCTION__));
 
     if (NULL != mPrivateData.PreviousCanvas) {
         delete_Canvas (mPrivateData.PreviousCanvas);

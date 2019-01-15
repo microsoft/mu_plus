@@ -29,11 +29,11 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = SwmDialogs
+  BASE_NAME                      = SwmDialogsLib
   FILE_GUID                      = 16a792c5-000d-4a9d-932c-4e5f00bc6e57
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = SWM_DIALOGS|DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER
+  LIBRARY_CLASS                  = SwmDialogsLib|DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER
   CONSTRUCTOR                    = SwmDialogsConstructor
 
 #

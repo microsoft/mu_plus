@@ -45,8 +45,6 @@ typedef union
   } Parts;
 } DFCI_CHALLENGE_NONCE;
 
-#pragma warning(disable: 4200) // zero-sized array
-
 typedef CHAR8 DFCI_TARGET_MULTI_STRING;
 #define DFCI_MULTI_STRING_MAX_SIZE 104
 

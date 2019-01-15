@@ -66,5 +66,3 @@
 [Depex]
   TRUE
 
-[BuildOptions]
-  DEBUG_*_*_CC_FLAGS  = /FAcs

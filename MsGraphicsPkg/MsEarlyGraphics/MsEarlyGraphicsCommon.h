@@ -25,8 +25,8 @@
 
 **/
 
-#ifndef _MS_EARLY_GRAPHICS_COMMON_H_
-#define _MS_EARLY_GRAPHICS_COMMON_H
+#ifndef __MS_EARLY_GRAPHICS_COMMON_H__
+#define __MS_EARLY_GRAPHICS_COMMON_H__
 
 #include <Uefi.h>
 
@@ -177,4 +177,4 @@ UINT32
 EFIAPI
 GetCellWidth();
 
-#endif
+#endif // __MS_EARLY_GRAPHICS_COMMON_H__

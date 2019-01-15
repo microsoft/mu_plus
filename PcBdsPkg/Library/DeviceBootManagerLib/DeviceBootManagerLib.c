@@ -752,7 +752,7 @@ static
 VOID
 PrintMemoryMap () {
 
-    if (PcdGet8 (PcdEnableMemoryMapOutput))
+    if (PcdGet8 (PcdEnableMemMapOutput))
     {
         EFI_STATUS             Status;
         UINTN                  MemoryMapSize = 0;
@@ -798,9 +798,9 @@ PrintMemoryMap () {
                     for (i=0; i<Count; i++) {
                         MemoryMap = (EFI_MEMORY_DESCRIPTOR *) Entry;
                         if (MemoryMap->Type <= EfiMaxMemoryType) {
-                            if (((1 << MemoryMap->Type) & PcdGet32 (PcdEnableMemoryMapTypes)) != 0) {
+                            if (((1 << MemoryMap->Type) & PcdGet32 (PcdEnableMemMapTypes)) != 0) {
                                 DEBUG((DEBUG_INFO,"%a at %p for %d pages\n",MemoryType[MemoryMap->Type],MemoryMap->PhysicalStart,MemoryMap->NumberOfPages));
-                                if (PcdGet8 (PcdEnableMemoryMapDumpOutput)) {
+                                if (PcdGet8 (PcdEnableMemMapDumpOutput)) {
                                     DebugDumpMemory (DEBUG_INFO, (CHAR8 *) MemoryMap->PhysicalStart,48,DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII );
                                 }
                             }
@@ -994,7 +994,7 @@ DeviceBootManagerConstructor (
     // Install Pre-ReadyToBoot callback to note when the variables need to be locked
     Status = gBS->CreateEventEx (
           EVT_NOTIFY_SIGNAL,
-          TPL_CALLBACK, // TODO: commit this!
+          TPL_CALLBACK,
           PreReadyToBoot,
           NULL,
           &gEfiEventPreReadyToBootGuid,

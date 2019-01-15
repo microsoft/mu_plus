@@ -89,9 +89,9 @@
   gPcBdsPkgTokenSpaceGuid.PcdShutdownGraphicDisplayTime
   gPcBdsPkgTokenSpaceGuid.PcdThermalControlRetryWait
   gPcBdsPkgTokenSpaceGuid.PcdShellFile
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapOutput
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapTypes
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapDumpOutput
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapOutput
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapTypes
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapDumpOutput
 
 [BuildOptions.AARCH64]
   # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
