@@ -163,36 +163,54 @@ DriverInit (IN EFI_HANDLE         ImageHandle,
             IN EFI_SYSTEM_TABLE  *SystemTable)
 {
     EFI_STATUS      Status = EFI_SUCCESS;
+    EFI_HANDLE     *Handles;
+    UINTN           HandleCount = 0;
 
     mMsGopOverrideProtocolGuid = PcdGetPtr(PcdMsGopOverrideProtocolGuid);
 
     //
-    // Graphics Output Protocol isn't availble now. Register for Graphics Output Protocol registration notifications.
+    // Find all the handles on which Graphics Output Protocol is installed (should be exactly one handle).
     //
-    Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL,
-                               TPL_NOTIFY,
-                               GopRegisteredCallback,
-                               NULL,
-                               &mGopRegisterEvent
-                              );
+    Status = gBS->LocateHandleBuffer(
+        ByProtocol,
+        &gEfiGraphicsOutputProtocolGuid,
+        NULL,
+        &HandleCount,
+        &Handles
+        );
+    if (!EFI_ERROR(Status) && HandleCount == 1) {
+        DEBUG((DEBUG_INFO, "[GOP Override]: 1 GOP handle located, not registering an event\n"));
+        GopRegisteredCallback(NULL, NULL);
+    } else {
 
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [GOP]: Failed to create GOP registration event (%r).\r\n", Status));
-        goto Exit;
+        
+        //
+        // Graphics Output Protocol isn't availble now. Register for Graphics Output Protocol registration notifications.
+        //
+        Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL,
+                                   TPL_NOTIFY,
+                                   GopRegisteredCallback,
+                                   NULL,
+                                   &mGopRegisterEvent
+                                  );
+
+        if (EFI_ERROR (Status))
+        {
+            DEBUG((DEBUG_ERROR, "ERROR [GOP]: Failed to create GOP registration event (%r).\r\n", Status));
+            goto Exit;
+        }
+
+        Status = gBS->RegisterProtocolNotify (&gEfiGraphicsOutputProtocolGuid,
+                                              mGopRegisterEvent,
+                                              &mGopRegistration
+                                             );
+
+        if (EFI_ERROR (Status))
+        {
+            DEBUG((DEBUG_ERROR, "ERROR [GOP]: Failed to register for GOP registration notifications (%r).\r\n", Status));
+            goto Exit;
+        }
     }
-
-    Status = gBS->RegisterProtocolNotify (&gEfiGraphicsOutputProtocolGuid,
-                                          mGopRegisterEvent,
-                                          &mGopRegistration
-                                         );
-
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [GOP]: Failed to register for GOP registration notifications (%r).\r\n", Status));
-        goto Exit;
-    }
-
 Exit:
     DEBUG((DEBUG_INFO, "INFO [GOP]: DriverInit exit - code=%r\n", Status));
 

@@ -346,7 +346,7 @@ SwmDialogsConstructor (
     //
     gSwmDialogsHiiHandle = HiiAddPackages (&gSwmDialogsHiiPackageListGuid,
                                            gImageHandle,
-                                           SwmDialogsStrings,
+                                           SwmDialogsLibStrings,
                                            NULL);
 
     if (NULL == gSwmDialogsHiiHandle)

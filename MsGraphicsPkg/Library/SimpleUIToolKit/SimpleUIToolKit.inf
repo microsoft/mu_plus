@@ -65,6 +65,7 @@
   MathLib
   MsUiThemeLib
   PcdLib
+  FltUsedLib
 
 [Protocols]
   gMsOSKProtocolGuid

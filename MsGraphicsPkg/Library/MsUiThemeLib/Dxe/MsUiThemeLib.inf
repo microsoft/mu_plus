@@ -53,12 +53,12 @@
   UefiBootServicesTableLib
 
 [Protocols]
-    gMsUiThemeProtolGuid
+    gMsUiThemeProtocolGuid
 
 [Guids]
 
 [Depex]
-    gMsUiThemeProtolGuid
+    gMsUiThemeProtocolGuid
 
 [BuildOptions]
 

@@ -38,9 +38,11 @@ DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
 DFCI_APPLY_PACKET_PROTOCOL mApplyPermissionsProtocol = {
        DFCI_APPLY_PACKET_SIGNATURE,
        DFCI_APPLY_PACKET_VERSION,
-       0,
-       0,
-       0,
+       {
+           0,
+           0,
+           0
+       },
        ApplyNewPermissionsPacket,
        SetPermissionsResponse,
        LKG_Handler

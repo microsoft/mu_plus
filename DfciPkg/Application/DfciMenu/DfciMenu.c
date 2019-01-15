@@ -115,7 +115,6 @@ HII_VENDOR_DEVICE_PATH                  mHiiVendorDevicePath = {
 //*---------------------------------------------------------------------------------------*
 //* Global Variables                                                                      *
 //*---------------------------------------------------------------------------------------*
-STATIC EFI_GUID                                mDfciPackageListGuid = DFCI_HII_PACKAGE_LIST_GUID;
 STATIC DFCI_AUTHENTICATION_PROTOCOL           *mAuthenticationProtocol = NULL;
 STATIC DFCI_MENU_CONFIGURATION                 mDfciMenuConfiguration;
 STATIC DFCI_SETTING_PERMISSIONS_PROTOCOL      *mDfciSettingsPermissionProtocol = NULL;
@@ -127,7 +126,6 @@ STATIC DFCI_CERT_STRINGS                       mUserCert;         // User inform
 STATIC DFCI_IDENTITY_MASK                      mIdMask;           // Identities installed
 STATIC CHAR8                                  *mDfciUrl = NULL;
 STATIC UINTN                                   mDfciUrlSize;
-STATIC CHAR16                                 *mHttpThumbprint = NULL;
 
 //*---------------------------------------------------------------------------------------*
 //* Hii Config Access functions                                                                  *
@@ -503,21 +501,21 @@ GetDfciParameters (
             DEBUG((DEBUG_INFO, "%a - Ztd Recovery enabled\n",  __FUNCTION__));
         }
 
-        Status = GetASetting (DFCI_SETTING_ID__DFCI_URL, &mDfciUrl, &mDfciUrlSize);
+        Status = GetASetting (DFCI_SETTING_ID__DFCI_URL, (VOID **) &mDfciUrl, &mDfciUrlSize);
         if (!EFI_ERROR(Status) && (mDfciUrlSize >= 1)) {
             mDfciMenuConfiguration.DfciHttpRecoveryEnabled = TRUE;
             SetStringEntry (STRING_TOKEN(STR_DFCI_URL_FIELD), mDfciUrl);
             DEBUG((DEBUG_INFO, "Dfci Http Recovery is enabled\n"));
         }
 
-        Status = GetASetting (DFCI_SETTING_ID__MDM_FRIENDLY_NAME, &Name, &NameSize);
+        Status = GetASetting (DFCI_SETTING_ID__MDM_FRIENDLY_NAME, (VOID **) &Name, &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
             mDfciMenuConfiguration.DfciFriendlyName = TRUE;
             SetStringEntry (STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME), Name);
             DEBUG((DEBUG_INFO, "Dfci MDM.FriendlyName is enabled\n"));
         }
 
-        Status = GetASetting (DFCI_SETTING_ID__MDM_TENANT_NAME, &Name, &NameSize);
+        Status = GetASetting (DFCI_SETTING_ID__MDM_TENANT_NAME, (VOID **) &Name, &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
             mDfciMenuConfiguration.DfciTennantName = TRUE;
             SetStringEntry (STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME), Name);
@@ -557,7 +555,7 @@ DfciMenuEntry(
     // Get all Id's that have Dfci Recovery permission.
     Status = gBS->LocateProtocol(&gDfciSettingPermissionsProtocolGuid,
                                  NULL,
-                                 &mDfciSettingsPermissionProtocol);
+                                 (VOID **) &mDfciSettingsPermissionProtocol);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "%a - DfciSettingPermissionsProtocolGuid not available. %r\n", __FUNCTION__, Status));
         ASSERT(FALSE); // Fatal error - again, there is a Depex for this protocol

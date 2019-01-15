@@ -37,8 +37,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_ALLOWABLE_DFCI_CURRENT_VAR_SIZE (1024 *  8) //  8kb
 
 // TODO: Remove these pragma warning statements as they're compiler-specific.
-//       Once removed, get rid of the BuildOptions override in
+//       Once removed, get rid of the -Wno-unknown-pragmas BuildOptions override in:
 //                PcBdsPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
+//                DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
+//                DfciPkg/SettingsManager/SettingsManagerDxe.inf
+//                DfciPkg/DfciManager/DfciManager.inf
+//                DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf
+//                DfciPkg/Application/DfciMenu/DfciMenu.inf
 #pragma warning(push)
 #pragma warning(disable: 4201) // nameless union
 #pragma pack (push, 1)

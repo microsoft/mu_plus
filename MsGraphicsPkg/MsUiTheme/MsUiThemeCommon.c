@@ -68,7 +68,7 @@ MsUiThemeProtocolEntry(
         mPlatformTheme = * ((MS_UI_THEME_DESCRIPTION **) (UINTN)(GET_GUID_HOB_DATA(GuidHob)));
         if (mPlatformTheme != NULL) {
             ASSERT (mPlatformTheme->Signature == MS_UI_THEME_PROTOCOL_SIGNATURE );
-            Status = gBS->InstallProtocolInterface (&ImageHandle,& gMsUiThemeProtolGuid, EFI_NATIVE_INTERFACE, mPlatformTheme);
+            Status = gBS->InstallProtocolInterface (&ImageHandle,& gMsUiThemeProtocolGuid, EFI_NATIVE_INTERFACE, mPlatformTheme);
         }
     }
     DEBUG((DEBUG_ERROR,"Unable to find Theme, or install theme protocol\n"));

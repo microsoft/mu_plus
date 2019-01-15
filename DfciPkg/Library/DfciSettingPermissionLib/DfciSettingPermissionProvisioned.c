@@ -131,7 +131,7 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
   *Store = NULL;
 
   //1. Load Variable
-  Status = GetVariable3(VAR_NAME, &gDfciInternalVariableGuid, &Var, &VarSize, &VarAttributes);
+  Status = GetVariable3(VAR_NAME, &gDfciInternalVariableGuid, (VOID **) &Var, &VarSize, &VarAttributes);
   if (EFI_ERROR(Status))
   {
     if (Status == EFI_NOT_FOUND)

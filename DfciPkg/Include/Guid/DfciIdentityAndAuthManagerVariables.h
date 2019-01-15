@@ -62,8 +62,6 @@ extern EFI_GUID gDfciAuthProvisionVarNamespace;
 #define DFCI_SIGNER_PROVISION_IDENTITY_USER2 (4)
 #define DFCI_SIGNER_PROVISION_IDENTITY_ZTD (5)
 
-#pragma warning(push)
-#pragma warning(disable: 4200) // zero-sized array
 #pragma pack (push, 1)
 
 
@@ -97,7 +95,6 @@ typedef struct {
 } DFCI_SIGNER_PROVISION_RESULT_VAR;
 
 #pragma pack (pop)
-#pragma warning(pop)
 
 
 #endif // __DFCI_IDENTITY_AND_AUTH_MANAGER_VARIABLES_H__

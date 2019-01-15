@@ -166,7 +166,7 @@ LoadProvisionedData()
   //so it must be freed if Status is not error. 
   Status = GetVariable3(_INTERNAL_PROVISIONED_CERT_VAR_NAME,
     &gDfciInternalVariableGuid,
-    &Var,
+    (VOID **) &Var,
     &VarSize,
     &Attributes
     );

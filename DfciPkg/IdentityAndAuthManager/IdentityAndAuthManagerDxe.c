@@ -48,9 +48,11 @@ DFCI_AUTHENTICATION_PROTOCOL  mAuthProtocol = {
 DFCI_APPLY_PACKET_PROTOCOL mApplyIdentityProtocol = {
        DFCI_APPLY_PACKET_SIGNATURE,
        DFCI_APPLY_PACKET_VERSION,
-       0,
-       0,
-       0,
+       {
+           0,
+           0,
+           0
+       },
        ApplyNewIdentityPacket,
        SetIdentityResponse,
        LKG_Handler
@@ -77,7 +79,7 @@ Init(
   EFI_STATUS       Status = EFI_SUCCESS;
   ZERO_TOUCH_STATE ZeroTouchState;
 
-  Status = gBS->LocateProtocol(&gDfciSettingPermissionsProtocolGuid, NULL, &mDfciSettingsPermissionProtocol);
+  Status = gBS->LocateProtocol(&gDfciSettingPermissionsProtocolGuid, NULL, (VOID **) &mDfciSettingsPermissionProtocol);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - DfciSystemSettingPermissionsProtocolGuid not available. %r\n", __FUNCTION__, Status));

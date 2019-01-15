@@ -178,7 +178,7 @@ SetIdentityResponse(
   Var.StatusCode = (UINT64)(Data->StatusCode);
   Var.SessionId = Data->SessionId;
 
-  return gRT->SetVariable(Data->ResultName, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES , sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR), &Var);
+  return gRT->SetVariable((CHAR16 *) Data->ResultName, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES , sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR), &Var);
 }
 
 /**
@@ -517,7 +517,7 @@ DeleteProvisionVariable(
     return;
   }
 
-  gRT->SetVariable(Data->MailboxName, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
+  gRT->SetVariable((CHAR16 *) Data->MailboxName, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
 }
 
 /**
@@ -679,7 +679,7 @@ ApplyNewIdentityPacket (
     Data->State = DFCI_PACKET_STATE_DATA_USER_APPROVED;
 
   } else {
-    Status = LocalGetAnswerFromUser(Data->Payload,
+    Status = LocalGetAnswerFromUser((UINT8 *) Data->Payload,
                                     Data->PayloadSize,
                                    &Data->AuthToken);
 
@@ -866,7 +866,7 @@ ClearDFCI (
   //
   // Get SettingsAccess
   //
-  Status = gBS->LocateProtocol(&gDfciSettingAccessProtocolGuid, NULL, &SettingsAccess);
+  Status = gBS->LocateProtocol(&gDfciSettingAccessProtocolGuid, NULL, (VOID **) &SettingsAccess);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "[AM] - %a - requires Settings Access Protocol (Status = %r)\n", __FUNCTION__, Status));

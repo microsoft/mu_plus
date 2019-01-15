@@ -86,6 +86,7 @@
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
+  FltUsedLib|MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
 
 
   !if $(TARGET) == DEBUG
@@ -133,6 +134,7 @@
 
 [Components]
   MsCorePkg/Library/MathLib/MathLib.inf
+  MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
   MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
   MsCorePkg/MuCryptoDxe/MuCryptoDxe.inf
 
