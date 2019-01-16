@@ -163,33 +163,6 @@ PlatformBootManagerBdsEntry (
     return;
 }
 
-static
-VOID
-RebootToFrontPage (
-    VOID
-    )
-{
-    UINT64                          OsIndication;
-    EFI_STATUS                      Status;
-
-
-    OsIndication = EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
-    Status = gRT->SetVariable (
-        L"OsIndications",
-        &gEfiGlobalVariableGuid,
-        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-        sizeof(UINT64),
-        &OsIndication
-        );
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to set OsIndications\n"));
-    }
-    DEBUG((DEBUG_INFO, "%a Resetting system.\n", __FUNCTION__));
-    gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
-
-    CpuDeadLoop ();
-}
-
 /**
 ProcessBootCompletion
 */
