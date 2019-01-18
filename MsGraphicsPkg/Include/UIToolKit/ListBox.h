@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -113,7 +113,7 @@ typedef struct _ListBox
 
     // *** Member variables ***
     //
-    EFI_FONT_INFO                   m_FontInfo;
+    EFI_FONT_INFO                  *m_FontInfo;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   m_NormalColor;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   m_HoverColor;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   m_SelectColor;
@@ -177,7 +177,7 @@ ListBox *new_ListBox(IN UINT32                          OrigX,
                      IN UINT32                          CellTextXOffset,
                      IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *NormalColor,
                      IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *HoverColor,
-                     IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *SelectColor,                     
+                     IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *SelectColor,
                      IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *GrayOutColor,
                      IN UIT_LB_CELLDATA                 *CellData,
                      IN VOID                            *pSelectionContext);

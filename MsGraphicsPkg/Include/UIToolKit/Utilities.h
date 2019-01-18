@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -32,6 +32,7 @@
 // Preprocessor constants.
 //
 #define UIT_INVALID_SELECTION              (UINT32)-1
+#define MAX_FONT_NAME_SIZE                 256
 
 
 /**
@@ -47,6 +48,7 @@ Calculates the bitmap width and height of the specified text string based on the
 
 **/
 EFI_STATUS
+EFIAPI
 GetTextStringBitmapSize (IN     CHAR16           *pString,
                          IN     EFI_FONT_INFO    *FontInfo,
                          IN     BOOLEAN           BoundsLimit,
@@ -58,6 +60,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
 // Given two canvas, find the "control" that is "InThisList" that is the eqivalent control
 // "InOtherList"
 UIT_CANVAS_CHILD_CONTROL *
+EFIAPI
 GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
                       IN Canvas                   *InThisList,
                       IN Canvas                   *InOtherList);
@@ -78,6 +81,7 @@ GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
 **/
 
 EFI_STATUS
+EFIAPI
 DrawRectangleOutline (IN UINT32                        OrigX,
                       IN UINT32                        OrigY,
                       IN UINT32                        Width,
@@ -85,5 +89,32 @@ DrawRectangleOutline (IN UINT32                        OrigX,
                       IN UINT32                        LineWidth,
                       IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Color);
 
+
+/**
+    Returns a copy of the FONT_INFO structure.
+
+    @param[in]      FontInfo            Pointer to callers FONT_INFO.
+
+    @retval         NewFontInfo         Copy of FONT_INFO.  Caller must free.
+
+**/
+
+EFI_FONT_INFO *
+EFIAPI
+DupFontInfo (IN EFI_FONT_INFO *FontInfo);
+
+/**
+    Returns a new FontDisplayInfo populated with callers FontInfo.
+
+    @param[in]      FontInfo             Pointer to callers FONT_INFO.
+
+    @retval         NewFontDisplayInfo   New FontDisplayIfo with font from FontInfo
+                                         Caller must free.
+
+**/
+
+EFI_FONT_DISPLAY_INFO *
+EFIAPI
+BuildFontDisplayInfoFromFontInfo (IN EFI_FONT_INFO *FontInfo);
 
 #endif  // _UIT_UTILITIES_H_.

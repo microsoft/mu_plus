@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -394,15 +394,22 @@ RenderToggleSwitch(IN ToggleSwitch  *this,
     EFI_STATUS                      Status = EFI_SUCCESS;
     UINT32                          MaxGlyphDescent;
     SWM_RECT                        StringRect;
-    EFI_FONT_DISPLAY_INFO           StringInfo;
-    EFI_IMAGE_OUTPUT                *pBltBuffer;
+    EFI_FONT_DISPLAY_INFO           *StringInfo = NULL;
+    EFI_IMAGE_OUTPUT                *pBltBuffer = NULL;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL    *DrawBitMap;
 
 
     // Text color.
     //
-    CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.ToggleSwitchTextBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-    CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.ToggleSwitchTextFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    StringInfo = BuildFontDisplayInfoFromFontInfo (this->m_FontInfo);
+    if (NULL == StringInfo)
+    {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
+
+    CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.ToggleSwitchTextBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.ToggleSwitchTextFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
     // Prepare string blitting buffer.
     //
@@ -423,7 +430,7 @@ RenderToggleSwitch(IN ToggleSwitch  *this,
     if (this->m_CurrentState == FALSE){
         if ((this->m_pToggleSwitch->State == GRAYED)){
             DrawBitMap = this->m_pToggleSwitch->GrayedSwitchOffBitmap;
-            CopyMem(&StringInfo.ForegroundColor, &this->m_GrayOutColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+            CopyMem(&StringInfo->ForegroundColor, &this->m_GrayOutColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
         }
         else{
             DrawBitMap = this->m_pToggleSwitch->SwitchOffBitmap;
@@ -431,7 +438,7 @@ RenderToggleSwitch(IN ToggleSwitch  *this,
     } else{
         if ((this->m_pToggleSwitch->State == GRAYED)){
             DrawBitMap = this->m_pToggleSwitch->GrayedSwitchOnBitmap;
-            CopyMem(&StringInfo.ForegroundColor, &this->m_GrayOutColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+            CopyMem(&StringInfo->ForegroundColor, &this->m_GrayOutColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
         }
         else{
             DrawBitMap = this->m_pToggleSwitch->SwitchOnBitmap;
@@ -468,8 +475,8 @@ RenderToggleSwitch(IN ToggleSwitch  *this,
 
     // Draw toggle switch text.
     //
-    StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-    CopyMem (&StringInfo.FontInfo, &this->m_FontInfo, sizeof (EFI_FONT_INFO));
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+    CopyMem (&StringInfo->FontInfo, &this->m_FontInfo, sizeof (EFI_FONT_INFO));
 
     // Determine the correct control text to display.
     //
@@ -481,7 +488,7 @@ RenderToggleSwitch(IN ToggleSwitch  *this,
     //
     CopyMem (&StringRect, &this->m_pToggleSwitch->ToggleSwitchBounds, sizeof(SWM_RECT));
     GetTextStringBitmapSize (pString,
-                             &StringInfo.FontInfo,
+                             &StringInfo->FontInfo,
                              TRUE,
                              EFI_HII_OUT_FLAG_CLIP |
                              EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
@@ -499,7 +506,7 @@ RenderToggleSwitch(IN ToggleSwitch  *this,
                              EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                              EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                              pString,
-                             &StringInfo,
+                             StringInfo,
                              &pBltBuffer,
                              pRect->Right + MsUiScaleByTheme(20),  // TODO
                              SwitchOrigY,
@@ -513,6 +520,11 @@ Exit:
     if (NULL != pBltBuffer)
     {
         FreePool(pBltBuffer);
+    }
+
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
     }
 
     return Status;
@@ -741,7 +753,11 @@ Ctor(IN struct _ToggleSwitch           *this,
 
     // Initialize variables.
     //
-    CopyMem(&this->m_FontInfo, FontInfo, sizeof(EFI_FONT_INFO));
+    this->m_FontInfo = DupFontInfo (FontInfo);
+    if (NULL == this->m_FontInfo)
+    {
+        goto Exit;
+    }
 
     this->m_OnColor         = OnColor;
     this->m_OffColor        = OffColor;
@@ -817,6 +833,10 @@ VOID Dtor(VOID *this)
         if (NULL != privthis->m_pToggleSwitch->SwitchOffBitmap)
         {
             FreePool(privthis->m_pToggleSwitch->SwitchOffBitmap);
+        }
+        if (NULL != privthis->m_FontInfo)
+        {
+            FreePool (privthis->m_FontInfo);
         }
 
         FreePool(privthis->m_pToggleSwitch);

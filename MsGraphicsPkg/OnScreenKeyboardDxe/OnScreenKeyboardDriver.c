@@ -57,6 +57,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/ConsoleInDevice.h>
 #include <Guid/OSKDevicePath.h>
 
+#include <UIToolKit/SimpleUIToolKit.h>
+
 #include "OnScreenKeyboard.h"
 #include "OnScreenKeyboardProtocol.h"
 #include "DisplayTransform.h"
@@ -435,12 +437,12 @@ Calculates the bitmap width and height of the specified text string based on the
 **/
 STATIC
 EFI_STATUS
-GetTextStringBitmapSize (IN CHAR16    *pString,
+LocalGetTextStringBitmapSize (IN CHAR16    *pString,
 OUT UINTN    *Width,
 OUT UINTN    *Height)
 {
     EFI_STATUS              Status = EFI_SUCCESS;
-    EFI_FONT_DISPLAY_INFO   StringInfo;
+    EFI_FONT_DISPLAY_INFO   *StringInfo;
     EFI_IMAGE_OUTPUT        *pBltBuffer;
     EFI_HII_ROW_INFO        *pStringRowInfo;
     UINTN                   RowInfoSize;
@@ -453,9 +455,11 @@ OUT UINTN    *Height)
 
     // Get the current preferred font size and style (selected based on current display resolution).
     //
-    ZeroMem (&StringInfo, sizeof(EFI_FONT_DISPLAY_INFO));
-    CopyMem (&StringInfo.FontInfo, &mOSK.PreferredFontInfo, sizeof(EFI_FONT_INFO));
-    StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+    StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
+    if (NULL == StringInfo) {
+        return EFI_OUT_OF_RESOURCES;
+    }
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
     // Set to NULL to have a buffers allocated for us.
     //
@@ -468,7 +472,7 @@ OUT UINTN    *Height)
         mImageHandle,
         EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_IGNORE_LINE_BREAK,       // NOTE: clipping isn't possible when rendering to a bitmap buffer.
         pString,
-        &StringInfo,
+        StringInfo,
         &pBltBuffer,
         0,
         0,
@@ -500,6 +504,9 @@ OUT UINTN    *Height)
     if (NULL != pStringRowInfo)
     {
         FreePool(pStringRowInfo);
+    }
+    if (NULL != StringInfo) {
+        FreePool (StringInfo);
     }
 
     return Status;
@@ -541,7 +548,7 @@ CalculateKeyLabelSizes (VOID)
         //
         for (KeyCount=0 ; KeyCount < NUMBER_OF_KEYS ; KeyCount++)
         {
-            GetTextStringBitmapSize(pKeyMap[KeyCount].KeyLabel,
+            LocalGetTextStringBitmapSize(pKeyMap[KeyCount].KeyLabel,
                 &pKeyMap[KeyCount].KeyLabelWidth,
                 &pKeyMap[KeyCount].KeyLabelHeight
                 );
@@ -569,7 +576,7 @@ CalculateSpecialButtonSizes (VOID)
     // Keyboard close button.
     //
     mOSK.KeyboardCloseButton.pBitmap = NULL;     // Using Unicode character.
-    GetTextStringBitmapSize(mCloseButtonLabel,
+    LocalGetTextStringBitmapSize(mCloseButtonLabel,
         &mOSK.KeyboardCloseButton.Width,
         &mOSK.KeyboardCloseButton.Height
         );
@@ -577,7 +584,7 @@ CalculateSpecialButtonSizes (VOID)
     // Keyboard dock button.
     //
     mOSK.KeyboardDockButton.pBitmap = NULL;     // Using Unicode character.
-    GetTextStringBitmapSize(mDockButtonLabel,
+    LocalGetTextStringBitmapSize(mDockButtonLabel,
         &mOSK.KeyboardDockButton.Width,
         &mOSK.KeyboardDockButton.Height
         );
@@ -585,7 +592,7 @@ CalculateSpecialButtonSizes (VOID)
     // Keyboard undock button.
     //
     mOSK.KeyboardUndockButton.pBitmap = NULL;     // Using Unicode character.
-    GetTextStringBitmapSize(mUndockButtonLabel,
+    LocalGetTextStringBitmapSize(mUndockButtonLabel,
         &mOSK.KeyboardUndockButton.Width,
         &mOSK.KeyboardUndockButton.Height
         );
@@ -765,9 +772,12 @@ InitializeKeyboardContext (VOID)
 
     // Set default custom font size/style (by default choose small format).
     //
-    mOSK.PreferredFontInfo.FontSize         = MsUiGetSmallFontHeight();;
+    mOSK.PreferredFontInfo.FontSize         = MsUiGetSmallFontHeight();
     mOSK.PreferredFontInfo.FontStyle        = EFI_HII_FONT_STYLE_NORMAL;
-    mOSK.PreferredFontInfo.FontName[0]      = L'S';
+
+    // NOTE: A font name cannot be specified unless there is space allocated for
+    //       the name.  See OnScreenKeyboard.h for more info.
+    mOSK.PreferredFontInfo.FontName[0]      = L'\0';
 
     return Status;
 }
@@ -1116,7 +1126,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
     UINT32                  KeyboardWidth, KeyboardHeight;
     UINTN                   KeyLabelOrigX, KeyLabelOrigY;
     UINTN                   Count;
-    EFI_FONT_DISPLAY_INFO   StringInfo;
+    EFI_FONT_DISPLAY_INFO   *StringInfo = NULL;
 
 
     // First check whether there's something to do.
@@ -1125,6 +1135,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
     {
         goto Exit;
     }
+    StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
 
     // Determine the keyboard outer bounding rectangle
     //
@@ -1183,10 +1194,9 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
 
             // Select preferred font size and style for these buttons.
             //
-            StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-            CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            CopyMem (&StringInfo.FontInfo,        &mOSK.PreferredFontInfo, sizeof (EFI_FONT_INFO));
+            StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+            CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+            CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
             // Draw the Un/Dock button
             //
@@ -1212,7 +1222,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
                 EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                 EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                 pButtonLabel,
-                &StringInfo,
+                StringInfo,
                 &mOSK.pKeyTextBltBuffer,
                 ButtonOrigX,
                 ButtonOrigY,
@@ -1235,7 +1245,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
                 EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                 EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                 pButtonLabel,
-                &StringInfo,
+                StringInfo,
                 &mOSK.pKeyTextBltBuffer,
                 ButtonOrigX,
                 ButtonOrigY,
@@ -1312,50 +1322,51 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
         //
         if (TRUE == bShowKeyLabels)
         {
-            ZeroMem (&StringInfo, sizeof (EFI_FONT_DISPLAY_INFO));
+            // Zero all of FONT_DISPLAY_INFO except preferred font first character as that
+            // has already been set.
+            ZeroMem (StringInfo, sizeof (EFI_FONT_DISPLAY_INFO) - sizeof(CHAR16));
 
             // Use correct color for key text, based on state
             //
             if (Shift == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardShiftStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardShiftStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardShiftStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardShiftStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (CapsLock == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardCapsLockStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardCapsLockStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardCapsLockStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardCapsLockStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if ((NumSym == mOSK.KeyModifierState || Function == mOSK.KeyModifierState) && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardNumSymStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));            // Gray-out shift keys in these modes
-                CopyMem (&StringInfo.BackgroundColor, mOSK.KeyList[Count].pKeyFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));            // Gray-out shift keys in these modes
+                CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (NumSym == mOSK.KeyModifierState && EfiKeyA0 == mOSK.pKeyMap[Count].EfiKey)
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardNumSymA0StateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardNumSymA0StateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymA0StateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardNumSymA0StateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (Function == mOSK.KeyModifierState && EfiKeyA2 == mOSK.pKeyMap[Count].EfiKey)
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardFunctionStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardFunctionStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardFunctionStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardFunctionStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (mOSK.SelectedKey == Count)
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardSelectedStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardSelectedStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardSelectedStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardSelectedStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else
             {
-                CopyMem (&StringInfo.ForegroundColor, mOSK.KeyList[Count].pKeyLabelColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, mOSK.KeyList[Count].pKeyFillColor,  sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, mOSK.KeyList[Count].pKeyLabelColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor,  sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
 
             // Select preferred font size/style.
             //
-            CopyMem (&StringInfo.FontInfo, &mOSK.PreferredFontInfo, sizeof(EFI_FONT_INFO));
-            StringInfo.FontInfoMask   = EFI_FONT_INFO_ANY_FONT;
+            StringInfo->FontInfoMask   = EFI_FONT_INFO_ANY_FONT;
 
             // Center the label on the key.
             //
@@ -1370,7 +1381,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
                 EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                 EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                 mOSK.pKeyMap[Count].KeyLabel,
-                &StringInfo,
+                StringInfo,
                 &mOSK.pKeyTextBltBuffer,
                 KeyLabelOrigX,
                 KeyLabelOrigY,
@@ -1425,6 +1436,11 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
     mOSK.bKeyboardSizeChanged = FALSE;
 
 Exit:
+
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
+    }
 
     return Status;
 }
