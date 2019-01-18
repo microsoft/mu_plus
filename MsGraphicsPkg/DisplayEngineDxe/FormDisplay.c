@@ -912,6 +912,7 @@ CreateFormControls (IN FORM_DISPLAY_ENGINE_FORM *FormData,
     //
     FontInfo.FontStyle = EFI_HII_FONT_STYLE_NORMAL;
     FontInfo.FontSize = MsUiGetSmallFontHeight ();     // Cell height for small font.
+    FontInfo.FontName[0] = L'\0';
 
     // Set a starting position within the canvas for rendering UI controls.
     //

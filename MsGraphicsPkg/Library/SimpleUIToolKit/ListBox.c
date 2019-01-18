@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -39,7 +39,7 @@
 // Private
 //
 static
-TOUCH_LOCATION 
+TOUCH_LOCATION
 QueryPointerLocation (IN ListBox         *this,
                       IN SWM_INPUT_STATE *pInputState,
                       IN UINTN            Index) {
@@ -171,11 +171,11 @@ EFI_STATUS
 RenderCellTrashcan (IN  ListBox  *this,
                     IN  UINT32   CellIndex) {
     EFI_STATUS                       Status;
-    EFI_FONT_DISPLAY_INFO            StringInfo;
+    EFI_FONT_DISPLAY_INFO            *StringInfo = NULL;
     CHAR16                           TrashcanString[] = {(CHAR16)0xE107, 0x00 };
     EFI_STRING                       Trashcan = (EFI_STRING) &TrashcanString;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *pFillColor;
-    EFI_IMAGE_OUTPUT                *pBltBuffer;
+    EFI_IMAGE_OUTPUT                *pBltBuffer = NULL;
     UINTN                            Left;
     UINTN                            Top;
 
@@ -183,29 +183,36 @@ RenderCellTrashcan (IN  ListBox  *this,
     {
         return EFI_SUCCESS;
     }
+
+    StringInfo = BuildFontDisplayInfoFromFontInfo (this->m_FontInfo);
+    if (NULL == StringInfo)
+    {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
+
     if (CellIndex == this->m_SelectedCell)
     {
         pFillColor = &this->m_SelectColor;
         // TODO - need to pass in font color.
-        CopyMem(&StringInfo.ForegroundColor, &gMsColorTable.ListBoxTranshanSelectColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem(&StringInfo->ForegroundColor, &gMsColorTable.ListBoxTranshanSelectColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     }
     else
     {
         pFillColor = &this->m_NormalColor;
         // TODO - need to pass in font color.
-        CopyMem(&StringInfo.ForegroundColor, &gMsColorTable.ListBoxTranshanNormalColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem(&StringInfo->ForegroundColor, &gMsColorTable.ListBoxTranshanNormalColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     }
 
     if (this->m_State == GRAYED){
         pFillColor = &this->m_GrayOutColor;
-        CopyMem(&StringInfo.ForegroundColor, &gMsColorTable.ListBoxTranshanGrayoutColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem(&StringInfo->ForegroundColor, &gMsColorTable.ListBoxTranshanGrayoutColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     }
 
-    CopyMem(&StringInfo.BackgroundColor, pFillColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    CopyMem(&StringInfo->BackgroundColor, pFillColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
-    StringInfo.FontInfoMask     = EFI_FONT_INFO_ANY_FONT;
-    CopyMem(&StringInfo.FontInfo, &this->m_FontInfo, sizeof(EFI_FONT_INFO));
-    StringInfo.FontInfo.FontSize = MsUiGetLargeFontHeight ();
+    StringInfo->FontInfoMask     = EFI_FONT_INFO_ANY_FONT;
+    StringInfo->FontInfo.FontSize = MsUiGetLargeFontHeight ();
 
     // Prepare string blitting buffer.
     //
@@ -231,7 +238,7 @@ RenderCellTrashcan (IN  ListBox  *this,
                             mClientImageHandle,
                             EFI_HII_DIRECT_TO_SCREEN,
                             Trashcan,
-                            &StringInfo,
+                            StringInfo,
                             &pBltBuffer,
                             Left,
                             Top,
@@ -242,7 +249,19 @@ RenderCellTrashcan (IN  ListBox  *this,
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"StringToWindow error %r\n",Status));
     }
+
 Exit:
+
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
+    }
+
+    if (NULL != pBltBuffer)
+    {
+        FreePool(pBltBuffer);
+    }
+
     return EFI_SUCCESS;
 }
 
@@ -287,7 +306,7 @@ RenderCell(IN ListBox       *this,
            IN UINT32        CellIndex)
 {
     EFI_STATUS                      Status = EFI_SUCCESS;
-    EFI_FONT_DISPLAY_INFO           StringInfo;
+    EFI_FONT_DISPLAY_INFO           *StringInfo = NULL;
     EFI_IMAGE_OUTPUT                *pBltBuffer = NULL;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *pFillColor;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *pCellRingColor;
@@ -303,25 +322,33 @@ RenderCell(IN ListBox       *this,
     // Color.
     // TODO - Hover.
     //
+
+    StringInfo = BuildFontDisplayInfoFromFontInfo (this->m_FontInfo);
+    if (NULL == StringInfo)
+    {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
+
     if (CellIndex == this->m_SelectedCell)
     {
         pFillColor = &this->m_SelectColor;
         // TODO - need to pass in font color.
-        CopyMem(&StringInfo.ForegroundColor, &gMsColorTable.ListBoxSelectFGColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem(&StringInfo->ForegroundColor, &gMsColorTable.ListBoxSelectFGColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     }
     else
     {
         pFillColor = &this->m_NormalColor;
         // TODO - need to pass in font color.
-        CopyMem(&StringInfo.ForegroundColor, &gMsColorTable.ListBoxNormalFGColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem(&StringInfo->ForegroundColor, &gMsColorTable.ListBoxNormalFGColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     }
 
     if (this->m_State == GRAYED){
         pFillColor = &this->m_GrayOutColor;
-        CopyMem(&StringInfo.ForegroundColor, &gMsColorTable.ListBoxGrayoutFGColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem(&StringInfo->ForegroundColor, &gMsColorTable.ListBoxGrayoutFGColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     }
 
-    CopyMem(&StringInfo.BackgroundColor, pFillColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    CopyMem(&StringInfo->BackgroundColor, pFillColor, sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     // Render cell background.
     //
     UINT32 CellWidth  = (pCell->CellBounds.Right - pCell->CellBounds.Left + 1);
@@ -397,8 +424,7 @@ RenderCell(IN ListBox       *this,
     pBltBuffer->Image.Screen = mUITGop;
 
 
-    StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-    CopyMem (&StringInfo.FontInfo, &this->m_FontInfo, sizeof(EFI_FONT_INFO));
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
     // TODO - for checkbox type listbox cells, how to handle text indent - indent checkbox as well?  For now
     // we keep the checkbox left-justified in the cell and the caller-specified text indent value affects the cell text only.
@@ -411,7 +437,7 @@ RenderCell(IN ListBox       *this,
                             EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                             EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                             pCell->pCellText,
-                            &StringInfo,
+                            StringInfo,
                             &pBltBuffer,
                             pCell->CellTextBounds.Left,
                             pCell->CellTextBounds.Top,
@@ -425,6 +451,11 @@ Exit:
     if (NULL != pBltBuffer)
     {
         FreePool(pBltBuffer);
+    }
+
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
     }
 
     return Status;
@@ -914,7 +945,11 @@ VOID Ctor(IN ListBox                        *this,
 
     // Initialize variables.
     //
-    CopyMem(&this->m_FontInfo, FontInfo, sizeof(EFI_FONT_INFO));
+    this->m_FontInfo = DupFontInfo (FontInfo);
+    if (NULL == this->m_FontInfo)
+    {
+        goto Exit;
+    }
 
     this->m_NormalColor         = *NormalColor;
     this->m_HoverColor          = *HoverColor;
@@ -1055,9 +1090,15 @@ VOID Dtor(VOID *this)
             FreePool(privthis->m_pCells[Index].pCellText);
         }
     }
+
     if (NULL != privthis->m_pCells)
     {
         FreePool(privthis->m_pCells);
+    }
+
+    if (NULL != privthis->m_FontInfo)
+    {
+        FreePool(privthis->m_FontInfo);
     }
 
     if (NULL != privthis)

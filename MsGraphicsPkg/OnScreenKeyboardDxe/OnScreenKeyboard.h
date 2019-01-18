@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -39,7 +39,7 @@
 
 #define DEFAULT_OSK_ICON_LOCATION       TopLeft         // Default keyboard icon screen position.
 #define DEFAULT_OSK_LOCATION            TopLeft         // Default keyboard screen position.
-#define DEFAULT_OSK_ANGLE               Angle_0         // Default keyboard rotation angle.             
+#define DEFAULT_OSK_ANGLE               Angle_0         // Default keyboard rotation angle.
 #define DEFAULT_OSK_SIZE                0.70f            // Default keyboard size (percent of screen width).
 
 #define PERIODIC_CHKINPUT_INTERVAL  (  5 * 10 * 1000)   // Check for pointer events: 5ms in 100ns units
@@ -64,10 +64,10 @@
 #define DEFAULT_MIN_SCALE           (float)0.1
 #define STANDARD_KEY_WIDTH          (float)145.0
 #define STANDARD_KEY_HEIGHT         (float)120.0
-#define BKSP_KEY_WIDTH_PERCENT      (float)2.103448 
+#define BKSP_KEY_WIDTH_PERCENT      (float)2.103448
 #define ENTER_KEY_WIDTH_PERCENT     (float)1.827586
 #define SPACE_KEY_WIDTH_PERCENT     (float)6.482758
-    
+
 #define KEY_SPACING_PERCENT         (float)0.09655172
 #define INDENT_SPACING_PERCENT      (float)0.82758620
 #define INDENT2_SPACING_PERCENT     (float)1.10344820
@@ -166,7 +166,7 @@ typedef struct _KEYINFO_tag
     // Raw key bounding rectangle (floating-point 3D space) used for transformations
     //
     RECT3D *pKeyBoundingRect;
-    
+
     // Key bounding rectangle (as integer) used for display and touch/mouse hit detection
     //
     struct
@@ -244,8 +244,10 @@ typedef struct _KEYBOARDINFO_tag
     UINTN KeyboardDragOrigY;                // Starting/sampled keyboard Y position during drag operation (used to compute dx, dy offset)
 
     // Preferred font display information (adapted to current video mode).
-    //
-    EFI_FONT_INFO           PreferredFontInfo;  
+    // NOTE: Unless space is allocated for a FontName directly after the EFI_FONT_INFO
+    //       structure, a font name can not be specified. The EFI_FONT_INFO structure only allocates
+    //       space for a single CHAR16 (the terminating NULL).
+    EFI_FONT_INFO           PreferredFontInfo;
 
     // Memory buffers used to render the keyboard and to maintain screen contents
     // when the keyboard is dismissed
