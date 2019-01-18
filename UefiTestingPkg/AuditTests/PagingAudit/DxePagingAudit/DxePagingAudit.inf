@@ -53,8 +53,7 @@
   DebugLib
   UefiBootServicesTableLib
   UefiLib
-  CpuExceptionHandlerLib
-  DebugFileLoggerLib
+  PeCoffGetEntryPointLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

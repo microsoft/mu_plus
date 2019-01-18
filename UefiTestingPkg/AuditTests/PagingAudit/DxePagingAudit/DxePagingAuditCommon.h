@@ -30,7 +30,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define    MEM_INFO_DATABASE_REALLOC_CHUNK   0x1000
 #define    MEM_INFO_DATABASE_MAX_STRING_SIZE 0x400  
 #define    MAX_STRING_SIZE 0x1000
-#define    ADDRESS_BITS 0x0000007FFFFFF000ull
 
 #define IndexToAddress(a, b, c, d)   ((UINT64) (a << 39) + (b << 30) + (c <<  21) + (d << 12))
 

@@ -728,13 +728,14 @@ GetFlatPageTableData (
   // First, fail fast if some of the parameters don't look right.
   //
   // ALL count parameters should be provided.
-  if (Pte1GCount == NULL || Pte2MCount == NULL || Pte4KCount == NULL || PdeCount == NULL) {
+  if (Pte1GCount == NULL || Pte2MCount == NULL || Pte4KCount == NULL || PdeCount == NULL || GuardCount == NULL) {
     return EFI_INVALID_PARAMETER;
   }
   // If a count is greater than 0, the corresponding buffer pointer MUST be provided.
   // It will be assumed that all buffers have space for any corresponding count.
   if ((*Pte1GCount > 0 && Pte1GEntries == NULL) || (*Pte2MCount > 0 && Pte2MEntries == NULL) ||
-      (*Pte4KCount > 0 && Pte4KEntries == NULL) || (*PdeCount > 0 && PdeEntries == NULL)) {
+      (*Pte4KCount > 0 && Pte4KEntries == NULL) || (*PdeCount > 0 && PdeEntries == NULL) ||
+      (*GuardCount > 0 && GuardEntries == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -848,7 +849,8 @@ GetFlatPageTableData (
   // Only matters if a given buffer was provided.
   //
   if ((Pte1GEntries != NULL && *Pte1GCount < My1GCount) || (Pte2MEntries != NULL && *Pte2MCount < My2MCount) ||
-      (Pte4KEntries != NULL && *Pte4KCount < My4KCount) || (PdeEntries != NULL && *PdeCount < MyPdeCount)) {
+      (Pte4KEntries != NULL && *Pte4KCount < My4KCount) || (PdeEntries != NULL && *PdeCount < MyPdeCount) ||
+      (GuardEntries != NULL && *GuardCount < MyGuardCount)) {
     Status = EFI_BUFFER_TOO_SMALL;
   }
 
@@ -917,6 +919,7 @@ LoadFlatPageTableData(
                                    *Pte1GEntries, *Pte2MEntries, *Pte4KEntries, *PdeEntries, *GuardEntries );
     if (Status == EFI_BUFFER_TOO_SMALL)
     {
+      DEBUG(( DEBUG_ERROR, __FUNCTION__" Second GetFlatPageTableData call returned - %r\n", Status ));
       FreePool( *Pte1GEntries );
       FreePool( *Pte2MEntries );
       FreePool( *Pte4KEntries );
@@ -970,6 +973,7 @@ LoadFlatPageTableData(
     *GuardCount = 0;
   }
 
+  DEBUG(( DEBUG_ERROR, __FUNCTION__" - Exit... - %r\n", Status ));
   return !EFI_ERROR( Status );
 }
 
@@ -1020,18 +1024,18 @@ DumpPagingInfo (
   IN      VOID                      *Context
   )
 {
-  EFI_STATUS    Status = EFI_SUCCESS;
-  static UINTN                           Pte1GCount = 0;
-  static UINTN                           Pte2MCount = 0;
-  static UINTN                           Pte4KCount = 0;
-  static UINTN                           PdeCount = 0;
-  static UINTN                           GuardCount = 0;
-  static PAGE_TABLE_1G_ENTRY            *Pte1GEntries = NULL;
-  static PAGE_TABLE_ENTRY               *Pte2MEntries = NULL;
-  static PAGE_TABLE_4K_ENTRY            *Pte4KEntries = NULL;
-  static UINT64                         *PdeEntries = NULL;
-  static UINT64                         *GuardEntries = NULL;
-  CHAR8                                  TempString[MAX_STRING_SIZE];
+  EFI_STATUS                      Status = EFI_SUCCESS;
+  UINTN                           Pte1GCount = 0;
+  UINTN                           Pte2MCount = 0;
+  UINTN                           Pte4KCount = 0;
+  UINTN                           PdeCount = 0;
+  UINTN                           GuardCount = 0;
+  PAGE_TABLE_1G_ENTRY            *Pte1GEntries = NULL;
+  PAGE_TABLE_ENTRY               *Pte2MEntries = NULL;
+  PAGE_TABLE_4K_ENTRY            *Pte4KEntries = NULL;
+  UINT64                         *PdeEntries = NULL;
+  UINT64                         *GuardEntries = NULL;
+  CHAR8                           TempString[MAX_STRING_SIZE];
 
   Status = gBS->LocateProtocol(&gHeapGuardDebugProtocolGuid, NULL, (VOID **) &mHgDumpBitMap);
   if (EFI_ERROR(Status)){
@@ -1051,14 +1055,19 @@ DumpPagingInfo (
     DflDxeCreateAndWriteFileSFS(mFs_Handle, L"2M.dat", Pte2MCount * sizeof( PAGE_TABLE_ENTRY ), Pte2MEntries);
     DflDxeCreateAndWriteFileSFS(mFs_Handle, L"4K.dat", Pte4KCount * sizeof( PAGE_TABLE_4K_ENTRY ), Pte4KEntries);
     DflDxeCreateAndWriteFileSFS(mFs_Handle, L"PDE.dat", PdeCount * sizeof( UINT64 ), PdeEntries);
-  }
 
-  for (UINT64 i = 0; i < GuardCount; i ++) {
-    AsciiSPrint( TempString, MAX_STRING_SIZE,
-      "GuardPage,0x%016lx\n",
-      GuardEntries[i] );
-    DEBUG((DEBUG_ERROR, __FUNCTION__"  %s\n", TempString));
-    AppendToMemoryInfoDatabase( TempString );
+    // Only populate guard pages when function call is successful
+    for (UINT64 i = 0; i < GuardCount; i ++) {
+      AsciiSPrint( TempString, MAX_STRING_SIZE,
+        "GuardPage,0x%016lx\n",
+        GuardEntries[i] );
+      DEBUG((DEBUG_ERROR, __FUNCTION__"  %s\n", TempString));
+      AppendToMemoryInfoDatabase( TempString );
+    }
+  }
+  else {
+    DEBUG(( DEBUG_ERROR, __FUNCTION__" - LoadFlatPageTableData returned with failure, bail from here!\n" ));
+    goto Cleanup;
   }
 
   FlushAndClearMemoryInfoDatabase( L"GuardPage" );
@@ -1067,6 +1076,23 @@ DumpPagingInfo (
   LoadedImageTableDump();
   MemoryAttributesTableDump();
   FlushAndClearMemoryInfoDatabase( L"MemoryInfoDatabase" );
+
+Cleanup:
+  if (Pte1GEntries != NULL) {
+    FreePool( Pte1GEntries );
+  }
+  if (Pte2MEntries != NULL) {
+    FreePool( Pte2MEntries );
+  }
+  if (Pte4KEntries != NULL) {
+    FreePool( Pte4KEntries );
+  }
+  if (PdeEntries != NULL) {
+    FreePool( PdeEntries );
+  }
+  if (GuardEntries != NULL) {
+    FreePool( GuardEntries );
+  }
 
   DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
 }
