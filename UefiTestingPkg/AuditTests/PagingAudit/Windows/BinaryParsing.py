@@ -30,8 +30,6 @@ from MemoryRangeObjects import *
 import logging
 import csv
 
-ADDRESS_BITS = 0x0000007FFFFFF000
-
 def ParseFileToBytes(fileName):
     file = open(fileName, "rb")
     d = memoryview(file.read())
@@ -50,7 +48,7 @@ def ParseInfoFile(fileName):
     return MemoryRanges
 
 
-def Parse4kPages(fileName):
+def Parse4kPages(fileName, addressbits):
     num = 0
     pages = []
     logging.debug("-- Processing file '%s'..." % fileName)
@@ -64,7 +62,7 @@ def Parse4kPages(fileName):
         ReadWrite = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
         User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
         # PageTableBaseAddress is 40 bits long
-        PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & ADDRESS_BITS)
+        PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & addressbits)
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
         if Present == 0:
             raise Exception ("Data error")
@@ -76,7 +74,7 @@ def Parse4kPages(fileName):
     return pages
 
 
-def Parse2mPages(fileName):
+def Parse2mPages(fileName, addressbits):
     num = 0
     pages = []
     logging.debug("-- Processing file '%s'..." % fileName)
@@ -91,7 +89,7 @@ def Parse2mPages(fileName):
         MustBe1 = ((ByteArray[byteZeroIndex + 0] & 0x80) >> 7)
         User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
         # PageTableBaseAddress is 31 bits long
-        PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 2] & 0xE0) >> 5)) + (ByteArray[byteZeroIndex + 3] << 3) + (ByteArray[byteZeroIndex + 4] << 11) + (ByteArray[byteZeroIndex + 5] << 19) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 27) << 21) & ADDRESS_BITS)
+        PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 2] & 0xE0) >> 5)) + (ByteArray[byteZeroIndex + 3] << 3) + (ByteArray[byteZeroIndex + 4] << 11) + (ByteArray[byteZeroIndex + 5] << 19) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 27) << 21) & addressbits)
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
 
         byteZeroIndex += 8
@@ -101,7 +99,7 @@ def Parse2mPages(fileName):
     return pages
 
 
-def Parse1gPages(fileName):
+def Parse1gPages(fileName, addressbits):
     num = 0
     pages = []
     logging.debug("-- Processing file '%s'..." % fileName)
@@ -116,7 +114,7 @@ def Parse1gPages(fileName):
         MustBe1 = ((ByteArray[byteZeroIndex + 0] & 0x80) >> 7)
         User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
         # PageTableBaseAddress is 22 bits long
-        PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 3] & 0xC0) >> 6)) + (ByteArray[byteZeroIndex + 4] << 2) + (ByteArray[byteZeroIndex + 5] << 10) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 18) << 30) & ADDRESS_BITS) # shift and address bits
+        PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 3] & 0xC0) >> 6)) + (ByteArray[byteZeroIndex + 4] << 2) + (ByteArray[byteZeroIndex + 5] << 10) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 18) << 30) & addressbits) # shift and address bits
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
 
         byteZeroIndex += 8

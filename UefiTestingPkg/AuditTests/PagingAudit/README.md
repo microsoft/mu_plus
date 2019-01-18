@@ -78,7 +78,10 @@ If the USB disk is FS0:\, the files should be in FS1:\\. Copy them to the flash 
 copy FS1:\*.dat FS0:\
 ```
 
-On a Windows PC, run the Python script on the data found on your USB key.  
+On a Windows PC, run Windows\PagingReportGenerator.py script with the data found on your USB key. Please use the following command for detailed script instruction:
+```
+PagingReportGenerator.py -h
+```
 
 Finally, double-click the HTML output file and check your results.   
 
