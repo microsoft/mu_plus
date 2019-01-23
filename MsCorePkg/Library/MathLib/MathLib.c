@@ -28,7 +28,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 #include <Uefi.h>
 #include <Library/MathLib.h>
-#include <Library/FltUsedLib.h>
 
 /**
 Find sine of a provided double in radians

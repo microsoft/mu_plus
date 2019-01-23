@@ -27,7 +27,6 @@
 **/
 
 #include "SimpleUIToolKitInternal.h"
-#include <Library/FltUsedLib.h>
 
 
 #define UIT_TS_HIGHLIGHT_RING_WIDTH     MsUiScaleByTheme(4)   // Number of pixels making up the toggle switch's highlight outer border (ring).
