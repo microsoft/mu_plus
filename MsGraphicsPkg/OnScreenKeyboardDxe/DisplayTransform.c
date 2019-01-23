@@ -29,7 +29,6 @@
 #include <Uefi.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MathLib.h>
-#include <Library/FltUsedLib.h>
 #include "DisplayTypes.h"
 #include "DisplayTransform.h"
 
