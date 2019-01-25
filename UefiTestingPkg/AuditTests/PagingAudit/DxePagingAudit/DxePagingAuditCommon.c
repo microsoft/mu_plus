@@ -2,7 +2,7 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (c) 2017, Microsoft Corporation
+Copyright (c) 2017 - 2019, Microsoft Corporation
 
 All rights reserved.
 Redistribution and use in source and binary forms, with or without
@@ -26,31 +26,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-// MS_CHANGE - Entire file created.
 
-#include <Uefi.h>
-
-#include <Library/BaseLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/DebugLib.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/PeCoffGetEntryPointLib.h>
-#include <Register/Msr.h>
-#include <Library/PrintLib.h>
-// #include <Library/ShellLib.h>
-#include <Library/UefiApplicationEntryPoint.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiLib.h>
-#include <Guid/EventGroup.h>
-#include <Protocol/SimpleFileSystem.h>
-#include <Protocol/HeapGuardDebug.h>
-#include <Register/Msr.h>
-#include <Register/Cpuid.h>
-
-#include <Library/DevicePathLib.h>
-#include <Guid/DebugImageInfoTable.h>
-#include <Guid/MemoryAttributesTable.h>
 #include "DxePagingAuditCommon.h"
+
 
 HEAP_GUARD_DEBUG_PROTOCOL *mHgDumpBitMap;
 EFI_FILE  *mFs_Handle;
@@ -72,8 +50,8 @@ UINTN      mMemoryInfoDatabaseAllocSize = 0;
                                     String has not been added.
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 AppendToMemoryInfoDatabase (
   IN CONST CHAR8    *DatabaseString
   )
@@ -299,89 +277,6 @@ MemoryAttributesTableDump (
   FreePool(Buffer);
 }
 
-
-/**
-  Initializes the valid bits mask and valid address mask for MTRRs.
-
-  This function initializes the valid bits mask and valid address mask for MTRRs.
-
-  Copied from UefiCpuPkg MtrrLib
-
-  @param[out]  MtrrValidBitsMask     The mask for the valid bit of the MTRR
-  @param[out]  MtrrValidAddressMask  The valid address mask for the MTRR
-
-**/
-STATIC
-VOID
-InitializeMtrrMask (
-  OUT UINT64 *MtrrValidBitsMask,
-  OUT UINT64 *MtrrValidAddressMask
-  )
-{
-  UINT32                          MaxExtendedFunction;
-  CPUID_VIR_PHY_ADDRESS_SIZE_EAX  VirPhyAddressSize;
-
-
-  AsmCpuid( CPUID_EXTENDED_FUNCTION, &MaxExtendedFunction, NULL, NULL, NULL );
-
-  if (MaxExtendedFunction >= CPUID_VIR_PHY_ADDRESS_SIZE) {
-    AsmCpuid( CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL );
-  } else {
-    VirPhyAddressSize.Bits.PhysicalAddressBits = 36;
-  }
-
-  *MtrrValidBitsMask = LShiftU64( 1, VirPhyAddressSize.Bits.PhysicalAddressBits ) - 1;
-  *MtrrValidAddressMask = *MtrrValidBitsMask & 0xfffffffffffff000ULL;
-}
-
-STATIC
-EFI_STATUS
-TSEGDumpHandler (
-  VOID
-  )
-{
-  UINT64      SmrrBase;
-  UINT64      SmrrMask;
-  UINT64      Length; 
-  UINT64      MtrrValidBitsMask; 
-  UINT64      MtrrValidAddressMask;  
-  CHAR8       TempString[MAX_STRING_SIZE];
-
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
-
-  MtrrValidBitsMask = 0;
-  MtrrValidAddressMask = 0;
-
-  InitializeMtrrMask( &MtrrValidBitsMask, &MtrrValidAddressMask );
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", MtrrValidBitsMask , MtrrValidAddressMask ));
-
-  // This is a 64-bit read, but the SMRR registers bits 63:32 are reserved.
-  SmrrBase = AsmReadMsr64( MSR_IA32_SMRR_PHYSBASE );
-  SmrrMask = AsmReadMsr64( MSR_IA32_SMRR_PHYSMASK );
-  // Extend the mask to account for the reserved bits.
-  SmrrMask |= 0xffffffff00000000ULL;
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"SMRR base 0x%016lx, mask: 0x%016lx\n", SmrrBase , SmrrMask ));
-
-  // Extend the top bits of the mask to account for the reserved
-
-  Length = ((~(SmrrMask & MtrrValidAddressMask)) & MtrrValidBitsMask) + 1;
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"Calculated length: 0x%016lx\n", Length ));
-
-  // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
-  AsciiSPrint( TempString, MAX_STRING_SIZE,
-               "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-               16,
-               (SmrrBase & MtrrValidAddressMask),
-               0,
-               EFI_SIZE_TO_PAGES( Length ),
-               0 );
-  AppendToMemoryInfoDatabase( TempString );
-
-  return EFI_SUCCESS;
-}
 
 /**
  * @brief      Writes the UEFI memory map to file.
@@ -1071,7 +966,7 @@ DumpPagingInfo (
   }
 
   FlushAndClearMemoryInfoDatabase( L"GuardPage" );
-  TSEGDumpHandler();
+  DumpProcessorSpecificHandlers();
   MemoryMapDumpHandler();
   LoadedImageTableDump();
   MemoryAttributesTableDump();
@@ -1096,38 +991,3 @@ Cleanup:
 
   DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
 }
-
-/**
-  SmmPagingAuditAppEntryPoint
-
-  @param[in] ImageHandle  The firmware allocated handle for the EFI image.
-  @param[in] SystemTable  A pointer to the EFI System Table.
-
-  @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
-
-**/
-EFI_STATUS
-EFIAPI
-PagingAuditDxeEntryPoint (
-  IN     EFI_HANDLE         ImageHandle,
-  IN     EFI_SYSTEM_TABLE  *SystemTable
-)
-{
-  EFI_STATUS    Status = EFI_SUCCESS;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" registered - %r\n", Status));
-  EFI_EVENT                         Event;
-
-  Status = gBS->CreateEventEx (
-                      EVT_NOTIFY_SIGNAL,
-                      TPL_CALLBACK,
-                      DumpPagingInfo,
-                      NULL,
-                      &gEfiEventExitBootServicesGuid,
-                      &Event
-                      );
-  // // DumpPagingInfo();
-  DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
-
-  return EFI_SUCCESS;
-} // SmmPagingAuditAppEntryPoint()

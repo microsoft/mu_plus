@@ -3,7 +3,7 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (c) 2017, Microsoft Corporation
+Copyright (c) 2017 - 2019, Microsoft Corporation
 
 All rights reserved.
 Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,29 @@ OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
+
+#ifndef _DXE_PAGING_AUDIT_COMMON_H_
+#define _DXE_PAGING_AUDIT_COMMON_H_
+
+#include <Uefi.h>
+
+#include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/DebugLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/PeCoffGetEntryPointLib.h>
+#include <Library/PrintLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiLib.h>
+#include <Guid/EventGroup.h>
+#include <Protocol/SimpleFileSystem.h>
+#include <Protocol/HeapGuardDebug.h>
+#include <Register/Cpuid.h>
+
+#include <Library/DevicePathLib.h>
+#include <Guid/DebugImageInfoTable.h>
+#include <Guid/MemoryAttributesTable.h>
+
 
 #define    MEM_INFO_DATABASE_REALLOC_CHUNK   0x1000
 #define    MEM_INFO_DATABASE_MAX_STRING_SIZE 0x400  
@@ -131,3 +154,51 @@ typedef union {
 
 
 #pragma pack()
+
+/**
+  This helper function writes a string entry to the memory info database buffer.
+  If string would exceed current buffer allocation, it will realloc.
+
+  NOTE: The buffer tracks its size. It does not work with NULL terminators.
+
+  @param[in]  DatabaseString    A pointer to a CHAR8 string that should be
+                                added to the database.
+
+  @retval     EFI_SUCCESS           String was successfully added.
+  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accomodate string.
+                                    String has not been added.
+
+**/
+EFI_STATUS
+EFIAPI
+AppendToMemoryInfoDatabase (
+  IN CONST CHAR8    *DatabaseString
+);
+
+
+/**
+   Dump platform specific handler. Created handler(s) need to be compliant with 
+   Windows\PagingReportGenerator.py, i.e. TSEG.
+**/
+VOID
+EFIAPI
+DumpProcessorSpecificHandlers (
+  VOID
+);
+
+
+/**
+   Event notification handler. Will dump paging information to disk.
+
+  @param[in]  Event     Event whose notification function is being invoked
+  @param[in]  Context   Pointer to the notification function's context
+
+**/
+VOID
+EFIAPI
+DumpPagingInfo (
+  IN      EFI_EVENT                 Event,
+  IN      VOID                      *Context
+);
+
+#endif // _DXE_PAGING_AUDIT_COMMON_H_
