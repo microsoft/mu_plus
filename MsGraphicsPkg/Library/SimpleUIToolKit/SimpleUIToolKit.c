@@ -36,7 +36,7 @@ InitializeUIToolKit (IN EFI_HANDLE ImageHandle)
 {
     EFI_STATUS  Status = EFI_SUCCESS;
 
-    DEBUG((DEBUG_ERROR,"[SUIT] Initializing UI Toolkit for %g\n", &gEfiCallerIdGuid));
+    DEBUG((DEBUG_INFO,"[SUIT] Initializing UI Toolkit for %g", &gEfiCallerIdGuid));
 
     // Save the client's image handle for later.
     //
