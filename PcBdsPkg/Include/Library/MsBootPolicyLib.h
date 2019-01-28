@@ -35,8 +35,7 @@ typedef enum {
     MsBootPXE4,
     MsBootPXE6,
     MsBootHDD,
-    MsBootUSB,
-    MsResetComputer
+    MsBootUSB
 } BOOT_SEQUENCE;
 
 /**
