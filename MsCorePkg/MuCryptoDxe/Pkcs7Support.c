@@ -77,25 +77,6 @@ IN  UINTN                               DataLength
 
 
 
-/**
-Function to install Pkcs7 Protocol for other drivers to use
-
-**/
-EFI_STATUS
-EFIAPI
-InstallPkcs7Support(
-IN EFI_HANDLE          ImageHandle
-)
-{
-  mPkcsProt.Verify = VerifyFunc;
-
-  return gBS->InstallMultipleProtocolInterfaces(
-    &ImageHandle,
-    &gMuPKCS7ProtocolGuid,
-    &mPkcsProt,
-    NULL
-    );
-}
 
 /**
 Function to uninstall Pkcs7 Protocol
@@ -163,3 +144,24 @@ Exit:
 
   return Status;
 }// VerifyEKUFunc()
+
+/**
+Function to install Pkcs7 Protocol for other drivers to use
+
+**/
+EFI_STATUS
+EFIAPI
+InstallPkcs7Support(
+IN EFI_HANDLE          ImageHandle
+)
+{
+  mPkcsProt.Verify    = VerifyFunc;
+  mPkcsProt.VerifyEKU = VerifyEKUFunc;
+
+  return gBS->InstallMultipleProtocolInterfaces(
+    &ImageHandle,
+    &gMuPKCS7ProtocolGuid,
+    &mPkcsProt,
+    NULL
+    );
+}
