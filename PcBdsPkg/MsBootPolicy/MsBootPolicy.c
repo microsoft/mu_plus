@@ -48,11 +48,6 @@ static BOOT_SEQUENCE mSddBootSequence[] = {
     MsBootHDD,
     MsBootDone
 };
-static BOOT_SEQUENCE mFactoryUsbBootSequence[] = {
-    MsBootUSB,
-    MsResetComputer,
-    MsBootDone
-};
 
 // Device Path filter routines
 typedef
@@ -569,16 +564,10 @@ MsBootPolicyEntry(
     case 'M':      // "MS" Default of SDD->USB->PXE  , "MA" Default of USB->PXE->SDD
     default:       // Try the default boot option is the parameter is messed up
         AltBootRequest = ('A' == *(Parameters + 1));
-        if (AltBootRequest) {
-          DEBUG((DEBUG_INFO, "********** ALT BOOT is selected**************\n"));
-          BootSequence = mFactoryUsbBootSequence;
-        }
-        else {
-          Status = MsBootPolicyLibGetBootSequence(&BootSequence, AltBootRequest);
-          if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "Unable to get boot sequence - using hard coded sequence.\n"));
-            BootSequence = mDefaultBootSequence;
-          }
+        Status = MsBootPolicyLibGetBootSequence(&BootSequence, AltBootRequest);
+        if (EFI_ERROR(Status)) {
+          DEBUG((DEBUG_ERROR, "Unable to get boot sequence - using hard coded sequence.\n"));
+          BootSequence = mDefaultBootSequence;
         }
 
         break;
@@ -646,10 +635,6 @@ MsBootPolicyEntry(
                     DEBUG((DEBUG_WARN, "Second chance USB boot failed! Status = %r\n", Status));
                 }
             }
-            break;
-        case MsResetComputer:
-            DEBUG((DEBUG_INFO, "################### SHOULD NEVER BE HERE*************\n"));
-            gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
             break;
         default:
             DEBUG((DEBUG_ERROR,"Invalid BootSequence value %x\n",BootSequence[Index]));
