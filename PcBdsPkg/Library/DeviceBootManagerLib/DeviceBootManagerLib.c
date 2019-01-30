@@ -52,7 +52,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MsBootManagerSettingsLib.h>
 #include <Library/MsBootOptionsLib.h>
 #include <Library/MsBootPolicyLib.h>
-#include <Library/BootGraphicsProviderLib.h>
 #include <Library/BootGraphicsLib.h>
 #include <Library/GraphicsConsoleHelperLib.h>
 #include <Library/MsPlatformDevicesLib.h>
@@ -1070,7 +1069,7 @@ DeviceBootManagerBeforeConsole (
     EFI_STATUS                Status;
     UINTN                     VarSize;
     UINT8                     *Ver;
-    
+
     VarSize = 0;
     Status = GetUefiVersionNumber(NULL, &VarSize);
     if (Status != EFI_BUFFER_TOO_SMALL) {
@@ -1275,4 +1274,3 @@ DeviceBootManagerUnableToBoot (
     // settiongs to be availabel if ReadyToBoot has been called.
     RebootToFrontPage();
 }
-
