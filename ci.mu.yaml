@@ -15,12 +15,12 @@
         {
             "Path": "MU_BASECORE",
             "Url": "https://github.com/Microsoft/mu_basecore.git",
-            "Branch": "release/201808"
+            "Branch": "release/201811"
         },
         {
             "Path": "Common/MU_TIANO",
             "Url": "https://github.com/Microsoft/mu_tiano_plus.git",
-            "Branch": "release/201808"
+            "Branch": "release/201811"
         }
     ],
 
