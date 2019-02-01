@@ -2890,6 +2890,7 @@ Exit:
 }
 
 EFI_STATUS
+EFIAPI
 OSKResetInputDevice (IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
 IN BOOLEAN                          ExtendedVerification)
 {
@@ -2904,6 +2905,7 @@ IN BOOLEAN                          ExtendedVerification)
 
 
 EFI_STATUS
+EFIAPI
 OSKReadKeyStroke (IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL     *This,
 OUT EFI_INPUT_KEY                      *pKey)
 {
@@ -2936,6 +2938,7 @@ OUT EFI_INPUT_KEY                      *pKey)
 
 
 EFI_STATUS
+EFIAPI
 OSKResetInputDeviceEx (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN BOOLEAN                             ExtendedVerification)
 {
@@ -2944,6 +2947,7 @@ IN BOOLEAN                             ExtendedVerification)
 
 
 EFI_STATUS
+EFIAPI
 OSKReadKeyStrokeEx (IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL     *This,
 OUT EFI_KEY_DATA                          *pKey)
 {
@@ -2957,6 +2961,7 @@ OUT EFI_KEY_DATA                          *pKey)
 
 
 EFI_STATUS
+EFIAPI
 OSKSetState (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_KEY_TOGGLE_STATE               *KeyToggleState)
 {
@@ -2965,6 +2970,7 @@ IN EFI_KEY_TOGGLE_STATE               *KeyToggleState)
 
 
 EFI_STATUS
+EFIAPI
 OSKRegisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_KEY_DATA                       *KeyData,
 IN EFI_KEY_NOTIFY_FUNCTION            KeyNotificationFunction,
@@ -2975,6 +2981,7 @@ OUT EFI_HANDLE                        *NotifyHandle)
 
 
 EFI_STATUS
+EFIAPI
 OSKUnregisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_HANDLE                         NotificationHandle)
 {
