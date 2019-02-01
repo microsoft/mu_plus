@@ -1135,7 +1135,14 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
     {
         goto Exit;
     }
+
     StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
+    if (NULL == StringInfo)
+    {
+        goto Exit;
+    }
+
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
     // Determine the keyboard outer bounding rectangle
     //
@@ -1194,7 +1201,6 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
 
             // Select preferred font size and style for these buttons.
             //
-            StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
             CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
@@ -1322,9 +1328,6 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
         //
         if (TRUE == bShowKeyLabels)
         {
-            // Zero all of FONT_DISPLAY_INFO except preferred font first character as that
-            // has already been set.
-            ZeroMem (StringInfo, sizeof (EFI_FONT_DISPLAY_INFO) - sizeof(CHAR16));
 
             // Use correct color for key text, based on state
             //
