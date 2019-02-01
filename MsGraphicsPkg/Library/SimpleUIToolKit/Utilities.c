@@ -144,7 +144,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
 
     if (EFI_ERROR(Status))
     {
-        DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Failed to calculate string bitmap size: %r.\r\n", Status));
+        DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Failed to calculate string bitmap size: %r.\n", Status));
         goto Exit;
     }
 
@@ -166,7 +166,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
     Bounds->Right    = (Bounds->Left + Width - 1);
     Bounds->Bottom   = (Bounds->Top + Height - 1);
 
-    DEBUG ((DEBUG_VERBOSE, "INFO [SUIT]: Calculated string bitmap size (Actual=L%d,R%d,T%d,B%d  MaxWidth=%d  MaxHeight=%d  TextRows=%d).\r\n", Bounds->Left, Bounds->Right, Bounds->Top, Bounds->Bottom, Width, Height, RowInfoSize));
+    DEBUG ((DEBUG_VERBOSE, "INFO [SUIT]: Calculated string bitmap size (Actual=L%d,R%d,T%d,B%d  MaxWidth=%d  MaxHeight=%d  TextRows=%d).\n", Bounds->Left, Bounds->Right, Bounds->Top, Bounds->Bottom, Width, Height, RowInfoSize));
 
 //CalcFontDescent:
 

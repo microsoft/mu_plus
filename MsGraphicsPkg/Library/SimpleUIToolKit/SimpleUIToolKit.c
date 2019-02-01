@@ -3,7 +3,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -16,10 +16,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -36,7 +36,7 @@ InitializeUIToolKit (IN EFI_HANDLE ImageHandle)
 {
     EFI_STATUS  Status = EFI_SUCCESS;
 
-    DEBUG((DEBUG_INFO,"[SUIT] Initializing UI Toolkit for %g", &gEfiCallerIdGuid));
+    DEBUG((DEBUG_INFO,"[SUIT] Initializing UI Toolkit for %g\n", &gEfiCallerIdGuid));
 
     // Save the client's image handle for later.
     //
@@ -54,7 +54,7 @@ InitializeUIToolKit (IN EFI_HANDLE ImageHandle)
     {
         mUITFont    = NULL;
         Status      = EFI_UNSUPPORTED;
-        DEBUG((DEBUG_ERROR, "INFO [SUIT]: Failed to find Font protocol (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "INFO [SUIT]: Failed to find Font protocol (%r).\n", Status));
         goto Exit;
     }
 
@@ -69,7 +69,7 @@ InitializeUIToolKit (IN EFI_HANDLE ImageHandle)
     {
         mUITGop     = NULL;
         Status      = EFI_UNSUPPORTED;
-        DEBUG((DEBUG_ERROR, "INFO [SUIT]: Failed to find GOP (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "INFO [SUIT]: Failed to find GOP (%r).\n", Status));
         goto Exit;
     }
 
@@ -84,7 +84,7 @@ InitializeUIToolKit (IN EFI_HANDLE ImageHandle)
     {
         mUITSWM     = NULL;
         Status      = EFI_UNSUPPORTED;
-        DEBUG((DEBUG_ERROR, "INFO [SUIT]: Failed to find SWM (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "INFO [SUIT]: Failed to find SWM (%r).\n", Status));
         goto Exit;
     }
 
