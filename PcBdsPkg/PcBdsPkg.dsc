@@ -125,6 +125,7 @@
 [Components]
   PcBdsPkg/Library/MsBootManagerSettingsDxeLib/MsBootManagerSettingsDxeLib.inf
   PcBdsPkg/Library/MsBootOptionsLib/MsBootOptionsLib.inf
+  PcBdsPkg/Library/MsNetworkDelayLib/MsNetworkDelayLib.inf
   PcBdsPkg/Library/MsNetworkDependencyLib/MsNetworkDependencyLib.inf
   PcBdsPkg/Library/PowerServicesLibNull/PowerServicesLibNull.inf
   PcBdsPkg/Library/ThermalServicesLibNull/ThermalServicesLibNull.inf
