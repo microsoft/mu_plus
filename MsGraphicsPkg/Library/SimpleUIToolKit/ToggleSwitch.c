@@ -475,7 +475,6 @@ RenderToggleSwitch(IN ToggleSwitch  *this,
     // Draw toggle switch text.
     //
     StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-    CopyMem (&StringInfo->FontInfo, &this->m_FontInfo, sizeof (EFI_FONT_INFO));
 
     // Determine the correct control text to display.
     //
