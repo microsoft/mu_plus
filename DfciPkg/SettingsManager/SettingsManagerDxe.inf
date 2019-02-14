@@ -86,10 +86,9 @@
   gDfciAuthenticationProtocolGuid  #sometimes consumes
 
 [FeaturePcd]
-
+  gDfciPkgTokenSpaceGuid.PcdDfciEnabled
 
 [Pcd]
-
 
 [Depex]
    gEfiVariableWriteArchProtocolGuid
