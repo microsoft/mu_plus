@@ -409,7 +409,7 @@ GetDfciParameters (
     STATIC BOOLEAN     AlreadyRun = FALSE;
     DFCI_CERT_STRINGS  Cert;
     DFCI_IDENTITY_MASK RecoveryMask;
-    VOID              *dummy;
+    EFI_HII_HANDLE    *RecoveryHandle;
     UINTN              i;
     CHAR8             *Name;
     UINTN              NameSize;
@@ -465,16 +465,17 @@ GetDfciParameters (
         }
 
         // Insure there is at least one certificate for any of the Id's that have recovery permission
-        for (i = DFCI_IDENTITY_SIGNER_OWNER; i != 0; i>>=1) {
+        for (i = DFCI_IDENTITY_SIGNER_OWNER; i >= DFCI_IDENTITY_SIGNER_ZTD; i>>=1) {
             if (i & RecoveryMask) {
                 Status =  mAuthenticationProtocol->GetCertInfo(mAuthenticationProtocol, i, NULL, 0, &Cert);
                 if (EFI_ERROR(Status)) {
                     DEBUG((DEBUG_ERROR, "%a - Unable to get the cert info for %x. %r\n", __FUNCTION__, i, Status));
                 } else {
-                    Status = gBS->LocateProtocol (&gDfciRecoveryFormsetGuid, NULL, (VOID **) &dummy);
-                    if (!EFI_ERROR(Status)) {
+                    RecoveryHandle = HiiGetHiiHandles(&gDfciRecoveryFormsetGuid);
+                    if (RecoveryHandle != NULL) {
                         mDfciMenuConfiguration.DfciRecoveryEnabled = TRUE;
                         DEBUG((DEBUG_INFO, "Dfci Recovery is enabled\n"));
+                        FreePool (RecoveryHandle);
                     }
                     if (Cert.SubjectString != NULL) {
                         FreePool(Cert.SubjectString);

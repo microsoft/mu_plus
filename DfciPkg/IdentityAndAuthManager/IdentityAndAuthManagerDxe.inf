@@ -83,6 +83,7 @@
   DfciUiSupportLib
   DfciXmlIdentitySchemaSupportLib
   ZeroTouchSettingsLib
+  PcdLib
 
 [Guids]
  gEfiCertPkcs7Guid
@@ -96,16 +97,17 @@
   gDfciAuthenticationProtocolGuid  #produces
   gMuPKCS7ProtocolGuid  #consumes
   gDfciSettingPermissionsProtocolGuid #sometimes consumes
-  gDfciSettingAccessProtocolGuid  #sometimes consumes 
+  gDfciSettingAccessProtocolGuid  #sometimes consumes
 
 [FeaturePcd]
+  gDfciPkgTokenSpaceGuid.PcdDfciEnabled
 
 [Pcd]
 
 [Depex]
-   gEfiVariableWriteArchProtocolGuid 
-   AND gEfiVariableArchProtocolGuid 
-   AND gEdkiiVariableLockProtocolGuid 
+   gEfiVariableWriteArchProtocolGuid
+   AND gEfiVariableArchProtocolGuid
+   AND gEdkiiVariableLockProtocolGuid
    AND gDfciSettingPermissionsProtocolGuid
    AND gMuPKCS7ProtocolGuid
    AND gEfiRngProtocolGuid
@@ -119,7 +121,7 @@
 
 
 [BuildOptions.AARCH64]
-    MSFT:*_VS2015x86_AARCH64_DLINK_FLAGS = /include:_fltused  
+    MSFT:*_VS2015x86_AARCH64_DLINK_FLAGS = /include:_fltused
 
 [BuildOptions.AARCH64]
   # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas

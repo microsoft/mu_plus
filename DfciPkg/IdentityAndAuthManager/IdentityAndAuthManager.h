@@ -46,6 +46,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/PcdLib.h>
 #include <Library/UefiLib.h>
 #include <Library/DfciUiSupportLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
