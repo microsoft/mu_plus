@@ -1,6 +1,6 @@
 /**@file Library to interface with alternate boot variable
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c) 2018 - 2019, Microsoft Corporation
 
 All rights reserved.
 Redistribution and use in source and binary forms, with or without 
@@ -39,7 +39,7 @@ ClearAltBoot (
 }
 
 /**
-  Return Uefi version number defined by platform
+  Set the Alternate boot flag
 
   @retval  EFI_SUCCESS  Set AltBoot successfully
   @retval  !EFI_SUCCESS Failed to set AltBoot
