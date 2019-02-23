@@ -113,7 +113,7 @@ MsWheaAddReportEvent(
   )
 {
   EFI_STATUS          Status;
-  MS_WHEA_LIST_ENTRY  *MsWheaListEntry;
+  MS_WHEA_LIST_ENTRY  *MsWheaListEntry = NULL;
   
   // Caller has to supply valid pointers to linked list and data.
   if (MsWheaLinkedList == NULL) {

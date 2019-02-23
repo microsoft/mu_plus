@@ -220,7 +220,7 @@ BuildUsbRequest (
 
     DFCI_SYSTEM_INFORMATION  DfciInfo;
     UINTN                    i;
-    CHAR16                  *PktFileName;
+    CHAR16                  *PktFileName = NULL;
     UINTN                    PktNameLen;
     EFI_STATUS               Status;
 

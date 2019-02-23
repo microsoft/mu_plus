@@ -1878,7 +1878,7 @@ MsWheaReportUnitTestAppEntryPoint (
   IN EFI_SYSTEM_TABLE                 *SystemTable
   )
 {
-  EFI_STATUS            Status;
+  EFI_STATUS            Status = EFI_ABORTED;
   UNIT_TEST_FRAMEWORK   *Fw = NULL;
   CHAR16                ShortTitle[128];
   UNIT_TEST_SUITE       *Misc = NULL;

@@ -613,7 +613,7 @@ MsWheaESCheckHeader (
   OUT MS_WHEA_ERROR_ENTRY_MD          *MsWheaEntryMD
 )
 {
-  EFI_STATUS                    Status;
+  EFI_STATUS                    Status = EFI_SUCCESS;
   MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
   MsWheaESReadHeader(&Header);
