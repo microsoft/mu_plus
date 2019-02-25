@@ -77,6 +77,7 @@
   HttpLib
   MemoryAllocationLib
   JsonLiteParserLib
+  PcdLib
   PrintLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
@@ -112,6 +113,7 @@
 [FeaturePcd]
 
 [Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSetupUiReducedFunction
 
 [Depex]
   gEfiVariableArchProtocolGuid  AND
