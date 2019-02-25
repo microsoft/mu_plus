@@ -63,10 +63,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 extern UINT8  DfciMenuVfrBin[];
 
+// Values for Dfci Menu Configuration
+#define MENU_TRUE  0x01
+#define MENU_FALSE 0x00
+
 typedef struct {
     UINT8    DfciRecoveryEnabled;
     UINT8    DfciHttpRecoveryEnabled;
     UINT8    DfciZeroTouchEnabled;
+    UINT8    DfciZeroTouchCertAvailable;
+    UINT8    DfciZeroTouchOptGrayOut;
     UINT8    DfciOwnerEnabled;
     UINT8    DfciUserEnabled;
     UINT8    DfciUser1Enabled;

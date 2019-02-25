@@ -55,6 +55,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/HiiLib.h>
 #include <Library/JsonLiteParser.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
@@ -288,11 +289,14 @@ CheckIfDfciEnrolled (
 
     EFI_STATUS         Status;
     BOOLEAN            IsDfciMenuEnabled = FALSE;
+    UINT8             *Cert;
+    UINTN              CertSize;
 
-
-    mDfciMenuConfiguration.DfciZeroTouchEnabled = FALSE;
-    mDfciMenuConfiguration.DfciOwnerEnabled = FALSE;
-    mDfciMenuConfiguration.DfciUserEnabled = FALSE;
+    mDfciMenuConfiguration.DfciZeroTouchOptGrayOut = MENU_FALSE;
+    mDfciMenuConfiguration.DfciZeroTouchCertAvailable = MENU_FALSE;
+    mDfciMenuConfiguration.DfciZeroTouchEnabled = MENU_FALSE;
+    mDfciMenuConfiguration.DfciOwnerEnabled = MENU_FALSE;
+    mDfciMenuConfiguration.DfciUserEnabled = MENU_FALSE;
 
     Status =  mAuthenticationProtocol->GetEnrolledIdentities ( mAuthenticationProtocol, &mIdMask);
     if (EFI_ERROR(Status)) {
@@ -300,12 +304,19 @@ CheckIfDfciEnrolled (
         return FALSE;
     }
 
+    Status = GetZeroTouchCertificate (&Cert, &CertSize);
+    if (!EFI_ERROR(Status)) {
+        mDfciMenuConfiguration.DfciZeroTouchCertAvailable = MENU_TRUE;
+        FreePool (Cert);
+        DEBUG((DEBUG_INFO, "%a: Zero Touch certificate is available\n", __FUNCTION__));
+    }
+
     if (IS_ZTD_IDENTITY_ENROLLED(mIdMask)) {
         Status =  mAuthenticationProtocol->GetCertInfo ( mAuthenticationProtocol, DFCI_IDENTITY_SIGNER_ZTD  , NULL, 0, &mZeroTouchCert);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a - Failed to get ZTD cert. %r\n", __FUNCTION__, Status));
         } else {
-            mDfciMenuConfiguration.DfciZeroTouchEnabled = TRUE;
+            mDfciMenuConfiguration.DfciZeroTouchEnabled = MENU_TRUE;
             IsDfciMenuEnabled = TRUE;
         }
     }
@@ -314,7 +325,7 @@ CheckIfDfciEnrolled (
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a - Failed to get owner cert. %r\n", __FUNCTION__, Status));
         } else {
-            mDfciMenuConfiguration.DfciOwnerEnabled = TRUE;
+            mDfciMenuConfiguration.DfciOwnerEnabled = MENU_TRUE;
         }
     }
     if (IS_USER_IDENTITY_ENROLLED(mIdMask)) {
@@ -322,7 +333,7 @@ CheckIfDfciEnrolled (
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a - Failed to get user cert. %r\n", __FUNCTION__, Status));
         } else {
-            mDfciMenuConfiguration.DfciUserEnabled = TRUE;
+            mDfciMenuConfiguration.DfciUserEnabled = MENU_TRUE;
             IsDfciMenuEnabled = TRUE;
         }
     }
@@ -419,8 +430,18 @@ GetDfciParameters (
     if (!AlreadyRun) {
         AlreadyRun = TRUE;
 
-        mDfciMenuConfiguration.DfciHttpRecoveryEnabled = FALSE;
-        mDfciMenuConfiguration.DfciRecoveryEnabled = FALSE;
+        //
+        // If the Setup UI supports a reduce function capability, it needs to set the
+        // the dynamic PCD PcdSetupUiReducedFunction.  This prevent changing the OPT IN
+        // state unless the local user has permission.
+        //
+        if (PcdGetBool(PcdSetupUiReducedFunction)) {
+            mDfciMenuConfiguration.DfciZeroTouchOptGrayOut = MENU_TRUE;
+            DEBUG((DEBUG_INFO, "%a: Reduced function DFci Menu\n", __FUNCTION__));
+        }
+
+        mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_FALSE;
+        mDfciMenuConfiguration.DfciRecoveryEnabled = MENU_FALSE;
         //
         // Populate Cert information
         //
@@ -473,7 +494,7 @@ GetDfciParameters (
                 } else {
                     RecoveryHandle = HiiGetHiiHandles(&gDfciRecoveryFormsetGuid);
                     if (RecoveryHandle != NULL) {
-                        mDfciMenuConfiguration.DfciRecoveryEnabled = TRUE;
+                        mDfciMenuConfiguration.DfciRecoveryEnabled = MENU_TRUE;
                         DEBUG((DEBUG_INFO, "Dfci Recovery is enabled\n"));
                         FreePool (RecoveryHandle);
                     }
@@ -498,27 +519,27 @@ GetDfciParameters (
         }
 
         if (RecoveryMask != 0) {
-            mDfciMenuConfiguration.DfciRecoveryEnabled = TRUE;
+            mDfciMenuConfiguration.DfciRecoveryEnabled = MENU_TRUE;
             DEBUG((DEBUG_INFO, "%a - Ztd Recovery enabled\n",  __FUNCTION__));
         }
 
         Status = GetASetting (DFCI_SETTING_ID__DFCI_URL, (VOID **) &mDfciUrl, &mDfciUrlSize);
         if (!EFI_ERROR(Status) && (mDfciUrlSize >= 1)) {
-            mDfciMenuConfiguration.DfciHttpRecoveryEnabled = TRUE;
+            mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_TRUE;
             SetStringEntry (STRING_TOKEN(STR_DFCI_URL_FIELD), mDfciUrl);
             DEBUG((DEBUG_INFO, "Dfci Http Recovery is enabled\n"));
         }
 
         Status = GetASetting (DFCI_SETTING_ID__MDM_FRIENDLY_NAME, (VOID **) &Name, &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
-            mDfciMenuConfiguration.DfciFriendlyName = TRUE;
+            mDfciMenuConfiguration.DfciFriendlyName = MENU_TRUE;
             SetStringEntry (STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME), Name);
             DEBUG((DEBUG_INFO, "Dfci MDM.FriendlyName is enabled\n"));
         }
 
         Status = GetASetting (DFCI_SETTING_ID__MDM_TENANT_NAME, (VOID **) &Name, &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
-            mDfciMenuConfiguration.DfciTennantName = TRUE;
+            mDfciMenuConfiguration.DfciTennantName = MENU_TRUE;
             SetStringEntry (STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME), Name);
             DEBUG((DEBUG_INFO, "Dfci MDM.Tenant is enabled\n"));
         }
@@ -995,7 +1016,7 @@ DriverCallback (
                 DEBUG((DEBUG_INFO," Opt In selected\n"));
 
                 SetZeroTouchState (ZERO_TOUCH_OPT_IN);
-                mDfciMenuConfiguration.DfciOptInChanged = TRUE;
+                mDfciMenuConfiguration.DfciOptInChanged = MENU_TRUE;
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
                 Status = EFI_SUCCESS;
@@ -1006,7 +1027,7 @@ DriverCallback (
                 DEBUG((DEBUG_INFO," Opt Out selected\n"));
 
                 SetZeroTouchState (ZERO_TOUCH_OPT_OUT);
-                mDfciMenuConfiguration.DfciOptInChanged = TRUE;
+                mDfciMenuConfiguration.DfciOptInChanged = MENU_TRUE;
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
                 Status = EFI_SUCCESS;
