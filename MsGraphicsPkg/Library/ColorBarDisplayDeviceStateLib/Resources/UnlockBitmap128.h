@@ -1,4 +1,4 @@
-// 82  x 128 x 32bpp
+// 83  x 128 x 32bpp
 CONST UINT32 mBltBuffer128[] = { 
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000, 
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000, 
@@ -2658,4 +2658,4 @@ CONST UINT32 mBltBuffer128[] = {
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000
 };
 
-BITMAPDATA unlock128 = {128, 82, mBltBuffer128, sizeof(mBltBuffer128)};
+BITMAPDATA unlock128 = {128, 83, mBltBuffer128, sizeof(mBltBuffer128)};
