@@ -1,7 +1,7 @@
 ##
 # @file Empty library to provide platform version information
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c) 2018 - 2019, Microsoft Corporation
 
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without 
@@ -26,11 +26,11 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = MsUefiVersionLib
+  BASE_NAME                      = MuUefiVersionLib
   FILE_GUID                      = 7D346383-45E2-43E9-88F9-AA2D006AEBB9
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = MsUefiVersionLib
+  LIBRARY_CLASS                  = MuUefiVersionLib
 
 #
 # The following information is for reference only and not required by the build
@@ -40,7 +40,7 @@
 #
 
 [Sources]
-  MsUefiVersionLibNull.c
+  MuUefiVersionLibNull.c
 
 [Packages]
   MdePkg/MdePkg.dec

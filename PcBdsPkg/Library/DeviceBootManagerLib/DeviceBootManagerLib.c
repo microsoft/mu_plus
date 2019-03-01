@@ -1,7 +1,7 @@
 /** @file
  *DeviceBootManager  - Ms Device specific extensions to BdsDxe.
 
-Copyright (c) 2017, Microsoft Corporation
+Copyright (c) 2017 - 2019, Microsoft Corporation
 
 All rights reserved.
 Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/MsUefiVersionLib.h>
+#include <Library/MuUefiVersionLib.h>
 #include <Library/MsNVBootReasonLib.h>
 
 #include <Settings/BootMenuSettings.h>
@@ -434,7 +434,7 @@ UpdateFACSHardwareSignature () {
 
     // Variables for Part 2 Firwmware Version data
     UINTN                                                IndexPart2;
-    UINTN                                                VersionDataSize;
+    UINT32                                               UefiFwVersion;
 
     // Variables for Part 3 System Settings data
     UINTN                                                IndexPart3;
@@ -509,14 +509,8 @@ UpdateFACSHardwareSignature () {
     //
     // Step 3. Determine space for firmware version (Part 2)
     //
-    VersionDataSize = 0;
-    Status = GetUefiVersionNumber(NULL, &VersionDataSize);
-    if (Status != EFI_BUFFER_TOO_SMALL) {
-      DEBUG((DEBUG_ERROR,"Reading with 0 length returned - %r!\n", Status));
-      return;
-    }
     IndexPart2 = BufferCount;                                  // Where, in Buffer, Part 2 starts
-    BufferCount += VersionDataSize / sizeof(UINT32);
+    BufferCount += sizeof(UINT32) / sizeof(UINT32);            // Firmware version from UEFI lib will always be sizeof(UINT32)
     BufferCount += (BufferCount & 0x01);                       // Add 1 to align to 64 bit boundary if necessary
 
     //
@@ -583,14 +577,8 @@ UpdateFACSHardwareSignature () {
     //
     // Step 8. Fill buffer with firmware version
     //
-    Status = GetUefiVersionNumber((UINT8*)&Buffer[IndexPart2], &VersionDataSize);
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR,"Reading with %d length returned - %r!\n", VersionDataSize, Status));
-      return;
-    }
-    else {
-      DEBUG((DEBUG_INFO,"Version number read successfully!\n"));
-    }
+    UefiFwVersion = GetUefiVersionNumber();
+    Buffer[IndexPart2] = UefiFwVersion;
 
     //
     // Step 9. Fill buffer with device settings
@@ -1065,25 +1053,6 @@ DeviceBootManagerBeforeConsole (
   EFI_DEVICE_PATH_PROTOCOL    **DevicePath,
   BDS_CONSOLE_CONNECT_ENTRY   **PlatformConsoles
   ) {
-
-    EFI_STATUS                Status;
-    UINTN                     VarSize;
-    UINT8                     *Ver;
-
-    VarSize = 0;
-    Status = GetUefiVersionNumber(NULL, &VarSize);
-    if (Status != EFI_BUFFER_TOO_SMALL) {
-      DEBUG((DEBUG_ERROR,"Reading with 0 length returned - %r!\n", Status));
-    }
-
-    Ver = AllocatePool(VarSize);
-    Status = GetUefiVersionNumber(Ver, &VarSize);
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR,"Reading with %d length returned - %r!\n", VarSize, Status));
-    }
-    else {
-      DEBUG((DEBUG_INFO,"Version number read successfully!\n"));
-    }
 
     MsBootOptionsLibRegisterDefaultBootOptions ();
     *PlatformConsoles = GetPlatformConsoleList ();

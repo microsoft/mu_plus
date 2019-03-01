@@ -125,6 +125,40 @@ PrintValues(DEVICE_STATE Notifications)
 
 
 /**
+Given an array of blit data find the largest that fits the bannner height
+
+@param si            - UI_STYLE_INFO that will be populated
+@param bannerHeight  - Height of a single banner
+@param blitArray     - array of struct BITMAPDATA holding blit data
+@param arrayLength   - amount of items in blitArray
+**/
+VOID
+EFIAPI
+PopulateIconData(
+IN OUT   UI_STYLE_INFO         *si,
+IN       INT32                 bannerHeight,
+IN       BITMAPDATA*           blitArray[],
+IN       UINT32                arrayLength
+)
+{
+  if (arrayLength > 0) {
+    DEBUG((DEBUG_INFO, "Preloaded icon array length %u\n", arrayLength));
+    for(UINT32 index = 0; index < arrayLength; index++) {
+      DEBUG((DEBUG_INFO, "Checking icon of size %u x %u to see if it fits\n", blitArray[index]->Height, blitArray[index]->Width));
+      if(blitArray[index]->Height <= bannerHeight) {
+        DEBUG((DEBUG_ERROR, "Found fitting icon\n"));
+        si->IconInfo.Width = blitArray[index]->Width;
+        si->IconInfo.Height = blitArray[index]->Height;
+        si->IconInfo.Placement = MIDDLE_CENTER;
+        si->IconInfo.PixelData = (UINT32*) &blitArray[index]->BlitData[0];
+        break;
+      }
+    }
+  }
+}
+
+
+/**
 Function to Display all Active Device States
 
 @param FrameBufferBase   - Address of point 0,0 in the frame buffer
@@ -167,11 +201,9 @@ IN  INT32  HeightInPixels
       {
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_RED;
-        si.IconInfo.Width = SECURE_BOOT_UNLOCKED_BITMAP_WIDTH;
-        si.IconInfo.Height = SECURE_BOOT_UNLOCKED_BITMAP_HEIGHT;
-        si.IconInfo.Placement = MIDDLE_CENTER;
-        si.IconInfo.PixelData = (UINT32*) &SecureBootUnlockedBitmap[0];
-
+        if(sizeof(mBlitArray) > 0) {
+          PopulateIconData(&si, SingleBannerHeight, mBlitArray, sizeof(mBlitArray)/sizeof(mBlitArray[0]));
+        }
       }
       else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_0)
       {

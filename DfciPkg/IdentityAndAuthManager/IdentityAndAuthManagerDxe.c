@@ -93,21 +93,23 @@ Init(
     DEBUG((DEBUG_ERROR, "PopulateInternalCertStore failed %r\n", Status));
   }
 
-  SaveState = TRUE;
+  SaveState = FALSE;
   ZeroTouchState = GetZeroTouchState();
   switch (ZeroTouchState) {
     case ZERO_TOUCH_OPT_IN:
       if ((mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert == NULL) &&
           (mInternalCertStore.Certs[CERT_OWNER_INDEX].Cert == NULL))
       {
-        Status = GetZeroTouchCertificate( &mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert,
-                                          &mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize);
-        if (EFI_ERROR(Status))
-        {
-          DEBUG((DEBUG_ERROR, "[AM] - Unable to obtain built in cert. Code=%r.\n",Status));
-          SaveState = FALSE;
-        } else {
-          mInternalCertStore.PopulatedIdentities |= DFCI_IDENTITY_SIGNER_ZTD;
+        if (FeaturePcdGet(PcdDfciEnabled)) {
+          Status = GetZeroTouchCertificate( &mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert,
+                                            &mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize);
+          if (EFI_ERROR(Status))
+          {
+            DEBUG((DEBUG_ERROR, "[AM] - Unable to obtain built in cert. Code=%r.\n",Status));
+          } else {
+            SaveState = TRUE;
+            mInternalCertStore.PopulatedIdentities |= DFCI_IDENTITY_SIGNER_ZTD;
+          }
         }
       }
       break;
@@ -115,16 +117,15 @@ Init(
     case ZERO_TOUCH_OPT_OUT:
       if (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert != NULL)
       {
-         FreePool (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert);
-         mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert = NULL;
-         mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize = 0;
-         mInternalCertStore.PopulatedIdentities &= ~DFCI_IDENTITY_SIGNER_ZTD;
-
+        SaveState = TRUE;
+        FreePool (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert);
+        mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert = NULL;
+        mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize = 0;
+        mInternalCertStore.PopulatedIdentities &= ~DFCI_IDENTITY_SIGNER_ZTD;
       }
       break;
 
     default:
-      SaveState = FALSE;
       break;
   }
 

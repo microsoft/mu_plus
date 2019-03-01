@@ -146,6 +146,116 @@ SettingManagerOnStartOfBds(
   }
 }
 
+VOID
+PublishDeviceIdentifier (
+  VOID
+  ) {
+
+  EFI_STATUS      Status;
+  UINTN           i;
+  XmlNode        *List = NULL;
+  XmlNode        *DeviceIdIdentifiersNode = NULL;
+  XmlNode        *DeviceIdIdentifiersListNode = NULL;
+  CHAR8          *XmlString = NULL;
+  UINTN           StringSize = 0;
+
+  //
+  // Populate Device Id Variable.
+  //
+  Status = DfciIdSupportGetManufacturer (&mInitTable[0].Value, NULL);
+  if (EFI_ERROR(Status)) {
+      goto NO_XML;
+  }
+
+  Status = DfciIdSupportGetProductName (&mInitTable[1].Value, NULL);
+  if (EFI_ERROR(Status)) {
+      goto NO_XML;
+  }
+
+  Status = DfciIdSupportGetSerialNumber (&mInitTable[2].Value, NULL);
+  if (EFI_ERROR(Status)) {
+      goto NO_XML;
+  }
+
+  Status = EFI_OUT_OF_RESOURCES;
+  List = New_DeviceIdPacketNodeList();
+  if (List == NULL) {
+    DEBUG((DEBUG_ERROR, "%a - Failed to create new DeviceId Packet List Node\n", __FUNCTION__));
+    goto NO_XML;
+  }
+
+  //Get SettingsPacket Node
+  DeviceIdIdentifiersNode = GetDeviceIdPacketNode(List);
+  if (DeviceIdIdentifiersNode == NULL) {
+    DEBUG((DEBUG_ERROR, "Failed to Get GetDeviceIdPacketNode Node\n"));
+    goto NO_XML;
+  }
+
+  Status = AddDfciVersionNode (DeviceIdIdentifiersNode, DFCI_FEATURE_VERSION);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a - Failed to add Dfci Version node. Code = %r", __FUNCTION__, Status));
+    goto NO_XML;
+  }
+  //
+  //Get the Settings Node List Node
+  //
+  DeviceIdIdentifiersListNode = GetDeviceIdListNodeFromPacketNode(DeviceIdIdentifiersNode);
+  if (DeviceIdIdentifiersListNode == NULL) {
+    DEBUG((DEBUG_ERROR, "Failed to Get DeviceId List Node from Packet Node\n"));
+    goto NO_XML;
+  }
+
+  for (i = 0; i < (sizeof(mInitTable)/sizeof(INIT_TABLE_ENTRY)); i++) {
+    Status = SetDeviceIdIdentifier(DeviceIdIdentifiersListNode,
+                                   mInitTable[i].Id,
+                                   mInitTable[i].Value);
+    if (EFI_ERROR(Status )) {
+      DEBUG((DEBUG_ERROR, "Failed to set %a node. Code = %r\n",mInitTable[i].Id, Status));
+      goto NO_XML;
+    }
+  }
+
+  //print the list
+  DEBUG((DEBUG_INFO, "PRINTING DEVICE ID XML - Start\n"));
+  DebugPrintXmlTree(List, 0);
+  DEBUG((DEBUG_INFO, "PRINTING DEVICE ID  XML - End\n"));
+
+  //now output as xml string
+
+  Status = XmlTreeToString(List, TRUE, &StringSize, &XmlString);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a - XmlTreeToString failed.  %r\n", __FUNCTION__, Status));
+    goto NO_XML;
+  }
+
+  //Save variable
+  Status = gRT->SetVariable(DFCI_DEVICE_ID_VAR_NAME, &gDfciDeviceIdVarNamespace, DFCI_DEVICE_ID_VAR_ATTRIBUTES, StringSize, XmlString);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a - Failed to write Device Id Xml variable %r\n", __FUNCTION__, Status));
+    goto NO_XML;
+  }
+  //Success
+  DEBUG((DEBUG_INFO, "%a - Device Id Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, StringSize));
+
+NO_XML:
+  //
+  //free memory allocated
+  //
+  if (NULL != XmlString) {
+    FreePool(XmlString);
+  }
+
+  if (NULL != List) {
+    FreeXmlTree(&List);
+  }
+
+  for (i = 0; i < (sizeof(mInitTable)/sizeof(INIT_TABLE_ENTRY)); i++) {
+    if (NULL != mInitTable[i].Value) {
+      FreePool (mInitTable[i].Value);
+    }
+  }
+}
+
 /**
  * Install UefiDeviceId at ReadyToBoot before the late locking variables are locked.
  *
@@ -157,117 +267,27 @@ SettingsManagerOnReadyToBoot (
     IN VOID             *Context
     ) {
 
-    EFI_STATUS      Status;
-    UINTN           i;
-    XmlNode        *List = NULL;
-    XmlNode        *DeviceIdIdentifiersNode = NULL;
-    XmlNode        *DeviceIdIdentifiersListNode = NULL;
-    CHAR8          *XmlString = NULL;
-    UINTN           StringSize = 0;
+  EFI_STATUS      Status;
 
-    //Check for Settings Provisioning
-    Status = PopulateCurrentSettingsIfNeeded();
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Populate Current Settings If Needed returned an error. %r\n", __FUNCTION__, Status));
+  //Check for Settings Provisioning
+  Status = PopulateCurrentSettingsIfNeeded();
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a - Populate Current Settings If Needed returned an error. %r\n", __FUNCTION__, Status));
+  }
+
+  // If DFCI is not enabled in the build, do not publish the Device Identifier, and insure any previous
+  // identifier has been deleted.
+  if (FeaturePcdGet(PcdDfciEnabled)) {
+    PublishDeviceIdentifier ();
+  } else {
+    // Insure variable is not present
+    DEBUG((DEBUG_INFO, "%a - Dfci is disabled.  Not publishing the Device Identifier\n"));
+    Status = gRT->SetVariable(DFCI_DEVICE_ID_VAR_NAME, &gDfciDeviceIdVarNamespace, DFCI_DEVICE_ID_VAR_ATTRIBUTES, 0, NULL);
+    if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
+      DEBUG((DEBUG_ERROR, "%a - Failed to delete Device Id Xml variable %r\n", __FUNCTION__, Status));
     }
-
-    //
-    // Populate Device Id Variable.
-    //
-    Status = DfciIdSupportGetManufacturer (&mInitTable[0].Value, NULL);
-    if (EFI_ERROR(Status)) {
-        goto NO_XML;
-    }
-
-    Status = DfciIdSupportGetProductName (&mInitTable[1].Value, NULL);
-    if (EFI_ERROR(Status)) {
-        goto NO_XML;
-    }
-
-    Status = DfciIdSupportGetSerialNumber (&mInitTable[2].Value, NULL);
-    if (EFI_ERROR(Status)) {
-        goto NO_XML;
-    }
-
-    Status = EFI_OUT_OF_RESOURCES;
-    List = New_DeviceIdPacketNodeList();
-    if (List == NULL) {
-      DEBUG((DEBUG_ERROR, "%a - Failed to create new DeviceId Packet List Node\n", __FUNCTION__));
-      goto NO_XML;
-    }
-
-    //Get SettingsPacket Node
-    DeviceIdIdentifiersNode = GetDeviceIdPacketNode(List);
-    if (DeviceIdIdentifiersNode == NULL) {
-      DEBUG((DEBUG_ERROR, "Failed to Get GetDeviceIdPacketNode Node\n"));
-      goto NO_XML;
-    }
-
-    Status = AddDfciVersionNode (DeviceIdIdentifiersNode, DFCI_FEATURE_VERSION);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Failed to add Dfci Version node. Code = %r", __FUNCTION__, Status));
-        goto NO_XML;
-    }
-    //
-    //Get the Settings Node List Node
-    //
-    DeviceIdIdentifiersListNode = GetDeviceIdListNodeFromPacketNode(DeviceIdIdentifiersNode);
-    if (DeviceIdIdentifiersListNode == NULL) {
-      DEBUG((DEBUG_ERROR, "Failed to Get DeviceId List Node from Packet Node\n"));
-      goto NO_XML;
-    }
-
-    for (i = 0; i < (sizeof(mInitTable)/sizeof(INIT_TABLE_ENTRY)); i++) {
-        Status = SetDeviceIdIdentifier(DeviceIdIdentifiersListNode,
-                                       mInitTable[i].Id,
-                                       mInitTable[i].Value);
-        if (EFI_ERROR(Status )) {
-          DEBUG((DEBUG_ERROR, "Failed to set %a node. Code = %r\n",mInitTable[i].Id, Status));
-          goto NO_XML;
-        }
-    }
-
-    //print the list
-    DEBUG((DEBUG_INFO, "PRINTING DEVICE ID XML - Start\n"));
-    DebugPrintXmlTree(List, 0);
-    DEBUG((DEBUG_INFO, "PRINTING DEVICE ID  XML - End\n"));
-
-    //now output as xml string
-
-    Status = XmlTreeToString(List, TRUE, &StringSize, &XmlString);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - XmlTreeToString failed.  %r\n", __FUNCTION__, Status));
-        goto NO_XML;
-    }
-
-    //Save variable
-    Status = gRT->SetVariable(DFCI_DEVICE_ID_VAR_NAME, &gDfciDeviceIdVarNamespace, DFCI_DEVICE_ID_VAR_ATTRIBUTES, StringSize, XmlString);
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "%a - Failed to write Device Id Xml variable %r\n", __FUNCTION__, Status));
-      goto NO_XML;
-    }
-    //Success
-    DEBUG((DEBUG_INFO, "%a - Device Id Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, StringSize));
-
-NO_XML:
-    //
-    //free memory allocated
-    //
-    if (NULL != XmlString) {
-        FreePool(XmlString);
-    }
-
-    if (NULL != List) {
-        FreeXmlTree(&List);
-    }
-
-    for (i = 0; i < (sizeof(mInitTable)/sizeof(INIT_TABLE_ENTRY)); i++) {
-        if (NULL != mInitTable[i].Value) {
-            FreePool (mInitTable[i].Value);
-        }
-    }
-
-    return;
+  }
+  return;
 }
 
 /**
