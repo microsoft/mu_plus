@@ -27,26 +27,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/DisplayDeviceStateLib.h>
 #include <Library/BmpSupportLib.h>
 
-static UINT8 mBackgroundColoringSkipCounter; // Color background only when counter reaches 0;
-
 #define MS_MAX_HEIGHT_PERCENTAGE 40 //40%
 #define MS_MAX_WIDTH_PERCENTAGE 40  //40%
-
-//
-// Constructor
-//
-EFI_STATUS
-EFIAPI
-BootGraphicsLibConstructor(
-    IN EFI_HANDLE ImageHandle,
-    IN EFI_SYSTEM_TABLE *SystemTable)
-{
-  //Init Skip Count to PCD value. 
-  //This Skip count is designed to allow a seemless (flicker-free) transition from Pei/Early graphics to gop based graphics
-  mBackgroundColoringSkipCounter = PcdGet8(PcdPostBackgroundColoringSkipCount); // Color background only when counter reaches 0;
-  return EFI_SUCCESS;
-}
-
 
 EFI_STATUS
 EFIAPI
@@ -68,6 +50,7 @@ DisplayBootGraphic(
   EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput;
   EDKII_BOOT_LOGO2_PROTOCOL *BootLogo2;
   BOOLEAN IsLandscape = FALSE;
+  UINT8 SkipCounter;
 
   // Initialize pointers to prevent CleanUp failure
   ImageData = NULL;
@@ -108,7 +91,7 @@ DisplayBootGraphic(
 
   SizeOfX = GraphicsOutput->Mode->Info->HorizontalResolution;
   SizeOfY = GraphicsOutput->Mode->Info->VerticalResolution;
- 
+
   Blt = NULL;
   DestX = 0;
   DestY = 0;
@@ -131,7 +114,10 @@ DisplayBootGraphic(
   Color = GetBackgroundColor();
 
   // Color background when counter BackgroundColoringSkipCounter reaches 0
-  if (mBackgroundColoringSkipCounter == 0) {
+
+  SkipCounter = PcdGet8(PcdPostBackgroundColoringSkipCount);
+  // Color background only when counter reaches 0;
+  if (SkipCounter == 0) {
     Blt = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)(&Color); // only pixel (0,0) is used for EfiBltVideoFill
     Status = GraphicsOutput->Blt(GraphicsOutput, Blt, EfiBltVideoFill,
                                  0, 0, 0, 0, SizeOfX, SizeOfY, 0);
@@ -140,8 +126,9 @@ DisplayBootGraphic(
   }
 
   //decrement counter if not zero
-  if (mBackgroundColoringSkipCounter > 0) {
-    mBackgroundColoringSkipCounter--;
+  if (SkipCounter > 0) {
+    SkipCounter--;
+    Status = PcdSet8S (PcdPostBackgroundColoringSkipCount, SkipCounter);
   }
 
   //Draw our device state
@@ -157,7 +144,7 @@ DisplayBootGraphic(
     DEBUG((DEBUG_ERROR, "GetPlatformBootGraphic Status: %r\n", Status));
     goto CleanUp;
   }
-  
+
   //
   // Convert Bmp To Blt Buffer
   //
@@ -172,7 +159,7 @@ DisplayBootGraphic(
     IsLandscape = TRUE;
   }
 
-  // If system logo it must meet size requirements.  
+  // If system logo it must meet size requirements.
   if(Graphic == BG_SYSTEM_LOGO) {
     //check if the image is appropriate size as per data defined in the windows engineering guide.
     if (Width > ((SizeOfX * MS_MAX_WIDTH_PERCENTAGE) / 100) || Height > ((SizeOfY * MS_MAX_HEIGHT_PERCENTAGE) / 100))
@@ -190,7 +177,7 @@ DisplayBootGraphic(
   if ((DestX >= 0) && (DestY >= 0)) {
     Status = GraphicsOutput->Blt(GraphicsOutput, Blt, EfiBltBufferToVideo,
                                  0, 0, (UINTN)DestX, (UINTN)DestY, Width, Height,
-                                 Width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));       
+                                 Width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   }
   else
   {
