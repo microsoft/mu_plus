@@ -41,8 +41,20 @@ typedef struct {
 // Register two notifications, one for a RightCtrl-PrtScn and one for a LeftCtrl-PrtScn
 //      
 STATIC PRINT_SCREEN_KEYS  gPrtScnKeys[] = {
-    {0,0,EFI_SHIFT_STATE_VALID | EFI_LEFT_CONTROL_PRESSED  | EFI_SYS_REQ_PRESSED, 0, NULL},
-    {0,0,EFI_SHIFT_STATE_VALID | EFI_RIGHT_CONTROL_PRESSED | EFI_SYS_REQ_PRESSED, 0, NULL}
+    {
+        { 
+          { 0, 0 }, 
+          { EFI_SHIFT_STATE_VALID | EFI_LEFT_CONTROL_PRESSED  | EFI_SYS_REQ_PRESSED, 0}
+        }, 
+        NULL
+    },
+    {
+        { 
+          { 0,0 },
+          { EFI_SHIFT_STATE_VALID | EFI_RIGHT_CONTROL_PRESSED | EFI_SYS_REQ_PRESSED, 0}
+        }, 
+        NULL
+    }
 };
 
 #define NUMBER_KEY_NOTIFIES (sizeof(gPrtScnKeys)/sizeof(PRINT_SCREEN_KEYS)) 

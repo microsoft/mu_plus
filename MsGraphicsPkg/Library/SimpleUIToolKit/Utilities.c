@@ -44,6 +44,7 @@ Calculates the bitmap width and height of the specified text string based on the
 
 **/
 EFI_STATUS
+EFIAPI
 GetTextStringBitmapSize (IN     CHAR16           *pString,
                          IN     EFI_FONT_INFO    *FontInfo,
                          IN     BOOLEAN           BoundsLimit,
