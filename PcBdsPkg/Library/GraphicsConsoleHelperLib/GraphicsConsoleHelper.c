@@ -253,8 +253,8 @@ SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode)
                   //
                   // Update text mode PCD.
                   //
-                  PcdSet32S(PcdConOutColumn, mVgaTextModeColumn);
-                  PcdSet32S(PcdConOutRow, mVgaTextModeRow);
+                  Status = PcdSet32S(PcdConOutColumn, mVgaTextModeColumn);
+                  Status = PcdSet32S(PcdConOutRow, mVgaTextModeRow);
 
                   FreePool(Info);
                   goto Exit;
@@ -303,10 +303,10 @@ SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode)
   // Set PCD to Inform GraphicsConsole to change video resolution.
   // Set PCD to Inform Consplitter to change text mode.
   //
-  PcdSet32S(PcdVideoHorizontalResolution, NewHorizontalResolution);
-  PcdSet32S(PcdVideoVerticalResolution, NewVerticalResolution);
-  PcdSet32S(PcdConOutColumn, NewColumns);
-  PcdSet32S(PcdConOutRow, NewRows);
+  Status = PcdSet32S (PcdVideoHorizontalResolution, NewHorizontalResolution);
+  Status = PcdSet32S (PcdVideoVerticalResolution, NewVerticalResolution);
+  Status = PcdSet32S (PcdConOutColumn, NewColumns);
+  Status = PcdSet32S (PcdConOutRow, NewRows);
 
   //
   // Video mode is changed, so restart graphics console driver and higher level driver.

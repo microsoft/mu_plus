@@ -39,6 +39,7 @@
 
 **/
 EFI_STATUS
+EFIAPI
 SWMAbsolutePointerReset (IN EFI_ABSOLUTE_POINTER_PROTOCOL *this,
                          IN BOOLEAN                        ExtendedVerification)
 {
@@ -96,6 +97,7 @@ Exit:
 
 **/
 EFI_STATUS
+EFIAPI
 SWMAbsolutePointerGetState (IN EFI_ABSOLUTE_POINTER_PROTOCOL     *this,
                             IN OUT MS_SWM_ABSOLUTE_POINTER_STATE *State)
 {

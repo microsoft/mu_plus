@@ -33,7 +33,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __PRINTSCREEN_LOGGER_H__
 
 #include <Uefi.h>
-#include <Uefi\UefiInternalFormRepresentation.h>
+#include <Uefi/UefiInternalFormRepresentation.h>
 
 #include <IndustryStandard/Bmp.h>
 
