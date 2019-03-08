@@ -137,25 +137,26 @@ EFI_STATUS
 EFIAPI
 SetProviderValueFromAscii(
   IN CONST DFCI_SETTING_PROVIDER *Provider,
-  IN CONST CHAR8* Value, 
+  IN CONST CHAR8* Value,
   IN CONST DFCI_AUTH_TOKEN *AuthToken,
   IN OUT DFCI_SETTING_FLAGS *Flags
   )
 {
   CONST VOID* SetValue = NULL;
   BOOLEAN            v = FALSE;
-  UINT8              b = 0;  
+  UINT8              b = 0;
   UINT8             *ByteArray = NULL;
   UINTN              ValueSize;
   EFI_STATUS         Status;
   UINTN              b64Size;
+  DFCI_VIRTUAL_USB_PORT_STATE UsbPortState;
 
   switch (Provider->Type)
   {
     /* Enable Type (Boolean)*/
   case DFCI_SETTING_TYPE_ENABLE:
     //convert to BOOLEAN
-    
+
     if (AsciiStrCmp(Value, "Enabled") == 0)
     {
       v = TRUE;
@@ -208,7 +209,7 @@ SetProviderValueFromAscii(
     ValueSize = sizeof(b);
     break;
 
-  case DFCI_SETTING_TYPE_PASSWORD:  
+  case DFCI_SETTING_TYPE_PASSWORD:
 
       //
       // DFCI_PW_STORE_SIZE is 74.  *2=148. +"eb".len == 150.  So, < 150 is not enough
@@ -247,20 +248,20 @@ SetProviderValueFromAscii(
     if (AsciiStrCmp(Value, "UsbPortEnabled") == 0)
     {
       DEBUG((DEBUG_INFO, "Setting to Usb Port Enabled\n"));
-      b = DfciUsbPortEnabled;
+      UsbPortState = DfciUsbPortEnabled;
     }
     else if (AsciiStrCmp(Value, "UsbPortHwDisabled") == 0)
     {
       DEBUG((DEBUG_INFO, "Setting to Usb Port HW Disabled\n"));
-      b = DfciUsbPortHwDisabled;
+      UsbPortState = DfciUsbPortHwDisabled;
     }
     else
     {
       DEBUG((DEBUG_INFO, "Invalid or unsupported Usb Port Setting. %a\n", Value));
       return EFI_INVALID_PARAMETER;
     }
-    SetValue = &b;
-    ValueSize = sizeof(b);
+    SetValue = &UsbPortState;
+    ValueSize = sizeof(UsbPortState);
     break;
 
   case DFCI_SETTING_TYPE_STRING:
