@@ -482,14 +482,6 @@ ApplyProvisionData(
     mInternalCertStore.PopulatedIdentities |= (Data->DfciIdentity);  //Set the populatedIdentities
   }
 
-  //Dispose of all mappings for the Identity that changed
-  Status = DisposeAllIdentityMappings(Data->DfciIdentity);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identites for Id 0x%X.  Status = %r\n", Data->DfciIdentity, Status));
-    //continue on.  
-  }
-
   // Data will be saved after all identities have been set
   Data->LKGDirty = TRUE;
 
@@ -732,6 +724,13 @@ ApplyNewIdentityPacket (
     goto CLEANUP;
   }
 
+  //Dispose of all mappings for the Identity that changed
+  Status = DisposeAllIdentityMappings(Data->DfciIdentity);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identites for Id 0x%X.  Status = %r\n", Data->DfciIdentity, Status));
+    //continue on.
+  }
 
 CLEANUP:
   if (EFI_ERROR(Status)) {
