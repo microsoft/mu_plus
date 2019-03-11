@@ -1201,8 +1201,8 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
 
             // Select preferred font size and style for these buttons.
             //
-            CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+            CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyLabelColor,                     sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+            CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
             // Draw the Un/Dock button
             //
