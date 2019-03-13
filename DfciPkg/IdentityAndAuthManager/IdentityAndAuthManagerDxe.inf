@@ -52,7 +52,6 @@
   IdentityAndAuthManagerDxe.c
   IdentityManager.c
   IdentityCurrentSettingsXml.c
-  AuthManager_PKCS1Support.c
   RecoverySupport.c
   CertSupport.c
   UiSupport.c
@@ -88,7 +87,6 @@
 [Guids]
  gEfiCertPkcs7Guid
  gDfciAuthProvisionVarNamespace
- gEfiHashAlgorithmSha256Guid
  gDfciInternalVariableGuid
 
 [Protocols]

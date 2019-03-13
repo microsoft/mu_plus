@@ -337,20 +337,6 @@ ClearDFCI (
   );
 
 /**
-Function to verify PKCS1 signed data against a provisioned cert
-**/
-EFI_STATUS
-EFIAPI
-VerifyUsingPkcs1
-(
-  IN CONST WIN_CERTIFICATE_EFI_PKCS1_15   *WinCert,
-  IN CONST UINT8                          *TrustedCertData,
-  IN       UINTN                          TrustedCertDataSize,
-  IN CONST UINT8                          *SignedData,
-  IN       UINTN                          SignedDataLength
-  );
-
-/**
 Function supports verifying the data in the SignedData hasn't
 been tampered with since it was signed, creating the signature, by an
 key that is verified using the TrustedCert
