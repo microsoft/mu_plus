@@ -49,7 +49,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CHECKERBOARD_WIDTH (20)
 
 //
-//Colors from RainBow wiki
+//Colors
 //
 #define COLOR_RED       (0xFFfb0200)
 #define COLOR_ORANGE    (0xFFfd6802)
@@ -58,6 +58,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COLOR_BLUE      (0xFF0094fb)
 #define COLOR_INDIGO    (0xFF4500f7)
 #define COLOR_VIOLET    (0xFF9c00ff)
+#define COLOR_BROWN     (0xFF654321)
 
 #define COLOR_GREY      (0xFFC0C0C0)
 #define COLOR_BLACK     (0xFF000000)
@@ -71,9 +72,10 @@ DEVICE_STATE mSupportedNotifications[] = {
   (DEVICE_STATE)DEVICE_STATE_SECUREBOOT_OFF,
   (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_0,
   (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_1,
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_2,
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_3,
   (DEVICE_STATE)DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED,
   (DEVICE_STATE)DEVICE_STATE_SOURCE_DEBUG_ENABLED,
-  (DEVICE_STATE)DEVICE_STATE_UNDEFINED,
   (DEVICE_STATE)DEVICE_STATE_MANUFACTURING_MODE,
 
   (DEVICE_STATE)DEVICE_STATE_MAX  //this needs to be the last one
@@ -100,6 +102,16 @@ PrintValues(DEVICE_STATE Notifications)
   if (Notifications & DEVICE_STATE_PLATFORM_MODE_1)
   {
     DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_1\n"));
+  }
+
+  if (Notifications & DEVICE_STATE_PLATFORM_MODE_2)
+  {
+    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_2\n"));
+  }
+
+  if (Notifications & DEVICE_STATE_PLATFORM_MODE_3)
+  {
+    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_3\n"));
   }
 
   if (Notifications & DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED)
@@ -215,6 +227,16 @@ IN  INT32  HeightInPixels
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_YELLOW;
       }
+      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_2)
+      {
+        si.FillType = FILL_SOLID;
+        si.FillTypeInfo.SolidFill.FillColor = COLOR_INDIGO;
+      }
+      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_3)
+      {
+        si.FillType = FILL_SOLID;
+        si.FillTypeInfo.SolidFill.FillColor = COLOR_BROWN;
+      }
       else if (*SupportedNotification & DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED)
       {
         si.FillType = FILL_SOLID;
@@ -224,11 +246,6 @@ IN  INT32  HeightInPixels
       {
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_BLUE;
-      }
-      else if (*SupportedNotification & DEVICE_STATE_UNDEFINED)
-      {
-        si.FillType = FILL_SOLID;
-        si.FillTypeInfo.SolidFill.FillColor = COLOR_INDIGO;
       }
       else if (*SupportedNotification & DEVICE_STATE_MANUFACTURING_MODE)
       {
