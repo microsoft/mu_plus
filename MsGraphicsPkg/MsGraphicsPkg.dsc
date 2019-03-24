@@ -71,7 +71,7 @@
 
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
-  
+
   MsUiThemeCopyLib|MsGraphicsPkg/Library/MsUiThemeCopyLib/MsUiThemeCopyLib.inf
   PlatformThemeLib|MsGraphicsPkg/Library/SamplePlatformThemeLib/PlatformThemeLib.inf
   UiProgressCircleLib|MsGraphicsPkg/Library/BaseUiProgressCircleLib/UiProgressCircleLib.inf
@@ -83,10 +83,13 @@
   SwmDialogsLib|MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
   BootGraphicsLib|MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf
   BootGraphicsProviderLib|MsGraphicsPkg/Library/BootGraphicsProviderLibNull/BootGraphicsProviderLib.inf
+  QrEncoderLib|MsGraphicsPkg/Library/QrEncoderLib/QrEncoderLib.inf
+
 
   #ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
   #FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
+  FltUsedLib|MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
 
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
@@ -94,7 +97,7 @@
   PeiServicesTablePointerLib|MdePkg/Library/PeiServicesTablePointerLib/PeiServicesTablePointerLib.inf
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
-  
+
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
   MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Pei/MsEarlyGraphicsLibNull.inf
 
@@ -102,7 +105,6 @@
 
 [LibraryClasses.X64, LibraryClasses.AARCH64]
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
-  
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
   UIToolKitLib|MsGraphicsPkg/Library/SimpleUIToolKit/SimpleUIToolKit.inf
 
@@ -136,6 +138,7 @@
   MsGraphicsPkg/Library/BootGraphicsLib/BootGraphicsLib.inf
   MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf
   MsGraphicsPkg/Library/BootGraphicsProviderLibNull/BootGraphicsProviderLib.inf
+  MsGraphicsPkg/Library/QrEncoderLib/QrEncoderLib.inf
 
 [Components.IA32]
   # Early Graphics driver.
@@ -146,7 +149,7 @@
 [Components.X64, Components.AARCH64]
   MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Dxe/MsEarlyGraphicsLibNull.inf
   MsGraphicsPkg/Library/SimpleUIToolKit/SimpleUIToolKit.inf
-  
+
   # Graphics (GOP) Override driver.
   MsGraphicsPkg/GopOverrideDxe/GopOverrideDxe.inf
 
@@ -170,7 +173,7 @@
 
   # Display On Screen Notifications Driver
   MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
-  
+
   # Null Display On Screen Notifications Driver
   MsGraphicsPkg/Library/DisplayDeviceStateLibNull/DisplayDeviceStateLibNull.inf
 

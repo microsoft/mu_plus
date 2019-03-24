@@ -75,7 +75,7 @@ GetZeroTouchCertificate(UINT8 **Certificate, UINTN *CertificateSize) {
     Status = GetSectionFromAnyFv(CertFile,
                                  EFI_SECTION_RAW,
                                  0,
-                                 Certificate,
+                                 (VOID **) Certificate,
                                  CertificateSize
                                 );
 

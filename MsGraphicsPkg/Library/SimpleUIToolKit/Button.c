@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -44,8 +44,8 @@ RenderButton(IN Button  *this,
 {
     EFI_STATUS                      Status = EFI_SUCCESS;
     UINTN                           Width, Height;
-    EFI_FONT_DISPLAY_INFO           StringInfo;
-    EFI_IMAGE_OUTPUT                *pBltBuffer;
+    EFI_FONT_DISPLAY_INFO           *StringInfo = NULL;
+    EFI_IMAGE_OUTPUT                *pBltBuffer = NULL;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *pTextColor;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *pFillColor;
 
@@ -77,9 +77,16 @@ RenderButton(IN Button  *this,
         pTextColor = &this->m_NormalTextColor;
         break;
     }
-    CopyMem (&StringInfo.BackgroundColor, pFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-    CopyMem (&StringInfo.ForegroundColor, pTextColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
+    StringInfo = BuildFontDisplayInfoFromFontInfo (this->m_FontInfo);
+    if (NULL == StringInfo)
+    {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
+
+    CopyMem (&StringInfo->BackgroundColor, pFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    CopyMem (&StringInfo->ForegroundColor, pTextColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
     // Prepare string blitting buffer.
     //
@@ -150,8 +157,7 @@ RenderButton(IN Button  *this,
     //
     // Select preferred font size and style for the button (smaller, normal font).
     //
-    StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-    CopyMem (&StringInfo.FontInfo, &this->m_FontInfo, sizeof (EFI_FONT_INFO));
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
     mUITSWM->StringToWindow (mUITSWM,
                              mClientImageHandle,
@@ -159,7 +165,7 @@ RenderButton(IN Button  *this,
                              EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                              EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                              this->m_pButton->pButtonText,
-                             &StringInfo,
+                             StringInfo,
                              &pBltBuffer,
                              this->m_pButton->ButtonTextBounds.Left,
                              this->m_pButton->ButtonTextBounds.Top,
@@ -169,6 +175,11 @@ RenderButton(IN Button  *this,
                             );
 
 Exit:
+
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
+    }
 
     if (NULL != pBltBuffer)
     {
@@ -386,7 +397,11 @@ Ctor(IN struct _Button                *this,
 
     // Initialize variables.
     //
-    CopyMem(&this->m_FontInfo, FontInfo, sizeof(EFI_FONT_INFO));
+    this->m_FontInfo = DupFontInfo (FontInfo);
+    if (NULL == this->m_FontInfo)
+    {
+        goto Exit;
+    }
 
     this->m_NormalColor     = *pNormalColor;
     this->m_HoverColor      = *pHoverColor;
@@ -478,9 +493,15 @@ VOID Dtor(VOID *this)
     {
         FreePool(privthis->m_pButton->pButtonText);
     }
+
     if (NULL != privthis->m_pButton)
     {
         FreePool(privthis->m_pButton);
+    }
+
+    if (NULL != privthis->m_FontInfo)
+    {
+        FreePool(privthis->m_FontInfo);
     }
 
     if (NULL != privthis)

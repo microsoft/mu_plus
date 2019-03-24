@@ -313,11 +313,11 @@ DecodePacket (
         return Data->StatusCode;
     }
 
-    Data->Manufacturer =  PKT_FIELD_FROM_OFFSET(Packet,Packet->SystemMfgOffset);
+    Data->Manufacturer = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Packet,Packet->SystemMfgOffset);
     Data->ManufacturerSize = Packet->SystemProductOffset - Packet->SystemMfgOffset;
-    Data->ProductName =  PKT_FIELD_FROM_OFFSET(Packet,Packet->SystemProductOffset);
+    Data->ProductName = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Packet,Packet->SystemProductOffset);
     Data->ProductNameSize = Packet->SystemSerialOffset - Packet->SystemProductOffset;
-    Data->SerialNumber =  PKT_FIELD_FROM_OFFSET(Packet,Packet->SystemSerialOffset);
+    Data->SerialNumber = (CHAR8 *) PKT_FIELD_FROM_OFFSET(Packet,Packet->SystemSerialOffset);
     Data->SerialNumberSize = Packet->PayloadOffset - Packet->SystemSerialOffset;
 
     Data->Signature = (WIN_CERTIFICATE*) PKT_FIELD_FROM_OFFSET(Packet,Data->SignedDataLength);
@@ -533,8 +533,8 @@ InitializePacket (IN     CHAR16                     *VariableName,
     //Get the Mailbox variable
     Status = GetVariable2(MgrData->Data->MailboxName,
                           MgrData->Data->NameSpace,
-                         &MgrData->Data->Packet,
-                         &MgrData->Data->PacketSize);
+                          (VOID **) &MgrData->Data->Packet,
+                          &MgrData->Data->PacketSize);
 
     if (EFI_ERROR(Status)) {
         MgrData->Data->StatusCode = Status;
@@ -972,21 +972,21 @@ DfciManagerEntry(
 
     PERF_FUNCTION_BEGIN ();
 
-    Status = gBS->LocateProtocol(&gDfciApplyIdentityProtocolGuid, NULL, &mApplyIdentityProtocol);
+    Status = gBS->LocateProtocol(&gDfciApplyIdentityProtocolGuid, NULL, (VOID **) &mApplyIdentityProtocol);
     if (EFI_ERROR(Status) || NULL == mApplyIdentityProtocol) {
         DEBUG((DEBUG_ERROR, "%a %a: Cannot find Apply Identity Protocol.\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);
         goto ERROR_EXIT;
     }
 
-    Status = gBS->LocateProtocol(&gDfciApplyPermissionsProtocolGuid, NULL, &mApplyPermissionsProtocol);
+    Status = gBS->LocateProtocol(&gDfciApplyPermissionsProtocolGuid, NULL, (VOID **) &mApplyPermissionsProtocol);
     if (EFI_ERROR(Status) || NULL == mApplyPermissionsProtocol) {
         DEBUG((DEBUG_ERROR, "%a %a: Cannot find Apply Permission Protocol.\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);
         goto ERROR_EXIT;
     }
 
-    Status = gBS->LocateProtocol(&gDfciApplySettingsProtocolGuid, NULL, &mApplySettingsProtocol);
+    Status = gBS->LocateProtocol(&gDfciApplySettingsProtocolGuid, NULL, (VOID **) &mApplySettingsProtocol);
     if (EFI_ERROR(Status) || NULL == mApplySettingsProtocol) {
         DEBUG((DEBUG_ERROR, "%a %a: Cannot find Apply Settings Protocol.\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);

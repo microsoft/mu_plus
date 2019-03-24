@@ -56,5 +56,5 @@ EFI_STATUS
 EFIAPI
 MsEarlyGraphicsGetFrameBufferInfo(EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE **GraphicsMode);
 
-#endif __MS_EARLY_GRAPHICS_LIB_H__
+#endif // __MS_EARLY_GRAPHICS_LIB_H__
 

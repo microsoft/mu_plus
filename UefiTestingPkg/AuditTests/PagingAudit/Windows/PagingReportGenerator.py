@@ -45,7 +45,7 @@ VERSION = "0.80"
 
 class ParsingTool(object):
 
-    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type):
+    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type, AddressBits):
         self.Logger = logging.getLogger("ParsingTool")
         self.MemoryAttributesTable = []
         self.MemoryRangeInfo = []
@@ -55,6 +55,7 @@ class ParsingTool(object):
         self.PlatformName = PlatformName
         self.PlatformVersion = PlatformVersion
         self.Type = Type
+        self.AddressBits = (1 << AddressBits) - 1
 
     def Parse(self):
         #Get Info Files
@@ -80,13 +81,13 @@ class ParsingTool(object):
             self.MemoryRangeInfo.extend(ParseInfoFile(info))
 
         for pte1g in Pte1gbFileList:
-            self.PageDirectoryInfo.extend(Parse1gPages(pte1g))
+            self.PageDirectoryInfo.extend(Parse1gPages(pte1g, self.AddressBits))
 
         for pte2m in Pte2mbFileList:
-            self.PageDirectoryInfo.extend(Parse2mPages(pte2m))
+            self.PageDirectoryInfo.extend(Parse2mPages(pte2m, self.AddressBits))
 
         for pte4k in Pte4kbFileList:
-            self.PageDirectoryInfo.extend(Parse4kPages(pte4k))
+            self.PageDirectoryInfo.extend(Parse4kPages(pte4k, self.AddressBits))
 
         for guardpage in GuardPageFileList:
             self.PageDirectoryInfo.extend(ParseInfoFile(guardpage))
@@ -209,6 +210,8 @@ def main():
     parser.add_argument('-o', "--OutputReport", dest="OutputReport", help="Path to output html report (default is report.html)", default=os.path.join(os.getcwd(), "report.html"))
     parser.add_argument('-p', "--PlatformName", dest="PlatformName", help="Name of Platform.  Will show up on report", default="Test Platform")
     parser.add_argument('-t', "--type", choices=['SMM', 'DXE'], dest="Type", help="SMM or DXE Paging Report", required=True)
+    parser.add_argument('-b', "--AddressBits", dest="AddressBits", help="Bit width of CPU address, could be found in processor datasheet or EFI_HOB_TYPE_CPU. \
+                        i.e. For a processor supports 39 bits in address bit width, please pass in '-b 39'", type=int, required=True)
     parser.add_argument("--PlatformVersion", dest="PlatformVersion", help="Version of Platform.  Will show up report", default="1.0.0")
 
     #Turn on dubug level logging
@@ -248,7 +251,7 @@ def main():
     logging.debug("Input Folder Path is: %s" % options.InputFolder)
     logging.debug("Output Report is: %s" % options.OutputReport)
 
-    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type)
+    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type, options.AddressBits)
     spt.Parse()
     return spt.OutputHtmlReport(VERSION, options.OutputReport)
 

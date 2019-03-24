@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -68,7 +68,7 @@ UpdateLabelText (IN     Label       *this,
     CopyMem(&this->m_pLabel->LabelBoundsCurrent, &this->m_pLabel->LabelBoundsLimit, sizeof(SWM_RECT));
 
     Status = GetTextStringBitmapSize(NewLabelText,
-                                     &this->m_FontInfo,
+                                     this->m_FontInfo,
                                      TRUE,
                                      EFI_HII_OUT_FLAG_WRAP,
                                      &this->m_pLabel->LabelBoundsCurrent,
@@ -85,8 +85,8 @@ EFI_STATUS
 RenderLabel(IN Label  *this)
 {
     EFI_STATUS              Status = EFI_SUCCESS;
-    EFI_FONT_DISPLAY_INFO   StringInfo;
-    EFI_IMAGE_OUTPUT        *BltBuffer;
+    EFI_FONT_DISPLAY_INFO   *StringInfo = NULL;
+    EFI_IMAGE_OUTPUT        *BltBuffer = NULL;
     SWM_RECT                *LabelBounds = &this->m_pLabel->LabelBoundsCurrent;
 
 
@@ -108,17 +108,23 @@ RenderLabel(IN Label  *this)
     BltBuffer->Height       = (UINT16)LabelBounds->Bottom + 1;
     BltBuffer->Image.Screen = mUITGop;
 
-    StringInfo.ForegroundColor = this->m_TextColor;
-    StringInfo.BackgroundColor = this->m_BackgroundColor;
+    StringInfo = BuildFontDisplayInfoFromFontInfo (this->m_FontInfo);
+    if (NULL == StringInfo)
+    {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
 
-    StringInfo.FontInfoMask     = EFI_FONT_INFO_ANY_FONT;
-    CopyMem (&StringInfo.FontInfo, &this->m_FontInfo, sizeof (EFI_FONT_INFO));
+    StringInfo->ForegroundColor = this->m_TextColor;
+    StringInfo->BackgroundColor = this->m_BackgroundColor;
+
+    StringInfo->FontInfoMask     = EFI_FONT_INFO_ANY_FONT;
 
     mUITSWM->StringToWindow (mUITSWM,
                              mClientImageHandle,
                              EFI_HII_OUT_FLAG_WRAP | EFI_HII_DIRECT_TO_SCREEN,
                              this->m_pLabel->pLabelText,
-                             &StringInfo,
+                             StringInfo,
                              &BltBuffer,
                              LabelBounds->Left,
                              LabelBounds->Top,
@@ -134,6 +140,10 @@ Exit:
         FreePool(BltBuffer);
     }
 
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
+    }
 
     return Status;
 }
@@ -246,7 +256,11 @@ Ctor(IN struct _Label                  *this,
 
     // Capture requested font size and style.
     //
-    CopyMem(&this->m_FontInfo, FontInfo, sizeof(EFI_FONT_INFO));
+    this->m_FontInfo = DupFontInfo (FontInfo);
+    if (NULL == this->m_FontInfo)
+    {
+        goto Exit;
+    }
 
     // Capture text and background colors.
     //
@@ -306,6 +320,11 @@ VOID Dtor(VOID *this)
     if (NULL != privthis->m_pLabel)
     {
         FreePool(privthis->m_pLabel);
+    }
+
+    if (NULL != privthis->m_FontInfo)
+    {
+        FreePool(privthis->m_FontInfo);
     }
 
     if (NULL != privthis)

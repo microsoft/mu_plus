@@ -1,6 +1,7 @@
-/**@file Empty library to provide platform version information
+/** @file
+  Lib to include if using floats
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c) 2018, Microsoft Corporation.
 
 All rights reserved.
 Redistribution and use in source and binary forms, with or without 
@@ -24,25 +25,5 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#include <Uefi.h>
-#include <Library/MsUefiVersionLib.h>
-
-/**
-  Return Uefi version number defined by platform
-
-  @param[out]       Buffer        Buffer to hold returned data
-  @param[in, out]   BufferSize    Input as available data buffer size, output as data 
-                                  size filled
-
-  @retval  EFI_SUCCESS  Fetched version information successfully
-  @retval  !EFI_SUCCESS Failed to fetch version information
-**/
-EFI_STATUS
-EFIAPI
-GetUefiVersionNumber (
-     OUT UINT8                  *Buffer,
-  IN OUT UINTN                  *BufferSize
-)
-{
-  return EFI_UNSUPPORTED;
-}
+//You need to include this to let the compiler know we are going to use floating point
+int   _fltused = 0x9875;

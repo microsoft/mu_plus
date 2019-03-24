@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -52,7 +52,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
                          OUT    UINT32           *MaxFontGlyphDescent)
 {
     EFI_STATUS              Status = EFI_SUCCESS;
-    EFI_FONT_DISPLAY_INFO   StringInfo;
+    EFI_FONT_DISPLAY_INFO   *StringInfo     = NULL;
     EFI_IMAGE_OUTPUT        *BltBuffer      = NULL;
     EFI_HII_ROW_INFO        *StringRowInfo  = NULL;
     UINTN                   RowInfoSize;
@@ -79,8 +79,14 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
 
     // Get the current preferred font size and style.
     //
-    CopyMem (&StringInfo.FontInfo, FontInfo, sizeof(EFI_FONT_INFO));
-    StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+    StringInfo = BuildFontDisplayInfoFromFontInfo (FontInfo);
+    if (NULL == StringInfo)
+    {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
+
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
     // If a null string was provided, return a standard single character-sizes rectangle.  Null strings are used for UI padding/alignment.
     //
@@ -127,7 +133,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
                              mClientImageHandle,
                              HiiFlags,
                              xString,
-                             &StringInfo,
+                             StringInfo,
                              &BltBuffer,
                              0,
                              0,
@@ -138,7 +144,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
 
     if (EFI_ERROR(Status))
     {
-        DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Failed to calculate string bitmap size: %r.\r\n", Status));
+        DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Failed to calculate string bitmap size: %r.\n", Status));
         goto Exit;
     }
 
@@ -160,7 +166,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
     Bounds->Right    = (Bounds->Left + Width - 1);
     Bounds->Bottom   = (Bounds->Top + Height - 1);
 
-    DEBUG ((DEBUG_VERBOSE, "INFO [SUIT]: Calculated string bitmap size (Actual=L%d,R%d,T%d,B%d  MaxWidth=%d  MaxHeight=%d  TextRows=%d).\r\n", Bounds->Left, Bounds->Right, Bounds->Top, Bounds->Bottom, Width, Height, RowInfoSize));
+    DEBUG ((DEBUG_VERBOSE, "INFO [SUIT]: Calculated string bitmap size (Actual=L%d,R%d,T%d,B%d  MaxWidth=%d  MaxHeight=%d  TextRows=%d).\n", Bounds->Left, Bounds->Right, Bounds->Top, Bounds->Bottom, Width, Height, RowInfoSize));
 
 //CalcFontDescent:
 
@@ -189,6 +195,11 @@ Exit:
     {
         FreePool(StringRowInfo);
     }
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
+    }
+
 
 
     return Status;
@@ -197,6 +208,7 @@ Exit:
 // from "prev" list.
 
 UIT_CANVAS_CHILD_CONTROL *
+EFIAPI
 GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
                       IN Canvas                   *src,       // Canvas that has the source Control
                       IN Canvas                   *tgt) {     // Canvas that has the target control
@@ -239,7 +251,6 @@ GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
 /**
     Draws a rectangular outline to the screen at location and in the size, line width, and color specified.
 
-    @param[in]      this                Pointer to a ToggleSwitch.
     @param[in]      X                   Line X-coordinate starting position within Bitmap.
     @param[in]      Y                   Line Y-coordinate starting position within Bitmap.
     @param[in]      NumberOfPixels      Number of pixels making up the line, extending from (X,Y) to the right.
@@ -251,6 +262,7 @@ GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
 **/
 
 EFI_STATUS
+EFIAPI
 DrawRectangleOutline (IN UINT32                        OrigX,
                       IN UINT32                        OrigY,
                       IN UINT32                        Width,
@@ -326,3 +338,75 @@ Exit:
     return Status;
 }
 
+
+/**
+    Returns a copy of the FONT_INFO structure.
+
+    @param[in]      FontInfo            Pointer to callers FONT_INFO.
+
+    @retval         NewFontInfo         Copy of FONT_INFO.  Caller must free.
+                    NULL                No memory resources available
+**/
+EFI_FONT_INFO *
+EFIAPI
+DupFontInfo (IN EFI_FONT_INFO *FontInfo)
+{
+
+    EFI_FONT_INFO  *NewFontInfo;
+    UINTN           FontNameSize;
+
+    if (NULL == FontInfo) {
+        FontNameSize = 0;
+    } else {
+        FontNameSize = StrnLenS (FontInfo->FontName, MAX_FONT_NAME_SIZE) * sizeof(FontInfo->FontName[0]);
+        if (FontNameSize > MAX_FONT_NAME_SIZE) {
+            FontNameSize = 0;
+        }
+    }
+
+   NewFontInfo =  AllocatePool (sizeof (EFI_FONT_INFO) + FontNameSize);
+
+   CopyMem (NewFontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
+   if (FontNameSize <= sizeof(FontInfo->FontName[0])) {
+      NewFontInfo->FontName[0] = '\0';
+   }
+
+   return NewFontInfo;
+}
+
+/**
+    Returns a new FontDisplayInfo populated with callers FontInfo.
+
+    @param[in]      FontInfo             Pointer to callers FONT_INFO.
+
+    @retval         NewFontDisplayInfo   New FontDisplayIfo with font from FontInfo
+                                         Caller must free.
+                    NULL                 No Resources available
+**/
+EFI_FONT_DISPLAY_INFO *
+EFIAPI
+BuildFontDisplayInfoFromFontInfo (IN EFI_FONT_INFO *FontInfo)
+{
+
+    EFI_FONT_DISPLAY_INFO  *NewFontDisplayInfo;
+    UINTN                   FontNameSize;
+
+    if (NULL == FontInfo) {
+        FontNameSize = 0;
+    } else {
+        FontNameSize = StrnLenS (FontInfo->FontName, MAX_FONT_NAME_SIZE) * sizeof(FontInfo->FontName[0]);
+        if (FontNameSize > MAX_FONT_NAME_SIZE) {
+            FontNameSize = 0;
+        }
+    }
+
+   NewFontDisplayInfo =  AllocateZeroPool (sizeof (EFI_FONT_DISPLAY_INFO) + FontNameSize);
+   if (NULL != NewFontDisplayInfo) {
+       CopyMem (&NewFontDisplayInfo->FontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
+       if (FontNameSize <= sizeof(FontInfo->FontName[0])) {
+           NewFontDisplayInfo->FontInfo.FontName[0] = L'\0';
+       }
+   }
+
+   return NewFontDisplayInfo;
+}

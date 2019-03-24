@@ -5,7 +5,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -18,10 +18,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -48,8 +48,8 @@ RenderEditBox(IN EditBox  *this,
 {
     EFI_STATUS                      Status = EFI_SUCCESS;
     UINTN                           Width, Height;
-    EFI_FONT_DISPLAY_INFO           StringInfo;
-    EFI_IMAGE_OUTPUT                *BltBuffer;
+    EFI_FONT_DISPLAY_INFO           *StringInfo = NULL;
+    EFI_IMAGE_OUTPUT                *BltBuffer = NULL;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *TextColor;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *FillColor;
 
@@ -78,9 +78,15 @@ RenderEditBox(IN EditBox  *this,
         FillColor = &gMsColorTable.EditBoxHighlightBGColor;
     }
 
-    CopyMem (&StringInfo.BackgroundColor, FillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-    CopyMem (&StringInfo.ForegroundColor, TextColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    StringInfo = BuildFontDisplayInfoFromFontInfo (this->m_FontInfo);
+    if (NULL == StringInfo)
+    {
+        Status = EFI_OUT_OF_RESOURCES;
+        goto Exit;
+    }
 
+    CopyMem (&StringInfo->BackgroundColor, FillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    CopyMem (&StringInfo->ForegroundColor, TextColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
     // Prepare the string blitting buffer.
     //
@@ -124,17 +130,16 @@ RenderEditBox(IN EditBox  *this,
     {
         // Select preferred font size and style for the watermark text.
         //
-        StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-        CopyMem (&StringInfo.FontInfo, &this->m_FontInfo, sizeof (EFI_FONT_INFO));
+        StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
         // Override text color and font for watermark.
         //
         if (this->m_State != GRAYED){
-            StringInfo.ForegroundColor = gMsColorTable.EditBoxWaterMarkFGColor;
+            StringInfo->ForegroundColor = gMsColorTable.EditBoxWaterMarkFGColor;
         }
 
         if (UIT_EDITBOX_TYPE_SELECTABLE  != this->m_Type) {   // For selectable, use the same font as the edit string
-            StringInfo.FontInfo.FontSize = MsUiGetSmallFontHeight ();   // TODO
+            StringInfo->FontInfo.FontSize = MsUiGetSmallFontHeight ();   // TODO
         }
 
         mUITSWM->StringToWindow (mUITSWM,
@@ -143,7 +148,7 @@ RenderEditBox(IN EditBox  *this,
                                  EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                                  EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                                  this->m_EditBoxWatermarkText,
-                                 &StringInfo,
+                                 StringInfo,
                                  &BltBuffer,
                                  this->m_EditBoxTextBounds.Left,
                                  this->m_EditBoxTextBounds.Top,
@@ -157,9 +162,7 @@ RenderEditBox(IN EditBox  *this,
         // Draw editbox text.
         //
         // Select preferred font size and style for the editbox text.
-        //
-        StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-        CopyMem (&StringInfo.FontInfo, &this->m_FontInfo, sizeof (EFI_FONT_INFO));
+        StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
         mUITSWM->StringToWindow (mUITSWM,
                                  mClientImageHandle,
@@ -167,7 +170,7 @@ RenderEditBox(IN EditBox  *this,
                                  EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                                  EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                                  &this->m_EditBoxDisplayText[this->m_DisplayStartPosition],
-                                 &StringInfo,
+                                 StringInfo,
                                  &BltBuffer,
                                  this->m_EditBoxTextBounds.Left,
                                  this->m_EditBoxTextBounds.Top,
@@ -194,6 +197,11 @@ Exit:
     if (NULL != BltBuffer)
     {
         FreePool(BltBuffer);
+    }
+
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
     }
 
     return Status;
@@ -617,7 +625,11 @@ Ctor(IN struct _EditBox                *this,
 
     // Initialize variables.
     //
-    CopyMem(&this->m_FontInfo, pFontInfo, sizeof(EFI_FONT_INFO));
+    this->m_FontInfo = DupFontInfo (pFontInfo);
+    if (NULL == this->m_FontInfo)
+    {
+        return;
+    }
 
     this->m_NormalColor      = *pNormalColor;
     this->m_NormalTextColor  = *pNormalTextColor;
@@ -734,6 +746,10 @@ VOID Dtor(VOID *this)
             // Hide the on-screen keyboard (if we were showing it).
             //
             mOSKProtocol->ShowKeyboard (mOSKProtocol, FALSE);
+        }
+        if (NULL != privthis->m_FontInfo)
+        {
+            FreePool (privthis->m_FontInfo);
         }
         FreePool(privthis);
     }

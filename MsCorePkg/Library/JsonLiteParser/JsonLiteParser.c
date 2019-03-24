@@ -114,7 +114,7 @@ JsonLibEncode (
         }
 
         Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-        Status |= Status = AsciiStrCatS (RequestBuffer, RequestSize, Request[i].FieldName);
+        Status |= AsciiStrCatS (RequestBuffer, RequestSize, Request[i].FieldName);
         Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\":");
         if (NULL != Request[i].Value) {
             Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");

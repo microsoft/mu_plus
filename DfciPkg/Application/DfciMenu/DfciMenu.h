@@ -42,7 +42,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // the values used in this formset.
 //
 // #define DFCI_MENU_FORM_ID       0x2000
-// #define DFCI_MENU_FORMSET_GUID  0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9} \
+// #define DFCI_MENU_FORMSET_GUID  0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9}
 
 #define DFCI_MENU_VARID                         0x2100
 #define DFCI_MENU_CONFIGURE_FORM_ID             0x2200
@@ -63,10 +63,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 extern UINT8  DfciMenuVfrBin[];
 
+// Values for Dfci Menu Configuration
+#define MENU_TRUE  0x01
+#define MENU_FALSE 0x00
+
 typedef struct {
     UINT8    DfciRecoveryEnabled;
     UINT8    DfciHttpRecoveryEnabled;
     UINT8    DfciZeroTouchEnabled;
+    UINT8    DfciZeroTouchCertAvailable;
+    UINT8    DfciZeroTouchOptGrayOut;
     UINT8    DfciOwnerEnabled;
     UINT8    DfciUserEnabled;
     UINT8    DfciUser1Enabled;

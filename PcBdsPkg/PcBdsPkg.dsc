@@ -1,7 +1,7 @@
 ## @file
 # PC BDS Package Localized Libraries and Content
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c) 2018 - 2019, Microsoft Corporation
 
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
@@ -125,6 +125,7 @@
 [Components]
   PcBdsPkg/Library/MsBootManagerSettingsDxeLib/MsBootManagerSettingsDxeLib.inf
   PcBdsPkg/Library/MsBootOptionsLib/MsBootOptionsLib.inf
+  PcBdsPkg/Library/MsNetworkDelayLib/MsNetworkDelayLib.inf
   PcBdsPkg/Library/MsNetworkDependencyLib/MsNetworkDependencyLib.inf
   PcBdsPkg/Library/PowerServicesLibNull/PowerServicesLibNull.inf
   PcBdsPkg/Library/ThermalServicesLibNull/ThermalServicesLibNull.inf
@@ -134,7 +135,7 @@
   PcBdsPkg/Library/MsPlatformPowerCheckLibNull/MsPlatformPowerCheckLibNull.inf
   PcBdsPkg/Library/MsAltBootLibNull/MsAltBootLibNull.inf
   PcBdsPkg/Library/MsNVBootReasonLibNull/MsNVBootReasonLibNull.inf
-  PcBdsPkg/Library/MsUefiVersionLibNull/MsUefiVersionLibNull.inf
+  PcBdsPkg/Library/MuUefiVersionLibNull/MuUefiVersionLibNull.inf
   PcBdsPkg/Library/GraphicsConsoleHelperLib/GraphicsConsoleHelper.inf
   PcBdsPkg/Library/GraphicsConsoleHelperLibNull/GraphicsConsoleHelperLibNull.inf
 

@@ -3,7 +3,7 @@
   Copyright (c) 2015 - 2018, Microsoft Corporation.
 
   All rights reserved.
-  Redistribution and use in source and binary forms, with or without 
+  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
   1. Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
@@ -16,10 +16,10 @@
   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
   IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
   INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
   LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
@@ -40,11 +40,11 @@
 static EFI_GUID                           gPriorityGuid = SWM_PRIORITY_PROTOCOL_GUID;
 static EFI_GUID                           gSwmDialogsHiiPackageListGuid = SWMDIALOGS_HII_PACKAGE_LIST_GUID;
 static MS_SIMPLE_WINDOW_MANAGER_PROTOCOL *gSwmProtocol = NULL;
-static EFI_EVENT                          gSwmRegisterEvent;
+static EFI_EVENT                          gSwmRegisterEvent = NULL;
 static VOID                              *gSwmRegistration;
 
 /**
- *  MessageBox.  Display a Message box 
+ *  MessageBox.  Display a Message box
  *
  *
  * @param pTitleBarText  - Text for titlebar of message box
@@ -64,7 +64,7 @@ SwmDialogsMessageBox (
     IN  CHAR16              *pBodyText,
     IN  UINT32              Type,
     IN  UINT64              Timeout,
-    OUT SWM_MB_RESULT       *Result) 
+    OUT SWM_MB_RESULT       *Result)
 {
 
     if (gSwmProtocol == NULL) {
@@ -129,7 +129,7 @@ SwmDialogsPasswordPrompt (
  * @param pBodyText      - Tecx for body of the message box
  * @param pOptionsList   - Array of option text
  * @param OptionsCount   - Cout of options
- * @param Result         - SMB_RESULT 
+ * @param Result         - SMB_RESULT
  * @param SelectedIndex  - Index of selected option when SMB_RESULT_OK
  *
  * @return EFI_STATUS EFIAPI
@@ -163,7 +163,7 @@ SwmDialogsSelectPrompt (
 /**
  *  VerifyThumbprintPrompt.  Display a Message box with a Thumbprint
  *                               verification text box, and an optional
- *                               Password box.  
+ *                               Password box.
  *
  * @param pTitleBarText   - Text for titlebar of message box
  * @param pCaptionText    - Text for caption (Title) of message box
@@ -172,7 +172,7 @@ SwmDialogsSelectPrompt (
  * @param pConfirmText    - User instruction displayed in dialog
  * @param pErrorText      - Error text to display for retry
  * @param Type            - SWM_MB_STYLE - Normal/Alert2/Alert2
- * @param Result          - SMB_RESULT 
+ * @param Result          - SMB_RESULT
  * @param Password       - Where to store pointer to allocated buffer with password result
  * @param Thumbprint     - Where to store the two character thumbprint
  *
@@ -182,7 +182,7 @@ EFI_STATUS
 EFIAPI
 SwmDialogsVerifyThumbprintPrompt (
     IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,  
+    IN  CHAR16              *pCaptionText,
     IN  CHAR16              *pBodyText,
     IN  CHAR16              *pCertText,
     IN  CHAR16              *pConfirmText,
@@ -192,7 +192,7 @@ SwmDialogsVerifyThumbprintPrompt (
     OUT CHAR16              **Password OPTIONAL,
     OUT CHAR16              **Thumbprint OPTIONAL
   ) {
- 
+
     if (gSwmProtocol == NULL) {
         return EFI_ABORTED;
     }
@@ -335,7 +335,8 @@ SwmDialogsConstructor (
                                                   &gSwmRegistration
                                                  );
             if (EFI_ERROR (Status)) {
-                DEBUG((DEBUG_INFO, "%a: Failed to register for SWM registration notifications (%r).\r\n", __FUNCTION__, Status));
+                DEBUG((DEBUG_INFO, "%a: Failed to register for SWM registration notifications (%r).\r\n",
+                       __FUNCTION__, Status));
             }
         }
     } else {
@@ -346,13 +347,35 @@ SwmDialogsConstructor (
     //
     gSwmDialogsHiiHandle = HiiAddPackages (&gSwmDialogsHiiPackageListGuid,
                                            gImageHandle,
-                                           SwmDialogsStrings,
+                                           SwmDialogsLibStrings,
                                            NULL);
 
     if (NULL == gSwmDialogsHiiHandle)
     {
         Status = EFI_OUT_OF_RESOURCES;
         DEBUG((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to register HII packages (%r).\r\n", Status));
+    }
+
+    return EFI_SUCCESS;
+}
+
+/**
+  Destructor for SwmDialogs
+
+  @param ImageHandle     The image handle.
+  @param SystemTable     The system table.
+  @return Status         From internal routine or boot object
+
+ **/
+EFI_STATUS
+EFIAPI
+SwmDialogsDestructor (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+    if (gSwmRegisterEvent != NULL) {
+        SystemTable->BootServices->CloseEvent(gSwmRegisterEvent);
     }
 
     return EFI_SUCCESS;

@@ -187,8 +187,19 @@
   #
   gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|FALSE|BOOLEAN|0x40000014
 
+  ## Dfci Enabled
+  # When DFCI is disabled, it means three things:
+  #    1. The DfciIdentifier is not published, telling any management service that DFCI is not supported
+  #    2. The SEMM menu is available when SEMM is actively owned.  The DFCI menu will not display.
+  #    3. The Zero Touch Certificate is not included in the ROM
+  gDfciPkgTokenSpaceGuid.PcdDfciEnabled|TRUE|BOOLEAN|0x40000015
 
 [PcdsFixedAtBuild]
   ## FFS filename to find the DFCI Timer BMP file,
   # {717f2543-3bb6-4f9d-a6fc-58e8a78dbd27}
   gDfciPkgTokenSpaceGuid.PcdDfciTimerFile |{ 0x43, 0x25, 0x7f, 0x71, 0xb6, 0x3b, 0x4f, 0x9d, 0xa6, 0xfc, 0x58, 0xe8, 0xa7, 0x8d, 0xbd, 0x27 }|VOID*|0x4000000C
+
+[PcdsDynamic, PcdsDynamicEx]
+  ## Setup UI is running in reduced functionality mode (ie password skipped)
+  #  Used to limit OPT IN and OPT OUT to when full setup is capable.
+    gDfciPkgTokenSpaceGuid.PcdSetupUiReducedFunction|FALSE|BOOLEAN|0x40000016

@@ -70,7 +70,7 @@ formset
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
-        suppressif   ideqval  DfciMenuConfig.DfciOptInChanged == 0x00;          // Warning message if OptIn/Out
+        suppressif ideqval DfciMenuConfig.DfciOptInChanged == MENU_FALSE;       // Warning message if OptIn/Out
 
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Enabled Header
@@ -82,38 +82,46 @@ formset
 
         endif;
 
-        suppressif   NOT ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;      // ZUM menu when no Owner
+        suppressif ideqval DfciMenuConfig.DfciOwnerEnabled == MENU_TRUE;       // ZUM menu when no Owner
 
-            suppressif ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
-                text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    //
-                    text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_READY);          // ZeroTouchStatus: Ready
+            grayoutif ideqval DfciMenuConfig.DfciZeroTouchOptGrayOut == MENU_TRUE;
 
-                text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                suppressif ideqval DfciMenuConfig.DfciZeroTouchEnabled == MENU_FALSE;
+                    text
+                        help    = STRING_TOKEN(STR_NULL_STRING),                //
+                        text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_READY);      // ZeroTouchStatus: Ready
 
-                text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    //
-                    text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_OUT),               // Opt Out
-                    flags   = INTERACTIVE | RESET_REQUIRED,                     // INTERACTIVE = Button
-                    key     = DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID;
-            endif;
+                    text
+                        help    = STRING_TOKEN(STR_NULL_STRING),                // SPACING
+                        text    = STRING_TOKEN(STR_NULL_STRING);                //
 
-            suppressif NOT ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
-                text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
-                    text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_NOT_READY);      // ZeroTouchStatus: Not Ready
+                    text
+                        help    = STRING_TOKEN(STR_NULL_STRING),                //
+                        text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_OUT),           // Opt Out
+                        flags   = INTERACTIVE | RESET_REQUIRED,                 // INTERACTIVE = Button
+                        key     = DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID;
+                endif;
 
-                text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    // SPACING
-                    text    = STRING_TOKEN(STR_NULL_STRING);                    //
+                suppressif ideqval DfciMenuConfig.DfciZeroTouchCertAvailable == MENU_FALSE;
 
-                text
-                    help    = STRING_TOKEN(STR_NULL_STRING),                    //
-                    text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_IN),                // Opt In
-                    flags   = INTERACTIVE | RESET_REQUIRED,                     // INTERACTIVE = Button
-                    key     = DFCI_MENU_ZUM_OPT_IN_QUESTION_ID;
+                    suppressif ideqval DfciMenuConfig.DfciZeroTouchEnabled == MENU_TRUE;
+                        text
+                            help    = STRING_TOKEN(STR_NULL_STRING),            // Subject:
+                            text    = STRING_TOKEN(STR_DFCI_ZUM_STATUS_NOT_READY);  // ZeroTouchStatus: Not Ready
+
+                        text
+                            help    = STRING_TOKEN(STR_NULL_STRING),            // SPACING
+                            text    = STRING_TOKEN(STR_NULL_STRING);            //
+
+                        text
+                            help    = STRING_TOKEN(STR_NULL_STRING),            //
+                            text    = STRING_TOKEN(STR_DFCI_ZUM_OPT_IN),        // Opt In
+                            flags   = INTERACTIVE | RESET_REQUIRED,             // INTERACTIVE = Button
+                            key     = DFCI_MENU_ZUM_OPT_IN_QUESTION_ID;
+                    endif;
+
+                endif;
+
             endif;
 
             text
@@ -144,7 +152,7 @@ formset
 
         endif;
 
-        suppressif   ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;          // DFCI Menu when Owner
+        suppressif ideqval DfciMenuConfig.DfciOwnerEnabled == MENU_FALSE;       // DFCI Menu when Owner
 
             guidop
                 guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
@@ -160,18 +168,18 @@ formset
                     help    = STRING_TOKEN(STR_NULL_STRING),                    // Subject:
                     text    = STRING_TOKEN(STR_DFCI_MANAGED_BY);
 
-                suppressif  NOT ideqval DfciMenuConfig.DfciFriendlyName == 0x00; // If no friendly name, just
+                suppressif ideqval DfciMenuConfig.DfciFriendlyName == MENU_TRUE;// If no friendly name, just
                     text
                         help    = STRING_TOKEN(STR_NULL_STRING),                // managed by owner
                         text    = STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD);
                 endif;
 
-                suppressif  ideqval DfciMenuConfig.DfciFriendlyName == 0x00;    // If friendly name,
+                suppressif  ideqval DfciMenuConfig.DfciFriendlyName == MENU_FALSE; // If friendly name,
                     text
                         help    = STRING_TOKEN(STR_NULL_STRING),                // managed by MDM
                         text    = STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME);
 
-                    suppressif  ideqval DfciMenuConfig.DfciTennantName == 0x00; // If Tennant Name name,
+                    suppressif ideqval DfciMenuConfig.DfciTennantName == MENU_FALSE; // If Tennant Name name,
 
 	                    subtitle
 	                        text    = STRING_TOKEN(STR_NULL_STRING),            // Group of horizontal text blocks
@@ -235,7 +243,7 @@ formset
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
-        suppressif ideqval  DfciMenuConfig.DfciUser2Enabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciUser2Enabled == MENU_FALSE;
 
             guidop
                 guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
@@ -289,7 +297,7 @@ formset
 
         endif;
 
-        suppressif ideqval  DfciMenuConfig.DfciUser1Enabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciUser1Enabled == MENU_FALSE;
 
             guidop
                 guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
@@ -343,7 +351,7 @@ formset
 
         endif;
 
-        suppressif ideqval  DfciMenuConfig.DfciUserEnabled == 0x00;
+        suppressif ideqval DfciMenuConfig.DfciUserEnabled == MENU_FALSE;
 
             guidop
                 guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
@@ -398,7 +406,7 @@ formset
         endif;
 
 
-        suppressif ideqval  DfciMenuConfig.DfciOwnerEnabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciOwnerEnabled == MENU_FALSE;
 
             guidop
                 guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
@@ -452,7 +460,7 @@ formset
 
         endif;
 
-        suppressif ideqval  DfciMenuConfig.DfciZeroTouchEnabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciZeroTouchEnabled == MENU_FALSE;
 
             guidop
                 guid     = GRID_CLASS_START_OPCODE_GUID,                        // Custom UI Grid opcode - START
@@ -534,7 +542,7 @@ formset
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
-        suppressif ideqval  DfciMenuConfig.DfciHttpRecoveryEnabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciHttpRecoveryEnabled == MENU_FALSE;
 
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Enabled Header
@@ -623,7 +631,7 @@ formset
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
-        suppressif ideqval  DfciMenuConfig.DfciRecoveryEnabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciRecoveryEnabled == MENU_FALSE;
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Reset Permission Info
                 text    = STRING_TOKEN(STR_DFCI_RESET_INFO);                    //
@@ -639,7 +647,7 @@ formset
                 help        = STRING_TOKEN(STR_NULL_STRING);
         endif;
 
-        suppressif NOT ideqval  DfciMenuConfig.DfciRecoveryEnabled == 0x00;
+        suppressif ideqval  DfciMenuConfig.DfciRecoveryEnabled == MENU_TRUE;
             text
                 help    = STRING_TOKEN(STR_NULL_STRING),                        // DFCI Reset Permission Info
                 text    = STRING_TOKEN(STR_DFCI_RESET_PERMISSION_INFO);         //

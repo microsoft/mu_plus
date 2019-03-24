@@ -57,8 +57,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/ConsoleInDevice.h>
 #include <Guid/OSKDevicePath.h>
 
-#include "OnscreenKeyboard.h"
-#include "OnscreenKeyboardProtocol.h"
+#include <UIToolKit/SimpleUIToolKit.h>
+
+#include "OnScreenKeyboard.h"
+#include "OnScreenKeyboardProtocol.h"
 #include "DisplayTransform.h"
 #include "KeyMapping.h"
 
@@ -67,26 +69,30 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // *** Small format ***
 #include <Resources/KeyboardIcon_Small.h>
 
-static EFI_HANDLE mControllerHandle = NULL;
+STATIC EFI_HANDLE mControllerHandle = NULL;
 
 //
 // Onscreen Keyboard Vendor Device Path
 //
-static OSK_DEVICE_PATH mPlatformOSKDevice = {
+STATIC OSK_DEVICE_PATH mPlatformOSKDevice = {
     {
-        HARDWARE_DEVICE_PATH,
-        HW_VENDOR_DP,
         {
-            (UINT8)(sizeof(VENDOR_DEVICE_PATH)),
-            (UINT8)((sizeof(VENDOR_DEVICE_PATH)) >> 8)
+            HARDWARE_DEVICE_PATH,
+            HW_VENDOR_DP,
+            {
+                (UINT8)(sizeof(VENDOR_DEVICE_PATH)),
+                (UINT8)((sizeof(VENDOR_DEVICE_PATH)) >> 8)
+            }
         },
         OSK_DEVICE_PATH_GUID
     },
     {
         END_DEVICE_PATH_TYPE,
         END_ENTIRE_DEVICE_PATH_SUBTYPE,
-        END_DEVICE_PATH_LENGTH,
-        0
+        {
+            END_DEVICE_PATH_LENGTH,
+            0
+        }
     }
 };
 
@@ -160,7 +166,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     Status = gBS->OpenProtocol(
         Controller,
         &gEfiDevicePathProtocolGuid,
-        (OSK_DEVICE_PATH **)&OskDevicePath,
+        (VOID **)&OskDevicePath,
         This->DriverBindingHandle,
         Controller,
         EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -212,7 +218,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     Status = gBS->OpenProtocol(
         Controller,
         &gEfiDevicePathProtocolGuid,
-        (OSK_DEVICE_PATH **)&OskDevicePath,
+        (VOID **)&OskDevicePath,
         This->DriverBindingHandle,
         Controller,
         EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -232,7 +238,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     if (EFI_ERROR(Status))
     {
         mSWMProtocol = NULL;
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
         goto ErrorExit;
     }
 
@@ -246,7 +252,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     if (EFI_ERROR(Status))
     {
         mGop = NULL;
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Failed to find GOP protocol (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to find GOP protocol (%r).\r\n", Status));
         goto ErrorExit;
     }
 
@@ -254,7 +260,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     Status = OSKDriverInit();
     if (EFI_ERROR(Status))
     {
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Init OSK Failed (%r).\r\n", Status));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Init OSK Failed (%r).\r\n", Status));
 
         if (mKeyRepeatTimerEvent != NULL){
             // you would be here if the driver init failed
@@ -324,7 +330,7 @@ IN EFI_HANDLE                   *ChildHandleBuffer OPTIONAL
 )
 {
     EFI_STATUS Status;
-    DEBUG((DEBUG_INFO, "[OSK]: DriverBindingStop. \r\n"));
+    DEBUG((DEBUG_INFO, "INFO [OSK]: DriverBindingStop. \r\n"));
     Status = gBS->UninstallMultipleProtocolInterfaces(ControllerHandle,
         &gEfiSimpleTextInProtocolGuid,
         (VOID**)&mOSK.SimpleTextIn,
@@ -429,14 +435,14 @@ Calculates the bitmap width and height of the specified text string based on the
 
 @retval     EFI_SUCCESS     Successfully calculated all key label sizes
 **/
-static
+STATIC
 EFI_STATUS
-GetTextStringBitmapSize (IN CHAR16    *pString,
+LocalGetTextStringBitmapSize (IN CHAR16    *pString,
 OUT UINTN    *Width,
 OUT UINTN    *Height)
 {
     EFI_STATUS              Status = EFI_SUCCESS;
-    EFI_FONT_DISPLAY_INFO   StringInfo;
+    EFI_FONT_DISPLAY_INFO   *StringInfo;
     EFI_IMAGE_OUTPUT        *pBltBuffer;
     EFI_HII_ROW_INFO        *pStringRowInfo;
     UINTN                   RowInfoSize;
@@ -449,9 +455,11 @@ OUT UINTN    *Height)
 
     // Get the current preferred font size and style (selected based on current display resolution).
     //
-    ZeroMem (&StringInfo, sizeof(EFI_FONT_DISPLAY_INFO));
-    CopyMem (&StringInfo.FontInfo, &mOSK.PreferredFontInfo, sizeof(EFI_FONT_INFO));
-    StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+    StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
+    if (NULL == StringInfo) {
+        return EFI_OUT_OF_RESOURCES;
+    }
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
     // Set to NULL to have a buffers allocated for us.
     //
@@ -464,7 +472,7 @@ OUT UINTN    *Height)
         mImageHandle,
         EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_IGNORE_LINE_BREAK,       // NOTE: clipping isn't possible when rendering to a bitmap buffer.
         pString,
-        &StringInfo,
+        StringInfo,
         &pBltBuffer,
         0,
         0,
@@ -497,6 +505,9 @@ OUT UINTN    *Height)
     {
         FreePool(pStringRowInfo);
     }
+    if (NULL != StringInfo) {
+        FreePool (StringInfo);
+    }
 
     return Status;
 }
@@ -509,7 +520,7 @@ Calculates the width and height of all key labels based on current font size/sty
 
 @retval     EFI_SUCCESS     Successfully calculated all key label sizes
 **/
-static
+STATIC
 EFI_STATUS
 CalculateKeyLabelSizes (VOID)
 {
@@ -537,7 +548,7 @@ CalculateKeyLabelSizes (VOID)
         //
         for (KeyCount=0 ; KeyCount < NUMBER_OF_KEYS ; KeyCount++)
         {
-            GetTextStringBitmapSize(pKeyMap[KeyCount].KeyLabel,
+            LocalGetTextStringBitmapSize(pKeyMap[KeyCount].KeyLabel,
                 &pKeyMap[KeyCount].KeyLabelWidth,
                 &pKeyMap[KeyCount].KeyLabelHeight
                 );
@@ -555,7 +566,7 @@ Calculates the width and height of all special OSK button labels based on curren
 
 @retval     EFI_SUCCESS     Successfully calculated all key label sizes
 **/
-static
+STATIC
 EFI_STATUS
 CalculateSpecialButtonSizes (VOID)
 {
@@ -565,7 +576,7 @@ CalculateSpecialButtonSizes (VOID)
     // Keyboard close button.
     //
     mOSK.KeyboardCloseButton.pBitmap = NULL;     // Using Unicode character.
-    GetTextStringBitmapSize(mCloseButtonLabel,
+    LocalGetTextStringBitmapSize(mCloseButtonLabel,
         &mOSK.KeyboardCloseButton.Width,
         &mOSK.KeyboardCloseButton.Height
         );
@@ -573,7 +584,7 @@ CalculateSpecialButtonSizes (VOID)
     // Keyboard dock button.
     //
     mOSK.KeyboardDockButton.pBitmap = NULL;     // Using Unicode character.
-    GetTextStringBitmapSize(mDockButtonLabel,
+    LocalGetTextStringBitmapSize(mDockButtonLabel,
         &mOSK.KeyboardDockButton.Width,
         &mOSK.KeyboardDockButton.Height
         );
@@ -581,7 +592,7 @@ CalculateSpecialButtonSizes (VOID)
     // Keyboard undock button.
     //
     mOSK.KeyboardUndockButton.pBitmap = NULL;     // Using Unicode character.
-    GetTextStringBitmapSize(mUndockButtonLabel,
+    LocalGetTextStringBitmapSize(mUndockButtonLabel,
         &mOSK.KeyboardUndockButton.Width,
         &mOSK.KeyboardUndockButton.Height
         );
@@ -761,9 +772,12 @@ InitializeKeyboardContext (VOID)
 
     // Set default custom font size/style (by default choose small format).
     //
-    mOSK.PreferredFontInfo.FontSize         = MsUiGetSmallFontHeight();;
+    mOSK.PreferredFontInfo.FontSize         = MsUiGetSmallFontHeight();
     mOSK.PreferredFontInfo.FontStyle        = EFI_HII_FONT_STYLE_NORMAL;
-    mOSK.PreferredFontInfo.FontName[0]      = L'S';
+
+    // NOTE: A font name cannot be specified unless there is space allocated for
+    //       the name.  See OnScreenKeyboard.h for more info.
+    mOSK.PreferredFontInfo.FontName[0]      = L'\0';
 
     return Status;
 }
@@ -1112,7 +1126,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
     UINT32                  KeyboardWidth, KeyboardHeight;
     UINTN                   KeyLabelOrigX, KeyLabelOrigY;
     UINTN                   Count;
-    EFI_FONT_DISPLAY_INFO   StringInfo;
+    EFI_FONT_DISPLAY_INFO   *StringInfo = NULL;
 
 
     // First check whether there's something to do.
@@ -1121,6 +1135,14 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
     {
         goto Exit;
     }
+
+    StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
+    if (NULL == StringInfo)
+    {
+        goto Exit;
+    }
+
+    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
     // Determine the keyboard outer bounding rectangle
     //
@@ -1179,10 +1201,8 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
 
             // Select preferred font size and style for these buttons.
             //
-            StringInfo.FontInfoMask = EFI_FONT_INFO_ANY_FONT;
-            CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor,        sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            CopyMem (&StringInfo.FontInfo,        &mOSK.PreferredFontInfo, sizeof (EFI_FONT_INFO));
+            CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyLabelColor,                     sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+            CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
             // Draw the Un/Dock button
             //
@@ -1208,7 +1228,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
                 EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                 EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                 pButtonLabel,
-                &StringInfo,
+                StringInfo,
                 &mOSK.pKeyTextBltBuffer,
                 ButtonOrigX,
                 ButtonOrigY,
@@ -1231,7 +1251,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
                 EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                 EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                 pButtonLabel,
-                &StringInfo,
+                StringInfo,
                 &mOSK.pKeyTextBltBuffer,
                 ButtonOrigX,
                 ButtonOrigY,
@@ -1308,50 +1328,48 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
         //
         if (TRUE == bShowKeyLabels)
         {
-            ZeroMem (&StringInfo, sizeof (EFI_FONT_DISPLAY_INFO));
 
             // Use correct color for key text, based on state
             //
             if (Shift == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardShiftStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardShiftStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardShiftStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardShiftStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (CapsLock == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardCapsLockStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardCapsLockStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardCapsLockStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardCapsLockStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if ((NumSym == mOSK.KeyModifierState || Function == mOSK.KeyModifierState) && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardNumSymStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));            // Gray-out shift keys in these modes
-                CopyMem (&StringInfo.BackgroundColor, mOSK.KeyList[Count].pKeyFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));            // Gray-out shift keys in these modes
+                CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (NumSym == mOSK.KeyModifierState && EfiKeyA0 == mOSK.pKeyMap[Count].EfiKey)
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardNumSymA0StateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardNumSymA0StateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymA0StateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardNumSymA0StateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (Function == mOSK.KeyModifierState && EfiKeyA2 == mOSK.pKeyMap[Count].EfiKey)
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardFunctionStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardFunctionStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardFunctionStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardFunctionStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else if (mOSK.SelectedKey == Count)
             {
-                CopyMem (&StringInfo.ForegroundColor, &gMsColorTable.KeyboardSelectedStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, &gMsColorTable.KeyboardSelectedStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardSelectedStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardSelectedStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
             else
             {
-                CopyMem (&StringInfo.ForegroundColor, mOSK.KeyList[Count].pKeyLabelColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo.BackgroundColor, mOSK.KeyList[Count].pKeyFillColor,  sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->ForegroundColor, mOSK.KeyList[Count].pKeyLabelColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+                CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor,  sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
             }
 
             // Select preferred font size/style.
             //
-            CopyMem (&StringInfo.FontInfo, &mOSK.PreferredFontInfo, sizeof(EFI_FONT_INFO));
-            StringInfo.FontInfoMask   = EFI_FONT_INFO_ANY_FONT;
+            StringInfo->FontInfoMask   = EFI_FONT_INFO_ANY_FONT;
 
             // Center the label on the key.
             //
@@ -1366,7 +1384,7 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
                 EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
                 EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
                 mOSK.pKeyMap[Count].KeyLabel,
-                &StringInfo,
+                StringInfo,
                 &mOSK.pKeyTextBltBuffer,
                 KeyLabelOrigX,
                 KeyLabelOrigY,
@@ -1421,6 +1439,11 @@ RenderKeyboard (IN BOOLEAN bShowKeyLabels)
     mOSK.bKeyboardSizeChanged = FALSE;
 
 Exit:
+
+    if (NULL != StringInfo)
+    {
+        FreePool (StringInfo);
+    }
 
     return Status;
 }
@@ -1532,13 +1555,13 @@ IN OSK_DOCKED_STATE     DockedState)
     EFI_STATUS Status    = EFI_SUCCESS;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "INFO[OSK] Cannot set keyboardposition GOP not yet initialized %x %x\n", Position, DockedState));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, GOP not yet initialized %x %x\n", Position, DockedState));
         mOSK.KeyboardPosition = Position;
         mOSK.DockedState      = DockedState;
         goto Exit;
     }
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "INFO[OSK] Cannot set keyboardposition mSWMProtocol not yet initialized %x %x\n", Position, DockedState));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, SWM protocol not yet initialized %x %x\n", Position, DockedState));
         mOSK.KeyboardPosition = Position;
         mOSK.DockedState = DockedState;
         goto Exit;
@@ -1768,12 +1791,12 @@ SetKeyboardSize (IN float    PercentOfScreenWidth)
     SWM_RECT Rect;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "[ERROR] OSK not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] GOP not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
         mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
         goto Exit;
     }
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "[ERROR] OSK not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] SWM protocol not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
         mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
         goto Exit;
     }
@@ -1959,7 +1982,7 @@ ShowKeyboard (IN BOOLEAN bShowKeyboard)
     }
 
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "ERROR [OSK]: Cannot change ShowKeyboard mode 0x%08x.  Status = \n", bShowKeyboard));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboard mode 0x%08x.\n", bShowKeyboard));
         mOSK.bDisplayKeyboard = bShowKeyboard;
         goto Exit;
     }
@@ -2017,13 +2040,13 @@ ShowKeyboardIcon (IN BOOLEAN bShowKeyboardIcon)
     EFI_STATUS Status   = EFI_SUCCESS;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "ERROR[OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x.  = \n", bShowKeyboardIcon));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x\n", bShowKeyboardIcon));
         mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
         goto Exit;
     }
 
     if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_INFO, "ERROR[OSK]: Cannot change ShowKeyboardIcon 0x%08x.  Status = \n", bShowKeyboardIcon));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboardIcon 0x%08x\n", bShowKeyboardIcon));
         mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
         goto Exit;
     }
@@ -2394,7 +2417,7 @@ RotateKeyboard(IN SCREEN_ANGLE    Angle)
     float Zang = 0.0;
 
     if (mGop == NULL){
-        DEBUG((DEBUG_INFO, "ERROR[OSK] Failed to find GOP protocol \n"));
+        DEBUG((DEBUG_ERROR, "ERROR [OSK] Failed to find GOP protocol \n"));
         mOSK.KeyboardAngle = Angle;
         goto Exit;
     }
@@ -2545,7 +2568,7 @@ BOOLEAN
 KeyModifierStateMachine (IN EFI_KEY Key)
 {
     BOOLEAN bModifierKey = FALSE;
-    static BOOLEAN bDelayedTransitionfromShiftState = FALSE;    // Delays the transition from shift state until after the next key press
+    STATIC BOOLEAN bDelayedTransitionfromShiftState = FALSE;    // Delays the transition from shift state until after the next key press
 
     // Was a modifier key pressed?
     //
@@ -3043,7 +3066,7 @@ OSKProcessPointerCallback (IN VOID     *Context)
     EFI_STATUS                     Status = EFI_SUCCESS;
     MS_SWM_ABSOLUTE_POINTER_STATE  TouchState;
     SWM_RECT                       Rect;
-    static BOOLEAN                 WatchForFirstFingerUpEvent = FALSE;
+    STATIC BOOLEAN                 WatchForFirstFingerUpEvent = FALSE;
     BOOLEAN                        WatchForFirstFingerUpEvent2;
 
 
@@ -3340,7 +3363,7 @@ IN EFI_SYSTEM_TABLE  *SystemTable
         );
     ASSERT_EFI_ERROR(Status);
 
-    DEBUG((DEBUG_INFO, __FUNCTION__"OSK DEVICE Handle %x\n", mControllerHandle));
+    DEBUG((DEBUG_INFO, "%a OSK DEVICE Handle %x\n", __FUNCTION__, mControllerHandle));
     //
     // Install UEFI Driver Model protocol(s).
     //

@@ -178,7 +178,7 @@ SetIdentityResponse(
   Var.StatusCode = (UINT64)(Data->StatusCode);
   Var.SessionId = Data->SessionId;
 
-  return gRT->SetVariable(Data->ResultName, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES , sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR), &Var);
+  return gRT->SetVariable((CHAR16 *) Data->ResultName, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES , sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR), &Var);
 }
 
 /**
@@ -482,14 +482,6 @@ ApplyProvisionData(
     mInternalCertStore.PopulatedIdentities |= (Data->DfciIdentity);  //Set the populatedIdentities
   }
 
-  //Dispose of all mappings for the Identity that changed
-  Status = DisposeAllIdentityMappings(Data->DfciIdentity);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identites for Id 0x%X.  Status = %r\n", Data->DfciIdentity, Status));
-    //continue on.  
-  }
-
   // Data will be saved after all identities have been set
   Data->LKGDirty = TRUE;
 
@@ -517,7 +509,7 @@ DeleteProvisionVariable(
     return;
   }
 
-  gRT->SetVariable(Data->MailboxName, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
+  gRT->SetVariable((CHAR16 *) Data->MailboxName, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
 }
 
 /**
@@ -679,7 +671,7 @@ ApplyNewIdentityPacket (
     Data->State = DFCI_PACKET_STATE_DATA_USER_APPROVED;
 
   } else {
-    Status = LocalGetAnswerFromUser(Data->Payload,
+    Status = LocalGetAnswerFromUser((UINT8 *) Data->Payload,
                                     Data->PayloadSize,
                                    &Data->AuthToken);
 
@@ -732,6 +724,13 @@ ApplyNewIdentityPacket (
     goto CLEANUP;
   }
 
+  //Dispose of all mappings for the Identity that changed
+  Status = DisposeAllIdentityMappings(Data->DfciIdentity);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identites for Id 0x%X.  Status = %r\n", Data->DfciIdentity, Status));
+    //continue on.
+  }
 
 CLEANUP:
   if (EFI_ERROR(Status)) {
@@ -866,7 +865,7 @@ ClearDFCI (
   //
   // Get SettingsAccess
   //
-  Status = gBS->LocateProtocol(&gDfciSettingAccessProtocolGuid, NULL, &SettingsAccess);
+  Status = gBS->LocateProtocol(&gDfciSettingAccessProtocolGuid, NULL, (VOID **) &SettingsAccess);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "[AM] - %a - requires Settings Access Protocol (Status = %r)\n", __FUNCTION__, Status));

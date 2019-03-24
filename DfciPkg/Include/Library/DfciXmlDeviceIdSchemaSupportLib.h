@@ -79,7 +79,7 @@ GetDeviceIdListNodeFromPacketNode(
     </Identifier>
   </Identifiers>
 </UEFIDeviceIdentifierPacket>
-                                                      >
+**/
 
 /**
 Create a new Device Id Packet Node List

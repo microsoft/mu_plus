@@ -2,7 +2,7 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (c) 2017, Microsoft Corporation
+Copyright (c) 2017 - 2019, Microsoft Corporation
 
 All rights reserved.
 Redistribution and use in source and binary forms, with or without
@@ -26,31 +26,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-// MS_CHANGE - Entire file created.
 
-#include <Uefi.h>
-
-#include <Library/BaseLib.h>
-#include <Library/BaseMemoryLib.h>
-#include <Library/DebugLib.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/PeCoffGetEntryPointLib.h>
-#include <Register/Msr.h>
-#include <Library/PrintLib.h>
-// #include <Library/ShellLib.h>
-#include <Library/UefiApplicationEntryPoint.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Library/UefiLib.h>
-#include <Guid/EventGroup.h>
-#include <Protocol/SimpleFileSystem.h>
-#include <Protocol/HeapGuardDebug.h>
-#include <Register/Msr.h>
-#include <Register/Cpuid.h>
-
-#include <Library/DevicePathLib.h>
-#include <Guid/DebugImageInfoTable.h>
-#include <Guid/MemoryAttributesTable.h>
 #include "DxePagingAuditCommon.h"
+
 
 HEAP_GUARD_DEBUG_PROTOCOL *mHgDumpBitMap;
 EFI_FILE  *mFs_Handle;
@@ -72,8 +50,8 @@ UINTN      mMemoryInfoDatabaseAllocSize = 0;
                                     String has not been added.
 
 **/
-STATIC
 EFI_STATUS
+EFIAPI
 AppendToMemoryInfoDatabase (
   IN CONST CHAR8    *DatabaseString
   )
@@ -299,89 +277,6 @@ MemoryAttributesTableDump (
   FreePool(Buffer);
 }
 
-
-/**
-  Initializes the valid bits mask and valid address mask for MTRRs.
-
-  This function initializes the valid bits mask and valid address mask for MTRRs.
-
-  Copied from UefiCpuPkg MtrrLib
-
-  @param[out]  MtrrValidBitsMask     The mask for the valid bit of the MTRR
-  @param[out]  MtrrValidAddressMask  The valid address mask for the MTRR
-
-**/
-STATIC
-VOID
-InitializeMtrrMask (
-  OUT UINT64 *MtrrValidBitsMask,
-  OUT UINT64 *MtrrValidAddressMask
-  )
-{
-  UINT32                          MaxExtendedFunction;
-  CPUID_VIR_PHY_ADDRESS_SIZE_EAX  VirPhyAddressSize;
-
-
-  AsmCpuid( CPUID_EXTENDED_FUNCTION, &MaxExtendedFunction, NULL, NULL, NULL );
-
-  if (MaxExtendedFunction >= CPUID_VIR_PHY_ADDRESS_SIZE) {
-    AsmCpuid( CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL );
-  } else {
-    VirPhyAddressSize.Bits.PhysicalAddressBits = 36;
-  }
-
-  *MtrrValidBitsMask = LShiftU64( 1, VirPhyAddressSize.Bits.PhysicalAddressBits ) - 1;
-  *MtrrValidAddressMask = *MtrrValidBitsMask & 0xfffffffffffff000ULL;
-}
-
-STATIC
-EFI_STATUS
-TSEGDumpHandler (
-  VOID
-  )
-{
-  UINT64      SmrrBase;
-  UINT64      SmrrMask;
-  UINT64      Length; 
-  UINT64      MtrrValidBitsMask; 
-  UINT64      MtrrValidAddressMask;  
-  CHAR8       TempString[MAX_STRING_SIZE];
-
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
-
-  MtrrValidBitsMask = 0;
-  MtrrValidAddressMask = 0;
-
-  InitializeMtrrMask( &MtrrValidBitsMask, &MtrrValidAddressMask );
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", MtrrValidBitsMask , MtrrValidAddressMask ));
-
-  // This is a 64-bit read, but the SMRR registers bits 63:32 are reserved.
-  SmrrBase = AsmReadMsr64( MSR_IA32_SMRR_PHYSBASE );
-  SmrrMask = AsmReadMsr64( MSR_IA32_SMRR_PHYSMASK );
-  // Extend the mask to account for the reserved bits.
-  SmrrMask |= 0xffffffff00000000ULL;
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"SMRR base 0x%016lx, mask: 0x%016lx\n", SmrrBase , SmrrMask ));
-
-  // Extend the top bits of the mask to account for the reserved
-
-  Length = ((~(SmrrMask & MtrrValidAddressMask)) & MtrrValidBitsMask) + 1;
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"Calculated length: 0x%016lx\n", Length ));
-
-  // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
-  AsciiSPrint( TempString, MAX_STRING_SIZE,
-               "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-               16,
-               (SmrrBase & MtrrValidAddressMask),
-               0,
-               EFI_SIZE_TO_PAGES( Length ),
-               0 );
-  AppendToMemoryInfoDatabase( TempString );
-
-  return EFI_SUCCESS;
-}
 
 /**
  * @brief      Writes the UEFI memory map to file.
@@ -728,13 +623,14 @@ GetFlatPageTableData (
   // First, fail fast if some of the parameters don't look right.
   //
   // ALL count parameters should be provided.
-  if (Pte1GCount == NULL || Pte2MCount == NULL || Pte4KCount == NULL || PdeCount == NULL) {
+  if (Pte1GCount == NULL || Pte2MCount == NULL || Pte4KCount == NULL || PdeCount == NULL || GuardCount == NULL) {
     return EFI_INVALID_PARAMETER;
   }
   // If a count is greater than 0, the corresponding buffer pointer MUST be provided.
   // It will be assumed that all buffers have space for any corresponding count.
   if ((*Pte1GCount > 0 && Pte1GEntries == NULL) || (*Pte2MCount > 0 && Pte2MEntries == NULL) ||
-      (*Pte4KCount > 0 && Pte4KEntries == NULL) || (*PdeCount > 0 && PdeEntries == NULL)) {
+      (*Pte4KCount > 0 && Pte4KEntries == NULL) || (*PdeCount > 0 && PdeEntries == NULL) ||
+      (*GuardCount > 0 && GuardEntries == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -848,7 +744,8 @@ GetFlatPageTableData (
   // Only matters if a given buffer was provided.
   //
   if ((Pte1GEntries != NULL && *Pte1GCount < My1GCount) || (Pte2MEntries != NULL && *Pte2MCount < My2MCount) ||
-      (Pte4KEntries != NULL && *Pte4KCount < My4KCount) || (PdeEntries != NULL && *PdeCount < MyPdeCount)) {
+      (Pte4KEntries != NULL && *Pte4KCount < My4KCount) || (PdeEntries != NULL && *PdeCount < MyPdeCount) ||
+      (GuardEntries != NULL && *GuardCount < MyGuardCount)) {
     Status = EFI_BUFFER_TOO_SMALL;
   }
 
@@ -917,6 +814,7 @@ LoadFlatPageTableData(
                                    *Pte1GEntries, *Pte2MEntries, *Pte4KEntries, *PdeEntries, *GuardEntries );
     if (Status == EFI_BUFFER_TOO_SMALL)
     {
+      DEBUG(( DEBUG_ERROR, __FUNCTION__" Second GetFlatPageTableData call returned - %r\n", Status ));
       FreePool( *Pte1GEntries );
       FreePool( *Pte2MEntries );
       FreePool( *Pte4KEntries );
@@ -970,6 +868,7 @@ LoadFlatPageTableData(
     *GuardCount = 0;
   }
 
+  DEBUG(( DEBUG_ERROR, __FUNCTION__" - Exit... - %r\n", Status ));
   return !EFI_ERROR( Status );
 }
 
@@ -1020,18 +919,18 @@ DumpPagingInfo (
   IN      VOID                      *Context
   )
 {
-  EFI_STATUS    Status = EFI_SUCCESS;
-  static UINTN                           Pte1GCount = 0;
-  static UINTN                           Pte2MCount = 0;
-  static UINTN                           Pte4KCount = 0;
-  static UINTN                           PdeCount = 0;
-  static UINTN                           GuardCount = 0;
-  static PAGE_TABLE_1G_ENTRY            *Pte1GEntries = NULL;
-  static PAGE_TABLE_ENTRY               *Pte2MEntries = NULL;
-  static PAGE_TABLE_4K_ENTRY            *Pte4KEntries = NULL;
-  static UINT64                         *PdeEntries = NULL;
-  static UINT64                         *GuardEntries = NULL;
-  CHAR8                                  TempString[MAX_STRING_SIZE];
+  EFI_STATUS                      Status = EFI_SUCCESS;
+  UINTN                           Pte1GCount = 0;
+  UINTN                           Pte2MCount = 0;
+  UINTN                           Pte4KCount = 0;
+  UINTN                           PdeCount = 0;
+  UINTN                           GuardCount = 0;
+  PAGE_TABLE_1G_ENTRY            *Pte1GEntries = NULL;
+  PAGE_TABLE_ENTRY               *Pte2MEntries = NULL;
+  PAGE_TABLE_4K_ENTRY            *Pte4KEntries = NULL;
+  UINT64                         *PdeEntries = NULL;
+  UINT64                         *GuardEntries = NULL;
+  CHAR8                           TempString[MAX_STRING_SIZE];
 
   Status = gBS->LocateProtocol(&gHeapGuardDebugProtocolGuid, NULL, (VOID **) &mHgDumpBitMap);
   if (EFI_ERROR(Status)){
@@ -1051,57 +950,44 @@ DumpPagingInfo (
     DflDxeCreateAndWriteFileSFS(mFs_Handle, L"2M.dat", Pte2MCount * sizeof( PAGE_TABLE_ENTRY ), Pte2MEntries);
     DflDxeCreateAndWriteFileSFS(mFs_Handle, L"4K.dat", Pte4KCount * sizeof( PAGE_TABLE_4K_ENTRY ), Pte4KEntries);
     DflDxeCreateAndWriteFileSFS(mFs_Handle, L"PDE.dat", PdeCount * sizeof( UINT64 ), PdeEntries);
-  }
 
-  for (UINT64 i = 0; i < GuardCount; i ++) {
-    AsciiSPrint( TempString, MAX_STRING_SIZE,
-      "GuardPage,0x%016lx\n",
-      GuardEntries[i] );
-    DEBUG((DEBUG_ERROR, __FUNCTION__"  %s\n", TempString));
-    AppendToMemoryInfoDatabase( TempString );
+    // Only populate guard pages when function call is successful
+    for (UINT64 i = 0; i < GuardCount; i ++) {
+      AsciiSPrint( TempString, MAX_STRING_SIZE,
+        "GuardPage,0x%016lx\n",
+        GuardEntries[i] );
+      DEBUG((DEBUG_ERROR, __FUNCTION__"  %s\n", TempString));
+      AppendToMemoryInfoDatabase( TempString );
+    }
+  }
+  else {
+    DEBUG(( DEBUG_ERROR, __FUNCTION__" - LoadFlatPageTableData returned with failure, bail from here!\n" ));
+    goto Cleanup;
   }
 
   FlushAndClearMemoryInfoDatabase( L"GuardPage" );
-  TSEGDumpHandler();
+  DumpProcessorSpecificHandlers();
   MemoryMapDumpHandler();
   LoadedImageTableDump();
   MemoryAttributesTableDump();
   FlushAndClearMemoryInfoDatabase( L"MemoryInfoDatabase" );
 
+Cleanup:
+  if (Pte1GEntries != NULL) {
+    FreePool( Pte1GEntries );
+  }
+  if (Pte2MEntries != NULL) {
+    FreePool( Pte2MEntries );
+  }
+  if (Pte4KEntries != NULL) {
+    FreePool( Pte4KEntries );
+  }
+  if (PdeEntries != NULL) {
+    FreePool( PdeEntries );
+  }
+  if (GuardEntries != NULL) {
+    FreePool( GuardEntries );
+  }
+
   DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
 }
-
-/**
-  SmmPagingAuditAppEntryPoint
-
-  @param[in] ImageHandle  The firmware allocated handle for the EFI image.
-  @param[in] SystemTable  A pointer to the EFI System Table.
-
-  @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
-
-**/
-EFI_STATUS
-EFIAPI
-PagingAuditDxeEntryPoint (
-  IN     EFI_HANDLE         ImageHandle,
-  IN     EFI_SYSTEM_TABLE  *SystemTable
-)
-{
-  EFI_STATUS    Status = EFI_SUCCESS;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" registered - %r\n", Status));
-  EFI_EVENT                         Event;
-
-  Status = gBS->CreateEventEx (
-                      EVT_NOTIFY_SIGNAL,
-                      TPL_CALLBACK,
-                      DumpPagingInfo,
-                      NULL,
-                      &gEfiEventExitBootServicesGuid,
-                      &Event
-                      );
-  // // DumpPagingInfo();
-  DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
-
-  return EFI_SUCCESS;
-} // SmmPagingAuditAppEntryPoint()

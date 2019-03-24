@@ -60,6 +60,8 @@
   MsUiThemeLib
   MsColorTableLib
   MathLib
+  FltUsedLib
+  UIToolKitLib
 
 [Guids]
   gEfiConsoleInDeviceGuid

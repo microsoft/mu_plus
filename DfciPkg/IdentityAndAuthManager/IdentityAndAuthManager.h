@@ -46,6 +46,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/PcdLib.h>
 #include <Library/UefiLib.h>
 #include <Library/DfciUiSupportLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
@@ -333,20 +334,6 @@ EFI_STATUS
 EFIAPI
 ClearDFCI (
   IN CONST DFCI_AUTH_TOKEN *AuthToken
-  );
-
-/**
-Function to verify PKCS1 signed data against a provisioned cert
-**/
-EFI_STATUS
-EFIAPI
-VerifyUsingPkcs1
-(
-  IN CONST WIN_CERTIFICATE_EFI_PKCS1_15   *WinCert,
-  IN CONST UINT8                          *TrustedCertData,
-  IN       UINTN                          TrustedCertDataSize,
-  IN CONST UINT8                          *SignedData,
-  IN       UINTN                          SignedDataLength
   );
 
 /**

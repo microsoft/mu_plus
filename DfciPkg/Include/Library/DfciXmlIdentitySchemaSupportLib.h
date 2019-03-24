@@ -82,7 +82,7 @@ GetIdentityCurrentListNodeFromPacketNode(
     </Certificate>
   </Certificates>
 </UEFIIdentityCurrentPacket>
-                                                      >
+**/
 
 /**
 Create a new Device Id Packet Node List

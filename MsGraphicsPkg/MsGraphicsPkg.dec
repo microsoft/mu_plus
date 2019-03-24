@@ -96,7 +96,7 @@
 
   ## Microsoft UiTheme protocol guid
   #
-  gMsUiThemeProtolGuid = { 0xfc111ae5, 0xf073, 0x4348, { 0xaa, 0x5c, 0x49, 0x12, 0x4b, 0xbf, 0xed, 0x7b }}
+  gMsUiThemeProtocolGuid = { 0xfc111ae5, 0xf073, 0x4348, { 0xaa, 0x5c, 0x49, 0x12, 0x4b, 0xbf, 0xed, 0x7b }}
 
   ## Microsoft Early Dxe Graphics protocol
   #
@@ -114,13 +114,6 @@
   #  no theme guid hob is inserted into the HOB list.  This is for system that do not use PPI
   gMsGraphicsPkgTokenSpaceGuid.PcdUiThemeInDxe|FALSE|BOOLEAN|0x40000015
 
-  ##
-  # POST background coloring skip counter's initial/default value.
-  # Background is colored in DXE only when this counter reaches 0
-  # Default is 1, meaning background will not be colored on first invocation of Logo rendering library in DXE
-  #
-  gMsGraphicsPkgTokenSpaceGuid.PcdPostBackgroundColoringSkipCount|0x01|UINT8|0x40000187
-
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   ## Power Off Delay and Hold time.  Delay is how long to wait before prompting the user, and
   #  hold is how long to display the power down dialog before shutting down
@@ -129,6 +122,13 @@
 
 [PcdsDynamic, PcdsDynamicEx]
   gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009
- 
+
+  ##
+  # POST background coloring skip counter's initial/default value.
+  # Background is colored in DXE only when this counter reaches 0
+  # Default is 1, meaning background will not be colored on first invocation of Logo rendering library in DXE
+  #
+  gMsGraphicsPkgTokenSpaceGuid.PcdPostBackgroundColoringSkipCount|0x01|UINT8|0x40000187
+
 [UserExtensions.TianoCore."ExtraFiles"]
   MsGraphicsPkgExtra.uni

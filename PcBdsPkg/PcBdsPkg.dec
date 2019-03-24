@@ -1,7 +1,7 @@
 ## @file
 # Component declaration file for PC BDS package.
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c) 2018 - 2019, Microsoft Corporation
 
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@
 
   ##  @libraryclass  Platform specific library to check uefi version information
   ##
-  MsUefiVersionLib|PcBdsPkg/Include/Library/MsUefiVersionLib.h
+  MuUefiVersionLib|PcBdsPkg/Include/Library/MuUefiVersionLib.h
 
   ##  @libraryclass  Platform specific library to set or get reboot reasons
   ##
@@ -132,10 +132,10 @@
   gPcBdsPkgTokenSpaceGuid.PcdStartNetwork|0x0|UINT8|0x4000012D
 
   # Display Memory Map in the debug log
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapOutput|0x0|UINT8|0x4000011D
-# gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapTypes|0x0600|UINT32|0x4000011E  #// Only display ACPI types
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapTypes|0x3FFF|UINT32|0x4000011E  #// Display all memory types 0-13
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapDumpOutput|0x0|UINT8|0x4000011F #// Display memory from entry
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapOutput|0x0|UINT8|0x4000011D
+# gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapTypes|0x0600|UINT32|0x4000011E  #// Only display ACPI types
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapTypes|0x3FFF|UINT32|0x4000011E  #// Display all memory types 0-13
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapDumpOutput|0x0|UINT8|0x4000011F #// Display memory from entry
 
   ## FFS filename to find the shell application.
   # @Prompt FFS Name of Shell Application

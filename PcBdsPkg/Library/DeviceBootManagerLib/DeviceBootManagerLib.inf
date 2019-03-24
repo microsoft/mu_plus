@@ -1,7 +1,7 @@
 ## @file
 ##
 ##
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c) 2018 - 2019, Microsoft Corporation
 
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
@@ -63,10 +63,9 @@
   MsPlatformPowerCheckLib
   ThermalServicesLib
   PowerServicesLib
-  MsUefiVersionLib
+  MuUefiVersionLib
   MsNVBootReasonLib
   BootGraphicsLib
-  BootGraphicsProviderLib
   GraphicsConsoleHelperLib
 
 [Guids]
@@ -89,9 +88,9 @@
   gPcBdsPkgTokenSpaceGuid.PcdShutdownGraphicDisplayTime
   gPcBdsPkgTokenSpaceGuid.PcdThermalControlRetryWait
   gPcBdsPkgTokenSpaceGuid.PcdShellFile
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapOutput
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapTypes
-  gPcBdsPkgTokenSpaceGuid.PcdEnableMemoryMapDumpOutput
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapOutput
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapTypes
+  gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapDumpOutput
 
 [BuildOptions.AARCH64]
   # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas

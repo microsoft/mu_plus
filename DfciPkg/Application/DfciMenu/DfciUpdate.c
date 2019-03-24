@@ -224,6 +224,8 @@ BuildUsbRequest (
     UINTN                    PktNameLen;
     EFI_STATUS               Status;
 
+    PktFileName = NULL;
+
     Status = GetDfciSystemInfo (&DfciInfo);
     if (EFI_ERROR(Status)) {
          goto Error;
@@ -309,7 +311,7 @@ EncodeData (
     EFI_STATUS      Status;
 
 
-    Status = Base64Encode (Value,
+    Status = Base64Encode ((UINT8 *) Value,
                            ValueSize - sizeof(CHAR8),
                            NULL,
                           &Rqst->ValueSize);
@@ -326,7 +328,7 @@ EncodeData (
         return EFI_OUT_OF_RESOURCES;
     }
 
-    Status = Base64Encode (Value,
+    Status = Base64Encode ((UINT8 *) Value,
                            ValueSize - sizeof(CHAR8),
                            Rqst->Value,
                           &Rqst->ValueSize);

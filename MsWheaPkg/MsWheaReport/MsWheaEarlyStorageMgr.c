@@ -648,6 +648,8 @@ MsWheaESCheckHeader (
 
   MsWheaESWriteHeader(&Header);
 
+  Status = EFI_SUCCESS;
+
 Cleanup:
   return Status;
 }

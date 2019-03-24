@@ -77,6 +77,7 @@
   HttpLib
   MemoryAllocationLib
   JsonLiteParserLib
+  PcdLib
   PrintLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
@@ -112,6 +113,7 @@
 [FeaturePcd]
 
 [Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSetupUiReducedFunction
 
 [Depex]
   gEfiVariableArchProtocolGuid  AND
@@ -121,3 +123,8 @@
 
 [BuildOptions]
 #  DEBUG_*_*_CC_FLAGS  = /FAcs
+
+[BuildOptions.AARCH64]
+  # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
+  # such pragmas found in included header DfciPacketHeader.h
+  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas

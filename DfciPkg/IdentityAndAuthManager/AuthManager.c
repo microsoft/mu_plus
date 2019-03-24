@@ -34,7 +34,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DfciPasswordLib.h>
 #include <Library/ZeroTouchSettingsLib.h>
 
-//Statically allocate the supported identities.  
+//Statically allocate the supported identities.
 DFCI_IDENTITY_PROPERTIES mIdentityProperties_Local              = { DFCI_IDENTITY_LOCAL        };
 DFCI_IDENTITY_PROPERTIES mIdentityProperties_SIGNER_USER1       = { DFCI_IDENTITY_SIGNER_USER1 };
 DFCI_IDENTITY_PROPERTIES mIdentityProperties_SIGNER_USER2       = { DFCI_IDENTITY_SIGNER_USER2 };
@@ -47,14 +47,14 @@ EFI_RNG_PROTOCOL* mRngGenerator = NULL;
 #define AUTH_MANAGER_PW_STATE_UNKNOWN   (0)
 #define AUTH_MANAGER_PW_STATE_NO_PW     (1)
 #define AUTH_MANAGER_PW_STATE_PW        (2)
-UINT8 mAdminPasswordSetState = 0;  
+UINT8 mAdminPasswordSetState = 0;
 
 
 
 DFCI_AUTH_TOKEN
 CreateRandomAuthToken()
 {
-  EFI_STATUS Status = EFI_SUCCESS; 
+  EFI_STATUS Status = EFI_SUCCESS;
   UINTN RandomValue = 0;
   UINTN RandomSize = sizeof(UINTN);
   if (mRngGenerator == NULL)
@@ -147,7 +147,7 @@ CreateAuthTokenWithMapping(DFCI_IDENTITY_ID Id)
 
 **/
 EFI_STATUS
-EFIAPI 
+EFIAPI
 AuthWithPW(
   IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
   IN  CONST CHAR16                         *Password OPTIONAL,
@@ -162,7 +162,7 @@ AuthWithPW(
   {
     return EFI_INVALID_PARAMETER;
   }
-  
+
   //
   // Check if we know the state of the system password
   //
@@ -184,12 +184,12 @@ AuthWithPW(
   if (mAdminPasswordSetState == AUTH_MANAGER_PW_STATE_NO_PW)
   {
     if((Password == NULL) && (PasswordLength < 1))
-    { 
+    {
       DEBUG((DEBUG_INFO, "[AM] NULL Password Valid\n"));
       Status = EFI_SUCCESS;
       goto AUTH_APPROVED_EXIT;
     }
-    //In this case it is invalid as No password is set yet caller tried to use something. 
+    //In this case it is invalid as No password is set yet caller tried to use something.
     DEBUG((DEBUG_ERROR, "[AM] Called with Password when no password set.  Fail.\n"));
     Status = EFI_SECURITY_VIOLATION;
     goto EXIT;
@@ -429,7 +429,7 @@ AuthWithSignedData(
     Status = EFI_DEVICE_ERROR;
     goto CLEANUP;
   }
-  
+
   *IdentityToken = Random;  //copy auth token to user passed in buffer
   Status = EFI_SUCCESS;
 
@@ -440,8 +440,8 @@ CLEANUP:
 
 
 /**
-Function supports verifying the data in the SignedData hasn't 
-been tampered with since it was signed, creating the signature, by an 
+Function supports verifying the data in the SignedData hasn't
+been tampered with since it was signed, creating the signature, by an
 key that is verified using the TrustedCert
 **/
 EFI_STATUS
@@ -457,8 +457,6 @@ VerifySignature(
   EFI_STATUS Status = EFI_SUCCESS;
   MU_PKCS7_PROTOCOL *Pkcs7Prot = NULL;
   UINTN CertSize = 0;
-  BOOLEAN PKCS7 = FALSE;
-  BOOLEAN PKCS1 = FALSE;
 
   //Check input parameters
   if ((SignedData == NULL) || (Signature == NULL) || (TrustedCert == NULL))
@@ -496,7 +494,6 @@ VerifySignature(
   //
   // Check Win_Cert type
   //
-  // FIRST CHECK FOR PCKS7 
   if (Signature->wCertificateType == WIN_CERT_TYPE_EFI_GUID)
   {
     WIN_CERTIFICATE_UEFI_GUID *Cert = (WIN_CERTIFICATE_UEFI_GUID*)Signature;
@@ -534,23 +531,6 @@ VerifySignature(
       Status = EFI_UNSUPPORTED;
       goto CLEANUP;
     }
-
-    PKCS7 = TRUE;
-  }
-  // NOW CHECK FOR PKSC1
-  else if (Signature->wCertificateType == WIN_CERT_TYPE_EFI_PKCS115)
-  {
-    DEBUG((DEBUG_INFO, "[AM] WIN_CERT is of TYPE PKCS115\n"));
-
-    if (Signature->dwLength <= sizeof(WIN_CERTIFICATE_EFI_PKCS1_15))
-    {
-      DEBUG((DEBUG_ERROR, "[AM] Signature dwLength is not large enough for valid WIN_CERTIFICATE_EFI_PKCS1_15 with data\n"));
-      Status = EFI_INVALID_PARAMETER;
-      goto CLEANUP;
-    }
-
-    CertSize = Signature->dwLength - sizeof(WIN_CERTIFICATE_EFI_PKCS1_15);
-    PKCS1 = TRUE;
   }
   else
   {
@@ -562,7 +542,7 @@ VerifySignature(
   DEBUG((DEBUG_INFO, "[AM] %a - CertSize is 0x%X\n", __FUNCTION__, CertSize));
 
 
-  // Check size...need to know what a good size is?  
+  // Check size...need to know what a good size is?
   if ((CertSize < 1) || (CertSize > Signature->dwLength))
   {
     DEBUG((DEBUG_ERROR, "[AM] Signature Cert Data Size invalid.\n"));
@@ -584,24 +564,11 @@ VerifySignature(
   DEBUG_BUFFER(DEBUG_INFO, (UINT8 *)(SignedData), SignedDataSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
 
 
-  if (PKCS7)
-  {
-    WIN_CERTIFICATE_UEFI_GUID *Cert = (WIN_CERTIFICATE_UEFI_GUID*)Signature;
-    Status = Pkcs7Prot->Verify(Pkcs7Prot, (UINT8 *)(&Cert->CertData), CertSize, TrustedCert, TrustedCertSize, SignedData, SignedDataSize);
-  }
-  else if (PKCS1)
-  {
-    Status = VerifyUsingPkcs1((WIN_CERTIFICATE_EFI_PKCS1_15 *)Signature, TrustedCert, TrustedCertSize, SignedData, SignedDataSize);
-  }
-  else
-  {
-    Status = EFI_UNSUPPORTED;
-  }
+  WIN_CERTIFICATE_UEFI_GUID *Cert = (WIN_CERTIFICATE_UEFI_GUID*)Signature;
+  Status = Pkcs7Prot->Verify(Pkcs7Prot, (UINT8 *)(&Cert->CertData), CertSize, TrustedCert, TrustedCertSize, SignedData, SignedDataSize);
 
 CLEANUP:
 
   DEBUG((DEBUG_INFO, "[AM] - %a - Validation Status %r\n", __FUNCTION__, Status));
   return Status;
 }
-
-

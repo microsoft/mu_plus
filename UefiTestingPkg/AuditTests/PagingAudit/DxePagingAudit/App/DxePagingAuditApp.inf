@@ -1,0 +1,71 @@
+## @file DxePagingAudit.inf
+# This Shell App writes page table and memory map information to SFS.
+#
+##
+# Copyright (c) 2017 - 2019, Microsoft Corporation
+#
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = DxePagingAuditApp
+  FILE_GUID           = 5CA3255F-0C91-4C8D-A4CF-36E8BC49D6C4
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = PagingAuditDxeAppEntryPoint
+
+
+[Sources]
+  DxePagingAuditApp.c
+  ../DxePagingAuditCommon.c
+  ../DxePagingAuditCommon.h
+
+
+[Sources.X64]
+  ../X64/DxePagingAuditProcessor.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  ShellPkg/ShellPkg.dec
+
+
+[LibraryClasses]
+  PrintLib
+  DebugLib
+  UefiBootServicesTableLib
+  UefiLib
+  PeCoffGetEntryPointLib
+  UefiApplicationEntryPoint
+  ShellLib
+
+[Guids]
+  gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
+  gEfiMemoryAttributesTableGuid
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gHeapGuardDebugProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid

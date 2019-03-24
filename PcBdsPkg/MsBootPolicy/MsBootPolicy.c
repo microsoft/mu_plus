@@ -48,11 +48,6 @@ static BOOT_SEQUENCE mSddBootSequence[] = {
     MsBootHDD,
     MsBootDone
 };
-static BOOT_SEQUENCE mFactoryUsbBootSequence[] = {
-    MsBootUSB,
-    MsResetComputer,
-    MsBootDone
-};
 
 // Device Path filter routines
 typedef
@@ -533,6 +528,7 @@ MsBootPolicyEntry(
     IN EFI_SYSTEM_TABLE                      *SystemTable
     ) {
     EFI_STATUS                          Status;
+    EFI_STATUS                          GraphicStatus;
     BOOT_SEQUENCE                      *BootSequence;   // Pointer to array of boot sequence entries
     UINTN                               Index;
     EFI_LOADED_IMAGE_PROTOCOL          *ImageInfo = NULL;
@@ -568,16 +564,10 @@ MsBootPolicyEntry(
     case 'M':      // "MS" Default of SDD->USB->PXE  , "MA" Default of USB->PXE->SDD
     default:       // Try the default boot option is the parameter is messed up
         AltBootRequest = ('A' == *(Parameters + 1));
-        if (AltBootRequest) {
-          DEBUG((DEBUG_INFO, "********** ALT BOOT is selected**************\n"));
-          BootSequence = mFactoryUsbBootSequence;
-        }
-        else {
-          Status = MsBootPolicyLibGetBootSequence(&BootSequence, AltBootRequest);
-          if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "Unable to get boot sequence - using hard coded sequence.\n"));
-            BootSequence = mDefaultBootSequence;
-          }
+        Status = MsBootPolicyLibGetBootSequence(&BootSequence, AltBootRequest);
+        if (EFI_ERROR(Status)) {
+          DEBUG((DEBUG_ERROR, "Unable to get boot sequence - using hard coded sequence.\n"));
+          BootSequence = mDefaultBootSequence;
         }
 
         break;
@@ -595,9 +585,9 @@ MsBootPolicyEntry(
         switch (BootSequence[Index]) {
         case MsBootPXE4:
             StartNetworking ();
-            Status = SetGraphicsConsoleMode(GCM_LOW_RES);
-            if (EFI_ERROR(Status) != FALSE) {
-              DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
+            GraphicStatus = SetGraphicsConsoleMode(GCM_LOW_RES);
+            if (EFI_ERROR(GraphicStatus) != FALSE) {
+              DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
             }
             Status = SelectAndBootDevice(&gEfiLoadFileProtocolGuid, FilterOnlyIPv4);
             break;
@@ -611,9 +601,9 @@ MsBootPolicyEntry(
             }
             if (EnableIPv6) {
                 StartNetworking();
-                Status = SetGraphicsConsoleMode(GCM_LOW_RES);
-                if (EFI_ERROR(Status) != FALSE) {
-                  DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
+                GraphicStatus = SetGraphicsConsoleMode(GCM_LOW_RES);
+                if (EFI_ERROR(GraphicStatus) != FALSE) {
+                  DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
                 }
                 Status = SelectAndBootDevice(&gEfiLoadFileProtocolGuid, FilterOnlyIPv6);
             } else {
@@ -621,16 +611,16 @@ MsBootPolicyEntry(
             }
             break;
         case MsBootHDD:
-            Status = SetGraphicsConsoleMode(GCM_NATIVE_RES);
-            if (EFI_ERROR(Status) != FALSE) {
-              DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
+            GraphicStatus = SetGraphicsConsoleMode(GCM_NATIVE_RES);
+            if (EFI_ERROR(GraphicStatus) != FALSE) {
+              DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
             }
             Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB);
             break;
         case MsBootUSB:
-            Status = SetGraphicsConsoleMode(GCM_NATIVE_RES);
-            if (EFI_ERROR(Status) != FALSE) {
-              DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
+            GraphicStatus = SetGraphicsConsoleMode(GCM_NATIVE_RES);
+            if (EFI_ERROR(GraphicStatus) != FALSE) {
+              DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
             }
             Status = SelectAndBootDevice(&gEfiSimpleFileSystemProtocolGuid, FilterOnlyUSB);
             if (Status == EFI_NOT_FOUND)
@@ -646,10 +636,6 @@ MsBootPolicyEntry(
                 }
             }
             break;
-        case MsResetComputer:
-            DEBUG((DEBUG_INFO, "################### SHOULD NEVER BE HERE*************\n"));
-            gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
-            break;
         default:
             DEBUG((DEBUG_ERROR,"Invalid BootSequence value %x\n",BootSequence[Index]));
             Status = EFI_INVALID_PARAMETER;
@@ -661,14 +647,16 @@ MsBootPolicyEntry(
         }
         Index++;
     }
-    Status = SetGraphicsConsoleMode(GCM_NATIVE_RES);
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
+
+    // Need to populate GraphicStatus here, otherwise logo function return value will override boot result 
+    GraphicStatus = SetGraphicsConsoleMode(GCM_NATIVE_RES);
+    if (EFI_ERROR(GraphicStatus) != FALSE) {
+      DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
       goto Done;
     }
-    Status = DisplayBootGraphic(BG_SYSTEM_LOGO);
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, "%a Unable to set graphics - %r\n", __FUNCTION__, Status));
+    GraphicStatus = DisplayBootGraphic(BG_SYSTEM_LOGO);
+    if (EFI_ERROR(GraphicStatus) != FALSE) {
+      DEBUG((DEBUG_ERROR, "%a Unable to set graphics - %r\n", __FUNCTION__, GraphicStatus));
     }
 
 Done:

@@ -56,8 +56,6 @@ extern EFI_GUID gDfciPermissionManagerVarNamespace;
 #define DFCI_PERMISSION_POLICY_RESULT_VERSION_V1 (1)
 #define DFCI_PERMISSION_POLICY_RESULT_VERSION    (2)
 
-#pragma warning(push)
-#pragma warning(disable: 4200) // zero-sized array
 #pragma pack (push, 1)
 
 typedef struct {
@@ -94,7 +92,6 @@ typedef struct {
 } DFCI_PERMISSION_POLICY_RESULT_VAR;
 
 #pragma pack (pop)
-#pragma warning(pop)
 
 
 #endif // __DFCI_PERMISSION_MANAGER_VARIABLES_H__

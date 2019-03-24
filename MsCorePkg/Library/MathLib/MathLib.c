@@ -29,11 +29,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Uefi.h>
 #include <Library/MathLib.h>
 
-
-//You need to include this to let the compiler know we are going to use floating point
-int   _fltused = 0x9875;
-
-
 /**
 Find sine of a provided double in radians
 
@@ -74,7 +69,7 @@ sin_d(
     value = previousValue - (top/denom);
 
     //iterate 7 iterations
-    for (iterationCount;iterationCount <= 19;iterationCount+=2){ 
+    for (;iterationCount <= 19;iterationCount+=2){ 
         previousValue = value;
         denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous compued n-2!)
         top *= radians * radians; // x^2 * (previous computed x^n-2)
@@ -129,7 +124,7 @@ cos_d(
     value = previousValue - (top/denom);
 
     //iterate 7 iterations
-    for (iterationCount;iterationCount <= 20;iterationCount+=2){ 
+    for (;iterationCount <= 20;iterationCount+=2){ 
         previousValue = value;
         denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous compued n-2!)
         top *= radians * radians; // x^2 * (previous computed x^n-2)
@@ -144,7 +139,7 @@ cos_d(
 //Bit scan reverse for 64 bit values
 static inline UINT16 bsr64(UINT64 value) {
 #if __GNUC__ > 3 //if we are using GCC take advantage of their builtins
-		return 64 - __builtin_clzl(value)
+    return 64 - __builtin_clzl(value);
 
 #elif _MSC_VER > 1500 //if we are using MS VS compiler 15 or greater
     UINT64 result;
