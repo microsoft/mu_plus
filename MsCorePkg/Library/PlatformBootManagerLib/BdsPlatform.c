@@ -191,7 +191,7 @@ PlatformBootManagerBeforeConsole (
   // Append Usb Keyboard short form DevicePath into "ConInDev"
   //
   EfiBootManagerUpdateConsoleVariable (
-    ConInDev,
+    ConIn,
     (EFI_DEVICE_PATH_PROTOCOL *) &mUsbClassKeyboardDevicePath,
     NULL
     );
