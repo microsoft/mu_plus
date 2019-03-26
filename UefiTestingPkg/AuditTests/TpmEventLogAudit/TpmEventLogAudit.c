@@ -337,7 +337,7 @@ UefiTestApp (
   //
   // Let's locate the protocol.
   //
-  Status = gBS->LocateProtocol( &gEfiTcg2ProtocolGuid, NULL, &Tcg2Protocol );
+  Status = gBS->LocateProtocol( &gEfiTcg2ProtocolGuid, NULL, (VOID **) &Tcg2Protocol );
 
   //
   // Handle errors and move on.
