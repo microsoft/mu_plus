@@ -20,7 +20,7 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
-- None
+- Added Color Bars for DEVICE_STATE_PLATFORM_MODE_[2|3]. (indigo and brown, respectively). Removed display for DEVICE_STATE_UNDEFINED.
 
 Bug Fixes-dev
 -------------
