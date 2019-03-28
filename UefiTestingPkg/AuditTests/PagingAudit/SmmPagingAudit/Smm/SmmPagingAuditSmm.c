@@ -109,7 +109,10 @@ SmmLoadedImageTableDump (
   // Based on the number of handles returned, determine whether we need to fetch anything else.
   //
   HandleBufferCount = HandleBufferSize / sizeof(EFI_HANDLE);
-  SourceIndex = RequestIndex * BUFFER_COUNT_IMAGES;   // RequestIndex is capped at 100 in the root handler.
+
+  // RequestIndex is capped at MAX_SMI_CALL_COUNT in the root handler,
+  // Multiplication overflow should not occur on x86 or x64 systems
+  SourceIndex = RequestIndex * BUFFER_COUNT_IMAGES;
   if (SourceIndex < HandleBufferCount) {
     for (DestinationIndex = 0;
           SourceIndex < HandleBufferCount && DestinationIndex < BUFFER_COUNT_IMAGES;
@@ -510,12 +513,13 @@ SmmPagingAuditHandler (
   //
   // Make sure that user-supplied values don't cause math errors.
   //
-  // This is somewhat arbitrary, but honestly, we shouldn't get more than 100 calls.
-  if (AuditCommBuffer->Header.RequestIndex > 100) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - RequestIndex %d > 100!\n", AuditCommBuffer->Header.RequestIndex ));
+  // This upper limit is somewhat arbitrary, currently capped at MAX_SMI_CALL_COUNT,
+  // in order to prevent overflow on x86 or x64 systems during related multiplications
+  if (AuditCommBuffer->Header.RequestIndex > MAX_SMI_CALL_COUNT) {
+    DEBUG(( DEBUG_ERROR, __FUNCTION__" - RequestIndex %d > MAX_SMI_CALL_COUNT!\n", AuditCommBuffer->Header.RequestIndex ));
     return EFI_INVALID_PARAMETER;
   }
-
+  DEBUG(( DEBUG_INFO, __FUNCTION__" - RequestIndex %d !\n", AuditCommBuffer->Header.RequestIndex ));
   //
   // If this call will need cached data, load that now.
   //

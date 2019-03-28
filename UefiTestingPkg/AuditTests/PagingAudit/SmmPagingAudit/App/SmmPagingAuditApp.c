@@ -674,7 +674,10 @@ SmmPageTableEntriesDump (
     Status = SmmCommunication->Communicate( SmmCommunication,
                                             CommBufferBase,
                                             &BufferSize );
-
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_ERROR, __FUNCTION__" - SmmCommunication errored - %r.\n", Status));
+      goto Cleanup;
+    }
     //
     // Get the data out of the comm buffer.
     //
@@ -683,6 +686,7 @@ SmmPageTableEntriesDump (
       NewSize = NewCount * sizeof(PAGE_TABLE_1G_ENTRY);
       Pte1GEntries = ReallocatePool( Pte1GCount * sizeof(PAGE_TABLE_1G_ENTRY), NewSize, Pte1GEntries );
       if (Pte1GEntries == NULL) {
+        DEBUG(( DEBUG_ERROR, __FUNCTION__" - 1G entries not allocated.\n" ));
         goto Cleanup;
       }
       CopyMem( &Pte1GEntries[Pte1GCount], &AuditCommData->Pte1G[0], AuditCommData->Pte1GCount * sizeof(PAGE_TABLE_1G_ENTRY) );
@@ -693,6 +697,7 @@ SmmPageTableEntriesDump (
       NewSize = NewCount * sizeof(PAGE_TABLE_ENTRY);
       Pte2MEntries = ReallocatePool( Pte2MCount * sizeof(PAGE_TABLE_ENTRY), NewSize, Pte2MEntries );
       if (Pte2MEntries == NULL) {
+        DEBUG(( DEBUG_ERROR, __FUNCTION__" - 2M entries not allocated.\n" ));
         goto Cleanup;
       }
       CopyMem( &Pte2MEntries[Pte2MCount], &AuditCommData->Pte2M[0], AuditCommData->Pte2MCount * sizeof(PAGE_TABLE_ENTRY) );
@@ -703,6 +708,7 @@ SmmPageTableEntriesDump (
       NewSize = NewCount * sizeof(PAGE_TABLE_4K_ENTRY);
       Pte4KEntries = ReallocatePool( Pte4KCount * sizeof(PAGE_TABLE_4K_ENTRY), NewSize, Pte4KEntries );
       if (Pte4KEntries == NULL) {
+        DEBUG(( DEBUG_ERROR, __FUNCTION__" - 4K entries not allocated.\n" ));
         goto Cleanup;
       }
       CopyMem( &Pte4KEntries[Pte4KCount], &AuditCommData->Pte4K[0], AuditCommData->Pte4KCount * sizeof(PAGE_TABLE_4K_ENTRY) );
@@ -948,6 +954,7 @@ LocateSmmCommonCommBuffer (
     Status = EfiGetSystemConfigurationTable(&gEdkiiPiSmmCommunicationRegionTableGuid, (VOID**)&PiSmmCommunicationRegionTable);
     if (EFI_ERROR(Status))
     {
+      DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to get system configuration table %r\n", Status));
       return Status;
     }
 

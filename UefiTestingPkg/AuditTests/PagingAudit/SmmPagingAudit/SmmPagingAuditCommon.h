@@ -128,6 +128,7 @@ typedef union {
 } PAGE_TABLE_1G_ENTRY;
 
 #define MAX_IMAGE_NAME_SIZE   100
+#define MAX_SMI_CALL_COUNT    1000
 
 typedef struct {
   UINT64              ImageBase;
