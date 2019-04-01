@@ -281,7 +281,7 @@ SettingsManagerOnReadyToBoot (
     PublishDeviceIdentifier ();
   } else {
     // Insure variable is not present
-    DEBUG((DEBUG_INFO, "%a - Dfci is disabled.  Not publishing the Device Identifier\n"));
+    DEBUG((DEBUG_INFO, "%a - Dfci is disabled.  Not publishing the Device Identifier\n", __FUNCTION__));
     Status = gRT->SetVariable(DFCI_DEVICE_ID_VAR_NAME, &gDfciDeviceIdVarNamespace, DFCI_DEVICE_ID_VAR_ATTRIBUTES, 0, NULL);
     if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
       DEBUG((DEBUG_ERROR, "%a - Failed to delete Device Id Xml variable %r\n", __FUNCTION__, Status));
