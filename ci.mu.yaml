@@ -42,7 +42,8 @@
     "ArchSupported": [
         "IA32",
         "X64",
-        "AARCH64"
+        "AARCH64",
+        "ARM"
     ],
     "Targets": [
         "DEBUG",
