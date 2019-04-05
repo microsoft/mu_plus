@@ -100,16 +100,6 @@ This currently supports x86, x64, AARCH64, and ARM.
 
 There are two ways to include this in your project: getting the protocol directly or using SharedCryptoLib. SharedCryptoLib is a wrapper that is a super set of the API for BaseCryptLib so you can just drop it in.
 
-## Calling the Protocol
-There are several protocols, each defined in the Supported Functions section. So for example, calling the Sha1 function in DXE would look like this
-
-```c
-EFI_STATUS Status = EFI_SUCCESS;
-CBD_SHA_PROTOCOL *pShaProt = NULL;
-Status = gBS->LocateProtocol(&gSharedCryptoProtocolGuid, NULL, (VOID **)&pShaProt);
-UINTN contextSize = pShaProt->S1_GetContextSize()
-...
-```
 
 
 ## Sample DSC change

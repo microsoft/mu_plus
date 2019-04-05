@@ -5,7 +5,6 @@
 #  see Readme.md in SharedCryptoPkg
 #  There are a few flavors of support from the protocol and this is just one version.
 #  This supports just the functions that Project Mu uses.
-#  It also shows how SharedCrypto can be modified
 #
 #  Copyright (c) 2019, Microsoft Corporation. All rights reserved.
 #
