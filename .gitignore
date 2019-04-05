@@ -7,7 +7,6 @@ tags/
 BuildConfig.conf
 /Conf
 /.vscode
-SharedCrypto_extdep/
 
 # Ignore SelfDescribingEnvironment artifacts.
 *_extdep/
@@ -15,5 +14,4 @@ SharedCrypto_extdep/
 # Ignore cloned dependencies
 /Common
 /MU_BASECORE
-.NugetOutput/
 _TEMP_*/

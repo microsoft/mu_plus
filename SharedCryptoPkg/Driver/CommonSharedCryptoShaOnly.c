@@ -2,6 +2,14 @@
 /** @file
   This module is consumed by the reduced version of PEI
 
+  This links the functions in the protocol to the functions in BaseCryptLib.
+  This is the ShaOnly flavor, which means we only support SHA1 and SHA256. This
+  is used by PEI on Microsoft Surface platforms as SHA is the only crypto
+  functions that we use in PEI. Using the ShaOnly flavor reduces in a smaller
+  binary size.
+
+  See Readme.md in the root of SharedCryptoPkg for more info.
+
   Copyright (c) 2019, Microsoft Corporation. All rights reserved.
 
   Redistribution and use in source and binary forms, with or without

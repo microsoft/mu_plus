@@ -37,16 +37,18 @@ import glob
 
 version = "20190404.0.2"
 
+
 def CopyFile(srcDir, destDir, file_name):
     copyfile(os.path.join(srcDir, file_name), os.path.join(destDir, file_name))
 
 
-def GetArchitecture(path:str):
+def GetArchitecture(path: str):
     path = os.path.normpath(path)
     path_parts = path.split(os.path.sep)
     return path_parts[1]
 
-def GetTarget(path:str):
+
+def GetTarget(path: str):
     path = os.path.normpath(path)
     path_parts = path.split(os.path.sep)
     target = path_parts[0]
@@ -55,6 +57,7 @@ def GetTarget(path:str):
         return target.split("_")[0]
 
     return None
+
 
 def MoveArchTargetSpecificFile(binary, offset, output_dir):
     binary_path = binary[offset:]
@@ -67,13 +70,14 @@ def MoveArchTargetSpecificFile(binary, offset, output_dir):
     dest_path = os.path.join(output_dir, target, arch)
     dest_filepath = os.path.join(dest_path, binary_name)
     if os.path.exists(dest_filepath):
-        logging.warning("Skipping {0}: {1} from {2}".format(binary_name,dest_filepath, binary))
+        logging.warning("Skipping {0}: {1} from {2}".format(binary_name, dest_filepath, binary))
         return
 
     if not os.path.exists(dest_path):
         os.makedirs(dest_path)
     # logging.warning("Copying {0}: {1}".format(binary_name,binary))
-    CopyFile(binary_folder,dest_path,binary_name)
+    CopyFile(binary_folder, dest_path, binary_name)
+
 
 if __name__ == "__main__":
     # get the root directory of mu_plus
@@ -81,15 +85,15 @@ if __name__ == "__main__":
     driverDir = os.path.join(scriptDir, "Driver")
     rootDir = os.path.dirname(scriptDir)
     os.chdir(rootDir)  # set ourselves to there
-    rootPath = os.path.realpath(os.path.join(
-        rootDir, "ci.mu.yaml"))  # get our yaml file
+    rootPath = os.path.realpath(os.path.join(rootDir, "ci.mu.yaml"))  # get our yaml file
     args = sys.argv
 
     if len(args) != 2:
         raise RuntimeError("You need to include your API key as the first argument")
 
     api_key = args[1]
-    sys.argv = ["-c", rootPath, "--ignore", "--CLEAN", "BUILDREPORTING=TRUE","BUILDREPORT_TYPES=LIBRARY DEPEX PCD BUILD_FLAGS", "-p", "SharedCryptoPkg"]
+    sys.argv = ["-c", rootPath, "--ignore", "--CLEAN", "BUILDREPORTING=TRUE",
+                "BUILDREPORT_TYPES=LIBRARY DEPEX PCD BUILD_FLAGS", "-p", "SharedCryptoPkg"]
     try:  # run the build
         MuBuild.main()
     except SystemExit as e:
@@ -99,20 +103,19 @@ if __name__ == "__main__":
 
     MuLogging.stop_logging(logging.getLogger("").handlers)
     logging.getLogger("").handlers = []
-    MuLogging.setup_console_logging(use_color=False,logging_level=logging.DEBUG)
+    MuLogging.setup_console_logging(use_color=False, logging_level=logging.DEBUG)
     # move the EFI's we generated to a folder to upload
-    NugetPath = os.path.join(rootDir, "MU_BASECORE",
-                             "BaseTools", "NugetPublishing")
+    NugetPath = os.path.join(rootDir, "MU_BASECORE", "BaseTools", "NugetPublishing")
     NugetFilePath = os.path.join(NugetPath, "NugetPublishing.py")
     if not os.path.exists(NugetFilePath):
         raise FileNotFoundError(NugetFilePath)
 
     logging.info("Running NugetPackager")
-    output_dir = os.path.join(scriptDir, ".NugetOutput")
+    output_dir = os.path.join(rootDir, "Build", ".NugetOutput")
 
     try:
         if os.path.exists(output_dir):
-            shutil.rmtree(output_dir,ignore_errors=True)
+            shutil.rmtree(output_dir, ignore_errors=True)
         os.makedirs(output_dir)
     except:
         logging.error("Ran into trouble getting Nuget Output Path setup")
@@ -130,16 +133,13 @@ if __name__ == "__main__":
         MoveArchTargetSpecificFile(binary, sharedcrypto_build_dir_offset, output_dir)
 
     for depex in glob.iglob(build_dir_dpx_search, recursive=True):
-      MoveArchTargetSpecificFile(depex, sharedcrypto_build_dir_offset, output_dir)
+        MoveArchTargetSpecificFile(depex, sharedcrypto_build_dir_offset, output_dir)
 
     for pdb in glob.iglob(build_dir_pdb_search, recursive=True):
-      MoveArchTargetSpecificFile(pdb, sharedcrypto_build_dir_offset, output_dir, skip_debug=False)
+        MoveArchTargetSpecificFile(pdb, sharedcrypto_build_dir_offset, output_dir, skip_debug=False)
 
-
-    params = "--Operation PackAndPush --ConfigFilePath Mu-SharedCrypto.config.json --Version {2} --InputFolderPath {0}  --ApiKey {1}".format(
-        output_dir, api_key, version)
-    UtilityFunctions.RunPythonScript(
-        NugetFilePath, params, capture=True, workingdir=driverDir)
+    params = "--Operation PackAndPush --ConfigFilePath Mu-SharedCrypto.config.json --Version {2} --InputFolderPath {0}  --ApiKey {1}".format(output_dir, api_key, version)
+    UtilityFunctions.RunPythonScript(NugetFilePath, params, capture=True, workingdir=driverDir)
 
     logging.critical("Finished")
     # make sure

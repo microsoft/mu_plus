@@ -1,8 +1,7 @@
 /** @file
-  This module installs Crypto protocols used by Project Mu Firmware
+  This module installs Crypto protocol used by Project Mu Firmware
 
-  Specifically, it installs the DXE protocols listed in the SharedCryptoPkg.dec
-  This includes Pkcs, Rsa, X509, Random, and Sha
+  Specifically, it installs the DXE protocol listed in the SharedCryptoPkg.dec
 
   See Readme.md in the root of SharedCryptoPkg for more information
 

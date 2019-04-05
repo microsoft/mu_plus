@@ -2,6 +2,13 @@
 /** @file
   This module is consumed by both DXE and SMM as well as PEI
 
+  This links the functions in the protocol to the functions in BaseCryptLib.
+  This is the Mu flavor, which means we only support the functions that are used
+  by Microsoft Surface platforms and what we believe is a sensible set of Crypto
+  functions to support.
+
+  See Readme.md in the root of SharedCryptoPkg for more info.
+
   Copyright (c) 2019, Microsoft Corporation. All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
