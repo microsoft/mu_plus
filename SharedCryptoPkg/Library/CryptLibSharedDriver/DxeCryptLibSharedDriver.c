@@ -35,7 +35,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <SharedCryptoHelpers.h>
 #include <Protocol/SharedCryptoProtocol.h>
 
-extern EFI_GUID gSharedCryptoProtocolGuid;
 SHARED_CRYPTO_PROTOCOL* pCryptoProtocol = NULL;
 
 SHARED_CRYPTO_FUNCTIONS* GetProtocol ()

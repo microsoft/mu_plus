@@ -34,8 +34,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Ppi/SharedCryptoPpi.h>
 #include <SharedCryptoHelpers.h>
 
-extern EFI_GUID gSharedCryptoPpiGuid;
-
 SHARED_CRYPTO_FUNCTIONS *GetProtocol()
 {
   EFI_STATUS Status;
