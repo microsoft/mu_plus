@@ -138,4 +138,44 @@
   #SharedCryptoPkg/UnitTests/ShaUnitTestApp/UnitTestApp.inf
   #SharedCryptoPkg/UnitTests/RsaUnitTestApp/UnitTestApp.inf
   #SharedCryptoPkg/UnitTests/X509UnitTestApp/UnitTestApp.inf
+
+[Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
+  SharedCryptoPkg/Driver/Pei/SharedCryptoPei.inf {
+    <LibraryClasses>
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
+      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  }
+  SharedCryptoPkg/Driver/Pei/SharedCryptoPeiShaOnly.inf {
+    <LibraryClasses>
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
+      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  }
+
+[Components.X64, Components.AARCH64, Components.IA32]
+  SharedCryptoPkg/Driver/Dxe/SharedCryptoDxe.inf {
+    <LibraryClasses>
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  }
+
+  SharedCryptoPkg/Driver/Dxe/SharedCryptoDxeMu.inf {
+    <LibraryClasses>
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  }
+
+[Components.X64.DXE_SMM_DRIVER]
+  SharedCryptoPkg/Driver/Smm/SharedCryptoSmm.inf {
+    <LibraryClasses>
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  }
+
+  SharedCryptoPkg/Driver/Smm/SharedCryptoSmmMu.inf {
+    <LibraryClasses>
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+  }
+
+
 !endif
