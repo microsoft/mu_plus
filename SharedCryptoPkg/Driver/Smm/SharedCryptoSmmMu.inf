@@ -68,6 +68,3 @@
 
 [Depex]
   TRUE
-
-[BuildOptions]
- MSFT:*_*_*_CC_FLAGS  = /FAcs /X /GS /D DEBUG_TARGET /D EFI_DEBUG /D DEBUG_MODE=1

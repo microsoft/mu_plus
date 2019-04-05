@@ -149,3 +149,6 @@
 [Components.X64.DXE_SMM_DRIVER]
   SharedCryptoPkg/Driver/Smm/SharedCryptoSmm.inf
   SharedCryptoPkg/Driver/Smm/SharedCryptoSmmMu.inf
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS  = /FAcs /X /GS

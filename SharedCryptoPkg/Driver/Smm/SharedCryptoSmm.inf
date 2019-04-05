@@ -68,6 +68,3 @@
 
 [Depex]
   TRUE
-
-[BuildOptions]
-  MSFT:*_*_*_CC_FLAGS  = /FAcs /X /GS
