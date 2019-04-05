@@ -39,7 +39,7 @@ typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_FUNCTIONS;
 //A function that returns the version number of the packaged crypto efi
 typedef
 UINTN
-(EFIAPI *CBD_GET_VERSION) (
+(EFIAPI *SHAREDCRYPTO_GET_VERSION) (
   VOID
 );
 
@@ -49,27 +49,27 @@ UINTN
 
 typedef
 UINTN
-(EFIAPI *CBD_HMAC_MD5_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_HMAC_MD5_GetContextSize) (
   VOID
   );
 
 typedef
 VOID*
-(EFIAPI *CBD_HMAC_MD5_New) (
+(EFIAPI *SHAREDCRYPTO_HMAC_MD5_New) (
   VOID
   );
 
 
 typedef
 VOID
-(EFIAPI *CBD_HMAC_MD5_Free) (
+(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Free) (
   IN  VOID  *HmacMd5Ctx
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_MD5_Init) (
+(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Init) (
   OUT  VOID         *HmacMd5Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -78,7 +78,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_MD5_Duplicate) (
+(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Duplicate) (
   IN   CONST VOID  *HmacMd5Context,
   OUT  VOID        *NewHmacMd5Context
   );
@@ -86,7 +86,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_MD5_Update) (
+(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Update) (
   IN OUT  VOID        *HmacMd5Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -95,33 +95,33 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_MD5_Final) (
+(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Final) (
   IN OUT  VOID   *HmacMd5Context,
   OUT     UINT8  *HmacValue
   );
 typedef
 UINTN
-(EFIAPI *CBD_HMAC_SHA1_GetContextSize )(
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_GetContextSize )(
   VOID
   );
 
 typedef
 VOID*
-(EFIAPI *CBD_HMAC_SHA1_New) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_New) (
   VOID
   );
 
 
 typedef
 VOID
-(EFIAPI *CBD_HMAC_SHA1_Free) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Free) (
   IN  VOID  *HmacSha1Ctx
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA1_Init) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Init) (
   OUT  VOID         *HmacSha1Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -130,7 +130,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA1_Duplicate) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Duplicate) (
   IN   CONST VOID  *HmacSha1Context,
   OUT  VOID        *NewHmacSha1Context
   );
@@ -138,7 +138,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA1_Update) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Update) (
   IN OUT  VOID        *HmacSha1Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -147,7 +147,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA1_Final) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Final) (
   IN OUT  VOID   *HmacSha1Context,
   OUT     UINT8  *HmacValue
   );
@@ -155,27 +155,27 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_HMAC_SHA256_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_GetContextSize) (
   VOID
   );
 
 typedef
 VOID *
-(EFIAPI *CBD_HMAC_SHA256_New) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_New) (
   VOID
   );
 
 
 typedef
 VOID
-(EFIAPI *CBD_HMAC_SHA256_Free) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Free) (
   IN  VOID  *HmacSha256Ctx
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA256_Init) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Init) (
   OUT  VOID         *HmacSha256Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -184,7 +184,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA256_Duplicate) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Duplicate) (
   IN   CONST VOID  *HmacSha256Context,
   OUT  VOID        *NewHmacSha256Context
   );
@@ -192,7 +192,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA256_Update) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Update) (
   IN OUT  VOID        *HmacSha256Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -201,7 +201,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_HMAC_SHA256_Final) (
+(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Final) (
   IN OUT  VOID   *HmacSha256Context,
   OUT     UINT8  *HmacValue
   );
@@ -213,21 +213,21 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_MD4_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_MD4_GetContextSize) (
   VOID
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_MD4_Init) (
+(EFIAPI *SHAREDCRYPTO_MD4_Init) (
   OUT  VOID  *Md4Context
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_MD4_Duplicate) (
+(EFIAPI *SHAREDCRYPTO_MD4_Duplicate) (
   IN   CONST VOID  *Md4Context,
   OUT  VOID        *NewMd4Context
   );
@@ -235,7 +235,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_MD4_Update) (
+(EFIAPI *SHAREDCRYPTO_MD4_Update) (
   IN OUT  VOID        *Md4Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -244,7 +244,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_MD4_Final) (
+(EFIAPI *SHAREDCRYPTO_MD4_Final) (
   IN OUT  VOID   *Md4Context,
   OUT     UINT8  *HashValue
   );
@@ -252,7 +252,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_MD4_HashAll) (
+(EFIAPI *SHAREDCRYPTO_MD4_HashAll) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -262,7 +262,7 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI* CBD_MD5_GetContextSize )(
+(EFIAPI* SHAREDCRYPTO_MD5_GetContextSize )(
   VOID
   );
 
@@ -270,19 +270,19 @@ UINTN
 
 typedef
 BOOLEAN
-(EFIAPI* CBD_MD5_Init)(
+(EFIAPI* SHAREDCRYPTO_MD5_Init)(
     OUT VOID *Md5Context);
 
 typedef
 BOOLEAN
-(EFIAPI* CBD_MD5_Duplicate) (
+(EFIAPI* SHAREDCRYPTO_MD5_Duplicate) (
     IN CONST VOID *Md5Context,
     OUT VOID *NewMd5Context);
 
 
 typedef
 BOOLEAN
-(EFIAPI* CBD_MD5_Update)(
+(EFIAPI* SHAREDCRYPTO_MD5_Update)(
     IN OUT VOID *Md5Context,
     IN CONST VOID *Data,
     IN UINTN DataSize);
@@ -290,14 +290,14 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI* CBD_MD5_Final)(
+(EFIAPI* SHAREDCRYPTO_MD5_Final)(
     IN OUT VOID *Md5Context,
     OUT UINT8 *HashValue);
 
 
 typedef
 BOOLEAN
-(EFIAPI* CBD_MD5_HashAll)(
+(EFIAPI* SHAREDCRYPTO_MD5_HashAll)(
     IN CONST VOID *Data,
     IN UINTN DataSize,
     OUT UINT8 *HashValue);
@@ -305,21 +305,21 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_SHA384_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_SHA384_GetContextSize) (
   VOID
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA384_Init) (
+(EFIAPI *SHAREDCRYPTO_SHA384_Init) (
   OUT  VOID  *Sha384Context
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA384_Duplicate) (
+(EFIAPI *SHAREDCRYPTO_SHA384_Duplicate) (
   IN   CONST VOID  *Sha384Context,
   OUT  VOID        *NewSha384Context
   );
@@ -327,7 +327,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA384_Update) (
+(EFIAPI *SHAREDCRYPTO_SHA384_Update) (
   IN OUT  VOID        *Sha384Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -336,7 +336,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA384_Final) (
+(EFIAPI *SHAREDCRYPTO_SHA384_Final) (
   IN OUT  VOID   *Sha384Context,
   OUT     UINT8  *HashValue
   );
@@ -344,7 +344,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA384_HashAll) (
+(EFIAPI *SHAREDCRYPTO_SHA384_HashAll) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -352,21 +352,21 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_SHA512_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_SHA512_GetContextSize) (
   VOID
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA512_Init) (
+(EFIAPI *SHAREDCRYPTO_SHA512_Init) (
   OUT  VOID  *Sha512Context
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA512_Duplicate) (
+(EFIAPI *SHAREDCRYPTO_SHA512_Duplicate) (
   IN   CONST VOID  *Sha512Context,
   OUT  VOID        *NewSha512Context
   );
@@ -374,7 +374,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA512_Update) (
+(EFIAPI *SHAREDCRYPTO_SHA512_Update) (
   IN OUT  VOID        *Sha512Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -383,7 +383,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA512_Final) (
+(EFIAPI *SHAREDCRYPTO_SHA512_Final) (
   IN OUT  VOID   *Sha512Context,
   OUT     UINT8  *HashValue
   );
@@ -391,7 +391,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA512_HashAll) (
+(EFIAPI *SHAREDCRYPTO_SHA512_HashAll) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -404,7 +404,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_PKCS1_ENCRYPT_V2) (
+(EFIAPI *SHAREDCRYPTO_PKCS1_ENCRYPT_V2) (
 IN   CONST UINT8                   *PublicKey,
 IN   UINTN                          PublicKeySize,
 IN   UINT8                         *InData,
@@ -423,7 +423,7 @@ OUT  UINTN                         *EncryptedDataSize
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_PKCS5_PW_HASH) (
+(EFIAPI *SHAREDCRYPTO_PKCS5_PW_HASH) (
   IN UINTN                      PasswordSize,
   IN CONST  CHAR8              *Password,
   IN UINTN                      SaltSize,
@@ -441,7 +441,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_PKCS7_VERIFY) (
+(EFIAPI *SHAREDCRYPTO_PKCS7_VERIFY) (
 IN  CONST UINT8                   *P7Data,
 IN  UINTN                          P7DataLength,
 IN  CONST UINT8                   *TrustedCert,
@@ -452,7 +452,7 @@ IN  UINTN                          DataLength
 
 typedef
 EFI_STATUS
-(EFIAPI *CBD_PKCS7_VERIFY_EKU) (
+(EFIAPI *SHAREDCRYPTO_PKCS7_VERIFY_EKU) (
 IN CONST UINT8                *Pkcs7Signature,
 IN CONST UINT32                SignatureSize,
 IN CONST CHAR8                *RequiredEKUs[],
@@ -462,7 +462,7 @@ IN BOOLEAN                     RequireAllPresent
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_PKCS7_GetSigners) (
+(EFIAPI *SHAREDCRYPTO_PKCS7_GetSigners) (
   IN  CONST UINT8  *P7Data,
   IN  UINTN        P7Length,
   OUT UINT8        **CertStack,
@@ -473,13 +473,13 @@ BOOLEAN
 
 typedef
 VOID
-(EFIAPI *CBD_PKCS7_FreeSigners) (
+(EFIAPI *SHAREDCRYPTO_PKCS7_FreeSigners) (
   IN  UINT8        *Certs
   );
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_PKCS7_Sign) (
+(EFIAPI *SHAREDCRYPTO_PKCS7_Sign) (
   IN   CONST UINT8  *PrivateKey,
   IN   UINTN        PrivateKeySize,
   IN   CONST UINT8  *KeyPassword,
@@ -493,7 +493,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_PKCS7_GetAttachedContent) (
+(EFIAPI *SHAREDCRYPTO_PKCS7_GetAttachedContent) (
   IN  CONST UINT8  *P7Data,
   IN  UINTN        P7Length,
   OUT VOID         **Content,
@@ -503,7 +503,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_PKCS7_GetCertificatesList) (
+(EFIAPI *SHAREDCRYPTO_PKCS7_GetCertificatesList) (
   IN  CONST UINT8  *P7Data,
   IN  UINTN        P7Length,
   OUT UINT8        **SignerChainCerts,
@@ -514,7 +514,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_AuthenticodeVerify) (
+(EFIAPI *SHAREDCRYPTO_AuthenticodeVerify) (
   IN  CONST UINT8  *AuthData,
   IN  UINTN        DataSize,
   IN  CONST UINT8  *TrustedCert,
@@ -525,7 +525,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_ImageTimestampVerify) (
+(EFIAPI *SHAREDCRYPTO_ImageTimestampVerify) (
   IN  CONST UINT8  *AuthData,
   IN  UINTN        DataSize,
   IN  CONST UINT8  *TsaCert,
@@ -541,21 +541,21 @@ BOOLEAN
 
 typedef
 VOID*
-(EFIAPI *CBD_DH_New) (
+(EFIAPI *SHAREDCRYPTO_DH_New) (
   VOID
   );
 
 
 typedef
 VOID
-(EFIAPI *CBD_DH_Free) (
+(EFIAPI *SHAREDCRYPTO_DH_Free) (
   IN  VOID  *DhContext
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_DH_GenerateParameter) (
+(EFIAPI *SHAREDCRYPTO_DH_GenerateParameter) (
   IN OUT  VOID   *DhContext,
   IN      UINTN  Generator,
   IN      UINTN  PrimeLength,
@@ -564,7 +564,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_DH_SetParameter) (
+(EFIAPI *SHAREDCRYPTO_DH_SetParameter) (
   IN OUT  VOID         *DhContext,
   IN      UINTN        Generator,
   IN      UINTN        PrimeLength,
@@ -574,7 +574,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_DH_GenerateKey) (
+(EFIAPI *SHAREDCRYPTO_DH_GenerateKey) (
   IN OUT  VOID   *DhContext,
   OUT     UINT8  *PublicKey,
   IN OUT  UINTN  *PublicKeySize
@@ -583,7 +583,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_DH_ComputeKey) (
+(EFIAPI *SHAREDCRYPTO_DH_ComputeKey) (
   IN OUT  VOID         *DhContext,
   IN      CONST UINT8  *PeerPublicKey,
   IN      UINTN        PeerPublicKeySize,
@@ -597,7 +597,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RANDOM_Seed) (
+(EFIAPI *SHAREDCRYPTO_RANDOM_Seed) (
   IN  CONST  UINT8  *Seed  OPTIONAL,
   IN  UINTN         SeedSize
   );
@@ -605,14 +605,14 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RANDOM_Bytes) (
+(EFIAPI *SHAREDCRYPTO_RANDOM_Bytes) (
   OUT  UINT8  *Output,
   IN   UINTN  Size
   );
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_VERIFY_PKCS1 ) (
+(EFIAPI *SHAREDCRYPTO_RSA_VERIFY_PKCS1 ) (
   IN  VOID                         *RsaContext,
   IN  CONST UINT8                  *MessageHash,
   IN  UINTN                         HashSize,
@@ -623,14 +623,14 @@ BOOLEAN
 
 typedef
 VOID
-(EFIAPI *CBD_RSA_FREE) (
+(EFIAPI *SHAREDCRYPTO_RSA_FREE) (
   IN  VOID  *RsaContext
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_GET_PUBLIC_KEY_FROM_X509) (
+(EFIAPI *SHAREDCRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509) (
   IN   CONST UINT8  *Cert,
   IN   UINTN        CertSize,
   OUT  VOID         **RsaContext
@@ -638,20 +638,20 @@ BOOLEAN
 
 typedef
 VOID*
-(EFIAPI *CBD_RSA_New) (
+(EFIAPI *SHAREDCRYPTO_RSA_New) (
   VOID
   );
 
 
 typedef
 VOID
-(EFIAPI *CBD_RSA_Free) (
+(EFIAPI *SHAREDCRYPTO_RSA_Free) (
   IN  VOID  *RsaContext
   );
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_SetKey) (
+(EFIAPI *SHAREDCRYPTO_RSA_SetKey) (
   IN OUT  VOID         *RsaContext,
   IN      RSA_KEY_TAG  KeyTag,
   IN      CONST UINT8  *BigNumber,
@@ -661,7 +661,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_GetKey) (
+(EFIAPI *SHAREDCRYPTO_RSA_GetKey) (
   IN OUT  VOID         *RsaContext,
   IN      RSA_KEY_TAG  KeyTag,
   OUT     UINT8        *BigNumber,
@@ -670,7 +670,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_GenerateKey) (
+(EFIAPI *SHAREDCRYPTO_RSA_GenerateKey) (
   IN OUT  VOID         *RsaContext,
   IN      UINTN        ModulusLength,
   IN      CONST UINT8  *PublicExponent,
@@ -680,13 +680,13 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_CheckKey) (
+(EFIAPI *SHAREDCRYPTO_RSA_CheckKey) (
   IN  VOID  *RsaContext
   );
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_Pkcs1Sign) (
+(EFIAPI *SHAREDCRYPTO_RSA_Pkcs1Sign) (
   IN      VOID         *RsaContext,
   IN      CONST UINT8  *MessageHash,
   IN      UINTN        HashSize,
@@ -697,7 +697,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_Pkcs1Verify) (
+(EFIAPI *SHAREDCRYPTO_RSA_Pkcs1Verify) (
   IN  VOID         *RsaContext,
   IN  CONST UINT8  *MessageHash,
   IN  UINTN        HashSize,
@@ -708,7 +708,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_GetPrivateKeyFromPem) (
+(EFIAPI *SHAREDCRYPTO_RSA_GetPrivateKeyFromPem) (
   IN   CONST UINT8  *PemData,
   IN   UINTN        PemSize,
   IN   CONST CHAR8  *Password,
@@ -718,7 +718,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_RSA_GetPublicKeyFromX509) (
+(EFIAPI *SHAREDCRYPTO_RSA_GetPublicKeyFromX509) (
   IN   CONST UINT8  *Cert,
   IN   UINTN        CertSize,
   OUT  VOID         **RsaContext
@@ -730,21 +730,21 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_SHA1_GET_CONTEXT_SIZE ) (
+(EFIAPI *SHAREDCRYPTO_SHA1_GET_CONTEXT_SIZE ) (
   VOID
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA1_INIT ) (
+(EFIAPI *SHAREDCRYPTO_SHA1_INIT ) (
   OUT  VOID  *Sha1Context
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA1_DUPLICATE ) (
+(EFIAPI *SHAREDCRYPTO_SHA1_DUPLICATE ) (
   IN   CONST VOID  *Sha1Context,
   OUT  VOID        *NewSha1Context
   );
@@ -752,7 +752,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA1_UPDATE ) (
+(EFIAPI *SHAREDCRYPTO_SHA1_UPDATE ) (
   IN OUT  VOID        *Sha1Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -762,7 +762,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA1_FINAL ) (
+(EFIAPI *SHAREDCRYPTO_SHA1_FINAL ) (
   IN OUT  VOID   *Sha1Context,
   OUT     UINT8  *HashValue
   );
@@ -771,7 +771,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA1_HASH_ALL ) (
+(EFIAPI *SHAREDCRYPTO_SHA1_HASH_ALL ) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -779,21 +779,21 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_SHA256_GET_CONTEXT_SIZE ) (
+(EFIAPI *SHAREDCRYPTO_SHA256_GET_CONTEXT_SIZE ) (
   VOID
 );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA256_INIT ) (
+(EFIAPI *SHAREDCRYPTO_SHA256_INIT ) (
   OUT  VOID  *Sha256Context
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA256_DUPLICATE ) (
+(EFIAPI *SHAREDCRYPTO_SHA256_DUPLICATE ) (
   IN   CONST VOID  *Sha256Context,
   OUT  VOID        *NewSha256Context
   );
@@ -801,7 +801,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA256_UPDATE ) (
+(EFIAPI *SHAREDCRYPTO_SHA256_UPDATE ) (
   IN OUT  VOID        *Sha256Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -811,7 +811,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA256_FINAL ) (
+(EFIAPI *SHAREDCRYPTO_SHA256_FINAL ) (
   IN OUT  VOID   *Sha256Context,
   OUT     UINT8  *HashValue
   );
@@ -820,7 +820,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_SHA256_HASH_ALL ) (
+(EFIAPI *SHAREDCRYPTO_SHA256_HASH_ALL ) (
   IN   CONST VOID                  *Data,
   IN   UINTN                       DataSize,
   OUT  UINT8                       *HashValue
@@ -830,7 +830,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_X509_GET_SUBJECT_NAME) (
+(EFIAPI *SHAREDCRYPTO_X509_GET_SUBJECT_NAME) (
   IN      CONST UINT8  *Cert,
   IN      UINTN        CertSize,
   OUT     UINT8        *CertSubject,
@@ -840,7 +840,7 @@ BOOLEAN
 
 typedef
 EFI_STATUS
-(EFIAPI *CBD_X509_GET_COMMON_NAME) (
+(EFIAPI *SHAREDCRYPTO_X509_GET_COMMON_NAME) (
   IN      CONST UINT8  *Cert,
   IN      UINTN        CertSize,
   OUT     CHAR8        *CommonName,  OPTIONAL
@@ -851,7 +851,7 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *CBD_X509_GET_ORGANIZATION_NAME) (
+(EFIAPI *SHAREDCRYPTO_X509_GET_ORGANIZATION_NAME) (
   IN      CONST UINT8  *Cert,
   IN      UINTN        CertSize,
   OUT     CHAR8        *NameBuffer,  OPTIONAL
@@ -860,7 +860,7 @@ EFI_STATUS
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_X509_VerifyCert) (
+(EFIAPI *SHAREDCRYPTO_X509_VerifyCert) (
   IN  CONST UINT8  *Cert,
   IN  UINTN        CertSize,
   IN  CONST UINT8  *CACert,
@@ -869,7 +869,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_X509_ConstructCertificate) (
+(EFIAPI *SHAREDCRYPTO_X509_ConstructCertificate) (
   IN   CONST UINT8  *Cert,
   IN   UINTN        CertSize,
   OUT  UINT8        **SingleX509Cert
@@ -877,26 +877,26 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_X509_ConstructCertificateStack) (
+(EFIAPI *SHAREDCRYPTO_X509_ConstructCertificateStack) (
   IN OUT  UINT8  **X509Stack,
   ...
   );
 
 typedef
 VOID
-(EFIAPI *CBD_X509_Free) (
+(EFIAPI *SHAREDCRYPTO_X509_Free) (
   IN  VOID  *X509Cert
   );
 
 typedef
 VOID
-(EFIAPI *CBD_X509_StackFree) (
+(EFIAPI *SHAREDCRYPTO_X509_StackFree) (
   IN  VOID  *X509Stack
   );
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_X509_GetTBSCert) (
+(EFIAPI *SHAREDCRYPTO_X509_GetTBSCert) (
   IN  CONST UINT8  *Cert,
   IN  UINTN        CertSize,
   OUT UINT8        **TBSCert,
@@ -911,13 +911,13 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_TDES_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_TDES_GetContextSize) (
   VOID
   );
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_TDES_Init) (
+(EFIAPI *SHAREDCRYPTO_TDES_Init) (
   OUT  VOID         *TdesContext,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeyLength
@@ -926,7 +926,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_TDES_EcbEncrypt) (
+(EFIAPI *SHAREDCRYPTO_TDES_EcbEncrypt) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -936,7 +936,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_TDES_EcbDecrypt) (
+(EFIAPI *SHAREDCRYPTO_TDES_EcbDecrypt) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -946,7 +946,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_TDES_CbcEncrypt) (
+(EFIAPI *SHAREDCRYPTO_TDES_CbcEncrypt) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -957,7 +957,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_TDES_CbcDecrypt) (
+(EFIAPI *SHAREDCRYPTO_TDES_CbcDecrypt) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -967,14 +967,14 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_AES_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_AES_GetContextSize) (
   VOID
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_AES_Init) (
+(EFIAPI *SHAREDCRYPTO_AES_Init) (
   OUT  VOID         *AesContext,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeyLength
@@ -983,7 +983,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_AES_EcbEncrypt) (
+(EFIAPI *SHAREDCRYPTO_AES_EcbEncrypt) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -993,7 +993,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_AES_EcbDecrypt) (
+(EFIAPI *SHAREDCRYPTO_AES_EcbDecrypt) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -1003,7 +1003,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_AES_CbcEncrypt) (
+(EFIAPI *SHAREDCRYPTO_AES_CbcEncrypt) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -1014,7 +1014,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_AES_CbcDecrypt) (
+(EFIAPI *SHAREDCRYPTO_AES_CbcDecrypt) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -1024,14 +1024,14 @@ BOOLEAN
 
 typedef
 UINTN
-(EFIAPI *CBD_ARC4_GetContextSize) (
+(EFIAPI *SHAREDCRYPTO_ARC4_GetContextSize) (
   VOID
   );
 
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_ARC4_Init) (
+(EFIAPI *SHAREDCRYPTO_ARC4_Init) (
   OUT  VOID         *Arc4Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -1040,7 +1040,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_ARC4_Encrypt) (
+(EFIAPI *SHAREDCRYPTO_ARC4_Encrypt) (
   IN OUT  VOID         *Arc4Context,
   IN      CONST UINT8  *Input,
   IN      UINTN        InputSize,
@@ -1050,7 +1050,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_ARC4_Decrypt) (
+(EFIAPI *SHAREDCRYPTO_ARC4_Decrypt) (
   IN OUT  VOID   *Arc4Context,
   IN      UINT8  *Input,
   IN      UINTN  InputSize,
@@ -1060,7 +1060,7 @@ BOOLEAN
 
 typedef
 BOOLEAN
-(EFIAPI *CBD_ARC4_Reset) (
+(EFIAPI *SHAREDCRYPTO_ARC4_Reset) (
   IN OUT  VOID  *Arc4Context
   );
 
@@ -1069,134 +1069,134 @@ BOOLEAN
 struct _SHARED_CRYPTO_FUNCTIONS
 {
   /// Shared Crypto Functions
-  CBD_GET_VERSION SharedCrypto_GetLowestSupportedVersion;
+  SHAREDCRYPTO_GET_VERSION SharedCrypto_GetLowestSupportedVersion;
   /// HMAC
-  CBD_HMAC_MD5_GetContextSize HMAC_MD5_GetContextSize;
-  CBD_HMAC_MD5_New HMAC_MD5_New;
-  CBD_HMAC_MD5_Free HMAC_MD5_Free;
-  CBD_HMAC_MD5_Init HMAC_MD5_Init;
-  CBD_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
-  CBD_HMAC_MD5_Update HMAC_MD5_Update;
-  CBD_HMAC_MD5_Final HMAC_MD5_Final;
-  CBD_HMAC_SHA1_GetContextSize HMAC_SHA1_GetContextSize;
-  CBD_HMAC_SHA1_New HMAC_SHA1_New;
-  CBD_HMAC_SHA1_Free HMAC_SHA1_Free;
-  CBD_HMAC_SHA1_Init HMAC_SHA1_Init;
-  CBD_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
-  CBD_HMAC_SHA1_Update HMAC_SHA1_Update;
-  CBD_HMAC_SHA1_Final HMAC_SHA1_Final;
-  CBD_HMAC_SHA256_GetContextSize HMAC_SHA256_GetContextSize;
-  CBD_HMAC_SHA256_New HMAC_SHA256_New;
-  CBD_HMAC_SHA256_Free HMAC_SHA256_Free;
-  CBD_HMAC_SHA256_Init HMAC_SHA256_Init;
-  CBD_HMAC_SHA256_Duplicate HMAC_SHA256_Duplicate;
-  CBD_HMAC_SHA256_Update HMAC_SHA256_Update;
-  CBD_HMAC_SHA256_Final HMAC_SHA256_Final;
+  SHAREDCRYPTO_HMAC_MD5_GetContextSize HMAC_MD5_GetContextSize;
+  SHAREDCRYPTO_HMAC_MD5_New HMAC_MD5_New;
+  SHAREDCRYPTO_HMAC_MD5_Free HMAC_MD5_Free;
+  SHAREDCRYPTO_HMAC_MD5_Init HMAC_MD5_Init;
+  SHAREDCRYPTO_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
+  SHAREDCRYPTO_HMAC_MD5_Update HMAC_MD5_Update;
+  SHAREDCRYPTO_HMAC_MD5_Final HMAC_MD5_Final;
+  SHAREDCRYPTO_HMAC_SHA1_GetContextSize HMAC_SHA1_GetContextSize;
+  SHAREDCRYPTO_HMAC_SHA1_New HMAC_SHA1_New;
+  SHAREDCRYPTO_HMAC_SHA1_Free HMAC_SHA1_Free;
+  SHAREDCRYPTO_HMAC_SHA1_Init HMAC_SHA1_Init;
+  SHAREDCRYPTO_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
+  SHAREDCRYPTO_HMAC_SHA1_Update HMAC_SHA1_Update;
+  SHAREDCRYPTO_HMAC_SHA1_Final HMAC_SHA1_Final;
+  SHAREDCRYPTO_HMAC_SHA256_GetContextSize HMAC_SHA256_GetContextSize;
+  SHAREDCRYPTO_HMAC_SHA256_New HMAC_SHA256_New;
+  SHAREDCRYPTO_HMAC_SHA256_Free HMAC_SHA256_Free;
+  SHAREDCRYPTO_HMAC_SHA256_Init HMAC_SHA256_Init;
+  SHAREDCRYPTO_HMAC_SHA256_Duplicate HMAC_SHA256_Duplicate;
+  SHAREDCRYPTO_HMAC_SHA256_Update HMAC_SHA256_Update;
+  SHAREDCRYPTO_HMAC_SHA256_Final HMAC_SHA256_Final;
   /// Md4
-  CBD_MD4_GetContextSize MD4_GetContextSize;
-  CBD_MD4_Init MD4_Init;
-  CBD_MD4_Duplicate MD4_Duplicate;
-  CBD_MD4_Update MD4_Update;
-  CBD_MD4_Final MD4_Final;
-  CBD_MD4_HashAll MD4_HashAll;
+  SHAREDCRYPTO_MD4_GetContextSize MD4_GetContextSize;
+  SHAREDCRYPTO_MD4_Init MD4_Init;
+  SHAREDCRYPTO_MD4_Duplicate MD4_Duplicate;
+  SHAREDCRYPTO_MD4_Update MD4_Update;
+  SHAREDCRYPTO_MD4_Final MD4_Final;
+  SHAREDCRYPTO_MD4_HashAll MD4_HashAll;
   /// Md5
-  CBD_MD5_GetContextSize MD5_GetContextSize;
-  CBD_MD5_Init MD5_Init;
-  CBD_MD5_Duplicate MD5_Duplicate;
-  CBD_MD5_Update MD5_Update;
-  CBD_MD5_Final MD5_Final;
-  CBD_MD5_HashAll MD5_HashAll;
+  SHAREDCRYPTO_MD5_GetContextSize MD5_GetContextSize;
+  SHAREDCRYPTO_MD5_Init MD5_Init;
+  SHAREDCRYPTO_MD5_Duplicate MD5_Duplicate;
+  SHAREDCRYPTO_MD5_Update MD5_Update;
+  SHAREDCRYPTO_MD5_Final MD5_Final;
+  SHAREDCRYPTO_MD5_HashAll MD5_HashAll;
   /// Pkcs
-  CBD_PKCS1_ENCRYPT_V2 PKCS1_ENCRYPT_V2;
-  CBD_PKCS5_PW_HASH PKCS5_PW_HASH;
-  CBD_PKCS7_VERIFY PKCS7_VERIFY;
-  CBD_PKCS7_VERIFY_EKU PKCS7_VERIFY_EKU;
-  CBD_PKCS7_GetSigners PKCS7_GetSigners;
-  CBD_PKCS7_FreeSigners PKCS7_FreeSigners;
-  CBD_PKCS7_Sign PKCS7_Sign;
-  CBD_PKCS7_GetAttachedContent PKCS7_GetAttachedContent;
-  CBD_PKCS7_GetCertificatesList PKCS7_GetCertificatesList;
-  CBD_AuthenticodeVerify Authenticode_Verify;
-  CBD_ImageTimestampVerify Image_TimestampVerify;
+  SHAREDCRYPTO_PKCS1_ENCRYPT_V2 PKCS1_ENCRYPT_V2;
+  SHAREDCRYPTO_PKCS5_PW_HASH PKCS5_PW_HASH;
+  SHAREDCRYPTO_PKCS7_VERIFY PKCS7_VERIFY;
+  SHAREDCRYPTO_PKCS7_VERIFY_EKU PKCS7_VERIFY_EKU;
+  SHAREDCRYPTO_PKCS7_GetSigners PKCS7_GetSigners;
+  SHAREDCRYPTO_PKCS7_FreeSigners PKCS7_FreeSigners;
+  SHAREDCRYPTO_PKCS7_Sign PKCS7_Sign;
+  SHAREDCRYPTO_PKCS7_GetAttachedContent PKCS7_GetAttachedContent;
+  SHAREDCRYPTO_PKCS7_GetCertificatesList PKCS7_GetCertificatesList;
+  SHAREDCRYPTO_AuthenticodeVerify Authenticode_Verify;
+  SHAREDCRYPTO_ImageTimestampVerify Image_TimestampVerify;
   /// DH
-  CBD_DH_New DH_New;
-  CBD_DH_Free DH_Free;
-  CBD_DH_GenerateParameter DH_GenerateParameter;
-  CBD_DH_SetParameter DH_SetParameter;
-  CBD_DH_GenerateKey DH_GenerateKey;
-  CBD_DH_ComputeKey DH_ComputeKey;
+  SHAREDCRYPTO_DH_New DH_New;
+  SHAREDCRYPTO_DH_Free DH_Free;
+  SHAREDCRYPTO_DH_GenerateParameter DH_GenerateParameter;
+  SHAREDCRYPTO_DH_SetParameter DH_SetParameter;
+  SHAREDCRYPTO_DH_GenerateKey DH_GenerateKey;
+  SHAREDCRYPTO_DH_ComputeKey DH_ComputeKey;
   /// Random
-  CBD_RANDOM_Seed RANDOM_Seed;
-  CBD_RANDOM_Bytes RANDOM_Bytes;
+  SHAREDCRYPTO_RANDOM_Seed RANDOM_Seed;
+  SHAREDCRYPTO_RANDOM_Bytes RANDOM_Bytes;
   /// RSA
-  CBD_RSA_VERIFY_PKCS1 RSA_VERIFY_PKCS1;
-  CBD_RSA_FREE RSA_FREE;
-  CBD_RSA_GET_PUBLIC_KEY_FROM_X509 RSA_GET_PUBLIC_KEY_FROM_X509;
-  CBD_RSA_New RSA_New;
-  CBD_RSA_Free RSA_Free;
-  CBD_RSA_SetKey RSA_SetKey;
-  CBD_RSA_GetKey RSA_GetKey;
-  CBD_RSA_GenerateKey RSA_GenerateKey;
-  CBD_RSA_CheckKey RSA_CheckKey;
-  CBD_RSA_Pkcs1Sign RSA_Pkcs1Sign;
-  CBD_RSA_Pkcs1Verify RSA_Pkcs1Verify;
-  CBD_RSA_GetPrivateKeyFromPem RSA_GetPrivateKeyFromPem;
-  CBD_RSA_GetPublicKeyFromX509 RSA_GetPublicKeyFromX509;
+  SHAREDCRYPTO_RSA_VERIFY_PKCS1 RSA_VERIFY_PKCS1;
+  SHAREDCRYPTO_RSA_FREE RSA_FREE;
+  SHAREDCRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509 RSA_GET_PUBLIC_KEY_FROM_X509;
+  SHAREDCRYPTO_RSA_New RSA_New;
+  SHAREDCRYPTO_RSA_Free RSA_Free;
+  SHAREDCRYPTO_RSA_SetKey RSA_SetKey;
+  SHAREDCRYPTO_RSA_GetKey RSA_GetKey;
+  SHAREDCRYPTO_RSA_GenerateKey RSA_GenerateKey;
+  SHAREDCRYPTO_RSA_CheckKey RSA_CheckKey;
+  SHAREDCRYPTO_RSA_Pkcs1Sign RSA_Pkcs1Sign;
+  SHAREDCRYPTO_RSA_Pkcs1Verify RSA_Pkcs1Verify;
+  SHAREDCRYPTO_RSA_GetPrivateKeyFromPem RSA_GetPrivateKeyFromPem;
+  SHAREDCRYPTO_RSA_GetPublicKeyFromX509 RSA_GetPublicKeyFromX509;
   /// Sha protocol
-  CBD_SHA1_GET_CONTEXT_SIZE SHA1_GET_CONTEXT_SIZE;
-  CBD_SHA1_INIT SHA1_INIT;
-  CBD_SHA1_DUPLICATE SHA1_DUPLICATE;
-  CBD_SHA1_UPDATE SHA1_UPDATE;
-  CBD_SHA1_FINAL SHA1_FINAL;
-  CBD_SHA1_HASH_ALL SHA1_HASH_ALL;
-  CBD_SHA256_GET_CONTEXT_SIZE SHA256_GET_CONTEXT_SIZE;
-  CBD_SHA256_INIT SHA256_INIT;
-  CBD_SHA256_DUPLICATE SHA256_DUPLICATE;
-  CBD_SHA256_UPDATE SHA256_UPDATE;
-  CBD_SHA256_FINAL SHA256_FINAL;
-  CBD_SHA256_HASH_ALL SHA256_HASH_ALL;
-  CBD_SHA384_GetContextSize SHA384_GetContextSize;
-  CBD_SHA384_Init SHA384_Init;
-  CBD_SHA384_Duplicate SHA384_Duplicate;
-  CBD_SHA384_Update SHA384_Update;
-  CBD_SHA384_Final SHA384_Final;
-  CBD_SHA384_HashAll SHA384_HashAll;
-  CBD_SHA512_GetContextSize SHA512_GetContextSize;
-  CBD_SHA512_Init SHA512_Init;
-  CBD_SHA512_Duplicate SHA512_Duplicate;
-  CBD_SHA512_Update SHA512_Update;
-  CBD_SHA512_Final SHA512_Final;
-  CBD_SHA512_HashAll SHA512_HashAll;
+  SHAREDCRYPTO_SHA1_GET_CONTEXT_SIZE SHA1_GET_CONTEXT_SIZE;
+  SHAREDCRYPTO_SHA1_INIT SHA1_INIT;
+  SHAREDCRYPTO_SHA1_DUPLICATE SHA1_DUPLICATE;
+  SHAREDCRYPTO_SHA1_UPDATE SHA1_UPDATE;
+  SHAREDCRYPTO_SHA1_FINAL SHA1_FINAL;
+  SHAREDCRYPTO_SHA1_HASH_ALL SHA1_HASH_ALL;
+  SHAREDCRYPTO_SHA256_GET_CONTEXT_SIZE SHA256_GET_CONTEXT_SIZE;
+  SHAREDCRYPTO_SHA256_INIT SHA256_INIT;
+  SHAREDCRYPTO_SHA256_DUPLICATE SHA256_DUPLICATE;
+  SHAREDCRYPTO_SHA256_UPDATE SHA256_UPDATE;
+  SHAREDCRYPTO_SHA256_FINAL SHA256_FINAL;
+  SHAREDCRYPTO_SHA256_HASH_ALL SHA256_HASH_ALL;
+  SHAREDCRYPTO_SHA384_GetContextSize SHA384_GetContextSize;
+  SHAREDCRYPTO_SHA384_Init SHA384_Init;
+  SHAREDCRYPTO_SHA384_Duplicate SHA384_Duplicate;
+  SHAREDCRYPTO_SHA384_Update SHA384_Update;
+  SHAREDCRYPTO_SHA384_Final SHA384_Final;
+  SHAREDCRYPTO_SHA384_HashAll SHA384_HashAll;
+  SHAREDCRYPTO_SHA512_GetContextSize SHA512_GetContextSize;
+  SHAREDCRYPTO_SHA512_Init SHA512_Init;
+  SHAREDCRYPTO_SHA512_Duplicate SHA512_Duplicate;
+  SHAREDCRYPTO_SHA512_Update SHA512_Update;
+  SHAREDCRYPTO_SHA512_Final SHA512_Final;
+  SHAREDCRYPTO_SHA512_HashAll SHA512_HashAll;
   /// X509
-  CBD_X509_GET_SUBJECT_NAME X509_GET_SUBJECT_NAME;
-  CBD_X509_GET_COMMON_NAME X509_GET_COMMON_NAME;
-  CBD_X509_GET_ORGANIZATION_NAME X509_GET_ORGANIZATION_NAME;
-  CBD_X509_VerifyCert X509_VerifyCert;
-  CBD_X509_ConstructCertificate X509_ConstructCertificate;
-  CBD_X509_ConstructCertificateStack X509_ConstructCertificateStack;
-  CBD_X509_Free X509_Free;
-  CBD_X509_StackFree X509_StackFree;
-  CBD_X509_GetTBSCert X509_GetTBSCert;
+  SHAREDCRYPTO_X509_GET_SUBJECT_NAME X509_GET_SUBJECT_NAME;
+  SHAREDCRYPTO_X509_GET_COMMON_NAME X509_GET_COMMON_NAME;
+  SHAREDCRYPTO_X509_GET_ORGANIZATION_NAME X509_GET_ORGANIZATION_NAME;
+  SHAREDCRYPTO_X509_VerifyCert X509_VerifyCert;
+  SHAREDCRYPTO_X509_ConstructCertificate X509_ConstructCertificate;
+  SHAREDCRYPTO_X509_ConstructCertificateStack X509_ConstructCertificateStack;
+  SHAREDCRYPTO_X509_Free X509_Free;
+  SHAREDCRYPTO_X509_StackFree X509_StackFree;
+  SHAREDCRYPTO_X509_GetTBSCert X509_GetTBSCert;
   /// TDES
-  CBD_TDES_GetContextSize TDES_GetContextSize;
-  CBD_TDES_Init TDES_Init;
-  CBD_TDES_EcbEncrypt TDES_EcbEncrypt;
-  CBD_TDES_EcbDecrypt TDES_EcbDecrypt;
-  CBD_TDES_CbcEncrypt TDES_CbcEncrypt;
-  CBD_TDES_CbcDecrypt TDES_CbcDecrypt;
+  SHAREDCRYPTO_TDES_GetContextSize TDES_GetContextSize;
+  SHAREDCRYPTO_TDES_Init TDES_Init;
+  SHAREDCRYPTO_TDES_EcbEncrypt TDES_EcbEncrypt;
+  SHAREDCRYPTO_TDES_EcbDecrypt TDES_EcbDecrypt;
+  SHAREDCRYPTO_TDES_CbcEncrypt TDES_CbcEncrypt;
+  SHAREDCRYPTO_TDES_CbcDecrypt TDES_CbcDecrypt;
   /// AES
-  CBD_AES_GetContextSize AES_GetContextSize;
-  CBD_AES_Init AES_Init;
-  CBD_AES_EcbEncrypt AES_EcbEncrypt;
-  CBD_AES_EcbDecrypt AES_EcbDecrypt;
-  CBD_AES_CbcEncrypt AES_CbcEncrypt;
-  CBD_AES_CbcDecrypt AES_CbcDecrypt;
+  SHAREDCRYPTO_AES_GetContextSize AES_GetContextSize;
+  SHAREDCRYPTO_AES_Init AES_Init;
+  SHAREDCRYPTO_AES_EcbEncrypt AES_EcbEncrypt;
+  SHAREDCRYPTO_AES_EcbDecrypt AES_EcbDecrypt;
+  SHAREDCRYPTO_AES_CbcEncrypt AES_CbcEncrypt;
+  SHAREDCRYPTO_AES_CbcDecrypt AES_CbcDecrypt;
   /// Arc4
-  CBD_ARC4_GetContextSize ARC4_GetContextSize;
-  CBD_ARC4_Init ARC4_Init;
-  CBD_ARC4_Encrypt ARC4_Encrypt;
-  CBD_ARC4_Decrypt ARC4_Decrypt;
-  CBD_ARC4_Reset ARC4_Reset;
+  SHAREDCRYPTO_ARC4_GetContextSize ARC4_GetContextSize;
+  SHAREDCRYPTO_ARC4_Init ARC4_Init;
+  SHAREDCRYPTO_ARC4_Encrypt ARC4_Encrypt;
+  SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
+  SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
 };
 #pragma pack(pop)
 

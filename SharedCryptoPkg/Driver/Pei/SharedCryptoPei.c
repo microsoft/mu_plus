@@ -51,8 +51,6 @@ SharedCryptoPeiEntry (
   IN CONST EFI_PEI_SERVICES           **PeiServices
   )
 {
-  DEBUG((DEBUG_ERROR, "[CBL_PEI_SO] Installing SHA Only\n"));
   EFI_STATUS Status = PeiServicesInstallPpi (&mUefiCryptoPpiList);
-  DEBUG((DEBUG_ERROR, "[CBL_PEI_SO] Installed SHA Only: %x\n", Status));
   return Status;
 }

@@ -42,7 +42,6 @@ SHARED_CRYPTO_FUNCTIONS* GetProtocol ()
 {
   EFI_STATUS Status;
   UINTN Version;
-  DEBUG((DEBUG_ERROR, "[CBL_DXE] Locating Support Protocol.\n"));
   if (pCryptoProtocol == NULL)
   {
     Status = gBS->LocateProtocol(&gSharedCryptoProtocolGuid, NULL, (VOID **)&pCryptoProtocol);
@@ -58,19 +57,18 @@ SHARED_CRYPTO_FUNCTIONS* GetProtocol ()
       }
     }
   }
-  DEBUG((DEBUG_ERROR, "[CBL_DXE] Found Support Protocol at %x.\n", pCryptoProtocol));
   return pCryptoProtocol;
 }
 VOID ProtocolNotFound (
   EFI_STATUS Status
 )
 {
-  DEBUG((DEBUG_ERROR, "[CBL_DXE] Failed to locate Support Protocol. Status = %r\n", Status));
+  DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_DXE] Failed to locate Support Protocol. Status = %r\n", Status));
   ASSERT_EFI_ERROR(Status);
 }
 
 VOID ProtocolFunctionNotFound (CHAR8* function_name)
 {
-  DEBUG((DEBUG_ERROR, "[CBL_DXE] This function was not found: %a\n",function_name));
+  DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_DXE] This function was not found: %a\n",function_name));
   ASSERT_EFI_ERROR(EFI_PROTOCOL_UNREACHABLE);
 }

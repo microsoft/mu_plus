@@ -39,7 +39,6 @@ SHARED_CRYPTO_FUNCTIONS *GetProtocol()
 {
   EFI_STATUS Status;
   UINTN Version;
-  DEBUG((DEBUG_ERROR, "[CBL_SMM] Trying to locate Crypto Support Protocol.\n"));
   if (pCryptoProtocol == NULL)
   {
     Status = gSmst->SmmLocateProtocol(&gSharedCryptoSmmProtocolGuid, NULL, (VOID **)&pCryptoProtocol);
@@ -62,11 +61,11 @@ VOID ProtocolNotFound (
   EFI_STATUS Status
 )
 {
-  DEBUG((DEBUG_ERROR, "[CBL_SMM] Failed to locate Support Protocol. Status = %r\n", Status));
+  DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_SMM] Failed to locate Support Protocol. Status = %r\n", Status));
   ASSERT_EFI_ERROR(Status);
 }
 VOID ProtocolFunctionNotFound (CHAR8* function_name)
 {
-  DEBUG((DEBUG_ERROR, "[CBL_SMM] This function was not found: %a\n",function_name));
+  DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_SMM] This function was not found: %a\n",function_name));
   ASSERT_EFI_ERROR(EFI_PROTOCOL_UNREACHABLE);
 }

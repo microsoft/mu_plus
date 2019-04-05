@@ -41,7 +41,6 @@ SHARED_CRYPTO_FUNCTIONS *GetProtocol()
   EFI_STATUS Status;
   UINTN Version;
   SHARED_CRYPTO_PPI *pCryptoProt = NULL;
-  DEBUG((DEBUG_ERROR, "[CBL_PEI] Trying to locate Crypto Support Protocol.\n"));
   if (pCryptoProt == NULL)
   {
     Status = PeiServicesLocatePpi(
@@ -54,9 +53,7 @@ SHARED_CRYPTO_FUNCTIONS *GetProtocol()
       ProtocolNotFound(Status);
     }
     else {
-      DEBUG((DEBUG_ERROR, "[CBL_PEI] Found Crypto Support Protocol: %x\n", pCryptoProt));
       Version = pCryptoProt->SharedCrypto_GetLowestSupportedVersion();
-      DEBUG((DEBUG_ERROR, "[CBL_PEI] Found Crypto Version: %x\n", Version));
       if (Version != SHARED_CRYPTO_VERSION)
       {
         ProtocolNotFound(EFI_PROTOCOL_ERROR);
@@ -72,12 +69,12 @@ VOID ProtocolNotFound (
   EFI_STATUS Status
 )
 {
-  DEBUG((DEBUG_ERROR, "[CBL_PEI] Failed to locate Crypto Support Protocol. Status = %r\n", Status));
+  DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_PEI] Failed to locate Crypto Support Protocol. Status = %r\n", Status));
   ASSERT_EFI_ERROR(Status);
 }
 
 VOID ProtocolFunctionNotFound (CHAR8* function_name)
 {
-  DEBUG((DEBUG_ERROR, "[CBL_PEI] This function was not found: %a\n",function_name));
+  DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_PEI] This function was not found: %a\n",function_name));
   ASSERT_EFI_ERROR(EFI_PROTOCOL_UNREACHABLE);
 }
