@@ -44,7 +44,7 @@
 
 [Binaries.X64]
   PE32|Mu-SharedCrypto_extdep/X64/SharedCryptoSmm.efi
-  SMM_DEPEX|SharedCryptoPkg/Package/Mu-SharedCrypto_extdep/X64/SharedCryptoSmm.depex
+  SMM_DEPEX|Mu-SharedCrypto_extdep/X64/SharedCryptoSmm.depex
 
 [Packages]
   SharedCryptoPkg/SharedCryptoPkg.dec
