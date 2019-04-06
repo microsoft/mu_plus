@@ -64,6 +64,7 @@ VOID ProtocolNotFound (
 {
   DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_DXE] Failed to locate Support Protocol. Status = %r\n", Status));
   ASSERT_EFI_ERROR(Status);
+  pCryptoProtocol = NULL;
 }
 
 VOID ProtocolFunctionNotFound (CHAR8* function_name)
