@@ -35,7 +35,7 @@ from shutil import copyfile
 import shutil
 import glob
 
-version = "20190404.0.2"
+version = "20190404.0.3"
 
 
 def CopyFile(srcDir, destDir, file_name):
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     # copy the md file
     CopyFile(driverDir, output_dir, "Mu-SharedCrypto.md")
 
-    sharedcrypto_build_dir = os.path.realpath(os.path.join(rootDir, "Build", "SharedCryptoPkg_Driver"))
+    sharedcrypto_build_dir = os.path.realpath(os.path.join(rootDir, "Build", "SharedCryptoPkg"))
     sharedcrypto_build_dir_offset = len(sharedcrypto_build_dir) + 1
     build_dir_efi_search = os.path.join(sharedcrypto_build_dir, "**", "SharedCrypto*.efi")
     build_dir_dpx_search = os.path.join(sharedcrypto_build_dir, "**", "SharedCrypto*.depex")

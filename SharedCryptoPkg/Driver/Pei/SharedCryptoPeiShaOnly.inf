@@ -63,4 +63,4 @@
   gSharedCryptoPpiGuid ## produces
 
 [Depex]
-  gEfiPeiMemoryDiscoveredPpiGuid
+  TRUE
