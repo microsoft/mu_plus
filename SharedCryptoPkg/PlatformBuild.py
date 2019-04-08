@@ -11,7 +11,7 @@ import os, sys
 # PLATFORM BUILD ENVIRONMENT CONFIGURATION
 #
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
-WORKSPACE_PATH = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_PATH)))
+WORKSPACE_PATH = os.path.dirname(os.path.dirname(SCRIPT_PATH))
 REQUIRED_REPOS = ('MU_BASECORE', 'Common/MU', 'Common/MU_TIANO')
 PROJECT_SCOPE = ("corebuild","sharedcrypto")
 

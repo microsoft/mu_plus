@@ -136,7 +136,7 @@ if __name__ == "__main__":
         MoveArchTargetSpecificFile(depex, sharedcrypto_build_dir_offset, output_dir)
 
     for pdb in glob.iglob(build_dir_pdb_search, recursive=True):
-        MoveArchTargetSpecificFile(pdb, sharedcrypto_build_dir_offset, output_dir, skip_debug=False)
+        MoveArchTargetSpecificFile(pdb, sharedcrypto_build_dir_offset, output_dir)
 
     params = "--Operation PackAndPush --ConfigFilePath Mu-SharedCrypto.config.json --Version {2} --InputFolderPath {0}  --ApiKey {1}".format(output_dir, api_key, version)
     UtilityFunctions.RunPythonScript(NugetFilePath, params, capture=True, workingdir=driverDir)
