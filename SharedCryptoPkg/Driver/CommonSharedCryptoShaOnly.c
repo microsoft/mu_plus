@@ -1,6 +1,10 @@
 
 /** @file
-  This module is consumed by the reduced version of PEI
+  This module is designed to be just SHA and compile to a small EFI.
+  
+  Currently it is consumed by the reduced version of PEI (to reduce the size of 
+  the PEI FV since it isn't compressed on many platforms.) Other phases (DXE,SMM)
+  can utilize this flavor if SHA is all they need.
 
   This links the functions in the protocol to the functions in BaseCryptLib.
   This is the ShaOnly flavor, which means we only support SHA1 and SHA256. This

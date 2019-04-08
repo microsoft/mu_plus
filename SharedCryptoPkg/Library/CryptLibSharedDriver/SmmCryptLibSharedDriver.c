@@ -32,7 +32,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common/SharedCryptoHelpers.h"
 #include <Protocol/SharedCryptoProtocol.h>
 
-extern EFI_GUID gSharedCryptoSmmProtocolGuid;
 SHARED_CRYPTO_PROTOCOL* pCryptoProtocol = NULL;
 
 SHARED_CRYPTO_FUNCTIONS *GetProtocol()
@@ -63,6 +62,7 @@ VOID ProtocolNotFound (
 {
   DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_SMM] Failed to locate Support Protocol. Status = %r\n", Status));
   ASSERT_EFI_ERROR(Status);
+  pCryptoProtocol = NULL;
 }
 VOID ProtocolFunctionNotFound (CHAR8* function_name)
 {

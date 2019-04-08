@@ -42,10 +42,10 @@
 # if they are not found, check there
 
 [Binaries]
-  DXE_DEPEX|SharedCryptoPkg/Package/Mu-SharedCrypto_extdep/X64/SharedCryptoDxe.depex|*
+  DXE_DEPEX|Mu-SharedCrypto_extdep/X64/SharedCryptoDxe.depex|*
 
 [Binaries.X64]
-  PE32|SharedCryptoPkg/Package/Mu-SharedCrypto_extdep/X64/SharedCryptoDxe.efi|*
+  PE32|Mu-SharedCrypto_extdep/X64/SharedCryptoDxe.efi|*
 
 
 [Binaries.ARM]

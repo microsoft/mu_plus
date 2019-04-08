@@ -41,5 +41,5 @@
 # if they are not found, check there
 
 [Binaries.IA32]
-  PE32|SharedCryptoPkg/Package/Mu-SharedCrypto_extdep/IA32/SharedCryptoPeiShaOnly.efi|*
-  PEI_DEPEX|SharedCryptoPkg/Package/Mu-SharedCrypto_extdep/IA32/SharedCryptoPeiShaOnly.depex|*
+  PE32|Mu-SharedCrypto_extdep/IA32/SharedCryptoPeiShaOnly.efi|*
+  PEI_DEPEX|Mu-SharedCrypto_extdep/IA32/SharedCryptoPeiShaOnly.depex|*
