@@ -56,9 +56,10 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
-
+  OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
+  IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
 
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
@@ -81,18 +82,18 @@
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   DebugAgentLib|SourceLevelDebugPkg/Library/DebugAgent/SecPeiDebugAgentLib.inf
   DebugLib|MsCorePkg/Library/PeiDebugLib/PeiDebugLib.inf
-  BaseCryptLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibPei.inf
+  BaseCryptLib|SharedCryptoPkg/Library/CryptLibSharedDriver/PeiCryptLibSharedDriver.inf
 
 [LibraryClasses.common.DXE_CORE]
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
   DebugAgentLib|SourceLevelDebugPkg/Library/DebugAgent/DxeDebugAgentLib.inf
-  BaseCryptLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibDxe.inf
-  SharedCryptoLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibDxe.inf
+  BaseCryptLib|SharedCryptoPkg/Library/CryptLibSharedDriver/DxeCryptLibSharedDriver.inf
+  CryptLibSharedDriver|SharedCryptoPkg/Library/CryptLibSharedDriver/DxeCryptLibSharedDriver.inf
 
 [LibraryClasses.common.DXE_SMM_DRIVER]
-  BaseCryptLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibSmm.inf
-  SharedCryptoLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibSmm.inf
+  BaseCryptLib|SharedCryptoPkg/Library/CryptLibSharedDriver/SmmCryptLibSharedDriver.inf
+  CryptLibSharedDriver|SharedCryptoPkg/Library/CryptLibSharedDriver/SmmCryptLibSharedDriver.inf
 
 
 [LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER,LibraryClasses.common.DXE_SMM_DRIVER]
@@ -101,6 +102,9 @@
 
 [LibraryClasses.common.DXE_SMM_DRIVER]
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
+
+[LibraryClasses.IA32]
+ NULL|MdePkg/Library/VsIntrinsicLib/VsIntrinsicLib.inf
 
 
 # build the test app if needed
@@ -140,41 +144,39 @@
   #SharedCryptoPkg/UnitTests/X509UnitTestApp/UnitTestApp.inf
 
 [Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
-  SharedCryptoPkg/Driver/Pei/SharedCryptoPei.inf {
-    <LibraryClasses>
-      BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
-      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
-  }
   SharedCryptoPkg/Driver/Pei/SharedCryptoPeiShaOnly.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
-      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+      RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
 [Components.X64, Components.AARCH64, Components.IA32]
   SharedCryptoPkg/Driver/Dxe/SharedCryptoDxe.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
-      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+
+      RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
   SharedCryptoPkg/Driver/Dxe/SharedCryptoDxeMu.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
-      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+      RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
 [Components.X64.DXE_SMM_DRIVER]
   SharedCryptoPkg/Driver/Smm/SharedCryptoSmm.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
-      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+      RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+      IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   }
 
   SharedCryptoPkg/Driver/Smm/SharedCryptoSmmMu.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
-      OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
+      RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+      IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   }
 
 

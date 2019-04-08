@@ -29,7 +29,7 @@
 
 
 [Defines]
-  PLATFORM_NAME                  = SharedCryptoDriver
+  PLATFORM_NAME                  = SharedCryptoDrivers
   PLATFORM_GUID                  = FA7B48DB-316A-45D6-A52F-5CD9662F4565
   PLATFORM_VERSION               = .10
   DSC_SPECIFICATION              = 0x0001001A
@@ -150,5 +150,5 @@
   SharedCryptoPkg/Driver/Smm/SharedCryptoSmm.inf
   SharedCryptoPkg/Driver/Smm/SharedCryptoSmmMu.inf
 
-[BuildOptions]
+[BuildOptions.X64]
   MSFT:*_*_*_CC_FLAGS  = /FAcs /X /GS
