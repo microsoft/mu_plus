@@ -41,8 +41,8 @@
 # if they are not found, check there
 
 [Binaries.Ia32]
-  PE32|Mu-SharedCrypto_extdep/IA32/SharedCryptoPei.efi|*
-  PEI_DEPEX|Mu-SharedCrypto_extdep/IA32/SharedCryptoPei.depex|*
+  PE32|Mu-SharedCrypto_extdep/$(TARGET)/IA32/SharedCryptoPei.efi|*
+  PEI_DEPEX|Mu-SharedCrypto_extdep/$(TARGET)/IA32/SharedCryptoPei.depex|*
 
 [Depex]
   gEfiPeiMemoryDiscoveredPpiGuid

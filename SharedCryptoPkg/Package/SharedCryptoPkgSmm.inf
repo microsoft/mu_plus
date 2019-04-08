@@ -43,8 +43,8 @@
 # if they are not found, check there
 
 [Binaries.X64]
-  PE32|Mu-SharedCrypto_extdep/X64/SharedCryptoSmm.efi
-  SMM_DEPEX|Mu-SharedCrypto_extdep/X64/SharedCryptoSmm.depex
+  PE32|Mu-SharedCrypto_extdep/$(TARGET)/X64/SharedCryptoSmm.efi
+  SMM_DEPEX|Mu-SharedCrypto_extdep/$(TARGET)/X64/SharedCryptoSmm.depex
 
 [Packages]
   SharedCryptoPkg/SharedCryptoPkg.dec

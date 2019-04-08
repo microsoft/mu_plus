@@ -42,17 +42,17 @@
 # if they are not found, check there
 
 [Binaries]
-  DXE_DEPEX|Mu-SharedCrypto_extdep/X64/SharedCryptoDxe.depex|*
+  DXE_DEPEX|Mu-SharedCrypto_extdep/$(TARGET)/X64/SharedCryptoDxe.depex|*
 
 [Binaries.X64]
-  PE32|Mu-SharedCrypto_extdep/X64/SharedCryptoDxe.efi|*
+  PE32|Mu-SharedCrypto_extdep/$(TARGET)/X64/SharedCryptoDxe.efi|*
 
 
 [Binaries.ARM]
-  PE32|Mu-SharedCrypto_extdep/Arm/SharedCryptoDxe.efi
+  PE32|Mu-SharedCrypto_extdep/$(TARGET)/Arm/SharedCryptoDxe.efi
 
 [Binaries.AArch64]
-  PE32|Mu-SharedCrypto_extdep/AArch64/SharedCryptoDxe.efi
+  PE32|Mu-SharedCrypto_extdep/$(TARGET)/AArch64/SharedCryptoDxe.efi
 
 [Packages]
   SharedCryptoPkg/SharedCryptoPkg.dec
