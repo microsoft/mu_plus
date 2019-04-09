@@ -46,9 +46,9 @@
 #
 
 [Sources]
-  ../SharedCryptoVersion.c
-  ../CommonSharedCryptoMu.c
-  SharedCryptoDxe.c
+  Common/SharedCryptoVersion.c
+  Common/CommonSharedCryptoMu.c
+  Dxe/SharedCryptoDxe.c
 
 [Packages]
   MdePkg/MdePkg.dec
