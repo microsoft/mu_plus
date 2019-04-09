@@ -3,6 +3,6 @@
   "type": "nuget",
   "name": "Mu-SharedCrypto",
   "source": "https://api.nuget.org/v3/index.json",
-  "version": "20190404.0.3",
+  "version": "20190409.0.1",
   "flags": []
 }
