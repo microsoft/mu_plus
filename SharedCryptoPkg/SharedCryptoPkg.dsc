@@ -141,35 +141,35 @@
   #SharedCryptoPkg/UnitTests/X509UnitTestApp/UnitTestApp.inf
 
 [Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
-  SharedCryptoPkg/Driver/Pei/SharedCryptoPeiShaOnly.inf {
+  SharedCryptoPkg/Driver/SharedCryptoPeiShaOnly.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
 [Components.X64, Components.AARCH64, Components.IA32]
-  SharedCryptoPkg/Driver/Dxe/SharedCryptoDxe.inf {
+  SharedCryptoPkg/Driver/SharedCryptoDxe.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
-  SharedCryptoPkg/Driver/Dxe/SharedCryptoDxeMu.inf {
+  SharedCryptoPkg/Driver/SharedCryptoDxeMu.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
 [Components.X64.DXE_SMM_DRIVER]
-  SharedCryptoPkg/Driver/Smm/SharedCryptoSmm.inf {
+  SharedCryptoPkg/Driver/SharedCryptoSmm.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
       IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   }
 
-  SharedCryptoPkg/Driver/Smm/SharedCryptoSmmMu.inf {
+  SharedCryptoPkg/Driver/SharedCryptoSmmMu.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf

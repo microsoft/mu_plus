@@ -140,15 +140,15 @@
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
 
 [Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
-  SharedCryptoPkg/Driver/Pei/SharedCryptoPeiShaOnly.inf
+  SharedCryptoPkg/Driver/SharedCryptoPeiShaOnly.inf
 
 [Components.X64, Components.AARCH64, Components.IA32]
-  SharedCryptoPkg/Driver/Dxe/SharedCryptoDxe.inf
-  SharedCryptoPkg/Driver/Dxe/SharedCryptoDxeMu.inf
+  SharedCryptoPkg/Driver/SharedCryptoDxe.inf
+  SharedCryptoPkg/Driver/SharedCryptoDxeMu.inf
 
 [Components.X64.DXE_SMM_DRIVER]
-  SharedCryptoPkg/Driver/Smm/SharedCryptoSmm.inf
-  SharedCryptoPkg/Driver/Smm/SharedCryptoSmmMu.inf
+  SharedCryptoPkg/Driver/SharedCryptoSmm.inf
+  SharedCryptoPkg/Driver/SharedCryptoSmmMu.inf
 
 [BuildOptions.X64]
   MSFT:*_*_*_CC_FLAGS  = /FAcs /X /GS

@@ -44,9 +44,9 @@
 #
 
 [Sources]
-  ../CommonSharedCryptoShaOnly.c
-  SharedCryptoPei.c
-  ../SharedCryptoVersion.c
+  Common/CommonSharedCryptoShaOnly.c
+  Pei/SharedCryptoPei.c
+  Common/SharedCryptoVersion.c
 
 [Packages]
   MdePkg/MdePkg.dec

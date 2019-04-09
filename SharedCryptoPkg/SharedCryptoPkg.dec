@@ -33,7 +33,7 @@
 
 
 [Includes.common.Private]
-  Include/Private
+  Private
 
 [Protocols]
   ## Shared Crypto Dxe protocol

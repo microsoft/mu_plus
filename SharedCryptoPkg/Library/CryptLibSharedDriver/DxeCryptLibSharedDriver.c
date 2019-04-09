@@ -70,5 +70,5 @@ VOID ProtocolNotFound (
 VOID ProtocolFunctionNotFound (CHAR8* function_name)
 {
   DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_DXE] This function was not found: %a\n",function_name));
-  ASSERT_EFI_ERROR(EFI_PROTOCOL_UNREACHABLE);
+  ASSERT_EFI_ERROR(EFI_UNSUPPORTED);
 }
