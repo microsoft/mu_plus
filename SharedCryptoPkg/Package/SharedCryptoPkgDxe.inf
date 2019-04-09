@@ -42,17 +42,20 @@
 # if they are not found, check there
 
 [Binaries]
-  DXE_DEPEX|Mu-SharedCrypto_extdep/$(TARGET)/X64/SharedCryptoDxe.depex|*
+  DXE_DEPEX|Mu-SharedCrypto_extdep/DEBUG/X64/SharedCryptoDxe.depex|DEBUG
+  DXE_DEPEX|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoDxe.depex|RELEASE
 
 [Binaries.X64]
-  PE32|Mu-SharedCrypto_extdep/$(TARGET)/X64/SharedCryptoDxe.efi|*
-
+  PE32|Mu-SharedCrypto_extdep/DEBUG/X64/SharedCryptoDxe.efi|DEBUG
+  PE32|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoDxe.efi|RELEASE
 
 [Binaries.ARM]
-  PE32|Mu-SharedCrypto_extdep/$(TARGET)/Arm/SharedCryptoDxe.efi
+  PE32|Mu-SharedCrypto_extdep/DEBUG/Arm/SharedCryptoDxe.efi|DEBUG
+  PE32|Mu-SharedCrypto_extdep/RELEASE/Arm/SharedCryptoDxe.efi|RELEASE
 
 [Binaries.AArch64]
-  PE32|Mu-SharedCrypto_extdep/$(TARGET)/AArch64/SharedCryptoDxe.efi
+  PE32|Mu-SharedCrypto_extdep/DEBUG/AArch64/SharedCryptoDxe.efi|DEBUG
+  PE32|Mu-SharedCrypto_extdep/RELEASE/AArch64/SharedCryptoDxe.efi|RELEASE
 
 [Packages]
   SharedCryptoPkg/SharedCryptoPkg.dec
