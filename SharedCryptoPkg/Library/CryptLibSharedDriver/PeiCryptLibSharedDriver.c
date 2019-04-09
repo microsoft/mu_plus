@@ -49,12 +49,14 @@ SHARED_CRYPTO_FUNCTIONS *GetProtocol()
     if (EFI_ERROR(Status))
     {
       ProtocolNotFound(Status);
+      pCryptoProt = NULL;
     }
     else {
       Version = pCryptoProt->SharedCrypto_GetLowestSupportedVersion();
       if (Version != SHARED_CRYPTO_VERSION)
       {
         ProtocolNotFound(EFI_PROTOCOL_ERROR);
+        pCryptoProt = NULL;
       }
 
     }
