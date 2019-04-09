@@ -1,5 +1,5 @@
 ##
-## Script to Build Kingsburg UEFI firmware
+## Script to Build the SharedCryptoPkg binaries for NuGet publishing
 ##
 ##
 ## Copyright Microsoft Corporation, 2018
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     from MuEnvironment import CommonBuildEntry
   except ImportError:
     print("Running Python version {0} from {1}".format(sys.version, sys.executable))
-    raise RuntimeError("Please run \"python -m pip install --upgrade mu_build\".\nContact MS Core UEFI team if you run into any problems.")
+    raise RuntimeError("Please run \"python -m pip install --upgrade mu_build\".\nContact Microsoft Project Mu team if you run into any problems.")
 
   # Now that we have access to the entry, hand off to the common code.
   CommonBuildEntry.build_entry(SCRIPT_PATH, WORKSPACE_PATH, REQUIRED_REPOS, PROJECT_SCOPE, MODULE_PKGS, MODULE_PKG_PATHS)
