@@ -31,7 +31,7 @@
   ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
-#include <Shared/SharedCrypto.h>
+#include <Protocol/SharedCrypto.h>
 #include <Library/BaseCryptLib.h>
 #include "SharedCryptoVersion.h"
 

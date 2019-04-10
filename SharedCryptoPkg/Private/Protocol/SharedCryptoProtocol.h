@@ -25,7 +25,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#include <Shared/SharedCrypto.h>
+#include <Protocol/SharedCrypto.h>
 
 #ifndef __SHARED_CRYPTO_PROTOCOL_H__
 #define __SHARED_CRYPTO_PROTOCOL_H__

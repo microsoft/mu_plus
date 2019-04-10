@@ -26,7 +26,7 @@
 
 **/
 
-#include <Shared/SharedCrypto.h>
+#include <Protocol/SharedCrypto.h>
 
 UINTN
 EFIAPI

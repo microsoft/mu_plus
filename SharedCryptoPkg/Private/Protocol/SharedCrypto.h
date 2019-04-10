@@ -34,6 +34,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHARED_CRYPTO_VERSION 1
 
 typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_FUNCTIONS;
+typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_PROTOCOL;
+
+extern GUID gSharedCryptoSmmProtocolGuid;
+extern GUID gSharedCryptoProtocolGuid;
+
 
 
 //A function that returns the version number of the packaged crypto efi

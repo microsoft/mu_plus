@@ -25,7 +25,7 @@
 
 **/
 
-#include <Shared/SharedCrypto.h>
+#include <Protocol/SharedCrypto.h>
 
 #ifndef __SHARED_CRYPTO_VERSION_H__
 #define __SHARED_CRYPTO_VERSION_H__

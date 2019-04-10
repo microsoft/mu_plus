@@ -30,7 +30,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __CRYPTO_BIN_LIB_HELPERS_H_
 
 
-#include <Shared/SharedCrypto.h>
+#include <Protocol/SharedCrypto.h>
 
 SHARED_CRYPTO_FUNCTIONS* GetProtocol();
 
