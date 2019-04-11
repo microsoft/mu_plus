@@ -3057,7 +3057,6 @@ BOOLEAN
   IN OUT  VOID  *Arc4Context
   );
 
-#pragma pack(push, 1)
 ///
 struct _SHARED_CRYPTO_FUNCTIONS
 {
@@ -3191,6 +3190,5 @@ struct _SHARED_CRYPTO_FUNCTIONS
   SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
   SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
 };
-#pragma pack(pop)
 
 #endif
