@@ -176,19 +176,32 @@ PlatformBootManagerBeforeConsole (
   )
 {
   EFI_STATUS                Status;
-  EFI_DEVICE_PATH_PROTOCOL  *VarConOut;
-  EFI_DEVICE_PATH_PROTOCOL  *VarConIn;
   EFI_DEVICE_PATH_PROTOCOL            *TempDevicePath;
   EFI_DEVICE_PATH_PROTOCOL            *ConsoleOut;
   EFI_DEVICE_PATH_PROTOCOL            *Temp;
   EFI_HANDLE                          Handle;
   BDS_CONSOLE_CONNECT_ENTRY          *PlatformConsoles;
 
+  UINTN                     TempSize;
+  BOOLEAN                   IsConsoleConfigured;
 
   mBootMode = GetBootModeHob();  // BeforeConsole has to be called before AfterConsole.
 
+  TempSize = 0;
+  // Try to find ConIn and ConOut from variable services, either variable is not configured will set flag to FALSE
+  IsConsoleConfigured = TRUE;
+  Status = gRT->GetVariable (EFI_CON_IN_VARIABLE_NAME, &gEfiGlobalVariableGuid, NULL, &TempSize, NULL);
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+      IsConsoleConfigured = FALSE;
+  }
+
+  Status = gRT->GetVariable (EFI_CON_OUT_VARIABLE_NAME, &gEfiGlobalVariableGuid, NULL, &TempSize, NULL);
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+      IsConsoleConfigured = FALSE;
+  }
+
   //
-  // Append Usb Keyboard short form DevicePath into "ConInDev"
+  // Append Usb Keyboard short form DevicePath into "ConIn"
   //
   EfiBootManagerUpdateConsoleVariable (
     ConIn,
@@ -242,18 +255,7 @@ PlatformBootManagerBeforeConsole (
       mBootMode == BOOT_IN_RECOVERY_MODE) {
 
 
-    VarConOut = NULL;
-    GetEfiGlobalVariable2 (L"ConOut", (VOID **) &VarConOut, NULL);
-    if (VarConOut != NULL) {
-        FreePool (VarConOut);
-    }
-    VarConIn = NULL;
-    GetEfiGlobalVariable2 (L"ConIn", (VOID **) &VarConIn, NULL);
-    if (VarConIn  != NULL) {
-        FreePool (VarConIn);
-    }
-
-    if (VarConOut == NULL || VarConIn == NULL) {
+    if (IsConsoleConfigured == FALSE) {
       //
       // Only fill ConIn/ConOut when ConIn/ConOut is empty because we may drop to Full Configuration boot mode in non-first boot
       //

@@ -41,6 +41,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MemoryAllocationLib.h>
 #include <Library/IoLib.h>
 #include <Library/UnitTestLogLib.h>
+#include <Library/UnitTestBootUsbLib.h>
 
 #include <Protocol/PciIo.h>
 #include <IndustryStandard/Pci22.h>
@@ -323,10 +324,13 @@ CheckBMETeardown (
                     );
     UT_ASSERT_NOT_EFI_ERROR(Status);
 
-    
+    //
+    // Step 6: Set Next Boot to Boot to USB
+    //
+    SetUsbBootNext();
 
     //
-    // Step 6: Create exit boot services event
+    // Step 7: Create exit boot services event
     //
     DEBUG((DEBUG_INFO, "Calling ExitBootServices\n"));
     Status = gBS->ExitBootServices (
@@ -335,7 +339,7 @@ CheckBMETeardown (
                   );
 
     //
-    // Step 7: Get Post EBS BME Status
+    // Step 8: Get Post EBS BME Status
     //
     Iterator = Head;
     Count = 0;
@@ -354,7 +358,7 @@ CheckBMETeardown (
     }
     
     //
-    // Step 8: Flatten Linked List to write to variable
+    // Step 9: Flatten Linked List to write to variable
     //
     Iterator = Head;
     Count = 0;
@@ -367,7 +371,7 @@ CheckBMETeardown (
     }
 
     //
-    // Step 9: Since we are post exitbootservices we need to save the variable and reboot for further processing
+    // Step 10: Since we are post exitbootservices we need to save the variable and reboot for further processing
     //
     gRT->SetVariable(
                   DMA_UNIT_TEST_VARIABLE_NAME,
