@@ -151,4 +151,4 @@
   SharedCryptoPkg/Driver/SharedCryptoSmmMu.inf
 
 [BuildOptions.X64]
-  MSFT:*_*_*_CC_FLAGS  = /FAcs /X /GS
+  #MSFT:*_*_*_CC_FLAGS  = /FAcs /X /GS

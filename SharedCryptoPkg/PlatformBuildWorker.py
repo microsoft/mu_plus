@@ -24,6 +24,7 @@ class PlatformBuilder(UefiBuilder):
         self.env.SetValue("ACTIVE_PLATFORM", "SharedCryptoPkg/SharedCryptoDriver.dsc", "Platform Hardcoded")
         self.env.SetValue("TARGET_ARCH", "IA32 X64 AARCH64 ARM", "Platform Hardcoded")
         self.env.SetValue("TARGET", "RELEASE", "Platform Hardcoded")
+        self.env.SetValue("CONF_TEMPLATE_DIR", "SharedCryptoPkg", "Conf template directory hardcoded - temporary and should go away")
 
         self.env.SetValue("LaunchBuildLogProgram", "Notepad", "default - will fail if already set", True)
         self.env.SetValue("LaunchLogOnSuccess", "True", "default - will fail if already set", True)
