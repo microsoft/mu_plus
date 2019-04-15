@@ -187,14 +187,15 @@ PlatformBootManagerBeforeConsole (
 
   mBootMode = GetBootModeHob();  // BeforeConsole has to be called before AfterConsole.
 
-  TempSize = 0;
-  // Try to find ConIn and ConOut from variable services, either variable is not configured will set flag to FALSE
   IsConsoleConfigured = TRUE;
+  // Try to find ConIn and ConOut from variable services, either variable is not configured will set flag to FALSE
+  TempSize = 0;
   Status = gRT->GetVariable (EFI_CON_IN_VARIABLE_NAME, &gEfiGlobalVariableGuid, NULL, &TempSize, NULL);
   if (Status != EFI_BUFFER_TOO_SMALL) {
       IsConsoleConfigured = FALSE;
   }
 
+  TempSize = 0;
   Status = gRT->GetVariable (EFI_CON_OUT_VARIABLE_NAME, &gEfiGlobalVariableGuid, NULL, &TempSize, NULL);
   if (Status != EFI_BUFFER_TOO_SMALL) {
       IsConsoleConfigured = FALSE;
