@@ -25,7 +25,6 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 
-from MuBuild import MuBuild
 import sys
 import os
 from MuPythonLibrary import UtilityFunctions
@@ -92,17 +91,6 @@ if __name__ == "__main__":
         raise RuntimeError("You need to include your API key as the first argument")
 
     api_key = args[1]
-    sys.argv = ["-c", rootPath, "--ignore", "--CLEAN", "BUILDREPORTING=TRUE",
-                "BUILDREPORT_TYPES=LIBRARY DEPEX PCD BUILD_FLAGS", "-p", "SharedCryptoPkg"]
-    try:  # run the build
-        MuBuild.main()
-    except SystemExit as e:
-        return_code = e.args[0]
-        if return_code != 0:
-            raise e
-
-    MuLogging.stop_logging(logging.getLogger("").handlers)
-    logging.getLogger("").handlers = []
     MuLogging.setup_console_logging(use_color=False, logging_level=logging.DEBUG)
     # move the EFI's we generated to a folder to upload
     NugetPath = os.path.join(rootDir, "MU_BASECORE", "BaseTools", "NugetPublishing")
