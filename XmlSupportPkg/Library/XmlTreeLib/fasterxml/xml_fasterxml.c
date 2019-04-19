@@ -619,7 +619,7 @@ InvalidCharacter:
 //
 #define _RtlIsCharacterText(x) (TRUE)
 
-BOOLEAN FORCEINLINE
+BOOLEAN
 RtlpIsCharacterLetter(UINT32 ulCharacter)
 {
   //
@@ -628,25 +628,25 @@ RtlpIsCharacterLetter(UINT32 ulCharacter)
   return (BOOLEAN)(((ulCharacter >= L'a') && (ulCharacter <= L'z')) || ((ulCharacter >= L'A') && (ulCharacter <= L'Z')));
 }
 
-BOOLEAN FORCEINLINE
+BOOLEAN
 RtlpIsCharacterDigit(UINT32 ulCharacter)
 {
   return (BOOLEAN)((ulCharacter >= L'0') && (ulCharacter <= L'9')) == TRUE;
 }
 
-BOOLEAN FORCEINLINE
+BOOLEAN
 RtlpIsCharacterCombiner(UINT32 ulCharacter)
 {
   return FALSE;
 }
 
-BOOLEAN FORCEINLINE
+BOOLEAN
 RtlpIsCharacterExtender(UINT32 ulCharacter)
 {
   return FALSE;
 }
 
-NTXML_RAW_TOKEN FORCEINLINE EFIAPI
+NTXML_RAW_TOKEN EFIAPI
 _RtlpDecodeCharacter(UINT32 ulCharacter) {
 
   NTXML_RAW_TOKEN RetVal;
@@ -690,7 +690,6 @@ _RtlpDecodeCharacter(UINT32 ulCharacter) {
 }
 
 VOID
-FORCEINLINE
 RtlpXmlSetEndOfStream(
   IN PXML_RAWTOKENIZATION_STATE pState,
   OUT PXML_RAW_TOKEN pToken
@@ -1227,7 +1226,6 @@ RtlRawXmlTokenizer_GatherUntilOneOrOther(
 } while (0);
 
 
-FORCEINLINE
 BOOLEAN RtlRawXmlTokenizer_IsValidPubIdCharacter(
   IN UINT32 ulChar,
   IN BOOLEAN fAllowSingleQuote

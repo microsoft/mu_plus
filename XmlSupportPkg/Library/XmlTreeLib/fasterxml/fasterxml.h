@@ -1168,7 +1168,7 @@ RtlAllocateGrowingList(
     PRTL_ALLOCATOR              Allocator
     );
 
-typedef EFI_STATUS (__cdecl *PFN_LIST_COMPARISON_CALLBACK)(
+typedef EFI_STATUS (EFIAPI *PFN_LIST_COMPARISON_CALLBACK)(
     PRTL_GROWING_LIST HostList,
     VOID* Left,
     VOID* Right,
