@@ -21,6 +21,7 @@ Main Changes-dev
 ----------------
 
 - Added Color Bars for DEVICE_STATE_PLATFORM_MODE_[2|3]. (indigo and brown, respectively). Removed display for DEVICE_STATE_UNDEFINED.
+- Added SharedCryptoPkg that includes support for having BaseCryptLib over a protocol
 
 Bug Fixes-dev
 -------------

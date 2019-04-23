@@ -5,6 +5,8 @@ tags/
 *.pyc
 *.bak
 BuildConfig.conf
+/Conf
+/.vscode
 
 # Ignore SelfDescribingEnvironment artifacts.
 *_extdep/
@@ -12,3 +14,4 @@ BuildConfig.conf
 # Ignore cloned dependencies
 /Common
 /MU_BASECORE
+_TEMP_*/

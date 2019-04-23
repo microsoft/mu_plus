@@ -34,6 +34,7 @@
         "MsCorePkg",
         "MsGraphicsPkg",
         "MsWheaPkg",
+        "SharedCryptoPkg",
         "PcBdsPkg",
         "UefiTestingPkg",
         "XmlSupportPkg",

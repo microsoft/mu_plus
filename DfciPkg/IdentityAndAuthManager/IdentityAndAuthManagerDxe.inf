@@ -76,7 +76,6 @@
   UefiLib
   BaseCryptLib
   DfciPasswordLib
-  OpensslLib
   DfciDeviceIdSupportLib
   DfciRecoveryLib
   DfciUiSupportLib

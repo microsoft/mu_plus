@@ -1,0 +1,51 @@
+## @file
+# Package declaration file for SharedCryptoPkg Library and Driver
+#
+# Copyright (c) 2019, Microsoft Corporation
+
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = SharedCryptoPkg
+  PACKAGE_UNI_FILE               = SharedCryptoPkg.uni
+  PACKAGE_GUID                   = 0E9D6868-7D81-4A21-9785-BA1021F3F63B
+  PACKAGE_VERSION                = 0.10
+
+
+[Includes.common.Private]
+  Private
+
+[Protocols]
+  ## Shared Crypto Dxe protocol
+  # 2C2275C9-3A7B-426F-BE54-2D22BD9D1092
+  gSharedCryptoProtocolGuid =  { 0x2C2275C9, 0x3A7B, 0x426F, { 0xBE, 0x54, 0x2D, 0x22, 0xBD, 0x9D, 0x10, 0x92 }}
+
+  ## Shared Crypto SMM protocol
+  # F46B2EB2-E0D7-4C96-A3B1-CB7C572EB300
+  gSharedCryptoSmmProtocolGuid =  { 0xF46B2EB2, 0xE0D7, 0x4C96, { 0xA3, 0xB1, 0xc, 0x61, 0xbb, 0x24, 0x5c, 0x42 }}
+
+
+[Ppis]
+  ## Shared Crypto PPI protocol
+  # 7DCE671B-C223-446A-A705-ED637AAF6771
+  gSharedCryptoPpiGuid =  { 0x7DCE671B, 0xC223, 0x446A, { 0xA7, 0x05, 0xED, 0x63, 0x7A, 0xAF, 0x67, 0x71 }}
