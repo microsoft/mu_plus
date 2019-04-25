@@ -34,6 +34,9 @@ The protocol is installed by several prebuilt EFI that gets downloaded via nuget
 
 ![Diagram showing dependencies](SharedCryptoPkg.png "Diagram")
 
+## Versioning
+
+A typical version consists of 4 numbers. The year, the month of the EDK II release, the revision number, and the build number. An example of this would be _2019.03.02.01_, which would translate to EDK II 1903 release, the second revision and the first build. This means that there were two code changes within 1903 (either in BaseCryptLib or OpenSSL). Release notes will be provided on the NuGet package page and on this repo. Build numbers are reved whenever there needs to be a recompiled binary due to a mistake on our part or a build flag is tweaked.
 
 ## Flavors
 
@@ -74,27 +77,28 @@ This would replace where you would normally include BaseCryptLib.
 
 ```
 [LibraryClasses.X64]
-    BaseCryptLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibDxe.inf
+    BaseCryptLib|SharedCryptoPkg/Library/CryptLibSharedDriver/DxeCryptLibSharedDriver.inf
     ...
 
 [LibraryClasses.IA32.PEIM]
-    BaseCryptLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibPei.inf
+    BaseCryptLib|SharedCryptoPkg/Library/CryptLibSharedDriver/PeiCryptLibSharedDriver.inf
     ...
 
 [LibraryClasses.DXE_SMM]
-    BaseCryptLib|SharedCryptoPkg/Library/SharedCryptoLib/SharedCryptoLibSmm.inf
+    BaseCryptLib|SharedCryptoPkg/Library/CryptLibSharedDriver/SmmCryptLibSharedDriver.inf
     ...
 ```
 
-Unfortunatly, due to the way that the EDK build system works, you'll also need to include the package in your component section.
+Unfortunatly, due to the way that the EDK build system works, you'll also need to include the package in your component section. Make sure this matches whatever you put in your FDF.
 
 ```
 [Components.IA32]
-    SharedCryptoPkg/Package/SharedCryptoPkgPei.inf
+    SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.inf
     ...
 
 [Components.X64]
-    SharedCryptoPkg/Package/SharedCryptoPkgDxe.inf
+    SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.inf
+    SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.inf
     ...
 ```
 
@@ -102,12 +106,15 @@ Make sure that the flavor you're using in your FDF matches the flavor you includ
 
 ## Sample FDF change
 
-TODO: re-evluate this once nuget dependency is live
-Include this file in your FV and the module will get loaded.
+Include this file in your FV and the module will get loaded. In this example, we are looking at the Mu flavor for DXE and the ShaOnly flavor for PEI, but feel free to swap it out with whatever flavor(s) you are using on your platform.
 
 ```
-[FV.FVDXE]
-    INF  SharedCryptoPkg/Package/SharedCryptoPkgDxe.inf
+[FV.FVBOOTBLOCK]
+    INF  SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.inf
     ...
+
+[FV.FVDXE]
+    INF  SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.inf
+    INF  SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.inf
     ...
 ```
