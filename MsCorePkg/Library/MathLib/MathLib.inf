@@ -51,3 +51,6 @@
 [Protocols]
 
 [Guids]
+
+[BuildOptions]
+   GCC:*_*_AARCH64_CC_XIPFLAGS == -mstrict-align
