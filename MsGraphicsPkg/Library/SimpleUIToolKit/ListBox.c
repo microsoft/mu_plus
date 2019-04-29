@@ -295,6 +295,21 @@ GetSelectedCellIndex (IN  ListBox   *this,
         ReturnData->Direction = LB_MOVE_NONE;
     }
 
+    //
+    // Validate Return Data
+    //
+    if (((ReturnData->SelectedCell < 0) || (ReturnData->SelectedCell >= this->m_NumberOfCells)) ||
+        ((ReturnData->TargetCell < 0)   || (ReturnData->TargetCell >= this->m_NumberOfCells)))
+    {
+        DEBUG((DEBUG_INFO, "Ignoring input due to range error Sel=%d, Tgt=%d\n",
+                           ReturnData->SelectedCell,
+                           ReturnData->TargetCell));
+        ReturnData->Action = LB_ACTION_NONE;
+        ReturnData->SelectedCell =0;
+        ReturnData->TargetCell = 0;
+        ReturnData->Direction = LB_MOVE_NONE;
+    }
+
 Exit:
     return Status;
 }
@@ -666,6 +681,7 @@ Draw (IN    ListBox             *this,
     if (Index >= this->m_NumberOfCells)
     {
         Index = UIT_INVALID_SELECTION;
+        this->m_CaptureLocation = LocationNone;
     }
     if (LocationNone != this->m_CaptureLocation)  // Capture Pointer in effect
     {

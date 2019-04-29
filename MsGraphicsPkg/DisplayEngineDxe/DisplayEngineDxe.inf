@@ -85,6 +85,3 @@
 [Guids]
     gMsEventMasterFrameNotifyGroupGuid                              ## CONSUMES
     gEfiEventReadyToBootGuid                                        ## CONSUMES
-
-[BuildOptions]
-#  *_VS2015x86_*_CC_FLAGS       = /Od /FAcs
