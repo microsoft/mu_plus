@@ -164,7 +164,6 @@
   DfciPkg/Library/DfciXmlDeviceIdSchemaSupportLib/DfciXmlDeviceIdSchemaSupportLib.inf
   DfciPkg/Library/DfciXmlIdentitySchemaSupportLib/DfciXmlIdentitySchemaSupportLib.inf
   DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
-
   DfciPkg/SettingsManager/SettingsManagerDxe.inf {
         #Platform should add all it settings libs here
   <LibraryClasses>
@@ -175,6 +174,7 @@
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE
   }
 
+  DfciPkg/AuthManagerNull/AuthManagerNull.inf
   DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf
   DfciPkg/DfciManager/DfciManager.inf
 
