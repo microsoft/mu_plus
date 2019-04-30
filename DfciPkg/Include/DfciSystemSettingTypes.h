@@ -66,9 +66,13 @@ typedef enum {
   DFCI_SETTING_TYPE_PASSWORD,
   DFCI_SETTING_TYPE_USBPORTENUM,
   DFCI_SETTING_TYPE_STRING,             // CHAR8 string
-  DFCI_SETTING_TYPE_BINARY,             // Opaque Binary Data
-  DFCI_SETTING_TYPE_CERT                // Opaque Binary Data on write, Thumbprint text on read
+  DFCI_SETTING_TYPE_BINARY,             // Opaque Binary Data on read/write, b64data in XML
+  DFCI_SETTING_TYPE_CERT                // Opaque Binary Data on read/write, Thumbprint in XML
 } DFCI_SETTING_TYPE;
+
+#define ENABLE_FALSE        0
+#define ENABLE_TRUE         1
+#define ENABLE_INCONSISTENT 2
 
 //
 // Most of the settings types have a fixed length.  Limit the String and Binary
@@ -124,7 +128,7 @@ typedef enum {
 
 #define IS_PERMISSION_REGEXP(mask )  ((mask * DFCI_PERMISSION_REGEXP) != 0)
 
-//Define Permission Store instatiated in memory at runtime
+//Define Permission Store instantiated in memory at runtime
 #define DFCI_PERMISSION_MASK__NONE (0)
 #define DFCI_PERMISSION_MASK__ALL (DFCI_IDENTITY_LOCAL | DFCI_IDENTITY_SIGNER_ZTD  | DFCI_IDENTITY_SIGNER_USER | DFCI_IDENTITY_SIGNER_USER1 | DFCI_IDENTITY_SIGNER_USER2 | DFCI_IDENTITY_SIGNER_OWNER)
 #define DFCI_PERMISSION_MASK__USERS (DFCI_IDENTITY_SIGNER_USER | DFCI_IDENTITY_SIGNER_USER1 | DFCI_IDENTITY_SIGNER_USER2 | DFCI_IDENTITY_SIGNER_OWNER)

@@ -91,6 +91,7 @@
   DfciV1SupportLib|DfciPkg/Library/DfciV1SupportLibNull/DfciV1SupportLibNull.inf
   DfciSettingsLib|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
   DfciVirtualizationSettingsLib|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
+  DfciGroupLib|DfciPkg/Library/DfciGroupLibNull/DfciGroups.inf
   ZeroTouchSettingsLib|ZeroTouchPkg/Library/ZeroTouchSettings/ZeroTouchSettings.inf
   JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
 
@@ -164,6 +165,7 @@
   DfciPkg/Library/DfciXmlDeviceIdSchemaSupportLib/DfciXmlDeviceIdSchemaSupportLib.inf
   DfciPkg/Library/DfciXmlIdentitySchemaSupportLib/DfciXmlIdentitySchemaSupportLib.inf
   DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
+  DfciPkg/Library/DfciGroupLibNull/DfciGroups.inf
   DfciPkg/SettingsManager/SettingsManagerDxe.inf {
         #Platform should add all it settings libs here
   <LibraryClasses>

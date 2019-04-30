@@ -70,6 +70,7 @@ Good examples:
 
    { "String" : "Value" , "String2" : "Value2" }
    {"String":"Value","String2":"Value2"}
+   {"String1": null, "String2" : "Value2" }
 
 Bad examples:
 
@@ -81,7 +82,8 @@ Bad examples:
 EFI_STATUS
 EFIAPI
 JsonProcessFunction (
-    IN  JSON_REQUEST_ELEMENT *JsonElement
+    IN  JSON_REQUEST_ELEMENT *JsonElement,
+    IN  VOID                 *Context
 );
 #define MAX_APPLY_ELEMENTS 64
 
@@ -258,28 +260,52 @@ static JSON_REQUEST_ELEMENT mParseTest15Elements[] = {
 #define mParseTest15ElementCount (sizeof(mParseTest15Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
 //*----------------------------------------------------------------------------------*
-// Decode Test 16 = NULL before second quote String                                  *
+// Decode Test 16 = Skip tuples when value == "null"                                 *
 //*----------------------------------------------------------------------------------*
-#define DEC_TEST_16_JSON     "{\"String"
-#define mParseTest16ElementCount 0
+#define DEC_TEST_16_JSON     "{\"String1\" :null, \"String2\" : \"Value2\" "
+#define DEC_TEST_16_1_String "String2"
+#define DEC_TEST_16_1_Value  "Value2"
+
+static JSON_REQUEST_ELEMENT mParseTest16Elements[] = {
+    {DEC_TEST_16_1_String, sizeof(DEC_TEST_16_1_String), DEC_TEST_16_1_Value, sizeof(DEC_TEST_16_1_Value)}
+};
+#define mParseTest16ElementCount (sizeof(mParseTest16Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
 //*----------------------------------------------------------------------------------*
-// Decode Test 17 = NULL before second quote Value                                   *
+// Decode Test 17 = Skip tuples when value == "null"                                 *
 //*----------------------------------------------------------------------------------*
-#define DEC_TEST_17_JSON     "{\"String\" : \"Value"
-#define mParseTest17ElementCount 0
+#define DEC_TEST_17_JSON     "{\"String1\" : null ,\"String2\" : \"Value2\" "
+#define DEC_TEST_17_1_String "String2"
+#define DEC_TEST_17_1_Value  "Value2"
 
-//*----------------------------------------------------------------------------------------------------------*
-// Decode Test 18 = Same as test 1, except a special routine is used to pass in NULL for the first parameter *
-//*----------------------------------------------------------------------------------------------------------*
+static JSON_REQUEST_ELEMENT mParseTest17Elements[] = {
+    {DEC_TEST_17_1_String, sizeof(DEC_TEST_17_1_String), DEC_TEST_17_1_Value, sizeof(DEC_TEST_17_1_Value)}
+};
+#define mParseTest17ElementCount (sizeof(mParseTest17Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
-//*----------------------------------------------------------------------------------------------------------*
-// Decode Test 19 = Same as test 1, except a special routine is used to pass in 0 for the second parameter   *
-//*----------------------------------------------------------------------------------------------------------*
+//*----------------------------------------------------------------------------------*
+// Decode Test 18  Skip tuples when value == "null"                                 *
+//*----------------------------------------------------------------------------------*
+#define DEC_TEST_18_JSON     "{\"String1\" : null, \"String2\" : \"Value2\" "
+#define DEC_TEST_18_1_String "String2"
+#define DEC_TEST_18_1_Value  "Value2"
 
-//*----------------------------------------------------------------------------------------------------------*
-// Decode Test 20 = Same as test 1, except a special routine is used to pass in NULL for the third parameter *
-//*----------------------------------------------------------------------------------------------------------*
+static JSON_REQUEST_ELEMENT mParseTest18Elements[] = {
+    {DEC_TEST_18_1_String, sizeof(DEC_TEST_18_1_String), DEC_TEST_18_1_Value, sizeof(DEC_TEST_17_1_Value)}
+};
+#define mParseTest18ElementCount (sizeof(mParseTest18Elements)/sizeof(JSON_REQUEST_ELEMENT))
+
+//*----------------------------------------------------------------------------------*
+// Decode Test 19= NULL before second quote String                                  *
+//*----------------------------------------------------------------------------------*
+#define DEC_TEST_19_JSON     "{\"String"
+#define mParseTest19lementCount 0
+
+//*----------------------------------------------------------------------------------*
+// Decode Test 20 = NULL before second quote Value                                   *
+//*----------------------------------------------------------------------------------*
+#define DEC_TEST_20_JSON     "{\"String\" : \"Value"
+#define mParseTest20ElementCount 0
 
 //*----------------------------------------------------------------------------------------------------------------*
 // Encode Test 1 = Same as encode test 1, except a special routine is used to pass in NULL for the first parameter *
@@ -364,7 +390,8 @@ CleanUpTestContext (
 EFI_STATUS
 EFIAPI
 JsonProcessFunction (
-    IN  JSON_REQUEST_ELEMENT *JsonElement
+    IN  JSON_REQUEST_ELEMENT *JsonElement,
+    IN  VOID                 *Context
   ) {
 
 
@@ -372,7 +399,7 @@ JsonProcessFunction (
         DEBUG((DEBUG_ERROR, "Too many calls to ApplyFunction\n"));
         return EFI_BUFFER_TOO_SMALL;
     }
-
+    DEBUG((DEBUG_INFO,"Process %p index=%d\n", JsonElement, mApplyElementCount));
     CopyMem (&mApplyElements[mApplyElementCount], JsonElement, sizeof(JSON_REQUEST_ELEMENT));
     mApplyElementCount++;
 
@@ -407,32 +434,36 @@ JsonParseTest (
     UT_ASSERT_TRUE (WorkString != NULL);
     Btc->BufferToFree = WorkString;
 
-    Status = JsonLibParse (WorkString, Btc->JsonStringSize, JsonProcessFunction);
+    DEBUG(( DEBUG_INFO, "Processing Test: %a\n",WorkString));
+
+    Status = JsonLibParse (WorkString, Btc->JsonStringSize, JsonProcessFunction, NULL);
 
     UT_LOG_INFO ("JsonLibParse returned %r, expected %r\n", Status, Btc->ExpectedStatus);
     UT_LOG_INFO ("ApplyCount = %d, ExpectedCount = %d\n", mApplyElementCount, Btc->ExpectedCount);
 
+    UT_ASSERT_TRUE (Status == Btc->ExpectedStatus);
     // The apply function may succeed a number of times before the expected error.  Check
     // the valid results before checking the Parse error code.
 
     UT_ASSERT_TRUE (mApplyElementCount <= Btc->ExpectedCount);
+    if (!EFI_ERROR(Status)) {
+      for (i = 0; i < mApplyElementCount; i++) {
+          UT_LOG_INFO ("Processing element %d\n", i);
 
-    for (i = 0; i < mApplyElementCount; i++) {
-        UT_LOG_INFO ("Processing element %d\n", i);
+          UT_LOG_INFO ("Expected FieldSize = %d, Actual FieldSize = %d\n", Btc->ExpectedResults[i].FieldSize, mApplyElements[i].FieldSize);
+          UT_LOG_INFO ("Actual Field   = %a\n", mApplyElements[i].FieldName);
+          UT_LOG_INFO ("Expected Field = %a\n", Btc->ExpectedResults[i].FieldName);
 
-        UT_LOG_INFO ("Expected FieldSize = %d, Actual FieldSize = %d\n", Btc->ExpectedResults[i].FieldSize, mApplyElements[i].FieldSize);
-        UT_LOG_INFO ("Actual Field   = %a\n", mApplyElements[i].FieldName);
-        UT_LOG_INFO ("Expected Field = %a\n", Btc->ExpectedResults[i].FieldName);
+          UT_LOG_INFO ("Expected ValueSize = %d, Actual ValueSize = %d\n", Btc->ExpectedResults[i].ValueSize, mApplyElements[i].ValueSize);
+          UT_LOG_INFO ("Actual Value   = %a\n", mApplyElements[i].Value);
+          UT_LOG_INFO ("Expected Value = %a\n", Btc->ExpectedResults[i].Value);
 
-        UT_LOG_INFO ("Expected ValueSize = %d, Actual ValueSize = %d\n", Btc->ExpectedResults[i].ValueSize, mApplyElements[i].ValueSize);
-        UT_LOG_INFO ("Actual Value   = %a\n", mApplyElements[i].Value);
-        UT_LOG_INFO ("Expected Value = %a\n", Btc->ExpectedResults[i].Value);
+          UT_ASSERT_TRUE (Btc->ExpectedResults[i].FieldSize == mApplyElements[i].FieldSize);
+          UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].FieldName, mApplyElements[i].FieldName, mApplyElements[i].FieldSize));
 
-        UT_ASSERT_TRUE (Btc->ExpectedResults[i].FieldSize == mApplyElements[i].FieldSize);
-        UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].FieldName, mApplyElements[i].FieldName, mApplyElements[i].FieldSize));
-
-        UT_ASSERT_TRUE (Btc->ExpectedResults[i].ValueSize == mApplyElements[i].ValueSize);
-        UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].Value, mApplyElements[i].Value, mApplyElements[i].ValueSize));
+          UT_ASSERT_TRUE (Btc->ExpectedResults[i].ValueSize == mApplyElements[i].ValueSize);
+          UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].Value, mApplyElements[i].Value, mApplyElements[i].ValueSize));
+      }
     }
 
     UT_ASSERT_TRUE (mApplyElementCount == Btc->ExpectedCount);
@@ -454,6 +485,8 @@ JsonEncodeTest (
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
+
+    DEBUG(( DEBUG_INFO, "Processing Encode test: %a\n", Btc->ExpectedResults));
 
     Status = JsonLibEncode (Btc->ExpectedResults, Btc->ExpectedCount, &Btc->BufferToFree, &NewStringSize);
 
@@ -491,7 +524,9 @@ JsonParseNullP1 (
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
-    Status = JsonLibParse (NULL, Btc->JsonStringSize, JsonProcessFunction);
+    DEBUG(( DEBUG_INFO, "Processing NullP1\n"));
+
+    Status = JsonLibParse (NULL, Btc->JsonStringSize, JsonProcessFunction, NULL);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
     return UNIT_TEST_PASSED;
@@ -519,8 +554,9 @@ JsonParseNullP2 (
     WorkString = AllocateCopyPool ( Btc->JsonStringSize, Btc->JsonString);
     UT_ASSERT_TRUE (WorkString != NULL);
     Btc->BufferToFree = WorkString;
+    DEBUG(( DEBUG_INFO, "Processing NullP2\n"));
 
-    Status = JsonLibParse (WorkString, 0, JsonProcessFunction);
+    Status = JsonLibParse (WorkString, 0, JsonProcessFunction, NULL);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
     return UNIT_TEST_PASSED;
@@ -544,12 +580,13 @@ JsonParseNullP3 (
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
+    DEBUG(( DEBUG_INFO, "Processing NullP3\n"));
 
     WorkString = AllocateCopyPool ( Btc->JsonStringSize, Btc->JsonString);
     UT_ASSERT_TRUE (WorkString != NULL);
     Btc->BufferToFree = WorkString;
 
-    Status = JsonLibParse (WorkString, Btc->JsonStringSize, NULL);
+    Status = JsonLibParse (WorkString, Btc->JsonStringSize, NULL, NULL);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
     return UNIT_TEST_PASSED;
@@ -573,6 +610,8 @@ JsonEncodeNullP1 (
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
+    DEBUG(( DEBUG_INFO, "Processing EncodeNullP1\n"));
+
     Status = JsonLibEncode (NULL, Btc->ExpectedCount, &Btc->BufferToFree, &NewStringSize);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
@@ -597,6 +636,7 @@ JsonEncodeNullP2 (
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
+    DEBUG(( DEBUG_INFO, "Processing EncodeNullP2\n"));
     Status = JsonLibEncode (Btc->ExpectedResults, 0, &Btc->BufferToFree, &NewStringSize);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
@@ -621,6 +661,7 @@ JsonEncodeNullP3 (
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
+    DEBUG(( DEBUG_INFO, "Processing EncodeNullP3\n"));
     Status = JsonLibEncode (Btc->ExpectedResults, Btc->ExpectedCount, NULL, &NewStringSize);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
@@ -644,6 +685,7 @@ JsonEncodeNullP4 (
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
+    DEBUG(( DEBUG_INFO, "Processing EncodeNullP4\n"));
     Status = JsonLibEncode (Btc->ExpectedResults, Btc->ExpectedCount, &Btc->BufferToFree, NULL);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 

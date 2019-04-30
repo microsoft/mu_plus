@@ -32,7 +32,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #ifndef __DFCI_SETTING_ACCESS_H__
-#define __DFCI_SETTING_ACCESS_H__  
+#define __DFCI_SETTING_ACCESS_H__
 
 /**
 Define the DFCI_SYSTEM_SETTING_ACCESS related structures
@@ -46,13 +46,13 @@ Set a single setting
 @param[in] This:       Access Protocol
 @param[in] Id:         Setting ID to set
 @param[in] AuthToken:  A valid auth token to apply the setting using.  This auth token will be validated 
-                       to check permissions for changing the setting. 
-@param[in] Type:       Type that caller expects this setting to be. 
-@param[in] Value:      A pointer to a datatype defined by the Type for this setting. 
+                       to check permissions for changing the setting.
+@param[in] Type:       Type that caller expects this setting to be.
+@param[in] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[in,out] Flags:  Informational Flags passed to the SET and/or Returned as a result of the set
 
 @retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
-@retval Error - Setting not set. 
+@retval Error - Setting not set.
 
 */
 typedef
@@ -91,7 +91,7 @@ EFI_STATUS
 (EFIAPI *DFCI_SETTING_ACCESS_GET) (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
   IN  DFCI_SETTING_ID_STRING              Id,
-  IN  CONST DFCI_AUTH_TOKEN              *AuthToken  OPTIONAL, 
+  IN  CONST DFCI_AUTH_TOKEN              *AuthToken  OPTIONAL,
   IN  DFCI_SETTING_TYPE                   Type,
   IN  OUT UINTN                          *ValueSize,
   OUT     VOID                           *Value,
@@ -124,7 +124,7 @@ EFI_STATUS
 //
 #pragma pack (push, 1)
 struct _DFCI_SETTING_ACCESS_PROTOCOL {
-  DFCI_SETTING_ACCESS_SET            Set;                 
+  DFCI_SETTING_ACCESS_SET            Set;
   DFCI_SETTING_ACCESS_GET            Get;
   DFCI_SETTING_ACCESS_RESET          Reset;
 };

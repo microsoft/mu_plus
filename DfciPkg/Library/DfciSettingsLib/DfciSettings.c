@@ -38,7 +38,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/DfciSettingsProvider.h>
 
 #include <Library/BaseMemoryLib.h>
-#include <Library/DfciSettingsLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
@@ -53,11 +52,21 @@ VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
 
 typedef enum {
     ID_IS_BAD,
-    ID_IS_URL,
-    ID_IS_HWID,
+    ID_IS_RECOVERY_URL,
+    ID_IS_BOOTSTRAP_URL,
+    ID_IS_CERT,
+    ID_IS_REGISTRATION_ID,
+    ID_IS_TENANT_ID,
     ID_IS_FRIENDLY_NAME,
     ID_IS_TENANT_NAME,
+    ID_IS_ENABLE_NETWORK,
 }  ID_IS;
+
+typedef struct  {
+    DFCI_SETTING_ID_STRING                 Id;                 //Setting Id String
+    DFCI_SETTING_TYPE                      Type;               //Enum setting type
+    DFCI_SETTING_FLAGS                     Flags;              //Flag for this setting.
+} PROVIDER_ENTRY;
 
 // Forward declarations needed
 /**
@@ -104,14 +113,22 @@ ID_IS
 IsIdSupported (DFCI_SETTING_ID_STRING Id)
 {
 
-    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_URL, DFCI_MAX_ID_LEN)) {
-        return ID_IS_URL;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_HWID, DFCI_MAX_ID_LEN)) {
-        return ID_IS_HWID;
+    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_RECOVERY_URL, DFCI_MAX_ID_LEN)) {
+        return ID_IS_RECOVERY_URL;
+    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_BOOTSTRAP_URL, DFCI_MAX_ID_LEN)) {
+        return ID_IS_BOOTSTRAP_URL;
+    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_HTTPS_CERT, DFCI_MAX_ID_LEN)) {
+        return ID_IS_CERT;
+    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_REGISTRATION_ID, DFCI_MAX_ID_LEN)) {
+        return ID_IS_REGISTRATION_ID;
+    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_TENANT_ID, DFCI_MAX_ID_LEN)) {
+        return ID_IS_TENANT_ID;
     } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__MDM_FRIENDLY_NAME, DFCI_MAX_ID_LEN)) {
         return ID_IS_FRIENDLY_NAME;
     } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__MDM_TENANT_NAME, DFCI_MAX_ID_LEN)) {
         return ID_IS_TENANT_NAME;
+    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_NETWORK, DFCI_MAX_ID_LEN)) {
+        return ID_IS_ENABLE_NETWORK;
     } else {
         DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
     }
@@ -174,10 +191,14 @@ InitializeNvVariables (
 {
     EFI_STATUS  Status;
 
-    Status  = ValidateNvVariable (DFCI_SETTINGS_URL_NAME);
-    Status |= ValidateNvVariable (DFCI_SETTINGS_HWID_NAME);
+    Status  = ValidateNvVariable (DFCI_SETTINGS_RECOVERY_URL_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_BOOTSTRAP_URL_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_HTTPS_CERT_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_REGISTRATION_ID_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_TENANT_ID_NAME);
     Status |= ValidateNvVariable (DFCI_SETTINGS_FRIENDLY_NAME);
     Status |= ValidateNvVariable (DFCI_SETTINGS_TENANT_NAME);
+    Status |= ValidateNvVariable (DFCI_SETTINGS_ENABLE_NETWORK);
 
     return Status;
 }
@@ -216,26 +237,48 @@ DfciSettingsSet (
 
     Id = IsIdSupported(This->Id);
     switch (Id) {
-        case ID_IS_URL:
-            VariableName = DFCI_SETTINGS_URL_NAME;
+        case ID_IS_RECOVERY_URL:
+            VariableName = DFCI_SETTINGS_RECOVERY_URL_NAME;
             break;
 
-        case ID_IS_HWID:
-            VariableName = DFCI_SETTINGS_HWID_NAME;
+        case ID_IS_BOOTSTRAP_URL:
+            VariableName = DFCI_SETTINGS_BOOTSTRAP_URL_NAME;
+            break;
+
+        case ID_IS_CERT:
+             VariableName = DFCI_SETTINGS_HTTPS_CERT_NAME;
+             break;
+
+        case ID_IS_REGISTRATION_ID:
+            VariableName = DFCI_SETTINGS_REGISTRATION_ID_NAME;
+            break;
+
+        case ID_IS_TENANT_ID:
+            VariableName = DFCI_SETTINGS_TENANT_ID_NAME;
             break;
 
         case ID_IS_FRIENDLY_NAME:
             VariableName = DFCI_SETTINGS_FRIENDLY_NAME;
-            break
-            ;
+            break;
+
         case ID_IS_TENANT_NAME:
             VariableName = DFCI_SETTINGS_TENANT_NAME;
+            break;
+
+        case ID_IS_ENABLE_NETWORK:
+            VariableName = DFCI_SETTINGS_ENABLE_NETWORK;
+            if (ValueSize > sizeof(UINT8)) {
+                ValueSize = sizeof(UINT8);
+            }
+            if ((ValueSize == 0) || ((*(UINT8 *) Value) > 1)) {
+                DEBUG((DEBUG_ERROR, "%a: Invalid Enable/Disable value %d\n", __FUNCTION__, (*(UINT8 *) Value)));
+                return EFI_INVALID_PARAMETER;
+            }
             break;
 
         default:
             DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
             return EFI_UNSUPPORTED;
-            break;
     }
 
     BufferSize = 0;
@@ -323,12 +366,24 @@ DfciSettingsGet (
 
     Id = IsIdSupported(This->Id);
     switch (Id) {
-        case ID_IS_URL:
-            VariableName = DFCI_SETTINGS_URL_NAME;
+        case ID_IS_RECOVERY_URL:
+            VariableName = DFCI_SETTINGS_RECOVERY_URL_NAME;
             break;
 
-        case ID_IS_HWID:
-            VariableName = DFCI_SETTINGS_HWID_NAME;
+        case ID_IS_BOOTSTRAP_URL:
+            VariableName = DFCI_SETTINGS_BOOTSTRAP_URL_NAME;
+            break;
+
+        case ID_IS_CERT:
+            VariableName = DFCI_SETTINGS_HTTPS_CERT_NAME;
+            break;
+
+        case ID_IS_REGISTRATION_ID:
+            VariableName = DFCI_SETTINGS_REGISTRATION_ID_NAME;
+            break;
+
+        case ID_IS_TENANT_ID:
+            VariableName = DFCI_SETTINGS_TENANT_ID_NAME;
             break;
 
         case ID_IS_FRIENDLY_NAME:
@@ -339,12 +394,15 @@ DfciSettingsGet (
             VariableName = DFCI_SETTINGS_TENANT_NAME;
             break;
 
+        case ID_IS_ENABLE_NETWORK:
+            VariableName = DFCI_SETTINGS_ENABLE_NETWORK;
+            break;
+
         default:
-            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+            DEBUG((DEBUG_ERROR, "%a: Invalid id(%a).\n", __FUNCTION__, This->Id));
             return EFI_UNSUPPORTED;
             break;
     }
-
 
     Status = gRT->GetVariable (VariableName,
                               &gDfciSettingsGuid,
@@ -396,6 +454,13 @@ DfciSettingsGetDefault (
 
     if (This->Type == DFCI_SETTING_TYPE_CERT) {
         *ValueSize = 0;  // Indicate no default
+    } else if (This->Type == DFCI_SETTING_TYPE_ENABLE) {
+        if (*ValueSize < sizeof(UINT8)) {
+            *ValueSize = sizeof(UINT8);
+            return EFI_BUFFER_TOO_SMALL;
+        }
+        *ValueSize = sizeof(UINT8);
+        *((UINT8 *)Value) = 1;  // Indicates Enabled default
     } else {
         if (*ValueSize < sizeof(CHAR8)) {
             *ValueSize = sizeof(CHAR8);
@@ -444,48 +509,71 @@ DfciSettingsSetDefault (
 // Since ProviderSupport Registration copies the provider to its own
 // allocated memory this code can use a single "template" and just change
 // the id, type, and flags field as needed for registration.
+//                    mDfciSettingsProviders
+STATIC PROVIDER_ENTRY mDfciSettingsProviders[] = {
+    {
+        DFCI_SETTING_ID__DFCI_RECOVERY_URL,
+        DFCI_SETTING_TYPE_STRING,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    },
+    {
+        DFCI_SETTING_ID__DFCI_BOOTSTRAP_URL,
+        DFCI_SETTING_TYPE_STRING,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    },
+    {
+        DFCI_SETTING_ID__DFCI_HTTPS_CERT,
+        DFCI_SETTING_TYPE_CERT,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    },
+    {
+        DFCI_SETTING_ID__DFCI_REGISTRATION_ID,
+        DFCI_SETTING_TYPE_STRING,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    },
+    {
+        DFCI_SETTING_ID__DFCI_TENANT_ID,
+        DFCI_SETTING_TYPE_STRING,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    },
+    {
+        DFCI_SETTING_ID__MDM_FRIENDLY_NAME,
+        DFCI_SETTING_TYPE_STRING,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    },
+    {
+        DFCI_SETTING_ID__MDM_TENANT_NAME,
+        DFCI_SETTING_TYPE_STRING,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    },
+    {
+        DFCI_SETTING_ID__ENABLE_NETWORK,
+        DFCI_SETTING_TYPE_ENABLE,
+        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
+    }
+
+};
+
+#define PROVIDER_COUNT (sizeof(mDfciSettingsProviders)/sizeof(PROVIDER_ENTRY))
+
+//
+// Since ProviderSupport Registration copies the provider to its own
+// allocated memory this code can use a single "template" and just change
+// the id, type, and flags field as needed for registration.
 //
 DFCI_SETTING_PROVIDER mDfciSettingsProviderTemplate = {
-  0,
-  0,
-  0,
-  DfciSettingsSet,
-  DfciSettingsGet,
-  DfciSettingsGetDefault,
-  DfciSettingsSetDefault
+    0,
+    0,
+    0,
+    DfciSettingsSet,
+    DfciSettingsGet,
+    DfciSettingsGetDefault,
+    DfciSettingsSetDefault
 };
 
 /////---------------------Interface for Library  ---------------------//////
 
-/**
-Function to Get a Dfci Setting.
-If the setting has not be previously set this function will return the default.  However it will
-not cause the default to be set.
-
-@param Id:          The DFCI_SETTING_ID_ENUM of the Dfci
-@param ValueSize:   IN=Size Of Buffer or 0 to get size, OUT=Size of returned Value
-@param Value:       Ptr to a buffer for the setting to be returned.
-
-
-@retval: Success - Setting was returned in Value
-@retval: EFI_ERROR.  Settings was not returned in Value.
-**/
-EFI_STATUS
-EFIAPI
-GetDfciSetting (
-  IN      DFCI_SETTING_ID_STRING   Id,
-  IN  OUT UINTN                   *ValueSize,
-  OUT     VOID                    *Value
-) {
-    EFI_STATUS      Status;
-
-    mDfciSettingsProviderTemplate.Id = Id;
-    Status = DfciSettingsGet (&mDfciSettingsProviderTemplate, ValueSize, Value);
-    if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        Status = DfciSettingsGetDefault (&mDfciSettingsProviderTemplate, ValueSize, Value);
-    }
-    return Status;
-}
+// NONE
 
 /**
  * Library design is such that a dependency on gDfciSettingsProviderSupportProtocolGuid
@@ -504,6 +592,7 @@ GetDfciSetting (
  *
  * @return VOID EFIAPI
  */
+STATIC
 VOID
 EFIAPI
 DfciSettingsProviderSupportProtocolNotify (
@@ -512,6 +601,7 @@ DfciSettingsProviderSupportProtocolNotify (
   )
 {
     STATIC UINT8                            CallCount = 0;
+    UINTN                                   i;
     DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
     EFI_STATUS                              Status;
 
@@ -524,43 +614,18 @@ DfciSettingsProviderSupportProtocolNotify (
       return;
     }
 
-    //
-    // Register items that are NOT in the PREBOOT_UI
-    //
-    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__DFCI_URL;
-    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_STRING;
-    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider (sp, &mDfciSettingsProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_URL.  Status = %r\n", Status));
-    }
-
-    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__DFCI_HWID;
-    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_STRING;
-    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_HWID.  Status = %r\n", Status));
-    }
-
-    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__MDM_FRIENDLY_NAME;
-    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_STRING;
-    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_MDM_FRIENDLY_NAME.  Status = %r\n", Status));
-    }
-
-    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__MDM_TENANT_NAME;
-    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_STRING;
-    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider(sp, &mDfciSettingsProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_MDM_TENANT_NAME.  Status = %r\n", Status));
+    for (i = 0; i < PROVIDER_COUNT; i++) {
+        mDfciSettingsProviderTemplate.Id = mDfciSettingsProviders[i].Id;
+        mDfciSettingsProviderTemplate.Type = mDfciSettingsProviders[i].Type;
+        mDfciSettingsProviderTemplate.Flags = mDfciSettingsProviders[i].Flags;
+        Status = sp->RegisterProvider (sp, &mDfciSettingsProviderTemplate);
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciSettingsProviderTemplate.Id, Status));
+        }
     }
 
     //We got here, this means all protocols were installed and we didn't exit early.
-    //close the event as we dont' need to be signaled again. (shouldn't happen anyway)
+    //close the event as we don't need to be signaled again. (shouldn't happen anyway)
     gBS->CloseEvent(Event);
 }
 

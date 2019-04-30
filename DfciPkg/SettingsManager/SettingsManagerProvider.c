@@ -34,6 +34,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DFCI_PASSWORD_STORE_SIZE sizeof(DFCI_PASSWORD_STORE)
 
 LIST_ENTRY  mProviderList = INITIALIZE_LIST_HEAD_VARIABLE(mProviderList);  //linked list for the providers
+LIST_ENTRY  mGroupList = INITIALIZE_LIST_HEAD_VARIABLE(mGroupList);        //linked list for the groups
 
 static DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
 
@@ -74,39 +75,13 @@ ProviderTypeAsAscii(DFCI_SETTING_TYPE Type)
   return "UNKNOWN TYPE";
 }
 
-/**
-Helper function to set a setting based on ASCII input
-**/
 EFI_STATUS
-EFIAPI
-SetSettingFromAscii(
-  IN DFCI_SETTING_ID_STRING  Id,
-  IN CONST CHAR8*  Value,
+SetIndividualSettings (
+  IN DFCI_SETTING_PROVIDER *Provider,
+  IN CONST CHAR8           *Value,
   IN CONST DFCI_AUTH_TOKEN *AuthToken,
-  IN OUT DFCI_SETTING_FLAGS *Flags)
-{
-  DFCI_SETTING_PROVIDER *Provider = NULL;  //need provider to get type
-
-  if (Id == NULL)
-  {
-    DEBUG((DEBUG_INFO, "%a - Id is NULL\n", __FUNCTION__));
-    return EFI_UNSUPPORTED;
-  }
-  DEBUG((DEBUG_INFO, "%a - Id is %a\n", __FUNCTION__, Id));
-
-  if (AuthToken == NULL)
-  {
-    DEBUG((DEBUG_INFO, "%a - AuthToken is NULL\n", __FUNCTION__));
-    return EFI_UNSUPPORTED;
-  }
-  DEBUG((DEBUG_INFO, "%a - AuthToken is 0x%X\n", __FUNCTION__, *AuthToken));
-
-  Provider = FindProviderById(Id);
-  if (Provider == NULL)
-  {
-    DEBUG((DEBUG_INFO, "%a - Provider for Id (%a) not found in system\n", __FUNCTION__, Id));
-    return EFI_NOT_FOUND;
-  }
+  IN OUT DFCI_SETTING_FLAGS *Flags
+  ) {
 
   // STRING and CERT types can be set to <NULL>.  The XML parser return NULL when
   // the value is <Value></Value>.  This prints in prettyXml as <Value/>
@@ -128,6 +103,71 @@ SetSettingFromAscii(
   DEBUG((DEBUG_INFO, "%a - Value is %a\n", __FUNCTION__, Value));
 
   return SetProviderValueFromAscii(Provider, Value, AuthToken, Flags);
+}
+
+/**
+Helper function to set a setting based on ASCII input
+**/
+EFI_STATUS
+EFIAPI
+SetSettingFromAscii(
+  IN DFCI_SETTING_ID_STRING  Id,
+  IN CONST CHAR8*  Value,
+  IN CONST DFCI_AUTH_TOKEN *AuthToken,
+  IN OUT DFCI_SETTING_FLAGS *Flags)
+{
+  DFCI_SETTING_PROVIDER *Provider = NULL;  //need provider to get type
+  DFCI_GROUP_LIST_ENTRY *Group;
+  LIST_ENTRY *Link;
+  DFCI_MEMBER_LIST_ENTRY *Member;
+  EFI_STATUS ReturnStatus;
+  EFI_STATUS Status;
+
+  if (Id == NULL)
+  {
+    DEBUG((DEBUG_INFO, "%a - Id is NULL\n", __FUNCTION__));
+    return EFI_UNSUPPORTED;
+  }
+  DEBUG((DEBUG_INFO, "%a - Id is %a\n", __FUNCTION__, Id));
+
+  if (AuthToken == NULL)
+  {
+    DEBUG((DEBUG_INFO, "%a - AuthToken is NULL\n", __FUNCTION__));
+    return EFI_UNSUPPORTED;
+  }
+  DEBUG((DEBUG_INFO, "%a - AuthToken is 0x%X\n", __FUNCTION__, *AuthToken));
+
+  Provider = FindProviderById(Id);
+  if (Provider != NULL)
+  {
+    // Set the setting (may be first member of a group)
+    return SetIndividualSettings(Provider, Value, AuthToken, Flags);
+  }
+  else
+  {
+    Group = FindGroup (Id);
+    if (NULL == Group)
+    {
+      DEBUG((DEBUG_INFO, "%a - Provider for Id (%a) not found in system\n", __FUNCTION__, Id));
+      return EFI_NOT_FOUND;
+    }
+
+    ReturnStatus = EFI_SUCCESS;
+    for (Link = GetFirstNode (&Group->MemberHead);
+         !IsNull (&Group->MemberHead, Link);
+         Link = GetNextNode (&Group->MemberHead, Link)
+       ) {
+      Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
+      Provider = &Member->PList->Provider;
+      DEBUG((DEBUG_INFO, "Processing Group Setting member %a\n", Provider->Id));
+      Status = SetIndividualSettings(Provider, Value, AuthToken, Flags);
+      if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a - Error %r settings %a\n", __FUNCTION__, Status, Provider->Id));
+        ReturnStatus = Status;
+      }
+    }
+    return ReturnStatus;
+  }
 }
 
 /**
@@ -304,7 +344,7 @@ SetProviderValueFromAscii(
 
       SetValue = ByteArray;
       DEBUG((DEBUG_INFO, "Setting BINARY data\n"));
-      DEBUG_BUFFER(DEBUG_ERROR, SetValue, ValueSize, DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII);
+      DEBUG_BUFFER(DEBUG_VERBOSE, SetValue, ValueSize, DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII);
       break;
 
   default:
@@ -327,7 +367,7 @@ SetProviderValueFromAscii(
 #define USB_PORT_STATE_STRING_SIZE (20)
 
 /**
-Helper function to Print out the Value as Ascii text. 
+Helper function to Print out the Value as Ascii text.
 NOTE: -- This must match the XML format
 
 Caller must free the return string if not null;
@@ -335,7 +375,7 @@ Caller must free the return string if not null;
 @param Provider : Pointer to provider instance the value should be printed for
 @param Current  : TRUE if provider current value.  FALSE for provider default value.
 
-@ret  String allocated with AllocatePool containing Ascii printable value.  
+@ret  String allocated with AllocatePool containing Ascii printable value.
 **/
 CHAR8*
 ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
@@ -360,7 +400,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       {
         Status = Provider->GetSettingValue(Provider, &ValueSize, &v);
       }
-      else 
+      else
       {
         Status = Provider->GetDefaultValue(Provider, &ValueSize, &v);
       }
@@ -457,7 +497,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       {
         AsciiStrCpyS(Value, SECURE_BOOT_ENUM_STRING_SIZE, "MsPlus3rdParty");
       }
-      else if (b == 3) //This is a special case.  Only supported as output.  
+      else if (b == 3) //This is a special case.  Only supported as output.
       {
         AsciiStrCpyS(Value, SECURE_BOOT_ENUM_STRING_SIZE, "Custom");
       }
@@ -752,7 +792,7 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
         FreePool (Buffer);
         break;
 
-    default: 
+    default:
       DEBUG((DEBUG_ERROR, "Failed - ProviderValueAsAscii for ID %a Unsupported Type = 0x%X\n", Provider->Id, Provider->Type));
       break;
   }
@@ -765,12 +805,24 @@ Helper function to print out one Setting Provider
 */
 VOID
 DebugPrintProviderEntry(DFCI_SETTING_PROVIDER *Provider)
-{ 
+{
+  DFCI_SETTING_PROVIDER_LIST_ENTRY *PList;
   CHAR8 *Value = ProviderValueAsAscii(Provider, TRUE);
   CHAR8 *DefaultValue = ProviderValueAsAscii(Provider, FALSE);
 
-  DEBUG((DEBUG_INFO, "Printing Provider @ 0x%X\n", (UINTN)Provider));
   DEBUG((DEBUG_INFO, "Id:            %a\n", Provider->Id));
+  DEBUG((DEBUG_INFO, "Printing Provider @ 0x%X\n", (UINTN)Provider));
+
+  PList = PROV_LIST_ENTRY_FROM_PROVIDER (Provider);
+  if (NULL != PList->Group)
+  {
+    DEBUG((DEBUG_INFO, "GroupId:       %a\n", PList->Group->GroupId));
+  }
+  else
+  {
+    DEBUG((DEBUG_INFO, "GroupId:       --not in a group--\n"));
+  }
+
   DEBUG((DEBUG_INFO, "Type:          %a\n", ProviderTypeAsAscii(Provider->Type)));
   DEBUG((DEBUG_INFO, "Flags:         0x%X\n", Provider->Flags));
   DEBUG((DEBUG_INFO, "Current Value: %a", Value));   // Split \n to separate DEBUG in case value is too long
@@ -800,14 +852,51 @@ DebugPrintProviderList()
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
   DEBUG((DEBUG_INFO, "START PRINTING ALL REGISTERED SETTING PROVIDERS\n"));
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
-  
+
   for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) {
     //Convert Link Node into object stored
-    Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
+    Prov = PROV_LIST_ENTRY_FROM_LINK(Link);
     DebugPrintProviderEntry(&Prov->Provider);
   }
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
   DEBUG((DEBUG_INFO, " END PRINTING ALL REGISTERED SETTING PROVIDERS\n"));
+  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
+}
+
+/*
+Helper function to print out all Groups currently registered
+*/
+VOID
+DebugPrintGroups()
+{
+  LIST_ENTRY* Link = NULL;
+  LIST_ENTRY* Link2 = NULL;
+  DFCI_GROUP_LIST_ENTRY *Group;
+  DFCI_MEMBER_LIST_ENTRY *Member;
+
+  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
+  DEBUG((DEBUG_INFO, "START PRINTING ALL REGISTERED GROUPS\n"));
+  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
+
+  for (Link = GetFirstNode (&mGroupList)
+       ; !IsNull (&mGroupList, Link)
+       ; Link = GetNextNode (&mGroupList, Link)
+       )
+  {
+    Group = GROUP_LIST_ENTRY_FROM_GROUP_LINK(Link);
+    DEBUG((DEBUG_INFO, "Group %a members:\n", Group->GroupId));
+    for (Link2 = GetFirstNode (&Group->MemberHead);
+         !IsNull (&Group->MemberHead, Link2);
+         Link2 = GetNextNode (&Group->MemberHead, Link2)
+       )
+    {
+      Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link2);
+      DEBUG((DEBUG_INFO, "      %a\n", Member->PList->Provider.Id));
+    }
+  }
+
+  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
+  DEBUG((DEBUG_INFO, " END PRINTING ALL REGISTERED GROUPS\n"));
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
 }
 
@@ -836,7 +925,7 @@ FindProviderById(DFCI_SETTING_ID_STRING Id)
 
   for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) {
     //Convert Link Node into object stored
-    Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
+    Prov = PROV_LIST_ENTRY_FROM_LINK(Link);
 
     if (0 == AsciiStrnCmp (Prov->Provider.Id, RealId, DFCI_MAX_ID_LEN))
     {
@@ -848,7 +937,30 @@ FindProviderById(DFCI_SETTING_ID_STRING Id)
   return NULL;
 }
 
+/*
+Find a group.
+*/
+DFCI_GROUP_LIST_ENTRY *
+FindGroup (DFCI_SETTING_ID_STRING Id) {
+  LIST_ENTRY *Link;
+  DFCI_GROUP_LIST_ENTRY *Group = NULL;
 
+  for (Link = GetFirstNode (&mGroupList)
+       ; !IsNull (&mGroupList, Link)
+       ; Link = GetNextNode (&mGroupList, Link)
+       )
+  {
+    Group = GROUP_LIST_ENTRY_FROM_GROUP_LINK(Link);
+    if (0 == AsciiStrnCmp (Group->GroupId, Id, DFCI_MAX_ID_LEN))
+    {
+      DEBUG((DEBUG_INFO, "FindGroup - Found (%a)\n", Id));
+      return Group;
+    }
+  }
+
+  DEBUG((DEBUG_INFO, "FindGroup - Failed to find (%a)\n", Id));
+  return NULL;
+}
 
 /**
 Registers a Setting Provider with the System Settings module
@@ -868,7 +980,7 @@ IN DFCI_SETTING_PROVIDER                         *Provider
 )
 {
   DFCI_SETTING_PROVIDER_LIST_ENTRY *Entry = NULL;
-  DFCI_SETTING_PROVIDER *ExistingProvider = NULL;
+  DFCI_SETTING_PROVIDER            *ExistingProvider;
 
   if (Provider == NULL)
   {
@@ -884,7 +996,7 @@ IN DFCI_SETTING_PROVIDER                         *Provider
 
   DEBUG((DEBUG_INFO, "Registering Provider with ID %a\n", Provider->Id));
 
-  //check to make sure it doesn't already exist. 
+  //check to make sure it doesn't already exist.
   ExistingProvider = FindProviderById(Provider->Id);
   if (ExistingProvider != NULL)
   {
@@ -898,7 +1010,7 @@ IN DFCI_SETTING_PROVIDER                         *Provider
   ASSERT(Provider->GetDefaultValue != NULL);
   ASSERT(Provider->GetSettingValue != NULL);
   ASSERT(Provider->SetSettingValue != NULL);
-  
+
 
   //Allocate memory for provider
   Entry = AllocateZeroPool(sizeof(DFCI_SETTING_PROVIDER_LIST_ENTRY));
@@ -915,6 +1027,8 @@ IN DFCI_SETTING_PROVIDER                         *Provider
 
   //insert into list
   InsertTailList(&mProviderList, &Entry->Link);
+
+  RegisterSettingToGroup (Entry);
 
   return EFI_SUCCESS;
 }
@@ -934,10 +1048,10 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
   DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = NULL;
 
 
-  for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) 
+  for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink)
   {
     //Convert Link Node into object stored
-    Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
+    Prov = PROV_LIST_ENTRY_FROM_LINK(Link);
     if (Prov->Provider.Flags & FilterFlag)
     {
       DEBUG((DEBUG_INFO, "%a - Setting Provider %a to defaults as part of a Reset request. \n", __FUNCTION__, Prov->Provider.Id));
@@ -949,5 +1063,5 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
     }
   }
   return EFI_SUCCESS;
-} 
+}
 

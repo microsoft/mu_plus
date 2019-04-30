@@ -68,7 +68,8 @@ extern EFI_GUID gDfciAuthProvisionVarNamespace;
 typedef struct {
   DFCI_PACKET_HEADER Header;    // (22) Signature =  'M', 'S', 'P', 'A'
                                 //      Header Version = 2
-  UINT16 Rsvd;                  //  (2) Alignment
+  UINT8  Service;               //  (1) Service class
+  UINT8  Rsvd;                  //  (1) Alignment
   UINT32 Version;               //  (4) Current packet version
   UINT32 LSV;                   //  (4) New Lowest Supported Version value
                                 // (32)

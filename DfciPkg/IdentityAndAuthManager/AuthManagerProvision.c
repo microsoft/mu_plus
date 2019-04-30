@@ -151,7 +151,9 @@ SetIdentityResponse(
   IN DFCI_INTERNAL_PACKET *Data
   )
 {
-  DFCI_SIGNER_PROVISION_RESULT_VAR Var;
+  EFI_STATUS                        Status;
+  DFCI_SIGNER_PROVISION_RESULT_VAR  Var;
+
   if (Data == NULL)
   {
     return EFI_INVALID_PARAMETER;
@@ -178,7 +180,12 @@ SetIdentityResponse(
   Var.StatusCode = (UINT64)(Data->StatusCode);
   Var.SessionId = Data->SessionId;
 
-  return gRT->SetVariable((CHAR16 *) Data->ResultName, &gDfciAuthProvisionVarNamespace, DFCI_IDENTITY_VAR_ATTRIBUTES , sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR), &Var);
+  Status = gRT->SetVariable((CHAR16 *) Data->ResultName,
+                            &gDfciAuthProvisionVarNamespace,
+                             DFCI_IDENTITY_VAR_ATTRIBUTES,
+                             sizeof(DFCI_SIGNER_PROVISION_RESULT_VAR),
+                             &Var);
+  return Status;
 }
 
 /**
@@ -216,10 +223,9 @@ ValidateAndAuthenticatePendingProvisionData (
     return Data->StatusCode;
   }
 
-  //Lets check that the auth packet is either 1. ZTD Identity, Owner Identity or that an Owner already exists.
+  //Lets check that the auth packet is either Owner Identity or that an Owner already exists.
   //Can't provision User Key without Owner key already provisioned.
   if ((*Data->VarIdentity != DFCI_SIGNER_PROVISION_IDENTITY_OWNER) &&
-      (*Data->VarIdentity != DFCI_SIGNER_PROVISION_IDENTITY_ZTD) &&
       (!(Provisioned() & DFCI_IDENTITY_SIGNER_OWNER)))
   {
     DEBUG((DEBUG_ERROR, "[AM] - Can't provision User Auth Packet when Owner auth isn't already provisioned.\n"));
@@ -230,16 +236,16 @@ ValidateAndAuthenticatePendingProvisionData (
 
   // Lets check that if its an unenroll packet, that identity must be enrolled already.
   if ((Data->PayloadSize == 0) && ((Data->DfciIdentity & Provisioned()) == 0))
-//  if ((Data->PayloadSize == 0) && (*Data->VarIdentity != DFCI_SIGNER_PROVISION_IDENTITY_ZTD) && (!(Provisioned() & DFCI_IDENTITY_SIGNER_OWNER)))
   {
-    DEBUG((DEBUG_ERROR, "[AM] - %a - Can't un-enroll a device that isn't enrolled in DFCI (no owner).\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "[AM] %a - Can't un-enroll a device that isn't enrolled in DFCI (no owner).\n", __FUNCTION__));
     Data->StatusCode = EFI_UNSUPPORTED;
     Data->State = DFCI_PACKET_STATE_DATA_NO_OWNER;
     return Data->StatusCode;
   }
 
   //Lets check the test signature
-  // - this is to confirm new Cert Data (Trusted Cert) isn't in bad format (user/tool error) which would cause future validation errors and possible "brick"
+  // - this is to confirm new Cert Data (Trusted Cert) isn't in bad format (user/tool error) which would
+  //   cause future validation errors and possible "brick"
   // - This is not present when this is a unenroll request (no New Trusted Cert)
   //
   if (Data->PayloadSize > 0)
@@ -302,7 +308,7 @@ ValidateAndAuthenticatePendingProvisionData (
 
   DEBUG((DEBUG_INFO, "%a - Permission for 0x%2.2x, %a, is 0x%X\n", __FUNCTION__, Data->DfciIdentity, DfciIdentityToSettingId(Data->DfciIdentity), PermMask));
 
-  Signature = (WIN_CERTIFICATE*) PKT_FIELD_FROM_OFFSET(Data->Packet, SignedDataLength); 
+  Signature = (WIN_CERTIFICATE*) PKT_FIELD_FROM_OFFSET(Data->Packet, SignedDataLength);
 
   //Check to make sure Signature is contained within Var Data
   if (Data->PacketSize != (Signature->dwLength + SignedDataLength))
@@ -438,7 +444,6 @@ ApplyProvisionData(
     return Status;
   }
 
-  
   Index = DfciIdentityToCertIndex(Data->DfciIdentity);
   if (Index == CERT_INVALID_INDEX)
   {
@@ -827,7 +832,7 @@ LKG_Handler (
 }
 
 /**
-Clear all DFCI from the System.  
+Clear all DFCI from the System.
 
 This requires an Auth token that has permission to change the owner key and/or permission for recovery.
 

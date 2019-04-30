@@ -60,7 +60,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/DfciAuthentication.h>
 
 
-extern EFI_HANDLE                 mImageHandle;
 extern DFCI_APPLY_PACKET_PROTOCOL mApplyIdentityProtocol;
 //
 // Internal structure to be used to hold cert details

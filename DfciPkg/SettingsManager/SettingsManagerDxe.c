@@ -109,6 +109,126 @@ SettingsLKG_Handler (
 }
 
 /**
+ * Register a Group.
+ *
+ * @param GroupId     - Group Id to register
+ *
+ * @return EFI_ALREADY_STARTD  -- GroupId is already in a group
+ *                                or Group name exists as a setting
+ * @return EFI_SUCCESS         -- Id Registered to group.
+ *                                If this is the first registered setting
+ *                                the group is created
+ */
+EFI_STATUS
+RegisterGroup (
+  IN DFCI_SETTING_ID_STRING GroupId
+  ) {
+  DFCI_GROUP_LIST_ENTRY *Group;
+  EFI_STATUS             Status;
+
+  Group = FindGroup (GroupId);
+  if (NULL == Group)
+  {       // Create New Group entry.
+    Group = (DFCI_GROUP_LIST_ENTRY *) AllocatePool (sizeof(DFCI_GROUP_LIST_ENTRY));
+    if (NULL == Group)
+    {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    Group->Signature = DFCI_GROUP_LIST_ENTRY_SIGNATURE;
+    Group->GroupId = GroupId;
+    InsertTailList(&mGroupList, &Group->GroupLink);
+    InitializeListHead (&Group->MemberHead);
+    Status = EFI_SUCCESS;
+  }
+  else
+  {
+    Status = EFI_ALREADY_STARTED;
+  }
+
+  return Status;
+}
+
+/**
+ * Register a setting as a member of a group.
+ *
+ * 1. Settings can only be member of one group
+ * 2. A GroupId cannot be a Setting Id.
+ *
+ * @param GroupId     - Group
+ * @param Id          - Setting to add to group
+ *
+ * @return EFI_NOT_FOUND       -- Id not available on this system
+ * @return EFI_ALREADY_STARTD  -- Id is already in a group
+ *                                or Group name exists as a setting
+ * @return EFI_SUCCESS         -- Id Registered to group.
+ *                                If this is the first registered setting
+ *                                the group is created
+ */
+EFI_STATUS
+RegisterSettingToGroup (
+  IN DFCI_SETTING_PROVIDER_LIST_ENTRY *PList
+  )
+{
+  DFCI_GROUP_ENTRY *GroupEntry;
+  DFCI_GROUP_LIST_ENTRY *Group;
+  DFCI_MEMBER_LIST_ENTRY *Member;
+  DFCI_SETTING_ID_STRING *Setting;
+  DFCI_SETTING_ID_STRING  SettingId;
+
+
+  SettingId = PList->Provider.Id;
+  Group = FindGroup (SettingId);
+  if (NULL != Group)
+  {
+    ASSERT(NULL == Group);
+    return EFI_UNSUPPORTED;
+  }
+
+  if (NULL != PList->Group)
+  {
+    DEBUG((DEBUG_ERROR, "Provider %a is already a member of %a\n", SettingId, PList->Group->GroupId));
+    return EFI_ALREADY_STARTED;
+  }
+
+  //
+  // Check if the setting is to be related to a group
+  //
+  GroupEntry = DfciGetGroupEntries ();
+  if (NULL != GroupEntry)
+  {
+    while (NULL != GroupEntry->GroupId) {
+      Setting = GroupEntry->GroupMembers;
+      while (*Setting != NULL)
+      {
+        if (0 == AsciiStrnCmp (PList->Provider.Id, *Setting, DFCI_MAX_ID_LEN))
+        {
+          Group = FindGroup (GroupEntry->GroupId);
+          Member = (DFCI_MEMBER_LIST_ENTRY *) AllocatePool (sizeof(DFCI_MEMBER_LIST_ENTRY));
+          if ((NULL == Member) || (NULL == Group))
+          {
+            ASSERT((NULL != Member) && (NULL != Group));
+            return EFI_OUT_OF_RESOURCES;
+          }
+
+          Member->Signature = DFCI_MEMBER_ENTRY_SIGNATURE;
+          Member->PList = PList;
+          InsertTailList (&Group->MemberHead, &Member->MemberLink);
+          PList->Group = Group;
+          DEBUG((DEBUG_INFO, "Setting %a added to group %a\n", PList->Provider.Id, Group->GroupId));
+          return EFI_SUCCESS;
+        }
+
+        Setting++;
+      }
+
+      GroupEntry++;
+    }
+  }
+
+  return EFI_NOT_FOUND;
+}
+
+/**
 Notify function for running and acting on the requests (input, debug, etc)
 
 @param[in]  Event   The Event that is being processed.
@@ -119,18 +239,18 @@ VOID
 EFIAPI
 SettingManagerOnStartOfBds(
   IN EFI_EVENT        Event,
-  IN VOID             *Context
+  IN VOID            *Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS              Status;
+
+  gBS->CloseEvent(Event);
 
   DEBUG_CODE_BEGIN();
   //print registered  on debug builds
   DebugPrintProviderList();
+  DebugPrintGroups();
   DEBUG_CODE_END();
-
-  gBS->CloseEvent(Event);
-
 
   //install setting access
   Status = gBS->InstallMultipleProtocolInterfaces(
@@ -164,16 +284,19 @@ PublishDeviceIdentifier (
   //
   Status = DfciIdSupportGetManufacturer (&mInitTable[0].Value, NULL);
   if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "%a - Failed to obtain Manufacturer\n", __FUNCTION__));
       goto NO_XML;
   }
 
   Status = DfciIdSupportGetProductName (&mInitTable[1].Value, NULL);
   if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "%a - Failed to obtain Product Name\n", __FUNCTION__));
       goto NO_XML;
   }
 
   Status = DfciIdSupportGetSerialNumber (&mInitTable[2].Value, NULL);
   if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "%a - Failed to obtain Serial Number\n", __FUNCTION__));
       goto NO_XML;
   }
 
@@ -275,12 +398,12 @@ SettingsManagerOnReadyToBoot (
     DEBUG((DEBUG_ERROR, "%a - Populate Current Settings If Needed returned an error. %r\n", __FUNCTION__, Status));
   }
 
-  // If DFCI is not enabled in the build, do not publish the Device Identifier, and insure any previous
+  // If DFCI is not enabled in the build, do not publish the Device Identifier, and ensure any previous
   // identifier has been deleted.
   if (FeaturePcdGet(PcdDfciEnabled)) {
     PublishDeviceIdentifier ();
   } else {
-    // Insure variable is not present
+    // Ensure variable is not present
     DEBUG((DEBUG_INFO, "%a - Dfci is disabled.  Not publishing the Device Identifier\n", __FUNCTION__));
     Status = gRT->SetVariable(DFCI_DEVICE_ID_VAR_NAME, &gDfciDeviceIdVarNamespace, DFCI_DEVICE_ID_VAR_ATTRIBUTES, 0, NULL);
     if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND)) {
@@ -373,6 +496,29 @@ Init (
 {
   EFI_EVENT  InitEvent;
   EFI_STATUS Status;
+  DFCI_GROUP_ENTRY *GroupEntry;
+
+  //
+  // Establish the groups to setting relationship
+  //
+  GroupEntry = DfciGetGroupEntries ();
+  if (NULL != GroupEntry)
+  {
+    while (NULL != GroupEntry->GroupId) {
+      Status = RegisterGroup (GroupEntry->GroupId);
+
+      if (EFI_ERROR(Status))
+      {
+        DEBUG((DEBUG_ERROR,"Error registering group %a. Code=%r\n", GroupEntry->GroupId, Status));
+      }
+      else
+      {
+        DEBUG((DEBUG_INFO,"Group %a registered.\n", GroupEntry->GroupId));
+      }
+
+      GroupEntry++;
+    }
+  }
 
   //Install Setting Provider Support Protocol and Permission Protocol
   Status = gBS->InstallMultipleProtocolInterfaces(

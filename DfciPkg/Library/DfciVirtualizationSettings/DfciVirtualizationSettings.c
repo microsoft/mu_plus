@@ -39,7 +39,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/DfciSettingsProvider.h>
 
 #include <Library/BaseMemoryLib.h>
-#include <Library/DfciSettingsLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
@@ -74,7 +73,7 @@ typedef enum {
 STATIC
 EFI_STATUS
 EFIAPI
-DfciSettingsGetDefault (
+DfciVirtSettingsGetDefault (
     IN  CONST DFCI_SETTING_PROVIDER     *This,
     IN  OUT   UINTN                     *ValueSize,
     OUT       VOID                      *Value
@@ -92,7 +91,7 @@ DfciSettingsGetDefault (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciSettingsGet (
+DfciVirtSettingsGet (
   IN  CONST DFCI_SETTING_PROVIDER  *This,
   IN  OUT   UINTN                  *ValueSize,
   OUT       VOID                   *Value
@@ -133,7 +132,7 @@ IsIdSupported (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciSettingsSet (
+DfciVirtSettingsSet (
     IN  CONST DFCI_SETTING_PROVIDER    *This,
     IN        UINTN                     ValueSize,
     IN  CONST VOID                     *Value,
@@ -155,7 +154,7 @@ DfciSettingsSet (
     switch (Id) {
         case ID_IS_VIRTUALIZATION:
             if (NewValue != HARD_CODED_VIRTUALIZAION) {
-                Status = EFI_ACCESS_DENIED;
+                Status = EFI_UNSUPPORTED;
             } else {
                 *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
                 Status = EFI_SUCCESS;
@@ -183,7 +182,7 @@ DfciSettingsSet (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciSettingsGet (
+DfciVirtSettingsGet (
     IN  CONST DFCI_SETTING_PROVIDER    *This,
     IN  OUT   UINTN                    *ValueSize,
     OUT       VOID                     *Value
@@ -237,7 +236,7 @@ DfciSettingsGet (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciSettingsGetDefault (
+DfciVirtSettingsGetDefault (
     IN  CONST DFCI_SETTING_PROVIDER     *This,
     IN  OUT   UINTN                     *ValueSize,
     OUT       VOID                      *Value
@@ -278,7 +277,7 @@ DfciSettingsGetDefault (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciSettingsSetDefault (
+DfciVirtSettingsSetDefault (
     IN  CONST DFCI_SETTING_PROVIDER     *This
   ) {
 
@@ -292,12 +291,12 @@ DfciSettingsSetDefault (
     }
 
     ValueSize = sizeof(ValueSize);
-    Status = DfciSettingsGetDefault (This, &ValueSize, &Value);
+    Status = DfciVirtSettingsGetDefault (This, &ValueSize, &Value);
     if (EFI_ERROR(Status)) {
         return Status;
     }
 
-    return DfciSettingsSet (This, ValueSize, &Value, &Flags);
+    return DfciVirtSettingsSet (This, ValueSize, &Value, &Flags);
 }
 
 //
@@ -305,14 +304,14 @@ DfciSettingsSetDefault (
 // allocated memory this code can use a single "template" and just change
 // the id, type, and flags field as needed for registration.
 //
-DFCI_SETTING_PROVIDER mDfciSettingsProviderTemplate = {
+STATIC DFCI_SETTING_PROVIDER mDfciCpuAndIoProviderTemplate = {
   0,
   0,
   0,
-  DfciSettingsSet,
-  DfciSettingsGet,
-  DfciSettingsGetDefault,
-  DfciSettingsSetDefault
+  DfciVirtSettingsSet,
+  DfciVirtSettingsGet,
+  DfciVirtSettingsGetDefault,
+  DfciVirtSettingsSetDefault
 };
 
 /////---------------------Interface for Library  ---------------------//////
@@ -340,10 +339,10 @@ GetVirtualizationSetting (
 
     EFI_STATUS      Status;
 
-    mDfciSettingsProviderTemplate.Id = Id;
-    Status = DfciSettingsGet (&mDfciSettingsProviderTemplate, ValueSize, Value);
+    mDfciCpuAndIoProviderTemplate.Id = Id;
+    Status = DfciVirtSettingsGet (&mDfciCpuAndIoProviderTemplate, ValueSize, Value);
     if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        Status = DfciSettingsGetDefault (&mDfciSettingsProviderTemplate, ValueSize, Value);
+        Status = DfciVirtSettingsGetDefault (&mDfciCpuAndIoProviderTemplate, ValueSize, Value);
     }
     return Status;
 }
@@ -389,10 +388,10 @@ DfciSettingsProviderSupportProtocolNotify (
     //
     // Register items that are NOT in the PREBOOT_UI
     //
-    mDfciSettingsProviderTemplate.Id = DFCI_SETTING_ID__ALL_CPU_IO_VIRT;
-    mDfciSettingsProviderTemplate.Type = DFCI_SETTING_TYPE_ENABLE;
-    mDfciSettingsProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider (sp, &mDfciSettingsProviderTemplate);
+    mDfciCpuAndIoProviderTemplate.Id = DFCI_SETTING_ID__ALL_CPU_IO_VIRT;
+    mDfciCpuAndIoProviderTemplate.Type = DFCI_SETTING_TYPE_ENABLE;
+    mDfciCpuAndIoProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
+    Status = sp->RegisterProvider (sp, &mDfciCpuAndIoProviderTemplate);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Failed to Register DFCI_URL.  Status = %r\n", Status));
     }

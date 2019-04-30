@@ -43,7 +43,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-#include "DfciMenu.h"
+//#include "DfciMenu.h"
 #include "DfciUsb.h"
 
 /**
@@ -113,7 +113,7 @@ FindUsbDriveWithDfciUpdate (
     //
     for (Index = 0; (Index < NumHandles); Index += 1) {
         //
-        // Insure this device is on a USB controller
+        // Ensure this device is on a USB controller
         //
         UsbDevicePath = DevicePathFromHandle(HandleBuffer[Index]);
         if (UsbDevicePath == NULL) {
@@ -165,7 +165,7 @@ FindUsbDriveWithDfciUpdate (
         }
 
         //
-        // Insure the PktName file is present
+        // Ensure the PktName file is present
         //
         Status = VolHandle->Open (VolHandle, &FileHandle, PktFileName, EFI_FILE_MODE_READ, 0);
         if (EFI_ERROR(Status)) {

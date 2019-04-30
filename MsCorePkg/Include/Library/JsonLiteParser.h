@@ -55,6 +55,7 @@ typedef struct {
  *  Function to process a Json Element
  *
  * @param[in]  Json Request Element   Element Being Processed
+ * @param[in]  Context for the Process Function
  *
  * @retval EFI_SUCCESS -       Packet processed normally
  * @retval Error -             Error processing packet
@@ -62,7 +63,8 @@ typedef struct {
 typedef
 EFI_STATUS
 (EFIAPI *JSON_PROCESS_ELEMENT) (
-    IN  JSON_REQUEST_ELEMENT *JsonElement
+    IN  JSON_REQUEST_ELEMENT *JsonElement,
+    IN  VOID                 *Context
 );
 
 /**
@@ -91,23 +93,28 @@ JsonLibEncode (
 /**
  * ParseJson
  *
- * @param[in]      JsonString       - Json String
+ * @param[in]      JsonString
  * @param[in]      JsonStringLength   Number of characters in the string
- * @param[in]      ApplyFunction    - Function to process a Json Element
+ * @param[in]      Function to process an element
+ * @param[in]      Context for the process function
  *
  * Don't confuse this routine for a real Json Parser.  This code is for the
- * expected Dfci request packets.
+ * expected Dfci request blobs, and consist of a maximum of 6 name value pairs.
  *
- * JsonString will be modified by the parse action.  The trailing quotes will
- * be converted to NULL characters.
+ * JsonString will be modified by the parse action.
+ * JsonElementArray will be initialized to all zeros before processing
  *
+ * returns    EFI_STATUS    EFI_SUCCESS   - Processed at least one JSON element
+ *                          EFI_NOT_FOUND - All json elements had null values.
+ *                          other         - internal errors
  **/
 EFI_STATUS
 EFIAPI
 JsonLibParse (
     IN  CHAR8                  *JsonString,
     IN  UINTN                   JsonStringSize,
-    IN  JSON_PROCESS_ELEMENT     ApplyFunction
+    IN  JSON_PROCESS_ELEMENT    ApplyFunction,
+    IN  VOID                   *Context
 );
 
 #endif // __JSON_LITE_H__

@@ -57,6 +57,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         a++;                \
     }
 
+#define JSON_NULL "null"
+
 /**
  * EncodeJson
  *
@@ -80,6 +82,7 @@ JsonLibEncode (
     OUT UINTN                *JsonStringSize) {
 
     UINTN      i;
+    UINTN      ValueSize;
     CHAR8     *RequestBuffer;
     UINTN      RequestSize;
     EFI_STATUS Status;
@@ -98,7 +101,12 @@ JsonLibEncode (
     Status = EFI_SUCCESS;
 
     for (i = 0; i < RequestCount; i++) {
-        RequestSize += Request[i].FieldSize + Request[i].ValueSize - 2; // -2 as both sizes count a NULL
+        if (NULL != Request[i].Value) {
+            ValueSize = Request[i].ValueSize;
+        } else {
+            ValueSize = sizeof(JSON_NULL);
+        }
+        RequestSize += Request[i].FieldSize + ValueSize - 2; // -2 as both sizes count a NULL
     }
 
     RequestBuffer = AllocatePool (RequestSize);
@@ -121,7 +129,7 @@ JsonLibEncode (
             Status |= AsciiStrCatS (RequestBuffer, RequestSize, Request[i].Value);
             Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
         } else {
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"null\"");
+            Status |= AsciiStrCatS (RequestBuffer, RequestSize, JSON_NULL);
         }
 
         if (EFI_ERROR(Status)) {
@@ -136,7 +144,7 @@ JsonLibEncode (
         FreePool (RequestBuffer);
     } else {
         DEBUG((DEBUG_INFO,"Request Buffer:\n"));
-        DEBUG_BUFFER(DEBUG_VERBOSE, RequestBuffer, RequestSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
+        DEBUG_BUFFER(DEBUG_INFO, RequestBuffer, RequestSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
         *JsonString = RequestBuffer;
         *JsonStringSize = RequestSize;
     }
@@ -149,9 +157,8 @@ JsonLibEncode (
  *
  * @param[in]      JsonString
  * @param[in]      JsonStringLength   Number of characters in the string
- * @param[out]     JsonElementArray
- * @param[in,out]  [in] Number of entries available in JsonElementArray
- *                 [out] Number of entries returned
+ * @param[in]      Function to process an element
+ * @param[in]      Context for the process function
  *
  * Don't confuse this routine for a real Json Parser.  This code is for the
  * expected Dfci request blobs, and consist of a maximum of 6 name value pairs.
@@ -159,26 +166,34 @@ JsonLibEncode (
  * JsonString will be modified by the parse action.
  * JsonElementArray will be initialized to all zeros before processing
  *
+ * returns    EFI_STATUS    EFI_SUCCESS   - Processed at least one JSON element
+ *                          EFI_NOT_FOUND - All json elements had null values.
+ *                          other         - internal errors
  **/
 EFI_STATUS
 EFIAPI
 JsonLibParse (
-    IN  CHAR8              *JsonString,
-    IN  UINTN               JsonStringSize,
-    IN  JSON_PROCESS_ELEMENT ApplyFunction
+    IN  CHAR8               *JsonString,
+    IN  UINTN                JsonStringSize,
+    IN  JSON_PROCESS_ELEMENT ProcessFunction,
+    IN  VOID                *Context
   ) {
 
     CHAR8               *JsonChar;
     UINTN                Length;
     JSON_REQUEST_ELEMENT Rqst;
     EFI_STATUS           Status;
+    BOOLEAN              Processed;
+    BOOLEAN              Changed;
 
 
-    if ((NULL == JsonString) || (NULL == ApplyFunction) || (0 == JsonStringSize)) {
+    if ((NULL == JsonString) || (NULL == ProcessFunction) || (0 == JsonStringSize)) {
             DEBUG((DEBUG_INFO,"Parse buffer received NULL buffer or NULL function\n"));
             return EFI_INVALID_PARAMETER;
     }
 
+    Processed = FALSE;
+    Changed = FALSE;
     DEBUG((DEBUG_INFO,"Parse buffer @ %p, Size = %d:\n", JsonString, JsonStringSize));
     DEBUG_BUFFER(DEBUG_VERBOSE, JsonString, JsonStringSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
 
@@ -202,7 +217,7 @@ JsonLibParse (
     while (TRUE) {
 
         SKIP_WHITE_SPACE (JsonChar);
-
+        DEBUG((DEBUG_ERROR,"Parsing at %p\n", JsonChar));
         // Expect a quoted name
         if ('\"' != *JsonChar) {
             DEBUG((DEBUG_INFO,"Name did not start with a quote\n"));
@@ -234,8 +249,30 @@ JsonLibParse (
 
         // Expect a quoted value
         if ('\"' != *JsonChar) {
-            DEBUG((DEBUG_INFO,"Value did not start with a quote\n"));
-            return EFI_INVALID_PARAMETER;
+            if ('n' != *JsonChar) {
+                DEBUG((DEBUG_ERROR,"err  found %p\n", JsonChar));
+INVALID:
+                DEBUG((DEBUG_INFO,"Value did not start with a quote\n"));
+                return EFI_INVALID_PARAMETER;
+            }
+            DEBUG((DEBUG_ERROR,"null found %p\n", JsonChar));
+            JsonChar++;
+            if ('u' != *JsonChar) {
+                goto INVALID;
+            }
+            JsonChar++;
+            if ('l' != *JsonChar) {
+                goto INVALID;
+            }
+            JsonChar++;
+            if ('l' != *JsonChar) {
+                goto INVALID;
+            }
+            JsonChar++;
+            DEBUG((DEBUG_ERROR,"SKIP_NULL  %p\n", JsonChar));
+            // At this point, the value is "null".  So do not process NULL
+            // values
+            goto SKIP_NULL;
         }
 
         JsonChar++;
@@ -251,18 +288,26 @@ JsonLibParse (
         *JsonChar++ = '\0';   // Terminate value in JsonString
         Rqst.ValueSize = JsonChar - Rqst.Value;
 
-        Status = (ApplyFunction) (&Rqst);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Error from Element Apply. Code = %r\n",Status));
-            return Status;
+        Status = (ProcessFunction) (&Rqst, Context);
+        if (EFI_MEDIA_CHANGED == Status) {
+            Status = EFI_SUCCESS;
+            Changed = TRUE;
+            DEBUG((DEBUG_INFO, "Media Changed from Process Function\n"));
         }
 
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "Error from Element Apply. Code = %r\n",Status));
+            return Status;
+        }
+        Processed = TRUE;
+
+SKIP_NULL:
         SKIP_WHITE_SPACE (JsonChar);
 
         if (',' == *JsonChar) {
             JsonChar++;
             if ('\0' == *JsonChar) {
-                DEBUG((DEBUG_ERROR,"End of string without terminator\n"));
+                DEBUG((DEBUG_ERROR, "End of string without terminator\n"));
                 return EFI_INVALID_PARAMETER;
             }
 
@@ -270,7 +315,14 @@ JsonLibParse (
         }
 
         if ('}' == *JsonChar) {
-            return EFI_SUCCESS;
+            if (Changed) {
+                Status = EFI_MEDIA_CHANGED;
+            } else if (Processed) {
+                Status = EFI_SUCCESS;
+            } else {
+                Status = EFI_NOT_FOUND;
+            }
+            return Status;
         }
 
         DEBUG((DEBUG_ERROR,"Malformed JsonString\n"));

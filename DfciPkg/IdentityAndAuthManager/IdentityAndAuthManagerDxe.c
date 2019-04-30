@@ -59,7 +59,6 @@ DFCI_APPLY_PACKET_PROTOCOL mApplyIdentityProtocol = {
 };
 
 DFCI_SETTING_PERMISSIONS_PROTOCOL *mDfciSettingsPermissionProtocol = NULL;
-EFI_HANDLE                         mImageHandle;
 
 /**
   Main entry for this driver.
@@ -86,7 +85,6 @@ Init(
     return Status;
   }
 
-  mImageHandle = ImageHandle;
   Status = PopulateInternalCertStore();  //Check variable and load existing data into internal store
   if (EFI_ERROR(Status))
   {

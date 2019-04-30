@@ -53,9 +53,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
+#include <Library/DfciGroupLib.h>
 #include <Library/DfciPasswordLib.h>
 #include <Library/DfciSettingPermissionLib.h>
-#include <Library/DfciSettingsLib.h>  // Library not used, just the defines
 #include <Library/DfciV1SupportLib.h>
 #include <Library/DfciXmlDeviceIdSchemaSupportLib.h>
 #include <Library/DfciXmlSettingSchemaSupportLib.h>
@@ -73,30 +73,60 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Settings/DfciSettings.h>
 
 typedef enum {
-  DfciUsbPortEnabled = 0,   //Port Enabled and Usable in preboot and os.  Including Boot  
+  DfciUsbPortEnabled = 0,   //Port Enabled and Usable in preboot and os.  Including Boot
   DfciUsbPortNoBoot,        //Port Enabled and Usable in preboot and os.  BDS will not boot from port         //<<< Not implemented. Can use BDS option for this to block all USB.
   DfciUsbPortHwDisabledExceptAuthorizedRecover,  //Port Disabled in HW except when factory requested R&R  //<<< Not implemented
   DfciUsbPortHwDisabled  = 0xF0,                  //This blocks factory recovery process
   DfciUsbPortStateMax   = 0xFF
 } DFCI_VIRTUAL_USB_PORT_STATE;
 
-#define DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','P')
 
 //
-// Internal structure to be used for the link list.
+// List of Settings Groups
 //
+#define DFCI_GROUP_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','G')
+#define GROUP_LIST_ENTRY_FROM_GROUP_LINK(a)    CR (a, DFCI_GROUP_LIST_ENTRY, GroupLink, DFCI_GROUP_LIST_ENTRY_SIGNATURE)
+
+typedef struct {
+  UINTN Signature;
+  DFCI_SETTING_ID_STRING GroupId;
+  LIST_ENTRY GroupLink;             // Link to next DFCI_GROUP_LIST_ENTRY
+  LIST_ENTRY MemberHead;         // Head of list of DFCI_MEMBER_LIST_ENTRYs
+} DFCI_GROUP_LIST_ENTRY;
+
+//
+// List of Settings Providers
+//
+#define DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','P')
+#define PROV_LIST_ENTRY_FROM_PROVIDER(a) CR (a, DFCI_SETTING_PROVIDER_LIST_ENTRY, Provider, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE)
+#define PROV_LIST_ENTRY_FROM_LINK(a)     CR (a, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE)
+
 typedef struct {
   UINTN Signature;
   LIST_ENTRY Link;
+  DFCI_GROUP_LIST_ENTRY *Group;        // Link to group if a member of that group
   DFCI_SETTING_PROVIDER Provider;
 } DFCI_SETTING_PROVIDER_LIST_ENTRY;
 
-extern LIST_ENTRY  mProviderList; 
+//
+// List of Member Settings in a group
+//
+#define DFCI_MEMBER_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','M')
+#define MEMBER_LIST_ENTRY_FROM_MEMBER_LINK(a)  CR (a, DFCI_MEMBER_LIST_ENTRY, MemberLink, DFCI_MEMBER_ENTRY_SIGNATURE)
+
+typedef struct {
+  UINTN Signature;
+  LIST_ENTRY MemberLink;
+  DFCI_SETTING_PROVIDER_LIST_ENTRY *PList;
+} DFCI_MEMBER_LIST_ENTRY;
+
+extern LIST_ENTRY  mProviderList;         // Head of a list of DFCI_SETTING_PROVIDER_LIST_ENTRYs
+extern LIST_ENTRY  mGroupList;            // Head of a list of DFCI_GROUP_PROVIDER_LIST_ENTRYs
 
 extern DFCI_SETTING_ACCESS_PROTOCOL             mSystemSettingAccessProtocol;
 extern DFCI_APPLY_PACKET_PROTOCOL               mApplySettingsProtocol;
 
-// 
+//
 // Internal Data struct
 //
 typedef struct {
@@ -118,6 +148,10 @@ FindProviderById (
   DFCI_SETTING_ID_STRING Id
   );
 
+DFCI_GROUP_LIST_ENTRY *
+FindGroup (DFCI_SETTING_ID_STRING Id
+  );
+
 /**
 Function sets the providers to default for
 any provider that contains the FilterFlag in its flags
@@ -129,6 +163,14 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
 
 VOID
 DebugPrintProviderList();
+
+VOID
+DebugPrintGroups();
+
+EFI_STATUS
+RegisterSettingToGroup (
+  IN DFCI_SETTING_PROVIDER_LIST_ENTRY *PList
+  );
 
 VOID
 EFIAPI

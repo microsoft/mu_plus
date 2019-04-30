@@ -1,9 +1,9 @@
 /** @file
-DfciSettingsLib.h
+DfciGroupsLib.h
 
-Library provides a method for DXE drivers to access Dfci Settings.
+Registers the platform groups and settings within the group.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c) 2019, Microsoft Corporation
 
 All rights reserved.
 
@@ -29,29 +29,27 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#ifndef __DFCI_SETTINGS_LIB_H__
-#define __DFCI_SETTINGS_LIB_H__
+typedef struct {
+    DFCI_SETTING_ID_STRING    GroupId;             // Pointer to Group Id
+    DFCI_SETTING_ID_STRING   *GroupMembers;        // Pointer to array of Setting Id's
+} DFCI_GROUP_ENTRY;
 
 /**
-Function to Get a Dfci Setting.
-If the setting has not be previously set this function will return the default.  However it will
-not cause the default to be set.
-
-@param Id:          The DFCI_SETTING_ID_STRING of the Dfci
-@param ValueSize:   IN=Size Of Buffer or 0 to get size, OUT=Size of returned Value
-@param Value:       Ptr to a buffer for the setting to be returned.
-
-
-@retval: Success - Setting was returned in Value
-@retval: EFI_ERROR.  Settings was not returned in Value.
-**/
-EFI_STATUS
+ * Register a setting as a member of a group.
+ *
+ * 1. Settings can only be member of one group
+ * 2. A GroupId cannot be a Setting Id.
+ *
+ * @param GroupId     - Group
+ * @param Id          - Setting to add to group
+ *
+ * @return EFI_NOT_FOUND       -- Id not available on this system
+ * @return EFI_ALREADY_STARTD  -- Id is already in a group
+ *                                or Group name exists as a setting
+ * @return EFI_SUCCESS         -- Id Registered to group.
+ *                                If this is the first registered setting
+ *                                the group is created
+ */
+DFCI_GROUP_ENTRY *
 EFIAPI
-GetDfciSetting
-(
-  IN      DFCI_SETTING_ID_STRING   Id,
-  IN  OUT UINTN                   *ValueSize,
-  OUT     VOID                    *Value
-);
-
-#endif  // __DFCI_SETTINGS_LIB_H__
+DfciGetGroupEntries (VOID);

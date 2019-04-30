@@ -331,11 +331,11 @@ DecodePacket (
 
     Status = CheckTarget (Data, DfciIdSupportGetManufacturer, Data->Manufacturer, Data->ManufacturerSize);
     if (!EFI_ERROR(Status)) {
-        CheckTarget(Data, DfciIdSupportGetProductName, Data->ProductName, Data->ProductNameSize);
+        Status = CheckTarget(Data, DfciIdSupportGetProductName, Data->ProductName, Data->ProductNameSize);
     }
 
     if (!EFI_ERROR(Status)) {
-        CheckTarget (Data, DfciIdSupportGetSerialNumber, Data->SerialNumber, Data->SerialNumberSize);
+        Status = CheckTarget (Data, DfciIdSupportGetSerialNumber, Data->SerialNumber, Data->SerialNumberSize);
     }
 
     return Status;

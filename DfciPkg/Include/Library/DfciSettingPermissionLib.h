@@ -36,24 +36,24 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
 Return if the User Identified by AuthToken
 has write permission to the setting identified
-by the SettingId.  
+by the SettingId.
 
 If error in processing request return bad status code
-otherwise Result will be updated with 
+otherwise Result will be updated with
 TRUE  - user has auth to write
 FALSE - user has read only access
 **/
 EFI_STATUS
 EFIAPI
 HasWritePermissions(
-  IN  DFCI_SETTING_ID_STRING      SettingId,
+  IN  DFCI_SETTING_ID_STRING       SettingId,
+  IN  DFCI_SETTING_ID_STRING       GroupId     OPTIONAL,
   IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
   OUT BOOLEAN                     *Result
   );
 
-
 /**
-Clear all current permission settings 
+Clear all current permission settings
 and restore to an all open system permissions
 
 No Auth is needed for this to support recovery case
@@ -66,7 +66,6 @@ EFIAPI
 ResetPermissionsToDefault(
 IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
 );
-
 
 EFI_STATUS
 EFIAPI

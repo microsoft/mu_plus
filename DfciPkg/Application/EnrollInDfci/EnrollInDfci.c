@@ -396,7 +396,7 @@ EnrollInDfciEntry(
     }
 
     AsciiPrint ("Saving URL file\n");
-    Status = gRT->SetVariable (DFCI_SETTINGS_URL_NAME,
+    Status = gRT->SetVariable (DFCI_SETTINGS_RECOVERY_URL_NAME,
                               &gDfciSettingsGuid,
                                EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
                                UrlFileSize,
@@ -438,7 +438,7 @@ EnrollInDfciEntry(
     }
 
     AsciiPrint ("Saving CERT file\n");
-    Status = gRT->SetVariable (DFCI_SETTINGS_URL_CERT_NAME,
+    Status = gRT->SetVariable (DFCI_SETTINGS_HTTPS_CERT_NAME,
                                &gDfciSettingsGuid,
                                EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
                                CertFileSize,

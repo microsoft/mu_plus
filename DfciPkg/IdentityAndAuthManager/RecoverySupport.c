@@ -5,11 +5,11 @@ Manage the brute force recovery to unlock a provisioned system that fails to boo
 
 Copyright (c) 2018, Microsoft Corporation
 
-All rights reserved. 
- 
+All rights reserved.
+
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met: 
- 
+modification, are permitted provided that the following conditions are met:
+
 1. Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -31,14 +31,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "IdentityAndAuthManager.h"
 #include <Library/BaseLib.h>
-#include <Library/DfciSettingsLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DfciRecoveryLib.h>
 #include <Library/BaseMemoryLib.h>
 
 #include <Settings/DfciSettings.h>
- 
+
 #define MAX_TRIES_FOR_RECOVERY (3)
 
 //2 hours
@@ -51,8 +50,8 @@ DFCI_IDENTITY_ID mRecoveryId = DFCI_IDENTITY_INVALID;
 
 
 /**
-DFCI recovery needs to happen.  User has performed valid 
-operations to invoke recovery. 
+DFCI recovery needs to happen.  User has performed valid
+operations to invoke recovery.
 
 - Need to clear permissions
 - Need to reset to defaults for all settings which do not have a FrontPage UI element
@@ -84,8 +83,8 @@ DoDfciRecovery()
 }
 
 /**
-Function shutsdown the system to protect it as unauthorized hammering has been
-detected.  
+Function to shutdown the system to protect it as unauthorized hammering has been
+detected.
 
 **/
 VOID
@@ -228,11 +227,11 @@ GetRecoveryPacket(
   LocalPacket->Identity = Identity;
   LocalPacket->DataLength = EDataSize;
   CopyMem(&(LocalPacket->Data), EData, EDataSize);
-  
+
   //Set global ptr - do after encryption so we know it was successful
   mRecoveryChallenge = Challenge;
-  
-  //Set a watchdog for our timeout period.  System will reset in that period. 
+
+  //Set a watchdog for our timeout period.  System will reset in that period.
   gBS->SetWatchdogTimer(RECOVERY_TIMEOUT_IN_SECONDS, 0x0000, 0x00, NULL);
 
   //set return values
@@ -242,14 +241,14 @@ GetRecoveryPacket(
   mRecoveryId = Identity;
 
   //TODO: remove this code once tool is written to decode
-  DEBUG((DEBUG_INFO, "%a: DEBUG FEATURE - Print response.  todo: remove before production\n", __FUNCTION__));
-  DEBUG_BUFFER(DEBUG_INFO, &(Challenge->Nonce.Parts.Key), sizeof(Challenge->Nonce.Parts.Key), DEBUG_DM_PRINT_ASCII);
+  //DEBUG((DEBUG_INFO, "%a: DEBUG FEATURE - Print response.  todo: remove before production\n", __FUNCTION__));
+  //DEBUG_BUFFER(DEBUG_INFO, &(Challenge->Nonce.Parts.Key), sizeof(Challenge->Nonce.Parts.Key), DEBUG_DM_PRINT_ASCII);
 
 
 CLEANUP:
   if (EFI_ERROR(Status))
   {
-    //free the challenge if error. 
+    //free the challenge if error.
     if (Challenge != NULL) { FreePool(Challenge); }
   }
 
@@ -304,7 +303,7 @@ SetRecoveryResponse(
     goto CLEANUP;
   }
 
-  //Make sure there is an active recovery session going on. 
+  //Make sure there is an active recovery session going on.
   if (mRecoveryChallenge == NULL)
   {
     DEBUG((DEBUG_ERROR, "No Recovery Packet Session Active.  Error\n"));

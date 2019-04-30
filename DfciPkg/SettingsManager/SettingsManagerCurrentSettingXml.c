@@ -1,7 +1,7 @@
 /**@file
 SettingsManagerCurrentSettingXml.c
 
-Settings Mnager component to create the Current Settings variable
+Settings Manager component to create the Current Settings variable
 
 Copyright (c) 2018, Microsoft Corporation
 
@@ -31,7 +31,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SettingsManager.h"
 
 /**
-Clear the cached Current Settings string 
+Clear the cached Current Settings string
 so the next boot it will be repopulated.
 **/
 VOID
@@ -60,9 +60,9 @@ CreateXmlStringFromCurrentSettings(
   XmlNode* List = NULL;
   XmlNode* CurrentSettingsNode = NULL;
   XmlNode* CurrentSettingsListNode = NULL;
-  CHAR8     LsvString[20];   
+  CHAR8     LsvString[20];
   EFI_TIME Time;
-  UINT32 Lsv = 0;  
+  UINT32 Lsv = 0;
   DFCI_SETTING_INTERNAL_DATA *InternalData = NULL;
 
   if ((XmlString == NULL) || (StringSize == NULL))
@@ -91,7 +91,7 @@ CreateXmlStringFromCurrentSettings(
     InternalData = NULL;
   }
 
-  //create basic xml 
+  //create basic xml
   Status = gRT->GetTime(&Time, NULL);
   if (EFI_ERROR(Status))
   {
@@ -107,7 +107,7 @@ CreateXmlStringFromCurrentSettings(
     goto EXIT;
   }
 
-  //Get SettingsPacket Node 
+  //Get SettingsPacket Node
   CurrentSettingsNode = GetCurrentSettingsPacketNode(List);
   if (CurrentSettingsNode == NULL)
   {
@@ -144,10 +144,10 @@ CreateXmlStringFromCurrentSettings(
   //
   // Loop each setting in the provider list
   //
-  for (LIST_ENTRY* Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) 
+  for (LIST_ENTRY* Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink)
   {
     CHAR8 *Value = NULL;
-    DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = CR(Link, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE);
+    DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = PROV_LIST_ENTRY_FROM_LINK(Link);
     Value = ProviderValueAsAscii(&(Prov->Provider), TRUE);
 
     if (V1Compatible)
@@ -169,6 +169,59 @@ CreateXmlStringFromCurrentSettings(
       FreePool(Value);
     }
   } //end for loop
+
+  DEBUG((DEBUG_INFO, "Processing Group settings\n"));
+  //
+  // Loop to present all group settings
+  //
+  for (LIST_ENTRY *Link = GetFirstNode (&mGroupList)
+       ; !IsNull (&mGroupList, Link)
+       ; Link = GetNextNode (&mGroupList, Link)
+       )
+  {
+    UINTN  ValueSize;
+    UINT8  Value;
+    CHAR8 *ReturnValue;
+    DFCI_GROUP_LIST_ENTRY *Group;
+
+    Group = GROUP_LIST_ENTRY_FROM_GROUP_LINK(Link);
+    Status = SystemSettingAccessGet (
+                   &mSystemSettingAccessProtocol,
+                    Group->GroupId,
+                    NULL,
+                    DFCI_SETTING_TYPE_ENABLE,
+                  &ValueSize,
+                  &Value,
+                   NULL);
+
+    if (EFI_ERROR(Status))
+    {
+      ReturnValue = "Error";
+    }
+    else
+    {
+      switch (Value) {
+        case ENABLE_FALSE:
+            ReturnValue = "Disabled";
+            break;
+        case ENABLE_TRUE:
+            ReturnValue = "Enabled";
+            break;
+        case ENABLE_INCONSISTENT:
+            ReturnValue = "Inconsistent";
+            break;
+        default:
+            ReturnValue = "Unknown";
+            break;
+      }
+    }
+
+    DEBUG((DEBUG_INFO, "   Setting Group Setting %a to %a\n", Group->GroupId, ReturnValue));
+    Status = SetCurrentSettings(CurrentSettingsListNode, Group->GroupId, ReturnValue);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "Error %r\n", Status));
+    }
+  }
 
   //print the list
   DEBUG((DEBUG_INFO, "PRINTING CURRENT SETTINGS XML - Start\n"));
@@ -235,7 +288,7 @@ PopulateCurrentSettingsIfNeeded()
     }
     VarSize = 0;
   }
-  
+
   //Create string of Xml
   Status = CreateXmlStringFromCurrentSettings(&Var, &VarSize, FALSE);
   if (EFI_ERROR(Status))

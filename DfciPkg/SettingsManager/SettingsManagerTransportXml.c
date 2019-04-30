@@ -193,7 +193,7 @@ ApplySettings(
     Status = EFI_NO_MAPPING;
     goto EXIT;
   }
-  
+
   //check against lsv
   if (InternalData->LSV > (UINT32)Version)
   {
@@ -239,7 +239,7 @@ ApplySettings(
     InternalData->CurrentVersion = (UINT32)Version;
     InternalData->Modified = TRUE;
   }
-  
+
   //If new LSV is larger set it
   if ((UINT32)Lsv > InternalData->LSV)
   {
@@ -269,7 +269,7 @@ ApplySettings(
     goto EXIT;
   }
 
-  //All verified.   Now lets walk thru the Settings and try to apply each one.  
+  //All verified.   Now lets walk thru the Settings and try to apply each one.
   for (Link = InputSettingsNode->ChildrenListHead.ForwardLink; Link != &(InputSettingsNode->ChildrenListHead); Link = Link->ForwardLink)
   {
     XmlNode *NodeThis = NULL;
@@ -278,7 +278,7 @@ ApplySettings(
     CHAR8        StatusString[25];   //0xFFFFFFFFFFFFFFFF\n
     CHAR8        FlagString[25];
     Flags = 0;
-    
+
     NodeThis = (XmlNode*)Link;   //Link is first member so just cast it.  this is the <Setting> node
     Status = GetInputSettings(NodeThis, &Id, &Value);
     if (EFI_ERROR(Status))
@@ -311,14 +311,14 @@ ApplySettings(
       Status = EFI_DEVICE_ERROR;
       goto EXIT;
     }
- 
+
     if (Flags & DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED)
     {
       Data->ResetRequired = TRUE;
     }
-    //all done. 
+    //all done.
   } //end for loop
-  
+
   Data->State = DFCI_PACKET_STATE_DATA_APPLIED;
 
   //PRINT OUT XML HERE
@@ -407,7 +407,7 @@ UpdateSettingsResult(
 
   //save var to var store
   Status = gRT->SetVariable((CHAR16 *) Data->ResultName, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES, VarSize, ResultVar);
-  DEBUG((DEBUG_INFO, "%a - Writing Variable for Results %r\n",__FUNCTION__, Status));
+  DEBUG((DEBUG_INFO, "%a - Writing Variable %s for Results %r\n", __FUNCTION__, Data->ResultName, Status));
 
   if (ResultVar)
   {

@@ -1,9 +1,9 @@
 ## @file
-# DfciVirtualizationSettingsLib.inf
+# DfciGroups.inf
 #
-#  Library to support Dfci Setting  (get/set)
+#  Library to support Dfci Groups
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c) 2019, Microsoft Corporation
 #
 # All rights reserved.
 #
@@ -31,46 +31,31 @@
 
 [Defines]
   INF_VERSION                    = 0x00010017
-  BASE_NAME                      = DfciVirtualizationSettingsLib
-  FILE_GUID                      = a6987668-2f26-48d6-979b-369a3b49a9a5
+  BASE_NAME                      = DfciGroupLib
+  FILE_GUID                      = c58ed423-1671-4b13-a0ba-f4acd974ecf5
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = DfciVirtualizationSettingsLib | DXE_DRIVER
-  CONSTRUCTOR                    = DfciVirtualizationSettingsConstructor
+  LIBRARY_CLASS                  = DfciGroupLib | DXE_DRIVER
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#  VALID_ARCHITECTURES           = ANY
 #
 
 [Sources]
-  DfciVirtualizationSettings.c
+  DfciGroups.c
 
 [Packages]
   DfciPkg/DfciPkg.dec
   MdePkg/MdePkg.dec
 
 [LibraryClasses]
-  BaseLib
-  BaseMemoryLib
-  DebugLib
-  MemoryAllocationLib
-  PcdLib
-  UefiLib
-  UefiBootServicesTableLib
-  UefiRuntimeServicesTableLib
 
 [Guids]
 
 [Protocols]
-  gDfciSettingsProviderSupportProtocolGuid
 
 [Pcd]
-  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider
 
 [Depex]
   TRUE
-
-[BuildOptions]
-#  DEBUG_*_*_CC_FLAGS  = /Od /FAcs
-  DEBUG_*_*_CC_FLAGS  = /analyze

@@ -47,7 +47,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DebugLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
 #include <Library/DfciSettingPermissionLib.h>
-#include <Library/DfciSettingsLib.h>
 #include <Library/DfciV1SupportLib.h>
 #include <Library/DfciXmlPermissionSchemaSupportLib.h>
 #include <Library/MemoryAllocationLib.h>

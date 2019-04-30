@@ -56,15 +56,18 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Dfci.Recovery.Enable is used as a permission only.  There is no setting.
 // When Dfci.Recovery.Enable permission is assigned to the local user, a menu
 // is available to initiate a Recovery Reset of DFCI.  The menu presents an encrypted
-// challenge that is given to an owner (QrCode, USB key, or raw text) for unencoding.
+// challenge that is given to an owner (QrCode, USB key, or raw text) for decoding.
 // This will allow the owner to give the local user a response token to disable DFCI.
 #define DFCI_SETTING_ID__DFCI_RECOVERY              "Dfci.Recovery.Enable"
 #define DFCI_SETTING_ID__ZTD_RECOVERY               "Dfci.Ztd.Recovery.Enable"
 
 // Dfci.RecoveryUrl.String is a setting that the owner can enable that will allow
 // UEFI to get updated DFCI settings should the system not be able to boot.
-#define DFCI_SETTING_ID__DFCI_URL                   "Dfci.RecoveryUrl.String"
-#define DFCI_SETTING_ID__DFCI_HWID                  "Dfci.Hwid.String"
+#define DFCI_SETTING_ID__DFCI_RECOVERY_URL          "Dfci.RecoveryUrl.String"
+#define DFCI_SETTING_ID__DFCI_BOOTSTRAP_URL         "Dfci.RecoveryBootstrapUrl.String"
+#define DFCI_SETTING_ID__DFCI_HTTPS_CERT            "Dfci.HttpsCert.Binary"
+#define DFCI_SETTING_ID__DFCI_REGISTRATION_ID       "Dfci.RegistrationId.String"
+#define DFCI_SETTING_ID__DFCI_TENANT_ID             "Dfci.TenantId.String"
 
 //
 // Second user settings
@@ -78,18 +81,18 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // AllCameras Group Setting.
 // AllCameras Enable allows the cameras to be enabled.  AllCameras disabled
-// insures all cameras are disabled.  When received as a setting, all cameras
+// ensures all cameras are disabled.  When received as a setting, all cameras
 // will be disabled, and individual settings will be disabled, and grayed out.
 #define DFCI_SETTING_ID__ALL_CAMERAS                "Dfci.OnboardCameras.Enable"
 
 // Cpu and I/O Virtualization Settings
 //
-#define DFCI_SETTING_ID__ALL_CPU_IO_VIRT            "Dfci.CpuAndIoVirtualizaiont.Enable"
+#define DFCI_SETTING_ID__ALL_CPU_IO_VIRT            "Dfci.CpuAndIoVirtualization.Enable"
 
 //
 // Onboard Audio devices settings
 //
-#define DFCI_SETTING_ID__ALL_AUDIO                  "Dfci.OnBoardAudio.Enable"
+#define DFCI_SETTING_ID__ALL_AUDIO                  "Dfci.OnboardAudio.Enable"
 
 //
 //  Onboard radios

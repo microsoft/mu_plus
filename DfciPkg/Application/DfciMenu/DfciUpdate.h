@@ -32,6 +32,39 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __DFCI_UPDATE_H__
 #define __DFCI_UPDATE_H__
 
+
+typedef struct {
+    CHAR16   *MailboxName;
+    EFI_GUID *MailboxNamespace;
+    UINT32    MailboxAttributes;
+    UINT32    Signature;
+} JSON_SET_VARIABLE_TABLE_ENTRY;
+
+#define JSON_SET_IDENTITY     0
+#define JSON_SET_IDENTITY2    1
+#define JSON_SET_PERMISSIONS  2
+#define JSON_SET_PERMISSIONS2 3
+#define JSON_SET_SETTINGS     4
+#define JSON_SET_SETTINGS2    5
+
+#define JSON_ACTION_SET_VARIABLE     0
+#define JSON_ACTION_SET_RETURN_CODE  1
+#define JSON_ACTION_SET_HTTP_MESSAGE 2
+
+typedef struct {
+    CHAR8    *FieldName;
+    CHAR8   **Message;
+    UINTN     Action;
+    UINTN     VariableIndex;   // Only for action SET_VARIABLE
+} JSON_RESPONSE_TO_ACTION_ENTRY;
+
+//
+// Expected JSON Results
+//
+JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[];
+JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[];
+JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[];
+
 /**
  * BuildUsbRequest
  *
@@ -58,12 +91,42 @@ BuildUsbRequest (
 EFI_STATUS
 EFIAPI
 BuildJsonRequest (
-    OUT CHAR8             **JsonString,
-    OUT UINTN              *JsonStringSize
+    IN  CHAR8       *OwnerThumbprint,
+    IN  CHAR8       *ZtdThumbprint,
+    OUT CHAR8      **JsonString,
+    OUT UINTN       *JsonStringSize
   );
 
 /**
- * UpdateDfciFromJson
+ * BuildJsonBootstrapRequest
+ *
+ * Build the payload for a Bootstrap request
+ *
+ * @Param [in]    NetworkRequest
+ *
+ **/
+EFI_STATUS
+EFIAPI
+BuildJsonBootstrapRequest (
+  IN DFCI_NETWORK_REQUEST *NetworkRequest
+  );
+
+/**
+ * BuildJsonRecoveryRequest
+ *
+ * Build the payload for a Recovery request
+ *
+ * @Param [in]    NetworkRequest
+ *
+ **/
+EFI_STATUS
+EFIAPI
+BuildJsonRecoveryRequest (
+  IN DFCI_NETWORK_REQUEST *NetworkRequest
+  );
+
+/**
+ * DfciUpdateFromJson
  *
  * Parse the Json String and update DFCI with each element parsed.
  *
@@ -73,9 +136,10 @@ BuildJsonRequest (
  **/
 EFI_STATUS
 EFIAPI
-UpdateDfciFromJson (
+DfciUpdateFromJson (
     IN  CHAR8   *JsonString,
-    IN  UINTN    JsonStringSize
+    IN  UINTN    JsonStringSize,
+    IN  JSON_RESPONSE_TO_ACTION_ENTRY *ResponseTable
     );
 
 #endif  // __DFCI_UPDATE_H__

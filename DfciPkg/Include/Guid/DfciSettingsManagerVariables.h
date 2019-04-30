@@ -44,7 +44,7 @@ Copyright (c) 2015, Microsoft Corporation. All rights reserved.
 #include <Guid/DfciPacketHeader.h>
 
 //
-// Variable namespace
+// Variable name-space
 //
 extern EFI_GUID gDfciSettingsManagerVarNamespace;
 
@@ -85,7 +85,7 @@ typedef struct {
                                 // Version = 1
   UINT8  rsvd[3];               // Not used
   UINT64 Status;                // Global Status of the request.  SUCCESS here means XML was parsed and payload contains detailed result.  ERROR means XML was not parsed.
-  UINT32 SessionId;             // Unique session id tool generated  -- matches the incomming apply var
+  UINT32 SessionId;             // Unique session id tool generated  -- matches the incoming apply var
   UINT16 PayloadSize;           // Size of Xml Payload
   UINT8  Payload[0];             // Xml Payload <-- ResultConfigPacket
 } DFCI_SECURED_SETTINGS_RESULT_VAR;

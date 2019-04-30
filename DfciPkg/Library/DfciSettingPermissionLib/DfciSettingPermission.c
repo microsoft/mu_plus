@@ -68,14 +68,14 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
 
     //User is trying to reset.  Check if auth token is valid for this operation.
     // Permission is based on who can change the Owner Cert and/or who can do recovery.
-    Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, AuthToken, &CanChange);
+    Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, NULL, AuthToken, &CanChange);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Owner Key. Status = %r\n", __FUNCTION__, Status));
       return Status;
     }
 
-    Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, AuthToken, &CanChangeRecovery);
+    Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, NULL, AuthToken, &CanChangeRecovery);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
@@ -130,6 +130,7 @@ EFI_STATUS
 EFIAPI
 HasWritePermissions(
 IN  DFCI_SETTING_ID_STRING       SettingId,
+IN  DFCI_SETTING_ID_STRING       GroupId     OPTIONAL,
 IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
 OUT BOOLEAN                     *Result
 )
@@ -138,6 +139,7 @@ OUT BOOLEAN                     *Result
   DFCI_PERMISSION_MASK PMask = 0;
   DFCI_IDENTITY_PROPERTIES Properties;
   DFCI_PERMISSION_ENTRY *Temp = NULL;
+  BOOLEAN GroupAuthStatus = FALSE;
 
   if ((AuthToken == NULL) || (Result == NULL) || (SettingId == NULL))
   {
@@ -155,11 +157,39 @@ OUT BOOLEAN                     *Result
     return EFI_NOT_READY;
   }
 
+  if (NULL != GroupId)
+  {
+    //
+    // Auth for members of a group depend on there being an explicit permission.
+    // If there is no explicit permission, normal write permissions are checked.  If
+    // there is an explicit permission entry for the group, the group permission
+    // supersedes the individual permission.r
+    //
+    Temp = FindPermissionEntry(mPermStore, GroupId, NULL, NULL);
+    if (NULL != Temp)
+    {
+      // Check Auth for the group id (Recursive Call)
+      Status = HasWritePermissions(GroupId, NULL, AuthToken, &GroupAuthStatus);
+      if (!EFI_ERROR(Status))
+      {
+        if (GroupAuthStatus) {
+          *Result = GroupAuthStatus;
+          return EFI_SUCCESS;
+        }
+      }
+      else
+      {
+        DEBUG((DEBUG_ERROR, "%a - HasWritePermissions returned an error %r\n", __FUNCTION__, Status));
+        // Fall through to setting permission
+      }
+    }
+  }
+
   //1. Get Identity from Auth Token
   Status = mAuthenticationProtocol->GetIdentityProperties(mAuthenticationProtocol, AuthToken, &Properties);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "%a - Faled to get properties for auth token %r\n", __FUNCTION__, Status));
+    DEBUG((DEBUG_ERROR, "%a - Failed to get properties for auth token %r\n", __FUNCTION__, Status));
     return Status;
   }
 
@@ -191,6 +221,7 @@ OUT DFCI_PERMISSION_MASK   *Permissions
 {
   DFCI_PERMISSION_MASK PMask = 0;
   DFCI_PERMISSION_ENTRY *Temp = NULL;
+
   if (Permissions == NULL)
   {
     return EFI_INVALID_PARAMETER;

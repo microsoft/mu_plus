@@ -1,9 +1,9 @@
 /** @file
-DfciRequest.h
+DfciGroups.c
 
-Defines the Request function to get the configuration from the server
+Library Instance for Dfci to establish platform settings that are part of Dfci Group settings.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c) 2019, Microsoft Corporation
 
 All rights reserved.
 
@@ -29,40 +29,20 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#ifndef __DFCI_REQUEST_H__
-#define __DFCI_REQUEST_H__
+#include <Uefi.h>
 
-#define MAX_DELAY_BEFORE_RETRY 24
-#define MIN_DELAY_BEFORE_RETRY  1
+#include <DfciSystemSettingTypes.h>
 
-/**
- * Process Http Recovery
- *
- * @param NetworkRequest
- *
- * @return EFI_STATUS EFIAPI
- */
-EFI_STATUS
-EFIAPI
-ProcessDfciNetworkRequest (
-    IN  DFCI_NETWORK_REQUEST    *NetworkRequest,
-    OUT CHAR16                 **Message
-  );
+#include <Library/DfciGroupLib.h>
 
 
 /**
- * Process Simple Http Recovery
- *
- * @param NetworkRequest
- *
- * @return EFI_STATUS EFIAPI
+ * Return a pointer to the Group Array to DFCI.  This NULL
+ * library does not return any group settings.
  */
-EFI_STATUS
+DFCI_GROUP_ENTRY *
 EFIAPI
-ProcessSimpleNetworkRequest (
-    IN  DFCI_NETWORK_REQUEST    *NetworkRequest,
-    OUT CHAR16                 **Message
-  );
+DfciGetGroupEntries (VOID) {
 
-#endif // __DFCI_REQUEST_H__
-
+    return NULL;
+}

@@ -2,7 +2,7 @@
 DfciPermissionManagerVariables.h
 
 Contains definitions for PermissionManager variables. This allows a tool to
-set/remove Policy Permissions on the device.  These permisions are how acccess
+set/remove Policy Permissions on the device.  These permissions are how access
 is controlled to different settings.
 
 Copyright (c) 2018, Microsoft Corporation
@@ -37,7 +37,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/DfciPacketHeader.h>
 
 //
-// Variable namespace
+// Variable name-space
 //
 extern EFI_GUID gDfciPermissionManagerVarNamespace;
 
@@ -78,7 +78,7 @@ typedef struct {
                               // Version = 1
   UINT8  rsvd[3];             // Not used
   UINT64 Status;              // Global Status of the request.  SUCCESS here means XML was parsed and Permissions applied.  ERROR means XML was not parsed.
-  UINT32 SessionId;           // Unique session id tool generated  -- matches the incomming apply var
+  UINT32 SessionId;           // Unique session id tool generated  -- matches the incoming apply var
 } DFCI_PERMISSION_POLICY_RESULT_VAR_V1;
 
 typedef struct {
@@ -86,7 +86,7 @@ typedef struct {
                               // Version = 2
   UINT8  rsvd[3];             // Not used
   UINT64 Status;              // Global Status of the request.  SUCCESS here means XML was parsed and Permissions applied.  ERROR means XML was not parsed.
-  UINT32 SessionId;           // Unique session id tool generated  -- matches the incomming apply var
+  UINT32 SessionId;           // Unique session id tool generated  -- matches the incoming apply var
   UINT16 PayloadSize;         // Size of Xml Payload
   UINT8  Payload[];           // Xml Payload <-- ResultConfigPacket
 } DFCI_PERMISSION_POLICY_RESULT_VAR;
