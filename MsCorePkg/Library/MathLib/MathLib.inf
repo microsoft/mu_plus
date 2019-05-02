@@ -53,5 +53,5 @@
 [Guids]
 
 [BuildOptions]
-  # Need to use floats in this library. Got rid of -mgeneral-regs-only to do so.
-   GCC:*_*_AARCH64_CC_XIPFLAGS == -mstrict-align
+# Need to use floats in this library. Got rid of -mgeneral-regs-only to do so.
+    GCC:*_*_AARCH64_CC_XIPFLAGS == -mstrict-align

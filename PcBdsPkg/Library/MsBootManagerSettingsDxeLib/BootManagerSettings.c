@@ -418,13 +418,13 @@ EFIAPI
 BootManagerSettingsSet (
   IN  CONST DFCI_SETTING_PROVIDER     *This,
   IN        UINTN                      ValueSize,
-  IN  CONST BOOLEAN                   *Value,
+  IN  CONST VOID                      *Value,
   OUT DFCI_SETTING_FLAGS              *Flags
   )
 {
   if ((This != NULL) && (Value != NULL) && (Flags != NULL) && (ValueSize == sizeof(BOOLEAN)))
   {
-    return SetBootManagerSetting (This->Id, *Value, Flags);
+    return SetBootManagerSetting (This->Id, *((BOOLEAN*) Value), Flags);
   }
   return EFI_INVALID_PARAMETER;
 
@@ -435,7 +435,7 @@ EFIAPI
 BootManagerSettingsGet(
   IN CONST DFCI_SETTING_PROVIDER     *This,
   IN OUT   UINTN                     *ValueSize,
-  OUT      BOOLEAN                   *Value
+  OUT      VOID                      *Value
   )
 {
   if ((This != NULL) && (Value != NULL) && (ValueSize != NULL) && (*ValueSize == sizeof(BOOLEAN)))
@@ -454,7 +454,7 @@ EFIAPI
 BootManagerSettingsGetDefault(
   IN CONST  DFCI_SETTING_PROVIDER     *This,
   IN OUT    UINTN                     *ValueSize,
-  OUT       BOOLEAN                   *Value
+  OUT       VOID                      *Value
   )
 {
   if ((This != NULL) && (Value != NULL) && (ValueSize != NULL) && (*ValueSize == sizeof(BOOLEAN)))
