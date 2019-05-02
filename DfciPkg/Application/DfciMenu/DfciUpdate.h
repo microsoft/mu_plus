@@ -61,9 +61,9 @@ typedef struct {
 //
 // Expected JSON Results
 //
-JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[];
-JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[];
-JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[];
+extern JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[];
+extern JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[];
+extern JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[];
 
 /**
  * BuildUsbRequest

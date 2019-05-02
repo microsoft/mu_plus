@@ -653,7 +653,7 @@ ProcessFunction (
               return EFI_OUT_OF_RESOURCES;
             }
 
-            Status = Base64Decode (Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), StringValue, &ValueSize);
+            Status = Base64Decode (Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), (UINT8 *) StringValue, &ValueSize);
             if (EFI_ERROR(Status)) {
                 FreePool (StringValue);
                 DEBUG((DEBUG_ERROR, "Cannot decode Value data. Code=%r\n",Status));
