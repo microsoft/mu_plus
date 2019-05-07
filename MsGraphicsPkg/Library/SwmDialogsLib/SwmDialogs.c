@@ -247,7 +247,19 @@ AllocateRequiredProtocols (
         DEBUG((DEBUG_INFO,"%a: Failed to get GraphicsOutput (%r).\r\n", __FUNCTION__, Status));
         gSwmProtocol = NULL;
     } else {
-        Status = gBS->LocateProtocol (&gEfiSimpleTextInputExProtocolGuid , NULL, (VOID **) &gSimpleTextInEx);
+        if (gST->ConsoleInHandle != NULL) {
+            Status = gBS->OpenProtocol (
+                        gST->ConsoleInHandle,
+                        &gEfiSimpleTextInputExProtocolGuid,
+                        (VOID **) &gSimpleTextInEx,
+                        NULL,
+                        NULL,
+                        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
+        } else {
+          DEBUG((DEBUG_ERROR,"%a: SystemTable ConsoleInHandle is NULL\n", __FUNCTION__));
+          Status = EFI_NOT_READY;
+        }
+
         if (EFI_ERROR (Status)) {
             DEBUG((DEBUG_INFO,"%a: Failed to get SimpleTextInEx (%r).\r\n", __FUNCTION__, Status));
             gSwmProtocol = NULL;
