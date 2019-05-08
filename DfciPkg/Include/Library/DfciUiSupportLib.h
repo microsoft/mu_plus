@@ -74,7 +74,27 @@ typedef enum
 } DFCI_MB_RESULT;
 
 /**
+  This routine indicates if the system is in Manufacturing Mode.
+
+  @retval  ManufacturingMode - Platforms may have a manufacturing mode.
+                               DFCI Auto opt-in's the management cert included
+                               in the firmware volume in Manufacturing Mode.
+                               TRUE if the device is in Manufacturing Mode
+**/
+BOOLEAN
+EFIAPI
+DfciUiIsManufacturingMode (
+  VOID
+  );
+
+/**
+
   This routine indicates if the UI is ready and can be used.
+
+  @param   ManufacturingMode - Platforms may have a manufacturing mode.
+                               DFCI Auto opt-in's the management cert included
+                               in the firmware volume in Manufacturing Mode.
+                               TRUE if the device is in Manufacturing Mode
 
   @retval  TRUE if the UI is ready to use, else FALSE.
 
@@ -82,7 +102,7 @@ typedef enum
 BOOLEAN
 EFIAPI
 DfciUiIsUiAvailable (
-  VOID
+    VOID
   );
 
 /**

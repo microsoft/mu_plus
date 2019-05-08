@@ -91,8 +91,16 @@ Init(
     DEBUG((DEBUG_ERROR, "PopulateInternalCertStore failed %r\n", Status));
   }
 
-  SaveState = FALSE;
+  // If user has not previously opted out of device management, and the system is
+  // in Mfg mode, automatically opt in for device management.
   ZeroTouchState = GetZeroTouchState();
+  if (ZERO_TOUCH_INACTIVE == ZeroTouchState) {
+    if (DfciUiIsManufacturingMode()) {
+      ZeroTouchState = ZERO_TOUCH_OPT_IN;
+    }
+  }
+
+  SaveState = FALSE;
   switch (ZeroTouchState) {
     case ZERO_TOUCH_OPT_IN:
       if ((mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert == NULL) &&

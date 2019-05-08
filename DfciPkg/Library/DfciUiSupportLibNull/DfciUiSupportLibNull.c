@@ -32,6 +32,23 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DfciUiSupportLib.h>
 
 /**
+  This routine indicates if the system is in Manufacturing Mode.
+
+  @retval  ManufacturingMode - Platforms may have a manufacturing mode.
+                               DFCI Auto opt-in's the management cert included
+                               in the firmware volume in Manufacturing Mode.
+                               TRUE if the device is in Manufacturing Mode
+**/
+BOOLEAN
+EFIAPI
+DfciUiIsManufacturingMode (
+  VOID
+  ) {
+
+  return FALSE;
+}
+
+/**
 
   This routine indicates if the UI is ready and can be used.
 
@@ -41,7 +58,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 BOOLEAN
 EFIAPI
 DfciUiIsUiAvailable (
-  VOID
+   VOID
   )
 {
 
