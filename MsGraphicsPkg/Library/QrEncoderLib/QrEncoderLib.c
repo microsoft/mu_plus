@@ -145,7 +145,7 @@ CheckQrVersion(UINT8 *Data, UINT16 DataLen) {
             break;
         default:
             qLen = 0;
-            DEBUG((DEBUG_ERROR,__FUNCTION__ " Internal error - QrMode invalid %d\n",gQrMode));
+            DEBUG((DEBUG_ERROR, "%a Internal error - QrMode invalid %d\n", __FUNCTION__, gQrMode));
             ASSERT(FALSE);
         }
         if (qLen >= DataLen) {
@@ -248,7 +248,7 @@ PrintBinary (UINTN data, UINTN width, CHAR8 fill ) {
         return;
     }
 
-    Mask = 0x01i64 << (width - 1);
+    Mask = 0x01ULL << (width - 1);
     for (; Mask != 0; Mask >>= 1) {
         if (data & Mask) {
             binString[Index] = '1';
@@ -603,7 +603,7 @@ drawHLine (UINT8 *bitmap, INTN s, INTN x, INTN y, INTN tx, UINT8 Color) {
     b = g + x;       // Index of starting point for the line
     for (i = x; i <= tx; i++) {
         if (b > (gQrBitmapLen)) {
-            DEBUG((DEBUG_ERROR,__FUNCTION__ " Attempt to write module out of bitmap bounds\n"));
+            DEBUG((DEBUG_ERROR, "%a Attempt to write module out of bitmap bounds\n", __FUNCTION__));
             ASSERT(FALSE);
         } else {
             bitmap[g + i] = Color;
@@ -621,7 +621,7 @@ drawVLine (UINT8 *bitmap, INTN s, INTN x, INTN y, INTN ty, UINT8 Color)
     INTN i;
     for (i = y; i <= ty; i++) {
         if ((x + (i * s)) > (gQrBitmapLen)) {
-            DEBUG((DEBUG_ERROR,__FUNCTION__ " Attempt to write module out of bitmap bounds\n"));
+            DEBUG((DEBUG_ERROR, "%a Attempt to write module out of bitmap bounds\n", __FUNCTION__));
             ASSERT(FALSE);
         } else {
             bitmap[x +( i * s)] = Color;
@@ -1709,18 +1709,18 @@ QrInitialize (IN UINT8      Version,
 
     if (Version > QrMaxVersion)  // Version within spec?
     {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid Version %d proposed\n",Version));
+        DEBUG((DEBUG_ERROR, "%a - Invalid Version %d proposed\n", __FUNCTION__, Version));
         return EFI_INVALID_PARAMETER;
     }
     // ECLevel MUST be specified.
     if ((Level < QrECLevel_L) || (Level > QrECLevel_H))
     {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid ECLevel %d proposed\n",Level));
+        DEBUG((DEBUG_ERROR, "%a - Invalid ECLevel %d proposed\n", __FUNCTION__, Level));
         return EFI_INVALID_PARAMETER;
     }
     if ((Mode < QrAutoMode) || (Mode > QrByteMode))  // Only support Num/Alpha/Byte for now
     {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Invalid Mode %d proposed\n",Mode));
+        DEBUG((DEBUG_ERROR, "%a - Invalid Mode %d proposed\n", __FUNCTION__, Mode));
         return EFI_INVALID_PARAMETER;
     }
 
@@ -1776,7 +1776,7 @@ QrEncodeData (
     EFI_STATUS Status;
 
     if ((Data == NULL) || DataLen == 0 || (Bitmap == NULL)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " - Data == NULL, DataLen == 0, or Bitmap == NULL\n"));
+        DEBUG((DEBUG_ERROR, "%a - Data == NULL, DataLen == 0, or Bitmap == NULL\n", __FUNCTION__));
         return EFI_INVALID_PARAMETER;
     }
 
