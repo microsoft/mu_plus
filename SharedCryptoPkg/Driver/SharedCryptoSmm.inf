@@ -34,7 +34,7 @@
 
 [Defines]
   INF_VERSION                    = 0x0001001B
-  PI_SPECIFICATION_VERSION       = 0x0001001B
+  PI_SPECIFICATION_VERSION       = 0x00010014
   BASE_NAME                      = SharedCryptoSmm
   FILE_GUID                      = 391B853F-F488-479B-A3D6-870766C7A38F
   MODULE_TYPE                    = DXE_SMM_DRIVER

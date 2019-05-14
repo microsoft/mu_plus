@@ -25,7 +25,7 @@
 
 
 [Defines]
-  INF_VERSION                    = 0x00010017
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = DxeSharedCryptoLib
   FILE_GUID                      = B38CBDA6-8017-4111-8232-9E8328DE82F6
   VERSION_STRING                 = 1.0

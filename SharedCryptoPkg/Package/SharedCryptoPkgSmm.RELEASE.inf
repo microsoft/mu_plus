@@ -26,11 +26,12 @@
 
 [Defines]
   INF_VERSION                    = 0x0001001B
-  BASE_NAME                      = SharedCryptoDriverDxeMu
-  FILE_GUID                      = 5550445C-7B09-4D69-8198-7060F9C1C732
-  MODULE_TYPE                    = DXE_DRIVER
+  PI_SPECIFICATION_VERSION       = 0x00010014
+  BASE_NAME                      = SharedCryptoDriverSmm
+  FILE_GUID                      = 391B853F-F488-479B-A3D6-870766C7A38F
+  MODULE_TYPE                    = DXE_SMM_DRIVER
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = SharedCryptoDxeEntry
+  ENTRY_POINT                    = SharedCryptoSmmEntry
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -38,27 +39,15 @@
 #  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
-# these binaries are resolved by the Nuget Package
+# these binaries are resolved by the Nuget Package Mu-SharedCrypto
 # if they are not found, check there
 
-[Binaries]
-  DXE_DEPEX|Mu-SharedCrypto_extdep/DEBUG/X64/SharedCryptoDxeMu.depex|DEBUG
-  DXE_DEPEX|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoDxeMu.depex|RELEASE
-
 [Binaries.X64]
-  PE32|Mu-SharedCrypto_extdep/DEBUG/X64/SharedCryptoDxeMu.efi|DEBUG
-  PE32|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoDxeMu.efi|RELEASE
-
-[Binaries.ARM]
-  PE32|Mu-SharedCrypto_extdep/DEBUG/Arm/SharedCryptoDxeMu.efi|DEBUG
-  PE32|Mu-SharedCrypto_extdep/RELEASE/Arm/SharedCryptoDxeMu.efi|RELEASE
-
-[Binaries.AArch64]
-  PE32|Mu-SharedCrypto_extdep/DEBUG/AArch64/SharedCryptoDxeMu.efi|DEBUG
-  PE32|Mu-SharedCrypto_extdep/RELEASE/AArch64/SharedCryptoDxeMu.efi|RELEASE
+  PE32|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoSmm.efi|RELEASE
+  SMM_DEPEX|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoSmm.depex|RELEASE
 
 [Packages]
   SharedCryptoPkg/SharedCryptoPkg.dec
 
-[Depex]
-  TRUE
+[Protocols]
+  gSharedCryptoSmmProtocolGuid ## produces

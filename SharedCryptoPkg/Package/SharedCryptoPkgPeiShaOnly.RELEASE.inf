@@ -1,4 +1,5 @@
 ## @file
+#  Crypto Bin Driver package
 #
 # Copyright (c) 2019, Microsoft Corporation
 #
@@ -23,40 +24,23 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 
-
 [Defines]
-  INF_VERSION                    = 0x0001001B
-  BASE_NAME                      = PeiSharedCryptoLib
-  FILE_GUID                      = 3E8B50C6-F68C-4212-B903-94A10FE02399
-  VERSION_STRING                 = 1.0
+  INF_VERSION                    = 0x0001000A
+  BASE_NAME                      = SharedCryptoDriverShaOnly
+  FILE_GUID                      = 566312D1-4878-4695-8E7A-AA585F1C0DA1
   MODULE_TYPE                    = PEIM
-  LIBRARY_CLASS                  = BaseCryptLib | PEIM
+  VERSION_STRING                 = 1.0
+
 #
 # The following information is for reference only and not required by the build tools.
 #
-# VALID_ARCHITECTURES = IA32 X64 IPF EBC
+#  VALID_ARCHITECTURES           = IA32 X64
 #
 
-[LibraryClasses]
-  DebugLib
-  BaseLib
-  PeimEntryPoint
-  PeiServicesTablePointerLib
-  PeiServicesLib
+# these binaries are resolved by the Nuget Package
+# if they are not found, check there
 
-[Packages]
-  MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
-  SharedCryptoPkg/SharedCryptoPkg.dec
-  CryptoPkg/CryptoPkg.dec
+[Binaries.IA32]
 
-[Sources]
-  PeiCryptLibSharedDriver.c
-  Common/CommonSharedCryptoLib.c
-  Common/SharedCryptoHelpers.h
-
-[Ppis]
-  gSharedCryptoPpiGuid  ## consumes
-
-[Depex]
-  gSharedCryptoPpiGuid    ## Everything is riding on this PPI.
+  PE32|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPeiShaOnly.efi|RELEASE
+  PEI_DEPEX|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPeiShaOnly.depex|RELEASE

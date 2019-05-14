@@ -53,6 +53,8 @@ If you wish to swap the underlying CryptoLibrary, replace the BaseCryptLib depen
 
 If you wish to use a different flavor or make a new flavor, create two new INF's. One for the Binary compilation (in the /Driver folder) and one for the Binary package that is consumed by the platform (in the /Package folder). By examining existing INF's, it should be fairly trival to create new ones.
 
+When making a new flavor please follow the convetion of SharedCryptoPkg{Phase}{Flavor}.{Target}.inf with Phase being DXE, SMM, or PEI. Target should be DEBUG or RELEASE.
+
 ## Using Different Pre-built EFI's
 
 If you wish to use your own PreBuild EFI's, they can be placed in the /Package folder and have INF's point to them. Or the INF can be overridden fairly easily.
@@ -64,6 +66,7 @@ There are two pieces to be build: the library and the driver. The library is to 
 There are 24 different versions of the prebuild driver. One for each arch (X86, AARCH64, ARM, X64) and for each phase (DXE, PEI, SMM) and for mode (DEBUG, RELEASE). The nuget system should take care of downloading the correct version for your project.
 
 ## Supported Architectures
+
 This currently supports x86, x64, AARCH64, and ARM.
 
 ## Including in your platform
@@ -90,15 +93,16 @@ This would replace where you would normally include BaseCryptLib.
 ```
 
 Unfortunatly, due to the way that the EDK build system works, you'll also need to include the package in your component section. Make sure this matches whatever you put in your FDF.
+You'll also need to include a macro for the current TARGET.
 
 ```
 [Components.IA32]
-    SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.inf
+    SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.$(TARGET).inf
     ...
 
 [Components.X64]
-    SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.inf
-    SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.inf
+    SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.$(TARGET).inf
+    SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.$(TARGET).inf
     ...
 ```
 
@@ -110,11 +114,11 @@ Include this file in your FV and the module will get loaded. In this example, we
 
 ```
 [FV.FVBOOTBLOCK]
-    INF  SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.inf
+    INF  SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.$(TARGET).inf
     ...
 
 [FV.FVDXE]
-    INF  SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.inf
-    INF  SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.inf
+    INF  SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.$(TARGET).inf
+    INF  SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.$(TARGET).inf
     ...
 ```

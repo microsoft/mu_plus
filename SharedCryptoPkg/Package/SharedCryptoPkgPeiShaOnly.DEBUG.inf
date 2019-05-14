@@ -25,9 +25,9 @@
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
-  BASE_NAME                      = SharedCryptoDriver
-  FILE_GUID                      = D27946C9-2212-42DD-8252-14EF9134D741
+  INF_VERSION                    = 0x0001000A
+  BASE_NAME                      = SharedCryptoDriverShaOnlyDebug
+  FILE_GUID                      = 566312D1-4878-4695-8E7A-AA585F1C0DA1
   MODULE_TYPE                    = PEIM
   VERSION_STRING                 = 1.0
 
@@ -40,13 +40,6 @@
 # these binaries are resolved by the Nuget Package
 # if they are not found, check there
 
-[Binaries.Ia32]
-  PE32|Mu-SharedCrypto_extdep/DEBUG/IA32/SharedCryptoPei.efi|DEBUG
-  PEI_DEPEX|Mu-SharedCrypto_extdep/DEBUG/IA32/SharedCryptoPei.depex|DEBUG
-
-  PE32|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPei.efi|RELEASE
-  PEI_DEPEX|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPei.depex|RELEASE
-
-
-[Depex]
-  gEfiPeiMemoryDiscoveredPpiGuid
+[Binaries.IA32]
+  PE32|Mu-SharedCrypto_extdep/DEBUG/IA32/SharedCryptoPeiShaOnly.efi|DEBUG
+  PEI_DEPEX|Mu-SharedCrypto_extdep/DEBUG/IA32/SharedCryptoPeiShaOnly.depex|DEBUG

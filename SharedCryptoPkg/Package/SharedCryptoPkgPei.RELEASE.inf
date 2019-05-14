@@ -25,32 +25,25 @@
 ##
 
 [Defines]
-  INF_VERSION                    = 0x0001001B
-  PI_SPECIFICATION_VERSION       = 0x0001000A
-  BASE_NAME                      = SharedCryptoDriverSmm
-  FILE_GUID                      = 391B853F-F488-479B-A3D6-870766C7A38F
-  MODULE_TYPE                    = DXE_SMM_DRIVER
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = SharedCryptoDriverPei
+  FILE_GUID                      = D27946C9-2212-42DD-8252-14EF9134D741
+  MODULE_TYPE                    = PEIM
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = SharedCryptoSmmEntry
 
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#  VALID_ARCHITECTURES           = IA32 X64
 #
 
-# these binaries are resolved by the Nuget Package Mu-SharedCrypto
+# these binaries are resolved by the Nuget Package
 # if they are not found, check there
 
-[Binaries.X64]
-  PE32|Mu-SharedCrypto_extdep/DEBUG/X64/SharedCryptoSmm.efi|DEBUG
-  SMM_DEPEX|Mu-SharedCrypto_extdep/DEBUG/X64/SharedCryptoSmm.depex|DEBUG
+[Binaries.IA32]
+  PE32|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPei.efi|RELEASE
+  PEI_DEPEX|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPei.depex|RELEASE
 
-  PE32|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoSmm.efi|RELEASE
-  SMM_DEPEX|Mu-SharedCrypto_extdep/RELEASE/X64/SharedCryptoSmm.depex|RELEASE
 
-[Packages]
-  SharedCryptoPkg/SharedCryptoPkg.dec
-
-[Protocols]
-  gSharedCryptoSmmProtocolGuid ## produces
+[Depex]
+  gEfiPeiMemoryDiscoveredPpiGuid
