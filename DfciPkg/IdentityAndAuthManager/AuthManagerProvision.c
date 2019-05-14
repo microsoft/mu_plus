@@ -192,6 +192,7 @@ SetIdentityResponse(
  * Perform basic checks on packet
  *
  * @param Data
+ * @param SettingsPermissionProtocol
  *
  * @return EFI_STATUS
  */
@@ -757,6 +758,7 @@ CLEANUP:
  *  After applying Identities, and LKG_COMMIT or LKG_DISCARD must be called
  *
  * @param[in] This:            Apply Packet Protocol
+ * @param[in] Data             Internal Packet
  * @param[in] Operation
  *                        DISCARD   discards the in memory changes, and retores from NV STORE
  *                        COMMIT    Saves the current settings to NV Store

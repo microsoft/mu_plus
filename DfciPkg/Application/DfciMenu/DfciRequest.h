@@ -38,7 +38,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * Process Http Recovery
  *
- * @param NetworkRequest
+ * @param NetworkRequest     - Private data
+ * @param Message            - Where to store the status message
  *
  * @return EFI_STATUS EFIAPI
  */
@@ -53,7 +54,8 @@ ProcessDfciNetworkRequest (
 /**
  * Process Simple Http Recovery
  *
- * @param NetworkRequest
+ * @param NetworkRequest     - Private data
+ * @param Message            - Where to store the status message
  *
  * @return EFI_STATUS EFIAPI
  */

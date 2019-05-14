@@ -83,7 +83,7 @@ STATIC UINT32                mOldCertificateAttr;
 /**
  * Dump the HTTP Headers
  *
- * @param[in] Count
+ * @param[in]  Count
  * @param[out] Headers
  *
  * @return VOID
@@ -898,7 +898,7 @@ STATIC
 EFI_STATUS
 DfciGetResponse (
     IN  DFCI_NETWORK_REQUEST  *NetworkRequest,
-    IN  EFI_HTTP_TOKEN     *ResponseToken
+    IN  EFI_HTTP_TOKEN        *ResponseToken
   ) {
 
     EFI_HTTP_RESPONSE_DATA *ResponseData;
@@ -968,6 +968,9 @@ DfciGetResponse (
 
 /**
  * Cleanup Network Request.
+ *
+ * @param[in]  NetworkRequest
+ * @param[in]  CleanupMask
  *
  * Free caller responsible items in:
  *
@@ -1207,9 +1210,9 @@ S_EXIT1:
  * Process an Http request, and honor 429 and possibly 202 as retry events
  *
  * @param  [in]    NetworkRequest
- * @param  [in]    Http Method
+ * @param  [in]    HttpMethod
  * @param  [in]    Url
- * &param  [in]    Retry on 202
+ * &param  [in]    RetryOn202
  *
  * return  EFI_STATUS
  **/
@@ -1383,6 +1386,9 @@ PROTOCOL_ERROR:
 /**
  * MainLogic for processing the recovery contract with on premise recovery provider
  *
+ * @param[in]  NetworkRequest
+ * @param[out] Done Processing    - Inform caller processing is complete
+ *
  * This is a simple request that retrieves a packet exactly like the USB Request.
  **/
 STATIC
@@ -1399,15 +1405,15 @@ SimpleMainLogic (
 /**
  * MainLogic for processing the recovery contract with recovery provider
  *
- * @Param [in]    NetworkRequest
- * @param [out]   ValidNic -- If NIC responds with first request, the stop processing NICs
+ * @param[in]  NetworkRequest
+ * @param[out] Done Processing    - Inform caller processing is complete
  *
  * There are two parts of the recovery.  First, the certs need to be updated.  After
  * the certs are updated, the new settings are obtained.
  *
- * Step 1. Recovery Bootstrap.
+ * Step 1. Bootstrap request.
  *
- * Recovery bootstrap is the action of requesting updates to the certificates being
+ * The Bootstrap is the action of requesting updates to the certificates being
  * used. It starts with an HTTP POST with the current DDS and ZTD certificate
  * thumbprints.  The response will be a new URL to request the packets.
  *
@@ -1421,6 +1427,17 @@ SimpleMainLogic (
  * The response has the URL to process for the actual data.  Then, using the response
  * URL, the cert updates are requested until there are no more.  The second HTTP
  * request is for the actual permission and setting update, or unenroll operation.
+ *
+ * If no certs are needed, the Step 2 is processed immediately.  Otherwise, the system
+ * need to be rebooted to apply the updated certs.  When this occurs, the used must manually
+ * start another refresh from network request.  Depending on how old the certificates are,
+ * this may have to be repeated a few times.
+ *
+ * Step2. Recovery Request
+ *
+ * This is exactly the same as Step 1, except the host sends the packets that unenroll the system.
+ * After the reboot, DFCI will not be enrolled.
+ *
  **/
 STATIC
 EFI_STATUS
@@ -1828,7 +1845,8 @@ GetResponseMsgLength (
 /**
  * Process Http Recovery
  *
- * @param NetworkRequest
+ * @param NetworkRequest     - Private data
+ * @param Message            - Where to store the status message
  *
  * @return EFI_STATUS EFIAPI
  */
@@ -1908,7 +1926,8 @@ EXIT_NETWORK_REQUEST:
 /**
  * Process Simple Http Recovery
  *
- * @param NetworkRequest
+ * @param NetworkRequest     - Private data
+ * @param Message            - Where to store the status message
  *
  * @return EFI_STATUS EFIAPI
  */

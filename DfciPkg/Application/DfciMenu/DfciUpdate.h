@@ -56,6 +56,7 @@ typedef struct {
     CHAR8   **Message;
     UINTN     Action;
     UINTN     VariableIndex;   // Only for action SET_VARIABLE
+    BOOLEAN   DecodeBase64;
 } JSON_RESPONSE_TO_ACTION_ENTRY;
 
 //
@@ -77,24 +78,6 @@ EFIAPI
 BuildUsbRequest (
     IN  CHAR16       *FileExtension,
     OUT CHAR16      **FileName
-  );
-
-/**
- *  Build Json Request.  For a network request, the current system information
- *                       needs to be provided.
- *
- * @param[in]    Dfci 			- Dfci Privates data for
- *  @param[out]  JsonString
- *  @param[out]  JsonStringSize
- *
- **/
-EFI_STATUS
-EFIAPI
-BuildJsonRequest (
-    IN  CHAR8       *OwnerThumbprint,
-    IN  CHAR8       *ZtdThumbprint,
-    OUT CHAR8      **JsonString,
-    OUT UINTN       *JsonStringSize
   );
 
 /**
@@ -132,6 +115,7 @@ BuildJsonRecoveryRequest (
  *
  * @param [in]  JsonString      - Dfci Update Json string
  * @param [in]  JsonStringSize  - Size of Json String
+ * @param [in]  ResponseTable   - Expected JSON elements
  *
  **/
 EFI_STATUS

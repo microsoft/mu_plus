@@ -1,7 +1,7 @@
 /**@file
 AuthManagerNull.c
 
-Considently provides the same token.
+Consistently provides the same token.
 Don't use in production!
 
 Copyright (c) 2019, Microsoft Corporation
@@ -132,9 +132,12 @@ EFIAPI
 GetCertInfo(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
   IN       DFCI_IDENTITY_ID                    Identity,
-  IN       UINT8*                              Cert,
+  IN CONST UINT8                              *Cert          OPTIONAL,
   IN       UINTN                               CertSize,
-  OUT      DFCI_CERT_STRINGS                  *CertInfo
+  IN       DFCI_CERT_REQUEST                   CertRequest,
+  IN       DFCI_CERT_FORMAT                    CertFormat,
+  OUT      VOID                              **Value,
+  OUT      UINTN                              *ValueSize     OPTIONAL
   )
 {
   DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));

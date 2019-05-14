@@ -43,11 +43,32 @@ typedef struct {
 
 typedef UINT8 DFCI_IDENTITY_MASK;  //compatible type as enum DFCI_IDENTITY_ID
 
-typedef struct {
-  CHAR16* SubjectString;
-  CHAR16* IssuerString;
-  CHAR16* ThumbprintString;
-} DFCI_CERT_STRINGS;
+typedef enum {
+  DFCI_CERT_FORMAT_CHAR8  = 0x00,
+  DFCI_CERT_FORMAT_CHAR16,
+  DFCI_CERT_FORMAT_BINARY,
+  DFCI_CERT_FORMAT_CHAR8_UI,
+  DFCI_CERT_FORMAT_CHAR16_UI,
+  DFCI_CERT_FORMAT_MAX
+} DFCI_CERT_FORMAT;
+
+typedef enum {
+  DFCI_CERT_SUBJECT      = 0x00,
+  DFCI_CERT_ISSUER,
+  DFCI_CERT_THUMBPRINT,
+  DFCI_CERT_REQUEST_MAX
+} DFCI_CERT_REQUEST;
+
+/*
+Cert field by format map.  Only the following combinations are initially available.
+
+                          CHAR8   CHAR16  BINARY   CHARx_UI
+                         +-------+-------+-------+-------+
+DFCI_CERT_SUBJECT        |   X   |   X   |       |       |
+DFCI_CERT_ISSUER         |   X   |   X   |       |       |
+DFCI_CERT_THUMBPRINT     |   X   |   X   |   X   |   X   |
+*/
+
 
 typedef struct {
   DFCI_IDENTITY_ID Identity;
@@ -56,7 +77,7 @@ typedef struct {
 } DFCI_AUTH_RECOVERY_PACKET;
 
 //Required size of the response byte array
-#define RECOVERY_RESPONSE_SIZE (10)   
+#define RECOVERY_RESPONSE_SIZE (10)
 
 
 /////////////////////*** AUTH FUNCTIONS ***////////////////////////
@@ -92,7 +113,7 @@ EFI_STATUS
 /**
 Function to Get the Identity Properties of a given Identity Token.
 
-This function will recieve caller input and needs to protect against brute force
+This function will receive caller input and needs to protect against brute force
 attack by rate limiting or some other means as the IdentityToken values are limited.
 
 @param This           Auth Protocol Instance Pointer
@@ -115,7 +136,7 @@ EFI_STATUS
 /**
 Function to return the currently enrolled identities within the system.
 
-This is a combonation of all identities (not just keys).
+This is a combination of all identities (not just keys).
 
 @param This               Auth Protocol Instance Pointer
 @param EnrolledIdentites  pointer to Mask to be updated
@@ -129,38 +150,45 @@ typedef
 EFI_STATUS
 (EFIAPI *DFCI_AUTHENTICATE_GET_ENROLLED_IDENTITY_MASK) (
   IN CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
-  OUT      DFCI_IDENTITY_MASK                 *EnrolledIdentities
+  OUT      DFCI_IDENTITY_MASK               *EnrolledIdentities
   );
 
 
 /**
-This function returns a dynamically populated CertInfo struct members;
+This function returns a field from a certificate in the format requested.
 
-The strings can also be NULL.
+If cert is NULL, the Identity parameter is used to locate the certificate.
+If Cert is not NULL, the Identity parameter is not used.
 
-caller should free the CertInfo members once finished.
+@param[in]  This               Auth Protocol Instance Pointer
+@param[in]  Identity           identity to get cert info for
+@param[in]  Cert               Cert to extract info from.  If NULL, use Identity's cert.
+@param[in]  CertSize           Size of supplied cert.  Not used if Cert == NULL.
+@param[in]  Request            Field of the cert to obtain.
+@param[in]  RequestFormat      Return value in this format.
+@param[out] ValueSize          If not NULL, set to size of returned object.
+@param[out] Value              Where to store pointer of allocated return object.  Must
+                               be freed by caller.
 
-@param This               Auth Protocol Instance Pointer
-@param Identity           identity to get cert info for
-@param CertInfo           Caller allocted CertInfo struct.  
-                          Members will be populated with dynamically allocated strings
-                          or NULL. 
-
-@retval EFI_SUCCESS   CertInfo is updated
-@retval ERROR         Couldn't get certinfo
+@retval EFI_SUCCESS       Cert field request successful
+@retval ERROR             Couldn't get certificate info
 **/
 typedef
 EFI_STATUS
 (EFIAPI *DFCI_AUTHENTICATE_GET_CERT_INFO) (
   IN CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
   IN       DFCI_IDENTITY_ID                  Identity,
-  IN       UINT8                            *Cert,
+  IN CONST UINT8                            *Cert          OPTIONAL,
   IN       UINTN                             CertSize,
-  OUT      DFCI_CERT_STRINGS                *CertInfo
+  IN       DFCI_CERT_REQUEST                 CertRequest,
+  IN       DFCI_CERT_FORMAT                  CertFormat,
+  OUT      VOID                            **Value,
+  OUT      UINTN                            *ValueSize     OPTIONAL
   );
 
+
 /**
-This function returns a dynamically allocated Recovery Packet. 
+This function returns a dynamically allocated Recovery Packet.
 caller should free the Packet once finished.
 Identity must be a valid key and have permission to do recovery
 
@@ -179,17 +207,18 @@ EFI_STATUS
   OUT      DFCI_AUTH_RECOVERY_PACKET         **Packet
   );
 
+
 /**
-This function validates the user provided Recovery response against 
+This function validates the user provided Recovery response against
 the active recovery packet for this session.  (1 packet at a given time/boot)
 
 @param This               Auth Protocol Instance Pointer
 @param RecoveryResponse   binary bytes of the recovery response
-@param Size               Size of the response buffer in bytes.  
+@param Size               Size of the response buffer in bytes.
 
-@retval EFI_SUCCESS            - Recovery successful.  DFCI is 
+@retval EFI_SUCCESS            - Recovery successful.  DFCI is
         unenrolled
-@retval EFI_SECURITY_VIOLATION - All valid attempts have been 
+@retval EFI_SECURITY_VIOLATION - All valid attempts have been
         exceeded.  Device needs rebooted.  Recovery session over
 @retval EFI_ACCESS_DENIED      - Incorrect RecoveryResponse.  Try again.
 @retval ERROR                  - Other error
@@ -201,7 +230,6 @@ EFI_STATUS
   IN CONST UINT8                           *RecoveryResponse,
   IN       UINTN                            Size
   );
- 
 
 
 //
@@ -217,7 +245,7 @@ struct _DFCI_AUTHENTICATION_PROTOCOL
   DFCI_AUTHENTICATE_GET_IDENTITY_PROPERTIES     GetIdentityProperties;
   DFCI_AUTHENTICATE_GET_CERT_INFO               GetCertInfo;
   DFCI_AUTHENTICATE_GET_RECOVERY_PACKET         GetRecoveryPacket;
-  DFCI_AUTHENTICATE_SET_RECOVERY_RESPONSE       SetRecoveryResponse; 
+  DFCI_AUTHENTICATE_SET_RECOVERY_RESPONSE       SetRecoveryResponse;
 };
 #pragma pack (pop)
 

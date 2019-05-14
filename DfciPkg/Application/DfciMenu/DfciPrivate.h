@@ -68,7 +68,7 @@ struct _DFCI_NETWORK_REQUEST {
     UINTN                               OwnerThumbprintSize;
     CHAR8                              *HttpsThumbprint;
     UINTN                               HttpsThumbprintSize;
-    CONST VOID                         *HttpsCert;
+    CONST UINT8                        *HttpsCert;
     UINTN                               HttpsCertSize;
     DFCI_SYSTEM_INFORMATION             DfciInfo;
     DFCI_MAIN_LOGIC                     MainLogic;

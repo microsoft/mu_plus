@@ -54,6 +54,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DevicePathLib.h>
 #include <Library/DfciUiSupportLib.h>
 #include <Library/HiiLib.h>
+#include <Library/HttpLib.h>
 #include <Library/JsonLiteParser.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
@@ -120,20 +121,37 @@ HII_VENDOR_DEVICE_PATH                  mHiiVendorDevicePath = {
 #define MAX_MSG_SIZE 600
 
 //*---------------------------------------------------------------------------------------*
+//* Application Global Variables                                                          *
+//*---------------------------------------------------------------------------------------*
+       DFCI_NETWORK_REQUEST                    mDfciNetworkRequest;
+
+//*---------------------------------------------------------------------------------------*
 //* Global Variables                                                                      *
 //*---------------------------------------------------------------------------------------*
 STATIC DFCI_AUTHENTICATION_PROTOCOL           *mAuthenticationProtocol = NULL;
 STATIC DFCI_MENU_CONFIGURATION                 mDfciMenuConfiguration;
 STATIC DFCI_SETTING_PERMISSIONS_PROTOCOL      *mDfciSettingsPermissionProtocol = NULL;
-       DFCI_NETWORK_REQUEST                    mDfciNetworkRequest;
-
-//* Dfci Settings
-STATIC DFCI_CERT_STRINGS                       mZeroTouchCert;    // ZeroTouch information
-STATIC DFCI_CERT_STRINGS                       mOwnerCert;        // Owner information
-STATIC DFCI_CERT_STRINGS                       mUserCert;         // User information
 STATIC DFCI_IDENTITY_MASK                      mIdMask;           // Identities installed
 STATIC CHAR8                                  *mDfciUrl = NULL;
 STATIC UINTN                                   mDfciUrlSize;
+
+typedef struct {
+    DFCI_IDENTITY_ID  Identity;
+    DFCI_CERT_REQUEST CertRequest;
+    DFCI_CERT_FORMAT  CertFormat;
+    EFI_STRING_ID     VfrField;
+} CERT_INIT_TABLE_ENTRY;
+
+static CERT_INIT_TABLE_ENTRY mCertInitTable[] = {
+    { DFCI_IDENTITY_SIGNER_ZTD,   DFCI_CERT_SUBJECT   , DFCI_CERT_FORMAT_CHAR16   , STR_DFCI_ZTD_SUBJECT_FIELD    },
+    { DFCI_IDENTITY_SIGNER_ZTD,   DFCI_CERT_THUMBPRINT, DFCI_CERT_FORMAT_CHAR16_UI, STR_DFCI_ZTD_THUMBPRINT_FIELD },
+    { DFCI_IDENTITY_SIGNER_OWNER, DFCI_CERT_SUBJECT   , DFCI_CERT_FORMAT_CHAR16   , STR_DFCI_OWNER_SUBJECT_FIELD    },
+    { DFCI_IDENTITY_SIGNER_OWNER, DFCI_CERT_THUMBPRINT, DFCI_CERT_FORMAT_CHAR16_UI, STR_DFCI_OWNER_THUMBPRINT_FIELD },
+    { DFCI_IDENTITY_SIGNER_USER,  DFCI_CERT_SUBJECT   , DFCI_CERT_FORMAT_CHAR16   , STR_DFCI_USER_SUBJECT_FIELD    },
+    { DFCI_IDENTITY_SIGNER_USER,  DFCI_CERT_THUMBPRINT, DFCI_CERT_FORMAT_CHAR16_UI, STR_DFCI_USER_THUMBPRINT_FIELD }
+};
+
+#define CERT_TABLE_COUNT (sizeof(mCertInitTable)/sizeof(CERT_INIT_TABLE_ENTRY))
 
 //*---------------------------------------------------------------------------------------*
 //* Hii Config Access functions                                                           *
@@ -226,47 +244,49 @@ CheckIfDfciEnrolled (
         DEBUG((DEBUG_INFO, "%a: Zero Touch certificate is available\n", __FUNCTION__));
     }
 
+    DEBUG((DEBUG_INFO, "IdMask=%x\n",mIdMask));
     if (IS_ZTD_IDENTITY_ENROLLED(mIdMask)) {
-        Status =  mAuthenticationProtocol->GetCertInfo ( mAuthenticationProtocol, DFCI_IDENTITY_SIGNER_ZTD  , NULL, 0, &mZeroTouchCert);
+        Status =  mAuthenticationProtocol->GetCertInfo (
+                            mAuthenticationProtocol,
+                            DFCI_IDENTITY_SIGNER_ZTD,
+                            NULL,
+                            0,
+                            DFCI_CERT_THUMBPRINT,
+                            DFCI_CERT_FORMAT_CHAR8,
+                (VOID **)  &mDfciNetworkRequest.ZeroTouchThumbprint,
+                           &mDfciNetworkRequest.ZeroTouchThumbprintSize);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a - Failed to get ZTD cert. %r\n", __FUNCTION__, Status));
         } else {
-            mDfciMenuConfiguration.DfciZeroTouchEnabled = MENU_TRUE;
-            IsDfciMenuEnabled = TRUE;
-
-            Status = DfciConvertToCHAR8 (mZeroTouchCert.ThumbprintString,
-                                         StrLen (mZeroTouchCert.ThumbprintString),
-                                        &mDfciNetworkRequest.ZeroTouchThumbprint,
-                                        &mDfciNetworkRequest.ZeroTouchThumbprintSize);
-            if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "%a - Failed to convert %s. %r\n", mZeroTouchCert.ThumbprintString, Status));
+            if (NULL != mDfciNetworkRequest.ZeroTouchThumbprint) {
+                mDfciMenuConfiguration.DfciZeroTouchEnabled = MENU_TRUE;
+                IsDfciMenuEnabled = TRUE;
             }
         }
     }
+
     if (IS_OWNER_IDENTITY_ENROLLED(mIdMask)) {
-        Status =  mAuthenticationProtocol->GetCertInfo ( mAuthenticationProtocol, DFCI_IDENTITY_SIGNER_OWNER , NULL, 0, &mOwnerCert);
+        Status =  mAuthenticationProtocol->GetCertInfo (
+                            mAuthenticationProtocol,
+                            DFCI_IDENTITY_SIGNER_OWNER,
+                            NULL,
+                            0,
+                            DFCI_CERT_THUMBPRINT,
+                            DFCI_CERT_FORMAT_CHAR8,
+                (VOID **)  &mDfciNetworkRequest.OwnerThumbprint,
+                           &mDfciNetworkRequest.OwnerThumbprintSize);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a - Failed to get owner cert. %r\n", __FUNCTION__, Status));
         } else {
-            mDfciMenuConfiguration.DfciOwnerEnabled = MENU_TRUE;
-
-            Status = DfciConvertToCHAR8 (mOwnerCert.ThumbprintString,
-                                         StrLen (mOwnerCert.ThumbprintString),
-                                        &mDfciNetworkRequest.OwnerThumbprint,
-                                        &mDfciNetworkRequest.OwnerThumbprintSize);
-            if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "%a - Failed to convert %s. %r\n", mZeroTouchCert.ThumbprintString, Status));
+            if (NULL != mDfciNetworkRequest.OwnerThumbprint) {
+                mDfciMenuConfiguration.DfciOwnerEnabled = MENU_TRUE;
             }
         }
     }
+
     if (IS_USER_IDENTITY_ENROLLED(mIdMask)) {
-        Status =  mAuthenticationProtocol->GetCertInfo ( mAuthenticationProtocol, DFCI_IDENTITY_SIGNER_USER , NULL, 0, &mUserCert);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a - Failed to get user cert. %r\n", __FUNCTION__, Status));
-        } else {
-            mDfciMenuConfiguration.DfciUserEnabled = MENU_TRUE;
-            IsDfciMenuEnabled = TRUE;
-        }
+        mDfciMenuConfiguration.DfciUserEnabled = MENU_TRUE;
+        IsDfciMenuEnabled = TRUE;
     }
 
     Status = DfciGetSystemInfo (&mDfciNetworkRequest.DfciInfo);
@@ -274,6 +294,11 @@ CheckIfDfciEnrolled (
         DEBUG((DEBUG_ERROR, "%a: Unable to get Dfci System Info. %r\n", __FUNCTION__, Status));
     }
 
+    DEBUG((DEBUG_INFO, "%a - IsDfci=%d, ZtdEnabled=%d, OwnerEnabled=%d, UserEnabled=%d\n", __FUNCTION__,
+        IsDfciMenuEnabled,
+        mDfciMenuConfiguration.DfciZeroTouchEnabled,
+        mDfciMenuConfiguration.DfciOwnerEnabled,
+        mDfciMenuConfiguration.DfciUserEnabled));
     return IsDfciMenuEnabled;
 }
 
@@ -291,12 +316,14 @@ GetDfciParameters (
   ) {
 
     STATIC BOOLEAN     AlreadyRun = FALSE;
-    DFCI_CERT_STRINGS  Cert;
-    DFCI_IDENTITY_MASK RecoveryMask;
-    EFI_HII_HANDLE    *RecoveryHandle;
+    CHAR16            *Field;
     UINTN              i;
+    CHAR8             *HostName;
     CHAR8             *Name;
     UINTN              NameSize;
+    VOID              *Parser;
+    DFCI_IDENTITY_MASK RecoveryMask;
+    EFI_HII_HANDLE    *RecoveryHandle;
     EFI_STATUS         Status;
 
 
@@ -315,31 +342,28 @@ GetDfciParameters (
 
         mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_FALSE;
         mDfciMenuConfiguration.DfciRecoveryEnabled = MENU_FALSE;
+
         //
         // Populate Cert information
         //
-        if (mZeroTouchCert.SubjectString != NULL) {
-            DfciSetString16Entry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_ZTD_SUBJECT_FIELD), mZeroTouchCert.SubjectString);
-        }
-
-        if (mZeroTouchCert.ThumbprintString != NULL) {
-            DfciSetString16Entry(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_ZTD_THUMBPRINT_FIELD), mZeroTouchCert.ThumbprintString);
-        }
-
-        if (mOwnerCert.SubjectString != NULL) {
-            DfciSetString16Entry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_OWNER_SUBJECT_FIELD), mOwnerCert.SubjectString);
-        }
-
-        if (mOwnerCert.ThumbprintString != NULL) {
-            DfciSetString16Entry(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_OWNER_THUMBPRINT_FIELD), mOwnerCert.ThumbprintString);
-        }
-
-        if (mUserCert.SubjectString != NULL) {
-            DfciSetString16Entry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_USER_SUBJECT_FIELD), mUserCert.SubjectString);
-        }
-
-        if (mUserCert.ThumbprintString != NULL) {
-            DfciSetString16Entry(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_USER_THUMBPRINT_FIELD), mUserCert.ThumbprintString);
+        for (i = 0; i < CERT_TABLE_COUNT; i++) {
+            Status =  mAuthenticationProtocol->GetCertInfo (
+                                mAuthenticationProtocol,
+                                mCertInitTable[i].Identity,
+                                NULL,
+                                0,
+                                mCertInitTable[i].CertRequest,
+                                mCertInitTable[i].CertFormat,
+                    (VOID **)  &Field,
+                                NULL);
+            if (EFI_ERROR(Status)) {
+                DEBUG((DEBUG_ERROR, "%a - Failed to get %x cert. %r\n", __FUNCTION__,  mCertInitTable[i].Identity));
+            } else {
+                if (NULL != Field) {
+                    DfciSetString16Entry(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(mCertInitTable[i].VfrField), Field);
+                    FreePool (Field);
+                }
+            }
         }
 
         //
@@ -358,32 +382,11 @@ GetDfciParameters (
             DEBUG((DEBUG_INFO, "%a - No Identities have DFCI Recovery Permissions\n",  __FUNCTION__));
         }
 
-        // Ensure there is at least one certificate for any of the Id's that have recovery permission
-        for (i = DFCI_IDENTITY_SIGNER_OWNER; i >= DFCI_IDENTITY_SIGNER_ZTD; i>>=1) {
-            if (i & RecoveryMask) {
-                ZeroMem (&Cert, sizeof(Cert));
-                Status =  mAuthenticationProtocol->GetCertInfo(mAuthenticationProtocol, i, NULL, 0, &Cert);
-                if (EFI_ERROR(Status)) {
-                    DEBUG((DEBUG_ERROR, "%a - Unable to get the cert info for %x. %r\n", __FUNCTION__, i, Status));
-                } else {
-                    RecoveryHandle = HiiGetHiiHandles(&gDfciRecoveryFormsetGuid);
-                    if (RecoveryHandle != NULL) {
-                        mDfciMenuConfiguration.DfciRecoveryEnabled = MENU_TRUE;
-                        DEBUG((DEBUG_INFO, "Dfci Recovery is enabled\n"));
-                        FreePool (RecoveryHandle);
-                    }
-                    if (Cert.SubjectString != NULL) {
-                        FreePool(Cert.SubjectString);
-                    }
-                    if (Cert.IssuerString != NULL) {
-                        FreePool(Cert.IssuerString);
-                    }
-                    if (Cert.ThumbprintString != NULL) {
-                        FreePool(Cert.ThumbprintString);
-                    }
-                    break;
-                }
-            }
+        RecoveryHandle = HiiGetHiiHandles(&gDfciRecoveryFormsetGuid);
+        if (RecoveryHandle != NULL) {
+            mDfciMenuConfiguration.DfciRecoveryEnabled = MENU_TRUE;
+            DEBUG((DEBUG_INFO, "Dfci Recovery is enabled\n"));
+            FreePool (RecoveryHandle);
         }
 
         RecoveryMask = 0;
@@ -412,39 +415,37 @@ GetDfciParameters (
                 goto NO_HTTP_RECOVERY;
             }
 
-            ZeroMem (&Cert, sizeof(Cert));
-            Status = mAuthenticationProtocol->GetCertInfo (mAuthenticationProtocol,
-                                                           0,
-                                                           (VOID *)mDfciNetworkRequest.HttpsCert,
-                                                           mDfciNetworkRequest.HttpsCertSize,
-                                                          &Cert);
+            Status =  mAuthenticationProtocol->GetCertInfo (
+                                mAuthenticationProtocol,
+                                0,
+                                mDfciNetworkRequest.HttpsCert,
+                                mDfciNetworkRequest.HttpsCertSize,
+                                DFCI_CERT_THUMBPRINT,
+                                DFCI_CERT_FORMAT_CHAR8,
+                    (VOID **)  &mDfciNetworkRequest.HttpsThumbprint,
+                               &mDfciNetworkRequest.HttpsThumbprintSize);
             if (EFI_ERROR(Status)) {
                 DEBUG((DEBUG_ERROR, "Error getting Https certificate info. Status = %r\n", Status));
             } else {
-                if (Cert.SubjectString != NULL) {
-                    FreePool(Cert.SubjectString);
-                }
+                if (NULL != mDfciNetworkRequest.HttpsThumbprint) {
 
-                if (Cert.IssuerString != NULL) {
-                    FreePool(Cert.IssuerString);
-                }
 
-                if (Cert.ThumbprintString != NULL) {
-                    Status = DfciConvertToCHAR8 (Cert.ThumbprintString,
-                                                 StrLen (Cert.ThumbprintString),
-                                                &mDfciNetworkRequest.HttpsThumbprint,
-                                                &mDfciNetworkRequest.HttpsThumbprintSize);
+                    Status = HttpParseUrl (mDfciUrl, (UINT32) mDfciUrlSize, FALSE, &Parser);
                     if (EFI_ERROR(Status)) {
-                        DEBUG((DEBUG_ERROR, "%a - Failed to convert %s. %r\n", Cert.ThumbprintString, Status));
+                        DEBUG((DEBUG_ERROR, "%a: Unable to parse host Url\n", __FUNCTION__));
                     } else {
-                        mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_TRUE;
-                        DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_URL_FIELD), mDfciUrl);
+                        Status = HttpUrlGetHostName (mDfciUrl, Parser, &HostName);
+                        if (EFI_ERROR(Status)) {
+                            DEBUG((DEBUG_ERROR, "%a: Unable to parse host Url\n", __FUNCTION__));
+                        } else {
+                            DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_URL_FIELD), HostName);
+                            FreePool (HostName);
+                            mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_TRUE;
+                        }
+                        FreePool (Parser);
                     }
-
-                    FreePool(Cert.ThumbprintString);
                 }
             }
-
         }
 
 NO_HTTP_RECOVERY:
@@ -551,7 +552,7 @@ DfciMenuEntry(
                                                      NULL);
         }
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Error during init - Uninstalling DfciMenu. Code=%r\n", __FUNCTION__, Status));
+            DEBUG((DEBUG_ERROR, "%a: Error during init - Uninstalling Protocols. Code=%r\n", __FUNCTION__, Status));
             gBS->UninstallMultipleProtocolInterfaces (
                  mDfciMenuPrivate.DriverHandle,
                 &gEfiDevicePathProtocolGuid,
@@ -580,7 +581,8 @@ DfciMenuEntry(
  * Display Message Box - Displays a message box with the status of the Dfci Request. If the
  *                       Dfci request appears normal, allow a restart to apply the new settings
  *
- * @param StatusIn
+ * @param StatusIn       What kind of failure
+ * @param Restart        Restart system when dialog is dismissed
  * @param MessageText    Used when a specific message is required
  *
  * @return EFI_STATUS
@@ -824,7 +826,7 @@ IssueDfciUsbRequest (
  *  This function processes the results of changes in configuration.
  *
  *  @param[in]  This               Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
- *  @param in] Action              Specifies the type of action taken by the browser.
+ *  @param in]  Action             Specifies the type of action taken by the browser.
  *  @param[in]  QuestionId         A unique value which is sent to the original
  *                                 exporting driver so that it can identify the type
  *                                 of data to expect.
@@ -984,8 +986,8 @@ RouteConfig (
  *  This function allows a caller to extract the current configuration for one
  *  or more named elements from the target driver.
  *
- *  @param[in]  This               Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
- *  @param[in]  Request            A null-terminated Unicode string in
+ *  @param[in]   This              Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
+ *  @param[in]   Request           A null-terminated Unicode string in
  *                                 <ConfigRequest> format.
  *  @param[out]  Progress          On return, points to a character in the Request
  *                                 string. Points to the string's null terminator if

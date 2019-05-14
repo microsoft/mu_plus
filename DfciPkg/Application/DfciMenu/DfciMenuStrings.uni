@@ -106,9 +106,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #string STR_DFCI_HTTP_UPDATE_NOW            #language en-US  "Refresh from Network"
 
-#string STR_DFCI_URL                        #language en-US  "Url:"
+#string STR_DFCI_URL                        #language en-US  "Server:"
 
-#string STR_DFCI_URL_FIELD                  #language en-US  "Url field missing"
+#string STR_DFCI_URL_FIELD                  #language en-US  "Server field missing"
 
 #string STR_DFCI_USB_RECOVERY               #language en-US  "If your settings manager has provided you with a configuration file on a USB drive, press Refresh from USB to apply the management file."
 

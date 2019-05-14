@@ -273,7 +273,7 @@ the active recovery packet for this session.  (1 packet at a given time/boot)
 EFI_STATUS
 EFIAPI
 SetRecoveryResponse(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
   IN CONST UINT8                            *RecoveryResponse,
   IN       UINTN                            Size
   )

@@ -95,9 +95,9 @@ FreeCertStore()
 }
 
 /**
-Function to initialize the provisioned NV data to defaults. 
+Function to initialize the provisioned NV data to defaults.
 
-This will delete any existing variable and recreate it using the default values. 
+This will delete any existing variable and recreate it using the default values.
 */
 EFI_STATUS
 EFIAPI
@@ -110,7 +110,7 @@ InitializeProvisionedData()
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_INFO, "%a - Failed to Delete internal provisioned var %r\n", __FUNCTION__, Status));
-    //If error that is ok as we will re-initialize anyway
+    //If error that is OK as we will re-initialize anyway
   }
 
   FreeCertStore();  //free any allocated memory
@@ -139,15 +139,15 @@ TransitionOldInternalVar()
 }
 
 
-/** 
-Load the currently provisioned data 
+/**
+Load the currently provisioned data
 from NV Storage to Internal Cert Store.
 
-@retval  EFI_SUCCESS    - Data was valid and loaded into InternalStore from variable. 
-@retval  EFI_NOT_FOUND  - Variable didn't exist.  
-@retval  EFI_COMPROMISED_DATA  - Something inside the variable or attributes were not correct.  Can't trust the data.  
-@retval  EFI_INCOMPATIBLE_VERSION - Version in variable not current.  
-@retval  EFI_UNSUPPORTED  - Max Cert changed or not valid. 
+@retval  EFI_SUCCESS    - Data was valid and loaded into InternalStore from variable.
+@retval  EFI_NOT_FOUND  - Variable didn't exist.
+@retval  EFI_COMPROMISED_DATA  - Something inside the variable or attributes were not correct.  Can't trust the data.
+@retval  EFI_INCOMPATIBLE_VERSION - Version in variable not current.
+@retval  EFI_UNSUPPORTED  - Max Cert changed or not valid.
 @retval  EFI_OUT_OF_RESOURCES - Couldn't allocate memory for variable
 
 **/
@@ -162,8 +162,8 @@ LoadProvisionedData()
   UINTN MaxCertsAllowed;
   DFCI_IDENTITY_ID Identity;
 
-  //Get the variable.  This function will allocate memory 
-  //so it must be freed if Status is not error. 
+  //Get the variable.  This function will allocate memory
+  //so it must be freed if Status is not error.
   Status = GetVariable3(_INTERNAL_PROVISIONED_CERT_VAR_NAME,
     &gDfciInternalVariableGuid,
     (VOID **) &Var,
@@ -297,8 +297,8 @@ LoadProvisionedData()
   if (((mInternalCertStore.PopulatedIdentities & DFCI_IDENTITY_MASK_USER_KEYS) > 0) &&
     ((mInternalCertStore.PopulatedIdentities & DFCI_IDENTITY_SIGNER_OWNER) == 0))
   {
-    DEBUG((DEBUG_INFO, "[AM] - %a - No Owner Key.  Must clear User keys and all data\n", __FUNCTION__));
-    Status = EFI_PROTOCOL_ERROR; 
+    DEBUG((DEBUG_ERROR, "[AM] - %a - No Owner Key.  Must clear User keys and all data\n", __FUNCTION__));
+    Status = EFI_PROTOCOL_ERROR;
     for (UINT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
     {
       Identity = CertIndexToDfciIdentity(i);
@@ -382,8 +382,8 @@ SaveProvisionedData()
 
 
 /*
-Check to see what identities are provisioned and if provisioned return a bitmask
-that convers the provisioned identities.
+Check to see what identities are provisioned and if provisioned return a bit-mask
+that conveys the provisioned identities.
 */
 DFCI_IDENTITY_MASK
 Provisioned()
@@ -394,10 +394,10 @@ Provisioned()
 /*
 Get the CertData and Size for a given provisioned Cert
 
-@param CertData  Double Ptr.  On success return it will point to
-const buffer shared within the module for the cert data
+@param CertData  Double Ptr.  On success return, it will point to a
+                 const buffer shared within the module for the cert data
 @param CertSize  Will be filled in with the size of the Cert
-@param KeyMask   Certificate data being requested
+@param Key       Certificate data being requested
 
 @retval  SUCCESS on found otherwise error
 */
@@ -409,7 +409,7 @@ GetProvisionedCertDataAndSize(
 {
   EFI_STATUS Status= EFI_SUCCESS;
   UINT8 Index = 0;
-  
+
   if ((CertData == NULL) || (CertSize == NULL))
   {
     return EFI_INVALID_PARAMETER;
@@ -443,11 +443,10 @@ GetProvisionedCertDataAndSize(
 }
 
 
-
 /**
-Provisioned Data entry point.  
-This function should load or initialize the variable and the Internal Cert Store on 
-every boot.  This also verifies the contents are valid in flash.  
+Provisioned Data entry point.
+This function should load or initialize the variable and the Internal Cert Store on
+every boot.  This also verifies the contents are valid in flash.
 
 
 **/
@@ -460,20 +459,20 @@ PopulateInternalCertStore()
   Status = LoadProvisionedData();
   if (EFI_ERROR(Status))
   {
-    FreeCertStore();  //free any garbage from load failure. 
+    FreeCertStore();  //free any garbage from load failure.
     switch (Status) {
     case EFI_NOT_FOUND:
-      DEBUG((DEBUG_INFO, "Failed to load provisoned data because it wasn't found. Probably first boot after flash\n"));
+      DEBUG((DEBUG_ERROR, "Failed to load provisioned data because it wasn't found. Probably first boot after flash\n"));
       Status = InitializeProvisionedData();
       break;
 
     case EFI_INCOMPATIBLE_VERSION:
-      DEBUG((DEBUG_INFO, "Provisioned data in different version.  Trying to transition\n"));
+      DEBUG((DEBUG_ERROR, "Provisioned data in different version.  Trying to transition\n"));
       Status = TransitionOldInternalVar();
       break;
 
     case EFI_OUT_OF_RESOURCES:
-      DEBUG((DEBUG_INFO, "%a - Out of resources\n", __FUNCTION__));
+      DEBUG((DEBUG_ERROR, "%a - Out of resources\n", __FUNCTION__));
       ASSERT_EFI_ERROR(Status);
       //try again if release build
       Status = EFI_SUCCESS;
@@ -481,13 +480,13 @@ PopulateInternalCertStore()
 
     case EFI_UNSUPPORTED:
     case EFI_COMPROMISED_DATA:
-      DEBUG((DEBUG_INFO, "Data Corrupted or not valid.  Re-initialize. %r\n", Status));
-      //UEFI Bluescreen - could be unowning system which might not be good. 
+      DEBUG((DEBUG_ERROR, "Data Corrupted or not valid.  Re-initialize. %r\n", Status));
+      //UEFI Blue screen - could be unowned system which might not be good.
       Status = InitializeProvisionedData();
       break;
 
     case EFI_PROTOCOL_ERROR:
-      DEBUG((DEBUG_INFO, "Data Loaded but data didn't follow the rules. Clearning.... %r\n", Status));
+      DEBUG((DEBUG_ERROR, "Data Loaded but data didn't follow the rules. Clearing.... %r\n", Status));
       Status = InitializeProvisionedData();
       break;
 
@@ -505,9 +504,9 @@ PopulateInternalCertStore()
 
 
 /**
-Internal function to map external identites to the cert index used
-internally to store the certificate.  
-If the identity is invalid a invalid index will be returned. 
+Internal function to map external identities to the cert index used
+internally to store the certificate.
+If the identity is invalid a invalid index will be returned.
 **/
 UINT8
 DfciIdentityToCertIndex(DFCI_IDENTITY_ID IdentityId)
@@ -540,7 +539,7 @@ DfciIdentityToCertIndex(DFCI_IDENTITY_ID IdentityId)
 }
 
 /**
- Internal function to map cert Index to the DFCI IDENTITY If the 
+ Internal function to map cert Index to the DFCI IDENTITY If the
  identity is invalid a invalid index will be returned.
 **/
 DFCI_IDENTITY_ID
@@ -594,7 +593,7 @@ DebugPrintCertStore(
 
   DEBUG((DEBUG_INFO, "\n---------- START PRINTING CERT STORE ---------\n"));
   DEBUG((DEBUG_INFO, " Version: 0x%X\n", Store->Version));
-  DEBUG((DEBUG_INFO, " Lsvs:    0x%X\n", Store->Lsv));
+  DEBUG((DEBUG_INFO, " Lsv:     0x%X\n", Store->Lsv));
   DEBUG((DEBUG_INFO, " Populated Identities: 0x%X\n", Store->PopulatedIdentities));
   for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
   {
@@ -611,11 +610,6 @@ DebugPrintCertStore(
   DEBUG((DEBUG_INFO, "---------- END PRINTING CERT STORE ---------\n\n"));
 }
 
-
-//Max length of the Subject/Issuer string.  
-// Our UI can't handle anything longer.  
-#define CERT_STRING_SIZE (200)
-
 /**
 This function returns a dynamically populated CertInfo struct members;
 
@@ -624,28 +618,41 @@ The strings can also be NULL.
 caller should free the CertInfo members once finished.
 
 @param This               Auth Protocol Instance Pointer
-@param Identity           identity to get cert info for
-@param CertInfo           Caller allocted CertInfo struct.
-Members will be populated with dynamically allocated strings
-or NULL.
+@param Identity           identity to get cert provisioned cert if Cert == NULL
+@param Cert               Cert to extract information from
+@param CertSize           Sized of caller provided cert.
+@param CertRequest        Requested information from cert
+@param CertFormat         Format of the returned data
+@param Value              Where to store callee provided buffer. Must
+                          be freed by caller.
+@param ValueSize          If not NULL, where to store size of object returned
 
-@retval EFI_SUCCESS   CertInfo is updated
+
+@retval EFI_SUCCESS   Cert Information returned
 @retval ERROR         Couldn't get certinfo
 **/
 EFI_STATUS
 EFIAPI
 GetCertInfo(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL      *This,
   IN       DFCI_IDENTITY_ID                   Identity,
-  IN       UINT8*                             Cert,
+  IN CONST UINT8                             *Cert          OPTIONAL,
   IN       UINTN                              CertSize,
-  OUT      DFCI_CERT_STRINGS                  *CertInfo
+  IN       DFCI_CERT_REQUEST                  CertRequest,
+  IN       DFCI_CERT_FORMAT                   CertFormat,
+  OUT      VOID                             **Value,
+  OUT      UINTN                             *ValueSize     OPTIONAL
   )
 {
 
-  EFI_STATUS Status = EFI_UNSUPPORTED;
+  EFI_STATUS Status;
+  BOOLEAN    UiFormat;
+  UINT8  CertDigest[SHA1_FINGERPRINT_DIGEST_SIZE]; // SHA1 Digest size is 20 bytes
 
-  if ((CertInfo == NULL) || (This == NULL))
+
+  if ((Value == NULL) || (This == NULL) ||
+      (CertRequest >= DFCI_CERT_REQUEST_MAX) ||
+      (CertFormat >= DFCI_CERT_FORMAT_MAX))
   {
     Status = EFI_INVALID_PARAMETER;
     goto CLEANUP;
@@ -662,11 +669,78 @@ GetCertInfo(
     }
   }
 
-  CertInfo->SubjectString = GetSubjectName(Cert, CertSize, CERT_STRING_SIZE);
-  CertInfo->IssuerString = GetIssuerName(Cert, CertSize, CERT_STRING_SIZE);
-  CertInfo->ThumbprintString = GetSha1Thumbprint(Cert, CertSize);
+  Status = EFI_UNSUPPORTED;
+  UiFormat = FALSE;
+  switch (CertRequest) {
+    case DFCI_CERT_SUBJECT:
+      switch (CertFormat) {
+        case DFCI_CERT_FORMAT_CHAR8:
+          Status = GetSubjectName8 (Cert, CertSize, CERT_STRING_SIZE, (CHAR8 **) Value, ValueSize);
+          break;
+        case DFCI_CERT_FORMAT_CHAR16:
+          Status = GetSubjectName16 (Cert,CertSize, CERT_STRING_SIZE, (CHAR16 **) Value, ValueSize);
+          break;
+        default:
+          DEBUG((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          break;
+      }
+      break;
 
-  Status = EFI_SUCCESS;
+    case   DFCI_CERT_ISSUER:
+      switch (CertFormat) {
+        case DFCI_CERT_FORMAT_CHAR8:
+          Status = GetIssuerName8 (Cert, CertSize, CERT_STRING_SIZE, (CHAR8 **) Value, ValueSize);
+          break;
+        case DFCI_CERT_FORMAT_CHAR16:
+          Status = GetIssuerName16 (Cert, CertSize, CERT_STRING_SIZE, (CHAR16 **) Value, ValueSize);
+          break;
+        default:
+          DEBUG((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          break;
+      }
+      break;
+
+    case   DFCI_CERT_THUMBPRINT:
+      switch (CertFormat) {
+        case DFCI_CERT_FORMAT_CHAR8_UI:
+          UiFormat = TRUE;
+          // Fall through to next case
+        case DFCI_CERT_FORMAT_CHAR8:
+          Status = GetSha1Thumbprint8 (Cert, CertSize, UiFormat, (CHAR8 **) Value, ValueSize);
+          break;
+
+        case DFCI_CERT_FORMAT_CHAR16_UI:
+          UiFormat = TRUE;
+          // Fall through to next case
+        case DFCI_CERT_FORMAT_CHAR16:
+          Status = GetSha1Thumbprint16 (Cert, CertSize, UiFormat, (CHAR16 **) Value, ValueSize);
+          break;
+
+        case DFCI_CERT_FORMAT_BINARY:
+          Status = GetSha1Thumbprint (Cert, CertSize, &CertDigest);
+          if (!EFI_ERROR(Status)) {
+            *Value = AllocateCopyPool (SHA1_FINGERPRINT_DIGEST_SIZE, CertDigest);
+            if (NULL != *Value) {
+              if (NULL != ValueSize) {
+                *ValueSize = SHA1_FINGERPRINT_DIGEST_SIZE;
+              }
+            } else {
+              Status = EFI_OUT_OF_RESOURCES;
+            }
+          }
+          break;
+
+        default:
+          DEBUG((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          break;
+      }
+
+      break;
+
+    default:
+      Status = EFI_INVALID_PARAMETER;
+      goto CLEANUP;
+  }
 
 CLEANUP:
   return Status;
@@ -675,7 +749,7 @@ CLEANUP:
 /**
 Function to return the currently enrolled identities within the system.
 
-This is a combonation of all identities (not just keys).
+This is a combination of all identities (not just keys).
 
 @param This               Auth Protocol Instance Pointer
 @param EnrolledIdentites  pointer to Mask to be updated
@@ -686,7 +760,7 @@ This is a combonation of all identities (not just keys).
 
 **/
 EFI_STATUS
-EFIAPI 
+EFIAPI
 GetEnrolledIdentities(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
   OUT      DFCI_IDENTITY_MASK                 *EnrolledIdentities

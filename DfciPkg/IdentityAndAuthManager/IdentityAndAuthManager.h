@@ -73,6 +73,10 @@ typedef struct {
 #define MAX_NUMBER_OF_CERTS_V1      (4)
 #define MAX_NUMBER_OF_CERTS         (7)
 #define CERT_STRING_SIZE            (200)
+#define SHA1_FINGERPRINT_DIGEST_SIZE           (SHA1_DIGEST_SIZE)
+#define SHA1_FINGERPRINT_DIGEST_STRING_SIZE    (SHA1_DIGEST_SIZE * 2)       // 2 characters per byte
+#define SHA1_FINGERPRINT_DIGEST_STRING_SIZE_UI ((SHA1_DIGEST_SIZE * 3) - 1) // 3 characters per byte (except last)
+
 //
 // Because of how nv is stored it is hard to add a new
 // cert index later.  Therefore create two open slots
@@ -87,6 +91,7 @@ typedef struct {
 #define CERT_RSVD2_INDEX            (6)
 #define CERT_INVALID_INDEX          (0xFF)
 
+#define MAX_SUBJECT_ISSUER_LENGTH 300
 
 #define DFCI_IDENTITY_MASK_LOCAL_PW             (DFCI_IDENTITY_LOCAL)
 #define DFCI_IDENTITY_MASK_KEYS                 (DFCI_IDENTITY_SIGNER_USER | DFCI_IDENTITY_SIGNER_USER1 | DFCI_IDENTITY_SIGNER_USER2 | DFCI_IDENTITY_SIGNER_OWNER | DFCI_IDENTITY_SIGNER_ZTD )
@@ -179,9 +184,12 @@ EFIAPI
 GetCertInfo(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
   IN       DFCI_IDENTITY_ID                    Identity,
-  IN       UINT8*                              Cert,
+  IN CONST UINT8                              *Cert          OPTIONAL,
   IN       UINTN                               CertSize,
-  OUT      DFCI_CERT_STRINGS                  *CertInfo
+  IN       DFCI_CERT_REQUEST                   CertRequest,
+  IN       DFCI_CERT_FORMAT                    CertFormat,
+  OUT      VOID                              **Value,
+  OUT      UINTN                              *ValueSize     OPTIONAL
   );
 
 EFI_STATUS
@@ -223,9 +231,9 @@ AddAuthHandleMapping(
 
 /**
 Function used to create an Auth Token
-and add it to the map for a given ID. 
+and add it to the map for a given ID.
 
-If error occurs it will return invalid auth token. 
+If error occurs it will return invalid auth token.
 **/
 DFCI_AUTH_TOKEN
 EFIAPI
@@ -233,7 +241,7 @@ CreateAuthTokenWithMapping(DFCI_IDENTITY_ID Id);
 
 /**
 Function to dispose any existing identity mappings that
-are for an Id in the Identity Mask. 
+are for an Id in the Identity Mask.
 
 Success for all disposed
 Error for error condition
@@ -352,27 +360,72 @@ VerifySignature(
 
 
 /******************************** Functions to support extracting CERT Data *********************/
-CHAR16*
+EFI_STATUS
 EFIAPI
-GetSubjectName(
-  IN CONST UINT8    *TrustedCert,
-  UINTN    CertLength,
-  UINTN    MaxStringLength
+GetSubjectName8(
+  IN CONST UINT8   *TrustedCert,
+  IN       UINTN    CertLength,
+  IN       UINTN    MaxStringLength,
+  OUT      CHAR8  **Value,
+  OUT      UINTN   *ValueSize  OPTIONAL
   );
 
-CHAR16*
+EFI_STATUS
 EFIAPI
-GetIssuerName(
+GetSubjectName16(
   IN CONST UINT8    *TrustedCert,
-  UINTN    CertLength,
-  UINTN    MaxStringLength
+  IN       UINTN     CertLength,
+  IN       UINTN     MaxStringLength,
+  OUT      CHAR16  **Value,
+  OUT      UINTN    *ValueSize  OPTIONAL
   );
 
-CHAR16*
+EFI_STATUS
+EFIAPI
+GetIssuerName8 (
+  IN CONST UINT8   *TrustedCert,
+  IN       UINTN    CertLength,
+  IN       UINTN    MaxStringLength,
+  OUT      CHAR8  **Value,
+  OUT      UINTN   *ValueSize  OPTIONAL
+  );
+
+EFI_STATUS
+EFIAPI
+GetIssuerName16 (
+  IN CONST UINT8    *TrustedCert,
+  IN       UINTN     CertLength,
+  IN       UINTN     MaxStringLength,
+  OUT      CHAR16  **Value,
+  OUT      UINTN    *ValueSize  OPTIONAL
+  );
+
+EFI_STATUS
 EFIAPI
 GetSha1Thumbprint(
-  IN CONST UINT8    *TrustedCert,
-  UINTN    CertLength);
+  IN CONST UINT8   *TrustedCert,
+  IN       UINTN    CertLength,
+  OUT      UINT8    (*CertDigest)[SHA1_FINGERPRINT_DIGEST_SIZE]);
+
+EFI_STATUS
+EFIAPI
+GetSha1Thumbprint8 (
+  IN CONST UINT8   *TrustedCert,
+  IN       UINTN    CertLength,
+  IN       BOOLEAN  UiFormat,
+  OUT      CHAR8  **Value,
+  OUT      UINTN   *ValueSize  OPTIONAL
+);
+
+EFI_STATUS
+EFIAPI
+GetSha1Thumbprint16(
+  IN CONST UINT8   *TrustedCert,
+  IN       UINTN    CertLength,
+  IN       BOOLEAN  UiFormat,
+  OUT      CHAR16 **Value,
+  OUT      UINTN   *ValueSize  OPTIONAL
+);
 
 /**
  * Populate current identities.  Due to this being new, every boot

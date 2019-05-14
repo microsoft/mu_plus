@@ -341,7 +341,7 @@ ApplyPermissionsInXml(
     Store->DefaultDMask = DMask;
   }
 
-  //All verified.   Now lets walk thru the Permission Entries and add them to our Permission List.  
+  //All verified.   Now lets walk thru the Permission Entries and add them to our Permission List.
   for (Link = InputPermissionsListNode->ChildrenListHead.ForwardLink; Link != &(InputPermissionsListNode->ChildrenListHead); Link = Link->ForwardLink)
   {
     XmlNode *NodeThis = NULL;
@@ -349,7 +349,7 @@ ApplyPermissionsInXml(
     DFCI_PERMISSION_MASK   Mask = 0;
     DFCI_PERMISSION_ENTRY *Entry = NULL;
     CHAR8                  StatusString[25];   //0xFFFFFFFFFFFFFFFF\n
-   
+
     NodeThis = (XmlNode*)Link;   //Link is first member so just cast it.  this is the <Setting> node
     Status = GetInputPermission(NodeThis, &Id, &Mask, &DMask);
     if (EFI_ERROR(Status))
@@ -588,6 +588,7 @@ FreeNvVarsForIncommingPermissions(
  *  After applying Identities, and LKG_COMMIT or LKG_DISCARD must be called
  *
  * @param[in] This:            Apply Packet Protocol
+ * @param[in] Data             Internal Packet
  * @param[in] Operation
  *                        DISCARD   discards the in memory changes, and retores from NV STORE
  *                        COMMIT    Saves the current settings to NV Store
@@ -710,7 +711,7 @@ ValidatePermissionsPacket (
 }
 
 /**
-  Main Entry point into the Xml Provisioning code. 
+  Main Entry point into the Xml Provisioning code.
   This will check the incomming variables, authenticate them, and apply permission settings.
 **/
 
@@ -756,15 +757,15 @@ ApplyNewPermissionsPacket (
 
   Status = ApplyPermissionsInXml(Data);
   if (EFI_ERROR(Status))
-  {  
+  {
     DEBUG((DEBUG_ERROR, "Input Permissions Apply Error\n"));
     goto CLEANUP;
   }
-  
+
   mPermStore->Modified = TRUE;
   Data->LKGDirty = TRUE;
 
-CLEANUP:    
+CLEANUP:
   if (Data->AuthToken != DFCI_AUTH_TOKEN_INVALID)
   {
     mAuthenticationProtocol->DisposeAuthToken(mAuthenticationProtocol, &Data->AuthToken);

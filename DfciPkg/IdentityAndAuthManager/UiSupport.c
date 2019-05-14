@@ -6,11 +6,11 @@ and the platform supplied DfciUiSupportLib.
 
 Copyright (c) 2018, Microsoft Corporation
 
-All rights reserved. 
- 
+All rights reserved.
+
 Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met: 
- 
+modification, are permitted provided that the following conditions are met:
+
 1. Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
 2. Redistributions in binary form must reproduce the above copyright notice,
@@ -38,7 +38,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/DebugLib.h>
 #include <Library/DfciUiSupportLib.h>
 
-#define SHA1_FINGERPRINT_DIGEST_STRING_SIZE 60
 #define CERT_DETAILS_MAX_STRING_LEN (1024)
 
 /**
@@ -109,7 +108,6 @@ GetConfirmationWithDfciAuthDialog (
         DEBUG((DEBUG_INFO, "%a: Invalid entry \n", __FUNCTION__));
         if (Password) {
           ErrorText = L"The certificate thumbprint is incorrect. Try again.\r -OR- \rThe password is incorrect. Try Again.";
-
         } else {
           ErrorText = L"The certificate thumbprint is incorrect. Try Again.";
         }
@@ -251,27 +249,12 @@ QueryCertificateDetails (
   IN UINTN  TrustedCertSize
   )
 {
-  DFCI_CERT_STRINGS CertStrings;
   EFI_STATUS Status;
-  CHAR16* StringToPrint = NULL;
-
-  CertStrings.IssuerString = NULL;
-  CertStrings.SubjectString = NULL;
-  CertStrings.ThumbprintString = NULL;
+  CHAR16    *StringToPrint = NULL;
+  CHAR16    *Field;
 
   if (TrustedCert == NULL) {
     DEBUG((DEBUG_ERROR, "%a: Invalid Data Parameter\n", __FUNCTION__));
-    goto CLEANUP;
-  }
-
-  Status = mAuthProtocol.GetCertInfo(&mAuthProtocol,
-                                     DFCI_MAX_IDENTITY,
-                                     TrustedCert,
-                                     TrustedCertSize,
-                                     &CertStrings);
-
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Failed to get cert info\n", __FUNCTION__));
     goto CLEANUP;
   }
 
@@ -280,13 +263,28 @@ QueryCertificateDetails (
     DEBUG((DEBUG_ERROR, "%a: Failed to allocate memory for StringToPrint\n", __FUNCTION__));
     goto CLEANUP;
   }
+  *StringToPrint = L'\0';
+
+  Status =  GetCertInfo (
+                      &mAuthProtocol,
+                      0,
+                      TrustedCert,
+                      TrustedCertSize,
+                      DFCI_CERT_SUBJECT,
+                      DFCI_CERT_FORMAT_CHAR16,
+          (VOID **)  &Field,
+                      NULL);
+
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a: Failed to get cert info\n", __FUNCTION__));
+    goto CLEANUP;
+  }
 
   //Append Subject Name
-  *StringToPrint = L'\0';
   StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"Subject:           ");
-  if (CertStrings.SubjectString != NULL) {
-    StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, CertStrings.SubjectString);
-
+  if (Field != NULL) {
+    StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, Field);
+    FreePool (Field);
   } else {
     StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"UNKNOWN");
   }
@@ -294,10 +292,25 @@ QueryCertificateDetails (
   StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"\n");
 
   //Append Issuer
-  StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"Issuer:              ");
-  if (CertStrings.IssuerString != NULL) {
-    StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, CertStrings.IssuerString);
+  Status =  GetCertInfo (
+                      &mAuthProtocol,
+                      0,
+                      TrustedCert,
+                      TrustedCertSize,
+                      DFCI_CERT_ISSUER,
+                      DFCI_CERT_FORMAT_CHAR16,
+          (VOID **)  &Field,
+                      NULL);
 
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a: Failed to get cert info\n", __FUNCTION__));
+    goto CLEANUP;
+  }
+
+  StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"Issuer:              ");
+  if (Field != NULL) {
+    StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, Field);
+    FreePool (Field);
   } else {
     StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"UNKNOWN");
   }
@@ -305,11 +318,26 @@ QueryCertificateDetails (
   StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"\n");
 
   //Append Thumbprint
-  StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"Thumbprint:      ");
-  if (CertStrings.ThumbprintString != NULL) {
-    StrnCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, CertStrings.ThumbprintString, 56); // dont display the last two bytes
-    StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"    ");
+  Status =  GetCertInfo (
+                    &mAuthProtocol,
+                    0,
+                    TrustedCert,
+                    TrustedCertSize,
+                    DFCI_CERT_THUMBPRINT,
+                    DFCI_CERT_FORMAT_CHAR16_UI,
+        (VOID **)  &Field,
+                    NULL);
 
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a: Failed to get cert info\n", __FUNCTION__));
+    goto CLEANUP;
+  }
+
+  StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"Thumbprint:      ");
+  if (Field != NULL) {
+    StrnCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, Field, 56); // don't display the last two bytes
+    StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"    ");
+    FreePool (Field);
   } else {
     StrCatS(StringToPrint, CERT_DETAILS_MAX_STRING_LEN, L"UNKNOWN");
   }
@@ -318,26 +346,16 @@ QueryCertificateDetails (
 
 CLEANUP:
 
-  if (CertStrings.IssuerString != NULL) {
-    FreePool(CertStrings.IssuerString);
-  }
-
-  if (CertStrings.SubjectString != NULL) {
-    FreePool(CertStrings.SubjectString);
-  }
-
-  if (CertStrings.ThumbprintString != NULL) {
-    FreePool(CertStrings.ThumbprintString);
-  }
-
   return StringToPrint;
 }
 
 /**
 Takes the Cert Data as an input and returns what the user decides.
 
-@param   Password  Local user password is set or not.
-@param   Data      Certificate Data used for provisioning. Caller needs to DisposeAuthToken.
+@param[in]    Password  Local user password is set or not.
+@param[in]    TrustedCertSize  CertSize
+@param[in]    TrustedCert      Cert
+@param[out]   AuthToken        Returned Authtoken. Caller needs to DisposeAuthToken.
 
 @return  UserConfirmation  Returns the boolean value of if the user chose to unenroll or not
 
@@ -354,7 +372,7 @@ UiEnrollRequest (
 
   CHAR16* BodyText = L"Device Firmware Configurarion Interface(DFCI) will be activated on this device using the following certificate. \r";
   CHAR16* CaptionText = L"Confirm activation of Device Firmware Configuration Interface";
-  DFCI_CERT_STRINGS CertStrings;
+  CHAR16* ThumbprintString;
   CHAR16* CertText;
   CHAR16* ConfirmationText;
   CHAR16* PwdErrText;
@@ -369,15 +387,28 @@ UiEnrollRequest (
   }
 
   //Get the certificate Thumbprint to verify the last two bytes of what the user has entered
-  mAuthProtocol.GetCertInfo(&mAuthProtocol, DFCI_MAX_IDENTITY, TrustedCert, TrustedCertSize, &CertStrings);
-  if ((CertStrings.ThumbprintString != NULL) && ((StrLen(CertStrings.ThumbprintString) + 1) == SHA1_FINGERPRINT_DIGEST_STRING_SIZE)){
-    StrCpyS(ThumbprintCode, 3, CertStrings.ThumbprintString + (StrLen(CertStrings.ThumbprintString) - 2));
+  ThumbprintString = NULL;
+  GetCertInfo (
+                &mAuthProtocol,
+                0,
+                TrustedCert,
+                TrustedCertSize,
+                DFCI_CERT_THUMBPRINT,
+                DFCI_CERT_FORMAT_CHAR16_UI,
+    (VOID **)  &ThumbprintString,
+                NULL);
+
+  if ((ThumbprintString != NULL) && ((StrLen(ThumbprintString)) == SHA1_FINGERPRINT_DIGEST_STRING_SIZE_UI)){
+    StrCpyS(ThumbprintCode,  sizeof(ThumbprintCode), ThumbprintString + (StrLen(ThumbprintString) - 2));
+  }
+
+  if (NULL == ThumbprintString) {
+    FreePool (ThumbprintString);
   }
 
   PwdErrText = L"\rThe Maximum number of activation attempts has been reached. Device Firmware Configuration Interface has not been enabled on this device. \r";
   if (Password) {
     ConfirmationText = L"To confirm activation, enter the last two digits of certificate thumbprint and the UEFI settings password. Then click ok to activate DFCI on this Device.";
-
   } else {
     ConfirmationText = L"\rTo confirm activation, enter the last two digits of certificate thumbprint. Then click ok to activate DFCI on this Device. \r";
   }
@@ -397,18 +428,6 @@ UiEnrollRequest (
   //Free Pointers
   if (CertText != NULL) {
     FreePool(CertText);
-  }
-
-  if (CertStrings.IssuerString != NULL) {
-    FreePool(CertStrings.IssuerString);
-  }
-
-  if (CertStrings.SubjectString != NULL) {
-    FreePool(CertStrings.SubjectString);
-  }
-
-  if (CertStrings.ThumbprintString != NULL) {
-    FreePool(CertStrings.ThumbprintString);
   }
 
   return UserConfirmation;

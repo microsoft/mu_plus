@@ -39,6 +39,7 @@ LIST_ENTRY  mGroupList = INITIALIZE_LIST_HEAD_VARIABLE(mGroupList);        //lin
 static DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
 
 #define CERT_STRING_SIZE (200)
+#define CERT_NOT_AVAILABLE "No Cert information available"
 
 /**
 Helper function to return the string describing the type enum
@@ -388,8 +389,6 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
   BOOLEAN    v = FALSE; //Boolean Types
   UINT8      b = 0xFF;    //Byte types (small enum)
   UINTN      ValueSize;
-  UINTN      ThumbprintLen;
-  DFCI_CERT_STRINGS CertInfo;
 
 
   switch (Provider->Type)
@@ -680,55 +679,25 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
           }
       }
 
-      CertInfo.IssuerString = NULL;
-      CertInfo.SubjectString = NULL;
-      CertInfo.ThumbprintString = NULL;
-
-      Status = mAuthenticationProtocol->GetCertInfo (mAuthenticationProtocol, 0, Buffer, ValueSize, &CertInfo);
-      if (EFI_ERROR(Status)) {
-          FreePool (Buffer);
-          Value = NULL;
-          DEBUG((DEBUG_ERROR, "Error cgetting certificate infor. Status = %r\n", Status));
-          break;
-      }
+      Status =  mAuthenticationProtocol->GetCertInfo (
+                          mAuthenticationProtocol,
+                          0,
+                          Buffer,
+                          ValueSize,
+                          DFCI_CERT_THUMBPRINT,
+                          DFCI_CERT_FORMAT_CHAR8_UI,
+              (VOID **)  &Value,
+                         &ValueSize);
       FreePool (Buffer);
 
-      ValueSize = 0;
-      ThumbprintLen = 0;
-      if (NULL != CertInfo.ThumbprintString) {
-          ValueSize = StrnLenS(CertInfo.ThumbprintString, CERT_STRING_SIZE);
+      if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "Unable to get strings from the certificate\n"));
+        ValueSize = sizeof(CERT_NOT_AVAILABLE);
+        Value = AllocatePool (ValueSize);
+        if (NULL != Value) {
+            AsciiStrnCpyS(Value, ValueSize, CERT_NOT_AVAILABLE, ValueSize-sizeof(CHAR8));
+        }
       }
-
-      Value = NULL;
-      if (ValueSize > 0) {
-          ValueSize += sizeof(CHAR8); // Allow for a terminating NULL
-
-          Value = AllocatePool(ValueSize);
-          Status = UnicodeStrToAsciiStrS(CertInfo.ThumbprintString, Value, ValueSize);
-          if (EFI_ERROR(Status)){
-              FreePool (Value);
-              DEBUG((DEBUG_ERROR,"Unable to build Cert Identifier string.\n"));
-              Value = NULL;
-          }
-      } else {
-          DEBUG((DEBUG_ERROR, "Unable to get any strings from the certificate\n"));
-          ValueSize = sizeof("No Cert information available");
-          Value = AllocatePool (ValueSize);
-          if (NULL != Value) {
-              AsciiStrnCpyS(Value, ValueSize, "No Cert information available", ValueSize-1);
-          }
-      }
-
-      if (NULL != CertInfo.SubjectString) {
-          FreePool (CertInfo.SubjectString);
-      }
-      if (NULL != CertInfo.IssuerString) {
-          FreePool(CertInfo.IssuerString);
-      }
-      if (NULL != CertInfo.ThumbprintString) {
-          FreePool(CertInfo.ThumbprintString);
-      }
-
       break;
 
     case DFCI_SETTING_TYPE_BINARY:

@@ -133,7 +133,7 @@ DfciUiDisplayAuthDialog (
   This routine is called by DFCI to prompt a local user to confirm certificate
   provisioning operations.
 
-  @param  AuthMgrProtocol        Supplies a pointer to the authentication 
+  @param  AuthMgrProtocol        Supplies a pointer to the authentication
                                  manager protocol.
   @param  TrustedCert            Supplies a pointer to a trusted certificate.
   @param  TrustedCertSize        Supplies the size in bytes of the trusted
@@ -149,7 +149,7 @@ DfciUiDisplayAuthDialog (
 EFI_STATUS
 EFIAPI
 DfciUiGetAnswerFromUser(
-  DFCI_AUTHENTICATION_PROTOCOL* AuthMgrProtocol,    
+  DFCI_AUTHENTICATION_PROTOCOL* AuthMgrProtocol,
   UINT8* TrustedCert,
   UINT16 TrustedCertSize,
   OUT DFCI_AUTH_TOKEN* AuthToken

@@ -50,7 +50,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
  * ConvertToCHAR16 - Converts a CHAR8 string to a CHAR16 string.
  *
- * @param[in]   Text           Input CHAR8 String
+ * @param[in]   Text8          Input CHAR8 String
+ * @param[in]   Text8Len       Number of characters in String
  * @param[out]  Text16         Where to store pointer to new CHAR8 string
  * @param[out]  Text16Size     CHAR16 string size (includes NULL)
  *
@@ -143,6 +144,7 @@ DfciConvertToCHAR8 (
 /**
  * SetStringEntry16 - sets the HiiString, and verify that it was accepted.
  *
+ * @param[in]  HiiHandle
  * @param[in]  IdName
  * @param[in]  StringValue
  *
@@ -169,6 +171,7 @@ DfciSetString16Entry (
 /**
  * SetStringEntry - Converts the string to CHAR16, and calls SetString16Entry
  *
+ * @param[in]  HiiHandle
  * @param[in]  IdName
  * @param[in]  StringValue
  *
@@ -203,6 +206,7 @@ DfciSetStringEntry (
  * Get A Setting
  *
  * @param[in]   IdName
+ * @param[in]   Type
  * @param[in]   ValuePtr
  * @param[out]  ValueSize
  *
@@ -288,6 +292,8 @@ CLEANUP_SETTING_EXIT:
 
 /**
  * DfciFreeInfo
+ *
+ * @param[in]  DfciInfo
  *
  * Free the system identifier elements
  **/

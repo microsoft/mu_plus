@@ -53,11 +53,9 @@ CreateXmlStringFromCurrentIdentities(
     XmlNode       *List = NULL;
     XmlNode       *CurrentIdentitiesNode = NULL;
     XmlNode       *CurrentIdentitiesListNode = NULL;
-    CHAR16        *Thumbprint16;
     CHAR8         *Thumbprint;
     CONST CHAR8   *Id;
     BOOLEAN        FreeThumbprint;
-    UINTN          ThumbprintLen;
 
 
     if ((XmlString == NULL) || (StringSize == NULL))
@@ -98,33 +96,19 @@ CreateXmlStringFromCurrentIdentities(
     for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
     {
         Thumbprint = NULL;
-        Thumbprint16 = NULL;
         FreeThumbprint = FALSE;
+        Thumbprint = IDENTITY_CURRENT_NO_CERTIFICATE_VALUE;
         if (mInternalCertStore.Certs[i].Cert != NULL)
         {
-            Thumbprint16 =  GetSha1Thumbprint(mInternalCertStore.Certs[i].Cert, mInternalCertStore.Certs[i].CertSize);
-            if (NULL == Thumbprint16)
+            Status =  GetSha1Thumbprint8(mInternalCertStore.Certs[i].Cert,
+                                         mInternalCertStore.Certs[i].CertSize,
+                                         FALSE,
+                                        &Thumbprint,
+                                         NULL);
+            if (!EFI_ERROR(Status))
             {
-                Thumbprint = IDENTITY_CURRENT_NO_CERTIFICATE_VALUE;
-                ThumbprintLen = sizeof(IDENTITY_CURRENT_NO_CERTIFICATE_VALUE);
-            } else {
-                ThumbprintLen = StrnLenS(Thumbprint16, CERT_STRING_SIZE);
-                Thumbprint = (CHAR8 *) AllocatePool (ThumbprintLen + sizeof(CHAR8));
-                Status = UnicodeStrToAsciiStrS (Thumbprint16, Thumbprint, ThumbprintLen + sizeof(CHAR8));
-                if (EFI_ERROR(Status)) {
-                    FreePool (Thumbprint);
-                    DEBUG((DEBUG_ERROR,"%a - Error converting thumbprint to ASCII. Code=%r\n",__FUNCTION__, Status));
-                    Thumbprint = NULL;
-                } else {
-                    FreeThumbprint = TRUE;
-                }
-                FreePool (Thumbprint16);
+                FreeThumbprint = TRUE;
             }
-        }
-        if (NULL == Thumbprint)
-        {
-            Thumbprint = IDENTITY_CURRENT_NO_CERTIFICATE_VALUE;
-            ThumbprintLen = sizeof(IDENTITY_CURRENT_NO_CERTIFICATE_VALUE);
         }
         switch (CertIndexToDfciIdentity(i))
         {
@@ -147,7 +131,6 @@ CreateXmlStringFromCurrentIdentities(
                 if (TRUE == FreeThumbprint)
                 {
                     FreePool (Thumbprint);
-                    FreeThumbprint = FALSE;
                 }
                 continue;
         }

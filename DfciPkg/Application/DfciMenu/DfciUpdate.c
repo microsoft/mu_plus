@@ -130,25 +130,29 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
         KEYWORD_TRANSITIONING1,
         NULL,
         JSON_ACTION_SET_VARIABLE,
-        JSON_SET_IDENTITY
+        JSON_SET_IDENTITY,
+        TRUE
     },
     {
         KEYWORD_TRANSITIONING2,
         NULL,
         JSON_ACTION_SET_VARIABLE,
-        JSON_SET_IDENTITY2
+        JSON_SET_IDENTITY2,
+        TRUE
     },
     {
         KEYWORD_SETTINGS,
         NULL,
         JSON_ACTION_SET_VARIABLE,
-        JSON_SET_SETTINGS
+        JSON_SET_SETTINGS,
+        TRUE
     },
     {
         KEYWORD_RESULT_MESSAGE,
        &mDfciNetworkRequest.HttpStatus.HttpMessage,
         JSON_ACTION_SET_HTTP_MESSAGE,
-        0
+        0,
+        FALSE
     },
     {
         KEYWORD_RESULT_CODE,
@@ -160,7 +164,8 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
         NULL,
         NULL,
         0,
-        0
+        0,
+        FALSE
     }
 };
 
@@ -171,31 +176,37 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[] = {
     { KEYWORD_PROVISIONING,
       NULL,
       JSON_ACTION_SET_VARIABLE,
-      JSON_SET_IDENTITY
+      JSON_SET_IDENTITY,
+      TRUE
     },
     { KEYWORD_PERMISSIONS,
       NULL,
       JSON_ACTION_SET_VARIABLE,
-      JSON_SET_PERMISSIONS
+      JSON_SET_PERMISSIONS,
+      TRUE
     },
     { KEYWORD_SETTINGS,
       NULL,
       JSON_ACTION_SET_VARIABLE,
-      JSON_SET_SETTINGS
+      JSON_SET_SETTINGS,
+      TRUE
     },
     { KEYWORD_RESULT_MESSAGE,
      &mDfciNetworkRequest.HttpStatus.HttpMessage,
       JSON_ACTION_SET_HTTP_MESSAGE,
-      0
+      0,
+      FALSE
     },
     { KEYWORD_RESULT_CODE,
       &mDfciNetworkRequest.HttpStatus.HttpReturnCode,
      JSON_ACTION_SET_RETURN_CODE,
-      0
+      0,
+      FALSE
     },
     { NULL,
       0,
-      0
+      0,
+      FALSE
     }
 };
 
@@ -336,54 +347,6 @@ Error:
     return Status;
 }
 
-/**
-  EncodeData - Convert blob data to a base64 value
-
-**/
-STATIC
-EFI_STATUS
-EncodeData (
-    CHAR8                *Value,
-    UINTN                 ValueSize,
-    JSON_REQUEST_ELEMENT *Rqst
-  ) {
-
-    EFI_STATUS      Status;
-
-    if (NULL == Value) {
-        Rqst->ValueSize = 0;
-        Rqst->Value = NULL;
-        Status = EFI_SUCCESS;
-    } else {
-        Status = Base64Encode ((UINT8 *) Value,
-                               ValueSize - sizeof(CHAR8),
-                               NULL,
-                              &Rqst->ValueSize);
-        if ((EFI_BUFFER_TOO_SMALL != Status) || (0 == Rqst->ValueSize)) {
-            DEBUG((DEBUG_ERROR,"Unable to convert field for index %a. Size=%d, Code = %r\n", Value, ValueSize, Status));
-            if (EFI_SUCCESS == Status) {
-                Status = EFI_INVALID_PARAMETER;
-            }
-            return Status;
-        }
-
-        Rqst->Value = AllocatePool (Rqst->ValueSize);
-        if (NULL == Rqst->Value) {
-            return EFI_OUT_OF_RESOURCES;
-        }
-
-        Status = Base64Encode ((UINT8 *) Value,
-                               ValueSize - sizeof(CHAR8),
-                               Rqst->Value,
-                              &Rqst->ValueSize);
-    }
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Convert to b64 failed. Code = %r\n", Status));
-    }
-
-    return Status;
-}
 
 /**
  * BuildJsonBootstrapRequest
@@ -408,25 +371,19 @@ BuildJsonBootstrapRequest (
 
     JsonRequest[0].FieldName = KEYWORD_HTTPS_THUMBPRINT;
     JsonRequest[0].FieldSize = sizeof (KEYWORD_HTTPS_THUMBPRINT);
-    Status = EncodeData (NetworkRequest->HttpsThumbprint, NetworkRequest->HttpsThumbprintSize, &JsonRequest[0]);
-    if (EFI_ERROR(Status)) {
-        goto BOOTSTRAP_CLEANUP;
-    }
+    JsonRequest[0].Value = NetworkRequest->HttpsThumbprint;
+    JsonRequest[0].ValueSize = NetworkRequest->HttpsThumbprintSize;
 
     JsonRequest[1].FieldName = KEYWORD_OWNER_THUMBPRINT;
     JsonRequest[1].FieldSize = sizeof (KEYWORD_OWNER_THUMBPRINT);
-    Status = EncodeData (NetworkRequest->OwnerThumbprint, NetworkRequest->OwnerThumbprintSize, &JsonRequest[1]);
-    if (EFI_ERROR(Status)) {
-        goto BOOTSTRAP_CLEANUP;
-    }
+    JsonRequest[1].Value = NetworkRequest->OwnerThumbprint;
+    JsonRequest[1].ValueSize = NetworkRequest->OwnerThumbprintSize;
 
     Status = JsonLibEncode (JsonRequest, JSON_RECOVERY_BOOTSTRAP_COUNT, &JsonRequestString, &JsonRequestStringSize);
     if (!EFI_ERROR(Status)) {
         NetworkRequest->HttpRequest.Body = JsonRequestString;
         NetworkRequest->HttpRequest.BodySize= JsonRequestStringSize;
     }
-
-BOOTSTRAP_CLEANUP:
 
   return Status;
 
@@ -455,31 +412,23 @@ BuildJsonRecoveryRequest (
 
     JsonRequest[0].FieldName = KEYWORD_MFG;
     JsonRequest[0].FieldSize = sizeof (KEYWORD_MFG);
-    Status = EncodeData (NetworkRequest->DfciInfo.Manufacturer, NetworkRequest->DfciInfo.ManufacturerSize, &JsonRequest[0]);
-    if (EFI_ERROR(Status)) {
-        goto BOOTSTRAP_CLEANUP;
-    }
+    JsonRequest[0].Value = NetworkRequest->DfciInfo.Manufacturer;
+    JsonRequest[0].ValueSize = NetworkRequest->DfciInfo.ManufacturerSize;
 
     JsonRequest[1].FieldName = KEYWORD_MODEL;
     JsonRequest[1].FieldSize = sizeof (KEYWORD_MODEL);
-    Status = EncodeData (NetworkRequest->DfciInfo.ProductName, NetworkRequest->DfciInfo.ProductNameSize, &JsonRequest[1]);
-    if (EFI_ERROR(Status)) {
-        goto BOOTSTRAP_CLEANUP;
-    }
+    JsonRequest[1].Value = NetworkRequest->DfciInfo.ProductName;
+    JsonRequest[1].ValueSize = NetworkRequest->DfciInfo.ProductNameSize;
 
     JsonRequest[2].FieldName = KEYWORD_SERIAL;
     JsonRequest[2].FieldSize = sizeof (KEYWORD_SERIAL);
-    Status = EncodeData (NetworkRequest->DfciInfo.SerialNumber, NetworkRequest->DfciInfo.SerialNumberSize, &JsonRequest[2]);
-    if (EFI_ERROR(Status)) {
-        goto BOOTSTRAP_CLEANUP;
-    }
+    JsonRequest[2].Value = NetworkRequest->DfciInfo.SerialNumber;
+    JsonRequest[2].ValueSize = NetworkRequest->DfciInfo.SerialNumberSize;
 
     JsonRequest[3].FieldName = KEYWORD_OWNER_THUMBPRINT;
     JsonRequest[3].FieldSize = sizeof (KEYWORD_OWNER_THUMBPRINT);
-    Status = EncodeData (NetworkRequest->OwnerThumbprint, NetworkRequest->OwnerThumbprintSize, &JsonRequest[3]);
-    if (EFI_ERROR(Status)) {
-        goto BOOTSTRAP_CLEANUP;
-    }
+    JsonRequest[3].Value = NetworkRequest->OwnerThumbprint;
+    JsonRequest[3].ValueSize = NetworkRequest->OwnerThumbprintSize;
 
     Status = JsonLibEncode (JsonRequest, JSON_RECOVERY_REQUEST_COUNT, &JsonRequestString, &JsonRequestStringSize);
     if (!EFI_ERROR(Status)) {
@@ -490,110 +439,9 @@ BuildJsonRecoveryRequest (
         NetworkRequest->HttpRequest.BodySize= JsonRequestStringSize;
     }
 
-BOOTSTRAP_CLEANUP:
-
   return Status;
-
 }
 
-/**
- *  Build Json Request.  For a network request, the current system information
- *                       needs to be provided.
- *
- *  @param[out]  JsonString
- *  @param[out]  JsonStringSize
- *
- **/
-EFI_STATUS
-EFIAPI
-BuildJsonRequest (
-    IN  CHAR8       *OwnerThumbprint,
-    IN  CHAR8       *ZtdThumbprint,
-    OUT CHAR8      **JsonString,
-    OUT UINTN       *JsonStringSize
-  ) {
-
-//    CHAR8                  *JsonRequestString;
-//    UINTN                   JsonRequestStringSize;
-//    JSON_REQUEST_ELEMENT    JsonRequest[4 /*TODO JSON_REQUEST_COUNT*/];
-    EFI_STATUS              Status;
-//    CHAR8                  *Thumbprint;
-//    UINTN                   ThumbprintSize;
-
-    Status = EFI_UNSUPPORTED;
-/**
-    if (OwnerThumbprint != NULL) {
-        ThumbprintSize = Str;
-
-        ThumbprintSize = StrnSizeS(Id, DFCI_MAX_ID_SIZE);
-        if ((IdSize < 1) || (IdSize > DFCI_MAX_ID_SIZE))
-        {
-          DEBUG((DEBUG_ERROR, "%a - Invalid ID length %d for %a\n", __FUNCTION__, IdSize, Id));
-          return EFI_INVALID_PARAMETER;
-        }
-
-        Thumbprint = AllocatePool ()
-    }
-    **/
-    //
-    //  TODO - Add code to get the Owner thumbprint
-    //
-#if 0
-
-#define THUMBPRINT "00 01 02 03 04 05 06 07 08 09 10"
-    Thumbprint = THUMBPRINT;
-    ThumbprintSize = sizeof(THUMBPRINT);
-
-    ZeroMem (JsonRequest, sizeof(JsonRequest));
-
-    Status = DfciGetSystemInfo (&DfciInfo);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Unable to get Dfci System Info. %r\n", __FUNCTION__, Status));
-        goto CLEANUP;
-    }
-
-    JsonRequest[0].FieldName = JSON_REQUEST_MFG;
-    JsonRequest[0].FieldSize = sizeof (JSON_REQUEST_MFG);
-    Status = EncodeData (DfciInfo.Manufacturer, DfciInfo.ManufacturerSize, &JsonRequest[0]);
-    if (EFI_ERROR(Status)) {
-        goto CLEANUP;
-    }
-
-    JsonRequest[1].FieldName = JSON_REQUEST_MODEL;
-    JsonRequest[1].FieldSize = sizeof (JSON_REQUEST_MODEL);
-    Status = EncodeData (DfciInfo.ProductName, DfciInfo.ProductNameSize, &JsonRequest[1]);
-    if (EFI_ERROR(Status)) {
-        goto CLEANUP;
-    }
-
-    JsonRequest[2].FieldName = JSON_REQUEST_SERIAL;
-    JsonRequest[2].FieldSize = sizeof (JSON_REQUEST_SERIAL);
-    Status = EncodeData (DfciInfo.SerialNumber, DfciInfo.SerialNumberSize, &JsonRequest[2]);
-    if (EFI_ERROR(Status)) {
-        goto CLEANUP;
-    }
-
-    JsonRequest[3].FieldName = JSON_REQUEST_THUMBPRINT;
-    JsonRequest[3].FieldSize = sizeof (JSON_REQUEST_THUMBPRINT);
-    Status = EncodeData (Thumbprint, ThumbprintSize, &JsonRequest[3]);
-    if (EFI_ERROR(Status)) {
-        goto CLEANUP;
-    }
-
-    Status = JsonLibEncode (JsonRequest, JSON_REQUEST_COUNT, &JsonRequestString, &JsonRequestStringSize);
-    if (EFI_ERROR(Status)) {
-        *JsonString = NULL;
-        *JsonStringSize = 0;
-    } else {
-        *JsonString = JsonRequestString;
-        *JsonStringSize = JsonRequestStringSize;
-    }
-
-CLEANUP:
-    FreeDfciSystemInfo (&DfciInfo);
-#endif
-    return Status;
-}
 
 /**
  *  Function to process a Json Element
@@ -640,27 +488,35 @@ ProcessFunction (
         if ((Rqst->FieldSize == AsciiStrSize(ResponseTable[j].FieldName)) &&
             (0 == AsciiStrnCmp (ResponseTable[j].FieldName, Rqst->FieldName, Rqst->FieldSize))) {
 
-            ValueSize = 0;
-            Status = Base64Decode(Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), NULL, &ValueSize);
-            if (Status != EFI_BUFFER_TOO_SMALL) {
-              DEBUG((DEBUG_ERROR, "Cannot query binary blob size. Code = %r\n",Status));
-              return EFI_INVALID_PARAMETER;
+            if (ResponseTable[j].DecodeBase64) {
+              ValueSize = 0;
+              Status = Base64Decode(Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), NULL, &ValueSize);
+              if (Status != EFI_BUFFER_TOO_SMALL) {
+                DEBUG((DEBUG_ERROR, "Cannot query binary blob size. Code = %r\n",Status));
+                return EFI_INVALID_PARAMETER;
+              }
+
+              StringValue = (CHAR8 *) AllocatePool (ValueSize + sizeof(CHAR8)); // Allow for extra NULL
+              if (NULL == Rqst->Value) {
+                DEBUG((DEBUG_ERROR, "Cannot allocate Rqst->Value\n"));
+                return EFI_OUT_OF_RESOURCES;
+              }
+
+              Status = Base64Decode (Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), (UINT8 *) StringValue, &ValueSize);
+              if (EFI_ERROR(Status)) {
+                  FreePool (StringValue);
+                  DEBUG((DEBUG_ERROR, "Cannot decode Value data. Code=%r\n",Status));
+                  return Status;
+              }
+              StringValue[ValueSize] = '\0';  // Add a NULL in case it is not part of the string.
+            } else {
+              StringValue = AllocateCopyPool(Rqst->ValueSize, Rqst->Value);
+              if (NULL == StringValue) {
+                return EFI_OUT_OF_RESOURCES;
+              }
+              ValueSize = Rqst->ValueSize;
             }
 
-            StringValue = (CHAR8 *) AllocatePool (ValueSize + sizeof(CHAR8)); // Allow for extra NULL
-            if (NULL == Rqst->Value) {
-              DEBUG((DEBUG_ERROR, "Cannot allocate Rqst->Value\n"));
-              return EFI_OUT_OF_RESOURCES;
-            }
-
-            Status = Base64Decode (Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), (UINT8 *) StringValue, &ValueSize);
-            if (EFI_ERROR(Status)) {
-                FreePool (StringValue);
-                DEBUG((DEBUG_ERROR, "Cannot decode Value data. Code=%r\n",Status));
-                return Status;
-            }
-
-            StringValue[ValueSize] = '\0';  // Add a NULL in case it is not part of the string.
             ActionIndex = ResponseTable[j].VariableIndex;
 
             switch (ResponseTable[j].Action) {
@@ -737,6 +593,7 @@ ProcessFunction (
  *
  * @param [in]  JsonString      - Dfci Update Json string
  * @param [in]  JsonStringSize  - Size of Json String
+ * @param [in]  ResponseTable   - Expected JSON elements
  *
  **/
 EFI_STATUS

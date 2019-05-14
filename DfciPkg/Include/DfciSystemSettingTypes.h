@@ -139,5 +139,4 @@ typedef enum {
 
 typedef UINT8 DFCI_PERMISSION_MASK; //currently only have 6 Identities so 8 bits is plenty
 
-
 #endif  // __DFCI_SETTING_TYPES_H__
