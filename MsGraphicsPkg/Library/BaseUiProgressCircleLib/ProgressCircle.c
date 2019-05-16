@@ -43,9 +43,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define BMP_PADDING 1
 
-#pragma warning (push)
-#pragma warning(disable:4200)
-
 typedef struct{
   ProgressCircle PublicPC;
   UINT32 ProgressBackgroundColor;         //Color for unused progress
@@ -56,8 +53,6 @@ typedef struct{
   INTN   BmpWidth;                        //Width of circle bounding box including required padding.
   UINT8  BitmapData[0];
 } PRIVATE_ProgressCircle;
-
-#pragma warning (pop)
 
 //
 // To determine what segment a point is in 
