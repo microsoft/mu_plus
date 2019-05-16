@@ -38,7 +38,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/VariablePolicy.h>
 
 #include <Guid/EventGroup.h>
-#include <Guid/DxePhaseVariables.h>
+#include <Guid/MuVarPolicyFoundationDxe.h>
 
 EFI_EVENT                 mEndOfDxeEvent;
 EFI_EVENT                 mReadyToBootEvent;
@@ -238,29 +238,18 @@ MuVarPolicyFoundationDxeMain (
     DEBUG(( DEBUG_ERROR, "%a - Failed to set namespace VariablePolicy! %r\n", __FUNCTION__, PolicyStatus ));
   }
 
-
-
   // Register a policy to describe the write-once state variable namespace.
-  // IMPORTANT NOTE: On the whole, it is a *bad* idea to use LOCK_ON_CREATE for a namespace policy.
-  //                 However, since these are are all forced to be Volatile variables and since you can't create
-  //                 volatile variables after ExitBootServices (and the variables will disappear on reboot),
-  //                 this isn't the end of the world.
-  WriteOnceStateVarPolicy.Version             = VARIABLE_POLICY_ENTRY_REVISION;
-  WriteOnceStateVarPolicy.Size                = sizeof(VARIABLE_POLICY_ENTRY);
-  WriteOnceStateVarPolicy.OffsetToName        = sizeof(VARIABLE_POLICY_ENTRY);
-  CopyGuid( &WriteOnceStateVarPolicy.Namespace, &gMuVarPolicyWriteOnceStateVarGuid );
-  WriteOnceStateVarPolicy.MinSize             = sizeof(POLICY_LOCK_VAR);
-  WriteOnceStateVarPolicy.MaxSize             = sizeof(POLICY_LOCK_VAR);
-  WriteOnceStateVarPolicy.AttributesMustHave  = WRTIE_ONCE_STATE_VAR_ATTR;
-  WriteOnceStateVarPolicy.AttributesCantHave  = (UINT32)(~WRTIE_ONCE_STATE_VAR_ATTR);
-  WriteOnceStateVarPolicy.LockPolicyType      = VARIABLE_POLICY_TYPE_LOCK_ON_CREATE;
-  Status = ProtocolRegisterVariablePolicy( &WriteOnceStateVarPolicy );
-  if (EFI_ERROR( Status )) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to register WriteOnce state var policy! %r\n", __FUNCTION__, Status ));
+  if (!EFI_ERROR( PolicyStatus )) {
+    CopyGuid( &PolicyEntry.Namespace, &gMuVarPolicyWriteOnceStateVarGuid );
+    PolicyEntry.MinSize             = sizeof(POLICY_LOCK_VAR);
+    PolicyEntry.MaxSize             = sizeof(POLICY_LOCK_VAR);
+    PolicyEntry.AttributesMustHave  = WRTIE_ONCE_STATE_VAR_ATTR;
+    PolicyEntry.AttributesCantHave  = (UINT32)(~WRTIE_ONCE_STATE_VAR_ATTR);
+    PolicyStatus = VariablePolicy->RegisterVariablePolicy( &PolicyEntry );
+    if (EFI_ERROR( PolicyStatus )) {
+      DEBUG(( DEBUG_ERROR, "%a - Failed to register WriteOnce state var policy! %r\n", __FUNCTION__, PolicyStatus ));
+    }
   }
-
-
-  
 
   if (!EFI_ERROR( PolicyStatus )) {
     //

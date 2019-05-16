@@ -46,6 +46,8 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
 
 
 [LibraryClasses]
