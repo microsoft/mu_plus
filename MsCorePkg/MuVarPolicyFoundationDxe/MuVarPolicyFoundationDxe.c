@@ -40,8 +40,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/EventGroup.h>
 #include <Guid/DxePhaseVariables.h>
 
-// TODO VARPOL: Make sure that an authenticated variable can be deleted with a MinSize policy and policy enforcement enabled.
-
 EFI_EVENT                 mEndOfDxeEvent;
 EFI_EVENT                 mReadyToBootEvent;
 EFI_EVENT                 mExitBootServicesEvent;
@@ -49,11 +47,6 @@ EFI_EVENT                 mExitBootServicesEvent;
 BOOLEAN                   mEndOfDxeIndicatorSet = FALSE;
 BOOLEAN                   mReadyToBootIndicatorSet = FALSE;
 BOOLEAN                   mExitBootServicesIndicatorSet = FALSE;
-
-// TODO VARPOL: Change this to a Mu Plus driver.
-//              Make it the "foundational policy something driver".
-//              Add the write-once policy and the phase variable policy code into this.
-//              Combine the GUID files.
 
 /**
   Creates an indicator variable with the supplied attributes.
@@ -75,7 +68,7 @@ SetPhaseIndicator (
   EFI_STATUS        Status = EFI_SUCCESS;
   PHASE_INDICATOR   Indicator = TRUE;
 
-  DEBUG(( DEBUG_VERBOSE, "VERBOSE [DxePhase] %a - Setting indicator '%s'...\n", __FUNCTION__, IndicatorName ));
+  DEBUG(( DEBUG_VERBOSE, "%a - Setting indicator '%s'...\n", __FUNCTION__, IndicatorName ));
 
   //
   // Attempt to create the variable.
@@ -86,7 +79,7 @@ SetPhaseIndicator (
                              &Indicator );
   if (EFI_ERROR( Status ))
   {
-    DEBUG(( DEBUG_ERROR, "ERROR [DxePhase] %a - Error creating indicator! %r\n", __FUNCTION__, Status ));
+    DEBUG(( DEBUG_ERROR, "%a - Error creating indicator! %r\n", __FUNCTION__, Status ));
     ASSERT_EFI_ERROR( Status );
     Status = EFI_OUT_OF_RESOURCES;    // Set the correct return value.
     // TODO VARPOL: Telemetry.
@@ -220,7 +213,7 @@ MuVarPolicyFoundationDxeMain (
   EFI_STATUS                  ReadyToBootStatus;
   EFI_STATUS                  ExitBootServicesStatus;
 
-  DEBUG(( DEBUG_VERBOSE, "VERBOSE [DxePhase] %a()\n", __FUNCTION__ ));
+  DEBUG(( DEBUG_VERBOSE, "%a()\n", __FUNCTION__ ));
 
   //
   // First, make sure that we can locate and set the required policy.
@@ -242,7 +235,7 @@ MuVarPolicyFoundationDxeMain (
     PolicyStatus = VariablePolicy->RegisterVariablePolicy( &PolicyEntry );
   }
   if (EFI_ERROR( PolicyStatus )) {
-    DEBUG(( DEBUG_ERROR, "ERROR [DxePhase] %a - Failed to set namespace VariablePolicy! %r\n", __FUNCTION__, PolicyStatus ));
+    DEBUG(( DEBUG_ERROR, "%a - Failed to set namespace VariablePolicy! %r\n", __FUNCTION__, PolicyStatus ));
   }
 
 
@@ -280,7 +273,7 @@ MuVarPolicyFoundationDxeMain (
                                          &mEndOfDxeEvent );
     if (EFI_ERROR( EndOfDxeStatus ))
     {
-      DEBUG(( DEBUG_ERROR, "ERROR [DxePhase] %a - EndOfDxe callback registration failed! %r\n", __FUNCTION__, EndOfDxeStatus ));
+      DEBUG(( DEBUG_ERROR, "%a - EndOfDxe callback registration failed! %r\n", __FUNCTION__, EndOfDxeStatus ));
     }
 
     //
@@ -293,7 +286,7 @@ MuVarPolicyFoundationDxeMain (
                                             &mReadyToBootEvent );
     if (EFI_ERROR( ReadyToBootStatus ))
     {
-      DEBUG(( DEBUG_ERROR, "ERROR [DxePhase] %a - ReadyToBoot callback registration failed! %r\n", __FUNCTION__, ReadyToBootStatus ));
+      DEBUG(( DEBUG_ERROR, "%a - ReadyToBoot callback registration failed! %r\n", __FUNCTION__, ReadyToBootStatus ));
     }
 
     //
@@ -306,7 +299,7 @@ MuVarPolicyFoundationDxeMain (
                                                  &mExitBootServicesEvent );
     if (EFI_ERROR( ExitBootServicesStatus ))
     {
-      DEBUG(( DEBUG_ERROR, "ERROR [DxePhase] %a - ExitBootServices callback registration failed! %r\n", __FUNCTION__, ExitBootServicesStatus ));
+      DEBUG(( DEBUG_ERROR, "%a - ExitBootServices callback registration failed! %r\n", __FUNCTION__, ExitBootServicesStatus ));
     }
   }
 
