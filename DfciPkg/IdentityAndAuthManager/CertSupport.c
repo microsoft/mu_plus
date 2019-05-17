@@ -90,9 +90,9 @@ GetSubjectName8 (
       return Status;
   }
 
-  if (AsciiNameSize >= MaxStringLength) {
-    AsciiNameSize = MaxStringLength;
-    AsciiName[MaxStringLength] = '\0';
+  if (AsciiNameSize > (MaxStringLength + sizeof(CHAR8))) {
+    AsciiNameSize = MaxStringLength + sizeof(CHAR8);
+    AsciiStrCpyS(&AsciiName[MaxStringLength-sizeof(MORE_INDICATOR)+1], sizeof(MORE_INDICATOR), MORE_INDICATOR);
   }
 
   *Value = AsciiName;

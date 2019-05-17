@@ -357,9 +357,11 @@ GetDfciParameters (
                     (VOID **)  &Field,
                                 NULL);
             if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "%a - Failed to get %x cert. %r\n", __FUNCTION__,  mCertInitTable[i].Identity));
+                DEBUG((DEBUG_ERROR, "%a - Failed to get %x cert. %r\n", __FUNCTION__,  mCertInitTable[i].Identity, Status));
             } else {
                 if (NULL != Field) {
+                    DEBUG((DEBUG_INFO, "String is %s", Field));
+                    DEBUG((DEBUG_INFO, "\n"));
                     DfciSetString16Entry(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(mCertInitTable[i].VfrField), Field);
                     FreePool (Field);
                 }

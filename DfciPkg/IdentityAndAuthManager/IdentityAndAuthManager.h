@@ -72,10 +72,11 @@ typedef struct {
 
 #define MAX_NUMBER_OF_CERTS_V1      (4)
 #define MAX_NUMBER_OF_CERTS         (7)
-#define CERT_STRING_SIZE            (200)
+#define CERT_STRING_SIZE            (80)
 #define SHA1_FINGERPRINT_DIGEST_SIZE           (SHA1_DIGEST_SIZE)
 #define SHA1_FINGERPRINT_DIGEST_STRING_SIZE    (SHA1_DIGEST_SIZE * 2)       // 2 characters per byte
 #define SHA1_FINGERPRINT_DIGEST_STRING_SIZE_UI ((SHA1_DIGEST_SIZE * 3) - 1) // 3 characters per byte (except last)
+#define MORE_INDICATOR "..."
 
 //
 // Because of how nv is stored it is hard to add a new
