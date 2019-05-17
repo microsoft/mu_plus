@@ -28,7 +28,9 @@
 #include "DxeDebugLibRouter.h"
 
 static volatile BOOLEAN       mIsRscAvailable = FALSE;
+static volatile BOOLEAN       mIsBSAvailable = TRUE;
 EFI_EVENT                     mReportStatusCodeRegisterEvent;
+EFI_EVENT                     mExitBootServicesRegisterEvent;
 static EFI_BOOT_SERVICES     *mBS = NULL;
 
 /**
@@ -48,6 +50,31 @@ ReportStatusCodeHandlerCallback(
 ) {
     mIsRscAvailable = TRUE;
     mBS->CloseEvent (mReportStatusCodeRegisterEvent);
+    return;
+}
+
+
+/**
+  Exit Boot Services Callback Handler
+
+  @param[in] Event      Event that signalled the callback.
+  @param[in] Context    Pointer to an optional event contxt.
+
+  @retval None.
+
+**/
+VOID
+EFIAPI
+ExitBootServicesHandlerCallback(
+    IN  EFI_EVENT    Event,
+    IN  VOID    *Context
+) {
+    EFI_STATUS Status;
+    mIsBSAvailable = FALSE;
+    if(mExitBootServicesRegisterEvent != NULL) {
+      Status = mBS->CloseEvent(mExitBootServicesRegisterEvent);
+      ASSERT_EFI_ERROR (Status);
+    }
     return;
 }
 
@@ -108,7 +135,44 @@ DxeDebugLibConstructor(
       mIsRscAvailable = TRUE;
     }
 
+    //
+    // Setup callback in case Exit BS is called and other callbacks needs to print
+    // This should be set to a level higher than Status Code Handler callback
+    //
+    Status = mBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
+                                TPL_NOTIFY,
+                                ExitBootServicesHandlerCallback,
+                                NULL,
+                                &gEfiEventExitBootServicesGuid,
+                                &mExitBootServicesRegisterEvent);
+    ASSERT_EFI_ERROR (Status);
+
     return EFI_SUCCESS;
+}
+
+/**
+* Destructor for Debug Router Lib. Unregisters EBS callback to prevent
+* function calls on unloaded library
+*
+* @param  ImageHandle   The firmware allocated handle for the EFI image.
+* @param  SystemTable   A pointer to the EFI System Table.
+*
+* @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
+*
+**/
+EFI_STATUS
+EFIAPI
+DxeDebugLibDestructor(
+    IN      EFI_HANDLE                ImageHandle,
+    IN      EFI_SYSTEM_TABLE          *SystemTable
+) {
+  EFI_STATUS Status;
+  if(mExitBootServicesRegisterEvent != NULL) {
+    Status = mBS->CloseEvent(mExitBootServicesRegisterEvent);
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -136,7 +200,7 @@ DebugPrint (
   VA_LIST       Marker;
   DEBUG_PRINT   *DebugPrintFunction;
 
-  if (mIsRscAvailable) {
+  if (mIsBSAvailable && mIsRscAvailable) {
     DebugPrintFunction = ReportStatusCodeDebugPrint;
   }
   else {
@@ -287,7 +351,7 @@ DebugPrintValist(
 ) {
   DEBUG_PRINT   *DebugPrintFunction;
 
-  if (mIsRscAvailable) {
+  if (mIsBSAvailable && mIsRscAvailable) {
     DebugPrintFunction = ReportStatusCodeDebugPrint;
   }
   else {
@@ -331,7 +395,7 @@ DebugAssert (
 {
   DEBUG_ASSERT   *DebugAssertFunction;
 
-  if (mIsRscAvailable) {
+  if (mIsBSAvailable && mIsRscAvailable) {
     DebugAssertFunction = ReportStatusCodeDebugAssert;
   }
   else {

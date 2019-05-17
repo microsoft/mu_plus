@@ -89,9 +89,15 @@ DxeEntry (
 
   mRscHandlerProtocol->Register(SerialStatusCode, TPL_HIGH_LEVEL);
 
+  //
+  // This callback should be invoked AFTER the ExitBootServices callback
+  // in DxeDebugLibRouter is completed to provide better print coverage.
+  // So once this callback is triggered, all protocol based debug prints
+  // could be routed to serial ports. TPL is used to guarantee sequence
+  //
   Status = gBS->CreateEventEx (
               EVT_NOTIFY_SIGNAL,
-              TPL_NOTIFY,
+              TPL_CALLBACK,
               UnregisterBootTimeHandlers,
               NULL,
               &gEfiEventExitBootServicesGuid,
