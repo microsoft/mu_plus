@@ -121,7 +121,7 @@ GetRecoveryPacket(
   UINTN  EDataSize = 0;
   DFCI_AUTH_RECOVERY_PACKET *LocalPacket = NULL;
   UINTN LocalSize = 0;
-  UINT8 *CertData = NULL;  //DONT FREE THIS AS IT POINTS TO MODULE DATA
+  CONST UINT8 *CertData = NULL;  //DON'T FREE THIS AS IT POINTS TO MODULE DATA
   UINTN CertDataSize = 0;
   UINTN ChallengeSize = 0;
 

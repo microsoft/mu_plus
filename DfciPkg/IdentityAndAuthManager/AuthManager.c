@@ -296,7 +296,7 @@ AuthWithSignedData(
   //
   if ((Id == DFCI_IDENTITY_INVALID) && (IdMask & DFCI_IDENTITY_SIGNER_ZTD ))
   {
-    UINT8* OwnerCertData = NULL;
+    CONST UINT8* OwnerCertData = NULL;
     UINTN  OwnerCertSize = 0;
 
     Status = GetProvisionedCertDataAndSize(&OwnerCertData, &OwnerCertSize, DFCI_IDENTITY_SIGNER_ZTD );
@@ -320,7 +320,7 @@ AuthWithSignedData(
   //
   if ((Id == DFCI_IDENTITY_INVALID) && (IdMask & DFCI_IDENTITY_SIGNER_OWNER))
   {
-    UINT8* OwnerCertData = NULL;
+    CONST UINT8* OwnerCertData = NULL;
     UINTN  OwnerCertSize = 0;
 
     Status = GetProvisionedCertDataAndSize(&OwnerCertData, &OwnerCertSize, DFCI_IDENTITY_SIGNER_OWNER);
@@ -344,7 +344,7 @@ AuthWithSignedData(
   //
   if ((Id == DFCI_IDENTITY_INVALID) && (IdMask & DFCI_IDENTITY_SIGNER_USER))
   {
-    UINT8* UserCertData = NULL;
+    CONST UINT8* UserCertData = NULL;
     UINTN  UserCertSize = 0;
 
     Status = GetProvisionedCertDataAndSize(&UserCertData, &UserCertSize, DFCI_IDENTITY_SIGNER_USER);
@@ -369,7 +369,7 @@ AuthWithSignedData(
   //
   if ((Id == DFCI_IDENTITY_INVALID) && (IdMask & DFCI_IDENTITY_SIGNER_USER1))
   {
-    UINT8* UserCertData = NULL;
+    CONST UINT8* UserCertData = NULL;
     UINTN  UserCertSize = 0;
 
     Status = GetProvisionedCertDataAndSize(&UserCertData, &UserCertSize, DFCI_IDENTITY_SIGNER_USER1);
@@ -394,7 +394,7 @@ AuthWithSignedData(
   //
   if ((Id == DFCI_IDENTITY_INVALID) && (IdMask & DFCI_IDENTITY_SIGNER_USER2))
   {
-    UINT8* UserCertData = NULL;
+    CONST UINT8* UserCertData = NULL;
     UINTN  UserCertSize = 0;
 
     Status = GetProvisionedCertDataAndSize(&UserCertData, &UserCertSize, DFCI_IDENTITY_SIGNER_USER2);

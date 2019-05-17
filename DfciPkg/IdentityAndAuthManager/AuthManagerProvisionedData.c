@@ -86,7 +86,7 @@ FreeCertStore()
     {
       if (mInternalCertStore.Certs[i].Cert != NULL)
       {
-        FreePool(mInternalCertStore.Certs[i].Cert);
+        FreePool((VOID *) mInternalCertStore.Certs[i].Cert);
       }
       mInternalCertStore.Certs[i].CertSize = 0;
       mInternalCertStore.Certs[i].Cert = NULL;
@@ -249,7 +249,7 @@ LoadProvisionedData()
     mInternalCertStore.Certs[i].CertSize = (UINTN)(Var->CertSizes[i]);
     if (mInternalCertStore.Certs[i].Cert != NULL)
     {
-      FreePool (mInternalCertStore.Certs[i].Cert);
+      FreePool ((VOID *)mInternalCertStore.Certs[i].Cert);
       mInternalCertStore.Certs[i].Cert = NULL;
     }
     if (Var->CertSizes[i] == 0)
@@ -274,7 +274,7 @@ LoadProvisionedData()
       goto CLEANUP;
     }
 
-    CopyMem(mInternalCertStore.Certs[i].Cert, BytePtr, mInternalCertStore.Certs[i].CertSize);
+    CopyMem((VOID *)mInternalCertStore.Certs[i].Cert, BytePtr, mInternalCertStore.Certs[i].CertSize);
     BytePtr += mInternalCertStore.Certs[i].CertSize;
     VarSize -= mInternalCertStore.Certs[i].CertSize;
     Status = EFI_SUCCESS;
@@ -306,7 +306,7 @@ LoadProvisionedData()
       {
         if (mInternalCertStore.Certs[i].Cert != NULL)
         {
-          FreePool (mInternalCertStore.Certs[i].Cert);
+          FreePool ((VOID *) mInternalCertStore.Certs[i].Cert);
           mInternalCertStore.Certs[i].Cert = NULL;
           mInternalCertStore.Version = 0;
           mInternalCertStore.Lsv = 0;
@@ -403,8 +403,8 @@ Get the CertData and Size for a given provisioned Cert
 */
 EFI_STATUS
 GetProvisionedCertDataAndSize(
-  OUT UINT8   **CertData,
-  OUT UINTN   *CertSize,
+  OUT UINT8 CONST **CertData,
+  OUT UINTN        *CertSize,
   IN  DFCI_IDENTITY_ID Key)
 {
   EFI_STATUS Status= EFI_SUCCESS;

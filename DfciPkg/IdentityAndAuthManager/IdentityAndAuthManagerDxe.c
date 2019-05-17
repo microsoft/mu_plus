@@ -107,7 +107,7 @@ Init(
           (mInternalCertStore.Certs[CERT_OWNER_INDEX].Cert == NULL))
       {
         if (FeaturePcdGet(PcdDfciEnabled)) {
-          Status = GetZeroTouchCertificate( &mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert,
+          Status = GetZeroTouchCertificate( (UINT8 **) &mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert,
                                             &mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize);
           if (EFI_ERROR(Status))
           {
@@ -124,7 +124,7 @@ Init(
       if (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert != NULL)
       {
         SaveState = TRUE;
-        FreePool (mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert);
+        FreePool ((VOID *) mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert);
         mInternalCertStore.Certs[CERT_ZTD_INDEX].Cert = NULL;
         mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize = 0;
         mInternalCertStore.PopulatedIdentities &= ~DFCI_IDENTITY_SIGNER_ZTD;

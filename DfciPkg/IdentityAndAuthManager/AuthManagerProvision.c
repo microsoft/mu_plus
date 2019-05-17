@@ -470,7 +470,7 @@ ApplyProvisionData(
   //Remove old if present
   if (mInternalCertStore.Certs[Index].Cert != NULL)
   {
-    FreePool(mInternalCertStore.Certs[Index].Cert);
+    FreePool((VOID *) mInternalCertStore.Certs[Index].Cert);
     mInternalCertStore.Certs[Index].Cert = NULL;
     mInternalCertStore.Certs[Index].CertSize = 0;
 
@@ -484,7 +484,7 @@ ApplyProvisionData(
     mInternalCertStore.Certs[Index].Cert = NewCertData;
     mInternalCertStore.Certs[Index].CertSize = Data->PayloadSize;
 
-    CopyMem(mInternalCertStore.Certs[Index].Cert, Data->Payload, mInternalCertStore.Certs[Index].CertSize);
+    CopyMem((VOID *) mInternalCertStore.Certs[Index].Cert, Data->Payload, mInternalCertStore.Certs[Index].CertSize);
     mInternalCertStore.PopulatedIdentities |= (Data->DfciIdentity);  //Set the populatedIdentities
   }
 

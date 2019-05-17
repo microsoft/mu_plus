@@ -66,8 +66,8 @@ extern DFCI_APPLY_PACKET_PROTOCOL mApplyIdentityProtocol;
 // of provisioned data
 //
 typedef struct {
-  UINT8   *Cert;
-  UINTN   CertSize;
+  CONST UINT8 *Cert;
+  UINTN        CertSize;
 }INTERNAL_CERT_DETAILS;
 
 #define MAX_NUMBER_OF_CERTS_V1      (4)
@@ -279,8 +279,8 @@ Get the CertData and Size for a given provisioned Cert
 */
 EFI_STATUS
 GetProvisionedCertDataAndSize(
-  OUT UINT8   **CertData,
-  OUT UINTN   *CertSize,
+  OUT UINT8 CONST **CertData,
+  OUT UINTN        *CertSize,
   IN  DFCI_IDENTITY_ID Identity);
 
 /**
