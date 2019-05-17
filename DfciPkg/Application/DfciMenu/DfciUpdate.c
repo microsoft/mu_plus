@@ -121,6 +121,8 @@ STATIC JSON_SET_VARIABLE_TABLE_ENTRY mJsonSetVariableEntryMailbox[] = {
 #define KEYWORD_RESULT_CODE       "ResultCode"
 #define KEYWORD_OWNER_THUMBPRINT  "DdsWildcardCertificateThumbprint"
 #define KEYWORD_HTTPS_THUMBPRINT  "DdsEncryptionCertificateThumbprint"
+#define KEYWORD_TENANTID          "TenantId"
+#define KEYWORD_REGISTRATIONID    "RegistrationId"
 
 //
 // DFCI RecoveryBootstrap response
@@ -402,7 +404,7 @@ BuildJsonRecoveryRequest (
   IN DFCI_NETWORK_REQUEST *NetworkRequest
   ) {
 
-#define JSON_RECOVERY_REQUEST_COUNT 4
+#define JSON_RECOVERY_REQUEST_COUNT 6
 
     JSON_REQUEST_ELEMENT    JsonRequest[JSON_RECOVERY_REQUEST_COUNT];
     CHAR8                  *JsonRequestString;
@@ -429,6 +431,16 @@ BuildJsonRecoveryRequest (
     JsonRequest[3].FieldSize = sizeof (KEYWORD_OWNER_THUMBPRINT);
     JsonRequest[3].Value = NetworkRequest->OwnerThumbprint;
     JsonRequest[3].ValueSize = NetworkRequest->OwnerThumbprintSize;
+
+    JsonRequest[4].FieldName = KEYWORD_TENANTID;
+    JsonRequest[4].FieldSize = sizeof (KEYWORD_TENANTID);
+    JsonRequest[4].Value = NetworkRequest->TenantId;
+    JsonRequest[4].ValueSize = NetworkRequest->TenantIdSize;
+
+    JsonRequest[5].FieldName = KEYWORD_REGISTRATIONID;
+    JsonRequest[5].FieldSize = sizeof (KEYWORD_REGISTRATIONID);
+    JsonRequest[5].Value = NetworkRequest->RegistrationId;
+    JsonRequest[5].ValueSize = NetworkRequest->RegistrationIdSize;
 
     Status = JsonLibEncode (JsonRequest, JSON_RECOVERY_REQUEST_COUNT, &JsonRequestString, &JsonRequestStringSize);
     if (!EFI_ERROR(Status)) {

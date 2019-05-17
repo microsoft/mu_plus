@@ -415,6 +415,22 @@ GetDfciParameters (
                 goto NO_HTTP_RECOVERY;
             }
 
+            Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_TENANT_ID,
+                                      DFCI_SETTING_TYPE_STRING,
+                                      (VOID **) &mDfciNetworkRequest.TenantId,
+                                      &mDfciNetworkRequest.TenantIdSize);
+            if (EFI_ERROR(Status)) {
+                goto NO_HTTP_RECOVERY;
+            }
+
+            Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_REGISTRATION_ID,
+                                      DFCI_SETTING_TYPE_STRING,
+                                      (VOID **) &mDfciNetworkRequest.RegistrationId,
+                                      &mDfciNetworkRequest.RegistrationIdSize);
+            if (EFI_ERROR(Status)) {
+                goto NO_HTTP_RECOVERY;
+            }
+
             Status =  mAuthenticationProtocol->GetCertInfo (
                                 mAuthenticationProtocol,
                                 0,
@@ -915,7 +931,8 @@ DriverCallback (
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
                 Status = EFI_SUCCESS;
-                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, FALSE, NULL);
+                // OptIn requires a restart
+                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, TRUE, NULL);
                 break;
 
             case DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID:
@@ -926,7 +943,8 @@ DriverCallback (
 
                 *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
                 Status = EFI_SUCCESS;
-                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, FALSE, NULL);
+                // OptOut requires a restart
+                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, TRUE, NULL);
                 break;
 
             default:
