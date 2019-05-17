@@ -30,7 +30,7 @@
 
 
 [Defines]
-  INF_VERSION                    = 0x0001000A
+  INF_VERSION                    = 0x0001001B
   BASE_NAME                      = SharedCryptoPeiShaOnly
   FILE_GUID                      = 0D1CE46B-72D9-4BA7-95DA-23511865E661
   MODULE_TYPE                    = PEIM

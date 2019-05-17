@@ -83,7 +83,7 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_PKCS7_Sign PKCS7_Sign;
   NULL, //SHAREDCRYPTO_PKCS7_GetAttachedContent PKCS7_GetAttachedContent;
   NULL, //SHAREDCRYPTO_PKCS7_GetCertificatesList PKCS7_GetCertificatesList;
-  NULL, //SHAREDCRYPTO_AuthenticodeVerify AuthenticodeVerify;
+  AuthenticodeVerify, //SHAREDCRYPTO_AuthenticodeVerify AuthenticodeVerify;
   NULL, //SHAREDCRYPTO_ImageTimestampVerify ImageTimestampVerify;
   /// DH
   NULL, //SHAREDCRYPTO_DH_New DH_New;

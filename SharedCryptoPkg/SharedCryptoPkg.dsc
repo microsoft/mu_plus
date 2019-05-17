@@ -113,7 +113,6 @@
 [LibraryClasses.IA32]
  NULL|MdePkg/Library/VsIntrinsicLib/VsIntrinsicLib.inf
 
-
 # build the test app if needed
 [LibraryClasses.X64]
   NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
