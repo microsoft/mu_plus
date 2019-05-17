@@ -816,6 +816,9 @@ IssueDfciUsbRequest (
         } else {
             DEBUG((DEBUG_INFO, "DfciUsb Request processed normally\n"));
             Status = DfciUpdateFromJson (JsonString, JsonStringSize, mUsbRecovery);
+            if (EFI_MEDIA_CHANGED == Status) {
+                Status = EFI_SUCCESS;
+            }
         }
     }
 
@@ -827,7 +830,7 @@ IssueDfciUsbRequest (
     //
     // Inform user that operation is complete
     //
-    DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), Status, FALSE, FileName);
+    DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), Status, TRUE, FileName);
 
     if (NULL != JsonString) {
         FreePool (JsonString);
