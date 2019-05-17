@@ -68,7 +68,7 @@ extern EFI_GUID gDfciSettingsManagerVarNamespace;
 typedef struct {
   DFCI_PACKET_HEADER Header;   // Signature = 'M', 'S', 'S', 'A'
                                // Version = 2
-  UINT8  SmBiosStrings[0];      // Where SmBios strings start
+  UINT8  SmBiosStrings[];      // Where SmBios strings start
   //
   // The strings and certificate MUST be in this order in order to use the Offsets to determine the max
   // string size.  eg. StrSize(MfgName) == SystemProductOffset-SystemMfgOffset.
@@ -87,7 +87,7 @@ typedef struct {
   UINT64 Status;                // Global Status of the request.  SUCCESS here means XML was parsed and payload contains detailed result.  ERROR means XML was not parsed.
   UINT32 SessionId;             // Unique session id tool generated  -- matches the incoming apply var
   UINT16 PayloadSize;           // Size of Xml Payload
-  UINT8  Payload[0];             // Xml Payload <-- ResultConfigPacket
+  UINT8  Payload[];             // Xml Payload <-- ResultConfigPacket
 } DFCI_SECURED_SETTINGS_RESULT_VAR;
 
 #pragma pack (pop)

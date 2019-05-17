@@ -53,7 +53,7 @@ typedef struct _DFCI_RECOVERY_CHALLENGE
   UINTN                     SerialNumber;
   EFI_TIME                  Timestamp;
   DFCI_CHALLENGE_NONCE      Nonce;
-  DFCI_TARGET_MULTI_STRING  MultiString[0];
+  DFCI_TARGET_MULTI_STRING  MultiString[];
 } DFCI_RECOVERY_CHALLENGE;
 
 
