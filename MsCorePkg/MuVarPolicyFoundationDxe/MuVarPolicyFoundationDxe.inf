@@ -1,0 +1,75 @@
+## @file MuVarPolicyFoundationDxe.inf
+# This DXE driver will publish policies and state variables to support a couple of different design patterns:
+# - Locking policies and performing other tests based on whether a DXE phase has passed
+#     - EndOfDxe
+#     - ReadyToBoot
+#     - ExitBootServices
+# - Setting up a reference variable that can only be written once that can be used in other variable policies
+#
+##
+# Copyright (C) Microsoft Corporation
+#
+# All rights reserved.
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice,
+# this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+# this list of conditions and the following disclaimer in the documentation
+# and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+# INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MuVarPolicyFoundationDxe
+  FILE_GUID           = 8C7DB881-DA76-4486-8654-8152EE3470A3
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  ENTRY_POINT         = MuVarPolicyFoundationDxeMain
+
+
+[Sources]
+  MuVarPolicyFoundationDxe.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  UefiDriverEntryPoint
+  BaseMemoryLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+
+
+[Protocols]
+  gVariablePolicyProtocolGuid                     ## CONSUMES # Used to register the DXE Phase Variable protection policy.
+
+
+[Guids]
+  gMuVarPolicyDxePhaseGuid                        ## CONSUMES ## GUID ## Variable namespace
+  gMuVarPolicyWriteOnceStateVarGuid               ## CONSUMES ## GUID ## Variable namespace
+  gEfiEndOfDxeEventGroupGuid                      ## CONSUMES ## EVENT ## EndOfDxe Event Group
+  gEfiEventReadyToBootGuid                        ## CONSUMES ## EVENT ## ReadyToBoot Event Group
+  gEfiEventExitBootServicesGuid                   ## CONSUMES ## EVENT ## ExitBootServices Event Group
+
+
+[Depex]
+  gEfiVariableArchProtocolGuid AND
+  gVariablePolicyProtocolGuid

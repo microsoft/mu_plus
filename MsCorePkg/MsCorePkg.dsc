@@ -1,7 +1,7 @@
 ## @file
 # MsCore Package Localized Strings and Content
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (C) Microsoft Corporation
 
 # All rights reserved.
 # Redistribution and use in source and binary forms, with or without
@@ -137,6 +137,7 @@
   MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
   MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
   MsCorePkg/MuCryptoDxe/MuCryptoDxe.inf
+  MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
