@@ -1,8 +1,7 @@
-
 /** @file
   This module is designed to be just SHA and compile to a small EFI.
-  
-  Currently it is consumed by the reduced version of PEI (to reduce the size of 
+
+  Currently it is consumed by the reduced version of PEI (to reduce the size of
   the PEI FV since it isn't compressed on many platforms.) Other phases (DXE,SMM)
   can utilize this flavor if SHA is all they need.
 
@@ -10,9 +9,7 @@
   This is the ShaOnly flavor, which means we only support SHA1 and SHA256. This
   is used by PEI on Microsoft Surface platforms as SHA is the only crypto
   functions that we use in PEI. Using the ShaOnly flavor reduces in a smaller
-  binary size.
-
-  See Readme.md in the root of SharedCryptoPkg for more info.
+  binary size. See Readme.md in the root of SharedCryptoPkg for more info.
 
   Copyright (c) 2019, Microsoft Corporation. All rights reserved.
 
@@ -39,7 +36,6 @@
 #include <Protocol/SharedCrypto.h>
 #include <Library/BaseCryptLib.h>
 #include "SharedCryptoVersion.h"
-
 
 CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   GetCryptoVersion,
@@ -103,8 +99,6 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_RANDOM_Bytes RANDOM_Bytes;
   /// RSA
   NULL, //SHAREDCRYPTO_RSA_VERIFY_PKCS1 RSA_VERIFY_PKCS1;
-  NULL, //SHAREDCRYPTO_RSA_FREE RSA_FREE;
-  NULL, //SHAREDCRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509 RSA_GET_PUBLIC_KEY_FROM_X509;
   NULL, //SHAREDCRYPTO_RSA_New RSA_New;
   NULL, //SHAREDCRYPTO_RSA_Free RSA_Free;
   NULL, //SHAREDCRYPTO_RSA_SetKey RSA_SetKey;
@@ -170,5 +164,4 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_ARC4_Encrypt ARC4_Encrypt;
   NULL, //SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
   NULL //SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
-
 };

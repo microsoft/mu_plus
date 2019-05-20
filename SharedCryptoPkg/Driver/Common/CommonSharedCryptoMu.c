@@ -1,5 +1,7 @@
-
 /** @file
+ *
+ *
+ *
   This module is consumed by both DXE and SMM as well as PEI
 
   This links the functions in the protocol to the functions in BaseCryptLib.
@@ -97,10 +99,8 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   RandomBytes, //SHAREDCRYPTO_RANDOM_Bytes RANDOM_Bytes;
   /// RSA
   RsaPkcs1Verify, //SHAREDCRYPTO_RSA_VERIFY_PKCS1 RSA_VERIFY_PKCS1;
-  RsaFree, //SHAREDCRYPTO_RSA_FREE RSA_FREE;
-  RsaGetPublicKeyFromX509, //SHAREDCRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509 RSA_GET_PUBLIC_KEY_FROM_X509;
-  NULL, //SHAREDCRYPTO_RSA_New RSA_New;
-  NULL, //SHAREDCRYPTO_RSA_Free RSA_Free;
+  RsaNew, //SHAREDCRYPTO_RSA_New RSA_New;
+  RsaFree, //SHAREDCRYPTO_RSA_Free RSA_Free;
   NULL, //SHAREDCRYPTO_RSA_SetKey RSA_SetKey;
   NULL, //SHAREDCRYPTO_RSA_GetKey RSA_GetKey;
   NULL, //SHAREDCRYPTO_RSA_GenerateKey RSA_GenerateKey;
@@ -108,7 +108,7 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_RSA_Pkcs1Sign RSA_Pkcs1Sign;
   NULL, //SHAREDCRYPTO_RSA_Pkcs1Verify RSA_Pkcs1Verify;
   NULL, //SHAREDCRYPTO_RSA_GetPrivateKeyFromPem RSA_GetPrivateKeyFromPem;
-  NULL, //SHAREDCRYPTO_RSA_GetPublicKeyFromX509 RSA_GetPublicKeyFromX509;
+  RsaGetPublicKeyFromX509, //SHAREDCRYPTO_RSA_GetPublicKeyFromX509 RSA_GetPublicKeyFromX509;
   /// Sha protocol
   Sha1GetContextSize, //SHAREDCRYPTO_SHA1_GET_CONTEXT_SIZE SHA1_GET_CONTEXT_SIZE;
   Sha1Init, //SHAREDCRYPTO_SHA1_INIT SHA1_INIT;

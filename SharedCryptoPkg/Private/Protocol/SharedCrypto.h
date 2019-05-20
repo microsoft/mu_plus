@@ -31,7 +31,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __SHARED_CRYPTO_H__
 #define __SHARED_CRYPTO_H__
 
-#define SHARED_CRYPTO_VERSION 1
+#define SHARED_CRYPTO_VERSION 3
 
 typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_FUNCTIONS;
 typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_PROTOCOL;
@@ -1434,20 +1434,6 @@ BOOLEAN
   IN  UINTN                         HashSize,
   IN  CONST UINT8                  *Signature,
   IN  UINTN                         SigSize
-  );
-
-/**
-  Release the specified RSA context.
-
-  If RsaContext is NULL, then return FALSE.
-
-  @param[in]  RsaContext  Pointer to the RSA context to be released.
-
-**/
-typedef
-VOID
-(EFIAPI *SHAREDCRYPTO_RSA_FREE) (
-  IN  VOID  *RsaContext
   );
 
 /**
@@ -3122,8 +3108,6 @@ struct _SHARED_CRYPTO_FUNCTIONS
   SHAREDCRYPTO_RANDOM_Bytes RANDOM_Bytes;
   /// RSA
   SHAREDCRYPTO_RSA_VERIFY_PKCS1 RSA_VERIFY_PKCS1;
-  SHAREDCRYPTO_RSA_FREE RSA_FREE;
-  SHAREDCRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509 RSA_GET_PUBLIC_KEY_FROM_X509;
   SHAREDCRYPTO_RSA_New RSA_New;
   SHAREDCRYPTO_RSA_Free RSA_Free;
   SHAREDCRYPTO_RSA_SetKey RSA_SetKey;

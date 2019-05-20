@@ -1,5 +1,17 @@
 # Release Notes for Shared Crypto
 
+## 2019.03.04.01 - Removed extra RsaGetFromX509
+
+mu_plus@90b6ad0c884627497d1a89abe653b85ccd9414a8
+mu_tiano@c6a0ad30012bae30fb9bb06e9b3caa975ac631a7
+mu_basecore@81982c9794af508b987937f83f4e8d5c0cd3fb30
+
+## 2019.03.03.01 - Added RsaNew and RsaGetKeyFromX509 to Mu Flavor
+
+mu_plus@7918284676db195e1e2d6a6d69964204e27441fd
+mu_tiano@c6a0ad30012bae30fb9bb06e9b3caa975ac631a7
+mu_basecore@81982c9794af508b987937f83f4e8d5c0cd3fb30
+
 ## 2019.03.02.08 - Included BUILD_REPORT.txt
 
 mu_plus@3fa2f92315112ff133a8789fa66d413beb9f5618

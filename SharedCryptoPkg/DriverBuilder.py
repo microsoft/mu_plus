@@ -30,7 +30,7 @@ PROJECT_SCOPE = ("corebuild", "")
 MODULE_PKGS = ('Common/MU_TIANO', "Silicon/Arm/MU_TIANO", "MU_BASECORE")
 MODULE_PKG_PATHS = ";".join(os.path.join(WORKSPACE_PATH, pkg_name) for pkg_name in MODULE_PKGS)
 ACTIVE_TARGET = None
-VERSION = "2019.03.02.08"
+VERSION = "2019.03.04.01"
 
 # Because we reimport this module we need to grab the other version when we are in PlatformBuildworker namespace as opposed to main
 def GetAPIKey():
