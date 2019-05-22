@@ -1120,6 +1120,19 @@ SREDeleteSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                 }
             }
 
+            {
+              // When deleting a Surface, clean up any other Surfaces that
+              // saved a "Previous Active" pointer to this Surface.
+              SRE_SURFACE_LIST    *Surface2;
+              Surface2 = mSRE.Surfaces;
+              while (NULL != Surface2) {
+                if (Surface2->PreviousActive == Surface) {
+                  Surface2->PreviousActive = Surface->PreviousActive;
+                }
+                Surface2 = Surface2->pNext;
+              }
+            }
+
             FreePool(Surface);
 
             break;
