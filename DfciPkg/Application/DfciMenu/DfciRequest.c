@@ -1360,9 +1360,9 @@ ProcessAsyncRequest (
     }
 
     //
-    // Only 201 is expected here
+    // Only 200 is expected here
     //
-    if (NetworkRequest->HttpStatus.HttpStatus != HTTP_STATUS_201_CREATED) {
+    if (NetworkRequest->HttpStatus.HttpStatus != HTTP_STATUS_200_OK) {
         Status = EFI_PROTOCOL_ERROR;
         DEBUG((DEBUG_ERROR, "Http request 2 failed.  Http error is %d, %a\n",
                              NetworkRequest->HttpStatus.HttpStatus,
