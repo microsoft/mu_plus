@@ -31,10 +31,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <Library/DebugLib.h>
+#include <Library/BaseLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 
+#include <Protocol/VariableLock.h>
 #include <Protocol/VariablePolicy.h>
 
 #include <Guid/EventGroup.h>
@@ -47,6 +50,124 @@ EFI_EVENT                 mExitBootServicesEvent;
 BOOLEAN                   mEndOfDxeIndicatorSet = FALSE;
 BOOLEAN                   mReadyToBootIndicatorSet = FALSE;
 BOOLEAN                   mExitBootServicesIndicatorSet = FALSE;
+
+STATIC VARIABLE_POLICY_PROTOCOL *mVariablePolicy = NULL;
+
+/**
+  This is an implementation of the RequestToLock interface that pipes everything through
+  the Variable Policy engine. Will construct a policy and attempt to add it to the policy table.
+
+  The policy will lock the variable at EndOfDxe.
+
+  @param[in] This          The EDKII_VARIABLE_LOCK_PROTOCOL instance.
+  @param[in] VariableName  A pointer to the variable name that will be made read-only subsequently.
+  @param[in] VendorGuid    A pointer to the vendor GUID that will be made read-only subsequently.
+
+  @retval EFI_SUCCESS           The variable specified by the VariableName and the VendorGuid was marked
+                                as pending to be read-only.
+  @retval EFI_INVALID_PARAMETER VariableName or VendorGuid is NULL.
+                                Or VariableName is an empty string.
+  @retval EFI_ACCESS_DENIED     EFI_END_OF_DXE_EVENT_GROUP_GUID or EFI_EVENT_GROUP_READY_TO_BOOT has
+                                already been signaled.
+  @retval EFI_OUT_OF_RESOURCES  There is not enough resource to hold the lock request.
+**/
+EFI_STATUS
+EFIAPI
+VariableLockRequestToLock (
+  IN CONST EDKII_VARIABLE_LOCK_PROTOCOL *This,
+  IN       CHAR16                       *VariableName,
+  IN       EFI_GUID                     *VendorGuid
+  )
+{
+  EFI_STATUS                         Status;
+  BOOLEAN                            State;
+  VARIABLE_POLICY_ENTRY              *NewEntry;
+  VOID                               *EntryName;
+  VOID                               *PhaseIndicator;
+  UINTN                              NameSize;
+  UINTN                              PolicySize;
+  UINTN                              LockOnVarStateNameSize;
+  CHAR16                             *EndOfDxeIndicatorStr;
+  VARIABLE_LOCK_ON_VAR_STATE_POLICY  *LockOnVarStatePolicy;
+
+  NewEntry = NULL;
+  EndOfDxeIndicatorStr = END_OF_DXE_INDICATOR_VAR_NAME;
+
+  // Check all the things for the goodness.
+  if (VariableName == NULL || VendorGuid == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // Locate the protocol
+  if (mVariablePolicy == NULL) {
+    Status = gBS->LocateProtocol(&gVariablePolicyProtocolGuid, NULL, (VOID **) &mVariablePolicy);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "[%a] Error locating Variable Policy protocol: %r\n", __FUNCTION__, Status));
+      return Status;
+    }
+  }
+
+  // Make sure Variable Policy Engine (VPE) is enabled
+  State = FALSE;
+  Status = mVariablePolicy->IsVariablePolicyEnabled(&State);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "[%a] Error checking Variable Policy Engine is enabled: %r\n", __FUNCTION__, Status));
+    return Status;
+  }
+  if (State == FALSE) {
+    DEBUG((DEBUG_ERROR, "[%a] Variable Policy Engine is disabled, not registering any policy entries\n", __FUNCTION__));
+    return EFI_DEVICE_ERROR;
+  }
+
+  // Now we assume that we're working with something useful.
+  // Let's start by figuring out how much memory we would need.
+  // Limit by the max size that a policy structure can support: MAX_UINT16.
+  // StrnSizeS returns a size, but takes in max number of chars for... reasons.
+  NameSize = StrnSizeS( VariableName, MAX_UINT16 / sizeof(*VariableName) );
+  LockOnVarStateNameSize = StrnSizeS( EndOfDxeIndicatorStr, MAX_UINT16 / sizeof(*EndOfDxeIndicatorStr) );
+  PolicySize = NameSize + sizeof(VARIABLE_POLICY_ENTRY) + LockOnVarStateNameSize + sizeof(VARIABLE_LOCK_ON_VAR_STATE_POLICY);
+
+  // Allocate the memory and forward the request.
+  NewEntry = AllocateZeroPool( PolicySize );
+  if (NewEntry == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+  LockOnVarStatePolicy = (VOID*)(NewEntry + 1);
+  PhaseIndicator = (VOID*)(LockOnVarStatePolicy + 1);
+  EntryName = (VOID*)(((UINT8 *)PhaseIndicator) + LockOnVarStateNameSize);
+
+  DEBUG(( DEBUG_VERBOSE, "%a -> RegisterVariablePolicy for %g:%s.\n",
+          __FUNCTION__, VendorGuid, VariableName ));
+
+  NewEntry->Version         = VARIABLE_POLICY_ENTRY_REVISION;
+  NewEntry->Size            = (UINT16)PolicySize;
+  NewEntry->OffsetToName    = sizeof(VARIABLE_POLICY_ENTRY) + sizeof(VARIABLE_LOCK_ON_VAR_STATE_POLICY) + LockOnVarStateNameSize;
+  CopyGuid( &NewEntry->Namespace, VendorGuid );
+  NewEntry->MinSize = 0;
+  NewEntry->MaxSize = MAX_UINT32;
+  NewEntry->AttributesMustHave = 0;
+  NewEntry->AttributesCantHave = 0;
+  NewEntry->LockPolicyType  = VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE;
+  CopyGuid( &LockOnVarStatePolicy->Namespace, &gMuVarPolicyDxePhaseGuid );
+  LockOnVarStatePolicy->Value = 1;
+  CopyMem( PhaseIndicator, EndOfDxeIndicatorStr, LockOnVarStateNameSize );
+  CopyMem( EntryName, VariableName, NameSize );
+
+  // IMPORTANT NOTE: If we do this, it will potentially override wildcard policies for the variable.
+  //                 Though, if successful, it would still be write protected, so this is probably a no-op.
+  Status = mVariablePolicy->RegisterVariablePolicy(NewEntry);
+  if (EFI_ERROR( Status )) {
+    DEBUG(( DEBUG_ERROR, "[%a] RequestToLock failed in RegisterVariablePolicy! %r\n", __FUNCTION__, Status ));
+    ASSERT_EFI_ERROR( Status );
+  }
+
+  // Always put away your toys.
+  if (NewEntry != NULL) {
+    FreePool( NewEntry );
+  }
+
+  return Status;
+} // VariableLockRequestToLock
 
 /**
   Creates an indicator variable with the supplied attributes.
@@ -187,6 +308,7 @@ SetExitBootServicesIndicator (
   }
 } // SetExitBootServicesIndicator()
 
+EDKII_VARIABLE_LOCK_PROTOCOL mVariableLock = { VariableLockRequestToLock };
 
 /**
   The driver's entry point.
@@ -207,17 +329,19 @@ MuVarPolicyFoundationDxeMain (
 {
   EFI_STATUS                  FinalStatus;
   EFI_STATUS                  PolicyStatus;
-  VARIABLE_POLICY_PROTOCOL    *VariablePolicy;
+  EFI_STATUS                  VarLockStatus;
   VARIABLE_POLICY_ENTRY       PolicyEntry;
   EFI_STATUS                  EndOfDxeStatus;
   EFI_STATUS                  ReadyToBootStatus;
   EFI_STATUS                  ExitBootServicesStatus;
 
+  FinalStatus = EFI_SUCCESS;
+
   DEBUG(( DEBUG_VERBOSE, "%a()\n", __FUNCTION__ ));
 
   //
   // First, make sure that we can locate and set the required policy.
-  PolicyStatus = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, &VariablePolicy );
+  PolicyStatus = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, (VOID **) &mVariablePolicy );
   if (!EFI_ERROR( PolicyStatus )) {
     // IMPORTANT NOTE: On the whole, it is a *bad* idea to use LOCK_ON_CREATE for a namespace policy.
     //                 However, since these are are all forced to be Volatile variables and since you can't create
@@ -233,7 +357,7 @@ MuVarPolicyFoundationDxeMain (
     PolicyEntry.AttributesCantHave  = (UINT32)(~DXE_PHASE_INDICATOR_ATTR);
     PolicyEntry.LockPolicyType      = VARIABLE_POLICY_TYPE_LOCK_ON_CREATE;
 
-    PolicyStatus = VariablePolicy->RegisterVariablePolicy( &PolicyEntry );
+    PolicyStatus = mVariablePolicy->RegisterVariablePolicy( &PolicyEntry );
   }
   if (EFI_ERROR( PolicyStatus )) {
     DEBUG(( DEBUG_ERROR, "%a - Failed to set namespace VariablePolicy! %r\n", __FUNCTION__, PolicyStatus ));
@@ -247,7 +371,7 @@ MuVarPolicyFoundationDxeMain (
     PolicyEntry.AttributesMustHave  = WRTIE_ONCE_STATE_VAR_ATTR;
     PolicyEntry.AttributesCantHave  = (UINT32)(~WRTIE_ONCE_STATE_VAR_ATTR);
 
-    PolicyStatus = VariablePolicy->RegisterVariablePolicy( &PolicyEntry );
+    PolicyStatus = mVariablePolicy->RegisterVariablePolicy( &PolicyEntry );
   }
   if (EFI_ERROR( PolicyStatus )) {
     DEBUG(( DEBUG_ERROR, "%a - Failed to register WriteOnce state var policy! %r\n", __FUNCTION__, PolicyStatus ));
@@ -283,7 +407,7 @@ MuVarPolicyFoundationDxeMain (
     //
     // Register ExitBootServices callback.
     ExitBootServicesStatus = gBS->CreateEventEx( EVT_NOTIFY_SIGNAL,
-                                                 TPL_NOTIFY,        // SOMEWHERE in ExitBootServices
+                                                 TPL_CALLBACK,        // SOMEWHERE in ExitBootServices
                                                  SetExitBootServicesIndicator,
                                                  NULL,
                                                  &gEfiEventExitBootServicesGuid,
@@ -294,9 +418,19 @@ MuVarPolicyFoundationDxeMain (
     }
   }
 
+  // Install VarLock Protocol here as well, since it's tied to phase indicator variables
+  VarLockStatus = gBS->InstallMultipleProtocolInterfaces ( &ImageHandle,
+                                                           &gEdkiiVariableLockProtocolGuid,
+                                                           &mVariableLock,
+                                                           NULL);
+  if (EFI_ERROR( VarLockStatus ))
+  {
+    DEBUG(( DEBUG_ERROR, "%a - EdkiiVariableLockProtocol installation failed! %r\n", __FUNCTION__, VarLockStatus ));
+  }
+
   // This driver is architecturally important.
   // As such, we should make sure that telemetry is logged if a failure ever occurs.
-  if (EFI_ERROR( PolicyStatus ) || EFI_ERROR( EndOfDxeStatus ) ||
+  if (EFI_ERROR( PolicyStatus ) || EFI_ERROR( VarLockStatus ) || EFI_ERROR( EndOfDxeStatus ) ||
       EFI_ERROR( ReadyToBootStatus ) || EFI_ERROR( ExitBootServicesStatus )) {
     // We will have already logged a more detailed error message.
     ASSERT( FALSE );
@@ -308,9 +442,6 @@ MuVarPolicyFoundationDxeMain (
     if (EFI_ERROR( PolicyStatus ) ||
         (EFI_ERROR( EndOfDxeStatus ) && EFI_ERROR(ReadyToBootStatus) && EFI_ERROR(ExitBootServicesStatus))) {
       FinalStatus = EFI_ABORTED;
-    }
-    else {
-      FinalStatus = EFI_SUCCESS;
     }
   }
 

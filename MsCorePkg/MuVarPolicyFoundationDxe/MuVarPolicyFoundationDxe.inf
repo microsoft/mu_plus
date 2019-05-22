@@ -52,6 +52,7 @@
 
 [LibraryClasses]
   DebugLib
+  BaseLib
   UefiDriverEntryPoint
   BaseMemoryLib
   UefiBootServicesTableLib
@@ -60,6 +61,7 @@
 
 [Protocols]
   gVariablePolicyProtocolGuid                     ## CONSUMES # Used to register the DXE Phase Variable protection policy.
+  gEdkiiVariableLockProtocolGuid                  ## PRODUCES
 
 
 [Guids]
