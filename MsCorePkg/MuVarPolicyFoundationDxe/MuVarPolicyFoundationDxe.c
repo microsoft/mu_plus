@@ -141,7 +141,7 @@ VariableLockRequestToLock (
 
   NewEntry->Version         = VARIABLE_POLICY_ENTRY_REVISION;
   NewEntry->Size            = (UINT16)PolicySize;
-  NewEntry->OffsetToName    = sizeof(VARIABLE_POLICY_ENTRY) + sizeof(VARIABLE_LOCK_ON_VAR_STATE_POLICY) + LockOnVarStateNameSize;
+  NewEntry->OffsetToName    = (UINT16) (sizeof(VARIABLE_POLICY_ENTRY) + sizeof(VARIABLE_LOCK_ON_VAR_STATE_POLICY) + LockOnVarStateNameSize);
   CopyGuid( &NewEntry->Namespace, VendorGuid );
   NewEntry->MinSize = 0;
   NewEntry->MaxSize = MAX_UINT32;
