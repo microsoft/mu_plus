@@ -53,6 +53,7 @@
 [LibraryClasses]
   DebugLib
   BaseLib
+  MemoryAllocationLib
   UefiDriverEntryPoint
   BaseMemoryLib
   UefiBootServicesTableLib
