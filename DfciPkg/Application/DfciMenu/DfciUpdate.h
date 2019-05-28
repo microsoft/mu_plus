@@ -54,6 +54,7 @@ typedef struct {
 typedef struct {
     CHAR8    *FieldName;
     CHAR8   **Message;
+    UINTN    *MessageSize;
     UINTN     Action;
     UINTN     VariableIndex;   // Only for action SET_VARIABLE
     BOOLEAN   DecodeBase64;

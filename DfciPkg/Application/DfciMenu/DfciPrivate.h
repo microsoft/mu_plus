@@ -116,7 +116,9 @@ struct _DFCI_NETWORK_REQUEST {
         //
         // This section is cleared by a CleanupNetworkRequest (CLEANUP_STATUS)
         CHAR8                          *HttpReturnCode;
+        UINTN                           HttpReturnCodeSize;
         CHAR8                          *HttpMessage;
+        UINTN                           HttpMessageSize;
         EFI_HTTP_STATUS_CODE            HttpStatus;
     } HttpStatus;
 

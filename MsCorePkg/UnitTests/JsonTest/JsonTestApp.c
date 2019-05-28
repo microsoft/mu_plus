@@ -71,12 +71,14 @@ Good examples:
    { "String" : "Value" , "String2" : "Value2" }
    {"String":"Value","String2":"Value2"}
    {"String1": null, "String2" : "Value2" }
+   {"String2":12345, "String3" : null}
 
 Bad examples:
 
   "String" : "Value"
   {"String"}
   {"String","String":"Value"}
+  {"String1" : 123abc, "String2" : 12345}
 
  */
 EFI_STATUS
@@ -109,8 +111,8 @@ typedef struct {
 #define DEC_TEST_1_2_Value  "Value2"
 
 static JSON_REQUEST_ELEMENT mParseTest1Elements[] = {
-    {DEC_TEST_1_1_String, sizeof(DEC_TEST_1_1_String), DEC_TEST_1_1_Value, sizeof(DEC_TEST_1_1_Value)},
-    {DEC_TEST_1_2_String, sizeof(DEC_TEST_1_2_String), DEC_TEST_1_2_Value, sizeof(DEC_TEST_1_2_Value)}
+    {DEC_TEST_1_1_String, sizeof(DEC_TEST_1_1_String) - sizeof (CHAR8), DEC_TEST_1_1_Value, sizeof(DEC_TEST_1_1_Value) - sizeof (CHAR8)},
+    {DEC_TEST_1_2_String, sizeof(DEC_TEST_1_2_String) - sizeof (CHAR8), DEC_TEST_1_2_Value, sizeof(DEC_TEST_1_2_Value) - sizeof (CHAR8)}
 };
 #define mParseTest1ElementCount (sizeof(mParseTest1Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -124,8 +126,8 @@ static JSON_REQUEST_ELEMENT mParseTest1Elements[] = {
 #define DEC_TEST_2_2_Value  "Value2"
 
 static JSON_REQUEST_ELEMENT mParseTest2Elements[] = {
-    {DEC_TEST_2_1_String, sizeof(DEC_TEST_2_1_String), DEC_TEST_2_1_Value, sizeof(DEC_TEST_2_1_Value)},
-    {DEC_TEST_2_2_String, sizeof(DEC_TEST_2_2_String), DEC_TEST_2_2_Value, sizeof(DEC_TEST_2_2_Value)}
+    {DEC_TEST_2_1_String, sizeof(DEC_TEST_2_1_String) - sizeof (CHAR8), DEC_TEST_2_1_Value, sizeof(DEC_TEST_2_1_Value) - sizeof (CHAR8)},
+    {DEC_TEST_2_2_String, sizeof(DEC_TEST_2_2_String) - sizeof (CHAR8), DEC_TEST_2_2_Value, sizeof(DEC_TEST_2_2_Value) - sizeof (CHAR8)}
 };
 #define mParseTest2ElementCount (sizeof(mParseTest2Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -158,7 +160,6 @@ static JSON_REQUEST_ELEMENT mParseTest2Elements[] = {
 //*----------------------------------------------------------------------------------*
 #define DEC_TEST_7_JSON     "{\"String\" : Value\" , \"String2\" : \"Value2\" }"
 #define mParseTest7ElementCount 0
-static BASIC_TEST_CONTEXT mParseTest7 = {DEC_TEST_7_JSON, sizeof(DEC_TEST_7_JSON), EFI_INVALID_PARAMETER, NULL, mParseTest7ElementCount, NULL};
 
 //*----------------------------------------------------------------------------------*
 // Decode Test 8 = Missing second " in first tuple value - actually finds next quote *
@@ -168,7 +169,7 @@ static BASIC_TEST_CONTEXT mParseTest7 = {DEC_TEST_7_JSON, sizeof(DEC_TEST_7_JSON
 #define DEC_TEST_8_1_Value  "Value , "
 
 static JSON_REQUEST_ELEMENT mParseTest8Elements[] = {
-    {DEC_TEST_8_1_String, sizeof(DEC_TEST_8_1_String), DEC_TEST_8_1_Value, sizeof(DEC_TEST_8_1_Value)},
+    {DEC_TEST_8_1_String, sizeof(DEC_TEST_8_1_String) - sizeof (CHAR8), DEC_TEST_8_1_Value, sizeof(DEC_TEST_8_1_Value) - sizeof (CHAR8)},
 };
 #define mParseTest8ElementCount (sizeof(mParseTest8Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -180,7 +181,7 @@ static JSON_REQUEST_ELEMENT mParseTest8Elements[] = {
 #define DEC_TEST_9_1_Value  "Value"
 
 static JSON_REQUEST_ELEMENT mParseTest9Elements[] = {
-    {DEC_TEST_9_1_String, sizeof(DEC_TEST_9_1_String), DEC_TEST_9_1_Value, sizeof(DEC_TEST_9_1_Value)},
+    {DEC_TEST_9_1_String, sizeof(DEC_TEST_9_1_String) - sizeof (CHAR8), DEC_TEST_9_1_Value, sizeof(DEC_TEST_9_1_Value) - sizeof (CHAR8)},
 };
 #define mParseTest9ElementCount (sizeof(mParseTest9Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -192,7 +193,7 @@ static JSON_REQUEST_ELEMENT mParseTest9Elements[] = {
 #define DEC_TEST_10_1_Value  "Value"
 
 static JSON_REQUEST_ELEMENT mParseTest10Elements[] = {
-    {DEC_TEST_10_1_String, sizeof(DEC_TEST_10_1_String), DEC_TEST_10_1_Value, sizeof(DEC_TEST_10_1_Value)},
+    {DEC_TEST_10_1_String, sizeof(DEC_TEST_10_1_String) - sizeof (CHAR8), DEC_TEST_10_1_Value, sizeof(DEC_TEST_10_1_Value) - sizeof (CHAR8)},
 };
 #define mParseTest10ElementCount (sizeof(mParseTest10Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -204,7 +205,7 @@ static JSON_REQUEST_ELEMENT mParseTest10Elements[] = {
 #define DEC_TEST_11_1_Value  "Value"
 
 static JSON_REQUEST_ELEMENT mParseTest11Elements[] = {
-    {DEC_TEST_11_1_String, sizeof(DEC_TEST_11_1_String), DEC_TEST_11_1_Value, sizeof(DEC_TEST_11_1_Value)},
+    {DEC_TEST_11_1_String, sizeof(DEC_TEST_11_1_String) - sizeof (CHAR8), DEC_TEST_11_1_Value, sizeof(DEC_TEST_11_1_Value) - sizeof (CHAR8)},
 };
 #define mParseTest11ElementCount (sizeof(mParseTest11Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -216,7 +217,7 @@ static JSON_REQUEST_ELEMENT mParseTest11Elements[] = {
 #define DEC_TEST_12_1_Value  "Value"
 
 static JSON_REQUEST_ELEMENT mParseTest12Elements[] = {
-    {DEC_TEST_12_1_String, sizeof(DEC_TEST_12_1_String), DEC_TEST_12_1_Value, sizeof(DEC_TEST_12_1_Value)},
+    {DEC_TEST_12_1_String, sizeof(DEC_TEST_12_1_String) - sizeof (CHAR8), DEC_TEST_12_1_Value, sizeof(DEC_TEST_12_1_Value) - sizeof (CHAR8)},
 };
 #define mParseTest12ElementCount (sizeof(mParseTest12Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -228,7 +229,7 @@ static JSON_REQUEST_ELEMENT mParseTest12Elements[] = {
 #define DEC_TEST_13_1_Value  "Value"
 
 static JSON_REQUEST_ELEMENT mParseTest13Elements[] = {
-    {DEC_TEST_13_1_String, sizeof(DEC_TEST_13_1_String), DEC_TEST_13_1_Value, sizeof(DEC_TEST_13_1_Value)},
+    {DEC_TEST_13_1_String, sizeof(DEC_TEST_13_1_String) - sizeof (CHAR8), DEC_TEST_13_1_Value, sizeof(DEC_TEST_13_1_Value) - sizeof (CHAR8)},
 };
 #define mParseTest13ElementCount (sizeof(mParseTest13Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -240,7 +241,7 @@ static JSON_REQUEST_ELEMENT mParseTest13Elements[] = {
 #define DEC_TEST_14_1_Value  "Value"
 
 static JSON_REQUEST_ELEMENT mParseTest14Elements[] = {
-    {DEC_TEST_14_1_String, sizeof(DEC_TEST_14_1_String), DEC_TEST_14_1_Value, sizeof(DEC_TEST_14_1_Value)},
+    {DEC_TEST_14_1_String, sizeof(DEC_TEST_14_1_String) - sizeof (CHAR8), DEC_TEST_14_1_Value, sizeof(DEC_TEST_14_1_Value) - sizeof (CHAR8)},
 };
 #define mParseTest14ElementCount (sizeof(mParseTest14Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -254,8 +255,8 @@ static JSON_REQUEST_ELEMENT mParseTest14Elements[] = {
 #define DEC_TEST_15_2_Value  "Value2"
 
 static JSON_REQUEST_ELEMENT mParseTest15Elements[] = {
-    {DEC_TEST_15_1_String, sizeof(DEC_TEST_15_1_String), DEC_TEST_15_1_Value, sizeof(DEC_TEST_15_1_Value)},
-    {DEC_TEST_15_2_String, sizeof(DEC_TEST_15_2_String), DEC_TEST_15_2_Value, sizeof(DEC_TEST_15_2_Value)}
+    {DEC_TEST_15_1_String, sizeof(DEC_TEST_15_1_String) - sizeof (CHAR8), DEC_TEST_15_1_Value, sizeof(DEC_TEST_15_1_Value) - sizeof (CHAR8)},
+    {DEC_TEST_15_2_String, sizeof(DEC_TEST_15_2_String) - sizeof (CHAR8), DEC_TEST_15_2_Value, sizeof(DEC_TEST_15_2_Value) - sizeof (CHAR8)}
 };
 #define mParseTest15ElementCount (sizeof(mParseTest15Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -267,7 +268,7 @@ static JSON_REQUEST_ELEMENT mParseTest15Elements[] = {
 #define DEC_TEST_16_1_Value  "Value2"
 
 static JSON_REQUEST_ELEMENT mParseTest16Elements[] = {
-    {DEC_TEST_16_1_String, sizeof(DEC_TEST_16_1_String), DEC_TEST_16_1_Value, sizeof(DEC_TEST_16_1_Value)}
+    {DEC_TEST_16_1_String, sizeof(DEC_TEST_16_1_String) - sizeof (CHAR8), DEC_TEST_16_1_Value, sizeof(DEC_TEST_16_1_Value) - sizeof (CHAR8)}
 };
 #define mParseTest16ElementCount (sizeof(mParseTest16Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -279,7 +280,7 @@ static JSON_REQUEST_ELEMENT mParseTest16Elements[] = {
 #define DEC_TEST_17_1_Value  "Value2"
 
 static JSON_REQUEST_ELEMENT mParseTest17Elements[] = {
-    {DEC_TEST_17_1_String, sizeof(DEC_TEST_17_1_String), DEC_TEST_17_1_Value, sizeof(DEC_TEST_17_1_Value)}
+    {DEC_TEST_17_1_String, sizeof(DEC_TEST_17_1_String) - sizeof (CHAR8) - sizeof (CHAR8), DEC_TEST_17_1_Value, sizeof(DEC_TEST_17_1_Value) - sizeof (CHAR8)}
 };
 #define mParseTest17ElementCount (sizeof(mParseTest17Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -291,15 +292,15 @@ static JSON_REQUEST_ELEMENT mParseTest17Elements[] = {
 #define DEC_TEST_18_1_Value  "Value2"
 
 static JSON_REQUEST_ELEMENT mParseTest18Elements[] = {
-    {DEC_TEST_18_1_String, sizeof(DEC_TEST_18_1_String), DEC_TEST_18_1_Value, sizeof(DEC_TEST_17_1_Value)}
+    {DEC_TEST_18_1_String, sizeof(DEC_TEST_18_1_String) - sizeof (CHAR8), DEC_TEST_18_1_Value, sizeof(DEC_TEST_18_1_Value) - sizeof (CHAR8)}
 };
 #define mParseTest18ElementCount (sizeof(mParseTest18Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
 //*----------------------------------------------------------------------------------*
-// Decode Test 19= NULL before second quote String                                  *
+// Decode Test 19= NULL before second quote String                                   *
 //*----------------------------------------------------------------------------------*
 #define DEC_TEST_19_JSON     "{\"String"
-#define mParseTest19lementCount 0
+#define mParseTest19ElementCount 0
 
 //*----------------------------------------------------------------------------------*
 // Decode Test 20 = NULL before second quote Value                                   *
@@ -307,18 +308,45 @@ static JSON_REQUEST_ELEMENT mParseTest18Elements[] = {
 #define DEC_TEST_20_JSON     "{\"String\" : \"Value"
 #define mParseTest20ElementCount 0
 
+//*----------------------------------------------------------------------------------*
+// Decode Test 21  Validate decimal digits                                           *
+//*----------------------------------------------------------------------------------*
+#define DEC_TEST_21_JSON     "{\"String1\" : 1234AFZ, \"String2\" : \"Value2\" "
+#define DEC_TEST_21_1_String "String1"
+#define DEC_TEST_21_1_Value  "1234"
+
+static JSON_REQUEST_ELEMENT mParseTest21Elements[] = {
+    {DEC_TEST_21_1_String, sizeof(DEC_TEST_21_1_String) - sizeof (CHAR8), DEC_TEST_21_1_Value, sizeof(DEC_TEST_21_1_Value) - sizeof (CHAR8)}
+};
+#define mParseTest21ElementCount (sizeof(mParseTest21Elements)/sizeof(JSON_REQUEST_ELEMENT))
+
+//*----------------------------------------------------------------------------------*
+// Decode Test 22  Validate decimal digits                                           *
+//*----------------------------------------------------------------------------------*
+#define DEC_TEST_22_JSON     "{\"String1\" : 1234, \"String2\" : F56789"
+#define DEC_TEST_22_1_String "String1"
+#define DEC_TEST_22_1_Value  "1234"
+
+static JSON_REQUEST_ELEMENT mParseTest22Elements[] = {
+    {DEC_TEST_22_1_String, sizeof(DEC_TEST_22_1_String) - sizeof (CHAR8), DEC_TEST_22_1_Value, sizeof(DEC_TEST_22_1_Value) - sizeof (CHAR8)}
+};
+#define mParseTest22ElementCount (sizeof(mParseTest22Elements)/sizeof(JSON_REQUEST_ELEMENT))
+
 //*----------------------------------------------------------------------------------------------------------------*
-// Encode Test 1 = Same as encode test 1, except a special routine is used to pass in NULL for the first parameter *
+// Encode Test 1 = Validate some data                                                                              *
 //*----------------------------------------------------------------------------------------------------------------*
-#define ENC_TEST_1_JSON     "{\"String\":\"Value\",\"String2\":\"Value2\"}"
+#define ENC_TEST_1_JSON     "{\"String\":\"Value\",\"String2\":\"Value2\",\"String3\":9123456780}"
 #define ENC_TEST_1_1_String "String"
 #define ENC_TEST_1_1_Value  "Value"
 #define ENC_TEST_1_2_String "String2"
 #define ENC_TEST_1_2_Value  "Value2"
+#define ENC_TEST_1_3_String "String3"
+#define ENC_TEST_1_3_Value  "9123456780"
 
 static JSON_REQUEST_ELEMENT mEncodeTest1Elements[] = {
-    {ENC_TEST_1_1_String, sizeof(ENC_TEST_1_1_String), ENC_TEST_1_1_Value, sizeof(ENC_TEST_1_1_Value)},
-    {ENC_TEST_1_2_String, sizeof(ENC_TEST_1_2_String), ENC_TEST_1_2_Value, sizeof(ENC_TEST_1_2_Value)}
+    {ENC_TEST_1_1_String, sizeof(ENC_TEST_1_1_String) - sizeof (CHAR8), ENC_TEST_1_1_Value, sizeof(ENC_TEST_1_1_Value) - sizeof (CHAR8)},
+    {ENC_TEST_1_2_String, sizeof(ENC_TEST_1_2_String) - sizeof (CHAR8), ENC_TEST_1_2_Value, sizeof(ENC_TEST_1_2_Value) - sizeof (CHAR8)},
+    {ENC_TEST_1_3_String, sizeof(ENC_TEST_1_3_String) - sizeof (CHAR8), ENC_TEST_1_3_Value, sizeof(ENC_TEST_1_3_Value) - sizeof (CHAR8)}
 };
 #define mEncodeTest1ElementCount (sizeof(mEncodeTest1Elements)/sizeof(JSON_REQUEST_ELEMENT))
 
@@ -342,6 +370,7 @@ static BASIC_TEST_CONTEXT mParseTest3  = {DEC_TEST_3_JSON,  sizeof(DEC_TEST_3_JS
 static BASIC_TEST_CONTEXT mParseTest4  = {DEC_TEST_4_JSON,  sizeof(DEC_TEST_4_JSON),  EFI_INVALID_PARAMETER, NULL,                 mParseTest4ElementCount,  NULL};
 static BASIC_TEST_CONTEXT mParseTest5  = {DEC_TEST_5_JSON,  sizeof(DEC_TEST_5_JSON),  EFI_INVALID_PARAMETER, NULL,                 mParseTest5ElementCount,  NULL};
 static BASIC_TEST_CONTEXT mParseTest6  = {DEC_TEST_6_JSON,  sizeof(DEC_TEST_6_JSON),  EFI_INVALID_PARAMETER, NULL,                 mParseTest6ElementCount,  NULL};
+static BASIC_TEST_CONTEXT mParseTest7  = {DEC_TEST_7_JSON,  sizeof(DEC_TEST_7_JSON),  EFI_INVALID_PARAMETER, NULL,                 mParseTest7ElementCount,  NULL};
 static BASIC_TEST_CONTEXT mParseTest8  = {DEC_TEST_8_JSON,  sizeof(DEC_TEST_8_JSON),  EFI_INVALID_PARAMETER, mParseTest8Elements,  mParseTest8ElementCount,  NULL};
 static BASIC_TEST_CONTEXT mParseTest9  = {DEC_TEST_9_JSON,  sizeof(DEC_TEST_9_JSON),  EFI_INVALID_PARAMETER, mParseTest9Elements,  mParseTest9ElementCount,  NULL};
 static BASIC_TEST_CONTEXT mParseTest10 = {DEC_TEST_10_JSON, sizeof(DEC_TEST_10_JSON), EFI_INVALID_PARAMETER, mParseTest10Elements, mParseTest10ElementCount, NULL};
@@ -350,8 +379,13 @@ static BASIC_TEST_CONTEXT mParseTest12 = {DEC_TEST_12_JSON, sizeof(DEC_TEST_12_J
 static BASIC_TEST_CONTEXT mParseTest13 = {DEC_TEST_13_JSON, sizeof(DEC_TEST_13_JSON), EFI_INVALID_PARAMETER, mParseTest13Elements, mParseTest13ElementCount, NULL};
 static BASIC_TEST_CONTEXT mParseTest14 = {DEC_TEST_14_JSON, sizeof(DEC_TEST_14_JSON), EFI_INVALID_PARAMETER, mParseTest14Elements, mParseTest14ElementCount, NULL};
 static BASIC_TEST_CONTEXT mParseTest15 = {DEC_TEST_15_JSON, sizeof(DEC_TEST_15_JSON), EFI_INVALID_PARAMETER, mParseTest15Elements, mParseTest15ElementCount, NULL};
-static BASIC_TEST_CONTEXT mParseTest16 = {DEC_TEST_16_JSON, sizeof(DEC_TEST_16_JSON), EFI_INVALID_PARAMETER, NULL,                 mParseTest16ElementCount, NULL};
-static BASIC_TEST_CONTEXT mParseTest17 = {DEC_TEST_17_JSON, sizeof(DEC_TEST_17_JSON), EFI_INVALID_PARAMETER, NULL,                 mParseTest17ElementCount, NULL};
+static BASIC_TEST_CONTEXT mParseTest16 = {DEC_TEST_16_JSON, sizeof(DEC_TEST_16_JSON), EFI_INVALID_PARAMETER, mParseTest16Elements, mParseTest16ElementCount, NULL};
+static BASIC_TEST_CONTEXT mParseTest17 = {DEC_TEST_17_JSON, sizeof(DEC_TEST_17_JSON), EFI_INVALID_PARAMETER, mParseTest17Elements, mParseTest17ElementCount, NULL};
+static BASIC_TEST_CONTEXT mParseTest18 = {DEC_TEST_18_JSON, sizeof(DEC_TEST_18_JSON), EFI_INVALID_PARAMETER, mParseTest18Elements, mParseTest18ElementCount, NULL};
+static BASIC_TEST_CONTEXT mParseTest19 = {DEC_TEST_19_JSON, sizeof(DEC_TEST_19_JSON), EFI_INVALID_PARAMETER, NULL,                 mParseTest19ElementCount, NULL};
+static BASIC_TEST_CONTEXT mParseTest20 = {DEC_TEST_20_JSON, sizeof(DEC_TEST_20_JSON), EFI_INVALID_PARAMETER, NULL,                 mParseTest20ElementCount, NULL};
+static BASIC_TEST_CONTEXT mParseTest21 = {DEC_TEST_21_JSON, sizeof(DEC_TEST_21_JSON), EFI_INVALID_PARAMETER, mParseTest21Elements, mParseTest21ElementCount, NULL};
+static BASIC_TEST_CONTEXT mParseTest22 = {DEC_TEST_22_JSON, sizeof(DEC_TEST_22_JSON), EFI_INVALID_PARAMETER, mParseTest22Elements, mParseTest22ElementCount, NULL};
 
 static BASIC_TEST_CONTEXT mEncodeTest1 = {ENC_TEST_1_JSON,  sizeof(ENC_TEST_1_JSON),  EFI_SUCCESS,           mEncodeTest1Elements, mEncodeTest1ElementCount, NULL};
 
@@ -423,20 +457,20 @@ JsonParseTest (
 
     BASIC_TEST_CONTEXT *Btc;
     INTN                i;
-    CHAR8              *WorkString;
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
 
     mApplyElementCount = 0;
 
-    WorkString = AllocateCopyPool ( Btc->JsonStringSize, Btc->JsonString);
-    UT_ASSERT_TRUE (WorkString != NULL);
-    Btc->BufferToFree = WorkString;
+    DEBUG(( DEBUG_INFO, "Processing Test: %a\n",Btc->JsonString));
+    if (((Btc->ExpectedResults == NULL) && (Btc->ExpectedCount != 0)) ||
+        ((Btc->ExpectedResults != NULL) && (Btc->ExpectedCount == 0)) ) {
+        UT_LOG_INFO ("JsonLibParse invalid test setup. Results = %p, Count=%d\n", Btc->ExpectedResults, Btc->ExpectedCount);
+        UT_ASSERT_TRUE (FALSE);
+    }
 
-    DEBUG(( DEBUG_INFO, "Processing Test: %a\n",WorkString));
-
-    Status = JsonLibParse (WorkString, Btc->JsonStringSize, JsonProcessFunction, NULL);
+    Status = JsonLibParse (Btc->JsonString, Btc->JsonStringSize, JsonProcessFunction, NULL);
 
     UT_LOG_INFO ("JsonLibParse returned %r, expected %r\n", Status, Btc->ExpectedStatus);
     UT_LOG_INFO ("ApplyCount = %d, ExpectedCount = %d\n", mApplyElementCount, Btc->ExpectedCount);
@@ -448,27 +482,30 @@ JsonParseTest (
     UT_ASSERT_TRUE (mApplyElementCount <= Btc->ExpectedCount);
     if (!EFI_ERROR(Status)) {
       for (i = 0; i < mApplyElementCount; i++) {
+          DEBUG((DEBUG_INFO, "Processing element %d\n", i));
           UT_LOG_INFO ("Processing element %d\n", i);
 
-          UT_LOG_INFO ("Expected FieldSize = %d, Actual FieldSize = %d\n", Btc->ExpectedResults[i].FieldSize, mApplyElements[i].FieldSize);
-          UT_LOG_INFO ("Actual Field   = %a\n", mApplyElements[i].FieldName);
-          UT_LOG_INFO ("Expected Field = %a\n", Btc->ExpectedResults[i].FieldName);
+          UT_LOG_INFO ("Expected FieldLen = %d, Actual FieldLen = %d\n", Btc->ExpectedResults[i].FieldLen, mApplyElements[i].FieldLen);
+          UT_LOG_INFO ("Actual Field   = %.*a\n",  mApplyElements[i].FieldLen, mApplyElements[i].FieldName);
+          UT_LOG_INFO ("Expected Field = %.*a\n", Btc->ExpectedResults[i].FieldLen, Btc->ExpectedResults[i].FieldName);
 
-          UT_LOG_INFO ("Expected ValueSize = %d, Actual ValueSize = %d\n", Btc->ExpectedResults[i].ValueSize, mApplyElements[i].ValueSize);
-          UT_LOG_INFO ("Actual Value   = %a\n", mApplyElements[i].Value);
-          UT_LOG_INFO ("Expected Value = %a\n", Btc->ExpectedResults[i].Value);
+          UT_LOG_INFO ("Expected ValueSize = %d, Actual ValueSize = %d\n", Btc->ExpectedResults[i].ValueLen, mApplyElements[i].ValueLen);
+          UT_LOG_INFO ("Actual Value   = %.*a\n", mApplyElements[i].ValueLen, mApplyElements[i].Value);
+          UT_LOG_INFO ("Expected Value = %.*a\n", Btc->ExpectedResults[i].ValueLen, Btc->ExpectedResults[i].Value);
 
-          UT_ASSERT_TRUE (Btc->ExpectedResults[i].FieldSize == mApplyElements[i].FieldSize);
-          UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].FieldName, mApplyElements[i].FieldName, mApplyElements[i].FieldSize));
+          UT_ASSERT_TRUE (Btc->ExpectedResults[i].FieldLen == mApplyElements[i].FieldLen);
+          UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].FieldName, mApplyElements[i].FieldName, mApplyElements[i].FieldLen));
 
-          UT_ASSERT_TRUE (Btc->ExpectedResults[i].ValueSize == mApplyElements[i].ValueSize);
-          UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].Value, mApplyElements[i].Value, mApplyElements[i].ValueSize));
+          UT_ASSERT_TRUE (Btc->ExpectedResults[i].ValueLen == mApplyElements[i].ValueLen);
+          UT_ASSERT_TRUE (0 == AsciiStrnCmp(Btc->ExpectedResults[i].Value, mApplyElements[i].Value, mApplyElements[i].ValueLen));
       }
     }
 
     UT_ASSERT_TRUE (mApplyElementCount == Btc->ExpectedCount);
 
     UT_ASSERT_STATUS_EQUAL(Status, Btc->ExpectedStatus);
+
+    DEBUG((DEBUG_INFO, "Test completed successfully\n"));
 
     return UNIT_TEST_PASSED;
 }
@@ -503,6 +540,8 @@ JsonEncodeTest (
 
         UT_ASSERT_TRUE (0 == AsciiStrnCmp (Btc->JsonString, Btc->BufferToFree, NewStringSize));
     }
+
+    DEBUG((DEBUG_INFO, "Encode test completed successfully\n"));
 
     return UNIT_TEST_PASSED;
 }
@@ -546,17 +585,13 @@ JsonParseNullP2 (
   ) {
 
     BASIC_TEST_CONTEXT *Btc;
-    CHAR8              *WorkString;
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
 
-    WorkString = AllocateCopyPool ( Btc->JsonStringSize, Btc->JsonString);
-    UT_ASSERT_TRUE (WorkString != NULL);
-    Btc->BufferToFree = WorkString;
     DEBUG(( DEBUG_INFO, "Processing NullP2\n"));
 
-    Status = JsonLibParse (WorkString, 0, JsonProcessFunction, NULL);
+    Status = JsonLibParse (Btc->JsonString, 0, JsonProcessFunction, NULL);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
     return UNIT_TEST_PASSED;
@@ -576,17 +611,12 @@ JsonParseNullP3 (
   ) {
 
     BASIC_TEST_CONTEXT *Btc;
-    CHAR8              *WorkString;
     EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
     DEBUG(( DEBUG_INFO, "Processing NullP3\n"));
 
-    WorkString = AllocateCopyPool ( Btc->JsonStringSize, Btc->JsonString);
-    UT_ASSERT_TRUE (WorkString != NULL);
-    Btc->BufferToFree = WorkString;
-
-    Status = JsonLibParse (WorkString, Btc->JsonStringSize, NULL, NULL);
+    Status = JsonLibParse (Btc->JsonString, Btc->JsonStringSize, NULL, NULL);
     UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
     return UNIT_TEST_PASSED;
@@ -765,10 +795,15 @@ JsonTestAppEntry (
     AddTestCase( JsonParseTests, L"Json Parse Test 15", L"JSON.Parse.Test15", JsonParseTest, NULL, CleanUpTestContext, &mParseTest15);
     AddTestCase( JsonParseTests, L"Json Parse Test 16", L"JSON.Parse.Test16", JsonParseTest, NULL, CleanUpTestContext, &mParseTest16);
     AddTestCase( JsonParseTests, L"Json Parse Test 17", L"JSON.Parse.Test17", JsonParseTest, NULL, CleanUpTestContext, &mParseTest17);
+    AddTestCase( JsonParseTests, L"Json Parse Test 18", L"JSON.Parse.Test18", JsonParseTest, NULL, CleanUpTestContext, &mParseTest18);
+    AddTestCase( JsonParseTests, L"Json Parse Test 19", L"JSON.Parse.Test19", JsonParseTest, NULL, CleanUpTestContext, &mParseTest19);
+    AddTestCase( JsonParseTests, L"Json Parse Test 20", L"JSON.Parse.Test20", JsonParseTest, NULL, CleanUpTestContext, &mParseTest20);
+    AddTestCase( JsonParseTests, L"Json Parse Test 21", L"JSON.Parse.Test21", JsonParseTest, NULL, CleanUpTestContext, &mParseTest21);
+    AddTestCase( JsonParseTests, L"Json Parse Test 22", L"JSON.Parse.Test22", JsonParseTest, NULL, CleanUpTestContext, &mParseTest22);
 
-    AddTestCase( JsonParseTests, L"Json Parse Test 18", L"JSON.Parse.Test18", JsonParseNullP1, NULL, CleanUpTestContext, &mParseTest1);
-    AddTestCase( JsonParseTests, L"Json Parse Test 19", L"JSON.Parse.Test19", JsonParseNullP2, NULL, CleanUpTestContext, &mParseTest1);
-    AddTestCase( JsonParseTests, L"Json Parse Test 20", L"JSON.Parse.Test20", JsonParseNullP3, NULL, CleanUpTestContext, &mParseTest1);
+    AddTestCase( JsonParseTests, L"Json Parse NULL Test 1", L"JSON.Parse.NullTest1", JsonParseNullP1, NULL, CleanUpTestContext, &mParseTest1);
+    AddTestCase( JsonParseTests, L"Json Parse NULL Test 2", L"JSON.Parse.NullTest2", JsonParseNullP2, NULL, CleanUpTestContext, &mParseTest1);
+    AddTestCase( JsonParseTests, L"Json Parse NULL Test 3", L"JSON.Parse.NullTest3", JsonParseNullP3, NULL, CleanUpTestContext, &mParseTest1);
 
     //
     // Populate the GlobalVarTests Unit Test Suite.
@@ -780,8 +815,7 @@ JsonTestAppEntry (
         goto EXIT;
     }
 
-    AddTestCase(JsonEncodeTests, L"Json Encode Test 1", L"JSON.EncodeTest1", JsonEncodeTest, NULL, CleanUpTestContext, &mEncodeTest1);
-
+    AddTestCase(JsonEncodeTests, L"Json Encode Test 1", L"JSON.EncodeTest1", JsonEncodeTest,   NULL, CleanUpTestContext, &mEncodeTest1);
     AddTestCase(JsonEncodeTests, L"Json Encode Test 2", L"JSON.EncodeTest2", JsonEncodeNullP1, NULL, CleanUpTestContext, &mEncodeTest1);
     AddTestCase(JsonEncodeTests, L"Json Encode Test 3", L"JSON.EncodeTest3", JsonEncodeNullP2, NULL, CleanUpTestContext, &mEncodeTest1);
     AddTestCase(JsonEncodeTests, L"Json Encode Test 4", L"JSON.EncodeTest4", JsonEncodeNullP3, NULL, CleanUpTestContext, &mEncodeTest1);

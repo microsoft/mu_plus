@@ -1024,6 +1024,10 @@ CleanupNetworkRequest (
         if (NULL != NetworkRequest->HttpStatus.HttpMessage) {
             FreePool (NetworkRequest->HttpStatus.HttpMessage);
         }
+
+        if (NULL != NetworkRequest->HttpStatus.HttpReturnCode) {
+            FreePool (NetworkRequest->HttpStatus.HttpReturnCode);
+        }
     }
 
     if (CleanupMask & (CLEANUP_STATUS | CLEAR_ALL)) {

@@ -57,8 +57,42 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         a++;                \
     }
 
-#define JSON_NULL "null"
+/**
+  LocalAsciiStrCat
 
+  Similar to AsciiStrCatS, but the source string is a count of characters with no NULL
+**/
+STATIC
+EFI_STATUS
+LocalAsciiStrCatS (
+          CHAR8 *Dest,
+          UINTN  DestMax,
+    CONST CHAR8 *Src,
+          UINTN  Count
+    ) {
+
+    while ((*Dest != '\0') && (DestMax > 0)){
+        Dest++;
+        DestMax--;
+    }
+
+    if (Count > DestMax) {
+        return EFI_BUFFER_TOO_SMALL;
+    }
+
+    while (Count > 0) {
+        if (*Src == '\0') {
+            *Dest = '\0';
+            return EFI_INVALID_PARAMETER;
+        }
+
+        *Dest++ = *Src++;
+        Count--;
+    }
+
+    *Dest = '\0';
+    return EFI_SUCCESS;
+}
 /**
  * EncodeJson
  *
@@ -82,7 +116,9 @@ JsonLibEncode (
     OUT UINTN                *JsonStringSize) {
 
     UINTN      i;
-    UINTN      ValueSize;
+    UINTN      j;
+    UINTN      ValueLen;
+    BOOLEAN    NeedQuotes;
     CHAR8     *RequestBuffer;
     UINTN      RequestSize;
     EFI_STATUS Status;
@@ -94,19 +130,29 @@ JsonLibEncode (
     //
     // Account for
     //    2                  the enclosing braces {}
-    //    5*RequestCount     " characters for the name and value, and the : separator
+    //    3*RequestCount     " characters for the name, and the : separator
     //    1*RequestCount     for the , separators and the terminating NULL
     //
-    RequestSize = 2 + 6 * RequestCount;
+    RequestSize = 2 + (4 * RequestCount);
     Status = EFI_SUCCESS;
 
     for (i = 0; i < RequestCount; i++) {
         if (NULL != Request[i].Value) {
-            ValueSize = Request[i].ValueSize;
+            ValueLen = Request[i].ValueLen;
+            NeedQuotes = FALSE;
+            for (j=0; (j < Request[i].ValueLen) && !NeedQuotes; j++) {
+                if ((Request[i].Value[j] < '0') ||
+                    (Request[i].Value[j] > '9')) {
+                    NeedQuotes = TRUE;
+                }
+            }
+            if (NeedQuotes) {
+                RequestSize += (2 * sizeof(CHAR8));
+            }
         } else {
-            ValueSize = sizeof(JSON_NULL);
+            ValueLen = AsciiStrLen(JSON_NULL);
         }
-        RequestSize += Request[i].FieldSize + ValueSize - 2; // -2 as both sizes count a NULL
+        RequestSize += Request[i].FieldLen + ValueLen;
     }
 
     RequestBuffer = AllocatePool (RequestSize);
@@ -122,14 +168,28 @@ JsonLibEncode (
         }
 
         Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-        Status |= AsciiStrCatS (RequestBuffer, RequestSize, Request[i].FieldName);
+        Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].FieldName, Request[i].FieldLen);
         Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\":");
         if (NULL != Request[i].Value) {
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, Request[i].Value);
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
+            NeedQuotes = FALSE;
+            for (j=0; (j < Request[i].ValueLen) && !NeedQuotes; j++) {
+                if ((Request[i].Value[j] < '0') ||
+                    (Request[i].Value[j] > '9')) {
+                    NeedQuotes = TRUE;
+                }
+            }
+
+            if (NeedQuotes) {
+                Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
+            }
+
+            Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].Value, Request[i].ValueLen);
+            if (NeedQuotes) {
+                Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
+            }
         } else {
             Status |= AsciiStrCatS (RequestBuffer, RequestSize, JSON_NULL);
+            RequestSize = RequestSize - (2 * sizeof(CHAR8));
         }
 
         if (EFI_ERROR(Status)) {
@@ -185,6 +245,7 @@ JsonLibParse (
     EFI_STATUS           Status;
     BOOLEAN              Processed;
     BOOLEAN              Changed;
+    BOOLEAN              SkipNULL;
 
 
     if ((NULL == JsonString) || (NULL == ProcessFunction) || (0 == JsonStringSize)) {
@@ -195,7 +256,7 @@ JsonLibParse (
     Processed = FALSE;
     Changed = FALSE;
     DEBUG((DEBUG_INFO,"Parse buffer @ %p, Size = %d:\n", JsonString, JsonStringSize));
-    DEBUG_BUFFER(DEBUG_VERBOSE, JsonString, JsonStringSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
+    DEBUG_BUFFER(DEBUG_INFO, JsonString, JsonStringSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
 
     Length = AsciiStrnLenS (JsonString, JsonStringSize);
     if (Length == JsonStringSize) {
@@ -234,8 +295,8 @@ JsonLibParse (
             return EFI_INVALID_PARAMETER;
         }
 
-        *JsonChar++ = '\0';   // Terminate name in JsonString
-        Rqst.FieldSize = JsonChar - Rqst.FieldName;
+        Rqst.FieldLen = JsonChar - Rqst.FieldName;   // Len does not include quote
+        JsonChar++;
 
         SKIP_WHITE_SPACE (JsonChar);
 
@@ -247,61 +308,73 @@ JsonLibParse (
         JsonChar++;
         SKIP_WHITE_SPACE (JsonChar);
 
-        // Expect a quoted value
-        if ('\"' != *JsonChar) {
-            if ('n' != *JsonChar) {
-                DEBUG((DEBUG_ERROR,"err  found %p\n", JsonChar));
+        // The value may be quoted, the word null, or a sequence of decimal digits.
+        SkipNULL = FALSE;
+        switch (*JsonChar) {
+            case '\"':          // Handle quoted value
+                JsonChar++;     // Skip quote
+                Rqst.Value = JsonChar;
+
+                SKIP_TO_NEXT_QUOTE (JsonChar);
+
+                if ('\"' != *JsonChar) {
+                    DEBUG((DEBUG_ERROR,"Value did not end with a quote\n"));
+                    return EFI_INVALID_PARAMETER;
+                }
+                Rqst.ValueLen = JsonChar - Rqst.Value;  // Len does not include trailing quote
+                JsonChar++;  // Skip trailing quote
+            break;
+
+            case 'n':           // Handle the word null
+                JsonChar++;
+                if ('u' != *JsonChar++) {
+                    goto INVALID;
+                }
+
+                if ('l' != *JsonChar++) {
+                    goto INVALID;
+                }
+
+                if ('l' != *JsonChar++) {
 INVALID:
-                DEBUG((DEBUG_INFO,"Value did not start with a quote\n"));
-                return EFI_INVALID_PARAMETER;
-            }
-            DEBUG((DEBUG_ERROR,"null found %p\n", JsonChar));
-            JsonChar++;
-            if ('u' != *JsonChar) {
-                goto INVALID;
-            }
-            JsonChar++;
-            if ('l' != *JsonChar) {
-                goto INVALID;
-            }
-            JsonChar++;
-            if ('l' != *JsonChar) {
-                goto INVALID;
-            }
-            JsonChar++;
-            DEBUG((DEBUG_ERROR,"SKIP_NULL  %p\n", JsonChar));
-            // At this point, the value is "null".  So do not process NULL
-            // values
-            goto SKIP_NULL;
+                    DEBUG((DEBUG_ERROR, "Invalid value\n"));
+                    return EFI_INVALID_PARAMETER;
+                }
+
+                SkipNULL = TRUE;
+            break;
+
+            default:
+                Rqst.Value = JsonChar;
+                if ((*JsonChar < '0') || (*JsonChar > '9')) {
+                    goto INVALID;
+                }
+
+                JsonChar++;
+                while ((*JsonChar >= '0') && (*JsonChar <= '9')) {
+                    JsonChar++;
+                }
+                                                           // JsonChar now points to next item
+                Rqst.ValueLen = JsonChar - Rqst.Value;
+            break;
         }
 
-        JsonChar++;
-        Rqst.Value = JsonChar;
+        if (!SkipNULL) {
+            Status = (ProcessFunction) (&Rqst, Context);
+            if (EFI_MEDIA_CHANGED == Status) {
+                Status = EFI_SUCCESS;
+                Changed = TRUE;
+                DEBUG((DEBUG_INFO, "Media Changed from Process Function\n"));
+            }
 
-        SKIP_TO_NEXT_QUOTE (JsonChar);
-
-        if ('\"' != *JsonChar) {
-            DEBUG((DEBUG_INFO,"Value did not end with a quote\n"));
-            return EFI_INVALID_PARAMETER;
+            if (EFI_ERROR(Status)) {
+                DEBUG((DEBUG_ERROR, "Error from Element Apply. Code = %r\n",Status));
+                return Status;
+            }
         }
 
-        *JsonChar++ = '\0';   // Terminate value in JsonString
-        Rqst.ValueSize = JsonChar - Rqst.Value;
-
-        Status = (ProcessFunction) (&Rqst, Context);
-        if (EFI_MEDIA_CHANGED == Status) {
-            Status = EFI_SUCCESS;
-            Changed = TRUE;
-            DEBUG((DEBUG_INFO, "Media Changed from Process Function\n"));
-        }
-
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "Error from Element Apply. Code = %r\n",Status));
-            return Status;
-        }
         Processed = TRUE;
 
-SKIP_NULL:
         SKIP_WHITE_SPACE (JsonChar);
 
         if (',' == *JsonChar) {
