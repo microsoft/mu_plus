@@ -73,6 +73,24 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static EFI_EVENT mPreReadyToBootEvent;
 static EFI_EVENT mPostReadyToBootEvent;
 
+       CHAR8     mMemoryType[][30] = {                    // Value for PcdMemoryMapTypes
+                           "EfiReservedMemoryType      ",      // 0x0001
+                           "EfiLoaderCode              ",      // 0x0002
+                           "EfiLoaderData              ",      // 0x0004
+                           "EfiBootServicesCode        ",      // 0x0008
+                           "EfiBootServicesData        ",      // 0x0010
+                           "EfiRuntimeServicesCode     ",      // 0x0020
+                           "EfiRuntimeServicesData     ",      // 0x0040
+                           "EfiConventionalMemory      ",      // 0x0080
+                           "EfiUnusableMemory          ",      // 0x0100
+                           "EfiACPIReclaimMemory       ",      // 0x0200   Both ACPI types would
+                           "EfiACPIMemoryNVS           ",      // 0x0400   be 0x0600
+                           "EfiMemoryMappedIO          ",      // 0x0800
+                           "EfiMemoryMappedIOPortSpace ",      // 0x1000
+                           "EfiPalCode                 ",      // 0x2000
+                           "EfiMaxMemoryType           "
+                      };
+
 static
 VOID
 ThermalFailureShutdown (
@@ -751,27 +769,6 @@ PrintMemoryMap () {
         UINT32                 DescriptorVersion;
         UINTN                  Count;
         UINTN                  i;
-        //
-        // Declare this static so RELEASE builds don't fail.
-        // slightly wasteful but other options are worse
-        //
-        static CHAR8           MemoryType[][30] = {                    // Value for PcdMemoryMapTypes
-                                   "EfiReservedMemoryType      ",      // 0x0001
-                                   "EfiLoaderCode              ",      // 0x0002
-                                   "EfiLoaderData              ",      // 0x0004
-                                   "EfiBootServicesCode        ",      // 0x0008
-                                   "EfiBootServicesData        ",      // 0x0010
-                                   "EfiRuntimeServicesCode     ",      // 0x0020
-                                   "EfiRuntimeServicesData     ",      // 0x0040
-                                   "EfiConventionalMemory      ",      // 0x0080
-                                   "EfiUnusableMemory          ",      // 0x0100
-                                   "EfiACPIReclaimMemory       ",      // 0x0200   Both ACPI types would
-                                   "EfiACPIMemoryNVS           ",      // 0x0400   be 0x0600
-                                   "EfiMemoryMappedIO          ",      // 0x0800
-                                   "EfiMemoryMappedIOPortSpace ",      // 0x1000
-                                   "EfiPalCode                 ",      // 0x2000
-                                   "EfiMaxMemoryType           "
-                              };
 
         Status = gBS->GetMemoryMap (&MemoryMapSize,MemoryMap,&MapKey,&DescriptorSize,&DescriptorVersion);
         if (Status == EFI_BUFFER_TOO_SMALL) {
@@ -786,7 +783,7 @@ PrintMemoryMap () {
                         MemoryMap = (EFI_MEMORY_DESCRIPTOR *) Entry;
                         if (MemoryMap->Type <= EfiMaxMemoryType) {
                             if (((1 << MemoryMap->Type) & PcdGet32 (PcdEnableMemMapTypes)) != 0) {
-                                DEBUG((DEBUG_INFO,"%a at %p for %d pages\n",MemoryType[MemoryMap->Type],MemoryMap->PhysicalStart,MemoryMap->NumberOfPages));
+                                DEBUG((DEBUG_INFO,"%a at %p for %d pages\n",mMemoryType[MemoryMap->Type],MemoryMap->PhysicalStart,MemoryMap->NumberOfPages));
                                 if (PcdGet8 (PcdEnableMemMapDumpOutput)) {
                                     DebugDumpMemory (DEBUG_INFO, (CHAR8 *) MemoryMap->PhysicalStart,48,DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII );
                                 }
