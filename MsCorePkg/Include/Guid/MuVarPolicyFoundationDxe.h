@@ -31,6 +31,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef BOOLEAN   PHASE_INDICATOR;
 
+#define PHASE_INDICATOR_SET                     TRUE
+
 // NOTE: Variable Attributes
 // When locating one of the phase indication variables, the attributes should be compared.
 // If the attributes don't match, that's a security error and the indicator cannot be trusted.

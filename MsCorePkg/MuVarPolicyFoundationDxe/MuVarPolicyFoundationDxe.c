@@ -149,7 +149,7 @@ VariableLockRequestToLock (
   NewEntry->AttributesCantHave = 0;
   NewEntry->LockPolicyType  = VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE;
   CopyGuid( &LockOnVarStatePolicy->Namespace, &gMuVarPolicyDxePhaseGuid );
-  LockOnVarStatePolicy->Value = 1;
+  LockOnVarStatePolicy->Value = PHASE_INDICATOR_SET;
   CopyMem( PhaseIndicator, EndOfDxeIndicatorStr, LockOnVarStateNameSize );
   CopyMem( EntryName, VariableName, NameSize );
 
@@ -187,7 +187,7 @@ SetPhaseIndicator (
   )
 {
   EFI_STATUS        Status = EFI_SUCCESS;
-  PHASE_INDICATOR   Indicator = TRUE;
+  PHASE_INDICATOR   Indicator = PHASE_INDICATOR_SET;
 
   DEBUG(( DEBUG_VERBOSE, "%a - Setting indicator '%s'...\n", __FUNCTION__, IndicatorName ));
 
