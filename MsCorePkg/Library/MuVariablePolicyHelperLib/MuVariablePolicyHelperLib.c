@@ -43,15 +43,23 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   structure for a policy that does not contain any sub-structures (such as
   VARIABLE_LOCK_ON_VAR_STATE_POLICY).
 
-  Caller will need to free structure once finished.
+  NOTE: Caller will need to free structure once finished.
 
-  @param[in]  Namespace   Pointer to an EFI_GUID for the namespace that this policy will protect.
-  @param[in]  Namespace   Pointer to an EFI_GUID for the namespace that this policy will protect.
+  @param[in]  Namespace   Pointer to an EFI_GUID for the target variable namespace that this policy will protect.
+  @param[in]  Name        [Optional] If provided, a pointer to the CHAR16 array for the target variable name.
+                          Otherwise, will create a policy that targets an entire namespace.
+  @param[in]  MinSize     MinSize for the VariablePolicy.
+  @param[in]  MaxSize     MaxSize for the VariablePolicy.
+  @param[in]  AttributesMustHave    AttributesMustHave for the VariablePolicy.
+  @param[in]  AttributesCantHave    AttributesCantHave for the VariablePolicy.
+  @param[in]  LockPolicyType        LockPolicyType for the VariablePolicy.
+  @param[out] NewEntry    If successful, will be set to a pointer to the allocated buffer containing the
+                          new policy. If unsuccessful, will be NULL.
 
   @retval     EFI_SUCCESS             Operation completed successfully and structure is populated.
-  @retval     EFI_OUT_OF_RESOURCES    Could not allocate sufficient space for structure.
   @retval     EFI_INVALID_PARAMETER   Namespace is NULL.
   @retval     EFI_INVALID_PARAMETER   LockPolicyType is invalid for a basic structure.
+  @retval     EFI_OUT_OF_RESOURCES    Could not allocate sufficient space for structure.
 
 **/
 EFI_STATUS
@@ -67,5 +75,9 @@ CreateBasicVariablePolicy (
   OUT VARIABLE_POLICY_ENTRY     **NewEntry
   )
 {
-    
+  // Check some initial invalid parameters for this function.
+  if (Namespace == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+  if (LockPolicyType != )
 } // CreateBasicVariablePolicy()
