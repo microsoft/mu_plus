@@ -35,21 +35,33 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // The limited format Json string is in the format:
 //
-//    { "ASCII-127-Identifier",  "ASCII-127-Value",
-//      "ASCII-127-Identifier1", "ASCII-127-Value",
-//      "ASCII-127-Identifier3", "ASCII-127-Value",
-//      "ASCII-127-Identifier4", "ASCII-127-Value" }
+//    { "ASCII-Identifier"  : "ASCII-Value",
+//      "ASCII-Identifier1" : "ASCII-Value",
+//      "ASCII-Identifier3" : "ASCII-Value",
+//      "ASCII-Identifier4" : "ASCII-Value" }
 //
-// where ASCII-127 includes all characters 0x01-0x7F excluding 0x22 (the double quote "). 0x00
-// is the NULL terminator.  ASCII-127 is not validated, but should not have an effect on parsing.
+// where the ASCII fields include all characters 0x01-0xFF excluding 0x22 (the double quote "). 0x00
+// is the NULL terminator.  ASCII is not validated, and may include some UTF-8 special characters, but
+// should not have an effect on parsing.  If there is a leading quote, parsing ends at an ending quote
+// that only has whitespace, comma, or close brace.
+//
 // An embedded NULL in the string will only stop parsing the string.
-
+//
+// A value (data to the right of the ':') may only be a quoted string, decimal number, or the word null.
+//
+// JSON_REQUEST_ELEMENT notes:
+//
+// The FieldName and Value are NOT NULL terminated strings. The FieldLen and ValueLen
+// are character counts, without the quotes.
+//
 typedef struct {
-    CHAR8    *FieldName;
-    UINTN     FieldSize;
-    CHAR8    *Value;
-    UINTN     ValueSize;
+    CONST CHAR8    *FieldName;
+    UINTN           FieldLen;
+    CONST CHAR8    *Value;
+    UINTN           ValueLen;
 } JSON_REQUEST_ELEMENT;
+
+#define JSON_NULL "null"
 
 /**
  *  Function to process a Json Element

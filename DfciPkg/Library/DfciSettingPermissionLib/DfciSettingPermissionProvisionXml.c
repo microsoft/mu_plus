@@ -41,13 +41,12 @@ EFIAPI
 ValidateAndAuthenticatePermissions(
     IN DFCI_INTERNAL_PACKET *Data)
 {
-  UINTN                     SignedDataLength = 0;
   UINTN                     SigLen = 0;
   WIN_CERTIFICATE          *SignaturePtr;
   EFI_STATUS                Status;
 
 
-  DEBUG((DEBUG_INFO, "%a - SignedDataLength = 0x%X\n", __FUNCTION__, SignedDataLength));
+  DEBUG((DEBUG_INFO, "%a - SignedDataLength = 0x%X\n", __FUNCTION__, Data->SignedDataLength));
 
   SignaturePtr = (WIN_CERTIFICATE *) PKT_FIELD_FROM_OFFSET(Data->Packet ,Data->SignedDataLength);
   SigLen = Data->PacketSize - Data->SignedDataLength;  //find out the max size of sig data based on var size and start of sig data.

@@ -29,7 +29,7 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MsEarlyGraphicsDxe
   FILE_GUID                      = 3977d4c4-b0eb-4548-96b9-671fa2e36820
-  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = MsEarlyGraphicsEntry
   UNLOAD_IMAGE                   = MsEarlyGraphicsUnload

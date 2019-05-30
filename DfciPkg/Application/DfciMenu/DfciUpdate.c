@@ -131,12 +131,14 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
     {
         KEYWORD_TRANSITIONING1,
         NULL,
+        NULL,
         JSON_ACTION_SET_VARIABLE,
         JSON_SET_IDENTITY,
         TRUE
     },
     {
         KEYWORD_TRANSITIONING2,
+        NULL,
         NULL,
         JSON_ACTION_SET_VARIABLE,
         JSON_SET_IDENTITY2,
@@ -145,6 +147,7 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
     {
         KEYWORD_SETTINGS,
         NULL,
+        NULL,
         JSON_ACTION_SET_VARIABLE,
         JSON_SET_SETTINGS,
         TRUE
@@ -152,6 +155,7 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
     {
         KEYWORD_RESULT_MESSAGE,
        &mDfciNetworkRequest.HttpStatus.HttpMessage,
+       &mDfciNetworkRequest.HttpStatus.HttpMessageSize,
         JSON_ACTION_SET_HTTP_MESSAGE,
         0,
         FALSE
@@ -159,6 +163,7 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
     {
         KEYWORD_RESULT_CODE,
        &mDfciNetworkRequest.HttpStatus.HttpReturnCode,
+       &mDfciNetworkRequest.HttpStatus.HttpReturnCodeSize,
         JSON_ACTION_SET_RETURN_CODE,
         0
     },
@@ -177,11 +182,13 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
 JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[] = {
     { KEYWORD_PROVISIONING,
       NULL,
+      NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_IDENTITY,
       TRUE
     },
     { KEYWORD_PERMISSIONS,
+      NULL,
       NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_PERMISSIONS,
@@ -189,23 +196,28 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[] = {
     },
     { KEYWORD_SETTINGS,
       NULL,
+      NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_SETTINGS,
       TRUE
     },
     { KEYWORD_RESULT_MESSAGE,
      &mDfciNetworkRequest.HttpStatus.HttpMessage,
+     &mDfciNetworkRequest.HttpStatus.HttpMessageSize,
       JSON_ACTION_SET_HTTP_MESSAGE,
       0,
       FALSE
     },
     { KEYWORD_RESULT_CODE,
-      &mDfciNetworkRequest.HttpStatus.HttpReturnCode,
-     JSON_ACTION_SET_RETURN_CODE,
+     &mDfciNetworkRequest.HttpStatus.HttpReturnCode,
+     &mDfciNetworkRequest.HttpStatus.HttpReturnCodeSize,
+      JSON_ACTION_SET_RETURN_CODE,
       0,
       FALSE
     },
     { NULL,
+      NULL,
+      NULL,
       0,
       0,
       FALSE
@@ -227,11 +239,13 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[] = {
 JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[] = {
     { KEYWORD_PROVISIONING,
       NULL,
+      NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_IDENTITY,
       TRUE
     },
     { KEYWORD_PROVISIONING2,
+      NULL,
       NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_IDENTITY2,
@@ -239,11 +253,13 @@ JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[] = {
     },
     { KEYWORD_PERMISSIONS,
       NULL,
+      NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_PERMISSIONS,
       TRUE,
     },
     { KEYWORD_PERMISSIONS2,
+      NULL,
       NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_PERMISSIONS2,
@@ -251,16 +267,19 @@ JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[] = {
     },
     { KEYWORD_SETTINGS,
       NULL,
+      NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_SETTINGS
     },
     { KEYWORD_SETTINGS2,
+      NULL,
       NULL,
       JSON_ACTION_SET_VARIABLE,
       JSON_SET_SETTINGS2,
       TRUE
     },
     { NULL,
+      NULL,
       NULL,
       0,
       0,
@@ -385,14 +404,14 @@ BuildJsonBootstrapRequest (
     EFI_STATUS              Status;
 
     JsonRequest[0].FieldName = KEYWORD_HTTPS_THUMBPRINT;
-    JsonRequest[0].FieldSize = sizeof (KEYWORD_HTTPS_THUMBPRINT);
+    JsonRequest[0].FieldLen = sizeof (KEYWORD_HTTPS_THUMBPRINT) - sizeof(CHAR8);
     JsonRequest[0].Value = NetworkRequest->HttpsThumbprint;
-    JsonRequest[0].ValueSize = NetworkRequest->HttpsThumbprintSize;
+    JsonRequest[0].ValueLen = NetworkRequest->HttpsThumbprintSize - sizeof(CHAR8);
 
     JsonRequest[1].FieldName = KEYWORD_OWNER_THUMBPRINT;
-    JsonRequest[1].FieldSize = sizeof (KEYWORD_OWNER_THUMBPRINT);
+    JsonRequest[1].FieldLen = sizeof (KEYWORD_OWNER_THUMBPRINT) - sizeof(CHAR8);
     JsonRequest[1].Value = NetworkRequest->OwnerThumbprint;
-    JsonRequest[1].ValueSize = NetworkRequest->OwnerThumbprintSize;
+    JsonRequest[1].ValueLen = NetworkRequest->OwnerThumbprintSize - sizeof(CHAR8);
 
     Status = JsonLibEncode (JsonRequest, JSON_RECOVERY_BOOTSTRAP_COUNT, &JsonRequestString, &JsonRequestStringSize);
     if (!EFI_ERROR(Status)) {
@@ -426,34 +445,34 @@ BuildJsonRecoveryRequest (
 
 
     JsonRequest[0].FieldName = KEYWORD_MFG;
-    JsonRequest[0].FieldSize = sizeof (KEYWORD_MFG);
+    JsonRequest[0].FieldLen = sizeof (KEYWORD_MFG) - sizeof(CHAR8);
     JsonRequest[0].Value = NetworkRequest->DfciInfo.Manufacturer;
-    JsonRequest[0].ValueSize = NetworkRequest->DfciInfo.ManufacturerSize;
+    JsonRequest[0].ValueLen = NetworkRequest->DfciInfo.ManufacturerSize - sizeof(CHAR8);
 
     JsonRequest[1].FieldName = KEYWORD_MODEL;
-    JsonRequest[1].FieldSize = sizeof (KEYWORD_MODEL);
+    JsonRequest[1].FieldLen = sizeof (KEYWORD_MODEL) - sizeof(CHAR8);
     JsonRequest[1].Value = NetworkRequest->DfciInfo.ProductName;
-    JsonRequest[1].ValueSize = NetworkRequest->DfciInfo.ProductNameSize;
+    JsonRequest[1].ValueLen = NetworkRequest->DfciInfo.ProductNameSize - sizeof(CHAR8);
 
     JsonRequest[2].FieldName = KEYWORD_SERIAL;
-    JsonRequest[2].FieldSize = sizeof (KEYWORD_SERIAL);
+    JsonRequest[2].FieldLen = sizeof (KEYWORD_SERIAL) - sizeof(CHAR8);
     JsonRequest[2].Value = NetworkRequest->DfciInfo.SerialNumber;
-    JsonRequest[2].ValueSize = NetworkRequest->DfciInfo.SerialNumberSize;
+    JsonRequest[2].ValueLen = NetworkRequest->DfciInfo.SerialNumberSize - sizeof(CHAR8);
 
     JsonRequest[3].FieldName = KEYWORD_OWNER_THUMBPRINT;
-    JsonRequest[3].FieldSize = sizeof (KEYWORD_OWNER_THUMBPRINT);
+    JsonRequest[3].FieldLen = sizeof (KEYWORD_OWNER_THUMBPRINT) - sizeof(CHAR8);
     JsonRequest[3].Value = NetworkRequest->OwnerThumbprint;
-    JsonRequest[3].ValueSize = NetworkRequest->OwnerThumbprintSize;
+    JsonRequest[3].ValueLen = NetworkRequest->OwnerThumbprintSize - sizeof(CHAR8);
 
     JsonRequest[4].FieldName = KEYWORD_TENANTID;
-    JsonRequest[4].FieldSize = sizeof (KEYWORD_TENANTID);
+    JsonRequest[4].FieldLen = sizeof (KEYWORD_TENANTID) - sizeof(CHAR8);
     JsonRequest[4].Value = NetworkRequest->TenantId;
-    JsonRequest[4].ValueSize = NetworkRequest->TenantIdSize;
+    JsonRequest[4].ValueLen = NetworkRequest->TenantIdSize - sizeof(CHAR8);
 
     JsonRequest[5].FieldName = KEYWORD_REGISTRATIONID;
-    JsonRequest[5].FieldSize = sizeof (KEYWORD_REGISTRATIONID);
+    JsonRequest[5].FieldLen = sizeof (KEYWORD_REGISTRATIONID) - sizeof(CHAR8);
     JsonRequest[5].Value = NetworkRequest->RegistrationId;
-    JsonRequest[5].ValueSize = NetworkRequest->RegistrationIdSize;
+    JsonRequest[5].ValueLen= NetworkRequest->RegistrationIdSize - sizeof(CHAR8);
 
     Status = JsonLibEncode (JsonRequest, JSON_RECOVERY_REQUEST_COUNT, &JsonRequestString, &JsonRequestStringSize);
     if (!EFI_ERROR(Status)) {
@@ -510,12 +529,12 @@ ProcessFunction (
     Valid = FALSE;
     VariableChanged = FALSE;
     for (j = 0; ResponseTable[j].FieldName != NULL; j++) {
-        if ((Rqst->FieldSize == AsciiStrSize(ResponseTable[j].FieldName)) &&
-            (0 == AsciiStrnCmp (ResponseTable[j].FieldName, Rqst->FieldName, Rqst->FieldSize))) {
+        if ((Rqst->FieldLen == AsciiStrLen(ResponseTable[j].FieldName)) &&
+            (0 == AsciiStrnCmp (ResponseTable[j].FieldName, Rqst->FieldName, Rqst->FieldLen))) {
 
             if (ResponseTable[j].DecodeBase64) {
               ValueSize = 0;
-              Status = Base64Decode(Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), NULL, &ValueSize);
+              Status = Base64Decode(Rqst->Value, Rqst->ValueLen, NULL, &ValueSize);
               if (Status != EFI_BUFFER_TOO_SMALL) {
                 DEBUG((DEBUG_ERROR, "Cannot query binary blob size. Code = %r\n",Status));
                 return EFI_INVALID_PARAMETER;
@@ -527,7 +546,7 @@ ProcessFunction (
                 return EFI_OUT_OF_RESOURCES;
               }
 
-              Status = Base64Decode (Rqst->Value, Rqst->ValueSize - sizeof(CHAR8), (UINT8 *) StringValue, &ValueSize);
+              Status = Base64Decode (Rqst->Value, Rqst->ValueLen, (UINT8 *) StringValue, &ValueSize);
               if (EFI_ERROR(Status)) {
                   FreePool (StringValue);
                   DEBUG((DEBUG_ERROR, "Cannot decode Value data. Code=%r\n",Status));
@@ -535,11 +554,12 @@ ProcessFunction (
               }
               StringValue[ValueSize] = '\0';  // Add a NULL in case it is not part of the string.
             } else {
-              StringValue = AllocateCopyPool(Rqst->ValueSize, Rqst->Value);
+              StringValue = AllocateZeroPool(Rqst->ValueLen + sizeof(CHAR8));
               if (NULL == StringValue) {
                 return EFI_OUT_OF_RESOURCES;
               }
-              ValueSize = Rqst->ValueSize;
+              CopyMem (StringValue, Rqst->Value, Rqst->ValueLen);
+              ValueSize = Rqst->ValueLen + sizeof(CHAR8);
             }
 
             ActionIndex = ResponseTable[j].VariableIndex;
@@ -548,9 +568,10 @@ ProcessFunction (
             case JSON_ACTION_SET_VARIABLE:
                 Pkt = (DFCI_PACKET_HEADER *) StringValue;
                 if (mJsonSetVariableEntryMailbox[ActionIndex].Signature != Pkt->Sig.Signature) {
-                    DEBUG((DEBUG_ERROR,"Invalid binary signature %4.4x, Indx=%d, Rqst %a. Expected %4.4x for %a\n",
+                    DEBUG((DEBUG_ERROR,"Invalid binary signature %4.4x, Indx=%d, Rqst %.*a. Expected %4.4x for %a.\n",
                         Pkt->Sig.Signature,
                         j,
+                        Rqst->FieldLen,
                         Rqst->FieldName,
                         mJsonSetVariableEntryMailbox[ActionIndex].Signature,
                         ResponseTable[j].FieldName));
@@ -580,6 +601,7 @@ ProcessFunction (
             case JSON_ACTION_SET_RETURN_CODE:
             case JSON_ACTION_SET_HTTP_MESSAGE:
                 *ResponseTable[j].Message = StringValue;
+                *ResponseTable[j].MessageSize = ValueSize;
                 StringValue = NULL;
                 Valid = TRUE;
                 break;

@@ -58,10 +58,6 @@
 #define SWM_MB_DIALOG_BUTTON_ASPECT_RATIO       3           // Dialog button aspect ration is 1:3 (length:width).
 #define SWM_MB_DIALOG_BUTTON_SPACE_PERCENT      30          // Dialog button spacing is 30% the width of the largest button.
 
-// Handle for the HII package list.
-// Used for button strings.
-//
-extern EFI_HII_HANDLE                 mSWMHiiHandle;
 
 /**
     Creates the Dialog's canvas and all the hosted child controls.
