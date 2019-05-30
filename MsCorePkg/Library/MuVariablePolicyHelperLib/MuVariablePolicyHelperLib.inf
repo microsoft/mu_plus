@@ -38,14 +38,6 @@
   MODULE_TYPE         = BASE
   LIBRARY_CLASS       = MuVariablePolicyHelperLib
 
-#
-# The following information is for reference only and not required by the build tools.
-#
-#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
-#
-#  VIRTUAL_ADDRESS_MAP_CALLBACK  =  VariableAddressChangeEvent
-#
-
 
 [Sources]
   MuVariablePolicyHelperLib.c
@@ -57,6 +49,7 @@
 
 
 [LibraryClasses]
+  BaseLib
   DebugLib
   MemoryAllocationLib
   BaseMemoryLib
