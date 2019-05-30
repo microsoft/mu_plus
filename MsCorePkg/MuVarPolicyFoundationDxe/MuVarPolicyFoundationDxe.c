@@ -81,17 +81,6 @@ VariableLockRequestToLock (
 {
   EFI_STATUS                         Status;
   BOOLEAN                            State;
-  VARIABLE_POLICY_ENTRY              *NewEntry;
-  VOID                               *EntryName;
-  VOID                               *PhaseIndicator;
-  UINTN                              NameSize;
-  UINTN                              PolicySize;
-  UINTN                              LockOnVarStateNameSize;
-  CHAR16                             *EndOfDxeIndicatorStr;
-  VARIABLE_LOCK_ON_VAR_STATE_POLICY  *LockOnVarStatePolicy;
-
-  NewEntry = NULL;
-  EndOfDxeIndicatorStr = END_OF_DXE_INDICATOR_VAR_NAME;
 
   // Check all the things for the goodness.
   if (VariableName == NULL || VendorGuid == NULL) {
@@ -119,51 +108,24 @@ VariableLockRequestToLock (
     return EFI_DEVICE_ERROR;
   }
 
-  // Now we assume that we're working with something useful.
-  // Let's start by figuring out how much memory we would need.
-  // Limit by the max size that a policy structure can support: MAX_UINT16.
-  // StrnSizeS returns a size, but takes in max number of chars for... reasons.
-  NameSize = StrnSizeS( VariableName, MAX_UINT16 / sizeof(*VariableName) );
-  LockOnVarStateNameSize = StrnSizeS( EndOfDxeIndicatorStr, MAX_UINT16 / sizeof(*EndOfDxeIndicatorStr) );
-  PolicySize = NameSize + sizeof(VARIABLE_POLICY_ENTRY) + LockOnVarStateNameSize + sizeof(VARIABLE_LOCK_ON_VAR_STATE_POLICY);
-
-  // Allocate the memory and forward the request.
-  NewEntry = AllocateZeroPool( PolicySize );
-  if (NewEntry == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-  LockOnVarStatePolicy = (VOID*)(NewEntry + 1);
-  PhaseIndicator = (VOID*)(LockOnVarStatePolicy + 1);
-  EntryName = (VOID*)(((UINT8 *)PhaseIndicator) + LockOnVarStateNameSize);
-
   DEBUG(( DEBUG_VERBOSE, "%a -> RegisterVariablePolicy for %g:%s.\n",
           __FUNCTION__, VendorGuid, VariableName ));
 
-  NewEntry->Version         = VARIABLE_POLICY_ENTRY_REVISION;
-  NewEntry->Size            = (UINT16)PolicySize;
-  NewEntry->OffsetToName    = (UINT16) (sizeof(VARIABLE_POLICY_ENTRY) + sizeof(VARIABLE_LOCK_ON_VAR_STATE_POLICY) + LockOnVarStateNameSize);
-  CopyGuid( &NewEntry->Namespace, VendorGuid );
-  NewEntry->MinSize = 0;
-  NewEntry->MaxSize = MAX_UINT32;
-  NewEntry->AttributesMustHave = 0;
-  NewEntry->AttributesCantHave = 0;
-  NewEntry->LockPolicyType  = VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE;
-  CopyGuid( &LockOnVarStatePolicy->Namespace, &gMuVarPolicyDxePhaseGuid );
-  LockOnVarStatePolicy->Value = PHASE_INDICATOR_SET;
-  CopyMem( PhaseIndicator, EndOfDxeIndicatorStr, LockOnVarStateNameSize );
-  CopyMem( EntryName, VariableName, NameSize );
-
   // IMPORTANT NOTE: If we do this, it will potentially override wildcard policies for the variable.
   //                 Though, if successful, it would still be write protected, so this is probably a no-op.
-  Status = mVariablePolicy->RegisterVariablePolicy(NewEntry);
+  Status = RegisterVarStateVariablePolicy( mVariablePolicy,
+                                           VendorGuid,    // Namespace
+                                           VariableName,  // Name
+                                           0,             // MinSize
+                                           MAX_UINT32,    // MaxSize
+                                           0,             // AttributesMustHave
+                                           0,             // AttributesCantHave
+                                           &gMuVarPolicyDxePhaseGuid,       // VarStateNamespace
+                                           PHASE_INDICATOR_SET,             // VarStateValue
+                                           END_OF_DXE_INDICATOR_VAR_NAME ); // VarStateName
   if (EFI_ERROR( Status )) {
-    DEBUG(( DEBUG_ERROR, "[%a] RequestToLock failed in RegisterVariablePolicy! %r\n", __FUNCTION__, Status ));
+    DEBUG(( DEBUG_ERROR, "[%a] RequestToLock failed in RegisterVarStateVariablePolicy! %r\n", __FUNCTION__, Status ));
     ASSERT_EFI_ERROR( Status );
-  }
-
-  // Always put away your toys.
-  if (NewEntry != NULL) {
-    FreePool( NewEntry );
   }
 
   return Status;
