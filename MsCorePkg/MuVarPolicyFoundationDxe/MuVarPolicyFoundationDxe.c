@@ -40,6 +40,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Protocol/VariableLock.h>
 #include <Protocol/VariablePolicy.h>
 
+#include <Library/MuVariablePolicyHelperLib.h>
+
 #include <Guid/EventGroup.h>
 #include <Guid/MuVarPolicyFoundationDxe.h>
 
