@@ -156,8 +156,8 @@ RegisterBasicVariablePolicy (
   @param[in]  AttributesMustHave    AttributesMustHave for the VariablePolicy.
   @param[in]  AttributesCantHave    AttributesCantHave for the VariablePolicy.
   @param[in]  VarStateNamespace     Pointer to the EFI_GUID for the VARIABLE_LOCK_ON_VAR_STATE_POLICY.Namespace.
-  @param[in]  VarStateValue         Value for the VARIABLE_LOCK_ON_VAR_STATE_POLICY.Value.
   @param[in]  VarStateName          Pointer to the CHAR16 array for the VARIABLE_LOCK_ON_VAR_STATE_POLICY.Name.
+  @param[in]  VarStateValue         Value for the VARIABLE_LOCK_ON_VAR_STATE_POLICY.Value.
 
   @retval     EFI_INVALID_PARAMETER VariablePolicy pointer is NULL.
   @retval     EFI_STATUS    Status returned by CreateBasicVariablePolicy() or RegisterVariablePolicy().
@@ -174,8 +174,8 @@ RegisterVarStateVariablePolicy (
   IN        UINT32            AttributesMustHave,
   IN        UINT32            AttributesCantHave,
   IN CONST  EFI_GUID          *VarStateNamespace,
-  IN        UINT8             VarStateValue,
-  IN CONST  CHAR16            *VarStateName
+  IN CONST  CHAR16            *VarStateName,
+  IN        UINT8             VarStateValue
   );
 
 #endif // _MU_VARIABLE_POLICY_HELPER_LIB_H_

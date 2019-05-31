@@ -123,8 +123,8 @@ VariableLockRequestToLock (
                                            0,             // AttributesMustHave
                                            0,             // AttributesCantHave
                                            &gMuVarPolicyDxePhaseGuid,       // VarStateNamespace
-                                           PHASE_INDICATOR_SET,             // VarStateValue
-                                           END_OF_DXE_INDICATOR_VAR_NAME ); // VarStateName
+                                           END_OF_DXE_INDICATOR_VAR_NAME,   // VarStateName
+                                           PHASE_INDICATOR_SET );           // VarStateValue
   if (EFI_ERROR( Status )) {
     DEBUG(( DEBUG_ERROR, "[%a] RequestToLock failed in RegisterVarStateVariablePolicy! %r\n", __FUNCTION__, Status ));
     ASSERT_EFI_ERROR( Status );
