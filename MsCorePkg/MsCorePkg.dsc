@@ -62,6 +62,7 @@
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
+  MuVariablePolicyHelperLib|MdeModulePkg/Library/MuVariablePolicyHelperLib/MuVariablePolicyHelperLib.inf
 
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
