@@ -306,6 +306,9 @@ MuVarPolicyFoundationDxeMain (
   //
   // First, make sure that we can locate and set the required policy.
   PolicyStatus = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, (VOID **) &mVariablePolicy );
+  if (EFI_ERROR( PolicyStatus )) {
+    DEBUG(( DEBUG_ERROR, "%a - Failed to locate VariablePolicy protocol! %r\n", __FUNCTION__, PolicyStatus ));
+  }
   if (!EFI_ERROR( PolicyStatus )) {
     // IMPORTANT NOTE: On the whole, it is a *bad* idea to use LOCK_ON_CREATE for a namespace policy.
     //                 However, since these are are all forced to be Volatile variables and since you can't create
@@ -322,9 +325,10 @@ MuVarPolicyFoundationDxeMain (
     PolicyEntry.LockPolicyType      = VARIABLE_POLICY_TYPE_LOCK_ON_CREATE;
 
     PolicyStatus = mVariablePolicy->RegisterVariablePolicy( &PolicyEntry );
-  }
-  if (EFI_ERROR( PolicyStatus )) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to set namespace VariablePolicy! %r\n", __FUNCTION__, PolicyStatus ));
+
+    if (EFI_ERROR( PolicyStatus )) {
+      DEBUG(( DEBUG_ERROR, "%a - Failed to register DxePhase state var policy! %r\n", __FUNCTION__, PolicyStatus ));
+    }
   }
 
   // Register a policy to describe the write-once state variable namespace.
@@ -336,9 +340,10 @@ MuVarPolicyFoundationDxeMain (
     PolicyEntry.AttributesCantHave  = (UINT32)(~WRTIE_ONCE_STATE_VAR_ATTR);
 
     PolicyStatus = mVariablePolicy->RegisterVariablePolicy( &PolicyEntry );
-  }
-  if (EFI_ERROR( PolicyStatus )) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to register WriteOnce state var policy! %r\n", __FUNCTION__, PolicyStatus ));
+
+    if (EFI_ERROR( PolicyStatus )) {
+      DEBUG(( DEBUG_ERROR, "%a - Failed to register WriteOnce state var policy! %r\n", __FUNCTION__, PolicyStatus ));
+    }
   }
 
   if (!EFI_ERROR( PolicyStatus )) {
@@ -386,7 +391,7 @@ MuVarPolicyFoundationDxeMain (
   VarLockStatus = gBS->InstallMultipleProtocolInterfaces ( &ImageHandle,
                                                            &gEdkiiVariableLockProtocolGuid,
                                                            &mVariableLock,
-                                                           NULL);
+                                                           NULL );
   if (EFI_ERROR( VarLockStatus ))
   {
     DEBUG(( DEBUG_ERROR, "%a - EdkiiVariableLockProtocol installation failed! %r\n", __FUNCTION__, VarLockStatus ));
