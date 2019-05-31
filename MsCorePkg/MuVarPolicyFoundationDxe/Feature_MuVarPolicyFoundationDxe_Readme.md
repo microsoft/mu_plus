@@ -1,4 +1,4 @@
-# MuVarPolicyFoundationDxe Driver and Policies
+-# MuVarPolicyFoundationDxe Driver and Policies
 ## Copyright
 
 Copyright (C) Microsoft Corporation
@@ -11,16 +11,18 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ## Overview
 
-This driver works in conjunction with the Variable Policy engine to create two policy-based concepts that can be leveraged by other drivers in the system. The two concepts are: Dxe Phase Indicators and Write Once State Variables.
+This driver works in conjunction with the Variable Policy engine to create two policy-based concepts that can be leveraged by other drivers in the system and to produce an EDK2 Variable Locking Protocol. The two concepts are: Dxe Phase Indicators and Write Once State Variables.
 
 ## DXE Phase Indicators
 
-To support the DXE Phase Indicators, a new policy is installed that creates the `gMuVarPolicyDxePhaseGuid` variable namespace. By policy, all variables in this namespace are required to be the size of a `PHASE_INDICATOR` (which is a `UINT8`) and must be volatile and readible in both BootServices and Runtime. All variables in this namespace will also be made read-only immediately upon creation (as such, they are also Write-Once, but have a special purpose). Because these variables are required to be volatile, it will not be possible to create more after ExitBootServices.
+To support the DXE Phase Indicators, a new policy is installed that creates the `gMuVarPolicyDxePhaseGuid` variable namespace. By policy, all variables in this namespace are required to be the size of a `PHASE_INDICATOR` (which is a `UINT8`) and must be volatile and readable in both BootServices and Runtime. All variables in this namespace will also be made read-only immediately upon creation (as such, they are also Write-Once, but have a special purpose). Because these variables are required to be volatile, it will not be possible to create more after ExitBootServices.
 
 This driver will also register callbacks for EndOfDxe, ReadyToBoot, and ExitBootServices. At the time of the corresponding event, a new `PHASE_INDICATOR` variable will be created for the callback that has just been triggered. The purpose of these variables is two-fold:
 
 - They can be queried by any driver or library that needs to know what phases of boot have already occurred. This is especially convenient for libraries that might be linked against any type of driver or applicaiton, but may not have been able to register callbacks for all the events because they don't know their execution order or time.
 - They can be used as the delegated "Variable State" variables in other Variable Policy lock policies. As such, you could describe a variable that locks "at ReadyToBoot" or "EndOfDxe".
+
+Note that the `PHASE_INDICATOR` variables are intentionally named as short abbreviations, such as "EOD" and "RTB". This is to minimize the size of the policy entries for lock-on-state policies.
 
 ### Important Note on Timing
 
@@ -41,3 +43,7 @@ Instead, the driver could create a policy that delegates lock control of the tar
 ### Important Note on Naming
 
 Since the `gMuVarPolicyWriteOnceStateVarGuid` namespace is a single variable namespace, naming collisions are possible. Because of the write-once nature of the policy, it is not a concern that an existing lock may be overwritten, but there still may be policy confusion if there are two policies that delegate to the exact same name. It is up to the platform architect to ensure that naming collisions like this do not occur.
+
+### EDK2 Variable Locking Protocol
+
+Finally, this driver installs an EDK2 Variable Locking Protocol instance. This implementation locks a variable by creating a policy entry and registering it via the Variable Policy Protocol. The policy entry is of type VARIABLE_POLICY_TYPE_LOCK_ON_VAR_STATE and locks the variable based on state of the Phase Indicator variable "EOD" (meaning End Of Dxe) in `gMuVarPolicyDxePhaseGuid` namespace.
