@@ -87,7 +87,6 @@
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
   JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
   FltUsedLib|MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
-  MuVariablePolicyHelperLib|MsCorePkg/Library/MuVariablePolicyHelperLib/MuVariablePolicyHelperLib.inf
 
 
   !if $(TARGET) == DEBUG
@@ -138,7 +137,6 @@
   MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
   MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
   MsCorePkg/MuCryptoDxe/MuCryptoDxe.inf
-  MsCorePkg/Library/MuVariablePolicyHelperLib/MuVariablePolicyHelperLib.inf
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
 
 [Components.IA32]
