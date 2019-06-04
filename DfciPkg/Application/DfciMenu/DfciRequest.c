@@ -1490,7 +1490,6 @@ DfciMainLogic (
             //  EFI_MEDIA_CHANGED indicates that Dfci Update Variables were set.  Exit to
             //  caller to display a status message and then reboot to apply the updates.
             //
-            Status = EFI_SUCCESS;
             DEBUG((DEBUG_INFO, "Bootstrap JSON updated\n"));
             goto MAIN_CLEANUP;
             break;
@@ -1538,7 +1537,6 @@ DfciMainLogic (
             //  EFI_MEDIA_CHANGED indicates that Dfci Update Variables were set.  Exit to
             //  caller to display a status message and then reboot to apply the updates.
             //
-            Status = EFI_SUCCESS;
             DEBUG((DEBUG_INFO, "Recovery updates applied\n"));
             break;
 

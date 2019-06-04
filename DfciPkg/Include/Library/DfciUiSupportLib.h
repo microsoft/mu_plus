@@ -172,4 +172,20 @@ DfciUiDisplayAuthDialog (
   OUT CHAR16                              **Password OPTIONAL
   );
 
+/**
+    DfciUiExitSecurityBoundary
+
+    UEFI that support locked settings variables can lock those
+    variable when this function is called.  DFCI will call this function
+    before enabling USB or the Network device which are considered unsafe.
+
+    Signal PreReadyToBoot - lock private settings variable to insure
+           USB or Network don't have access to locked settings.
+    Disable the OSK from displaying (PreReadyToBoot also enables the OSK)
+**/
+VOID
+EFIAPI
+DfciUiExitSecurityBoundary (VOID);
+
+
 #endif //__DFCI_UI_SUPPORT_LIB_H__

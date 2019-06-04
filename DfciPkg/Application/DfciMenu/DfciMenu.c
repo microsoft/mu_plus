@@ -38,6 +38,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Guid/MdeModuleHii.h>
 #include <Guid/DfciSettingsGuid.h>
 #include <Guid/DfciEventGroup.h>
+#include <Guid/GlobalVariable.h>
 #include <Guid/TlsAuthentication.h>
 
 #include <DfciSystemSettingTypes.h>
@@ -134,6 +135,7 @@ STATIC DFCI_SETTING_PERMISSIONS_PROTOCOL      *mDfciSettingsPermissionProtocol =
 STATIC DFCI_IDENTITY_MASK                      mIdMask;           // Identities installed
 STATIC CHAR8                                  *mDfciUrl = NULL;
 STATIC UINTN                                   mDfciUrlSize;
+
 
 typedef struct {
     DFCI_IDENTITY_ID  Identity;
@@ -600,7 +602,7 @@ DfciMenuEntry(
  *                       Dfci request appears normal, allow a restart to apply the new settings
  *
  * @param StatusIn       What kind of failure
- * @param Restart        Restart system when dialog is dismissed
+ * @param Restart        Display the Restart Now button
  * @param MessageText    Used when a specific message is required
  *
  * @return EFI_STATUS
@@ -695,11 +697,33 @@ DisplayMessageBox (
         FreePool (pBody);
     }
 
-    if (Restart) {
-        gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
-    }
-
     return Status;
+}
+
+STATIC
+VOID
+RebootToFrontPage (
+    VOID
+  ) {
+    UINT64                          OsIndication;
+    EFI_STATUS                      Status;
+
+
+    OsIndication = EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
+    Status = gRT->SetVariable (
+        EFI_OS_INDICATIONS_VARIABLE_NAME,
+        &gEfiGlobalVariableGuid,
+        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+        sizeof(UINT64),
+        &OsIndication
+        );
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR,"Unable to set OsIndications\n"));
+    }
+    DEBUG((DEBUG_INFO, "%a: Resetting system.\n", __FUNCTION__));
+    gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
+
+    CpuDeadLoop ();
 }
 
 /**
@@ -707,10 +731,10 @@ DisplayMessageBox (
  *
  * @param   NONE
  *
- * @return EFI_STATUS
+ * @return -- This routine never returns to the caller
  */
 STATIC
-EFI_STATUS
+VOID
 IssueDfciNetworkRequest (
     VOID
   ) {
@@ -719,23 +743,24 @@ IssueDfciNetworkRequest (
     //
 
     BOOLEAN         OnPrem = FALSE;
-    EFI_STATUS      Status;
     EFI_STATUS      NetworkStatus;
     CHAR16         *Msg = NULL;
 
-    //
+    DfciUiExitSecurityBoundary ();
+
     // Start UI Spinner if one is present
     //
     EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
-
-    // Platform Late Locking event.  For now, just signal
-    // ReadyToBoot().
-    EfiEventGroupSignal (&gEfiEventPreReadyToBootGuid);
 
     if (OnPrem) {
         NetworkStatus = ProcessSimpleNetworkRequest(&mDfciNetworkRequest, &Msg);
     } else {
         NetworkStatus = ProcessDfciNetworkRequest(&mDfciNetworkRequest, &Msg);
+    }
+
+    // Success also includes
+    if (EFI_MEDIA_CHANGED == NetworkStatus) {
+        NetworkStatus = EFI_SUCCESS;
     }
 
     //
@@ -744,15 +769,11 @@ IssueDfciNetworkRequest (
     EfiEventGroupSignal (&gDfciConfigCompleteEventGroupGuid);
 
     //
-    // Inform user that operation is complete
+    // Inform user that operation is complete - then restart the system to return to the trusted code
     //
-    Status = DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NetworkStatus, TRUE, Msg);
+    DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NetworkStatus, TRUE, Msg);
 
-    if (NULL != Msg) {
-        FreePool (Msg);
-    }
-
-    return Status;
+    RebootToFrontPage ();
 }
 
 /**
@@ -760,10 +781,10 @@ IssueDfciNetworkRequest (
  *
  * @param  NONE
  *
- * @return EFI_STATUS
+ * @return -- This routine never returns to the caller
  */
 STATIC
-EFI_STATUS
+VOID
 IssueDfciUsbRequest (
     VOID
   ) {
@@ -773,14 +794,8 @@ IssueDfciUsbRequest (
     CHAR16       *FileName2;
     CHAR8        *JsonString;
     UINTN         JsonStringSize;
-    //
-    // Start UI Spinner if one is present
-    //
-    EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
 
-    // Platform Late Locking event.  For now, just signal
-    // ReadyToBoot().
-    EfiEventGroupSignal (&gEfiEventPreReadyToBootGuid);
+    DfciUiExitSecurityBoundary ();
 
     FileName = NULL;
     JsonString = NULL;
@@ -816,10 +831,15 @@ IssueDfciUsbRequest (
         } else {
             DEBUG((DEBUG_INFO, "DfciUsb Request processed normally\n"));
             Status = DfciUpdateFromJson (JsonString, JsonStringSize, mUsbRecovery);
-            if (EFI_MEDIA_CHANGED == Status) {
-                Status = EFI_SUCCESS;
+            if (EFI_ERROR(Status) && (EFI_MEDIA_CHANGED != Status)) {
+                // MEDIA_CHANGED is a good return, It means that a JSON element updated a mailbox.
+                DEBUG((DEBUG_ERROR,"%a Error updating from JSON packet. Code=%r\n", Status));
             }
         }
+    }
+
+    if (NULL != JsonString) {
+        FreePool (JsonString);
     }
 
     //
@@ -832,15 +852,7 @@ IssueDfciUsbRequest (
     //
     DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), Status, TRUE, FileName);
 
-    if (NULL != JsonString) {
-        FreePool (JsonString);
-    }
-
-    if (NULL != FileName) {
-        FreePool (FileName);
-    }
-
-    return Status;
+    RebootToFrontPage ();
 }
 
 /**
@@ -902,17 +914,17 @@ DriverCallback (
             switch (QuestionId) {
             case DFCI_MENU_HTTP_UPDATE_NOW_QUESTION_ID:
                 DEBUG((DEBUG_INFO," Http Recovery was selected\n"));
+
+                // This routine never returns
                 IssueDfciNetworkRequest ();
-                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
-                Status = EFI_SUCCESS;
                 break;
 
             case DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID:
             case DFCI_MENU_USB_INSTALL_NOW_QUESTION_ID:
                 DEBUG((DEBUG_INFO," Usb Recovery was selected\n"));
+
+                // This routine never returns;
                 IssueDfciUsbRequest ();
-                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
-                Status = EFI_SUCCESS;
                 break;
 
             case DFCI_MENU_RECOVERY_INFO_QUESTION_ID:
