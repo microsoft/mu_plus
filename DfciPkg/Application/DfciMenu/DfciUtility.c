@@ -275,9 +275,11 @@ STATIC DFCI_SETTING_ACCESS_PROTOCOL *SettingAccess = NULL;
         goto CLEANUP_SETTING_EXIT;
     }
 
-    if (*ValueSize == AsciiStrnLenS (*ValuePtr, *ValueSize)) { // No terminating NULL
-        DEBUG((DEBUG_ERROR, "%a - No terminating NULL in URL string\n",  __FUNCTION__));
-        goto CLEANUP_SETTING_EXIT;
+    if (Type == DFCI_SETTING_TYPE_STRING) {
+        if (*ValueSize == AsciiStrnLenS (*ValuePtr, *ValueSize)) { // No terminating NULL
+            DEBUG((DEBUG_ERROR, "%a - No terminating NULL in URL string\n",  __FUNCTION__));
+            goto CLEANUP_SETTING_EXIT;
+        }
     }
 
     return Status;
