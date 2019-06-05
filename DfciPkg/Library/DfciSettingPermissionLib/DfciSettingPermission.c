@@ -172,7 +172,7 @@ OUT BOOLEAN                     *Result
       Status = HasWritePermissions(GroupId, NULL, AuthToken, &GroupAuthStatus);
       if (!EFI_ERROR(Status))
       {
-        if (GroupAuthStatus) {
+        if (!GroupAuthStatus) {
           *Result = GroupAuthStatus;
           return EFI_SUCCESS;
         }
