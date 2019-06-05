@@ -55,7 +55,6 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
 )
 {
   EFI_STATUS Status;
-  BOOLEAN CanChange = FALSE;
   BOOLEAN CanChangeRecovery = FALSE;
 
   if (AuthToken != NULL)
@@ -68,21 +67,14 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
 
     //User is trying to reset.  Check if auth token is valid for this operation.
     // Permission is based on who can change the Owner Cert and/or who can do recovery.
-    Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, NULL, AuthToken, &CanChange);
+    Status = HasRecoveryPermission(AuthToken, &CanChangeRecovery);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Owner Key. Status = %r\n", __FUNCTION__, Status));
+      DEBUG((DEBUG_ERROR, "%a - Failed to get Recovery Permission. Status = %r\n", __FUNCTION__, Status));
       return Status;
     }
 
-    Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, NULL, AuthToken, &CanChangeRecovery);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
-      return Status;
-    }
-
-    if ((CanChange == FALSE) && (CanChangeRecovery == FALSE))
+    if (!CanChangeRecovery)
     {
       DEBUG((DEBUG_INFO, "%a - Auth Token doesn't have permission to clear permissions\n", __FUNCTION__));
       return EFI_ACCESS_DENIED;
@@ -211,6 +203,55 @@ OUT BOOLEAN                     *Result
 
   return EFI_SUCCESS;
 }
+
+
+/**
+ Check if the current AuthToken has recovery permissions
+ **/
+EFI_STATUS
+EFIAPI
+HasRecoveryPermission (
+  IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
+  OUT BOOLEAN                     *Result
+  ) {
+
+  BOOLEAN CanChangeRecovery = FALSE;
+  EFI_STATUS    Status;
+
+  //Check parameters
+  if (AuthToken == NULL)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // There are two recovery permissions.  Dfci Recovery, which is used by SEMM, and Ztd Recovery.  The
+  // Permission manager own these permissions and one or the other is in control based on the enrolled owner.  If
+  // the owner certificate was enrolled and signed by the Ztd key, the DFCI recovery is disabled and ZTD recovery
+  // is enabled.
+
+  Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, NULL, AuthToken, &CanChangeRecovery);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
+    return Status;
+  }
+
+  // If CanChangeRecovery is false, check for ZTD_RECOVERY
+  if (!CanChangeRecovery)
+  {
+    Status = HasWritePermissions(DFCI_SETTING_ID__ZTD_RECOVERY, NULL, AuthToken, &CanChangeRecovery);
+    if (EFI_ERROR(Status))
+    {
+      DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for ZTD Recovery. Status = %r\n", __FUNCTION__, Status));
+      return Status;
+    }
+  }
+  DEBUG((DEBUG_INFO, "%a - Recovery Permission Policy=%d\n", __FUNCTION__, CanChangeRecovery));
+
+  *Result = CanChangeRecovery;
+  return EFI_SUCCESS;
+}
+
 
 EFI_STATUS
 EFIAPI
