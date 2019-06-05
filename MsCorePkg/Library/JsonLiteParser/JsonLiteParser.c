@@ -116,9 +116,7 @@ JsonLibEncode (
     OUT UINTN                *JsonStringSize) {
 
     UINTN      i;
-    UINTN      j;
     UINTN      ValueLen;
-    BOOLEAN    NeedQuotes;
     CHAR8     *RequestBuffer;
     UINTN      RequestSize;
     EFI_STATUS Status;
@@ -139,16 +137,7 @@ JsonLibEncode (
     for (i = 0; i < RequestCount; i++) {
         if (NULL != Request[i].Value) {
             ValueLen = Request[i].ValueLen;
-            NeedQuotes = FALSE;
-            for (j=0; (j < Request[i].ValueLen) && !NeedQuotes; j++) {
-                if ((Request[i].Value[j] < '0') ||
-                    (Request[i].Value[j] > '9')) {
-                    NeedQuotes = TRUE;
-                }
-            }
-            if (NeedQuotes) {
-                RequestSize += (2 * sizeof(CHAR8));
-            }
+            RequestSize += (2 * sizeof(CHAR8));
         } else {
             ValueLen = AsciiStrLen(JSON_NULL);
         }
@@ -171,22 +160,9 @@ JsonLibEncode (
         Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].FieldName, Request[i].FieldLen);
         Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\":");
         if (NULL != Request[i].Value) {
-            NeedQuotes = FALSE;
-            for (j=0; (j < Request[i].ValueLen) && !NeedQuotes; j++) {
-                if ((Request[i].Value[j] < '0') ||
-                    (Request[i].Value[j] > '9')) {
-                    NeedQuotes = TRUE;
-                }
-            }
-
-            if (NeedQuotes) {
-                Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-            }
-
+            Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
             Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].Value, Request[i].ValueLen);
-            if (NeedQuotes) {
-                Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-            }
+            Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
         } else {
             Status |= AsciiStrCatS (RequestBuffer, RequestSize, JSON_NULL);
             RequestSize = RequestSize - (2 * sizeof(CHAR8));
