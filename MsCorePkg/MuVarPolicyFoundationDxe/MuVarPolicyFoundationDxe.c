@@ -106,8 +106,8 @@ VariableLockRequestToLock (
     return Status;
   }
   if (State == FALSE) {
-    DEBUG((DEBUG_ERROR, "[%a] Variable Policy Engine is disabled, not registering any policy entries\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
+    DEBUG(( DEBUG_INFO, "%a - Variable Policy Engine is disabled. Ignoring RequestToLock().\n", __FUNCTION__ ));
+    return EFI_SUCCESS;
   }
 
   DEBUG(( DEBUG_VERBOSE, "%a -> RegisterVariablePolicy for %g:%s.\n",
