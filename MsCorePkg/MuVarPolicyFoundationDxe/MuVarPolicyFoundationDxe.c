@@ -82,7 +82,6 @@ VariableLockRequestToLock (
   )
 {
   EFI_STATUS                         Status;
-  BOOLEAN                            State;
 
   // Check all the things for the goodness.
   if (VariableName == NULL || VendorGuid == NULL) {
@@ -98,30 +97,18 @@ VariableLockRequestToLock (
     }
   }
 
-  // Make sure Variable Policy Engine (VPE) is enabled
-  State = FALSE;
-  Status = mVariablePolicy->IsVariablePolicyEnabled(&State);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "[%a] Error checking Variable Policy Engine is enabled: %r\n", __FUNCTION__, Status));
-    return Status;
-  }
-  if (State == FALSE) {
-    DEBUG((DEBUG_ERROR, "[%a] Variable Policy Engine is disabled, not registering any policy entries\n", __FUNCTION__));
-    return EFI_DEVICE_ERROR;
-  }
-
   DEBUG(( DEBUG_VERBOSE, "%a -> RegisterVariablePolicy for %g:%s.\n",
           __FUNCTION__, VendorGuid, VariableName ));
 
   // IMPORTANT NOTE: If we do this, it will potentially override wildcard policies for the variable.
   //                 Though, if successful, it would still be write protected, so this is probably a no-op.
   Status = RegisterVarStateVariablePolicy( mVariablePolicy,
-                                           VendorGuid,    // Namespace
-                                           VariableName,  // Name
-                                           0,             // MinSize
-                                           MAX_UINT32,    // MaxSize
-                                           0,             // AttributesMustHave
-                                           0,             // AttributesCantHave
+                                           VendorGuid,                      // Namespace
+                                           VariableName,                    // Name
+                                           VARIABLE_POLICY_NO_MIN_SIZE,     // MinSize
+                                           VARIABLE_POLICY_NO_MAX_SIZE,     // MaxSize
+                                           VARIABLE_POLICY_NO_MUST_ATTR,    // AttributesMustHave
+                                           VARIABLE_POLICY_NO_CANT_ATTR,    // AttributesCantHave
                                            &gMuVarPolicyDxePhaseGuid,       // VarStateNamespace
                                            END_OF_DXE_INDICATOR_VAR_NAME,   // VarStateName
                                            PHASE_INDICATOR_SET );           // VarStateValue
@@ -294,7 +281,6 @@ MuVarPolicyFoundationDxeMain (
   EFI_STATUS                  FinalStatus;
   EFI_STATUS                  PolicyStatus;
   EFI_STATUS                  VarLockStatus;
-  VARIABLE_POLICY_ENTRY       PolicyEntry;
   EFI_STATUS                  EndOfDxeStatus;
   EFI_STATUS                  ReadyToBootStatus;
   EFI_STATUS                  ExitBootServicesStatus;
@@ -314,18 +300,14 @@ MuVarPolicyFoundationDxeMain (
     //                 However, since these are are all forced to be Volatile variables and since you can't create
     //                 volatile variables after ExitBootServices (and the variables will disappear on reboot),
     //                 this isn't the end of the world.
-    PolicyEntry.Version             = VARIABLE_POLICY_ENTRY_REVISION;
-    PolicyEntry.Size                = sizeof(VARIABLE_POLICY_ENTRY);
-    PolicyEntry.OffsetToName        = sizeof(VARIABLE_POLICY_ENTRY);
-    CopyGuid( &PolicyEntry.Namespace, &gMuVarPolicyDxePhaseGuid );
-    PolicyEntry.MinSize             = sizeof(PHASE_INDICATOR);
-    PolicyEntry.MaxSize             = sizeof(PHASE_INDICATOR);
-    PolicyEntry.AttributesMustHave  = DXE_PHASE_INDICATOR_ATTR;
-    PolicyEntry.AttributesCantHave  = (UINT32)(~DXE_PHASE_INDICATOR_ATTR);
-    PolicyEntry.LockPolicyType      = VARIABLE_POLICY_TYPE_LOCK_ON_CREATE;
-
-    PolicyStatus = mVariablePolicy->RegisterVariablePolicy( &PolicyEntry );
-
+    PolicyStatus = RegisterBasicVariablePolicy( mVariablePolicy,                        // VariablePolicy
+                                                &gMuVarPolicyDxePhaseGuid,              // Namespace
+                                                NULL,                                   // Name
+                                                sizeof(PHASE_INDICATOR),                // MinSize
+                                                sizeof(PHASE_INDICATOR),                // MaxSize
+                                                DXE_PHASE_INDICATOR_ATTR,               // AttributesMustHave
+                                                (UINT32)(~DXE_PHASE_INDICATOR_ATTR),    // AttributesCantHave
+                                                VARIABLE_POLICY_TYPE_LOCK_ON_CREATE );  // LockPolicyType
     if (EFI_ERROR( PolicyStatus )) {
       DEBUG(( DEBUG_ERROR, "%a - Failed to register DxePhase state var policy! %r\n", __FUNCTION__, PolicyStatus ));
     }
@@ -333,14 +315,14 @@ MuVarPolicyFoundationDxeMain (
 
   // Register a policy to describe the write-once state variable namespace.
   if (!EFI_ERROR( PolicyStatus )) {
-    CopyGuid( &PolicyEntry.Namespace, &gMuVarPolicyWriteOnceStateVarGuid );
-    PolicyEntry.MinSize             = sizeof(POLICY_LOCK_VAR);
-    PolicyEntry.MaxSize             = sizeof(POLICY_LOCK_VAR);
-    PolicyEntry.AttributesMustHave  = WRTIE_ONCE_STATE_VAR_ATTR;
-    PolicyEntry.AttributesCantHave  = (UINT32)(~WRTIE_ONCE_STATE_VAR_ATTR);
-
-    PolicyStatus = mVariablePolicy->RegisterVariablePolicy( &PolicyEntry );
-
+    PolicyStatus = RegisterBasicVariablePolicy( mVariablePolicy,                        // VariablePolicy
+                                                &gMuVarPolicyWriteOnceStateVarGuid,     // Namespace
+                                                NULL,                                   // Name
+                                                sizeof(POLICY_LOCK_VAR),                // MinSize
+                                                sizeof(POLICY_LOCK_VAR),                // MaxSize
+                                                WRTIE_ONCE_STATE_VAR_ATTR,              // AttributesMustHave
+                                                (UINT32)(~WRTIE_ONCE_STATE_VAR_ATTR),   // AttributesCantHave
+                                                VARIABLE_POLICY_TYPE_LOCK_ON_CREATE );  // LockPolicyType
     if (EFI_ERROR( PolicyStatus )) {
       DEBUG(( DEBUG_ERROR, "%a - Failed to register WriteOnce state var policy! %r\n", __FUNCTION__, PolicyStatus ));
     }
