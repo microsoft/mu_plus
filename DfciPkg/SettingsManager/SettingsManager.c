@@ -364,7 +364,6 @@ SystemSettingsAccessReset (
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken
   )
 {
-  BOOLEAN CanChange = FALSE;
   BOOLEAN CanChangeRecovery = FALSE;
   EFI_STATUS Status;
 
@@ -374,22 +373,14 @@ SystemSettingsAccessReset (
     return EFI_INVALID_PARAMETER;
   }
 
-  //Check permission for DFCI Recovery or Owner Key
-  Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, NULL, AuthToken, &CanChange);
+  Status = HasRecoveryPermission ( AuthToken, &CanChangeRecovery);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Owner Key. Status = %r\n", __FUNCTION__, Status));
+    DEBUG((DEBUG_ERROR, "%a - Failed to get recovery permission. Status = %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, NULL, AuthToken, &CanChangeRecovery);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
-    return Status;
-  }
-
-  if ((CanChange == FALSE) && (CanChangeRecovery == FALSE))
+  if (!CanChangeRecovery)
   {
     DEBUG((DEBUG_INFO, "%a - Auth Token doesn't have permission to reset settings\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;

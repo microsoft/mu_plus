@@ -335,7 +335,7 @@ static JSON_REQUEST_ELEMENT mParseTest22Elements[] = {
 //*----------------------------------------------------------------------------------------------------------------*
 // Encode Test 1 = Validate some data                                                                              *
 //*----------------------------------------------------------------------------------------------------------------*
-#define ENC_TEST_1_JSON     "{\"String\":\"Value\",\"String2\":\"Value2\",\"String3\":9123456780}"
+#define ENC_TEST_1_JSON     "{\"String\":\"Value\",\"String2\":\"Value2\",\"String3\":\"9123456780\"}"
 #define ENC_TEST_1_1_String "String"
 #define ENC_TEST_1_1_Value  "Value"
 #define ENC_TEST_1_2_String "String2"

@@ -138,7 +138,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #string STR_DFCI_MB_CAPTION_FAIL            #language en-US  "Refresh settings request failed"
 
-#string STR_DFCI_MB_NEW_SETTINGS            #language en-US  "Refresh settings request applied new settings from\n%s\nRestart now to apply those settings."
+#string STR_DFCI_MB_NEW_SETTINGS            #language en-US  "Refresh settings requested new settings from\n%s"
 
 #string STR_DFCI_MB_NO_MEDIA                #language en-US  "Unable to detect network cable."
 

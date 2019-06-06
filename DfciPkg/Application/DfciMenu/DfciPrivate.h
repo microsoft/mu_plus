@@ -40,6 +40,16 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef struct _DFCI_NETWORK_REQUEST DFCI_NETWORK_REQUEST;
 
+typedef enum {
+    DFCI_PRE_BOOTSTRAP,
+    DFCI_BOOTSTRAP,
+    DFCI_BOOTSTRAP_COMPLETE,
+    DFCI_PRE_RECOVERY,
+    DFCI_RECOVERY,
+    DFCI_RECOVERY_COMPLETE,
+    DFCI_NO_RECOVERY_AVAILABLE
+} DFCI_MAIN_LOGIC_STATE;
+
 /**
  *  Function to process the main logic of the Dfci network provider
  *
@@ -76,6 +86,7 @@ struct _DFCI_NETWORK_REQUEST {
     UINTN                               TenantIdSize;
     DFCI_SYSTEM_INFORMATION             DfciInfo;
     DFCI_MAIN_LOGIC                     MainLogic;
+    DFCI_MAIN_LOGIC_STATE               LogicState;
 
     struct {
         //
