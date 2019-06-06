@@ -82,7 +82,6 @@ VariableLockRequestToLock (
   )
 {
   EFI_STATUS                         Status;
-  BOOLEAN                            State;
 
   // Check all the things for the goodness.
   if (VariableName == NULL || VendorGuid == NULL) {
@@ -282,7 +281,6 @@ MuVarPolicyFoundationDxeMain (
   EFI_STATUS                  FinalStatus;
   EFI_STATUS                  PolicyStatus;
   EFI_STATUS                  VarLockStatus;
-  VARIABLE_POLICY_ENTRY       PolicyEntry;
   EFI_STATUS                  EndOfDxeStatus;
   EFI_STATUS                  ReadyToBootStatus;
   EFI_STATUS                  ExitBootServicesStatus;
