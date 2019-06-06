@@ -50,8 +50,8 @@
 [Binaries.ARM]
   PE32|Mu-SharedCrypto_extdep/DEBUG/Arm/SharedCryptoDxeMu.efi|DEBUG
 
-[Binaries.AArch64]
-  PE32|Mu-SharedCrypto_extdep/DEBUG/AArch64/SharedCryptoDxeMu.efi|DEBUG
+[Binaries.AARCH64]
+  PE32|Mu-SharedCrypto_extdep/DEBUG/AARCH64/SharedCryptoDxeMu.efi|DEBUG
 
 [Packages]
   SharedCryptoPkg/SharedCryptoPkg.dec

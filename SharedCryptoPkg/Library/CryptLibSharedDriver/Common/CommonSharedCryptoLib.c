@@ -1230,7 +1230,7 @@ HmacMd5New (
   SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
   if (prot == NULL || prot->HMAC_MD5_New == NULL) {
     ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
+    return NULL;
   }
   return prot->HMAC_MD5_New();
 }

@@ -73,7 +73,7 @@ VOID ProtocolNotFound (
   ASSERT_EFI_ERROR(Status);
 }
 
-VOID ProtocolFunctionNotFound (CHAR8* function_name)
+VOID ProtocolFunctionNotFound (CONST CHAR8* function_name)
 {
   DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_PEI] This function was not found: %a\n",function_name));
   ASSERT_EFI_ERROR(EFI_UNSUPPORTED);

@@ -40,7 +40,7 @@ VOID ProtocolNotFound (
 );
 
 //Called when a particular function cannot be called
-VOID ProtocolFunctionNotFound(CHAR8*);
+VOID ProtocolFunctionNotFound(CONST CHAR8*);
 
 
 #endif
