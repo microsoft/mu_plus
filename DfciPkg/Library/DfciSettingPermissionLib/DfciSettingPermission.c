@@ -55,7 +55,7 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
 )
 {
   EFI_STATUS Status;
-  BOOLEAN CanChangeRecovery = FALSE;
+  BOOLEAN CanUnenroll = FALSE;
 
   if (AuthToken != NULL)
   {
@@ -67,14 +67,14 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
 
     //User is trying to reset.  Check if auth token is valid for this operation.
     // Permission is based on who can change the Owner Cert and/or who can do recovery.
-    Status = HasRecoveryPermission(AuthToken, &CanChangeRecovery);
+    Status = HasUnenrollPermission(AuthToken, &CanUnenroll);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Recovery Permission. Status = %r\n", __FUNCTION__, Status));
       return Status;
     }
 
-    if (!CanChangeRecovery)
+    if (!CanUnenroll)
     {
       DEBUG((DEBUG_INFO, "%a - Auth Token doesn't have permission to clear permissions\n", __FUNCTION__));
       return EFI_ACCESS_DENIED;
@@ -206,16 +206,22 @@ OUT BOOLEAN                     *Result
 
 
 /**
- Check if the current AuthToken has recovery permissions
+ Check if the current AuthToken has unenroll permissions, which recovery is a special
+ form of unenroll.
+
+ Owner has implicit authority to unenroll.
+
+ If not the owner, check if on prem solution enabled another identity with DFCI_RECOVERY.
+ If not that, check if ZTD_RECOVERY is enabled (that is, check if ZTD was used to enroll the system).
  **/
 EFI_STATUS
 EFIAPI
-HasRecoveryPermission (
+HasUnenrollPermission (
   IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
   OUT BOOLEAN                     *Result
   ) {
 
-  BOOLEAN CanChangeRecovery = FALSE;
+  BOOLEAN CanUnenroll = FALSE;
   EFI_STATUS    Status;
 
   //Check parameters
@@ -224,31 +230,42 @@ HasRecoveryPermission (
     return EFI_INVALID_PARAMETER;
   }
 
-  // There are two recovery permissions.  Dfci Recovery, which is used by SEMM, and Ztd Recovery.  The
-  // Permission manager own these permissions and one or the other is in control based on the enrolled owner.  If
-  // the owner certificate was enrolled and signed by the Ztd key, the DFCI recovery is disabled and ZTD recovery
-  // is enabled.
-
-  Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, NULL, AuthToken, &CanChangeRecovery);
+  // This interface is part of unenroll and recovery.  The owner has permission to unenroll.
+  Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, NULL, AuthToken, &CanUnenroll);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
+    DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Owner Key. Status = %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  // If CanChangeRecovery is false, check for ZTD_RECOVERY
-  if (!CanChangeRecovery)
+  if (!CanUnenroll)
   {
-    Status = HasWritePermissions(DFCI_SETTING_ID__ZTD_RECOVERY, NULL, AuthToken, &CanChangeRecovery);
+    // If this is not the owner, see if another identity has the permission to unenroll.  For the on prem
+    // solution, is DFCI_RECOVERY permission is assigned to the identity allowed to unenroll.
+    // Check if the identity has DFCI_RECOVERY.
+    Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, NULL, AuthToken, &CanUnenroll);
+    if (EFI_ERROR(Status))
+    {
+      DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
+      return Status;
+    }
+  }
+
+  if (!CanUnenroll)
+  {
+    // If not owner, and not on prem recovery, check for ZTD recovery.  See if the permission for ZTD recovery
+    // is allowed to unenroll.
+    Status = HasWritePermissions(DFCI_SETTING_ID__ZTD_RECOVERY, NULL, AuthToken, &CanUnenroll);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for ZTD Recovery. Status = %r\n", __FUNCTION__, Status));
       return Status;
     }
   }
-  DEBUG((DEBUG_INFO, "%a - Recovery Permission Policy=%d\n", __FUNCTION__, CanChangeRecovery));
 
-  *Result = CanChangeRecovery;
+  DEBUG((DEBUG_INFO, "%a - HasUnenroll policy=%d\n", __FUNCTION__, CanUnenroll));
+
+  *Result = CanUnenroll;
   return EFI_SUCCESS;
 }
 

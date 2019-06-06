@@ -53,11 +53,12 @@ HasWritePermissions(
   );
 
 /**
- Check if the current AuthToken has recovery permissions
+ Check if the current AuthToken has unenroll permission. This
+ includes recovery, which is a form of unenroll.
  **/
 EFI_STATUS
 EFIAPI
-HasRecoveryPermission (
+HasUnenrollPermission (
   IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
   OUT BOOLEAN                     *Result
   );

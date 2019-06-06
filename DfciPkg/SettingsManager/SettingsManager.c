@@ -364,7 +364,7 @@ SystemSettingsAccessReset (
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken
   )
 {
-  BOOLEAN CanChangeRecovery = FALSE;
+  BOOLEAN CanUnenroll = FALSE;
   EFI_STATUS Status;
 
   //Check parameters
@@ -373,14 +373,14 @@ SystemSettingsAccessReset (
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = HasRecoveryPermission ( AuthToken, &CanChangeRecovery);
+  Status = HasUnenrollPermission ( AuthToken, &CanUnenroll);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to get recovery permission. Status = %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  if (!CanChangeRecovery)
+  if (!CanUnenroll)
   {
     DEBUG((DEBUG_INFO, "%a - Auth Token doesn't have permission to reset settings\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
