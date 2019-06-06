@@ -1240,6 +1240,7 @@ ProcessHttpRequestWithReties (
     BOOLEAN           Retry;
 
     RetryCount = 6;
+    CleanupNetworkRequest (NetworkRequest, CLEANUP_STATUS);
     do {
         RetryCount--;
         Retry = FALSE;
@@ -1453,6 +1454,7 @@ DfciMainLogic (
     EFI_STATUS       Status;
 
     *DoneProcessing = FALSE;
+    NetworkRequest->LogicState = DFCI_PRE_BOOTSTRAP;
 
     //
     // Step 1. Ping server with Bootstrap URL provided in DFCI settings
@@ -1466,6 +1468,7 @@ DfciMainLogic (
                                   NetworkRequest->HttpRequest.BootstrapUrl,
                                   DoneProcessing);
     if (!EFI_ERROR(Status)) {
+        NetworkRequest->LogicState = DFCI_BOOTSTRAP;
         //
         // Process the response JSON
         //
@@ -1483,6 +1486,7 @@ DfciMainLogic (
             //
             Status = EFI_SUCCESS;
             DEBUG((DEBUG_INFO, "No Bootstrap updates\n"));
+            NetworkRequest->LogicState = DFCI_PRE_RECOVERY;
             break;
 
         case EFI_MEDIA_CHANGED:
@@ -1491,6 +1495,7 @@ DfciMainLogic (
             //  caller to display a status message and then reboot to apply the updates.
             //
             DEBUG((DEBUG_INFO, "Bootstrap JSON updated\n"));
+            NetworkRequest->LogicState = DFCI_BOOTSTRAP_COMPLETE;
             goto MAIN_CLEANUP;
             break;
 
@@ -1513,6 +1518,7 @@ DfciMainLogic (
                                   NetworkRequest->HttpRequest.Url,
                                   DoneProcessing);
     if (!EFI_ERROR(Status)) {
+        NetworkRequest->LogicState = DFCI_RECOVERY;
         //
         // Process the response JSON
         //
@@ -1529,6 +1535,7 @@ DfciMainLogic (
             //  processing is complete.
             //
             Status = EFI_SUCCESS;
+            NetworkRequest->LogicState = DFCI_NO_RECOVERY_AVAILABLE;
             DEBUG((DEBUG_INFO, "No Recovery updates\n"));
             break;
 
@@ -1537,6 +1544,7 @@ DfciMainLogic (
             //  EFI_MEDIA_CHANGED indicates that Dfci Update Variables were set.  Exit to
             //  caller to display a status message and then reboot to apply the updates.
             //
+            NetworkRequest->LogicState = DFCI_RECOVERY_COMPLETE;
             DEBUG((DEBUG_INFO, "Recovery updates applied\n"));
             break;
 
@@ -1858,10 +1866,11 @@ ProcessDfciNetworkRequest (
     IN  DFCI_NETWORK_REQUEST    *NetworkRequest,
     OUT CHAR16                 **Message
   ) {
-    CHAR16     *Msg;
-    EFI_STATUS  Status;
-    UINTN       MsgLen;
-    UINTN       MsgSize;
+    CHAR16      *Msg;
+    EFI_STATUS   Status;
+    UINTN        MsgLen;
+    UINTN        MsgSize;
+    CONST CHAR8 *MsgFormat;
 
     Status = InitializeNetworkRequest (NetworkRequest);
     if (EFI_ERROR(Status)) {
@@ -1878,36 +1887,71 @@ ProcessDfciNetworkRequest (
     // Try every NIC in the system until one fills the first part of the request.
     Status = TryEachNICThenProcessRequest (NetworkRequest);
 
-    DEBUG((DEBUG_INFO, "Url @ %p\n", NetworkRequest->HttpRequest.Url));
     DEBUG((DEBUG_INFO, "Url   %a\n", NetworkRequest->HttpRequest.Url));
     DEBUG((DEBUG_INFO, "HttpStatus = %d\n", NetworkRequest->HttpStatus.HttpStatus));
     DEBUG((DEBUG_INFO, "HttpStatus = %a\n", GetHttpErrorMsg(NetworkRequest->HttpStatus.HttpStatus)));
-    DEBUG((DEBUG_INFO, "HttpRc  = %p\n", NetworkRequest->HttpStatus.HttpReturnCode));
     DEBUG((DEBUG_INFO, "HttpRc  = %a\n", NetworkRequest->HttpStatus.HttpReturnCode));
-    if (NetworkRequest->HttpStatus.HttpReturnCode) {
-        DEBUG_BUFFER(DEBUG_INFO, NetworkRequest->HttpStatus.HttpReturnCode, 4, DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    }
-    DEBUG((DEBUG_INFO, "HttpRc  = %a\n", NetworkRequest->HttpStatus.HttpReturnCode));
-    DEBUG((DEBUG_INFO, "HttpMsg = %p\n", NetworkRequest->HttpStatus.HttpMessage));
     DEBUG((DEBUG_INFO, "HttpMsg = %a\n", NetworkRequest->HttpStatus.HttpMessage));
 
-    #define MSG_FORMAT \
-      "%a\nStatus = %r, HttpStatus=%a\n Code=%a, Msg=%a", \
+
+    // The proper message format depends on:
+    //
+    //  1. UEFI Status
+    //  2. Main Logic State.
+
+    #define MSG_PARAMETERS \
       NetworkRequest->HttpRequest.Url, \
       Status, \
       GetHttpErrorMsg (NetworkRequest->HttpStatus.HttpStatus), \
       NetworkRequest->HttpStatus.HttpReturnCode, \
-      NetworkRequest->HttpStatus.HttpMessage
+      NetworkRequest->HttpStatus.HttpMessage, \
+      NetworkRequest->LogicState
 
-    DEBUG((DEBUG_INFO,"Assembling Error Message\n"));
-    MsgLen = GetResponseMsgLength (MSG_FORMAT);
+    #define MSG_FORMAT_ERROR_OCCURRED \
+      "%a\nStatus = %r, HttpStatus=%a\n Code=%a, Msg=%a"
+
+    #define MSG_FORMAT_NO_UPDATE_NEEDED \
+      "%a\nNo updates are available from the server."
+
+    #define MSG_FORMAT_MORE_UPDATES_NEEDED \
+      "%a\nCertificate updates have been accepted from the server.  A restart is needed\n\
+to apply these new certificates. After restarting the system, repeat this\n\
+operation."
+
+    #define MSG_FORMAT_RECOVERY_COMPLETE \
+      "%a\nUpdates have been applied from the server."
+
+
+    // An error occurred. Display the full error message.
+    MsgFormat = "%a\nStatus = %r, HttpStatus=%a\nCode=%a, Msg=%a\nState=%d";
+
+    if (EFI_SUCCESS == Status) {
+        if (NetworkRequest->LogicState == DFCI_NO_RECOVERY_AVAILABLE) {
+
+            // Done here.  No update packets are available.
+            MsgFormat = MSG_FORMAT_NO_UPDATE_NEEDED;
+        }
+    } else if (EFI_MEDIA_CHANGED == Status) {
+        if (NetworkRequest->LogicState == DFCI_BOOTSTRAP_COMPLETE) {
+
+            // Intermediate step complete
+            MsgFormat = MSG_FORMAT_MORE_UPDATES_NEEDED;
+        } else if (NetworkRequest->LogicState == DFCI_RECOVERY_COMPLETE) {
+
+            // Done here - recovery complete
+            MsgFormat = MSG_FORMAT_RECOVERY_COMPLETE;
+        }
+    }
+
+    DEBUG((DEBUG_INFO,"Assembling error message\n"));
+    MsgLen = GetResponseMsgLength (MsgFormat, MSG_PARAMETERS);
 
     ASSERT (MsgLen > 0);
     if (MsgLen > 0) {
         MsgSize = (MsgLen + 1) * sizeof(CHAR16);
         Msg = AllocatePool (MsgSize);
         if (NULL != Msg) {
-            MsgLen = UnicodeSPrintAsciiFormat (Msg, MsgSize, MSG_FORMAT);
+            MsgLen = UnicodeSPrintAsciiFormat (Msg, MsgSize, MsgFormat, MSG_PARAMETERS);
             ASSERT (MsgLen > 0);
             if (MsgLen > 0) {
                 *Message = Msg;

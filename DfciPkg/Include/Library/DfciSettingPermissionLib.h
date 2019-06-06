@@ -53,6 +53,16 @@ HasWritePermissions(
   );
 
 /**
+ Check if the current AuthToken has recovery permissions
+ **/
+EFI_STATUS
+EFIAPI
+HasRecoveryPermission (
+  IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
+  OUT BOOLEAN                     *Result
+  );
+
+/**
 Clear all current permission settings
 and restore to an all open system permissions
 
