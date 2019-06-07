@@ -235,9 +235,19 @@ formset
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
             text    = STRING_TOKEN(STR_NULL_STRING);                            //
 
-        text
-            help    = STRING_TOKEN(STR_NULL_STRING),
-            text    = STRING_TOKEN(STR_DETAILS);
+        // Display the certificate details.  If no certificates are being displayed,
+        // suppress the "Details" string.
+
+        suppressif ideqval  DfciMenuConfig.DfciOwnerEnabled == MENU_FALSE AND
+                   ideqval  DfciMenuConfig.DfciUserEnabled == MENU_FALSE AND
+                   ideqval  DfciMenuConfig.DfciUser1Enabled == MENU_FALSE AND
+                   ideqval  DfciMenuConfig.DfciUser2Enabled == MENU_FALSE AND
+                   ideqval  DfciMenuConfig.DfciZeroTouchEnabled == MENU_FALSE;
+
+            text
+                help    = STRING_TOKEN(STR_NULL_STRING),
+                text    = STRING_TOKEN(STR_DETAILS);
+        endif;
 
         text
             help    = STRING_TOKEN(STR_NULL_STRING),                            // SPACING
