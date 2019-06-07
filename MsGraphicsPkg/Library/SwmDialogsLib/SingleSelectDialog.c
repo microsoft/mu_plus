@@ -43,6 +43,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SWM_SS_CUSTOM_FONT_BODY_HEIGHT          MsUiGetSmallFontHeight ()
 
 #define SWM_SS_LISTBOX_CELL_TEXT_SIZE           MsUiGetSmallFontHeight ()
+#define SWM_SS_LISTBOX_CELL_TEXT_WIDTH          MsUiGetSmallFontWidth ()
 #define SWM_SS_LISTBOX_CELL_WIDTH               MsUiScaleByTheme (700)
 #define SWM_SS_LISTBOX_CELL_HEIGHT              MsUiScaleByTheme (80)
 #define SWM_SS_LISTBOX_CELL_TEXT_X_OFFSET       MsUiScaleByTheme (10)
@@ -119,6 +120,8 @@ CreateDialogControls (IN    MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
     EFI_FONT_INFO   FontInfo;
     UIT_LB_CELLDATA *OptionCells                = NULL;
     UINTN           Index;
+    UINT32          MaxCellWidth;
+    UINT32          TempCellWidth;
 
 
     // Create a canvas for hosting the dialog child controls.
@@ -228,11 +231,47 @@ CreateDialogControls (IN    MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
         goto Exit;
     }
 
-    // Populate the option cells.
     //
+    // Populate the option cells, and compute the size of the largest item
+    //
+    MaxCellWidth = 0;
     for (Index = 0; Index < OptionsCount; Index++)
     {
       OptionCells[Index].CellText = Options[Index];
+      // Calculate the string bitmap size of the of this item.
+      //
+      GetTextStringBitmapSize (Options[Index],
+                               &FontInfo,
+                               FALSE,
+                               EFI_HII_OUT_FLAG_CLIP |
+                               EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+                               EFI_HII_IGNORE_LINE_BREAK,
+                               &StringRect,
+                               &MaxGlyphDescent
+                              );
+
+      TempCellWidth = (StringRect.Right - StringRect.Left + 1);
+      if (TempCellWidth > MaxCellWidth) {
+        MaxCellWidth = TempCellWidth;
+      }
+    }
+
+    // Calculate the space reserved for the left and right side of the listbox within the dialog
+    //
+    TempCellWidth = (ControlOrigX - DialogOrigX - SWM_SS_LISTBOX_CELL_TEXT_X_OFFSET) * 2;
+
+    // Convert that to the width between the left and right side of the Listbox
+    //
+    TempCellWidth = DialogWidth - TempCellWidth;
+
+    // Allow for the border on left and right side of the text, and ensure
+    // the listbox is not larger than the maximum, and not too small
+    //
+    MaxCellWidth += (SWM_SS_LISTBOX_CELL_TEXT_X_OFFSET * 2);
+    if (MaxCellWidth > TempCellWidth) {
+      MaxCellWidth = TempCellWidth;
+    } else if (MaxCellWidth < SWM_SS_LISTBOX_CELL_WIDTH) {
+      MaxCellWidth = SWM_SS_LISTBOX_CELL_WIDTH;
     }
 
     // Select an appropriate font and colors for the body text.
@@ -244,7 +283,7 @@ CreateDialogControls (IN    MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
     //
     mOptionListBox = new_ListBox(ControlOrigX,
                                  ControlOrigY,
-                                 SWM_SS_LISTBOX_CELL_WIDTH,
+                                 MaxCellWidth,
                                  SWM_SS_LISTBOX_CELL_HEIGHT,
                                  0,           // Flags
                                  &FontInfo,
