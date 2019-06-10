@@ -41,10 +41,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _INTERNAL_VAR_VERSION_V2              (2)
 #define _INTERNAL_VAR_SIGNATURE               SIGNATURE_32('I','P','C','V')
 
-#pragma warning(push)
-#pragma warning(disable: 4200) // zero-sized array
 #pragma pack (push, 1)
-
 
 typedef struct {
   UINTN                 HeaderSignature;
@@ -67,8 +64,6 @@ typedef struct {
 } INTERNAL_VAR_STRUCT;
 
 #pragma pack (pop)
-#pragma warning(pop)
-
 
 INTERNAL_CERT_STORE mInternalCertStore = { 0, 0, DFCI_IDENTITY_LOCAL, {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}} };
 
