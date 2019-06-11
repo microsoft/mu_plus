@@ -3,7 +3,7 @@ DfciUpdate.c
 
 This module will request and apply a new DFCI configuration.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -567,9 +567,9 @@ ProcessFunction (
             switch (ResponseTable[j].Action) {
             case JSON_ACTION_SET_VARIABLE:
                 Pkt = (DFCI_PACKET_HEADER *) StringValue;
-                if (mJsonSetVariableEntryMailbox[ActionIndex].Signature != Pkt->Sig.Signature) {
+                if (mJsonSetVariableEntryMailbox[ActionIndex].Signature != Pkt->Sig.Hdr.Signature) {
                     DEBUG((DEBUG_ERROR,"Invalid binary signature %4.4x, Indx=%d, Rqst %.*a. Expected %4.4x for %a.\n",
-                        Pkt->Sig.Signature,
+                        Pkt->Sig.Hdr.Signature,
                         j,
                         Rqst->FieldLen,
                         Rqst->FieldName,

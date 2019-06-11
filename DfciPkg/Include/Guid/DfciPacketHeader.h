@@ -3,7 +3,7 @@ DfciPacketHeader.h
 
 This file defines the Header for all DFCI Mailbox Packets
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -36,25 +36,14 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_ALLOWABLE_DFCI_RESULT_VAR_SIZE  (1024 *  8) //  8kb
 #define MAX_ALLOWABLE_DFCI_CURRENT_VAR_SIZE (1024 *  8) //  8kb
 
-// TODO: Remove these pragma warning statements as they're compiler-specific.
-//       Once removed, get rid of the -Wno-unknown-pragmas BuildOptions override in:
-//                PcBdsPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
-//                DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
-//                DfciPkg/SettingsManager/SettingsManagerDxe.inf
-//                DfciPkg/DfciManager/DfciManager.inf
-//                DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf
-//                DfciPkg/Application/DfciMenu/DfciMenu.inf
-#pragma warning(push)
-#pragma warning(disable: 4201) // nameless union
 #pragma pack (push, 1)
-
 
 //Nameless union is used to address all of the bytes of a packet.
 typedef struct {
     union {
         UINT32 Signature;        // (4)
         UINT8  Pkt[1];           // Packet Data
-    };                           //
+    } Hdr;                       //
     UINT8  Version;              // (1)
 } DFCI_PACKET_SIGNATURE;         // (5)
 
@@ -72,7 +61,5 @@ typedef struct {
 } DFCI_PACKET_HEADER;            //(22)
 
 #pragma pack (pop)
-#pragma warning(pop)
-
 
 #endif // __DFCI_PACKET_HEADER_H__

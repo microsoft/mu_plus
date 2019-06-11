@@ -3,7 +3,7 @@ AuthManagerProvisionData.c
 
 Implements support for the Internal NV storage of Auth Manager data.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -64,6 +64,7 @@ typedef struct {
 } INTERNAL_VAR_STRUCT;
 
 #pragma pack (pop)
+
 
 INTERNAL_CERT_STORE mInternalCertStore = { 0, 0, DFCI_IDENTITY_LOCAL, {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}} };
 

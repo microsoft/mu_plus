@@ -4,7 +4,7 @@
 # This module manages the Identity certificates, and processes the
 # Dfci packets.
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c), Microsoft Corporation
 #
 # All rights reserved.
 #
@@ -108,19 +108,3 @@
    AND gDfciSettingPermissionsProtocolGuid
    AND gMuPKCS7ProtocolGuid
    AND gEfiRngProtocolGuid
-
-[BuildOptions]
-  # MS-Change - pulling in OpenSSL headers exposes us to several compiler warnings. Disable them for now.
-  #   Disable C4005: macro redefinition
-  #   Disable C4090: 'function': different 'const' qualifiers
-  MSFT:*_*_IA32_CC_FLAGS   = /wd4005 /wd4090
-  MSFT:*_*_X64_CC_FLAGS    = /wd4005 /wd4090
-
-
-[BuildOptions.AARCH64]
-    MSFT:*_VS2015x86_AARCH64_DLINK_FLAGS = /include:_fltused
-
-[BuildOptions.AARCH64]
-  # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
-  # such pragmas found in included header DfciPacketHeader.h
-  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas

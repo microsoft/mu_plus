@@ -4,7 +4,7 @@ DfciSettingPermissionProvisioned.c
 This file supports loading internal data (previously provisioned) from flash so that
 SettingPermission code can use it.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -43,8 +43,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define VAR_VERSION_V3 (3)
 #define MAX_SIZE_FOR_VAR (1024 * 2)  
 
-#pragma warning(push)
-#pragma warning(disable: 4200) // zero-sized array
 #pragma pack (push, 1)
 
 typedef struct {
@@ -103,7 +101,6 @@ typedef struct {
 } DFCI_PERM_INTERNAL_PROVISONED_VAR;
 
 #pragma pack (pop)
-#pragma warning(pop)
 
 
 EFI_STATUS
@@ -165,7 +162,7 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
   }
 
   //3. Check out variable to make sure it is valid
-  if (Var->Header.Signature != VAR_HEADER_SIG)
+  if (Var->Header.Hdr.Signature != VAR_HEADER_SIG)
   {
     DEBUG((DEBUG_INFO, "%a - Var Header Signature wrong.\n", __FUNCTION__));
     Status = EFI_COMPROMISED_DATA;
@@ -388,7 +385,7 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
     Status = EFI_ABORTED;
     goto EXIT;
   }
-  Var->Header.Signature = VAR_HEADER_SIG;
+  Var->Header.Hdr.Signature = VAR_HEADER_SIG;
   Var->Header.Version = VAR_VERSION_V3;
   Var->Version = Store->Version;
   Var->LowestSupportedVersion = Store->Lsv;  

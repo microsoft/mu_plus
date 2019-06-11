@@ -3,7 +3,7 @@
 #
 # DfciMenu is an application that presents & manages the Dfci settings page.
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c), Microsoft Corporation
 #
 # All rights reserved.
 #
@@ -128,9 +128,3 @@
   gDfciSettingPermissionsProtocolGuid
 
 [BuildOptions]
-#  DEBUG_*_*_CC_FLAGS  = /FAcs
-
-[BuildOptions.AARCH64]
-  # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
-  # such pragmas found in included header DfciPacketHeader.h
-  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas

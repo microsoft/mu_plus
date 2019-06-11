@@ -4,7 +4,7 @@
 # Dfci Manager manages the input and output mailboxes for applying
 # Dfci packets.
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c), Microsoft Corporation
 #
 # All rights reserved.
 #
@@ -88,8 +88,3 @@
   AND gDfciApplyPermissionsProtocolGuid
   AND gDfciApplySettingsProtocolGuid
   AND gDfciApplyIdentityProtocolGuid
-
-[BuildOptions.AARCH64]
-  # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
-  # such pragmas found in included header DfciPacketHeader.h
-  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas

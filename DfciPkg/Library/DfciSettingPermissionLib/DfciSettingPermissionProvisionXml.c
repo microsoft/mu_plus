@@ -5,7 +5,7 @@ Thsi file supports the tool input path for setting permissions.
 Permissions are set using XML.  That xml is written to a variable and then passed to UEFI to be applied.
 This code supports that.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -536,7 +536,7 @@ SetPermissionsResponse(
     DEBUG((DEBUG_ERROR, "%a - Failed to allocate memory for Var\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
   }
-  ResultVar->Header.Signature = DFCI_PERMISSION_POLICY_RESULT_VAR_SIGNATURE;
+  ResultVar->Header.Hdr.Signature = DFCI_PERMISSION_POLICY_RESULT_VAR_SIGNATURE;
   ResultVar->Header.Version = HeaderVersion;
   ResultVar->Status = Data->StatusCode;
   ResultVar->SessionId = Data->SessionId;
@@ -691,18 +691,18 @@ ValidatePermissionsPacket (
         return EFI_COMPROMISED_DATA;
     }
 
-    EndData = &Data->Packet->Pkt[Data->SignedDataLength];
+    EndData = &Data->Packet->Hdr.Pkt[Data->SignedDataLength];
 
     if ((UINT8 *) Data->Signature != EndData)
     {
-        DEBUG((DEBUG_ERROR, "%a - Addr of Signatue not at EndData. %p != %p.\n", __FUNCTION__,Data->Signature, EndData));
+        DEBUG((DEBUG_ERROR, "%a - Addr of Signature not at EndData. %p != %p.\n", __FUNCTION__,Data->Signature, EndData));
         return EFI_COMPROMISED_DATA;
     }
 
-    if (((UINT8 *)Data->Payload <= Data->Packet->Pkt) ||
+    if (((UINT8 *)Data->Payload <= Data->Packet->Hdr.Pkt) ||
         ((UINT8 *)Data->Payload+Data->PayloadSize > EndData))
     {
-        DEBUG((DEBUG_ERROR, "%a - Payload outside Pkt. %p <= %p <= %p < %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Payload,Data->Payload+Data->PayloadSize, EndData));
+        DEBUG((DEBUG_ERROR, "%a - Payload outside Pkt. %p <= %p <= %p < %p.\n", __FUNCTION__,Data->Packet->Hdr.Pkt, Data->Payload,Data->Payload+Data->PayloadSize, EndData));
         return EFI_COMPROMISED_DATA;
     }
 

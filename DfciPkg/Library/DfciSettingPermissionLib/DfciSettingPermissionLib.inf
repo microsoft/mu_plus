@@ -9,7 +9,7 @@
 # This library has a very small public interface but it has a lot of
 # logic required to support Permissions, Provioning Permissions from tool thru variable interface, etc
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (c), Microsoft Corporation
 #
 # All rights reserved.
 #
@@ -39,13 +39,13 @@
   BASE_NAME                      = DfciSettingPermissionLib
   FILE_GUID                      = 659801E4-4729-4461-86F6-19E0942CCA5C
   MODULE_TYPE                    = DXE_DRIVER
-  VERSION_STRING                 = 1.0 
+  VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = DfciSettingPermissionLib|DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER
   CONSTRUCTOR                    = DfciPermissionInit
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 
+#  VALID_ARCHITECTURES           = IA32 X64
 #
 
 [Sources]
@@ -62,7 +62,7 @@
   MdeModulePkg/MdeModulePkg.dec
   XmlSupportPkg/XmlSupportPkg.dec
   DfciPkg/DfciPkg.dec
-   
+
 [LibraryClasses]
   DebugLib
   XmlTreeLib
@@ -90,8 +90,3 @@
 
 [Depex]
   TRUE
-
-[BuildOptions.AARCH64]
-  # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
-  # such pragmas found in included header DfciPacketHeader.h
-  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas

@@ -3,7 +3,7 @@ AuthManagerProvision.c
 
 Processes new Identity Packets
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -173,7 +173,7 @@ SetIdentityResponse(
     return EFI_SUCCESS;
   }
 
-  Var.Header.Signature = DFCI_IDENTITY_RESULT_VAR_SIGNATURE;
+  Var.Header.Hdr.Signature = DFCI_IDENTITY_RESULT_VAR_SIGNATURE;
   Var.Header.Version = DFCI_IDENTITY_RESULT_VERSION;
   Var.Identity = DfciIdentityToVarIdentity(Data->DfciIdentity);
   DEBUG((DEBUG_INFO, "%a - Set Result Var Identity 0x%X.  DFCI Identity 0x%X\n", __FUNCTION__, Var.Identity, Data->DfciIdentity));
@@ -544,7 +544,7 @@ ValidateIdentityPacket (
         return EFI_COMPROMISED_DATA;
     }
 
-    EndData = &Data->Packet->Pkt[Data->SignedDataLength];
+    EndData = &Data->Packet->Hdr.Pkt[Data->SignedDataLength];
 
     if ((UINT8 *) Data->Signature != EndData)
     {
@@ -552,39 +552,39 @@ ValidateIdentityPacket (
         return EFI_COMPROMISED_DATA;
     }
 
-    if (((UINT8 *)Data->VarIdentity <= Data->Packet->Pkt) ||
+    if (((UINT8 *)Data->VarIdentity <= Data->Packet->Hdr.Pkt) ||
         ((UINT8 *)Data->VarIdentity >= EndData))
     {
-        DEBUG((DEBUG_ERROR, "%a - VarIdentity outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->VarIdentity, EndData));
+        DEBUG((DEBUG_ERROR, "%a - VarIdentity outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Hdr.Pkt, Data->VarIdentity, EndData));
         return EFI_COMPROMISED_DATA;
     }
 
     if ((Data->Packet->Version >= DFCI_IDENTITY_VAR_VERSION) && (Data->Version == 0))
     {
-      if (((UINT8 *)Data->Version <= Data->Packet->Pkt) ||
+      if (((UINT8 *)Data->Version <= Data->Packet->Hdr.Pkt) ||
           ((UINT8 *)Data->Version >= EndData))
       {
-          DEBUG((DEBUG_ERROR, "%a - Version outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Version, EndData));
+          DEBUG((DEBUG_ERROR, "%a - Version outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Hdr.Pkt, Data->Version, EndData));
           return EFI_COMPROMISED_DATA;
       }
     }
 
     if ((Data->Packet->Version >= DFCI_IDENTITY_VAR_VERSION) && (Data->LSV == 0))
     {
-      if (((UINT8 *)Data->LSV <= Data->Packet->Pkt) ||
+      if (((UINT8 *)Data->LSV <= Data->Packet->Hdr.Pkt) ||
           ((UINT8 *)Data->LSV >= EndData))
       {
-          DEBUG((DEBUG_ERROR, "%a - Lsv outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Version, EndData));
+          DEBUG((DEBUG_ERROR, "%a - Lsv outside Pkt. %p <= %p <= %p.\n", __FUNCTION__,Data->Packet->Hdr.Pkt, Data->Version, EndData));
           return EFI_COMPROMISED_DATA;
       }
     }
 
     if ((Data->PayloadSize != 0) || (Data->Payload != NULL))
     {
-      if (((UINT8 *)Data->Payload <= Data->Packet->Pkt) ||
+      if (((UINT8 *)Data->Payload <= Data->Packet->Hdr.Pkt) ||
           ((UINT8 *)Data->Payload+Data->PayloadSize > EndData))
       {
-          DEBUG((DEBUG_ERROR, "%a - Payload outside Pkt. %p <= %p <= %p < %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Payload,Data->Payload+Data->PayloadSize, EndData));
+          DEBUG((DEBUG_ERROR, "%a - Payload outside Pkt. %p <= %p <= %p < %p.\n", __FUNCTION__,Data->Packet->Hdr.Pkt, Data->Payload,Data->Payload+Data->PayloadSize, EndData));
           return EFI_COMPROMISED_DATA;
       }
     }

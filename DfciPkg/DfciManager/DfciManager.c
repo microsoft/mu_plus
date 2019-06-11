@@ -3,7 +3,7 @@ DfciManager.c
 
 This module implements the Dfci Package Deployment.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -269,8 +269,8 @@ DecodePacket (
         return Data->StatusCode;
     }
 
-    if (Data->Packet->Signature != Data->Expected.Signature) {
-        DEBUG((DEBUG_ERROR, "%a Var Signature not valid. Sig=%x, Exp=%x\n", _DBGMSGID_, Data->Packet->Signature, Data->Expected.Signature));
+    if (Data->Packet->Hdr.Signature != Data->Expected.Hdr.Signature) {
+        DEBUG((DEBUG_ERROR, "%a Var Signature not valid. Sig=%x, Exp=%x\n", _DBGMSGID_, Data->Packet->Hdr.Signature, Data->Expected.Hdr.Signature));
         Data->StatusCode = EFI_COMPROMISED_DATA;
         Data->State = DFCI_PACKET_STATE_DATA_INVALID;
         return Data->StatusCode;
@@ -526,7 +526,7 @@ InitializePacket (IN     CHAR16                     *VariableName,
     MgrData->Data->MailboxName = VariableName;
     MgrData->Data->ResultName = ResultName;
     MgrData->Data->NameSpace = NameSpace;
-    MgrData->Data->Expected.Signature = HdrSignature;
+    MgrData->Data->Expected.Hdr.Signature = HdrSignature;
     MgrData->Data->Expected.Version = HdrVersion;
     MgrData->ApplyProtocol = ApplyProtocol;
 

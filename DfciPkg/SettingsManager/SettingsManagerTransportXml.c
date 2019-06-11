@@ -5,7 +5,7 @@ This file supports the tool input path for setting settings.
 Settings are set using XML.  That xml is written to a variable and then passed to UEFI to be applied.
 This code supports that.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c), Microsoft Corporation
 
 All rights reserved.
 
@@ -52,7 +52,7 @@ ValidateAndAuthenticateSettings(
   DEBUG((DEBUG_INFO, "%a - Session ID = 0x%X\n", __FUNCTION__, Data->SessionId));
 
   //Lets check for device specific targetting using Serial Number
-  Status = CheckAuthAndGetToken(Data->Packet->Pkt, Data->SignedDataLength, Data->Signature, &Data->AuthToken);
+  Status = CheckAuthAndGetToken(Data->Packet->Hdr.Pkt, Data->SignedDataLength, Data->Signature, &Data->AuthToken);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to Authenticate Settings %r\n", __FUNCTION__, Status));
@@ -395,7 +395,7 @@ UpdateSettingsResult(
     return;
   }
 
-  ResultVar->Header.Signature = DFCI_SECURED_SETTINGS_RESULT_VAR_SIGNATURE;
+  ResultVar->Header.Hdr.Signature = DFCI_SECURED_SETTINGS_RESULT_VAR_SIGNATURE;
   ResultVar->Header.Version = DFCI_SECURED_SETTINGS_RESULTS_VERSION;
   ResultVar->Status = Data->StatusCode;
   ResultVar->SessionId = Data->SessionId;
@@ -502,7 +502,7 @@ ValidateSettingsPacket (
         return EFI_COMPROMISED_DATA;
     }
 
-    EndData = &Data->Packet->Pkt[Data->SignedDataLength];
+    EndData = &Data->Packet->Hdr.Pkt[Data->SignedDataLength];
 
     if ((UINT8 *) Data->Signature != EndData)
     {
@@ -510,10 +510,10 @@ ValidateSettingsPacket (
         return EFI_COMPROMISED_DATA;
     }
 
-    if (((UINT8 *)Data->Payload <= Data->Packet->Pkt) ||
+    if (((UINT8 *)Data->Payload <= Data->Packet->Hdr.Pkt) ||
         ((UINT8 *)Data->Payload+Data->PayloadSize > EndData))
     {
-        DEBUG((DEBUG_ERROR, "%a - Payload outside Pkt. %p <= %p <= %p < %p.\n", __FUNCTION__,Data->Packet->Pkt, Data->Payload,Data->Payload+Data->PayloadSize, EndData));
+        DEBUG((DEBUG_ERROR, "%a - Payload outside Pkt. %p <= %p <= %p < %p.\n", __FUNCTION__,Data->Packet->Hdr.Pkt, Data->Payload,Data->Payload+Data->PayloadSize, EndData));
         return EFI_COMPROMISED_DATA;
     }
 
