@@ -392,6 +392,8 @@ SettingsManagerOnReadyToBoot (
 
   EFI_STATUS      Status;
 
+  PERF_CALLBACK_BEGIN(&gEfiEventReadyToBootGuid);
+
   //Check for Settings Provisioning
   Status = PopulateCurrentSettingsIfNeeded();
   if (EFI_ERROR(Status)) {
@@ -410,6 +412,9 @@ SettingsManagerOnReadyToBoot (
       DEBUG((DEBUG_ERROR, "%a - Failed to delete Device Id Xml variable %r\n", __FUNCTION__, Status));
     }
   }
+
+  PERF_CALLBACK_END(&gEfiEventReadyToBootGuid);
+
   return;
 }
 
