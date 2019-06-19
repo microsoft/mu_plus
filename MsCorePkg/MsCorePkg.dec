@@ -1,5 +1,5 @@
 ## @file  MsCorePkg.dec
-# This Package provides all definitions, library classes and libraries instances for MsCore. 
+# This Package provides all definitions, library classes and libraries instances for MsCore.
 # MsCore is common code used in the Microsoft UEFI Core code base
 # This is targetted at promoting to open source and should be aligned with
 # Tianocore standards
@@ -7,7 +7,7 @@
 # Copyright (C) Microsoft Corporation
 #
 # All rights reserved.
-# Redistribution and use in source and binary forms, with or without 
+# Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 # 1. Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.
@@ -20,10 +20,10 @@
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 # IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 # INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 # DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
 
@@ -68,7 +68,7 @@
 [Ppis]
   gDebugPortPpiGuid = { 0x9d83f2d1, 0x9832, 0x4ded, { 0xaf, 0x78, 0x0e, 0xfe, 0x93, 0x07, 0xe8, 0xb1 }}
 
-  
+
 [Protocols]
   ## Mu Crypto Pkcs7 protocol
   #
@@ -86,6 +86,9 @@
 [PcdsFeatureFlag]
 
 [PcdsFixedAtBuild]
+
+  ## Define a GUID for the regulatory graphics ACPI Table
+  gMsCorePkgTokenSpaceGuid.PcdRegulatoryGraphicFileGuid|{ 0x7B, 0x35, 0x39, 0x36,  0xD7, 0xB3,  0x23, 0x4C,  0x20, 0x9A,  0x0B, 0x74, 0x91, 0xD5, 0x70, 0xCE }|VOID*|0x00010177
 
 [PcdsDynamic]
   gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask|0x00000000|UINT32|0x00010178
