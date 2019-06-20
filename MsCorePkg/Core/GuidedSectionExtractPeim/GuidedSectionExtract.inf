@@ -48,6 +48,7 @@
   PeimEntryPoint
   DebugLib
   DebugAgentLib
+  PerformanceLib
 
 [Ppis]
   gEfiPeiDecompressPpiGuid          ## PRODUCES

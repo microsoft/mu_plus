@@ -53,7 +53,7 @@ PeimInitializeGuidedSectionExtract (
   EFI_GUID                                  *ExtractHandlerGuidTable;
   UINTN                                     ExtractHandlerNumber;
   EFI_PEI_PPI_DESCRIPTOR                    *GuidPpi;
-  
+
   Status = EFI_SUCCESS;
 
   BootMode = GetBootModeHob();
@@ -171,7 +171,9 @@ CustomGuidedSectionExtract (
   UINT32          ScratchBufferSize;
   UINT32          OutputBufferSize;
   UINT16          SectionAttribute;
-  
+
+  PERF_FUNCTION_BEGIN ();
+
   //
   // Init local variable
   //
@@ -186,19 +188,20 @@ CustomGuidedSectionExtract (
              &ScratchBufferSize,
              &SectionAttribute
              );
-  
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "GetInfo from guided section Failed - %r\n", Status));
-    return Status;
+    goto Done;
   }
-  
+
   if (ScratchBufferSize != 0) {
     //
     // Allocate scratch buffer
     //
     ScratchBuffer = AllocatePages (EFI_SIZE_TO_PAGES (ScratchBufferSize));
     if (ScratchBuffer == NULL) {
-      return EFI_OUT_OF_RESOURCES;
+      Status = EFI_OUT_OF_RESOURCES;
+      goto Done;
     }
   }
 
@@ -208,7 +211,8 @@ CustomGuidedSectionExtract (
     //
     *OutputBuffer = AllocatePages (EFI_SIZE_TO_PAGES (OutputBufferSize) + 1);
     if (*OutputBuffer == NULL) {
-      return EFI_OUT_OF_RESOURCES;
+      Status = EFI_OUT_OF_RESOURCES;
+      goto Done;
     }
     DEBUG ((DEBUG_INFO, "Customized Guided section Memory Size required is 0x%x and address is 0x%p\n", OutputBufferSize, *OutputBuffer));
     //
@@ -217,24 +221,31 @@ CustomGuidedSectionExtract (
     //
     *OutputBuffer = (VOID *)((UINT8 *) *OutputBuffer + EFI_PAGE_SIZE - sizeof (EFI_COMMON_SECTION_HEADER));
   }
-  
+
+  PERF_INMODULE_BEGIN ("Extract guided section");
   Status = ExtractGuidedSectionDecode (
              InputSection, 
              OutputBuffer,
              ScratchBuffer,
              AuthenticationStatus
              );
+  PERF_INMODULE_END ("Extract guided section");
+
   if (EFI_ERROR (Status)) {
     //
     // Decode failed
     //
     DEBUG ((DEBUG_ERROR, "Extract guided section Failed - %r\n", Status));
-    return Status;
+    goto Done;
   }
-  
+
   *OutputSize = (UINTN) OutputBufferSize;
-  
-  return EFI_SUCCESS;
+
+  Status = EFI_SUCCESS;
+
+Done:
+  PERF_FUNCTION_END ();
+  return Status;
 }
 
 

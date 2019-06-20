@@ -37,6 +37,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/RecoveryLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/PeiServicesTablePointerLib.h>
+#include <Library/PerformanceLib.h>
 
 
 /**
