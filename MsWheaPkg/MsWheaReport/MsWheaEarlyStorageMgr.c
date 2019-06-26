@@ -175,7 +175,7 @@ MsWheaESDump (
   for (Index = 0; Index < MsWheaEarlyStorageGetMaxSize(); Index ++) {
     Status = MsWheaEarlyStorageRead(&Data, sizeof(Data), Index);
     if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, __FUNCTION__": Reading Early Storage %d failed %r", Index, Status));
+      DEBUG((DEBUG_ERROR, "%a: Reading Early Storage %d failed %r", __FUNCTION__, Index, Status));
       goto Cleanup;
     }
 
@@ -339,7 +339,7 @@ MsWheaESInit (
     goto Cleanup;
   }
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": init early storage...\n"));
+  DEBUG((DEBUG_INFO, "%a: init early storage...\n", __FUNCTION__));
 
   // Clear the rest of the Early Storage store.
   MsWheaESClearAllData();
@@ -386,7 +386,7 @@ MsWheaESV0InfoStore (
 
   Status = MsWheaESWriteData(&WheaV0, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), Offset);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Clear V0 Early Storage failed at %d %r\n", Offset, Status));
+    DEBUG((DEBUG_ERROR, "%a: Clear V0 Early Storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
 
@@ -427,7 +427,7 @@ MsWheaESV1InfoStore (
 
   Status = MsWheaESWriteData(&WheaV1, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), Offset);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Clear V0 Early Storage failed at %d %r\n", Offset, Status));
+    DEBUG((DEBUG_ERROR, "%a: Clear V0 Early Storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
 
@@ -468,7 +468,7 @@ MsWheaESGetV0Info (
   
   Status = MsWheaESReadData(&WheaV0, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Read V0 Early Storage storage failed at %d %r\n", Offset, Status));
+    DEBUG((DEBUG_ERROR, "%a: Read V0 Early Storage storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
 
@@ -482,7 +482,7 @@ MsWheaESGetV0Info (
 
   Status = MsWheaESClearData(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Clear V0 Early Storage storage failed at %d %r\n", Offset, Status));
+    DEBUG((DEBUG_ERROR, "%a: Clear V0 Early Storage storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
   *Offset = *Offset + sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0);
@@ -524,7 +524,7 @@ MsWheaESGetV1Info (
   
   Status = MsWheaESReadData(&WheaV1, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Read V1 Early Storage storage failed at %d %r\n", Offset, Status));
+    DEBUG((DEBUG_ERROR, "%a: Read V1 Early Storage storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
 
@@ -540,7 +540,7 @@ MsWheaESGetV1Info (
 
   Status = MsWheaESClearData(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Clear V1 Early Storage storage failed at %d %r\n", Offset, Status));
+    DEBUG((DEBUG_ERROR, "%a: Clear V1 Early Storage storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
   *Offset = *Offset + sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1);
@@ -673,14 +673,14 @@ MsWheaESStoreEntry (
   EFI_STATUS  Status = EFI_SUCCESS;
 
   if (MsWheaEntryMD == NULL) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": input pointer cannot be null!\n"));
+    DEBUG((DEBUG_ERROR, "%a: input pointer cannot be null!\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
   // Make sure the Early Storage is valid.
   if (MsWheaESRegionIsValid() == FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": the Early Storage is not valid!\n"));
+    DEBUG((DEBUG_ERROR, "%a: the Early Storage is not valid!\n", __FUNCTION__));
     Status = EFI_NOT_FOUND;
     goto Cleanup;
   }
@@ -733,17 +733,17 @@ MsWheaESProcess (
   MS_WHEA_REV             mRevInfo;
   MS_WHEA_ERROR_ENTRY_MD  MsWheaEntryMD;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   if (ReportFn == NULL) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Input fucntion pointer cannot be null!\n"));
+    DEBUG((DEBUG_ERROR, "%a: Input fucntion pointer cannot be null!\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
   // Make sure the Early Storage is valid.
   if (MsWheaESRegionIsValid() == FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": the Early Storage is not valid!\n"));
+    DEBUG((DEBUG_ERROR, "%a: the Early Storage is not valid!\n", __FUNCTION__));
     Status = EFI_NOT_FOUND;
     goto Cleanup;
   }
@@ -754,7 +754,7 @@ MsWheaESProcess (
     Status = ReportFn(&MsWheaEntryMD, &MsWheaEntryMD.MsWheaErrorHdr, sizeof(MS_WHEA_ERROR_HDR));
   }
   else {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Early Storage header check status: %r\n", Status));
+    DEBUG((DEBUG_WARN, "%a: Early Storage header check status: %r\n", __FUNCTION__, Status));
   }
   
   // Go through normal entries
@@ -764,7 +764,7 @@ MsWheaESProcess (
                               sizeof(MS_WHEA_REV), 
                               Index + OFFSET_OF(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON, Rev));
     if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ ": Early Storage storage read Index %d failed: %r\n", Index, Status));
+      DEBUG((DEBUG_ERROR, "%a: Early Storage storage read Index %d failed: %r\n", __FUNCTION__, Index, Status));
       Index += sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON);
       continue;
     }
@@ -778,7 +778,7 @@ MsWheaESProcess (
           Status = ReportFn(&MsWheaEntryMD, &MsWheaEntryMD.MsWheaErrorHdr, sizeof(MS_WHEA_ERROR_HDR));
         }
         else {
-          DEBUG((DEBUG_ERROR, __FUNCTION__ ": V0 Early Storage storage process failed %r\n", Status));
+          DEBUG((DEBUG_ERROR, "%a: V0 Early Storage storage process failed %r\n", __FUNCTION__, Status));
           Index += sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON);
         }
         break;
@@ -788,7 +788,7 @@ MsWheaESProcess (
           Status = ReportFn(&MsWheaEntryMD, &MsWheaEntryMD.MsWheaErrorHdr, sizeof(MS_WHEA_ERROR_HDR));
         } 
         else {
-          DEBUG((DEBUG_ERROR, __FUNCTION__ ": V1 Early Storage storage process failed %r\n", Status));
+          DEBUG((DEBUG_ERROR, "%a: V1 Early Storage storage process failed %r\n", __FUNCTION__, Status));
           Index += sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON);
         }
         break;
@@ -802,6 +802,6 @@ MsWheaESProcess (
   MsWheaESClearAllData();
 
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return Status;
 }

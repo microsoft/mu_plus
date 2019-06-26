@@ -158,7 +158,7 @@ MsWheaReportPeiEntry (
   EFI_STATUS                Status = EFI_SUCCESS;
   EFI_PEI_RSC_HANDLER_PPI   *RscHandlerPpi;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   // Insert signature and clear the space, if not already clear
   MsWheaESInit();

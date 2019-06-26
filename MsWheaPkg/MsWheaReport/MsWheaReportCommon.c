@@ -393,7 +393,7 @@ ReportHwErrRecRouter (
   VOID                                *TempPtr = NULL;
 
   if (ReportFn == NULL) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Input fucntion pointer cannot be null!\n"));
+    DEBUG((DEBUG_ERROR, "%a: Input fucntion pointer cannot be null!\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -490,7 +490,7 @@ MsWheaInSituTest(
   MS_WHEA_ERROR_HDR   *mMsWheaErrHdr;
   UINT8               TestIndex;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   SetMem(Data, sizeof(MS_WHEA_ERROR_HDR), 0);
   
@@ -500,7 +500,7 @@ MsWheaInSituTest(
   mMsWheaErrHdr->ReporterID = MS_WHEA_IN_SITU_TEST_ERROR_ID;
   mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Fatal error report rev 0...\n"));
+  DEBUG((DEBUG_INFO, "%a: Fatal error report rev 0...\n", __FUNCTION__));
   TestIndex = 0;
   SetMem((mMsWheaErrHdr + 1), 
         MS_WHEA_IN_SITU_TEST_ERROR_SIZE, 
@@ -512,7 +512,7 @@ MsWheaInSituTest(
                                   Data,
                                   Size);
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Fatal error report rev 1...\n"));
+  DEBUG((DEBUG_INFO, "%a: Fatal error report rev 1...\n", __FUNCTION__));
   TestIndex ++;
   SetMem((mMsWheaErrHdr + 1), 
         MS_WHEA_IN_SITU_TEST_ERROR_SIZE, 
@@ -524,7 +524,7 @@ MsWheaInSituTest(
                                   Data,
                                   Size);
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Fatal error report unsupported rev...\n"));
+  DEBUG((DEBUG_INFO, "%a: Fatal error report unsupported rev...\n", __FUNCTION__));
   TestIndex ++;
   SetMem((mMsWheaErrHdr + 1), 
         MS_WHEA_IN_SITU_TEST_ERROR_SIZE, 
@@ -536,7 +536,7 @@ MsWheaInSituTest(
                                   Data,
                                   Size);
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Non-fatal error report unsupported rev...\n"));
+  DEBUG((DEBUG_INFO, "%a: Non-fatal error report unsupported rev...\n", __FUNCTION__));
   TestIndex ++;
   SetMem((mMsWheaErrHdr + 1), 
         MS_WHEA_IN_SITU_TEST_ERROR_SIZE, 
@@ -548,7 +548,7 @@ MsWheaInSituTest(
                                   Data,
                                   Size);
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Non-fatal error report rev wildcard...\n"));
+  DEBUG((DEBUG_INFO, "%a: Non-fatal error report rev wildcard...\n", __FUNCTION__));
   TestIndex ++;
   SetMem((mMsWheaErrHdr + 1), 
         MS_WHEA_IN_SITU_TEST_ERROR_SIZE, 
@@ -559,7 +559,7 @@ MsWheaInSituTest(
                                   (mMsWheaErrHdr + 1),
                                   MS_WHEA_IN_SITU_TEST_ERROR_SIZE);
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Non-fatal error report rev short payload...\n"));
+  DEBUG((DEBUG_INFO, "%a: Non-fatal error report rev short payload...\n", __FUNCTION__));
   TestIndex ++;
   SetMem((mMsWheaErrHdr + 1), 
         MS_WHEA_IN_SITU_TEST_ERROR_SHORT_SIZE, 
@@ -570,10 +570,10 @@ MsWheaInSituTest(
                                   (mMsWheaErrHdr + 1),
                                   MS_WHEA_IN_SITU_TEST_ERROR_SHORT_SIZE);
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Non-fatal error report rev short...\n"));
+  DEBUG((DEBUG_INFO, "%a: Non-fatal error report rev short...\n", __FUNCTION__));
   TestIndex ++;
   ReportStatusCode((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
                   MS_WHEA_IN_SITU_TEST_ERROR_CODE);
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
 }

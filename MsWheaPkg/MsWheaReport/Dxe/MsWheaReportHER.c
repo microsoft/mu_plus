@@ -63,7 +63,7 @@ MsWheaAnFBuffer (
   EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp;
   EFI_FIRMWARE_ERROR_DATA         *EfiFirmwareErrorData;
   
-  DEBUG((DEBUG_INFO,__FUNCTION__" enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
   
   if ((PayloadSize == NULL) || 
       (PayloadPtr == NULL) || 
@@ -106,7 +106,7 @@ MsWheaAnFBuffer (
   // Update PayloadSize as the recorded error has Headers and Payload merged
   *PayloadSize = BufferIndex;
  Cleanup:
-  DEBUG((DEBUG_INFO,__FUNCTION__" exit %r...\n", Status));
+  DEBUG((DEBUG_INFO, "%a: exit %r...\n", __FUNCTION__, Status));
   return (VOID*) Buffer;
 }
 
@@ -189,7 +189,7 @@ MsWheaClearAllEntries (
   UINTN                 Size = 0;
   EFI_STATUS            Status = EFI_SUCCESS;
   
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
+  DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
   for (Index = 0; Index <= MAX_UINT16; Index++) {
     Size = 0;
@@ -217,7 +217,7 @@ MsWheaClearAllEntries (
                               0,
                               NULL);
     if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Clear HwErrRec has an issue...\n"));
+      DEBUG((DEBUG_ERROR, "%a Clear HwErrRec has an issue...\n", __FUNCTION__));
       break;
     }
   }
@@ -226,7 +226,7 @@ MsWheaClearAllEntries (
     Status = EFI_SUCCESS;
   }
   
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " exit...\n"));
+  DEBUG((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
   return Status;
 }
 
@@ -261,7 +261,7 @@ MsWheaReportHERAdd (
   // 1. Find an available variable name for next write
   Status = MsWheaFindNextAvailableSlot(&Index);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Find the next available slot failed (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: Find the next available slot failed (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
   
@@ -269,7 +269,7 @@ MsWheaReportHERAdd (
   Buffer = MsWheaAnFBuffer(MsWheaEntryMD, &Size, PayloadPtr);
   if (Buffer == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Buffer allocate and fill failed (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: Buffer allocate and fill failed (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
   
@@ -284,15 +284,15 @@ MsWheaReportHERAdd (
                             Size,
                             Buffer);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Write size of %d at index %04X errored with (%r)\n", Size, Index, Status));
+    DEBUG((DEBUG_ERROR, "%a: Write size of %d at index %04X errored with (%r)\n", __FUNCTION__, Size, Index, Status));
   } else {
-    DEBUG((DEBUG_INFO, __FUNCTION__ ": Write size of %d at index %04X succeeded\n", Size, Index));
+    DEBUG((DEBUG_INFO, "%a: Write size of %d at index %04X succeeded\n", __FUNCTION__, Size, Index));
   }
 
 Cleanup:
   if (Buffer) {
     FreePool(Buffer);
   }
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit (%r)\n", Status));
+  DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
   return Status;
 }

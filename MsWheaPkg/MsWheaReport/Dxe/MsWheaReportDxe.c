@@ -80,7 +80,7 @@ MsWheaReportHandlerDxe(
 {
   EFI_STATUS Status;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
   
   if (mExitBootHasOccurred != FALSE) {
     // This function is locked due to Exit Boot has occurred
@@ -174,7 +174,7 @@ MsWheaProcHob (
   VOID                    *MsWheaReportEntry = NULL;
   MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD = NULL;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   GuidHob = GetFirstGuidHob(&gMsWheaReportServiceGuid);
   if (GuidHob == NULL) {
@@ -193,11 +193,11 @@ MsWheaProcHob (
                                       MsWheaEntryMD + 1, 
                                       MsWheaEntryMD->PayloadSize - sizeof(MS_WHEA_ERROR_ENTRY_MD));
       if (EFI_ERROR(Status) != FALSE) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ ": Hob entry process failed %r\n", Status));
+        DEBUG((DEBUG_ERROR, "%a: Hob entry process failed %r\n", __FUNCTION__, Status));
       }
     }
     else {
-      DEBUG((DEBUG_ERROR, __FUNCTION__": Bad entry: EntrySize: %08X, PayloadSize: %08X\n", 
+      DEBUG((DEBUG_ERROR, "%a: Bad entry: EntrySize: %08X, PayloadSize: %08X\n", __FUNCTION__, 
                                       EntrySize, 
                                       MsWheaEntryMD->PayloadSize));
     }
@@ -206,7 +206,7 @@ MsWheaProcHob (
   }
 
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...%r\n", Status));
+  DEBUG((DEBUG_INFO, "%a: exit...%r\n", __FUNCTION__, Status));
   return Status;
 }
 
@@ -229,7 +229,7 @@ MsWheaProcList (
   MS_WHEA_LIST_ENTRY      *MsWheaListEntry = NULL;
   LIST_ENTRY              *HeadList = NULL;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   while (IsListEmpty(&mMsWheaEntryList) == FALSE) {
     HeadList = GetFirstNode(&mMsWheaEntryList);
@@ -244,14 +244,14 @@ MsWheaProcList (
                                       MsWheaEntryMD->PayloadSize - sizeof(MS_WHEA_ERROR_ENTRY_MD));
 
       if (EFI_ERROR(Status) != FALSE) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ ": Linked list entry process failed %r\n", Status));
+        DEBUG((DEBUG_ERROR, "%a: Linked list entry process failed %r\n", __FUNCTION__, Status));
       }
     }
 
     MsWheaDeleteReportEvent(&mMsWheaEntryList);
   }
   
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return Status;
 }
 
@@ -271,17 +271,17 @@ MsWheaProcessPrevError (
   
   Status = MsWheaESProcess(MsWheaReportHandlerDxe);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": CMOS entries process failed %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: CMOS entries process failed %r\n", __FUNCTION__, Status));
   }
 
   Status = MsWheaProcHob();
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Hob entries process failed %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: Hob entries process failed %r\n", __FUNCTION__, Status));
   }
 
   Status = MsWheaProcList();
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": List entries process failed %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: List entries process failed %r\n", __FUNCTION__, Status));
   }
 
   return Status;
@@ -299,19 +299,19 @@ MsWheaReportDxeExitBoot (
 {
   EFI_STATUS Status;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   if (mExitBootHasOccurred != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Been here already...\n"));
+    DEBUG((DEBUG_ERROR, "%a: Been here already...\n, __FUNCTION__"));
     Status = EFI_ACCESS_DENIED;
   }
   else {
     mExitBootHasOccurred = TRUE;
     Status = mRscHandlerProtocol->Unregister(MsWheaRscHandlerDxe);
-    DEBUG((DEBUG_INFO, __FUNCTION__ ": Protocol unregister result %r\n", Status));
+    DEBUG((DEBUG_INFO, "%a: Protocol unregister result %r\n", __FUNCTION__, Status));
   }
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...%r\n", Status));
+  DEBUG((DEBUG_INFO, "%a: exit...%r\n", __FUNCTION__, Status));
 }
 
 /**
@@ -354,14 +354,14 @@ MsWheaArchCallback (
                               &gEfiEventExitBootServicesGuid,
                               &mExitBootServicesEvent);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to register of MsWhea report exit boot (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a failed to register of MsWhea report exit boot (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // collect all reported events during PEI and pre-DXE Runtime
   Status = MsWheaProcessPrevError();
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " processing hob list failed (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a processing hob list failed (%r)\n", __FUNCTION__, Status));
   }
 
   if (PcdGetBool(PcdMsWheaReportTestEnable) != FALSE) {
@@ -419,7 +419,7 @@ MsWheaReportDxeEntry (
 {
   EFI_STATUS  Status = EFI_SUCCESS;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   // init linked list, all fields should be 0
   InitializeListHead(&mMsWheaEntryList);
@@ -427,14 +427,14 @@ MsWheaReportDxeEntry (
   // locate the RSC protocol
   Status = gBS->LocateProtocol(&gEfiRscHandlerProtocolGuid, NULL, (VOID**)&mRscHandlerProtocol);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to register MsWhea report RSC handler (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // register for the RSC callback handler
   Status = mRscHandlerProtocol->Register(MsWheaRscHandlerDxe, TPL_HIGH_LEVEL);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to register MsWhea report RSC handler (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
   
@@ -446,6 +446,6 @@ MsWheaReportDxeEntry (
   MsWheaRegisterCallbacks();
 
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit (%r)\n", Status));
+  DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
   return Status;
 }
