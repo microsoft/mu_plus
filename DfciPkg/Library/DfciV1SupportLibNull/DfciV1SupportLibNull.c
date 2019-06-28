@@ -81,6 +81,6 @@ DFCI_SETTING_ID_STRING
 EFIAPI
 DfciV1NumberFromId (DFCI_SETTING_ID_STRING Id) {
 
-    DEBUG((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
-    return NULL;
+    DEBUG((DEBUG_INFO, "%a: Called - Returning standard Id\n", __FUNCTION__));
+    return Id;
 }

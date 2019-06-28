@@ -159,7 +159,9 @@ ValidateNvVariable (
                               &Attributes,
                               &ValueSize,
                                NULL );
-    if (!EFI_ERROR(Status)) {                          // We have a variable
+
+    if (EFI_BUFFER_TOO_SMALL ==  Status) {             // We have a variable
+        Status = EFI_SUCCESS;
         if (DFCI_SETTINGS_ATTRIBUTES != Attributes) {  // Check if Attributes are wrong
             // Delete invalid URL variable
             Status = gRT->SetVariable (VariableName,
@@ -171,6 +173,9 @@ ValidateNvVariable (
                 DEBUG((DEBUG_ERROR, "%a: Unable to delete invalid variable %s\n", __FUNCTION__, VariableName));
             }
         }
+
+    } else {
+        Status = EFI_SUCCESS;
     }
 
     return Status;
@@ -415,9 +420,11 @@ DfciSettingsGet (
     }
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Error retrieving setting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
+        if (EFI_BUFFER_TOO_SMALL != Status) {
+            DEBUG((DEBUG_ERROR, "%a - Error retrieving setting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
+        }
     } else {
-        DEBUG((DEBUG_INFO, "%a - Setting %s retrieved.\n",__FUNCTION__ , VariableName));
+        DEBUG((DEBUG_INFO, "%a - Setting %s retrieved.\n", __FUNCTION__ , VariableName));
     }
 
     return Status;

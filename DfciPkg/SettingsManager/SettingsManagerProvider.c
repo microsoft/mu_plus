@@ -190,7 +190,7 @@ SetProviderValueFromAscii(
   UINTN              ValueSize;
   EFI_STATUS         Status;
   UINTN              b64Size;
-  DFCI_VIRTUAL_USB_PORT_STATE UsbPortState;
+  UINT8              UsbPortState;
 
   switch (Provider->Type)
   {
@@ -902,7 +902,6 @@ FindProviderById(DFCI_SETTING_ID_STRING Id)
       return &Prov->Provider;
     }
   }
-  DEBUG((DEBUG_ERROR, "FindProviderById - Failed to find (%a)\n", Id));
   return NULL;
 }
 
