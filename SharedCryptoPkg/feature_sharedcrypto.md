@@ -42,7 +42,6 @@ A typical version consists of 4 numbers. The year, the month of the EDK II relea
 
 Additionally there are a few different "flavors" of SharedCrypto. The three main flavors are ShaOnly, Mu, and Full. ShaOnly only supports functions related to Sha1 and Sha256 and results in a very small EFI binary. The Mu flavor is the functions that are utilized in the platforms that depend on Project Mu and what we believe are the most practical functions. The full flavor supports all functions that BaseCryptLib does. When a function is called that a flavor doesn't have, the ProtocolFunctionNotFound method from the library is called and an assert is generated.
 
-
 ## Reproducibility
 
 For those wishing to verify for themselves that the packaged EFI's in the Nuget Feed match the code in this package can compile the Driver themselves by sing the SharedCryptoDriver.dsc or PublishDrivers.py. PublishDrivers is the same exact script that we run to update the package in Nuget.
@@ -65,6 +64,12 @@ There are two pieces to be build: the library and the driver. The library is to 
 
 There are 24 different versions of the prebuild driver. One for each arch (X86, AARCH64, ARM, X64) and for each phase (DXE, PEI, SMM) and for mode (DEBUG, RELEASE). The nuget system should take care of downloading the correct version for your project.
 
+To build, run DriverBuilder.py. This will compile the correct EFI's and copy the needed files such as the license and markdown.
+In order to build, you'll need to have a few repos cloned into your tree, which is most easily accomplished by running *mu_build -c ci.mu.yaml -p SharedCryptoPkg*, which will clone the correct repos automatically for you.
+This should be a one-time step to setup the tree. DriverBuilder supports all the same options that a regular platformbuilder does, such as --update and --skipbuild. If you wish to publish to Nuget, provide an API key by including it on the command line. *DriverBuilder.py --api-key=XXXXXX*
+
+The output will go to the Build directory under .SharedCrypto_Nuget
+
 ## Supported Architectures
 
 This currently supports x86, x64, AARCH64, and ARM.
@@ -72,7 +77,6 @@ This currently supports x86, x64, AARCH64, and ARM.
 ## Including in your platform
 
 There are two ways to include this in your project: getting the protocol directly or using SharedCryptoLib. SharedCryptoLib is a wrapper that has the same API as BaseCryptLib so you can just drop it in.
-
 
 ## Sample DSC change
 
@@ -114,11 +118,11 @@ Include this file in your FV and the module will get loaded. In this example, we
 
 ```
 [FV.FVBOOTBLOCK]
-    INF  SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.$(TARGET).inf
+    INF SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.$(TARGET).inf
     ...
 
 [FV.FVDXE]
-    INF  SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.$(TARGET).inf
-    INF  SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.$(TARGET).inf
+    INF SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.$(TARGET).inf
+    INF SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.$(TARGET).inf
     ...
 ```

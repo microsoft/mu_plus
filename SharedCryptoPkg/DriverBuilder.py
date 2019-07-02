@@ -25,7 +25,7 @@ except ImportError:
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 WORKSPACE_PATH = os.path.dirname(SCRIPT_PATH)
 REQUIRED_REPOS = ('Common/MU_TIANO', "MU_BASECORE", "Silicon/Arm/MU_TIANO")
-PROJECT_SCOPE = ("corebuild", "")
+PROJECT_SCOPE = ("corebuild", "driverbuild")
 
 MODULE_PKGS = ('Common/MU_TIANO', "Silicon/Arm/MU_TIANO", "MU_BASECORE")
 MODULE_PKG_PATHS = ";".join(os.path.join(WORKSPACE_PATH, pkg_name) for pkg_name in MODULE_PKGS)
@@ -87,7 +87,7 @@ def PublishNuget():
     # move the EFI's we generated to a folder to upload
 
     logging.info("Running NugetPackager")
-    output_dir = os.path.join(rootDir, "Build", ".NugetOutput")
+    output_dir = os.path.join(rootDir, "Build", "SharedCrypto_Nuget")
 
     try:
         if os.path.exists(output_dir):
@@ -100,6 +100,7 @@ def PublishNuget():
     # copy the md file
     CopyFile(scriptDir, output_dir, "feature_sharedcrypto.md")
     CopyFile(scriptDir, output_dir, "release_notes.md")
+    CopyFile(scriptDir, output_dir, "LICENSE.txt")
     CopyFile(os.path.join(scriptDir,"Driver"), output_dir, "Mu-SharedCrypto.md")
 
     sharedcrypto_build_dir = os.path.realpath(os.path.join(rootDir, "Build", "SharedCryptoPkg_Driver"))
