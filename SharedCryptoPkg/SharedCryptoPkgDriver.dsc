@@ -101,7 +101,7 @@
 [LibraryClasses]
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
 [LibraryClasses.common.DXE_CORE]
-  DebugLib|MdePkg/Library/UefiDebugLibDebugPortProtocol/UefiDebugLibDebugPortProtocol.inf
+  DebugLib|MdePkg/Library/UefiDebugLibDebugPortProtocol/UefiDebugLibDebugPortProtocolDxe.inf
 [LibraryClasses.common.PEIM]
   DebugLib|MsCorePkg/Library/PeiDebugLib/PeiDebugLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
