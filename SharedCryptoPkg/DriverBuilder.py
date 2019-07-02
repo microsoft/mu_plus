@@ -85,10 +85,6 @@ def PublishNuget():
     scriptDir = SCRIPT_PATH
     rootDir = WORKSPACE_PATH
     # move the EFI's we generated to a folder to upload
-    NugetPath = os.path.join(rootDir,"MU_BASECORE", "BaseTools", "NugetPublishing")
-    NugetFilePath = os.path.join(NugetPath, "NugetPublishing.py")
-    if not os.path.exists(NugetFilePath):
-        raise FileNotFoundError(NugetFilePath)
 
     logging.info("Running NugetPackager")
     output_dir = os.path.join(rootDir, "Build", ".NugetOutput")
@@ -126,14 +122,20 @@ def PublishNuget():
         CopyFile(txt, output_dir)
 
     API_KEY = GetAPIKey()
-    config_file = os.path.join("Driver", "Mu-SharedCrypto.config.json")
-    params = "--Operation PackAndPush --ConfigFilePath {0} --Version {1} --InputFolderPath {2}  --ApiKey {3}".format(config_file,VERSION, output_dir, API_KEY)
-    ret = UtilityFunctions.RunPythonScript(NugetFilePath, params, capture=True, workingdir=scriptDir)
-    if ret == 0:
-        logging.critical("Finished publishing Nuget version {0}".format(VERSION))
+    if API_KEY is not None:
+        logging.info("Attempting to publish the Nuget package")
+
+        config_file = os.path.join("Driver", "Mu-SharedCrypto.config.json")
+        params = "--Operation PackAndPush --ConfigFilePath {0} --Version {1} --InputFolderPath {2}  --ApiKey {3}".format(config_file,VERSION, output_dir, API_KEY)
+        ret = UtilityFunctions.RunCmd("nuget-publish", params, capture=True, workingdir=scriptDir)
+        if ret == 0:
+            logging.critical("Finished publishing Nuget version {0}".format(VERSION))
+        else:
+            logging.error("Unable to publish nuget package")
+            return False
     else:
-        logging.error("Unable to publish nuget package")
-        return False
+        logging.critical("Skipping nuget publish step. No API key provided.")
+
     return True
 
 
@@ -153,7 +155,7 @@ def MoveArchTargetSpecificFile(binary, offset, output_dir):
 
     if not os.path.exists(dest_path):
         os.makedirs(dest_path)
-    logging.critical("Copying {0}: {1}".format(binary_name,binary))
+    logging.info("Copying {0}: {1}".format(binary_name,binary))
     CopyFile(binary_folder, dest_path, binary_name)
 
 
@@ -223,30 +225,24 @@ if __name__ == '__main__':
         args.extend(remaining_args) # tack them on after the first argument
     sys.argv = args
     SetAPIKey(parsed_args.api_key)  # Set the API ley
-    # set the build target
-    SetBuildTarget("DEBUG")
-    try:
-        CommonBuildEntry.build_entry(SCRIPT_PATH, WORKSPACE_PATH, REQUIRED_REPOS, PROJECT_SCOPE, MODULE_PKGS, MODULE_PKG_PATHS, worker_module='DriverBuilder')
-    except SystemExit as e:  # catch the sys.exit call from uefibuild
-        if e.code != 0:
-            raise
-        print("Success" + str(e.code))
 
-    # this is hacky to close logging and restart it back to a default state
-    reload_logging()
-    SetBuildTarget("RELEASE")
-    sys.argv = args  # restore the args since they were consumed by the previous build entry
-    try:
-        CommonBuildEntry.build_entry(SCRIPT_PATH, WORKSPACE_PATH, REQUIRED_REPOS, PROJECT_SCOPE, MODULE_PKGS, MODULE_PKG_PATHS, worker_module='DriverBuilder')
-    except SystemExit as e:
-        if e.code != 0:
-            raise
-        print("Success" + str(e.code))
+    build_targets = ["DEBUG", "RELEASE"]
 
-    if GetAPIKey() is not None:
-        reload_logging()  # reload logging for publishing the nuget package
-        logging.critical("--Publishing NUGET package--")
-        if not PublishNuget():
-            logging.error("Failed to publish Nuget")
-    else:
-        print("Skipping nuget publish step") # logging is trashed so we have to print
+    for target in build_targets:
+        # set the build target
+        SetBuildTarget(target)
+        sys.argv = args  # restore the args since they were consumed by the previous build entry
+        try:
+            CommonBuildEntry.build_entry(SCRIPT_PATH, WORKSPACE_PATH, REQUIRED_REPOS, PROJECT_SCOPE, MODULE_PKGS, MODULE_PKG_PATHS, worker_module='DriverBuilder')
+        except SystemExit as e:  # catch the sys.exit call from uefibuild
+            if e.code != 0:
+                raise
+        # this is hacky to close logging and restart it back to a default state
+        reload_logging()
+    # we've finished building
+    # if we want to be verbose?
+    #logging.getLogger("").setLevel(logging.INFO)
+
+    logging.critical("--Creating NUGET package--")
+    if not PublishNuget():
+        logging.error("Failed to publish Nuget")
