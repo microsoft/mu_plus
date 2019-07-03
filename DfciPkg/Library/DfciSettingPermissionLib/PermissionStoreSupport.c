@@ -258,6 +258,8 @@ DeletePermissionEntries (
 IN DFCI_PERMISSION_STORE *Store,
 IN DFCI_IDENTITY_ID       Id
 ) {
+  LIST_ENTRY *Link = NULL;
+  LIST_ENTRY *NextLink = NULL;
 
   if (Store == NULL)
   {
@@ -266,15 +268,15 @@ IN DFCI_IDENTITY_ID       Id
   }
 
   DEBUG((DEBUG_INFO,"%a - Deleting permission entries owned by %x\n", __FUNCTION__, Id));
-  for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)
+  EFI_LIST_FOR_EACH_SAFE(Link, NextLink, &(Store->PermissionsListHead)) 
   {
       DFCI_PERMISSION_ENTRY *Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
       if ((Temp->DMask & DFCI_PERMISSION_MASK__USERS) != 0)
       {
         if (Id & HIGHEST_IDENTITY(Temp->DMask))
         {
-          DEBUG((DEBUG_INFO,"%a - deleting perm Mask=%x, %id.\n", __FUNCTION__, Temp->DMask, Temp->Id));
-          Link = RemoveEntryList (Link);
+          DEBUG((DEBUG_INFO,"%a - deleting perm Mask=%x, %a.\n", __FUNCTION__, Temp->DMask, Temp->Id));
+          RemoveEntryList (Link);
           FreePool (Temp);
         }
       }
