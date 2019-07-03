@@ -100,12 +100,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DFCI_SETTING_ID__ALL_RADIOS                 "Dfci.OnboardRadios.Enable"
 
 //
-// Boot External Media
+// Boot from External Media
 //
 #define DFCI_SETTING_ID__EXTERNAL_MEDIA             "Dfci.BootExternalMedia.Enable"
 
 //
-// Boot On Board Network
+// Boot from On Board Network
 //
 #define DFCI_SETTING_ID__ENABLE_NETWORK             "Dfci.BootOnboardNetwork.Enable"
 

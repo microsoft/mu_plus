@@ -59,7 +59,6 @@ typedef enum {
     ID_IS_TENANT_ID,
     ID_IS_FRIENDLY_NAME,
     ID_IS_TENANT_NAME,
-    ID_IS_ENABLE_NETWORK,
 }  ID_IS;
 
 typedef struct  {
@@ -127,8 +126,6 @@ IsIdSupported (DFCI_SETTING_ID_STRING Id)
         return ID_IS_FRIENDLY_NAME;
     } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__MDM_TENANT_NAME, DFCI_MAX_ID_LEN)) {
         return ID_IS_TENANT_NAME;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_NETWORK, DFCI_MAX_ID_LEN)) {
-        return ID_IS_ENABLE_NETWORK;
     } else {
         DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
     }
@@ -203,7 +200,6 @@ InitializeNvVariables (
     Status |= ValidateNvVariable (DFCI_SETTINGS_TENANT_ID_NAME);
     Status |= ValidateNvVariable (DFCI_SETTINGS_FRIENDLY_NAME);
     Status |= ValidateNvVariable (DFCI_SETTINGS_TENANT_NAME);
-    Status |= ValidateNvVariable (DFCI_SETTINGS_ENABLE_NETWORK);
 
     return Status;
 }
@@ -268,17 +264,6 @@ DfciSettingsSet (
 
         case ID_IS_TENANT_NAME:
             VariableName = DFCI_SETTINGS_TENANT_NAME;
-            break;
-
-        case ID_IS_ENABLE_NETWORK:
-            VariableName = DFCI_SETTINGS_ENABLE_NETWORK;
-            if (ValueSize > sizeof(UINT8)) {
-                ValueSize = sizeof(UINT8);
-            }
-            if ((ValueSize == 0) || ((*(UINT8 *) Value) > 1)) {
-                DEBUG((DEBUG_ERROR, "%a: Invalid Enable/Disable value %d\n", __FUNCTION__, (*(UINT8 *) Value)));
-                return EFI_INVALID_PARAMETER;
-            }
             break;
 
         default:
@@ -397,10 +382,6 @@ DfciSettingsGet (
             ;
         case ID_IS_TENANT_NAME:
             VariableName = DFCI_SETTINGS_TENANT_NAME;
-            break;
-
-        case ID_IS_ENABLE_NETWORK:
-            VariableName = DFCI_SETTINGS_ENABLE_NETWORK;
             break;
 
         default:
@@ -551,11 +532,6 @@ STATIC PROVIDER_ENTRY mDfciSettingsProviders[] = {
     {
         DFCI_SETTING_ID__MDM_TENANT_NAME,
         DFCI_SETTING_TYPE_STRING,
-        DFCI_SETTING_FLAGS_NO_PREBOOT_UI
-    },
-    {
-        DFCI_SETTING_ID__ENABLE_NETWORK,
-        DFCI_SETTING_TYPE_ENABLE,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     }
 
