@@ -3,7 +3,7 @@ IdentityManager.c
 
 Manages Identities
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c) Microsoft Corporation
 
 All rights reserved.
 
@@ -35,10 +35,10 @@ LIST_ENTRY  mAuthIdMapList = INITIALIZE_LIST_HEAD_VARIABLE(mAuthIdMapList);  //l
 
 /*
 Function to find the DFCI_AUTH_TO_ID_LIST_ENTRY given the auth token.
-From the List entry and Identiry Properties and all other fields can be 
+From the List entry and Identiry Properties and all other fields can be
 easily accessed.  The List Entry also can contain other information about
 validity period, access count, etc.  If any data is returned to an external caller
-it should be copied so that the enternal entity can not modify the internal values.  
+it should be copied so that the enternal entity can not modify the internal values.
 
 @param Token    Pointer to Auth Token to find
 @retval         Will return the DFCI_AUTH List entry structure if found.  Otherwise NULL
@@ -93,7 +93,7 @@ AddAuthHandleMapping(
 
   DEBUG((DEBUG_INFO, "Adding Auth Token Mapping 0x%X\n", *Token));
 
-  //check to make sure it doesn't already exist. 
+  //check to make sure it doesn't already exist.
   if (FindListEntryByAuthToken(Token) != NULL)
   {
     DEBUG((DEBUG_ERROR, "Error - Can't map the same auth token to more than one id property. 0x%X\n", *Token));
@@ -101,7 +101,7 @@ AddAuthHandleMapping(
     return EFI_INVALID_PARAMETER;
   }
 
-  //Allocate memory for 
+  //Allocate memory for
   Entry = AllocateZeroPool(sizeof(DFCI_AUTH_TO_ID_LIST_ENTRY));
   if (Entry == NULL)
   {
@@ -130,8 +130,8 @@ FreeAuthHandleMapping(
   if (Entry != NULL)
   {
     RemoveEntryList(&Entry->Link);
-    //Any dynamic memory in the Entry should be freed here. 
-    //Note: Identity is currently staically allocated so it should not be freed.
+    //Any dynamic memory in the Entry should be freed here.
+    //Note: Identity is currently statically allocated so it should not be freed.
     FreePool(Entry);
   }
 }
@@ -233,7 +233,7 @@ GetIdentityProperties(
     return EFI_NOT_FOUND;
   }
   //Must be copied we don't want to give back
-  //a ptr to the real entry otherwise user could modify internal data. 
+  //a ptr to the real entry otherwise user could modify internal data.
   CopyMem(Properties, Entry->Identity, sizeof(DFCI_IDENTITY_PROPERTIES));
   return EFI_SUCCESS;
 }

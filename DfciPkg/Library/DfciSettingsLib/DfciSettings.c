@@ -3,7 +3,7 @@ DfciSettings.c
 
 Library Instance for DXE to support getting, setting, defaults, and support Dfci settings.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (c) Microsoft Corporation
 
 All rights reserved.
 
@@ -149,16 +149,17 @@ ValidateNvVariable (
     EFI_STATUS  Status;
     UINT32      Attributes = 0;
     UINTN       ValueSize = 0;
+    VOID       *Value = NULL;
 
 
-    Status = gRT->GetVariable (VariableName,
-                              &gDfciSettingsGuid,
-                              &Attributes,
-                              &ValueSize,
-                               NULL );
+    Status = GetVariable3 (VariableName,
+                          &gDfciSettingsGuid,
+                          (VOID *) &Value,
+                          &ValueSize,
+                          &Attributes);
 
-    if (EFI_BUFFER_TOO_SMALL ==  Status) {             // We have a variable
-        Status = EFI_SUCCESS;
+    if (!EFI_ERROR(Status)) {             // We have a variable
+        FreePool (Value);
         if (DFCI_SETTINGS_ATTRIBUTES != Attributes) {  // Check if Attributes are wrong
             // Delete invalid URL variable
             Status = gRT->SetVariable (VariableName,
@@ -168,9 +169,10 @@ ValidateNvVariable (
                                        NULL);
             if (EFI_ERROR(Status)) {                   // What???
                 DEBUG((DEBUG_ERROR, "%a: Unable to delete invalid variable %s\n", __FUNCTION__, VariableName));
+            } else {
+                DEBUG((DEBUG_INFO, "%a: Deleting invalid variable %s, with attributes %x\n", __FUNCTION__, VariableName, Attributes));
             }
         }
-
     } else {
         Status = EFI_SUCCESS;
     }
@@ -322,7 +324,7 @@ DfciSettingsSet (
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Error setting variable %s.  Code = %r\n", VariableName, Status));
     } else {
-        DEBUG((DEBUG_INFO, "Variable %s set.\n", VariableName));
+        DEBUG((DEBUG_INFO, "Variable %s set Attributes=%x, Size=%d.\n", VariableName, DFCI_SETTINGS_ATTRIBUTES, ValueSize));
     }
 
     return Status;
