@@ -952,7 +952,7 @@ SingleSelectDialogInternal (
     if (EFI_ERROR (Status))
     {
         DEBUG((DEBUG_ERROR, "ERROR [SWM]: Failed to register the dialog as a client: %r.\r\n", Status));
-        goto Exit;
+        goto Exit2;
     }
 
     // Set window manager client state active.
@@ -1016,6 +1016,8 @@ Exit:
     //
     This->UnregisterClient (This,
                             gImageHandle);
+
+Exit2:
 
     // Clean-up.
     //

@@ -966,7 +966,7 @@ MessageBoxInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL     *This,
     if (EFI_ERROR (Status))
     {
         DEBUG((DEBUG_ERROR, "ERROR [MsgBox]: Failed to register the dialog as a client: %r.\r\n", Status));
-        goto Exit;
+        goto Exit2;
     }
 
     // Set window manager client state active.
@@ -1017,7 +1017,7 @@ Exit:
     //
     This->UnregisterClient (This,
                             MessageBoxHandle);
-
+Exit2:
     if (MessageBoxHandle == gPriorityHandle) {
         InitializeUIToolKit (gImageHandle);  // Restore UI Handle to normal
     }

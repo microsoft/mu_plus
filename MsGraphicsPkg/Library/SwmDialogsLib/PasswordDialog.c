@@ -1279,7 +1279,7 @@ PasswordDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
     if (EFI_ERROR (Status))
     {
         DEBUG((DEBUG_ERROR, "ERROR [PasswordDlg]: Failed to register the password dialog as a client: %r.\r\n", Status));
-        goto Exit;
+        goto Exit2;
     }
 
     // Set window manager client state active.
@@ -1340,6 +1340,12 @@ PasswordDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
 
 Exit:
 
+    // Unregister with the window manager as a client.
+    //
+    this->UnregisterClient (this,
+                            gImageHandle);
+Exit2:
+
     // Hide the keyboard (if it was being displayed).
     //
     if (NULL != mOSKProtocol)
@@ -1348,11 +1354,6 @@ Exit:
         //
         mOSKProtocol->ShowKeyboard (mOSKProtocol, FALSE);
     }
-
-    // Unregister with the window manager as a client.
-    //
-    this->UnregisterClient (this,
-                            gImageHandle);
 
     // Clean-up.
     //

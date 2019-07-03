@@ -2697,7 +2697,7 @@ BrowserStatusProcess (
         SwmDialogsMessageBox(L"Internal Error",
                              ErrorInfo,        // Dialog body text.
                              PrintString,      // Dialog Caption text.
-                             SWM_MB_OK,        // Show OK and CANCEL buttons.
+                             SWM_MB_OK | SWM_MB_STYLE_ALERT2, // Show OK and CANCEL buttons.
                              0,                // No timeout
                              &SwmResult);      // Return result.
 
@@ -2708,7 +2708,7 @@ BrowserStatusProcess (
         Status = SwmDialogsMessageBox(L"Requested Pause",
                                       ErrorInfo,        // Dialog body text.
                                       L"Press OK to continue",  // Dialog Caption text.
-                                      SWM_MB_OK,        // Show OK.
+                                      SWM_MB_OK | SWM_MB_STYLE_ALERT2, // Show OK.
                                       0,                // No timeout
                                       &SwmResult);      // Return result.
         break;
