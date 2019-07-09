@@ -1,0 +1,8 @@
+{
+  "scope": "sharedcrypto_build",
+  "type": "git",
+  "name": "MU_TIANO",
+  "source": "https://projectmu@dev.azure.com/projectmu/Mu_Security_Private_Release/_git/mu_tiano_plus",
+  "version": "178c2d7e7fcd9cc3845ac1379045c4bcaedf0ef0",
+  "flags": []
+}

@@ -1,0 +1,47 @@
+workspace:
+  clean: all
+
+trigger: none # will disable CI builds entirely
+
+steps:
+- checkout: self
+  clean: true
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7.x'
+    architecture: 'x64'
+
+- script: python -m pip install --upgrade pip
+  displayName: 'Install/Upgrade pip'
+
+- script: pip install -r requirements.txt --upgrade
+  displayName: 'Install/Upgrade mu_build'
+
+# Update dependencies
+- task: PythonScript@0
+  displayName: 'Update Dependencies'
+  inputs:
+    scriptSource: 'filePath'
+    scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
+    arguments: '--UPDATE'
+    failOnStderr: true
+
+# Update dependencies (to resolve nugets from previously resolved ext_deps)
+- task: PythonScript@0
+  displayName: 'Update Dependencies (Again)'
+  inputs:
+    scriptSource: 'filePath'
+    scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
+    arguments: '--UPDATE'
+    failOnStderr: true
+
+
+# Build and publish
+- task: PythonScript@0
+  displayName: 'Build and Ship'
+  inputs:
+    scriptSource: 'filePath'
+    scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
+    arguments: '--api-key=$(NUGET_API_KEY)'
+    failOnStderr: true

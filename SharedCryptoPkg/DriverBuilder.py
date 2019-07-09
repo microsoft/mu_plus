@@ -10,9 +10,16 @@ import logging
 from MuEnvironment.UefiBuild import UefiBuilder
 from MuPythonLibrary import UtilityFunctions
 from MuEnvironment import CommonBuildEntry
+from MuEnvironment.NugetDependency import NugetDependency
+from MuPythonLibrary.UtilityFunctions import RunCmd
 import shutil
+import tempfile
 import argparse
 import glob
+from io import StringIO
+#from setuptools_scm import get_version
+import re
+
 try:
     from importlib import reload  # Python 3.4+ only.
 except ImportError:
@@ -25,12 +32,14 @@ except ImportError:
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 WORKSPACE_PATH = os.path.dirname(SCRIPT_PATH)
 REQUIRED_REPOS = ('Common/MU_TIANO', "MU_BASECORE", "Silicon/Arm/MU_TIANO")
-PROJECT_SCOPE = ("corebuild", "driverbuild")
+PROJECT_SCOPE = ("corebuild", "sharedcrypto_build")
 
-MODULE_PKGS = ('Common/MU_TIANO', "Silicon/Arm/MU_TIANO", "MU_BASECORE")
+MODULE_PKGS = ('SharedCryptoPkg/MU_BASECORE_extdep/MU_BASECORE', "SharedCryptoPkg/MU_ARM_TIANO_extdep/MU_ARM_TIANO", "SharedCryptoPkg/MU_TIANO_extdep/MU_TIANO")
 MODULE_PKG_PATHS = ";".join(os.path.join(WORKSPACE_PATH, pkg_name) for pkg_name in MODULE_PKGS)
 ACTIVE_TARGET = None
-VERSION = "2019.03.04.01"
+RELEASE_NOTES_FILENAME ="release_notes.md"
+PACKAGE_NAME="Mu-SharedCrypto"
+
 
 # Because we reimport this module we need to grab the other version when we are in PlatformBuildworker namespace as opposed to main
 def GetAPIKey():
@@ -39,15 +48,18 @@ def GetAPIKey():
         return API_KEY
     else:
         pbw = __import__("__main__")
-        return pbw.API_KEY # import the API KEY
+        return pbw.API_KEYv  # import the API KEY
+
 
 def SetAPIKey(key):
     global API_KEY
     API_KEY = key
 
+
 def SetBuildTarget(key):
     global ACTIVE_TARGET
     ACTIVE_TARGET = key
+
 
 def GetBuildTarget():
     if __name__ == "__main__":
@@ -56,6 +68,7 @@ def GetBuildTarget():
     else:
         pbw = __import__("__main__")
         return pbw.ACTIVE_TARGET
+
 
 def CopyFile(srcDir, destDir, file_name=None):
     if file_name is None:
@@ -80,28 +93,212 @@ def GetTarget(path: str):
     return None
 
 
+def GetLatestNugetVersion(package_name, source=None):
+    cmd = NugetDependency.GetNugetCmd()
+    cmd += ["list"]
+    cmd += [package_name]
+    if source is not None:
+        cmd += ["-Source", source]
+    return_buffer = StringIO()
+    if (RunCmd(cmd[0], " ".join(cmd[1:]), outstream=return_buffer) == 0):
+        # Seek to the beginning of the output buffer and capture the output.
+        return_buffer.seek(0)
+        return_string = return_buffer.read()
+        return_buffer.close()
+        return return_string.strip().strip(package_name).strip()
+    else:
+        return "0.0.0.0"
+
+
+def GetReleaseNote():
+    cmd = "log --format=%B -n 1 HEAD"
+    return_buffer = StringIO()
+    if (RunCmd("git", cmd, outstream=return_buffer) == 0):
+        # Seek to the beginning of the output buffer and capture the output.
+        return_buffer.seek(0)
+        return_string = return_buffer.read(155).replace("\n"," ")  # read the first 155 characters and replace the
+        return_buffer.close()
+        # TODO: figure out if there was more input and append a ... if needed
+        return return_string.strip()
+    else:
+        raise RuntimeError("Unable to read release notes")
+
+
+def CreateReleaseNotes(note:str, new_version:str, old_release_notes:list, hashes:dict):
+    scriptDir = SCRIPT_PATH
+
+    release_notes_path = os.path.join(scriptDir, RELEASE_NOTES_FILENAME)
+    current_notes_file  = open(release_notes_path, "r")
+    notes = current_notes_file.readlines()
+    current_notes_file.close()
+
+    notes += ["\n"]
+    notes += ["## {}- {}\n".format(new_version, note), "\n"]
+    for repo in hashes:
+        repo_hash = hashes[repo]
+        notes += ["{}@{}\n".format(repo, repo_hash)]
+    notes += ["\n"]
+
+    # write our notes out to the file
+    current_notes_file  = open(release_notes_path, "w")
+    current_notes_file.writelines(notes)
+    current_notes_file.writelines(old_release_notes)
+    current_notes_file.close()
+
+
+def GetCommitHashes(root_dir:os.PathLike):
+    # Recursively looks at every .git and gets the commit from there
+    search_path = os.path.join(root_dir, "**", ".git")
+    search = glob.iglob(search_path, recursive=True)
+    found_repos = {}
+    cmd_args = "rev-parse HEAD"
+    for git_path in search:
+        git_path_dir = os.path.dirname(git_path)
+        _, git_repo_name = os.path.split(git_path_dir)
+        git_repo_name = git_repo_name.upper()
+        if git_repo_name in found_repos:
+            raise RuntimeError("we've already found this repo before "+git_repo_name)
+        # read the git hash for this repo
+        return_buffer = StringIO()
+        RunCmd("git", cmd_args, workingdir=git_path_dir, outstream=return_buffer)
+        commit_hash = return_buffer.getvalue().strip()
+        return_buffer.close()
+        found_repos[git_repo_name] = commit_hash
+    return found_repos
+
+
+def GetOldReleaseNotesAndHashes(notes_path:os.PathLike):
+    # Read in the text file
+    if not os.path.isfile(notes_path):
+        raise FileNotFoundError("Unable to find the old release notes")
+    old_notes_file  = open(notes_path, "r")
+    notes = old_notes_file.readlines()
+    old_notes_file.close()
+    version_re = re.compile(r'##\s*\d+\.\d+\.\d+\.\d+')
+    while len(notes) > 0:  # go through the notes until we find a version
+        if not version_re.match(notes[0]):
+            del notes[0]
+        else:
+            break
+    old_hashes = {}
+    hash_re = re.compile(r'([\w_]+)@([\w\d]+)')
+    for note_line in notes:
+        hash_match = hash_re.match(note_line)
+        if hash_match:
+            repo, commit_hash = hash_match.groups()
+            repo = str(repo).upper()
+            if repo not in old_hashes:
+                old_hashes[repo] = commit_hash
+
+    return (notes, old_hashes)
+
+
+def DownloadNugetPackageVersion(package_name:str, version:str, destination:os.PathLike, source=None):
+    cmd = NugetDependency.GetNugetCmd()
+    cmd += ["install", package_name]
+    if source is not None:
+        cmd += ["-Source", source]
+    cmd += ["-ExcludeVersion"]
+    cmd += ["-Version", version]
+    cmd += ["-Verbosity", "detailed"]
+    cmd += ["-OutputDirectory", '"' + destination + '"']
+    ret = RunCmd(cmd[0], " ".join(cmd[1:]))
+    if ret != 0:
+        return False
+    else:
+        return True
+
+def GetReleaseForCommit(commit_hash:str):
+    git_dir = os.path.dirname(SCRIPT_PATH)
+    cmd_args = ["log", '--format="%h %D"', "--all", "-n 100"]
+    return_buffer = StringIO()
+    RunCmd("git", " ".join(cmd_args), workingdir=git_dir, outstream=return_buffer)
+    return_buffer.seek(0)
+    results = return_buffer.readlines()
+    return_buffer.close()
+    log_re = re.compile(r'release/(\d{6})')
+    for log_item in results:
+        commit = log_item[:11]
+        branch = log_item[11:].strip()
+        if len(branch) == 0:
+            continue
+        match = log_re.search(branch)
+        if match:
+            return match.group(1)
+
+    raise RuntimeError("We couldn't find the release branch that we correspond to")
+
+
+def GetSubVersions(old_version:str, curr_hashes:dict, old_hashes:dict):
+    _, _, major, minor = old_version.split(".")
+    differences = []
+    for repo in curr_hashes:
+        if repo not in old_hashes:
+            logging.warning("Skipping comparing "+repo)
+            continue
+        if curr_hashes[repo] != old_hashes[repo]:
+            differences.append(repo)
+    if "OPENSSL" in differences or "MU_TIANO" in differences:
+        major = int(major) + 1
+        minor = 1
+    elif len(differences) > 0:
+        minor = int(minor) + 1
+    return "{}.{}".format(major, minor)
+
+
+def GetNextVersion():
+    # first get the last version
+    old_version = GetLatestNugetVersion(PACKAGE_NAME)  # TODO: get the source from the JSON file that configures this
+    # Get a temporary folder to download the nuget package into
+    temp_nuget_path = tempfile.mkdtemp()
+    # Download the Nuget Package
+    DownloadNugetPackageVersion(PACKAGE_NAME, old_version, temp_nuget_path)
+    # Unpack and read the previous release notes, skipping the header, also get hashes
+    old_notes, old_hashes = GetOldReleaseNotesAndHashes(os.path.join(temp_nuget_path, PACKAGE_NAME, PACKAGE_NAME, RELEASE_NOTES_FILENAME))
+    # Get the current hashes of open ssl and ourself
+    curr_hashes = GetCommitHashes(os.path.dirname(SCRIPT_PATH))
+    # Figure out what release branch we are in
+    current_release = GetReleaseForCommit(curr_hashes["MU_PLUS"])
+    # Put that as the first two pieces of our version
+    new_version = current_release[0:4]+"."+current_release[4:]+"."
+    # Calculate the newest version
+    new_version += GetSubVersions(old_version, curr_hashes, old_hashes)
+    if new_version == old_version:
+        raise RuntimeError("We are unable to republish the same version that was published last")
+    # Create the release note from this branch, currently the commit message on the head?
+    release_note = GetReleaseNote()
+    # Create our release notes, appending the old ones
+    CreateReleaseNotes(release_note, new_version, old_notes, curr_hashes)
+    # Clean up the temporary nuget file?
+    logging.critical("Creating new version:"+new_version)
+    return new_version
+
+
 def PublishNuget():
+    logging.info("Running NugetPackager")
     # get the root directory of mu_basecore
     scriptDir = SCRIPT_PATH
     rootDir = WORKSPACE_PATH
+    API_KEY = GetAPIKey()
+    VERSION = None
+    if API_KEY is not None:
+        VERSION = GetNextVersion()
+
     # move the EFI's we generated to a folder to upload
-
-    logging.info("Running NugetPackager")
     output_dir = os.path.join(rootDir, "Build", "SharedCrypto_Nuget")
-
     try:
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir, ignore_errors=False)
         os.makedirs(output_dir)
-    except:
+    except Exception:
         logging.error("Ran into trouble getting Nuget Output Path setup")
         return False
 
-    # copy the md file
+    # copy the release notes and the license
     CopyFile(scriptDir, output_dir, "feature_sharedcrypto.md")
-    CopyFile(scriptDir, output_dir, "release_notes.md")
     CopyFile(scriptDir, output_dir, "LICENSE.txt")
-    CopyFile(os.path.join(scriptDir,"Driver"), output_dir, "Mu-SharedCrypto.md")
+    CopyFile(os.path.join(scriptDir, "Driver"), output_dir, "Mu-SharedCrypto.md")
+    CopyFile(scriptDir, output_dir, "release_notes.md")  # we will generate new release notes when we Get the next version
 
     sharedcrypto_build_dir = os.path.realpath(os.path.join(rootDir, "Build", "SharedCryptoPkg_Driver"))
     sharedcrypto_build_dir_offset = len(sharedcrypto_build_dir) + 1
@@ -122,12 +319,12 @@ def PublishNuget():
     for txt in glob.iglob(build_dir_txt_search, recursive=True):
         CopyFile(txt, output_dir)
 
-    API_KEY = GetAPIKey()
+
     if API_KEY is not None:
         logging.info("Attempting to publish the Nuget package")
-
         config_file = os.path.join("Driver", "Mu-SharedCrypto.config.json")
-        params = "--Operation PackAndPush --ConfigFilePath {0} --Version {1} --InputFolderPath {2}  --ApiKey {3}".format(config_file,VERSION, output_dir, API_KEY)
+        params = "--Operation PackAndPush --ConfigFilePath {0} --Version {1} --InputFolderPath {2}  --ApiKey {3}".format(config_file, VERSION, output_dir, API_KEY)
+        # TODO: change this from a runcmd to directly invoking nuget publishing
         ret = UtilityFunctions.RunCmd("nuget-publish", params, capture=True, workingdir=scriptDir)
         if ret == 0:
             logging.critical("Finished publishing Nuget version {0}".format(VERSION))
@@ -156,7 +353,7 @@ def MoveArchTargetSpecificFile(binary, offset, output_dir):
 
     if not os.path.exists(dest_path):
         os.makedirs(dest_path)
-    logging.info("Copying {0}: {1}".format(binary_name,binary))
+    logging.info("Copying {0}: {1}".format(binary_name, binary))
     CopyFile(binary_folder, dest_path, binary_name)
 
 
@@ -178,18 +375,11 @@ class PlatformBuilder(UefiBuilder):
         self.env.SetValue("TARGET", GetBuildTarget(), "Platform Hardcoded")
         self.env.SetValue("BUILDREPORTING", "TRUE", "Platform Hardcoded")
         self.env.SetValue("BUILDREPORT_TYPES", 'PCD DEPEX LIBRARY BUILD_FLAGS', "Platform Hardcoded")
-
-        #self.env.SetValue("CONF_TEMPLATE_DIR", "NetworkPkg", "Conf template directory hardcoded - temporary and should go away")
-
-        self.env.SetValue("LaunchBuildLogProgram", "Notepad", "default - will fail if already set", True)
-        self.env.SetValue("LaunchLogOnSuccess", "False", "default - will fail if already set", True)
-        self.env.SetValue("LaunchLogOnError", "False", "default - will fail if already set", True)
+        # We need to use flash image as it runs after post Build to restore the shell environment
         self.FlashImage = True
 
         return 0
 
-    def PlatformPostBuild(self):
-        return 0
     # ------------------------------------------------------------------
     #
     # Method for the platform to check if a gated build is needed
@@ -203,12 +393,12 @@ class PlatformBuilder(UefiBuilder):
 
     def PlatformFlashImage(self):
         # we have to restore checkpoint in flash as there are certain steps that run inbetween PostBuild and Flash (build report, etc)
-        self.env.internal_shell_env.restore_checkpoint(self.shell_checkpoint) # revert the last checkpoint
+        # the shell_env is a singleton so it carries over between builds and we need to checkpoint it
+        self.env.internal_shell_env.restore_checkpoint(self.shell_checkpoint)  # revert the last checkpoint
         return 0
 
-# ==========================================================================
-#
 
+# ==========================================================================
 def reload_logging():
     logging.disable(logging.NOTSET)
     logging.shutdown()
@@ -221,9 +411,9 @@ if __name__ == '__main__':
     args = [sys.argv[0]]
     parser = argparse.ArgumentParser(description='Grab API Key')
     parser.add_argument('--api-key', dest="api_key", help='API key for NuGet')
-    parsed_args, remaining_args = parser.parse_known_args() # this strips the first argument off
-    if remaining_args is not None: # any arguments that remain need to be tacked on
-        args.extend(remaining_args) # tack them on after the first argument
+    parsed_args, remaining_args = parser.parse_known_args()  # this strips the first argument off
+    if remaining_args is not None:  # any arguments that remain need to be tacked on
+        args.extend(remaining_args)  # tack them on after the first argument
     sys.argv = args
     SetAPIKey(parsed_args.api_key)  # Set the API ley
 
@@ -242,7 +432,7 @@ if __name__ == '__main__':
         reload_logging()
     # we've finished building
     # if we want to be verbose?
-    #logging.getLogger("").setLevel(logging.INFO)
+    logging.getLogger("").setLevel(logging.INFO)
 
     logging.critical("--Creating NUGET package--")
     if not PublishNuget():
