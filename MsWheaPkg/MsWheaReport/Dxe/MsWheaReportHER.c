@@ -180,6 +180,7 @@ MsWheaClearAllEntries (
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   UINTN                 Size = 0;
   EFI_STATUS            Status = EFI_SUCCESS;
+  UINT32                Attributes;
   
   DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
@@ -200,16 +201,20 @@ MsWheaClearAllEntries (
       break;
     }
 
-    Status = gRT->SetVariable(VarName,
-                              &gEfiHardwareErrorVariableGuid,
-                              EFI_VARIABLE_NON_VOLATILE |
-                              EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                              EFI_VARIABLE_RUNTIME_ACCESS |
-                              EFI_VARIABLE_HARDWARE_ERROR_RECORD,
-                              0,
-                              NULL);
+    Attributes = EFI_VARIABLE_NON_VOLATILE |
+                 EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                 EFI_VARIABLE_RUNTIME_ACCESS;
+
+    DEBUG((DEBUG_VERBOSE, "Attributes for variable %s: %x\n", VarName, Attributes));
+
+    if (PcdGetBool(PcdVariableHardwareErrorRecordAttributeSupported)) {
+      Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
+    }
+
+    Status = gRT->SetVariable(VarName, &gEfiHardwareErrorVariableGuid, Attributes, 0, NULL);
+
     if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, "%a Clear HwErrRec has an issue...\n", __FUNCTION__));
+      DEBUG((DEBUG_ERROR, "%a Clear HwErrRec has an issue - %r\n", __FUNCTION__, Status));
       break;
     }
   }
@@ -245,7 +250,8 @@ MsWheaReportHERAdd (
   VOID              *Buffer = NULL;
   UINT32            Size = 0;
   CHAR16            VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
-
+  UINT32            Attributes;
+  
   // 1. Find an available variable name for next write
   Status = MsWheaFindNextAvailableSlot(&Index);
   if (EFI_ERROR(Status)) {
@@ -268,14 +274,19 @@ MsWheaReportHERAdd (
 
   // 3. Save the record to flash
   UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, Index);
-  Status = gRT->SetVariable(VarName,
-                            &gEfiHardwareErrorVariableGuid,
-                            EFI_VARIABLE_NON_VOLATILE |
-                            EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                            EFI_VARIABLE_RUNTIME_ACCESS |
-                            EFI_VARIABLE_HARDWARE_ERROR_RECORD,
-                            Size,
-                            Buffer);
+
+  Attributes = EFI_VARIABLE_NON_VOLATILE |
+               EFI_VARIABLE_BOOTSERVICE_ACCESS |
+               EFI_VARIABLE_RUNTIME_ACCESS;
+
+  if (PcdGetBool(PcdVariableHardwareErrorRecordAttributeSupported)) {
+    Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
+  }
+
+  DEBUG((DEBUG_VERBOSE, "Attributes for variable %s: %x\n", VarName, Attributes));
+
+  Status = gRT->SetVariable(VarName, &gEfiHardwareErrorVariableGuid, Attributes, Size, Buffer);
+
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "%a: Write size of %d at index %04X errored with (%r)\n", __FUNCTION__, Size, Index, Status));
   } else {

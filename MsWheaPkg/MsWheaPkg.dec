@@ -65,6 +65,7 @@
 
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity|0x00000100|UINT32|0x00000002
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue|0xFF|UINT8|0x00000003
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported|TRUE|BOOLEAN|0x00000005
 
   # Platform identifier guid, set as Pcd. Platform SHOULD override this field during build!!!
   gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid|{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}|VOID*|0x00000004

@@ -82,6 +82,7 @@
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
   gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
 
 [Guids]
   gEfiHardwareErrorVariableGuid       ## CONSUMES
