@@ -2,9 +2,8 @@
 
 This header defines APIs to manipulate early storage for MsWheaReport usage.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -30,6 +29,65 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __MS_WHEA_EARLY_STORAGE_MGR__
 
 #include "MsWheaReportCommon.h"
+
+/**
+
+ Accepted revision values
+
+**/
+#define MS_WHEA_REV_0                 0x00
+
+/**
+
+ Indicator for early storage header to be valid
+
+**/
+#define MS_WHEA_EARLY_STORAGE_SIGNATURE       MS_WHEA_ERROR_SIGNATURE
+
+#pragma pack(1)
+
+/**
+
+ Header of early storage, reserved for area sanity check, storage full check, etc.
+
+ Signature:         Needs to be MS_WHEA_EARLY_STORAGE_SIGNATURE to indicate this is valid.
+ IsStorageFull:     Indicator whether this early storage is full or not, if full, a error
+                    report will be generated.
+ FullPhase:         Phase of boot process when early storage is full.
+
+**/
+typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
+  UINT32                              Signature;
+  UINT8                               IsStorageFull;
+  UINT8                               FullPhase;
+  UINT16                              Reserved;
+} MS_WHEA_EARLY_STORAGE_HEADER;
+
+/**
+
+ Minimal information reported for reported status codes under Rev 0 and fatal severity
+
+ Rev:               Revision used for parser to identify supplied payload format.
+ Phase:             Phase of boot process reporting module, will be filled at the backend.
+ ErrorStatusValue:  Reported Status Code Value upon calling ReportStatusCode*
+ AdditionalInfo1:   Critical information to be filled by caller
+ AdditionalInfo2:   AdditionalInfo2 to be filled by caller, same usage as AdditionalInfo1
+ PartitionID:       IHV Guid for the party reporting this error
+ ModuleID:          Driver Guid that reports this error
+
+**/
+typedef struct MS_WHEA_EARLY_STORAGE_ENTRY_V0_T_DEF {
+  UINT8                               Rev;
+  UINT8                               Phase;
+  UINT16                              Reserved;
+  UINT32                              ErrorStatusValue;
+  UINT64                              AdditionalInfo1;
+  UINT64                              AdditionalInfo2;
+  EFI_GUID                            ModuleID;
+  EFI_GUID                            PartitionID;
+} MS_WHEA_EARLY_STORAGE_ENTRY_V0, MS_WHEA_EARLY_STORAGE_ENTRY_COMMON;
+
+#pragma pack()
 
 /**
 

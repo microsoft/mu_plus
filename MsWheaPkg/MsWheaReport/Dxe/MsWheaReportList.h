@@ -2,9 +2,8 @@
 
 This header defines API that will save supplied payload on heap for pre-ExitBoot usage.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -59,9 +58,7 @@ EFI_STATUS
 EFIAPI
 MsWheaAddReportEvent(
   IN LIST_ENTRY                       *MsWheaLinkedList,
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN CONST VOID                       *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
 );
 
 /**

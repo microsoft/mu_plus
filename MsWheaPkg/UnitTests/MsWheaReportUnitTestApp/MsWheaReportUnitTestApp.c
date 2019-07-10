@@ -2,9 +2,8 @@
 
 Tests for MS WHEA report tests with various payloads and error severities.
 
-Copyright (c) 2017, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -27,6 +26,10 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include <Uefi.h>
+#include <Pi/PiStatusCode.h>
+#include <Guid/Cper.h>
+#include <Guid/MsWheaReportDataType.h>
+#include <Guid/MuTelemetryCperSection.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/UefiLib.h>
@@ -44,10 +47,11 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/PcdLib.h>
 #include <MsWheaErrorStatus.h>
+#include <Library/MuTelemetryHelperLib.h>
 
 
 #define UNIT_TEST_APP_NAME            L"MsWhea Report Test"
-#define UNIT_TEST_APP_VERSION         L"0.1"
+#define UNIT_TEST_APP_VERSION         L"0.2"
 
 // Copy from MsWheaReportCommon.h, will fail test if any mismatch
 #define EFI_HW_ERR_REC_VAR_NAME       L"HwErrRec"
@@ -55,32 +59,30 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CPER_HDR_SEC_CNT              0x01
 #define EFI_FIRMWARE_ERROR_REVISION   0x0002  // Set Firmware Error Record Revision to 2 as per UEFI Spec 2.7A
 
+#define UNIT_TEST_SINGLE_ROUND        2
 #define UNIT_TEST_ERROR_CODE          0xA0A0A0A0
 #define UNIT_TEST_ERROR_SIZE          0x100
-#define UNIT_TEST_ERROR_SHORT_SIZE    (sizeof(MS_WHEA_ERROR_HDR) >> 1) // Half of the header size
+#define UNIT_TEST_ERROR_SHORT_SIZE    (sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) >> 1) // Half of the header size
 #define UNIT_TEST_ERROR_PATTERN       0x30
-#define UNIT_TEST_ERROR_INFO          0xC0C0C0C0
-#define UNIT_TEST_ERROR_ID            0x50505050
+#define UNIT_TEST_ERROR_INFO1         0xC0C0C0C0
+#define UNIT_TEST_ERROR_INFO2         0x50505050
 
 #define MS_WHEA_REV_UNSUPPORTED       0x66
 
 #define HW_ERR_REC_HEADERS_OFFSET     (sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + \
                                        sizeof(EFI_ERROR_SECTION_DESCRIPTOR))
 #define HW_ERR_REC_PAYLOAD_OVERHEAD   (HW_ERR_REC_HEADERS_OFFSET + \
-                                       sizeof(EFI_FIRMWARE_ERROR_DATA))
+                                       sizeof(MU_TELEMETRY_CPER_SECTION_DATA))
 
 typedef enum TEST_ID_T_DEF {
-  TEST_ID_FATAL_REV_0,
-  TEST_ID_FATAL_REV_1,
-  TEST_ID_FATAL_REV_UNSUP,
-  TEST_ID_NON_FATAL_REV_0,
-  TEST_ID_NON_FATAL_REV_1,
-  TEST_ID_NON_FATAL_REV_UNSUP,
+  TEST_ID_FATAL_EX,
+  TEST_ID_NON_FATAL_EX,
   TEST_ID_WILDCARD,
   TEST_ID_SHORT,
   TEST_ID_STRESS,
   TEST_ID_BOUNDARY,
   TEST_ID_VARSEV,
+  TEST_ID_TPL,
 
   TEST_ID_COUNT
 } TEST_ID;
@@ -121,7 +123,7 @@ MsWheaVerifyCPERHeader (
   IN UNIT_TEST_CONTEXT                Context,
   IN EFI_COMMON_ERROR_RECORD_HEADER   *CperHdr,
   IN UINT32                           ErrorSeverity,
-  IN UINT32                           ErrorStatusCodeValue,
+  IN EFI_GUID                         *PartitionId,
   IN UINT32                           TotalSize
   )
 {
@@ -153,63 +155,68 @@ MsWheaVerifyCPERHeader (
   // If it breaks here, means count has changed for some reason, which is the point of this test
   if (CperHdr->SectionCount != CPER_HDR_SEC_CNT) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Header section count mismatch: has: %d, expect: %d.", 
-                  CperHdr->SectionCount, 
+    UT_LOG_ERROR( "CPER Header section count mismatch: has: %d, expect: %d.",
+                  CperHdr->SectionCount,
                   CPER_HDR_SEC_CNT);
     goto Cleanup;
   }
 
   if (CperHdr->ErrorSeverity != ErrorSeverity) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Header section count mismatch: has: %d, expect: %d.", 
-                  CperHdr->SectionCount, 
-                  CPER_HDR_SEC_CNT);
+    UT_LOG_ERROR( "CPER Header error severity mismatch: has: %d, expect: %d.",
+                  CperHdr->ErrorSeverity,
+                  ErrorSeverity);
     goto Cleanup;
   }
 
-  if (CperHdr->ValidationBits != EFI_ERROR_RECORD_HEADER_PLATFORM_ID_VALID) {
+  if (((CperHdr->ValidationBits & EFI_ERROR_RECORD_HEADER_PLATFORM_ID_VALID) == 0) ||
+      (CompareMem(&CperHdr->PlatformID, PcdGetPtr(PcdDeviceIdentifierGuid), sizeof(EFI_GUID)))) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Header validation bits mismatch: has: %d, expect: %d.", 
-                  CperHdr->ValidationBits, 
-                  EFI_ERROR_RECORD_HEADER_PLATFORM_ID_VALID);
+    UT_LOG_ERROR( "CPER Header Creator Id incorrect: has: %g, validation bits: %X.",
+                  CperHdr->ValidationBits,
+                  CperHdr->PlatformID);
+    goto Cleanup;
+  }
+
+  if ((PartitionId != NULL) &&
+      (CompareMem(PartitionId, &CperHdr->PartitionID, sizeof(EFI_GUID)) ||
+       ((CperHdr->ValidationBits & EFI_ERROR_RECORD_HEADER_PARTITION_ID_VALID) == 0))) {
+    Status = EFI_PROTOCOL_ERROR;
+    UT_LOG_ERROR( "CPER Header Partition Id incorrect: has Guid: %g, validation bits: %X.",
+                  CperHdr->PartitionID,
+                  CperHdr->ValidationBits);
     goto Cleanup;
   }
 
   if (CperHdr->RecordLength != TotalSize) {
     Status = EFI_BAD_BUFFER_SIZE;
-    UT_LOG_ERROR( "CPER Header record length incorrect: has: %08X, expect: %08X.", 
-                  CperHdr->RecordLength, 
+    UT_LOG_ERROR( "CPER Header record length incorrect: has: %08X, expect: %08X.",
+                  CperHdr->RecordLength,
                   TotalSize);
     goto Cleanup;
   }
 
-  if (CompareGuid(&CperHdr->PlatformID, &gMsWheaReportServiceGuid) == FALSE) {
+  if (CompareGuid(&CperHdr->CreatorID, &gMsWheaReportServiceGuid) == FALSE) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Header Platform ID mismatch: has: %g, expect: %g.", 
-                  CperHdr->PlatformID,
+    UT_LOG_ERROR( "CPER Header Creator ID mismatch: has: %g, expect: %g.",
+                  CperHdr->CreatorID,
                   &gMsWheaReportServiceGuid);
     goto Cleanup;
   }
 
   if (CompareGuid(&CperHdr->NotificationType, &gEfiEventNotificationTypeBootGuid) == FALSE) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Header Notification Type mismatch: has: %g, expect: %g.", 
+    UT_LOG_ERROR( "CPER Header Notification Type mismatch: has: %g, expect: %g.",
                   CperHdr->NotificationType,
                   &gEfiEventNotificationTypeBootGuid);
     goto Cleanup;
   }
 
-  if (CperHdr->RecordID != ErrorStatusCodeValue) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Header Error Status Code mismatch: has: %16X, expect: %16X.", 
-                  CperHdr->RecordID,
-                  ErrorStatusCodeValue);
-    goto Cleanup;
-  }
+  // TODO: Needs to be checked when CperHdr->RecordID is implemented
 
   if (CperHdr->Flags != EFI_HW_ERROR_FLAGS_PREVERR) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Header Error Flags mismatch: has: %08X, expect: %08X.", 
+    UT_LOG_ERROR( "CPER Header Error Flags mismatch: has: %08X, expect: %08X.",
                   CperHdr->Flags,
                   EFI_HW_ERROR_FLAGS_PREVERR);
     goto Cleanup;
@@ -265,7 +272,7 @@ MsWheaVerifyCPERSecDesc (
 
   if (CperSecDecs->SectionLength != (TotalSize - HW_ERR_REC_HEADERS_OFFSET)) {
     Status = EFI_BAD_BUFFER_SIZE;
-    UT_LOG_ERROR( "CPER Section Descriptor length mismatch: has %08X, expects %08X.", 
+    UT_LOG_ERROR( "CPER Section Descriptor length mismatch: has %08X, expects %08X.",
                   CperSecDecs->SectionLength,
                   TotalSize - HW_ERR_REC_HEADERS_OFFSET);
     goto Cleanup;
@@ -277,19 +284,44 @@ MsWheaVerifyCPERSecDesc (
     goto Cleanup;
   }
 
-  if (CompareGuid(&CperSecDecs->SectionType, &gEfiFirmwareErrorSectionGuid) == FALSE) {
+  if (CperSecDecs->SecValidMask != 0) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Section Descriptor Section Type mismatch: has: %g, expect: %g.", 
+    UT_LOG_ERROR( "CPER Section Descriptor SecValidMask incorrect: %02X.", CperSecDecs->SecValidMask);
+    goto Cleanup;
+  }
+
+  if (CperSecDecs->SectionFlags != 0) {
+    Status = EFI_PROTOCOL_ERROR;
+    UT_LOG_ERROR( "CPER Section Descriptor SectionFlags incorrect: %08X.", CperSecDecs->SectionFlags);
+    goto Cleanup;
+  }
+
+  if (CompareGuid(&CperSecDecs->SectionType, &gMuTelemetrySectionTypeGuid) == FALSE) {
+    Status = EFI_PROTOCOL_ERROR;
+    UT_LOG_ERROR( "CPER Section Descriptor Section Type mismatch: has: %g, expect: %g.",
                   CperSecDecs->SectionType,
-                  &gEfiFirmwareErrorSectionGuid);
+                  &gMuTelemetrySectionTypeGuid);
+    goto Cleanup;
+  }
+
+  if (IsZeroBuffer(&CperSecDecs->FruId, sizeof(EFI_GUID)) == FALSE) {
+    Status = EFI_PROTOCOL_ERROR;
+    UT_LOG_ERROR( "CPER Section Descriptor Fru ID not emptry. Has: %g.",
+                  CperSecDecs->FruId);
     goto Cleanup;
   }
 
   if (CperSecDecs->Severity != ErrorSeverity) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "CPER Section Descriptor Error severity mismatch: has: %08X, expect: %08X.", 
+    UT_LOG_ERROR( "CPER Section Descriptor Error severity mismatch: has: %08X, expect: %08X.",
                   CperSecDecs->Severity,
                   ErrorSeverity);
+    goto Cleanup;
+  }
+
+  if (IsZeroBuffer(&CperSecDecs->FruString, sizeof(CperSecDecs->FruString)) == FALSE) {
+    Status = EFI_PROTOCOL_ERROR;
+    UT_LOG_ERROR( "CPER Section Descriptor FruString not emptry.");
     goto Cleanup;
   }
 
@@ -316,39 +348,57 @@ Cleanup:
 **/
 STATIC
 EFI_STATUS
-MsWheaVerifyEfiFirmwareErrorData (
+MsWheaVerifyMuTelemetryErrorData (
   IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context,
-  IN EFI_FIRMWARE_ERROR_DATA          *EfiFirmwareErrorData,
-  IN UINT32                           ErrorStatusCodeValue
+  IN MU_TELEMETRY_CPER_SECTION_DATA   *MuTelemetrySectionData,
+  IN EFI_GUID                         *LibraryId,
+  IN UINT32                           ErrorStatusCodeValue,
+  IN UINT64                           AdditionalInfo1,
+  IN UINT64                           AdditionalInfo2
   )
 {
   EFI_STATUS            Status;
 
-  if (EfiFirmwareErrorData == NULL) {
+  if (MuTelemetrySectionData == NULL) {
     Status = EFI_INVALID_PARAMETER;
-    UT_LOG_ERROR( "Firmware Error Data Null pointer exception.");
+    UT_LOG_ERROR( "Mu Telemetry Section Data Null pointer exception.");
     goto Cleanup;
   }
 
-  if (EfiFirmwareErrorData->ErrorType != EFI_FIRMWARE_ERROR_TYPE_SOC_TYPE2) {
+  if (CompareMem(&MuTelemetrySectionData->ComponentID, &gEfiCallerIdGuid, sizeof(EFI_GUID))) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "Firmware Error Data Error type mismatch: %d.", 
-                  EfiFirmwareErrorData->ErrorType);
+    UT_LOG_ERROR( "Mu Telemetry system Id mismatch: %d.",
+                  MuTelemetrySectionData->ComponentID);
     goto Cleanup;
   }
 
-  if (EfiFirmwareErrorData->Revision != EFI_FIRMWARE_ERROR_REVISION) {
+  if ((LibraryId != NULL) &&
+      CompareMem(&MuTelemetrySectionData->SubComponentID, LibraryId, sizeof(EFI_GUID))) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "Firmware Error Revision mismatch: %04X.", 
-                  EfiFirmwareErrorData->Revision);
+    UT_LOG_ERROR( "Mu Telemetry subsystem Id mismatch: %g.",
+                  MuTelemetrySectionData->SubComponentID);
     goto Cleanup;
   }
-  
-  if (EfiFirmwareErrorData->RecordId != 0) {
+
+  if (MuTelemetrySectionData->ErrorStatusValue != ErrorStatusCodeValue) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "Firmware Error Data RecordID mismatch: has: %16X, expect 0x0.", 
-                  EfiFirmwareErrorData->RecordId);
+    UT_LOG_ERROR( "Mu Telemetry ErrorStatusValue mismatch: has: %08X, expect %08X.",
+                  MuTelemetrySectionData->ErrorStatusValue, ErrorStatusCodeValue);
+    goto Cleanup;
+  }
+
+  if (MuTelemetrySectionData->AdditionalInfo1 != AdditionalInfo1) {
+    Status = EFI_PROTOCOL_ERROR;
+    UT_LOG_ERROR( "Mu Telemetry AdditionalInfo1 mismatch: has: %16X, expect %16X.",
+                  MuTelemetrySectionData->AdditionalInfo1, AdditionalInfo1);
+    goto Cleanup;
+  }
+
+  if (MuTelemetrySectionData->AdditionalInfo2 != AdditionalInfo2) {
+    Status = EFI_PROTOCOL_ERROR;
+    UT_LOG_ERROR( "Mu Telemetry AdditionalInfo2 mismatch: has: %16X, expect %16X.",
+                  MuTelemetrySectionData->AdditionalInfo2, AdditionalInfo2);
     goto Cleanup;
   }
 
@@ -356,151 +406,7 @@ MsWheaVerifyEfiFirmwareErrorData (
 
 Cleanup:
   return Status;
-} // MsWheaVerifyEfiFirmwareErrorData ()
-
-
-/**
-  Paylaod verification routine, between flash entry and expect based on input payload
-
-  @param[in] Framework                Test framework applied for this test case
-  @param[in] Context                  Test context applied for this test case
-  @param[in] Revision                 Revision number from input paylaod, Rev Wildcard if null payload
-  @param[in] ErrorSeverity            Error Severity from input payload
-  @param[in] HERPayload               Payload portion of a HwErrRec entry, excluding CPER Header, CPER 
-                                      section descriptor and Firmware error data
-  @param[in] HERPayloadSize           Size of HwErrRec entry paylaod, excluding CPER Header, CPER 
-                                      section descriptor and Firmware error data
-  @param[in] Payload                  Payload passed in when calling ReportStatusCodeWithExtendedData
-  @param[in] PayloadSize              PayloadSize passed in when calling ReportStatusCodeWithExtendedData
-
-  @retval EFI_SUCCESS                 The entry point executed successfully.
-  @retval EFI_INVALID_PARAMETER       Null pointer detected.
-  @retval EFI_PROTOCOL_ERROR          Parameter mismatches during validation.
-  @retval EFI_BAD_BUFFER_SIZE         Read buffer does match the data size field in the header.
-
-**/
-STATIC
-EFI_STATUS
-MsWheaVerifyPayload (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
-  IN UNIT_TEST_CONTEXT                Context,
-  IN MS_WHEA_REV                      Revision,
-  IN UINT32                           ErrorSeverity,
-  IN UINT8                            *HERPayload, 
-  IN UINT32                           HERPayloadSize,
-  IN VOID                             *Payload,
-  IN UINT32                           PayloadSize
-  )
-{
-  EFI_STATUS            Status;
-  MS_WHEA_ERROR_HDR     *HERMsWheaErrorHdr = NULL;
-  
-  // Default value for wildcard inputs, should change if input is valid
-  UINT32                ExpectedPayloadSize = PayloadSize + sizeof(MS_WHEA_ERROR_HDR);
-  VOID                  *ExpectedPayloadPtr = (MS_WHEA_ERROR_HDR*)Payload;
-
-  MS_WHEA_ERROR_HDR     ExpectedHeader = {
-    .Signature = MS_WHEA_ERROR_SIGNATURE,
-    .Phase = MS_WHEA_PHASE_DXE_RUNTIME,
-    .CriticalInfo = 0,
-    .ReporterID = 0
-  };
-  ExpectedHeader.Rev = Revision,
-  ExpectedHeader.ErrorSeverity = ErrorSeverity;
-
-  // Payload CAN be NULL as the caller maybe calling ReportStatusCode
-  if (HERPayload == NULL) {
-    Status = EFI_INVALID_PARAMETER;
-    UT_LOG_ERROR( "MS WHEA payload Null pointer exception.");
-    goto Cleanup;
-  }
-
-  if (HERPayloadSize < sizeof(MS_WHEA_ERROR_HDR)) {
-    Status = EFI_BAD_BUFFER_SIZE;
-    UT_LOG_ERROR( "MS WHEA payload length non-sensical: has %d, minimal: %d.", 
-                  HERPayloadSize,
-                  sizeof(MS_WHEA_ERROR_HDR));
-    goto Cleanup;
-  }
-
-  HERMsWheaErrorHdr = (MS_WHEA_ERROR_HDR *)HERPayload;
-
-  if (HERMsWheaErrorHdr->Signature != MS_WHEA_ERROR_SIGNATURE) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "MS WHEA payload signature mismatch: %08X.", 
-                  HERMsWheaErrorHdr->Signature);
-    goto Cleanup;
-  }
-
-  if ((Payload != NULL) && 
-      (PayloadSize >= sizeof(MS_WHEA_ERROR_HDR)) && 
-      (((MS_WHEA_ERROR_HDR*)Payload)->Signature == MS_WHEA_ERROR_SIGNATURE)) {
-    // Valid staff from caller;
-    ExpectedPayloadSize = PayloadSize;
-    ExpectedPayloadPtr = (UINT8*)ExpectedPayloadPtr + sizeof(MS_WHEA_ERROR_HDR);
-    CopyMem(&ExpectedHeader, Payload, sizeof(MS_WHEA_ERROR_HDR));
-    // Phase should always be runtime in this case
-    ExpectedHeader.Phase = MS_WHEA_PHASE_DXE_RUNTIME;
-  }
-  
-  if (HERPayloadSize != ExpectedPayloadSize) {
-    Status = EFI_BAD_BUFFER_SIZE;
-    UT_LOG_ERROR( "MS WHEA payload wildcard revision mismatch: has %08X, expects %08X.", 
-                  HERPayloadSize, 
-                  ExpectedPayloadSize);
-    goto Cleanup;
-  }
-
-  if (HERMsWheaErrorHdr->Rev != ExpectedHeader.Rev) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "MS WHEA payload wildcard revision incorrect: %d.", 
-                  HERMsWheaErrorHdr->Rev);
-    goto Cleanup;
-  }
-  
-  if (HERMsWheaErrorHdr->Phase != ExpectedHeader.Phase) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "MS WHEA payload wildcard phase incorrect: %d.", 
-                  HERMsWheaErrorHdr->Phase);
-    goto Cleanup;
-  }
-
-  if (HERMsWheaErrorHdr->ErrorSeverity != 
-      ExpectedHeader.ErrorSeverity) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "MS WHEA payload wildcard severity mismatch: has %08X, expects %08X.", 
-                  HERMsWheaErrorHdr->ErrorSeverity,
-                  ErrorSeverity);
-    goto Cleanup;
-  }
-
-  if (HERMsWheaErrorHdr->CriticalInfo != ExpectedHeader.CriticalInfo) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "MS WHEA payload wildcard critical information non-empty %08X.", 
-                  HERMsWheaErrorHdr->CriticalInfo);
-    goto Cleanup;
-  }
-
-  if (HERMsWheaErrorHdr->ReporterID != ExpectedHeader.ReporterID) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "MS WHEA payload wildcard Reporter ID non-empty %08X.", 
-                  HERMsWheaErrorHdr->ReporterID);
-    goto Cleanup;
-  }
-
-  if (CompareMem(ExpectedPayloadPtr, 
-                HERMsWheaErrorHdr + 1, 
-                ExpectedPayloadSize - sizeof(MS_WHEA_ERROR_HDR)) != 0) {
-    Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR( "MS WHEA payload wildcard content mismatch.");
-    goto Cleanup;
-  }
-
-  Status = EFI_SUCCESS;
-
-Cleanup:
-  return Status;
-} // MsWheaVerifyPayload ()
+} // MsWheaVerifyMuTelemetryErrorData ()
 
 
 /**
@@ -511,9 +417,10 @@ Cleanup:
   @param[in] TestIndex                This is used to locate the corresponding HwErrRec entry
   @param[in] ErrorStatusCodeValue     Error Status Code Value passed during ReportStatusCode*
   @param[in] ErrorSeverity            Error Severity from input payload, Sev Info if null payload
-  @param[in] Revision                 Revision number from input paylaod, Rev Wildcard if null payload
-  @param[in] Payload                  Payload passed in when calling ReportStatusCodeWithExtendedData
-  @param[in] PayloadSize              PayloadSize passed in when calling ReportStatusCodeWithExtendedData
+  @param[in] PartitionId              Ihv shared Guid from caller
+  @param[in] LibraryId                Library Id Guid from caller, used to populated SubComponentID of section data
+  @param[in] AdditionalInfo1          AdditionalInfo1 reported when calling ReportStatusCodeWithExtendedData
+  @param[in] AdditionalInfo2          AdditionalInfo2 reported when calling ReportStatusCodeWithExtendedData
 
   @retval EFI_SUCCESS                 The entry point executed successfully.
   @retval EFI_INVALID_PARAMETER       Null pointer detected.
@@ -526,12 +433,13 @@ EFI_STATUS
 MsWheaVerifyFlashStorage (
   IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context,
-  IN UINT16                           TestIndex, 
+  IN UINT16                           TestIndex,
   IN UINT32                           ErrorStatusCodeValue, // Whatever was passed into RSC
-  IN UINT32                           ErrorSeverity, 
-  IN MS_WHEA_REV                      Revision,
-  IN VOID                             *Payload,             // Whatever was passed into RSC
-  IN UINT32                           PayloadSize           // Whatever was passed into RSC
+  IN UINT32                           ErrorSeverity,
+  IN EFI_GUID                         *PartitionId,
+  IN EFI_GUID                         *LibraryId,
+  IN UINT64                           AdditionalInfo1,
+  IN UINT64                           AdditionalInfo2
   )
 {
   EFI_STATUS            Status;
@@ -543,11 +451,10 @@ MsWheaVerifyFlashStorage (
 
   EFI_COMMON_ERROR_RECORD_HEADER  *CperHdr;
   EFI_ERROR_SECTION_DESCRIPTOR    *CperSecDecs;
-  EFI_FIRMWARE_ERROR_DATA         *EfiFwErrData;
-  VOID                            *HERPayload;
+  MU_TELEMETRY_CPER_SECTION_DATA  *MuTelSecData;
 
   DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
-  
+
   UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, TestIndex);
   Status = gRT->GetVariable(VarName,
                             &gEfiHardwareErrorVariableGuid,
@@ -556,17 +463,17 @@ MsWheaVerifyFlashStorage (
                             NULL);
   if ((Status == EFI_NOT_FOUND) && (MsWheaContext->TestId == TEST_ID_BOUNDARY)) {
     // Silently continue
-    DEBUG((DEBUG_INFO, __FUNCTION__ " Boundary test has Not Found error %s %08X %08X\n", 
-                                    VarName, 
-                                    PcdGet32(PcdMaxHardwareErrorVariableSize), 
+    DEBUG((DEBUG_INFO, __FUNCTION__ " Boundary test has Not Found error %s %08X %08X\n",
+                                    VarName,
+                                    PcdGet32(PcdMaxHardwareErrorVariableSize),
                                     HW_ERR_REC_HEADERS_OFFSET));
     goto Cleanup;
   }
   else if (Status != EFI_BUFFER_TOO_SMALL) {
-    UT_LOG_ERROR( "Variable service read %s returns %08X at Test No. %d.", 
-                  VarName, 
-                  Status, 
-                  TestIndex);
+    UT_LOG_WARNING( "Variable service read %s returns %08X at Test No. %d.",
+                    VarName,
+                    Status,
+                    TestIndex);
     goto Cleanup;
   }
 
@@ -582,20 +489,20 @@ MsWheaVerifyFlashStorage (
                             &Size,
                             Buffer);
   if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_ERROR( "Variable service read %s returns %08X, expecting %08X.", 
-                  VarName, 
-                  Status, 
+    UT_LOG_ERROR( "Variable service read %s returns %08X, expecting %08X.",
+                  VarName,
+                  Status,
                   EFI_BUFFER_TOO_SMALL);
     goto Cleanup;
   }
 
   mIndex = 0;
   CperHdr = (EFI_COMMON_ERROR_RECORD_HEADER*)&Buffer[mIndex];
-  Status = MsWheaVerifyCPERHeader(Framework, 
-                                  Context, 
-                                  CperHdr, 
-                                  ErrorSeverity, 
-                                  ErrorStatusCodeValue, 
+  Status = MsWheaVerifyCPERHeader(Framework,
+                                  Context,
+                                  CperHdr,
+                                  ErrorSeverity,
+                                  PartitionId,
                                   (UINT32)Size);
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_ERROR( "CPER Header validation fails.");
@@ -604,40 +511,34 @@ MsWheaVerifyFlashStorage (
 
   mIndex += sizeof(EFI_COMMON_ERROR_RECORD_HEADER);
   CperSecDecs = (EFI_ERROR_SECTION_DESCRIPTOR*)&Buffer[mIndex];
-  Status = MsWheaVerifyCPERSecDesc(Framework, 
-                                  Context, 
-                                  CperSecDecs, 
-                                  ErrorSeverity, 
-                                  ErrorStatusCodeValue, 
+  Status = MsWheaVerifyCPERSecDesc(Framework,
+                                  Context,
+                                  CperSecDecs,
+                                  ErrorSeverity,
+                                  ErrorStatusCodeValue,
                                   (UINT32)Size);
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_ERROR( "CPER Section Descriptor validation fails.");
     goto Cleanup;
   }
-  
+
   mIndex += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
-  EfiFwErrData = (EFI_FIRMWARE_ERROR_DATA*)&Buffer[mIndex];
-  Status = MsWheaVerifyEfiFirmwareErrorData(Framework, 
-                                            Context, 
-                                            EfiFwErrData, 
-                                            ErrorStatusCodeValue);
+  MuTelSecData = (MU_TELEMETRY_CPER_SECTION_DATA*)&Buffer[mIndex];
+  Status = MsWheaVerifyMuTelemetryErrorData(Framework,
+                                            Context,
+                                            MuTelSecData,
+                                            LibraryId,
+                                            ErrorStatusCodeValue,
+                                            AdditionalInfo1,
+                                            AdditionalInfo2);
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_ERROR( "Firmware Error Data validation fails.");
     goto Cleanup;
   }
 
-  mIndex += sizeof(EFI_FIRMWARE_ERROR_DATA);
-  HERPayload = &Buffer[mIndex];
-  Status = MsWheaVerifyPayload(Framework, 
-                              Context, 
-                              Revision,
-                              ErrorSeverity, 
-                              HERPayload, 
-                              (UINT32) Size - mIndex, 
-                              Payload, 
-                              PayloadSize);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_ERROR( "MS WHEA Payload validation fails.");
+  mIndex += sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
+  if (Size != mIndex) {
+    UT_LOG_ERROR( "MS WHEA Payload validation fails on size: has %d, expecting %d.", Size, mIndex);
     goto Cleanup;
   }
 
@@ -646,39 +547,8 @@ Cleanup:
     FreePool(Buffer);
   }
   DEBUG((DEBUG_ERROR, __FUNCTION__ " exit %r\n", Status));
-  return Status;  
+  return Status;
 } // MsWheaVerifyFlashStorage ()
-
-/**
-  Helper function to fill out MsWhea headers
-
-  @param[in] Buffer                   Buffer for header
-  @param[in] ErrorSeverity            Error Severity from input payload, Sev Info if null payload
-  @param[in] Revision                 Revision number from input paylaod, Rev Wildcard if null payload
-
-**/
-VOID
-InitMsWheaHeader (
-  IN MS_WHEA_REV                      Revision,
-  IN UINT32                           Severity,
-  OUT UINT8                           *Buffer
-)
-{
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
-
-  if (Buffer == NULL) {
-    return;
-  }
-
-  SetMem(Buffer, sizeof(MS_WHEA_ERROR_HDR), 0);
-  
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Buffer;
-  mMsWheaErrHdr->Signature = MS_WHEA_ERROR_SIGNATURE;
-  mMsWheaErrHdr->CriticalInfo = UNIT_TEST_ERROR_INFO;
-  mMsWheaErrHdr->ReporterID = UNIT_TEST_ERROR_ID;
-  mMsWheaErrHdr->ErrorSeverity = Severity;
-  mMsWheaErrHdr->Rev = Revision;
-} // InitMsWheaHeader ()
 
 ///================================================================================================
 ///================================================================================================
@@ -710,7 +580,7 @@ MsWheaCommonClean (
   UINTN                 Size = 0;
   EFI_STATUS            Status = EFI_SUCCESS;
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
-  
+
   DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
 
   for (Index = 0; Index <= MAX_UINT16; Index++) {
@@ -739,9 +609,9 @@ MsWheaCommonClean (
                               0,
                               NULL);
     if (Status != EFI_SUCCESS) {
-      UT_LOG_ERROR( "MS WHEA Clean variables failed: SetVar: Name: %s, Status: %08X, Size: %d\n", 
-                    VarName, 
-                    Status, 
+      UT_LOG_ERROR( "MS WHEA Clean variables failed: SetVar: Name: %s, Status: %08X, Size: %d\n",
+                    VarName,
+                    Status,
                     Size);
       break;
     }
@@ -753,7 +623,7 @@ MsWheaCommonClean (
   else {
     utStatus = UNIT_TEST_ERROR_TEST_FAILED;
   }
-  
+
   DEBUG((DEBUG_ERROR, __FUNCTION__ " exit...\n"));
   return utStatus;
 } // MsWheaCommonClean ()
@@ -768,517 +638,114 @@ MsWheaCommonClean (
 
 
 /**
-  This rountine should store 2 Fatal Rev 0 errors on flash 
+  This rountine should store 2 Fatal Ex errors on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
-MsWheaFatalRev0Entries (
+MsWheaFatalExEntries (
   IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
   UINT8                 TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
   DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-  
-  MsWheaContext->TestId = TEST_ID_FATAL_REV_0;
-  InitMsWheaHeader (MS_WHEA_REV_0, EFI_GENERIC_ERROR_FATAL, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
-  
-  TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Fatal Rev0 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
 
-  TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Fatal Rev0 test case %d failed.", TestIndex);
-    goto Cleanup;
+  MsWheaContext->TestId = TEST_ID_FATAL_EX;
+
+  for (TestIndex =0; TestIndex < UNIT_TEST_SINGLE_ROUND; TestIndex++) {
+    DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+
+    LogTelemetry (TRUE,
+                  NULL,
+                  UNIT_TEST_ERROR_CODE | TestIndex,
+                  &gMuTestLibraryGuid,
+                  &gMuTestIhvSharedGuid,
+                  UNIT_TEST_ERROR_INFO1,
+                  UNIT_TEST_ERROR_INFO2
+                  );
+    Status = MsWheaVerifyFlashStorage(Framework,
+                                      Context,
+                                      TestIndex,
+                                      UNIT_TEST_ERROR_CODE | TestIndex,
+                                      EFI_GENERIC_ERROR_FATAL,
+                                      &gMuTestIhvSharedGuid,
+                                      &gMuTestLibraryGuid,
+                                      UNIT_TEST_ERROR_INFO1,
+                                      UNIT_TEST_ERROR_INFO2);
+    if (EFI_ERROR(Status) != FALSE) {
+      utStatus = UNIT_TEST_ERROR_TEST_FAILED;
+      UT_LOG_ERROR( "Fatal Ex test case %d failed.", TestIndex);
+      goto Cleanup;
+    }
   }
 
   utStatus = UNIT_TEST_PASSED;
-  UT_LOG_INFO( "Fatal Rev0 test passed!");
+  UT_LOG_INFO( "Fatal Ex test passed!");
 Cleanup:
   DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
   return utStatus;
-} // MsWheaFatalRev0Entries ()
+} // MsWheaFatalExEntries ()
 
 
 /**
-  This rountine should store 2 Fatal Rev 1 errors on flash 
+  This rountine should store 2 Non Fatal Ex errors on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
-MsWheaFatalRev1Entries (
+MsWheaNonFatalExEntries (
   IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
   UINT8                 TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
   DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
 
-  MsWheaContext->TestId = TEST_ID_FATAL_REV_1;
-  InitMsWheaHeader (MS_WHEA_REV_1, EFI_GENERIC_ERROR_FATAL, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
+  MsWheaContext->TestId = TEST_ID_NON_FATAL_EX;
 
-  TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
+  for (TestIndex =0; TestIndex < UNIT_TEST_SINGLE_ROUND; TestIndex++) {
+    DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+    LogTelemetry (FALSE,
+                  NULL,
+                  UNIT_TEST_ERROR_CODE | TestIndex,
+                  &gMuTestLibraryGuid,
+                  &gMuTestIhvSharedGuid,
+                  UNIT_TEST_ERROR_INFO1,
+                  UNIT_TEST_ERROR_INFO2
+                  );
+    Status = MsWheaVerifyFlashStorage(Framework,
+                                      Context,
+                                      TestIndex,
+                                      UNIT_TEST_ERROR_CODE | TestIndex,
+                                      EFI_GENERIC_ERROR_INFO,
+                                      &gMuTestIhvSharedGuid,
+                                      &gMuTestLibraryGuid,
+                                      UNIT_TEST_ERROR_INFO1,
+                                      UNIT_TEST_ERROR_INFO2);
+    if (EFI_ERROR(Status) != FALSE) {
+      utStatus = UNIT_TEST_ERROR_TEST_FAILED;
+      UT_LOG_ERROR( "Non Fatal Ex test case %d failed.", TestIndex);
+      goto Cleanup;
+    }
   }
 
   utStatus = UNIT_TEST_PASSED;
-  UT_LOG_INFO( "Fatal Rev1 test passed!");
+  UT_LOG_INFO( "Non Fatal Ex test passed!");
 Cleanup:
   DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
   return utStatus;
-} // MsWheaFatalRev1Entries ()
+} // MsWheaNonFatalExEntries ()
 
 
 /**
-  This rountine should store 2 Fatal Unsupported Reved errors on flash 
-**/
-UNIT_TEST_STATUS
-EFIAPI
-MsWheaFatalRevUnsupEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
-  IN UNIT_TEST_CONTEXT                Context
-  )
-{
-  UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
-  EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
-  UINT8                 TestIndex;
-  MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
-
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-
-  MsWheaContext->TestId = TEST_ID_FATAL_REV_UNSUP;
-  InitMsWheaHeader (MS_WHEA_REV_UNSUPPORTED, EFI_GENERIC_ERROR_FATAL, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
-
-  TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  utStatus = UNIT_TEST_PASSED;
-  UT_LOG_INFO( "Fatal Rev1 test passed!");
-Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
-  return utStatus;
-} // MsWheaFatalRevUnsupEntries ()
-
-
-/**
-  This rountine should store 2 Non Fatal Rev 0 errors on flash 
-**/
-UNIT_TEST_STATUS
-EFIAPI
-MsWheaNonFatalRev0Entries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
-  IN UNIT_TEST_CONTEXT                Context
-  )
-{
-  UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
-  EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
-  UINT8                 TestIndex;
-  MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
-
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-
-  MsWheaContext->TestId = TEST_ID_NON_FATAL_REV_0;
-  InitMsWheaHeader (MS_WHEA_REV_0, EFI_GENERIC_ERROR_CORRECTED, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
-  
-  TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_CORRECTED;  
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Non Fatal Rev0 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_RECOVERABLE;
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Non Fatal Rev0 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  utStatus = UNIT_TEST_PASSED;
-  UT_LOG_INFO( "Non Fatal Rev0 test passed!");
-Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
-  return utStatus;
-} // MsWheaNonFatalRev0Entries ()
-
-
-/**
-  This rountine should store 2 Non Fatal Rev 1 errors on flash 
-**/
-UNIT_TEST_STATUS
-EFIAPI
-MsWheaNonFatalRev1Entries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
-  IN UNIT_TEST_CONTEXT                Context
-  )
-{
-  UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
-  EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
-  UINT8                 TestIndex;
-  MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
-
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-
-  MsWheaContext->TestId = TEST_ID_NON_FATAL_REV_1;
-  InitMsWheaHeader (MS_WHEA_REV_1, EFI_GENERIC_ERROR_CORRECTED, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
-  
-  TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_CORRECTED;  
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Non Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_RECOVERABLE;
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Non Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  utStatus = UNIT_TEST_PASSED;
-  UT_LOG_INFO( "Non Fatal Rev1 test passed!");
-Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
-  return utStatus;
-} // MsWheaNonFatalRev1Entries ()
-
-
-/**
-  This rountine should store 2 Non-Fatal Unsupported Reved errors on flash 
-**/
-UNIT_TEST_STATUS
-EFIAPI
-MsWheaNonFatalRevUnsupEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
-  IN UNIT_TEST_CONTEXT                Context
-  )
-{
-  UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
-  EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
-  UINT8                 TestIndex;
-  MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
-
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-
-  MsWheaContext->TestId = TEST_ID_NON_FATAL_REV_UNSUP;
-  InitMsWheaHeader (MS_WHEA_REV_UNSUPPORTED, EFI_GENERIC_ERROR_CORRECTED, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
-
-  TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_CORRECTED;  
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Non Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(mMsWheaErrHdr + 1, 
-        UNIT_TEST_ERROR_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_RECOVERABLE;
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Non Fatal Rev1 test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  utStatus = UNIT_TEST_PASSED;
-  UT_LOG_INFO( "Non Fatal Unsupported rev test passed!");
-Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
-  return utStatus;
-} // MsWheaNonFatalRevUnsupEntries ()
-
-
-/**
-  This rountine should store 2 wildcard errors on flash 
+  This rountine should not store any errors on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -1294,14 +761,14 @@ MsWheaWildcardEntries (
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
   DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-  
+
   MsWheaContext->TestId = TEST_ID_WILDCARD;
   TestIndex = 0;
   DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(Data, 
-        UNIT_TEST_ERROR_SIZE, 
+  SetMem(Data,
+        UNIT_TEST_ERROR_SIZE,
         (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
+  Status = ReportStatusCodeWithExtendedData(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
                                             UNIT_TEST_ERROR_CODE,
                                             Data,
                                             UNIT_TEST_ERROR_SIZE);
@@ -1310,13 +777,15 @@ MsWheaWildcardEntries (
   }
   Status = MsWheaVerifyFlashStorage(Framework,
                                     Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    EFI_GENERIC_ERROR_INFO, 
-                                    MS_WHEA_REV_WILDCARD, 
-                                    Data, 
-                                    UNIT_TEST_ERROR_SIZE);
-  if (EFI_ERROR(Status) != FALSE) {
+                                    TestIndex,
+                                    UNIT_TEST_ERROR_CODE,
+                                    EFI_GENERIC_ERROR_FATAL,
+                                    &gMuTestIhvSharedGuid,
+                                    &gMuTestLibraryGuid,
+                                    0,
+                                    0);
+  if (!EFI_ERROR(Status)) {
+    // Should not store anything if malformatted data
     utStatus = UNIT_TEST_ERROR_TEST_FAILED;
     UT_LOG_ERROR( "Wildcard payload test case %d failed.", TestIndex);
     goto Cleanup;
@@ -1324,10 +793,10 @@ MsWheaWildcardEntries (
 
   TestIndex ++;
   DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(Data, 
-        UNIT_TEST_ERROR_SIZE, 
+  SetMem(Data,
+        UNIT_TEST_ERROR_SIZE,
         (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
+  Status = ReportStatusCodeWithExtendedData(MS_WHEA_ERROR_STATUS_TYPE_INFO,
                                             UNIT_TEST_ERROR_CODE,
                                             Data,
                                             UNIT_TEST_ERROR_SIZE);
@@ -1336,13 +805,15 @@ MsWheaWildcardEntries (
   }
   Status = MsWheaVerifyFlashStorage(Framework,
                                     Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    EFI_GENERIC_ERROR_INFO, 
-                                    MS_WHEA_REV_WILDCARD, 
-                                    Data, 
-                                    UNIT_TEST_ERROR_SIZE);
-  if (EFI_ERROR(Status) != FALSE) {
+                                    TestIndex,
+                                    UNIT_TEST_ERROR_CODE,
+                                    EFI_GENERIC_ERROR_INFO,
+                                    &gMuTestIhvSharedGuid,
+                                    &gMuTestLibraryGuid,
+                                    0,
+                                    0);
+  if (!EFI_ERROR(Status)) {
+    // Should not store anything if malformatted data
     utStatus = UNIT_TEST_ERROR_TEST_FAILED;
     UT_LOG_ERROR( "Wildcard payload test case %d failed.", TestIndex);
     goto Cleanup;
@@ -1357,146 +828,7 @@ Cleanup:
 
 
 /**
-  This rountine should store 4 errors with mixed severity and revision with only the header as a payload 
-**/
-UNIT_TEST_STATUS
-EFIAPI
-MsWheaMixedHeaderOnlyEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
-  IN UNIT_TEST_CONTEXT                Context
-  )
-{
-  UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
-  EFI_STATUS            Status = EFI_SUCCESS;
-  MS_WHEA_ERROR_HDR     mMsWheaErrHdr;
-  UINT8                 TestIndex;
-  MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
-
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-
-  MsWheaContext->TestId = TEST_ID_NON_FATAL_REV_UNSUP;
-  InitMsWheaHeader (MS_WHEA_REV_UNSUPPORTED, EFI_GENERIC_ERROR_FATAL, (UINT8 *)&mMsWheaErrHdr);
-  
-  TestIndex = 0;
-  mMsWheaErrHdr.Rev = MS_WHEA_REV_0;
-  mMsWheaErrHdr.ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d: Sev: %d Rev %d...\n", 
-                                  TestIndex, 
-                                  mMsWheaErrHdr.ErrorSeverity, 
-                                  mMsWheaErrHdr.Rev));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            &mMsWheaErrHdr,
-                                            sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr.ErrorSeverity, 
-                                    mMsWheaErrHdr.Rev, 
-                                    &mMsWheaErrHdr, 
-                                    sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Mixed Header Only test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  mMsWheaErrHdr.Rev = MS_WHEA_REV_1;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d: Sev: %d Rev %d...\n", 
-                                  TestIndex, 
-                                  mMsWheaErrHdr.ErrorSeverity, 
-                                  mMsWheaErrHdr.Rev));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            &mMsWheaErrHdr,
-                                            sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr.ErrorSeverity, 
-                                    mMsWheaErrHdr.Rev, 
-                                    &mMsWheaErrHdr, 
-                                    sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Mixed Header Only test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  mMsWheaErrHdr.Rev = MS_WHEA_REV_0;
-  mMsWheaErrHdr.ErrorSeverity = EFI_GENERIC_ERROR_CORRECTED;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d: Sev: %d Rev %d...\n", 
-                                  TestIndex, 
-                                  mMsWheaErrHdr.ErrorSeverity, 
-                                  mMsWheaErrHdr.Rev));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            &mMsWheaErrHdr,
-                                            sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr.ErrorSeverity, 
-                                    mMsWheaErrHdr.Rev, 
-                                    &mMsWheaErrHdr, 
-                                    sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Mixed Header Only test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  mMsWheaErrHdr.Rev = MS_WHEA_REV_1;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d: Sev: %d Rev %d...\n", 
-                                  TestIndex, 
-                                  mMsWheaErrHdr.ErrorSeverity, 
-                                  mMsWheaErrHdr.Rev));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            &mMsWheaErrHdr,
-                                            sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }  
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr.ErrorSeverity, 
-                                    mMsWheaErrHdr.Rev, 
-                                    &mMsWheaErrHdr, 
-                                    sizeof(MS_WHEA_ERROR_HDR));
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Mixed Header Only test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  utStatus = UNIT_TEST_PASSED;
-  UT_LOG_INFO( "Header only test passed!");
-Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
-  return utStatus;
-} // MsWheaMixedHeaderOnlyEntries ()
-
-
-/**
-  This rountine should store 3 short errors on flash 
+  This rountine should store one short error for each supported severity on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -1507,27 +839,27 @@ MsWheaShortEntries (
 {
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[UNIT_TEST_ERROR_SHORT_SIZE];
   UINT8                 TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
   DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-  
+
   MsWheaContext->TestId = TEST_ID_SHORT;
   TestIndex = 0;
   DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  Status = ReportStatusCode((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
+  Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
                             UNIT_TEST_ERROR_CODE);
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
   Status = MsWheaVerifyFlashStorage(Framework,
                                     Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    EFI_GENERIC_ERROR_INFO, 
-                                    MS_WHEA_REV_WILDCARD, 
-                                    NULL, 
+                                    TestIndex,
+                                    UNIT_TEST_ERROR_CODE,
+                                    EFI_GENERIC_ERROR_FATAL,
+                                    NULL,
+                                    NULL,
+                                    0,
                                     0);
   if (EFI_ERROR(Status) != FALSE) {
     utStatus = UNIT_TEST_ERROR_TEST_FAILED;
@@ -1537,45 +869,20 @@ MsWheaShortEntries (
 
   TestIndex ++;
   DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  Status = ReportStatusCode((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
+  Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_INFO,
                             UNIT_TEST_ERROR_CODE);
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
   Status = MsWheaVerifyFlashStorage(Framework,
                                     Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    EFI_GENERIC_ERROR_INFO, 
-                                    MS_WHEA_REV_WILDCARD, 
-                                    NULL, 
+                                    TestIndex,
+                                    UNIT_TEST_ERROR_CODE,
+                                    EFI_GENERIC_ERROR_INFO,
+                                    NULL,
+                                    NULL,
+                                    0,
                                     0);
-  if (EFI_ERROR(Status) != FALSE) {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Short invocation test case %d failed.", TestIndex);
-    goto Cleanup;
-  }
-
-  TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-  SetMem(Data, 
-        UNIT_TEST_ERROR_SHORT_SIZE, 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            UNIT_TEST_ERROR_SHORT_SIZE);
-  if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_WARNING( "Report Status Code returns non success value.");
-  }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
-                                    TestIndex, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    EFI_GENERIC_ERROR_INFO, 
-                                    MS_WHEA_REV_WILDCARD, 
-                                    Data, 
-                                    UNIT_TEST_ERROR_SHORT_SIZE);
   if (EFI_ERROR(Status) != FALSE) {
     utStatus = UNIT_TEST_ERROR_TEST_FAILED;
     UT_LOG_ERROR( "Short invocation test case %d failed.", TestIndex);
@@ -1603,50 +910,41 @@ MsWheaStressEntries (
 {
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
   UINT16                TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
   DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
 
   MsWheaContext->TestId = TEST_ID_STRESS;
-  InitMsWheaHeader (MS_WHEA_REV_1, EFI_GENERIC_ERROR_FATAL, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
 
-  // This should use up all the available space and return 
+  // This should use up all the available space and return
   for (TestIndex = 0; TestIndex < (PcdGet32(PcdHwErrStorageSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
     DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-    SetMem(mMsWheaErrHdr + 1, 
-          UNIT_TEST_ERROR_SIZE, 
-          (UINT8)(TestIndex & 0xFF));
-    Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                              UNIT_TEST_ERROR_CODE,
-                                              Data,
-                                              Size);
+    Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
+                              UNIT_TEST_ERROR_CODE);
     if (EFI_ERROR(Status) != FALSE) {
       UT_LOG_WARNING( "Report Status Code returns non success value.");
     }
     Status = MsWheaVerifyFlashStorage(Framework,
                                       Context,
-                                      TestIndex, 
-                                      UNIT_TEST_ERROR_CODE, 
-                                      mMsWheaErrHdr->ErrorSeverity, 
-                                      mMsWheaErrHdr->Rev, 
-                                      Data, 
-                                      Size);
+                                      TestIndex,
+                                      UNIT_TEST_ERROR_CODE,
+                                      EFI_GENERIC_ERROR_FATAL,
+                                      NULL,
+                                      NULL,
+                                      0,
+                                      0);
     DEBUG((DEBUG_INFO,"Result: %r \n", Status));
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_INFO, __FUNCTION__"Stress test case ceased at No. %d.\n", TestIndex));
       break;
     }
   }
-  
+
   if (Status != EFI_NOT_FOUND) {
     utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Stress test case failed as payload returns %08X, expecting %08X.", 
-                  Status, 
+    UT_LOG_ERROR( "Stress test case failed as payload returns %08X, expecting %08X.",
+                  Status,
                   EFI_NOT_FOUND);
     goto Cleanup;
   }
@@ -1657,95 +955,6 @@ Cleanup:
   DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
   return utStatus;
 } // MsWheaStressEntries ()
-
-
-/**
-  This rountine should try to figure out the maximal size this payload 
-**/
-UNIT_TEST_STATUS
-EFIAPI
-MsWheaBoundaryEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
-  IN UNIT_TEST_CONTEXT           Context
-  )
-{
-  UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
-  EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 *Data = NULL;
-  UINT32                Size;
-  UINT32                TestIndex;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
-  MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
-
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
-
-  MsWheaContext->TestId = TEST_ID_BOUNDARY;
-  Size = sizeof(MS_WHEA_ERROR_HDR) + PcdGet32(PcdMaxHardwareErrorVariableSize);
-  Data = AllocateZeroPool(Size);
-  if (Data == NULL) {
-    UT_LOG_ERROR( "Failed to allocate buffer %08X", Size);
-    goto Cleanup;
-  }
-  
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
-  mMsWheaErrHdr->Signature = MS_WHEA_ERROR_SIGNATURE;
-  mMsWheaErrHdr->CriticalInfo = UNIT_TEST_ERROR_INFO;
-  mMsWheaErrHdr->ReporterID = UNIT_TEST_ERROR_ID;
-  mMsWheaErrHdr->Rev = MS_WHEA_REV_1;
-  mMsWheaErrHdr->ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
-
-  SetMem(mMsWheaErrHdr + 1, 
-        PcdGet32(PcdMaxHardwareErrorVariableSize), 
-        (UINT8)(UNIT_TEST_ERROR_PATTERN & 0xFF));
-
-  // This would start from upper bound and reduce the size unti the first success
-  for (TestIndex = Size; TestIndex >= sizeof(MS_WHEA_ERROR_HDR); TestIndex --) {
-    DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", Size - TestIndex));
-    
-    Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE),
-                                              UNIT_TEST_ERROR_CODE,
-                                              Data,
-                                              TestIndex);
-    if (EFI_ERROR(Status) != FALSE) {
-      UT_LOG_WARNING( "Report Status Code returns non success value.");
-    }
-    Status = MsWheaVerifyFlashStorage(Framework,
-                                      Context,
-                                      0, 
-                                      UNIT_TEST_ERROR_CODE, 
-                                      mMsWheaErrHdr->ErrorSeverity, 
-                                      mMsWheaErrHdr->Rev, 
-                                      Data, 
-                                      TestIndex);
-    DEBUG((DEBUG_INFO,"Result: %r \n", Status));
-    if (EFI_ERROR(Status) == FALSE) {
-      DEBUG((DEBUG_INFO, __FUNCTION__"Boundary test case ceased at payload size %d bytes.\n", TestIndex));
-      break;
-    }
-    else if (Status != EFI_NOT_FOUND) {
-      DEBUG((DEBUG_INFO, __FUNCTION__"Boundary test case errored at payload size %d bytes, status: %r.\n", 
-                                      TestIndex, Status));
-      break;
-    }
-  }
-
-  DEBUG((DEBUG_INFO,"Result: %r \n", Status));
-  if (EFI_ERROR(Status) == FALSE) {
-    utStatus = UNIT_TEST_PASSED;
-    UT_LOG_INFO( "Boundary found to be %d (including MS WHEA Error header), test passed!", TestIndex);
-  }
-  else {
-    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    UT_LOG_ERROR( "Boundary test case failed as no lower boundary found.");
-  }
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
-  
-Cleanup:
-  if (Data != NULL) {
-    FreePool(Data);
-  }
-  return utStatus;
-} // MsWheaBoundaryEntries ()
 
 
 /**
@@ -1762,9 +971,8 @@ MsWheaVariableServicesTest (
 {
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS            Status = EFI_SUCCESS;
-  UINT8                 Data[sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE];
-  UINT32                Size = sizeof(MS_WHEA_ERROR_HDR) + UNIT_TEST_ERROR_SIZE;
-  MS_WHEA_ERROR_HDR     *mMsWheaErrHdr;
+  UINT8                 Data[sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA)];
+  UINT32                Size = sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA);
   UINT16                TestIndex;
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
@@ -1773,23 +981,16 @@ MsWheaVariableServicesTest (
 
   MsWheaContext->TestId = TEST_ID_VARSEV;
   UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, 0);
-  InitMsWheaHeader (MS_WHEA_REV_1, EFI_GENERIC_ERROR_FATAL, Data);
-  mMsWheaErrHdr = (MS_WHEA_ERROR_HDR*)Data;
 
   // Phase 1: Alternate write and delete HwErrRec, it should end up with out of resources
   for (TestIndex = 0; TestIndex < (PcdGet32(PcdFlashNvStorageVariableSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
     DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
-    SetMem(mMsWheaErrHdr + 1, 
-          UNIT_TEST_ERROR_SIZE, 
-          (UINT8)(TestIndex & 0xFF));
-    Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                              UNIT_TEST_ERROR_CODE,
-                                              Data,
-                                              Size);
+    Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
+                              UNIT_TEST_ERROR_CODE);
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_WARN, __FUNCTION__ ": Write %d failed with %r...\n", TestIndex, Status));
     }
-    
+
     Status = gRT->SetVariable(VarName,
                               &gEfiHardwareErrorVariableGuid,
                               EFI_VARIABLE_NON_VOLATILE |
@@ -1804,6 +1005,7 @@ MsWheaVariableServicesTest (
       DEBUG((DEBUG_INFO, __FUNCTION__ ": Phase 1 test ceased at %d...\n", TestIndex));
       break;
     } else {
+      utStatus = UNIT_TEST_ERROR_TEST_FAILED;
       UT_LOG_ERROR( "Read HwErrRec failed at %d, result: %r.", TestIndex, Status);
       goto Cleanup;
     }
@@ -1823,28 +1025,43 @@ MsWheaVariableServicesTest (
                             Size,
                             Data);
   if (EFI_ERROR(Status) != FALSE) {
-    UT_LOG_ERROR( "Write commont variable not succeeded at result: %r.", Status);
+    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
+    UT_LOG_ERROR( "Write common variable not succeeded at result: %r.", Status);
+    goto Cleanup;
+  }
+
+  // Turn off the light when leaving the room
+  Status = gRT->SetVariable(L"CommonVar",
+                            &gMsWheaReportServiceGuid,
+                            EFI_VARIABLE_NON_VOLATILE |
+                            EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                            EFI_VARIABLE_RUNTIME_ACCESS,
+                            0,
+                            NULL);
+  if (EFI_ERROR(Status) != FALSE) {
+    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
+    UT_LOG_ERROR( "Delete common variable not succeeded at result: %r.", Status);
     goto Cleanup;
   }
 
   // Phase 3: Write a HwErrRec should succeed
-  Status = ReportStatusCodeWithExtendedData((EFI_ERROR_MAJOR|EFI_ERROR_CODE), 
-                                            UNIT_TEST_ERROR_CODE,
-                                            Data,
-                                            Size);
+  Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
+                            UNIT_TEST_ERROR_CODE);
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
   Status = MsWheaVerifyFlashStorage(Framework,
                                     Context,
-                                    0, 
-                                    UNIT_TEST_ERROR_CODE, 
-                                    mMsWheaErrHdr->ErrorSeverity, 
-                                    mMsWheaErrHdr->Rev, 
-                                    Data, 
-                                    Size);
+                                    0,
+                                    UNIT_TEST_ERROR_CODE,
+                                    EFI_GENERIC_ERROR_FATAL,
+                                    NULL,
+                                    NULL,
+                                    0,
+                                    0);
   DEBUG((DEBUG_INFO,"Result: %r \n", Status));
   if (EFI_ERROR(Status) != FALSE) {
+    utStatus = UNIT_TEST_ERROR_TEST_FAILED;
     UT_LOG_ERROR( "Written HwErrRec failed to pass verification.");
     goto Cleanup;
   }
@@ -1859,6 +1076,70 @@ Cleanup:
   DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
   return utStatus;
 } // MsWheaVariableServicesTest ()
+
+
+/**
+  This rountine should verify report works at all the supported TPLs
+**/
+UNIT_TEST_STATUS
+EFIAPI
+MsWheaReportTplTest (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
+  EFI_STATUS            Status = EFI_SUCCESS;
+  UINT16                TestIndex;
+  EFI_TPL               TplPrevious;
+  EFI_TPL               TplCap;
+  CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
+  MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
+
+  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+
+  MsWheaContext->TestId = TEST_ID_TPL;
+  UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, 0);
+  TplCap = (FixedPcdGet32(PcdMsWheaRSCHandlerTpl) > TPL_NOTIFY) ? (TPL_NOTIFY) : (FixedPcdGet32(PcdMsWheaRSCHandlerTpl));
+
+  // This would just make sure the report status code handle will not fail on all supported TPLs
+  for (TestIndex = TPL_APPLICATION; TestIndex <= TplCap; TestIndex ++)
+  {
+    DEBUG((DEBUG_INFO, "%a Callback level: %x\n", __FUNCTION__, TestIndex));
+    TplPrevious = gBS->RaiseTPL(TestIndex);
+    ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL, (EFI_STATUS_CODE_VALUE) (UNIT_TEST_ERROR_CODE | TestIndex));
+    gBS->RestoreTPL(TplPrevious) ;
+    Status = MsWheaVerifyFlashStorage(Framework,
+                                    Context,
+                                    0,
+                                    (UNIT_TEST_ERROR_CODE | TestIndex),
+                                    EFI_GENERIC_ERROR_FATAL,
+                                    NULL,
+                                    NULL,
+                                    0,
+                                    0);
+    DEBUG((DEBUG_INFO,"Result: %r \n", Status));
+    if (EFI_ERROR(Status) != FALSE) {
+      utStatus = UNIT_TEST_ERROR_TEST_FAILED;
+      UT_LOG_WARNING( "Written HwErrRec failed to pass verification.");
+      goto Cleanup;
+    }
+    Status = gRT->SetVariable(VarName,
+                              &gEfiHardwareErrorVariableGuid,
+                              EFI_VARIABLE_NON_VOLATILE |
+                              EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                              EFI_VARIABLE_RUNTIME_ACCESS |
+                              EFI_VARIABLE_HARDWARE_ERROR_RECORD,
+                              0,
+                              NULL);
+  }
+
+  utStatus = UNIT_TEST_PASSED;
+  UT_LOG_INFO( "TPL report test passed!");
+Cleanup:
+  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  return utStatus;
+} // MsWheaReportTplTest ()
 
 
 /**
@@ -1883,7 +1164,7 @@ MsWheaReportUnitTestAppEntryPoint (
   CHAR16                ShortTitle[128];
   UNIT_TEST_SUITE       *Misc = NULL;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = NULL;
-  
+
   DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
 
   MsWheaContext = AllocateZeroPool(sizeof(MS_WHEA_TEST_CONTEXT));
@@ -1895,7 +1176,7 @@ MsWheaReportUnitTestAppEntryPoint (
   SetMem(ShortTitle, sizeof(ShortTitle), 0);
   UnicodeSPrint(ShortTitle, sizeof(ShortTitle), L"%a", gEfiCallerBaseName);
   DEBUG(( DEBUG_ERROR, __FUNCTION__ "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
-  
+
   // Start setting up the test framework for running the tests.
   Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortTitle, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR(Status) != FALSE) {
@@ -1912,41 +1193,26 @@ MsWheaReportUnitTestAppEntryPoint (
     goto Cleanup;
   }
 
-  AddTestCase(Misc, L"Fatal error Rev 0 report", L"MsWhea.Miscellaneous.MsWheaFatalRev0Entries", 
-              MsWheaFatalRev0Entries, MsWheaCommonClean, NULL, MsWheaContext );
+  AddTestCase(Misc, L"Fatal error Ex report", L"MsWhea.Miscellaneous.MsWheaFatalExEntries",
+              MsWheaFatalExEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Fatal error Rev 1 report", L"MsWhea.Miscellaneous.MsWheaFatalRev1Entries", 
-              MsWheaFatalRev1Entries, MsWheaCommonClean, NULL, MsWheaContext );
+  AddTestCase(Misc, L"Non-fatal error Ex report", L"MsWhea.Miscellaneous.MsWheaNonFatalExEntries",
+              MsWheaNonFatalExEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Fatal unsupported error", L"MsWhea.Miscellaneous.MsWheaFatalRevUnsupEntries", 
-              MsWheaFatalRevUnsupEntries, MsWheaCommonClean, NULL, MsWheaContext );
-
-  AddTestCase(Misc, L"Non-fatal error Rev 0 report", L"MsWhea.Miscellaneous.MsWheaNonFatalRev0Entries", 
-              MsWheaNonFatalRev0Entries, MsWheaCommonClean, NULL, MsWheaContext );
-              
-  AddTestCase(Misc, L"Non-fatal error Rev 1 report", L"MsWhea.Miscellaneous.MsWheaNonFatalRev1Entries", 
-              MsWheaNonFatalRev1Entries, MsWheaCommonClean, NULL, MsWheaContext );
-
-  AddTestCase(Misc, L"Non-fatal unsupported error", L"MsWhea.Miscellaneous.MsWheaNonFatalRevUnsupEntries", 
-              MsWheaNonFatalRevUnsupEntries, MsWheaCommonClean, NULL, MsWheaContext );
-
-  AddTestCase(Misc, L"Wildcard error report", L"MsWhea.Miscellaneous.MsWheaWildcardEntries", 
+  AddTestCase(Misc, L"Wildcard error report", L"MsWhea.Miscellaneous.MsWheaWildcardEntries",
               MsWheaWildcardEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Headers only error report", L"MsWhea.Miscellaneous.MsWheaMixedHeaderOnlyEntries", 
-              MsWheaMixedHeaderOnlyEntries, MsWheaCommonClean, NULL, MsWheaContext );
-
-  AddTestCase(Misc, L"Short error report", L"MsWhea.Miscellaneous.MsWheaShortEntries", 
+  AddTestCase(Misc, L"Short error report", L"MsWhea.Miscellaneous.MsWheaShortEntries",
               MsWheaShortEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Stress test should fill up reserved variable space", L"MsWhea.Miscellaneous.MsWheaStressEntries", 
+  AddTestCase(Misc, L"Stress test should fill up reserved variable space", L"MsWhea.Miscellaneous.MsWheaStressEntries",
               MsWheaStressEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Boundary test should probe maximal payload accepted", L"MsWhea.Miscellaneous.MsWheaBoundaryEntries", 
-              MsWheaBoundaryEntries, MsWheaCommonClean, MsWheaCommonClean, MsWheaContext );
-
-  AddTestCase(Misc, L"Variable service test should verify Reclaim and quota manipulation", L"MsWhea.Miscellaneous.MsWheaVariableServicesTest", 
+  AddTestCase(Misc, L"Variable service test should verify Reclaim and quota manipulation", L"MsWhea.Miscellaneous.MsWheaVariableServicesTest",
               MsWheaVariableServicesTest, MsWheaCommonClean, MsWheaCommonClean, MsWheaContext );
+
+  AddTestCase(Misc, L"TPL test for all supported TPLs", L"MsWhea.Miscellaneous.MsWheaReportTplTest",
+              MsWheaReportTplTest, MsWheaCommonClean, MsWheaCommonClean, MsWheaContext );
 
   //
   // Execute the tests.

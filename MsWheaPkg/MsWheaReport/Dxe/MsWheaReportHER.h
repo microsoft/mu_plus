@@ -2,9 +2,8 @@
 
 This header defines API that will save supplied payload via HwErrRec.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -51,8 +50,6 @@ This routine accepts the pointer to the MS WHEA entry metadata, error specific d
 then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEFI Spec 2.7A)
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in]  PayloadPtr                The pointer to reported error block payload, the content will be copied
-@param[in]  PayloadSize               The size of reported error block payload
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
@@ -62,9 +59,7 @@ then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEF
 EFI_STATUS
 EFIAPI
 MsWheaReportHERAdd (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN CONST VOID                       *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
 );
 
 #endif // __MS_WHEA_REPORT_HER__

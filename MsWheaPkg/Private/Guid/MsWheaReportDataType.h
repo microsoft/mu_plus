@@ -1,6 +1,6 @@
 /** @file -- MsWheaErrorStatus.h
 
-This header file defines MsWheaReport expected/applied invocation components.
+This header file defines MsWheaReport expected data structure.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 
@@ -25,21 +25,35 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-#ifndef __MS_WHEA_ERROR_STATUS__ 
-#define __MS_WHEA_ERROR_STATUS__ 
+#ifndef __MS_WHEA_REPORT_DATA_TYPE__ 
+#define __MS_WHEA_REPORT_DATA_TYPE__ 
 
-#define MS_WHEA_EARLY_STORAGE_SUBCLASS  \
-                                      0x00CA0000
+#define MS_WHEA_RSC_DATA_TYPE \
+  { \
+    0x91deea05, 0x8c0a, 0x4dcd, { 0xb9, 0x1e, 0xf2, 0x1c, 0xa0, 0xc6, 0x84, 0x5 } \
+  }
 
-#define MS_WHEA_ERROR_EARLY_STORAGE_STORE_FULL  \
-                                      (EFI_SOFTWARE | MS_WHEA_EARLY_STORAGE_SUBCLASS | EFI_SW_EC_EVENT_LOG_FULL)
+extern EFI_GUID gMsWheaRSCDataTypeGuid;
+
+#pragma pack(1)
 
 /**
+ Internal RSC Extended Data Buffer format used by Project Mu firmware WHEA infrastructure.
 
- Microsoft WHEA accepted error status type, other types will be ignored
+ A Buffer of this format should be passed to ReportStatusCodeWithExtendedData
 
+ LibraryID:         GUID of the library reporting the error. If not from a library use zero guid
+ IhvSharingGuid:    GUID of the partner to share this with. If none use zero guid
+ AdditionalInfo1:   64 bit value used for caller to include necessary interrogative information
+ AdditionalInfo2:   64 bit value used for caller to include necessary interrogative information
 **/
-#define MS_WHEA_ERROR_STATUS_TYPE_INFO  (EFI_ERROR_MINOR | EFI_ERROR_CODE)
-#define MS_WHEA_ERROR_STATUS_TYPE_FATAL (EFI_ERROR_MAJOR | EFI_ERROR_CODE)
+typedef struct {
+ EFI_GUID           LibraryID;
+ EFI_GUID           IhvSharingGuid;
+ UINT64             AdditionalInfo1;
+ UINT64             AdditionalInfo2;
+} MS_WHEA_RSC_INTERNAL_ERROR_DATA;
 
-#endif // __MS_WHEA_ERROR_STATUS__ 
+#pragma pack()
+
+#endif // __MS_WHEA_REPORT_DATA_TYPE__ 

@@ -65,16 +65,21 @@
   ShellLib
   PcdLib
   UefiLib
+  MuTelemetryHelperLib
 
 [Protocols]
 
 [Guids]
   gEfiEventNotificationTypeBootGuid                                   ## CONSUMES
-  gEfiFirmwareErrorSectionGuid                                        ## CONSUMES
+  gMuTelemetrySectionTypeGuid                                         ## CONSUMES
   gEfiHardwareErrorVariableGuid                                       ## CONSUMES
   gMsWheaReportServiceGuid                                            ## CONSUMES
+  gMuTestLibraryGuid                                                  ## CONSUMES
+  gMuTestIhvSharedGuid                                                ## CONSUMES
 
 [FixedPcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdHwErrStorageSize                  ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize      ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize        ## CONSUMES
+  gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid                    ## CONSUMES
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl                     ## CONSUMES

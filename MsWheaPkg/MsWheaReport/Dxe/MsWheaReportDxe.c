@@ -5,9 +5,8 @@ This Dxe driver will produce a RSC listener that listens to reported status code
 Certains errors will be stored to flash upon reproting, under gEfiHardwareErrorVariableGuid 
 with VarName "HwErrRecXXXX", where "XXXX" are hexadecimal digits;
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -62,8 +61,6 @@ Note: It is the reporter's responsibility to make sure the format of each blob i
 with specifications. Malformed data will fail the entire reporting.
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in]  PayloadPtr                The pointer to reported error block payload, the content will be copied
-@param[in]  PayloadSize               The size of reported error block payload
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_ACCESS_DENIED             Exit boot has locked the report function
@@ -73,9 +70,7 @@ with specifications. Malformed data will fail the entire reporting.
 STATIC
 EFI_STATUS
 MsWheaReportHandlerDxe(
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN VOID                             *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
 {
   EFI_STATUS Status;
@@ -89,20 +84,18 @@ MsWheaReportHandlerDxe(
   }
 
   // Input argument sanity check
-  if ((PayloadPtr == NULL) || 
-      (PayloadSize == 0) || 
-      (MsWheaEntryMD == NULL)) {
+  if (MsWheaEntryMD == NULL) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
   if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE)) {
     // Variable service is ready, store to HwErrRecXXXX
-    Status = MsWheaReportHERAdd(MsWheaEntryMD, PayloadPtr, PayloadSize);
+    Status = MsWheaReportHERAdd(MsWheaEntryMD);
   }
   else {
     // Add to linked list, similar to hob list
-    Status = MsWheaAddReportEvent(&mMsWheaEntryList, MsWheaEntryMD, PayloadPtr, PayloadSize);
+    Status = MsWheaAddReportEvent(&mMsWheaEntryList, MsWheaEntryMD);
   }
 
 Cleanup:
@@ -138,7 +131,7 @@ MsWheaRscHandlerDxe (
   IN EFI_STATUS_CODE_DATA             *Data OPTIONAL
   )
 {
-  MS_WHEA_ERROR_PHASE CurrentPhase;
+  UINT8 CurrentPhase;
 
   if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE)) {
     CurrentPhase = MS_WHEA_PHASE_DXE_RUNTIME;
@@ -189,9 +182,7 @@ MsWheaProcHob (
     MsWheaEntryMD = (MS_WHEA_ERROR_ENTRY_MD *) MsWheaReportEntry;
     if ((EntrySize != 0) && (EntrySize >= MsWheaEntryMD->PayloadSize)) {
       // Report this entry
-      Status = MsWheaReportHandlerDxe(MsWheaEntryMD, 
-                                      MsWheaEntryMD + 1, 
-                                      MsWheaEntryMD->PayloadSize - sizeof(MS_WHEA_ERROR_ENTRY_MD));
+      Status = MsWheaReportHandlerDxe(MsWheaEntryMD);
       if (EFI_ERROR(Status) != FALSE) {
         DEBUG((DEBUG_ERROR, "%a: Hob entry process failed %r\n", __FUNCTION__, Status));
       }
@@ -239,9 +230,7 @@ MsWheaProcList (
       MsWheaReportEntry = MsWheaListEntry->PayloadPtr;
       MsWheaEntryMD = (MS_WHEA_ERROR_ENTRY_MD *) MsWheaReportEntry;
       
-      Status = MsWheaReportHandlerDxe(MsWheaEntryMD, 
-                                      MsWheaEntryMD + 1, 
-                                      MsWheaEntryMD->PayloadSize - sizeof(MS_WHEA_ERROR_ENTRY_MD));
+      Status = MsWheaReportHandlerDxe(MsWheaEntryMD);
 
       if (EFI_ERROR(Status) != FALSE) {
         DEBUG((DEBUG_ERROR, "%a: Linked list entry process failed %r\n", __FUNCTION__, Status));
@@ -288,7 +277,11 @@ MsWheaProcessPrevError (
 }
 
 /**
-Callback of exit boot event. This will unregister RSC handler in this module. 
+Callback of exit boot event. This will unregister RSC handler in this module.
+
+@param[in]  Event                     Event whose notification function is being invoked.
+@param[in]  Context                   The pointer to the notification function's context, which is 
+                                      implementation-dependent.
 **/
 STATIC
 VOID
@@ -346,26 +339,10 @@ MsWheaArchCallback (
     goto Cleanup;
   }
 
-  // register for the exit boot event
-  Status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
-                              TPL_NOTIFY,
-                              MsWheaReportDxeExitBoot,
-                              NULL,
-                              &gEfiEventExitBootServicesGuid,
-                              &mExitBootServicesEvent);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a failed to register of MsWhea report exit boot (%r)\n", __FUNCTION__, Status));
-    goto Cleanup;
-  }
-
   // collect all reported events during PEI and pre-DXE Runtime
   Status = MsWheaProcessPrevError();
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a processing hob list failed (%r)\n", __FUNCTION__, Status));
-  }
-
-  if (PcdGetBool(PcdMsWheaReportTestEnable) != FALSE) {
-    MsWheaInSituTest(MS_WHEA_PHASE_DXE_RUNTIME);
   }
 
 Cleanup:
@@ -432,18 +409,25 @@ MsWheaReportDxeEntry (
   }
 
   // register for the RSC callback handler
-  Status = mRscHandlerProtocol->Register(MsWheaRscHandlerDxe, TPL_HIGH_LEVEL);
+  Status = mRscHandlerProtocol->Register(MsWheaRscHandlerDxe, (EFI_TPL) FixedPcdGet32(PcdMsWheaRSCHandlerTpl));
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
-  
-  
-  if (PcdGetBool(PcdMsWheaReportTestEnable) != FALSE) {
-    MsWheaInSituTest(MS_WHEA_PHASE_DXE);
-  }
 
   MsWheaRegisterCallbacks();
+
+  // register for the exit boot event
+  Status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
+                              TPL_NOTIFY,
+                              MsWheaReportDxeExitBoot,
+                              NULL,
+                              &gEfiEventExitBootServicesGuid,
+                              &mExitBootServicesEvent);
+  if (EFI_ERROR(Status) != FALSE) {
+    DEBUG((DEBUG_ERROR, "%a failed to register of MsWhea report exit boot (%r)\n", __FUNCTION__, Status));
+    goto Cleanup;
+  }
 
 Cleanup:
   DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));

@@ -27,6 +27,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
+#include <Uefi/UefiBaseType.h>
+
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/PcdLib.h>

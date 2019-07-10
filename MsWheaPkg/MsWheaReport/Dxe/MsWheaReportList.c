@@ -3,9 +3,8 @@
 This source implements common methods to support logging of non-fatal Microsoft
 WHEA errors in UEFI.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -44,21 +43,17 @@ This function creates a new entry to be added to the linked list
 STATIC
 MS_WHEA_LIST_ENTRY *
 CreateNewEntry (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN CONST VOID                       *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
 {
   MS_WHEA_LIST_ENTRY *MsWheaListEntry = NULL;
   UINT32 Index = 0;
 
   // Input argument sanity check
-  if ((PayloadPtr == NULL) || 
-      (PayloadSize == 0) || 
-      (MsWheaEntryMD == NULL)) {
+  if (MsWheaEntryMD == NULL) {
     goto Cleanup;
   }
-  
+
   MsWheaListEntry = AllocateZeroPool(sizeof(MS_WHEA_LIST_ENTRY));
   if (MsWheaListEntry == NULL) {
     goto Cleanup;
@@ -66,7 +61,7 @@ CreateNewEntry (
 
   MsWheaListEntry->Signature = MS_WHEA_LIST_ENTRY_SIGNATURE;
   
-  MsWheaListEntry->PayloadPtr = AllocateZeroPool(PayloadSize + sizeof(MS_WHEA_ERROR_ENTRY_MD));
+  MsWheaListEntry->PayloadPtr = AllocateZeroPool(sizeof(MS_WHEA_ERROR_ENTRY_MD));
   if (MsWheaListEntry->PayloadPtr == NULL) {
     FreePool(MsWheaListEntry);
     MsWheaListEntry = NULL;
@@ -78,9 +73,6 @@ CreateNewEntry (
   CopyMem(&((UINT8*)MsWheaListEntry->PayloadPtr)[Index], MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD));
 
   Index += sizeof(MS_WHEA_ERROR_ENTRY_MD);
-  CopyMem(&((UINT8*)MsWheaListEntry->PayloadPtr)[Index], PayloadPtr, PayloadSize);
-
-  Index += PayloadSize;
   ((MS_WHEA_ERROR_ENTRY_MD*)MsWheaListEntry->PayloadPtr)->PayloadSize = Index;
 
   MsWheaListEntry->PayloadSize = Index;
@@ -95,8 +87,7 @@ This routine accepts the MS WHEA linked list and the reported data and data leng
 existed list, First In First Out (FIFO)
 
 @param[in]  MsWheaLinkedList          Supplies a MS WHEA error linked list header.
-@param[in]  PayloadPtr                The pointer to reported error block, the content will be copied.
-@param[in]  PayloadSize               The size of reported error block.
+@param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error linked list
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
@@ -107,9 +98,7 @@ EFI_STATUS
 EFIAPI
 MsWheaAddReportEvent(
   IN LIST_ENTRY                       *MsWheaLinkedList,
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN CONST VOID                       *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
 {
   EFI_STATUS          Status;
@@ -121,7 +110,7 @@ MsWheaAddReportEvent(
     goto Cleanup;
   }
 
-  MsWheaListEntry = CreateNewEntry(MsWheaEntryMD, PayloadPtr, PayloadSize);
+  MsWheaListEntry = CreateNewEntry(MsWheaEntryMD);
   if (MsWheaListEntry == NULL) {
     // This error code may not be true, but something is knowingly wrong
     Status = EFI_OUT_OF_RESOURCES;

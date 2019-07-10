@@ -2,9 +2,8 @@
 
 This header defines MsWheaReport related helper functions.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -30,6 +29,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define __MS_WHEA_REPORT_COMMON__
 
 #include <Guid/Cper.h>
+#include <Guid/MsWheaReportDataType.h>
+#include <Guid/MuTelemetryCperSection.h>
 #include <Protocol/AcpiTable.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>
@@ -39,31 +40,46 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /************************************ Definition Section *************************************/
 
+#define MS_WHEA_ERROR_SIGNATURE       SIGNATURE_32('W', 'H', 'E', 'A')
+
 /**
 Definition wrapper to unify all bert/hwerrrec related specification versioning
 **/
-#define EFI_FIRMWARE_ERROR_REVISION   0x0002 // Set Firmware Error Record Revision to 2 as per UEFI Spec 2.7A
 #define MS_WHEA_SECTION_REVISION      0x0100 // Set Section Descriptor Revision to 1.0 as per UEFI Spec 2.7A 
 
 #define EFI_HW_ERR_REC_VAR_NAME       L"HwErrRec"
 #define EFI_HW_ERR_REC_VAR_NAME_LEN   16      // Buffer length covers at least "HwErrRec####\0"
 
 /**
-MS WHEA error entry metadata:
 
-MsWheaErrorHdr:     MS WHEA error header, either from payload or self-generated if wildcard.
-PayloadSize:        Payload size of this error, when used for hob/linked list operation, including a MS WHEA
-                    metadata and a well formatted payload (starting with a MS_WHEA_ERROR_HDR, followed by raw
-                    payload).
-ErrorStatusCode:    Reported Status Code value from ReportStatusCode*
-CallerID:           Caller ID for identification purpose
+ Accepted phase values
+
+**/
+#define MS_WHEA_PHASE_PEI             0x00
+#define MS_WHEA_PHASE_DXE             0x01
+#define MS_WHEA_PHASE_DXE_RUNTIME     0x02
+
+#pragma pack(1)
+
+/**
+MS WHEA error entry metadata, used for intermediate data storage and preliminarily processed
+raw data. All fields usage is the same as in their own header unless listed otherwise.
 **/
 typedef struct MS_WHEA_ERROR_ENTRY_MD_T_DEF {
-  MS_WHEA_ERROR_HDR                   MsWheaErrorHdr;
+  UINT8                               Rev;
+  UINT8                               Phase;
+  UINT16                              Reserved;
+  UINT32                              ErrorSeverity;
   UINT32                              PayloadSize;
-  UINT32                              ErrorStatusCode;
-  EFI_GUID                            CallerID;
+  EFI_STATUS_CODE_VALUE               ErrorStatusValue;
+  UINT64                              AdditionalInfo1;
+  UINT64                              AdditionalInfo2;
+  EFI_GUID                            ModuleID;
+  EFI_GUID                            LibraryID;
+  EFI_GUID                            IhvSharingGuid;
 } MS_WHEA_ERROR_ENTRY_MD;
+
+#pragma pack()
 
 /**
 This routine accepts the Common Platform Error Record header and Section 
@@ -71,9 +87,6 @@ Descriptor and correspthen store on the flash as HwErrRec awaiting to be picked 
 (Refer to UEFI Spec 2.7A)
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in]  PayloadPtr                The pointer to reported error block, the content will be copied
-@param[in]  PayloadSize               The size of a well formatted payload (starting with a 
-                                      MS_WHEA_ERROR_HDR, followed by raw payload)
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
@@ -82,9 +95,7 @@ Descriptor and correspthen store on the flash as HwErrRec awaiting to be picked 
 typedef
 EFI_STATUS
 (EFIAPI *MS_WHEA_ERR_REPORT_PS_FN) (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN VOID                             *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
 );
 
 /************************************ Function Section *************************************/
@@ -92,12 +103,12 @@ EFI_STATUS
 /**
 This routine will fill CPER related headers with certain preset values;
 
-Presets:  NotificationType: gEfiEventNotificationTypeBootGuid; SectionType: gEfiFirmwareErrorSectionGuid;
+Presets:  NotificationType: gEfiEventNotificationTypeBootGuid; SectionType: gMuTelemetrySectionTypeGuid;
 Zeroed:   CPER Header: Flags, RecordID; Section Descriptor: SectionFlags, FruId, FruString;
 
 @param[out] CperHdr                   Supplies a pointer to CPER header structure 
 @param[out] CperErrSecDscp            Supplies a pointer to CPER Section Decsriptor structure
-@param[out] EfiFirmwareErrorData      Supplies a pointer to Firmware Error Data header structure
+@param[out] MuTelemetryData           Supplies a pointer to Mu telemetry data structure
 @param[in]  MsWheaEntryMD             Supplies a pointer to reported MS WHEA error metadata
 @param[in]  PayloadSize               Length of entire payload to be included within this entry, refer to 
                                       UEFI Spec for more information
@@ -110,7 +121,7 @@ EFIAPI
 CreateHeadersDefault (
   OUT EFI_COMMON_ERROR_RECORD_HEADER  *CperHdr,
   OUT EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp,
-  OUT EFI_FIRMWARE_ERROR_DATA         *EfiFirmwareErrorData,
+  OUT MU_TELEMETRY_CPER_SECTION_DATA  *MuTelemetryData,
   IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
   IN UINT32                           PayloadSize
 );
@@ -149,21 +160,8 @@ ReportHwErrRecRouter (
   IN UINT32                           Instance,
   IN CONST EFI_GUID                   *CallerId,
   IN CONST EFI_STATUS_CODE_DATA       *Data OPTIONAL,
-  IN MS_WHEA_ERROR_PHASE              CurrentPhase,
+  IN UINT8                            CurrentPhase,
   IN MS_WHEA_ERR_REPORT_PS_FN         ReportFn
-);
-
-/**
-This routine will create a few ReportStatusCode calls to test the implementation of backend service.
-1. This function should be invoked after evaluating gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportTestEnable;
-2. Only the modules creating backend services should use this function;
-
-@param[out] CurrentPhase              Supplies the boot phase the reporting module is in
-**/
-VOID
-EFIAPI
-MsWheaInSituTest(
-  IN MS_WHEA_ERROR_PHASE              CurrentPhase
 );
 
 #endif //__MS_WHEA_REPORT_COMMON__

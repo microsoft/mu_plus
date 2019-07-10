@@ -1,9 +1,8 @@
 ## @file
 # Package declaration file for Microsoft WHEA Package
 #
-# Copyright (c) 2018, Microsoft Corporation
-
-# All rights reserved.
+# Copyright (C) Microsoft Corporation. All rights reserved.
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -34,9 +33,21 @@
 [Guids]
   gMsWheaPkgTokenSpaceGuid =    { 0x9b859fdb, 0xcae9, 0x44f8, { 0x80, 0x86, 0xbb, 0xc0, 0xb2, 0x69, 0x3a, 0x1d } }
   gMsWheaReportServiceGuid =    { 0x8efebc4a, 0x5222, 0x409c, { 0xa5, 0x9f, 0x6f, 0x06, 0xdd, 0xb7, 0x96, 0x78 } }
+  gMuTelemetrySectionTypeGuid = { 0x85183a8b, 0x9c41, 0x429c, { 0x93, 0x9c, 0x5c, 0x3c, 0x08, 0x7c, 0xa2, 0x80 } }
+
+  # Internal guid to be populated in DataType guid of report status code call
+  gMsWheaRSCDataTypeGuid   =    { 0x91deea05, 0x8c0a, 0x4dcd, { 0xb9, 0x1e, 0xf2, 0x1c, 0xa0, 0xc6, 0x84, 0x5 } }
+
+  # Test guid to be populated in IhvSharingGuid of MS_WHEA_RSC_INTERNAL_ERROR_DATA
+  gMuTestIhvSharedGuid     =    { 0x6de15562, 0x3b90, 0x4f73, { 0xb4, 0x58, 0x5a, 0x59, 0xe4, 0x21, 0xb2, 0xb8 } }
+  # Test guid to be populated in LibraryID of MS_WHEA_RSC_INTERNAL_ERROR_DATA
+  gMuTestLibraryGuid       =    { 0xf3446251, 0x8ba4, 0x4fe9, { 0xae, 0xed, 0x26, 0x5c, 0x45, 0xca, 0x4a, 0xf6 } }
 
 [Includes]
   Include
+
+[Includes.common.Private]
+  Private
 
 [Protocols]
 
@@ -44,11 +55,14 @@
 
 [LibraryClasses]
   MsWheaEarlyStorageLib|Include/Library/MsWheaEarlyStorageLib.h
+  MuTelemetryHelperLib |Include/Library/MuTelemetryHelperLib.inf
 
 [PcdsFeatureFlag]
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportTestEnable|FALSE|BOOLEAN|0x00000001
 
 [PcdsFixedAtBuild]
+  # Configure this Pcd to determine the TPL the RSC handler used by Whea listener, default to TPL_CALLBACK
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl|0x00000008|UINT32|0x00000001
+
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity|0x00000100|UINT32|0x00000002
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue|0xFF|UINT8|0x00000003
 

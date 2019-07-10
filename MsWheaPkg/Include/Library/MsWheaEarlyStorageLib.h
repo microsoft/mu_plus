@@ -2,9 +2,8 @@
 
 This header defines APIs to utilize special memory for MsWheaReport during early stage.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -28,10 +27,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef __MS_WHEA_EARLY_STORAGE_LIB__
 #define __MS_WHEA_EARLY_STORAGE_LIB__
-
-#include <Uefi/UefiBaseType.h>
-
-#define EARLY_STORAGE_DEFAULT_VALUE           0xFF
 
 /**
 

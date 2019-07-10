@@ -2,9 +2,8 @@
 
 This source utilizes early storage APIs for MsWheaReport usage.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without 
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -31,14 +30,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Library/PcdLib.h>
 #include "MsWheaEarlyStorageMgr.h"
 
-typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
-  UINT32                                      Signature;
-  UINT8                                       IsStorageFull;
-  UINT8                                       Reserved;
-  MS_WHEA_ERROR_PHASE                         FullPhase;
-} MS_WHEA_EARLY_STORAGE_HEADER;
-
-#define MS_WHEA_EARLY_STORAGE_SIGNATURE       MS_WHEA_ERROR_SIGNATURE
 #define MS_WHEA_EARLY_STORAGE_HEADER_SIZE     (sizeof(MS_WHEA_EARLY_STORAGE_HEADER))
 #define MS_WHEA_EARLY_STORAGE_DATA_OFFSET     MS_WHEA_EARLY_STORAGE_HEADER_SIZE
 
@@ -380,52 +371,17 @@ MsWheaESV0InfoStore (
     goto Cleanup;
   }
 
-  WheaV0.Rev = MsWheaEntryMD->MsWheaErrorHdr.Rev;
-  WheaV0.Phase = MsWheaEntryMD->MsWheaErrorHdr.Phase;
-  WheaV0.ErrorStatusCode = MsWheaEntryMD->ErrorStatusCode;
+  SetMem(&WheaV0, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), 0);
+
+  WheaV0.Rev = MsWheaEntryMD->Rev;
+  WheaV0.Phase = MsWheaEntryMD->Phase;
+  WheaV0.ErrorStatusValue = MsWheaEntryMD->ErrorStatusValue;
+  WheaV0.AdditionalInfo1 = MsWheaEntryMD->AdditionalInfo1;
+  WheaV0.AdditionalInfo2 = MsWheaEntryMD->AdditionalInfo2;
+  CopyMem(&WheaV0.PartitionID, &MsWheaEntryMD->IhvSharingGuid, sizeof(EFI_GUID));
+  CopyMem(&WheaV0.ModuleID, &MsWheaEntryMD->ModuleID, sizeof(EFI_GUID));
 
   Status = MsWheaESWriteData(&WheaV0, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), Offset);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Clear V0 Early Storage failed at %d %r\n", __FUNCTION__, Offset, Status));
-    goto Cleanup;
-  }
-
-Cleanup:
-  return Status;
-}
-
-/**
-This routine will extract necessary Rev 1 information from supplied metadata and store onto the next 
-contiguously available Early Storage data region
-
-@param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-
-@retval EFI_SUCCESS                   Operation is successful
-@retval Others                        See MsWheaESFindSlot and MsWheaESWriteData for more 
-                                      details
-**/
-STATIC
-EFI_STATUS
-MsWheaESV1InfoStore (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
-)
-{
-  UINT8                           Offset = 0;
-  EFI_STATUS                      Status;
-  MS_WHEA_EARLY_STORAGE_ENTRY_V1  WheaV1;
-  
-  Status = MsWheaESFindSlot(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), &Offset);
-  if (EFI_ERROR(Status) != FALSE) {
-    goto Cleanup;
-  }
-
-  WheaV1.Rev = MsWheaEntryMD->MsWheaErrorHdr.Rev;
-  WheaV1.Phase = MsWheaEntryMD->MsWheaErrorHdr.Phase;
-  WheaV1.ErrorStatusCode = MsWheaEntryMD->ErrorStatusCode;
-  WheaV1.CriticalInfo = MsWheaEntryMD->MsWheaErrorHdr.CriticalInfo;
-  WheaV1.ReporterID = MsWheaEntryMD->MsWheaErrorHdr.ReporterID;
-
-  Status = MsWheaESWriteData(&WheaV1, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), Offset);
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a: Clear V0 Early Storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
@@ -462,23 +418,25 @@ MsWheaESGetV0Info (
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
-  
+
   SetMem(&WheaV0, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), 0);
   SetMem(MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD), 0);
-  
+
   Status = MsWheaESReadData(&WheaV0, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a: Read V0 Early Storage storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
 
-  MsWheaEntryMD->MsWheaErrorHdr.Signature = MS_WHEA_ERROR_SIGNATURE;
-  MsWheaEntryMD->MsWheaErrorHdr.Rev = WheaV0.Rev;
-  MsWheaEntryMD->MsWheaErrorHdr.Phase = WheaV0.Phase;
-  MsWheaEntryMD->MsWheaErrorHdr.ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
-  MsWheaEntryMD->ErrorStatusCode = WheaV0.ErrorStatusCode;
-  MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD) + sizeof(MS_WHEA_ERROR_HDR);
-  CopyGuid(&MsWheaEntryMD->CallerID, &gEfiCallerIdGuid);
+  MsWheaEntryMD->Rev = WheaV0.Rev;
+  MsWheaEntryMD->Phase = WheaV0.Phase;
+  MsWheaEntryMD->ErrorStatusValue = WheaV0.ErrorStatusValue;
+  MsWheaEntryMD->ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
+  MsWheaEntryMD->AdditionalInfo1 = WheaV0.AdditionalInfo1;
+  MsWheaEntryMD->AdditionalInfo2 = WheaV0.AdditionalInfo2;
+  MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD);
+  CopyMem(&MsWheaEntryMD->IhvSharingGuid, &WheaV0.PartitionID, sizeof(EFI_GUID));
+  CopyMem(&MsWheaEntryMD->ModuleID, &WheaV0.ModuleID, sizeof(EFI_GUID));
 
   Status = MsWheaESClearData(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), *Offset);
   if (EFI_ERROR(Status) != FALSE) {
@@ -486,64 +444,6 @@ MsWheaESGetV0Info (
     goto Cleanup;
   }
   *Offset = *Offset + sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0);
-
-Cleanup:
-  return Status;
-}
-
-/**
-This routine will read Rev 1 information from specified offset on Early Storage data region and fill in the
-metadata based on read value
-
-@param[out] MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in, out] Offset                The pointer to specified offset, will be updated to the end of 
-                                      processed data upon successful operation
-
-@retval EFI_SUCCESS                   Operation is successful
-@retval EFI_INVALID_PARAMETER         Null pointer detected
-@retval Others                        See MsWheaESFindSlot and MsWheaESReadData for more 
-                                      details
-**/
-STATIC
-EFI_STATUS
-MsWheaESGetV1Info (
-  OUT MS_WHEA_ERROR_ENTRY_MD          *MsWheaEntryMD,
-  IN UINT8                            *Offset
-)
-{
-  EFI_STATUS                      Status;
-  MS_WHEA_EARLY_STORAGE_ENTRY_V1  WheaV1;
-
-  if (MsWheaEntryMD == NULL) {
-    Status = EFI_INVALID_PARAMETER;
-    goto Cleanup;
-  }
-  
-  SetMem(&WheaV1, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), 0);
-  SetMem(MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD), 0);
-  
-  Status = MsWheaESReadData(&WheaV1, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), *Offset);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Read V1 Early Storage storage failed at %d %r\n", __FUNCTION__, Offset, Status));
-    goto Cleanup;
-  }
-
-  MsWheaEntryMD->MsWheaErrorHdr.Signature = MS_WHEA_ERROR_SIGNATURE;
-  MsWheaEntryMD->MsWheaErrorHdr.Rev = WheaV1.Rev;
-  MsWheaEntryMD->MsWheaErrorHdr.Phase = WheaV1.Phase;
-  MsWheaEntryMD->MsWheaErrorHdr.ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
-  MsWheaEntryMD->MsWheaErrorHdr.CriticalInfo = WheaV1.CriticalInfo;
-  MsWheaEntryMD->MsWheaErrorHdr.ReporterID = WheaV1.ReporterID;
-  MsWheaEntryMD->ErrorStatusCode = WheaV1.ErrorStatusCode;
-  MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD) + sizeof(MS_WHEA_ERROR_HDR);
-  CopyGuid(&MsWheaEntryMD->CallerID, &gEfiCallerIdGuid);
-
-  Status = MsWheaESClearData(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1), *Offset);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Clear V1 Early Storage storage failed at %d %r\n", __FUNCTION__, Offset, Status));
-    goto Cleanup;
-  }
-  *Offset = *Offset + sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V1);
 
 Cleanup:
   return Status;
@@ -565,7 +465,7 @@ legit
 STATIC
 EFI_STATUS
 MsWheaESSetHeaderFull (
-  MS_WHEA_ERROR_PHASE                 Phase
+  UINT8                         Phase
 )
 {
   EFI_STATUS                    Status;
@@ -631,16 +531,15 @@ MsWheaESCheckHeader (
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
-  
+
   SetMem(MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD), 0);
 
-  MsWheaEntryMD->MsWheaErrorHdr.Signature = MS_WHEA_ERROR_SIGNATURE;
-  MsWheaEntryMD->MsWheaErrorHdr.Rev = MS_WHEA_REV_0;
-  MsWheaEntryMD->MsWheaErrorHdr.Phase = Header.FullPhase;
-  MsWheaEntryMD->MsWheaErrorHdr.ErrorSeverity = EFI_GENERIC_ERROR_RECOVERABLE;
-  MsWheaEntryMD->ErrorStatusCode = MS_WHEA_ERROR_EARLY_STORAGE_STORE_FULL;
-  MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD) + sizeof(MS_WHEA_ERROR_HDR);
-  CopyGuid(&MsWheaEntryMD->CallerID, &gEfiCallerIdGuid);
+  MsWheaEntryMD->Rev = MS_WHEA_REV_0;
+  MsWheaEntryMD->Phase = Header.FullPhase;
+  MsWheaEntryMD->ErrorSeverity = EFI_GENERIC_ERROR_RECOVERABLE;
+  MsWheaEntryMD->ErrorStatusValue = MS_WHEA_ERROR_EARLY_STORAGE_STORE_FULL;
+  MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD);
+  CopyMem(&MsWheaEntryMD->ModuleID, &gEfiCallerIdGuid, sizeof(EFI_GUID));
 
   // Reset the header after processing
   SetMem(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
@@ -669,7 +568,7 @@ MsWheaESStoreEntry (
   IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
 {
-  MS_WHEA_REV Rev = 0;
+  UINT8 Rev = 0;
   EFI_STATUS  Status = EFI_SUCCESS;
 
   if (MsWheaEntryMD == NULL) {
@@ -685,17 +584,11 @@ MsWheaESStoreEntry (
     goto Cleanup;
   }
 
-  Rev = MsWheaEntryMD->MsWheaErrorHdr.Rev;
+  Rev = MsWheaEntryMD->Rev;
   switch (Rev) {
     case MS_WHEA_REV_0:
-      // Fall through
-    case MS_WHEA_REV_WILDCARD:
-      // Store Rev0/Wildcard structure
+      // Store Rev0 structure
       Status = MsWheaESV0InfoStore(MsWheaEntryMD);
-      break;
-    case MS_WHEA_REV_1:
-      // Store Rev1 structure
-      Status = MsWheaESV1InfoStore(MsWheaEntryMD);
       break;
     default:
       // Any unsupported revisions are not stored
@@ -705,7 +598,7 @@ MsWheaESStoreEntry (
 
   if (Status == EFI_OUT_OF_RESOURCES) {
     // Early Storage is full, write the header error section
-    MsWheaESSetHeaderFull(MsWheaEntryMD->MsWheaErrorHdr.Phase);
+    MsWheaESSetHeaderFull(MsWheaEntryMD->Phase);
   }
 
 Cleanup:
@@ -730,7 +623,7 @@ MsWheaESProcess (
 {
   EFI_STATUS              Status = EFI_SUCCESS;
   UINT8                   Index = 0;
-  MS_WHEA_REV             mRevInfo;
+  UINT8                   mRevInfo;
   MS_WHEA_ERROR_ENTRY_MD  MsWheaEntryMD;
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
@@ -751,7 +644,7 @@ MsWheaESProcess (
   // Check if there is indication of Early Storage full, report it if so
   Status = MsWheaESCheckHeader(&MsWheaEntryMD);
   if (EFI_ERROR(Status) == FALSE) {
-    Status = ReportFn(&MsWheaEntryMD, &MsWheaEntryMD.MsWheaErrorHdr, sizeof(MS_WHEA_ERROR_HDR));
+    Status = ReportFn(&MsWheaEntryMD);
   }
   else {
     DEBUG((DEBUG_WARN, "%a: Early Storage header check status: %r\n", __FUNCTION__, Status));
@@ -761,7 +654,7 @@ MsWheaESProcess (
   while (Index < (MsWheaESGetMaxDataCount() - sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON))) {
 
     Status = MsWheaESReadData(&mRevInfo, 
-                              sizeof(MS_WHEA_REV), 
+                              sizeof(mRevInfo), 
                               Index + OFFSET_OF(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON, Rev));
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a: Early Storage storage read Index %d failed: %r\n", __FUNCTION__, Index, Status));
@@ -770,25 +663,13 @@ MsWheaESProcess (
     }
 
     switch (mRevInfo) {
-      case MS_WHEA_REV_WILDCARD:
-        // Fall through
       case MS_WHEA_REV_0:
         Status = MsWheaESGetV0Info(&MsWheaEntryMD, &Index);
         if (EFI_ERROR(Status) == FALSE) {
-          Status = ReportFn(&MsWheaEntryMD, &MsWheaEntryMD.MsWheaErrorHdr, sizeof(MS_WHEA_ERROR_HDR));
+          Status = ReportFn(&MsWheaEntryMD);
         }
         else {
           DEBUG((DEBUG_ERROR, "%a: V0 Early Storage storage process failed %r\n", __FUNCTION__, Status));
-          Index += sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON);
-        }
-        break;
-      case MS_WHEA_REV_1:
-        Status = MsWheaESGetV1Info(&MsWheaEntryMD, &Index);
-        if (EFI_ERROR(Status) == FALSE) {
-          Status = ReportFn(&MsWheaEntryMD, &MsWheaEntryMD.MsWheaErrorHdr, sizeof(MS_WHEA_ERROR_HDR));
-        } 
-        else {
-          DEBUG((DEBUG_ERROR, "%a: V1 Early Storage storage process failed %r\n", __FUNCTION__, Status));
           Index += sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON);
         }
         break;

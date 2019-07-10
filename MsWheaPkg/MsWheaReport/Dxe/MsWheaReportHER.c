@@ -3,9 +3,8 @@
 This source implements backend routines to support storing persistent hardware 
 error records in UEFI.
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -39,8 +38,7 @@ fill (AnF) in the buffer with supplied information. Then return the pointer of p
 Note: Caller is responsible for freeing the valid returned buffer!!!
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in]  PayloadPtr                The pointer to payload
-@param[in, out]  PayloadSize          The pointer to payload length, this will be updated to the totally
+@param[out]  PayloadSize              The pointer to payload length, this will be updated to the totally
                                       allocated/operated size if operation succeeded
 
 @retval NULL if any errors, otherwise filled and allocated buffer will be returned. 
@@ -50,8 +48,7 @@ STATIC
 VOID *
 MsWheaAnFBuffer (
   IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN OUT UINT32                       *PayloadSize,
-  IN CONST VOID                       *PayloadPtr
+  IN OUT UINT32                       *PayloadSize
   )
 {
   EFI_STATUS                      Status = EFI_SUCCESS;
@@ -61,18 +58,16 @@ MsWheaAnFBuffer (
 
   EFI_COMMON_ERROR_RECORD_HEADER  *CperHdr;
   EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp;
-  EFI_FIRMWARE_ERROR_DATA         *EfiFirmwareErrorData;
+  MU_TELEMETRY_CPER_SECTION_DATA  *MuTelemetryData;
   
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
   
-  if ((PayloadSize == NULL) || 
-      (PayloadPtr == NULL) || 
-      (MsWheaEntryMD == NULL)) {
+  if ((MsWheaEntryMD == NULL) || (PayloadSize == NULL)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  ErrorPayloadSize = sizeof(EFI_FIRMWARE_ERROR_DATA) + *PayloadSize;
+  ErrorPayloadSize = sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
 
   Buffer = AllocateZeroPool(sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + 
                             sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
@@ -89,22 +84,19 @@ MsWheaAnFBuffer (
   CperErrSecDscp = (EFI_ERROR_SECTION_DESCRIPTOR*)&Buffer[BufferIndex];
   BufferIndex += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
 
-  EfiFirmwareErrorData = (EFI_FIRMWARE_ERROR_DATA*)&Buffer[BufferIndex];
-  BufferIndex += sizeof(EFI_FIRMWARE_ERROR_DATA);
+  MuTelemetryData = (MU_TELEMETRY_CPER_SECTION_DATA*)&Buffer[BufferIndex];
+  BufferIndex += sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
 
   // Fill out error type based headers according to UEFI Spec...
   CreateHeadersDefault(CperHdr, 
                       CperErrSecDscp, 
-                      EfiFirmwareErrorData, 
+                      MuTelemetryData, 
                       MsWheaEntryMD, 
                       ErrorPayloadSize);
 
-  // Copy payload section
-  CopyMem(&Buffer[BufferIndex], PayloadPtr, *PayloadSize);
-  BufferIndex += (*PayloadSize);
-
   // Update PayloadSize as the recorded error has Headers and Payload merged
   *PayloadSize = BufferIndex;
+
  Cleanup:
   DEBUG((DEBUG_INFO, "%a: exit %r...\n", __FUNCTION__, Status));
   return (VOID*) Buffer;
@@ -236,8 +228,6 @@ This routine accepts the pointer to the MS WHEA entry metadata, error specific d
 then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEFI Spec 2.7A)
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in]  PayloadPtr                The pointer to reported error block payload, the content will be copied
-@param[in]  PayloadSize               The size of reported error block payload
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
@@ -247,32 +237,35 @@ then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEF
 EFI_STATUS
 EFIAPI
 MsWheaReportHERAdd (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN CONST VOID                       *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
 {
   EFI_STATUS        Status = EFI_SUCCESS;
   UINT16            Index = 0;
   VOID              *Buffer = NULL;
-  UINT32            Size = PayloadSize;
+  UINT32            Size = 0;
   CHAR16            VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
-  
+
   // 1. Find an available variable name for next write
   Status = MsWheaFindNextAvailableSlot(&Index);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "%a: Find the next available slot failed (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
-  
+
   // 2. Fill out headers
-  Buffer = MsWheaAnFBuffer(MsWheaEntryMD, &Size, PayloadPtr);
+  Buffer = MsWheaAnFBuffer(MsWheaEntryMD, &Size);
   if (Buffer == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     DEBUG((DEBUG_ERROR, "%a: Buffer allocate and fill failed (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
-  
+  else if (Size == 0) {
+    Status = EFI_INVALID_PARAMETER;
+    DEBUG((DEBUG_ERROR, "%a: Buffer filling returned 0 length...\n", __FUNCTION__));
+    goto Cleanup;
+  }
+
   // 3. Save the record to flash
   UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, Index);
   Status = gRT->SetVariable(VarName,

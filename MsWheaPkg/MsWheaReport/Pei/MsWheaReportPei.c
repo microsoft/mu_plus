@@ -5,9 +5,8 @@ This Pei module will produce a RSC listener that listens to reported status code
 Certains errors will be collected and added to Hob List and waiting to be collected
 and/or stored during Dxe phase;
 
-Copyright (c) 2018, Microsoft Corporation
+Copyright (C) Microsoft Corporation. All rights reserved.
 
-All rights reserved.
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 1. Redistributions of source code must retain the above copyright notice,
@@ -42,8 +41,6 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 Handler function that validates input arguments, and create a hob list entry for this input for later process.
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in]  PayloadPtr                The pointer to reported error block payload, the content will be copied
-@param[in]  PayloadSize               The size of reported error block payload
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_OUT_OF_RESOURCES          List cannot make the space for requested error block payload
@@ -53,9 +50,7 @@ Handler function that validates input arguments, and create a hob list entry for
 STATIC
 EFI_STATUS
 MsWheaReportHandlerPei(
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN VOID                             *PayloadPtr,
-  IN UINT32                           PayloadSize
+  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
 {
   EFI_STATUS              Status = EFI_SUCCESS;
@@ -63,11 +58,8 @@ MsWheaReportHandlerPei(
   UINT32                  Size;
   VOID                    *MsWheaReportEntry = NULL;
 
-  if ((PayloadPtr == NULL) || 
-      (PayloadSize == 0) || 
-      (MsWheaEntryMD == NULL) || 
-      ((PayloadSize + 
-        sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + 
+  if ((MsWheaEntryMD == NULL) || 
+      ((sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + 
         sizeof(EFI_ERROR_SECTION_DESCRIPTOR) + 
         sizeof(AUTHENTICATED_VARIABLE_HEADER) + 
         EFI_HW_ERR_REC_VAR_NAME_LEN * sizeof(CHAR16)) > 
@@ -77,7 +69,7 @@ MsWheaReportHandlerPei(
   }
 
   // Add this block to the list
-  Size =  sizeof(MS_WHEA_ERROR_ENTRY_MD) + PayloadSize;
+  Size =  sizeof(MS_WHEA_ERROR_ENTRY_MD);
 
   MsWheaReportEntry = BuildGuidHob(&gMsWheaReportServiceGuid, Size);
   if (MsWheaReportEntry == NULL) {
@@ -90,10 +82,9 @@ MsWheaReportHandlerPei(
   Index = 0;
   CopyMem(&((UINT8*)MsWheaReportEntry)[Index], MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD));
 
-  Index = sizeof(MS_WHEA_ERROR_ENTRY_MD);
-  CopyMem(&((UINT8*)MsWheaReportEntry)[Index], PayloadPtr, PayloadSize);
-  
-  ((MS_WHEA_ERROR_ENTRY_MD*)MsWheaReportEntry)->PayloadSize = Size;
+  Index += sizeof(MS_WHEA_ERROR_ENTRY_MD);
+
+  ((MS_WHEA_ERROR_ENTRY_MD*)MsWheaReportEntry)->PayloadSize = Index;
 
 Cleanup:
   return Status;
@@ -176,10 +167,6 @@ MsWheaReportPeiEntry (
   Status = RscHandlerPpi->Register(MsWheaRscHandlerPei);
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, __FUNCTION__ ": failed to register PEI RSC Handler PPI (%r)\n", Status));
-  }
-
-  if (PcdGetBool(PcdMsWheaReportTestEnable) != FALSE) {
-    MsWheaInSituTest(MS_WHEA_PHASE_PEI);
   }
 
 Cleanup:
