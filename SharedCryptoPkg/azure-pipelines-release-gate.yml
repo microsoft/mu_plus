@@ -4,7 +4,7 @@ workspace:
 trigger: none # will disable CI builds entirely
 
 variables:
-  gitCreds:'$(secmircom.user):$(secmircom.pat)'
+  gitCreds: '$(secmircom.user):$(secmircom.pat)'
 
 steps:
 - checkout: self
