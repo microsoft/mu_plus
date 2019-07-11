@@ -37,6 +37,7 @@ PROJECT_SCOPE = ("corebuild", "sharedcrypto_build")
 MODULE_PKGS = ('SharedCryptoPkg/MU_BASECORE_extdep/MU_BASECORE', "SharedCryptoPkg/MU_ARM_TIANO_extdep/MU_ARM_TIANO", "SharedCryptoPkg/MU_TIANO_extdep/MU_TIANO")
 MODULE_PKG_PATHS = ";".join(os.path.join(WORKSPACE_PATH, pkg_name) for pkg_name in MODULE_PKGS)
 ACTIVE_TARGET = None
+SHOULD_DUMP_VERSION = False
 RELEASE_NOTES_FILENAME ="release_notes.md"
 PACKAGE_NAME="Mu-SharedCrypto"
 
@@ -68,6 +69,15 @@ def GetBuildTarget():
     else:
         pbw = __import__("__main__")
         return pbw.ACTIVE_TARGET
+
+
+def ShouldDumpVersion():
+    if __name__ == "__main__":
+        global SHOULD_DUMP_VERSION
+        return SHOULD_DUMP_VERSION
+    else:
+        pbw = __import__("__main__")
+        return pbw.SHOULD_DUMP_VERSION
 
 
 def CopyFile(srcDir, destDir, file_name=None):
@@ -229,8 +239,10 @@ def GetReleaseForCommit(commit_hash:str):
     raise RuntimeError("We couldn't find the release branch that we correspond to")
 
 
-def GetSubVersions(old_version:str, curr_hashes:dict, old_hashes:dict):
-    _, _, major, minor = old_version.split(".")
+def GetSubVersions(old_version:str, current_release:str, curr_hashes:dict, old_hashes:dict):
+    year, month, major, minor = old_version.split(".")
+    curr_year = int(current_release[0:4])
+    curr_mon = int(current_release[4:])
     differences = []
     for repo in curr_hashes:
         if repo not in old_hashes:
@@ -238,7 +250,10 @@ def GetSubVersions(old_version:str, curr_hashes:dict, old_hashes:dict):
             continue
         if curr_hashes[repo] != old_hashes[repo]:
             differences.append(repo)
-    if "OPENSSL" in differences or "MU_TIANO" in differences:
+    if curr_year != int(year) or curr_mon != int(month):
+        major = 1
+        minor = 1
+    elif "OPENSSL" in differences or "MU_TIANO" in differences:
         major = int(major) + 1
         minor = 1
     elif len(differences) > 0:
@@ -256,13 +271,13 @@ def GetNextVersion():
     # Unpack and read the previous release notes, skipping the header, also get hashes
     old_notes, old_hashes = GetOldReleaseNotesAndHashes(os.path.join(temp_nuget_path, PACKAGE_NAME, PACKAGE_NAME, RELEASE_NOTES_FILENAME))
     # Get the current hashes of open ssl and ourself
-    curr_hashes = GetCommitHashes(os.path.dirname(SCRIPT_PATH))
+    curr_hashes = GetCommitHashes(WORKSPACE_PATH)
     # Figure out what release branch we are in
     current_release = GetReleaseForCommit(curr_hashes["MU_PLUS"])
     # Put that as the first two pieces of our version
     new_version = current_release[0:4]+"."+current_release[4:]+"."
     # Calculate the newest version
-    new_version += GetSubVersions(old_version, curr_hashes, old_hashes)
+    new_version += GetSubVersions(old_version, current_release, curr_hashes, old_hashes)
     if new_version == old_version:
         raise RuntimeError("We are unable to republish the same version that was published last")
     # Create the release note from this branch, currently the commit message on the head?
@@ -280,12 +295,15 @@ def PublishNuget():
     scriptDir = SCRIPT_PATH
     rootDir = WORKSPACE_PATH
     API_KEY = GetAPIKey()
-    VERSION = None
-    if API_KEY is not None:
-        VERSION = GetNextVersion()
+    DUMP_VERSION = ShouldDumpVersion()
+    VERSION = GetNextVersion()
+
+    if (DUMP_VERSION):
+        print("##vso[task.setvariable variable=NugetPackageVersion;isOutput=true]"+VERSION)
 
     # move the EFI's we generated to a folder to upload
-    output_dir = os.path.join(rootDir, "Build", "SharedCrypto_Nuget")
+    output_dir = os.path.join(rootDir, "Build", "SharedCrypto_NugetOutput")
+    build_dir = os.path.join(rootDir, "Build")
     try:
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir, ignore_errors=False)
@@ -317,22 +335,27 @@ def PublishNuget():
         MoveArchTargetSpecificFile(pdb, sharedcrypto_build_dir_offset, output_dir)
 
     for txt in glob.iglob(build_dir_txt_search, recursive=True):
-        CopyFile(txt, output_dir)
+        file_name = os.path.basename(txt)
+        srcDir = os.path.dirname(txt)
+        target = os.path.basename(srcDir)
+        shutil.copyfile(os.path.join(srcDir, file_name), os.path.join(output_dir, target + file_name))
 
 
+
+    logging.info("Attempting to package the Nuget package")
+    config_file = os.path.join("Driver", "Mu-SharedCrypto.config.json")
     if API_KEY is not None:
-        logging.info("Attempting to publish the Nuget package")
-        config_file = os.path.join("Driver", "Mu-SharedCrypto.config.json")
+        logging.info("Will attempt to publish as well")
         params = "--Operation PackAndPush --ConfigFilePath {0} --Version {1} --InputFolderPath {2}  --ApiKey {3}".format(config_file, VERSION, output_dir, API_KEY)
-        # TODO: change this from a runcmd to directly invoking nuget publishing
-        ret = UtilityFunctions.RunCmd("nuget-publish", params, capture=True, workingdir=scriptDir)
-        if ret == 0:
-            logging.critical("Finished publishing Nuget version {0}".format(VERSION))
-        else:
-            logging.error("Unable to publish nuget package")
-            return False
     else:
-        logging.critical("Skipping nuget publish step. No API key provided.")
+        params = "--Operation Pack --ConfigFilePath {0} --Version {1} --InputFolderPath {2} --OutputFolderPath {3}".format(config_file, VERSION, output_dir, build_dir)
+    # TODO: change this from a runcmd to directly invoking nuget publishing
+    ret = UtilityFunctions.RunCmd("nuget-publish", params, capture=True, workingdir=scriptDir)
+    if ret == 0:
+        logging.critical("Finished packaging/publishing Nuget version {0}".format(VERSION))
+    else:
+        logging.error("Unable to pack/publish nuget package")
+        return False
 
     return True
 
@@ -411,13 +434,18 @@ if __name__ == '__main__':
     args = [sys.argv[0]]
     parser = argparse.ArgumentParser(description='Grab API Key')
     parser.add_argument('--api-key', dest="api_key", help='API key for NuGet')
+    parser.add_argument('--dump-version', '--dumpversion', '--dump_version', dest="dump_version", action='store_true', default=False, help='whether or not to dump the version onto the command-line')
     parsed_args, remaining_args = parser.parse_known_args()  # this strips the first argument off
     if remaining_args is not None:  # any arguments that remain need to be tacked on
         args.extend(remaining_args)  # tack them on after the first argument
     sys.argv = args
     SetAPIKey(parsed_args.api_key)  # Set the API ley
+    SHOULD_DUMP_VERSION = parsed_args.dump_version  # set the dump versions
 
     build_targets = ["DEBUG", "RELEASE"]
+    doing_an_update = False
+    if "--update" in (" ".join(sys.argv)).lower():
+        doing_an_update = True
 
     for target in build_targets:
         # set the build target
@@ -427,12 +455,17 @@ if __name__ == '__main__':
             CommonBuildEntry.build_entry(SCRIPT_PATH, WORKSPACE_PATH, REQUIRED_REPOS, PROJECT_SCOPE, MODULE_PKGS, MODULE_PKG_PATHS, worker_module='DriverBuilder')
         except SystemExit as e:  # catch the sys.exit call from uefibuild
             if e.code != 0:
-                raise
+                logging.warning("Stopping the build")
+                break
+        finally:
+            if doing_an_update:
+                print("Exiting because we're updating")
+                break
         # this is hacky to close logging and restart it back to a default state
         reload_logging()
     # we've finished building
     # if we want to be verbose?
-    logging.getLogger("").setLevel(logging.INFO)
+    logging.getLogger("").setLevel(logging.INFO+1)
 
     logging.critical("--Creating NUGET package--")
     if not PublishNuget():

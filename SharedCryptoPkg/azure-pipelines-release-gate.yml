@@ -3,6 +3,9 @@ workspace:
 
 trigger: none # will disable CI builds entirely
 
+variables:
+  gitCreds:'$(secmircom.user):$(secmircom.pat)'
+
 steps:
 - checkout: self
   clean: true
@@ -43,5 +46,25 @@ steps:
   inputs:
     scriptSource: 'filePath'
     scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
-    arguments: '--api-key=$(NUGET_API_KEY)'
+    arguments: '--dump-version'
     failOnStderr: true
+
+# Publish Build Artifacts
+# Publish build artifacts to Azure Artifacts/TFS or a file share
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish NugetPackage'
+  continueOnError: true
+  condition: succeeded()
+  inputs:
+    pathtoPublish: 'Build/'
+    artifactName: 'Nuget Package'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+# publish to Nuget
+- task: NuGetCommand@2
+  inputs:
+    command: push
+    nuGetFeedType: external
+    publishFeedCredentials: 'Uefibot_Mu_SharedCrypto'
+    versioningScheme: byEnvVar
+    versionEnvVar: NugetPackageVersion
