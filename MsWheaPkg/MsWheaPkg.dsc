@@ -74,8 +74,10 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
 
   MsWheaEarlyStorageLib|MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
+  CheckHwErrRecHeaderLib|MsWheaPkg/Library/CheckHwErrRecHeaderLib/CheckHwErrRecHeaderLib.inf
   MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
 
 # UNIT TEST APPLICATION RELATED
@@ -124,6 +126,7 @@
 [Components]
   MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
   MsWheaPkg/Library/MsWheaEarlyStorageLibNull/MsWheaEarlyStorageLibNull.inf
+  MsWheaPkg/Library/CheckHwErrRecHeaderLib/CheckHwErrRecHeaderLib.inf
   MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
 
 [Components.IA32]
@@ -135,8 +138,10 @@
 [Components.X64]
   MsWheaPkg/MsWheaReport/Dxe/MsWheaReportDxe.inf
 
+  MsWheaPkg/Test/UnitTests/Library/LibraryClass/CheckHwErrRecHeaderTestsApp.inf
+  
   # UNIT TEST APPLICATION RELATED
-  MsWheaPkg/UnitTests/MsWheaReportUnitTestApp/MsWheaReportUnitTestApp.inf
+  MsWheaPkg/Test/UnitTests/MsWheaReportUnitTestApp/MsWheaReportUnitTestApp.inf
 
 [BuildOptions]
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES

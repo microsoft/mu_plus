@@ -57,6 +57,10 @@
   MsWheaEarlyStorageLib|Include/Library/MsWheaEarlyStorageLib.h
   MuTelemetryHelperLib |Include/Library/MuTelemetryHelperLib.inf
 
+  ##  @libraryclass Checks the validity of hardware error records
+  ##
+  CheckHwErrRecHeaderLib|Include/Library/CheckHwErrRecHeaderLib.h
+
 [PcdsFeatureFlag]
 
 [PcdsFixedAtBuild]

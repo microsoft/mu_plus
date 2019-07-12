@@ -1,10 +1,9 @@
 ## @file MsWheaReportUnitTestApp.inf
 #
 # Tests for MS WHEA report tests with various payloads and error severities.
-##
-# Copyright (c) 2018, Microsoft Corporation
 #
-# All rights reserved.
+# Copyright (C) Microsoft Corporation. All rights reserved.
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 # 1. Redistributions of source code must retain the above copyright notice,
@@ -24,7 +23,6 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ##
-
 [Defines]
   INF_VERSION         = 0x00010005
   BASE_NAME           = MsWheaReportUnitTestApp
