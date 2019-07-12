@@ -12,19 +12,20 @@ This repository is part of Project Mu.  Please see Project Mu for details https:
 Branch Changes - release/201903
 ===============================
 
-Breaking Changes-dev
+Breaking Changes
 --------------------
 
 - None
 
-Main Changes-dev
+Main Changes
 ----------------
 
 - Added Color Bars for DEVICE_STATE_PLATFORM_MODE_[2|3]. (indigo and brown, respectively). Removed display for DEVICE_STATE_UNDEFINED.
 - Added SharedCryptoPkg that includes support for having BaseCryptLib over a protocol
 - Added the MuVarPolicyFoundationDxe driver to work with the new Variable Policy infrastructure to install a couple of foundational policies that can be used by multiple drivers. See the Feature_MuVarPolicyFoundationDxe_Readme.md document for details.
+- Massive changes to the internal structure (and reported structure) of WHEA events.
 
-Bug Fixes-dev
+Bug Fixes
 -------------
 
 - None
