@@ -164,7 +164,10 @@ def GetCommitHashes(root_dir:os.PathLike):
     cmd_args = "rev-parse HEAD"
     for git_path in search:
         git_path_dir = os.path.dirname(git_path)
-        _, git_repo_name = os.path.split(git_path_dir)
+        if git_path_dir == root_dir:
+            git_repo_name = "ROOT"
+        else:
+            _, git_repo_name = os.path.split(git_path_dir)
         git_repo_name = git_repo_name.upper()
         if git_repo_name in found_repos:
             raise RuntimeError("we've already found this repo before "+git_repo_name)
@@ -273,7 +276,7 @@ def GetNextVersion():
     # Get the current hashes of open ssl and ourself
     curr_hashes = GetCommitHashes(WORKSPACE_PATH)
     # Figure out what release branch we are in
-    current_release = GetReleaseForCommit(curr_hashes["MU_PLUS"])
+    current_release = GetReleaseForCommit(curr_hashes["ROOT"])
     # Put that as the first two pieces of our version
     new_version = current_release[0:4]+"."+current_release[4:]+"."
     # Calculate the newest version
@@ -339,8 +342,6 @@ def PublishNuget():
         srcDir = os.path.dirname(txt)
         target = os.path.basename(srcDir)
         shutil.copyfile(os.path.join(srcDir, file_name), os.path.join(output_dir, target + file_name))
-
-
 
     logging.info("Attempting to package the Nuget package")
     config_file = os.path.join("Driver", "Mu-SharedCrypto.config.json")
@@ -465,8 +466,9 @@ if __name__ == '__main__':
         reload_logging()
     # we've finished building
     # if we want to be verbose?
-    logging.getLogger("").setLevel(logging.INFO+1)
+    logging.getLogger("").setLevel(logging.INFO)
 
     logging.critical("--Creating NUGET package--")
-    if not PublishNuget():
-        logging.error("Failed to publish Nuget")
+    if not doing_an_update:
+        if not PublishNuget():
+            logging.error("Failed to publish Nuget")
