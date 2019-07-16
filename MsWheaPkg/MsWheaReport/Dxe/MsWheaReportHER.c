@@ -125,7 +125,7 @@ MsWheaFindNextAvailableSlot (
   UINT32            Index = 0;
   UINTN             Size = 0;
   CHAR16            VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
-
+  
   if (next == NULL) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
@@ -136,7 +136,7 @@ MsWheaFindNextAvailableSlot (
     goto Cleanup;
   }
 
-  for (Index = 0; Index <= MAX_UINT16; Index++) {
+  for (Index = 0; Index <= PcdGet16(PcdVariableHardwareMaxCount); Index++) {
     Size = 0;
     UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, (UINT16)(Index & MAX_UINT16));
     Status = gRT->GetVariable(VarName,
@@ -176,29 +176,49 @@ MsWheaClearAllEntries (
   VOID
   )
 {
-  UINT32                Index = 0;
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
-  UINTN                 Size = 0;
   EFI_STATUS            Status = EFI_SUCCESS;
   UINT32                Attributes;
+  CHAR16               *Name = NULL;
+  UINTN                 NameSize;
+  UINTN                 NewNameSize;
+  EFI_GUID              Guid;
   
   DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
-  for (Index = 0; Index <= MAX_UINT16; Index++) {
-    Size = 0;
-    UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, Index);
-    Status = gRT->GetVariable(VarName,
-                              &gEfiHardwareErrorVariableGuid,
-                              NULL,
-                              &Size,
-                              NULL);
-    if (Status == EFI_NOT_FOUND) {
-      // Do nothing
-      continue;
+  NameSize = sizeof(CHAR16);
+  Name = AllocateZeroPool(NameSize);
+
+  while (TRUE) {
+    // Get the next name out of the system
+    NewNameSize = NameSize;
+    Status = gRT->GetNextVariableName(&NewNameSize, Name, &Guid);
+
+    // Make sure the variable has enough room for the name
+    if (Status == EFI_BUFFER_TOO_SMALL) {
+      Name = ReallocatePool(NameSize, NewNameSize, Name);
+      if (Name == NULL) {
+        // Being out of memory is bad
+        ASSERT(FALSE);
+        Status = EFI_OUT_OF_RESOURCES;
+        break;
+      }
+      Status = gRT->GetNextVariableName(&NewNameSize, Name, &Guid);
+      NameSize = NewNameSize;
     }
-    else if (Status != EFI_BUFFER_TOO_SMALL) {
-      // We have other problems here..
+
+    if (Status == EFI_NOT_FOUND) {
+      // Out of variables, lets get out of here!
       break;
+    }
+    else if (EFI_ERROR(Status)) {
+      // Something is wrong...
+      DEBUG((DEBUG_ERROR, "%a %d get next variable name failed - %r\n", __FUNCTION__, __LINE__, Status));
+      break;
+    }
+    else if (!CompareGuid(&Guid, &gEfiHardwareErrorVariableGuid)) {
+      // If the GUID doesn't match, it isn't what we're looking for
+      continue;
     }
 
     Attributes = EFI_VARIABLE_NON_VOLATILE |
@@ -222,8 +242,13 @@ MsWheaClearAllEntries (
   if ((Status == EFI_SUCCESS) || (Status == EFI_NOT_FOUND)) {
     Status = EFI_SUCCESS;
   }
+
+  if (Name) {
+    FreePool(Name);
+  }
   
   DEBUG((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
+
   return Status;
 }
 
@@ -269,6 +294,13 @@ MsWheaReportHERAdd (
   else if (Size == 0) {
     Status = EFI_INVALID_PARAMETER;
     DEBUG((DEBUG_ERROR, "%a: Buffer filling returned 0 length...\n", __FUNCTION__));
+    goto Cleanup;
+  }
+  else if (Size > PcdGet32(PcdMaxHardwareErrorVariableSize)) {
+    Status = EFI_INVALID_PARAMETER;
+    DEBUG((DEBUG_ERROR, "%a: Buffer was bigger than we allow... %x > %x\n",
+           __FUNCTION__, Size, PcdGet32(PcdMaxHardwareErrorVariableSize)));
+    ASSERT(TRUE);
     goto Cleanup;
   }
 

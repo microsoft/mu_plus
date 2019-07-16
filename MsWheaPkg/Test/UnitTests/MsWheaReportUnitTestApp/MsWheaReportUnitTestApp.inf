@@ -81,3 +81,4 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdFlashNvStorageVariableSize        ## CONSUMES
   gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid                    ## CONSUMES
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl                     ## CONSUMES
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported

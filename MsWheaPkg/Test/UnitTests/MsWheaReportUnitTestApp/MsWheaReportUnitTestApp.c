@@ -580,6 +580,7 @@ MsWheaCommonClean (
   UINTN                 Size = 0;
   EFI_STATUS            Status = EFI_SUCCESS;
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
+  UINT32                Attributes;
 
   DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
@@ -600,12 +601,17 @@ MsWheaCommonClean (
       break;
     }
 
+    Attributes = EFI_VARIABLE_NON_VOLATILE |
+                 EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                 EFI_VARIABLE_RUNTIME_ACCESS;
+
+    if (PcdGetBool(PcdVariableHardwareErrorRecordAttributeSupported)) {
+      Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
+    }
+
     Status = gRT->SetVariable(VarName,
                               &gEfiHardwareErrorVariableGuid,
-                              EFI_VARIABLE_NON_VOLATILE |
-                              EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                              EFI_VARIABLE_RUNTIME_ACCESS |
-                              EFI_VARIABLE_HARDWARE_ERROR_RECORD,
+                              Attributes,
                               0,
                               NULL);
     if (Status != EFI_SUCCESS) {
@@ -657,6 +663,7 @@ MsWheaCommonCleanUp (
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   UINTN                 Size = 0;
   EFI_STATUS            Status = EFI_SUCCESS;
+  UINT32                Attributes;
 
   DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
@@ -677,12 +684,17 @@ MsWheaCommonCleanUp (
       break;
     }
 
+    Attributes = EFI_VARIABLE_NON_VOLATILE |
+                 EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                 EFI_VARIABLE_RUNTIME_ACCESS;
+
+    if (PcdGetBool(PcdVariableHardwareErrorRecordAttributeSupported)) {
+      Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
+    }
+
     Status = gRT->SetVariable(VarName,
                               &gEfiHardwareErrorVariableGuid,
-                              EFI_VARIABLE_NON_VOLATILE |
-                              EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                              EFI_VARIABLE_RUNTIME_ACCESS |
-                              EFI_VARIABLE_HARDWARE_ERROR_RECORD,
+                              Attributes,
                               0,
                               NULL);
     if (Status != EFI_SUCCESS) {
@@ -1045,6 +1057,7 @@ MsWheaVariableServicesTest (
   UINT16                TestIndex;
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
+  UINT32                Attributes;
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
@@ -1060,12 +1073,17 @@ MsWheaVariableServicesTest (
       DEBUG((DEBUG_WARN, "%a: Write %d failed with %r...\n", __FUNCTION__, TestIndex, Status));
     }
 
+    Attributes = EFI_VARIABLE_NON_VOLATILE |
+                 EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                 EFI_VARIABLE_RUNTIME_ACCESS;
+
+    if (PcdGetBool(PcdVariableHardwareErrorRecordAttributeSupported)) {
+      Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
+    }
+
     Status = gRT->SetVariable(VarName,
                               &gEfiHardwareErrorVariableGuid,
-                              EFI_VARIABLE_NON_VOLATILE |
-                              EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                              EFI_VARIABLE_RUNTIME_ACCESS |
-                              EFI_VARIABLE_HARDWARE_ERROR_RECORD,
+                              Attributes,
                               0,
                               NULL);
     if (Status == EFI_SUCCESS) {
@@ -1081,7 +1099,7 @@ MsWheaVariableServicesTest (
   }
 
   if (Status != EFI_NOT_FOUND) {
-    UT_LOG_ERROR( "Variable service test Phase 1 expect EFI_OUT_OF_RESOURCES, has %r.", Status);
+    UT_LOG_ERROR( "Variable service test Phase 1 expect EFI_NOT_FOUND, has %r.", Status);
     goto Cleanup;
   }
 
@@ -1160,6 +1178,7 @@ MsWheaReportTplTest (
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS            Status = EFI_SUCCESS;
   UINT16                TestIndex;
+  UINT32                Attributes;
   EFI_TPL               TplPrevious;
   EFI_TPL               TplCap;
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
@@ -1193,12 +1212,17 @@ MsWheaReportTplTest (
       UT_LOG_WARNING( "Written HwErrRec failed to pass verification.");
       goto Cleanup;
     }
+    Attributes = EFI_VARIABLE_NON_VOLATILE |
+                 EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                 EFI_VARIABLE_RUNTIME_ACCESS;
+
+    if (PcdGetBool(PcdVariableHardwareErrorRecordAttributeSupported)) {
+      Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
+    }
+
     Status = gRT->SetVariable(VarName,
                               &gEfiHardwareErrorVariableGuid,
-                              EFI_VARIABLE_NON_VOLATILE |
-                              EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                              EFI_VARIABLE_RUNTIME_ACCESS |
-                              EFI_VARIABLE_HARDWARE_ERROR_RECORD,
+                              Attributes,
                               0,
                               NULL);
   }

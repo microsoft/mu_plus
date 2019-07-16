@@ -82,7 +82,9 @@
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
   gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareMaxCount
   gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize
 
 [Guids]
   gEfiHardwareErrorVariableGuid       ## CONSUMES
