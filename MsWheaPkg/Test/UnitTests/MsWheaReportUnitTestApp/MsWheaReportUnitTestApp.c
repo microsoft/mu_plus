@@ -453,7 +453,7 @@ MsWheaVerifyFlashStorage (
   EFI_ERROR_SECTION_DESCRIPTOR    *CperSecDecs;
   MU_TELEMETRY_CPER_SECTION_DATA  *MuTelSecData;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
+  DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
   UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, TestIndex);
   Status = gRT->GetVariable(VarName,
@@ -463,7 +463,7 @@ MsWheaVerifyFlashStorage (
                             NULL);
   if ((Status == EFI_NOT_FOUND) && (MsWheaContext->TestId == TEST_ID_BOUNDARY)) {
     // Silently continue
-    DEBUG((DEBUG_INFO, __FUNCTION__ " Boundary test has Not Found error %s %08X %08X\n",
+    DEBUG((DEBUG_INFO, "%a Boundary test has Not Found error %s %08X %08X\n", __FUNCTION__,
                                     VarName,
                                     PcdGet32(PcdMaxHardwareErrorVariableSize),
                                     HW_ERR_REC_HEADERS_OFFSET));
@@ -546,7 +546,7 @@ Cleanup:
   if (Buffer != NULL) {
     FreePool(Buffer);
   }
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " exit %r\n", Status));
+  DEBUG((DEBUG_ERROR, "%a exit %r\n", __FUNCTION__, Status));
   return Status;
 } // MsWheaVerifyFlashStorage ()
 
@@ -581,7 +581,7 @@ MsWheaCommonClean (
   EFI_STATUS            Status = EFI_SUCCESS;
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
+  DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
   for (Index = 0; Index <= MAX_UINT16; Index++) {
     Size = 0;
@@ -624,10 +624,79 @@ MsWheaCommonClean (
     utStatus = UNIT_TEST_ERROR_TEST_FAILED;
   }
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " exit...\n"));
+  DEBUG((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaCommonClean ()
 
+///================================================================================================
+///================================================================================================
+///
+/// CLEANUP FUNCTIONS
+///
+///================================================================================================
+///================================================================================================
+
+/**
+  Clear all the HwErrRec entries on flash
+
+  @param[in] Framework                Test framework applied for this test case
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+VOID
+EFIAPI
+MsWheaCommonCleanUp (
+  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
+  IN UNIT_TEST_CONTEXT                Context
+  )
+{
+  UINT32                Index = 0;
+  CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
+  UINTN                 Size = 0;
+  EFI_STATUS            Status = EFI_SUCCESS;
+
+  DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
+
+  for (Index = 0; Index <= MAX_UINT16; Index++) {
+    Size = 0;
+    UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, Index);
+    Status = gRT->GetVariable(VarName,
+                              &gEfiHardwareErrorVariableGuid,
+                              NULL,
+                              &Size,
+                              NULL);
+    if (Status == EFI_NOT_FOUND) {
+      // Do nothing
+      continue;
+    }
+    else if (Status != EFI_BUFFER_TOO_SMALL) {
+      // We have other problems here..
+      break;
+    }
+
+    Status = gRT->SetVariable(VarName,
+                              &gEfiHardwareErrorVariableGuid,
+                              EFI_VARIABLE_NON_VOLATILE |
+                              EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                              EFI_VARIABLE_RUNTIME_ACCESS |
+                              EFI_VARIABLE_HARDWARE_ERROR_RECORD,
+                              0,
+                              NULL);
+    if (Status != EFI_SUCCESS) {
+      UT_LOG_ERROR( "MS WHEA Clean variables failed: SetVar: Name: %s, Status: %08X, Size: %d\n",
+                    VarName,
+                    Status,
+                    Size);
+      break;
+    }
+  }
+
+
+  DEBUG((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
+} // MsWheaCommonClean ()
 ///================================================================================================
 ///================================================================================================
 ///
@@ -652,12 +721,12 @@ MsWheaFatalExEntries (
   UINT8                 TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_FATAL_EX;
 
   for (TestIndex =0; TestIndex < UNIT_TEST_SINGLE_ROUND; TestIndex++) {
-    DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+    DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
 
     LogTelemetry (TRUE,
                   NULL,
@@ -686,7 +755,7 @@ MsWheaFatalExEntries (
   utStatus = UNIT_TEST_PASSED;
   UT_LOG_INFO( "Fatal Ex test passed!");
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaFatalExEntries ()
 
@@ -706,12 +775,12 @@ MsWheaNonFatalExEntries (
   UINT8                 TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_NON_FATAL_EX;
 
   for (TestIndex =0; TestIndex < UNIT_TEST_SINGLE_ROUND; TestIndex++) {
-    DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+    DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
     LogTelemetry (FALSE,
                   NULL,
                   UNIT_TEST_ERROR_CODE | TestIndex,
@@ -739,7 +808,7 @@ MsWheaNonFatalExEntries (
   utStatus = UNIT_TEST_PASSED;
   UT_LOG_INFO( "Non Fatal Ex test passed!");
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaNonFatalExEntries ()
 
@@ -760,11 +829,11 @@ MsWheaWildcardEntries (
   UINT8                 TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_WILDCARD;
   TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+  DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
   SetMem(Data,
         UNIT_TEST_ERROR_SIZE,
         (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
@@ -792,7 +861,7 @@ MsWheaWildcardEntries (
   }
 
   TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+  DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
   SetMem(Data,
         UNIT_TEST_ERROR_SIZE,
         (UINT8)(UNIT_TEST_ERROR_PATTERN | TestIndex));
@@ -822,7 +891,7 @@ MsWheaWildcardEntries (
   utStatus = UNIT_TEST_PASSED;
   UT_LOG_INFO( "Wildcard payload test passed!");
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaWildcardEntries ()
 
@@ -842,11 +911,11 @@ MsWheaShortEntries (
   UINT8                 TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_SHORT;
   TestIndex = 0;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+  DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
   Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
                             UNIT_TEST_ERROR_CODE);
   if (EFI_ERROR(Status) != FALSE) {
@@ -868,7 +937,7 @@ MsWheaShortEntries (
   }
 
   TestIndex ++;
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+  DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
   Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_INFO,
                             UNIT_TEST_ERROR_CODE);
   if (EFI_ERROR(Status) != FALSE) {
@@ -892,7 +961,7 @@ MsWheaShortEntries (
   utStatus = UNIT_TEST_PASSED;
   UT_LOG_INFO( "Short invocation test passed!");
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaShortEntries ()
 
@@ -913,13 +982,13 @@ MsWheaStressEntries (
   UINT16                TestIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_STRESS;
 
   // This should use up all the available space and return
   for (TestIndex = 0; TestIndex < (PcdGet32(PcdHwErrStorageSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
-    DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+    DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
     Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
                               UNIT_TEST_ERROR_CODE);
     if (EFI_ERROR(Status) != FALSE) {
@@ -936,7 +1005,7 @@ MsWheaStressEntries (
                                       0);
     DEBUG((DEBUG_INFO,"Result: %r \n", Status));
     if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_INFO, __FUNCTION__"Stress test case ceased at No. %d.\n", TestIndex));
+      DEBUG((DEBUG_INFO,"%a Stress test case ceased at No. %d.\n", __FUNCTION__, TestIndex));
       break;
     }
   }
@@ -952,7 +1021,7 @@ MsWheaStressEntries (
   utStatus = UNIT_TEST_PASSED;
   UT_LOG_INFO( "Stress test passed!");
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaStressEntries ()
 
@@ -977,18 +1046,18 @@ MsWheaVariableServicesTest (
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_VARSEV;
   UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, 0);
 
   // Phase 1: Alternate write and delete HwErrRec, it should end up with out of resources
   for (TestIndex = 0; TestIndex < (PcdGet32(PcdFlashNvStorageVariableSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
-    DEBUG((DEBUG_INFO, __FUNCTION__ ": Test No. %d...\n", TestIndex));
+    DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
     Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
                               UNIT_TEST_ERROR_CODE);
     if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_WARN, __FUNCTION__ ": Write %d failed with %r...\n", TestIndex, Status));
+      DEBUG((DEBUG_WARN, "%a: Write %d failed with %r...\n", __FUNCTION__, TestIndex, Status));
     }
 
     Status = gRT->SetVariable(VarName,
@@ -1000,9 +1069,9 @@ MsWheaVariableServicesTest (
                               0,
                               NULL);
     if (Status == EFI_SUCCESS) {
-      DEBUG((DEBUG_INFO, __FUNCTION__ ": Write %d result: %r...\n", TestIndex, Status));
+      DEBUG((DEBUG_INFO, "%a: Write %d result: %r...\n", __FUNCTION__, TestIndex, Status));
     } else if (Status == EFI_NOT_FOUND) {
-      DEBUG((DEBUG_INFO, __FUNCTION__ ": Phase 1 test ceased at %d...\n", TestIndex));
+      DEBUG((DEBUG_INFO, "%a: Phase 1 test ceased at %d...\n", __FUNCTION__, TestIndex));
       break;
     } else {
       utStatus = UNIT_TEST_ERROR_TEST_FAILED;
@@ -1073,7 +1142,7 @@ MsWheaVariableServicesTest (
   utStatus = UNIT_TEST_PASSED;
   UT_LOG_INFO( "Variable service test passed!");
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaVariableServicesTest ()
 
@@ -1096,7 +1165,7 @@ MsWheaReportTplTest (
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
 
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": enter...\n"));
+  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_TPL;
   UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, 0);
@@ -1137,7 +1206,7 @@ MsWheaReportTplTest (
   utStatus = UNIT_TEST_PASSED;
   UT_LOG_INFO( "TPL report test passed!");
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit...\n"));
+  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return utStatus;
 } // MsWheaReportTplTest ()
 
@@ -1165,22 +1234,22 @@ MsWheaReportUnitTestAppEntryPoint (
   UNIT_TEST_SUITE       *Misc = NULL;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = NULL;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " enter\n"));
+  DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
   MsWheaContext = AllocateZeroPool(sizeof(MS_WHEA_TEST_CONTEXT));
   if (MsWheaContext == NULL) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__ "MS WHEA context allocation failed\n"));
+    DEBUG(( DEBUG_ERROR, "%a MS WHEA context allocation failed\n", __FUNCTION__));
     goto Cleanup;
   }
 
   SetMem(ShortTitle, sizeof(ShortTitle), 0);
   UnicodeSPrint(ShortTitle, sizeof(ShortTitle), L"%a", gEfiCallerBaseName);
-  DEBUG(( DEBUG_ERROR, __FUNCTION__ "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG(( DEBUG_ERROR, "%a %s v%s\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
   // Start setting up the test framework for running the tests.
   Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortTitle, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ "Failed in InitUnitTestFramework. Status = %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a Failed in InitUnitTestFramework. Status = %r\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
@@ -1188,7 +1257,7 @@ MsWheaReportUnitTestAppEntryPoint (
   CreateUnitTestSuite( &Misc, Fw, L"MS WHEA Miscellaneous Test cases", L"MsWhea.Miscellaneous", NULL, NULL);
 
   if (Misc == NULL) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ "Failed in CreateUnitTestSuite for TestSuite\n"));
+    DEBUG((DEBUG_ERROR, "%a Failed in CreateUnitTestSuite for TestSuite\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
@@ -1209,10 +1278,10 @@ MsWheaReportUnitTestAppEntryPoint (
               MsWheaStressEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
   AddTestCase(Misc, L"Variable service test should verify Reclaim and quota manipulation", L"MsWhea.Miscellaneous.MsWheaVariableServicesTest",
-              MsWheaVariableServicesTest, MsWheaCommonClean, MsWheaCommonClean, MsWheaContext );
+              MsWheaVariableServicesTest, MsWheaCommonClean, MsWheaCommonCleanUp, MsWheaContext );
 
   AddTestCase(Misc, L"TPL test for all supported TPLs", L"MsWhea.Miscellaneous.MsWheaReportTplTest",
-              MsWheaReportTplTest, MsWheaCommonClean, MsWheaCommonClean, MsWheaContext );
+              MsWheaReportTplTest, MsWheaCommonClean, MsWheaCommonCleanUp, MsWheaContext );
 
   //
   // Execute the tests.
@@ -1226,6 +1295,6 @@ Cleanup:
   if (MsWheaContext != NULL) {
     FreePool(MsWheaContext);
   }
-  DEBUG((DEBUG_ERROR, __FUNCTION__ " exit\n"));
+  DEBUG((DEBUG_ERROR, "%a exit\n", __FUNCTION__));
   return Status;
 } // MsWheaReportUnitTestAppEntryPoint ()
