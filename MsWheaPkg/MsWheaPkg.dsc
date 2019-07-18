@@ -136,6 +136,7 @@
   }
 
 [Components.X64]
+  MsWheaPkg/HwErrBert/HwErrBert.inf
   MsWheaPkg/MsWheaReport/Dxe/MsWheaReportDxe.inf
 
   MsWheaPkg/Test/UnitTests/Library/LibraryClass/CheckHwErrRecHeaderTestsApp.inf
