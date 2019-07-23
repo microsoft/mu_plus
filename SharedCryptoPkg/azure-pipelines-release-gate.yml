@@ -4,7 +4,7 @@ workspace:
 trigger: none # will disable CI builds entirely
 
 variables:
-  gitCreds: '$(secmircom.user):$(secmircom.pat)'
+- group: SecMirrorCommon
 
 steps:
 - checkout: self
@@ -21,6 +21,12 @@ steps:
 - script: pip install -r requirements.txt --upgrade
   displayName: 'Install/Upgrade mu_build'
 
+# Create a variable
+- powershell: |
+    Write-Host "##vso[task.setvariable variable=GIT_CREDS]projectmu:$(secmircom.pat)"
+- script: |
+    echo my pipeline variable is $(GIT_CREDS)
+
 # Update dependencies
 - task: PythonScript@0
   displayName: 'Update Dependencies'
@@ -28,7 +34,7 @@ steps:
     scriptSource: 'filePath'
     scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
     arguments: '--UPDATE'
-    failOnStderr: true
+    failOnStderr: false
 
 # Update dependencies (to resolve nugets from previously resolved ext_deps)
 - task: PythonScript@0
@@ -37,8 +43,7 @@ steps:
     scriptSource: 'filePath'
     scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
     arguments: '--UPDATE'
-    failOnStderr: true
-
+    failOnStderr: false
 
 # Build and publish
 - task: PythonScript@0
@@ -46,8 +51,21 @@ steps:
   inputs:
     scriptSource: 'filePath'
     scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
-    arguments: '--dump-version'
-    failOnStderr: true
+    arguments: '--dump-version --api-key=$(NUGET_API_KEY)'
+    failOnStderr: false
+
+# Copy the Nuget Package
+- task: CopyFiles@2
+  displayName: 'Copy Nuget Pkg'
+  inputs:
+    contents: 'Build/**.nupkg'
+    targetFolder: $(Build.ArtifactStagingDirectory)
+# Copy the TXT file
+- task: CopyFiles@2
+  displayName: 'Copy TXT files'
+  inputs:
+    contents: 'Build/**.txt'
+    targetFolder: $(Build.ArtifactStagingDirectory)
 
 # Publish Build Artifacts
 # Publish build artifacts to Azure Artifacts/TFS or a file share
@@ -56,9 +74,7 @@ steps:
   continueOnError: true
   condition: succeeded()
   inputs:
-    pathtoPublish: 'Build/'
     artifactName: 'Nuget Package'
-    targetFolder: $(Build.ArtifactStagingDirectory)
 
 # publish to Nuget
 - task: NuGetCommand@2
@@ -68,3 +84,5 @@ steps:
     publishFeedCredentials: 'Uefibot_Mu_SharedCrypto'
     versioningScheme: byEnvVar
     versionEnvVar: NugetPackageVersion
+    verbosityPush: 'detailed'
+    configuration: 'SharedCryptoPkg/Driver/Mu-SharedCrypto.config.json'

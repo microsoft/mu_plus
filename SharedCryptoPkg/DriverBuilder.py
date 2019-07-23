@@ -165,7 +165,7 @@ def GetCommitHashes(root_dir:os.PathLike):
     for git_path in search:
         git_path_dir = os.path.dirname(git_path)
         if git_path_dir == root_dir:
-            git_repo_name = "ROOT"
+            git_repo_name = "MU_PLUS"
         else:
             _, git_repo_name = os.path.split(git_path_dir)
         git_repo_name = git_repo_name.upper()
@@ -276,7 +276,7 @@ def GetNextVersion():
     # Get the current hashes of open ssl and ourself
     curr_hashes = GetCommitHashes(WORKSPACE_PATH)
     # Figure out what release branch we are in
-    current_release = GetReleaseForCommit(curr_hashes["ROOT"])
+    current_release = GetReleaseForCommit(curr_hashes["MU_PLUS"])
     # Put that as the first two pieces of our version
     new_version = current_release[0:4]+"."+current_release[4:]+"."
     # Calculate the newest version
@@ -467,8 +467,11 @@ if __name__ == '__main__':
     # we've finished building
     # if we want to be verbose?
     logging.getLogger("").setLevel(logging.INFO)
+    newHandler = logging.StreamHandler(sys.stdout)
+    newHandler.setLevel(logging.NOTSET)
+    logging.getLogger("").addHandler(newHandler)
 
-    logging.critical("--Creating NUGET package--")
     if not doing_an_update:
+        logging.critical("--Creating NUGET package--")
         if not PublishNuget():
             logging.error("Failed to publish Nuget")
