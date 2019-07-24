@@ -185,7 +185,7 @@ GenerateVariableList() {
     }
 
     // Add this variable to the array
-    DEBUG((DEBUG_VERBOSE, "%a - found %s\n", __FUNCTION__, Name));
+    DEBUG((DEBUG_ERROR, "%a - found %s\n", __FUNCTION__, Name));
     mVarNameList = ReallocatePool( mVarNameListCount * EFI_HW_ERR_REC_VAR_NAME_LEN * sizeof(CHAR16),
                                   (mVarNameListCount + 1) * EFI_HW_ERR_REC_VAR_NAME_LEN * sizeof(CHAR16),
                                    mVarNameList);
@@ -229,7 +229,7 @@ ClearVariables() {
   DEBUG((DEBUG_VERBOSE, "%a enter: number of elements to clear = %x\n", __FUNCTION__, mVarNameListCount));
 
   if (mVarNameList == NULL) {
-    DEBUG((DEBUG_ERROR, "%a mVarNameList is null!\n", __FUNCTION__));
+    DEBUG((DEBUG_WARN, "%a mVarNameList is null!\n", __FUNCTION__));
     return;
   }
 

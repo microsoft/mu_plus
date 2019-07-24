@@ -263,8 +263,7 @@ BertErrorBlockAddErrorData (
   Entry->ErrorDataLength = SizeOfGenericErrorData;
 
   // Copy data right after header
-  GenericErrorDataFollowEntry = (VOID*)(Entry +
-             sizeof(EFI_ACPI_6_1_GENERIC_ERROR_DATA_ENTRY_STRUCTURE));
+  GenericErrorDataFollowEntry = (VOID*)(Entry + 1);
   gBS->CopyMem (
          GenericErrorDataFollowEntry,
          GenericErrorData,
