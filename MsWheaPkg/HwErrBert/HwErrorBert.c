@@ -326,21 +326,7 @@ HwErrorBertEntry (
 
   DEBUG((DEBUG_VERBOSE, "%a\n", __FUNCTION__));
 
-  // Register for the exit boot event to publish BERT table.
-  Status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
-                              TPL_CALLBACK,
-                              ExitBootServicesHandlerCallback,
-                              NULL,
-                              &gEfiEventExitBootServicesGuid,
-                              &mExitBootServicesEvent);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a - Error creating mExitBootServicesEvent\n", __FUNCTION__));
-    goto cleanup;
-  }
-
-  // Register for the ready to boot event to clear variables!
-  // This is separate from publishing BERT table in case we never boot to OS.
-  // In that case, we would be able to try to publish the variables again.
+  // Register for the ready to boot event to publish BERT table.
   Status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
                 TPL_CALLBACK,
                 ReadyToBootHandlerCallback,
@@ -349,6 +335,20 @@ HwErrorBertEntry (
                 &mReadyToBootEvent);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "%a - Error creating mReadyToBootEvent\n", __FUNCTION__));
+    goto cleanup;
+  }
+
+  // Register for the exit boot services event to clear variables!
+  // This is separate from publishing BERT table in case we never boot to OS.
+  // In that case, we would be able to try to publish the variables again.
+  Status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
+                              TPL_CALLBACK,
+                              ExitBootServicesHandlerCallback,
+                              NULL,
+                              &gEfiEventExitBootServicesGuid,
+                              &mExitBootServicesEvent);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "%a - Error creating mExitBootServicesEvent\n", __FUNCTION__));
     goto cleanup;
   }
 
