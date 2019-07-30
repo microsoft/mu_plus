@@ -238,7 +238,7 @@ IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
     if (EFI_ERROR(Status))
     {
         mSWMProtocol = NULL;
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
+        DEBUG((DEBUG_WARN, "ERROR [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
         goto ErrorExit;
     }
 

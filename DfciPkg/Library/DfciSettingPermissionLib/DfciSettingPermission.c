@@ -432,7 +432,7 @@ CheckForAuthenticationProtocol (
       }
       else
       {
-        DEBUG((DEBUG_ERROR,"No Owner Identity installed, re-initializing Permissions. Code=%r\n",Status));
+        DEBUG((DEBUG_INFO,"No Owner Identity installed, re-initializing Permissions. Code=%r\n",Status));
       }
       if (EFI_ERROR(Status))
       {

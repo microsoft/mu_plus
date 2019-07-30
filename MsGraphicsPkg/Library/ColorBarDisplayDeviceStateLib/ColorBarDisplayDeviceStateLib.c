@@ -158,7 +158,7 @@ IN       UINT32                arrayLength
     for(UINT32 index = 0; index < arrayLength; index++) {
       DEBUG((DEBUG_INFO, "Checking icon of size %u x %u to see if it fits\n", blitArray[index]->Height, blitArray[index]->Width));
       if(blitArray[index]->Height <= bannerHeight) {
-        DEBUG((DEBUG_ERROR, "Found fitting icon\n"));
+        DEBUG((DEBUG_INFO, "Found fitting icon\n"));
         si->IconInfo.Width = blitArray[index]->Width;
         si->IconInfo.Height = blitArray[index]->Height;
         si->IconInfo.Placement = MIDDLE_CENTER;

@@ -636,7 +636,7 @@ MsWheaESProcess (
 
   // Make sure the Early Storage is valid.
   if (MsWheaESRegionIsValid() == FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: the Early Storage is not valid!\n", __FUNCTION__));
+    DEBUG((DEBUG_WARN, "%a: the Early Storage is not valid!\n", __FUNCTION__));
     Status = EFI_NOT_FOUND;
     goto Cleanup;
   }

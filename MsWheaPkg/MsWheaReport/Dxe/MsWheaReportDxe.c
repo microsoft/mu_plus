@@ -260,7 +260,7 @@ MsWheaProcessPrevError (
   
   Status = MsWheaESProcess(MsWheaReportHandlerDxe);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: CMOS entries process failed %r\n", __FUNCTION__, Status));
+    DEBUG((DEBUG_WARN, "%a: CMOS entries process failed %r\n", __FUNCTION__, Status));
   }
 
   Status = MsWheaProcHob();
