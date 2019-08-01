@@ -1,6 +1,7 @@
 ##
 # Script to Build Shared Crypto Driver
-# Copyright Microsoft Corporation, 2019
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 # This is to build the SharedTls binaries for NuGet publishing
 ##
