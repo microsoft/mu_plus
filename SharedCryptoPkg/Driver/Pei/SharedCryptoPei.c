@@ -1,7 +1,7 @@
 /** @file
   This module installs Crypto PPI used by Project Mu Firmware
 
-Copyright (C) Microsoft Corporation. All rights reserved.. All rights reserved.
+Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/

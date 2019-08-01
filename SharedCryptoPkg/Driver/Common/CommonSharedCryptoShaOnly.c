@@ -11,7 +11,7 @@
   functions that we use in PEI. Using the ShaOnly flavor reduces in a smaller
   binary size. See Readme.md in the root of SharedCryptoPkg for more info.
 
-Copyright (C) Microsoft Corporation. All rights reserved.. All rights reserved.
+Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/

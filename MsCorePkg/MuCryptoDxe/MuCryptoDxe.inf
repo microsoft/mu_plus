@@ -2,7 +2,7 @@
 #  This module consolidates all crypto needed for Project Mu UEFI and provides 
 #  protocol for those functions. 
 #
-# Copyright (C) Microsoft Corporation. All rights reserved.. All rights reserved.
+# Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
