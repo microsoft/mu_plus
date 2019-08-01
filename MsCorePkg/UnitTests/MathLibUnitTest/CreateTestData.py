@@ -1,3 +1,10 @@
+## @file
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
 import os
 import sys
 import math
