@@ -1,8 +1,8 @@
 /** @file
   Support using XML as the File format for var report data
 
-
-  Copyright (c) 2016, Microsoft Corporation. All rights reserved.<BR>
+Copyright (C) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 

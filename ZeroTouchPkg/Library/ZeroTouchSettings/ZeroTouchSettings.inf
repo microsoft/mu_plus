@@ -1,7 +1,8 @@
 ## @file
 #  Library to support Zero Touch Settings  (get/set)
 #
-#  Copyright (c) 2018, Microsoft Corporation. All rights reserved.<BR>
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 
