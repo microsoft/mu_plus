@@ -2,11 +2,10 @@
 /** @file
   This application will request new DFCI configuration data from server.
 
-
-  Copyright (c) 2017, Microsoft Corporation. All rights reserved.<BR>
+Copyright (C) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
 
 #include <Uefi.h>
 
