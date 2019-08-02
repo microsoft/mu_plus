@@ -1,10 +1,8 @@
 ## @file
 # Library to get and set the device state
 #
-# @copyright
-# Copyright (c) 2018 Microsoft Corporation. All rights reserved
-#
-# @par Specification Reference:
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 #
 ##
 

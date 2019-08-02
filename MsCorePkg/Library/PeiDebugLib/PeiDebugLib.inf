@@ -2,7 +2,7 @@
 # Debug Library to be used with DebugPortPEI library
 # Routes all DebugPrint and DebugAssert calls through PPI
 #
-# Copyright (c) 2018, Microsoft Corporation
+# Copyright (C) Microsoft Corporation. All rights reserved.
 #
 # Copyright (C) 2013 - 2015, Intel Corporation. All rights reserved.<BR>
 # This software and associated documentation (if any) is furnished

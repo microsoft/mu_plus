@@ -1,8 +1,8 @@
 /** @file
   Internal header file for XML helper routines for JUNIT support
 
-
-  Copyright (c) 2017, Microsoft Corporation. All rights reserved.<BR>
+Copyright (C) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
