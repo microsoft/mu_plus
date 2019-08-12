@@ -182,7 +182,7 @@ PlatformBootManagerPriorityBoot (
     if (EFI_NOT_FOUND == Status) {
         DEBUG((DEBUG_INFO,"No Priority Boot option selected.\n"));
         if (*BootNext != NULL ) {
-            DEBUG((DEBUG_INFO,"Boot Next is %x\n",*BootNext));
+            DEBUG((DEBUG_INFO, "Boot Next is %04X\n", **BootNext));
         }
         return;
     }
