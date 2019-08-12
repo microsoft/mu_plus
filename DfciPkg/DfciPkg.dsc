@@ -29,8 +29,8 @@
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   OpensslLib|CryptoPkg/Library/OpensslLib/OpensslLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
-  HttpLib|MdeModulePkg/Library/DxeHttpLib/DxeHttpLib.inf
-  NetLib|MdeModulePkg/Library/DxeNetLib/DxeNetLib.inf
+  HttpLib|NetworkPkg/Library/DxeHttpLib/DxeHttpLib.inf
+  NetLib|NetworkPkg/Library/DxeNetLib/DxeNetLib.inf
 
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf

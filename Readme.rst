@@ -2,40 +2,40 @@
 Project Mu Common Plus Repository
 =================================
 
-.. |build_status_windows| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/mu_plus%20PR%20gate?branchName=release/201903
+.. |build_status_windows| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/mu_plus%20PR%20gate?branchName=dev/201905
 
-|build_status_windows| Current build status for release/201903
+|build_status_windows| Current build status for release/201905
 
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
 
-Branch Changes - release/201903
+Branch Status - dev/201905
+==============================
+
+Status:
+  In Development
+
+Anticipated Stabilization:
+  September 2019
+
+
+Branch Changes - dev/201905
 ===============================
 
-Breaking Changes
+Breaking Changes-dev
 --------------------
 
 - None
 
-Main Changes
+Main Changes-dev
 ----------------
 
-- Added Color Bars for DEVICE_STATE_PLATFORM_MODE_[2|3]. (indigo and brown, respectively). Removed display for DEVICE_STATE_UNDEFINED.
-- Added SharedCryptoPkg that includes support for having BaseCryptLib over a protocol
-- Added the MuVarPolicyFoundationDxe driver to work with the new Variable Policy infrastructure to install a couple of foundational policies that can be used by multiple drivers. See the Feature_MuVarPolicyFoundationDxe_Readme.md document for details.
-- Massive changes to the internal structure (and reported structure) of WHEA events.
+- None
 
-Bug Fixes
+Bug Fixes-dev
 -------------
 
 - None
-
-1903_CIBuild Changes
---------------------
-
-Source Commit from 201811: 235936c9ab85fe859ddbdb8576b7d4e5cd711052
-
-- Update DisplayEngineDxe fingerprint. Should this even still be an override?
 
 Code of Conduct
 ===============
