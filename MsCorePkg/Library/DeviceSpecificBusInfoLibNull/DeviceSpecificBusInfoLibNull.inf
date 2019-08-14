@@ -1,0 +1,25 @@
+## @file
+# DeviceSpecificBusInfo.inf
+#
+# Implements the DeviceSpecificBusInfoLib.h header to provide the CheckHardwareConnected.c file with
+# the pci bus info for pci devices which the user wants to verify are connected at boot
+#
+##
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION         = 0x00010006
+  BASE_NAME           = DeviceSpecificBusInfoLibNull
+  FILE_GUID           = 2284258C-0E2C-42B1-B8FF-B2EC1D7F139A
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = BASE
+  LIBRARY_CLASS       = DeviceSpecificBusInfoLib
+
+[Sources]
+  DeviceSpecificBusInfoLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsCorePkg/MsCorePkg.dec

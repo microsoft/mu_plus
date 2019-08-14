@@ -1,0 +1,45 @@
+## @file
+#CheckHardwareConnected.inf
+#
+# Checks if PCI devices defined in DeviceSpecificBusInfoLib are connected
+#
+##
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+
+[Defines]
+  INF_VERSION         = 0x00010006
+  BASE_NAME           = CheckHardwareConnected
+  FILE_GUID           = E1732F53-53CC-4B6C-90EB-CF4161A1C9ED
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  ENTRY_POINT         = CheckHardwareConnectedEntryPoint
+
+[Sources]
+  CheckHardwareConnected.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiDriverEntryPoint
+  UefiLib
+  MemoryAllocationLib
+  MuTelemetryHelperLib
+  DeviceSpecificBusInfoLib
+
+[Protocols]
+  gEfiPciIoProtocolGuid
+
+[Guids]
+  gDeviceSpecificBusInfoLibTelemetryGuid
+
+[Depex]
+  gEfiPciIoProtocolGuid

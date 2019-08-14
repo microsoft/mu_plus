@@ -44,6 +44,8 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   MuVariablePolicyHelperLib|MdeModulePkg/Library/MuVariablePolicyHelperLib/MuVariablePolicyHelperLib.inf
+  MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
+  DeviceSpecificBusInfoLib|MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf
 
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
 
@@ -141,6 +143,8 @@
   MsCorePkg/UnitTests/MathLibUnitTest/MathLibUnitTest.inf
   MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
   MsCorePkg/UnitTests/JsonTest/JsonTestApp.inf
+  MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf
+  MsCorePkg/CheckHardwareConnected/CheckHardwareConnected.inf
 
 
 [BuildOptions]

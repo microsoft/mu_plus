@@ -31,6 +31,10 @@
   #
   DeviceStateLib|Include/Library/DeviceStateLib.h
 
+  ## @libraryclass Provides PCI device info to CheckHardwareConnected
+  #
+  DeviceSpecificBusInfoLib|Include/Library/DeviceSpecificBusInfoLib.h
+
 
 [Guids]
   #  {a2966407-1f6b-4c86-b21e-fcc474c6f28e}
@@ -44,7 +48,9 @@
   # {6A85A0B9-3C08-4585-AC1F-8ED221CF059F}
   gMuVarPolicyWriteOnceStateVarGuid = { 0x6a85a0b9, 0x3c08, 0x4585, { 0xac, 0x1f, 0x8e, 0xd2, 0x21, 0xcf, 0x05, 0x9f }}
 
-
+  ## DeviceSpecificBusInfo Library Guid
+  #
+  gDeviceSpecificBusInfoLibTelemetryGuid = {0x3b82283d, 0x71dd, 0x4c61, {0xad, 0x2b, 0x51, 0x9b, 0x8d, 0x7b, 0x77, 0xc9}}
 
 [Ppis]
   gDebugPortPpiGuid = { 0x9d83f2d1, 0x9832, 0x4ded, { 0xaf, 0x78, 0x0e, 0xfe, 0x93, 0x07, 0xe8, 0xb1 }}
