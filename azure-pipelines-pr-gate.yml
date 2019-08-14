@@ -67,6 +67,8 @@ steps:
 # Copy the build logs to the artifact staging directory
 - task: CopyFiles@2
   displayName: "Copy build logs"
+  continueOnError: true
+  condition: succeededOrFailed()
   inputs:
     targetFolder: '$(Build.ArtifactStagingDirectory)'
     contents: |
@@ -74,12 +76,17 @@ steps:
       Build\**\BUILDLOG_*.md
       Build\**\CI_*.txt
       Build\**\CI_*.md
+      Build\**\CISETUP.txt
+      Build\**\CISETUP.md
+      Build\**\*LOG.txt
+      Build\**\*LOG.md
       Build\**\TestSuites.xml
     flattenFolders: true
 
 # Publish build artifacts to Azure Artifacts/TFS or a file share
 - task: PublishBuildArtifacts@1
   continueOnError: true
+  condition: succeededOrFailed()
   displayName: "Publish build logs"
   inputs:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)'
