@@ -26,6 +26,10 @@
   # Test guid to be populated in LibraryID of MS_WHEA_RSC_INTERNAL_ERROR_DATA
   gMuTestLibraryGuid       =    { 0xf3446251, 0x8ba4, 0x4fe9, { 0xae, 0xed, 0x26, 0x5c, 0x45, 0xca, 0x4a, 0xf6 } }
 
+  ## Guid which we'll use to get and store the variable which states whether or not we should raise errors at boot
+  #
+  gRaiseTelemetryErrorsAtBoot = {0x34b1e7cd, 0x9cc8, 0x4dcd, {0x9f, 0x9a, 0xf7, 0x1f, 0x1f, 0xae, 0xfd, 0xc6}}
+
 [Includes]
   Include
 

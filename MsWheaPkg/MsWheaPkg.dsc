@@ -121,8 +121,16 @@
   MsWheaPkg/HwErrBert/HwErrBert.inf
   MsWheaPkg/MsWheaReport/Dxe/MsWheaReportDxe.inf
 
+  # Check HWErrRec headers
   MsWheaPkg/Test/UnitTests/Library/LibraryClass/CheckHwErrRecHeaderTestsApp.inf
   
+  # Raises Report Status Codes
+  MsWheaPkg/DummyErrorDriver/DummyErrorDriver.inf
+
+  # UEFI_APPLICATION which can be run in shell to set variable which decides how many HWErrRecs are produced
+  # at boot
+  MsWheaPkg/EnableDisableErrors/EnableDisableErrors.inf
+
   # UNIT TEST APPLICATION RELATED
   MsWheaPkg/Test/UnitTests/MsWheaReportUnitTestApp/MsWheaReportUnitTestApp.inf
 

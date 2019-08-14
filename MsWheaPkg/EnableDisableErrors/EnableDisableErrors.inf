@@ -1,0 +1,42 @@
+## @file
+#
+#
+# <DESCRIPTION>
+#
+##
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = EnableDisableErrors
+  FILE_GUID                      = E06294D1-E633-47A7-BA58-69318A439053
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = EnableDisableErrorsEntry
+
+[Sources]
+  EnableDisableErrors.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  UefiApplicationEntryPoint
+  DebugLib
+  UefiBootServicesTableLib
+  MemoryAllocationLib 
+  UefiRuntimeServicesTableLib
+  MuTelemetryHelperLib
+
+[Protocols]
+  gEfiShellParametersProtocolGuid
+
+[Guids]
+  gRaiseTelemetryErrorsAtBoot   ## PRODUCES
+  gEfiHardwareErrorVariableGuid ## CONSUMES
