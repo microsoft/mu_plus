@@ -37,7 +37,7 @@ DebugPortPrint (
   IN  CONST CHAR8  *Format,
   VA_LIST          VaListMarker
 ) {
-  DebugPrintValist (ErrorLevel, Format, VaListMarker);
+  DebugVPrint (ErrorLevel, Format, VaListMarker);
 }
 
 /**

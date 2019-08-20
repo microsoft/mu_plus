@@ -1,7 +1,7 @@
 /** @file
   Debug library that routes debug to either ReportStatusCode or Serial output
   based on what protocols/tag GUIDs are installed
-  
+
 Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -171,15 +171,15 @@ DxeDebugLibDestructor(
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
 
-  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function 
-  GetDebugPrintErrorLevel (), then print the message specified by Format and the 
+  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function
+  GetDebugPrintErrorLevel (), then print the message specified by Format and the
   associated variable argument list to the debug output device.
 
   If Format is NULL, then ASSERT().
 
   @param  ErrorLevel  The error level of the debug message.
   @param  Format      The format string for the debug message to print.
-  @param  ...         The variable argument list whose contents are accessed 
+  @param  ...         The variable argument list whose contents are accessed
                       based on the format string specified by Format.
 
 **/
@@ -317,10 +317,6 @@ DebugDumpMemory (
 // END
 
 /**
-MS_CHANGE_?
-MSCHANGE - To split the DebugPrint into two one taking va_list and one with var args
-Prints a debug message to the debug output device if the specified error level is enabled.
-
 If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function
 GetDebugPrintErrorLevel (), then print the message specified by Format and the
 associated variable argument list to the debug output device.
@@ -337,7 +333,7 @@ record length, then directly return and not print it.
 **/
 VOID
 EFIAPI
-DebugPrintValist(
+DebugVPrint(
   IN  UINTN        ErrorLevel,
   IN  CONST CHAR8  *Format,
   VA_LIST          VaListMarker
@@ -356,16 +352,15 @@ DebugPrintValist(
 }
 // END
 
-
 /**
-  Prints an assert message containing a filename, line number, and description.  
+  Prints an assert message containing a filename, line number, and description.
   This may be followed by a breakpoint or a dead loop.
 
   Print a message of the form "ASSERT <FileName>(<LineNumber>): <Description>\n"
-  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of 
-  PcdDebugProperyMask is set then CpuBreakpoint() is called. Otherwise, if 
-  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugProperyMask is set then 
-  CpuDeadLoop() is called.  If neither of these bits are set, then this function 
+  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of
+  PcdDebugProperyMask is set then CpuBreakpoint() is called. Otherwise, if
+  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugProperyMask is set then
+  CpuDeadLoop() is called.  If neither of these bits are set, then this function
   returns immediately after the message is printed to the debug output device.
   DebugAssert() must actively prevent recursion.  If DebugAssert() is called while
   processing another DebugAssert(), then DebugAssert() must return immediately.
@@ -403,14 +398,14 @@ DebugAssert (
 /**
   Fills a target buffer with PcdDebugClearMemoryValue, and returns the target buffer.
 
-  This function fills Length bytes of Buffer with the value specified by 
+  This function fills Length bytes of Buffer with the value specified by
   PcdDebugClearMemoryValue, and returns Buffer.
 
   If Buffer is NULL, then ASSERT().
-  If Length is greater than (MAX_ADDRESS - Buffer + 1), then ASSERT(). 
+  If Length is greater than (MAX_ADDRESS - Buffer + 1), then ASSERT().
 
   @param   Buffer  The pointer to the target buffer to be filled with PcdDebugClearMemoryValue.
-  @param   Length  The number of bytes in Buffer to fill with zeros PcdDebugClearMemoryValue. 
+  @param   Length  The number of bytes in Buffer to fill with zeros PcdDebugClearMemoryValue.
 
   @return  Buffer  The pointer to the target buffer filled with PcdDebugClearMemoryValue.
 
@@ -437,7 +432,7 @@ DebugClearMemory (
 /**
   Returns TRUE if ASSERT() macros are enabled.
 
-  This function returns TRUE if the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of 
+  This function returns TRUE if the DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of
   PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
 
   @retval  TRUE    The DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED bit of PcdDebugProperyMask is set.
@@ -454,10 +449,10 @@ DebugAssertEnabled (
 }
 
 
-/**  
+/**
   Returns TRUE if DEBUG() macros are enabled.
 
-  This function returns TRUE if the DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of 
+  This function returns TRUE if the DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of
   PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
 
   @retval  TRUE    The DEBUG_PROPERTY_DEBUG_PRINT_ENABLED bit of PcdDebugProperyMask is set.
@@ -474,10 +469,10 @@ DebugPrintEnabled (
 }
 
 
-/**  
+/**
   Returns TRUE if DEBUG_CODE() macros are enabled.
 
-  This function returns TRUE if the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of 
+  This function returns TRUE if the DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of
   PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
 
   @retval  TRUE    The DEBUG_PROPERTY_DEBUG_CODE_ENABLED bit of PcdDebugProperyMask is set.
@@ -494,10 +489,10 @@ DebugCodeEnabled (
 }
 
 
-/**  
+/**
   Returns TRUE if DEBUG_CLEAR_MEMORY() macro is enabled.
 
-  This function returns TRUE if the DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of 
+  This function returns TRUE if the DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of
   PcdDebugProperyMask is set.  Otherwise, FALSE is returned.
 
   @retval  TRUE    The DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED bit of PcdDebugProperyMask is set.
