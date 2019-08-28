@@ -1,0 +1,29 @@
+## @file MemoryTypeInformationChangeLib.inf
+# Reports the memory type information change as a telemetry event.
+##
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MemoryTypeInformationChangeLib
+  FILE_GUID           = 6884A444-8A1D-4812-AB91-601B0FE3BBEA
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = BASE
+  LIBRARY_CLASS       = MemoryTypeInformationChangeLib
+
+
+[Sources]
+  MemoryTypeInformationChangeLib.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+
+[LibraryClasses]
+  BaseLib
+  MuTelemetryHelperLib
