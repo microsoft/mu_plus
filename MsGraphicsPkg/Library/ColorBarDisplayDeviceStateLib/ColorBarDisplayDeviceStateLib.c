@@ -25,9 +25,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //Height of single banner is percent of total screen height
 #define HEIGHT_OF_SINGLE_BANNER (8)
 
-//These widths are percent of banner height
-#define STRIPE_WIDTH (20)
-#define CHECKERBOARD_WIDTH (20)
 
 //
 //Colors
@@ -120,32 +117,42 @@ PrintValues(DEVICE_STATE Notifications)
 /**
 Given an array of blit data find the largest that fits the bannner height
 
-@param si            - UI_STYLE_INFO that will be populated
-@param bannerHeight  - Height of a single banner
-@param blitArray     - array of struct BITMAPDATA holding blit data
-@param arrayLength   - amount of items in blitArray
+This is used to identify the correct icon for various screen resolutions.
+
+@param Style         - UI_STYLE_INFO that will be modified if icon found
+@param BannerHeight  - Height of a single banner
+@param BannerWidth   - Width of a single banner
+@param BlitArray     - array of struct BITMAPDATA holding blit data
+@param ArrayLength   - number of items in BlitArray
+@param IconPlacement - UI placement type for icon if found
+
+@return Style Info struct will be updated if valid icon is found
 **/
 VOID
 EFIAPI
 PopulateIconData(
-IN OUT   UI_STYLE_INFO         *si,
-IN       INT32                 bannerHeight,
-IN       BITMAPDATA*           blitArray[],
-IN       UINT32                arrayLength
+IN OUT   UI_STYLE_INFO         *Style,
+IN       INT32                 BannerHeight,
+IN       INT32                 BannerWidth,
+IN       BITMAPDATA*           BlitArray[],
+IN       UINT32                ArrayLength,
+IN       UI_PLACEMENT          IconPlacement
 )
 {
-  if (arrayLength > 0) {
-    DEBUG((DEBUG_INFO, "Preloaded icon array length %u\n", arrayLength));
-    for(UINT32 index = 0; index < arrayLength; index++) {
-      DEBUG((DEBUG_INFO, "Checking icon of size %u x %u to see if it fits\n", blitArray[index]->Height, blitArray[index]->Width));
-      if(blitArray[index]->Height <= bannerHeight) {
-        DEBUG((DEBUG_INFO, "Found fitting icon\n"));
-        si->IconInfo.Width = blitArray[index]->Width;
-        si->IconInfo.Height = blitArray[index]->Height;
-        si->IconInfo.Placement = MIDDLE_CENTER;
-        si->IconInfo.PixelData = (UINT32*) &blitArray[index]->BlitData[0];
-        break;
-      }
+  if(Style == NULL) {
+    ASSERT(Style != NULL);
+    return;
+  }
+  
+  for(UINT32 index = 0; index < ArrayLength; index++) {
+    DEBUG((DEBUG_VERBOSE, "Checking icon of size %u x %u to see if it fits\n", BlitArray[index]->Height, BlitArray[index]->Width));
+    if((BlitArray[index]->Height <= BannerHeight) && (BlitArray[index]->Width <= BannerWidth)){
+      DEBUG((DEBUG_VERBOSE, "Found fitting icon\n"));
+      Style->IconInfo.Width = BlitArray[index]->Width;
+      Style->IconInfo.Height = BlitArray[index]->Height;
+      Style->IconInfo.Placement = IconPlacement;
+      Style->IconInfo.PixelData = (UINT32*) &BlitArray[index]->BlitData[0];
+      break;
     }
   }
 }
@@ -194,8 +201,8 @@ IN  INT32  HeightInPixels
       {
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_RED;
-        if(sizeof(mBlitArray) > 0) {
-          PopulateIconData(&si, SingleBannerHeight, mBlitArray, sizeof(mBlitArray)/sizeof(mBlitArray[0]));
+        if(sizeof(mUnlockBlitArray) > 0) {
+          PopulateIconData(&si, SingleBannerHeight, WidthInPixels, mUnlockBlitArray, ARRAY_SIZE(mUnlockBlitArray), MIDDLE_CENTER);
         }
       }
       else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_0)
