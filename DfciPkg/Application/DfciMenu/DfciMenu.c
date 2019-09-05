@@ -810,9 +810,12 @@ IssueDfciUsbRequest (
         } else {
             DEBUG((DEBUG_INFO, "DfciUsb Request processed normally\n"));
             Status = DfciUpdateFromJson (JsonString, JsonStringSize, mUsbRecovery);
-            if (EFI_ERROR(Status) && (EFI_MEDIA_CHANGED != Status)) {
+            if (Status == EFI_MEDIA_CHANGED) {
                 // MEDIA_CHANGED is a good return, It means that a JSON element updated a mailbox.
-                DEBUG((DEBUG_ERROR,"%a Error updating from JSON packet. Code=%r\n", Status));
+                Status = EFI_SUCCESS;
+            }
+            if (EFI_ERROR(Status)) {
+                DEBUG((DEBUG_ERROR,"%a: Error updating from JSON packet. Code=%r\n", __FUNCTION__, Status));
             }
         }
     }
