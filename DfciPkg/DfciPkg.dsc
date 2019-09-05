@@ -60,7 +60,6 @@
   UefiApplicationEntryPoint|MdePkg/Library/UefiApplicationEntryPoint/UefiApplicationEntryPoint.inf
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
-  DfciPasswordLib|DfciPkg/Library/DfciPasswordLibNull/DfciPasswordLibNull.inf
   DfciXmlSettingSchemaSupportLib|DfciPkg/Library/DfciXmlSettingSchemaSupportLib/DfciXmlSettingSchemaSupportLib.inf
   DfciXmlPermissionSchemaSupportLib|DfciPkg/Library/DfciXmlPermissionSchemaSupportLib/DfciXmlPermissionSchemaSupportLib.inf
   DfciXmlDeviceIdSchemaSupportLib|DfciPkg/Library/DfciXmlDeviceIdSchemaSupportLib/DfciXmlDeviceIdSchemaSupportLib.inf
@@ -79,6 +78,7 @@
 
 [LibraryClasses.X64]
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
+  PasswordStoreLib|MsCorePkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
 
 #!if $(TARGET) == DEBUG
   #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
@@ -133,9 +133,8 @@
 
 [Components.X64]
   DfciPkg/Library/DfciDeviceIdSupportLibNull/DfciDeviceIdSupportLibNull.inf
-  DfciPkg/Library/DfciPasswordLib/DfciPasswordLib.inf
-  DfciPkg/Library/DfciPasswordLibNull/DfciPasswordLibNull.inf
   DfciPkg/Library/DfciRecoveryLib/DfciRecoveryLib.inf
+  DfciPkg/Library/DfciPasswordProvider/DfciPasswordProvider.inf
   DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
   DfciPkg/Library/DfciUiSupportLibNull/DfciUiSupportLibNull.inf
@@ -149,6 +148,7 @@
   DfciPkg/SettingsManager/SettingsManagerDxe.inf {
         #Platform should add all it settings libs here
   <LibraryClasses>
+        NULL|DfciPkg/Library/DfciPasswordProvider/DfciPasswordProvider.inf
         NULL|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
         NULL|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
         DfciSettingPermissionLib|DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf

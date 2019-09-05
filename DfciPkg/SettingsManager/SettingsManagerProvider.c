@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "SettingsManager.h"
 
-#define DFCI_PASSWORD_STORE_SIZE sizeof(DFCI_PASSWORD_STORE)
-
 LIST_ENTRY  mProviderList = INITIALIZE_LIST_HEAD_VARIABLE(mProviderList);  //linked list for the providers
 LIST_ENTRY  mGroupList = INITIALIZE_LIST_HEAD_VARIABLE(mGroupList);        //linked list for the groups
 
@@ -170,6 +168,7 @@ SetProviderValueFromAscii(
   EFI_STATUS         Status;
   UINTN              b64Size;
   UINT8              UsbPortState;
+  UINTN              ByteArraySize;
 
   switch (Provider->Type)
   {
@@ -236,21 +235,30 @@ SetProviderValueFromAscii(
       // characters, and > 150 is too many for the password size buffer.  Also, the last
       // two characters must be "eb"
       //
-      DEBUG((DEBUG_ERROR,"Value + StoreSize(%d) %a\n", (DFCI_PASSWORD_STORE_SIZE * 2), Value + (DFCI_PASSWORD_STORE_SIZE * 2) ));
-      if ((AsciiStrLen(Value) != ((DFCI_PASSWORD_STORE_SIZE * 2) + 2)) ||
-          (0 != AsciiStriCmp(Value + (DFCI_PASSWORD_STORE_SIZE * 2), "eb")))
+      DEBUG((DEBUG_ERROR, "New Password Value %a\n", Value));
+
+      ByteArraySize = AsciiStrLen(Value);
+      if ((ByteArraySize < 4) || (ByteArraySize & 0x01))  // Arbitrary to force at least 1 hex character plus the 0xeb
+      {                                                   // The settings provider will validate the length.
+          return EFI_INVALID_PARAMETER;
+      }
+
+      ByteArraySize -= 2;
+      if  (0 != AsciiStriCmp(Value + ByteArraySize, "eb"))
       {
           DEBUG((DEBUG_ERROR, "End Byte 'EB' is missing. Not a valid store format. %a\n", Value));
           return EFI_INVALID_PARAMETER;
       }
 
-      ByteArray = (UINT8 *)AllocateZeroPool(DFCI_PASSWORD_STORE_SIZE);
+      ByteArraySize /= 2;
+
+      ByteArray = (UINT8 *)AllocateZeroPool(ByteArraySize);
       if (NULL == ByteArray)
       {
           return EFI_OUT_OF_RESOURCES;
       }
       // - 2 to account for the "eb" at the end
-      Status = AsciiStrHexToBytes(Value, AsciiStrLen(Value) - 2, ByteArray, DFCI_PASSWORD_STORE_SIZE);
+      Status = AsciiStrHexToBytes(Value, AsciiStrLen(Value) - 2, ByteArray, ByteArraySize);
 
       if (EFI_ERROR(Status))
       {
@@ -261,7 +269,7 @@ SetProviderValueFromAscii(
       DEBUG((DEBUG_INFO, "Setting Password. %a\n", Value));
 
       SetValue = ByteArray;
-      ValueSize = DFCI_PASSWORD_STORE_SIZE;
+      ValueSize = ByteArraySize;
       break;
 
   case DFCI_SETTING_TYPE_USBPORTENUM:

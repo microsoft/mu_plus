@@ -54,7 +54,7 @@
   PrintLib
   UefiLib
   BaseCryptLib
-  DfciPasswordLib
+  PasswordStoreLib
   DfciDeviceIdSupportLib
   DfciRecoveryLib
   DfciUiSupportLib

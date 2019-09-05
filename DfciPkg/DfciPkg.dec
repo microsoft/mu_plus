@@ -25,10 +25,6 @@
   ##
   DfciDeviceIdSupportLib|Include/Library/DfciDeviceIdSupportLib.h
 
-  ##  @libraryclass  Library for querying, setting, and verifying user passwords.
-  ##
-  DfciPasswordLib|Include/Library/DfciPasswordLib.h
-
   ##  @libraryclass  Library contains crypto support functions for the DFCI recovery feature.
   ##
   DfciRecoveryLib|Include/Library/DfciRecoveryLib.h

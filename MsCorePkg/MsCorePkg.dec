@@ -35,6 +35,10 @@
   #
   DeviceSpecificBusInfoLib|Include/Library/DeviceSpecificBusInfoLib.h
 
+  ## @libraryclass Provides the methods for storing the password
+  #
+  PasswordStoreLib|Include/Library/PasswordStoreLib.h
+
 
 [Guids]
   #  {a2966407-1f6b-4c86-b21e-fcc474c6f28e}

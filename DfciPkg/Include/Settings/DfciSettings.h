@@ -89,4 +89,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define DFCI_SETTING_ID__ENABLE_NETWORK             "Dfci.BootOnboardNetwork.Enable"
 
 
+//
+// Common Device Settings
+//
+#define DFCI_SETTING_ID__PASSWORD                   "Device.Password.Password"
+
 #endif //  __DFCI_SETTINGS_H__

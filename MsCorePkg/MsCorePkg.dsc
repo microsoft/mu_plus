@@ -148,8 +148,8 @@
   MsCorePkg/UnitTests/JsonTest/JsonTestApp.inf
   MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf
   MsCorePkg/CheckHardwareConnected/CheckHardwareConnected.inf
-
+  MsCorePkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
 
 [BuildOptions]
-#force deprecated interaces off
+#force deprecated interfaces off
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES

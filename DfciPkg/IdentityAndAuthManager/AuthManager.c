@@ -10,7 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "IdentityAndAuthManager.h"
 #include <Protocol/Rng.h>       //protocol based rng support
-#include <Library/DfciPasswordLib.h>
+#include <Library/PasswordStoreLib.h>
 #include <Library/ZeroTouchSettingsLib.h>
 
 //Statically allocate the supported identities.
@@ -128,10 +128,10 @@ CreateAuthTokenWithMapping(DFCI_IDENTITY_ID Id)
 EFI_STATUS
 EFIAPI
 AuthWithPW(
-  IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
+  IN  CONST DFCI_AUTHENTICATION_PROTOCOL   *This,
   IN  CONST CHAR16                         *Password OPTIONAL,
-  IN  UINTN                                PasswordLength,
-  OUT DFCI_AUTH_TOKEN                        *IdentityToken
+  IN  UINTN                                 PasswordLength,
+  OUT DFCI_AUTH_TOKEN                      *IdentityToken
   )
 {
   DFCI_AUTH_TOKEN Random = DFCI_AUTH_TOKEN_INVALID;
@@ -147,7 +147,7 @@ AuthWithPW(
   //
   if (mAdminPasswordSetState == AUTH_MANAGER_PW_STATE_UNKNOWN)
   {
-    if (IsPasswordSet(ADMIN_PW_HANDLE))
+    if (PasswordStoreIsPasswordSet())
     {
       mAdminPasswordSetState = AUTH_MANAGER_PW_STATE_PW;
     }
@@ -192,7 +192,7 @@ AuthWithPW(
   //
   // Check the Password
   //
-  if (AuthenticatePassword(ADMIN_PW_HANDLE, Password))
+  if (PasswordStoreAuthenticatePassword(Password))
   {
     DEBUG((DEBUG_INFO, "[AM] Password Valid\n"));
     Status = EFI_SUCCESS;

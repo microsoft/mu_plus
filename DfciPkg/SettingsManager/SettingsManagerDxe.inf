@@ -36,6 +36,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   DfciPkg/DfciPkg.dec
+  MsCorePkg/MsCorePkg.dec
   XmlSupportPkg/XmlSupportPkg.dec
 
 [LibraryClasses]
