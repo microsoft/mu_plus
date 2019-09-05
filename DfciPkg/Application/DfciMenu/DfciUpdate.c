@@ -144,9 +144,11 @@ JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[] = {
        &mDfciNetworkRequest.HttpStatus.HttpReturnCode,
        &mDfciNetworkRequest.HttpStatus.HttpReturnCodeSize,
         JSON_ACTION_SET_RETURN_CODE,
-        0
+        0,
+        FALSE
     },
     {
+        NULL,
         NULL,
         NULL,
         0,
@@ -248,7 +250,8 @@ JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[] = {
       NULL,
       NULL,
       JSON_ACTION_SET_VARIABLE,
-      JSON_SET_SETTINGS
+      JSON_SET_SETTINGS,
+      TRUE,
     },
     { KEYWORD_SETTINGS2,
       NULL,
