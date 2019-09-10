@@ -1,0 +1,52 @@
+## @file
+# DeviceIdTestApp.inf
+#
+# Test application to verify DeviceId strings are acceptable to Dfci.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = DeviceIdTestApp
+  FILE_GUID                      = e3dd9528-cee0-4375-995d-abd4b6ca314c
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DeviceIdTestAppEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#
+
+[Sources]
+  DeviceIdTest.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsUnitTestPkg/MsUnitTestPkg.dec
+  DfciPkg/DfciPkg.dec
+
+[Protocols]
+
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DfciDeviceIdSupportLib
+  PrintLib
+  UefiApplicationEntryPoint
+  UefiLib
+  UnitTestAssertLib
+  UnitTestLib
+  UnitTestLogLib
+
+[Guids]
+
+
+
+

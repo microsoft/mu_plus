@@ -169,6 +169,8 @@
   DfciPkg/Application/EnrollInDfci/EnrollInDfci.inf
   DfciPkg/Application/SetRecovery/SetRecovery.inf
 
+  DfciPkg/UnitTests/DevicdIdTest/DeviceIdTestApp.inf
+
 [BuildOptions]
-#force deprecated interaces off
+#force deprecated interfaces off
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
