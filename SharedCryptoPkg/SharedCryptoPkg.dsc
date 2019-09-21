@@ -39,6 +39,7 @@
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
@@ -79,7 +80,6 @@
 
 [LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER,LibraryClasses.common.DXE_SMM_DRIVER]
   BaseBinSecurityLibRng|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [LibraryClasses.common.DXE_SMM_DRIVER]
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
@@ -118,6 +118,11 @@
   #SharedCryptoPkg/UnitTests/ShaUnitTestApp/UnitTestApp.inf
   #SharedCryptoPkg/UnitTests/RsaUnitTestApp/UnitTestApp.inf
   #SharedCryptoPkg/UnitTests/X509UnitTestApp/UnitTestApp.inf
+  # make sure we can build our own images
+  SharedCryptoPkg/Library/CryptLibSharedDriver/DxeCryptLibSharedDriver.inf
+  SharedCryptoPkg/Library/CryptLibSharedDriver/PeiCryptLibSharedDriver.inf
+  SharedCryptoPkg/Library/CryptLibSharedDriver/SmmCryptLibSharedDriver.inf
+
 
 [Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
   SharedCryptoPkg/Driver/SharedCryptoPeiShaOnly.inf {

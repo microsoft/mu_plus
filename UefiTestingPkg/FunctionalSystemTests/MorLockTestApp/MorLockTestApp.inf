@@ -9,7 +9,7 @@
 [Defines]
   INF_VERSION                    = 0x00010006
   BASE_NAME                      = MorLockFunctionalTestApp
-  FILE_GUID                      = 9E8F461A-17E1-4312-B49C-E66F0A88EA8B
+  FILE_GUID                      = ab26bc38-9271-44b4-b6e0-8deb1a7caac2
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = MorLockTestApp

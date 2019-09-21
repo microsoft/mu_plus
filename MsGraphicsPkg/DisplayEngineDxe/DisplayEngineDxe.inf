@@ -12,7 +12,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = DisplayEngine
-  FILE_GUID                      = E660EA85-058E-4b55-A54B-F02F83A24707
+  FILE_GUID                      = c09e4ce4-ae29-4340-b941-078871bd89d1
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = InitializeDisplayEngine

@@ -9,7 +9,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MsNetworkDelayLib
-  FILE_GUID                      = 231f57fd-3875-4ec9-82fb-c077ffb22b2e
+  FILE_GUID                      = c9322a46-4a5f-4e75-b9a3-8781c45ad86d
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MsNetworkDelayLib|DXE_CORE DXE_DRIVER DXE_RUNTIME_DRIVER UEFI_APPLICATION UEFI_DRIVER

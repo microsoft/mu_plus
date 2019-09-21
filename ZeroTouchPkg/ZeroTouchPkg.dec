@@ -24,7 +24,7 @@
 [LibraryClasses]
   ##  @libraryclass  Library to used to obtain the zero touch certificate
   ##
-  ZeroTouchSettingsLib|Include/Library/ZeroTouchSettings.h
+  ZeroTouchSettingsLib|Include/Library/ZeroTouchSettingsLib.h
 
 [Guids]
   ## ZeroTouch Package token space guid

@@ -42,7 +42,7 @@
 
 [LibraryClasses]
   MsWheaEarlyStorageLib|Include/Library/MsWheaEarlyStorageLib.h
-  MuTelemetryHelperLib |Include/Library/MuTelemetryHelperLib.inf
+  MuTelemetryHelperLib |Include/Library/MuTelemetryHelperLib.h
 
   ##  @libraryclass Checks the validity of hardware error records
   ##

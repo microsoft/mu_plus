@@ -1,0 +1,60 @@
+{
+    "CompilerPlugin": {
+        "DscPath": "SharedCryptoPkg.dsc"
+    },
+    "HostUnitTestCompilerPlugin": {
+        #"DscPath":
+    },
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": []
+    },
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "CryptoPkg/CryptoPkg.dec",
+            "SharedCryptoPkg/SharedCryptoPkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "MsUnitTestPkg/MsUnitTestPkg.dec",
+            "UefiHostTestPkg/UefiHostTestPkg.dec",
+            "UefiHostUnitTestPkg/UefiHostUnitTestPkg.dec",
+            "CmockaHostUnitTestPkg/CmockaHostUnitTestPkg.dec",
+            "UnitTestPkg/UnitTestPkg.dec"
+        ],
+        "AcceptableDependencies-UEFI_APPLICATION": [
+            "MsUnitTestPkg/MsUnitTestPkg.dec"
+        ],
+        "IgnoreInf": []
+    },
+    "DscCompleteCheck": {
+        "IgnoreInf": [
+            "SharedCryptoPkg/Package/SharedCryptoPkgDxe.DEBUG.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgDxe.RELEASE.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.DEBUG.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgDxeMu.RELEASE.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgPei.DEBUG.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgPei.RELEASE.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.DEBUG.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.RELEASE.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgSmm.DEBUG.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgSmm.RELEASE.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.DEBUG.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.RELEASE.inf"
+        ],
+        "DscPath": "SharedCryptoPkg.dsc"
+    },
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    }
+}

@@ -19,7 +19,7 @@
 [LibraryClasses]
   MsUiThemeCopyLib|Include/Library/MsUiThemeCopyLib.h
   MsUiThemeLib|Include/Library/MsUiThemeLib.h
-  UIToolKitLib|Include/UIToolKit/SimpleUIToolKit.h
+  #UIToolKitLib|Include/UIToolKit/SimpleUIToolKit.h  # temporarily disabled due to bug in pytools library parsing
   MsPlatformEarlyGraphicsLib|Include/Library/MsPlatformEarlyGraphicsLib.h
   UiProgressCircleLib|Include/Library/UiProgressCircleLib.h
   UiRectangleLib|Include/Library/UiRectangleLib.h
@@ -27,8 +27,9 @@
   DisplayDeviceStateLib|Include/Library/DisplayDeviceStateLib.h
   MsColorTableLib|Include/Library/MsColorTableLib.h
   BootGraphicsProviderLib|Include/Library/BootGraphicsProviderLib.h
-  BootGraphicsLib|MsGraphicsPkg/Include/Library/BootGraphicsLib.h
-  SwmDialogsLib|MsGraphicsPkg/Include/Library/SwmDialogsLib.h
+  QrEncoderLib|Include/Library/QrEncoderLib.h
+  BootGraphicsLib|Include/Library/BootGraphicsLib.h
+  SwmDialogsLib|Include/Library/SwmDialogsLib.h
 
 [Guids]
   ## Microsoft Core Package token space guid

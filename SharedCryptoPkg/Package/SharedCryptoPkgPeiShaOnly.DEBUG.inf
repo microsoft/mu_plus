@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x0001001B
   BASE_NAME                      = SharedCryptoDriverShaOnlyDebug
-  FILE_GUID                      = 566312D1-4878-4695-8E7A-AA585F1C0DA1
+  FILE_GUID                      = ACF64C7B-1763-4460-BD23-57558B42C579
   MODULE_TYPE                    = PEIM
   VERSION_STRING                 = 1.0
 

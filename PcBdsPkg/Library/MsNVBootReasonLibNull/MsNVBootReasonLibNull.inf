@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MsNVBootReasonLib
-  FILE_GUID                      = 8532FF36-7788-4BDF-B7F7-1865927273CF
+  FILE_GUID                      = 9ab7d76f-2683-4a1c-af85-70ab5b165f08
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MsNVBootReasonLib|DXE_DRIVER UEFI_APPLICATION

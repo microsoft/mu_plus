@@ -1,0 +1,51 @@
+{
+    "CompilerPlugin": {
+        "DscPath": ""
+    },
+    "HostUnitTestCompilerPlugin": {
+        #"DscPath": 
+    },
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": []  
+    },
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "UefiTestingPkg/UefiTestingPkg.dec",
+            "XmlSupportPkg/XmlSupportPkg.dec",
+            "UefiCpuPkg/UefiCpuPkg.dec",
+            "SecurityPkg/SecurityPkg.dec",
+            "IntelSiliconPkg/IntelSiliconPkg.dec" #this is bad layering.  Need to fix. 
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "MsUnitTestPkg/MsUnitTestPkg.dec",
+            "UefiHostTestPkg/UefiHostTestPkg.dec",
+            "UefiHostUnitTestPkg/UefiHostUnitTestPkg.dec",
+            "CmockaHostUnitTestPkg/CmockaHostUnitTestPkg.dec",
+            "UnitTestPkg/UnitTestPkg.dec"
+        ],
+        "AcceptableDependencies-UEFI_APPLICATION": [
+            "MsUnitTestPkg/MsUnitTestPkg.dec",
+            "ShellPkg/ShellPkg.dec"
+        ],
+        "IgnoreInf": []
+    },
+    "DscCompleteCheck": {
+        "IgnoreInf": [], 
+        "DscPath": ""   
+    },
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    }
+}

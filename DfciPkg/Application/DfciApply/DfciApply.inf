@@ -11,7 +11,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = DfciApply
-  FILE_GUID                      = 255fc784-9ae7-4734-82b6-88f9e845fe43
+  FILE_GUID                      = c534c5c3-df44-4212-8929-f9baf35577a8
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = DfciApplyEntry

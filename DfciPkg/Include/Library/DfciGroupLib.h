@@ -1,5 +1,5 @@
 /** @file
-DfciGroupsLib.h
+DfciGroupLib.h
 
 Registers the platform groups and settings within the group.
 

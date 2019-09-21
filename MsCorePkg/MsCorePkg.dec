@@ -39,6 +39,10 @@
   #
   PasswordStoreLib|Include/Library/PasswordStoreLib.h
 
+  ## @libraryclass provides support for simple json parsing
+  #
+  JsonLiteParserLib|Include/Library/JsonLiteParser.h
+
 
 [Guids]
   #  {a2966407-1f6b-4c86-b21e-fcc474c6f28e}
