@@ -8,9 +8,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi/UefiBaseType.h>
+#include <Pi/PiStatusCode.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PcdLib.h>
 #include "MsWheaEarlyStorageMgr.h"
+
+#ifdef INTERNAL_UNIT_TEST
+#undef STATIC
+#define STATIC    // Nothing...
+#endif
 
 #define MS_WHEA_EARLY_STORAGE_HEADER_SIZE     (sizeof(MS_WHEA_EARLY_STORAGE_HEADER))
 #define MS_WHEA_EARLY_STORAGE_DATA_OFFSET     MS_WHEA_EARLY_STORAGE_HEADER_SIZE
@@ -220,6 +226,115 @@ MsWheaESWriteHeader (
 
 /**
 
+This routine checks the checksum of early storage region: starting from the signature of header to
+the last byte of active range (excluding checksum field).
+
+**/
+STATIC
+EFI_STATUS
+MsWheaESChecksum16 (
+  MS_WHEA_EARLY_STORAGE_HEADER    *Header,
+  UINT16                          *Checksum
+  )
+{
+  UINT16      Data;
+  UINT8       Index;
+  UINTN       Sum;
+  EFI_STATUS  Status;
+
+  DEBUG((DEBUG_INFO, "%a Calculate sum...\n", __FUNCTION__));
+
+  if ((Checksum == NULL) || (Header == NULL)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Cleanup;
+  }
+  else if ((Header->ActiveRange > MsWheaEarlyStorageGetMaxSize()) ||
+           ((Header->ActiveRange & BIT0) != 0)) {
+    Status = EFI_BAD_BUFFER_SIZE;
+    goto Cleanup;
+  }
+
+  // Clear the checksum field for calculation then restore...
+  *Checksum = Header->Checksum;
+  Header->Checksum = 0;
+  Sum = CalculateSum16 ((UINT16*)Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE);
+  Header->Checksum = *Checksum;
+
+  for (Index = 0; Index < Header->ActiveRange; Index += sizeof(Data)) {
+    Status = MsWheaESReadData(&Data, sizeof(Data), Index);
+    if (EFI_ERROR(Status) != FALSE) {
+      DEBUG((DEBUG_ERROR, "%a: Reading Early Storage %d failed %r\n", __FUNCTION__, Index, Status));
+      goto Cleanup;
+    }
+    Sum = (UINT16) (Sum + Data);
+  }
+
+  *Checksum = (UINT16) (0x10000 - Sum);
+
+Cleanup:
+  return Status;
+}
+
+/**
+
+This routine calculates the checksum of early storage region and update the range and checksum in
+header accordingly.
+
+**/
+STATIC
+VOID
+MsWheaESContentChangeChecksumHelper (
+  UINT16*         Buffer,
+  UINTN           Length
+  )
+{
+  UINT16    Sum16;
+  MS_WHEA_EARLY_STORAGE_HEADER  Header;
+
+  DEBUG((DEBUG_INFO, "Calculate sum content helper...\n"));
+
+  MsWheaESReadHeader (&Header);
+  Sum16 = (UINT16)(0x10000 - Header.Checksum);
+
+  // Update length field of header, update checksum accordingly
+  Sum16 = (Sum16 - (UINT16)(Header.ActiveRange & MAX_UINT16) - (UINT16)((Header.ActiveRange >> 16) & MAX_UINT16));
+  Header.ActiveRange += (UINT32) Length;
+  Sum16 = (Sum16 + (UINT16)(Header.ActiveRange & MAX_UINT16) + (UINT16)((Header.ActiveRange >> 16) & MAX_UINT16));
+
+  // Calculate updated chunk only
+  Sum16 = Sum16 + CalculateSum16 (Buffer, Length);
+  Header.Checksum = (UINT16)(0x10000 - Sum16);
+
+  MsWheaESWriteHeader (&Header);
+}
+
+/**
+
+This routine calculates and updates the checksum based on the supplied header.
+
+**/
+STATIC
+VOID
+MsWheaESHeaderChangeChecksumHelper (
+  MS_WHEA_EARLY_STORAGE_HEADER    *Header
+  )
+{
+  UINT16    Checksum16;
+  EFI_STATUS Status;
+
+  DEBUG((DEBUG_INFO, "%a Calculate sum header helper...\n", __FUNCTION__));
+
+  Status = MsWheaESChecksum16 (Header, &Checksum16);
+  if (EFI_ERROR(Status)) {
+    DEBUG((DEBUG_ERROR, "Checksum calculator failed - %r...", Status));
+  }
+  Header->Checksum = Checksum16;
+
+  MsWheaESWriteHeader (Header);
+}
+
+/**
+
 This routine returns a boolean indicating if the MS WHEA store is valid.
 
 @retval TRUE if the MS WHEA store is valid, else FALSE.
@@ -228,18 +343,46 @@ This routine returns a boolean indicating if the MS WHEA store is valid.
 STATIC
 BOOLEAN
 MsWheaESRegionIsValid (
-  VOID
+  OUT MS_WHEA_EARLY_STORAGE_HEADER *OutPutHeader OPTIONAL
   )
 {
+  BOOLEAN Valid;
+  UINT16 Checksum16;
+  EFI_STATUS Status;
   MS_WHEA_EARLY_STORAGE_HEADER Header;
 
   MsWheaESReadHeader(&Header);
-  if (Header.Signature != MS_WHEA_EARLY_STORAGE_SIGNATURE) {
-    return FALSE;
-  } 
-  else {
-    return TRUE;
+
+  if (OutPutHeader != NULL) {
+    CopyMem (OutPutHeader, &Header, sizeof(MS_WHEA_EARLY_STORAGE_HEADER));
   }
+
+  Status = MsWheaESChecksum16 (&Header, &Checksum16);
+  if (EFI_ERROR(Status)) {
+    Valid = FALSE;
+    DEBUG ((DEBUG_ERROR, "%a Checksum calculation failed %r\n", __FUNCTION__, Status));
+    goto Cleanup;
+  }
+
+  if ((Header.Signature != MS_WHEA_EARLY_STORAGE_SIGNATURE) ||
+      (Checksum16 != Header.Checksum)) {
+    Valid = FALSE;
+    DEBUG ((DEBUG_ERROR, "%a Header verification failed: signature %08X, CS has %04X, expecting %04X\n",
+                          __FUNCTION__,
+                          Header.Signature,
+                          Header.Checksum,
+                          Checksum16));
+    goto Cleanup;
+  }
+  else {
+    DEBUG ((DEBUG_INFO, "%a Checksum all good\n", __FUNCTION__));
+    Valid = TRUE;
+  }
+
+  Status = EFI_SUCCESS;
+
+Cleanup:
+  return Valid;
 }
 
 /**
@@ -262,31 +405,14 @@ MsWheaESFindSlot (
   IN UINT8 *Offset
   )
 {
-  UINT16      i = 0;
-  UINT8       val = 0;
-  UINT8       ceiling;
-  UINT8       remainder = Size;
   EFI_STATUS  Status = EFI_OUT_OF_RESOURCES;
+  MS_WHEA_EARLY_STORAGE_HEADER Header;
 
-  ceiling = MsWheaESGetMaxDataCount();
+  MsWheaESReadHeader(&Header);
 
-  for (i = 0; i < ceiling; i ++) {
-    if (remainder == Size) {
-      *Offset = (UINT8) i;
-    }
-
-    MsWheaESReadData(&val, sizeof(UINT8), (UINT8) i);
-    if (val != PcdGet8(PcdMsWheaEarlyStorageDefaultValue)) {
-      remainder = Size;
-      continue;
-    }
-
-    if (remainder > 0) {
-      remainder --;
-    } else {
-      Status = EFI_SUCCESS;
-      break;
-    }
+  if (Header.ActiveRange + Size <= MsWheaESGetMaxDataCount()) {
+    *Offset = (UINT8) Header.ActiveRange;
+    Status = EFI_SUCCESS;
   }
   return Status;
 }
@@ -304,11 +430,9 @@ MsWheaESInit (
 {
   MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
-  MsWheaESReadHeader(&Header);
-
-  // Check if the Early Storage has the signature. If it does, the store has already been initialized 
-  // and there's nothing more to do.
-  if (Header.Signature == MS_WHEA_EARLY_STORAGE_SIGNATURE) {
+  // Check if the Early Storage has the signature and valid checksum.
+  // If it does, the store has already been initialized and there's nothing more to do.
+  if (MsWheaESRegionIsValid(&Header)) {
     goto Cleanup;
   }
 
@@ -322,7 +446,8 @@ MsWheaESInit (
   
   // Sign the header signature.
   Header.Signature = MS_WHEA_EARLY_STORAGE_SIGNATURE;
-  MsWheaESWriteHeader(&Header);
+  Header.ActiveRange = 0;
+  MsWheaESHeaderChangeChecksumHelper (&Header);
 
 Cleanup:
   MsWheaESDump();
@@ -368,6 +493,8 @@ MsWheaESV0InfoStore (
     DEBUG((DEBUG_ERROR, "%a: Clear V0 Early Storage failed at %d %r\n", __FUNCTION__, Offset, Status));
     goto Cleanup;
   }
+
+  MsWheaESContentChangeChecksumHelper((UINT16*)&WheaV0, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0));
 
 Cleanup:
   return Status;
@@ -447,28 +574,26 @@ legit
 STATIC
 EFI_STATUS
 MsWheaESSetHeaderFull (
-  UINT8                         Phase
+  UINT8                         Phase,
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header
 )
 {
   EFI_STATUS                    Status;
-  MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
-  MsWheaESReadHeader(&Header);
-  
-  if (Header.Signature != MS_WHEA_EARLY_STORAGE_SIGNATURE) {
-    Status = EFI_NOT_FOUND;
+  if (Header == NULL) {
+    Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  if (Header.IsStorageFull != FALSE) {
+  if (Header->IsStorageFull != FALSE) {
     Status = EFI_SUCCESS;
     goto Cleanup;
   }
 
   // Set this field to any non-zero value;
-  Header.IsStorageFull = PcdGet8(PcdMsWheaEarlyStorageDefaultValue);
-  Header.FullPhase = Phase;
-  MsWheaESWriteHeader(&Header);
+  Header->IsStorageFull = 1;
+  Header->FullPhase = Phase;
+  MsWheaESHeaderChangeChecksumHelper (Header);
 
   Status = EFI_SUCCESS;
 
@@ -492,19 +617,18 @@ is full
 STATIC
 EFI_STATUS
 MsWheaESCheckHeader (
-  OUT MS_WHEA_ERROR_ENTRY_MD          *MsWheaEntryMD
+  OUT MS_WHEA_ERROR_ENTRY_MD          *MsWheaEntryMD,
+  MS_WHEA_EARLY_STORAGE_HEADER        *Header
 )
 {
   EFI_STATUS                    Status = EFI_SUCCESS;
-  MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
-  MsWheaESReadHeader(&Header);
-  if (Header.Signature != MS_WHEA_EARLY_STORAGE_SIGNATURE) {
-    Status = EFI_NOT_FOUND;
+  if (Header == NULL) {
+    Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  if (Header.IsStorageFull == FALSE) {
+  if (Header->IsStorageFull == FALSE) {
     Status = EFI_NOT_STARTED;
     goto Cleanup;
   }
@@ -517,17 +641,15 @@ MsWheaESCheckHeader (
   SetMem(MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD), 0);
 
   MsWheaEntryMD->Rev = MS_WHEA_REV_0;
-  MsWheaEntryMD->Phase = Header.FullPhase;
+  MsWheaEntryMD->Phase = Header->FullPhase;
   MsWheaEntryMD->ErrorSeverity = EFI_GENERIC_ERROR_RECOVERABLE;
   MsWheaEntryMD->ErrorStatusValue = MS_WHEA_ERROR_EARLY_STORAGE_STORE_FULL;
   MsWheaEntryMD->PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD);
   CopyMem(&MsWheaEntryMD->ModuleID, &gEfiCallerIdGuid, sizeof(EFI_GUID));
 
-  // Reset the header after processing
-  SetMem(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
-  Header.Signature = MS_WHEA_EARLY_STORAGE_SIGNATURE;
-
-  MsWheaESWriteHeader(&Header);
+  // Reset the header full flag after processing
+  Header->IsStorageFull = FALSE;
+  MsWheaESHeaderChangeChecksumHelper(Header);
 
   Status = EFI_SUCCESS;
 
@@ -552,6 +674,7 @@ MsWheaESStoreEntry (
 {
   UINT8 Rev = 0;
   EFI_STATUS  Status = EFI_SUCCESS;
+  MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
   if (MsWheaEntryMD == NULL) {
     DEBUG((DEBUG_ERROR, "%a: input pointer cannot be null!\n", __FUNCTION__));
@@ -560,7 +683,7 @@ MsWheaESStoreEntry (
   }
 
   // Make sure the Early Storage is valid.
-  if (MsWheaESRegionIsValid() == FALSE) {
+  if (MsWheaESRegionIsValid(&Header) == FALSE) {
     DEBUG((DEBUG_ERROR, "%a: the Early Storage is not valid!\n", __FUNCTION__));
     Status = EFI_NOT_FOUND;
     goto Cleanup;
@@ -580,7 +703,8 @@ MsWheaESStoreEntry (
 
   if (Status == EFI_OUT_OF_RESOURCES) {
     // Early Storage is full, write the header error section
-    MsWheaESSetHeaderFull(MsWheaEntryMD->Phase);
+    DEBUG((DEBUG_WARN, "%a: the Early Storage is full at %d!\n", __FUNCTION__, Header.ActiveRange));
+    MsWheaESSetHeaderFull(MsWheaEntryMD->Phase, &Header);
   }
 
 Cleanup:
@@ -607,6 +731,7 @@ MsWheaESProcess (
   UINT8                   Index = 0;
   UINT8                   mRevInfo;
   MS_WHEA_ERROR_ENTRY_MD  MsWheaEntryMD;
+  MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
@@ -617,23 +742,24 @@ MsWheaESProcess (
   }
 
   // Make sure the Early Storage is valid.
-  if (MsWheaESRegionIsValid() == FALSE) {
+  if (MsWheaESRegionIsValid(&Header) == FALSE) {
     DEBUG((DEBUG_WARN, "%a: the Early Storage is not valid!\n", __FUNCTION__));
     Status = EFI_NOT_FOUND;
     goto Cleanup;
   }
-  
+
   // Check if there is indication of Early Storage full, report it if so
-  Status = MsWheaESCheckHeader(&MsWheaEntryMD);
+  Status = MsWheaESCheckHeader(&MsWheaEntryMD, &Header);
   if (EFI_ERROR(Status) == FALSE) {
     Status = ReportFn(&MsWheaEntryMD);
   }
   else {
     DEBUG((DEBUG_WARN, "%a: Early Storage header check status: %r\n", __FUNCTION__, Status));
   }
-  
+
   // Go through normal entries
-  while (Index < (MsWheaESGetMaxDataCount() - sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON))) {
+  while ((Header.ActiveRange >= sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON)) &&
+         (Index <= (Header.ActiveRange - sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON)))) {
 
     Status = MsWheaESReadData(&mRevInfo, 
                               sizeof(mRevInfo), 
@@ -663,6 +789,16 @@ MsWheaESProcess (
 
   // This is needed incase there is leftover garbage in default/failed cases
   MsWheaESClearAllData();
+
+  // Zero all the fields in the 
+  SetMem(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
+
+  // Sign the header signature.
+  Header.Signature = MS_WHEA_EARLY_STORAGE_SIGNATURE;
+  Header.ActiveRange = 0;
+  MsWheaESHeaderChangeChecksumHelper (&Header);
+
+  Status = EFI_SUCCESS;
 
 Cleanup:
   DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));

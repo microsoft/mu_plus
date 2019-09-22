@@ -1,0 +1,62 @@
+## @file MsWheaEarlyUnitTestApp.inf
+#
+# Tests for MS WHEA early storage management.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+[Defines]
+  INF_VERSION         = 0x00010005
+  BASE_NAME           = MsWheaEarlyUnitTestApp
+  FILE_GUID           = 2D954146-24C3-4D66-9B86-3C5B241A1F7A
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = MsWheaEarlyUnitTestAppEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+
+[Sources]
+  MsWheaEarlyUnitTestApp.c
+  ../../../MsWheaReport/MsWheaEarlyStorageMgr.c
+  ../../../MsWheaReport/MsWheaEarlyStorageMgr.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsUnitTestPkg/MsUnitTestPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+  ShellPkg/ShellPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UnitTestLib
+  UnitTestLogLib
+  UnitTestPersistenceLib
+  UnitTestAssertLib
+  PrintLib
+  MemoryAllocationLib
+  BaseLib
+  ShellLib
+  PcdLib
+  UefiLib
+  MsWheaEarlyStorageLib
+
+[Protocols]
+
+[Guids]
+  gMsWheaReportServiceGuid
+
+[FixedPcd]
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
+  gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
+
+[BuildOptions.Common]
+  MSFT:*_*_*_CC_FLAGS = /D INTERNAL_UNIT_TEST
