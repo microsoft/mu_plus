@@ -276,7 +276,12 @@ CheckBMETeardown (
     UT_ASSERT_NOT_NULL(BMEStatusArray);
     
     //
-    // Step 5: Get the EFI memory map.
+    // Step 5: Set Next Boot to Boot to USB
+    //
+    SetUsbBootNext();
+
+    //
+    // Step 6: Get the EFI memory map.
     //
     EfiMemoryMapSize  = 0;
     EfiMemoryMap      = NULL;
@@ -306,11 +311,6 @@ CheckBMETeardown (
     UT_ASSERT_NOT_EFI_ERROR(Status);
 
     //
-    // Step 6: Set Next Boot to Boot to USB
-    //
-    SetUsbBootNext();
-
-    //
     // Step 7: Create exit boot services event
     //
     DEBUG((DEBUG_INFO, "Calling ExitBootServices\n"));
@@ -318,6 +318,10 @@ CheckBMETeardown (
                     gImageHandle,
                     EfiMapKey
                   );
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "ERROR - Exit Boot Services returned %r\n", Status));
+    }
 
     //
     // Step 8: Get Post EBS BME Status
@@ -337,7 +341,7 @@ CheckBMETeardown (
       Iterator = Iterator->Next;
       Count++;
     }
-    
+
     //
     // Step 9: Flatten Linked List to write to variable
     //
