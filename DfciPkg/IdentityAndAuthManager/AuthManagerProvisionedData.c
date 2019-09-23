@@ -87,6 +87,12 @@ InitializeProvisionedData()
     DEBUG((DEBUG_INFO, "%a - Failed to Delete internal provisioned var %r\n", __FUNCTION__, Status));
     //If error that is OK as we will re-initialize anyway
   }
+  Status = gRT->SetVariable(DFCI_IDENTITY_CURRENT_VAR_NAME, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
+  if (EFI_ERROR(Status))
+  {
+    DEBUG((DEBUG_INFO, "%a - Failed to Delete Current Identities provisioned var %r\n", __FUNCTION__, Status));
+    //If error that is OK as we will re-initialize anyway
+  }
 
   FreeCertStore();  //free any allocated memory
   mInternalCertStore.PopulatedIdentities = DFCI_IDENTITY_LOCAL;
