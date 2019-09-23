@@ -20,28 +20,27 @@ to check permissions for changing the setting.
 @param[in] Type:       Type that caller expects this setting to be.
 @param[in] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[in,out] Flags:  Informational Flags passed to the SET and/or Returned as a result of the set
+@param[in] GroupId     If a member of a group, group to get permission from
 
 @retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
 @retval Error - Setting not set.
 
 */
 EFI_STATUS
-EFIAPI
-SystemSettingAccessSet (
+InternalSystemSettingAccessSet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL    *This,
   IN  DFCI_SETTING_ID_STRING                 Id,
   IN  CONST DFCI_AUTH_TOKEN                 *AuthToken,
   IN  DFCI_SETTING_TYPE                      Type,
   IN  UINTN                                  ValueSize,
   IN  CONST VOID                            *Value,
-  IN OUT DFCI_SETTING_FLAGS                 *Flags
+  IN OUT DFCI_SETTING_FLAGS                 *Flags,
+  IN  DFCI_SETTING_ID_STRING                 GroupId
   )
 {
   DFCI_SETTING_PROVIDER *prov;
-  DFCI_SETTING_ID_STRING  GroupId;
   DFCI_GROUP_LIST_ENTRY *Group;
   DFCI_MEMBER_LIST_ENTRY *Member;
-  DFCI_SETTING_PROVIDER_LIST_ENTRY *Provider;
   LIST_ENTRY *Link;
   EFI_STATUS ReturnStatus;
   EFI_STATUS Status;
@@ -81,13 +80,14 @@ SystemSettingAccessSet (
     {
       Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
       SetRecurse = TRUE;
-      Status = SystemSettingAccessSet (This,
+      Status = InternalSystemSettingAccessSet (This,
                                        Member->PList->Provider.Id,
                                        AuthToken,
                                        Type,
                                        ValueSize,
                                        Value,
-                                       Flags);
+                                       Flags,
+                                       Group->GroupId);
       SetRecurse = FALSE;
       if (EFI_ERROR(Status)) {
         ReturnStatus = Status;
@@ -95,13 +95,6 @@ SystemSettingAccessSet (
     }
 
     return ReturnStatus;
-  }
-
-  Provider = PROV_LIST_ENTRY_FROM_PROVIDER (prov);
-  if (NULL != Provider->Group) {
-    GroupId = Provider->Group->GroupId;
-  } else {
-    GroupId = NULL;
   }
 
   //Check Auth for the setting Id.
@@ -149,6 +142,42 @@ SystemSettingAccessSet (
 }
 
 /*
+Set a single setting
+
+@param[in] This:       Access Protocol
+@param[in] Id:         Setting ID to set
+@param[in] AuthToken:  A valid auth token to apply the setting using.  This auth token will be validated
+to check permissions for changing the setting.
+@param[in] Type:       Type that caller expects this setting to be.
+@param[in] Value:      A pointer to a datatype defined by the Type for this setting.
+@param[in,out] Flags:  Informational Flags passed to the SET and/or Returned as a result of the set
+
+@retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
+@retval Error - Setting not set.
+
+*/
+EFI_STATUS
+EFIAPI
+SystemSettingAccessSet (
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL    *This,
+  IN  DFCI_SETTING_ID_STRING                 Id,
+  IN  CONST DFCI_AUTH_TOKEN                 *AuthToken,
+  IN  DFCI_SETTING_TYPE                      Type,
+  IN  UINTN                                  ValueSize,
+  IN  CONST VOID                            *Value,
+  IN OUT DFCI_SETTING_FLAGS                 *Flags
+  ) {
+  return InternalSystemSettingAccessSet ( This,
+                                          Id,
+                                          AuthToken,
+                                          Type,
+                                          ValueSize,
+                                          Value,
+                                          Flags,
+                                          NULL);
+}
+
+/*
 Get a single setting
 
 @param[in] This:        Access Protocol
@@ -159,28 +188,28 @@ to check permissions for changing the setting which will be reported in flags if
 @param[out] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[IN OUT] Flags    Optional Informational flags passed back from the Get operation.  If the Auth Token is valid write access will be set in
 flags for the given auth.
+@param[in] GroupId     If a member of a group, group to get permission from
+
 
 @retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
 @retval Error - couldn't get setting.
 
 */
 EFI_STATUS
-EFIAPI
-SystemSettingAccessGet (
+InternalSystemSettingAccessGet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
   IN  DFCI_SETTING_ID_STRING              Id,
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken, OPTIONAL
   IN  DFCI_SETTING_TYPE                   Type,
   IN OUT UINTN                           *ValueSize,
   OUT VOID                               *Value,
-  IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
+  IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL,
+  IN  DFCI_SETTING_ID_STRING              GroupId
   )
 {
   DFCI_SETTING_PROVIDER *prov = NULL;
   DFCI_GROUP_LIST_ENTRY *Group;
-  DFCI_SETTING_ID_STRING  GroupId;
   DFCI_MEMBER_LIST_ENTRY *Member;
-  DFCI_SETTING_PROVIDER_LIST_ENTRY *Provider;
   LIST_ENTRY *Link;
   EFI_STATUS ReturnStatus;
   EFI_STATUS Status = EFI_SUCCESS;
@@ -242,13 +271,14 @@ SystemSettingAccessGet (
       }
       LocalSize = sizeof(LocalValue);
       GetRecurse= TRUE;
-      Status = SystemSettingAccessGet (This,
+      Status = InternalSystemSettingAccessGet (This,
                                        Member->PList->Provider.Id,
                                        AuthToken,
                                        Type,
                                       &LocalSize,
                                       &LocalValue,
-                                       Flags);
+                                       Flags,
+                                       Group->GroupId);
       GetRecurse = FALSE;
       if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "%a: Unexpected return from AccessGet. Code=%r\n", __FUNCTION__, Status));
@@ -282,13 +312,6 @@ SystemSettingAccessGet (
     return ReturnStatus;
   }
 
-  Provider = PROV_LIST_ENTRY_FROM_PROVIDER (prov);
-  if (NULL != Provider->Group) {
-    GroupId = Provider->Group->GroupId;
-  } else {
-    GroupId = NULL;
-  }
-
   if (Type != prov->Type)
   {
     DEBUG((DEBUG_ERROR, "Caller supplied type (0x%X) and provider type (0x%X) don't match\n", Type, prov->Type));
@@ -320,6 +343,44 @@ SystemSettingAccessGet (
     }
   }
   return prov->GetSettingValue(prov, ValueSize, Value);
+}
+
+/*
+Get a single setting
+
+@param[in] This:        Access Protocol
+@param[in] Id:          Setting ID to Get
+@param[in] AuthToken:   An optional auth token* to use to check permission of setting.  This auth token will be validated
+to check permissions for changing the setting which will be reported in flags if valid.
+@param[in] Type:        Type that caller expects this setting to be.
+@param[out] Value:      A pointer to a datatype defined by the Type for this setting.
+@param[IN OUT] Flags    Optional Informational flags passed back from the Get operation.  If the Auth Token is valid write access will be set in
+flags for the given auth.
+
+@retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
+@retval Error - couldn't get setting.
+
+*/
+EFI_STATUS
+EFIAPI
+SystemSettingAccessGet (
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
+  IN  DFCI_SETTING_ID_STRING              Id,
+  IN  CONST DFCI_AUTH_TOKEN              *AuthToken, OPTIONAL
+  IN  DFCI_SETTING_TYPE                   Type,
+  IN OUT UINTN                           *ValueSize,
+  OUT VOID                               *Value,
+  IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
+  )
+{
+  return InternalSystemSettingAccessGet ( This,
+                                          Id,
+                                          AuthToken,
+                                          Type,
+                                          ValueSize,
+                                          Value,
+                                          Flags,
+                                          NULL);
 }
 
 /*
