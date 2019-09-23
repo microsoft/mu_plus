@@ -68,6 +68,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 #define DFCI_SETTING_ID__ALL_CPU_IO_VIRT            "Dfci.CpuAndIoVirtualization.Enable"
 
+// Device setting for use with DfciPkg\Library\DfciVirtualizationSettings
+#define DFCI_SETTING_ID__ENABLE_VIRT_SETTINGS       "Device.CpuAndIoVirtualizaion.Enable"
+
 //
 // Onboard Audio devices settings
 //
