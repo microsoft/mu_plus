@@ -130,17 +130,13 @@ RegisterGroup (
 /**
  * Register a setting as a member of a group.
  *
- * 1. Settings can only be member of one group
- * 2. A GroupId cannot be a Setting Id.
+ * 1. A GroupId cannot be a Setting Id.
  *
- * @param GroupId     - Group
- * @param Id          - Setting to add to group
+ * @param PList       - The setting Id name
  *
  * @return EFI_NOT_FOUND       -- Id not available on this system
- * @return EFI_ALREADY_STARTD  -- Id is already in a group
- *                                or Group name exists as a setting
  * @return EFI_SUCCESS         -- Id Registered to group.
- *                                If this is the first registered setting
+ *                                If this is the first registered setting in a group,
  *                                the group is created
  */
 EFI_STATUS
@@ -153,48 +149,62 @@ RegisterSettingToGroup (
   DFCI_MEMBER_LIST_ENTRY *Member;
   DFCI_SETTING_ID_STRING *Setting;
   DFCI_SETTING_ID_STRING  SettingId;
+  EFI_STATUS              Status;
 
 
   SettingId = PList->Provider.Id;
   Group = FindGroup (SettingId);
   if (NULL != Group)
   {
+    // Don't allow a setting Id to exist as a group Id
     ASSERT(NULL == Group);
     return EFI_UNSUPPORTED;
-  }
-
-  if (NULL != PList->Group)
-  {
-    DEBUG((DEBUG_ERROR, "Provider %a is already a member of %a\n", SettingId, PList->Group->GroupId));
-    return EFI_ALREADY_STARTED;
   }
 
   //
   // Check if the setting is to be related to a group
   //
+  Status = EFI_NOT_FOUND;
   GroupEntry = DfciGetGroupEntries ();
   if (NULL != GroupEntry)
   {
     while (NULL != GroupEntry->GroupId) {
+      // Get NULL terminated list of settings that are part of this group.  Each group has
+      // a NULL terminated list of settings that are part of the group.
       Setting = GroupEntry->GroupMembers;
       while (*Setting != NULL)
       {
         if (0 == AsciiStrnCmp (PList->Provider.Id, *Setting, DFCI_MAX_ID_LEN))
         {
+          // See if this group exists.
           Group = FindGroup (GroupEntry->GroupId);
+          if (NULL == Group) {
+            // Register the first instance of this group
+            Status = RegisterGroup (GroupEntry->GroupId);
+            if (!EFI_ERROR(Status))
+            {
+              Group = FindGroup (GroupEntry->GroupId);
+            }
+            if (NULL == Group) {
+              DEBUG((DEBUG_ERROR, "Unable to create group for setting %a, group %a\n", PList->Provider.Id, Group->GroupId));
+              return EFI_OUT_OF_RESOURCES;
+            }
+          }
+
+          // Allocate a member entry for this setting
           Member = (DFCI_MEMBER_LIST_ENTRY *) AllocatePool (sizeof(DFCI_MEMBER_LIST_ENTRY));
-          if ((NULL == Member) || (NULL == Group))
+          if (NULL == Member)
           {
-            ASSERT((NULL != Member) && (NULL != Group));
+            ASSERT(NULL != Member);
             return EFI_OUT_OF_RESOURCES;
           }
 
           Member->Signature = DFCI_MEMBER_ENTRY_SIGNATURE;
           Member->PList = PList;
           InsertTailList (&Group->MemberHead, &Member->MemberLink);
-          PList->Group = Group;
           DEBUG((DEBUG_INFO, "Setting %a added to group %a\n", PList->Provider.Id, Group->GroupId));
-          return EFI_SUCCESS;
+          Status = EFI_SUCCESS;
+          break;
         }
 
         Setting++;
@@ -394,6 +404,8 @@ SettingsManagerOnReadyToBoot (
 
   PERF_CALLBACK_END(&gEfiEventReadyToBootGuid);
 
+  gBS->CloseEvent (Event);
+
   return;
 }
 
@@ -480,29 +492,6 @@ Init (
 {
   EFI_EVENT  InitEvent;
   EFI_STATUS Status;
-  DFCI_GROUP_ENTRY *GroupEntry;
-
-  //
-  // Establish the groups to setting relationship
-  //
-  GroupEntry = DfciGetGroupEntries ();
-  if (NULL != GroupEntry)
-  {
-    while (NULL != GroupEntry->GroupId) {
-      Status = RegisterGroup (GroupEntry->GroupId);
-
-      if (EFI_ERROR(Status))
-      {
-        DEBUG((DEBUG_ERROR,"Error registering group %a. Code=%r\n", GroupEntry->GroupId, Status));
-      }
-      else
-      {
-        DEBUG((DEBUG_INFO,"Group %a registered.\n", GroupEntry->GroupId));
-      }
-
-      GroupEntry++;
-    }
-  }
 
   //Install Setting Provider Support Protocol and Permission Protocol
   Status = gBS->InstallMultipleProtocolInterfaces(
