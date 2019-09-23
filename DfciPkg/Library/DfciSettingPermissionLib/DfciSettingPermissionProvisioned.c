@@ -367,8 +367,9 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
   Var->Header.Hdr.Signature = VAR_HEADER_SIG;
   Var->Header.Version = VAR_VERSION_V3;
   Var->Version = Store->Version;
-  Var->LowestSupportedVersion = Store->Lsv;  
+  Var->LowestSupportedVersion = Store->Lsv;
   Var->DefaultPMask = Store->DefaultPMask;
+  Var->DefaultDMask = Store->DefaultDMask;
   CopyMem(&(Var->CreatedOn), &(Store->CreatedOn), sizeof(Var->CreatedOn));
 
   PermEntry = &Var->PermTableStart;
