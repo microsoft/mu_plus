@@ -52,8 +52,6 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
 
     def GetArchitecturesSupported(self):
         ''' return iterable of edk2 architectures supported by this build '''
-        if "SharedCryptoPkg" in self.ActualPackages:
-            return ("IA32", "X64")
         return ("IA32",
                 "X64",
                 "AARCH64")
@@ -87,18 +85,14 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
 
         Raise Exception if a list_of_requested_architectures is not supported
         '''
-        # TODO: remove once TCBZ2029 is fixed
         requested_arch_set = set(list_of_requested_architectures)
-        if "SharedCryptoPkg" in self.ActualPackages and "AARCH64" in requested_arch_set:
-            requested_arch_set.remove("AARCH64")
-
         unsupported = requested_arch_set - set(self.GetArchitecturesSupported())
         if(len(unsupported) > 0):
             logging.critical(
                 "Unsupported Architecture Requested: " + " ".join(unsupported))
             raise Exception(
                 "Unsupported Architecture Requested: " + " ".join(unsupported))
-        self.ActualArchitectures = list(requested_arch_set)
+        self.ActualArchitectures = list_of_requested_architectures
 
     def SetTargets(self, list_of_requested_target):
         ''' Confirm the request target list is valid and configure SettingsManager

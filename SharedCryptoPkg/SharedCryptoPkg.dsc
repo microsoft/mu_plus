@@ -19,6 +19,10 @@
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
 
+!ifndef $(IS_CI)
+  DEFINE IS_CI = TRUE
+!endif
+
 [LibraryClasses]
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
@@ -126,7 +130,11 @@
 [Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
   SharedCryptoPkg/Driver/SharedCryptoPeiShaOnly.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
@@ -134,28 +142,44 @@
 
   SharedCryptoPkg/Driver/SharedCryptoDxe.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+!endif
 
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
   SharedCryptoPkg/Driver/SharedCryptoDxeMu.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
 [Components.X64.DXE_SMM_DRIVER]
   SharedCryptoPkg/Driver/SharedCryptoSmm.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
       IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   }
 
   SharedCryptoPkg/Driver/SharedCryptoSmmMu.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
       IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   }
