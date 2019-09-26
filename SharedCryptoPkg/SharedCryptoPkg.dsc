@@ -123,7 +123,6 @@
   SharedCryptoPkg/Library/CryptLibSharedDriver/PeiCryptLibSharedDriver.inf
   SharedCryptoPkg/Library/CryptLibSharedDriver/SmmCryptLibSharedDriver.inf
 
-
 [Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
   SharedCryptoPkg/Driver/SharedCryptoPeiShaOnly.inf {
     <LibraryClasses>
@@ -132,6 +131,7 @@
   }
 
 [Components.X64, Components.AARCH64, Components.IA32]
+
   SharedCryptoPkg/Driver/SharedCryptoDxe.inf {
     <LibraryClasses>
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf

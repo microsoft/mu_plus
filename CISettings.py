@@ -13,7 +13,7 @@ from edk2toollib.utility_functions import GetHostInfo
 
 
 class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsManager, SetupSettingsManager):
-    
+
     def __init__(self):
         self.ActualPackages = []
         self.ActualTargets = []
@@ -35,7 +35,7 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
     # ####################################################################################### #
 
     def GetPackagesSupported(self):
-        ''' return iterable of edk2 packages supported by this build. 
+        ''' return iterable of edk2 packages supported by this build.
         These should be edk2 workspace relative paths '''
 
         return (
@@ -52,6 +52,8 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
 
     def GetArchitecturesSupported(self):
         ''' return iterable of edk2 architectures supported by this build '''
+        if "SharedCryptoPkg" in self.ActualPackages:
+            return ("IA32", "X64")
         return ("IA32",
                 "X64",
                 "AARCH64")
@@ -85,14 +87,18 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
 
         Raise Exception if a list_of_requested_architectures is not supported
         '''
-        unsupported = set(list_of_requested_architectures) - \
-            set(self.GetArchitecturesSupported())
+        # TODO: remove once TCBZ2029 is fixed
+        requested_arch_set = set(list_of_requested_architectures)
+        if "SharedCryptoPkg" in self.ActualPackages and "AARCH64" in requested_arch_set:
+            requested_arch_set.remove("AARCH64")
+
+        unsupported = requested_arch_set - set(self.GetArchitecturesSupported())
         if(len(unsupported) > 0):
             logging.critical(
                 "Unsupported Architecture Requested: " + " ".join(unsupported))
             raise Exception(
                 "Unsupported Architecture Requested: " + " ".join(unsupported))
-        self.ActualArchitectures = list_of_requested_architectures
+        self.ActualArchitectures = list(requested_arch_set)
 
     def SetTargets(self, list_of_requested_target):
         ''' Confirm the request target list is valid and configure SettingsManager
