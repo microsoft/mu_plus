@@ -81,6 +81,7 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
   {
     //save the newly initialized permissions
     Status = SaveToFlash(mPermStore);
+    PopulateCurrentPermissions(TRUE);
   }
   return Status;
 }

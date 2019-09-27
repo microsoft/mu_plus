@@ -1,8 +1,8 @@
 /**@file
 DfciSettingPermissionProvisionXml.c
 
-Thsi file supports the tool input path for setting permissions.
-Permissions are set using XML.  That xml is written to a variable and then passed to UEFI to be applied.
+This file supports the tool input path for setting permissions.
+Permissions are set using XML.  That XML is written to a variable and then passed to UEFI to be applied.
 This code supports that.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -184,7 +184,7 @@ ApplyPermissionsInXml(
     Status = EFI_NO_MAPPING;
     goto EXIT;
   }
-  DEBUG((DEBUG_INFO, "Incomming Version: %a\n", InputTempNode->Value));
+  DEBUG((DEBUG_INFO, "Incoming Version: %a\n", InputTempNode->Value));
   Version = AsciiStrDecimalToUintn(InputTempNode->Value);
 
   if (Version > 0xFFFFFFFF)
@@ -200,7 +200,7 @@ ApplyPermissionsInXml(
   //
   if (Version < Store->Lsv)
   {
-    DEBUG((DEBUG_INFO, "%a - Incomming Permission Packet Has Lower Version (0x%X) than allowed LSV (0x%X). Can't apply\n", __FUNCTION__, Version, Store->Lsv));
+    DEBUG((DEBUG_INFO, "%a - Incoming Permission Packet Has Lower Version (0x%X) than allowed LSV (0x%X). Can't apply\n", __FUNCTION__, Version, Store->Lsv));
     Data->State = DFCI_PACKET_STATE_VERSION_ERROR;
     Status = EFI_ACCESS_DENIED;
     goto EXIT;
@@ -280,7 +280,7 @@ ApplyPermissionsInXml(
   if (!AppendToExistingPermission)
   {
     // If not doing append, delete all permissions created by this Identity
-    Status = DeletePermissionEntries (Store, IdProps.Identity);
+    Status = MarkPermissionEntriesForDeletion (Store, IdProps.Identity);
 
     if (EFI_ERROR(Status))
     {
@@ -315,11 +315,16 @@ ApplyPermissionsInXml(
   }
   else
   {  //have a good mask value
-    Store->DefaultPMask = PMask;
-    Store->DefaultDMask = DMask;
+
+    // Check if identity has authority to change Default Permissions
+    if (IdProps.Identity & Store->DefaultDMask)
+    {
+        Store->DefaultPMask = PMask;
+        Store->DefaultDMask = DMask;
+    }
   }
 
-  //All verified.   Now lets walk thru the Permission Entries and add them to our Permission List.
+  //All verified.   Now lets walk through the Permission Entries and add them to our Permission List.
   for (Link = InputPermissionsListNode->ChildrenListHead.ForwardLink; Link != &(InputPermissionsListNode->ChildrenListHead); Link = Link->ForwardLink)
   {
     XmlNode *NodeThis = NULL;
@@ -345,7 +350,6 @@ ApplyPermissionsInXml(
     Entry = FindPermissionEntry(Store, Id, NULL, NULL);
     if (Entry)
     {
-
       if (IdProps.Identity & Entry->DMask)
       {
         Entry->PMask = Mask;
@@ -353,6 +357,7 @@ ApplyPermissionsInXml(
         {
           Entry->DMask = DMask;
         }
+        Entry->DMask &= ~DFCI_PERMISSION_DELETE;  // Insure entry is not deleted.
       }
       else
       {
@@ -366,7 +371,7 @@ ApplyPermissionsInXml(
       {
         if (DMask == DFCI_IDENTITY_NOT_SPECIFIED)  // If not specified, use default
         {
-          DMask = Store->DefaultDMask;
+          DMask = IdProps.Identity;
         }
         //Doesn't exist.  Add new
         Status = AddPermissionEntry(Store, Id, Mask, DMask);
@@ -402,6 +407,8 @@ ApplyPermissionsInXml(
     }
 
   } //end for loop
+
+  Status = DeleteMarkedPermissionEntries (Store);
 
   Data->State = DFCI_PACKET_STATE_DATA_APPLIED;
 
