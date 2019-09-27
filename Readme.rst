@@ -2,24 +2,24 @@
 Project Mu Common Plus Repository
 =================================
 
-.. |build_status_windows| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/mu_plus%20PR%20gate?branchName=dev/201905
+.. |build_status_windows| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/mu_plus%20PR%20gate?branchName=dev/201908
 
-|build_status_windows| Current build status for release/201905
+|build_status_windows| Current build status for dev/201908
 
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
 
-Branch Status - dev/201905
+Branch Status - dev/201908
 ==============================
 
 Status:
   In Development
 
 Anticipated Stabilization:
-  September 2019
+  November 2019
 
 
-Branch Changes - dev/201905
+Branch Changes - dev/201908
 ===============================
 
 Breaking Changes-dev
