@@ -51,6 +51,7 @@
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
+  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
@@ -72,7 +73,6 @@
   DfciGroupLib|DfciPkg/Library/DfciGroupLibNull/DfciGroups.inf
   ZeroTouchSettingsLib|ZeroTouchPkg/Library/ZeroTouchSettings/ZeroTouchSettings.inf
   JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
-
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [LibraryClasses.X64]
@@ -153,6 +153,11 @@
         DfciSettingPermissionLib|DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   <PcdsFeatureFlag>
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE
+  }
+
+  DfciPkg/Application/DfciMenu/DfciSARecovery.inf {
+    <LibraryClasses>
+      DebugLib|MdePkg/Library/UefiDebugLibConOut/UefiDebugLibConOut.inf
   }
 
   DfciPkg/AuthManagerNull/AuthManagerNull.inf
