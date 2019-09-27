@@ -318,7 +318,7 @@ GetDfciParameters (
         //
         if (PcdGetBool(PcdSetupUiReducedFunction)) {
             mDfciMenuConfiguration.DfciZeroTouchOptGrayOut = MENU_TRUE;
-            DEBUG((DEBUG_INFO, "%a: Reduced function DFci Menu\n", __FUNCTION__));
+            DEBUG((DEBUG_INFO, "%a: Reduced function Dfci Menu\n", __FUNCTION__));
         }
 
         mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_FALSE;
@@ -383,69 +383,80 @@ GetDfciParameters (
             DEBUG((DEBUG_INFO, "%a - Ztd Recovery enabled\n",  __FUNCTION__));
         }
 
+        // To enable Http recovery, the URL, Https Cert, TenantId, and Registration Id are
+        // required.  These settings may be at the default state, which is NULL (size 0) for
+        // the Https Cert, or a NULL string. For this simple test, to be valid, they need to
+        // have a size of 2 or better.
+
         Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_RECOVERY_URL,
                                   DFCI_SETTING_TYPE_STRING,
                                   (VOID **) &mDfciUrl,
                                   &mDfciUrlSize);
-        if (!EFI_ERROR(Status) && (mDfciUrlSize >= 1)) {
-            DEBUG((DEBUG_INFO, "Dfci Http Recovery is enabled\n"));
-
-            Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_HTTPS_CERT,
-                                      DFCI_SETTING_TYPE_CERT,
-                                      (VOID **) &mDfciNetworkRequest.HttpsCert,
-                                      &mDfciNetworkRequest.HttpsCertSize);
-            if (EFI_ERROR(Status)) {
-                goto NO_HTTP_RECOVERY;
-            }
-
-            Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_TENANT_ID,
-                                      DFCI_SETTING_TYPE_STRING,
-                                      (VOID **) &mDfciNetworkRequest.TenantId,
-                                      &mDfciNetworkRequest.TenantIdSize);
-            if (EFI_ERROR(Status)) {
-                goto NO_HTTP_RECOVERY;
-            }
-
-            Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_REGISTRATION_ID,
-                                      DFCI_SETTING_TYPE_STRING,
-                                      (VOID **) &mDfciNetworkRequest.RegistrationId,
-                                      &mDfciNetworkRequest.RegistrationIdSize);
-            if (EFI_ERROR(Status)) {
-                goto NO_HTTP_RECOVERY;
-            }
-
-            Status =  mAuthenticationProtocol->GetCertInfo (
-                                mAuthenticationProtocol,
-                                0,
-                                mDfciNetworkRequest.HttpsCert,
-                                mDfciNetworkRequest.HttpsCertSize,
-                                DFCI_CERT_THUMBPRINT,
-                                DFCI_CERT_FORMAT_CHAR8,
-                    (VOID **)  &mDfciNetworkRequest.HttpsThumbprint,
-                               &mDfciNetworkRequest.HttpsThumbprintSize);
-            if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "Error getting Https certificate info. Status = %r\n", Status));
-            } else {
-                if (NULL != mDfciNetworkRequest.HttpsThumbprint) {
-
-
-                    Status = HttpParseUrl (mDfciUrl, (UINT32) mDfciUrlSize, FALSE, &Parser);
-                    if (EFI_ERROR(Status)) {
-                        DEBUG((DEBUG_ERROR, "%a: Unable to parse host Url\n", __FUNCTION__));
-                    } else {
-                        Status = HttpUrlGetHostName (mDfciUrl, Parser, &HostName);
-                        if (EFI_ERROR(Status)) {
-                            DEBUG((DEBUG_ERROR, "%a: Unable to parse host Url\n", __FUNCTION__));
-                        } else {
-                            DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_URL_FIELD), HostName);
-                            FreePool (HostName);
-                            mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_TRUE;
-                        }
-                        FreePool (Parser);
-                    }
-                }
-            }
+        if (EFI_ERROR(Status) || (mDfciUrlSize <= sizeof(CHAR8))) {
+            DEBUG((DEBUG_ERROR, "%a: Unable to obtain Recovery Url\n", __FUNCTION__));
+            goto NO_HTTP_RECOVERY;
         }
+
+
+        Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_HTTPS_CERT,
+                                  DFCI_SETTING_TYPE_CERT,
+                                  (VOID **) &mDfciNetworkRequest.HttpsCert,
+                                  &mDfciNetworkRequest.HttpsCertSize);
+        if (EFI_ERROR(Status) || (mDfciNetworkRequest.HttpsCertSize <= sizeof(CHAR8))) {
+            DEBUG((DEBUG_ERROR, "%a: Unable to obtain Https Certificate\n", __FUNCTION__));
+            goto NO_HTTP_RECOVERY;
+        }
+
+        Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_TENANT_ID,
+                                  DFCI_SETTING_TYPE_STRING,
+                                  (VOID **) &mDfciNetworkRequest.TenantId,
+                                  &mDfciNetworkRequest.TenantIdSize);
+        if (EFI_ERROR(Status) || mDfciNetworkRequest.TenantIdSize <= sizeof(CHAR8)) {
+            DEBUG((DEBUG_ERROR, "%a: Unable to obtain TenantId\n", __FUNCTION__));
+            goto NO_HTTP_RECOVERY;
+        }
+
+        Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_REGISTRATION_ID,
+                                  DFCI_SETTING_TYPE_STRING,
+                                  (VOID **) &mDfciNetworkRequest.RegistrationId,
+                                  &mDfciNetworkRequest.RegistrationIdSize);
+        if (EFI_ERROR(Status) || mDfciNetworkRequest.RegistrationIdSize <= sizeof(CHAR8)) {
+            DEBUG((DEBUG_ERROR, "%a: Unable to obtain RegistrationId\n", __FUNCTION__));
+            goto NO_HTTP_RECOVERY;
+        }
+
+        Status =  mAuthenticationProtocol->GetCertInfo (
+                            mAuthenticationProtocol,
+                            0,
+                            mDfciNetworkRequest.HttpsCert,
+                            mDfciNetworkRequest.HttpsCertSize,
+                            DFCI_CERT_THUMBPRINT,
+                            DFCI_CERT_FORMAT_CHAR8,
+                (VOID **)  &mDfciNetworkRequest.HttpsThumbprint,
+                           &mDfciNetworkRequest.HttpsThumbprintSize);
+        if (EFI_ERROR(Status) || (mDfciNetworkRequest.HttpsThumbprint == NULL)) {
+            DEBUG((DEBUG_ERROR, "Error getting Https certificate info. Status = %r\n", Status));
+            goto NO_HTTP_RECOVERY;
+        }
+
+        Status = HttpParseUrl (mDfciUrl, (UINT32) mDfciUrlSize, FALSE, &Parser);
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "%a: Unable to parse host Url\n", __FUNCTION__));
+            goto NO_HTTP_RECOVERY;
+        }
+
+        Status = HttpUrlGetHostName (mDfciUrl, Parser, &HostName);
+        if (EFI_ERROR(Status)) {
+            FreePool (Parser);
+            DEBUG((DEBUG_ERROR, "%a: Unable to parse host Url\n", __FUNCTION__));
+            goto NO_HTTP_RECOVERY;
+        }
+
+        FreePool (Parser);
+        DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_URL_FIELD), HostName);
+        FreePool (HostName);
+        mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_TRUE;
+        DEBUG((DEBUG_INFO, "Dfci Http Recovery is enabled\n"));
 
 NO_HTTP_RECOVERY:
 
