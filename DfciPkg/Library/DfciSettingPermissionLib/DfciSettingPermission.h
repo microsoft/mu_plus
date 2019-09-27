@@ -149,13 +149,21 @@ IN DFCI_PERMISSION_MASK        *DefaultPMask  OPTIONAL,
 IN DFCI_PERMISSION_MASK        *DefaultDMask  OPTIONAL);
 
 /**
+ * Mark permissions entries for deletion
+ *
+ */
+EFI_STATUS
+MarkPermissionEntriesForDeletion (
+IN DFCI_PERMISSION_STORE *Store,
+IN DFCI_IDENTITY_ID       Id);
+
+/**
  * Delete permissions entries of this Id
  *
  */
 EFI_STATUS
-DeletePermissionEntries (
-IN DFCI_PERMISSION_STORE *Store,
-IN DFCI_IDENTITY_ID       Id);
+DeleteMarkedPermissionEntries (
+IN DFCI_PERMISSION_STORE *Store);
 
 /**
  * Add a new, or update an existing permission entry

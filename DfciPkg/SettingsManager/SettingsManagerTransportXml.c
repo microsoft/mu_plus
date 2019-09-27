@@ -176,7 +176,7 @@ ApplySettings(
   //check against lsv
   if (InternalData->LSV > (UINT32)Version)
   {
-    DEBUG((DEBUG_INFO, "Setting Version Less Than System LSV\n"));
+    DEBUG((DEBUG_INFO, "Setting Version Less Than System LSV(%ld)\n", InternalData->LSV));
     Data->State = DFCI_PACKET_STATE_VERSION_ERROR;
     Status = EFI_ACCESS_DENIED;
     goto EXIT;

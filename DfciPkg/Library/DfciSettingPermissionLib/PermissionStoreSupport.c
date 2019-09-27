@@ -61,7 +61,7 @@ EFI_STATUS
 EFIAPI
 InitPermStore(DFCI_PERMISSION_STORE **Store)
 {
-  EFI_STATUS Status; 
+  EFI_STATUS Status;
 
   if (Store == NULL)
   {
@@ -88,7 +88,7 @@ InitPermStore(DFCI_PERMISSION_STORE **Store)
   (*Store)->DefaultPMask = DFCI_PERMISSION_MASK__DEFAULT;              //Set to default which is local user
   (*Store)->DefaultDMask = DFCI_PERMISSION_MASK__DELEGATED_DEFAULT;  //Set to default which is SignerOwner
   InitializeListHead( &((*Store)->PermissionsListHead));
-  
+
   Status = gRT->GetTime(&((*Store)->CreatedOn), NULL);
   if (EFI_ERROR(Status))
   {
@@ -172,10 +172,10 @@ GetNumberOfPermissionEntires(IN CONST DFCI_PERMISSION_STORE *Store, OPTIONAL OUT
 }
 
 /**
-  Add a new Permission entry to the list at the end. 
+  Add a new Permission entry to the list at the end.
 
   This doesn't check if an existing entry already exists.  Caller should make sure
-  entry doesn't already exist.  
+  entry doesn't already exist.
 **/
 EFI_STATUS
 EFIAPI
@@ -233,9 +233,37 @@ IN DFCI_PERMISSION_MASK DMask)
 }
 
 EFI_STATUS
-DeletePermissionEntries (
+MarkPermissionEntriesForDeletion (
 IN DFCI_PERMISSION_STORE *Store,
 IN DFCI_IDENTITY_ID       Id
+) {
+  LIST_ENTRY *Link = NULL;
+
+  if (Store == NULL)
+  {
+    DEBUG((DEBUG_ERROR,"%a - Invalid Perm Store\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  DEBUG((DEBUG_INFO,"%a - Marking permission entries owned by %x\n", __FUNCTION__, Id));
+  EFI_LIST_FOR_EACH(Link, &(Store->PermissionsListHead))
+  {
+      DFCI_PERMISSION_ENTRY *Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
+      if ((Temp->DMask & DFCI_PERMISSION_MASK__USERS) != 0)
+      {
+        if (Id & HIGHEST_IDENTITY(Temp->DMask))
+        {
+          DEBUG((DEBUG_INFO,"%a - marking perm Mask=%x, %a.\n", __FUNCTION__, Temp->DMask, Temp->Id));
+          Temp->DMask |= DFCI_PERMISSION_DELETE;
+        }
+      }
+  }
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+DeleteMarkedPermissionEntries (
+IN DFCI_PERMISSION_STORE *Store
 ) {
   LIST_ENTRY *Link = NULL;
   LIST_ENTRY *NextLink = NULL;
@@ -246,25 +274,21 @@ IN DFCI_IDENTITY_ID       Id
     return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG((DEBUG_INFO,"%a - Deleting permission entries owned by %x\n", __FUNCTION__, Id));
-  EFI_LIST_FOR_EACH_SAFE(Link, NextLink, &(Store->PermissionsListHead)) 
+  EFI_LIST_FOR_EACH_SAFE(Link, NextLink, &(Store->PermissionsListHead))
   {
       DFCI_PERMISSION_ENTRY *Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
-      if ((Temp->DMask & DFCI_PERMISSION_MASK__USERS) != 0)
+      if (Temp->DMask & DFCI_PERMISSION_DELETE)
       {
-        if (Id & HIGHEST_IDENTITY(Temp->DMask))
-        {
-          DEBUG((DEBUG_INFO,"%a - deleting perm Mask=%x, %a.\n", __FUNCTION__, Temp->DMask, Temp->Id));
-          RemoveEntryList (Link);
-          FreePool (Temp);
-        }
+        DEBUG((DEBUG_INFO,"%a - deleting perm Mask=%x, Entry %a.\n", __FUNCTION__, Temp->DMask, Temp->Id));
+        RemoveEntryList (Link);
+        FreePool (Temp);
       }
   }
   return EFI_SUCCESS;
 }
 
 /**
- Find Permission Entry for a given Id. 
+ Find Permission Entry for a given Id.
 
  If doesn't exist return NULL
 **/
@@ -392,9 +416,9 @@ DebugPrintPermissionStore(IN CONST DFCI_PERMISSION_STORE *Store)
   DEBUG((DEBUG_INFO, " Number Of Permission Entries: %d\n", GetNumberOfPermissionEntires(Store, NULL)));
   for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)
   {
-    // 
-    // THIS IS UGLY - 
-    // USE #define so that compiler doens't complain on RELEASE build.  
+    //
+    // THIS IS UGLY -
+    // USE #define so that compiler doens't complain on RELEASE build.
     //
     #define Temp (CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE))
     DEBUG((DEBUG_INFO, "   PERM ENTRY - Id: %a  Permission: 0x%X  DefaultDMask Permission: 0x%X\n", Temp->Id, Temp->PMask, Temp->DMask));
