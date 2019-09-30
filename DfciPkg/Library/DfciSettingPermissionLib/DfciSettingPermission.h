@@ -19,8 +19,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/DfciPacketHeader.h>
 #include <Guid/DfciPermissionManagerVariables.h>
 
-#include <Protocol/RegularExpressionProtocol.h>
-
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -85,7 +83,7 @@ typedef struct {
   LIST_ENTRY PermissionsListHead;
 } DFCI_PERMISSION_STORE;
 
-extern DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol; 
+extern DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol;
 extern DFCI_PERMISSION_STORE        *mPermStore;
 extern DFCI_APPLY_PACKET_PROTOCOL    mApplyPermissionsProtocol;
 
@@ -144,9 +142,7 @@ DFCI_PERMISSION_ENTRY*
 EFIAPI
 FindPermissionEntry(
 IN CONST DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_STRING       Id,
-IN DFCI_PERMISSION_MASK        *DefaultPMask  OPTIONAL,
-IN DFCI_PERMISSION_MASK        *DefaultDMask  OPTIONAL);
+IN DFCI_SETTING_ID_STRING       Id);
 
 /**
  * Mark permissions entries for deletion

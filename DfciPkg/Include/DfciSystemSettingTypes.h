@@ -92,8 +92,7 @@ typedef enum {
   DFCI_IDENTITY_INVALID       = 0x00,
   DFCI_IDENTITY_LOCAL         = 0x01,
   DFCI_IDENTITY_NOT_SPECIFIED = 0x02, // Only allowed internally for delegated mask
-  DFCI_PERMISSION_REGEXP      = 0x02, // Only set in Permissions PMask to indicate Regular Expression
-  DFCI_PERMISSION_DELETE      = 0x04, // Only set in Permissions PMask to indicate entry to be deleted
+  DFCI_PERMISSION_DELETE      = 0x04, // Only set in Permissions DMask to indicate entry to be deleted
   DFCI_IDENTITY_SIGNER_ZTD    = 0x08,
   DFCI_IDENTITY_SIGNER_USER2  = 0x10,
   DFCI_IDENTITY_SIGNER_USER1  = 0x20,
