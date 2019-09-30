@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "DfciSettingPermission.h"
 
-EFI_REGULAR_EXPRESSION_PROTOCOL *mRegExp = NULL;
-
 EFI_STATUS
 EFIAPI
 AddRequiredPermissionEntry (
@@ -23,7 +21,7 @@ AddRequiredPermissionEntry (
   DFCI_PERMISSION_ENTRY *Entry;
   EFI_STATUS             Status = EFI_SUCCESS;
 
-  Entry = FindPermissionEntry (Store, Id, NULL, NULL);
+  Entry = FindPermissionEntry (Store, Id);
 
   if (Entry == NULL)
   {
@@ -66,12 +64,6 @@ InitPermStore(DFCI_PERMISSION_STORE **Store)
   if (Store == NULL)
   {
     return EFI_INVALID_PARAMETER;
-  }
-
-  Status = gBS->LocateProtocol (&gEfiRegularExpressionProtocolGuid, NULL, (VOID **) &mRegExp);
-  if (EFI_ERROR(Status))
-  {
-     DEBUG((DEBUG_ERROR, "%a: RegExp protocol not found.  RegExp is not supported\n", __FUNCTION__));
   }
 
   *Store = (DFCI_PERMISSION_STORE *)AllocateZeroPool(sizeof(DFCI_PERMISSION_STORE));
@@ -296,15 +288,10 @@ DFCI_PERMISSION_ENTRY*
 EFIAPI
 FindPermissionEntry(
 IN CONST DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_STRING       Id,
-IN DFCI_PERMISSION_MASK        *DefaultPMask  OPTIONAL,
-IN DFCI_PERMISSION_MASK        *DefaultDMask  OPTIONAL
+IN DFCI_SETTING_ID_STRING       Id
 )
 {
-  EFI_STATUS Status;
   UINTN      IdSize;
-  BOOLEAN    Match;
-  UINTN      MatchCount;
 
 
   if (Store == NULL)
@@ -322,60 +309,6 @@ IN DFCI_PERMISSION_MASK        *DefaultDMask  OPTIONAL
   {
       DEBUG((DEBUG_ERROR, "%a - Invalid ID length\n", __FUNCTION__));
       return NULL;
-  }
-
-  if (DefaultPMask != NULL)
-  {
-    *DefaultPMask = Store->DefaultPMask;
-  }
-
-  if (DefaultDMask != NULL)
-  {
-    *DefaultDMask = Store->DefaultDMask;
-  }
-
-  if ((mRegExp != NULL) && ((DefaultPMask != NULL) || (DefaultDMask != NULL)))
-  {
-    for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)
-    {
-      DFCI_PERMISSION_ENTRY *Temp = CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
-
-      if (!IS_PERMISSION_REGEXP(Temp->PMask))
-      {
-        continue;
-      }
-
-      Match = FALSE;
-      Status = mRegExp->MatchString (mRegExp,
-                                     (CHAR16 *) Id,
-                                     (CHAR16 *) Temp->Id,
-                                    &gEfiRegexSyntaxTypePerlGuid,
-                                    &Match,
-                                     NULL,
-                                    &MatchCount);
-      if (EFI_ERROR(Status))
-      {
-        DEBUG((DEBUG_ERROR," %a: Error in RegExp %a. Code = %r\n", __FUNCTION__, Temp->Id, Status));
-      }
-      else
-      {
-        if (Match)
-        {
-          if (DefaultPMask != NULL)
-          {
-            *DefaultPMask = Temp->PMask & (!DFCI_PERMISSION_REGEXP);
-          }
-
-          if (DefaultDMask != NULL)
-          {
-            *DefaultDMask = Temp->DMask;
-          }
-        }
-      }
-
-      // First match wins, and sets the default PMask an DMask
-      break;
-    }
   }
 
   for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink)

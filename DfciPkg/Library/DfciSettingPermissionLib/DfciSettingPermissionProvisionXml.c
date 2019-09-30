@@ -347,7 +347,7 @@ ApplyPermissionsInXml(
 
     //Check if it already exists
     Status = EFI_SUCCESS;
-    Entry = FindPermissionEntry(Store, Id, NULL, NULL);
+    Entry = FindPermissionEntry(Store, Id);
     if (Entry)
     {
       if (IdProps.Identity & Entry->DMask)

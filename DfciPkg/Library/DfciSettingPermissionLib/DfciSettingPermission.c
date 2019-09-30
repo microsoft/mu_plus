@@ -137,7 +137,7 @@ OUT BOOLEAN                     *Result
     // there is an explicit permission entry for the group, the group permission
     // supersedes the individual permission.r
     //
-    Temp = FindPermissionEntry(mPermStore, GroupId, NULL, NULL);
+    Temp = FindPermissionEntry(mPermStore, GroupId);
     if (NULL != Temp)
     {
       // Check Auth for the group id (Recursive Call)
@@ -169,7 +169,7 @@ OUT BOOLEAN                     *Result
   PMask = mPermStore->DefaultPMask;
 
   //3. Set PMask to specific value if in list
-  Temp = FindPermissionEntry(mPermStore, SettingId, NULL, NULL);
+  Temp = FindPermissionEntry(mPermStore, SettingId);
   if (Temp != NULL)
   {
     DEBUG((DEBUG_INFO, "%a - Found Specific Permission for %a (0x%x), (0x%x)\n", __FUNCTION__, SettingId, Temp->PMask, Properties.Identity));
@@ -278,7 +278,7 @@ OUT DFCI_PERMISSION_MASK   *Permissions
   PMask = mPermStore->DefaultPMask;
 
   //3. Set PMask to specific value if in list
-  Temp = FindPermissionEntry(mPermStore, SettingId, NULL, NULL);
+  Temp = FindPermissionEntry(mPermStore, SettingId);
   if (Temp != NULL)
   {
     PMask = Temp->PMask;
