@@ -37,7 +37,7 @@ When a Print Screen callback occurs:
     [Components.<arch>]
     ...
     ...
-    MsGraphicsPkg/PrintScreenFileLogger/PrintScreenFileLogger.inf
+    MsGraphicsPkg/PrintScreenLogger/PrintScreenLogger.inf
     
 
 ## Sample FDF change
@@ -45,7 +45,7 @@ When a Print Screen callback occurs:
     [FV.<a DXE firmware volume>]
     ...
     ...
-    INF MsGraphicsPkg/PrintScreenFileLogger/PrintScreenFileLogger.inf
+    INF MsGraphicsPkg/PrintScreenLogger/PrintScreenLogger.inf
 
 ## Copyright
 
