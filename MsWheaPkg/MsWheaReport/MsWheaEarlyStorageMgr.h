@@ -24,7 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  Indicator for early storage header to be valid
 
 **/
-#define MS_WHEA_EARLY_STORAGE_SIGNATURE       MS_WHEA_ERROR_SIGNATURE
+#define MS_WHEA_EARLY_STORAGE_SIGNATURE       SIGNATURE_32('M', 'E', 'S', '1')
 
 #pragma pack(1)
 
@@ -40,9 +40,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
   UINT32                              Signature;
+  UINT32                              ActiveRange;
   UINT8                               IsStorageFull;
   UINT8                               FullPhase;
-  UINT16                              Reserved;
+  UINT16                              Checksum;
+  UINT32                              Reserved;
 } MS_WHEA_EARLY_STORAGE_HEADER;
 
 /**

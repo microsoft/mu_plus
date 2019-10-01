@@ -2,7 +2,7 @@
 DfciSettings.c
 
 Library Instance for DXE to support getting, setting, defaults, and support the
-Dfci.CpuAndIoVirtualization.Enable setting.
+Device.CpuAndIoVirtualization.Enable setting.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -87,7 +87,7 @@ IsIdSupported (
 	IN  DFCI_SETTING_ID_STRING Id
   ) {
 
-    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALL_CPU_IO_VIRT, DFCI_MAX_ID_LEN)) {
+    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_VIRT_SETTINGS, DFCI_MAX_ID_LEN)) {
         return ID_IS_VIRTUALIZATION;
     } else {
         DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
@@ -169,19 +169,19 @@ DfciVirtSettingsGet (
 
     ID_IS               Id;
     EFI_STATUS          Status;
-    CHAR8              *CurrentValue;
+    UINT8              *CurrentValue;
 
     if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
         DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
         return EFI_INVALID_PARAMETER;
     }
 
-    if (*ValueSize < sizeof(CHAR8)) {
-        *ValueSize = sizeof(CHAR8);
+    if (*ValueSize < sizeof(UINT8)) {
+        *ValueSize = sizeof(UINT8);
         return EFI_BUFFER_TOO_SMALL;
     }
 
-    CurrentValue = (CHAR8 *) Value;
+    CurrentValue = (UINT8 *) Value;
 
     Id = IsIdSupported(This->Id);
     Status = EFI_SUCCESS;
@@ -191,7 +191,7 @@ DfciVirtSettingsGet (
         // Current setting is hard coded to Enabled.
         case ID_IS_VIRTUALIZATION:
             *CurrentValue = HARD_CODED_VIRTUALIZAION;
-            *ValueSize = sizeof(CHAR8);
+            *ValueSize = sizeof(UINT8);
             break;
 
         default:
@@ -222,15 +222,15 @@ DfciVirtSettingsGetDefault (
   ) {
 
     ID_IS    Id;
-    CHAR8   *DefaultValue;
+    UINT8   *DefaultValue;
 
     if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
         DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
         return EFI_INVALID_PARAMETER;
     }
 
-    if (*ValueSize < sizeof(CHAR8)) {
-        *ValueSize = sizeof(CHAR8);
+    if (*ValueSize < sizeof(UINT8)) {
+        *ValueSize = sizeof(UINT8);
         return EFI_BUFFER_TOO_SMALL;
     }
 
@@ -239,8 +239,8 @@ DfciVirtSettingsGetDefault (
         return EFI_UNSUPPORTED;
     }
 
-    DefaultValue = (CHAR8 *) Value;
-    *ValueSize = sizeof(CHAR8);
+    DefaultValue = (UINT8 *) Value;
+    *ValueSize = sizeof(UINT8);
     *DefaultValue = HARD_CODED_VIRTUALIZAION;
 
     return EFI_SUCCESS;
@@ -262,7 +262,7 @@ DfciVirtSettingsSetDefault (
 
     DFCI_SETTING_FLAGS Flags = 0;
     EFI_STATUS         Status;
-    CHAR8              Value;
+    UINT8              Value;
     UINTN              ValueSize;
 
     if (This == NULL) {
@@ -367,12 +367,12 @@ DfciSettingsProviderSupportProtocolNotify (
     //
     // Register items that are NOT in the PREBOOT_UI
     //
-    mDfciCpuAndIoProviderTemplate.Id = DFCI_SETTING_ID__ALL_CPU_IO_VIRT;
+    mDfciCpuAndIoProviderTemplate.Id = DFCI_SETTING_ID__ENABLE_VIRT_SETTINGS;
     mDfciCpuAndIoProviderTemplate.Type = DFCI_SETTING_TYPE_ENABLE;
     mDfciCpuAndIoProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
     Status = sp->RegisterProvider (sp, &mDfciCpuAndIoProviderTemplate);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register DFCI_URL.  Status = %r\n", Status));
+        DEBUG((DEBUG_ERROR, "Failed to Register Virtual Settings.  Status = %r\n", Status));
     }
 
     //We got here, this means all protocols were installed and we didn't exit early.

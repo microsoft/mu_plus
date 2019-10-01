@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MuUefiVersionLib
-  FILE_GUID                      = 7D346383-45E2-43E9-88F9-AA2D006AEBB9
+  FILE_GUID                      = 81a4bd4d-d368-4740-ab10-9525dcc1c2dc
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MuUefiVersionLib

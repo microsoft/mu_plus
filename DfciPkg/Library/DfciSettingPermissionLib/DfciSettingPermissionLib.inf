@@ -7,7 +7,7 @@
 # flags indicating write access
 #
 # This library has a very small public interface but it has a lot of
-# logic required to support Permissions, Provioning Permissions from tool thru variable interface, etc
+# logic required to support Permissions, Provisioning Permissions from tool through variable interface, etc
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -32,8 +32,8 @@
   DfciSettingPermissionProvisioned.c  #support loaded saved/already provisioned data into internal stores for usage
   DfciSettingPermission.h
   PermissionStoreSupport.c
-  DfciSettingPermissionProvisionXml.c #Support reading a Permission Packet in XML format and appling to Permission Store
-  DfciSettingPermissionCurrentPermissionXml.c #Support convertion of current permissions to XML format and
+  DfciSettingPermissionProvisionXml.c #Support reading a Permission Packet in XML format and applying to Permission Store
+  DfciSettingPermissionCurrentPermissionXml.c #Support conversion of current permissions to XML format and
 
 
 [Packages]
@@ -60,12 +60,13 @@
 [Protocols]
   gDfciApplyPermissionsProtocolGuid
   gDfciAuthenticationProtocolGuid
-  gEfiRegularExpressionProtocolGuid
 
 [Guids]
   gDfciPermissionManagerVarNamespace
   gDfciInternalVariableGuid
-  gEfiRegexSyntaxTypePerlGuid
 
 [Depex]
   TRUE
+
+[BuildOptions]
+#  DEBUG_*_*_CC_FLAGS  = /FAcs

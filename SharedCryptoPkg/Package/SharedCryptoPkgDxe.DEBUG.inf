@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x0001001B
   BASE_NAME                      = SharedCryptoDriverDxeDebug
-  FILE_GUID                      = BDFC3C26-73AF-4A14-B861-1B6922EE0C46
+  FILE_GUID                      = 9FA69FA3-3A23-479F-9997-E715A8AD859A
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = SharedCryptoDxeEntry

@@ -1,8 +1,8 @@
 /** @file
-DfciMenu.c
+DfciSARecovery.c
 
-Device Firmware Configuration Interface - Menu to request update of firmware
-configuration from configured portal.
+Device Firmware Configuration Interface - Stand Alone driver that can be loaded
+at the UEFI Shell
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -56,6 +56,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "DfciUsb.h"
 
 #pragma pack(1)
+
 
 ///
 /// HII specific Vendor Device Path definition.
@@ -134,37 +135,6 @@ static CERT_INIT_TABLE_ENTRY mCertInitTable[] = {
 
 #define CERT_TABLE_COUNT (sizeof(mCertInitTable)/sizeof(CERT_INIT_TABLE_ENTRY))
 
-//*---------------------------------------------------------------------------------------*
-//* Hii Config Access functions                                                           *
-//*---------------------------------------------------------------------------------------*
-EFI_STATUS
-EFIAPI
-ExtractConfig (
-    IN  CONST EFI_HII_CONFIG_ACCESS_PROTOCOL   *This,
-    IN  CONST EFI_STRING                        Request,
-    OUT EFI_STRING                             *Progress,
-    OUT EFI_STRING                             *Results
-    );
-
-EFI_STATUS
-EFIAPI
-RouteConfig (
-    IN  CONST EFI_HII_CONFIG_ACCESS_PROTOCOL   *This,
-    IN  CONST EFI_STRING                        Configuration,
-    OUT EFI_STRING                             *Progress
-    );
-
-EFI_STATUS
-EFIAPI
-DriverCallback (
-    IN  CONST EFI_HII_CONFIG_ACCESS_PROTOCOL   *This,
-    IN  EFI_BROWSER_ACTION                      Action,
-    IN  EFI_QUESTION_ID                         QuestionId,
-    IN  UINT8                                   Type,
-    IN  EFI_IFR_TYPE_VALUE                     *Value,
-    OUT EFI_BROWSER_ACTION_REQUEST             *ActionRequest
-    );
-
 //
 // Private internal data
 //
@@ -172,18 +142,12 @@ typedef struct {
     UINTN                           Signature;
     EFI_HANDLE                      DriverHandle;
     EFI_HII_HANDLE                  HiiHandle;
-    EFI_HII_CONFIG_ACCESS_PROTOCOL  ConfigAccess;
 } DFCI_MENU_PRIVATE;
 
 DFCI_MENU_PRIVATE  mDfciMenuPrivate = {
     DFCI_MENU_SIGNATURE,
     NULL,
-    NULL,
-    {
-        ExtractConfig,
-        RouteConfig,
-        DriverCallback
-    }
+    NULL
 };
 
 /**
@@ -343,7 +307,6 @@ GetDfciParameters (
                 if (NULL != Field) {
                     DEBUG((DEBUG_INFO, "String is %s", Field));
                     DEBUG((DEBUG_INFO, "\n"));
-                    DfciSetString16Entry(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(mCertInitTable[i].VfrField), Field);
                     FreePool (Field);
                 }
             }
@@ -453,7 +416,6 @@ GetDfciParameters (
         }
 
         FreePool (Parser);
-        DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_URL_FIELD), HostName);
         FreePool (HostName);
         mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_TRUE;
         DEBUG((DEBUG_INFO, "Dfci Http Recovery is enabled\n"));
@@ -466,7 +428,6 @@ NO_HTTP_RECOVERY:
                                   &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
             mDfciMenuConfiguration.DfciFriendlyName = MENU_TRUE;
-            DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME), Name);
             DEBUG((DEBUG_INFO, "Dfci MDM.FriendlyName is enabled\n"));
         }
 
@@ -476,114 +437,10 @@ NO_HTTP_RECOVERY:
                                   &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
             mDfciMenuConfiguration.DfciTennantName = MENU_TRUE;
-            DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME), Name);
             DEBUG((DEBUG_INFO, "Dfci MDM.Tenant is enabled\n"));
         }
     }
 
-    return EFI_SUCCESS;
-}
-
-/**
-*  This function is the main entry of the Dfci Menu application.
-*
-* @param[in]   ImageHandle
-* @param[in]   SystemTable
-*
-**/
-EFI_STATUS
-EFIAPI
-DfciMenuEntry(
-    IN EFI_HANDLE        ImageHandle,
-    IN EFI_SYSTEM_TABLE  *SystemTable
-  ) {
-
-    EFI_STATUS      Status;
-
-
-    Status = gBS->LocateProtocol(&gDfciAuthenticationProtocolGuid,
-                                 NULL,
-                                 (VOID **)&mAuthenticationProtocol);
-    if (EFI_ERROR(Status) || (mAuthenticationProtocol == NULL)) {
-        DEBUG((DEBUG_ERROR, "%a -  DfciAuthentication protocol not available. %r\n", __FUNCTION__, Status));
-        ASSERT(FALSE);  // Fatal error - There is a Depex for this protocol
-        return FALSE;
-    }
-
-    // Get all Id's that have Dfci Recovery permission.
-    Status = gBS->LocateProtocol(&gDfciSettingPermissionsProtocolGuid,
-                                 NULL,
-                                 (VOID **) &mDfciSettingsPermissionProtocol);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - DfciSettingPermissionsProtocolGuid not available. %r\n", __FUNCTION__, Status));
-        ASSERT(FALSE); // Fatal error - again, there is a Depex for this protocol
-        return FALSE;
-    }
-
-    if (!CheckIfDfciEnrolled ()) {        // Check if system is managed by DFCI
-        DEBUG((DEBUG_INFO, "%a - Error getting Cert Information.\n", __FUNCTION__));
-    }
-
-    // Install Device Path Protocol and Config Access protocol to driver handle
-    //
-    Status = gBS->InstallMultipleProtocolInterfaces (
-        &mDfciMenuPrivate.DriverHandle,
-        &gEfiDevicePathProtocolGuid,
-        &mHiiVendorDevicePath,
-        &gEfiHiiConfigAccessProtocolGuid,
-        &mDfciMenuPrivate.ConfigAccess,
-        NULL
-        );
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Error on InstallMultipleProtocol. Code=%r\n", __FUNCTION__, Status));
-    } else {
-        //
-        // Publish our HII data
-        //
-        mDfciMenuPrivate.HiiHandle = HiiAddPackages (
-            &gDfciMenuFormsetGuid,
-            mDfciMenuPrivate.DriverHandle,
-            DfciMenuVfrBin,
-            DfciMenuStrings,
-            NULL
-            );
-
-        if (mDfciMenuPrivate.HiiHandle == NULL) {
-            DEBUG((DEBUG_ERROR, "%a - Error on HiiAddPackages. Code=%r\n", __FUNCTION__, Status));
-
-            Status = EFI_OUT_OF_RESOURCES;
-        }
-        if (!EFI_ERROR(Status)) {
-            // Signal that DfciMenu is loaded and available.
-            Status = gBS->InstallProtocolInterface (&mDfciMenuPrivate.DriverHandle,
-                                                    &gDfciMenuFormsetGuid,
-                                                     EFI_NATIVE_INTERFACE,
-                                                     NULL);
-        }
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Error during init - Uninstalling Protocols. Code=%r\n", __FUNCTION__, Status));
-            gBS->UninstallMultipleProtocolInterfaces (
-                 mDfciMenuPrivate.DriverHandle,
-                &gEfiDevicePathProtocolGuid,
-                &mHiiVendorDevicePath,
-                &gEfiHiiConfigAccessProtocolGuid,
-                &mDfciMenuPrivate.ConfigAccess,
-                NULL
-                );
-            if (NULL != mDfciMenuPrivate.HiiHandle) {
-                HiiRemovePackages(mDfciMenuPrivate.HiiHandle);
-            }
-        }
-    }
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Dfci Menu Loaded.  There was an error along the way. Code=%r\n", __FUNCTION__, Status));
-    } else {
-        DEBUG((DEBUG_LOAD, "%a: Dfci Menu Loaded.\n", __FUNCTION__));
-    }
-
-    // Always load the menu.
     return EFI_SUCCESS;
 }
 
@@ -606,22 +463,12 @@ DisplayMessageBox (
     IN CHAR16    *MessageText  OPTIONAL
   ) {
 
-    UINT32                    MessageBoxType;
     EFI_STRING                pTitle;
     EFI_STRING                pCaption;
     EFI_STRING                pBody;
     EFI_STRING                pTmp;
-    EFI_STATUS                Status;
-    DFCI_MB_RESULT            SwmResult;
 
 
-    if (Restart) {
-        MessageBoxType = DFCI_MB_RESTART;
-    } else {
-        MessageBoxType = DFCI_MB_OK;
-    }
-
-    SwmResult = DFCI_MB_IDOK;
     pTitle   = HiiGetString(mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MB_TITLE), NULL);
 
     if (EFI_SUCCESS == StatusIn) {
@@ -665,15 +512,9 @@ DisplayMessageBox (
         DEBUG((DEBUG_ERROR, "Invalid message parameters. pTitle=%p, pCaption=%p, pBody=%p\n", pTitle, pCaption, pBody));
     }
 
-    Status = DfciUiDisplayMessageBox (pTitle,
-                                      pBody,             // Dialog body text.
-                                      pCaption,          // Dialog caption text.
-                                      MessageBoxType,    // Show Restart button.
-                                      0,                 // No timeout
-                                      &SwmResult);       // Return result.
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "MessageBox failed. Code=%r\n", Status));
-    }
+    DEBUG((DEBUG_ERROR, "pTitle   = %s\n", pTitle));
+    DEBUG((DEBUG_ERROR, "pCaption = %s\n", pCaption));
+    DEBUG((DEBUG_ERROR, "pBody    = %s\n", pBody));
 
     if (NULL != pTitle) {
         FreePool (pTitle);
@@ -687,33 +528,7 @@ DisplayMessageBox (
         FreePool (pBody);
     }
 
-    return Status;
-}
-
-STATIC
-VOID
-RebootToFrontPage (
-    VOID
-  ) {
-    UINT64                          OsIndication;
-    EFI_STATUS                      Status;
-
-
-    OsIndication = EFI_OS_INDICATIONS_BOOT_TO_FW_UI;
-    Status = gRT->SetVariable (
-        EFI_OS_INDICATIONS_VARIABLE_NAME,
-        &gEfiGlobalVariableGuid,
-        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-        sizeof(UINT64),
-        &OsIndication
-        );
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Unable to set OsIndications\n"));
-    }
-    DEBUG((DEBUG_INFO, "%a: Resetting system.\n", __FUNCTION__));
-    gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
-
-    CpuDeadLoop ();
+    return EFI_SUCCESS;
 }
 
 /**
@@ -736,11 +551,6 @@ IssueDfciNetworkRequest (
     EFI_STATUS      NetworkStatus;
     CHAR16         *Msg = NULL;
 
-    DfciUiExitSecurityBoundary ();
-
-    // Start UI Spinner if one is present
-    //
-    EfiEventGroupSignal (&gDfciConfigStartEventGroupGuid);
 
     if (OnPrem) {
         NetworkStatus = ProcessSimpleNetworkRequest(&mDfciNetworkRequest, &Msg);
@@ -754,16 +564,10 @@ IssueDfciNetworkRequest (
     }
 
     //
-    // Stop UI Spinner
-    //
-    EfiEventGroupSignal (&gDfciConfigCompleteEventGroupGuid);
-
-    //
     // Inform user that operation is complete - then restart the system to return to the trusted code
     //
     DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), NetworkStatus, TRUE, Msg);
 
-    RebootToFrontPage ();
 }
 
 /**
@@ -784,8 +588,6 @@ IssueDfciUsbRequest (
     CHAR16       *FileName2;
     CHAR8        *JsonString;
     UINTN         JsonStringSize;
-
-    DfciUiExitSecurityBoundary ();
 
     FileName = NULL;
     JsonString = NULL;
@@ -836,249 +638,78 @@ IssueDfciUsbRequest (
     }
 
     //
-    // Stop UI Spinner
-    //
-    EfiEventGroupSignal (&gDfciConfigCompleteEventGroupGuid);
-
-    //
     // Inform user that operation is complete
     //
     DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_NEW_SETTINGS), Status, TRUE, FileName);
 
-    RebootToFrontPage ();
 }
 
 /**
- *  This function processes the results of changes in configuration.
- *
- *  @param[in]  This               Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
- *  @param in]  Action             Specifies the type of action taken by the browser.
- *  @param[in]  QuestionId         A unique value which is sent to the original
- *                                 exporting driver so that it can identify the type
- *                                 of data to expect.
- *  @param[in]  Type               The type of value for the question.
- *  @param[in]  Value              A pointer to the data being sent to the original
- *                                 exporting driver.
- *  @param[out] ActionRequest      On return, points to the action requested by the
- *                                 callback function.
- *
- *  @retval EFI_SUCCESS            The callback successfully handled the action.
- *  @retval EFI_OUT_OF_RESOURCES   Not enough storage is available to hold the
- *                                 variable and its data.
- *  @retval EFI_DEVICE_ERROR       The variable could not be saved.
- *  @retval EFI_UNSUPPORTED        The specified Action is not supported by the
- *                                 callback.
+*  This function is the main entry of the Dfci Menu application.
+*
+* @param[in]   ImageHandle
+* @param[in]   SystemTable
+*
 **/
 EFI_STATUS
 EFIAPI
-DriverCallback (
-    IN  CONST EFI_HII_CONFIG_ACCESS_PROTOCOL   *This,
-    IN  EFI_BROWSER_ACTION                     Action,
-    IN  EFI_QUESTION_ID                        QuestionId,
-    IN  UINT8                                  Type,
-    IN  EFI_IFR_TYPE_VALUE                     *Value,
-    OUT EFI_BROWSER_ACTION_REQUEST             *ActionRequest
-    ) {
-    EFI_STATUS               Status;
+DfciSARecoveryEntry(
+    IN EFI_HANDLE        ImageHandle,
+    IN EFI_SYSTEM_TABLE  *SystemTable
+  ) {
 
-    DEBUG ((DEBUG_INFO, "*Hii-Dfci* - Question ID=0x%08x Type=0x%04x Action=0x%04x Value=0x%lx\n", QuestionId, Type, Action, Value->u64));
+    EFI_STATUS      Status;
+    EFI_HII_HANDLE *DfciHandles;
 
-    *ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE;
-    Status = EFI_UNSUPPORTED;
+    AsciiPrint ("DfciSARecovery V0.1\n");
 
-    switch (Action) {
-
-        case EFI_BROWSER_ACTION_FORM_OPEN:
-            switch (QuestionId) {
-            case DFCI_MENU_INIT_QUESTION_ID:
-                DEBUG((DEBUG_INFO," HttpRecovery is %d\n", mDfciMenuConfiguration.DfciHttpRecoveryEnabled));
-                DEBUG((DEBUG_INFO," DfciRecovery is %d\n", mDfciMenuConfiguration.DfciRecoveryEnabled));
-                break;
-
-            case DFCI_MENU_INIT2_QUESTION_ID:
-            case DFCI_MENU_INIT3_QUESTION_ID:
-            default:
-                break;
-            }
-
-            break;
-
-        case EFI_BROWSER_ACTION_CHANGED:
-            switch (QuestionId) {
-            case DFCI_MENU_HTTP_UPDATE_NOW_QUESTION_ID:
-                DEBUG((DEBUG_INFO," Http Recovery was selected\n"));
-
-                // This routine never returns
-                IssueDfciNetworkRequest ();
-                break;
-
-            case DFCI_MENU_USB_UPDATE_NOW_QUESTION_ID:
-            case DFCI_MENU_USB_INSTALL_NOW_QUESTION_ID:
-                DEBUG((DEBUG_INFO," Usb Recovery was selected\n"));
-
-                // This routine never returns;
-                IssueDfciUsbRequest ();
-                break;
-
-            case DFCI_MENU_RECOVERY_INFO_QUESTION_ID:
-            case DFCI_MENU_RECOVERY_NOW_QUESTION_ID:
-                DEBUG((DEBUG_INFO," Full Recovery was selected\n"));
-                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
-                Status = EFI_SUCCESS;
-                break;
-
-            case DFCI_MENU_CONFIGURE_QUESTION_ID:
-                DEBUG((DEBUG_INFO," Move to Configure Menu\n"));
-                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_SUBMIT_EXIT;
-                Status = EFI_SUCCESS;
-                break;
-
-            case DFCI_MENU_ZUM_OPT_IN_QUESTION_ID:
-                DEBUG((DEBUG_INFO," Opt In selected\n"));
-
-                SetZeroTouchState (ZERO_TOUCH_OPT_IN);
-                mDfciMenuConfiguration.DfciOptInChanged = MENU_TRUE;
-
-                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
-                Status = EFI_SUCCESS;
-                // OptIn requires a restart
-                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, TRUE, NULL);
-                break;
-
-            case DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID:
-                DEBUG((DEBUG_INFO," Opt Out selected\n"));
-
-                SetZeroTouchState (ZERO_TOUCH_OPT_OUT);
-                mDfciMenuConfiguration.DfciOptInChanged = MENU_TRUE;
-
-                *ActionRequest = EFI_BROWSER_ACTION_REQUEST_SUBMIT;
-                Status = EFI_SUCCESS;
-                // OptOut requires a restart
-                DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, TRUE, NULL);
-                break;
-
-            default:
-                break;
-            }
-
-        default:
-            break;
-    }
-
-    return Status;
-}
-
-/**
- *  This function processes the results of changes in configuration.
- *
- *  @param[in]  This               Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
- *  @param[in]  Configuration      A null-terminated Unicode string in <ConfigResp>
- *                                 format.
- *  @param[out]  Progress          A pointer to a string filled in with the offset of
- *                                 the most recent '&' before the first failing
- *                                 name/value pair (or the beginning of the string if
- *                                 the failure is in the first name/value pair) or
- *                                 the terminating NULL if all was successful.
- *
- *  @retval EFI_SUCCESS            The Results is processed successfully.
- *  @retval EFI_INVALID_PARAMETER  Configuration is NULL.
- *  @retval EFI_NOT_FOUND          Routing data doesn't match any storage in this
- *                                 driver.
- *
- **/
-EFI_STATUS
-EFIAPI
-RouteConfig (
-    IN  CONST EFI_HII_CONFIG_ACCESS_PROTOCOL   *This,
-    IN  CONST EFI_STRING                       Configuration,
-    OUT EFI_STRING                             *Progress
-    ) {
-    EFI_STATUS    Status;
-
-    if (Configuration == NULL || Progress == NULL) {
+    DfciHandles  = HiiGetHiiHandles(&gDfciMenuFormsetGuid);
+    if (DfciHandles == NULL) {
+        DEBUG((DEBUG_ERROR, "%a: Unable to locate Dfci Menu.\n", __FUNCTION__));
         return EFI_INVALID_PARAMETER;
     }
-    if (Configuration == NULL) {
-        return EFI_UNSUPPORTED;
-    }
-    if (StrStr(Configuration, L"OFFSET") == NULL) {
-        return EFI_UNSUPPORTED;
-    }
-    Status = EFI_SUCCESS;
 
-    DEBUG((DEBUG_INFO, "%a: complete. Code = %r\n", __FUNCTION__, Status));
-    return Status;
-}
+    mDfciMenuPrivate.HiiHandle  = DfciHandles[0];
+    FreePool (DfciHandles);
 
-/**
- *  This function allows a caller to extract the current configuration for one
- *  or more named elements from the target driver.
- *
- *  @param[in]   This              Points to the EFI_HII_CONFIG_ACCESS_PROTOCOL.
- *  @param[in]   Request           A null-terminated Unicode string in
- *                                 <ConfigRequest> format.
- *  @param[out]  Progress          On return, points to a character in the Request
- *                                 string. Points to the string's null terminator if
- *                                 request was successful. Points to the most recent
- *                                 '&' before the first failing name/value pair (or
- *                                 the beginning of the string if the failure is in
- *                                 the first name/value pair) if the request was not
- *                                 successful.
- *  @param[out]  Results           A null-terminated Unicode string in
- *                                 <ConfigAltResp> format which has all values filled
- *                                 in for the names in the Request string. String to
- *                                 be allocated by the called function.
- *
- *  @retval EFI_SUCCESS            The Results is filled with the requested values.
- *  @retval EFI_OUT_OF_RESOURCES   Not enough memory to store the results.
- *  @retval EFI_INVALID_PARAMETER  Request is illegal syntax, or unknown name.
- *  @retval EFI_NOT_FOUND          Routing data doesn't match any storage in this
- *                                 driver.
- *
- **/
-EFI_STATUS
-EFIAPI
-ExtractConfig (
-    IN  CONST EFI_HII_CONFIG_ACCESS_PROTOCOL   *This,
-    IN  CONST EFI_STRING                        Request,
-    OUT EFI_STRING                             *Progress,
-    OUT EFI_STRING                             *Results
-    ) {
-    EFI_STATUS              Status;
-
-    if (Progress == NULL || Results == NULL) {
+    if (NULL == mDfciMenuPrivate.HiiHandle) {
+        DEBUG((DEBUG_ERROR, "Unable to locate DfciMenu\n"));
         return EFI_INVALID_PARAMETER;
     }
-    if (Request == NULL) {
-        return EFI_UNSUPPORTED;
-    }
-    if (StrStr(Request, L"OFFSET") == NULL) {
-        return EFI_UNSUPPORTED;
+
+    Status = gBS->LocateProtocol(&gDfciAuthenticationProtocolGuid,
+                                 NULL,
+                                 (VOID **)&mAuthenticationProtocol);
+    if (EFI_ERROR(Status) || (mAuthenticationProtocol == NULL)) {
+        DEBUG((DEBUG_ERROR, "%a -  DfciAuthentication protocol not available. %r\n", __FUNCTION__, Status));
+        ASSERT(FALSE);  // Fatal error - There is a Depex for this protocol
+        return FALSE;
     }
 
-    // The Request string may be truncated as it is long.  Ensure \n gets out
-    DEBUG((DEBUG_INFO, "%a: Request=%s\n", __FUNCTION__));
-    DEBUG((DEBUG_INFO, "%s", Request));
-    DEBUG((DEBUG_INFO, "\n"));
+    // Get all Id's that have Dfci Recovery permission.
+    Status = gBS->LocateProtocol(&gDfciSettingPermissionsProtocolGuid,
+                                 NULL,
+                                 (VOID **) &mDfciSettingsPermissionProtocol);
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a - DfciSettingPermissionsProtocolGuid not available. %r\n", __FUNCTION__, Status));
+        ASSERT(FALSE); // Fatal error - again, there is a Depex for this protocol
+        return FALSE;
+    }
 
     Status = GetDfciParameters ();
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Unable to get Dfci Parameters. Code=%r\n", Status));
+
+    if (!CheckIfDfciEnrolled ()) {        // Check if system is managed by DFCI
+        DEBUG((DEBUG_INFO, "%a - Error getting Cert Information.\n", __FUNCTION__));
+        return EFI_SUCCESS;
     }
 
-    if (HiiIsConfigHdrMatch(Request, &gDfciMenuFormsetGuid, L"DfciMenuConfig")) {
-        Status = gHiiConfigRouting->BlockToConfig(
-            gHiiConfigRouting,
-            Request,
-            (UINT8 *)&mDfciMenuConfiguration,
-            sizeof(mDfciMenuConfiguration),
-            Results,
-            Progress
-            );
-        DEBUG((DEBUG_INFO, "%a: Size is %d, Code=%r\n", __FUNCTION__, sizeof(mDfciMenuConfiguration), Status));
+    if (mDfciMenuConfiguration.DfciHttpRecoveryEnabled == MENU_TRUE) {
+        DEBUG((DEBUG_INFO, "%a - Processing Network Request.\n", __FUNCTION__));
+        IssueDfciNetworkRequest ();
+    } else {
+        DEBUG((DEBUG_ERROR, "%a - Unable to attempt network request.\n", __FUNCTION__));
     }
 
-    Status = EFI_SUCCESS;
-    DEBUG((DEBUG_INFO, "%a: complete. Code = %r\n", __FUNCTION__, Status));
-    return Status;
+    // Right now, this is a driver due to the libraries used.  So, never load.
+    return EFI_NOT_FOUND;
 }

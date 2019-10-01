@@ -8,7 +8,7 @@
 [Defines]
     DEC_SPECIFICATION   = 0x00010005
     PACKAGE_NAME        = PcBdsPkg
-    PACKAGE_GUID        = 394D14C6-8C75-4A83-BFE0-969EFB5AF0AA
+    PACKAGE_GUID        = f3577de5-cfbf-4b10-90ef-bca870af6279
     PACKAGE_VERSION     = 0.1
 
 [Includes]
@@ -53,19 +53,19 @@
 
   ##  @libraryclass  Platform specific library to check uefi version information
   ##
-  MuUefiVersionLib|PcBdsPkg/Include/Library/MuUefiVersionLib.h
+  MuUefiVersionLib|Include/Library/MuUefiVersionLib.h
 
   ##  @libraryclass  Platform specific library to set or get reboot reasons
   ##
-  MsNVBootReasonLib|PcBdsPkg/Include/Library/MsNVBootReasonLib.h
+  MsNVBootReasonLib|Include/Library/MsNVBootReasonLib.h
 
   ##  @libraryclass  Platform specific library to set or clear altboot flag
   ##
-  MsAltBootLib|PcBdsPkg/Include/Library/MsAltBootLib.h
+  MsAltBootLib|Include/Library/MsAltBootLib.h
 
   ##  @libraryclass  Library to set console mode low_res or native_res
   ##
-  GraphicsConsoleHelperLib|PcBdsPkg/Include/Library/GraphicsConsoleHelperLib.h
+  GraphicsConsoleHelperLib|Include/Library/GraphicsConsoleHelperLib.h
 
 [Guids]
   # {394D14C6-8C75-4A83-BFE0-969EFB5AF0AA}

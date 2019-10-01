@@ -33,9 +33,9 @@
   ##
   DfciSettingPermissionLib|Include/Library/DfciSettingPermissionLib.h
 
-  ##  @libraryclass  Library  provides a method for DXE drivers to access Dfci Settings.
+  ##  @libraryclass  Library  provides a method to declare groups.
   ##
-  DfciSettingsLib|Include/Library/DfciSettingsLib.h
+  DfciGroupLib|Include/Library/DfciGroupLib.h
 
   ##  @libraryclass  Library  supports UI components associated with DFCI.
   ##

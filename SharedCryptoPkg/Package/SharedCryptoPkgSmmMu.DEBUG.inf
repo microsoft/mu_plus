@@ -9,7 +9,7 @@
   INF_VERSION                    = 0x0001001B
   PI_SPECIFICATION_VERSION       = 0x00010014
   BASE_NAME                      = SharedCryptoDriverSmmMuDebug
-  FILE_GUID                      = C3589CC2-A610-48C5-8DD3-C66E5D05B9E2
+  FILE_GUID                      = 54D64A90-8C1C-4FA2-AAD3-721FE4683538
   MODULE_TYPE                    = DXE_SMM_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = SharedCryptoSmmEntry

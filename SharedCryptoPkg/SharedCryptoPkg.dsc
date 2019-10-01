@@ -19,6 +19,10 @@
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
 
+!ifndef $(IS_CI)
+  DEFINE IS_CI = TRUE
+!endif
+
 [LibraryClasses]
   PrintLib|MdePkg/Library/BasePrintLib/BasePrintLib.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
@@ -39,6 +43,7 @@
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   IntrinsicLib|CryptoPkg/Library/IntrinsicLib/IntrinsicLib.inf
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
@@ -79,7 +84,6 @@
 
 [LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.DXE_RUNTIME_DRIVER,LibraryClasses.common.DXE_SMM_DRIVER]
   BaseBinSecurityLibRng|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [LibraryClasses.common.DXE_SMM_DRIVER]
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
@@ -118,39 +122,64 @@
   #SharedCryptoPkg/UnitTests/ShaUnitTestApp/UnitTestApp.inf
   #SharedCryptoPkg/UnitTests/RsaUnitTestApp/UnitTestApp.inf
   #SharedCryptoPkg/UnitTests/X509UnitTestApp/UnitTestApp.inf
+  # make sure we can build our own images
+  SharedCryptoPkg/Library/CryptLibSharedDriver/DxeCryptLibSharedDriver.inf
+  SharedCryptoPkg/Library/CryptLibSharedDriver/PeiCryptLibSharedDriver.inf
+  SharedCryptoPkg/Library/CryptLibSharedDriver/SmmCryptLibSharedDriver.inf
 
 [Components.IA32, Components.ARM, Components.X64, Components.AARCH64]
   SharedCryptoPkg/Driver/SharedCryptoPeiShaOnly.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
 [Components.X64, Components.AARCH64, Components.IA32]
+
   SharedCryptoPkg/Driver/SharedCryptoDxe.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+!endif
 
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
   SharedCryptoPkg/Driver/SharedCryptoDxeMu.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   }
 
 [Components.X64.DXE_SMM_DRIVER]
   SharedCryptoPkg/Driver/SharedCryptoSmm.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
       IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   }
 
   SharedCryptoPkg/Driver/SharedCryptoSmmMu.inf {
     <LibraryClasses>
+!if $(IS_CI)  == TRUE
+      BaseCryptLib|CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+!else
       BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+!endif
       RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
       IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   }

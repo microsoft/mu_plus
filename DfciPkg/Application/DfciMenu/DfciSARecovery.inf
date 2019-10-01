@@ -1,0 +1,109 @@
+## @file
+# DfciMenu.inf
+#
+# DfciMenu is an application that presents & manages the Dfci settings page.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciSARecovery
+  FILE_GUID                      = af1bb1db-9931-4cb0-8629-b9319bb0efa0
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DfciSARecoveryEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  DfciPrivate.h
+  DfciMenu.h
+  DfciSARecovery.c
+  DfciMenuVfr.Vfr
+  DfciMenuStrings.uni
+  DfciRequest.h
+  DfciRequest.c
+  DfciUsb.h
+  DfciUsb.c
+  DfciUpdate.h
+  DfciUpdate.c
+  DfciUtility.h
+  DfciUtility.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  NetworkPkg/NetworkPkg.dec
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+  ZeroTouchPkg/ZeroTouchPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  DfciDeviceIdSupportLib
+  DfciUiSupportLib
+  FileHandleLib
+  HiiLib
+  HttpLib
+  MemoryAllocationLib
+  JsonLiteParserLib
+  PcdLib
+  PrintLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiHiiServicesLib
+  UefiLib
+  UefiRuntimeServicesTableLib
+  ZeroTouchSettingsLib
+
+[Guids]
+  gDfciAuthProvisionVarNamespace
+  gDfciConfigCompleteEventGroupGuid
+  gDfciConfigStartEventGroupGuid
+  gDfciMenuFormsetGuid
+  gDfciRecoveryFormsetGuid
+  gDfciPermissionManagerVarNamespace
+  gDfciSettingsGuid
+  gDfciSettingsManagerVarNamespace
+  gEfiBootManagerPolicyNetworkGuid
+  gEfiEventPreReadyToBootGuid
+  gEfiTlsCaCertificateGuid
+  gEfiCertX509Guid
+
+[Protocols]
+  gDfciAuthenticationProtocolGuid
+  gDfciSettingAccessProtocolGuid
+  gDfciSettingPermissionsProtocolGuid
+  gEfiBlockIoProtocolGuid
+  gEfiBootManagerPolicyProtocolGuid
+  gEfiHiiConfigAccessProtocolGuid
+  gEfiHttpProtocolGuid
+  gEfiHttpServiceBindingProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid
+  gEfiTlsConfigurationProtocolGuid
+  gEfiUsbIoProtocolGuid
+  gMsOSKProtocolGuid
+
+[FeaturePcd]
+
+[Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSetupUiReducedFunction
+
+[Depex]
+  gEfiVariableArchProtocolGuid  AND
+  gDfciSettingAccessProtocolGuid AND
+  gDfciAuthenticationProtocolGuid AND
+  gDfciSettingPermissionsProtocolGuid
+
+[BuildOptions]

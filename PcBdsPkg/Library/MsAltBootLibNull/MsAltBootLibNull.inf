@@ -8,7 +8,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MsAltBootLib
-  FILE_GUID                      = 7D346383-45E2-43E9-88F9-AA2D006AEBB9
+  FILE_GUID                      = 10a000e1-2eb2-4fd4-99ac-b98d1867b924
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MsAltBootLib

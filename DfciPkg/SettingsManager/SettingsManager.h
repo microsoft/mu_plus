@@ -82,7 +82,6 @@ typedef struct {
 typedef struct {
   UINTN Signature;
   LIST_ENTRY Link;
-  DFCI_GROUP_LIST_ENTRY *Group;        // Link to group if a member of that group
   DFCI_SETTING_PROVIDER Provider;
 } DFCI_SETTING_PROVIDER_LIST_ENTRY;
 
