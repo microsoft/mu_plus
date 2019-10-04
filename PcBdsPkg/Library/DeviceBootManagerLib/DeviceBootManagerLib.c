@@ -88,7 +88,6 @@ ThermalFailureShutdown (
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a Unabled to set graphics - %r\n", __FUNCTION__, Status));
     }
-    PreparePlatformGraphics();
 
     // Wait a few seconds
 
@@ -131,7 +130,6 @@ PowerFailureShutdown (
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a Unabled to set graphics - %r\n", __FUNCTION__, Status));
     }
-    PreparePlatformGraphics();
 
     // Wait a few seconds
     // Create an event
@@ -1063,7 +1061,6 @@ DeviceBootManagerAfterConsole (
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a Unabled to set graphics - %r\n", __FUNCTION__, Status));
     }
-    PreparePlatformGraphics();
 
     ConsoleMsgLibDisplaySystemInfoOnConsole();
 

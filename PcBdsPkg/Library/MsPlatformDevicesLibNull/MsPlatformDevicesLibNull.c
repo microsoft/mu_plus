@@ -61,20 +61,6 @@ GetPlatformConnectOnConInList (
 }
 
 /**
-Library function used to signal platform that UEFI is ready for InstantOn handshake to declare 
-UEFI is ready to draw graphics. This call occurs after GOP is loaded and graphics controller 
-is connected.
-**/
-VOID
-EFIAPI
-PreparePlatformGraphics (
-VOID
-)
-{
-  return;
-}
-
-/**
 Library function used to provide the console type.  For ConType == DisplayPath,
 device path is filled in to the exact controller to use.  For other ConTypes, DisplayPath
 must NULL. The device path must NOT be freed.
