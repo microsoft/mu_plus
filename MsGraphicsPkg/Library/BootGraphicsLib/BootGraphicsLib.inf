@@ -41,6 +41,9 @@
   gEfiGraphicsOutputProtocolGuid                ## SOMETIMES_CONSUMES
   gEdkiiBootLogo2ProtocolGuid                   ## SOMETIMES_CONSUMES
 
+[Guids]
+  gLogoDisplayedEventGroup                      ## CONSUMES
+
 [Pcd]
   gMsGraphicsPkgTokenSpaceGuid.PcdPostBackgroundColoringSkipCount
 

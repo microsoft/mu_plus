@@ -20,6 +20,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BootGraphicsProviderLib.h>
 #include <Library/DisplayDeviceStateLib.h>
 #include <Library/BmpSupportLib.h>
+#include <Library/UefiLib.h>
 
 #define MS_MAX_HEIGHT_PERCENTAGE 40 //40%
 #define MS_MAX_WIDTH_PERCENTAGE 40  //40%
@@ -195,6 +196,10 @@ DisplayBootGraphic(
         DEBUG((DEBUG_ERROR, "%a - BootLogo2 Error %r\n", __FUNCTION__, Status));
       }
     }
+
+    //Signals that boot graphics has been displayed
+    EfiEventGroupSignal (&gLogoDisplayedEventGroup);
+
     //
     // Status of this function is EFI_SUCCESS even if registration with Boot
     // Logo 2 Protocol fails.
