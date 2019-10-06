@@ -239,10 +239,12 @@ MsWheaESChecksum16 (
 {
   UINT16      Data;
   UINT8       Index;
-  UINTN       Sum;
+  UINT16      Sum;
   EFI_STATUS  Status;
 
   DEBUG((DEBUG_INFO, "%a Calculate sum...\n", __FUNCTION__));
+
+  Status = EFI_SUCCESS;
 
   if ((Checksum == NULL) || (Header == NULL)) {
     Status = EFI_INVALID_PARAMETER;
@@ -266,7 +268,7 @@ MsWheaESChecksum16 (
       DEBUG((DEBUG_ERROR, "%a: Reading Early Storage %d failed %r\n", __FUNCTION__, Index, Status));
       goto Cleanup;
     }
-    Sum = (UINT16) (Sum + Data);
+    Sum = Sum + Data;
   }
 
   *Checksum = (UINT16) (0x10000 - Sum);
