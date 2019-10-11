@@ -361,7 +361,6 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
 
   switch (Var->Header.Version)
   {
-
     //
     // Original version, where settings are an ENUM.  Have to translate the setting id ENUM to a setting id string.
     //

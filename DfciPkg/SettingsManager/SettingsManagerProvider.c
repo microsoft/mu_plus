@@ -921,12 +921,13 @@ Registers a Setting Provider with the System Settings module
 EFI_STATUS
 EFIAPI
 RegisterProvider(
-IN DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL       *This,
-IN DFCI_SETTING_PROVIDER                         *Provider
+IN DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *This,
+IN DFCI_SETTING_PROVIDER                   *Provider
 )
 {
   DFCI_SETTING_PROVIDER_LIST_ENTRY *Entry = NULL;
   DFCI_SETTING_PROVIDER            *ExistingProvider;
+  EFI_STATUS                        Status;
 
   if (Provider == NULL)
   {
@@ -974,8 +975,13 @@ IN DFCI_SETTING_PROVIDER                         *Provider
   //insert into list
   InsertTailList(&mProviderList, &Entry->Link);
 
-  RegisterSettingToGroup (Entry);
+  Status = RegisterSettingToGroup (Entry);
+  if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND))
+  {
+    DEBUG((DEBUG_ERROR, "Error registering %a to a group. Code=%r", Status));
+  }
 
+  // Groups are not known by a provider, so don't return group error to the provider.
   return EFI_SUCCESS;
 }
 
