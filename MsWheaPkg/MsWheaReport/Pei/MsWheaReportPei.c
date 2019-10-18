@@ -112,6 +112,24 @@ MsWheaRscHandlerPei (
                               MsWheaReportHandlerPei);
 }
 
+//A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling PopulateTime() during Pei phase.
+//Dxe phase drivers actually populate time, see PopulateTime() in MsWheaReportDxe.c
+BOOLEAN
+PopulateTime(EFI_TIME* CurrentTime)
+{
+  return FALSE;
+}
+
+//A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling GetRecordID() during Pei phase.
+//Dxe phase drivers actually populate time, see GetRecordID() in MsWheaReportDxe.c
+EFI_STATUS
+GetRecordID(UINT64* RecordID, 
+            EFI_GUID *RecordIDGuid OPTIONAL
+            )
+{
+  return EFI_UNSUPPORTED;
+}
+
 /**
 Entry to MsWheaReportPei.
 

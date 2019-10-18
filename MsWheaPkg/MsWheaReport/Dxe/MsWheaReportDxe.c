@@ -29,12 +29,34 @@ STATIC EFI_RSC_HANDLER_PROTOCOL       *mRscHandlerProtocol    = NULL;
 STATIC EFI_EVENT                      mWriteArchAvailEvent    = NULL;
 STATIC EFI_EVENT                      mVarArchAvailEvent      = NULL;
 STATIC EFI_EVENT                      mExitBootServicesEvent  = NULL;
+STATIC EFI_EVENT                      mClockArchAvailEvent    = NULL;
 
 STATIC BOOLEAN                        mWriteArchAvailable     = FALSE;
 STATIC BOOLEAN                        mVarArchAvailable       = FALSE;
 STATIC BOOLEAN                        mExitBootHasOccurred    = FALSE;
+STATIC BOOLEAN                        mClockArchAvailable     = FALSE;
 
 STATIC LIST_ENTRY                     mMsWheaEntryList;
+
+/**
+Handler function that checks whether the system can write errors to UEFI variable or not.
+
+@retval TRUE                          All pending protocols are ready and can write to UEFI variable immediately
+@retval FALSE                         Some necessary protocols are missing, cannot write to UEFI variable yet
+**/
+STATIC
+BOOLEAN
+ReadyToWriteVariable(
+  VOID
+  )
+{
+  BOOLEAN Res;
+  Res = FALSE;
+  if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE) && (mClockArchAvailable != FALSE)) {
+    Res = TRUE;
+  }
+  return Res;
+}
 
 /**
 Handler function that validates input arguments, and store on flash/CMOS for OS to process.
@@ -71,13 +93,15 @@ MsWheaReportHandlerDxe(
     goto Cleanup;
   }
 
-  if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE)) {
+  if (ReadyToWriteVariable()) {
     // Variable service is ready, store to HwErrRecXXXX
     Status = MsWheaReportHERAdd(MsWheaEntryMD);
+    DEBUG((DEBUG_INFO, "%a: error record written to flash - %r\n", __FUNCTION__, Status));
   }
   else {
     // Add to linked list, similar to hob list
     Status = MsWheaAddReportEvent(&mMsWheaEntryList, MsWheaEntryMD);
+    DEBUG((DEBUG_INFO, "%a: error record added to linked list - %r\n", __FUNCTION__, Status));
   }
 
 Cleanup:
@@ -115,8 +139,8 @@ MsWheaRscHandlerDxe (
 {
   UINT8 CurrentPhase;
 
-  if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE)) {
-    CurrentPhase = MS_WHEA_PHASE_DXE_RUNTIME;
+  if (ReadyToWriteVariable()) {
+    CurrentPhase = MS_WHEA_PHASE_DXE_VAR;
   }
   else {
     CurrentPhase = MS_WHEA_PHASE_DXE;
@@ -311,12 +335,15 @@ MsWheaArchCallback (
   else if ((Event == mVarArchAvailEvent) && (mVarArchAvailable == FALSE)) {
     mVarArchAvailable = TRUE;
   }
+  else if ((Event == mClockArchAvailEvent) && (mClockArchAvailable == FALSE)) {
+    mClockArchAvailable = TRUE;
+  }
   else {
     // Unrecognized event or all available already, do nothing
     goto Cleanup;
   }
 
-  if ((mVarArchAvailable == FALSE) || (mWriteArchAvailable == FALSE)) {
+  if (!ReadyToWriteVariable()) {
     // Some protocol(s) not ready
     goto Cleanup;
   }
@@ -329,6 +356,67 @@ MsWheaArchCallback (
 
 Cleanup:
   return;
+}
+
+/**
+Populates the current time for WHEA records
+
+@param[in,out]  *CurrentTime              A pointer to an EFI_TIME variable which will contain the curren time after
+                                          this function executes
+
+@retval          BOOLEAN                  True if *CurrentTime was populated. 
+                                          False otherwise.
+**/
+BOOLEAN
+PopulateTime(EFI_TIME* CurrentTime)
+{
+  EFI_STATUS Status;
+  Status = gRT->GetTime(CurrentTime, NULL);
+  DEBUG ((DEBUG_INFO, "%a - %r\n", __FUNCTION__, Status));
+  return !EFI_ERROR(Status);
+}
+
+/**
+Gets the Record ID variable and increments it for WHEA records
+
+@param[in,out]  *RecordID                   Pointer to a UINT64 which will contain the record ID to be put on the next WHEA Record
+@param[in]      *RecordIDGuid               Pointer to guid used to get the record ID variable 
+
+@retval          EFI_SUCCESS                The firmware has successfully stored the variable and its data as
+                                            defined by the Attributes.
+@retval          EFI_INVALID_PARAMETER      An invalid combination of attribute bits, name, and GUID was supplied, or the
+                                            DataSize exceeds the maximum allowed.
+@retval          EFI_INVALID_PARAMETER      VariableName is an empty string.
+@retval          EFI_OUT_OF_RESOURCES       Not enough storage is available to hold the variable and its data.
+@retval          EFI_DEVICE_ERROR           The variable could not be retrieved due to a hardware error.
+@retval          EFI_WRITE_PROTECTED        The variable in question is read-only.
+@retval          EFI_WRITE_PROTECTED        The variable in question cannot be deleted.
+@retval          EFI_SECURITY_VIOLATION     The variable could not be written due to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACESS being set,
+                                            but the AuthInfo does NOT pass the validation check carried out by the firmware.
+@retval          EFI_NOT_FOUND              The variable trying to be updated or deleted was not found.                 
+**/
+EFI_STATUS
+GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
+{
+  UINTN Size = sizeof(UINT64);
+
+  //Get the last record ID number used
+  if(EFI_ERROR(gRT->GetVariable(L"RecordID",RecordIDGuid,NULL,&Size,RecordID))) {
+
+    DEBUG ((DEBUG_INFO, __FUNCTION__ " Record ID variable not retrieved, initializing to 0\n"));
+    *RecordID = 0;
+  
+  }
+
+  (*RecordID)++; //increment the record ID number
+
+  //Set the variable so the next record uses a unique record ID
+  return gRT->SetVariable(L"RecordID",
+                          RecordIDGuid,
+                          EFI_VARIABLE_NON_VOLATILE |
+                          EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                          Size,
+                          RecordID);
 }
 
 /**
@@ -355,6 +443,13 @@ MsWheaRegisterCallbacks (
 
   // register for Variable Archetecture Protocol Callback
   mVarArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiVariableArchProtocolGuid, 
+                                                    TPL_CALLBACK, 
+                                                    MsWheaArchCallback, 
+                                                    NULL, 
+                                                    &Registration);
+
+  // register for Clock Architecture Protocol Callback
+  mClockArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiRealTimeClockArchProtocolGuid, 
                                                     TPL_CALLBACK, 
                                                     MsWheaArchCallback, 
                                                     NULL, 

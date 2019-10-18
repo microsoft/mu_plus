@@ -58,6 +58,7 @@
   gEfiRscHandlerProtocolGuid          ## CONSUMES
   gEfiVariableWriteArchProtocolGuid   ## CONSUMES
   gEfiVariableArchProtocolGuid        ## CONSUMES
+  gEfiRealTimeClockArchProtocolGuid   ## CONSUMES
 
 [Pcd]
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
@@ -75,6 +76,7 @@
   gMsWheaRSCDataTypeGuid              ## CONSUMES
   gMsWheaReportServiceGuid            ## SOMETIMES_CONSUMES
   gEfiEventNotificationTypeBootGuid   ## SOMETIMES_CONSUMES
+  gMsWheaReportRecordIDGuid           ## CONSUMES
 
 [Depex]
   gEfiRscHandlerProtocolGuid

@@ -42,10 +42,13 @@ CreateCperHdrDefaultMin (
   IN UINT32                           PayloadSize,
   IN UINT32                           ErrorSeverity,
   IN UINT32                           ErrorStatusCode,
-  IN EFI_GUID                         *PartitionIdGuid
+  IN EFI_GUID                         *PartitionIdGuid,
+  IN UINT8                            ErrorPhase
   )
 {
   EFI_STATUS Status = EFI_SUCCESS;
+  EFI_TIME            CurrentTime;
+  UINT64              RecordID;
 
   if (CperHdr == NULL) {
     Status = EFI_INVALID_PARAMETER;
@@ -62,8 +65,23 @@ CreateCperHdrDefaultMin (
   CperHdr->ErrorSeverity = ErrorSeverity;
   CperHdr->ValidationBits = EFI_ERROR_RECORD_HEADER_PLATFORM_ID_VALID;
   CperHdr->RecordLength = (UINT32)(sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + sizeof(EFI_ERROR_SECTION_DESCRIPTOR) + PayloadSize);
+  
+  if(PopulateTime(&CurrentTime)){
+    CperHdr->ValidationBits    |= (EFI_ERROR_RECORD_HEADER_TIME_STAMP_VALID);
+    CperHdr->TimeStamp.Seconds  = DecimalToBcd8(CurrentTime.Second);
+    CperHdr->TimeStamp.Minutes  = DecimalToBcd8(CurrentTime.Minute);
+    CperHdr->TimeStamp.Hours    = DecimalToBcd8(CurrentTime.Hour);
+    CperHdr->TimeStamp.Day      = DecimalToBcd8(CurrentTime.Day);
+    CperHdr->TimeStamp.Month    = DecimalToBcd8(CurrentTime.Month);
+    CperHdr->TimeStamp.Year     = DecimalToBcd8(CurrentTime.Year % 100);
+    CperHdr->TimeStamp.Century  = DecimalToBcd8((CurrentTime.Year / 100 + 1) % 100); // should not lose data
+    if (ErrorPhase == MS_WHEA_PHASE_DXE_VAR) {
+      CperHdr->TimeStamp.Flag   = BIT0;
+    }
+  } else{
+    CperHdr->ValidationBits &= (~EFI_ERROR_RECORD_HEADER_TIME_STAMP_VALID);
+  }
 
-  CperHdr->ValidationBits &= (~EFI_ERROR_RECORD_HEADER_TIME_STAMP_VALID);
   CopyMem(&CperHdr->PlatformID, (EFI_GUID*)PcdGetPtr(PcdDeviceIdentifierGuid), sizeof(EFI_GUID));
   if (!IsZeroBuffer(PartitionIdGuid, sizeof(EFI_GUID))) {
     CperHdr->ValidationBits |= EFI_ERROR_RECORD_HEADER_PARTITION_ID_VALID;
@@ -76,8 +94,12 @@ CreateCperHdrDefaultMin (
   // Default to Boot Error
   CopyMem(&CperHdr->NotificationType, &gEfiEventNotificationTypeBootGuid, sizeof(EFI_GUID));
 
-  // This is can be modified further
-  CperHdr->RecordID = 0;
+  if(EFI_ERROR(GetRecordID(&RecordID, &gMsWheaReportRecordIDGuid))) {
+    DEBUG ((DEBUG_INFO, __FUNCTION__ " - RECORD ID NOT UPDATED\n"));
+  }
+  
+  //Even if the record id was not updated, the value is either 0 or the previously incremented value
+  CperHdr->RecordID = RecordID;
   CperHdr->Flags |= EFI_HW_ERROR_FLAGS_PREVERR;
   //CperHdr->PersistenceInfo = 0;// Untouched.
   //SetMem(&CperHdr->Resv1, sizeof(CperHdr->Resv1), 0); // Reserved field, should be 0.
@@ -278,7 +300,8 @@ CreateHeadersDefault (
                                   PayloadSize,
                                   MsWheaEntryMD->ErrorSeverity,
                                   MsWheaEntryMD->ErrorStatusValue,
-                                  &MsWheaEntryMD->IhvSharingGuid);
+                                  &MsWheaEntryMD->IhvSharingGuid,
+                                  MsWheaEntryMD->Phase);
   if (EFI_ERROR(Status) != FALSE) {
     goto Cleanup;
   }

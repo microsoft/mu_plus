@@ -39,7 +39,7 @@ Definition wrapper to unify all bert/hwerrrec related specification versioning
 **/
 #define MS_WHEA_PHASE_PEI             0x00
 #define MS_WHEA_PHASE_DXE             0x01
-#define MS_WHEA_PHASE_DXE_RUNTIME     0x02
+#define MS_WHEA_PHASE_DXE_VAR         0x02
 
 #pragma pack(1)
 
@@ -144,6 +144,42 @@ ReportHwErrRecRouter (
   IN CONST EFI_STATUS_CODE_DATA       *Data OPTIONAL,
   IN UINT8                            CurrentPhase,
   IN MS_WHEA_ERR_REPORT_PS_FN         ReportFn
+);
+
+/**
+Populates the current time for WHEA records
+
+@param[in,out]  *CurrentTime              A pointer to an EFI_TIME variable which will contain the curren time after
+                                          this function executes
+
+@retval          BOOLEAN                  True if *CurrentTime was populated. 
+                                          False otherwise.
+**/
+BOOLEAN
+PopulateTime(EFI_TIME* CurrentTime);
+
+/**
+Gets the Record ID variable and increments it for WHEA records
+
+@param[in,out]  *RecordID                   Pointer to a UINT64 which will contain the record ID to be put on the next WHEA Record
+@param[in]      *RecordIDGuid               Pointer to guid used to get the record ID variable 
+
+@retval          EFI_SUCCESS                The firmware has successfully stored the variable and its data as
+                                            defined by the Attributes.
+@retval          EFI_INVALID_PARAMETER      An invalid combination of attribute bits, name, and GUID was supplied, or the
+                                            DataSize exceeds the maximum allowed.
+@retval          EFI_INVALID_PARAMETER      VariableName is an empty string.
+@retval          EFI_OUT_OF_RESOURCES       Not enough storage is available to hold the variable and its data.
+@retval          EFI_DEVICE_ERROR           The variable could not be retrieved due to a hardware error.
+@retval          EFI_WRITE_PROTECTED        The variable in question is read-only.
+@retval          EFI_WRITE_PROTECTED        The variable in question cannot be deleted.
+@retval          EFI_SECURITY_VIOLATION     The variable could not be written due to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACESS being set,
+                                            but the AuthInfo does NOT pass the validation check carried out by the firmware.
+@retval          EFI_NOT_FOUND              The variable trying to be updated or deleted was not found.                 
+**/
+EFI_STATUS
+GetRecordID(UINT64* RecordID, 
+            EFI_GUID *RecordIDGuid
 );
 
 #endif //__MS_WHEA_REPORT_COMMON__

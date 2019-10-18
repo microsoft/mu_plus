@@ -62,6 +62,7 @@
   gMsWheaRSCDataTypeGuid              ## CONSUMES
   gMsWheaReportServiceGuid            ## SOMETIMES_CONSUMES
   gEfiEventNotificationTypeBootGuid   ## SOMETIMES_CONSUMES
+  gMsWheaReportRecordIDGuid           ## CONSUMES
 
 [Depex]
   gEfiPeiRscHandlerPpiGuid
