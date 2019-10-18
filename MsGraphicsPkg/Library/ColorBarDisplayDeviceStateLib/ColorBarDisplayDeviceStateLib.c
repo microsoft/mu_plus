@@ -39,8 +39,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define COLOR_BROWN     (0xFF654321)
 
 #define COLOR_GREY      (0xFFC0C0C0)
+#define COLOR_DARK_GREY (0xFF404040)
 #define COLOR_BLACK     (0xFF000000)
 #define COLOR_WHITE     (0xFFFFFFFF)
+
+//
+// Dimensions
+//
+// This is width in pixels
+#define FORWARD_STRIPE_WIDTH  (50)
 
 //
 // List of supported notifications.
@@ -55,6 +62,7 @@ DEVICE_STATE mSupportedNotifications[] = {
   (DEVICE_STATE)DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED,
   (DEVICE_STATE)DEVICE_STATE_SOURCE_DEBUG_ENABLED,
   (DEVICE_STATE)DEVICE_STATE_MANUFACTURING_MODE,
+  (DEVICE_STATE)DEVICE_STATE_UNIT_TEST_MODE,
 
   (DEVICE_STATE)DEVICE_STATE_MAX  //this needs to be the last one
 };
@@ -105,6 +113,11 @@ PrintValues(DEVICE_STATE Notifications)
   if (Notifications & DEVICE_STATE_MANUFACTURING_MODE)
   {
     DEBUG((DEBUG_INFO, "\tDEVICE_STATE_MANUFACTURING_MODE\n"));
+  }
+
+  if (Notifications & DEVICE_STATE_UNIT_TEST_MODE)
+  {
+    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_UNIT_TEST_MODE\n"));
   }
 
   if (Notifications & DEVICE_STATE_MAX)
@@ -239,6 +252,13 @@ IN  INT32  HeightInPixels
       {
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_VIOLET;
+      }
+      else if (*SupportedNotification & DEVICE_STATE_UNIT_TEST_MODE)
+      {
+        si.FillType = FILL_FORWARD_STRIPE;
+        si.FillTypeInfo.StripeFill.Color1 = COLOR_DARK_GREY;
+        si.FillTypeInfo.StripeFill.Color2 = COLOR_YELLOW;
+        si.FillTypeInfo.StripeFill.StripeSize = FORWARD_STRIPE_WIDTH;
       }
       else
       {
