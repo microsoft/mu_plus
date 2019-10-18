@@ -25,6 +25,7 @@ BaseMemoryLib
 
 [Packages]
 MdePkg/MdePkg.dec
+MdeModulePkg/MdeModulePkg.dec
 MsGraphicsPkg/MsGraphicsPkg.dec
 MsCorePkg/MsCorePkg.dec
 

@@ -123,7 +123,6 @@
 [Components]
   MsCorePkg/Library/MathLib/MathLib.inf
   MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
-  MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
   MsCorePkg/Library/MemoryTypeInformationChangeLib/MemoryTypeInformationChangeLib.inf
   MsCorePkg/MuCryptoDxe/MuCryptoDxe.inf
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf

@@ -27,10 +27,6 @@
   #
   DeviceBootManagerLib|Include/Library/DeviceBootManagerLib.h
 
-  ## @libraryclass Provides a way to store and update the current device state
-  #
-  DeviceStateLib|Include/Library/DeviceStateLib.h
-
   ## @libraryclass Provides PCI device info to CheckHardwareConnected
   #
   DeviceSpecificBusInfoLib|Include/Library/DeviceSpecificBusInfoLib.h
@@ -84,9 +80,6 @@
 
   ## Define a GUID for the regulatory graphics ACPI Table
   gMsCorePkgTokenSpaceGuid.PcdRegulatoryGraphicFileGuid|{ 0x7B, 0x35, 0x39, 0x36,  0xD7, 0xB3,  0x23, 0x4C,  0x20, 0x9A,  0x0B, 0x74, 0x91, 0xD5, 0x70, 0xCE }|VOID*|0x00010177
-
-[PcdsDynamic, PcdsDynamicEx]
-  gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask|0x00000000|UINT32|0x00010178
 
 [UserExtensions.TianoCore."ExtraFiles"]
   MsCorePkgExtra.uni

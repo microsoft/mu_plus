@@ -56,7 +56,7 @@
   BootGraphicsProviderLib|MsGraphicsPkg/Library/BootGraphicsProviderLibNull/BootGraphicsProviderLib.inf
 
   DisplayDeviceStateLib|MsGraphicsPkg/Library/ColorBarDisplayDeviceStateLib/ColorBarDisplayDeviceStateLib.inf
-  DeviceStateLib|MsCorePkg/Library/DeviceStateLib/DeviceStateLib.inf
+  DeviceStateLib|MdeModulePkg/Library/DeviceStateLib/DeviceStateLib.inf
   DeviceBootManagerLib|MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
 
   MsBootManagerSettingsLib|PcBdsPkg/Library/MsBootManagerSettingsDxeLib/MsBootManagerSettingsDxeLib.inf
