@@ -56,6 +56,9 @@
   #
   gDeviceSpecificBusInfoLibTelemetryGuid = {0x3b82283d, 0x71dd, 0x4c61, {0xad, 0x2b, 0x51, 0x9b, 0x8d, 0x7b, 0x77, 0xc9}}
 
+  ## HOB Guid for DebugFileLogger
+  gMuDebugLoggerGuid                  = {0x1c842fbb, 0x1e63, 0x432c, { 0xa1, 0xa9, 0x8a, 0x81, 0x27, 0xf1, 0x2d, 0x47 }}
+
 [Ppis]
   gDebugPortPpiGuid = { 0x9d83f2d1, 0x9832, 0x4ded, { 0xaf, 0x78, 0x0e, 0xfe, 0x93, 0x07, 0xe8, 0xb1 }}
 
@@ -80,6 +83,13 @@
 
   ## Define a GUID for the regulatory graphics ACPI Table
   gMsCorePkgTokenSpaceGuid.PcdRegulatoryGraphicFileGuid|{ 0x7B, 0x35, 0x39, 0x36,  0xD7, 0xB3,  0x23, 0x4C,  0x20, 0x9A,  0x0B, 0x74, 0x91, 0xD5, 0x70, 0xCE }|VOID*|0x00010177
+
+  ## Number of pages (EFI_PAGE_SIZE) to allocate in the EFI partition for each file log
+  ## Default: 1024 * 4KiB = 4MB
+  gMsCorePkgTokenSpaceGuid.PcdDebugFileLoggerAllocatedPages|1024|UINT32|0x4000001C
+
+[PcdsDynamic, PcdsDynamicEx]
+  gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask|0x00000000|UINT32|0x00010178
 
 [UserExtensions.TianoCore."ExtraFiles"]
   MsCorePkgExtra.uni

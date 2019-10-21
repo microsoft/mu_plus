@@ -1,0 +1,52 @@
+## @file DebugFileLoggerPei.inf
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#
+# PEI driver
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DebugFileLoggerPei
+  FILE_GUID                      = c010431c-c352-43a8-ade3-99661b627549
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+
+  ENTRY_POINT                    = DebugFileLoggerPeiEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  DebugFileLoggerPei.h
+  DebugFileLoggerPei.c
+  ../DebugFileLoggerCommon.h
+  ../DebugFileLoggerCommon.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PeimEntryPoint
+  PeiServicesLib
+  PrintLib
+  ReportStatusCodeLib
+  SafeIntLib
+  SynchronizationLib
+
+[Ppis]
+  gEfiPeiRscHandlerPpiGuid
+
+[Guids]
+  gEfiStatusCodeDataTypeStringGuid
+  gMuDebugLoggerGuid
+
+[Depex]
+  gEfiPeiRscHandlerPpiGuid

@@ -1,0 +1,68 @@
+## @file DebugFileLogger.inf
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#
+#  This is a driver for logging debug messages to a file
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DebugFileLoggerDxe
+  FILE_GUID                      = 67adfdfa-d54a-4d5f-9310-36d910d76fc7
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DebugFileLoggerDxeEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  DebugFileLogger.c
+  DebugFileLogger.h
+  FileAccess.c
+  ../DebugFileLoggerCommon.h
+  ../DebugFileLoggerCommon.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  HobLib
+  MemoryAllocationLib
+  PrintLib
+  ReportStatusCodeLib
+  SafeIntLib
+  SynchronizationLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gEfiStatusCodeDataTypeStringGuid
+  gEfiStatusCodeSpecificDataGuid
+  gMuDebugLoggerGuid
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiResetNotificationProtocolGuid
+  gEfiRscHandlerProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid
+
+[Pcd]
+  gMsCorePkgTokenSpaceGuid.PcdDebugFileLoggerAllocatedPages
+
+[Depex]
+ TRUE
+

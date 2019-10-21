@@ -75,6 +75,7 @@
   JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
   FltUsedLib|MsCorePkg/Library/FltUsedLib/FltUsedLib.inf
   MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
+  SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
 
 
   !if $(TARGET) == DEBUG
@@ -133,6 +134,7 @@
   MsCorePkg/Universal/StatusCodeHandler/Serial/Pei/SerialStatusCodeHandlerPei.inf
   MsCorePkg/Library/DebugPortPei/DebugPortPei.inf
   MsCorePkg/Library/PeiDebugLib/PeiDebugLib.inf
+  MsCorePkg/DebugFileLoggerII/Pei/DebugFileLoggerPei.inf
 
 [Components.X64]
   MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
@@ -148,6 +150,7 @@
   MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf
   MsCorePkg/CheckHardwareConnected/CheckHardwareConnected.inf
   MsCorePkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
+  MsCorePkg/DebugFileLoggerII/Dxe/DebugFileLogger.inf
 
 [BuildOptions]
 #force deprecated interfaces off
