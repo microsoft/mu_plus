@@ -12,7 +12,7 @@ Microsoft [leverages DFCI to provide automated UEFI settings management via Micr
 
 ### OEMs that support DFCI
 
-* Microsoft Surface
+* [Microsoft Surface](https://docs.microsoft.com/en-us/surface/surface-manage-dfci-guide)
 
 More are in the works...
 
