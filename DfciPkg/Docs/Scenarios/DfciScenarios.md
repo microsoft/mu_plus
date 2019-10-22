@@ -2,13 +2,19 @@
 
 ## Overview
 
-Microsoft leverages DFCI to provide automated UEFI settings management via Microsoft Intune.  Intune provides the IT manager with abstracted, easy button settings that are generally applicable to all platforms, for example, disable booting USB devices or disable all cameras.  IT managers depend on the UEFI implementation to protect and enforce DFCI configurations such that they cannot be bypassed by an operating system or casual physical attacker.  [Windows Autopilot](https://www.microsoft.com/en-us/microsoft-365/windows/windows-autopilot) provides the trusted device ownership database, mapping devices to Azure Active Directory Tenants.  The "Microsoft Device Management Trust" certificate must be included in UEFI to act as the root of trust for automated UEFI management.  The Autopilot Service (APS) exposes a cloud endpoint to enable recovery from a BIOS menu in case the device can no longer boot due to misconfiguration or disk corruption.
+Microsoft [leverages DFCI to provide automated UEFI settings management via Microsoft Intune](https://docs.microsoft.com/en-us/intune/configuration/device-firmware-configuration-interface-windows).  Intune provides the IT manager with abstracted, easy button settings that are generally applicable to all platforms, for example, disable booting USB devices or disable all cameras.  IT managers depend on the UEFI implementation to protect and enforce DFCI configurations such that they cannot be bypassed by an operating system or casual physical attacker.  [Windows Autopilot](https://www.microsoft.com/en-us/microsoft-365/windows/windows-autopilot) provides the trusted device ownership database, mapping devices to Azure Active Directory Tenants.  The "Microsoft Device Management Trust" certificate must be included in UEFI to act as the root of trust for automated UEFI management.  The Autopilot Service (APS) exposes a cloud endpoint to enable recovery from a BIOS menu in case the device can no longer boot due to misconfiguration or disk corruption.
 
 ## Microsoft DFCI Scenario Requirements
 
 * PCs must include the DFCI feature in their UEFI
 * PCs must be registered to the [Windows Autopilot](https://www.microsoft.com/en-us/microsoft-365/windows/windows-autopilot) service by an OEM or [Microsoft Cloud Solution Provider](https://docs.microsoft.com/en-us/windows/client-management/mdm/uefi-csp)
 * PCs must be managed with [Microsoft Intune](https://www.microsoft.com/en-us/microsoft-365/enterprise-mobility-security/microsoft-intune)
+
+### OEMs that support DFCI
+
+* Microsoft Surface
+
+More are in the works...
 
 ## Lifecycle
 
@@ -20,7 +26,7 @@ The DFCI lifecycle can be viewed as UEFI integration, device registration, profi
 | --- | --- |
 | [UEFI Integration](../PlatformIntegration/PlatformIntegrationOverview.md) | PCs must first include a UEFI BIOS that integrates the DFCI code and includes the Microsoft Device Management Trust certificate. |
 | [Device Registration](https://docs.microsoft.com/en-us/windows/deployment/windows-autopilot/add-devices#registering-devices) | Device ownership must be [registered](https://docs.microsoft.com/en-us/windows/deployment/windows-autopilot/add-devices#registering-devices) via the [Windows Autopilot](https://www.microsoft.com/en-us/microsoft-365/windows/windows-autopilot) program by an OEM or Microsoft [Cloud Solution Provider](https://partner.microsoft.com/en-US/membership/cloud-solution-provider) |
-| Profile Creation | An IT administrator leverages Intune to create DFCI Profiles for their devices. |
+| Profile Creation | An IT administrator [leverages Intune to create DFCI Profiles](https://docs.microsoft.com/en-us/intune/configuration/device-firmware-configuration-interface-windows) for their devices. |
 | Enrollment | The DFCI enrollment process is kicked off when a PC is enrolled into Intune and has a matching DFCI Profile.  Enrollment includes Intune requesting enrollment packets from APS, sending the packets to the [Windows UEFI configuration service provider (CSP) endpoints](https://docs.microsoft.com/en-us/windows/client-management/mdm/uefi-csp), the CSP writes the packets to UEFI variables, and triggers an OS reboot to allow UEFI firmware to process the DFCI packets. |
 | Management | For day-to-day management, Intune creates device-specific packets, digitally signs them, and sends them through the same [UEFI configuration service provider](https://docs.microsoft.com/en-us/windows/client-management/mdm/uefi-csp), UEFI variable, and reboot process. |
 | Retirement | When a device is removed from Windows Autopilot, they are marked as unenrolled in APS.  Intune will attempt to restore permissions (un-grey all settings) and remove its management authority from the device. |
