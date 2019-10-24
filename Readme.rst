@@ -13,10 +13,9 @@ Branch Status - dev/201905
 ==============================
 
 Status:
-  In Development
+  Abandoned - 2019-10-04
 
-Anticipated Stabilization:
-  September 2019
+  This branch is not recommended for production use.
 
 
 Branch Changes - dev/201905
