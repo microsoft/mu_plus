@@ -22,6 +22,10 @@ This test verifies the UEFI variable store handling of MorLock v1 and v2 behavio
 This test verifies the SMM paging attributes by invoking operations that should cause cpu exceptions if the memory protections are in place.  The SMM cpu exception handler needs to be configured to force reset on trap to allow automated testing.  
 See _UefiCpuPkg/Include/Protocol/SmmExceptionTestProtocol.h_, _gUefiCpuPkgTokenSpaceGuid.PcdSmmExceptionRebootInsteadOfHaltDefault_, and _gUefiCpuPkgTokenSpaceGuid.PcdSmmExceptionTestModeSupport_.  
 
+### VarPolicyUnitTestApp
+
+This test verifies functionality of the Variable Policy Protocol by registering various variable policies and exercising them, as well as tests locking the policy, disabling it, and dumping the policy entries.
+
 ## System Audit tests 
 
 UEFI applications that collect data from the system and then that data can be used to
