@@ -43,8 +43,8 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
                 "MsCorePkg",
                 "MsGraphicsPkg",
                 "MsWheaPkg",
-                "SharedCryptoPkg",
                 "PcBdsPkg",
+                "SharedCryptoPkg",
                 "UefiTestingPkg",
                 "XmlSupportPkg",
                 "ZeroTouchPkg"
@@ -115,7 +115,7 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
 
     def GetActiveScopes(self):
         ''' return tuple containing scopes that should be active for this process '''
-        scopes = ("corebuild", "project_mu")
+        scopes = ("corebuild", "project_mu", "cibuild")
 
         self.ActualToolChainTag = shell_environment.GetBuildVars().GetValue("TOOL_CHAIN_TAG", "")
 
@@ -161,8 +161,10 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
             }
         ]
 
-    def GetRequiredRepos(self):
-        ''' Required Submodules to be populated '''
+    def GetRequiredSubmodules(self):
+        ''' return iterable containing RequiredSubmodule objects.
+        If no RequiredSubmodules return an empty iterable
+        '''
         return []
 
 

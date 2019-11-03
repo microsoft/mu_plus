@@ -77,10 +77,10 @@
   MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
 
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
   !if $(TARGET) == DEBUG
     #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
-    RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
     NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
   !endif
 

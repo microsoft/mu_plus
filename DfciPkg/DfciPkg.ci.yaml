@@ -1,16 +1,21 @@
+##
+# CI configuration for DfciPkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
 {
+    ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
         "DscPath": "DfciPkg.dsc"
     },
-    "HostUnitTestCompilerPlugin": {
-        #"DscPath": 
-    },
-    "HostUnitTestDscCompleteCheck": {
-        "IgnoreInf": []  
-    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
     "CharEncodingCheck": {
         "IgnoreFiles": []
     },
+
+    ## options defined ci/Plugin/DependencyCheck
     "DependencyCheck": {
         "AcceptableDependencies": [
             "MdePkg/MdePkg.dec",
@@ -36,18 +41,57 @@
         ],
         "IgnoreInf": []
     },
+
+    ## options defined ci/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
-        "IgnoreInf": [], 
-        "DscPath": "DfciPkg.dsc"   
+        "IgnoreInf": [],
+        "DscPath": "DfciPkg.dsc"
     },
+
+    ## options defined ci/Plugin/GuidCheck
     "GuidCheck": {
         "IgnoreGuidName": [],
         "IgnoreGuidValue": [],
         "IgnoreFoldersAndFiles": [],
         "IgnoreDuplicates": []
     },
+
+    ## options defined ci/Plugin/LibraryClassCheck
     "LibraryClassCheck": {
         "IgnoreLibraryClass": [],
         "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
+        ],
+        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
+        ],
+        "ExtendWords": [           # words to extend to the dictionary for this package
+            "unconfigure",
+            "unenroll",
+            "unenrolling",
+            "OKCANCEL",
+            "IDCANCEL",
+            "IDIGNORE",
+            "IDYES",
+            "IDTRYAGAIN",
+            "IDCONTINUE",
+            "IDRESTART",
+            "IDRETRY",
+            "intune",
+            "redfish",
+            "gitignore",
+            "DFCIPKG",
+            "Outlandia",
+            "TENANTID",
+            "aabbccdd", # describes bytes of guid
+            "kkllmmnnoopp", # describes bytes of guid
+            "DFCIs",
+            "DDTHH",
+            "uefis"
+        ],
+        "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
 }
