@@ -24,6 +24,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 #include <Library/MsPlatformEarlyGraphicsLib.h>
 #include <Library/MsUiThemeLib.h>
 
-#include "..\MsEarlyGraphicsCommon.h"
+#include "../MsEarlyGraphicsCommon.h"
 
 #endif // __MS_EARLY_GRAPHICS_DXE_H__
