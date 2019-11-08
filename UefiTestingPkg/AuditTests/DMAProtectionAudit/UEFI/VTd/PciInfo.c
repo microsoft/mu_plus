@@ -1,6 +1,8 @@
 /** @file
 
-Copied from Tianocore IntelSiliconPkg\Feature\VTd\IntelVTdDxe for purpose of easy DMAR/BME parsing
+Copied from Tianocore
+https://github.com/tianocore/edk2-platforms/tree/master/Silicon/Intel/IntelSiliconPkg/Feature/VTd/IntelVTdDxe
+for purpose of easy DMAR/BME parsing
 
   Copyright (c) 2017, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent

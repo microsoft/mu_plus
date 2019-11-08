@@ -1,6 +1,8 @@
-/** @file
+/** @file DmaProtection.h
 
-Copied from Tianocore IntelSiliconPkg\Feature\VTd\IntelVTdDxe for purpose of easy DMAR/BME parsing
+Copied from Tianocore
+https://github.com/tianocore/edk2-platforms/tree/master/Silicon/Intel/IntelSiliconPkg/Feature/VTd/IntelVTdDxe
+for purpose of easy DMAR/BME parsing
 
   Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -62,11 +64,11 @@ typedef struct {
 } VTD_UNIT_INFORMATION;
 
 //Linked List node used for RMRR Test
-struct RMRRListNode
+typedef struct RMRRListNode_t_def
 {
   EFI_ACPI_DMAR_RMRR_HEADER*    RMRR;
-  struct RMRRListNode*          Next;
-};
+  struct RMRRListNode_t_def*    Next;
+} RMRRListNode;
 
 /**
   The scan bus callback function.
@@ -185,7 +187,7 @@ ParseDmarAcpiTableDrhd (
 
   @return Linked List to all RMRR headers. Caller is required to check for NULL if no RMRRs found.
 **/
-struct RMRRListNode*
+RMRRListNode*
 GetDmarAcpiTableRmrr (
   VOID
   );

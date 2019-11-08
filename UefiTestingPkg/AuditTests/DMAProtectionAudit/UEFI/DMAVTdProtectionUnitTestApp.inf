@@ -1,0 +1,63 @@
+## @file DMAVTdProtectionUnitTestApp.inf
+##
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = DMAVTdProtectionUnitTestApp
+  FILE_GUID                      = 1843f23c-7494-4ed8-afcf-969e2be65a49
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DMAProtectionUnitTestApp
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
+#
+
+[Sources]
+  Acpi.c
+  Acpi.h
+  DMAProtectionTest.h
+  DMAProtectionUnitTestApp.c
+  VTd/DmaProtection.h
+  VTd/DMAProtectionTestArch.c
+  VTd/DmarAcpiTable.c
+  VTd/PciInfo.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiTestingPkg/UefiTestingPkg.dec
+  MsUnitTestPkg/MsUnitTestPkg.dec
+  ShellPkg/ShellPkg.dec
+  IntelSiliconPkg/IntelSiliconPkg.dec
+
+[Protocols]
+
+
+[LibraryClasses]
+  BaseLib
+  UefiApplicationEntryPoint
+  DebugLib
+  UnitTestLib
+  UnitTestAssertLib
+  PrintLib
+  ShellLib
+  IoLib
+  MemoryAllocationLib
+  PciSegmentLib
+
+  
+
+[Guids]
+  gDMAUnitTestVariableGuid
+  gEfiAcpi20TableGuid
+  gEfiAcpi10TableGuid
+
+
+

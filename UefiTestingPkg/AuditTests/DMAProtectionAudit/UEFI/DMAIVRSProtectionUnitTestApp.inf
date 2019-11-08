@@ -1,14 +1,15 @@
-## @file
+## @file DMAIVRSProtectionUnitTestApp.inf
 ##
 # Copyright (C) Microsoft Corporation. All rights reserved.
-## SPDX-License-Identifier: BSD-2-Clause-Patent
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
 ##
 
 
 [Defines]
   INF_VERSION                    = 0x00010006
-  BASE_NAME                      = DMAProtectionUnitTestApp
-  FILE_GUID                      = 1843f23c-7494-4ed8-afcf-969e2be65a49
+  BASE_NAME                      = DMAIVRSProtectionUnitTestApp
+  FILE_GUID                      = 1FE28524-ABCF-4A6C-8B33-8C7F6A054465
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = DMAProtectionUnitTestApp
@@ -20,9 +21,14 @@
 #
 
 [Sources]
+  Acpi.c
+  Acpi.h
+  DMAProtectionTest.h
   DMAProtectionUnitTestApp.c
-  DmarAcpiTable.c
-  PciInfo.c
+  IVRS/DmaProtection.h
+  IVRS/DMAProtectionTestArch.c
+  IVRS/IVRS.h
+  IVRS/IVRSAcpiTable.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -30,10 +36,6 @@
   UefiTestingPkg/UefiTestingPkg.dec
   MsUnitTestPkg/MsUnitTestPkg.dec
   ShellPkg/ShellPkg.dec
-  IntelSiliconPkg/IntelSiliconPkg.dec
-
-[Protocols]
-
 
 [LibraryClasses]
   BaseLib
@@ -44,15 +46,11 @@
   PrintLib
   ShellLib
   IoLib
+  PciLib
   MemoryAllocationLib
   PciSegmentLib
-
-  
 
 [Guids]
   gDMAUnitTestVariableGuid
   gEfiAcpi20TableGuid
   gEfiAcpi10TableGuid
-
-
-

@@ -1,27 +1,16 @@
 /** @file
 
-Copied from Tianocore IntelSiliconPkg\Feature\VTd\IntelVTdDxe for purpose of easy DMAR/BME parsing
+Copied from Tianocore
+https://github.com/tianocore/edk2-platforms/tree/master/Silicon/Intel/IntelSiliconPkg/Feature/VTd/IntelVTdDxe
+for purpose of easy DMAR/BME parsing
 
   Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
+#include "../Acpi.h"
 #include "DmaProtection.h"
-
-#pragma pack(1)
-
-typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER  Header;
-  UINT32                       Entry;
-} RSDT_TABLE;
-
-typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER  Header;
-  UINT64                       Entry;
-} XSDT_TABLE;
-
-#pragma pack()
 
 EFI_ACPI_DMAR_HEADER             *mAcpiDmarTable = NULL;
 VTD_UNIT_INFORMATION             *mVtdUnitInformation;
@@ -187,22 +176,22 @@ ProcessDhrd (
 
   @return Linked List to all RMRR headers. Caller is required to check for NULL if no RMRRs found.
 **/
-struct RMRRListNode*
+RMRRListNode*
 GetDmarAcpiTableRmrr (
   VOID
   )
 {
   EFI_ACPI_DMAR_STRUCTURE_HEADER                    *DmarHeader;
 
-  struct RMRRListNode*                              Head = NULL;
-  struct RMRRListNode*                              Tail = Head;
+  RMRRListNode*                                     Head = NULL;
+  RMRRListNode*                                     Tail = Head;
 
   DmarHeader = (EFI_ACPI_DMAR_STRUCTURE_HEADER *)((UINTN)(mAcpiDmarTable + 1));
   while ((UINTN)DmarHeader < (UINTN)mAcpiDmarTable + mAcpiDmarTable->Header.Length) {
     switch (DmarHeader->Type) {
     case EFI_ACPI_DMAR_TYPE_RMRR:
       //If RMRR found add to end of linked list
-      struct RMRRListNode* newNode = (struct RMRRListNode*)AllocateZeroPool(sizeof(struct RMRRListNode));
+      RMRRListNode* newNode = (RMRRListNode*)AllocateZeroPool(sizeof(RMRRListNode));
       newNode->RMRR = (EFI_ACPI_DMAR_RMRR_HEADER *)DmarHeader;
       newNode->Next = NULL;
       
@@ -306,116 +295,6 @@ ParseDmarAcpiTableDrhd (
 }
 
 /**
-  This function scan ACPI table in RSDT.
-
-  @param[in]  Rsdt      ACPI RSDT
-  @param[in]  Signature ACPI table signature
-
-  @return ACPI table
-**/
-VOID *
-ScanTableInRSDT (
-  IN RSDT_TABLE                   *Rsdt,
-  IN UINT32                       Signature
-  )
-{
-  UINTN                         Index;
-  UINT32                        EntryCount;
-  UINT32                        *EntryPtr;
-  EFI_ACPI_DESCRIPTION_HEADER   *Table;
-
-  EntryCount = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT32);
-
-  EntryPtr = &Rsdt->Entry;
-  for (Index = 0; Index < EntryCount; Index ++, EntryPtr ++) {
-    Table = (EFI_ACPI_DESCRIPTION_HEADER*)((UINTN)(*EntryPtr));
-    if ((Table != NULL) && (Table->Signature == Signature)) {
-      return Table;
-    }
-  }
-
-  return NULL;
-}
-
-/**
-  This function scan ACPI table in XSDT.
-
-  @param[in]  Xsdt      ACPI XSDT
-  @param[in]  Signature ACPI table signature
-
-  @return ACPI table
-**/
-VOID *
-ScanTableInXSDT (
-  IN XSDT_TABLE                   *Xsdt,
-  IN UINT32                       Signature
-  )
-{
-  UINTN                        Index;
-  UINT32                       EntryCount;
-  UINT64                       EntryPtr;
-  UINTN                        BasePtr;
-  EFI_ACPI_DESCRIPTION_HEADER  *Table;
-
-  EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT64);
-
-  BasePtr = (UINTN)(&(Xsdt->Entry));
-  for (Index = 0; Index < EntryCount; Index ++) {
-    CopyMem (&EntryPtr, (VOID *)(BasePtr + Index * sizeof(UINT64)), sizeof(UINT64));
-    Table = (EFI_ACPI_DESCRIPTION_HEADER*)((UINTN)(EntryPtr));
-    if ((Table != NULL) && (Table->Signature == Signature)) {
-      return Table;
-    }
-  }
-
-  return NULL;
-}
-
-/**
-  This function scan ACPI table in RSDP.
-
-  @param[in]  Rsdp      ACPI RSDP
-  @param[in]  Signature ACPI table signature
-
-  @return ACPI table
-**/
-VOID *
-FindAcpiPtr (
-  IN EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER *Rsdp,
-  IN UINT32                                       Signature
-  )
-{
-  EFI_ACPI_DESCRIPTION_HEADER                    *AcpiTable;
-  RSDT_TABLE                                     *Rsdt;
-  XSDT_TABLE                                     *Xsdt;
-
-  AcpiTable = NULL;
-
-  //
-  // Check ACPI2.0 table
-  //
-  Rsdt = (RSDT_TABLE *)(UINTN)Rsdp->RsdtAddress;
-  Xsdt = NULL;
-  if ((Rsdp->Revision >= 2) && (Rsdp->XsdtAddress < (UINT64)(UINTN)-1)) {
-    Xsdt = (XSDT_TABLE *)(UINTN)Rsdp->XsdtAddress;
-  }
-  //
-  // Check Xsdt
-  //
-  if (Xsdt != NULL) {
-    AcpiTable = ScanTableInXSDT (Xsdt, Signature);
-  }
-  //
-  // Check Rsdt
-  //
-  if ((AcpiTable == NULL) && (Rsdt != NULL)) {
-    AcpiTable = ScanTableInRSDT (Rsdt, Signature);
-  }
-
-  return AcpiTable;
-}
-
-/**
   Get the DMAR ACPI table.
 
   @retval EFI_SUCCESS           The DMAR ACPI table is got.
@@ -427,37 +306,5 @@ GetDmarAcpiTable (
   VOID
   )
 {
-  VOID                              *AcpiTable;
-  EFI_STATUS                        Status;
-
-  if (mAcpiDmarTable != NULL) {
-    return EFI_ALREADY_STARTED;
-  }
-
-  AcpiTable = NULL;
-  Status = EfiGetSystemConfigurationTable (
-             &gEfiAcpi20TableGuid,
-             &AcpiTable
-             );
-  if (EFI_ERROR (Status)) {
-    Status = EfiGetSystemConfigurationTable (
-               &gEfiAcpi10TableGuid,
-               &AcpiTable
-               );
-  }
-  if (EFI_ERROR (Status)) {
-    return EFI_NOT_FOUND;
-  }
-  ASSERT (AcpiTable != NULL);
-
-  mAcpiDmarTable = FindAcpiPtr (
-                      (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)AcpiTable,
-                      EFI_ACPI_4_0_DMA_REMAPPING_TABLE_SIGNATURE
-                      );
-  if (mAcpiDmarTable == NULL) {
-    return EFI_NOT_FOUND;
-  }
-  DEBUG ((DEBUG_INFO,"DMAR Table - 0x%08x\n", mAcpiDmarTable));
-
-  return EFI_SUCCESS;
+  return GetAcpiTable (EFI_ACPI_4_0_DMA_REMAPPING_TABLE_SIGNATURE, &mAcpiDmarTable);
 }
