@@ -13,9 +13,8 @@
 
 [Defines]
   INF_VERSION                    = 0x0001001B
-  PI_SPECIFICATION_VERSION       = 0x0001000A
-  BASE_NAME                      = SharedCryptoDxeMu
-  FILE_GUID                      = BECD81FD-AC56-4308-BEFC-957EA17384D2
+  BASE_NAME                      = SharedCryptoDxeShaOnly
+  FILE_GUID                      = DFCD7299-9697-4BF9-A0B5-58ABDA7D7851
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = SharedCryptoDxeEntry
@@ -28,7 +27,7 @@
 
 [Sources]
   Common/SharedCryptoVersion.c
-  Common/CommonSharedCryptoMu.c
+  Common/CommonSharedCryptoShaOnly.c
   Dxe/SharedCryptoDxe.c
   Common/SharedCryptoVersion.h
 

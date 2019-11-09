@@ -1,5 +1,5 @@
 {
-  "scope": "sharedcrypto_build",
+  "scope": "sharedcrypto_build_secure",
   "type": "git",
   "name": "MU_ARM_TIANO",
   "source": "https://github.com/Microsoft/mu_silicon_arm_tiano.git",

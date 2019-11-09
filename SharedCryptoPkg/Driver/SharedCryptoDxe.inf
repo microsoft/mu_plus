@@ -30,6 +30,7 @@
   Common/CommonSharedCryptoFull.c
   Common/SharedCryptoVersion.c
   Dxe/SharedCryptoDxe.c
+  Common/SharedCryptoVersion.h
 
 [Packages]
   MdePkg/MdePkg.dec

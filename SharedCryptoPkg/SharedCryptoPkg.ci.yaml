@@ -7,7 +7,7 @@
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
-        "DscPath": "SharedCryptoPkg.dsc"
+        "DscPath": "SharedCryptoPkg.ci.dsc"
     },
 
     ## options defined ci/Plugin/CharEncodingCheck
@@ -52,7 +52,7 @@
             "SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.DEBUG.inf",
             "SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.RELEASE.inf"
         ],
-        "DscPath": "SharedCryptoPkg.dsc"
+        "DscPath": "SharedCryptoPkg.ci.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck

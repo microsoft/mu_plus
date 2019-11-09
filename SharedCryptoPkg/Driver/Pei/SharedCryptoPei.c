@@ -33,8 +33,7 @@ SharedCryptoPeiEntry (
   IN CONST EFI_PEI_SERVICES           **PeiServices
   )
 {
-  DEBUG((DEBUG_INFO, "%a: loading Ppi\n", __FUNCTION__));
-  EFI_STATUS Status = PeiServicesInstallPpi (&mUefiCryptoPpiList);
-  DEBUG((DEBUG_INFO, "%a: loaded Ppi: %r\n", __FUNCTION__, Status));
+  //Install the Ppi
+  EFI_STATUS Status = (*PeiServices)->InstallPpi (PeiServices, &mUefiCryptoPpiList);
   return Status;
 }

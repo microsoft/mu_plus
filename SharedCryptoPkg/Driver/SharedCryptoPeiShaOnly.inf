@@ -28,6 +28,7 @@
   Common/CommonSharedCryptoShaOnly.c
   Pei/SharedCryptoPei.c
   Common/SharedCryptoVersion.c
+  Common/SharedCryptoVersion.h
 
 [Packages]
   MdePkg/MdePkg.dec

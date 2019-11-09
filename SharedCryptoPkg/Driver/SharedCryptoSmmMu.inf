@@ -32,6 +32,7 @@
   Common/CommonSharedCryptoMu.c
   Common/SharedCryptoVersion.c
   Smm/SharedCryptoSmm.c
+  Common/SharedCryptoVersion.h
 
 [Packages]
   MdePkg/MdePkg.dec

@@ -1,5 +1,5 @@
 {
-  "scope": "sharedcrypto_build",
+  "scope": "sharedcrypto_build_secure",
   "type": "git",
   "name": "MU_BASECORE",
   "source": "https://dev.azure.com/projectmu/Mu_Security_Private_Release/_git/mu_basecore",

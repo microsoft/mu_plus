@@ -5,6 +5,8 @@ trigger: none # will disable CI builds entirely
 
 variables:
 - group: SecMirrorCommon
+- name: ShouldPublish
+  value: false
 
 steps:
 - checkout: self
@@ -28,31 +30,38 @@ steps:
     echo my pipeline variable is $(GIT_CREDS)
 
 # Update dependencies
-- task: PythonScript@0
+- task: CmdLine@1
+  displayName: Setup
+  inputs:
+    filename: stuart_ci_setup
+    arguments: -c SharedCryptoPkg/SharedCryptoSettings.py
+
+- task: CmdLine@1
   displayName: 'Update Dependencies'
   inputs:
-    scriptSource: 'filePath'
-    scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
-    arguments: '--UPDATE'
-    failOnStderr: false
-
-# Update dependencies (to resolve nugets from previously resolved ext_deps)
-- task: PythonScript@0
-  displayName: 'Update Dependencies (Again)'
-  inputs:
-    scriptSource: 'filePath'
-    scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
-    arguments: '--UPDATE'
+    filename: stuart_update
+    arguments: -c SharedCryptoPkg/SharedCryptoSettings.py
     failOnStderr: false
 
 # Build and publish
 - task: PythonScript@0
-  displayName: 'Build and Ship'
+  displayName: 'Build without publish'
+  condition: not(ShouldPublish)
   inputs:
     scriptSource: 'filePath'
-    scriptPath: 'SharedCryptoPkg/DriverBuilder.py'
+    scriptPath: 'SharedCryptoPkg/SharedCryptoSettings.py'
+    arguments: '--dump-version'
+    failOnStderr: true
+
+# Build and publish
+- task: PythonScript@0
+  displayName: 'Build and Ship'
+  condition: ShouldPublish
+  inputs:
+    scriptSource: 'filePath'
+    scriptPath: 'SharedCryptoPkg/SharedCryptoSettings.py'
     arguments: '--dump-version --api-key=$(NUGET_API_KEY)'
-    failOnStderr: false
+    failOnStderr: true
 
 # Copy the Nuget Package
 - task: CopyFiles@2
@@ -60,11 +69,17 @@ steps:
   inputs:
     contents: 'Build/**.nupkg'
     targetFolder: $(Build.ArtifactStagingDirectory)
+
 # Copy the TXT file
 - task: CopyFiles@2
-  displayName: 'Copy TXT files'
+  displayName: 'Copy Build files'
   inputs:
-    contents: 'Build/**.txt'
+    contents: |
+      Build\**\BUILDLOG_*.txt
+      Build\**\BUILDLOG_*.md
+      Build\**\CI_*.txt
+      Build\**\CI_*.md
+      Build\**\TestSuites.xml
     targetFolder: $(Build.ArtifactStagingDirectory)
 
 # Publish Build Artifacts
@@ -78,6 +93,7 @@ steps:
 
 # publish to Nuget
 - task: NuGetCommand@2
+  condition: ShouldPublish
   inputs:
     command: push
     nuGetFeedType: external

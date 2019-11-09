@@ -28,6 +28,7 @@ SHARED_CRYPTO_FUNCTIONS *GetProtocol()
       Version = pCryptoProtocol->SharedCrypto_GetLowestSupportedVersion();
       if (Version != SHARED_CRYPTO_VERSION)
       {
+        DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_SMM] Failed to locate Support Protocol. Version doesn't match expected %d. Current Version: %d\n", SHARED_CRYPTO_VERSION, Version));
         ProtocolNotFound(EFI_PROTOCOL_ERROR);
       }
     }
