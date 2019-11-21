@@ -95,7 +95,7 @@ CreateCperHdrDefaultMin (
   CopyMem(&CperHdr->NotificationType, &gEfiEventNotificationTypeBootGuid, sizeof(EFI_GUID));
 
   if(EFI_ERROR(GetRecordID(&RecordID, &gMsWheaReportRecordIDGuid))) {
-    DEBUG ((DEBUG_INFO, __FUNCTION__ " - RECORD ID NOT UPDATED\n"));
+    DEBUG ((DEBUG_INFO, "%a - RECORD ID NOT UPDATED\n", __FUNCTION__));
   }
   
   //Even if the record id was not updated, the value is either 0 or the previously incremented value

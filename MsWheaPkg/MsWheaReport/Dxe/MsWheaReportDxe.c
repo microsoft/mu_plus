@@ -403,7 +403,7 @@ GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
   //Get the last record ID number used
   if(EFI_ERROR(gRT->GetVariable(L"RecordID",RecordIDGuid,NULL,&Size,RecordID))) {
 
-    DEBUG ((DEBUG_INFO, __FUNCTION__ " Record ID variable not retrieved, initializing to 0\n"));
+    DEBUG ((DEBUG_INFO, "%a Record ID variable not retrieved, initializing to 0\n", __FUNCTION__));
     *RecordID = 0;
   
   }
