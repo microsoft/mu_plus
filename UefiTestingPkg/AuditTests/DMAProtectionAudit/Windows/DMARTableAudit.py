@@ -18,7 +18,7 @@ import struct
 import subprocess
 import datetime
 import xml.etree.ElementTree as ET
-from MuPythonLibrary.ACPI.DMARParser import *
+from edk2toollib.acpi.dmar_parser import *
 
 DMARParserVersion = '1.01'
 
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     parser.add_argument('-x', '--OutputXml', dest='output_xml_file', help='Name of the output XML file which will contain the DMAR info', default=None)
     options = parser.parse_args()
 
-    
+
 
     # Set up logging
     logger = logging.getLogger('')
