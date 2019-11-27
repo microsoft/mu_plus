@@ -1,0 +1,27 @@
+## @file
+#  Crypto Bin Driver package
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SharedCryptoDriverShaRsa
+  FILE_GUID                      = BAA196B8-0774-47BD-A40F-3463D8F6E2D9
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+# these binaries are resolved by the Nuget Package
+# if they are not found, check there
+
+[Binaries.IA32]
+
+  PE32|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPeiShaRsa.efi|RELEASE
+  PEI_DEPEX|Mu-SharedCrypto_extdep/RELEASE/IA32/SharedCryptoPeiShaRsa.depex|RELEASE

@@ -47,6 +47,8 @@
             "SharedCryptoPkg/Package/SharedCryptoPkgPei.RELEASE.inf",
             "SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.DEBUG.inf",
             "SharedCryptoPkg/Package/SharedCryptoPkgPeiShaOnly.RELEASE.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgPeiShaRsa.DEBUG.inf",
+            "SharedCryptoPkg/Package/SharedCryptoPkgPeiShaRsa.RELEASE.inf",
             "SharedCryptoPkg/Package/SharedCryptoPkgSmm.DEBUG.inf",
             "SharedCryptoPkg/Package/SharedCryptoPkgSmm.RELEASE.inf",
             "SharedCryptoPkg/Package/SharedCryptoPkgSmmMu.DEBUG.inf",

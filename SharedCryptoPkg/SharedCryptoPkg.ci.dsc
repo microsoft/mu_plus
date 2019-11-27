@@ -99,6 +99,7 @@
 
 [Components.IA32, Components.X64]
   SharedCryptoPkg/Driver/SharedCryptoPeiShaOnly.inf
+  SharedCryptoPkg/Driver/SharedCryptoPeiShaRsa.inf
 
 [Components.X64.DXE_SMM_DRIVER, Components.AARCH64.DXE_SMM_DRIVER, Components.IA32.DXE_SMM_DRIVER]
 

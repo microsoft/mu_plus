@@ -1,0 +1,48 @@
+## @file
+#  This module consolidates all crypto needed for Project Mu UEFI and provides
+#  a PPI for those functions.
+#
+#  There are several different flavors of each driver and this flavor just supports SHA
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x0001001B
+  BASE_NAME                      = SharedCryptoPeiShaOnly
+  FILE_GUID                      = FC9E3BF7-3B2B-4FB6-8C5A-3D46831651BD
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = SharedCryptoPeiEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  Common/CommonSharedCryptoShaRsa.c
+  Pei/SharedCryptoPei.c
+  Common/SharedCryptoVersion.c
+  Common/SharedCryptoVersion.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  SharedCryptoPkg/SharedCryptoPkg.dec
+
+[LibraryClasses]
+  PeimEntryPoint
+  BaseCryptLib
+  DebugLib
+  PeiServicesLib
+
+[Ppis]
+  gSharedCryptoPpiGuid ## produces
+
+[Depex]
+  TRUE
