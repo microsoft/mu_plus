@@ -114,15 +114,21 @@ struct _DFCI_NETWORK_REQUEST {
 
     struct {
         //
+        // Http service section
+        //
+        EFI_HTTP_PROTOCOL              *HttpProtocol;
+        EFI_HANDLE                      HttpChildHandle;
+        EFI_HTTP_CONFIG_DATA            ConfigData;
+    } Http;
+
+    struct {
+        //
         // NIC Section
         //
         // This section is managed by the function TryEachNICThenProcessRequest
         EFI_HANDLE                      NicHandle;
-        EFI_SERVICE_BINDING_PROTOCOL   *HttpSbProtocol;
-        EFI_HTTP_CONFIG_DATA            ConfigData;
-        EFI_HTTP_PROTOCOL              *HttpProtocol;
-        EFI_HANDLE                      HttpChildHandle;
         BOOLEAN                         DhcpRequested;
+        EFI_SERVICE_BINDING_PROTOCOL   *HttpSbProtocol;
 
         //
         // IPv4 Specific section

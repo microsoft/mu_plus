@@ -334,8 +334,8 @@ EventWait (
         Step = 3;
         do {
             if (NULL != NetworkRequest) {
-                if (NULL != NetworkRequest->HttpNic.HttpProtocol) {
-                    NetworkRequest->HttpNic.HttpProtocol->Poll(NetworkRequest->HttpNic.HttpProtocol);
+                if (NULL != NetworkRequest->Http.HttpProtocol) {
+                    NetworkRequest->Http.HttpProtocol->Poll(NetworkRequest->Http.HttpProtocol);
                 }
 
                 if (EFI_SUCCESS == gBS->CheckEvent(MainEvent)) {
@@ -639,20 +639,20 @@ ConfigureHTTP (
         return EFI_INVALID_PARAMETER;
     }
 
-    if (NetworkRequest->HttpNic.ConfigData.LocalAddressIsIPv6) {
+    if (NetworkRequest->Http.ConfigData.LocalAddressIsIPv6) {
         DEBUG((DEBUG_ERROR, "IPv6 is not supported yet\n"));
         Status = EFI_UNSUPPORTED;
     } else {
         //
         // Initialize HTTP Config Data
         //
-        NetworkRequest->HttpNic.ConfigData.HttpVersion = HttpVersion11;
-        NetworkRequest->HttpNic.ConfigData.TimeOutMillisec = 0;             // Indicates default timeout period
-        NetworkRequest->HttpNic.ConfigData.LocalAddressIsIPv6 = FALSE;
+        NetworkRequest->Http.ConfigData.HttpVersion = HttpVersion11;
+        NetworkRequest->Http.ConfigData.TimeOutMillisec = 0;             // Indicates default timeout period
+        NetworkRequest->Http.ConfigData.LocalAddressIsIPv6 = FALSE;
 
         ZeroMem(&NetworkRequest->HttpNic.IPv4Node, sizeof(NetworkRequest->HttpNic.IPv4Node));
         NetworkRequest->HttpNic.IPv4Node.UseDefaultAddress = TRUE;          // Use address configured already
-        NetworkRequest->HttpNic.ConfigData.AccessPoint.IPv4Node = &NetworkRequest->HttpNic.IPv4Node;
+        NetworkRequest->Http.ConfigData.AccessPoint.IPv4Node = &NetworkRequest->HttpNic.IPv4Node;
 
         //
         // Check the current IP Address.  If an IP address not present, ConfigureDHCP
@@ -686,24 +686,24 @@ ConfigureHTTP (
     //
 
     Status = NetworkRequest->HttpNic.HttpSbProtocol->CreateChild(NetworkRequest->HttpNic.HttpSbProtocol,
-                                                                &NetworkRequest->HttpNic.HttpChildHandle);
+                                                                &NetworkRequest->Http.HttpChildHandle);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Error creating worker child. Code=%r\n", Status));
         return Status;
     }
 
-    NetworkRequest->HttpNic.HttpProtocol = NULL;
-    Status = gBS->HandleProtocol(NetworkRequest->HttpNic.HttpChildHandle,
+    NetworkRequest->Http.HttpProtocol = NULL;
+    Status = gBS->HandleProtocol(NetworkRequest->Http.HttpChildHandle,
                                 &gEfiHttpProtocolGuid,
-                                (VOID **) &NetworkRequest->HttpNic.HttpProtocol);
+                                (VOID **) &NetworkRequest->Http.HttpProtocol);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Unable to locate HTTP protocol. Code=%r\n", Status));
         return Status;
     }
 
 
-    Status = NetworkRequest->HttpNic.HttpProtocol->Configure(NetworkRequest->HttpNic.HttpProtocol,
-                                                            &NetworkRequest->HttpNic.ConfigData);
+    Status = NetworkRequest->Http.HttpProtocol->Configure(NetworkRequest->Http.HttpProtocol,
+                                                         &NetworkRequest->Http.ConfigData);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Unable to configure HTTP Protocol. Code=%r\n", Status));
         return Status;
@@ -841,7 +841,7 @@ DfciIssueRequest (
     DEBUG_BUFFER(DEBUG_INFO, RequestData, sizeof(EFI_HTTP_REQUEST_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     DEBUG((DEBUG_INFO, "%p Url=%s\n", RequestData->Url,RequestData->Url));
 
-    Status = NetworkRequest->HttpNic.HttpProtocol->Request(NetworkRequest->HttpNic.HttpProtocol, RequestToken);
+    Status = NetworkRequest->Http.HttpProtocol->Request(NetworkRequest->Http.HttpProtocol, RequestToken);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Http Request failed. Code=%r\n", Status));
         gBS->CloseEvent(RequestToken->Event);
@@ -852,7 +852,7 @@ DfciIssueRequest (
     gBS->CloseEvent(RequestToken->Event);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Http request timed out\n"));
-        Status2 = NetworkRequest->HttpNic.HttpProtocol->Cancel(NetworkRequest->HttpNic.HttpProtocol, RequestToken);
+        Status2 = NetworkRequest->Http.HttpProtocol->Cancel(NetworkRequest->Http.HttpProtocol, RequestToken);
         if (EFI_ERROR(Status2)) {
             DEBUG((DEBUG_ERROR, "Http Cancel failed. Code=%r\n", Status));
         }
@@ -907,7 +907,7 @@ DfciGetResponse (
         DEBUG_BUFFER(DEBUG_INFO, ResponseData, sizeof(EFI_HTTP_RESPONSE_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
     }
 
-    Status = NetworkRequest->HttpNic.HttpProtocol->Response(NetworkRequest->HttpNic.HttpProtocol, ResponseToken);
+    Status = NetworkRequest->Http.HttpProtocol->Response(NetworkRequest->Http.HttpProtocol, ResponseToken);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Http Response failed. Code=%r\n", Status));
         return Status;
@@ -916,7 +916,7 @@ DfciGetResponse (
     Status = EventWait (NetworkRequest, ResponseToken->Event, HTTP_TIMEOUT);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Http Response timeout.\n"));
-        Status2 = NetworkRequest->HttpNic.HttpProtocol->Cancel(NetworkRequest->HttpNic.HttpProtocol, ResponseToken);
+        Status2 = NetworkRequest->Http.HttpProtocol->Cancel(NetworkRequest->Http.HttpProtocol, ResponseToken);
         if (EFI_ERROR(Status2)) {
             DEBUG((DEBUG_ERROR, "Http HttpCancel failed. Code=%r", Status));
         }
@@ -939,11 +939,12 @@ DfciGetResponse (
 #define CLEANUP_REQUEST   0x01
 #define CLEANUP_RESPONSE  0x02
 #define CLEANUP_STATUS    0x04
-#define CLEANUP_NIC       0x08
-#define CLEANUP_MAIN      0x10
+#define CLEANUP_HTTP      0x08
+#define CLEANUP_NIC       0x10
+#define CLEANUP_MAIN      0x20
 #define CLEAR_ALL         0x80
 
-#define CLEANUP_ALL       (CLEANUP_REQUEST | CLEANUP_RESPONSE | CLEANUP_STATUS | CLEANUP_NIC | CLEANUP_MAIN)
+#define CLEANUP_ALL       (CLEANUP_REQUEST | CLEANUP_RESPONSE | CLEANUP_STATUS | CLEANUP_HTTP | CLEANUP_NIC | CLEANUP_MAIN)
 
 /**
  * Cleanup Network Request.
@@ -953,7 +954,7 @@ DfciGetResponse (
  *
  * Free caller responsible items in:
  *
- *    CLEANUP_xxx   Just clean up the requested zone then zero the zone
+ *    CLEANUP_xxx   Just clean up the requested zone(s) then zero the zone
  *    CLEAR_ALL     Just zero all of the zones
 **/
 EFI_STATUS
@@ -1011,6 +1012,13 @@ CleanupNetworkRequest (
 
     if (CleanupMask & (CLEANUP_STATUS | CLEAR_ALL)) {
         ZeroMem (&NetworkRequest->HttpStatus, sizeof(NetworkRequest->HttpStatus));
+    }
+
+    //
+    // Http zone
+    //
+    if (CleanupMask & (CLEANUP_HTTP | CLEAR_ALL)) {
+        ZeroMem (&NetworkRequest->Http, sizeof(NetworkRequest->Http));
     }
 
     //
@@ -1188,7 +1196,7 @@ S_EXIT1:
 }
 
 /**
- * ProcessHttpRequestWithReties
+ * ProcessHttpRequestInternal
  *
  * Process an Http request, and honor 429 and possibly 202 as retry events
  *
@@ -1201,7 +1209,7 @@ S_EXIT1:
  **/
 STATIC
 EFI_STATUS
-ProcessHttpRequestWithReties (
+ProcessHttpRequestInternal (
     IN  DFCI_NETWORK_REQUEST   *NetworkRequest,
     IN  EFI_HTTP_METHOD         HttpMethod,
     IN  CHAR8                  *Url,
@@ -1274,6 +1282,50 @@ ProcessHttpRequestWithReties (
     return Status;
 }
 
+STATIC
+EFI_STATUS
+ProcessHttpRequestWithRetries (
+    IN  DFCI_NETWORK_REQUEST   *NetworkRequest,
+    IN  EFI_HTTP_METHOD         HttpMethod,
+    IN  CHAR8                  *Url,
+    IN  BOOLEAN                 RetryOn202
+  ) {
+    EFI_STATUS      Status;
+    EFI_STATUS      Status2;
+
+    NetworkRequest->Http.ConfigData.LocalAddressIsIPv6 = FALSE;
+    NetworkRequest->Http.HttpChildHandle = gImageHandle;   //Place HttpChild on our image handle
+    Status = ConfigureHTTP (NetworkRequest);
+    if (EFI_ERROR(Status)) {
+        goto EARLY_EXIT;
+    }
+
+    Status = ProcessHttpRequestInternal (NetworkRequest,
+                                         HttpMethod,
+                                         Url,
+                                         RetryOn202);
+    //
+    // Don't let success or fail of cleanup from disturbing the return status.
+    //
+    if (NULL != NetworkRequest->Http.HttpProtocol) {
+        Status2 = NetworkRequest->Http.HttpProtocol->Configure(NetworkRequest->Http.HttpProtocol, NULL);
+        if (EFI_ERROR(Status2)) {
+            DEBUG((DEBUG_ERROR, "Unable to cleanup HTTP Protocol. Code=%r\n", Status2));
+        }
+    }
+
+    Status2 = NetworkRequest->HttpNic.HttpSbProtocol->DestroyChild(NetworkRequest->HttpNic.HttpSbProtocol,
+                                                                   NetworkRequest->Http.HttpChildHandle);
+    if (EFI_ERROR(Status2)) {
+        DEBUG((DEBUG_ERROR, "Error destroying worker child. Code=%r\n", Status2));
+    }
+
+    CleanupNetworkRequest (NetworkRequest, CLEANUP_HTTP);
+
+EARLY_EXIT:
+    return Status;
+}
+
 /**
  * Process Async Request
  *
@@ -1294,10 +1346,10 @@ ProcessAsyncRequest (
     EFI_HTTP_HEADER *Header;
     EFI_STATUS       Status;
 
-    Status = ProcessHttpRequestWithReties (NetworkRequest,
-                                           HttpMethodPost,
-                                           Url,
-                                           FALSE);
+    Status = ProcessHttpRequestWithRetries (NetworkRequest,
+                                            HttpMethodPost,
+                                            Url,
+                                            FALSE);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Process Http Post failed.  Status = %r\n", Status));
         goto PROTOCOL_ERROR;
@@ -1334,10 +1386,10 @@ ProcessAsyncRequest (
     //
     // Get the first set of update certificates
     //
-    Status = ProcessHttpRequestWithReties (NetworkRequest,
-                                           HttpMethodGet,
-                                           Header->FieldValue,
-                                           TRUE);
+    Status = ProcessHttpRequestWithRetries (NetworkRequest,
+                                            HttpMethodGet,
+                                            Header->FieldValue,
+                                            TRUE);
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "Http Get failed.  Status = %r\n", Status));
         goto PROTOCOL_ERROR;
@@ -1561,7 +1613,6 @@ TryEachNICThenProcessRequest (
     BOOLEAN                           MediaPresent;
     UINTN                             NicIndex;
     EFI_STATUS                        Status;
-    EFI_STATUS                        Status2;
 
 
     Status = gBS->LocateProtocol(&gEfiBootManagerPolicyProtocolGuid,
@@ -1630,41 +1681,16 @@ TryEachNICThenProcessRequest (
             continue;
         }
 
-        NetworkRequest->HttpNic.ConfigData.LocalAddressIsIPv6 = FALSE;
-        NetworkRequest->HttpNic.HttpChildHandle = gImageHandle;   //Place HttpChild on our image handle
-        Status = ConfigureHTTP (NetworkRequest);
-        if (EFI_ERROR(Status)) {
-            goto EARLY_EXIT;
-        }
-
         //
         // Process HTTP Recovery flow on this NIC. If it fails, check the next NIC
         //
         Status = NetworkRequest->MainLogic (NetworkRequest, &DoneProcessing);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_INFO, "MainLogic error. Code=%r\n", Status));
-            goto EARLY_EXIT;
         }
 
-EARLY_EXIT:
         if (NetworkRequest->HttpNic.DhcpRequested) {
             UnconfigureNIC (NetworkRequest);
-        }
-
-        //
-        // Don't let success or fail of cleanup from disturbing the return status.
-        //
-        if (NULL != NetworkRequest->HttpNic.HttpProtocol) {
-            Status2 = NetworkRequest->HttpNic.HttpProtocol->Configure(NetworkRequest->HttpNic.HttpProtocol, NULL);
-            if (EFI_ERROR(Status2)) {
-                DEBUG((DEBUG_ERROR, "Unable to cleanup HTTP Protocol. Code=%r\n", Status2));
-            }
-        }
-
-        Status2 = NetworkRequest->HttpNic.HttpSbProtocol->DestroyChild(NetworkRequest->HttpNic.HttpSbProtocol,
-                                                                       NetworkRequest->HttpNic.HttpChildHandle);
-        if (EFI_ERROR(Status2)) {
-            DEBUG((DEBUG_ERROR, "Error destroying worker child. Code=%r\n", Status2));
         }
     }
 
@@ -1672,6 +1698,7 @@ CLEANUP:
     if (NULL != HandleBuffer) {
         FreePool(HandleBuffer);
     }
+
     CleanupNetworkRequest (NetworkRequest, CLEANUP_NIC);
     DEBUG((DEBUG_INFO, "Done processing\n"));
 
