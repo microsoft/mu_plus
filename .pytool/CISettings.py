@@ -1,18 +1,21 @@
 # @file
 #
-# Copyright (c), Microsoft Corporation
+# Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import os
+import logging
 from edk2toolext.environment import shell_environment
 from edk2toolext.invocables.edk2_ci_build import CiBuildSettingsManager
-from edk2toolext.invocables.edk2_ci_setup import CiSetupSettingsManager
-from edk2toolext.invocables.edk2_setup import SetupSettingsManager
+from edk2toolext.invocables.edk2_ci_setup import CiSetupSettingsManager     # MU_CHANGE
+from edk2toolext.invocables.edk2_setup import SetupSettingsManager, RequiredSubmodule
 from edk2toolext.invocables.edk2_update import UpdateSettingsManager
+from edk2toolext.invocables.edk2_pr_eval import PrEvalSettingsManager
 from edk2toollib.utility_functions import GetHostInfo
 
 
-class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsManager, SetupSettingsManager):
+# MU_CHANGE - Add CiSetupSettingsManager superclass.
+class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsManager, SetupSettingsManager, PrEvalSettingsManager):
 
     def __init__(self):
         self.ActualPackages = []
@@ -38,8 +41,7 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
         ''' return iterable of edk2 packages supported by this build.
         These should be edk2 workspace relative paths '''
 
-        return (
-                "DfciPkg",
+        return ("DfciPkg",
                 "MsCorePkg",
                 "MsGraphicsPkg",
                 "MsWheaPkg",
@@ -54,11 +56,12 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
         ''' return iterable of edk2 architectures supported by this build '''
         return ("IA32",
                 "X64",
+                "ARM",
                 "AARCH64")
 
     def GetTargetsSupported(self):
         ''' return iterable of edk2 target tags supported by this build '''
-        return ("DEBUG", "RELEASE", "NO-TARGET")
+        return ("DEBUG", "RELEASE", "NO-TARGET", "NOOPT")
 
     # ####################################################################################### #
     #                     Verify and Save requested Ci Build Config                           #
@@ -85,8 +88,8 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
 
         Raise Exception if a list_of_requested_architectures is not supported
         '''
-        requested_arch_set = set(list_of_requested_architectures)
-        unsupported = requested_arch_set - set(self.GetArchitecturesSupported())
+        unsupported = set(list_of_requested_architectures) - \
+            set(self.GetArchitecturesSupported())
         if(len(unsupported) > 0):
             logging.critical(
                 "Unsupported Architecture Requested: " + " ".join(unsupported))
@@ -115,22 +118,36 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
 
     def GetActiveScopes(self):
         ''' return tuple containing scopes that should be active for this process '''
-        scopes = ("corebuild", "project_mu", "cibuild")
+        scopes = ("cibuild","edk2-build")
 
         self.ActualToolChainTag = shell_environment.GetBuildVars().GetValue("TOOL_CHAIN_TAG", "")
 
-        if (GetHostInfo().os == "Linux" and "AARCH64" in self.ActualArchitectures and self.ActualToolChainTag.upper().startswith("GCC")):
-            scopes += ("gcc_aarch64_linux",)
-
-        if GetHostInfo().os == "Windows":
-            scopes += ("host-test-win",)
+        if GetHostInfo().os.upper() == "LINUX" and self.ActualToolChainTag.upper().startswith("GCC"):
+            if "AARCH64" in self.ActualArchitectures:
+                scopes += ("gcc_aarch64_linux",)
+            if "ARM" in self.ActualArchitectures:
+                scopes += ("gcc_arm_linux",)
 
         return scopes
 
+    def GetRequiredSubmodules(self):
+        ''' return iterable containing RequiredSubmodule objects.
+        If no RequiredSubmodules return an empty iterable
+        '''
+        rs=[]
+        # MU_CHANGE
+        # rs.append(RequiredSubmodule(
+        #     "ArmPkg/Library/ArmSoftFloatLib/berkeley-softfloat-3", False))
+        # rs.append(RequiredSubmodule(
+        #     "CryptoPkg/Library/OpensslLib/openssl", False))
+        return rs
+
     def GetName(self):
+        # MU_CHANGE
         return "MuPlus"
 
     def GetDependencies(self):
+        # MU_CHANGE BEGIN
         ''' Return Git Repository Dependencies
 
         Return an iterable of dictionary objects with the following fields
@@ -147,34 +164,49 @@ class Settings(CiBuildSettingsManager, CiSetupSettingsManager, UpdateSettingsMan
             {
                 "Path": "MU_BASECORE",
                 "Url": "https://github.com/Microsoft/mu_basecore.git",
-                "Branch": "dev/201908"
+                "Branch": "dev/201911_pre"
             },
             {
                 "Path": "Silicon/Arm/MU_TIANO",
                 "Url": "https://github.com/Microsoft/mu_silicon_arm_tiano.git",
-                "Branch": "dev/201908"
+                "Branch": "dev/201911_pre"
             },
             {
                 "Path": "Common/MU_TIANO",
                 "Url": "https://github.com/Microsoft/mu_tiano_plus.git",
-                "Branch": "dev/201908"
+                "Branch": "dev/201911_pre"
             }
         ]
-
-    def GetRequiredSubmodules(self):
-        ''' return iterable containing RequiredSubmodule objects.
-        If no RequiredSubmodules return an empty iterable
-        '''
-        return []
-
+        # MU_CHANGE END
 
     def GetPackagesPath(self):
+        # MU_CHANGE BEGIN
         ''' Return a list of workspace relative paths that should be mapped as edk2 PackagesPath '''
         result = []
         for a in self.GetDependencies():
             result.append(a["Path"])
         return result
+        # MU_CHANGE END
 
     def GetWorkspaceRoot(self):
         ''' get WorkspacePath '''
-        return os.path.dirname(os.path.abspath(__file__))
+        return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def FilterPackagesToTest(self, changedFilesList: list, potentialPackagesList: list) -> list:
+        ''' Filter potential packages to test based on changed files. '''
+        build_these_packages=[]
+        possible_packages=potentialPackagesList.copy()
+        for f in changedFilesList:
+            nodes=f.split("/")  # split each part of path for comparison later
+
+            # python file change in .pytool folder causes building all
+            if f.endswith(".py") and ".pytool" in nodes:
+                build_these_packages = possible_packages
+                break
+
+            # BaseTools files that might change the build
+            if "BaseTools" in nodes:
+                if os.path.splitext(f) not in [".txt", ".md"]:
+                    build_these_packages = possible_packages
+                    break
+        return build_these_packages

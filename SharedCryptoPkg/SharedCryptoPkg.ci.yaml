@@ -71,12 +71,10 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
-        "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
-        ],
-        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
-        ],
-        "ExtendWords": [           # words to extend to the dictionary for this package
-        ],
-        "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+        "AuditOnly": True,           # Fails test but run in AuditOnly mode to collect log
+        "IgnoreFiles": [],           # use gitignore syntax to ignore errors in matching files
+        "ExtendWords": [],           # words to extend to the dictionary for this package
+        "IgnoreStandardPaths": [],   # Standard Plugin defined paths that should be ignore
+        "AdditionalIncludePaths": [] # Additional paths to spell check (wildcards supported)
     }
 }
