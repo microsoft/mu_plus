@@ -181,6 +181,31 @@ Sample settings payload:
 </SettingsPacket>
 ```
 
+## Signatures and Creation Using SignTool
+
+DFCI signatures are similar to those used by UEFI Secure Boot - DER-encoded PKCS#7 version 1.5 SignedData structures.  The following Python demonstrates how to create these signatures with Microsoft signtool.exe using a software key (for testing convenience).
+Oid should be "1.2.840.113549.1.7.2".  Note again that for Identity Packets, the TestSignature is first created by passing the DER-encoded x.509 certificate as ToSignFilePath with the same certificate's corresponding PFX as PfxFile, it is concatenated to the header and certificate to create the identity packet, and then SignWithSignTool is called again with the concatenated packet as ToSignFilePath.
+
+```python
+def SignWithSignTool(ToSignFilePath, DetachedSignatureOutputFilePath, PfxFile, PfxPass, Oid):
+    OutputDir = os.path.dirname(DetachedSignatureOutputFilePath)
+    cmd = gSignToolPath + ' sign /p7ce DetachedSignedData /fd sha256 /p7co ' + Oid + ' /p7 "' + OutputDir + '" /f "' + PfxFile + '"'
+    if PfxPass:
+        #add password if set
+        cmd = cmd + ' /p ' + PfxPass
+    cmd = cmd + ' /debug /v "' + ToSignFilePath + '" '
+    logging.critical("Command is: %s" % cmd)
+    ret = RunCmd(cmd)
+    if(ret != 0):
+        raise Exception("Signtool error %d" % ret)
+    signedfile = os.path.join(OutputDir, os.path.basename(ToSignFilePath) + ".p7")
+    if(not os.path.isfile(signedfile)):
+        raise Exception("Output file doesn't eixst %s" % signedfile)
+
+    shutil.move(signedfile, DetachedSignatureOutputFilePath)
+    return ret
+```
+
 ## Packet Processing
 
 In order to minimize rebooting when accepting packets from the owner, there are 6 mailboxes for DFCI.  There are two for each Identity, Permission, and Settings.  We call them:
