@@ -65,7 +65,7 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
     }
 
     if (gFlagVerbose) {
-        AsciiPrint ("Openning %.\n", FileName);
+        AsciiPrint ("Opening %.\n", FileName);
     }
 
     Status = ShellOpenFileByName(FileName,
@@ -180,7 +180,7 @@ SetRecoveryEntry(
     gFlagVerbose = ShellCommandLineGetFlag(ParamPackage, L"-v");
 
     if (FlagH) {
-        AsciiPrint ("SetRecovery -c CertFileName -f OuttputFileName [-s Msize] [-?] [-h]\n");
+        AsciiPrint ("SetRecovery -c CertFileName -f OutputFileName [-s Msize] [-?] [-h]\n");
         AsciiPrint ("   -c    CertFileName\n");
         AsciiPrint ("   -f    OutputFileName\n");
         AsciiPrint ("   -s    MaxStringSize\n");

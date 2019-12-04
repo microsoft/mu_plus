@@ -178,7 +178,7 @@ OUT BOOLEAN                     *Result
       DEBUG((DEBUG_INFO, "%a - Using default permission %a (0x%x), (0x%x)\n", __FUNCTION__, SettingId, PMask, Properties.Identity));
   }
 
-  //3. Permission and Identity use the same bits so they can be logically anded together
+  //3. Permission and Identity use the same bits so they can be logically and-ed together
   *Result = (PMask & Properties.Identity)? TRUE: FALSE;
 
   return EFI_SUCCESS;
@@ -186,10 +186,10 @@ OUT BOOLEAN                     *Result
 
 
 /**
- Check if the current AuthToken has unenroll permissions, which recovery is a special
- form of unenroll.
+ Check if the current AuthToken has un-enroll permissions, which recovery is a special
+ form of un-enroll.
 
- Owner has implicit authority to unenroll.
+ Owner has implicit authority to un-enroll.
 
  If not the owner, check if on prem solution enabled another identity with DFCI_RECOVERY.
  If not that, check if ZTD_RECOVERY is enabled (that is, check if ZTD was used to enroll the system).
@@ -320,7 +320,7 @@ IdentityChange (
       return EFI_INVALID_PARAMETER;
     }
 
-    // 1. If the action is not Enroll, do nothing as owner unenroll has alreay reset permissions.
+    // 1. If the action is not Enroll, do nothing as owner unenroll has already reset permissions.
     if (!Enroll)
     {
       return EFI_SUCCESS;
@@ -336,7 +336,7 @@ IdentityChange (
     Status = mAuthenticationProtocol->GetIdentityProperties(mAuthenticationProtocol, AuthToken, &Properties);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, "%a: Faled to get properties for auth token %r\n", __FUNCTION__, Status));
+      DEBUG((DEBUG_ERROR, "%a: Failed to get properties for auth token %r\n", __FUNCTION__, Status));
       return EFI_ACCESS_DENIED;
     }
     DEBUG((DEBUG_INFO, "%a: Signer=0x%2.2x, Identity=0x%2.2x, Enroll=%d\n", __FUNCTION__, Properties.Identity, CertIdentity, Enroll));

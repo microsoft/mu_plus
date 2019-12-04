@@ -1471,7 +1471,7 @@ SimpleMainLogic (
  *
  * Step2. Recovery Request
  *
- * This is exactly the same as Step 1, except the host sends the packets that unenroll the system.
+ * This is exactly the same as Step 1, except the host sends the packets that un-enro the system.
  * After the reboot, DFCI will not be enrolled.
  *
  **/
@@ -1636,7 +1636,7 @@ TryEachNICThenProcessRequest (
     DoneProcessing = FALSE;
     HandleBuffer = NULL;
     //
-    // Find NIC's with HTTP ServiceBinding protocol.  These are the available HTTP devices.
+    // Find NICs with HTTP ServiceBinding protocol.  These are the available HTTP devices.
     //
     Status = gBS->LocateHandleBuffer(
         ByProtocol,
@@ -1645,7 +1645,7 @@ TryEachNICThenProcessRequest (
         &HandleCount,
         &HandleBuffer);
     if (EFI_ERROR(Status) || (0 == HandleCount)) {
-        DEBUG((DEBUG_ERROR, "Unable to locate any NIC's for HTTP file access\n"));
+        DEBUG((DEBUG_ERROR, "Unable to locate any NICs for HTTP file access\n"));
         Status = EFI_NOT_FOUND;
         goto CLEANUP;
     }

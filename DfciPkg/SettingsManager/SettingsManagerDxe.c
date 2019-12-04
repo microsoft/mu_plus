@@ -94,7 +94,7 @@ SettingsLKG_Handler (
  *
  * @param GroupId     - Group Id to register
  *
- * @return EFI_ALREADY_STARTD  -- GroupId is already in a group
+ * @return EFI_ALREADY_STARTED  -- GroupId is already in a group
  *                                or Group name exists as a setting
  * @return EFI_SUCCESS         -- Id Registered to group.
  *                                If this is the first registered setting

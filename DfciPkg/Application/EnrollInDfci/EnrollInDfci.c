@@ -412,7 +412,7 @@ EnrollInDfciEntry(
         Status = Compress(CertBuffer, CertFileSize, NULL, &CompressedSize);
         if (EFI_BUFFER_TOO_SMALL != Status) {
             FreePool (CertBuffer);
-            AsciiPrint ("Error determining compressed sizeg. Code=%r\n",Status);
+            AsciiPrint ("Error determining compressed size. Code=%r\n",Status);
             return 8;
         }
         CompressedBuffer = AllocatePool (CompressedSize);

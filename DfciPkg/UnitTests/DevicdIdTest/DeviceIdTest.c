@@ -183,7 +183,7 @@ IsValidUTF8(CHAR8 *InputString) {
 /*
     CleanUpTestContext
 
-    Cleans up after a test case.  Free's any allocated buffers if a test
+    Cleans up after a test case.  Free any allocated buffers if a test
     takes the error exit.
 
 */
@@ -480,7 +480,7 @@ ValidateCharacters (
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS

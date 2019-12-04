@@ -37,7 +37,7 @@ STATIC CONST SHELL_PARAM_ITEM ParamList[] = {
     { L"-c", TypeFlag },   // -r Display Current Settings
     { L"-i", TypeValue },  // -i Identity Packet
     { L"-p", TypeValue },  // -p Permission Packet
-    { L"-s", TypeValue },  // -s Settings Packete
+    { L"-s", TypeValue },  // -s Settings Packet
     { NULL,  TypeMax }
 };
 
@@ -74,7 +74,7 @@ ReadFileIntoMemory (IN  CONST CHAR16  *FileName,
     }
 
     if (gFlagVerbose) {
-        AsciiPrint ("Openning %.\n", FileName);
+        AsciiPrint ("Opening %.\n", FileName);
     }
 
     Status = ShellOpenFileByName(FileName,
@@ -211,7 +211,7 @@ PrintResults (
     if (gFlagVerbose) {
         AsciiPrint ("Processing results for %s\n",VariableName);
     }
-    AsciiPrint ("Not implenented yet for %s\n",VariableName);
+    AsciiPrint ("Not implemented yet for %s\n",VariableName);
     return EFI_SUCCESS;
 }
 
@@ -232,7 +232,7 @@ PrintCurrent (
     if (gFlagVerbose) {
         AsciiPrint ("Processing current settings for %s\n",VariableName);
     }
-    AsciiPrint ("Not implenented yet for %s\n",VariableName);
+    AsciiPrint ("Not implemented yet for %s\n",VariableName);
     return EFI_SUCCESS;
 }
 

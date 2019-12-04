@@ -193,7 +193,7 @@ IN DFCI_PERMISSION_MASK DMask)
 
   if ((Id[0] >= '0') && (Id[0] <= '9'))
   {
-    // Number didnt' get converted.  That means this is an unsupported item.
+    // Number didn't get converted.  That means this is an unsupported item.
     DEBUG((DEBUG_ERROR, "%a - %a is an invalid permission.\n", __FUNCTION__, Id));
     return EFI_SUCCESS;
   }
@@ -351,7 +351,7 @@ DebugPrintPermissionStore(IN CONST DFCI_PERMISSION_STORE *Store)
   {
     //
     // THIS IS UGLY -
-    // USE #define so that compiler doens't complain on RELEASE build.
+    // USE #define so that compiler doesn't complain on RELEASE build.
     //
     #define Temp (CR(Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE))
     DEBUG((DEBUG_INFO, "   PERM ENTRY - Id: %a  Permission: 0x%X  DefaultDMask Permission: 0x%X\n", Temp->Id, Temp->PMask, Temp->DMask));

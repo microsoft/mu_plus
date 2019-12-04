@@ -37,7 +37,7 @@ typedef struct _DFCI_RECOVERY_CHALLENGE
 
 
 /**
-  This function will attempr to allocate and populate a buffer
+  This function will attempt to allocate and populate a buffer
   with a DFCI recovery challenge structure. If unsuccessful,
   will return an error and set pointer to NULL.
 

@@ -1,4 +1,4 @@
-/** @file DfciPasswordProvicer.c
+/** @file DfciPasswordProvider.c
 
 Library Instance for DXE to support getting, setting, defaults, and support
 SystemSettings for the Admin password.

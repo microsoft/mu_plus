@@ -23,7 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define   RANDOM_SEED_BUFFER_SIZE   64  // We'll seed with 64 bytes of random so that OAEP can work its best.
 
 /**
-  This function will attempr to allocate and populate a buffer
+  This function will attempt to allocate and populate a buffer
   with a DFCI recovery challenge structure. If unsuccessful,
   will return an error and set pointer to NULL.
 

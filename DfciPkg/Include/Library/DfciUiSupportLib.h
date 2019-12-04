@@ -87,7 +87,7 @@ DfciUiIsUiAvailable (
 /**
  * Display a Message Box
  *
- * NOTE: The UI must be avaialable
+ * NOTE: The UI must be available
  *
  * @param TitleBarText
  * @param Text

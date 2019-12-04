@@ -51,7 +51,7 @@ typedef enum {
 typedef struct {
     // Parameter passed into decoder
 
-    // The Packet is opaqe to DFCI.  Only the Decoder Library understands
+    // The Packet is opaque to DFCI.  Only the Decoder Library understands
     // the actual packet data, and transforms the packet into an internally usable
     // structure. While opaque, it is validated with signatures.
     DFCI_PACKET_SIGNATURE *Packet;            // (NeedToFree) Apply Packet
@@ -78,7 +78,7 @@ typedef struct {
     BOOLEAN                LKGDirty;
     BOOLEAN                Unenroll;          // Process packet after Perms and Settings
 
-    // The Payload.  TrustedCert for Idenity Packets, XML for Permissions and Settings Packets
+    // The Payload.  TrustedCert for Identity Packets, XML for Permissions and Settings Packets
     UINTN                  PayloadSize;
     CONST UINT8           *Payload;           // (Pkt) Payload is in the Packet
 

@@ -597,7 +597,7 @@ DfciSettingsProviderSupportProtocolNotify (
  * The constructor function initializes the Lib for Dxe.
  *
  * This constructor is only needed for DfciSettingsManager support.
- * The design is to have the PCD false for all modules except the 1 anonymously liked to the DfciettingsManager.
+ * The design is to have the PCD false for all modules except the 1 anonymously liked to the DfcSettingsManager.
  *
  * @param  ImageHandle   The firmware allocated handle for the EFI image.
  * @param  SystemTable   A pointer to the EFI System Table.

@@ -372,7 +372,7 @@ InsertNode (
   if (mMatchLen >= 4) {
     //
     // We have just got a long match, the target tree
-    // can be located by MatchPos + 1. Travese the tree
+    // can be located by MatchPos + 1. Traverse the tree
     // from bottom up to get to a proper starting point.
     // The usage of PERC_FLAG ensures proper node deletion
     // in DeleteNode() later.
@@ -934,7 +934,7 @@ EncodeP (
 
   PutBits (mPTLen[LoopVar5], mPTCode[LoopVar5]);
   if (LoopVar5 > 1) {
-    PutBits(LoopVar5 - 1, LoopVar7 & (0xFFFFU >> (17 - LoopVar5)));
+    PutBits(LoopVar5 - 1, LoopVar7 & (0xFFFFU >> (17 - LoopVar5))); // spell-checker: disable-line
   }
 }
 
@@ -1321,7 +1321,7 @@ Encode (
   @param[in, out]  DstSize       On input the size (in bytes) of DstBuffer, on
                                 return the number of bytes placed in DstBuffer.
 
-  @retval EFI_SUCCESS           The compression was sucessful.
+  @retval EFI_SUCCESS           The compression was successful.
   @retval EFI_BUFFER_TOO_SMALL  The buffer was too small.  DstSize is required.
 **/
 EFI_STATUS

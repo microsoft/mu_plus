@@ -15,7 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 // Definer.SettingName.Type
 //
-// Some settings types are asymetric in that the types are different for getting and
+// Some settings types are asymmetric in that the types are different for getting and
 // updating a setting. The HttpsCert, for example, is set with a binary blob of a
 // Certificate. On Get, a string of the thumbprint is returned.
 
@@ -69,7 +69,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define DFCI_SETTING_ID__ALL_CPU_IO_VIRT            "Dfci.CpuAndIoVirtualization.Enable"
 
 // Device setting for use with DfciPkg\Library\DfciVirtualizationSettings
-#define DFCI_SETTING_ID__ENABLE_VIRT_SETTINGS       "Device.CpuAndIoVirtualizaion.Enable"
+#define DFCI_SETTING_ID__ENABLE_VIRT_SETTINGS       "Device.CpuAndIoVirtualization.Enable"
 
 //
 // Onboard Audio devices settings

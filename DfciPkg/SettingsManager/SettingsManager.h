@@ -69,7 +69,7 @@ typedef struct {
   UINTN Signature;
   DFCI_SETTING_ID_STRING GroupId;
   LIST_ENTRY GroupLink;             // Link to next DFCI_GROUP_LIST_ENTRY
-  LIST_ENTRY MemberHead;         // Head of list of DFCI_MEMBER_LIST_ENTRYs
+  LIST_ENTRY MemberHead;         // Head of list of DFCI_MEMBER_LIST_ENTRY
 } DFCI_GROUP_LIST_ENTRY;
 
 //
@@ -97,8 +97,8 @@ typedef struct {
   DFCI_SETTING_PROVIDER_LIST_ENTRY *PList;
 } DFCI_MEMBER_LIST_ENTRY;
 
-extern LIST_ENTRY  mProviderList;         // Head of a list of DFCI_SETTING_PROVIDER_LIST_ENTRYs
-extern LIST_ENTRY  mGroupList;            // Head of a list of DFCI_GROUP_PROVIDER_LIST_ENTRYs
+extern LIST_ENTRY  mProviderList;         // Head of a list of DFCI_SETTING_PROVIDER_LIST_ENTRY
+extern LIST_ENTRY  mGroupList;            // Head of a list of DFCI_GROUP_PROVIDER_LIST_ENTRY
 
 extern DFCI_SETTING_ACCESS_PROTOCOL             mSystemSettingAccessProtocol;
 extern DFCI_APPLY_PACKET_PROTOCOL               mApplySettingsProtocol;

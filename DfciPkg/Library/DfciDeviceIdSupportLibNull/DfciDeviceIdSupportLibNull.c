@@ -1,5 +1,5 @@
 /** @file
-DfciDeviceidSupportLib.c
+DfciDeviceIdSupportLib.c
 
 This library provides access to platform data the becomes the DFCI DeviceId.
 

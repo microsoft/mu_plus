@@ -179,7 +179,7 @@ SMID_LoadFromFlash(IN DFCI_SETTING_INTERNAL_DATA **InternalData)
     goto EXIT;
   }
 
-  //size should be coorect now
+  //size should be corect now
   if (VarSize != sizeof(DFCI_INTERNAL_DATA_VAR))
   {
     DEBUG((DEBUG_INFO, "%a - Var Header Version Wrong %d.\n", __FUNCTION__, Var->HeaderVersion));
@@ -208,7 +208,7 @@ SMID_LoadFromFlash(IN DFCI_SETTING_INTERNAL_DATA **InternalData)
   }
 
   //
-  // Set the data members of the Interal Data Store
+  // Set the data members of the Internal Data Store
   //
   (*InternalData)->CurrentVersion = Var->Version;
   (*InternalData)->LSV = Var->LowestSupportedVersion;
@@ -225,7 +225,7 @@ EXIT:
   }
 
   //
-  // If in error condition make sure we freed the Interal data
+  // If in error condition make sure we freed the Internal data
   //
   if (EFI_ERROR(Status))
   {

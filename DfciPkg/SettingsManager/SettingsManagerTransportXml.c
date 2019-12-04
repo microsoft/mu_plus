@@ -183,7 +183,7 @@ ApplySettings(
   }
 
   //
-  //Get Incomming LSV
+  //Get Incoming LSV
   //
   InputTempNode = FindFirstChildNodeByName(InputPacketNode, SETTINGS_LSV_ELEMENT_NAME);
   if (InputTempNode == NULL)
@@ -193,7 +193,7 @@ ApplySettings(
     Status = EFI_NO_MAPPING;
     goto EXIT;
   }
-  DEBUG((DEBUG_INFO, "Incomming LSV: %a\n", InputTempNode->Value));
+  DEBUG((DEBUG_INFO, "Incoming LSV: %a\n", InputTempNode->Value));
   Lsv = AsciiStrDecimalToUintn(InputTempNode->Value);
 
   if (Lsv > 0xFFFFFFFF)
@@ -405,7 +405,7 @@ UpdateSettingsResult(
 }
 
 //
-// Clean up the incomming variable
+// Clean up the incoming variable
 //
 VOID
 EFIAPI

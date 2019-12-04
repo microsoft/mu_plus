@@ -207,7 +207,7 @@ ApplyPermissionsInXml(
   }
 
   //
-  //Get Incomming LSV
+  //Get Incoming LSV
   //
   InputTempNode = FindFirstChildNodeByName(InputPacketNode, PERMISSIONS_LSV_ELEMENT_NAME);
   if (InputTempNode == NULL)
@@ -217,7 +217,7 @@ ApplyPermissionsInXml(
     Status = EFI_NO_MAPPING;
     goto EXIT;
   }
-  DEBUG((DEBUG_INFO, "Incomming LSV: %a\n", InputTempNode->Value));
+  DEBUG((DEBUG_INFO, "Incoming LSV: %a\n", InputTempNode->Value));
   Lsv = AsciiStrDecimalToUintn(InputTempNode->Value);
 
   if (Lsv > 0xFFFFFFFF)
@@ -269,7 +269,7 @@ ApplyPermissionsInXml(
     goto EXIT;
   }
 
-  if (AppendToExistingPermission && (Data->V1Mode)) // Early V1 allows APPEND=TRUE.  This is depracated for V2
+  if (AppendToExistingPermission && (Data->V1Mode)) // Early V1 allows APPEND=TRUE.  This is deprecated for V2
   {
     DEBUG((DEBUG_ERROR, "Append=TRUE specified for V2 processing.  Bad XML Data.\n"));
     Data->State = DFCI_PACKET_STATE_BAD_XML;
@@ -545,11 +545,11 @@ SetPermissionsResponse(
 }
 
 //
-// Clean up the incomming variable
+// Clean up the incoming variable
 //
 VOID
 EFIAPI
-FreeNvVarsForIncommingPermissions(
+FreeNvVarsForIncomingPermissions(
   IN DFCI_INTERNAL_PACKET *Data)
 {
   EFI_STATUS Status;
@@ -592,7 +592,7 @@ LKG_Handler (
 
   Status = EFI_SUCCESS;
 
-  FreeNvVarsForIncommingPermissions(Data);
+  FreeNvVarsForIncomingPermissions(Data);
 
   if ((This != &mApplyPermissionsProtocol) || (Data == NULL))
   {
@@ -697,7 +697,7 @@ ValidatePermissionsPacket (
 
 /**
   Main Entry point into the Xml Provisioning code.
-  This will check the incomming variables, authenticate them, and apply permission settings.
+  This will check the incoming variables, authenticate them, and apply permission settings.
 **/
 
 EFI_STATUS

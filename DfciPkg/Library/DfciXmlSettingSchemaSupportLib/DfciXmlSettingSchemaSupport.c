@@ -92,7 +92,7 @@ ERROR:
 }
 
 /**
-Funtion to get the SettingsPacket node given the root node
+Function to get the SettingsPacket node given the root node
 
 **/
 XmlNode*

@@ -14,10 +14,10 @@ LIST_ENTRY  mAuthIdMapList = INITIALIZE_LIST_HEAD_VARIABLE(mAuthIdMapList);  //l
 
 /*
 Function to find the DFCI_AUTH_TO_ID_LIST_ENTRY given the auth token.
-From the List entry and Identiry Properties and all other fields can be
+From the List entry and Identity Properties and all other fields can be
 easily accessed.  The List Entry also can contain other information about
 validity period, access count, etc.  If any data is returned to an external caller
-it should be copied so that the enternal entity can not modify the internal values.
+it should be copied so that the external entity can not modify the internal values.
 
 @param Token    Pointer to Auth Token to find
 @retval         Will return the DFCI_AUTH List entry structure if found.  Otherwise NULL
@@ -179,7 +179,7 @@ DisposeAuthToken(
 /**
 Function to Get the Identity Properties of a given Identity Token.
 
-This function will recieve caller input and needs to protect against brute force
+This function will receive caller input and needs to protect against brute force
 attack by rate limiting or some other means as the IdentityToken values are limited.
 
 @param This           Auth Protocol Instance Pointer

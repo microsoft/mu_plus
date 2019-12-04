@@ -1,7 +1,7 @@
 /** @file
 DfciV1SupportLibNull.c
 
-NULL Library for V1Upport
+NULL Library for V1Support
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent

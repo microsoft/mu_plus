@@ -117,8 +117,8 @@ Function to return the currently enrolled identities within the system.
 
 This is a combination of all identities (not just keys).
 
-@param This               Auth Protocol Instance Pointer
-@param EnrolledIdentites  pointer to Mask to be updated
+@param This                Auth Protocol Instance Pointer
+@param EnrolledIdentities  pointer to Mask to be updated
 
 
 @retval EFI_SUCCESS   EnrolledIdentities will contain a valid MASK for all identities

@@ -6,7 +6,7 @@ DFCI consists mostly of a software feature that is written in the DXE phase of U
 
 ## Dfci Menu application
 
-The [DfciMenu](https://github.com/microsoft/mu_plus/tree/dev/201908/DfciPkg/Application/DfciMenu) application is optimized for **mu_plus MsGraphicsPkg**.  It is VFR but since many platforms use custom layouts and graphical representation this area might need some adjustments.  The DfciMenu application publishes a HII formset that should be located by your "frontpage" and shown.
+The [DfciMenu](https://github.com/microsoft/mu_plus/tree/dev/201908/DfciPkg/Application/DfciMenu) application is optimized for **mu_plus MsGraphicsPkg**.  It is VFR but since many platforms use custom layouts and graphical representation this area might need some adjustments.  The DfciMenu application publishes a HII formset that should be located by your pre-boot UEFI menu application (e.g. "FrontPage") and displayed.
 
 * Formset GUID: `gDfciMenuFormsetGuid = {0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9 }}`
 * Entry Form: `#define DFCI_MENU_FORM_ID           0x2000`
@@ -39,7 +39,7 @@ The [DfciMenu](https://github.com/microsoft/mu_plus/tree/dev/201908/DfciPkg/Appl
 
 ## DFCI Platform provided libraries
 
-The following libraries have to be provided by the platfrom:
+The following libraries have to be provided by the platform:
 
 | Library | Documentation | Function |
 | ----- | -----| ----- |
@@ -53,7 +53,7 @@ Setting providers is how a platform provides a setting to DFCI
 
 [Setting detailed overview](DfciSettingProviders.md)
 
-## Platform DSC statememts
+## Platform DSC statements
 
 Adding DFCI to your system consists of:
 
@@ -82,8 +82,8 @@ Adding DFCI to your system consists of:
   #Platform should add all it settings libs here
   <LibraryClasses>
         NULL|ZeroTouchPkg/Library/ZeroTouchSettings/ZeroTouchSettings.inf
-        NULL|YOURPLATFORMPKG/Library/YOUR_FIRST_SETTING_PROVIDER.inf
-        NULL|YOURPLATFORMPKG/Library/YOUR_SECOND_SETTING_PROVIDER.inf
+        NULL|YOUR_PLATFORM_PKG/Library/YOUR_FIRST_SETTING_PROVIDER.inf
+        NULL|YOUR_PLATFORM_PKG/Library/YOUR_SECOND_SETTING_PROVIDER.inf
         NULL|DfciPkg/Library/DfciPasswordProvider/DfciPasswordProvider.inf
         NULL|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
         NULL|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf

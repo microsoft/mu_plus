@@ -1,7 +1,7 @@
 ## @file
 # AuthManagerNull.inf
 #
-# Considently provides the same token.
+# Always provides the same token.
 # Don't use in production!
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.

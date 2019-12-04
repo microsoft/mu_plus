@@ -22,12 +22,12 @@ typedef struct {
  * @param GroupId     - Group
  * @param Id          - Setting to add to group
  *
- * @return EFI_NOT_FOUND       -- Id not available on this system
- * @return EFI_ALREADY_STARTD  -- Id is already in a group
- *                                or Group name exists as a setting
- * @return EFI_SUCCESS         -- Id Registered to group.
- *                                If this is the first registered setting
- *                                the group is created
+ * @return EFI_NOT_FOUND        -- Id not available on this system
+ * @return EFI_ALREADY_STARTED  -- Id is already in a group
+ *                                 or Group name exists as a setting
+ * @return EFI_SUCCESS          -- Id Registered to group.
+ *                                 If this is the first registered setting
+ *                                 the group is created
  */
 DFCI_GROUP_ENTRY *
 EFIAPI

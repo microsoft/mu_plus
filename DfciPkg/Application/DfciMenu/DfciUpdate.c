@@ -9,7 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 // A file on a USB key is limted to 255 characters.  This code will generate a filename
-// based on the Serial Number, Model, and Manaufacturer strings concatenated with "_",
+// based on the Serial Number, Model, and Manufacturer strings concatenated with "_",
 // and truncated to 250 characters.  The file name extensions will be
 //
 //   .Dfi  -- Dfci Update Package

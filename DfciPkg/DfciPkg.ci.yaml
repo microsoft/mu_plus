@@ -64,11 +64,11 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
-        "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
-        ],
-        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
-        ],
-        "ExtendWords": [           # words to extend to the dictionary for this package
+        "AuditOnly": False,           # Fails test but run in AuditOnly mode to collect log
+        "IgnoreFiles": [],            # use gitignore syntax to ignore errors in matching files
+        "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
+        "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
+        "ExtendWords": [              # words to extend to the dictionary for this package
             "unconfigure",
             "unenroll",
             "unenrolling",
@@ -91,7 +91,6 @@
             "DFCIs",
             "DDTHH",
             "uefis"
-        ],
-        "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+        ]
     }
 }

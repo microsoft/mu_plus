@@ -475,7 +475,7 @@ NO_HTTP_RECOVERY:
                                   (VOID **) &Name,
                                   &NameSize);
         if (!EFI_ERROR(Status) && (NameSize >= 1)) {
-            mDfciMenuConfiguration.DfciTennantName = MENU_TRUE;
+            mDfciMenuConfiguration.DfciTenantName = MENU_TRUE;
             DfciSetStringEntry (mDfciMenuPrivate.HiiHandle, STRING_TOKEN(STR_DFCI_MDM_TENANT_NAME), Name);
             DEBUG((DEBUG_INFO, "Dfci MDM.Tenant is enabled\n"));
         }

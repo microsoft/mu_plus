@@ -70,7 +70,7 @@ GetPermissionsListNodeFromPacketNode(
 /**
  * Get Permissin attributes DefaultPMask and DefaultMask
  *
- * Set the input values to theri default before calling this function.  If the
+ * Set the input values to their default before calling this function.  If the
  * values are not defined in the XML, the PMask or DMask will not be disturbed.
  *
  * @param PermissionListNode

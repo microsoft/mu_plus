@@ -20,7 +20,7 @@
   Include
 
 [LibraryClasses]
-  ##  @libraryclass  Library to used to optain platform device
+  ##  @libraryclass  Library used to obtain platform device
   ##                 information (serial number, UUID etc)
   ##
   DfciDeviceIdSupportLib|Include/Library/DfciDeviceIdSupportLib.h

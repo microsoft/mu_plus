@@ -158,7 +158,7 @@ formset
                         help    = STRING_TOKEN(STR_NULL_STRING),                // managed by MDM
                         text    = STRING_TOKEN(STR_DFCI_MDM_FRIENDLY_NAME);
 
-                    suppressif ideqval DfciMenuConfig.DfciTennantName == MENU_FALSE; // If Tennant Name name,
+                    suppressif ideqval DfciMenuConfig.DfciTenantName == MENU_FALSE; // If Tenant Name name,
 
 	                    subtitle
 	                        text    = STRING_TOKEN(STR_NULL_STRING),            // Group of horizontal text blocks

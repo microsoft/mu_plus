@@ -78,7 +78,7 @@ by tools to provide name, id, help information.
     <!-- Need to define binary blob for Hash of Admin Key so key can be changed if desired. -->
     <!-- Need to define binary blob for Hash of Local Key so key can be set or changed if desired -->
     <!-- Need to figure out boot order and authenticated boot order -->
-    <!-- Boot order should be changable when in local mode using local data but in offline mode only generic boot targets can be used.  (Pxe, Usb Mass Storage, Interal Drive) -->
+    <!-- Boot order should be modifiable when in local mode using local data but in offline mode only generic boot targets can be used.  (Pxe, Usb Mass Storage, Internal Drive) -->
   </Settings>
 </AllSettings>
 

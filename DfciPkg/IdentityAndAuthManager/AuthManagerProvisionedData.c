@@ -13,7 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //PRIVATE VARIABLE INFO FOR STORAGE OF PROVISIONED VARS
 //Use gDfciAuthProvisionVarNamespace for the namespace
 //Internal var names
-#define _INTERNAL_PROVISIONED_CERT_VAR_NAME          L"_IPCVN"
+#define _INTERNAL_PROVISIONED_CERT_VAR_NAME          L"_IPCVN" // spell-checker: disable-line
 
 //Internal var attributes
 #define _INTERNAL_VAR_VERSION_V1              (1)
@@ -224,7 +224,7 @@ LoadProvisionedData()
 
   Status = EFI_SUCCESS;
 
-  //We now have good data from varible store.  decompose and populate internal cert store
+  //We now have good data from variable store.  decompose and populate internal cert store
   for (UINT8 i = 0; i < MaxCertsAllowed; i++)
   {
     mInternalCertStore.Certs[i].CertSize = (UINTN)(Var->CertSizes[i]);
@@ -733,7 +733,7 @@ Function to return the currently enrolled identities within the system.
 This is a combination of all identities (not just keys).
 
 @param This               Auth Protocol Instance Pointer
-@param EnrolledIdentites  pointer to Mask to be updated
+@param EnrolledIdentities  pointer to Mask to be updated
 
 
 @retval EFI_SUCCESS   EnrolledIdentities will contain a valid MASK for all identities

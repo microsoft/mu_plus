@@ -47,7 +47,7 @@ An IT administrator leverages the Intune console to remove devices from Autopilo
 ### Recovery
 
 Recovery is essential because UEFI misconfiguration may prevent booting to an operating system, for example if USB and network boot are disabled and the hard disk becomes corrupted.  When a device is enrolled, UEFI must provide alternative mechanisms for the physically-present user to place packets in the DFCI request mailboxes - this MUST NOT be blocked by a BIOS password or similar.  Note that when a device is not enrolled, a BIOS password _should_ prevent access to DFCI enrollment by a physically-present user until they have entered the correct credential.
-The APS keeps track of the enrollment state of devices.  When an administrator removes a device from Autopilot, APS creates signed, device-specific unenrollment packets and makes them available via a REST endpoint at DFCI_SETTING_ID__DFCI_RECOVERY_URL.  These packets should delete the Intune and APS certificates and provide the local user with access to all settings (they should no longer be greyed out in BIOS menus).  Note that retirement does not restore visible settings to their default values.
+The APS keeps track of the enrollment state of devices.  When an administrator removes a device from Autopilot, APS creates signed, device-specific un-enrollment packets and makes them available via a REST endpoint at DFCI_SETTING_ID__DFCI_RECOVERY_URL.  These packets should delete the Intune and APS certificates and provide the local user with access to all settings (they should no longer be greyed out in BIOS menus).  Note that retirement does not restore visible settings to their default values.
 
 ![DFCI Recovery](collateral/DFCI-Recovery_mu.png)
 
@@ -80,7 +80,7 @@ DFCI supports UEFI settings and permission management by multiple entities.  In 
 
 ## Security & Privacy Considerations
 
-When a DFCI owner is enrolled, DFCI must take precedence over any other UEFI management solution.  Physically-present user, including authenticated, may not bypass DFCI's permissions on `DFCI_IDENTITY_LOCAL`.
+When a DFCI owner is enrolled, DFCI must take precedence over any other UEFI management solution.  Physically-present user, including authenticated, may not bypass DFCI permissions on `DFCI_IDENTITY_LOCAL`.
 
 **Protection:** The hardware/firmware implementation of DFCI must __protect__ DFCI configuration code and data such that they cannot by bypassed by an operating system or casual physical attacker.  For example, non-volatile storage that is locked prior to Boot Device Selection.
 

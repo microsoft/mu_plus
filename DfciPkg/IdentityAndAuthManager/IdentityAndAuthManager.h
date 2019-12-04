@@ -280,7 +280,7 @@ VOID
 CheckForNewProvisionInput();
 
 /**
-Internal function to map external identites to the cert index used
+Internal function to map external identities to the cert index used
 internally to store the certificate.
 If the identity is invalid a invalid index will be returned.
 **/
@@ -426,8 +426,8 @@ PopulateCurrentIdentities(BOOLEAN  Force);
   @param  TrustedCert            Supplies a pointer to a trusted certificate.
   @param  TrustedCertSize        Supplies the size in bytes of the trusted
                                  certificate.
-  @param  AuthToken              Supplies a pointer that will receive an auth-
-                                 entication token.
+  @param  AuthToken              Supplies a pointer that will receive an 
+                                 authentication token.
 
   @return EFI_NOT_READY          Indicates that UI components are not available.
   @return EFI_ACCESS_DENIED      The user rejected the operation.

@@ -713,7 +713,7 @@ ApplyNewIdentityPacket (
   Status = DisposeAllIdentityMappings(Data->DfciIdentity);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identites for Id 0x%X.  Status = %r\n", Data->DfciIdentity, Status));
+    DEBUG((DEBUG_ERROR, "[AM] - Failed to dispose of identities for Id 0x%X.  Status = %r\n", Data->DfciIdentity, Status));
     //continue on.
   }
 
@@ -819,7 +819,7 @@ This requires an Auth token that has permission to change the owner key and/or p
 
 All settings need a DFCI reset (only reset the settings that are DFCI only)
 All Permissions need a DFCI Reset (clear all permissions and internal data)
-All Auth needs a DFCI reset (Cleaer all keys and internal data)
+All Auth needs a DFCI reset (Clear all keys and internal data)
 
 **/
 EFI_STATUS
@@ -886,7 +886,7 @@ ClearDFCI (
     ASSERT_EFI_ERROR(Status);
     goto CLEANUP;
   }
-  DEBUG((DEBUG_INFO, "[AM] All Stored Auths Keys Reset\n"));
+  DEBUG((DEBUG_INFO, "[AM] All Stored Authentication Keys Reset\n"));
 
   //Dispose all Key based Identity Mappings in the system
   Status = DisposeAllIdentityMappings(DFCI_IDENTITY_MASK_KEYS);

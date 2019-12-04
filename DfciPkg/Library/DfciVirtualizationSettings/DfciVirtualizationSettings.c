@@ -37,7 +37,7 @@ typedef enum {
 
 // There are no setting to change the support for CPU and I/O virtualization
 
-#define HARD_CODED_VIRTUALIZAION 1
+#define HARD_CODED_VIRTUALIZATION 1
 
 // Forward declarations needed
 /**
@@ -132,7 +132,7 @@ DfciVirtSettingsSet (
     Id = IsIdSupported(This->Id);
     switch (Id) {
         case ID_IS_VIRTUALIZATION:
-            if (NewValue != HARD_CODED_VIRTUALIZAION) {
+            if (NewValue != HARD_CODED_VIRTUALIZATION) {
                 Status = EFI_UNSUPPORTED;
             } else {
                 *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
@@ -190,7 +190,7 @@ DfciVirtSettingsGet (
 
         // Current setting is hard coded to Enabled.
         case ID_IS_VIRTUALIZATION:
-            *CurrentValue = HARD_CODED_VIRTUALIZAION;
+            *CurrentValue = HARD_CODED_VIRTUALIZATION;
             *ValueSize = sizeof(UINT8);
             break;
 
@@ -241,7 +241,7 @@ DfciVirtSettingsGetDefault (
 
     DefaultValue = (UINT8 *) Value;
     *ValueSize = sizeof(UINT8);
-    *DefaultValue = HARD_CODED_VIRTUALIZAION;
+    *DefaultValue = HARD_CODED_VIRTUALIZATION;
 
     return EFI_SUCCESS;
 }
@@ -384,7 +384,7 @@ DfciSettingsProviderSupportProtocolNotify (
  * The constructor function initializes the Lib for Dxe.
  *
  * This constructor is only needed for DfciSettingsManager support.
- * The design is to have the PCD false for all modules except the 1 anonymously liked to the DfciettingsManager.
+ * The design is to have the PCD false for all modules except the 1 anonymously liked to the DfciSettingsManager.
  *
  * @param  ImageHandle   The firmware allocated handle for the EFI image.
  * @param  SystemTable   A pointer to the EFI System Table.

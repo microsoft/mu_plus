@@ -113,7 +113,7 @@ EndOfDxeCallback (
     // Check if the UI components we need are available. If not, bail.
     //
     if (DfciUiIsUiAvailable() == FALSE) {
-        DEBUG((DEBUG_ERROR, "%a %a: Callback trigggered. UI not available\n", _DBGMSGID_, __FUNCTION__));
+        DEBUG((DEBUG_ERROR, "%a %a: Callback triggered. UI not available\n", _DBGMSGID_, __FUNCTION__));
         ASSERT(FALSE);
         return;
     }
@@ -230,9 +230,9 @@ DecodePacket (
         return Data->StatusCode;
     }
 
-    //Check incomming size
+    //Check incoming size
     if (Data->PacketSize > MAX_ALLOWABLE_DFCI_APPLY_VAR_SIZE) {
-      DEBUG((DEBUG_ERROR, "%a %a: %s Incomming Apply var is too big (%d bytes)\n", _DBGMSGID_, __FUNCTION__, Data->MailboxName, Data->PacketSize));
+      DEBUG((DEBUG_ERROR, "%a %a: %s Incoming Apply var is too big (%d bytes)\n", _DBGMSGID_, __FUNCTION__, Data->MailboxName, Data->PacketSize));
       Data->State = DFCI_PACKET_STATE_DATA_INVALID;
       Data->StatusCode = EFI_BAD_BUFFER_SIZE;
       return Data->StatusCode;
@@ -370,7 +370,7 @@ QueueMailboxAtEndOfDxe () {
 
 
     if (mProcessingAtEndOfDxe) {
-        DEBUG((DEBUG_INFO, "Queue for EndOfDxe satified\n"));
+        DEBUG((DEBUG_INFO, "Queue for EndOfDxe satisfied\n"));
         Status = EFI_SUCCESS;
     } else {
         Status = EFI_MEDIA_CHANGED;
@@ -626,7 +626,7 @@ AllocateManagerData (VOID) {
 /**
  * Free Manager Data
  *
- * Normal - just discard varialbe data - will be retrieved again
+ * Normal - just discard variable data - will be retrieved again
  * Complete - Discard all ManagerData
  *
  * @param

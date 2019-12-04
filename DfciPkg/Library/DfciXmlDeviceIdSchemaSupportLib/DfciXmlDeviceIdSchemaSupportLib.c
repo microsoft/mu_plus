@@ -18,7 +18,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DfciXmlDeviceIdSchemaSupportLib.h>
 #include <Library/BaseLib.h>
 
-// YYYY-MM-DDTHH:MM:SS
+// YYYY-MM-DDTHH:MM:SS  //spell-checker: disable-line
 #define DATE_STRING_SIZE 20
 
 #define DEVICE_ID_XML_TEMPLATE "<?xml version=\"1.0\" encoding=\"utf-8\"?><UEFIDeviceIdentifierPacket></UEFIDeviceIdentifierPacket>"
