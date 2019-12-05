@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    @file
+
+    Sample DFCI Owner initial enroll settings
+
+
+    Make sure you edit DfciSettingsPattern.xml and then
+    run BuildSettings.bat to generate this DfciSettings.xml
+
+
+
+
+    Copyright (c), Microsoft Corporation
+    SPDX-License-Identifier: BSD-2-Clause-Patent
+
+ -->
+<SettingsPacket xmlns="urn:UefiSettings-Schema">
+    <CreatedBy>DFCI Tester</CreatedBy>
+    <CreatedOn>2019-09-20 14:30:00</CreatedOn>
+    <Version>2</Version>
+    <!--
+
+      Make sure you edit DfciSettingsPattern.xml and then
+      run BuildSettings.bat to generate this DfciSettings.xml
+
+      -->
+    <LowestSupportedVersion>2</LowestSupportedVersion>
+    <Settings>
+        <Setting>
+            <Id>Dfci.RecoveryBootstrapUrl.String</Id>
+            <Value>http://mikeytbds3.eastus.cloudapp.azure.com/ztd/noauth/dfci/recovery-bootstrap/</Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci.RecoveryUrl.String</Id>
+            <Value>https://mikeytbds3.eastus.cloudapp.azure.com/ztd/unauth/dfci/recovery-packets/</Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci.HttpsCert.Binary</Id>
+     <!--
+
+      Value is XYZZY in DfciSettingsPattern.xml.  the XYZZY is replaced by
+      a base64 string of the HTTPS certificate when you run BuildSettings.bat.
+
+      -->
+           <Value>
+                XYZZY
+            </Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci.RegistrationId.String</Id>
+            <Value>
+                12345678-1234-5678-1234-012345674321
+            </Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci.TenantId.String</Id>
+            <Value>
+                98765432-1234-5678-1234-012345674321
+            </Value>
+        </Setting>
+        <Setting>
+            <Id>Device.SecureBootKeys.Enum</Id>
+            <!-- MsOnly, MsPlus3rdParty, None -->
+            <Value>None</Value>
+        </Setting>
+        <Setting>
+            <Id>Device.BootOrderLock.Enable</Id>
+            <Value>Disabled</Value>
+        </Setting>
+    </Settings>
+</SettingsPacket>

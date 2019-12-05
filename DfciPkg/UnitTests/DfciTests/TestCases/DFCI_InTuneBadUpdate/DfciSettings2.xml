@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+rem @file
+rem
+rem Setting being attempted with bad certificate.
+rem
+rem Copyright (c), Microsoft Corporation
+rem SPDX-License-Identifier: BSD-2-Clause-Patent
+
+ -->
+<SettingsPacket xmlns="urn:UefiSettings-Schema">
+    <CreatedBy>DFCI Tester</CreatedBy>
+    <CreatedOn>2018-03-29 12:37:00</CreatedOn>
+    <Version>2</Version>
+    <LowestSupportedVersion>2</LowestSupportedVersion>
+    <Settings>
+        <Setting>
+            <Id>MDM.FriendlyName.String</Id>
+            <Value>The DFCI Test Lab</Value>
+        </Setting>
+        <Setting>
+            <Id>MDM.TenantName.String</Id>
+            <Value>The DFCI Test Lab Tenant</Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci.OnboardCameras.Enable</Id>
+            <Value>Disabled</Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci.OnboardAudio.Enable</Id>
+            <Value>Disabled</Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci.BootOnboardNetwork.Enable</Id>
+            <Value>Disabled</Value>
+        </Setting>
+    </Settings>
+</SettingsPacket>

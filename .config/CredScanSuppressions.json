@@ -1,0 +1,8 @@
+{
+    "suppressions": [
+        {
+            "file": "DfciPkg/UnitTests/DfciTests/Certs",
+            "_justification": "Test case test certificates."
+        }
+    ]
+}

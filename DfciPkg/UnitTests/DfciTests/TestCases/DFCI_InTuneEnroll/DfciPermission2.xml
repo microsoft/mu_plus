@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    @file
+
+    Sample DFCI User initial enroll permissions
+
+    Copyright (c), Microsoft Corporation
+    SPDX-License-Identifier: BSD-2-Clause-Patent
+
+ -->
+<PermissionsPacket xmlns="urn:UefiSettings-Schema">
+  <CreatedBy>DFCI Tester</CreatedBy>
+  <CreatedOn>2018-03-28</CreatedOn>
+  <Version>1</Version>
+  <LowestSupportedVersion>1</LowestSupportedVersion>
+  <Permissions Default="192" Delegated="192" Append="False">
+    <Permission>
+        <!--
+           Permission Mask - 128 = Owner
+                              64 = User
+                              32 = User1
+                              16 = User2
+                               8 = ZTD
+                               2 = Regular Expression
+           Owner keeps the following settings for itself
+         -->
+        <Id>Dfci.OnboardCameras.Enable</Id>
+        <PMask>64</PMask>
+    </Permission>
+    <Permission>
+        <Id>Dfci.OnboardAudio.Enable</Id>
+        <PMask>64</PMask>
+    </Permission>
+  </Permissions>
+</PermissionsPacket>

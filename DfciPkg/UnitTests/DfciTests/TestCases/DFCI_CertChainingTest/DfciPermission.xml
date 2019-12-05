@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+rem @file
+rem
+rem Permission required to enroll a User.
+rem
+rem Copyright (c), Microsoft Corporation
+rem SPDX-License-Identifier: BSD-2-Clause-Patent
+
+ -->
+<PermissionsPacket xmlns="urn:UefiSettings-Schema">
+    <CreatedBy>DFCI Tester</CreatedBy>
+    <CreatedOn>2018-03-28</CreatedOn>
+    <Version>1</Version>
+    <LowestSupportedVersion>1</LowestSupportedVersion>
+    <Permissions Default="128" Delegated="128" Append="False">
+        <!--
+
+           Sample DDS initial enroll permissions
+
+           Permission Mask - 128 = Owner
+                              64 = User
+                              32 = User1
+                              16 = User2
+                               8 = ZTD
+                               2 = Regular Expression
+           Owner keeps the following settings for itself
+         -->
+        <Permission>
+            <Id>Dfci.OwnerKey.Enum</Id>
+            <PMask>136</PMask>
+            <DMask>128</DMask>
+        </Permission>
+        <Permission>
+            <!--
+                   Needs 128 (Owner Permission) to set the key,
+                   Needs  64 (User Permission) for User to roll the key
+             -->
+            <Id>Dfci.UserKey.Enum</Id>
+            <PMask>192</PMask>
+            <DMask>128</DMask>
+        </Permission>
+        <Permission>
+            <Id>Dfci.User1Key.Enum</Id>
+            <PMask>192</PMask>
+            <DMask>192</DMask>
+        </Permission>
+        <Permission>
+            <Id>Dfci.User2Key.Enum</Id>
+            <PMask>192</PMask>
+            <DMask>192</DMask>
+        </Permission>
+        <Permission>
+            <Id>Dfci.RecoveryUrl.String</Id>
+            <PMask>128</PMask>
+            <DMask>128</DMask>
+        </Permission>
+    </Permissions>
+</PermissionsPacket>
