@@ -1,0 +1,50 @@
+## @file
+# DfciSampleProviderLib.inf
+#
+#  Library to support Dfci Setting  (get/set)
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = DfciSampleProviderLib
+  FILE_GUID                      = f2be5105-b110-4671-b2be-16ddb3b3aa84
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DfciSampleProvider | DXE_DRIVER
+  CONSTRUCTOR                    = DfciSampleProviderConstructor
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  DfciSampleProvider.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiBootServicesTableLib
+  MemoryAllocationLib
+  BaseLib
+  BaseMemoryLib
+  UefiLib
+  PcdLib
+
+[Guids]
+
+[Protocols]
+  gDfciSettingsProviderSupportProtocolGuid
+
+[Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider
+
+[Depex]
+  TRUE

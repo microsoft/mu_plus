@@ -69,6 +69,7 @@
   DfciUiSupportLib|DfciPkg/Library/DfciUiSupportLibNull/DfciUiSupportLibNull.inf
   DfciV1SupportLib|DfciPkg/Library/DfciV1SupportLibNull/DfciV1SupportLibNull.inf
   DfciSettingsLib|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
+  DfciSampleProviderLib|DfciPkg/Library/DfciSampleProvider/DfciSampleProviderLib.inf
   DfciVirtualizationSettingsLib|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
   DfciGroupLib|DfciPkg/Library/DfciGroupLibNull/DfciGroups.inf
   ZeroTouchSettingsLib|ZeroTouchPkg/Library/ZeroTouchSettings/ZeroTouchSettings.inf
@@ -136,6 +137,7 @@
   DfciPkg/Library/DfciPasswordProvider/DfciPasswordProvider.inf
   DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
+  DfciPkg/Library/DfciSampleProvider/DfciSampleProviderLib.inf
   DfciPkg/Library/DfciUiSupportLibNull/DfciUiSupportLibNull.inf
   DfciPkg/Library/DfciV1SupportLibNull/DfciV1SupportLibNull.inf
   DfciPkg/Library/DfciXmlPermissionSchemaSupportLib/DfciXmlPermissionSchemaSupportLib.inf
