@@ -1,0 +1,21 @@
+## @file
+# Azure Pipeline build file for a build using ubuntu and GCC5
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+# MU_CHANGE BEGIN
+trigger: none
+
+pr:
+- dev/*
+  release/*
+# MU_CHANGE END
+
+jobs:
+- template: templates/pr-gate-build-job.yml
+  parameters:
+    tool_chain_tag: 'GCC5'
+    vm_image: 'ubuntu-latest'
+    arch_list: "IA32,X64,ARM,AARCH64"
+
