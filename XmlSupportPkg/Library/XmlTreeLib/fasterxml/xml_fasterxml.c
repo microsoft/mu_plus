@@ -5036,7 +5036,9 @@ RtlXmlDetermineStreamEncoding(
   //
   for (u = 0; u != RTL_NUMBER_OF(EncodingCorrelation); u++) {
 
+#ifndef __GNUC__
 #pragma prefast(suppress:394, "Prefast doesn't understand about != vs. < in loop invariants")
+#endif
     const PCENCODER_CORRELATION pEncoder = &EncodingCorrelation[u];
 
     if ((cAvailableUINT8s < pEncoder->cbSense) || (pEncoder->cbSense == 0))

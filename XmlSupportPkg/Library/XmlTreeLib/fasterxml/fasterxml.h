@@ -798,7 +798,7 @@ typedef UINT32 (EFIAPI *NTXMLTRANSFORMCHARACTER)(
 // This function knows how to compare a pvoid and a length against
 // a 7-bit ascii string
 //
-typedef EFI_STATUS (*NTXMLSPECIALSTRINGCOMPARE)(
+typedef EFI_STATUS EFIAPI (*NTXMLSPECIALSTRINGCOMPARE)(
     PXML_TOKENIZATION_STATE         pState,
     PCXML_EXTENT                    pRawToken,
     PCXML_SIMPLE_STRING                pSpecialString,
@@ -811,7 +811,7 @@ typedef EFI_STATUS (*NTXMLSPECIALSTRINGCOMPARE)(
 //
 // Compare two extents
 //
-typedef EFI_STATUS (*NTXMLCOMPARESTRINGS)(
+typedef EFI_STATUS EFIAPI (*NTXMLCOMPARESTRINGS)(
     PXML_TOKENIZATION_STATE TokenizationState,
     PCXML_EXTENT pLeft,
     PCXML_EXTENT pRight,
@@ -897,6 +897,7 @@ RtlXmlAdvanceTokenization(
 
 
 EFI_STATUS
+EFIAPI
 RtlXmlDetermineStreamEncoding(
     PXML_TOKENIZATION_STATE pState,
     UINTN* pulUINT8sOfEncoding
