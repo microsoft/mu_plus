@@ -4870,6 +4870,7 @@ RtlXmlAdvanceTokenization(
 
 
 EFI_STATUS
+EFIAPI
 RtlXmlInitializeTokenization(
   OUT PXML_TOKENIZATION_STATE     pState,
   IN PCXML_TOKENIZATION_INIT     pInit
