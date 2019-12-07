@@ -66,6 +66,26 @@
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
         "ExtendWords": [           # words to extend to the dictionary for this package
+            "JUNIT",
+            "NOFAILURE",
+            "PCXML",            # A bunch of stuff from XML lib.
+            "XMLEF",
+            "PCVOID",
+            "NTXMLTRANSFORMCHARACTER",
+            "NTXMLRAWNEXTCHARACTER",
+            "PXMLSTRUCTURE",
+            "NTXML",
+            "PCENCODER",
+            "PCXMLSTRUCTURE",
+            "PVOID",
+            "PXMLDOC",
+            "PLUTF",
+            "Upcase",
+            "fasterxml",
+            "namespacemanager",
+            "prefast",
+            "xmlstructure",
+            "fooba",      # Partial word in a comment about testing.
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

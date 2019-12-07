@@ -1487,7 +1487,7 @@ _HandleDocTypeDeclStuff(
       NextState = XTSS_DOCTYPE_ENTITYDECL_PARAMETERMARKER;
 
       //
-      // Snarf whitespace after the percent to avoid a wierd state...
+      // Snarf whitespace after the percent to avoid a weird state...
       //
       ADVANCE_PVOID(pRawState->pvCursor, (UINTN)cbTotalTokenLength);
 
@@ -4043,7 +4043,7 @@ RtlXmlNextToken(
       }
       //
       // Otherwise, we got something after a name that wasn't whitespace, or
-      // part of a clsoe, so that's an error
+      // part of a close, so that's an error
       //
       else {
         pToken->fError = TRUE;
@@ -4743,7 +4743,7 @@ RtlXmlNextToken(
 
 
   //
-  // Wierd, some unhandled state.
+  // Weird, some unhandled state.
   //
   default:
     NextState = XTSS_ERRONEOUS;
@@ -5032,7 +5032,7 @@ RtlXmlDetermineStreamEncoding(
     return RtlpReportXmlError(EFI_INVALID_PARAMETER);
 
   //
-  // Zip through our set of encoders and do the corellation work
+  // Zip through our set of encoders and do the correllation work
   //
   for (u = 0; u != RTL_NUMBER_OF(EncodingCorrelation); u++) {
 

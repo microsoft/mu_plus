@@ -1028,7 +1028,7 @@ TryAgain:
 
 
         //
-        // A processing instruction was found.  Record it in the returned blibbet
+        // A processing instruction was found.  Record it in the returned structure.
         //
     case XTSS_PI_OPEN:
         {

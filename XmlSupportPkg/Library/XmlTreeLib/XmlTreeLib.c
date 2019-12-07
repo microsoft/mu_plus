@@ -174,7 +174,7 @@ AddNode(
     NodeTemp->Value = NodeValue;
 
     //
-    // Initailize our list head entries.
+    // Initialize our list head entries.
     //
     InitializeListHead(&(NodeTemp->ChildrenListHead));
     InitializeListHead(&(NodeTemp->AttributesListHead));
@@ -858,7 +858,7 @@ Engine parsing code which will build a XmlNode for the XmlTree
 
 @param[in] XmlDocument      -- XML document.
 @param[in] XmlDocumentSize  -- Size of the XML document.
-@param[in out] Root         -- Pointer to recieve the node list.
+@param[in out] Root         -- Pointer to receive the node list.
 
 Return Value:
 
@@ -1243,7 +1243,7 @@ BuildNodeList(
     }
 
     //
-    // Parsing is finished when you recieve the stream-end state.
+    // Parsing is finished when you receive the stream-end state.
     //
     if (Next.State == XTSS_STREAM_END)
     {
@@ -1312,7 +1312,7 @@ Exit:
  @param   RootNode -- The root node that contains the node list.
 
  @return  EFI_SUCCESS or underlying failure code.  
- On successfuly return RootNode Ptr will be NULL
+ On successfully return RootNode Ptr will be NULL
 
  **/
 EFI_STATUS
