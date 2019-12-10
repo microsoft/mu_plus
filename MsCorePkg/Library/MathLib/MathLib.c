@@ -10,6 +10,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi.h>
 #include <Library/MathLib.h>
 
+#if _MSC_VER > 1500
+// Include explicit prototypes for intrinsic functions.
+unsigned char _BitScanReverse (
+   unsigned long * Index,
+   unsigned long Mask
+);
+unsigned char _BitScanReverse64 (
+   unsigned long * Index,
+   unsigned __int64 Mask
+);
+#endif
+
 /**
 Find sine of a provided double in radians
 
@@ -20,7 +32,7 @@ Find sine of a provided double in radians
 double
 EFIAPI
 sin_d(
-  IN CONST double angleInRadians  
+  IN CONST double angleInRadians
 ){
     double radians = angleInRadians;
     double previousValue = radians; //x0
@@ -39,18 +51,18 @@ sin_d(
     while (radians < -2* MU_PI){
         radians += 2*MU_PI;
     }
-    
+
     //compute the first iteration
     //Formula is sum over N to infinity with x being the radians
     // -1^n x^(2n+1)
     //----------------
     //    (2n+1)!
-    
+
     top = radians * radians * radians; //x^3
     value = previousValue - (top/denom);
 
     //iterate 7 iterations
-    for (;iterationCount <= 19;iterationCount+=2){ 
+    for (; iterationCount <= 19; iterationCount += 2) {
         previousValue = value;
         denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous compued n-2!)
         top *= radians * radians; // x^2 * (previous computed x^n-2)
@@ -77,7 +89,7 @@ cos_d(
   IN CONST double angleInRadians
 ){
     double radians = angleInRadians;
-    
+
     double previousValue = 1; //x0
     INT16 multiply = -1; //we subtract first possibly faster
     UINT32 iterationCount = 4; //we start at four
@@ -100,12 +112,12 @@ cos_d(
     // -1^n x^(2n)
     //----------------
     //    (2n)!
-    
+
     top = radians * radians; //x^2
     value = previousValue - (top/denom);
 
     //iterate 7 iterations
-    for (;iterationCount <= 20;iterationCount+=2){ 
+    for (; iterationCount <= 20; iterationCount += 2) {
         previousValue = value;
         denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous compued n-2!)
         top *= radians * radians; // x^2 * (previous computed x^n-2)
@@ -123,21 +135,22 @@ static inline UINT16 bsr64(UINT64 value) {
     return 64 - __builtin_clzl(value);
 
 #elif _MSC_VER > 1500 //if we are using MS VS compiler 15 or greater
-    UINT64 result;
+    unsigned long result;
     #if defined _M_X64
         //https://msdn.microsoft.com/en-us/library/fbxyd7zd.aspx
         //this will only work on ARM and x64
 		_BitScanReverse64(&result, value);
-		return (UINT16) result + 1;	
+		return (UINT16) result + 1;
     #else
-       UINT32 value2 = value >> 32;
+
+		UINT32 valueLow = value & 0xffffffff;
+		UINT32 valueHigh = value >> 32;
 		//https://msdn.microsoft.com/en-us/library/fbxyd7zd.aspx
-		// we split the operation up - first we check the upper bits and then check 
-		if (_BitScanReverse(&result, value2)) {
+		// we split the operation up - first we check the upper bits and then check
+		if (_BitScanReverse(&result, valueHigh)) {
 			result += 32;
-		}
-		else {
-			_BitScanReverse(&result, value);
+		} else {
+			_BitScanReverse(&result, valueLow);
 		}
 
 		return (UINT16)result + 1;
@@ -199,7 +212,7 @@ sqrt_d(
     //we might need to use another function other than clzl since that relies on BSR
     //this should output a bsrl on x86 and polyfill it in on ARM64
     UINT16 highestOrderBitPosition = bsr64(highestOrderBit);
-    
+
     //our first guess is then just 2 ^ (n/2)
     firstGuess = (UINT64)1 << highestOrderBitPosition/2;
 
@@ -212,7 +225,7 @@ sqrt_d(
 
     //do 7 iterations
     //any further iterations yields no accuracy benefits
-    //quadratic convergent so we get 4x the precision each iteration 
+    //quadratic convergent so we get 4x the precision each iteration
     for (UINT64 i=0;i<6 && x != 0 && prevX != x;i++){
         prevX = x;
         x = .5 * (prevX + (input/prevX));
@@ -237,18 +250,18 @@ sqrt32(
     UINT32 res = 0;
     UINT32 bit = 1 << 30; // The second-to-top bit is set: 1 << 30 for 32 bits
     UINT32 num = input;
- 
+
     // "bit" starts at the highest power of four <= the argument.
     while (bit > input)
         bit >>= 2;
-        
+
     while (bit != 0) {
         //if num is more than result + bit
         if (num >= res + bit) {
             num -= res + bit;
             res += bit << 1;
         }
-        
+
         res >>= 1;
         bit >>= 2;
     }
@@ -270,21 +283,20 @@ sqrt64(
     UINT64 res = 0;
     UINT64 bit = (UINT64) 1 << 62; // The second-to-top bit is set: 1 << 62 for 64 bits
     UINT64 num = input;
- 
+
     // "bit" starts at the highest power of four <= the argument.
     while (bit > input)
         bit >>= 2;
-        
+
     while (bit != 0) {
         //if num is more than result + bit
         if (num >= res + bit) {
             num -= res + bit;
             res += bit << 1;
         }
-        
+
         res >>= 1;
         bit >>= 2;
     }
     return res;
 }
-
