@@ -90,6 +90,12 @@
             "kkllmmnnoopp", # describes bytes of guid
             "DFCIs",
             "DDTHH",
+            "Fabrikam",
+            "pypiwin", # python package dependency
+            "ipcvn", # a DFCI internal variable name
+            "pytool",
+            "robotframework", # python package dependency
+            "robotremoteserver", # python package dependency
             "uefis"
         ]
     }

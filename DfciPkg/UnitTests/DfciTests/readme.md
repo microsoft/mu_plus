@@ -61,7 +61,7 @@ Table of DFCI Test case collections:
 | DFCI_InTunePermissions | Applies multiple sets of permissions to an InTune Enrolled system. |
 | DFCI_InTuneEnroll | Applies a InTune Owner, an InTune Manager, and the appropriate permissions and settings. |
 | DFCI_InTuneRollCerts | Updates the Owner and Manager certificates. This test can be run multiple times as it just swaps between two sets of certificates. |
-| DFCI_InTuneSettings | Applies multipl sets of settings to a InTune Enrolled system. |
+| DFCI_InTuneSettings | Applies multiple sets of settings to a InTune Enrolled system. |
 | DFCI_InTuneUnenroll | Applies an InTune Owner unenroll package, that removes both the InTune Owner and the InTune Manager, resets the Permission Database, and restores settings marked No UI to their default state. |
 
 ## Note on the firmware for testing DFCI
@@ -92,6 +92,8 @@ FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
 Run the first test as shown replacing 11.11.11.211 with the actual IP address of the DUT.
 You should expect to see similar output with all four tests passing.
 
+<!-- spellchecker: disable -->
+<!-- This omits the below code block from cspell checking -->
 ```txt
 DfciTests>RunDfciTest.bat TestCases\DFCI_InitialState 11.11.11.211
 
@@ -120,6 +122,7 @@ XUnit:   C:\TestLogs\robot\DFCI_InitialState\logs_20191113_121224\DFCI_InitialSt
 Log:     C:\TestLogs\robot\DFCI_InitialState\logs_20191113_121224\log.html
 Report:  C:\TestLogs\robot\DFCI_InitialState\logs_20191113_121224\report.html
 ```
+<!-- spellchecker: enable -->
 
 ## Standard Testing
 
@@ -143,7 +146,7 @@ This tests also start with a DUT that is not enrolled in DFCI, and will leave th
 
 ## Recovering from errors
 
-Code issues an present issues with DFCI that may require deleting the Idenity and Permission data bases. Using privileged access of a DUT that unlocks the varstore, you can delete the two master variables of DFCI. These variable are:
+Code issues an present issues with DFCI that may require deleting the Identity and Permission data bases. Using privileged access of a DUT that unlocks the varstore, you can delete the two master variables of DFCI. These variable are:
 
 1. \_SPP
 2. \_IPCVN
@@ -154,7 +157,7 @@ The test cases DFCI_InTuneEnroll and DFCI_InTuneUnenroll have a GenUsb.bat file.
 The GenUsb.bat file will generate a .dfi file that UEFI management menu can read.
 
 ```txt
-GenUsb MFGNAME PRODUCTNAME SERIALNUMBER
+GenUsb MFG_NAME PRODUCT_NAME SERIAL_NUMBER
 ```
 
 If there is a space or other special characters, add double quotes as in:
