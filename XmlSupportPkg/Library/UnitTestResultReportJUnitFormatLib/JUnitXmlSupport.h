@@ -21,8 +21,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
 
 // Note: JUnit schema definition doesn't seem to be completely clear.  Sounds like since no real "owner" different projects have changed and adapted
-// for their usage.  Here is one schema found online that seems reasonable.  Need to confirm our tools/usage (visual studio) parse this correctly 
-// and take full advantage of the format. 
+// for their usage.  Here is one schema found online that seems reasonable.  Need to confirm our tools/usage (visual studio) parse this correctly
+// and take full advantage of the format.
 
 http://help.catchsoftware.com/display/ET/JUnit+Format
 
@@ -64,7 +64,7 @@ http://help.catchsoftware.com/display/ET/JUnit+Format
          test. Contains as a text node relevant data for the error,
          for example a stack trace. optional -->
          <error message="" <!-- The error message. e.g., if a java exception is thrown, the return value of getMessage() -->
-         type=""    <!-- The type of error that occured. e.g., if a java execption is thrown the full class name of the exception. -->
+         type=""    <!-- The type of error that occurred. e.g., if a java exception is thrown the full class name of the exception. -->
          ></error>
 
          <!-- Indicates that the test failed. A failure is a test which
@@ -102,7 +102,7 @@ http://help.catchsoftware.com/display/ET/JUnit+Format
 /**
 Creates a new MsXmlNode list following the List
 format.  This is the root document that test suite objects can be
-added to.  
+added to.
 
 Return NULL if error occurs. Otherwise return a pointer to xml doc root element
 of a testsuite.
@@ -147,7 +147,7 @@ New_TestCaseInSuite(
   IN CONST  CHAR8*    ClassName,
   UINTN              TimeInSeconds,
   IN CONST  CHAR8*    Log  OPTIONAL,
-  IN CONST  CHAR8*    FailureMsg   OPTIONAL, 
+  IN CONST  CHAR8*    FailureMsg   OPTIONAL,
   IN CONST  CHAR8*    FailureType  OPTIONAL,
   IN        BOOLEAN   Skipped
 );

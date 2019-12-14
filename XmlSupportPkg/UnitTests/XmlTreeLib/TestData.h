@@ -1,6 +1,6 @@
 /**
-@file 
-Define structure and test data for xml testing.  
+@file
+Define structure and test data for xml testing.
 
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -87,15 +87,15 @@ XmlTestContext LongElementContext = { 10, 0, 4, 0, LongElement, NULL, NULL };
 CONST CHAR8 SimpleElementsAttributes[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
 "<RootNode>"
-"  <Gen1Node attribte1='value1' attribute2='value2'>Gen1Node1 contents</Gen1Node>"
+"  <Gen1Node attribute1='value1' attribute2='value2'>Gen1Node1 contents</Gen1Node>"
 "</RootNode>";
 XmlTestContext SimpleElementsAttributesContext = {2, 2, 2, 2, SimpleElementsAttributes, NULL, NULL };
 
 
-CONST CHAR8 NonEncodedXmlAttribute1[] = 
+CONST CHAR8 NonEncodedXmlAttribute1[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
 "<RootNode>"
-"  <Gen1Node attribte1='value1 < value2' attribute2='value2'>Gen1Node1 contents</Gen1Node>"
+"  <Gen1Node attribute1='value1 < value2' attribute2='value2'>Gen1Node1 contents</Gen1Node>"
 "</RootNode>";
 
 XmlTestContext NonEncodedXmlAttribute1Context = { 2, 2, 2, 2, NonEncodedXmlAttribute1, NULL, NULL };
@@ -104,7 +104,7 @@ XmlTestContext NonEncodedXmlAttribute1Context = { 2, 2, 2, 2, NonEncodedXmlAttri
 CONST CHAR8 NonEncodedXmlContent1[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
 "<RootNode>"
-"  <Gen1Node attribte1='value1 < value2' attribute2='value2'>Gen1Node1 contents < test</Gen1Node>"
+"  <Gen1Node attribute1='value1 < value2' attribute2='value2'>Gen1Node1 contents < test</Gen1Node>"
 "</RootNode>";
 
 XmlTestContext NonEncodedXmlContent1Context = { 2, 2, 2, 2, NonEncodedXmlContent1, NULL, NULL };
@@ -112,7 +112,7 @@ XmlTestContext NonEncodedXmlContent1Context = { 2, 2, 2, 2, NonEncodedXmlContent
 CONST CHAR8 EncodedXmlAttribute1[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
 "<RootNode>"
-"  <Gen1Node attribte1='value1 &lt; value2' attribute2='value2'>Gen1Node1 contents</Gen1Node>"
+"  <Gen1Node attribute1='value1 &lt; value2' attribute2='value2'>Gen1Node1 contents</Gen1Node>"
 "</RootNode>";
 
 XmlTestContext EncodedXmlAttribute1Context = { 2, 2, 2, 2, EncodedXmlAttribute1, NULL, NULL };
@@ -121,7 +121,7 @@ XmlTestContext EncodedXmlAttribute1Context = { 2, 2, 2, 2, EncodedXmlAttribute1,
 CONST CHAR8 EncodedXmlContent1[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
 "<RootNode>"
-"  <Gen1Node attribte1='value1 < value2' attribute2='value2'>Gen1Node1 contents &alt; test</Gen1Node>"
+"  <Gen1Node attribute1='value1 < value2' attribute2='value2'>Gen1Node1 contents &alt; test</Gen1Node>"
 "</RootNode>";
 
 XmlTestContext EncodedXmlContent1Context = { 2, 2, 2, 2, EncodedXmlContent1, NULL, NULL };

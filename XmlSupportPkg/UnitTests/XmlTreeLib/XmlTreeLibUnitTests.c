@@ -1,6 +1,6 @@
 /**
 @file
-UEFI Shell based application for unit testing the XmlTreeLib.  
+UEFI Shell based application for unit testing the XmlTreeLib.
 
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -28,31 +28,30 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
 Simple clean up method to make sure string parsing tests clean up even if interrupted and fail in the middle.
 **/
-UNIT_TEST_STATUS
+VOID
 EFIAPI
 CleanUpXmlStringParseContext (
 IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
 IN UNIT_TEST_CONTEXT           Context
 )
 {
-XmlStringParseContext *XmlContext = (XmlStringParseContext*)Context;
+  XmlStringParseContext *XmlContext = (XmlStringParseContext*)Context;
 
-if (XmlContext != NULL)
-{
-  //free string if set
-  if (XmlContext->String != NULL)
+  if (XmlContext != NULL)
   {
-    FreePool(XmlContext->String);
-    XmlContext->String = NULL;
+    //free string if set
+    if (XmlContext->String != NULL)
+    {
+      FreePool(XmlContext->String);
+      XmlContext->String = NULL;
+    }
   }
-}
-return UNIT_TEST_PASSED;
 }
 
 /**
 Simple clean up method to make sure tests clean up even if interrupted and fail in the middle.
 **/
-UNIT_TEST_STATUS
+VOID
 EFIAPI
 CleanUpXmlTestContext(
   IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
@@ -76,7 +75,6 @@ CleanUpXmlTestContext(
       FreeXmlTree(&(XmlContext->Node));
     }
   }
-  return UNIT_TEST_PASSED;
 }
 
 /**
@@ -117,7 +115,7 @@ ParseValidXml(
   {
     DEBUG((DEBUG_ERROR, "%a Failed to create xml tree node\n", __FUNCTION__));
   }
-  
+
   UT_ASSERT_NOT_NULL(ResultData);
 
   //Check all the things we can check to make sure it was parsed correctly
@@ -149,7 +147,7 @@ ParseValidXml(
 
   //read from the new string
   Status = CreateXmlTree(XmlContext->ToFreeXmlString, AsciiStrLen(XmlContext->ToFreeXmlString), &ResultData);
-  XmlContext->Node = ResultData; 
+  XmlContext->Node = ResultData;
   UT_ASSERT_NOT_EFI_ERROR(Status);
 
   ResultTotalElements = 0;
@@ -309,7 +307,7 @@ ParseInValidXml1(
 	XmlNode *ResultData = NULL;
 	EFI_STATUS Status;
 	CHAR8 BadString[] = "This is not valid xml"; //Not even close
-	
+
 	Status = CreateXmlTree(BadString, AsciiStrLen(BadString), &ResultData);
 	if (ResultData != NULL)
 	{
@@ -389,11 +387,11 @@ TestNodeCount(
   CHAR8 MyString[] = "<Node1><Node2><Node3 /><Node4 /></Node2> </Node1>";  //4 nodes with depth of 3
 
   Status = CreateXmlTree(MyString, AsciiStrLen(MyString), &ResultData);
-  UT_ASSERT_NOT_NULL(ResultData); 
+  UT_ASSERT_NOT_NULL(ResultData);
 
   Status = XmlTreeNumberOfNodes(ResultData, &TotalElements);
 
-  //free our memory 
+  //free our memory
   FreeXmlTree(&ResultData);
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(4, TotalElements);
@@ -422,7 +420,7 @@ TestNodeMaxDepth(
 
   Status = XmlTreeMaxDepth(ResultData, &MaxDepth);
 
-  //free our memory 
+  //free our memory
   FreeXmlTree(&ResultData);
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(4, MaxDepth);
@@ -451,7 +449,7 @@ TestAttributeCount(
 
   Status = XmlTreeNumberOfAttributes(ResultData, &Count);
 
-  //free our memory 
+  //free our memory
   FreeXmlTree(&ResultData);
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(4, Count);
@@ -479,7 +477,7 @@ TestAttributeMax(
 
   Status = XmlTreeMaxAttributes(ResultData, &Count);
 
-  //free our memory 
+  //free our memory
   FreeXmlTree(&ResultData);
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(2, Count);
@@ -490,7 +488,7 @@ TestAttributeMax(
 
 
 /**
-  
+
   Main fuction sets up the unit test environment
 
 
@@ -509,7 +507,7 @@ UefiMain(
   CHAR16  ShortName[100];
   ShortName[0] = L'\0';
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName); 
+  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
   DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
@@ -544,7 +542,7 @@ UefiMain(
 
 
   //
-  // The the metric functions - Max depth, node count, max attributes, attribute count 
+  // The the metric functions - Max depth, node count, max attributes, attribute count
   //
   Status = CreateUnitTestSuite(&BasicMetricsTestSuite, Fw, L"XML Node Tree Metrics", L"Common.Xml.TreeMetrics", NULL, NULL);
   if (EFI_ERROR(Status))

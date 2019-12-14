@@ -122,8 +122,8 @@ static BASIC_TEST_CONTEXT    mBasicDecodeError5 = {B64_TEST_7,     BIN_TEST_1,  
 /**
 Simple clean up method to make sure tests clean up even if interrupted and fail in the middle.
 **/
-static
-UNIT_TEST_STATUS
+STATIC
+VOID
 EFIAPI
 CleanUpB64TestContext (
     IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
@@ -142,7 +142,6 @@ CleanUpB64TestContext (
         Btc->BufferToFree = NULL;
       }
     }
-    return UNIT_TEST_PASSED;
 }
 
 ///================================================================================================
@@ -193,7 +192,7 @@ RfcEncodeTest(
     Btc->BufferToFree = b64WorkString;
     ReturnSize = b64StringSize;
 
-    Status = Base64Encode(binString, BinSize, b64WorkString, &ReturnSize);
+    Status = Base64Encode(BinData, BinSize, b64WorkString, &ReturnSize);
 
     UT_ASSERT_STATUS_EQUAL(Status, Btc->ExpectedStatus);
 
@@ -305,7 +304,7 @@ RfcDecodeTest(
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS
@@ -353,7 +352,7 @@ XmlBase64UnitTestAppEntry (
     AddTestCase( b64EncodeTests, L"RFC 4686 Test Vector", L"b64Encode.Test5", RfcEncodeTest, NULL, CleanUpB64TestContext, &mBasicEncodeTest5);
     AddTestCase( b64EncodeTests, L"RFC 4686 Test Vector", L"b64Encode.Test6", RfcEncodeTest, NULL, CleanUpB64TestContext, &mBasicEncodeTest6);
     AddTestCase( b64EncodeTests, L"RFC 4686 Test Vector", L"b64Encode.Test7", RfcEncodeTest, NULL, CleanUpB64TestContext, &mBasicEncodeTest7);
-    AddTestCase( b64EncodeTests, L"RFC 4686 Test Vector", L"b64Encode.Test8", RfcEncodeTest, NULL, CleanUpB64TestContext, &mBasicEncodeTest7);
+    AddTestCase( b64EncodeTests, L"RFC 4686 Test Vector", L"b64Encode.Test8", RfcEncodeTest, NULL, CleanUpB64TestContext, &mBasicEncodeTest8);
 
     //
     // Populate the B64 Decode Unit Test Suite.

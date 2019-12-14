@@ -12,7 +12,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #pragma once
 
-#include <Library/DebugLib.h> // ASSERT
+#include <Library/DebugLib.h>                    // ASSERT
+#include <Uefi.h>                                // UEFI base types
+
 
 #ifndef IN_OUT
 #define IN_OUT
@@ -224,7 +226,7 @@ typedef struct _XML_RAWTOKENIZATION_STATE
     //
     // When the upper-level tokenizer detects the "encoding" statement
     // in the <?xml ...?> declaration, it should set this member to the
-    // code page that was found.  Noticably, this will start out as
+    // code page that was found.  noticeably, this will start out as
     // zero on initialization.  A smart "next character" function will
     // do some default operation to continue working even if this is
     // unset.
@@ -269,7 +271,7 @@ Normal operation would go like this:
   <!-- commentary -->
   <?bonk foo?>
   <ham>
-    <frooby:cheese hot="yes"/>
+    <sandwich:cheese hot="yes"/>
   </ham>
 
   XTLS_STREAM_START
@@ -297,7 +299,7 @@ Normal operation would go like this:
   XTLS_ELEMENT                      {XTSS_ELEMENT_CLOSE     ">"             }
   XTLS_FLOATINGDATA                 {XTSS_FLOATINGDATA      "\n  "          }
   XTLS_ELEMENT                      {XTSS_ELEMENT_OPEN      "<"             }
-  XTLS_ELEMENT                      {XTSS_ELEMENT_NAMESPACE "frooby"        }
+  XTLS_ELEMENT                      {XTSS_ELEMENT_NAMESPACE "sandwich"        }
   XTLS_ELEMENT                      {XTSS_ELEMENT_NAME      "cheese"        }
   XTLS_ELEMENT                      {XTSS_ELEMENT_VALUENAME "hot"           }
   XTLS_ELEMENT                      {XTSS_ELEMENT_VALUE     "yes"           }
@@ -798,7 +800,7 @@ typedef UINT32 (EFIAPI *NTXMLTRANSFORMCHARACTER)(
 // This function knows how to compare a pvoid and a length against
 // a 7-bit ascii string
 //
-typedef EFI_STATUS (*NTXMLSPECIALSTRINGCOMPARE)(
+typedef EFI_STATUS (EFIAPI *NTXMLSPECIALSTRINGCOMPARE)(
     PXML_TOKENIZATION_STATE         pState,
     PCXML_EXTENT                    pRawToken,
     PCXML_SIMPLE_STRING                pSpecialString,
@@ -811,7 +813,7 @@ typedef EFI_STATUS (*NTXMLSPECIALSTRINGCOMPARE)(
 //
 // Compare two extents
 //
-typedef EFI_STATUS (*NTXMLCOMPARESTRINGS)(
+typedef EFI_STATUS (EFIAPI *NTXMLCOMPARESTRINGS)(
     PXML_TOKENIZATION_STATE TokenizationState,
     PCXML_EXTENT pLeft,
     PCXML_EXTENT pRight,
@@ -888,6 +890,7 @@ XML_TOKENIZATION_STATE, *PXML_TOKENIZATION_STATE;
 
 
 EFI_STATUS
+EFIAPI
 RtlXmlAdvanceTokenization(
     IN_OUT PXML_TOKENIZATION_STATE pState,
     IN PXML_TOKEN pToken
@@ -896,6 +899,7 @@ RtlXmlAdvanceTokenization(
 
 
 EFI_STATUS
+EFIAPI
 RtlXmlDetermineStreamEncoding(
     PXML_TOKENIZATION_STATE pState,
     UINTN* pulUINT8sOfEncoding
@@ -1057,7 +1061,7 @@ typedef struct _RTL_GROWING_LIST {
     UINT32 Flags;
 
     //
-    // How many total elments are in this growing list?
+    // How many total elements are in this growing list?
     //
     UINT32 cTotalElements;
 
@@ -1079,7 +1083,7 @@ typedef struct _RTL_GROWING_LIST {
     UINT32 cInternalElements;
 
     //
-    // Pointer to the intial "internal" list, if specified by the caller
+    // Pointer to the intital "internal" list, if specified by the caller
     //
     VOID* pvInternalList;
 
@@ -1292,6 +1296,7 @@ NS_MANAGER, *PNS_MANAGER;
 
 
 EFI_STATUS
+EFIAPI
 RtlNsInitialize(
     PNS_MANAGER             pManager,
     PFNCOMPAREEXTENTS       pCompare,
@@ -1300,11 +1305,13 @@ RtlNsInitialize(
     );
 
 EFI_STATUS
+EFIAPI
 RtlNsDestroy(
     PNS_MANAGER pManager
     );
 
 EFI_STATUS
+EFIAPI
 RtlNsInsertDefaultNamespace(
     PNS_MANAGER     pManager,
     UINT32           ulDepth,
@@ -1312,6 +1319,7 @@ RtlNsInsertDefaultNamespace(
     );
 
 EFI_STATUS
+EFIAPI
 RtlNsInsertNamespaceAlias(
     PNS_MANAGER     pManager,
     UINT32           ulDepth,
@@ -1320,12 +1328,14 @@ RtlNsInsertNamespaceAlias(
     );
 
 EFI_STATUS
+EFIAPI
 RtlNsLeaveDepth(
     PNS_MANAGER pManager,
     UINT32       ulDepth
     );
 
 EFI_STATUS
+EFIAPI
 RtlNsGetNamespaceForAlias(
     PNS_MANAGER     pManager,
     UINT32           ulDepth,

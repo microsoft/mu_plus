@@ -28,7 +28,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_VERSION     L"0.1"
 
 //global node tree so we only have to create once
-extern XmlNode *mNode; 
+extern XmlNode *mNode;
 
 /**
 Simple clean up method to make sure string parsing tests clean up even if interrupted and fail in the middle.
@@ -41,9 +41,11 @@ PreReqNodeTreeIsValid(
 );
 
 EFI_STATUS
+EFIAPI
 RegisterAttributeTests(UNIT_TEST_SUITE           *TestSuite);
 
 EFI_STATUS
+EFIAPI
 RegisterElementTests(UNIT_TEST_SUITE           *TestSuite);
 
 #endif

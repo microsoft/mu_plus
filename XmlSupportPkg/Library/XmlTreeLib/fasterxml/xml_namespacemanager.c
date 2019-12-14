@@ -679,6 +679,7 @@ RtlpNsFindMatchingAlias(
 
 
 EFI_STATUS
+EFIAPI
 RtlNsGetNamespaceForAlias(
     PNS_MANAGER     pManager,
     UINT32           ulDepth,

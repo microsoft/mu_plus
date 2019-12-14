@@ -28,7 +28,7 @@ typedef struct _XmlNode
   LIST_ENTRY         ChildrenListHead;  // List head for the children of this node.
   LIST_ENTRY         AttributesListHead;// Optional list of attributes for this node.
   struct _XmlNode*   ParentNode;       // Optional parent for this node.
-  UINTN              NumChildren;     // Number of children within chidrenListHead.
+  UINTN              NumChildren;     // Number of children within childrenListHead.
   UINTN              NumAttributes;   // Number of attributes within this node.
   CHAR8*             Name;           // Name of this node.
   CHAR8*             Value;          // Optional value.

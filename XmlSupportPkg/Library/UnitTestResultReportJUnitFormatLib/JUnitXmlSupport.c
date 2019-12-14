@@ -168,7 +168,7 @@ New_TestCaseInSuite(
   //1 - confirm good suite node
   if (TestSuite == NULL)
   {
-    DEBUG((DEBUG_ERROR, "%a - TesteSuite is NULL\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "%a - TestSuite is NULL\n", __FUNCTION__));
     return NULL;
   }
 
@@ -180,7 +180,7 @@ New_TestCaseInSuite(
   //TestSuite Node is good. 
 
 
-  //Create the tesetCase node with no parent
+  //Create the testCase node with no parent
   Status = AddNode(NULL, TESTCASE_ELEMENT_NAME, NULL, &NewTestNode);
   if (EFI_ERROR(Status))
   {
@@ -358,7 +358,7 @@ AddTestSuiteStats(
   //1 - confirm good suite node
   if (TestSuite == NULL)
   {
-    DEBUG((DEBUG_ERROR, "%a - TesteSuite is NULL\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "%a - TestSuite is NULL\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 

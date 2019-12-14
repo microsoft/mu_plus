@@ -13,6 +13,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #pragma once
 
+#include <Uefi.h>                                // UEFI base types
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -55,10 +57,10 @@ enum XMLDOC_THING_TYPE {
 
 typedef enum {
     XMLERROR_SUCCESS = 0,
-    XMLERROR_ATTRIBUTE_NAME_NOT_FOUND,              // <binky foo:=""> or <binky =""/> - Attribute name part not found
-    XMLERROR_ATTRIBUTE_NS_PREFIX_MISSING_COLON,     // <bingy foo="ham"> - Somehow we got into a state where we thought we had a namespace prefix, but it wasn't followed by a colon
+    XMLERROR_ATTRIBUTE_NAME_NOT_FOUND,              // <bar foo:=""> or <bar =""/> - Attribute name part not found
+    XMLERROR_ATTRIBUTE_NS_PREFIX_MISSING_COLON,     // <bar foo="ham"> - Somehow we got into a state where we thought we had a namespace prefix, but it wasn't followed by a colon
     XMLERROR_CDATA_MALFORMED,                       // CDATA not properly formed?
-    XMLERROR_ELEMENT_NAME_NOT_FOUND,                // < binky="bleep"> or <foo: /> - element name not found
+    XMLERROR_ELEMENT_NAME_NOT_FOUND,                // < bar="bleep"> or <foo: /> - element name not found
     XMLERROR_ELEMENT_NS_PREFIX_MISSING_COLON,
     XMLERROR_ENDELEMENT_MALFORMED,                  // EOF before end of element found, or other problem
     XMLERROR_ENDELEMENT_MALFORMED_NAME,             // The name was malformed .. ns missing or something like that
@@ -404,8 +406,8 @@ typedef struct _XMLDOC_THING {
     //
     XML_EXTENT TotalExtent;
 
-    
-    union 
+
+    union
     {
 
         XMLDOC_ERROR Error;
@@ -556,12 +558,14 @@ typedef const XML_INIT_LOGICAL_LAYER *PCXML_INIT_LOGICAL_LAYER;
 // you pass along the same namespace management object.
 //
 EFI_STATUS
+EFIAPI
 RtlXmlInitializeNextLogicalThing(
     OUT PXML_LOGICAL_STATE pParseState,
     IN PCXML_INIT_LOGICAL_LAYER Init
     );
 
 EFI_STATUS
+EFIAPI
 RtlXmlNextLogicalThing(
     PXML_LOGICAL_STATE pParseState,
     PNS_MANAGER pNamespaceManager,
@@ -570,6 +574,7 @@ RtlXmlNextLogicalThing(
     );
 
 EFI_STATUS
+EFIAPI
 RtlXmlDestroyNextLogicalThing(
     PXML_LOGICAL_STATE pState
     );
@@ -577,6 +582,7 @@ RtlXmlDestroyNextLogicalThing(
 #define RTL_XML_EXTENT_TO_STRING_FLAG_CONVERT_REFERENCES 0x00000001
 
 EFI_STATUS
+EFIAPI
 RtlXmlExtentToString(
     IN UINT32                   ConversionFlags,
     IN_OUT PXML_RAWTOKENIZATION_STATE pParseState,
@@ -588,6 +594,7 @@ RtlXmlExtentToString(
 #define RTL_XML_EXTENT_TO_UTF8_STRING_FLAG_CONVERT_REFERENCES 0x00000001
 
 EFI_STATUS
+EFIAPI
 RtlXmlExtentToUtf8String(
     IN UINT32 ConversionFlags,
     IN_OUT PXML_RAWTOKENIZATION_STATE pParseState,
@@ -597,6 +604,7 @@ RtlXmlExtentToUtf8String(
     );
 
 EFI_STATUS
+EFIAPI
 RtlXmlMatchLogicalElement(
     IN  PXML_TOKENIZATION_STATE     pState,
     IN  PXMLDOC_ELEMENT             pElement,
@@ -606,6 +614,7 @@ RtlXmlMatchLogicalElement(
     );
 
 EFI_STATUS
+EFIAPI
 RtlXmlFindAttributesInElement(
     IN  PXML_TOKENIZATION_STATE     pState,
     IN  PRTL_GROWING_LIST           pAttributeList,
@@ -617,12 +626,14 @@ RtlXmlFindAttributesInElement(
     );
 
 EFI_STATUS
+EFIAPI
 RtlXmlSkipElement(
     PXML_LOGICAL_STATE pState,
     PXMLDOC_ELEMENT TheElement
     );
 
 EFI_STATUS
+EFIAPI
 RtlXmlMatchAttribute(
     IN PXML_TOKENIZATION_STATE      State,
     IN PXMLDOC_ATTRIBUTE            Attribute,

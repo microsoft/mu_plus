@@ -312,9 +312,8 @@ OutputUnitTestFrameworkReport(
       FailureMsg = ConvertAndAllocateUnicodeStringToAsciiString(Test->UT.FailureMessage);
 
 
-      XmlNode* TestNode = NULL;
       //TODO:  need to handle timing.  Right now its hard coded to 1 second. 
-      TestNode = New_TestCaseInSuite(SuiteNode, Name, ClassName, 1, Log, FailureMsg, GetStringForFailureType(Test->UT.FailureType), Skipped);
+      New_TestCaseInSuite(SuiteNode, Name, ClassName, 1, Log, FailureMsg, GetStringForFailureType(Test->UT.FailureType), Skipped);
 
       if (Name != NULL) { FreePool(Name); }
       if (Log != NULL) { FreePool(Log); }

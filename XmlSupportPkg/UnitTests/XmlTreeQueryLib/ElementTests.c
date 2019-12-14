@@ -17,14 +17,14 @@ FindFirstFound(
 )
 {
   XmlNode* Result = NULL;
-  
+
   Result = FindFirstChildNodeByName(mNode, "AnotherGen1Node");
   UT_ASSERT_NOT_NULL(Result);
 
   UT_ASSERT_NOT_NULL(Result->Name);
   UT_ASSERT_EQUAL(AsciiStrLen("AnotherGen1Node"), AsciiStrLen(Result->Name));
   UT_ASSERT_MEM_EQUAL(Result->Name, "AnotherGen1Node", AsciiStrLen("AnotherGen1Node"));
-  
+
   UT_ASSERT_NOT_NULL(Result->Value);
   UT_ASSERT_EQUAL(AsciiStrLen("Test Data 123"), AsciiStrLen(Result->Value));
   UT_ASSERT_MEM_EQUAL(Result->Value, "Test Data 123", AsciiStrLen("Test Data 123"));
@@ -83,6 +83,7 @@ FindFirstNullParameters(
 
 
 EFI_STATUS
+EFIAPI
 RegisterElementTests(
   IN UNIT_TEST_SUITE* TestSuite)
 {
@@ -91,6 +92,6 @@ RegisterElementTests(
   AddTestCase(TestSuite, L"Find 1st Child Node By Name Found", L"Common.Xml.QueryFindFirstByName", FindFirstFound, PreReqNodeTreeIsValid, NULL, NULL);
   AddTestCase(TestSuite, L"Find 1st Child Node By Name Not Found", L"Common.Xml.QueryFindFirstByName", FindFirstNotFound, PreReqNodeTreeIsValid, NULL, NULL);
   AddTestCase(TestSuite, L"Find 1st Child Node By Name Not Found 2nd Generation", L"Common.Xml.QueryFindFirstByName", FindFirstNotFound2, PreReqNodeTreeIsValid, NULL, NULL);
-  
+
   return EFI_SUCCESS;
 }

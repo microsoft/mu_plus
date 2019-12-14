@@ -123,7 +123,7 @@ RtlXmlDefaultCompareStrings(
         status = DecodeResult.Result.ErrorCode;
         goto Exit;
       }
-      else 
+      else
       {
         LeftCharacter = DecodeResult.Character;
         LeftCursor = DecodeResult.Result.NextCursor;
@@ -134,7 +134,7 @@ RtlXmlDefaultCompareStrings(
         status = DecodeResult.Result.ErrorCode;
         goto Exit;
       }
-      else 
+      else
       {
         RightCharacter = DecodeResult.Character;
         RightCursor = DecodeResult.Result.NextCursor;
@@ -305,7 +305,7 @@ RtlXmlDefaultNextCharacter_UTF8(
   UINT8 b1;
   const UINT8 *bCursor;
 
-  const UINT64 InputUINT8sLeft = ((UINT64)pvEnd) - ((UINT64)pvCursor);
+  const UINT64 InputUINT8sLeft = ((UINT64)(UINTN)pvEnd) - ((UINT64)(UINTN)pvCursor);
 
   if (pvCursor >= pvEnd)
   {
@@ -445,7 +445,7 @@ RtlXmlDefaultNextCharacter_UCS4LE(
 {
   XML_RAWTOKENIZATION_RESULT Result;
 
-  const UINT64 cLeft = ((UINT64)pvEnd) - ((UINT64)pvCursor);
+  const UINT64 cLeft = ((UINT64)(UINTN)pvEnd) - ((UINT64)(UINTN)pvCursor);
 
   if (cLeft < sizeof(UINT32))
   {
@@ -470,7 +470,7 @@ RtlXmlDefaultNextCharacter_UCS4BE(
 {
   XML_RAWTOKENIZATION_RESULT Result;
   const UINT8* pb = (UINT8*)pvCursor;
-  const UINT64 cLeft = ((UINT64)pvEnd) - ((UINT64)pvCursor);
+  const UINT64 cLeft = ((UINT64)(UINTN)pvEnd) - ((UINT64)(UINTN)pvCursor);
 
   if (cLeft < sizeof(UINT32))
   {
@@ -501,7 +501,7 @@ RtlXmlDefaultNextCharacter_UTF16BE(
   XML_RAWTOKENIZATION_RESULT Result;
 
   const UINT8* pb = (UINT8*)pvCursor;
-  const UINT64 cLeft = ((UINT64)pvEnd) - ((UINT64)pvCursor);
+  const UINT64 cLeft = ((UINT64)(UINTN)pvEnd) - ((UINT64)(UINTN)pvCursor);
 
   if (cLeft < sizeof(UINT16))
   {
@@ -552,7 +552,7 @@ RtlXmlDefaultNextCharacter_UTF16LE(
 {
   XML_RAWTOKENIZATION_RESULT Result;
   UINT16* pb = (UINT16*)pvCursor;
-  const UINT64 cLeft = ((UINT64)pvEnd) - ((UINT64)pvCursor);
+  const UINT64 cLeft = ((UINT64)(UINTN)pvEnd) - ((UINT64)(UINTN)pvCursor);
 
   if (cLeft < sizeof(UINT16))
   {
@@ -713,7 +713,7 @@ RtlRawXmlTokenizer_SingleToken(
   // Set up returns
   //
   pToken->Run.pvData = pState->pvCursor;
-  pToken->Run.cbData = ((UINT64)Token.Result.NextCursor) - ((UINT64)pState->pvCursor);
+  pToken->Run.cbData = ((UINT64)(UINTN)Token.Result.NextCursor) - ((UINT64)(UINTN)pState->pvCursor);
   pToken->Run.Encoding = pState->EncodingFamily;
   pToken->Run.ulCharacters = 1;
   pToken->TokenName = _RtlpDecodeCharacter(Token.Character);
@@ -785,7 +785,7 @@ RtlRawXmlTokenizer_GatherWhitespace(
     default:
       if (pTerminator) {
         pTerminator->Run.pvData = pvCursor;
-        pTerminator->Run.cbData = ((UINT64)Result.Result.NextCursor) - ((UINT64)pvCursor);
+        pTerminator->Run.cbData = ((UINT64)(UINTN)Result.Result.NextCursor) - ((UINT64)(UINTN)pvCursor);
         pTerminator->Run.Encoding = pState->EncodingFamily;
         pTerminator->Run.ulCharacters = 1;
         pTerminator->TokenName = _RtlpDecodeCharacter(Result.Character);
@@ -817,7 +817,7 @@ Done:
   // Set up the other stuff in the output.
   //
   pWhitespace->Run.pvData = pState->pvCursor;
-  pWhitespace->Run.cbData = ((UINT64)pvCursor) - ((UINT64)pState->pvCursor);
+  pWhitespace->Run.cbData = ((UINT64)(UINTN)pvCursor) - ((UINT64)(UINTN)pState->pvCursor);
   pWhitespace->Run.ulCharacters = ulCharCount;
   pWhitespace->Run.Encoding = pState->EncodingFamily;
   pWhitespace->TokenName = NTXML_RAWTOKEN_WHITESPACE;
@@ -874,7 +874,7 @@ RtlRawXmlTokenizer_GatherPCData(
     case L'<':
 
       if (pNextRawToken != NULL) {
-        pNextRawToken->Run.cbData = ((UINT64)Result.Result.NextCursor) - ((UINT64)pvCursor);
+        pNextRawToken->Run.cbData = ((UINT64)(UINTN)Result.Result.NextCursor) - ((UINT64)(UINTN)pvCursor);
         pNextRawToken->Run.pvData = pvCursor;
         pNextRawToken->Run.Encoding = pState->EncodingFamily;
         pNextRawToken->Run.ulCharacters = 1;
@@ -903,7 +903,7 @@ NoMore:
     RtlpXmlSetEndOfStream(pState, pNextRawToken);
   }
 
-  pPcData->Run.cbData = (UINT64)pvCursor - (UINT64)pState->pvCursor;
+  pPcData->Run.cbData = (UINT64)(UINTN)pvCursor - (UINT64)(UINTN)pState->pvCursor;
   pPcData->Run.ulCharacters = ulCharCount;
 
   return EFI_SUCCESS;
@@ -950,7 +950,7 @@ RtlRawXmlTokenizer_GatherNTokens(
     // Decode the name
     //
     pTokens->TokenName = _RtlpDecodeCharacter(Result.Character);
-    pTokens->Run.cbData = ((UINT64)Result.Result.NextCursor) - ((UINT64)pvCursor);
+    pTokens->Run.cbData = ((UINT64)(UINTN)Result.Result.NextCursor) - ((UINT64)(UINTN)pvCursor);
     pTokens->Run.pvData = pvCursor;
     pTokens->Run.ulCharacters = 1;
     pTokens->Run.Encoding = pState->EncodingFamily;
@@ -969,9 +969,9 @@ RtlRawXmlTokenizer_GatherNTokens(
   // input?  Then fill the remainder with the "end of document" token
   //
 FillEndOfDocumentTokens:
-  if (ulTokenCount) 
+  if (ulTokenCount)
   {
-    while (ulTokenCount--) 
+    while (ulTokenCount--)
     {
       RtlpXmlSetEndOfStream(pState, pTokens++);
     }
@@ -1028,7 +1028,7 @@ RtlRawXmlTokenizer_GatherIdentifier(
   else if ((Result.Character != L'_') && !RtlpIsCharacterLetter(Result.Character)) {
 
     if (pStoppedOn) {
-      pStoppedOn->Run.cbData = ((UINT64)Result.Result.NextCursor) - ((UINT64)pvCursor);
+      pStoppedOn->Run.cbData = ((UINT64)(UINTN)Result.Result.NextCursor) - ((UINT64)(UINTN)pvCursor);
       pStoppedOn->Run.pvData = pvCursor;
       pStoppedOn->Run.ulCharacters = 1;
       pStoppedOn->Run.Encoding = pState->EncodingFamily;
@@ -1080,7 +1080,7 @@ RtlRawXmlTokenizer_GatherIdentifier(
         !RtlpIsCharacterCombiner(Result.Character) && !RtlpIsCharacterExtender(Result.Character)) {
 
         if (pStoppedOn) {
-          pStoppedOn->Run.cbData = ((UINT64)Result.Result.NextCursor) - ((UINT64)pvCursor);
+          pStoppedOn->Run.cbData = ((UINT64)(UINTN)Result.Result.NextCursor) - ((UINT64)(UINTN)pvCursor);
           pStoppedOn->Run.pvData = pvCursor;
           pStoppedOn->Run.ulCharacters = 1;
           pStoppedOn->Run.Encoding = pState->EncodingFamily;
@@ -1104,7 +1104,7 @@ DoneLooking:
     RtlpXmlSetEndOfStream(pState, pStoppedOn);
   }
 
-  pIdentifier->Run.cbData = ((UINT64)pvCursor) - ((UINT64)pState->pvCursor);
+  pIdentifier->Run.cbData = ((UINT64)(UINTN)pvCursor) - ((UINT64)(UINTN)pState->pvCursor);
   pIdentifier->Run.pvData = pState->pvCursor;
   pIdentifier->Run.ulCharacters = ulCharCount;
   pIdentifier->Run.Encoding = pState->EncodingFamily;
@@ -1160,7 +1160,7 @@ RtlRawXmlTokenizer_GatherUntilOneOrOther(
     if ((ulDecoded == StopOn1) || (ulDecoded == StopOn2))
     {
       if (pTokenFound) {
-        pTokenFound->Run.cbData = ((UINT64)Result.Result.NextCursor) - ((UINT64)pvCursor);
+        pTokenFound->Run.cbData = ((UINT64)(UINTN)Result.Result.NextCursor) - ((UINT64)(UINTN)pvCursor);
         pTokenFound->Run.pvData = pvCursor;
         pTokenFound->TokenName = ulDecoded;
       }
@@ -1187,7 +1187,7 @@ RtlRawXmlTokenizer_GatherUntilOneOrOther(
   //
   // Indicate we're done
   //
-  pGathered->Run.cbData = ((UINT64)pvCursor) - ((UINT64)pState->pvCursor);
+  pGathered->Run.cbData = ((UINT64)(UINTN)pvCursor) - ((UINT64)(UINTN)pState->pvCursor);
   pGathered->Run.ulCharacters = ulCharCount;
 
   return EFI_SUCCESS;
@@ -1292,7 +1292,7 @@ RtlRawXmlTokenizer_GatherPubIdLiteral(
   } while (TRUE);
 
   pGathered->TokenName = NTXML_RAWTOKEN_TEXT;
-  pGathered->Run.cbData = ((UINT64)pvCursor) - ((UINT64)pState->pvCursor);
+  pGathered->Run.cbData = ((UINT64)(UINTN)pvCursor) - ((UINT64)(UINTN)pState->pvCursor);
   pGathered->Run.ulCharacters = ulCharCount;
 
   return EFI_SUCCESS;
@@ -1349,7 +1349,7 @@ RtlRawXmlTokenizer_GatherUntil(
     if ((ulDecoded = _RtlpDecodeCharacter(Result.Character)) == StopOn) {
 
       if (pTokenFound) {
-        pTokenFound->Run.cbData = ((UINT64)Result.Result.NextCursor) - ((UINT64)pvCursor);
+        pTokenFound->Run.cbData = ((UINT64)(UINTN)Result.Result.NextCursor) - ((UINT64)(UINTN)pvCursor);
         pTokenFound->Run.pvData = pvCursor;
         pTokenFound->Run.ulCharacters = 1;
         pTokenFound->Run.Encoding = pState->EncodingFamily;
@@ -1380,7 +1380,7 @@ RtlRawXmlTokenizer_GatherUntil(
   //
   // Indicate we're done
   //
-  pGathered->Run.cbData = ((UINT64)pvCursor) - ((UINT64)pState->pvCursor);
+  pGathered->Run.cbData = ((UINT64)(UINTN)pvCursor) - ((UINT64)(UINTN)pState->pvCursor);
   pGathered->Run.ulCharacters = ulCharCount;
 
   return EFI_SUCCESS;
@@ -1487,7 +1487,7 @@ _HandleDocTypeDeclStuff(
       NextState = XTSS_DOCTYPE_ENTITYDECL_PARAMETERMARKER;
 
       //
-      // Snarf whitespace after the percent to avoid a wierd state...
+      // Snarf whitespace after the percent to avoid a weird state...
       //
       ADVANCE_PVOID(pRawState->pvCursor, (UINTN)cbTotalTokenLength);
 
@@ -4043,7 +4043,7 @@ RtlXmlNextToken(
       }
       //
       // Otherwise, we got something after a name that wasn't whitespace, or
-      // part of a clsoe, so that's an error
+      // part of a close, so that's an error
       //
       else {
         pToken->fError = TRUE;
@@ -4084,7 +4084,7 @@ RtlXmlNextToken(
     if (pRawToken->TokenName == NTXML_RAWTOKEN_EQUALS) {
       NextState = XTSS_ELEMENT_ATTRIBUTE_EQUALS;
     }
-    else 
+    else
     {
       pToken->fError = TRUE;
     }
@@ -4743,7 +4743,7 @@ RtlXmlNextToken(
 
 
   //
-  // Wierd, some unhandled state.
+  // Weird, some unhandled state.
   //
   default:
     NextState = XTSS_ERRONEOUS;
@@ -4870,6 +4870,7 @@ RtlXmlAdvanceTokenization(
 
 
 EFI_STATUS
+EFIAPI
 RtlXmlInitializeTokenization(
   OUT PXML_TOKENIZATION_STATE     pState,
   IN PCXML_TOKENIZATION_INIT     pInit
@@ -5015,7 +5016,7 @@ RtlXmlDetermineStreamEncoding(
 {
   VOID* pvCursor = pState ? pState->RawTokenState.pvCursor : NULL;
   const VOID* pvDocumentEnd = pState ? pState->RawTokenState.pvDocumentEnd : NULL;
-  const UINT64 cAvailableUINT8s = ((UINT64)pvDocumentEnd) - ((UINT64)pvCursor);
+  const UINT64 cAvailableUINT8s = ((UINT64)(UINTN)pvDocumentEnd) - ((UINT64)(UINTN)pvCursor);
   PCENCODER_CORRELATION pChosenEncoder = NULL;
   XML_TOKENIZATION_STATE PrivateState;
   EFI_STATUS status;
@@ -5031,11 +5032,13 @@ RtlXmlDetermineStreamEncoding(
     return RtlpReportXmlError(EFI_INVALID_PARAMETER);
 
   //
-  // Zip through our set of encoders and do the corellation work
+  // Zip through our set of encoders and do the correllation work
   //
   for (u = 0; u != RTL_NUMBER_OF(EncodingCorrelation); u++) {
 
+#ifndef __GNUC__
 #pragma prefast(suppress:394, "Prefast doesn't understand about != vs. < in loop invariants")
+#endif
     const PCENCODER_CORRELATION pEncoder = &EncodingCorrelation[u];
 
     if ((cAvailableUINT8s < pEncoder->cbSense) || (pEncoder->cbSense == 0))
@@ -5297,7 +5300,7 @@ RtlXmlCopyStringOut(
     pvCursor = Result.Result.NextCursor;
   }
 
-  *pCbResult = ((UINT64)pwszWriteCursor) - ((UINT64)pwszTarget);
+  *pCbResult = ((UINT64)(UINTN)pwszWriteCursor) - ((UINT64)(UINTN)pwszTarget);
 
   if (*pCbResult > cbInTarget) {
     return RtlpReportXmlError(STATUS_BUFFER_TOO_SMALL);
@@ -5347,5 +5350,3 @@ RtlXmlIsExtentWhitespace(
   *pfIsWhitespace = TRUE;
   return EFI_SUCCESS;
 }
-
-

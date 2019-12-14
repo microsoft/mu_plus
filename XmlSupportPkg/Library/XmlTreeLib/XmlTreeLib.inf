@@ -1,6 +1,6 @@
 ## @file
 #  XmlTreeLib.inf
-#  
+#
 #  Description:    Library for parsing Extensible Markup Language (XML) data.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
@@ -16,7 +16,7 @@
   LIBRARY_CLASS                  = XmlTreeLib
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64 
+#  VALID_ARCHITECTURES           = IA32 X64
 #
 
 [Sources]
@@ -41,7 +41,7 @@
 
 [Guids]
 
-[BuildOptions.AARCH64]
+[BuildOptions]
   # LLVM doesn't support pragma warning push/pop or disabling specific warnings via pragmas
   # such pragma found in fasterxml/xml_fasterxml.c (prefast-related)
-  GCC:*_*_AARCH64_CC_FLAGS = -Wno-unknown-pragmas
+  GCC:*_*_*_CC_FLAGS = -Wno-unknown-pragmas

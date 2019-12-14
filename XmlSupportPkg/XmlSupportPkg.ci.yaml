@@ -7,7 +7,6 @@
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
-        "skip": true,
         "DscPath": "XmlSupportPkg.dsc"
     },
 
@@ -42,8 +41,8 @@
 
     ## options defined ci/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
-        "IgnoreInf": [], 
-        "DscPath": "XmlSupportPkg.dsc"   
+        "IgnoreInf": [],
+        "DscPath": "XmlSupportPkg.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck
@@ -62,12 +61,42 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
+        # Fails test but run in AuditOnly mode to collect log
         "AuditOnly": true,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
         "ExtendWords": [           # words to extend to the dictionary for this package
+            "JUNIT",
+            "NOFAILURE",
+            "PCXML",            # A bunch of stuff from XML lib.
+            "XMLEF",
+            "PCVOID",
+            "NTXMLTRANSFORMCHARACTER",
+            "NTXMLRAWNEXTCHARACTER",
+            "NTXMLFETCHCHARACTERDECODER",
+            "NTXMLSPECIALSTRINGCOMPARE",
+            "NTXMLCOMPARESTRINGS",
+            "PXMLSTRUCTURE",
+            "RTLXMLCALLBACK",
+            "NTXML",
+            "PCXMLDOC",
+            "PCENCODER",
+            "PCUNICODE",
+            "PCXMLSTRUCTURE",
+            "PVOID",
+            "PXMLDOC",
+            "PLUTF",
+            "PCLUTF",
+            "Upcase",
+            "fasterxml",
+            "namespacemanager",
+            "prefast",
+            "xmlstructure",
+            "xmldsig",
+            "systemid",
+            "fooba",      # Partial word in a comment about testing.
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
