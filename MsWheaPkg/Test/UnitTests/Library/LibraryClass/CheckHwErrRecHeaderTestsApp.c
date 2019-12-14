@@ -57,11 +57,11 @@ typedef struct {
 EFI_COMMON_ERROR_RECORD_HEADER        *Err = NULL;
 
 //PASS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest1  = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest1  = {
                                     BaseSecDescLength + (BaseSecLength * 1) + (BaseSecHeadLength * 1),
                                     BaseSecDescLength + (BaseSecLength * 1) + (BaseSecHeadLength * 1),
                                     BaseSecCount * 1,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 1) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 1) + (BaseSecLength * 0)},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
@@ -69,12 +69,12 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest1  = {
                                     TRUE
                                   };
 
-//FAIL BECAUSE SIZE AND LENGTH DO NOT MATCH                                              
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest2  = { 
+//FAIL BECAUSE SIZE AND LENGTH DO NOT MATCH
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest2  = {
                                     BaseSecDescLength + (BaseSecLength * 1) + (BaseSecHeadLength * 1),
                                     BaseSecDescLength + (BaseSecLength * 1) + (BaseSecHeadLength * 1) + 1,
                                     BaseSecCount * 1,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 1) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 1) + (BaseSecLength * 0)},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
@@ -83,11 +83,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest2  = {
                                   };
 
 //PASS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest3  = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest3  = {
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecCount * 2,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 1)},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
@@ -96,11 +96,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest3  = {
                                   };
 
 //FAIL BECAUSE DECLARED SECTION 2 SIZE AND OFFSET WOULD RUN OFF THE END OF THE STRUCTURE
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest4  = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest4  = {
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecCount * 2,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength + 1, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 1)},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
@@ -108,12 +108,12 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest4  = {
                                     FALSE
                                   };
 
-//FAIL BECAUSE SIZE ISN'T LARGE ENOUGH TO HOLD THE SPECIFIED NUMBER OF HEADERS                                                
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest5  = { 
+//FAIL BECAUSE SIZE ISN'T LARGE ENOUGH TO HOLD THE SPECIFIED NUMBER OF HEADERS
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest5  = {
                                     BaseSecDescLength + (BaseSecLength * 0) + (BaseSecHeadLength * 1),
                                     BaseSecDescLength + (BaseSecLength * 0) + (BaseSecHeadLength * 1),
                                     BaseSecCount * 2,
-                                    {FALSE, 0, 0}, 
+                                    {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
@@ -122,11 +122,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest5  = {
                                   };
 
 //PASS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest6  = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest6  = {
                                     BaseSecDescLength + (BaseSecLength * 3) + (BaseSecHeadLength * 3),
                                     BaseSecDescLength + (BaseSecLength * 3) + (BaseSecHeadLength * 3),
                                     BaseSecCount * 3,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 2)},
                                     {FALSE, 0, 0},
@@ -135,11 +135,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest6  = {
                                   };
 
 //FAIL BECAUSE SECTION 2 AND 3 ARE NOT CONTIGUOUS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest7  = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest7  = {
                                     BaseSecDescLength + (BaseSecLength * 3) + (BaseSecHeadLength * 3),
                                     BaseSecDescLength + (BaseSecLength * 3) + (BaseSecHeadLength * 3),
                                     BaseSecCount * 3,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 2) + 1},
                                     {FALSE, 0, 0},
@@ -148,11 +148,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest7  = {
                                   };
 
 //FAIL BECAUSE NOT ENOUGH SPACE FOR THE SPECIFIED NUMBER OF SECTIONS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest8  = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest8  = {
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecCount * 3,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 2)},
                                     {FALSE, 0, 0},
@@ -161,11 +161,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest8  = {
                                   };
 
 //PASS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest9  = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest9  = {
                                     BaseSecDescLength + (BaseSecLength * 3) + (BaseSecHeadLength * 3) + 64,
                                     BaseSecDescLength + (BaseSecLength * 3) + (BaseSecHeadLength * 3) + 64,
                                     BaseSecCount * 3,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength + 64, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 3) + (BaseSecLength * 2) + 64},
                                     {FALSE, 0, 0},
@@ -174,11 +174,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest9  = {
                                   };
 
 //PASS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest10 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest10 = {
                                     BaseSecDescLength + (BaseSecLength * 4) + (BaseSecHeadLength * 4) + 64,
                                     BaseSecDescLength + (BaseSecLength * 4) + (BaseSecHeadLength * 4) + 64,
                                     BaseSecCount * 4,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 4) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 4) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength + 64, BaseSecDescLength + (BaseSecHeadLength * 4) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 4) + (BaseSecLength * 2) + 64},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 4) + (BaseSecLength * 3) + 64},
@@ -187,11 +187,11 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest10 = {
                                   };
 
 //PASS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest11 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest11 = {
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 64,
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 64,
                                     BaseSecCount * 5,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength + 64, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 2) + 64},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 3) + 64},
@@ -199,108 +199,108 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest11 = {
                                     TRUE
                                   };
 //FAIL BECAUSE OF UINTN OVERFLOW
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest12 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest12 = {
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 64,
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 64,
                                     BaseSecCount * 5,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength + 64, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 2) + 64},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 3) + 64},
-                                    {TRUE, MAX_UINT64, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 4) + 64},
+                                    {TRUE, MAX_UINT32, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 4) + 64},
                                     FALSE
                                   };
 
 //FAIL BECAUSE SIZE IS GREATER THAN THE SIZE OF HEADERS + SECTIONS
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest13 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest13 = {
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 1,
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 1,
                                     BaseSecCount * 5,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 2)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 3)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 4)},
                                     FALSE
-                                  };                                                
+                                  };
 
-//FAIL BECAUSE THERE IS SPACE BETWEEEN SECTIONS 4 AND 5
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest14 = { 
+//FAIL BECAUSE THERE IS SPACE BETWEEN SECTIONS 4 AND 5
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest14 = {
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 1,
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 1,
                                     BaseSecCount * 5,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 2)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 3)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 4) + 1},
                                     FALSE
-                                  };    
+                                  };
 
 //FAIL BECAUSE SECTIONS 4 AND 5 INTERSECT
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest15 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest15 = {
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 1,
                                     BaseSecDescLength + (BaseSecLength * 5) + (BaseSecHeadLength * 5) + 1,
                                     BaseSecCount * 5,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 1)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 2)},
                                     {TRUE, BaseSecLength + 1, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 3)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 5) + (BaseSecLength * 4)},
                                     FALSE
-                                  };   
+                                  };
 
 //FAIL BECAUSE LENGTH OF SECTION 5 IS ZERO
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest16 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest16 = {
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecCount * 2,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)},
                                     {TRUE, 0, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 1)},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     FALSE
-                                  };   
+                                  };
 
 //FAIL BECAUSE SECTION 2 OFFSET IS BEFORE THE SECTION HEAD ITSELF
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest17 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest17 = {
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecCount * 2,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     FALSE
-                                  };   
+                                  };
 
 //FAIL BECAUSE SECTION 2 OFFSET FALLS WITHIN THE SECTION 2 HEADER
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest18 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest18 = {
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecCount * 2,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 0)},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 1) + 20},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     FALSE
-                                  }; 
+                                  };
 
 //FAIL BECAUSE SECTION 1 OFFSET FALLS WITHIN THE SECTION 1 HEADER
-STATIC BASIC_TEST_CONTEXT  mBasicRecordTest19 = { 
+STATIC BASIC_TEST_CONTEXT  mBasicRecordTest19 = {
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecDescLength + (BaseSecLength * 2) + (BaseSecHeadLength * 2),
                                     BaseSecCount * 2,
-                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 0) + 20}, 
+                                    {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 0) + 20},
                                     {TRUE, BaseSecLength, BaseSecDescLength + (BaseSecHeadLength * 2) + (BaseSecLength * 1)},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     {FALSE, 0, 0},
                                     FALSE
-                                  }; 
+                                  };
 ///================================================================================================
 ///================================================================================================
 ///
@@ -313,7 +313,7 @@ STATIC BASIC_TEST_CONTEXT  mBasicRecordTest19 = {
 Simple clean up method to make sure tests clean up even if interrupted and fail in the middle.
 **/
 STATIC
-UNIT_TEST_STATUS
+VOID
 EFIAPI
 CleanupErr (
     IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
@@ -323,8 +323,6 @@ CleanupErr (
     if (Err != NULL) {
      FreePool(Err);
     }
-
-    return UNIT_TEST_PASSED;
 }
 
 ///================================================================================================
@@ -338,7 +336,7 @@ STATIC
 UNIT_TEST_STATUS
 EFIAPI
 ErrorRecordHeaderTest(IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
-                      IN UNIT_TEST_CONTEXT           Context) 
+                      IN UNIT_TEST_CONTEXT           Context)
 {
 
   EFI_ERROR_SECTION_DESCRIPTOR          *SectionHeader;
@@ -367,7 +365,7 @@ ErrorRecordHeaderTest(IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     }
   }
 
-  
+
 
   if(ValidateCperHeader(Err, Btc->Size) == Btc->ExpectedResult)
   {
@@ -399,7 +397,7 @@ ErrorRecordHeaderTest(IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS

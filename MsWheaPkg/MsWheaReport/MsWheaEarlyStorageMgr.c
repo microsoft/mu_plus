@@ -43,7 +43,7 @@ This is a helper function that reads the early storage region with an offset of 
 
 @param[in]  Ptr                       The pointer to hold intended read data
 @param[in]  Size                      The size of intended read data
-@param[in]  Offset                    The offset of read data, ranging from 0 to 
+@param[in]  Offset                    The offset of read data, ranging from 0 to
                                       PcdMsWheaReportEarlyStorageCapacity - MS_WHEA_EARLY_STORAGE_DATA_OFFSET
 
 @retval EFI_SUCCESS                   Operation is successful
@@ -77,7 +77,7 @@ This is a helper function that writes the early storage region with an offset of
 
 @param[in]  Ptr                       The pointer to hold intended written data
 @param[in]  Size                      The size of intended written data
-@param[in]  Offset                    The offset of written data, ranging from 0 to 
+@param[in]  Offset                    The offset of written data, ranging from 0 to
                                       PcdMsWheaReportEarlyStorageCapacity - MS_WHEA_EARLY_STORAGE_DATA_OFFSET
 
 @retval EFI_SUCCESS                   Operation is successful
@@ -109,7 +109,7 @@ Cleanup:
 This is a helper function that clears the early storage region with an offset of header size.
 
 @param[in]  Size                      The size of intended clear data
-@param[in]  Offset                    The offset of clear data, ranging from 0 to 
+@param[in]  Offset                    The offset of clear data, ranging from 0 to
                                       PcdMsWheaReportEarlyStorageCapacity - MS_WHEA_EARLY_STORAGE_DATA_OFFSET
 
 @retval EFI_SUCCESS                   Operation is successful
@@ -389,11 +389,11 @@ Cleanup:
 
 /**
 
-This routine finds a contiguous memory that has default value of specified size in data region 
+This routine finds a contiguous memory that has default value of specified size in data region
 from the MS WHEA store.
 
 @param[in]  Size                      The size of intended clear data
-@param[out] Offset                    The pointer to receive returned offset value, starting from 
+@param[out] Offset                    The pointer to receive returned offset value, starting from
                                       Early MS_WHEA_EARLY_STORAGE_DATA_OFFSET
 
 @retval EFI_SUCCESS                   Operation is successful
@@ -443,9 +443,9 @@ MsWheaESInit (
   // Clear the rest of the Early Storage store.
   MsWheaESClearAllData();
 
-  // Zero all the fields in the 
+  // Zero all the fields in the
   SetMem(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
-  
+
   // Sign the header signature.
   Header.Signature = MS_WHEA_EARLY_STORAGE_SIGNATURE;
   Header.ActiveRange = 0;
@@ -457,7 +457,7 @@ Cleanup:
 }
 
 /**
-This routine will extract necessary Rev 0 information from supplied metadata and store onto the next 
+This routine will extract necessary Rev 0 information from supplied metadata and store onto the next
 contiguously available Early Storage data region
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
@@ -507,7 +507,7 @@ This routine will read Rev 0 information from specified offset on Early Storage 
 metadata based on read value
 
 @param[out] MsWheaEntryMD             The pointer to reported MS WHEA error metadata
-@param[in, out] Offset                The pointer to specified offset, will be updated to the end of 
+@param[in, out] Offset                The pointer to specified offset, will be updated to the end of
                                       processed data upon successful operation
 
 @retval EFI_SUCCESS                   Operation is successful
@@ -562,14 +562,14 @@ Cleanup:
 
 /**
 
-This routine will Set Early Storage header IsStorageFull flag and mark the system stage if the signature is 
+This routine will Set Early Storage header IsStorageFull flag and mark the system stage if the signature is
 legit
 
-@param[in] Phase                      Current envirnment stage by the time of report
+@param[in] Phase                      Current environment stage by the time of report
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_NOT_FOUND                 Early Storage header region is not valid
-@retval Others                        See MsWheaESFindSlot and MsWheaESReadData for more 
+@retval Others                        See MsWheaESFindSlot and MsWheaESReadData for more
                                       details
 
 **/
@@ -665,7 +665,7 @@ This routine will store data onto Early Storage data region based on supplied MS
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
 
 @retval EFI_SUCCESS                   Operation is successful
-@retval Others                        See MsWheaESFindSlot and MsWheaESWriteData for more 
+@retval Others                        See MsWheaESFindSlot and MsWheaESWriteData for more
                                       details
 **/
 EFI_STATUS
@@ -720,7 +720,7 @@ This routine processes the stored errors on Early Storage data region
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer detected
-@retval Others                        See implementation specific functions and MS_WHEA_ERR_REPORT_PS_FN 
+@retval Others                        See implementation specific functions and MS_WHEA_ERR_REPORT_PS_FN
                                       definition for more details
 **/
 EFI_STATUS
@@ -738,7 +738,7 @@ MsWheaESProcess (
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   if (ReportFn == NULL) {
-    DEBUG((DEBUG_ERROR, "%a: Input fucntion pointer cannot be null!\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "%a: Input function pointer cannot be null!\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -763,8 +763,8 @@ MsWheaESProcess (
   while ((Header.ActiveRange >= sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON)) &&
          (Index <= (Header.ActiveRange - sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON)))) {
 
-    Status = MsWheaESReadData(&mRevInfo, 
-                              sizeof(mRevInfo), 
+    Status = MsWheaESReadData(&mRevInfo,
+                              sizeof(mRevInfo),
                               Index + OFFSET_OF(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON, Rev));
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a: Early Storage storage read Index %d failed: %r\n", __FUNCTION__, Index, Status));
@@ -792,7 +792,7 @@ MsWheaESProcess (
   // This is needed incase there is leftover garbage in default/failed cases
   MsWheaESClearAllData();
 
-  // Zero all the fields in the 
+  // Zero all the fields in the
   SetMem(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
 
   // Sign the header signature.

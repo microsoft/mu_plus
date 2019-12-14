@@ -1,6 +1,6 @@
 /** @file -- MsWheaEarlyStorageLib.c
 
-This header defines APIs to utilize special memory for MsWheaReport during 
+This header defines APIs to utilize special memory for MsWheaReport during
 early stage.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -24,7 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 /**
 
-This routine has the highest previlege to read any byte(s) on the CMOS
+This routine has the highest privilege to read any byte(s) on the CMOS
 
 @param[in]  Ptr                       The pointer to hold read data
 @param[in]  Size                      The size of intended read data
@@ -48,8 +48,8 @@ __MsWheaCMOSRawRead (
   EFI_STATUS  Status;
 
   mBuf = Ptr;
-  if ((mBuf == NULL) || 
-      (Size == 0) || 
+  if ((mBuf == NULL) ||
+      (Size == 0) ||
       ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
@@ -60,7 +60,7 @@ __MsWheaCMOSRawRead (
     if ((mIndex >= 0) && (mIndex <= 127)) {
       IoWrite8(PCAT_RTC_LO_ADDRESS_PORT, mIndex);
       mBuf[i] = IoRead8(PCAT_RTC_LO_DATA_PORT);
-    } 
+    }
     else {
       IoWrite8(PCAT_RTC_HI_ADDRESS_PORT, mIndex);
       mBuf[i] = IoRead8(PCAT_RTC_HI_DATA_PORT);
@@ -74,7 +74,7 @@ Cleanup:
 
 /**
 
-This routine has the highest previlege to write any byte(s) on the CMOS
+This routine has the highest privilege to write any byte(s) on the CMOS
 
 @param[in]  Ptr                       The pointer to hold intended written data
 @param[in]  Size                      The size of intended written data
@@ -98,8 +98,8 @@ __MsWheaCMOSRawWrite (
   EFI_STATUS  Status;
 
   mBuf = Ptr;
-  if ((mBuf == NULL) || 
-      (Size == 0) || 
+  if ((mBuf == NULL) ||
+      (Size == 0) ||
       ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
@@ -110,7 +110,7 @@ __MsWheaCMOSRawWrite (
     if ((mIndex >= 0) && (mIndex <= 127)) {
       IoWrite8(PCAT_RTC_LO_ADDRESS_PORT, mIndex);
       IoWrite8(PCAT_RTC_LO_DATA_PORT, mBuf[i]);
-    } 
+    }
     else {
       IoWrite8(PCAT_RTC_HI_ADDRESS_PORT, mIndex);
       IoWrite8(PCAT_RTC_HI_DATA_PORT, mBuf[i]);
@@ -124,7 +124,7 @@ Cleanup:
 
 /**
 
-This routine has the highest previlege to 'clear' any byte(s) on the CMOS
+This routine has the highest privilege to 'clear' any byte(s) on the CMOS
 
 @param[in]  Size                      The size of intended clear region
 @param[in]  Offset                    The offset of clear data, starting from the beginning of CMOS
@@ -144,7 +144,7 @@ __MsWheaCMOSRawClear (
   UINT8       i;
   EFI_STATUS  Status;
 
-  if ((Size == 0) || 
+  if ((Size == 0) ||
       ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
@@ -155,7 +155,7 @@ __MsWheaCMOSRawClear (
     if ((mIndex >= 0) && (mIndex <= 127)) {
       IoWrite8(PCAT_RTC_LO_ADDRESS_PORT, mIndex);
       IoWrite8(PCAT_RTC_LO_DATA_PORT, PcdGet8(PcdMsWheaEarlyStorageDefaultValue));
-    } 
+    }
     else {
       IoWrite8(PCAT_RTC_HI_ADDRESS_PORT, mIndex);
       IoWrite8(PCAT_RTC_HI_DATA_PORT, PcdGet8(PcdMsWheaEarlyStorageDefaultValue));

@@ -25,6 +25,7 @@
 [Sources]
   HwErrorBert.c
   BertHelper.c
+  BertHelper.h
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -48,7 +49,7 @@
 [Protocols]
   gEfiAcpiTableProtocolGuid           ## CONSUMES
 
-[Pcd] 
+[Pcd]
   gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemId
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemTableId

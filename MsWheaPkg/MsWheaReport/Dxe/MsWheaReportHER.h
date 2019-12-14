@@ -28,14 +28,14 @@ MsWheaClearAllEntries (
 
 /**
 
-This routine accepts the pointer to the MS WHEA entry metadata, error specific data payload and its size 
+This routine accepts the pointer to the MS WHEA entry metadata, error specific data payload and its size
 then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEFI Spec 2.7A)
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
-@retval EFI_OUT_OF_RESOURCES          Not enough spcae for the requested space.
+@retval EFI_OUT_OF_RESOURCES          Not enough space for the requested space.
 
 **/
 EFI_STATUS

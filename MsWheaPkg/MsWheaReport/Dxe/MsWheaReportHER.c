@@ -1,6 +1,6 @@
 /** @file -- MsWheaReportHER.c
 
-This source implements backend routines to support storing persistent hardware 
+This source implements backend routines to support storing persistent hardware
 error records in UEFI.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -23,7 +23,7 @@ Note: Caller is responsible for freeing the valid returned buffer!!!
 @param[out]  PayloadSize              The pointer to payload length, this will be updated to the totally
                                       allocated/operated size if operation succeeded
 
-@retval NULL if any errors, otherwise filled and allocated buffer will be returned. 
+@retval NULL if any errors, otherwise filled and allocated buffer will be returned.
 
 **/
 STATIC
@@ -41,9 +41,9 @@ MsWheaAnFBuffer (
   EFI_COMMON_ERROR_RECORD_HEADER  *CperHdr;
   EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp;
   MU_TELEMETRY_CPER_SECTION_DATA  *MuTelemetryData;
-  
+
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
-  
+
   if ((MsWheaEntryMD == NULL) || (PayloadSize == NULL)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
@@ -51,7 +51,7 @@ MsWheaAnFBuffer (
 
   ErrorPayloadSize = sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
 
-  Buffer = AllocateZeroPool(sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + 
+  Buffer = AllocateZeroPool(sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
                             sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
                             ErrorPayloadSize);
   if (Buffer == NULL) {
@@ -70,10 +70,10 @@ MsWheaAnFBuffer (
   BufferIndex += sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
 
   // Fill out error type based headers according to UEFI Spec...
-  CreateHeadersDefault(CperHdr, 
-                      CperErrSecDscp, 
-                      MuTelemetryData, 
-                      MsWheaEntryMD, 
+  CreateHeadersDefault(CperHdr,
+                      CperErrSecDscp,
+                      MuTelemetryData,
+                      MsWheaEntryMD,
                       ErrorPayloadSize);
 
   // Update PayloadSize as the recorded error has Headers and Payload merged
@@ -86,8 +86,8 @@ MsWheaAnFBuffer (
 
 /**
 
-This routine accepts the pointer to a UINT16 number. It will iterate through each HwErrRecXXXX and stops 
-after 0xFFFF iterations or spotted a slot that returns EFI_NOT_FOUND. 
+This routine accepts the pointer to a UINT16 number. It will iterate through each HwErrRecXXXX and stops
+after 0xFFFF iterations or spotted a slot that returns EFI_NOT_FOUND.
 
 @param[out]  next                       The pointer to output result holder
 
@@ -107,7 +107,7 @@ MsWheaFindNextAvailableSlot (
   UINT32            Index = 0;
   UINTN             Size = 0;
   CHAR16            VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
-  
+
   if (next == NULL) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
@@ -165,7 +165,7 @@ MsWheaClearAllEntries (
   UINTN                 NameSize;
   UINTN                 NewNameSize;
   EFI_GUID              Guid;
-  
+
   DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
   NameSize = sizeof(CHAR16);
@@ -228,7 +228,7 @@ MsWheaClearAllEntries (
   if (Name) {
     FreePool(Name);
   }
-  
+
   DEBUG((DEBUG_ERROR, "%a exit...\n", __FUNCTION__));
 
   return Status;
@@ -236,14 +236,14 @@ MsWheaClearAllEntries (
 
 /**
 
-This routine accepts the pointer to the MS WHEA entry metadata, error specific data payload and its size 
+This routine accepts the pointer to the MS WHEA entry metadata, error specific data payload and its size
 then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEFI Spec 2.7A)
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
-@retval EFI_OUT_OF_RESOURCES          Not enough spcae for the requested space.
+@retval EFI_OUT_OF_RESOURCES          Not enough space for the requested space.
 
 **/
 EFI_STATUS
@@ -258,7 +258,7 @@ MsWheaReportHERAdd (
   UINT32            Size = 0;
   CHAR16            VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   UINT32            Attributes;
-  
+
   // 1. Find an available variable name for next write
   Status = MsWheaFindNextAvailableSlot(&Index);
   if (EFI_ERROR(Status)) {

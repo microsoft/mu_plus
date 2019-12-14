@@ -28,7 +28,7 @@ Zeroed: Flags, PersistenceInfo;
 @param[in]  PayloadSize               Length of entire payload to be included within this entry, refer to
                                       UEFI Spec for more information
 @param[in]  ErrorSeverity             Error severity of this entry
-@param[in]  ErrorStatusCode           Reported Status Code from ReportStatucCode* function
+@param[in]  ErrorStatusCode           Reported Status Code from ReportStatusCode* function
 @param[in]  PartitionIdGuid           PartitionID for error source identification, default to
                                       zero guid if not supplied by caller
 
@@ -65,7 +65,7 @@ CreateCperHdrDefaultMin (
   CperHdr->ErrorSeverity = ErrorSeverity;
   CperHdr->ValidationBits = EFI_ERROR_RECORD_HEADER_PLATFORM_ID_VALID;
   CperHdr->RecordLength = (UINT32)(sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + sizeof(EFI_ERROR_SECTION_DESCRIPTOR) + PayloadSize);
-  
+
   if(PopulateTime(&CurrentTime)){
     CperHdr->ValidationBits    |= (EFI_ERROR_RECORD_HEADER_TIME_STAMP_VALID);
     CperHdr->TimeStamp.Seconds  = DecimalToBcd8(CurrentTime.Second);
@@ -97,7 +97,7 @@ CreateCperHdrDefaultMin (
   if(EFI_ERROR(GetRecordID(&RecordID, &gMsWheaReportRecordIDGuid))) {
     DEBUG ((DEBUG_INFO, "%a - RECORD ID NOT UPDATED\n", __FUNCTION__));
   }
-  
+
   //Even if the record id was not updated, the value is either 0 or the previously incremented value
   CperHdr->RecordID = RecordID;
   CperHdr->Flags |= EFI_HW_ERROR_FLAGS_PREVERR;
@@ -196,7 +196,7 @@ Cleanup:
 /**
 This routine will populate certain MS WHEA metadata fields based on supplied information
 
-@param[in]  Value                     Reported Status Code from ReportStatucCode* function
+@param[in]  Value                     Reported Status Code from ReportStatusCode* function
 @param[in]  CurrentPhase              Supplies the boot phase the reporting module is in
 @param[in]  ReportHdr                 Supplies the pointer to reported MS WHEA header, will be treated as
                                       wildcard if cannot decode signature
@@ -328,7 +328,7 @@ Cleanup:
 /**
 This routine will filter status code based on status type, decode reported extended data , if any,
 generate MS WHEA metadata based on decoded information and either 1. pass generated metadata to supplied
-callback function for further processing or 2. store onto CMOS if boot phase and error severtiy meets
+callback function for further processing or 2. store onto CMOS if boot phase and error severity meets
 certain requirements
 
 @param[in]  CodeType                  Indicates the type of status code being reported.
@@ -368,7 +368,7 @@ ReportHwErrRecRouter (
   MS_WHEA_ERROR_ENTRY_MD              MsWheaEntryMD;
 
   if (ReportFn == NULL) {
-    DEBUG((DEBUG_ERROR, "%a: Input fucntion pointer cannot be null!\n", __FUNCTION__));
+    DEBUG((DEBUG_ERROR, "%a: Input function pointer cannot be null!\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }

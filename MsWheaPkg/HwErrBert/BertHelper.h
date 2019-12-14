@@ -1,5 +1,5 @@
 
-/** @file -- 
+/** @file --
 
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -12,7 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // ACPI table information used to initialize tables.
 //
-#define BOOT_ERROR_REGION_SIZE        0x1000 
+#define BOOT_ERROR_REGION_SIZE        0x1000
 #define EFI_HW_ERR_REC_VAR_NAME       L"HwErrRec"
 #define EFI_HW_ERR_REC_VAR_NAME_LEN   13      // Buffer length covers at least "HwErrRec####\0"
 
@@ -43,6 +43,7 @@ BertSetAcpiTable (
 );
 
 VOID
+EFIAPI
 BertHeaderCreator (
   BERT_CONTEXT  *Context,
   UINT32        ErrorBlockSize

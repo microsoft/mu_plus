@@ -1,6 +1,6 @@
 ## @file -- MsWheaEarlyStorageLib.inf
 #
-#  This header defines APIs to utilize special memory for MsWheaReport during 
+#  This header defines APIs to utilize special memory for MsWheaReport during
 #  early stage.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
@@ -43,3 +43,6 @@
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
 
 [Guids]
+
+[BuildOptions]
+  *_GCC5_*_CC_FLAGS = -Wno-unused-function

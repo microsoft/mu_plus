@@ -1,6 +1,6 @@
-/** @file 
- 
-<DESCRIPTION> 
+/** @file
+
+<DESCRIPTION>
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -35,7 +35,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 /**
  *  Deletes all WHEA Error Records
- * 
+ *
  *  @retval    void
 **/
 VOID
@@ -61,29 +61,29 @@ DeleteAllWheaErrors(VOID)
 }
 
 /**
- *  Created to test uefi appliation which enables/disables errors.
- *  
- *  Simply run the application in the shell and add an argument after the 
+ *  Created to test uefi application which enables/disables errors.
+ *
+ *  Simply run the application in the shell and add an argument after the
  *  .efi file which is one of the following:
- * 
+ *
  *  For now, let's say 0 = No errors
  *                     1 = Errors every boot
- *                     2 = Errors only on next boot 
+ *                     2 = Errors only on next boot
  *                     3 = Delete Currently Stored Variables
  *                     4 = Raise an error right now. Can take 2 additional string arguments
- *                         to populate extradata1 and extradata2 in UEFI Generic section data 
+ *                         to populate extradata1 and extradata2 in UEFI Generic section data
  *                         struct
  *  Expand this later
- * 
+ *
  *  @param[in]    ImageHandle
  *  @param[in]    SystemTable
- * 
+ *
  *  @retval       EFI_SUCCESS           The desired value was written to the variable
  *                EFI_PROTOCOL_ERROR    The shell parameter protocol could not be found
  *                EFI_NOT_FOUND         The variable could not be written to
  *                EFI_INVALID_PARAMETER The shell parameter was not a valid option
  *
-**/ 
+**/
 EFI_STATUS
 EFIAPI
 EnableDisableErrorsEntry(
@@ -112,23 +112,23 @@ EnableDisableErrorsEntry(
     return EFI_PROTOCOL_ERROR;
   }
 
-  // Make sure theres an argument to view (beides the name of this file)
+  // Make sure theres an argument to view (besides the name of this file)
   if(ShellParams->Argc > 1) {
 
     // Convert the argument into Ascii so it can be converted to a digit
-    UnicodeStrnToAsciiStrS(ShellParams->Argv[1], 
-                          StrnLenS(ShellParams->Argv[1], MAX_NUM_DIGITS_READ), 
-                          Argument, 
-                          MAX_NUM_DIGITS_READ + 1, 
+    UnicodeStrnToAsciiStrS(ShellParams->Argv[1],
+                          StrnLenS(ShellParams->Argv[1], MAX_NUM_DIGITS_READ),
+                          Argument,
+                          MAX_NUM_DIGITS_READ + 1,
                           &TempNum
                           );
 
     // Get decimal version of input
     Result = AsciiStrDecimalToUintn(Argument);
-      
+
       // Check these individually because I suspect it may be possible to pass in a number like "1.3" but haven't tried
       if(Result == SET_NO_ERRORS || Result == SET_CONT_ERRORS || Result == SET_ONE_TIME_ERRORS) {
-        
+
         // Set the variable
         Status =  gRT->SetVariable(L"EnableDisableErrors",
                                   &gRaiseTelemetryErrorsAtBoot,
@@ -136,7 +136,7 @@ EnableDisableErrorsEntry(
                                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                                   sizeof(UINTN),
                                   &Result
-                                  );   
+                                  );
 
         // Debug print if we couldn't set the value
         if(EFI_ERROR(Status)) {
@@ -146,7 +146,7 @@ EnableDisableErrorsEntry(
 
       // Check if the user wants to generate an immediate error
       } else if (Result == GEN_ERROR_DIGIT) {
-        
+
         // Allocate space for the strings they may have passed in. Zero fill it so the data is empty if they
         // did not supply anything
         ExtraData1 = AllocateZeroPool(MAX_CHARS_EXTRA_DATA + 1);
@@ -163,26 +163,26 @@ EnableDisableErrorsEntry(
         ExtraData2[MAX_CHARS_EXTRA_DATA] = '\0';
 
         // If there is a second argument to fill into the extra data 1
-        if (ShellParams->Argc > 2) { 
-            
+        if (ShellParams->Argc > 2) {
+
             // Fill it in
-            UnicodeStrnToAsciiStrS(ShellParams->Argv[2], 
-                                  StrnLenS(ShellParams->Argv[2], MAX_CHARS_EXTRA_DATA), 
-                                  ExtraData1, 
-                                  MAX_CHARS_EXTRA_DATA + 1, 
+            UnicodeStrnToAsciiStrS(ShellParams->Argv[2],
+                                  StrnLenS(ShellParams->Argv[2], MAX_CHARS_EXTRA_DATA),
+                                  ExtraData1,
+                                  MAX_CHARS_EXTRA_DATA + 1,
                                   &TempNum
                                   );
 
-            // If there is a third argument to fill into the extradata2             
+            // If there is a third argument to fill into the extradata2
             if (ShellParams->Argc > 3) {
-             
+
               // Fill it in
-              UnicodeStrnToAsciiStrS(ShellParams->Argv[3], 
-                                    StrnLenS(ShellParams->Argv[3], MAX_CHARS_EXTRA_DATA), 
-                                    ExtraData2, 
-                                    MAX_CHARS_EXTRA_DATA + 1, 
+              UnicodeStrnToAsciiStrS(ShellParams->Argv[3],
+                                    StrnLenS(ShellParams->Argv[3], MAX_CHARS_EXTRA_DATA),
+                                    ExtraData2,
+                                    MAX_CHARS_EXTRA_DATA + 1,
                                     &TempNum
-                                    );                             
+                                    );
             }
         }
 
@@ -196,12 +196,12 @@ EnableDisableErrorsEntry(
         DeleteAllWheaErrors();
       }
 
-      // Debug print that we did not recieve a valid digit
+      // Debug print that we did not receive a valid digit
       else {
         DEBUG((DEBUG_INFO, "%a Parameter argument was invalid\n",__FUNCTION__));
         return EFI_INVALID_PARAMETER;
       }
-  } 
+  }
 
   // Debug print that we need the user to input some arguments
   else {

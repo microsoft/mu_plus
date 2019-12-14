@@ -203,7 +203,7 @@ MsWheaESCleanUp (
   // This is needed incase there is leftover garbage in default/failed cases
   MsWheaESClearAllData();
 
-  // Zero all the fields in the 
+  // Zero all the fields in the
   SetMem(&UnitTestHeader, sizeof(MS_WHEA_EARLY_STORAGE_HEADER), 0);
 
   // Sign the header signature.
@@ -227,7 +227,7 @@ MsWheaESCleanUp (
 
 
 /**
-  This rountine should verify internal checksum vs BaseLib checksum
+  This routine should verify internal checksum vs BaseLib checksum
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -261,7 +261,7 @@ MsWheaESChecksumTest (
 }
 
 /**
-  This rountine should verify ES will ignore inactive data region corruption
+  This routine should verify ES will ignore inactive data region corruption
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -288,7 +288,7 @@ MsWheaESDataCorruptTest (
 }
 
 /**
-  This rountine should verify ES can catch header region corruption
+  This routine should verify ES can catch header region corruption
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -318,7 +318,7 @@ MsWheaESHeaderCorruptTest (
 }
 
 /**
-  This rountine should verify ES header can be updated with proper API
+  This routine should verify ES header can be updated with proper API
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -347,7 +347,7 @@ MsWheaESHeaderUpdateTest (
 }
 
 /**
-  This rountine should verify ES content can be updated with proper API and catch data corruption
+  This routine should verify ES content can be updated with proper API and catch data corruption
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -399,7 +399,7 @@ MsWheaESContentUpdateTest (
 }
 
 /**
-  This rountine should verify ES find slot plays well with active range field
+  This routine should verify ES find slot plays well with active range field
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -423,7 +423,7 @@ MsWheaESFindSlotTest (
 }
 
 /**
-  This rountine should verify ES recover bad state early storage properly
+  This routine should verify ES recover bad state early storage properly
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -440,7 +440,7 @@ MsWheaESInitTest (
   // Should fail
   UT_ASSERT_FALSE (MsWheaESRegionIsValid(NULL));
 
-  // Holy grail to retore evrything
+  // Holy grail to retore everything
   MsWheaESInit ();
 
   MsWheaESReadHeader(&UnitTestHeader);
@@ -451,7 +451,7 @@ MsWheaESInitTest (
 }
 
 /**
-  This rountine should verify ES store/converted supported metadata properly
+  This routine should verify ES store/converted supported metadata properly
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -499,7 +499,7 @@ MsWheaESStoreEntryTest (
 }
 
 /**
-  This rountine should verify ES restore save ES records to metadata properly
+  This routine should verify ES restore save ES records to metadata properly
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -545,7 +545,7 @@ MsWheaESProcessTest (
   @param[in] SystemTable              A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS                 The entry point executed successfully.
-  @retval other                       Some error occured when executing this entry point.
+  @retval other                       Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS

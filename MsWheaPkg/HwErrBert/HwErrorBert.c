@@ -1,7 +1,7 @@
 /** @file -- HwErrorBert.c
 
 At EBS, driver will generate BERT table with all HwErrRec from flash storage.
-At ReadyToBoot, driver will delete HwErrRec from flash. 
+At ReadyToBoot, driver will delete HwErrRec from flash.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -49,7 +49,7 @@ SetupBert() {
     DEBUG((DEBUG_WARN, "%a: leaving because list of entries to catalogue was empty.\n", __FUNCTION__));
     return;
   }
-  
+
   DEBUG((DEBUG_VERBOSE, "%a - %x CPER entries to publish to BERT\n", __FUNCTION__, mVarNameListCount));
 
   // Create & publish BERT Header
@@ -67,7 +67,7 @@ SetupBert() {
     Buffer = NULL;
     NamePtr = &mVarNameList[Index * EFI_HW_ERR_REC_VAR_NAME_LEN];
     DEBUG((DEBUG_VERBOSE, "%a - Publishing %s\n", __FUNCTION__, NamePtr));
-    
+
     //
     // Call, get variable size; call again, get variable
     //
@@ -95,7 +95,7 @@ SetupBert() {
                               NULL,
                              &Size,
                               Buffer);
- 
+
     if (!EFI_ERROR (Status) && ValidateCperHeader((EFI_COMMON_ERROR_RECORD_HEADER *)Buffer, Size)) {
       // We got a CPER, time to add it to BERT!
       if (!BertAddAllCperSections(Context.BertHeader, Buffer)) {
@@ -137,7 +137,7 @@ GenerateVariableList() {
 
   // Go through all the variables on flash
   while (TRUE) {
-    // Get ready to recieve the next name
+    // Get ready to receive the next name
     NewNameSize = NameSize;
     Status = gRT->GetNextVariableName(&NewNameSize, Name, &Guid);
 
@@ -179,7 +179,7 @@ GenerateVariableList() {
     mVarNameListCount++;
   }
 
-  // We succeded! Let's not say otherwise.
+  // We succeeded! Let's not say otherwise.
   Status = EFI_SUCCESS;
 
 cleanup:
@@ -206,7 +206,7 @@ ClearVariables() {
   UINT32                Index = 0;
   EFI_STATUS            Status = EFI_SUCCESS;
   CHAR16               *NamePtr = NULL;
-  
+
   DEBUG((DEBUG_VERBOSE, "%a enter: number of elements to clear = %x\n", __FUNCTION__, mVarNameListCount));
 
   if (mVarNameList == NULL) {
@@ -217,7 +217,7 @@ ClearVariables() {
   for (Index = 0; Index < mVarNameListCount; Index ++) {
     NamePtr = &mVarNameList[Index * EFI_HW_ERR_REC_VAR_NAME_LEN];
     Status = gRT->SetVariable(NamePtr, &gEfiHardwareErrorVariableGuid, 0, 0, NULL);
-    
+
     // Can't really do much if this fails
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, "Clearing variable %s failed with %r \n", NamePtr, Status));
@@ -289,7 +289,7 @@ ReadyToBootHandlerCallback(
 
 
 /**
-Entry to 
+Entry to
 
 @param[in] ImageHandle                The image handle.
 @param[in] SystemTable                The system table.
@@ -301,7 +301,7 @@ EFIAPI
 HwErrorBertEntry (
   IN EFI_HANDLE         ImageHandle,
   IN EFI_SYSTEM_TABLE   *SystemTable
-  ) 
+  )
 {
   EFI_STATUS Status;
 
@@ -334,13 +334,13 @@ HwErrorBertEntry (
   }
 
 cleanup:
-  // If anything goes wrong, we will need to close the events. 
+  // If anything goes wrong, we will need to close the events.
   ASSERT_EFI_ERROR(Status);
   if (EFI_ERROR(Status)) {
     if(mReadyToBootEvent != NULL) {
       Status = gBS->CloseEvent(mReadyToBootEvent);
     }
-    
+
     if(mExitBootServicesEvent != NULL) {
       Status = gBS->CloseEvent(mExitBootServicesEvent);
     }

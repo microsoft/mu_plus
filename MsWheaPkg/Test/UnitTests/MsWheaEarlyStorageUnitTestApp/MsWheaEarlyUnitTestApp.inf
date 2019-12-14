@@ -60,3 +60,4 @@
 
 [BuildOptions.Common]
   MSFT:*_*_*_CC_FLAGS = /D INTERNAL_UNIT_TEST
+  GCC:*_*_*_CC_FLAGS = -D INTERNAL_UNIT_TEST

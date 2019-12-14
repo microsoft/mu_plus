@@ -2,7 +2,7 @@
 
 This Dxe driver will produce a RSC listener that listens to reported status codes.
 
-Certains errors will be stored to flash upon reproting, under gEfiHardwareErrorVariableGuid 
+Certain errors will be stored to flash upon reproting, under gEfiHardwareErrorVariableGuid
 with VarName "HwErrRecXXXX", where "XXXX" are hexadecimal digits;
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -73,6 +73,7 @@ with specifications. Malformed data will fail the entire reporting.
 **/
 STATIC
 EFI_STATUS
+EFIAPI
 MsWheaReportHandlerDxe(
   IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
@@ -80,7 +81,7 @@ MsWheaReportHandlerDxe(
   EFI_STATUS Status;
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
-  
+
   if (mExitBootHasOccurred != FALSE) {
     // This function is locked due to Exit Boot has occurred
     Status = EFI_ACCESS_DENIED;
@@ -113,22 +114,23 @@ Added module phase information and route reported status code value and extended
 for further processing.
 
 @param[in]  CodeType                  Indicates the type of status code being reported.
-@param[in]  Value                     Describes the current status of a hardware or software entity. This 
-                                      includes information about the class and subclass that is used to 
+@param[in]  Value                     Describes the current status of a hardware or software entity. This
+                                      includes information about the class and subclass that is used to
                                       classify the entity as well as an operation.
-@param[in]  Instance                  The enumeration of a hardware or software entity within the system. 
+@param[in]  Instance                  The enumeration of a hardware or software entity within the system.
                                       Valid instance numbers start with 1.
-@param[in]  CallerId                  This optional parameter may be used to identify the caller. This 
+@param[in]  CallerId                  This optional parameter may be used to identify the caller. This
                                       parameter allows the status code driver to apply different rules to
                                       different callers.
 @param[in]  Data                      This optional parameter may be used to pass additional data.
 
 @retval EFI_SUCCESS                   Operation is successful
-@retval Others                        Any other error that rises from Variable Services, Boot Services, 
+@retval Others                        Any other error that rises from Variable Services, Boot Services,
                                       Runtime Services, etc.
 **/
 STATIC
 EFI_STATUS
+EFIAPI
 MsWheaRscHandlerDxe (
   IN EFI_STATUS_CODE_TYPE             CodeType,
   IN EFI_STATUS_CODE_VALUE            Value,
@@ -163,6 +165,7 @@ This routine processes the reported errors during PEI phase through hob list
 **/
 STATIC
 EFI_STATUS
+EFIAPI
 MsWheaProcHob (
   VOID
   )
@@ -194,8 +197,8 @@ MsWheaProcHob (
       }
     }
     else {
-      DEBUG((DEBUG_ERROR, "%a: Bad entry: EntrySize: %08X, PayloadSize: %08X\n", __FUNCTION__, 
-                                      EntrySize, 
+      DEBUG((DEBUG_ERROR, "%a: Bad entry: EntrySize: %08X, PayloadSize: %08X\n", __FUNCTION__,
+                                      EntrySize,
                                       MsWheaEntryMD->PayloadSize));
     }
 
@@ -235,7 +238,7 @@ MsWheaProcList (
     if (MsWheaListEntry->PayloadPtr != NULL) {
       MsWheaReportEntry = MsWheaListEntry->PayloadPtr;
       MsWheaEntryMD = (MS_WHEA_ERROR_ENTRY_MD *) MsWheaReportEntry;
-      
+
       Status = MsWheaReportHandlerDxe(MsWheaEntryMD);
 
       if (EFI_ERROR(Status) != FALSE) {
@@ -245,13 +248,13 @@ MsWheaProcList (
 
     MsWheaDeleteReportEvent(&mMsWheaEntryList);
   }
-  
+
   DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return Status;
 }
 
 /**
-Process all previously reported status errors during PEI/early Dxe/previous boots 
+Process all previously reported status errors during PEI/early Dxe/previous boots
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval Others                        See each individual function for more details
@@ -263,7 +266,7 @@ MsWheaProcessPrevError (
   )
 {
   EFI_STATUS Status;
-  
+
   Status = MsWheaESProcess(MsWheaReportHandlerDxe);
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_WARN, "%a: CMOS entries process failed %r\n", __FUNCTION__, Status));
@@ -286,11 +289,12 @@ MsWheaProcessPrevError (
 Callback of exit boot event. This will unregister RSC handler in this module.
 
 @param[in]  Event                     Event whose notification function is being invoked.
-@param[in]  Context                   The pointer to the notification function's context, which is 
+@param[in]  Context                   The pointer to the notification function's context, which is
                                       implementation-dependent.
 **/
 STATIC
 VOID
+EFIAPI
 MsWheaReportDxeExitBoot (
   IN  EFI_EVENT                   Event,
   IN  VOID                        *Context
@@ -317,11 +321,12 @@ MsWheaReportDxeExitBoot (
 Register Exit Boot callback and process previous errors when variable service is ready
 
 @param[in]  Event                 Event whose notification function is being invoked.
-@param[in]  Context               The pointer to the notification function's context, which is 
+@param[in]  Context               The pointer to the notification function's context, which is
                                   implementation-dependent.
 **/
 STATIC
 VOID
+EFIAPI
 MsWheaArchCallback (
   IN  EFI_EVENT             Event,
   IN  VOID                  *Context
@@ -331,7 +336,7 @@ MsWheaArchCallback (
 
   if ((Event == mWriteArchAvailEvent) && (mWriteArchAvailable == FALSE)) {
     mWriteArchAvailable = TRUE;
-  } 
+  }
   else if ((Event == mVarArchAvailEvent) && (mVarArchAvailable == FALSE)) {
     mVarArchAvailable = TRUE;
   }
@@ -364,7 +369,7 @@ Populates the current time for WHEA records
 @param[in,out]  *CurrentTime              A pointer to an EFI_TIME variable which will contain the curren time after
                                           this function executes
 
-@retval          BOOLEAN                  True if *CurrentTime was populated. 
+@retval          BOOLEAN                  True if *CurrentTime was populated.
                                           False otherwise.
 **/
 BOOLEAN
@@ -380,7 +385,7 @@ PopulateTime(EFI_TIME* CurrentTime)
 Gets the Record ID variable and increments it for WHEA records
 
 @param[in,out]  *RecordID                   Pointer to a UINT64 which will contain the record ID to be put on the next WHEA Record
-@param[in]      *RecordIDGuid               Pointer to guid used to get the record ID variable 
+@param[in]      *RecordIDGuid               Pointer to guid used to get the record ID variable
 
 @retval          EFI_SUCCESS                The firmware has successfully stored the variable and its data as
                                             defined by the Attributes.
@@ -391,9 +396,9 @@ Gets the Record ID variable and increments it for WHEA records
 @retval          EFI_DEVICE_ERROR           The variable could not be retrieved due to a hardware error.
 @retval          EFI_WRITE_PROTECTED        The variable in question is read-only.
 @retval          EFI_WRITE_PROTECTED        The variable in question cannot be deleted.
-@retval          EFI_SECURITY_VIOLATION     The variable could not be written due to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACESS being set,
+@retval          EFI_SECURITY_VIOLATION     The variable could not be written due to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS being set,
                                             but the AuthInfo does NOT pass the validation check carried out by the firmware.
-@retval          EFI_NOT_FOUND              The variable trying to be updated or deleted was not found.                 
+@retval          EFI_NOT_FOUND              The variable trying to be updated or deleted was not found.
 **/
 EFI_STATUS
 GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
@@ -405,7 +410,7 @@ GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
 
     DEBUG ((DEBUG_INFO, "%a Record ID variable not retrieved, initializing to 0\n", __FUNCTION__));
     *RecordID = 0;
-  
+
   }
 
   (*RecordID)++; //increment the record ID number
@@ -420,10 +425,10 @@ GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
 }
 
 /**
-Register Write Archetecture and Variable Archetecture callbacks
+Register Write Architecture and Variable Architecture callbacks
 
 @param[in]  Event                     Event whose notification function is being invoked.
-@param[in]  Context                   The pointer to the notification function's context, which is 
+@param[in]  Context                   The pointer to the notification function's context, which is
                                       implementation-dependent.
 **/
 STATIC
@@ -434,25 +439,25 @@ MsWheaRegisterCallbacks (
 {
   VOID *Registration; // Just a dummy, not used
 
-  // register for Write Archetecture Protocol Callback
-  mWriteArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiVariableWriteArchProtocolGuid, 
-                                                    TPL_CALLBACK, 
-                                                    MsWheaArchCallback, 
-                                                    NULL, 
+  // register for Write Architecture Protocol Callback
+  mWriteArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiVariableWriteArchProtocolGuid,
+                                                    TPL_CALLBACK,
+                                                    MsWheaArchCallback,
+                                                    NULL,
                                                     &Registration);
 
-  // register for Variable Archetecture Protocol Callback
-  mVarArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiVariableArchProtocolGuid, 
-                                                    TPL_CALLBACK, 
-                                                    MsWheaArchCallback, 
-                                                    NULL, 
+  // register for Variable Architecture Protocol Callback
+  mVarArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiVariableArchProtocolGuid,
+                                                    TPL_CALLBACK,
+                                                    MsWheaArchCallback,
+                                                    NULL,
                                                     &Registration);
 
   // register for Clock Architecture Protocol Callback
-  mClockArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiRealTimeClockArchProtocolGuid, 
-                                                    TPL_CALLBACK, 
-                                                    MsWheaArchCallback, 
-                                                    NULL, 
+  mClockArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiRealTimeClockArchProtocolGuid,
+                                                    TPL_CALLBACK,
+                                                    MsWheaArchCallback,
+                                                    NULL,
                                                     &Registration);
 }
 
@@ -469,7 +474,7 @@ EFIAPI
 MsWheaReportDxeEntry (
   IN EFI_HANDLE         ImageHandle,
   IN EFI_SYSTEM_TABLE   *SystemTable
-  ) 
+  )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
 
@@ -477,7 +482,7 @@ MsWheaReportDxeEntry (
 
   // init linked list, all fields should be 0
   InitializeListHead(&mMsWheaEntryList);
-  
+
   // locate the RSC protocol
   Status = gBS->LocateProtocol(&gEfiRscHandlerProtocolGuid, NULL, (VOID**)&mRscHandlerProtocol);
   if (EFI_ERROR(Status) != FALSE) {

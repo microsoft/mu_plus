@@ -42,7 +42,7 @@ CreateNewEntry (
   }
 
   MsWheaListEntry->Signature = MS_WHEA_LIST_ENTRY_SIGNATURE;
-  
+
   MsWheaListEntry->PayloadPtr = AllocateZeroPool(sizeof(MS_WHEA_ERROR_ENTRY_MD));
   if (MsWheaListEntry->PayloadPtr == NULL) {
     FreePool(MsWheaListEntry);
@@ -65,7 +65,7 @@ Cleanup:
 
 /**
 
-This routine accepts the MS WHEA linked list and the reported data and data length, then add the data to the 
+This routine accepts the MS WHEA linked list and the reported data and data length, then add the data to the
 existed list, First In First Out (FIFO)
 
 @param[in]  MsWheaLinkedList          Supplies a MS WHEA error linked list header.
@@ -73,7 +73,7 @@ existed list, First In First Out (FIFO)
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
-@retval EFI_OUT_OF_RESOURCES          Not enough spcae for the requested space.
+@retval EFI_OUT_OF_RESOURCES          Not enough space for the requested space.
 
 **/
 EFI_STATUS
@@ -85,7 +85,7 @@ MsWheaAddReportEvent(
 {
   EFI_STATUS          Status;
   MS_WHEA_LIST_ENTRY  *MsWheaListEntry = NULL;
-  
+
   // Caller has to supply valid pointers to linked list and data.
   if (MsWheaLinkedList == NULL) {
     Status = EFI_INVALID_PARAMETER;
@@ -101,7 +101,7 @@ MsWheaAddReportEvent(
 
   // Added the initialized entry into the linked list
   InsertTailList(MsWheaLinkedList, &MsWheaListEntry->Link);
-  
+
   Status = EFI_SUCCESS;
 
 Cleanup:

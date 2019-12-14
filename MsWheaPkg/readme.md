@@ -3,7 +3,7 @@
 ## About
 This package contains drivers and infrastructure for reporting errors and telemetry through the CPER (Common Platform Error Record) HwErrRecord interface, specifically targeting systems that also leverage WHEA (Windows Hardware Error Architecture).
 
-The MsWhea drivers provide the same functionality at different stages of UEFI by binding to the REPORT_STATUS_CODE interface. Together, they store hardware errors and corrected faults into non-volatile memory that is later picked up by Windows. In Windows, this can be emitted as telemetry which is then used to idenitfy errors and patterns for devices (as of time of writing any event besides EFI_GENERIC_ERROR_INFO will be sent).
+The MsWhea drivers provide the same functionality at different stages of UEFI by binding to the REPORT_STATUS_CODE interface. Together, they store hardware errors and corrected faults into non-volatile memory that is later picked up by Windows. In Windows, this can be emitted as telemetry which is then used to identify errors and patterns for devices (as of time of writing any event besides EFI_GENERIC_ERROR_INFO will be sent).
 
 Project MU has updated design which defines a specific section type under `gMuTelemetrySectionTypeGuid` to be used in CPER header for WHEA telemetry. All reported data will be formatted to this section. Please refer to `MuTelemetryCperSection.h` for field definitions.
 

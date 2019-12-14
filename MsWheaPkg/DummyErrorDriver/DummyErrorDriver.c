@@ -1,10 +1,10 @@
-/** @file 
+/** @file
     DummyErrorDriver.c
 
 Raises various ReportStatusCode calls found throughout project MU.
-Can be used to test parsing functions and telemetry functionality. 
+Can be used to test parsing functions and telemetry functionality.
 
-Uncomment calls to ReportStatusCode to create HwErrRecs. Use HwhMenu 
+Uncomment calls to ReportStatusCode to create HwErrRecs. Use HwhMenu
 frontpage extension to easily view records.
 
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -25,7 +25,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS
@@ -52,9 +52,9 @@ DummyErrorDriverEntryPoint (
                         EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                         sizeof(UINTN),
                         &SetValueEnableDisable);
-        
+
         if(EFI_ERROR(Status)) {
-            DEBUG((DEBUG_INFO, __FUNCTION__" Could not set the enable/disable variable!\n"));
+            DEBUG((DEBUG_INFO, "%a Could not set the enable/disable variable!\n", __FUNCTION__));
           }
         break;
 

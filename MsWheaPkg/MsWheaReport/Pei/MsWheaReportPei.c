@@ -2,7 +2,7 @@
 
 This Pei module will produce a RSC listener that listens to reported status codes.
 
-Certains errors will be collected and added to Hob List and waiting to be collected
+Certain errors will be collected and added to Hob List and waiting to be collected
 and/or stored during Dxe phase;
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -26,7 +26,7 @@ Handler function that validates input arguments, and create a hob list entry for
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_OUT_OF_RESOURCES          List cannot make the space for requested error block payload
-@retval EFI_INVALID_PARAMETER         Null pointer or zero length payload detected or length and header 
+@retval EFI_INVALID_PARAMETER         Null pointer or zero length payload detected or length and header
                                       length field exceeds variable limit
 **/
 STATIC
@@ -40,11 +40,11 @@ MsWheaReportHandlerPei(
   UINT32                  Size;
   VOID                    *MsWheaReportEntry = NULL;
 
-  if ((MsWheaEntryMD == NULL) || 
-      ((sizeof(EFI_COMMON_ERROR_RECORD_HEADER) + 
-        sizeof(EFI_ERROR_SECTION_DESCRIPTOR) + 
-        sizeof(AUTHENTICATED_VARIABLE_HEADER) + 
-        EFI_HW_ERR_REC_VAR_NAME_LEN * sizeof(CHAR16)) > 
+  if ((MsWheaEntryMD == NULL) ||
+      ((sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
+        sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
+        sizeof(AUTHENTICATED_VARIABLE_HEADER) +
+        EFI_HW_ERR_REC_VAR_NAME_LEN * sizeof(CHAR16)) >
         PcdGet32 (PcdMaxHardwareErrorVariableSize)) ) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
@@ -58,7 +58,7 @@ MsWheaReportHandlerPei(
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
-  
+
   ZeroMem(MsWheaReportEntry, Size);
 
   Index = 0;
@@ -78,18 +78,18 @@ for further processing.
 
 @param[in]  PeiServices               Pointer to PEI services table.
 @param[in]  CodeType                  Indicates the type of status code being reported.
-@param[in]  Value                     Describes the current status of a hardware or software entity. This 
-                                      includes information about the class and subclass that is used to 
+@param[in]  Value                     Describes the current status of a hardware or software entity. This
+                                      includes information about the class and subclass that is used to
                                       classify the entity as well as an operation.
-@param[in]  Instance                  The enumeration of a hardware or software entity within the system. 
+@param[in]  Instance                  The enumeration of a hardware or software entity within the system.
                                       Valid instance numbers start with 1.
-@param[in]  CallerId                  This optional parameter may be used to identify the caller. This 
+@param[in]  CallerId                  This optional parameter may be used to identify the caller. This
                                       parameter allows the status code driver to apply different rules to
                                       different callers.
 @param[in]  Data                      This optional parameter may be used to pass additional data.
 
 @retval EFI_SUCCESS                   Operation is successful
-@retval Others                        Any other error that rises from Variable Services, Boot Services, 
+@retval Others                        Any other error that rises from Variable Services, Boot Services,
                                       Runtime Services, etc.
 **/
 STATIC
@@ -123,7 +123,7 @@ PopulateTime(EFI_TIME* CurrentTime)
 //A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling GetRecordID() during Pei phase.
 //Dxe phase drivers actually populate time, see GetRecordID() in MsWheaReportDxe.c
 EFI_STATUS
-GetRecordID(UINT64* RecordID, 
+GetRecordID(UINT64* RecordID,
             EFI_GUID *RecordIDGuid OPTIONAL
             )
 {
@@ -143,7 +143,7 @@ EFIAPI
 MsWheaReportPeiEntry (
   IN EFI_PEI_FILE_HANDLE              FileHandle,
   IN CONST EFI_PEI_SERVICES           **PeiServices
-  ) 
+  )
 {
 
   EFI_STATUS                Status = EFI_SUCCESS;
@@ -158,18 +158,18 @@ MsWheaReportPeiEntry (
                                 0,
                                 NULL,
                                 (VOID**)&RscHandlerPpi);
-  
+
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": failed to locate PEI RSC Handler PPI (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: failed to locate PEI RSC Handler PPI (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   Status = RscHandlerPpi->Register(MsWheaRscHandlerPei);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": failed to register PEI RSC Handler PPI (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: failed to register PEI RSC Handler PPI (%r)\n", __FUNCTION__, Status));
   }
 
 Cleanup:
-  DEBUG((DEBUG_INFO, __FUNCTION__ ": exit (%r)\n", Status));
+  DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
   return Status;
 }

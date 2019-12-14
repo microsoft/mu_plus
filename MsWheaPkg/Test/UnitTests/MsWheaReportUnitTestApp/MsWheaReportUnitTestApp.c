@@ -701,7 +701,7 @@ MsWheaCommonCleanUp (
 
 
 /**
-  This rountine should store 2 Fatal Ex errors on flash
+  This routine should store 2 Fatal Ex errors on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -755,7 +755,7 @@ Cleanup:
 
 
 /**
-  This rountine should store 2 Non Fatal Ex errors on flash
+  This routine should store 2 Non Fatal Ex errors on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -808,7 +808,7 @@ Cleanup:
 
 
 /**
-  This rountine should not store any errors on flash
+  This routine should not store any errors on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -891,7 +891,7 @@ Cleanup:
 
 
 /**
-  This rountine should store one short error for each supported severity on flash
+  This routine should store one short error for each supported severity on flash
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -961,7 +961,7 @@ Cleanup:
 
 
 /**
-  This rountine should try to store as many errors on flash with a fixed size, test should fail with
+  This routine should try to store as many errors on flash with a fixed size, test should fail with
   out of resources before the designated count is reached
 **/
 UNIT_TEST_STATUS
@@ -1021,9 +1021,9 @@ Cleanup:
 
 
 /**
-  This rountine should verify changes regarding variable services:
+  This routine should verify changes regarding variable services:
   1.	Deleted hw error records should not count towards the hw error record space quota
-  2.	HwError record quata state should not trigger variable store reclaim
+  2.	HwError record quota state should not trigger variable store reclaim
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -1148,7 +1148,7 @@ Cleanup:
 
 
 /**
-  This rountine should verify report works at all the supported TPLs
+  This routine should verify report works at all the supported TPLs
 **/
 UNIT_TEST_STATUS
 EFIAPI
@@ -1224,7 +1224,7 @@ Cleanup:
   @param[in] SystemTable              A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS                 The entry point executed successfully.
-  @retval other                       Some error occured when executing this entry point.
+  @retval other                       Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS

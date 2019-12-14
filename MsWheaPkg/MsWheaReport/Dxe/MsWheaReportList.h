@@ -24,7 +24,7 @@ typedef struct MS_WHEA_LIST_ENTRY_T_DEF {
 
 /**
 
-This routine accepts the MS WHEA metadata and the reported data and data length, then add the data to the 
+This routine accepts the MS WHEA metadata and the reported data and data length, then add the data to the
 existed list, First In First Out (FIFO)
 
 @param[in]  MsWheaLinkedList          Supplies a MS WHEA error linked list header.
@@ -33,7 +33,7 @@ existed list, First In First Out (FIFO)
 
 @retval EFI_SUCCESS                   Entry addition is successful.
 @retval EFI_INVALID_PARAMETER         Input has NULL pointer as input.
-@retval EFI_OUT_OF_RESOURCES          Not enough spcae for the requested space.
+@retval EFI_OUT_OF_RESOURCES          Not enough space for the requested space.
 
 **/
 EFI_STATUS
