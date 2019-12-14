@@ -48,6 +48,7 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
+        "AuditOnly": True,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
