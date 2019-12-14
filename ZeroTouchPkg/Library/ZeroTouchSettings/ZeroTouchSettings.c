@@ -23,7 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/ZeroTouchSettingsLib.h>   // Just for header information, no library access.
 
-///// --- Inernal functions ------
+///// --- internal functions ------
 
 ///// --- No Dfci Settings.  Must not be linked with SettingsManager.
 /////                        Should be linked with IdentityAndAuthManager

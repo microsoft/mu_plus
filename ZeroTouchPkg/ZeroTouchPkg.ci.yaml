@@ -7,6 +7,7 @@
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
+        "DscPath": "ZeroTouchPkg.dsc"
     },
 
     ## options defined ci/Plugin/CharEncodingCheck
@@ -20,7 +21,6 @@
             "MdePkg/MdePkg.dec",
             "MdeModulePkg/MdeModulePkg.dec",
             "MsUnitTestPkg/MsUnitTestPkg.dec",
-            "DfciPkg/DfciPkg.dec",
             "ZeroTouchPkg/ZeroTouchPkg.dec"
         ],
         "IgnoreInf": []
@@ -48,7 +48,7 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
-        "AuditOnly": True,
+        "AuditOnly": True,           # Fails test but run in AuditOnly mode to collect log
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
