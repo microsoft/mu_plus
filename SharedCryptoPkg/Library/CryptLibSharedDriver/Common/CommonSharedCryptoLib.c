@@ -3,7 +3,7 @@ SharedCryptoLib.c
 
 This defines the implementation of BaseCryptLib and calls out to the protocol
 published by SharedCryptoDriver. The ProtocolFunctionNotFound and GetProtocol
-funtion is defined by the flavor of the library.
+function is defined by the flavor of the library.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent

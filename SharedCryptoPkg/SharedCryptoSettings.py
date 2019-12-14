@@ -436,7 +436,7 @@ class SettingsManager(UpdateSettingsManager, CiSetupSettingsManager, BinaryBuild
         if ret == 0:
             ret = self._CollectNuget()
         if ret != 0:
-            logging.error("Error occured in post build hook")
+            logging.error("Error occurred in post build hook")
         return ret
 
     def PostFinalBuildHook(self, ret):

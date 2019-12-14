@@ -7,7 +7,6 @@
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
-        "skip": true,
         "DscPath": "SharedCryptoPkg.ci.dsc"
     },
 
@@ -74,12 +73,24 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
-        "AuditOnly": true,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
         "ExtendWords": [           # words to extend to the dictionary for this package
+            "platformbuilder",
+            "prebuild",
+            "postbuild",
+            "fvdxe",
+            "skipbuild",
+            "mschange",
+            "eku's",
+            "inf's",
+            "invokable",
+            "extdep",
+            "fvbootblock",
+            "efi's",
+            "rsaes"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

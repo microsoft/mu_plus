@@ -32,7 +32,7 @@ The year, the month of the EDK II release, the revision number, and the build nu
 An example of this would be _2019.03.02.01_, which would translate to EDK II 1903 release, the second revision and the first build.
 This means that there were two code changes within 1903 (either in BaseCryptLib or OpenSSL).
 Release notes will be provided on the NuGet package page and on this repo.
-Build numbers are reved whenever there needs to be a recompiled binary due to a mistake on our part or a build flag is tweaked.
+Build numbers are revved whenever there needs to be a recompiled binary due to a mistake on our part or a build flag is tweaked.
 
 ## Flavors
 
@@ -53,9 +53,9 @@ For those wishing to verify for themselves that the packaged EFI's in the Nuget 
 
 If you wish to swap the underlying Crypto library, replace the BaseCryptLib dependency in the DriverDSC with another version of BaseCryptLib that utilizes another library but conforms to the same interface.
 
-If you wish to use a different flavor or make a new flavor, create two new INF's. One for the Binary compilation (in the /Driver folder) and one for the external package that is consumed by the platform (in the /Package folder). By examining existing INF's, it should be fairly trival to create new ones.
+If you wish to use a different flavor or make a new flavor, create two new INF's. One for the Binary compilation (in the /Driver folder) and one for the external package that is consumed by the platform (in the /Package folder). By examining existing INF's, it should be fairly trivial to create new ones.
 
-When making a new flavor please follow the convetion of SharedCryptoPkg{Phase}{Flavor}.{Target}.inf with Phase being DXE, SMM, or PEI. Target should be DEBUG or RELEASE.
+When making a new flavor please follow the convention of SharedCryptoPkg{Phase}{Flavor}.{Target}.inf with Phase being DXE, SMM, or PEI. Target should be DEBUG or RELEASE.
 
 ## Using Different Pre-built EFI's
 
@@ -72,7 +72,7 @@ The nuget system should take care of downloading the correct version for your pr
 
 To build, run SharedNetworkSettings.py. This will compile the correct EFI's and copy the needed files such as the license and markdown.
 In order to build, you'll need to have a few repos cloned into your tree, which is most easily accomplished by running SharedNetworkSettings.py --SETUP and SharedNetworkSettings.py --UPDATE, which will clone the correct repos automatically for you.
-Under the hood SharedNetworkSettings is invoking stuart_update, stuart_ci_setup, and BinaryDriveryBuilder as needed.
+Under the hood SharedNetworkSettings is invoking stuart_update, stuart_ci_setup, and BinaryDriverBuilder as needed.
 
 This should be a one-time step to setup the tree. SharedNetworkSettings supports all the same options that a regular platformbuilder does, such as --update and --skipbuild. If you wish to publish to Nuget, provide an API key by including it on the command line. *SharedNetworkSettings.py --api-key=XXXXXX*
 
@@ -104,7 +104,7 @@ This would replace where you would normally include BaseCryptLib.
     ...
 ```
 
-Unfortunatly, due to the way that the EDK build system works, you'll also need to include the package in your component section. Make sure this matches whatever you put in your FDF.
+Unfortunately, due to the way that the EDK build system works, you'll also need to include the package in your component section. Make sure this matches whatever you put in your FDF.
 You'll also need to include a macro for the current TARGET.
 
 ```
@@ -137,7 +137,7 @@ Include this file in your FV and the module will get loaded. In this example, we
 
 ## Release Process
 
-The decision to release a new Shared Crypto shold not be taken lightly. When preparing to release, please follow this checklist.
+The decision to release a new Shared Crypto should not be taken lightly. When preparing to release, please follow this checklist.
 
 1. Delete Build folder in the root of your tree
 2. Run the build

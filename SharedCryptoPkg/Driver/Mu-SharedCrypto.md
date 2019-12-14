@@ -31,7 +31,7 @@ There are 24 different versions of the prebuild driver. One for each arch (X86, 
   + PKCS1_ENCRYPT_V2  _Encrypts a blob using PKCS1v2 (RSAES-OAEP) schema. On success, will return the encrypted message in a newly allocated buffer._
   + PKCS5_PW_HASH _Hashes a password using Pkcs5_
   + PKCS7_VERIFY_EKU  _Receives a PKCS7 formatted signature, and then verifies that the specified EKU's are present in the end-entity leaf signing certificate_
-  + PKCS7_VERIFY  _Verifies the validility of a PKCS7 signed data. The data can be wrappedin a ContentInfo structure._
+  + PKCS7_VERIFY  _Verifies the validity of a PKCS7 signed data. The data can be wrapped in a ContentInfo structure._
 + RSA
   + RSA_VERIFY_PKCS1  _Verifies the RSA-SSA signature with EMSA-PKCS1-v1_5 encoding scheme defined in RSA PKCS1_
   + RSA_FREE  _Release the specified RSA context_
@@ -50,7 +50,7 @@ There are 24 different versions of the prebuild driver. One for each arch (X86, 
   + SHA256_FINAL  _Completes computation of SHA256 digest values_
   + SHA256_HASH_ALL  _Computes the SHA256 message digest of an data buffer_
 + X509
-  + X509_GET_SUBJECT_NAME  _Retrive the subject btyes from one X.509 cert_
+  + X509_GET_SUBJECT_NAME  _retrieve the subject bytes from one X.509 cert_
   + X509_GET_COMMON_NAME  _Retrieve the common name (CN) string from one X.509 certificate._
   + X509_GET_ORGANIZATION_NAME  _Retrieve the organization name (O) string from one X.509 certificate._
 + MD5
@@ -103,7 +103,7 @@ This would replace where you would normally include BaseCryptLib.
 
 ## Sample FDF change
 
-TODO: re-evluate this once nuget dependency is live
+TODO: re-evaluate this once nuget dependency is live
 Include this file in your FV and the module will get loaded.
 
 ```
