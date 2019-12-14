@@ -108,7 +108,7 @@ CheckExcludedRegions (
   EfiMemoryMapEnd = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)EfiMemoryMap + EfiMemoryMapSize);
 
   while (EfiMemNext < EfiMemoryMapEnd) {
-    //Check if memory range fully encompases RMRR
+    //Check if memory range fully encompasses RMRR
     if((EfiMemNext->PhysicalStart <= Current->RMRR->ReservedMemoryRegionBaseAddress)
     && (EfiMemNext->PhysicalStart + (EFI_PAGE_SIZE * EfiMemNext->NumberOfPages) >= Current->RMRR->ReservedMemoryRegionLimitAddress)) {
       //Verify memory range is marked as reserved
@@ -131,8 +131,8 @@ CheckExcludedRegions (
       //RMRR Not found in memory map
       UT_ASSERT_TRUE(EfiMemNext < EfiMemoryMapEnd);
     }
-  } 
-  
+  }
+
   //Should never reach here
   return UNIT_TEST_ERROR_TEST_FAILED;
 } // CheckExcludedRegions()

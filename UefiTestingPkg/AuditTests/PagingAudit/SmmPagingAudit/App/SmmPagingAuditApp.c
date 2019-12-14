@@ -105,7 +105,7 @@ WriteBufferToFile (
                                 added to the database.
 
   @retval     EFI_SUCCESS           String was successfully added.
-  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accomodate string.
+  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accommodate string.
                                     String has not been added.
 
 **/
@@ -539,9 +539,9 @@ TSEGDumpHandler (
 {
   UINT64      SmrrBase;
   UINT64      SmrrMask;
-  UINT64      Length; 
-  UINT64      MtrrValidBitsMask; 
-  UINT64      MtrrValidAddressMask;  
+  UINT64      Length;
+  UINT64      MtrrValidBitsMask;
+  UINT64      MtrrValidAddressMask;
   CHAR8       TempString[MAX_STRING_SIZE];
 
   DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
@@ -974,7 +974,7 @@ LocateSmmCommonCommBuffer (
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS

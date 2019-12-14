@@ -223,7 +223,7 @@ PoolTest (
     ptrLoc = ALIGN_POINTER(ptr, 0x1000);
 
     //
-    // The guard page will be immidiately preceding the page the pool starts on.
+    // The guard page will be immediately preceding the page the pool starts on.
     //
     ptrLoc = (UINT64*) (((UINTN) ptrLoc) - 0x1);
   }
@@ -588,7 +588,7 @@ UefiPoolGuard (
   if (HeapGuardContext.TestProgress < NUM_POOL_SIZES) {
     //
     // Context.TestProgress indicates progress within this specific test.
-    // The test progressively allocates larger areas to test the gaurd on.
+    // The test progressively allocates larger areas to test the guard on.
     // These areas are defined in Pool.c as the 13 different sized chunks that are available
     // for pool allocation.
     //
@@ -848,7 +848,7 @@ SmmPoolGuard (
   if (HeapGuardContext.TestProgress < NUM_POOL_SIZES) {
     //
     // Context.TestProgress indicates progress within this specific test.
-    // The test progressively allocates larger areas to test the gaurd on.
+    // The test progressively allocates larger areas to test the guard on.
     // These areas are defined in Pool.c as the 13 different sized chunks that are available
     // for pool allocation.
     //
@@ -1227,7 +1227,7 @@ AddSmmPageTest(
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS
@@ -1276,7 +1276,7 @@ HeapGuardTestAppEntryPoint (
   }
 
   //
-  // Create seperate test suites for Page, Pool, NX tests.
+  // Create separate test suites for Page, Pool, NX tests.
   // Misc test suite for stack guard and null pointer.
   //
   CreateUnitTestSuite( &Misc, Fw, L"Stack Guard and Null Pointer Detection", L"Security.HeapGuardMisc", NULL, NULL);

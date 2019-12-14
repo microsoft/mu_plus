@@ -101,7 +101,7 @@ PoolTest (
     ptrLoc = ALIGN_POINTER(ptr, 0x1000);
 
     //
-    // The guard page will be immidiately preceding the page the pool starts on.
+    // The guard page will be immediately preceding the page the pool starts on.
     //
     ptrLoc = (UINT64*) (((UINTN) ptrLoc) - 0x1);
   }
@@ -213,7 +213,7 @@ SmmPoolGuard (
 
   //
   // Context.TestProgress indicates progress within this specific test.
-  // The test progressively allocates larger areas to test the gaurd on.
+  // The test progressively allocates larger areas to test the guard on.
   // These areas are defined in Pool.c as the 13 different sized chunks that are available
   // for pool allocation.
   //
@@ -256,7 +256,7 @@ SmmNullPointerDetection (
   Communication service SMI Handler entry.
 
   This handler takes requests to probe specific areas of memory and prove
-  whether the SMM memory protections are covering the expected regions. 
+  whether the SMM memory protections are covering the expected regions.
 
   Caution: This function may receive untrusted input.
   Communicate buffer and buffer size are external input, so this function will do basic validation.
@@ -268,7 +268,7 @@ SmmNullPointerDetection (
                                     be conveyed from a non-SMM environment into an SMM environment.
   @param[in, out] CommBufferSize    The size of the CommBuffer.
 
-  @retval EFI_SUCCESS               The interrupt was handled and quiesced. No other handlers 
+  @retval EFI_SUCCESS               The interrupt was handled and quiesced. No other handlers
                                     should still be called.
   @retval EFI_UNSUPPORTED           An unknown test function was requested.
   @retval EFI_ACCESS_DENIED         Part of the communication buffer lies in an invalid region.

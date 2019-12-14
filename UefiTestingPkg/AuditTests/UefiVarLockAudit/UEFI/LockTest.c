@@ -1,5 +1,5 @@
 /** @file
-  This application will locate all variables and aquire their status as deletable.
+  This application will locate all variables and acquire their status as deletable.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -176,7 +176,7 @@ IN EFI_SYSTEM_TABLE  *SystemTable
     UINTN                          StringSize = 0;
     CHAR8*                         XmlString = NULL;
 
-    
+
     MyList = CreateListOfAllVars();
     if (MyList == NULL)
     {
@@ -248,4 +248,3 @@ IN EFI_SYSTEM_TABLE  *SystemTable
     if (XmlString != NULL) { FreePool(XmlString); }
     return Status & 0x7FFFFFFFFFFFFF;
 }
-

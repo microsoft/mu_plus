@@ -27,7 +27,7 @@ UINTN      mMemoryInfoDatabaseAllocSize = 0;
                                 added to the database.
 
   @retval     EFI_SUCCESS           String was successfully added.
-  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accomodate string.
+  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accommodate string.
                                     String has not been added.
 
 **/
@@ -457,11 +457,11 @@ DflDxeOpenVolumeSFS (
 
     //
     // Check if this is a block IO device path. If it is not, keep searching.
-    // This changes our locat device path variable, so we'll have to restore
+    // This changes our locate device path variable, so we'll have to restore
     // it afterwards.
     //
-    Status = gBS->LocateDevicePath(&gEfiBlockIoProtocolGuid, 
-                                   &DevicePath, 
+    Status = gBS->LocateDevicePath(&gEfiBlockIoProtocolGuid,
+                                   &DevicePath,
                                    &Handle);
 
     if (EFI_ERROR(Status) != FALSE) {
@@ -485,7 +485,7 @@ DflDxeOpenVolumeSFS (
         // Check if this is a gpt partition. If it is, we'll use it. Otherwise,
         // keep searching.
         //
-        if (((HARDDRIVE_DEVICE_PATH*)DevicePath)->MBRType == MBR_TYPE_EFI_PARTITION_TABLE_HEADER && 
+        if (((HARDDRIVE_DEVICE_PATH*)DevicePath)->MBRType == MBR_TYPE_EFI_PARTITION_TABLE_HEADER &&
             ((HARDDRIVE_DEVICE_PATH*)DevicePath)->SignatureType == SIGNATURE_TYPE_GUID) {
 
           DevicePath = OrigDevicePath;
@@ -617,7 +617,7 @@ GetFlatPageTableData (
 
   //
   // Alright, let's get to work.
-  // 
+  //
   Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *) AsmReadCr3 ();
   // Increase the count.
   // If we have room for more PDE Entries, add one.
@@ -721,7 +721,7 @@ GetFlatPageTableData (
   DEBUG(( DEBUG_ERROR, "Number of   Guard Pages active  = %d\n",MyGuardCount));
 
   //
-  // Deteremine whether any of the buffers were too small.
+  // determine whether any of the buffers were too small.
   // Only matters if a given buffer was provided.
   //
   if ((Pte1GEntries != NULL && *Pte1GCount < My1GCount) || (Pte2MEntries != NULL && *Pte2MCount < My2MCount) ||
@@ -759,7 +759,7 @@ LoadFlatPageTableData(
   )
 {
   EFI_STATUS    Status = EFI_SUCCESS;
- 
+
   // Run once to get counts.
   DEBUG(( DEBUG_ERROR, __FUNCTION__" - First call to determine required buffer sizes.\n" ));
   *Pte1GCount = 0;

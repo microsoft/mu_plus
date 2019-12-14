@@ -1,4 +1,4 @@
-# Varible Policy Unit Tests
+# variable Policy Unit Tests
 
 ## &#x1F539; Copyright
 Copyright (C) Microsoft Corporation. All rights reserved.

@@ -237,7 +237,7 @@ GetFlatPageTableData (
 
   //
   // Alright, let's get to work.
-  // 
+  //
   Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *) AsmReadCr3 ();
   // Increase the count.
   // If we have room for more PDE Entries, add one.
@@ -333,7 +333,7 @@ GetFlatPageTableData (
   DEBUG(( DEBUG_INFO, "Number of   1G Pages active  = %d - NotPresent = %d\n", My1GCount, NumPage1GNotPresent ));
 
   //
-  // Deteremine whether any of the buffers were too small.
+  // determine whether any of the buffers were too small.
   // Only matters if a given buffer was provided.
   //
   if ((Pte1GEntries != NULL && *Pte1GCount < My1GCount) || (Pte2MEntries != NULL && *Pte2MCount < My2MCount) ||

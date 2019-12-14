@@ -1,6 +1,6 @@
 /** @file -- DMAProtectionTest.h
 
-This is a header file defined helpfer data structures and all test function prtotypes:
+This is a header file defined helpfer data structures and all test function prototypes:
 1) BME Breakdown on ExitBootServices()
 2) Check the Status Registers of hardware definitions to verify IOMMU is enabled
 3) Check excluded memory ranges are set as reserved

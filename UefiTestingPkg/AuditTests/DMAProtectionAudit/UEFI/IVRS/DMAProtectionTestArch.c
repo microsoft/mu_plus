@@ -108,7 +108,7 @@ CheckExcludedRegions (
   EfiMemoryMapEnd = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)EfiMemoryMap + EfiMemoryMapSize);
 
   while (EfiMemNext < EfiMemoryMapEnd) {
-    //Check if memory range fully encompases IVMD
+    //Check if memory range fully encompasses IVMD
     if((EfiMemNext->PhysicalStart <= Current->IVMD->IVMDStartAddress)
     && ((EfiMemNext->PhysicalStart + EFI_PAGE_SIZE * EfiMemNext->NumberOfPages) >= (Current->IVMD->IVMDStartAddress + Current->IVMD->IVMDMemoryBlockLength))) {
       //Verify memory range is marked as reserved

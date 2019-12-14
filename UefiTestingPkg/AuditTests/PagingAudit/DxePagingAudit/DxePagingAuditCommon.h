@@ -32,7 +32,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 #define    MEM_INFO_DATABASE_REALLOC_CHUNK   0x1000
-#define    MEM_INFO_DATABASE_MAX_STRING_SIZE 0x400  
+#define    MEM_INFO_DATABASE_MAX_STRING_SIZE 0x400
 #define    MAX_STRING_SIZE 0x1000
 
 #define IndexToAddress(a, b, c, d)   ((UINT64) (a << 39) + (b << 30) + (c <<  21) + (d << 12))
@@ -146,7 +146,7 @@ typedef union {
                                 added to the database.
 
   @retval     EFI_SUCCESS           String was successfully added.
-  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accomodate string.
+  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accommodate string.
                                     String has not been added.
 
 **/
@@ -158,7 +158,7 @@ AppendToMemoryInfoDatabase (
 
 
 /**
-   Dump platform specific handler. Created handler(s) need to be compliant with 
+   Dump platform specific handler. Created handler(s) need to be compliant with
    Windows\PagingReportGenerator.py, i.e. TSEG.
 **/
 VOID

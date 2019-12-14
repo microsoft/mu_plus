@@ -55,7 +55,7 @@ class ParsingTool(object):
         logging.debug("Found %d GuardPage Files" % len(GuardPageFileList))
 
 
-        # Parse each file, keeping PTEs and "Memory Ranges" seperate
+        # Parse each file, keeping PTEs and "Memory Ranges" separate
         # Memory ranges are either "memory descriptions" for memory map types and TSEG
         # or "memory contents" for loaded image information or IDT/GDT
         for info in InfoFileList:
@@ -86,11 +86,11 @@ class ParsingTool(object):
             maxindex = len(self.PageDirectoryInfo) -1
             while index < maxindex:  #this will allow all comparisions to work
                 if(self.PageDirectoryInfo[index].overlap(self.PageDirectoryInfo[index+1])):
-                    self.ErrorMsg.append("Page Table Entry Overlap.  Index %d Overlapping %d at StartAddress 0x%X" % 
+                    self.ErrorMsg.append("Page Table Entry Overlap.  Index %d Overlapping %d at StartAddress 0x%X" %
                     (index, index+1, self.PageDirectoryInfo[index].PhysicalStart))
                     logging.error("PTE overlap index %d and %d.  Base Address = 0x%x", index, index+1, self.PageDirectoryInfo[index].PhysicalStart)
                 index += 1
-        
+
         if len(self.MemoryRangeInfo) == 0:
             self.ErrorMsg.append("No Memory Range info found in Info files")
 

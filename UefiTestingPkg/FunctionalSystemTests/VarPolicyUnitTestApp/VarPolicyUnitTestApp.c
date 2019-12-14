@@ -539,7 +539,7 @@ TestMustHaveAttrWildcardNoLock (
 } // TestMustHaveAttrWildcardNoLock
 
 UNIT_TEST_STATUS
-TestPolicyPrioritizatonNoLock (
+TestPolicyprioritizationNoLock (
   IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
@@ -597,7 +597,7 @@ TestPolicyPrioritizatonNoLock (
   //
 
   //
-  // Let's confirm the namespace-wide policy enforcemenet
+  // Let's confirm the namespace-wide policy enforcement
   //
   Value8 = 0x78;
   Status = gRT->SetVariable (L"TestVar",
@@ -654,7 +654,7 @@ TestPolicyPrioritizatonNoLock (
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   return UNIT_TEST_PASSED;
-} // TestPolicyPrioritizatonNoLock
+} // TestPolicyprioritizationNoLock
 
 //
 // LockNow Policy tests:
@@ -1825,7 +1825,7 @@ UefiMain (
   AddTestCase (NoLockPoliciesTestSuite, L"Test Can't Have Attribute enforcement in NoLock policy", L"Common.VP.NoLockPolicies.TestCantHaveAttrNoLock", TestCantHaveAttrNoLock, LocateVarPolicyPreReq, NULL, NULL);
   AddTestCase (NoLockPoliciesTestSuite, L"Test Max Size enforcement in NoLock policy for entire namespace", L"Common.VP.NoLockPolicies.TestMaxSizeNamespaceNoLock", TestMaxSizeNamespaceNoLock, LocateVarPolicyPreReq, NULL, NULL);
   AddTestCase (NoLockPoliciesTestSuite, L"Test Must Have Attribute enforcement in NoLock policy with wildcards", L"Common.VP.NoLockPolicies.TestMustHaveAttrWildcardNoLock", TestMustHaveAttrWildcardNoLock, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (NoLockPoliciesTestSuite, L"Test policy prioritization between namespace-wide, wildcard, and var-specific policies", L"Common.VP.NoLockPolicies.TestPolicyPrioritizatonNoLock", TestPolicyPrioritizatonNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, L"Test policy prioritization between namespace-wide, wildcard, and var-specific policies", L"Common.VP.NoLockPolicies.TestPolicyprioritizationNoLock", TestPolicyprioritizationNoLock, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 3: Test LockNow policies
@@ -1903,7 +1903,7 @@ UefiMain (
   AddTestCase (PolicyVersionTestSuite, L"Test policy version", L"Common.VP.DumpPolicy.TestPolicyVersion", TestPolicyVersion, LocateVarPolicyPreReq, NULL, NULL);
 
   //
-  // Test suite 9: Lock VPE and test implcations
+  // Test suite 9: Lock VPE and test implications
   //
   Status = CreateUnitTestSuite (&LockPolicyTestSuite, mFw, L"Lock policy, test it", L"Common.VP.LockPolicyTests", NULL, NULL);
   if (EFI_ERROR (Status)) {

@@ -24,7 +24,7 @@
             "XmlSupportPkg/XmlSupportPkg.dec",
             "UefiCpuPkg/UefiCpuPkg.dec",
             "SecurityPkg/SecurityPkg.dec",
-            "IntelSiliconPkg/IntelSiliconPkg.dec" #this is bad layering.  Need to fix. 
+            "IntelSiliconPkg/IntelSiliconPkg.dec" #this is bad layering.  Need to fix.
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
             "MsUnitTestPkg/MsUnitTestPkg.dec",
@@ -42,8 +42,8 @@
 
     ## options defined ci/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
-        "IgnoreInf": [], 
-        "DscPath": ""   
+        "IgnoreInf": [],
+        "DscPath": ""
     },
 
     ## options defined ci/Plugin/GuidCheck
@@ -62,6 +62,7 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
+        # Fails test but run in AuditOnly mode to collect log
         "AuditOnly": true,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],

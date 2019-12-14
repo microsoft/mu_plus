@@ -720,14 +720,14 @@ InitializeTestEnvironment (
 } // InitializeTestEnvironment()
 
 
-/** 
+/**
   MemmapAndMatTestApp
-  
+
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS
@@ -742,7 +742,7 @@ MemmapAndMatTestApp (
   UNIT_TEST_SUITE           *TableStructureTests, *MatTableContentTests, *TableEntryRangeTests;
   CHAR16  ShortName[100];
   ShortName[0] = L'\0';
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);  
+  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
   DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //

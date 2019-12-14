@@ -311,7 +311,7 @@ InvalidRangesShouldBeReadProtected (
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS
@@ -352,7 +352,7 @@ SmmPagingProtectionsTestAppEntryPoint (
   }
   AddTestCase( TestSuite, L"Code regions should be write-protected", L"Security.SMMPaging.CodeProtections", CodeShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
   AddTestCase( TestSuite, L"Data regions should be protected against execution", L"Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
-  // THIS TEST DOESN'T WORK.  
+  // THIS TEST DOESN'T WORK.
   // AddTestCase( TestSuite, L"Invalid ranges should be protected against access from SMM", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL );
 
   //

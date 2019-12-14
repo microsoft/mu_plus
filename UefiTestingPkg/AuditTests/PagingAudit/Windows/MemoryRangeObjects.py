@@ -109,10 +109,10 @@ class MemoryRange(object):
         except:
             raise Exception("System Memory Type is invalid %d" % self.SystemMemoryType)
 
-    
-    # 
+
+    #
     # Initializes memory descriptions
-    # 
+    #
     def MemoryMapEntryInit(self, Type, PhysicalStart, VirtualStart, NumberOfPages, Attribute):
         if(Type < 16):
             self.MemoryType = Type
@@ -137,9 +137,9 @@ class MemoryRange(object):
     PhysicalSize            : 0x%010X
 """ % (self.GetMemoryTypeDescription(), self.PhysicalStart, self.PhysicalEnd, self.VirtualStart, self.NumberOfPages, self.Attribute, self.PhysicalSize)
 
-    # 
-    # Intializes memory contents description
-    # 
+    #
+    # intitalizes memory contents description
+    #
     def LoadedImageEntryInit(self, Base, Size, Name):
         self.PhysicalStart = Base
         self.PhysicalSize = Size
@@ -162,10 +162,10 @@ class MemoryRange(object):
         self.UserPrivilege = 1
         self.Nx = 0
 
-    # 
+    #
     # Initializes page table entries
-    # 
-    def PteInit(self, PageSize, ReadWrite, Nx, MustBe1, User, VA):    
+    #
+    def PteInit(self, PageSize, ReadWrite, Nx, MustBe1, User, VA):
         self.MustBe1 = MustBe1
         self.PageSize = PageSize if self.MustBe1 == 1 else "pde"
         self.PhysicalStart = VA
@@ -240,7 +240,7 @@ class MemoryRange(object):
             return True
 
         return False
-        
+
     def eq(self, compare):
         if (self.PhysicalStart == compare.PhysicalStart) and (self.PhysicalEnd == compare.PhysicalEnd):
             return True
@@ -272,13 +272,13 @@ class MemoryRange(object):
         if (self.ImageName != compare.ImageName):
             return False
 
-        if (self.MemoryType != compare.MemoryType): 
+        if (self.MemoryType != compare.MemoryType):
             return False
-        
+
         if (self.SystemMemoryType != compare.SystemMemoryType):
             return False
 
         if (self.Attribute != compare.Attribute):
             return False
-        
+
         return True

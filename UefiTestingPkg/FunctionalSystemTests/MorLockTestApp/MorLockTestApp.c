@@ -198,10 +198,10 @@ MorLockShouldNotBeSet (
   {
     return UNIT_TEST_PASSED;
   }
-  
+
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(MorLock, MOR_LOCK_DATA_UNLOCKED);
-  
+
   return UNIT_TEST_PASSED;
 } // MorLockShouldNotBeSet()
 
@@ -306,7 +306,7 @@ MorControlShouldNotBeDeletable (
 
   UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
   return UNIT_TEST_PASSED;
-	
+
 } // MorControlShouldNotBeDeletable()
 
 
@@ -319,7 +319,7 @@ MorControlShouldEnforceCorrectAttributes (
 {
   EFI_STATUS        Status;
   UINT8             Data = FALSE;
-  
+
   Status  = gRT->SetVariable( MEMORY_OVERWRITE_REQUEST_VARIABLE_NAME,
                               &gEfiMemoryOverwriteControlDataGuid,
                               MOR_VARIABLE_BAD_ATTRIBUTES1,
@@ -1059,7 +1059,7 @@ MorLockv2ShouldNotClearWithWrongKey (
   Status = GetMorLockVariable( &MorLock );
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(MorLock, MOR_LOCK_DATA_LOCKED_WITH_KEY);
-  
+
 
   // Attempt to clear with a different key.
   DataSize  = sizeof( mTestKey2 );
@@ -1226,12 +1226,12 @@ MorLockv2ShouldSetClearSet (
 
 /**
   MorLockTestApp
-  
+
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS
@@ -1247,7 +1247,7 @@ MorLockTestApp (
   CHAR16  ShortName[100];
   ShortName[0] = L'\0';
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName); 
+  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
   DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
   //

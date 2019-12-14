@@ -101,7 +101,7 @@ DummyFunctionForCodeSelfTest (
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, and sort of return value
-                                      should be considered a security viololation.
+                                      should be considered a security violation.
 
 **/
 EFI_STATUS
@@ -147,7 +147,7 @@ SmmMemoryProtectionsSelfTestCode (
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, and sort of return value
-                                      should be considered a security viololation.
+                                      should be considered a security violation.
 
 **/
 EFI_STATUS
@@ -194,7 +194,7 @@ SmmMemoryProtectionsSelfTestData (
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
-                                      should be considered a security viololation.
+                                      should be considered a security violation.
 
 **/
 EFI_STATUS
@@ -242,7 +242,7 @@ SmmMemoryProtectionsTestInvalidRange (
   Communication service SMI Handler entry.
 
   This handler takes requests to probe specific areas of memory and prove
-  whether the SMM memory protections are covering the expected regions. 
+  whether the SMM memory protections are covering the expected regions.
 
   Caution: This function may receive untrusted input.
   Communicate buffer and buffer size are external input, so this function will do basic validation.
@@ -254,7 +254,7 @@ SmmMemoryProtectionsTestInvalidRange (
                                     be conveyed from a non-SMM environment into an SMM environment.
   @param[in, out] CommBufferSize    The size of the CommBuffer.
 
-  @retval EFI_SUCCESS               The interrupt was handled and quiesced. No other handlers 
+  @retval EFI_SUCCESS               The interrupt was handled and quiesced. No other handlers
                                     should still be called.
   @retval EFI_UNSUPPORTED           An unknown test function was requested.
   @retval EFI_ACCESS_DENIED         Part of the communication buffer lies in an invalid region.

@@ -1,6 +1,6 @@
 /** @file -- BlockIoPerfTest.c
- * 
- * Do block io transfers and time them for performance evaluation.  
+ *
+ * Do block io transfers and time them for performance evaluation.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -23,7 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/TimerLib.h>
 #include <Library/DevicePathLib.h>
 
-#define MAX_SIZE_FOR_TEST (0x100000 * 20) 
+#define MAX_SIZE_FOR_TEST (0x100000 * 20)
 
 #define ONE_MICROSECOND (1000)
 #define ONE_MILLISECOND (1000 * ONE_MICROSECOND)
@@ -80,14 +80,14 @@ TestBlockIo(EFI_BLOCK_IO_PROTOCOL *BlkIo)
   UINT32 MediaId;
   EFI_LBA Lba;
   UINT8 *Buffer = NULL;
-  UINTN  ReadSizes[] = {0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x100000, MAX_SIZE_FOR_TEST}; 
+  UINTN  ReadSizes[] = {0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x100000, MAX_SIZE_FOR_TEST};
   UINTN  Index;
 
   if(BlkIo == NULL) {
     Print(L"BlockIo is NULL\n");
     return;
   }
-  
+
   Buffer = AllocatePages(EFI_SIZE_TO_PAGES(MAX_SIZE_FOR_TEST));
   if(Buffer == NULL)
   {
@@ -96,7 +96,7 @@ TestBlockIo(EFI_BLOCK_IO_PROTOCOL *BlkIo)
   }
 
   MediaId = BlkIo->Media->MediaId;
-  Print(L" Revision: 0x%lX\n WriteCaching: 0x%X\n BlockSize: 0x%X\n", 
+  Print(L" Revision: 0x%lX\n WriteCaching: 0x%X\n BlockSize: 0x%X\n",
         BlkIo->Revision, BlkIo->Media->WriteCaching, BlkIo->Media->BlockSize);
   Print(L" IoAlign: 0x%X\n", BlkIo->Media->IoAlign);
 
@@ -177,14 +177,14 @@ TestMain (
       Print(L"No Device Path Protocol for this block io\n");
     } else {
       DevicePathString = ConvertDevicePathToText(BlockIoDevicePath, TRUE, FALSE);
-      if(DevicePathString != NULL) 
+      if(DevicePathString != NULL)
       {
         Print(L"DevicePath is %s\n", DevicePathString);
         FreePool(DevicePathString);
         DevicePathString = NULL;
       } else {
         Print(L"DevicePath to text was NULL\n");
-      }  
+      }
     }
     Status = gBS->HandleProtocol (BlockIoBuffer[Index], &gEfiBlockIoProtocolGuid, (VOID *) &BlockIoProtocol);
     if (EFI_ERROR (Status) || BlockIoProtocol == NULL) {
@@ -192,12 +192,12 @@ TestMain (
       Print(L"\n\n");
       continue;
     }
-   
+
     TestBlockIo(BlockIoProtocol);
     Print(L"\n\n");
 
 
-  } //end for looop
+  } //end for loop
 
   if (BlockIoBuffer != NULL) {
       gBS->FreePool (BlockIoBuffer);
@@ -205,5 +205,3 @@ TestMain (
 
   return Status;
 }
-
-
