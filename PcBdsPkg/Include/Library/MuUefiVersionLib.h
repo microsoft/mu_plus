@@ -27,7 +27,7 @@ GetUefiVersionNumber (
   @param[out]       Buffer        The caller allocated buffer to hold the returned version
                                   Ascii string. May be NULL with a zero Length in order
                                   to determine the length buffer needed.
-  @param[in, out]   Length        On input, the count of Ascii chars avaiable in Buffer.
+  @param[in, out]   Length        On input, the count of Ascii chars available in Buffer.
                                   On output, the count of Ascii chars of data returned
                                   in Buffer, including Null-terminator.
 
@@ -51,7 +51,7 @@ GetUefiVersionStringAscii (
   @param[out]       Buffer        The caller allocated buffer to hold the returned version
                                   Unicode string. May be NULL with a zero Length in order
                                   to determine the length buffer needed.
-  @param[in, out]   Length        On input, the count of Unicode chars avaiable in Buffer.
+  @param[in, out]   Length        On input, the count of Unicode chars available in Buffer.
                                   On output, the count of Unicode chars of data returned
                                   in Buffer, including Null-terminator.
 
@@ -75,7 +75,7 @@ GetUefiVersionStringUnicode (
   @param[out]       Buffer        The caller allocated buffer to hold the returned build
                                   date Ascii string. May be NULL with a zero Length in
                                   order to determine the length buffer needed.
-  @param[in, out]   Length        On input, the count of Ascii chars avaiable in Buffer.
+  @param[in, out]   Length        On input, the count of Ascii chars available in Buffer.
                                   On output, the count of Ascii chars of data returned
                                   in Buffer, including Null-terminator.
 
@@ -99,8 +99,8 @@ GetBuildDateStringAscii (
   @param[out]       Buffer        The caller allocated buffer to hold the returned build
                                   date Unicode string. May be NULL with a zero Length in
                                   order to determine the length buffer needed.
-  @param[in, out]   Length        On input, the count of Unicode chars avaiable in Buffer.
-                                  On output, the count of Unicode chars of data returned 
+  @param[in, out]   Length        On input, the count of Unicode chars available in Buffer.
+                                  On output, the count of Unicode chars of data returned
                                   in Buffer, including Null-terminator.
 
   @retval EFI_SUCCESS             The function completed successfully.

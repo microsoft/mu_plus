@@ -101,7 +101,7 @@ InitializeNvVariable ()
                 Settings.BootOrderLock = FALSE; // Set default for first conversion.
                 Settings.EnableUsbBoot = PcdGet8 (PcdEnableUsbBoot);
                 Settings.StartNetwork  = PcdGet8 (PcdStartNetwork);
-                Settings.Version = MS_BOOT_MANAGER_SETTINGS_VERSON3;
+                Settings.Version = MS_BOOT_MANAGER_SETTINGS_VERSION3;
                 //delete it first as it has RT set
                 Status = gRT->SetVariable (MS_BOOT_MANAGER_SETTINGS_NAME,
                                           &gMsBootManagerSettingsGuid,
@@ -135,17 +135,17 @@ InitializeNvVariable ()
                     DEBUG((DEBUG_INFO, "BootManager Variable has corrupted signature."));
                     Status = EFI_COMPROMISED_DATA;
                 }
-                else if ((Settings.Version >= MS_BOOT_MANAGER_SETTINGS_VERSON1) &&
-                         (Settings.Version < MS_BOOT_MANAGER_SETTINGS_VERSON3)) {
+                else if ((Settings.Version >= MS_BOOT_MANAGER_SETTINGS_VERSION1) &&
+                         (Settings.Version < MS_BOOT_MANAGER_SETTINGS_VERSION3)) {
                     // Handle the case where systems have the new settings varirable, but don't have
                     // the correct value for USB Boot and, or StartNetworking
-                    if (Settings.Version == MS_BOOT_MANAGER_SETTINGS_VERSON1) {
+                    if (Settings.Version == MS_BOOT_MANAGER_SETTINGS_VERSION1) {
                         Settings.EnableUsbBoot  = PcdGet8(PcdEnableUsbBoot);
                     }
-                    if (Settings.Version <= MS_BOOT_MANAGER_SETTINGS_VERSON2) {
+                    if (Settings.Version <= MS_BOOT_MANAGER_SETTINGS_VERSION2) {
                         Settings.StartNetwork = PcdGet8(PcdStartNetwork);
                     }
-                    Settings.Version = MS_BOOT_MANAGER_SETTINGS_VERSON3;
+                    Settings.Version = MS_BOOT_MANAGER_SETTINGS_VERSION3;
                     Status = gRT->SetVariable (MS_BOOT_MANAGER_SETTINGS_NAME,
                                               &gMsBootManagerSettingsGuid,
                                                MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,

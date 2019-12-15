@@ -36,7 +36,7 @@ BOOLEAN
 (EFIAPI *FILTER_ROUTINE)(
                          IN  EFI_DEVICE_PATH_PROTOCOL *DevicePath);
 
-BOOLEAN CheckDeviceNode(
+BOOLEAN EFIAPI CheckDeviceNode(
     EFI_DEVICE_PATH_PROTOCOL *DevicePath,
     UINT8  Type,
     UINT8  SubType) {
@@ -50,31 +50,31 @@ BOOLEAN CheckDeviceNode(
     return FALSE;
 }
 
-BOOLEAN IsDevicePathUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+BOOLEAN EFIAPI IsDevicePathUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_USB_DP);
 }
 
-BOOLEAN IsDevicePathIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+BOOLEAN EFIAPI IsDevicePathIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv4_DP);
 }
 
-BOOLEAN IsDevicePathIPv6(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+BOOLEAN EFIAPI IsDevicePathIPv6(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_IPv6_DP);
 }
 
-BOOLEAN FilterOnlyUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+BOOLEAN EFIAPI FilterOnlyUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return (TRUE == IsDevicePathUSB(DevicePath));
 }
 
-BOOLEAN FilterNoUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+BOOLEAN EFIAPI FilterNoUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return (FALSE == IsDevicePathUSB(DevicePath));
 }
 
-BOOLEAN FilterOnlyIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+BOOLEAN EFIAPI FilterOnlyIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return (TRUE == IsDevicePathIPv4(DevicePath));
 }
 
-BOOLEAN FilterOnlyIPv6(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
+BOOLEAN EFIAPI FilterOnlyIPv6(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
     return (TRUE == IsDevicePathIPv6(DevicePath));
 }
 
@@ -245,12 +245,10 @@ EFI_STATUS SelectAndBootDevice(EFI_GUID *ByGuid, FILTER_ROUTINE ByFilter) {
     EFI_HANDLE                  *Handles;
     UINTN                        HandleCount;
     UINTN                        Index;
-    UINTN                        FlagSize;
     EFI_BOOT_MANAGER_LOAD_OPTION BootOption;
     CHAR16                      *TmpStr;
     EFI_DEVICE_PATH_PROTOCOL    *DevicePath;
 
-    FlagSize = sizeof(UINTN);
     Status = gBS->LocateHandleBuffer(
         ByProtocol,
         ByGuid,
@@ -629,7 +627,7 @@ MsBootPolicyEntry(
         Index++;
     }
 
-    // Need to populate GraphicStatus here, otherwise logo function return value will override boot result 
+    // Need to populate GraphicStatus here, otherwise logo function return value will override boot result
     GraphicStatus = SetGraphicsConsoleMode(GCM_NATIVE_RES);
     if (EFI_ERROR(GraphicStatus) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));

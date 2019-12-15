@@ -15,9 +15,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MS_BOOT_MANAGER_SETTINGS_NAME  L"MsBootPolicySettings"
 #define MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE )
 
-#define MS_BOOT_MANAGER_SETTINGS_VERSON1  0         // Original version
-#define MS_BOOT_MANAGER_SETTINGS_VERSON2  1         // USB Boot is valid
-#define MS_BOOT_MANAGER_SETTINGS_VERSON3  2         // StartNetwork is valid
+#define MS_BOOT_MANAGER_SETTINGS_VERSION1  0         // Original version
+#define MS_BOOT_MANAGER_SETTINGS_VERSION2  1         // USB Boot is valid
+#define MS_BOOT_MANAGER_SETTINGS_VERSION3  2         // StartNetwork is valid
 
 typedef struct {
     // Currently a 16 byte structure.  When initialized, the unused values are zero.

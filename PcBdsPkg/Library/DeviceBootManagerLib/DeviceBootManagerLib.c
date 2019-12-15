@@ -431,7 +431,7 @@ UpdateFACSHardwareSignature () {
     EFI_HANDLE                                          *PciHandleBuffer;
     UINT32                                               PciId;
 
-    // Variables for Part 2 Firwmware Version data
+    // Variables for Part 2 Firmware Version data
     UINTN                                                IndexPart2;
     UINT32                                               UefiFwVersion;
 
@@ -443,7 +443,6 @@ UpdateFACSHardwareSignature () {
     UINTN                                                IndexPart4;
     UINTN                                                MemoryMapSize;
     EFI_MEMORY_DESCRIPTOR                               *MemoryMap = NULL;
-    VOID                                                *p;
     CHAR8                                               *Entry;
     UINT64                                              *MapState;
     UINTN                                                MapKey;
@@ -597,11 +596,10 @@ UpdateFACSHardwareSignature () {
     // Step 10. Fill buffer with memory map entries
     //
     // The MemoryMap buffer is an array of 48 byte entries.  This code is will build an array
-    // of 16 byte entries on top of the exisiting MemoryMap buffer, but only from selected
+    // of 16 byte entries on top of the existing MemoryMap buffer, but only from selected
     // entries (Runtime, Rsvd, ACPI) from the MemoryMap buffer.
     //
     MemoryMap = (EFI_MEMORY_DESCRIPTOR *) &Buffer[IndexPart4];
-    p = (VOID *) MemoryMap;  // Save for FreePool
     MapState = (UINT64 *) MemoryMap;
     Status = gBS->GetMemoryMap (&MemoryMapSize,MemoryMap,&MapKey,&DescriptorSize,&DescriptorVersion);
     Entry = (CHAR8 *) MemoryMap;
@@ -798,7 +796,6 @@ BootCurrentIsInternalShell (
   CHAR16                        BootOptionName[16];
   UINT8                         *BootOption;
   UINT8                         *Ptr;
-  EFI_DEVICE_PATH_PROTOCOL      *BootDevicePath;
   BOOLEAN                       Result;
   EFI_STATUS                    Status;
   EFI_DEVICE_PATH_PROTOCOL      *TempDevicePath;
@@ -806,7 +803,6 @@ BootCurrentIsInternalShell (
   EFI_GUID                      *GuidPoint;
 
   BootOption     = NULL;
-  BootDevicePath = NULL;
   Result         = FALSE;
 
   //
@@ -984,7 +980,7 @@ DeviceBootManagerConstructor (
 }
 
 /**
-  OnDemandConInCOnnect
+  OnDemandConInConnect
  */
 EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
@@ -1070,7 +1066,7 @@ DeviceBootManagerAfterConsole (
       Status = gBS->LocateProtocol(&gTpmPpProtocolGuid, NULL, (VOID **)&TpmPp);
       if (!EFI_ERROR(Status) && (TpmPp != NULL)) {
           Status = TpmPp->PromptForConfirmation(TpmPp);
-          DEBUG((DEBUG_ERROR, "%a: Unexpected return from Tpm Pyhsical Presence. Code=%r\n", __FUNCTION__, Status));
+          DEBUG((DEBUG_ERROR, "%a: Unexpected return from Tpm Physical Presence. Code=%r\n", __FUNCTION__, Status));
       }
     }
     return GetPlatformConnectList ();
@@ -1218,6 +1214,6 @@ DeviceBootManagerUnableToBoot (
   ) {
 
     // Have to reboot to font page as seetings are locked at ReadyToBoot.  This allows
-    // settiongs to be availabel if ReadyToBoot has been called.
+    // settings to be available if ReadyToBoot has been called.
     RebootToFrontPage();
 }

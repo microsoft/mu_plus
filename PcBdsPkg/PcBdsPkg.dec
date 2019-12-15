@@ -106,7 +106,7 @@
   # EnableBootOrderLock - 1 = BootOrder is locked, 0 BootOrder is unlocked by default
   gPcBdsPkgTokenSpaceGuid.PcdEnableBootOrderLock|0x0|UINT8|0x4000011C
 
-  # EnableUsbBoot - 1 = Alllow boot from USB devices, 0 Don't allow boot from USB devices
+  # EnableUsbBoot - 1 = allow boot from USB devices, 0 Don't allow boot from USB devices
   gPcBdsPkgTokenSpaceGuid.PcdEnableUsbBoot|0x1|UINT8|0x4000012C
 
   # StartNetworking - 1 = Enable and start the network stack at boot time, 0 Don't enable and start the network stack at boot time
