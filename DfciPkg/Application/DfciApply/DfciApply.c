@@ -150,7 +150,7 @@ SetDfciVariable (
   ) {
 
     EFI_STATUS  Status;
-    CHAR8      *Buffer;
+    UINT8      *Buffer;
     UINT64      FileSize;
 
     if (gFlagVerbose) {
@@ -319,4 +319,3 @@ DfciApplyEntry(
 
     return 0;
 }
-

@@ -221,6 +221,7 @@ It will ASSERT() if one of these operations fails and it will always return EFI_
 
 **/
 EFI_STATUS
+EFIAPI
 DfciPasswordProviderConstructor
 (
   IN EFI_HANDLE        ImageHandle,

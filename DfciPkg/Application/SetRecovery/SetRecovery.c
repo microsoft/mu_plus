@@ -147,7 +147,7 @@ SetRecoveryEntry(
     LIST_ENTRY                     *ParamPackage;
     CHAR16                         *ProblemParm = NULL;
     EFI_STATUS                      Status;
-    CHAR8                          *Cert;
+    UINT8                          *Cert;
     UINT64                          CertSize;
     CHAR8                          *EData;
     UINT64                          EDataSize;
@@ -281,7 +281,7 @@ SetRecoveryEntry(
     AsciiPrint ("The multistring size is %d for a total size of %d\n", AsciiStrSize (ChallengeV2->MultiString), ChallengeV2Size);
 
     //Encrypt Challenge
-    Status = EncryptRecoveryChallenge(Challenge, ChallengeSize, Cert, CertSize, &EData, &EDataSize);
+    Status = EncryptRecoveryChallenge(Challenge, ChallengeSize, Cert, CertSize, (UINT8**) &EData, &EDataSize);
     if (EFI_ERROR(Status)) {
         AsciiPrint("%a - Failed to Encrypt Recovery Challenge %r\n", __FUNCTION__, Status);
         return Status;
@@ -290,7 +290,7 @@ SetRecoveryEntry(
     AsciiPrint ("File of %d bytes would have been created for the original challenge\n", EDataSize);
 
     //Encrypt ChallengeV2
-    Status = EncryptRecoveryChallenge(ChallengeV2, ChallengeV2Size, Cert, CertSize, &EData, &EDataSize);
+    Status = EncryptRecoveryChallenge(ChallengeV2, ChallengeV2Size, Cert, CertSize, (UINT8**)&EData, &EDataSize);
     if (EFI_ERROR(Status)) {
         AsciiPrint("%a - Failed to Encrypt Recovery Challenge %r\n", __FUNCTION__, Status);
         return Status;

@@ -273,7 +273,6 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
   EFI_STATUS Status;
   DFCI_PERM_INTERNAL_PROVISONED_VAR    *Var = NULL;
   UINTN VarSize = 0;
-  UINTN ComputedSize = 0;
   UINT32 VarAttributes = 0;
 
   if (Store == NULL)
@@ -335,7 +334,6 @@ LoadFromFlash(IN DFCI_PERMISSION_STORE **Store)
   }
 
   // Allocate new permission store;
-  ComputedSize = sizeof(DFCI_PERMISSION_STORE);
   *Store = (DFCI_PERMISSION_STORE *) AllocateZeroPool(sizeof(DFCI_PERMISSION_STORE));
   if (*Store == NULL)
   {

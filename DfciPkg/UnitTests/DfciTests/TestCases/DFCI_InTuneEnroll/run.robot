@@ -153,7 +153,7 @@ Send User Permission Packet to Enrolled System
 
 Send Owner Settings Packet to Enrolled System
     [Setup]    Require test case    Send User Permission Packet to Enrolled System
-    #Initial Settigns for Enrolled System
+    #Initial settings for Enrolled System
     ${nameofTest}=      Set Variable    OwnerSettings
     ${xmlPayloadFile}=  Set Variable    ${TEST_CASE_DIR}${/}DfciSettings.xml
 
@@ -162,7 +162,7 @@ Send Owner Settings Packet to Enrolled System
 
 Send User Settings Packet to Enrolled System
     [Setup]    Require test case    Send Owner Settings Packet to Enrolled System
-    #Initial Settigns for Enrolled System
+    #Initial settings for Enrolled System
     ${nameofTest}=      Set Variable    UserSettings
     ${xmlPayloadFile}=  Set Variable    ${TEST_CASE_DIR}${/}DfciSettings2.xml
 

@@ -762,14 +762,11 @@ Helper function to print out one Setting Provider
 VOID
 DebugPrintProviderEntry(DFCI_SETTING_PROVIDER *Provider)
 {
-  DFCI_SETTING_PROVIDER_LIST_ENTRY *PList;
   CHAR8 *Value = ProviderValueAsAscii(Provider, TRUE);
   CHAR8 *DefaultValue = ProviderValueAsAscii(Provider, FALSE);
 
   DEBUG((DEBUG_INFO, "Id:            %a\n", Provider->Id));
-  DEBUG((DEBUG_INFO, "Printing Provider @ 0x%X\n", (UINTN)Provider));
-
-  PList = PROV_LIST_ENTRY_FROM_PROVIDER (Provider);
+  DEBUG((DEBUG_INFO, "Printing Prov@ 0x%X\n", (UINTN) Provider));
   DEBUG((DEBUG_INFO, "Type:          %a\n", ProviderTypeAsAscii(Provider->Type)));
   DEBUG((DEBUG_INFO, "Flags:         0x%X\n", Provider->Flags));
   DEBUG((DEBUG_INFO, "Current Value: %a", Value));   // Split \n to separate DEBUG in case value is too long
@@ -1016,4 +1013,3 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
   }
   return EFI_SUCCESS;
 }
-

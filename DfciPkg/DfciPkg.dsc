@@ -74,19 +74,22 @@
   DfciGroupLib|DfciPkg/Library/DfciGroupLibNull/DfciGroups.inf
   ZeroTouchSettingsLib|ZeroTouchPkg/Library/ZeroTouchSettings/ZeroTouchSettings.inf
   JsonLiteParserLib|MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
-  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [LibraryClasses.X64]
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   PasswordStoreLib|MsCorePkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
-#!if $(TARGET) == DEBUG
+!if $(TARGET) == DEBUG
+!if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019
   #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
   NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-#!else
-#  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
-#!endif
+!else
+  # otherwise use the null version for GCC and CLANG
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
+!endif
+!endif
 
 [LibraryClasses.X64.UEFI_APPLICATION]
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf

@@ -27,8 +27,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Settings/DfciSettings.h>
 
-EFI_EVENT  mDfciSettingsProviderSupportInstallEvent;
-VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
+EFI_EVENT  mDfciVirtualSettingsProviderSupportInstallEvent;
+VOID      *mDfciVirtualSettingsProviderSupportInstallEventRegistration = NULL;
 
 typedef enum {
     ID_IS_BAD,
@@ -401,12 +401,12 @@ DfciVirtualizationSettingsConstructor (
 
     if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
         //Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
-        mDfciSettingsProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+        mDfciVirtualSettingsProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
             &gDfciSettingsProviderSupportProtocolGuid,
              TPL_CALLBACK,
              DfciSettingsProviderSupportProtocolNotify,
              NULL,
-            &mDfciSettingsProviderSupportInstallEventRegistration
+            &mDfciVirtualSettingsProviderSupportInstallEventRegistration
             );
 
         DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));

@@ -117,7 +117,7 @@ DfciUiDisplayAuthDialog (
   @param  TrustedCert            Supplies a pointer to a trusted certificate.
   @param  TrustedCertSize        Supplies the size in bytes of the trusted
                                  certificate.
-  @param  AuthToken              Supplies a pointer that will receive an 
+  @param  AuthToken              Supplies a pointer that will receive an
                                  authentication token.
 
   @return EFI_NOT_READY          Indicates that UI components are not available.
@@ -150,6 +150,7 @@ DfciUiGetAnswerFromUser(
     Disable the OSK from displaying (PreReadyToBoot also enables the OSK)
 **/
 VOID
+EFIAPI
 DfciUiExitSecurityBoundary (VOID)
 {
   return;

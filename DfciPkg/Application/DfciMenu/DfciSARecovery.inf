@@ -107,3 +107,4 @@
   gDfciSettingPermissionsProtocolGuid
 
 [BuildOptions]
+  *_GCC5_*_CC_FLAGS  = -Wno-unused-function

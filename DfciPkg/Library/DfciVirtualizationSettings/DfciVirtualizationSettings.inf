@@ -49,7 +49,3 @@
 
 [Depex]
   TRUE
-
-[BuildOptions]
-#  DEBUG_*_*_CC_FLAGS  = /Od /FAcs
-  DEBUG_*_*_CC_FLAGS  = /analyze

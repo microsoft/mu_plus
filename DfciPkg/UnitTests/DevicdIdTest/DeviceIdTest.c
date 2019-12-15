@@ -187,8 +187,8 @@ IsValidUTF8(CHAR8 *InputString) {
     takes the error exit.
 
 */
-static
-UNIT_TEST_STATUS
+STATIC
+VOID
 EFIAPI
 CleanUpTestContext (
     IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
@@ -204,8 +204,6 @@ CleanUpTestContext (
 
     Btc->IdString = NULL;
     Btc->IdStringSize = 0;
-
-    return UNIT_TEST_PASSED;
 }
 
 ///================================================================================================

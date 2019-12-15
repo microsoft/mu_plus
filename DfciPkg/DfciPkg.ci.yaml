@@ -7,7 +7,6 @@
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
-        "skip": true,
         "DscPath": "DfciPkg.dsc"
     },
 
@@ -91,13 +90,21 @@
             "kkllmmnnoopp", # describes bytes of guid
             "DFCIs",
             "DDTHH",
+            "uefis",
+            "idenity",
+            "identi",
+            "mfgname",
+            "multipl",
+            "productname",
+            "serialnumber",
+            "testcase",
+            "testcases",
             "Fabrikam",
             "pypiwin", # python package dependency
             "ipcvn", # a DFCI internal variable name
             "pytool",
             "robotframework", # python package dependency
             "robotremoteserver", # python package dependency
-            "uefis"
         ]
     }
 }

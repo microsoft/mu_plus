@@ -414,6 +414,7 @@ BuildJsonBootstrapRequest (
  *
  **/
 EFI_STATUS
+EFIAPI
 BuildJsonRecoveryRequest (
   IN DFCI_NETWORK_REQUEST *NetworkRequest
   ) {
@@ -481,6 +482,7 @@ BuildJsonRecoveryRequest (
  */
 STATIC
 EFI_STATUS
+EFIAPI
 ProcessFunction (
     IN  JSON_REQUEST_ELEMENT  *Rqst,
     IN  VOID                  *Context

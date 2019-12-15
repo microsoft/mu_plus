@@ -456,10 +456,9 @@ DfciPermissionInit(
   )
 {
   EFI_STATUS Status;
-  EFI_EVENT  InitEvent;
   VOID      *InitRegistration;
 
-  InitEvent = EfiCreateProtocolNotifyEvent(
+  EfiCreateProtocolNotifyEvent(
     &gDfciAuthenticationProtocolGuid,
     TPL_CALLBACK,
     CheckForAuthenticationProtocol,
