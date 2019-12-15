@@ -108,7 +108,7 @@ WaitForEventInternal (
                 ContinueTimer = FALSE;  // No possible previous timer
             }
             //
-            //  Normal waits will clear the current event, and reset a new poewr off delay.  If
+            //  Normal waits will clear the current event, and reset a new power off delay.  If
             //  ContinueTimer is set, then just use the previous timer event.
             if ((!ContinueTimer) || (TRUE == Restart)) {
                 Status = gBS->SetTimer(

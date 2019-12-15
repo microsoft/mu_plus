@@ -76,7 +76,7 @@ GlyphToBlt (
 
 @param This             Pointer to MS_EARLY_GRAPHICS_PROTOCOL
 @param Image            Pointer to bitmap
-@param DestinationX     X location to display the bitmatp
+@param DestinationX     X location to display the bitmap
 @param DestinationY     Y location to display the bitmap
 @param Width            Width of bitmap
 @param Height           Height of bitmap
@@ -98,7 +98,7 @@ SimpleBlt (
 
   @param This             Pointer to MS_EARLY_GRAPHICS_PROTOCOL
   @param Image            Pointer to bitmap
-  @param DestinationX     X location to display the bitmatp
+  @param DestinationX     X location to display the bitmap
   @param DestinationY     Y location to display the bitmap
   @param Width            Width of bitmap
   @param Height           Height of bitmap

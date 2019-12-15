@@ -455,7 +455,7 @@ EncodeAlphanumeric (UINT8 *Data, UINTN DataLen) {
             }
         }
         if (index == sizeof(gAlphaNumerics)) {
-            DEBUG((DEBUG_ERROR,"Invalid charcter - was checked for valid earlier\n"));
+            DEBUG((DEBUG_ERROR,"Invalid character - was checked for valid earlier\n"));
             ASSERT (FALSE);
             return;
         }
@@ -825,7 +825,7 @@ Evaluate1 (UINT8 *Bitmap, INTN RowSize) {
 
 /*--------------------------------------------------------------------------------*/
 /* Evaluate 2                                                                     */
-/*         Scan rows and colums looking for 2x2 collections of modules the        */
+/*         Scan rows and columns looking for 2x2 collections of modules the        */
 /*         of the same color.                                                     */
 /*                                                                                */
 /*         3 points for each occurrence.                                          */
@@ -846,7 +846,7 @@ Evaluate2 (UINT8 *Bitmap, INTN RowSize) {
     //
     // Check each row for 2x2 collections of the same color.
     //
-    for (y = 0; y < (RowSize - 1); y++) {      // Check two cells vertially and two cells horizontal
+    for (y = 0; y < (RowSize - 1); y++) {      // Check two cells vertically and two cells horizontal
         for (x = 0; x < (RowSize - 1); x++) {  // Checking two cells - so stop one short
             Cell1 = Bitmap[(y * RowSize) + x] & ~QrExclude;
             if (Cell1 == QrRsvd) {

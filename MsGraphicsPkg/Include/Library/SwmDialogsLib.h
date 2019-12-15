@@ -75,7 +75,7 @@ typedef enum
 } SWM_PWD_DIALOG_TYPE;
 
 /**
- *  MessageBox.  Display a Message box 
+ *  MessageBox.  Display a Message box
  *
  *
  * @param pTitleBarText  - Text for titlebar of message box
@@ -133,7 +133,7 @@ SwmDialogsPasswordPrompt (
  * @param pBodyText      - Tecx for body of the message box
  * @param pOptionsList   - Array of option text
  * @param OptionsCount   - Cout of options
- * @param Result         - SMB_RESULT 
+ * @param Result         - SMB_RESULT
  * @param SelectedIndex  - Index of selected option when Result is SMB_RESULT_OK
  *
  * @return EFI_STATUS EFIAPI
@@ -153,7 +153,7 @@ SwmDialogsSelectPrompt (
 /**
  *  VerifyThumbprintPrompt.  Display a Message box with a Thumbprint
  *                               verification text box, and an optional
- *                               Password box.  
+ *                               Password box.
  *
  * @param pTitleBarText  - Text for titlebar of message box
  * @param pCaptionText   - Text for Title of message box
@@ -162,7 +162,7 @@ SwmDialogsSelectPrompt (
  * @param pConfirmText   - Instructions for current format of the dialog
  * @param pErrorText     - Error message to display if number of attempts is exceeded
  * @param Type           - SWM_MB_STYLE - Normal/Alert2/Alert2
- * @param Result         - SMB_RESULT 
+ * @param Result         - SMB_RESULT
  * @param Password       - Where to store pointer to allocated buffer with password result
  * @param Thumbprint     - Where to store the two character thumbprint
  *
@@ -172,7 +172,7 @@ EFI_STATUS
 EFIAPI
 SwmDialogsVerifyThumbprintPrompt (
     IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,  
+    IN  CHAR16              *pCaptionText,
     IN  CHAR16              *pBodyText,
     IN  CHAR16              *pCertText,
     IN  CHAR16              *pConfirmText,
@@ -184,7 +184,7 @@ SwmDialogsVerifyThumbprintPrompt (
   );
 
 /**
- *  SwmDIalogsReady.  Are Dialogs ready? The SWMProtocol starts late,
+ *  SwmDDialogsReady.  Are Dialogs ready? The SWMProtocol starts late,
  *                    and SwmDialogsReady returns TRUE if Dialogs are ready.
  */
 BOOLEAN

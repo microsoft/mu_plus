@@ -769,7 +769,7 @@ Draw (IN    ListBox             *this,
 
         case LocationNone:
         default:
-            DEBUG((DEBUG_ERROR,"ERROR - Invalid location in listbox processing. Locatione=%d\n",this->m_CaptureLocation));
+            DEBUG((DEBUG_ERROR,"ERROR - Invalid location in listbox processing. Location=%d\n",this->m_CaptureLocation));
             //               ASSERT(FALSE);
             break;
         }

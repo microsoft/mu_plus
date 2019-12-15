@@ -270,7 +270,7 @@ OUT CHAR16                              **Thumbprint OPTIONAL);
 //
 typedef struct _WINMGR_CLIENTLIST_tag
 {
-    UINTN                               Signature;          // Sinature of this block
+    UINTN                               Signature;          // Signature of this block
     BOOLEAN                             HasDisplaySurface;  // TRUE = client has an associated display surface (i.e., not just a user input queue).
     BOOLEAN                             Active;             // TRUE = currently active and processing events.
     SWM_RECT                            WindowFrame;        // Clients on-screen window frame rectangle (used for hit detection).
@@ -283,7 +283,7 @@ typedef struct _WINMGR_CLIENTLIST_tag
     //
     EFI_ABSOLUTE_POINTER_PROTOCOL       ClientAbsPtr;       // Absolute Pointer Protocol for each client that registers.
     MS_SWM_ABSOLUTE_POINTER_QUEUE       Queue;              // Queue for this Window
-    MS_SWM_CLIENT_NOTFICATION_CALLBACK  DataNotificationCallback; // Function to call when data is available.  Optional
+    MS_SWM_CLIENT_NOTIFICATION_CALLBACK  DataNotificationCallback; // Function to call when data is available.  Optional
     VOID                               *DataNotificationContext;  // Client Context parameter for Callback.
     UINT32                              Z_Order;            // Limited Z-order (fixed, not dynamic)
 } WINMGR_CLIENT;

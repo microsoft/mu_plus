@@ -36,7 +36,7 @@ typedef struct{
 } PRIVATE_ProgressCircle;
 
 //
-// To determine what segment a point is in 
+// To determine what segment a point is in
 // the slope can be compared.  This table includes
 // the slopes for 1-25%.  because a circle can be
 // mirrored to all quadrants this covers 100%
@@ -72,7 +72,7 @@ INTN mSlopeMap[] = {
 
 
 /**
-Interal function to init all private data members
+Internal function to init all private data members
 **/
 static
 VOID
@@ -84,7 +84,7 @@ Method to use create a new ProgressCircle struct.
 This structure is used by all the other functions to update and
 draw the progress circle to the screen
 
-@param Orgin             - Center point of progress circle in framebuffer coordinates
+@param Origin             - Center point of progress circle in framebuffer coordinates
 @param FrameBufferBase   - pointer to framebuffer address of 0,0  (upper left)
 @param PixelsPerScanLine - Number of pixels per scan line.
 This is to support aligned framebuffers
@@ -98,7 +98,7 @@ radius can deviate from the alignment by 1 pixel at times.
 ProgressCircle*
 EFIAPI
 new_ProgressCircle(
-IN POINT *Orgin,
+IN POINT *Origin,
 IN UINT8 *FrameBufferBase,
 IN UINTN PixelsPerScanLine,
 IN UINT16 InnerRadius,
@@ -117,18 +117,18 @@ IN UINT16 OuterRadius
     return NULL;
   }
 
-  if (Orgin == NULL)
+  if (Origin == NULL)
   {
-    ASSERT(NULL != Orgin);
+    ASSERT(NULL != Origin);
     return NULL;
   }
 
-  //extra allocation is for segment bitmap. 
+  //extra allocation is for segment bitmap.
   PRIVATE_ProgressCircle *this = (PRIVATE_ProgressCircle *)AllocateZeroPool(sizeof(PRIVATE_ProgressCircle) + ((OuterRadius + BMP_PADDING) * (OuterRadius + BMP_PADDING) * 4));
   ASSERT(NULL != this);
   if (this != NULL)
   {
-    this->PublicPC.Orgin = *Orgin;
+    this->PublicPC.Origin = *Origin;
     this->PublicPC.FrameBufferBase = FrameBufferBase;
     this->PublicPC.PixelsPerScanLine = PixelsPerScanLine;
     this->PublicPC.OuterRadius = OuterRadius;
@@ -243,7 +243,7 @@ IN INT8 Progress
     DrawAll(this, thispri->ProgressBackgroundColor);
 
     //return early because it was 0 which means no segment drawing
-    return; 
+    return;
   }
 
   for (INT8 S = (thispri->ProgressPreviousState + 1); S <= thispri->ProgressCurrentState; S++)
@@ -329,7 +329,7 @@ UINT32 Color
     return;
   }
 
-  //Find start of circle bmp in framebuffer space. 
+  //Find start of circle bmp in framebuffer space.
   Pix = ((UINT32*)thispri->PublicPC.FrameBufferBase) + (thispri->UpperLeft.Y * thispri->PublicPC.PixelsPerScanLine) + thispri->UpperLeft.X;
 
   //Get pointer to start of circle bmp
@@ -351,10 +351,10 @@ UINT32 Color
       cur++;
     }
 
-    //exit early 
+    //exit early
     if (FoundOnce && !FoundInThisRow)
     {
-      break; 
+      break;
     }
 
     //increment Pix 1 row
@@ -371,7 +371,7 @@ UINT32 Color
 
 /**
 Internal function to find a start and end point of a given horizontal line and then fill
-each point between them with given value. 
+each point between them with given value.
 **/
 static
 VOID
@@ -387,7 +387,7 @@ Fill(IN  PRIVATE_ProgressCircle *this, UINT8 Value)
     for (UINT16 X = 0; X < this->BmpWidth; X++)
     {
       //find outer edge
-      if (*cur == OUTER_RADIUS) 
+      if (*cur == OUTER_RADIUS)
       {
         //find the left side
         if (start == NULL)
@@ -398,7 +398,7 @@ Fill(IN  PRIVATE_ProgressCircle *this, UINT8 Value)
         {
           //fill between left and right side
           //use odd do while to avoid memset
-          do 
+          do
           {
             *start++ = Value;  //set and increment
           } while (start <= cur);
@@ -410,11 +410,11 @@ Fill(IN  PRIVATE_ProgressCircle *this, UINT8 Value)
 }
 
 /**
-Internal function used to find the segment of a given point. 
+Internal function used to find the segment of a given point.
 Segment between 1-100 returned.
 This routine mirrors the point into known quadrant, then calculates
-the slope and then compares with slope list to find which segment it is in.  
-Finally the segment is adjusted based on the quadrant of the original point.  
+the slope and then compares with slope list to find which segment it is in.
+Finally the segment is adjusted based on the quadrant of the original point.
 **/
 static
 UINT8
@@ -423,35 +423,35 @@ FindSegment(IN PRIVATE_ProgressCircle *this, POINT a)
   POINT t = a;
   UINT8 Seg;
   INTN Slope;
-  INTN BmpOrgin = this->BmpWidth / 2;
+  INTN BmpOrigin = this->BmpWidth / 2;
 
   //first convert into first Quadrant
-  if (t.X < BmpOrgin)
+  if (t.X < BmpOrigin)
   {
-    t.X = (BmpOrgin -t.X) + BmpOrgin;
+    t.X = (BmpOrigin -t.X) + BmpOrigin;
   }
 
-  if (t.Y > BmpOrgin)
+  if (t.Y > BmpOrigin)
   {
-    t.Y = BmpOrgin - (t.Y - BmpOrgin);
+    t.Y = BmpOrigin - (t.Y - BmpOrigin);
   }
 
   //Catch special cases where rise/run calc doesn't work
-  if (t.X == BmpOrgin)
+  if (t.X == BmpOrigin)
   {
     Slope = mSlopeMap[0] + 1;
   }
-  else if (t.Y == BmpOrgin)
+  else if (t.Y == BmpOrigin)
   {
     Slope = mSlopeMap[24] + 1;
   }
   else
   {
     //compute it
-    Slope = ((BmpOrgin - t.Y) * 1000) / (t.X - BmpOrgin);  //1000 x slope value (integer math trick)
+    Slope = ((BmpOrigin - t.Y) * 1000) / (t.X - BmpOrigin);  //1000 x slope value (integer math trick)
   }
   Seg = 0;
-  while (mSlopeMap[Seg++] > Slope); 
+  while (mSlopeMap[Seg++] > Slope);
 
   ASSERT(Slope >= 0);
   ASSERT(Seg <= 25);
@@ -473,8 +473,8 @@ FindSegment(IN PRIVATE_ProgressCircle *this, POINT a)
 
 /**
 Private function iterate thru all points and
-each point inside the donut will have its Segment 
-determined. 
+each point inside the donut will have its Segment
+determined.
 
 **/
 static
@@ -487,7 +487,7 @@ IN  PRIVATE_ProgressCircle *this)
   {
     for (UINT16 X = 0; X < this->BmpWidth; X++)
     {
-      if (*cur != OUTSIDE_CONTROL) 
+      if (*cur != OUTSIDE_CONTROL)
       {
         POINT t;
         t.X = X;
@@ -518,8 +518,8 @@ IN UINT8 Value
 
 /**
 Private function supporting drawing a circle.
-This will mark all points in the private bitmap with a given value.  
-This uses the symetry of the circle to draw all points.  
+This will mark all points in the private bitmap with a given value.
+This uses the symmetry of the circle to draw all points.
 This also translates from circle coordinates (-radius, radius) to bitmap coordinates (0, BmpWidth)
 
 **/
@@ -538,7 +538,7 @@ IN UINT8 Value
     SetPixel(this, bmpcenter + P.Y, bmpcenter, Value);  //Q2
     SetPixel(this, bmpcenter, bmpcenter - P.Y, Value);  //Q3
     SetPixel(this, bmpcenter - P.Y, bmpcenter, Value);  //Q4
-    
+
   }
   else if (P.X == P.Y)
   {
@@ -570,7 +570,7 @@ IN UINT8 Value
 }
 
 /**
-Private function to draw a single circle radius using 
+Private function to draw a single circle radius using
 the midpoint algorithm adjusted for integers
 
 **/
@@ -579,7 +579,7 @@ VOID
 DrawCircleEdgeUsingMidPointAlg(
 IN PRIVATE_ProgressCircle *this,
 IN INTN RadiusToDraw,
-IN UINT8 MarkValue 
+IN UINT8 MarkValue
 )
 {
   POINT c;
@@ -599,13 +599,13 @@ IN UINT8 MarkValue
       Mid += 2 * (c.X - c.Y) + 1;
     }
   } while (c.X <= c.Y);
-  
+
   return;
 }
 
 
 /**
-  Private function to Init all internal members 
+  Private function to Init all internal members
   and figure out all information needed for drawing and segments
 
 
@@ -615,15 +615,15 @@ VOID
 PRIVATE_Init(IN PRIVATE_ProgressCircle *this)
 {
   //find bounding box start
-  this->UpperLeft.X = (this->PublicPC.Orgin.X - this->PublicPC.OuterRadius-BMP_PADDING);
-  this->UpperLeft.Y = (this->PublicPC.Orgin.Y - this->PublicPC.OuterRadius - BMP_PADDING);
+  this->UpperLeft.X = (this->PublicPC.Origin.X - this->PublicPC.OuterRadius-BMP_PADDING);
+  this->UpperLeft.Y = (this->PublicPC.Origin.Y - this->PublicPC.OuterRadius - BMP_PADDING);
   this->BmpWidth = (this->PublicPC.OuterRadius + BMP_PADDING) *2;
   this->ProgressCurrentState = -1;
   this->ProgressPreviousState = 0;
   this->ProgressBackgroundColor = 0xFFFFFFFF;
   this->ProgressSegmentColor = 0x00000000;
 
-  DEBUG((DEBUG_INFO, "BmpWidth %d Orgin: %d\n", this->BmpWidth, (this->BmpWidth / 2)));
+  DEBUG((DEBUG_INFO, "BmpWidth %d Origin: %d\n", this->BmpWidth, (this->BmpWidth / 2)));
 
   SetMem(this->BitmapData, (this->BmpWidth * this->BmpWidth), OUTSIDE_CONTROL);  //init bitmap to all nothing
 

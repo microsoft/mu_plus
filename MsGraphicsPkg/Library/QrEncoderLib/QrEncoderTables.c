@@ -190,7 +190,7 @@ CONST UINT8 gAlphaNumerics[QR_ALPHA_TABLE_SIZE] = { // ISO 18004:2015 Table 5 En
                         ' ', '$', '%', '*', '+', '-', '.', '/', ':'};
 
 CONST UINT8 gLengthBits[QR_LENGTH_ENTRIES][QR_ENCODER_ENTRIES] = {  // ISO 18004:2015 Table 3 Number of Bits in the length indicator
-                            //  Lengths for Numeric, AlphaNumeric, Byte, and Kanjii
+                            //  Lengths for Numeric, AlphaNumeric, Byte, and Kanji
             {/* max QR Version */  9, 10,  9,  8,  8 },                    // Length bits for Versions 1-9
             {                     26, 12, 11, 16, 10 },                    // for Versions 10-26
             {                     40, 14, 13, 16, 12 }                     // for Versions 27-40

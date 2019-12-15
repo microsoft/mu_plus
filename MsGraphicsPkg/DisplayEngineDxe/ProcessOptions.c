@@ -274,7 +274,7 @@ CompareHiiValue (
     *Result = CompareMem (Buf1, Buf2, Len);
     if ((*Result == 0) && (Buf1Len != Buf2Len)) {
       //
-      // In this case, means base on samll number buffer, the data is same
+      // In this case, means base on small number buffer, the data is same
       // So which value has more data, which value is bigger.
       //
       *Result = Buf1Len > Buf2Len ? 1 : -1;
@@ -607,22 +607,14 @@ ProcessOptions (
   )
 {
   EFI_STATUS                      Status;
-  CHAR16                          *StringPtr;
   FORM_DISPLAY_ENGINE_STATEMENT   *Question;
   CHAR16                          FormattedNumber[21];
-  CHAR16                          Character[2];
   UINTN                           BufferSize;
   EFI_HII_VALUE                   *QuestionValue;
-  EFI_STRING_ID                   StringId;
-  BOOLEAN                         ValueInvalid;
 
   Status        = EFI_SUCCESS;
 
-  StringPtr     = NULL;
-  Character[1]  = L'\0';
   *OptionString = NULL;
-  StringId      = 0;
-  ValueInvalid  = FALSE;
 
   ZeroMem (FormattedNumber, 21 * sizeof (CHAR16));
   BufferSize = (gOptionBlockWidth + 1) * 2 * gStatementDimensions.BottomRow;
@@ -670,7 +662,7 @@ ProcessOptions (
   FormattedString and the glyph width of each line cannot exceed gHelpBlockWidth.
 
   @param  StringPtr              The entire help string.
-  @param  FormattedString        The oupput formatted string.
+  @param  FormattedString        The output formatted string.
   @param  EachLineWidth          The max string length of each line in the formatted string.
   @param  RowCount               TRUE: if Question is selected.
 

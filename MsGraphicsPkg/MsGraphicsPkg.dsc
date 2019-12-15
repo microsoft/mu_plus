@@ -25,13 +25,20 @@
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
 
-##MSCHANGE Begin
-!if $(TARGET) == DEBUG
-  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
+[LibraryClasses.X64]
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+!if $(TARGET) == DEBUG
+!if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019
+  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
   NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+!else
+  # otherwise use the null version for GCC and CLANG
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
 !endif
-##MSCHANGE End
+!endif
+
+[LibraryClasses.common]
 
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   MathLib|MsCorePkg/Library/MathLib/MathLib.inf
@@ -165,5 +172,5 @@
   MsGraphicsPkg/PrintScreenLogger/PrintScreenLogger.inf
 
 [BuildOptions]
-#force deprecated interaces off
+#force deprecated interfaces off
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES

@@ -1,7 +1,7 @@
 /** @file
   Defines the UI Theme settings.
 
-  This protocol provides the fonts and settigns to be used by the settings UI.
+  This protocol provides the fonts and settings to be used by the settings UI.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -10,6 +10,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #ifndef __MS_UI_THEME_PROTOCOL_H__
 #define __MS_UI_THEME_PROTOCOL_H__
+
+#include <Uefi.h>
 
 
 // Font package definition.
@@ -55,7 +57,7 @@ typedef struct {
 typedef struct {
     UINT64                   Signature;         // Force alignment for proper pointers.
     UINT32                   Version;
-    // General Puropose regsion of the Theme
+    // General Purpose regsion of the Theme
     UINT16                   Scale;
     UINT16                   Reserved1;         // Value is % * 100 (ie 25% == 25)
     // Fonts for this theme.

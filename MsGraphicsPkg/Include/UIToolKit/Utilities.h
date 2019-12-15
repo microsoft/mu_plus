@@ -21,7 +21,7 @@ Calculates the bitmap width and height of the specified text string based on the
 
 @param[in]     pString                        The string to measure.
 @param[in]     FontInfo                   Font information (defines size, style, etc.).
-@param[in]     BoundsLimit              TRUE == bounding rectangle restriction, FALSE == no restrction (only limit is the total screen size).
+@param[in]     BoundsLimit              TRUE == bounding rectangle restriction, FALSE == no restriction (only limit is the total screen size).
 @param[in out] Bounds                 On entry (if NoBounds == FALSE), contains the absolute bounds to be imposed on the string.  On exit, contains the actual string bounds.
 @param[out]    MaxFontGlyphDescent  Maximum font glyph descent (pixels) for the selected font.
 
@@ -38,7 +38,7 @@ GetTextStringBitmapSize (IN     CHAR16           *pString,
                          OUT    UINT32           *MaxFontGlyphDescent);
 
 
-// Given two canvas, find the "control" that is "InThisList" that is the eqivalent control
+// Given two canvas, find the "control" that is "InThisList" that is the equivalent control
 // "InOtherList"
 UIT_CANVAS_CHILD_CONTROL *
 EFIAPI

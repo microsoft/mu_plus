@@ -908,7 +908,7 @@ Exit:
 
 /**
     Timer Callback that Polls the Absolute Pointer provider watchlist for incoming pointer events,
-    and Queus them to the proper queue.
+    and Queues them to the proper queue.
 
     @param[in] Event                Ignored.
     @param[in] Context              Ignored.

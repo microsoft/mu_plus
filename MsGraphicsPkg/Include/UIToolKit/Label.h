@@ -14,7 +14,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 typedef struct _LabelDisplayInfo
 {
-    SWM_RECT                        LabelBoundsLimit;       // Asbolute maximum label bounds allowed.
+    SWM_RECT                        LabelBoundsLimit;       // absolute maximum label bounds allowed.
     SWM_RECT                        LabelBoundsCurrent;     // Actual label bounds required for the current string.
     CHAR16                          *pLabelText;            // Label text string.
 } LabelDisplayInfo;

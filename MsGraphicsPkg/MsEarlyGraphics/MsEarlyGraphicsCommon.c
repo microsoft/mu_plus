@@ -65,7 +65,7 @@ FindGlyph (
             break;
 
         case EFI_HII_GIBT_GLYPH_DEFAULT:
-            if (DefaultCell == NULL) 
+            if (DefaultCell == NULL)
             {
               ASSERT(DefaultCell != NULL);
               return EFI_NOT_FOUND;  //mschange - check with MT.  What is best way to exit this func
@@ -210,7 +210,7 @@ GlyphToBlt (
 
   @param This             Pointer to MS_EARLY_GRAPHICS_PROTOCOL
   @param Image            Pointer to bitmap
-  @param DestinationX     X location to display the bitmatp
+  @param DestinationX     X location to display the bitmap
   @param DestinationY     Y location to display the bitmap
   @param Width            Width of bitmap
   @param Height           Height of bitmap
@@ -255,7 +255,7 @@ SimpleBlt (
 
   @param this             Pointer to MS_EARLY_GRAPHICS_PROTOCOL
   @param Image            Pointer to bitmap
-  @param DestinationX     X location to display the bitmatp
+  @param DestinationX     X location to display the bitmap
   @param DestinationY     Y location to display the bitmap
   @param Width            Width of bitmap
   @param Height           Height of bitmap
@@ -297,13 +297,13 @@ SimpleFill(
  * Print a line at the row specified. There is no line
  * wrapping, and \n and other special characters are not
  * supported.
- * 
+ *
  * @param Row               Row to display msg on
  * @param Column            Column to start display of message
  * @param ForegroundColor   Color of text in foreground
  * @param BackgroundColor   Color of background behind text
  * @param Msg               String to display
- * 
+ *
  * @retval EFI_SUCCESS      String was written to display
  */
 EFI_STATUS
@@ -322,13 +322,13 @@ PrintLn(
     UINT16                          BaseLine;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *BufferPtr;
     EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *ImageBuffer;
-  
+
     this->UpdateFrameBufferBase(this);
     ImageBuffer = AllocatePool (MS_EARLY_GRAPHICS_CELL_HEIGHT * MS_EARLY_GRAPHICS_CELL_ADVANCE * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     if (ImageBuffer == NULL) {
         return EFI_OUT_OF_RESOURCES;
     }
-  
+
     Status = EFI_SUCCESS;
     while ('\0' != *Msg) {
         Status = FindGlyph((UINT8)*Msg, &Cell, &GlyphBlock); // Poor man's CHAR8 to CHAR16 conversion
@@ -353,11 +353,11 @@ PrintLn(
                                    Cell->Height);
             }
         }
-    
+
         Msg++;
         Column++;
     }
-  
+
     FreePool (ImageBuffer );
     return Status;
 }

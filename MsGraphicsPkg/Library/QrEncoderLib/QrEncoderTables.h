@@ -39,7 +39,7 @@ typedef struct {
 #define QR_LENGTH_ENTRIES 3        // There are 3 scales of length bits
 #define QR_ENCODER_ENTRIES 5       // Encoder entries
 #define QR_MASK_PATTERNS 8         // Number of mask patterns
-#define QR_QUIET_ZONE 4            // Reguired white modules on each side
+#define QR_QUIET_ZONE 4            // Required white modules on each side
 
 extern CONST QrTableEntry gQrTable[QR_TABLE_ENTRIES];      // ISO 18004:2015 Combination of data from Table 7 and Table 9
 

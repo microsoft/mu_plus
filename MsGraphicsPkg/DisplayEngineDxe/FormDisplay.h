@@ -550,7 +550,7 @@ GetSelectionInputPopUp (
   FormattedString and the glyph width of each line cannot exceed gHelpBlockWidth.
 
   @param  StringPtr              The entire help string.
-  @param  FormattedString        The oupput formatted string.
+  @param  FormattedString        The output formatted string.
   @param  EachLineWidth          The max string length of each line in the formatted string.
   @param  RowCount               TRUE: if Question is selected.
 

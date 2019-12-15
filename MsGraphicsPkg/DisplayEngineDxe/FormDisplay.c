@@ -132,7 +132,7 @@ FORM_DISPLAY_ENGINE_FORM          *gFormData;
 EFI_HII_HANDLE                    gHiiHandle;
 UINT16                            gDirection;
 LIST_ENTRY                        gMenuOption;
-DISPLAY_HIGHLIGHT_MENU_INFO       gHighligthMenuInfo            = { 0 };
+DISPLAY_HIGHLIGHT_MENU_INFO       gHighlightMenuInfo            = { 0 };
 BOOLEAN                           mIsFirstForm                  = TRUE;
 BOOLEAN                           mControlsRequireRefresh       = FALSE;
 BOOLEAN                           mRefreshOnEvent               = FALSE;
@@ -2605,10 +2605,6 @@ BrowserStatusProcess (
     VOID
     ) {
     CHAR16             *ErrorInfo;
-    EFI_EVENT          RefreshIntervalEvent;
-    EFI_EVENT          TimeOutEvent;
-    UINT8              TimeOut;
-    EFI_STATUS         Status;
     EFI_IFR_OP_HEADER  *OpCodeBuf;
     EFI_STRING_ID      StringToken;
     CHAR16             *PrintString;
@@ -2619,8 +2615,6 @@ BrowserStatusProcess (
     }
 
     StringToken = 0;
-    TimeOutEvent = NULL;
-    RefreshIntervalEvent = NULL;
     OpCodeBuf = NULL;
     if (gFormData->HighLightedStatement != NULL) {
         OpCodeBuf = gFormData->HighLightedStatement->OpCode;
@@ -2629,10 +2623,8 @@ BrowserStatusProcess (
     if (gFormData->BrowserStatus == (BROWSER_WARNING_IF)) {
         ASSERT (OpCodeBuf != NULL && OpCodeBuf->OpCode == EFI_IFR_WARNING_IF_OP);
 
-        TimeOut = ((EFI_IFR_WARNING_IF *)OpCodeBuf)->TimeOut;
         StringToken = ((EFI_IFR_WARNING_IF *)OpCodeBuf)->Warning;
     } else {
-        TimeOut = 0;
         if ((gFormData->BrowserStatus == (BROWSER_NO_SUBMIT_IF)) &&
             (OpCodeBuf != NULL && OpCodeBuf->OpCode == EFI_IFR_NO_SUBMIT_IF_OP)) {
             StringToken = ((EFI_IFR_NO_SUBMIT_IF *)OpCodeBuf)->Error;
@@ -2699,12 +2691,12 @@ BrowserStatusProcess (
         break;
 
     default:
-        Status = SwmDialogsMessageBox(L"Requested Pause",
-                                      ErrorInfo,        // Dialog body text.
-                                      L"Press OK to continue",  // Dialog Caption text.
-                                      SWM_MB_OK | SWM_MB_STYLE_ALERT2, // Show OK.
-                                      0,                // No timeout
-                                      &SwmResult);      // Return result.
+        SwmDialogsMessageBox(L"Requested Pause",
+                                ErrorInfo,        // Dialog body text.
+                                L"Press OK to continue",  // Dialog Caption text.
+                                SWM_MB_OK | SWM_MB_STYLE_ALERT2, // Show OK.
+                                0,                // No timeout
+                                &SwmResult);      // Return result.
         break;
     }
 
@@ -2960,7 +2952,7 @@ InitializeDisplayEngine (
                                   (VOID **)&mGop
                                  );
     //
-    // Known issue where on some devices gop is not found on console out. 
+    // Known issue where on some devices gop is not found on console out.
     // Need to root cause
     //
     if(EFI_ERROR(Status))
@@ -3028,7 +3020,7 @@ InitializeDisplayEngine (
 
     InitializeDisplayStrings ();
 
-    ZeroMem (&gHighligthMenuInfo, sizeof(gHighligthMenuInfo));
+    ZeroMem (&gHighlightMenuInfo, sizeof(gHighlightMenuInfo));
     ZeroMem (&gOldFormEntry, sizeof(gOldFormEntry));
 
     // Create the master frame notification event.
@@ -3042,7 +3034,7 @@ InitializeDisplayEngine (
                                 );
 
     if (EFI_SUCCESS != Status) {
-        DEBUG ((DEBUG_ERROR, "ERROR [DE]: Failed to create master frame notificiation event (%r).\r\n", Status));
+        DEBUG ((DEBUG_ERROR, "ERROR [DE]: Failed to create master frame notification event (%r).\r\n", Status));
         goto Exit;
     }
 
@@ -3135,12 +3127,12 @@ UnloadDisplayEngine (
 
     FreeDisplayStrings ();
 
-    if (gHighligthMenuInfo.OpCode != NULL) {
-        FreePool (gHighligthMenuInfo.OpCode);
+    if (gHighlightMenuInfo.OpCode != NULL) {
+        FreePool (gHighlightMenuInfo.OpCode);
     }
 
-    if (gHighligthMenuInfo.TOSOpCode != NULL) {
-      FreePool (gHighligthMenuInfo.TOSOpCode);
+    if (gHighlightMenuInfo.TOSOpCode != NULL) {
+      FreePool (gHighlightMenuInfo.TOSOpCode);
     }
 
     if (NULL != mReadyToBootEvent) {
@@ -3169,9 +3161,9 @@ ConfirmDataChange (
     return BROWSER_ACTION_SUBMIT;
 }
 /**
-  Set Timeout value for a ceratain Form to get user response.
+  Set Timeout value for a certain Form to get user response.
 
-  This function allows to set timeout value on a ceratain form if necessary.
+  This function allows to set timeout value on a certain form if necessary.
   If timeout is not zero, the form will exit if user has no response in timeout.
 
   @param[in]  FormData   Form Data to be shown in Page

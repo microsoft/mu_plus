@@ -32,3 +32,9 @@ MsCorePkg/MsCorePkg.dec
 
 [Sources]
 ColorBarDisplayDeviceStateLib.c
+Resources/UnlockBitmap.h
+Resources/UnlockBitmap32.h
+Resources/UnlockBitmap64.h
+Resources/UnlockBitmap112.h
+Resources/UnlockBitmap128.h
+Resources/UnlockBitmap256.h

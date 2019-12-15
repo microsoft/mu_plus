@@ -1,7 +1,7 @@
 ## @file
 # PrintScreenLogger.inf
 #
-# PrintScreenLogger registers for Crtl-PrtScn and writes the sreen contents
+# PrintScreenLogger registers for Crtl-PrtScn and writes the screen contents
 # to a eligible USB storage device.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.

@@ -44,6 +44,7 @@ EFI_DRIVER_BINDING_PROTOCOL     mSREDriverBinding =
 //
 static
 EFI_STATUS
+EFIAPI
 SREShowMousePointer (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                      IN  BOOLEAN                         ShowPointer);
 
@@ -199,6 +200,7 @@ RectsOverlap (IN SWM_RECT   A,
 
 static
 EFI_STATUS
+EFIAPI
 SREBlt (IN  EFI_GRAPHICS_OUTPUT_PROTOCOL            *This,
         IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL           *BltBuffer,
         IN  EFI_GRAPHICS_OUTPUT_BLT_OPERATION       BltOperation,
@@ -372,6 +374,7 @@ SREBlt (IN  EFI_GRAPHICS_OUTPUT_PROTOCOL            *This,
 
 static
 EFI_STATUS
+EFIAPI
 SREQueryMode (IN  EFI_GRAPHICS_OUTPUT_PROTOCOL          *This,
               IN  UINT32                                ModeNumber,
               OUT UINTN                                 *SizeOfInfo,
@@ -388,6 +391,7 @@ SREQueryMode (IN  EFI_GRAPHICS_OUTPUT_PROTOCOL          *This,
 
 static
 EFI_STATUS
+EFIAPI
 SRESetMode (IN  EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
             IN  UINT32                       ModeNumber)
 {
@@ -411,6 +415,7 @@ SRESetMode (IN  EFI_GRAPHICS_OUTPUT_PROTOCOL *This,
 
 static
 EFI_STATUS
+EFIAPI
 SRESetMousePointer (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                     IN  const UINT32                    *MouseBitmap,
                     IN  UINT32                          Width,
@@ -514,6 +519,7 @@ Exit:
 
 static
 EFI_STATUS
+EFIAPI
 SREShowMousePointer (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                      IN  BOOLEAN                         ShowPointer)
 {
@@ -543,6 +549,7 @@ SREShowMousePointer (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
 
 static
 EFI_STATUS
+EFIAPI
 SREMoveMousePointer (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                      IN  UINT32                          OrigX,
                      IN  UINT32                          OrigY)
@@ -684,6 +691,7 @@ SampleSurfaceFrameTimerCallback (IN EFI_EVENT  Event,
 
 static
 EFI_STATUS
+EFIAPI
 SRECreateSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                   IN  EFI_HANDLE                      ImageHandle,
                   IN  SWM_RECT                        FrameRect,
@@ -799,6 +807,7 @@ Exit:
 
 static
 EFI_STATUS
+EFIAPI
 SREResizeSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                   IN  EFI_HANDLE                      ImageHandle,
                   IN  SWM_RECT                        *FrameRect)
@@ -878,7 +887,7 @@ SREResizeSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                 break;
             }
 
-            // If the surface is active, cature screen contents to the new buffer.
+            // If the surface is active, capture screen contents to the new buffer.
             //
             if (TRUE == Surface->Active)
             {
@@ -925,6 +934,7 @@ SREResizeSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
 
 static
 EFI_STATUS
+EFIAPI
 SREActivateSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                     IN  EFI_HANDLE                      ImageHandle,
                     IN  BOOLEAN                         MakeActive)
@@ -1054,6 +1064,7 @@ SREActivateSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
 
 static
 EFI_STATUS
+EFIAPI
 SREDeleteSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                   IN  EFI_HANDLE                      ImageHandle)
 {
@@ -1145,6 +1156,7 @@ SREDeleteSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
 
 static
 EFI_STATUS
+EFIAPI
 SRESetModeSurface (IN  MS_RENDERING_ENGINE_PROTOCOL     *This,
                    IN  EFI_HANDLE                       ImageHandle,
                    IN  MS_SRE_SURFACE_MODE              Mode)
@@ -1514,4 +1526,3 @@ DriverUnload (IN EFI_HANDLE  ImageHandle)
 
     return Status;
 }
-

@@ -44,7 +44,6 @@ DisplayBootGraphic(
   UINTN BltSize;
   EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput;
   EDKII_BOOT_LOGO2_PROTOCOL *BootLogo2;
-  BOOLEAN IsLandscape = FALSE;
   UINT8 SkipCounter;
 
   // Initialize pointers to prevent CleanUp failure
@@ -151,7 +150,6 @@ DisplayBootGraphic(
 
   if (SizeOfX >= SizeOfY) {
     DEBUG((DEBUG_VERBOSE, "Landscape mode detected.\n"));
-    IsLandscape = TRUE;
   }
 
   // If system logo it must meet size requirements.

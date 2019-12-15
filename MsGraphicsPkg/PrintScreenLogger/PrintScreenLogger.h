@@ -12,7 +12,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __PRINTSCREEN_LOGGER_H__
 
 #include <Uefi.h>
-#include <Uefi\UefiInternalFormRepresentation.h>
 
 #include <IndustryStandard/Bmp.h>
 

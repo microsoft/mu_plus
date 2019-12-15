@@ -2,7 +2,7 @@
 #  ManufacturingModeLib.inf
 #
 #  Description:    Library for determining if Manufacturing mode should be
-#                  enabled on this boot.  This libray is what everyone should
+#                  enabled on this boot.  This library is what everyone should
 #                  use to determine which mode we are in.  It can be called from
 #                  PEI or DXE.
 #

@@ -121,7 +121,7 @@ RenderButton(IN Button  *this,
                        );
 
 
-    // Draw the button's - keyboard focus highilght rectangle if it's needed.
+    // Draw the button's - keyboard focus highlight rectangle if it's needed.
     //
     if (TRUE == DrawHighlight)
     {
@@ -264,7 +264,6 @@ Draw (IN    Button              *this,
       IN    SWM_INPUT_STATE     *pInputState,
       OUT   VOID                **pSelectionContext)
 {
-    EFI_STATUS  Status      = EFI_SUCCESS;
     SWM_RECT    *pRect      = &this->m_pButton->ButtonBounds;
     VOID        *Context    = NULL;
 
@@ -273,9 +272,9 @@ Draw (IN    Button              *this,
     //
     if ((NULL == pInputState) || (this->m_pButton->State == GRAYED))
     {
-        Status = RenderButton (this,
-                               DrawHighlight
-                              );
+        RenderButton (this,
+                        DrawHighlight
+                        );
 
         goto Exit;
     }
@@ -301,9 +300,9 @@ Draw (IN    Button              *this,
 
         // Draw the button.
         //
-        Status = RenderButton (this,
-                               DrawHighlight
-                              );
+        RenderButton (this,
+                        DrawHighlight
+                        );
 
         // We're done, exit.
         //
@@ -341,9 +340,9 @@ Draw (IN    Button              *this,
 
     // Draw the button.
     //
-    Status = RenderButton (this,
-                           DrawHighlight
-                          );
+    RenderButton (this,
+                    DrawHighlight
+                    );
 
 Exit:
 

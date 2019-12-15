@@ -14,12 +14,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     Resets the aggregate pointer event state queue and providers.
 
     @param[in] This                 Pointer to the instance of this driver.
-    @param[in] ExtendedVerifiation  Ignored.
+    @param[in] ExtendedVerification  Ignored.
 
     @retval EFI_SUCCESS             Successfully reset.
 
 **/
 EFI_STATUS
+EFIAPI
 SWMAbsolutePointerReset (IN EFI_ABSOLUTE_POINTER_PROTOCOL *this,
                          IN BOOLEAN                        ExtendedVerification)
 {
@@ -77,6 +78,7 @@ Exit:
 
 **/
 EFI_STATUS
+EFIAPI
 SWMAbsolutePointerGetState (IN EFI_ABSOLUTE_POINTER_PROTOCOL     *this,
                             IN OUT MS_SWM_ABSOLUTE_POINTER_STATE *State)
 {
@@ -141,7 +143,7 @@ Exit:
     @param[in]  ImageHandle  Image handle representing the client to be supported.
     @param[in]  Z_Order      Where in the Z_Order does this Client exist.
     @param[in]  FrameRect    Client's window frame rectangle.
-    @param[in]  DataNotificationCallback Routine to be called when data is avialable for this client. This routine is optional.
+    @param[in]  DataNotificationCallback Routine to be called when data is available for this client. This routine is optional.
     @param[in]  Context      Pointer from Client to be passed into the DataNotificationCallback function.
     @param[out] AbsolutePointerProtocol  Where to store the clients AbsolutePointerProtocol pointer.
     @param[out] PaintEvent   Per-client event to be provided used for screen paint event notifications (NULL means no window surface required).
@@ -157,7 +159,7 @@ SWMRegisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
                    IN  EFI_HANDLE                           ImageHandle,
                    IN  UINT32                               Z_Order,
                    IN  SWM_RECT                            *FrameRect,
-                   IN  MS_SWM_CLIENT_NOTFICATION_CALLBACK   DataNotificationCallback OPTIONAL,
+                   IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK   DataNotificationCallback OPTIONAL,
                    IN  VOID                                *Context,
                    OUT EFI_ABSOLUTE_POINTER_PROTOCOL      **AbsolutePointer,
                    OUT EFI_EVENT                           *PaintEvent)
@@ -491,7 +493,7 @@ SWMActivateWindow (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
 
 
 /**
-    Sets the outer window frame (bouding rectangle) for the client window.
+    Sets the outer window frame (bounding rectangle) for the client window.
 
     @param[in]  This         Pointer to the instance of this driver.
     @param[in]  ImageHandle  Image handle representing the client to be supported.

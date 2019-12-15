@@ -7,7 +7,6 @@
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
-        "skip": true,
         "DscPath": "MsGraphicsPkg.dsc"
     },
 
@@ -39,8 +38,8 @@
 
     ## options defined ci/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
-        "IgnoreInf": [], 
-        "DscPath": "MsGraphicsPkg.dsc"   
+        "IgnoreInf": [],
+        "DscPath": "MsGraphicsPkg.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck
@@ -59,12 +58,61 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
+        # Fails test but run in AuditOnly mode to collect log
         "AuditOnly": true,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
         "ExtendWords": [           # words to extend to the dictionary for this package
+            "blits",
+            "okcancel",
+            "blitting",
+            "idcancel",
+            "idcontinue",
+            "idignore",
+            "idrestart",
+            "idretry",
+            "idtryagain",
+            "idyes",
+            "mframe",
+            "mschange",
+            "mslogo",
+            "pytools",
+            "qrencoder",
+            "qrencoding",
+            "qrlevel",
+            "osk's",
+            "selawik",
+            "swmdialogs",
+            "undock",
+            "undocked",
+            "yesno",
+            "Jndex",
+            "FCANVAS",
+            "cat'ing",
+            "shiftn",
+            "winjs",
+            "Segmatize",
+            "uirect",
+            "lavel",
+            "Thonky",
+            "UITSWM",
+            "STEADYST",
+            "Xstart",
+            "dialog's",
+            "reprompt",
+            "glyph's",
+            "bitmap",
+            "pixed",
+            "xform",
+            "rotex",
+            "rotey",
+            "rotez",
+            "xformed",
+            "fltused",
+            "Splitter's",
+            "brower", ## TO BE REMOVED ONCE MU_BASECORE has all spelling mistakes fixed for gEfiMdeModulePkgTokenSpaceGuid.PcdBrowerGrayOutReadOnlyMenu
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

@@ -15,7 +15,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 
 MS_EARLY_GRAPHICS_PROTOCOL                            mEarlyGraphicsProtocol;
-MS_UI_THEME_DESCRIPTION                              *gPlatformTheme;
 
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_PEI_PPI_DESCRIPTOR  mMsEarlyGraphicsPpiList = {
     EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST,
@@ -71,7 +70,7 @@ MsEarlyGraphicsEntry (
         return Status;
     }
 
-    // Create a HoB for passing the PEI graphics informaiont up to the DXE MsEarlyGraphics
+    // Create a HoB for passing the PEI graphics information up to the DXE MsEarlyGraphics
     //
     Status = PeiServicesCreateHob (
                                   EFI_HOB_TYPE_GUID_EXTENSION,

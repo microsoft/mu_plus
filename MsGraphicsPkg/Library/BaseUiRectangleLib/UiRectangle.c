@@ -77,12 +77,12 @@ IN UI_STYLE_INFO* StyleInfo
     {
       INTN PixelDataSize = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width * sizeof(UINT32);
       this->Public.StyleInfo.IconInfo.PixelData = (UINT32*)AllocatePool(PixelDataSize);
-      if (this->Public.StyleInfo.IconInfo.PixelData != NULL) 
+      if (this->Public.StyleInfo.IconInfo.PixelData != NULL)
       {
         CopyMem(this->Public.StyleInfo.IconInfo.PixelData, StyleInfo->IconInfo.PixelData, PixelDataSize);
       }
     }
-    
+
     PRIVATE_Init(this);
     return &this->Public;
   }
@@ -116,7 +116,7 @@ IN UI_RECTANGLE *this
 /*
 Method to draw the rectangle to the framebuffer.
 
-@param this     - UI_RECTAGLE object to draw
+@param this     - UI_RECTANGLE object to draw
 
 */
 VOID
@@ -144,7 +144,7 @@ IN  UI_RECTANGLE *this
         if (((y / priv->Public.StyleInfo.FillTypeInfo.StripeFill.StripeSize) % 2) == 0)
         {
           //temp is uint32 pointer so move it forward by pixels
-          temp += priv->Public.Width;  
+          temp += priv->Public.Width;
         }
         break;
 
@@ -201,14 +201,14 @@ IN  UI_RECTANGLE *this
 
 /***  PRIVATE METHODS ***/
 
-/** 
+/**
 Method checks to see if the StyleInfo is supported by
 this implementation of UiRectangle
 
 @retval TRUE:   Supported
 @retval FALSE:  Not Supported
 **/
-BOOLEAN 
+BOOLEAN
 IsStyleSupported(IN UI_STYLE_INFO* StyleInfo)
 {
   if ((StyleInfo->FillType > FILL_POLKA_SQUARES) || (StyleInfo->FillType < FILL_SOLID))
@@ -222,7 +222,7 @@ IsStyleSupported(IN UI_STYLE_INFO* StyleInfo)
   }
 }
 
-/** 
+/**
 Method returns the private datasize in bytes needed to support this style info for this rectangle
 
 **/
@@ -285,7 +285,7 @@ IN PRIVATE_UI_RECTANGLE* priv
     case FILL_VERTICAL_STRIPE:
       SetMem32(priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color1);  //set row to Color1
 
-      //setup alternate color.  Color band is width stripe_width.  
+      //setup alternate color.  Color band is width stripe_width.
       //i is in pixels not bytes
       for (INTN i = priv->Public.StyleInfo.FillTypeInfo.StripeFill.StripeSize; i < FillDataSizeInPixels; i += (priv->Public.StyleInfo.FillTypeInfo.StripeFill.StripeSize * 2))
       {
@@ -302,7 +302,7 @@ IN PRIVATE_UI_RECTANGLE* priv
     case FILL_CHECKERBOARD:
       SetMem32(priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.Color1);  //set row to Color1
 
-      //setup alternate color.  Color band is width stripe_width.  
+      //setup alternate color.  Color band is width stripe_width.
       for (int i = priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth; i < FillDataSizeInPixels; i += (priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth * 2))
       {
         INTN Len = FillDataSizeInPixels - i;
@@ -318,7 +318,7 @@ IN PRIVATE_UI_RECTANGLE* priv
     case FILL_POLKA_SQUARES:
       SetMem32(priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.Color1);  //set row to Color1
 
-      //setup dot row. as row two of the filldata  
+      //setup dot row. as row two of the filldata
       for (int i = priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares / 2;
         i < (FillDataSizeInPixels / 2);
         i += (priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.SquareWidth + priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares)
@@ -342,7 +342,7 @@ IN PRIVATE_UI_RECTANGLE* priv
 
 
 /**
-Method used to draw the rectangle border.  Border Width is included in rectangle width. 
+Method used to draw the rectangle border.  Border Width is included in rectangle width.
 **/
 VOID
 DrawBorder(
@@ -403,7 +403,7 @@ IN PRIVATE_UI_RECTANGLE* priv
 
     //
     // Figure out where the logo is placed based on rect size, border, icon size, and icon placement
-    // Offset X and Y will be in coordinate space of rectangle. 
+    // Offset X and Y will be in coordinate space of rectangle.
     //
     switch (priv->Public.StyleInfo.IconInfo.Placement)
     {

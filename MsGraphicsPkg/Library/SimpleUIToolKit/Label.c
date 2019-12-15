@@ -203,12 +203,10 @@ Draw (IN    Label               *this,
       IN    SWM_INPUT_STATE     *pInputState,
       OUT   VOID                **pSelectionContext)
 {
-    EFI_STATUS  Status = EFI_SUCCESS;
-
 
     // Draw the label.
     //
-    Status = RenderLabel (this);
+    RenderLabel (this);
 
     // No selection context associated with a label.
     //
@@ -249,7 +247,7 @@ Ctor(IN struct _Label                  *this,
     this->m_BackgroundColor = *pBackgroundColor;
 
     // Allocate space for storing display information.
-    // TODO - this needn't be a seperate structure from the label context structure.
+    // TODO - this needn't be a separate structure from the label context structure.
     //
     this->m_pLabel = AllocateZeroPool(sizeof(LabelDisplayInfo));
 

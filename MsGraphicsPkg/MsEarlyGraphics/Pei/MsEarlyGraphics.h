@@ -26,6 +26,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MsPlatformEarlyGraphicsLib.h>
 #include <Library/MsUiThemeLib.h>
 
-#include "..\MsEarlyGraphicsCommon.h"
+#include "../MsEarlyGraphicsCommon.h"
 
 #endif  // _MS_EARLY_GRAPHICS_PEI_H_

@@ -20,17 +20,10 @@ RenderCanvas(IN     Canvas              *this,
              IN     SWM_INPUT_STATE     *pInputState,
              OUT    VOID                **pSelectionContext)
 {
-    UINTN                       Width, Height;
     UIT_CANVAS_CHILD_CONTROL    *pChildControl  = this->m_pControls;
     ControlBase                 *pControlBase;
 
-
-    // Compute canvas width and height.
-    //
-    Width   = (this->m_CanvasBounds.Right  - this->m_CanvasBounds.Left + 1);
-    Height  = (this->m_CanvasBounds.Bottom - this->m_CanvasBounds.Top + 1);
-
-    // NOTE: We assume that it's not necessary to fill the entire canvas - it's alraedy been cleared for us.  If
+    // NOTE: We assume that it's not necessary to fill the entire canvas - it's already been cleared for us.  If
     // we have to fill it every time we render it's a notable performance impact.  Instead, we clear individual control
     // rectangles on the canvas when we switch between canvases.
     //
@@ -370,7 +363,7 @@ MoveHighlight (IN Canvas    *this,
     }
 
     // Check whether we're highlighting anything currently.  If not, we'll start
-    // with the first highlighable control in our list (not all controls can be highlighted).
+    // with the first highlightable control in our list (not all controls can be highlighted).
     //
     if (NULL == this->m_pCurrentHighlight)
     {
@@ -540,7 +533,6 @@ ClearCanvas(IN  Canvas    *this)
 {
     EFI_STATUS                  Status          = EFI_SUCCESS;
     UIT_CANVAS_CHILD_CONTROL    *pChildControl  = this->m_pControls;
-    ControlBase                 *pControlBase;
     SWM_RECT                    *pChildControlRect;
     UINT32                      FillWidth, FillHeight;
 
@@ -553,7 +545,6 @@ ClearCanvas(IN  Canvas    *this)
     //
     while (NULL != pChildControl)
     {
-        pControlBase        = (ControlBase *)pChildControl->pControl;
         pChildControlRect   = &pChildControl->ChildBounds;
 
         FillWidth   = (pChildControlRect->Right - pChildControlRect->Left + 1);

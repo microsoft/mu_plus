@@ -108,7 +108,7 @@ typedef struct
 **/
 typedef
 BOOLEAN
-(EFIAPI *MS_SWM_CLIENT_NOTFICATION_CALLBACK) (IN VOID *Context);
+(EFIAPI *MS_SWM_CLIENT_NOTIFICATION_CALLBACK) (IN VOID *Context);
 
 /*++
 
@@ -133,7 +133,7 @@ EFI_STATUS
     IN  EFI_HANDLE                          ImageHandle,
     IN  UINT32                              Z_Order,
     IN  SWM_RECT                           *FrameRect,
-    IN  MS_SWM_CLIENT_NOTFICATION_CALLBACK  DataNotificationCallback OPTIONAL,
+    IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK  DataNotificationCallback OPTIONAL,
     IN  VOID                                *Context,
     OUT EFI_ABSOLUTE_POINTER_PROTOCOL      **AbsolutePointer,
     OUT EFI_EVENT                           *PaintEvent

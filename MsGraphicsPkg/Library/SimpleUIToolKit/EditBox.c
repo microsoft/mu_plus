@@ -392,7 +392,6 @@ Draw (IN    EditBox             *this,
       IN    SWM_INPUT_STATE     *pInputState,
       OUT   VOID                **pSelectionContext)
 {
-    EFI_STATUS  Status      = EFI_SUCCESS;
     SWM_RECT    *pRect      = &this->m_EditBoxBounds;
     VOID        *Context    = NULL;
 
@@ -400,7 +399,7 @@ Draw (IN    EditBox             *this,
     //
     if (this->m_State == GRAYED)
     {
-        Status = RenderEditBox(this,
+        RenderEditBox(this,
             FALSE
             );
 
@@ -418,9 +417,9 @@ Draw (IN    EditBox             *this,
     //
     if (NULL == pInputState)
     {
-        Status = RenderEditBox (this,
-                                DrawHighlight
-                               );
+        RenderEditBox (this,
+                        DrawHighlight
+                        );
 
         goto Exit;
     }
@@ -546,9 +545,9 @@ Draw (IN    EditBox             *this,
         //
         if (TRUE == NeedToRender)
         {
-            Status = RenderEditBox (this,
-                                    DrawHighlight
-                                   );
+            RenderEditBox (this,
+                            DrawHighlight
+                            );
         }
 
         // We're done, exit.

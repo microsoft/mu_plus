@@ -366,16 +366,14 @@ AllocateBackBuffers (VOID)
 
     // Compute maximum (to screen limits) keyboard dimensions possible (including rotation scenarios).
     //
-    UINTN Width, Height;
+    UINTN Width;
     if (mGop->Mode->Info->HorizontalResolution > mGop->Mode->Info->VerticalResolution)
     {
         Width  = mGop->Mode->Info->HorizontalResolution;        // Landscape
-        Height = mGop->Mode->Info->VerticalResolution;
     }
     else
     {
         Width  = mGop->Mode->Info->VerticalResolution;          // Portrait
-        Height = mGop->Mode->Info->HorizontalResolution;
     }
 
     mOSK.KeyboardMaxWidth  = Width;
@@ -1796,7 +1794,7 @@ SetKeyboardSize (IN float    PercentOfScreenWidth)
     //
     ScaleFactor *= (float)PercentOfScreenWidth;
 
-    // Make sure height doens't scale past screen limits since we haven't implemented clipping
+    // Make sure height doesn't scale past screen limits since we haven't implemented clipping
     //
     if ((UINTN)((float)KeyboardHeight * ScaleFactor) >= ScreenHeight)
     {
@@ -2871,6 +2869,7 @@ Exit:
 }
 
 EFI_STATUS
+EFIAPI
 OSKResetInputDevice (IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
 IN BOOLEAN                          ExtendedVerification)
 {
@@ -2885,6 +2884,7 @@ IN BOOLEAN                          ExtendedVerification)
 
 
 EFI_STATUS
+EFIAPI
 OSKReadKeyStroke (IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL     *This,
 OUT EFI_INPUT_KEY                      *pKey)
 {
@@ -2917,6 +2917,7 @@ OUT EFI_INPUT_KEY                      *pKey)
 
 
 EFI_STATUS
+EFIAPI
 OSKResetInputDeviceEx (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN BOOLEAN                             ExtendedVerification)
 {
@@ -2925,6 +2926,7 @@ IN BOOLEAN                             ExtendedVerification)
 
 
 EFI_STATUS
+EFIAPI
 OSKReadKeyStrokeEx (IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL     *This,
 OUT EFI_KEY_DATA                          *pKey)
 {
@@ -2938,6 +2940,7 @@ OUT EFI_KEY_DATA                          *pKey)
 
 
 EFI_STATUS
+EFIAPI
 OSKSetState (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_KEY_TOGGLE_STATE               *KeyToggleState)
 {
@@ -2946,6 +2949,7 @@ IN EFI_KEY_TOGGLE_STATE               *KeyToggleState)
 
 
 EFI_STATUS
+EFIAPI
 OSKRegisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_KEY_DATA                       *KeyData,
 IN EFI_KEY_NOTIFY_FUNCTION            KeyNotificationFunction,
@@ -2956,6 +2960,7 @@ OUT EFI_HANDLE                        *NotifyHandle)
 
 
 EFI_STATUS
+EFIAPI
 OSKUnregisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
 IN EFI_HANDLE                         NotificationHandle)
 {

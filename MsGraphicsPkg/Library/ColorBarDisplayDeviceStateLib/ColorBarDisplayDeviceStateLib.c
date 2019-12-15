@@ -128,7 +128,7 @@ PrintValues(DEVICE_STATE Notifications)
 
 
 /**
-Given an array of blit data find the largest that fits the bannner height
+Given an array of blit data find the largest that fits the banner height
 
 This is used to identify the correct icon for various screen resolutions.
 
@@ -156,7 +156,7 @@ IN       UI_PLACEMENT          IconPlacement
     ASSERT(Style != NULL);
     return;
   }
-  
+
   for(UINT32 index = 0; index < ArrayLength; index++) {
     DEBUG((DEBUG_VERBOSE, "Checking icon of size %u x %u to see if it fits\n", BlitArray[index]->Height, BlitArray[index]->Width));
     if((BlitArray[index]->Height <= BannerHeight) && (BlitArray[index]->Width <= BannerWidth)){

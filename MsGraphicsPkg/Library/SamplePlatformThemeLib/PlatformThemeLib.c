@@ -21,6 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/MsUiThemeProtocol.h>
 #include <Library/PlatformThemeLib.h>
 
+#define FILLED_AT_RUNTIME       0
 
 #define FONT_DECL(TABLE, NAME ) \
   \
@@ -30,8 +31,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
         MS_UI_CUSTOM_FONT_ ## NAME ## _MAX_ADVANCE, \
         sizeof (mMsUiFontPackageHdr_ ## NAME), \
         sizeof (mMsUiFontPackageGlyphs_ ## NAME), \
-        FONT_PTR_SET &mMsUiFontPackageHdr_ ## NAME, \
-        GLYPH_PTR_SET &mMsUiFontPackageGlyphs_ ## NAME \
+        FILLED_AT_RUNTIME, \
+        FILLED_AT_RUNTIME \
     };
 
 // The fonts for this platform are:
@@ -62,17 +63,42 @@ static  MS_UI_THEME_DESCRIPTION gMsUiPlatformTheme = {
     MS_UI_THEME_PROTOCOL_VERSION,
     SCALE,
     0,
-    FONT_PTR_SET &FixedFont,
-    FONT_PTR_SET &SmallOSKFont,
-    FONT_PTR_SET &SmallFont,
-    FONT_PTR_SET &StandardFont,
-    FONT_PTR_SET &MediumFont,
-    FONT_PTR_SET &LargeFont
+    FILLED_AT_RUNTIME,
+    FILLED_AT_RUNTIME,
+    FILLED_AT_RUNTIME,
+    FILLED_AT_RUNTIME,
+    FILLED_AT_RUNTIME,
+    FILLED_AT_RUNTIME
 };
 
 MS_UI_THEME_DESCRIPTION *
 EFIAPI
 PlatformThemeGet ( VOID ) {
+
+    FixedFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_22pt;
+    FixedFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_22pt;
+
+    SmallOSKFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_10pt;
+    SmallOSKFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_10pt;
+
+    SmallFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_24pt;
+    SmallFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_24pt;
+
+    StandardFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_28pt;
+    StandardFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_28pt;
+
+    MediumFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_36pt;
+    MediumFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_36pt;
+
+    LargeFont.Package = FONT_PTR_SET &mMsUiFontPackageHdr_Selawik_Regular_48pt;
+    LargeFont.Glyphs  = GLYPH_PTR_SET &mMsUiFontPackageGlyphs_Selawik_Regular_48pt;
+
+    gMsUiPlatformTheme.FixedFont    = FONT_PTR_SET &FixedFont;
+    gMsUiPlatformTheme.SmallOSKFont = FONT_PTR_SET &SmallOSKFont;
+    gMsUiPlatformTheme.SmallFont    = FONT_PTR_SET &SmallFont;
+    gMsUiPlatformTheme.StandardFont = FONT_PTR_SET &StandardFont;
+    gMsUiPlatformTheme.MediumFont   = FONT_PTR_SET &MediumFont;
+    gMsUiPlatformTheme.LargeFont    = FONT_PTR_SET &LargeFont;
 
     return &gMsUiPlatformTheme;
 }

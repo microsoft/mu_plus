@@ -24,7 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MsUiThemeLib.h>
 
 
-extern MS_UI_THEME_DESCRIPTION *gPlatformTheme = NULL;
+extern MS_UI_THEME_DESCRIPTION *gPlatformTheme;
 
 
 /**

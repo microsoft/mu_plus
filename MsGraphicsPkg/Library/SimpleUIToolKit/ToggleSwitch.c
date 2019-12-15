@@ -578,7 +578,6 @@ Draw (IN  ToggleSwitch          *this,
       IN   SWM_INPUT_STATE      *pInputState,
       OUT VOID                  **pSelectionContext)
 {
-    EFI_STATUS  Status      = EFI_SUCCESS;
     SWM_RECT    *pRect      = &this->m_pToggleSwitch->ToggleSwitchBounds;
     VOID        *Context    = NULL;
 
@@ -586,9 +585,9 @@ Draw (IN  ToggleSwitch          *this,
     //
     if (NULL == pInputState || this->m_pToggleSwitch->State == GRAYED)
     {
-        Status = RenderToggleSwitch (this,
-                                     DrawHighlight
-                                    );
+        RenderToggleSwitch (this,
+                                DrawHighlight
+                            );
 
         goto Exit;
     }
@@ -633,9 +632,9 @@ Draw (IN  ToggleSwitch          *this,
 
         // Draw the toggle switch.
         //
-        Status = RenderToggleSwitch (this,
-                                     TRUE
-                                    );
+        RenderToggleSwitch (this,
+                                TRUE
+                            );
 
         // We're done, Exit.
         //
@@ -694,9 +693,9 @@ Draw (IN  ToggleSwitch          *this,
 
     // Draw the toggle switch.
     //
-    Status = RenderToggleSwitch (this,
-                                DrawHighlight
-                               );
+    RenderToggleSwitch (this,
+                        DrawHighlight
+                        );
 
 Exit:
 
