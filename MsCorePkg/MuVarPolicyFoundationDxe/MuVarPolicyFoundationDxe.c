@@ -249,7 +249,7 @@ EDKII_VARIABLE_LOCK_PROTOCOL mVariableLock = { VariableLockRequestToLock };
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS
@@ -301,8 +301,8 @@ MuVarPolicyFoundationDxeMain (
                                                 NULL,                                   // Name
                                                 sizeof(POLICY_LOCK_VAR),                // MinSize
                                                 sizeof(POLICY_LOCK_VAR),                // MaxSize
-                                                WRTIE_ONCE_STATE_VAR_ATTR,              // AttributesMustHave
-                                                (UINT32)(~WRTIE_ONCE_STATE_VAR_ATTR),   // AttributesCantHave
+                                                WRITE_ONCE_STATE_VAR_ATTR,              // AttributesMustHave
+                                                (UINT32)(~WRITE_ONCE_STATE_VAR_ATTR),   // AttributesCantHave
                                                 VARIABLE_POLICY_TYPE_LOCK_ON_CREATE );  // LockPolicyType
     if (EFI_ERROR( PolicyStatus )) {
       DEBUG(( DEBUG_ERROR, "%a - Failed to register WriteOnce state var policy! %r\n", __FUNCTION__, PolicyStatus ));
@@ -368,7 +368,7 @@ MuVarPolicyFoundationDxeMain (
     ASSERT( FALSE );
 
     // TODO VARPOL: Telemetry.
-  
+
     // If any of the callback registrations succeeded, we MUST return EFI_SUCCESS so
     // that the driver remains resident.
     if (EFI_ERROR( PolicyStatus ) ||

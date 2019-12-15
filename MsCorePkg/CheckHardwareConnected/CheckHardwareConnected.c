@@ -1,4 +1,4 @@
-/** @file 
+/** @file
 CheckHardwareConnected.c
 
 Checks if PCI devices defined in DeviceSpecificBusInfoLib are connected
@@ -50,29 +50,29 @@ CheckPCIDevices(VOID)
   DeviceFound = AllocateZeroPool(sizeof(BOOLEAN) * NumDevices);
 
   // Ensure that all necessary pointers have been populated, abort to cleanup if not
-  if(Devices == NULL || DeviceFound == NULL || NumDevices == 0 || 
+  if(Devices == NULL || DeviceFound == NULL || NumDevices == 0 ||
      EFI_ERROR(EfiLocateProtocolBuffer(&gEfiPciIoProtocolGuid, &ProtocolCount, (VOID*)&ProtocolList))) {
     goto CLEANUP;
   }
 
   // For each device protocol found...
   for(OuterLoop = 0; OuterLoop < ProtocolCount; OuterLoop++) {
-    
+
     // Get device location
     if(EFI_ERROR(ProtocolList[OuterLoop]->GetLocation(ProtocolList[OuterLoop],&Seg,&Bus,&Dev,&Fun))) {
       continue;
     }
-    
+
     // For each device supplied by DeviceSpecificBusInfoLib...
     for(InnerLoop = 0; InnerLoop < NumDevices; InnerLoop++) {
-      
+
       // Make sure that device actually is present in the array
       if(Devices[InnerLoop] == NULL) {
         continue;
       }
 
       // If so, check if that device matches the current protocol in OuterLoop
-      if(Seg == Devices[InnerLoop]->SegmentNumber && Bus == Devices[InnerLoop]->BusNumber && 
+      if(Seg == Devices[InnerLoop]->SegmentNumber && Bus == Devices[InnerLoop]->BusNumber &&
           Dev == Devices[InnerLoop]->DeviceNumber  && Fun == Devices[InnerLoop]->FunctionNumber) {
 
         // If it matches, check it off in the parallel array
@@ -80,7 +80,7 @@ CheckPCIDevices(VOID)
       }
     }
   }
-  
+
 
   // For each device supplied by DeviceSpecificBusInfoLib...
   for(OuterLoop = 0; OuterLoop < NumDevices; OuterLoop++) {
@@ -94,18 +94,18 @@ CheckPCIDevices(VOID)
                                          Devices[OuterLoop]->FunctionNumber,
                                          0
                                         );
-                                        
+
       // Report an error if not
-      LogTelemetry(Devices[OuterLoop]->IsFatal, 
-                   NULL, 
-                   (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_DETECTED), 
-                   &gDeviceSpecificBusInfoLibTelemetryGuid, 
-                   NULL, 
+      LogTelemetry(Devices[OuterLoop]->IsFatal,
+                   NULL,
+                   (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_DETECTED),
+                   &gDeviceSpecificBusInfoLibTelemetryGuid,
+                   NULL,
                    AdditionalData1,
                    *((UINT64*)Devices[OuterLoop]->DeviceName));
 
-      DEBUG ((DEBUG_INFO,"%a - %a not found. Expected Segment: %d  Bus: %d  Device: %d  Function: %d\n", __FUNCTION__, 
-        Devices[OuterLoop]->DeviceName, Devices[OuterLoop]->SegmentNumber, Devices[OuterLoop]->BusNumber, 
+      DEBUG ((DEBUG_INFO,"%a - %a not found. Expected Segment: %d  Bus: %d  Device: %d  Function: %d\n", __FUNCTION__,
+        Devices[OuterLoop]->DeviceName, Devices[OuterLoop]->SegmentNumber, Devices[OuterLoop]->BusNumber,
         Devices[OuterLoop]->DeviceNumber, Devices[OuterLoop]->FunctionNumber));
 
     }
@@ -122,7 +122,7 @@ CheckPCIDevices(VOID)
     if(ProtocolList != NULL) {
       FreePool(ProtocolList);
     }
-  
+
 }
 
 /**
@@ -132,7 +132,7 @@ CheckPCIDevices(VOID)
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS

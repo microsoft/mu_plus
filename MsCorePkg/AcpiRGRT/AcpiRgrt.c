@@ -80,7 +80,7 @@ InstallAcpiTable (
     goto cleanup;
   }
 
-  // Add the sigature, length, and revision
+  // Add the signature, length, and revision
   RgrtAcpiTable->Header.Signature = MSFT_ACPI_REGULATORY_GRAPHIC_RESOURCE_TABLE_SIGNATURE;
   RgrtAcpiTable->Header.Length = RgrtTableSize;
   RgrtAcpiTable->Header.Revision = MSFT_ACPI_REGULATORY_GRAPHIC_RESOURCE_TABLE_IMAGE_REVISION;

@@ -29,7 +29,7 @@ DeviceBootManagerConstructor (
 }
 
 /**
-  OnDemandConInCOnnect
+  OnDemandConInConnect
  */
 EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
@@ -116,7 +116,7 @@ DeviceBootManagerPriorityBoot (
 }
 
 /**
- This is called from BDS right before going into front page 
+ This is called from BDS right before going into front page
  when no bootable devices/options found
 */
 VOID

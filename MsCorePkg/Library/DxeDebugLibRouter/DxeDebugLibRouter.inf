@@ -1,6 +1,6 @@
 ## @file
 #  Instance of Debug Library based on Serial Port Library.
-#  It uses Print Library to produce formatted output strings to seiral port device.
+#  It uses Print Library to produce formatted output strings to serial port device.
 #
 #  Copyright (C) Microsoft Corporation. All rights reserved.
 #  Copyright (c) 2006 - 2015, Intel Corporation. All rights reserved.<BR>

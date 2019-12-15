@@ -27,7 +27,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 static BOOLEAN   mSecViolation         = FALSE;
 
 /**
-  OnDemandConInCOnnect
+  OnDemandConInConnect
  */
 VOID
 EFIAPI
@@ -40,11 +40,7 @@ PlatformBootManagerOnDemandConInConnect (
     UINTN                    HandleCount;
     UINTN                    Index;
     EFI_DEVICE_PATH_PROTOCOL **PlatformConnectDeviceList;
-    EFI_STATUS               Status;
     CHAR16                  *TmpStr;
-
-    /* if no demand consoles then we return success by default */
-    Status = EFI_SUCCESS;
 
     PlatformConnectDeviceList = DeviceBootManagerOnDemandConInConnect ();
     DEBUG((DEBUG_INFO,"Connect List = %p\n",PlatformConnectDeviceList));
@@ -55,7 +51,7 @@ PlatformBootManagerOnDemandConInConnect (
             if (TmpStr != NULL) {
                 FreePool (TmpStr);
             }
-            Status = EfiBootManagerConnectDevicePath(*PlatformConnectDeviceList, &DeviceHandle);
+            EfiBootManagerConnectDevicePath(*PlatformConnectDeviceList, &DeviceHandle);
             PlatformConnectDeviceList++;
         }
     }
@@ -206,7 +202,7 @@ PlatformBootManagerPriorityBoot (
 }
 
 /**
- This is called from BDS right before going into front page 
+ This is called from BDS right before going into front page
  when no bootable devices/options found
 */
 VOID

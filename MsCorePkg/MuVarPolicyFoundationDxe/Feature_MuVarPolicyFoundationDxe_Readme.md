@@ -14,14 +14,14 @@ To support the DXE Phase Indicators, a new policy is installed that creates the 
 
 This driver will also register callbacks for EndOfDxe, ReadyToBoot, and ExitBootServices. At the time of the corresponding event, a new `PHASE_INDICATOR` variable will be created for the callback that has just been triggered. The purpose of these variables is two-fold:
 
-- They can be queried by any driver or library that needs to know what phases of boot have already occurred. This is especially convenient for libraries that might be linked against any type of driver or applicaiton, but may not have been able to register callbacks for all the events because they don't know their execution order or time.
+- They can be queried by any driver or library that needs to know what phases of boot have already occurred. This is especially convenient for libraries that might be linked against any type of driver or application, but may not have been able to register callbacks for all the events because they don't know their execution order or time.
 - They can be used as the delegated "Variable State" variables in other Variable Policy lock policies. As such, you could describe a variable that locks "at ReadyToBoot" or "EndOfDxe".
 
 Note that the `PHASE_INDICATOR` variables are intentionally named as short abbreviations, such as "EOD" and "RTB". This is to minimize the size of the policy entries for lock-on-state policies.
 
 ### Important Note on Timing
 
-The EndOfDxe and ReadyToBoot state varibles will be created at the **end** of the Notify list for the respective event. As such, any variable that locks on those events will still be writeable in Notify callbacks for the event. However, the ExitBootServices state variable (due to architectural requirements) will be created at a non-deterministic time in the Notify list. Therefore, it is unpredictable whether any variable which locks "on ExitBootServices" would still be writeable in any given callback.
+The EndOfDxe and ReadyToBoot state variables will be created at the **end** of the Notify list for the respective event. As such, any variable that locks on those events will still be writeable in Notify callbacks for the event. However, the ExitBootServices state variable (due to architectural requirements) will be created at a non-deterministic time in the Notify list. Therefore, it is unpredictable whether any variable which locks "on ExitBootServices" would still be writeable in any given callback.
 
 ## Write-Once State Variables
 

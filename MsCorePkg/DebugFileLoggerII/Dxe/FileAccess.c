@@ -188,7 +188,7 @@ CleanUp:
 /**
   InitializeLogIndexFile
 
-  Initialze the Index file.
+  Initialize the Index file.
 
   File is flushed and closed upon exit.
 
@@ -232,7 +232,7 @@ InitializeLogIndexFile (
 
   @param File       Open File handle.
 
-                    Initialze the Index file.
+                    Initialize the Index file.
 
                     File is flushed and closed upon exit.
 
@@ -325,7 +325,7 @@ CleanUp:
   @param   LogDevice        Which log device to write the log to
 
   @retval  EFI_SUCCESS      The LogData->FileIndex was updated
-  @retval  other            An error occurrred.  The log device was disabled
+  @retval  other            An error occurred.  The log device was disabled
 
   **/
 STATIC
@@ -369,7 +369,7 @@ DetermineLogFile (
                        (VOID*)&FileIndex);
 
     if (EFI_ERROR (Status) || (BufferSize != sizeof(FileIndex))) {
-        DEBUG((DEBUG_ERROR, "%a: Falied to read the log file index. Using log 1. Code=%r\n", __FUNCTION__, Status));
+        DEBUG((DEBUG_ERROR, "%a: Failed to read the log file index. Using log 1. Code=%r\n", __FUNCTION__, Status));
         FileIndex = '0';
     }
 
@@ -448,7 +448,7 @@ DetermineLogFile (
   @param   LogBufferLength  The number of bytes to write to the log
 
   @retval  EFI_SUCCESS      The log was updated
-  @retval  other            An error occurrred.  The log device was disabled
+  @retval  other            An error occurred.  The log device was disabled
 
   **/
 EFI_STATUS

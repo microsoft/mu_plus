@@ -7,7 +7,6 @@
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
-        "skip": true,
         "DscPath": "MsCorePkg.dsc"
     },
 
@@ -24,7 +23,6 @@
             "CryptoPkg/CryptoPkg.dec",
             "MsCorePkg/MsCorePkg.dec",
             "MsWheaPkg/MsWheaPkg.dec",
-            "DfciPkg/DfciPkg.dec",
             "SecurityPkg/SecurityPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
@@ -42,8 +40,8 @@
 
     ## options defined ci/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
-        "IgnoreInf": [], 
-        "DscPath": "MsCorePkg.dsc"   
+        "IgnoreInf": [],
+        "DscPath": "MsCorePkg.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck
@@ -62,12 +60,26 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
+        # Fails test but run in AuditOnly mode to collect log
         "AuditOnly": true,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
         "ExtendWords": [           # words to extend to the dictionary for this package
+            "checksumed",
+            "FVDXE",
+            "CMIIT",
+            "JASTST",
+            "mountvol",
+            "EKU's",
+            "bootable",
+            "MSCHANGE",
+            "UNRECOVERED",
+            "hibit",
+            "XIPFLAGS",
+            "mstrict",
+            "mgeneral"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

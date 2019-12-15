@@ -18,13 +18,13 @@ EFI_SMM_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol = NULL;
 
 /**
   Status Code SMM Entry point.
-  
+
   Register this handler with the SMM Router
 
   @param  FileHandle  Handle of the file being invoked.
   @param  PeiServices Describes the list of possible PEI Services.
 
-  @retval EFI_SUCESS  Successfully registered
+  @retval EFI_SUCCESS  Successfully registered
 
 **/
 EFI_STATUS
@@ -55,14 +55,14 @@ SmmEntry (
     return Status;
   }
 
-  mRscHandlerProtocol->Register(SerialStatusCode);
+  mRscHandlerProtocol->Register((EFI_SMM_RSC_HANDLER_CALLBACK)SerialStatusCode);
 
   return EFI_SUCCESS;
 }
 
 /**
   This routine writes a status code string to the correct place.
-  
+
   @retval Buffer        Supplies a buffer holding the string to output.
   @retval NumberOfBytes Supplies a value that indicates how many bytes are in
                         the buffer.
@@ -76,7 +76,7 @@ WriteStatusCode (
   )
 {
   //
-  // Send the print string to a Serial Port 
+  // Send the print string to a Serial Port
   //
   SerialPortWrite (Buffer, NumberOfBytes);
 }

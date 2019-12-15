@@ -13,7 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 typedef struct _MU_PKCS7_PROTOCOL  MU_PKCS7_PROTOCOL;
 
 /**
-Verifies the validility of a PKCS#7 signed data as described in "PKCS #7:
+Verifies the validity of a PKCS#7 signed data as described in "PKCS #7:
 Cryptographic Message Syntax Standard". The input signed data could be wrapped
 in a ContentInfo structure.
 
@@ -50,30 +50,30 @@ IN  UINTN                          DataLength
 /**
   VerifyEKUsInPkcs7Signature()
 
-  This function receives a PKCS7 formatted signature, and then verifies that 
-  the specified Enhanced or Extended Key Usages (EKU's) are present in the end-entity 
+  This function receives a PKCS7 formatted signature, and then verifies that
+  the specified Enhanced or Extended Key Usages (EKU's) are present in the end-entity
   leaf signing certificate.
 
   Note that this function does not validate the certificate chain.
-  
+
   Applications for custom EKU's are quite flexible.  For example, a policy EKU
   may be present in an Issuing Certificate Authority (CA), and any sub-ordinate
-  certificate issued might also contain this EKU, thus constraining the 
-  sub-ordinate certificate.  Other applications might allow a certificate 
+  certificate issued might also contain this EKU, thus constraining the
+  sub-ordinate certificate.  Other applications might allow a certificate
   embedded in a device to specify that other Object Identifiers (OIDs) are
-  present which contains binary data specifying custom capabilities that 
+  present which contains binary data specifying custom capabilities that
   the device is able to do.
- 
+
   @param[in]  Pkcs7Signature     - The PKCS#7 signed information content block. An array
                                    containing the content block with both the signature,
                                    the signer's certificate, and any necessary intermediate
                                    certificates.
- 
+
   @param[in]  Pkcs7SignatureSize - Number of bytes in Pkcs7Signature.
- 
+
   @param[in]  RequiredEKUs       - Array of null-terminated strings listing OIDs of
                                    required EKUs that must be present in the signature.
- 
+
   @param[in]  RequiredEKUsSize   - Number of elements in the RequiredEKUs string array.
 
   @param[in]  RequireAllPresent  - If this is TRUE, then all of the specified EKU's

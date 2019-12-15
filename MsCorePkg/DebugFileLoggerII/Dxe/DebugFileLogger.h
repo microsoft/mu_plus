@@ -32,7 +32,7 @@
 #include <Library/SynchronizationLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <library/UefiRuntimeServicesTableLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 
 #include "../DebugFileLoggerCommon.h"
 
@@ -107,7 +107,7 @@ typedef struct {
   @param   LogBufferLength  The number of bytes to write to the log
 
   @retval  EFI_SUCCESS      The log was updated
-  @retval  other            An error occurrred.  The log device was disabled
+  @retval  other            An error occurred.  The log device was disabled
 
   **/
 EFI_STATUS

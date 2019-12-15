@@ -47,6 +47,5 @@
 
 [Guids]
 
-
-
-
+[BuildOptions]
+  *_GCC5_*_CC_FLAGS = -Wno-incompatible-pointer-types

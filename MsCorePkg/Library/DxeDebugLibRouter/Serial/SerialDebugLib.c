@@ -1,11 +1,11 @@
 /** @file
   Base Debug library instance base on Serial Port library.
   It uses PrintLib to send debug messages to serial port device.
-  
-  NOTE: If the Serial Port library enables hardware flow control, then a call 
-  to DebugPrint() or DebugAssert() may hang if writes to the serial port are 
+
+  NOTE: If the Serial Port library enables hardware flow control, then a call
+  to DebugPrint() or DebugAssert() may hang if writes to the serial port are
   being blocked.  This may occur if a key(s) are pressed in a terminal emulator
-  used to monitor the DEBUG() and ASSERT() messages. 
+  used to monitor the DEBUG() and ASSERT() messages.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
@@ -20,15 +20,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 
 //
-// Define the maximum debug and assert message length that this library supports 
+// Define the maximum debug and assert message length that this library supports
 //
 #define MAX_DEBUG_MESSAGE_LENGTH  0x100
 
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
 
-  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function 
-  GetDebugPrintErrorLevel (), then print the message specified by Format and the 
+  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function
+  GetDebugPrintErrorLevel (), then print the message specified by Format and the
   associated variable argument list to the debug output device.
 
   If Format is NULL, then ASSERT().
@@ -65,20 +65,20 @@ SerialDebugPrint (
   //
   AsciiVSPrint (Buffer, sizeof (Buffer), Format, Marker);
   //
-  // Send the print string to a Serial Port 
+  // Send the print string to a Serial Port
   //
   SerialPortWrite ((UINT8 *)Buffer, AsciiStrLen (Buffer));
 }
 
 /**
-  Prints an assert message containing a filename, line number, and description.  
+  Prints an assert message containing a filename, line number, and description.
   This may be followed by a breakpoint or a dead loop.
 
   Print a message of the form "ASSERT <FileName>(<LineNumber>): <Description>\n"
-  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of 
-  PcdDebugProperyMask is set then CpuBreakpoint() is called. Otherwise, if 
-  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugProperyMask is set then 
-  CpuDeadLoop() is called.  If neither of these bits are set, then this function 
+  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of
+  PcdDebugPropertyMask is set then CpuBreakpoint() is called. Otherwise, if
+  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugPropertyMask is set then
+  CpuDeadLoop() is called.  If neither of these bits are set, then this function
   returns immediately after the message is printed to the debug output device.
   DebugAssert() must actively prevent recursion.  If DebugAssert() is called while
   processing another DebugAssert(), then DebugAssert() must return immediately.

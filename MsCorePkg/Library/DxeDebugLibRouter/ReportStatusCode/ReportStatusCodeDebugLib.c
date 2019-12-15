@@ -23,8 +23,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
 
-  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function 
-  GetDebugPrintErrorLevel (), then print the message specified by Format and the 
+  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function
+  GetDebugPrintErrorLevel (), then print the message specified by Format and the
   associated variable argument list to the debug output device.
 
   If Format is NULL, then ASSERT().
@@ -67,7 +67,7 @@ ReportStatusCodeDebugPrint (
 
   //
   // Compute the total size of the record.
-  // Note that the passing-in format string and variable parameters will be constructed to 
+  // Note that the passing-in format string and variable parameters will be constructed to
   // the following layout:
   //
   //         Buffer->|------------------------|
@@ -162,7 +162,7 @@ ReportStatusCodeDebugPrint (
       if (*Format == '\0') {
         //
         // Make no output if Format string terminates unexpectedly when
-        // looking up for flag, width, precision and type. 
+        // looking up for flag, width, precision and type.
         //
         Format--;
       }
@@ -172,7 +172,7 @@ ReportStatusCodeDebugPrint (
       //
       break;
     }
-    
+
     //
     // Pack variable arguments into the storage area following EFI_DEBUG_INFO.
     //
@@ -195,7 +195,7 @@ ReportStatusCodeDebugPrint (
 
     //
     // If the converted BASE_LIST is larger than the 12 * sizeof (UINT64) allocated bytes, then ASSERT()
-    // This indicates that the DEBUG() macro is passing in more argument than can be handled by 
+    // This indicates that the DEBUG() macro is passing in more argument than can be handled by
     // the EFI_DEBUG_INFO record
     //
     ASSERT ((CHAR8 *)BaseListMarker <= FormatString);
@@ -223,14 +223,14 @@ ReportStatusCodeDebugPrint (
 }
 
 /**
-  Prints an assert message containing a filename, line number, and description.  
+  Prints an assert message containing a filename, line number, and description.
   This may be followed by a breakpoint or a dead loop.
 
   Print a message of the form "ASSERT <FileName>(<LineNumber>): <Description>\n"
-  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of 
-  PcdDebugProperyMask is set then CpuBreakpoint() is called. Otherwise, if 
-  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugProperyMask is set then 
-  CpuDeadLoop() is called.  If neither of these bits are set, then this function 
+  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of
+  PcdDebugPropertyMask is set then CpuBreakpoint() is called. Otherwise, if
+  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugPropertyMask is set then
+  CpuDeadLoop() is called.  If neither of these bits are set, then this function
   returns immediately after the message is printed to the debug output device.
   DebugAssert() must actively prevent recursion.  If DebugAssert() is called while
   processing another DebugAssert(), then DebugAssert() must return immediately.
@@ -346,11 +346,11 @@ ReportStatusCodeDebugAssert (
   if ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED) != 0) {
     CpuBreakAssert ();
   }
-  
+
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
     CpuBreakpoint ();
   }
-  
+
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED) != 0) {
     CpuDeadLoop ();
   }

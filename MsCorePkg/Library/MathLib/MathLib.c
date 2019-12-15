@@ -64,7 +64,7 @@ sin_d(
     //iterate 7 iterations
     for (; iterationCount <= 19; iterationCount += 2) {
         previousValue = value;
-        denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous compued n-2!)
+        denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous computed n-2!)
         top *= radians * radians; // x^2 * (previous computed x^n-2)
         multiply *= -1; //invert the sign
         //could be possibly faster to not use multiply but a conditional move?
@@ -119,7 +119,7 @@ cos_d(
     //iterate 7 iterations
     for (; iterationCount <= 20; iterationCount += 2) {
         previousValue = value;
-        denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous compued n-2!)
+        denom *= iterationCount * (iterationCount-1); //n * n-1 * (previous computed n-2!)
         top *= radians * radians; // x^2 * (previous computed x^n-2)
         multiply *= -1; //invert the sign
         //could be possibly faster to not use multiply but a conditional move?

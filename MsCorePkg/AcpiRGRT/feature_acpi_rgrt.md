@@ -2,7 +2,7 @@
 
 ## What is it?
 
-The Regulartory Graphics Resource Table is an entry into the ACPI table. It provides a way to publish a PNG with the regulatory information of a given product. This could include FCC id, UL, Model number, or CMIIT ID just to name a few. This driver publishes that entry in the ACPI table to be picked up by the OS later to display for regulatory reasons.
+The Regulatory Graphics Resource Table is an entry into the ACPI table. It provides a way to publish a PNG with the regulatory information of a given product. This could include FCC id, UL, Model number, or CMIIT ID just to name a few. This driver publishes that entry in the ACPI table to be picked up by the OS later to display for regulatory reasons.
 
 ## The table definition
 

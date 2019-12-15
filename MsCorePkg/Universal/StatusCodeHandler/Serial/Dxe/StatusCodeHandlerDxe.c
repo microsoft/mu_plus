@@ -39,17 +39,17 @@ UnregisterBootTimeHandlers (
   IN VOID             *Context
 )
 {
-  mRscHandlerProtocol->Unregister(SerialStatusCode);
+  mRscHandlerProtocol->Unregister((EFI_RSC_HANDLER_CALLBACK)SerialStatusCode);
 }
 
 /**
   Status Code DXE Entry point.
-  
+
   Register this handler with the DXE Router
 
   @param  ImageHandle       The firmware allocated handle for the EFI image.
   @param  SystemTable       A pointer to the EFI System Table.
-  
+
   @retval EFI_SUCCESS       The entry point is executed successfully.
 
 **/
@@ -81,7 +81,7 @@ DxeEntry (
     return Status;
   }
 
-  mRscHandlerProtocol->Register(SerialStatusCode, TPL_HIGH_LEVEL);
+  mRscHandlerProtocol->Register((EFI_RSC_HANDLER_CALLBACK)SerialStatusCode, TPL_HIGH_LEVEL);
 
   //
   // This callback should be invoked AFTER the ExitBootServices callback
@@ -111,7 +111,7 @@ DxeEntry (
 
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": failed to install DXE serial status code handler protocol (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: failed to install DXE serial status code handler protocol (%r)\n", __FUNCTION__, Status));
     ASSERT_EFI_ERROR(Status);
   }
 
@@ -121,7 +121,7 @@ DxeEntry (
 
 /**
   This routine writes a status code string to the correct place.
-  
+
   @retval Buffer        Supplies a buffer holding the string to output.
   @retval NumberOfBytes Supplies a value that indicates how many bytes are in
                         the buffer.

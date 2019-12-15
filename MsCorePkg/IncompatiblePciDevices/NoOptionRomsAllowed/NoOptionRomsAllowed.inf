@@ -46,5 +46,5 @@
 [Depex]
   TRUE
 
-#[BuildOptions]
-#  DEBUG_VS2015x86_*_CC_FLAGS     = /Od
+[BuildOptions]
+   DEBUG_GCC5_*_CC_FLAGS  = -Wno-missing-braces

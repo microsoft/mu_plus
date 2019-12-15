@@ -138,7 +138,7 @@ EfiPlatformBootManagerProcessCapsules (
   );
 
 //
-// MSchange - Make this function available to TcgPhysicalPresence.c
+// MSChange - Make this function available to TcgPhysicalPresence.c
 //
 BOOLEAN
 IsGopDevicePath (

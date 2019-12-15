@@ -46,7 +46,7 @@ static NO_ROMS_CONFIGURATION mNoRomsConfiguration = {
     // EFI_ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR
     {
        //   ACPI_LARGE_RESOURCE_HEADER
-       {ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR, sizeof(EFI_ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR)},
+       {{ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR}, sizeof(EFI_ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR)},
        //   rest of EFI_ACPI_QWORD_ADDRESS_SPACE_DESCRIPTOR
         INCOMPATIBLE_ACPI_ADDRESS_SPACE_TYPE_ROM, // ResType;
         0,                                        // GenFlag;
@@ -102,7 +102,7 @@ NoRomsCheckDevice (
 }
 
 /**
-  The user Entry Point for Application. Publish the Icompatible Pci Device
+  The user Entry Point for Application. Publish the Incompatible Pci Device
   protocol.
 
   @param[in] ImageHandle    The firmware allocated handle for the EFI image.

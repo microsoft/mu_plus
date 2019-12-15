@@ -27,9 +27,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_VERSION     L"0.1"
 
 EFI_STATUS
+EFIAPI
 RegisterAttributeTests(UNIT_TEST_SUITE           *TestSuite);
 
 EFI_STATUS
+EFIAPI
 RegisterElementTests(UNIT_TEST_SUITE           *TestSuite);
 
 #endif

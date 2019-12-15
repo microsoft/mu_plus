@@ -15,7 +15,7 @@ This package is not architecturally dependent.
 
 # Methods supported
 There are two protocols exposed in this GUID
-### _MU_PKCS5_PASSWORD_HASH_PROTOCOL 
+### _MU_PKCS5_PASSWORD_HASH_PROTOCOL
 ### __HashPassword__
 Hashes a password by passing through to the BaseCryptLib. Returns EFI_STATUS
 
@@ -36,12 +36,12 @@ NOTE: DigestSize will be used to determine the hash algorithm and must correspon
     IN UINTN                                      IterationCount
     IN UINTN                                      DigestSize
     IN UINTN                                      OutputSize
-    OUT UINT8                                    *Output    
+    OUT UINT8                                    *Output
 
 ## _MU_PKCS7_PROTOCOL
 ### Verify
 
-Verifies the validility of a PKCS#7 signed data as described in "PKCS #7: Cryptographic Message Syntax Standard". The input signed data could be wrapped in a ContentInfo structure.
+Verifies the validity of a PKCS#7 signed data as described in "PKCS #7: Cryptographic Message Syntax Standard". The input signed data could be wrapped in a ContentInfo structure.
 
 If P7Data, TrustedCert or InData is NULL, then return EFI_INVALID_PARAMETER.
 If P7Length, CertLength or DataLength overflow, then return EFI_INVALID_PARAMETER.
@@ -54,7 +54,7 @@ If this interface is not supported, then return EFI_UNSUPPORTED.
 
 **Inputs:**
 
-    IN  CONST MU_PKCS7_PROTOCOL       
+    IN  CONST MU_PKCS7_PROTOCOL
     IN  CONST UINT8                   *P7Data,
     IN  UINTN                          P7DataLength,
     IN  CONST UINT8                   *TrustedCert,
@@ -76,7 +76,7 @@ Applications for custom EKU's are quite flexible.  For example, a policy EKU may
 
 **Inputs:**
 
-    IN CONST MU_PKCS7_PROTOCOL    
+    IN CONST MU_PKCS7_PROTOCOL
     IN CONST UINT8                *Pkcs7Signature,
     IN CONST UINT32                SignatureSize,  (in bytes)
     IN CONST CHAR8                *RequiredEKUs[], null-terminated strings listing OIDs of required EKUs
@@ -91,7 +91,7 @@ Applications for custom EKU's are quite flexible.  For example, a policy EKU may
     ...
     ...
     MsCorePkg/MuCryptoDxe/MuCryptoDxe.inf
-    
+
 
 ## Sample FDF change
 

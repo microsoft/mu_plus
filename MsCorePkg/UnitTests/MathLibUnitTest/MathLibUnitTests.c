@@ -27,7 +27,7 @@ TestSine(
   IN UNIT_TEST_CONTEXT           Context
 )
 {
-  UT_LOG_INFO( "Testing Sine function\n" );
+  UT_LOG_INFO( "%a - Testing Sine function\n", __FUNCTION__ );
   UINTN Index = 0;
   double current;
   MathLibContext *mathContext = (MathLibContext*)Context;
@@ -50,7 +50,7 @@ TestSine(
     if (maxError >= maxAllowedError){
       UT_LOG_WARNING("COS at %llx = %llx",current,result);
     }
-    
+
     UT_ASSERT_TRUE(maxError < maxAllowedError);
     Index++;
   }
@@ -69,10 +69,10 @@ TestSqrt(
   IN UNIT_TEST_CONTEXT           Context
 )
 {
-  UT_LOG_INFO( "Testing Square Root function\n" );
+  UT_LOG_INFO( "%a - Testing Square Root function\n", __FUNCTION__ );
   UINTN Index = 0;
   double current;
-  MathLibContext *mathContext = (MathLibContext*)Context;  
+  MathLibContext *mathContext = (MathLibContext*)Context;
   double result;
   double totalErrorSquared = 0;
   double maxError = 0;
@@ -110,10 +110,10 @@ TestSqrt32(
   IN UNIT_TEST_CONTEXT           Context
 )
 {
-  UT_LOG_INFO( "Testing Square Root Unsigned 32 function\n" );
+  UT_LOG_INFO( "%a - Testing Square Root Unsigned 32 function\n", __FUNCTION__ );
   UINTN Index = 0;
   UINT32 current;
-  MathLibContextUnsigned *mathContext = (MathLibContextUnsigned*)Context;  
+  MathLibContextUnsigned *mathContext = (MathLibContextUnsigned*)Context;
   UINT32 result;
   UINT32 totalErrorSquared = 0;
   UINT32 maxError = 0;
@@ -151,10 +151,10 @@ TestSqrt64(
   IN UNIT_TEST_CONTEXT           Context
 )
 {
-  UT_LOG_INFO( "Testing Square Root Unsigned 64 function\n" );
+  UT_LOG_INFO( "%a - Testing Square Root Unsigned 64 function\n", __FUNCTION__ );
   UINTN Index = 0;
   UINT32 current;
-  MathLibContextUnsigned *mathContext = (MathLibContextUnsigned*)Context;  
+  MathLibContextUnsigned *mathContext = (MathLibContextUnsigned*)Context;
   UINT64 result;
   UINT32 totalErrorSquared = 0;
   UINT32 maxError = 0;
@@ -192,11 +192,11 @@ TestCos(
   IN UNIT_TEST_CONTEXT           Context
 )
 {
-  //MathLibContext *MathContext = (MathLibContext*)Context;  
+  //MathLibContext *MathContext = (MathLibContext*)Context;
   UT_LOG_INFO( "Testing Cosine function\n" );
   UINTN Index = 0;
   double current;
-  MathLibContext *mathContext = (MathLibContext*)Context;  
+  MathLibContext *mathContext = (MathLibContext*)Context;
   double result;
   double totalErrorSquared = 0;
   double maxError = 0;
@@ -215,7 +215,7 @@ TestCos(
       DEBUG(( DEBUG_INFO, "COS %llx = %llx",current,result));
       UT_LOG_WARNING("COS at %llx = %llx",current,result);
     }
-    
+
     UT_ASSERT_TRUE(maxError < maxAllowedError);
     Index++;
   }
@@ -241,7 +241,7 @@ UefiMain(
   CHAR16  ShortName[100];
   ShortName[0] = L'\0';
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName); 
+  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
     DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
@@ -269,14 +269,14 @@ UefiMain(
   AddTestCase(TestSuite, L"Check sqrt is within a reasonable error", L"Common.MathLib.Sqrt", TestSqrt, NULL, NULL, &SQRT_CONTEXT);
 
   AddTestCase(TestSuite, L"Check sqrt64 is within a reasonable error", L"Common.MathLib.Sqrt64", TestSqrt32, NULL, NULL, &SQRTUNSIGNED_CONTEXT);
-  
+
   AddTestCase(TestSuite, L"Check sqrt32 is within a reasonable error", L"Common.MathLib.Sqrt32", TestSqrt64, NULL, NULL, &SQRTUNSIGNED_CONTEXT);
-  
+
   //Run Tests
   Status = RunAllTestSuites(Fw);
 
-  
- 
+
+
 EXIT:
 
   if (Fw != NULL)

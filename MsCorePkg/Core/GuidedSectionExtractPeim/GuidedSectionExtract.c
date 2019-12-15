@@ -26,12 +26,12 @@ CONST EFI_PEI_PPI_DESCRIPTOR mPpiList[] = {
 
 /**
   Entry point of JASTST PEIM.
-  
+
   @param  FileHandle  Handle of the file being invoked.
   @param  PeiServices Describes the list of possible PEI Services.
 
-  @retval EFI_SUCESS  The entry point of DXE IPL PEIM executes successfully.
-  @retval Others      Some error occurs during the execution of this function. 
+  @retval EFI_SUCCESS  The entry point of DXE IPL PEIM executes successfully.
+  @retval Others      Some error occurs during the execution of this function.
 
 **/
 EFI_STATUS
@@ -54,24 +54,24 @@ PeimInitializeGuidedSectionExtract (
   if (BootMode != BOOT_ON_S3_RESUME) {
 
     //
-    // EFI_SUCESS means it is the first time to call register for shadow. 
-    // 
+    // EFI_SUCCESS means it is the first time to call register for shadow.
+    //
     Status = PeiServicesRegisterForShadow(FileHandle);
     if (Status == EFI_SUCCESS) {
       return Status;
     }
-    
+
     //
     // Ensure that PEIM is shadowed to permanent memory.
     //
     ASSERT (Status == EFI_ALREADY_STARTED);
   }
-     
+
   //
-  // Get custom extract guided section method guid list 
+  // Get custom extract guided section method guid list
   //
   ExtractHandlerNumber = ExtractGuidedSectionGetGuidList (&ExtractHandlerGuidTable);
-  
+
   //
   // Install custom extraction guid PPI
   //
@@ -86,7 +86,7 @@ PeimInitializeGuidedSectionExtract (
       ASSERT_EFI_ERROR(Status);
     }
   }
-  
+
   //
   // Install DxeIpl and Decompress PPIs.
   //
@@ -127,7 +127,7 @@ PeimInitializeGuidedSectionExtract (
                                 output buffer. If the input
                                 section's GuidedSectionHeader.
                                 Attributes field has the
-                                EFI_GUIDED_SECTION_AUTH_STATUS_VALID 
+                                EFI_GUIDED_SECTION_AUTH_STATUS_VALID
                                 bit as clear,
                                 AuthenticationStatus must return
                                 zero. These bits reflect the
@@ -137,14 +137,14 @@ PeimInitializeGuidedSectionExtract (
                                 EFI_SUCCESS, the value of
                                 AuthenticationStatus is
                                 undefined.
-  
+
   @retval EFI_SUCCESS           The InputSection was
                                 successfully processed and the
                                 section contents were returned.
-  
+
   @retval EFI_OUT_OF_RESOURCES  The system has insufficient
                                 resources to process the request.
-  
+
   @retval EFI_INVALID_PARAMETER The GUID in InputSection does
                                 not match this instance of the
                                 GUIDed Section Extraction PPI.
@@ -199,7 +199,7 @@ CustomGuidedSectionExtract (
     }
   }
 
-  if (((SectionAttribute & EFI_GUIDED_SECTION_PROCESSING_REQUIRED) != 0) && OutputBufferSize > 0) {  
+  if (((SectionAttribute & EFI_GUIDED_SECTION_PROCESSING_REQUIRED) != 0) && OutputBufferSize > 0) {
     //
     // Allocate output buffer
     //
@@ -210,7 +210,7 @@ CustomGuidedSectionExtract (
     }
     DEBUG ((DEBUG_INFO, "Customized Guided section Memory Size required is 0x%x and address is 0x%p\n", OutputBufferSize, *OutputBuffer));
     //
-    // *OutputBuffer still is one section. Adjust *OutputBuffer offset, 
+    // *OutputBuffer still is one section. Adjust *OutputBuffer offset,
     // skip EFI section header to make section data at page alignment.
     //
     *OutputBuffer = (VOID *)((UINT8 *) *OutputBuffer + EFI_PAGE_SIZE - sizeof (EFI_COMMON_SECTION_HEADER));
@@ -218,7 +218,7 @@ CustomGuidedSectionExtract (
 
   PERF_INMODULE_BEGIN ("Extract guided section");
   Status = ExtractGuidedSectionDecode (
-             InputSection, 
+             InputSection,
              OutputBuffer,
              ScratchBuffer,
              AuthenticationStatus
@@ -249,7 +249,7 @@ Done:
    This function looks up the compression type field in the input section and
    applies the appropriate compression algorithm to compress the section to a
    callee allocated buffer.
-    
+
    @param  This                  Points to this instance of the
                                  EFI_PEI_DECOMPRESS_PEI PPI.
    @param  CompressionSection    Points to the compressed section.
@@ -257,14 +257,14 @@ Done:
                                  sections.
    @param  OutputSize            Holds the returned size of the decompress
                                  section streams.
-   
+
    @retval EFI_SUCCESS           The section was decompressed successfully.
                                  OutputBuffer contains the resulting data and
                                  OutputSize contains the resulting size.
 
 **/
 EFI_STATUS
-EFIAPI 
+EFIAPI
 Decompress (
   IN CONST  EFI_PEI_DECOMPRESS_PPI  *This,
   IN CONST  EFI_COMPRESSION_SECTION *CompressionSection,
@@ -298,7 +298,7 @@ Decompress (
     UncompressedLength = CompressionSection->UncompressedLength;
     CompressionType = CompressionSection->CompressionType;
   }
-  
+
   //
   // This is a compression set, expand it
   //
@@ -330,7 +330,7 @@ Decompress (
         return EFI_OUT_OF_RESOURCES;
       }
       //
-      // Allocate destination buffer, extra one page for adjustment 
+      // Allocate destination buffer, extra one page for adjustment
       //
       DstBuffer = AllocatePages (EFI_SIZE_TO_PAGES (DstBufferSize) + 1);
       if (DstBuffer == NULL) {

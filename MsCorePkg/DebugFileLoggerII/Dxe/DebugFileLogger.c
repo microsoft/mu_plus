@@ -13,18 +13,6 @@
 // Global variables.
 //
 
-STATIC DEBUG_LOG_FILE_INFO  mLogFiles[] = { { L"\\Logs\\UEFI_LogIndex.txt", INDEX_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log1.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log2.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log3.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log4.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log5.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log6.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log7.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log8.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log9.txt", DEBUG_LOG_FILE_SIZE } };
-#define DEBUG_LOG_FILE_COUNT ARRAY_SIZE(mLogFiles)
-
 LOG_GET_MEMORY_MAP          mCoreGetMemoryMap = NULL;
 VOID                       *mFileSystemRegistration = NULL;
 CHAR8                      *mLoggingBuffer = NULL;
@@ -192,7 +180,7 @@ WriteLogFiles (
 /**
     OnResetNotification
 
-    Write the log files if the reset occurs as a reasonalbe TPL.
+    Write the log files if the reset occurs as a reasonable TPL.
 
   **/
 STATIC
@@ -247,7 +235,7 @@ DxeLoggingBufferCaptureEvent (
     IN EFI_STATUS_CODE_VALUE        Value,
     IN UINT32                       Instance,
     IN EFI_GUID                    *CallerId,
-    IN CONST EFI_STATUS_CODE_DATA  *Data OPTIONAL
+    IN EFI_STATUS_CODE_DATA        *Data OPTIONAL
     )
 {
     UINTN         BytesWritten = 0;
@@ -299,17 +287,18 @@ CleanUp:
 /**
     OnRscHandlerProtocolInstalled
 
-    This fucntion gets called whent the Report Status Code protocol
+    This function gets called when the Report Status Code protocol
     is installed.  Register for ReportStatusCode data (Debug messages etc).
 
 
     @param  Event   - The event used to trigger this callback
-    @param  Context - NULL (not conetxt is supplied)
+    @param  Context - NULL (not context is supplied)
 
     @returns          No return information
 
   **/
 VOID
+EFIAPI
 OnRscHandlerProtocolInstalled (
     IN  EFI_EVENT   Event,
     IN  VOID        *Context
@@ -352,12 +341,13 @@ OnRscHandlerProtocolInstalled (
 
 
     @param  Event   - The event used to trigger this callback
-    @param  Context - NULL (not conetxt is supplied)
+    @param  Context - NULL (not context is supplied)
 
     @returns          No return information
 
   **/
 VOID
+EFIAPI
 OnResetNotificationProtocolInstalled (
     IN  EFI_EVENT   Event,
     IN  VOID        *Context
@@ -554,7 +544,7 @@ LogGetMemoryMap (
     ProcessFileSystemRegistration
 
     This function registers for FileSystemProtocols, and then
-    checks for any existing FileSystemProtocols, and addes them
+    checks for any existing FileSystemProtocols, and adds them
     to the LOG_DEVICE list.
 
     @param       VOID
@@ -690,9 +680,9 @@ Cleanup:
 /**
    ProcessResetEventRegistration
 
-   Process registration of ResetNotivation
+   Process registration of ResetNotification
 
-   @paranm   VOID
+   @param   VOID
 
    @retval   EFI_SUCCESS     Registration successful
              error           Unsuccessful at registering for Reset Notifications
@@ -760,7 +750,7 @@ ProcessResetEventRegistration (
     memory map is computed.
 
     Waiting for an ExitBootServices event is too late as
-    memory allocation is turned off before the ExitBootSercies
+    memory allocation is turned off before the ExitBootServices
     event handlers are dispatched.
 
 
@@ -850,7 +840,7 @@ Exit:
 
     // Always return EFI_SUCCESS.  This means any partial registration of functions,
     // and hooks in the system table, will still exist, reducing the complexity of
-    // uninstallation error cases.
+    // un-installation error cases.
 
     return EFI_SUCCESS;
 }

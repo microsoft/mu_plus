@@ -1,8 +1,8 @@
 /** @file
   This library is meant to be linked against a module within a DSC already
   linked against a version of DebugLib. This PPI is meant to be used by the
-  rest of the PEI modules as a source for DebugLib functions 
-  
+  rest of the PEI modules as a source for DebugLib functions
+
 Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -19,8 +19,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
 
-  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function 
-  GetDebugPrintErrorLevel (), then print the message specified by Format and the 
+  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function
+  GetDebugPrintErrorLevel (), then print the message specified by Format and the
   associated variable argument list to the debug output device.
 
   If Format is NULL, then ASSERT().
@@ -62,14 +62,14 @@ DebugPortDumpMemory (
 }
 
 /**
-  Prints an assert message containing a filename, line number, and description.  
+  Prints an assert message containing a filename, line number, and description.
   This may be followed by a breakpoint or a dead loop.
 
   Print a message of the form "ASSERT <FileName>(<LineNumber>): <Description>\n"
-  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of 
-  PcdDebugProperyMask is set then CpuBreakpoint() is called. Otherwise, if 
-  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugProperyMask is set then 
-  CpuDeadLoop() is called.  If neither of these bits are set, then this function 
+  to the debug output device.  If DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED bit of
+  PcdDebugPropertyMask is set then CpuBreakpoint() is called. Otherwise, if
+  DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED bit of PcdDebugPropertyMask is set then
+  CpuDeadLoop() is called.  If neither of these bits are set, then this function
   returns immediately after the message is printed to the debug output device.
   DebugAssert() must actively prevent recursion.  If DebugAssert() is called while
   processing another DebugAssert(), then DebugAssert() must return immediately.
@@ -121,6 +121,6 @@ DebugPortInitialize (
 
   Status = PeiServicesInstallPpi (&mPpiList[0]);
   ASSERT_EFI_ERROR (Status);
- 
+
   return EFI_SUCCESS;
 }

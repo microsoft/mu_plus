@@ -337,7 +337,6 @@ static JSON_REQUEST_ELEMENT mEncodeTest1Elements[] = {
 //*----------------------------------------------------------------------------------*
 // Encode Test 3 = Set the element array count to 0                                  *
 //*----------------------------------------------------------------------------------*
-static JSON_REQUEST_ELEMENT mEncodeTest3Elements[] = { NULL, 0 , NULL, 0 };
 #define mEncodeTest3ElementCount 0
 
 //*----------------------------------------------------------------------------------*
@@ -375,9 +374,8 @@ static BASIC_TEST_CONTEXT mEncodeTest1 = {ENC_TEST_1_JSON,  sizeof(ENC_TEST_1_JS
 ///
 ///================================================================================================
 ///================================================================================================
-static
-
-UNIT_TEST_STATUS
+STATIC
+VOID
 EFIAPI
 CleanUpTestContext (
     IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
@@ -392,8 +390,6 @@ CleanUpTestContext (
         FreePool (Btc->BufferToFree);
         Btc->BufferToFree = NULL;
     }
-
-    return UNIT_TEST_PASSED;
 }
 
 
@@ -427,8 +423,9 @@ JsonProcessFunction (
 ///================================================================================================
 ///================================================================================================
 
-static
+STATIC
 UNIT_TEST_STATUS
+EFIAPI
 JsonParseTest (
     IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
@@ -717,7 +714,7 @@ JsonEncodeNullP4 (
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 
 **/
 EFI_STATUS

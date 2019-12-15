@@ -54,13 +54,13 @@ SerialStatusCodePei
 
 /**
   Status Code PEIM Entry point.
-  
+
   Register this handler with the Pei Router
 
   @param  FileHandle  Handle of the file being invoked.
   @param  PeiServices Describes the list of possible PEI Services.
 
-  @retval EFI_SUCESS  Successfully registered
+  @retval EFI_SUCCESS  Successfully registered
 
 **/
 EFI_STATUS
@@ -74,7 +74,7 @@ PeiEntry (
   EFI_PEI_RSC_HANDLER_PPI     *Ppi;
 
   Status = PeiServicesLocatePpi (
-             &gEfiPeiRscHandlerPpiGuid, 
+             &gEfiPeiRscHandlerPpiGuid,
              0,
              NULL,
              (VOID **) &Ppi
@@ -84,7 +84,7 @@ PeiEntry (
     ASSERT_EFI_ERROR(Status);
     return Status;
   }
-  
+
   Status = SerialPortInitialize();
   if (EFI_ERROR(Status))
   {
@@ -94,13 +94,13 @@ PeiEntry (
 
   Status = Ppi->Register (SerialStatusCodePei);
   ASSERT_EFI_ERROR (Status);
-  
+
   return EFI_SUCCESS;
 }
 
 /**
   This routine writes a status code string to the correct place.
-  
+
   @retval Buffer        Supplies a buffer holding the string to output.
   @retval NumberOfBytes Supplies a value that indicates how many bytes are in
                         the buffer.

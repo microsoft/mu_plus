@@ -52,7 +52,7 @@ ExitPmAuth (
   //
   // NOTE: We need install DxeSmmReadyToLock directly here because many boot script is added via ExitPmAuth/EndOfDxe callback.
   // If we install them at same callback, these boot script will be rejected because BootScript Driver runs first to lock them done.
-  // So we seperate them to be 2 different events, ExitPmAuth is last chance to let platform add boot script. DxeSmmReadyToLock will
+  // So we separate them to be 2 different events, ExitPmAuth is last chance to let platform add boot script. DxeSmmReadyToLock will
   // make boot script save driver lock down the interface.
   //
   Handle = NULL;
@@ -160,7 +160,7 @@ UpdateGopDevicePath (
 }
 
 /**
-  Platform Bds init. Incude the platform firmware vendor, revision
+  Platform Bds init. Include the platform firmware vendor, revision
   and so crc check.
 **/
 VOID
@@ -424,7 +424,7 @@ PlatformBootManagerAfterConsole (
 
       //
       // In recovery boot mode, we still enter to the
-      // frong page now
+      // front page now
       //
 
       break;
