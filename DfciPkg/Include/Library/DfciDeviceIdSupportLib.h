@@ -81,46 +81,4 @@ DfciIdSupportGetSerialNumber (
     UINTN    *SerialNumberSize  OPTIONAL
   );
 
-/**
- * Get the Uuid
- *
- * The format of the output Unicode string String consists of 36 characters, as follows:
- *
- *                aabbccdd-eeff-gghh-iijj-kkllmmnnoopp
- *
- * The pairs aa - pp are two characters in the range [0-9], [a-f] and
- * [A-F], with each pair representing a single byte hexadecimal value.
- *
- * The mapping between String and the EFI_GUID structure is as follows:
- *                aa          Data1[24:31]
- *                bb          Data1[16:23]
- *                cc          Data1[8:15]
- *                dd          Data1[0:7]
- *                ee          Data2[8:15]
- *                ff          Data2[0:7]
- *                gg          Data3[8:15]
- *                hh          Data3[0:7]
- *                ii          Data4[0:7]
- *                jj          Data4[8:15]
- *                kk          Data4[16:23]
- *                ll          Data4[24:31]
- *                mm          Data4[32:39]
- *                nn          Data4[40:47]
- *                oo          Data4[48:55]
- *                pp          Data4[56:63]
- *
- * @param Uuid
- * @param UuidSize
- *
- * It is the callers responsibility to free the buffer returned.
- *
- * @return EFI_STATUS EFIAPI
- */
-EFI_STATUS
-EFIAPI
-DfciIdSupportGetUuid (
-    CHAR8   **Uuid,
-    UINTN    *UuidSize  OPTIONAL
-  );
-
 #endif //__DFCI_DEVICE_ID_SUPPORT_LIB_H__

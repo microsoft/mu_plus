@@ -90,23 +90,3 @@ DfciIdSupportGetSerialNumber (
 
     return EFI_UNSUPPORTED;
 }
-
-/**
- * Get the Uuid
- *
- * @param Uuid
- * @param UuidSize
- *
- * It is the callers responsibility to free the buffer returned.
- *
- * @return EFI_STATUS EFIAPI
- */
-EFI_STATUS
-EFIAPI
-DfciIdSupportGetUuid (
-    CHAR8   **Uuid,
-    UINTN    *UuidSize  OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
-}
