@@ -488,7 +488,7 @@ EntriesBetweenListsShouldNotOverlapBoundaries (
       if ((A_IS_BETWEEN_B_AND_C( MatDescriptor->PhysicalStart, LegacyDescriptor->PhysicalStart, LegacyEnd ) && MatEnd > LegacyEnd) ||
           (A_IS_BETWEEN_B_AND_C( LegacyDescriptor->PhysicalStart, MatDescriptor->PhysicalStart, MatEnd ) && LegacyEnd > MatEnd))
       {
-        DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - Overlap between MemoryMaps!\n" ));
+        DEBUG(( DEBUG_VERBOSE, "%a - Overlap between MemoryMaps!\n", __FUNCTION__ ));
         DumpDescriptor( DEBUG_VERBOSE, L"[MatDescriptor]", MatDescriptor );
         DumpDescriptor( DEBUG_VERBOSE, L"[LegacyDescriptor]", LegacyDescriptor );
         Status = UNIT_TEST_ERROR_TEST_FAILED;
@@ -550,7 +550,7 @@ AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap (
     // If a match was not found for this MAT entry, we have a problem.
     if (!MatchFound)
     {
-      DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - MAT entry not found in Legacy MemoryMap!\n" ));
+      DEBUG(( DEBUG_VERBOSE, "%a - MAT entry not found in Legacy MemoryMap!\n", __FUNCTION__ ));
       DumpDescriptor( DEBUG_VERBOSE, NULL, MatDescriptor );
       Status = UNIT_TEST_ERROR_TEST_FAILED;
       break;
@@ -630,7 +630,7 @@ AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat (
     // If we never completed this entry, we're borked.
     if (!EntryComplete)
     {
-      DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - Legacy MemoryMap entry not covered by MAT entries!\n" ));
+      DEBUG(( DEBUG_VERBOSE, "%a - Legacy MemoryMap entry not covered by MAT entries!\n", __FUNCTION__ ));
       DumpDescriptor( DEBUG_VERBOSE, NULL, LegacyDescriptor );
       Status = UNIT_TEST_ERROR_TEST_FAILED;
       break;
@@ -705,7 +705,7 @@ InitializeTestEnvironment (
   //
   // Grab the MAT memory map...
   //
-  Status = EfiGetSystemConfigurationTable( &gEfiMemoryAttributesTableGuid, &MatMap );
+  Status = EfiGetSystemConfigurationTable( &gEfiMemoryAttributesTableGuid, (VOID **)&MatMap );
   if (EFI_ERROR( Status ))
   {
     return Status;

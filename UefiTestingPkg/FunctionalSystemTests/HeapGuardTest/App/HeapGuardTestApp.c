@@ -64,7 +64,7 @@ InterruptHandler (
   IN EFI_SYSTEM_CONTEXT   SystemContext
   )
 {
-  DEBUG((DEBUG_ERROR, __FUNCTION__" SystemContextX64->ExceptionData: %x - InterruptType: %x\n", SystemContext.SystemContextX64->ExceptionData, InterruptType));
+  DEBUG((DEBUG_ERROR, "%a SystemContextX64->ExceptionData: %x - InterruptType: %x\n", __FUNCTION__, SystemContext.SystemContextX64->ExceptionData, InterruptType));
   gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
 } // InterruptHandler()
 
@@ -93,7 +93,7 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
   UINTN                                   CommBufferSize;
 
   if (mPiSmmCommonCommBufferAddress == NULL) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Communication buffer not found!\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - Communication buffer not found!\n", __FUNCTION__ ));
     return EFI_ABORTED;
   }
 
@@ -103,7 +103,7 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
   CommHeader = (EFI_SMM_COMMUNICATE_HEADER*)mPiSmmCommonCommBufferAddress;
   CommBufferSize = sizeof( HEAP_GUARD_TEST_COMM_BUFFER ) + OFFSET_OF( EFI_SMM_COMMUNICATE_HEADER, Data );
   if (CommBufferSize > mPiSmmCommonCommBufferSize) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Communication buffer is too small!\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - Communication buffer is too small!\n", __FUNCTION__ ));
     return EFI_ABORTED;
   }
   ZeroMem( CommHeader, CommBufferSize );
@@ -135,7 +135,7 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
     Status = SmmCommunication->Communicate( SmmCommunication,
                                             CommHeader,
                                             &CommBufferSize );
-    DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - Communicate() = %r\n", Status ));
+    DEBUG(( DEBUG_VERBOSE, "%a - Communicate() = %r\n", __FUNCTION__, Status ));
   }
 
   return VerificationCommBuffer->Status;
@@ -177,14 +177,13 @@ LocateSmmCommonCommBuffer (
 } // LocateSmmCommonCommBuffer()
 
 STATIC
-#pragma warning(disable:4717)
 UINT64
 Recursion (
   UINT64 Count
   )
 {
   UINT64 Sum = 0;
-  DEBUG((DEBUG_ERROR, __FUNCTION__"  %x\n", Count));
+  DEBUG((DEBUG_ERROR, "%a  %x\n", __FUNCTION__, Count));
   Sum = Recursion(++ Count);
   return Sum + Count;
 }
@@ -197,7 +196,7 @@ PoolTest (
   )
 {
   UINT64 *ptrLoc;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" Allocated pool at 0x%p\n", ptr));
+  DEBUG((DEBUG_ERROR, "%a Allocated pool at 0x%p\n", __FUNCTION__, ptr));
 
   //
   // Check if guard page is going to be at the head or tail.
@@ -227,9 +226,9 @@ PoolTest (
     //
     ptrLoc = (UINT64*) (((UINTN) ptrLoc) - 0x1);
   }
-  DEBUG((DEBUG_ERROR, __FUNCTION__" Writing to 0x%p\n", ptrLoc));
+  DEBUG((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptrLoc));
   *ptrLoc = 1;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" failure \n"));
+  DEBUG((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
 } // PoolTest()
 
 
@@ -238,14 +237,14 @@ HeadPageTest (
   IN UINT64* ptr
   )
 {
-  DEBUG((DEBUG_ERROR, __FUNCTION__" Allocated page at 0x%p\n", ptr));
+  DEBUG((DEBUG_ERROR, "%a Allocated page at 0x%p\n", __FUNCTION__, ptr));
 
   // Hit the head guard page
   ptr = (UINT64*) (((UINTN) ptr) - 0x1);
-  DEBUG((DEBUG_ERROR, __FUNCTION__" Writing to 0x%p\n", ptr));
+  DEBUG((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptr));
   *ptr = 1;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__" failure \n"));
+  DEBUG((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
 } // HeadPageTest()
 
 
@@ -254,13 +253,13 @@ TailPageTest (
   IN UINT64* ptr
   )
 {
-  DEBUG((DEBUG_ERROR, __FUNCTION__" Allocated page at 0x%p\n", ptr));
+  DEBUG((DEBUG_ERROR, "%a Allocated page at 0x%p\n", __FUNCTION__, ptr));
 
   // Hit the tail guard page
   ptr = (UINT64*) (((UINTN) ptr) + 0x1000);
-  DEBUG((DEBUG_ERROR, __FUNCTION__" Writing to 0x%p\n", ptr));
+  DEBUG((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptr));
   *ptr = 1;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" failure \n"));
+  DEBUG((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
 } // TailPageTest()
 
 
@@ -292,16 +291,14 @@ NxTest (
   UINT8 *CodeRegionToCopyTo
   )
 {
-  #pragma warning(suppress:4054)
   UINT8   *CodeRegionToCopyFrom = (UINT8*)DummyFunctionForCodeSelfTest;
   CopyMem( CodeRegionToCopyTo, CodeRegionToCopyFrom, 512);
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__" writing to %p\n", CodeRegionToCopyTo));
+  DEBUG((DEBUG_ERROR, "%a writing to %p\n", __FUNCTION__, CodeRegionToCopyTo));
 
-  #pragma warning(suppress:4055)
   ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__" failure \n"));
+  DEBUG((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
 } // NxTest()
 
 
@@ -320,7 +317,7 @@ UefiHardwareNxProtectionEnabledPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
   if (PcdGetBool(PcdSetNxForStack) || PcdGet64(PcdDxeNxMemoryProtectionPolicy)) {
     return UNIT_TEST_PASSED;
   }
@@ -335,7 +332,7 @@ UefiNxStackPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
   if (PcdGetBool(PcdSetNxForStack) == FALSE) {
     return UNIT_TEST_SKIPPED;
   }
@@ -356,7 +353,7 @@ UefiNxProtectionPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
-  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
   if ((PcdGet64(PcdDxeNxMemoryProtectionPolicy) & TestBit) == 0) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %s", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -535,7 +532,7 @@ UefiPageGuard (
     SetUsbBootNext();
     SaveFrameworkState( Framework, &HeapGuardContext, sizeof(HEAP_GUARD_TEST_CONTEXT));
 
-    Status = gBS->AllocatePages(AllocateAnyPages, (EFI_MEMORY_TYPE) HeapGuardContext.TargetMemoryType, 1, &ptr);
+    Status = gBS->AllocatePages(AllocateAnyPages, (EFI_MEMORY_TYPE) HeapGuardContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
 
     if (EFI_ERROR(Status))
     {
@@ -603,7 +600,7 @@ UefiPoolGuard (
     // Memory type rHardwareNxProtections to the bitmask for the PcdHeapGuardPoolType,
     // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
     //
-    Status = gBS->AllocatePool((EFI_MEMORY_TYPE) HeapGuardContext.TargetMemoryType, AllocationSize, &ptr);
+    Status = gBS->AllocatePool((EFI_MEMORY_TYPE) HeapGuardContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
 
     if (EFI_ERROR(Status)) {
       UT_LOG_WARNING("Memory allocation failed for type %s of size %x - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], AllocationSize, Status);
@@ -685,7 +682,7 @@ UefiNullPointerDetection (
 
     if (HeapGuardContext.TestProgress == 1) {
       if (mFw->Title == NULL) {
-        DEBUG((DEBUG_ERROR,  __FUNCTION__" should have failed \n"));
+        DEBUG((DEBUG_ERROR,  "%a should have failed \n", __FUNCTION__));
       }
       UT_LOG_ERROR( "Failed NULL pointer read test." );
     }
@@ -715,9 +712,8 @@ UefiNxStackGuard (
   )
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
   UINT8 CodeRegionToCopyTo[512];
-  #pragma warning(suppress:4054)
   UINT8   *CodeRegionToCopyFrom = (UINT8*)DummyFunctionForCodeSelfTest;
 
   if (HeapGuardContext.TestProgress < 1) {
@@ -731,7 +727,6 @@ UefiNxStackGuard (
     SaveFrameworkState( Framework, &HeapGuardContext, sizeof(HEAP_GUARD_TEST_CONTEXT));
 
     CopyMem( CodeRegionToCopyTo, CodeRegionToCopyFrom, 512);
-    #pragma warning(suppress:4055)
     ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
 
 
@@ -769,7 +764,7 @@ UefiNxProtection (
     SetUsbBootNext();
     SaveFrameworkState( Framework, &HeapGuardContext, sizeof(HEAP_GUARD_TEST_CONTEXT));
 
-    Status = gBS->AllocatePool((EFI_MEMORY_TYPE) HeapGuardContext.TargetMemoryType, 4096, &ptr);
+    Status = gBS->AllocatePool((EFI_MEMORY_TYPE) HeapGuardContext.TargetMemoryType, 4096, (VOID **)&ptr);
 
     if (EFI_ERROR(Status)) {
       UT_LOG_WARNING("Memory allocation failed for type %s - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], Status);
@@ -952,14 +947,14 @@ AddUefiNxTest(
     // Set memory type according to the bitmask for PcdDxeNxMemoryProtectionPolicy.
     // The test progress should start at 0.
     //
-    HeapGuardContext =  AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
+    HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
 
     TestNameSize = sizeof(CHAR16) * (1 + StrnLenS(NameStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName = AllocateZeroPool(TestNameSize);
 
     TestDescriptionSize = sizeof(CHAR16) * (1 + StrnLenS(DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestDescription = AllocateZeroPool(TestDescriptionSize);
+    TestDescription = (CHAR16 *)AllocateZeroPool(TestDescriptionSize);
 
     if (TestName != NULL && TestDescription != NULL && HeapGuardContext != NULL) {
       //
@@ -981,7 +976,7 @@ AddUefiNxTest(
     }
     else
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " allocating memory for test creation failed.\n"));
+      DEBUG((DEBUG_ERROR, "%a allocating memory for test creation failed.\n", __FUNCTION__));
       return;
     }
   }
@@ -1010,17 +1005,17 @@ AddUefiPoolTest(
     // Set memory type according to the bitmask for PcdHeapGuardPoolType.
     // The test progress should start at 0.
     //
-    HeapGuardContext =  AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
+    HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
 
     //
     // Name of the test is Security.PoolGuard.Uefi + Memory Type Name (from MEMORY_TYPES)
     //
     TestNameSize = sizeof(CHAR16) * (1 + StrnLenS(NameStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestName = AllocateZeroPool(TestNameSize);
+    TestName = (CHAR16 *)AllocateZeroPool(TestNameSize);
 
     TestDescriptionSize = sizeof(CHAR16) * (1 + StrnLenS(DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestDescription = AllocateZeroPool(TestDescriptionSize);
+    TestDescription = (CHAR16 *)AllocateZeroPool(TestDescriptionSize);
 
     if (TestName != NULL && TestDescription != NULL && HeapGuardContext != NULL) {
       StrCatS(TestName, UNIT_TEST_MAX_STRING_LENGTH, NameStub);
@@ -1039,7 +1034,7 @@ AddUefiPoolTest(
     }
     else
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " allocating memory for test creation failed.\n"));
+      DEBUG((DEBUG_ERROR, "%a allocating memory for test creation failed.\n", __FUNCTION__));
       return;
     }
   }
@@ -1068,14 +1063,14 @@ AddUefiPageTest(
     // Set memory type according to the bitmask for PcdHeapGuardPageType.
     // The test progress should start at 0.
     //
-    HeapGuardContext =  AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
+    HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
 
     TestNameSize = sizeof(CHAR16) * (1 + StrnLenS(NameStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestName = AllocateZeroPool(TestNameSize);
+    TestName = (CHAR16 *)AllocateZeroPool(TestNameSize);
 
     TestDescriptionSize = sizeof(CHAR16) * (1 + StrnLenS(DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestDescription = AllocateZeroPool(TestDescriptionSize);
+    TestDescription = (CHAR16 *)AllocateZeroPool(TestDescriptionSize);
 
     if (TestName != NULL && TestDescription != NULL && HeapGuardContext != NULL) {
       //
@@ -1097,7 +1092,7 @@ AddUefiPageTest(
     }
     else
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " allocating memory for test creation failed.\n"));
+      DEBUG((DEBUG_ERROR, "%a allocating memory for test creation failed.\n", __FUNCTION__));
       return;
     }
   }
@@ -1126,14 +1121,14 @@ AddSmmPoolTest(
     // Set memory type according to the bitmask for PcdHeapGuardPoolType.
     // The test progress should start at 0.
     //
-    HeapGuardContext =  AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
+    HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
 
     TestNameSize = sizeof(CHAR16) * (1 + StrnLenS(NameStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestName = AllocateZeroPool(TestNameSize);
+    TestName = (CHAR16 *)AllocateZeroPool(TestNameSize);
 
     TestDescriptionSize = sizeof(CHAR16) * (1 + StrnLenS(DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestDescription = AllocateZeroPool(TestDescriptionSize);
+    TestDescription = (CHAR16 *)AllocateZeroPool(TestDescriptionSize);
 
     if (TestName != NULL && TestDescription != NULL && HeapGuardContext != NULL) {
       //
@@ -1155,7 +1150,7 @@ AddSmmPoolTest(
     }
     else
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " allocating memory for test creation failed.\n"));
+      DEBUG((DEBUG_ERROR, "%a allocating memory for test creation failed.\n", __FUNCTION__));
       return;
     }
   }
@@ -1184,14 +1179,14 @@ AddSmmPageTest(
     // Set memory type according to the bitmask for PcdHeapGuardPageType.
     // The test progress should start at 0.
     //
-    HeapGuardContext =  AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
+    HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
 
     TestNameSize = sizeof(CHAR16) * (1 + StrnLenS(NameStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestName = AllocateZeroPool(TestNameSize);
+    TestName = (CHAR16 *)AllocateZeroPool(TestNameSize);
 
     TestDescriptionSize = sizeof(CHAR16) * (1 + StrnLenS(DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + StrnLenS(MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
-    TestDescription = AllocateZeroPool(TestDescriptionSize);
+    TestDescription = (CHAR16 *)AllocateZeroPool(TestDescriptionSize);
 
     if (TestName != NULL && TestDescription != NULL && HeapGuardContext != NULL) {
       //
@@ -1213,7 +1208,7 @@ AddSmmPageTest(
     }
     else
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " allocating memory for test creation failed.\n"));
+      DEBUG((DEBUG_ERROR, "%a allocating memory for test creation failed.\n", __FUNCTION__));
       return;
     }
   }
@@ -1243,11 +1238,12 @@ HeapGuardTestAppEntryPoint (
   UNIT_TEST_SUITE           *PoolGuard = NULL;
   UNIT_TEST_SUITE           *NxProtection = NULL;
   UNIT_TEST_SUITE           *Misc = NULL;
-  HEAP_GUARD_TEST_CONTEXT *HeapGuardContext = AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
+  HEAP_GUARD_TEST_CONTEXT *HeapGuardContext;
+  HeapGuardContext = (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
 
   CHAR16  ShortName[100];
   ShortName[0] = L'\0';
-  DEBUG((DEBUG_ERROR, __FUNCTION__ "()\n"));
+  DEBUG((DEBUG_ERROR, "%a()\n", __FUNCTION__));
 
   UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
   DEBUG(( DEBUG_ERROR, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));

@@ -63,7 +63,7 @@ MorControlVariableShouldBeCorrect (
   UINTN         DataSize;
   UINT8         Data;
 
-  UT_LOG_VERBOSE( __FUNCTION__"()\n" );
+  UT_LOG_VERBOSE( "%a()\n", __FUNCTION__ );
 
   DataSize = sizeof( Data );
   Status = gRT->GetVariable( MEMORY_OVERWRITE_REQUEST_VARIABLE_NAME,
@@ -187,7 +187,7 @@ MorLockShouldNotBeSet (
   EFI_STATUS    Status;
   UINT8         MorLock;
 
-  UT_LOG_VERBOSE( __FUNCTION__"()\n" );
+  UT_LOG_VERBOSE( "%a()\n", __FUNCTION__ );
 
   Status = GetMorLockVariable( &MorLock );
 
@@ -504,11 +504,11 @@ MorLockv1ShouldReportCorrectly (
   EFI_STATUS    Status;
   UINT8         MorLock;
 
-  UT_LOG_VERBOSE( __FUNCTION__"()\n" );
+  UT_LOG_VERBOSE( "%a()\n", __FUNCTION__ );
 
   Status = GetMorLockVariable( &MorLock );
 
-  UT_LOG_VERBOSE( __FUNCTION__" - Status = %r, MorLock = %d\n", Status, MorLock );
+  UT_LOG_VERBOSE( "%a - Status = %r, MorLock = %d\n", __FUNCTION__, Status, MorLock );
 
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(MorLock, MOR_LOCK_DATA_LOCKED_WITHOUT_KEY);
@@ -814,11 +814,11 @@ MorLockv2ShouldReportCorrectly (
   EFI_STATUS    Status;
   UINT8         MorLock;
 
-  UT_LOG_VERBOSE( __FUNCTION__"()\n" );
+  UT_LOG_VERBOSE( "%a()\n", __FUNCTION__ );
 
   Status = GetMorLockVariable( &MorLock );
 
-  UT_LOG_VERBOSE( __FUNCTION__" - Status = %r, MorLock = %d\n", Status, MorLock );
+  UT_LOG_VERBOSE( "%a - Status = %r, MorLock = %d\n", __FUNCTION__, Status, MorLock );
 
   UT_ASSERT_NOT_EFI_ERROR(Status);
   UT_ASSERT_EQUAL(MorLock, MOR_LOCK_DATA_LOCKED_WITH_KEY);

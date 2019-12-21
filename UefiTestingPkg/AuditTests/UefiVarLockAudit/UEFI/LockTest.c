@@ -53,7 +53,7 @@ CreateListOfAllVars()
     UINTN  varDataSize = 0;
     UINT32 varAttributes = 0;
 
-    Status = GetVariable3(varName, &varGuid, &varData, &varDataSize, &varAttributes);
+    Status = GetVariable3(varName, &varGuid, (VOID **)&varData, &varDataSize, &varAttributes);
     if (!EFI_ERROR(Status))
     {
       if (New_VariableNodeInList(List, varName, &varGuid, varAttributes, varDataSize, varData) == NULL)
@@ -107,20 +107,20 @@ UpdateListWithReadWriteInfo(XmlNode *List)
     Status = GetNameGuidMembersFromNode(Current, &varName, &varGuid);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed in GetNameGuidMembers.  Status = %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a Failed in GetNameGuidMembers.  Status = %r\n", __FUNCTION__ , Status));
       return Status;
     }
 
     //Get current data - don't use XML stringized data...easier just to read binary again
-    Status = GetVariable3(varName, &varGuid, &varData, &varDataSize, &varAttributes);
+    Status = GetVariable3(varName, &varGuid, (VOID **)&varData, &varDataSize, &varAttributes);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed in GetVar3.  Status = %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a Failed in GetVar3.  Status = %r\n", __FUNCTION__, Status));
       FreePool(varName);
       return Status;
     }
 
-    DEBUG((DEBUG_INFO, __FUNCTION__ " testing write properties for var %g", &varGuid));
+    DEBUG((DEBUG_INFO, "%a testing write properties for var %g", __FUNCTION__, &varGuid));
     DEBUG((DEBUG_INFO," ::%s", varName));
     DEBUG((DEBUG_INFO, "\n"));  //do independent debug print so that we always have newline.  Some names can be long and overrun the debug buffer
 
@@ -129,7 +129,7 @@ UpdateListWithReadWriteInfo(XmlNode *List)
     Status = AddReadyToBootStatusToNode(Current, EFI_SUCCESS, StatusFromDelete);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " failed in AddReadyToBootStatusToNode.  Status = %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a failed in AddReadyToBootStatusToNode.  Status = %r\n", __FUNCTION__, Status));
     }
 
     //restore if needed
@@ -138,7 +138,7 @@ UpdateListWithReadWriteInfo(XmlNode *List)
       Status = gRT->SetVariable(varName, &varGuid, varAttributes, varDataSize, varData);
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to restore variable data.  Status = %r\n", Status));
+        DEBUG((DEBUG_ERROR, "%a failed to restore variable data.  Status = %r\n", __FUNCTION__, Status));
       }
     }
 
@@ -223,7 +223,7 @@ IN EFI_SYSTEM_TABLE  *SystemTable
       Status = ShellDeleteFile(&FileHandle);
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " failed to delete file %r\n", Status));
+        DEBUG((DEBUG_ERROR, "%a failed to delete file %r\n", __FUNCTION__, Status));
       }
     }
 
