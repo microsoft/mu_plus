@@ -157,7 +157,7 @@ SerialStatusCode(
   //
   // Call SerialPort Lib function to do print.
   //
-  WriteStatusCode(BufferPtr, CharCount);
+  WriteStatusCode((UINT8 *)BufferPtr, CharCount);
 
 Cleanup:
   return EFI_SUCCESS;
