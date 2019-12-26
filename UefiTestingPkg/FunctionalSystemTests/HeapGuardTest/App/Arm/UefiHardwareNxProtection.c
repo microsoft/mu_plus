@@ -8,7 +8,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi.h>
 
 #include <Library/DebugLib.h>
-#include "../HeapGuardTestCommon.h"
+#include <UnitTestTypes.h>
 
 UNIT_TEST_STATUS
 EFIAPI

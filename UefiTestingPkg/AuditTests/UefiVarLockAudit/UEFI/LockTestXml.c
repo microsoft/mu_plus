@@ -72,7 +72,7 @@ GetNameGuidMembersFromNode(
 {
   EFI_STATUS Status;
   LIST_ENTRY *Link = NULL;
-  UINTN i;
+  UINTN i, Length;
   
   if (Node == NULL)
   {
@@ -113,11 +113,11 @@ GetNameGuidMembersFromNode(
     switch (i)
     {
     case 0: //Name
-      UINTN Length = AsciiStrnLenS(CurrentAttribute->Value, 1024);
+      Length = AsciiStrnLenS(CurrentAttribute->Value, 1024);
       *VarName = (CHAR16*)AllocateZeroPool((Length + 1) * sizeof(CHAR16));
       if (*VarName == NULL)
       {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to allocate for varname\n"));
+        DEBUG((DEBUG_ERROR, "%a Failed to allocate for varname\n", __FUNCTION__));
         Status = EFI_OUT_OF_RESOURCES;
         goto EXIT;
       }
@@ -128,13 +128,13 @@ GetNameGuidMembersFromNode(
       Status = ConvertAsciiStringToGuid(CurrentAttribute->Value, VarGuid);
       if (EFI_ERROR(Status))
       {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ " Failed to convert ascii string to guid. %r\n", Status));
+        DEBUG((DEBUG_ERROR, "%a Failed to convert ascii string to guid. %r\n", __FUNCTION__, Status));
         goto EXIT;
       }
       break;
 
     default:
-      DEBUG((DEBUG_ERROR, __FUNCTION__ " logic error: should never hit the default case\n"));
+      DEBUG((DEBUG_ERROR, "%a logic error: should never hit the default case\n", __FUNCTION__));
       Status = EFI_DEVICE_ERROR;
       goto EXIT;
     }
