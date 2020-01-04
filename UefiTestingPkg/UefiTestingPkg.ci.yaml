@@ -63,12 +63,16 @@
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
         # Fails test but run in AuditOnly mode to collect log
-        "AuditOnly": true,
+        "AuditOnly": TRUE,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
         "ExtendWords": [           # words to extend to the dictionary for this package
+            "RMRRs",               # DMAProtectionAudit/Windows/Readme.md
+            "Pywin",               # "
+            "musthave",            # VarPolicyUnitTestApp/Readme.md
+            "canthave",            # "
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
