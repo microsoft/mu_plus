@@ -2,13 +2,13 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 
-#include "../DxePagingAuditCommon.h"
+#include "../../PagingAuditCommon.h"
 
 
 /**
@@ -23,13 +23,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 EFIAPI
-PagingAuditDxeEntryPoint (
+PagingAuditDriverEntryPoint (
   IN     EFI_HANDLE         ImageHandle,
   IN     EFI_SYSTEM_TABLE  *SystemTable
 )
 {
   EFI_STATUS    Status = EFI_SUCCESS;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" registered - %r\n", Status));
+  DEBUG((DEBUG_ERROR, "%a registered - %r\n", __FUNCTION__, Status));
   EFI_EVENT                         Event;
 
   Status = gBS->CreateEventEx (
@@ -37,11 +37,10 @@ PagingAuditDxeEntryPoint (
                       TPL_CALLBACK,
                       DumpPagingInfo,
                       NULL,
-                      &gEfiEventExitBootServicesGuid,
+                      &gMuEventPreExitBootServicesGuid,
                       &Event
                       );
-  // // DumpPagingInfo();
-  DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
+  DEBUG((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 
   return EFI_SUCCESS;
 } // PagingAuditDxeEntryPoint()

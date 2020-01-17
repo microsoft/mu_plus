@@ -1,13 +1,13 @@
 /** @file -- DxePagingAuditApp.c
 This Shell App writes page table and memory map information to SFS.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 
-#include "../DxePagingAuditCommon.h"
+#include "../../PagingAuditCommon.h"
 
 
 /**
@@ -28,11 +28,11 @@ PagingAuditDxeAppEntryPoint (
 )
 {
   EFI_STATUS    Status = EFI_SUCCESS;
-  DEBUG((DEBUG_ERROR, __FUNCTION__" entered - %r\n", Status));
+  DEBUG((DEBUG_ERROR, "%a entered - %r\n", __FUNCTION__, Status));
 
   DumpPagingInfo (NULL, NULL);
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
+  DEBUG((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 
   return EFI_SUCCESS;
 } // PagingAuditDxeAppEntryPoint()

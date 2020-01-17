@@ -2,14 +2,28 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 
-#include "DxePagingAuditCommon.h"
+#include "PagingAuditCommon.h"
 
+/**
+
+  Opens the SFS volume and if successful, returns a FS handle to the opened volume.
+
+  @param    mFs_Handle       Handle to the opened volume.
+
+  @retval   EFI_SUCCESS     The FS volume was opened successfully.
+  @retval   Others          The operation failed.
+
+**/
+EFI_STATUS
+OpenVolumeSFS (
+  OUT EFI_FILE** Fs_Handle
+  );
 
 HEAP_GUARD_DEBUG_PROTOCOL *mHgDumpBitMap;
 EFI_FILE  *mFs_Handle;
@@ -80,7 +94,6 @@ AppendToMemoryInfoDatabase (
   return Status;
 } // AppendToMemoryInfoDatabase()
 
-
 /**
   Creates a new file and writes the contents of the caller's data buffer to the file.
 
@@ -94,7 +107,7 @@ AppendToMemoryInfoDatabase (
 
 **/
 EFI_STATUS
-DflDxeCreateAndWriteFileSFS (
+CreateAndWriteFileSFS (
     IN EFI_FILE*  Fs_Handle,
     IN CHAR16*    FileName,
     IN UINTN      DataBufferSize,
@@ -104,7 +117,7 @@ DflDxeCreateAndWriteFileSFS (
     EFI_STATUS Status = EFI_SUCCESS;
     EFI_FILE    *FileHandle = NULL;
 
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Creating file: %s \n", FileName));
+    DEBUG((DEBUG_ERROR, "%a: Creating file: %s \n", __FUNCTION__, FileName));
 
     // Create the file with RW permissions.
     //
@@ -117,7 +130,7 @@ DflDxeCreateAndWriteFileSFS (
                             );
 
     if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ ": Failed to create file %s: %r !\n", FileName, Status));
+        DEBUG((DEBUG_ERROR, "%a: Failed to create file %s: %r !\n", __FUNCTION__, FileName, Status));
         goto CleanUp;
     }
 
@@ -130,7 +143,7 @@ DflDxeCreateAndWriteFileSFS (
                                 );
 
     if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR, __FUNCTION__ ": Failed to write to file %s: %r !\n", FileName, Status));
+        DEBUG((DEBUG_ERROR, "%a: Failed to write to file %s: %r !\n", __FUNCTION__, FileName, Status));
         goto CleanUp;
     }
 
@@ -155,8 +168,8 @@ CleanUp:
  * @param[in]  BufferSize   Size of the buffer.
  * @param[in]  WriteCount   Number to append to the end of the file.
  */
-STATIC
 VOID
+EFIAPI
 WriteBufferToFile (
   IN CONST CHAR16                   *FileName,
   IN       VOID                     *Buffer,
@@ -166,12 +179,20 @@ WriteBufferToFile (
   EFI_STATUS          Status;
   CHAR16              FileNameAndExt[MAX_STRING_SIZE];
 
+  if (mFs_Handle == NULL) {
+    Status = OpenVolumeSFS (&mFs_Handle);
+    if (EFI_ERROR(Status)) {
+      DEBUG((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
+      return;
+    }
+  }
+
   // Calculate final file name.
   ZeroMem( FileNameAndExt, sizeof(CHAR16) * MAX_STRING_SIZE );
   UnicodeSPrint( FileNameAndExt, MAX_STRING_SIZE, L"%s.dat", FileName );
 
-  Status = DflDxeCreateAndWriteFileSFS(mFs_Handle, FileNameAndExt, BufferSize, Buffer);
-  DEBUG((DEBUG_ERROR, __FUNCTION__" Writing file %s - %r\n", FileNameAndExt, Status));
+  Status = CreateAndWriteFileSFS(mFs_Handle, FileNameAndExt, BufferSize, Buffer);
+  DEBUG((DEBUG_ERROR, "%a Writing file %s - %r\n", __FUNCTION__, FileNameAndExt, Status));
 }
 
 /**
@@ -203,7 +224,7 @@ MemoryAttributesTableDump (
   Status = EfiGetSystemConfigurationTable( &gEfiMemoryAttributesTableGuid, &MatMap );
 
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to retrieve MAT %r", Status));
+    DEBUG((DEBUG_ERROR, "%a Failed to retrieve MAT %r\n", __FUNCTION__, Status));
     return;
   }
 
@@ -224,7 +245,7 @@ MemoryAttributesTableDump (
   BufferSize = (EntryCount * FormattedStringSize) + sizeof(CHAR8);
   Buffer = AllocatePool(BufferSize);
   if (!Buffer) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to allocate buffer for data dump!"));
+    DEBUG((DEBUG_ERROR, "%a Failed to allocate buffer for data dump!\n", __FUNCTION__));
     return;
   }
 
@@ -262,8 +283,8 @@ MemoryAttributesTableDump (
 /**
  * @brief      Writes the UEFI memory map to file.
  */
-STATIC
 VOID
+EFIAPI
 MemoryMapDumpHandler (
   VOID
   )
@@ -279,7 +300,7 @@ MemoryMapDumpHandler (
   EFI_MEMORY_DESCRIPTOR       *EfiMemNext;
   CHAR8                       TempString[MAX_STRING_SIZE];
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
   //
   // Get the EFI memory map.
@@ -348,7 +369,7 @@ LoadedImageTableDump (
   CHAR8                                       *PdbFileName;
   CHAR8                                       TempString[MAX_STRING_SIZE];
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
   //
   // locate DebugImageInfoTable
@@ -362,7 +383,7 @@ LoadedImageTableDump (
   Table = TableHeader->EfiDebugImageInfoTable;
   TableSize = TableHeader->TableSize;
 
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"\n\nLength %lx Start x0x%016lx\n\n", TableHeader->TableSize, Table ));
+  DEBUG(( DEBUG_VERBOSE, "%a\n\nLength %lx Start x0x%016lx\n\n", __FUNCTION__, TableHeader->TableSize, Table ));
 
   for (Index = 0; Index < TableSize; Index ++) {
     if (Table[Index].NormalImage == NULL) {
@@ -387,6 +408,7 @@ LoadedImageTableDump (
     AppendToMemoryInfoDatabase( TempString );
   }
 }
+
 /**
 
   Opens the SFS volume and if successful, returns a FS handle to the opened volume.
@@ -398,7 +420,7 @@ LoadedImageTableDump (
 
 **/
 EFI_STATUS
-DflDxeOpenVolumeSFS (
+OpenVolumeSFS (
   OUT EFI_FILE** Fs_Handle
   )
 {
@@ -429,7 +451,7 @@ DflDxeOpenVolumeSFS (
                                    &HandleBuffer);
 
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": failed to locate all handles using the Simple FS protocol (%r)\n", Status));
+    DEBUG((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
     goto CleanUp;
   }
 
@@ -453,7 +475,7 @@ DflDxeOpenVolumeSFS (
     // Convert the device path to a string to print it.
     //
     PathNameStr = ConvertDevicePathToText(DevicePath,TRUE,TRUE);
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": device path %d -> %s\n", Index, PathNameStr));
+    DEBUG((DEBUG_ERROR, "%a: device path %d -> %s\n", __FUNCTION__, Index, PathNameStr));
 
     //
     // Check if this is a block IO device path. If it is not, keep searching.
@@ -465,7 +487,7 @@ DflDxeOpenVolumeSFS (
                                    &Handle);
 
     if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ ": not a block IO device path\n"));
+      DEBUG((DEBUG_ERROR, "%a: not a block IO device path\n", __FUNCTION__));
       continue;
     }
 
@@ -504,7 +526,7 @@ DflDxeOpenVolumeSFS (
     // If we found a good device path, stop searching.
     //
     if (Found != FALSE) {
-      DEBUG((DEBUG_ERROR, __FUNCTION__ ": found GPT partition Index:%d\n", Index));
+      DEBUG((DEBUG_ERROR, "%a: found GPT partition Index:%d\n", __FUNCTION__, Index));
       break;
     }
   }
@@ -522,7 +544,7 @@ DflDxeOpenVolumeSFS (
                                (VOID**)&SfProtocol);
 
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Failed to locate Simple FS protocol using the handle to fs0: %r \n", Status));
+    DEBUG((DEBUG_ERROR, "%a: Failed to locate Simple FS protocol using the handle to fs0: %r \n", __FUNCTION__, Status));
     goto CleanUp;
   }
 
@@ -531,7 +553,7 @@ DflDxeOpenVolumeSFS (
   //
   Status = SfProtocol->OpenVolume(SfProtocol, Fs_Handle);
   if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__ ": Failed to open Simple FS volume fs0: %r \n", Status));
+    DEBUG((DEBUG_ERROR, "%a: Failed to open Simple FS volume fs0: %r \n", __FUNCTION__, Status));
     goto CleanUp;
   }
 
@@ -542,6 +564,7 @@ CleanUp:
 
   return Status;
 }
+
 /**
   This helper function walks the page tables to retrieve:
   - a count of each entry
@@ -761,7 +784,7 @@ LoadFlatPageTableData(
   EFI_STATUS    Status = EFI_SUCCESS;
 
   // Run once to get counts.
-  DEBUG(( DEBUG_ERROR, __FUNCTION__" - First call to determine required buffer sizes.\n" ));
+  DEBUG(( DEBUG_ERROR, "%a - First call to determine required buffer sizes.\n", __FUNCTION__ ));
   *Pte1GCount = 0;
   *Pte2MCount = 0;
   *Pte4KCount = 0;
@@ -790,12 +813,12 @@ LoadFlatPageTableData(
 
   // If still good, grab the data.
   if (!EFI_ERROR( Status )) {
-    DEBUG(( DEBUG_INFO, __FUNCTION__" - Second call to grab the data.\n" ));
+    DEBUG(( DEBUG_INFO, "%a - Second call to grab the data.\n", __FUNCTION__ ));
     Status = GetFlatPageTableData( Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, GuardCount,
                                    *Pte1GEntries, *Pte2MEntries, *Pte4KEntries, *PdeEntries, *GuardEntries );
     if (Status == EFI_BUFFER_TOO_SMALL)
     {
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" Second GetFlatPageTableData call returned - %r\n", Status ));
+      DEBUG(( DEBUG_ERROR, "%a Second GetFlatPageTableData call returned - %r\n", __FUNCTION__, Status ));
       FreePool( *Pte1GEntries );
       FreePool( *Pte2MEntries );
       FreePool( *Pte4KEntries );
@@ -849,7 +872,7 @@ LoadFlatPageTableData(
     *GuardCount = 0;
   }
 
-  DEBUG(( DEBUG_ERROR, __FUNCTION__" - Exit... - %r\n", Status ));
+  DEBUG(( DEBUG_ERROR, "%a - Exit... - %r\n", __FUNCTION__, Status ));
   return !EFI_ERROR( Status );
 }
 
@@ -862,7 +885,6 @@ LoadFlatPageTableData(
   @retval     EFI_SUCCESS     Database has been flushed to file.
 
 **/
-STATIC
 EFI_STATUS
 FlushAndClearMemoryInfoDatabase (
   IN CONST CHAR16     *FileName
@@ -915,34 +937,34 @@ DumpPagingInfo (
 
   Status = gBS->LocateProtocol(&gHeapGuardDebugProtocolGuid, NULL, (VOID **) &mHgDumpBitMap);
   if (EFI_ERROR(Status)){
-    DEBUG((DEBUG_ERROR, __FUNCTION__" error finding hg bitmap protocol - %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a error finding hg bitmap protocol - %r\n", __FUNCTION__, Status));
     mHgDumpBitMap = NULL;
   }
-  Status = DflDxeOpenVolumeSFS (&mFs_Handle);
+  Status = OpenVolumeSFS (&mFs_Handle);
   if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" error opening sfs volume - %r\n", Status));
+    DEBUG((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
     return;
   }
 
   if (LoadFlatPageTableData( &Pte1GCount, &Pte2MCount, &Pte4KCount, &PdeCount, &GuardCount,
                          &Pte1GEntries, &Pte2MEntries, &Pte4KEntries, &PdeEntries, &GuardEntries ))
   {
-    DflDxeCreateAndWriteFileSFS(mFs_Handle, L"1G.dat", Pte1GCount * sizeof( PAGE_TABLE_1G_ENTRY ), Pte1GEntries);
-    DflDxeCreateAndWriteFileSFS(mFs_Handle, L"2M.dat", Pte2MCount * sizeof( PAGE_TABLE_ENTRY ), Pte2MEntries);
-    DflDxeCreateAndWriteFileSFS(mFs_Handle, L"4K.dat", Pte4KCount * sizeof( PAGE_TABLE_4K_ENTRY ), Pte4KEntries);
-    DflDxeCreateAndWriteFileSFS(mFs_Handle, L"PDE.dat", PdeCount * sizeof( UINT64 ), PdeEntries);
+    CreateAndWriteFileSFS(mFs_Handle, L"1G.dat", Pte1GCount * sizeof( PAGE_TABLE_1G_ENTRY ), Pte1GEntries);
+    CreateAndWriteFileSFS(mFs_Handle, L"2M.dat", Pte2MCount * sizeof( PAGE_TABLE_ENTRY ), Pte2MEntries);
+    CreateAndWriteFileSFS(mFs_Handle, L"4K.dat", Pte4KCount * sizeof( PAGE_TABLE_4K_ENTRY ), Pte4KEntries);
+    CreateAndWriteFileSFS(mFs_Handle, L"PDE.dat", PdeCount * sizeof( UINT64 ), PdeEntries);
 
     // Only populate guard pages when function call is successful
     for (UINT64 i = 0; i < GuardCount; i ++) {
       AsciiSPrint( TempString, MAX_STRING_SIZE,
         "GuardPage,0x%016lx\n",
         GuardEntries[i] );
-      DEBUG((DEBUG_ERROR, __FUNCTION__"  %s\n", TempString));
+      DEBUG((DEBUG_ERROR, "%a  %s\n", __FUNCTION__, TempString));
       AppendToMemoryInfoDatabase( TempString );
     }
   }
   else {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - LoadFlatPageTableData returned with failure, bail from here!\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - LoadFlatPageTableData returned with failure, bail from here!\n", __FUNCTION__ ));
     goto Cleanup;
   }
 
@@ -970,5 +992,5 @@ Cleanup:
     FreePool( GuardEntries );
   }
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__" leave - %r\n", Status));
+  DEBUG((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 }

@@ -3,11 +3,9 @@
 # protection test infrastructure exercise a particular test.
 #
 ##
-# Copyright (C) Microsoft Corporation. All rights reserved.
-## SPDX-License-Identifier: BSD-2-Clause-Patent
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
-# MS_CHANGE - Entire file created.
 
 [Defines]
   INF_VERSION         = 0x00010017
@@ -19,8 +17,13 @@
 
 
 [Sources]
-  SmmPagingAuditApp.c
+  Smm/App/SmmPagingAuditApp.c
+  Smm/SmmPagingAuditCommon.h
+  PagingAuditCommon.c
+  PagingAuditCommon.h
 
+[Sources.X64]
+  X64/PagingAuditProcessor.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -39,7 +42,9 @@
   CpuExceptionHandlerLib
 
 [Protocols]
+  gEfiBlockIoProtocolGuid
   gEfiSmmCommunicationProtocolGuid
+  gHeapGuardDebugProtocolGuid
 
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID

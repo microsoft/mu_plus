@@ -2,7 +2,7 @@
 # This Shell App writes page table and memory map information to SFS.
 #
 ##
-# Copyright (C) Microsoft Corporation. All rights reserved.
+# Copyright (c) Microsoft Corporation.
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -17,13 +17,13 @@
 
 
 [Sources]
-  DxePagingAuditApp.c
-  ../DxePagingAuditCommon.c
-  ../DxePagingAuditCommon.h
+  Dxe/App/DxePagingAuditApp.c
+  PagingAuditCommon.c
+  PagingAuditCommon.h
 
 
 [Sources.X64]
-  ../X64/DxePagingAuditProcessor.c
+  X64/PagingAuditProcessor.c
 
 
 [Packages]

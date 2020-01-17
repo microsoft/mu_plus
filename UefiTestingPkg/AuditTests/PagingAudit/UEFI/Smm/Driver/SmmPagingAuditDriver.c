@@ -2,12 +2,10 @@
 This is the SMM portion of the SmmPagingAuditApp driver.
 It copies valid entries from the page tables into the communication buffer.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
-// MS_CHANGE - Entire file created.
 
 #include <PiSmm.h>
 
@@ -24,6 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/SmmCommunication.h>
 #include <Guid/DebugImageInfoTable.h>
 
+#include "../../PagingAuditCommon.h"
 #include "../SmmPagingAuditCommon.h"
 
 
@@ -381,7 +380,7 @@ LoadFlatPageTableData (
   EFI_STATUS    Status;
 
   // Run once to get counts.
-  DEBUG(( DEBUG_INFO, __FUNCTION__" - First call to determine required buffer sizes.\n" ));
+  DEBUG(( DEBUG_INFO, "%a - First call to determine required buffer sizes.\n", __FUNCTION__ ));
   *Pte1GCount = 0;
   *Pte2MCount = 0;
   *Pte4KCount = 0;
@@ -397,13 +396,17 @@ LoadFlatPageTableData (
 
     // Check for errors.
     if (*Pte1GEntries == NULL || *Pte2MEntries == NULL || *Pte4KEntries == NULL || *PdeEntries == NULL) {
+      DEBUG(( DEBUG_ERROR, "%a - Ran out of resource during allocation.\n", __FUNCTION__ ));
       Status = EFI_OUT_OF_RESOURCES;
     }
+  }
+  else {
+    DEBUG(( DEBUG_ERROR, "%a - Get page table data failed - %r.\n", __FUNCTION__, Status ));
   }
 
   // If still good, grab the data.
   if (!EFI_ERROR( Status )) {
-    DEBUG(( DEBUG_INFO, __FUNCTION__" - Second call to grab the data.\n" ));
+    DEBUG(( DEBUG_INFO, "%a - Second call to grab the data.\n", __FUNCTION__ ));
     Status = GetFlatPageTableData( Pte1GCount, Pte2MCount, Pte4KCount, PdeCount,
                                    *Pte1GEntries, *Pte2MEntries, *Pte4KEntries, *PdeEntries );
   }
@@ -472,13 +475,13 @@ SmmPagingAuditHandler (
   static PAGE_TABLE_4K_ENTRY            *Pte4KEntries = NULL;
   static UINT64                         *PdeEntries = NULL;
 
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_VERBOSE, "%a()\n", __FUNCTION__ ));
 
   //
   // If input is invalid, stop processing this SMI
   //
   if (CommBuffer == NULL || CommBufferSize == NULL) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Invalid comm buffer! Bad pointers!\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - Invalid comm buffer! Bad pointers!\n", __FUNCTION__ ));
     return EFI_ACCESS_DENIED;
   }
 
@@ -486,7 +489,7 @@ SmmPagingAuditHandler (
   // Make sure that the buffer size makes sense for any of the possible calls.
   //
   if (*CommBufferSize < sizeof(SMM_PAGE_AUDIT_UNIFIED_COMM_BUFFER)) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Invalid comm buffer! Bad size!\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - Invalid comm buffer! Bad size!\n", __FUNCTION__ ));
     return EFI_ACCESS_DENIED;
   }
   AuditCommBuffer = CommBuffer;
@@ -497,10 +500,10 @@ SmmPagingAuditHandler (
   // This upper limit is somewhat arbitrary, currently capped at MAX_SMI_CALL_COUNT,
   // in order to prevent overflow on x86 or x64 systems during related multiplications
   if (AuditCommBuffer->Header.RequestIndex > MAX_SMI_CALL_COUNT) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - RequestIndex %d > MAX_SMI_CALL_COUNT!\n", AuditCommBuffer->Header.RequestIndex ));
+    DEBUG(( DEBUG_ERROR, "%a - RequestIndex %d > MAX_SMI_CALL_COUNT!\n", __FUNCTION__, AuditCommBuffer->Header.RequestIndex ));
     return EFI_INVALID_PARAMETER;
   }
-  DEBUG(( DEBUG_INFO, __FUNCTION__" - RequestIndex %d !\n", AuditCommBuffer->Header.RequestIndex ));
+  DEBUG(( DEBUG_INFO, "%a - RequestIndex %d !\n", __FUNCTION__, AuditCommBuffer->Header.RequestIndex ));
   //
   // If this call will need cached data, load that now.
   //
@@ -511,7 +514,7 @@ SmmPagingAuditHandler (
                                                    &Pte1GEntries, &Pte2MEntries, &Pte4KEntries, &PdeEntries );
     }
     if (!PageTableDataLoaded) {
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" - Failed to load page table data!\n" ));
+      DEBUG(( DEBUG_ERROR, "%a - Failed to load page table data!\n", __FUNCTION__ ));
       return EFI_ABORTED;
     }
   }
@@ -521,7 +524,7 @@ SmmPagingAuditHandler (
   //
   switch (AuditCommBuffer->Header.RequestType) {
     case SMM_PAGE_AUDIT_TABLE_REQUEST:
-      DEBUG(( DEBUG_INFO, __FUNCTION__" - Getting page tables.\n" ));
+      DEBUG(( DEBUG_INFO, "%a - Getting page tables.\n", __FUNCTION__ ));
       // Init defaults.
       ZeroMem( &AuditCommBuffer->Data.TableEntry, sizeof(AuditCommBuffer->Data.TableEntry) );
       // Copy 1G Table Entries.
@@ -563,7 +566,7 @@ SmmPagingAuditHandler (
       break;
 
     case SMM_PAGE_AUDIT_PDE_REQUEST:
-      DEBUG(( DEBUG_INFO, __FUNCTION__" - Getting page directories.\n" ));
+      DEBUG(( DEBUG_INFO, "%a - Getting page directories.\n", __FUNCTION__ ));
       // Init defaults.
       ZeroMem( &AuditCommBuffer->Data.PdeEntry, sizeof(AuditCommBuffer->Data.PdeEntry) );
       // Copy PDE Entries.
@@ -581,14 +584,14 @@ SmmPagingAuditHandler (
       break;
 
     case SMM_PAGE_AUDIT_MISC_DATA_REQUEST:
-      DEBUG((DEBUG_INFO, __FUNCTION__" - Getting misc info run #%d\n", AuditCommBuffer->Header.RequestIndex));
+      DEBUG((DEBUG_INFO, "%a - Getting misc info run #%d\n", __FUNCTION__, AuditCommBuffer->Header.RequestIndex));
       IdtDumpHandler( &AuditCommBuffer->Data.MiscData );
       GdtDumpHandler( &AuditCommBuffer->Data.MiscData );
       SmmLoadedImageTableDump( AuditCommBuffer->Header.RequestIndex, &AuditCommBuffer->Data.MiscData );
       break;
 
     case SMM_PAGE_AUDIT_CLEAR_DATA_REQUEST:
-      DEBUG(( DEBUG_INFO, __FUNCTION__" - Clearing cached data.\n" ));
+      DEBUG(( DEBUG_INFO, "%a - Clearing cached data.\n", __FUNCTION__ ));
       // Reset all of the cached data.
       FreePool( Pte1GEntries );
       Pte1GEntries = NULL;
@@ -606,7 +609,7 @@ SmmPagingAuditHandler (
       break;
 
     default:
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" - Unknown request type! 0x%02X\n", AuditCommBuffer->Header.RequestType ));
+      DEBUG(( DEBUG_ERROR, "%a - Unknown request type! 0x%02X\n", __FUNCTION__, AuditCommBuffer->Header.RequestType ));
       Status = EFI_ACCESS_DENIED;
       break;
   }
@@ -626,7 +629,7 @@ SmmPagingAuditHandler (
 **/
 EFI_STATUS
 EFIAPI
-SmmPagingAuditSmmEntryPoint (
+SmmPagingAuditDriverEntryPoint (
   IN EFI_HANDLE         ImageHandle,
   IN EFI_SYSTEM_TABLE   *SystemTable
 )

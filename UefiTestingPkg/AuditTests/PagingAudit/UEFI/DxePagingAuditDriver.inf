@@ -3,28 +3,28 @@
 # by an event.
 #
 ##
-# Copyright (C) Microsoft Corporation. All rights reserved.
-## SPDX-License-Identifier: BSD-2-Clause-Patent
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = DxePagingAuditDxeDriver
+  BASE_NAME           = DxePagingAuditDriver
   FILE_GUID           = 8C8CEAB1-6062-4777-BD21-7A1C034EF034
   VERSION_STRING      = 1.0
   MODULE_TYPE         = DXE_DRIVER
-  ENTRY_POINT         = PagingAuditDxeEntryPoint
+  ENTRY_POINT         = PagingAuditDriverEntryPoint
 
 
 [Sources]
-  DxePagingAuditDxe.c
-  ../DxePagingAuditCommon.c
-  ../DxePagingAuditCommon.h
+  Dxe/Driver/DxePagingAuditDriver.c
+  PagingAuditCommon.c
+  PagingAuditCommon.h
 
 
 [Sources.X64]
-  ../X64/DxePagingAuditProcessor.c
+  X64/PagingAuditProcessor.c
 
 
 [Packages]
@@ -44,7 +44,7 @@
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
-  gEfiEventExitBootServicesGuid
+  gMuEventPreExitBootServicesGuid
 
 [Protocols]
   gEfiBlockIoProtocolGuid

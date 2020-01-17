@@ -2,7 +2,7 @@
 Platform specific memory handler dump function. Handler(s) need to be in compliance
 with existed Windows\PagingReportGenerator.py, i.e. TSEG.
 
-Copyright (C) Microsoft Corporation. All rights reserved..
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -16,7 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 #include <Register/Msr.h>
-#include "../DxePagingAuditCommon.h"
+#include "../PagingAuditCommon.h"
 
 
 /**
@@ -53,7 +53,6 @@ InitializeMtrrMask (
   *MtrrValidAddressMask = *MtrrValidBitsMask & 0xfffffffffffff000ULL;
 }
 
-
 /*
   Helper function inherited from MinPlatformPkg TestPointCheckSmrr()
 
@@ -67,7 +66,7 @@ InitializeMtrrMask (
 */
 STATIC
 EFI_STATUS
-CheckSmrrSupported (
+LookupSmrrIntel (
   OUT   UINT32    *SmrrPhysBaseMsr,
   OUT   UINT32    *SmrrPhysMaskMsr
   )
@@ -79,27 +78,25 @@ CheckSmrrSupported (
   UINTN       FamilyId;
   UINTN       ModelId;
 
-  DEBUG (( DEBUG_INFO, "%a - Enter\n", __FUNCTION__ ));
-
   Status = EFI_UNSUPPORTED;
   if ((SmrrPhysBaseMsr == NULL) || (SmrrPhysMaskMsr == NULL)) {
-    Status = EFI_INVALID_PARAMETER;
-    goto Cleanup;
+    return EFI_INVALID_PARAMETER;
   }
 
   *SmrrPhysBaseMsr = MSR_IA32_SMRR_PHYSBASE;
   *SmrrPhysMaskMsr = MSR_IA32_SMRR_PHYSMASK;
+
   //
   // Retrieve CPU Family and Model
   //
   AsmCpuid (CPUID_VERSION_INFO, &RegEax, NULL, NULL, &RegEdx);
   FamilyId = (RegEax >> 8) & 0xf;
   ModelId  = (RegEax >> 4) & 0xf;
-  DEBUG (( DEBUG_INFO, "%a - FamilyId 0x%02x, ModelId 0x%02x\n", __FUNCTION__, FamilyId, ModelId ));
 
   if (FamilyId == 0x06 || FamilyId == 0x0f) {
     ModelId = ModelId | ((RegEax >> 12) & 0xf0);
   }
+  DEBUG (( DEBUG_INFO, "%a - FamilyId 0x%02x, ModelId 0x%02x\n", __FUNCTION__, FamilyId, ModelId ));
 
   //
   // Check CPUID(CPUID_VERSION_INFO).EDX[12] for MTRR capability
@@ -140,6 +137,112 @@ CheckSmrrSupported (
     }
   }
 
+  return Status;
+}
+
+/*
+  Helper function inherited from MinPlatformPkg TestPointCheckSmrr()
+
+  @param[out]   SmrrPhysBaseMsr     Input pointer to hold SMRR Base Msr
+  @param[out]   SmrrPhysMaskMsr     Input pointer to hold SMRR Mask Msr
+
+  @retval   EFI_STATUS              The system supports SMRR and pointers will be put in pointers passed in
+  @retval   EFI_INVALID_PARAMETER   Input arguments have NULL pointers
+  @retval   EFI_UNSUPPORTED         This system does not predefined SMRR in this module
+
+*/
+STATIC
+EFI_STATUS
+LookupSmrrAMD (
+  OUT   UINT32    *SmrrPhysBaseMsr,
+  OUT   UINT32    *SmrrPhysMaskMsr
+  )
+{
+  EFI_STATUS  Status;
+
+  UINT32      RegEax;
+  UINT32      RegEdx;
+  UINTN       FamilyId;
+  UINTN       ModelId;
+
+  if ((SmrrPhysBaseMsr == NULL) || (SmrrPhysMaskMsr == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *SmrrPhysBaseMsr = AMD_64_SMM_ADDR;
+  *SmrrPhysMaskMsr = AMD_64_SMM_MASK;
+
+  //
+  // Retrieve CPU Family and Model
+  //
+  AsmCpuid (CPUID_VERSION_INFO, &RegEax, NULL, NULL, &RegEdx);
+  FamilyId = (RegEax >> 8) & 0xf;
+  ModelId  = (RegEax >> 4) & 0xf;
+
+  if (FamilyId == 0x0f) {
+    // Extended family id and model in use
+    FamilyId = FamilyId + (RegEax >> 20) & 0xff;
+    ModelId = ModelId | ((RegEax >> 12) & 0xf0);
+  }
+  DEBUG (( DEBUG_INFO, "%a - FamilyId 0x%02x, ModelId 0x%02x\n", __FUNCTION__, FamilyId, ModelId ));
+
+  //
+  // In processors implementing the AMD64 architecture, SMBASE relocation is always supported
+  //
+  Status = EFI_SUCCESS;
+
+  return Status;
+}
+
+/*
+  Helper function inherited from MinPlatformPkg TestPointCheckSmrr()
+
+  @param[out]   SmrrPhysBaseMsr     Input pointer to hold SMRR Base Msr
+  @param[out]   SmrrPhysMaskMsr     Input pointer to hold SMRR Mask Msr
+
+  @retval   EFI_STATUS              The system supports SMRR and pointers will be put in pointers passed in
+  @retval   EFI_INVALID_PARAMETER   Input arguments have NULL pointers
+  @retval   EFI_UNSUPPORTED         This system does not predefined SMRR in this module
+
+*/
+STATIC
+EFI_STATUS
+CheckSmrrSupported (
+  OUT   UINT32    *SmrrPhysBaseMsr,
+  OUT   UINT32    *SmrrPhysMaskMsr
+  )
+{
+  EFI_STATUS  Status;
+
+  UINT32      RegEbx;
+  UINT32      RegEcx;
+  UINT32      RegEdx;
+
+  DEBUG (( DEBUG_INFO, "%a - Enter\n", __FUNCTION__ ));
+
+  Status = EFI_UNSUPPORTED;
+  if ((SmrrPhysBaseMsr == NULL) || (SmrrPhysMaskMsr == NULL)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Cleanup;
+  }
+
+  AsmCpuid (CPUID_SIGNATURE, NULL, &RegEbx, &RegEcx, &RegEdx);
+  if ((RegEbx == CPUID_SIGNATURE_GENUINE_INTEL_EBX) &&
+      (RegEcx == CPUID_SIGNATURE_GENUINE_INTEL_ECX) &&
+      (RegEdx == CPUID_SIGNATURE_GENUINE_INTEL_EDX)) {
+    // Deal with intel cpus
+    Status = LookupSmrrIntel (SmrrPhysBaseMsr, SmrrPhysMaskMsr);
+  }
+  else if ((RegEbx == CPUID_SIGNATURE_AUTHENTIC_AMD_EBX) &&
+          (RegEcx == CPUID_SIGNATURE_AUTHENTIC_AMD_ECX) &&
+          (RegEdx == CPUID_SIGNATURE_AUTHENTIC_AMD_EDX)) {
+    // Deal with AMD cpus
+    Status = LookupSmrrAMD (SmrrPhysBaseMsr, SmrrPhysMaskMsr);
+  }
+  else {
+    Status = EFI_UNSUPPORTED;
+  }
+
 Cleanup:
   DEBUG (( DEBUG_INFO, "%a - Exit %r\n", __FUNCTION__, Status ));
   return Status;
@@ -162,18 +265,18 @@ TSEGDumpHandler (
   CHAR8       TempString[MAX_STRING_SIZE];
   EFI_STATUS  Status;
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
   MtrrValidBitsMask = 0;
   MtrrValidAddressMask = 0;
 
   InitializeMtrrMask( &MtrrValidBitsMask, &MtrrValidAddressMask );
 
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__" MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", MtrrValidBitsMask , MtrrValidAddressMask ));
+  DEBUG(( DEBUG_VERBOSE, "%a MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", __FUNCTION__, MtrrValidBitsMask , MtrrValidAddressMask ));
 
   Status = CheckSmrrSupported(&mSmrrPhysBaseMsr, &mSmrrPhysMaskMsr);
   if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" SMRR base and mask cannot be queried! Bail from here!\n" ));
+    DEBUG(( DEBUG_ERROR, "%a SMRR base and mask cannot be queried! Bail from here!\n", __FUNCTION__ ));
     return Status;
   }
 
@@ -183,13 +286,13 @@ TSEGDumpHandler (
   // Extend the mask to account for the reserved bits.
   SmrrMask |= 0xffffffff00000000ULL;
 
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__" SMRR base 0x%016lx, mask: 0x%016lx\n", SmrrBase , SmrrMask ));
+  DEBUG(( DEBUG_VERBOSE, "%a SMRR base 0x%016lx, mask: 0x%016lx\n", __FUNCTION__, SmrrBase , SmrrMask ));
 
   // Extend the top bits of the mask to account for the reserved
 
   Length = ((~(SmrrMask & MtrrValidAddressMask)) & MtrrValidBitsMask) + 1;
 
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__" Calculated length: 0x%016lx\n", Length ));
+  DEBUG(( DEBUG_VERBOSE, "%a Calculated length: 0x%016lx\n", __FUNCTION__, Length ));
 
   // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
   AsciiSPrint( TempString, MAX_STRING_SIZE,
@@ -214,6 +317,6 @@ DumpProcessorSpecificHandlers (
   VOID
   )
 {
-  // Dump TSEG Handlers for Intel platforms
+  // Dump TSEG Handlers for x64 platforms
   TSEGDumpHandler();
 }

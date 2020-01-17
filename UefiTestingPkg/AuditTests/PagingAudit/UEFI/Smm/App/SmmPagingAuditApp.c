@@ -2,12 +2,10 @@
 This user-facing application collects information from the SMM page tables and
 writes it to files.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
-// MS_CHANGE - Entire file created.
 
 #include <Uefi.h>
 
@@ -31,6 +29,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MemoryAttributesTable.h>
 #include <Guid/PiSmmCommunicationRegionTable.h>
 
+#include "../../PagingAuditCommon.h"
 #include "../SmmPagingAuditCommon.h"
 
 
@@ -40,303 +39,6 @@ UINTN     mPiSmmCommonCommBufferSize;
 CHAR8     *mMemoryInfoDatabaseBuffer = NULL;
 UINTN     mMemoryInfoDatabaseSize = 0;
 UINTN     mMemoryInfoDatabaseAllocSize = 0;
-#define   MEM_INFO_DATABASE_REALLOC_CHUNK   0x1000
-#define   MEM_INFO_DATABASE_MAX_STRING_SIZE 0x400     // Should be less than the realloc chunk.
-
-
-/**
- * @brief      Writes a buffer to file.
- *
- * @param      FileName     The name of the file being written to.
- * @param      Buffer       The buffer to write to file.
- * @param[in]  BufferSize   Size of the buffer.
- * @param[in]  WriteCount   Number to append to the end of the file.
- */
-STATIC
-VOID
-WriteBufferToFile (
-  IN CONST CHAR16                   *FileName,
-  IN       VOID                     *Buffer,
-  IN       UINTN                    BufferSize
-  )
-{
-  EFI_STATUS          Status;
-  UINTN               StringSize = BufferSize;
-  SHELL_FILE_HANDLE   FileHandle;
-  CHAR16              FileNameAndExt[MAX_STRING_SIZE];
-
-  // Calculate final file name.
-  ZeroMem( FileNameAndExt, sizeof(CHAR16) * MAX_STRING_SIZE );
-  UnicodeSPrint( FileNameAndExt, MAX_STRING_SIZE, L"%s.dat", FileName );
-
-  // First, let's open the file if it exists so we can delete it...
-  // This is the work around for truncation
-  Status = ShellOpenFileByName( FileNameAndExt, &FileHandle,
-                                (EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE),
-                                0 );
-  if (!EFI_ERROR( Status )) {
-    // If file handle above was opened it will be closed by the delete.
-    Status = ShellDeleteFile( &FileHandle );
-    if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, __FUNCTION__ " failed to delete file %r\n", Status ));
-    }
-  }
-
-  // Open the file and write buffer contents.
-  Status = ShellOpenFileByName( FileNameAndExt, &FileHandle,
-                                (EFI_FILE_MODE_CREATE | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_READ),
-                                0 );
-  if (!EFI_ERROR( Status )) {
-    ShellWriteFile( FileHandle, &StringSize, Buffer );
-    ShellCloseFile( &FileHandle );
-
-    ShellPrintEx( -1, -1, L"Wrote to file %s\n", FileNameAndExt );
-  }
-}
-
-
-/**
-  This helper function writes a string entry to the memory info database buffer.
-  If string would exceed current buffer allocation, it will realloc.
-
-  NOTE: The buffer tracks its size. It does not work with NULL terminators.
-
-  @param[in]  DatabaseString    A pointer to a CHAR8 string that should be
-                                added to the database.
-
-  @retval     EFI_SUCCESS           String was successfully added.
-  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accommodate string.
-                                    String has not been added.
-
-**/
-STATIC
-EFI_STATUS
-AppendToMemoryInfoDatabase (
-  IN CONST CHAR8    *DatabaseString
-  )
-{
-  EFI_STATUS    Status = EFI_SUCCESS;
-  UINTN         NewStringSize, NewDatabaseSize;
-  CHAR8         *NewDatabaseBuffer;
-
-  // If the incoming string is NULL or empty, get out of here.
-  if (DatabaseString == NULL || DatabaseString[0] == '\0') {
-    return EFI_SUCCESS;
-  }
-
-  // Determine the length of the incoming string.
-  // NOTE: This size includes the NULL terminator.
-  NewStringSize = AsciiStrnSizeS( DatabaseString, MEM_INFO_DATABASE_MAX_STRING_SIZE );
-  NewStringSize = NewStringSize - sizeof(CHAR8);    // Remove NULL.
-
-  // If we need more space, realloc now.
-  // Subtract 1 because we only need a single NULL terminator.
-  NewDatabaseSize = NewStringSize + mMemoryInfoDatabaseSize;
-  if (NewDatabaseSize > mMemoryInfoDatabaseAllocSize) {
-    NewDatabaseBuffer = ReallocatePool( mMemoryInfoDatabaseAllocSize,
-                                        mMemoryInfoDatabaseAllocSize + MEM_INFO_DATABASE_REALLOC_CHUNK,
-                                        mMemoryInfoDatabaseBuffer );
-    // If we failed, don't change anything.
-    if (NewDatabaseBuffer == NULL) {
-      Status = EFI_OUT_OF_RESOURCES;
-    }
-    // Otherwise, updated the pointers and sizes.
-    else {
-      mMemoryInfoDatabaseBuffer = NewDatabaseBuffer;
-      mMemoryInfoDatabaseAllocSize += MEM_INFO_DATABASE_REALLOC_CHUNK;
-    }
-  }
-
-  // If we're still good, copy the new string to the end of
-  // the buffer and update the size.
-  if (!EFI_ERROR( Status )) {
-    // Subtract 1 to remove the previous NULL terminator.
-    CopyMem( &mMemoryInfoDatabaseBuffer[mMemoryInfoDatabaseSize], DatabaseString, NewStringSize );
-    mMemoryInfoDatabaseSize = NewDatabaseSize;
-  }
-
-  return Status;
-} // AppendToMemoryInfoDatabase()
-
-
-/**
-  This helper function will flush the MemoryInfoDatabase to its corresponding
-  file and free all resources currently associated with it.
-
-  @param[in]  FileName    Name of the file to be flushed to.
-
-  @retval     EFI_SUCCESS     Database has been flushed to file.
-
-**/
-STATIC
-EFI_STATUS
-FlushAndClearMemoryInfoDatabase (
-  IN CONST CHAR16     *FileName
-  )
-{
-  // If we have database contents, flush them to the file.
-  if (mMemoryInfoDatabaseSize > 0) {
-    WriteBufferToFile( FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize );
-  }
-
-  // If we have a database, free it, and reset all counters.
-  if (mMemoryInfoDatabaseBuffer != NULL) {
-    FreePool( mMemoryInfoDatabaseBuffer );
-    mMemoryInfoDatabaseBuffer = NULL;
-  }
-  mMemoryInfoDatabaseAllocSize = 0;
-  mMemoryInfoDatabaseSize = 0;
-
-  return EFI_SUCCESS;
-} // FlushAndClearMemoryInfoDatabase()
-
-
-/**
- * @brief      Writes the MemoryAttributesTable to a file.
- */
-VOID
-EFIAPI
-MemoryAttributesTableDump (
-  VOID
-  )
-{
-  EFI_STATUS                      Status;
-  EFI_MEMORY_ATTRIBUTES_TABLE     *MatMap;
-  EFI_MEMORY_DESCRIPTOR           *Map;
-  UINT64                          EntrySize;
-  UINT64                          EntryCount;
-  CHAR8                           *WriteString;
-  CHAR8                           *Buffer;
-  UINT64                          Index;
-  UINTN                           BufferSize;
-  UINTN                           FormattedStringSize;
-  // NOTE: Important to use fixed-size formatters for pointer movement.
-  CHAR8                           MatFormatString[] = "MAT,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n";
-  CHAR8                           TempString[MAX_STRING_SIZE];
-
-  //
-  // First, we need to locate the MAT table.
-  //
-  Status = EfiGetSystemConfigurationTable( &gEfiMemoryAttributesTableGuid, &MatMap );
-
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "Failed to retrieve MAT %r", Status));
-    return;
-  }
-
-  // MAT should now be at the pointer.
-  EntrySize    = MatMap->DescriptorSize;
-  EntryCount   = MatMap->NumberOfEntries;
-  Map          = (VOID*)((UINT8*)MatMap + sizeof( *MatMap ));
-
-
-  //
-  // Next, we need to allocate a buffer to hold all of the entries.
-  // We'll be storing the data as fixed-length strings.
-  //
-  // Do a dummy format to determine the size of a string.
-  // We're safe to use 0's, since the formatters are fixed-size.
-  FormattedStringSize = AsciiSPrint( TempString, MAX_STRING_SIZE, MatFormatString, 0, 0, 0, 0, 0 );
-  // Make sure to add space for the NULL terminator at the end.
-  BufferSize = (EntryCount * FormattedStringSize) + sizeof(CHAR8);
-  Buffer = AllocatePool(BufferSize);
-  if (!Buffer) {
-    DEBUG((DEBUG_ERROR, "Failed to allocate buffer for data dump!"));
-    return;
-  }
-
-
-  //
-  // Add all entries to the buffer.
-  //
-  WriteString = Buffer;
-  for (Index = 0; Index < EntryCount; Index ++)
-  {
-    AsciiSPrint( WriteString,
-                 FormattedStringSize+1,
-                 MatFormatString,
-                 Map->Type,
-                 Map->PhysicalStart,
-                 Map->VirtualStart,
-                 Map->NumberOfPages,
-                 Map->Attribute );
-
-    WriteString += FormattedStringSize;
-    Map = NEXT_MEMORY_DESCRIPTOR( Map, EntrySize );
-  }
-
-
-  //
-  // Finally, write the strings to the dump file.
-  //
-  // NOTE: Don't need to save the NULL terminator.
-  WriteBufferToFile( L"MAT", Buffer, BufferSize-1 );
-
-  FreePool(Buffer);
-}
-
-
-/**
- * @brief      Writes the name, base, and limit of each image in the image table to a file.
- */
-VOID
-EFIAPI
-LoadedImageTableDump (
-  VOID
-  )
-{
-  EFI_STATUS                                   Status;
-  EFI_DEBUG_IMAGE_INFO_TABLE_HEADER           *TableHeader;
-  EFI_DEBUG_IMAGE_INFO                        *Table;
-  EFI_LOADED_IMAGE_PROTOCOL                   *LoadedImageProtocolInstance;
-  UINT64                                       ImageBase;
-  UINT64                                       ImageSize;
-  UINT64                                       Index;
-  UINT32                                       TableSize;
-  EFI_DEBUG_IMAGE_INFO_NORMAL                 *NormalImage;
-  CHAR8                                       *PdbFileName;
-  CHAR8                                       TempString[MAX_STRING_SIZE];
-
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
-
-  //
-  // locate DebugImageInfoTable
-  //
-  Status = EfiGetSystemConfigurationTable( &gEfiDebugImageInfoTableGuid, (VOID**)&TableHeader );
-  if (EFI_ERROR( Status )) {
-    DEBUG(( DEBUG_ERROR, "Failed to retrieve loaded image table %r", Status ));
-    return;
-  }
-
-  Table = TableHeader->EfiDebugImageInfoTable;
-  TableSize = TableHeader->TableSize;
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"\n\nLength %lx Start x0x%016lx\n\n", TableHeader->TableSize, Table ));
-
-  for (Index = 0; Index < TableSize; Index ++) {
-    if (Table[Index].NormalImage == NULL) {
-      continue;
-    }
-
-    NormalImage = Table[Index].NormalImage;
-    LoadedImageProtocolInstance = NormalImage->LoadedImageProtocolInstance;
-    ImageSize = LoadedImageProtocolInstance->ImageSize;
-    ImageBase = (UINT64) LoadedImageProtocolInstance->ImageBase;
-
-    if (ImageSize == 0) {
-      // No need to register empty slots in the table as images.
-      continue;
-    }
-    PdbFileName = PeCoffLoaderGetPdbPointer( LoadedImageProtocolInstance->ImageBase );
-    AsciiSPrint( TempString, MAX_STRING_SIZE,
-                 "LoadedImage,0x%016lx,0x%016lx,%a\n",
-                 ImageBase,
-                 ImageSize,
-                 PdbFileName );
-    AppendToMemoryInfoDatabase( TempString );
-  }
-}
-
 
 /**
   This helper function will call to the SMM agent to retrieve the entire contents of the
@@ -366,7 +68,7 @@ SmmLoadedImageTableDump (
   UINTN                                     Index;
   CHAR8                                     TempString[MAX_STRING_SIZE];
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
   //
   // Check to make sure we have what we need.
@@ -375,7 +77,7 @@ SmmLoadedImageTableDump (
                   sizeof(SMM_PAGE_AUDIT_COMM_HEADER) +
                   sizeof(SMM_PAGE_AUDIT_MISC_DATA_COMM_BUFFER);
   if (SmmCommunication == NULL || CommBufferBase == NULL || CommBufferSize < MinBufferSize) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Bad parameters. This shouldn't happen.\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - Bad parameters. This shouldn't happen.\n", __FUNCTION__ ));
     return;
   }
 
@@ -428,160 +130,6 @@ SmmLoadedImageTableDump (
 
 
 /**
- * @brief      Writes the UEFI memory map to file.
- */
-STATIC
-VOID
-MemoryMapDumpHandler (
-  VOID
-  )
-{
-
-  EFI_STATUS                  Status;
-  UINTN                       EfiMemoryMapSize;
-  UINTN                       EfiMapKey;
-  UINTN                       EfiDescriptorSize;
-  UINT32                      EfiDescriptorVersion;
-  EFI_MEMORY_DESCRIPTOR       *EfiMemoryMap;
-  EFI_MEMORY_DESCRIPTOR       *EfiMemoryMapEnd;
-  EFI_MEMORY_DESCRIPTOR       *EfiMemNext;
-  CHAR8                       TempString[MAX_STRING_SIZE];
-
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
-
-  //
-  // Get the EFI memory map.
-  //
-  EfiMemoryMapSize  = 0;
-  EfiMemoryMap      = NULL;
-  Status = gBS->GetMemoryMap( &EfiMemoryMapSize,
-                              EfiMemoryMap,
-                              &EfiMapKey,
-                              &EfiDescriptorSize,
-                              &EfiDescriptorVersion );
-  //
-  // Loop to allocate space for the memory map and then copy it in.
-  //
-  do {
-    EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR*)AllocateZeroPool( EfiMemoryMapSize );
-    ASSERT( EfiMemoryMap != NULL );
-    Status = gBS->GetMemoryMap( &EfiMemoryMapSize,
-                                EfiMemoryMap,
-                                &EfiMapKey,
-                                &EfiDescriptorSize,
-                                &EfiDescriptorVersion );
-    if (EFI_ERROR( Status )) {
-      FreePool( EfiMemoryMap );
-    }
-  } while (Status == EFI_BUFFER_TOO_SMALL);
-
-  EfiMemoryMapEnd = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)EfiMemoryMap + EfiMemoryMapSize);
-  EfiMemNext = EfiMemoryMap;
-
-  while (EfiMemNext < EfiMemoryMapEnd) {
-    AsciiSPrint( TempString, MAX_STRING_SIZE,
-                 "MemoryMap,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-                 EfiMemNext->Type,
-                 EfiMemNext->PhysicalStart,
-                 EfiMemNext->VirtualStart,
-                 EfiMemNext->NumberOfPages,
-                 EfiMemNext->Attribute );
-    AppendToMemoryInfoDatabase( TempString );
-    EfiMemNext = NEXT_MEMORY_DESCRIPTOR( EfiMemNext, EfiDescriptorSize );
-  }
-
-  if (EfiMemoryMap) {
-    FreePool( EfiMemoryMap );
-  }
-}
-
-
-/**
-  Initializes the valid bits mask and valid address mask for MTRRs.
-
-  This function initializes the valid bits mask and valid address mask for MTRRs.
-
-  Copied from UefiCpuPkg MtrrLib
-
-  @param[out]  MtrrValidBitsMask     The mask for the valid bit of the MTRR
-  @param[out]  MtrrValidAddressMask  The valid address mask for the MTRR
-
-**/
-STATIC
-VOID
-InitializeMtrrMask (
-  OUT UINT64 *MtrrValidBitsMask,
-  OUT UINT64 *MtrrValidAddressMask
-  )
-{
-  UINT32                          MaxExtendedFunction;
-  CPUID_VIR_PHY_ADDRESS_SIZE_EAX  VirPhyAddressSize;
-
-
-  AsmCpuid( CPUID_EXTENDED_FUNCTION, &MaxExtendedFunction, NULL, NULL, NULL );
-
-  if (MaxExtendedFunction >= CPUID_VIR_PHY_ADDRESS_SIZE) {
-    AsmCpuid( CPUID_VIR_PHY_ADDRESS_SIZE, &VirPhyAddressSize.Uint32, NULL, NULL, NULL );
-  } else {
-    VirPhyAddressSize.Bits.PhysicalAddressBits = 36;
-  }
-
-  *MtrrValidBitsMask = LShiftU64( 1, VirPhyAddressSize.Bits.PhysicalAddressBits ) - 1;
-  *MtrrValidAddressMask = *MtrrValidBitsMask & 0xfffffffffffff000ULL;
-}
-
-
-STATIC
-EFI_STATUS
-TSEGDumpHandler (
-  VOID
-  )
-{
-  UINT64      SmrrBase;
-  UINT64      SmrrMask;
-  UINT64      Length;
-  UINT64      MtrrValidBitsMask;
-  UINT64      MtrrValidAddressMask;
-  CHAR8       TempString[MAX_STRING_SIZE];
-
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
-
-  MtrrValidBitsMask = 0;
-  MtrrValidAddressMask = 0;
-
-  InitializeMtrrMask( &MtrrValidBitsMask, &MtrrValidAddressMask );
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", MtrrValidBitsMask , MtrrValidAddressMask ));
-
-  // This is a 64-bit read, but the SMRR registers bits 63:32 are reserved.
-  SmrrBase = AsmReadMsr64( MSR_IA32_SMRR_PHYSBASE );
-  SmrrMask = AsmReadMsr64( MSR_IA32_SMRR_PHYSMASK );
-  // Extend the mask to account for the reserved bits.
-  SmrrMask |= 0xffffffff00000000ULL;
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"SMRR base 0x%016lx, mask: 0x%016lx\n", SmrrBase , SmrrMask ));
-
-  // Extend the top bits of the mask to account for the reserved
-
-  Length = ((~(SmrrMask & MtrrValidAddressMask)) & MtrrValidBitsMask) + 1;
-
-  DEBUG(( DEBUG_VERBOSE, __FUNCTION__"Calculated length: 0x%016lx\n", Length ));
-
-  // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
-  AsciiSPrint( TempString, MAX_STRING_SIZE,
-               "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-               16,
-               (SmrrBase & MtrrValidAddressMask),
-               0,
-               EFI_SIZE_TO_PAGES( Length ),
-               0 );
-  AppendToMemoryInfoDatabase( TempString );
-
-  return EFI_SUCCESS;
-}
-
-
-/**
   This helper function will call to the SMM agent to retrieve the entire contents of the
   SMM Page Tables. It will then dump those tables to files differentiated by the
   page size (1G, 2M, 4K).
@@ -615,7 +163,7 @@ SmmPageTableEntriesDump (
   PAGE_TABLE_ENTRY                          *Pte2MEntries = NULL;
   PAGE_TABLE_4K_ENTRY                       *Pte4KEntries = NULL;
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
   //
   // Check to make sure we have what we need.
@@ -624,7 +172,7 @@ SmmPageTableEntriesDump (
                   sizeof(SMM_PAGE_AUDIT_COMM_HEADER) +
                   sizeof(SMM_PAGE_AUDIT_TABLE_ENTRY_COMM_BUFFER);
   if (SmmCommunication == NULL || CommBufferBase == NULL || CommBufferSize < MinBufferSize) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Bad parameters. This shouldn't happen.\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - Bad parameters. This shouldn't happen.\n", __FUNCTION__ ));
     return;
   }
 
@@ -656,7 +204,7 @@ SmmPageTableEntriesDump (
                                             CommBufferBase,
                                             &BufferSize );
     if (EFI_ERROR(Status)) {
-      DEBUG ((DEBUG_ERROR, __FUNCTION__" - SmmCommunication errored - %r.\n", Status));
+      DEBUG ((DEBUG_ERROR, "%a - SmmCommunication errored - %r.\n", __FUNCTION__, Status));
       goto Cleanup;
     }
     //
@@ -667,7 +215,7 @@ SmmPageTableEntriesDump (
       NewSize = NewCount * sizeof(PAGE_TABLE_1G_ENTRY);
       Pte1GEntries = ReallocatePool( Pte1GCount * sizeof(PAGE_TABLE_1G_ENTRY), NewSize, Pte1GEntries );
       if (Pte1GEntries == NULL) {
-        DEBUG(( DEBUG_ERROR, __FUNCTION__" - 1G entries not allocated.\n" ));
+        DEBUG(( DEBUG_ERROR, "%a - 1G entries not allocated.\n", __FUNCTION__ ));
         goto Cleanup;
       }
       CopyMem( &Pte1GEntries[Pte1GCount], &AuditCommData->Pte1G[0], AuditCommData->Pte1GCount * sizeof(PAGE_TABLE_1G_ENTRY) );
@@ -678,7 +226,7 @@ SmmPageTableEntriesDump (
       NewSize = NewCount * sizeof(PAGE_TABLE_ENTRY);
       Pte2MEntries = ReallocatePool( Pte2MCount * sizeof(PAGE_TABLE_ENTRY), NewSize, Pte2MEntries );
       if (Pte2MEntries == NULL) {
-        DEBUG(( DEBUG_ERROR, __FUNCTION__" - 2M entries not allocated.\n" ));
+        DEBUG(( DEBUG_ERROR, "%a - 2M entries not allocated.\n", __FUNCTION__ ));
         goto Cleanup;
       }
       CopyMem( &Pte2MEntries[Pte2MCount], &AuditCommData->Pte2M[0], AuditCommData->Pte2MCount * sizeof(PAGE_TABLE_ENTRY) );
@@ -689,7 +237,7 @@ SmmPageTableEntriesDump (
       NewSize = NewCount * sizeof(PAGE_TABLE_4K_ENTRY);
       Pte4KEntries = ReallocatePool( Pte4KCount * sizeof(PAGE_TABLE_4K_ENTRY), NewSize, Pte4KEntries );
       if (Pte4KEntries == NULL) {
-        DEBUG(( DEBUG_ERROR, __FUNCTION__" - 4K entries not allocated.\n" ));
+        DEBUG(( DEBUG_ERROR, "%a - 4K entries not allocated.\n", __FUNCTION__ ));
         goto Cleanup;
       }
       CopyMem( &Pte4KEntries[Pte4KCount], &AuditCommData->Pte4K[0], AuditCommData->Pte4KCount * sizeof(PAGE_TABLE_4K_ENTRY) );
@@ -750,7 +298,7 @@ SmmPdeEntriesDump (
   UINTN                                     Index;
   CHAR8                                     TempString[MAX_STRING_SIZE];
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
   //
   // Check to make sure we have what we need.
@@ -759,7 +307,7 @@ SmmPdeEntriesDump (
                   sizeof(SMM_PAGE_AUDIT_COMM_HEADER) +
                   sizeof(SMM_PAGE_AUDIT_PDE_ENTRY_COMM_BUFFER);
   if (SmmCommunication == NULL || CommBufferBase == NULL || CommBufferSize < MinBufferSize) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" - Bad parameters. This shouldn't happen.\n" ));
+    DEBUG(( DEBUG_ERROR, "%a - Bad parameters. This shouldn't happen.\n", __FUNCTION__ ));
     return;
   }
 
@@ -834,18 +382,18 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
   UINTN                                   MinBufferSize, BufferSize;
   CHAR8                                   TempString[MAX_STRING_SIZE];
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__"()\n" ));
+  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
   //
   // Make sure that we have access to a buffer that seems to be sufficient to do everything we need to do.
   //
   if (mPiSmmCommonCommBufferAddress == NULL) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" - Communication mBuffer not found!\n"));
+    DEBUG((DEBUG_ERROR, "%a - Communication mBuffer not found!\n", __FUNCTION__ ));
     return EFI_ABORTED;
   }
   MinBufferSize = OFFSET_OF(EFI_SMM_COMMUNICATE_HEADER, Data) + sizeof(SMM_PAGE_AUDIT_UNIFIED_COMM_BUFFER);
   if (MinBufferSize > mPiSmmCommonCommBufferSize) {
-    DEBUG((DEBUG_ERROR, __FUNCTION__" - Communication mBuffer is too small\n"));
+    DEBUG((DEBUG_ERROR, "%a - Communication mBuffer is too small\n", __FUNCTION__ ));
     return EFI_BUFFER_TOO_SMALL;
   }
   CommBufferBase = mPiSmmCommonCommBufferAddress;
@@ -935,14 +483,14 @@ LocateSmmCommonCommBuffer (
     Status = EfiGetSystemConfigurationTable(&gEdkiiPiSmmCommunicationRegionTableGuid, (VOID**)&PiSmmCommunicationRegionTable);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, __FUNCTION__" Failed to get system configuration table %r\n", Status));
+      DEBUG((DEBUG_ERROR, "%a Failed to get system configuration table %r\n", __FUNCTION__, Status));
       return Status;
     }
 
     Status = EFI_BAD_BUFFER_SIZE;
 
     DesiredBufferSize = sizeof(SMM_PAGE_AUDIT_UNIFIED_COMM_BUFFER);
-    DEBUG((DEBUG_ERROR, __FUNCTION__" desired comm buffer size %ld\n", DesiredBufferSize));
+    DEBUG((DEBUG_ERROR, "%a desired comm buffer size %ld\n", __FUNCTION__, DesiredBufferSize));
     BufferSize = 0;
     SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR*)(PiSmmCommunicationRegionTable + 1);
     for (Index = 0; Index < PiSmmCommunicationRegionTable->NumberOfEntries; Index++)
@@ -984,20 +532,20 @@ SmmPagingAuditAppEntryPoint (
   IN     EFI_SYSTEM_TABLE  *SystemTable
 )
 {
-  TSEGDumpHandler();
+  DumpProcessorSpecificHandlers();
   MemoryMapDumpHandler();
   LoadedImageTableDump();
   MemoryAttributesTableDump();
 
   if (EFI_ERROR( LocateSmmCommonCommBuffer() )) {
-    DEBUG(( DEBUG_ERROR, __FUNCTION__" Comm buffer setup failed\n" ));
+    DEBUG(( DEBUG_ERROR, "%a Comm buffer setup failed\n", __FUNCTION__ ));
     return EFI_ABORTED;
   }
   SmmMemoryProtectionsDxeToSmmCommunicate();
 
   FlushAndClearMemoryInfoDatabase( L"MemoryInfoDatabase" );
 
-  DEBUG(( DEBUG_INFO, __FUNCTION__" the app's done!\n" ));
+  DEBUG(( DEBUG_INFO, "%a the app's done!\n", __FUNCTION__ ));
 
   return EFI_SUCCESS;
 } // SmmPagingAuditAppEntryPoint()

@@ -3,13 +3,13 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef _DXE_PAGING_AUDIT_COMMON_H_
-#define _DXE_PAGING_AUDIT_COMMON_H_
+#ifndef _PAGING_AUDIT_COMMON_H_
+#define _PAGING_AUDIT_COMMON_H_
 
 #include <Uefi.h>
 
@@ -25,6 +25,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/SimpleFileSystem.h>
 #include <Protocol/HeapGuardDebug.h>
 #include <Register/Cpuid.h>
+#include <Register/Amd/Cpuid.h>
 
 #include <Library/DevicePathLib.h>
 #include <Guid/DebugImageInfoTable.h>
@@ -36,6 +37,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define    MAX_STRING_SIZE 0x1000
 
 #define IndexToAddress(a, b, c, d)   ((UINT64) (a << 39) + (b << 30) + (c <<  21) + (d << 12))
+
+#define AMD_64_SMM_ADDR   0xC0010112
+#define AMD_64_SMM_MASK   0xC0010113
 
 // volatile UINT32 jason = 0;
 
@@ -182,4 +186,61 @@ DumpPagingInfo (
   IN      VOID                      *Context
 );
 
-#endif // _DXE_PAGING_AUDIT_COMMON_H_
+/**
+ * @brief      Writes a buffer to file.
+ *
+ * @param      FileName     The name of the file being written to.
+ * @param      Buffer       The buffer to write to file.
+ * @param[in]  BufferSize   Size of the buffer.
+ * @param[in]  WriteCount   Number to append to the end of the file.
+ */
+VOID
+WriteBufferToFile (
+  IN CONST CHAR16                   *FileName,
+  IN       VOID                     *Buffer,
+  IN       UINTN                     BufferSize
+  );
+
+/**
+ * @brief      Writes the UEFI memory map to file.
+ */
+VOID
+EFIAPI
+MemoryMapDumpHandler (
+  VOID
+  );
+
+/**
+ * @brief      Writes the name, base, and limit of each image in the image table to a file.
+ */
+VOID
+EFIAPI
+LoadedImageTableDump (
+  VOID
+  );
+
+/**
+ * @brief      Writes the MemoryAttributesTable to a file.
+ */
+VOID
+EFIAPI
+MemoryAttributesTableDump (
+  VOID
+  );
+
+  /**
+  This helper function will flush the MemoryInfoDatabase to its corresponding
+  file and free all resources currently associated with it.
+
+  @param[in]  FileName    Name of the file to be flushed to.
+
+  @retval     EFI_SUCCESS     Database has been flushed to file.
+
+**/
+EFI_STATUS
+EFIAPI
+FlushAndClearMemoryInfoDatabase (
+  IN CONST CHAR16     *FileName
+  );
+
+#endif // _PAGING_AUDIT_COMMON_H_
