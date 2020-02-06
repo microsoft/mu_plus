@@ -54,7 +54,8 @@ typedef enum {
   DfciUsbPortEnabled = 0,   //Port Enabled and Usable in preboot and os.  Including Boot
   DfciUsbPortNoBoot,        //Port Enabled and Usable in preboot and os.  BDS will not boot from port         //<<< Not implemented. Can use BDS option for this to block all USB.
   DfciUsbPortHwDisabledExceptAuthorizedRecover,  //Port Disabled in HW except when factory requested R&R  //<<< Not implemented
-  DfciUsbPortHwDisabled  = 0xF0,                  //This blocks factory recovery process
+  DfciUsbPortHwDisabled  = 0xF0,                 //This blocks factory recovery process
+  DfciUsbPortDataDisabled = 0xF1,                //Applies to Type C ports only; disables USB Data while leaving USB Power Delivery and Alternate Modes intact
   DfciUsbPortStateMax   = 0xFF
 } DFCI_VIRTUAL_USB_PORT_STATE;
 
