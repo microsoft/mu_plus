@@ -456,12 +456,11 @@ CreateDialogControls (IN    MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
     ControlOrigY    = (DialogOrigY + DialogHeight) - ((DialogHeight * SWM_PWD_DIALOG_FIRST_BUTTON_Y_PERCENT) / 100);
 
     // check that the controls will fit in the dialog
-    if ( TotalControlWidth < DialogWidth )
+    if ( TotalControlWidth > DialogWidth )
     {
-        DEBUG(( DEBUG_ERROR, "[%a] - ERROR: The controls are too large for the password dialog box, adjust your fonts.", __FUNCTION__ ));
+        DEBUG(( DEBUG_ERROR, "[%a] - ERROR: The controls are too large for the password dialog box, adjust your fonts.\n", __FUNCTION__ ));
         ASSERT(FALSE);
     }
-
 
     // Draw the OK Button.
     //
