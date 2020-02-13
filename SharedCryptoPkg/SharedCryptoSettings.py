@@ -317,7 +317,7 @@ class SettingsManager(UpdateSettingsManager, CiSetupSettingsManager, BinaryBuild
 
     def GetActiveScopes(self):
         ''' get scope '''
-        scopes = ("corebuild", "SharedCrypto_build", )
+        scopes = ("corebuild", "SharedCrypto_build", "edk2-build" )
         if (GetHostInfo().os == "Linux"
             and "AARCH64" in self.GetArchSupported()
             and self.ToolChainTagCacheValue is not None

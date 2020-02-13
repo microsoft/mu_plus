@@ -12,7 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __SHARED_CRYPTO_H__
 #define __SHARED_CRYPTO_H__
 
-#define SHARED_CRYPTO_VERSION 4
+#define SHARED_CRYPTO_VERSION 5
 
 typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_FUNCTIONS;
 typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_PROTOCOL;
@@ -32,22 +32,6 @@ UINTN
 //=====================================================================================
 //    MAC (Message Authentication Code) Primitive
 //=====================================================================================
-/**
-  Retrieves the size, in bytes, of the context buffer required for HMAC-MD5 operations.
-  (NOTE: This API is deprecated.
-         Use HmacMd5New() / HmacMd5Free() for HMAC-MD5 Context operations.)
-
-  If this interface is not supported, then return zero.
-
-  @return  The size, in bytes, of the context buffer required for HMAC-MD5 operations.
-  @retval  0   This interface is not supported.
-
-**/
-typedef
-UINTN
-(EFIAPI *SHAREDCRYPTO_HMAC_MD5_GetContextSize) (
-  VOID
-  );
 
 /**
   Allocates and initializes one HMAC_CTX context for subsequent HMAC-MD5 use.
@@ -182,22 +166,6 @@ BOOLEAN
 (EFIAPI *SHAREDCRYPTO_HMAC_MD5_Final) (
   IN OUT  VOID   *HmacMd5Context,
   OUT     UINT8  *HmacValue
-  );
-
-/**
-  Retrieves the size, in bytes, of the context buffer required for HMAC-SHA1 operations.
-  (NOTE: This API is deprecated.
-         Use HmacSha1New() / HmacSha1Free() for HMAC-SHA1 Context operations.)
-
-  If this interface is not supported, then return zero.
-
-  @return  The size, in bytes, of the context buffer required for HMAC-SHA1 operations.
-  @retval  0   This interface is not supported.
-**/
-typedef
-UINTN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_GetContextSize )(
-  VOID
   );
 
 
@@ -336,24 +304,6 @@ BOOLEAN
 (EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Final) (
   IN OUT  VOID   *HmacSha1Context,
   OUT     UINT8  *HmacValue
-  );
-
-
-/**
-  Retrieves the size, in bytes, of the context buffer required for HMAC-SHA256 operations.
-  (NOTE: This API is deprecated.
-         Use HmacSha256New() / HmacSha256Free() for HMAC-SHA256 Context operations.)
-
-  If this interface is not supported, then return zero.
-
-  @return  The size, in bytes, of the context buffer required for HMAC-SHA256 operations.
-  @retval  0   This interface is not supported.
-
-**/
-typedef
-UINTN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_GetContextSize) (
-  VOID
   );
 
 /**
@@ -2458,6 +2408,28 @@ VOID
   );
 
 /**
+  Construct a X509 stack object from a list of DER-encoded certificate data.
+  If X509Stack is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
+  @param[in, out]  X509Stack  On input, pointer to an existing or NULL X509 stack object.
+                              On output, pointer to the X509 stack object with new
+                              inserted X509 certificate.
+  @param[in]       Args       VA_LIST marker for the variable argument list.
+                              A list of DER-encoded single certificate data followed
+                              by certificate size. A NULL terminates the list. The
+                              pairs are the arguments to X509ConstructCertificate().
+  @retval     TRUE            The X509 stack construction succeeded.
+  @retval     FALSE           The construction operation failed.
+  @retval     FALSE           This interface is not supported.
+**/
+typedef
+BOOLEAN
+(EFIAPI * SHAREDCRYPTO_X509_ConstructCertificateStackV) (
+  IN OUT  UINT8    **X509Stack,
+  IN      VA_LIST  Args
+  );
+
+/**
   Release the specified X509 stack object.
 
   If the interface is not supported, then ASSERT().
@@ -3024,27 +2996,157 @@ BOOLEAN
   IN OUT  VOID  *Arc4Context
   );
 
+
+/**
+  Retrieves the size, in bytes, of the context buffer required for SM3 hash operations.
+
+  @return  The size, in bytes, of the context buffer required for SM3 hash operations.
+
+**/
+typedef
+UINTN
+(EFIAPI *SHAREDCRYPTO_SM3_GetContextSize) (
+  VOID
+  );
+
+/**
+  Initializes user-supplied memory pointed by Sm3Context as SM3 hash context for
+  subsequent use.
+
+  If Sm3Context is NULL, then return FALSE.
+
+  @param[out]  Sm3Context  Pointer to SM3 context being initialized.
+
+  @retval TRUE   SM3 context initialization succeeded.
+  @retval FALSE  SM3 context initialization failed.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI *SHAREDCRYPTO_SM3_Init) (
+  OUT  VOID  *Sm3Context
+  );
+
+/**
+  Makes a copy of an existing SM3 context.
+
+  If Sm3Context is NULL, then return FALSE.
+  If NewSm3Context is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
+
+  @param[in]  Sm3Context     Pointer to SM3 context being copied.
+  @param[out] NewSm3Context  Pointer to new SM3 context.
+
+  @retval TRUE   SM3 context copy succeeded.
+  @retval FALSE  SM3 context copy failed.
+  @retval FALSE  This interface is not supported.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI *SHAREDCRYPTO_SM3_Duplicate) (
+  IN   CONST VOID  *Sm3Context,
+  OUT  VOID        *NewSm3Context
+  );
+
+/**
+  Digests the input data and updates SM3 context.
+
+  This function performs SM3 digest on a data buffer of the specified size.
+  It can be called multiple times to compute the digest of long or discontinuous data streams.
+  SM3 context should be already correctly initialized by Sm3Init(), and should not be finalized
+  by Sm3Final(). Behavior with invalid context is undefined.
+
+  If Sm3Context is NULL, then return FALSE.
+
+  @param[in, out]  Sm3Context     Pointer to the SM3 context.
+  @param[in]       Data           Pointer to the buffer containing the data to be hashed.
+  @param[in]       DataSize       Size of Data buffer in bytes.
+
+  @retval TRUE   SM3 data digest succeeded.
+  @retval FALSE  SM3 data digest failed.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI *SHAREDCRYPTO_SM3_Update) (
+  IN OUT  VOID        *Sm3Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  );
+
+/**
+  Completes computation of the SM3 digest value.
+
+  This function completes SM3 hash computation and retrieves the digest value into
+  the specified memory. After this function has been called, the SM3 context cannot
+  be used again.
+  SM3 context should be already correctly initialized by Sm3Init(), and should not be
+  finalized by Sm3Final(). Behavior with invalid SM3 context is undefined.
+
+  If Sm3Context is NULL, then return FALSE.
+  If HashValue is NULL, then return FALSE.
+
+  @param[in, out]  Sm3Context     Pointer to the SM3 context.
+  @param[out]      HashValue      Pointer to a buffer that receives the SM3 digest
+                                  value (32 bytes).
+
+  @retval TRUE   SM3 digest computation succeeded.
+  @retval FALSE  SM3 digest computation failed.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI *SHAREDCRYPTO_SM3_Final) (
+  IN OUT  VOID   *Sm3Context,
+  OUT     UINT8  *HashValue
+  );
+
+/**
+  Computes the SM3 message digest of a input data buffer.
+
+  This function performs the SM3 message digest of a given data buffer, and places
+  the digest value into the specified memory.
+
+  If this interface is not supported, then return FALSE.
+
+  @param[in]   Data        Pointer to the buffer containing the data to be hashed.
+  @param[in]   DataSize    Size of Data buffer in bytes.
+  @param[out]  HashValue   Pointer to a buffer that receives the SM3 digest
+                           value (32 bytes).
+
+  @retval TRUE   SM3 digest computation succeeded.
+  @retval FALSE  SM3 digest computation failed.
+  @retval FALSE  This interface is not supported.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI *SHAREDCRYPTO_SM3_HashAll) (
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  );
+
+
 ///
 struct _SHARED_CRYPTO_FUNCTIONS
 {
   /// Shared Crypto Functions
   SHAREDCRYPTO_GET_VERSION SharedCrypto_GetLowestSupportedVersion;
   /// HMAC
-  SHAREDCRYPTO_HMAC_MD5_GetContextSize HMAC_MD5_GetContextSize;
   SHAREDCRYPTO_HMAC_MD5_New HMAC_MD5_New;
   SHAREDCRYPTO_HMAC_MD5_Free HMAC_MD5_Free;
   SHAREDCRYPTO_HMAC_MD5_Init HMAC_MD5_Init;
   SHAREDCRYPTO_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
   SHAREDCRYPTO_HMAC_MD5_Update HMAC_MD5_Update;
   SHAREDCRYPTO_HMAC_MD5_Final HMAC_MD5_Final;
-  SHAREDCRYPTO_HMAC_SHA1_GetContextSize HMAC_SHA1_GetContextSize;
   SHAREDCRYPTO_HMAC_SHA1_New HMAC_SHA1_New;
   SHAREDCRYPTO_HMAC_SHA1_Free HMAC_SHA1_Free;
   SHAREDCRYPTO_HMAC_SHA1_Init HMAC_SHA1_Init;
   SHAREDCRYPTO_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
   SHAREDCRYPTO_HMAC_SHA1_Update HMAC_SHA1_Update;
   SHAREDCRYPTO_HMAC_SHA1_Final HMAC_SHA1_Final;
-  SHAREDCRYPTO_HMAC_SHA256_GetContextSize HMAC_SHA256_GetContextSize;
   SHAREDCRYPTO_HMAC_SHA256_New HMAC_SHA256_New;
   SHAREDCRYPTO_HMAC_SHA256_Free HMAC_SHA256_Free;
   SHAREDCRYPTO_HMAC_SHA256_Init HMAC_SHA256_Init;
@@ -3131,6 +3233,7 @@ struct _SHARED_CRYPTO_FUNCTIONS
   SHAREDCRYPTO_X509_VerifyCert X509_VerifyCert;
   SHAREDCRYPTO_X509_ConstructCertificate X509_ConstructCertificate;
   SHAREDCRYPTO_X509_ConstructCertificateStack X509_ConstructCertificateStack;
+  SHAREDCRYPTO_X509_ConstructCertificateStackV X509_ConstructCertificateStackV;
   SHAREDCRYPTO_X509_Free X509_Free;
   SHAREDCRYPTO_X509_StackFree X509_StackFree;
   SHAREDCRYPTO_X509_GetTBSCert X509_GetTBSCert;
@@ -3154,6 +3257,13 @@ struct _SHARED_CRYPTO_FUNCTIONS
   SHAREDCRYPTO_ARC4_Encrypt ARC4_Encrypt;
   SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
   SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  /// SM3
+  SHAREDCRYPTO_SM3_GetContextSize SM3_GetContextSize;
+  SHAREDCRYPTO_SM3_Init SM3_Init;
+  SHAREDCRYPTO_SM3_Duplicate SM3_Duplicate;
+  SHAREDCRYPTO_SM3_Update SM3_Update;
+  SHAREDCRYPTO_SM3_Final SM3_Final;
+  SHAREDCRYPTO_SM3_HashAll SM3_Hashall;
 };
 
 #endif

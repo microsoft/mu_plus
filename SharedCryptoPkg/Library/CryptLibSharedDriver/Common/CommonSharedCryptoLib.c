@@ -1161,34 +1161,190 @@ Sha512HashAll (
   return prot->SHA512_HashAll(Data, DataSize, HashValue);
 }
 
-//=====================================================================================
-//    MAC (Message Authentication Code) Primitive
-//=====================================================================================
 
 /**
-  Retrieves the size, in bytes, of the context buffer required for HMAC-MD5 operations.
-  (NOTE: This API is deprecated.
-         Use HmacMd5New() / HmacMd5Free() for HMAC-MD5 Context operations.)
+  Retrieves the size, in bytes, of the context buffer required for SM3 hash operations.
 
-  If this interface is not supported, then return zero.
-
-  @return  The size, in bytes, of the context buffer required for HMAC-MD5 operations.
-  @retval  0   This interface is not supported.
+  @return  The size, in bytes, of the context buffer required for SM3 hash operations.
 
 **/
 UINTN
 EFIAPI
-HmacMd5GetContextSize (
-    VOID
-)
+Sm3GetContextSize (
+  VOID
+  )
 {
   SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_MD5_GetContextSize == NULL) {
+  if (prot == NULL || prot->SM3_GetContextSize == NULL) {
     ProtocolFunctionNotFound(__FUNCTION__);
      return 0;
    }
-  return prot->HMAC_MD5_GetContextSize();
+  return prot->SM3_GetContextSize();
 }
+
+/**
+  Initializes user-supplied memory pointed by Sm3Context as SM3 hash context for
+  subsequent use.
+
+  If Sm3Context is NULL, then return FALSE.
+
+  @param[out]  Sm3Context  Pointer to SM3 context being initialized.
+
+  @retval TRUE   SM3 context initialization succeeded.
+  @retval FALSE  SM3 context initialization failed.
+
+**/
+BOOLEAN
+EFIAPI
+Sm3Init (
+  OUT  VOID  *Sm3Context
+  )
+{
+  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
+  if (prot == NULL || prot->SM3_Init == NULL) {
+    ProtocolFunctionNotFound(__FUNCTION__);
+     return 0;
+   }
+  return prot->SM3_Init(Sm3Context);
+}
+
+/**
+  Makes a copy of an existing SM3 context.
+
+  If Sm3Context is NULL, then return FALSE.
+  If NewSm3Context is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
+
+  @param[in]  Sm3Context     Pointer to SM3 context being copied.
+  @param[out] NewSm3Context  Pointer to new SM3 context.
+
+  @retval TRUE   SM3 context copy succeeded.
+  @retval FALSE  SM3 context copy failed.
+  @retval FALSE  This interface is not supported.
+
+**/
+BOOLEAN
+EFIAPI
+Sm3Duplicate (
+  IN   CONST VOID  *Sm3Context,
+  OUT  VOID        *NewSm3Context
+  )
+{
+  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
+  if (prot == NULL || prot->SM3_Duplicate == NULL) {
+    ProtocolFunctionNotFound(__FUNCTION__);
+     return 0;
+   }
+  return prot->SM3_Duplicate(Sm3Context, NewSm3Context);
+}
+
+/**
+  Digests the input data and updates SM3 context.
+
+  This function performs SM3 digest on a data buffer of the specified size.
+  It can be called multiple times to compute the digest of long or discontinuous data streams.
+  SM3 context should be already correctly initialized by Sm3Init(), and should not be finalized
+  by Sm3Final(). Behavior with invalid context is undefined.
+
+  If Sm3Context is NULL, then return FALSE.
+
+  @param[in, out]  Sm3Context     Pointer to the SM3 context.
+  @param[in]       Data           Pointer to the buffer containing the data to be hashed.
+  @param[in]       DataSize       Size of Data buffer in bytes.
+
+  @retval TRUE   SM3 data digest succeeded.
+  @retval FALSE  SM3 data digest failed.
+
+**/
+BOOLEAN
+EFIAPI
+Sm3Update (
+  IN OUT  VOID        *Sm3Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
+{
+  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
+  if (prot == NULL || prot->SM3_Update == NULL) {
+    ProtocolFunctionNotFound(__FUNCTION__);
+     return 0;
+   }
+  return prot->SM3_Update(Sm3Context, Data, DataSize);
+}
+
+/**
+  Completes computation of the SM3 digest value.
+
+  This function completes SM3 hash computation and retrieves the digest value into
+  the specified memory. After this function has been called, the SM3 context cannot
+  be used again.
+  SM3 context should be already correctly initialized by Sm3Init(), and should not be
+  finalized by Sm3Final(). Behavior with invalid SM3 context is undefined.
+
+  If Sm3Context is NULL, then return FALSE.
+  If HashValue is NULL, then return FALSE.
+
+  @param[in, out]  Sm3Context     Pointer to the SM3 context.
+  @param[out]      HashValue      Pointer to a buffer that receives the SM3 digest
+                                  value (32 bytes).
+
+  @retval TRUE   SM3 digest computation succeeded.
+  @retval FALSE  SM3 digest computation failed.
+
+**/
+BOOLEAN
+EFIAPI
+Sm3Final (
+  IN OUT  VOID   *Sm3Context,
+  OUT     UINT8  *HashValue
+  )
+{
+  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
+  if (prot == NULL || prot->SM3_Final == NULL) {
+    ProtocolFunctionNotFound(__FUNCTION__);
+     return 0;
+   }
+  return prot->SM3_Final(Sm3Context, HashValue);
+}
+
+/**
+  Computes the SM3 message digest of a input data buffer.
+
+  This function performs the SM3 message digest of a given data buffer, and places
+  the digest value into the specified memory.
+
+  If this interface is not supported, then return FALSE.
+
+  @param[in]   Data        Pointer to the buffer containing the data to be hashed.
+  @param[in]   DataSize    Size of Data buffer in bytes.
+  @param[out]  HashValue   Pointer to a buffer that receives the SM3 digest
+                           value (32 bytes).
+
+  @retval TRUE   SM3 digest computation succeeded.
+  @retval FALSE  SM3 digest computation failed.
+  @retval FALSE  This interface is not supported.
+
+**/
+BOOLEAN
+EFIAPI
+Sm3HashAll (
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  )
+{
+  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
+  if (prot == NULL || prot->SM3_Hashall == NULL) {
+    ProtocolFunctionNotFound(__FUNCTION__);
+     return 0;
+   }
+  return prot->SM3_Hashall(Data, DataSize, HashValue);
+}
+
+
+//=====================================================================================
+//    MAC (Message Authentication Code) Primitive
+//=====================================================================================
 
 /**
   Allocates and initializes one HMAC_CTX context for subsequent HMAC-MD5 use.
@@ -1368,32 +1524,6 @@ HmacMd5Final (
 }
 
 /**
-  Retrieves the size, in bytes, of the context buffer required for HMAC-SHA1 operations.
-  (NOTE: This API is deprecated.
-         Use HmacSha1New() / HmacSha1Free() for HMAC-SHA1 Context operations.)
-
-  If this interface is not supported, then return zero.
-
-  @return  The size, in bytes, of the context buffer required for HMAC-SHA1 operations.
-  @retval  0   This interface is not supported.
-
-**/
-UINTN
-EFIAPI
-HmacSha1GetContextSize (
-    VOID)
-{
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA1_GetContextSize == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-
-  return prot->HMAC_SHA1_GetContextSize();
-}
-
-/**
   Allocates and initializes one HMAC_CTX context for subsequent HMAC-SHA1 use.
 
   If this interface is not supported, then return NULL.
@@ -1428,8 +1558,8 @@ HmacSha1New (
 
 **/
 VOID
-    EFIAPI
-    HmacSha1Free (
+EFIAPI
+HmacSha1Free (
         IN VOID *HmacSha1Ctx)
 {
   SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
@@ -1582,32 +1712,6 @@ HmacSha1Final (
 }
 
 /**
-  Retrieves the size, in bytes, of the context buffer required for HMAC-SHA256 operations.
-  (NOTE: This API is deprecated.
-         Use HmacSha256New() / HmacSha256Free() for HMAC-SHA256 Context operations.)
-
-  If this interface is not supported, then return zero.
-
-  @return  The size, in bytes, of the context buffer required for HMAC-SHA256 operations.
-  @retval  0   This interface is not supported.
-
-**/
-UINTN
-EFIAPI
-HmacSha256GetContextSize (
-    VOID)
-{
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA256_GetContextSize == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-
-  return prot->HMAC_SHA256_GetContextSize();
-}
-
-/**
   Allocates and initializes one HMAC_CTX context for subsequent HMAC-SHA256 use.
 
   @return  Pointer to the HMAC_CTX context that has been initialized.
@@ -1615,8 +1719,8 @@ HmacSha256GetContextSize (
 
 **/
 VOID *
-    EFIAPI
-        HmacSha256New (
+EFIAPI
+HmacSha256New (
             VOID)
 {
   SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
@@ -1636,8 +1740,8 @@ VOID *
 
 **/
 VOID
-    EFIAPI
-    HmacSha256Free (
+EFIAPI
+HmacSha256Free (
         IN VOID *HmacSha256Ctx)
 {
   SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
@@ -3014,24 +3118,52 @@ X509ConstructCertificate (
 **/
 BOOLEAN
 EFIAPI
-X509ConstructCertificateStack (
+X509ConstructCertificateStack  (
     IN OUT UINT8 **X509Stack,
     ...)
 {
+  //VA_LIST  Args;
+  //BOOLEAN  Result;
+
+  //VA_START (Args, X509Stack);
+  ProtocolFunctionNotFound(__FUNCTION__);
+  //Result = X509ConstructCertificateStackV (X509Stack, Args);
+  // TODO figure this out
+  // TODO this will come as part of the 2003 stable integration
+  //VA_END (Args);
+  return FALSE;
+}
+
+/**
+  Construct a X509 stack object from a list of DER-encoded certificate data.
+  If X509Stack is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
+  @param[in, out]  X509Stack  On input, pointer to an existing or NULL X509 stack object.
+                              On output, pointer to the X509 stack object with new
+                              inserted X509 certificate.
+  @param[in]       Args       VA_LIST marker for the variable argument list.
+                              A list of DER-encoded single certificate data followed
+                              by certificate size. A NULL terminates the list. The
+                              pairs are the arguments to X509ConstructCertificate().
+  @retval     TRUE            The X509 stack construction succeeded.
+  @retval     FALSE           The construction operation failed.
+  @retval     FALSE           This interface is not supported.
+**/
+BOOLEAN
+EFIAPI
+X509ConstructCertificateStackV (
+  IN OUT  UINT8    **X509Stack,
+  IN      VA_LIST  Args
+  )
+{
+  //SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
+  /*if (prot == NULL || prot->X509ConstructCertificateStackV == NULL) {
+    ProtocolFunctionNotFound(__FUNCTION__);
+    return;
+  }*/
   ProtocolFunctionNotFound(__FUNCTION__);
   return FALSE;
-  /*
-  //This function doesn't work because we don't have a good way to pass the VA_LIST without a function that takes it directly
-  //https://stackoverflow.com/questions/150543/forward-an-invocation-of-a-variadic-function-in-c
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol(); //FIX
-  VA_LIST args;
-  va_start(args, X509Stack);
-  if (prot == NULL || prot->X509_ConstructCertificateStack == NULL) {
-
-    return FALSE;
-  }
-  return prot->X509_ConstructCertificateStack(X509Stack, args);
-  */
+  //prot->X509ConstructCertificateStackV(Args);
 }
 
 /**

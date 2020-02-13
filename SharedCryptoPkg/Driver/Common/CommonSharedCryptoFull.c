@@ -20,21 +20,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   GetCryptoVersion,
   /// HMAC
-  HmacMd5GetContextSize, //SHAREDCRYPTO_HMAC_MD5_GetContextSize HMAC_MD5_GetContextSize;
   HmacMd5New, //SHAREDCRYPTO_HMAC_MD5_New HMAC_MD5_New;
   HmacMd5Free, //SHAREDCRYPTO_HMAC_MD5_Free HMAC_MD5_Free;
   HmacMd5Init, //SHAREDCRYPTO_HMAC_MD5_Init HMAC_MD5_Init;
   HmacMd5Duplicate, //SHAREDCRYPTO_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
   HmacMd5Update, //SHAREDCRYPTO_HMAC_MD5_Update HMAC_MD5_Update;
   HmacMd5Final, //SHAREDCRYPTO_HMAC_MD5_Final HMAC_MD5_Final;
-  HmacSha1GetContextSize, //SHAREDCRYPTO_HMAC_SHA1_GetContextSize HMAC_SHA1_GetContextSize;
   HmacSha1New, //SHAREDCRYPTO_HMAC_SHA1_New HMAC_SHA1_New;
   HmacSha1Free, //SHAREDCRYPTO_HMAC_SHA1_Free HMAC_SHA1_Free;
   HmacSha1Init, //SHAREDCRYPTO_HMAC_SHA1_Init HMAC_SHA1_Init;
   HmacSha1Duplicate, //SHAREDCRYPTO_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
   HmacSha1Update, //SHAREDCRYPTO_HMAC_SHA1_Update HMAC_SHA1_Update;
   HmacSha1Final, //SHAREDCRYPTO_HMAC_SHA1_Final HMAC_SHA1_Final;
-  HmacSha256GetContextSize, //SHAREDCRYPTO_HMAC_SHA256_GetContextSize HMAC_SHA256_GetContextSize;
   HmacSha256New, //SHAREDCRYPTO_HMAC_SHA256_New HMAC_SHA256_New;
   HmacSha256Free, //SHAREDCRYPTO_HMAC_SHA256_Free HMAC_SHA256_Free;
   HmacSha256Init, //SHAREDCRYPTO_HMAC_SHA256_Init HMAC_SHA256_Init;
@@ -121,6 +118,7 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   X509VerifyCert, //SHAREDCRYPTO_X509_VerifyCert X509_VerifyCert;
   X509ConstructCertificate, //SHAREDCRYPTO_X509_ConstructCertificate X509_ConstructCertificate;
   X509ConstructCertificateStack, //SHAREDCRYPTO_X509_ConstructCertificateStack X509_ConstructCertificateStack;
+  NULL,    // X509ConstructCertificateStackV This needs to come from EDK II
   X509Free, //SHAREDCRYPTO_X509_Free X509_Free;
   X509StackFree, //SHAREDCRYPTO_X509_StackFree X509_StackFree;
   X509GetTBSCert, //SHAREDCRYPTO_X509_GetTBSCert X509_GetTBSCert;
@@ -143,5 +141,12 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   Arc4Init, //SHAREDCRYPTO_ARC4_Init ARC4_Init;
   Arc4Encrypt, //SHAREDCRYPTO_ARC4_Encrypt ARC4_Encrypt;
   Arc4Decrypt, //SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
-  Arc4Reset //SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  Arc4Reset, //SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  /// SM3
+  Sm3GetContextSize, //SHAREDCRYPTO_SM3_GetContextSize
+  Sm3Init,           //SHAREDCRYPTO_SM3_Init
+  Sm3Duplicate,      //SHAREDCRYPTO_SM3_Duplicate
+  Sm3Update,         //SHAREDCRYPTO_SM3_Update
+  Sm3Final,          //SHAREDCRYPTO_SM3_Final
+  Sm3HashAll         //SHAREDCRYPTO_SM3_HashAll
 };

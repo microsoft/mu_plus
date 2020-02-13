@@ -22,21 +22,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   GetCryptoVersion,
   /// HMAC
-  NULL, //SHAREDCRYPTO_HMAC_MD5_GetContextSize HMAC_MD5_GetContextSize;
   NULL, //SHAREDCRYPTO_HMAC_MD5_New HMAC_MD5_New;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Free HMAC_MD5_Free;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Init HMAC_MD5_Init;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Update HMAC_MD5_Update;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Final HMAC_MD5_Final;
-  HmacSha1GetContextSize, //SHAREDCRYPTO_HMAC_SHA1_GetContextSize HMAC_SHA1_GetContextSize;
   HmacSha1New, //SHAREDCRYPTO_HMAC_SHA1_New HMAC_SHA1_New;
   HmacSha1Free, //SHAREDCRYPTO_HMAC_SHA1_Free HMAC_SHA1_Free;
   HmacSha1Init, //SHAREDCRYPTO_HMAC_SHA1_Init HMAC_SHA1_Init;
   HmacSha1Duplicate, //SHAREDCRYPTO_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
   HmacSha1Update, //SHAREDCRYPTO_HMAC_SHA1_Update HMAC_SHA1_Update;
   HmacSha1Final, //SHAREDCRYPTO_HMAC_SHA1_Final HMAC_SHA1_Final;
-  HmacSha256GetContextSize, //SHAREDCRYPTO_HMAC_SHA256_GetContextSize HMAC_SHA256_GetContextSize;
   HmacSha256New, //SHAREDCRYPTO_HMAC_SHA256_New HMAC_SHA256_New;
   HmacSha256Free, //SHAREDCRYPTO_HMAC_SHA256_Free HMAC_SHA256_Free;
   HmacSha256Init, //SHAREDCRYPTO_HMAC_SHA256_Init HMAC_SHA256_Init;
@@ -123,6 +120,7 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_X509_VerifyCert X509_VerifyCert;
   NULL, //SHAREDCRYPTO_X509_ConstructCertificate X509_ConstructCertificate;
   NULL, //SHAREDCRYPTO_X509_ConstructCertificateStack X509_ConstructCertificateStack;
+  NULL,    // X509ConstructCertificateStackV This needs to come from EDK II
   NULL, //SHAREDCRYPTO_X509_Free X509_Free;
   NULL, //SHAREDCRYPTO_X509_StackFree X509_StackFree;
   X509GetTBSCert, //SHAREDCRYPTO_X509_GetTBSCert X509_GetTBSCert;
@@ -145,5 +143,12 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_ARC4_Init ARC4_Init;
   NULL, //SHAREDCRYPTO_ARC4_Encrypt ARC4_Encrypt;
   NULL, //SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
-  NULL //SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  NULL, //SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  /// SM3
+  NULL, //SHAREDCRYPTO_SM3_GetContextSize
+  NULL, //SHAREDCRYPTO_SM3_Init
+  NULL, //SHAREDCRYPTO_SM3_Duplicate
+  NULL, //SHAREDCRYPTO_SM3_Update
+  NULL, //SHAREDCRYPTO_SM3_Final
+  NULL  //SHAREDCRYPTO_SM3_HashAll
 };
