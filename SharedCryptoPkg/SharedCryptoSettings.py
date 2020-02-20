@@ -374,7 +374,7 @@ class SettingsManager(UpdateSettingsManager, CiSetupSettingsManager, BinaryBuild
             return 1
 
         # copy the md file
-        _CopyFile(scriptDir, output_dir, "feature_sharedcrypto.md")
+        _CopyFile(scriptDir, output_dir, "Readme.md")
         _CopyFile(scriptDir, output_dir, "release_notes.md")
 
         list_to_get = ["Shared*",]

@@ -70,11 +70,11 @@ There are 24 different versions of the prebuild driver.
 One for each arch (X86, AARCH64, ARM, X64) and for each phase (DXE, PEI, SMM) and for mode (DEBUG, RELEASE).
 The nuget system should take care of downloading the correct version for your project.
 
-To build, run SharedNetworkSettings.py. This will compile the correct EFI's and copy the needed files such as the license and markdown.
-In order to build, you'll need to have a few repos cloned into your tree, which is most easily accomplished by running SharedNetworkSettings.py --SETUP and SharedNetworkSettings.py --UPDATE, which will clone the correct repos automatically for you.
-Under the hood SharedNetworkSettings is invoking stuart_update, stuart_ci_setup, and BinaryDriverBuilder as needed.
+To build, run SharedCryptoSettings.py. This will compile the correct EFI's and copy the needed files such as the license and markdown.
+In order to build, you'll need to have a few repos cloned into your tree, which is most easily accomplished by running SharedCryptoSettings.py --SETUP and SharedCryptoSettings.py --UPDATE, which will clone the correct repos automatically for you.
+Under the hood SharedCryptoSettings is invoking stuart_update, stuart_ci_setup, and BinaryDriverBuilder as needed.
 
-This should be a one-time step to setup the tree. SharedNetworkSettings supports all the same options that a regular platformbuilder does, such as --update and --skipbuild. If you wish to publish to Nuget, provide an API key by including it on the command line. *SharedNetworkSettings.py --api-key=XXXXXX*
+This should be a one-time step to setup the tree. SharedCryptoSettings supports all the same options that a regular platformbuilder does, such as --update and --skipbuild. If you wish to publish to Nuget, provide an API key by including it on the command line. *SharedCryptoSettings.py --api-key=XXXXXX*
 
 The output will go to the Build directory under .SharedCrypto_Nuget
 
