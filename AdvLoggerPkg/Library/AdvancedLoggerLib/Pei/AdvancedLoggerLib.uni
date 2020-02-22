@@ -1,0 +1,16 @@
+// /** @file
+// PEI Instance of Advanced Logger Library.
+//
+// Transfers the debug print message to the Advanced Logger Ppi.
+//
+// Copyright (c) Microsoft Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "PEI Instance of AdvancedLoggerLib for Memory Logger"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "Copies the debug buffer to the Advanced Logger Ppi."
+

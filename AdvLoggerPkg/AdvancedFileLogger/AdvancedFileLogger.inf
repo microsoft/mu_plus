@@ -1,0 +1,63 @@
+## @file AdvancedFileLogger.inf
+#
+#  This is a driver for logging debug messages to a file
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = AdvancedFileLogger
+  FILE_GUID                      = 06e49122-4ef4-45fe-9766-e2eaf2f9472f
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = AdvancedFileLoggerEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  AdvancedFileLogger.c
+  AdvancedFileLogger.h
+  FileAccess.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerAccessLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  ReportStatusCodeLib
+  SynchronizationLib
+  TimerLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gAdvancedLoggerWriteLogFiles
+  gMuEventPreExitBootServicesGuid
+
+[Protocols]
+  gEfiBlockIoProtocolGuid                                   ## CONSUMES
+  gEfiResetNotificationProtocolGuid                         ## CONSUMES
+  gEfiSimpleFileSystemProtocolGuid                          ## CONSUMES
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages        ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerForceEnable  ## CONSUMES
+
+[Depex]
+  TRUE

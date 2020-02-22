@@ -1,0 +1,37 @@
+## @file
+#  PEI instance of the Advanced Logger library.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = PeiAdvancedLoggerLib
+  MODULE_UNI_FILE                = AdvancedLoggerLib.uni
+  FILE_GUID                      = 1aab6811-6a83-4aa2-ae08-196c419004b4
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvancedLoggerLib | PEIM
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvancedLoggerLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  PeiServicesLib
+
+[Ppis]
+  gAdvancedLoggerPpiGuid                                    ## CONSUMES
+
+[Pcd]

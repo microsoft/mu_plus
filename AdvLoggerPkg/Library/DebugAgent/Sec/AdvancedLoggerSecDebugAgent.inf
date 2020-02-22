@@ -1,0 +1,55 @@
+## @file
+#  Advanced Logger Debug Agent library for the SEC phase.
+#
+#  This is the first module taking control of the platform upon power-on/reset.
+#  It implements the first phase of the security phase. The entry point function is
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = AdvancedLoggerSecDebugAgent
+  MODULE_UNI_FILE                = AdvancedLoggerSecDebugAgent.uni
+  MODULE_TYPE                    = SEC
+  FILE_GUID                      = f591f320-5e74-4a42-8958-bb0ba8b90e48
+  LIBRARY_CLASS                  = DebugAgentLib | SEC
+  VERSION_STRING                 = 1.0
+
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvancedLoggerSecDebugAgent.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  DebugAgentLib
+  HobLib
+  PcdLib
+  PeiServicesLib
+
+[Ppis]
+
+[Guids]
+  gAdvancedLoggerHobGuid
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase          ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages   ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages         ## CONSUMES
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  AdvancedLoggerSecDebugAgent.uni
