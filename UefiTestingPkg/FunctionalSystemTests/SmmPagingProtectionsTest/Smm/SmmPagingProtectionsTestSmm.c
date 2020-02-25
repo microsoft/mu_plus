@@ -16,6 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/SmmMemLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
 
 #include <Protocol/SmmExceptionTestProtocol.h>
 
@@ -32,23 +33,43 @@ EnableExceptionTestMode (
   )
 {
   EFI_STATUS    Status;
-  static SMM_EXCEPTION_TEST_PROTOCOL    *SmmExceptionTestProtocol = NULL;
+  UINTN         HandleBuffSize;
+  EFI_HANDLE   *Handles;
+  UINTN         Idx;
+  SMM_EXCEPTION_TEST_PROTOCOL    *SmmExceptionTestProtocol;
 
-  // If we haven't found the protocol yet, do that now.
-  if (SmmExceptionTestProtocol == NULL) {
-    Status = gSmst->SmmLocateProtocol( &gSmmExceptionTestProtocolGuid, NULL, &SmmExceptionTestProtocol );
-    if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" - Failed to locate SmmExceptionTestProtocol! %r\n", Status ));
-      SmmExceptionTestProtocol = NULL;
-    }
-
+  // Find all the SmmExceptionTestProtocol instances. There might be more than one if
+  // different handlers are used based on what features are enabled.
+  Handles = NULL;
+  HandleBuffSize = 0;
+  Status = gSmst->SmmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    DEBUG ((DEBUG_ERROR, "[%a] - Failed to locate any instances of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Status));
+    return;
   }
 
-  // If we have, request test mode.
-  if (SmmExceptionTestProtocol != NULL) {
+  Handles = AllocatePool(HandleBuffSize);
+  if (Handles == NULL) {
+    DEBUG ((DEBUG_ERROR, "[%a] - Failed to allocate space for instances of SmmExceptionTestProtocol.\n", __FUNCTION__));
+    return;
+  }
+
+  Status = gSmst->SmmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[%a] - Error getting instances of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Status));
+    return;
+  }
+
+  //Iterate over all instacnes and call EnableTestMode() on each.
+  for (Idx = 0; Idx < (HandleBuffSize/sizeof (EFI_HANDLE)); Idx++) {
+    Status = gSmst->SmmHandleProtocol (Handles[Idx], &gSmmExceptionTestProtocolGuid, (VOID **)&SmmExceptionTestProtocol);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[%a] - Error getting instance %d of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Idx, Status));
+      continue;
+    }
     Status = SmmExceptionTestProtocol->EnableTestMode();
-    if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, __FUNCTION__" - Failed to enable test mode!\n" ));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[%a] - Failed to enable test mode for instance %d: %r\n", __FUNCTION__, Idx, Status));
     }
   }
 

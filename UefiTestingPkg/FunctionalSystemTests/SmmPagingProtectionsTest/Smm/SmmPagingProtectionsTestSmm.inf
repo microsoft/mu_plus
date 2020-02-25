@@ -42,6 +42,7 @@
   DebugLib
   SmmMemLib
   BaseMemoryLib
+  MemoryAllocationLib
 
 
 [Protocols]
