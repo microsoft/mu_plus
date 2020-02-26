@@ -15,6 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define SMM_PAGING_PROTECTIONS_SELF_TEST_CODE            1
 #define SMM_PAGING_PROTECTIONS_SELF_TEST_DATA            2
 #define SMM_PAGING_PROTECTIONS_TEST_INVALID_RANGE        3
+#define SMM_PROTECTIONS_READ_UNAUTHORIZED_IO             4
 
 #pragma pack(1)
 

@@ -37,12 +37,13 @@
 
 
 [LibraryClasses]
-  UefiDriverEntryPoint
-  SmmServicesTableLib
-  DebugLib
-  SmmMemLib
   BaseMemoryLib
+  DebugLib
+  IoLib
   MemoryAllocationLib
+  SmmMemLib
+  SmmServicesTableLib
+  UefiDriverEntryPoint
 
 
 [Protocols]

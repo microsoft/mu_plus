@@ -295,6 +295,49 @@ InvalidRangesShouldBeReadProtected (
   return UNIT_TEST_PASSED;
 }
 
+UNIT_TEST_STATUS
+EFIAPI
+UnauthorizedIoShouldBeReadProtected (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN   PostReset = FALSE;
+
+  // Check to see whether we're loading a context, potentially after a reboot.
+  if (Context != NULL) {
+    PostReset = *(BOOLEAN*)Context;
+  }
+
+  // If we're not post-reset, this should be the first time this test runs.
+  if (!PostReset) {
+    UT_ASSERT_NOT_NULL( mPiSmmCommonCommBufferAddress );
+
+    //
+    // Since we expect the "test" code to cause a fault which will
+    // reset the system. Let's save a state that suggests the system
+    // has already reset. This way, when we resume we will consider
+    // it a "pass". If we fall through we will consider it a "fail".
+    //
+    PostReset = TRUE;
+    SetUsbBootNext();
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+
+    // This should cause the system to reboot.
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PROTECTIONS_READ_UNAUTHORIZED_IO );
+
+    // If we're still here, things have gone wrong.
+    UT_LOG_ERROR( "System was expected to reboot, but didn't." );
+    PostReset = FALSE;
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+  }
+
+  UT_ASSERT_TRUE( PostReset );
+
+  return UNIT_TEST_PASSED;
+}
+
 ///================================================================================================
 ///================================================================================================
 ///
@@ -323,37 +366,53 @@ SmmPagingProtectionsTestAppEntryPoint (
 {
   EFI_STATUS                Status;
   UNIT_TEST_FRAMEWORK       *Fw = NULL;
-  UNIT_TEST_SUITE           *TestSuite;
+  UNIT_TEST_SUITE           *PagingSuite;
+  UNIT_TEST_SUITE           *ProtectionsSuite;
   CHAR16  ShortName[100];
   ShortName[0] = L'\0';
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-  DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  UnicodeSPrint (&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
+  DEBUG ((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION );
-  if (EFI_ERROR( Status ))
-  {
+  Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+  if (EFI_ERROR (Status)) {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
     goto EXIT;
   }
 
   //
-  // Populate the TestSuite Unit Test Suite.
+  // Populate the ProtectionsSuite with general SMM Protection Unit tests
   //
-  Status = CreateUnitTestSuite( &TestSuite, Fw, L"SMM Paging Protections Tests", L"Security.SMMPaging", NULL, NULL );
-  if (EFI_ERROR( Status ))
-  {
-    DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TestSuite\n"));
+  Status = CreateUnitTestSuite( &ProtectionsSuite, Fw, L"SMM Protections Tests", L"Security.SMMProtections", NULL, NULL );
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for ProtectionsSuite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( TestSuite, L"Code regions should be write-protected", L"Security.SMMPaging.CodeProtections", CodeShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
-  AddTestCase( TestSuite, L"Data regions should be protected against execution", L"Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
-  // THIS TEST DOESN'T WORK.
-  // AddTestCase( TestSuite, L"Invalid ranges should be protected against access from SMM", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL );
+  AddTestCase(ProtectionsSuite, L"Reads to unauthorized I/O ports should be prevented", L"Security.SMMPaging.IoReadProtections", UnauthorizedIoShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  //AddTestCase(ProtectionsSuite, L"Writes to unauthorized I/O ports should be prevented", L"Security.SMMPaging.IoWriteProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  //AddTestCase(ProtectionsSuite, L"Reads to unauthorized MSRs should be prevented")
+  //AddTestCase(ProtectionsSuite, L"Writes to unauthorized MSRs should be prevented")
+  //AddTestCase(ProtectionsSuite, L"Execution of privileged instructions in SMM should be prevented", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  //AddTestCase(ProtectionsSuite, L"Access to supervisor stack should be prevented", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  //AddTestCase(ProtectionsSuite, L"Access to supervisor ... prevented", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+
+  //
+  // Populate the PagingSuite Paging Unit tests
+  //
+  Status = CreateUnitTestSuite (&PagingSuite, Fw, L"SMM Paging Protections Tests", L"Security.SMMPaging", NULL, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for PagingSuite\n"));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto EXIT;
+  }
+  AddTestCase(PagingSuite, L"Code regions should be write-protected", L"Security.SMMPaging.CodeProtections", CodeShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase(PagingSuite, L"Data regions should be protected against execution", L"Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase(PagingSuite, L"Invalid ranges should be protected against access from SMM", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+
 
   //
   // Execute the tests.
