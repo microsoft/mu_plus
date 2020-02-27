@@ -338,6 +338,221 @@ UnauthorizedIoShouldBeReadProtected (
   return UNIT_TEST_PASSED;
 }
 
+UNIT_TEST_STATUS
+EFIAPI
+UnauthorizedIoShouldBeWriteProtected (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN   PostReset = FALSE;
+
+  // Check to see whether we're loading a context, potentially after a reboot.
+  if (Context != NULL) {
+    PostReset = *(BOOLEAN*)Context;
+  }
+
+  // If we're not post-reset, this should be the first time this test runs.
+  if (!PostReset) {
+    UT_ASSERT_NOT_NULL( mPiSmmCommonCommBufferAddress );
+
+    //
+    // Since we expect the "test" code to cause a fault which will
+    // reset the system. Let's save a state that suggests the system
+    // has already reset. This way, when we resume we will consider
+    // it a "pass". If we fall through we will consider it a "fail".
+    //
+    PostReset = TRUE;
+    SetUsbBootNext();
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+
+    // This should cause the system to reboot.
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PROTECTIONS_WRITE_UNAUTHORIZED_IO );
+
+    // If we're still here, things have gone wrong.
+    UT_LOG_ERROR( "System was expected to reboot, but didn't." );
+    PostReset = FALSE;
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+  }
+
+  UT_ASSERT_TRUE( PostReset );
+
+  return UNIT_TEST_PASSED;
+}
+
+UNIT_TEST_STATUS
+EFIAPI
+UnauthorizedMsrShouldBeReadProtected (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN   PostReset = FALSE;
+
+  // Check to see whether we're loading a context, potentially after a reboot.
+  if (Context != NULL) {
+    PostReset = *(BOOLEAN*)Context;
+  }
+
+  // If we're not post-reset, this should be the first time this test runs.
+  if (!PostReset) {
+    UT_ASSERT_NOT_NULL( mPiSmmCommonCommBufferAddress );
+
+    //
+    // Since we expect the "test" code to cause a fault which will
+    // reset the system. Let's save a state that suggests the system
+    // has already reset. This way, when we resume we will consider
+    // it a "pass". If we fall through we will consider it a "fail".
+    //
+    PostReset = TRUE;
+    SetUsbBootNext();
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+
+    // This should cause the system to reboot.
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PROTECTIONS_READ_UNAUTHORIZED_MSR );
+
+    // If we're still here, things have gone wrong.
+    UT_LOG_ERROR( "System was expected to reboot, but didn't." );
+    PostReset = FALSE;
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+  }
+
+  UT_ASSERT_TRUE( PostReset );
+
+  return UNIT_TEST_PASSED;
+}
+
+UNIT_TEST_STATUS
+EFIAPI
+UnauthorizedMsrShouldBeWriteProtected (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN   PostReset = FALSE;
+
+  // Check to see whether we're loading a context, potentially after a reboot.
+  if (Context != NULL) {
+    PostReset = *(BOOLEAN*)Context;
+  }
+
+  // If we're not post-reset, this should be the first time this test runs.
+  if (!PostReset) {
+    UT_ASSERT_NOT_NULL( mPiSmmCommonCommBufferAddress );
+
+    //
+    // Since we expect the "test" code to cause a fault which will
+    // reset the system. Let's save a state that suggests the system
+    // has already reset. This way, when we resume we will consider
+    // it a "pass". If we fall through we will consider it a "fail".
+    //
+    PostReset = TRUE;
+    SetUsbBootNext();
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+
+    // This should cause the system to reboot.
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR );
+
+    // If we're still here, things have gone wrong.
+    UT_LOG_ERROR( "System was expected to reboot, but didn't." );
+    PostReset = FALSE;
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+  }
+
+  UT_ASSERT_TRUE( PostReset );
+
+  return UNIT_TEST_PASSED;
+}
+
+UNIT_TEST_STATUS
+EFIAPI
+PrivilegedInstructionsShouldBePrevented (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN   PostReset = FALSE;
+
+  // Check to see whether we're loading a context, potentially after a reboot.
+  if (Context != NULL) {
+    PostReset = *(BOOLEAN*)Context;
+  }
+
+  // If we're not post-reset, this should be the first time this test runs.
+  if (!PostReset) {
+    UT_ASSERT_NOT_NULL( mPiSmmCommonCommBufferAddress );
+
+    //
+    // Since we expect the "test" code to cause a fault which will
+    // reset the system. Let's save a state that suggests the system
+    // has already reset. This way, when we resume we will consider
+    // it a "pass". If we fall through we will consider it a "fail".
+    //
+    PostReset = TRUE;
+    SetUsbBootNext();
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+
+    // This should cause the system to reboot.
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PROTECTIONS_PRIVILEGED_INSTRUCTIONS );
+
+    // If we're still here, things have gone wrong.
+    UT_LOG_ERROR( "System was expected to reboot, but didn't." );
+    PostReset = FALSE;
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+  }
+
+  UT_ASSERT_TRUE( PostReset );
+
+  return UNIT_TEST_PASSED;
+}
+
+UNIT_TEST_STATUS
+EFIAPI
+AccessToSmmEntryPointShouldBePrevented (
+  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
+  IN UNIT_TEST_CONTEXT           Context
+  )
+{
+  EFI_STATUS  Status;
+  BOOLEAN   PostReset = FALSE;
+
+  // Check to see whether we're loading a context, potentially after a reboot.
+  if (Context != NULL) {
+    PostReset = *(BOOLEAN*)Context;
+  }
+
+  // If we're not post-reset, this should be the first time this test runs.
+  if (!PostReset) {
+    UT_ASSERT_NOT_NULL( mPiSmmCommonCommBufferAddress );
+
+    //
+    // Since we expect the "test" code to cause a fault which will
+    // reset the system. Let's save a state that suggests the system
+    // has already reset. This way, when we resume we will consider
+    // it a "pass". If we fall through we will consider it a "fail".
+    //
+    PostReset = TRUE;
+    SetUsbBootNext();
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+
+    // This should cause the system to reboot.
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PROTECTIONS_ACCESS_ENTRY_POINT );
+
+    // If we're still here, things have gone wrong.
+    UT_LOG_ERROR( "System was expected to reboot, but didn't." );
+    PostReset = FALSE;
+    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+  }
+
+  UT_ASSERT_TRUE( PostReset );
+
+  return UNIT_TEST_PASSED;
+}
+
 ///================================================================================================
 ///================================================================================================
 ///
@@ -383,22 +598,6 @@ SmmPagingProtectionsTestAppEntryPoint (
     goto EXIT;
   }
 
-  //
-  // Populate the ProtectionsSuite with general SMM Protection Unit tests
-  //
-  Status = CreateUnitTestSuite( &ProtectionsSuite, Fw, L"SMM Protections Tests", L"Security.SMMProtections", NULL, NULL );
-  if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for ProtectionsSuite\n"));
-    Status = EFI_OUT_OF_RESOURCES;
-    goto EXIT;
-  }
-  AddTestCase(ProtectionsSuite, L"Reads to unauthorized I/O ports should be prevented", L"Security.SMMPaging.IoReadProtections", UnauthorizedIoShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
-  //AddTestCase(ProtectionsSuite, L"Writes to unauthorized I/O ports should be prevented", L"Security.SMMPaging.IoWriteProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
-  //AddTestCase(ProtectionsSuite, L"Reads to unauthorized MSRs should be prevented")
-  //AddTestCase(ProtectionsSuite, L"Writes to unauthorized MSRs should be prevented")
-  //AddTestCase(ProtectionsSuite, L"Execution of privileged instructions in SMM should be prevented", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
-  //AddTestCase(ProtectionsSuite, L"Access to supervisor stack should be prevented", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
-  //AddTestCase(ProtectionsSuite, L"Access to supervisor ... prevented", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
 
   //
   // Populate the PagingSuite Paging Unit tests
@@ -413,6 +612,22 @@ SmmPagingProtectionsTestAppEntryPoint (
   AddTestCase(PagingSuite, L"Data regions should be protected against execution", L"Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
   AddTestCase(PagingSuite, L"Invalid ranges should be protected against access from SMM", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
 
+  //
+  // Populate the ProtectionsSuite with general SMM Protection Unit tests
+  //
+  Status = CreateUnitTestSuite( &ProtectionsSuite, Fw, L"SMM Protections Tests", L"Security.SMMProtections", NULL, NULL );
+  if (EFI_ERROR (Status)) {
+    DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for ProtectionsSuite\n"));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto EXIT;
+  }
+
+  AddTestCase(ProtectionsSuite, L"Reads to unauthorized I/O ports should be prevented", L"Security.SMMProtections.IoReadProtections", UnauthorizedIoShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase(ProtectionsSuite, L"Writes to unauthorized I/O ports should be prevented", L"Security.SMMProtections.IoWriteProtections", UnauthorizedIoShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase(ProtectionsSuite, L"Reads to unauthorized MSRs should be prevented", L"Security.SMMProtections.MsrReadProtections", UnauthorizedMsrShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase(ProtectionsSuite, L"Writes to unauthorized MSRs should be prevented", L"Security.SMMProtections.MsrWriteProtections", UnauthorizedMsrShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase(ProtectionsSuite, L"Execution of privileged instructions in SMM should be prevented", L"Security.SMMProtections.PrivilegedInstructionProtections", PrivilegedInstructionsShouldBePrevented, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase(ProtectionsSuite, L"Access to SMM Entry Point should be prevented", L"Security.SMMProtections.EntryPointShouldNotBeAccessible", AccessToSmmEntryPointShouldBePrevented, LocateSmmCommonCommBuffer, NULL, NULL);
 
   //
   // Execute the tests.

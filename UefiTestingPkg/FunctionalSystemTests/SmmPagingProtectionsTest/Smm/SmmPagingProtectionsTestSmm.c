@@ -12,6 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <PiSmm.h>
 
+#include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
@@ -20,6 +21,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/SmmMemLib.h>
 
 #include <Protocol/SmmExceptionTestProtocol.h>
+
+#include <Register/Intel/ArchitecturalMsr.h>
+#include <Register/Intel/SmramSaveStateMap.h>
 
 #include "../SmmPagingProtectionsTestCommon.h"
 
@@ -136,7 +140,7 @@ SmmMemoryProtectionsSelfTestCode (
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
-  // Make sure that the require telemetry/handling is
+  // Make sure that the required telemetry/handling is
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
@@ -182,7 +186,7 @@ SmmMemoryProtectionsSelfTestData (
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n",__FUNCTION__));
 
-  // Make sure that the require telemetry/handling is
+  // Make sure that the required telemetry/handling is
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
@@ -231,7 +235,7 @@ SmmMemoryProtectionsTestInvalidRange (
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
-  // Make sure that the require telemetry/handling is
+  // Make sure that the required telemetry/handling is
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
@@ -262,7 +266,7 @@ SmmMemoryProtectionsTestInvalidRange (
 
 /**
   Unauthorized I/O read test.
-  This test will attempt to read non-whitelisted I/O port from SMM.
+  This test will attempt to read a non-whitelisted I/O port from SMM.
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
@@ -279,18 +283,176 @@ SmmMemoryProtectionsTestUnathorizedIoRead (
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
-  // Make sure that the require telemetry/handling is
+  // Make sure that the required telemetry/handling is
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
-  DEBUG ((DEBUG_INFO, "[%a] - Attempting 32-bit I/O read from 0xCF8...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting 32-bit I/O read from non-whitelisted port 0xCF8...\n", __FUNCTION__));
 
   ReadData = IoRead32(0xCF8);
 
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
   return EFI_SECURITY_VIOLATION;
-} // SmmMemoryProtectionsTestInvalidRange()
+}
+
+/**
+  Unauthorized I/O write test.
+  This test will attempt to write a non-whitelisted I/O port from SMM.
+
+  @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
+                                      a system crash, any sort of return value
+                                      should be considered a security violation.
+
+**/
+EFI_STATUS
+EFIAPI
+SmmMemoryProtectionsTestUnathorizedIoWrite (
+  VOID
+  )
+{
+  DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
+
+  // Make sure that the required telemetry/handling is
+  // performed to get accurate test results.
+  EnableExceptionTestMode ();
+
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting 32-bit I/O write to non-whitelisted port 0xCF8...\n", __FUNCTION__));
+
+  IoWrite32(0xCF8, 0x80000000);
+
+  DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
+
+  return EFI_SECURITY_VIOLATION;
+}
+
+/**
+  Unauthorized MSR read test.
+  This test will attempt to read a non-whitelisted MSR from SMM.
+
+  @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
+                                      a system crash, any sort of return value
+                                      should be considered a security violation.
+
+**/
+EFI_STATUS
+EFIAPI
+SmmMemoryProtectionsTestUnathorizedMsrRead (
+  VOID
+  )
+{
+  UINT64 ReadData;
+  DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
+
+  // Make sure that the required telemetry/handling is
+  // performed to get accurate test results.
+  EnableExceptionTestMode ();
+
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to read non-whitelisted MSR IA32_MTRR_PHYSBASE0...\n", __FUNCTION__));
+
+  ReadData = AsmReadMsr64(MSR_IA32_MTRR_PHYSBASE0);
+
+  DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
+
+  return EFI_SECURITY_VIOLATION;
+}
+
+/**
+  Unauthorized MSR write test.
+  This test will attempt to write a non-whitelisted MSR from SMM.
+
+  @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
+                                      a system crash, any sort of return value
+                                      should be considered a security violation.
+
+**/
+EFI_STATUS
+EFIAPI
+SmmMemoryProtectionsTestUnathorizedMsrWrite (
+  VOID
+  )
+{
+  DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
+
+  // Make sure that the required telemetry/handling is
+  // performed to get accurate test results.
+  EnableExceptionTestMode ();
+
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to write non-whitelisted MSR IA32_MTRR_PHYSBASE0...\n", __FUNCTION__));
+
+  AsmWriteMsr64(MSR_IA32_MTRR_PHYSBASE0, 0);
+
+  DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
+
+  return EFI_SECURITY_VIOLATION;
+}
+
+/**
+  Unauthorized MSR write test.
+  This test will attempt to write a non-whitelisted MSR from SMM.
+
+  @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
+                                      a system crash, any sort of return value
+                                      should be considered a security violation.
+
+**/
+EFI_STATUS
+EFIAPI
+SmmMemoryProtectionsTestPrivilegedInstructions (
+  VOID
+  )
+{
+  UINTN Cr3;
+  DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
+
+  // Make sure that the required telemetry/handling is
+  // performed to get accurate test results.
+  EnableExceptionTestMode ();
+
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to read CR3...\n", __FUNCTION__));
+
+  Cr3 = AsmReadCr3();
+
+  DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
+
+  return EFI_SECURITY_VIOLATION;
+}
+
+/**
+  Unauthorized MSR write test.
+  This test will attempt to write a non-whitelisted MSR from SMM.
+
+  @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
+                                      a system crash, any sort of return value
+                                      should be considered a security violation.
+
+**/
+EFI_STATUS
+EFIAPI
+SmmMemoryProtectionsTestEntryPointAccess (
+  VOID
+  )
+{
+  UINT64 SmmBase;
+  VOID *SmmEntry;
+  DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
+
+  // Make sure that the required telemetry/handling is
+  // performed to get accurate test results.
+  EnableExceptionTestMode ();
+
+  SmmBase = AsmReadMsr64(MSR_IA32_SMBASE);
+
+  SmmEntry = (VOID *) (SmmBase + SMM_HANDLER_OFFSET);
+
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to access SMM EntryPoint at %p...\n", __FUNCTION__, SmmEntry));
+
+  SetMem(SmmEntry, 0x100, 0xFF);
+
+  DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
+
+  return EFI_SECURITY_VIOLATION;
+}
 
 /**
   Communication service SMI Handler entry.
@@ -339,11 +501,11 @@ MemoryProtectionTestHandler (
   TempCommBufferSize = *CommBufferSize;
 
   if(TempCommBufferSize != sizeof (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER)) {
-    DEBUG (( DEBUG_ERROR, "[%a] SMM Communication buffer size is invalid for this handler!\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "[%a] SMM Communication buffer size is invalid for this handler!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
   if (!SmmIsBufferOutsideSmmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
-    DEBUG (( DEBUG_ERROR, __FUNCTION__": SMM Communication buffer in invalid location!\n" ));
+    DEBUG ((DEBUG_ERROR, "[%a] - SMM Communication buffer in invalid location!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
 
@@ -354,27 +516,52 @@ MemoryProtectionTestHandler (
   Status = EFI_SUCCESS;
   switch (CommParams->Function) {
     case SMM_PAGING_PROTECTIONS_SELF_TEST_CODE:
-      DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - Function requested: SMM_PAGING_PROTECTIONS_SELF_TEST_CODE\n" ));
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PAGING_PROTECTIONS_SELF_TEST_CODE\n", __FUNCTION__));
       Status = SmmMemoryProtectionsSelfTestCode();
       break;
 
     case SMM_PAGING_PROTECTIONS_SELF_TEST_DATA:
-      DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - Function requested: SMM_PAGING_PROTECTIONS_SELF_TEST_DATA\n" ));
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PAGING_PROTECTIONS_SELF_TEST_DATA\n", __FUNCTION__));
       Status = SmmMemoryProtectionsSelfTestData();
       break;
 
     case SMM_PAGING_PROTECTIONS_TEST_INVALID_RANGE:
-      DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - Function requested: SMM_PAGING_PROTECTIONS_TEST_INVALID_RANGE\n" ));
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PAGING_PROTECTIONS_TEST_INVALID_RANGE\n", __FUNCTION__));
       Status = SmmMemoryProtectionsTestInvalidRange();
       break;
 
     case SMM_PROTECTIONS_READ_UNAUTHORIZED_IO:
-      DEBUG(( DEBUG_VERBOSE, __FUNCTION__" - Function requested: SMM_PROTECTIONS_READ_UNAUTHORIZED_IO\n" ));
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_READ_UNAUTHORIZED_IO\n", __FUNCTION__));
       Status = SmmMemoryProtectionsTestUnathorizedIoRead();
       break;
 
+    case SMM_PROTECTIONS_WRITE_UNAUTHORIZED_IO:
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_WRITE_UNAUTHORIZED_IO\n", __FUNCTION__));
+      Status = SmmMemoryProtectionsTestUnathorizedIoWrite();
+      break;
+
+    case SMM_PROTECTIONS_READ_UNAUTHORIZED_MSR:
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_READ_UNAUTHORIZED_MSR\n", __FUNCTION__));
+      Status = SmmMemoryProtectionsTestUnathorizedMsrRead();
+      break;
+
+    case SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR:
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR\n", __FUNCTION__));
+      Status = SmmMemoryProtectionsTestUnathorizedMsrWrite();
+      break;
+
+    case SMM_PROTECTIONS_PRIVILEGED_INSTRUCTIONS:
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_PRIVILEGED_INSTRUCTIONS\n", __FUNCTION__));
+      Status = SmmMemoryProtectionsTestPrivilegedInstructions();
+      break;
+
+    case SMM_PROTECTIONS_ACCESS_ENTRY_POINT:
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_ACCESS_ENTRY_POINT\n", __FUNCTION__));
+      Status = SmmMemoryProtectionsTestEntryPointAccess();
+      break;
+
     default:
-      DEBUG(( DEBUG_INFO, __FUNCTION__" - Unknown function %d!\n", CommParams->Function ));
+      DEBUG ((DEBUG_INFO, "[%a] - Unknown function %d!\n", __FUNCTION__, CommParams->Function));
       Status = EFI_UNSUPPORTED;
       break;
   }
@@ -407,8 +594,8 @@ SmmPagingProtectionsTestEntryPoint (
   // Register SMI handler.
   //
   DiscardedHandle = NULL;
-  Status = gSmst->SmiHandlerRegister( MemoryProtectionTestHandler, &gSmmPagingProtectionsTestSmiHandlerGuid, &DiscardedHandle );
-  ASSERT_EFI_ERROR( Status );
+  Status = gSmst->SmiHandlerRegister (MemoryProtectionTestHandler, &gSmmPagingProtectionsTestSmiHandlerGuid, &DiscardedHandle);
+  ASSERT_EFI_ERROR (Status);
 
   return Status;
 }
