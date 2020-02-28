@@ -21,6 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR           7
 #define SMM_PROTECTIONS_PRIVILEGED_INSTRUCTIONS          8
 #define SMM_PROTECTIONS_ACCESS_ENTRY_POINT               9
+#define SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE       10
 
 #pragma pack(1)
 

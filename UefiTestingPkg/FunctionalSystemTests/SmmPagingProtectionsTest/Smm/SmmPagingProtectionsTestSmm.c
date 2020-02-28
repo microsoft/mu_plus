@@ -136,7 +136,7 @@ SmmMemoryProtectionsSelfTestCode (
   VOID
   )
 {
-  UINTN   *CodeRegionToWriteTo;
+  volatile UINTN   *CodeRegionToWriteTo;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -229,7 +229,7 @@ SmmMemoryProtectionsTestInvalidRange (
   VOID
   )
 {
-  UINTN                   ReadData;
+  volatile UINTN          ReadData;
   EFI_PHYSICAL_ADDRESS    ReadAddress;
   BOOLEAN                 ResultsValid = FALSE;
 
@@ -253,9 +253,6 @@ SmmMemoryProtectionsTestInvalidRange (
 
     // Attempt to read from the address. This *should* fail.
     ReadData = *(UINTN*)ReadAddress;
-    // Be Warned: if you don't do something with the read, the compiler may optimize it out. So
-    // leave the below debug in place (or replace it with something ouse)
-    DEBUG ((DEBUG_ERROR, "[%a] Read %p data = 0x%016lx\n", __FUNCTION__, ReadAddress, ReadData));
   }
 
   // Note whether this was a valid test pass for debugging.
@@ -458,6 +455,42 @@ SmmMemoryProtectionsTestEntryPointAccess (
 }
 
 /**
+  Self-Test Data
+  This function will use the SmmPagingProtectionsTestSmm driver itself
+  to determine whether paging protections are active for SMM driver images.
+  This image should have at least one code page and one data page.
+  Data pages should be marked NX.
+  Code pages should be marked RO.
+
+  To test the data page, we will attempt to execute from the specified code region outside of SMM.
+
+  @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
+                                      a system crash, and sort of return value
+                                      should be considered a security violation.
+
+**/
+EFI_STATUS
+EFIAPI
+SmmMemoryProtectionsRunArbitraryCode (
+  EFI_PHYSICAL_ADDRESS TargetAddress
+  )
+{
+  DEBUG ((DEBUG_VERBOSE, "%a()\n",__FUNCTION__));
+
+  // Make sure that the required telemetry/handling is
+  // performed to get accurate test results.
+  EnableExceptionTestMode ();
+
+  // Now attempt to call the function.
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to execute from 0x%16lX...\n", __FUNCTION__, TargetAddress));
+  ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)TargetAddress)();
+
+  DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
+
+  return EFI_SECURITY_VIOLATION;
+}
+
+/**
   Communication service SMI Handler entry.
 
   This handler takes requests to probe specific areas of memory and prove
@@ -561,6 +594,11 @@ MemoryProtectionTestHandler (
     case SMM_PROTECTIONS_ACCESS_ENTRY_POINT:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_ACCESS_ENTRY_POINT\n", __FUNCTION__));
       Status = SmmMemoryProtectionsTestEntryPointAccess();
+      break;
+
+    case SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE:
+      DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE\n", __FUNCTION__));
+      Status = SmmMemoryProtectionsRunArbitraryCode(CommParams->TargetAddress);
       break;
 
     default:
