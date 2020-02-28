@@ -32,21 +32,26 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MsUnitTestPkg/MsUnitTestPkg.dec
-
+  UefiTestingPkg/UefiTestingPkg.dec
 
 [LibraryClasses]
+  BaseLib
+  BaseMemoryLib
   DebugLib
+  PcdLib
+  PrintLib
   UefiApplicationEntryPoint
   UefiBootServicesTableLib
   UnitTestLib
   UnitTestLogLib
   UnitTestPersistenceLib
   UnitTestAssertLib
-  PrintLib
 
 [Protocols]
   gEfiSmmCommunicationProtocolGuid
 
-
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid
+
+[FixedPcd]
+  gUefiTestingPkgTokenSpaceGuid.SkipSmmProtectionFeatures

@@ -13,10 +13,9 @@
 
 
 [Includes]
-  
 
 [LibraryClasses]
- 
+
 [Guids]
   ##
   gUefiTestingPkgTokenSpaceGuid       = { 0xb3f4fb27, 0xf382, 0x4484, { 0x9b, 0x77, 0x22, 0x6b, 0x2b, 0x43, 0x48, 0xbb } }
@@ -24,4 +23,7 @@
   # Guid for DMA Protection Variable
   # {d1eef7c2-f719-41ae-a8c4-1dc434a862df}
   gDMAUnitTestVariableGuid = { 0xd1eef7c2, 0xf719, 0x41ae, {0xa8, 0xc4, 0x1d, 0xc4, 0x34, 0xa8, 0x62, 0xdf}}
- 
+
+[PcdsFixedAtBuild]
+  ## Controls whether SMM Protoection features in SmmPagingProtectionTest should be skipped.
+  gUefiTestingPkgTokenSpaceGuid.SkipSmmProtectionFeatures|FALSE|BOOLEAN|0x00000001

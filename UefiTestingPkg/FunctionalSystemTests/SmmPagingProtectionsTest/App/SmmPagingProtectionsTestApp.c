@@ -15,11 +15,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/UefiLib.h>
 #include <Library/DebugLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
+#include <Library/UefiLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
+
 #include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
 #include <Library/UnitTestLogLib.h>
@@ -340,6 +342,10 @@ UnauthorizedIoShouldBeReadProtected (
   BOOLEAN   PostReset = FALSE;
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
+  if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
+    return UNIT_TEST_SKIPPED;
+  }
+
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
     PostReset = *(BOOLEAN*)Context;
@@ -390,6 +396,10 @@ UnauthorizedIoShouldBeWriteProtected (
   BOOLEAN   PostReset = FALSE;
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
+  if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
+    return UNIT_TEST_SKIPPED;
+  }
+
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
     PostReset = *(BOOLEAN*)Context;
@@ -439,6 +449,10 @@ UnauthorizedMsrShouldBeReadProtected (
   EFI_STATUS  Status;
   BOOLEAN   PostReset = FALSE;
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+
+  if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
+    return UNIT_TEST_SKIPPED;
+  }
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
@@ -493,6 +507,10 @@ UnauthorizedMsrShouldBeWriteProtected (
   BOOLEAN   PostReset = FALSE;
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
+  if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
+    return UNIT_TEST_SKIPPED;
+  }
+
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
     PostReset = *(BOOLEAN*)Context;
@@ -543,6 +561,10 @@ PrivilegedInstructionsShouldBePrevented (
   BOOLEAN   PostReset = FALSE;
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
+  if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
+    return UNIT_TEST_SKIPPED;
+  }
+
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
     PostReset = *(BOOLEAN*)Context;
@@ -592,6 +614,10 @@ AccessToSmmEntryPointShouldBePrevented (
   EFI_STATUS  Status;
   BOOLEAN   PostReset = FALSE;
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+
+  if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
+    return UNIT_TEST_SKIPPED;
+  }
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
@@ -832,7 +858,6 @@ SmmPagingProtectionsTestAppEntryPoint (
   AddTestCase (ProtectionsSuite, L"Writes to unauthorized MSRs should be prevented", L"Security.SMMProtections.MsrWriteProtections", UnauthorizedMsrShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
   AddTestCase (ProtectionsSuite, L"Execution of privileged instructions in SMM should be prevented", L"Security.SMMProtections.PrivilegedInstructionProtections", PrivilegedInstructionsShouldBePrevented, LocateSmmCommonCommBuffer, NULL, NULL);
   AddTestCase (ProtectionsSuite, L"Access to SMM Entry Point should be prevented", L"Security.SMMProtections.EntryPointShouldNotBeAccessible", AccessToSmmEntryPointShouldBePrevented, LocateSmmCommonCommBuffer, NULL, NULL);
-
   //
   // Execute the tests.
   //
