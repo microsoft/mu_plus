@@ -253,6 +253,9 @@ SmmMemoryProtectionsTestInvalidRange (
 
     // Attempt to read from the address. This *should* fail.
     ReadData = *(UINTN*)ReadAddress;
+    // Be Warned: if you don't do something with the read, the compiler may optimize it out. So
+    // leave the below debug in place (or replace it with something ouse)
+    DEBUG ((DEBUG_ERROR, "[%a] Read %p data = 0x%016lx\n", __FUNCTION__, ReadAddress, ReadData));
   }
 
   // Note whether this was a valid test pass for debugging.
