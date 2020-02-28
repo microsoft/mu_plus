@@ -343,7 +343,7 @@ UnauthorizedIoShouldBeReadProtected (
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
   if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
-    return UNIT_TEST_SKIPPED;
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
   }
 
   // Check to see whether we're loading a context, potentially after a reboot.
@@ -397,7 +397,7 @@ UnauthorizedIoShouldBeWriteProtected (
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
   if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
-    return UNIT_TEST_SKIPPED;
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
   }
 
   // Check to see whether we're loading a context, potentially after a reboot.
@@ -451,7 +451,7 @@ UnauthorizedMsrShouldBeReadProtected (
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
   if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
-    return UNIT_TEST_SKIPPED;
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
   }
 
   // Check to see whether we're loading a context, potentially after a reboot.
@@ -508,7 +508,7 @@ UnauthorizedMsrShouldBeWriteProtected (
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
   if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
-    return UNIT_TEST_SKIPPED;
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
   }
 
   // Check to see whether we're loading a context, potentially after a reboot.
@@ -562,7 +562,7 @@ PrivilegedInstructionsShouldBePrevented (
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
   if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
-    return UNIT_TEST_SKIPPED;
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
   }
 
   // Check to see whether we're loading a context, potentially after a reboot.
@@ -616,7 +616,7 @@ AccessToSmmEntryPointShouldBePrevented (
   SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
 
   if (FixedPcdGetBool(SkipSmmProtectionFeatures)) {
-    return UNIT_TEST_SKIPPED;
+    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
   }
 
   // Check to see whether we're loading a context, potentially after a reboot.
