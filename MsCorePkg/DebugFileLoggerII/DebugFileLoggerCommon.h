@@ -14,6 +14,8 @@
 
 #define PEI_BUFFER_SIZE_DEBUG_FILE_LOGGING  (6 * EFI_PAGE_SIZE)
 
+#define EFI_DEBUG_FILE_LOGGER_OVERFLOW 0x80000000
+
 typedef struct {
 
    UINT32 BytesWritten;

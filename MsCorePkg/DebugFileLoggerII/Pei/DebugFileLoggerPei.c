@@ -75,6 +75,13 @@ PeiLoggingBufferEventCapture (
 
     if ((LoggingBufferHeader->BytesWritten + EFI_STATUS_CODE_DATA_MAX_SIZE) > PEI_BUFFER_SIZE_DEBUG_FILE_LOGGING) {
 
+        if (LoggingBufferHeader->BytesWritten & EFI_DEBUG_FILE_LOGGER_OVERFLOW) {
+            Status = EFI_OUT_OF_RESOURCES;
+            goto CleanUp;
+        }
+
+        LoggingBufferHeader->BytesWritten |= EFI_DEBUG_FILE_LOGGER_OVERFLOW;
+
         //
         // Locate the PEI report status code handler.
         //

@@ -100,6 +100,9 @@
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
 
+[LibraryClasses.IA32]
+  NULL|MdePkg/Library/VsIntrinsicLib/VsIntrinsicLib.inf
+
 [LibraryClasses.common.DXE_CORE]
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
