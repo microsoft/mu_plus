@@ -65,7 +65,7 @@ EnableExceptionTestMode (
     return;
   }
 
-  //Iterate over all instacnes and call EnableTestMode() on each.
+  //Iterate over all instances and call EnableTestMode() on each.
   for (Idx = 0; Idx < (HandleBuffSize/sizeof (EFI_HANDLE)); Idx++) {
     Status = gSmst->SmmHandleProtocol (Handles[Idx], &gSmmExceptionTestProtocolGuid, (VOID **)&SmmExceptionTestProtocol);
     if (EFI_ERROR (Status)) {
@@ -266,7 +266,7 @@ SmmMemoryProtectionsTestInvalidRange (
 
 /**
   Unauthorized I/O read test.
-  This test will attempt to read a non-whitelisted I/O port from SMM.
+  This test will attempt to read a non-authorized I/O port from SMM.
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
@@ -287,7 +287,7 @@ SmmMemoryProtectionsTestUnathorizedIoRead (
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
-  DEBUG ((DEBUG_INFO, "[%a] - Attempting 32-bit I/O read from non-whitelisted port 0xCF8...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting 32-bit I/O read from non-authorized port 0xCF8...\n", __FUNCTION__));
 
   ReadData = IoRead32(0xCF8);
 
@@ -298,7 +298,7 @@ SmmMemoryProtectionsTestUnathorizedIoRead (
 
 /**
   Unauthorized I/O write test.
-  This test will attempt to write a non-whitelisted I/O port from SMM.
+  This test will attempt to write a non-authorized I/O port from SMM.
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
@@ -317,7 +317,7 @@ SmmMemoryProtectionsTestUnathorizedIoWrite (
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
-  DEBUG ((DEBUG_INFO, "[%a] - Attempting 32-bit I/O write to non-whitelisted port 0xCF8...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting 32-bit I/O write to non-authorized port 0xCF8...\n", __FUNCTION__));
 
   IoWrite32(0xCF8, 0x80000000);
 
@@ -328,7 +328,7 @@ SmmMemoryProtectionsTestUnathorizedIoWrite (
 
 /**
   Unauthorized MSR read test.
-  This test will attempt to read a non-whitelisted MSR from SMM.
+  This test will attempt to read a non-authorized MSR from SMM.
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
@@ -348,7 +348,7 @@ SmmMemoryProtectionsTestUnathorizedMsrRead (
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
-  DEBUG ((DEBUG_INFO, "[%a] - Attempting to read non-whitelisted MSR IA32_MTRR_PHYSBASE0...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to read non-authorized MSR IA32_MTRR_PHYSBASE0...\n", __FUNCTION__));
 
   ReadData = AsmReadMsr64(MSR_IA32_MTRR_PHYSBASE0);
 
@@ -359,7 +359,7 @@ SmmMemoryProtectionsTestUnathorizedMsrRead (
 
 /**
   Unauthorized MSR write test.
-  This test will attempt to write a non-whitelisted MSR from SMM.
+  This test will attempt to write a non-authorized MSR from SMM.
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
@@ -378,7 +378,7 @@ SmmMemoryProtectionsTestUnathorizedMsrWrite (
   // performed to get accurate test results.
   EnableExceptionTestMode ();
 
-  DEBUG ((DEBUG_INFO, "[%a] - Attempting to write non-whitelisted MSR IA32_MTRR_PHYSBASE0...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to write non-authorized MSR IA32_MTRR_PHYSBASE0...\n", __FUNCTION__));
 
   AsmWriteMsr64(MSR_IA32_MTRR_PHYSBASE0, 0);
 
@@ -389,7 +389,7 @@ SmmMemoryProtectionsTestUnathorizedMsrWrite (
 
 /**
   Unauthorized MSR write test.
-  This test will attempt to write a non-whitelisted MSR from SMM.
+  This test will attempt to write a non-authorized MSR from SMM.
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
@@ -420,7 +420,7 @@ SmmMemoryProtectionsTestPrivilegedInstructions (
 
 /**
   Unauthorized MSR write test.
-  This test will attempt to write a non-whitelisted MSR from SMM.
+  This test will attempt to write a non-authorized MSR from SMM.
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, any sort of return value
@@ -455,14 +455,11 @@ SmmMemoryProtectionsTestEntryPointAccess (
 }
 
 /**
-  Self-Test Data
-  This function will use the SmmPagingProtectionsTestSmm driver itself
-  to determine whether paging protections are active for SMM driver images.
-  This image should have at least one code page and one data page.
-  Data pages should be marked NX.
-  Code pages should be marked RO.
+  Unauthorized code execution test.
 
-  To test the data page, we will attempt to execute from the specified code region outside of SMM.
+  To verify paging protections for code execution, we will attempt to execute from the specified code region outside of SMM.
+
+  Note! This is dangerous! Do not allow this to be used in shipping code!
 
   @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
                                       a system crash, and sort of return value
