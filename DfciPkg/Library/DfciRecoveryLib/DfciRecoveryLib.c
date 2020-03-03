@@ -112,7 +112,27 @@ GetRecoveryChallenge (
                                   &gEfiRngAlgorithmSp80090Ctr256Guid,
                                   DFCI_RECOVERY_NONCE_SIZE,
                                   &NewChallenge->Nonce.Bytes[0] );
-    DEBUG(( DEBUG_VERBOSE, "%a: GetRNG() = %r\n", __FUNCTION__, Status ));
+    DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Ctr256) = %r\n", __FUNCTION__, Status ));
+    //
+    // If Ctr256 failed, let's try Hmac256
+    if (EFI_ERROR( Status ))
+    {
+      Status = RngProtocol->GetRNG( RngProtocol,
+                                    &gEfiRngAlgorithmSp80090Hmac256Guid,
+                                    DFCI_RECOVERY_NONCE_SIZE,
+                                    &NewChallenge->Nonce.Bytes[0] );
+      DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hmac256) = %r\n", __FUNCTION__, Status ));
+      //
+      // Finally, try Hash256
+      if (EFI_ERROR( Status ))
+      {
+        Status = RngProtocol->GetRNG( RngProtocol,
+                                      &gEfiRngAlgorithmSp80090Hash256Guid,
+                                      DFCI_RECOVERY_NONCE_SIZE,
+                                      &NewChallenge->Nonce.Bytes[0] );
+        DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hash256) = %r\n", __FUNCTION__, Status ));
+      }
+    }
   }
 
   //
@@ -236,7 +256,27 @@ EncryptRecoveryChallenge (
                                   &gEfiRngAlgorithmSp80090Ctr256Guid,
                                   RANDOM_SEED_BUFFER_SIZE,
                                   &ExtraSeed[0] );
-    DEBUG(( DEBUG_VERBOSE, "%a: GetRNG() = %r\n", __FUNCTION__, Status));
+    DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Ctr256) = %r\n", __FUNCTION__, Status));
+    //
+    // If Ctr256 failed, let's try Hmac256
+    if (EFI_ERROR( Status ))
+    {
+      Status = RngProtocol->GetRNG( RngProtocol,
+                                    &gEfiRngAlgorithmSp80090Hmac256Guid,
+                                    RANDOM_SEED_BUFFER_SIZE,
+                                    &ExtraSeed[0] );
+      DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hmac256) = %r\n", __FUNCTION__, Status ));
+      //
+      // Finally, try Hash256
+      if (EFI_ERROR( Status ))
+      {
+        Status = RngProtocol->GetRNG( RngProtocol,
+                                      &gEfiRngAlgorithmSp80090Hash256Guid,
+                                      RANDOM_SEED_BUFFER_SIZE,
+                                      &ExtraSeed[0] );
+        DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hash256) = %r\n", __FUNCTION__, Status ));
+      }
+    }
   }
 
   //
