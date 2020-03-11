@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
-#include <UnitTestTypes.h>
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
@@ -22,13 +21,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiLib.h>
-#include <Library/UnitTestAssertLib.h>
-#include <Library/UnitTestLogLib.h>
 #include <Library/UnitTestLib.h>
 
 
-#define UNIT_TEST_APP_NAME        L"LineParser Library test cases"
-#define UNIT_TEST_APP_VERSION     L"1.0"
+#define UNIT_TEST_APP_NAME        "LineParser Library test cases"
+#define UNIT_TEST_APP_VERSION     "1.0"
 
 // The following text represents the file logger stream of text as individual DEBUG
 // statements.
@@ -122,7 +119,7 @@ ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY mMessageEntry;
   */
 UINT64
 InternalGetPerformanceCounter (
-    IN  UNIT_TEST_FRAMEWORK_HANDLE  Framework
+    VOID
   ) {
 
             UINT64  TimeInMs;
@@ -183,7 +180,6 @@ InternalGetPerformanceCounter (
 UNIT_TEST_STATUS
 EFIAPI
 InternalTestLoggerWrite (
-    IN  UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN  UINTN                       DebugLevel,
     IN  CONST CHAR8                *Buffer,
     IN  UINTN                       NumberOfBytes
@@ -212,7 +208,7 @@ InternalTestLoggerWrite (
         UT_ASSERT_TRUE(FALSE);
     }
 
-    Entry->TimeStamp = InternalGetPerformanceCounter(Framework);
+    Entry->TimeStamp = InternalGetPerformanceCounter();
 
     // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
     // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
@@ -276,7 +272,6 @@ STATIC
 VOID
 EFIAPI
 CleanUpTestContext (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -305,7 +300,6 @@ STATIC
 UNIT_TEST_STATUS
 EFIAPI
 InitializeInMemoryLog (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     UINTN               i;
@@ -323,8 +317,7 @@ InitializeInMemoryLog (
     mLoggerInfo.LogCurrent = mLoggerInfo.LogBuffer;
 
     for (i = 0; i < ARRAY_SIZE(InternalMemoryLog); i++) {
-        UnitTestStatus = InternalTestLoggerWrite ( Framework,
-                                                   (i % 5) == 0 ? DEBUG_INFO : DEBUG_ERROR,
+        UnitTestStatus = InternalTestLoggerWrite ( (i % 5) == 0 ? DEBUG_INFO : DEBUG_ERROR,
                                                    InternalMemoryLog[i],
                                                    AsciiStrLen (InternalMemoryLog[i]));
         UT_ASSERT_TRUE(UnitTestStatus == UNIT_TEST_PASSED);
@@ -346,7 +339,6 @@ STATIC
 UNIT_TEST_STATUS
 EFIAPI
 BasicTests (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -383,7 +375,6 @@ STATIC
 UNIT_TEST_STATUS
 EFIAPI
 EOFTest (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -431,23 +422,20 @@ LineParserTestAppEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    UNIT_TEST_FRAMEWORK       *Fw;
-    UNIT_TEST_SUITE           *LineParserTests;
-    CHAR16                     ShortName[100];
-    EFI_STATUS                 Status;
+    UNIT_TEST_FRAMEWORK_HANDLE  Fw;
+    UNIT_TEST_SUITE_HANDLE      LineParserTests;
+    EFI_STATUS                  Status;
 
-    Fw = NULL;
-    ShortName[0] = L'\0';
-    UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-    AsciiPrint ("%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION );
-    DEBUG((DEBUG_ERROR, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+    Fw = (UNIT_TEST_FRAMEWORK_HANDLE)NULL;
+    AsciiPrint ("%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION );
+    DEBUG((DEBUG_ERROR, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
     ZeroMem (&mMessageEntry, sizeof(mMessageEntry));
 
     //
     // Start setting up the test framework for running the tests.
     //
-    Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+    Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
     if (EFI_ERROR( Status )) {
         AsciiPrint ("Failed in InitUnitTestFramework. Status = %r\n", Status);
         goto EXIT;
@@ -456,7 +444,7 @@ LineParserTestAppEntry (
     //
     // Populate the DeviceId Library Test Suite.
     //
-    Status = CreateUnitTestSuite( &LineParserTests, Fw, L"Validate Line parser returns valid data", L"LineParser.Test", NULL, NULL);
+    Status = CreateUnitTestSuite( &LineParserTests, Fw, "Validate Line parser returns valid data", "LineParser.Test", NULL, NULL);
     if (EFI_ERROR( Status )) {
         AsciiPrint ("Failed in CreateUnitTestSuite for Line Parser Tests\n");
         Status = EFI_OUT_OF_RESOURCES;
@@ -464,28 +452,28 @@ LineParserTestAppEntry (
     }
 
     //-----------Suite------------Description-------Class---------Test Function-Pre---Clean-Context
-    AddTestCase( LineParserTests, L"Init",          L"SelfInit",  InitializeInMemoryLog, NULL, NULL,      NULL);
-    AddTestCase( LineParserTests, L"Basic check",   L"BasicCheck", BasicTests,  NULL, CleanUpTestContext, &mTest00);
-    AddTestCase( LineParserTests, L"Line check  1", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest01);
-    AddTestCase( LineParserTests, L"Line check  2", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest02);
-    AddTestCase( LineParserTests, L"Line check  3", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest03);
-    AddTestCase( LineParserTests, L"Line check  4", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest04);
-    AddTestCase( LineParserTests, L"Line check  5", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest05);
-    AddTestCase( LineParserTests, L"Line check  6", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest06);
-    AddTestCase( LineParserTests, L"Line check  7", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest07);
-    AddTestCase( LineParserTests, L"Line check  8", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest08);
-    AddTestCase( LineParserTests, L"Line check  9", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest09);
-    AddTestCase( LineParserTests, L"Line check 10", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest10);
-    AddTestCase( LineParserTests, L"Line check 11", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest11);
-    AddTestCase( LineParserTests, L"Line check 12", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest12);
-    AddTestCase( LineParserTests, L"Line check 13", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest13);
-    AddTestCase( LineParserTests, L"Line check 14", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest14);
-    AddTestCase( LineParserTests, L"Line check 15", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest15);
-    AddTestCase( LineParserTests, L"Line check 16", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest16);
-    AddTestCase( LineParserTests, L"Line check 17", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest17);
-    AddTestCase( LineParserTests, L"Line check 18", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest18);
-    AddTestCase( LineParserTests, L"Line check 19", L"SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest19);
-    AddTestCase( LineParserTests, L"Check EOF",     L"SelfCheck", EOFTest,      NULL, CleanUpTestContext, &mTest20);
+    AddTestCase( LineParserTests, "Init",          "SelfInit",  InitializeInMemoryLog, NULL, NULL,      NULL);
+    AddTestCase( LineParserTests, "Basic check",   "BasicCheck", BasicTests,  NULL, CleanUpTestContext, &mTest00);
+    AddTestCase( LineParserTests, "Line check  1", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest01);
+    AddTestCase( LineParserTests, "Line check  2", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest02);
+    AddTestCase( LineParserTests, "Line check  3", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest03);
+    AddTestCase( LineParserTests, "Line check  4", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest04);
+    AddTestCase( LineParserTests, "Line check  5", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest05);
+    AddTestCase( LineParserTests, "Line check  6", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest06);
+    AddTestCase( LineParserTests, "Line check  7", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest07);
+    AddTestCase( LineParserTests, "Line check  8", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest08);
+    AddTestCase( LineParserTests, "Line check  9", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest09);
+    AddTestCase( LineParserTests, "Line check 10", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest10);
+    AddTestCase( LineParserTests, "Line check 11", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest11);
+    AddTestCase( LineParserTests, "Line check 12", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest12);
+    AddTestCase( LineParserTests, "Line check 13", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest13);
+    AddTestCase( LineParserTests, "Line check 14", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest14);
+    AddTestCase( LineParserTests, "Line check 15", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest15);
+    AddTestCase( LineParserTests, "Line check 16", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest16);
+    AddTestCase( LineParserTests, "Line check 17", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest17);
+    AddTestCase( LineParserTests, "Line check 18", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest18);
+    AddTestCase( LineParserTests, "Line check 19", "SelfCheck", BasicTests,   NULL, CleanUpTestContext, &mTest19);
+    AddTestCase( LineParserTests, "Check EOF",     "SelfCheck", EOFTest,      NULL, CleanUpTestContext, &mTest20);
 
     //
     // Execute the tests.

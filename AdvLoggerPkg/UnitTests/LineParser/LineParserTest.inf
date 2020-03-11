@@ -27,7 +27,6 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
   AdvLoggerPkg/AdvLoggerPkg.dec
 
 [Protocols]
@@ -42,8 +41,6 @@
   TimerLib
   UefiApplicationEntryPoint
   UefiLib
-  UnitTestAssertLib
   UnitTestLib
-  UnitTestLogLib
 
 [Guids]

@@ -101,7 +101,7 @@ FormatTimeStamp (
                                  is NOT NULL terminated.
           EFI_NOT_STARTED        Error occurred during constructor
           EFI_INVALID_PARAMETER  A Bad CurrentMessage pointer provided
-          EFI_END_OF_FILE        No more messages in the memory buffer.  ReumeContext is still
+          EFI_END_OF_FILE        No more messages in the memory buffer.  ResumeContext is still
                                  valid to check for more messages.
 
 **/

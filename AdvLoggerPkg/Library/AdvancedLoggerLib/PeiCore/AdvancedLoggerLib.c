@@ -266,7 +266,7 @@ AdvancedLoggerGetLoggerInfo (
                 // This is the "No SEC Debug Agent" path.
                 //
                 // PEI Core must allocate the small temporary buffer for the in memory log,
-                // and register for the Memeory Discovered Ppi.  At that time, the full
+                // and register for the Memory Discovered Ppi.  At that time, the full
                 // in memory log buffer is allocated.
                 //
 
@@ -313,7 +313,7 @@ AdvancedLoggerGetLoggerInfo (
                 LogPtr->LoggerInfo = PA_FROM_PTR (LoggerInfo);
 
                 //
-                // Publish the PPI's needed
+                // Publish the PPIs needed
                 GuidHob->Name = gAdvancedLoggerHobGuid;
                 Status = PeiServicesInstallPpi (mAdvancedLoggerPpiList);
                 ASSERT_EFI_ERROR(Status);
