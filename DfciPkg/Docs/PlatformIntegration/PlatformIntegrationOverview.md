@@ -56,6 +56,7 @@ Setting providers is how a platform provides a setting to DFCI
 ## Mu Changes
 
 * DFCI Recovery service uses HTTPS certificates with Subject Alternative Names.  This requires a source modification to NetworkPkg, [removal of EFI_TLS_VERIFY_FLAG_NO_WILDCARDS from TlsConfigureSession()](https://github.com/microsoft/mu_basecore/commit/931ff1a45ce13a6a8c3e296f89c6de21f23a17ed#diff-620e10fa41a63814688b931d19fefa89R628).
+* [Configure OpenSSL to support modern TLS ciphers](https://github.com/microsoft/mu_tiano_plus/commit/1f3b135ddc821718a78c352316197889c5d3e0c2)
 
 ## Platform DSC statements
 
