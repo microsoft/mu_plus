@@ -1,16 +1,17 @@
 ## @file
-# Uefi Shell based Application that Unit Tests the XmlTreeQueryLib
+# Uefi Shell based Application that Unit Tests the XmlTreeLib
+# this includes parsing Xml, printing Xml, escaping and removing escape sequences for xml strings.
 #
-# Copyright (C) Microsoft Corporation. All rights reserved.
+# Copyright (C) Microsoft Corporation.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = XmlTreeQueryLibUnitTestApp
-  FILE_GUID                      = F4DAEB88-2251-4F65-9121-01729F7AA4AE
+  BASE_NAME                      = XmlTreeLibUnitTestApp
+  FILE_GUID                      = 204C443D-9003-45F2-A9A9-1919E93AF3F2
   MODULE_TYPE                    = UEFI_APPLICATION
-  VERSION_STRING                 = 1.0 
+  VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain
 
 #
@@ -20,31 +21,26 @@
 #
 
 [Sources]
-  XmlTreeQueryLibUnitTests.c
-  AttributeTests.c
-  ElementTests.c
-  XmlTreeQueryLibUnitTests.h
+  XmlTreeLibUnitTests.c
+  TestData.h
 
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   XmlSupportPkg/XmlSupportPkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
 
-   
+
 [LibraryClasses]
   UefiApplicationEntryPoint
   BaseLib
   MemoryAllocationLib
   XmlTreeLib
-  XmlTreeQueryLib
   UnitTestLib
-  UnitTestAssertLib
   PrintLib
 
 [Protocols]
-  
+
 [Guids]
 
 [FeaturePcd]

@@ -1,9 +1,9 @@
 /**
 XmlTreeLib.h
 
-Library to support creating, deleting, reading, and writing XML.  
+Library to support creating, deleting, reading, and writing XML.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -122,7 +122,7 @@ DeleteAttribute(
 
 /**
   This function will free all of the resources allocated for an XML Tree.
-  
+
   @param   RootNode -- The root node that contains the node list.
 
   @return  EFI_SUCCESS or underlying failure code.
@@ -138,9 +138,9 @@ FreeXmlTree(
 
 /**
   This function uses DEBUG to print the Xml tree
-  
+
   @param[in] Node  - Pointer to head xml element to print
-  @param[in] Level - IndentLevel to make printing pretty.  
+  @param[in] Level - IndentLevel to make printing pretty.
                      Each child element will be indented.
 					 When calling externally this parameter should be 0
 **/
@@ -149,11 +149,11 @@ EFIAPI
 DebugPrintXmlTree(
   IN CONST XmlNode *Node,
   IN UINTN Level
-); 
+);
 
 /**
 Public function to create an ascii string from an xml tree.
-This will use shortened XML notation and no whitespace and xml escaped strings.  (ideal for data transfer) 
+This will use shortened XML notation and no whitespace and xml escaped strings.  (ideal for data transfer)
 
 @param[in]  Node - Root node or first node to start printing.
 @param[out] BufferSize - Number of bytes that the string needed. Includes Null terminator

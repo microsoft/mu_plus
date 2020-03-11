@@ -2,7 +2,7 @@
 This library supports generic XML queries based on the Xml Tree lib.
 
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,7 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __XML_TREE_QUERY_LIB__
 
 //Max length of an Element Name
-#define MAX_ELEMENT_NAME_LENGTH   (50)  
+#define MAX_ELEMENT_NAME_LENGTH   (50)
 #define MAX_ATTRIBUTE_NAME_LENGTH (50)
 
 /**
@@ -20,7 +20,7 @@ Find the first 1st generation child that has a matching ElementName
 @param[in]  ParentNode to search under
 @param[in]  ElementName to search for
 
-@retval 
+@retval
 **/
 XmlNode*
 EFIAPI

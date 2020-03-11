@@ -1,8 +1,7 @@
 /**
 Unit Tests that verify functionality of XmlTreeQueryLib for element queries
 
-
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -12,7 +11,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstFound(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -35,7 +33,6 @@ FindFirstFound(
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstNotFound(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -50,7 +47,6 @@ FindFirstNotFound(
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstNotFound2(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -66,7 +62,6 @@ FindFirstNotFound2(
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstNullParameters(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -85,13 +80,13 @@ FindFirstNullParameters(
 EFI_STATUS
 EFIAPI
 RegisterElementTests(
-  IN UNIT_TEST_SUITE* TestSuite)
+  IN UNIT_TEST_SUITE_HANDLE TestSuite)
 {
   //Test find node
-  AddTestCase(TestSuite, L"Find 1st Child Node By Name Null Parameters", L"Common.Xml.QueryFindFirstByName", FindFirstNullParameters, PreReqNodeTreeIsValid, NULL, NULL);
-  AddTestCase(TestSuite, L"Find 1st Child Node By Name Found", L"Common.Xml.QueryFindFirstByName", FindFirstFound, PreReqNodeTreeIsValid, NULL, NULL);
-  AddTestCase(TestSuite, L"Find 1st Child Node By Name Not Found", L"Common.Xml.QueryFindFirstByName", FindFirstNotFound, PreReqNodeTreeIsValid, NULL, NULL);
-  AddTestCase(TestSuite, L"Find 1st Child Node By Name Not Found 2nd Generation", L"Common.Xml.QueryFindFirstByName", FindFirstNotFound2, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st Child Node By Name Null Parameters", "FindFirstByName.Null", FindFirstNullParameters, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st Child Node By Name Found", "FindFirstByName.Found", FindFirstFound, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st Child Node By Name Not Found", "FindFirstByName.NotFound", FindFirstNotFound, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st Child Node By Name Not Found 2nd Generation", "FindFirstByName.NotFound2", FindFirstNotFound2, PreReqNodeTreeIsValid, NULL, NULL);
 
   return EFI_SUCCESS;
 }

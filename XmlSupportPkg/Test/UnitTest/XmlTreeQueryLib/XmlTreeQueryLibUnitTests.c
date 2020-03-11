@@ -1,8 +1,8 @@
 /**
-Unit-tests UEFI shell app for XmlTreeQueryLib.
+Unit-tests for XmlTreeQueryLib.
 
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -34,47 +34,41 @@ Simple clean up method to make sure string parsing tests clean up even if interr
 UNIT_TEST_STATUS
 EFIAPI
 PreReqNodeTreeIsValid(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
   if (mNode == NULL)
   {
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
   return UNIT_TEST_PASSED;
 }
 
 
 //----------------------------------------------------
-// UEFI main
+// test main
 //----------------------------------------------------
 EFI_STATUS
 EFIAPI
-UefiMain(
-  IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE* SystemTable)
+UnitTestingEntry()
 {
-  EFI_STATUS                Status;
-  UNIT_TEST_FRAMEWORK       *Fw = NULL;
-  UNIT_TEST_SUITE           *TestSuite;
-  CHAR16  ShortName[100];
-  ShortName[0] = L'\0';
+  EFI_STATUS                  Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE      TestSuite;
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName); 
-    DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
+  DEBUG((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
     goto EXIT;
   }
 
-  Status = CreateUnitTestSuite(&TestSuite, Fw, L"XML Tree Query Test Suite ", L"Common.Xml.Query", NULL, NULL);
+  Status = CreateUnitTestSuite(&TestSuite, Fw, "XML Tree Query Test Suite ", "Common.Xml.Query", NULL, NULL);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for XML Tree Query Test Suite %r\n", Status));
@@ -91,12 +85,12 @@ UefiMain(
   {
     DEBUG((DEBUG_ERROR, "%a test setup error.  CreateXmlTree failed. %r\n", __FUNCTION__, Status));
   }
-  
+
   //Run Tests
   Status = RunAllTestSuites(Fw);
 
-  
- 
+
+
 EXIT:
   //Clean up Node Tree for query
   if (mNode != NULL)
@@ -110,4 +104,23 @@ EXIT:
   }
 
   return Status;
+}
+
+
+EFI_STATUS
+EFIAPI
+UefiMain(
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE* SystemTable)
+{
+  return UnitTestingEntry();
+}
+
+int
+main (
+  int argc,
+  char *argv[]
+  )
+{
+  return UnitTestingEntry();
 }

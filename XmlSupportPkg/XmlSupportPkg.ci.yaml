@@ -5,47 +5,45 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 {
-    ## options defined ci/Plugin/CompilerPlugin
+    ## options defined .pytool/Plugin/CompilerPlugin
     "CompilerPlugin": {
         "DscPath": "XmlSupportPkg.dsc"
     },
-
-    ## options defined ci/Plugin/CharEncodingCheck
+    ## options defined .pytool/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "Test/XmlSupportPkgHostTest.dsc"
+    },
+    ## options defined .pytool/Plugin/CharEncodingCheck
     "CharEncodingCheck": {
         "IgnoreFiles": []
     },
 
-    ## options defined ci/Plugin/DependencyCheck
+    ## options defined .pytool/Plugin/DependencyCheck
     "DependencyCheck": {
         "AcceptableDependencies": [
             "MdePkg/MdePkg.dec",
             "MdeModulePkg/MdeModulePkg.dec",
-            "XmlSupportPkg/XmlSupportPkg.dec",
-            "ShellPkg/ShellPkg.dec", #is this ok for file writing?
-            "MsUnitTestPkg/MsUnitTestPkg.dec"
-
+            "XmlSupportPkg/XmlSupportPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
-            "MsUnitTestPkg/MsUnitTestPkg.dec",
-            "UefiHostTestPkg/UefiHostTestPkg.dec",
-            "UefiHostUnitTestPkg/UefiHostUnitTestPkg.dec",
-            "CmockaHostUnitTestPkg/CmockaHostUnitTestPkg.dec",
-            "UnitTestPkg/UnitTestPkg.dec"
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
-            "MsUnitTestPkg/MsUnitTestPkg.dec",
             "ShellPkg/ShellPkg.dec"
         ],
         "IgnoreInf": []
     },
 
-    ## options defined ci/Plugin/DscCompleteCheck
+    ## options defined .pytool/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
         "IgnoreInf": [],
         "DscPath": "XmlSupportPkg.dsc"
     },
-
-    ## options defined ci/Plugin/GuidCheck
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "Test/XmlSupportPkgHostTest.dsc"
+    },
+    ## options defined .pytool/Plugin/GuidCheck
     "GuidCheck": {
         "IgnoreGuidName": [],
         "IgnoreGuidValue": [],
@@ -53,23 +51,21 @@
         "IgnoreDuplicates": []
     },
 
-    ## options defined ci/Plugin/LibraryClassCheck
+    ## options defined .pytool/Plugin/LibraryClassCheck
     "LibraryClassCheck": {
         "IgnoreLibraryClass": [],
         "IgnoreHeaderFile": []
     },
 
-    ## options defined ci/Plugin/SpellCheck
+    ## options defined .pytool/Plugin/SpellCheck
     "SpellCheck": {
         # Fails test but run in AuditOnly mode to collect log
-        "AuditOnly": true,
+        "AuditOnly": False,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
         "ExtendWords": [           # words to extend to the dictionary for this package
-            "JUNIT",
-            "NOFAILURE",
             "PCXML",            # A bunch of stuff from XML lib.
             "XMLEF",
             "PCVOID",
@@ -94,9 +90,7 @@
             "namespacemanager",
             "prefast",
             "xmlstructure",
-            "xmldsig",
-            "systemid",
-            "fooba",      # Partial word in a comment about testing.
+            "xmldsig"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

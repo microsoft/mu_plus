@@ -2,7 +2,7 @@
 Unit Tests that verify functionality of XmlTreeQueryLib for attribute queries
 
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -14,7 +14,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstAttFound(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -44,7 +43,6 @@ FindFirstAttFound(
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstAttFound2(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -74,7 +72,6 @@ FindFirstAttFound2(
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstAttNotFound(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -94,7 +91,6 @@ FindFirstAttNotFound(
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstAttNotFound2(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -113,7 +109,6 @@ FindFirstAttNotFound2(
 UNIT_TEST_STATUS
 EFIAPI
 FindFirstAttNullParameters(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -135,14 +130,14 @@ FindFirstAttNullParameters(
 
 EFI_STATUS
 EFIAPI
-RegisterAttributeTests(UNIT_TEST_SUITE           *TestSuite)
+RegisterAttributeTests(UNIT_TEST_SUITE_HANDLE           TestSuite)
 {
-  
-  AddTestCase(TestSuite, L"Find 1st Attribute By Name Null Parameters", L"Common.Xml.QueryFindFirstAttribute", FindFirstAttNullParameters, PreReqNodeTreeIsValid, NULL, NULL);
-  AddTestCase(TestSuite, L"Find 1st Attribute By Name Found", L"Common.Xml.QueryFindFirstAttribute", FindFirstAttFound, PreReqNodeTreeIsValid, NULL, NULL);
-  AddTestCase(TestSuite, L"Find 1st Attribute By Name Found 2nd Attribute", L"Common.Xml.QueryFindFirstAttribute", FindFirstAttFound2, PreReqNodeTreeIsValid, NULL, NULL);
-  AddTestCase(TestSuite, L"Find 1st Attribute By Name Not Existing Not Found ", L"Common.Xml.QueryFindFirstAttribute", FindFirstAttNotFound, PreReqNodeTreeIsValid, NULL, NULL);
-  AddTestCase(TestSuite, L"Find 1st AttributeBy Name Not Found Different Node", L"Common.Xml.QueryFindFirstAttribute", FindFirstAttNotFound2, PreReqNodeTreeIsValid, NULL, NULL);
+
+  AddTestCase(TestSuite, "Find 1st Attribute By Name Null Parameters", "FindFirstAttribute", FindFirstAttNullParameters, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st Attribute By Name Found", "FindFirstAttribute", FindFirstAttFound, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st Attribute By Name Found 2nd Attribute", "FindFirstAttribute", FindFirstAttFound2, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st Attribute By Name Not Existing Not Found ", "FindFirstAttribute", FindFirstAttNotFound, PreReqNodeTreeIsValid, NULL, NULL);
+  AddTestCase(TestSuite, "Find 1st AttributeBy Name Not Found Different Node", "FindFirstAttribute", FindFirstAttNotFound2, PreReqNodeTreeIsValid, NULL, NULL);
 
   return EFI_SUCCESS;
 }

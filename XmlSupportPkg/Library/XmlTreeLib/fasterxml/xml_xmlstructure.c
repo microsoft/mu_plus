@@ -1,7 +1,7 @@
 /**
 Implementation of the XML structures/fuctions used in parsing.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -59,7 +59,7 @@ RtlpXmlExpectStates(
 
             #pragma prefast(suppress:394, "Prefast doesn't understand about != vs. < in loop invariants")
             status = RtlXmlNextToken(pParseState, &FoundTokens[c], TRUE);
-            if (EFI_ERROR(status) || FoundTokens[c].fError) 
+            if (EFI_ERROR(status) || FoundTokens[c].fError)
             {
                 if (FoundTokens[c].fError) {
                     status = EFI_INVALID_PARAMETER;
@@ -2604,7 +2604,7 @@ RtlXmlFindAttributesInElement(
     //
     // NULL the outbound array members appropriately
     //
-    
+
     for (ul = 0; ul < ulFindCount; ul++)
     {
         ppAttributes[ul] = NULL;

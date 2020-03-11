@@ -3,7 +3,7 @@ XmlTypes.h
 
 XML structure defintions
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -17,8 +17,8 @@ typedef struct _XmlDeclaration
   CHAR8* Declaration;
 } XmlDeclaration;
 
-// Dev Note:  Keep the LIST_ENTRY item as the first element in all 
-//            of these structures, so that we can cast them to 
+// Dev Note:  Keep the LIST_ENTRY item as the first element in all
+//            of these structures, so that we can cast them to
 //            the structure types.
 //
 

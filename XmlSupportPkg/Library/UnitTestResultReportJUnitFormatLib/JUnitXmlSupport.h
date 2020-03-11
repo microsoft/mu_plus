@@ -1,7 +1,7 @@
 /** @file
   Internal header file for XML helper routines for JUNIT support
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -15,7 +15,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/XmlTreeLib.h>
 #include <Library/BaseLib.h>
 #include <Library/PrintLib.h>
-//add once we do real compute function #include <Library/MsXmlNodeQueryLib.h>
 
 
 /**

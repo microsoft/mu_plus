@@ -1,0 +1,50 @@
+## @file
+# Host based Application that Unit Tests the XmlTreeQueryLib
+#
+# Copyright (C) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = XmlTreeQueryLibUnitTest
+  FILE_GUID                      = b356f888-e427-4abe-95b7-4b2b1b7699dc
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  XmlTreeQueryLibUnitTests.c
+  AttributeTests.c
+  ElementTests.c
+  XmlTreeQueryLibUnitTests.h
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  BaseLib
+  MemoryAllocationLib
+  XmlTreeLib
+  XmlTreeQueryLib
+  UnitTestLib
+  PrintLib
+
+[Protocols]
+
+[Guids]
+
+[FeaturePcd]
+
+[Pcd]
+

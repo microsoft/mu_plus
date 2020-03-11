@@ -2,7 +2,7 @@
 Structure definitions used in the XML parsing engine.
 
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -327,8 +327,8 @@ typedef struct _XMLDOC_ENTITYDECL {
     //
     // - When the value type is 'system', then SystemId is set
     //
-    // - When the value type is 'public', then both systemid and
-    //   publicid are set
+    // - When the value type is 'public', then both systemId and
+    //   publicId are set
     //
     // - If an ndata type is present, then NDataType is set
     //

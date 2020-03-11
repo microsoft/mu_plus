@@ -1,9 +1,8 @@
 /**
 @file
-UEFI Shell based application for unit testing the XmlTreeLib.
+Code for unit testing the XmlTreeLib.
 
-
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -13,16 +12,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestAssertLib.h>
 #include <XmlTypes.h>
 #include <Library/XmlTreeLib.h>
 #include "TestData.h"
 
 
-#define UNIT_TEST_APP_NAME        L"XML Lib Unit Test Application"
-#define UNIT_TEST_APP_VERSION     L"0.2"
+#define UNIT_TEST_APP_NAME        "XML Lib Unit Test Application"
+#define UNIT_TEST_APP_VERSION     "0.3"
 
 
 /**
@@ -31,7 +28,6 @@ Simple clean up method to make sure string parsing tests clean up even if interr
 VOID
 EFIAPI
 CleanUpXmlStringParseContext (
-IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
 IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -54,7 +50,6 @@ Simple clean up method to make sure tests clean up even if interrupted and fail 
 VOID
 EFIAPI
 CleanUpXmlTestContext(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -83,7 +78,6 @@ Simple Test method that can be used to validate lots of different XML strings.
 UNIT_TEST_STATUS
 EFIAPI
 ParseValidXml(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -184,8 +178,7 @@ Parse strings
 UNIT_TEST_STATUS
 EFIAPI
 TestStringParsing(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
 )
 {
   UINTN Length = 0;
@@ -196,31 +189,31 @@ TestStringParsing(
   if (XmlContext->StringEscaped == NULL)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (StringEscaped == NULL)\n"));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
   Length = AsciiStrLen(XmlContext->StringEscaped);
   if (Length != XmlContext->EscapedLength)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (EscapedLength Incorrect %d Test Data EscapedLength %d)\n", Length, XmlContext->EscapedLength));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   if (XmlContext->StringNotEscaped == NULL)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (StringNotEscaped == NULL)\n"));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
   Length = AsciiStrLen(XmlContext->StringNotEscaped);
   if (Length != XmlContext->NotEscapedLength)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (NotEscapedLength Incorrect %d Test Data NotEscapedLength %d)\n", Length, XmlContext->NotEscapedLength));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   if (XmlContext->String != NULL)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (String Not NULL Before Test)\n"));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   //Now start actual tests
@@ -254,7 +247,6 @@ Verify UnEscape works on strings with no escape codes
 UNIT_TEST_STATUS
 EFIAPI
 TestStringUnescapeErrorTest(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -266,19 +258,19 @@ TestStringUnescapeErrorTest(
   if (XmlContext->StringEscaped == NULL)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (StringEscaped == NULL)\n"));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
   Length = AsciiStrLen(XmlContext->StringEscaped);
   if (Length != XmlContext->EscapedLength)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (EscapedLength Incorrect %d Test Data EscapedLength %d)\n", Length, XmlContext->EscapedLength));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   if (XmlContext->String != NULL)
   {
     DEBUG((DEBUG_ERROR, "Test Data Error - Context invalid (String Not NULL Before Test)\n"));
-    return UNIT_TEST_ERROR_PREREQ_NOT_MET;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   //Test UnEscape Function
@@ -300,7 +292,6 @@ Test that invalid Xml is not parsed and error is reported correctly
 UNIT_TEST_STATUS
 EFIAPI
 ParseInValidXml1(
-	IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
 	IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -325,7 +316,6 @@ Test that invalid Xml is not parsed and error is reported correctly
 UNIT_TEST_STATUS
 EFIAPI
 ParseInValidXml2(
-	IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
 	IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -350,7 +340,6 @@ Test that invalid Xml is not parsed and error is reported correctly
 UNIT_TEST_STATUS
 EFIAPI
 ParseInValidXml3(
-	IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
 	IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -377,7 +366,6 @@ Test Node count function on known count
 UNIT_TEST_STATUS
 EFIAPI
 TestNodeCount(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -406,7 +394,6 @@ Test Node max depth function on known value
 UNIT_TEST_STATUS
 EFIAPI
 TestNodeMaxDepth(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -435,7 +422,6 @@ Test attribute count function with known value
 UNIT_TEST_STATUS
 EFIAPI
 TestAttributeCount(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -463,7 +449,6 @@ Test max attribute function on known value
 UNIT_TEST_STATUS
 EFIAPI
 TestAttributeMax(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -491,29 +476,23 @@ TestAttributeMax(
 
   Main fuction sets up the unit test environment
 
-
 **/
 EFI_STATUS
 EFIAPI
-UefiMain(
-  IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE* SystemTable)
+UnitTestingEntry()
 {
-  EFI_STATUS                Status;
-  UNIT_TEST_FRAMEWORK       *Fw = NULL;
-  UNIT_TEST_SUITE           *InputTestSuite;
-  UNIT_TEST_SUITE           *ProcessEscapedInputTestSuite;
-  UNIT_TEST_SUITE           *BasicMetricsTestSuite;
-  CHAR16  ShortName[100];
-  ShortName[0] = L'\0';
+  EFI_STATUS                       Status;
+  UNIT_TEST_FRAMEWORK_HANDLE       Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE           InputTestSuite;
+  UNIT_TEST_SUITE_HANDLE           ProcessEscapedInputTestSuite;
+  UNIT_TEST_SUITE_HANDLE           BasicMetricsTestSuite;
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-  DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
+  DEBUG((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
@@ -523,7 +502,7 @@ UefiMain(
   ///
   // Test the Escape / Unescape functions for special characters in the XML strings
   //
-  Status = CreateUnitTestSuite(&ProcessEscapedInputTestSuite, Fw, L"XML Escape Strings Test Suite ", L"Common.Xml.ParseEscape", NULL, NULL);
+  Status = CreateUnitTestSuite(&ProcessEscapedInputTestSuite, Fw, "XML Escape Strings Test Suite ", "Common.Xml.ParseEscape", NULL, NULL);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for XML Escape Input String Parsing Test Suite\n"));
@@ -531,20 +510,20 @@ UefiMain(
     goto EXIT;
   }
 
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with no escape characters", L"Common.Xml.ParseEscapeNone", TestStringParsing, NULL, CleanUpXmlStringParseContext, &Context1);
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with three Less Than escape characters", L"Common.Xml.ParseEscapeLessThan", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextLT);
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with three Greater Than escape characters", L"Common.Xml.ParseEscapeGreaterThan", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextGT);
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with three Quote escape characters", L"Common.Xml.ParseEscapeQuote", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextQuote);
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with three Apostrophe escape characters", L"Common.Xml.ParseEscapeApostrophe", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextApostrophe);
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with three Ampersand escape characters", L"Common.Xml.ParseEscapeAmpersand", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextAmp);
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with all escape characters and other inputs", L"Common.Xml.ParseEscapeMany", TestStringParsing, NULL, CleanUpXmlStringParseContext, &Context7Esc);
-  AddTestCase(ProcessEscapedInputTestSuite, L"Parse string with Ampersand but no escape", L"Common.Xml.ParseAmpersand", TestStringUnescapeErrorTest, NULL, CleanUpXmlStringParseContext, &ContextAmpNoEsc);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with no escape characters", "ParseEscapeNone", TestStringParsing, NULL, CleanUpXmlStringParseContext, &Context1);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with three Less Than escape characters", "ParseEscapeLessThan", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextLT);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with three Greater Than escape characters", "ParseEscapeGreaterThan", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextGT);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with three Quote escape characters", "ParseEscapeQuote", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextQuote);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with three Apostrophe escape characters", "ParseEscapeApostrophe", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextApostrophe);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with three Ampersand escape characters", "ParseEscapeAmpersand", TestStringParsing, NULL, CleanUpXmlStringParseContext, &ContextAmp);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with all escape characters and other inputs", "ParseEscapeMany", TestStringParsing, NULL, CleanUpXmlStringParseContext, &Context7Esc);
+  AddTestCase(ProcessEscapedInputTestSuite, "Parse string with Ampersand but no escape", "ParseAmpersand", TestStringUnescapeErrorTest, NULL, CleanUpXmlStringParseContext, &ContextAmpNoEsc);
 
 
   //
   // The the metric functions - Max depth, node count, max attributes, attribute count
   //
-  Status = CreateUnitTestSuite(&BasicMetricsTestSuite, Fw, L"XML Node Tree Metrics", L"Common.Xml.TreeMetrics", NULL, NULL);
+  Status = CreateUnitTestSuite(&BasicMetricsTestSuite, Fw, "XML Node Tree Metrics", "Common.Xml.TreeMetrics", NULL, NULL);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for XML Node Tree Metrics Test Suite\n"));
@@ -552,32 +531,32 @@ UefiMain(
     goto EXIT;
   }
 
-  AddTestCase(BasicMetricsTestSuite, L"Test Node Count Function", L"Common.Xml.TreeMetric.NodeCount", TestNodeCount, NULL, NULL, NULL);
-  AddTestCase(BasicMetricsTestSuite, L"Test Max Node Depth Function", L"Common.Xml.TreeMetic.MaxDepth", TestNodeMaxDepth, NULL, NULL, NULL);
-  AddTestCase(BasicMetricsTestSuite, L"Test Attribute Count Function", L"Common.Xml.TreeMetric.AttributeCount", TestAttributeCount, NULL, NULL, NULL);
-  AddTestCase(BasicMetricsTestSuite, L"Test Max Node Depth Function", L"Common.Xml.TreeMetic.AttributeMax", TestAttributeMax, NULL, NULL, NULL);
+  AddTestCase(BasicMetricsTestSuite, "Test Node Count Function", "NodeCount", TestNodeCount, NULL, NULL, NULL);
+  AddTestCase(BasicMetricsTestSuite, "Test Max Node Depth Function", "MaxDepth", TestNodeMaxDepth, NULL, NULL, NULL);
+  AddTestCase(BasicMetricsTestSuite, "Test Attribute Count Function", "AttributeCount", TestAttributeCount, NULL, NULL, NULL);
+  AddTestCase(BasicMetricsTestSuite, "Test Max Node Depth Function", "AttributeMax", TestAttributeMax, NULL, NULL, NULL);
 
 
   //
   // Test the conversion of string to tree and back to string
   //
-  Status = CreateUnitTestSuite(&InputTestSuite, Fw, L"XML Input Parsing Test Suite ", L"Common.Xml.Parse", NULL, NULL);
+  Status = CreateUnitTestSuite(&InputTestSuite, Fw, "XML Input Parsing Test Suite ", "Common.Xml.Parse", NULL, NULL);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for XML Input Parsing Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase(InputTestSuite, L"Parse Valid XML with simple elements 3 layers", L"Common.Xml.ParseValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &SimpleElementsOnlyContext);
-  AddTestCase(InputTestSuite, L"Parse Valid XML with 2 elements and 2 attributes", L"Common.Xml.ParseValidElementsAndAttributes", ParseValidXml, NULL, CleanUpXmlTestContext, &SimpleElementsAttributesContext);
-  AddTestCase(InputTestSuite, L"Parse Invalid XML string containing an attribute with invalid xml chars", L"Common.Xml.NonXmlEncodedAttribute", ParseValidXml, NULL, CleanUpXmlTestContext, &NonEncodedXmlAttribute1Context);
-  AddTestCase(InputTestSuite, L"Parse valid encoded XML string containing an attribute with encoded xml chars", L"Common.Xml.XmlEncodedAttribute", ParseValidXml, NULL, CleanUpXmlTestContext, &EncodedXmlAttribute1Context);
+  AddTestCase(InputTestSuite, "Parse Valid XML with simple elements 3 layers", "ValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &SimpleElementsOnlyContext);
+  AddTestCase(InputTestSuite, "Parse Valid XML with 2 elements and 2 attributes", "ValidElementsAndAttributes", ParseValidXml, NULL, CleanUpXmlTestContext, &SimpleElementsAttributesContext);
+  AddTestCase(InputTestSuite, "Parse Invalid XML string containing an attribute with invalid xml chars", "NonXmlEncodedAttribute", ParseValidXml, NULL, CleanUpXmlTestContext, &NonEncodedXmlAttribute1Context);
+  AddTestCase(InputTestSuite, "Parse valid encoded XML string containing an attribute with encoded xml chars", "XmlEncodedAttribute", ParseValidXml, NULL, CleanUpXmlTestContext, &EncodedXmlAttribute1Context);
 
-  AddTestCase(InputTestSuite, L"Fail parsing string with no XML Tags", L"Common.Xml.ParseInvalidString", ParseInValidXml1, NULL, NULL, NULL);
-  AddTestCase(InputTestSuite, L"Fail parsing string missing closing element", L"Common.Xml.ParseInvalidString", ParseInValidXml2, NULL, NULL, NULL);
-  AddTestCase(InputTestSuite, L"Fail parsing string missing nested closing element", L"Common.Xml.ParseInvalidString", ParseInValidXml3, NULL, NULL, NULL);
+  AddTestCase(InputTestSuite, "Fail parsing string with no XML Tags", "InvalidString", ParseInValidXml1, NULL, NULL, NULL);
+  AddTestCase(InputTestSuite, "Fail parsing string missing closing element", "InvalidString", ParseInValidXml2, NULL, NULL, NULL);
+  AddTestCase(InputTestSuite, "Fail parsing string missing nested closing element", "InvalidString", ParseInValidXml3, NULL, NULL, NULL);
 
-  AddTestCase(InputTestSuite, L"Parse Valid XML with a long data element", L"Common.Xml.ParseLongElement", ParseValidXml, NULL, CleanUpXmlTestContext, &LongElementContext);
+  AddTestCase(InputTestSuite, "Parse Valid XML with a long data element", "LongElement", ParseValidXml, NULL, CleanUpXmlTestContext, &LongElementContext);
   //
   // Execute the tests.
   //
@@ -590,4 +569,22 @@ EXIT:
   }
 
   return Status;
+}
+
+EFI_STATUS
+EFIAPI
+UefiMain(
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE* SystemTable)
+{
+  return UnitTestingEntry();
+}
+
+int
+main (
+  int argc,
+  char *argv[]
+  )
+{
+  return UnitTestingEntry();
 }

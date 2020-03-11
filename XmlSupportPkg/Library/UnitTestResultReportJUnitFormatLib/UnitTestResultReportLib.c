@@ -1,13 +1,13 @@
 /**
 Implement UnitTestResultReportLib instance that writes to an JUnit compliant XML file on the same filesystem where the test efi resides
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #include <Uefi.h>
-#include <UnitTestTypes.h>
+#include <UnitTestFrameworkTypes.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UnitTestResultReportLib.h>
@@ -46,8 +46,8 @@ GetStringForFailureType(
   UINTN   Index;
   CHAR8   *Result;
 
-  //special case for No failure so that failure node is not created.  
-  if (Failure == FAILURETYPE_NOFAILURE) 
+  //special case for No failure so that failure node is not created.
+  if (Failure == FAILURETYPE_NOFAILURE)
   {
     return NULL;
   }
@@ -66,41 +66,6 @@ GetStringForFailureType(
     DEBUG((DEBUG_INFO, "%a Failure Type does not have string defined 0x%X\n", __FUNCTION__, (UINT32)Failure));
   }
   return Result;
-}
-
-/**
-  Caller must free returned buffer if not NULL
-**/
-STATIC
-CHAR8*
-ConvertAndAllocateUnicodeStringToAsciiString(
-  IN CHAR16* UnicodeString
-)
-{
-  CHAR8 *AsciiString = NULL;
-  UINTN AsciiStringLength = 0;
-
-  if (UnicodeString == NULL)
-  {
-    return NULL;
-  }
-
-  //get length of string
-  AsciiStringLength = StrLen(UnicodeString) + 1;
-
-  //allocate memory for ascii version
-  AsciiString = AllocatePool(AsciiStringLength);
-
-  if (AsciiString == NULL)
-  {
-    return NULL;
-  }
-
-  //copy and convert to ascii
-  UnicodeStrToAsciiStrS(UnicodeString, AsciiString, AsciiStringLength);
-  //return ascii
-
-  return AsciiString;
 }
 
 STATIC
@@ -131,12 +96,12 @@ WriteXmlNodeToLogFile(
     DEBUG((DEBUG_ERROR, "XML Doc Node List is NULL.\n"));
     goto Exit;
   }
- 
+
   //Get the file name based on framework name
-  FileNameLen = StrLen(Framework->ShortTitle);
+  FileNameLen = AsciiStrLen(Framework->ShortTitle);
   FileNameLen += StrLen(LogFileNameSuffix);
   FileNameLen += 1;  //NULL term
-  LogFileName = AllocateZeroPool(FileNameLen * sizeof(CHAR16));  
+  LogFileName = AllocateZeroPool(FileNameLen * sizeof(CHAR16));
   if (LogFileName == NULL)
   {
     Status = EFI_OUT_OF_RESOURCES;
@@ -144,7 +109,7 @@ WriteXmlNodeToLogFile(
     goto Exit;
   }
 
-  StrnCatS(LogFileName, FileNameLen, Framework->ShortTitle, FileNameLen-1);
+  AsciiStrToUnicodeStrS(Framework->ShortTitle, LogFileName, FileNameLen);
   StrnCatS(LogFileName, FileNameLen, LogFileNameSuffix, FileNameLen - 1);
 
 
@@ -214,13 +179,16 @@ Method to print the Unit Test run results
 EFI_STATUS
 EFIAPI
 OutputUnitTestFrameworkReport(
-  IN UNIT_TEST_FRAMEWORK  *Framework
+  IN UNIT_TEST_FRAMEWORK_HANDLE  FrameworkHandle
 )
 {
   EFI_STATUS Status = EFI_SUCCESS;
   UNIT_TEST_SUITE_LIST_ENTRY *Suite = NULL;
   XmlNode *Doc = NULL;
   UINTN Id = 0;
+  UNIT_TEST_FRAMEWORK *Framework = NULL;
+
+  Framework = (UNIT_TEST_FRAMEWORK *) FrameworkHandle;
 
   if (Framework == NULL)
   {
@@ -228,7 +196,7 @@ OutputUnitTestFrameworkReport(
     Status = EFI_INVALID_PARAMETER;
     goto EXIT;
   }
-  
+
   Doc = New_JUnitXmlDocNodeList();
   if (Doc == NULL)
   {
@@ -252,17 +220,17 @@ OutputUnitTestFrameworkReport(
     UINTN TotalFailures = 0;
     UINTN TotalSkips = 0;
     UINTN TotalErrors = 0;
-    SuiteName = ConvertAndAllocateUnicodeStringToAsciiString(Suite->UTS.Title);
-    SuitePackage = ConvertAndAllocateUnicodeStringToAsciiString(Suite->UTS.Package);
+    SuiteName = Suite->UTS.Title;
+    SuitePackage = Suite->UTS.Name;
     if (SuiteName == NULL)
     {
-      DEBUG((DEBUG_ERROR, "%a ConvertAndAllocateUnicodeStringToAsciiString returned NULL for SuiteName \n", __FUNCTION__));
+      DEBUG((DEBUG_ERROR, "%a SuiteName is NULL \n", __FUNCTION__));
       Status = EFI_DEVICE_ERROR;
       goto EXIT;
     }
     if (SuitePackage == NULL)
     {
-      DEBUG((DEBUG_ERROR, "%a ConvertAndAllocateUnicodeStringToAsciiString returned NULL for SuitePackage \n", __FUNCTION__));
+      DEBUG((DEBUG_ERROR, "%a SuitePackage is NULL \n", __FUNCTION__));
       Status = EFI_DEVICE_ERROR;
       goto EXIT;
     }
@@ -292,7 +260,7 @@ OutputUnitTestFrameworkReport(
 
       TotalTests++;
 
-      if (Test->UT.Result == UNIT_TEST_ERROR_PREREQ_NOT_MET)
+      if (Test->UT.Result == UNIT_TEST_ERROR_PREREQUISITE_NOT_MET)
       {
         Skipped = TRUE;
         TotalSkips++;
@@ -306,13 +274,13 @@ OutputUnitTestFrameworkReport(
         }
       }
 
-      Name = ConvertAndAllocateUnicodeStringToAsciiString(Test->UT.Description);
-      ClassName = ConvertAndAllocateUnicodeStringToAsciiString(Test->UT.ClassName);
-      Log = ConvertAndAllocateUnicodeStringToAsciiString(Test->UT.Log);
-      FailureMsg = ConvertAndAllocateUnicodeStringToAsciiString(Test->UT.FailureMessage);
+      Name = Test->UT.Description;
+      ClassName = Test->UT.Name;
+      Log = Test->UT.Log;
+      FailureMsg = Test->UT.FailureMessage;
 
 
-      //TODO:  need to handle timing.  Right now its hard coded to 1 second. 
+      //TODO:  need to handle timing.  Right now its hard coded to 1 second.
       New_TestCaseInSuite(SuiteNode, Name, ClassName, 1, Log, FailureMsg, GetStringForFailureType(Test->UT.FailureType), Skipped);
 
       if (Name != NULL) { FreePool(Name); }

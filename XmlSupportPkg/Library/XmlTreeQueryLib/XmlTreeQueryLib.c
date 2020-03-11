@@ -1,9 +1,9 @@
 /** @file
 XmlTreeQueryLib
 
-This library supports generic XML queries based on the XmlTreeLib. 
+This library supports generic XML queries based on the XmlTreeLib.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/

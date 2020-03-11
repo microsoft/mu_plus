@@ -1,7 +1,7 @@
 /** @file
-  Support using XML as the File format for var report data
+  Support using XML as the File format for unittest report data
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -9,9 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "JUnitXmlSupport.h"
 #define DOC_XML_TEMPLATE "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuites />"
-
-
-
 
 /**
 Creates a new MsXmlNode list following the List
@@ -89,7 +86,7 @@ New_TestSuiteNodeInList(
     DEBUG((DEBUG_ERROR, "%a - RootNode is not testsuites List\n", __FUNCTION__));
     return NULL;
   }
-  //RootNode is good. 
+  //RootNode is good.
 
 
   //Create the testsuite node with no parent
@@ -177,7 +174,7 @@ New_TestCaseInSuite(
     DEBUG((DEBUG_ERROR, "%a - TestSuite is not a testsuite\n", __FUNCTION__));
     return NULL;
   }
-  //TestSuite Node is good. 
+  //TestSuite Node is good.
 
 
   //Create the testCase node with no parent
@@ -187,7 +184,7 @@ New_TestCaseInSuite(
     DEBUG((DEBUG_ERROR, "%a - AddNode for test case Failed.  Status %r\n", __FUNCTION__, Status));
     goto ERROR_EXIT;
   }
-  
+
   //Create the classname attribute
   Status = AddAttributeToNode(NewTestNode, "classname", ClassName);
   if (EFI_ERROR(Status))
@@ -220,7 +217,7 @@ New_TestCaseInSuite(
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - AddNode for skipped element failed.  Status = %r\n", __FUNCTION__, Status));
-      //do not exit...just keep going.  
+      //do not exit...just keep going.
     }
   }
 
@@ -233,7 +230,7 @@ New_TestCaseInSuite(
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - AddNode for log element failed.  Status = %r\n", __FUNCTION__, Status));
-    //do not exit...just keep going.  
+    //do not exit...just keep going.
   }
 
   //Add the testcase to the end of the testsuite children
@@ -298,7 +295,7 @@ New_FailureForTestCase(
     DEBUG((DEBUG_ERROR, "%a - TestCase is not a testcase\n", __FUNCTION__));
     return NULL;
   }
-  //TestCase Node is good. 
+  //TestCase Node is good.
 
 
   //Create the failure node with no parent
@@ -367,7 +364,7 @@ AddTestSuiteStats(
     DEBUG((DEBUG_ERROR, "%a - TestSuite is not a testsuite\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
-  //TestSuite Node is good. 
+  //TestSuite Node is good.
 
   //Create the total errors attribute
   //Convert int to string
@@ -408,6 +405,6 @@ AddTestSuiteStats(
     DEBUG((DEBUG_ERROR, "%a - AddAttribute for skipped Failed.  Status %r\n", __FUNCTION__, Status));
     return Status;
   }
- 
+
   return EFI_SUCCESS;
 }

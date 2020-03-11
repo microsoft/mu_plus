@@ -1,8 +1,8 @@
 /**
 @file
-Implementation of XmlTreeLib using the faster Xml lib modified to work in UEFI. 
+Implementation of XmlTreeLib using the faster Xml lib modified to work in UEFI.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -11,7 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>             // Safe string functions
 #include <Library/DebugLib.h>            // DEBUG tracing
 #include <Library/BaseMemoryLib.h>       // SetMem()
-#include <XmlTypes.h>     
+#include <XmlTypes.h>
 #include <Library/XmlTreeLib.h>          // Our header
 #include "fasterxml/fasterxml.h"         // XML Engine
 #include "fasterxml/xmlerr.h"            // XML errors
@@ -31,7 +31,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 //DEFINE the max number of nodes deep the parser will support
-#define MAX_RECURSIVE_LEVEL (25)  
+#define MAX_RECURSIVE_LEVEL (25)
 
 
 //
@@ -179,7 +179,7 @@ AddNode(
     InitializeListHead(&(NodeTemp->ChildrenListHead));
     InitializeListHead(&(NodeTemp->AttributesListHead));
 
-    // 
+    //
     // If we have a parent, we need to add this node to the Parent's child list.
     //
     if (Parent)
@@ -340,7 +340,7 @@ AddAttributeToNode(
     Attribute->Value = AsciiString;
 
     //
-    // Add the node to the parent's child list and increase the number of 
+    // Add the node to the parent's child list and increase the number of
     // attributes within this node.
     //
     InsertTailList(&(Parent->AttributesListHead), &(Attribute->Link));
@@ -393,7 +393,7 @@ DeleteNode(IN XmlNode* Node)
   }
 
 
-  
+
   //delete any children - can't use for loop because removal breaks iterator
   while (!IsListEmpty(&Node->ChildrenListHead))
   {
@@ -416,7 +416,7 @@ DeleteNode(IN XmlNode* Node)
   while (!IsListEmpty(&Node->AttributesListHead))
   {
     Link = GetFirstNode(&Node->AttributesListHead);
-  
+
     Status = DeleteAttribute((XmlAttribute*)Link);
     if (EFI_ERROR(Status))
     {
@@ -892,7 +892,7 @@ BuildNodeList(
 
   //
   // Zero everthing out to start.
-  //   
+  //
   ZeroMem(&State, sizeof(State));
   ZeroMem(&Init, sizeof(Init));
   ZeroMem(&Location, sizeof(Location));
@@ -1162,7 +1162,7 @@ BuildNodeList(
     else if (Next.State == XTSS_ELEMENT_ATTRIBUTE_VALUE)
     {
       //
-      // We received the attribute value, so we can now add the name 
+      // We received the attribute value, so we can now add the name
       // and value to the current node.
       //
       Status = AsciiStrnCpyS(AttributeValue, ARRAYSIZE(AttributeValue), (CHAR8*)Next.Run.pvData, (UINTN)Next.Run.ulCharacters);
@@ -1311,7 +1311,7 @@ Exit:
 
  @param   RootNode -- The root node that contains the node list.
 
- @return  EFI_SUCCESS or underlying failure code.  
+ @return  EFI_SUCCESS or underlying failure code.
  On successfully return RootNode Ptr will be NULL
 
  **/
@@ -1442,16 +1442,16 @@ _GetXmlUnEscapedLength(
     return 0;
   }
 
-  //String is good null terminated string. 
-  // loop thru all chars looking for chars that are escaped.  
+  //String is good null terminated string.
+  // loop thru all chars looking for chars that are escaped.
   // When found subtract the size of escape sequence
   while (String[i] != '\0')
   {
     if (String[i] == '&')
     {
       //Must use a string compare with length because
-      // string is not null terminated because we are 
-      // in the middle of the string.  
+      // string is not null terminated because we are
+      // in the middle of the string.
       if (AsciiStrnCmp(&String[i + 1], "lt;", 3) == 0)
       {
         Len -= 3;
@@ -1482,7 +1482,7 @@ _GetXmlUnEscapedLength(
         DEBUG((DEBUG_INFO, "%a found an & char that is not valid xml escape sequence\n", __FUNCTION__));
       }
     }
-    i++; 
+    i++;
   }
   return Len;
 }
@@ -1509,12 +1509,12 @@ _GetXmlEscapedLength(
     return 0;
   }
 
-  //String is good null terminated string. 
+  //String is good null terminated string.
   // loop thru all chars looking for chars that need
   // to be escaped.  When found add the additional length
   // of the escape sequence
   while(String[i] != '\0')
-  { 
+  {
     switch (String[i++])
     {
       case '<':  // &lt;
@@ -1541,13 +1541,13 @@ _GetXmlEscapedLength(
 
 /**
   Escape the string so any XML invalid chars are
-  converted into valid chars. 
+  converted into valid chars.
 
   @param String - Ascii string to escape
   @param MaxStringLength - Max length of the Ascii string "String"
   @param EscapedString - resulting escaped string if return value is success.  Memory must be freed by caller
 
-  @return Status of escape process.  ON success EscapedString * will point to escaped string. 
+  @return Status of escape process.  ON success EscapedString * will point to escaped string.
 **/
 EFI_STATUS
 EFIAPI
@@ -1587,7 +1587,7 @@ XmlEscape(
         if (j + 4 > EscapedLength)
         {
           DEBUG((DEBUG_ERROR, "%a invalid parsing <.  J+4 will cause overflow\n", __FUNCTION__));
-          j = EscapedLength; //cause error to force break without corrupting memory 
+          j = EscapedLength; //cause error to force break without corrupting memory
           break;
         }
         EString[j++] = '&';
@@ -1600,7 +1600,7 @@ XmlEscape(
         if (j + 4 > EscapedLength)
         {
           DEBUG((DEBUG_ERROR, "%a invalid parsing >.  J + 4 will cause overflow\n", __FUNCTION__));
-          j = EscapedLength + 1; //cause error to force break without corrupting memory 
+          j = EscapedLength + 1; //cause error to force break without corrupting memory
           break;
         }
         EString[j++] = '&';
@@ -1613,7 +1613,7 @@ XmlEscape(
         if (j + 6 > EscapedLength)
         {
           DEBUG((DEBUG_ERROR, "%a invalid parsing \".  J+6 will cause overflow\n", __FUNCTION__));
-          j = EscapedLength +1 ; //cause error to force break without corrupting memory 
+          j = EscapedLength +1 ; //cause error to force break without corrupting memory
           break;
         }
         EString[j++] = '&';
@@ -1623,12 +1623,12 @@ XmlEscape(
         EString[j++] = 't';
         EString[j++] = ';';
         break;
-      
+
       case '\'': //&apos;
         if (j + 6 > EscapedLength)
         {
           DEBUG((DEBUG_ERROR, "%a invalid parsing '.  J+6 will cause overflow\n", __FUNCTION__));
-          j = EscapedLength; //cause error to force break without corrupting memory 
+          j = EscapedLength; //cause error to force break without corrupting memory
           break;
         }
         EString[j++] = '&';
@@ -1643,7 +1643,7 @@ XmlEscape(
         if (j + 5 > EscapedLength)
         {
           DEBUG((DEBUG_ERROR, "%a invalid parsing &.  J+5 will cause overflow\n", __FUNCTION__));
-          j = EscapedLength +1 ; //cause error to force break without corrupting memory 
+          j = EscapedLength +1 ; //cause error to force break without corrupting memory
           break;
         }
         EString[j++] = '&';
@@ -1663,7 +1663,7 @@ XmlEscape(
   if ((j != EscapedLength) || (String[i] != '\0') )
   {
     //report unique messages for easier debug
-    if (j != EscapedLength) 
+    if (j != EscapedLength)
     {
       DEBUG((DEBUG_ERROR, "%a escape string process failed.  New String index counter (j = %d EscapedLength = %d) not at end point\n", __FUNCTION__, j, EscapedLength));
       ASSERT(j == EscapedLength);
@@ -1955,7 +1955,7 @@ XmlTreeMaxAttributes(
   }
 
   //
-  //Loop thru children recursively 
+  //Loop thru children recursively
   //
   for (Link = GetFirstNode(&Node->ChildrenListHead);
     !IsNull(&Node->ChildrenListHead, Link);

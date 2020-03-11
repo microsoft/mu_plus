@@ -2,7 +2,7 @@
 #
 # This library supports basic query functions on valid xml trees
 
-# Copyright (C) Microsoft Corporation. All rights reserved.
+# Copyright (C) Microsoft Corporation.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -11,14 +11,14 @@
   BASE_NAME                      = XmlTreeQueryLib
   FILE_GUID                      = DC128BB6-0CB9-4AF7-9A01-4D9150C43446
   MODULE_TYPE                    = DXE_DRIVER
-  VERSION_STRING                 = 1.0 
+  VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = XmlTreeQueryLib|DXE_DRIVER UEFI_APPLICATION UEFI_DRIVER
 
 # CONSTRUCTOR                    = NONE
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 
+#  VALID_ARCHITECTURES           = IA32 X64
 #
 
 [Sources]
@@ -28,10 +28,10 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   XmlSupportPkg/XmlSupportPkg.dec
-   
+
 [LibraryClasses]
   DebugLib
   XmlTreeLib
   DebugLib
   BaseLib
-  
+
