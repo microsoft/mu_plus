@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
-#include <UnitTestTypes.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -18,12 +17,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiLib.h>
-#include <Library/UnitTestAssertLib.h>
-#include <Library/UnitTestLogLib.h>
 #include <Library/UnitTestLib.h>
 
-#define UNIT_TEST_APP_NAME        L"Device Id Library test cases"
-#define UNIT_TEST_APP_VERSION     L"1.0"
+#define UNIT_TEST_APP_NAME        "Device Id Library test cases"
+#define UNIT_TEST_APP_VERSION     "1.0"
 
 // A Constant used to insure a field is not disturbed.
 #define TEST_CONSTANT_ONE  0xDeadBea7Ba5eBa11
@@ -191,7 +188,6 @@ STATIC
 VOID
 EFIAPI
 CleanUpTestContext (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -227,7 +223,6 @@ static
 UNIT_TEST_STATUS
 EFIAPI
 VerifyUTF8 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -308,7 +303,6 @@ static
 UNIT_TEST_STATUS
 EFIAPI
 ValidateNull (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -336,7 +330,6 @@ static
 UNIT_TEST_STATUS
 EFIAPI
 ValidateSize (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -377,7 +370,6 @@ static
 UNIT_TEST_STATUS
 EFIAPI
 ValidateNullP2 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -411,7 +403,6 @@ static
 UNIT_TEST_STATUS
 EFIAPI
 ValidateCharacters (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
@@ -488,19 +479,16 @@ DeviceIdTestAppEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    UNIT_TEST_FRAMEWORK       *Fw = NULL;
-    UNIT_TEST_SUITE           *DeviceIdTests;
-    CHAR16                     ShortName[100];
-    EFI_STATUS                 Status;
+    UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+    UNIT_TEST_SUITE_HANDLE      DeviceIdTests;
+    EFI_STATUS                  Status;
 
-    ShortName[0] = L'\0';
-    UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-    DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+    DEBUG(( DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
     //
     // Start setting up the test framework for running the tests.
     //
-    Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+    Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
     if (EFI_ERROR( Status )) {
         DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
         goto EXIT;
@@ -509,7 +497,7 @@ DeviceIdTestAppEntry (
     //
     // Populate the DeviceId Library Test Suite.
     //
-    Status = CreateUnitTestSuite( &DeviceIdTests, Fw, L"Validate DeviceId Library returns valid data", L"DeviceId.Test", NULL, NULL);
+    Status = CreateUnitTestSuite( &DeviceIdTests, Fw, "Validate DeviceId Library returns valid data", "DeviceId.Test", NULL, NULL);
     if (EFI_ERROR( Status )) {
         DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for Device Id Tests\n"));
         Status = EFI_OUT_OF_RESOURCES;
@@ -517,22 +505,22 @@ DeviceIdTestAppEntry (
     }
 
     //-----------Suite----------Description-----------------Class------------Test Function-------Pre---Clean-Context
-    AddTestCase( DeviceIdTests, L"UTF8 SelfCheck",          L"SelfCheck",    VerifyUTF8,         NULL, CleanUpTestContext, &mTest1);
+    AddTestCase( DeviceIdTests, "UTF8 SelfCheck",           "SelfCheck",     VerifyUTF8,         NULL, CleanUpTestContext, &mTest1);
 
-    AddTestCase( DeviceIdTests, L"GetSerialNumber NULL",    L"GetSN.NULL",   ValidateNull,       NULL, CleanUpTestContext, &mTest2);
-    AddTestCase( DeviceIdTests, L"GetSerialNumber Size",    L"GetSN.Size",   ValidateSize,       NULL, CleanUpTestContext, &mTest3);
-    AddTestCase( DeviceIdTests, L"GetSerialNumber NULL P2", L"GetSN.NULL",   ValidateNullP2,     NULL, CleanUpTestContext, &mTest4);
-    AddTestCase( DeviceIdTests, L"GetSerialNumber Chars",   L"GetSN.Chars",  ValidateCharacters, NULL, CleanUpTestContext, &mTest5);
+    AddTestCase( DeviceIdTests, "GetSerialNumber NULL",     "GetSN.NULL",    ValidateNull,       NULL, CleanUpTestContext, &mTest2);
+    AddTestCase( DeviceIdTests, "GetSerialNumber Size",     "GetSN.Size",    ValidateSize,       NULL, CleanUpTestContext, &mTest3);
+    AddTestCase( DeviceIdTests, "GetSerialNumber NULL P2",  "GetSN.NULL",    ValidateNullP2,     NULL, CleanUpTestContext, &mTest4);
+    AddTestCase( DeviceIdTests, "GetSerialNumber Chars",    "GetSN.Chars",   ValidateCharacters, NULL, CleanUpTestContext, &mTest5);
 
-    AddTestCase( DeviceIdTests, L"GetProductName NULL",     L"GetPN.NULL",   ValidateNull,       NULL, CleanUpTestContext, &mTest6);
-    AddTestCase( DeviceIdTests, L"GetProductName Size",     L"GetPN.Size",   ValidateSize,       NULL, CleanUpTestContext, &mTest7);
-    AddTestCase( DeviceIdTests, L"GetSerialNumber NULL P2", L"GetSN.NULL",   ValidateNullP2,     NULL, CleanUpTestContext, &mTest8);
-    AddTestCase( DeviceIdTests, L"GetProductName Chars",    L"GetPN.Chars",  ValidateCharacters, NULL, CleanUpTestContext, &mTest9);
+    AddTestCase( DeviceIdTests, "GetProductName NULL",      "GetPN.NULL",    ValidateNull,       NULL, CleanUpTestContext, &mTest6);
+    AddTestCase( DeviceIdTests, "GetProductName Size",      "GetPN.Size",    ValidateSize,       NULL, CleanUpTestContext, &mTest7);
+    AddTestCase( DeviceIdTests, "GetSerialNumber NULL P2",  "GetSN.NULL",    ValidateNullP2,     NULL, CleanUpTestContext, &mTest8);
+    AddTestCase( DeviceIdTests, "GetProductName Chars",     "GetPN.Chars",   ValidateCharacters, NULL, CleanUpTestContext, &mTest9);
 
-    AddTestCase( DeviceIdTests, L"GetManufacturer NULL",    L"GetMfg.NULL",  ValidateNull,       NULL, CleanUpTestContext, &mTest10);
-    AddTestCase( DeviceIdTests, L"GetManufacturer Size",    L"GetMfg.Size",  ValidateSize,       NULL, CleanUpTestContext, &mTest11);
-    AddTestCase( DeviceIdTests, L"GetSerialNumber NULL P2", L"GetSN.NULL",   ValidateNullP2,     NULL, CleanUpTestContext, &mTest12);
-    AddTestCase( DeviceIdTests, L"GetManufacturer Chars",   L"GetMfg.Chars", ValidateCharacters, NULL, CleanUpTestContext, &mTest13);
+    AddTestCase( DeviceIdTests, "GetManufacturer NULL",     "GetMfg.NULL",   ValidateNull,       NULL, CleanUpTestContext, &mTest10);
+    AddTestCase( DeviceIdTests, "GetManufacturer Size",     "GetMfg.Size",   ValidateSize,       NULL, CleanUpTestContext, &mTest11);
+    AddTestCase( DeviceIdTests, "GetSerialNumber NULL P2",  "GetSN.NULL",    ValidateNullP2,     NULL, CleanUpTestContext, &mTest12);
+    AddTestCase( DeviceIdTests, "GetManufacturer Chars",    "GetMfg.Chars",  ValidateCharacters, NULL, CleanUpTestContext, &mTest13);
 
     //
     // Execute the tests.
