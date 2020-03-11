@@ -27,7 +27,6 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
   MsCorePkg/MsCorePkg.dec
 
 [Protocols]
@@ -41,9 +40,7 @@
   PrintLib
   UefiApplicationEntryPoint
   UefiLib
-  UnitTestAssertLib
   UnitTestLib
-  UnitTestLogLib
 
 [Guids]
 

@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
-#include <UnitTestTypes.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -18,12 +17,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiLib.h>
-#include <Library/UnitTestAssertLib.h>
-#include <Library/UnitTestLogLib.h>
 #include <Library/UnitTestLib.h>
 
-#define UNIT_TEST_APP_NAME        L"Json Lite test cases"
-#define UNIT_TEST_APP_VERSION     L"1.0"
+#define UNIT_TEST_APP_NAME        "Json Lite test cases"
+#define UNIT_TEST_APP_VERSION     "1.0"
 
 /**
 
@@ -378,7 +375,6 @@ STATIC
 VOID
 EFIAPI
 CleanUpTestContext (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -427,7 +423,6 @@ STATIC
 UNIT_TEST_STATUS
 EFIAPI
 JsonParseTest (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
     ) {
 
@@ -489,7 +484,6 @@ JsonParseTest (
 static
 UNIT_TEST_STATUS
 JsonEncodeTest (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
     ) {
 
@@ -531,7 +525,6 @@ JsonEncodeTest (
 static
 UNIT_TEST_STATUS
 JsonParseNullP1 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -556,7 +549,6 @@ JsonParseNullP1 (
 static
 UNIT_TEST_STATUS
 JsonParseNullP2 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -582,7 +574,6 @@ JsonParseNullP2 (
 static
 UNIT_TEST_STATUS
 JsonParseNullP3 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -607,7 +598,6 @@ JsonParseNullP3 (
 static
 UNIT_TEST_STATUS
 JsonEncodeNullP1 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -633,7 +623,6 @@ JsonEncodeNullP1 (
 static
 UNIT_TEST_STATUS
 JsonEncodeNullP2 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -658,7 +647,6 @@ JsonEncodeNullP2 (
 static
 UNIT_TEST_STATUS
 JsonEncodeNullP3 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -683,7 +671,6 @@ JsonEncodeNullP3 (
 static
 UNIT_TEST_STATUS
 JsonEncodeNullP4 (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -724,20 +711,17 @@ JsonTestAppEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    UNIT_TEST_FRAMEWORK       *Fw = NULL;
-    UNIT_TEST_SUITE           *JsonParseTests;
-    UNIT_TEST_SUITE           *JsonEncodeTests;
-    CHAR16                     ShortName[100];
-    EFI_STATUS                 Status;
+    UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+    UNIT_TEST_SUITE_HANDLE      JsonParseTests;
+    UNIT_TEST_SUITE_HANDLE      JsonEncodeTests;
+    EFI_STATUS                  Status;
 
-    ShortName[0] = L'\0';
-    UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-    DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+    DEBUG(( DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
     //
     // Start setting up the test framework for running the tests.
     //
-    Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+    Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
     if (EFI_ERROR( Status )) {
         DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
         goto EXIT;
@@ -746,7 +730,7 @@ JsonTestAppEntry (
     //
     // Populate the Json Library Test Suite.
     //
-    Status = CreateUnitTestSuite( &JsonParseTests, Fw, L"Parse Json to individual components", L"JSON.Parse", NULL, NULL);
+    Status = CreateUnitTestSuite( &JsonParseTests, Fw, "Parse Json to individual components", "JSON.Parse", NULL, NULL);
     if (EFI_ERROR( Status )) {
         DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for Parse JsonTests\n"));
         Status = EFI_OUT_OF_RESOURCES;
@@ -754,48 +738,48 @@ JsonTestAppEntry (
     }
 
     //-----------Suite-----------Description------------Class-----------------Test Function--Pre---Clean-Context
-    AddTestCase( JsonParseTests, L"Json Parse Test 1",  L"JSON.Parse.Test1",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest1);
-    AddTestCase( JsonParseTests, L"Json Parse Test 2",  L"JSON.Parse.Test2",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest2);
-    AddTestCase( JsonParseTests, L"Json Parse Test 3",  L"JSON.Parse.Test3",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest3);
-    AddTestCase( JsonParseTests, L"Json Parse Test 4",  L"JSON.Parse.Test4",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest4);
-    AddTestCase( JsonParseTests, L"Json Parse Test 5",  L"JSON.Parse.Test5",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest5);
-    AddTestCase( JsonParseTests, L"Json Parse Test 6",  L"JSON.Parse.Test6",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest6);
-    AddTestCase( JsonParseTests, L"Json Parse Test 7",  L"JSON.Parse.Test7",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest7);
-    AddTestCase( JsonParseTests, L"Json Parse Test 8",  L"JSON.Parse.Test8",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest8);
-    AddTestCase( JsonParseTests, L"Json Parse Test 9",  L"JSON.Parse.Test9",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest9);
-    AddTestCase( JsonParseTests, L"Json Parse Test 10", L"JSON.Parse.Test10", JsonParseTest, NULL, CleanUpTestContext, &mParseTest10);
-    AddTestCase( JsonParseTests, L"Json Parse Test 11", L"JSON.Parse.Test11", JsonParseTest, NULL, CleanUpTestContext, &mParseTest11);
-    AddTestCase( JsonParseTests, L"Json Parse Test 12", L"JSON.Parse.Test12", JsonParseTest, NULL, CleanUpTestContext, &mParseTest12);
-    AddTestCase( JsonParseTests, L"Json Parse Test 13", L"JSON.Parse.Test13", JsonParseTest, NULL, CleanUpTestContext, &mParseTest13);
-    AddTestCase( JsonParseTests, L"Json Parse Test 14", L"JSON.Parse.Test14", JsonParseTest, NULL, CleanUpTestContext, &mParseTest14);
-    AddTestCase( JsonParseTests, L"Json Parse Test 15", L"JSON.Parse.Test15", JsonParseTest, NULL, CleanUpTestContext, &mParseTest15);
-    AddTestCase( JsonParseTests, L"Json Parse Test 16", L"JSON.Parse.Test16", JsonParseTest, NULL, CleanUpTestContext, &mParseTest16);
-    AddTestCase( JsonParseTests, L"Json Parse Test 17", L"JSON.Parse.Test17", JsonParseTest, NULL, CleanUpTestContext, &mParseTest17);
-    AddTestCase( JsonParseTests, L"Json Parse Test 18", L"JSON.Parse.Test18", JsonParseTest, NULL, CleanUpTestContext, &mParseTest18);
-    AddTestCase( JsonParseTests, L"Json Parse Test 19", L"JSON.Parse.Test19", JsonParseTest, NULL, CleanUpTestContext, &mParseTest19);
-    AddTestCase( JsonParseTests, L"Json Parse Test 20", L"JSON.Parse.Test20", JsonParseTest, NULL, CleanUpTestContext, &mParseTest20);
-    AddTestCase( JsonParseTests, L"Json Parse Test 21", L"JSON.Parse.Test21", JsonParseTest, NULL, CleanUpTestContext, &mParseTest21);
-    AddTestCase( JsonParseTests, L"Json Parse Test 22", L"JSON.Parse.Test22", JsonParseTest, NULL, CleanUpTestContext, &mParseTest22);
+    AddTestCase( JsonParseTests, "Json Parse Test 1",  "JSON.Parse.Test1",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest1);
+    AddTestCase( JsonParseTests, "Json Parse Test 2",  "JSON.Parse.Test2",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest2);
+    AddTestCase( JsonParseTests, "Json Parse Test 3",  "JSON.Parse.Test3",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest3);
+    AddTestCase( JsonParseTests, "Json Parse Test 4",  "JSON.Parse.Test4",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest4);
+    AddTestCase( JsonParseTests, "Json Parse Test 5",  "JSON.Parse.Test5",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest5);
+    AddTestCase( JsonParseTests, "Json Parse Test 6",  "JSON.Parse.Test6",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest6);
+    AddTestCase( JsonParseTests, "Json Parse Test 7",  "JSON.Parse.Test7",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest7);
+    AddTestCase( JsonParseTests, "Json Parse Test 8",  "JSON.Parse.Test8",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest8);
+    AddTestCase( JsonParseTests, "Json Parse Test 9",  "JSON.Parse.Test9",  JsonParseTest, NULL, CleanUpTestContext, &mParseTest9);
+    AddTestCase( JsonParseTests, "Json Parse Test 10", "JSON.Parse.Test10", JsonParseTest, NULL, CleanUpTestContext, &mParseTest10);
+    AddTestCase( JsonParseTests, "Json Parse Test 11", "JSON.Parse.Test11", JsonParseTest, NULL, CleanUpTestContext, &mParseTest11);
+    AddTestCase( JsonParseTests, "Json Parse Test 12", "JSON.Parse.Test12", JsonParseTest, NULL, CleanUpTestContext, &mParseTest12);
+    AddTestCase( JsonParseTests, "Json Parse Test 13", "JSON.Parse.Test13", JsonParseTest, NULL, CleanUpTestContext, &mParseTest13);
+    AddTestCase( JsonParseTests, "Json Parse Test 14", "JSON.Parse.Test14", JsonParseTest, NULL, CleanUpTestContext, &mParseTest14);
+    AddTestCase( JsonParseTests, "Json Parse Test 15", "JSON.Parse.Test15", JsonParseTest, NULL, CleanUpTestContext, &mParseTest15);
+    AddTestCase( JsonParseTests, "Json Parse Test 16", "JSON.Parse.Test16", JsonParseTest, NULL, CleanUpTestContext, &mParseTest16);
+    AddTestCase( JsonParseTests, "Json Parse Test 17", "JSON.Parse.Test17", JsonParseTest, NULL, CleanUpTestContext, &mParseTest17);
+    AddTestCase( JsonParseTests, "Json Parse Test 18", "JSON.Parse.Test18", JsonParseTest, NULL, CleanUpTestContext, &mParseTest18);
+    AddTestCase( JsonParseTests, "Json Parse Test 19", "JSON.Parse.Test19", JsonParseTest, NULL, CleanUpTestContext, &mParseTest19);
+    AddTestCase( JsonParseTests, "Json Parse Test 20", "JSON.Parse.Test20", JsonParseTest, NULL, CleanUpTestContext, &mParseTest20);
+    AddTestCase( JsonParseTests, "Json Parse Test 21", "JSON.Parse.Test21", JsonParseTest, NULL, CleanUpTestContext, &mParseTest21);
+    AddTestCase( JsonParseTests, "Json Parse Test 22", "JSON.Parse.Test22", JsonParseTest, NULL, CleanUpTestContext, &mParseTest22);
 
-    AddTestCase( JsonParseTests, L"Json Parse NULL Test 1", L"JSON.Parse.NullTest1", JsonParseNullP1, NULL, CleanUpTestContext, &mParseTest1);
-    AddTestCase( JsonParseTests, L"Json Parse NULL Test 2", L"JSON.Parse.NullTest2", JsonParseNullP2, NULL, CleanUpTestContext, &mParseTest1);
-    AddTestCase( JsonParseTests, L"Json Parse NULL Test 3", L"JSON.Parse.NullTest3", JsonParseNullP3, NULL, CleanUpTestContext, &mParseTest1);
+    AddTestCase( JsonParseTests, "Json Parse NULL Test 1", "JSON.Parse.NullTest1", JsonParseNullP1, NULL, CleanUpTestContext, &mParseTest1);
+    AddTestCase( JsonParseTests, "Json Parse NULL Test 2", "JSON.Parse.NullTest2", JsonParseNullP2, NULL, CleanUpTestContext, &mParseTest1);
+    AddTestCase( JsonParseTests, "Json Parse NULL Test 3", "JSON.Parse.NullTest3", JsonParseNullP3, NULL, CleanUpTestContext, &mParseTest1);
 
     //
     // Populate the GlobalVarTests Unit Test Suite.
     //
-    Status = CreateUnitTestSuite( &JsonEncodeTests, Fw, L"Encode elements into a Json string", L"JSON.Encode", NULL, NULL);
+    Status = CreateUnitTestSuite( &JsonEncodeTests, Fw, "Encode elements into a Json string", "JSON.Encode", NULL, NULL);
     if (EFI_ERROR( Status )) {
         DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for Encode Json Tests\n"));
         Status = EFI_OUT_OF_RESOURCES;
         goto EXIT;
     }
 
-    AddTestCase(JsonEncodeTests, L"Json Encode Test 1", L"JSON.EncodeTest1", JsonEncodeTest,   NULL, CleanUpTestContext, &mEncodeTest1);
-    AddTestCase(JsonEncodeTests, L"Json Encode Test 2", L"JSON.EncodeTest2", JsonEncodeNullP1, NULL, CleanUpTestContext, &mEncodeTest1);
-    AddTestCase(JsonEncodeTests, L"Json Encode Test 3", L"JSON.EncodeTest3", JsonEncodeNullP2, NULL, CleanUpTestContext, &mEncodeTest1);
-    AddTestCase(JsonEncodeTests, L"Json Encode Test 4", L"JSON.EncodeTest4", JsonEncodeNullP3, NULL, CleanUpTestContext, &mEncodeTest1);
-    AddTestCase(JsonEncodeTests, L"Json Encode Test 5", L"JSON.EncodeTest5", JsonEncodeNullP4, NULL, CleanUpTestContext, &mEncodeTest1);
+    AddTestCase(JsonEncodeTests, "Json Encode Test 1", "JSON.EncodeTest1", JsonEncodeTest,   NULL, CleanUpTestContext, &mEncodeTest1);
+    AddTestCase(JsonEncodeTests, "Json Encode Test 2", "JSON.EncodeTest2", JsonEncodeNullP1, NULL, CleanUpTestContext, &mEncodeTest1);
+    AddTestCase(JsonEncodeTests, "Json Encode Test 3", "JSON.EncodeTest3", JsonEncodeNullP2, NULL, CleanUpTestContext, &mEncodeTest1);
+    AddTestCase(JsonEncodeTests, "Json Encode Test 4", "JSON.EncodeTest4", JsonEncodeNullP3, NULL, CleanUpTestContext, &mEncodeTest1);
+    AddTestCase(JsonEncodeTests, "Json Encode Test 5", "JSON.EncodeTest5", JsonEncodeNullP4, NULL, CleanUpTestContext, &mEncodeTest1);
 
     //
     // Execute the tests.

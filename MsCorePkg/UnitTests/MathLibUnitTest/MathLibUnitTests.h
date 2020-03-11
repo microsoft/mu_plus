@@ -16,22 +16,20 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestAssertLib.h>
 
 #include <Library/MathLib.h>
 
 
-#define UNIT_TEST_APP_NAME        L"Math Lib Unit Test Application"
-#define UNIT_TEST_APP_VERSION     L"0.1"
+#define UNIT_TEST_APP_NAME        "Math Lib Unit Test Application"
+#define UNIT_TEST_APP_VERSION     "0.1"
 
 EFI_STATUS
 EFIAPI
-RegisterAttributeTests(UNIT_TEST_SUITE           *TestSuite);
+RegisterAttributeTests(UNIT_TEST_SUITE_HANDLE   TestSuite);
 
 EFI_STATUS
 EFIAPI
-RegisterElementTests(UNIT_TEST_SUITE           *TestSuite);
+RegisterElementTests(UNIT_TEST_SUITE_HANDLE   TestSuite);
 
 #endif

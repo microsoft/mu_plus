@@ -26,7 +26,6 @@
 
 [Packages]
   MsCorePkg/MsCorePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
   MdePkg/MdePkg.dec
 
    
@@ -36,8 +35,6 @@
   UefiApplicationEntryPoint
   DebugLib
   UnitTestLib
-  UnitTestAssertLib
-  UnitTestLogLib
   PrintLib
   MathLib
 

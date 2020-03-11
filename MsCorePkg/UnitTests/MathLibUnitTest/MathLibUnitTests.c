@@ -10,10 +10,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "TestData.h"
 #include <Library/MathLib.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestLogLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PrintLib.h>
-#include <Library/UnitTestAssertLib.h>
 
 
 
@@ -23,7 +21,6 @@ Test sine function
 UNIT_TEST_STATUS
 EFIAPI
 TestSine(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -65,7 +62,6 @@ Test sqrt function
 UNIT_TEST_STATUS
 EFIAPI
 TestSqrt(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -106,7 +102,6 @@ Test sqrt function
 UNIT_TEST_STATUS
 EFIAPI
 TestSqrt32(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -147,7 +142,6 @@ Test sqrt function
 UNIT_TEST_STATUS
 EFIAPI
 TestSqrt64(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -188,7 +182,6 @@ Test Cosine function
 UNIT_TEST_STATUS
 EFIAPI
 TestCos(
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
 )
 {
@@ -235,26 +228,23 @@ UefiMain(
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE* SystemTable)
 {
-  EFI_STATUS                Status;
-  UNIT_TEST_FRAMEWORK       *Fw = NULL;
-  UNIT_TEST_SUITE           *TestSuite;
-  CHAR16  ShortName[100];
-  ShortName[0] = L'\0';
+  EFI_STATUS                  Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE      TestSuite;
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-    DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
+  DEBUG((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+  Status = InitUnitTestFramework(&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
     goto EXIT;
   }
 
-  Status = CreateUnitTestSuite(&TestSuite, Fw, L"Math Lib Test Suite ", L"Common.MathLib", NULL, NULL);
+  Status = CreateUnitTestSuite(&TestSuite, Fw, "Math Lib Test Suite ", "Common.MathLib", NULL, NULL);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for Math Lib Test Suite %r\n", Status));
@@ -262,15 +252,15 @@ UefiMain(
     goto EXIT;
   }
 
-  AddTestCase(TestSuite, L"Check Sine is within a reasonable error", L"Common.MathLib.Sine", TestSine, NULL, NULL, &SIN_CONTEXT);
+  AddTestCase(TestSuite, "Check Sine is within a reasonable error", "Common.MathLib.Sine", TestSine, NULL, NULL, &SIN_CONTEXT);
 
-  AddTestCase(TestSuite, L"Check cosine is within a reasonable error", L"Common.MathLib.Cos", TestCos, NULL, NULL, &COS_CONTEXT);
+  AddTestCase(TestSuite, "Check cosine is within a reasonable error", "Common.MathLib.Cos", TestCos, NULL, NULL, &COS_CONTEXT);
 
-  AddTestCase(TestSuite, L"Check sqrt is within a reasonable error", L"Common.MathLib.Sqrt", TestSqrt, NULL, NULL, &SQRT_CONTEXT);
+  AddTestCase(TestSuite, "Check sqrt is within a reasonable error", "Common.MathLib.Sqrt", TestSqrt, NULL, NULL, &SQRT_CONTEXT);
 
-  AddTestCase(TestSuite, L"Check sqrt64 is within a reasonable error", L"Common.MathLib.Sqrt64", TestSqrt32, NULL, NULL, &SQRTUNSIGNED_CONTEXT);
+  AddTestCase(TestSuite, "Check sqrt64 is within a reasonable error", "Common.MathLib.Sqrt64", TestSqrt32, NULL, NULL, &SQRTUNSIGNED_CONTEXT);
 
-  AddTestCase(TestSuite, L"Check sqrt32 is within a reasonable error", L"Common.MathLib.Sqrt32", TestSqrt64, NULL, NULL, &SQRTUNSIGNED_CONTEXT);
+  AddTestCase(TestSuite, "Check sqrt32 is within a reasonable error", "Common.MathLib.Sqrt32", TestSqrt64, NULL, NULL, &SQRTUNSIGNED_CONTEXT);
 
   //Run Tests
   Status = RunAllTestSuites(Fw);
