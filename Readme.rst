@@ -25,7 +25,7 @@ Branch Changes - release/202002
 Breaking Changes-dev
 --------------------
 
-- None
+- SharedCrypto is still preserved for now, but doesn't build against the new core.
 
 Main Changes-dev
 ----------------
