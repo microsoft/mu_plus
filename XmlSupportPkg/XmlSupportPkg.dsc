@@ -32,6 +32,7 @@
 [Components]
   XmlSupportPkg/Library/XmlTreeLib/XmlTreeLib.inf
   XmlSupportPkg/Library/XmlTreeQueryLib/XmlTreeQueryLib.inf
+  XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf
 
   ##
   # Uefi environment unit tests

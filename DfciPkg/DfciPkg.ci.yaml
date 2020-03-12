@@ -29,14 +29,8 @@
             "NetworkPkg/NetworkPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
-            "MsUnitTestPkg/MsUnitTestPkg.dec",
-            "UefiHostTestPkg/UefiHostTestPkg.dec",
-            "UefiHostUnitTestPkg/UefiHostUnitTestPkg.dec",
-            "CmockaHostUnitTestPkg/CmockaHostUnitTestPkg.dec",
-            "UnitTestPkg/UnitTestPkg.dec"
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
-            "MsUnitTestPkg/MsUnitTestPkg.dec",
             "ShellPkg/ShellPkg.dec"
         ],
         "IgnoreInf": []
