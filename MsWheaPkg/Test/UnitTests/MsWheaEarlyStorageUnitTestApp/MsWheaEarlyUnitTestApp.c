@@ -17,11 +17,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestLogLib.h>
-#include <Library/UnitTestAssertLib.h>
-#include <Library/UnitTestBootUsbLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
@@ -33,8 +29,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #error Make sure to build thie with INTERNAL_UNIT_TEST enabled! Otherwise, some important tests may be skipped!
 #endif
 
-#define UNIT_TEST_APP_NAME            L"MsWhea Early Storage Test"
-#define UNIT_TEST_APP_VERSION         L"0.1"
+#define UNIT_TEST_APP_NAME            "MsWhea Early Storage Test"
+#define UNIT_TEST_APP_VERSION         "0.1"
 
 #define   TEST_ERROR_STATUS_VALUE     0xA0A0A0A0
 #define   TEST_ADDITIONAL_INFO_1      0xDEADBEEF
@@ -151,7 +147,6 @@ TestReportFunction (
 /**
   Function verifies that the early storage starts from a good condition
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
 
   @retval UNIT_TEST_PASSED            The entry point executed successfully.
@@ -161,7 +156,6 @@ TestReportFunction (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESVerify (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -184,7 +178,6 @@ MsWheaESVerify (
 /**
   Clear all the HwErrRec entries on flash
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
 
   @retval UNIT_TEST_PASSED            The entry point executed successfully.
@@ -194,7 +187,6 @@ MsWheaESVerify (
 VOID
 EFIAPI
 MsWheaESCleanUp (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -232,7 +224,6 @@ MsWheaESCleanUp (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESChecksumTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -266,7 +257,6 @@ MsWheaESChecksumTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESDataCorruptTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -293,7 +283,6 @@ MsWheaESDataCorruptTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESHeaderCorruptTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -323,7 +312,6 @@ MsWheaESHeaderCorruptTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESHeaderUpdateTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -352,7 +340,6 @@ MsWheaESHeaderUpdateTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESContentUpdateTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -404,7 +391,6 @@ MsWheaESContentUpdateTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESFindSlotTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -428,7 +414,6 @@ MsWheaESFindSlotTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESInitTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -456,7 +441,6 @@ MsWheaESInitTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESStoreEntryTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -504,7 +488,6 @@ MsWheaESStoreEntryTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESProcessTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -555,26 +538,23 @@ MsWheaEarlyUnitTestAppEntryPoint (
   IN EFI_SYSTEM_TABLE                 *SystemTable
   )
 {
-  EFI_STATUS            Status = EFI_ABORTED;
-  UNIT_TEST_FRAMEWORK   *Fw = NULL;
-  CHAR16                ShortTitle[128];
-  UNIT_TEST_SUITE       *Misc = NULL;
+  EFI_STATUS                  Status = EFI_ABORTED;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE      Misc = NULL;
 
   DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
-  SetMem(ShortTitle, sizeof(ShortTitle), 0);
-  UnicodeSPrint(ShortTitle, sizeof(ShortTitle), L"%a", gEfiCallerBaseName);
-  DEBUG(( DEBUG_ERROR, "%a %s v%s\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG(( DEBUG_ERROR, "%a %a v%a\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
   // Start setting up the test framework for running the tests.
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortTitle, UNIT_TEST_APP_VERSION );
+  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a Failed in InitUnitTestFramework. Status = %r\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // Misc test suite for all tests.
-  CreateUnitTestSuite( &Misc, Fw, L"MS WHEA Early Storage Checksum Test cases", L"MsWhea.Miscellaneous", NULL, NULL);
+  CreateUnitTestSuite( &Misc, Fw, "MS WHEA Early Storage Checksum Test cases", "MsWhea.Miscellaneous", NULL, NULL);
 
   if (Misc == NULL) {
     DEBUG((DEBUG_ERROR, "%a Failed in CreateUnitTestSuite for TestSuite\n", __FUNCTION__));
@@ -582,31 +562,31 @@ MsWheaEarlyUnitTestAppEntryPoint (
     goto Cleanup;
   }
 
-  AddTestCase(Misc, L"Checksum calculation test", L"MsWhea.Miscellaneous.MsWheaESChecksumTest",
+  AddTestCase(Misc, "Checksum calculation test", "MsWhea.Miscellaneous.MsWheaESChecksumTest",
               MsWheaESChecksumTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"Inactive data corruption test", L"MsWhea.Miscellaneous.MsWheaESDataCorruptTest",
+  AddTestCase(Misc, "Inactive data corruption test", "MsWhea.Miscellaneous.MsWheaESDataCorruptTest",
               MsWheaESDataCorruptTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"Header corruption test", L"MsWhea.Miscellaneous.MsWheaESHeaderCorruptTest",
+  AddTestCase(Misc, "Header corruption test", "MsWhea.Miscellaneous.MsWheaESHeaderCorruptTest",
               MsWheaESHeaderCorruptTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"Header update test", L"MsWhea.Miscellaneous.MsWheaESHeaderUpdateTest",
+  AddTestCase(Misc, "Header update test", "MsWhea.Miscellaneous.MsWheaESHeaderUpdateTest",
               MsWheaESHeaderUpdateTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"Content update and corrupt", L"MsWhea.Miscellaneous.MsWheaESContentUpdateTest",
+  AddTestCase(Misc, "Content update and corrupt", "MsWhea.Miscellaneous.MsWheaESContentUpdateTest",
               MsWheaESContentUpdateTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"Free ES slot find", L"MsWhea.Miscellaneous.MsWheaESFindSlotTest",
+  AddTestCase(Misc, "Free ES slot find", "MsWhea.Miscellaneous.MsWheaESFindSlotTest",
               MsWheaESFindSlotTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"MsWhea ES Init", L"MsWhea.Miscellaneous.MsWheaESInitTest",
+  AddTestCase(Misc, "MsWhea ES Init", "MsWhea.Miscellaneous.MsWheaESInitTest",
               MsWheaESInitTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"MsWhea ES store entry", L"MsWhea.Miscellaneous.MsWheaESStoreEntryTest",
+  AddTestCase(Misc, "MsWhea ES store entry", "MsWhea.Miscellaneous.MsWheaESStoreEntryTest",
               MsWheaESStoreEntryTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
-  AddTestCase(Misc, L"MsWhea ES process entry", L"MsWhea.Miscellaneous.MsWheaESProcessTest",
+  AddTestCase(Misc, "MsWhea ES process entry", "MsWhea.Miscellaneous.MsWheaESProcessTest",
               MsWheaESProcessTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
 
   //

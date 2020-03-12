@@ -19,11 +19,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestLogLib.h>
-#include <Library/UnitTestAssertLib.h>
-#include <Library/UnitTestBootUsbLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/ReportStatusCodeLib.h>
@@ -32,8 +28,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MuTelemetryHelperLib.h>
 
 
-#define UNIT_TEST_APP_NAME            L"MsWhea Report Test"
-#define UNIT_TEST_APP_VERSION         L"0.2"
+#define UNIT_TEST_APP_NAME            "MsWhea Report Test"
+#define UNIT_TEST_APP_VERSION         "0.2"
 
 // Copy from MsWheaReportCommon.h, will fail test if any mismatch
 #define EFI_HW_ERR_REC_VAR_NAME       L"HwErrRec"
@@ -85,7 +81,6 @@ typedef struct MS_WHEA_TEST_CONTEXT_T_DEF {
 /**
   CPER Header verification routine, between flash entry and expect based on input payload
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
   @param[in] CperHdr                  CPER Header read from a specific HwErrRec entry
   @param[in] ErrorSeverity            Error Severity from input payload
@@ -101,7 +96,6 @@ typedef struct MS_WHEA_TEST_CONTEXT_T_DEF {
 STATIC
 EFI_STATUS
 MsWheaVerifyCPERHeader (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context,
   IN EFI_COMMON_ERROR_RECORD_HEADER   *CperHdr,
   IN UINT32                           ErrorSeverity,
@@ -214,7 +208,6 @@ Cleanup:
 /**
   CPER Section Descriptor verification routine, between flash entry and expect based on input payload
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
   @param[in] CperSecDecs              CPER Section Descriptor read from a specific HwErrRec entry
   @param[in] ErrorSeverity            Error Severity from input payload
@@ -230,7 +223,6 @@ Cleanup:
 STATIC
 EFI_STATUS
 MsWheaVerifyCPERSecDesc (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context,
   IN EFI_ERROR_SECTION_DESCRIPTOR     *CperSecDecs,
   IN UINT32                           ErrorSeverity,
@@ -317,7 +309,6 @@ Cleanup:
 /**
   Firmware Error Data verification routine, between flash entry and expect based on input payload
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
   @param[in] EfiFirmwareErrorData     Firmware Error Data read from a specific HwErrRec entry
   @param[in] ErrorStatusCodeValue     Error Status Code Value passed during ReportStatusCode*
@@ -331,7 +322,6 @@ Cleanup:
 STATIC
 EFI_STATUS
 MsWheaVerifyMuTelemetryErrorData (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context,
   IN MU_TELEMETRY_CPER_SECTION_DATA   *MuTelemetrySectionData,
   IN EFI_GUID                         *LibraryId,
@@ -394,7 +384,6 @@ Cleanup:
 /**
   HwErrRec Entry verification routine, between flash entry and expect based on input payload
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
   @param[in] TestIndex                This is used to locate the corresponding HwErrRec entry
   @param[in] ErrorStatusCodeValue     Error Status Code Value passed during ReportStatusCode*
@@ -413,7 +402,6 @@ Cleanup:
 STATIC
 EFI_STATUS
 MsWheaVerifyFlashStorage (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context,
   IN UINT16                           TestIndex,
   IN UINT32                           ErrorStatusCodeValue, // Whatever was passed into RSC
@@ -480,8 +468,7 @@ MsWheaVerifyFlashStorage (
 
   mIndex = 0;
   CperHdr = (EFI_COMMON_ERROR_RECORD_HEADER*)&Buffer[mIndex];
-  Status = MsWheaVerifyCPERHeader(Framework,
-                                  Context,
+  Status = MsWheaVerifyCPERHeader(Context,
                                   CperHdr,
                                   ErrorSeverity,
                                   PartitionId,
@@ -493,8 +480,7 @@ MsWheaVerifyFlashStorage (
 
   mIndex += sizeof(EFI_COMMON_ERROR_RECORD_HEADER);
   CperSecDecs = (EFI_ERROR_SECTION_DESCRIPTOR*)&Buffer[mIndex];
-  Status = MsWheaVerifyCPERSecDesc(Framework,
-                                  Context,
+  Status = MsWheaVerifyCPERSecDesc(Context,
                                   CperSecDecs,
                                   ErrorSeverity,
                                   ErrorStatusCodeValue,
@@ -506,8 +492,7 @@ MsWheaVerifyFlashStorage (
 
   mIndex += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
   MuTelSecData = (MU_TELEMETRY_CPER_SECTION_DATA*)&Buffer[mIndex];
-  Status = MsWheaVerifyMuTelemetryErrorData(Framework,
-                                            Context,
+  Status = MsWheaVerifyMuTelemetryErrorData(Context,
                                             MuTelSecData,
                                             LibraryId,
                                             ErrorStatusCodeValue,
@@ -543,7 +528,6 @@ Cleanup:
 /**
   Clear all the HwErrRec entries on flash
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
 
   @retval UNIT_TEST_PASSED            The entry point executed successfully.
@@ -553,7 +537,6 @@ Cleanup:
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaCommonClean (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -627,7 +610,6 @@ MsWheaCommonClean (
 /**
   Clear all the HwErrRec entries on flash
 
-  @param[in] Framework                Test framework applied for this test case
   @param[in] Context                  Test context applied for this test case
 
   @retval UNIT_TEST_PASSED            The entry point executed successfully.
@@ -637,7 +619,6 @@ MsWheaCommonClean (
 VOID
 EFIAPI
 MsWheaCommonCleanUp (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -706,7 +687,6 @@ MsWheaCommonCleanUp (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaFatalExEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -730,8 +710,7 @@ MsWheaFatalExEntries (
                   UNIT_TEST_ERROR_INFO1,
                   UNIT_TEST_ERROR_INFO2
                   );
-    Status = MsWheaVerifyFlashStorage(Framework,
-                                      Context,
+    Status = MsWheaVerifyFlashStorage(Context,
                                       TestIndex,
                                       UNIT_TEST_ERROR_CODE | TestIndex,
                                       EFI_GENERIC_ERROR_FATAL,
@@ -760,7 +739,6 @@ Cleanup:
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaNonFatalExEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -783,8 +761,7 @@ MsWheaNonFatalExEntries (
                   UNIT_TEST_ERROR_INFO1,
                   UNIT_TEST_ERROR_INFO2
                   );
-    Status = MsWheaVerifyFlashStorage(Framework,
-                                      Context,
+    Status = MsWheaVerifyFlashStorage(Context,
                                       TestIndex,
                                       UNIT_TEST_ERROR_CODE | TestIndex,
                                       EFI_GENERIC_ERROR_INFO,
@@ -813,7 +790,6 @@ Cleanup:
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaWildcardEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -838,8 +814,7 @@ MsWheaWildcardEntries (
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
+  Status = MsWheaVerifyFlashStorage(Context,
                                     TestIndex,
                                     UNIT_TEST_ERROR_CODE,
                                     EFI_GENERIC_ERROR_FATAL,
@@ -866,8 +841,7 @@ MsWheaWildcardEntries (
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
+  Status = MsWheaVerifyFlashStorage(Context,
                                     TestIndex,
                                     UNIT_TEST_ERROR_CODE,
                                     EFI_GENERIC_ERROR_INFO,
@@ -896,7 +870,6 @@ Cleanup:
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaShortEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -915,8 +888,7 @@ MsWheaShortEntries (
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
+  Status = MsWheaVerifyFlashStorage(Context,
                                     TestIndex,
                                     UNIT_TEST_ERROR_CODE,
                                     EFI_GENERIC_ERROR_FATAL,
@@ -937,8 +909,7 @@ MsWheaShortEntries (
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
+  Status = MsWheaVerifyFlashStorage(Context,
                                     TestIndex,
                                     UNIT_TEST_ERROR_CODE,
                                     EFI_GENERIC_ERROR_INFO,
@@ -967,7 +938,6 @@ Cleanup:
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaStressEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE       Framework,
   IN UNIT_TEST_CONTEXT                Context
   )
 {
@@ -988,8 +958,7 @@ MsWheaStressEntries (
     if (EFI_ERROR(Status) != FALSE) {
       UT_LOG_WARNING( "Report Status Code returns non success value.");
     }
-    Status = MsWheaVerifyFlashStorage(Framework,
-                                      Context,
+    Status = MsWheaVerifyFlashStorage(Context,
                                       TestIndex,
                                       UNIT_TEST_ERROR_CODE,
                                       EFI_GENERIC_ERROR_FATAL,
@@ -1028,7 +997,6 @@ Cleanup:
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaVariableServicesTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1119,8 +1087,7 @@ MsWheaVariableServicesTest (
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_WARNING( "Report Status Code returns non success value.");
   }
-  Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
+  Status = MsWheaVerifyFlashStorage(Context,
                                     0,
                                     UNIT_TEST_ERROR_CODE,
                                     EFI_GENERIC_ERROR_FATAL,
@@ -1153,7 +1120,6 @@ Cleanup:
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaReportTplTest (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1179,8 +1145,7 @@ MsWheaReportTplTest (
     TplPrevious = gBS->RaiseTPL(TestIndex);
     ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL, (EFI_STATUS_CODE_VALUE) (UNIT_TEST_ERROR_CODE | TestIndex));
     gBS->RestoreTPL(TplPrevious) ;
-    Status = MsWheaVerifyFlashStorage(Framework,
-                                    Context,
+    Status = MsWheaVerifyFlashStorage(Context,
                                     0,
                                     (UNIT_TEST_ERROR_CODE | TestIndex),
                                     EFI_GENERIC_ERROR_FATAL,
@@ -1234,11 +1199,10 @@ MsWheaReportUnitTestAppEntryPoint (
   IN EFI_SYSTEM_TABLE                 *SystemTable
   )
 {
-  EFI_STATUS            Status = EFI_ABORTED;
-  UNIT_TEST_FRAMEWORK   *Fw = NULL;
-  CHAR16                ShortTitle[128];
-  UNIT_TEST_SUITE       *Misc = NULL;
-  MS_WHEA_TEST_CONTEXT  *MsWheaContext = NULL;
+  EFI_STATUS                  Status = EFI_ABORTED;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE      Misc = NULL;
+  MS_WHEA_TEST_CONTEXT        *MsWheaContext = NULL;
 
   DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
@@ -1248,19 +1212,17 @@ MsWheaReportUnitTestAppEntryPoint (
     goto Cleanup;
   }
 
-  SetMem(ShortTitle, sizeof(ShortTitle), 0);
-  UnicodeSPrint(ShortTitle, sizeof(ShortTitle), L"%a", gEfiCallerBaseName);
-  DEBUG(( DEBUG_ERROR, "%a %s v%s\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG(( DEBUG_ERROR, "%a %a v%a\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
   // Start setting up the test framework for running the tests.
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortTitle, UNIT_TEST_APP_VERSION );
+  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a Failed in InitUnitTestFramework. Status = %r\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // Misc test suite for all tests.
-  CreateUnitTestSuite( &Misc, Fw, L"MS WHEA Miscellaneous Test cases", L"MsWhea.Miscellaneous", NULL, NULL);
+  CreateUnitTestSuite( &Misc, Fw, "MS WHEA Miscellaneous Test cases", "MsWhea.Miscellaneous", NULL, NULL);
 
   if (Misc == NULL) {
     DEBUG((DEBUG_ERROR, "%a Failed in CreateUnitTestSuite for TestSuite\n", __FUNCTION__));
@@ -1268,25 +1230,25 @@ MsWheaReportUnitTestAppEntryPoint (
     goto Cleanup;
   }
 
-  AddTestCase(Misc, L"Fatal error Ex report", L"MsWhea.Miscellaneous.MsWheaFatalExEntries",
+  AddTestCase(Misc, "Fatal error Ex report", "MsWhea.Miscellaneous.MsWheaFatalExEntries",
               MsWheaFatalExEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Non-fatal error Ex report", L"MsWhea.Miscellaneous.MsWheaNonFatalExEntries",
+  AddTestCase(Misc, "Non-fatal error Ex report", "MsWhea.Miscellaneous.MsWheaNonFatalExEntries",
               MsWheaNonFatalExEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Wildcard error report", L"MsWhea.Miscellaneous.MsWheaWildcardEntries",
+  AddTestCase(Misc, "Wildcard error report", "MsWhea.Miscellaneous.MsWheaWildcardEntries",
               MsWheaWildcardEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Short error report", L"MsWhea.Miscellaneous.MsWheaShortEntries",
+  AddTestCase(Misc, "Short error report", "MsWhea.Miscellaneous.MsWheaShortEntries",
               MsWheaShortEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Stress test should fill up reserved variable space", L"MsWhea.Miscellaneous.MsWheaStressEntries",
+  AddTestCase(Misc, "Stress test should fill up reserved variable space", "MsWhea.Miscellaneous.MsWheaStressEntries",
               MsWheaStressEntries, MsWheaCommonClean, NULL, MsWheaContext );
 
-  AddTestCase(Misc, L"Variable service test should verify Reclaim and quota manipulation", L"MsWhea.Miscellaneous.MsWheaVariableServicesTest",
+  AddTestCase(Misc, "Variable service test should verify Reclaim and quota manipulation", "MsWhea.Miscellaneous.MsWheaVariableServicesTest",
               MsWheaVariableServicesTest, MsWheaCommonClean, MsWheaCommonCleanUp, MsWheaContext );
 
-  AddTestCase(Misc, L"TPL test for all supported TPLs", L"MsWhea.Miscellaneous.MsWheaReportTplTest",
+  AddTestCase(Misc, "TPL test for all supported TPLs", "MsWhea.Miscellaneous.MsWheaReportTplTest",
               MsWheaReportTplTest, MsWheaCommonClean, MsWheaCommonCleanUp, MsWheaContext );
 
   //

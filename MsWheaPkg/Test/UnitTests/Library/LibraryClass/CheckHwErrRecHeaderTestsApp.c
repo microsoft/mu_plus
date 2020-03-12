@@ -7,7 +7,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
-#include <UnitTestTypes.h>
 
 #include <Guid/Cper.h>
 
@@ -17,13 +16,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiLib.h>
-#include <Library/UnitTestAssertLib.h>
-#include <Library/UnitTestLogLib.h>
 #include <Library/UnitTestLib.h>
 #include <Library/CheckHwErrRecHeaderLib.h>
 
-#define UNIT_TEST_APP_NAME        L"CheckHwErrRecHeader Tests App"
-#define UNIT_TEST_APP_VERSION     L"1.0"
+#define UNIT_TEST_APP_NAME        "CheckHwErrRecHeader Tests App"
+#define UNIT_TEST_APP_VERSION     "1.0"
 
 #define MaxNumSections        5
 #define BaseSecDescLength     128
@@ -316,7 +313,6 @@ STATIC
 VOID
 EFIAPI
 CleanupErr (
-    IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
     IN UNIT_TEST_CONTEXT           Context
   ) {
 
@@ -335,8 +331,7 @@ CleanupErr (
 STATIC
 UNIT_TEST_STATUS
 EFIAPI
-ErrorRecordHeaderTest(IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
-                      IN UNIT_TEST_CONTEXT           Context)
+ErrorRecordHeaderTest(IN UNIT_TEST_CONTEXT           Context)
 {
 
   EFI_ERROR_SECTION_DESCRIPTOR          *SectionHeader;
@@ -407,20 +402,16 @@ CheckHwErrRecHeaderTestsEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    EFI_STATUS                 Status;
-    UNIT_TEST_FRAMEWORK       *Fw = NULL;
-    UNIT_TEST_SUITE           *ErrorRecordTests;
-    CHAR16                     ShortName[100];
+    EFI_STATUS                  Status;
+    UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+    UNIT_TEST_SUITE_HANDLE      ErrorRecordTests;
 
-
-    ShortName[0] = L'\0';
-    UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-    DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+    DEBUG(( DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
     //
     // Start setting up the test framework for running the tests.
     //
-    Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION );
+    Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
     if (EFI_ERROR( Status )) {
         DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
         goto EXIT;
@@ -429,7 +420,7 @@ CheckHwErrRecHeaderTestsEntry (
     //
     // Populate the test suite.
     //
-    Status = CreateUnitTestSuite( &ErrorRecordTests, Fw, L"Test Error Record Header Validation", L"ErrorRecord.tests", NULL, NULL );
+    Status = CreateUnitTestSuite( &ErrorRecordTests, Fw, "Test Error Record Header Validation", "ErrorRecord.tests", NULL, NULL );
     if (EFI_ERROR( Status )){
         DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for ErrorRecord Tests\n"));
         Status = EFI_OUT_OF_RESOURCES;
@@ -437,25 +428,25 @@ CheckHwErrRecHeaderTestsEntry (
     }
 
 // --------------Suite-------------Description------------------Class Name-------------Function---------------Pre---Post--------Context-----------
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test1",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest1);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test2",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest2);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test3",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest3);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test4",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest4);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test5",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest5);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test6",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest6);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test7",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest7);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test8",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest8);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test9",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest9);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test10", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest10);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test11", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest11);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test12", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest12);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test13", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest13);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test14", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest14);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test15", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest15);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test16", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest16);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test17", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest17);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test18", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest18);
-    AddTestCase( ErrorRecordTests, L"Test Error Record Header", L"ErrorRecord.Test19", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest19);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test1",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest1);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test2",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest2);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test3",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest3);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test4",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest4);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test5",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest5);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test6",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest6);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test7",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest7);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test8",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest8);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test9",  ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest9);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test10", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest10);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test11", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest11);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test12", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest12);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test13", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest13);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test14", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest14);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test15", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest15);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test16", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest16);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test17", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest17);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test18", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest18);
+    AddTestCase( ErrorRecordTests, "Test Error Record Header", "ErrorRecord.Test19", ErrorRecordHeaderTest, NULL, CleanupErr, &mBasicRecordTest19);
 
     //
     // Execute the tests.

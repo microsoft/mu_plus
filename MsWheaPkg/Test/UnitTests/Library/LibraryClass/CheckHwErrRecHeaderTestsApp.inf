@@ -20,7 +20,6 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
   MsWheaPkg/MsWheaPkg.dec
 
 [LibraryClasses]
@@ -29,7 +28,5 @@
   UefiApplicationEntryPoint
   DebugLib
   UnitTestLib
-  UnitTestAssertLib
-  UnitTestLogLib
   PrintLib
   CheckHwErrRecHeaderLib
