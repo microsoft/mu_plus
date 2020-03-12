@@ -20,17 +20,21 @@ jobs:
   #Use matrix to speed up the build process
   strategy:
     matrix:
-      TARGET_DFCI:
+      TARGET_DFCI_ZERO_XML:
         Build.Pkgs: 'DfciPkg,ZeroTouchPkg,XmlSupportPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
-      TARGET_SHARED_CRYPTO:
-        Build.Pkgs: 'SharedCryptoPkg'
+      # TEMP - Remove SharedCrypto from CI while porting to EdkSharedCrypto.
+      # TARGET_SHARED_CRYPTO:
+      #   Build.Pkgs: 'SharedCryptoPkg'
+      #   Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
+      TARGET_GRAPHICS:
+        Build.Pkgs: 'MsGraphicsPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
-      TARGET_OTHER1:
-        Build.Pkgs: 'MsGraphicsPkg,UefiTestingPkg,PcBdsPkg,AdvLoggerPkg'
+      TARGET_CORE:
+        Build.Pkgs: 'MsCorePkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
-      TARGET_OTHER2:
-        Build.Pkgs: 'MsCorePkg,MsWheaPkg'
+      TARGET_TEST_PCBDS_LOG_WHEA:
+        Build.Pkgs: 'UefiTestingPkg,PcBdsPkg,AdvLoggerPkg,MsWheaPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
   workspace:
     clean: all
