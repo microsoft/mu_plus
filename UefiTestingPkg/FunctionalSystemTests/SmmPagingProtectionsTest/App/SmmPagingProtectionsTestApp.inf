@@ -31,7 +31,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
 
 
 [LibraryClasses]
@@ -39,9 +38,7 @@
   UefiApplicationEntryPoint
   UefiBootServicesTableLib
   UnitTestLib
-  UnitTestLogLib
   UnitTestPersistenceLib
-  UnitTestAssertLib
   PrintLib
 
 [Protocols]

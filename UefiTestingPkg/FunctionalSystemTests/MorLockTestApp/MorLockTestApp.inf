@@ -27,7 +27,6 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
 
 
 [LibraryClasses]
@@ -35,9 +34,7 @@
   UefiApplicationEntryPoint
   DebugLib
   UnitTestLib
-  UnitTestLogLib
   UnitTestPersistenceLib
-  UnitTestAssertLib
   PrintLib
 
 [Guids]

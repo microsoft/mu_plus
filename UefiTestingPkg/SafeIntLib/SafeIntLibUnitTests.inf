@@ -31,7 +31,6 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
   MdeModulePkg/MdeModulePkg.dec
 
 [LibraryClasses]
@@ -39,5 +38,4 @@
   BaseLib
   SafeIntLib
   UnitTestLib
-  UnitTestAssertLib
   PrintLib

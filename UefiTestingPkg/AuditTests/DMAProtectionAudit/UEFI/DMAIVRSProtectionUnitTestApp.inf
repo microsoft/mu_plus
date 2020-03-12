@@ -34,7 +34,6 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
   ShellPkg/ShellPkg.dec
 
 [LibraryClasses]
@@ -42,7 +41,6 @@
   UefiApplicationEntryPoint
   DebugLib
   UnitTestLib
-  UnitTestAssertLib
   PrintLib
   ShellLib
   IoLib

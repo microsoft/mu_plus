@@ -26,7 +26,6 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
 
 [Protocols]
 

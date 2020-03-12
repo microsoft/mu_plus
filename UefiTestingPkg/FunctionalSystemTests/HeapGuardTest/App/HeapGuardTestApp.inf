@@ -36,7 +36,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  MsUnitTestPkg/MsUnitTestPkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
   ShellPkg/ShellPkg.dec
 
@@ -46,9 +45,7 @@
   UefiApplicationEntryPoint
   UefiBootServicesTableLib
   UnitTestLib
-  UnitTestLogLib
   UnitTestPersistenceLib
-  UnitTestAssertLib
   PrintLib
   MemoryAllocationLib
   BaseLib
