@@ -313,7 +313,7 @@ AdvancedLoggerGetLoggerInfo (
                 LogPtr->LoggerInfo = PA_FROM_PTR (LoggerInfo);
 
                 //
-                // Publish the PPIs needed
+                // Publish the mAdvancedLoggerPpiList
                 GuidHob->Name = gAdvancedLoggerHobGuid;
                 Status = PeiServicesInstallPpi (mAdvancedLoggerPpiList);
                 ASSERT_EFI_ERROR(Status);
