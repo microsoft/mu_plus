@@ -35,7 +35,7 @@ FindFirstAttFound(
   UT_ASSERT_MEM_EQUAL(Result->Value, "value1", AsciiStrLen("value1"));
 
   //Make sure parent and parent link are equal
-  UT_ASSERT_EQUAL(Result->Parent, NodeWithAtt);
+  UT_ASSERT_EQUAL((UINTN)Result->Parent, (UINTN)NodeWithAtt);
 
   return UNIT_TEST_PASSED;
 }
@@ -64,7 +64,7 @@ FindFirstAttFound2(
   UT_ASSERT_MEM_EQUAL(Result->Value, "value2", AsciiStrLen("value2")); //Make sure contents are the same
 
   //Make sure parent and parent link are equal
-  UT_ASSERT_EQUAL(Result->Parent, NodeWithAtt);
+  UT_ASSERT_EQUAL((UINTN)Result->Parent, (UINTN)NodeWithAtt);
 
   return UNIT_TEST_PASSED;
 }
