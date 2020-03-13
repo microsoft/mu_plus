@@ -24,19 +24,19 @@ STATIC DEBUG_LOG_FILE_INFO  mLogFiles[] = { { L"\\Logs\\UEFI_Index.txt", INDEX_F
 
 
 /**
-  CheckIfUSB
+  CheckIfNVME
 
-  Checks if the device path is a USB device path.
+  Checks if the device path is an NVME device path.
 
   @param Handle     Handle with Device Path protocol
 
-  @retval  TRUE     Device is USB or Unable to get Device Path
-  @retval  FALSE    Device is NOT USB.
+  @retval  TRUE     Device is NVME
+  @retval  FALSE    Device is NOT NVME or Unable to get Device Path.
 
   **/
 STATIC
 BOOLEAN
-CheckIfUSB (
+CheckIfNVME (
     IN EFI_HANDLE Handle
     )
 {
@@ -44,12 +44,12 @@ CheckIfUSB (
 
     DevicePath = DevicePathFromHandle (Handle);
     if (DevicePath == NULL) {
-        return TRUE;
+        return FALSE;
     }
 
     while (!IsDevicePathEnd(DevicePath)) {
         if ((MESSAGING_DEVICE_PATH == DevicePathType(DevicePath)) &&
-            (MSG_USB_DP == DevicePathSubType(DevicePath)) ) {
+            (MSG_NVME_NAMESPACE_DP == DevicePathSubType(DevicePath)) ) {
             return TRUE;
         }
         DevicePath = NextDevicePathNode(DevicePath);
@@ -117,9 +117,9 @@ VolumeFromFileSystemHandle (
                            EFI_FILE_DIRECTORY | EFI_FILE_HIDDEN);
 
     if (EFI_ERROR(Status)) {
-        // Logs directory doesn't exist.  If USB, no logging available
-        if (CheckIfUSB (FileSystemHandle)) {
-            DEBUG((DEBUG_INFO, "Logs directory not found on USB device.  No logging to USB\n"));
+        // Logs directory doesn't exist.  If NVME, allow forced logging
+        if (!CheckIfNVME (FileSystemHandle)) {
+            DEBUG((DEBUG_INFO, "Logs directory not found on device.  No logging.\n"));
             return NULL;
         }
 
@@ -671,7 +671,7 @@ EnableLoggingOnThisDevice (
                                    0);
             if (EFI_ERROR(Status)) {
                 DEBUG((DEBUG_ERROR,"%a: Failed to create log file %s. Code=%r \n", __FUNCTION__ , mLogFiles[i].LogFileName, Status));
-                FreePool (DataBuffer);
+                FreePages (DataBuffer, EFI_SIZE_TO_PAGES(DEBUG_LOG_CHUNK_SIZE));
                 return Status;
             }
 

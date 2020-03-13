@@ -156,10 +156,12 @@ RegisterLogDevice (
     IN EFI_HANDLE Handle
     )
 {
-    LOG_DEVICE     *LogDevice;
-    EFI_STATUS      Status;
-    UINT64          TimeStart;
-    UINT64          TimeEnd;
+    EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+    CHAR16                   *DevicePathString;
+    LOG_DEVICE               *LogDevice;
+    EFI_STATUS                Status;
+    UINT64                    TimeStart;
+    UINT64                    TimeEnd;
 
     TimeStart = GetPerformanceCounter ();
 
@@ -180,6 +182,12 @@ RegisterLogDevice (
         FreePool (LogDevice);
     } else {
         InsertTailList (&mLoggingDeviceHead, &LogDevice->Link);
+        DevicePath = DevicePathFromHandle (Handle);
+        DevicePathString = ConvertDevicePathToText (DevicePath, TRUE, TRUE);
+        if (DevicePathString != NULL) {
+            DEBUG((DEBUG_INFO, "File system registered on device:\n%s\n", DevicePathString));
+            FreePool (DevicePathString);
+        }
     }
 
     TimeEnd = GetPerformanceCounter();

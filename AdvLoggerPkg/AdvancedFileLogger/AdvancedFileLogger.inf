@@ -51,7 +51,6 @@
   gMuEventPreExitBootServicesGuid
 
 [Protocols]
-  gEfiBlockIoProtocolGuid                                   ## CONSUMES
   gEfiResetNotificationProtocolGuid                         ## CONSUMES
   gEfiSimpleFileSystemProtocolGuid                          ## CONSUMES
 
