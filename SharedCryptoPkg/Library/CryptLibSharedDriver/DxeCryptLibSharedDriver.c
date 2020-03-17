@@ -28,7 +28,7 @@ SHARED_CRYPTO_FUNCTIONS* GetProtocol ()
       ProtocolNotFound(Status);
     }
     else {
-      Version = pCryptoProtocol->SharedCrypto_GetLowestSupportedVersion();
+      Version = pCryptoProtocol->GetVersion();
       if (Version != SHARED_CRYPTO_VERSION)
       {
         DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_DXE] Failed to locate Support Protocol. Version doesn't match expected %d. Current Version: %d\n", SHARED_CRYPTO_VERSION, Version));
@@ -51,4 +51,39 @@ VOID ProtocolFunctionNotFound (CONST CHAR8* function_name)
 {
   DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_DXE] This function was not found: %a\n",function_name));
   ASSERT_EFI_ERROR(EFI_UNSUPPORTED);
+}
+
+EFI_STATUS
+EFIAPI
+DxeCryptLibConstructor (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       Version;
+
+  Status = gBS->LocateProtocol (
+                  &gSharedCryptoProtocolGuid,
+                  NULL,
+                  (VOID **)&pCryptoProtocol
+                  );
+
+  if (EFI_ERROR (Status) || pCryptoProtocol == NULL) {
+    DEBUG((DEBUG_ERROR, "[DxeCryptLib] Failed to locate Crypto Protocol. Status = %r\n", Status));
+    ASSERT_EFI_ERROR (Status);
+    ASSERT (pCryptoProtocol != NULL);
+    pCryptoProtocol = NULL;
+    return EFI_NOT_FOUND;
+  }
+
+  Version = pCryptoProtocol->GetVersion ();
+  if (Version < SHARED_CRYPTO_VERSION) {
+    DEBUG((DEBUG_ERROR, "[DxeCryptLib] Crypto Protocol unsupported version %d\n", Version));
+    ASSERT (Version >= SHARED_CRYPTO_VERSION);
+    pCryptoProtocol = NULL;
+    return EFI_NOT_FOUND;
+  }
+
+  return EFI_SUCCESS;
 }

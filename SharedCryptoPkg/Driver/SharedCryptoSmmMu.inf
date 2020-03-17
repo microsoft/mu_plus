@@ -44,6 +44,8 @@
   SmmServicesTableLib
   UefiDriverEntryPoint
   BaseCryptLib
+  DebugLib
+  TlsLib
 
 [Protocols]
   gSharedCryptoSmmProtocolGuid ## produces

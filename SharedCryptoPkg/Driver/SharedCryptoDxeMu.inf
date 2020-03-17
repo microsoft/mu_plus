@@ -41,6 +41,8 @@
   UefiBootServicesTableLib
   BaseCryptLib
   UefiDriverEntryPoint
+  DebugLib
+  TlsLib
 
 [Protocols]
   gSharedCryptoProtocolGuid ## produces

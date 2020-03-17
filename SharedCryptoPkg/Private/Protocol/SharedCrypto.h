@@ -6,13 +6,14 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-
-#include <Library/BaseCryptLib.h>
-
 #ifndef __SHARED_CRYPTO_H__
 #define __SHARED_CRYPTO_H__
 
-#define SHARED_CRYPTO_VERSION 5
+#define SHARED_CRYPTO_VERSION 6
+
+#include <Base.h>
+#include <Library/BaseCryptLib.h>
+#include <Library/PcdLib.h>
 
 typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_FUNCTIONS;
 typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_PROTOCOL;
@@ -20,19 +21,21 @@ typedef struct _SHARED_CRYPTO_FUNCTIONS SHARED_CRYPTO_PROTOCOL;
 extern GUID gSharedCryptoSmmProtocolGuid;
 extern GUID gSharedCryptoProtocolGuid;
 
+/**
+  Returns the version of the EDK II Crypto Protocol.
 
+  @return  The version of the EDK II Crypto Protocol.
 
-//A function that returns the version number of the packaged crypto efi
+**/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_GET_VERSION) (
+(EFIAPI *EDKII_CRYPTO_GET_VERSION) (
   VOID
-);
+  );
 
 //=====================================================================================
 //    MAC (Message Authentication Code) Primitive
 //=====================================================================================
-
 /**
   Allocates and initializes one HMAC_CTX context for subsequent HMAC-MD5 use.
 
@@ -45,7 +48,7 @@ UINTN
 **/
 typedef
 VOID*
-(EFIAPI *SHAREDCRYPTO_HMAC_MD5_New) (
+(EFIAPI *EDKII_CRYPTO_HMAC_MD5_NEW) (
   VOID
   );
 
@@ -59,18 +62,18 @@ VOID*
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Free) (
+(EFIAPI *EDKII_CRYPTO_HMAC_MD5_FREE) (
   IN  VOID  *HmacMd5Ctx
   );
 
 /**
-  Initializes user-supplied memory pointed by HmacMd5Context as HMAC-MD5 context for
-  subsequent use.
+  Set user-supplied key for subsequent use. It must be done before any
+  calling to HmacMd5Update().
 
   If HmacMd5Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
 
-  @param[out]  HmacMd5Context  Pointer to HMAC-MD5 context being initialized.
+  @param[out]  HmacMd5Context  Pointer to HMAC-MD5 context.
   @param[in]   Key             Pointer to the user-supplied key.
   @param[in]   KeySize         Key size in bytes.
 
@@ -81,7 +84,7 @@ VOID
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Init) (
+(EFIAPI *EDKII_CRYPTO_HMAC_MD5_INIT) (
   OUT  VOID         *HmacMd5Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -104,7 +107,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Duplicate) (
+(EFIAPI *EDKII_CRYPTO_HMAC_MD5_DUPLICATE) (
   IN   CONST VOID  *HmacMd5Context,
   OUT  VOID        *NewHmacMd5Context
   );
@@ -114,8 +117,8 @@ BOOLEAN
 
   This function performs HMAC-MD5 digest on a data buffer of the specified size.
   It can be called multiple times to compute the digest of long or discontinuous data streams.
-  HMAC-MD5 context should be already correctly initialized by HmacMd5Init(), and should not be
-  finalized by HmacMd5Final(). Behavior with invalid context is undefined.
+  HMAC-MD5 context should be initialized by HmacMd5New(), and should not be finalized by
+  HmacMd5Final(). Behavior with invalid context is undefined.
 
   If HmacMd5Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
@@ -131,7 +134,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Update) (
+(EFIAPI *EDKII_CRYPTO_HMAC_MD5_UPDATE) (
   IN OUT  VOID        *HmacMd5Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -144,8 +147,8 @@ BOOLEAN
   This function completes HMAC-MD5 hash computation and retrieves the digest value into
   the specified memory. After this function has been called, the HMAC-MD5 context cannot
   be used again.
-  HMAC-MD5 context should be already correctly initialized by HmacMd5Init(), and should not be
-  finalized by HmacMd5Final(). Behavior with invalid HMAC-MD5 context is undefined.
+  HMAC-MD5 context should be initialized by HmacMd5New(), and should not be finalized by
+  HmacMd5Final(). Behavior with invalid HMAC-MD5 context is undefined.
 
   If HmacMd5Context is NULL, then return FALSE.
   If HmacValue is NULL, then return FALSE.
@@ -160,10 +163,9 @@ BOOLEAN
   @retval FALSE  This interface is not supported.
 
 **/
-
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_MD5_Final) (
+(EFIAPI *EDKII_CRYPTO_HMAC_MD5_FINAL) (
   IN OUT  VOID   *HmacMd5Context,
   OUT     UINT8  *HmacValue
   );
@@ -181,7 +183,7 @@ BOOLEAN
 **/
 typedef
 VOID*
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_New) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA1_NEW) (
   VOID
   );
 
@@ -195,30 +197,30 @@ VOID*
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Free) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA1_FREE) (
   IN  VOID  *HmacSha1Ctx
   );
 
 
 /**
-  Initializes user-supplied memory pointed by HmacSha1Context as HMAC-SHA1 context for
-  subsequent use.
+  Set user-supplied key for subsequent use. It must be done before any
+  calling to HmacSha1Update().
 
   If HmacSha1Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
 
-  @param[out]  HmacSha1Context  Pointer to HMAC-SHA1 context being initialized.
+  @param[out]  HmacSha1Context  Pointer to HMAC-SHA1 context.
   @param[in]   Key              Pointer to the user-supplied key.
   @param[in]   KeySize          Key size in bytes.
 
-  @retval TRUE   HMAC-SHA1 context initialization succeeded.
-  @retval FALSE  HMAC-SHA1 context initialization failed.
+  @retval TRUE   The Key is set successfully.
+  @retval FALSE  The Key is set unsuccessfully.
   @retval FALSE  This interface is not supported.
 
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Init) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA1_INIT) (  // SET_KEY
   OUT  VOID         *HmacSha1Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -242,7 +244,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Duplicate) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA1_DUPLICATE) (
   IN   CONST VOID  *HmacSha1Context,
   OUT  VOID        *NewHmacSha1Context
   );
@@ -253,8 +255,8 @@ BOOLEAN
 
   This function performs HMAC-SHA1 digest on a data buffer of the specified size.
   It can be called multiple times to compute the digest of long or discontinuous data streams.
-  HMAC-SHA1 context should be already correctly initialized by HmacSha1Init(), and should not
-  be finalized by HmacSha1Final(). Behavior with invalid context is undefined.
+  HMAC-SHA1 context should be initialized by HmacSha1New(), and should not be finalized by
+  HmacSha1Final(). Behavior with invalid context is undefined.
 
   If HmacSha1Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
@@ -270,7 +272,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Update) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA1_UPDATE) (
   IN OUT  VOID        *HmacSha1Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -283,8 +285,8 @@ BOOLEAN
   This function completes HMAC-SHA1 hash computation and retrieves the digest value into
   the specified memory. After this function has been called, the HMAC-SHA1 context cannot
   be used again.
-  HMAC-SHA1 context should be already correctly initialized by HmacSha1Init(), and should
-  not be finalized by HmacSha1Final(). Behavior with invalid HMAC-SHA1 context is undefined.
+  HMAC-SHA1 context should be initialized by HmacSha1New(), and should not be finalized
+  by HmacSha1Final(). Behavior with invalid HMAC-SHA1 context is undefined.
 
   If HmacSha1Context is NULL, then return FALSE.
   If HmacValue is NULL, then return FALSE.
@@ -301,10 +303,11 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA1_Final) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA1_FINAL) (
   IN OUT  VOID   *HmacSha1Context,
   OUT     UINT8  *HmacValue
   );
+
 
 /**
   Allocates and initializes one HMAC_CTX context for subsequent HMAC-SHA256 use.
@@ -315,7 +318,7 @@ BOOLEAN
 **/
 typedef
 VOID *
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_New) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA256_NEW) (
   VOID
   );
 
@@ -327,30 +330,30 @@ VOID *
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Free) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA256_FREE) (
   IN  VOID  *HmacSha256Ctx
   );
 
 
 /**
-  Initializes user-supplied memory pointed by HmacSha256Context as HMAC-SHA256 context for
-  subsequent use.
+  Set user-supplied key for subsequent use. It must be done before any
+  calling to HmacSha256Update().
 
   If HmacSha256Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
 
-  @param[out]  HmacSha256Context  Pointer to HMAC-SHA256 context being initialized.
+  @param[out]  HmacSha256Context  Pointer to HMAC-SHA256 context.
   @param[in]   Key                Pointer to the user-supplied key.
   @param[in]   KeySize            Key size in bytes.
 
-  @retval TRUE   HMAC-SHA256 context initialization succeeded.
-  @retval FALSE  HMAC-SHA256 context initialization failed.
+  @retval TRUE   The Key is set successfully.
+  @retval FALSE  The Key is set unsuccessfully.
   @retval FALSE  This interface is not supported.
 
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Init) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA256_INIT) (
   OUT  VOID         *HmacSha256Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -373,7 +376,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Duplicate) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA256_DUPLICATE) (
   IN   CONST VOID  *HmacSha256Context,
   OUT  VOID        *NewHmacSha256Context
   );
@@ -384,8 +387,8 @@ BOOLEAN
 
   This function performs HMAC-SHA256 digest on a data buffer of the specified size.
   It can be called multiple times to compute the digest of long or discontinuous data streams.
-  HMAC-SHA256 context should be already correctly initialized by HmacSha256Init(), and should not
-  be finalized by HmacSha256Final(). Behavior with invalid context is undefined.
+  HMAC-SHA256 context should be initialized by HmacSha256New(), and should not be finalized
+  by HmacSha256Final(). Behavior with invalid context is undefined.
 
   If HmacSha256Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
@@ -401,7 +404,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Update) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA256_UPDATE) (
   IN OUT  VOID        *HmacSha256Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -413,8 +416,8 @@ BOOLEAN
   This function completes HMAC-SHA256 hash computation and retrieves the digest value into
   the specified memory. After this function has been called, the HMAC-SHA256 context cannot
   be used again.
-  HMAC-SHA256 context should be already correctly initialized by HmacSha256Init(), and should
-  not be finalized by HmacSha256Final(). Behavior with invalid HMAC-SHA256 context is undefined.
+  HMAC-SHA256 context should be initialized by HmacSha256New(), and should not be finalized
+  by HmacSha256Final(). Behavior with invalid HMAC-SHA256 context is undefined.
 
   If HmacSha256Context is NULL, then return FALSE.
   If HmacValue is NULL, then return FALSE.
@@ -431,7 +434,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_HMAC_SHA256_Final) (
+(EFIAPI *EDKII_CRYPTO_HMAC_SHA256_FINAL) (
   IN OUT  VOID   *HmacSha256Context,
   OUT     UINT8  *HmacValue
   );
@@ -452,7 +455,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_MD4_GetContextSize) (
+(EFIAPI *EDKII_CRYPTO_MD4_GET_CONTEXT_SIZE) (
   VOID
   );
 
@@ -473,7 +476,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_MD4_Init) (
+(EFIAPI *EDKII_CRYPTO_MD4_INIT) (
   OUT  VOID  *Md4Context
   );
 
@@ -495,7 +498,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_MD4_Duplicate) (
+(EFIAPI *EDKII_CRYPTO_MD4_DUPLICATE) (
   IN   CONST VOID  *Md4Context,
   OUT  VOID        *NewMd4Context
   );
@@ -523,7 +526,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_MD4_Update) (
+(EFIAPI *EDKII_CRYPTO_MD4_UPDATE) (
   IN OUT  VOID        *Md4Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -554,7 +557,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_MD4_Final) (
+(EFIAPI *EDKII_CRYPTO_MD4_FINAL) (
   IN OUT  VOID   *Md4Context,
   OUT     UINT8  *HashValue
   );
@@ -580,7 +583,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_MD4_HashAll) (
+(EFIAPI *EDKII_CRYPTO_MD4_HASH_ALL) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -599,7 +602,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI* SHAREDCRYPTO_MD5_GetContextSize )(
+(EFIAPI* EDKII_CRYPTO_MD5_GET_CONTEXT_SIZE)(
   VOID
   );
 
@@ -619,7 +622,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI* SHAREDCRYPTO_MD5_Init)(
+(EFIAPI* EDKII_CRYPTO_MD5_INIT)(
     OUT VOID *Md5Context);
 
 /**
@@ -639,7 +642,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI* SHAREDCRYPTO_MD5_Duplicate) (
+(EFIAPI* EDKII_CRYPTO_MD5_DUPLICATE) (
     IN CONST VOID *Md5Context,
     OUT VOID *NewMd5Context);
 
@@ -666,7 +669,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI* SHAREDCRYPTO_MD5_Update)(
+(EFIAPI* EDKII_CRYPTO_MD5_UPDATE)(
     IN OUT VOID *Md5Context,
     IN CONST VOID *Data,
     IN UINTN DataSize);
@@ -696,7 +699,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI* SHAREDCRYPTO_MD5_Final)(
+(EFIAPI* EDKII_CRYPTO_MD5_FINAL)(
     IN OUT VOID *Md5Context,
     OUT UINT8 *HashValue);
 
@@ -721,7 +724,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI* SHAREDCRYPTO_MD5_HashAll)(
+(EFIAPI* EDKII_CRYPTO_MD5_HASH_ALL)(
     IN CONST VOID *Data,
     IN UINTN DataSize,
     OUT UINT8 *HashValue);
@@ -758,7 +761,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_PKCS1_ENCRYPT_V2) (
+(EFIAPI *EDKII_CRYPTO_PKCS1_ENCRYPT_V2) (
 IN   CONST UINT8                   *PublicKey,
 IN   UINTN                          PublicKeySize,
 IN   UINT8                         *InData,
@@ -804,7 +807,7 @@ OUT  UINTN                         *EncryptedDataSize
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_PKCS5_PW_HASH) (
+(EFIAPI *EDKII_CRYPTO_PKCS5_PW_HASH) (
   IN UINTN                      PasswordSize,
   IN CONST  CHAR8              *Password,
   IN UINTN                      SaltSize,
@@ -844,7 +847,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_PKCS7_VERIFY) (
+(EFIAPI *EDKII_CRYPTO_PKCS7_VERIFY) (
 IN  CONST UINT8                   *P7Data,
 IN  UINTN                          P7DataLength,
 IN  CONST UINT8                   *TrustedCert,
@@ -894,7 +897,7 @@ IN  UINTN                          DataLength
 **/
 typedef
 EFI_STATUS
-(EFIAPI *SHAREDCRYPTO_PKCS7_VERIFY_EKU) (
+(EFIAPI *EDKII_CRYPTO_PKCS7_VERIFY_EKU) (
 IN CONST UINT8                *Pkcs7Signature,
 IN CONST UINT32                SignatureSize,
 IN CONST CHAR8                *RequiredEKUs[],
@@ -930,7 +933,7 @@ IN BOOLEAN                     RequireAllPresent
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_PKCS7_GetSigners) (
+(EFIAPI *EDKII_CRYPTO_PKCS7_GET_SIGNERS) (
   IN  CONST UINT8  *P7Data,
   IN  UINTN        P7Length,
   OUT UINT8        **CertStack,
@@ -949,7 +952,7 @@ BOOLEAN
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_PKCS7_FreeSigners) (
+(EFIAPI *EDKII_CRYPTO_PKCS7_FREE_SIGNERS) (
   IN  UINT8        *Certs
   );
 
@@ -982,7 +985,7 @@ VOID
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_PKCS7_Sign) (
+(EFIAPI *EDKII_CRYPTO_PKCS7_SIGN) (
   IN   CONST UINT8  *PrivateKey,
   IN   UINTN        PrivateKeySize,
   IN   CONST UINT8  *KeyPassword,
@@ -1017,7 +1020,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_PKCS7_GetAttachedContent) (
+(EFIAPI *EDKII_CRYPTO_PKCS7_GET_ATTACHED_CONTENT) (
   IN  CONST UINT8  *P7Data,
   IN  UINTN        P7Length,
   OUT VOID         **Content,
@@ -1048,7 +1051,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_PKCS7_GetCertificatesList) (
+(EFIAPI *EDKII_CRYPTO_PKCS7_GET_CERTIFICATES_LIST) (
   IN  CONST UINT8  *P7Data,
   IN  UINTN        P7Length,
   OUT UINT8        **SignerChainCerts,
@@ -1083,7 +1086,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_AuthenticodeVerify) (
+(EFIAPI *EDKII_CRYPTO_AUTHENTICODE_VERIFY) (
   IN  CONST UINT8  *AuthData,
   IN  UINTN        DataSize,
   IN  CONST UINT8  *TrustedCert,
@@ -1114,7 +1117,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_ImageTimestampVerify) (
+(EFIAPI *EDKII_CRYPTO_IMAGE_TIMESTAMP_VERIFY) (
   IN  CONST UINT8  *AuthData,
   IN  UINTN        DataSize,
   IN  CONST UINT8  *TsaCert,
@@ -1137,7 +1140,7 @@ BOOLEAN
 **/
 typedef
 VOID*
-(EFIAPI *SHAREDCRYPTO_DH_New) (
+(EFIAPI *EDKII_CRYPTO_DH_NEW) (
   VOID
   );
 
@@ -1151,7 +1154,7 @@ VOID*
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_DH_Free) (
+(EFIAPI *EDKII_CRYPTO_DH_FREE) (
   IN  VOID  *DhContext
   );
 
@@ -1181,7 +1184,7 @@ VOID
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_DH_GenerateParameter) (
+(EFIAPI *EDKII_CRYPTO_DH_GENERATE_PARAMETER) (
   IN OUT  VOID   *DhContext,
   IN      UINTN  Generator,
   IN      UINTN  PrimeLength,
@@ -1213,7 +1216,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_DH_SetParameter) (
+(EFIAPI *EDKII_CRYPTO_DH_SET_PARAMETER) (
   IN OUT  VOID         *DhContext,
   IN      UINTN        Generator,
   IN      UINTN        PrimeLength,
@@ -1246,7 +1249,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_DH_GenerateKey) (
+(EFIAPI *EDKII_CRYPTO_DH_GENERATE_KEY) (
   IN OUT  VOID   *DhContext,
   OUT     UINT8  *PublicKey,
   IN OUT  UINTN  *PublicKeySize
@@ -1280,7 +1283,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_DH_ComputeKey) (
+(EFIAPI *EDKII_CRYPTO_DH_COMPUTE_KEY) (
   IN OUT  VOID         *DhContext,
   IN      CONST UINT8  *PeerPublicKey,
   IN      UINTN        PeerPublicKeySize,
@@ -1312,7 +1315,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RANDOM_Seed) (
+(EFIAPI *EDKII_CRYPTO_RANDOM_SEED) (
   IN  CONST  UINT8  *Seed  OPTIONAL,
   IN  UINTN         SeedSize
   );
@@ -1333,7 +1336,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RANDOM_Bytes) (
+(EFIAPI *EDKII_CRYPTO_RANDOM_BYTES) (
   OUT  UINT8  *Output,
   IN   UINTN  Size
   );
@@ -1359,7 +1362,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_VERIFY_PKCS1 ) (
+(EFIAPI *EDKII_CRYPTO_RSA_VERIFY_PKCS1) (
   IN  VOID                         *RsaContext,
   IN  CONST UINT8                  *MessageHash,
   IN  UINTN                         HashSize,
@@ -1387,7 +1390,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509) (
+(EFIAPI *EDKII_CRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509) (
   IN   CONST UINT8  *Cert,
   IN   UINTN        CertSize,
   OUT  VOID         **RsaContext
@@ -1402,7 +1405,7 @@ BOOLEAN
 **/
 typedef
 VOID*
-(EFIAPI *SHAREDCRYPTO_RSA_New) (
+(EFIAPI *EDKII_CRYPTO_RSA_NEW) (
   VOID
   );
 
@@ -1416,7 +1419,7 @@ VOID*
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_RSA_Free) (
+(EFIAPI *EDKII_CRYPTO_RSA_FREE) (
   IN  VOID  *RsaContext
   );
 
@@ -1444,7 +1447,7 @@ VOID
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_SetKey) (
+(EFIAPI *EDKII_CRYPTO_RSA_SET_KEY) (
   IN OUT  VOID         *RsaContext,
   IN      RSA_KEY_TAG  KeyTag,
   IN      CONST UINT8  *BigNumber,
@@ -1481,7 +1484,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_GetKey) (
+(EFIAPI *EDKII_CRYPTO_RSA_GET_KEY) (
   IN OUT  VOID         *RsaContext,
   IN      RSA_KEY_TAG  KeyTag,
   OUT     UINT8        *BigNumber,
@@ -1513,7 +1516,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_GenerateKey) (
+(EFIAPI *EDKII_CRYPTO_RSA_GENERATE_KEY) (
   IN OUT  VOID         *RsaContext,
   IN      UINTN        ModulusLength,
   IN      CONST UINT8  *PublicExponent,
@@ -1543,7 +1546,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_CheckKey) (
+(EFIAPI *EDKII_CRYPTO_RSA_CHECK_KEY) (
   IN  VOID  *RsaContext
   );
 
@@ -1576,7 +1579,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_Pkcs1Sign) (
+(EFIAPI *EDKII_CRYPTO_RSA_PKCS1_SIGN) (
   IN      VOID         *RsaContext,
   IN      CONST UINT8  *MessageHash,
   IN      UINTN        HashSize,
@@ -1605,7 +1608,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_Pkcs1Verify) (
+(EFIAPI *EDKII_CRYPTO_RSA_PKCS1_VERIFY) (
   IN  VOID         *RsaContext,
   IN  CONST UINT8  *MessageHash,
   IN  UINTN        HashSize,
@@ -1634,7 +1637,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_GetPrivateKeyFromPem) (
+(EFIAPI *EDKII_CRYPTO_RSA_GET_PRIVATE_KEY_FROM_PEM) (
   IN   CONST UINT8  *PemData,
   IN   UINTN        PemSize,
   IN   CONST CHAR8  *Password,
@@ -1661,7 +1664,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_RSA_GetPublicKeyFromX509) (
+(EFIAPI *EDKII_CRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509) (
   IN   CONST UINT8  *Cert,
   IN   UINTN        CertSize,
   OUT  VOID         **RsaContext
@@ -1682,7 +1685,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_SHA1_GET_CONTEXT_SIZE ) (
+(EFIAPI *EDKII_CRYPTO_SHA1_GET_CONTEXT_SIZE ) (
   VOID
   );
 
@@ -1702,7 +1705,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA1_INIT ) (
+(EFIAPI *EDKII_CRYPTO_SHA1_INIT ) (
   OUT  VOID  *Sha1Context
   );
 
@@ -1723,7 +1726,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA1_DUPLICATE ) (
+(EFIAPI *EDKII_CRYPTO_SHA1_DUPLICATE ) (
   IN   CONST VOID  *Sha1Context,
   OUT  VOID        *NewSha1Context
   );
@@ -1750,7 +1753,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA1_UPDATE ) (
+(EFIAPI *EDKII_CRYPTO_SHA1_UPDATE ) (
   IN OUT  VOID        *Sha1Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -1780,7 +1783,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA1_FINAL ) (
+(EFIAPI *EDKII_CRYPTO_SHA1_FINAL ) (
   IN OUT  VOID   *Sha1Context,
   OUT     UINT8  *HashValue
   );
@@ -1805,7 +1808,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA1_HASH_ALL ) (
+(EFIAPI *EDKII_CRYPTO_SHA1_HASH_ALL ) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -1819,7 +1822,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_SHA256_GET_CONTEXT_SIZE ) (
+(EFIAPI *EDKII_CRYPTO_SHA256_GET_CONTEXT_SIZE ) (
   VOID
 );
 
@@ -1837,7 +1840,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA256_INIT ) (
+(EFIAPI *EDKII_CRYPTO_SHA256_INIT ) (
   OUT  VOID  *Sha256Context
   );
 
@@ -1858,7 +1861,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA256_DUPLICATE ) (
+(EFIAPI *EDKII_CRYPTO_SHA256_DUPLICATE ) (
   IN   CONST VOID  *Sha256Context,
   OUT  VOID        *NewSha256Context
   );
@@ -1883,7 +1886,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA256_UPDATE ) (
+(EFIAPI *EDKII_CRYPTO_SHA256_UPDATE ) (
   IN OUT  VOID        *Sha256Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -1911,7 +1914,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA256_FINAL ) (
+(EFIAPI *EDKII_CRYPTO_SHA256_FINAL ) (
   IN OUT  VOID   *Sha256Context,
   OUT     UINT8  *HashValue
   );
@@ -1936,7 +1939,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA256_HASH_ALL ) (
+(EFIAPI *EDKII_CRYPTO_SHA256_HASH_ALL ) (
   IN   CONST VOID                  *Data,
   IN   UINTN                       DataSize,
   OUT  UINT8                       *HashValue
@@ -1953,7 +1956,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_SHA384_GetContextSize) (
+(EFIAPI *EDKII_CRYPTO_SHA384_GET_CONTEXT_SIZE) (
   VOID
   );
 
@@ -1972,7 +1975,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA384_Init) (
+(EFIAPI *EDKII_CRYPTO_SHA384_INIT) (
   OUT  VOID  *Sha384Context
   );
 
@@ -1994,7 +1997,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA384_Duplicate) (
+(EFIAPI *EDKII_CRYPTO_SHA384_DUPLICATE) (
   IN   CONST VOID  *Sha384Context,
   OUT  VOID        *NewSha384Context
   );
@@ -2020,7 +2023,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA384_Update) (
+(EFIAPI *EDKII_CRYPTO_SHA384_UPDATE) (
   IN OUT  VOID        *Sha384Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -2049,7 +2052,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA384_Final) (
+(EFIAPI *EDKII_CRYPTO_SHA384_FINAL) (
   IN OUT  VOID   *Sha384Context,
   OUT     UINT8  *HashValue
   );
@@ -2075,7 +2078,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA384_HashAll) (
+(EFIAPI *EDKII_CRYPTO_SHA384_HASH_ALL) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -2089,7 +2092,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_SHA512_GetContextSize) (
+(EFIAPI *EDKII_CRYPTO_SHA512_GET_CONTEXT_SIZE) (
   VOID
   );
 
@@ -2108,7 +2111,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA512_Init) (
+(EFIAPI *EDKII_CRYPTO_SHA512_INIT) (
   OUT  VOID  *Sha512Context
   );
 
@@ -2130,7 +2133,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA512_Duplicate) (
+(EFIAPI *EDKII_CRYPTO_SHA512_DUPLICATE) (
   IN   CONST VOID  *Sha512Context,
   OUT  VOID        *NewSha512Context
   );
@@ -2155,7 +2158,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA512_Update) (
+(EFIAPI *EDKII_CRYPTO_SHA512_UPDATE) (
   IN OUT  VOID        *Sha512Context,
   IN      CONST VOID  *Data,
   IN      UINTN       DataSize
@@ -2184,7 +2187,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA512_Final) (
+(EFIAPI *EDKII_CRYPTO_SHA512_FINAL) (
   IN OUT  VOID   *Sha512Context,
   OUT     UINT8  *HashValue
   );
@@ -2209,7 +2212,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SHA512_HashAll) (
+(EFIAPI *EDKII_CRYPTO_SHA512_HASH_ALL) (
   IN   CONST VOID  *Data,
   IN   UINTN       DataSize,
   OUT  UINT8       *HashValue
@@ -2240,7 +2243,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_X509_GET_SUBJECT_NAME) (
+(EFIAPI *EDKII_CRYPTO_X509_GET_SUBJECT_NAME) (
   IN      CONST UINT8  *Cert,
   IN      UINTN        CertSize,
   OUT     UINT8        *CertSubject,
@@ -2275,7 +2278,7 @@ BOOLEAN
 **/
 typedef
 EFI_STATUS
-(EFIAPI *SHAREDCRYPTO_X509_GET_COMMON_NAME) (
+(EFIAPI *EDKII_CRYPTO_X509_GET_COMMON_NAME) (
   IN      CONST UINT8  *Cert,
   IN      UINTN        CertSize,
   OUT     CHAR8        *CommonName,  OPTIONAL
@@ -2310,7 +2313,7 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *SHAREDCRYPTO_X509_GET_ORGANIZATION_NAME) (
+(EFIAPI *EDKII_CRYPTO_X509_GET_ORGANIZATION_NAME) (
   IN      CONST UINT8  *Cert,
   IN      UINTN        CertSize,
   OUT     CHAR8        *NameBuffer,  OPTIONAL
@@ -2337,7 +2340,7 @@ EFI_STATUS
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_X509_VerifyCert) (
+(EFIAPI *EDKII_CRYPTO_X509_VERIFY_CERT) (
   IN  CONST UINT8  *Cert,
   IN  UINTN        CertSize,
   IN  CONST UINT8  *CACert,
@@ -2362,7 +2365,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_X509_ConstructCertificate) (
+(EFIAPI *EDKII_CRYPTO_X509_CONSTRUCT_CERTIFICATE) (
   IN   CONST UINT8  *Cert,
   IN   UINTN        CertSize,
   OUT  UINT8        **SingleX509Cert
@@ -2388,9 +2391,35 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_X509_ConstructCertificateStack) (
+(EFIAPI *EDKII_CRYPTO_X509_CONSTRUCT_CERTIFICATE_STACK) (
   IN OUT  UINT8  **X509Stack,
   ...
+  );
+
+/**
+  Construct a X509 stack object from a list of DER-encoded certificate data.
+
+  If X509Stack is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
+
+  @param[in, out]  X509Stack  On input, pointer to an existing or NULL X509 stack object.
+                              On output, pointer to the X509 stack object with new
+                              inserted X509 certificate.
+  @param[in]       Args       VA_LIST marker for the variable argument list.
+                              A list of DER-encoded single certificate data followed
+                              by certificate size. A NULL terminates the list. The
+                              pairs are the arguments to X509ConstructCertificate().
+
+  @retval     TRUE            The X509 stack construction succeeded.
+  @retval     FALSE           The construction operation failed.
+  @retval     FALSE           This interface is not supported.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI *EDKII_CRYPTO_X509_CONSTRUCT_CERTIFICATE_STACK_V) (
+  IN OUT  UINT8    **X509Stack,
+  IN      VA_LIST  Args
   );
 
 /**
@@ -2403,30 +2432,8 @@ BOOLEAN
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_X509_Free) (
+(EFIAPI *EDKII_CRYPTO_X509_FREE) (
   IN  VOID  *X509Cert
-  );
-
-/**
-  Construct a X509 stack object from a list of DER-encoded certificate data.
-  If X509Stack is NULL, then return FALSE.
-  If this interface is not supported, then return FALSE.
-  @param[in, out]  X509Stack  On input, pointer to an existing or NULL X509 stack object.
-                              On output, pointer to the X509 stack object with new
-                              inserted X509 certificate.
-  @param[in]       Args       VA_LIST marker for the variable argument list.
-                              A list of DER-encoded single certificate data followed
-                              by certificate size. A NULL terminates the list. The
-                              pairs are the arguments to X509ConstructCertificate().
-  @retval     TRUE            The X509 stack construction succeeded.
-  @retval     FALSE           The construction operation failed.
-  @retval     FALSE           This interface is not supported.
-**/
-typedef
-BOOLEAN
-(EFIAPI * SHAREDCRYPTO_X509_ConstructCertificateStackV) (
-  IN OUT  UINT8    **X509Stack,
-  IN      VA_LIST  Args
   );
 
 /**
@@ -2439,7 +2446,7 @@ BOOLEAN
 **/
 typedef
 VOID
-(EFIAPI *SHAREDCRYPTO_X509_StackFree) (
+(EFIAPI *EDKII_CRYPTO_X509_STACK_FREE) (
   IN  VOID  *X509Stack
   );
 
@@ -2462,7 +2469,7 @@ VOID
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_X509_GetTBSCert) (
+(EFIAPI *EDKII_CRYPTO_X509_GET_TBS_CERT) (
   IN  CONST UINT8  *Cert,
   IN  UINTN        CertSize,
   OUT UINT8        **TBSCert,
@@ -2486,7 +2493,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_TDES_GetContextSize) (
+(EFIAPI *EDKII_CRYPTO_TDES_GET_CONTEXT_SIZE) (
   VOID
   );
 
@@ -2517,7 +2524,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_TDES_Init) (
+(EFIAPI *EDKII_CRYPTO_TDES_INIT) (
   OUT  VOID         *TdesContext,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeyLength
@@ -2551,7 +2558,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_TDES_EcbEncrypt) (
+(EFIAPI *EDKII_CRYPTO_TDES_ECB_ENCRYPT) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2586,7 +2593,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_TDES_EcbDecrypt) (
+(EFIAPI *EDKII_CRYPTO_TDES_ECB_DECRYPT) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2624,7 +2631,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_TDES_CbcEncrypt) (
+(EFIAPI *EDKII_CRYPTO_TDES_CBC_ENCRYPT) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2663,7 +2670,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_TDES_CbcDecrypt) (
+(EFIAPI *EDKII_CRYPTO_TDES_CBC_DECRYPT) (
   IN   VOID         *TdesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2682,7 +2689,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_AES_GetContextSize) (
+(EFIAPI *EDKII_CRYPTO_AES_GET_CONTEXT_SIZE) (
   VOID
   );
 
@@ -2710,7 +2717,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_AES_Init) (
+(EFIAPI *EDKII_CRYPTO_AES_INIT) (
   OUT  VOID         *AesContext,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeyLength
@@ -2744,7 +2751,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_AES_EcbEncrypt) (
+(EFIAPI *EDKII_CRYPTO_AES_ECB_ENCRYPT) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2779,7 +2786,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_AES_EcbDecrypt) (
+(EFIAPI *EDKII_CRYPTO_AES_ECB_DECRYPT) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2817,7 +2824,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_AES_CbcEncrypt) (
+(EFIAPI *EDKII_CRYPTO_AES_CBC_ENCRYPT) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2856,7 +2863,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_AES_CbcDecrypt) (
+(EFIAPI *EDKII_CRYPTO_AES_CBC_DECRYPT) (
   IN   VOID         *AesContext,
   IN   CONST UINT8  *Input,
   IN   UINTN        InputSize,
@@ -2875,7 +2882,7 @@ BOOLEAN
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_ARC4_GetContextSize) (
+(EFIAPI *EDKII_CRYPTO_ARC4_GET_CONTEXT_SIZE) (
   VOID
   );
 
@@ -2902,7 +2909,7 @@ UINTN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_ARC4_Init) (
+(EFIAPI *EDKII_CRYPTO_ARC4_INIT) (
   OUT  VOID         *Arc4Context,
   IN   CONST UINT8  *Key,
   IN   UINTN        KeySize
@@ -2933,7 +2940,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_ARC4_Encrypt) (
+(EFIAPI *EDKII_CRYPTO_ARC4_ENCRYPT) (
   IN OUT  VOID         *Arc4Context,
   IN      CONST UINT8  *Input,
   IN      UINTN        InputSize,
@@ -2965,7 +2972,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_ARC4_Decrypt) (
+(EFIAPI *EDKII_CRYPTO_ARC4_DECRYPT) (
   IN OUT  VOID   *Arc4Context,
   IN      UINT8  *Input,
   IN      UINTN  InputSize,
@@ -2992,7 +2999,7 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_ARC4_Reset) (
+(EFIAPI *EDKII_CRYPTO_ARC4_RESET) (
   IN OUT  VOID  *Arc4Context
   );
 
@@ -3000,12 +3007,15 @@ BOOLEAN
 /**
   Retrieves the size, in bytes, of the context buffer required for SM3 hash operations.
 
+  If this interface is not supported, then return zero.
+
   @return  The size, in bytes, of the context buffer required for SM3 hash operations.
+  @retval  0   This interface is not supported.
 
 **/
 typedef
 UINTN
-(EFIAPI *SHAREDCRYPTO_SM3_GetContextSize) (
+(EFIAPI* EDKII_CRYPTO_SM3_GET_CONTEXT_SIZE)(
   VOID
   );
 
@@ -3014,18 +3024,19 @@ UINTN
   subsequent use.
 
   If Sm3Context is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
 
   @param[out]  Sm3Context  Pointer to SM3 context being initialized.
 
   @retval TRUE   SM3 context initialization succeeded.
   @retval FALSE  SM3 context initialization failed.
+  @retval FALSE  This interface is not supported.
 
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SM3_Init) (
-  OUT  VOID  *Sm3Context
-  );
+(EFIAPI* EDKII_CRYPTO_SM3_INIT)(
+    OUT VOID *Sm3Context);
 
 /**
   Makes a copy of an existing SM3 context.
@@ -3044,10 +3055,10 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SM3_Duplicate) (
-  IN   CONST VOID  *Sm3Context,
-  OUT  VOID        *NewSm3Context
-  );
+(EFIAPI* EDKII_CRYPTO_SM3_DUPLICATE) (
+    IN CONST VOID *Sm3Context,
+    OUT VOID *NewSm3Context);
+
 
 /**
   Digests the input data and updates SM3 context.
@@ -3058,22 +3069,24 @@ BOOLEAN
   by Sm3Final(). Behavior with invalid context is undefined.
 
   If Sm3Context is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
 
-  @param[in, out]  Sm3Context     Pointer to the SM3 context.
-  @param[in]       Data           Pointer to the buffer containing the data to be hashed.
-  @param[in]       DataSize       Size of Data buffer in bytes.
+  @param[in, out]  Sm3Context  Pointer to the SM3 context.
+  @param[in]       Data        Pointer to the buffer containing the data to be hashed.
+  @param[in]       DataSize    Size of Data buffer in bytes.
 
   @retval TRUE   SM3 data digest succeeded.
   @retval FALSE  SM3 data digest failed.
+  @retval FALSE  This interface is not supported.
 
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SM3_Update) (
-  IN OUT  VOID        *Sm3Context,
-  IN      CONST VOID  *Data,
-  IN      UINTN       DataSize
-  );
+(EFIAPI* EDKII_CRYPTO_SM3_UPDATE)(
+    IN OUT VOID *Sm3Context,
+    IN CONST VOID *Data,
+    IN UINTN DataSize);
+
 
 /**
   Completes computation of the SM3 digest value.
@@ -3086,21 +3099,23 @@ BOOLEAN
 
   If Sm3Context is NULL, then return FALSE.
   If HashValue is NULL, then return FALSE.
+  If this interface is not supported, then return FALSE.
 
-  @param[in, out]  Sm3Context     Pointer to the SM3 context.
-  @param[out]      HashValue      Pointer to a buffer that receives the SM3 digest
-                                  value (32 bytes).
+  @param[in, out]  Sm3Context  Pointer to the SM3 context.
+  @param[out]      HashValue   Pointer to a buffer that receives the SM3 digest
+                               value (16 bytes).
 
   @retval TRUE   SM3 digest computation succeeded.
   @retval FALSE  SM3 digest computation failed.
+  @retval FALSE  This interface is not supported.
 
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SM3_Final) (
-  IN OUT  VOID   *Sm3Context,
-  OUT     UINT8  *HashValue
-  );
+(EFIAPI* EDKII_CRYPTO_SM3_FINAL)(
+    IN OUT VOID *Sm3Context,
+    OUT UINT8 *HashValue);
+
 
 /**
   Computes the SM3 message digest of a input data buffer.
@@ -3113,7 +3128,7 @@ BOOLEAN
   @param[in]   Data        Pointer to the buffer containing the data to be hashed.
   @param[in]   DataSize    Size of Data buffer in bytes.
   @param[out]  HashValue   Pointer to a buffer that receives the SM3 digest
-                           value (32 bytes).
+                           value (16 bytes).
 
   @retval TRUE   SM3 digest computation succeeded.
   @retval FALSE  SM3 digest computation failed.
@@ -3122,148 +3137,1027 @@ BOOLEAN
 **/
 typedef
 BOOLEAN
-(EFIAPI *SHAREDCRYPTO_SM3_HashAll) (
-  IN   CONST VOID  *Data,
-  IN   UINTN       DataSize,
-  OUT  UINT8       *HashValue
+(EFIAPI* EDKII_CRYPTO_SM3_HASH_ALL)(
+    IN CONST VOID *Data,
+    IN UINTN DataSize,
+    OUT UINT8 *HashValue);
+
+
+/**
+  Derive key data using HMAC-SHA256 based KDF.
+
+  @param[in]   Key              Pointer to the user-supplied key.
+  @param[in]   KeySize          Key size in bytes.
+  @param[in]   Salt             Pointer to the salt(non-secret) value.
+  @param[in]   SaltSize         Salt size in bytes.
+  @param[in]   Info             Pointer to the application specific info.
+  @param[in]   InfoSize         Info size in bytes.
+  @param[out]  Out              Pointer to buffer to receive hkdf value.
+  @param[in]   OutSize          Size of hkdf bytes to generate.
+
+  @retval TRUE   Hkdf generated successfully.
+  @retval FALSE  Hkdf generation failed.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI* EDKII_CRYPTO_HKDF_SHA_256_EXTRACT_AND_EXPAND)(
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeySize,
+  IN   CONST UINT8  *Salt,
+  IN   UINTN        SaltSize,
+  IN   CONST UINT8  *Info,
+  IN   UINTN        InfoSize,
+  OUT  UINT8        *Out,
+  IN   UINTN        OutSize
+  );
+
+/**
+  Initializes the OpenSSL library.
+
+  This function registers ciphers and digests used directly and indirectly
+  by SSL/TLS, and initializes the readable error messages.
+  This function must be called before any other action takes places.
+
+  @retval TRUE   The OpenSSL library has been initialized.
+  @retval FALSE  Failed to initialize the OpenSSL library.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI* EDKII_CRYPTO_TLS_INITIALIZE)(
+  VOID
+  );
+
+/**
+  Free an allocated SSL_CTX object.
+
+  @param[in]  TlsCtx    Pointer to the SSL_CTX object to be released.
+
+**/
+typedef
+VOID
+(EFIAPI* EDKII_CRYPTO_TLS_CTX_FREE)(
+  IN   VOID                  *TlsCtx
+  );
+
+/**
+  Creates a new SSL_CTX object as framework to establish TLS/SSL enabled
+  connections.
+
+  @param[in]  MajorVer    Major Version of TLS/SSL Protocol.
+  @param[in]  MinorVer    Minor Version of TLS/SSL Protocol.
+
+  @return  Pointer to an allocated SSL_CTX object.
+           If the creation failed, TlsCtxNew() returns NULL.
+
+**/
+typedef
+VOID *
+(EFIAPI* EDKII_CRYPTO_TLS_CTX_NEW)(
+  IN     UINT8                    MajorVer,
+  IN     UINT8                    MinorVer
+  );
+
+/**
+  Free an allocated TLS object.
+
+  This function removes the TLS object pointed to by Tls and frees up the
+  allocated memory. If Tls is NULL, nothing is done.
+
+  @param[in]  Tls    Pointer to the TLS object to be freed.
+
+**/
+typedef
+VOID
+(EFIAPI* EDKII_CRYPTO_TLS_FREE)(
+  IN     VOID                     *Tls
+  );
+
+/**
+  Create a new TLS object for a connection.
+
+  This function creates a new TLS object for a connection. The new object
+  inherits the setting of the underlying context TlsCtx: connection method,
+  options, verification setting.
+
+  @param[in]  TlsCtx    Pointer to the SSL_CTX object.
+
+  @return  Pointer to an allocated SSL object.
+           If the creation failed, TlsNew() returns NULL.
+
+**/
+typedef
+VOID *
+(EFIAPI* EDKII_CRYPTO_TLS_NEW)(
+  IN     VOID                     *TlsCtx
+  );
+
+/**
+  Checks if the TLS handshake was done.
+
+  This function will check if the specified TLS handshake was done.
+
+  @param[in]  Tls    Pointer to the TLS object for handshake state checking.
+
+  @retval  TRUE     The TLS handshake was done.
+  @retval  FALSE    The TLS handshake was not done.
+
+**/
+typedef
+BOOLEAN
+(EFIAPI* EDKII_CRYPTO_TLS_IN_HANDSHAKE)(
+  IN     VOID                     *Tls
+  );
+
+/**
+  Perform a TLS/SSL handshake.
+
+  This function will perform a TLS/SSL handshake.
+
+  @param[in]       Tls            Pointer to the TLS object for handshake operation.
+  @param[in]       BufferIn       Pointer to the most recently received TLS Handshake packet.
+  @param[in]       BufferInSize   Packet size in bytes for the most recently received TLS
+                                  Handshake packet.
+  @param[out]      BufferOut      Pointer to the buffer to hold the built packet.
+  @param[in, out]  BufferOutSize  Pointer to the buffer size in bytes. On input, it is
+                                  the buffer size provided by the caller. On output, it
+                                  is the buffer size in fact needed to contain the
+                                  packet.
+
+  @retval EFI_SUCCESS             The required TLS packet is built successfully.
+  @retval EFI_INVALID_PARAMETER   One or more of the following conditions is TRUE:
+                                  Tls is NULL.
+                                  BufferIn is NULL but BufferInSize is NOT 0.
+                                  BufferInSize is 0 but BufferIn is NOT NULL.
+                                  BufferOutSize is NULL.
+                                  BufferOut is NULL if *BufferOutSize is not zero.
+  @retval EFI_BUFFER_TOO_SMALL    BufferOutSize is too small to hold the response packet.
+  @retval EFI_ABORTED             Something wrong during handshake.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_DO_HANDSHAKE)(
+  IN     VOID                     *Tls,
+  IN     UINT8                    *BufferIn, OPTIONAL
+  IN     UINTN                    BufferInSize, OPTIONAL
+     OUT UINT8                    *BufferOut, OPTIONAL
+  IN OUT UINTN                    *BufferOutSize
+  );
+
+/**
+  Handle Alert message recorded in BufferIn. If BufferIn is NULL and BufferInSize is zero,
+  TLS session has errors and the response packet needs to be Alert message based on error type.
+
+  @param[in]       Tls            Pointer to the TLS object for state checking.
+  @param[in]       BufferIn       Pointer to the most recently received TLS Alert packet.
+  @param[in]       BufferInSize   Packet size in bytes for the most recently received TLS
+                                  Alert packet.
+  @param[out]      BufferOut      Pointer to the buffer to hold the built packet.
+  @param[in, out]  BufferOutSize  Pointer to the buffer size in bytes. On input, it is
+                                  the buffer size provided by the caller. On output, it
+                                  is the buffer size in fact needed to contain the
+                                  packet.
+
+  @retval EFI_SUCCESS             The required TLS packet is built successfully.
+  @retval EFI_INVALID_PARAMETER   One or more of the following conditions is TRUE:
+                                  Tls is NULL.
+                                  BufferIn is NULL but BufferInSize is NOT 0.
+                                  BufferInSize is 0 but BufferIn is NOT NULL.
+                                  BufferOutSize is NULL.
+                                  BufferOut is NULL if *BufferOutSize is not zero.
+  @retval EFI_ABORTED             An error occurred.
+  @retval EFI_BUFFER_TOO_SMALL    BufferOutSize is too small to hold the response packet.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_HANDLE_ALERT)(
+  IN     VOID                     *Tls,
+  IN     UINT8                    *BufferIn, OPTIONAL
+  IN     UINTN                    BufferInSize, OPTIONAL
+     OUT UINT8                    *BufferOut, OPTIONAL
+  IN OUT UINTN                    *BufferOutSize
+  );
+
+/**
+  Build the CloseNotify packet.
+
+  @param[in]       Tls            Pointer to the TLS object for state checking.
+  @param[in, out]  Buffer         Pointer to the buffer to hold the built packet.
+  @param[in, out]  BufferSize     Pointer to the buffer size in bytes. On input, it is
+                                  the buffer size provided by the caller. On output, it
+                                  is the buffer size in fact needed to contain the
+                                  packet.
+
+  @retval EFI_SUCCESS             The required TLS packet is built successfully.
+  @retval EFI_INVALID_PARAMETER   One or more of the following conditions is TRUE:
+                                  Tls is NULL.
+                                  BufferSize is NULL.
+                                  Buffer is NULL if *BufferSize is not zero.
+  @retval EFI_BUFFER_TOO_SMALL    BufferSize is too small to hold the response packet.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_CLOSE_NOTIFY)(
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *Buffer,
+  IN OUT UINTN                    *BufferSize
+  );
+
+/**
+  Attempts to read bytes from one TLS object and places the data in Buffer.
+
+  This function will attempt to read BufferSize bytes from the TLS object
+  and places the data in Buffer.
+
+  @param[in]      Tls           Pointer to the TLS object.
+  @param[in,out]  Buffer        Pointer to the buffer to store the data.
+  @param[in]      BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The amount of data successfully read from the TLS object.
+  @retval  <=0   No data was successfully read.
+
+**/
+typedef
+INTN
+(EFIAPI* EDKII_CRYPTO_TLS_CTRL_TRAFFIC_OUT)(
+  IN     VOID                     *Tls,
+  IN OUT VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  );
+
+/**
+  Attempts to write data from the buffer to TLS object.
+
+  This function will attempt to write BufferSize bytes data from the Buffer
+  to the TLS object.
+
+  @param[in]  Tls           Pointer to the TLS object.
+  @param[in]  Buffer        Pointer to the data buffer.
+  @param[in]  BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The amount of data successfully written to the TLS object.
+  @retval <=0    No data was successfully written.
+
+**/
+typedef
+INTN
+(EFIAPI* EDKII_CRYPTO_TLS_CTRL_TRAFFIC_IN)(
+  IN     VOID                     *Tls,
+  IN     VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  );
+
+/**
+  Attempts to read bytes from the specified TLS connection into the buffer.
+
+  This function tries to read BufferSize bytes data from the specified TLS
+  connection into the Buffer.
+
+  @param[in]      Tls           Pointer to the TLS connection for data reading.
+  @param[in,out]  Buffer        Pointer to the data buffer.
+  @param[in]      BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The read operation was successful, and return value is the
+                 number of bytes actually read from the TLS connection.
+  @retval  <=0   The read operation was not successful.
+
+**/
+typedef
+INTN
+(EFIAPI* EDKII_CRYPTO_TLS_READ)(
+  IN     VOID                     *Tls,
+  IN OUT VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  );
+
+/**
+  Attempts to write data to a TLS connection.
+
+  This function tries to write BufferSize bytes data from the Buffer into the
+  specified TLS connection.
+
+  @param[in]  Tls           Pointer to the TLS connection for data writing.
+  @param[in]  Buffer        Pointer to the data buffer.
+  @param[in]  BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The write operation was successful, and return value is the
+                 number of bytes actually written to the TLS connection.
+  @retval <=0    The write operation was not successful.
+
+**/
+typedef
+INTN
+(EFIAPI* EDKII_CRYPTO_TLS_WRITE)(
+  IN     VOID                     *Tls,
+  IN     VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  );
+
+/**
+  Set a new TLS/SSL method for a particular TLS object.
+
+  This function sets a new TLS/SSL method for a particular TLS object.
+
+  @param[in]  Tls         Pointer to a TLS object.
+  @param[in]  MajorVer    Major Version of TLS/SSL Protocol.
+  @param[in]  MinorVer    Minor Version of TLS/SSL Protocol.
+
+  @retval  EFI_SUCCESS           The TLS/SSL method was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Unsupported TLS/SSL method.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_VERSION)(
+  IN     VOID                     *Tls,
+  IN     UINT8                    MajorVer,
+  IN     UINT8                    MinorVer
+  );
+
+/**
+  Set TLS object to work in client or server mode.
+
+  This function prepares a TLS object to work in client or server mode.
+
+  @param[in]  Tls         Pointer to a TLS object.
+  @param[in]  IsServer    Work in server mode.
+
+  @retval  EFI_SUCCESS           The TLS/SSL work mode was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Unsupported TLS/SSL work mode.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_CONNECTION_END)(
+  IN     VOID                     *Tls,
+  IN     BOOLEAN                  IsServer
+  );
+
+/**
+  Set the ciphers list to be used by the TLS object.
+
+  This function sets the ciphers for use by a specified TLS object.
+
+  @param[in]  Tls          Pointer to a TLS object.
+  @param[in]  CipherId     Array of UINT16 cipher identifiers. Each UINT16
+                           cipher identifier comes from the TLS Cipher Suite
+                           Registry of the IANA, interpreting Byte1 and Byte2
+                           in network (big endian) byte order.
+  @param[in]  CipherNum    The number of cipher in the list.
+
+  @retval  EFI_SUCCESS           The ciphers list was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       No supported TLS cipher was found in CipherId.
+  @retval  EFI_OUT_OF_RESOURCES  Memory allocation failed.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_CIPHER_LIST)(
+  IN     VOID                     *Tls,
+  IN     UINT16                   *CipherId,
+  IN     UINTN                    CipherNum
+  );
+
+/**
+  Set the compression method for TLS/SSL operations.
+
+  This function handles TLS/SSL integrated compression methods.
+
+  @param[in]  CompMethod    The compression method ID.
+
+  @retval  EFI_SUCCESS        The compression method for the communication was
+                              set successfully.
+  @retval  EFI_UNSUPPORTED    Unsupported compression method.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_COMPRESSION_METHOD)(
+  IN     UINT8                    CompMethod
+  );
+
+/**
+  Set peer certificate verification mode for the TLS connection.
+
+  This function sets the verification mode flags for the TLS connection.
+
+  @param[in]  Tls           Pointer to the TLS object.
+  @param[in]  VerifyMode    A set of logically or'ed verification mode flags.
+
+**/
+typedef
+VOID
+(EFIAPI* EDKII_CRYPTO_TLS_SET_VERIFY)(
+  IN     VOID                     *Tls,
+  IN     UINT32                   VerifyMode
+  );
+
+/**
+  Set the specified host name to be verified.
+
+  @param[in]  Tls           Pointer to the TLS object.
+  @param[in]  Flags         The setting flags during the validation.
+  @param[in]  HostName      The specified host name to be verified.
+
+  @retval  EFI_SUCCESS           The HostName setting was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_ABORTED           Invalid HostName setting.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_VERIFY_HOST)(
+  IN     VOID                     *Tls,
+  IN     UINT32                   Flags,
+  IN     CHAR8                    *HostName
+  );
+
+/**
+  Sets a TLS/SSL session ID to be used during TLS/SSL connect.
+
+  This function sets a session ID to be used when the TLS/SSL connection is
+  to be established.
+
+  @param[in]  Tls             Pointer to the TLS object.
+  @param[in]  SessionId       Session ID data used for session resumption.
+  @param[in]  SessionIdLen    Length of Session ID in bytes.
+
+  @retval  EFI_SUCCESS           Session ID was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       No available session for ID setting.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_SESSIONID)(
+  IN     VOID                     *Tls,
+  IN     UINT8                    *SessionId,
+  IN     UINT16                   SessionIdLen
+  );
+
+/**
+  Adds the CA to the cert store when requesting Server or Client authentication.
+
+  This function adds the CA certificate to the list of CAs when requesting
+  Server or Client authentication for the chosen TLS connection.
+
+  @param[in]  Tls         Pointer to the TLS object.
+  @param[in]  Data        Pointer to the data buffer of a DER-encoded binary
+                          X.509 certificate or PEM-encoded X.509 certificate.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_INVALID_PARAMETER   The parameter is invalid.
+  @retval  EFI_OUT_OF_RESOURCES    Required resources could not be allocated.
+  @retval  EFI_ABORTED             Invalid X.509 certificate.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_CA_CERTIFICATE)(
+  IN     VOID                     *Tls,
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  );
+
+/**
+  Loads the local public certificate into the specified TLS object.
+
+  This function loads the X.509 certificate into the specified TLS object
+  for TLS negotiation.
+
+  @param[in]  Tls         Pointer to the TLS object.
+  @param[in]  Data        Pointer to the data buffer of a DER-encoded binary
+                          X.509 certificate or PEM-encoded X.509 certificate.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_INVALID_PARAMETER   The parameter is invalid.
+  @retval  EFI_OUT_OF_RESOURCES    Required resources could not be allocated.
+  @retval  EFI_ABORTED             Invalid X.509 certificate.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_HOST_PUBLIC_CERT)(
+  IN     VOID                     *Tls,
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  );
+
+/**
+  Adds the local private key to the specified TLS object.
+
+  This function adds the local private key (PEM-encoded RSA or PKCS#8 private
+  key) into the specified TLS object for TLS negotiation.
+
+  @param[in]  Tls         Pointer to the TLS object.
+  @param[in]  Data        Pointer to the data buffer of a PEM-encoded RSA
+                          or PKCS#8 private key.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS     The operation succeeded.
+  @retval  EFI_UNSUPPORTED This function is not supported.
+  @retval  EFI_ABORTED     Invalid private key data.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_HOST_PRIVATE_KEY)(
+  IN     VOID                     *Tls,
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  );
+
+/**
+  Adds the CA-supplied certificate revocation list for certificate validation.
+
+  This function adds the CA-supplied certificate revocation list data for
+  certificate validity checking.
+
+  @param[in]  Data        Pointer to the data buffer of a DER-encoded CRL data.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS     The operation succeeded.
+  @retval  EFI_UNSUPPORTED This function is not supported.
+  @retval  EFI_ABORTED     Invalid CRL data.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_SET_CERT_REVOCATION_LIST)(
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  );
+
+/**
+  Gets the protocol version used by the specified TLS connection.
+
+  This function returns the protocol version used by the specified TLS
+  connection.
+
+  If Tls is NULL, then ASSERT().
+
+  @param[in]  Tls    Pointer to the TLS object.
+
+  @return  The protocol version of the specified TLS connection.
+
+**/
+typedef
+UINT16
+(EFIAPI* EDKII_CRYPTO_TLS_GET_VERSION)(
+  IN     VOID                     *Tls
+  );
+
+/**
+  Gets the connection end of the specified TLS connection.
+
+  This function returns the connection end (as client or as server) used by
+  the specified TLS connection.
+
+  If Tls is NULL, then ASSERT().
+
+  @param[in]  Tls    Pointer to the TLS object.
+
+  @return  The connection end used by the specified TLS connection.
+
+**/
+typedef
+UINT8
+(EFIAPI* EDKII_CRYPTO_TLS_GET_CONNECTION_END)(
+  IN     VOID                     *Tls
+  );
+
+/**
+  Gets the cipher suite used by the specified TLS connection.
+
+  This function returns current cipher suite used by the specified
+  TLS connection.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[in,out]  CipherId    The cipher suite used by the TLS object.
+
+  @retval  EFI_SUCCESS           The cipher suite was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Unsupported cipher suite.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_CURRENT_CIPHER)(
+  IN     VOID                     *Tls,
+  IN OUT UINT16                   *CipherId
+  );
+
+/**
+  Gets the compression methods used by the specified TLS connection.
+
+  This function returns current integrated compression methods used by
+  the specified TLS connection.
+
+  @param[in]      Tls              Pointer to the TLS object.
+  @param[in,out]  CompressionId    The current compression method used by
+                                   the TLS object.
+
+  @retval  EFI_SUCCESS           The compression method was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_ABORTED           Invalid Compression method.
+  @retval  EFI_UNSUPPORTED       This function is not supported.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_CURRENT_COMPRESSION_ID)(
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *CompressionId
+  );
+
+/**
+  Gets the verification mode currently set in the TLS connection.
+
+  This function returns the peer verification mode currently set in the
+  specified TLS connection.
+
+  If Tls is NULL, then ASSERT().
+
+  @param[in]  Tls    Pointer to the TLS object.
+
+  @return  The verification mode set in the specified TLS connection.
+
+**/
+typedef
+UINT32
+(EFIAPI* EDKII_CRYPTO_TLS_GET_VERIFY)(
+  IN     VOID                     *Tls
+  );
+
+/**
+  Gets the session ID used by the specified TLS connection.
+
+  This function returns the TLS/SSL session ID currently used by the
+  specified TLS connection.
+
+  @param[in]      Tls             Pointer to the TLS object.
+  @param[in,out]  SessionId       Buffer to contain the returned session ID.
+  @param[in,out]  SessionIdLen    The length of Session ID in bytes.
+
+  @retval  EFI_SUCCESS           The Session ID was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Invalid TLS/SSL session.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_SESSION_ID)(
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *SessionId,
+  IN OUT UINT16                   *SessionIdLen
+  );
+
+/**
+  Gets the client random data used in the specified TLS connection.
+
+  This function returns the TLS/SSL client random data currently used in
+  the specified TLS connection.
+
+  @param[in]      Tls             Pointer to the TLS object.
+  @param[in,out]  ClientRandom    Buffer to contain the returned client
+                                  random data (32 bytes).
+
+**/
+typedef
+VOID
+(EFIAPI* EDKII_CRYPTO_TLS_GET_CLIENT_RANDOM)(
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *ClientRandom
+  );
+
+/**
+  Gets the server random data used in the specified TLS connection.
+
+  This function returns the TLS/SSL server random data currently used in
+  the specified TLS connection.
+
+  @param[in]      Tls             Pointer to the TLS object.
+  @param[in,out]  ServerRandom    Buffer to contain the returned server
+                                  random data (32 bytes).
+
+**/
+typedef
+VOID
+(EFIAPI* EDKII_CRYPTO_TLS_GET_SERVER_RANDOM)(
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *ServerRandom
+  );
+
+/**
+  Gets the master key data used in the specified TLS connection.
+
+  This function returns the TLS/SSL master key material currently used in
+  the specified TLS connection.
+
+  @param[in]      Tls            Pointer to the TLS object.
+  @param[in,out]  KeyMaterial    Buffer to contain the returned key material.
+
+  @retval  EFI_SUCCESS           Key material was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Invalid TLS/SSL session.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_KEY_MATERIAL)(
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *KeyMaterial
+  );
+
+/**
+  Gets the CA Certificate from the cert store.
+
+  This function returns the CA certificate for the chosen
+  TLS connection.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[out]     Data        Pointer to the data buffer to receive the CA
+                              certificate data sent to the client.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_UNSUPPORTED         This function is not supported.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_CA_CERTIFICATE)(
+  IN     VOID                     *Tls,
+  OUT    VOID                     *Data,
+  IN OUT UINTN                    *DataSize
+  );
+
+/**
+  Gets the local public Certificate set in the specified TLS object.
+
+  This function returns the local public certificate which was currently set
+  in the specified TLS object.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[out]     Data        Pointer to the data buffer to receive the local
+                              public certificate.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_INVALID_PARAMETER   The parameter is invalid.
+  @retval  EFI_NOT_FOUND           The certificate is not found.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_HOST_PUBLIC_CERT)(
+  IN     VOID                     *Tls,
+  OUT    VOID                     *Data,
+  IN OUT UINTN                    *DataSize
+  );
+
+/**
+  Gets the local private key set in the specified TLS object.
+
+  This function returns the local private key data which was currently set
+  in the specified TLS object.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[out]     Data        Pointer to the data buffer to receive the local
+                              private key data.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_UNSUPPORTED         This function is not supported.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_HOST_PRIVATE_KEY)(
+  IN     VOID                     *Tls,
+  OUT    VOID                     *Data,
+  IN OUT UINTN                    *DataSize
+  );
+
+/**
+  Gets the CA-supplied certificate revocation list data set in the specified
+  TLS object.
+
+  This function returns the CA-supplied certificate revocation list data which
+  was currently set in the specified TLS object.
+
+  @param[out]     Data        Pointer to the data buffer to receive the CRL data.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_UNSUPPORTED         This function is not supported.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+typedef
+EFI_STATUS
+(EFIAPI* EDKII_CRYPTO_TLS_GET_CERT_REVOCATION_LIST)(
+  OUT    VOID                     *DATA,
+  IN OUT UINTN                    *DataSize
   );
 
 
 ///
-struct _SHARED_CRYPTO_FUNCTIONS
-{
-  /// Shared Crypto Functions
-  SHAREDCRYPTO_GET_VERSION SharedCrypto_GetLowestSupportedVersion;
-  /// HMAC
-  SHAREDCRYPTO_HMAC_MD5_New HMAC_MD5_New;
-  SHAREDCRYPTO_HMAC_MD5_Free HMAC_MD5_Free;
-  SHAREDCRYPTO_HMAC_MD5_Init HMAC_MD5_Init;
-  SHAREDCRYPTO_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
-  SHAREDCRYPTO_HMAC_MD5_Update HMAC_MD5_Update;
-  SHAREDCRYPTO_HMAC_MD5_Final HMAC_MD5_Final;
-  SHAREDCRYPTO_HMAC_SHA1_New HMAC_SHA1_New;
-  SHAREDCRYPTO_HMAC_SHA1_Free HMAC_SHA1_Free;
-  SHAREDCRYPTO_HMAC_SHA1_Init HMAC_SHA1_Init;
-  SHAREDCRYPTO_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
-  SHAREDCRYPTO_HMAC_SHA1_Update HMAC_SHA1_Update;
-  SHAREDCRYPTO_HMAC_SHA1_Final HMAC_SHA1_Final;
-  SHAREDCRYPTO_HMAC_SHA256_New HMAC_SHA256_New;
-  SHAREDCRYPTO_HMAC_SHA256_Free HMAC_SHA256_Free;
-  SHAREDCRYPTO_HMAC_SHA256_Init HMAC_SHA256_Init;
-  SHAREDCRYPTO_HMAC_SHA256_Duplicate HMAC_SHA256_Duplicate;
-  SHAREDCRYPTO_HMAC_SHA256_Update HMAC_SHA256_Update;
-  SHAREDCRYPTO_HMAC_SHA256_Final HMAC_SHA256_Final;
+/// EDK II Crypto Protocol
+///
+struct _SHARED_CRYPTO_FUNCTIONS {
+  /// Version
+  EDKII_CRYPTO_GET_VERSION                        GetVersion;
+  /// HMAC MD5
+  EDKII_CRYPTO_HMAC_MD5_NEW                       HmacMd5New;
+  EDKII_CRYPTO_HMAC_MD5_FREE                      HmacMd5Free;
+  EDKII_CRYPTO_HMAC_MD5_INIT                      HmacMd5Init;
+  EDKII_CRYPTO_HMAC_MD5_DUPLICATE                 HmacMd5Duplicate;
+  EDKII_CRYPTO_HMAC_MD5_UPDATE                    HmacMd5Update;
+  EDKII_CRYPTO_HMAC_MD5_FINAL                     HmacMd5Final;
+  /// HMAC SHA1
+  EDKII_CRYPTO_HMAC_SHA1_NEW                      HmacSha1New;
+  EDKII_CRYPTO_HMAC_SHA1_FREE                     HmacSha1Free;
+  EDKII_CRYPTO_HMAC_SHA1_INIT                     HmacSha1Init;
+  EDKII_CRYPTO_HMAC_SHA1_DUPLICATE                HmacSha1Duplicate;
+  EDKII_CRYPTO_HMAC_SHA1_UPDATE                   HmacSha1Update;
+  EDKII_CRYPTO_HMAC_SHA1_FINAL                    HmacSha1Final;
+  /// HMAC SHA256
+  EDKII_CRYPTO_HMAC_SHA256_NEW                    HmacSha256New;
+  EDKII_CRYPTO_HMAC_SHA256_FREE                   HmacSha256Free;
+  EDKII_CRYPTO_HMAC_SHA256_INIT                   HmacSha256Init;
+  EDKII_CRYPTO_HMAC_SHA256_DUPLICATE              HmacSha256Duplicate;
+  EDKII_CRYPTO_HMAC_SHA256_UPDATE                 HmacSha256Update;
+  EDKII_CRYPTO_HMAC_SHA256_FINAL                  HmacSha256Final;
   /// Md4
-  SHAREDCRYPTO_MD4_GetContextSize MD4_GetContextSize;
-  SHAREDCRYPTO_MD4_Init MD4_Init;
-  SHAREDCRYPTO_MD4_Duplicate MD4_Duplicate;
-  SHAREDCRYPTO_MD4_Update MD4_Update;
-  SHAREDCRYPTO_MD4_Final MD4_Final;
-  SHAREDCRYPTO_MD4_HashAll MD4_HashAll;
+  EDKII_CRYPTO_MD4_GET_CONTEXT_SIZE               Md4GetContextSize;
+  EDKII_CRYPTO_MD4_INIT                           Md4Init;
+  EDKII_CRYPTO_MD4_DUPLICATE                      Md4Duplicate;
+  EDKII_CRYPTO_MD4_UPDATE                         Md4Update;
+  EDKII_CRYPTO_MD4_FINAL                          Md4Final;
+  EDKII_CRYPTO_MD4_HASH_ALL                       Md4HashAll;
   /// Md5
-  SHAREDCRYPTO_MD5_GetContextSize MD5_GetContextSize;
-  SHAREDCRYPTO_MD5_Init MD5_Init;
-  SHAREDCRYPTO_MD5_Duplicate MD5_Duplicate;
-  SHAREDCRYPTO_MD5_Update MD5_Update;
-  SHAREDCRYPTO_MD5_Final MD5_Final;
-  SHAREDCRYPTO_MD5_HashAll MD5_HashAll;
+  EDKII_CRYPTO_MD5_GET_CONTEXT_SIZE               Md5GetContextSize;
+  EDKII_CRYPTO_MD5_INIT                           Md5Init;
+  EDKII_CRYPTO_MD5_DUPLICATE                      Md5Duplicate;
+  EDKII_CRYPTO_MD5_UPDATE                         Md5Update;
+  EDKII_CRYPTO_MD5_FINAL                          Md5Final;
+  EDKII_CRYPTO_MD5_HASH_ALL                       Md5HashAll;
   /// Pkcs
-  SHAREDCRYPTO_PKCS1_ENCRYPT_V2 PKCS1_ENCRYPT_V2;
-  SHAREDCRYPTO_PKCS5_PW_HASH PKCS5_PW_HASH;
-  SHAREDCRYPTO_PKCS7_VERIFY PKCS7_VERIFY;
-  SHAREDCRYPTO_PKCS7_VERIFY_EKU PKCS7_VERIFY_EKU;
-  SHAREDCRYPTO_PKCS7_GetSigners PKCS7_GetSigners;
-  SHAREDCRYPTO_PKCS7_FreeSigners PKCS7_FreeSigners;
-  SHAREDCRYPTO_PKCS7_Sign PKCS7_Sign;
-  SHAREDCRYPTO_PKCS7_GetAttachedContent PKCS7_GetAttachedContent;
-  SHAREDCRYPTO_PKCS7_GetCertificatesList PKCS7_GetCertificatesList;
-  SHAREDCRYPTO_AuthenticodeVerify Authenticode_Verify;
-  SHAREDCRYPTO_ImageTimestampVerify Image_TimestampVerify;
+  EDKII_CRYPTO_PKCS1_ENCRYPT_V2                   Pkcs1v2Encrypt;
+  EDKII_CRYPTO_PKCS5_PW_HASH                      Pkcs5HashPassword;
+  EDKII_CRYPTO_PKCS7_VERIFY                       Pkcs7Verify;
+  EDKII_CRYPTO_PKCS7_VERIFY_EKU                   VerifyEKUsInPkcs7Signature;
+  EDKII_CRYPTO_PKCS7_GET_SIGNERS                  Pkcs7GetSigners;
+  EDKII_CRYPTO_PKCS7_FREE_SIGNERS                 Pkcs7FreeSigners;
+  EDKII_CRYPTO_PKCS7_SIGN                         Pkcs7Sign;
+  EDKII_CRYPTO_PKCS7_GET_ATTACHED_CONTENT         Pkcs7GetAttachedContent;
+  EDKII_CRYPTO_PKCS7_GET_CERTIFICATES_LIST        Pkcs7GetCertificatesList;
+  EDKII_CRYPTO_AUTHENTICODE_VERIFY                AuthenticodeVerify;
+  EDKII_CRYPTO_IMAGE_TIMESTAMP_VERIFY             ImageTimestampVerify;
   /// DH
-  SHAREDCRYPTO_DH_New DH_New;
-  SHAREDCRYPTO_DH_Free DH_Free;
-  SHAREDCRYPTO_DH_GenerateParameter DH_GenerateParameter;
-  SHAREDCRYPTO_DH_SetParameter DH_SetParameter;
-  SHAREDCRYPTO_DH_GenerateKey DH_GenerateKey;
-  SHAREDCRYPTO_DH_ComputeKey DH_ComputeKey;
+  EDKII_CRYPTO_DH_NEW                             DhNew;
+  EDKII_CRYPTO_DH_FREE                            DhFree;
+  EDKII_CRYPTO_DH_GENERATE_PARAMETER              DhGenerateParameter;
+  EDKII_CRYPTO_DH_SET_PARAMETER                   DhSetParameter;
+  EDKII_CRYPTO_DH_GENERATE_KEY                    DhGenerateKey;
+  EDKII_CRYPTO_DH_COMPUTE_KEY                     DhComputeKey;
   /// Random
-  SHAREDCRYPTO_RANDOM_Seed RANDOM_Seed;
-  SHAREDCRYPTO_RANDOM_Bytes RANDOM_Bytes;
+  EDKII_CRYPTO_RANDOM_SEED                        RandomSeed;
+  EDKII_CRYPTO_RANDOM_BYTES                       RandomBytes;
   /// RSA
-  SHAREDCRYPTO_RSA_VERIFY_PKCS1 RSA_VERIFY_PKCS1;
-  SHAREDCRYPTO_RSA_New RSA_New;
-  SHAREDCRYPTO_RSA_Free RSA_Free;
-  SHAREDCRYPTO_RSA_SetKey RSA_SetKey;
-  SHAREDCRYPTO_RSA_GetKey RSA_GetKey;
-  SHAREDCRYPTO_RSA_GenerateKey RSA_GenerateKey;
-  SHAREDCRYPTO_RSA_CheckKey RSA_CheckKey;
-  SHAREDCRYPTO_RSA_Pkcs1Sign RSA_Pkcs1Sign;
-  SHAREDCRYPTO_RSA_Pkcs1Verify RSA_Pkcs1Verify;
-  SHAREDCRYPTO_RSA_GetPrivateKeyFromPem RSA_GetPrivateKeyFromPem;
-  SHAREDCRYPTO_RSA_GetPublicKeyFromX509 RSA_GetPublicKeyFromX509;
-  /// Sha protocol
-  SHAREDCRYPTO_SHA1_GET_CONTEXT_SIZE SHA1_GET_CONTEXT_SIZE;
-  SHAREDCRYPTO_SHA1_INIT SHA1_INIT;
-  SHAREDCRYPTO_SHA1_DUPLICATE SHA1_DUPLICATE;
-  SHAREDCRYPTO_SHA1_UPDATE SHA1_UPDATE;
-  SHAREDCRYPTO_SHA1_FINAL SHA1_FINAL;
-  SHAREDCRYPTO_SHA1_HASH_ALL SHA1_HASH_ALL;
-  SHAREDCRYPTO_SHA256_GET_CONTEXT_SIZE SHA256_GET_CONTEXT_SIZE;
-  SHAREDCRYPTO_SHA256_INIT SHA256_INIT;
-  SHAREDCRYPTO_SHA256_DUPLICATE SHA256_DUPLICATE;
-  SHAREDCRYPTO_SHA256_UPDATE SHA256_UPDATE;
-  SHAREDCRYPTO_SHA256_FINAL SHA256_FINAL;
-  SHAREDCRYPTO_SHA256_HASH_ALL SHA256_HASH_ALL;
-  SHAREDCRYPTO_SHA384_GetContextSize SHA384_GetContextSize;
-  SHAREDCRYPTO_SHA384_Init SHA384_Init;
-  SHAREDCRYPTO_SHA384_Duplicate SHA384_Duplicate;
-  SHAREDCRYPTO_SHA384_Update SHA384_Update;
-  SHAREDCRYPTO_SHA384_Final SHA384_Final;
-  SHAREDCRYPTO_SHA384_HashAll SHA384_HashAll;
-  SHAREDCRYPTO_SHA512_GetContextSize SHA512_GetContextSize;
-  SHAREDCRYPTO_SHA512_Init SHA512_Init;
-  SHAREDCRYPTO_SHA512_Duplicate SHA512_Duplicate;
-  SHAREDCRYPTO_SHA512_Update SHA512_Update;
-  SHAREDCRYPTO_SHA512_Final SHA512_Final;
-  SHAREDCRYPTO_SHA512_HashAll SHA512_HashAll;
+  EDKII_CRYPTO_RSA_VERIFY_PKCS1                   RsaVerifyPkcs1;
+  EDKII_CRYPTO_RSA_NEW                            RsaNew;
+  EDKII_CRYPTO_RSA_FREE                           RsaFree;
+  EDKII_CRYPTO_RSA_SET_KEY                        RsaSetKey;
+  EDKII_CRYPTO_RSA_GET_KEY                        RsaGetKey;
+  EDKII_CRYPTO_RSA_GENERATE_KEY                   RsaGenerateKey;
+  EDKII_CRYPTO_RSA_CHECK_KEY                      RsaCheckKey;
+  EDKII_CRYPTO_RSA_PKCS1_SIGN                     RsaPkcs1Sign;
+  EDKII_CRYPTO_RSA_PKCS1_VERIFY                   RsaPkcs1Verify;
+  EDKII_CRYPTO_RSA_GET_PRIVATE_KEY_FROM_PEM       RsaGetPrivateKeyFromPem;
+  EDKII_CRYPTO_RSA_GET_PUBLIC_KEY_FROM_X509       RsaGetPublicKeyFromX509;
+  /// Sha1
+  EDKII_CRYPTO_SHA1_GET_CONTEXT_SIZE              Sha1GetContextSize;
+  EDKII_CRYPTO_SHA1_INIT                          Sha1Init;
+  EDKII_CRYPTO_SHA1_DUPLICATE                     Sha1Duplicate;
+  EDKII_CRYPTO_SHA1_UPDATE                        Sha1Update;
+  EDKII_CRYPTO_SHA1_FINAL                         Sha1Final;
+  EDKII_CRYPTO_SHA1_HASH_ALL                      Sha1HashAll;
+  /// Sha256
+  EDKII_CRYPTO_SHA256_GET_CONTEXT_SIZE            Sha256GetContextSize;
+  EDKII_CRYPTO_SHA256_INIT                        Sha256Init;
+  EDKII_CRYPTO_SHA256_DUPLICATE                   Sha256Duplicate;
+  EDKII_CRYPTO_SHA256_UPDATE                      Sha256Update;
+  EDKII_CRYPTO_SHA256_FINAL                       Sha256Final;
+  EDKII_CRYPTO_SHA256_HASH_ALL                    Sha256HashAll;
+  /// Sha384
+  EDKII_CRYPTO_SHA384_GET_CONTEXT_SIZE            Sha384GetContextSize;
+  EDKII_CRYPTO_SHA384_INIT                        Sha384Init;
+  EDKII_CRYPTO_SHA384_DUPLICATE                   Sha384Duplicate;
+  EDKII_CRYPTO_SHA384_UPDATE                      Sha384Update;
+  EDKII_CRYPTO_SHA384_FINAL                       Sha384Final;
+  EDKII_CRYPTO_SHA384_HASH_ALL                    Sha384HashAll;
+  /// Sha512
+  EDKII_CRYPTO_SHA512_GET_CONTEXT_SIZE            Sha512GetContextSize;
+  EDKII_CRYPTO_SHA512_INIT                        Sha512Init;
+  EDKII_CRYPTO_SHA512_DUPLICATE                   Sha512Duplicate;
+  EDKII_CRYPTO_SHA512_UPDATE                      Sha512Update;
+  EDKII_CRYPTO_SHA512_FINAL                       Sha512Final;
+  EDKII_CRYPTO_SHA512_HASH_ALL                    Sha512HashAll;
   /// X509
-  SHAREDCRYPTO_X509_GET_SUBJECT_NAME X509_GET_SUBJECT_NAME;
-  SHAREDCRYPTO_X509_GET_COMMON_NAME X509_GET_COMMON_NAME;
-  SHAREDCRYPTO_X509_GET_ORGANIZATION_NAME X509_GET_ORGANIZATION_NAME;
-  SHAREDCRYPTO_X509_VerifyCert X509_VerifyCert;
-  SHAREDCRYPTO_X509_ConstructCertificate X509_ConstructCertificate;
-  SHAREDCRYPTO_X509_ConstructCertificateStack X509_ConstructCertificateStack;
-  SHAREDCRYPTO_X509_ConstructCertificateStackV X509_ConstructCertificateStackV;
-  SHAREDCRYPTO_X509_Free X509_Free;
-  SHAREDCRYPTO_X509_StackFree X509_StackFree;
-  SHAREDCRYPTO_X509_GetTBSCert X509_GetTBSCert;
+  EDKII_CRYPTO_X509_GET_SUBJECT_NAME              X509GetSubjectName;
+  EDKII_CRYPTO_X509_GET_COMMON_NAME               X509GetCommonName;
+  EDKII_CRYPTO_X509_GET_ORGANIZATION_NAME         X509GetOrganizationName;
+  EDKII_CRYPTO_X509_VERIFY_CERT                   X509VerifyCert;
+  EDKII_CRYPTO_X509_CONSTRUCT_CERTIFICATE         X509ConstructCertificate;
+  EDKII_CRYPTO_X509_CONSTRUCT_CERTIFICATE_STACK   X509ConstructCertificateStack;
+  EDKII_CRYPTO_X509_FREE                          X509Free;
+  EDKII_CRYPTO_X509_STACK_FREE                    X509StackFree;
+  EDKII_CRYPTO_X509_GET_TBS_CERT                  X509GetTBSCert;
   /// TDES
-  SHAREDCRYPTO_TDES_GetContextSize TDES_GetContextSize;
-  SHAREDCRYPTO_TDES_Init TDES_Init;
-  SHAREDCRYPTO_TDES_EcbEncrypt TDES_EcbEncrypt;
-  SHAREDCRYPTO_TDES_EcbDecrypt TDES_EcbDecrypt;
-  SHAREDCRYPTO_TDES_CbcEncrypt TDES_CbcEncrypt;
-  SHAREDCRYPTO_TDES_CbcDecrypt TDES_CbcDecrypt;
+  EDKII_CRYPTO_TDES_GET_CONTEXT_SIZE              TdesGetContextSize;
+  EDKII_CRYPTO_TDES_INIT                          TdesInit;
+  EDKII_CRYPTO_TDES_ECB_ENCRYPT                   TdesEcbEncrypt;
+  EDKII_CRYPTO_TDES_ECB_DECRYPT                   TdesEcbDecrypt;
+  EDKII_CRYPTO_TDES_CBC_ENCRYPT                   TdesCbcEncrypt;
+  EDKII_CRYPTO_TDES_CBC_DECRYPT                   TdesCbcDecrypt;
   /// AES
-  SHAREDCRYPTO_AES_GetContextSize AES_GetContextSize;
-  SHAREDCRYPTO_AES_Init AES_Init;
-  SHAREDCRYPTO_AES_EcbEncrypt AES_EcbEncrypt;
-  SHAREDCRYPTO_AES_EcbDecrypt AES_EcbDecrypt;
-  SHAREDCRYPTO_AES_CbcEncrypt AES_CbcEncrypt;
-  SHAREDCRYPTO_AES_CbcDecrypt AES_CbcDecrypt;
+  EDKII_CRYPTO_AES_GET_CONTEXT_SIZE               AesGetContextSize;
+  EDKII_CRYPTO_AES_INIT                           AesInit;
+  EDKII_CRYPTO_AES_ECB_ENCRYPT                    AesEcbEncrypt;
+  EDKII_CRYPTO_AES_ECB_DECRYPT                    AesEcbDecrypt;
+  EDKII_CRYPTO_AES_CBC_ENCRYPT                    AesCbcEncrypt;
+  EDKII_CRYPTO_AES_CBC_DECRYPT                    AesCbcDecrypt;
   /// Arc4
-  SHAREDCRYPTO_ARC4_GetContextSize ARC4_GetContextSize;
-  SHAREDCRYPTO_ARC4_Init ARC4_Init;
-  SHAREDCRYPTO_ARC4_Encrypt ARC4_Encrypt;
-  SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
-  SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  EDKII_CRYPTO_ARC4_GET_CONTEXT_SIZE              Arc4GetContextSize;
+  EDKII_CRYPTO_ARC4_INIT                          Arc4Init;
+  EDKII_CRYPTO_ARC4_ENCRYPT                       Arc4Encrypt;
+  EDKII_CRYPTO_ARC4_DECRYPT                       Arc4Decrypt;
+  EDKII_CRYPTO_ARC4_RESET                         Arc4Reset;
   /// SM3
-  SHAREDCRYPTO_SM3_GetContextSize SM3_GetContextSize;
-  SHAREDCRYPTO_SM3_Init SM3_Init;
-  SHAREDCRYPTO_SM3_Duplicate SM3_Duplicate;
-  SHAREDCRYPTO_SM3_Update SM3_Update;
-  SHAREDCRYPTO_SM3_Final SM3_Final;
-  SHAREDCRYPTO_SM3_HashAll SM3_Hashall;
+  EDKII_CRYPTO_SM3_GET_CONTEXT_SIZE               Sm3GetContextSize;
+  EDKII_CRYPTO_SM3_INIT                           Sm3Init;
+  EDKII_CRYPTO_SM3_DUPLICATE                      Sm3Duplicate;
+  EDKII_CRYPTO_SM3_UPDATE                         Sm3Update;
+  EDKII_CRYPTO_SM3_FINAL                          Sm3Final;
+  EDKII_CRYPTO_SM3_HASH_ALL                       Sm3HashAll;
+  /// HKDF
+  EDKII_CRYPTO_HKDF_SHA_256_EXTRACT_AND_EXPAND    HkdfSha256ExtractAndExpand;
+  /// X509 (Continued)
+  EDKII_CRYPTO_X509_CONSTRUCT_CERTIFICATE_STACK_V X509ConstructCertificateStackV;
+  /// TLS
+  EDKII_CRYPTO_TLS_INITIALIZE                     TlsInitialize;
+  EDKII_CRYPTO_TLS_CTX_FREE                       TlsCtxFree;
+  EDKII_CRYPTO_TLS_CTX_NEW                        TlsCtxNew;
+  EDKII_CRYPTO_TLS_FREE                           TlsFree;
+  EDKII_CRYPTO_TLS_NEW                            TlsNew;
+  EDKII_CRYPTO_TLS_IN_HANDSHAKE                   TlsInHandshake;
+  EDKII_CRYPTO_TLS_DO_HANDSHAKE                   TlsDoHandshake;
+  EDKII_CRYPTO_TLS_HANDLE_ALERT                   TlsHandleAlert;
+  EDKII_CRYPTO_TLS_CLOSE_NOTIFY                   TlsCloseNotify;
+  EDKII_CRYPTO_TLS_CTRL_TRAFFIC_OUT               TlsCtrlTrafficOut;
+  EDKII_CRYPTO_TLS_CTRL_TRAFFIC_IN                TlsCtrlTrafficIn;
+  EDKII_CRYPTO_TLS_READ                           TlsRead;
+  EDKII_CRYPTO_TLS_WRITE                          TlsWrite;
+  /// TLS Set
+  EDKII_CRYPTO_TLS_SET_VERSION                    TlsSetVersion;
+  EDKII_CRYPTO_TLS_SET_CONNECTION_END             TlsSetConnectionEnd;
+  EDKII_CRYPTO_TLS_SET_CIPHER_LIST                TlsSetCipherList;
+  EDKII_CRYPTO_TLS_SET_COMPRESSION_METHOD         TlsSetCompressionMethod;
+  EDKII_CRYPTO_TLS_SET_VERIFY                     TlsSetVerify;
+  EDKII_CRYPTO_TLS_SET_VERIFY_HOST                TlsSetVerifyHost;
+  EDKII_CRYPTO_TLS_SET_SESSIONID                  TlsSetSessionId;
+  EDKII_CRYPTO_TLS_SET_CA_CERTIFICATE             TlsSetCaCertificate;
+  EDKII_CRYPTO_TLS_SET_HOST_PUBLIC_CERT           TlsSetHostPublicCert;
+  EDKII_CRYPTO_TLS_SET_HOST_PRIVATE_KEY           TlsSetHostPrivateKey;
+  EDKII_CRYPTO_TLS_SET_CERT_REVOCATION_LIST       TlsSetCertRevocationList;
+  /// TLS Get
+  EDKII_CRYPTO_TLS_GET_VERSION                    TlsGetVersion;
+  EDKII_CRYPTO_TLS_GET_CONNECTION_END             TlsGetConnectionEnd;
+  EDKII_CRYPTO_TLS_GET_CURRENT_CIPHER             TlsGetCurrentCipher;
+  EDKII_CRYPTO_TLS_GET_CURRENT_COMPRESSION_ID     TlsGetCurrentCompressionId;
+  EDKII_CRYPTO_TLS_GET_VERIFY                     TlsGetVerify;
+  EDKII_CRYPTO_TLS_GET_SESSION_ID                 TlsGetSessionId;
+  EDKII_CRYPTO_TLS_GET_CLIENT_RANDOM              TlsGetClientRandom;
+  EDKII_CRYPTO_TLS_GET_SERVER_RANDOM              TlsGetServerRandom;
+  EDKII_CRYPTO_TLS_GET_KEY_MATERIAL               TlsGetKeyMaterial;
+  EDKII_CRYPTO_TLS_GET_CA_CERTIFICATE             TlsGetCaCertificate;
+  EDKII_CRYPTO_TLS_GET_HOST_PUBLIC_CERT           TlsGetHostPublicCert;
+  EDKII_CRYPTO_TLS_GET_HOST_PRIVATE_KEY           TlsGetHostPrivateKey;
+  EDKII_CRYPTO_TLS_GET_CERT_REVOCATION_LIST       TlsGetCertRevocationList;
 };
 
 #endif
