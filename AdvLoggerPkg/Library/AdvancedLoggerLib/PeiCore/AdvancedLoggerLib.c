@@ -34,7 +34,10 @@ InstallPermanentMemoryBuffer (
 );
 
 ADVANCED_LOGGER_PPI                 mAdvancedLoggerPpi = {
-    AdvancedLoggerWrite
+    AdvancedLoggerWrite,
+    DebugVPrint,
+    DebugAssert,
+    DebugDumpMemory
 };
 
 CONST EFI_PEI_PPI_DESCRIPTOR        mAdvancedLoggerPpiList[] = {

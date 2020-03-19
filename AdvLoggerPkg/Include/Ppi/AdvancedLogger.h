@@ -29,8 +29,61 @@ VOID
     IN  UINTN           NumberOfBytes
   );
 
+/**
+  Function pointer for PPI routing to correct DebugPrint function
+
+  @param  ErrorLevel  The error level of the debug message.
+  @param  Format      Format string for the debug message to print.
+  @param  VaListMarker  VA_LIST marker for the variable argument list.
+
+**/
+typedef
+VOID
+(EFIAPI *ADVANCED_LOGGER_PRINT)(
+    IN  UINTN        ErrorLevel,
+    IN  CONST CHAR8 *Format,
+    VA_LIST          VaListMarker
+  );
+
+/**
+  Function pointer for PPI routing to correct DebugAssert function
+
+  @param  FileName     The pointer to the name of the source file that generated the assert condition.
+  @param  LineNumber   The line number in the source file that generated the assert condition
+  @param  Description  The pointer to the description of the assert condition.
+
+**/
+typedef
+VOID
+(EFIAPI *ADVANCED_LOGGER_ASSERT)(
+    IN CONST CHAR8 *FileName,
+    IN UINTN        LineNumber,
+    IN CONST CHAR8 *Description
+  );
+
+/**
+  Function pointer for PPI routing to correct DebugDumpMemory function
+
+  @param  Address      The address of the memory to dump.
+  @param  Length       The length of the region to dump.
+  @param  Flags        PrintAddress, PrintOffset etc
+
+**/
+typedef
+VOID
+(EFIAPI *ADVANCED_LOGGER_DUMP_MEMORY)(
+    IN UINTN        ErrorLevel,
+    IN CONST VOID  *Address,
+    IN UINTN        Length,
+    IN UINT32       Flags
+  );
+
+
 struct _ADVANCED_LOGGER_PPI {
-    ADVANCED_LOGGER_WRITE    AdvancedLoggerWrite;
+    ADVANCED_LOGGER_WRITE         AdvancedLoggerWrite;
+    ADVANCED_LOGGER_PRINT         AdvancedLoggerPrint;
+    ADVANCED_LOGGER_ASSERT        AdvancedLoggerAssert;
+    ADVANCED_LOGGER_DUMP_MEMORY   AdvancedLoggerDumpMemory;
 };
 
 extern  EFI_GUID  gAdvancedLoggerPpiGuid;
