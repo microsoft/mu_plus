@@ -14,25 +14,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 #include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestAssertLib.h>
 #include <Library/ShellLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/IoLib.h>
 #include <Library/PciLib.h>
-#include <Library/UnitTestLogLib.h>
-#include <Library/UnitTestBootUsbLib.h>
+#include <Library/UnitTestBootLib.h>
 
 #include <Protocol/PciIo.h>
 #include <IndustryStandard/Pci22.h>
 
 #include "DMAProtectionTest.h"
 
-#define UNIT_TEST_APP_NAME                    L"IOMMU BME and Register Status Unit Test Library Application"
-#define UNIT_TEST_APP_VERSION                 L"0.2"
+#define UNIT_TEST_APP_NAME                    "IOMMU BME and Register Status Unit Test Library Application"
+#define UNIT_TEST_APP_VERSION                 "0.2"
 #define DMA_UNIT_TEST_VARIABLE_PRE_EBS_NAME   L"DMAUnitTestVariablePreEBS"
 #define DMA_UNIT_TEST_VARIABLE_POST_EBS_NAME  L"DMAUnitTestVariablePostEBS"
 
@@ -74,7 +71,6 @@ typedef struct BME_TEST_CONTEXT_T_DEF
 UNIT_TEST_STATUS
 EFIAPI
 CheckBMETeardown (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -103,7 +99,7 @@ CheckBMETeardown (
   if(BMEContext.TestProgress == 0)
   {
     BMEContext.TestProgress++;
-    SaveFrameworkState(Framework, &BMEContext, sizeof(BME_TEST_CONTEXT));
+    SaveFrameworkState(&BMEContext, sizeof(BME_TEST_CONTEXT));
 
     //
     // Step 1: Get all PCI IO protocols
@@ -185,7 +181,7 @@ CheckBMETeardown (
     //
     // Step 5: Set Next Boot to Boot to USB
     //
-    SetUsbBootNext();
+    SetBootNextDevice();
 
     //
     // Step 6: Get the EFI memory map.
@@ -389,24 +385,21 @@ DMAProtectionUnitTestApp (
   )
 {
   EFI_STATUS                  Status;
-  UNIT_TEST_SUITE             *IommuTests;
-  UNIT_TEST_FRAMEWORK         *Fw = NULL;
-  CHAR16                      ShortName[100];
+  UNIT_TEST_SUITE_HANDLE      IommuTests;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
   BME_TEST_CONTEXT            *BMEContext;
 
   gImageHandle = ImageHandle;
-  ShortName[0] = L'\0';
 
   //
   // Setup Unit Test Framework
   //
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-  DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG(( DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION );
+  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
@@ -416,7 +409,7 @@ DMAProtectionUnitTestApp (
   //
   // Populate the Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &IommuTests, Fw, L"IOMMU ACPI and Register tests", L"IOMMU", NULL, NULL );
+  Status = CreateUnitTestSuite( &IommuTests, Fw, "IOMMU ACPI and Register tests", "IOMMU", NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for IOMMU\n"));
@@ -434,9 +427,9 @@ DMAProtectionUnitTestApp (
     goto EXIT;
   }
 
-  AddTestCase( IommuTests, L"All Hardware Definition Units Have IOMMU Enabled", L"IOMMU.StatusRegister", CheckIOMMUEnabled, NULL, NULL, NULL );
-  AddTestCase( IommuTests, L"BME Teardown at ExitBootServices", L"IOMMU.BMETeardown", CheckBMETeardown, NULL, NULL, BMEContext);
-  AddTestCase( IommuTests, L"Verify excluded ranges are marked reserved", L"IOMMU.ExcludedRangeTest", CheckExcludedRegions, NULL, NULL, NULL);
+  AddTestCase( IommuTests, "All Hardware Definition Units Have IOMMU Enabled", "IOMMU.StatusRegister", CheckIOMMUEnabled, NULL, NULL, NULL );
+  AddTestCase( IommuTests, "BME Teardown at ExitBootServices", "IOMMU.BMETeardown", CheckBMETeardown, NULL, NULL, BMEContext);
+  AddTestCase( IommuTests, "Verify excluded ranges are marked reserved", "IOMMU.ExcludedRangeTest", CheckExcludedRegions, NULL, NULL, NULL);
 
   //
   // Execute the tests.

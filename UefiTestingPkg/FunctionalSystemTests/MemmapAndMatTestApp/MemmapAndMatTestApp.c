@@ -11,7 +11,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PrintLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
@@ -20,9 +19,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MemoryAttributesTable.h>
 
 
-#define UNIT_TEST_APP_NAME        L"MemoryMap and MemoryAttributesTable Unit Test"
-#define UNIT_TEST_APP_SHORT_NAME  L"MemMap_and_MAT_Test"
-#define UNIT_TEST_APP_VERSION     L"1.0"
+#define UNIT_TEST_APP_NAME        "MemoryMap and MemoryAttributesTable Unit Test"
+#define UNIT_TEST_APP_SHORT_NAME  "MemMap_and_MAT_Test"
+#define UNIT_TEST_APP_VERSION     "1.0"
 
 
 #define A_IS_BETWEEN_B_AND_C(A, B, C) \
@@ -80,7 +79,6 @@ DumpDescriptor (
 UNIT_TEST_STATUS
 EFIAPI
 MemoryMapShouldHaveFewEntries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -92,7 +90,6 @@ MemoryMapShouldHaveFewEntries (
 UNIT_TEST_STATUS
 EFIAPI
 ListsShouldHaveTheSameDescriptorSize (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -105,7 +102,6 @@ ListsShouldHaveTheSameDescriptorSize (
 UNIT_TEST_STATUS
 EFIAPI
 LegacyMapSizeShouldBeAMultipleOfDescriptorSize (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -124,7 +120,6 @@ LegacyMapSizeShouldBeAMultipleOfDescriptorSize (
 UNIT_TEST_STATUS
 EFIAPI
 MatMapSizeShouldBeAMultipleOfDescriptorSize (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -143,7 +138,6 @@ MatMapSizeShouldBeAMultipleOfDescriptorSize (
 UNIT_TEST_STATUS
 EFIAPI
 NoLegacyMapEntriesShouldHaveZeroSize (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -168,7 +162,6 @@ NoLegacyMapEntriesShouldHaveZeroSize (
 UNIT_TEST_STATUS
 EFIAPI
 NoMatMapEntriesShouldHaveZeroSize (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -193,7 +186,6 @@ NoMatMapEntriesShouldHaveZeroSize (
 UNIT_TEST_STATUS
 EFIAPI
 AllLegacyMapEntriesShouldBePageAligned (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -219,7 +211,6 @@ AllLegacyMapEntriesShouldBePageAligned (
 UNIT_TEST_STATUS
 EFIAPI
 AllMatMapEntriesShouldBePageAligned (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -245,7 +236,6 @@ AllMatMapEntriesShouldBePageAligned (
 UNIT_TEST_STATUS
 EFIAPI
 AllMatEntriesShouldBeCertainTypes (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -272,7 +262,6 @@ AllMatEntriesShouldBeCertainTypes (
 UNIT_TEST_STATUS
 EFIAPI
 AllMatEntriesShouldHaveRuntimeAttribute (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -299,7 +288,6 @@ AllMatEntriesShouldHaveRuntimeAttribute (
 UNIT_TEST_STATUS
 EFIAPI
 AllMatEntriesShouldHaveNxOrRoAttribute (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -327,7 +315,6 @@ AllMatEntriesShouldHaveNxOrRoAttribute (
 UNIT_TEST_STATUS
 EFIAPI
 AllMatEntriesShouldBe4kAligned (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -356,7 +343,6 @@ AllMatEntriesShouldBe4kAligned (
 UNIT_TEST_STATUS
 EFIAPI
 AllMatEntriesMustBeInAscendingOrder (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -428,7 +414,6 @@ EntriesInASingleMapShouldNotOverlapAtAll (
 UNIT_TEST_STATUS
 EFIAPI
 EntriesInLegacyMapShouldNotOverlapAtAll (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -439,7 +424,6 @@ EntriesInLegacyMapShouldNotOverlapAtAll (
 UNIT_TEST_STATUS
 EFIAPI
 EntriesInMatMapShouldNotOverlapAtAll (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -450,7 +434,6 @@ EntriesInMatMapShouldNotOverlapAtAll (
 UNIT_TEST_STATUS
 EFIAPI
 EntriesBetweenListsShouldNotOverlapBoundaries (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -504,7 +487,6 @@ EntriesBetweenListsShouldNotOverlapBoundaries (
 UNIT_TEST_STATUS
 EFIAPI
 AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -564,7 +546,6 @@ AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap (
 UNIT_TEST_STATUS
 EFIAPI
 AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -737,13 +718,11 @@ MemmapAndMatTestApp (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                Status;
-  UNIT_TEST_FRAMEWORK       *Fw = NULL;
-  UNIT_TEST_SUITE           *TableStructureTests, *MatTableContentTests, *TableEntryRangeTests;
-  CHAR16  ShortName[100];
-  ShortName[0] = L'\0';
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-  DEBUG((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
+  EFI_STATUS                  Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE      TableStructureTests, MatTableContentTests, TableEntryRangeTests;
+
+  DEBUG((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // First, let's set up somethings that will be used by all test cases.
@@ -758,7 +737,7 @@ MemmapAndMatTestApp (
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION );
+  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
@@ -768,56 +747,56 @@ MemmapAndMatTestApp (
   //
   // Populate the TableStructureTests Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &TableStructureTests, Fw, L"Table Structure Tests", L"Security.MAT.TableStructure",  NULL, NULL );
+  Status = CreateUnitTestSuite( &TableStructureTests, Fw, "Table Structure Tests", "Security.MAT.TableStructure",  NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TableStructureTests\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( TableStructureTests, L"Memory Maps should not have more than 500 entries", L"Security.MAT.NumEntries", MemoryMapShouldHaveFewEntries, NULL, NULL, NULL);
-  AddTestCase( TableStructureTests, L"Memory Maps should have the same Descriptor size", L"Security.MAT.DescriptorSize", ListsShouldHaveTheSameDescriptorSize, NULL, NULL, NULL);
-  AddTestCase( TableStructureTests, L"Standard MemoryMap size should be a multiple of the Descriptor size", L"Security.MAT.MemMapSize", LegacyMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
-  AddTestCase( TableStructureTests, L"MAT size should be a multiple of the Descriptor size", L"Security.MAT.Size", MatMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
-  AddTestCase( TableStructureTests, L"No standard MemoryMap entries should have a 0 size", L"Security.MAT.MemMapZeroSizeEntries", NoLegacyMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
-  AddTestCase( TableStructureTests, L"No MAT entries should have a 0 size", L"Security.MAT.MatZeroSizeEntries", NoMatMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
-  AddTestCase( TableStructureTests, L"All standard MemoryMap entries should be page aligned", L"Security.MAT.MemMapAlignment", AllLegacyMapEntriesShouldBePageAligned, NULL, NULL, NULL);
-  AddTestCase( TableStructureTests, L"All MAT entries should be page aligned", L"Security.MAT.MatPageAligned", AllMatMapEntriesShouldBePageAligned, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "Memory Maps should not have more than 500 entries", "Security.MAT.NumEntries", MemoryMapShouldHaveFewEntries, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "Memory Maps should have the same Descriptor size", "Security.MAT.DescriptorSize", ListsShouldHaveTheSameDescriptorSize, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "Standard MemoryMap size should be a multiple of the Descriptor size", "Security.MAT.MemMapSize", LegacyMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "MAT size should be a multiple of the Descriptor size", "Security.MAT.Size", MatMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "No standard MemoryMap entries should have a 0 size", "Security.MAT.MemMapZeroSizeEntries", NoLegacyMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "No MAT entries should have a 0 size", "Security.MAT.MatZeroSizeEntries", NoMatMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "All standard MemoryMap entries should be page aligned", "Security.MAT.MemMapAlignment", AllLegacyMapEntriesShouldBePageAligned, NULL, NULL, NULL);
+  AddTestCase( TableStructureTests, "All MAT entries should be page aligned", "Security.MAT.MatPageAligned", AllMatMapEntriesShouldBePageAligned, NULL, NULL, NULL);
 
   //
   // Populate the MatTableContentTests Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &MatTableContentTests, Fw, L"MAT Memory Map Content Tests", L"Security.MAT.MatEntries", NULL, NULL );
+  Status = CreateUnitTestSuite( &MatTableContentTests, Fw, "MAT Memory Map Content Tests", "Security.MAT.MatEntries", NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for MatTableContentTests\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( MatTableContentTests, L"MAT entries should be EfiRuntimeServicesCode or EfiRuntimeServicesData", L"Security.MAT.RtMemoryType", AllMatEntriesShouldBeCertainTypes, NULL, NULL, NULL);
-  AddTestCase( MatTableContentTests, L"MAT entries should all have the Runtime attribute", L"Security.MAT.RtAttributes", AllMatEntriesShouldHaveRuntimeAttribute, NULL, NULL, NULL);
-  AddTestCase( MatTableContentTests, L"All MAT entries should have the XP or RO attribute", L"Security.MAT.XPorRO", AllMatEntriesShouldHaveNxOrRoAttribute, NULL, NULL, NULL);
-  AddTestCase( MatTableContentTests, L"All MAT entries should be aligned on a 4k boundary", L"Security.MAT.4kAlign", AllMatEntriesShouldBe4kAligned, NULL, NULL, NULL);
-  AddTestCase( MatTableContentTests, L"All MAT entries must appear in ascending order by physical start address", L"Security.MAT.EntryOrder", AllMatEntriesMustBeInAscendingOrder, NULL, NULL, NULL);
+  AddTestCase( MatTableContentTests, "MAT entries should be EfiRuntimeServicesCode or EfiRuntimeServicesData", "Security.MAT.RtMemoryType", AllMatEntriesShouldBeCertainTypes, NULL, NULL, NULL);
+  AddTestCase( MatTableContentTests, "MAT entries should all have the Runtime attribute", "Security.MAT.RtAttributes", AllMatEntriesShouldHaveRuntimeAttribute, NULL, NULL, NULL);
+  AddTestCase( MatTableContentTests, "All MAT entries should have the XP or RO attribute", "Security.MAT.XPorRO", AllMatEntriesShouldHaveNxOrRoAttribute, NULL, NULL, NULL);
+  AddTestCase( MatTableContentTests, "All MAT entries should be aligned on a 4k boundary", "Security.MAT.4kAlign", AllMatEntriesShouldBe4kAligned, NULL, NULL, NULL);
+  AddTestCase( MatTableContentTests, "All MAT entries must appear in ascending order by physical start address", "Security.MAT.EntryOrder", AllMatEntriesMustBeInAscendingOrder, NULL, NULL, NULL);
 
   //
   // Populate the TableEntryRangeTests Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &TableEntryRangeTests, Fw, L"Memory Map Entry Range Tests", L"Security.MAT.RangeTest",  NULL, NULL );
+  Status = CreateUnitTestSuite( &TableEntryRangeTests, Fw, "Memory Map Entry Range Tests", "Security.MAT.RangeTest",  NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TableEntryRangeTests\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( TableEntryRangeTests, L"Entries in standard MemoryMap should not overlap each other at all", L"Security.MAT.MemMapEntryOverlap", EntriesInLegacyMapShouldNotOverlapAtAll, NULL, NULL, NULL);
-  AddTestCase( TableEntryRangeTests, L"Entries in MAT should not overlap each other at all", L"Security.MAT.MatEntryOverlap", EntriesInMatMapShouldNotOverlapAtAll, NULL, NULL, NULL);
-  AddTestCase( TableEntryRangeTests, L"Entries in one list should not overlap any of the boundaries of entries in the other", L"Security.MAT.EntryOverlap", EntriesBetweenListsShouldNotOverlapBoundaries, NULL, NULL, NULL);
-  AddTestCase( TableEntryRangeTests, L"All MAT entries should lie entirely within a standard MemoryMap entry of the same type", L"Security.MAT.EntriesWithinMemMap", AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap, NULL, NULL, NULL);
+  AddTestCase( TableEntryRangeTests, "Entries in standard MemoryMap should not overlap each other at all", "Security.MAT.MemMapEntryOverlap", EntriesInLegacyMapShouldNotOverlapAtAll, NULL, NULL, NULL);
+  AddTestCase( TableEntryRangeTests, "Entries in MAT should not overlap each other at all", "Security.MAT.MatEntryOverlap", EntriesInMatMapShouldNotOverlapAtAll, NULL, NULL, NULL);
+  AddTestCase( TableEntryRangeTests, "Entries in one list should not overlap any of the boundaries of entries in the other", "Security.MAT.EntryOverlap", EntriesBetweenListsShouldNotOverlapBoundaries, NULL, NULL, NULL);
+  AddTestCase( TableEntryRangeTests, "All MAT entries should lie entirely within a standard MemoryMap entry of the same type", "Security.MAT.EntriesWithinMemMap", AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap, NULL, NULL, NULL);
   // NOTE: For this test, it would be ideal for the AllMatEntriesMustBeInAscendingOrder test to be a prereq, but since the prototype for
   //       a test case and a prereq are now different (and since I'm too lazy to write a wrapper function...) here we are.
-  AddTestCase( TableEntryRangeTests, L"All EfiRuntimeServicesCode and EfiRuntimeServicesData entries in standard MemoryMap must be entirely described by MAT",
-              L"Security.MAT.AllRtCodeInMat", AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat, NULL, NULL, NULL);
+  AddTestCase( TableEntryRangeTests, "All EfiRuntimeServicesCode and EfiRuntimeServicesData entries in standard MemoryMap must be entirely described by MAT",
+              "Security.MAT.AllRtCodeInMat", AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat, NULL, NULL, NULL);
 
   //
   // Execute the tests.

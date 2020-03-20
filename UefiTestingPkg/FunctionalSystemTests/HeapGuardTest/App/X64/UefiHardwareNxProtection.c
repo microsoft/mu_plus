@@ -10,15 +10,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Register\ArchitecturalMsr.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestLogLib.h>
 #include "../HeapGuardTestCommon.h"
 
 UNIT_TEST_STATUS
 EFIAPI
 UefiHardwareNxProtectionEnabled (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {

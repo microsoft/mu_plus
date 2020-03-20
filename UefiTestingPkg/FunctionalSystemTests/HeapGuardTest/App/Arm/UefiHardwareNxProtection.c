@@ -8,12 +8,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi.h>
 
 #include <Library/DebugLib.h>
-#include <UnitTestTypes.h>
+#include <Library/UnitTestLib.h>
 
 UNIT_TEST_STATUS
 EFIAPI
 UefiHardwareNxProtectionEnabled (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {

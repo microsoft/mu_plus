@@ -13,16 +13,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 #include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestAssertLib.h>
 #include <Library/ShellLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/IoLib.h>
-#include <Library/UnitTestLogLib.h>
-#include <Library/UnitTestBootUsbLib.h>
 
 #include "IVRS.h"
 #include "DmaProtection.h"
@@ -38,7 +34,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 UNIT_TEST_STATUS
 EFIAPI
 CheckExcludedRegions (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -140,7 +135,6 @@ CheckExcludedRegions (
 UNIT_TEST_STATUS
 EFIAPI
 CheckIOMMUEnabled (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {

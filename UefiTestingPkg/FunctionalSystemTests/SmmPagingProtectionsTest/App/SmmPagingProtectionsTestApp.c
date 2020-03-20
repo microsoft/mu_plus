@@ -20,19 +20,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestLogLib.h>
-#include <Library/UnitTestAssertLib.h>
-#include <Library/UnitTestBootUsbLib.h>
+#include <Library/UnitTestBootLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
 
 #include "../SmmPagingProtectionsTestCommon.h"
 
 
-#define UNIT_TEST_APP_NAME        L"SMM Memory Protections Test"
-#define UNIT_TEST_APP_VERSION     L"0.5"
+#define UNIT_TEST_APP_NAME        "SMM Memory Protections Test"
+#define UNIT_TEST_APP_VERSION     "0.5"
 
 VOID      *mPiSmmCommonCommBufferAddress = NULL;
 UINTN     mPiSmmCommonCommBufferSize;
@@ -120,7 +117,6 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
 UNIT_TEST_STATUS
 EFIAPI
 LocateSmmCommonCommBuffer (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -169,7 +165,6 @@ LocateSmmCommonCommBuffer (
 UNIT_TEST_STATUS
 EFIAPI
 CodeShouldBeWriteProtected (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -192,8 +187,8 @@ CodeShouldBeWriteProtected (
     // it a "pass". If we fall through we will consider it a "fail".
     //
     PostReset = TRUE;
-    SetUsbBootNext();
-    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+    SetBootNextDevice();
+    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
 
     // This should cause the system to reboot.
     Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PAGING_PROTECTIONS_SELF_TEST_CODE );
@@ -201,7 +196,7 @@ CodeShouldBeWriteProtected (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR( "System was expected to reboot, but didn't." );
     PostReset = FALSE;
-    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
   }
 
   UT_ASSERT_TRUE( PostReset );
@@ -212,7 +207,6 @@ CodeShouldBeWriteProtected (
 UNIT_TEST_STATUS
 EFIAPI
 DataShouldBeExecuteProtected (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -235,8 +229,8 @@ DataShouldBeExecuteProtected (
     // it a "pass". If we fall through we will consider it a "fail".
     //
     PostReset = TRUE;
-    SetUsbBootNext();
-    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+    SetBootNextDevice();
+    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
 
     // This should cause the system to reboot.
     Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PAGING_PROTECTIONS_SELF_TEST_DATA );
@@ -244,7 +238,7 @@ DataShouldBeExecuteProtected (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR( "System was expected to reboot, but didn't." );
     PostReset = FALSE;
-    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
   }
 
   UT_ASSERT_TRUE( PostReset );
@@ -255,7 +249,6 @@ DataShouldBeExecuteProtected (
 UNIT_TEST_STATUS
 EFIAPI
 InvalidRangesShouldBeReadProtected (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -278,8 +271,8 @@ InvalidRangesShouldBeReadProtected (
     // it a "pass". If we fall through we will consider it a "fail".
     //
     PostReset = TRUE;
-    SetUsbBootNext();
-    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+    SetBootNextDevice();
+    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
 
     // This should cause the system to reboot.
     Status = SmmMemoryProtectionsDxeToSmmCommunicate( SMM_PAGING_PROTECTIONS_TEST_INVALID_RANGE );
@@ -287,7 +280,7 @@ InvalidRangesShouldBeReadProtected (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR( "System was expected to reboot, but didn't." );
     PostReset = FALSE;
-    SaveFrameworkState( Framework, &PostReset, sizeof( PostReset ) );
+    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
   }
 
   UT_ASSERT_TRUE( PostReset );
@@ -321,19 +314,16 @@ SmmPagingProtectionsTestAppEntryPoint (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                Status;
-  UNIT_TEST_FRAMEWORK       *Fw = NULL;
-  UNIT_TEST_SUITE           *TestSuite;
-  CHAR16  ShortName[100];
-  ShortName[0] = L'\0';
+  EFI_STATUS                  Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE      TestSuite;
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-  DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG(( DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION );
+  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
@@ -343,17 +333,17 @@ SmmPagingProtectionsTestAppEntryPoint (
   //
   // Populate the TestSuite Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &TestSuite, Fw, L"SMM Paging Protections Tests", L"Security.SMMPaging", NULL, NULL );
+  Status = CreateUnitTestSuite( &TestSuite, Fw, "SMM Paging Protections Tests", "Security.SMMPaging", NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TestSuite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( TestSuite, L"Code regions should be write-protected", L"Security.SMMPaging.CodeProtections", CodeShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
-  AddTestCase( TestSuite, L"Data regions should be protected against execution", L"Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
+  AddTestCase( TestSuite, "Code regions should be write-protected", "Security.SMMPaging.CodeProtections", CodeShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
+  AddTestCase( TestSuite, "Data regions should be protected against execution", "Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
   // THIS TEST DOESN'T WORK.
-  // AddTestCase( TestSuite, L"Invalid ranges should be protected against access from SMM", L"Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL );
+  // AddTestCase( TestSuite, "Invalid ranges should be protected against access from SMM", "Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL );
 
   //
   // Execute the tests.

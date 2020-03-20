@@ -24,21 +24,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 UNIT_TEST_STATUS
 EFIAPI
 CheckBMETeardown (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   );
 
 UNIT_TEST_STATUS
 EFIAPI
 CheckExcludedRegions (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   );
 
 UNIT_TEST_STATUS
 EFIAPI
 CheckIOMMUEnabled (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   );
 

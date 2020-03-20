@@ -7,7 +7,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Uefi.h>
-#include <UnitTestFrameworkTypes.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UnitTestResultReportLib.h>

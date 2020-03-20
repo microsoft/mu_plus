@@ -13,18 +13,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PrintLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestLogLib.h>
-#include <Library/UnitTestAssertLib.h>
+#include <Library/UnitTestBootLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 
 #include <Guid/MemoryOverwriteControl.h>
 #include <IndustryStandard/MemoryOverwriteRequestControlLock.h>
 
 
-#define UNIT_TEST_APP_NAME        L"MORLock v1 and v2 Test"
-#define UNIT_TEST_APP_VERSION     L"0.1"
+#define UNIT_TEST_APP_NAME        "MORLock v1 and v2 Test"
+#define UNIT_TEST_APP_VERSION     "0.1"
 
 #define MOR_LOCK_DATA_UNLOCKED           0x0
 #define MOR_LOCK_DATA_LOCKED_WITHOUT_KEY 0x1
@@ -51,10 +49,61 @@ UINT8     mTestKey3[] = { 0x81, 0x51, 0x1E, 0x00, 0xCB, 0xFE, 0x48, 0xD9 };
 ///================================================================================================
 
 
+/**
+  NOTE: Takes in a ResetType, but currently only supports EfiResetCold
+        and EfiResetWarm. All other types will return EFI_INVALID_PARAMETER.
+        If a more specific reset is required, use SaveFrameworkState() and
+        call gRT->ResetSystem() directly.
+
+**/
+EFI_STATUS
+EFIAPI
+SaveFrameworkStateAndReboot (
+  IN UNIT_TEST_CONTEXT          ContextToSave     OPTIONAL,
+  IN UINTN                      ContextToSaveSize,
+  IN EFI_RESET_TYPE             ResetType
+  )
+{
+  EFI_STATUS                  Status;
+
+  //
+  // First, let's not make assumptions about the parameters.
+  if (ResetType != EfiResetCold && ResetType != EfiResetWarm)
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Now, save all the data associated with this framework.
+  Status = SaveFrameworkState( ContextToSave, ContextToSaveSize );
+
+  //
+  // If we're all good, let's book...
+  if (!EFI_ERROR( Status ))
+  {
+    //
+    // Next, we want to update the BootNext variable to USB
+    // so that we have a fighting chance of coming back here.
+    //
+    SetBootNextDevice();
+
+    //
+    // Reset 
+    gRT->ResetSystem( ResetType, EFI_SUCCESS, 0, NULL );
+    DEBUG(( DEBUG_ERROR, "%a - Unit test failed to quit! Framework can no longer be used!\n", __FUNCTION__ ));
+
+    //
+    // We REALLY shouldn't be here.
+    Status = EFI_ABORTED;
+  }
+
+  return Status;
+} // SaveFrameworkStateAndReboot()
+
+
 UNIT_TEST_STATUS
 EFIAPI
 MorControlVariableShouldBeCorrect (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -134,12 +183,11 @@ SetMorControlVariable (
 STATIC
 VOID
 UnitTestCleanupReboot (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
   // Reboot this mother.
-  SaveFrameworkStateAndReboot( Framework, NULL, 0, EfiResetCold );
+  SaveFrameworkStateAndReboot( NULL, 0, EfiResetCold );
   return;
 } // UnitTestCleanupReboot()
 
@@ -180,7 +228,6 @@ GetMorLockVariable (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockShouldNotBeSet (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -218,7 +265,6 @@ MorLockShouldNotBeSet (
 UNIT_TEST_STATUS
 EFIAPI
 MorControlVariableShouldExist (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -241,7 +287,6 @@ MorControlVariableShouldExist (
 UNIT_TEST_STATUS
 EFIAPI
 MorControlVariableShouldHaveCorrectSize (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -266,7 +311,6 @@ MorControlVariableShouldHaveCorrectSize (
 UNIT_TEST_STATUS
 EFIAPI
 MorControlVariableShouldHaveCorrectAttributes (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -292,7 +336,6 @@ MorControlVariableShouldHaveCorrectAttributes (
 UNIT_TEST_STATUS
 EFIAPI
 MorControlShouldNotBeDeletable (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -313,7 +356,6 @@ MorControlShouldNotBeDeletable (
 UNIT_TEST_STATUS
 EFIAPI
 MorControlShouldEnforceCorrectAttributes (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -334,7 +376,6 @@ MorControlShouldEnforceCorrectAttributes (
 UNIT_TEST_STATUS
 EFIAPI
 MorControlShouldChangeWhenNotLocked (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -368,7 +409,6 @@ MorControlShouldChangeWhenNotLocked (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv1ShouldNotSetBadValue (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -387,15 +427,6 @@ MorLockv1ShouldNotSetBadValue (
   // Make sure that the status is EFI_INVALID_PARAMETER.
   UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
-  // If the value was accepted, for some reason,
-  // we need to reboot to clean up after ourselves.
-  if (!EFI_ERROR( Status ))
-  {
-    // Check this trick out...
-    // We're gonna pull the rug out from under ourselves.
-    ((UNIT_TEST_FRAMEWORK*)Framework)->CurrentTest->CleanUp = UnitTestCleanupReboot;
-  }
-
   return UNIT_TEST_PASSED;
 } // MorLockv1ShouldNotSetBadValue()
 
@@ -403,7 +434,6 @@ MorLockv1ShouldNotSetBadValue (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv1ShouldNotSetBadBufferSize (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -422,15 +452,6 @@ MorLockv1ShouldNotSetBadBufferSize (
   // Make sure that the status is EFI_INVALID_PARAMETER.
   UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
-  // If the value was accepted, for some reason,
-  // we need to reboot to clean up after ourselves.
-  if (!EFI_ERROR( Status ))
-  {
-    // Check this trick out...
-    // We're gonna pull the rug out fromm under ourselves.
-    ((UNIT_TEST_FRAMEWORK*)Framework)->CurrentTest->CleanUp = UnitTestCleanupReboot;
-  }
-
   return UNIT_TEST_PASSED;
 } // MorLockv1ShouldNotSetBadBufferSize()
 
@@ -438,7 +459,6 @@ MorLockv1ShouldNotSetBadBufferSize (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockShouldNotSetBadAttributes (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -464,7 +484,6 @@ MorLockShouldNotSetBadAttributes (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv1ShouldBeLockable (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -497,7 +516,6 @@ MorLockv1ShouldBeLockable (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv1ShouldReportCorrectly (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -520,7 +538,6 @@ MorLockv1ShouldReportCorrectly (
 UNIT_TEST_STATUS
 EFIAPI
 MorControlShouldNotChange (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -565,7 +582,6 @@ MorControlShouldNotChange (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv1ShouldNotChangeWhenLocked (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -589,7 +605,6 @@ MorLockv1ShouldNotChangeWhenLocked (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv1ShouldNotBeDeleteable (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -610,7 +625,6 @@ MorLockv1ShouldNotBeDeleteable (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockShouldClearAfterReboot (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -634,7 +648,7 @@ MorLockShouldClearAfterReboot (
 
     UT_LOG_INFO( "Going down for reboot!\n" );
     // A warm reboot should be sufficient.
-    SaveFrameworkStateAndReboot( Framework, &IsPostReboot, sizeof( IsPostReboot ), EfiResetWarm );
+    SaveFrameworkStateAndReboot( &IsPostReboot, sizeof( IsPostReboot ), EfiResetWarm );
     // We shouldn't get here. If we do, we'll just return failure from this function.
     UT_LOG_ERROR( "Reboot failed! Should never get here!!\n" );
   }
@@ -657,7 +671,6 @@ MorLockShouldClearAfterReboot (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotSetSmallBuffer (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -680,15 +693,6 @@ MorLockv2ShouldNotSetSmallBuffer (
   // Make sure that the status is EFI_INVALID_PARAMETER.
   UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
-  // If the value was accepted, for some reason,
-  // we need to reboot to clean up after ourselves.
-  if (!EFI_ERROR( Status ))
-  {
-    // Check this trick out...
-    // We're gonna pull the rug out fromm under ourselves.
-    ((UNIT_TEST_FRAMEWORK*)Framework)->CurrentTest->CleanUp = UnitTestCleanupReboot;
-  }
-
   return UNIT_TEST_PASSED;
 } // MorLockv2ShouldNotSetSmallBuffer()
 
@@ -696,7 +700,6 @@ MorLockv2ShouldNotSetSmallBuffer (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotSetLargeBuffer (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -720,16 +723,6 @@ MorLockv2ShouldNotSetLargeBuffer (
   // Make sure that the status is EFI_INVALID_PARAMETER.
   UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
-
-  // If the value was accepted, for some reason,
-  // we need to reboot to clean up after ourselves.
-  if (!EFI_ERROR( Status ))
-  {
-    // Check this trick out...
-    // We're gonna pull the rug out fromm under ourselves.
-    ((UNIT_TEST_FRAMEWORK*)Framework)->CurrentTest->CleanUp = UnitTestCleanupReboot;
-  }
-
   return Result;
 } // MorLockv2ShouldNotSetLargeBuffer()
 
@@ -737,7 +730,6 @@ MorLockv2ShouldNotSetLargeBuffer (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotSetNoBuffer (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -758,15 +750,6 @@ MorLockv2ShouldNotSetNoBuffer (
   // Make sure that the status is EFI_INVALID_PARAMETER.
   UT_ASSERT_STATUS_EQUAL(Status, EFI_INVALID_PARAMETER);
 
-  // If the value was accepted, for some reason,
-  // we need to reboot to clean up after ourselves.
-  if (!EFI_ERROR( Status ))
-  {
-    // Check this trick out...
-    // We're gonna pull the rug out fromm under ourselves.
-    ((UNIT_TEST_FRAMEWORK*)Framework)->CurrentTest->CleanUp = UnitTestCleanupReboot;
-  }
-
   return Result;
 } // MorLockv2ShouldNotSetNoBuffer()
 
@@ -774,7 +757,6 @@ MorLockv2ShouldNotSetNoBuffer (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldBeLockable (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -807,7 +789,6 @@ MorLockv2ShouldBeLockable (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldReportCorrectly (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -830,7 +811,6 @@ MorLockv2ShouldReportCorrectly (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldOnlyReturnOneByte (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -864,7 +844,6 @@ MorLockv2ShouldOnlyReturnOneByte (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotReturnKey (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -905,7 +884,6 @@ MorLockv2ShouldNotReturnKey (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotChangeWhenLocked (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -928,7 +906,6 @@ MorLockv2ShouldNotChangeWhenLocked (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotChangeTov1 (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -953,7 +930,6 @@ MorLockv2ShouldNotChangeTov1 (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotBeDeleteable (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -974,7 +950,6 @@ MorLockv2ShouldNotBeDeleteable (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldClearWithCorrectKey (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1035,7 +1010,6 @@ Exit:
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldNotClearWithWrongKey (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1083,7 +1057,6 @@ MorLockv2ShouldNotClearWithWrongKey (
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldReleaseMorControlAfterClear (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1124,14 +1097,13 @@ MorLockv2ShouldReleaseMorControlAfterClear (
 
   // If we've made it this far, the only thing left to do is make sure
   // that the MOR Control can change.
-  return MorControlShouldChangeWhenNotLocked( Framework, NULL );
+  return MorControlShouldChangeWhenNotLocked( NULL );
 } // MorLockv2ShouldReleaseMorControlAfterClear()
 
 
 UNIT_TEST_STATUS
 EFIAPI
 MorLockv2ShouldSetClearSet (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1241,19 +1213,16 @@ MorLockTestApp (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                Status;
-  UNIT_TEST_FRAMEWORK       *Fw = NULL;
-  UNIT_TEST_SUITE           *EnvironmentalTests, *MorLockV1Tests, *MorLockV2Tests;
-  CHAR16  ShortName[100];
-  ShortName[0] = L'\0';
+  EFI_STATUS                  Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
+  UNIT_TEST_SUITE_HANDLE      EnvironmentalTests, MorLockV1Tests, MorLockV2Tests;
 
-  UnicodeSPrint(&ShortName[0], sizeof(ShortName), L"%a", gEfiCallerBaseName);
-  DEBUG(( DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG(( DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION );
+  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
@@ -1263,18 +1232,18 @@ MorLockTestApp (
   //
   // Populate the EnvironmentalTests Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &EnvironmentalTests, Fw, L"Boot Environment Tests", L"Security.MOR", NULL, NULL );
+  Status = CreateUnitTestSuite( &EnvironmentalTests, Fw, "Boot Environment Tests", "Security.MOR", NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for EnvironmentalTests\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( EnvironmentalTests, L"On any given boot, the MOR control variable should exist", L"Security.MOR.ControlExists", MorControlVariableShouldExist, NULL, NULL, NULL );
-  AddTestCase( EnvironmentalTests, L"MOR control variable should be the correct size", L"Security.MOR.ControlSize", MorControlVariableShouldHaveCorrectSize, NULL, NULL, NULL );
-  AddTestCase( EnvironmentalTests, L"MOR control variable should have correct attributes", L"Security.MOR.ControlAttributesCorrect", MorControlVariableShouldHaveCorrectAttributes, NULL, NULL, NULL );
-  AddTestCase( EnvironmentalTests, L"Should not be able to delete MOR control variable", L"Security.MOR.ControlCannotDelete", MorControlShouldNotBeDeletable, NULL, NULL, NULL );
-  AddTestCase( EnvironmentalTests, L"Should not be able to create MOR control variable with incorrect attributes", L"Security.MOR.ControlAttributesCreate", MorControlShouldEnforceCorrectAttributes, NULL, UnitTestCleanupReboot, NULL );
+  AddTestCase( EnvironmentalTests, "On any given boot, the MOR control variable should exist", "Security.MOR.ControlExists", MorControlVariableShouldExist, NULL, NULL, NULL );
+  AddTestCase( EnvironmentalTests, "MOR control variable should be the correct size", "Security.MOR.ControlSize", MorControlVariableShouldHaveCorrectSize, NULL, NULL, NULL );
+  AddTestCase( EnvironmentalTests, "MOR control variable should have correct attributes", "Security.MOR.ControlAttributesCorrect", MorControlVariableShouldHaveCorrectAttributes, NULL, NULL, NULL );
+  AddTestCase( EnvironmentalTests, "Should not be able to delete MOR control variable", "Security.MOR.ControlCannotDelete", MorControlShouldNotBeDeletable, NULL, NULL, NULL );
+  AddTestCase( EnvironmentalTests, "Should not be able to create MOR control variable with incorrect attributes", "Security.MOR.ControlAttributesCreate", MorControlShouldEnforceCorrectAttributes, NULL, UnitTestCleanupReboot, NULL );
 
   // IMPORTANT NOTE: On a reboot test, currently, prereqs will be run each time the test is continued. Ergo, a prereq that may be
   //                 valid on a single boot may not be valid on subsequent boots. THIS MUST BE SOLVED!!
@@ -1282,17 +1251,17 @@ MorLockTestApp (
   //
   // Populate the MorLockV1Tests Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &MorLockV1Tests, Fw, L"MORLock v1 Tests", L"Security.MOR.LockV1", NULL, NULL );
+  Status = CreateUnitTestSuite( &MorLockV1Tests, Fw, "MORLock v1 Tests", "Security.MOR.LockV1", NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for MorLockV1Tests\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( MorLockV1Tests, L"Should be able to change MOR control when not locked", L"Security.MOR.MorLockV1.MorControlChange", MorControlShouldChangeWhenNotLocked, MorControlVariableShouldBeCorrect, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"Should not be able to set MORLock v1 with a bad value", L"Security.MOR.MorLockV1.LockValue", MorLockv1ShouldNotSetBadValue, MorLockShouldNotBeSet, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"Should not be able to set MORLock v1 with strange buffer size", L"Security.MOR.MorLockV1.StrangeSize", MorLockv1ShouldNotSetBadBufferSize, MorLockShouldNotBeSet, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"Should not be able to set MORLock v1 with bad attributes", L"Security.MOR.MorLockV1.BadAttributes", MorLockShouldNotSetBadAttributes, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should be able to change MOR control when not locked", "Security.MOR.MorLockV1.MorControlChange", MorControlShouldChangeWhenNotLocked, MorControlVariableShouldBeCorrect, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should not be able to set MORLock v1 with a bad value", "Security.MOR.MorLockV1.LockValue", MorLockv1ShouldNotSetBadValue, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should not be able to set MORLock v1 with strange buffer size", "Security.MOR.MorLockV1.StrangeSize", MorLockv1ShouldNotSetBadBufferSize, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should not be able to set MORLock v1 with bad attributes", "Security.MOR.MorLockV1.BadAttributes", MorLockShouldNotSetBadAttributes, MorLockShouldNotBeSet, NULL, NULL );
   //
   // NOTE: Strictly speaking, this isn't a good unit test.
   //       After this test runs, the MorLock is set and the other tests
@@ -1300,28 +1269,28 @@ MorLockTestApp (
   //       We *could* make better unit tests, but there would be a lot more
   //       reboots. So let's say this is for efficiency.
   //
-  AddTestCase( MorLockV1Tests, L"Should be able to set the v1 MORLock", L"Security.MOR.MorLockV1.SetLock", MorLockv1ShouldBeLockable, MorLockShouldNotBeSet, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"Should report version correctly when locked with MORLock v1", L"Security.MOR.MorLockV1.LockVersion", MorLockv1ShouldReportCorrectly, NULL, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"Should not be able to change the MOR control when locked with MORLock v1", L"Security.MOR.MorLockV1.Lock", MorControlShouldNotChange, MorLockv1ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"Should not be able to change the MORLock when locked with MORLock v1", L"Security.MOR.MorLockV1.LockImmutable", MorLockv1ShouldNotChangeWhenLocked, MorLockv1ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"Should not be able to delete the MORLock when locked with MORLock v1", L"Security.MOR.MorLockV1.LockDelete", MorLockv1ShouldNotBeDeleteable, MorLockv1ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV1Tests, L"MORLock v1 should clear after reboot", L"Security.MOR.MorLockV1.ClearOnReboot", MorLockShouldClearAfterReboot, MorLockv1ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should be able to set the v1 MORLock", "Security.MOR.MorLockV1.SetLock", MorLockv1ShouldBeLockable, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should report version correctly when locked with MORLock v1", "Security.MOR.MorLockV1.LockVersion", MorLockv1ShouldReportCorrectly, NULL, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should not be able to change the MOR control when locked with MORLock v1", "Security.MOR.MorLockV1.Lock", MorControlShouldNotChange, MorLockv1ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should not be able to change the MORLock when locked with MORLock v1", "Security.MOR.MorLockV1.LockImmutable", MorLockv1ShouldNotChangeWhenLocked, MorLockv1ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "Should not be able to delete the MORLock when locked with MORLock v1", "Security.MOR.MorLockV1.LockDelete", MorLockv1ShouldNotBeDeleteable, MorLockv1ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV1Tests, "MORLock v1 should clear after reboot", "Security.MOR.MorLockV1.ClearOnReboot", MorLockShouldClearAfterReboot, MorLockv1ShouldReportCorrectly, NULL, NULL );
 
   //
   // Populate the MorLockV2Tests Unit Test Suite.
   //
-  Status = CreateUnitTestSuite( &MorLockV2Tests, Fw, L"MORLock v2 Tests", L"Security.MOR.LockV2", NULL, NULL );
+  Status = CreateUnitTestSuite( &MorLockV2Tests, Fw, "MORLock v2 Tests", "Security.MOR.LockV2", NULL, NULL );
   if (EFI_ERROR( Status ))
   {
     DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for MorLockV2Tests\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase( MorLockV2Tests, L"Should be able to change MOR control when not locked", L"Security.MOR.LockV2.MorMutableWhenNotLocked", MorControlShouldChangeWhenNotLocked, MorControlVariableShouldBeCorrect, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to set MORLock v2 with buffer too small", L"Security.MOR.LockV2.LockValueTooSmall", MorLockv2ShouldNotSetSmallBuffer, MorLockShouldNotBeSet, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to set MORLock v2 with buffer too large", L"Security.MOR.LockV2.LockValueTooLarge", MorLockv2ShouldNotSetLargeBuffer, MorLockShouldNotBeSet, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to set MORLock v2 without a key", L"Security.MOR.LockV2.LockWithoutKey", MorLockv2ShouldNotSetNoBuffer, MorLockShouldNotBeSet, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to set MORLock v2 with bad attributes", L"Security.MOR.LockV2.BadAttributes", MorLockShouldNotSetBadAttributes, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should be able to change MOR control when not locked", "Security.MOR.LockV2.MorMutableWhenNotLocked", MorControlShouldChangeWhenNotLocked, MorControlVariableShouldBeCorrect, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to set MORLock v2 with buffer too small", "Security.MOR.LockV2.LockValueTooSmall", MorLockv2ShouldNotSetSmallBuffer, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to set MORLock v2 with buffer too large", "Security.MOR.LockV2.LockValueTooLarge", MorLockv2ShouldNotSetLargeBuffer, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to set MORLock v2 without a key", "Security.MOR.LockV2.LockWithoutKey", MorLockv2ShouldNotSetNoBuffer, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to set MORLock v2 with bad attributes", "Security.MOR.LockV2.BadAttributes", MorLockShouldNotSetBadAttributes, MorLockShouldNotBeSet, NULL, NULL );
   //
   // NOTE: Strictly speaking, this isn't a good unit test.
   //       After this test runs, the MorLock is set and the other tests
@@ -1329,23 +1298,23 @@ MorLockTestApp (
   //       We *could* make better unit tests, but there would be a lot more
   //       reboots. So let's say this is for efficiency.
   //
-  AddTestCase( MorLockV2Tests, L"Should be able to set the v2 MORLock", L"Security.MOR.LockV2.SetLock", MorLockv2ShouldBeLockable, MorLockShouldNotBeSet, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should report version correctly when locked with MORLock v2", L"Security.MOR.LockV2.LockVersion", MorLockv2ShouldReportCorrectly, NULL, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should only return one byte when reading MORLock v2", L"Security.MOR.LockV2.LockSize", MorLockv2ShouldOnlyReturnOneByte, MorLockv2ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not return the key contents when locked with MORLock v2", L"Security.MOR.LockV2.LockDataProtection", MorLockv2ShouldNotReturnKey, MorLockv2ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to change the MOR control when locked with MORLock v2", L"Security.MOR.LockV2.Lock", MorControlShouldNotChange, MorLockv2ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to change the key when locked with MORLock v2", L"Security.MOR.LockV2.LockImmutable", MorLockv2ShouldNotChangeWhenLocked, MorLockv2ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to change to MORLock v1 when locked with MORLock v2", L"Security.MOR.LockV2.ChangeToV1Lock", MorLockv2ShouldNotChangeTov1, MorLockv2ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"Should not be able to delete the MORLock when locked with MORLock v2", L"Security.MOR.LockV2.LockDelete", MorLockv2ShouldNotBeDeleteable, MorLockv2ShouldReportCorrectly, NULL, NULL );
-  AddTestCase( MorLockV2Tests, L"MORLock v2 should clear after reboot", L"Security.MOR.MorLockV2.ClearOnReboot", MorLockShouldClearAfterReboot, MorLockv2ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should be able to set the v2 MORLock", "Security.MOR.LockV2.SetLock", MorLockv2ShouldBeLockable, MorLockShouldNotBeSet, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should report version correctly when locked with MORLock v2", "Security.MOR.LockV2.LockVersion", MorLockv2ShouldReportCorrectly, NULL, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should only return one byte when reading MORLock v2", "Security.MOR.LockV2.LockSize", MorLockv2ShouldOnlyReturnOneByte, MorLockv2ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not return the key contents when locked with MORLock v2", "Security.MOR.LockV2.LockDataProtection", MorLockv2ShouldNotReturnKey, MorLockv2ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to change the MOR control when locked with MORLock v2", "Security.MOR.LockV2.Lock", MorControlShouldNotChange, MorLockv2ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to change the key when locked with MORLock v2", "Security.MOR.LockV2.LockImmutable", MorLockv2ShouldNotChangeWhenLocked, MorLockv2ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to change to MORLock v1 when locked with MORLock v2", "Security.MOR.LockV2.ChangeToV1Lock", MorLockv2ShouldNotChangeTov1, MorLockv2ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "Should not be able to delete the MORLock when locked with MORLock v2", "Security.MOR.LockV2.LockDelete", MorLockv2ShouldNotBeDeleteable, MorLockv2ShouldReportCorrectly, NULL, NULL );
+  AddTestCase( MorLockV2Tests, "MORLock v2 should clear after reboot", "Security.MOR.MorLockV2.ClearOnReboot", MorLockShouldClearAfterReboot, MorLockv2ShouldReportCorrectly, NULL, NULL );
   //
   // End of tests that assume precedence.
   // From here on, each test is isolated and will clean up after itself.
   //
-  AddTestCase( MorLockV2Tests, L"MORLock v2 should clear with a correct key", L"Security.MOR.MorLockV2.LockUnlock", MorLockv2ShouldClearWithCorrectKey, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
-  AddTestCase( MorLockV2Tests, L"MORLock v2 should not clear with an incorrect key", L"Security.MOR.MorLockV2.LockKeyValueWrongUnlock", MorLockv2ShouldNotClearWithWrongKey, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
-  AddTestCase( MorLockV2Tests, L"Should be able to change MOR control after setting and clearing MORLock v2", L"Security.MOR.MorLockV2.Unlock", MorLockv2ShouldReleaseMorControlAfterClear, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
-  AddTestCase( MorLockV2Tests, L"Should be able to change keys by setting, clearing, and setting MORLock v2", L"Security.MOR.MorLockV2.LockUnlockLock", MorLockv2ShouldSetClearSet, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
+  AddTestCase( MorLockV2Tests, "MORLock v2 should clear with a correct key", "Security.MOR.MorLockV2.LockUnlock", MorLockv2ShouldClearWithCorrectKey, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
+  AddTestCase( MorLockV2Tests, "MORLock v2 should not clear with an incorrect key", "Security.MOR.MorLockV2.LockKeyValueWrongUnlock", MorLockv2ShouldNotClearWithWrongKey, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
+  AddTestCase( MorLockV2Tests, "Should be able to change MOR control after setting and clearing MORLock v2", "Security.MOR.MorLockV2.Unlock", MorLockv2ShouldReleaseMorControlAfterClear, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
+  AddTestCase( MorLockV2Tests, "Should be able to change keys by setting, clearing, and setting MORLock v2", "Security.MOR.MorLockV2.LockUnlockLock", MorLockv2ShouldSetClearSet, MorLockShouldNotBeSet, UnitTestCleanupReboot, NULL );
 
   //
   // Execute the tests.

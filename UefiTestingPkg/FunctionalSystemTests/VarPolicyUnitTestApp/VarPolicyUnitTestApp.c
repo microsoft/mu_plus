@@ -13,20 +13,17 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <UnitTestTypes.h>
 #include <Library/UnitTestLib.h>
-#include <Library/UnitTestAssertLib.h>
+#include <Library/UnitTestBootLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/VariablePolicy.h>
-#include <Library/UnitTestLogLib.h>
 #include <Library/MuVariablePolicyHelperLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 
-#define UNIT_TEST_APP_NAME        L"Variable Policy Unit Test Application"
-#define UNIT_TEST_APP_VERSION     L"0.1"
+#define UNIT_TEST_APP_NAME        "Variable Policy Unit Test Application"
+#define UNIT_TEST_APP_VERSION     "0.1"
 
-UNIT_TEST_FRAMEWORK       *mFw = NULL;
 VARIABLE_POLICY_PROTOCOL  *mVarPol = NULL;
 
 
@@ -40,7 +37,6 @@ EFI_GUID mTestNamespaceGuid3 = { 0x5d5ab4bb, 0xcdc1, 0x655d, { 0xc6, 0xcb, 0x45,
 UNIT_TEST_STATUS
 EFIAPI
 LocateVarPolicyPreReq (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -63,7 +59,6 @@ LocateVarPolicyPreReq (
 //
 UNIT_TEST_STATUS
 CheckVpEnabled (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -80,12 +75,11 @@ CheckVpEnabled (
 
 UNIT_TEST_STATUS
 CheckVpRevision (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
   UT_ASSERT_NOT_EQUAL (mVarPol->Revision, 0);
-  UnitTestLog (mFw, DEBUG_INFO, "VP Revision: 0x%x\n", mVarPol->Revision);
+  UT_LOG_INFO ("VP Revision: 0x%x\n", mVarPol->Revision);
 
   return UNIT_TEST_PASSED;
 } // CheckVpRevision
@@ -95,7 +89,6 @@ CheckVpRevision (
 //
 UNIT_TEST_STATUS
 TestMinSizeNoLock (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -175,7 +168,6 @@ TestMinSizeNoLock (
 
 UNIT_TEST_STATUS
 TestMaxSizeNoLock (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -255,7 +247,6 @@ TestMaxSizeNoLock (
 
 UNIT_TEST_STATUS
 TestMustHaveAttrNoLock (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -329,7 +320,6 @@ TestMustHaveAttrNoLock (
 
 UNIT_TEST_STATUS
 TestCantHaveAttrNoLock (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -382,7 +372,6 @@ TestCantHaveAttrNoLock (
 
 UNIT_TEST_STATUS
 TestMaxSizeNamespaceNoLock (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -465,7 +454,6 @@ TestMaxSizeNamespaceNoLock (
 
 UNIT_TEST_STATUS
 TestMustHaveAttrWildcardNoLock (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -540,7 +528,6 @@ TestMustHaveAttrWildcardNoLock (
 
 UNIT_TEST_STATUS
 TestPolicyprioritizationNoLock (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -661,7 +648,6 @@ TestPolicyprioritizationNoLock (
 //
 UNIT_TEST_STATUS
 TestExistingVarLockNow (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -722,7 +708,6 @@ TestExistingVarLockNow (
 
 UNIT_TEST_STATUS
 TestNonexistentVarLockNow (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -773,7 +758,6 @@ TestNonexistentVarLockNow (
 //
 UNIT_TEST_STATUS
 TestExistingVarLockOnCreate (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -834,7 +818,6 @@ TestExistingVarLockOnCreate (
 
 UNIT_TEST_STATUS
 TestNonexistentVarLockOnCreate (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -933,7 +916,6 @@ TestNonexistentVarLockOnCreate (
 //
 UNIT_TEST_STATUS
 TestLockOnVarStateBeforeCreate (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1033,7 +1015,6 @@ TestLockOnVarStateBeforeCreate (
 
 UNIT_TEST_STATUS
 TestLockOnVarStateAfterCreate (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1121,7 +1102,6 @@ TestLockOnVarStateAfterCreate (
 
 UNIT_TEST_STATUS
 TestLockOnVarStateInvalidLargeTrigger (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1187,7 +1167,6 @@ TestLockOnVarStateInvalidLargeTrigger (
 
 UNIT_TEST_STATUS
 TestLockOnVarStateWrongValueTrigger (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1256,7 +1235,6 @@ TestLockOnVarStateWrongValueTrigger (
 //
 UNIT_TEST_STATUS
 TestInvalidAttributesPolicy (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1278,7 +1256,7 @@ TestInvalidAttributesPolicy (
                                         EFI_VARIABLE_HARDWARE_ERROR_RECORD,
                                         VARIABLE_POLICY_NO_CANT_ATTR,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting must have attr to EFI_VARIABLE_HARDWARE_ERROR_RECORD returned %r\n", Status);
+  UT_LOG_INFO ("Setting must have attr to EFI_VARIABLE_HARDWARE_ERROR_RECORD returned %r\n", Status);
 
   //
   // Let's try 0x10 - EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS, a deprecated attribute
@@ -1291,7 +1269,7 @@ TestInvalidAttributesPolicy (
                                         EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS,
                                         VARIABLE_POLICY_NO_CANT_ATTR,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting must have attr to EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
+  UT_LOG_INFO ("Setting must have attr to EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
 
   //
   // Let's try 0x20 - EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS
@@ -1304,7 +1282,7 @@ TestInvalidAttributesPolicy (
                                         EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,
                                         VARIABLE_POLICY_NO_CANT_ATTR,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting must have attr to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
+  UT_LOG_INFO ("Setting must have attr to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
 
   //
   // Let's try something wild, like 0x4000
@@ -1317,7 +1295,7 @@ TestInvalidAttributesPolicy (
                                         0x4000,
                                         VARIABLE_POLICY_NO_CANT_ATTR,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting must have attr to 0x4000 returned %r\n", Status);
+  UT_LOG_INFO ("Setting must have attr to 0x4000 returned %r\n", Status);
 
   //
   // Now repeat the same tests, but for the can't-have param
@@ -1330,7 +1308,7 @@ TestInvalidAttributesPolicy (
                                         VARIABLE_POLICY_NO_MUST_ATTR,
                                         EFI_VARIABLE_HARDWARE_ERROR_RECORD,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting cant have attr to EFI_VARIABLE_HARDWARE_ERROR_RECORD returned %r\n", Status);
+  UT_LOG_INFO ("Setting cant have attr to EFI_VARIABLE_HARDWARE_ERROR_RECORD returned %r\n", Status);
 
   Status = RegisterBasicVariablePolicy (mVarPol,
                                         &mTestNamespaceGuid1,
@@ -1340,7 +1318,7 @@ TestInvalidAttributesPolicy (
                                         VARIABLE_POLICY_NO_MUST_ATTR,
                                         EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting cant have attr to EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
+  UT_LOG_INFO ("Setting cant have attr to EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
 
   Status = RegisterBasicVariablePolicy (mVarPol,
                                         &mTestNamespaceGuid1,
@@ -1350,7 +1328,7 @@ TestInvalidAttributesPolicy (
                                         VARIABLE_POLICY_NO_MUST_ATTR,
                                         EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting cant have attr to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
+  UT_LOG_INFO ("Setting cant have attr to EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS returned %r\n", Status);
 
   Status = RegisterBasicVariablePolicy (mVarPol,
                                         &mTestNamespaceGuid1,
@@ -1360,14 +1338,13 @@ TestInvalidAttributesPolicy (
                                         VARIABLE_POLICY_NO_MUST_ATTR,
                                         0x4000,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
-  UnitTestLog (mFw, DEBUG_INFO, "Setting cant have attr to 0x4000 returned %r\n", Status);
+  UT_LOG_INFO ("Setting cant have attr to 0x4000 returned %r\n", Status);
 
   return UNIT_TEST_PASSED;
 } // TestInvalidAttributesPolicy
 
 UNIT_TEST_STATUS
 TestLargeMinSizePolicy (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1385,14 +1362,13 @@ TestLargeMinSizePolicy (
                                         VARIABLE_POLICY_NO_CANT_ATTR,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
 
-  UnitTestLog (mFw, DEBUG_INFO, "Setting min size to 0x80000000 returned %r\n", Status);
+  UT_LOG_INFO ("Setting min size to 0x80000000 returned %r\n", Status);
 
   return UNIT_TEST_PASSED;
 } // TestLargeMinSizePolicy
 
 UNIT_TEST_STATUS
 TestZeroMaxSizePolicy (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1410,14 +1386,13 @@ TestZeroMaxSizePolicy (
                                         VARIABLE_POLICY_NO_CANT_ATTR,
                                         VARIABLE_POLICY_TYPE_NO_LOCK);
   //UT_ASSERT_NOT_EQUAL (Status, EFI_SUCCESS); // this fails on QC. Real bug? Do we care?
-  UnitTestLog (mFw, DEBUG_INFO, "Setting max size to 0 returned %r\n", Status);
+  UT_LOG_INFO ("Setting max size to 0 returned %r\n", Status);
 
   return UNIT_TEST_PASSED;
 } // TestZeroMaxSizePolicy
 
 UNIT_TEST_STATUS
 TestInvalidPolicyTypePolicy (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1459,7 +1434,6 @@ TestInvalidPolicyTypePolicy (
 //
 UNIT_TEST_STATUS
 TestDumpPolicy (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1495,7 +1469,6 @@ TestDumpPolicy (
 //
 UNIT_TEST_STATUS
 TestPolicyVersion (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1518,7 +1491,7 @@ TestPolicyVersion (
 
   NewEntry->Version = 0x1234;
   Status = mVarPol->RegisterVariablePolicy (NewEntry);
-  UnitTestLog (mFw, DEBUG_INFO, "Registering policy entry with an unknown version status: %r\n", Status);
+  UT_LOG_INFO ("Registering policy entry with an unknown version status: %r\n", Status);
 
   FreePool (NewEntry);
 
@@ -1530,7 +1503,6 @@ TestPolicyVersion (
 //
 UNIT_TEST_STATUS
 LockPolicyEngineTests (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1562,7 +1534,7 @@ LockPolicyEngineTests (
   // See if we can lock it again?
   //
   Status = mVarPol->LockVariablePolicy ();
-  UnitTestLog (mFw, DEBUG_INFO, "Locking VPE for second time returned %r\n", Status);
+  UT_LOG_INFO ("Locking VPE for second time returned %r\n", Status);
 
   //
   // Let's confirm one of the policies from prior test suites is still enforced
@@ -1643,11 +1615,35 @@ LockPolicyEngineTests (
 STATIC
 VOID
 SaveContextAndReboot (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  SaveFrameworkStateAndReboot (Framework, NULL, 0, EfiResetCold);
+  EFI_STATUS Status;
+
+  //
+  // Now, save all the data associated with this framework.
+  Status = SaveFrameworkState( NULL, 0 );
+
+  //
+  // If we're all good, let's book...
+  if (!EFI_ERROR( Status ))
+  {
+    //
+    // Next, we want to update the BootNext variable to USB
+    // so that we have a fighting chance of coming back here.
+    //
+    SetBootNextDevice();
+
+    //
+    // Reset 
+    gRT->ResetSystem( EfiResetCold, EFI_SUCCESS, 0, NULL );
+    DEBUG(( DEBUG_ERROR, "%a - Unit test failed to quit! Framework can no longer be used!\n", __FUNCTION__ ));
+
+    //
+    // We REALLY shouldn't be here.
+    Status = EFI_ABORTED;
+  }
+
   return;
 } // SaveContextAndReboot
 
@@ -1656,7 +1652,6 @@ SaveContextAndReboot (
 //
 UNIT_TEST_STATUS
 DisablePolicyEngineTests (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1681,7 +1676,7 @@ DisablePolicyEngineTests (
   // Try locking it?
   //
   Status = mVarPol->LockVariablePolicy ();
-  UnitTestLog (mFw, DEBUG_INFO, "Locking VP after disabling it status: %r\n", Status);
+  UT_LOG_INFO ("Locking VP after disabling it status: %r\n", Status);
 
   //
   // Try modifying the var from TestExistingVarLockNow
@@ -1703,7 +1698,6 @@ DisablePolicyEngineTests (
 STATIC
 VOID
 FinalCleanup (
-  IN UNIT_TEST_FRAMEWORK_HANDLE  Framework,
   IN UNIT_TEST_CONTEXT           Context
   )
 {
@@ -1714,49 +1708,49 @@ FinalCleanup (
                              0,
                              0,
                              NULL);
-  UnitTestLog (mFw, DEBUG_INFO, "Delete ExistingLockNowVar status: %r\n", Status);
+  UT_LOG_INFO ("Delete ExistingLockNowVar status: %r\n", Status);
 
   Status = gRT->SetVariable (L"ExistingLockOnCreateVar",
                              &mTestNamespaceGuid1,
                              0,
                              0,
                              NULL);
-  UnitTestLog (mFw, DEBUG_INFO, "Delete ExistingLockOnCreateVar status: %r\n", Status);
+  UT_LOG_INFO ("Delete ExistingLockOnCreateVar status: %r\n", Status);
 
   Status = gRT->SetVariable (L"NonexistentLockOnCreateVar",
                              &mTestNamespaceGuid1,
                              0,
                              0,
                              NULL);
-  UnitTestLog (mFw, DEBUG_INFO, "Delete NonexistentLockOnCreateVar status: %r\n", Status);
+  UT_LOG_INFO ("Delete NonexistentLockOnCreateVar status: %r\n", Status);
 
   Status = gRT->SetVariable (L"NonexistentLockNowVar",
                              &mTestNamespaceGuid1,
                              0,
                              0,
                              NULL);
-  UnitTestLog (mFw, DEBUG_INFO, "Delete NonexistentLockNowVar status: %r\n", Status);
+  UT_LOG_INFO ("Delete NonexistentLockNowVar status: %r\n", Status);
 
   Status = gRT->SetVariable (L"CantHaveAttrNoLockVar",
                              &mTestNamespaceGuid1,
                              0,
                              0,
                              NULL);
-  UnitTestLog (mFw, DEBUG_INFO, "Delete CantHaveAttrNoLockVar status: %r\n", Status);
+  UT_LOG_INFO ("Delete CantHaveAttrNoLockVar status: %r\n", Status);
 
   Status = gRT->SetVariable (L"NonexistentLockOnVarStateVar",
                              &mTestNamespaceGuid1,
                              0,
                              0,
                              NULL);
-  UnitTestLog (mFw, DEBUG_INFO, "Delete NonexistentLockOnVarStateVar status: %r\n", Status);
+  UT_LOG_INFO ("Delete NonexistentLockOnVarStateVar status: %r\n", Status);
 
   Status = gRT->SetVariable (L"ExistingLockOnVarStateVar",
                              &mTestNamespaceGuid1,
                              0,
                              0,
                              NULL);
-  UnitTestLog (mFw, DEBUG_INFO, "Delete ExistingLockOnVarStateVar status: %r\n", Status);
+  UT_LOG_INFO ("Delete ExistingLockOnVarStateVar status: %r\n", Status);
 } // FinalCleanup
 
 /**
@@ -1769,30 +1763,27 @@ UefiMain (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE* SystemTable)
 {
-  EFI_STATUS       Status;
-  UNIT_TEST_SUITE  *GettingStartedTestSuite;
-  UNIT_TEST_SUITE  *NoLockPoliciesTestSuite;
-  UNIT_TEST_SUITE  *LockNowPoliciesTestSuite;
-  UNIT_TEST_SUITE  *LockOnCreatePoliciesTestSuite;
-  UNIT_TEST_SUITE  *LockOnVarStatePoliciesTestSuite;
-  UNIT_TEST_SUITE  *InvalidPoliciesTestSuite;
-  UNIT_TEST_SUITE  *DumpPolicyTestSuite;
-  UNIT_TEST_SUITE  *PolicyVersionTestSuite;
-  UNIT_TEST_SUITE  *LockPolicyTestSuite;
-  UNIT_TEST_SUITE  *DisablePolicyTestSuite;
-
-  CHAR16  ShortName[100];
-  ShortName[0] = L'\0';
+  EFI_STATUS                  Status;
+  UNIT_TEST_FRAMEWORK_HANDLE  mFw = NULL;
+  UNIT_TEST_SUITE_HANDLE      GettingStartedTestSuite;
+  UNIT_TEST_SUITE_HANDLE      NoLockPoliciesTestSuite;
+  UNIT_TEST_SUITE_HANDLE      LockNowPoliciesTestSuite;
+  UNIT_TEST_SUITE_HANDLE      LockOnCreatePoliciesTestSuite;
+  UNIT_TEST_SUITE_HANDLE      LockOnVarStatePoliciesTestSuite;
+  UNIT_TEST_SUITE_HANDLE      InvalidPoliciesTestSuite;
+  UNIT_TEST_SUITE_HANDLE      DumpPolicyTestSuite;
+  UNIT_TEST_SUITE_HANDLE      PolicyVersionTestSuite;
+  UNIT_TEST_SUITE_HANDLE      LockPolicyTestSuite;
+  UNIT_TEST_SUITE_HANDLE      DisablePolicyTestSuite;
 
   GettingStartedTestSuite = NULL;
 
-  UnicodeSPrint (&ShortName[0], sizeof (ShortName), L"%a", gEfiCallerBaseName);
-  DEBUG ((DEBUG_INFO, "%s v%s\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
+  DEBUG ((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework (&mFw, UNIT_TEST_APP_NAME, ShortName, UNIT_TEST_APP_VERSION);
+  Status = InitUnitTestFramework (&mFw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
     goto EXIT;
@@ -1801,131 +1792,131 @@ UefiMain (
   //
   // Test suite 1: Getting Started. Get VP protocol, check state, log revision
   //
-  Status = CreateUnitTestSuite (&GettingStartedTestSuite, mFw, L"Getting Started", L"Common.VP.GettingStarted", NULL, NULL);
+  Status = CreateUnitTestSuite (&GettingStartedTestSuite, mFw, "Getting Started", "Common.VP.GettingStarted", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the Getting Started Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (GettingStartedTestSuite, L"Confirm VP is enabled", L"Common.VP.GettingStarted.CheckVpEnabled", CheckVpEnabled, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (GettingStartedTestSuite, L"Check VP revision", L"Common.VP.GettingStarted.CheckVpRevision", CheckVpRevision, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (GettingStartedTestSuite, "Confirm VP is enabled", "Common.VP.GettingStarted.CheckVpEnabled", CheckVpEnabled, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (GettingStartedTestSuite, "Check VP revision", "Common.VP.GettingStarted.CheckVpRevision", CheckVpRevision, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 2: Test NoLock Policies
   //
-  Status = CreateUnitTestSuite (&NoLockPoliciesTestSuite, mFw, L"Exercise NoLock Policies", L"Common.VP.NoLockPolicies", NULL, NULL);
+  Status = CreateUnitTestSuite (&NoLockPoliciesTestSuite, mFw, "Exercise NoLock Policies", "Common.VP.NoLockPolicies", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the NoLock Policies Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (NoLockPoliciesTestSuite, L"Test Min Size enforcement in NoLock policy", L"Common.VP.NoLockPolicies.TestMinSizeNoLock", TestMinSizeNoLock, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (NoLockPoliciesTestSuite, L"Test Max Size enforcement in NoLock policy", L"Common.VP.NoLockPolicies.TestMaxSizeNoLock", TestMaxSizeNoLock, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (NoLockPoliciesTestSuite, L"Test Must Have Attribute enforcement in NoLock policy", L"Common.VP.NoLockPolicies.TestMustHaveAttrNoLock", TestMustHaveAttrNoLock, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (NoLockPoliciesTestSuite, L"Test Can't Have Attribute enforcement in NoLock policy", L"Common.VP.NoLockPolicies.TestCantHaveAttrNoLock", TestCantHaveAttrNoLock, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (NoLockPoliciesTestSuite, L"Test Max Size enforcement in NoLock policy for entire namespace", L"Common.VP.NoLockPolicies.TestMaxSizeNamespaceNoLock", TestMaxSizeNamespaceNoLock, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (NoLockPoliciesTestSuite, L"Test Must Have Attribute enforcement in NoLock policy with wildcards", L"Common.VP.NoLockPolicies.TestMustHaveAttrWildcardNoLock", TestMustHaveAttrWildcardNoLock, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (NoLockPoliciesTestSuite, L"Test policy prioritization between namespace-wide, wildcard, and var-specific policies", L"Common.VP.NoLockPolicies.TestPolicyprioritizationNoLock", TestPolicyprioritizationNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, "Test Min Size enforcement in NoLock policy", "Common.VP.NoLockPolicies.TestMinSizeNoLock", TestMinSizeNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, "Test Max Size enforcement in NoLock policy", "Common.VP.NoLockPolicies.TestMaxSizeNoLock", TestMaxSizeNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, "Test Must Have Attribute enforcement in NoLock policy", "Common.VP.NoLockPolicies.TestMustHaveAttrNoLock", TestMustHaveAttrNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, "Test Can't Have Attribute enforcement in NoLock policy", "Common.VP.NoLockPolicies.TestCantHaveAttrNoLock", TestCantHaveAttrNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, "Test Max Size enforcement in NoLock policy for entire namespace", "Common.VP.NoLockPolicies.TestMaxSizeNamespaceNoLock", TestMaxSizeNamespaceNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, "Test Must Have Attribute enforcement in NoLock policy with wildcards", "Common.VP.NoLockPolicies.TestMustHaveAttrWildcardNoLock", TestMustHaveAttrWildcardNoLock, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (NoLockPoliciesTestSuite, "Test policy prioritization between namespace-wide, wildcard, and var-specific policies", "Common.VP.NoLockPolicies.TestPolicyprioritizationNoLock", TestPolicyprioritizationNoLock, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 3: Test LockNow policies
   //
-  Status = CreateUnitTestSuite (&LockNowPoliciesTestSuite, mFw, L"Exercise LockNow Policies", L"Common.VP.LockNowPolicies", NULL, NULL);
+  Status = CreateUnitTestSuite (&LockNowPoliciesTestSuite, mFw, "Exercise LockNow Policies", "Common.VP.LockNowPolicies", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the LockNow Policies Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (LockNowPoliciesTestSuite, L"Test LockNow policy for a pre-existing variable", L"Common.VP.LockNowPolicies.TestExistingVarLockNow", TestExistingVarLockNow, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (LockNowPoliciesTestSuite, L"Test LockNow policy for a nonexistent variable", L"Common.VP.LockNowPolicies.TestNonexistentVarLockNow", TestNonexistentVarLockNow, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockNowPoliciesTestSuite, "Test LockNow policy for a pre-existing variable", "Common.VP.LockNowPolicies.TestExistingVarLockNow", TestExistingVarLockNow, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockNowPoliciesTestSuite, "Test LockNow policy for a nonexistent variable", "Common.VP.LockNowPolicies.TestNonexistentVarLockNow", TestNonexistentVarLockNow, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 4: Test LockOnCreate policies
   //
-  Status = CreateUnitTestSuite (&LockOnCreatePoliciesTestSuite, mFw, L"Exercise LockOnCreate Policies", L"Common.VP.LockOnCreate", NULL, NULL);
+  Status = CreateUnitTestSuite (&LockOnCreatePoliciesTestSuite, mFw, "Exercise LockOnCreate Policies", "Common.VP.LockOnCreate", NULL, NULL);
   if (EFI_ERROR (Status))
   {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the LockOnCreate Policies Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (LockOnCreatePoliciesTestSuite, L"Test LockOnCreate policy for a pre-existing variable", L"Common.VP.LockOnCreate.TestExistingVarLockOnCreate", TestExistingVarLockOnCreate, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (LockOnCreatePoliciesTestSuite, L"Test LockOnCreate policy for a nonexistent variable", L"Common.VP.LockOnCreate.TestNonexistentVarLockOnCreate", TestNonexistentVarLockOnCreate, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockOnCreatePoliciesTestSuite, "Test LockOnCreate policy for a pre-existing variable", "Common.VP.LockOnCreate.TestExistingVarLockOnCreate", TestExistingVarLockOnCreate, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockOnCreatePoliciesTestSuite, "Test LockOnCreate policy for a nonexistent variable", "Common.VP.LockOnCreate.TestNonexistentVarLockOnCreate", TestNonexistentVarLockOnCreate, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 5: Test LockOnVarState policies
   //
-  Status = CreateUnitTestSuite (&LockOnVarStatePoliciesTestSuite, mFw, L"Exercise LockOnVarState Policies", L"Common.VP.LockOnVarState", NULL, NULL);
+  Status = CreateUnitTestSuite (&LockOnVarStatePoliciesTestSuite, mFw, "Exercise LockOnVarState Policies", "Common.VP.LockOnVarState", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the LockOnVarState Policies Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (LockOnVarStatePoliciesTestSuite, L"Test LockOnVarState policy for a nonexistent variable", L"Common.VP.LockOnVarState.TestLockOnVarStateBeforeCreate", TestLockOnVarStateBeforeCreate, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (LockOnVarStatePoliciesTestSuite, L"Test LockOnVarState policy for a pre-existing variable", L"Common.VP.LockOnVarState.TestLockOnVarStateAfterCreate", TestLockOnVarStateAfterCreate, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (LockOnVarStatePoliciesTestSuite, L"Test LockOnVarState policy triggered by invalid-size variable", L"Common.VP.LockOnVarState.TestLockOnVarStateInvalidLargeTrigger", TestLockOnVarStateInvalidLargeTrigger, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (LockOnVarStatePoliciesTestSuite, L"Test LockOnVarState policy triggered by invalid-value variable", L"Common.VP.LockOnVarState.TestLockOnVarStateWrongValueTrigger", TestLockOnVarStateWrongValueTrigger, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockOnVarStatePoliciesTestSuite, "Test LockOnVarState policy for a nonexistent variable", "Common.VP.LockOnVarState.TestLockOnVarStateBeforeCreate", TestLockOnVarStateBeforeCreate, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockOnVarStatePoliciesTestSuite, "Test LockOnVarState policy for a pre-existing variable", "Common.VP.LockOnVarState.TestLockOnVarStateAfterCreate", TestLockOnVarStateAfterCreate, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockOnVarStatePoliciesTestSuite, "Test LockOnVarState policy triggered by invalid-size variable", "Common.VP.LockOnVarState.TestLockOnVarStateInvalidLargeTrigger", TestLockOnVarStateInvalidLargeTrigger, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockOnVarStatePoliciesTestSuite, "Test LockOnVarState policy triggered by invalid-value variable", "Common.VP.LockOnVarState.TestLockOnVarStateWrongValueTrigger", TestLockOnVarStateWrongValueTrigger, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 6: Test registering invalid policies
   //
-  Status = CreateUnitTestSuite (&InvalidPoliciesTestSuite, mFw, L"Attempt registering invalid policies", L"Common.VP.InvalidPolicies", NULL, NULL);
+  Status = CreateUnitTestSuite (&InvalidPoliciesTestSuite, mFw, "Attempt registering invalid policies", "Common.VP.InvalidPolicies", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the Invalid Policies Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (InvalidPoliciesTestSuite, L"Test policy with invalid must-have attributes", L"Common.VP.InvalidPolicies.TestInvalidAttributesPolicy", TestInvalidAttributesPolicy, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (InvalidPoliciesTestSuite, L"Test policy with invalid attributes", L"Common.VP.InvalidPolicies.TestLargeMinSizePolicy", TestLargeMinSizePolicy, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (InvalidPoliciesTestSuite, L"Test policy with invalid attributes", L"Common.VP.InvalidPolicies.TestZeroMaxSizePolicy", TestZeroMaxSizePolicy, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (InvalidPoliciesTestSuite, L"Test policy with invalid type", L"Common.VP.InvalidPolicies.TestInvalidPolicyTypePolicy", TestInvalidPolicyTypePolicy, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (InvalidPoliciesTestSuite, "Test policy with invalid must-have attributes", "Common.VP.InvalidPolicies.TestInvalidAttributesPolicy", TestInvalidAttributesPolicy, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (InvalidPoliciesTestSuite, "Test policy with invalid attributes", "Common.VP.InvalidPolicies.TestLargeMinSizePolicy", TestLargeMinSizePolicy, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (InvalidPoliciesTestSuite, "Test policy with invalid attributes", "Common.VP.InvalidPolicies.TestZeroMaxSizePolicy", TestZeroMaxSizePolicy, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (InvalidPoliciesTestSuite, "Test policy with invalid type", "Common.VP.InvalidPolicies.TestInvalidPolicyTypePolicy", TestInvalidPolicyTypePolicy, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 7: Test dumping the policy
   //
-  Status = CreateUnitTestSuite (&DumpPolicyTestSuite, mFw, L"Attempt dumping policy", L"Common.VP.DumpPolicy", NULL, NULL);
+  Status = CreateUnitTestSuite (&DumpPolicyTestSuite, mFw, "Attempt dumping policy", "Common.VP.DumpPolicy", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the Dump Policy Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (DumpPolicyTestSuite, L"Test dumping policy", L"Common.VP.DumpPolicy.TestDumpPolicy", TestDumpPolicy, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (DumpPolicyTestSuite, "Test dumping policy", "Common.VP.DumpPolicy.TestDumpPolicy", TestDumpPolicy, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 8: Test policy version
   //
-  Status = CreateUnitTestSuite (&PolicyVersionTestSuite, mFw, L"Use non-zero policy version", L"Common.VP.PolicyVersion", NULL, NULL);
+  Status = CreateUnitTestSuite (&PolicyVersionTestSuite, mFw, "Use non-zero policy version", "Common.VP.PolicyVersion", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the Policy Version Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (PolicyVersionTestSuite, L"Test policy version", L"Common.VP.DumpPolicy.TestPolicyVersion", TestPolicyVersion, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (PolicyVersionTestSuite, "Test policy version", "Common.VP.DumpPolicy.TestPolicyVersion", TestPolicyVersion, LocateVarPolicyPreReq, NULL, NULL);
 
   //
   // Test suite 9: Lock VPE and test implications
   //
-  Status = CreateUnitTestSuite (&LockPolicyTestSuite, mFw, L"Lock policy, test it", L"Common.VP.LockPolicyTests", NULL, NULL);
+  Status = CreateUnitTestSuite (&LockPolicyTestSuite, mFw, "Lock policy, test it", "Common.VP.LockPolicyTests", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the Lock Policy Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (LockPolicyTestSuite, L"Test locking policy", L"Common.VP.LockPolicyTests.LockPolicyEngineTests", LockPolicyEngineTests, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (LockPolicyTestSuite, L"Test locking policy", L"Common.VP.LockPolicyTests.LockPolicyEngineTests", LockPolicyEngineTests, LocateVarPolicyPreReq, SaveContextAndReboot, NULL);
+  AddTestCase (LockPolicyTestSuite, "Test locking policy", "Common.VP.LockPolicyTests.LockPolicyEngineTests", LockPolicyEngineTests, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (LockPolicyTestSuite, "Test locking policy", "Common.VP.LockPolicyTests.LockPolicyEngineTests", LockPolicyEngineTests, LocateVarPolicyPreReq, SaveContextAndReboot, NULL);
 
   //
   // Test suite 10: Disable var policy and confirm expected behavior
   //
-  Status = CreateUnitTestSuite (&DisablePolicyTestSuite, mFw, L"Disable policy, test it", L"Common.VP.DisablePolicyTests", NULL, NULL);
+  Status = CreateUnitTestSuite (&DisablePolicyTestSuite, mFw, "Disable policy, test it", "Common.VP.DisablePolicyTests", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for the Disable Policy Test Suite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
-  AddTestCase (DisablePolicyTestSuite, L"Confirm VP is enabled", L"Common.VP.DisablePolicyTests.CheckVpEnabled", CheckVpEnabled, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (DisablePolicyTestSuite, L"Test LockNow policy for a pre-existing variable", L"Common.VP.DisablePolicyTests.TestExistingVarLockNow", TestExistingVarLockNow, LocateVarPolicyPreReq, NULL, NULL);
-  AddTestCase (DisablePolicyTestSuite, L"Test disabling policy", L"Common.VP.DisablePolicyTests.DisablePolicyEngineTests", DisablePolicyEngineTests, LocateVarPolicyPreReq, FinalCleanup, NULL);
+  AddTestCase (DisablePolicyTestSuite, "Confirm VP is enabled", "Common.VP.DisablePolicyTests.CheckVpEnabled", CheckVpEnabled, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (DisablePolicyTestSuite, "Test LockNow policy for a pre-existing variable", "Common.VP.DisablePolicyTests.TestExistingVarLockNow", TestExistingVarLockNow, LocateVarPolicyPreReq, NULL, NULL);
+  AddTestCase (DisablePolicyTestSuite, "Test disabling policy", "Common.VP.DisablePolicyTests.DisablePolicyEngineTests", DisablePolicyEngineTests, LocateVarPolicyPreReq, FinalCleanup, NULL);
 
   //
   // Execute the tests.

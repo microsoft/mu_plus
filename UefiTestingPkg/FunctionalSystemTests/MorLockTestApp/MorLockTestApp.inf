@@ -27,6 +27,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
 
 [LibraryClasses]
@@ -35,6 +36,7 @@
   DebugLib
   UnitTestLib
   UnitTestPersistenceLib
+  UnitTestBootLib
   PrintLib
 
 [Guids]

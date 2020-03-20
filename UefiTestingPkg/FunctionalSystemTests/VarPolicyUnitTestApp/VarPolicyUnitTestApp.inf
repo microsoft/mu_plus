@@ -25,11 +25,13 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
 [LibraryClasses]
   UefiApplicationEntryPoint
   BaseLib
   UnitTestLib
+  UnitTestBootLib
   PrintLib
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib

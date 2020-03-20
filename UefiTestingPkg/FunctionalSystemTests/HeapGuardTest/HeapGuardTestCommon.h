@@ -13,7 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #pragma pack(1)
 
 
-CHAR16* MEMORY_TYPES[] = {L"ReservedMemoryType", L"LoaderCode", L"LoaderData", L"BootServicesCode", L"BootServicesData", L"RuntimeServicesCode", L"RuntimeServicesData", L"ConventionalMemory", L"UnusableMemory", L"ACPIReclaimMemory", L"ACPIMemoryNVS", L"MemoryMappedIO", L"MemoryMappedIOPortSpace", L"PalCode", L"PersistentMemory"};
+CHAR8* MEMORY_TYPES[] = {"ReservedMemoryType", "LoaderCode", "LoaderData", "BootServicesCode", "BootServicesData", "RuntimeServicesCode", "RuntimeServicesData", "ConventionalMemory", "UnusableMemory", "ACPIReclaimMemory", "ACPIMemoryNVS", "MemoryMappedIO", "MemoryMappedIOPortSpace", "PalCode", "PersistentMemory"};
 
 typedef struct _HEAP_GUARD_TEST_CONTEXT {
   UINT64                TargetMemoryType;
