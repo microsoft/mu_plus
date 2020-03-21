@@ -15,7 +15,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <SharedCryptoHelpers.h>
 
-
 //=====================================================================================
 //    One-Way Cryptographic Hash Primitives
 //=====================================================================================
@@ -32,15 +31,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 UINTN
 EFIAPI
 Md4GetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_GetContextSize == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-  return prot->MD4_GetContextSize();
+  CALL_CRYPTO_SERVICE (Md4GetContextSize, (), 0);
 }
 
 /**
@@ -60,15 +54,10 @@ Md4GetContextSize (
 BOOLEAN
 EFIAPI
 Md4Init (
-    OUT VOID *Md4Context)
+  OUT  VOID  *Md4Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_Init == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-  return prot->MD4_Init(Md4Context);
+  CALL_CRYPTO_SERVICE (Md4Init, (Md4Context), FALSE);
 }
 
 /**
@@ -89,16 +78,11 @@ Md4Init (
 BOOLEAN
 EFIAPI
 Md4Duplicate (
-    IN CONST VOID *Md4Context,
-    OUT VOID *NewMd4Context)
+  IN   CONST VOID  *Md4Context,
+  OUT  VOID        *NewMd4Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_Duplicate == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->MD4_Duplicate(Md4Context, NewMd4Context);
+  CALL_CRYPTO_SERVICE (Md4Duplicate, (Md4Context, NewMd4Context), FALSE);
 }
 
 /**
@@ -124,17 +108,12 @@ Md4Duplicate (
 BOOLEAN
 EFIAPI
 Md4Update (
-    IN OUT VOID *Md4Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *Md4Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_Update == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->MD4_Update(Md4Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (Md4Update, (Md4Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -162,16 +141,11 @@ Md4Update (
 BOOLEAN
 EFIAPI
 Md4Final (
-    IN OUT VOID *Md4Context,
-    OUT UINT8 *HashValue)
+  IN OUT  VOID   *Md4Context,
+  OUT     UINT8  *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_Final == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->MD4_Final(Md4Context, HashValue);
+  CALL_CRYPTO_SERVICE (Md4Final, (Md4Context, HashValue), FALSE);
 }
 
 /**
@@ -195,17 +169,12 @@ Md4Final (
 BOOLEAN
 EFIAPI
 Md4HashAll (
-    IN CONST VOID *Data,
-    IN UINTN DataSize,
-    OUT UINT8 *HashValue)
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_HashAll == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->MD4_HashAll(Data, DataSize, HashValue);
+  CALL_CRYPTO_SERVICE (Md4HashAll, (Data, DataSize, HashValue), FALSE);
 }
 
 /**
@@ -220,19 +189,10 @@ Md4HashAll (
 UINTN
 EFIAPI
 Md5GetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return 0;
-
-  if (prot->MD5_GetContextSize == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-
-  return prot->MD5_GetContextSize();
+  CALL_CRYPTO_SERVICE (Md5GetContextSize, (), 0);
 }
 
 /**
@@ -252,19 +212,10 @@ Md5GetContextSize (
 BOOLEAN
 EFIAPI
 Md5Init (
-    OUT VOID *Md5Context)
+  OUT  VOID  *Md5Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-
-  if (prot->MD5_Init == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->MD5_Init(Md5Context);
+  CALL_CRYPTO_SERVICE (Md5Init, (Md5Context), FALSE);
 }
 
 /**
@@ -285,20 +236,11 @@ Md5Init (
 BOOLEAN
 EFIAPI
 Md5Duplicate (
-    IN CONST VOID *Md5Context,
-    OUT VOID *NewMd5Context)
+  IN   CONST VOID  *Md5Context,
+  OUT  VOID        *NewMd5Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-
-  if (prot->MD5_Update == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->MD5_Duplicate(Md5Context, NewMd5Context);
+  CALL_CRYPTO_SERVICE (Md5Duplicate, (Md5Context, NewMd5Context), FALSE);
 }
 
 /**
@@ -324,20 +266,12 @@ Md5Duplicate (
 BOOLEAN
 EFIAPI
 Md5Update (
-    IN OUT VOID *Md5Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *Md5Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-
-  if (prot->MD5_Update == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->MD5_Update(Md5Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (Md5Update, (Md5Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -365,20 +299,11 @@ Md5Update (
 BOOLEAN
 EFIAPI
 Md5Final (
-    IN OUT VOID *Md5Context,
-    OUT UINT8 *HashValue)
+  IN OUT  VOID   *Md5Context,
+  OUT     UINT8  *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-
-  if (prot->MD5_Final == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->MD5_Final(Md5Context, HashValue);
+  CALL_CRYPTO_SERVICE (Md5Final, (Md5Context, HashValue), FALSE);
 }
 
 /**
@@ -402,20 +327,12 @@ Md5Final (
 BOOLEAN
 EFIAPI
 Md5HashAll (
-    IN CONST VOID *Data,
-    IN UINTN DataSize,
-    OUT UINT8 *HashValue)
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-
-  if (prot->MD5_HashAll == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->MD5_HashAll(Data, DataSize, HashValue);
+  CALL_CRYPTO_SERVICE (Md5HashAll, (Data, DataSize, HashValue), FALSE);
 }
 
 /**
@@ -430,17 +347,10 @@ Md5HashAll (
 UINTN
 EFIAPI
 Sha1GetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return 0;
-  if (prot->SHA1_GET_CONTEXT_SIZE == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-
-  return prot->SHA1_GET_CONTEXT_SIZE();
+  CALL_CRYPTO_SERVICE (Sha1GetContextSize, (), 0);
 }
 
 /**
@@ -460,17 +370,10 @@ Sha1GetContextSize (
 BOOLEAN
 EFIAPI
 Sha1Init (
-    OUT VOID *Sha1Context)
+  OUT  VOID  *Sha1Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA1_INIT == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->SHA1_INIT(Sha1Context);
+  CALL_CRYPTO_SERVICE (Sha1Init, (Sha1Context), FALSE);
 }
 
 /**
@@ -491,16 +394,11 @@ Sha1Init (
 BOOLEAN
 EFIAPI
 Sha1Duplicate (
-    IN CONST VOID *Sha1Context,
-    OUT VOID *NewSha1Context)
+  IN   CONST VOID  *Sha1Context,
+  OUT  VOID        *NewSha1Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA1_DUPLICATE == NULL)
-    return FALSE;
-
-  return prot->SHA1_DUPLICATE(Sha1Context, NewSha1Context);
+  CALL_CRYPTO_SERVICE (Sha1Duplicate, (Sha1Context, NewSha1Context), FALSE);
 }
 
 /**
@@ -526,20 +424,12 @@ Sha1Duplicate (
 BOOLEAN
 EFIAPI
 Sha1Update (
-    IN OUT VOID *Sha1Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *Sha1Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA1_UPDATE == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->SHA1_UPDATE(Sha1Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (Sha1Update, (Sha1Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -567,19 +457,11 @@ Sha1Update (
 BOOLEAN
 EFIAPI
 Sha1Final (
-    IN OUT VOID *Sha1Context,
-    OUT UINT8 *HashValue)
+  IN OUT  VOID   *Sha1Context,
+  OUT     UINT8  *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA1_FINAL == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->SHA1_FINAL(Sha1Context, HashValue);
+  CALL_CRYPTO_SERVICE (Sha1Final, (Sha1Context, HashValue), FALSE);
 }
 
 /**
@@ -603,17 +485,12 @@ Sha1Final (
 BOOLEAN
 EFIAPI
 Sha1HashAll (
-    IN CONST VOID *Data,
-    IN UINTN DataSize,
-    OUT UINT8 *HashValue)
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA1_HASH_ALL == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA1_HASH_ALL(Data, DataSize, HashValue);
+  CALL_CRYPTO_SERVICE (Sha1HashAll, (Data, DataSize, HashValue), FALSE);
 }
 
 /**
@@ -625,18 +502,10 @@ Sha1HashAll (
 UINTN
 EFIAPI
 Sha256GetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return 0;
-  if (prot->SHA256_GET_CONTEXT_SIZE == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-
-  return prot->SHA256_GET_CONTEXT_SIZE();
+  CALL_CRYPTO_SERVICE (Sha256GetContextSize, (), 0);
 }
 
 /**
@@ -654,18 +523,10 @@ Sha256GetContextSize (
 BOOLEAN
 EFIAPI
 Sha256Init (
-    OUT VOID *Sha256Context)
+  OUT  VOID  *Sha256Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA256_INIT == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->SHA256_INIT(Sha256Context);
+  CALL_CRYPTO_SERVICE (Sha256Init, (Sha256Context), FALSE);
 }
 
 /**
@@ -686,19 +547,11 @@ Sha256Init (
 BOOLEAN
 EFIAPI
 Sha256Duplicate (
-    IN CONST VOID *Sha256Context,
-    OUT VOID *NewSha256Context)
+  IN   CONST VOID  *Sha256Context,
+  OUT  VOID        *NewSha256Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA256_DUPLICATE == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->SHA256_DUPLICATE(Sha256Context, NewSha256Context);
+  CALL_CRYPTO_SERVICE (Sha256Duplicate, (Sha256Context, NewSha256Context), FALSE);
 }
 
 /**
@@ -722,20 +575,12 @@ Sha256Duplicate (
 BOOLEAN
 EFIAPI
 Sha256Update (
-    IN OUT VOID *Sha256Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *Sha256Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA256_UPDATE == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->SHA256_UPDATE(Sha256Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (Sha256Update, (Sha256Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -761,19 +606,11 @@ Sha256Update (
 BOOLEAN
 EFIAPI
 Sha256Final (
-    IN OUT VOID *Sha256Context,
-    OUT UINT8 *HashValue)
+  IN OUT  VOID   *Sha256Context,
+  OUT     UINT8  *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL)
-    return FALSE;
-  if (prot->SHA256_FINAL == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->SHA256_FINAL(Sha256Context, HashValue);
+  CALL_CRYPTO_SERVICE (Sha256Final, (Sha256Context, HashValue), FALSE);
 }
 
 /**
@@ -797,17 +634,12 @@ Sha256Final (
 BOOLEAN
 EFIAPI
 Sha256HashAll (
-    IN CONST VOID *Data,
-    IN UINTN DataSize,
-    OUT UINT8 *HashValue)
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA256_HASH_ALL == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA256_HASH_ALL(Data, DataSize, HashValue);
+  CALL_CRYPTO_SERVICE (Sha256HashAll, (Data, DataSize, HashValue), FALSE);
 }
 
 /**
@@ -819,15 +651,10 @@ Sha256HashAll (
 UINTN
 EFIAPI
 Sha384GetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA384_GetContextSize == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-  return prot->SHA384_GetContextSize();
+  CALL_CRYPTO_SERVICE (Sha384GetContextSize, (), 0);
 }
 
 /**
@@ -845,15 +672,10 @@ Sha384GetContextSize (
 BOOLEAN
 EFIAPI
 Sha384Init (
-    OUT VOID *Sha384Context)
+  OUT  VOID  *Sha384Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA384_Init == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA384_Init(Sha384Context);
+  CALL_CRYPTO_SERVICE (Sha384Init, (Sha384Context), FALSE);
 }
 
 /**
@@ -874,16 +696,11 @@ Sha384Init (
 BOOLEAN
 EFIAPI
 Sha384Duplicate (
-    IN CONST VOID *Sha384Context,
-    OUT VOID *NewSha384Context)
+  IN   CONST VOID  *Sha384Context,
+  OUT  VOID        *NewSha384Context
+  )
 {
- SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA384_Duplicate == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA384_Duplicate(Sha384Context, NewSha384Context);
+  CALL_CRYPTO_SERVICE (Sha384Duplicate, (Sha384Context, NewSha384Context), FALSE);
 }
 
 /**
@@ -907,17 +724,12 @@ Sha384Duplicate (
 BOOLEAN
 EFIAPI
 Sha384Update (
-    IN OUT VOID *Sha384Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *Sha384Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA384_Update == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA384_Update(Sha384Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (Sha384Update, (Sha384Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -943,15 +755,11 @@ Sha384Update (
 BOOLEAN
 EFIAPI
 Sha384Final (
-    IN OUT VOID *Sha384Context,
-    OUT UINT8 *HashValue)
+  IN OUT  VOID   *Sha384Context,
+  OUT     UINT8  *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA384_Final == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA384_Final(Sha384Context, HashValue);
+  CALL_CRYPTO_SERVICE (Sha384Final, (Sha384Context, HashValue), FALSE);
 }
 
 /**
@@ -975,16 +783,12 @@ Sha384Final (
 BOOLEAN
 EFIAPI
 Sha384HashAll (
-    IN CONST VOID *Data,
-    IN UINTN DataSize,
-    OUT UINT8 *HashValue)
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA384_HashAll == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA384_HashAll(Data, DataSize, HashValue);
+  CALL_CRYPTO_SERVICE (Sha384HashAll, (Data, DataSize, HashValue), FALSE);
 }
 
 /**
@@ -996,14 +800,10 @@ Sha384HashAll (
 UINTN
 EFIAPI
 Sha512GetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA512_GetContextSize == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return 0;
-   }
-  return prot->SHA512_GetContextSize();
+  CALL_CRYPTO_SERVICE (Sha512GetContextSize, (), 0);
 }
 
 /**
@@ -1021,14 +821,10 @@ Sha512GetContextSize (
 BOOLEAN
 EFIAPI
 Sha512Init (
-    OUT VOID *Sha512Context)
+  OUT  VOID  *Sha512Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA512_Init == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA512_Init(Sha512Context);
+  CALL_CRYPTO_SERVICE (Sha512Init, (Sha512Context), FALSE);
 }
 
 /**
@@ -1049,15 +845,11 @@ Sha512Init (
 BOOLEAN
 EFIAPI
 Sha512Duplicate (
-    IN CONST VOID *Sha512Context,
-    OUT VOID *NewSha512Context)
+  IN   CONST VOID  *Sha512Context,
+  OUT  VOID        *NewSha512Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA512_Duplicate == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA512_Duplicate(Sha512Context, NewSha512Context);
+  CALL_CRYPTO_SERVICE (Sha512Duplicate, (Sha512Context, NewSha512Context), FALSE);
 }
 
 /**
@@ -1081,16 +873,12 @@ Sha512Duplicate (
 BOOLEAN
 EFIAPI
 Sha512Update (
-    IN OUT VOID *Sha512Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *Sha512Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA512_Update == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA512_Update(Sha512Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (Sha512Update, (Sha512Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -1116,15 +904,11 @@ Sha512Update (
 BOOLEAN
 EFIAPI
 Sha512Final (
-    IN OUT VOID *Sha512Context,
-    OUT UINT8 *HashValue)
+  IN OUT  VOID   *Sha512Context,
+  OUT     UINT8  *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA512_Final == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA512_Final(Sha512Context, HashValue);
+  CALL_CRYPTO_SERVICE (Sha512Final, (Sha512Context, HashValue), FALSE);
 }
 
 /**
@@ -1148,19 +932,13 @@ Sha512Final (
 BOOLEAN
 EFIAPI
 Sha512HashAll (
-    IN CONST VOID *Data,
-    IN UINTN DataSize,
-    OUT UINT8 *HashValue
-)
+  IN   CONST VOID  *Data,
+  IN   UINTN       DataSize,
+  OUT  UINT8       *HashValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SHA512_HashAll == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->SHA512_HashAll(Data, DataSize, HashValue);
+  CALL_CRYPTO_SERVICE (Sha512HashAll, (Data, DataSize, HashValue), FALSE);
 }
-
 
 /**
   Retrieves the size, in bytes, of the context buffer required for SM3 hash operations.
@@ -1174,12 +952,7 @@ Sm3GetContextSize (
   VOID
   )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SM3_GetContextSize == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return 0;
-   }
-  return prot->SM3_GetContextSize();
+  CALL_CRYPTO_SERVICE (Sm3GetContextSize, (), 0);
 }
 
 /**
@@ -1200,12 +973,7 @@ Sm3Init (
   OUT  VOID  *Sm3Context
   )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SM3_Init == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return 0;
-   }
-  return prot->SM3_Init(Sm3Context);
+  CALL_CRYPTO_SERVICE (Sm3Init, (Sm3Context), FALSE);
 }
 
 /**
@@ -1230,12 +998,7 @@ Sm3Duplicate (
   OUT  VOID        *NewSm3Context
   )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SM3_Duplicate == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return 0;
-   }
-  return prot->SM3_Duplicate(Sm3Context, NewSm3Context);
+  CALL_CRYPTO_SERVICE (Sm3Duplicate, (Sm3Context, NewSm3Context), FALSE);
 }
 
 /**
@@ -1264,12 +1027,7 @@ Sm3Update (
   IN      UINTN       DataSize
   )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SM3_Update == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return 0;
-   }
-  return prot->SM3_Update(Sm3Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (Sm3Update, (Sm3Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -1299,12 +1057,7 @@ Sm3Final (
   OUT     UINT8  *HashValue
   )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SM3_Final == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return 0;
-   }
-  return prot->SM3_Final(Sm3Context, HashValue);
+  CALL_CRYPTO_SERVICE (Sm3Final, (Sm3Context, HashValue), FALSE);
 }
 
 /**
@@ -1333,14 +1086,8 @@ Sm3HashAll (
   OUT  UINT8       *HashValue
   )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->SM3_Hashall == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return 0;
-   }
-  return prot->SM3_Hashall(Data, DataSize, HashValue);
+  CALL_CRYPTO_SERVICE (Sm3HashAll, (Data, DataSize, HashValue), FALSE);
 }
-
 
 //=====================================================================================
 //    MAC (Message Authentication Code) Primitive
@@ -1360,14 +1107,9 @@ VOID *
 EFIAPI
 HmacMd5New (
   VOID
-)
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_MD5_New == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return NULL;
-  }
-  return prot->HMAC_MD5_New();
+  CALL_CRYPTO_SERVICE (HmacMd5New, (), NULL);
 }
 
 /**
@@ -1381,46 +1123,37 @@ HmacMd5New (
 VOID
 EFIAPI
 HmacMd5Free (
-  IN VOID *HmacMd5Ctx
-)
+  IN  VOID  *HmacMd5Ctx
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_MD5_Free == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-     return;
-   }
-  prot->HMAC_MD5_Free(HmacMd5Ctx);
+  CALL_VOID_CRYPTO_SERVICE (HmacMd5Free, (HmacMd5Ctx));
 }
 
 /**
-  Initializes user-supplied memory pointed by HmacMd5Context as HMAC-MD5 context for
-  subsequent use.
+  Set user-supplied key for subsequent use. It must be done before any
+  calling to HmacMd5Update().
 
   If HmacMd5Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
 
-  @param[out]  HmacMd5Context  Pointer to HMAC-MD5 context being initialized.
+  @param[out]  HmacMd5Context  Pointer to HMAC-MD5 context.
   @param[in]   Key             Pointer to the user-supplied key.
   @param[in]   KeySize         Key size in bytes.
 
-  @retval TRUE   HMAC-MD5 context initialization succeeded.
-  @retval FALSE  HMAC-MD5 context initialization failed.
+  @retval TRUE   Key is set successfully.
+  @retval FALSE  Key is set unsuccessfully.
   @retval FALSE  This interface is not supported.
 
 **/
 BOOLEAN
 EFIAPI
-HmacMd5Init (
-    OUT VOID *HmacMd5Context,
-    IN CONST UINT8 *Key,
-    IN UINTN KeySize)
+HmacMd5SetKey (
+  OUT  VOID         *HmacMd5Context,
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeySize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_MD5_Init == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->HMAC_MD5_Init(HmacMd5Context, Key, KeySize);
+  CALL_CRYPTO_SERVICE (HmacMd5Init, (HmacMd5Context, Key, KeySize), FALSE);
 }
 
 /**
@@ -1441,15 +1174,11 @@ HmacMd5Init (
 BOOLEAN
 EFIAPI
 HmacMd5Duplicate (
-    IN CONST VOID *HmacMd5Context,
-    OUT VOID *NewHmacMd5Context)
+  IN   CONST VOID  *HmacMd5Context,
+  OUT  VOID        *NewHmacMd5Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_MD5_Duplicate == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->HMAC_MD5_Duplicate(HmacMd5Context, NewHmacMd5Context);
+  CALL_CRYPTO_SERVICE (HmacMd5Duplicate, (HmacMd5Context, NewHmacMd5Context), FALSE);
 }
 
 /**
@@ -1457,8 +1186,8 @@ HmacMd5Duplicate (
 
   This function performs HMAC-MD5 digest on a data buffer of the specified size.
   It can be called multiple times to compute the digest of long or discontinuous data streams.
-  HMAC-MD5 context should be already correctly initialized by HmacMd5Init(), and should not be
-  finalized by HmacMd5Final(). Behavior with invalid context is undefined.
+  HMAC-MD5 context should be initialized by HmacMd5New(), and should not be finalized by
+  HmacMd5Final(). Behavior with invalid context is undefined.
 
   If HmacMd5Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
@@ -1475,16 +1204,12 @@ HmacMd5Duplicate (
 BOOLEAN
 EFIAPI
 HmacMd5Update (
-    IN OUT VOID *HmacMd5Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *HmacMd5Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_MD5_Update == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->HMAC_MD5_Update(HmacMd5Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (HmacMd5Update, (HmacMd5Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -1493,8 +1218,8 @@ HmacMd5Update (
   This function completes HMAC-MD5 hash computation and retrieves the digest value into
   the specified memory. After this function has been called, the HMAC-MD5 context cannot
   be used again.
-  HMAC-MD5 context should be already correctly initialized by HmacMd5Init(), and should not be
-  finalized by HmacMd5Final(). Behavior with invalid HMAC-MD5 context is undefined.
+  HMAC-MD5 context should be initialized by HmacMd5New(), and should not be finalized by
+  HmacMd5Final(). Behavior with invalid HMAC-MD5 context is undefined.
 
   If HmacMd5Context is NULL, then return FALSE.
   If HmacValue is NULL, then return FALSE.
@@ -1512,15 +1237,11 @@ HmacMd5Update (
 BOOLEAN
 EFIAPI
 HmacMd5Final (
-    IN OUT VOID *HmacMd5Context,
-    OUT UINT8 *HmacValue)
+  IN OUT  VOID   *HmacMd5Context,
+  OUT     UINT8  *HmacValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_MD5_Final == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->HMAC_MD5_Final(HmacMd5Context, HmacValue);
+  CALL_CRYPTO_SERVICE (HmacMd5Final, (HmacMd5Context, HmacValue), FALSE);
 }
 
 /**
@@ -1537,16 +1258,9 @@ VOID *
 EFIAPI
 HmacSha1New (
   VOID
-)
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL||prot->HMAC_SHA1_New == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return NULL;
-  }
-
-  return prot->HMAC_SHA1_New();
+  CALL_CRYPTO_SERVICE (HmacSha1New, (), NULL);
 }
 
 /**
@@ -1560,49 +1274,37 @@ HmacSha1New (
 VOID
 EFIAPI
 HmacSha1Free (
-        IN VOID *HmacSha1Ctx)
+  IN  VOID  *HmacSha1Ctx
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA1_Free == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return;
-  }
-
-  prot->HMAC_SHA1_Free(HmacSha1Ctx);
+  CALL_VOID_CRYPTO_SERVICE (HmacSha1Free, (HmacSha1Ctx));
 }
 
 /**
-  Initializes user-supplied memory pointed by HmacSha1Context as HMAC-SHA1 context for
-  subsequent use.
+  Set user-supplied key for subsequent use. It must be done before any
+  calling to HmacSha1Update().
 
   If HmacSha1Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
 
-  @param[out]  HmacSha1Context  Pointer to HMAC-SHA1 context being initialized.
+  @param[out]  HmacSha1Context  Pointer to HMAC-SHA1 context.
   @param[in]   Key              Pointer to the user-supplied key.
   @param[in]   KeySize          Key size in bytes.
 
-  @retval TRUE   HMAC-SHA1 context initialization succeeded.
-  @retval FALSE  HMAC-SHA1 context initialization failed.
+  @retval TRUE   The Key is set successfully.
+  @retval FALSE  The Key is set unsuccessfully.
   @retval FALSE  This interface is not supported.
 
 **/
 BOOLEAN
 EFIAPI
-HmacSha1Init (
-    OUT VOID *HmacSha1Context,
-    IN CONST UINT8 *Key,
-    IN UINTN KeySize)
+HmacSha1SetKey (
+  OUT  VOID         *HmacSha1Context,
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeySize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA1_Init == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA1_Init(HmacSha1Context, Key, KeySize);
+  CALL_CRYPTO_SERVICE (HmacSha1Init, (HmacSha1Context, Key, KeySize), FALSE);
 }
 
 /**
@@ -1623,17 +1325,11 @@ HmacSha1Init (
 BOOLEAN
 EFIAPI
 HmacSha1Duplicate (
-    IN CONST VOID *HmacSha1Context,
-    OUT VOID *NewHmacSha1Context)
+  IN   CONST VOID  *HmacSha1Context,
+  OUT  VOID        *NewHmacSha1Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA1_Duplicate == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA1_Duplicate(HmacSha1Context, NewHmacSha1Context);
+  CALL_CRYPTO_SERVICE (HmacSha1Duplicate, (HmacSha1Context, NewHmacSha1Context), FALSE);
 }
 
 /**
@@ -1641,8 +1337,8 @@ HmacSha1Duplicate (
 
   This function performs HMAC-SHA1 digest on a data buffer of the specified size.
   It can be called multiple times to compute the digest of long or discontinuous data streams.
-  HMAC-SHA1 context should be already correctly initialized by HmacSha1Init(), and should not
-  be finalized by HmacSha1Final(). Behavior with invalid context is undefined.
+  HMAC-SHA1 context should be initialized by HmacSha1New(), and should not be finalized by
+  HmacSha1Final(). Behavior with invalid context is undefined.
 
   If HmacSha1Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
@@ -1659,18 +1355,12 @@ HmacSha1Duplicate (
 BOOLEAN
 EFIAPI
 HmacSha1Update (
-    IN OUT VOID *HmacSha1Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *HmacSha1Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA1_Update == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA1_Update(HmacSha1Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (HmacSha1Update, (HmacSha1Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -1679,8 +1369,8 @@ HmacSha1Update (
   This function completes HMAC-SHA1 hash computation and retrieves the digest value into
   the specified memory. After this function has been called, the HMAC-SHA1 context cannot
   be used again.
-  HMAC-SHA1 context should be already correctly initialized by HmacSha1Init(), and should
-  not be finalized by HmacSha1Final(). Behavior with invalid HMAC-SHA1 context is undefined.
+  HMAC-SHA1 context should be initialized by HmacSha1New(), and should not be finalized
+  by HmacSha1Final(). Behavior with invalid HMAC-SHA1 context is undefined.
 
   If HmacSha1Context is NULL, then return FALSE.
   If HmacValue is NULL, then return FALSE.
@@ -1698,17 +1388,11 @@ HmacSha1Update (
 BOOLEAN
 EFIAPI
 HmacSha1Final (
-    IN OUT VOID *HmacSha1Context,
-    OUT UINT8 *HmacValue)
+  IN OUT  VOID   *HmacSha1Context,
+  OUT     UINT8  *HmacValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA1_Final == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA1_Final(HmacSha1Context, HmacValue);
+  CALL_CRYPTO_SERVICE (HmacSha1Final, (HmacSha1Context, HmacValue), FALSE);
 }
 
 /**
@@ -1721,16 +1405,10 @@ HmacSha1Final (
 VOID *
 EFIAPI
 HmacSha256New (
-            VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA256_New == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return NULL;
-  }
-
-  return prot->HMAC_SHA256_New();
+  CALL_CRYPTO_SERVICE (HmacSha256New, (), NULL);
 }
 
 /**
@@ -1742,49 +1420,37 @@ HmacSha256New (
 VOID
 EFIAPI
 HmacSha256Free (
-        IN VOID *HmacSha256Ctx)
+  IN  VOID  *HmacSha256Ctx
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA256_Free == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return;
-  }
-
-  prot->HMAC_SHA256_Free(HmacSha256Ctx);
+  CALL_VOID_CRYPTO_SERVICE (HmacSha256Free, (HmacSha256Ctx));
 }
 
 /**
-  Initializes user-supplied memory pointed by HmacSha256Context as HMAC-SHA256 context for
-  subsequent use.
+  Set user-supplied key for subsequent use. It must be done before any
+  calling to HmacSha256Update().
 
   If HmacSha256Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
 
-  @param[out]  HmacSha256Context  Pointer to HMAC-SHA256 context being initialized.
+  @param[out]  HmacSha256Context  Pointer to HMAC-SHA256 context.
   @param[in]   Key                Pointer to the user-supplied key.
   @param[in]   KeySize            Key size in bytes.
 
-  @retval TRUE   HMAC-SHA256 context initialization succeeded.
-  @retval FALSE  HMAC-SHA256 context initialization failed.
+  @retval TRUE   The Key is set successfully.
+  @retval FALSE  The Key is set unsuccessfully.
   @retval FALSE  This interface is not supported.
 
 **/
 BOOLEAN
 EFIAPI
-HmacSha256Init (
-    OUT VOID *HmacSha256Context,
-    IN CONST UINT8 *Key,
-    IN UINTN KeySize)
+HmacSha256SetKey (
+  OUT  VOID         *HmacSha256Context,
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeySize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA256_Free == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA256_Init(HmacSha256Context, Key, KeySize);
+  CALL_CRYPTO_SERVICE (HmacSha256Init, (HmacSha256Context, Key, KeySize), FALSE);
 }
 
 /**
@@ -1805,17 +1471,11 @@ HmacSha256Init (
 BOOLEAN
 EFIAPI
 HmacSha256Duplicate (
-    IN CONST VOID *HmacSha256Context,
-    OUT VOID *NewHmacSha256Context)
+  IN   CONST VOID  *HmacSha256Context,
+  OUT  VOID        *NewHmacSha256Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA256_Duplicate == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA256_Duplicate(HmacSha256Context, NewHmacSha256Context);
+  CALL_CRYPTO_SERVICE (HmacSha256Duplicate, (HmacSha256Context, NewHmacSha256Context), FALSE);
 }
 
 /**
@@ -1823,8 +1483,8 @@ HmacSha256Duplicate (
 
   This function performs HMAC-SHA256 digest on a data buffer of the specified size.
   It can be called multiple times to compute the digest of long or discontinuous data streams.
-  HMAC-SHA256 context should be already correctly initialized by HmacSha256Init(), and should not
-  be finalized by HmacSha256Final(). Behavior with invalid context is undefined.
+  HMAC-SHA256 context should be initialized by HmacSha256New(), and should not be finalized
+  by HmacSha256Final(). Behavior with invalid context is undefined.
 
   If HmacSha256Context is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
@@ -1841,18 +1501,12 @@ HmacSha256Duplicate (
 BOOLEAN
 EFIAPI
 HmacSha256Update (
-    IN OUT VOID *HmacSha256Context,
-    IN CONST VOID *Data,
-    IN UINTN DataSize)
+  IN OUT  VOID        *HmacSha256Context,
+  IN      CONST VOID  *Data,
+  IN      UINTN       DataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA256_Update == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA256_Update(HmacSha256Context, Data, DataSize);
+  CALL_CRYPTO_SERVICE (HmacSha256Update, (HmacSha256Context, Data, DataSize), FALSE);
 }
 
 /**
@@ -1861,8 +1515,8 @@ HmacSha256Update (
   This function completes HMAC-SHA256 hash computation and retrieves the digest value into
   the specified memory. After this function has been called, the HMAC-SHA256 context cannot
   be used again.
-  HMAC-SHA256 context should be already correctly initialized by HmacSha256Init(), and should
-  not be finalized by HmacSha256Final(). Behavior with invalid HMAC-SHA256 context is undefined.
+  HMAC-SHA256 context should be initialized by HmacSha256New(), and should not be finalized
+  by HmacSha256Final(). Behavior with invalid HMAC-SHA256 context is undefined.
 
   If HmacSha256Context is NULL, then return FALSE.
   If HmacValue is NULL, then return FALSE.
@@ -1880,17 +1534,11 @@ HmacSha256Update (
 BOOLEAN
 EFIAPI
 HmacSha256Final (
-    IN OUT VOID *HmacSha256Context,
-    OUT UINT8 *HmacValue)
+  IN OUT  VOID   *HmacSha256Context,
+  OUT     UINT8  *HmacValue
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->HMAC_SHA256_Final == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->HMAC_SHA256_Final(HmacSha256Context, HmacValue);
+  CALL_CRYPTO_SERVICE (HmacSha256Final, (HmacSha256Context, HmacValue), FALSE);
 }
 
 //=====================================================================================
@@ -1909,14 +1557,10 @@ HmacSha256Final (
 UINTN
 EFIAPI
 TdesGetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->TDES_GetContextSize == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-  return prot->TDES_GetContextSize();
+  CALL_CRYPTO_SERVICE (TdesGetContextSize, (), 0);
 }
 
 /**
@@ -1947,16 +1591,12 @@ TdesGetContextSize (
 BOOLEAN
 EFIAPI
 TdesInit (
-    OUT VOID *TdesContext,
-    IN CONST UINT8 *Key,
-    IN UINTN KeyLength)
+  OUT  VOID         *TdesContext,
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeyLength
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->TDES_Init == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->TDES_Init(TdesContext, Key, KeyLength);
+  CALL_CRYPTO_SERVICE (TdesInit, (TdesContext, Key, KeyLength), FALSE);
 }
 
 /**
@@ -1988,17 +1628,13 @@ TdesInit (
 BOOLEAN
 EFIAPI
 TdesEcbEncrypt (
-    IN VOID *TdesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    OUT UINT8 *Output)
+  IN   VOID         *TdesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->TDES_EcbEncrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->TDES_EcbEncrypt(TdesContext, Input, InputSize, Output);
+  CALL_CRYPTO_SERVICE (TdesEcbEncrypt, (TdesContext, Input, InputSize, Output), FALSE);
 }
 
 /**
@@ -2030,17 +1666,13 @@ TdesEcbEncrypt (
 BOOLEAN
 EFIAPI
 TdesEcbDecrypt (
-    IN VOID *TdesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    OUT UINT8 *Output)
+  IN   VOID         *TdesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->TDES_EcbDecrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->TDES_EcbDecrypt(TdesContext, Input, InputSize, Output);
+  CALL_CRYPTO_SERVICE (TdesEcbDecrypt, (TdesContext, Input, InputSize, Output), FALSE);
 }
 
 /**
@@ -2075,18 +1707,14 @@ TdesEcbDecrypt (
 BOOLEAN
 EFIAPI
 TdesCbcEncrypt (
-    IN VOID *TdesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    IN CONST UINT8 *Ivec,
-    OUT UINT8 *Output)
+  IN   VOID         *TdesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  IN   CONST UINT8  *Ivec,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->TDES_CbcEncrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->TDES_CbcEncrypt(TdesContext, Input, InputSize, Ivec, Output);
+  CALL_CRYPTO_SERVICE (TdesCbcEncrypt, (TdesContext, Input, InputSize, Ivec, Output), FALSE);
 }
 
 /**
@@ -2121,18 +1749,14 @@ TdesCbcEncrypt (
 BOOLEAN
 EFIAPI
 TdesCbcDecrypt (
-    IN VOID *TdesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    IN CONST UINT8 *Ivec,
-    OUT UINT8 *Output)
+  IN   VOID         *TdesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  IN   CONST UINT8  *Ivec,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->TDES_CbcDecrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->TDES_CbcDecrypt(TdesContext, Input, InputSize, Ivec, Output);
+  CALL_CRYPTO_SERVICE (TdesCbcDecrypt, (TdesContext, Input, InputSize, Ivec, Output), FALSE);
 }
 
 /**
@@ -2147,14 +1771,10 @@ TdesCbcDecrypt (
 UINTN
 EFIAPI
 AesGetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->AES_GetContextSize == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-  return prot->AES_GetContextSize();
+  CALL_CRYPTO_SERVICE (AesGetContextSize, (), 0);
 }
 
 /**
@@ -2182,16 +1802,12 @@ AesGetContextSize (
 BOOLEAN
 EFIAPI
 AesInit (
-    OUT VOID *AesContext,
-    IN CONST UINT8 *Key,
-    IN UINTN KeyLength)
+  OUT  VOID         *AesContext,
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeyLength
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->AES_Init == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->AES_Init(AesContext, Key, KeyLength);
+  CALL_CRYPTO_SERVICE (AesInit, (AesContext, Key, KeyLength), FALSE);
 }
 
 /**
@@ -2223,17 +1839,13 @@ AesInit (
 BOOLEAN
 EFIAPI
 AesEcbEncrypt (
-    IN VOID *AesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    OUT UINT8 *Output)
+  IN   VOID         *AesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->AES_EcbEncrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->AES_EcbEncrypt(AesContext, Input, InputSize, Output);
+  CALL_CRYPTO_SERVICE (AesEcbEncrypt, (AesContext, Input, InputSize, Output), FALSE);
 }
 
 /**
@@ -2265,17 +1877,13 @@ AesEcbEncrypt (
 BOOLEAN
 EFIAPI
 AesEcbDecrypt (
-    IN VOID *AesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    OUT UINT8 *Output)
+  IN   VOID         *AesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->AES_EcbDecrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->AES_EcbDecrypt(AesContext, Input, InputSize, Output);
+  CALL_CRYPTO_SERVICE (AesEcbDecrypt, (AesContext, Input, InputSize, Output), FALSE);
 }
 
 /**
@@ -2310,18 +1918,14 @@ AesEcbDecrypt (
 BOOLEAN
 EFIAPI
 AesCbcEncrypt (
-    IN VOID *AesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    IN CONST UINT8 *Ivec,
-    OUT UINT8 *Output)
+  IN   VOID         *AesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  IN   CONST UINT8  *Ivec,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->AES_CbcEncrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->AES_CbcEncrypt(AesContext, Input, InputSize, Ivec, Output);
+  CALL_CRYPTO_SERVICE (AesCbcEncrypt, (AesContext, Input, InputSize, Ivec, Output), FALSE);
 }
 
 /**
@@ -2356,18 +1960,14 @@ AesCbcEncrypt (
 BOOLEAN
 EFIAPI
 AesCbcDecrypt (
-    IN VOID *AesContext,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    IN CONST UINT8 *Ivec,
-    OUT UINT8 *Output)
+  IN   VOID         *AesContext,
+  IN   CONST UINT8  *Input,
+  IN   UINTN        InputSize,
+  IN   CONST UINT8  *Ivec,
+  OUT  UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->AES_CbcDecrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->AES_CbcDecrypt(AesContext, Input, InputSize, Ivec, Output);
+  CALL_CRYPTO_SERVICE (AesCbcDecrypt, (AesContext, Input, InputSize, Ivec, Output), FALSE);
 }
 
 /**
@@ -2382,14 +1982,10 @@ AesCbcDecrypt (
 UINTN
 EFIAPI
 Arc4GetContextSize (
-    VOID)
+  VOID
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_Update == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return 0;
-  }
-  return prot->ARC4_GetContextSize();
+  CALL_CRYPTO_SERVICE (Arc4GetContextSize, (), 0);
 }
 
 /**
@@ -2416,16 +2012,12 @@ Arc4GetContextSize (
 BOOLEAN
 EFIAPI
 Arc4Init (
-    OUT VOID *Arc4Context,
-    IN CONST UINT8 *Key,
-    IN UINTN KeySize)
+  OUT  VOID         *Arc4Context,
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeySize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->ARC4_Init == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->ARC4_Init(Arc4Context, Key, KeySize);
+  CALL_CRYPTO_SERVICE (Arc4Init, (Arc4Context, Key, KeySize), FALSE);
 }
 
 /**
@@ -2454,17 +2046,13 @@ Arc4Init (
 BOOLEAN
 EFIAPI
 Arc4Encrypt (
-    IN OUT VOID *Arc4Context,
-    IN CONST UINT8 *Input,
-    IN UINTN InputSize,
-    OUT UINT8 *Output)
+  IN OUT  VOID         *Arc4Context,
+  IN      CONST UINT8  *Input,
+  IN      UINTN        InputSize,
+  OUT     UINT8        *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->ARC4_Encrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->ARC4_Encrypt(Arc4Context, Input, InputSize, Output);
+  CALL_CRYPTO_SERVICE (Arc4Encrypt, (Arc4Context, Input, InputSize, Output), FALSE);
 }
 
 /**
@@ -2493,18 +2081,13 @@ Arc4Encrypt (
 BOOLEAN
 EFIAPI
 Arc4Decrypt (
-    IN OUT VOID *Arc4Context,
-    IN UINT8 *Input,
-    IN UINTN InputSize,
-    OUT UINT8 *Output
-)
+  IN OUT  VOID   *Arc4Context,
+  IN      UINT8  *Input,
+  IN      UINTN  InputSize,
+  OUT     UINT8  *Output
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->ARC4_Decrypt == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->ARC4_Decrypt(Arc4Context, Input, InputSize, Output);
+  CALL_CRYPTO_SERVICE (Arc4Decrypt, (Arc4Context, Input, InputSize, Output), FALSE);
 }
 
 /**
@@ -2528,15 +2111,10 @@ Arc4Decrypt (
 BOOLEAN
 EFIAPI
 Arc4Reset (
-  IN OUT VOID *Arc4Context
-)
+  IN OUT  VOID  *Arc4Context
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->ARC4_Reset == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->ARC4_Reset(Arc4Context);
+  CALL_CRYPTO_SERVICE (Arc4Reset, (Arc4Context), FALSE);
 }
 
 //=====================================================================================
@@ -2554,14 +2132,9 @@ VOID *
 EFIAPI
 RsaNew (
   VOID
-)
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_New == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return NULL;
-  }
-  return prot->RSA_New();
+  CALL_CRYPTO_SERVICE (RsaNew, (), NULL);
 }
 
 /**
@@ -2575,17 +2148,10 @@ RsaNew (
 VOID
 EFIAPI
 RsaFree (
-    IN VOID *RsaContext
-)
+  IN  VOID  *RsaContext
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_Free == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return;
-  }
-
-  prot->RSA_Free(RsaContext);
+  CALL_VOID_CRYPTO_SERVICE (RsaFree, (RsaContext));
 }
 
 /**
@@ -2613,17 +2179,13 @@ RsaFree (
 BOOLEAN
 EFIAPI
 RsaSetKey (
-    IN OUT VOID *RsaContext,
-    IN RSA_KEY_TAG KeyTag,
-    IN CONST UINT8 *BigNumber,
-    IN UINTN BnSize)
+  IN OUT  VOID         *RsaContext,
+  IN      RSA_KEY_TAG  KeyTag,
+  IN      CONST UINT8  *BigNumber,
+  IN      UINTN        BnSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_SetKey == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->RSA_SetKey(RsaContext, KeyTag, BigNumber, BnSize);
+  CALL_CRYPTO_SERVICE (RsaSetKey, (RsaContext, KeyTag, BigNumber, BnSize), FALSE);
 }
 
 /**
@@ -2657,17 +2219,13 @@ RsaSetKey (
 BOOLEAN
 EFIAPI
 RsaGetKey (
-    IN OUT VOID *RsaContext,
-    IN RSA_KEY_TAG KeyTag,
-    OUT UINT8 *BigNumber,
-    IN OUT UINTN *BnSize)
+  IN OUT  VOID         *RsaContext,
+  IN      RSA_KEY_TAG  KeyTag,
+  OUT     UINT8        *BigNumber,
+  IN OUT  UINTN        *BnSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_GetKey == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->RSA_GetKey(RsaContext, KeyTag, BigNumber, BnSize);
+  CALL_CRYPTO_SERVICE (RsaGetKey, (RsaContext, KeyTag, BigNumber, BnSize), FALSE);
 }
 
 /**
@@ -2696,17 +2254,13 @@ RsaGetKey (
 BOOLEAN
 EFIAPI
 RsaGenerateKey (
-    IN OUT VOID *RsaContext,
-    IN UINTN ModulusLength,
-    IN CONST UINT8 *PublicExponent,
-    IN UINTN PublicExponentSize)
+  IN OUT  VOID         *RsaContext,
+  IN      UINTN        ModulusLength,
+  IN      CONST UINT8  *PublicExponent,
+  IN      UINTN        PublicExponentSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_GenerateKey == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->RSA_GenerateKey(RsaContext, ModulusLength, PublicExponent, PublicExponentSize);
+  CALL_CRYPTO_SERVICE (RsaGenerateKey, (RsaContext, ModulusLength, PublicExponent, PublicExponentSize), FALSE);
 }
 
 /**
@@ -2733,14 +2287,10 @@ RsaGenerateKey (
 BOOLEAN
 EFIAPI
 RsaCheckKey (
-    IN VOID *RsaContext)
+  IN  VOID  *RsaContext
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_CheckKey == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->RSA_CheckKey(RsaContext);
+  CALL_CRYPTO_SERVICE (RsaCheckKey, (RsaContext), FALSE);
 }
 
 /**
@@ -2773,18 +2323,14 @@ RsaCheckKey (
 BOOLEAN
 EFIAPI
 RsaPkcs1Sign (
-    IN VOID *RsaContext,
-    IN CONST UINT8 *MessageHash,
-    IN UINTN HashSize,
-    OUT UINT8 *Signature,
-    IN OUT UINTN *SigSize)
+  IN      VOID         *RsaContext,
+  IN      CONST UINT8  *MessageHash,
+  IN      UINTN        HashSize,
+  OUT     UINT8        *Signature,
+  IN OUT  UINTN        *SigSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_Pkcs1Sign == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->RSA_Pkcs1Sign(RsaContext, MessageHash, HashSize, Signature, SigSize);
+  CALL_CRYPTO_SERVICE (RsaPkcs1Sign, (RsaContext, MessageHash, HashSize, Signature, SigSize), FALSE);
 }
 
 /**
@@ -2809,24 +2355,14 @@ RsaPkcs1Sign (
 BOOLEAN
 EFIAPI
 RsaPkcs1Verify (
-    IN VOID *RsaContext,
-    IN CONST UINT8 *MessageHash,
-    IN UINTN HashSize,
-    IN CONST UINT8 *Signature,
-    IN UINTN SigSize)
+  IN  VOID         *RsaContext,
+  IN  CONST UINT8  *MessageHash,
+  IN  UINTN        HashSize,
+  IN  CONST UINT8  *Signature,
+  IN  UINTN        SigSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  EFI_STATUS Status;
-  if (prot == NULL || prot->RSA_Pkcs1Verify == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  Status = prot->RSA_Pkcs1Verify(RsaContext, MessageHash, HashSize, Signature, SigSize);
-  if (EFI_ERROR(Status))
-    return FALSE;
-  return TRUE;
+  CALL_CRYPTO_SERVICE (RsaPkcs1Verify, (RsaContext, MessageHash, HashSize, Signature, SigSize), FALSE);
 }
 
 /**
@@ -2851,17 +2387,13 @@ RsaPkcs1Verify (
 BOOLEAN
 EFIAPI
 RsaGetPrivateKeyFromPem (
-    IN CONST UINT8 *PemData,
-    IN UINTN PemSize,
-    IN CONST CHAR8 *Password,
-    OUT VOID **RsaContext)
+  IN   CONST UINT8  *PemData,
+  IN   UINTN        PemSize,
+  IN   CONST CHAR8  *Password,
+  OUT  VOID         **RsaContext
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RSA_GetPrivateKeyFromPem == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->RSA_GetPrivateKeyFromPem(PemData, PemSize, Password, RsaContext);
+  CALL_CRYPTO_SERVICE (RsaGetPrivateKeyFromPem, (PemData, PemSize, Password, RsaContext), FALSE);
 }
 
 /**
@@ -2885,22 +2417,12 @@ RsaGetPrivateKeyFromPem (
 BOOLEAN
 EFIAPI
 RsaGetPublicKeyFromX509 (
-    IN CONST UINT8 *Cert,
-    IN UINTN CertSize,
-    OUT VOID **RsaContext)
+  IN   CONST UINT8  *Cert,
+  IN   UINTN        CertSize,
+  OUT  VOID         **RsaContext
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  EFI_STATUS Status;
-  if (prot == NULL || prot->RSA_GetPublicKeyFromX509 == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  Status = prot->RSA_GetPublicKeyFromX509(Cert, CertSize, RsaContext);
-  if (EFI_ERROR(Status))
-    return FALSE;
-  return TRUE;
+  CALL_CRYPTO_SERVICE (RsaGetPublicKeyFromX509, (Cert, CertSize, RsaContext), FALSE);
 }
 
 /**
@@ -2925,23 +2447,13 @@ RsaGetPublicKeyFromX509 (
 BOOLEAN
 EFIAPI
 X509GetSubjectName (
-    IN CONST UINT8 *Cert,
-    IN UINTN CertSize,
-    OUT UINT8 *CertSubject,
-    IN OUT UINTN *SubjectSize)
+  IN      CONST UINT8  *Cert,
+  IN      UINTN        CertSize,
+  OUT     UINT8        *CertSubject,
+  IN OUT  UINTN        *SubjectSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  EFI_STATUS Status;
-  if (prot == NULL || prot->X509_GET_SUBJECT_NAME == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  Status = prot->X509_GET_SUBJECT_NAME(Cert, CertSize, CertSubject, SubjectSize);
-  if (EFI_ERROR(Status))
-    return FALSE;
-  return TRUE;
+  CALL_CRYPTO_SERVICE (X509GetSubjectName, (Cert, CertSize, CertSubject, SubjectSize), FALSE);
 }
 
 /**
@@ -2973,22 +2485,15 @@ X509GetSubjectName (
 RETURN_STATUS
 EFIAPI
 X509GetCommonName (
-    IN CONST UINT8 *Cert,
-    IN UINTN CertSize,
-    OUT CHAR8 *CommonName,
-    OPTIONAL IN OUT UINTN *CommonNameSize)
+  IN      CONST UINT8  *Cert,
+  IN      UINTN        CertSize,
+  OUT     CHAR8        *CommonName,  OPTIONAL
+  IN OUT  UINTN        *CommonNameSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->X509_GET_COMMON_NAME == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return EFI_PROTOCOL_UNREACHABLE;
-  }
-
-  return prot->X509_GET_COMMON_NAME(Cert, CertSize, CommonName, CommonNameSize);
+  CALL_CRYPTO_SERVICE (X509GetCommonName, (Cert, CertSize, CommonName, CommonNameSize), RETURN_UNSUPPORTED);
 }
 
-// MSCHANGE [Begin]
 /**
   Retrieve the organization name (O) string from one X.509 certificate.
 
@@ -2998,7 +2503,7 @@ X509GetCommonName (
                                    name string. At most NameBufferSize bytes will be
                                    written and the string will be null terminated. May be
                                    NULL in order to determine the size buffer needed.
-  @param[in,out]  NameBufferSiz e  The size in bytes of the Name buffer on input,
+  @param[in,out]  NameBufferSize   The size in bytes of the Name buffer on input,
                                    and the size of buffer returned Name on output.
                                    If NameBuffer is NULL then the amount of space needed
                                    in buffer (including the final null) is returned.
@@ -3018,19 +2523,13 @@ X509GetCommonName (
 RETURN_STATUS
 EFIAPI
 X509GetOrganizationName (
-    IN CONST UINT8 *Cert,
-    IN UINTN CertSize,
-    OUT CHAR8 *NameBuffer,
-    OPTIONAL IN OUT UINTN *NameBufferSize)
+  IN      CONST UINT8   *Cert,
+  IN      UINTN         CertSize,
+  OUT     CHAR8         *NameBuffer,  OPTIONAL
+  IN OUT  UINTN         *NameBufferSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->X509_GET_ORGANIZATION_NAME == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return EFI_PROTOCOL_UNREACHABLE;
-  }
-
-  return prot->X509_GET_ORGANIZATION_NAME(Cert, CertSize, NameBuffer, NameBufferSize);
+  CALL_CRYPTO_SERVICE (X509GetOrganizationName, (Cert, CertSize, NameBuffer, NameBufferSize), RETURN_UNSUPPORTED);
 }
 
 /**
@@ -3054,17 +2553,13 @@ X509GetOrganizationName (
 BOOLEAN
 EFIAPI
 X509VerifyCert (
-    IN CONST UINT8 *Cert,
-    IN UINTN CertSize,
-    IN CONST UINT8 *CACert,
-    IN UINTN CACertSize)
+  IN  CONST UINT8  *Cert,
+  IN  UINTN        CertSize,
+  IN  CONST UINT8  *CACert,
+  IN  UINTN        CACertSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_Update == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->X509_VerifyCert(Cert, CertSize, CACert, CACertSize);
+  CALL_CRYPTO_SERVICE (X509VerifyCert, (Cert, CertSize, CACert, CACertSize), FALSE);
 }
 
 /**
@@ -3086,16 +2581,12 @@ X509VerifyCert (
 BOOLEAN
 EFIAPI
 X509ConstructCertificate (
-    IN CONST UINT8 *Cert,
-    IN UINTN CertSize,
-    OUT UINT8 **SingleX509Cert)
+  IN   CONST UINT8  *Cert,
+  IN   UINTN        CertSize,
+  OUT  UINT8        **SingleX509Cert
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->X509_ConstructCertificate == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->X509_ConstructCertificate(Cert, CertSize, SingleX509Cert);
+  CALL_CRYPTO_SERVICE (X509ConstructCertificate, (Cert, CertSize, SingleX509Cert), FALSE);
 }
 
 /**
@@ -3107,7 +2598,8 @@ X509ConstructCertificate (
   @param[in, out]  X509Stack  On input, pointer to an existing or NULL X509 stack object.
                               On output, pointer to the X509 stack object with new
                               inserted X509 certificate.
-  @param           ...        A list of DER-encoded single certificate data followed
+  @param[in]  Args            VA_LIST marker for the variable argument list.
+           ...                A list of DER-encoded single certificate data followed
                               by certificate size. A NULL terminates the list. The
                               pairs are the arguments to X509ConstructCertificate().
 
@@ -3118,26 +2610,27 @@ X509ConstructCertificate (
 **/
 BOOLEAN
 EFIAPI
-X509ConstructCertificateStack  (
-    IN OUT UINT8 **X509Stack,
-    ...)
+X509ConstructCertificateStack (
+  IN OUT  UINT8  **X509Stack,
+  ...
+  )
 {
-  //VA_LIST  Args;
-  //BOOLEAN  Result;
+  VA_LIST  Args;
+  BOOLEAN  Result;
 
-  //VA_START (Args, X509Stack);
+  VA_START (Args, X509Stack);
   ProtocolFunctionNotFound(__FUNCTION__);
-  //Result = X509ConstructCertificateStackV (X509Stack, Args);
-  // TODO figure this out
-  // TODO this will come as part of the 2003 stable integration
-  //VA_END (Args);
-  return FALSE;
+  Result = FALSE; //X509ConstructCertificateStackV (X509Stack, Args);
+  VA_END (Args);
+  return Result;
 }
 
 /**
   Construct a X509 stack object from a list of DER-encoded certificate data.
+
   If X509Stack is NULL, then return FALSE.
   If this interface is not supported, then return FALSE.
+
   @param[in, out]  X509Stack  On input, pointer to an existing or NULL X509 stack object.
                               On output, pointer to the X509 stack object with new
                               inserted X509 certificate.
@@ -3145,9 +2638,11 @@ X509ConstructCertificateStack  (
                               A list of DER-encoded single certificate data followed
                               by certificate size. A NULL terminates the list. The
                               pairs are the arguments to X509ConstructCertificate().
+
   @retval     TRUE            The X509 stack construction succeeded.
   @retval     FALSE           The construction operation failed.
   @retval     FALSE           This interface is not supported.
+
 **/
 BOOLEAN
 EFIAPI
@@ -3156,14 +2651,9 @@ X509ConstructCertificateStackV (
   IN      VA_LIST  Args
   )
 {
-  //SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  /*if (prot == NULL || prot->X509ConstructCertificateStackV == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return;
-  }*/
+  //CALL_CRYPTO_SERVICE (X509ConstructCertificateStackV, (X509Stack, Args), FALSE);
   ProtocolFunctionNotFound(__FUNCTION__);
   return FALSE;
-  //prot->X509ConstructCertificateStackV(Args);
 }
 
 /**
@@ -3177,15 +2667,10 @@ X509ConstructCertificateStackV (
 VOID
 EFIAPI
 X509Free (
-  IN VOID *X509Cert
-)
+  IN  VOID  *X509Cert
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->X509_Free == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return;
-  }
-  prot->X509_Free(X509Cert);
+  CALL_VOID_CRYPTO_SERVICE (X509Free, (X509Cert));
 }
 
 /**
@@ -3199,14 +2684,10 @@ X509Free (
 VOID
 EFIAPI
 X509StackFree (
-    IN VOID *X509Stack
- )
+  IN  VOID  *X509Stack
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->X509_StackFree == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-  }
-  prot->X509_StackFree(X509Stack);
+  CALL_VOID_CRYPTO_SERVICE (X509StackFree, (X509Stack));
 }
 
 /**
@@ -3229,17 +2710,13 @@ X509StackFree (
 BOOLEAN
 EFIAPI
 X509GetTBSCert (
-    IN CONST UINT8 *Cert,
-    IN UINTN CertSize,
-    OUT UINT8 **TBSCert,
-    OUT UINTN *TBSCertSize)
+  IN  CONST UINT8  *Cert,
+  IN  UINTN        CertSize,
+  OUT UINT8        **TBSCert,
+  OUT UINTN        *TBSCertSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->X509_GetTBSCert == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->X509_GetTBSCert(Cert, CertSize, TBSCert, TBSCertSize);
+  CALL_CRYPTO_SERVICE (X509GetTBSCert, (Cert, CertSize, TBSCert, TBSCertSize), FALSE);
 }
 
 /**
@@ -3272,74 +2749,62 @@ X509GetTBSCert (
 BOOLEAN
 EFIAPI
 Pkcs5HashPassword (
-    IN UINTN PasswordLength,
-    IN CONST CHAR8 *Password,
-    IN UINTN SaltLength,
-    IN CONST UINT8 *Salt,
-    IN UINTN IterationCount,
-    IN UINTN DigestSize,
-    IN UINTN KeyLength,
-    OUT UINT8 *OutKey)
+  IN  UINTN        PasswordLength,
+  IN  CONST CHAR8  *Password,
+  IN  UINTN        SaltLength,
+  IN  CONST UINT8  *Salt,
+  IN  UINTN        IterationCount,
+  IN  UINTN        DigestSize,
+  IN  UINTN        KeyLength,
+  OUT UINT8        *OutKey
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  EFI_STATUS Status;
-  if (prot == NULL || prot->PKCS5_PW_HASH == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  Status = prot->PKCS5_PW_HASH(PasswordLength, Password, SaltLength, Salt, IterationCount, DigestSize, KeyLength, OutKey);
-  if (EFI_ERROR(Status))
-    return FALSE;
-  return TRUE;
+  CALL_CRYPTO_SERVICE (Pkcs5HashPassword, (PasswordLength, Password, SaltLength, Salt, IterationCount, DigestSize, KeyLength, OutKey), FALSE);
 }
 
-// MSChange [BEGIN] - Add a wrapper function for the PKCS1v2 RSAES-OAEP PKI encryption
-//                    functionality provided by OpenSSL.
 /**
-  Encrypts a blob using PKCS1v2 (RSAES-OAEP) schema. On success, will return the encrypted message in
-  in a newly allocated buffer.
+  Encrypts a blob using PKCS1v2 (RSAES-OAEP) schema. On success, will return the
+  encrypted message in a newly allocated buffer.
 
   Things that can cause a failure include:
   - X509 key size does not match any known key size.
   - Fail to parse X509 certificate.
   - Fail to allocate an intermediate buffer.
-  - NULL pointer provided for a non-optional parameter.
-  - Data size is too large for the provided key size (max size is a function of key size and hash digest size).
+  - Null pointer provided for a non-optional parameter.
+  - Data size is too large for the provided key size (max size is a function of key size
+    and hash digest size).
 
-  @param[in]  PublicKey     A pointer to the DER-encoded X509 certificate that will be used to encrypt the data.
-  @param[in]  PublicKeySize Size of the X509 cert buffer.
-  @param[in]  InData        Data to be encrypted.
-  @param[in]  InDataSize    Size of the data buffer.
-  @param[in]  PrngSeed      [Optional] If provided, a pointer to a random seed buffer to be used when initializing the PRNG. NULL otherwise.
-  @param[in]  PrngSeedSize  [Optional] If provided, size of the random seed buffer. 0 otherwise.
-  @param[out] EncryptedData       Pointer to an allocated buffer containing the encrypted message.
+  @param[in]  PublicKey           A pointer to the DER-encoded X509 certificate that
+                                  will be used to encrypt the data.
+  @param[in]  PublicKeySize       Size of the X509 cert buffer.
+  @param[in]  InData              Data to be encrypted.
+  @param[in]  InDataSize          Size of the data buffer.
+  @param[in]  PrngSeed            [Optional] If provided, a pointer to a random seed buffer
+                                  to be used when initializing the PRNG. NULL otherwise.
+  @param[in]  PrngSeedSize        [Optional] If provided, size of the random seed buffer.
+                                  0 otherwise.
+  @param[out] EncryptedData       Pointer to an allocated buffer containing the encrypted
+                                  message.
   @param[out] EncryptedDataSize   Size of the encrypted message buffer.
 
-  @retval     TRUE  Encryption was successful.
-  @retval     FALSE Encryption failed.
+  @retval     TRUE                Encryption was successful.
+  @retval     FALSE               Encryption failed.
 
 **/
 BOOLEAN
+EFIAPI
 Pkcs1v2Encrypt (
-    IN CONST UINT8 *PublicKey,
-    IN UINTN PublicKeySize,
-    IN UINT8 *InData,
-    IN UINTN InDataSize,
-    IN CONST UINT8 *PrngSeed OPTIONAL,
-    IN UINTN PrngSeedSize OPTIONAL,
-    OUT UINT8 **EncryptedData,
-    OUT UINTN *EncryptedDataSize)
+  IN   CONST UINT8  *PublicKey,
+  IN   UINTN        PublicKeySize,
+  IN   UINT8        *InData,
+  IN   UINTN        InDataSize,
+  IN   CONST UINT8  *PrngSeed,  OPTIONAL
+  IN   UINTN        PrngSeedSize,  OPTIONAL
+  OUT  UINT8        **EncryptedData,
+  OUT  UINTN        *EncryptedDataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS1_ENCRYPT_V2 == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->PKCS1_ENCRYPT_V2(PublicKey, PublicKeySize, InData, InDataSize, PrngSeed, PrngSeedSize, EncryptedData, EncryptedDataSize);
+  CALL_CRYPTO_SERVICE (Pkcs1v2Encrypt, (PublicKey, PublicKeySize, InData, InDataSize, PrngSeed, PrngSeedSize, EncryptedData, EncryptedDataSize), FALSE);
 }
 
 /**
@@ -3371,19 +2836,15 @@ Pkcs1v2Encrypt (
 BOOLEAN
 EFIAPI
 Pkcs7GetSigners (
-    IN CONST UINT8 *P7Data,
-    IN UINTN P7Length,
-    OUT UINT8 **CertStack,
-    OUT UINTN *StackLength,
-    OUT UINT8 **TrustedCert,
-    OUT UINTN *CertLength)
+  IN  CONST UINT8  *P7Data,
+  IN  UINTN        P7Length,
+  OUT UINT8        **CertStack,
+  OUT UINTN        *StackLength,
+  OUT UINT8        **TrustedCert,
+  OUT UINTN        *CertLength
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS7_GetSigners == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->PKCS7_GetSigners(P7Data, P7Length, CertStack, StackLength, TrustedCert, CertLength);
+  CALL_CRYPTO_SERVICE (Pkcs7GetSigners, (P7Data, P7Length, CertStack, StackLength, TrustedCert, CertLength), FALSE);
 }
 
 /**
@@ -3397,14 +2858,10 @@ Pkcs7GetSigners (
 VOID
 EFIAPI
 Pkcs7FreeSigners (
-  IN UINT8 *Certs
-)
+  IN  UINT8        *Certs
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS7_FreeSigners == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-  }
-  prot->PKCS7_FreeSigners(Certs);
+  CALL_VOID_CRYPTO_SERVICE (Pkcs7FreeSigners, (Certs));
 }
 
 /**
@@ -3432,19 +2889,15 @@ Pkcs7FreeSigners (
 BOOLEAN
 EFIAPI
 Pkcs7GetCertificatesList (
-    IN CONST UINT8 *P7Data,
-    IN UINTN P7Length,
-    OUT UINT8 **SignerChainCerts,
-    OUT UINTN *ChainLength,
-    OUT UINT8 **UnchainCerts,
-    OUT UINTN *UnchainLength)
+  IN  CONST UINT8  *P7Data,
+  IN  UINTN        P7Length,
+  OUT UINT8        **SignerChainCerts,
+  OUT UINTN        *ChainLength,
+  OUT UINT8        **UnchainCerts,
+  OUT UINTN        *UnchainLength
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS7_GetCertificatesList == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->PKCS7_GetCertificatesList(P7Data, P7Length, SignerChainCerts, ChainLength, UnchainCerts, UnchainLength);
+  CALL_CRYPTO_SERVICE (Pkcs7GetCertificatesList, (P7Data, P7Length, SignerChainCerts, ChainLength, UnchainCerts, UnchainLength), FALSE);
 }
 
 /**
@@ -3477,22 +2930,18 @@ Pkcs7GetCertificatesList (
 BOOLEAN
 EFIAPI
 Pkcs7Sign (
-    IN CONST UINT8 *PrivateKey,
-    IN UINTN PrivateKeySize,
-    IN CONST UINT8 *KeyPassword,
-    IN UINT8 *InData,
-    IN UINTN InDataSize,
-    IN UINT8 *SignCert,
-    IN UINT8 *OtherCerts OPTIONAL,
-    OUT UINT8 **SignedData,
-    OUT UINTN *SignedDataSize)
+  IN   CONST UINT8  *PrivateKey,
+  IN   UINTN        PrivateKeySize,
+  IN   CONST UINT8  *KeyPassword,
+  IN   UINT8        *InData,
+  IN   UINTN        InDataSize,
+  IN   UINT8        *SignCert,
+  IN   UINT8        *OtherCerts      OPTIONAL,
+  OUT  UINT8        **SignedData,
+  OUT  UINTN        *SignedDataSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS7_Sign == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->PKCS7_Sign(PrivateKey, PrivateKeySize, KeyPassword, InData, InDataSize, SignCert, OtherCerts, SignedData, SignedDataSize);
+  CALL_CRYPTO_SERVICE (Pkcs7Sign, (PrivateKey, PrivateKeySize, KeyPassword, InData, InDataSize, SignCert, OtherCerts, SignedData, SignedDataSize), FALSE);
 }
 
 /**
@@ -3520,37 +2969,24 @@ Pkcs7Sign (
 BOOLEAN
 EFIAPI
 Pkcs7Verify (
-    IN CONST UINT8 *P7Data,
-    IN UINTN P7Length,
-    IN CONST UINT8 *TrustedCert,
-    IN UINTN CertLength,
-    IN CONST UINT8 *InData,
-    IN UINTN DataLength)
+  IN  CONST UINT8  *P7Data,
+  IN  UINTN        P7Length,
+  IN  CONST UINT8  *TrustedCert,
+  IN  UINTN        CertLength,
+  IN  CONST UINT8  *InData,
+  IN  UINTN        DataLength
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS7_VERIFY == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->PKCS7_VERIFY(P7Data, P7Length, TrustedCert, CertLength, InData, DataLength);
+  CALL_CRYPTO_SERVICE (Pkcs7Verify, (P7Data, P7Length, TrustedCert, CertLength, InData, DataLength), FALSE);
 }
 
-// MS_CHANGE [BEGIN] - Add a function that will verify Extended Key Usages
-//                     are present in the end-entity (leaf) signer certificate
-//                     in a PKCS7 formatted signature.
-
 /**
-  VerifyEKUsInPkcs7Signature()
-
   This function receives a PKCS7 formatted signature, and then verifies that
   the specified Enhanced or Extended Key Usages (EKU's) are present in the end-entity
   leaf signing certificate.
-
   Note that this function does not validate the certificate chain.
 
-  Applications for custom EKU's are quite flexible.  For example, a policy EKU
+  Applications for custom EKU's are quite flexible. For example, a policy EKU
   may be present in an Issuing Certificate Authority (CA), and any sub-ordinate
   certificate issued might also contain this EKU, thus constraining the
   sub-ordinate certificate.  Other applications might allow a certificate
@@ -3558,48 +2994,37 @@ Pkcs7Verify (
   present which contains binary data specifying custom capabilities that
   the device is able to do.
 
-  @param[in]  Pkcs7Signature     - The PKCS#7 signed information content block. An array
+  @param[in]  Pkcs7Signature       The PKCS#7 signed information content block. An array
                                    containing the content block with both the signature,
                                    the signer's certificate, and any necessary intermediate
                                    certificates.
-
-  @param[in]  Pkcs7SignatureSize - Number of bytes in Pkcs7Signature.
-
-  @param[in]  RequiredEKUs       - Array of null-terminated strings listing OIDs of
+  @param[in]  Pkcs7SignatureSize   Number of bytes in Pkcs7Signature.
+  @param[in]  RequiredEKUs         Array of null-terminated strings listing OIDs of
                                    required EKUs that must be present in the signature.
-
-  @param[in]  RequiredEKUsSize   - Number of elements in the RequiredEKUs string array.
-
-  @param[in]  RequireAllPresent  - If this is TRUE, then all of the specified EKU's
+  @param[in]  RequiredEKUsSize     Number of elements in the RequiredEKUs string array.
+  @param[in]  RequireAllPresent    If this is TRUE, then all of the specified EKU's
                                    must be present in the leaf signer.  If it is
                                    FALSE, then we will succeed if we find any
                                    of the specified EKU's.
 
-  @retval EFI_SUCCESS            - The required EKUs were found in the signature.
-  @retval EFI_INVALID_PARAMETER  - A parameter was invalid.
-  @retval EFI_NOT_FOUND          - One or more EKU's were not found in the signature.
+  @retval EFI_SUCCESS              The required EKUs were found in the signature.
+  @retval EFI_INVALID_PARAMETER    A parameter was invalid.
+  @retval EFI_NOT_FOUND            One or more EKU's were not found in the signature.
 
 **/
-EFI_STATUS
+RETURN_STATUS
 EFIAPI
 VerifyEKUsInPkcs7Signature (
-    IN CONST UINT8 *Pkcs7Signature,
-    IN CONST UINT32 SignatureSize,
-    IN CONST CHAR8 *RequiredEKUs[],
-    IN CONST UINT32 RequiredEKUsSize,
-    IN BOOLEAN RequireAllPresent)
+  IN  CONST UINT8   *Pkcs7Signature,
+  IN  CONST UINT32  SignatureSize,
+  IN  CONST CHAR8   *RequiredEKUs[],
+  IN  CONST UINT32  RequiredEKUsSize,
+  IN  BOOLEAN       RequireAllPresent
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS7_VERIFY_EKU == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->PKCS7_VERIFY_EKU(Pkcs7Signature, SignatureSize, RequiredEKUs, RequiredEKUsSize, RequireAllPresent);
+  CALL_CRYPTO_SERVICE (VerifyEKUsInPkcs7Signature, (Pkcs7Signature, SignatureSize, RequiredEKUs, RequiredEKUsSize, RequireAllPresent), FALSE);
 }
 
-// MS_CHANGE [END]
 
 /**
   Extracts the attached content from a PKCS#7 signed data if existed. The input signed
@@ -3624,17 +3049,13 @@ VerifyEKUsInPkcs7Signature (
 BOOLEAN
 EFIAPI
 Pkcs7GetAttachedContent (
-    IN CONST UINT8 *P7Data,
-    IN UINTN P7Length,
-    OUT VOID **Content,
-    OUT UINTN *ContentSize)
+  IN  CONST UINT8  *P7Data,
+  IN  UINTN        P7Length,
+  OUT VOID         **Content,
+  OUT UINTN        *ContentSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->PKCS7_GetAttachedContent == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->PKCS7_GetAttachedContent(P7Data, P7Length, Content, ContentSize);
+  CALL_CRYPTO_SERVICE (Pkcs7GetAttachedContent, (P7Data, P7Length, Content, ContentSize), FALSE);
 }
 
 /**
@@ -3664,19 +3085,15 @@ Pkcs7GetAttachedContent (
 BOOLEAN
 EFIAPI
 AuthenticodeVerify (
-    IN CONST UINT8 *AuthData,
-    IN UINTN DataSize,
-    IN CONST UINT8 *TrustedCert,
-    IN UINTN CertSize,
-    IN CONST UINT8 *ImageHash,
-    IN UINTN HashSize)
+  IN  CONST UINT8  *AuthData,
+  IN  UINTN        DataSize,
+  IN  CONST UINT8  *TrustedCert,
+  IN  UINTN        CertSize,
+  IN  CONST UINT8  *ImageHash,
+  IN  UINTN        HashSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->Authenticode_Verify == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->Authenticode_Verify(AuthData, DataSize, TrustedCert, CertSize, ImageHash, HashSize);
+  CALL_CRYPTO_SERVICE (AuthenticodeVerify, (AuthData, DataSize, TrustedCert, CertSize, ImageHash, HashSize), FALSE);
 }
 
 /**
@@ -3702,18 +3119,14 @@ AuthenticodeVerify (
 BOOLEAN
 EFIAPI
 ImageTimestampVerify (
-    IN CONST UINT8 *AuthData,
-    IN UINTN DataSize,
-    IN CONST UINT8 *TsaCert,
-    IN UINTN CertSize,
-    OUT EFI_TIME *SigningTime)
+  IN  CONST UINT8  *AuthData,
+  IN  UINTN        DataSize,
+  IN  CONST UINT8  *TsaCert,
+  IN  UINTN        CertSize,
+  OUT EFI_TIME     *SigningTime
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->MD4_Update == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->Image_TimestampVerify(AuthData, DataSize, TsaCert, CertSize, SigningTime);
+  CALL_CRYPTO_SERVICE (ImageTimestampVerify, (AuthData, DataSize, TsaCert, CertSize, SigningTime), FALSE);
 }
 
 //=====================================================================================
@@ -3732,14 +3145,9 @@ VOID *
 EFIAPI
 DhNew (
   VOID
-)
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->DH_New == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return NULL;
-  }
-  return prot->DH_New();
+  CALL_CRYPTO_SERVICE (DhNew, (), NULL);
 }
 
 /**
@@ -3753,14 +3161,10 @@ DhNew (
 VOID
 EFIAPI
 DhFree (
-  IN VOID *DhContext
-)
+  IN  VOID  *DhContext
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->DH_Free == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-  }
-  prot->DH_Free(DhContext);
+  CALL_VOID_CRYPTO_SERVICE (DhFree, (DhContext));
 }
 
 /**
@@ -3790,17 +3194,13 @@ DhFree (
 BOOLEAN
 EFIAPI
 DhGenerateParameter (
-    IN OUT VOID *DhContext,
-    IN UINTN Generator,
-    IN UINTN PrimeLength,
-    OUT UINT8 *Prime)
+  IN OUT  VOID   *DhContext,
+  IN      UINTN  Generator,
+  IN      UINTN  PrimeLength,
+  OUT     UINT8  *Prime
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->DH_GenerateParameter == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->DH_GenerateParameter(DhContext, Generator, PrimeLength, Prime);
+  CALL_CRYPTO_SERVICE (DhGenerateParameter, (DhContext, Generator, PrimeLength, Prime), FALSE);
 }
 
 /**
@@ -3829,18 +3229,13 @@ DhGenerateParameter (
 BOOLEAN
 EFIAPI
 DhSetParameter (
-  IN OUT VOID *DhContext,
-  IN UINTN Generator,
-  IN UINTN PrimeLength,
-  IN CONST UINT8 *Prime
-)
+  IN OUT  VOID         *DhContext,
+  IN      UINTN        Generator,
+  IN      UINTN        PrimeLength,
+  IN      CONST UINT8  *Prime
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->DH_SetParameter == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->DH_SetParameter(DhContext, Generator, PrimeLength, Prime);
+  CALL_CRYPTO_SERVICE (DhSetParameter, (DhContext, Generator, PrimeLength, Prime), FALSE);
 }
 
 /**
@@ -3870,17 +3265,12 @@ DhSetParameter (
 BOOLEAN
 EFIAPI
 DhGenerateKey (
-  IN OUT VOID *DhContext,
-  OUT UINT8 *PublicKey,
-  IN OUT UINTN *PublicKeySize
-)
+  IN OUT  VOID   *DhContext,
+  OUT     UINT8  *PublicKey,
+  IN OUT  UINTN  *PublicKeySize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->DH_GenerateKey == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->DH_GenerateKey(DhContext, PublicKey, PublicKeySize);
+  CALL_CRYPTO_SERVICE (DhGenerateKey, (DhContext, PublicKey, PublicKeySize), FALSE);
 }
 
 /**
@@ -3912,18 +3302,14 @@ DhGenerateKey (
 BOOLEAN
 EFIAPI
 DhComputeKey (
-    IN OUT VOID *DhContext,
-    IN CONST UINT8 *PeerPublicKey,
-    IN UINTN PeerPublicKeySize,
-    OUT UINT8 *Key,
-    IN OUT UINTN *KeySize)
+  IN OUT  VOID         *DhContext,
+  IN      CONST UINT8  *PeerPublicKey,
+  IN      UINTN        PeerPublicKeySize,
+  OUT     UINT8        *Key,
+  IN OUT  UINTN        *KeySize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->DH_ComputeKey == NULL) {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-  return prot->DH_ComputeKey(DhContext, PeerPublicKey, PeerPublicKeySize, Key, KeySize);
+  CALL_CRYPTO_SERVICE (DhComputeKey, (DhContext, PeerPublicKey, PeerPublicKeySize, Key, KeySize), FALSE);
 }
 
 //=====================================================================================
@@ -3951,17 +3337,11 @@ DhComputeKey (
 BOOLEAN
 EFIAPI
 RandomSeed (
-    IN CONST UINT8 *Seed OPTIONAL,
-    IN UINTN SeedSize)
+  IN  CONST  UINT8  *Seed  OPTIONAL,
+  IN  UINTN         SeedSize
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RANDOM_Seed == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
-
-  return prot->RANDOM_Seed(Seed, SeedSize);
+  CALL_CRYPTO_SERVICE (RandomSeed, (Seed, SeedSize), FALSE);
 }
 
 /**
@@ -3981,15 +3361,957 @@ RandomSeed (
 BOOLEAN
 EFIAPI
 RandomBytes (
-    OUT UINT8 *Output,
-    IN UINTN Size)
+  OUT  UINT8  *Output,
+  IN   UINTN  Size
+  )
 {
-  SHARED_CRYPTO_FUNCTIONS *prot = GetProtocol();
-  if (prot == NULL || prot->RANDOM_Bytes == NULL)
-  {
-    ProtocolFunctionNotFound(__FUNCTION__);
-    return FALSE;
-  }
+  CALL_CRYPTO_SERVICE (RandomBytes, (Output, Size), FALSE);
+}
 
-  return prot->RANDOM_Bytes(Output, Size);
+//=====================================================================================
+//    Key Derivation Function Primitive
+//=====================================================================================
+
+/**
+  Derive key data using HMAC-SHA256 based KDF.
+
+  @param[in]   Key              Pointer to the user-supplied key.
+  @param[in]   KeySize          Key size in bytes.
+  @param[in]   Salt             Pointer to the salt(non-secret) value.
+  @param[in]   SaltSize         Salt size in bytes.
+  @param[in]   Info             Pointer to the application specific info.
+  @param[in]   InfoSize         Info size in bytes.
+  @param[out]  Out              Pointer to buffer to receive hkdf value.
+  @param[in]   OutSize          Size of hkdf bytes to generate.
+
+  @retval TRUE   Hkdf generated successfully.
+  @retval FALSE  Hkdf generation failed.
+
+**/
+BOOLEAN
+EFIAPI
+HkdfSha256ExtractAndExpand (
+  IN   CONST UINT8  *Key,
+  IN   UINTN        KeySize,
+  IN   CONST UINT8  *Salt,
+  IN   UINTN        SaltSize,
+  IN   CONST UINT8  *Info,
+  IN   UINTN        InfoSize,
+  OUT  UINT8        *Out,
+  IN   UINTN        OutSize
+  )
+{
+  CALL_CRYPTO_SERVICE (HkdfSha256ExtractAndExpand, (Key, KeySize, Salt, SaltSize, Info, InfoSize, Out, OutSize), FALSE);
+}
+
+/**
+  Initializes the OpenSSL library.
+
+  This function registers ciphers and digests used directly and indirectly
+  by SSL/TLS, and initializes the readable error messages.
+  This function must be called before any other action takes places.
+
+  @retval TRUE   The OpenSSL library has been initialized.
+  @retval FALSE  Failed to initialize the OpenSSL library.
+
+**/
+BOOLEAN
+EFIAPI
+TlsInitialize (
+  VOID
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsInitialize, (), FALSE);
+}
+
+/**
+  Free an allocated SSL_CTX object.
+
+  @param[in]  TlsCtx    Pointer to the SSL_CTX object to be released.
+
+**/
+VOID
+EFIAPI
+TlsCtxFree (
+  IN   VOID                  *TlsCtx
+  )
+{
+  CALL_VOID_CRYPTO_SERVICE (TlsCtxFree, (TlsCtx));
+}
+
+/**
+  Creates a new SSL_CTX object as framework to establish TLS/SSL enabled
+  connections.
+
+  @param[in]  MajorVer    Major Version of TLS/SSL Protocol.
+  @param[in]  MinorVer    Minor Version of TLS/SSL Protocol.
+
+  @return  Pointer to an allocated SSL_CTX object.
+           If the creation failed, TlsCtxNew() returns NULL.
+
+**/
+VOID *
+EFIAPI
+TlsCtxNew (
+  IN     UINT8                    MajorVer,
+  IN     UINT8                    MinorVer
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsCtxNew, (MajorVer, MinorVer), NULL);
+}
+
+/**
+  Free an allocated TLS object.
+
+  This function removes the TLS object pointed to by Tls and frees up the
+  allocated memory. If Tls is NULL, nothing is done.
+
+  @param[in]  Tls    Pointer to the TLS object to be freed.
+
+**/
+VOID
+EFIAPI
+TlsFree (
+  IN     VOID                     *Tls
+  )
+{
+  CALL_VOID_CRYPTO_SERVICE (TlsFree, (Tls));
+}
+
+/**
+  Create a new TLS object for a connection.
+
+  This function creates a new TLS object for a connection. The new object
+  inherits the setting of the underlying context TlsCtx: connection method,
+  options, verification setting.
+
+  @param[in]  TlsCtx    Pointer to the SSL_CTX object.
+
+  @return  Pointer to an allocated SSL object.
+           If the creation failed, TlsNew() returns NULL.
+
+**/
+VOID *
+EFIAPI
+TlsNew (
+  IN     VOID                     *TlsCtx
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsNew, (TlsCtx), NULL);
+}
+
+/**
+  Checks if the TLS handshake was done.
+
+  This function will check if the specified TLS handshake was done.
+
+  @param[in]  Tls    Pointer to the TLS object for handshake state checking.
+
+  @retval  TRUE     The TLS handshake was done.
+  @retval  FALSE    The TLS handshake was not done.
+
+**/
+BOOLEAN
+EFIAPI
+TlsInHandshake (
+  IN     VOID                     *Tls
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsInHandshake, (Tls), FALSE);
+}
+
+/**
+  Perform a TLS/SSL handshake.
+
+  This function will perform a TLS/SSL handshake.
+
+  @param[in]       Tls            Pointer to the TLS object for handshake operation.
+  @param[in]       BufferIn       Pointer to the most recently received TLS Handshake packet.
+  @param[in]       BufferInSize   Packet size in bytes for the most recently received TLS
+                                  Handshake packet.
+  @param[out]      BufferOut      Pointer to the buffer to hold the built packet.
+  @param[in, out]  BufferOutSize  Pointer to the buffer size in bytes. On input, it is
+                                  the buffer size provided by the caller. On output, it
+                                  is the buffer size in fact needed to contain the
+                                  packet.
+
+  @retval EFI_SUCCESS             The required TLS packet is built successfully.
+  @retval EFI_INVALID_PARAMETER   One or more of the following conditions is TRUE:
+                                  Tls is NULL.
+                                  BufferIn is NULL but BufferInSize is NOT 0.
+                                  BufferInSize is 0 but BufferIn is NOT NULL.
+                                  BufferOutSize is NULL.
+                                  BufferOut is NULL if *BufferOutSize is not zero.
+  @retval EFI_BUFFER_TOO_SMALL    BufferOutSize is too small to hold the response packet.
+  @retval EFI_ABORTED             Something wrong during handshake.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsDoHandshake (
+  IN     VOID                     *Tls,
+  IN     UINT8                    *BufferIn, OPTIONAL
+  IN     UINTN                    BufferInSize, OPTIONAL
+     OUT UINT8                    *BufferOut, OPTIONAL
+  IN OUT UINTN                    *BufferOutSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsDoHandshake, (Tls, BufferIn, BufferInSize, BufferOut, BufferOutSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Handle Alert message recorded in BufferIn. If BufferIn is NULL and BufferInSize is zero,
+  TLS session has errors and the response packet needs to be Alert message based on error type.
+
+  @param[in]       Tls            Pointer to the TLS object for state checking.
+  @param[in]       BufferIn       Pointer to the most recently received TLS Alert packet.
+  @param[in]       BufferInSize   Packet size in bytes for the most recently received TLS
+                                  Alert packet.
+  @param[out]      BufferOut      Pointer to the buffer to hold the built packet.
+  @param[in, out]  BufferOutSize  Pointer to the buffer size in bytes. On input, it is
+                                  the buffer size provided by the caller. On output, it
+                                  is the buffer size in fact needed to contain the
+                                  packet.
+
+  @retval EFI_SUCCESS             The required TLS packet is built successfully.
+  @retval EFI_INVALID_PARAMETER   One or more of the following conditions is TRUE:
+                                  Tls is NULL.
+                                  BufferIn is NULL but BufferInSize is NOT 0.
+                                  BufferInSize is 0 but BufferIn is NOT NULL.
+                                  BufferOutSize is NULL.
+                                  BufferOut is NULL if *BufferOutSize is not zero.
+  @retval EFI_ABORTED             An error occurred.
+  @retval EFI_BUFFER_TOO_SMALL    BufferOutSize is too small to hold the response packet.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsHandleAlert (
+  IN     VOID                     *Tls,
+  IN     UINT8                    *BufferIn, OPTIONAL
+  IN     UINTN                    BufferInSize, OPTIONAL
+     OUT UINT8                    *BufferOut, OPTIONAL
+  IN OUT UINTN                    *BufferOutSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsHandleAlert, (Tls, BufferIn, BufferInSize, BufferOut, BufferOutSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Build the CloseNotify packet.
+
+  @param[in]       Tls            Pointer to the TLS object for state checking.
+  @param[in, out]  Buffer         Pointer to the buffer to hold the built packet.
+  @param[in, out]  BufferSize     Pointer to the buffer size in bytes. On input, it is
+                                  the buffer size provided by the caller. On output, it
+                                  is the buffer size in fact needed to contain the
+                                  packet.
+
+  @retval EFI_SUCCESS             The required TLS packet is built successfully.
+  @retval EFI_INVALID_PARAMETER   One or more of the following conditions is TRUE:
+                                  Tls is NULL.
+                                  BufferSize is NULL.
+                                  Buffer is NULL if *BufferSize is not zero.
+  @retval EFI_BUFFER_TOO_SMALL    BufferSize is too small to hold the response packet.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsCloseNotify (
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *Buffer,
+  IN OUT UINTN                    *BufferSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsCloseNotify, (Tls, Buffer, BufferSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Attempts to read bytes from one TLS object and places the data in Buffer.
+
+  This function will attempt to read BufferSize bytes from the TLS object
+  and places the data in Buffer.
+
+  @param[in]      Tls           Pointer to the TLS object.
+  @param[in,out]  Buffer        Pointer to the buffer to store the data.
+  @param[in]      BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The amount of data successfully read from the TLS object.
+  @retval  <=0   No data was successfully read.
+
+**/
+INTN
+EFIAPI
+TlsCtrlTrafficOut (
+  IN     VOID                     *Tls,
+  IN OUT VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsCtrlTrafficOut, (Tls, Buffer, BufferSize), 0);
+}
+
+/**
+  Attempts to write data from the buffer to TLS object.
+
+  This function will attempt to write BufferSize bytes data from the Buffer
+  to the TLS object.
+
+  @param[in]  Tls           Pointer to the TLS object.
+  @param[in]  Buffer        Pointer to the data buffer.
+  @param[in]  BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The amount of data successfully written to the TLS object.
+  @retval <=0    No data was successfully written.
+
+**/
+INTN
+EFIAPI
+TlsCtrlTrafficIn (
+  IN     VOID                     *Tls,
+  IN     VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsCtrlTrafficIn, (Tls, Buffer, BufferSize), 0);
+}
+
+/**
+  Attempts to read bytes from the specified TLS connection into the buffer.
+
+  This function tries to read BufferSize bytes data from the specified TLS
+  connection into the Buffer.
+
+  @param[in]      Tls           Pointer to the TLS connection for data reading.
+  @param[in,out]  Buffer        Pointer to the data buffer.
+  @param[in]      BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The read operation was successful, and return value is the
+                 number of bytes actually read from the TLS connection.
+  @retval  <=0   The read operation was not successful.
+
+**/
+INTN
+EFIAPI
+TlsRead (
+  IN     VOID                     *Tls,
+  IN OUT VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsRead, (Tls, Buffer, BufferSize), 0);
+}
+
+/**
+  Attempts to write data to a TLS connection.
+
+  This function tries to write BufferSize bytes data from the Buffer into the
+  specified TLS connection.
+
+  @param[in]  Tls           Pointer to the TLS connection for data writing.
+  @param[in]  Buffer        Pointer to the data buffer.
+  @param[in]  BufferSize    The size of Buffer in bytes.
+
+  @retval  >0    The write operation was successful, and return value is the
+                 number of bytes actually written to the TLS connection.
+  @retval <=0    The write operation was not successful.
+
+**/
+INTN
+EFIAPI
+TlsWrite (
+  IN     VOID                     *Tls,
+  IN     VOID                     *Buffer,
+  IN     UINTN                    BufferSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsWrite, (Tls, Buffer, BufferSize), 0);
+}
+
+/**
+  Set a new TLS/SSL method for a particular TLS object.
+
+  This function sets a new TLS/SSL method for a particular TLS object.
+
+  @param[in]  Tls         Pointer to a TLS object.
+  @param[in]  MajorVer    Major Version of TLS/SSL Protocol.
+  @param[in]  MinorVer    Minor Version of TLS/SSL Protocol.
+
+  @retval  EFI_SUCCESS           The TLS/SSL method was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Unsupported TLS/SSL method.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetVersion (
+  IN     VOID                     *Tls,
+  IN     UINT8                    MajorVer,
+  IN     UINT8                    MinorVer
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetVersion, (Tls, MajorVer, MinorVer), EFI_UNSUPPORTED);
+}
+
+/**
+  Set TLS object to work in client or server mode.
+
+  This function prepares a TLS object to work in client or server mode.
+
+  @param[in]  Tls         Pointer to a TLS object.
+  @param[in]  IsServer    Work in server mode.
+
+  @retval  EFI_SUCCESS           The TLS/SSL work mode was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Unsupported TLS/SSL work mode.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetConnectionEnd (
+  IN     VOID                     *Tls,
+  IN     BOOLEAN                  IsServer
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetConnectionEnd, (Tls, IsServer), EFI_UNSUPPORTED);
+}
+
+/**
+  Set the ciphers list to be used by the TLS object.
+
+  This function sets the ciphers for use by a specified TLS object.
+
+  @param[in]  Tls          Pointer to a TLS object.
+  @param[in]  CipherId     Array of UINT16 cipher identifiers. Each UINT16
+                           cipher identifier comes from the TLS Cipher Suite
+                           Registry of the IANA, interpreting Byte1 and Byte2
+                           in network (big endian) byte order.
+  @param[in]  CipherNum    The number of cipher in the list.
+
+  @retval  EFI_SUCCESS           The ciphers list was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       No supported TLS cipher was found in CipherId.
+  @retval  EFI_OUT_OF_RESOURCES  Memory allocation failed.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetCipherList (
+  IN     VOID                     *Tls,
+  IN     UINT16                   *CipherId,
+  IN     UINTN                    CipherNum
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetCipherList, (Tls, CipherId, CipherNum), EFI_UNSUPPORTED);
+}
+
+/**
+  Set the compression method for TLS/SSL operations.
+
+  This function handles TLS/SSL integrated compression methods.
+
+  @param[in]  CompMethod    The compression method ID.
+
+  @retval  EFI_SUCCESS        The compression method for the communication was
+                              set successfully.
+  @retval  EFI_UNSUPPORTED    Unsupported compression method.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetCompressionMethod (
+  IN     UINT8                    CompMethod
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetCompressionMethod, (CompMethod), EFI_UNSUPPORTED);
+}
+
+/**
+  Set peer certificate verification mode for the TLS connection.
+
+  This function sets the verification mode flags for the TLS connection.
+
+  @param[in]  Tls           Pointer to the TLS object.
+  @param[in]  VerifyMode    A set of logically or'ed verification mode flags.
+
+**/
+VOID
+EFIAPI
+TlsSetVerify (
+  IN     VOID                     *Tls,
+  IN     UINT32                   VerifyMode
+  )
+{
+  CALL_VOID_CRYPTO_SERVICE (TlsSetVerify, (Tls, VerifyMode));
+}
+
+/**
+  Set the specified host name to be verified.
+
+  @param[in]  Tls           Pointer to the TLS object.
+  @param[in]  Flags         The setting flags during the validation.
+  @param[in]  HostName      The specified host name to be verified.
+
+  @retval  EFI_SUCCESS           The HostName setting was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_ABORTED           Invalid HostName setting.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetVerifyHost (
+  IN     VOID                     *Tls,
+  IN     UINT32                   Flags,
+  IN     CHAR8                    *HostName
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetVerifyHost, (Tls, Flags, HostName), EFI_UNSUPPORTED);
+}
+
+/**
+  Sets a TLS/SSL session ID to be used during TLS/SSL connect.
+
+  This function sets a session ID to be used when the TLS/SSL connection is
+  to be established.
+
+  @param[in]  Tls             Pointer to the TLS object.
+  @param[in]  SessionId       Session ID data used for session resumption.
+  @param[in]  SessionIdLen    Length of Session ID in bytes.
+
+  @retval  EFI_SUCCESS           Session ID was set successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       No available session for ID setting.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetSessionId (
+  IN     VOID                     *Tls,
+  IN     UINT8                    *SessionId,
+  IN     UINT16                   SessionIdLen
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetSessionId, (Tls, SessionId, SessionIdLen), EFI_UNSUPPORTED);
+}
+
+/**
+  Adds the CA to the cert store when requesting Server or Client authentication.
+
+  This function adds the CA certificate to the list of CAs when requesting
+  Server or Client authentication for the chosen TLS connection.
+
+  @param[in]  Tls         Pointer to the TLS object.
+  @param[in]  Data        Pointer to the data buffer of a DER-encoded binary
+                          X.509 certificate or PEM-encoded X.509 certificate.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_INVALID_PARAMETER   The parameter is invalid.
+  @retval  EFI_OUT_OF_RESOURCES    Required resources could not be allocated.
+  @retval  EFI_ABORTED             Invalid X.509 certificate.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetCaCertificate (
+  IN     VOID                     *Tls,
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetCaCertificate, (Tls, Data, DataSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Loads the local public certificate into the specified TLS object.
+
+  This function loads the X.509 certificate into the specified TLS object
+  for TLS negotiation.
+
+  @param[in]  Tls         Pointer to the TLS object.
+  @param[in]  Data        Pointer to the data buffer of a DER-encoded binary
+                          X.509 certificate or PEM-encoded X.509 certificate.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_INVALID_PARAMETER   The parameter is invalid.
+  @retval  EFI_OUT_OF_RESOURCES    Required resources could not be allocated.
+  @retval  EFI_ABORTED             Invalid X.509 certificate.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetHostPublicCert (
+  IN     VOID                     *Tls,
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetHostPublicCert, (Tls, Data, DataSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Adds the local private key to the specified TLS object.
+
+  This function adds the local private key (PEM-encoded RSA or PKCS#8 private
+  key) into the specified TLS object for TLS negotiation.
+
+  @param[in]  Tls         Pointer to the TLS object.
+  @param[in]  Data        Pointer to the data buffer of a PEM-encoded RSA
+                          or PKCS#8 private key.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS     The operation succeeded.
+  @retval  EFI_UNSUPPORTED This function is not supported.
+  @retval  EFI_ABORTED     Invalid private key data.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetHostPrivateKey (
+  IN     VOID                     *Tls,
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetHostPrivateKey, (Tls, Data, DataSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Adds the CA-supplied certificate revocation list for certificate validation.
+
+  This function adds the CA-supplied certificate revocation list data for
+  certificate validity checking.
+
+  @param[in]  Data        Pointer to the data buffer of a DER-encoded CRL data.
+  @param[in]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS     The operation succeeded.
+  @retval  EFI_UNSUPPORTED This function is not supported.
+  @retval  EFI_ABORTED     Invalid CRL data.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsSetCertRevocationList (
+  IN     VOID                     *Data,
+  IN     UINTN                    DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsSetCertRevocationList, (Data, DataSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the protocol version used by the specified TLS connection.
+
+  This function returns the protocol version used by the specified TLS
+  connection.
+
+  If Tls is NULL, then ASSERT().
+
+  @param[in]  Tls    Pointer to the TLS object.
+
+  @return  The protocol version of the specified TLS connection.
+
+**/
+UINT16
+EFIAPI
+TlsGetVersion (
+  IN     VOID                     *Tls
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetVersion, (Tls), 0);
+}
+
+/**
+  Gets the connection end of the specified TLS connection.
+
+  This function returns the connection end (as client or as server) used by
+  the specified TLS connection.
+
+  If Tls is NULL, then ASSERT().
+
+  @param[in]  Tls    Pointer to the TLS object.
+
+  @return  The connection end used by the specified TLS connection.
+
+**/
+UINT8
+EFIAPI
+TlsGetConnectionEnd (
+  IN     VOID                     *Tls
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetConnectionEnd, (Tls), 0);
+}
+
+/**
+  Gets the cipher suite used by the specified TLS connection.
+
+  This function returns current cipher suite used by the specified
+  TLS connection.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[in,out]  CipherId    The cipher suite used by the TLS object.
+
+  @retval  EFI_SUCCESS           The cipher suite was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Unsupported cipher suite.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetCurrentCipher (
+  IN     VOID                     *Tls,
+  IN OUT UINT16                   *CipherId
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetCurrentCipher, (Tls, CipherId), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the compression methods used by the specified TLS connection.
+
+  This function returns current integrated compression methods used by
+  the specified TLS connection.
+
+  @param[in]      Tls              Pointer to the TLS object.
+  @param[in,out]  CompressionId    The current compression method used by
+                                   the TLS object.
+
+  @retval  EFI_SUCCESS           The compression method was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_ABORTED           Invalid Compression method.
+  @retval  EFI_UNSUPPORTED       This function is not supported.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetCurrentCompressionId (
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *CompressionId
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetCurrentCompressionId, (Tls, CompressionId), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the verification mode currently set in the TLS connection.
+
+  This function returns the peer verification mode currently set in the
+  specified TLS connection.
+
+  If Tls is NULL, then ASSERT().
+
+  @param[in]  Tls    Pointer to the TLS object.
+
+  @return  The verification mode set in the specified TLS connection.
+
+**/
+UINT32
+EFIAPI
+TlsGetVerify (
+  IN     VOID                     *Tls
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetVerify, (Tls), 0);
+}
+
+/**
+  Gets the session ID used by the specified TLS connection.
+
+  This function returns the TLS/SSL session ID currently used by the
+  specified TLS connection.
+
+  @param[in]      Tls             Pointer to the TLS object.
+  @param[in,out]  SessionId       Buffer to contain the returned session ID.
+  @param[in,out]  SessionIdLen    The length of Session ID in bytes.
+
+  @retval  EFI_SUCCESS           The Session ID was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Invalid TLS/SSL session.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetSessionId (
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *SessionId,
+  IN OUT UINT16                   *SessionIdLen
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetSessionId, (Tls, SessionId, SessionIdLen), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the client random data used in the specified TLS connection.
+
+  This function returns the TLS/SSL client random data currently used in
+  the specified TLS connection.
+
+  @param[in]      Tls             Pointer to the TLS object.
+  @param[in,out]  ClientRandom    Buffer to contain the returned client
+                                  random data (32 bytes).
+
+**/
+VOID
+EFIAPI
+TlsGetClientRandom (
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *ClientRandom
+  )
+{
+  CALL_VOID_CRYPTO_SERVICE (TlsGetClientRandom, (Tls, ClientRandom));
+}
+
+/**
+  Gets the server random data used in the specified TLS connection.
+
+  This function returns the TLS/SSL server random data currently used in
+  the specified TLS connection.
+
+  @param[in]      Tls             Pointer to the TLS object.
+  @param[in,out]  ServerRandom    Buffer to contain the returned server
+                                  random data (32 bytes).
+
+**/
+VOID
+EFIAPI
+TlsGetServerRandom (
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *ServerRandom
+  )
+{
+  CALL_VOID_CRYPTO_SERVICE (TlsGetServerRandom, (Tls, ServerRandom));
+}
+
+/**
+  Gets the master key data used in the specified TLS connection.
+
+  This function returns the TLS/SSL master key material currently used in
+  the specified TLS connection.
+
+  @param[in]      Tls            Pointer to the TLS object.
+  @param[in,out]  KeyMaterial    Buffer to contain the returned key material.
+
+  @retval  EFI_SUCCESS           Key material was returned successfully.
+  @retval  EFI_INVALID_PARAMETER The parameter is invalid.
+  @retval  EFI_UNSUPPORTED       Invalid TLS/SSL session.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetKeyMaterial (
+  IN     VOID                     *Tls,
+  IN OUT UINT8                    *KeyMaterial
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetKeyMaterial, (Tls, KeyMaterial), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the CA Certificate from the cert store.
+
+  This function returns the CA certificate for the chosen
+  TLS connection.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[out]     Data        Pointer to the data buffer to receive the CA
+                              certificate data sent to the client.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_UNSUPPORTED         This function is not supported.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetCaCertificate (
+  IN     VOID                     *Tls,
+  OUT    VOID                     *Data,
+  IN OUT UINTN                    *DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetCaCertificate, (Tls, Data, DataSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the local public Certificate set in the specified TLS object.
+
+  This function returns the local public certificate which was currently set
+  in the specified TLS object.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[out]     Data        Pointer to the data buffer to receive the local
+                              public certificate.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_INVALID_PARAMETER   The parameter is invalid.
+  @retval  EFI_NOT_FOUND           The certificate is not found.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetHostPublicCert (
+  IN     VOID                     *Tls,
+  OUT    VOID                     *Data,
+  IN OUT UINTN                    *DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetHostPublicCert, (Tls, Data, DataSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the local private key set in the specified TLS object.
+
+  This function returns the local private key data which was currently set
+  in the specified TLS object.
+
+  @param[in]      Tls         Pointer to the TLS object.
+  @param[out]     Data        Pointer to the data buffer to receive the local
+                              private key data.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_UNSUPPORTED         This function is not supported.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetHostPrivateKey (
+  IN     VOID                     *Tls,
+  OUT    VOID                     *Data,
+  IN OUT UINTN                    *DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetHostPrivateKey, (Tls, Data, DataSize), EFI_UNSUPPORTED);
+}
+
+/**
+  Gets the CA-supplied certificate revocation list data set in the specified
+  TLS object.
+
+  This function returns the CA-supplied certificate revocation list data which
+  was currently set in the specified TLS object.
+
+  @param[out]     Data        Pointer to the data buffer to receive the CRL data.
+  @param[in,out]  DataSize    The size of data buffer in bytes.
+
+  @retval  EFI_SUCCESS             The operation succeeded.
+  @retval  EFI_UNSUPPORTED         This function is not supported.
+  @retval  EFI_BUFFER_TOO_SMALL    The Data is too small to hold the data.
+
+**/
+EFI_STATUS
+EFIAPI
+TlsGetCertRevocationList (
+  OUT    VOID                     *Data,
+  IN OUT UINTN                    *DataSize
+  )
+{
+  CALL_CRYPTO_SERVICE (TlsGetCertRevocationList, (Data, DataSize), EFI_UNSUPPORTED);
 }

@@ -18,6 +18,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/SharedCrypto.h>
 #include <Library/BaseCryptLib.h>
 #include "SharedCryptoVersion.h"
+#include <Library/TlsLib.h>
 
 CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   GetCryptoVersion,
@@ -28,12 +29,14 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Update HMAC_MD5_Update;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Final HMAC_MD5_Final;
+  // HMAC SHA 1
   NULL, //SHAREDCRYPTO_HMAC_SHA1_New HMAC_SHA1_New;
   NULL, //SHAREDCRYPTO_HMAC_SHA1_Free HMAC_SHA1_Free;
   NULL, //SHAREDCRYPTO_HMAC_SHA1_Init HMAC_SHA1_Init;
   NULL, //SHAREDCRYPTO_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
   NULL, //SHAREDCRYPTO_HMAC_SHA1_Update HMAC_SHA1_Update;
   NULL, //SHAREDCRYPTO_HMAC_SHA1_Final HMAC_SHA1_Final;
+  // HMAC SHA 256
   NULL, //SHAREDCRYPTO_HMAC_SHA256_New HMAC_SHA256_New;
   NULL, //SHAREDCRYPTO_HMAC_SHA256_Free HMAC_SHA256_Free;
   NULL, //SHAREDCRYPTO_HMAC_SHA256_Init HMAC_SHA256_Init;
@@ -120,7 +123,6 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_X509_VerifyCert X509_VerifyCert;
   NULL, //SHAREDCRYPTO_X509_ConstructCertificate X509_ConstructCertificate;
   NULL, //SHAREDCRYPTO_X509_ConstructCertificateStack X509_ConstructCertificateStack;
-  NULL,    // X509ConstructCertificateStackV This needs to come from EDK II
   NULL, //SHAREDCRYPTO_X509_Free X509_Free;
   NULL, //SHAREDCRYPTO_X509_StackFree X509_StackFree;
   NULL, //SHAREDCRYPTO_X509_GetTBSCert X509_GetTBSCert;
@@ -150,5 +152,49 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_SM3_Duplicate
   NULL, //SHAREDCRYPTO_SM3_Update
   NULL, //SHAREDCRYPTO_SM3_Final
-  NULL  //SHAREDCRYPTO_SM3_HashAll
+  NULL,  //SHAREDCRYPTO_SM3_HashAll
+  /// HKDF
+  NULL,
+  // X509 Continued
+  NULL,
+  // TLS
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  /// TLS Set
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  /// TLS Get
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
 };
