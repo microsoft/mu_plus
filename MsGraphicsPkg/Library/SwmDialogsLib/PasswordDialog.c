@@ -33,8 +33,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define SWM_PWD_DIALOG_RIGHT_PADDING_PERCENT       4          // Password dialog right side padding is 4% of the width of the dialog.
 #define SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX    MsUiScaleByTheme (60)  // Password dialog number of vertical pixels between controls.
 
-#define SWM_PWD_DIALOG_FIRST_BUTTON_X_PERCENT     61          // Password dialog first (leftmost) button x position is 61% the width of the screen.
 #define SWM_PWD_DIALOG_FIRST_BUTTON_Y_PERCENT     15          // Password dialog first (leftmost) button y position is 15% the height of the screen (from the bottom).
+#define SWM_PWD_DIALOG_LAST_BTN_X_PADDING_PERCENT 15       // The padding as a percentage of the button width that pads the right side of the last button
 #define SWM_PWD_DIALOG_BUTTONTEXT_PADDING_PX      MsUiScaleByTheme (100) // Password dialog button text left-right padding in pixels.
 #define SWM_PWD_DIALOG_BUTTON_ASPECT_RATIO        3           // Password dialog button aspect ration is 1:3 (length:width).
 #define SWM_PWD_DIALOG_BUTTON_SPACE_PERCENT       30          // Password dialog button spacing is 30% the width of the largest button.
@@ -155,6 +155,7 @@ CreateDialogControls (IN    MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
     SWM_RECT        StringRect;
     SWM_RECT        ControlBounds;
     UINT32          ControlOrigX, ControlOrigY;
+    UINT32          TotalControlWidth;
     UINT32          ControlWidth, ControlHeight, MaxGlyphDescent;
     Canvas          *DialogCanvas               = NULL;
     Label           *CaptionLabel               = NULL;
@@ -447,15 +448,19 @@ CreateDialogControls (IN    MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
 
     // Calculate the position and size of the first button.
     //
-    ControlWidth    = (StringRect.Right - StringRect.Left + 1);
-    ControlHeight   = (StringRect.Bottom - StringRect.Top + 1);
-    ControlOrigX    = (DialogOrigX + ((DialogWidth * SWM_PWD_DIALOG_FIRST_BUTTON_X_PERCENT) / 100));
+    ControlWidth    = (StringRect.Right - StringRect.Left + 1) + (SWM_PWD_DIALOG_BUTTONTEXT_PADDING_PX * 2);
+    ControlHeight   =  (ControlWidth / SWM_PWD_DIALOG_BUTTON_ASPECT_RATIO);
+    // Calculate the total width of the buttons plus the padding inbetween them
+    TotalControlWidth = ControlWidth * (200 + SWM_PWD_DIALOG_BUTTON_SPACE_PERCENT) / 100; // the control width is 2 buttons + 30% spacing
+    ControlOrigX    = DialogOrigX + DialogWidth - TotalControlWidth - ((ControlWidth * SWM_PWD_DIALOG_LAST_BTN_X_PADDING_PERCENT) / 100); // The right edge of the dialog - the total width of the controls - some padding
     ControlOrigY    = (DialogOrigY + DialogHeight) - ((DialogHeight * SWM_PWD_DIALOG_FIRST_BUTTON_Y_PERCENT) / 100);
 
-    // Size is the maximum button text length plus padding both before and after.
-    //
-    ControlWidth    += (SWM_PWD_DIALOG_BUTTONTEXT_PADDING_PX * 2);
-    ControlHeight   =  (ControlWidth / SWM_PWD_DIALOG_BUTTON_ASPECT_RATIO);
+    // check that the controls will fit in the dialog
+    if ( TotalControlWidth > DialogWidth )
+    {
+        DEBUG(( DEBUG_ERROR, "[%a] - ERROR: The controls are too large for the password dialog box, adjust your fonts.\n", __FUNCTION__ ));
+        ASSERT(FALSE);
+    }
 
     // Draw the OK Button.
     //
@@ -1348,4 +1353,3 @@ Exit2:
 
     return Status;
 }
-

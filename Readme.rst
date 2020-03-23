@@ -6,34 +6,36 @@ Project Mu Common Plus Repository
 
 |build_status_windows| Current build status for release/201911
 
-
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
 
-Branch Status - dev/201911
+Branch Status - release/201911
 ==============================
 
 Status:
-  In Development
+  Stabilized
 
-Anticipated Stabilization:
-  January 2020
+Entered Development:
+  December 2019
+
+Stabilized:
+  2020/03/18
 
 
 Branch Changes - release/201911
 ===============================
 
-Breaking Changes-dev
---------------------
-
-- None
-
-Main Changes-dev
+Breaking Changes
 ----------------
 
 - None
 
-Bug Fixes-dev
--------------
+Main Changes
+------------
+
+- None
+
+Bug Fixes
+---------
 
 - None
 

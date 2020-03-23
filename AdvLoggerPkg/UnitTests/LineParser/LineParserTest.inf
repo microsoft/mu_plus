@@ -1,0 +1,49 @@
+## @file
+# LineParserTestApp.inf
+#
+# Test application to verify the LineParser operations.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = LineParserTestApp
+  FILE_GUID                      = a329c87c-4dd2-4a56-87a9-dd9c9d35395d
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = LineParserTestAppEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#
+
+[Sources]
+  LineParserTest.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsUnitTestPkg/MsUnitTestPkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[Protocols]
+
+
+[LibraryClasses]
+  AdvancedLoggerAccessLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PrintLib
+  TimerLib
+  UefiApplicationEntryPoint
+  UefiLib
+  UnitTestAssertLib
+  UnitTestLib
+  UnitTestLogLib
+
+[Guids]

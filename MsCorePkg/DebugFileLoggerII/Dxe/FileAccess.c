@@ -12,7 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "DebugFileLogger.h"
 
 
-STATIC DEBUG_LOG_FILE_INFO  mLogFiles[] = { { L"\\Logs\\UEFI_LogIndex.txt", INDEX_FILE_SIZE },
+STATIC DEBUG_LOG_FILE_INFO  mLogFiles[] = { { L"\\Logs\\UEFI_Index.txt", INDEX_FILE_SIZE },
                                             { L"\\Logs\\UEFI_Log1.txt", DEBUG_LOG_FILE_SIZE },
                                             { L"\\Logs\\UEFI_Log2.txt", DEBUG_LOG_FILE_SIZE },
                                             { L"\\Logs\\UEFI_Log3.txt", DEBUG_LOG_FILE_SIZE },

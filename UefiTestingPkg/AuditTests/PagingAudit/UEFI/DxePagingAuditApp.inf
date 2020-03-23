@@ -1,0 +1,52 @@
+## @file DxePagingAudit.inf
+# This Shell App writes page table and memory map information to SFS.
+#
+##
+# Copyright (c) Microsoft Corporation.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = DxePagingAuditApp
+  FILE_GUID           = 5CA3255F-0C91-4C8D-A4CF-36E8BC49D6C4
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = PagingAuditDxeAppEntryPoint
+
+
+[Sources]
+  Dxe/App/DxePagingAuditApp.c
+  PagingAuditCommon.c
+  PagingAuditCommon.h
+
+
+[Sources.X64]
+  X64/PagingAuditProcessor.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  ShellPkg/ShellPkg.dec
+
+
+[LibraryClasses]
+  PrintLib
+  DebugLib
+  UefiBootServicesTableLib
+  UefiLib
+  PeCoffGetEntryPointLib
+  UefiApplicationEntryPoint
+  ShellLib
+
+[Guids]
+  gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
+  gEfiMemoryAttributesTableGuid
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gHeapGuardDebugProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid

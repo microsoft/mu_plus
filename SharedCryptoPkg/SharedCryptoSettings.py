@@ -317,7 +317,7 @@ class SettingsManager(UpdateSettingsManager, CiSetupSettingsManager, BinaryBuild
 
     def GetActiveScopes(self):
         ''' get scope '''
-        scopes = ("corebuild", "SharedCrypto_build", )
+        scopes = ("corebuild", "SharedCrypto_build", "edk2-build" )
         if (GetHostInfo().os == "Linux"
             and "AARCH64" in self.GetArchSupported()
             and self.ToolChainTagCacheValue is not None
@@ -374,7 +374,7 @@ class SettingsManager(UpdateSettingsManager, CiSetupSettingsManager, BinaryBuild
             return 1
 
         # copy the md file
-        _CopyFile(scriptDir, output_dir, "feature_sharedcrypto.md")
+        _CopyFile(scriptDir, output_dir, "Readme.md")
         _CopyFile(scriptDir, output_dir, "release_notes.md")
 
         list_to_get = ["Shared*",]

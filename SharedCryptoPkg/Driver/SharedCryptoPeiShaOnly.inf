@@ -40,6 +40,8 @@
   BaseCryptLib
   DebugLib
   PeiServicesLib
+  DebugLib
+  TlsLib
 
 [Ppis]
   gSharedCryptoPpiGuid ## produces

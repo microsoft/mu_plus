@@ -236,7 +236,7 @@ VOID SortHandles(EFI_HANDLE *HandleBuffer, UINTN HandleCount) {
     } while ((Swap == TRUE) && (SwapCount < 50));
     DEBUG((DEBUG_INFO,"SortHandles - After sorting\n"));
     DisplayDevicePaths(HandleBuffer, HandleCount);
-    DEBUG((DEBUG_INFO,"Exit %a, swapcount = %d\n",__FUNCTION__,SwapCount));
+    DEBUG((DEBUG_INFO,"Exit %a, SwapCount = %d\n",__FUNCTION__,SwapCount));
     return;
 }
 
@@ -326,10 +326,10 @@ EFI_STATUS SelectAndBootDevice(EFI_GUID *ByGuid, FILTER_ROUTINE ByFilter) {
   Cleans the LoadOption Variables Boot####/Driver#### based on the LoadOptionType.
   Removes any Boot####/Driver#### that is not present in the BootOrder/DriverOrder
 
-  @param  OptionType    Enum either LoadOptionTypeBoot/LoadOptionTypeDriver
+  @param  OptionType    ENUM either LoadOptionTypeBoot/LoadOptionTypeDriver
 
-  @return Status        EFI_SUCCESS if atleast one variable was deleted using setvariable.
-                        EFI_NOT_FOUND if the variable list has been traversed entirely and no optionvarioable was deleted.
+  @return Status        EFI_SUCCESS if at least one variable was deleted using SetVariable.
+                        EFI_NOT_FOUND if the variable list has been traversed entirely and no option variable was deleted.
                         Any other EF_ERROR will mean an error executing the function itself.
 **/
 EFI_STATUS
@@ -455,7 +455,7 @@ CleanLoadOptions (
 
 /**
 Pauses for a defined number of seconds to allow USB mass storage devices enumerate
-through hubs that may take a long time (100s of ms) to power up and enumerate.
+through hubs that may take a long time (hundreds of ms) to power up and enumerate.
 Our test system is forced to use hubs on BB of some units due to lack of connectivity
 options.
 

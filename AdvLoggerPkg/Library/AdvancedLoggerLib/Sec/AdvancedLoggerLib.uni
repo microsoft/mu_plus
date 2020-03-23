@@ -1,0 +1,16 @@
+// /** @file
+// SEC instance of Advanced Logger Library for Advanced Logging.
+//
+// Implements the Memory Logger plus Serial Port logging functinoality.
+//
+// Copyright (c) Microsoft Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "SEC Instance of Advanced Logger Library"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "Accepts messages from a base debug library and routes it to the memory logger and serial port"
+

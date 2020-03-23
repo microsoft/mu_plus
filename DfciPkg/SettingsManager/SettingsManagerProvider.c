@@ -283,6 +283,11 @@ SetProviderValueFromAscii(
       DEBUG((DEBUG_INFO, "Setting to Usb Port HW Disabled\n"));
       UsbPortState = DfciUsbPortHwDisabled;
     }
+    else if (AsciiStrCmp(Value, "UsbPortDataDisabled") == 0)
+    {
+      DEBUG((DEBUG_INFO, "Setting to Usb Data Disabled\n"));
+      UsbPortState = DfciUsbPortDataDisabled;
+    }
     else
     {
       DEBUG((DEBUG_INFO, "Invalid or unsupported Usb Port Setting. %a\n", Value));
@@ -549,6 +554,10 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       else if (b == DfciUsbPortEnabled)
       {
         AsciiStrCpyS(Value, USB_PORT_STATE_STRING_SIZE, "UsbPortEnabled");
+      }
+      else if (b == DfciUsbPortDataDisabled)
+      {
+        AsciiStrCpyS(Value, USB_PORT_STATE_STRING_SIZE, "UsbPortDataDisabled");
       }
       else
       {

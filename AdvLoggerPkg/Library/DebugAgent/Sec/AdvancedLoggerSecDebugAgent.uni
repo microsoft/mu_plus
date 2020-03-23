@@ -1,0 +1,14 @@
+// /** @file
+// Advanded Logger Debug Agent Library for the SEC phase.
+//
+// This library intercepts the InitializeDebugAgent call to allow the AdvancedLogger
+// to set up early logging on systems the use UefiCpuPkg\SecCore.
+//
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+#string STR_MODULE_ABSTRACT             #language en-US "Advanded Logger Debug Agent libarary for the SEC phase."
+
+#string STR_MODULE_DESCRIPTION          #language en-US "This is the earliest public hook in systems that use UefiCpuPkg\SecCore."

@@ -12,6 +12,8 @@
   VERSION_STRING                 = 1.0
   MODULE_TYPE                    = DXE_DRIVER
   LIBRARY_CLASS                  = BaseCryptLib | DXE_DRIVER UEFI_DRIVER UEFI_APPLICATION
+  LIBRARY_CLASS                  = TlsLib       | DXE_DRIVER UEFI_DRIVER UEFI_APPLICATION
+  CONSTRUCTOR                    = DxeCryptLibConstructor
 #
 # The following information is for reference only and not required by the build tools.
 #

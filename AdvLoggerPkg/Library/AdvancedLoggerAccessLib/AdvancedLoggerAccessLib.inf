@@ -1,0 +1,46 @@
+## @file
+#  Advanced Logger Access library.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = AdvancedLoggerAccessLib
+  MODULE_UNI_FILE                = AdvancedLoggerAccessLib.uni
+  FILE_GUID                      = c56a24ee-ec75-46a3-b07e-e98764435be4
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvancedLoggerAccessLib | DXE_DRIVER UEFI_DRIVER UEFI_APPLICATION
+  CONSTRUCTOR                    = AdvancedLoggerAccessLibConstructor
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvancedLoggerAccessLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  PrintLib
+  TimerLib
+  UefiBootServicesTableLib
+
+[Protocols]
+  gAdvancedLoggerProtocolGuid                               ## CONSUMES
+
+[Pcd]
+
+[Depex]
+  gAdvancedLoggerProtocolGuid

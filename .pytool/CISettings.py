@@ -41,6 +41,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         These should be edk2 workspace relative paths '''
 
         return (
+                "AdvLoggerPkg",
                 "DfciPkg",
                 "MsCorePkg",
                 "MsGraphicsPkg",

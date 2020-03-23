@@ -1,0 +1,52 @@
+## @file SmmPagingProtectionsTestApp.inf
+# This user-facing application requests that the underlying SMM memory
+# protection test infrastructure exercise a particular test.
+#
+##
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = SmmPagingAuditApp
+  FILE_GUID           = D99AE95E-7BAF-49CF-A57D-9A5BFAC68E0A
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = SmmPagingAuditAppEntryPoint
+
+
+[Sources]
+  Smm/App/SmmPagingAuditApp.c
+  Smm/SmmPagingAuditCommon.h
+  PagingAuditCommon.c
+  PagingAuditCommon.h
+
+[Sources.X64]
+  X64/PagingAuditProcessor.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  ShellPkg/ShellPkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+
+
+[LibraryClasses]
+  ShellLib
+  UefiApplicationEntryPoint
+  PrintLib
+  DebugLib
+  UefiBootServicesTableLib
+  UefiLib
+  CpuExceptionHandlerLib
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiSmmCommunicationProtocolGuid
+  gHeapGuardDebugProtocolGuid
+
+[Guids]
+  gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID
+  gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
+  gEfiMemoryAttributesTableGuid

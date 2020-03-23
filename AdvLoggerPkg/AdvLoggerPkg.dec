@@ -1,0 +1,95 @@
+## @file  AdvLoggerPkg.dec
+# This Package provides all definitions, library classes and libraries instances for
+# the Advanced Logger.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = AdvLoggerPkg
+  PACKAGE_UNI_FILE               = AdvLoggerPkg.uni
+  PACKAGE_GUID                   = 010c041f-ee07-4a7b-afd5-c2228eb2806e
+  PACKAGE_VERSION                = 0.10
+
+
+[Includes]
+  Include
+
+[LibraryClasses]
+
+  ## @library class Provides the interface for the top level logger
+  #
+  AdvancedLoggerLib|Include/Library/AdvancedLoggerLib.h
+
+  ## @library class Provides the interface to access the memory logger
+  #
+  AdvancedLoggerAccessLib|Include/Library/AdvancedLoggerAccessLib.h
+
+
+[Guids]
+  ## Token Space GUID
+  #  { 11aaf2c3-c657-4137-bda8-d1e58822b836}
+  gAdvLoggerPkgTokenSpaceGuid = { 0x11aaf2c3, 0xc657, 0x4137, {0xbd, 0xa8, 0xd1, 0xe5, 0x88, 0x22, 0xb8, 0x36 }}
+
+  ## Advanced Logger Hob Guid
+  #
+  gAdvancedLoggerHobGuid =  { 0x4d60cfb5, 0xf481, 0x4a98, {0x9c, 0x81, 0xbf, 0xf8, 0x64, 0x60, 0xc4, 0x3e }}
+
+  ## Advanced Logger Write Log Files Request Event Guid
+  #
+  gAdvancedLoggerWriteLogFiles = { 0xc60e894d, 0x29a4, 0x4e0b, {0xb7, 0x44, 0x77, 0x84, 0x22, 0x6e, 0x81, 0x80 }}
+
+
+[Ppis]
+  ## Advanced Logger Ppi - Communication from PEIM to PEI_CORE library implementation
+  #
+  gAdvancedLoggerPpiGuid =  { 0x47f1b6df, 0xcf35, 0x46a7, {0xb2, 0x84, 0x7d, 0x4d, 0xba, 0x5f, 0xf4, 0x34 }}
+
+
+[Protocols]
+  ## Advanced Logger Protocol - Communication from DXE Libary to DXE_CORE library implementation
+  #
+  gAdvancedLoggerProtocolGuid = { 0x434f695c, 0xef26, 0x4a12, {0x9e, 0xba, 0xdd, 0xef, 0x00, 0x97, 0x49, 0x7c }}
+
+
+[PcdsFeatureFlag]
+  ## PcdAdvancedLoggerForceEnable - Forces the creation of the Logs subdirectory on non USB devices
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerForceEnable|TRUE|BOOLEAN|0x00010184
+
+  ## PcdAdvancedLoggerPeiInRAM - Tells the PEI Advanced Logger that this PEI can allocate memory
+  #                              and there is no need for a temporary memory buffer
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPeiInRAM|FALSE|BOOLEAN|0x00010185
+
+  ## PcdAdvancedLoggerLocator - Tells the Advanced Logger to publish a variable with the logger info block address
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator|FALSE|BOOLEAN|0x00010186
+
+
+[PcdsFixedAtBuild]
+  ## Advanced Logger serial port filter ErrorLevel
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
+
+  ## Advanced Logger Base - NULL = UEFI starts with PEI or DXE, and there is no SEC, or SEC
+  #                                provides no memory log buffer
+  #                         Address = UEFI starts with SEC, and SEC provided LogInfoPtr is at this address
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase|0x00000000|UINT64|0x00010181
+
+  ## PcdAdvancedLoggerPreMemPages = Size of pre-memory memory buffer (SEC or PEI Pre-memory)
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages|8|UINT32|0x00010182
+
+  ## PcdAdvancedLoggerPages - Number of pages of in memory UEFI log.  The default allows for 4MB
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages|1024|UINT32|0x00010183
+
+
+[PcdsDynamic]
+
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  AdvLoggerPkgExtra.uni

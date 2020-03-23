@@ -1,8 +1,5 @@
 /** @file
- *
- *
- *
-  This module is consumed by both DXE and SMM as well as PEI
+   This module is consumed by both DXE and SMM as well as PEI
 
   This links the functions in the protocol to the functions in BaseCryptLib.
   This is the Mu flavor, which means we only support the functions that are used
@@ -17,26 +14,26 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include <Protocol/SharedCrypto.h>
 #include <Library/BaseCryptLib.h>
+#include <Library/TlsLib.h>
 #include "SharedCryptoVersion.h"
 
 CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   GetCryptoVersion,
   /// HMAC
-  NULL, //SHAREDCRYPTO_HMAC_MD5_GetContextSize HMAC_MD5_GetContextSize;
   NULL, //SHAREDCRYPTO_HMAC_MD5_New HMAC_MD5_New;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Free HMAC_MD5_Free;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Init HMAC_MD5_Init;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Duplicate HMAC_MD5_Duplicate;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Update HMAC_MD5_Update;
   NULL, //SHAREDCRYPTO_HMAC_MD5_Final HMAC_MD5_Final;
-  HmacSha1GetContextSize, //SHAREDCRYPTO_HMAC_SHA1_GetContextSize HMAC_SHA1_GetContextSize;
+  //HMAC SHA1
   HmacSha1New, //SHAREDCRYPTO_HMAC_SHA1_New HMAC_SHA1_New;
   HmacSha1Free, //SHAREDCRYPTO_HMAC_SHA1_Free HMAC_SHA1_Free;
   HmacSha1Init, //SHAREDCRYPTO_HMAC_SHA1_Init HMAC_SHA1_Init;
   HmacSha1Duplicate, //SHAREDCRYPTO_HMAC_SHA1_Duplicate HMAC_SHA1_Duplicate;
   HmacSha1Update, //SHAREDCRYPTO_HMAC_SHA1_Update HMAC_SHA1_Update;
   HmacSha1Final, //SHAREDCRYPTO_HMAC_SHA1_Final HMAC_SHA1_Final;
-  HmacSha256GetContextSize, //SHAREDCRYPTO_HMAC_SHA256_GetContextSize HMAC_SHA256_GetContextSize;
+  //HMAC SHA256
   HmacSha256New, //SHAREDCRYPTO_HMAC_SHA256_New HMAC_SHA256_New;
   HmacSha256Free, //SHAREDCRYPTO_HMAC_SHA256_Free HMAC_SHA256_Free;
   HmacSha256Init, //SHAREDCRYPTO_HMAC_SHA256_Init HMAC_SHA256_Init;
@@ -65,7 +62,7 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   Pkcs7GetSigners, //SHAREDCRYPTO_PKCS7_GetSigners PKCS7_GetSigners;
   Pkcs7FreeSigners, //SHAREDCRYPTO_PKCS7_FreeSigners PKCS7_FreeSigners;
   NULL, //SHAREDCRYPTO_PKCS7_Sign PKCS7_Sign;
-  NULL, //SHAREDCRYPTO_PKCS7_GetAttachedContent PKCS7_GetAttachedContent;
+  Pkcs7GetAttachedContent, //SHAREDCRYPTO_PKCS7_GetAttachedContent PKCS7_GetAttachedContent;
   NULL, //SHAREDCRYPTO_PKCS7_GetCertificatesList PKCS7_GetCertificatesList;
   AuthenticodeVerify, //SHAREDCRYPTO_AuthenticodeVerify AuthenticodeVerify;
   NULL, //SHAREDCRYPTO_ImageTimestampVerify ImageTimestampVerify;
@@ -145,5 +142,56 @@ CONST SHARED_CRYPTO_FUNCTIONS mSharedCryptoFunctions = {
   NULL, //SHAREDCRYPTO_ARC4_Init ARC4_Init;
   NULL, //SHAREDCRYPTO_ARC4_Encrypt ARC4_Encrypt;
   NULL, //SHAREDCRYPTO_ARC4_Decrypt ARC4_Decrypt;
-  NULL //SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  NULL, //SHAREDCRYPTO_ARC4_Reset ARC4_Reset;
+  /// SM3
+  NULL, //SHAREDCRYPTO_SM3_GetContextSize
+  NULL, //SHAREDCRYPTO_SM3_Init
+  NULL, //SHAREDCRYPTO_SM3_Duplicate
+  NULL, //SHAREDCRYPTO_SM3_Update
+  NULL, //SHAREDCRYPTO_SM3_Final
+  NULL, //SHAREDCRYPTO_SM3_HashAll
+  /// HKDF
+  NULL,
+  // X509 Continued
+  NULL,
+  // TLS
+  TlsInitialize,
+  TlsCtxFree,
+  TlsCtxNew,
+  TlsFree,
+  TlsNew,
+  TlsInHandshake,
+  TlsDoHandshake,
+  TlsHandleAlert,
+  TlsCloseNotify,
+  TlsCtrlTrafficOut,
+  TlsCtrlTrafficIn,
+  TlsRead,
+  TlsWrite,
+  /// TLS Set
+  TlsSetVersion,
+  TlsSetConnectionEnd,
+  TlsSetCipherList,
+  TlsSetCompressionMethod,
+  TlsSetVerify,
+  TlsSetVerifyHost,
+  TlsSetSessionId,
+  TlsSetCaCertificate,
+  TlsSetHostPublicCert,
+  TlsSetHostPrivateKey,
+  TlsSetCertRevocationList,
+  /// TLS Get
+  TlsGetVersion,
+  TlsGetConnectionEnd,
+  TlsGetCurrentCipher,
+  TlsGetCurrentCompressionId,
+  TlsGetVerify,
+  TlsGetSessionId,
+  TlsGetClientRandom,
+  TlsGetServerRandom,
+  TlsGetKeyMaterial,
+  TlsGetCaCertificate,
+  TlsGetHostPublicCert,
+  TlsGetHostPrivateKey,
+  TlsGetCertRevocationList
 };

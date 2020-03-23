@@ -13,7 +13,6 @@
 // Global variables.
 //
 
-LOG_GET_MEMORY_MAP          mCoreGetMemoryMap = NULL;
 VOID                       *mFileSystemRegistration = NULL;
 CHAR8                      *mLoggingBuffer = NULL;
 UINT64                      mLoggingBuffer_BytesWritten = 0;
@@ -95,6 +94,7 @@ LoggingBufferInit (
         //
         // We found the PEI log, capture it in the DXE logging buffer.
         //
+        PeiBufferHeader->BytesWritten &= ~EFI_DEBUG_FILE_LOGGER_OVERFLOW;  // Turn off overflow indicator
         DEBUG((DEBUG_INFO, "%a: PEI log contains %d bytes.\n", __FUNCTION__, PeiBufferHeader->BytesWritten));
         PeiBuffer = PeiBufferHeader + 1;
 
@@ -206,6 +206,26 @@ OnResetNotification (
     }
 
     return;
+}
+
+/**
+    Write the log files at ExitBootServices.
+
+    @param    Event           Not Used.
+    @param    Context         Not Used.
+
+   @retval   none
+ **/
+VOID
+EFIAPI
+OnPreExitBootServicesNotification (
+    IN EFI_EVENT        Event,
+    IN VOID             *Context
+  )
+{
+
+    WriteLogFiles ();
+    gBS->CloseEvent (Event);
 }
 
 /**
@@ -492,55 +512,6 @@ OnFileSystemNotification (
 }
 
 /**
-    LogGetMemoryMap
-
-    LogGetMemoryMap is the function that is hooked into the EFI System Table, to replace
-    the system GetMemoryMap function.
-
-    GetMemoryMap is as close to ExitBootServices that we can get without totally
-    corrupting the memory map.
-
-    1. Ignore all GetMemoryMaps > TPL_APPLICATION
-    2. Writes log files to any registered log devices.
-    3. Call the original GetMemoryMap function
-
-    @param        MemoryMapSize
-    @param        MemoryMap
-    @param        MapKey
-    @param        DescriptorSize
-    @param        DescriptorVersion
-
-
-    @retval       EFI_STATUS from the original GetMemoryMap function
-
-  **/
-EFI_STATUS
-EFIAPI
-LogGetMemoryMap (
-    IN OUT UINTN                  *MemoryMapSize,
-    IN OUT EFI_MEMORY_DESCRIPTOR  *MemoryMap,
-    OUT UINTN                     *MapKey,
-    OUT UINTN                     *DescriptorSize,
-    OUT UINT32                    *DescriptorVersion
-    )
-{
-    EFI_TPL         OldTpl;
-
-    OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
-    gBS->RestoreTPL (OldTpl);
-
-    if (TPL_APPLICATION == OldTpl) {
-        WriteLogFiles ();
-    }
-
-    return (*mCoreGetMemoryMap) (MemoryMapSize,
-                                 MemoryMap,
-                                 MapKey,
-                                 DescriptorSize,
-                                 DescriptorVersion);
-}
-
-/**
     ProcessFileSystemRegistration
 
     This function registers for FileSystemProtocols, and then
@@ -743,38 +714,40 @@ ProcessResetEventRegistration (
 }
 
 /**
-    ProcessGetMemoryMapRegistration
+    ProcessPreExitBootServicesRegistration
 
-    This function hooks the UEFI gBS->GetMemoryMap function
-    in order to dump the logs to the log files before the
-    memory map is computed.
-
-    Waiting for an ExitBootServices event is too late as
-    memory allocation is turned off before the ExitBootServices
-    event handlers are dispatched.
+    This function creates a group event handler for PreExitBootServices
 
 
     @param    VOID
 
-    @returns  nothing
+    @returns  EFI_SUCCESS   - Successfully registered for PreExitBootServices
+    @returns  other         - failure code from CreateEventEx
 
   **/
-VOID
-ProcessGetMemoryMapRegistration (
+EFI_STATUS
+ProcessPreExitBootServicesRegistration (
     VOID
     )
 {
-    UINT32          Crc;
-    EFI_TPL         OldTpl;
+    EFI_EVENT       InitEvent;
+    EFI_STATUS      Status;
 
-    OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
-    mCoreGetMemoryMap = gBS->GetMemoryMap;
-    gBS->GetMemoryMap = LogGetMemoryMap;
-    gBS->Hdr.CRC32 = 0;
-    Crc = 0;
-    gBS->CalculateCrc32 ((UINT8 *) &gBS->Hdr, gBS->Hdr.HeaderSize, &Crc);
-    gBS->Hdr.CRC32 = Crc;
-    gBS->RestoreTPL (OldTpl);
+    //
+    // Register notify function for writing the log files.
+    //
+    Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
+                                  TPL_CALLBACK,
+                                  OnPreExitBootServicesNotification,
+                                  gImageHandle,
+                                 &gMuEventPreExitBootServicesGuid,
+                                 &InitEvent );
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+    }
+
+    return Status;
 }
 
 /**
@@ -831,9 +804,10 @@ DebugFileLoggerDxeEntry (
         goto Exit;
     }
 
-    // Last step - hook GetMemoryMap.  This is as close to ExitBootServices
-    // that is possible.
-    ProcessGetMemoryMapRegistration ();
+    //
+    // Step 5. Register for PreExitBootServices Notifications.
+    //
+    Status = ProcessPreExitBootServicesRegistration ();
 
 Exit:
     DEBUG((DEBUG_INFO, "%a: Leaving, code = %r\n", __FUNCTION__, Status));

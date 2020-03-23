@@ -27,7 +27,7 @@ jobs:
         Build.Pkgs: 'SharedCryptoPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
       TARGET_OTHER1:
-        Build.Pkgs: 'MsGraphicsPkg,UefiTestingPkg,PcBdsPkg'
+        Build.Pkgs: 'MsGraphicsPkg,UefiTestingPkg,PcBdsPkg,AdvLoggerPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
       TARGET_OTHER2:
         Build.Pkgs: 'MsCorePkg,MsWheaPkg'

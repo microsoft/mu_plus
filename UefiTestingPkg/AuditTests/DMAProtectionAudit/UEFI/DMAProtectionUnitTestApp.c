@@ -36,6 +36,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define DMA_UNIT_TEST_VARIABLE_PRE_EBS_NAME   L"DMAUnitTestVariablePreEBS"
 #define DMA_UNIT_TEST_VARIABLE_POST_EBS_NAME  L"DMAUnitTestVariablePostEBS"
 
+#define GET_MEMORY_MAP_RETRIES  4
+
 extern EFI_GUID                          gDMAUnitTestVariableGuid;
 EFI_HANDLE                               gImageHandle;
 
@@ -96,6 +98,7 @@ CheckBMETeardown (
   UINTN                       PreVarSize = 0;
   UINTN                       PostVarSize = 0;
   BME_TEST_CONTEXT            BMEContext = (*(BME_TEST_CONTEXT *)Context);
+  UINTN                       Retry;
 
   if(BMEContext.TestProgress == 0)
   {
@@ -187,40 +190,51 @@ CheckBMETeardown (
     //
     // Step 6: Get the EFI memory map.
     //
-    EfiMemoryMapSize  = 0;
-    EfiMemoryMap      = NULL;
-    Status = gBS->GetMemoryMap (
-                    &EfiMemoryMapSize,
-                    EfiMemoryMap,
-                    &EfiMapKey,
-                    &EfiDescriptorSize,
-                    &EfiDescriptorVersion
-                    );
-    if (Status != EFI_BUFFER_TOO_SMALL || !EfiMemoryMapSize) {
-        DEBUG((DEBUG_ERROR, "GetMemoryMap Error\n"));
-        return UNIT_TEST_ERROR_TEST_FAILED;
-    }
+    Retry = 0;
+    EfiMemoryMap = NULL;
 
-    EfiMemoryMap = AllocateZeroPool(EfiMemoryMapSize);
-    UT_ASSERT_NOT_NULL(EfiMemoryMap);
+    do {
+        if (EfiMemoryMap != NULL) {
+            FreePool (EfiMemoryMap);
+        }
 
-    Status = gBS->GetMemoryMap (
-                    &EfiMemoryMapSize,
-                    EfiMemoryMap,
-                    &EfiMapKey,
-                    &EfiDescriptorSize,
-                    &EfiDescriptorVersion
-                    );
-    UT_ASSERT_NOT_EFI_ERROR(Status);
+        EfiMemoryMapSize  = 0;
+        EfiMemoryMap      = NULL;
+        Status = gBS->GetMemoryMap (
+                        &EfiMemoryMapSize,
+                        EfiMemoryMap,
+                        &EfiMapKey,
+                        &EfiDescriptorSize,
+                        &EfiDescriptorVersion
+                        );
+        if (Status != EFI_BUFFER_TOO_SMALL || !EfiMemoryMapSize) {
+            DEBUG((DEBUG_ERROR, "GetMemoryMap Error\n"));
+            return UNIT_TEST_ERROR_TEST_FAILED;
+        }
 
-    //
-    // Step 7: Create exit boot services event
-    //
-    DEBUG((DEBUG_INFO, "Calling ExitBootServices\n"));
-    Status = gBS->ExitBootServices (
-                    gImageHandle,
-                    EfiMapKey
-                  );
+        EfiMemoryMapSize += EfiMemoryMapSize + 64 * EfiDescriptorSize;
+        EfiMemoryMap = AllocateZeroPool(EfiMemoryMapSize);
+        UT_ASSERT_NOT_NULL(EfiMemoryMap);
+
+        Status = gBS->GetMemoryMap (
+                        &EfiMemoryMapSize,
+                        EfiMemoryMap,
+                        &EfiMapKey,
+                        &EfiDescriptorSize,
+                        &EfiDescriptorVersion
+                        );
+        UT_ASSERT_NOT_EFI_ERROR(Status);
+
+        //
+        // Step 7: Create exit boot services event
+        //
+        DEBUG((DEBUG_INFO, "Calling ExitBootServices - Retry = %d\n", Retry));
+        Status = gBS->ExitBootServices (
+                        gImageHandle,
+                        EfiMapKey
+                      );
+
+    } while (EFI_ERROR(Status) && Retry++ < GET_MEMORY_MAP_RETRIES);
 
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "ERROR - Exit Boot Services returned %r\n", Status));

@@ -18,27 +18,24 @@ SHARED_CRYPTO_FUNCTIONS *GetProtocol()
   EFI_STATUS Status;
   UINTN Version;
   SHARED_CRYPTO_PPI *pCryptoProt = NULL;
-  if (pCryptoProt == NULL)
+  
+  Status = PeiServicesLocatePpi(
+      &gSharedCryptoPpiGuid,
+      0,
+      NULL,
+      (VOID **)&pCryptoProt);
+  if (EFI_ERROR(Status))
   {
-    Status = PeiServicesLocatePpi(
-        &gSharedCryptoPpiGuid,
-        0,
-        NULL,
-        (VOID **)&pCryptoProt);
-    if (EFI_ERROR(Status))
+    ProtocolNotFound(Status);
+    pCryptoProt = NULL;
+  }
+  else {
+    Version = pCryptoProt->GetVersion();
+    if (Version != SHARED_CRYPTO_VERSION)
     {
-      ProtocolNotFound(Status);
+      DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_PEI] Version mismatch. Version doesn't match expected %d. Current Version: %d\n", SHARED_CRYPTO_VERSION, Version));
+      ProtocolNotFound(EFI_PROTOCOL_ERROR);
       pCryptoProt = NULL;
-    }
-    else {
-      Version = pCryptoProt->SharedCrypto_GetLowestSupportedVersion();
-      if (Version != SHARED_CRYPTO_VERSION)
-      {
-        DEBUG((DEBUG_ERROR, "[SharedCryptoLibrary_PEI] Failed to locate Support Protocol. Version doesn't match expected %d. Current Version: %d\n", SHARED_CRYPTO_VERSION, Version));
-        ProtocolNotFound(EFI_PROTOCOL_ERROR);
-        pCryptoProt = NULL;
-      }
-
     }
   }
 

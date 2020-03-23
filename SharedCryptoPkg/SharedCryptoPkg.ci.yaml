@@ -90,7 +90,13 @@
             "extdep",
             "fvbootblock",
             "efi's",
-            "rsaes"
+            "rsaes",
+            "or'ed",
+            "armsoftfloatlib",
+            "authenticode",
+            "basecore",
+            "cryptopkg",
+            "openssllib"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

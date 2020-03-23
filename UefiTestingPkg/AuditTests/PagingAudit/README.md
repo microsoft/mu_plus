@@ -37,8 +37,8 @@ parsed using Windows\PagingReportGenerator.py.
 
 ### DXE Driver
 
-The DXE Driver registers an event to be notified on Exit Boot Services (to change this,
-replace gEfiEventExitBootServicesGuid with a different event GUID), which will then trigger
+The DXE Driver registers an event to be notified on Mu Pre Exit Boot Services (to change this,
+replace gMuEventPreExitBootServicesGuid with a different event GUID), which will then trigger
 the paging information collection.
 
 ### DXE Version App
@@ -63,13 +63,13 @@ First, for the SMM driver and app you need to add them to your DSC file for your
 
 ```
 [Components.X64]
-  UefiTestingPkg\AuditTests\PagingAudit\SmmPagingAudit\Smm\SmmPagingAuditSmm.inf
-  UefiTestingPkg\AuditTests\PagingAudit\SmmPagingAudit\App\SmmPagingAuditApp.inf
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditDriver.inf
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditApp.inf
 ```
 
 Next, you must add the SMM driver to a firmware volume in your FDF that can dispatch SMM modules.
 ```
-INF UefiTestingPkg\AuditTests\PagingAudit\SmmPagingAudit\Smm\SmmPagingAuditSmm.inf
+INF UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditApp.inf
 ```
 
 Third, after compiling your new firmware you must:
@@ -89,16 +89,16 @@ Finally, double-click the HTML output file and check your results.
 1. Add the following entry to platform dsc file;
 ```
 [Components.X64]
-    UefiTestingPkg\AuditTests\PagingAudit\DxePagingAudit\Dxe\DxePagingAuditDxe.inf
+    UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
 ```
 2. Add the driver to a firmware volume in your FDF that can dispatch it;
 ```
-INF UefiTestingPkg\AuditTests\PagingAudit\DxePagingAudit\Dxe\DxePagingAuditDxe.inf
+INF UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
 ```
 3. After compiling your new firmware you must:<BR>
     a. flash that image on the system.
-4. Boot your system running the new firmware to the shell with a USB plugged in. If the USB
-disk is FS0:\\, the files should be in FS1:\\. Copy them to the flash drive:
+4. Boot your system running the new firmware to the OS then reboot to UEFI shell with a USB plugged in.
+If the USB disk is FS0:\\, the files should be in FS1:\\. Copy them to the flash drive:
 ```
 copy FS1:\*.dat FS0:\
 ```
@@ -114,7 +114,7 @@ PagingReportGenerator.py -h
 1. Add the following entry to platform dsc file;
 ```
 [Components.X64]
-    UefiTestingPkg\AuditTests\PagingAudit\DxePagingAudit\App\DxePagingAuditApp.inf
+    UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditApp.inf
 ```
 2. Compile the newly added application and copy DxePagingAuditApp.efi to a USB key;
 3. Boot your system to the shell with the USB plugged in. If the USB disk is FS0:\, the files
@@ -128,5 +128,5 @@ copy FS1:\*.dat FS0:\
 
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
