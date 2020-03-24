@@ -16,6 +16,9 @@
   Include
 
 [LibraryClasses]
+  ##  @libraryclass  Library to abstract platform differences in SMM protections
+  ##
+  ConsoleMsgLib|Include/Library/PlatformSmmProtectionsTestLib.h
 
 [Guids]
   ##
