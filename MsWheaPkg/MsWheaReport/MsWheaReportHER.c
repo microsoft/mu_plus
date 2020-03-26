@@ -87,7 +87,7 @@ MsWheaAnFBuffer (
 /**
 
 This routine accepts the pointer to a UINT16 number. It will iterate through each HwErrRecXXXX and stops
-after 0xFFFF iterations or spotted a slot that returns EFI_NOT_FOUND.
+after PcdVariableHardwareMaxCount iterations or spotted a slot that returns EFI_NOT_FOUND.
 
 @param[out]  next                       The pointer to output result holder
 
@@ -113,15 +113,10 @@ MsWheaFindNextAvailableSlot (
     goto Cleanup;
   }
 
-  if ((gRT == NULL) || (gRT->GetVariable == NULL)) {
-    Status = EFI_NOT_READY;
-    goto Cleanup;
-  }
-
   for (Index = 0; Index <= PcdGet16(PcdVariableHardwareMaxCount); Index++) {
     Size = 0;
     UnicodeSPrint(VarName, sizeof(VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, (UINT16)(Index & MAX_UINT16));
-    Status = gRT->GetVariable(VarName,
+    Status = WheaGetVariable (VarName,
                               &gEfiHardwareErrorVariableGuid,
                               NULL,
                               &Size,
@@ -174,7 +169,7 @@ MsWheaClearAllEntries (
   while (TRUE) {
     // Get the next name out of the system
     NewNameSize = NameSize;
-    Status = gRT->GetNextVariableName(&NewNameSize, Name, &Guid);
+    Status = WheaGetNextVariableName(&NewNameSize, Name, &Guid);
 
     // Make sure the variable has enough room for the name
     if (Status == EFI_BUFFER_TOO_SMALL) {
@@ -185,7 +180,7 @@ MsWheaClearAllEntries (
         Status = EFI_OUT_OF_RESOURCES;
         break;
       }
-      Status = gRT->GetNextVariableName(&NewNameSize, Name, &Guid);
+      Status = WheaGetNextVariableName(&NewNameSize, Name, &Guid);
       NameSize = NewNameSize;
     }
 
@@ -213,7 +208,7 @@ MsWheaClearAllEntries (
       Attributes |= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
     }
 
-    Status = gRT->SetVariable(VarName, &gEfiHardwareErrorVariableGuid, Attributes, 0, NULL);
+    Status = WheaSetVariable(VarName, &gEfiHardwareErrorVariableGuid, Attributes, 0, NULL);
 
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a Clear HwErrRec has an issue - %r\n", __FUNCTION__, Status));
@@ -237,7 +232,7 @@ MsWheaClearAllEntries (
 /**
 
 This routine accepts the pointer to the MS WHEA entry metadata, error specific data payload and its size
-then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEFI Spec 2.7A)
+then store on variable storage as HwErrRec awaiting to be picked up by OS (Refer to UEFI Spec 2.7A)
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
 
@@ -299,7 +294,7 @@ MsWheaReportHERAdd (
 
   DEBUG((DEBUG_VERBOSE, "Attributes for variable %s: %x\n", VarName, Attributes));
 
-  Status = gRT->SetVariable(VarName, &gEfiHardwareErrorVariableGuid, Attributes, Size, Buffer);
+  Status = WheaSetVariable(VarName, &gEfiHardwareErrorVariableGuid, Attributes, Size, Buffer);
 
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "%a: Write size of %d at index %04X errored with (%r)\n", __FUNCTION__, Size, Index, Status));

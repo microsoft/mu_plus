@@ -1,18 +1,19 @@
-## @file -- MsWheaReportDxe.inf
+## @file -- MsWheaReportSmm.inf
 #
-#  MsWheaReportDxe implements Microsoft WHEA report service for Dxe phase.
+#  MsWheaReportSmm implements Microsoft WHEA report service for SMM environment.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
-  BASE_NAME                      = MsWheaReportDxe
-  FILE_GUID                      = 995F045B-0265-46A4-8D21-001211A24A4F
-  MODULE_TYPE                    = DXE_DRIVER
+  INF_VERSION                    = 0x00010017
+  PI_SPECIFICATION_VERSION       = 0x00010014
+  BASE_NAME                      = MsWheaReportSmm
+  FILE_GUID                      = 73103E54-C56A-4D5D-8A0B-B7934FC7C9FD
+  MODULE_TYPE                    = DXE_SMM_DRIVER
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = MsWheaReportDxeEntry
+  ENTRY_POINT                    = MsWheaReportSmmEntry
 
 #
 # The following information is for reference only and not required by the
@@ -26,11 +27,10 @@
   ../MsWheaReportCommon.c
   ../MsWheaEarlyStorageMgr.c
   ../MsWheaEarlyStorageMgr.h
+  ../MsWheaEarlyStorageMgr.h
   ../MsWheaReportHER.c
   ../MsWheaReportHER.h
-  MsWheaReportDxe.c
-  MsWheaReportList.c
-  MsWheaReportList.h
+  MsWheaReportSmm.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -42,29 +42,21 @@
   BaseMemoryLib
   UefiLib
   DebugLib
-  HobLib
   MemoryAllocationLib
   PcdLib
   PrintLib
   ReportStatusCodeLib
-  UefiBootServicesTableLib
   UefiDriverEntryPoint
-  UefiRuntimeServicesTableLib
+  SmmServicesTableLib
   MsWheaEarlyStorageLib
 
 [Protocols]
   gEfiAcpiTableProtocolGuid           ## CONSUMES
-  gEfiRuntimeArchProtocolGuid		      ## CONSUMES
-  gEfiRscHandlerProtocolGuid          ## CONSUMES
-  gEfiVariableWriteArchProtocolGuid   ## CONSUMES
-  gEfiVariableArchProtocolGuid        ## CONSUMES
-  gEfiRealTimeClockArchProtocolGuid   ## CONSUMES
+  gEfiSmmRscHandlerProtocolGuid       ## CONSUMES
+  gEfiSmmVariableProtocolGuid         ## CONSUMES
 
 [Pcd]
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaEarlyStorageDefaultValue
   gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
-  gMsWheaPkgTokenSpaceGuid.PcdMsWheaRSCHandlerTpl
   gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareMaxCount
   gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize
@@ -79,4 +71,5 @@
   gMsWheaReportRecordIDGuid           ## CONSUMES
 
 [Depex]
-  gEfiRscHandlerProtocolGuid
+  gEfiSmmRscHandlerProtocolGuid AND
+  gEfiVariableWriteArchProtocolGuid

@@ -15,6 +15,7 @@ Detailed information about CPER can be found in Appendix N of the UEFI spec.
 This driver must be included via DSC by including the EarlyStorageLib: MsWheaEarlyStorageLib|MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
 Then the PEI stage driver will be included in the DSC Components.IA32 or PEI section: MsWheaPkg/MsWheaReport/Pei/MsWheaReportPei.inf
 Then the DXE stage driver will be included in the Components.X64 or DXE section: MsWheaPkg/MsWheaReport/Dxe/MsWheaReportDxe.inf
+Finally the SMM stage driver will be included in the Components.X64 or DXE_SMM_DRIVER section: MsWheaPkg/MsWheaReport/Smm/MsWheaReportSmm.inf
 
 ## Important Notes
 The PCD value of __gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid__ must be overriden by *each* platform as this is later used in the CPER as the Platform ID (byte offset 32 in the record).

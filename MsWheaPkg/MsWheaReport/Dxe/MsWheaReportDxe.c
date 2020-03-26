@@ -2,7 +2,7 @@
 
 This Dxe driver will produce a RSC listener that listens to reported status codes.
 
-Certain errors will be stored to flash upon reproting, under gEfiHardwareErrorVariableGuid
+Certain errors will be stored to flash upon reporting, under gEfiHardwareErrorVariableGuid
 with VarName "HwErrRecXXXX", where "XXXX" are hexadecimal digits;
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -37,6 +37,109 @@ STATIC BOOLEAN                        mExitBootHasOccurred    = FALSE;
 STATIC BOOLEAN                        mClockArchAvailable     = FALSE;
 
 STATIC LIST_ENTRY                     mMsWheaEntryList;
+
+/**
+
+Returns the value of a variable. See definition of EFI_GET_VARIABLE in
+Include/Uefi/UefiSpec.h.
+
+@retval EFI_NOT_READY                 If requested service is not yet available
+@retval Others                        See EFI_GET_VARIABLE for more details
+
+**/
+EFI_STATUS
+EFIAPI
+WheaGetVariable (
+  IN     CHAR16                      *VariableName,
+  IN     EFI_GUID                    *VendorGuid,
+  OUT    UINT32                      *Attributes,    OPTIONAL
+  IN OUT UINTN                       *DataSize,
+  OUT    VOID                        *Data           OPTIONAL
+  )
+{
+  EFI_STATUS Status;
+
+  if ((gRT == NULL) || (gRT->GetVariable == NULL)) {
+    Status = EFI_NOT_READY;
+    goto Cleanup;
+  }
+
+  Status = gRT->GetVariable (VariableName,
+                             VendorGuid,
+                             Attributes,
+                             DataSize,
+                             Data);
+
+Cleanup:
+  return Status;
+}
+
+/**
+
+Enumerates the current variable names. See definition of EFI_GET_NEXT_VARIABLE_NAME in
+Include/Uefi/UefiSpec.h.
+
+@retval EFI_NOT_READY                 If requested service is not yet available
+@retval Others                        See EFI_GET_NEXT_VARIABLE_NAME for more details
+
+**/
+EFI_STATUS
+EFIAPI
+WheaGetNextVariableName (
+  IN OUT UINTN                    *VariableNameSize,
+  IN OUT CHAR16                   *VariableName,
+  IN OUT EFI_GUID                 *VendorGuid
+  )
+{
+  EFI_STATUS Status;
+
+  if ((gRT == NULL) || (gRT->GetNextVariableName == NULL)) {
+    Status = EFI_NOT_READY;
+    goto Cleanup;
+  }
+
+  Status = gRT->GetNextVariableName (VariableNameSize,
+                                     VariableName,
+                                     VendorGuid);
+
+Cleanup:
+  return Status;
+}
+
+/**
+Sets the value of a variable. See definition of EFI_SET_VARIABLE in
+Include/Uefi/UefiSpec.h.
+
+@retval EFI_NOT_READY                 If requested service is not yet available
+@retval Others                        See EFI_SET_VARIABLE for more details
+
+**/
+EFI_STATUS
+EFIAPI
+WheaSetVariable (
+  IN  CHAR16                       *VariableName,
+  IN  EFI_GUID                     *VendorGuid,
+  IN  UINT32                       Attributes,
+  IN  UINTN                        DataSize,
+  IN  VOID                         *Data
+  )
+{
+  EFI_STATUS Status;
+
+  if ((gRT == NULL) || (gRT->SetVariable == NULL)) {
+    Status = EFI_NOT_READY;
+    goto Cleanup;
+  }
+
+  Status = gRT->SetVariable (VariableName,
+                             VendorGuid,
+                             Attributes,
+                             DataSize,
+                             Data);
+
+Cleanup:
+  return Status;
+}
 
 /**
 Handler function that checks whether the system can write errors to UEFI variable or not.
@@ -366,7 +469,7 @@ Cleanup:
 /**
 Populates the current time for WHEA records
 
-@param[in,out]  *CurrentTime              A pointer to an EFI_TIME variable which will contain the curren time after
+@param[in,out]  *CurrentTime              A pointer to an EFI_TIME variable which will contain the current time after
                                           this function executes
 
 @retval          BOOLEAN                  True if *CurrentTime was populated.

@@ -99,6 +99,9 @@
   MemoryAllocationLib|MdePkg/Library/PeiMemoryAllocationLib/PeiMemoryAllocationLib.inf
   ReportStatusCodeLib|MdeModulePkg/Library/PeiReportStatusCodeLib/PeiReportStatusCodeLib.inf
 
+[LibraryClasses.common.DXE_SMM_DRIVER]
+  SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
+
 [PcdsFixedAtBuild]
   # Enabled support for HwErrRec and increased the size of HwErrRec region on flash
   gEfiMdePkgTokenSpaceGuid.PcdHardwareErrorRecordLevel|1
@@ -126,6 +129,7 @@
 [Components.X64]
   MsWheaPkg/HwErrBert/HwErrBert.inf
   MsWheaPkg/MsWheaReport/Dxe/MsWheaReportDxe.inf
+  MsWheaPkg/MsWheaReport/Smm/MsWheaReportSmm.inf
 
   # Check HWErrRec headers
   MsWheaPkg/Test/UnitTests/Library/LibraryClass/CheckHwErrRecHeaderTestsApp.inf
