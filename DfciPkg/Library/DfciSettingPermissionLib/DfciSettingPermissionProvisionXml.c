@@ -387,7 +387,7 @@ ApplyPermissionsInXml(
       {
         {
           Status = EFI_ACCESS_DENIED;
-          DEBUG((DEBUG_ERROR,"%a - failed to add permission. Access Denied. Id=%x, Perm=%s\n", __FUNCTION__, IdProps.Identity, Store->DefaultDMask));
+          DEBUG((DEBUG_ERROR,"%a - failed to add permission. Access Denied. Id=%x, Perm=%x\n", __FUNCTION__, IdProps.Identity, Store->DefaultDMask));
         }
       }
     }
@@ -575,7 +575,7 @@ FreeNvVarsForIncomingPermissions(
  * @param[in] This:            Apply Packet Protocol
  * @param[in] Data             Internal Packet
  * @param[in] Operation
- *                        DISCARD   discards the in memory changes, and retores from NV STORE
+ *                        DISCARD   discards the in memory changes, and restores from NV STORE
  *                        COMMIT    Saves the current settings to NV Store
  *
  * @return EFI_STATUS EFIAPI

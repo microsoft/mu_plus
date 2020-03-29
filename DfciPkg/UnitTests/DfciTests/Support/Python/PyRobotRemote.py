@@ -45,7 +45,7 @@ class UefiRemoteTesting(object):
             return lines[2].decode('utf-8').strip()
 
     #
-    # String variables are deisgned to have a NULL.  This does
+    # String variables are designed to have a NULL.  This does
     # confuse Python, so get rid of the NULL when it is expected
     #
     def GetUefiVariable(self, name, guid, trim):

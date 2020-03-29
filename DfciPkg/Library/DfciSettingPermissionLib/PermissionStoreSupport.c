@@ -28,7 +28,7 @@ AddRequiredPermissionEntry (
     Status = AddPermissionEntry(Store, Id, PMask, DMask);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, "%a - Failed adding %a. Code = %r\n", __FUNCTION__, Status));
+      DEBUG((DEBUG_ERROR, "%a - Failed adding %a. Code = %r\n", __FUNCTION__, Id, Status));
     }
   } else {
     Entry->PMask = PMask;
