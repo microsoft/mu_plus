@@ -18,7 +18,7 @@
  -->
 <SettingsPacket xmlns="urn:UefiSettings-Schema">
     <CreatedBy>DFCI Tester</CreatedBy>
-    <CreatedOn>2019-09-20 14:30:00</CreatedOn>
+    <CreatedOn>2020-03-27 10:22:00</CreatedOn>
     <Version>2</Version>
     <!--
 
@@ -38,12 +38,12 @@
         </Setting>
         <Setting>
             <Id>Dfci.HttpsCert.Binary</Id>
-     <!--
+                <!--
 
-      Value is XYZZY in DfciSettingsPattern.xml.  the XYZZY is replaced by
-      a base64 string of the HTTPS certificate when you run BuildSettings.bat.
+                Value is XYZZY in DfciSettingsPattern.xml.  the XYZZY is replaced by
+                a base64 string of the HTTPS certificate when you run BuildSettings.bat.
 
-      -->
+                -->
             <Value>
 MIIEWTCCA0GgAwIBAgIUDMMIrvx+n/6lBCOVmXIUR/leTkMwDQYJKoZIhvcNAQELBQAwfjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAldBMRAwDgYDVQQHEwdSZWRtb25kMRUwEwYDVQQKEwxEZmNpIFRlc3RpbmcxGTAXBgNVBAsTEERmY2lSZWNvdmVyeVRlc3QxHjAcBgNVBAMTFU1pa2V5cyBEZmNpIFRlc3QgU2hvcDAeFw0xOTA2MDMwMzUzMzFaFw0yMTA2MDIwMzUzMzFaMH4xCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJXQTEQMA4GA1UEBxMHUmVkbW9uZDEVMBMGA1UEChMMRGZjaSBUZXN0aW5nMRkwFwYDVQQLExBEZmNpUmVjb3ZlcnlUZXN0MR4wHAYDVQQDExVNaWtleXMgRGZjaSBUZXN0IFNob3AwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDhd0TXqexSckqm7CX+x9vHEUMBqD+fUtBjAslrB2vsFwrCx/3Jb32OPJdfZAHDWcZMxf19PhIAuQbbfRCLIxaram7ItVdk3Pjk/dZzvfvoFmRzdVFANQMJZuiFR8nUwJkhoAdd7xhg+kB4gtlBGOC346+K7QPXlVwy8+MlJeUzpe0ILQM6k8cdEAyFg53i/OekxlXvkQaFbqijaBMDk5pR6SAea1yglphOYk10dtJ3mptehnrvOceLknGUEQ7i1CnqY8r7AKyNOtq9C3Fin8X0MAkrISmdQjJ5YZcsy7defZqpVET6aRtXAfoMHA/YVZLCMUFCmCCgYHvtCF6iUbMrAgMBAAGjgc4wgcswCwYDVR0PBAQDAgWgMB0GA1UdDgQWBBS/KzfX5NG/OEbb39kVYM+MpawElzBWBgNVHREETzBNghVkZHMubWljcm9zb2Z0LWludC5jb22CFyouZGRzLm1pY3Jvc29mdC1pbnQuY29tghsqLmVhc3R1cy5jbG91ZGFwcC5henVyZS5jb20wDwYDVR0TAQH/BAUwAwIBADATBgNVHSUEDDAKBggrBgEFBQcDATAfBgNVHSMEGDAWgBS/KzfX5NG/OEbb39kVYM+MpawElzANBgkqhkiG9w0BAQsFAAOCAQEAwUn8sk2/B/VFQtl5b3igRUsUV9icnc0flMx7ocdkRSlzUsMPRMKXkmYw1Gd5mWa0+oaREEDOmvAOidZbjNaV7CfAMRvImBVRftGkaM13ZDOSNf0pbwk1gCM9wkNVz0/jK7xrp9RAZ5zBl5EaV3KHn31lc8pw3HFzuh0ZOG3rq4FDc+bSzumtuwozgTimGNBPqIXd2ntO50RhCwGounvVmmk4RLnCLQSLyZp5xKWCOC/WfXvupNoU/plmXe1/5fy7PZvfkmAFRiHZfh5VjQI1kZHrRWn0sXFuysMiFr6C9I9rK+z2gs4G1JI1ZozHaY6M5O0Fq42Z3VejNT1FeehHwA==
             </Value>
@@ -60,14 +60,5 @@ MIIEWTCCA0GgAwIBAgIUDMMIrvx+n/6lBCOVmXIUR/leTkMwDQYJKoZIhvcNAQELBQAwfjELMAkGA1UE
                 98765432-1234-5678-1234-012345674321
             </Value>
         </Setting>
-        <Setting>
-            <Id>Device.SecureBootKeys.Enum</Id>
-            <!-- MsOnly, MsPlus3rdParty, None -->
-            <Value>None</Value>
-        </Setting>
-        <Setting>
-            <Id>Device.BootOrderLock.Enable</Id>
-            <Value>Disabled</Value>
-        </Setting>
-    </Settings>
+     </Settings>
 </SettingsPacket>

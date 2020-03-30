@@ -16,8 +16,8 @@ from Lib.UefiVariablesSupportLib import UefiVariable
 
 
 #update this whenever you make a change
-RobotRemoteChangeDate       = "2019-08-14 08:30"
-RobotRemoteVersion          = 1.03
+RobotRemoteChangeDate       = "2020-03-21 15:21"
+RobotRemoteVersion          = 1.04
 
 
 class UefiRemoteTesting(object):
@@ -72,6 +72,9 @@ class UefiRemoteTesting(object):
 
     def remote_warm_reboot(self):
         os.system("shutdown -r -t 1")
+
+    def remote_reboot_to_firmware(self):
+        os.system("shutdown -r -fw -t 1")
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@
  -->
 <PermissionsPacket xmlns="urn:UefiSettings-Schema">
     <CreatedBy>DFCI Tester</CreatedBy>
-    <CreatedOn>2018-03-28</CreatedOn>
+    <CreatedOn>2020-03-27 10:22:00</CreatedOn>
     <Version>1</Version>
     <LowestSupportedVersion>1</LowestSupportedVersion>
     <Permissions Default="129" Delegated="192" Append="False">
@@ -43,16 +43,6 @@
             <DMask>128</DMask>
         </Permission>
         <Permission>
-            <Id>Dfci.User1Key.Enum</Id>
-            <PMask>192</PMask>
-            <DMask>192</DMask>
-        </Permission>
-        <Permission>
-            <Id>Dfci.User2Key.Enum</Id>
-            <PMask>192</PMask>
-            <DMask>192</DMask>
-        </Permission>
-        <Permission>
             <Id>Dfci.RecoveryBootstrapUrl.String</Id>
             <PMask>128</PMask>
             <DMask>128</DMask>
@@ -62,6 +52,20 @@
             <PMask>128</PMask>
             <DMask>128</DMask>
         </Permission>
-
+       <Permission>
+            <Id>Dfci.HttpsCert.Binary</Id>
+            <PMask>128</PMask>
+            <DMask>128</DMask>
+        </Permission>
+        <Permission>
+            <Id>Dfci.RegistrationId.String</Id>
+            <PMask>128</PMask>
+            <DMask>128</DMask>
+        </Permission>
+        <Permission>
+            <Id>Dfci.TenantId.String</Id>
+            <PMask>128</PMask>
+            <DMask>128</DMask>
+        </Permission>
   </Permissions>
 </PermissionsPacket>

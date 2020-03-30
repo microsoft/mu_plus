@@ -222,6 +222,12 @@ Reboot System And Wait For System Online
     Wait For System Online    60
     Wait For Remote Robot    15
 
+Reboot System To Firmware And Wait For System Online
+    remote_reboot_to_firmware
+    Wait For System Offline    60
+    Wait For System Online    120
+    Wait For Remote Robot    15
+
 
 ############################################################
 #      Verify NO APPLY variables present                   #

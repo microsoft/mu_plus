@@ -10,27 +10,39 @@
 
  -->
 <PermissionsPacket xmlns="urn:UefiSettings-Schema">
-  <CreatedBy>DFCI Tester</CreatedBy>
-  <CreatedOn>2018-03-28</CreatedOn>
-  <Version>1</Version>
-  <LowestSupportedVersion>1</LowestSupportedVersion>
-  <Permissions Default="192" Delegated="192" Append="False">
-    <Permission>
-        <!--
-           Permission Mask - 128 = Owner
-                              64 = User
-                              32 = User1
-                              16 = User2
-                               8 = ZTD
-                               2 = Regular Expression
-           Owner keeps the following settings for itself
-         -->
-        <Id>Dfci.OnboardCameras.Enable</Id>
-        <PMask>64</PMask>
-    </Permission>
-    <Permission>
-        <Id>Dfci.OnboardAudio.Enable</Id>
-        <PMask>64</PMask>
-    </Permission>
-  </Permissions>
+    <CreatedBy>DFCI Tester</CreatedBy>
+    <CreatedOn>2020-03-27 10:22:00</CreatedOn>
+    <Version>1</Version>
+    <LowestSupportedVersion>1</LowestSupportedVersion>
+    <Permissions Default="65" Append="False">
+        <Permission>
+            <!--
+               Permission Mask - 128 = Owner
+                                  64 = User
+                                  32 = User1
+                                  16 = User2
+                                   8 = ZTD
+                                   2 = Regular Expression
+               Owner keeps the following settings for itself
+             -->
+            <Id>Dfci.OnboardCameras.Enable</Id>
+            <PMask>64</PMask>
+        </Permission>
+        <Permission>
+            <Id>Dfci.OnboardRadios.Enable</Id>
+            <PMask>64</PMask>
+        </Permission>
+        <Permission>
+            <Id>Dfci.BootExternalMedia.Enable</Id>
+            <PMask>64</PMask>
+        </Permission>
+        <Permission>
+            <Id>MDM.FriendlyName.String</Id>
+            <PMask>64</PMask>
+        </Permission>
+        <Permission>
+            <Id>MDM.TenantName.String</Id>
+            <PMask>64</PMask>
+        </Permission>
+    </Permissions>
 </PermissionsPacket>

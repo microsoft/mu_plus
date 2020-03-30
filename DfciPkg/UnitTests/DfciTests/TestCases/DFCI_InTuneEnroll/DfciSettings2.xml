@@ -11,7 +11,7 @@
  -->
 <SettingsPacket xmlns="urn:UefiSettings-Schema">
     <CreatedBy>DFCI Tester</CreatedBy>
-    <CreatedOn>2018-03-29 12:37:00</CreatedOn>
+    <CreatedOn>2020-03-27 10:22:00</CreatedOn>
     <Version>2</Version>
     <LowestSupportedVersion>2</LowestSupportedVersion>
     <Settings>
@@ -28,11 +28,11 @@
             <Value>Disabled</Value>
         </Setting>
         <Setting>
-            <Id>Dfci.OnboardAudio.Enable</Id>
+            <Id>Dfci.OnboardRadios.Enable</Id>
             <Value>Disabled</Value>
         </Setting>
         <Setting>
-            <Id>Dfci.BootOnboardNetwork.Enable</Id>
+            <Id>Dfci.BootExternalMedia.Enable</Id>
             <Value>Disabled</Value>
         </Setting>
     </Settings>
