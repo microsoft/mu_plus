@@ -74,7 +74,7 @@ class UefiRemoteTesting(object):
         os.system("shutdown -r -t 1")
 
     def remote_reboot_to_firmware(self):
-        os.system("shutdown -r -fw -t 1")
+        os.system("shutdown -r -fw -t 0")
 
 
 if __name__ == '__main__':
