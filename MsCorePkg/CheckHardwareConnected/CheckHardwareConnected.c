@@ -1,7 +1,8 @@
 /** @file
 CheckHardwareConnected.c
 
-Checks if PCI devices defined in DeviceSpecificBusInfoLib are connected
+Checks if PCI devices defined in DeviceSpecificBusInfoLib were discovered
+on the bus.
 
 Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -35,16 +36,17 @@ CheckPCIDevices(VOID)
   // To store protocols
   EFI_PCI_IO_PROTOCOL**  ProtocolList = NULL;
 
-  // Array of pci info pointers. The ARRAY is freed, but the individual struct pointers pointed to
-  // from within the array are not. This is to make the structs within the DeviceSpecificBusInfoLib
-  // simpler by declaring them as globals
-  DEVICE_PCI_INFO**      Devices      = NULL;
+  // Pointer to the head of an array of DEVICE_PCI_INFO structures.
+  DEVICE_PCI_INFO        *Devices = NULL;
 
   // Array parallel to Devices which we will use to check off which devices we've found
   BOOLEAN*               DeviceFound  = NULL;
 
-  // Number of devices we're looking for
-  NumDevices = GetPciCheckDevices(&Devices);
+  // Get devices that will be checked from the platform library.
+  NumDevices = GetPciCheckDevices (&Devices);
+  if (Devices == NULL) {
+    return;
+  }
 
   // Array to track which devices we've found
   DeviceFound = AllocateZeroPool(sizeof(BOOLEAN) * NumDevices);
@@ -65,15 +67,9 @@ CheckPCIDevices(VOID)
 
     // For each device supplied by DeviceSpecificBusInfoLib...
     for(InnerLoop = 0; InnerLoop < NumDevices; InnerLoop++) {
-
-      // Make sure that device actually is present in the array
-      if(Devices[InnerLoop] == NULL) {
-        continue;
-      }
-
-      // If so, check if that device matches the current protocol in OuterLoop
-      if(Seg == Devices[InnerLoop]->SegmentNumber && Bus == Devices[InnerLoop]->BusNumber &&
-          Dev == Devices[InnerLoop]->DeviceNumber  && Fun == Devices[InnerLoop]->FunctionNumber) {
+      // Check if that device matches the current protocol in OuterLoop
+      if(Seg == Devices[InnerLoop].SegmentNumber && Bus == Devices[InnerLoop].BusNumber &&
+         Dev == Devices[InnerLoop].DeviceNumber  && Fun == Devices[InnerLoop].FunctionNumber) {
 
         // If it matches, check it off in the parallel array
         DeviceFound[InnerLoop] = TRUE;
@@ -89,33 +85,30 @@ CheckPCIDevices(VOID)
     if(DeviceFound[OuterLoop] == FALSE) {
 
       // Get the BDF for AdditionalData1
-      AdditionalData1 = PCI_ECAM_ADDRESS(Devices[OuterLoop]->BusNumber,
-                                         Devices[OuterLoop]->DeviceNumber,
-                                         Devices[OuterLoop]->FunctionNumber,
+      AdditionalData1 = PCI_ECAM_ADDRESS(Devices[OuterLoop].BusNumber,
+                                         Devices[OuterLoop].DeviceNumber,
+                                         Devices[OuterLoop].FunctionNumber,
                                          0
                                         );
 
       // Report an error if not
-      LogTelemetry(Devices[OuterLoop]->IsFatal,
+      LogTelemetry(Devices[OuterLoop].IsFatal,
                    NULL,
                    (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_DETECTED),
                    &gDeviceSpecificBusInfoLibTelemetryGuid,
                    NULL,
                    AdditionalData1,
-                   *((UINT64*)Devices[OuterLoop]->DeviceName));
+                   *((UINT64*)Devices[OuterLoop].DeviceName));
 
       DEBUG ((DEBUG_INFO,"%a - %a not found. Expected Segment: %d  Bus: %d  Device: %d  Function: %d\n", __FUNCTION__,
-        Devices[OuterLoop]->DeviceName, Devices[OuterLoop]->SegmentNumber, Devices[OuterLoop]->BusNumber,
-        Devices[OuterLoop]->DeviceNumber, Devices[OuterLoop]->FunctionNumber));
+        Devices[OuterLoop].DeviceName, Devices[OuterLoop].SegmentNumber, Devices[OuterLoop].BusNumber,
+        Devices[OuterLoop].DeviceNumber, Devices[OuterLoop].FunctionNumber));
 
     }
   }
 
   // Make sure everything is freed
   CLEANUP:
-    if(Devices != NULL) {
-      FreePool(Devices);
-    }
     if(DeviceFound != NULL) {
       FreePool(DeviceFound);
     }
@@ -123,6 +116,7 @@ CheckPCIDevices(VOID)
       FreePool(ProtocolList);
     }
 
+  return;
 }
 
 /**
