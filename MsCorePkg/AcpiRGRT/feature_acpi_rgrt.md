@@ -8,7 +8,7 @@ The Regulatory Graphics Resource Table is an entry into the ACPI table. It provi
 
 The format of the table is defined by spec.png and consists of a standard ACPI header along with an RGRT payload. At time of writing, the only image format supported by RGRT is PNG.
 
-![ACPI RGRT Spec](spec.png "ACPI RGRT Specification")
+![ACPI RGRT Spec](spec_mu.png "ACPI RGRT Specification")
 
 ## Using in your project
 
