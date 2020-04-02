@@ -24,6 +24,23 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 //
 
+// START - Tianocore Bugzilla 1959.  Remove this once fixed
+
+//
+//Iterate through the double linked list. NOT delete safe
+//
+#define EFI_LIST_FOR_EACH(Entry, ListHead)    \
+  for(Entry = (ListHead)->ForwardLink; Entry != (ListHead); Entry = Entry->ForwardLink)
+
+//
+//Iterate through the double linked list. This is delete-safe.
+//Don't touch NextEntry
+//
+#define EFI_LIST_FOR_EACH_SAFE(Entry, NextEntry, ListHead)            \
+  for(Entry = (ListHead)->ForwardLink, NextEntry = Entry->ForwardLink;\
+      Entry != (ListHead); Entry = NextEntry, NextEntry = Entry->ForwardLink)
+// END - Tianocore Bugzilla 1959.  Remove this once fixed
+
 #define DFCI_FEATURE_VERSION "2"
 
 // Settings are a CHAR8 string

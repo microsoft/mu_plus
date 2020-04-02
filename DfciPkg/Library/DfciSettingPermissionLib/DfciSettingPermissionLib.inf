@@ -34,7 +34,7 @@
   PermissionStoreSupport.c
   DfciSettingPermissionProvisionXml.c #Support reading a Permission Packet in XML format and applying to Permission Store
   DfciSettingPermissionCurrentPermissionXml.c #Support conversion of current permissions to XML format and
-
+  GroupSupport.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -56,6 +56,7 @@
   BaseMemoryLib
   DfciDeviceIdSupportLib
   DfciV1SupportLib
+  DfciGroupLib
 
 [Protocols]
   gDfciApplyPermissionsProtocolGuid

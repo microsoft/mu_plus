@@ -20,7 +20,6 @@ to check permissions for changing the setting.
 @param[in] Type:       Type that caller expects this setting to be.
 @param[in] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[in,out] Flags:  Informational Flags passed to the SET and/or Returned as a result of the set
-@param[in] GroupId     If a member of a group, group to get permission from
 
 @retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
 @retval Error - Setting not set.
@@ -34,8 +33,7 @@ InternalSystemSettingAccessSet (
   IN  DFCI_SETTING_TYPE                      Type,
   IN  UINTN                                  ValueSize,
   IN  CONST VOID                            *Value,
-  IN OUT DFCI_SETTING_FLAGS                 *Flags,
-  IN  DFCI_SETTING_ID_STRING                 GroupId
+  IN OUT DFCI_SETTING_FLAGS                 *Flags
   )
 {
   DFCI_SETTING_PROVIDER *prov;
@@ -73,21 +71,17 @@ InternalSystemSettingAccessSet (
     }
 
     ReturnStatus = EFI_SUCCESS;
-    for (Link = GetFirstNode (&Group->MemberHead)
-         ; !IsNull (&Group->MemberHead, Link)
-         ; Link = GetNextNode (&Group->MemberHead, Link)
-         )
+    EFI_LIST_FOR_EACH(Link, &Group->MemberHead)
     {
       Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
       SetRecurse = TRUE;
       Status = InternalSystemSettingAccessSet (This,
-                                       Member->PList->Provider.Id,
+                                       Member->Id,
                                        AuthToken,
                                        Type,
                                        ValueSize,
                                        Value,
-                                       Flags,
-                                       Group->GroupId);
+                                       Flags);
       SetRecurse = FALSE;
       if (EFI_ERROR(Status)) {
         ReturnStatus = Status;
@@ -98,7 +92,7 @@ InternalSystemSettingAccessSet (
   }
 
   //Check Auth for the setting Id.
-  Status = HasWritePermissions(Id, GroupId, AuthToken, &AuthStatus);
+  Status = HasWritePermissions(Id, AuthToken, &AuthStatus);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - HasWritePermissions returned an error %r\n", __FUNCTION__, Status));
@@ -173,8 +167,7 @@ SystemSettingAccessSet (
                                           Type,
                                           ValueSize,
                                           Value,
-                                          Flags,
-                                          NULL);
+                                          Flags);
 }
 
 /*
@@ -188,7 +181,6 @@ to check permissions for changing the setting which will be reported in flags if
 @param[out] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[IN OUT] Flags    Optional Informational flags passed back from the Get operation.  If the Auth Token is valid write access will be set in
 flags for the given auth.
-@param[in] GroupId     If a member of a group, group to get permission from
 
 
 @retval EFI_SUCCESS if setting could be set.  Check flags for other info (reset required, etc)
@@ -203,8 +195,7 @@ InternalSystemSettingAccessGet (
   IN  DFCI_SETTING_TYPE                   Type,
   IN OUT UINTN                           *ValueSize,
   OUT VOID                               *Value,
-  IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL,
-  IN  DFCI_SETTING_ID_STRING              GroupId
+  IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
   )
 {
   DFCI_SETTING_PROVIDER *prov = NULL;
@@ -258,27 +249,18 @@ InternalSystemSettingAccessGet (
 
     ReturnStatus = EFI_SUCCESS;
     MasterValue = 0x80;  // Some value not ENABLE_TRUE or ENABLE_FALSE
-    for (Link = GetFirstNode (&Group->MemberHead)
-         ; !IsNull (&Group->MemberHead, Link)
-         ; Link = GetNextNode (&Group->MemberHead, Link)
-         )
+    EFI_LIST_FOR_EACH(Link, &Group->MemberHead)
     {
       Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
-      if (Member->PList->Provider.Type != Type) {
-        DEBUG((DEBUG_ERROR, "%a: Only type ENABLE is allowed to be a group member\n", __FUNCTION__));
-        ReturnStatus = EFI_UNSUPPORTED;
-        continue;
-      }
       LocalSize = sizeof(LocalValue);
       GetRecurse= TRUE;
       Status = InternalSystemSettingAccessGet (This,
-                                       Member->PList->Provider.Id,
+                                       Member->Id,
                                        AuthToken,
                                        Type,
                                       &LocalSize,
                                       &LocalValue,
-                                       Flags,
-                                       Group->GroupId);
+                                       Flags);
       GetRecurse = FALSE;
       if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "%a: Unexpected return from AccessGet. Code=%r\n", __FUNCTION__, Status));
@@ -286,7 +268,7 @@ InternalSystemSettingAccessGet (
         continue;
       }
 
-      DEBUG((DEBUG_INFO,"Value of %a is %x\n", Member->PList->Provider.Id, (UINTN) LocalValue));
+      DEBUG((DEBUG_INFO,"Value of %a is %x\n", Member->Id, (UINTN) LocalValue));
 
       if (0x80 == MasterValue) {
         MasterValue = LocalValue;
@@ -331,7 +313,7 @@ InternalSystemSettingAccessGet (
   if ((AuthToken != NULL) && (Flags != NULL))
   {
     BOOLEAN AuthStatus = FALSE;
-    Status = HasWritePermissions(Id, GroupId, AuthToken, &AuthStatus);
+    Status = HasWritePermissions(Id, AuthToken, &AuthStatus);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_INFO, "%a - Failed to get Write Permission for Id %a Status %r\n", __FUNCTION__, Id, Status));
@@ -379,8 +361,7 @@ SystemSettingAccessGet (
                                           Type,
                                           ValueSize,
                                           Value,
-                                          Flags,
-                                          NULL);
+                                          Flags);
 }
 
 /*
