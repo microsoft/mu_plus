@@ -88,3 +88,20 @@ TestPrivilegedInstruction (
 ) {
   return EFI_UNSUPPORTED;
 }
+
+/**
+  Attempt to access the SMM entry point.
+  The Smm paging protections test invokes this routine to request that the platform attempt to
+  access the protected SMM entry point.
+  @retval     EFI_UNSUPPORTED         The platform does not support privileged
+                                      instruction protections.
+  @retval     EFI_SECURITY_VIOLATION  Since this test is supposed to produce
+                                      a system crash, any sort of return value
+                                      should be considered a security violation.
+**/
+EFI_STATUS
+TestEntryPointAccess (
+  VOID
+) {
+  return EFI_UNSUPPORTED;
+}

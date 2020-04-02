@@ -22,9 +22,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Protocol/SmmExceptionTestProtocol.h>
 
-#include <Register/Intel/ArchitecturalMsr.h>
-#include <Register/Intel/SmramSaveStateMap.h>
-
 #include "../SmmPagingProtectionsTestCommon.h"
 
 
@@ -442,20 +439,18 @@ SmmMemoryProtectionsTestEntryPointAccess (
   VOID
   )
 {
-  UINT64 SmmBase;
-  VOID *SmmEntry;
+  EFI_STATUS Status;
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
   // Make sure that the required telemetry/handling is
   // performed to get accurate test results.
+
   EnableExceptionTestMode ();
-
-  SmmBase = AsmReadMsr64(MSR_IA32_SMBASE);
-
-  SmmEntry = (VOID *) (SmmBase + SMM_HANDLER_OFFSET);
-
-  DEBUG ((DEBUG_INFO, "[%a] - Attempting to access SMM EntryPoint at %p...\n", __FUNCTION__, SmmEntry));
-  SetMem(SmmEntry, 0x100, 0xFF);
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to access SMM EntryPoint\n", __FUNCTION__));
+  Status = TestEntryPointAccess();
+  if (Status == EFI_UNSUPPORTED) {
+    return EFI_UNSUPPORTED;
+  }
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
   return EFI_SECURITY_VIOLATION;
