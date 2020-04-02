@@ -11,7 +11,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "SettingsManager.h"
 
 LIST_ENTRY  mProviderList = INITIALIZE_LIST_HEAD_VARIABLE(mProviderList);  //linked list for the providers
-LIST_ENTRY  mGroupList = INITIALIZE_LIST_HEAD_VARIABLE(mGroupList);        //linked list for the groups
 
 static DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol = NULL;
 
@@ -131,12 +130,14 @@ SetSettingFromAscii(
     }
 
     ReturnStatus = EFI_SUCCESS;
-    for (Link = GetFirstNode (&Group->MemberHead);
-         !IsNull (&Group->MemberHead, Link);
-         Link = GetNextNode (&Group->MemberHead, Link)
-       ) {
+    EFI_LIST_FOR_EACH(Link, &Group->MemberHead)
+    {
       Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
-      Provider = &Member->PList->Provider;
+      Provider =  FindProviderById(Member->Id);
+      ASSERT(Provider != NULL);
+      if (Provider == NULL) {
+        return EFI_NOT_FOUND;
+      }
       DEBUG((DEBUG_INFO, "Processing Group Setting member %a\n", Provider->Id));
       Status = SetIndividualSettings(Provider, Value, AuthToken, Flags);
       if (EFI_ERROR(Status)) {
@@ -806,50 +807,14 @@ DebugPrintProviderList()
   DEBUG((DEBUG_INFO, "START PRINTING ALL REGISTERED SETTING PROVIDERS\n"));
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
 
-  for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) {
+  EFI_LIST_FOR_EACH(Link, &mProviderList)
+  {
     //Convert Link Node into object stored
     Prov = PROV_LIST_ENTRY_FROM_LINK(Link);
     DebugPrintProviderEntry(&Prov->Provider);
   }
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
   DEBUG((DEBUG_INFO, " END PRINTING ALL REGISTERED SETTING PROVIDERS\n"));
-  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
-}
-
-/*
-Helper function to print out all Groups currently registered
-*/
-VOID
-DebugPrintGroups()
-{
-  LIST_ENTRY* Link = NULL;
-  LIST_ENTRY* Link2 = NULL;
-  DFCI_GROUP_LIST_ENTRY *Group;
-  DFCI_MEMBER_LIST_ENTRY *Member;
-
-  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
-  DEBUG((DEBUG_INFO, "START PRINTING ALL REGISTERED GROUPS\n"));
-  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
-
-  for (Link = GetFirstNode (&mGroupList)
-       ; !IsNull (&mGroupList, Link)
-       ; Link = GetNextNode (&mGroupList, Link)
-       )
-  {
-    Group = GROUP_LIST_ENTRY_FROM_GROUP_LINK(Link);
-    DEBUG((DEBUG_INFO, "Group %a members:\n", Group->GroupId));
-    for (Link2 = GetFirstNode (&Group->MemberHead);
-         !IsNull (&Group->MemberHead, Link2);
-         Link2 = GetNextNode (&Group->MemberHead, Link2)
-       )
-    {
-      Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link2);
-      DEBUG((DEBUG_INFO, "      %a\n", Member->PList->Provider.Id));
-    }
-  }
-
-  DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
-  DEBUG((DEBUG_INFO, " END PRINTING ALL REGISTERED GROUPS\n"));
   DEBUG((DEBUG_INFO, "-----------------------------------------------------\n"));
 }
 
@@ -876,7 +841,8 @@ FindProviderById(DFCI_SETTING_ID_STRING Id)
     RealId = Id;
   }
 
-  for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink) {
+  EFI_LIST_FOR_EACH(Link, &mProviderList)
+  {
     //Convert Link Node into object stored
     Prov = PROV_LIST_ENTRY_FROM_LINK(Link);
 
@@ -886,31 +852,6 @@ FindProviderById(DFCI_SETTING_ID_STRING Id)
       return &Prov->Provider;
     }
   }
-  return NULL;
-}
-
-/*
-Find a group.
-*/
-DFCI_GROUP_LIST_ENTRY *
-FindGroup (DFCI_SETTING_ID_STRING Id) {
-  LIST_ENTRY *Link;
-  DFCI_GROUP_LIST_ENTRY *Group = NULL;
-
-  for (Link = GetFirstNode (&mGroupList)
-       ; !IsNull (&mGroupList, Link)
-       ; Link = GetNextNode (&mGroupList, Link)
-       )
-  {
-    Group = GROUP_LIST_ENTRY_FROM_GROUP_LINK(Link);
-    if (0 == AsciiStrnCmp (Group->GroupId, Id, DFCI_MAX_ID_LEN))
-    {
-      DEBUG((DEBUG_INFO, "FindGroup - Found (%a)\n", Id));
-      return Group;
-    }
-  }
-
-  DEBUG((DEBUG_INFO, "FindGroup - Failed to find (%a)\n", Id));
   return NULL;
 }
 
@@ -981,10 +922,10 @@ IN DFCI_SETTING_PROVIDER                   *Provider
   //insert into list
   InsertTailList(&mProviderList, &Entry->Link);
 
-  Status = RegisterSettingToGroup (Entry);
+  Status = RegisterSettingToGroup (Provider->Id);
   if (EFI_ERROR(Status) && (Status != EFI_NOT_FOUND))
   {
-    DEBUG((DEBUG_ERROR, "Error registering %a to a group. Code=%r", Status));
+    DEBUG((DEBUG_ERROR, "Error registering %a to a group. Code=%r", Provider->Id, Status));
   }
 
   // Groups are not known by a provider, so don't return group error to the provider.
@@ -1005,8 +946,7 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
   LIST_ENTRY* Link = NULL;
   DFCI_SETTING_PROVIDER_LIST_ENTRY *Prov = NULL;
 
-
-  for (Link = mProviderList.ForwardLink; Link != &mProviderList; Link = Link->ForwardLink)
+  EFI_LIST_FOR_EACH(Link, &mProviderList)
   {
     //Convert Link Node into object stored
     Prov = PROV_LIST_ENTRY_FROM_LINK(Link);

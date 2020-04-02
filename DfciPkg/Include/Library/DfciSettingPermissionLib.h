@@ -26,7 +26,6 @@ EFI_STATUS
 EFIAPI
 HasWritePermissions(
   IN  DFCI_SETTING_ID_STRING       SettingId,
-  IN  DFCI_SETTING_ID_STRING       GroupId     OPTIONAL,
   IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
   OUT BOOLEAN                     *Result
   );
@@ -71,5 +70,61 @@ IdentityChange(
   IN        DFCI_IDENTITY_ID     CertIdentity,
   IN        BOOLEAN              Enroll
   );
+
+//
+// Group Support
+//
+
+//
+// List of Settings Groups
+//
+#define DFCI_GROUP_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','G')
+#define GROUP_LIST_ENTRY_FROM_GROUP_LINK(a)    CR (a, DFCI_GROUP_LIST_ENTRY, GroupLink, DFCI_GROUP_LIST_ENTRY_SIGNATURE)
+
+extern LIST_ENTRY  mGroupList;            // Head of a list of DFCI_GROUP_PROVIDER_LIST_ENTRY
+
+typedef struct {
+  UINTN Signature;
+  DFCI_SETTING_ID_STRING GroupId;
+  LIST_ENTRY GroupLink;             // Link to next DFCI_GROUP_LIST_ENTRY
+  LIST_ENTRY MemberHead;         // Head of list of DFCI_MEMBER_LIST_ENTRY
+} DFCI_GROUP_LIST_ENTRY;
+
+//
+// List of Member Settings in a group
+//
+#define DFCI_MEMBER_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','M')
+#define MEMBER_LIST_ENTRY_FROM_MEMBER_LINK(a)  CR (a, DFCI_MEMBER_LIST_ENTRY, MemberLink, DFCI_MEMBER_ENTRY_SIGNATURE)
+
+typedef struct {
+  UINTN Signature;
+  LIST_ENTRY MemberLink;
+  DFCI_SETTING_ID_STRING Id;
+} DFCI_MEMBER_LIST_ENTRY;
+
+VOID
+EFIAPI
+DebugPrintGroups();
+
+EFI_STATUS
+EFIAPI
+RegisterSettingToGroup (
+  IN DFCI_SETTING_ID_STRING Id
+  );
+
+DFCI_GROUP_LIST_ENTRY *
+EFIAPI
+FindGroup (
+    DFCI_SETTING_ID_STRING Id
+  );
+
+DFCI_SETTING_ID_STRING
+EFIAPI
+FindGroupIdBySetting (
+    DFCI_SETTING_ID_STRING Id,
+    VOID **Key OPTIONAL
+
+  );
+
 
 #endif //__DFCI_SETTING_PERMISSION_LIB_H__

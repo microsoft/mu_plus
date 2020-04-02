@@ -59,20 +59,6 @@ typedef enum {
   DfciUsbPortStateMax   = 0xFF
 } DFCI_VIRTUAL_USB_PORT_STATE;
 
-
-//
-// List of Settings Groups
-//
-#define DFCI_GROUP_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','G')
-#define GROUP_LIST_ENTRY_FROM_GROUP_LINK(a)    CR (a, DFCI_GROUP_LIST_ENTRY, GroupLink, DFCI_GROUP_LIST_ENTRY_SIGNATURE)
-
-typedef struct {
-  UINTN Signature;
-  DFCI_SETTING_ID_STRING GroupId;
-  LIST_ENTRY GroupLink;             // Link to next DFCI_GROUP_LIST_ENTRY
-  LIST_ENTRY MemberHead;         // Head of list of DFCI_MEMBER_LIST_ENTRY
-} DFCI_GROUP_LIST_ENTRY;
-
 //
 // List of Settings Providers
 //
@@ -86,20 +72,7 @@ typedef struct {
   DFCI_SETTING_PROVIDER Provider;
 } DFCI_SETTING_PROVIDER_LIST_ENTRY;
 
-//
-// List of Member Settings in a group
-//
-#define DFCI_MEMBER_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','M')
-#define MEMBER_LIST_ENTRY_FROM_MEMBER_LINK(a)  CR (a, DFCI_MEMBER_LIST_ENTRY, MemberLink, DFCI_MEMBER_ENTRY_SIGNATURE)
-
-typedef struct {
-  UINTN Signature;
-  LIST_ENTRY MemberLink;
-  DFCI_SETTING_PROVIDER_LIST_ENTRY *PList;
-} DFCI_MEMBER_LIST_ENTRY;
-
 extern LIST_ENTRY  mProviderList;         // Head of a list of DFCI_SETTING_PROVIDER_LIST_ENTRY
-extern LIST_ENTRY  mGroupList;            // Head of a list of DFCI_GROUP_PROVIDER_LIST_ENTRY
 
 extern DFCI_SETTING_ACCESS_PROTOCOL             mSystemSettingAccessProtocol;
 extern DFCI_APPLY_PACKET_PROTOCOL               mApplySettingsProtocol;
@@ -123,11 +96,7 @@ RegisterProvider (
 
 DFCI_SETTING_PROVIDER*
 FindProviderById (
-  DFCI_SETTING_ID_STRING Id
-  );
-
-DFCI_GROUP_LIST_ENTRY *
-FindGroup (DFCI_SETTING_ID_STRING Id
+    DFCI_SETTING_ID_STRING Id
   );
 
 /**
@@ -141,14 +110,6 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
 
 VOID
 DebugPrintProviderList();
-
-VOID
-DebugPrintGroups();
-
-EFI_STATUS
-RegisterSettingToGroup (
-  IN DFCI_SETTING_PROVIDER_LIST_ENTRY *PList
-  );
 
 VOID
 EFIAPI

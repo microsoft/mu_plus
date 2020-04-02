@@ -86,8 +86,6 @@ IN CONST DFCI_AUTH_TOKEN *AuthToken OPTIONAL
   return Status;
 }
 
-
-
 /**
 Return if the User Identified by AuthToken
 has write permission to the setting identified
@@ -102,16 +100,17 @@ EFI_STATUS
 EFIAPI
 HasWritePermissions(
 IN  DFCI_SETTING_ID_STRING       SettingId,
-IN  DFCI_SETTING_ID_STRING       GroupId     OPTIONAL,
 IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
 OUT BOOLEAN                     *Result
 )
 {
-  EFI_STATUS Status;
-  DFCI_PERMISSION_MASK PMask = 0;
+  EFI_STATUS               Status;
+  DFCI_PERMISSION_MASK     PMask = 0;
   DFCI_IDENTITY_PROPERTIES Properties;
-  DFCI_PERMISSION_ENTRY *Temp = NULL;
-  BOOLEAN GroupAuthStatus = FALSE;
+  DFCI_PERMISSION_ENTRY   *Temp = NULL;
+  DFCI_SETTING_ID_STRING   GroupId;
+  BOOLEAN                  MemberOfGroup;
+  VOID                    *Key;
 
   if ((AuthToken == NULL) || (Result == NULL) || (SettingId == NULL))
   {
@@ -129,34 +128,6 @@ OUT BOOLEAN                     *Result
     return EFI_NOT_READY;
   }
 
-  if (NULL != GroupId)
-  {
-    //
-    // Auth for members of a group depend on there being an explicit permission.
-    // If there is no explicit permission, normal write permissions are checked.  If
-    // there is an explicit permission entry for the group, the group permission
-    // supersedes the individual permission.r
-    //
-    Temp = FindPermissionEntry(mPermStore, GroupId);
-    if (NULL != Temp)
-    {
-      // Check Auth for the group id (Recursive Call)
-      Status = HasWritePermissions(GroupId, NULL, AuthToken, &GroupAuthStatus);
-      if (!EFI_ERROR(Status))
-      {
-        if (!GroupAuthStatus) {
-          *Result = GroupAuthStatus;
-          return EFI_SUCCESS;
-        }
-      }
-      else
-      {
-        DEBUG((DEBUG_ERROR, "%a - HasWritePermissions returned an error %r\n", __FUNCTION__, Status));
-        // Fall through to setting permission
-      }
-    }
-  }
-
   //1. Get Identity from Auth Token
   Status = mAuthenticationProtocol->GetIdentityProperties(mAuthenticationProtocol, AuthToken, &Properties);
   if (EFI_ERROR(Status))
@@ -165,10 +136,47 @@ OUT BOOLEAN                     *Result
     return Status;
   }
 
-  //2. set to default.
+  //2. Group permission override setting permission.
+  //
+  //  If the setting is the member of a group that has explicit permissions, the group permissions
+  //  are used.  If any explicit permission is denied, write permission is false.  If all of the
+  //  explicit permission allow access, then write permission is granted.
+  //
+  MemberOfGroup = FALSE;
+  Key = NULL;
+  GroupId = FindGroupIdBySetting (SettingId, &Key);
+  while (GroupId != NULL) {
+    DEBUG((DEBUG_INFO, "FindGroup Setting - %a is a member of a group %a\n", SettingId, GroupId));
+    Temp = FindPermissionEntry(mPermStore, GroupId);
+    if (Temp != NULL) {                    // Explicit permission
+      MemberOfGroup = TRUE;                // Member of a group with explicit permissions.
+
+      // If a group permission is set, and that group denies
+      // permission for this Auth, permission is denied.
+
+      if (!(Temp->PMask & Properties.Identity)) {
+        *Result = FALSE;
+        return EFI_SUCCESS;
+      }
+    }
+
+    // A setting may be a member of multiple groups. Get the next group
+    GroupId = FindGroupIdBySetting (SettingId, &Key);
+  }
+
+  //
+  // If the setting is a member of a group with explicit permissions, and was not denied by
+  // any of the Group explicit permissions, allow access.
+  //
+  if (MemberOfGroup) {
+    *Result = TRUE;
+    return EFI_SUCCESS;
+  }
+
+  //3. Get the default permission.
   PMask = mPermStore->DefaultPMask;
 
-  //3. Set PMask to specific value if in list
+  //4. Set PMask to specific value if in list
   Temp = FindPermissionEntry(mPermStore, SettingId);
   if (Temp != NULL)
   {
@@ -178,12 +186,10 @@ OUT BOOLEAN                     *Result
       DEBUG((DEBUG_INFO, "%a - Using default permission %a (0x%x), (0x%x)\n", __FUNCTION__, SettingId, PMask, Properties.Identity));
   }
 
-  //3. Permission and Identity use the same bits so they can be logically and-ed together
+  //5. Permission and Identity use the same bits so they can be logically and-ed together
   *Result = (PMask & Properties.Identity)? TRUE: FALSE;
-
   return EFI_SUCCESS;
 }
-
 
 /**
  Check if the current AuthToken has un-enroll permissions, which recovery is a special
@@ -211,7 +217,7 @@ HasUnenrollPermission (
   }
 
   // This interface is part of unenroll and recovery.  The owner has permission to unenroll.
-  Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, NULL, AuthToken, &CanUnenroll);
+  Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, AuthToken, &CanUnenroll);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Owner Key. Status = %r\n", __FUNCTION__, Status));
@@ -223,7 +229,7 @@ HasUnenrollPermission (
     // If this is not the owner, see if another identity has the permission to unenroll.  For the on prem
     // solution, is DFCI_RECOVERY permission is assigned to the identity allowed to unenroll.
     // Check if the identity has DFCI_RECOVERY.
-    Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, NULL, AuthToken, &CanUnenroll);
+    Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, AuthToken, &CanUnenroll);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
@@ -235,7 +241,7 @@ HasUnenrollPermission (
   {
     // If not owner, and not on prem recovery, check for ZTD recovery.  See if the permission for ZTD recovery
     // is allowed to unenroll.
-    Status = HasWritePermissions(DFCI_SETTING_ID__ZTD_RECOVERY, NULL, AuthToken, &CanUnenroll);
+    Status = HasWritePermissions(DFCI_SETTING_ID__ZTD_RECOVERY, AuthToken, &CanUnenroll);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for ZTD Recovery. Status = %r\n", __FUNCTION__, Status));
