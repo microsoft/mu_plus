@@ -42,7 +42,6 @@
   UefiDriverEntryPoint
   DebugLib
   BaseLib
-  DfciGroupLib
   DfciXmlDeviceIdSchemaSupportLib
   DfciXmlSettingSchemaSupportLib
   DfciSettingPermissionLib
