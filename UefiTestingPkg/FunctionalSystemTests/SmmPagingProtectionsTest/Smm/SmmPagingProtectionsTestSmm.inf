@@ -29,24 +29,24 @@
 [Sources]
   SmmPagingProtectionsTestSmm.c
 
-
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
-
+  UefiTestingPkg/UefiTestingPkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
-  SmmServicesTableLib
-  DebugLib
-  SmmMemLib
+  BaseLib
   BaseMemoryLib
-
+  DebugLib
+  MemoryAllocationLib
+  SmmMemLib
+  SmmServicesTableLib
+  UefiDriverEntryPoint
+  PlatformSmmProtectionsTestLib
 
 [Protocols]
   gSmmExceptionTestProtocolGuid           ## CONSUMES
-
 
 [Depex]
   gSmmExceptionTestProtocolGuid
