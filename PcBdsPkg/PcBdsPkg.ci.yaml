@@ -27,14 +27,10 @@
             "ShellPkg/ShellPkg.dec"  # this needs to be reviewed.  TODO: bug??
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
-            "MsUnitTestPkg/MsUnitTestPkg.dec",
-            "UefiHostTestPkg/UefiHostTestPkg.dec",
-            "UefiHostUnitTestPkg/UefiHostUnitTestPkg.dec",
-            "CmockaHostUnitTestPkg/CmockaHostUnitTestPkg.dec",
-            "UnitTestPkg/UnitTestPkg.dec"
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
-            "MsUnitTestPkg/MsUnitTestPkg.dec",
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec",
             "ShellPkg/ShellPkg.dec"
         ],
         "IgnoreInf": []
