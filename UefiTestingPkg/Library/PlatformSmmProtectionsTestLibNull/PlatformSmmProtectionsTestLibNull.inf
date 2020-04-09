@@ -1,0 +1,24 @@
+## @file
+# Null Implementation of PlatformSmmProtectionsTestLib
+#
+# @copyright
+# Copyright (C) 2016 Microsoft Corporation.
+#
+##
+
+[Defines]
+  INF_VERSION = 1.27
+  BASE_NAME = PlatformSmmProtectionsTestLibNull
+  FILE_GUID = 95D58F5C-5A4A-486C-BD73-12901473BEC0
+  VERSION_STRING = 1.0
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = PlatformSmmProtectionsTestLib
+
+[LibraryClasses]
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[Sources]
+  PlatformSmmProtectionsTestLibNull.c
