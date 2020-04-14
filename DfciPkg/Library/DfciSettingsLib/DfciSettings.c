@@ -25,6 +25,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciPrivateSettings.h>
 
 EFI_EVENT  mDfciSettingsProviderSupportInstallEvent;
 VOID      *mDfciSettingsProviderSupportInstallEventRegistration = NULL;
@@ -91,19 +92,19 @@ ID_IS
 IsIdSupported (DFCI_SETTING_ID_STRING Id)
 {
 
-    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_RECOVERY_URL, DFCI_MAX_ID_LEN)) {
+    if (0 == AsciiStrnCmp (Id, DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY_URL, DFCI_MAX_ID_LEN)) {
         return ID_IS_RECOVERY_URL;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_BOOTSTRAP_URL, DFCI_MAX_ID_LEN)) {
+    } else if (0 == AsciiStrnCmp (Id, DFCI_PRIVATE_SETTING_ID__DFCI_BOOTSTRAP_URL, DFCI_MAX_ID_LEN)) {
         return ID_IS_BOOTSTRAP_URL;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_HTTPS_CERT, DFCI_MAX_ID_LEN)) {
+    } else if (0 == AsciiStrnCmp (Id, DFCI_PRIVATE_SETTING_ID__DFCI_HTTPS_CERT, DFCI_MAX_ID_LEN)) {
         return ID_IS_CERT;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_REGISTRATION_ID, DFCI_MAX_ID_LEN)) {
+    } else if (0 == AsciiStrnCmp (Id, DFCI_PRIVATE_SETTING_ID__DFCI_REGISTRATION_ID, DFCI_MAX_ID_LEN)) {
         return ID_IS_REGISTRATION_ID;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__DFCI_TENANT_ID, DFCI_MAX_ID_LEN)) {
+    } else if (0 == AsciiStrnCmp (Id, DFCI_PRIVATE_SETTING_ID__DFCI_TENANT_ID, DFCI_MAX_ID_LEN)) {
         return ID_IS_TENANT_ID;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__MDM_FRIENDLY_NAME, DFCI_MAX_ID_LEN)) {
+    } else if (0 == AsciiStrnCmp (Id, DFCI_PRIVATE_SETTING_ID__MDM_FRIENDLY_NAME, DFCI_MAX_ID_LEN)) {
         return ID_IS_FRIENDLY_NAME;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__MDM_TENANT_NAME, DFCI_MAX_ID_LEN)) {
+    } else if (0 == AsciiStrnCmp (Id, DFCI_PRIVATE_SETTING_ID__MDM_TENANT_NAME, DFCI_MAX_ID_LEN)) {
         return ID_IS_TENANT_NAME;
     } else {
         DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
@@ -481,37 +482,37 @@ DfciSettingsSetDefault (
 //                    mDfciSettingsProviders
 STATIC PROVIDER_ENTRY mDfciSettingsProviders[] = {
     {
-        DFCI_SETTING_ID__DFCI_RECOVERY_URL,
+        DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY_URL,
         DFCI_SETTING_TYPE_STRING,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     },
     {
-        DFCI_SETTING_ID__DFCI_BOOTSTRAP_URL,
+        DFCI_PRIVATE_SETTING_ID__DFCI_BOOTSTRAP_URL,
         DFCI_SETTING_TYPE_STRING,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     },
     {
-        DFCI_SETTING_ID__DFCI_HTTPS_CERT,
+        DFCI_PRIVATE_SETTING_ID__DFCI_HTTPS_CERT,
         DFCI_SETTING_TYPE_CERT,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     },
     {
-        DFCI_SETTING_ID__DFCI_REGISTRATION_ID,
+        DFCI_PRIVATE_SETTING_ID__DFCI_REGISTRATION_ID,
         DFCI_SETTING_TYPE_STRING,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     },
     {
-        DFCI_SETTING_ID__DFCI_TENANT_ID,
+        DFCI_PRIVATE_SETTING_ID__DFCI_TENANT_ID,
         DFCI_SETTING_TYPE_STRING,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     },
     {
-        DFCI_SETTING_ID__MDM_FRIENDLY_NAME,
+        DFCI_PRIVATE_SETTING_ID__MDM_FRIENDLY_NAME,
         DFCI_SETTING_TYPE_STRING,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     },
     {
-        DFCI_SETTING_ID__MDM_TENANT_NAME,
+        DFCI_PRIVATE_SETTING_ID__MDM_TENANT_NAME,
         DFCI_SETTING_TYPE_STRING,
         DFCI_SETTING_FLAGS_NO_PREBOOT_UI
     }

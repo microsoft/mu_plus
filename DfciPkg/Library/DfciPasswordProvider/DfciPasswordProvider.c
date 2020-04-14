@@ -22,6 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciOemSample.h>
 
 EFI_EVENT      mPasswordProviderSupportInstallEvent = NULL;;
 VOID          *mPasswordProviderSupportInstallEventRegistration = NULL;
@@ -45,7 +46,7 @@ OUT       UINT8                     *Value
         return EFI_BUFFER_TOO_SMALL;
     }
 
-    if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
+    if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
     {
         DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
         return EFI_UNSUPPORTED;
@@ -76,7 +77,7 @@ OUT      UINT8                     *Value
         return EFI_BUFFER_TOO_SMALL;
     }
 
-    if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
+    if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
     {
         DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (0x%X)\n", This->Id));
         return EFI_UNSUPPORTED;
@@ -106,7 +107,7 @@ OUT DFCI_SETTING_FLAGS              *Flags
 
     *Flags = 0;
 
-    if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
+    if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
     {
         DEBUG((DEBUG_ERROR, "PasswordSet was called with incorrect Provider Id (%a)\n", This->Id));
         return EFI_UNSUPPORTED;
@@ -134,7 +135,7 @@ PasswordSetDefault (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (0 != AsciiStrnCmp (This->Id, DFCI_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
+  if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
   {
     DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
     return EFI_UNSUPPORTED;
@@ -147,7 +148,7 @@ PasswordSetDefault (
 }
 
 DFCI_SETTING_PROVIDER mPasswordProvider = {
-    DFCI_SETTING_ID__PASSWORD,
+    DFCI_OEM_SETTING_ID__PASSWORD,
     DFCI_SETTING_TYPE_PASSWORD,
     DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED,
     (DFCI_SETTING_PROVIDER_SET) PasswordSet,

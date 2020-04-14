@@ -38,6 +38,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciPrivateSettings.h>
 
 //#include "DfciMenu.h"
 #include "DfciPrivate.h"
@@ -1053,7 +1054,7 @@ InitializeNetworkRequest (
 
     CleanupNetworkRequest (NetworkRequest, CLEAR_ALL);
 
-    Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_RECOVERY_URL,
+    Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY_URL,
                               DFCI_SETTING_TYPE_STRING,
                               (VOID **) &NetworkRequest->HttpRequest.Url,
                                &NetworkRequest->HttpRequest.UrlSize);
@@ -1062,7 +1063,7 @@ InitializeNetworkRequest (
         goto INITIALIZE_CLEANUP;
     }
 
-    Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_BOOTSTRAP_URL,
+    Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__DFCI_BOOTSTRAP_URL,
                               DFCI_SETTING_TYPE_STRING,
                               (VOID **) &NetworkRequest->HttpRequest.BootstrapUrl,
                                &NetworkRequest->HttpRequest.BootstrapUrlSize);

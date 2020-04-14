@@ -26,6 +26,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciOemSample.h>
 
 EFI_EVENT  mDfciVirtualSettingsProviderSupportInstallEvent;
 VOID      *mDfciVirtualSettingsProviderSupportInstallEventRegistration = NULL;
@@ -87,7 +88,7 @@ IsIdSupported (
 	IN  DFCI_SETTING_ID_STRING Id
   ) {
 
-    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_VIRT_SETTINGS, DFCI_MAX_ID_LEN)) {
+    if (0 == AsciiStrnCmp (Id, DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS, DFCI_MAX_ID_LEN)) {
         return ID_IS_VIRTUALIZATION;
     } else {
         DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
@@ -367,7 +368,7 @@ DfciSettingsProviderSupportProtocolNotify (
     //
     // Register items that are NOT in the PREBOOT_UI
     //
-    mDfciCpuAndIoProviderTemplate.Id = DFCI_SETTING_ID__ENABLE_VIRT_SETTINGS;
+    mDfciCpuAndIoProviderTemplate.Id = DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS;
     mDfciCpuAndIoProviderTemplate.Type = DFCI_SETTING_TYPE_ENABLE;
     mDfciCpuAndIoProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
     Status = sp->RegisterProvider (sp, &mDfciCpuAndIoProviderTemplate);

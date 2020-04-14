@@ -17,6 +17,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciPrivateSettings.h>
+
 
 /**
  Convert the Identity values used in the Provisioning Variable
@@ -94,27 +96,27 @@ DfciIdentityToSettingId(
 {
   if (Identity == DFCI_IDENTITY_SIGNER_ZTD )
   {
-    return DFCI_SETTING_ID__ZTD_KEY;
+    return DFCI_PRIVATE_SETTING_ID__ZTD_KEY;
   }
 
   if (Identity == DFCI_IDENTITY_SIGNER_USER)
   {
-    return DFCI_SETTING_ID__USER_KEY;
+    return DFCI_PRIVATE_SETTING_ID__USER_KEY;
   }
 
   if (Identity == DFCI_IDENTITY_SIGNER_OWNER)
   {
-    return DFCI_SETTING_ID__OWNER_KEY;
+    return DFCI_PRIVATE_SETTING_ID__OWNER_KEY;
   }
 
   if (Identity == DFCI_IDENTITY_SIGNER_USER1)
   {
-    return DFCI_SETTING_ID__USER1_KEY;
+    return DFCI_PRIVATE_SETTING_ID__USER1_KEY;
   }
 
   if (Identity == DFCI_IDENTITY_SIGNER_USER2)
   {
-    return DFCI_SETTING_ID__USER2_KEY;
+    return DFCI_PRIVATE_SETTING_ID__USER2_KEY;
   }
 
   return NULL;
@@ -325,7 +327,7 @@ ValidateAndAuthenticatePendingProvisionData (
     if ((Data->PayloadSize == 0) && (Properties.Identity == DFCI_IDENTITY_SIGNER_ZTD))
     {
       //Get Permissions Dfci.ZtdUnenroll.Enable
-      Status = SettingsPermissionProtocol->GetPermission(SettingsPermissionProtocol, DFCI_SETTING_ID__ZTD_UNENROLL, &ZtdUnenrollPermMask);
+      Status = SettingsPermissionProtocol->GetPermission(SettingsPermissionProtocol, DFCI_PRIVATE_SETTING_ID__ZTD_UNENROLL, &ZtdUnenrollPermMask);
       if (EFI_ERROR(Status))
       {
         DEBUG((DEBUG_ERROR, "%a - Failed to get Permission for Identity 0x%X.  Status = %r\n", __FUNCTION__, Data->DfciIdentity, Status));

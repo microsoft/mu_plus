@@ -217,7 +217,7 @@ HasUnenrollPermission (
   }
 
   // This interface is part of unenroll and recovery.  The owner has permission to unenroll.
-  Status = HasWritePermissions(DFCI_SETTING_ID__OWNER_KEY, AuthToken, &CanUnenroll);
+  Status = HasWritePermissions(DFCI_PRIVATE_SETTING_ID__OWNER_KEY, AuthToken, &CanUnenroll);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for Owner Key. Status = %r\n", __FUNCTION__, Status));
@@ -229,7 +229,7 @@ HasUnenrollPermission (
     // If this is not the owner, see if another identity has the permission to unenroll.  For the on prem
     // solution, is DFCI_RECOVERY permission is assigned to the identity allowed to unenroll.
     // Check if the identity has DFCI_RECOVERY.
-    Status = HasWritePermissions(DFCI_SETTING_ID__DFCI_RECOVERY, AuthToken, &CanUnenroll);
+    Status = HasWritePermissions(DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY, AuthToken, &CanUnenroll);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for DFCI Recovery. Status = %r\n", __FUNCTION__, Status));
@@ -241,7 +241,7 @@ HasUnenrollPermission (
   {
     // If not owner, and not on prem recovery, check for ZTD recovery.  See if the permission for ZTD recovery
     // is allowed to unenroll.
-    Status = HasWritePermissions(DFCI_SETTING_ID__ZTD_RECOVERY, AuthToken, &CanUnenroll);
+    Status = HasWritePermissions(DFCI_PRIVATE_SETTING_ID__ZTD_RECOVERY, AuthToken, &CanUnenroll);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get Write Permission for ZTD Recovery. Status = %r\n", __FUNCTION__, Status));
@@ -351,7 +351,7 @@ IdentityChange (
     if (CertIdentity == DFCI_IDENTITY_SIGNER_OWNER)
     {
       //  Disallow any future ZTD signing while an owner is applied.
-      Status  = AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_KEY,      DFCI_IDENTITY_INVALID,    DFCI_PERMISSION_MASK__NONE);
+      Status  = AddRequiredPermissionEntry (mPermStore, DFCI_PRIVATE_SETTING_ID__ZTD_KEY,      DFCI_IDENTITY_INVALID,    DFCI_PERMISSION_MASK__NONE);
     }
 
     // 4. When an Owner is enrolled and the signer is ZTD:
@@ -360,9 +360,9 @@ IdentityChange (
       //    a. Allow ZTD to UnEnroll.
       //    b. Allow ZTD to use hard reset Recovery
       //    c. Remove SEMM recovery permission
-      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_RECOVERY, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
-      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__ZTD_UNENROLL, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
-      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_SETTING_ID__DFCI_RECOVERY, DFCI_PERMISSION_MASK__NONE, DFCI_PERMISSION_MASK__NONE);
+      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_PRIVATE_SETTING_ID__ZTD_RECOVERY, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
+      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_PRIVATE_SETTING_ID__ZTD_UNENROLL, DFCI_IDENTITY_SIGNER_ZTD, DFCI_PERMISSION_MASK__NONE);
+      Status |= AddRequiredPermissionEntry (mPermStore, DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY, DFCI_PERMISSION_MASK__NONE, DFCI_PERMISSION_MASK__NONE);
       return EFI_SUCCESS;
     }
 

@@ -40,6 +40,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/DfciApplyPacket.h>
 
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciPrivateSettings.h>
 
 #define DFCI_PERMISSION_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','P','L','S')
 
