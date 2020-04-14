@@ -46,6 +46,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ZeroTouchSettingsLib.h>
 
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciPrivateSettings.h>
 
 #include "DfciMenu.h"
 
@@ -353,7 +354,7 @@ GetDfciParameters (
         // Check if hard unenroll is enabled
         //
         RecoveryMask = 0;
-        Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_SETTING_ID__DFCI_RECOVERY, &RecoveryMask);
+        Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY, &RecoveryMask);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a - Failed to get permission for recovery %r\n", __FUNCTION__, Status));
         }
@@ -373,7 +374,7 @@ GetDfciParameters (
         }
 
         RecoveryMask = 0;
-        Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_SETTING_ID__ZTD_RECOVERY, &RecoveryMask);
+        Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_PRIVATE_SETTING_ID__ZTD_RECOVERY, &RecoveryMask);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a - Failed to get permission for recovery %r\n", __FUNCTION__, Status));
         }
@@ -388,7 +389,7 @@ GetDfciParameters (
         // the Https Cert, or a NULL string. For this simple test, to be valid, they need to
         // have a size of 2 or better.
 
-        Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_RECOVERY_URL,
+        Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY_URL,
                                   DFCI_SETTING_TYPE_STRING,
                                   (VOID **) &mDfciUrl,
                                   &mDfciUrlSize);
@@ -398,7 +399,7 @@ GetDfciParameters (
         }
 
 
-        Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_HTTPS_CERT,
+        Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__DFCI_HTTPS_CERT,
                                   DFCI_SETTING_TYPE_CERT,
                                   (VOID **) &mDfciNetworkRequest.HttpsCert,
                                   &mDfciNetworkRequest.HttpsCertSize);
@@ -407,7 +408,7 @@ GetDfciParameters (
             goto NO_HTTP_RECOVERY;
         }
 
-        Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_TENANT_ID,
+        Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__DFCI_TENANT_ID,
                                   DFCI_SETTING_TYPE_STRING,
                                   (VOID **) &mDfciNetworkRequest.TenantId,
                                   &mDfciNetworkRequest.TenantIdSize);
@@ -416,7 +417,7 @@ GetDfciParameters (
             goto NO_HTTP_RECOVERY;
         }
 
-        Status = DfciGetASetting (DFCI_SETTING_ID__DFCI_REGISTRATION_ID,
+        Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__DFCI_REGISTRATION_ID,
                                   DFCI_SETTING_TYPE_STRING,
                                   (VOID **) &mDfciNetworkRequest.RegistrationId,
                                   &mDfciNetworkRequest.RegistrationIdSize);
@@ -460,7 +461,7 @@ GetDfciParameters (
 
 NO_HTTP_RECOVERY:
 
-        Status = DfciGetASetting (DFCI_SETTING_ID__MDM_FRIENDLY_NAME,
+        Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__MDM_FRIENDLY_NAME,
                                   DFCI_SETTING_TYPE_STRING,
                                   (VOID **) &Name,
                                   &NameSize);
@@ -470,7 +471,7 @@ NO_HTTP_RECOVERY:
             DEBUG((DEBUG_INFO, "Dfci MDM.FriendlyName is enabled\n"));
         }
 
-        Status = DfciGetASetting (DFCI_SETTING_ID__MDM_TENANT_NAME,
+        Status = DfciGetASetting (DFCI_PRIVATE_SETTING_ID__MDM_TENANT_NAME,
                                   DFCI_SETTING_TYPE_STRING,
                                   (VOID **) &Name,
                                   &NameSize);

@@ -16,6 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseMemoryLib.h>
 
 #include <Settings/DfciSettings.h>
+#include <Settings/DfciPrivateSettings.h>
 
 #define MAX_TRIES_FOR_RECOVERY (3)
 
@@ -143,7 +144,7 @@ GetRecoveryPacket(
     goto CLEANUP;
   }
 
-  Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_SETTING_ID__DFCI_RECOVERY, &Mask);
+  Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY, &Mask);
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - Failed to get permission for recovery %r\n", __FUNCTION__, Status));
@@ -152,7 +153,7 @@ GetRecoveryPacket(
 
   // If DFCI_RECOVERY_MASK is 0, this is a DFCI recovery request.  Get permissions for ZTD_RECOVERY
   if (Mask == 0) {
-    Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_SETTING_ID__ZTD_RECOVERY, &Mask);
+    Status = mDfciSettingsPermissionProtocol->GetPermission(mDfciSettingsPermissionProtocol, DFCI_PRIVATE_SETTING_ID__ZTD_RECOVERY, &Mask);
     if (EFI_ERROR(Status))
     {
       DEBUG((DEBUG_ERROR, "%a - Failed to get permission for Dfci recovery %r\n", __FUNCTION__, Status));

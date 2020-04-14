@@ -47,7 +47,7 @@ An IT administrator leverages the Intune console to remove devices from Autopilo
 ### Recovery
 
 Recovery is essential because UEFI misconfiguration may prevent booting to an operating system, for example if USB and network boot are disabled and the hard disk becomes corrupted.  When a device is enrolled, UEFI must provide alternative mechanisms for the physically-present user to place packets in the DFCI request mailboxes - this MUST NOT be blocked by a BIOS password or similar.  Note that when a device is not enrolled, a BIOS password _should_ prevent access to DFCI enrollment by a physically-present user until they have entered the correct credential.
-The APS keeps track of the enrollment state of devices.  When an administrator removes a device from Autopilot, APS creates signed, device-specific un-enrollment packets and makes them available via a REST endpoint at DFCI_SETTING_ID__DFCI_RECOVERY_URL.  These packets should delete the Intune and APS certificates and provide the local user with access to all settings (they should no longer be greyed out in BIOS menus).  Note that retirement does not restore visible settings to their default values.
+The APS keeps track of the enrollment state of devices.  When an administrator removes a device from Autopilot, APS creates signed, device-specific un-enrollment packets and makes them available via a REST endpoint at DFCI_PRIVATE_SETTING_ID__DFCI_RECOVERY_URL.  These packets should delete the Intune and APS certificates and provide the local user with access to all settings (they should no longer be greyed out in BIOS menus).  Note that retirement does not restore visible settings to their default values.
 
 ![DFCI Recovery](collateral/DFCI-Recovery_mu.png)
 
@@ -92,7 +92,7 @@ A user could then prevent enrollment by configuring a BIOS password or enroll th
 
 ### Online Recovery via the Autopilot Service
 
-The Recovery REST interface includes machine identities.  Before transferring machine identities, the server's authenticity should be verified against DFCI_SETTING_ID__DFCI_HTTPS_CERT.  After authenticating the server, the network traffic, including machine identities, are kept private by HTTPS encryption.  But wait, there's more... the server certificate is updated regularly, so UEFI must first ensure it has the up-to-date DFCI_SETTING_ID__DFCI_HTTPS_CERT.  DFCI_SETTING_ID__DFCI_BOOTSTRAP_URL provides a REST API to download a signed settings packet containing DFCI_SETTING_ID__DFCI_HTTPS_CERT.  For this workflow, the server is not authenticated, but the payload will be authenticated prior to consumption.
+The Recovery REST interface includes machine identities.  Before transferring machine identities, the server's authenticity should be verified against DFCI_PRIVATE_SETTING_ID__DFCI_HTTPS_CERT.  After authenticating the server, the network traffic, including machine identities, are kept private by HTTPS encryption.  But wait, there's more... the server certificate is updated regularly, so UEFI must first ensure it has the up-to-date DFCI_PRIVATE_SETTING_ID__DFCI_HTTPS_CERT.  DFCI_PRIVATE_SETTING_ID__DFCI_BOOTSTRAP_URL provides a REST API to download a signed settings packet containing DFCI_PRIVATE_SETTING_ID__DFCI_HTTPS_CERT.  For this workflow, the server is not authenticated, but the payload will be authenticated prior to consumption.
 
 ### Unknown Certificate Enrollment
 
