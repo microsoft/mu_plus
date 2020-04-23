@@ -19,8 +19,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define DFCI_SETTINGS_TENANT_ID_NAME        L"DfciTenantId"
 #define DFCI_SETTINGS_FRIENDLY_NAME         L"MdmFriendlyName"
 #define DFCI_SETTINGS_TENANT_NAME           L"MdmTenantName"
-
 #define DFCI_SETTINGS_WPBT_NAME             L"WPBTen"
+#define DFCI_SETTINGS_ASSET_TAG_NAME        L"AssetTag"
+
 #define DFCI_SETTINGS_ATTRIBUTES (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE )
 
 #define DFCI_SETTINGS_GUID  \

@@ -177,6 +177,8 @@
   ## FFS filename to find the DFCI Timer BMP file,
   # {717f2543-3bb6-4f9d-a6fc-58e8a78dbd27}
   gDfciPkgTokenSpaceGuid.PcdDfciTimerFile |{ 0x43, 0x25, 0x7f, 0x71, 0xb6, 0x3b, 0x4f, 0x9d, 0xa6, 0xfc, 0x58, 0xe8, 0xa7, 0x8d, 0xbd, 0x27 }|VOID*|0x4000000C
+  gDfciPkgTokenSpaceGuid.PcdDfciAssetTagChars|"0123456789-.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"|VOID*|0x40000017
+  gDfciPkgTokenSpaceGuid.PcdDfciAssetTagLen | 36 | UINT16 | 0x40000018
 
 [PcdsDynamic, PcdsDynamicEx]
   ## Setup UI is running in reduced functionality mode (ie password skipped)

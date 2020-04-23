@@ -1,0 +1,55 @@
+## @file
+# DfciAssetTagSetting.inf
+#
+#  Library Instance for DXE to support getting, setting, and defaults for the Dfci3.AssetTag.String setting.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = DfciAssetTagSettingLib
+  FILE_GUID                      = 2a5f223b-9058-49cb-9eb4-ae1a0a876c12
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DfciAssetTagSettingLib | DXE_DRIVER
+  CONSTRUCTOR                    = DfciAssetTagSettingConstructor
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  DfciAssetTagSetting.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  MemoryAllocationLib
+  BaseLib
+  BaseMemoryLib
+  UefiLib
+  PcdLib
+
+[Guids]
+  gDfciSettingsGuid
+
+[Protocols]
+  gDfciSettingsProviderSupportProtocolGuid
+
+[Pcd]
+  gDfciPkgTokenSpaceGuid.PcdDfciAssetTagChars
+  gDfciPkgTokenSpaceGuid.PcdDfciAssetTagLen
+  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider
+
+[Depex]
+  gEfiVariableWriteArchProtocolGuid AND
+  gEfiVariableArchProtocolGuid

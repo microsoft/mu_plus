@@ -64,4 +64,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 #define DFCI_STD_SETTING_ID_V3_ENABLE_WPBT             "Dfci3.OnboardWPBT.Enable"
 
+//
+// Set the device ASSET TAG.
+//
+#define DFCI_STD_SETTING_ID_V3_ASSET_TAG                "Dfci3.AssetTag.String"
 #endif //  __DFCI_SETTINGS_H__
