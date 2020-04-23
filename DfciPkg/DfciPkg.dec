@@ -90,6 +90,10 @@
   # {74f90a71-cfea-4842-8a45-f79823459d4a}
   gDfciApplyIdentityProtocolGuid = { 0x74f90a71, 0xcfea, 0x4842, {0x8a, 0x45, 0xf7, 0x98, 0x23, 0x45, 0x9d, 0x4a} }
 
+  ## DFCI WBPT Enabled Protocol
+  # {1e7367f0-e09a-47a4-afe6-831ecefef9f4}
+  gDfciWBPTEnabledProtocolGuid = { 0x1e7367f0, 0xe09a, 0x47a4, {0xaf, 0xe6, 0x83, 0x1e, 0xce, 0xfe, 0xf9, 0xf4 } }
+
 [Guids]
   ## DFCI Package token space guid
   #  Include/Guid/DfciPkgTokenSpace.h

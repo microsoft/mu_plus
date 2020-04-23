@@ -148,12 +148,14 @@
   DfciPkg/Library/DfciXmlIdentitySchemaSupportLib/DfciXmlIdentitySchemaSupportLib.inf
   DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
   DfciPkg/Library/DfciGroupLibNull/DfciGroups.inf
+  DfciPkg/Library/DfciWPBTSettingLib/DfciWPBTSetting.inf
   DfciPkg/SettingsManager/SettingsManagerDxe.inf {
         #Platform should add all it settings libs here
   <LibraryClasses>
         NULL|DfciPkg/Library/DfciPasswordProvider/DfciPasswordProvider.inf
         NULL|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
         NULL|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
+        NULL|DfciPkg/Library/DfciWPBTSettingLib/DfciWPBTSetting.inf
         DfciSettingPermissionLib|DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   <PcdsFeatureFlag>
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE

@@ -1,0 +1,54 @@
+## @file
+# DfciWPBTSettingLib.inf
+#
+#  Library to support one method of WPBT control
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = DfciWPBTSettingLib
+  FILE_GUID                      = 11f20aad-4c46-463e-86cf-14629337ccd9
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = DfciWPBTSettingLib | DXE_DRIVER
+  CONSTRUCTOR                    = DfciWPBTSettingConstructor
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  DfciWPBTSetting.c
+
+[Packages]
+  DfciPkg/DfciPkg.dec
+  MdePkg/MdePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  MemoryAllocationLib
+  BaseLib
+  BaseMemoryLib
+  UefiLib
+  PcdLib
+
+[Guids]
+  gDfciSettingsGuid
+
+[Protocols]
+  gDfciWBPTEnabledProtocolGuid
+  gDfciSettingsProviderSupportProtocolGuid
+
+[Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider
+
+[Depex]
+  gEfiVariableWriteArchProtocolGuid AND
+  gEfiVariableArchProtocolGuid
