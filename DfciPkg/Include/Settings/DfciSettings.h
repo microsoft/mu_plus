@@ -54,4 +54,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 #define DFCI_STD_SETTING_ID__ENABLE_NETWORK             "Dfci.BootOnboardNetwork.Enable"
 
+//
+// Disable simultaneous multi threading support.
+//
+#define DFCI_STD_SETTING_ID_V3_ENABLE_SMT              "Dfci3.ProcessorSMT.Enable"
+
 #endif //  __DFCI_SETTINGS_H__
