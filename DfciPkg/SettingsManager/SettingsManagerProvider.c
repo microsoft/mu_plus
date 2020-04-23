@@ -27,9 +27,6 @@ ProviderTypeAsAscii(DFCI_SETTING_TYPE Type)
     case DFCI_SETTING_TYPE_ENABLE:
       return "ENABLE/DISABLE TYPE";
 
-    case DFCI_SETTING_TYPE_ASSETTAG:
-      return "ASSET TAG TYPE";
-
     case DFCI_SETTING_TYPE_SECUREBOOTKEYENUM:
       return "SECURE BOOT KEY ENUM TYPE";
 
@@ -195,13 +192,6 @@ SetProviderValueFromAscii(
 
     SetValue = &v;
     ValueSize = sizeof(v);
-    break;
-
-  /* ASSET Tag Type (Ascii String)*/
-  case DFCI_SETTING_TYPE_ASSETTAG:
-    SetValue = &Value;
-    ValueSize = AsciiStrSize(Value);
-    DEBUG((DEBUG_INFO, "Setting Asset Tag to %a\n", Value));
     break;
 
   case DFCI_SETTING_TYPE_SECUREBOOTKEYENUM:
@@ -412,52 +402,6 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       }
       else {
         AsciiStrCpyS(Value, ENABLED_STRING_SIZE, "Disabled");
-      }
-      break;
-
-    case DFCI_SETTING_TYPE_ASSETTAG:
-      ValueSize = 0;
-      if (Current)
-      {
-        Status = Provider->GetSettingValue(Provider, &ValueSize, &v);
-      }
-      else
-      {
-        Status = Provider->GetDefaultValue(Provider, &ValueSize, &v);
-      }
-
-      if (EFI_BUFFER_TOO_SMALL != Status)
-      {
-        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
-        break;
-      }
-
-      if (ValueSize > ASSET_TAG_STRING_MAX_SIZE)
-      {
-        DEBUG((DEBUG_ERROR, "Value too large - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
-        break;
-      }
-
-      Value = AllocateZeroPool (ValueSize+1);
-      if (Value == NULL)
-      {
-        DEBUG((DEBUG_ERROR, "Out of resources - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
-        break;
-      }
-      if (Current)
-      {
-        Status = Provider->GetSettingValue(Provider, &ValueSize, Value);
-      }
-      else
-      {
-        Status = Provider->GetDefaultValue(Provider, &ValueSize, Value);
-      }
-
-      if (EFI_ERROR(Status))
-      {
-        DEBUG((DEBUG_ERROR, "Failed - GetSettingValue for ID %a Status = %r\n", Provider->Id, Status));
-        FreePool (Value);
-        break;
       }
       break;
 

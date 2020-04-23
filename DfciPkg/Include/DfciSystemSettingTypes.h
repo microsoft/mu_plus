@@ -56,14 +56,13 @@ typedef UINT32        DFCI_SETTING_ID_V1_ENUM;    // Only used for V1 support an
 //  memory allocation requirements.
 //
 typedef enum {
-  DFCI_SETTING_TYPE_ENABLE,
-  DFCI_SETTING_TYPE_ASSETTAG,
-  DFCI_SETTING_TYPE_SECUREBOOTKEYENUM,
-  DFCI_SETTING_TYPE_PASSWORD,
-  DFCI_SETTING_TYPE_USBPORTENUM,
-  DFCI_SETTING_TYPE_STRING,             // CHAR8 string
-  DFCI_SETTING_TYPE_BINARY,             // Opaque Binary Data on read/write, b64data in XML
-  DFCI_SETTING_TYPE_CERT                // Opaque Binary Data on read/write, Thumbprint in XML
+  DFCI_SETTING_TYPE_ENABLE = 0,
+  DFCI_SETTING_TYPE_SECUREBOOTKEYENUM = 2,
+  DFCI_SETTING_TYPE_PASSWORD = 3,
+  DFCI_SETTING_TYPE_USBPORTENUM = 4,
+  DFCI_SETTING_TYPE_STRING = 5,             // CHAR8 string
+  DFCI_SETTING_TYPE_BINARY = 6,             // Opaque Binary Data on read/write, b64data in XML
+  DFCI_SETTING_TYPE_CERT = 7                // Opaque Binary Data on read/write, Thumbprint in XML
 } DFCI_SETTING_TYPE;
 
 #define ENABLE_FALSE        0
