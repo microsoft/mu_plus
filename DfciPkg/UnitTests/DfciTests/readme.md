@@ -45,7 +45,9 @@ The HOST system requires the following software (NOTE - There are dependencies o
 3. Python 3.7.4 x86-64 (the version tested), available here [Python 3.7.4](https://www.python.org/downloads/release/python-374/).
 4. python -m pip install pip --upgrade
 5. python -m pip install robotframework
-6. python -m pop install edk2-pytool-library
+   NOTE: Dfci now requires RobotFramework 3.2.  Until 3.2 is the default, install using
+   pip install --pre --upgrade robotframework
+6. python -m pip install edk2-pytool-library
 
 Copy the DfciTests directory, including all of the contents of the subdirectories, onto the HOST system.
 

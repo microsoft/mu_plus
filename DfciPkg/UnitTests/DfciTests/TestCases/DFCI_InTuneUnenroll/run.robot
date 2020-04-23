@@ -11,6 +11,7 @@ Library         Process
 
 Library         Support${/}Python${/}DFCI_SupportLib.py
 Library         Support${/}Python${/}DependencyLib.py
+Library         Support${/}Python${/}SettingsXMLLib.py
 Library         Remote  http://${IP_OF_DUT}:${RF_PORT}
 
 #Import the Generic Shared keywords
@@ -147,6 +148,35 @@ Get the current DFCI Settings after Unenroll
 
     ${rc}=   Get Thumbprint Element    ${currentIdxmlFile}    User
     Should Be True    '${rc}' == 'Cert not installed'
+
+Verify Settings Returned To Defaults
+    ${nameofTest}=              Set Variable   VerifyDefaults
+    ${currentSettingXmlFile}=   Set Variable   ${TOOL_DATA_OUT_DIR}${/}${Testname}_CurrentSettings.xml
+
+    @{RTD_CHECK01}=   Create List   Dfci.HttpsCert.Binary              ${EMPTY}
+    @{RTD_CHECK02}=   Create List   Dfci.RecoveryBootstrapUrl.String   ${EMPTY}
+    @{RTD_CHECK03}=   Create List   Dfci.RecoveryUrl.String            ${EMPTY}
+    @{RTD_CHECK04}=   Create List   Dfci.RegistrationId.String         ${EMPTY}
+    @{RTD_CHECK05}=   Create List   Dfci.TenantId.String               ${EMPTY}
+    @{RTD_CHECK06}=   Create List   Dfci3.AssetTag.String              ${EMPTY}
+    @{RTD_CHECK07}=   Create List   Dfci3.OnboardWPBT.Enable           Enabled
+    @{RTD_CHECK08}=   Create List   MDM.FriendlyName.String            ${EMPTY}
+    @{RTD_CHECK09}=   Create List   MDM.TenantName.String              ${EMPTY}
+
+    @{RTD_CHECKS}=    Create List   ${RTD_CHECK01}
+...                                 ${RTD_CHECK02}
+...                                 ${RTD_CHECK03}
+...                                 ${RTD_CHECK04}
+...                                 ${RTD_CHECK05}
+...                                 ${RTD_CHECK06}
+...                                 ${RTD_CHECK07}
+...                                 ${RTD_CHECK08}
+...                                 ${RTD_CHECK09}
+
+    Get and Print Current Settings     ${currentSettingXmlFile}
+
+    ${rc}=    Validate Current Settings    ${Testname}    ${currentSettingXmlFile}    ${RTD_CHECKS}
+    Should Be True    ${rc}
 
 
 Clean Up Mailboxes

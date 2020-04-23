@@ -67,5 +67,11 @@
             <PMask>128</PMask>
             <DMask>128</DMask>
         </Permission>
+        <Permission>
+            <Id>Dfci3.AssetTag.String</Id>
+            <PMask>192</PMask>
+            <DMask>64</DMask>
+        </Permission>
+
   </Permissions>
 </PermissionsPacket>

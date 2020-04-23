@@ -151,6 +151,12 @@ class DFCI_SupportLib(object):
             return False
 
         print ("Result Value for Id (%s): %s" % (str(id), r.text))
+
+        if (r.text is None):
+            if valuestring == '':
+                return True
+            else:
+                return False
         return r.text.strip() == valuestring.strip()
 
     def get_current_permission_value(self, resultfile, id):
@@ -314,6 +320,54 @@ class DFCI_SupportLib(object):
         #done with loop
         return rc
 
+    #
+    # Check list list of settings results
+    #
+    def check_setting_status_by_dictionary(self, resultfile, settingdict):
+        t = -1
+        found = False
+        xmlstring = ""
+        a = open(resultfile, "r")
+
+        #find the start of the xml string and then copy all lines to xmlstring variable
+        for l in a.readlines():
+            if(found):
+                xmlstring += l
+            else:
+                if l.lstrip().startswith("<?xml"):
+                    xmlstring = l
+                    found = True
+        a.close()
+
+        if (len(xmlstring) == 0) or (not found):
+            print ("Result XML not found")
+            return False
+
+        #make an element tree from xml string
+        r = None
+        root = ET.fromstring(xmlstring)
+        rc = True
+        for e in root.findall("./Settings/SettingResult"):
+            i = e.find("Id")
+            r = e.find("Result")
+
+            if(r is None):
+                print("Failed to find a result node for id (%s)" % i.text.strip())
+                return False
+
+            index = str(i.text.strip())
+            result = int(r.text.strip(), base=0)
+            print ("Result Status for Id (%s): %s" % (str(i.text.strip()), r.text))
+            if index in settingdict:
+                if result != int(settingdict[index], base=0):
+                    print("Error.  Status Code for id (%s) didn't match expected" % i.text.strip())
+                    rc = False;
+            else:
+                print("Error.  Index %s not in dictionary" % i.text.strip())
+                rc - False;
+        #done with loop
+        return rc
+
     def extract_payload_from_current(self, resultfile, payloadfile):
         try:
             tree = ET.parse(resultfile)
@@ -396,13 +450,16 @@ class DFCI_SupportLib(object):
         rslt.Print()
         return rslt.SessionId
 
-    def get_status_and_sessionid_from_settings_results(self, resultfile):
+    def get_status_and_sessionid_from_settings_results(self, resultfile, checktype):
         f = open(resultfile, 'rb')
         rslt = SecureSettingsResultVariable(f)
         rslt.Print()
         f.close()
+        if (checktype != "FULL") and (checktype != "BASIC"):
+            print('checktype invalid')
+            return  0x8000000000000007, 0  # EFI_DEVICE_ERROR
         RsltRc = rslt.Status
-        if RsltRc == 0:
+        if RsltRc == 0 and checktype == "FULL":
             try:
                 tree = ET.fromstring(rslt.Payload)
                 for elem in tree.findall('./Settings/SettingResult'):

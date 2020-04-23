@@ -135,7 +135,7 @@ Restart System to Apply Bad Settings
 Verify User Update System Settings Results
     ${nameofTest}=   Set Variable    UserSettings
 
-    Validate Settings Status    ${nameofTest}  2  ${STATUS_SECURITY_VIOLATION}
+    Validate Settings Status    ${nameofTest}  2  ${STATUS_SECURITY_VIOLATION}  FULL
 
 
 Get the ending DFCI Settings

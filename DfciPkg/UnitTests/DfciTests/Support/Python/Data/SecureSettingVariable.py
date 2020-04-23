@@ -33,7 +33,7 @@ class SecureSettingsApplyVariable(object):
             HdrVersion != self.VERSION_V2):
             raise Exception("Invalid version specified")
 
-        print ("MRT Processing Version %s" % HdrVersion)
+        print ("Processing Version %s" % HdrVersion)
         # Common members
         self.HeaderSignature = None
         self.HeaderVersion = 0

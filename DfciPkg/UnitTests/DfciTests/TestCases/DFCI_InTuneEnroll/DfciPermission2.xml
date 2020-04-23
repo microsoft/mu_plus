@@ -44,5 +44,9 @@
             <Id>MDM.TenantName.String</Id>
             <PMask>64</PMask>
         </Permission>
+        <Permission>
+            <Id>Dfci3.AssetTag.String</Id>
+            <PMask>64</PMask>
+        </Permission>
     </Permissions>
 </PermissionsPacket>

@@ -35,5 +35,17 @@
             <Id>Dfci.BootExternalMedia.Enable</Id>
             <Value>Disabled</Value>
         </Setting>
+        <Setting>
+            <Id>Dfci3.OnboardWPBT.Enable</Id>
+            <Value>Disabled</Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci3.ProcessorSMT.Enable</Id>
+            <Value>Disabled</Value>
+        </Setting>
+        <Setting>
+            <Id>Dfci3.AssetTag.String</Id>
+            <Value>DFCI.LAB.001234</Value>
+        </Setting>
     </Settings>
 </SettingsPacket>

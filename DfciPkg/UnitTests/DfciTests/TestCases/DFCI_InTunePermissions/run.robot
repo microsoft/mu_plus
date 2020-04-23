@@ -132,50 +132,50 @@ Process TestCases
 # restart the system to apply the permissions, and then validate that the
 # permissions in the checklist are correct.
 #
-    :FOR    ${Testname}    ${Sets}    ${Checks}    ${PMask}    ${DMask}    ${CheckPMask}    ${CheckDMask}    IN    @{ATest}
-    \    ${newPermissionsXmlFile}=        Set Variable   ${TOOL_DATA_OUT_DIR}${/}${Testname}_NewPermissions.xml
-    \    ${currentPermissionsXmlFile}=    Set Variable   ${TOOL_DATA_OUT_DIR}${/}${Testname}_CurrentPermissions.xml
-    \    #
-    \    #
-    \    Log To Console    .
-    \    Log To Console    Starting test ${Testname}
-    \    #
-    \    # Create the permissions packet
-    \    #
-    \    Create Permissions XML    ${newPermissionsXmlFile}    2    2    ${PMask}    ${DMask}    ${Sets}
-    \    File should Exist    ${newPermissionsXmlFile}
-    \    #
-    \    #Enable the serial log if the platform supports it
-    \    #
-    \    Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}${Testname}_ApplyPermissions.log
-    \    #
-    \    # Send the user(2) permissions packet to the system under test
-    \    #
-    \    Process Permission Packet     ${Testname}  2  ${OLD_USER_PFX}  ${newPermissionsXmlFile}  @{TARGET_PARAMETERS}
-    \    #
-    \    # Restart the system to apply the permissions
-    \    #
-    \    Log To Console    Restarting the system under test
-    \    Reboot System And Wait For System Online
-    \    #
-    \    #
-    \    Get and Print Current Permissions     ${currentPermissionsXmlFile}
-    \    #
-    \    # Ensure all of the permissions set, were applied correctly
-    \    #
-    \    ${xmlPermissionsRslt}=    Validate Permission Status    ${Testname}  2  ${STATUS_SUCCESS}
-    \    #
-    \    # Validate the individual settings after the reboot
-    \    #
-    \    ${rc}=   Validate Current Permission Defaults    ${Testname}    ${currentPermissionsXmlFile}    ${CheckPMask}    ${CheckDMask}
-    \    Should Be True    ${rc}
-    \    #
-    \    ${rc}=    Validate Current Permissions    ${Testname}    ${currentPermissionsXmlFile}    ${Checks}
-    \    Should Be True    ${rc}
-    \    #
-    \    ${rc}    Check All Permission Status    ${xmlPermissionsRslt}    ${STATUS_SUCCESS}
-    \    Should Be True    ${rc}
-
+    FOR    ${Testname}    ${Sets}    ${Checks}    ${PMask}    ${DMask}    ${CheckPMask}    ${CheckDMask}    IN    @{ATest}
+        ${newPermissionsXmlFile}=        Set Variable   ${TOOL_DATA_OUT_DIR}${/}${Testname}_NewPermissions.xml
+        ${currentPermissionsXmlFile}=    Set Variable   ${TOOL_DATA_OUT_DIR}${/}${Testname}_CurrentPermissions.xml
+        #
+        #
+        Log To Console    .
+        Log To Console    Starting test ${Testname}
+        #
+        # Create the permissions packet
+        #
+        Create Permissions XML    ${newPermissionsXmlFile}    2    2    ${PMask}    ${DMask}    ${Sets}
+        File should Exist    ${newPermissionsXmlFile}
+        #
+        #Enable the serial log if the platform supports it
+        #
+        Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}${Testname}_ApplyPermissions.log
+        #
+        # Send the user(2) permissions packet to the system under test
+        #
+        Process Permission Packet     ${Testname}  2  ${OLD_USER_PFX}  ${newPermissionsXmlFile}  @{TARGET_PARAMETERS}
+        #
+        # Restart the system to apply the permissions
+        #
+        Log To Console    Restarting the system under test
+        Reboot System And Wait For System Online
+        #
+        #
+        Get and Print Current Permissions     ${currentPermissionsXmlFile}
+        #
+        # Ensure all of the permissions set, were applied correctly
+        #
+        ${xmlPermissionsRslt}=    Validate Permission Status    ${Testname}  2  ${STATUS_SUCCESS}
+        #
+        # Validate the individual settings after the reboot
+        #
+        ${rc}=   Validate Current Permission Defaults    ${Testname}    ${currentPermissionsXmlFile}    ${CheckPMask}    ${CheckDMask}
+        Should Be True    ${rc}
+        #
+        ${rc}=    Validate Current Permissions    ${Testname}    ${currentPermissionsXmlFile}    ${Checks}
+        Should Be True    ${rc}
+        #
+        ${rc}    Check All Permission Status    ${xmlPermissionsRslt}    ${STATUS_SUCCESS}
+        Should Be True    ${rc}
+    END
 
 
 Get The DFCI Settings
@@ -248,8 +248,9 @@ Process Complete Testcase List
 
     Log To Console    Running test
 
-    :FOR    ${ATest}    IN    @{MASTER_TEST}
-    \    Process TestCases    @{ATest}
+    FOR    ${ATest}    IN    @{MASTER_TEST}
+        Process TestCases    @{ATest}
+    END
 
 
 Get the ending DFCI Settings

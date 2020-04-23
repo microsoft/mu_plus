@@ -177,7 +177,7 @@ Restart System to Apply Enrollment
 
     Log To Console    Restart
     Log To Console    If test Ztd cert is not installed, you will be prompted
-    Log To Console    for a the following thumbprint:
+    Log To Console    for the last two characters of the following thumbprint:
     Log To Console    Enrolling with ${DDS_CA_THUMBPRINT}
 
     Reboot System And Wait For System Online
@@ -214,14 +214,14 @@ Verify User Enrolled System Permission Results
 Verify Owner Enrolled System Settings Results
     ${nameofTest}=   Set Variable    OwnerSettings
 
-    ${xmlPermissionsRslt}=   Validate Settings Status    ${nameofTest}    1    ${STATUS_SUCCESS}
+    ${xmlPermissionsRslt}=   Validate Settings Status    ${nameofTest}    1    ${STATUS_SUCCESS}  FULL
     ${rc}    Check All Setting Status    ${xmlPermissionsRslt}    ${STATUS_SUCCESS}
     Should Be True    ${rc}
 
 Verify User Enrolled System Settings Results
     ${nameofTest}=   Set Variable    UserSettings
 
-    ${xmlPermissionsRslt}=   Validate Settings Status    ${nameofTest}    2    ${STATUS_SUCCESS}
+    ${xmlPermissionsRslt}=   Validate Settings Status    ${nameofTest}    2    ${STATUS_SUCCESS}  FULL
     ${rc}    Check All Setting Status    ${xmlPermissionsRslt}    ${STATUS_SUCCESS}
     Should Be True    ${rc}
 
@@ -253,7 +253,7 @@ Restart System to Verify Device Setting
     Log To Console    Restarting to firmware
     Log To Console    Check the device settings to insure that all
     Log To Console    of the camera devices, and radio devices, are
-    Log To Console    off and grayed out.  Other devices should be
-    Log To Console    available for the user to control..
+    Log To Console    off and grayed out. Other devices should be
+    Log To Console    available for the user to control.
 
     Reboot System To Firmware And Wait For System Online

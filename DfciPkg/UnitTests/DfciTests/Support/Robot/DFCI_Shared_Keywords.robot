@@ -123,9 +123,9 @@ Verify Provision Response
     [Arguments]     ${pktfile}  ${ResponseFile}  ${ExpectedRc}
     @{rc2}=     get status and sessionid from identity results  ${ResponseFile}
     ${id2}=     get sessionid from identity packet  ${pktfile}
-    ${rc2zstring}=      get uefistatus string    @{rc2}[0]
+    ${rc2zstring}=      get uefistatus string    ${rc2}[0]
     ${ExpectedString}=  get uefistatus string    ${ExpectedRc}
-    Should Be Equal As Integers     @{rc2}[1]    ${id2}
+    Should Be Equal As Integers     ${rc2}[1]    ${id2}
     Should Be Equal As strings      ${rc2zstring}   ${ExpectedString}
 
 
@@ -133,19 +133,19 @@ Verify Permission Response
     [Arguments]     ${pktfile}  ${ResponseFile}  ${ExpectedRc}
     @{rc2}=     get status and sessionid from permission results  ${ResponseFile}
     ${id2}=     get sessionid from permission packet  ${pktfile}
-    ${rc2zstring}=      get uefistatus string    @{rc2}[0]
+    ${rc2zstring}=      get uefistatus string    ${rc2}[0]
     ${ExpectedString}=  get uefistatus string    ${ExpectedRc}
-    Should Be Equal As Integers     @{rc2}[1]   ${id2}
+    Should Be Equal As Integers     ${rc2}[1]   ${id2}
     Should Be Equal As strings      ${rc2zstring}   ${ExpectedString}
 
 
 Verify Settings Response
-    [Arguments]     ${pktfile}  ${ResponseFile}  ${ExpectedRc}
-    @{rc2}=     get status and sessionid from settings results  ${ResponseFile}
+    [Arguments]     ${pktfile}  ${ResponseFile}  ${ExpectedRc}  ${checktype}
+    @{rc2}=     get status and sessionid from settings results  ${ResponseFile}  ${checktype}
     ${id2}=     get sessionid from settings packet  ${pktfile}
-    ${rc2zstring}=      get uefistatus string    @{rc2}[0]
+    ${rc2zstring}=      get uefistatus string    ${rc2}[0]
     ${ExpectedString}=  get uefistatus string    ${ExpectedRc}
-    Should Be Equal As Integers     @{rc2}[1]   ${id2}
+    Should Be Equal As Integers     ${rc2}[1]   ${id2}
     Should Be Equal As strings      ${rc2zstring}   ${ExpectedString}
 
 
@@ -191,29 +191,32 @@ Get and Print Device Identifier
 
 Wait For System Online
     [Arguments]     ${retries}
-    :FOR    ${index}    IN RANGE    ${retries}
-    \   ${result} =     Is Device Online    ${IP_OF_DUT}
-    \   Exit For Loop If    '${result}' == 'True'
-    \   Sleep   5sec    "Waiting for system to come back Online"
+    FOR    ${index}    IN RANGE    ${retries}
+       ${result} =     Is Device Online    ${IP_OF_DUT}
+       Exit For Loop If    '${result}' == 'True'
+       Sleep   5sec    "Waiting for system to come back Online"
+    END
     Run Keyword Unless  ${result}   Log Failed Ping ${IP_OF_DUT} ${retries} times   ERROR
     Should Be True  ${result}
 
 Wait For System Offline
     [Arguments]     ${retries}
-    :FOR    ${index}    IN RANGE    ${retries}
-    \   ${result} =     Is Device Online    ${IP_OF_DUT}
-    \   Exit For Loop If    '${result}' == 'False'
-    \   Sleep   5sec    "Waiting for system to go offline"
+    FOR    ${index}    IN RANGE    ${retries}
+       ${result} =     Is Device Online    ${IP_OF_DUT}
+       Exit For Loop If    '${result}' == 'False'
+       Sleep   5sec    "Waiting for system to go offline"
+    END
     Run Keyword If  ${result}   Log Ping ${IP_OF_DUT} ${retries} times  ERROR
     Should Not Be True  ${result}
 
 Wait For Remote Robot
     [Arguments]     ${timeinseconds}
-    :FOR    ${retries}  IN RANGE    ${timeinseconds}
-    \   Log To Console      Waiting for Robot To Ack ${retries}
-    \   ${status}   ${message}  Run Keyword And Ignore Error    Remote Ack
-    \   Return From Keyword If      '${status}' == 'PASS'   ${message}
-    \   Sleep       1
+    FOR    ${retries}  IN RANGE    ${timeinseconds}
+       Log To Console      Waiting for Robot To Ack ${retries}
+       ${status}   ${message}  Run Keyword And Ignore Error    Remote Ack
+       Return From Keyword If      '${status}' == 'PASS'   ${message}
+       Sleep       1
+    END
     Return From Keyword     ${False}
 
 Reboot System And Wait For System Online
@@ -236,35 +239,34 @@ Reboot System To Firmware And Wait For System Online
 Verify No Mailboxes Have Data
 
     @{rcid}=    GetUefiVariable    ${IDENTITY_APPLY}  ${IDENTITY_GUID}  ${None}
-    Run Keyword If   @{rcid}[0] != ${STATUS_VARIABLE_NOT_FOUND}
+    Run Keyword If   ${rcid}[0] != ${STATUS_VARIABLE_NOT_FOUND}
     ...    SetUefiVariable    ${IDENTITY_APPLY}  ${IDENTITY_GUID}
 
     @{rcid2}=    GetUefiVariable    ${IDENTITY2_APPLY}  ${IDENTITY_GUID}  ${None}
-    Run Keyword If   @{rcid2}[0] != ${STATUS_VARIABLE_NOT_FOUND}
+    Run Keyword If   ${rcid2}[0] != ${STATUS_VARIABLE_NOT_FOUND}
     ...    SetUefiVariable    ${IDENTITY2_APPLY}  ${IDENTITY_GUID}
 
     @{rcperm}=    GetUefiVariable    ${PERMISSION_APPLY}  ${PERMISSION_GUID}  ${None}
-    Run Keyword If   @{rcperm}[0] != ${STATUS_VARIABLE_NOT_FOUND}
+    Run Keyword If   ${rcperm}[0] != ${STATUS_VARIABLE_NOT_FOUND}
     ...    SetUefiVariable    ${PERMISSION_APPLY}  ${IDENTITY_GUID}
 
     @{rcperm2}=    GetUefiVariable    ${PERMISSION2_APPLY}  ${PERMISSION_GUID}  ${None}
-    Run Keyword If   @{rcperm2}[0] != ${STATUS_VARIABLE_NOT_FOUND}
+    Run Keyword If   ${rcperm2}[0] != ${STATUS_VARIABLE_NOT_FOUND}
     ...    SetUefiVariable    ${PERMISSION2_APPLY}  ${IDENTITY_GUID}
 
     @{rcset}=    GetUefiVariable    ${SETTINGS_APPLY}  ${SETTINGS_GUID}  ${None}
-    Run Keyword If   @{rcset}[0] != ${STATUS_VARIABLE_NOT_FOUND}
+    Run Keyword If   ${rcset}[0] != ${STATUS_VARIABLE_NOT_FOUND}
     ...    SetUefiVariable    ${SETTINGS_APPLY}  ${IDENTITY_GUID}
 
     @{rcset2}=    GetUefiVariable    ${SETTINGS2_APPLY}  ${SETTINGS_GUID}  ${None}
-    Run Keyword If   @{rcset2}[0] != ${STATUS_VARIABLE_NOT_FOUND}
+    Run Keyword If   ${rcset2}[0] != ${STATUS_VARIABLE_NOT_FOUND}
     ...    SetUefiVariable    ${SETTINGS2_APPLY}  ${IDENTITY_GUID}
 
-    Should Be True    @{rcid}[0] == ${STATUS_VARIABLE_NOT_FOUND}
-    Should Be True    @{rcid2}[0] == ${STATUS_VARIABLE_NOT_FOUND}
-    Should Be True    @{rcperm}[0] == ${STATUS_VARIABLE_NOT_FOUND}
-    Should Be True    @{rcperm2}[0] == ${STATUS_VARIABLE_NOT_FOUND}
-    Should Be True    @{rcset}[0] == ${STATUS_VARIABLE_NOT_FOUND}
-    Should Be True    @{rcset2}[0] == ${STATUS_VARIABLE_NOT_FOUND}
+    Should Be True    ${rcid}[0] == ${STATUS_VARIABLE_NOT_FOUND}
+    Should Be True    ${rcperm}[0] == ${STATUS_VARIABLE_NOT_FOUND}
+    Should Be True    ${rcperm2}[0] == ${STATUS_VARIABLE_NOT_FOUND}
+    Should Be True    ${rcset}[0] == ${STATUS_VARIABLE_NOT_FOUND}
+    Should Be True    ${rcset2}[0] == ${STATUS_VARIABLE_NOT_FOUND}
 
 
 # Create an Unenroll Identity Package File
@@ -435,14 +437,14 @@ Process Settings Packet
 
 
 Validate Settings Status
-    [Arguments]  ${TestName}  ${mailbox}  ${expectedStatus}
+    [Arguments]  ${TestName}  ${mailbox}  ${expectedStatus}  ${full}
     ${binPackageFile}=  Set Variable  ${TOOL_DATA_OUT_DIR}${/}${TestName}_Settings_apply.bin
     ${binResultFile}=   Set Variable  ${TOOL_DATA_OUT_DIR}${/}${TestName}_Settings_result.bin
     ${xmlResultFile}=   Set Variable  ${TOOL_DATA_OUT_DIR}${/}${TestName}_Settings_result.xml
 
     Get Settings Results  ${mailbox}  ${binResultFile}
 
-    Verify Settings Response    ${binPackageFile}  ${binResultFile}  ${expectedStatus}
+    Verify Settings Response    ${binPackageFile}  ${binResultFile}  ${expectedStatus}  ${full}
 
     Get Payload From Settings Results  ${binResultFile}  ${xmlResultFile}
     Run Keyword If  '${expectedStatus}' == ${STATUS_SUCCESS}  File Should Exist  ${xmlResultFile}

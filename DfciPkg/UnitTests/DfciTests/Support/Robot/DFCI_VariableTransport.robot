@@ -18,8 +18,8 @@ Library     Support${/}Python${/}DFCI_SupportLib.py
 Generic Get With Variables
     [Arguments]   ${Variable}  ${VariableGuid}  ${outputXmlFile}  ${Trim}
     @{rc}=              GetUefiVariable    ${Variable}  ${VariableGuid}  ${Trim}
-    Should Be True      @{rc}[0] == 0
-    Create Binary File  ${outputXmlFile}  @{rc}[1]
+    Should Be True      ${rc}[0] == 0
+    Create Binary File  ${outputXmlFile}  ${rc}[1]
     File Should Exist   ${outputXmlFile}
 
 
