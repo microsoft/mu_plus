@@ -47,7 +47,6 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
                 "MsGraphicsPkg",
                 "MsWheaPkg",
                 "PcBdsPkg",
-                "SharedCryptoPkg",
                 "UefiTestingPkg",
                 "XmlSupportPkg",
                 "ZeroTouchPkg"

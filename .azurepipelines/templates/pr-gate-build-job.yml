@@ -23,10 +23,6 @@ jobs:
       TARGET_DFCI_ZERO_XML:
         Build.Pkgs: 'DfciPkg,ZeroTouchPkg,XmlSupportPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
-      # TEMP - Remove SharedCrypto from CI while porting to EdkSharedCrypto.
-      # TARGET_SHARED_CRYPTO:
-      #   Build.Pkgs: 'SharedCryptoPkg'
-      #   Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
       TARGET_GRAPHICS:
         Build.Pkgs: 'MsGraphicsPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
