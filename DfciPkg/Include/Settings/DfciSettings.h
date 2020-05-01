@@ -62,7 +62,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // Disable components known to inject ACPI OS Executable code.
 //
-#define DFCI_STD_SETTING_ID_V3_ENABLE_WPBT             "Dfci3.OnboardWPBT.Enable"
+#define DFCI_STD_SETTING_ID_V3_ENABLE_WPBT             "Dfci3.OnboardWpbt.Enable"
 
 //
 // Set the device ASSET TAG.

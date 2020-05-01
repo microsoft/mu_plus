@@ -159,7 +159,7 @@ Verify Settings Returned To Defaults
     @{RTD_CHECK04}=   Create List   Dfci.RegistrationId.String         ${EMPTY}
     @{RTD_CHECK05}=   Create List   Dfci.TenantId.String               ${EMPTY}
     @{RTD_CHECK06}=   Create List   Dfci3.AssetTag.String              ${EMPTY}
-    @{RTD_CHECK07}=   Create List   Dfci3.OnboardWPBT.Enable           Enabled
+    @{RTD_CHECK07}=   Create List   Dfci3.OnboardWpbt.Enable           Enabled
     @{RTD_CHECK08}=   Create List   MDM.FriendlyName.String            ${EMPTY}
     @{RTD_CHECK09}=   Create List   MDM.TenantName.String              ${EMPTY}
 

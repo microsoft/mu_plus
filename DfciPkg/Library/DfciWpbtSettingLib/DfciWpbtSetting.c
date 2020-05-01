@@ -1,7 +1,7 @@
 /** @file
-DfciWPBTSetting.c
+DfciWpbtSetting.c
 
-Library Instance for DXE to support getting, setting, defaults, and support the Dfci.WPBT.Enable setting.
+Library Instance for DXE to support getting, setting, defaults, and support the Dfci.Wpbt.Enable setting.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -27,8 +27,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciSettings.h>
 #include <Settings/DfciPrivateSettings.h>
 
-STATIC EFI_EVENT  mDfciWPBTSettingProviderSupportInstallEvent;
-STATIC VOID      *mDfciWPBTSettingProviderSupportInstallEventRegistration = NULL;
+STATIC EFI_EVENT  mDfciWpbtSettingProviderSupportInstallEvent;
+STATIC VOID      *mDfciWpbtSettingProviderSupportInstallEventRegistration = NULL;
 
 typedef enum {
     ID_IS_BAD,
@@ -48,7 +48,7 @@ typedef enum {
 STATIC
 EFI_STATUS
 EFIAPI
-DfciWPBTSettingGetDefault (
+DfciWpbtSettingGetDefault (
     IN  CONST DFCI_SETTING_PROVIDER     *This,
     IN  OUT   UINTN                     *ValueSize,
     OUT       VOID                      *Value
@@ -66,7 +66,7 @@ DfciWPBTSettingGetDefault (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciWPBTSettingGet (
+DfciWpbtSettingGet (
   IN  CONST DFCI_SETTING_PROVIDER  *This,
   IN  OUT   UINTN                  *ValueSize,
   OUT       VOID                   *Value
@@ -173,7 +173,7 @@ InitializeNvVariables (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciWPBTSettingSet (
+DfciWpbtSettingSet (
     IN  CONST DFCI_SETTING_PROVIDER    *This,
     IN        UINTN                     ValueSize,
     IN  CONST VOID                     *Value,
@@ -203,7 +203,7 @@ DfciWPBTSettingSet (
     }
 
     BufferSize = sizeof(CurrentValue);
-    Status = DfciWPBTSettingGet (This, &BufferSize, &CurrentValue);
+    Status = DfciWpbtSettingGet (This, &BufferSize, &CurrentValue);
 
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "%a: Error getting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
@@ -243,7 +243,7 @@ DfciWPBTSettingSet (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciWPBTSettingGet (
+DfciWpbtSettingGet (
     IN  CONST DFCI_SETTING_PROVIDER    *This,
     IN  OUT   UINTN                    *ValueSize,
     OUT       VOID                     *Value
@@ -277,7 +277,7 @@ DfciWPBTSettingGet (
                                Value );
     if (EFI_NOT_FOUND == Status) {
         DEBUG((DEBUG_INFO, "%a - Variable %s not found. Getting default value.\n", __FUNCTION__, VariableName));
-        Status = DfciWPBTSettingGetDefault (This, ValueSize, Value);
+        Status = DfciWpbtSettingGetDefault (This, ValueSize, Value);
     }
 
     if (EFI_ERROR(Status)) {
@@ -303,7 +303,7 @@ DfciWPBTSettingGet (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciWPBTSettingGetDefault (
+DfciWpbtSettingGetDefault (
     IN  CONST DFCI_SETTING_PROVIDER     *This,
     IN  OUT   UINTN                     *ValueSize,
     OUT       VOID                      *Value
@@ -342,7 +342,7 @@ DfciWPBTSettingGetDefault (
 STATIC
 EFI_STATUS
 EFIAPI
-DfciWPBTSettingSetDefault (
+DfciWpbtSettingSetDefault (
     IN  CONST DFCI_SETTING_PROVIDER     *This
   )
 {
@@ -356,12 +356,12 @@ DfciWPBTSettingSetDefault (
     }
 
     ValueSize = sizeof(Value);
-    Status = DfciWPBTSettingGetDefault (This, &ValueSize, &Value);
+    Status = DfciWpbtSettingGetDefault (This, &ValueSize, &Value);
     if (EFI_ERROR(Status)) {
         return Status;
     }
 
-    return DfciWPBTSettingSet (This, ValueSize, &Value, &Flags);
+    return DfciWpbtSettingSet (This, ValueSize, &Value, &Flags);
 }
 
 
@@ -370,14 +370,14 @@ DfciWPBTSettingSetDefault (
 // allocated memory this code can use a single "template" and just change
 // the id, type, and flags field as needed for registration.
 //
-DFCI_SETTING_PROVIDER mDfciWPBTSettingProviderTemplate = {
+DFCI_SETTING_PROVIDER mDfciWpbtSettingProviderTemplate = {
     DFCI_STD_SETTING_ID_V3_ENABLE_WPBT,
     DFCI_SETTING_TYPE_ENABLE,
     DFCI_SETTING_FLAGS_NO_PREBOOT_UI | DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED,
-    DfciWPBTSettingSet,
-    DfciWPBTSettingGet,
-    DfciWPBTSettingGetDefault,
-    DfciWPBTSettingSetDefault
+    DfciWpbtSettingSet,
+    DfciWpbtSettingGet,
+    DfciWpbtSettingGetDefault,
+    DfciWpbtSettingSetDefault
 };
 
 /////---------------------Interface for Library  ---------------------//////
@@ -404,7 +404,7 @@ DFCI_SETTING_PROVIDER mDfciWPBTSettingProviderTemplate = {
 STATIC
 VOID
 EFIAPI
-DfciWPBTSettingProviderSupportProtocolNotify (
+DfciWpbtSettingProviderSupportProtocolNotify (
     IN  EFI_EVENT       Event,
     IN  VOID            *Context
   )
@@ -422,9 +422,9 @@ DfciWPBTSettingProviderSupportProtocolNotify (
       return;
     }
 
-    Status = sp->RegisterProvider (sp, &mDfciWPBTSettingProviderTemplate);
+    Status = sp->RegisterProvider (sp, &mDfciWpbtSettingProviderTemplate);
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciWPBTSettingProviderTemplate.Id, Status));
+        DEBUG((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciWpbtSettingProviderTemplate.Id, Status));
     }
 
     //We got here, this means all protocols were installed and we didn't exit early.
@@ -435,8 +435,8 @@ DfciWPBTSettingProviderSupportProtocolNotify (
 /**
  * The constructor function initializes the Lib for Dxe.
  *
- * This constructor is needed for DfciSettingsManager support, and to publish the WPBT enabled
- * protocol if WBPT is enabled.
+ * This constructor is needed for DfciSettingsManager support, and to publish the Wpbt enabled
+ * protocol if Wpbt is enabled.
  *
  * The design is to have the PCD false for all modules except the 1 anonymously linked to the DfcSettingsManager.
  *
@@ -448,7 +448,7 @@ DfciWPBTSettingProviderSupportProtocolNotify (
  **/
 EFI_STATUS
 EFIAPI
-DfciWPBTSettingConstructor (
+DfciWpbtSettingConstructor (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -459,12 +459,12 @@ DfciWPBTSettingConstructor (
 
     if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
         //Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
-        mDfciWPBTSettingProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+        mDfciWpbtSettingProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
             &gDfciSettingsProviderSupportProtocolGuid,
              TPL_CALLBACK,
-             DfciWPBTSettingProviderSupportProtocolNotify,
+             DfciWpbtSettingProviderSupportProtocolNotify,
              NULL,
-            &mDfciWPBTSettingProviderSupportInstallEventRegistration
+            &mDfciWpbtSettingProviderSupportInstallEventRegistration
             );
 
         DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
@@ -476,18 +476,18 @@ DfciWPBTSettingConstructor (
         }
 
         ValueSize = sizeof(Value);
-        Status = DfciWPBTSettingGet (&mDfciWPBTSettingProviderTemplate, &ValueSize, &Value);
+        Status = DfciWpbtSettingGet (&mDfciWpbtSettingProviderTemplate, &ValueSize, &Value);
 
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: unable to get WPBT Enabled setting. %r.\n", __FUNCTION__, Status));
+            DEBUG((DEBUG_ERROR, "%a: unable to get Wpbt Enabled setting. %r.\n", __FUNCTION__, Status));
         } else {
             if (Value == 0x01) {
                 Status = gBS->InstallProtocolInterface (&ImageHandle,
-                                        &gDfciWBPTEnabledProtocolGuid,
+                                        &gDfciWpbtEnabledProtocolGuid,
                                          EFI_NATIVE_INTERFACE,
                                          NULL);
                 if (EFI_ERROR(Status)) {
-                    DEBUG((DEBUG_ERROR, "%a: unable to install WBPT Enabled protocol. %r.\n", __FUNCTION__, Status));
+                    DEBUG((DEBUG_ERROR, "%a: unable to install Wpbt Enabled protocol. %r.\n", __FUNCTION__, Status));
                 }
             }
         }

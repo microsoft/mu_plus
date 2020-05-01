@@ -148,7 +148,7 @@
   DfciPkg/Library/DfciXmlIdentitySchemaSupportLib/DfciXmlIdentitySchemaSupportLib.inf
   DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
   DfciPkg/Library/DfciGroupLibNull/DfciGroups.inf
-  DfciPkg/Library/DfciWPBTSettingLib/DfciWPBTSetting.inf
+  DfciPkg/Library/DfciWpbtSettingLib/DfciWpbtSetting.inf
   DfciPkg/Library/DfciAssetTagSettingLib/DfciAssetTagSetting.inf
   DfciPkg/SettingsManager/SettingsManagerDxe.inf {
         #Platform should add all it settings libs here
@@ -156,7 +156,7 @@
         NULL|DfciPkg/Library/DfciPasswordProvider/DfciPasswordProvider.inf
         NULL|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
         NULL|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
-        NULL|DfciPkg/Library/DfciWPBTSettingLib/DfciWPBTSetting.inf
+        NULL|DfciPkg/Library/DfciWpbtSettingLib/DfciWpbtSetting.inf
         NULL|DfciPkg/Library/DfciAssetTagSettingLib/DfciAssetTagSetting.inf	
         DfciSettingPermissionLib|DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   <PcdsFeatureFlag>

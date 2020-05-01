@@ -36,7 +36,7 @@
             <Value>Disabled</Value>
         </Setting>
         <Setting>
-            <Id>Dfci3.OnboardWPBT.Enable</Id>
+            <Id>Dfci3.OnboardWpbt.Enable</Id>
             <Value>Disabled</Value>
         </Setting>
         <Setting>

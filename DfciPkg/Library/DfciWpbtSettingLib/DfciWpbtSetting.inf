@@ -1,7 +1,7 @@
 ## @file
-# DfciWPBTSettingLib.inf
+# DfciWpbtSettingLib.inf
 #
-#  Library to support one method of WPBT control
+#  Library to support one method of Wpbt control
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -10,12 +10,12 @@
 
 [Defines]
   INF_VERSION                    = 0x00010017
-  BASE_NAME                      = DfciWPBTSettingLib
+  BASE_NAME                      = DfciWpbtSettingLib
   FILE_GUID                      = 11f20aad-4c46-463e-86cf-14629337ccd9
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = DfciWPBTSettingLib | DXE_DRIVER
-  CONSTRUCTOR                    = DfciWPBTSettingConstructor
+  LIBRARY_CLASS                  = DfciWpbtSettingLib | DXE_DRIVER
+  CONSTRUCTOR                    = DfciWpbtSettingConstructor
 #
 # The following information is for reference only and not required by the build tools.
 #
@@ -23,7 +23,7 @@
 #
 
 [Sources]
-  DfciWPBTSetting.c
+  DfciWpbtSetting.c
 
 [Packages]
   DfciPkg/DfciPkg.dec
@@ -43,7 +43,7 @@
   gDfciSettingsGuid
 
 [Protocols]
-  gDfciWBPTEnabledProtocolGuid
+  gDfciWpbtEnabledProtocolGuid
   gDfciSettingsProviderSupportProtocolGuid
 
 [Pcd]
