@@ -39,6 +39,9 @@
   #
   JsonLiteParserLib|Include/Library/JsonLiteParser.h
 
+  ## @libraryclass provides interfaces to define NV index for SystemGuard.
+  TpmSgNvIndexLib|Include/Library/TpmSgNvIndexLib.h
+
 
 [Guids]
   #  {a2966407-1f6b-4c86-b21e-fcc474c6f28e}
