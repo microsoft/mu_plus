@@ -23,6 +23,7 @@
             "PcBdsPkg/PcBdsPkg.dec",
             "DfciPkg/DfciPkg.dec",
             "MsGraphicsPkg/MsGraphicsPkg.dec",
+            "MsWheaPkg/MsWheaPkg.dec",
             "MsCorePkg/MsCorePkg.dec",
             "ShellPkg/ShellPkg.dec"  # this needs to be reviewed.  TODO: bug??
         ],

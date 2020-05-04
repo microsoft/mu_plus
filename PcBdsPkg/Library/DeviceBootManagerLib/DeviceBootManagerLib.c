@@ -47,6 +47,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MuUefiVersionLib.h>
 #include <Library/MsNVBootReasonLib.h>
+#include <Library/MuTelemetryHelperLib.h>
 
 #include <Settings/BootMenuSettings.h>
 #include <Settings/DfciSettings.h>
@@ -265,11 +266,13 @@ CleanUp:
 
     if (!ThermalGood) {
         DEBUG((DEBUG_ERROR, "MsPreBootChecks failed when calling Thermal Good function. %r\n", Status));
+        LogTelemetry (TRUE, NULL, EFI_CU_HP_EC_THERMAL, NULL, NULL, 0, 0);
         ThermalFailureShutdown(); // Should never return from this function
     }
 
     if (!PowerGood) {
         DEBUG((DEBUG_ERROR, "MsPreBootChecks failed when calling Power Good function. %r\n", Status));
+        LogTelemetry (TRUE, NULL, EFI_CU_HP_EC_LOW_VOLTAGE, NULL, NULL, 0, 0);
         PowerFailureShutdown(); // Should never return from this function
     }
 
