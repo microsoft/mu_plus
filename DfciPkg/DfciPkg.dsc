@@ -157,7 +157,7 @@
         NULL|DfciPkg/Library/DfciSettingsLib/DfciSettingsLib.inf
         NULL|DfciPkg/Library/DfciVirtualizationSettings/DfciVirtualizationSettings.inf
         NULL|DfciPkg/Library/DfciWpbtSettingLib/DfciWpbtSetting.inf
-        NULL|DfciPkg/Library/DfciAssetTagSettingLib/DfciAssetTagSetting.inf	
+        NULL|DfciPkg/Library/DfciAssetTagSettingLib/DfciAssetTagSetting.inf
         DfciSettingPermissionLib|DfciPkg/Library/DfciSettingPermissionLib/DfciSettingPermissionLib.inf
   <PcdsFeatureFlag>
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE

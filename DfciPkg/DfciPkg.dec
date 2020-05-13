@@ -61,6 +61,10 @@
   ##
   DfciXmlIdentitySchemaSupportLib|Include/Library/DfciXmlIdentitySchemaSupportLib.h
 
+  ##  @libraryclass  Library supports the AssetTag settings provider for pre Settings Manager access
+  ##
+  DfciAssetTagSettingLib|Include/Library/DfciAssetTagSettingLib.h
+
 [Protocols]
   ## DFCI Setting Permission Protocol
   # {83FB5B14-8FBA-4D55-9578-A5314F3633A5}

@@ -61,7 +61,11 @@ DfciAssetTagSettingGetDefault (
  * @param ValueSize
  * @param Value
  *
- * @return EFI_STATUS EFIAPI
+ * @return EFI_STATUS
+ *         EFI_SUCCESS           - Returns value
+ *         EFI_INVALID_PARAMETER - Bad parameters
+ *         EFI_BUFFER_TOO_SMALL  - Size of new Value is larger than ValueSize
+ *         EFI_UNSUPPORTED       - "This" points to an Id that is not supported
  */
 STATIC
 EFI_STATUS
@@ -325,7 +329,11 @@ DfciAssetTagSettingSet (
  * @param ValueSize
  * @param Value
  *
- * @return EFI_STATUS EFIAPI
+ * @return EFI_STATUS
+ *         EFI_SUCCESS           - Returns value
+ *         EFI_INVALID_PARAMETER - Bad parameters
+ *         EFI_BUFFER_TOO_SMALL  - Size of new Value is larger than ValueSize
+ *         EFI_UNSUPPORTED       - "This" points to an Id that is not supported
  */
 STATIC
 EFI_STATUS
@@ -469,7 +477,30 @@ DFCI_SETTING_PROVIDER mDfciAssetTagSettingProviderTemplate = {
 
 /////---------------------Interface for Library  ---------------------//////
 
-// NONE
+/**
+ * Settings Provider AssetTagGet routine for pre SettingsManager access.
+ *
+ * @param ValueSize
+ * @param Value
+ *
+ * @return EFI_STATUS
+ *         EFI_SUCCESS           - Returns value
+ *         EFI_INVALID_PARAMETER - Bad parameters
+ *         EFI_BUFFER_TOO_SMALL  - Size of new Value is larger than ValueSize
+ */
+EFI_STATUS
+EFIAPI
+DfciGetAssetTag (
+    IN  OUT   UINTN                    *ValueSize,
+    OUT       VOID                     *Value    )
+{
+    EFI_STATUS      Status;
+
+    Status = DfciAssetTagSettingGet (&mDfciAssetTagSettingProviderTemplate,
+                                    ValueSize,
+                                    Value);
+    return Status;
+}
 
 /**
  * Library design is such that a dependency on gDfciSettingsProviderSupportProtocolGuid
@@ -552,12 +583,12 @@ DfciAssetTagSettingConstructor (
             );
 
         DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
+    }
 
-        //Initialize nonvolatile variables
-        Status = InitializeNvVariables ();
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
-        }
+    //Initialize nonvolatile variables
+    Status = InitializeNvVariables ();
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a: Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
     }
 
     return EFI_SUCCESS;
