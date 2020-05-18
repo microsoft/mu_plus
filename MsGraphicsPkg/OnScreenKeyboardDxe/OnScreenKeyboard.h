@@ -28,8 +28,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define INITIAL_KEYREPEAT_INTERVAL  (500 * 10 * 1000)   // Initial Key Repeat: 500ms in 100ns units
 #define STEADYST_KEYREPEAT_INTERVAL ( 33 * 10 * 1000)   // Steady-State Key Repeat: 33ms in 100ns units
 
-#define SMALL_ASSET_MAX_SCREEN_WIDTH    1280            // Maximum screen resolution that still supports "small" keyboard icon & button bitmaps.
-
 // Reference keyboard information - note that the geometry may be scaled/transformed for rendering.
 //
 // Standard key        = 145x120

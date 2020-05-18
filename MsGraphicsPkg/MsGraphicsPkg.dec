@@ -102,8 +102,9 @@
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   ## Power Off Delay and Hold time.  Delay is how long to wait before prompting the user, and
   #  hold is how long to display the power down dialog before shutting down
-  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|300|UINT32|0x4000012A    # Default is 5 * 60 Seconds (5 minutes)
-  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffHold|30|UINT16|0x4000012B      # Default is 30 seconds
+  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay|300|UINT32|0x4000012A                  # Default is 5 * 60 Seconds (5 minutes)
+  gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffHold|30|UINT16|0x4000012B                    # Default is 30 seconds
+  gMsGraphicsPkgTokenSpaceGuid.PcdSmallAssetMaxScreenWidth|1280|UINT32|0x4000012C      # Default is 1280 pixels
 
 [PcdsDynamic, PcdsDynamicEx]
   gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009

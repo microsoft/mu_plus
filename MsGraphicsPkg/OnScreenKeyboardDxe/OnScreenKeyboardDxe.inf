@@ -57,6 +57,9 @@
   gEfiSimpleTextInProtocolGuid      # PRODUCES
   gEfiSimpleTextInputExProtocolGuid # PRODUCES
 
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdSmallAssetMaxScreenWidth
+
 [Depex]
 
 [BuildOptions]

@@ -62,6 +62,7 @@
  [Pcd]
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffDelay
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffHold
+  gMsGraphicsPkgTokenSpaceGuid.PcdSmallAssetMaxScreenWidth
 
 [BuildOptions.AARCH64]
   MSFT:*_*_AARCH64_DLINK_FLAGS = /include:_fltused

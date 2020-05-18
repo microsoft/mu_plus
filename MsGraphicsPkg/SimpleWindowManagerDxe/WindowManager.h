@@ -48,8 +48,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define POINTER_STATE_INPUT_QUEUE_SIZE                  50                  // Depth of aggregate pointer event queue.
 #define PERIODIC_REFRESH_INTERVAL                       (5 * 10 * 1000)     // Interval for scanning AP providers: 5ms in 100ns units.
 
-#define SMALL_ASSET_MAX_SCREEN_WIDTH                    1280                // Maximum screen resolution that still supports "small" mouse pointer & screen assets.
-
 #define SWM_POINTER_EVENT_FILTER_BOX_SIZE_PERCENT       50                  // Filter window in fraction of a percent (0.50%) of the absolute pointer maximum width.
 
 // Common variables with SimpleWindowManager

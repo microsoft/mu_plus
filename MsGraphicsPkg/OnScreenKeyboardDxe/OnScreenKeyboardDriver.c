@@ -608,7 +608,7 @@ UINT32 ScreenHeight)
 
     // Select screen size-appropriate bitmaps.
     //
-    if (ScreenWidth >= SMALL_ASSET_MAX_SCREEN_WIDTH)
+    if (ScreenWidth >= PcdGet32(PcdSmallAssetMaxScreenWidth))
     {
         // Keyboard icon.
         mOSK.KeyboardIcon.pBitmap               = gKeyboardIcon_Medium;

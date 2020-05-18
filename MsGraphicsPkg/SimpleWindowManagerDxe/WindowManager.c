@@ -872,7 +872,7 @@ SelectMousePointer (VOID)
 
     // Select an appropriate mouse pointer bitmap.
     //
-    if (mSWM.ScreenWidth >= SMALL_ASSET_MAX_SCREEN_WIDTH)
+    if (mSWM.ScreenWidth >= PcdGet32(PcdSmallAssetMaxScreenWidth))
     {
         mSWM.MousePointer.pBitmap       = gMousePointer_Medium;
         mSWM.MousePointer.Width         = MOUSE_POINTER_WIDTH_MEDIUM;
