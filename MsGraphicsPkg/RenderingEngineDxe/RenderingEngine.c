@@ -24,6 +24,7 @@ EFI_GRAPHICS_OUTPUT_PROTOCOL    *mParentGop;
 RENDERING_ENGINE_CONTEXT        mSRE;
 EFI_EVENT                       mSampleSurfaceFrameTimerEvent;
 EFI_GUID                       *mMsGopOverrideProtocolGuid;
+BOOLEAN                         mPreExitBootServices = FALSE;
 
 // ****** Typedefs and structures ******
 //
@@ -944,7 +945,7 @@ SREActivateSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
     SRE_SURFACE_LIST    *ActiveSurface;
     UINT32              FrameWidth, FrameHeight;
     BOOLEAN             MousePointerState   = mSRE.ShowingMousePointer;
-
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL   BlackPixel = {0,0,0,0};
 
     DEBUG ((DEBUG_INFO, "INFO [SRE]: Setting surface active (ImageHandle=0x%x, MakeActive=%s).\r\n", (UINTN)ImageHandle, (TRUE == MakeActive ? L"TRUE" : L"FALSE")));
 
@@ -1018,17 +1019,32 @@ SREActivateSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
                 }
                 // Restore the contents to the framebuffer.
                 //
-                mParentGop->Blt(mParentGop,
-                                Surface->pCaptureBuffer,
-                                EfiBltBufferToVideo,
-                                0,
-                                0,
-                                Surface->FrameRect.Left,
-                                Surface->FrameRect.Top,
-                                FrameWidth,
-                                FrameHeight,
-                                0
-                               );
+
+                if (mPreExitBootServices) {
+                    mParentGop->Blt(mParentGop,
+                                        &BlackPixel,
+                                        EfiBltVideoFill,
+                                        0,
+                                        0,
+                                        Surface->FrameRect.Left,
+                                        Surface->FrameRect.Top,
+                                        FrameWidth,
+                                        FrameHeight,
+                                        0
+                                       );
+                } else {
+                    mParentGop->Blt(mParentGop,
+                                    Surface->pCaptureBuffer,
+                                    EfiBltBufferToVideo,
+                                    0,
+                                    0,
+                                    Surface->FrameRect.Left,
+                                    Surface->FrameRect.Top,
+                                    FrameWidth,
+                                    FrameHeight,
+                                    0
+                                   );
+                }
             }
 
             // Compute the surface frame checksum.
@@ -1042,9 +1058,10 @@ SREActivateSurface (IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
         Surface = Surface->pNext;
     }
 
-    // Restore the mouse pointer if it was displayed before.
+    // Restore the mouse pointer if it was displayed before, and
+    // not after PreExitbootServices
     //
-    if (TRUE == MousePointerState)
+    if ((MousePointerState) && (!mPreExitBootServices))
     {
         SREShowMousePointer (&mSRE.SREProtocol,
                              TRUE
@@ -1468,6 +1485,24 @@ Exit:
     return Status;
 }
 
+/**
+    Change Deactivate to ignore the original background, and only paint black at PreExitBootServices.
+
+    @param    Event           Not Used.
+    @param    Context         Not Used.
+
+   @retval   none
+ **/
+VOID
+EFIAPI
+OnPreExitBootServicesNotification (
+    IN EFI_EVENT        Event,
+    IN VOID             *Context
+  )
+{
+    mPreExitBootServices = TRUE;
+}
+
 
 /**
   Main entry point for this driver.
@@ -1484,6 +1519,7 @@ EFIAPI
 DriverInit (IN EFI_HANDLE         ImageHandle,
             IN EFI_SYSTEM_TABLE  *SystemTable)
 {
+    EFI_EVENT       InitEvent;
     EFI_STATUS      Status = EFI_SUCCESS;
 
     // Save the image handle for later.
@@ -1503,6 +1539,22 @@ DriverInit (IN EFI_HANDLE         ImageHandle,
                                                        );
 
     ASSERT_EFI_ERROR (Status);
+
+    //
+    // Register notify function to modify any window deactivate to a black background at PreExitBootServices.
+    //
+    Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
+                                  TPL_NOTIFY,
+                                  OnPreExitBootServicesNotification,
+                                  gImageHandle,
+                                 &gMuEventPreExitBootServicesGuid,
+                                 &InitEvent );
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+    }
+
+
 
     return Status;
 }

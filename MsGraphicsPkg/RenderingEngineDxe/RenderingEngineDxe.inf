@@ -42,6 +42,9 @@
   gMsSREProtocolGuid                  # PRODUCES
   gEfiGraphicsOutputProtocolGuid      # PRODUCES
 
+[Guids]
+  gMuEventPreExitBootServicesGuid
+
 [Pcd]
   gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
 

@@ -3306,6 +3306,26 @@ Exit:
     return Status;
 }
 
+/**
+    Dismiss the Keyboard and Icon at PreExitBootServices.
+
+    @param    Event           Not Used.
+    @param    Context         Not Used.
+
+   @retval   none
+ **/
+VOID
+EFIAPI
+OnPreExitBootServicesNotification (
+    IN EFI_EVENT        Event,
+    IN VOID             *Context
+  )
+{
+    ShowKeyboardIcon(FALSE);
+    ShowKeyboard(FALSE);
+}
+
+
 
 EFI_STATUS
 EFIAPI
@@ -3337,6 +3357,7 @@ IN EFI_HANDLE        ImageHandle,
 IN EFI_SYSTEM_TABLE  *SystemTable
 )
 {
+    EFI_EVENT               InitEvent;
     EFI_STATUS              Status;
 
 
@@ -3429,6 +3450,21 @@ IN EFI_SYSTEM_TABLE  *SystemTable
     // Initialize keyboard context (initial operating state)
     //
     InitializeKeyboardContext();
+
+    //
+    // Register notify function to dismiss the keyboard and icon at PreExitBootServices.
+    //
+    Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
+                                  TPL_CALLBACK,
+                                  OnPreExitBootServicesNotification,
+                                  gImageHandle,
+                                 &gMuEventPreExitBootServicesGuid,
+                                 &InitEvent );
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+    }
+
 
 Exit:
     return Status;

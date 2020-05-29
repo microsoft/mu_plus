@@ -47,6 +47,8 @@
 [Guids]
   gEfiConsoleInDeviceGuid
   gOSKDevicePathGuid
+  gMuEventPreExitBootServicesGuid
+
 
 [Protocols]
   gEfiGraphicsOutputProtocolGuid    # CONSUMES
