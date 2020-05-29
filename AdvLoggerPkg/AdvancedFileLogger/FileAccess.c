@@ -61,7 +61,7 @@ CheckIfNVME (
 /**
   VolumeFromFileSystemHandle
 
-  Handle must have a FileSystemProtocol on it.  Get the FileSystemProtocol
+  LogDevice->Handle must have a FileSystemProtocol on it.  Get the FileSystemProtocol
   and then get the VolumeHandle.
 
   For a USB device to get log files, it must have a Logs directory in the root
@@ -73,7 +73,7 @@ CheckIfNVME (
 
   If there is no Logs directory, or one cannot be made, return error.
 
-  @param FileSystemHandle   Handle with a File System Protocol installed
+  @param LogDevice          Internal control block with the device handle needed
 
   @retval VolumeHandle      Handle to the Volume for I/O
 
@@ -81,15 +81,33 @@ CheckIfNVME (
 STATIC
 EFI_FILE *
 VolumeFromFileSystemHandle (
-    IN EFI_HANDLE FileSystemHandle
+    IN LOG_DEVICE    *LogDevice
     )
 {
     EFI_FILE                         *File;
     EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *FileSystem;
+    EFI_TPL                           OldTpl;
     EFI_STATUS                        Status;
     EFI_FILE                         *Volume;
 
-    Status = gBS->OpenProtocol(FileSystemHandle,
+
+    File = NULL;
+    Volume = NULL;
+
+    //
+    // The RaiseTPL/RestoreTPL is used to clear all pending events.  When a USB device is,
+    // removed, there may be pending events to tear down the USB file system.  Just calling
+    // OpenProtocol to get the EfiSimpleFileSystemProtocol causes OpenProtocol to find the
+    // EfiSimpleFileSystemProtocol interface address. Then OpenProtocol calls RestoreTPL which
+    // will dispatch the USB cleanup code and uninstall the EfiSimpleFileSystemProtocol.
+    // OpenProtocol then returns the pointer to what is now free memory.  Accessing this free
+    // memory as if it was an EfiSimpleFileSystemProtocol causes exceptions.
+    //
+
+    OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
+    gBS->RestoreTPL (OldTpl);
+
+    Status = gBS->OpenProtocol(LogDevice->Handle,
                               &gEfiSimpleFileSystemProtocolGuid,
                                (VOID**)&FileSystem,
                                gImageHandle,
@@ -97,6 +115,7 @@ VolumeFromFileSystemHandle (
                                EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
 
     if (EFI_ERROR(Status)) {
+        LogDevice->Valid = FALSE;
         DEBUG((DEBUG_ERROR,"%a: Failed to get FileSystem protocol. Code=%r \n", __FUNCTION__ , Status));
         return NULL;
     }
@@ -118,15 +137,17 @@ VolumeFromFileSystemHandle (
 
     if (EFI_ERROR(Status)) {
         // Logs directory doesn't exist.  If NVME, allow forced logging
-        if (!CheckIfNVME (FileSystemHandle)) {
+        if (!CheckIfNVME (LogDevice->Handle)) {
             DEBUG((DEBUG_INFO, "Logs directory not found on device.  No logging.\n"));
+            Volume->Close (Volume);
             return NULL;
         }
 
         // Logs directory doesn't exist, see if we can create the Logs directory.
         if (!FeaturePcdGet(PcdAdvancedLoggerForceEnable)) {
-           DEBUG((DEBUG_INFO, "Creating the Logs directory is not allowed.\n"));
-           return NULL;
+            DEBUG((DEBUG_INFO, "Creating the Logs directory is not allowed.\n"));
+            Volume->Close (Volume);
+            return NULL;
         }
 
         Status = Volume->Open (Volume,
@@ -136,12 +157,14 @@ VolumeFromFileSystemHandle (
                                EFI_FILE_DIRECTORY | EFI_FILE_HIDDEN);
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "Unable to create Log directory. Code=%r\n", Status));
+            Volume->Close (Volume);
             return NULL;
         }
     }
 
     // Close directory
     File->Close(File);
+    LogDevice->Volume = Volume;
 
     return Volume;
 }
@@ -402,7 +425,7 @@ DetermineLogFile (
     EFI_STATUS      Status;
     EFI_FILE       *Volume;
 
-    Volume = VolumeFromFileSystemHandle (LogDevice->Handle);
+    Volume = VolumeFromFileSystemHandle (LogDevice);
     if (NULL == Volume) {
         LogDevice->Valid = FALSE;
         return EFI_INVALID_PARAMETER;
@@ -497,17 +520,17 @@ WriteALogFile (
     }
 
     File = NULL;
+    Volume = VolumeFromFileSystemHandle (LogDevice);
+    if (NULL == Volume) {
+        Status = EFI_INVALID_PARAMETER;
+        goto CloseAndExit;
+    }
+
     if (LogDevice->FileIndex == 0) {
         Status = DetermineLogFile (LogDevice);
         if (EFI_ERROR(Status)) {
             goto CloseAndExit;
         }
-    }
-
-    Volume = VolumeFromFileSystemHandle (LogDevice->Handle);
-    if (NULL == Volume) {
-        Status = EFI_INVALID_PARAMETER;
-        goto CloseAndExit;
     }
 
     //
@@ -583,6 +606,11 @@ CloseAndExit:
         File->Close(File);
     }
 
+    if (Volume != NULL) {
+        LogDevice->Volume = NULL;
+        Volume->Close (Volume);
+    }
+
     return Status;
 }
 
@@ -614,18 +642,20 @@ EnableLoggingOnThisDevice (
     )
 {
     CHAR8          *DataBuffer;
-    EFI_FILE       *File   = NULL;
+    EFI_FILE       *File;
     UINTN           i;
     EFI_STATUS      Status;
     EFI_FILE       *Volume;
 
+    File = NULL;
+    Volume = NULL;
     DataBuffer = (CHAR8 *) AllocatePages (EFI_SIZE_TO_PAGES(DEBUG_LOG_CHUNK_SIZE));
     if (DataBuffer == NULL) {
         DEBUG((DEBUG_ERROR, "Unable to allocate working buffer\n"));
         return EFI_OUT_OF_RESOURCES;
     }
 
-    Volume = VolumeFromFileSystemHandle (LogDevice->Handle);
+    Volume = VolumeFromFileSystemHandle (LogDevice);
     if (NULL == Volume) {
         FreePages (DataBuffer, EFI_SIZE_TO_PAGES(DEBUG_LOG_CHUNK_SIZE));
         return EFI_INVALID_PARAMETER;
@@ -671,8 +701,7 @@ EnableLoggingOnThisDevice (
                                    0);
             if (EFI_ERROR(Status)) {
                 DEBUG((DEBUG_ERROR,"%a: Failed to create log file %s. Code=%r \n", __FUNCTION__ , mLogFiles[i].LogFileName, Status));
-                FreePages (DataBuffer, EFI_SIZE_TO_PAGES(DEBUG_LOG_CHUNK_SIZE));
-                return Status;
+                goto ErrorExit;
             }
 
             if (i == 0) {
@@ -683,10 +712,14 @@ EnableLoggingOnThisDevice (
 
             DEBUG((DEBUG_INFO, "Debug file %s created, Code=%r\n", mLogFiles[i].LogFileName, Status));
         }
-
     }
 
+ErrorExit:
+
     FreePages (DataBuffer, EFI_SIZE_TO_PAGES(DEBUG_LOG_CHUNK_SIZE));
+
+    LogDevice->Volume = NULL;
+    Volume->Close (Volume);
 
     return Status;
 }

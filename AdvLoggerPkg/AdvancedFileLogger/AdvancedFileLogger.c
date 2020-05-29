@@ -52,7 +52,7 @@ WriteLogFiles (
     }
 
     TimeEnd = GetPerformanceCounter ();
-    DEBUG((DEBUG_INFO, "Time to write logs: %ld ms\n\n", (GetTimeInNanoSecond(TimeEnd-TimeStart) / (1024 * 1024)) ));
+    DEBUG((DEBUG_INFO, "Time to write logs: %ld ms\n", (GetTimeInNanoSecond(TimeEnd-TimeStart) / (1024 * 1024)) ));
 
     //
     // Release the lock.
@@ -283,6 +283,7 @@ OnPreExitBootServicesNotification (
 {
 
     WriteLogFiles ();
+    gBS->CloseEvent (Event);
 }
 
 /**
