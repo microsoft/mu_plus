@@ -1,11 +1,10 @@
 /** @file
-CheckHardwareConnected.c
+  CheckHardwareConnected
 
-Checks if PCI devices defined in DeviceSpecificBusInfoLib were discovered
-on the bus.
+  Checks if a set of platform-defined PCI devices are discovered.
 
-Copyright (c) Microsoft Corporation. All rights reserved.
-SPDX-License-Identifier: BSD-2-Clause-Patent
+  Copyright (c) Microsoft Corporation. All rights reserved.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -13,108 +12,115 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Library/MemoryAllocationLib.h>
-#include <Library/UefiLib.h>
 #include <Library/DeviceSpecificBusInfoLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/MuTelemetryHelperLib.h>
 #include <Library/PciExpressLib.h>
+#include <Library/UefiLib.h>
 
 #include <Protocol/PciIo.h>
 
 /**
-  Checks if PCI devices defined in DeviceSpecificBusInfoLib are connected
+  Checks if the platform provided set of PCI devices are currently present.
 
-  @retval VOID
 **/
 VOID
-CheckPCIDevices(VOID)
+CheckPciDevicePresence (
+  VOID
+  )
 {
+  EFI_STATUS            Status;
+  BOOLEAN               *DeviceFound;
+  DEVICE_PCI_INFO       *Devices;
+  EFI_PCI_IO_PROTOCOL   **ProtocolList;
 
-  // Nums for finding bus, seg, etc. and keeping count of how many devices found
-  UINTN                  ProtocolCount, Seg, Bus, Dev, Fun, NumDevices, AdditionalData1, OuterLoop, InnerLoop;
+  UINTN   ProtocolCount;
+  UINTN   Seg;
+  UINTN   Bus;
+  UINTN   Dev;
+  UINTN   Fun;
+  UINTN   NumDevices;
+  UINTN   AdditionalData1;
+  UINTN   Index;
+  UINTN   DeviceIndex;
 
-  // To store protocols
-  EFI_PCI_IO_PROTOCOL**  ProtocolList = NULL;
+  DeviceFound   = NULL;
+  Devices       = NULL;
+  ProtocolList  = NULL;
 
-  // Pointer to the head of an array of DEVICE_PCI_INFO structures.
-  DEVICE_PCI_INFO        *Devices = NULL;
-
-  // Array parallel to Devices which we will use to check off which devices we've found
-  BOOLEAN*               DeviceFound  = NULL;
-
-  // Get devices that will be checked from the platform library.
+  // Get the set of platform-defined PCI devices
   NumDevices = GetPciCheckDevices (&Devices);
-  if (Devices == NULL) {
+  if (NumDevices == 0 || Devices == NULL) {
     return;
   }
 
-  // Array to track which devices we've found
-  DeviceFound = AllocateZeroPool(sizeof(BOOLEAN) * NumDevices);
-
-  // Ensure that all necessary pointers have been populated, abort to cleanup if not
-  if(Devices == NULL || DeviceFound == NULL || NumDevices == 0 ||
-     EFI_ERROR(EfiLocateProtocolBuffer(&gEfiPciIoProtocolGuid, &ProtocolCount, (VOID*)&ProtocolList))) {
-    goto CLEANUP;
+  DeviceFound = AllocateZeroPool (sizeof (BOOLEAN) * NumDevices);
+  if (DeviceFound == NULL) {
+    return;
   }
 
-  // For each device protocol found...
-  for(OuterLoop = 0; OuterLoop < ProtocolCount; OuterLoop++) {
+  Status = EfiLocateProtocolBuffer (&gEfiPciIoProtocolGuid, &ProtocolCount, (VOID ***) &ProtocolList);
+  if (EFI_ERROR (Status)) {
+    goto Cleanup;
+  }
 
-    // Get device location
-    if(EFI_ERROR(ProtocolList[OuterLoop]->GetLocation(ProtocolList[OuterLoop],&Seg,&Bus,&Dev,&Fun))) {
+  for (Index = 0; Index < ProtocolCount; Index++) {
+    Status = ProtocolList[Index]->GetLocation (ProtocolList[Index], &Seg, &Bus, &Dev, &Fun);
+    if (EFI_ERROR (Status)) {
       continue;
     }
 
-    // For each device supplied by DeviceSpecificBusInfoLib...
-    for(InnerLoop = 0; InnerLoop < NumDevices; InnerLoop++) {
-      // Check if that device matches the current protocol in OuterLoop
-      if(Seg == Devices[InnerLoop].SegmentNumber && Bus == Devices[InnerLoop].BusNumber &&
-         Dev == Devices[InnerLoop].DeviceNumber  && Fun == Devices[InnerLoop].FunctionNumber) {
-
-        // If it matches, check it off in the parallel array
-        DeviceFound[InnerLoop] = TRUE;
+    for (DeviceIndex = 0; DeviceIndex < NumDevices; DeviceIndex++) {
+      // Check if that device matches the current protocol
+      if (Seg == Devices[DeviceIndex].SegmentNumber &&
+        Bus == Devices[DeviceIndex].BusNumber &&
+        Dev == Devices[DeviceIndex].DeviceNumber &&
+        Fun == Devices[DeviceIndex].FunctionNumber) {
+        DeviceFound[DeviceIndex] = TRUE;
       }
     }
   }
 
-
-  // For each device supplied by DeviceSpecificBusInfoLib...
-  for(OuterLoop = 0; OuterLoop < NumDevices; OuterLoop++) {
-
-    // Check if the previous loop found that device
-    if(DeviceFound[OuterLoop] == FALSE) {
-
+  for (Index = 0; Index < NumDevices; Index++) {
+    if (DeviceFound[Index] == FALSE) {
       // Get the BDF for AdditionalData1
-      AdditionalData1 = PCI_ECAM_ADDRESS(Devices[OuterLoop].BusNumber,
-                                         Devices[OuterLoop].DeviceNumber,
-                                         Devices[OuterLoop].FunctionNumber,
-                                         0
-                                        );
+      AdditionalData1 = PCI_ECAM_ADDRESS (
+                          Devices[Index].BusNumber,
+                          Devices[Index].DeviceNumber,
+                          Devices[Index].FunctionNumber,
+                          0
+                          );
 
-      // Report an error if not
-      LogTelemetry(Devices[OuterLoop].IsFatal,
-                   NULL,
-                   (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_DETECTED),
-                   &gDeviceSpecificBusInfoLibTelemetryGuid,
-                   NULL,
-                   AdditionalData1,
-                   *((UINT64*)Devices[OuterLoop].DeviceName));
+      LogTelemetry (
+        Devices[Index].IsFatal,
+        NULL,
+        (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_DETECTED),
+        &gDeviceSpecificBusInfoLibTelemetryGuid,
+        NULL,
+        AdditionalData1,
+        *((UINT64 *) Devices[Index].DeviceName)
+        );
 
-      DEBUG ((DEBUG_INFO,"%a - %a not found. Expected Segment: %d  Bus: %d  Device: %d  Function: %d\n", __FUNCTION__,
-        Devices[OuterLoop].DeviceName, Devices[OuterLoop].SegmentNumber, Devices[OuterLoop].BusNumber,
-        Devices[OuterLoop].DeviceNumber, Devices[OuterLoop].FunctionNumber));
-
+      DEBUG ((
+        DEBUG_ERROR,
+        "%a - %a not found. Expected Segment: %d  Bus: %d  Device: %d  Function: %d\n",
+        __FUNCTION__,
+        Devices[Index].DeviceName,
+        Devices[Index].SegmentNumber,
+        Devices[Index].BusNumber,
+        Devices[Index].DeviceNumber,
+        Devices[Index].FunctionNumber
+        ));
     }
   }
 
-  // Make sure everything is freed
-  CLEANUP:
-    if(DeviceFound != NULL) {
-      FreePool(DeviceFound);
-    }
-    if(ProtocolList != NULL) {
-      FreePool(ProtocolList);
-    }
+Cleanup:
+  if (DeviceFound != NULL) {
+    FreePool (DeviceFound);
+  }
+  if (ProtocolList != NULL) {
+    FreePool (ProtocolList);
+  }
 
   return;
 }
@@ -136,7 +142,7 @@ CheckHardwareConnectedEntryPoint (
   IN    EFI_SYSTEM_TABLE            *SystemTable
   )
 {
-  CheckPCIDevices();
+  CheckPciDevicePresence ();
 
   return EFI_SUCCESS;
 }
