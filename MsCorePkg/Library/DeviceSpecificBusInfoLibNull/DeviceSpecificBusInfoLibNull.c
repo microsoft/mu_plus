@@ -1,4 +1,4 @@
-/** @file 
+/** @file
 DeviceSpecificBusInfoLibNull.c
 
 An interface for platforms to define PCI devices which is checked
@@ -21,7 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   Returns a pointer to a static array of DEVICE_PCI_INFO structures and the length of the
   array.
 
-  @param[in, out]   DevicesArray  Pointer to the head of an array of DEVICE_PCI_INFO structures.
+  @param[out]       DevicesArray  Pointer to the head of an array of DEVICE_PCI_INFO structures.
                                   The caller shall not free this array.
 
   @retval           UINTN         Length of the returned array.
@@ -29,7 +29,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 UINTN
 GetPciCheckDevices(
-  IN OUT DEVICE_PCI_INFO **DevicesArray
+  OUT DEVICE_PCI_INFO **DevicesArray
   )
 {
   return 0;

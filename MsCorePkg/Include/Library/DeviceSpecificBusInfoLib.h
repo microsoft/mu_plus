@@ -1,4 +1,4 @@
-/** @file 
+/** @file
 DeviceSpecificBusInfoLib.h
 
 An interface for platforms to define PCI devices which is checked
@@ -27,7 +27,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define PCIE_LINK_SPEED_GEN3 3
 
 typedef struct DEVICE_PCI_INFO
-{ 
+{
     CHAR8                 DeviceName[8]; //So it fits within the 64 bits of Additional Code 2 in section data
     BOOLEAN               IsFatal;
     UINTN                 SegmentNumber;
@@ -41,13 +41,13 @@ typedef struct DEVICE_PCI_INFO
   Returns a pointer to a static array of DEVICE_PCI_INFO structures and the length of the
   array.
 
-  @param[in, out]   DevicesArray  Pointer to the head of an array of DEVICE_PCI_INFO structures.
+  @param[out]       DevicesArray  Pointer to the head of an array of DEVICE_PCI_INFO structures.
                                   The caller shall not free this array.
 
   @retval           UINTN         Length of the returned array.
 
 **/
 UINTN
-GetPciCheckDevices(
-  IN OUT DEVICE_PCI_INFO **DevicesArray
+GetPciCheckDevices (
+  OUT DEVICE_PCI_INFO **DevicesArray
   );
