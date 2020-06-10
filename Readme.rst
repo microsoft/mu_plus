@@ -26,6 +26,14 @@ Breaking Changes-dev
 --------------------
 
 - SharedCrypto is still preserved for now, but doesn't build against the new core.
+- Some identifiers and types were modified in the DeviceSpecificBusInfoLib interface that may break
+  the build for library consumers. Users should take note that:
+  1. The "MinimumGenSpeed" field in DEVICE_PCI_INFO is now called "MinimumLinkSpeed"
+  2. The "MinimumLinkSpeed" field type is changed from a UINTN to an enum of type PCIE_LINK_SPEED
+  3. The "PCIE_LINK_SPEED_GENx" macros are removed from the library header
+  4. A new data structure is introduced of type DEVICE_PCI_CHECK_RESULT that is used in the function
+     prototype for a new function ProcessPciDeviceResults (). The user should implement this function
+     if their platform needs to take custom actions based on device check results.
 
 Main Changes-dev
 ----------------

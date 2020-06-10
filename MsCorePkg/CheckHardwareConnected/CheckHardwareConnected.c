@@ -1,7 +1,7 @@
 /** @file
   CheckHardwareConnected
 
-  Checks if a set of platform-defined PCI devices are discovered.
+  This driver performs a set of hardware checks on devices defined by the platform.
 
   Copyright (c) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -9,7 +9,6 @@
 **/
 
 #include <Uefi.h>
-
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DeviceSpecificBusInfoLib.h>
@@ -17,22 +16,24 @@
 #include <Library/MuTelemetryHelperLib.h>
 #include <Library/PciExpressLib.h>
 #include <Library/UefiLib.h>
-
 #include <Protocol/PciIo.h>
+
+#include "CheckHardwareConnected.h"
 
 /**
   Checks if the platform provided set of PCI devices are currently present.
 
 **/
 VOID
-CheckPciDevicePresence (
+PerformPciChecks (
   VOID
   )
 {
-  EFI_STATUS            Status;
-  BOOLEAN               *DeviceFound;
-  DEVICE_PCI_INFO       *Devices;
-  EFI_PCI_IO_PROTOCOL   **ProtocolList;
+  EFI_STATUS                Status;
+  PCIE_LINK_SPEED           DeviceLinkSpeed;
+  DEVICE_PCI_CHECK_RESULT   *DeviceCheckResult;
+  DEVICE_PCI_INFO           *Devices;
+  EFI_PCI_IO_PROTOCOL       **ProtocolList;
 
   UINTN   ProtocolCount;
   UINTN   Seg;
@@ -44,7 +45,6 @@ CheckPciDevicePresence (
   UINTN   Index;
   UINTN   DeviceIndex;
 
-  DeviceFound   = NULL;
   Devices       = NULL;
   ProtocolList  = NULL;
 
@@ -54,8 +54,8 @@ CheckPciDevicePresence (
     return;
   }
 
-  DeviceFound = AllocateZeroPool (sizeof (BOOLEAN) * NumDevices);
-  if (DeviceFound == NULL) {
+  DeviceCheckResult = AllocateZeroPool (sizeof (DEVICE_PCI_CHECK_RESULT) * NumDevices);
+  if (DeviceCheckResult == NULL) {
     return;
   }
 
@@ -76,21 +76,55 @@ CheckPciDevicePresence (
         Bus == Devices[DeviceIndex].BusNumber &&
         Dev == Devices[DeviceIndex].DeviceNumber &&
         Fun == Devices[DeviceIndex].FunctionNumber) {
-        DeviceFound[DeviceIndex] = TRUE;
+        DeviceCheckResult[DeviceIndex].DevicePresent = TRUE;
       }
     }
   }
 
   for (Index = 0; Index < NumDevices; Index++) {
-    if (DeviceFound[Index] == FALSE) {
-      // Get the BDF for AdditionalData1
-      AdditionalData1 = PCI_ECAM_ADDRESS (
-                          Devices[Index].BusNumber,
-                          Devices[Index].DeviceNumber,
-                          Devices[Index].FunctionNumber,
-                          0
-                          );
+    // Get the BDF for AdditionalData1 to be used in potential telemetry calls
+    AdditionalData1 = PCI_ECAM_ADDRESS (
+                        Devices[Index].BusNumber,
+                        Devices[Index].DeviceNumber,
+                        Devices[Index].FunctionNumber,
+                        0
+                        );
 
+    if (Devices[Index].MinimumLinkSpeed != Ignore) {
+      Status = GetPciExpressDeviceLinkSpeed (ProtocolList[Index], &DeviceLinkSpeed);
+      if (EFI_ERROR (Status)) {
+        DeviceCheckResult[Index].LinkSpeedResult.ActualSpeed = Unknown;
+
+        // Log to telemetry that an error prevented an unignored link speed from being read
+        LogTelemetry (
+          Devices[Index].IsFatal,
+          NULL,
+          (EFI_IO_BUS_PCI | EFI_IOB_EC_CONTROLLER_ERROR),
+          &gDeviceSpecificBusInfoLibTelemetryGuid,
+          NULL,
+          AdditionalData1,
+          *((UINT64 *) Devices[Index].DeviceName)
+          );
+      } else {
+        DeviceCheckResult[Index].LinkSpeedResult.ActualSpeed = DeviceLinkSpeed;
+        if (Devices[Index].MinimumLinkSpeed <= DeviceLinkSpeed && DeviceLinkSpeed != Unknown) {
+          DeviceCheckResult[Index].LinkSpeedResult.MinimumSatisfied = TRUE;
+        } else {
+          // Log to telemetry that a specified minimum link speed was not satisfied
+          LogTelemetry (
+            Devices[Index].IsFatal,
+            NULL,
+            (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_SUPPORTED),
+            &gDeviceSpecificBusInfoLibTelemetryGuid,
+            NULL,
+            AdditionalData1,
+            *((UINT64 *) Devices[Index].DeviceName)
+            );
+        }
+      }
+    }
+
+    if (DeviceCheckResult[Index].DevicePresent == FALSE) {
       LogTelemetry (
         Devices[Index].IsFatal,
         NULL,
@@ -100,23 +134,13 @@ CheckPciDevicePresence (
         AdditionalData1,
         *((UINT64 *) Devices[Index].DeviceName)
         );
-
-      DEBUG ((
-        DEBUG_ERROR,
-        "%a - %a not found. Expected Segment: %d  Bus: %d  Device: %d  Function: %d\n",
-        __FUNCTION__,
-        Devices[Index].DeviceName,
-        Devices[Index].SegmentNumber,
-        Devices[Index].BusNumber,
-        Devices[Index].DeviceNumber,
-        Devices[Index].FunctionNumber
-        ));
     }
   }
+  ProcessPciDeviceResults (NumDevices, DeviceCheckResult);
 
 Cleanup:
-  if (DeviceFound != NULL) {
-    FreePool (DeviceFound);
+  if (DeviceCheckResult != NULL) {
+    FreePool (DeviceCheckResult);
   }
   if (ProtocolList != NULL) {
     FreePool (ProtocolList);
@@ -142,7 +166,7 @@ CheckHardwareConnectedEntryPoint (
   IN    EFI_SYSTEM_TABLE            *SystemTable
   )
 {
-  CheckPciDevicePresence ();
+  PerformPciChecks ();
 
   return EFI_SUCCESS;
 }

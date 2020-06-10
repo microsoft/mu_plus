@@ -34,3 +34,21 @@ GetPciCheckDevices(
 {
   return 0;
 }
+
+/**
+  Performs custom actions in response to the given results from the PCI device check.
+
+  @param[in]        ResultCount   The number of elements in the Results array.
+  @param[in]        Results       An array of DEVICE_PCI_CHECK_RESULT elements where each index directly corresponds
+                                  to the device index in the array passed to GetPciCheckDevices (). TRUE indicates
+                                  the device at that index is present. FALSE indicates the device at that index
+                                  is not present.
+**/
+VOID
+ProcessPciDeviceResults (
+  IN  UINTN                       ResultCount,
+  IN  DEVICE_PCI_CHECK_RESULT     *Results
+  )
+{
+  return;
+}

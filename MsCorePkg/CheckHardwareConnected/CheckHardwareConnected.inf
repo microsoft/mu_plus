@@ -16,7 +16,9 @@
   ENTRY_POINT         = CheckHardwareConnectedEntryPoint
 
 [Sources]
+  CheckHardwareConnected.h
   CheckHardwareConnected.c
+  CheckHardwareConnectedPci.c
 
 [Packages]
   MdePkg/MdePkg.dec

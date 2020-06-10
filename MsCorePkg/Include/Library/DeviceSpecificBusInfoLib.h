@@ -12,21 +12,28 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-/**
-    CHAR8       DeviceName[8]
-    BOOLEAN     IsFatal
-    UINTN       SegmentNumber
-    UINTN       BusNumber
-    UINTN       DeviceNumber
-    UINTN       FunctionNumber
-    UINTN       MinimumGenSpeed
-**/
+typedef enum {
+  Ignore,     // Do not check link speed
+  Gen1,       // 2.5 GT/s
+  Gen2,       // 5.0 GT/s
+  Gen3,       // 8.0 GT/s
+  Gen4,       // 16.0 GT/s
+  Gen5,       // 32.0 GT/s
+  Gen6,       // 64.0 GT/s
+  Unknown     // Unknown link speed
+} PCIE_LINK_SPEED;
 
-#define PCIE_LINK_SPEED_GEN1 1
-#define PCIE_LINK_SPEED_GEN2 2
-#define PCIE_LINK_SPEED_GEN3 3
+typedef struct {
+  BOOLEAN                 MinimumSatisfied;
+  PCIE_LINK_SPEED         ActualSpeed;
+} PCIE_LINK_SPEED_RESULT;
 
-typedef struct DEVICE_PCI_INFO
+typedef struct {
+  BOOLEAN                 DevicePresent;
+  PCIE_LINK_SPEED_RESULT  LinkSpeedResult;
+} DEVICE_PCI_CHECK_RESULT;
+
+typedef struct
 {
     CHAR8                 DeviceName[8]; //So it fits within the 64 bits of Additional Code 2 in section data
     BOOLEAN               IsFatal;
@@ -34,7 +41,7 @@ typedef struct DEVICE_PCI_INFO
     UINTN                 BusNumber;
     UINTN                 DeviceNumber;
     UINTN                 FunctionNumber;
-    UINTN                 MinimumGenSpeed;
+    PCIE_LINK_SPEED       MinimumLinkSpeed;
 } DEVICE_PCI_INFO;
 
 /**
@@ -50,4 +57,19 @@ typedef struct DEVICE_PCI_INFO
 UINTN
 GetPciCheckDevices (
   OUT DEVICE_PCI_INFO **DevicesArray
+  );
+
+/**
+  Performs custom actions in response to the given results from the PCI device check.
+
+  @param[in]        ResultCount   The number of elements in the Results array.
+  @param[in]        Results       An array of DEVICE_PCI_CHECK_RESULT elements where each index directly corresponds
+                                  to the device index in the array passed to GetPciCheckDevices (). TRUE indicates
+                                  the device at that index is present. FALSE indicates the device at that index
+                                  is not present.
+**/
+VOID
+ProcessPciDeviceResults (
+  IN  UINTN                       ResultCount,
+  IN  DEVICE_PCI_CHECK_RESULT     *Results
   );
