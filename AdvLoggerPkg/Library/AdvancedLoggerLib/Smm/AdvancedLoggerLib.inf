@@ -37,7 +37,6 @@
   TimerLib
 
 [Guids]
-  gEfiEventExitBootServicesGuid
 
 [Protocols]
   gAdvancedLoggerProtocolGuid                                               ## CONSUMES
