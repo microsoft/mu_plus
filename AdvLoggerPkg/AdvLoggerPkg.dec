@@ -36,6 +36,11 @@
   ## Advanced Logger Hob Guid
   #
   gAdvancedLoggerHobGuid =  { 0x4d60cfb5, 0xf481, 0x4a98, {0x9c, 0x81, 0xbf, 0xf8, 0x64, 0x60, 0xc4, 0x3e }}
+  #
+
+  ## Advanced Logger Variable Guid. This variable guid is used to access the log data via GetVariable.
+  #
+  gAdvancedLoggerAccessGuid = { 0xa021bf2b, 0x34ed, 0x4a98, {0x85, 0x9c, 0x42, 0x0e, 0xf9, 0x4f, 0x3e, 0x94 }}
 
   ## Advanced Logger Write Log Files Request Event Guid
   #
