@@ -42,9 +42,10 @@
   #
   gAdvancedLoggerAccessGuid = { 0xa021bf2b, 0x34ed, 0x4a98, {0x85, 0x9c, 0x42, 0x0e, 0xf9, 0x4f, 0x3e, 0x94 }}
 
-  ## Advanced Logger Write Log Files Request Event Guid
+  ## Advanced File Logger Write Log Files Request Event Guid
+  # Any driver may signal this event during Boot Services to cause the log to be flushed to present media.
   #
-  gAdvancedLoggerWriteLogFiles = { 0xc60e894d, 0x29a4, 0x4e0b, {0xb7, 0x44, 0x77, 0x84, 0x22, 0x6e, 0x81, 0x80 }}
+  gAdvancedFileLoggerWriteLogFiles = { 0xc60e894d, 0x29a4, 0x4e0b, {0xb7, 0x44, 0x77, 0x84, 0x22, 0x6e, 0x81, 0x80 }}
 
 
 [Ppis]
@@ -60,10 +61,6 @@
 
 
 [PcdsFeatureFlag]
-  ## PcdAdvancedLoggerForceEnable - Forces the creation of the Logs subdirectory on non USB devices
-  #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerForceEnable|TRUE|BOOLEAN|0x00010184
-
   ## PcdAdvancedLoggerPeiInRAM - Tells the PEI Advanced Logger that this PEI can allocate memory
   #                              and there is no need for a temporary memory buffer
   #
@@ -73,6 +70,9 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator|FALSE|BOOLEAN|0x00010186
 
+  ## PcdAdvancedFileLoggerForceEnable - Forces the creation of the Logs subdirectory on non USB devices
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE|BOOLEAN|0x00010184
 
 [PcdsFixedAtBuild]
   ## Advanced Logger serial port filter ErrorLevel

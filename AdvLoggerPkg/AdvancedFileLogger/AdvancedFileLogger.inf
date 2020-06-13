@@ -47,16 +47,17 @@
   UefiRuntimeServicesTableLib
 
 [Guids]
-  gAdvancedLoggerWriteLogFiles
+  gAdvancedFileLoggerWriteLogFiles
+  gEfiEventReadyToBootGuid
   gMuEventPreExitBootServicesGuid
 
 [Protocols]
-  gEfiResetNotificationProtocolGuid                         ## CONSUMES
-  gEfiSimpleFileSystemProtocolGuid                          ## CONSUMES
+  gEfiResetNotificationProtocolGuid                             ## CONSUMES
+  gEfiSimpleFileSystemProtocolGuid                              ## CONSUMES
 
 [Pcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages        ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerForceEnable  ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages            ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable  ## CONSUMES
 
 [Depex]
   TRUE

@@ -68,7 +68,7 @@ CheckIfNVME (
   of the USB file system.
 
   For a non USB device to get Log files, it too must have a Logs directory in the root of the
-  file system.  If PcdAdvancedLoggerForceEnable is TRUE, create the Logs directory
+  file system.  If PcdAdvancedFileLoggerForceEnable is TRUE, create the Logs directory
   in the root of the file system.
 
   If there is no Logs directory, or one cannot be made, return error.
@@ -144,7 +144,7 @@ VolumeFromFileSystemHandle (
         }
 
         // Logs directory doesn't exist, see if we can create the Logs directory.
-        if (!FeaturePcdGet(PcdAdvancedLoggerForceEnable)) {
+        if (!FeaturePcdGet(PcdAdvancedFileLoggerForceEnable)) {
             DEBUG((DEBUG_INFO, "Creating the Logs directory is not allowed.\n"));
             Volume->Close (Volume);
             return NULL;

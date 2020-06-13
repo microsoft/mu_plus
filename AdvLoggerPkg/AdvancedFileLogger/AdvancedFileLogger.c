@@ -452,7 +452,7 @@ ProcessSyncRequestRegistration (
                                   TPL_CALLBACK,
                                   OnWriteLogNotification,
                                   gImageHandle,
-                                 &gAdvancedLoggerWriteLogFiles,
+                                 &gAdvancedFileLoggerWriteLogFiles,
                                  &InitEvent );
 
     if (EFI_ERROR(Status)) {
