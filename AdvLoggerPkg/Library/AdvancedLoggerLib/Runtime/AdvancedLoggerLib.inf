@@ -16,6 +16,7 @@
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = AdvancedLoggerLib | DXE_RUNTIME_DRIVER
   CONSTRUCTOR                    = DxeRuntimeAdvancedLoggerLibConstructor
+  DESTRUCTOR                     = DxeRuntimeAdvancedLoggerLibDestructor
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64
@@ -37,7 +38,6 @@
   TimerLib
 
 [Guids]
-  gEfiEventExitBootServicesGuid
 
 [Protocols]
   gAdvancedLoggerProtocolGuid                                               ## CONSUMES

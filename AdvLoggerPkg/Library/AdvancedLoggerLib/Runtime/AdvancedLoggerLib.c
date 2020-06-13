@@ -13,13 +13,13 @@
 #include <Guid/EventGroup.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <Library/DebugLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
 STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
-STATIC BOOLEAN                  mAtRuntime = FALSE;
-STATIC EFI_EVENT                mExitBootServicesEvent = NULL;
 STATIC EFI_BOOT_SERVICES       *mBS = NULL;
+STATIC EFI_EVENT                mExitBootServicesEvent = NULL;
 
 /**
     Get the Logger Information block
@@ -33,14 +33,12 @@ AdvancedLoggerGetLoggerInfo (
     ADVANCED_LOGGER_PROTOCOL   *LoggerProtocol;
     EFI_STATUS                  Status;
 
-    if (!mAtRuntime) {
-        if ((mLoggerInfo == NULL) && (mBS != NULL)) {
-            Status = mBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
-                                           NULL,
-                                           (VOID **) &LoggerProtocol);
-            if (!EFI_ERROR(Status) && (LoggerProtocol != NULL)) {
-                mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
-            }
+    if ((mLoggerInfo == NULL) &&  (mBS != NULL)) {
+        Status = mBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
+                                       NULL,
+                                       (VOID **) &LoggerProtocol);
+        if (!EFI_ERROR(Status) && (LoggerProtocol != NULL)) {
+            mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
         }
     }
 
@@ -48,29 +46,26 @@ AdvancedLoggerGetLoggerInfo (
 }
 
 /**
-    Exit Boot Services Event notification handler.
+    Inform all instances of Advanced Logger that ExitBoot Services has occurred.
 
-    @param[in]  Event     Event whose notification function is being invoked.
-    @param[in]  Context   Pointer to the notification function's context.
+    @param    Event           Not Used.
+    @param    Context         Not Used.
 
-**/
-STATIC
+   @retval   none
+ **/
 VOID
 EFIAPI
-AllOnExitBootServices (
-    IN      EFI_EVENT                         Event,
-    IN      VOID                              *Context
-    )
+OnExitBootServicesNotification (
+    IN EFI_EVENT        Event,
+    IN VOID             *Context
+  )
 {
-    //
-    // Stop Memory logging :
-    //
-    if (mLoggerInfo != NULL) {
-        mLoggerInfo->ExitBootServices = TRUE;
-    }
 
+    //
+    // Runtime logging is currently not supported, so clear mLoggerInfo.  This
+    // will also stop serial port output from Runtime Advanced Logger instances.
+    //
     mLoggerInfo = NULL;
-    mAtRuntime = TRUE;
 }
 
 /**
@@ -89,23 +84,33 @@ DxeRuntimeAdvancedLoggerLibConstructor (
     IN EFI_SYSTEM_TABLE  *SystemTable
     )
 {
-    mBS = SystemTable->BootServices;
+    EFI_STATUS                      Status;
 
-    //
-    // Register for the ExitBootServices event to shutdown the in memory logger.
-    //
-    mBS->CreateEventEx (EVT_NOTIFY_SIGNAL,
-                        TPL_CALLBACK,
-                        AllOnExitBootServices,
-                        NULL,
-                       &gEfiEventExitBootServicesGuid,
-                       &mExitBootServicesEvent);
+    mBS = SystemTable->BootServices;
+    AdvancedLoggerGetLoggerInfo ();
+
+    ASSERT (mLoggerInfo != NULL);
+
+    if (mLoggerInfo != 0) {
+        //
+        // Register notify function for ExitBootServices.
+        //
+        Status = mBS->CreateEvent ( EVT_SIGNAL_EXIT_BOOT_SERVICES,
+                                    TPL_CALLBACK,
+                                    OnExitBootServicesNotification,
+                                    NULL,
+                                   &mExitBootServicesEvent);
+
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "%a - Create Event for Address Change failed. Code = %r\n", __FUNCTION__, Status));
+        }
+    }
 
     return EFI_SUCCESS;
 }
 
 /**
-    The destructor function closes the exit boot services event
+    The destructor closes the registered event in case of driver failure.
 
     @param  ImageHandle   The firmware allocated handle for the EFI image.
     @param  SystemTable   A pointer to the EFI System Table.
