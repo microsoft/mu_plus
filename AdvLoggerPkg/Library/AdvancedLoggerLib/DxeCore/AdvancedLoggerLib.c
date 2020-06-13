@@ -91,7 +91,7 @@ OnVariableWriteNotification (
     SystemTable->RuntimeServices->SetVariable (
         ADVANCED_LOGGER_LOCATOR_NAME,
         &gAdvancedLoggerHobGuid,
-        EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
         sizeof(mLoggerInfo),
         (VOID *) &mLoggerInfo );
 
