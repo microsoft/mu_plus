@@ -19,6 +19,7 @@
 
 #include "../AdvancedLoggerCommon.h"
 
+BOOLEAN mSerialPortDisabled = FALSE;
 
 /**
   Write data from buffer into the in memory logging buffer.
@@ -61,6 +62,10 @@ AdvancedLoggerMemoryLoggerWrite (
     EntrySize = MESSAGE_ENTRY_SIZE(NumberOfBytes);
 
     if (LoggerInfo != NULL) {
+        if (LoggerInfo->SerialPortDisabled) {
+            mSerialPortDisabled = TRUE;
+        }
+
         do {
             CurrentBuffer = LoggerInfo->LogCurrent;
             if ((LoggerInfo->LogBufferSize -
@@ -122,14 +127,15 @@ AdvancedLoggerWrite (
     IN       UINTN    NumberOfBytes
   ) {
 
-
     // All messages go to the in memory log.
 
     AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 
     // Only selected messages go to the serial port.
 
-    if (DebugLevel & FixedPcdGet32(PcdAdvancedLoggerSerialDebugPrintErrorLevel)) {
-        SerialPortWrite((UINT8 *) Buffer, NumberOfBytes);
+    if (!mSerialPortDisabled) {
+        if (DebugLevel & FixedPcdGet32(PcdAdvancedLoggerSerialDebugPrintErrorLevel)) {
+            SerialPortWrite((UINT8 *) Buffer, NumberOfBytes);
+        }
     }
 }

@@ -10,7 +10,7 @@
 #ifndef __ADVANCED_LOGGER_COMMON_H__
 #define __ADVANCED_LOGGER_COMMON_H__
 
-
+extern BOOLEAN mSerialPortDisabled;
 /**
     Write data from buffer to possible debugging devices.
 

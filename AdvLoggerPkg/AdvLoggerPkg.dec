@@ -102,6 +102,24 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages|1024|UINT32|0x00010183
 
+  ## PcdAdvancedLoggerSerialDisable - When to turn off writing to the SerialPort. Only used
+  ##                                      by DXE_SMM_DRIVER
+  # The values supported are:
+  # 0 = Never
+  # 2 = Exit Boot Services
+  # 4 = Virtual Address Change
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDisable|0x04|UINT8|0x00010188
+
+
+  ## PcdAdvancedFileLoggerFlush - When the in memory log is flushed to media
+  # The values supported are:
+  # 0 = Never
+  # 1 = Ready To Boot
+  # 2 = Exit Boot Services
+  #
+  # The values can be combined eg. 3 == Ready To Boot and Exit Boot Services.
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush|1|UINT8|0x00010187
 
 [PcdsDynamic]
 

@@ -293,7 +293,6 @@ AdvancedLoggerGetLoggerInfo (
                     LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
                     SerialPortInitialize ();
                     LoggerInfo->SerialInitialized = TRUE;
-                    LoggerInfo->PeiAllocated = TRUE;
 
                     if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
                         LoggerInfo->InPermanentRAM = TRUE;

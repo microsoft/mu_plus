@@ -35,8 +35,8 @@ typedef volatile struct {
     UINT32                DiscardedSize;          // Number of bytes of messages missed
     BOOLEAN               SerialInitialized;      // Serial port initialized
     BOOLEAN               InPermanentRAM;         // Log in permanent RAM
-    BOOLEAN               ExitBootServices;       // Exit Boot Services occurred
-    BOOLEAN               PeiAllocated;           // Pei allocated "Temp Ram"
+    BOOLEAN               SerialPortDisabled;     // SerialPort is Disabled
+    BOOLEAN               Reserved;               //
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {
@@ -81,12 +81,22 @@ typedef struct {
 } ADVANCED_LOGGER_PTR;
 
 //
+// Bit flags for PcdAdvancedLoggerSerialDisableSMM and PcdAdvancedLoggerSerialDisableRUNTIME
+//
+#define ADV_PCD_DISABLE_SERIAL_FLAGS_NEVER                  0x00
+#define ADV_PCD_DISABLE_SERIAL_FLAGS_EXIT_BOOT_SERVICES     0x02
+#define ADV_PCD_DISABLE_SERIAL_FLAGS_VIRTUAL_ADDRESS_CHANGE 0x04
+
+//
 // Bit flags for PcdAdvancedFileLoggerFlush
 //
 #define ADV_PCD_FLUSH_TO_MEDIA_FLAGS_NEVER                  0x00
 #define ADV_PCD_FLUSH_TO_MEDIA_FLAGS_READY_TO_BOOT          0x01
 #define ADV_PCD_FLUSH_TO_MEDIA_FLAGS_EXIT_BOOT_SERVICES     0x02
 
+//
+// Address of mLoggerInfo block for script access to in memory log
+//
 #define ADVANCED_LOGGER_LOCATOR_NAME L"AdvLoggerLocator"
 
 extern EFI_GUID gAdvancedLoggerHobGuid;
