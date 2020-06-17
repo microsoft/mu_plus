@@ -8,7 +8,7 @@
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
+  INF_VERSION                    = 1.26
   BASE_NAME                      = AdvancedFileLogger
   FILE_GUID                      = 06e49122-4ef4-45fe-9766-e2eaf2f9472f
   MODULE_TYPE                    = DXE_DRIVER

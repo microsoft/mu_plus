@@ -17,7 +17,7 @@
   LIBRARY_CLASS                  = AdvancedLoggerLib | PEIM
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
 [Sources]

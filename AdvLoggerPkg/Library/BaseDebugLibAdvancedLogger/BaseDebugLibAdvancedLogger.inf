@@ -20,7 +20,7 @@
   LIBRARY_CLASS                  = DebugLib
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
 [Sources]
