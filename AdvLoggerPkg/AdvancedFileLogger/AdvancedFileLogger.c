@@ -204,6 +204,8 @@ RegisterLogDevice (
 
   @retval   none
 
+  This may be called for multiple device arrivals, so the Event is not closed.
+
 **/
 VOID
 EFIAPI
@@ -253,11 +255,36 @@ OnFileSystemNotification (
     @param    Event           Not Used.
     @param    Context         Not Used.
 
-   @retval   none
+    @retval   none
+
+    This may be called for multiple WriteLogNotifications, so the Event is not closed.
+
  **/
 VOID
 EFIAPI
 OnWriteLogNotification (
+    IN EFI_EVENT        Event,
+    IN VOID             *Context
+  )
+{
+
+    WriteLogFiles ();
+}
+
+/**
+    Write the log files at ReadyToBoot.
+
+    @param    Event           Not Used.
+    @param    Context         Not Used.
+
+   @retval   none
+
+    This may be called for multiple ReadyToBoot notifications, so the Event is not closed.
+
+ **/
+VOID
+EFIAPI
+OnReadyToBootNotification (
     IN EFI_EVENT        Event,
     IN VOID             *Context
   )
@@ -272,7 +299,10 @@ OnWriteLogNotification (
     @param    Event           Not Used.
     @param    Context         Not Used.
 
-   @retval   none
+    @retval   none
+
+    There is only one call to ExitBootServices, so close the Event.
+
  **/
 VOID
 EFIAPI
@@ -463,6 +493,49 @@ ProcessSyncRequestRegistration (
 }
 
 /**
+    ProcessReadyToBootRegistration
+
+    This function creates a group event handler for ReadyToBoot to flush the
+    log file to media/
+
+
+    @param    VOID
+
+    @returns  nothing
+
+  **/
+EFI_STATUS
+ProcessReadyToBootRegistration (
+    VOID
+    )
+{
+    EFI_EVENT       InitEvent;
+    EFI_STATUS      Status;
+    UINT8           FlushFlags;
+
+    FlushFlags = FixedPcdGet8(PcdAdvancedFileLoggerFlush);
+
+    Status = EFI_SUCCESS;
+    if (FlushFlags & ADV_PCD_FLUSH_TO_MEDIA_FLAGS_READY_TO_BOOT) {
+        //
+        // Register notify function for writing the log files.
+        //
+        Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
+                                      TPL_CALLBACK,
+                                      OnReadyToBootNotification,
+                                      gImageHandle,
+                                     &gEfiEventReadyToBootGuid,
+                                     &InitEvent );
+
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ReadyToBoot. Code = %r\n", __FUNCTION__, Status));
+        }
+    }
+
+    return Status;
+}
+
+/**
     ProcessPreExitBootServicesRegistration
 
     This function creates a group event handler for gAdvancedLoggerWriteLogFiles
@@ -544,7 +617,15 @@ AdvancedFileLoggerEntry (
     }
 
     //
-    // Step 4. Register for PreExitBootServices Notifications.
+    // Step 4. Register for ReadyToBoot Notifications.
+    //
+    Status = ProcessReadyToBootRegistration ();
+    if (EFI_ERROR(Status)) {
+        goto Exit;
+    }
+
+    //
+    // Step 5. Register for PreExitBootServices Notifications.
     //
     Status = ProcessPreExitBootServicesRegistration ();
 

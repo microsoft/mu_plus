@@ -80,6 +80,13 @@ typedef struct {
     EFI_PHYSICAL_ADDRESS    LoggerInfo;
 } ADVANCED_LOGGER_PTR;
 
+//
+// Bit flags for PcdAdvancedFileLoggerFlush
+//
+#define ADV_PCD_FLUSH_TO_MEDIA_FLAGS_NEVER                  0x00
+#define ADV_PCD_FLUSH_TO_MEDIA_FLAGS_READY_TO_BOOT          0x01
+#define ADV_PCD_FLUSH_TO_MEDIA_FLAGS_EXIT_BOOT_SERVICES     0x02
+
 #define ADVANCED_LOGGER_LOCATOR_NAME L"AdvLoggerLocator"
 
 extern EFI_GUID gAdvancedLoggerHobGuid;

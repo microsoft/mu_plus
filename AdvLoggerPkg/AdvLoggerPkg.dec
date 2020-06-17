@@ -74,6 +74,16 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE|BOOLEAN|0x00010184
 
+  ## PcdAdvancedFileLoggerFlush - When the in memory log is flushed to media
+  # The values supported are:
+  # 0 = Never
+  # 1 = Ready To Boot
+  # 2 = Exit Boot Services
+  #
+  # The values can be combined eg. 3 == Ready To Boot and Exit Boot Services.
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush|1|UINT8|0x00010187
+
+
 [PcdsFixedAtBuild]
   ## Advanced Logger serial port filter ErrorLevel
   #
