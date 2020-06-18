@@ -12,6 +12,7 @@
 #define __ADVANCED_LOGGER_INTERNAL_H__
 
 #define ADVANCED_LOGGER_SIGNATURE     SIGNATURE_32('A','L','O','G')
+#define ADVANCED_LOGGER_VERSION       1
 
 //
 // These Pcds are used to carve out a PEI memory buffer from the temporary RAM.
@@ -27,16 +28,20 @@
 
 #pragma pack (push, 1)
 
+
 typedef volatile struct {
-    UINT32                Signature;
-    UINT32                LogBufferSize;
+    UINT32                Signature;              // Signature 'ALOG'
+    UINT16                Version;                // Current Version
+    UINT16                Reserved;               // Reserved for future
     EFI_PHYSICAL_ADDRESS  LogBuffer;              // Fixed pointer to start of log
     EFI_PHYSICAL_ADDRESS  LogCurrent;             // Where to store next log entry.
     UINT32                DiscardedSize;          // Number of bytes of messages missed
+    UINT32                LogBufferSize;
     BOOLEAN               SerialInitialized;      // Serial port initialized
     BOOLEAN               InPermanentRAM;         // Log in permanent RAM
     BOOLEAN               SerialPortDisabled;     // SerialPort is Disabled
-    BOOLEAN               Reserved;               //
+    BOOLEAN               Reserved2[5];           //
+    UINT64                TimerFrequency;         //
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {

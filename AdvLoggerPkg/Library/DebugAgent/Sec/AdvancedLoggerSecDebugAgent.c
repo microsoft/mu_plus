@@ -89,6 +89,7 @@ InitializeDebugAgent (
             SecCoreData->PeiTemporaryRamSize -= PreMemSize;
             ZeroMem ((VOID *) LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
             LoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
+            LoggerInfo->Version = ADVANCED_LOGGER_VERSION;
             LoggerInfo->LogBufferSize = PreMemSize - sizeof(ADVANCED_LOGGER_INFO) - sizeof(LogPtr);
             LoggerInfo->LogBuffer = PA_FROM_PTR ( (LoggerInfo + 1));
             LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;

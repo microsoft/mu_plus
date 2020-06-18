@@ -20,6 +20,7 @@
 #include <Library/PcdLib.h>
 #include <Library/SerialPortLib.h>
 #include <Library/SynchronizationLib.h>
+#include <Library/TimerLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
@@ -175,6 +176,7 @@ DxeCoreAdvancedLoggerLibConstructor (
         LoggerInfo = (ADVANCED_LOGGER_INFO *) AllocateReservedPages(FixedPcdGet32 (PcdAdvancedLoggerPages));
         if (LoggerInfo != NULL) {
             LoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
+            LoggerInfo->Version = ADVANCED_LOGGER_VERSION;
             LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
             LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
             LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
@@ -187,13 +189,17 @@ DxeCoreAdvancedLoggerLibConstructor (
         mLoggerProtocol.Context = (VOID *) mLoggerInfo;
     }
 
-    Status = SystemTable->BootServices->InstallProtocolInterface (&ImageHandle,
-                                                                  &gAdvancedLoggerProtocolGuid,
-                                                                   EFI_NATIVE_INTERFACE,
-                                                                  &mLoggerProtocol);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Error installing protocol - %r\n", Status));
-        // If the protocol doesn't install, don't fail.
+    if (mLoggerInfo != NULL) {
+        mLoggerInfo->TimerFrequency = GetPerformanceCounterProperties (NULL, NULL);
+        Status = SystemTable->BootServices->InstallProtocolInterface (&ImageHandle,
+                                                                      &gAdvancedLoggerProtocolGuid,
+                                                                       EFI_NATIVE_INTERFACE,
+                                                                      &mLoggerProtocol);
+
+        if (EFI_ERROR(Status)) {
+            DEBUG((DEBUG_ERROR, "%a: Error installing protocol - %r\n", Status));
+            // If the protocol doesn't install, don't fail.
+        }
     }
 
     DEBUG((DEBUG_INFO, "%a Initialized. mLoggerInfo = %p\n", __FUNCTION__, mLoggerInfo));

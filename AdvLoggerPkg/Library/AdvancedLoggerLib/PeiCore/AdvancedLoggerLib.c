@@ -288,6 +288,7 @@ AdvancedLoggerGetLoggerInfo (
                     LoggerInfo = (ADVANCED_LOGGER_INFO *) (UINTN) NewLoggerInfo;
                     ZeroMem ((VOID *)LoggerInfo, BufferSize);
                     LoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
+                    LoggerInfo->Version = ADVANCED_LOGGER_VERSION;
                     LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
                     LoggerInfo->LogBufferSize = BufferSize - sizeof(ADVANCED_LOGGER_INFO);
                     LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;

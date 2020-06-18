@@ -14,8 +14,6 @@ from win32com.shell import shell
 from UefiVariablesSupportLib import UefiVariable
 
 
-class AdvLogParser ():
-
     # ----------------------------------------------------------------------- #
     #
     # AdvLogParser - Parser for the in memory AdvLoggerPkg buffer using UEFI Get Variable, or
@@ -103,15 +101,15 @@ class AdvLogParser ():
     #        EFI_PHYSICAL_ADDRESS  LogBuffer;              // Fixed pointer to start of log
     #        EFI_PHYSICAL_ADDRESS  LogCurrent;             // Where to store next log entry.
     #        UINT32                DiscardedSize;          // Number of bytes of messages missed
-    #        UINT32                LogBufferSize;
-    #        BOOLEAN               SerialInitialized;      // Serial port initialized
+    #        UINT32                LogBufferSize;          // Size of allocated buffer
     #        BOOLEAN               InPermanentRAM;         // Log in permanent RAM
-    #        BOOLEAN               ExitBootServices;       // Exit Boot Services occurred
-    #        BOOLEAN               PeiAllocated;           // Pei allocated "Temp Ram"
+    #        BOOLEAN               AtRuntime;              // After ExitBootServices
+    #        BOOLEAN               GoneVirtual;            // After VirtualAddressChange
+    #        BOOLEAN               Reserved2[5];           //
     #        UINT64                TimerFrequency;         // Ticks per second for log timing
     #    } ADVANCED_LOGGER_INFO;
     #
-    LOGGER_INFO_SIZE = 52
+    LOGGER_INFO_SIZE = 48
     #
     # The dictionary entries for LoggerInfo is based on the UEFI structure above.
     #
@@ -158,16 +156,13 @@ class AdvLogParser ():
 
     # ---------------------------------------------------------------------- #
     #
-    # Global Variables
+    # Global Constants
     #
     # ---------------------------------------------------------------------- #
-    StartLine = 0           # From argument StartLine
-    CurrentLine = 0         # Internal counter tracing the number of lines printed
-    Frequency = 2.5         # From argument Frequency and is in GigaHertz (GH)
-
     SUCCESS = 0
     END_OF_FILE = 1
     ABORTED = 2
+
     # ---------------------------------------------------------------------- #
     #
     # AdvLogParser Class Functions
@@ -179,19 +174,31 @@ class AdvLogParser ():
     #  Initialize log Header
     #
     # ---------------------------------------------------------------------- #
-    def _InitializeLoggerInfo(self, InFile):
+    def _InitializeLoggerInfo(self, InFile, StartLine):
         ''' Initialize log Header '''
         LoggerInfo = {}
+        LoggerInfo["StartLine"] = StartLine
+        LoggerInfo["CurrentLine"] = 0
         LoggerInfo["Signature"] = InFile.read(4).decode()
-        LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
+        LoggerInfo["Version"] = struct.unpack("=H", InFile.read(2))[0]
+        InFile.read(2)[0]           # Skip reserved field
+
+        if LoggerInfo["Signature"] != "ALOG":
+            raise Exception('Error initializing logger info. Invalid signature: %s' % LoggerInfo["Version"])
+
+        if LoggerInfo["Version"] != 1:
+            raise Exception('Error initializing logger info. Unsupported version: 0x%X' % LoggerInfo["Version"])
+
         BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + self.LOGGER_INFO_SIZE
         LoggerInfo["LogBuffer"] = self.LOGGER_INFO_SIZE
         LoggerInfo["LogCurrent"] = struct.unpack("=Q", InFile.read(8))[0]
         LoggerInfo["DiscardedSize"] = struct.unpack("=I", InFile.read(4))[0]
-        LoggerInfo["SerialInitialized"] = struct.unpack("=B", InFile.read(1))[0]
+        LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
         LoggerInfo["InPermanentRAM"] = struct.unpack("=B", InFile.read(1))[0]
-        LoggerInfo["ExitBootServices"] = struct.unpack("=B", InFile.read(1))[0]
-        LoggerInfo["PeiAllocated"] = struct.unpack("=B", InFile.read(1))[0]
+        LoggerInfo["AtRuntime"] = struct.unpack("=B", InFile.read(1))[0]
+        LoggerInfo["GoneVirtual"] = struct.unpack("=B", InFile.read(1))[0]
+        InFile.read(5)                 # skip reserve2 field
+        LoggerInfo["Frequency"] = struct.unpack("=Q", InFile.read(8))[0]
 
         LoggerInfo["BaseAddress"] = BaseAddress
         LoggerInfo["LogCurrent"] -= BaseAddress
@@ -200,7 +207,7 @@ class AdvLogParser ():
         LoggerInfo["InFile"] = InFile
 
         if InFile.tell() != (self.LOGGER_INFO_SIZE):
-            raise Exception('Error initializing logger info. AmountRead: 0x%X' % AmountRead)
+            raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
         return LoggerInfo
 
@@ -342,10 +349,9 @@ class AdvLogParser ():
     #
     #   Convert Ticks to approximate time based of Frequency setting
     #
-    def _GetTimeInNanoSecond(self, Ticks):
-        Frequency = int(self.Frequency)
+    def _GetTimeInNanoSecond(self, Ticks, Frequency):
         NanoSeconds = (Ticks // Frequency) * 1000000000
-        Remainder = int(Ticks % Frequency)
+        Remainder = Ticks % Frequency
         BitLength = Remainder.bit_length()
 
         ##
@@ -363,8 +369,8 @@ class AdvLogParser ():
     #
     #   Get the formatted timestamp
     #
-    def _GetTimeStamp(self, Ticks):
-        Temp = self._GetTimeInNanoSecond(Ticks)
+    def _GetTimeStamp(self, Ticks, Frequency):
+        Temp = self._GetTimeInNanoSecond(Ticks, Frequency)
 
         Temp = Temp // (1000 * 1000)
         Hours = Temp // (1000 * 60 * 60)
@@ -387,18 +393,24 @@ class AdvLogParser ():
         lines = []
         Status = self.SUCCESS
         MessageLine = None
+        CurrentLine = LoggerInfo["CurrentLine"]
+        StartLine = LoggerInfo["StartLine"]
 
         while (Status == self.SUCCESS):
             (Status, MessageLine) = self._GetNextFormattedLine(MessageLine, LoggerInfo)
             if Status != self.SUCCESS:
+                if Status != self.END_OF_FILE:
+                    print(f"Error {Status} from GetNextFormattedLine")
                 break
 
-            if self.CurrentLine >= self.StartLine:
+            if CurrentLine >= StartLine:
                 Ticks = MessageLine["TimeStamp"]
-                NewLine = self._GetTimeStamp(Ticks) + MessageLine["Message"]
+                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"]) + MessageLine["Message"]
                 lines.append(NewLine.rstrip() + '\n')
 
-            self.CurrentLine += 1
+            CurrentLine += 1
+
+        LoggerInfo["CurrentLine"] = CurrentLine
 
         return lines
 
@@ -413,11 +425,9 @@ class AdvLogParser ():
     # ProcessMessages - Process the message buffer
     #
     # ----------------------------------------------------------------------- #
-    def ProcessMessages(self, InFile, StartLine, ProcessorFrequency):
-        self.StartLine = StartLine
-        self.Frequency = ProcessorFrequency * 1000000000
+    def ProcessMessages(self, InFile, StartLine):
 
-        LoggerInfo = self._InitializeLoggerInfo(InFile)
+        LoggerInfo = self._InitializeLoggerInfo(InFile, StartLine)
         Messages = None
         lines = self._GetLines(Messages, LoggerInfo)
 
@@ -467,10 +477,10 @@ def main():
                               Advanced Logger in memory log from UEFI""")
     parser.add_argument("-o",  "--OutFile", dest="OutFilePath", default=None,
                         help="Path to Output LogFile")
+    parser.add_argument("-r",  "--Raw OutFile", dest="RawFilePath", default=None,
+                        help="Path to binary Output LogFile")
     parser.add_argument("-s",  "--StartLine", dest="StartLine", default=0, type=int,
                         help="Print starting at StartLine")
-    parser.add_argument("-f",  "--Frequency", dest="Frequency", default=2.5, type=float,
-                        help="Processor frequency in GHz")
 
     options = parser.parse_args()
 
@@ -484,14 +494,26 @@ def main():
 
     advlog = AdvLogParser()
 
-    lines = advlog.ProcessMessages(InFile,
-                                   options.StartLine,
-                                   options.Frequency)
+    try:
+        lines = advlog.ProcessMessages(InFile, options.StartLine)
 
-    if options.OutFilePath is not None:
-        OutFile = open(options.OutFilePath, "w", newline=None)
-        OutFile.writelines(lines)
-        OutFile.close()
+        if options.OutFilePath is not None:
+            OutFile = open(options.OutFilePath, "w", newline=None)
+            OutFile.writelines(lines)
+            OutFile.close()
+            CountOfLines = len(lines)
+            print(f"{CountOfLines} lines written to {options.OutFilePath}")
+
+    except Exception as ex:
+        print("Error processing log output.")
+        print(ex)
+
+    if options.RawFilePath is not None:
+        RawFile = open(options.RawFilePath, "wb")
+        InFile.seek(0)
+        RawFile.write(InFile.read())
+        RawFile.close()
+        print("RawFile complete")
 
     InFile.close()
 
