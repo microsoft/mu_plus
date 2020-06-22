@@ -1,0 +1,33 @@
+## @file
+#  NULL library for the MFCI Policy parser
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MfciPolicyParsingLibNull
+  FILE_GUID           = BCCB4D0D-B5B8-45D4-8F4E-961E9161F32E
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  LIBRARY_CLASS       = MfciPolicyParsingLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+
+[Sources]
+  MfciPolicyParsingLibNull.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MfciPkg/MfciPkg.dec
+
+
+[LibraryClasses]

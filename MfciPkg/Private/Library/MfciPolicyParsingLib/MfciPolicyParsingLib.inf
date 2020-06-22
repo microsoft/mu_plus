@@ -1,0 +1,40 @@
+## @file
+# Implements the MFCI Policy Parser Library
+# Parses a signed, binary policy blob returning logical values
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MfciPolicyParsingLib
+  FILE_GUID           = D8E5BB86-8F2E-48F5-8213-F53643F5F16A
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  LIBRARY_CLASS       = MfciPolicyParsingLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+
+[Sources]
+  MfciPolicyParsingLibInternal.h
+  MfciPolicyParsingLib.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MfciPkg/MfciPkg.dec
+  CryptoPkg/CryptoPkg.dec
+
+
+[LibraryClasses]
+  BaseCryptLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib

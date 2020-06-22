@@ -1,0 +1,53 @@
+## @file
+# PEI Driver for determining the MFCI Policy in-effect
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MfciPei
+  FILE_GUID                      = 6076A6DB-3CE5-4D08-ACA3-740A679E1A5C
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MfciPeiEntry
+
+#
+# The following information is for reference only and not required by the
+# build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciPei.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  PcdLib
+  PeimEntryPoint
+  PeiServicesLib
+
+[Protocols]
+
+[Pcd]
+
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid    ## CONSUMES
+  gMfciPpiGuid                  ## PRODUCES
+
+[Guids]
+  gMfciHobGuid              ## CONSUMES
+  gMfciVendorGuid           ## CONSUMES
+
+[Depex]
+  TRUE

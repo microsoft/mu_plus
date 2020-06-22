@@ -1,0 +1,53 @@
+## @file MuSecureBootLib.inf
+#
+#  This module contains functions for setting and clearing the secure boot
+#  variables
+#
+#  Copyright (c) Microsoft Corporation
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MuSecureBootLib
+  FILE_GUID                      = 800cd4b3-6f9f-44d7-a2d3-98499966fab4
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MuSecureBootLib | DXE_DRIVER UEFI_APPLICATION
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MuSecureBootLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  SecurityPkg/SecurityPkg.dec 
+  MfciPkg/MfciPkg.dec
+
+[LibraryClasses]
+  DebugLib
+#  PlatformKeyLib
+  UefiBootServicesTableLib
+
+
+[Protocols]
+  gEfiRealTimeClockArchProtocolGuid             ## PROTOCOL CONSUMES
+  gVariablePolicyProtocolGuid                   # CONSUMES
+
+  
+[Guids]
+  gEfiGlobalVariableGuid         # CONSUMES
+  gEfiImageSecurityDatabaseGuid  # CONSUMES
+  gEfiCertPkcs7Guid              # CONSUMES
+  gEfiCustomModeEnableGuid       ## CONSUMES ## Variable ## L"CustomMode"
+  gMuVarPolicyDxePhaseGuid       ## CONSUMES ## Variable ## ReadyToBoot Indicator
+
+
+[Depex]
+  gEfiRealTimeClockArchProtocolGuid AND
+  gVariablePolicyProtocolGuid

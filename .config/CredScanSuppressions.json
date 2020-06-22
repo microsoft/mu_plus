@@ -2,6 +2,16 @@
     "suppressions": [
         {
             "file": "DfciPkg/UnitTests/DfciTests/Certs",
+            "file": "MfciPkg/UnitTests/data/certs/CA-NotTrusted.pfx",
+            "file": "MfciPkg/UnitTests/data/certs/CA-NotTrusted.pvk",
+            "file": "MfciPkg/UnitTests/data/certs/CA.pfx",
+            "file": "MfciPkg/UnitTests/data/certs/CA.pvk",
+            "file": "MfciPkg/UnitTests/data/certs/Leaf-NoEku.pfx",
+            "file": "MfciPkg/UnitTests/data/certs/Leaf-NoEku.pvk",
+            "file": "MfciPkg/UnitTests/data/certs/Leaf-test.pfx",
+            "file": "MfciPkg/UnitTests/data/certs/Leaf-test.pvk",
+            "file": "MfciPkg/UnitTests/data/certs/Root.pfx",
+            "file": "MfciPkg/UnitTests/data/certs/Root.pvk",
             "_justification": "Test case test certificates."
         }
     ]

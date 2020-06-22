@@ -1,0 +1,75 @@
+## @file
+# DXE Driver for determining the MFCI Policy in-effect and changes
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MfciDxe
+  FILE_GUID                      = D4ABC208-E91F-4A5C-880B-7063A0393E4C
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MfciDxeEntry
+
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciDxe.c
+  MfciPublicInterface.c
+  MfciDxe.h
+  MfciTargeting.c
+  SecureBootClear.c
+  TpmClear.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+  MfciPkg/MfciPkg.dec
+  SecurityPkg/SecurityPkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  UefiDriverEntryPoint
+  ResetUtilityLib
+  BaseMemoryLib
+  HobLib
+  MemoryAllocationLib
+  MfciPolicyParsingLib
+  MuVariablePolicyHelperLib
+  RngLib
+  Tpm2CommandLib
+  MuSecureBootLib
+
+
+[Protocols]
+  gMfciProtocolGuid         ## CONSUMES
+  gVariablePolicyProtocolGuid         ## CONSUMES
+
+[Protocols.X64.Private, Protocols.AARCH64.Private]
+  gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
+
+[Pcd]
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr    ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU  ## CONSUMES
+
+[Guids]
+  gMfciHobGuid              ## CONSUMES
+  gMfciVendorGuid           ## CONSUMES
+  gMsStartOfBdsNotifyGuid             ## CONSUMES
+  gEfiEndOfDxeEventGroupGuid          ## CONSUMES
+  gMuVarPolicyDxePhaseGuid            ## CONSUMES
+  gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES ## GUID ## Variable namespace
+  gMfciPolicyChangeResetGuid            ## CONSUMES
+
+[Depex]
+  gVariablePolicyProtocolGuid

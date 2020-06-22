@@ -43,6 +43,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         return (
                 "AdvLoggerPkg",
                 "DfciPkg",
+                "MfciPkg",
                 "MsCorePkg",
                 "MsGraphicsPkg",
                 "MsWheaPkg",

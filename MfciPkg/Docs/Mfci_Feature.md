@@ -1,4 +1,4 @@
-# **DRAFT:** Windows Firmware Policy
+# **DRAFT:** Manufacturer Firmware Configuration Interface (MFCI)
 
 ## **NOTE**
 
@@ -8,27 +8,45 @@ The following is prerelease documentation for an upcoming feature.  Details are 
 
 ### What Is It
 
-Windows Firmware Policy provides a mechanism for an authenticated agent, such as an OEM or ODM, to modify firmware security properties of a specific device, typically for the purposes of remanufacturing or refurbishment.
+Manufacturer Firmware Configuration Interface (MFCI) provides a mechanism for an authenticated
+agent, such as an OEM or ODM, to modify firmware security properties of a specific device, typically
+for the purposes of remanufacturing or refurbishment.
 
 ### Background
 
-Manufacturing and remanufacturing (refurbishment) of devices requires configuration of settings related to safety (batteries, thermals), compliance (radio calibration, anti-theft), licensing (OA3, serial numbers), & security.  These sensitive settings are typically secured by the OEM / ODM at end of manufacturing to ensure that they are not modified with malicious intent.  During initial manufacturing, a device is typically not secured until the final provisioning station, after calibration and other secure data have been provisioned.  After a device is secured, product demand may deviate from forecasts and a device may need to be reprovisioned for a different region, requiring modification of secured settings.  Remanufacturing of devices requires executing tools and workflows that bypass this security, allowing modification of these sensitive settings, and performing potentially destructive diagnostics.  The Windows 10 X (a.k.a. WCOS) Compatibility Requirements (formerly known as Logo) prohibit unauthorized execution of these dangerous tools.  The firmware policy feature provides a secure path to enable remanufacturing while maintaining the Windows security promise.
+Manufacturing and remanufacturing (refurbishment) of devices requires configuration of settings
+related to safety (batteries, thermals), compliance (radio calibration, anti-theft), licensing
+(OA3, serial numbers), & security.  These sensitive settings are typically secured by the
+OEM / ODM at end of manufacturing to ensure that they are not modified with malicious intent.
+During initial manufacturing, a device is typically not secured until the final provisioning
+station, after calibration and other secure data have been provisioned.  After a device is secured,
+product demand may deviate from forecasts and a device may need to be reprovisioned for a different
+region, requiring modification of secured settings.  Remanufacturing of devices requires executing
+tools and workflows that bypass this security, allowing modification of these sensitive settings,
+and performing potentially destructive diagnostics.  The Windows 10 X (a.k.a. WCOS) Compatibility
+Requirements (formerly known as Logo) prohibit unauthorized execution of these dangerous tools.
+The MFCI feature provides a secure path to enable remanufacturing while maintaining the Windows
+security promise.
 
 ## Workflows
 
-### Generic Policy Installation Workflow
+### Generic MFCI Policy Installation Workflow
 
 1. Read targeting information from a target device (UEFI variables)
-1. Determine the flavor of policy to be applied to the device based upon the type of remanufacturing to be performed
-1. Assemble the targeting information and policy flavor into the unsigned Windows Firmware Policy packet format
+1. Determine the flavor of MFCI policy to be applied to the device based upon the type of
+remanufacturing to be performed
+1. Assemble the targeting information and policy flavor into the unsigned MFCI Policy packet format
 1. Digitally sign the packet using the specified digital signing format and trusted signing keys
-1. Write the signed Windows Firmware Policy packet to the target policy mailbox (a UEFI variable) on the target device
+1. Write the signed MFCI Policy packet to the "next" policy mailbox (a UEFI variable) on the target device
 1. Reboot the target device to trigger an installation attempt
 1. Prior to OS launch, the firmware attempts to verify the digital signature and targeting information
-    1. If verification fails, the policy is deleted from the target policy mailbox, and the device proceeds with boot to the OS
+    1. If verification fails, the policy is deleted from the next policy mailbox, and
+    the device proceeds with boot to the OS
     1. If verification succeeds...
         1. Registered firmware handlers are notified
-        1. The target policy and nonce become "active"
+        1. Bits representing 1-shot actions are cleared from the policy, as they should have been
+        handled in the prior notifications
+        1. The next policy and nonce become "active"
         1. The device reboots so that early boot code can observe the new active policy
 
 ### One "Real" Installation Workflow
@@ -38,33 +56,39 @@ Manufacturing and remanufacturing (refurbishment) of devices requires configurat
 1. Use Microsoft Hardware Dev Center (web portal or REST APIs) to generate the signed policy
     1. Authenticate from an authorized account
     1. Supply the targeting and flavor parameters
-    1. Receive the signed Windows Firmware Policy for your device
-1. Use the Microsoft-supplied tool _foo_ to set the signed policy to the target device policy mailbox
+    1. Receive the signed MFCI Policy for your device
+1. Use the Microsoft-supplied tool _foo_ to set the signed policy to the next device policy mailbox
 1. Reboot, and the new policy should take effect
-1. Do re-manufacturing. Note that if the device make, model, serial number, or related UEFI variables change or are deleted, the policy may no longer be valid on subsequent boots.
+1. OEM performs customer service or re-manufacturing as needed. Note that if the device make, model, serial
+number, or related UEFI variables change or are deleted, the policy may no longer be valid on subsequent boots.
 1. After re-manufacturing, remove the policy using MS-supplied tool _foo_
 
 ### Boot Workflow
 
 1. PEI
-    1. This is not the place to perform policy verification.  Simply get a pre-verified policy from prior boot for augmenting PEI security properties.
+    1. This is not the place to perform MFCI policy verification.  Simply get a pre-verified policy
+    from prior boot for augmenting PEI security properties.
 1. DXE prior to StartOfBds
-    1. Drivers that need security policy augmentation should both get the current pre-verified policy and register for notification of policy changes
-    1. OEM-supplied code populates UEFI variables that communicate the Make, Model, & SN targeting information to FirmwarePolicy driver
+    1. Drivers that need security policy augmentation should both get the current pre-verified
+    policy and register for notification of policy changes
+    1. OEM-supplied code populates UEFI variables that communicate the Make, Model, & SN targeting
+    information to MFCI policy driver
 1. StartOfBds event
-    1. The Firmware Policy Driver will...
+    1. The MFCI Policy Driver will...
         1. Check for the presence of a policy.  If present...
             1. Verify its signature, delete the policy on failure
             1. Verify its structure, delete the policy on failure
-            1. If the resulting policy is different from the current policy, notify registered handlers, make the new policy active, reboot
-        1. If a target policy is not present, and a pre-verified policy was used for this boot, roll nonces, delete the pre-verified policy, & notify registered handlers
+            1. If the resulting policy is different from the current policy, notify registered handlers,
+            make the new policy active, reboot
+        1. If a next policy is not present, and a pre-verified policy was used for this boot, roll
+        nonces, delete the pre-verified policy, & notify registered handlers
 
 ## TODO
 
 * Links to drill-down documentation, more on the APIs, usage, & data format
 * Diagrams of the structure
 
-## Integrating FirmwarePolicyPkg
+## Integrating MfciPkg
 
 * TODO: OEM/IBV must author code that populates the UEFI variables that this module needs for make/model/sn
 * TODO: document DSC & FDF changes
@@ -75,23 +99,31 @@ Manufacturing and remanufacturing (refurbishment) of devices requires configurat
 
 ## Data Format
 
-The policy consists of device targeting information, a policy flavor, & a digital signature.  
+The MFCI policy consists of device targeting information, a policy flavor, & a digital signature.
 
 ### Targeting Information
 
-Policies are targeted at specific devices via Make (OEM), Model, Serial Number, Nonce, and 2 optional, OEM-defined fields.  The Nonce is a randomly-generated 64-bit integer, and the remaining fields are Unicode strings.
+Policies are targeted at specific devices via Make (OEM), Model, Serial Number, Nonce, and 2
+optional, OEM-defined fields.  The Nonce is a randomly-generated 64-bit integer, and the
+remaining fields are unescaped, WIDE NULL-terminated UTF-16LE strings.
 
 ### Policy Flavor Bitfield
 
-A 64-bit bitfield representing both persistent states and 1-time actions to be performed upon successful authentication and installation of a policy.  The bitfield is split into a 32-bit Microsoft-defined region, and 32-bit OEM-defined region.  Each of those regions are split again into a 16-bit region for persistent states and 16-bit region for 1-time actions.
+A 64-bit bitfield representing both persistent states and 1-time actions to be performed upon
+successful authentication and installation of a policy.  The bitfield is split into a 32-bit
+Microsoft-defined region, and 32-bit OEM-defined region.  Each of those regions are split again
+into a 16-bit region for persistent states and 16-bit region for 1-time actions.
 
 ### Digital Signature
 
-The PKCS7 digital signature format familiar to the UEFI ecosystem is used with 2 key differences.  First, a full PKCS7 is used, not the SignedData subset used by authenticated variables.  Second, the P7 is embedded, not detatched.  The policy targeting and flavor information are embedded in a PKCS 7 Data inside the full PKCS 7 Signed object.
+The PKCS7 digital signature format familiar to the UEFI ecosystem is used with 2 key differences.
+First, a full PKCS7 is used, not the SignedData subset used by authenticated variables.  Second,
+the P7 is embedded, not detatched.  The policy targeting and flavor information are embedded in a
+PKCS 7 Data inside the full PKCS 7 Signed object.
 
 ## Signed Packet Example
 
-```certutil.exe -asn``` output for an example Windows Firmware Policy packet (signed) is as follows:
+`certutil.exe -asn`  output for an example MFCI Policy packet (signed) is as follows:
 
 ```ASN
 0000: 30 82 0e 6c                               ; SEQUENCE (e6c Bytes)
