@@ -32,11 +32,9 @@
 [LibraryClasses]
   BaseLib
   PcdLib
-  SerialPortLib
   SynchronizationLib
 
 [Ppis]
 
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel   ## CONSUMES

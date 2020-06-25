@@ -130,11 +130,13 @@
 
 [Components.X64]
   AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
+  AdvLoggerPkg/AdvancedSerialLogger/Dxe/AdvancedSerialLoggerDxe.inf
   AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/Dxe/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/DxeCore/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/Runtime/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/Smm/AdvancedLoggerLib.inf
+  AdvLoggerPkg/Library/AdvLoggerSmmAccessLib/AdvLoggerSmmAccessLib.inf
   AdvLoggerPkg/UnitTests/LineParser/LineParserTest.inf
 
 [BuildOptions]

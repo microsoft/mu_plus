@@ -13,7 +13,6 @@
 #include <Library/AdvancedLoggerLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcdLib.h>
-#include <Library/SerialPortLib.h>
 #include <Library/SynchronizationLib.h>
 
 #include "../AdvancedLoggerCommon.h"
@@ -41,10 +40,6 @@ AdvancedLoggerGetLoggerInfo (
     LoggerInfoSec = NULL;
     if (LogPtr != NULL) {
         LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
-        if (!LoggerInfoSec->SerialInitialized) {
-            SerialPortInitialize();
-            LoggerInfoSec->SerialInitialized = TRUE;
-        }
     }
 
     return LoggerInfoSec;

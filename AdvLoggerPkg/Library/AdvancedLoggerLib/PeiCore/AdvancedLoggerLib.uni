@@ -1,7 +1,7 @@
 // /** @file
-// PEI Instance of Advanced Logger Library.
+// PEI Core Instance of Advanced Logger Library.
 //
-// Transfers the debug print message to the advanced routines (Memory Logger, SerialPort, etc).
+// Transfers the debug print message to the advanced logger.
 //
 // Copyright (c) Microsoft Corporation
 //

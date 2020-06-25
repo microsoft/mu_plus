@@ -1,0 +1,17 @@
+// /** @file
+// Advanced Logger Serial driver.
+//
+// This is a driver for logging debug messages to the serial port.
+//
+//
+// Copyright (c) Microsoft Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "Advanced Logger Serial driver."
+
+#string STR_MODULE_DESCRIPTION          #language en-US "Obtains the debug message from the Advanced Logger memory."
+

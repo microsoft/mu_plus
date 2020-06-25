@@ -20,7 +20,6 @@
 #include <Library/PeiServicesTablePointerLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PeiServicesLib.h>
-#include <Library/SerialPortLib.h>
 #include <Library/SynchronizationLib.h>
 
 #include "../AdvancedLoggerCommon.h"
@@ -167,10 +166,6 @@ GetSecLoggerInfo (
     LoggerInfoSec = NULL;
     if (LogPtr != NULL) {
         LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
-        if (!LoggerInfoSec->SerialInitialized) {
-            SerialPortInitialize();
-            LoggerInfoSec->SerialInitialized = TRUE;
-        }
     }
 
     return LoggerInfoSec;
@@ -206,6 +201,10 @@ UpdateSecLoggerInfo (
   Get the Logger Information block
 
  **/
+
+/*
+   No special security checks before EndOfDxe
+*/
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerGetLoggerInfo (
@@ -292,17 +291,11 @@ AdvancedLoggerGetLoggerInfo (
                     LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
                     LoggerInfo->LogBufferSize = BufferSize - sizeof(ADVANCED_LOGGER_INFO);
                     LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
-                    SerialPortInitialize ();
-                    LoggerInfo->SerialInitialized = TRUE;
 
                     if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
                         LoggerInfo->InPermanentRAM = TRUE;
                     } else {
-                        Status = PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
-                        if (EFI_ERROR(Status)) {
-                            #define ERROR_MSG3 "Unable to create Notify\n"
-                            SerialPortWrite ((UINT8 *) ERROR_MSG3, sizeof(ERROR_MSG3));
-                        }
+                        PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
                     }
                 }
             } else {
@@ -325,15 +318,7 @@ AdvancedLoggerGetLoggerInfo (
                 if (LoggerInfoSec != NULL) {
                     UpdateSecLoggerInfo (LoggerInfo);
                 }
-
-            } else {
-                #define ERROR_MSG1 "Error creating Advanced Logger Info Block 1\n"
-                SerialPortWrite ((UINT8 *) ERROR_MSG1, sizeof(ERROR_MSG1));
             }
-        } else {
-            SerialPortInitialize ();
-            #define ERROR_MSG2 "Error creating Advanced Logger Info Block 2\n"
-            SerialPortWrite ((UINT8 *) ERROR_MSG2, sizeof(ERROR_MSG2));
         }
     }
 

@@ -20,7 +20,59 @@
 #include "../AdvancedLoggerCommon.h"
 
 STATIC ADVANCED_LOGGER_INFO *mLoggerInfo = NULL;
+STATIC UINT32                mBufferSize = 0;
+STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress = 0;
 STATIC BOOLEAN               mInitialized = FALSE;
+
+
+/**
+    CheckAddress
+
+    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.  The
+    pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here, we check that
+    the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which is used in multiple places
+    to see if a new message will fit into the log buffer, is valid.
+
+    @param          NONE
+
+    @return         BOOLEAN     TRUE - mInforBlock passes security checks
+    @return         BOOLEAN     FALSE- mInforBlock failed security checks
+
+**/
+STATIC
+BOOLEAN
+ValidateInfoBlock (
+    VOID
+  ) {
+
+    if (mLoggerInfo == NULL) {
+        return FALSE;
+    }
+
+    if (mLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+        return FALSE;
+    }
+
+    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo) + sizeof(ADVANCED_LOGGER_INFO))) {
+        return FALSE;
+    }
+
+    if ((mLoggerInfo->LogCurrent >= mMaxAddress) ||
+        (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
+        return FALSE;
+    }
+
+
+    if (mBufferSize == 0) {
+        mBufferSize = mLoggerInfo->LogBufferSize;
+    } else {
+        if (mLoggerInfo->LogBufferSize != mBufferSize) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
 
 /**
     Get the Logger Information Block published by DxeCore.
@@ -49,8 +101,8 @@ SmmInitializeLoggerInfo (
                                       (VOID **) &LoggerProtocol);
         if (!EFI_ERROR(Status)) {
             mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
-            if (mLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
-                mLoggerInfo = NULL;
+            if (mLoggerInfo != NULL) {
+                 mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
             }
         }
 
@@ -59,6 +111,10 @@ SmmInitializeLoggerInfo (
         //
 
         DEBUG((DEBUG_INFO, "%a: LoggerInfo=%p, code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+    }
+
+    if (!ValidateInfoBlock()) {
+        mLoggerInfo = NULL;
     }
 }
 

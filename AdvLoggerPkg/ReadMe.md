@@ -2,8 +2,7 @@
 
 ## About
 
-This package contains the various libraries to have in memory logging.  In memory
-logging also includes support for BaseSerialPortLib.
+This package contains the various libraries to have in memory logging.
 
 ## Configuration
 
@@ -27,6 +26,19 @@ PCD's used by Advanced Logger
 |PcdAdvancedLoggerPreMemPages|Amount of temporary RAM used for the debug log.|
 |PcdAdvancedLoggerPages|Amount of system RAM used for the debug log|
 |PcdAdvancedLoggerLocator|When enabled, the AdvLogger creates a variable "AdvLoggerLocator" with the address of the LoggerInfo buffer|
+
+# Libraries
+
+The following libraries are used with AdvancedLogger:
+
+| Library | Function of the Library |
+| ---| --- |
+  AdvancedLoggerAccessLib | Used to access the memory log - used by FileLogger and Serial/Dxe/Logger |
+| AdvancedLoggerLib | One per module type - used to provide access to the in memory log buffer |
+| AdvLoggerSmmAccessLib | Used to intercept GetVariable in order to provide an OS utility the ability to read the log |
+| BaseDebugLibAdvancedLogger | Basic Dxe etc DebugLib |
+| DebugAgent | Used to intercept SEC initialization |
+| PeiDebugLibAdvancedLogger | Basic Pei DebugLib |
 
 # Platform note:
 
@@ -70,11 +82,11 @@ The following changes are needed in the .dsc
 [PcdsFeatureFlag]
 ## Build Example if you build environment differentiates customer builds from internal test builds
 !if $(SHIP_MODE) == FALSE
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerForceEnable|TRUE
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator|TRUE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerLocator|TRUE
 !else
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerForceEnable|FALSE
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator|TRUE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|FALSE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerLocator|TRUE
 !endif
 ```
 

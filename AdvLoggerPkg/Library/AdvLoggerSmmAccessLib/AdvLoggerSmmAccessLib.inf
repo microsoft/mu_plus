@@ -1,0 +1,48 @@
+## @file
+#  Implementation of the Advanced Logger Access library for DXE_SMM_DRIVER.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = AdvLoggerAccessLib
+  MODULE_UNI_FILE                = AdvLoggerAccessLib.uni
+  FILE_GUID                      = 3d4b1fe8-6eb2-4a18-9157-b3329d515716
+  MODULE_TYPE                    = DXE_SMM_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvLoggerAccessLib | DXE_SMM_DRIVER
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvLoggerSmmAccessLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PcdLib
+  SafeIntLib
+  UefiBootServicesTableLib
+
+[Guids]
+  gAdvLoggerAccessGuid                      ## CONSUMES
+
+[Protocols]
+  gAdvancedLoggerProtocolGuid               ## CONSUMES
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize
+
+[Depex]

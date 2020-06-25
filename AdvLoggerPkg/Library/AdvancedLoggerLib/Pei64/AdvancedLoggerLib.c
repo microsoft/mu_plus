@@ -38,10 +38,6 @@ AdvancedLoggerGetLoggerInfo (
     LoggerInfoSec = NULL;
     if (LogPtr != NULL) {
         LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
-        if (!LoggerInfoSec->SerialInitialized) {
-            SerialPortInitialize();
-            LoggerInfoSec->SerialInitialized = TRUE;
-        }
     }
 
     return LoggerInfoSec;
