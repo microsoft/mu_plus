@@ -13,13 +13,10 @@
 
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcdLib.h>
-#include <Library/SerialPortLib.h>
 #include <Library/SynchronizationLib.h>
 #include <Library/TimerLib.h>
 
 #include "../AdvancedLoggerCommon.h"
-
-BOOLEAN mSerialPortDisabled = FALSE;
 
 /**
   Write data from buffer into the in memory logging buffer.
@@ -27,7 +24,7 @@ BOOLEAN mSerialPortDisabled = FALSE;
   Writes NumberOfBytes data bytes from Buffer to the logging buffer.
 
   @param  Buffer           Pointer to the data buffer to be written.
-  @param  NumberOfBytes    Number of bytes to written to the serial device.
+  @param  NumberOfBytes    Number of bytes to written to the Advanced Logger log.
 
   @retval LoggerInfo       Returns the logger info block
 **/
@@ -62,10 +59,6 @@ AdvancedLoggerMemoryLoggerWrite (
     EntrySize = MESSAGE_ENTRY_SIZE(NumberOfBytes);
 
     if (LoggerInfo != NULL) {
-        if (LoggerInfo->SerialPortDisabled) {
-            mSerialPortDisabled = TRUE;
-        }
-
         do {
             CurrentBuffer = LoggerInfo->LogCurrent;
             if ((LoggerInfo->LogBufferSize -
@@ -115,7 +108,7 @@ AdvancedLoggerMemoryLoggerWrite (
 
   @param  DebugLevel       Error level of items top be printed
   @param  Buffer           Pointer to the data buffer to be written.
-  @param  NumberOfBytes    Number of bytes to written to the serial device.
+  @param  NumberOfBytes    Number of bytes to written to the Advanced Logger log.
 
 
 **/
@@ -131,11 +124,4 @@ AdvancedLoggerWrite (
 
     AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 
-    // Only selected messages go to the serial port.
-
-    if (!mSerialPortDisabled) {
-        if (DebugLevel & FixedPcdGet32(PcdAdvancedLoggerSerialDebugPrintErrorLevel)) {
-            SerialPortWrite((UINT8 *) Buffer, NumberOfBytes);
-        }
-    }
 }

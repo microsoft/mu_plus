@@ -18,7 +18,6 @@
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
-#include <Library/SerialPortLib.h>
 #include <Library/SynchronizationLib.h>
 #include <Library/TimerLib.h>
 
@@ -28,6 +27,9 @@
 // Protocol interface that connects the DXE library instances with the AdvancedLogger
 //
 STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
+STATIC UINT32                   mBufferSize = 0;
+STATIC EFI_PHYSICAL_ADDRESS     mMaxAddress = 0;
+
 STATIC VOID                    *mVariableWriteRegistration = NULL;
 
 STATIC ADVANCED_LOGGER_PROTOCOL mLoggerProtocol = {
@@ -36,6 +38,52 @@ STATIC ADVANCED_LOGGER_PROTOCOL mLoggerProtocol = {
                                                    AdvancedLoggerWrite,
                                                    0
 };
+
+/**
+    ValidateInfoBlock
+
+    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.  The
+    pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here, we check that
+    the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which is used in multiple places
+    to see if a new message will fit into the log buffer, is valid.
+
+    @param          NONE
+
+    @return         BOOLEAN     TRUE - mInforBlock passes security checks
+    @return         BOOLEAN     FALSE- mInforBlock failed security checks
+
+**/
+STATIC
+BOOLEAN
+ValidateInfoBlock (
+    VOID
+  ) {
+    if (mLoggerInfo == NULL) {
+        return FALSE;
+    }
+
+    if (mLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+        return FALSE;
+    }
+
+    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo) + sizeof(ADVANCED_LOGGER_INFO))) {
+        return FALSE;
+    }
+
+    if ((mLoggerInfo->LogCurrent >= mMaxAddress) ||
+        (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
+        return FALSE;
+    }
+
+    if (mBufferSize == 0) {
+        mBufferSize = mLoggerInfo->LogBufferSize;
+    } else {
+        if (mLoggerInfo->LogBufferSize != mBufferSize) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
 
 /**
   Get the Logger Information block
@@ -58,11 +106,14 @@ AdvancedLoggerGetLoggerInfo (
             LogPtr = (ADVANCED_LOGGER_PTR * ) GET_GUID_HOB_DATA(GuidHob);
             mLoggerInfo = ALI_FROM_PA(LogPtr->LoggerInfo);
             mLoggerProtocol.Context = (VOID *) mLoggerInfo;
-            if (!mLoggerInfo->SerialInitialized) {
-                SerialPortInitialize();
-                mLoggerInfo->SerialInitialized = TRUE;
+            if (mLoggerInfo != NULL) {
+                mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
             }
         }
+    }
+
+    if (!ValidateInfoBlock()) {
+        mLoggerInfo = NULL;
     }
 
     return mLoggerInfo;

@@ -1,0 +1,56 @@
+## @file AdvancedFileLogger.inf
+#
+#  This is a driver for logging debug messages to a serial port
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = AdvancedSerialLogger
+  FILE_GUID                      = 78fc8c89-eed9-4b94-b927-426c3721f3e6
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = AdvancedSerialLoggerEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  AdvancedSerialLoggerDxe.c
+  AdvancedSerialLoggerDxe.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerAccessLib
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  PcdLib
+  PrintLib
+  SerialPortLib
+  TimerLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gMuEventPreExitBootServicesGuid
+
+[Protocols]
+  gEfiResetNotificationProtocolGuid                             ## CONSUMES
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel  ## CONSUMES
+
+[Depex]
+  TRUE

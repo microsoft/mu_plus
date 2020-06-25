@@ -36,12 +36,12 @@ typedef volatile struct {
     EFI_PHYSICAL_ADDRESS  LogBuffer;              // Fixed pointer to start of log
     EFI_PHYSICAL_ADDRESS  LogCurrent;             // Where to store next log entry.
     UINT32                DiscardedSize;          // Number of bytes of messages missed
-    UINT32                LogBufferSize;
-    BOOLEAN               SerialInitialized;      // Serial port initialized
+    UINT32                LogBufferSize;          // Size of allocated buffer
     BOOLEAN               InPermanentRAM;         // Log in permanent RAM
-    BOOLEAN               SerialPortDisabled;     // SerialPort is Disabled
+    BOOLEAN               AtRuntime;              // After ExitBootServices
+    BOOLEAN               GoneVirtual;            // After VirtualAddressChage
     BOOLEAN               Reserved2[5];           //
-    UINT64                TimerFrequency;         //
+    UINT64                TimerFrequency;         // Ticks per second for log timing
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {

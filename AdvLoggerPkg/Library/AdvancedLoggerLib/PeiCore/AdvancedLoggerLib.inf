@@ -37,7 +37,6 @@
   PcdLib
   PeiServicesLib
   PeiServicesTablePointerLib
-  SerialPortLib
   SynchronizationLib
   TimerLib
 
@@ -54,4 +53,3 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel   ## CONSUMES

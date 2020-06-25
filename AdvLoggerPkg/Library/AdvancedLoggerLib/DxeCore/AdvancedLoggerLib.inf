@@ -37,7 +37,6 @@
   HobLib
   MemoryAllocationLib
   PcdLib
-  SerialPortLib
   SynchronizationLib
   TimerLib
 
@@ -49,6 +48,5 @@
   gEfiVariableWriteArchProtocolGuid                                         ## CONSUMES
 
 [Pcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel   ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator                      ## CONSUMES

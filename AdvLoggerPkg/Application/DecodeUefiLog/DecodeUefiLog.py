@@ -14,6 +14,8 @@ from win32com.shell import shell
 from UefiVariablesSupportLib import UefiVariable
 
 
+class AdvLogParser ():
+
     # ----------------------------------------------------------------------- #
     #
     # AdvLogParser - Parser for the in memory AdvLoggerPkg buffer using UEFI Get Variable, or
@@ -426,7 +428,6 @@ from UefiVariablesSupportLib import UefiVariable
     #
     # ----------------------------------------------------------------------- #
     def ProcessMessages(self, InFile, StartLine):
-
         LoggerInfo = self._InitializeLoggerInfo(InFile, StartLine)
         Messages = None
         lines = self._GetLines(Messages, LoggerInfo)

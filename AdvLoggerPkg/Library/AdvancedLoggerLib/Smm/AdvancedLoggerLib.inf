@@ -32,7 +32,6 @@
 [LibraryClasses]
   BaseLib
   DebugLib
-  SerialPortLib
   SynchronizationLib
   TimerLib
 
@@ -42,4 +41,3 @@
   gAdvancedLoggerProtocolGuid                                               ## CONSUMES
 
 [Pcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel   ## CONSUMES
