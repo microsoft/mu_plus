@@ -10,20 +10,20 @@ Project Mu Common Plus Repository
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
 
 Branch Status - dev/202002
-==============================
+==========================
 
 Status:
-  In Development
+  Stabilized
 
-Anticipated Stabilization:
-  May 2020
+Stabilized:
+  2020/07/06
 
 
 Branch Changes - release/202002
 ===============================
 
-Breaking Changes-dev
---------------------
+Breaking Changes
+----------------
 
 - SharedCrypto is still preserved for now, but doesn't build against the new core.
 - Some identifiers and types were modified in the DeviceSpecificBusInfoLib interface that may break
@@ -35,13 +35,13 @@ Breaking Changes-dev
      prototype for a new function ProcessPciDeviceResults (). The user should implement this function
      if their platform needs to take custom actions based on device check results.
 
-Main Changes-dev
-----------------
+Main Changes
+------------
 
 - None
 
-Bug Fixes-dev
--------------
+Bug Fixes
+---------
 
 - None
 
