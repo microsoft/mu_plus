@@ -1,0 +1,53 @@
+## @file UsbMouseHidDxe.inf
+# USB Mouse Driver that manages USB mouse and produces HID Mouse Protocol.
+#
+# USB Mouse Driver consumes USB I/O Protocol and Device Path Protocol, and produces
+# HID Mouse Protocol on USB mouse devices.
+# It manages the USB mouse device via Asynchronous Interrupt Transfer of USB I/O Protocol,
+# and parses the data according to USB HID Specification.
+# This module refers to following specifications:
+# 1. Universal Serial Bus HID Firmware Specification, ver 1.11
+# 2. UEFI Specification, v2.1
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# Derived from MdeModulePkg\Bus\Usb\UsbMouseAbsolutePointerDxe, which is:
+# Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = UsbMouseHidDxe
+  MODULE_UNI_FILE                = UsbMouseHidDxe.uni
+  FILE_GUID                      = 7E45AA7D-05B5-4C25-B623-7E3EE049DEBB
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UsbMouseHidDriverBindingEntryPoint
+
+[Sources]
+  ComponentName.c
+  UsbMouseHid.c
+  UsbMouseHid.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  HidPkg/HidPkg.dec
+
+[LibraryClasses]
+  MemoryAllocationLib
+  UefiLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  BaseMemoryLib
+  ReportStatusCodeLib
+  UefiUsbLib
+
+[Protocols]
+  gEfiUsbIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gHidPointerProtocolGuid
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  UsbMouseHidDxeExtra.uni

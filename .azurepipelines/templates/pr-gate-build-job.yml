@@ -29,8 +29,8 @@ jobs:
       TARGET_CORE:
         Build.Pkgs: 'MsCorePkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
-      TARGET_TEST_PCBDS_LOG_WHEA:
-        Build.Pkgs: 'UefiTestingPkg,PcBdsPkg,AdvLoggerPkg,MsWheaPkg'
+      TARGET_TEST_PCBDS_LOG_WHEA_HID:
+        Build.Pkgs: 'UefiTestingPkg,PcBdsPkg,AdvLoggerPkg,MsWheaPkg,HidPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
   workspace:
     clean: all

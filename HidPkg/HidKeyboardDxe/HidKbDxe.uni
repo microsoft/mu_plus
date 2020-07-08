@@ -1,0 +1,26 @@
+// /** @file HidKbDxe.uni
+// HID Keyboard Driver that manages HID keyboard and produces Simple Text Input(Ex) Protocol.
+//
+// HID Keyboard Driver consumes HID Keyboard Protocol, and produces
+// Simple Text Input Protocol and Simple Text Input Ex Protocol on HID keyboard devices.
+// It initializes the keyboard layout according to info retrieved from HII database.
+// If HII cannot provide the info, this module uses its carried default one if PCD allows.
+// It manages the HID keyboard device via the HID Keyboard protocol,
+// and parses the data according to HID spec Boot Keyboard report definition.
+// This module refers to following specifications:
+// 1. Universal Serial Bus HID Firmware Specification, ver 1.11
+// 2. UEFI Specification, v2.1
+//
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// Portions derived from UsbKbDxe:
+// Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "Manages HID keyboard and produces Simple Text Input(Ex) Protocol"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "HID Keyboard Driver consumes HID Keyboard Protocol, and produces Simple Text Input Protocol."
+

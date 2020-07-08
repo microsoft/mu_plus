@@ -1,0 +1,65 @@
+## @file
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#
+#  This is the component INF for the HID Keyboard Dxe Driver
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = HidKeyboardDxe
+  MODULE_UNI_FILE                = HidKbDxe.uni
+  FILE_GUID                      = B5FD279E-779D-4831-ADEE-41CC49FAF652
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = HIDKeyboardDriverEntryPoint
+
+[Sources]
+  HidKbDxe.c
+  HidKbDxe.h
+  HidKeyboard.c
+  ComponentName.c
+  HidKeyboard.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  HidPkg/HidPkg.dec
+
+[LibraryClasses]
+  MemoryAllocationLib
+  UefiLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+  BaseMemoryLib
+  DebugLib
+  PcdLib
+  HiiLib
+
+[Guids]
+  #
+  # Event registered to EFI_HII_SET_KEYBOARD_LAYOUT_EVENT_GUID group,
+  # which will be triggered by EFI_HII_DATABASE_PROTOCOL.SetKeyboardLayout().
+  #
+  gEfiHiiKeyBoardLayoutGuid
+  gHidKeyboardLayoutPackageGuid
+  gHidKeyboardLayoutKeyGuid
+
+[Protocols]
+  gHidKeyboardProtocolGuid
+  gEfiSimpleTextInProtocolGuid
+  gEfiSimpleTextInputExProtocolGuid
+
+  #
+  # If HII Database Protocol exists, then keyboard layout from HII database is used.
+  # Otherwise, USB keyboard module tries to use its carried default layout.
+  #
+  gEfiHiiDatabaseProtocolGuid
+
+[FeaturePcd]
+  gHidPkgTokenSpaceGuid.PcdDisableDefaultKeyboardLayoutInHidKbDriver
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  HidKbDxeExtra.uni

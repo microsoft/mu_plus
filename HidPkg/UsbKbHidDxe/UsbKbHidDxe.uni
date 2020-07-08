@@ -1,0 +1,25 @@
+/* @file UsbKbHidDxe.uni
+ * USB HID Keyboard Driver that manages USB keyboard and produces HID Keyboard Protocol.
+ *
+ * USB Keyboard Driver consumes USB I/O Protocol and Device Path Protocol, and produces
+ * HID Keyboard Protocol on USB keyboard devices.
+ * This module refers to following specifications:
+ * 1. Universal Serial Bus HID Firmware Specification, ver 1.11
+ * 2. Universal Serial Bus HID Usage Tables, ver 1.12
+ * 3. UEFI Specification, v2.1
+ *
+ * Copyright (C) Microsoft Corporation. All rights reserved.
+ * Portions derived from MdeModulePkg\Bus\Usb\UsbKbDxe which is:
+ * Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+ *
+ *  SPDX-License-Identifier: BSD-2-Clause-Patent
+ */
+
+#string STR_MODULE_ABSTRACT             #language en-US "Manages USB keyboard and produces HID Keyboard Protocol"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "USB Keyboard Driver consumes USB I/O Protocol and Device Path Protocol, and produces HID Keyboard Protocol on USB keyboard devices.\n"
+                                                        "This module refers to following specifications:<BR>\n"
+                                                        "1. Universal Serial Bus HID Firmware Specification, ver 1.11<BR>\n"
+                                                        "2. Universal Serial Bus HID Usage Tables, ver 1.12<BR>\n"
+                                                        "3. UEFI Specification, v2.1<BR>"
+

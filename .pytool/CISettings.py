@@ -44,6 +44,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
                 "AdvLoggerPkg",
                 "DfciPkg",
                 "MfciPkg",
+                "HidPkg",
                 "MsCorePkg",
                 "MsGraphicsPkg",
                 "MsWheaPkg",

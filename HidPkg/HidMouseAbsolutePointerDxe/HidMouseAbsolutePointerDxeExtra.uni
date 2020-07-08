@@ -1,0 +1,24 @@
+// @file
+// HID Mouse Driver that manages HID mouse and produces Absolute Pointer Protocol.
+//
+// HID Mouse Driver consumes HID mouse Protocol and produces
+// Absolute Pointer Protocol on HID Mouse mouse devices.
+//
+// It manages the HID mouse device via the HID mouse protocol abstraction,
+// and parses the data according to USB HID Specification.
+// This module refers to following specifications:
+// 1. Universal Serial Bus HID Firmware Specification, ver 1.11
+// 2. UEFI Specification, v2.1
+//
+// Copyright (c) Microsoft Corporation.
+//
+// Most of this driver derived from USB Mouse driver in UDK, which is:
+// Copyright (c) 2013 - 2018, Intel Corporation. All rights reserved.<BR>
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+//
+
+#string STR_PROPERTIES_MODULE_NAME
+#language en-US
+"HID Mouse Pointer DXE Driver"

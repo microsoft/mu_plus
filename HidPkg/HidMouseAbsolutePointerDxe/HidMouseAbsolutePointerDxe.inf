@@ -1,0 +1,54 @@
+## @file
+# HID Mouse Driver that manages HID Mouse device and produces Absolute Pointer Protocol.
+#
+# This Mouse Driver consumes the HID Mouse Protocol, and produces
+# Absolute Pointer Protocol on HID Mouse mouse devices.
+#
+# It manages the HID mouse device via the HID mouse protocol abstraction,
+# and parses the data according to USB HID Specification.
+# This module refers to following specifications:
+# 1. Universal Serial Bus HID Firmware Specification, ver 1.11
+# 2. UEFI Specification, v2.1
+#
+# Copyright (c) Microsoft Corporation.
+#
+# Most of this driver derived from USB Mouse driver in UDK, which is:
+# Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = HidMouseAbsolutePointerDxe
+  MODULE_UNI_FILE                = HidMouseAbsolutePointerDxe.uni
+  FILE_GUID                      = 99710012-4230-4842-9712-B9785B723812
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = HidMouseAbsolutePointerDriverBindingEntryPoint
+
+[Sources]
+  ComponentName.c
+  HidMouseAbsolutePointer.c
+  HidMouseAbsolutePointer.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  HidPkg/HidPkg.dec
+
+[LibraryClasses]
+  MemoryAllocationLib
+  UefiLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  BaseMemoryLib
+  ReportStatusCodeLib
+
+[Protocols]
+  gHidPointerProtocolGuid
+  gEfiAbsolutePointerProtocolGuid
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  HidMouseAbsolutePointerDxeExtra.uni

@@ -1,0 +1,16 @@
+// /** @file UsbMouseHidDxeExtra.uni
+// UsbMouseHidDxe Localized Strings and Content
+//
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// Derived from MdeModulePkg\Bus\Usb\UsbMouseAbsolutePointerDxe
+// Copyright (c) 2013 - 2018, Intel Corporation. All rights reserved.<BR>
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+#string STR_PROPERTIES_MODULE_NAME
+#language en-US
+"USB HID Pointer DXE Driver"
+
+

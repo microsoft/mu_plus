@@ -1,0 +1,41 @@
+## @file  HidPkg.dec
+#
+# This package provides HID related drivers and interface definitions.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 1.27
+  PACKAGE_NAME                   = HidPkg
+  PACKAGE_GUID                   = 0DFB0FF4-C523-4B5C-8224-22B46736CE78
+  PACKAGE_VERSION                = 1.00
+
+[Includes]
+  Include
+
+[Protocols]
+  ## HidKeyboard Protocol - Interface between keyboard hardware and keyboard HID processing layer.
+  #
+  gHidKeyboardProtocolGuid           = { 0x540937ca, 0xcac9, 0x4d5c, { 0x83, 0xa9, 0xa8, 0x08, 0x45, 0x79, 0x40, 0xaf }}
+
+  ## HidPointer Protocol - Interface between pointer hardware and pointer HID processing layer.
+  #
+  gHidPointerProtocolGuid              = { 0x80b5ee6e, 0xcbd8, 0x43ae, { 0xb6, 0xac, 0x10, 0x91, 0x7b, 0x25, 0x35, 0xb7 }}
+
+[Guids]
+  gHidPkgTokenSpaceGuid = {0x347d3cd6, 0xdf7d, 0x4397, {0xa3, 0x7a, 0x4c, 0x0f, 0x46, 0xdb, 0xdb, 0xff}}
+
+  ## Include/Guid/HidKeyBoardLayout.h
+  gHidKeyboardLayoutPackageGuid      = {0x57adcfa9, 0xc08a, 0x40b9, {0x86, 0x87, 0x65, 0xe2, 0xec, 0xe0, 0xe5, 0xe1}}
+  gHidKeyboardLayoutKeyGuid          = {0xdcafaba8, 0xcde5, 0x40a1, {0x9a, 0xd3, 0x48, 0x76, 0x44, 0x71, 0x7e, 0x47}}
+
+[PcdsFeatureFlag]
+  ## Indicates if HID KeyBoard Driver disables the default keyboard layout.
+  #  The default keyboard layout serves as the backup when no keyboard layout can be retrieved
+  #  from HII database.<BR><BR>
+  #   TRUE  - HID KeyBoard Driver will disable the default keyboard layout.<BR>
+  #   FALSE - HID KeyBoard Driver will not disable the default keyboard layout.<BR>
+  # @Prompt Disable default keyboard layout in HID KeyBoard Driver.
+  gHidPkgTokenSpaceGuid.PcdDisableDefaultKeyboardLayoutInHidKbDriver|FALSE|BOOLEAN|0x00010200

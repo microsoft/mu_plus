@@ -1,0 +1,55 @@
+## @file
+# USB HID Keyboard Driver that manages USB keyboard and produces HID Keyboard Protocol.
+#
+# USB Keyboard Driver consumes USB I/O Protocol and Device Path Protocol, and produces
+# HID Keyboard Protocol on USB keyboard devices.
+# This module refers to following specifications:
+# 1. Universal Serial Bus HID Firmware Specification, ver 1.11
+# 2. Universal Serial Bus HID Usage Tables, ver 1.12
+# 3. UEFI Specification, v2.1
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# Portions derived from MdeModulePkg\Bus\Usb\UsbKbDxe which is:
+# Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = UsbKbHidDxe
+  MODULE_UNI_FILE                = UsbKbHidDxe.uni
+  FILE_GUID                      = 60291E5A-334E-4181-B506-8280BA6696F2
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UsbKbHidDriverBindingEntryPoint
+
+[Sources]
+  UsbKbHidDxe.c
+  UsbKbHidDxe.h
+  ComponentName.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  HidPkg/HidPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  PcdLib
+  ReportStatusCodeLib
+  UefiLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiUsbLib
+
+[Protocols]
+  gEfiUsbIoProtocolGuid
+  gEfiDevicePathProtocolGuid
+  gHidKeyboardProtocolGuid
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  UsbHidKbDxeExtra.uni

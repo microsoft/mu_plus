@@ -1,0 +1,28 @@
+/* @file HidMouseAbsolutePointer.c
+ HID Mouse Driver that manages HID Mouse device and produces Absolute Pointer Protocol.
+
+ This Mouse Driver consumes the HID Mouse Protocol, and produces
+ Absolute Pointer Protocol on HID Mouse mouse devices.
+
+ It manages the HID mouse device via the HID mouse protocol abstraction,
+ and parses the data according to USB HID Specification.
+ This module refers to following specifications:
+ 1. Universal Serial Bus HID Firmware Specification, ver 1.11
+ 2. UEFI Specification, v2.1
+
+ Copyright (c) Microsoft Corporation.
+
+ Most of this driver derived from USB Mouse driver in UDK, which is:
+// Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+*/
+
+#string STR_MODULE_ABSTRACT             #language en-US "Manages HID mouse and produces Absolute Pointer Protocol"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "HID Mouse Driver consumes HID Mouse Protocol and Device Path Protocol, and produces Absolute Pointer Protocol on HID mouse devices.\n"
+                                                        "This module refers to following specifications:<BR>\n"
+                                                        "1. Universal Serial Bus HID Firmware Specification, ver 1.11<BR>\n"
+                                                        "2. UEFI Specification, v2.1<BR>"
+
