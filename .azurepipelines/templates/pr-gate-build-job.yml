@@ -22,16 +22,16 @@ jobs:
     matrix:
       TARGET_DFCI_ZERO_XML:
         Build.Pkgs: 'DfciPkg,ZeroTouchPkg,XmlSupportPkg,MfciPkg'
-        Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
+        Build.Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
       TARGET_GRAPHICS:
         Build.Pkgs: 'MsGraphicsPkg'
-        Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
+        Build.Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
       TARGET_CORE:
         Build.Pkgs: 'MsCorePkg'
-        Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
+        Build.Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
       TARGET_TEST_PCBDS_LOG_WHEA_HID:
         Build.Pkgs: 'UefiTestingPkg,PcBdsPkg,AdvLoggerPkg,MsWheaPkg,HidPkg'
-        Build.Targets: 'DEBUG,RELEASE,NO-TARGET'
+        Build.Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
   workspace:
     clean: all
 
