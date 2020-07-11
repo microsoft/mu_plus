@@ -209,7 +209,7 @@ OnResetNotification (
 }
 
 /**
-    Write the log files at ExitBootServices.
+    Write the log files at PostReadyToBoot.
 
     @param    Event           Not Used.
     @param    Context         Not Used.
@@ -218,14 +218,17 @@ OnResetNotification (
  **/
 VOID
 EFIAPI
-OnPreExitBootServicesNotification (
+OnPostReadyToBootNotification (
     IN EFI_EVENT        Event,
     IN VOID             *Context
   )
 {
 
     WriteLogFiles ();
-    gBS->CloseEvent (Event);
+
+    //
+    //  Leave Event open to process subsequent ReadyToBoot notifications.
+    //
 }
 
 /**
@@ -714,19 +717,19 @@ ProcessResetEventRegistration (
 }
 
 /**
-    ProcessPreExitBootServicesRegistration
+    ProcessPostReadyToBootRegistration
 
-    This function creates a group event handler for PreExitBootServices
+    This function creates a group event handler for PostReadyToBoot
 
 
     @param    VOID
 
-    @returns  EFI_SUCCESS   - Successfully registered for PreExitBootServices
+    @returns  EFI_SUCCESS   - Successfully registered for PostReadyToBoot
     @returns  other         - failure code from CreateEventEx
 
   **/
 EFI_STATUS
-ProcessPreExitBootServicesRegistration (
+ProcessPostReadyToBootRegistration (
     VOID
     )
 {
@@ -738,13 +741,13 @@ ProcessPreExitBootServicesRegistration (
     //
     Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
                                   TPL_CALLBACK,
-                                  OnPreExitBootServicesNotification,
+                                  OnPostReadyToBootNotification,
                                   gImageHandle,
-                                 &gMuEventPreExitBootServicesGuid,
+                                 &gEfiEventPostReadyToBootGuid,
                                  &InitEvent );
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for PostReadyToBoot. Code = %r\n", __FUNCTION__, Status));
     }
 
     return Status;
@@ -805,9 +808,9 @@ DebugFileLoggerDxeEntry (
     }
 
     //
-    // Step 5. Register for PreExitBootServices Notifications.
+    // Step 5. Register for PostReadytoBoot Notifications.
     //
-    Status = ProcessPreExitBootServicesRegistration ();
+    Status = ProcessPostReadyToBootRegistration ();
 
 Exit:
     DEBUG((DEBUG_INFO, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
