@@ -66,7 +66,7 @@ ValidateInfoBlock (
         return FALSE;
     }
 
-    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo) + sizeof(ADVANCED_LOGGER_INFO))) {
+    if (mLoggerInfo->LogBuffer != PA_FROM_PTR(mLoggerInfo + 1)) {
         return FALSE;
     }
 
@@ -232,6 +232,7 @@ DxeCoreAdvancedLoggerLibConstructor (
             LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
             LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
             mLoggerInfo = LoggerInfo;
+            mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
             mLoggerProtocol.Context = (VOID *) mLoggerInfo;
         } else {
             DEBUG((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));
