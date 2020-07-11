@@ -53,7 +53,7 @@
   gEfiStatusCodeDataTypeStringGuid
   gEfiStatusCodeSpecificDataGuid
   gMuDebugLoggerGuid
-  gMuEventPreExitBootServicesGuid
+  gEfiEventPostReadyToBootGuid
 
 [Protocols]
   gEfiBlockIoProtocolGuid
