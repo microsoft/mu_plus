@@ -81,9 +81,9 @@
 
 
 [PcdsFixedAtBuild]
-  ## Advanced Logger serial port filter ErrorLevel
+  ## Advanced Serial Logger filter ErrorLevel
   #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedSerialLoggerDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
 
   ## Advanced Logger Base - NULL = UEFI starts with PEI or DXE, and there is no SEC, or SEC
   #                                provides no memory log buffer
@@ -98,14 +98,14 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages|1024|UINT32|0x00010183
 
-  ## PcdAdvancedLoggerSerialDisable - When to turn off writing to the SerialPort. Only used
-  ##                                      by AdvancedSerialLogger
+  ## PcdAdvancedSerialLoggerDisable - When to turn off writing to the SerialPort.
+  ##
   # The values supported are:
   # 0 = Never
   # 2 = Exit Boot Services
   # 4 = Virtual Address Change
   #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDisable|0x04|UINT8|0x00010188
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedSerialLoggerDisable|0x04|UINT8|0x00010188
 
 
   ## PcdAdvancedFileLoggerFlush - When the in memory log is flushed to media

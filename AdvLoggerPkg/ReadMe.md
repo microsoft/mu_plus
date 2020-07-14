@@ -22,7 +22,8 @@ PCD's used by Advanced Logger
 | --- | --- |
 |PcdAdvancedLoggerForceEnable|The default operation is to check if a Logs directory is present in the root of the filesystem.  If the logs directory is present, logging is enabled. When PcdAdvancedLoggerForceEnable is TRUE, and the device is not a USB device, a Logs directory will be created and logging is enabled.  When logging is enabled, the proper log files will be created if not already preset.|
 |PcdAdvancedLoggerPeiInRAM|For system that have memory at PeiCore entry. The full in memory log buffer if PcdAdvancedLoggerPages is allocated in the Pei Core constructor and PcdAdvancedLoggerPreMemPages is ignored.|
-|PcdAdvancedLoggerSerialDebugPrintErrorLevel|The standard debug flags filter which log messages are produced.  This PCD allow a subset of log messages to be forwarded to the Serial Port Lib.|
+|PcdAdvancedSerialLoggerDebugPrintErrorLevel|The standard debug flags filter which log messages are produced.  This PCD allow a subset of log messages to be forwarded to the Serial Port Lib.|
+|PcdAdvancedSerialLoggerDisable|Specifies when to disable writing to the serial port.|
 |PcdAdvancedLoggerPreMemPages|Amount of temporary RAM used for the debug log.|
 |PcdAdvancedLoggerPages|Amount of system RAM used for the debug log|
 |PcdAdvancedLoggerLocator|When enabled, the AdvLogger creates a variable "AdvLoggerLocator" with the address of the LoggerInfo buffer|

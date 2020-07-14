@@ -50,7 +50,7 @@
   gEfiResetNotificationProtocolGuid                             ## CONSUMES
 
 [Pcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerSerialDebugPrintErrorLevel  ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedSerialLoggerDebugPrintErrorLevel  ## CONSUMES
 
 [Depex]
   TRUE
