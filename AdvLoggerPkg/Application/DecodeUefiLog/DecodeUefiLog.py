@@ -93,6 +93,29 @@ class AdvLogParser ():
     #
     # ----------------------------------------------------------------------- #
 
+    # #  Developement Log Version (pre versioning)
+
+    # typedef volatile struct {
+    #     UINT32                Signature;
+    #     UINT32                LogBufferSize;
+    #     EFI_PHYSICAL_ADDRESS  LogBuffer;              // Fixed pointer to start of log
+    #     EFI_PHYSICAL_ADDRESS  LogCurrent;             // Where to store next log entry.
+    #     UINT32                DiscardedSize;          // Number of bytes of messages missed
+    #     BOOLEAN               SerialInitialized;      // Serial port initialized
+    #     BOOLEAN               InPermanentRAM;         // Log in permanent RAM
+    #     BOOLEAN               ExitBootServices;       // Exit Boot Services occurred
+    #     BOOLEAN               PeiAllocated;           // Pei allocated "Temp Ram"
+    # } ADVANCED_LOGGER_INFO;
+
+    #
+    #  Heuristic for V1 decoding:
+    #   1. Version will appear as 0 as it is in the Low order 16 bits for the LogBufferSize.
+    #   2. LogBuffer will be a constant value of BaseAddress + 32
+    V0_LOGGER_INFO_SIZE = 32
+    V0_LOGGER_INFO_VERSION = 0
+
+    # #  First supported Log Version with versioning.
+
     # ----------------------------------------------------------------------- #
     #
     #
@@ -111,7 +134,9 @@ class AdvLogParser ():
     #        UINT64                TimerFrequency;         // Ticks per second for log timing
     #    } ADVANCED_LOGGER_INFO;
     #
-    LOGGER_INFO_SIZE = 48
+    V1_LOGGER_INFO_SIZE = 48
+    V1_LOGGER_INFO_VERSION = 1
+
     #
     # The dictionary entries for LoggerInfo is based on the UEFI structure above.
     #
@@ -176,40 +201,56 @@ class AdvLogParser ():
     #  Initialize log Header
     #
     # ---------------------------------------------------------------------- #
+
     def _InitializeLoggerInfo(self, InFile, StartLine):
         ''' Initialize log Header '''
         LoggerInfo = {}
         LoggerInfo["StartLine"] = StartLine
         LoggerInfo["CurrentLine"] = 0
         LoggerInfo["Signature"] = InFile.read(4).decode()
-        LoggerInfo["Version"] = struct.unpack("=H", InFile.read(2))[0]
+        Version = struct.unpack("=H", InFile.read(2))[0]
         InFile.read(2)[0]           # Skip reserved field
-
         if LoggerInfo["Signature"] != "ALOG":
             raise Exception('Error initializing logger info. Invalid signature: %s' % LoggerInfo["Version"])
 
-        if LoggerInfo["Version"] != 1:
+        if Version == self.V0_LOGGER_INFO_VERSION:
+            InFile.seek(4)
+            LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
+            BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + self.V0_LOGGER_INFO_SIZE
+            LoggerInfo["LogBuffer"] = self.V0_LOGGER_INFO_SIZE
+            LoggerInfo["LogCurrent"] = struct.unpack("=Q", InFile.read(8))[0]
+            LoggerInfo["DiscardedSize"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["SerialInitialized"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["InPermanentRAM"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["ExitBootServices"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["PeiAllocated"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["LogCurrent"] += self.V0_LOGGER_INFO_SIZE
+            LoggerInfo["Frequency"] = int(2.5e9)
+            if InFile.tell() != (self.V0_LOGGER_INFO_SIZE):
+                raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
+
+        elif Version == self.V1_LOGGER_INFO_VERSION:
+            BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + self.V1_LOGGER_INFO_SIZE
+            LoggerInfo["LogBuffer"] = self.V1_LOGGER_INFO_SIZE
+            LoggerInfo["LogCurrent"] = struct.unpack("=Q", InFile.read(8))[0]
+            LoggerInfo["DiscardedSize"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["InPermanentRAM"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["AtRuntime"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["GoneVirtual"] = struct.unpack("=B", InFile.read(1))[0]
+            InFile.read(5)                 # skip reserved2 field
+            LoggerInfo["Frequency"] = struct.unpack("=Q", InFile.read(8))[0]
+            LoggerInfo["LogCurrent"] += self.V1_LOGGER_INFO_SIZE
+            if InFile.tell() != (self.V1_LOGGER_INFO_SIZE):
+                raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
+
+        else:
             raise Exception('Error initializing logger info. Unsupported version: 0x%X' % LoggerInfo["Version"])
 
-        BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + self.LOGGER_INFO_SIZE
-        LoggerInfo["LogBuffer"] = self.LOGGER_INFO_SIZE
-        LoggerInfo["LogCurrent"] = struct.unpack("=Q", InFile.read(8))[0]
-        LoggerInfo["DiscardedSize"] = struct.unpack("=I", InFile.read(4))[0]
-        LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
-        LoggerInfo["InPermanentRAM"] = struct.unpack("=B", InFile.read(1))[0]
-        LoggerInfo["AtRuntime"] = struct.unpack("=B", InFile.read(1))[0]
-        LoggerInfo["GoneVirtual"] = struct.unpack("=B", InFile.read(1))[0]
-        InFile.read(5)                 # skip reserve2 field
-        LoggerInfo["Frequency"] = struct.unpack("=Q", InFile.read(8))[0]
-
+        LoggerInfo["Version"] = Version
         LoggerInfo["BaseAddress"] = BaseAddress
         LoggerInfo["LogCurrent"] -= BaseAddress
-        LoggerInfo["LogCurrent"] += self.LOGGER_INFO_SIZE
-
         LoggerInfo["InFile"] = InFile
-
-        if InFile.tell() != (self.LOGGER_INFO_SIZE):
-            raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
         return LoggerInfo
 
@@ -356,11 +397,11 @@ class AdvLogParser ():
         Remainder = Ticks % Frequency
         BitLength = Remainder.bit_length()
 
-        ##
-        ## Ensure (Remainder * 1,000,000,000) will not overflow 64-bit.
-        ## Since 2^29 < 1,000,000,000 = 0x3B9ACA00 < 2^30, Remainder should < 2^(64-30) = 2^34,
-        ## i.e. highest bit set in Remainder should <= 33.
-        ##
+        # -
+        # - Ensure (Remainder * 1,000,000,000) will not overflow 64-bit.
+        # - Since 2^29 < 1,000,000,000 = 0x3B9ACA00 < 2^30, Remainder should < 2^(64-30) = 2^34,
+        # - i.e. highest bit set in Remainder should <= 33.
+        # -
         Shift = max((BitLength - 1 - 33), 0)
         Remainder = Remainder >> Shift
         Frequency = Frequency >> Shift
