@@ -44,7 +44,7 @@
   UefiRuntimeServicesTableLib
 
 [Guids]
-  gMuEventPreExitBootServicesGuid
+  gEfiEventExitBootServicesGuid
 
 [Protocols]
   gEfiResetNotificationProtocolGuid                             ## CONSUMES

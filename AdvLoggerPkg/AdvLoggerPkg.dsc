@@ -17,8 +17,6 @@
 
 [PcdsFeatureFlag]
 
-[PcdsFixedAtBuild]
-
 [LibraryClasses.common]
 
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
