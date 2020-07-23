@@ -29,9 +29,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define ONE_MILLISECOND (1000 * ONE_MICROSECOND)
 #define ONE_SECOND (1000 * ONE_MILLISECOND)
 
-#define GET_SECONDS(a)        ((a) / ONE_SECOND)
-#define GET_MILLISECONDS(a)   ((a) / ONE_MILLISECOND)
-#define GET_MICROSECONDS(a)   ((a) / ONE_MICROSECOND)
+#define GET_SECONDS(a)        (DivU64x32 ((a), ONE_SECOND))
+#define GET_MILLISECONDS(a)   (DivU64x32 ((a), ONE_MILLISECOND))
+#define GET_MICROSECONDS(a)   (DivU64x32 ((a), ONE_MICROSECOND))
 
 
 VOID
@@ -45,17 +45,17 @@ PrintTimeFromNs(UINT64 TimeInNs)
 
   if(RemainingTime > ONE_SECOND)  {
     Sec = GET_SECONDS(RemainingTime);
-    RemainingTime -= (Sec * ONE_SECOND);
+    RemainingTime -= MultU64x32 (Sec, ONE_SECOND);
   }
 
   if(RemainingTime > ONE_MILLISECOND) {
     Milli = GET_MILLISECONDS(RemainingTime);
-    RemainingTime -= (Milli * ONE_MILLISECOND);
+    RemainingTime -= MultU64x32 (Milli, ONE_MILLISECOND);
   }
 
   if(RemainingTime > ONE_MICROSECOND) {
     Micro = GET_MICROSECONDS(RemainingTime);
-    RemainingTime -= (Micro * ONE_MICROSECOND);
+    RemainingTime -= MultU64x32 (Micro, ONE_MICROSECOND);
   }
 
   if(RemainingTime > 0) {
