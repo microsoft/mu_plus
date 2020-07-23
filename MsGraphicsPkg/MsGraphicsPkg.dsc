@@ -89,6 +89,11 @@
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
   MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Pei/MsEarlyGraphicsLibNull.inf
 
+[LibraryClasses.common.UEFI_APPLICATION]
+  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
+  ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
+  SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
+
 [LibraryClasses.IA32]
 
 [LibraryClasses.X64, LibraryClasses.AARCH64]
@@ -127,6 +132,7 @@
   MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf
   MsGraphicsPkg/Library/BootGraphicsProviderLibNull/BootGraphicsProviderLib.inf
   MsGraphicsPkg/Library/QrEncoderLib/QrEncoderLib.inf
+  MsGraphicsPkg/Application/BmpDisplay/BmpDisplay.inf
 
 [Components.IA32]
   # Early Graphics driver.

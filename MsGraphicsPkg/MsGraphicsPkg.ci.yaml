@@ -20,6 +20,7 @@
         "AcceptableDependencies": [
             "MdePkg/MdePkg.dec",
             "MdeModulePkg/MdeModulePkg.dec",
+            "ShellPkg/ShellPkg.dec",
             "MsGraphicsPkg/MsGraphicsPkg.dec",
             "MsCorePkg/MsCorePkg.dec"
         ],

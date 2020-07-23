@@ -1,0 +1,42 @@
+## @file
+# BmpDisplay.inf
+#
+# A simple UEFI application that displays a user-specified BMP image.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BmpDisplay
+  FILE_GUID                      = CBAEADF9-1AED-427E-A1C2-ED079EBAFE4F
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = BmpDisplayEntrypoint
+
+[Sources]
+  BmpDisplay.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  ShellPkg/ShellPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  BmpSupportLib
+  MemoryAllocationLib
+  PrintLib
+  ShellLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+
+[Protocols]
+  gEfiGraphicsOutputProtocolGuid    ## CONSUMES
+
+[Depex]
+  gEfiGraphicsOutputProtocolGuid
