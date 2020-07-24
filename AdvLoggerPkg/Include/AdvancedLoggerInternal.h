@@ -86,7 +86,7 @@ typedef struct {
 } ADVANCED_LOGGER_PTR;
 
 //
-// Bit flags for PcdAdvancedLoggerSerialDisableSMM and PcdAdvancedLoggerSerialDisableRUNTIME
+// Bit flags for PcdAdvancedSerialDisable
 //
 #define ADV_PCD_DISABLE_SERIAL_FLAGS_NEVER                  0x00
 #define ADV_PCD_DISABLE_SERIAL_FLAGS_EXIT_BOOT_SERVICES     0x02

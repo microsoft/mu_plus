@@ -47,7 +47,7 @@ WriteToSerialPort (
     // at EXIT BOOT SERVICES by default.
 
     if (mLoggerInfo != NULL) {
-        DisableFlags = FixedPcdGet8(PcdAdvancedLoggerSerialDisable);
+        DisableFlags = FixedPcdGet8(PcdAdvancedSerialLoggerDisable);
         if (DisableFlags & ADV_PCD_DISABLE_SERIAL_FLAGS_EXIT_BOOT_SERVICES) {
             if (mLoggerInfo->AtRuntime) {
                 return;
@@ -70,7 +70,7 @@ WriteToSerialPort (
         if (WriteSize > 0) {
             // Only selected messages go to the serial port.
 
-            if (mAccessEntry.DebugLevel & FixedPcdGet32(PcdAdvancedLoggerSerialDebugPrintErrorLevel)) {
+            if (mAccessEntry.DebugLevel & FixedPcdGet32(PcdAdvancedSerialLoggerDebugPrintErrorLevel)) {
                 Status = SerialPortWrite((UINT8 *) mAccessEntry.Message, mAccessEntry.MessageLen);
                 if (EFI_ERROR(Status)) {
                     DEBUG((DEBUG_ERROR, "%a: Failed to write to serial port: %r\n", __FUNCTION__, Status));
