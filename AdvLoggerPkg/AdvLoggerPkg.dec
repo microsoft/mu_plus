@@ -81,10 +81,6 @@
 
 
 [PcdsFixedAtBuild]
-  ## Advanced Serial Logger filter ErrorLevel
-  #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedSerialLoggerDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
-
   ## Advanced Logger Base - NULL = UEFI starts with PEI or DXE, and there is no SEC, or SEC
   #                                provides no memory log buffer
   #                         Address = UEFI starts with SEC, and SEC provided LogInfoPtr is at this address
@@ -117,7 +113,11 @@
   # The values can be combined eg. 3 == Ready To Boot and Exit Boot Services.
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush|1|UINT8|0x00010187
 
-[PcdsDynamic]
+[PcdsFixedAtBuild, PcdsDynamic]
+  ## Advanced Logger serial port filter ErrorLevel
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedSerialLoggerDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
+
 
 
 [UserExtensions.TianoCore."ExtraFiles"]

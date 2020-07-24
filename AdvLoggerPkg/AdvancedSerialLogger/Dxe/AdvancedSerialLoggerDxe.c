@@ -10,14 +10,14 @@
 #include "AdvancedSerialLoggerDxe.h"
 
 #define ADV_LOG_REFRESH_INTERVAL  (200 * 10 * 1000)   // Refresh interval: 200ms in 100ns units
-#define ADV_LOG_MESSAGES_PER_EVENT 10
+#define ADV_LOG_MESSAGES_PER_EVENT 1000
 
 //
 // Global variables.
 //
 STATIC ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  mAccessEntry;
 STATIC EFI_EVENT                                  mWriteToSerialPortTimerEvent = NULL;
-STATIC EFI_EVENT                                  mMuPreExitBootServicesEvent = NULL;
+STATIC EFI_EVENT                                  mExitBootServicesEvent = NULL;
 STATIC EFI_EVENT                                  mResetNotificationEvent = NULL;
 STATIC EFI_RESET_NOTIFICATION_PROTOCOL           *mResetNotificationProtocol = NULL;
 STATIC ADVANCED_LOGGER_INFO                      *mLoggerInfo;
@@ -70,7 +70,7 @@ WriteToSerialPort (
         if (WriteSize > 0) {
             // Only selected messages go to the serial port.
 
-            if (mAccessEntry.DebugLevel & FixedPcdGet32(PcdAdvancedSerialLoggerDebugPrintErrorLevel)) {
+            if (mAccessEntry.DebugLevel & PcdGet32(PcdAdvancedSerialLoggerDebugPrintErrorLevel)) {
                 Status = SerialPortWrite((UINT8 *) mAccessEntry.Message, mAccessEntry.MessageLen);
                 if (EFI_ERROR(Status)) {
                     DEBUG((DEBUG_ERROR, "%a: Failed to write to serial port: %r\n", __FUNCTION__, Status));
@@ -193,7 +193,7 @@ OnWriteSerialTimerCallback (
  **/
 VOID
 EFIAPI
-OnPreExitBootServicesNotification (
+OnExitBootServicesNotification (
     IN EFI_EVENT        Event,
     IN VOID             *Context
   )
@@ -329,7 +329,7 @@ return Status;
 
   **/
 EFI_STATUS
-ProcessPreExitBootServicesRegistration (
+ProcessExitBootServicesRegistration (
     VOID
     )
 {
@@ -338,12 +338,14 @@ ProcessPreExitBootServicesRegistration (
     //
     // Register notify function for writing the log files.
     //
+    // - Note: Nonstandard TPL used in order to be the last running item in the ExitBootServices
+    //         callback list to insure log messages are written to the the log.
     Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
-                                  TPL_CALLBACK,
-                                  OnPreExitBootServicesNotification,
+                                 (TPL_APPLICATION + 1),
+                                  OnExitBootServicesNotification,
                                   gImageHandle,
-                                 &gMuEventPreExitBootServicesGuid,
-                                 &mMuPreExitBootServicesEvent );
+                                 &gEfiEventExitBootServicesGuid,
+                                 &mExitBootServicesEvent );
 
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
@@ -387,7 +389,12 @@ AdvancedSerialLoggerEntry (
     mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
 
     //
-    // Step 1 - Register for timer events
+    // Step 1 - Start the first group of messages
+    //
+    WriteToSerialPort (ADV_LOG_MESSAGES_PER_EVENT);
+
+    //
+    // Step 2 - Register for timer events
     //
     Status = ProcessTimerRegistration ();
     if (EFI_ERROR(Status)) {
@@ -395,15 +402,15 @@ AdvancedSerialLoggerEntry (
     }
 
     //
-    // Step 2 - Register for ExitBootServices
+    // Step 3 - Register for ExitBootServices
     //
-    Status = ProcessPreExitBootServicesRegistration ();
+    Status = ProcessExitBootServicesRegistration ();
     if (EFI_ERROR(Status)) {
         goto Exit;
     }
 
     //
-    // Step 3. Register for Reset Event
+    // Step 4. Register for Reset Event
     //
     Status = ProcessResetEventRegistration ();
 
@@ -416,8 +423,8 @@ Exit:
             gBS->CloseEvent (mWriteToSerialPortTimerEvent);
         }
 
-        if (mMuPreExitBootServicesEvent != NULL) {
-            gBS->CloseEvent (mMuPreExitBootServicesEvent);
+        if (mExitBootServicesEvent != NULL) {
+            gBS->CloseEvent (mExitBootServicesEvent);
         }
 
         if (mResetNotificationProtocol != NULL) {
