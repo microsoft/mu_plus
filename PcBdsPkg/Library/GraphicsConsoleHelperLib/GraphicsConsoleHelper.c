@@ -36,7 +36,7 @@ static UINT32 mVgaVerticalResolution;
 static BOOLEAN mModeTableInitialized = FALSE;
 
 /**
- * InitializeModeTable - 
+ * InitializeModeTable -
  * @param
  *
  * @return VOID
@@ -116,19 +116,20 @@ SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode)
   UINTN CurrentColumn;
   UINTN CurrentRow;
 
-    //
-    // Get current video resolution and text mode
-    //
-    Status = gBS->HandleProtocol (
-                    gST->ConsoleOutHandle,
-                    &gEfiGraphicsOutputProtocolGuid,
-                    (VOID**)&GraphicsOutput
-                    );
-    if (EFI_ERROR (Status)) {
-        GraphicsOutput = NULL;
-    }
+  //
+  // Get current video resolution and text mode
+  //
+  Status = gBS->HandleProtocol (
+                  gST->ConsoleOutHandle,
+                  &gEfiGraphicsOutputProtocolGuid,
+                  (VOID**)&GraphicsOutput
+                  );
+  if (EFI_ERROR (Status)) {
+    GraphicsOutput = NULL;
+    Status = gBS->LocateProtocol (&gEfiGraphicsOutputProtocolGuid, NULL, (VOID**)&GraphicsOutput);
+  }
 
-  if (GraphicsOutput == NULL)
+  if (EFI_ERROR(Status) || (GraphicsOutput == NULL))
   {
     return EFI_UNSUPPORTED;
   }
