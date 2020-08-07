@@ -171,7 +171,7 @@ class MemoryRange(object):
         self.PhysicalStart = VA
         self.ReadWrite = ReadWrite
         self.Nx = Nx
-        self.UserPrivilege = 1
+        self.UserPrivilege = User
         self.PhysicalSize = self.getPageSize()
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
