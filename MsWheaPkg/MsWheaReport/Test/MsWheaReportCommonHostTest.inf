@@ -1,0 +1,53 @@
+## @file MsWheaReportCommonHostTest.inf
+# Host-based UnitTest for Common routines in the MsWheaReport driver.
+#
+##
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MsWheaReportCommonHostTest
+  FILE_GUID           = C6B9D08E-24D5-4C20-BE91-204014F5B2FD
+  MODULE_TYPE         = HOST_APPLICATION
+  VERSION_STRING      = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+
+[Sources]
+  MsWheaReportCommonHostTest.c
+  ../MsWheaReportCommon.h
+  ../MsWheaReportCommon.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  UnitTestLib
+
+
+[Pcd]
+  gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
+
+
+[Guids]
+  gMsWheaReportServiceGuid
+  gMsWheaReportRecordIDGuid
+  gMsWheaRSCDataTypeGuid
+
+
+[BuildOptions]
+  MSFT:NOOPT_*_*_CC_FLAGS   = -DINTERNAL_UNIT_TEST    ## cspell:words DINTERNAL
+  GCC:NOOPT_*_*_CC_FLAGS    = -DINTERNAL_UNIT_TEST    ## cspell:words DINTERNAL

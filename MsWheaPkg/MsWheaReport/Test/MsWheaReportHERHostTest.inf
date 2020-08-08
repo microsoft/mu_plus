@@ -1,0 +1,65 @@
+## @file MsWheaReportHERHostTest.inf
+# Host-based UnitTest for HER routines in the MsWheaReport driver.
+#
+##
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MsWheaReportHERHostTest
+  FILE_GUID           = 93E26E85-F3B3-45E8-8257-BD9E8B2FDEF4
+  MODULE_TYPE         = HOST_APPLICATION
+  VERSION_STRING      = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+
+[Sources]
+  MsWheaReportHERHostTest.c
+  ../MsWheaReportHER.h
+  ../MsWheaReportHER.c
+  ../MsWheaReportCommon.h
+  # Need these for a couple shared functions called by MsWheaReportHER.
+  ../MsWheaReportCommon.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  UnitTestLib
+
+
+[Pcd]
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareErrorRecordAttributeSupported
+  gMsWheaPkgTokenSpaceGuid.PcdVariableHardwareMaxCount
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxHardwareErrorVariableSize
+  # Needed by MsWheaReportCommon
+  gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid
+
+
+[Guids]
+  gEfiHardwareErrorVariableGuid
+  # Needed by MsWheaReportCommon
+  gMsWheaReportServiceGuid
+  gMsWheaReportRecordIDGuid
+  gEfiEventNotificationTypeBootGuid
+  gMsWheaRSCDataTypeGuid
+  gMuTelemetrySectionTypeGuid
+
+
+[BuildOptions]
+  MSFT:NOOPT_*_*_CC_FLAGS   = -DINTERNAL_UNIT_TEST    ## cspell:words DINTERNAL
+  GCC:NOOPT_*_*_CC_FLAGS    = -DINTERNAL_UNIT_TEST    ## cspell:words DINTERNAL

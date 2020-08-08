@@ -36,6 +36,7 @@
   DebugLib
   ReportStatusCodeLib
   BaseMemoryLib
+  MemoryAllocationLib
 
 [Guids]
   gMsWheaRSCDataTypeGuid                  ## CONSUMES

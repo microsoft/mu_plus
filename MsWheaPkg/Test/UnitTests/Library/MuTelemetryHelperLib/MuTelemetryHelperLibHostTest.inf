@@ -1,0 +1,42 @@
+## @file MuTelemetryHelperLibHostTest.inf
+# Host-based UnitTest for MuTelemetryHelperLib.
+#
+##
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MuTelemetryHelperLibHostTest
+  FILE_GUID           = 768C1D44-BA74-4FBD-9567-F53DC107EF04
+  MODULE_TYPE         = HOST_APPLICATION
+  VERSION_STRING      = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+
+[Sources]
+  MuTelemetryHelperLibHostTest.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+
+[Guids]
+  gZeroGuid
+
+
+[LibraryClasses]
+  DebugLib
+  UnitTestLib
+  MuTelemetryHelperLib

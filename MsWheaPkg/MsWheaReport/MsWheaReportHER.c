@@ -8,9 +8,233 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include <Library/UefiRuntimeServicesTableLib.h>
+#include <Uefi.h>
+#include <Library/ReportStatusCodeLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
+
 #include "MsWheaReportHER.h"
+
+//
+// This library was designed with advanced unit-test features.
+// This define handles the configuration.
+#ifdef INTERNAL_UNIT_TEST
+#undef STATIC
+#define STATIC    // Nothing...
+#endif
+
+/**
+This routine will fill out the CPER header for caller.
+
+Zeroed: Flags, PersistenceInfo;
+
+@param[in]  MsWheaEntryMD             Pointer to the internal WHEA structure that will be used
+                                      to populate the structure.
+@param[in]  TotalSize                 Total size of the entire record.
+@param[out] CperHdr                   Supplies a pointer to CPER header structure
+
+@retval EFI_SUCCESS                   The operation completed successfully
+@retval EFI_INVALID_PARAMETER         Any required input pointer is NULL
+**/
+STATIC
+EFI_STATUS
+CreateCperHdrDefaultMin (
+  CONST IN MS_WHEA_ERROR_ENTRY_MD     *MsWheaEntryMD,
+  IN  UINT32                          TotalSize,
+  OUT EFI_COMMON_ERROR_RECORD_HEADER  *CperHdr
+  )
+{
+  EFI_STATUS Status = EFI_SUCCESS;
+  EFI_TIME            CurrentTime;
+  UINT64              RecordID;
+
+  if (CperHdr == NULL) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Cleanup;
+  }
+
+  SetMem(CperHdr, sizeof(EFI_COMMON_ERROR_RECORD_HEADER), 0);
+
+  CperHdr->SignatureStart = EFI_ERROR_RECORD_SIGNATURE_START;
+  CperHdr->Revision = EFI_ERROR_RECORD_REVISION;
+  CperHdr->SignatureEnd = EFI_ERROR_RECORD_SIGNATURE_END;
+  CperHdr->SectionCount = (MsWheaEntryMD->ExtraSection == NULL) ? 1 : 2;
+  CperHdr->ErrorSeverity = MsWheaEntryMD->ErrorSeverity;
+  CperHdr->ValidationBits = EFI_ERROR_RECORD_HEADER_PLATFORM_ID_VALID;
+  CperHdr->RecordLength = TotalSize;
+
+  if(PopulateTime(&CurrentTime)){
+    CperHdr->ValidationBits    |= (EFI_ERROR_RECORD_HEADER_TIME_STAMP_VALID);
+    CperHdr->TimeStamp.Seconds  = DecimalToBcd8(CurrentTime.Second);
+    CperHdr->TimeStamp.Minutes  = DecimalToBcd8(CurrentTime.Minute);
+    CperHdr->TimeStamp.Hours    = DecimalToBcd8(CurrentTime.Hour);
+    CperHdr->TimeStamp.Day      = DecimalToBcd8(CurrentTime.Day);
+    CperHdr->TimeStamp.Month    = DecimalToBcd8(CurrentTime.Month);
+    CperHdr->TimeStamp.Year     = DecimalToBcd8(CurrentTime.Year % 100);
+    CperHdr->TimeStamp.Century  = DecimalToBcd8((CurrentTime.Year / 100 + 1) % 100); // should not lose data
+    if (MsWheaEntryMD->Phase == MS_WHEA_PHASE_DXE_VAR) {
+      CperHdr->TimeStamp.Flag   = BIT0;
+    }
+  } else{
+    CperHdr->ValidationBits &= (~EFI_ERROR_RECORD_HEADER_TIME_STAMP_VALID);
+  }
+
+  CopyMem(&CperHdr->PlatformID, (EFI_GUID*)PcdGetPtr(PcdDeviceIdentifierGuid), sizeof(EFI_GUID));
+  if (!IsZeroBuffer(&MsWheaEntryMD->IhvSharingGuid, sizeof(EFI_GUID))) {
+    CperHdr->ValidationBits |= EFI_ERROR_RECORD_HEADER_PARTITION_ID_VALID;
+  }
+  CopyGuid(&CperHdr->PartitionID, &MsWheaEntryMD->IhvSharingGuid);
+
+  // Default to MS WHEA Service guid
+  CopyMem(&CperHdr->CreatorID, &gMsWheaReportServiceGuid, sizeof(EFI_GUID));
+
+  // Default to Boot Error
+  CopyMem(&CperHdr->NotificationType, &gEfiEventNotificationTypeBootGuid, sizeof(EFI_GUID));
+
+  if(EFI_ERROR(GetRecordID(&RecordID, &gMsWheaReportRecordIDGuid))) {
+    DEBUG ((DEBUG_INFO, "%a - RECORD ID NOT UPDATED\n", __FUNCTION__));
+  }
+
+  //Even if the record id was not updated, the value is either 0 or the previously incremented value
+  CperHdr->RecordID = RecordID;
+  CperHdr->Flags |= EFI_HW_ERROR_FLAGS_PREVERR;
+  //CperHdr->PersistenceInfo = 0;// Untouched.
+  //SetMem(&CperHdr->Resv1, sizeof(CperHdr->Resv1), 0); // Reserved field, should be 0.
+
+Cleanup:
+  return Status;
+}
+
+/**
+This routine will fill out the CPER Section Descriptor for caller.
+
+Zeroed: SectionFlags, FruId, FruString;
+
+@param[in]  MsWheaEntryMD             Pointer to the internal WHEA structure that will be used
+                                      to populate the structure.
+@param[out] CperErrSecDscp            Supplies a pointer to CPER header structure
+
+@retval EFI_SUCCESS                   The operation completed successfully
+@retval EFI_INVALID_PARAMETER         Any required input pointer is NULL
+**/
+STATIC
+EFI_STATUS
+CreateCperErrSecDscpDefaultMin (
+  CONST IN MS_WHEA_ERROR_ENTRY_MD     *MsWheaEntryMD,
+  IN  UINT32                          Offset,
+  OUT EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp
+  )
+{
+  EFI_STATUS Status = EFI_SUCCESS;
+
+  if (CperErrSecDscp == NULL) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Cleanup;
+  }
+
+  SetMem(CperErrSecDscp, sizeof(EFI_ERROR_SECTION_DESCRIPTOR), 0);
+
+  CperErrSecDscp->SectionOffset = Offset;
+  CperErrSecDscp->SectionLength = sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
+  CperErrSecDscp->Revision = MS_WHEA_SECTION_REVISION;
+  //CperErrSecDscp->SecValidMask = 0;
+
+  //CperErrSecDscp->Resv1 = 0; // Reserved field, should be 0.
+  //CperErrSecDscp->SectionFlags = 0; // Untouched.
+
+  // Default to Mu telemetry error data
+  CopyMem(&CperErrSecDscp->SectionType, &gMuTelemetrySectionTypeGuid, sizeof(EFI_GUID));
+
+  //SetMem(&CperErrSecDscp->FruId, sizeof(CperErrSecDscp->FruId), 0); // Untouched.
+  CperErrSecDscp->Severity = MsWheaEntryMD->ErrorSeverity;
+  //SetMem(CperErrSecDscp->FruString, sizeof(CperErrSecDscp->FruString), 0); // Untouched.
+
+Cleanup:
+  return Status;
+}
+
+/**
+This routine will fill out the CPER Section Descriptor for caller.
+
+Zeroed: SectionFlags, FruId, FruString;
+
+@param[in]  MsWheaEntryMD             Pointer to the internal WHEA structure that will be used
+                                      to populate the structure.
+@param[out] CperErrSecDscp            Supplies a pointer to CPER header structure
+
+@retval EFI_SUCCESS                   The operation completed successfully
+@retval EFI_INVALID_PARAMETER         Any required input pointer is NULL
+**/
+STATIC
+EFI_STATUS
+CreateCperErrExtraSecDscpDefaultMin (
+  CONST IN MS_WHEA_ERROR_ENTRY_MD     *MsWheaEntryMD,
+  IN  UINT32                          Offset,
+  OUT EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp
+  )
+{
+  EFI_STATUS Status = EFI_SUCCESS;
+
+  if (MsWheaEntryMD->ExtraSection == NULL || CperErrSecDscp == NULL) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Cleanup;
+  }
+
+  SetMem(CperErrSecDscp, sizeof(EFI_ERROR_SECTION_DESCRIPTOR), 0);
+
+  CperErrSecDscp->SectionOffset = Offset;
+  CperErrSecDscp->SectionLength = MsWheaEntryMD->ExtraSection->DataSize;
+  CperErrSecDscp->Revision = MS_WHEA_SECTION_REVISION;
+  //CperErrSecDscp->SecValidMask = 0;
+
+  //CperErrSecDscp->Resv1 = 0; // Reserved field, should be 0.
+  //CperErrSecDscp->SectionFlags = 0; // Untouched.
+
+  // Default to Mu telemetry error data
+  CopyMem(&CperErrSecDscp->SectionType, &MsWheaEntryMD->ExtraSection->SectionGuid, sizeof(EFI_GUID));
+
+  //SetMem(&CperErrSecDscp->FruId, sizeof(CperErrSecDscp->FruId), 0); // Untouched.
+  CperErrSecDscp->Severity = MsWheaEntryMD->ErrorSeverity;
+  //SetMem(CperErrSecDscp->FruString, sizeof(CperErrSecDscp->FruString), 0); // Untouched.
+
+Cleanup:
+  return Status;
+}
+
+/**
+This routine will fill out the Mu Telemetry Error Data structure for caller.
+
+@param[in]  MsWheaEntryMD             Internal telemetry metadata collected during error report
+@param[out] MuTelemetryData           Supplies a pointer to Mu Telemetry Error Data structure
+
+@retval EFI_SUCCESS                   The operation completed successfully
+@retval EFI_INVALID_PARAMETER         Any required input pointer is NULL
+**/
+STATIC
+EFI_STATUS
+CreateMuTelemetryData (
+  CONST IN MS_WHEA_ERROR_ENTRY_MD                    *MsWheaEntryMD,
+  OUT MU_TELEMETRY_CPER_SECTION_DATA                 *MuTelemetryData
+  )
+{
+  EFI_STATUS Status = EFI_SUCCESS;
+  if ((MuTelemetryData == NULL) ||
+      (MsWheaEntryMD == NULL)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Cleanup;
+  }
+
+  SetMem(MuTelemetryData, sizeof(MU_TELEMETRY_CPER_SECTION_DATA), 0);
+
+  MuTelemetryData->ComponentID = MsWheaEntryMD->ModuleID;
+  MuTelemetryData->SubComponentID = MsWheaEntryMD->LibraryID;
+  MuTelemetryData->ErrorStatusValue = MsWheaEntryMD->ErrorStatusValue;
+  MuTelemetryData->AdditionalInfo1 = MsWheaEntryMD->AdditionalInfo1;
+  MuTelemetryData->AdditionalInfo2 = MsWheaEntryMD->AdditionalInfo2;
+
+Cleanup:
+  return Status;
+}
 
 /**
 
@@ -29,18 +253,20 @@ Note: Caller is responsible for freeing the valid returned buffer!!!
 STATIC
 VOID *
 MsWheaAnFBuffer (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
+  CONST IN MS_WHEA_ERROR_ENTRY_MD     *MsWheaEntryMD,
   IN OUT UINT32                       *PayloadSize
   )
 {
   EFI_STATUS                      Status = EFI_SUCCESS;
   UINT8                           *Buffer = NULL;
-  UINT32                          BufferIndex = 0;
-  UINT32                          ErrorPayloadSize = 0;
+  UINT32                          BufferIndex;
+  UINT32                          TotalSize;
 
   EFI_COMMON_ERROR_RECORD_HEADER  *CperHdr;
   EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp;
   MU_TELEMETRY_CPER_SECTION_DATA  *MuTelemetryData;
+  EFI_ERROR_SECTION_DESCRIPTOR    *CperErrExtraSecDscp;
+  UINT8                           *ExtraSectionData;
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
@@ -49,35 +275,56 @@ MsWheaAnFBuffer (
     goto Cleanup;
   }
 
-  ErrorPayloadSize = sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
+  TotalSize = sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
+                sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
+                sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
+  if (MsWheaEntryMD->ExtraSection != NULL) {
+    TotalSize   += sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
+                    MsWheaEntryMD->ExtraSection->DataSize;
+  }
 
-  Buffer = AllocateZeroPool(sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
-                            sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
-                            ErrorPayloadSize);
+  Buffer = AllocateZeroPool(TotalSize);
   if (Buffer == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
 
   // Grab pointers to each header
-  CperHdr = (EFI_COMMON_ERROR_RECORD_HEADER*)&Buffer[BufferIndex];
-  BufferIndex += sizeof(EFI_COMMON_ERROR_RECORD_HEADER);
+  CperHdr = (EFI_COMMON_ERROR_RECORD_HEADER*)&Buffer[0];
+  BufferIndex = sizeof(EFI_COMMON_ERROR_RECORD_HEADER);
 
   CperErrSecDscp = (EFI_ERROR_SECTION_DESCRIPTOR*)&Buffer[BufferIndex];
   BufferIndex += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
 
+  if (MsWheaEntryMD->ExtraSection != NULL) {
+    CperErrExtraSecDscp = (EFI_ERROR_SECTION_DESCRIPTOR*)&Buffer[BufferIndex];
+    BufferIndex += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
+  }
+
   MuTelemetryData = (MU_TELEMETRY_CPER_SECTION_DATA*)&Buffer[BufferIndex];
   BufferIndex += sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
 
+  if (MsWheaEntryMD->ExtraSection != NULL) {
+    ExtraSectionData = (UINT8*)&Buffer[BufferIndex];
+  }
+
   // Fill out error type based headers according to UEFI Spec...
-  CreateHeadersDefault(CperHdr,
-                      CperErrSecDscp,
-                      MuTelemetryData,
-                      MsWheaEntryMD,
-                      ErrorPayloadSize);
+  CreateCperHdrDefaultMin(MsWheaEntryMD, TotalSize, CperHdr);
+  // Add all section descriptors.
+  CreateCperErrSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)MuTelemetryData - (UINTN)CperErrSecDscp), CperErrSecDscp);
+  if (MsWheaEntryMD->ExtraSection != NULL) {
+    CreateCperErrExtraSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)ExtraSectionData - (UINTN)CperErrSecDscp), CperErrExtraSecDscp);
+  }
+  // Add all section data.
+  CreateMuTelemetryData(MsWheaEntryMD, MuTelemetryData);
+  if (MsWheaEntryMD->ExtraSection != NULL) {
+    CopyMem(ExtraSectionData,
+              &MsWheaEntryMD->ExtraSection->Data,
+              MsWheaEntryMD->ExtraSection->DataSize);
+  }
 
   // Update PayloadSize as the recorded error has Headers and Payload merged
-  *PayloadSize = BufferIndex;
+  *PayloadSize = TotalSize;
 
  Cleanup:
   DEBUG((DEBUG_INFO, "%a: exit %r...\n", __FUNCTION__, Status));

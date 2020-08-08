@@ -36,6 +36,7 @@
 
 [Includes.common.Private]
   Private
+  Test/Include
 
 [Protocols]
 

@@ -9,6 +9,10 @@
     "CompilerPlugin": {
         "DscPath": "MsWheaPkg.dsc"
     },
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "Test/MsWheaPkgHostTest.dsc"
+    },
 
     ## options defined ci/Plugin/CharEncodingCheck
     "CharEncodingCheck": {
@@ -36,6 +40,11 @@
     "DscCompleteCheck": {
         "IgnoreInf": [],
         "DscPath": "MsWheaPkg.dsc"
+    },
+    ## options defined ci/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [""],
+        "DscPath": "Test/MsWheaPkgHostTest.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck

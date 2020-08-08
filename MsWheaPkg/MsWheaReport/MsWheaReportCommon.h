@@ -44,6 +44,12 @@ Definition wrapper to unify all bert/hwerrrec related specification versioning
 
 #pragma pack(1)
 
+typedef struct _MS_WHEA_ERROR_EXTRA_SECTION_DATA {
+  EFI_GUID    SectionGuid;
+  UINT32      DataSize;
+  UINT8       Data[];
+} MS_WHEA_ERROR_EXTRA_SECTION_DATA;
+
 /**
 MS WHEA error entry metadata, used for intermediate data storage and preliminarily processed
 raw data. All fields usage is the same as in their own header unless listed otherwise.
@@ -60,6 +66,7 @@ typedef struct MS_WHEA_ERROR_ENTRY_MD_T_DEF {
   EFI_GUID                            ModuleID;
   EFI_GUID                            LibraryID;
   EFI_GUID                            IhvSharingGuid;
+  MS_WHEA_ERROR_EXTRA_SECTION_DATA    *ExtraSection;
 } MS_WHEA_ERROR_ENTRY_MD;
 
 #pragma pack()
@@ -82,32 +89,6 @@ EFI_STATUS
 );
 
 /************************************ Function Section *************************************/
-
-/**
-This routine will fill CPER related headers with certain preset values;
-
-Presets:  NotificationType: gEfiEventNotificationTypeBootGuid; SectionType: gMuTelemetrySectionTypeGuid;
-Zeroed:   CPER Header: Flags, RecordID; Section Descriptor: SectionFlags, FruId, FruString;
-
-@param[out] CperHdr                   Supplies a pointer to CPER header structure
-@param[out] CperErrSecDscp            Supplies a pointer to CPER Section Decsriptor structure
-@param[out] MuTelemetryData           Supplies a pointer to Mu telemetry data structure
-@param[in]  MsWheaEntryMD             Supplies a pointer to reported MS WHEA error metadata
-@param[in]  PayloadSize               Length of entire payload to be included within this entry, refer to
-                                      UEFI Spec for more information
-
-@retval EFI_SUCCESS                   The operation completed successfully
-@retval EFI_INVALID_PARAMETER         Any required input pointer is NULL
-**/
-EFI_STATUS
-EFIAPI
-CreateHeadersDefault (
-  OUT EFI_COMMON_ERROR_RECORD_HEADER  *CperHdr,
-  OUT EFI_ERROR_SECTION_DESCRIPTOR    *CperErrSecDscp,
-  OUT MU_TELEMETRY_CPER_SECTION_DATA  *MuTelemetryData,
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD,
-  IN UINT32                           PayloadSize
-);
 
 /**
 This routine will filter status code based on status type, decode reported extended data , if any,
