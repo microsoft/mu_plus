@@ -96,44 +96,6 @@ EFIAPI
 PlatformBootManagerBdsEntry (
   VOID
 ) {
-    EFI_STATUS                    Status;
-    EDKII_VARIABLE_LOCK_PROTOCOL *VarLockProtocol = NULL;
-
-
-    // Delete errant boot option that was accidentally introduced
-    // This code can be removed after 12/31/2017
-    Status = gRT->SetVariable (
-                    L"PlatformRecovery0000",
-                    &gEfiGlobalVariableGuid,
-                    EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                    0,
-                    NULL
-                    );
-    if (EFI_NOT_FOUND != Status) {
-        DEBUG((DEBUG_ERROR,"%a leftover PlatformRecovery0000 was deleted\n", __FUNCTION__));
-    }
-
-    // Delete DriverOrder before locking it.  We do not support DriverOrder
-    Status = gRT->SetVariable (
-                    EFI_DRIVER_ORDER_VARIABLE_NAME,
-                    &gEfiGlobalVariableGuid,
-                    0,
-                    0,
-                    NULL
-                    );
-    DEBUG((DEBUG_INFO,"Status from deleting DriverOrder prior to lock. Code=%r\n",Status));
-
-    Status = gBS->LocateProtocol(&gEdkiiVariableLockProtocolGuid, NULL, (VOID**)&VarLockProtocol);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Failed to locate var lock protocol (%r).  Can't lock driver order variable\n", __FUNCTION__, Status));
-    } else {
-        Status = VarLockProtocol->RequestToLock(VarLockProtocol, EFI_DRIVER_ORDER_VARIABLE_NAME, &gEfiGlobalVariableGuid);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR,"Unable to lock DriverOrder. Code=%r\n",Status));
-        } else {
-            DEBUG((DEBUG_INFO,"Variable DriverOrder locked\n"));
-        }
-    }
 
     DeviceBootManagerBdsEntry ();
 
