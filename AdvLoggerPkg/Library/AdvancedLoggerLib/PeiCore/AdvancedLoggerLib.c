@@ -24,6 +24,8 @@
 
 #include "../AdvancedLoggerCommon.h"
 
+STATIC ADVANCED_LOGGER_INFO *mLoggerInfo = NULL;
+
 EFI_STATUS
 EFIAPI
 InstallPermanentMemoryBuffer (
@@ -114,13 +116,14 @@ InstallPermanentMemoryBuffer (
                 }
 
                 NewLoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
-                NewLoggerInfo->LogCurrent = PA_FROM_PTR( CHAR8_FROM_PA(NewLogBuffer) + BufferSize );
+                NewLoggerInfo->LogCurrent = PA_FROM_PTR( CHAR8_FROM_PA(NewLoggerInfo->LogBuffer) + BufferSize );
                 NewLoggerInfo->InPermanentRAM = TRUE;
                 //
                 // Update the HOB pointer
                 //
                 OldLoggerInfo = LogPtr->LoggerInfo;
                 LogPtr->LoggerInfo = PA_FROM_PTR (NewLoggerInfo);
+                mLoggerInfo = NewLoggerInfo;
                 PeiServicesFreePages (OldLoggerInfo,
                                       FixedPcdGet32 (PcdAdvancedLoggerPreMemPages));
 
@@ -221,8 +224,6 @@ AdvancedLoggerGetLoggerInfo (
     CONST EFI_PEI_SERVICES    **PeiServices;
     EFI_STATUS                  Status;
 
-    STATIC ADVANCED_LOGGER_INFO *mLoggerInfo = NULL;
-
     //
     // Once memory is installed, the static variable will work.
     //
@@ -291,12 +292,6 @@ AdvancedLoggerGetLoggerInfo (
                     LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
                     LoggerInfo->LogBufferSize = BufferSize - sizeof(ADVANCED_LOGGER_INFO);
                     LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
-
-                    if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
-                        LoggerInfo->InPermanentRAM = TRUE;
-                    } else {
-                        PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
-                    }
                 }
             } else {
                 LoggerInfo = LoggerInfoSec;
@@ -313,10 +308,16 @@ AdvancedLoggerGetLoggerInfo (
                 GuidHob->Name = gAdvancedLoggerHobGuid;
                 Status = PeiServicesInstallPpi (mAdvancedLoggerPpiList);
                 ASSERT_EFI_ERROR(Status);
-                mLoggerInfo = LoggerInfo;
 
                 if (LoggerInfoSec != NULL) {
                     UpdateSecLoggerInfo (LoggerInfo);
+                }
+
+                if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
+                    LoggerInfo->InPermanentRAM = TRUE;
+                    mLoggerInfo = LoggerInfo;
+                } else {
+                    PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
                 }
             }
         }
