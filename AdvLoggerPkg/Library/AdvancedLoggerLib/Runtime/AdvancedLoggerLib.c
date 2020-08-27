@@ -84,7 +84,7 @@ AdvancedLoggerGetLoggerInfo (
     ADVANCED_LOGGER_PROTOCOL   *LoggerProtocol;
     EFI_STATUS                  Status;
 
-    if ((mLoggerInfo == NULL) &&  (mBS != NULL)) {
+    if ((mLoggerInfo == NULL) && (mBS != NULL)) {
         Status = mBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
                                        NULL,
                                        (VOID **) &LoggerProtocol);
@@ -124,6 +124,7 @@ OnExitBootServicesNotification (
     // will also stop serial port output from Runtime Advanced Logger instances.
     //
     mLoggerInfo = NULL;
+    mBS = NULL;
 }
 
 /**
@@ -144,6 +145,10 @@ DxeRuntimeAdvancedLoggerLibConstructor (
 {
     EFI_STATUS                      Status;
 
+    //
+    // Cache BootServices pointer as AdvLogger calls may be made before
+    // the constructor runs.
+    //
     mBS = SystemTable->BootServices;
     AdvancedLoggerGetLoggerInfo ();
 
