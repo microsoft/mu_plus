@@ -114,7 +114,7 @@ if __name__ == "__main__":
     #
     table = SystemFirmwareTable()
     (errorcode, data, errorstring) = table.GetAcpiTable(b'DMAR')
-    dmar_table = DMAR_TABLE(data)
+    dmar_table = DMARTable(data)
 
     DMARTest = dmar_table.DMARBitEnabled()
     ANDDCount = dmar_table.ANDDCount()
