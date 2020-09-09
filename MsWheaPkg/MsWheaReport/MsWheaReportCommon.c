@@ -97,9 +97,9 @@ ReportHwErrRecRouter (
     if (Data->HeaderSize != sizeof(EFI_STATUS_CODE_DATA) ||
         Data->Size < sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) ||
         CompareMem(&Data->Type, &gMsWheaRSCDataTypeGuid, sizeof(EFI_GUID)) != 0) {
+      // Bail logging telemetry, this is not for us...
       DEBUG ((DEBUG_ERROR, "%a - Unrecognized data provided! Bailing!\n", __FUNCTION__));
       Status = EFI_UNSUPPORTED;
-      ASSERT_EFI_ERROR(Status);
       goto Cleanup;
     }
   }
