@@ -951,6 +951,12 @@ DfciManagerEntry(
 
     PERF_FUNCTION_BEGIN ();
 
+    if (!PcdGetBool(PcdSKUEnableDfci)) {
+        Status = EFI_UNSUPPORTED;
+        DEBUG((DEBUG_INFO, "%a %a: DFCI not enabled.\n", _DBGMSGID_, __FUNCTION__));
+        goto ERROR_EXIT;
+    }
+
     Status = gBS->LocateProtocol(&gDfciApplyIdentityProtocolGuid, NULL, (VOID **) &mApplyIdentityProtocol);
     if (EFI_ERROR(Status) || NULL == mApplyIdentityProtocol) {
         DEBUG((DEBUG_ERROR, "%a %a: Cannot find Apply Identity Protocol.\n", _DBGMSGID_, __FUNCTION__));
@@ -1014,7 +1020,7 @@ DfciManagerEntry(
 
 ERROR_EXIT:
 
-    DEBUG((DEBUG_ERROR, "%a %a: Exiting with error. Code = %r\n", _DBGMSGID_, __FUNCTION__, Status));
+    DEBUG((DEBUG_ERROR, "%a %a: Exiting with error. Code = %r\n", _DBGMSGID_, Status));
 
     FreeManagerData ();
 

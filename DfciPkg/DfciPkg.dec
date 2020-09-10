@@ -188,3 +188,7 @@
   ## Setup UI is running in reduced functionality mode (ie password skipped)
   #  Used to limit OPT IN and OPT OUT to when full setup is capable.
     gDfciPkgTokenSpaceGuid.PcdSetupUiReducedFunction|FALSE|BOOLEAN|0x40000016
+
+  ## Platform OptIn for DFCI based on SKU. Since SKU is a platform option, provide a dynamic PCD
+  #  for the platform SKU detection logic to enable or disable DFCI based on SKU.
+    gDfciPkgTokenSpaceGuid.PcdSKUEnableDfci|TRUE|BOOLEAN|0x40000019

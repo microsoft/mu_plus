@@ -99,6 +99,7 @@
 
 [Pcd]
   gDfciPkgTokenSpaceGuid.PcdSetupUiReducedFunction
+  gDfciPkgTokenSpaceGuid.PcdSKUEnableDfci
 
 [Depex]
   gEfiVariableArchProtocolGuid  AND
