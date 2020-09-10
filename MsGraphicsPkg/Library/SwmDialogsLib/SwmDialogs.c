@@ -368,7 +368,18 @@ SwmDialogsDestructor (
   )
 {
     if (gSwmRegisterEvent != NULL) {
-        SystemTable->BootServices->CloseEvent(gSwmRegisterEvent);
+        gBS->CloseEvent(gSwmRegisterEvent);
+    }
+
+    if (gSwmDialogsHiiHandle != NULL) {
+        HiiRemovePackages(gSwmDialogsHiiHandle);
+    }
+
+    if (gSwmDialogsHiiHandle!= NULL) {
+        gBS->UninstallMultipleProtocolInterfaces(
+                         gImageHandle,
+                        &gPriorityGuid,
+                         NULL);
     }
 
     return EFI_SUCCESS;
