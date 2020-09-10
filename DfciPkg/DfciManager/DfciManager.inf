@@ -38,6 +38,7 @@
   DfciDeviceIdSupportLib
   DfciUiSupportLib
   MemoryAllocationLib
+  PcdLib
   PerformanceLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
@@ -59,6 +60,7 @@
 [FeaturePcd]
 
 [Pcd]
+  gDfciPkgTokenSpaceGuid.PcdSKUEnableDfci
 
 [Depex]
   gEfiVariableWriteArchProtocolGuid

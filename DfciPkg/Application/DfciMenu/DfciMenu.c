@@ -501,6 +501,10 @@ DfciMenuEntry(
 
     EFI_STATUS      Status;
 
+    if (!PcdGetBool(PcdSKUEnableDfci)) {
+        DEBUG((DEBUG_INFO, "%a: DFCI not enabled.\n", __FUNCTION__));
+        return EFI_UNSUPPORTED;
+    }
 
     Status = gBS->LocateProtocol(&gDfciAuthenticationProtocolGuid,
                                  NULL,
