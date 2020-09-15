@@ -183,10 +183,10 @@ class SecureSettingsApplyVariable(object):
         else:
             print ("XML TREE DOESN'T EXIST")
 
-        if(ShowRawXmlAsBytes and (self.Payload != None)):
+        if(ShowRawXmlAsBytes and (self.Payload is not None)):
             print ("  Payload Bytes:    ")
             ndbl = list(bytearray(self.Payload.encode()))
-            print(type(ndbl ) )
+            print(type(ndbl))
             PrintByteList(ndbl)
 
         if(self.Signature != None):
@@ -283,7 +283,7 @@ class SecureSettingsResultVariable(object):
             self._XmlTree = xml.dom.minidom.parseString(self.Payload)
 
     #
-    # Method to Print SEM var to stdout
+    # Method to Print SEM var results to stdout
     #
     def Print(self, ShowRawXmlAsBytes=False):
         print ("SecureSettingResultVariable")
@@ -299,7 +299,8 @@ class SecureSettingsResultVariable(object):
 
         if(ShowRawXmlAsBytes and (self.Payload is not None)):
             print ("  Payload Bytes:    " )
-            ndbl = memoryview(self.Payload).tolist()
+            ndbl = list(bytearray(self.Payload.encode()))
+            print(type(ndbl))
             PrintByteList(ndbl)
 
 
@@ -345,7 +346,7 @@ class SecureSettingsCurrentVariable(object):
         self._Payload = fs.read()
         self._Payload = self._Payload.rstrip('\x00')
         self._XmlTree = xml.dom.minidom.parseString(self._Payload)
-        
+
     #
     # Method to Print SEM var to stdout
     #
@@ -355,10 +356,9 @@ class SecureSettingsCurrentVariable(object):
             print ("%s" % self._XmlTree.toprettyxml())
         else:
             print ("XML TREE DOESN'T EXIST")
-        
 
-    def Write(self, fs): 
+
+    def Write(self, fs):
         if(self._Payload == None):
             raise Exception("No payload to write")
-        fs.write(self._Payload) 
-   
+        fs.write(self._Payload)

@@ -79,6 +79,7 @@ class PermissionApplyVariable(object):
 
         self.HeaderSignature = fs.read(4).decode()
         if self.HeaderSignature != self.HEADER_SIG_VALUE:
+            print ("  HeaderSignature:  %s" % self.HeaderSignature)
             raise Exception("Incorrect Header Signature")
         self.HeaderVersion = struct.unpack("=B", fs.read(1))[0]
         self.Rsvd1 = struct.unpack("=B", fs.read(1))[0]
@@ -269,9 +270,8 @@ class PermissionResultVariable(object):
             raise Exception("Invalid file stream size")
 
         self.HeaderSignature = fs.read(4).decode()
-        print ("  HeaderSignature:  %s" % self.HeaderSignature)
-
         if self.HeaderSignature != PermissionResultVariable.HEADER_SIG_VALUE:
+            print ("  HeaderSignature:  %s" % self.HeaderSignature)
             raise Exception("Incorrect Header Signature")
         self.HeaderVersion = struct.unpack("=B", fs.read(1))[0]
         if (self.HeaderVersion != PermissionResultVariable.VERSION_V1 and

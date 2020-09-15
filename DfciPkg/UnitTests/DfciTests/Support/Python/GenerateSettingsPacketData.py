@@ -45,6 +45,8 @@ from edk2toollib.uefi.wincert import *
 from edk2toollib.utility_functions import DetachedSignWithSignTool
 from edk2toollib.windows.locate_tools import FindToolInWinSdk
 from Data.SecureSettingVariable import SecureSettingsApplyVariable
+from Data.SecureSettingVariable import SecureSettingsResultVariable
+
 
 #PKCS7 Signed Data OID
 gOid = "1.2.840.113549.1.7.2"
@@ -55,6 +57,15 @@ def PrintSEM(filepath):
     if(filepath and os.path.isfile(filepath)):
         s = open(filepath, "rb")
         SEM = SecureSettingsApplyVariable(s)
+        s.close()
+
+        #now print it out.
+        SEM.Print(True)
+
+def PrintSEMResults(filepath):
+    if(filepath and os.path.isfile(filepath)):
+        s = open(filepath, "rb")
+        SEM = SecureSettingsResultVariable(s)
         s.close()
 
         #now print it out.
@@ -79,6 +90,7 @@ def main():
     #Output debug log
     parser.add_argument("-l", dest="OutputLog", help="Create an output log file: ie -l out.txt", default=None)
     parser.add_argument("-p", dest="PrintFile", help="Print File as Settings Blob", default= None)
+    parser.add_argument("-pr", dest="PrintResultsFile", help="Print Results File as Settings Blob", default= None)
     parser.add_argument("--dirty", action="store_true", dest="dirty", help="Leave around the temp files after finished", default=False)
 
     Step1Group = parser.add_argument_group(title="Step1", description="Signed Data Prep.  Build data structure.")
@@ -288,6 +300,9 @@ def main():
     #
     if(options.PrintFile) and (os.path.isfile(options.PrintFile)):
         PrintSEM(options.PrintFile)
+
+    if(options.PrintResultsFile) and (os.path.isfile(options.PrintResultsFile)):
+        PrintSEMResults(options.PrintResultsFile)
 
     #clean up if user didn't request to leave around
     if(not options.dirty):
