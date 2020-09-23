@@ -375,9 +375,9 @@ SwmDialogsDestructor (
         HiiRemovePackages(gSwmDialogsHiiHandle);
     }
 
-    if (gSwmDialogsHiiHandle!= NULL) {
+    if (gPriorityHandle != NULL) {
         gBS->UninstallMultipleProtocolInterfaces(
-                         gImageHandle,
+                         gPriorityHandle,
                         &gPriorityGuid,
                          NULL);
     }
