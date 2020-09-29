@@ -498,6 +498,12 @@ def ReadLogFromUefiInterface():
         if (rc == 0):
             Index += 1
             InFile.write(var)
+        elif (Index == 0):
+                print('Error initializing logger. No access to in memory log')
+                raise SystemExit(1)
+        else:
+                print(f"Found {Index} variables worth of log")
+
 
     InFile.seek(0)
 
