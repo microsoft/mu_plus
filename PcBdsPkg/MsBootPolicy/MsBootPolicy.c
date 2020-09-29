@@ -564,10 +564,6 @@ MsBootPolicyEntry(
         switch (BootSequence[Index]) {
         case MsBootPXE4:
             StartNetworking ();
-            GraphicStatus = SetGraphicsConsoleMode(GCM_LOW_RES);
-            if (EFI_ERROR(GraphicStatus) != FALSE) {
-              DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
-            }
             Status = SelectAndBootDevice(&gEfiLoadFileProtocolGuid, FilterOnlyIPv4);
             break;
         case MsBootPXE6:
