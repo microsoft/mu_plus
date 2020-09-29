@@ -112,6 +112,9 @@
   # StartNetworking - 1 = Enable and start the network stack at boot time, 0 Don't enable and start the network stack at boot time
   gPcBdsPkgTokenSpaceGuid.PcdStartNetwork|0x0|UINT8|0x4000012D
 
+  # LowResolutionInternalShell - If true, set the graphics console to a lower resolution (800x640 for example), if false, don't do anything
+  gPcBdsPkgTokenSpaceGuid.PcdLowResolutionInternalShell|TRUE|BOOLEAN|0x4000012E
+
   # Display Memory Map in the debug log
   gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapOutput|0x0|UINT8|0x4000011D
 # gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapTypes|0x0600|UINT32|0x4000011E  #// Only display ACPI types

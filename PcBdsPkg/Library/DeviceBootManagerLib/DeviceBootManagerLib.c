@@ -911,10 +911,12 @@ PostReadyToBoot (
 
 
     if (BootCurrentIsInternalShell ()) {
-      Status = SetGraphicsConsoleMode (GCM_LOW_RES);
-      if (EFI_ERROR(Status) != FALSE) {
-        DEBUG((DEBUG_ERROR, "%a Unabled to set console mode - %r\n", __FUNCTION__, Status));
-      }
+        if (PcdGetBool(PcdLowResolutionInternalShell)) {
+            Status = SetGraphicsConsoleMode (GCM_LOW_RES);
+            if (EFI_ERROR(Status) != FALSE) {
+                DEBUG((DEBUG_ERROR, "%a Unabled to set console mode - %r\n", __FUNCTION__, Status));
+            }
+        }
     }
 
     if (FirstPass) {
@@ -1145,7 +1147,6 @@ DeviceBootManagerProcessBootCompletion (
     }
 
     SetRebootReason (BootOption->Status);
-
     Status = SetGraphicsConsoleMode( GCM_NATIVE_RES );
     if (EFI_ERROR(Status) != FALSE) {
       DEBUG((DEBUG_ERROR, "%a Unabled to set console mode - %r\n", __FUNCTION__, Status));

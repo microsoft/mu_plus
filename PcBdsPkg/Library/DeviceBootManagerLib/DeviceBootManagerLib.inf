@@ -74,6 +74,7 @@
   gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapOutput
   gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapTypes
   gPcBdsPkgTokenSpaceGuid.PcdEnableMemMapDumpOutput
+  gPcBdsPkgTokenSpaceGuid.PcdLowResolutionInternalShell
 
 [Depex]
   TRUE

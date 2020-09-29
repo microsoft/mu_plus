@@ -576,10 +576,6 @@ MsBootPolicyEntry(
             }
             if (EnableIPv6) {
                 StartNetworking();
-                GraphicStatus = SetGraphicsConsoleMode(GCM_LOW_RES);
-                if (EFI_ERROR(GraphicStatus) != FALSE) {
-                  DEBUG((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
-                }
                 Status = SelectAndBootDevice(&gEfiLoadFileProtocolGuid, FilterOnlyIPv6);
             } else {
                 Status = EFI_DEVICE_ERROR;
