@@ -1,0 +1,40 @@
+
+## @file
+#  A UEFI Audit test app that verifies the automaic (SysPrep, xxxRecovery)
+#  boot options are disabled.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = BootAuditTestApp
+  FILE_GUID                      = 07f38a54-53a6-4099-b13c-abdc440205ee
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = BootAuditTestAppEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  BootAuditTest.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  PrintLib
+  UefiApplicationEntryPoint
+  UefiLib
+  UefiRuntimeServicesTableLib
+  UnitTestLib
