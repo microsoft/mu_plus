@@ -32,6 +32,7 @@ import struct
 import shutil
 import time
 import random
+import hashlib
 
 #get script path
 sp = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -42,6 +43,7 @@ sys.path.append(sp)
 from DFCI_SupportLib import DFCI_SupportLib
 
 from Data.CertProvisioningVariable import CertProvisioningApplyVariable
+from Data.CertProvisioningVariable import CertProvisioningResultVariable
 from edk2toollib.uefi.wincert import *
 from edk2toollib.windows.locate_tools import FindToolInWinSdk
 from edk2toollib.utility_functions import DetachedSignWithSignTool
@@ -59,6 +61,40 @@ def PrintSEM(filepath):
         #now print it out.
         SEM.Print()
 
+def ExtractCert(filepath):
+    if(filepath and os.path.isfile(filepath)):
+        s = open(filepath, "rb")
+        SEM = CertProvisioningApplyVariable(s)
+        s.close()
+
+        #now write the certificate out.
+        (certtype, a, b) = SEM.GetCertType().partition(' ')
+
+        certfilename = os.path.basename(filepath) + "_" + certtype + ".cer"
+        s = open(certfilename, "wb")
+        SEM.WriteCert(s)
+        s.close()
+        s = open(certfilename, "rb")
+        m = hashlib.new("sha1",s.read())
+        s.close()
+
+        # return the sha1 (Thumbprint) of the certificate.
+        return m.digest().hex()
+
+def PrintSEMCurrent(filepath):
+    if(filepath and os.path.isfile(filepath)):
+        outfilename = os.path.basename(filepath) + "_Current" + ".xml"
+        a = DFCI_SupportLib ()
+        a.extract_payload_from_current(filepath, outfilename)
+
+def PrintSEMResults(filepath):
+    if(filepath and os.path.isfile(filepath)):
+        s = open(filepath, "rb")
+        SEM = CertProvisioningResultVariable(s)
+        s.close()
+
+        #now print it out.
+        SEM.Print()
 
 def SignSEMProvisionData(options):
     global gPath2SignTool
@@ -107,6 +143,9 @@ def main():
     #Output debug log
     parser.add_argument("-l", dest="OutputLog", help="Create an output log file: ie -l out.txt", default=None)
     parser.add_argument("-p", dest="PrintFile", help="Print File as Provisioning Blob", default= None)
+    parser.add_argument("-pr", dest="PrintResultsFile", help="Print Result File as Identity Blob", default= None)
+    parser.add_argument("-pc", dest="PrintCurrentFile", help="Print Current File as {basename}_Current.xml", default= None)
+    parser.add_argument("-xc", dest="ExtractCertFile", help="Extract the certificate to {basename}_{certtype}.cer", default=None)
     parser.add_argument("--dirty", action="store_true", dest="dirty", help="Leave around the temp files after finished", default=False)
 
     Step1Group = parser.add_argument_group(title="Step1", description="Signed Data Prep.  Build data structure.")
@@ -433,6 +472,16 @@ def main():
     #
     if(options.PrintFile) and (os.path.isfile(options.PrintFile)):
         PrintSEM(options.PrintFile)
+
+    if(options.PrintResultsFile) and (os.path.isfile(options.PrintResultsFile)):
+        PrintSEMResults(options.PrintResultsFile)
+
+    if(options.PrintCurrentFile) and (os.path.isfile(options.PrintCurrentFile)):
+        PrintSEMCurrent(options.PrintCurrentFile)
+
+    if(options.ExtractCertFile) and (os.path.isfile(options.ExtractCertFile)):
+        Thumbprint = ExtractCert(options.ExtractCertFile)
+        logging.critical(f"Extracted cert with thumbprint {Thumbprint}")
 
     #clean up if user didn't request to leave around
     if(not options.dirty):

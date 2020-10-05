@@ -62,6 +62,12 @@ def PrintSEM(filepath):
         #now print it out.
         SEM.Print(True)
 
+def PrintSEMCurrent(filepath):
+    if(filepath and os.path.isfile(filepath)):
+        outfilename = os.path.basename(filepath) + "_Current" + ".xml"
+        a = DFCI_SupportLib ()
+        a.extract_payload_from_current(filepath, outfilename)
+
 def PrintSEMResults(filepath):
     if(filepath and os.path.isfile(filepath)):
         s = open(filepath, "rb")
@@ -70,7 +76,6 @@ def PrintSEMResults(filepath):
 
         #now print it out.
         SEM.Print(True)
-
 
 def SignSEMData(options):
     global gPath2SignTool
@@ -91,6 +96,7 @@ def main():
     parser.add_argument("-l", dest="OutputLog", help="Create an output log file: ie -l out.txt", default=None)
     parser.add_argument("-p", dest="PrintFile", help="Print File as Settings Blob", default= None)
     parser.add_argument("-pr", dest="PrintResultsFile", help="Print Results File as Settings Blob", default= None)
+    parser.add_argument("-pc", dest="PrintCurrentFile", help="Print Current File as {basename}_Current.xml", default= None)
     parser.add_argument("--dirty", action="store_true", dest="dirty", help="Leave around the temp files after finished", default=False)
 
     Step1Group = parser.add_argument_group(title="Step1", description="Signed Data Prep.  Build data structure.")
@@ -303,6 +309,9 @@ def main():
 
     if(options.PrintResultsFile) and (os.path.isfile(options.PrintResultsFile)):
         PrintSEMResults(options.PrintResultsFile)
+
+    if(options.PrintCurrentFile) and (os.path.isfile(options.PrintCurrentFile)):
+        PrintSEMCurrent(options.PrintCurrentFile)
 
     #clean up if user didn't request to leave around
     if(not options.dirty):

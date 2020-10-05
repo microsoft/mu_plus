@@ -378,29 +378,10 @@ class DFCI_SupportLib(object):
         if elem is None:
             return  0x8000000000000007 # EFI_DEVICE_ERROR
 
+        tree = xml.dom.minidom.parseString(elem.text.encode())
         f = open(payloadfile,"wb")
-        f.write(elem.text.encode())
+        f.write(tree.toprettyxml().encode())
         f.close
-        return 0
-
-    def extract_payload_from_settings_results(self, resultfile, payloadfile):
-        try:
-            tree = ET.parse(resultfile)
-            elem = tree.find('./SyncBody/Results/Item/Data')
-        except:
-            elem = None
-
-        if elem is None:
-            return  0x8000000000000007 # EFI_DEVICE_ERROR
-
-        bindata = binascii.a2b_base64(elem.text)   #.decode('utf-16')
-        f = BytesIO(bindata)
-
-        rslt = SecureSettingsResultVariable(f)
-        f.close()
-        f = open(payloadfile,"wb")
-        f.write(rslt.Payload)
-        f.close()
         return 0
 
     def extract_results_packet(self, resultfile, resultpktfile):

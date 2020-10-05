@@ -243,7 +243,12 @@ class CertProvisioningApplyVariable(object):
 
         return True
 
+    def GetCertType(self):
+        return self.IDENTITY_MAP[self.Identity]
 
+    def WriteCert(self, fs):
+        if(self.TrustedCertSize != 0):
+            fs.write(self.TrustedCert)
 
 ##
 ##  SEM Cert Provision Result Variable Data
