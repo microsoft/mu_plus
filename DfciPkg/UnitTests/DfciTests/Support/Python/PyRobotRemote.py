@@ -8,16 +8,21 @@
 ##
 
 import os
+import sys
 import subprocess
 import logging
 import shlex
+import win32api
+import win32con
+import win32security
+import winnt
 
 from Lib.UefiVariablesSupportLib import UefiVariable
 
 
-#update this whenever you make a change
-RobotRemoteChangeDate       = "2020-03-21 15:21"
-RobotRemoteVersion          = 1.04
+# update this whenever you make a change
+RobotRemoteChangeDate = "2020-10-02 09:30"
+RobotRemoteVersion = 1.05
 
 
 class UefiRemoteTesting(object):
@@ -29,7 +34,6 @@ class UefiRemoteTesting(object):
     def __init__(self):
         self.filepath = None
         self.lines = []
-
 
     def Run_Command_And_Return_Output(self, cmdline):
         cmd = shlex.split(cmdline)
@@ -49,19 +53,19 @@ class UefiRemoteTesting(object):
     # confuse Python, so get rid of the NULL when it is expected
     #
     def GetUefiVariable(self, name, guid, trim):
-        UefiVar = UefiVariable();
-        logging.info("Calling GetUefiVar ( name='%s', GUID='%s')" % (name, "{%s}" % guid) )
-        (rc,var,errorstring) = UefiVar.GetUefiVar (name, guid)
+        UefiVar = UefiVariable()
+        logging.info("Calling GetUefiVar(name='%s', GUID='%s')" % (name, "{%s}" % guid))
+        (rc, var, errorstring) = UefiVar.GetUefiVar(name, guid)
         var2 = var
         if (var is not None) and (trim == 'trim'):
             varlen = len(var)
             if varlen > 1:
                 var2 = var[0:varlen-1]
-        return (rc,var2,errorstring)
+        return (rc, var2, errorstring)
 
     def SetUefiVariable(self, name, guid, attrs=None, contents=None):
-        UefiVar = UefiVariable();
-        (rc,err,errorstring) = UefiVar.SetUefiVar (name, guid, contents, attrs);
+        UefiVar = UefiVariable()
+        (rc, err, errorstring) = UefiVar.SetUefiVar(name, guid, contents, attrs)
         return rc
 
     def remote_ack(self):
@@ -74,14 +78,19 @@ class UefiRemoteTesting(object):
         os.system("shutdown -r -t 1")
 
     def remote_reboot_to_firmware(self):
+        TokenHandle = win32security.OpenProcessToken(win32api.GetCurrentProcess(),
+                                                     win32con.TOKEN_ADJUST_PRIVILEGES | win32con.TOKEN_QUERY)
+        NewPrivilege = [(win32security.LookupPrivilegeValue(None, winnt.SE_SHUTDOWN_NAME),
+                        winnt.SE_PRIVILEGE_ENABLED)]
+        win32security.AdjustTokenPrivileges(TokenHandle, False, NewPrivilege)
         os.system("shutdown -r -fw -t 0")
 
 
 if __name__ == '__main__':
     from robotremoteserver import RobotRemoteServer
-    print ("Version %s - %s" % (str(RobotRemoteVersion), RobotRemoteChangeDate))
+    print("Version %s - %s" % (str(RobotRemoteVersion), RobotRemoteChangeDate))
 
-    #setup main console as logger
+    # setup main console as logger
     logger = logging.getLogger('')
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(levelname)s - %(message)s")
@@ -90,7 +99,10 @@ if __name__ == '__main__':
     console.setFormatter(formatter)
     logger.addHandler(console)
 
+    # Display IP address for convenience of tester
+    os.system('ipconfig | findstr IPv4')
+
     RobotRemoteServer(UefiRemoteTesting(), host='0.0.0.0', port=8270)
 
     logging.shutdown()
-    sys.exit(retcode)
+    sys.exit(0)
