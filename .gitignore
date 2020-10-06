@@ -1,18 +1,16 @@
-# Ignore build artifacts.
-/Build
-tags/
+/Build/
 .DS_Store
+*_extdep/
 *.pyc
+__pycache__/
+tags/
+.vscode/
 *.bak
 BuildConfig.conf
-/Conf
-/.vscode
-
-# Ignore SelfDescribingEnvironment artifacts.
-*_extdep/
 
 # Ignore cloned dependencies
 /Common
 /Silicon
 /MU_BASECORE
+
 _TEMP_*/
