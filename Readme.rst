@@ -2,38 +2,34 @@
 Project Mu Common Plus Repository
 =================================
 
-.. |build_status_windows| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/mu_plus%20PR%20gate?branchName=release/202002
-
-|build_status_windows| Current build status for release/202002
-
+============================= ================= =============== ===================
+ Host Type & Toolchain        Build Status      Test Status     Code Coverage
+============================= ================= =============== ===================
+Windows_VS2019_               |WindowsCiBuild|  |WindowsCiTest| |WindowsCiCoverage|
+Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverage|
+============================= ================= =============== ===================
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
 
-Branch Status - dev/202002
+Branch Status - release/202008
 ==============================
 
 Status:
   In Development
 
+Entered Development:
+  2020/10/06
+
 Anticipated Stabilization:
-  May 2020
+  November 2020
 
-
-Branch Changes - release/202002
+Branch Changes - release/202008
 ===============================
 
 Breaking Changes-dev
 --------------------
 
-- SharedCrypto is still preserved for now, but doesn't build against the new core.
-- Some identifiers and types were modified in the DeviceSpecificBusInfoLib interface that may break
-  the build for library consumers. Users should take note that:
-  1. The "MinimumGenSpeed" field in DEVICE_PCI_INFO is now called "MinimumLinkSpeed"
-  2. The "MinimumLinkSpeed" field type is changed from a UINTN to an enum of type PCIE_LINK_SPEED
-  3. The "PCIE_LINK_SPEED_GENx" macros are removed from the library header
-  4. A new data structure is introduced of type DEVICE_PCI_CHECK_RESULT that is used in the function
-     prototype for a new function ProcessPciDeviceResults (). The user should implement this function
-     if their platform needs to take custom actions based on device check results.
+- None
 
 Main Changes-dev
 ----------------
@@ -65,3 +61,21 @@ Copyright & License
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
+
+.. ===================================================================
+.. This is a bunch of directives to make the README file more readable
+.. ===================================================================
+
+.. CoreCI
+
+.. _Windows_VS2019: https://dev.azure.com/projectmu/mu/
+.. |WindowsCiBuild| image:: https://img.shields.io/badge/build-coming_soon-red
+.. |WindowsCiTest| image:: https://img.shields.io/badge/tests-coming_soon-green
+.. |WindowsCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
+
+.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/
+.. |UbuntuCiBuild| image:: https://img.shields.io/badge/build-coming_soon-red
+.. |UbuntuCiTest| image:: https://img.shields.io/badge/tests-coming_soon-green
+.. |UbuntuCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
+
+.. |build_status_windows| image:: https://img.shields.io/badge/build-coming_soon-red
