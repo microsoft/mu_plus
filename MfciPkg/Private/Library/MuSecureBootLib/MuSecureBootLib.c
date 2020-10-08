@@ -711,8 +711,6 @@ IsSecureBootEnable (
 //  
 //    return Status;
 //  } // SetDefaultSecureBootVariables()
-//  
-//  ****** END:   not needed by MfciPkg
 
 /**
   A helper function to take in a variable payload, wrap it in the
@@ -730,6 +728,7 @@ IsSecureBootEnable (
   @retval     EFI_OUT_OF_RESOURCES    There was a problem constructing the payload.
 
 **/
+/*
 STATIC
 EFI_STATUS
 InstallSecureBootVariable (
@@ -791,3 +790,6 @@ InstallSecureBootVariable (
 
   return Status;
 } // InstallSecureBootVariable()
+*/
+//  
+//  ****** END:   not needed by MfciPkg

@@ -329,7 +329,7 @@ VarPolicyCallback (
 
   DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
 
-  Status = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, &VariablePolicy );
+  Status = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, (VOID**)&VariablePolicy );
   if (EFI_ERROR(Status)) {
     DEBUG(( DEBUG_ERROR, "%a - Locating Variable Policy failed - %r\n", __FUNCTION__, Status ));
     goto Done;

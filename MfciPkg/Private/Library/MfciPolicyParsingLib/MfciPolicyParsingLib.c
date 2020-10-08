@@ -76,7 +76,7 @@ ValidateSignature (
   DEBUG ((DEBUG_VERBOSE, "SignedPolicy: %p\n", SignedPolicy));
   DEBUG ((DEBUG_VERBOSE, "SignedPolicySize: %p\n", SignedPolicySize));
 
-  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, &Content, &ContentSize)) {
+  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, (VOID**)&Content, &ContentSize)) {
     DEBUG ((DEBUG_ERROR, "Pkcs7GetAttachedContent() returns FALSE\n"));
     Status = EFI_COMPROMISED_DATA;
     goto _Exit;
@@ -140,7 +140,7 @@ SanityCheckSignedPolicy (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, &Policy, &PolicySize)) {
+  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, (VOID**)&Policy, &PolicySize)) {
     DEBUG ((DEBUG_ERROR, "Pkcs7GetAttachedContent() returns FALSE\n"));
     Status = EFI_COMPROMISED_DATA;
     goto _Exit;
@@ -277,6 +277,7 @@ SanityCheckPolicy (
 
 
 UINT32
+EFIAPI
 CalculateSizeOfValueTableEntry(
     IN CONST POLICY_VALUE_HEADER *ValueHeader
   )
@@ -428,7 +429,7 @@ ExtractChar16 (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, &Policy, &PolicySize)) {
+  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, (VOID**)&Policy, &PolicySize)) {
     DEBUG ((DEBUG_ERROR, "Pkcs7GetAttachedContent() returns FALSE\n"));
     Status = EFI_COMPROMISED_DATA;
     goto _Exit;
@@ -501,7 +502,7 @@ ExtractUint64 (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, &Policy, &PolicySize)) {
+  if (TRUE != Pkcs7GetAttachedContent (SignedPolicy, SignedPolicySize, (VOID**)&Policy, &PolicySize)) {
     DEBUG ((DEBUG_ERROR, "Pkcs7GetAttachedContent() returns FALSE\n"));
     Status = EFI_COMPROMISED_DATA;
     goto _Exit;
