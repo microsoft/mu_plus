@@ -39,7 +39,7 @@ Main Changes-dev
 Bug Fixes-dev
 -------------
 
-- None
+- Drop mPeiVariableNotifyList from MfciPei. Seems to be unused.
 
 Code of Conduct
 ===============
