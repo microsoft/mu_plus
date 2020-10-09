@@ -129,7 +129,7 @@ IN UI_STYLE_INFO* StyleInfo
         }
       }
       else {
-        // if we have 
+        // if we have a non UINT32 sized pixel
         UINTN IconTotalPixels = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width;
         UINTN PixelDataSize = IconTotalPixels * PixelSizeInBytes;
         this->Public.StyleInfo.IconInfo.PixelData = (UINT32*)AllocatePool(PixelDataSize);
@@ -191,53 +191,54 @@ IN  UI_RECTANGLE *this
 {
   PRIVATE_UI_RECTANGLE* priv = (PRIVATE_UI_RECTANGLE*)this;
   UINT8* StartAddressInFrameBuffer = (UINT8*) (((UINT32*)this->FrameBufferBase) + ((this->UpperLeft.Y * this->PixelsPerScanLine) + this->UpperLeft.X));
+  UINT8 PixelSizeInBytes = this->PixelSizeInBytes;
   UINTN RowLengthInBytes = this->Width * this->PixelSizeInBytes;
 
   for (INTN y = 0; y < (INTN)this->Height; y++)   //each row
   {
-    UINT32* temp = NULL;
+    UINT8* temp = NULL;
     switch (this->StyleInfo.FillType){
 
       case FILL_SOLID:
       case FILL_VERTICAL_STRIPE:
-        temp = (UINT32*)priv->FillData;
+        temp = priv->FillData;
         break;
 
       case FILL_HORIZONTAL_STRIPE:
-        temp = (UINT32*)priv->FillData;  //set to first row...else set to 2nd row
+        temp = priv->FillData;  //set to first row...else set to 2nd row
         if (((y / priv->Public.StyleInfo.FillTypeInfo.StripeFill.StripeSize) % 2) == 0)
         {
           //temp is uint32 pointer so move it forward by pixels
-          temp += priv->Public.Width;
+          temp += priv->Public.Width * PixelSizeInBytes;
         }
         break;
 
       case FILL_FORWARD_STRIPE:
-        temp = (UINT32*)priv->FillData;
-        temp += (y % priv->Public.Height);  //Add 1 each time
+        temp = priv->FillData;
+        temp += (y % priv->Public.Height) * PixelSizeInBytes;  //Add 1 each time
         break;
 
       case FILL_BACKWARD_STRIPE:
-        temp = (UINT32*)priv->FillData;
-        temp += (priv->Public.Height - (y % priv->Public.Height));
+        temp = priv->FillData;
+        temp += (priv->Public.Height - (y % priv->Public.Height)) * PixelSizeInBytes;
         break;
 
       case FILL_CHECKERBOARD:
-        temp = (UINT32*)priv->FillData;
+        temp = priv->FillData;
         if (((y / priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth) % 2) == 0)
         {
-          temp += priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth;
+          temp += priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth * PixelSizeInBytes;
         }
         break;
 
       case FILL_POLKA_SQUARES:
-        temp = (UINT32*)priv->FillData;  //set to first row
+        temp = priv->FillData;  //set to first row
 
 
         if (((y + (priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares / 2)) % (priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares + priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.SquareWidth)) > priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares)
         {
           //temp is uint32 pointer so move it forward by pixels
-          temp += priv->Public.Width;
+          temp += priv->Public.Width * PixelSizeInBytes;
         }
         break;
 
@@ -344,14 +345,16 @@ IN PRIVATE_UI_RECTANGLE* priv
       break;
 
     case FILL_HORIZONTAL_STRIPE:
-      SetMem32(priv->FillData, (priv->FillDataSize / 2), priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color1);
-      SetMem32(priv->FillData + (priv->Public.Width * sizeof(UINT32)), (priv->FillDataSize / 2), priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color2);
+      SetMemX(priv->FillData, (priv->FillDataSize / 2), (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color1), PixelSizeInBytes);
+      SetMemX(priv->FillData + (priv->Public.Width * PixelSizeInBytes), (priv->FillDataSize / 2), (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color2), PixelSizeInBytes);
       break;
 
     case FILL_FORWARD_STRIPE:
     case FILL_BACKWARD_STRIPE:
     case FILL_VERTICAL_STRIPE:
-      SetMem32(priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color1);  //set row to Color1
+      ASSERT(priv->Public.StyleInfo.FillTypeInfo.StripeFill.StripeSize != 0); // check to make sure the stripe isn't zero
+      DEBUG((DEBUG_INFO, "FILL_VERTICAL_STRIPE Private_init \n"));
+      SetMemX(priv->FillData, priv->FillDataSize, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color1), PixelSizeInBytes);  //set row to Color1
 
       //setup alternate color.  Color band is width stripe_width.
       //i is in pixels not bytes
@@ -362,13 +365,15 @@ IN PRIVATE_UI_RECTANGLE* priv
         {
           Len = (INTN) (priv->Public.StyleInfo.FillTypeInfo.StripeFill.StripeSize);
         }
-        Len = Len * sizeof(UINT32);  //Convert Len from Pixels to bytes
-        SetMem32(((UINT32*)priv->FillData) + i, Len, priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color2);
+        Len = Len * PixelSizeInBytes;  //Convert Len from Pixels to bytes
+        INTN StripeOffset = i * PixelSizeInBytes;
+        SetMemX(priv->FillData + StripeOffset, Len, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.StripeFill.Color2), PixelSizeInBytes);
       }
       break;
 
     case FILL_CHECKERBOARD:
-      SetMem32(priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.Color1);  //set row to Color1
+      //set row to Color1
+      SetMemX(priv->FillData, priv->FillDataSize, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.Color1), PixelSizeInBytes);
 
       //setup alternate color.  Color band is width stripe_width.
       for (int i = priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth; i < FillDataSizeInPixels; i += (priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth * 2))
@@ -378,13 +383,15 @@ IN PRIVATE_UI_RECTANGLE* priv
         {
           Len = (INTN)priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth;
         }
-        Len = Len * sizeof(UINT32);  //convert len from Pixels to bytes
-        SetMem32(((UINT32*)priv->FillData) + i, Len, priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.Color2);
+        Len = Len * PixelSizeInBytes;  //convert len from Pixels to bytes
+        INTN StripeOffset = i * PixelSizeInBytes;
+        SetMemX(priv->FillData + StripeOffset, Len, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.Color2), PixelSizeInBytes);
       }
       break;
 
     case FILL_POLKA_SQUARES:
-      SetMem32(priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.Color1);  //set row to Color1
+      //set row to Color1
+      SetMemX(priv->FillData, priv->FillDataSize, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.Color1), PixelSizeInBytes);
 
       //setup dot row. as row two of the filldata
       for (int i = priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares / 2;
@@ -397,8 +404,10 @@ IN PRIVATE_UI_RECTANGLE* priv
         {
           Len = (INTN)priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.SquareWidth;
         }
-        Len = Len * sizeof(UINT32);  //convert len from Pixels to bytes
-        SetMem32(priv->FillData + (priv->FillDataSize / 2) + (i * sizeof(UINT32)), Len, priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.Color2);  //color only the second row
+        Len = Len * PixelSizeInBytes;  //convert len from Pixels to bytes
+        INTN StripeOffset = i * PixelSizeInBytes;
+        SetMemX(priv->FillData + (priv->FillDataSize / 2) + (StripeOffset), Len, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.Color2), PixelSizeInBytes);  //color only the second row
+        //SetMemX(priv->FillData + StripeOffset, Len, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.Color2), PixelSizeInBytes);
       }
       break;
 
