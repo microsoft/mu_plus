@@ -67,6 +67,7 @@
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
   MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Dxe/MsEarlyGraphicsLibNull.inf
   DisplayDeviceStateLib|MsGraphicsPkg/Library/DisplayDeviceStateLibNull/DisplayDeviceStateLibNull.inf
+  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLibNull/FrameBufferMemDrawLibNull.inf
   MsColorTableLib|MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
   SwmDialogsLib|MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
   BootGraphicsLib|MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf
@@ -127,6 +128,7 @@
   MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
   MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
   MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
+  MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLib.inf
   MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
   MsGraphicsPkg/Library/BootGraphicsLib/BootGraphicsLib.inf
   MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf

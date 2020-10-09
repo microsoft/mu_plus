@@ -22,6 +22,7 @@ LIBRARY_CLASS = UiRectangleLib
 [LibraryClasses]
 DebugLib
 MemoryAllocationLib
+FrameBufferMemDrawLib
 
 
 [Packages]

@@ -11,8 +11,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __UI_RECTANGLE_LIB_H_
 #define __UI_RECTANGLE_LIB_H_
 
-#include <Protocol/GraphicsOutput.h>
-
 //
 // Rectangle context
 //
@@ -21,9 +19,7 @@ typedef struct
   POINT                        UpperLeft;
   UINT32                       Width;
   UINT32                       Height;
-  UINT8*                       FrameBufferBase;
   UINTN                        PixelsPerScanLine;  //in framebuffer
-  UINT8                        PixelSizeInBytes; // the size of the pixel
   UI_STYLE_INFO                StyleInfo;
 } UI_RECTANGLE;
 
@@ -33,11 +29,8 @@ Method to use create a new UI_RECTANGLE struct.
 This structure is used by all the other functions to modify and draw the object
 
 @param UpperLeft         - Upper left point of rectangle in framebuffer coordinates
-@param FrameBufferBase   - pointer to framebuffer address of 0,0  (upper left)
 @param PixelsPerScanLine - Number of pixels per scan line in framebuffer.
                            This is to support aligned framebuffers
-@param PixelFormat       - An enum that tells use what format the pixel are in
-@param PixelFormatBitMap       - A pointer to the exact layout of the pixels
 @param Width             - The width of the rectangle
 @param Height            - The height of the rectangle
 @param StyleInfo  - Style info for this (color, sizes, fill types, border, etc)
@@ -49,10 +42,7 @@ UI_RECTANGLE*
 EFIAPI
 new_UI_RECTANGLE(
   IN POINT *UpperLeft,
-  IN UINT8 *FrameBufferBase,
   IN UINTN PixelsPerScanLine,
-  IN EFI_GRAPHICS_PIXEL_FORMAT PixelFormat,
-  IN EFI_PIXEL_BITMASK*        PixelFormatBitMap,
   IN UINT32 Width,
   IN UINT32 Height,
   IN UI_STYLE_INFO* StyleInfo

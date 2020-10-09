@@ -174,20 +174,14 @@ IN       UI_PLACEMENT          IconPlacement
 /**
 Function to Display all Active Device States
 
-@param FrameBufferBase   - Address of point 0,0 in the frame buffer
 @param PixelsPerScanLine - Number of pixels per scan line.
-@param PixelFormat       - An enum that tells use what format the pixel are in
-@param PixelFormatBitMap - A pointer to the exact layout of the pixels
 @param WidthInPixels     - Number of Columns in FrameBuffer
 @param HeightInPixels    - Number of Rows in FrameBuffer
 **/
 VOID
 EFIAPI
 DisplayDeviceState(
-IN  UINT8*                   FrameBufferBase,
 IN  INT32                    PixelsPerScanLine,
-IN EFI_GRAPHICS_PIXEL_FORMAT PixelFormat,
-IN EFI_PIXEL_BITMASK*        PixelFormatBitMap,
 IN  INT32                    WidthInPixels,
 IN  INT32                    HeightInPixels
 )
@@ -213,6 +207,8 @@ IN  INT32                    HeightInPixels
       si.IconInfo.Width = 0;
       si.IconInfo.Height = 0;
       si.IconInfo.PixelData = NULL;
+      si.Border.BorderColor = COLOR_INDIGO;
+      si.Border.BorderWidth = 5;
 
       if (*SupportedNotification & DEVICE_STATE_SECUREBOOT_OFF)
       {
@@ -222,7 +218,7 @@ IN  INT32                    HeightInPixels
           PopulateIconData(&si, SingleBannerHeight, WidthInPixels, mUnlockBlitArray, ARRAY_SIZE(mUnlockBlitArray), MIDDLE_CENTER);
         }
       }
-      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_0)
+      else if (TRUE || (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_0))
       {
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_ORANGE;
@@ -275,7 +271,7 @@ IN  INT32                    HeightInPixels
         continue;
       }
 
-      UI_RECTANGLE* rect = new_UI_RECTANGLE(&ul, FrameBufferBase, PixelsPerScanLine, PixelFormat, PixelFormatBitMap, (UINT16)WidthInPixels, SingleBannerHeight, &si);
+      UI_RECTANGLE* rect = new_UI_RECTANGLE(&ul, PixelsPerScanLine, (UINT16)WidthInPixels, SingleBannerHeight, &si);
       DrawRect(rect);
       delete_UI_RECTANGLE(rect);
       ul.Y += SingleBannerHeight;
