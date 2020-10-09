@@ -120,11 +120,20 @@ IN UI_STYLE_INFO* StyleInfo
     if ((this->Public.StyleInfo.IconInfo.Height > 0) && (this->Public.StyleInfo.IconInfo.Width > 0) && (StyleInfo->IconInfo.PixelData != NULL))
     {
       // By default pixel size is defined at 32 bit RGB with 8 bits reserved
-      INTN PixelDataSize = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width * sizeof(UINT32);
+      INTN IconTotalPixels = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width;
+      INTN PixelDataSize = IconTotalPixels * PixelSizeInBytes;
       this->Public.StyleInfo.IconInfo.PixelData = (UINT32*)AllocatePool(PixelDataSize);
       if (this->Public.StyleInfo.IconInfo.PixelData != NULL)
       {
-        CopyMem(this->Public.StyleInfo.IconInfo.PixelData, StyleInfo->IconInfo.PixelData, PixelDataSize);
+        UINT32* IconPtr = StyleInfo->IconInfo.PixelData;
+        UINT8*  IconDataPtr = this->Public.StyleInfo.IconInfo.PixelData;
+        for (UINTN iter = 0; iter < IconTotalPixels; iter++) {
+          // TODO swap order of bytes as needed
+          CopyMem(IconDataPtr, IconPtr, PixelDataSize);
+          IconDataPtr += PixelSizeInBytes;
+          IconPtr ++;
+        }
+        
       }
     }
 
@@ -440,9 +449,8 @@ IN PRIVATE_UI_RECTANGLE* priv
   INT32 SizeX = (priv->Public.Width - (priv->Public.StyleInfo.Border.BorderWidth * 2));
   INT32 SizeY = (priv->Public.Height - (priv->Public.StyleInfo.Border.BorderWidth * 2));
   UINT8* TempFB = priv->Public.FrameBufferBase;  //frame buffer pointer
-  UINT32* TempIcon = priv->Public.StyleInfo.IconInfo.PixelData;
+  UINT8* TempIcon = (UINT8*)priv->Public.StyleInfo.IconInfo.PixelData;
   UINT8 PixelSizeInBytes = priv->Public.PixelSizeInBytes; // the number of bytes in a pixel
-  UINT8* FillLineBuffer = (UINT8*)AllocateZeroPool(priv->Public.StyleInfo.IconInfo.Width * PixelSizeInBytes);
 
   if (priv->Public.StyleInfo.IconInfo.PixelData != NULL)
   {
@@ -513,23 +521,13 @@ IN PRIVATE_UI_RECTANGLE* priv
     TempFB += ((OffsetY * priv->Public.PixelsPerScanLine) + OffsetX) * PixelSizeInBytes;  //move ptr to upper left of icon
     for (INTN Y = 0; Y < priv->Public.StyleInfo.IconInfo.Height; Y++)
     {
-      // TODO figure out how to convert icon to proper version
-      for (UINTN icon_x = 0 ; icon_x < priv->Public.StyleInfo.IconInfo.Width; icon_x += 1) {
-        // for each uint32 chunk of the image, convert it to the right format
-        // TODO: convert it to the right format
-        CopyMem(FillLineBuffer, TempIcon++, PixelSizeInBytes);
-      }
       //draw icon
-      CopyMem(TempFB, FillLineBuffer, priv->Public.StyleInfo.IconInfo.Width * PixelSizeInBytes);
+      CopyMem(TempFB, TempIcon, priv->Public.StyleInfo.IconInfo.Width * priv->Public.PixelSizeInBytes);
       TempFB += priv->Public.PixelsPerScanLine * PixelSizeInBytes;
-      
+      TempIcon += priv->Public.StyleInfo.IconInfo.Width * PixelSizeInBytes;
     }
 
   } //close if pixel data not null
-  // make sure to free the memory
-  if (FillLineBuffer != NULL) {
-    FreePool(FillLineBuffer);
-  }
 }
 
 VOID *
