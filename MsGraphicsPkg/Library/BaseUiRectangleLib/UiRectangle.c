@@ -515,7 +515,7 @@ IN PRIVATE_UI_RECTANGLE* priv
       //draw icon
       // TODO figure out how to convert icon to proper version
       CopyMem(TempFB, TempIcon, priv->Public.StyleInfo.IconInfo.Width * priv->Public.PixelSizeInBytes);
-      TempFB += priv->Public.PixelsPerScanLine;
+      TempFB += priv->Public.PixelsPerScanLine * PixelSizeInBytes;
       TempIcon += priv->Public.StyleInfo.IconInfo.Width;
     }
 
