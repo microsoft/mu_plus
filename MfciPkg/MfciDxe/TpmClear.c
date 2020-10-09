@@ -75,7 +75,7 @@ InitTpmListener (
 
   DEBUG(( DEBUG_INFO, "%a() - Enter\n", __FUNCTION__ ));
 
-  Status = gBS->LocateProtocol( &gMfciProtocolGuid, NULL, &MfciPolicyProtocol );
+  Status = gBS->LocateProtocol( &gMfciProtocolGuid, NULL, (VOID**) &MfciPolicyProtocol );
   if (EFI_ERROR(Status)) {
     DEBUG(( DEBUG_ERROR, "%a - Locating MFCI Policy failed - %r\n", __FUNCTION__, Status ));
     return Status;

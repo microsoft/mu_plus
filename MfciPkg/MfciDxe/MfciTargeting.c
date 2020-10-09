@@ -16,7 +16,7 @@
 #include <Library/MemoryAllocationLib.h>                 // Memory allocation and freeing
 #include <Library/UefiRuntimeServicesTableLib.h>         // gRT
 #include <Library/ResetUtilityLib.h>                     // ResetPlatformSpecificGuid()
-#include <Library/MfciPolicyParsingLib.h>                  // Extracting and validating policy blobs
+#include <Library/MfciPolicyParsingLib.h>                // Extracting and validating policy blobs
 
 #include "MfciDxe.h"
 #include "MfciVariables.h"

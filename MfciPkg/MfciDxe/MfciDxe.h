@@ -22,6 +22,7 @@ InitPublicInterface (
 );
 
 EFI_STATUS
+EFIAPI
 VerifyTargeting (
   VOID                              *PolicyBlob,
   UINTN                             PolicyBlobSize,

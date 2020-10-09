@@ -319,10 +319,7 @@ Done:
 
 STATIC
 EFI_STATUS
-VarPolicyCallback (
-  IN  EFI_EVENT             Event,
-  IN  VOID                  *Context
-  )
+LockVarPolicy ()
 {
   VARIABLE_POLICY_PROTOCOL            *VariablePolicy = NULL;
   EFI_STATUS                          Status;
@@ -412,6 +409,25 @@ Done:
 
 
 /**
+ * Executes after variable policy protocol becomes available, uses it to lock variables
+ *
+ * @param Event
+ *   Unused
+ * @param Context
+ *   Unused
+ */
+VOID
+EFIAPI
+VarPolicyCallback (
+  IN  EFI_EVENT             Event,
+  IN  VOID                  *Context
+  )
+{
+  LockVarPolicy ();
+}
+
+
+/**
  * Executes after DXE modules get opportunity to publish the OEM, model, SN, ... variables that
  * are used for per-device targeting of policies.
  * Always re-authenticate any policy that is currently installed.  Then check if a new policy
@@ -427,8 +443,8 @@ Done:
  * @param Context
  *   Unused
  */
-STATIC
 VOID
+EFIAPI
 VerifyPolicyAndChange (
   IN EFI_EVENT        Event,
   IN VOID             *Context
@@ -851,9 +867,9 @@ MfciDxeEntry (
     }
   }
   else {
-    Status = VarPolicyCallback (VarPolicyEvent, NULL);
+    Status = LockVarPolicy (VarPolicyEvent, NULL);
     if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a - VarPolicyCallback failed returning %r\n", __FUNCTION__, Status ));
+      DEBUG(( DEBUG_ERROR, "%a - LockVarPolicy failed returning %r\n", __FUNCTION__, Status ));
       goto Exit;
     }
   }

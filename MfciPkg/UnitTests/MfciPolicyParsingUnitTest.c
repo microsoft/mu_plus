@@ -170,7 +170,7 @@ TestExtractChar16 (
   UT_ASSERT_STATUS_EQUAL(Status, btx->ExpectedStatus);
 
   if (btx->ExpectedValue == NULL || btx->ExtractedString == NULL) {
-    UT_ASSERT_EQUAL(btx->ExpectedValue, btx->ExtractedString);
+    UT_ASSERT_TRUE(btx->ExpectedValue == btx->ExtractedString);
   } 
   else {
     DEBUG((DEBUG_INFO, "Found String: '%s'\n", btx->ExtractedString));
@@ -317,9 +317,9 @@ EntryPoint (
   static VALIDATEBLOB_TEST_CONTEXT mTestVB1  = { "Good Signature",        EFI_SUCCESS            , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   &mCertCA,            &mCertCaLength           , &mTestEKU};
   static VALIDATEBLOB_TEST_CONTEXT mTestVB2  = { "*SignedPolicy NULL",    EFI_INVALID_PARAMETER  , NULL                             , sizeof(mSigned_policy_good_manufacturing),   &mCertCA,            &mCertCaLength           , &mTestEKU};
   static VALIDATEBLOB_TEST_CONTEXT mTestVB3  = { "SignedPolicySize 0",    EFI_INVALID_PARAMETER  , mSigned_policy_good_manufacturing, 0                                        ,   &mCertCA,            &mCertCaLength           , &mTestEKU};
-  static VALIDATEBLOB_TEST_CONTEXT mTestVB4  = { "*TrustAnchorCert NULL", EFI_INVALID_PARAMETER  , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   (UINT8**) &mNullPtr, &mCertCaLength           , &mTestEKU};
+  static VALIDATEBLOB_TEST_CONTEXT mTestVB4  = { "*TrustAnchorCert NULL", EFI_INVALID_PARAMETER  , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   (CONST UINT8**) &mNullPtr, &mCertCaLength           , &mTestEKU};
   static VALIDATEBLOB_TEST_CONTEXT mTestVB5  = { "TrustAnchorCertSize 0", EFI_INVALID_PARAMETER  , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   &mCertCA,            (UINTN*) &mNullPtr       , &mTestEKU};
-  static VALIDATEBLOB_TEST_CONTEXT mTestVB6  = { "*EKU NULL",             EFI_INVALID_PARAMETER  , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   &mCertCA,            &mCertCaLength           , (UINT8**) &mNullPtr};
+  static VALIDATEBLOB_TEST_CONTEXT mTestVB6  = { "*EKU NULL",             EFI_INVALID_PARAMETER  , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   &mCertCA,            &mCertCaLength           , (CONST CHAR8**) &mNullPtr};
   static VALIDATEBLOB_TEST_CONTEXT mTestVB7  = { "Policy Unsigned",       EFI_COMPROMISED_DATA   , mBin_policy_good_manufacturing   , sizeof(mBin_policy_good_manufacturing)   ,   &mCertCA,            &mCertCaLength           , &mTestEKU};
   static VALIDATEBLOB_TEST_CONTEXT mTestVB8  = { "Incorrect Trust Anchor",EFI_SECURITY_VIOLATION , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   &mCertInvalidCaPtr,  &mCertInvalidCaLength    , &mTestEKU};
   static VALIDATEBLOB_TEST_CONTEXT mTestVB9  = { "Different EKUs    ",    EFI_NOT_FOUND          , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   &mCertCA,            &mCertCaLength           , &mTestInvalidEKU};
