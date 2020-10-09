@@ -207,8 +207,6 @@ IN  INT32                    HeightInPixels
       si.IconInfo.Width = 0;
       si.IconInfo.Height = 0;
       si.IconInfo.PixelData = NULL;
-      si.Border.BorderColor = COLOR_INDIGO;
-      si.Border.BorderWidth = 5;
 
       if (*SupportedNotification & DEVICE_STATE_SECUREBOOT_OFF)
       {
