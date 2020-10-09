@@ -96,7 +96,7 @@ IN UI_STYLE_INFO* StyleInfo
     PixelSizeInBytes = BitsInPixel / 8;
   }
   ASSERT(PixelFormat != PixelFormatMax); // we should never have a pixel format that is at max
-  
+
   DEBUG((DEBUG_INFO, "GOP Format: %x\n", PixelFormat));
   DEBUG((DEBUG_INFO, "GOP Bytes of a pixel: %x\n", PixelSizeInBytes));
 
@@ -120,20 +120,30 @@ IN UI_STYLE_INFO* StyleInfo
     if ((this->Public.StyleInfo.IconInfo.Height > 0) && (this->Public.StyleInfo.IconInfo.Width > 0) && (StyleInfo->IconInfo.PixelData != NULL))
     {
       // By default pixel size is defined at 32 bit RGB with 8 bits reserved
-      INTN IconTotalPixels = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width;
-      INTN PixelDataSize = IconTotalPixels * PixelSizeInBytes;
-      this->Public.StyleInfo.IconInfo.PixelData = (UINT32*)AllocatePool(PixelDataSize);
-      if (this->Public.StyleInfo.IconInfo.PixelData != NULL)
-      {
-        UINT32* IconPtr = StyleInfo->IconInfo.PixelData;
-        UINT8*  IconDataPtr = this->Public.StyleInfo.IconInfo.PixelData;
-        for (UINTN iter = 0; iter < IconTotalPixels; iter++) {
-          // TODO swap order of bytes as needed
-          CopyMem(IconDataPtr, IconPtr, PixelDataSize);
-          IconDataPtr += PixelSizeInBytes;
-          IconPtr ++;
+      if (PixelSizeInBytes == sizeof(UINT32)) {
+        INTN PixelDataSize = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width * sizeof(UINT32);
+        this->Public.StyleInfo.IconInfo.PixelData = (UINT32*)AllocatePool(PixelDataSize);
+        if (this->Public.StyleInfo.IconInfo.PixelData != NULL)
+        {
+          CopyMem(this->Public.StyleInfo.IconInfo.PixelData, StyleInfo->IconInfo.PixelData, PixelDataSize);
         }
-        
+      }
+      else {
+        // if we have 
+        UINTN IconTotalPixels = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width;
+        UINTN PixelDataSize = IconTotalPixels * PixelSizeInBytes;
+        this->Public.StyleInfo.IconInfo.PixelData = (UINT32*)AllocatePool(PixelDataSize);
+        if (this->Public.StyleInfo.IconInfo.PixelData != NULL)
+        {
+          UINT32* IconPtr = StyleInfo->IconInfo.PixelData;
+          UINT8*  IconDataPtr = (UINT8*) this->Public.StyleInfo.IconInfo.PixelData;
+          for (UINTN iter = 0; iter < IconTotalPixels; iter++) {
+            // TODO swap order of bytes as needed
+            CopyMem(IconDataPtr, IconPtr, PixelSizeInBytes);
+            IconDataPtr += PixelSizeInBytes;
+            IconPtr ++;
+          }
+        }
       }
     }
 
@@ -537,15 +547,15 @@ SetMemX (
   IN UINTN   BufferLength,
   IN UINT8   *Value,
   IN UINTN   ValueLength
-) 
+)
 {
   volatile UINT8 *Pointer8;
   UINTN           ValueIter;
   // Check if it's a common size we already support
-  if (ValueLength == 1) return   SetMem (Buffer, BufferLength, (UINT8)  *Value);
-  if (ValueLength == 2) return SetMem16 (Buffer, BufferLength, (UINT16) *Value);
-  if (ValueLength == 4) return SetMem32 (Buffer, BufferLength, (UINT32) *Value);
-  if (ValueLength == 8) return SetMem64 (Buffer, BufferLength, (UINT64) *Value);
+  if (ValueLength == sizeof(UINT8) ) return   SetMem (Buffer, BufferLength, (UINT8)  *Value);
+  if (ValueLength == sizeof(UINT16)) return SetMem16 (Buffer, BufferLength, (UINT16) *Value);
+  if (ValueLength == sizeof(UINT32)) return SetMem32 (Buffer, BufferLength, (UINT32) *Value);
+  if (ValueLength == sizeof(UINT64)) return SetMem64 (Buffer, BufferLength, (UINT64) *Value);
   Pointer8 = Buffer;
   DEBUG((DEBUG_INFO, "SetMemX: Writing to %x of length %x\n", Buffer, BufferLength));
   DEBUG((DEBUG_INFO, "SetMemX: Writing value of length %x:", ValueLength));
