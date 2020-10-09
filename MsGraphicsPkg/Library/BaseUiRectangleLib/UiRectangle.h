@@ -35,6 +35,7 @@ INTN
 GetFillDataSize(
 IN UINTN Width,
 IN UINTN Height,
+IN UINT8 PixelSize,
 IN UI_STYLE_INFO* StyleInfo
 );
 
@@ -52,6 +53,15 @@ IN PRIVATE_UI_RECTANGLE* priv
 VOID
 DrawIcon(
 IN PRIVATE_UI_RECTANGLE* priv
+);
+
+VOID *
+EFIAPI
+SetMemX (
+  OUT VOID   *Buffer,
+  IN UINTN   BufferLength,
+  IN UINT8*  Value,
+  IN UINTN   ValueLength
 );
 
 #endif

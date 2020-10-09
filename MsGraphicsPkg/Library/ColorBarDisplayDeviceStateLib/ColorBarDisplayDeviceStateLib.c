@@ -158,9 +158,9 @@ IN       UI_PLACEMENT          IconPlacement
   }
 
   for(UINT32 index = 0; index < ArrayLength; index++) {
-    DEBUG((DEBUG_VERBOSE, "Checking icon of size %u x %u to see if it fits\n", BlitArray[index]->Height, BlitArray[index]->Width));
+    DEBUG((DEBUG_INFO, "Checking icon of size %u x %u to see if it fits\n", BlitArray[index]->Height, BlitArray[index]->Width));
     if((BlitArray[index]->Height <= BannerHeight) && (BlitArray[index]->Width <= BannerWidth)){
-      DEBUG((DEBUG_VERBOSE, "Found fitting icon\n"));
+      DEBUG((DEBUG_INFO, "Found fitting icon %d\n", index));
       Style->IconInfo.Width = BlitArray[index]->Width;
       Style->IconInfo.Height = BlitArray[index]->Height;
       Style->IconInfo.Placement = IconPlacement;
@@ -176,16 +176,20 @@ Function to Display all Active Device States
 
 @param FrameBufferBase   - Address of point 0,0 in the frame buffer
 @param PixelsPerScanLine - Number of pixels per scan line.
+@param PixelFormat       - An enum that tells use what format the pixel are in
+@param PixelFormatBitMap - A pointer to the exact layout of the pixels
 @param WidthInPixels     - Number of Columns in FrameBuffer
 @param HeightInPixels    - Number of Rows in FrameBuffer
 **/
 VOID
 EFIAPI
 DisplayDeviceState(
-IN  UINT8* FrameBufferBase,
-IN  INT32  PixelsPerScanLine,
-IN  INT32  WidthInPixels,
-IN  INT32  HeightInPixels
+IN  UINT8*                   FrameBufferBase,
+IN  INT32                    PixelsPerScanLine,
+IN EFI_GRAPHICS_PIXEL_FORMAT PixelFormat,
+IN EFI_PIXEL_BITMASK*        PixelFormatBitMap,
+IN  INT32                    WidthInPixels,
+IN  INT32                    HeightInPixels
 )
 {
   DEVICE_STATE Notifications = 0;
@@ -271,7 +275,7 @@ IN  INT32  HeightInPixels
         continue;
       }
 
-      UI_RECTANGLE* rect = new_UI_RECTANGLE(&ul, FrameBufferBase, PixelsPerScanLine, (UINT16)WidthInPixels, SingleBannerHeight, &si);
+      UI_RECTANGLE* rect = new_UI_RECTANGLE(&ul, FrameBufferBase, PixelsPerScanLine, PixelFormat, PixelFormatBitMap, (UINT16)WidthInPixels, SingleBannerHeight, &si);
       DrawRect(rect);
       delete_UI_RECTANGLE(rect);
       ul.Y += SingleBannerHeight;

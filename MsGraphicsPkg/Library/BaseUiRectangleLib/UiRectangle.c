@@ -21,12 +21,14 @@ This structure is used by all the other functions to modify and draw the object
 @param UpperLeft         - Upper left point of rectangle in framebuffer coordinates
 @param FrameBufferBase   - pointer to framebuffer address of 0,0  (upper left)
 @param PixelsPerScanLine - Number of pixels per scan line in framebuffer.
-This is to support aligned framebuffers
+                           This is to support aligned framebuffers
+@param PixelFormat       - An enum that tells use what format the pixel are in
+@param PixelBitMap       - A pointer to the exact layout of the pixels
 @param Width             - The width of the rectangle
 @param Height            - The height of the rectangle
 @param StyleInfo  - Style info for this (color, sizes, fill types, border, etc)
 
-@ret   A new UI_RECTANGLE structure used for drawing a rectangle
+@ret   A new UI_RECTANGLE structure used for updating and drawing the rectangle
 
 */
 UI_RECTANGLE*
@@ -35,12 +37,15 @@ new_UI_RECTANGLE(
 IN POINT *UpperLeft,
 IN UINT8 *FrameBufferBase,
 IN UINTN PixelsPerScanLine,
+IN EFI_GRAPHICS_PIXEL_FORMAT PixelFormat,
+IN EFI_PIXEL_BITMASK* PixelFormatBitMap,
 IN UINT32 Width,
 IN UINT32 Height,
 IN UI_STYLE_INFO* StyleInfo
 )
 {
   INTN FillDataSize = 0;
+  INT8 PixelSizeInBytes = 0;
   if (FrameBufferBase == NULL)
   {
     ASSERT(NULL != FrameBufferBase);
@@ -59,14 +64,53 @@ IN UI_STYLE_INFO* StyleInfo
     return NULL;
   }
 
-  FillDataSize = GetFillDataSize(Width, Height, StyleInfo);
+  DEBUG((DEBUG_INFO, "MATTHEW CARLSON START\n"));
+
+  // This is the default arrangement - 32 bit RGB
+  if (PixelFormat == PixelRedGreenBlueReserved8BitPerColor) {
+    PixelSizeInBytes = 4;
+  }
+
+  // This is the a reverse arrangement of the standard 32 bit BGR (RGB reversed)
+  if (PixelFormat == PixelBlueGreenRedReserved8BitPerColor) {
+    // TODO: Figure out how to re-organize the colors and create a color mapping
+    DEBUG((DEBUG_ERROR, "%a:%d - BGR revered Framebuffer BOPS are not supported currently\n", __FILE__,__LINE__));
+    ASSERT(PixelFormat != PixelBlueGreenRedReserved8BitPerColor);
+
+  }
+  // This is currently unsupported by this library
+  else if (PixelFormat == PixelBltOnly) {
+    DEBUG((DEBUG_ERROR, "%a:%d - BLT only GOP's are not supported currently\n", __FILE__,__LINE__));
+    ASSERT(PixelFormat != PixelBltOnly);
+  }
+  // If this is bitmask, this mean to check the PixelBitMap and figure out how to handle it
+  else if (PixelFormat == PixelBitMask) {
+    DEBUG((DEBUG_INFO, "Figuring out how to map values from bitmap onto pixel size\n"));
+    ASSERT(PixelFormatBitMap != NULL);
+    UINT32 PixelBitFormat = PixelFormatBitMap->BlueMask | PixelFormatBitMap->GreenMask | PixelFormatBitMap->RedMask | PixelFormatBitMap->ReservedMask;
+    ASSERT(PixelBitFormat != 0); // make sure we have a valid format
+    DEBUG((DEBUG_INFO, "GOP Pixel Format: %x\n", PixelBitFormat));
+    UINT8  BitsInPixel = 1;
+    while( PixelBitFormat>>=1 ) BitsInPixel++;
+    DEBUG((DEBUG_INFO, "GOP Bits in Pixel: %d\n", BitsInPixel));
+    PixelSizeInBytes = BitsInPixel / 8;
+  }
+  ASSERT(PixelFormat != PixelFormatMax); // we should never have a pixel format that is at max
+  
+  DEBUG((DEBUG_INFO, "GOP Format: %x\n", PixelFormat));
+  DEBUG((DEBUG_INFO, "GOP Bytes of a pixel: %x\n", PixelSizeInBytes));
+
+  FillDataSize = GetFillDataSize(Width, Height, PixelSizeInBytes, StyleInfo);
   PRIVATE_UI_RECTANGLE *this = (PRIVATE_UI_RECTANGLE *)AllocateZeroPool(sizeof(PRIVATE_UI_RECTANGLE) + FillDataSize);
   ASSERT(NULL != this);
+  ASSERT(PixelSizeInBytes != 0);
+
   if (this != NULL)
   {
     this->Public.UpperLeft = *UpperLeft;
     this->Public.FrameBufferBase = FrameBufferBase;
     this->Public.PixelsPerScanLine = PixelsPerScanLine;
+    this->Public.PixelSizeInBytes = PixelSizeInBytes;
     this->Public.Width = Width;
     this->Public.Height = Height;
     this->Public.StyleInfo = *StyleInfo;
@@ -75,6 +119,7 @@ IN UI_STYLE_INFO* StyleInfo
     this->Public.StyleInfo.IconInfo.PixelData = NULL;
     if ((this->Public.StyleInfo.IconInfo.Height > 0) && (this->Public.StyleInfo.IconInfo.Width > 0) && (StyleInfo->IconInfo.PixelData != NULL))
     {
+      // By default pixel size is defined at 32 bit RGB with 8 bits reserved
       INTN PixelDataSize = this->Public.StyleInfo.IconInfo.Height * this->Public.StyleInfo.IconInfo.Width * sizeof(UINT32);
       this->Public.StyleInfo.IconInfo.PixelData = (UINT32*)AllocatePool(PixelDataSize);
       if (this->Public.StyleInfo.IconInfo.PixelData != NULL)
@@ -127,7 +172,7 @@ IN  UI_RECTANGLE *this
 {
   PRIVATE_UI_RECTANGLE* priv = (PRIVATE_UI_RECTANGLE*)this;
   UINT8* StartAddressInFrameBuffer = (UINT8*) (((UINT32*)this->FrameBufferBase) + ((this->UpperLeft.Y * this->PixelsPerScanLine) + this->UpperLeft.X));
-  UINTN RowLengthInBytes = this->Width * sizeof(UINT32);
+  UINTN RowLengthInBytes = this->Width * this->PixelSizeInBytes;
 
   for (INTN y = 0; y < (INTN)this->Height; y++)   //each row
   {
@@ -183,7 +228,7 @@ IN  UI_RECTANGLE *this
     }
 
     CopyMem(StartAddressInFrameBuffer, temp, RowLengthInBytes);
-    StartAddressInFrameBuffer += (this->PixelsPerScanLine * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));  //move to next row
+    StartAddressInFrameBuffer += (this->PixelsPerScanLine * this->PixelSizeInBytes);  //move to next row
   }
 
   if (this->StyleInfo.Border.BorderWidth > 0)
@@ -230,6 +275,7 @@ INTN
 GetFillDataSize(
 IN UINTN Width,
 IN UINTN Height,
+IN UINT8 PixelSize,
 IN UI_STYLE_INFO* StyleInfo
 )
 {
@@ -257,7 +303,7 @@ IN UI_STYLE_INFO* StyleInfo
       break;
   }
 
-  return PixelBufferLength * sizeof(UINT32);   //each pixel is a uint32
+  return PixelBufferLength * PixelSize;
 }
 
 
@@ -266,13 +312,16 @@ PRIVATE_Init(
 IN PRIVATE_UI_RECTANGLE* priv
 )
 {
+  UINT8 PixelSizeInBytes = priv->Public.PixelSizeInBytes;
   //Init any private data needed for this rectangle
-  INTN FillDataSizeInPixels = priv->FillDataSize / sizeof(UINT32);
+  INTN FillDataSizeInPixels = priv->FillDataSize / PixelSizeInBytes;
+  DEBUG((DEBUG_INFO, "Private_init enter\n"));
 
   //Private fill data is used to hold row data needed for the fill
   switch (priv->Public.StyleInfo.FillType){
     case FILL_SOLID:
-      SetMem32(priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.SolidFill.FillColor);
+      DEBUG((DEBUG_INFO, "FILL_SOLID Private_init \n"));
+      SetMemX(priv->FillData, priv->FillDataSize, (UINT8*)&(priv->Public.StyleInfo.FillTypeInfo.SolidFill.FillColor), PixelSizeInBytes);
       break;
 
     case FILL_HORIZONTAL_STRIPE:
@@ -390,8 +439,9 @@ IN PRIVATE_UI_RECTANGLE* priv
   INT32 OffsetY = 0;  //Upper edge of icon in coordinate space of the rectangle
   INT32 SizeX = (priv->Public.Width - (priv->Public.StyleInfo.Border.BorderWidth * 2));
   INT32 SizeY = (priv->Public.Height - (priv->Public.StyleInfo.Border.BorderWidth * 2));
-  UINT32* TempFB = (UINT32*)priv->Public.FrameBufferBase;  //frame buffer pointer
+  UINT8* TempFB = priv->Public.FrameBufferBase;  //frame buffer pointer
   UINT32* TempIcon = priv->Public.StyleInfo.IconInfo.PixelData;
+  UINT8 PixelSizeInBytes = priv->Public.PixelSizeInBytes; // the number of bytes in a pixel
 
   if (priv->Public.StyleInfo.IconInfo.PixelData != NULL)
   {
@@ -458,15 +508,47 @@ IN PRIVATE_UI_RECTANGLE* priv
     } //close switch
 
     //now convert offsetx and y to framebuffer coordinates and draw it
-    TempFB += ((priv->Public.UpperLeft.Y * priv->Public.PixelsPerScanLine) + priv->Public.UpperLeft.X);  //move ptr to upper left of uirect
-    TempFB += ((OffsetY * priv->Public.PixelsPerScanLine) + OffsetX);  //move ptr to upper left of icon
+    TempFB += ((priv->Public.UpperLeft.Y * priv->Public.PixelsPerScanLine) + priv->Public.UpperLeft.X) * PixelSizeInBytes;  //move ptr to upper left of uirect
+    TempFB += ((OffsetY * priv->Public.PixelsPerScanLine) + OffsetX) * PixelSizeInBytes;  //move ptr to upper left of icon
     for (INTN Y = 0; Y < priv->Public.StyleInfo.IconInfo.Height; Y++)
     {
       //draw icon
-      CopyMem(TempFB, TempIcon, priv->Public.StyleInfo.IconInfo.Width * sizeof(UINT32));
+      // TODO figure out how to convert icon to proper version
+      CopyMem(TempFB, TempIcon, priv->Public.StyleInfo.IconInfo.Width * priv->Public.PixelSizeInBytes);
       TempFB += priv->Public.PixelsPerScanLine;
       TempIcon += priv->Public.StyleInfo.IconInfo.Width;
     }
 
   } //close if pixel data not null
+}
+
+VOID *
+EFIAPI
+SetMemX (
+  OUT VOID   *Buffer,
+  IN UINTN   BufferLength,
+  IN UINT8   *Value,
+  IN UINTN   ValueLength
+) 
+{
+  volatile UINT8 *Pointer8;
+  UINTN           ValueIter;
+  // Check if it's a common size we already support
+  if (ValueLength == 1) return   SetMem (Buffer, BufferLength, (UINT8)  *Value);
+  if (ValueLength == 2) return SetMem16 (Buffer, BufferLength, (UINT16) *Value);
+  if (ValueLength == 4) return SetMem32 (Buffer, BufferLength, (UINT32) *Value);
+  if (ValueLength == 8) return SetMem64 (Buffer, BufferLength, (UINT64) *Value);
+  Pointer8 = Buffer;
+  DEBUG((DEBUG_INFO, "SetMemX: Writing to %x of length %x\n", Buffer, BufferLength));
+  DEBUG((DEBUG_INFO, "SetMemX: Writing value of length %x:", ValueLength));
+  for(ValueIter = 0; ValueIter <= ValueLength; ValueIter += 1) {
+    DEBUG((DEBUG_INFO, "%x", *(Value+ValueIter)));
+  }
+  DEBUG((DEBUG_INFO, "\n"));
+  ValueIter = 0;
+  while (BufferLength-- > 0) {
+    *(Pointer8++) = *(Value + ValueIter);
+    ValueIter = (ValueIter + 1) % ValueLength;
+  }
+  return Buffer;
 }

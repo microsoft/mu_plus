@@ -129,6 +129,8 @@ DisplayBootGraphic(
   DisplayDeviceState(
         (UINT8*)((UINTN)GraphicsOutput->Mode->FrameBufferBase),
         GraphicsOutput->Mode->Info->PixelsPerScanLine,
+        GraphicsOutput->Mode->Info->PixelFormat,
+        &GraphicsOutput->Mode->Info->PixelInformation,
         (INT32)SizeOfX,
         (INT32)SizeOfY
         );
