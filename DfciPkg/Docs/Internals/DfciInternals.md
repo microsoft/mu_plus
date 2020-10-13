@@ -124,7 +124,8 @@ Sample permission packet:
             <DMask>128</DMask>
         </Permission>
   </Permissions>
-</PermissionsPacket>```
+</PermissionsPacket>
+```
 
 ## Settings Packet Formats
 

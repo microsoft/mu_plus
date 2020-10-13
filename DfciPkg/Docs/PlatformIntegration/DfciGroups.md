@@ -39,7 +39,7 @@ The DfciGroupLib is how groups are managed. This library separates the grouping 
 
 * Declare names for all individual BIOS settings that may be modified by the DFCI-standard settings.  The DFCI-standard string values are prefixed with "```Dfci.```".  A naming convention for device-specific setting strings is proposed as "```Device.```", as follows:
 
-``` C
+``` c
 // Cameras
 //
 // Group setting                                      "Dfci.OnboardCameras.Enable"
@@ -51,7 +51,7 @@ The DfciGroupLib is how groups are managed. This library separates the grouping 
 
 * Map the individual settings to the DFCI groups, an example DfciGroups.c is as follows:
 
-``` C
+``` c
 STATIC DFCI_SETTING_ID_STRING mAllCameraSettings[] = {
     DEVICE_SETTING_ID__FRONT_CAMERA,
     DEVICE_SETTING_ID__REAR_CAMERA,

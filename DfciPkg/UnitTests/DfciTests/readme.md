@@ -73,7 +73,7 @@ To test functionality of the Zero Touch feature, the firmware needs to be built 
 
 To do this, change your platform .fdf file from:
 
-```c
+```
 FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
     SECTION RAW = ZeroTouchPkg/Certs/ZeroTouch/ZtdRecovery.cer
 }
@@ -81,7 +81,7 @@ FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
 
 to:
 
-```c
+```
 FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
     SECTION RAW = DfciPkg/UnitTests/DfciTests/ZTD_Leaf.cer
 }
