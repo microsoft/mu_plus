@@ -34,7 +34,7 @@ MemDrawOnFrameBuffer(
 Function to draw a single color onto the frame buffer
 We assume the data is in 32 bit RGB reserved format
 
-@param DrawDataBuffer    - The data to draw
+@param Color             - The color to draw
 @param TopLeftXInPixels  - The top-left X coordinate in pixels
 @param TopLeftYInPixels  - The top-left Y coordinate in pixels
 @param WidthInPixels     - Number of Columns in DrawDataBuffers

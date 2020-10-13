@@ -158,9 +158,9 @@ IN       UI_PLACEMENT          IconPlacement
   }
 
   for(UINT32 index = 0; index < ArrayLength; index++) {
-    DEBUG((DEBUG_INFO, "Checking icon of size %u x %u to see if it fits\n", BlitArray[index]->Height, BlitArray[index]->Width));
+    DEBUG((DEBUG_VERBOSE, "Checking icon of size %u x %u to see if it fits\n", BlitArray[index]->Height, BlitArray[index]->Width));
     if((BlitArray[index]->Height <= BannerHeight) && (BlitArray[index]->Width <= BannerWidth)){
-      DEBUG((DEBUG_INFO, "Found fitting icon %d\n", index));
+      DEBUG((DEBUG_VERBOSE, "Found fitting icon\n"));
       Style->IconInfo.Width = BlitArray[index]->Width;
       Style->IconInfo.Height = BlitArray[index]->Height;
       Style->IconInfo.Placement = IconPlacement;
@@ -216,7 +216,7 @@ IN  INT32                    HeightInPixels
           PopulateIconData(&si, SingleBannerHeight, WidthInPixels, mUnlockBlitArray, ARRAY_SIZE(mUnlockBlitArray), MIDDLE_CENTER);
         }
       }
-      else if (TRUE || (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_0))
+      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_0)
       {
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_ORANGE;
