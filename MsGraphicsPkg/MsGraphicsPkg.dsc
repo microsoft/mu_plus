@@ -135,6 +135,8 @@
   MsGraphicsPkg/Library/BootGraphicsProviderLibNull/BootGraphicsProviderLib.inf
   MsGraphicsPkg/Library/QrEncoderLib/QrEncoderLib.inf
   MsGraphicsPkg/Application/BmpDisplay/BmpDisplay.inf
+  # Null Version of FrameBufferMemDrawLib
+  MsGraphicsPkg/Library/FrameBufferMemDrawLibNull/FrameBufferMemDrawLibNull.inf
 
 [Components.IA32]
   # Early Graphics driver.
