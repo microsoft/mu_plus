@@ -22,7 +22,7 @@ setting provider is an anonymous library linked with the Settings Manager DXE dr
 is how the DfciSampleProvider library is linked with the Settings Manager as an anonymous
 library:
 
-```yaml
+```
  DfciPkg/SettingsManager/SettingsManagerDxe.inf {
   <PcdsFeatureFlag>
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE

@@ -67,7 +67,7 @@ Adding DFCI to your system consists of:
 3. Adding the DSC sections below.
 4. Adding the FDF sections below.
 
-``` yaml
+```
 [LibraryClasses.XXX]
   DfciXmlSettingSchemaSupportLib|DfciPkg/Library/DfciXmlSettingSchemaSupportLib/DfciXmlSettingSchemaSupportLib.inf
   DfciXmlPermissionSchemaSupportLib|DfciPkg/Library/DfciXmlPermissionSchemaSupportLib/DfciXmlPermissionSchemaSupportLib.inf
@@ -96,16 +96,15 @@ Adding DFCI to your system consists of:
   <PcdsFeatureFlag>
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE
   }
-  
+
   DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf
   DfciPkg/DfciManager/DfciManager.inf
   DfciPkg/Application/DfciMenu/DfciMenu.inf
-
 ```
 
 ## Platform FDF statements
 
-```yaml
+```
 [FV.YOUR_DXE_FV]
 INF  DfciPkg/SettingsManager/SettingsManagerDxe.inf
 INF  DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf
