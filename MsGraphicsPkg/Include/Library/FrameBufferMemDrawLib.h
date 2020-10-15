@@ -11,7 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __FRAME_BUFFER_MEM_DRAW_LIB_H__
 
 /**
-Function to Display all Active Device States
+Function to draw a data buffer onto the frame buffer
 We assume the data is in 32 bit RGB reserved format
 
 @param DrawDataBuffer    - The data to draw

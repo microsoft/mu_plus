@@ -12,7 +12,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/FrameBufferMemDrawLib.h>
 
 /**
-Function to Display all Active Device States
+Function to draw a data buffer onto the frame buffer
+We assume the data is in 32 bit RGB reserved format
 
 @param DrawDataBuffer    - The data to draw
 @param TopLeftXInPixels  - The top-left X coordinate in pixels
