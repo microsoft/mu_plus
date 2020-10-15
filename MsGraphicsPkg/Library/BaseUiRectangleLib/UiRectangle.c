@@ -174,7 +174,7 @@ IN  UI_RECTANGLE *this
         return;
     }
     // we draw it one row at a time
-    Status = MemDrawOnFrameBuffer(temp, 0, (INT32) y,  (INT32) this->Width, 1);
+    Status = MemDrawOnFrameBuffer(temp, (INT32) this->UpperLeft.X, (INT32)(this->UpperLeft.Y + y), (INT32) this->Width, 1);
     if (EFI_ERROR(Status)) {
       // We check if we failed but we don't assert
       DEBUG((DEBUG_ERROR, "Failed to draw on the UIRectangle\n"));
