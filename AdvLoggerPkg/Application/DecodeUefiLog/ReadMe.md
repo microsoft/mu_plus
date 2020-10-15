@@ -1,16 +1,19 @@
 # AdvLoggerPkg - DecodeUefiLog
 
-DecodeUefiLog is used to get the Uefi debug log that is stored by UEFI.
+DecodeUefiLog is used to get the Uefi debug log that is stored by UEFI in system memory.
 
 ## About
 
 Advanced Logger stores the debug log file in memory, with additional data for each line.
-At runtime, if the Advanced Logger is enabled, this in memory log is available through the UEFI Variable store.
-As the log in memory has additional metadata and alignment structure, DecodeUefiLog parses the on memory UefiLog to a text stream and writes the decoded log to a local file.
+At runtime, if the Advanced Logger is enabled, this in memory log is available through the UEFI
+Variable store.
+As the log in memory has additional metadata and alignment structure, DecodeUefiLog parses the
+on memory UefiLog to a text stream and writes the decoded log to a local file.
 
 ## Usage
 
-Copy the two files DecideUefiLog.py and UefiVariablesSupportLib.py to the system with Advanced Logger enabled.
+Copy the two files, DecideUefiLog.py and UefiVariablesSupportLib.py, to the system that has
+the Advanced Logger enabled.
 
 The simplest case:
 
@@ -35,3 +38,10 @@ Decode a raw file into a text file:
 ```.sh
   DecodeUefiLog -l RawLog.bin -o NewLogFIle.txt
 ```
+
+---
+
+## Copyright
+
+Copyright (C) Microsoft Corporation. All rights reserved.  
+SPDX-License-Identifier: BSD-2-Clause-Patent

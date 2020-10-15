@@ -8,6 +8,8 @@ This package contains the various libraries to have in memory logging.
 
 The following configurations are supported:
 
+<!-- spell-checker: disable-line --> <!-- markdownlint-disable line-length -->
+
 | Phase | Usage |
 | --- | --- |
 |DXE Only|Uses DxeCore, DxeRuntime, and Dxe AdvancedLoggerLib libraries for logging from start of DXE CORE through Exit Boot Services.  Accepts the PEI Advanced Logger Hob if one is generated.  Produces the AdvancedLogger protocol.|
@@ -28,7 +30,7 @@ PCD's used by Advanced Logger
 |PcdAdvancedLoggerPages|Amount of system RAM used for the debug log|
 |PcdAdvancedLoggerLocator|When enabled, the AdvLogger creates a variable "AdvLoggerLocator" with the address of the LoggerInfo buffer|
 
-# Libraries
+## Libraries
 
 The following libraries are used with AdvancedLogger:
 
@@ -41,13 +43,18 @@ The following libraries are used with AdvancedLogger:
 | DebugAgent | Used to intercept SEC initialization |
 | PeiDebugLibAdvancedLogger | Basic Pei DebugLib |
 
-# Platform note:
+<!-- spell-checker: disable-line --> <!-- markdownlint-enable line-length -->
 
-The SEC version of the Advanced Logger uses the temporary RAM block. This block is fixed in size and location, and these need to be adjusted to make room for the Advanced Logger buffer.  There may be cases where the processor cache size is too small to enable the Advanced Logger during SEC.
+## Platform notes
 
-The following changes are needed in the .dsc
+The SEC version of the Advanced Logger uses the temporary RAM block. This block is fixed in size
+and location, and these need to be adjusted to make room for the Advanced Logger buffer.
+There may be cases where the processor cache size is too small to enable the Advanced Logger
+during SEC.
 
-```yaml
+The following changes are needed in the .dsc (Example assumes IA32/X64)
+
+```inf
 [LibraryClasses.common]
   DebugLib|AdvLoggerPkg/Library/BaseDebugLibAdvancedLogger/BaseDebugLibAdvancedLogger.inf
 
@@ -81,7 +88,7 @@ The following changes are needed in the .dsc
   AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Runtime/AdvancedLoggerLib.inf
 
 [PcdsFeatureFlag]
-## Build Example if you build environment differentiates customer builds from internal test builds
+## Build Example if your build environment differentiates customer builds from internal test builds
 !if $(SHIP_MODE) == FALSE
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerLocator|TRUE
@@ -93,32 +100,40 @@ The following changes are needed in the .dsc
 
 The following changes should be in the family .dsc where the processor specific changes are specified
 
-```yaml
+```inf
 [PcdsFixedAtBuild.common]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages|24
 ```
 
 ## Advanced File Logger
 
-The Advanced File Logger monitors for file systems mounted during boot.  When an eligible file system is detected, the log is flushed to the file system.  The log is flushed if the system is reset during POST, and at Exit Boot Services.
+The Advanced File Logger monitors for file systems mounted during boot.
+When an eligible file system is detected, the log is flushed to the file system.
+The log is flushed if the system is reset during POST, and at Exit Boot Services.
 
-An eligible file system is one with a Logs directory in the root of the file system.  If no log files are present, the Advanced File Logger will create a log index file which contains the index of the last log file written, and nine log files each PcdAdvancedLoggerPages in size.  These files are pre allocated at one time to reduce interference with other users of the filesystem.
+An eligible file system is one with a Logs directory in the root of the file system.
+If no log files are present, the Advanced File Logger will create a log index file which
+contains the index of the last log file written, and nine log files each PcdAdvancedLoggerPages
+in size.
+These files are pre allocated at one time to reduce interference with other users of the filesystem.
 
 To enable the Advanced File Logger, the following change is needed in the .dsc:
 
-```yaml
-[Components.ArchOfDXE]
+```inf
+[Components.<ArchOfDXE>]
   AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 ```
 
 and the follow change is needed in the .fdf:
 
-```yaml
-[Components.FV.YourFvDXE]
+```inf
+[Components.FV.<YourFvDXE>]
   INF AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 ```
 
+---
+
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation. All rights reserved.  
 SPDX-License-Identifier: BSD-2-Clause-Patent

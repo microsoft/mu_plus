@@ -9,16 +9,15 @@ operations.
 The line parser builds a debug line by copying one or more DEBUG(()) segments into a line,
 and prepends the time stamp.
 
-
 ## About
 
 These tests verify that the LineParser is functional.
 
 ## LineParserTestApp
 
-
+---
 
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation. All rights reserved.  
 SPDX-License-Identifier: BSD-2-Clause-Patent
