@@ -808,7 +808,7 @@ DebugFileLoggerDxeEntry (
     }
 
     //
-    // Step 5. Register for PostReadytoBoot Notifications.
+    // Step 5. Register for PostReadyToBoot Notifications.
     //
     Status = ProcessPostReadyToBootRegistration ();
 

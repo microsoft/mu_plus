@@ -26,7 +26,7 @@
             "SecurityPkg/SecurityPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
-            
+
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
@@ -56,8 +56,6 @@
 
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
-        # Fails test but run in AuditOnly mode to collect log
-        "AuditOnly": true,
         "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files

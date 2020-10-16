@@ -85,7 +85,7 @@ DefineSgTpmNVIndexforOS (
   // 0x420F0404 - Attributes
   NvData.nvPublic.attributes.TPMA_NV_POLICYWRITE    = 1;    // BIT2
   NvData.nvPublic.attributes.TPMA_NV_POLICY_DELETE  = 1;    // BIT10
-  NvData.nvPublic.attributes.TPMA_NV_PPREAD         = 1;    // BIT16
+  NvData.nvPublic.attributes.TPMA_NV_PPREAD         = 1;    // BIT16            // spell-checker: disable-line
   NvData.nvPublic.attributes.TPMA_NV_OWNERREAD      = 1;    // BIT17
   NvData.nvPublic.attributes.TPMA_NV_AUTHREAD       = 1;    // BIT18
   NvData.nvPublic.attributes.TPMA_NV_POLICYREAD     = 1;    // BIT19

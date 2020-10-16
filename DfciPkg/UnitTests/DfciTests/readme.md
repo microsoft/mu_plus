@@ -30,9 +30,15 @@ See the Platforms\SimpleFTDI\ folder.
 
 Copy the files needed for the DUT.
 There is a script to help you do this.
-With a removable device at drive letter D for example, issue the command **DeviceUnderTest\CollectFilesForDut.cmd D:\DfciSetup**.
-This will create a directory on the USB key named DfciSetup with the required files for setting up the remote server.
-Mount the USB device on the DUT and run the **SetupDUT.cmd**.
+For example, with a removable device mounted at drive D:, issue the command:  
+
+**DeviceUnderTest\CollectFilesForDut.cmd D:\DfciSetup**  
+
+This will create a directory on the USB key named **DfciSetup** with the required files for setting up the remote server.
+Mount the removable device on the DUT and run:  
+
+**SetupDUT.cmd**  
+
 This will download and install Python 3.7.4, robotframework, robotremoteserver, and pypiwin32.
 In addition, the SetupDUT command will update the firewall for the robot framework testing, and a make a couple of configuration changes to Windows for a better test experience.
 
@@ -56,7 +62,7 @@ Copy the DfciTests directory, including all of the contents of the subdirectorie
 Table of DFCI Test case collections:
 
 | Test Case Collection | Description of Test Case |
-| ----- | ----- | ----- |
+| ----- | ----- |
 | DFCI_CertChainingTest | Verifies that a ZeroTouch enroll actually prompts for authorization to Enroll when the enroll package is not signed by the proper key.|
 | DFCI_InitialState | Verifies that the firmware indicates support for DFCI and that the system is not already enrolled into DFCI. |
 | DFCI_InTuneBadUpdate | Tries to apply a settings package signed with the wrong key |

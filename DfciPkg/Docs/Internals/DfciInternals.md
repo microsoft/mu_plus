@@ -129,9 +129,9 @@ Sample permission packet:
 
 ## Settings Packet Formats
 
-![Setting packet signature](Images/SettingsPacket.jpg)
+![Setting packet signature](Images/SettingsPacket_mu.jpg)
 
-![Setting packet signature](Images/DataPacketSignature.jpg)
+![Setting packet signature](Images/DataPacketSignature_mu.jpg)
 
 Sample settings payload:
 
