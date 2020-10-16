@@ -11,6 +11,7 @@ screen's contents and write it to a enabled USB drive.
 
 This package is not architecturally dependent. This package is dependent upon
 the Gop pixel format, and only supports these two pixel formats:
+
 1. *PixelRedGreenBlueReserved8BitPerColor*
 2. *PixelBlueGreenRedReserved8BitPerColor*
 
@@ -31,21 +32,25 @@ When a Print Screen callback occurs:
 5. Converts the BLT buffer to a 24bbp BMP structure.
 6. Writes the BMP structure to the new **PrtScreen####.bmp** file.
 
-# Including in your platform
+## Including in your platform
 
 ## Sample DSC change
+
+```inf
     [Components.<arch>]
     ...
     ...
     MsGraphicsPkg/PrintScreenLogger/PrintScreenLogger.inf
-
+```
 
 ## Sample FDF change
 
+```inf
     [FV.<a DXE firmware volume>]
     ...
     ...
     INF MsGraphicsPkg/PrintScreenLogger/PrintScreenLogger.inf
+```
 
 ## Copyright
 
