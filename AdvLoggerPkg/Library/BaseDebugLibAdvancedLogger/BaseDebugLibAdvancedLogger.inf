@@ -29,6 +29,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   AdvLoggerPkg/AdvLoggerPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
 
 [LibraryClasses]
   AdvancedLoggerLib
@@ -37,6 +38,7 @@
   PcdLib
   PrintLib
   DebugPrintErrorLevelLib
+  MuTelemetryHelperLib
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue  ## SOMETIMES_CONSUMES
