@@ -1020,7 +1020,7 @@ DfciManagerEntry(
 
 ERROR_EXIT:
 
-    DEBUG((DEBUG_ERROR, "%a %a: Exiting with error. Code = %r\n", _DBGMSGID_, Status));
+    DEBUG((DEBUG_ERROR, "%a %a: Exiting with error. Code = %r\n", _DBGMSGID_, __FUNCTION__, Status));
 
     FreeManagerData ();
 
