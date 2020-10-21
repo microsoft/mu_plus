@@ -10,6 +10,7 @@ These tests verify that the Json Lite Library functions properly.
 
 This application consumes the UnitTestLib and implements various test cases for the verification of the Json Lite Library.
 
+---
 
 ## Copyright
 
