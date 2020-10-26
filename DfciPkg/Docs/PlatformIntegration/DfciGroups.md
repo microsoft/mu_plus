@@ -1,43 +1,63 @@
 # DFCI Groups
 
-DFCI Groups allow numerous like typed settings to be managed together.  Groups can also be used to provide multiple names for the same setting.  This allows actual device settings to be mapped into a different namespaces for settings.
+DFCI Groups allow numerous like typed settings to be managed together.
+Groups can also be used to provide multiple names for the same setting.
+This allows actual device settings to be mapped into a different namespaces for settings.
 
-One such example from the Microsoft scenario is `Dfci.OnboardCameras.Enable`.  This group setting is used to manage the state of all onboard cameras and gives the management entity an ability to control all cameras regardless of how many each platform has.  A platform may have `Device.FrontCamera.Enable` and `Device.RearCamera.Enable` settings.  Adding those settings to the group `Dfci.OnboardCameras.Enable` allows a general purpose management entity to control both.
+One such example from the Microsoft scenario is `Dfci.OnboardCameras.Enable.`
+This group setting is used to manage the state of all onboard cameras and gives the management
+entity an ability to control all cameras regardless of how many each platform has.
+A platform may have `Device.FrontCamera.Enable` and `Device.RearCamera.Enable` settings.
+Adding those settings to the group `Dfci.OnboardCameras.Enable` allows a general purpose
+management entity to control both.
 
 ## Handling State Reporting
 
-If all of the settings of the group have the same value then that value will be returned (ie `Enabled` or `Disabled` for an Enable type setting).  If they are not the same then `Inconsistent` will be returned. `Unknown` will be returned if there are no members in a group.
+If all of the settings of the group have the same value then that value will be returned (ie
+`Enabled` or `Disabled` for an Enable type setting).
+If they are not the same then `Inconsistent` will be returned.
+`Unknown` will be returned if there are no members in a group.
 
 ## Restrictions on group names
 
-Group names and settings names are in the same name space and duplicate names are not allowed. Like settings names, group names are limited to 96 characters in length, and are null terminated CHAR8 strings.
+Group names and settings names are in the same name space and duplicate names are not allowed.
+Like settings names, group names are limited to 96 characters in length, and are null terminated
+CHAR8 strings.
 
 ## DfciGroupLib
 
-The DfciGroupLib is how groups are managed. This library separates the grouping configuration from the setting providers to allow better flexibility and better maintainability.
+The DfciGroupLib is how groups are managed. This library separates the grouping configuration
+from the setting providers to allow better flexibility and better maintainability.
 
-**DfciGroupLib** is defined in the **DfciPkg** located in **mu_plus** repository <https://github.com/microsoft/mu_plus/>
+**DfciGroupLib** is defined in the **DfciPkg** located in **mu_plus** repository
+<https://github.com/microsoft/mu_plus/>
 
 ## Library Interfaces
 
-| Interfaces | Usage |
-| ----- | ----- |
+| Interfaces          | Usage |
+| ---                 | --- |
 | DfciGetGroupEntries | DfciGetGroupEntries returns an array of groups, and each group points to a list of settings that are members of the group.
 
 ## DFCI Standard Groups for OEM extension
 
-| Group Setting String | Description |
-| - | - |
-| "Dfci.OnboardCameras.Enable" | Enable/Disable all built-in cameras |
-| "Dfci.OnboardAudio.Enable" | Enable/Disable all built-in microphones & speakers |
-| "Dfci.OnboardRadios.Enable" | Enable/Disable all built-in radios (e.g. Wi-Fi, BlueTooth, NFC, Mobile Broadband...) |
-| "Dfci.BootExternalMedia.Enable" | Enable/disable boot from external media |
-| "Dfci.BootOnboardNetwork.Enable" | Enable/disable boot from built-in network adapters |
+| Group Setting String                 | Description |
+| ---                                  | --- |
+| "Dfci.OnboardCameras.Enable"         | Enable/Disable all built-in cameras |
+| "Dfci.OnboardAudio.Enable"           | Enable/Disable all built-in microphones & speakers |
+| "Dfci.OnboardRadios.Enable"          | Enable/Disable all built-in radios (e.g. Wi-Fi, BlueTooth, NFC, Mobile Broadband...) |
+| "Dfci.BootExternalMedia.Enable"      | Enable/disable boot from external media |
+| "Dfci.BootOnboardNetwork.Enable"     | Enable/disable boot from built-in network adapters |
 | "Dfci.CpuAndIoVirtualization.Enable" | Enable/disable both CPU & IO Virtualization (i.e. prerequisite for Windows Virtualization Based Security (a.k.a. Device Guard, Core Isolation, Secured Core) |
 
-## Example
+### Setting Provider for group settings
 
-* Declare names for all individual BIOS settings that may be modified by the DFCI-standard settings.  The DFCI-standard string values are prefixed with "```Dfci.```".  A naming convention for device-specific setting strings is proposed as "```Device.```", as follows:
+The individual setting providers that are part of a group are expected to be of type
+DFCI_SETTING_TYPE_ENABLE.
+Sample for mapping multiple OEM device settings to a group setting:
+
+Declare names for all individual BIOS settings that may be modified by the DFCI-standard settings.
+The DFCI-standard string values are prefixed with "```Dfci.```."
+A naming convention for device-specific setting strings is proposed as "```Device.```," as follows:
 
 ``` c
 // Cameras
@@ -85,3 +105,25 @@ DfciGetGroupEntries (VOID) {
 }
 
 ```
+
+### Group settings results
+
+When a group setting is accessed, DFCI enumerates the individual settings of the group.
+The actual return code to the caller is modified by DFCI depending on the individual settings
+providers return values.
+Each of the individual settings will be listed in the Settings Result variable, along with the
+return code from each setting provider.
+The return value for the group setting will be one of the following:
+
+| Return Value from DFCI | Reason to return this value |
+| ---                    | --- |
+| "Enabled"              | All providers returned the boolean value TRUE |
+| "Disabled"             | All providers in the group returned the boolean value FALSE |
+| "Inconsistent"         | Different results were returned from the providers |
+
+---
+
+## Copyright
+
+Copyright (C) Microsoft Corporation. All rights reserved.  
+SPDX-License-Identifier: BSD-2-Clause-Patent

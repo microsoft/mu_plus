@@ -22,7 +22,7 @@ setting provider is an anonymous library linked with the Settings Manager DXE dr
 is how the DfciSampleProvider library is linked with the Settings Manager as an anonymous
 library:
 
-```
+```ini
  DfciPkg/SettingsManager/SettingsManagerDxe.inf {
   <PcdsFeatureFlag>
      gDfciPkgTokenSpaceGuid.PcdSettingsManagerInstallProvider|TRUE
@@ -64,11 +64,11 @@ The constructor looks like:
     if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
         //Install callback on the SettingsManager gDfciSettingsProviderSupportProtocolGuid protocol
         mDfciSampleProviderProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
-            &gDfciSettingsProviderSupportProtocolGuid,
-             TPL_CALLBACK,
-             DfciSampleProviderProviderSupportProtocolNotify,
-             NULL,
-            &mDfciSampleProviderProviderSupportInstallEventRegistration
+                    &gDfciSettingsProviderSupportProtocolGuid,
+                    TPL_CALLBACK,
+                    DfciSampleProviderProviderSupportProtocolNotify,
+                    NULL,
+                    &mDfciSampleProviderProviderSupportInstallEventRegistration
             );
 
         DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
@@ -88,14 +88,15 @@ The notify routine looks like:
     //locate protocol
     Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
     if (EFI_ERROR(Status)) {
-      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
-        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
+      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND))
+      {
+        DEBUG ((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
       }
       return;
     }
 
     Status = sp->RegisterProvider (sp, &mDfciSampleProviderProviderSetting1);
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR (Status)) {
         DEBUG((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciSampleProviderProviderSetting1.Id, Status));
     }
 
@@ -132,10 +133,19 @@ OEM_GetSampleSetting1 (
 
     LocalSettingSize = sizeof (*LocalSetting);
 
-    Status = DfciSampleProviderGet ( &mDfciSampleProviderProviderSetting1,
-                                     &LocalSettingSize,
-                                     &LocalSetting);
+    Status = DfciSampleProviderGet (
+                    &mDfciSampleProviderProviderSetting1,
+                    &LocalSettingSize,
+                    &LocalSetting
+                    );
 
     return Status;
 }
 ```
+
+---
+
+## Copyright
+
+Copyright (C) Microsoft Corporation. All rights reserved.  
+SPDX-License-Identifier: BSD-2-Clause-Patent
