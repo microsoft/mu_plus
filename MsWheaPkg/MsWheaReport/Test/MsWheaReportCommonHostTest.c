@@ -67,7 +67,8 @@ SharedCheckParams (
   CONST IN MS_WHEA_ERROR_ENTRY_MD           *TestEntry
   )
 {
-  UINT32                      TestSize;
+  UINT32                              TestSize;
+  MS_WHEA_ERROR_EXTRA_SECTION_DATA    *TestExtraSection;
 
   assert_non_null(TestEntry);
 
@@ -104,12 +105,13 @@ SharedCheckParams (
   }
   if (ChkParams & TEST_CHK_EXTRA_SEC) {
     TestSize = (UINT32)mock();
+    TestExtraSection = (MS_WHEA_ERROR_EXTRA_SECTION_DATA*) TestEntry->ExtraSection;
     if (TestSize == 0) {
-      assert_null(TestEntry->ExtraSection);
+      assert_null(TestExtraSection);
     } else {
-      assert_memory_equal(&TestEntry->ExtraSection->SectionGuid, mock(), sizeof(EFI_GUID));
-      assert_int_equal(TestEntry->ExtraSection->DataSize, TestSize);
-      assert_memory_equal(TestEntry->ExtraSection->Data, mock(), TestSize);
+      assert_memory_equal(&TestExtraSection->SectionGuid, mock(), sizeof(EFI_GUID));
+      assert_int_equal(TestExtraSection->DataSize, TestSize);
+      assert_memory_equal(TestExtraSection->Data, mock(), TestSize);
     }
   }
 }

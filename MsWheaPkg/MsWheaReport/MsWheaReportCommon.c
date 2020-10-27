@@ -138,7 +138,7 @@ ReportHwErrRecRouter (
         CopyGuid(&ExtraData->SectionGuid, (EFI_GUID*)((UINT8*)DataHeader + sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA)));
         CopyMem(ExtraData->Data, (UINT8*)DataHeader + sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof(EFI_GUID), ExtraDataSize);
       }
-      MsWheaEntryMD.ExtraSection = ExtraData;
+      MsWheaEntryMD.ExtraSection = (EFI_PHYSICAL_ADDRESS) (UINTN) ExtraData;
     }
   }
 

@@ -324,7 +324,7 @@ AnFCorrectlyPopulatesDynamicallySizedData (
   ExtraData->DataSize = sizeof(ExtraDataContents);
   CopyGuid(&ExtraData->SectionGuid, &mTestGuid2);
   CopyMem(&ExtraData->Data, ExtraDataContents, ExtraData->DataSize);
-  TestEntry.ExtraSection = ExtraData;
+  TestEntry.ExtraSection = (EFI_PHYSICAL_ADDRESS) (UINTN) ExtraData;
 
   Buffer = MsWheaAnFBuffer(&TestEntry, &BufferSize);
   UT_ASSERT_NOT_NULL(Buffer);

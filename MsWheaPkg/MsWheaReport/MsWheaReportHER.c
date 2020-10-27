@@ -58,7 +58,7 @@ CreateCperHdrDefaultMin (
   CperHdr->SignatureStart = EFI_ERROR_RECORD_SIGNATURE_START;
   CperHdr->Revision = EFI_ERROR_RECORD_REVISION;
   CperHdr->SignatureEnd = EFI_ERROR_RECORD_SIGNATURE_END;
-  CperHdr->SectionCount = (MsWheaEntryMD->ExtraSection == NULL) ? 1 : 2;
+  CperHdr->SectionCount = ((MS_WHEA_ERROR_EXTRA_SECTION_DATA *) MsWheaEntryMD->ExtraSection == NULL) ? 1 : 2;
   CperHdr->ErrorSeverity = MsWheaEntryMD->ErrorSeverity;
   CperHdr->ValidationBits = EFI_ERROR_RECORD_HEADER_PLATFORM_ID_VALID;
   CperHdr->RecordLength = TotalSize;
@@ -174,8 +174,11 @@ CreateCperErrExtraSecDscpDefaultMin (
   )
 {
   EFI_STATUS Status = EFI_SUCCESS;
+  MS_WHEA_ERROR_EXTRA_SECTION_DATA *ExtraSectionPtr;
 
-  if (MsWheaEntryMD->ExtraSection == NULL || CperErrSecDscp == NULL) {
+  ExtraSectionPtr = (MS_WHEA_ERROR_EXTRA_SECTION_DATA *) MsWheaEntryMD->ExtraSection;
+
+  if (ExtraSectionPtr == NULL || CperErrSecDscp == NULL) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -183,7 +186,7 @@ CreateCperErrExtraSecDscpDefaultMin (
   SetMem(CperErrSecDscp, sizeof(EFI_ERROR_SECTION_DESCRIPTOR), 0);
 
   CperErrSecDscp->SectionOffset = Offset;
-  CperErrSecDscp->SectionLength = MsWheaEntryMD->ExtraSection->DataSize;
+  CperErrSecDscp->SectionLength = ExtraSectionPtr->DataSize;
   CperErrSecDscp->Revision = MS_WHEA_SECTION_REVISION;
   //CperErrSecDscp->SecValidMask = 0;
 
@@ -191,7 +194,7 @@ CreateCperErrExtraSecDscpDefaultMin (
   //CperErrSecDscp->SectionFlags = 0; // Untouched.
 
   // Default to Mu telemetry error data
-  CopyMem(&CperErrSecDscp->SectionType, &MsWheaEntryMD->ExtraSection->SectionGuid, sizeof(EFI_GUID));
+  CopyMem(&CperErrSecDscp->SectionType, &ExtraSectionPtr->SectionGuid, sizeof(EFI_GUID));
 
   //SetMem(&CperErrSecDscp->FruId, sizeof(CperErrSecDscp->FruId), 0); // Untouched.
   CperErrSecDscp->Severity = MsWheaEntryMD->ErrorSeverity;
@@ -267,6 +270,7 @@ MsWheaAnFBuffer (
   MU_TELEMETRY_CPER_SECTION_DATA  *MuTelemetryData;
   EFI_ERROR_SECTION_DESCRIPTOR    *CperErrExtraSecDscp;
   UINT8                           *ExtraSectionData;
+  MS_WHEA_ERROR_EXTRA_SECTION_DATA *ExtraSectionPtr;
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
@@ -278,9 +282,10 @@ MsWheaAnFBuffer (
   TotalSize = sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
                 sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
                 sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
-  if (MsWheaEntryMD->ExtraSection != NULL) {
+  ExtraSectionPtr = (MS_WHEA_ERROR_EXTRA_SECTION_DATA *) MsWheaEntryMD->ExtraSection;
+  if (ExtraSectionPtr != NULL) {
     TotalSize   += sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
-                    MsWheaEntryMD->ExtraSection->DataSize;
+                    ExtraSectionPtr->DataSize;
   }
 
   Buffer = AllocateZeroPool(TotalSize);
@@ -296,7 +301,7 @@ MsWheaAnFBuffer (
   CperErrSecDscp = (EFI_ERROR_SECTION_DESCRIPTOR*)&Buffer[BufferIndex];
   BufferIndex += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
 
-  if (MsWheaEntryMD->ExtraSection != NULL) {
+  if (ExtraSectionPtr != NULL) {
     CperErrExtraSecDscp = (EFI_ERROR_SECTION_DESCRIPTOR*)&Buffer[BufferIndex];
     BufferIndex += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
   }
@@ -304,7 +309,7 @@ MsWheaAnFBuffer (
   MuTelemetryData = (MU_TELEMETRY_CPER_SECTION_DATA*)&Buffer[BufferIndex];
   BufferIndex += sizeof(MU_TELEMETRY_CPER_SECTION_DATA);
 
-  if (MsWheaEntryMD->ExtraSection != NULL) {
+  if (ExtraSectionPtr != NULL) {
     ExtraSectionData = (UINT8*)&Buffer[BufferIndex];
   }
 
@@ -312,15 +317,15 @@ MsWheaAnFBuffer (
   CreateCperHdrDefaultMin(MsWheaEntryMD, TotalSize, CperHdr);
   // Add all section descriptors.
   CreateCperErrSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)MuTelemetryData - (UINTN)CperErrSecDscp), CperErrSecDscp);
-  if (MsWheaEntryMD->ExtraSection != NULL) {
+  if (ExtraSectionPtr != NULL) {
     CreateCperErrExtraSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)ExtraSectionData - (UINTN)CperErrSecDscp), CperErrExtraSecDscp);
   }
   // Add all section data.
   CreateMuTelemetryData(MsWheaEntryMD, MuTelemetryData);
-  if (MsWheaEntryMD->ExtraSection != NULL) {
+  if (ExtraSectionPtr != NULL) {
     CopyMem(ExtraSectionData,
-              &MsWheaEntryMD->ExtraSection->Data,
-              MsWheaEntryMD->ExtraSection->DataSize);
+              &ExtraSectionPtr->Data,
+              ExtraSectionPtr->DataSize);
   }
 
   // Update PayloadSize as the recorded error has Headers and Payload merged

@@ -66,7 +66,7 @@ typedef struct MS_WHEA_ERROR_ENTRY_MD_T_DEF {
   EFI_GUID                            ModuleID;
   EFI_GUID                            LibraryID;
   EFI_GUID                            IhvSharingGuid;
-  MS_WHEA_ERROR_EXTRA_SECTION_DATA    *ExtraSection;
+  EFI_PHYSICAL_ADDRESS                ExtraSection;
 } MS_WHEA_ERROR_ENTRY_MD;
 
 #pragma pack()
