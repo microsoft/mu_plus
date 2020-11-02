@@ -1,11 +1,6 @@
 /** @file
-  Base Debug library instance base on Serial Port library.
-  It uses PrintLib to send debug messages to serial port device.
-
-  NOTE: If the Serial Port library enables hardware flow control, then a call
-  to DebugPrint() or DebugAssert() may hang if writes to the serial port are
-  being blocked.  This may occur if a key(s) are pressed in a terminal emulator
-  used to monitor the DEBUG() and ASSERT() messages.
+  Base Debug library instance for Advanced Logger.
+  It uses PrintLib to format debug messages to log in the in memory buffer.
 
   Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
   Copyright (c) Microsoft Corporation. All rights reserved.
@@ -22,10 +17,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/MuTelemetryHelperLib.h>
-
-//
-//  TEMP TEMP TEMP DebugVPrint is new in 1908.
-//
 
 /**
   Prints a debug message to the debug output device if the specified
@@ -173,7 +164,7 @@ DebugPrintMarker (
   }
 
   //
-  // Send the print string to a Serial Port
+  // Send the print string to the Advanced Logger
   //
   AdvancedLoggerWrite (ErrorLevel, Buffer, AsciiStrLen (Buffer));
 }

@@ -11,6 +11,8 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Ppi/AdvancedLogger.h>
+
+#include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseLib.h>
 #include <Library/AdvancedLoggerLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -169,6 +171,10 @@ GetSecLoggerInfo (
     LoggerInfoSec = NULL;
     if (LogPtr != NULL) {
         LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
+        if (!LoggerInfoSec->HdwPortInitialized) {
+            AdvancedLoggerHdwPortInitialize();
+            LoggerInfoSec->HdwPortInitialized = TRUE;
+        }
     }
 
     return LoggerInfoSec;
@@ -292,6 +298,13 @@ AdvancedLoggerGetLoggerInfo (
                     LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
                     LoggerInfo->LogBufferSize = BufferSize - sizeof(ADVANCED_LOGGER_INFO);
                     LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
+                    AdvancedLoggerHdwPortInitialize ();
+                    LoggerInfo->HdwPortInitialized = TRUE;
+                    if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
+                        LoggerInfo->InPermanentRAM = TRUE;
+                    } else {
+                        PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
+                    }
                 }
             } else {
                 LoggerInfo = LoggerInfoSec;
@@ -319,7 +332,14 @@ AdvancedLoggerGetLoggerInfo (
                 } else {
                     PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
                 }
+            } else {
+                #define ERROR_MSG1 "Error creating Advanced Logger Info Block 1\n"
+                AdvancedLoggerHdwPortWrite (DEBUG_ERROR, (UINT8 *) ERROR_MSG1, sizeof(ERROR_MSG1));
             }
+        } else {
+            AdvancedLoggerHdwPortInitialize ();
+            #define ERROR_MSG2 "Error creating Advanced Logger Info Block 2\n"
+            AdvancedLoggerHdwPortWrite (DEBUG_ERROR, (UINT8 *) ERROR_MSG2, sizeof(ERROR_MSG2));
         }
     }
 

@@ -1,0 +1,37 @@
+## @file
+#  NULL version of the Advanced Logger Hdw Port library.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = AdvancedLoggerHdwPortLib
+  MODULE_UNI_FILE                = AdvancedLoggerHdwPortLib.uni
+  FILE_GUID                      = 519a564f-b837-4a91-ac23-c3774a76b017
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvancedLoggerHdwPortLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  AdvancedLoggerHdwPortLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+
+[Protocols]
+
+[Pcd]
+
+[Depex]
+  TRUE

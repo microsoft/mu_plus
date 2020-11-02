@@ -27,6 +27,9 @@
   #
   AdvancedLoggerAccessLib|Include/Library/AdvancedLoggerAccessLib.h
 
+  ## @library class Provides the interface to the Hdw Port
+  #
+  AdvancedLoggerAccessLib|Include/Library/AdvancedLoggerHdwPortLib.h
 
 [Guids]
   ## Token Space GUID
@@ -94,15 +97,14 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages|1024|UINT32|0x00010183
 
-  ## PcdAdvancedSerialLoggerDisable - When to turn off writing to the SerialPort.
+  ## PcdAdvancedLoggerHdwPortDisable - When to turn off writing to the HdwPort.
   ##
   # The values supported are:
   # 0 = Never
   # 2 = Exit Boot Services
   # 4 = Virtual Address Change
   #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedSerialLoggerDisable|0x04|UINT8|0x00010188
-
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDisable|0x04|UINT8|0x00010188
 
   ## PcdAdvancedFileLoggerFlush - When the in memory log is flushed to media
   # The values supported are:
@@ -114,9 +116,9 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush|1|UINT8|0x00010187
 
 [PcdsFixedAtBuild, PcdsDynamic]
-  ## Advanced Logger serial port filter ErrorLevel
+  ## Advanced Logger Hdw port filter ErrorLevel
   #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedSerialLoggerDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
 
 
 

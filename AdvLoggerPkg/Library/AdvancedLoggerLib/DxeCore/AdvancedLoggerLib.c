@@ -12,6 +12,7 @@
 
 #include <Protocol/AdvancedLogger.h>
 
+#include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -29,8 +30,6 @@
 STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
 STATIC UINT32                   mBufferSize = 0;
 STATIC EFI_PHYSICAL_ADDRESS     mMaxAddress = 0;
-
-STATIC VOID                    *mVariableWriteRegistration = NULL;
 
 STATIC ADVANCED_LOGGER_PROTOCOL mLoggerProtocol = {
                                                    ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
@@ -106,6 +105,11 @@ AdvancedLoggerGetLoggerInfo (
             LogPtr = (ADVANCED_LOGGER_PTR * ) GET_GUID_HOB_DATA(GuidHob);
             mLoggerInfo = ALI_FROM_PA(LogPtr->LoggerInfo);
             mLoggerProtocol.Context = (VOID *) mLoggerInfo;
+            if (!mLoggerInfo->HdwPortInitialized) {
+                AdvancedLoggerHdwPortInitialize();
+                mLoggerInfo->HdwPortInitialized = TRUE;
+            }
+
             if (mLoggerInfo != NULL) {
                 mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
             }
@@ -119,6 +123,38 @@ AdvancedLoggerGetLoggerInfo (
     return mLoggerInfo;
 }
 
+/**
+    OnRuntimeArchNotification
+
+    Collect the UEFI system time.
+
+  **/
+STATIC
+VOID
+EFIAPI
+OnRealTimeClockArchNotification (
+    IN  EFI_EVENT   Event,
+    IN  VOID        *Context
+    )
+{
+    EFI_STATUS         Status;
+    EFI_SYSTEM_TABLE  *SystemTable;
+
+    SystemTable = (EFI_SYSTEM_TABLE *) Context;
+
+    DEBUG((DEBUG_INFO, "%a: getting real time\n", __FUNCTION__));
+
+    SystemTable->BootServices->CloseEvent (Event);
+
+    Status = SystemTable->RuntimeServices->GetTime ((EFI_TIME *) &mLoggerInfo->Time, NULL);
+    if (EFI_ERROR (Status)) {
+        DEBUG((DEBUG_INFO, "%a: error getting real time. Code=%r\n", __FUNCTION__, Status));
+    } else {
+        mLoggerInfo->TicksAtTime = GetPerformanceCounter();
+    }
+
+    return;
+}
 
 /**
     OnVariableWriteNotification
@@ -138,7 +174,7 @@ OnVariableWriteNotification (
 
     SystemTable = (EFI_SYSTEM_TABLE *) Context;
 
-    DEBUG((DEBUG_INFO, "OnVariableWriteNotification, writing locator variable\n"));
+    DEBUG((DEBUG_INFO, "%a: writing locator variable\n", __FUNCTION__));
 
     SystemTable->RuntimeServices->SetVariable (
         ADVANCED_LOGGER_LOCATOR_NAME,
@@ -153,7 +189,7 @@ OnVariableWriteNotification (
 }
 
 /**
-    ProcessVariableWriteRegistration
+    ProcessProtocolRegistration
 
     This function registers for Variable Write being available.
 
@@ -164,37 +200,40 @@ OnVariableWriteNotification (
 
  **/
 EFI_STATUS
-ProcessVariableWriteRegistration (
-    IN EFI_SYSTEM_TABLE  *SystemTable
+ProcessProtocolRegistration (
+    IN EFI_SYSTEM_TABLE  *SystemTable,
+    IN EFI_GUID          *ProtocolGuid,
+    IN EFI_EVENT_NOTIFY   NotifyFunction
     )
 {
     EFI_STATUS      Status;
-    EFI_EVENT       VariableWriteEvent;
+    EFI_EVENT       ProtocolEvent;
+    VOID           *ProtocolRegistration;
 
     //
-    // Always register for file system notifications.  They may arrive at any time.
+    // Register for protocol notification.
     //
-    DEBUG((DEBUG_INFO, "Registering for VariableWrite notification\n"));
+    DEBUG((DEBUG_INFO, "%a: Registering for %g\n", __FUNCTION__, ProtocolGuid));
     Status = SystemTable->BootServices->CreateEvent (
                                EVT_NOTIFY_SIGNAL,
                                TPL_CALLBACK,
-                               OnVariableWriteNotification,
+                               NotifyFunction,
                                SystemTable,
-                              &VariableWriteEvent);
+                               &ProtocolEvent);
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: failed to create Variable Notification callback event (%r)\n", __FUNCTION__, Status));
+        DEBUG((DEBUG_ERROR, "%a: failed to create notification callback event (%r)\n", __FUNCTION__, Status));
         goto Cleanup;
     }
 
     Status = SystemTable->BootServices->RegisterProtocolNotify (
-                                          &gEfiVariableWriteArchProtocolGuid,
-                                           VariableWriteEvent,
-                                          &mVariableWriteRegistration);
+                                           ProtocolGuid,
+                                           ProtocolEvent,
+                                          &ProtocolRegistration);
 
     if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: failed to register for file system notifications (%r)\n", __FUNCTION__, Status));
-        SystemTable->BootServices->CloseEvent (VariableWriteEvent);
+        DEBUG((DEBUG_ERROR, "%a: failed to register for notification (%r)\n", __FUNCTION__, Status));
+        SystemTable->BootServices->CloseEvent (ProtocolEvent);
         goto Cleanup;
     }
 
@@ -203,7 +242,6 @@ ProcessVariableWriteRegistration (
 Cleanup:
     return Status;
 }
-
 
 /**
   DxeCore Advanced Logger initialization.
@@ -249,15 +287,25 @@ DxeCoreAdvancedLoggerLibConstructor (
                                                                       &mLoggerProtocol);
 
         if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Error installing protocol - %r\n", Status));
+            DEBUG((DEBUG_ERROR, "%a: Error installing protocol - %r\n", __FUNCTION__, Status));
             // If the protocol doesn't install, don't fail.
         }
     }
 
     DEBUG((DEBUG_INFO, "%a Initialized. mLoggerInfo = %p\n", __FUNCTION__, mLoggerInfo));
 
+    ProcessProtocolRegistration (
+        SystemTable,
+        &gEfiRealTimeClockArchProtocolGuid,
+        OnRealTimeClockArchNotification
+        );
+
     if (FeaturePcdGet(PcdAdvancedLoggerLocator)) {
-        ProcessVariableWriteRegistration (SystemTable);
+        ProcessProtocolRegistration (
+            SystemTable,
+            &gEfiVariableWriteArchProtocolGuid,
+            OnVariableWriteNotification
+            );
     }
 
     return EFI_SUCCESS;

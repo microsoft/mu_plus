@@ -15,13 +15,13 @@
 
 /**
   Write data from the DebugLib buffer to the in memory logging buffer,
-  and route it to the Serial Port lib.
+  and route it to the Hdw Port lib.
 
   Writes NumberOfBytes data bytes from Buffer to the logging buffer.
 
   @param  ErrorLevel       Error level passed into DebugLib
   @param  Buffer           Pointer to the data buffer to be written.
-  @param  NumberOfBytes    Number of bytes to written to the serial device.
+  @param  NumberOfBytes    Number of bytes to be written.
 
 
 **/

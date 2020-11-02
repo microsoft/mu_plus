@@ -11,17 +11,16 @@
 #define __ADVANCED_LOGGER_COMMON_H__
 
 /**
-    Write data from buffer to possible debugging devices.
+  Write data from buffer into the in memory logging buffer.
 
-    This is the interface from PeiCore
-    This is also called by the Ppi
+  Writes NumberOfBytes data bytes from Buffer to the logging buffer.
 
-    Writes NumberOfBytes data bytes from Buffer to the debugging devices.
+  @param  DebugLevel       Debug level of the message
+  @param  Buffer           Pointer to the data buffer to be written.
+  @param  NumberOfBytes    Number of bytes to be written to the Advanced Logger log.
 
-    @param  ErrorLevel       Error level of items top be printed
-    @param  Buffer           Pointer to the data buffer to be written.
-    @param  NumberOfBytes    Number of bytes to written to the serial device.
-
+  @retval LoggerInfo       Returns the logger info block. Returns NULL
+                           if it cannot be located. This occurs prior to SEC completion.
 **/
 VOID
 EFIAPI
@@ -36,6 +35,9 @@ AdvancedLoggerWrite (
 
     Each instance of the AdvancedLogger Library must provide the following interface
     for use by AdVancedLoggerWrite ();
+
+    @retval         Returns a pointer to the ADVANCED_LOGGER_INFO block.  Returns NULL
+                    if it cannot be located.  This occurs prior to SEC completion.
  **/
 ADVANCED_LOGGER_INFO *
 EFIAPI

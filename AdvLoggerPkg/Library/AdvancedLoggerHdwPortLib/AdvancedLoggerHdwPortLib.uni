@@ -1,0 +1,17 @@
+// /** @file
+// Advanced Logger Hdw Port Library.
+//
+// Provides a platform to have the Advanced Logger output directly to a hardware port.
+//
+//
+// Copyright (c) Microsoft Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "Advanced Logger Hdw Port Lib"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "Provides access method to access hdw port."
+

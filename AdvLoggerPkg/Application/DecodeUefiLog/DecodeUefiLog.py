@@ -93,8 +93,13 @@ class AdvLogParser ():
     #
     # ----------------------------------------------------------------------- #
 
-    # #  Developement Log Version (pre versioning)
+    # The dictionary entries for LoggerInfo is based on the UEFI structure.  Each version
+    # has its own structure. The current structure is defined in
+    # AdvLogger\Include\AdvancedLoggerInternal.h.  The structure as it was, or is, is included
+    # here for reference.
 
+    # Developement Log Version (pre versioning)
+    #
     # typedef volatile struct {
     #     UINT32                Signature;
     #     UINT32                LogBufferSize;
@@ -106,7 +111,7 @@ class AdvLogParser ():
     #     BOOLEAN               ExitBootServices;       // Exit Boot Services occurred
     #     BOOLEAN               PeiAllocated;           // Pei allocated "Temp Ram"
     # } ADVANCED_LOGGER_INFO;
-
+    #
     #
     #  Heuristic for V1 decoding:
     #   1. Version will appear as 0 as it is in the Low order 16 bits for the LogBufferSize.
@@ -114,8 +119,7 @@ class AdvLogParser ():
     V0_LOGGER_INFO_SIZE = 32
     V0_LOGGER_INFO_VERSION = 0
 
-    # #  First supported Log Version with versioning.
-
+    # First supported Log Version with versioning.
     # ----------------------------------------------------------------------- #
     #
     #
@@ -137,23 +141,27 @@ class AdvLogParser ():
     V1_LOGGER_INFO_SIZE = 48
     V1_LOGGER_INFO_VERSION = 1
 
-    #
-    # The dictionary entries for LoggerInfo is based on the UEFI structure above.
-    #
-    # Members of LoggerInfo
-    #
-    #  Signature
-    #  LogBufferSize;
-    #  LogBuffer;
-    #  LogCurrent;
-    #  DiscardedSize
-    #  SerialInitialized
-    #  InPermanentRAM
-    #  ExitBootServices
-    #  PeiAllocated
-    #  BaseAdress
-    #
     # ---------------------------------------------------------------------- #
+    # typedef volatile struct {
+    #     UINT32                Signature;           4  // Signature 'ALOG'
+    #     UINT16                Version;             6  // Current Version
+    #     UINT16                Reserved;            8  // Reserved for future
+    #     EFI_PHYSICAL_ADDRESS  LogBuffer;          16  // Fixed pointer to start of log
+    #     EFI_PHYSICAL_ADDRESS  LogCurrent;         24  // Where to store next log entry.
+    #     UINT32                DiscardedSize;      28  // Number of bytes of messages missed
+    #     UINT32                LogBufferSize;      32  // Size of allocated buffer
+    #     BOOLEAN               InPermanentRAM;     33  // Log in permanent RAM
+    #     BOOLEAN               AtRuntime;          34  // After ExitBootServices
+    #     BOOLEAN               GoneVirtual;        35  // After VirtualAddressChage
+    #     BOOLEAN               HdwPortInitialized; 36  // HdwPort initialized
+    #     BOOLEAN               HdwPortDisabled;    37  // HdwPort is Disabled
+    #     BOOLEAN               Reserved2[3];       40  //
+    #     UINT64                TimerFrequency;     48  // Ticks per second for log timing
+    #     UINT64                TicksAtTime;        56  // Ticks when Time Acquired
+    #     EFI_TIME              Time;               72  // Uefi Time Field
+    # } ADVANCED_LOGGER_INFO;
+    V2_LOGGER_INFO_SIZE = 72
+    V2_LOGGER_INFO_VERSION = 2
 
     # ---------------------------------------------------------------------- #
     #
@@ -201,6 +209,24 @@ class AdvLogParser ():
     #  Initialize log Header
     #
     # ---------------------------------------------------------------------- #
+    def _Compute_Basetime(self, LoggerInfo):
+        TicksAtTime = LoggerInfo["TicksAtTime"]
+        if (0 == TicksAtTime):
+            print("TicksAtTime is 0, real time is disabled")
+        else:
+            Hours = LoggerInfo["Hour"]
+            Minutes = LoggerInfo["Minute"]
+            Seconds = LoggerInfo["Second"]
+            Nanoseconds = LoggerInfo["Nanosecond"]
+
+            Temp = Hours * 60                # Hours to Minutes
+            Temp = (Temp + Minutes) * 60     # Hours + Minutes to Seconds
+            Temp += Seconds
+            Temp *= 1000000000               # Hours/Minutes/Seconds to Nanoseconds
+            Nanoseconds += Temp
+
+            TimeInTicks = self._GetTimeInTicks(Nanoseconds, LoggerInfo["Frequency"])
+            LoggerInfo["BaseTime"] = TimeInTicks - TicksAtTime
 
     def _InitializeLoggerInfo(self, InFile, StartLine):
         ''' Initialize log Header '''
@@ -209,7 +235,10 @@ class AdvLogParser ():
         LoggerInfo["CurrentLine"] = 0
         LoggerInfo["Signature"] = InFile.read(4).decode()
         Version = struct.unpack("=H", InFile.read(2))[0]
+        LoggerInfo["Version"] = Version
+        LoggerInfo["BaseTime"] = 0
         InFile.read(2)[0]           # Skip reserved field
+
         if LoggerInfo["Signature"] != "ALOG":
             raise Exception('Error initializing logger info. Invalid signature: %s' % LoggerInfo["Version"])
 
@@ -244,10 +273,43 @@ class AdvLogParser ():
             if InFile.tell() != (self.V1_LOGGER_INFO_SIZE):
                 raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
+        elif Version == self.V2_LOGGER_INFO_VERSION:
+            BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + self.V2_LOGGER_INFO_SIZE
+            LoggerInfo["LogBuffer"] = self.V2_LOGGER_INFO_SIZE
+            LoggerInfo["LogCurrent"] = struct.unpack("=Q", InFile.read(8))[0]
+            LoggerInfo["DiscardedSize"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["InPermanentRAM"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["AtRuntime"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["GoneVirtual"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["HdwInitialized"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["HdwDisabled"] = struct.unpack("=B", InFile.read(1))[0]
+            InFile.read(3)                 # skip reserved2 field
+            LoggerInfo["Frequency"] = struct.unpack("=Q", InFile.read(8))[0]
+            LoggerInfo["TicksAtTime"] = struct.unpack("=Q", InFile.read(8))[0]
+
+            # Reading in the EFI_TIME structure
+            LoggerInfo["Year"] = struct.unpack("=H", InFile.read(2))[0]
+            LoggerInfo["Month"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Day"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Hour"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Minute"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Second"] = struct.unpack("=B", InFile.read(1))[0]
+            InFile.read(1)                 # skip Pad1 field
+            LoggerInfo["Nanosecond"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["TimeZone"] = struct.unpack("=H", InFile.read(2))[0]
+            LoggerInfo["DayLight"] = struct.unpack("=B", InFile.read(1))[0]
+            InFile.read(1)                 # skip Pad2 field
+
+            self._Compute_Basetime(LoggerInfo)
+
+            LoggerInfo["LogCurrent"] += self.V2_LOGGER_INFO_SIZE
+            if InFile.tell() != (self.V2_LOGGER_INFO_SIZE):
+                raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
+
         else:
             raise Exception('Error initializing logger info. Unsupported version: 0x%X' % LoggerInfo["Version"])
 
-        LoggerInfo["Version"] = Version
         LoggerInfo["BaseAddress"] = BaseAddress
         LoggerInfo["LogCurrent"] -= BaseAddress
         LoggerInfo["InFile"] = InFile
@@ -393,27 +455,23 @@ class AdvLogParser ():
     #   Convert Ticks to approximate time based of Frequency setting
     #
     def _GetTimeInNanoSecond(self, Ticks, Frequency):
-        NanoSeconds = (Ticks // Frequency) * 1000000000
-        Remainder = Ticks % Frequency
-        BitLength = Remainder.bit_length()
+        Nanosecond = int((Ticks / Frequency) * 1000000000)
 
-        # -
-        # - Ensure (Remainder * 1,000,000,000) will not overflow 64-bit.
-        # - Since 2^29 < 1,000,000,000 = 0x3B9ACA00 < 2^30, Remainder should < 2^(64-30) = 2^34,
-        # - i.e. highest bit set in Remainder should <= 33.
-        # -
-        Shift = max((BitLength - 1 - 33), 0)
-        Remainder = Remainder >> Shift
-        Frequency = Frequency >> Shift
-        NanoSeconds += (Remainder * 1000000000) // Frequency
+        return Nanosecond
 
-        return NanoSeconds
+    #
+    #   Convert Nanoseconds back to Ticks
+    #
+    def _GetTimeInTicks(self, Nanosecond, Frequency):
+        Ticks = int((Nanosecond * Frequency) / 1000000000)
+
+        return Ticks
 
     #
     #   Get the formatted timestamp
     #
-    def _GetTimeStamp(self, Ticks, Frequency):
-        Temp = self._GetTimeInNanoSecond(Ticks, Frequency)
+    def _GetTimeStamp(self, Ticks, Frequency, BaseTime):
+        Temp = self._GetTimeInNanoSecond(Ticks + BaseTime, Frequency)
 
         Temp = Temp // (1000 * 1000)
         Hours = Temp // (1000 * 60 * 60)
@@ -425,15 +483,14 @@ class AdvLogParser ():
 
         # define ADV_TIME_STAMP_FORMAT "%2d:%2.2d:%2.2d.%3.3d "
 
-        Timestamp = f"{Hours:02}:{Minutes:02}:{Seconds:02}:{Milliseconds:03} "
+        Timestamp = f"{Hours:02}:{Minutes:02}:{Seconds:02}:{Milliseconds:03} : "
 
         return Timestamp
 
     #
     #   Get all of the formated message lines
     #
-    def _GetLines(self, Messages, LoggerInfo):
-        lines = []
+    def _GetLines(self, lines, LoggerInfo):
         Status = self.SUCCESS
         MessageLine = None
         CurrentLine = LoggerInfo["CurrentLine"]
@@ -448,7 +505,7 @@ class AdvLogParser ():
 
             if CurrentLine >= StartLine:
                 Ticks = MessageLine["TimeStamp"]
-                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"]) + MessageLine["Message"]
+                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + MessageLine["Message"]
                 lines.append(NewLine.rstrip() + '\n')
 
             CurrentLine += 1
@@ -470,8 +527,20 @@ class AdvLogParser ():
     # ----------------------------------------------------------------------- #
     def ProcessMessages(self, InFile, StartLine):
         LoggerInfo = self._InitializeLoggerInfo(InFile, StartLine)
-        Messages = None
-        lines = self._GetLines(Messages, LoggerInfo)
+
+        Year = LoggerInfo["Year"]
+        Month = LoggerInfo["Month"]
+        Day = LoggerInfo["Day"]
+        Hour = LoggerInfo["Hour"]
+        Minute = LoggerInfo["Minute"]
+        Second = LoggerInfo["Second"]
+
+        Title = f"Log from {Month:2}/{Day:02}/{Year:04} at {Hour:2}:{Minute:02}:{Second:02}\n\n"
+
+        lines = []
+        lines.append(Title)
+
+        self._GetLines(lines, LoggerInfo)
 
         return lines
 
@@ -499,11 +568,10 @@ def ReadLogFromUefiInterface():
             Index += 1
             InFile.write(var)
         elif (Index == 0):
-                print('Error initializing logger. No access to in memory log')
-                raise SystemExit(1)
+            print('Error initializing logger. No access to in memory log')
+            raise SystemExit(1)
         else:
-                print(f"Found {Index} variables worth of log")
-
+            print(f"Found {Index} variables worth of log")
 
     InFile.seek(0)
 

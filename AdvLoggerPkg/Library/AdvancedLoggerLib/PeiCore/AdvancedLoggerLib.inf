@@ -30,6 +30,7 @@
   AdvLoggerPkg/AdvLoggerPkg.dec
 
 [LibraryClasses]
+  AdvancedLoggerHdwPortLib
   BaseLib
   BaseMemoryLib
   HobLib

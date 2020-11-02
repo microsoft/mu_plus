@@ -11,6 +11,7 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Library/AdvancedLoggerLib.h>
+#include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcdLib.h>
 #include <Library/SynchronizationLib.h>
@@ -40,6 +41,10 @@ AdvancedLoggerGetLoggerInfo (
     LoggerInfoSec = NULL;
     if (LogPtr != NULL) {
         LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
+        if (!LoggerInfoSec->HdwPortInitialized) {
+            AdvancedLoggerHdwPortInitialize();
+            LoggerInfoSec->HdwPortInitialized = TRUE;
+        }
     }
 
     return LoggerInfoSec;

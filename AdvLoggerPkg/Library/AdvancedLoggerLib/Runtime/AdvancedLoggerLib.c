@@ -120,8 +120,7 @@ OnExitBootServicesNotification (
 {
 
     //
-    // Runtime logging is currently not supported, so clear mLoggerInfo.  This
-    // will also stop serial port output from Runtime Advanced Logger instances.
+    // Runtime logging is currently not supported, so clear mLoggerInfo.
     //
     mLoggerInfo = NULL;
     mBS = NULL;

@@ -27,7 +27,7 @@ STATIC BOOLEAN                   mInitialized = FALSE;
 
   @param  ErrorLevel       Error level of items top be printed
   @param  Buffer           Pointer to the data buffer to be written.
-  @param  NumberOfBytes    Number of bytes to written to the serial device.
+  @param  NumberOfBytes    Number of bytes to written to the log.
 
 
 **/

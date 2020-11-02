@@ -11,6 +11,7 @@
 
 #include <AdvancedLoggerInternal.h>
 
+#include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcdLib.h>
 #include <Library/SynchronizationLib.h>
@@ -23,13 +24,15 @@
 
   Writes NumberOfBytes data bytes from Buffer to the logging buffer.
 
+  @param  DebugLevel       Debug level of the message
   @param  Buffer           Pointer to the data buffer to be written.
-  @param  NumberOfBytes    Number of bytes to written to the Advanced Logger log.
+  @param  NumberOfBytes    Number of bytes to be written to the Advanced Logger log.
 
-  @retval LoggerInfo       Returns the logger info block
+  @retval LoggerInfo       Returns the logger info block. Returns NULL
+                           if it cannot be located. This occurs prior to SEC completion.
 **/
 STATIC
-VOID
+ADVANCED_LOGGER_INFO *
 AdvancedLoggerMemoryLoggerWrite (
     IN       UINTN    DebugLevel,
     IN CONST CHAR8   *Buffer,
@@ -47,11 +50,11 @@ AdvancedLoggerMemoryLoggerWrite (
     ADVANCED_LOGGER_MESSAGE_ENTRY  *Entry;
 
     if ((NumberOfBytes == 0) || (Buffer == NULL)) {
-        return;
+        return NULL;
     }
 
     if (NumberOfBytes > MAX_UINT16) {
-        return;
+        return NULL;
     }
 
     LoggerInfo = AdvancedLoggerGetLoggerInfo ();
@@ -70,19 +73,24 @@ AdvancedLoggerMemoryLoggerWrite (
                 do {
                     CurrentSize = LoggerInfo->DiscardedSize;
                     NewSize = LoggerInfo->DiscardedSize + (UINT32) NumberOfBytes;
-                    OldSize = InterlockedCompareExchange32 ( (UINT32 *) &LoggerInfo->DiscardedSize,
-                                                             (UINT32) CurrentSize,
-                                                             (UINT32) NewSize);
+                    OldSize = InterlockedCompareExchange32 (
+                                (UINT32 *) &LoggerInfo->DiscardedSize,
+                                (UINT32) CurrentSize,
+                                (UINT32) NewSize
+                                );
 
                 } while (OldSize != CurrentSize);
 
-                return;
+                return LoggerInfo;
             }
 
             NewBuffer = PA_FROM_PTR((CHAR8_FROM_PA(CurrentBuffer) + EntrySize));
-            OldValue = InterlockedCompareExchange64 ( (UINT64 *) &LoggerInfo->LogCurrent,
-                                                      (UINT64) CurrentBuffer,
-                                                      (UINT64) NewBuffer);
+            OldValue = InterlockedCompareExchange64 (
+                         (UINT64 *) &LoggerInfo->LogCurrent,
+                         (UINT64) CurrentBuffer,
+                         (UINT64) NewBuffer
+                         );
+
         } while (OldValue != CurrentBuffer);
 
         Entry = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(CurrentBuffer);
@@ -95,6 +103,8 @@ AdvancedLoggerMemoryLoggerWrite (
         CopyMem(Entry->MessageText, Buffer, NumberOfBytes);
         Entry->Signature = MESSAGE_ENTRY_SIGNATURE;
     }
+
+    return LoggerInfo;
 }
 
 
@@ -108,7 +118,7 @@ AdvancedLoggerMemoryLoggerWrite (
 
   @param  DebugLevel       Error level of items top be printed
   @param  Buffer           Pointer to the data buffer to be written.
-  @param  NumberOfBytes    Number of bytes to written to the Advanced Logger log.
+  @param  NumberOfBytes    Number of bytes to be written to the Advanced Logger log.
 
 
 **/
@@ -119,9 +129,19 @@ AdvancedLoggerWrite (
     IN CONST CHAR8   *Buffer,
     IN       UINTN    NumberOfBytes
   ) {
+    ADVANCED_LOGGER_INFO    *LoggerInfo;
+
 
     // All messages go to the in memory log.
 
-    AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
+    LoggerInfo = AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 
+    // Only selected messages go to the hdw port.
+
+    // If LoggerInfo == NULL, assume there is a HdwPort and it has not been disabled. This
+    // can occur in SEC and other points of darkness for logging debug messages
+
+    if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled)) {
+        AdvancedLoggerHdwPortWrite(DebugLevel, (UINT8 *) Buffer, NumberOfBytes);
+    }
 }

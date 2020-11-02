@@ -12,7 +12,7 @@
 #define __ADVANCED_LOGGER_INTERNAL_H__
 
 #define ADVANCED_LOGGER_SIGNATURE     SIGNATURE_32('A','L','O','G')
-#define ADVANCED_LOGGER_VERSION       1
+#define ADVANCED_LOGGER_VERSION       2
 
 //
 // These Pcds are used to carve out a PEI memory buffer from the temporary RAM.
@@ -40,8 +40,12 @@ typedef volatile struct {
     BOOLEAN               InPermanentRAM;         // Log in permanent RAM
     BOOLEAN               AtRuntime;              // After ExitBootServices
     BOOLEAN               GoneVirtual;            // After VirtualAddressChage
-    BOOLEAN               Reserved2[5];           //
+    BOOLEAN               HdwPortInitialized;     // HdwPort initialized
+    BOOLEAN               HdwPortDisabled;        // HdwPort is Disabled
+    BOOLEAN               Reserved2[3];           //
     UINT64                TimerFrequency;         // Ticks per second for log timing
+    UINT64                TicksAtTime;            // Ticks when Time Acquired
+    EFI_TIME              Time;                   // Uefi Time Field
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {
@@ -86,11 +90,11 @@ typedef struct {
 } ADVANCED_LOGGER_PTR;
 
 //
-// Bit flags for PcdAdvancedSerialDisable
+// Bit flags for PcdAdvancedLoggerHdwDisable
 //
-#define ADV_PCD_DISABLE_SERIAL_FLAGS_NEVER                  0x00
-#define ADV_PCD_DISABLE_SERIAL_FLAGS_EXIT_BOOT_SERVICES     0x02
-#define ADV_PCD_DISABLE_SERIAL_FLAGS_VIRTUAL_ADDRESS_CHANGE 0x04
+#define ADV_PCD_DISABLE_HDW_PORT_FLAGS_NEVER                  0x00
+#define ADV_PCD_DISABLE_HDW_PORT_FLAGS_EXIT_BOOT_SERVICES     0x02
+#define ADV_PCD_DISABLE_HDW_PORT_FLAGS_VIRTUAL_ADDRESS_CHANGE 0x04
 
 //
 // Bit flags for PcdAdvancedFileLoggerFlush
@@ -100,7 +104,7 @@ typedef struct {
 #define ADV_PCD_FLUSH_TO_MEDIA_FLAGS_EXIT_BOOT_SERVICES     0x02
 
 //
-// Address of mLoggerInfo block for script access to in memory log
+// Address of LoggerInfo block for script access to in memory log
 //
 #define ADVANCED_LOGGER_LOCATOR_NAME L"AdvLoggerLocator"
 

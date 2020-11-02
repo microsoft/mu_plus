@@ -70,7 +70,7 @@ WriteToSerialPort (
         if (WriteSize > 0) {
             // Only selected messages go to the serial port.
 
-            if (mAccessEntry.DebugLevel & PcdGet32(PcdAdvancedSerialLoggerDebugPrintErrorLevel)) {
+            if (mAccessEntry.DebugLevel & PcdGet32(PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
                 Status = SerialPortWrite((UINT8 *) mAccessEntry.Message, mAccessEntry.MessageLen);
                 if (EFI_ERROR(Status)) {
                     DEBUG((DEBUG_ERROR, "%a: Failed to write to serial port: %r\n", __FUNCTION__, Status));

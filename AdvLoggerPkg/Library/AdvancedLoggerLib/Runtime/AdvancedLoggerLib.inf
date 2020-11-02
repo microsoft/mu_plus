@@ -32,6 +32,7 @@
   AdvLoggerPkg/AdvLoggerPkg.dec
 
 [LibraryClasses]
+  AdvancedLoggerHdwPortLib
   BaseLib
   SynchronizationLib
   TimerLib
