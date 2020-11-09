@@ -194,7 +194,7 @@ CleanUpTestContext (
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
 
-    if (NULL != Btc->IdString) {
+    if ((NULL != Btc->IdString) && (Btc->IdString != (CHAR8 *) TEST_CONSTANT_ONE)) {
         FreePool (Btc->IdString);
     }
 
