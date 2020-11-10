@@ -18,6 +18,7 @@
   MODULE_TYPE                    = SEC
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = AdvancedLoggerLib
+  CONSTRUCTOR                    = AdvancedLoggerLibConstructor
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64 AARCH64

@@ -11,11 +11,14 @@
 
 #include <AdvancedLoggerInternal.h>
 
+#include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/HobLib.h>
 #include <Library/PeiServicesLib.h>
+
+#include "AdvancedLoggerSecDebugAgent.h"
 
 /**
   Initialize debug agent.
@@ -42,14 +45,17 @@ InitializeDebugAgent (
     IN DEBUG_AGENT_CONTINUE  Function  OPTIONAL
   ) {
     UINTN                       BufferSize;
+    EFI_PHYSICAL_ADDRESS        CarBase;
     UINTN                       DebugLevel;
     EFI_HOB_GUID_TYPE          *GuidHob;
     ADVANCED_LOGGER_INFO       *LoggerInfo;
     ADVANCED_LOGGER_PTR        *LogPtr;
+    ADVANCED_LOGGER_PTR        *LogPtrSec;
     EFI_PHYSICAL_ADDRESS        NewLogBuffer;
     ADVANCED_LOGGER_INFO       *NewLoggerInfo;
-    UINTN                       PreMemSize;
+    UINTN                       LogBufferSize;
     EFI_SEC_PEI_HAND_OFF       *SecCoreData;
+    EFI_PHYSICAL_ADDRESS        SecLogBuffer;
     EFI_STATUS                  Status;
     CHAR8                      *TargetLog;
 
@@ -57,7 +63,6 @@ InitializeDebugAgent (
         SecCoreData = (EFI_SEC_PEI_HAND_OFF *) Context;
 
         // At SEC entry
-
         // |-------------------|---->
         // |IDT Table          |
         // |-------------------|
@@ -73,65 +78,61 @@ InitializeDebugAgent (
         // |                   |
         // |-------------------|---->  TempRamBase
 
-        PreMemSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPreMemPages));
         ASSERT (SecCoreData->PeiTemporaryRamBase == (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase));
-        ASSERT (SecCoreData->PeiTemporaryRamSize >  PreMemSize);
 
-        if ((SecCoreData->PeiTemporaryRamBase == (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase)) &&
-            (SecCoreData->PeiTemporaryRamSize >  PreMemSize)) {
-            // So we don't have to save the PeiTemporaryRamBase in some exotic manner, this code
-            // assumes that PeiTemproaryRamBase is still the same as the PCD defined value
+        LogPtr = (ADVANCED_LOGGER_PTR *) SecCoreData->PeiTemporaryRamBase;
 
-            LogPtr = (ADVANCED_LOGGER_PTR *) SecCoreData->PeiTemporaryRamBase;
-            LoggerInfo = (ADVANCED_LOGGER_INFO *) (LogPtr + 1);
-            LogPtr->LoggerInfo = PA_FROM_PTR (LoggerInfo);
-            SecCoreData->PeiTemporaryRamBase =  (VOID *) (((UINTN) SecCoreData->PeiTemporaryRamBase) + PreMemSize);
-            SecCoreData->PeiTemporaryRamSize -= PreMemSize;
+        DEBUG ((DEBUG_ERROR, "%a Initializing AdvancedLogger.\n", __FUNCTION__));
+
+        SecCoreData->PeiTemporaryRamBase = (VOID *) (((UINTN) SecCoreData->PeiTemporaryRamBase) + sizeof(ADVANCED_LOGGER_PTR));
+        SecCoreData->PeiTemporaryRamSize -= sizeof(ADVANCED_LOGGER_PTR);
+
+        // After carving out Logger Buffer Pointer
+
+        // |----------------------|---->
+        // |IDT Table             |
+        // |----------------------|
+        // |PeiService Pointer    |    PeiStackSize
+        // |----------------------|
+        // |                      |
+        // |      Stack           |
+        // |----------------------|---->
+        // |                      |
+        // |                      |
+        // |      Heap            |    PeiTemporayRamSize
+        // |                      |
+        // |                      |
+        // |----------------------|----> New TempRamBase
+        // | ADVANCED_LOGGER_PTR  |----> Contains physical address of LoggerInfo
+        // |----------------------|---->
+
+        LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet64 (PcdAdvancedLoggerPreMemPages));
+        CarBase = (EFI_PHYSICAL_ADDRESS) FixedPcdGet64 (PcdAdvancedLoggerCarBase);
+
+        NewLogBuffer = AllocateRamForSEC (CarBase, LogBufferSize);
+        if (NewLogBuffer != 0ULL) {
+            LoggerInfo = ALI_FROM_PA(NewLogBuffer);
             ZeroMem ((VOID *) LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
             LoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
             LoggerInfo->Version = ADVANCED_LOGGER_VERSION;
-            LoggerInfo->LogBufferSize = PreMemSize - sizeof(ADVANCED_LOGGER_INFO) - sizeof(LogPtr);
+            LoggerInfo->LogBufferSize = LogBufferSize - sizeof(ADVANCED_LOGGER_INFO);
             LoggerInfo->LogBuffer = PA_FROM_PTR ( (LoggerInfo + 1));
             LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
+            LoggerInfo->HdwPortInitialized = TRUE;
+            LogPtr->LogBuffer = NewLogBuffer;     // Set physical address of Logger Memory at TemporaryRamBase
+            LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
 
             DEBUG((DEBUG_INFO, "%a: Start. SecLogInfo=%p\n", __FUNCTION__, LoggerInfo));
             DEBUG_BUFFER(DEBUG_INFO, (VOID *) LoggerInfo, sizeof(ADVANCED_LOGGER_INFO), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-
-            // After carving out Logger Buffer
-
-            // |-------------------|---->
-            // |IDT Table          |
-            // |-------------------|
-            // |PeiService Pointer |    PeiStackSize
-            // |-------------------|
-            // |                   |
-            // |      Stack        |
-            // |-------------------|---->
-            // |                   |
-            // |                   |
-            // |      Heap         |    PeiTemporayRamSize
-            // |                   |
-            // |                   |
-            // |-------------------|---->  TempRamBase
-            // |                   |
-            // |    Logger Buffer  |
-            // |                   |
-            // |-------------------|---->
-            // |   LoggerInfo      |<---+   Temp Logger Info until Pei hob created
-            // |-------------------|    |
-            // |   LoggerInfo PTR  |----+
-            // |-------------------|----> LoggerInfo->
-
-
             // From this point until the PeiDebugLib constructor creates the Logger Info HOB, the access
             // to the LoggerInfo is via PCD to the well known address.  However, there is some overlap between
             // PEI and SEC due to SEC PPI callbacks. There will be two transition of logging:
             //
-            //  1. When the PeiCore DebugLib constructor is called, a HOB is created with a Logger Info block.
+            //  1. When the PeiCore AdvancedLoggerLib constructor is called, a HOB is created with a Logger Info block.
             //     The Logger Info block created here is copied to the HOB, and the Sec LoggerInfo PTR is updated
             //     to point to the HOB version of the Logger Info block. All future SEC references will reference
             //     the HOB version of the Logger Info block. This way, even if SEC code were to access the well
-            //     know PCD address, the one current Logger Info block will be used.
+            //     known PCD address, the current Logger Info block will be used.
             //
             //  2. When Memory is available, the PeiCore constructor is called again, and the Logger Info HOB is
             //     updated to a proper in memory buffer, and the temporary RAM buffer is copied into the proper
@@ -140,6 +141,7 @@ InitializeDebugAgent (
             //  3. The last transition is to DXE at DXE_CORE initialization.  The HOB information is duplicated into a
             //     DXE version of the Logger Info block, and a protocol is published for the normal DXE DebugLib.
         }
+
     } else if (InitFlag == DEBUG_AGENT_INIT_POSTMEM_SEC) {
         //
         // Update HOB for use after memory has been allocated
@@ -154,7 +156,7 @@ InitializeDebugAgent (
         if (GuidHob != NULL) {
             DEBUG((DEBUG_INFO, "%a: Updating PeiCore HOB...%p\n",  __FUNCTION__, GuidHob));
             LogPtr = (ADVANCED_LOGGER_PTR *) PTR_FROM_PA( GET_GUID_HOB_DATA(GuidHob));
-            LoggerInfo = ALI_FROM_PA(LogPtr->LoggerInfo);
+            LoggerInfo = ALI_FROM_PA(LogPtr->LogBuffer);
             if (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE) {
                 //
                 // Reserved memory type is used to grant the SMM Library to access the logger
@@ -166,28 +168,18 @@ InitializeDebugAgent (
                                                   &NewLogBuffer);
                 if (!EFI_ERROR(Status)) {
                     BufferSize = (UINTN) (LoggerInfo->LogCurrent - LoggerInfo->LogBuffer);
-                    DEBUG((DEBUG_INFO, "%a: - Old Info=%p Buffer=%LX, Current=%LX, Size=%d\n",
+                    DEBUG((DEBUG_INFO, "%a: - Old Info=%p Buffer=%LX, Current=%LX, Size=%d, Used=%d\n",
                         __FUNCTION__,
                         LoggerInfo,
                         LoggerInfo->LogBuffer,
                         LoggerInfo->LogCurrent,
-                        LoggerInfo->LogBufferSize));
+                        LoggerInfo->LogBufferSize,
+                        LoggerInfo->LogCurrent - LoggerInfo->LogBuffer));
 
                     NewLoggerInfo = ALI_FROM_PA(NewLogBuffer);
                     CopyMem ((VOID *) NewLoggerInfo, (VOID *) LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
                     NewLoggerInfo->LogBuffer = PA_FROM_PTR( (NewLoggerInfo + 1));
-                    if ((NewLoggerInfo->Signature == LoggerInfo->Signature) &&
-                        (NewLoggerInfo->LogBuffer == LoggerInfo->LogBuffer) &&
-                        (NewLoggerInfo->LogBufferSize == LoggerInfo->LogBufferSize) &&
-                        (((UINTN) (NewLoggerInfo->LogCurrent - NewLoggerInfo->LogBuffer)) <
-                            (LoggerInfo->LogBufferSize / 2))) {
-                        // Looks like the log buffer is in the same place, and may have some
-                        // Valid Data from the previous boot. Leave that log there,
-                        // and append the new SEC buffer at the end.
-                        TargetLog = CHAR8_FROM_PA(NewLoggerInfo->LogCurrent);
-                    } else {
-                        TargetLog = CHAR8_FROM_PA(NewLoggerInfo->LogBuffer);
-                    }
+                    TargetLog = CHAR8_FROM_PA(NewLoggerInfo->LogBuffer);
 
                     if (BufferSize > 0) {
                         CopyMem (TargetLog,
@@ -195,19 +187,24 @@ InitializeDebugAgent (
                                 (BufferSize));
                     }
 
-                    NewLoggerInfo->LogBufferSize = (EFI_PAGE_SIZE * FixedPcdGet32(PcdAdvancedLoggerPages));
+                    NewLoggerInfo->LogBufferSize = (EFI_PAGE_SIZE * FixedPcdGet32(PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
                     NewLoggerInfo->LogCurrent = PA_FROM_PTR( TargetLog + BufferSize );
                     NewLoggerInfo->InPermanentRAM = TRUE;
 
                     //
                     // Update the HOB pointer
                     //
-                    LogPtr->LoggerInfo = PA_FROM_PTR (NewLoggerInfo);
+                    LogPtr->LogBuffer = NewLogBuffer;
                     //
-                    // Update the SEC pointer
+                    // Update the SEC pointer and free the RamForSEC buffer.
                     //
-                    LogPtr = (ADVANCED_LOGGER_PTR *) (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase);
-                    LogPtr->LoggerInfo = PA_FROM_PTR (LoggerInfo);
+                    LogPtrSec = (ADVANCED_LOGGER_PTR *) (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase);
+                    SecLogBuffer = LogPtrSec->LogBuffer;
+
+                    // Update Sec LogPtr to point to NewLogBuffer
+                    LogPtrSec->LogBuffer = NewLogBuffer;
+
+                    FreeRamForSEC (SecLogBuffer);
 
                     if (NewLoggerInfo->DiscardedSize != 0) {
                         DebugLevel = DEBUG_ERROR;

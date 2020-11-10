@@ -103,7 +103,7 @@ AdvancedLoggerGetLoggerInfo (
         GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
         if (GuidHob != NULL) {
             LogPtr = (ADVANCED_LOGGER_PTR * ) GET_GUID_HOB_DATA(GuidHob);
-            mLoggerInfo = ALI_FROM_PA(LogPtr->LoggerInfo);
+            mLoggerInfo = ALI_FROM_PA(LogPtr->LogBuffer);
             mLoggerProtocol.Context = (VOID *) mLoggerInfo;
             if (!mLoggerInfo->HdwPortInitialized) {
                 AdvancedLoggerHdwPortInitialize();

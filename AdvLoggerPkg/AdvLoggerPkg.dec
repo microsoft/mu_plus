@@ -89,6 +89,10 @@
   #                         Address = UEFI starts with SEC, and SEC provided LogInfoPtr is at this address
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase|0x00000000|UINT64|0x00010181
 
+  ## Advanced Logger Car Base - Physical address to use for CacheAsRam region for AdvLogger
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerCarBase|0x00000000|UINT64|0x00010198
+
   ## PcdAdvancedLoggerPreMemPages = Size of pre-memory memory buffer (SEC or PEI Pre-memory)
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages|8|UINT32|0x00010182
@@ -119,7 +123,6 @@
   ## Advanced Logger Hdw port filter ErrorLevel
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
-
 
 
 [UserExtensions.TianoCore."ExtraFiles"]

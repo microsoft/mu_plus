@@ -22,11 +22,15 @@
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#  VALID_ARCHITECTURES           = IA32
 #
 
 [Sources]
   AdvancedLoggerSecDebugAgent.c
+
+[Sources.Ia32]
+  ia32/RamForSEC.c
+  ia32/AsmRepLodsd.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -34,10 +38,13 @@
   AdvLoggerPkg/AdvLoggerPkg.dec
 
 [LibraryClasses]
+  AdvancedLoggerHdwPortLib
   BaseMemoryLib
+  BaseLib
   DebugLib
   DebugAgentLib
   HobLib
+  MtrrLib
   PcdLib
   PeiServicesLib
 
@@ -48,6 +55,7 @@
 
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase          ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerCarBase       ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages   ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages         ## CONSUMES
 

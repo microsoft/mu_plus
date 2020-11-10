@@ -88,7 +88,7 @@ InstallPermanentMemoryBuffer (
     ADVANCED_LOGGER_PTR        *LogPtr;
     EFI_PHYSICAL_ADDRESS        NewLogBuffer;
     ADVANCED_LOGGER_INFO       *NewLoggerInfo;
-    EFI_PHYSICAL_ADDRESS        OldLoggerInfo;
+    EFI_PHYSICAL_ADDRESS        OldLoggerBuffer;
     EFI_STATUS                  Status;
 
     DEBUG((DEBUG_INFO, "%a: Find PeiCore HOB...\n",  __FUNCTION__));
@@ -97,7 +97,7 @@ InstallPermanentMemoryBuffer (
         DEBUG((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n",  __FUNCTION__));
     } else {
         LogPtr = (ADVANCED_LOGGER_PTR *) GET_GUID_HOB_DATA(GuidHob);
-        LoggerInfo = ALI_FROM_PA(LogPtr->LoggerInfo);
+        LoggerInfo = ALI_FROM_PA(LogPtr->LogBuffer);
         if (!LoggerInfo->InPermanentRAM) {
             //
             // Must be PeiCore allocated small memory buffer
@@ -118,15 +118,14 @@ InstallPermanentMemoryBuffer (
                 }
 
                 NewLoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
-                NewLoggerInfo->LogCurrent = PA_FROM_PTR( CHAR8_FROM_PA(NewLoggerInfo->LogBuffer) + BufferSize );
+                NewLoggerInfo->LogCurrent = PA_FROM_PTR( CHAR8_FROM_PA(NewLogBuffer) + BufferSize );
                 NewLoggerInfo->InPermanentRAM = TRUE;
                 //
                 // Update the HOB pointer
                 //
-                OldLoggerInfo = LogPtr->LoggerInfo;
-                LogPtr->LoggerInfo = PA_FROM_PTR (NewLoggerInfo);
-                mLoggerInfo = NewLoggerInfo;
-                PeiServicesFreePages (OldLoggerInfo,
+                OldLoggerBuffer = LogPtr->LogBuffer;
+                LogPtr->LogBuffer = NewLogBuffer;
+                PeiServicesFreePages (OldLoggerBuffer,
                                       FixedPcdGet32 (PcdAdvancedLoggerPreMemPages));
 
                 if (NewLoggerInfo->DiscardedSize != 0) {
@@ -167,10 +166,13 @@ GetSecLoggerInfo (
     // The PCD AdvancedLoggerBase MAY be a 64 bit address.  However, it is
     // trimmed to be a pointer the size of the actual platform - and the Pcd is expected
     // to be set accordingly.
-    LogPtr = (ADVANCED_LOGGER_PTR *) (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase);
     LoggerInfoSec = NULL;
-    if (LogPtr != NULL) {
-        LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
+    LogPtr = (ADVANCED_LOGGER_PTR *) (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase);
+    if ((LogPtr != NULL) &&
+        (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
+        (LogPtr->LogBuffer != 0ULL))
+    {
+        LoggerInfoSec = ALI_FROM_PA(LogPtr->LogBuffer);
         if (!LoggerInfoSec->HdwPortInitialized) {
             AdvancedLoggerHdwPortInitialize();
             LoggerInfoSec->HdwPortInitialized = TRUE;
@@ -202,7 +204,7 @@ UpdateSecLoggerInfo (
     // to be set accordingly.
     LogPtr = (ADVANCED_LOGGER_PTR *) (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase);
     if (LogPtr != NULL) {
-        LogPtr->LoggerInfo = PA_FROM_PTR (LoggerInfo);
+        LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
     }
 }
 
@@ -263,7 +265,7 @@ AdvancedLoggerGetLoggerInfo (
     GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
     if (GuidHob != NULL) {
         LogPtr = (ADVANCED_LOGGER_PTR *) GET_GUID_HOB_DATA(GuidHob);
-        LoggerInfo = ALI_FROM_PA(LogPtr->LoggerInfo);
+        LoggerInfo = ALI_FROM_PA(LogPtr->LogBuffer);
     } else {
         Status = PeiServicesCreateHob (EFI_HOB_TYPE_GUID_EXTENSION,
                                        (UINT16) (sizeof(EFI_HOB_GUID_TYPE) + sizeof(ADVANCED_LOGGER_PTR)),
@@ -314,7 +316,8 @@ AdvancedLoggerGetLoggerInfo (
                 //
                 // Update the HOB pointer to point to current LoggerInfo
                 //
-                LogPtr->LoggerInfo = PA_FROM_PTR (LoggerInfo);
+                LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
+                LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
 
                 //
                 // Publish the mAdvancedLoggerPpiList
@@ -333,13 +336,10 @@ AdvancedLoggerGetLoggerInfo (
                     PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
                 }
             } else {
-                #define ERROR_MSG1 "Error creating Advanced Logger Info Block 1\n"
-                AdvancedLoggerHdwPortWrite (DEBUG_ERROR, (UINT8 *) ERROR_MSG1, sizeof(ERROR_MSG1));
+                DEBUG((DEBUG_ERROR, "Error creating Advanced Logger Info Block 1\n"));
             }
         } else {
-            AdvancedLoggerHdwPortInitialize ();
-            #define ERROR_MSG2 "Error creating Advanced Logger Info Block 2\n"
-            AdvancedLoggerHdwPortWrite (DEBUG_ERROR, (UINT8 *) ERROR_MSG2, sizeof(ERROR_MSG2));
+            DEBUG((DEBUG_ERROR, "Error creating Advanced Logger Info Block 2\n"));
         }
     }
 

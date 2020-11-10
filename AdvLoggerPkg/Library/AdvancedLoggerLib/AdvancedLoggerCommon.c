@@ -47,6 +47,7 @@ AdvancedLoggerMemoryLoggerWrite (
     UINT32                          NewSize;
     UINT32                          CurrentSize;
     UINTN                           EntrySize;
+    UINTN                           UsedSize;
     ADVANCED_LOGGER_MESSAGE_ENTRY  *Entry;
 
     if ((NumberOfBytes == 0) || (Buffer == NULL)) {
@@ -59,20 +60,20 @@ AdvancedLoggerMemoryLoggerWrite (
 
     LoggerInfo = AdvancedLoggerGetLoggerInfo ();
 
-    EntrySize = MESSAGE_ENTRY_SIZE(NumberOfBytes);
-
     if (LoggerInfo != NULL) {
+        EntrySize = MESSAGE_ENTRY_SIZE(NumberOfBytes);
         do {
             CurrentBuffer = LoggerInfo->LogCurrent;
-            if ((LoggerInfo->LogBufferSize -
-                ((UINTN)(CurrentBuffer - LoggerInfo->LogBuffer))) < EntrySize) {
+            UsedSize = (UINTN) (CurrentBuffer - LoggerInfo->LogBuffer);
+            if ((UsedSize >= LoggerInfo->LogBufferSize) ||
+               ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize)) {
 
                 //
                 // Update the number of bytes of log that have not been captured
                 //
                 do {
                     CurrentSize = LoggerInfo->DiscardedSize;
-                    NewSize = LoggerInfo->DiscardedSize + (UINT32) NumberOfBytes;
+                    NewSize = CurrentSize + (UINT32) NumberOfBytes;
                     OldSize = InterlockedCompareExchange32 (
                                 (UINT32 *) &LoggerInfo->DiscardedSize,
                                 (UINT32) CurrentSize,

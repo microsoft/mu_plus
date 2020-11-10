@@ -233,7 +233,7 @@ class AdvLogParser ():
         LoggerInfo = {}
         LoggerInfo["StartLine"] = StartLine
         LoggerInfo["CurrentLine"] = 0
-        LoggerInfo["Signature"] = InFile.read(4).decode()
+        LoggerInfo["Signature"] = InFile.read(4).decode('utf-8', 'replace')
         Version = struct.unpack("=H", InFile.read(2))[0]
         LoggerInfo["Version"] = Version
         LoggerInfo["BaseTime"] = 0
@@ -332,11 +332,11 @@ class AdvLogParser ():
 
         InFile = LoggerInfo["InFile"]
 
-        MessageEntry["Signature"] = InFile.read(4).decode('utf-8', 'ignore')
+        MessageEntry["Signature"] = InFile.read(4).decode('utf-8', 'replace')
         MessageEntry["DebugLevel"] = struct.unpack("=I", InFile.read(4))[0]
         MessageEntry["TimeStamp"] = struct.unpack("=Q", InFile.read(8))[0]
         MessageEntry["MessageLen"] = struct.unpack("=H", InFile.read(2))[0]
-        MessageEntry["MessageText"] = InFile.read(MessageEntry["MessageLen"]).decode('utf-8', 'ignore')
+        MessageEntry["MessageText"] = InFile.read(MessageEntry["MessageLen"]).decode('utf-8', 'replace')
 
         Skip = InFile.tell()
         Norm = int((int((Skip + 7) / 8)) * 8)
@@ -398,6 +398,7 @@ class AdvLogParser ():
             AccessMessageLineEntry = {}
             AccessMessageLineEntry["Message"] = 0
             AccessMessageLineEntry["ResidualLen"] = 0
+            AccessMessageLineEntry["TimeStamp"] = 0
 
         AccessMessageLineEntry["Message"] = 0
         Status = self.SUCCESS
@@ -426,7 +427,7 @@ class AdvLogParser ():
                     break
 
                 if TargetLen >= (self.MAX_MESSAGE_SIZE - 2):
-                    AccessMessageLineEntry["Message"]
+                    AccessMessageLineEntry["Message"] += '\n'
                     TargetLen = TargetLen + 1
                     break
 
@@ -444,10 +445,8 @@ class AdvLogParser ():
             if Status == self.SUCCESS:
                 AccessMessageLineEntry["ResidualLen"] = AccessMessageBlock["MessageLen"]
                 AccessMessageLineEntry["ResidualChar"] = AccessMessageBlock["Message"]
-
-        if Status == self.SUCCESS:
-            AccessMessageLineEntry["TimeStamp"] = AccessMessageBlock["TimeStamp"]
-            AccessMessageLineEntry["DebugLevel"] = AccessMessageBlock["DebugLevel"]
+                AccessMessageLineEntry["TimeStamp"] = AccessMessageBlock["TimeStamp"]
+                AccessMessageLineEntry["DebugLevel"] = AccessMessageBlock["DebugLevel"]
 
         return (Status, AccessMessageLineEntry)
 
@@ -535,10 +534,16 @@ class AdvLogParser ():
         Minute = LoggerInfo["Minute"]
         Second = LoggerInfo["Second"]
 
-        Title = f"Log from {Month:2}/{Day:02}/{Year:04} at {Hour:2}:{Minute:02}:{Second:02}\n\n"
+        DiscardedSize = LoggerInfo["DiscardedSize"]
 
+        Title = f"Log from {Month:2}/{Day:02}/{Year:04} at {Hour:2}:{Minute:02}:{Second:02}\n\n"
         lines = []
         lines.append(Title)
+
+        if (DiscardedSize != 0):
+            Title2 = f"The memory space was short by {DiscardedSize} bytes. Some PEI messages are not in the in memory log.\n\n"
+
+            lines.append(Title2)
 
         self._GetLines(lines, LoggerInfo)
 
@@ -622,14 +627,19 @@ def main():
 
     except Exception as ex:
         print("Error processing log output.")
-        print(ex)
+        traceback.print_exc()
 
-    if options.RawFilePath is not None:
-        RawFile = open(options.RawFilePath, "wb")
-        InFile.seek(0)
-        RawFile.write(InFile.read())
-        RawFile.close()
-        print("RawFile complete")
+    try:
+        if options.RawFilePath is not None:
+            RawFile = open(options.RawFilePath, "wb")
+            InFile.seek(0)
+            RawFile.write(InFile.read())
+            RawFile.close()
+            print("RawFile complete")
+
+    except Exception as ex:
+        print("Error processing raw file output.")
+        traceback.print_exc()
 
     InFile.close()
 

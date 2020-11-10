@@ -85,8 +85,12 @@ STATIC_ASSERT (sizeof(ADVANCED_LOGGER_INFO) % 8 == 0, "Logger Info Misaligned" )
 // Log Buffer Base PCD points to this structure.  This is also the structure of the
 // Advanced Logger HOB.
 //
+
+#define ADVANCED_LOGGER_PTR_SIGNATURE     SIGNATURE_64('A','l','o','g','_','P','t','r')
+
 typedef struct {
-    EFI_PHYSICAL_ADDRESS    LoggerInfo;
+    EFI_PHYSICAL_ADDRESS    LogBuffer;
+    UINT64                  Signature;              // Signature 'Alog_Ptr'
 } ADVANCED_LOGGER_PTR;
 
 //

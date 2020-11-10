@@ -139,6 +139,7 @@
   AdvLoggerPkg/UnitTests/LineParser/LineParserTest.inf
   AdvLoggerPkg/Library/AdvancedLoggerHdwPortLibNull/AdvancedLoggerHdwPortLibNull.inf
   AdvLoggerPkg/Library/AdvancedLoggerHdwPortLib/AdvancedLoggerHdwPortLib.inf
+  AdvLoggerPkg/Library/AdvLoggerSerialPortLib/AdvLoggerSerialPortLib.inf
 
 [BuildOptions]
 #force deprecated interfaces off

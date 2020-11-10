@@ -29,7 +29,7 @@ AdvancedLoggerHdwPortInitialize (
   VOID
   )
 {
-    return SerialPortInitialize();
+    return SerialPortInitialize ();
 }
 
 /**

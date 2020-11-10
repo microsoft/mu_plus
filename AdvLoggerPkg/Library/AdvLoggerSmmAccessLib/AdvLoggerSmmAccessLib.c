@@ -60,7 +60,7 @@ ValidateInfoBlock (
         return FALSE;
     }
 
-    if ((mLoggerInfo->LogCurrent >= mMaxAddress) ||
+    if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
         (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
         return FALSE;
     }
@@ -122,11 +122,10 @@ AdvLoggerAccessInit (
     if (!EFI_ERROR(Status)) {
         mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
         if (mLoggerInfo != NULL) {
-            mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
+            mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
         }
 
-        if (ValidateInfoBlock()) {
-        } else {
+        if (!ValidateInfoBlock()) {
             mLoggerInfo = NULL;
         }
     }

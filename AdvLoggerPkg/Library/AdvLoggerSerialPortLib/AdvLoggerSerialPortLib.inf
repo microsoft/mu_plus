@@ -1,0 +1,38 @@
+## @file
+#  Advanced Logger Serial Port Library.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = AdvLoggerSerialPortLib
+  MODULE_UNI_FILE                = AdvLoggerSerialPortLib.uni
+  FILE_GUID                      = 2532f02a-a36a-451a-84f4-9e94c2256a83
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvLoggerSerialPortLib
+
+#
+#  VALID_ARCHITECTURES           = X64 AARCH64
+#
+
+[Sources]
+  AdvLoggerSerialPortLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+   AdvancedLoggerLib
+
+[Protocols]
+
+[Pcd]
+
+[Depex]
+  TRUE

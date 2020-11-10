@@ -18,6 +18,25 @@
 
 #include "../AdvancedLoggerCommon.h"
 
+EFI_STATUS
+EFIAPI
+AdvancedLoggerLibConstructor (
+  VOID
+  )
+{
+    ADVANCED_LOGGER_PTR    *LogPtr;
+
+    // Initialize the fixed memory LogPtr structure to no address, with a signature.
+
+    LogPtr = (ADVANCED_LOGGER_PTR *) FixedPcdGet64 (PcdAdvancedLoggerBase);
+    LogPtr->LogBuffer = 0ULL;
+    LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
+
+    AdvancedLoggerHdwPortInitialize ();
+
+    return EFI_SUCCESS;
+}
+
 /**
   Get the Logger Information block
 
@@ -37,17 +56,15 @@ AdvancedLoggerGetLoggerInfo (
     // trimmed to be a pointer the size of the actual platform SEC pointer - and
     // the Pcd is expected to be set properly for the platform.
 
-    LogPtr = (ADVANCED_LOGGER_PTR *) (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase);
     LoggerInfoSec = NULL;
-    if (LogPtr != NULL) {
-        LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
-        if (!LoggerInfoSec->HdwPortInitialized) {
-            AdvancedLoggerHdwPortInitialize();
-            LoggerInfoSec->HdwPortInitialized = TRUE;
-        }
+    LogPtr = (ADVANCED_LOGGER_PTR *) FixedPcdGet64 (PcdAdvancedLoggerBase);
+
+    if ((LogPtr != NULL) &&
+        (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
+        (LogPtr->LogBuffer != 0ULL))
+    {
+        LoggerInfoSec = ALI_FROM_PA(LogPtr->LogBuffer);
     }
 
     return LoggerInfoSec;
 }
-
-

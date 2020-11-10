@@ -36,8 +36,11 @@ AdvancedLoggerGetLoggerInfo (
     // to be set accordingly.
     LogPtr = (ADVANCED_LOGGER_PTR *) (VOID *) (UINTN) FixedPcdGet64 (PcdAdvancedLoggerBase);
     LoggerInfoSec = NULL;
-    if (LogPtr != NULL) {
-        LoggerInfoSec = ALI_FROM_PA(LogPtr->LoggerInfo);
+    if ((LogPtr != NULL) &&
+        (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
+        (LogPtr->LogBuffer != 0ULL))
+    {
+        LoggerInfoSec = ALI_FROM_PA(LogPtr->LogBuffer);
         if (!LoggerInfoSec->HdwPortInitialized) {
             AdvancedLoggerHdwPortInitialize();
             LoggerInfoSec->HdwPortInitialized = TRUE;

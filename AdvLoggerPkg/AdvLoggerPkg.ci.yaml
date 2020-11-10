@@ -57,7 +57,8 @@
         "IgnoreFiles": [],            # use gitignore syntax to ignore errors in matching files
         "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
         "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
-        "ExtendWords": [              # words to extend to the dictionary for this package
+        "ExtendWords": [
+          lodsd              # 4 character Assembler instruction
         ]
     }
 }
