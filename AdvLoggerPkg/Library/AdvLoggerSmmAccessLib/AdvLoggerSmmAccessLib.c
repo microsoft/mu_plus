@@ -56,7 +56,7 @@ ValidateInfoBlock (
         return FALSE;
     }
 
-    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo) + sizeof(ADVANCED_LOGGER_INFO))) {
+    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo + 1))) {
         return FALSE;
     }
 

@@ -69,7 +69,7 @@ ValidateInfoBlock (
         return FALSE;
     }
 
-    if ((mLoggerInfo->LogCurrent >= mMaxAddress) ||
+    if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
         (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
         return FALSE;
     }
@@ -111,7 +111,7 @@ AdvancedLoggerGetLoggerInfo (
             }
 
             if (mLoggerInfo != NULL) {
-                mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
+                mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
             }
         }
     }

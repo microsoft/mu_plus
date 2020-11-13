@@ -52,11 +52,11 @@ ValidateInfoBlock (
         return FALSE;
     }
 
-    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo) + sizeof(ADVANCED_LOGGER_INFO))) {
+    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo + 1))) {
         return FALSE;
     }
 
-    if ((mLoggerInfo->LogCurrent >= mMaxAddress) ||
+    if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
         (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
         return FALSE;
     }
@@ -91,7 +91,7 @@ AdvancedLoggerGetLoggerInfo (
         if (!EFI_ERROR(Status) && (LoggerProtocol != NULL)) {
             mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
             if (mLoggerInfo != NULL) {
-                mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
+                mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
             }
         }
     }
