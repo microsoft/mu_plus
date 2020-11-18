@@ -23,6 +23,7 @@
             "AdvLoggerPkg/AdvLoggerPkg.dec",
             "MsWheaPkg/MsWheaPkg.dec",
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec",
+            "ShellPkg/ShellPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
         ],
