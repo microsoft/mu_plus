@@ -92,7 +92,9 @@ ReportHwErrRecRouter (
   }
 
   // If Data is provided, we need to validate it.
-  if (Data != NULL) {
+  // "&& Data->Size > 0": MU_CHANGE TCBZ3078 as temporary workaround for current
+  // ReportDispatcher implementation
+  if (Data != NULL && Data->Size > 0) {
     // If the Data doesn't look right, bail.
     if (Data->HeaderSize != sizeof(EFI_STATUS_CODE_DATA) ||
         Data->Size < sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) ||
@@ -120,7 +122,9 @@ ReportHwErrRecRouter (
 
   // Now, if we've still got some data, we know if must at least have room
   // for the MS_WHEA_RSC_INTERNAL_ERROR_DATA.
-  if (Data != NULL) {
+  // "&& Data->Size > 0": MU_CHANGE TCBZ3078 as temporary workaround for current
+  // ReportDispatcher implementation
+  if (Data != NULL && Data->Size > 0) {
     DataHeader = (MS_WHEA_RSC_INTERNAL_ERROR_DATA*)((UINT8*)Data + Data->HeaderSize);
     MsWheaEntryMD.AdditionalInfo1 = DataHeader->AdditionalInfo1;
     MsWheaEntryMD.AdditionalInfo2 = DataHeader->AdditionalInfo2;

@@ -222,6 +222,22 @@ ReportRouterCallsEsLib (
                                                 MS_WHEA_PHASE_DXE,
                                                 TestReportFnCheckCall));  
 
+  // For DXE phase, expect a call to MsWheaESStoreEntry, but not ReportFn.
+  will_return(MsWheaESStoreEntry, 0);       // ChkParams
+  will_return(MsWheaESStoreEntry, EFI_SUCCESS);
+
+  ZeroMem(&TestData, sizeof(TestData));
+  // TCBZ3078: Check to make sure ReportHwErrRecRouter() accepts a zeroed data field
+  // By not pushing a 'will_return' for TestReportFnCheckCall, it will fail if called.
+  UT_ASSERT_NOT_EFI_ERROR(ReportHwErrRecRouter(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
+                                                TEST_RSC_CRITICAL_B,
+                                                0,
+                                                &gEfiCallerIdGuid,
+                                                (EFI_STATUS_CODE_DATA*)&TestData,
+                                                MS_WHEA_PHASE_DXE,
+                                                TestReportFnCheckCall));
+
+
   return UNIT_TEST_PASSED;
 }
 
