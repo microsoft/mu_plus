@@ -431,6 +431,7 @@ MsWheaVerifyFlashStorage (
                             NULL,
                             &Size,
                             NULL);
+
   if ((Status == EFI_NOT_FOUND) && (MsWheaContext->TestId == TEST_ID_BOUNDARY)) {
     // Silently continue
     DEBUG((DEBUG_INFO, "%a Boundary test has Not Found error %s %08X %08X\n", __FUNCTION__,
@@ -458,6 +459,7 @@ MsWheaVerifyFlashStorage (
                             NULL,
                             &Size,
                             Buffer);
+  
   if (EFI_ERROR(Status) != FALSE) {
     UT_LOG_ERROR( "Variable service read %s returns %08X, expecting %08X.",
                   VarName,
@@ -1008,6 +1010,7 @@ MsWheaVariableServicesTest (
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT*) Context;
   UINT32                Attributes;
+  UINT8                  Buffer[UNIT_TEST_ERROR_SIZE];
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
@@ -1017,11 +1020,6 @@ MsWheaVariableServicesTest (
   // Phase 1: Alternate write and delete HwErrRec, it should end up with out of resources
   for (TestIndex = 0; TestIndex < (PcdGet32(PcdFlashNvStorageVariableSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
     DEBUG((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
-    Status = ReportStatusCode(MS_WHEA_ERROR_STATUS_TYPE_FATAL,
-                              UNIT_TEST_ERROR_CODE);
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_WARN, "%a: Write %d failed with %r...\n", __FUNCTION__, TestIndex, Status));
-    }
 
     Attributes = EFI_VARIABLE_NON_VOLATILE |
                  EFI_VARIABLE_BOOTSERVICE_ACCESS |
@@ -1034,8 +1032,19 @@ MsWheaVariableServicesTest (
     Status = gRT->SetVariable(VarName,
                               &gEfiHardwareErrorVariableGuid,
                               Attributes,
+                              UNIT_TEST_ERROR_SIZE,
+                              Buffer);
+
+    if (EFI_ERROR(Status) != FALSE) {
+      DEBUG((DEBUG_WARN, "%a: Write %d failed with %r...\n", __FUNCTION__, TestIndex, Status));
+    }
+
+    Status = gRT->SetVariable(VarName,
+                              &gEfiHardwareErrorVariableGuid,
+                              Attributes,
                               0,
                               NULL);
+
     if (Status == EFI_SUCCESS) {
       DEBUG((DEBUG_INFO, "%a: Write %d result: %r...\n", __FUNCTION__, TestIndex, Status));
     } else if (Status == EFI_NOT_FOUND) {
