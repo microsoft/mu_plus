@@ -316,9 +316,9 @@ MsWheaAnFBuffer (
   // Fill out error type based headers according to UEFI Spec...
   CreateCperHdrDefaultMin(MsWheaEntryMD, TotalSize, CperHdr);
   // Add all section descriptors.
-  CreateCperErrSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)MuTelemetryData - (UINTN)CperErrSecDscp), CperErrSecDscp);
+  CreateCperErrSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)MuTelemetryData - (UINTN)CperHdr), CperErrSecDscp);
   if (ExtraSectionPtr != NULL) {
-    CreateCperErrExtraSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)ExtraSectionData - (UINTN)CperErrSecDscp), CperErrExtraSecDscp);
+    CreateCperErrExtraSecDscpDefaultMin(MsWheaEntryMD, (UINT32)((UINTN)ExtraSectionData - (UINTN)CperHdr), CperErrExtraSecDscp);
   }
   // Add all section data.
   CreateMuTelemetryData(MsWheaEntryMD, MuTelemetryData);

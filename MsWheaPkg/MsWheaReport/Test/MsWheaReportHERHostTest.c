@@ -263,9 +263,8 @@ AnFCorrectlyPopulatesFixedSizedData (
   
   // Validate the CPER MU Telemetry Section Header
   Off = sizeof(EFI_COMMON_ERROR_RECORD_HEADER);
-  UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+0]), BufferSize - 
-                                                              (sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
-                                                                sizeof(MU_TELEMETRY_CPER_SECTION_DATA)));   // SectionOffset;
+  UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+0]), sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
+                                                                sizeof(EFI_ERROR_SECTION_DESCRIPTOR)); // SectionOffset;
   UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+4]), sizeof(MU_TELEMETRY_CPER_SECTION_DATA));   // SectionLength;
   UT_ASSERT_EQUAL(ReadUnaligned16((UINT16*)&Buffer[Off+8]), MS_WHEA_SECTION_REVISION);       // Revision;
   // UINT8                  SecValidMask;
@@ -354,10 +353,9 @@ AnFCorrectlyPopulatesDynamicallySizedData (
   Off = sizeof(EFI_COMMON_ERROR_RECORD_HEADER);
   
   // Validate the CPER MU Telemetry Section Header
-  UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+0]), BufferSize -
-                                                              (sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
-                                                                sizeof(MU_TELEMETRY_CPER_SECTION_DATA) +
-                                                                sizeof(ExtraDataContents)));   // SectionOffset;
+  UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+0]), sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
+                                                                sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
+                                                                sizeof(EFI_ERROR_SECTION_DESCRIPTOR)); // SectionOffset;
   UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+4]), sizeof(MU_TELEMETRY_CPER_SECTION_DATA));   // SectionLength;
   UT_ASSERT_EQUAL(ReadUnaligned16((UINT16*)&Buffer[Off+8]), MS_WHEA_SECTION_REVISION);       // Revision;
   // UINT8                  SecValidMask;
@@ -370,9 +368,10 @@ AnFCorrectlyPopulatesDynamicallySizedData (
   Off += sizeof(EFI_ERROR_SECTION_DESCRIPTOR);
   
   // Validate the CPER MU Telemetry Extra Section Header
-  UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+0]), BufferSize -
-                                                              (sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
-                                                                sizeof(ExtraDataContents)));   // SectionOffset;
+  UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+0]), sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
+                                                                sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
+                                                                sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
+                                                                sizeof(MU_TELEMETRY_CPER_SECTION_DATA)); // SectionOffset;
   UT_ASSERT_EQUAL(ReadUnaligned32((UINT32*)&Buffer[Off+4]), sizeof(ExtraDataContents));      // SectionLength;
   UT_ASSERT_EQUAL(ReadUnaligned16((UINT16*)&Buffer[Off+8]), MS_WHEA_SECTION_REVISION);       // Revision;
   // UINT8                  SecValidMask;
