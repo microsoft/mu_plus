@@ -264,6 +264,7 @@ DxeCoreAdvancedLoggerLibConstructor (
     if (LoggerInfo == NULL) {
         LoggerInfo = (ADVANCED_LOGGER_INFO *) AllocateReservedPages(FixedPcdGet32 (PcdAdvancedLoggerPages));
         if (LoggerInfo != NULL) {
+            ZeroMem ((VOID *) LoggerInfo, sizeof(ADVANCED_LOGGER_INFO));
             LoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
             LoggerInfo->Version = ADVANCED_LOGGER_VERSION;
             LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
