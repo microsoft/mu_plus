@@ -408,7 +408,7 @@ MsWheaReportDxeExitBoot (
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   if (mExitBootHasOccurred != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Been here already...\n, __FUNCTION__"));
+    DEBUG((DEBUG_ERROR, "%a: Been here already...\n", __FUNCTION__));
     Status = EFI_ACCESS_DENIED;
   }
   else {
