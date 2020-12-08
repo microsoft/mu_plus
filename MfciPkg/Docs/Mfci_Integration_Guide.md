@@ -10,7 +10,8 @@ The following is prerelease documentation for an upcoming feature.  Details are 
 * a definition of the structure's digital signature format, authentication & authorization
 * a test certificate and private key for development & testing
 * a production Microsoft certificate and Enhanced Key Usage for authorizing Microsoft's cloud MFCI service
-* a manufacturing-line-facing UEFI interface, based upon UEFI variables, that supports creation, installation, and removal of policies
+* a manufacturing-line-facing UEFI interface, based upon UEFI variables, that supports creation, installation, and
+    removal of policies
 * a UEFI-implementor-facing UEFI interface that reports the in-effect policy and notifications of policy changes
 * a reference UEFI implementation that handles the authentication, target validation, and structure parsing,
 translating signed policy blobs into actionable 64-bit policies
@@ -20,8 +21,11 @@ translating signed policy blobs into actionable 64-bit policies
 ## UEFI Integration Overview
 
 1. Include MfciPkg and its dependencies in your platform
-1. Author code that sets the [MFCI Per-Device Targeting Variable Names](../Include/MfciVariables.h) with the manufacturer, product, serial number, and optional OEM targeting values.  These variables MUST be set prior the EndOfDxe event.
-1. Where applicable to your platform, leverage MFCI's [PEI](../Include/Ppi/MfciPolicyPpi.h) and/or [DXE](../Include/Protocol/MfciProtocol.h) interfaces to synchronously query the in-effect MFCI policy, or register callbacks for notification of MFCI policy changes
+2. Author code that sets the [MFCI Per-Device Targeting Variable Names](../Include/MfciVariables.h) with the
+manufacturer, product, serial number, and optional OEM targeting values.  These variables MUST be set prior the EndOfDxe
+event.
+3. Where applicable to your platform, leverage MFCI's [PEI](../Include/Ppi/MfciPolicyPpi.h) and/or [DXE](../Include/Protocol/MfciProtocol.h)
+interfaces to synchronously query the in-effect MFCI policy, or register callbacks for notification of MFCI policy changes
 
 ## Including MfciPkg and dependencies
 
@@ -36,7 +40,7 @@ INF  MfciPkg/MfciDxe/MfciDxe.inf
 ### DSC
 
 MfciPkg provides a ```.dsc.inc``` that can be ```!include``` in your platform DSC.
-To denote that MfciPkg is currently in Beta status, platforms must opt-in by defining ```OPT_INTO_MFCI_PRE_PRODUCTION = TRUE```  
+To denote that MfciPkg is currently in Beta status, platforms must opt-in by defining ```OPT_INTO_MFCI_PRE_PRODUCTION = TRUE```
 An example follows:
 
 ```INI
@@ -47,9 +51,11 @@ DEFINE OPT_INTO_MFCI_PRE_PRODUCTION = TRUE
 ### MfciPkg Dependencies
 
 * Variable Policy
-  * _NOTE:_ effort is underway to upstream Project Mu's Variable Policy into EDK2.  Until that completes, MfciPkg depends upon the [Variable Policy implementation in Project Mu's mu_basecore repository](https://github.com/microsoft/mu_basecore/commits/0397ae87d80330e847670c1a747ed4f8eefe51f6/MdeModulePkg/Include/Protocol/VariablePolicy.h).
+  * _NOTE:_ effort is underway to upstream Project Mu's Variable Policy into EDK2.  Until that completes, MfciPkg depends
+    upon the [Variable Policy implementation in Project Mu's mu_basecore repository](https://github.com/microsoft/mu_basecore/commits/0397ae87d80330e847670c1a747ed4f8eefe51f6/MdeModulePkg/Include/Protocol/VariablePolicy.h).
   * Variable policy is used to protect MFCI's security data (UEFI variables) from malicious tampering
-  * The provided example [Secure Boot Clear](../MfciDxe/SecureBootClear.c) expects that Secure Boot variables are protected using Mu Variable Policy
+  * The provided example [Secure Boot Clear](../MfciDxe/SecureBootClear.c) expects that Secure Boot variables are
+    protected using Mu Variable Policy
 * EDK2's BaseCryptLib, specifically:
   * ```Pkcs7GetAttachedContent()```
   * ```Pkcs7Verify()```
@@ -57,17 +63,22 @@ DEFINE OPT_INTO_MFCI_PRE_PRODUCTION = TRUE
 
 ## Populating Device Targeting Variables
 
-An integrator must author code that sets the [MFCI Per-Device Targeting Variable Names](../Include/MfciVariables.h) with the manufacturer, product, serial number, and optional OEM targeting values.  These variables MUST be set prior the EndOfDxe event.
-See the header file for type information on these variables, they must exactly match the contents of policies for targeting to successfully match them.
+An integrator must author code that sets the [MFCI Per-Device Targeting Variable Names](../Include/MfciVariables.h) with
+the manufacturer, product, serial number, and optional OEM targeting values.  These variables MUST be set prior the
+EndOfDxe event.
+
+See the header file for type information on these variables, they must exactly match the contents of policies for
+targeting to successfully match them.
 
 ## Take action based upon MFCI Policy & changes
 
-The final piece of code integration is to enumerate the list of behaviors and actions to be supported, and activate their code by
-calling either MFCI's [PEI](../Include/Ppi/MfciPolicyPpi.h) and/or [DXE](../Include/Protocol/MfciProtocol.h) interfaces to synchronously query the in-effect MFCI policy, or register callbacks for notification of MFCI policy changes.
+The final piece of code integration is to enumerate the list of behaviors and actions to be supported, and activate
+their code by calling either MFCI's [PEI](../Include/Ppi/MfciPolicyPpi.h) and/or [DXE](../Include/Protocol/MfciProtocol.h)
+interfaces to synchronously query the in-effect MFCI policy, or register callbacks for notification of MFCI policy changes.
 
 ## State Machine
 
-MfciPkg's public interface defines UEFI variable mailboxes for installing and removing policy blobs, see 
+MfciPkg's public interface defines UEFI variable mailboxes for installing and removing policy blobs, see
 [MFCI Per-Device Targeting Variable Names](../Include/MfciVariables.h)
 
 A machine with no policy blob installed is deemed to have have a configuration policy value of 0x0 and is
@@ -80,18 +91,21 @@ installation of a new policy.
 ## Boot Timeline Example
 
 1. PEI
-    1. PEI is considered too early in the boot root of trust to perform policy blob validation. A pre-validated, cached copy of configuration policy is available to PEI modules via the [PEI](../Include/Ppi/MfciPolicyPpi.h) interface. Policy will not change in the PEI phase, so a policy change notification is not part of the PEI interface. If a policy change occurs later in boot, the platform is guaranteed to reboot prior to the BDS phase.
-1. DXE prior to StartOfBds
+    1. PEI is considered too early in the boot root of trust to perform policy blob validation. A pre-validated, cached
+        copy of configuration policy is available to PEI modules via the [PEI](../Include/Ppi/MfciPolicyPpi.h)
+        interface. Policy will not change in the PEI phase, so a policy change notification is not part of the PEI
+        interface. If a policy change occurs later in boot, the platform is guaranteed to reboot prior to the BDS phase.
+2. DXE prior to StartOfBds
     1. Drivers that need security policy augmentation should both get the current pre-verified
     policy and register for notification of policy changes
-    1. OEM-supplied code populates UEFI variables that communicate the Make, Model, & SN targeting
+    2. OEM-supplied code populates UEFI variables that communicate the Make, Model, & SN targeting
     information to MFCI policy driver
-1. StartOfBds event
+3. StartOfBds event
     1. The MFCI Policy Driver will...
         1. Check for the presence of a policy.  If present...
             1. Verify its signature, delete the policy on failure
-            1. Verify its structure, delete the policy on failure
-            1. If the resulting policy is different from the current policy, notify registered handlers,
+            2. Verify its structure, delete the policy on failure
+            3. If the resulting policy is different from the current policy, notify registered handlers,
             make the new policy active, reboot
-        1. If a next policy is not present, and a pre-verified policy was used for this boot, roll
+        2. If a next policy is not present, and a pre-verified policy was used for this boot, roll
         nonces, delete the pre-verified policy, & notify registered handlers
