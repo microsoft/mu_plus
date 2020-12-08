@@ -119,7 +119,6 @@
   # The values can be combined eg. 3 == Ready To Boot and Exit Boot Services.
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush|1|UINT8|0x00010187
 
-[PcdsFixedAtBuild, PcdsDynamic]
   ## Advanced Logger Hdw port filter ErrorLevel
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
