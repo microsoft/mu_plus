@@ -28,17 +28,20 @@ is already producing reports in the same format that the HidKeyboardProtocol or
 HidMouseProtocol expects.
 
 ## Integration Guide
+
 To use the HidPkg, include the following drivers in your build:
 
 FDF:
-```
+
+```text
 #HID Support
 INF HidPkg/HidKeyboardDxe/HidKeyboardDxe.inf
 INF HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.inf
 ```
 
 DSC:
-```
+
+```text
 #HID Support
   HidPkg/HidKeyboardDxe/HidKeyboardDxe.inf
   HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.inf
@@ -54,6 +57,7 @@ To include the sample USB HID drivers, remove the MdeModulePkg versions and
 replace them with the sample drivers from this package.
 
 FDF:
+
 ```diff
 -INF MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 -INF MdeModulePkg/Bus/Usb/UsbMouseAbsolutePointerDxe/UsbMouseAbsolutePointerDxe.inf
@@ -62,6 +66,7 @@ FDF:
 ```
 
 DSC:
+
 ```diff
 -  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 -  MdeModulePkg/Bus/Usb/UsbMouseAbsolutePointerDxe/UsbMouseAbsolutePointerDxe.inf
