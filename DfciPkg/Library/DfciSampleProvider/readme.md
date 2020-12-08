@@ -1,6 +1,7 @@
 # Dfci Sample Provider
 
-This is a DXE driver that publishes the gDfciSettingsProviderSupportProtocolGuid protocol, which is a settings provider for DFCI.
+This is a DXE driver that publishes the gDfciSettingsProviderSupportProtocolGuid protocol, which is a settings provider
+for DFCI.
 
 This is **not to be used in production** but is provided as a sample for reference when creating your own provider.
 

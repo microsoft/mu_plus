@@ -34,4 +34,3 @@ These values should not be user configurable and should be protected from tamper
 
 Copyright (C) Microsoft Corporation. All rights reserved.  
 SPDX-License-Identifier: BSD-2-Clause-Patent
-

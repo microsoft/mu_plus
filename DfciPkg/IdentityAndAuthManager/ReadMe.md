@@ -27,19 +27,20 @@ Basic overview of the IdentityAndAuthManager module.
 ### AuthManagerProvisionedData.C
 
 * Support NV storage of Provisioned Data.  This manages loading internal store and saving changes to internal store.
-* This differs from the Provision.c file in that this has nothing to do with User input or applying user changes.  This is internal to the module only.  
+* This differs from the Provision.c file in that this has nothing to do with User input or applying user changes.  Thi
+ is internal to the module only.
 
 ### IdentityManager.C
 
 * Support the get identity functionality
 * Dispose Auth Handle
-* Private 
+* Private
   * Identity / auth token map management (Add, Free, Find)
 * Add security *TODO*
 
 ### IdentityAndAuthManagerDxe.INF
 
-* Dxe Module inf file 
+* Dxe Module inf file
 
 ### DfciAuthentication.h  PUBLIC HEADER FILE
 

@@ -1,6 +1,7 @@
 # DfciUiSupportLib
 
-DfciUiSupportLib allows DFCI to communicate with the user during DFCI initialization, enrollment, or to indicate a non secure environment is available.
+DfciUiSupportLib allows DFCI to communicate with the user during DFCI initialization, enrollment, or to indicate a
+non-secure environment is available.
 
 ## Interfaces
 

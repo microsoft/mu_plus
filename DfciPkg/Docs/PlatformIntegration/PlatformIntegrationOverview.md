@@ -1,12 +1,19 @@
 # Platform Integration of DFCI
 
-This section of documentation is focused on UEFI firmware developers and helping them enable their platforms with the DFCI feature.  
+This section of documentation is focused on UEFI firmware developers and helping them enable their platforms with the
+DFCI feature.
 
-DFCI consists mostly of a software feature that is written in the DXE phase of UEFI.  It has numerous architecture and platform independent modules with only a few required platform libraries.  It also requires the platform adhere to and use the DFCI components to ensure the DFCI features work as designed.  Finally to enable an End-To-End management scenario there maybe custom requirements in adjacent UEFI firmware components.
+DFCI consists mostly of a software feature that is written in the DXE phase of UEFI.  It has numerous architecture and
+platform independent modules with only a few required platform libraries. It also requires the platform adhere to and
+use the DFCI components to ensure the DFCI features work as designed.  Finally to enable an End-To-End management
+scenario there maybe custom requirements in adjacent UEFI firmware components.
 
 ## Dfci Menu application
 
-The [DfciMenu](https://github.com/microsoft/mu_plus/tree/dev/201908/DfciPkg/Application/DfciMenu) application is optimized for **mu_plus MsGraphicsPkg**.  It is VFR but since many platforms use custom layouts and graphical representation this area might need some adjustments.  The DfciMenu application publishes a HII formset that should be located by your pre-boot UEFI menu application (e.g. "FrontPage") and displayed.
+The [DfciMenu](https://github.com/microsoft/mu_plus/tree/dev/201908/DfciPkg/Application/DfciMenu) application is
+optimized for **mu_plus MsGraphicsPkg**. It is VFR but since many platforms use custom layouts and graphical
+representation this area might need some adjustments.  The DfciMenu application publishes a HII formset that should be
+located by your pre-boot UEFI menu application (e.g. "FrontPage") and displayed.
 
 * Formset GUID: `gDfciMenuFormsetGuid = {0x3b82283d, 0x7add, 0x4c6a, {0xad, 0x2b, 0x71, 0x9b, 0x8d, 0x7b, 0x77, 0xc9 }}`
 * Entry Form: `#define DFCI_MENU_FORM_ID           0x2000`
@@ -55,7 +62,8 @@ Setting providers is how a platform provides a setting to DFCI
 
 ## Mu Changes
 
-* DFCI Recovery service uses HTTPS certificates with Subject Alternative Names.  This requires a source modification to NetworkPkg, [removal of EFI_TLS_VERIFY_FLAG_NO_WILDCARDS from TlsConfigureSession()](https://github.com/microsoft/mu_basecore/commit/931ff1a45ce13a6a8c3e296f89c6de21f23a17ed#diff-620e10fa41a63814688b931d19fefa89R628).
+* DFCI Recovery service uses HTTPS certificates with Subject Alternative Names.  This requires a source modification to NetworkPkg,
+[removal of EFI_TLS_VERIFY_FLAG_NO_WILDCARDS from TlsConfigureSession()](https://github.com/microsoft/mu_basecore/commit/931ff1a45ce13a6a8c3e296f89c6de21f23a17ed#diff-620e10fa41a63814688b931d19fefa89R628).
 * [Configure OpenSSL to support modern TLS ciphers](https://github.com/microsoft/mu_tiano_plus/commit/1f3b135ddc821718a78c352316197889c5d3e0c2)
 
 ## Platform DSC statements
@@ -67,7 +75,7 @@ Adding DFCI to your system consists of:
 3. Adding the DSC sections below.
 4. Adding the FDF sections below.
 
-```
+```text
 [LibraryClasses.XXX]
   DfciXmlSettingSchemaSupportLib|DfciPkg/Library/DfciXmlSettingSchemaSupportLib/DfciXmlSettingSchemaSupportLib.inf
   DfciXmlPermissionSchemaSupportLib|DfciPkg/Library/DfciXmlPermissionSchemaSupportLib/DfciXmlPermissionSchemaSupportLib.inf
@@ -104,7 +112,7 @@ Adding DFCI to your system consists of:
 
 ## Platform FDF statements
 
-```
+```text
 [FV.YOUR_DXE_FV]
 INF  DfciPkg/SettingsManager/SettingsManagerDxe.inf
 INF  DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf

@@ -240,7 +240,8 @@ provider.
 
 ## Out of band recovery
 
-Normally, the cloud provider would just send unenroll packets through the OS to the UEFICsp.  However, if Windows is unable to boot, the UEFI front page application has a method to contact the owner via HTTPS.
+Normally, the cloud provider would just send unenroll packets through the OS to the UEFICsp.  However, if Windows is
+unable to boot, the UEFI front page application has a method to contact the owner via HTTPS.
 
 ## Setting Provider
 
@@ -255,7 +256,7 @@ disable the audio output.
 Using the DfciGroup lib, the individual platform settings can be mapped to the DFCI-standard settings.
 For more information on groups, see [Dfci Groups](../PlatformIntegration/DfciGroups.md)
 
-### Setting Provider expected return codes:
+### Setting Provider expected return codes
 
 | Return Code           | Reason to return this code |
 | ---                   | --- |

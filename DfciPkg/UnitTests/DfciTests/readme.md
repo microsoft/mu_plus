@@ -11,7 +11,8 @@ This describes the test structure for insuring DFCI operates properly.
 The DFCI tests are a collection of Robot Framework test cases.
 Each Robot Framework test case collection is contained in a directory, and, as a minimum, contains a run.robot file.
 
-Each test case collection is run manually in a proscribed order, and its status is verified before running the next test case.
+Each test case collection is run manually in a proscribed order, and its status is verified before running the next test
+case.
 The tests must be run in order, as they alter the system state, much like the real usage of DFCI.
 
 ## Equipment needed
@@ -32,15 +33,20 @@ Copy the files needed for the DUT.
 There is a script to help you do this.
 For example, with a removable device mounted at drive D:, issue the command:  
 
-**DeviceUnderTest\CollectFilesForDut.cmd D:\DfciSetup**  
+```text
+DeviceUnderTest\CollectFilesForDut.cmd D:\DfciSetup
+```
 
-This will create a directory on the USB key named **DfciSetup** with the required files for setting up the remote server.
+This will create a directory on the USB key named `DfciSetup` with the required files for setting up the remote server.
 Mount the removable device on the DUT and run:  
 
-**SetupDUT.cmd**  
+```text
+SetupDUT.cmd
+```
 
 This will download and install Python 3.7.4, robotframework, robotremoteserver, and pypiwin32.
-In addition, the SetupDUT command will update the firewall for the robot framework testing, and a make a couple of configuration changes to Windows for a better test experience.
+In addition, the SetupDUT command will update the firewall for the robot framework testing, and a make a couple of
+configuration changes to Windows for a better test experience.
 
 ## Setting up the HOST system
 
@@ -75,11 +81,12 @@ Table of DFCI Test case collections:
 ## Note on the firmware for testing DFCI
 
 Most of DFCI functionality can be tested without regard of the Zero Touch certificate.
-To test functionality of the Zero Touch feature, the firmware needs to be built with the ZTD_Leaf.cer file instead of the ZtdRecovery.cer file.
+To test functionality of the Zero Touch feature, the firmware needs to be built with the ZTD_Leaf.cer file instead of
+the ZtdRecovery.cer file.
 
 To do this, change your platform .fdf file from:
 
-```
+```text
 FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
     SECTION RAW = ZeroTouchPkg/Certs/ZeroTouch/ZtdRecovery.cer
 }
@@ -87,7 +94,7 @@ FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
 
 to:
 
-```
+```text
 FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
     SECTION RAW = DfciPkg/UnitTests/DfciTests/ZTD_Leaf.cer
 }
@@ -154,7 +161,8 @@ This tests also start with a DUT that is not enrolled in DFCI, and will leave th
 
 ## Recovering from errors
 
-Code issues an present issues with DFCI that may require deleting the Identity and Permission data bases. Using privileged access of a DUT that unlocks the varstore, you can delete the two master variables of DFCI. These variable are:
+Code issues an present issues with DFCI that may require deleting the Identity and Permission data bases. Using
+privileged access of a DUT that unlocks the varstore, you can delete the two master variables of DFCI. These variable are:
 
 1. \_SPP
 2. \_IPCVN
