@@ -360,16 +360,7 @@ ErrorRecordHeaderTest(IN UNIT_TEST_CONTEXT           Context)
     }
   }
 
-
-
-  if(ValidateCperHeader(Err, Btc->Size) == Btc->ExpectedResult)
-  {
-    UT_LOG_ERROR("UNIT TEST PASSED");
-    Status = UNIT_TEST_PASSED;
-  } else
-  {
-    UT_LOG_ERROR("UNIT TEST FAILED");
-  }
+  UT_ASSERT_EQUAL(ValidateCperHeader(Err, Btc->Size), Btc->ExpectedResult);
 
   FreePool(Err);
   Err = NULL;
