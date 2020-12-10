@@ -1,0 +1,40 @@
+## @file
+#  Library that receives the MFCI policy from the PEI phase via HOB
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MfciRetrievePolicyLibViaHob
+  FILE_GUID           = ea3d551b-4352-4931-b4f0-d42d4425f84c
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  LIBRARY_CLASS       = MfciRetrievePolicyLib | DXE_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+
+[Sources]
+  MfciRetrievePolicyLibViaHob.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MfciPkg/MfciPkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  HobLib
+
+[Guids]
+  gMfciHobGuid              ## CONSUMES
+
+[Depex]

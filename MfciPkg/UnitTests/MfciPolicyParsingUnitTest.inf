@@ -6,7 +6,7 @@
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010006
+  INF_VERSION                    = 0x00010017
   BASE_NAME                      = MfciPolicyParsingLibUnitTest
   FILE_GUID                      = B0F19A87-DA19-44E9-A63C-72D3D9A56614
   MODULE_TYPE                    = UEFI_APPLICATION

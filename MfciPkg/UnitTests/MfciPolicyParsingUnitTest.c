@@ -18,13 +18,14 @@
 
 #include <Include/MfciPolicyType.h>
 
-#include "Private/MfciPolicyFields.h"
-#include "Private/Library/MfciPolicyParsingLib.h"
-#include "Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLibInternal.h"
+#include <Private/MfciPolicyFields.h>
+#include <Private/Library/MfciPolicyParsingLib.h>
+#include <Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLibInternal.h>
 
 #include "data/certs/CA_NotTrusted.cer.h"
 #include "data/packets/policy_good_manufacturing.bin.h"
 #include "data/packets/policy_good_manufacturing.bin.p7.h"
+#include "data/packets/policy_NULL_in_OEM_string.bin.p7.h"
 #include "data/packets/policy_badFormatVersion.bin.h"
 #include "data/packets/policy_badPolicyVersion.bin.h"
 #include "data/packets/policy_badPolicyPublisher.bin.h"
@@ -421,6 +422,7 @@ EntryPoint (
   static EXTRACT_CHAR16_TEST_CONTEXT mTestChar07 = { "Nothing after Sep" , EFI_NOT_FOUND        , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing), L"Before\\"            , NULL, NULL};
   static EXTRACT_CHAR16_TEST_CONTEXT mTestChar08 = { "Nothing before Sep", EFI_NOT_FOUND        , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing), L"\\After"             , NULL, NULL};
   static EXTRACT_CHAR16_TEST_CONTEXT mTestChar09 = { "Empty String"      , EFI_NOT_FOUND        , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing), L""                    , NULL, NULL};
+  static EXTRACT_CHAR16_TEST_CONTEXT mTestChar10 = { "NULL inside string", EFI_COMPROMISED_DATA , mSigned_policy_NULL_in_OEM_string, sizeof(mSigned_policy_NULL_in_OEM_string), gPolicyBlobFieldName[MFCI_POLICY_TARGET_MANUFACTURER], NULL, NULL};
 
   static EXTRACT_UINT64_TEST_CONTEXT mTestUint01 = { "Good Blob"         , EFI_SUCCESS          , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing), gPolicyBlobFieldName[MFCI_POLICY_FIELD_UEFI_POLICY], MFCI_POLICY_VALUE_ACTION_SECUREBOOT_CLEAR | MFCI_POLICY_VALUE_ACTION_TPM_CLEAR};
   static EXTRACT_UINT64_TEST_CONTEXT mTestUint02 = { "SignedPolicy NULL" , EFI_INVALID_PARAMETER, NULL                             , sizeof(mSigned_policy_good_manufacturing), gPolicyBlobFieldName[MFCI_POLICY_FIELD_UEFI_POLICY], MFCI_POLICY_VALUE_INVALID};
@@ -438,6 +440,7 @@ EntryPoint (
   AddTestCase( ExtractValueTests, mTestChar07.Description, "CHAR16", TestExtractChar16, NULL, CleanUpExtractChar16, &mTestChar07 );
   AddTestCase( ExtractValueTests, mTestChar08.Description, "CHAR16", TestExtractChar16, NULL, CleanUpExtractChar16, &mTestChar08 );
   AddTestCase( ExtractValueTests, mTestChar09.Description, "CHAR16", TestExtractChar16, NULL, CleanUpExtractChar16, &mTestChar09 );
+  AddTestCase( ExtractValueTests, mTestChar10.Description, "CHAR16", TestExtractChar16, NULL, CleanUpExtractChar16, &mTestChar10 );
 
   AddTestCase( ExtractValueTests, mTestUint01.Description, "Uint64", TestExtractUint64, NULL, NULL, &mTestUint01 );
   AddTestCase( ExtractValueTests, mTestUint02.Description, "Uint64", TestExtractUint64, NULL, NULL, &mTestUint02 );

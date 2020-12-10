@@ -135,7 +135,7 @@ NotifyMfciPolicyChange (
   EFI_HANDLE                              *HandleBuffer = NULL;
   MFCI_POLICY_CHANGE_NOTIFY_PROTOCOL  *NotifyProtocol;
 
-  DEBUG(( DEBUG_INFO, "%a - Notifying MFCI Policy change from 0x%x to 0x%x.\n",
+  DEBUG(( DEBUG_INFO, "%a - Notifying MFCI Policy change from 0x%lx to 0x%lx.\n",
           __FUNCTION__, mCurrentPolicy, NewPolicy ));
 
   //

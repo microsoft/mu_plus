@@ -1,0 +1,36 @@
+## @file
+# NULL library that abstracts retrieving the MFCI policy from the PEI phase
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MfciRetrievePolicyLibNull
+  FILE_GUID           = 5429aa91-e9ec-4c6e-ad82-97e5f83e3fb7
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = BASE
+  LIBRARY_CLASS       = MfciRetrievePolicyLib | DXE_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+
+[Sources]
+  MfciRetrievePolicyLibNull.c
+
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MfciPkg/MfciPkg.dec
+
+
+[LibraryClasses]
+
+[Depex]

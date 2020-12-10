@@ -16,8 +16,7 @@
     !include MfciPkg/Private/Certs/CA-test.dsc.inc
     gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU  |$(MFCI_POLICY_EKU_TEST)   # use the test version
   !else
-    # TODO: add the production certificate
-    # !include MfciPkg/Private/Certs/CA-production.inc
+    !include MfciPkg/Private/Certs/SharedMfciTrustAnchor.dsc.inc
     gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU  |$(MFCI_POLICY_EKU_RETAIL) # we use the production version
   !endif
 
@@ -31,18 +30,35 @@
 
 
 [LibraryClasses.IA32]
-  MfciPkg|MfciPkg/MfciPei/MfciPei.inf
 
-[LibraryClasses.X64, LibraryClasses.AARCH64]
-  MfciPkg|MfciPkg/MfciDxe/MfciDxe.inf
+[LibraryClasses.X64]
   Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
+  MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
+
+[LibraryClasses.AARCH64]
+  Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
+  MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf
 
 [Components.Common]
-  MfciPkg/Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.inf
-  MfciPkg/Private/Library/MuSecureBootLib/MuSecureBootLib.inf
 
 [Components.IA32]
   MfciPkg/MfciPei/MfciPei.inf
 
-[Components.X64, Components.AARCH64]
+[Components.X64]
   MfciPkg/MfciDxe/MfciDxe.inf
+
+[Components.AARCH64]
+  MfciPkg/MfciDxe/MfciDxe.inf
+
+
+##
+#  Example: to enable population of targeting variables via Project Mu OEM Sample Package's SMBIOS example
+#
+# [PcdsFeatureFlag]
+#   gMfciPkgTokenSpaceGuid.PcdMfciPopulateTargetFromDeviceIdSupportLib|TRUE
+#
+# [LibraryClasses]
+#  # From https://github.com/microsoft/mu_oem_sample.git
+#  MfciDeviceIdSupportLib|OemPkg/Library/MfciDeviceIdSupportLibSmbios/MfciDeviceIdSupportLibSmbios.inf
+#
+##

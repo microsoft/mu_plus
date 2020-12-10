@@ -1,6 +1,6 @@
 /** @file
-  The PEI phase implementation of the public interface to 
-  the MFCI Policy
+  The PEI phase implementation of the public interface to the MFCI Policy
+  Constructs a HOB so that DXE knows what policy was used during PEI
 
   Copyright (c) Microsoft Corporation
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -18,25 +18,6 @@
 #include <Ppi/MfciPolicyPpi.h>
 #include <Ppi/ReadOnlyVariable2.h>
 
-/**
-  This function handles PlatformInit task after PeiReadOnlyVariable2 PPI produced
-
-  @param[in]  PeiServices  Pointer to PEI Services Table.
-  @param[in]  NotifyDesc   Pointer to the descriptor for the Notification event that
-                           caused this function to execute.
-  @param[in]  Ppi          Pointer to the PPI data associated with this function.
-
-  @retval     EFI_SUCCESS  The function completes successfully
-  @retval     others
-**/
-EFI_STATUS
-EFIAPI
-PeiVariableNotify (
-  IN CONST EFI_PEI_SERVICES     **PeiServices,
-  IN EFI_PEI_NOTIFY_DESCRIPTOR  *NotifyDescriptor,
-  IN VOID                       *Ppi
-  );
-
 
 MFCI_POLICY_TYPE
 EFIAPI
@@ -44,14 +25,14 @@ InternalGetMfciPolicy (
   IN CONST MFCI_POLICY_PPI   *This
   );
 
-MFCI_POLICY_PPI MfciProtocol = {
+MFCI_POLICY_PPI MfciPpi = {
   .GetMfciPolicy = InternalGetMfciPolicy
 };
 
-STATIC EFI_PEI_PPI_DESCRIPTOR mMfciProtocolList = {
+STATIC EFI_PEI_PPI_DESCRIPTOR mMfciPpiList = {
   (EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST),
   &gMfciPpiGuid,
-  &MfciProtocol
+  &MfciPpi
 };
 
 /**
@@ -78,7 +59,7 @@ InternalGetMfciPolicy (
   Policy = CUSTOMER_STATE;
 
   if (This == NULL) {
-    // Do not give out any if input parameter is insane.
+    DEBUG((DEBUG_ERROR, "%a: Input pointer should NOT be NULL", __FUNCTION__));
     goto Cleanup;
   }
 
@@ -101,78 +82,12 @@ Cleanup:
   return Policy;
 }
 
-/**
-  This function handles MFCI policy task when/after PeiReadOnlyVariable2 PPI produces:
-
-  @param[in]  PeiServices  Pointer to PEI Services Table.
-  @param[in]  NotifyDesc   Pointer to the descriptor for the Notification event that
-                           caused this function to execute.
-  @param[in]  Ppi          Pointer to the PPI data associated with this function.
-
-  @retval     EFI_SUCCESS  The function completes successfully
-  @retval     others
-**/
-EFI_STATUS
-EFIAPI
-PeiVariableNotify (
-  IN CONST EFI_PEI_SERVICES     **PeiServices,
-  IN EFI_PEI_NOTIFY_DESCRIPTOR  *NotifyDescriptor,
-  IN VOID                       *Ppi
-  )
-{
-  EFI_STATUS                        Status;
-  EFI_PEI_READ_ONLY_VARIABLE2_PPI   *PeiVariablePpi;
-  MFCI_POLICY_TYPE                  Policy;
-  MFCI_POLICY_TYPE                  *PolicyHobPtr;
-  UINTN                             DataSize;
-  UINT32                            Attributes;
-
-  if (Ppi == NULL || PeiServices == NULL) {
-    ASSERT (FALSE);
-    Status = EFI_INVALID_PARAMETER;
-    goto Cleanup;
-  }
-
-  PeiVariablePpi = (EFI_PEI_READ_ONLY_VARIABLE2_PPI *) Ppi;
-
-  DataSize = sizeof (Policy);
-  Status = PeiVariablePpi->GetVariable (
-                            PeiVariablePpi,
-                            CURRENT_MFCI_POLICY_VARIABLE_NAME,
-                            &MFCI_VAR_VENDOR_GUID,
-                            &Attributes,
-                            &DataSize,
-                            &Policy);
-
-  //
-  // Finally, sanitize the data and account for any errors.
-  // The only way we'll return non CUSTOMER_STATE is if that
-  // is the current policy *and* everything else checks out.
-  if (EFI_ERROR( Status ) || Attributes != MFCI_POLICY_VARIABLE_ATTR ||
-      DataSize != sizeof( Policy )) {
-    Policy = CUSTOMER_STATE;
-  }
-
-  PolicyHobPtr = BuildGuidHob(&gMfciHobGuid, DataSize);
-  if (PolicyHobPtr == NULL) {
-    Status = EFI_OUT_OF_RESOURCES;
-    goto Cleanup;
-  }
-
-  *PolicyHobPtr = Policy;
-
-  Status = (*PeiServices)->InstallPpi (
-                              PeiServices,
-                              &mMfciProtocolList
-                              );
-  ASSERT_EFI_ERROR (Status);
-
-Cleanup:
-  return Status;
-}
 
 /**
-Entry to MfciPei.
+Entry to MfciPei
+Read the PEI phase MFCI policy from a variable and publish to a HOB for consumption by both
+this driver's PPI as well as DXE phase.  Register a PPI so that PEI drivers can determine the
+MFCI policy and take action accordingly
 
 @param FileHandle                     The image handle.
 @param PeiServices                    The PEI services table.
@@ -186,9 +101,12 @@ MfciPeiEntry (
   IN CONST EFI_PEI_SERVICES           **PeiServices
   )
 {
-
   EFI_STATUS                        Status = EFI_SUCCESS;
-  EFI_PEI_READ_ONLY_VARIABLE2_PPI   *PeiVariablePpi;
+  EFI_PEI_READ_ONLY_VARIABLE2_PPI   *PeiVariablePpi = NULL;
+  MFCI_POLICY_TYPE                  Policy;
+  MFCI_POLICY_TYPE                  *PolicyHobPtr;
+  UINTN                             DataSize;
+  UINT32                            Attributes;
 
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
@@ -197,19 +115,52 @@ MfciPeiEntry (
                                 NULL,
                                 (VOID**)&PeiVariablePpi);
 
-  if (EFI_ERROR(Status) != FALSE) {
-    // If variable ppi is not available, set a callback for when it is ready.
-    // TODO BUG
-    DEBUG((DEBUG_WARN, "%a: failed to locate PEI Variable PPI (%r)\n", __FUNCTION__, Status));
+  if (EFI_ERROR(Status) || PeiVariablePpi == NULL) {
+    DEBUG((DEBUG_ERROR, "%a: failed to locate PEI Variable PPI (%r) PeiVariablePpi(%p)\n", __FUNCTION__, Status, PeiVariablePpi));  // Depex failed
     goto Cleanup;
   }
-  else {
-    // Otherwise, try to get the variable indicating MFCI policy applicable for this device.
-    Status = PeiVariableNotify(PeiServices, NULL, PeiVariablePpi);
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, "%a: Status failure from PeiVariableNotify(%r)\n", __FUNCTION__, Status));
-    }
+
+  DataSize = sizeof (Policy);
+  Status = PeiVariablePpi->GetVariable (
+                            PeiVariablePpi,
+                            CURRENT_MFCI_POLICY_VARIABLE_NAME,
+                            &MFCI_VAR_VENDOR_GUID,
+                            &Attributes,
+                            &DataSize,
+                            &Policy);
+
+  if (EFI_ERROR( Status )
+      || Attributes != MFCI_POLICY_VARIABLE_ATTR
+      || DataSize != sizeof( Policy )) {
+    DEBUG((DEBUG_ERROR,
+      "%a: GetVariable(CURRENT_MFCI_POLICY_VARIABLE_NAME) failed to return " \
+      "well-formed data Status(%r) Attributes(0x%x) DataSize(%d)\n" \
+      "note that this is expected on first boot after flashing\n",
+      __FUNCTION__, Status, Attributes, DataSize));
+
+    // Fail secure
+    Policy = CUSTOMER_STATE;
+    DataSize = sizeof (Policy);
   }
+
+  PolicyHobPtr = BuildGuidHob(&gMfciHobGuid, DataSize);
+  if (PolicyHobPtr == NULL) {
+    DEBUG((DEBUG_ERROR, "%a: BuildGuidHob() returned NULL", __FUNCTION__));
+    ASSERT(PolicyHobPtr != NULL);
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Cleanup;  // without a HOB, the PPI cannot return accurate state
+  }
+  DEBUG((DEBUG_INFO, "%a: Published MFCI HOB with policy(0x%lx)\n", __FUNCTION__, Policy));
+
+  // publish the Policy into a HOB for consumption by both the PPI as well
+  // as the DXE phase
+  *PolicyHobPtr = Policy;
+
+  Status = (*PeiServices)->InstallPpi (
+                              PeiServices,
+                              &mMfciPpiList
+                              );
+  ASSERT_EFI_ERROR (Status);
 
 Cleanup:
   DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));

@@ -6,7 +6,7 @@
 ##
 
 [Defines]
-  INF_VERSION                    = 0x00010005
+  INF_VERSION                    = 0x00010017
   BASE_NAME                      = MfciDxe
   FILE_GUID                      = D4ABC208-E91F-4A5C-880B-7063A0393E4C
   MODULE_TYPE                    = DXE_DRIVER
@@ -42,34 +42,37 @@
   UefiDriverEntryPoint
   ResetUtilityLib
   BaseMemoryLib
-  HobLib
   MemoryAllocationLib
   MfciPolicyParsingLib
   MuVariablePolicyHelperLib
   RngLib
   Tpm2CommandLib
   MuSecureBootLib
+  MfciRetrievePolicyLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  MfciDeviceIdSupportLib
 
 
 [Protocols]
   gMfciProtocolGuid         ## CONSUMES
   gVariablePolicyProtocolGuid         ## CONSUMES
 
-[Protocols.X64.Private, Protocols.AARCH64.Private]
+[Protocols.common.Private]
   gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
 
 [Pcd]
-  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr    ## CONSUMES
-  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU  ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr                    ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU                  ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdMfciPopulateTargetFromDeviceIdSupportLib  ## CONSUMES
 
 [Guids]
-  gMfciHobGuid              ## CONSUMES
-  gMfciVendorGuid           ## CONSUMES
+  gMfciVendorGuid                     ## CONSUMES
   gMsStartOfBdsNotifyGuid             ## CONSUMES
   gEfiEndOfDxeEventGroupGuid          ## CONSUMES
   gMuVarPolicyDxePhaseGuid            ## CONSUMES
   gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES ## GUID ## Variable namespace
-  gMfciPolicyChangeResetGuid            ## CONSUMES
+  gMfciPolicyChangeResetGuid          ## CONSUMES
 
 [Depex]
   gVariablePolicyProtocolGuid

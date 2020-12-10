@@ -9,6 +9,7 @@
 #include <Uefi.h>
 #include <MfciPolicyType.h>
 #include <MfciPolicyFields.h>
+#include <MfciVariables.h>
 
 #include <Library/BaseLib.h>                             // CpuDeadLoop()
 #include <Library/DebugLib.h>                            // DEBUG tracing
@@ -19,7 +20,6 @@
 #include <Library/MfciPolicyParsingLib.h>                // Extracting and validating policy blobs
 
 #include "MfciDxe.h"
-#include "MfciVariables.h"
 
 
 STATIC
@@ -79,14 +79,33 @@ VerifyStringFieldHelper (
     DEBUG(( DEBUG_ERROR, "%a - Failed to read UEFI variable %s with return status %r\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField], Status ));
     goto Done;
   }
-  if (DataSize < (MFCI_POLICY_FIELD_MAX_LEN * sizeof(CHAR16))) { ThisMfciPolData[DataSize/sizeof(CHAR16)] = L'\0'; } // ensure NULL termination
+  // Verify the variable read is a multiple of CHAR16's
+  if (DataSize % sizeof(CHAR16)) {
+    DEBUG(( DEBUG_ERROR, "%a - OEM variable '%s' size(0x%x) is not a multiple of sizeof(CHAR16)\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField], DataSize ));
+    Status = EFI_COMPROMISED_DATA;
+    goto Done;
+  }
+  // Verify the variable read is wide NULL terminated
+  if (ThisMfciPolData[DataSize/sizeof(CHAR16) - 1] != L'\0') {
+    DEBUG(( DEBUG_ERROR, "%a - OEM variable '%s' lacks NULL termination\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField] ));
+    Status = EFI_COMPROMISED_DATA;
+    goto Done;
+  }
+  // Ensure there are no embedded wide NULLs
+  if (StrSize(ThisMfciPolData) != DataSize) {
+    DEBUG ((DEBUG_ERROR, "StrSize(%x) does not match DataSize(%x), there must be embedded NULLs (not permitted)\n", StrSize(ThisMfciPolData), DataSize));
+    Status = EFI_COMPROMISED_DATA;
+    goto Done;
+  }
 
   if (StrnCmp (ThisMfciPolData, MfciPolData, MFCI_POLICY_FIELD_MAX_LEN) != 0) {
     // String comparison failed
     DEBUG(( DEBUG_ERROR, "%a - Target Field '%s' policy target '%s' does not match system value '%s'\n", __FUNCTION__, gPolicyBlobFieldName[TargetField], MfciPolData, ThisMfciPolData ));
-    Status = EFI_DEVICE_ERROR;
+    Status = EFI_SECURITY_VIOLATION;
     goto Done;
   }
+
+  DEBUG(( DEBUG_VERBOSE, "%a - Successful match\n", __FUNCTION__));
 
 Done:
   if (MfciPolData != NULL) {
@@ -134,7 +153,7 @@ VerifyTargeting (
     goto Done;
   }
   if (BlobNonce != ExpectedNonce) {
-    DEBUG(( DEBUG_ERROR, "%a - Blob nonce does not match platform's nonce, the blob is not fresh.\n", __FUNCTION__));
+    DEBUG(( DEBUG_ERROR, "%a - Blob nonce (0x%lx) does not match platform's target nonce (0x%lx), the blob is not fresh.\n", __FUNCTION__, BlobNonce, ExpectedNonce));
     Status = EFI_SECURITY_VIOLATION;
     goto Done;
   }

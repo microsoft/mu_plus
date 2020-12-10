@@ -1,0 +1,42 @@
+## @file
+#  Library that receives the MFCI policy from the variable store.
+#  Intended for use on PEI-less, HOB-less systems
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = MfciRetrievePolicyLibViaVariable
+  FILE_GUID           = 3a65ffff-fa4f-4267-87a8-4035ada74395
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  LIBRARY_CLASS       = MfciRetrievePolicyLib | DXE_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+
+[Sources]
+  MfciRetrievePolicyLibViaVariable.c
+
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MfciPkg/MfciPkg.dec
+
+
+[LibraryClasses]
+  DebugLib
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gMfciVendorGuid              ## CONSUMES
+
+[Depex]
+  gEfiVariableArchProtocolGuid

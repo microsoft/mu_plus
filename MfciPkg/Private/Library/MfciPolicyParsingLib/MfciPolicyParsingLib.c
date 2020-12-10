@@ -12,7 +12,7 @@
 #include <Library/DebugLib.h>                            // DEBUG tracing
 #include <Library/BaseLib.h>                             // Safe String
 
-#include "Library/MfciPolicyParsingLib.h"
+#include <Library/MfciPolicyParsingLib.h>
 #include "MfciPolicyParsingLibInternal.h"
 
 EFI_STATUS
@@ -398,7 +398,7 @@ FindRule (
     }
 
     *Value = (POLICY_VALUE_HEADER*) (ValueTable + Rule->OffsetToValue);
-    DEBUG ((DEBUG_VERBOSE, "Found: %p\n", *Value));
+    DEBUG ((DEBUG_VERBOSE, "Found at address: 0x%p\n", *Value));
     return EFI_SUCCESS;
   }
   DEBUG ((DEBUG_ERROR, "Not Found\n"));
@@ -420,6 +420,7 @@ ExtractChar16 (
   UINTN PolicySize = 0;
   POLICY_VALUE_HEADER *PolicyValue = NULL;
   CHAR16 *TargetString = NULL;
+  UINT32 TargetStringSize = 0; // Length of TargetString in bytes, including any null-terminator.
   POLICY_STRING *PolicyString;
 
   DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
@@ -452,7 +453,8 @@ ExtractChar16 (
   DEBUG ((DEBUG_VERBOSE, "PolicyString Length %x\n", PolicyString->StringLength));
   DEBUG ((DEBUG_VERBOSE, "PolicyString Value '%s'\n", PolicyString->String));
 
-  TargetString = AllocatePool(PolicyString->StringLength + sizeof(CHAR16)); // Reserving space to add a NULL
+  TargetStringSize = (PolicyString->StringLength + sizeof(CHAR16));  // Reserving space to add a NULL
+  TargetString = AllocatePool(TargetStringSize);
   if (TargetString == NULL) {
     DEBUG ((DEBUG_ERROR, "AllocatePool Failed\n"));
     Status = EFI_OUT_OF_RESOURCES;
@@ -460,7 +462,12 @@ ExtractChar16 (
   }
 
   CopyMem(TargetString, &PolicyString->String, PolicyString->StringLength);
-  TargetString[PolicyString->StringLength / sizeof(CHAR16)] = L'\0';
+  TargetString[PolicyString->StringLength / sizeof(CHAR16)] = L'\0';  // adding Wide NULL termination
+  if (StrSize(TargetString) != TargetStringSize) {
+    DEBUG ((DEBUG_ERROR, "StrSize of TargetString (%x) does not match TargetStringSize (%x), there must be embedded NULLs (not permitted)\n", StrSize(TargetString), TargetStringSize));
+    Status = EFI_COMPROMISED_DATA;
+    goto _Exit;
+  }
   DEBUG ((DEBUG_VERBOSE, "TargetString '%s'\n", TargetString));
   *MfciPolicyStringValue = TargetString;
   TargetString = NULL;
