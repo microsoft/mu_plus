@@ -1,4 +1,4 @@
-# MfciRetirevePolicyLib: HOB edition
+# MfciRetrievePolicyLib: HOB edition
 
 ## About
 

@@ -1,4 +1,4 @@
-# MfciRetirevePolicyLib: NULL edition
+# MfciRetrievePolicyLib: NULL edition
 
 ## About
 

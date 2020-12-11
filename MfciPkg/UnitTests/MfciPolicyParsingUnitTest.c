@@ -298,10 +298,10 @@ EntryPoint (
 
   // The test case data contexts are large, to be nice to the stack we define them as static
   // Some of the data comes from PCDs (not constant), and it was necessary to pass that data
-  // via static pointers to the data.  Unfortinately to test a 0 or NULL, this required declaring
+  // via static pointers to the data.  Unfortunately to test a 0 or NULL, this required declaring
   // static pointers to 0 and NULL.
   //
-  // TODO: any suggestions on friendler code or comment for below code?
+  // TODO: any suggestions on friendlier code or comment for below code?
 
   static CONST VOID* CONST  mNullPtr = NULL;
   static CONST UINT8* mCertCA;

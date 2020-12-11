@@ -6,7 +6,7 @@ The following is prerelease documentation for an upcoming feature.  Details are 
 
 ## Overview
 
-### In a Sentance
+### In a Sentence
 
 Manufacturer Firmware Configuration Interface (MFCI) is a UEFI BIOS feature that provides a secure
 mechanism for an authorized agent, such as an OEM or ODM, to modify firmware security properties
