@@ -1,0 +1,49 @@
+## @file
+# Implementation sample for MfciDeviceIdSupportLib
+# Returns device IDs read from SMBIOS
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MfciDeviceIdSupportLibSmbios
+  FILE_GUID                      = 45500855-C967-4BEB-A9D1-C604B08AB303
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MfciDeviceIdSupportLib|DXE_DRIVER UEFI_APPLICATION
+  CONSTRUCTOR                    = MfciIdSupportConstructor
+
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = ANY
+#
+
+[Sources]
+  MfciDeviceIdSupportLibSmbios.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  UefiLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  BaseMemoryLib
+
+[Protocols]
+  gEfiSmbiosProtocolGuid                                ## CONSUMES
+
+[Guids]
+
+[Pcd]
+
+[Depex]
+  gEfiSmbiosProtocolGuid
