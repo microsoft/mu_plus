@@ -1,4 +1,4 @@
-# MfciRetirevePolicyLib: UEFI variable edition
+# MfciRetrievePolicyLib: UEFI variable edition
 
 ## About
 

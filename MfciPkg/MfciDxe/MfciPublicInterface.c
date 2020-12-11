@@ -86,7 +86,7 @@ GetPhaseIndicatorStatus (
 /**
   This callback is registered on EndOfDxe to clean up the notification context.
 
-  This is done for security so that after EndOfDxe an ellicit attempt may not be
+  This is done for security so that after EndOfDxe an illicit attempt may not be
   made to trick drivers in a MFCI Policy change.
 
   @param[in]  Event     Event whose notification function is being invoked
@@ -313,7 +313,7 @@ InternalRegisterMfciPolicyChangeNotifyCallback (
 /**
   This callback is registered on EndOfDxe to clean up the notification context.
 
-  This is done for security so that after EndOfDxe an ellicit attempt may not be
+  This is done for security so that after EndOfDxe an illicit attempt may not be
   made to trick drivers in a MFCI Policy change.
 
   @param[in]  Event     Event whose notification function is being invoked
