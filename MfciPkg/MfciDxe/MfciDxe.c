@@ -936,8 +936,8 @@ MfciDxeEntry (
     properly initialized and resynchronized.
   **/
   if (EFI_ERROR(Status)) {
-    UINTN debuglevel = (Status == EFI_NOT_FOUND) ? DEBUG_INFO : DEBUG_ERROR;
-    DEBUG(( debuglevel, "%a() - MfciRetrievePolicy failed returning %r\n", __FUNCTION__, Status ));
+    DEBUG(( ((Status == EFI_NOT_FOUND) ? DEBUG_INFO : DEBUG_ERROR),
+      "%a() - MfciRetrievePolicy failed returning %r\n", __FUNCTION__, Status ));
     // Continue in CUSTOMER_STATE, may be first boot with variable not initialized, clear error status
     mCurrentPolicy = CUSTOMER_STATE;
     Status = EFI_SUCCESS;

@@ -259,11 +259,10 @@ SanityCheckPolicy (
     }
 
     POLICY_VALUE_HEADER* ValueHeader = (POLICY_VALUE_HEADER*) (ValueTable + Rule->OffsetToValue);
-    POLICY_VALUE_TYPE ValueType = ValueHeader->Type;
 
     UINT32 ValueSize = CalculateSizeOfValueTableEntry(ValueHeader);
     if (ValueSize == 0) {
-      DEBUG ((DEBUG_ERROR, "Policy Value Type 0x%04x not supported\n", ValueType));
+      DEBUG ((DEBUG_ERROR, "Policy Value Type 0x%04x not supported\n", ValueHeader->Type));
       return EFI_COMPROMISED_DATA;
     }
     if (Rule->OffsetToValue + ValueSize > ValueTableSize) {
