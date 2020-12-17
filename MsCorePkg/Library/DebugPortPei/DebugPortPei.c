@@ -41,27 +41,6 @@ DebugPortPrint (
 }
 
 /**
-  Dumps memory formatted.
-
-  Calls into the DebugDumpMemory inside MdeModulePkg
-
-  @param  Address      The address of the memory to dump.
-  @param  Length       The length of the region to dump.
-  @param  Flags        PrintAddress, PrintOffset etc
-
-**/
-VOID
-EFIAPI
-DebugPortDumpMemory (
-  IN  UINTN         ErrorLevel,
-  IN  CONST VOID   *Address,
-  IN  UINTN         Length,
-  IN  UINT32        Flags
-) {
-    DebugDumpMemory(ErrorLevel, Address, Length, Flags);
-}
-
-/**
   Prints an assert message containing a filename, line number, and description.
   This may be followed by a breakpoint or a dead loop.
 
@@ -95,7 +74,6 @@ DebugPortAssert (
 DEBUG_PORT_PPI mDebugPortPpi = {
   DebugPortPrint,
   DebugPortAssert,
-  DebugPortDumpMemory
 };
 
 EFI_PEI_PPI_DESCRIPTOR mPpiList[] = {

@@ -36,8 +36,8 @@ VOID DumpFontInfo (MS_UI_FONT_DESCRIPTION *Font) {
     DEBUG((DEBUG_VERBOSE,"Package Size=%d, GlyphsSize=%d\n",
                 Font->PackageSize,
                 Font->GlyphsSize));
-    DebugDumpMemory (DEBUG_VERBOSE,PACKAGE_PTR_GET Font->Package,64,DEBUG_DM_PRINT_ADDRESS);
-    DebugDumpMemory (DEBUG_VERBOSE,PACKAGE_PTR_GET Font->Glyphs,64,DEBUG_DM_PRINT_ADDRESS);
+    DUMP_HEX(DEBUG_VERBOSE, 0, PACKAGE_PTR_GET Font->Package, 64, "");
+    DUMP_HEX(DEBUG_VERBOSE, 0, PACKAGE_PTR_GET Font->Glyphs, 64, "");
 }
 
 #endif
@@ -437,7 +437,7 @@ MsUiGetPlatformTheme (VOID) {
     ASSERT (gPlatformTheme != NULL);
     if (FirstTime) {
 
-        DebugDumpMemory (DEBUG_VERBOSE, gPlatformTheme, sizeof(MS_UI_THEME_DESCRIPTION),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+        DUMP_HEX(DEBUG_VERBOSE, 0, gPlatformTheme, sizeof(MS_UI_THEME_DESCRIPTION), "");
         DEBUG((DEBUG_VERBOSE,__FUNCTION__ " Theme information\n"));
         DEBUG((DEBUG_VERBOSE,"Scale = %d\n",gPlatformTheme->Scale));
         DEBUG((DEBUG_VERBOSE,"Fixed Font\n"));

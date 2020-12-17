@@ -837,9 +837,9 @@ DfciIssueRequest (
     DEBUG((DEBUG_INFO, "Making Request - Headers:\n"));
     DumpHeaders (RequestMessage->HeaderCount, RequestMessage->Headers);
     DEBUG((DEBUG_INFO, "HttpRequestToken:\n"));
-    DEBUG_BUFFER(DEBUG_INFO, RequestToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG_BUFFER(DEBUG_INFO, RequestMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG_BUFFER(DEBUG_INFO, RequestData, sizeof(EFI_HTTP_REQUEST_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DUMP_HEX(DEBUG_INFO, 0, RequestToken, sizeof(EFI_HTTP_TOKEN), "");
+    DUMP_HEX(DEBUG_INFO, 0, RequestMessage, sizeof(EFI_HTTP_MESSAGE), "");
+    DUMP_HEX(DEBUG_INFO, 0, RequestData, sizeof(EFI_HTTP_REQUEST_DATA), "");
     DEBUG((DEBUG_INFO, "%p Url=%s\n", RequestData->Url,RequestData->Url));
 
     Status = NetworkRequest->Http.HttpProtocol->Request(NetworkRequest->Http.HttpProtocol, RequestToken);
@@ -902,10 +902,10 @@ DfciGetResponse (
     ResponseData = ResponseMessage->Data.Response;
 
     DEBUG((DEBUG_INFO, "HttpResponseToken:\n"));
-    DEBUG_BUFFER(DEBUG_INFO, ResponseToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG_BUFFER(DEBUG_INFO, ResponseMessage, sizeof(EFI_HTTP_MESSAGE), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DUMP_HEX(DEBUG_INFO, 0, ResponseToken, sizeof(EFI_HTTP_TOKEN), "");
+    DUMP_HEX(DEBUG_INFO, 0, ResponseMessage, sizeof(EFI_HTTP_MESSAGE), "");
     if (NULL != ResponseData) {
-        DEBUG_BUFFER(DEBUG_INFO, ResponseData, sizeof(EFI_HTTP_RESPONSE_DATA), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+        DUMP_HEX(DEBUG_INFO, 0, ResponseData, sizeof(EFI_HTTP_RESPONSE_DATA), "");
     }
 
     Status = NetworkRequest->Http.HttpProtocol->Response(NetworkRequest->Http.HttpProtocol, ResponseToken);
@@ -931,8 +931,8 @@ DfciGetResponse (
 
     DumpHeaders (ResponseMessage->HeaderCount, ResponseMessage->Headers);
     DEBUG((DEBUG_INFO, "HttpResponseData:\n"));
-    DEBUG_BUFFER(DEBUG_INFO, ResponseToken, sizeof(EFI_HTTP_TOKEN), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DEBUG_BUFFER(DEBUG_INFO, ResponseMessage->Body, ResponseMessage->BodyLength, DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DUMP_HEX(DEBUG_INFO, 0, ResponseToken, sizeof(EFI_HTTP_TOKEN), "");
+    DUMP_HEX(DEBUG_INFO, 0, ResponseMessage->Body, ResponseMessage->BodyLength, "");
 
     return Status;
 }

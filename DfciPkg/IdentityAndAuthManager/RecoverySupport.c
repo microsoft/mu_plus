@@ -220,10 +220,6 @@ GetRecoveryPacket(
   //Set the identity so we can use later once authenticated
   mRecoveryId = Identity;
 
-  //TODO: remove this code once tool is written to decode
-  //DEBUG((DEBUG_INFO, "%a: DEBUG FEATURE - Print response.  todo: remove before production\n", __FUNCTION__));
-  //DEBUG_BUFFER(DEBUG_INFO, &(Challenge->Nonce.Parts.Key), sizeof(Challenge->Nonce.Parts.Key), DEBUG_DM_PRINT_ASCII);
-
 
 CLEANUP:
   if (EFI_ERROR(Status))

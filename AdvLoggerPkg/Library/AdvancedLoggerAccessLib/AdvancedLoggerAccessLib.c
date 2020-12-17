@@ -130,7 +130,7 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
         LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *) MESSAGE_ENTRY_FROM_MSG(BlockEntry->Message);
         if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
             DEBUG((DEBUG_ERROR, "Resume LogEntry invalid signature at %p\n", LogEntry));
-            DEBUG_BUFFER(DEBUG_INFO, (CHAR8 *)LogEntry - 128, 256, DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+            DUMP_HEX(DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
             return EFI_INVALID_PARAMETER;
         }
         LogEntry = NEXT_LOG_ENTRY (LogEntry);
@@ -151,8 +151,8 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
 
     if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
         DEBUG((DEBUG_ERROR, "Next LogEntry invalid signature at %p, Last=%p\n", LogEntry, BlockEntry->Message));
-        DEBUG_BUFFER(DEBUG_INFO, (CHAR8 *)BlockEntry->Message - 128, 256, DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-        DEBUG_BUFFER(DEBUG_INFO, (CHAR8 *)LogEntry - 128, 256, DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+        DUMP_HEX(DEBUG_INFO, 0, (CHAR8 *)BlockEntry->Message - 128, 256, "");
+        DUMP_HEX(DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
         return EFI_COMPROMISED_DATA;
     }
 

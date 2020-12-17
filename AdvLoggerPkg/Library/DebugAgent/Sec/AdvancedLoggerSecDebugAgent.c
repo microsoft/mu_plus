@@ -123,7 +123,7 @@ InitializeDebugAgent (
             LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
 
             DEBUG((DEBUG_INFO, "%a: Start. SecLogInfo=%p\n", __FUNCTION__, LoggerInfo));
-            DEBUG_BUFFER(DEBUG_INFO, (VOID *) LoggerInfo, sizeof(ADVANCED_LOGGER_INFO), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+            DUMP_HEX(DEBUG_INFO, 0, (VOID *) LoggerInfo, sizeof(ADVANCED_LOGGER_INFO), "");
             // From this point until the PeiDebugLib constructor creates the Logger Info HOB, the access
             // to the LoggerInfo is via PCD to the well known address.  However, there is some overlap between
             // PEI and SEC due to SEC PPI callbacks. There will be two transition of logging:
@@ -219,8 +219,8 @@ InitializeDebugAgent (
                         NewLoggerInfo->LogCurrent,
                         NewLoggerInfo->LogBufferSize,
                         NewLoggerInfo->DiscardedSize));
-                    DEBUG_BUFFER(DEBUG_INFO, (VOID *) LogPtr, sizeof(ADVANCED_LOGGER_PTR), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-                    DEBUG_BUFFER(DEBUG_INFO, (VOID *) NewLoggerInfo, sizeof(ADVANCED_LOGGER_INFO), DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+                    DUMP_HEX(DEBUG_INFO, 0, (VOID *) LogPtr, sizeof(ADVANCED_LOGGER_PTR), "");
+                    DUMP_HEX(DEBUG_INFO, 0, (VOID *) NewLoggerInfo, sizeof(ADVANCED_LOGGER_INFO), "");
                 }
             }
         } else {

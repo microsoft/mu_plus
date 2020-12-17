@@ -200,7 +200,7 @@ BertErrorBlockAddErrorData (
     return FALSE;
   }
   DEBUG((DEBUG_VERBOSE, "%a - %d: Dumping GenericErrorData contents: \n", __FUNCTION__, __LINE__));
-  DEBUG_BUFFER(DEBUG_VERBOSE, GenericErrorData, SizeOfGenericErrorData, DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+  DUMP_HEX(DEBUG_VERBOSE, 0, GenericErrorData, SizeOfGenericErrorData, "");
 
   // Setup BERT structures
   BlockHeader = ErrorBlock;

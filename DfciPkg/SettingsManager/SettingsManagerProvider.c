@@ -328,7 +328,7 @@ SetProviderValueFromAscii(
 
       SetValue = ByteArray;
       DEBUG((DEBUG_INFO, "Setting BINARY data\n"));
-      DEBUG_BUFFER(DEBUG_VERBOSE, SetValue, ValueSize, DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII);
+      DUMP_HEX(DEBUG_VERBOSE, 0, SetValue, ValueSize, "");
       break;
 
   default:

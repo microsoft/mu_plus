@@ -74,52 +74,6 @@ DebugPrint (
   }
 }
 
-/**
-  Dumps memory formatted.
-
-  Dumps the memory as hex bytes.  Other additional options
-  are controlled with the Flags parameter.
-
-
-  @param  Address      The address of the memory to dump.
-  @param  Length       The length of the region to dump.
-  @param  Flags        PrintAddress, PrintOffset etc
-**/
-
-VOID
-EFIAPI
-DebugDumpMemory (
-  IN  UINTN         ErrorLevel,
-  IN  CONST VOID   *Address,
-  IN  UINTN         Length,
-  IN  UINT32        Flags
-  )
-{
-  ADVANCED_LOGGER_PPI *AdvLoggerPPI;
-  EFI_STATUS           Status;
-
-  //
-  // If Format is NULL, then ASSERT().
-  //
-  ASSERT(Address != NULL);
-
-  //
-  // Check driver Debug Level value and global debug level
-  //
-  if ((ErrorLevel & GetDebugPrintErrorLevel()) == 0) {
-    return;
-  }
-
-  Status = PeiServicesLocatePpi(
-    &gAdvancedLoggerPpiGuid,
-    0,
-    NULL,
-    (VOID **)&AdvLoggerPPI
-    );
-  if (Status == EFI_SUCCESS) {
-    AdvLoggerPPI->AdvancedLoggerDumpMemory(ErrorLevel, Address, Length, Flags);
-  }
-}
 
 /**
   Prints an assert message containing a filename, line number, and description.

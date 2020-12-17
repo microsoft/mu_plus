@@ -159,7 +159,7 @@ JsonLibEncode (
         FreePool (RequestBuffer);
     } else {
         DEBUG((DEBUG_INFO,"Request Buffer:\n"));
-        DEBUG_BUFFER(DEBUG_INFO, RequestBuffer, RequestSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
+        DUMP_HEX(DEBUG_INFO, 0, RequestBuffer, RequestSize, "");
         *JsonString = RequestBuffer;
         *JsonStringSize = RequestSize;
     }
@@ -211,7 +211,7 @@ JsonLibParse (
     Processed = FALSE;
     Changed = FALSE;
     DEBUG((DEBUG_INFO,"Parse buffer @ %p, Size = %d:\n", JsonString, JsonStringSize));
-    DEBUG_BUFFER(DEBUG_INFO, JsonString, JsonStringSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
+    DUMP_HEX(DEBUG_INFO, 0, JsonString, JsonStringSize, "");
 
     Length = AsciiStrnLenS (JsonString, JsonStringSize);
     if (Length == JsonStringSize) {

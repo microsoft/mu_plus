@@ -2478,11 +2478,11 @@ UiDisplayMenu (IN FORM_DISPLAY_ENGINE_FORM *FormData) {
                             Tgt = ReturnData.TargetCell;
 #define EXTENDED_DEBUG 0 // Set to 1 for extra debug
 #if (EXTENDED_DEBUG)
-                            DEBUG((DEBUG_ERROR,"Old Buffer\n"));
-                            DebugDumpMemory(DEBUG_ERROR,((CHAR8 *)ValueArray) - 0x18, Statement->CurrentValue.BufferLen + 0x20,DEBUG_DM_PRINT_ASCII);
+                            DEBUG((DEBUG_ERROR,"Old Buffer %p\n", ((CHAR8 *)ValueArray) - 0x18));
+                            DUMP_HEX(DEBUG_ERROR, 0, ((CHAR8 *)ValueArray) - 0x18, Statement->CurrentValue.BufferLen + 0x20, "");
 
-                            DEBUG((DEBUG_ERROR,"New empty Buffer\n"));
-                            DebugDumpMemory(DEBUG_ERROR,((CHAR8 *)ReturnValue) - 0x18, Statement->CurrentValue.BufferLen + 0x20,DEBUG_DM_PRINT_ASCII);
+                            DEBUG((DEBUG_ERROR,"New empty Buffer %p\n", ((CHAR8 *)ReturnValue) - 0x18));
+                            DUMP_HEX(DEBUG_ERROR, 0, ((CHAR8 *)ReturnValue) - 0x18, Statement->CurrentValue.BufferLen + 0x20, "");
 #endif
                             // An ordered list always returns all of the data, so
                             // move old value to return value honoring the values of
@@ -2526,8 +2526,8 @@ UiDisplayMenu (IN FORM_DISPLAY_ENGINE_FORM *FormData) {
                                 break;
                             }
 #if (EXTENDED_DEBUG)
-                            DEBUG((DEBUG_ERROR,"New filled Buffer\n"));
-                            DebugDumpMemory(DEBUG_ERROR,((CHAR8 *)ReturnValue) - 0x18, Statement->CurrentValue.BufferLen + 0x20,DEBUG_DM_PRINT_ASCII);
+                            DEBUG((DEBUG_ERROR,"New filled Buffer %p\n", ((CHAR8 *)ReturnValue) - 0x18));
+                            DUMP_HEX(DEBUG_ERROR, 0, ((CHAR8 *)ReturnValue) - 0x18, Statement->CurrentValue.BufferLen + 0x20, "");
 #endif
                             if (CompareMem (ReturnValue, ValueArray, Statement->CurrentValue.BufferLen) == 0) {
                                 DEBUG ((DEBUG_ERROR, "%a no change detected\n", __FUNCTION__));

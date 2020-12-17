@@ -66,13 +66,13 @@ MsUiThemePpiEntry(
     DEBUG((DEBUG_INFO,"MsUiThemePpi started.  Table at %p for %d\n",mPlatformTheme,sizeof(MS_UI_THEME_DESCRIPTION)));
 
     DEBUG((DEBUG_VERBOSE,"Dumping static font table.  Table at %p for %d\n",mPlatformTheme,sizeof(MS_UI_THEME_DESCRIPTION)));
-    DebugDumpMemory (DEBUG_VERBOSE, mPlatformTheme, sizeof(MS_UI_THEME_DESCRIPTION),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, (FONT_PTR_GET mPlatformTheme->FixedFont), sizeof (MS_UI_FONT_DESCRIPTION),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->FixedFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->FixedFont)->Glyphs,  256,DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, (FONT_PTR_GET mPlatformTheme->LargeFont), sizeof (MS_UI_FONT_DESCRIPTION),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->LargeFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->LargeFont)->Glyphs,  256,DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DUMP_HEX (DEBUG_VERBOSE, 0, mPlatformTheme, sizeof(MS_UI_THEME_DESCRIPTION), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET mPlatformTheme->FixedFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->FixedFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->FixedFont)->Glyphs,  256, "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET mPlatformTheme->LargeFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->LargeFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET mPlatformTheme->LargeFont)->Glyphs,  256, "");
 
     FontSize = MsThemeGetSize(mPlatformTheme);
 
@@ -87,13 +87,13 @@ MsUiThemePpiEntry(
 
     DEBUG((DEBUG_VERBOSE,"Font Stats Fp=%p, size=%d\n",NewFonts,FontSize));
     DEBUG((DEBUG_VERBOSE,"Dumping new font table.  Table at %p for %d\n",&mPlatformTheme,sizeof(MS_UI_THEME_DESCRIPTION)));
-    DebugDumpMemory (DEBUG_VERBOSE, NewFonts, sizeof(MS_UI_THEME_DESCRIPTION),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, (FONT_PTR_GET NewFonts->FixedFont), sizeof (MS_UI_FONT_DESCRIPTION),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->FixedFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->FixedFont)->Glyphs,  256,DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, (FONT_PTR_GET NewFonts->LargeFont), sizeof (MS_UI_FONT_DESCRIPTION),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->LargeFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER),DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
-    DebugDumpMemory (DEBUG_VERBOSE, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->LargeFont)->Glyphs,  256,DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII);
+    DUMP_HEX (DEBUG_VERBOSE, 0, NewFonts, sizeof(MS_UI_THEME_DESCRIPTION), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET NewFonts->FixedFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->FixedFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->FixedFont)->Glyphs,  256, "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, (FONT_PTR_GET NewFonts->LargeFont), sizeof (MS_UI_FONT_DESCRIPTION), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->LargeFont)->Package, sizeof(MS_UI_FONT_PACKAGE_HEADER), "");
+    DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET (FONT_PTR_GET NewFonts->LargeFont)->Glyphs,  256, "");
 
     // Create a HoB for passing the PEI font tables up to the DXE MsUiThemeProtocol
     //
@@ -114,7 +114,7 @@ MsUiThemePpiEntry(
     *HobData = (EFI_PHYSICAL_ADDRESS) (UINTN) NewFonts;
 
     DEBUG((DEBUG_VERBOSE,"Font Hob=%p, HobData=%p NewFonts = *HobData = %p\n",GuidHob,HobData,*HobData));
-    DebugDumpMemory (DEBUG_VERBOSE,GuidHob,sizeof(EFI_HOB_GUID_TYPE)+sizeof(UINT64) + 8 ,DEBUG_DM_PRINT_ADDRESS);
+    DUMP_HEX(DEBUG_VERBOSE, 0, GuidHob, sizeof(EFI_HOB_GUID_TYPE)+sizeof(UINT64) + 8, "");
 
     // Publish the Ppi for MsEarlyGraphics
     mMsUiThemePpiList.Ppi = NewFonts;

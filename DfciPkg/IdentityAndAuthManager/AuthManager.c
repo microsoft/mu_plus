@@ -534,13 +534,13 @@ VerifySignature(
   //
 
   DEBUG((DEBUG_INFO, "\n====\n[AM] %a - Printing Out The Trusted Cert\n", __FUNCTION__));
-  DEBUG_BUFFER(DEBUG_INFO, TrustedCert, TrustedCertSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
+  DUMP_HEX(DEBUG_INFO, 0, TrustedCert, TrustedCertSize, "");
 
   DEBUG((DEBUG_INFO, "\n====\n[AM] %a - Printing Out The %a\n", __FUNCTION__, "Incoming Sig Data Struct"));
-  DEBUG_BUFFER(DEBUG_INFO, (UINT8 *)(Signature), Signature->dwLength, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
+  DUMP_HEX(DEBUG_INFO, 0, (UINT8 *)(Signature), Signature->dwLength, "");
 
   DEBUG((DEBUG_INFO, "\n====\n[AM] %a - Printing Out The %a\n", __FUNCTION__, "Incoming Signed Data"));
-  DEBUG_BUFFER(DEBUG_INFO, (UINT8 *)(SignedData), SignedDataSize, (DEBUG_DM_PRINT_OFFSET | DEBUG_DM_PRINT_ASCII));
+  DUMP_HEX(DEBUG_INFO, 0, (UINT8 *)(SignedData), SignedDataSize, "");
 
 
   WIN_CERTIFICATE_UEFI_GUID *Cert = (WIN_CERTIFICATE_UEFI_GUID*)Signature;

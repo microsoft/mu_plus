@@ -61,29 +61,10 @@ VOID
     IN CONST CHAR8 *Description
   );
 
-/**
-  Function pointer for PPI routing to correct DebugDumpMemory function
-
-  @param  Address      The address of the memory to dump.
-  @param  Length       The length of the region to dump.
-  @param  Flags        PrintAddress, PrintOffset etc
-
-**/
-typedef
-VOID
-(EFIAPI *ADVANCED_LOGGER_DUMP_MEMORY)(
-    IN UINTN        ErrorLevel,
-    IN CONST VOID  *Address,
-    IN UINTN        Length,
-    IN UINT32       Flags
-  );
-
-
 struct _ADVANCED_LOGGER_PPI {
     ADVANCED_LOGGER_WRITE         AdvancedLoggerWrite;
     ADVANCED_LOGGER_PRINT         AdvancedLoggerPrint;
     ADVANCED_LOGGER_ASSERT        AdvancedLoggerAssert;
-    ADVANCED_LOGGER_DUMP_MEMORY   AdvancedLoggerDumpMemory;
 };
 
 extern  EFI_GUID  gAdvancedLoggerPpiGuid;

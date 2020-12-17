@@ -42,27 +42,9 @@ VOID
   IN CONST CHAR8  *Description
   );
 
-/**
-  Function pointer for PPI routing to correct DebugDumpMemory function
-
-  @param  Address      The address of the memory to dump.
-  @param  Length       The length of the region to dump.
-  @param  Flags        PrintAddress, PrintOffset etc
-
-**/
-typedef
-VOID
-(EFIAPI *DEBUG_PORT_DUMP_MEMORY)(
-  IN UINTN        ErrorLevel,
-  IN CONST VOID   *Address,
-  IN UINTN        Length,
-  IN UINT32       Flags
-  );
-  
 typedef struct {
   DEBUG_PORT_PRINT            DebugPortPrint;
   DEBUG_PORT_ASSERT           DebugPortAssert;
-  DEBUG_PORT_DUMP_MEMORY      DebugPortDumpMemory;
 } DEBUG_PORT_PPI;
 
 extern EFI_GUID gDebugPortPpiGuid;

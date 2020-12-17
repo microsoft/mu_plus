@@ -767,7 +767,7 @@ PrintMemoryMap () {
                             if (((1 << MemoryMap->Type) & PcdGet32 (PcdEnableMemMapTypes)) != 0) {
                                 DEBUG((DEBUG_INFO,"%a at %p for %d pages\n",mMemoryType[MemoryMap->Type],MemoryMap->PhysicalStart,MemoryMap->NumberOfPages));
                                 if (PcdGet8 (PcdEnableMemMapDumpOutput)) {
-                                    DebugDumpMemory (DEBUG_INFO, (CHAR8 *) MemoryMap->PhysicalStart,48,DEBUG_DM_PRINT_ADDRESS | DEBUG_DM_PRINT_ASCII );
+                                    DUMP_HEX(DEBUG_INFO, 0, (CHAR8 *) MemoryMap->PhysicalStart, 48, "");
                                 }
                             }
                         } else {
