@@ -64,7 +64,6 @@
 [Pcd]
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr                    ## CONSUMES
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU                  ## CONSUMES
-  gMfciPkgTokenSpaceGuid.PcdMfciPopulateTargetFromDeviceIdSupportLib  ## CONSUMES
 
 [Guids]
   gMfciVendorGuid                     ## CONSUMES

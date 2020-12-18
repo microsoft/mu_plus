@@ -51,23 +51,6 @@
   MuSecureBootLib|Private/Library/MuSecureBootLib.h
   MfciRetrievePolicyLib|Private/Library/MfciRetrievePolicyLib.h
 
-[PcdsFeatureFlag]
-
-  ##
-  # PcdMfciPopulateTargetFromDeviceIdSupportLib
-  #
-  # Should MfciDxe call MfciDeviceIdSupportLib to populate the targeting variables
-  #
-  # FALSE (default): the platform is expected to set the MFCI device targeting
-  # variables prior to the End of Dxe event
-  #
-  # TRUE: MfciDxe will call MfciDeviceIdSupportLib to gather the targeting
-  # strings, and it (MfciDxe) will set the device targeting variables. This invocation
-  # of MfciDeviceIdSupportLib occurs during the gMsStartOfBdsNotify event, which is
-  # triggered immediately prior to EndOfDxe
-  ##
-  gMfciPkgTokenSpaceGuid.PcdMfciPopulateTargetFromDeviceIdSupportLib|FALSE|BOOLEAN|0x40000044
-
 [PcdsFixedAtBuild]
   ## One or more PKCS7 certificates used to verify the MFCI Policy
   #  blob.  Encoded using the Variable-Length Opaque Data format of RFC

@@ -423,6 +423,30 @@ Done:
 }
 
 
+BOOLEAN
+CheckTargetVarsExist (
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       Size = 0;
+  UINT32      VariableAttr;
+
+  for (int i = 0; i < ARRAY_SIZE(gDeviceIdFnToTargetVarNameMap); i++) {
+    VariableAttr = 0;
+    Status = gRT->GetVariable (
+                             gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName,
+                             &MFCI_VAR_VENDOR_GUID,
+                             &VariableAttr,
+                             &Size,
+                             NULL);
+    if (Status != EFI_BUFFER_TOO_SMALL) {
+      DEBUG(( DEBUG_VERBOSE, "MFCI targeting variable %s returned %r, expecting variables to be populated via MfciDeviceIdSupportLib\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName, Status ));
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
 EFI_STATUS
 PopulateTargetVarsFromLib (
   )
@@ -532,9 +556,13 @@ VerifyPolicyAndChange (
 
   DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
 
-  if (FeaturePcdGet(PcdMfciPopulateTargetFromDeviceIdSupportLib)) {
+  if (! CheckTargetVarsExist () ) {
     Status = PopulateTargetVarsFromLib ();
     if (EFI_ERROR(Status)) {
+      if (Status == EFI_UNSUPPORTED) {
+        DEBUG(( DEBUG_ERROR, "MfciDeviceIdSupportLib returned EFI_UNSUPPORTED. Did you forget to either create the MFCI targeting variables, or implement MfciDeviceIdSupportLib?\n"));
+      }
+      Status = EFI_ABORTED;
       goto Exit;
     }
   }
@@ -803,10 +831,10 @@ VerifyTarget:
   }
 
   // Step 3.4: verify targetting is for this machine
-    Status = VerifyTargeting (TargetBlob,
-                              TargetBlobSize,
-                              TargetNonce,
-                              &BlobPolicy);
+  Status = VerifyTargeting (TargetBlob,
+                            TargetBlobSize,
+                            TargetNonce,
+                            &BlobPolicy);
 
   if (EFI_ERROR(Status)) {
     // If target is wrong, we fail, back to safe zone

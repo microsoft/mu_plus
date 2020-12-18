@@ -4,7 +4,7 @@
 
 MFCI-compatible platforms MUST publish MFCI targeting information prior to EndOfDxe. They may do so by either setting
 all of the Per-Device Targeting Variables declared in `MfciVariables.h`.  Alternatively, then can implement an instance
-of MFCI Device ID Support Library and set ```PcdMfciPopulateTargetFromDeviceIdSupportLib``` to ```TRUE```.
+of MFCI Device ID Support Library.
 
 Refer to ```MfciDeviceIdSupportLib.h``` for this library's interface.
 
@@ -19,9 +19,6 @@ by populating SMBIOS values in another driver's entry point, constructor, or in 
 To leverage this library, add the following to your platform DSC:
 
 ```ini
-[PcdsFeatureFlag]
-gMfciPkgTokenSpaceGuid.PcdMfciPopulateTargetFromDeviceIdSupportLib|TRUE
-
 [LibraryClasses]
 MfciDeviceIdSupportLib|MfciPkg/Library/MfciDeviceIdSupportLibSmbios/MfciDeviceIdSupportLibSmbios.inf
 ```
