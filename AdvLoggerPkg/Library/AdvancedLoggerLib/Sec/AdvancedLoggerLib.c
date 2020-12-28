@@ -29,11 +29,12 @@ AdvancedLoggerLibConstructor (
     // Initialize the fixed memory LogPtr structure to no address, with a signature.
 
     LogPtr = (ADVANCED_LOGGER_PTR *) FixedPcdGet64 (PcdAdvancedLoggerBase);
-    LogPtr->LogBuffer = 0ULL;
-    LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
+    if (LogPtr != NULL) {
+        LogPtr->LogBuffer = 0ULL;
+        LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
+    }
 
     AdvancedLoggerHdwPortInitialize ();
-
     return EFI_SUCCESS;
 }
 

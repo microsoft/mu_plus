@@ -22,6 +22,56 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/PeiServicesLib.h>
 
+
+/**
+  Prints a debug message to the debug output device if the specified
+  error level is enabled.
+
+  If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function
+  GetDebugPrintErrorLevel (), then print the message specified by Format and
+  the associated variable argument list to the debug output device.
+
+  If Format is NULL, then ASSERT().
+
+  @param  ErrorLevel    The error level of the debug message.
+  @param  Format        Format string for the debug message to print.
+  @param  VaListMarker  VA_LIST marker for the variable argument list.
+
+**/
+VOID
+EFIAPI
+DebugVPrint (
+  IN  UINTN         ErrorLevel,
+  IN  CONST CHAR8   *Format,
+  IN  VA_LIST       VaListMarker
+  ) {
+  ADVANCED_LOGGER_PPI *AdvLoggerPPI;
+  EFI_STATUS           Status;
+
+  //
+  // If Format is NULL, then ASSERT().
+  //
+  ASSERT (Format != NULL);
+
+  //
+  // Check driver Debug Level value and global debug level
+  //
+  if ((ErrorLevel & GetDebugPrintErrorLevel ()) == 0) {
+    return;
+  }
+
+  Status = PeiServicesLocatePpi (
+              &gAdvancedLoggerPpiGuid,
+              0,
+              NULL,
+              (VOID **) &AdvLoggerPPI
+              );
+  if (Status == EFI_SUCCESS) {
+    AdvLoggerPPI->AdvancedLoggerPrint (ErrorLevel, Format, VaListMarker);
+  }
+}
+
+
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
 
@@ -45,33 +95,11 @@ DebugPrint (
   ...
   )
 {
-  ADVANCED_LOGGER_PPI *AdvLoggerPPI;
   VA_LIST              Marker;
-  EFI_STATUS           Status;
 
-  //
-  // If Format is NULL, then ASSERT().
-  //
-  ASSERT (Format != NULL);
-
-  //
-  // Check driver Debug Level value and global debug level
-  //
-  if ((ErrorLevel & GetDebugPrintErrorLevel ()) == 0) {
-    return;
-  }
-
-  Status = PeiServicesLocatePpi (
-              &gAdvancedLoggerPpiGuid,
-              0,
-              NULL,
-              (VOID **) &AdvLoggerPPI
-              );
-  if (Status == EFI_SUCCESS) {
     VA_START (Marker, Format);
-    AdvLoggerPPI->AdvancedLoggerPrint (ErrorLevel, Format, Marker);
+    DebugVPrint (ErrorLevel, Format, Marker);
     VA_END (Marker);
-  }
 }
 
 

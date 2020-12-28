@@ -1,6 +1,5 @@
 ## @file
-#  Instance of Debug Library based by AdvancedLogger.
-#  It uses Print Library to produce formatted output strings to be passed to the Advanced Logger.
+#  Instance of Assert Library.
 #
 #  Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.<BR>
 #  Copyright (C) Microsoft Corporation. All rights reserved.
@@ -12,19 +11,19 @@
 
 [Defines]
   INF_VERSION                    = 1.26
-  BASE_NAME                      = BaseDebugLibAdvancedLogger
-  MODULE_UNI_FILE                = BaseDebugLibAdvancedLogger.uni
-  FILE_GUID                      = a58e9bc1-6da6-494b-8463-b694e801ad28
+  BASE_NAME                      = AssertLib
+  MODULE_UNI_FILE                = AssertLib.uni
+  FILE_GUID                      = 7e051eba-3146-4fa5-9b4b-b715d786cf5e
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = DebugLib
+  LIBRARY_CLASS                  = AssertLib
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64 AARCH64
 #
 
 [Sources]
-  DebugLib.c
+  AssertLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -32,14 +31,9 @@
 
 [LibraryClasses]
   AdvancedLoggerLib
-  AssertLib
   BaseLib
-  BaseMemoryLib
   PcdLib
   PrintLib
-  DebugPrintErrorLevelLib
 
 [Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdDebugClearMemoryValue  ## SOMETIMES_CONSUMES
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask      ## CONSUMES
-  gEfiMdePkgTokenSpaceGuid.PcdFixedDebugPrintErrorLevel ## CONSUMES
