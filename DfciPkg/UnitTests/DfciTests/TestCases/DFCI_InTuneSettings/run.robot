@@ -85,52 +85,87 @@ Initialize lists of tests
 
     @{VTEST_01_SET1}=      Create List    Dfci.OnboardCameras.Enable    Enabled
     @{VTEST_01_SET2}=      Create List    Device.IRCamera.Enable        Enabled
-    @{VTEST_01_SET3}=      Create List    Dfci3.AssetTag.String         ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+    @{VTEST_01_SET3}=      Create List    Dfci.OnboardAudio.Enable      Enabled
+
     @{VTEST_01_CHECK1}=    Create List    Device.FrontCamera.Enable     Enabled
     @{VTEST_01_CHECK2}=    Create List    Device.IRCamera.Enable        Enabled
     @{VTEST_01_CHECK3}=    Create List    Device.RearCamera.Enable      Enabled
     @{VTEST_01_CHECK4}=    Create List    Dfci.OnboardCameras.Enable    Enabled
-    @{VTEST_01_CHECK5}=    Create List    Dfci3.AssetTag.String         ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+    @{VTEST_01_CHECK5}=    Create List    Dfci.OnboardAudio.Enable      Enabled
 
     ${VTEST_01_RESULTS}=   Create Dictionary     Dfci.OnboardCameras.Enable    ${STATUS_SUCCESS}
     Set To Dictionary      ${VTEST_01_RESULTS}   Device.IRCamera.Enable        ${STATUS_SUCCESS}
-    Set To Dictionary      ${VTEST_01_RESULTS}   Dfci3.AssetTag.String         ${STATUS_SUCCESS}
+    Set To Dictionary      ${VTEST_01_RESULTS}   Dfci.OnboardAudio.Enable      ${STATUS_SUCCESS}
 
     @{VTEST_01_SETS}=      Create List    ${VTEST_01_SET1}    ${VTEST_01_SET2}    ${VTEST_01_SET3}
     @{VTEST_01_CHECKS}=    Create List    ${VTEST_01_CHECK1}    ${VTEST_01_CHECK2}    ${VTEST_01_CHECK3}    ${VTEST_01_CHECK4}    ${VTEST_01_CHECK5}
 
+
     # Testcase 2
-    @{VTEST_02_SET1}=      Create List    Dfci.OnboardCameras.Enable     Disabled
-    @{VTEST_02_SET2}=      Create List    Device.IRCamera.Enable         Enabled
-    @{VTEST_02_SET3}=      Create List    Dfci3.AssetTag.String          ${EMPTY}
-    @{VTEST_02_CHECK1}=    Create List    Device.FrontCamera.Enable      Disabled
-    @{VTEST_02_CHECK2}=    Create List    Device.IRCamera.Enable         Enabled
-    @{VTEST_02_CHECK3}=    Create List    Device.RearCamera.Enable       Disabled
-    @{VTEST_02_CHECK4}=    Create List    Dfci.OnboardCameras.Enable     Inconsistent
-    @{VTEST_02_CHECK5}=    Create List    Dfci3.AssetTag.String          ${EMPTY}
+    @{VTEST_02_SET1}=      Create List    Dfci.OnboardCameras.Enable    Disabled
+    @{VTEST_02_SET2}=      Create List    Device.IRCamera.Enable        Enabled
+    @{VTEST_02_SET3}=      Create List    Dfci.OnboardAudio.Enable      Disabled
+
+    @{VTEST_02_CHECK1}=    Create List    Device.FrontCamera.Enable     Disabled
+    @{VTEST_02_CHECK2}=    Create List    Device.IRCamera.Enable        Enabled
+    @{VTEST_02_CHECK3}=    Create List    Device.RearCamera.Enable      Disabled
+    @{VTEST_02_CHECK4}=    Create List    Dfci.OnboardCameras.Enable    Inconsistent
+    @{VTEST_02_CHECK5}=    Create List    Dfci.OnboardAudio.Enable      Disabled
 
     ${VTEST_02_RESULTS}=   Create Dictionary     Dfci.OnboardCameras.Enable    ${STATUS_SUCCESS}
     Set To Dictionary      ${VTEST_02_RESULTS}   Device.IRCamera.Enable        ${STATUS_SUCCESS}
-    Set To Dictionary      ${VTEST_02_RESULTS}   Dfci3.AssetTag.String         ${STATUS_SUCCESS}
+    Set To Dictionary      ${VTEST_02_RESULTS}   Dfci.OnboardAudio.Enable      ${STATUS_SUCCESS}
 
     @{VTEST_02_SETS}=      Create List    ${VTEST_02_SET1}    ${VTEST_02_SET2}    ${VTEST_02_SET3}
-    @{VTEST_02_CHECKS}=    Create List    ${VTEST_02_CHECK1}    ${VTEST_02_CHECK2}    ${VTEST_02_CHECK3}    ${VTEST_02_CHECK4}
+    @{VTEST_02_CHECKS}=    Create List    ${VTEST_02_CHECK1}    ${VTEST_02_CHECK2}    ${VTEST_02_CHECK3}    ${VTEST_02_CHECK4}    ${VTEST_02_CHECK5}
 
-    # Testcase 3    Asset tag too long
-    @{VTEST_03_SET1}=      Create List        Dfci3.AssetTag.String    ABCDEFGHIJKLMNOPQRSTUVWXYZ.1234567890
-    @{VTEST_03_CHECK1}=    Create List        Dfci3.AssetTag.String    ${EMPTY}
-    ${VTEST_03_RESULTS}=   Create Dictionary  Dfci3.AssetTag.String    ${STATUS_INVALID_PARAMETER}
 
-    @{VTEST_03_SETS}=      Create List    ${VTEST_03_SET1}
-    @{VTEST_03_CHECKS}=    Create List    ${VTEST_03_CHECK1}
+    # Testcase 3    V3 Set variables
+    @{VTEST_03_SET1}=      Create List    Dfci3.AssetTag.String         ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+    @{VTEST_03_SET2}=      Create List    Dfci3.OnboardWpbt.Enable      Enabled
+    @{VTEST_03_SET3}=      Create List    Dfci3.ProcessorSMT.Enable     Enabled
 
-    # Testcase 4    Asset tag invalid characters
-    @{VTEST_04_SET1}=      Create List        Dfci3.AssetTag.String   ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789%
-    @{VTEST_04_CHECK1}=    Create List        Dfci3.AssetTag.String   ${EMPTY}
-    ${VTEST_04_RESULTS}=   Create Dictionary  Dfci3.AssetTag.String   ${STATUS_INVALID_PARAMETER}
+    @{VTEST_03_CHECK1}=    Create List    Dfci3.AssetTag.String         ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+    @{VTEST_03_CHECK2}=    Create List    Dfci3.OnboardWpbt.Enable      Enabled
+    @{VTEST_03_CHECK3}=    Create List    Dfci3.ProcessorSMT.Enable     Enabled
+
+    ${VTEST_03_RESULTS}    Create Dictionary     Dfci3.AssetTag.String         ${STATUS_SUCCESS}
+    Set To Dictionary      ${VTEST_03_RESULTS}   Dfci3.OnboardWpbt.Enable      ${STATUS_SUCCESS}
+    Set To Dictionary      ${VTEST_03_RESULTS}   Dfci3.ProcessorSMT.Enable     ${STATUS_SUCCESS}
+
+    @{VTEST_03_SETS}=      Create List    ${VTEST_03_SET1}    ${VTEST_03_SET2}    ${VTEST_03_SET3}
+    @{VTEST_03_CHECKS}=    Create List    ${VTEST_03_CHECK1}    ${VTEST_03_CHECK3}    ${VTEST_03_CHECK3}
+
+
+    # Testcase 4    V3 Check Variables
+    @{VTEST_04_SET1}=      Create List    Dfci3.AssetTag.String          ${EMPTY}
+    @{VTEST_04_CHECK1}=    Create List    Dfci3.AssetTag.String          ${EMPTY}
+
+    ${VTEST_04_RESULTS}    Create Dictionary    Dfci3.AssetTag.String         ${STATUS_SUCCESS}
 
     @{VTEST_04_SETS}=      Create List    ${VTEST_04_SET1}
     @{VTEST_04_CHECKS}=    Create List    ${VTEST_04_CHECK1}
+
+
+    # Testcase 5    V3 Asset tag too long
+    @{VTEST_05_SET1}=      Create List        Dfci3.AssetTag.String    ABCDEFGHIJKLMNOPQRSTUVWXYZ.1234567890
+    @{VTEST_05_CHECK1}=    Create List        Dfci3.AssetTag.String    ${EMPTY}
+
+    ${VTEST_05_RESULTS}=   Create Dictionary    Dfci3.AssetTag.String    ${STATUS_INVALID_PARAMETER}
+
+    @{VTEST_05_SETS}=      Create List    ${VTEST_05_SET1}
+    @{VTEST_05_CHECKS}=    Create List    ${VTEST_05_CHECK1}
+
+
+    # Testcase 6    V3 Asset tag invalid characters
+    @{VTEST_06_SET1}=      Create List        Dfci3.AssetTag.String   ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789%
+    @{VTEST_06_CHECK1}=    Create List        Dfci3.AssetTag.String   ${EMPTY}
+
+    ${VTEST_06_RESULTS}=   Create Dictionary  Dfci3.AssetTag.String   ${STATUS_INVALID_PARAMETER}
+
+    @{VTEST_06_SETS}=      Create List    ${VTEST_06_SET1}
+    @{VTEST_06_CHECKS}=    Create List    ${VTEST_06_CHECK1}
+
 
     # The full tests are here
 
@@ -138,6 +173,8 @@ Initialize lists of tests
     @{VTEST_02}=          Create List     Test2    ${VTEST_02_SETS}    ${VTEST_02_CHECKS}    ${VTEST_02_RESULTS}
     @{VTEST_03}=          Create List     Test3    ${VTEST_03_SETS}    ${VTEST_03_CHECKS}    ${VTEST_03_RESULTS}
     @{VTEST_04}=          Create List     Test4    ${VTEST_04_SETS}    ${VTEST_04_CHECKS}    ${VTEST_04_RESULTS}
+    @{VTEST_05}=          Create List     Test5    ${VTEST_05_SETS}    ${VTEST_05_CHECKS}    ${VTEST_05_RESULTS}
+    @{VTEST_06}=          Create List     Test6    ${VTEST_06_SETS}    ${VTEST_06_CHECKS}    ${VTEST_06_RESULTS}
 
     # Export one master test variable.  Each entry in the MASTER TEST variable is a set of two lists and a dictionary of results.
     # Variables to be set before a reboot, and a set of variables to be checked after a reboot, and a dictionary of expected results
@@ -149,8 +186,18 @@ Initialize lists of tests
     # 5. reboot
     # 6. Test 2 Checks with return codes
     #
-    @{MASTER_TEST}=      Create List  ${VTEST_01}  ${VTEST_02}  ${VTEST_03}  ${VTEST_04}
-    Set suite variable   ${MASTER_TEST}
+    @{MASTER_TEST_V2}=   Create List  ${VTEST_01}  ${VTEST_02}
+    @{MASTER_TEST_V3}=   Create List  ${VTEST_03}  ${VTEST_04}  ${VTEST_05}  ${VTEST_06}
+
+    @{RESTORE_SETTINGS_V2}=   Create List  ${VTEST_01}
+    @{RESTORE_SETTINGS_V3}=   Create List  ${VTEST_03}
+
+    # Default to all the tests
+    Set suite variable   ${MASTER_TEST_V2}
+    Set suite variable   ${MASTER_TEST_V3}
+    Set suite variable   ${RESTORE_SETTINGS_V2}
+    Set suite variable   ${RESTORE_SETTINGS_V3}
+
 
 #
 #        Use the following to ensure the lists are built correctly
@@ -280,14 +327,50 @@ Obtain Target Parameters From Target
     Verify Identity Current  ${currentXmlFile}  ${Manufacturer}  ${Model}  ${SerialNumber}
 
 
-Process Complete Testcase List
+Process Complete Testcase List V2
 
     Log To Console    Initializing testcases
     Initialize lists of tests
 
-    Log To Console    Running test
+    Log To Console    Running test V2
 
-    FOR    ${ATest}    IN    @{MASTER_TEST}
+    FOR    ${ATest}    IN    @{MASTER_TEST_V2}
+        Process TestCases    @{ATest}
+    END
+
+
+Process Complete Testcase List V3
+
+    Log To Console    Initializing testcases
+    Initialize lists of tests
+
+    Log To Console    Running test V3
+
+    FOR    ${ATest}    IN    @{MASTER_TEST_V3}
+        Process TestCases    @{ATest}
+    END
+
+
+Restore Settings V2
+
+    Log To Console    Initializing testcases
+    Initialize lists of tests
+
+    Log To Console    Restoring settings V2
+
+    FOR    ${ATest}    IN    @{RESTORE_SETTINGS_V2}
+        Process TestCases    @{ATest}
+    END
+
+
+Restore Settings V3
+
+    Log To Console    Initializing testcases
+    Initialize lists of tests
+
+    Log To Console    Restoring settings V3
+
+    FOR    ${ATest}    IN    @{RESTORE_SETTINGS_V3}
         Process TestCases    @{ATest}
     END
 

@@ -163,6 +163,7 @@ CreateXmlStringFromCurrentSettings(
     CHAR8 *ReturnValue;
     DFCI_GROUP_LIST_ENTRY *Group;
 
+    ValueSize = sizeof(*ReturnValue);
     Group = GROUP_LIST_ENTRY_FROM_GROUP_LINK(Link);
     Status = SystemSettingAccessGet (
                    &mSystemSettingAccessProtocol,
@@ -175,6 +176,7 @@ CreateXmlStringFromCurrentSettings(
 
     if (EFI_ERROR(Status))
     {
+      DEBUG((DEBUG_ERROR, "%a: Error accessing %a, Code=%r\n", __FUNCTION__, Group->GroupId, Status));
       ReturnValue = "Error";
     }
     else

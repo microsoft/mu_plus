@@ -18,6 +18,7 @@ Set a single setting
 @param[in] AuthToken:  A valid auth token to apply the setting using.  This auth token will be validated
 to check permissions for changing the setting.
 @param[in] Type:       Type that caller expects this setting to be.
+@param[in] ValueSize   Size of the new value
 @param[in] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[in,out] Flags:  Informational Flags passed to the SET and/or Returned as a result of the set
 
@@ -143,6 +144,7 @@ Set a single setting
 @param[in] AuthToken:  A valid auth token to apply the setting using.  This auth token will be validated
 to check permissions for changing the setting.
 @param[in] Type:       Type that caller expects this setting to be.
+@param[in] ValueSize   Size of the new value
 @param[in] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[in,out] Flags:  Informational Flags passed to the SET and/or Returned as a result of the set
 
@@ -178,6 +180,7 @@ Get a single setting
 @param[in] AuthToken:   An optional auth token* to use to check permission of setting.  This auth token will be validated
 to check permissions for changing the setting which will be reported in flags if valid.
 @param[in] Type:        Type that caller expects this setting to be.
+@param[in,out] ValueSize On input, size of the buffer provided, on output size of buffer needed
 @param[out] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[IN OUT] Flags    Optional Informational flags passed back from the Get operation.  If the Auth Token is valid write access will be set in
 flags for the given auth.
@@ -335,6 +338,7 @@ Get a single setting
 @param[in] AuthToken:   An optional auth token* to use to check permission of setting.  This auth token will be validated
 to check permissions for changing the setting which will be reported in flags if valid.
 @param[in] Type:        Type that caller expects this setting to be.
+@param[in,out] ValueSize On input, size of the buffer provided, on output size of buffer needed
 @param[out] Value:      A pointer to a datatype defined by the Type for this setting.
 @param[IN OUT] Flags    Optional Informational flags passed back from the Get operation.  If the Auth Token is valid write access will be set in
 flags for the given auth.
