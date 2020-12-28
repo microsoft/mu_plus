@@ -14,20 +14,12 @@ typedef struct {
 } DFCI_GROUP_ENTRY;
 
 /**
- * Register a setting as a member of a group.
+ * Acquire the platforms group settings.
  *
- * 1. Settings can only be member of one group
- * 2. A GroupId cannot be a Setting Id.
  *
- * @param GroupId     - Group
- * @param Id          - Setting to add to group
+ * @return DFCI_GROUP_ENTRY     Array of group settings. NULL if there are no
+ *                              group settings.
  *
- * @return EFI_NOT_FOUND        -- Id not available on this system
- * @return EFI_ALREADY_STARTED  -- Id is already in a group
- *                                 or Group name exists as a setting
- * @return EFI_SUCCESS          -- Id Registered to group.
- *                                 If this is the first registered setting
- *                                 the group is created
  */
 DFCI_GROUP_ENTRY *
 EFIAPI
