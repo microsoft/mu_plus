@@ -313,7 +313,6 @@ OnPreExitBootServicesNotification (
 {
 
     WriteLogFiles ();
-    gBS->CloseEvent (Event);
 }
 
 /**
