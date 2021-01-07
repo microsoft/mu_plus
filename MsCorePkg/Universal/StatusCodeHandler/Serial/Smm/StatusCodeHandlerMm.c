@@ -7,37 +7,32 @@ Copyright (C) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#include <PiSmm.h>
+#include <PiMm.h>
 #include <Library/SerialPortLib.h>
 #include <Library/DebugLib.h>
-#include <Protocol/SmmReportStatusCodeHandler.h>
-#include <Library/SmmServicesTableLib.h>
+#include <Protocol/MmReportStatusCodeHandler.h>
+#include <Library/MmServicesTableLib.h>
 #include "../Common/SerialStatusCodeHandler.h"
 
-EFI_SMM_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol = NULL;
+EFI_MM_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol = NULL;
 
 /**
-  Status Code SMM Entry point.
+  Status Code MM Common Entry point.
 
-  Register this handler with the SMM Router
-
-  @param  FileHandle  Handle of the file being invoked.
-  @param  PeiServices Describes the list of possible PEI Services.
+  Register this handler with the MM Router
 
   @retval EFI_SUCCESS  Successfully registered
 
 **/
 EFI_STATUS
-EFIAPI
-SmmEntry (
-  IN EFI_HANDLE         ImageHandle,
-  IN EFI_SYSTEM_TABLE   *SystemTable
+MmEntry (
+  VOID
 )
 {
   EFI_STATUS                Status;
 
-  Status = gSmst->SmmLocateProtocol(
-                    &gEfiSmmRscHandlerProtocolGuid,
+  Status = gMmst->MmLocateProtocol (
+                    &gEfiMmRscHandlerProtocolGuid,
                     NULL,
                     (VOID **)&mRscHandlerProtocol
                     );
@@ -55,7 +50,7 @@ SmmEntry (
     return Status;
   }
 
-  mRscHandlerProtocol->Register((EFI_SMM_RSC_HANDLER_CALLBACK)SerialStatusCode);
+  mRscHandlerProtocol->Register((EFI_MM_RSC_HANDLER_CALLBACK)SerialStatusCode);
 
   return EFI_SUCCESS;
 }

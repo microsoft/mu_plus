@@ -117,6 +117,11 @@
 [LibraryClasses.common.DXE_SMM_DRIVER]
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/SmmCryptLib.inf
+  MmServicesTableLib|MdePkg/Library/MmServicesTableLib/MmServicesTableLib.inf
+
+[LibraryClasses.common.MM_STANDALONE]
+  MmServicesTableLib|MdePkg/Library/StandaloneMmServicesTableLib/StandaloneMmServicesTableLib.inf
+  StandaloneMmDriverEntryPoint|MdePkg/Library/StandaloneMmDriverEntryPoint/StandaloneMmDriverEntryPoint.inf
 
 
 ###################################################################################################
@@ -160,6 +165,7 @@
   MsCorePkg/Library/DebugPortProtocolInstallLib/DebugPortProtocolInstallLib.inf
   MsCorePkg/Universal/StatusCodeHandler/Serial/Dxe/SerialStatusCodeHandlerDxe.inf
   MsCorePkg/Universal/StatusCodeHandler/Serial/Smm/SerialStatusCodeHandlerSmm.inf
+  MsCorePkg/Universal/StatusCodeHandler/Serial/Smm/SerialStatusCodeHandlerStandaloneMm.inf
   MsCorePkg/IncompatiblePciDevices/NoOptionRomsAllowed/NoOptionRomsAllowed.inf
   MsCorePkg/UnitTests/MathLibUnitTest/MathLibUnitTest.inf
   MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf

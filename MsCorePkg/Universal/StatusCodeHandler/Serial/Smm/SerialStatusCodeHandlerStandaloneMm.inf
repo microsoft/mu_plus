@@ -12,11 +12,11 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = SerialStatusCodeHandlerTraditionalMm
-  FILE_GUID                      = EA5DCD04-3861-4B95-A6B1-EC5E944C350E
-  MODULE_TYPE                    = DXE_SMM_DRIVER
-  PI_SPECIFICATION_VERSION       = 1.20
-  ENTRY_POINT                    = TraditionalEntry
+  BASE_NAME                      = SerialStatusCodeHandlerStandaloneMm
+  FILE_GUID                      = 1ED8E3F5-3C4B-4B2B-A9BE-9FFEE0C42B75
+  MODULE_TYPE                    = MM_STANDALONE
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  ENTRY_POINT                    = StandaloneEntry
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -27,7 +27,7 @@
 [Sources]
   StatusCodeHandlerMm.c
   StatusCodeHandlerMm.h
-  StatusCodeHandlerTraditional.c
+  StatusCodeHandlerStandalone.c
   ../Common/SerialStatusCodeHandler.h
   ../Common/SerialStatusCodeHandler.c
 
@@ -37,7 +37,7 @@
 
 [LibraryClasses]
   MmServicesTableLib
-  UefiDriverEntryPoint
+  StandaloneMmDriverEntryPoint
   ReportStatusCodeLib
   DebugLib
   SerialPortLib
