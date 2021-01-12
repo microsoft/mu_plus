@@ -44,7 +44,6 @@
   DebugLib
   DebugAgentLib
   HobLib
-  MtrrLib
   PcdLib
   PeiServicesLib
 
