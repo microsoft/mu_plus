@@ -40,7 +40,7 @@ Definition wrapper to unify all bert/hwerrrec related specification versioning
 #define MS_WHEA_PHASE_PEI             0x00
 #define MS_WHEA_PHASE_DXE             0x01
 #define MS_WHEA_PHASE_DXE_VAR         0x02
-#define MS_WHEA_PHASE_SMM             0x03
+#define MS_WHEA_PHASE_MM              0x03
 
 #pragma pack(1)
 

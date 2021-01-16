@@ -1,7 +1,7 @@
-/** @file -- MsWheaReportSmm.c
+/** @file -- MsWheaReportMm.c
 
-This Smm driver will produce a RSC listener that listens to reported status codes. The
-service is intended for SMM environment and will only be available after
+This Mm driver will produce a RSC listener that listens to reported status codes. The
+service is intended for MM environment and will only be available after
 gEfiVariableWriteArchProtocolGuid is published.
 
 Certain errors will be stored to flash upon reporting, under gEfiHardwareErrorVariableGuid
@@ -14,12 +14,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Uefi.h>
 #include <Protocol/SmmVariable.h>
-#include <Protocol/SmmReportStatusCodeHandler.h>
+#include <Protocol/MmReportStatusCodeHandler.h>
 
 #include <Library/UefiLib.h>
 #include <Library/HobLib.h>
 #include <Library/PcdLib.h>
-#include <Library/SmmServicesTableLib.h>
+#include <Library/MmServicesTableLib.h>
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 
@@ -28,7 +28,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 EFI_SMM_VARIABLE_PROTOCOL  *mSmmVariable = NULL;
 
-STATIC EFI_SMM_RSC_HANDLER_PROTOCOL   *mRscHandlerProtocol    = NULL;
+STATIC EFI_MM_RSC_HANDLER_PROTOCOL   *mRscHandlerProtocol    = NULL;
 
 /**
 
@@ -149,7 +149,7 @@ with specifications. Malformed data will fail the entire reporting.
 STATIC
 EFI_STATUS
 EFIAPI
-MsWheaReportHandlerSmm(
+MsWheaReportHandlerMm (
   IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
   )
 {
@@ -193,7 +193,7 @@ for further processing.
 STATIC
 EFI_STATUS
 EFIAPI
-MsWheaRscHandlerSmm (
+MsWheaRscHandlerMm (
   IN EFI_STATUS_CODE_TYPE             CodeType,
   IN EFI_STATUS_CODE_VALUE            Value,
   IN UINT32                           Instance,
@@ -208,8 +208,8 @@ MsWheaRscHandlerSmm (
                                 Instance,
                                 CallerId,
                                 Data,
-                                MS_WHEA_PHASE_SMM,
-                                MsWheaReportHandlerSmm);
+                                MS_WHEA_PHASE_MM,
+                                MsWheaReportHandlerMm);
   return Status;
 }
 
@@ -272,18 +272,14 @@ GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
 }
 
 /**
-Entry to MsWheaReportSmm, register RSC handler and callback functions
-
-@param[in] ImageHandle                The image handle.
-@param[in] SystemTable                The system table.
+Common entry to MsWheaReportMm, register RSC handler and callback functions
 
 @retval Status                        From internal routine or boot object, should not fail
 **/
 EFI_STATUS
 EFIAPI
-MsWheaReportSmmEntry (
-  IN EFI_HANDLE         ImageHandle,
-  IN EFI_SYSTEM_TABLE   *SystemTable
+MsWheaReportCommonEntry (
+  VOID
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
@@ -291,21 +287,21 @@ MsWheaReportSmmEntry (
   DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   // locate the RSC protocol
-  Status = gSmst->SmmLocateProtocol(&gEfiSmmRscHandlerProtocolGuid, NULL, (VOID**)&mRscHandlerProtocol);
+  Status = gMmst->MmLocateProtocol (&gEfiMmRscHandlerProtocolGuid, NULL, (VOID**)&mRscHandlerProtocol);
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a failed to RSC handler protocol (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // register for the RSC callback handler
-  Status = mRscHandlerProtocol->Register(MsWheaRscHandlerSmm);
+  Status = mRscHandlerProtocol->Register(MsWheaRscHandlerMm);
   if (EFI_ERROR(Status) != FALSE) {
     DEBUG((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // Locate global smm variable service. By depex, this should not fail
-  Status = gSmst->SmmLocateProtocol (&gEfiSmmVariableProtocolGuid, NULL, (VOID**)&mSmmVariable);
+  Status = gMmst->MmLocateProtocol (&gEfiSmmVariableProtocolGuid, NULL, (VOID**)&mSmmVariable);
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "%a failed to locate smm variable protocol (%r)\n", __FUNCTION__, Status));
     goto Cleanup;

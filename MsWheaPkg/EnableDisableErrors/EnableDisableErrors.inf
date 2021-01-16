@@ -33,6 +33,7 @@
   MemoryAllocationLib 
   UefiRuntimeServicesTableLib
   MuTelemetryHelperLib
+  PrintLib
 
 [Protocols]
   gEfiShellParametersProtocolGuid

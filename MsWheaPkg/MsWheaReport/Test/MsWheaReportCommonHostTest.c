@@ -271,7 +271,7 @@ ReportRouterCallsReportFn (
                                                 0,
                                                 &gEfiCallerIdGuid,
                                                 NULL,
-                                                MS_WHEA_PHASE_SMM,
+                                                MS_WHEA_PHASE_MM,
                                                 TestReportFnCheckCall));
 
   // For PEI and DXE, INFO should hit ReportFn.
