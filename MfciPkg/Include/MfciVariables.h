@@ -115,7 +115,7 @@
   Note that, not visible via attributes, these variables are locked by variable policy prior to BDS
 **/
 #define MFCI_POLICY_TARGETING_VARIABLE_ATTR \
-        (EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS)
+        (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS)
 
 /**
   Name of the variable that the OEM populates with the manufacturer name
