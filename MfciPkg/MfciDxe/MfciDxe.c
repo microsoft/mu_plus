@@ -225,7 +225,7 @@ LockPolicyVariables (
     ReturnStatus = EFI_SECURITY_VIOLATION;
   }
   else {
-    DEBUG((DEBUG_VERBOSE, "Successfully set MFCI Policy Lock"));
+    DEBUG((DEBUG_VERBOSE, "Successfully set MFCI Policy Lock\n"));
     ReturnStatus = Status;
   }
 
@@ -428,11 +428,12 @@ CheckTargetVarsExist (
   )
 {
   EFI_STATUS  Status;
-  UINTN       Size = 0;
+  UINTN       Size;
   UINT32      VariableAttr;
 
   for (int i = 0; i < ARRAY_SIZE(gDeviceIdFnToTargetVarNameMap); i++) {
     VariableAttr = 0;
+    Size = 0;
     Status = gRT->GetVariable (
                              gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName,
                              &MFCI_VAR_VENDOR_GUID,
@@ -440,7 +441,7 @@ CheckTargetVarsExist (
                              &Size,
                              NULL);
     if (Status != EFI_BUFFER_TOO_SMALL) {
-      DEBUG(( DEBUG_VERBOSE, "MFCI targeting variable %s returned %r, expecting variables to be populated via MfciDeviceIdSupportLib\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName, Status ));
+      DEBUG(( DEBUG_VERBOSE, "MFCI targeting variable %s returned %r\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName, Status ));
       return FALSE;
     }
   }
@@ -872,7 +873,7 @@ Exit:
 
   if (EFI_ERROR( Status ) || EFI_ERROR( Status2 )) {
     DEBUG(( DEBUG_ERROR,
-            "%a - An error occurred while processing MFCI Policy - %r, %r!!\n",
+            "%a !!! An error occurred while processing MFCI Policy - Status(%r), Status2(%r)\n",
             __FUNCTION__, Status, Status2 ));
 
     // TODO uncomment the below after debugging is complete
