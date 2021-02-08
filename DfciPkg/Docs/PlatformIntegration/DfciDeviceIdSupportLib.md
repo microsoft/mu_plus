@@ -18,7 +18,7 @@ DfciDeviceIdSupportLib provides DFCI with three platform strings:
 
 | Interface                      | Function |
 | ---                            | --- |
-| DfciIdSupportV1GetSerialNumber | Return the system serial number as a UINTN if possible. Otherwise, return 0. |
+| DfciIdSupportV1GetSerialNumber | DEPRECATED.  Always return 0. Will be removed. |
 | DfciIdSupportGetManufacturer   | Returns an allocated buffer with the system manufacturer name. |
 | DfciIdSupportGetProductName    | Return an allocated buffer with the system product name. |
 | DfciIdSupportGetSerialNumber   | Return an allocated buffer with the system serial number. |

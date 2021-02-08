@@ -12,7 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __DFCI_DEVICE_ID_SUPPORT_LIB_H__
 
 // *-------------------------------------------------------------------*
-//  TO DO - Remove this function when V2 packet support is complete    *
+// * This function is now DEPRECATED.  Always return 0                 *
 // *-------------------------------------------------------------------*
 /**
 Gets the serial number for this device.

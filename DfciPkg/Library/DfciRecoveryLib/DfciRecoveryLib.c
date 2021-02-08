@@ -85,16 +85,12 @@ GetRecoveryChallenge (
   }
 
   //
-  // Grab the system UUID...
-  if (!EFI_ERROR( Status ))
-  {
-    Status = DfciIdSupportV1GetSerialNumber(&NewChallenge->SerialNumber);
-    DEBUG((DEBUG_VERBOSE, "%a: GetSerialNumber = %r\n", __FUNCTION__, Status));
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "%a: Failed to get the DeviceSerialNumber %r\n", __FUNCTION__, Status));
-    }
-  }
+  // Grab the system identifier
+  //
+  // The challenge serial number is now a string.  The UINTN V1 serial number is now deprecated,
+  // with the string version of the serial number located in the multstring field of NewChallenge.
+  //
+  NewChallenge->SerialNumber = 0;
 
   //
   // Grab a timestamp...
