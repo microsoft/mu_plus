@@ -42,7 +42,7 @@ typedef struct {
 static DFCI_APPLY_PACKET_PROTOCOL *mApplyIdentityProtocol;
 static DFCI_APPLY_PACKET_PROTOCOL *mApplyPermissionsProtocol;
 static DFCI_APPLY_PACKET_PROTOCOL *mApplySettingsProtocol;
-static EFI_EVENT                   mEndOfDxeEvent;
+static EFI_EVENT                   mEndOfDxeEvent = NULL;
 static BOOLEAN                     mProcessingAtEndOfDxe = FALSE;
 static BOOLEAN                     mRebootRequired = FALSE;
 static DFCI_MANAGER_DATA           mManagerData[MGR_MAX] = {{NULL, NULL, EFI_SUCCESS},
@@ -125,6 +125,7 @@ EndOfDxeCallback (
     RunProcessMailBoxes ();
 
     gBS->CloseEvent(Event);
+    mEndOfDxeEvent = NULL;
 
     PERF_FUNCTION_END ();
 }
@@ -417,9 +418,13 @@ QueueMailboxAtSettingAccess () {
             if (EFI_ERROR (Status)) {
                 DEBUG((DEBUG_INFO,  "%a %a: Failed to register for Setting Access notifications (%r).\r\n", _DBGMSGID_, __FUNCTION__, Status));
             } else {
+                DEBUG((DEBUG_INFO,  "%a %a: Waiting for SettingsAccessProtocol.\r\n", _DBGMSGID_, __FUNCTION__));
                 Status = EFI_MEDIA_CHANGED;
             }
         }
+    } else {
+        DEBUG((DEBUG_INFO,  "%a %a: Processing packets immediately.\r\n", _DBGMSGID_, __FUNCTION__));
+        Status = ProcessMailBoxes ();
     }
 
     return Status;
@@ -671,7 +676,7 @@ ProcessPacket (IN DFCI_MANAGER_DATA *MgrData
 
     Data = MgrData->Data;
 
-    if (Data->Packet == NULL) {
+    if ((Data == NULL) || (Data->Packet == NULL)) {
         DEBUG((DEBUG_INFO, "%a Process Packet - No pending Data for %s.\n", _DBGMSGID_, Data->MailboxName));
         return EFI_SUCCESS;
     }
@@ -719,20 +724,12 @@ ProcessUnEnrollPacket (IN DFCI_MANAGER_DATA *MgrData
         Data = MgrData->Data;
         if (Data->Packet != NULL) {
             if (Data->Unenroll) {
-                Status = QueueMailboxAtSettingAccess ();
-                DEBUG((DEBUG_INFO, "%a QueueMailboxAtSettingsAccess - code=%r\n", _DBGMSGID_, Status));
+                Status = ProcessApplyPacket (Data, mApplyIdentityProtocol);
+                DEBUG((DEBUG_INFO, "%a Applied Packet, code=%r, state=%d\n", _DBGMSGID_, Data->StatusCode, Data->State));
                 if (Status == EFI_MEDIA_CHANGED) {
                     return Status;
-                }
-
-                if (!EFI_ERROR(Status)) {
-                    Status = ProcessApplyPacket (Data, mApplyIdentityProtocol);
-                    DEBUG((DEBUG_INFO, "%a Applied Packet, code=%r, state=%d\n", _DBGMSGID_, Data->StatusCode, Data->State));
-                    if (Status == EFI_MEDIA_CHANGED) {
-                        return Status;
-                    } else if (EFI_ERROR(Status)) {
-                        DEBUG((DEBUG_ERROR, "%a %a: Error applying results for variable %s - %r\n", _DBGMSGID_, __FUNCTION__, Data->ResultName, Status));
-                    }
+                } else if (EFI_ERROR(Status)) {
+                    DEBUG((DEBUG_ERROR, "%a %a: Error applying results for variable %s - %r\n", _DBGMSGID_, __FUNCTION__, Data->ResultName, Status));
                 }
 
                 mRebootRequired = TRUE;
@@ -918,6 +915,10 @@ COMPLETE_AS_FAILED:
     DEBUG((DEBUG_INFO, "%a ProcessMailboxes Final Exit\n", _DBGMSGID_));
 
     FreeManagerData ();
+    if (mEndOfDxeEvent != NULL) {
+        gBS->CloseEvent(mEndOfDxeEvent);
+        mEndOfDxeEvent = NULL;
+    }
 
     if (mRebootRequired) {
         gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
@@ -1001,13 +1002,20 @@ DfciManagerEntry(
       DEBUG(( DEBUG_ERROR, "%a %a: EndOfDxe callback registration failed! %r\n", _DBGMSGID_, __FUNCTION__, Status ));
       goto ERROR_EXIT;
     } else {
-        Status = ProcessMailBoxes ();
-        DEBUG((DEBUG_INFO, "%a %a: Processing mailbox complete. Code = %r.\n", _DBGMSGID_, __FUNCTION__, Status));
+        Status = QueueMailboxAtSettingAccess ();
+        DEBUG((DEBUG_INFO, "%a %a: Queued mailbox for processing. Code = %r.\n", _DBGMSGID_, __FUNCTION__, Status));
 
         if (Status != EFI_MEDIA_CHANGED) {
+            if (EFI_ERROR(Status)) {
+                DEBUG((DEBUG_ERROR, "%a %a: Error processing initial packets. Code = %r.\n", _DBGMSGID_, __FUNCTION__, Status));
+                goto ERROR_EXIT;
+            }
+
             gBS->CloseEvent(mEndOfDxeEvent);
+            mEndOfDxeEvent = NULL;
+        } else {
+            Status = EFI_SUCCESS;
         }
-        Status = EFI_SUCCESS;
     }
 
     if (EFI_ERROR(Status)) {
@@ -1028,5 +1036,3 @@ ERROR_EXIT:
 
     return EFI_SUCCESS;
 }
-
-
