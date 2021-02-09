@@ -32,7 +32,6 @@
 
 
 [LibraryClasses]
-  UefiApplicationEntryPoint
   BaseLib
   MemoryAllocationLib
   XmlTreeLib
