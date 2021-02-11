@@ -1,4 +1,3 @@
-/**
 /** @file -- TpmEventLogAudit.c
 Audit test code to collect tpm event log for offline processing or validation
 File provides common XML output format for tpm event log.
