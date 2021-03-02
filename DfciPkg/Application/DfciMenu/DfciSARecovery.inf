@@ -12,7 +12,7 @@
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = DfciSARecovery
   FILE_GUID                      = af1bb1db-9931-4cb0-8629-b9319bb0efa0
-  MODULE_TYPE                    = DXE_DRIVER
+  MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = DfciSARecoveryEntry
 
@@ -61,7 +61,7 @@
   PcdLib
   PrintLib
   UefiBootServicesTableLib
-  UefiDriverEntryPoint
+  UefiApplicationEntryPoint
   UefiHiiServicesLib
   UefiLib
   UefiRuntimeServicesTableLib

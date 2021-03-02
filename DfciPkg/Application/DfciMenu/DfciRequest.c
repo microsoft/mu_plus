@@ -932,7 +932,9 @@ DfciGetResponse (
     DumpHeaders (ResponseMessage->HeaderCount, ResponseMessage->Headers);
     DEBUG((DEBUG_INFO, "HttpResponseData:\n"));
     DUMP_HEX(DEBUG_INFO, 0, ResponseToken, sizeof(EFI_HTTP_TOKEN), "");
-    DUMP_HEX(DEBUG_INFO, 0, ResponseMessage->Body, ResponseMessage->BodyLength, "");
+    if ((ResponseMessage->Body != NULL) && (ResponseMessage->BodyLength != 0)) {
+        DUMP_HEX(DEBUG_INFO, 0, ResponseMessage->Body, ResponseMessage->BodyLength, "");
+    }
 
     return Status;
 }

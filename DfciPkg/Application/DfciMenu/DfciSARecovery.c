@@ -39,6 +39,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
+#include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
@@ -275,16 +276,6 @@ GetDfciParameters (
 
     if (!AlreadyRun) {
         AlreadyRun = TRUE;
-
-        //
-        // If the Setup UI supports a reduce function capability, it needs to set the
-        // the dynamic PCD PcdSetupUiReducedFunction.  This prevent changing the OPT IN
-        // state unless the local user has permission.
-        //
-        if (PcdGetBool(PcdSetupUiReducedFunction)) {
-            mDfciMenuConfiguration.DfciZeroTouchOptGrayOut = MENU_TRUE;
-            DEBUG((DEBUG_INFO, "%a: Reduced function Dfci Menu\n", __FUNCTION__));
-        }
 
         mDfciMenuConfiguration.DfciHttpRecoveryEnabled = MENU_FALSE;
         mDfciMenuConfiguration.DfciRecoveryEnabled = MENU_FALSE;
