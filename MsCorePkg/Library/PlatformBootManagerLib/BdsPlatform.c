@@ -404,6 +404,8 @@ PlatformBootManagerAfterConsole (
 
     case BOOT_ON_FLASH_UPDATE:
       EfiBootManagerConnectAll();
+      DEBUG ((DEBUG_INFO, "[%a] - signalling capsules are ready for processing\n", __FUNCTION__));
+      EfiEventGroupSignal (&gMuReadyToProcessCapsulesNotifyGuid);
       Status = ProcessCapsules();
 
       // If capsule update require reboot

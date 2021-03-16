@@ -64,6 +64,7 @@ CONSTRUCTOR                    = PlatformBootManagerEntry
   gEfiEndOfDxeEventGroupGuid
   gEfiGlobalVariableGuid
   gEfiMemoryOverwriteControlDataGuid
+  gMuReadyToProcessCapsulesNotifyGuid ## PRODUCES
 
 [FeaturePcd]
 
