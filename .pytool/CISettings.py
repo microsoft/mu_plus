@@ -187,7 +187,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         return [
             {
                 "Path": "MU_BASECORE",
-                "Url": "https://github.com/Microsoft/mu_basecore.git",
+                "Url": "https://github.com/microsoft/mu_basecore.git",
                 "Branch": "release/202111"
             },
             {
