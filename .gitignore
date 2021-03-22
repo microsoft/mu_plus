@@ -8,9 +8,11 @@ tags/
 *.bak
 BuildConfig.conf
 
+# Repo-specific
+_TEMP_*/
+/Conf/
+
 # Ignore cloned dependencies
 /Common
 /Silicon
 /MU_BASECORE
-
-_TEMP_*/
