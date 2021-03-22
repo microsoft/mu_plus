@@ -305,7 +305,7 @@ GetWidth (
     ) {
     CHAR16                        *String;
     UINTN                         Size;
-    EFI_IFR_TEXT                  *TestOp;
+    EFI_IFR_TEXT                  *TextOp;
     UINT16                        ReturnWidth;
     FORM_DISPLAY_ENGINE_STATEMENT *Statement;
 
@@ -316,9 +316,9 @@ GetWidth (
     // See if the second text parameter is really NULL
     //
     if (Statement->OpCode->OpCode == EFI_IFR_TEXT_OP) {
-        TestOp = (EFI_IFR_TEXT *)Statement->OpCode;
-        if (TestOp->TextTwo != 0) {
-            String = GetToken (TestOp->TextTwo, gFormData->HiiHandle);
+        TextOp = (EFI_IFR_TEXT *)Statement->OpCode;
+        if (TextOp->TextTwo != 0) {
+            String = GetToken (TextOp->TextTwo, gFormData->HiiHandle);
             Size = StrLen (String);
             FreePool (String);
         }
