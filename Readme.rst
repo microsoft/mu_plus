@@ -36,6 +36,7 @@ Main Changes-dev
 
 - MuVarPolicyFoundationDxe is no longer required to get backwards compatibility with EDKII_VARIABLE_LOCK_PROTOCOL
   - It's now provided by Basecore.
+- UefiTestingPkg/FunctionalSystemTests/VarPolicyUnitTestApp dropped. It's now in Basecore
 
 Bug Fixes-dev
 -------------

@@ -24,11 +24,6 @@ are in place.  The SMM cpu exception handler needs to be configured to force res
 See `UefiCpuPkg/Include/Protocol/SmmExceptionTestProtocol.h`, `gUefiCpuPkgTokenSpaceGuid.PcdSmmExceptionRebootInsteadOfHaltDefault`,
 and `gUefiCpuPkgTokenSpaceGuid.PcdSmmExceptionTestModeSupport`.
 
-### VarPolicyUnitTestApp
-
-This test verifies functionality of the Variable Policy Protocol by registering various variable policies and exercising
-them, as well as tests locking the policy, disabling it, and dumping the policy entries.
-
 ## System Audit tests
 
 UEFI applications that collect data from the system and then that data can be used to

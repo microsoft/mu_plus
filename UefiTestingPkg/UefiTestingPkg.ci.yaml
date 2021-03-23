@@ -68,8 +68,6 @@
         "ExtendWords": [           # words to extend to the dictionary for this package
             "RMRRs",               # DMAProtectionAudit/Windows/Readme.md
             "Pywin",               # "
-            "musthave",            # VarPolicyUnitTestApp/Readme.md
-            "canthave",            # "
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
