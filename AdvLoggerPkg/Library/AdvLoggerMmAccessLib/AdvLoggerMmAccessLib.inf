@@ -1,0 +1,47 @@
+## @file
+#  Implementation of the Advanced Logger Access library for MM_STANDALONE.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = AdvLoggerMmAccessLib
+  MODULE_UNI_FILE                = AdvLoggerMmAccessLib.uni
+  FILE_GUID                      = 181574de-cf85-4ef3-96ba-a892579b7beb
+  MODULE_TYPE                    = MM_STANDALONE
+  VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  LIBRARY_CLASS                  = AdvLoggerAccessLib | MM_STANDALONE
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvLoggerMmAccessLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  PcdLib
+  SafeIntLib
+
+[Guids]
+  gAdvancedLoggerHobGuid
+  gAdvLoggerAccessGuid                      ## CONSUMES
+
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize
+
+[Depex]

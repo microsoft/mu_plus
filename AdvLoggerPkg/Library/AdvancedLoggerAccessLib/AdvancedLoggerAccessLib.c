@@ -27,8 +27,8 @@ STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY *mLowAddress = NULL;
 STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY *mHighAddress = NULL;
 STATIC  UINTN                          mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
 
-#define ADV_TIME_STAMP_FORMAT "%2d:%2.2d:%2.2d.%3.3d "
-#define ADV_TIME_STAMP_RESULT "hh:mm:ss:ttt "
+#define ADV_TIME_STAMP_FORMAT "%2.2d:%2.2d:%2.2d.%3.3d : "
+#define ADV_TIME_STAMP_RESULT "hh:mm:ss:ttt : "
 
 
 /**
