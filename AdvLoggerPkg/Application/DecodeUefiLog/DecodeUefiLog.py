@@ -504,8 +504,8 @@ class AdvLogParser ():
 
             if CurrentLine >= StartLine:
                 Ticks = MessageLine["TimeStamp"]
-                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + MessageLine["Message"]
-                lines.append(NewLine.rstrip() + '\n')
+                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + MessageLine["Message"].rstrip("\r\n")
+                lines.append(NewLine + '\n')
 
             CurrentLine += 1
 
