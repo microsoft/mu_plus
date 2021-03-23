@@ -19,6 +19,7 @@
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/MmUnblockMemoryLib.h>
 #include <Library/PeiServicesTablePointerLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PeiServicesLib.h>
@@ -124,6 +125,16 @@ InstallPermanentMemoryBuffer (
                 //
                 OldLoggerBuffer = LogPtr->LogBuffer;
                 LogPtr->LogBuffer = NewLogBuffer;
+
+                Status = MmUnblockMemoryRequest (NewLogBuffer,  FixedPcdGet32 (PcdAdvancedLoggerPages));
+                if (EFI_ERROR(Status)) {
+                    if (Status != EFI_UNSUPPORTED) {
+                        DEBUG((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
+                    }
+                } else {
+                    DEBUG((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
+                }
+
                 PeiServicesFreePages (OldLoggerBuffer,
                                       FixedPcdGet32 (PcdAdvancedLoggerPreMemPages));
 
@@ -303,6 +314,15 @@ AdvancedLoggerGetLoggerInfo (
                     LoggerInfo->HdwPortInitialized = TRUE;
                     if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
                         LoggerInfo->InPermanentRAM = TRUE;
+                        Status = MmUnblockMemoryRequest (NewLoggerInfo, Pages);
+                        if (EFI_ERROR(Status)) {
+                            if (Status != EFI_UNSUPPORTED) {
+                                DEBUG((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
+                            }
+                        } else {
+                            DEBUG((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
+                        }
+
                     } else {
                         PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
                     }

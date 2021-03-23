@@ -59,6 +59,8 @@
   XmlTreeLib|XmlSupportPkg/Library/XmlTreeLib/XmlTreeLib.inf
   UnitTestLib|UnitTestFrameworkPkg/Library/UnitTestLib/UnitTestLib.inf
 
+  MmUnblockMemoryLib|MdePkg/Library/MmUnblockMemoryLib/MmUnblockMemoryLibNull.inf
+
 
 [LibraryClasses.common.UEFI_APPLICATION]
   UnitTestPersistenceLib|UnitTestFrameworkPkg/Library/UnitTestPersistenceLibSimpleFileSystem/UnitTestPersistenceLibSimpleFileSystem.inf
@@ -137,6 +139,7 @@
   AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/Dxe/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/DxeCore/AdvancedLoggerLib.inf
+  AdvLoggerPkg/Library/AdvancedLoggerLib/MmCore/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/Runtime/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/Smm/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/SmmCore/AdvancedLoggerLib.inf
@@ -147,6 +150,7 @@
   AdvLoggerPkg/Library/AdvLoggerSerialPortLib/AdvLoggerSerialPortLib.inf
   AdvLoggerPkg/Library/AssertLib/AssertLib.inf
   AdvLoggerPkg/Library/AssertTelemetryLib/AssertLib.inf
+  AdvLoggerPkg/Library/AdvLoggerMmAccessLib/AdvLoggerMmAccessLib.inf
 
 [BuildOptions]
 #force deprecated interfaces off

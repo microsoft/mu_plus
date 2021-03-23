@@ -44,6 +44,7 @@
   DebugLib
   DebugAgentLib
   HobLib
+  MmUnblockMemoryLib
   PcdLib
   PeiServicesLib
 

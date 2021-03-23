@@ -16,6 +16,7 @@
 #include <Library/DebugLib.h>
 #include <Library/DebugAgentLib.h>
 #include <Library/HobLib.h>
+#include <Library/MmUnblockMemoryLib.h>
 #include <Library/PeiServicesLib.h>
 
 #include "AdvancedLoggerSecDebugAgent.h"
@@ -167,7 +168,6 @@ InitializeDebugAgent (
                                                    FixedPcdGet32(PcdAdvancedLoggerPages),
                                                   &NewLogBuffer);
                 if (!EFI_ERROR(Status)) {
-                    BufferSize = (UINTN) (LoggerInfo->LogCurrent - LoggerInfo->LogBuffer);
                     DEBUG((DEBUG_INFO, "%a: - Old Info=%p Buffer=%LX, Current=%LX, Size=%d, Used=%d\n",
                         __FUNCTION__,
                         LoggerInfo,
@@ -176,6 +176,7 @@ InitializeDebugAgent (
                         LoggerInfo->LogBufferSize,
                         LoggerInfo->LogCurrent - LoggerInfo->LogBuffer));
 
+                    BufferSize = (UINTN) (LoggerInfo->LogCurrent - LoggerInfo->LogBuffer);
                     NewLoggerInfo = ALI_FROM_PA(NewLogBuffer);
                     CopyMem ((VOID *) NewLoggerInfo, (VOID *) LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
                     NewLoggerInfo->LogBuffer = PA_FROM_PTR( (NewLoggerInfo + 1));
@@ -205,6 +206,15 @@ InitializeDebugAgent (
                     LogPtrSec->LogBuffer = NewLogBuffer;
 
                     FreeRamForSEC (SecLogBuffer);
+
+                    Status = MmUnblockMemoryRequest (NewLogBuffer, FixedPcdGet32(PcdAdvancedLoggerPages));
+                    if (EFI_ERROR(Status)) {
+                        if (Status != EFI_UNSUPPORTED) {
+                            DEBUG((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
+                        }
+                    } else {
+                        DEBUG((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
+                    }
 
                     if (NewLoggerInfo->DiscardedSize != 0) {
                         DebugLevel = DEBUG_ERROR;
