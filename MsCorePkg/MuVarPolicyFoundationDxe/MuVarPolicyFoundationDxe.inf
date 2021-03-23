@@ -39,12 +39,11 @@
   BaseMemoryLib
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib
-  MuVariablePolicyHelperLib
+  VariablePolicyHelperLib
 
 
 [Protocols]
-  gVariablePolicyProtocolGuid                     ## CONSUMES # Used to register the DXE Phase Variable protection policy.
-  gEdkiiVariableLockProtocolGuid                  ## PRODUCES
+  gEdkiiVariablePolicyProtocolGuid                ## CONSUMES # Used to register the DXE Phase Variable protection policy.
 
 
 [Guids]
@@ -57,4 +56,4 @@
 
 [Depex]
   gEfiVariableArchProtocolGuid AND
-  gVariablePolicyProtocolGuid
+  gEdkiiVariablePolicyProtocolGuid

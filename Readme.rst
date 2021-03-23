@@ -34,7 +34,8 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
-- None
+- MuVarPolicyFoundationDxe is no longer required to get backwards compatibility with EDKII_VARIABLE_LOCK_PROTOCOL
+  - It's now provided by Basecore.
 
 Bug Fixes-dev
 -------------
