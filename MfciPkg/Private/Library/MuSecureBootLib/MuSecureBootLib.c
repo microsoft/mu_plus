@@ -224,7 +224,7 @@ SetAuthorizedPkUpdateState (
   UINT32                            Attributes;
   PHASE_INDICATOR                   PhaseIndicator;
   UINTN                             DataSize;
-  VARIABLE_POLICY_PROTOCOL          *VariablePolicy;
+  EDKII_VARIABLE_POLICY_PROTOCOL    *VariablePolicy;
 
   DEBUG(( DEBUG_INFO, "[SB] %a()\n", __FUNCTION__ ));
 
@@ -264,7 +264,7 @@ SetAuthorizedPkUpdateState (
   {
     // IMPORTANT NOTE: This operation is sticky and leaves variable protections disabled.
     //                  The system *MUST* be reset after performing this operation.
-    Status = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, (VOID **) &VariablePolicy );
+    Status = gBS->LocateProtocol( &gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **) &VariablePolicy );
     if (!EFI_ERROR( Status )) {
       Status = VariablePolicy->DisableVariablePolicy();
       // EFI_ALREADY_STARTED means that everything is currently disabled.

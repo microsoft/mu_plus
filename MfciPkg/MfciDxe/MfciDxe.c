@@ -26,7 +26,7 @@
 #include <Library/UefiBootServicesTableLib.h>            // gBS
 #include <Library/UefiRuntimeServicesTableLib.h>         // gRT
 #include <Library/ResetUtilityLib.h>                     // ResetPlatformSpecificGuid()
-#include <Library/MuVariablePolicyHelperLib.h>           // NotifyMfciPolicyChange()
+#include <Library/VariablePolicyHelperLib.h>             // NotifyMfciPolicyChange()
 #include <Library/RngLib.h>                              // GetRandomNumber64()
 
 #include "MfciDxe.h"
@@ -332,12 +332,12 @@ STATIC
 EFI_STATUS
 RegisterVarPolicies ()
 {
-  VARIABLE_POLICY_PROTOCOL            *VariablePolicy = NULL;
+  EDKII_VARIABLE_POLICY_PROTOCOL            *VariablePolicy = NULL;
   EFI_STATUS                          Status;
 
   DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
 
-  Status = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, (VOID**)&VariablePolicy );
+  Status = gBS->LocateProtocol( &gEdkiiVariablePolicyProtocolGuid, NULL, (VOID**)&VariablePolicy );
   if (EFI_ERROR(Status)) {
     DEBUG(( DEBUG_ERROR, "%a - Locating Variable Policy failed - %r\n", __FUNCTION__, Status ));
     goto Done;
@@ -921,7 +921,7 @@ MfciDxeEntry (
 
   // First initialize the variable policies & prepare locks
   // NOTE:  we _always_ lock the variables to prevent tampering by an attacker.
-  Status = gBS->LocateProtocol( &gVariablePolicyProtocolGuid, NULL, &NotUsed );
+  Status = gBS->LocateProtocol( &gEdkiiVariablePolicyProtocolGuid, NULL, &NotUsed );
   if (EFI_ERROR( Status )) {
     // The DepEx should have ensured that Variable Policy was already available.  If we fail to locate the protocol,
     // ASSERT on debug builds, and for retail register a notification in hopes the system will recovery (defence in depth)
@@ -934,7 +934,7 @@ MfciDxeEntry (
       goto Error;
     }
 
-    Status = gBS->RegisterProtocolNotify (&gVariablePolicyProtocolGuid, VarPolicyEvent, (VOID **) &NotUsed);
+    Status = gBS->RegisterProtocolNotify (&gEdkiiVariablePolicyProtocolGuid, VarPolicyEvent, (VOID **) &NotUsed);
     if (EFI_ERROR(Status)) {
       DEBUG(( DEBUG_ERROR, "%a() - RegisterProtocolNotify failed returning %r\n", __FUNCTION__, Status ));
       goto Error;

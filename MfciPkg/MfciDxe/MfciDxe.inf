@@ -44,7 +44,7 @@
   BaseMemoryLib
   MemoryAllocationLib
   MfciPolicyParsingLib
-  MuVariablePolicyHelperLib
+  VariablePolicyHelperLib
   RngLib
   Tpm2CommandLib
   MuSecureBootLib
@@ -55,8 +55,8 @@
 
 
 [Protocols]
-  gMfciProtocolGuid         ## CONSUMES
-  gVariablePolicyProtocolGuid         ## CONSUMES
+  gMfciProtocolGuid                     ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid      ## CONSUMES
 
 [Protocols.common.Private]
   gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
@@ -74,4 +74,4 @@
   gMfciPolicyChangeResetGuid          ## CONSUMES
 
 [Depex]
-  gVariablePolicyProtocolGuid
+  gEdkiiVariablePolicyProtocolGuid
