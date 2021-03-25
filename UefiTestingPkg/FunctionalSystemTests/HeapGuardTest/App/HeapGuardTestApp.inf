@@ -72,7 +72,10 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask   ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                      ## CONSUMES
   gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy        ## CONSUMES
+
+[Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdSetNxForStack                      ## CONSUMES
+
 [BuildOptions]
   GCC:*_CLANG40WIN_AARCH64_CC_FLAGS = -Wno-infinite-recursion
   MSFT:*_*_*_CC_FLAGS  = /wd4054 /wd4055 /wd4717
