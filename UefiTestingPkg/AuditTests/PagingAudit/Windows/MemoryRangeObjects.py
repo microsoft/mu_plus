@@ -1,3 +1,5 @@
+import copy
+
 # Memory range is either a page table entry, memory map entry,
 # or a description of the memory contents.
 #
@@ -73,6 +75,7 @@ class MemoryRange(object):
         self.Found = False
         self.Attribute = 0
         self.AddressBitwidth = None
+        self.PageSplit = False
 
         # Check to see whether we're a type that we recognize.
         if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT", "GuardPage", "Bitwidth"):
@@ -234,11 +237,12 @@ class MemoryRange(object):
             "Privilege" : "User" if (self.UserPrivilege == 1) else "Supervisor",
             "Start" : "0x{0:010X}".format(self.PhysicalStart),
             "End" : "0x{0:010X}".format(self.PhysicalEnd),
-            "Number of Entries" : self.NumberOfEntries,
+            "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
             "Memory Type" : self.GetMemoryTypeDescription(),
             "Section Type" : section_type,
             "System Memory": self.GetSystemMemoryType(),
-            "Memory Contents" : self.ImageName}
+            "Memory Contents" : self.ImageName,
+            "Partial Page": self.PageSplit}
 
     def overlap(self, compare):
         if(self.PhysicalStart >= compare.PhysicalStart) and (self.PhysicalStart <= compare.PhysicalEnd):
@@ -254,6 +258,33 @@ class MemoryRange(object):
             return True
 
         return False
+
+    def split(self, end_of_current):
+        ''' split the memory range object into two and copy
+        all attributes to the new object.
+        end_of_current = physical end of the first object.
+
+        modify self
+        return
+        '''
+        if end_of_current is None:
+            raise Exception("Failed Split - Invalid parameter.  end_of_current can not be none")
+
+        if end_of_current <= self.PhysicalStart:
+            raise Exception("Failed Split - Invalid parameter.  end_of_current can not be <= start. " +
+                            f"self.PhysicalStart = {self.PhysicalStart} " +
+                            f"end_of_current = {end_of_current}" )
+
+        if end_of_current >= self.PhysicalEnd:
+            raise Exception("Failed Split - Invalid parameter.  end_of_current can not be >= end" +
+                            f"self.PhysicalEnd = {self.PhysicalEnd} " +
+                            f"end_of_current = {end_of_current}" )
+
+        self.PageSplit = True
+        next = copy.deepcopy(self)
+        self.PhysicalEnd = end_of_current
+        next.PhysicalStart = end_of_current +1
+        return next
 
     def sameAttributes(self, compare):
         if compare is None:
@@ -287,6 +318,9 @@ class MemoryRange(object):
             return False
 
         if (self.Attribute != compare.Attribute):
+            return False
+
+        if (self.PageSplit or compare.PageSplit):
             return False
 
         return True
