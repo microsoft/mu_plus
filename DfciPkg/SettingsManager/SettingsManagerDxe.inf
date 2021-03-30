@@ -43,6 +43,7 @@
   UefiDriverEntryPoint
   DebugLib
   BaseLib
+  DfciSettingChangedNotificationLib
   DfciXmlDeviceIdSchemaSupportLib
   DfciXmlSettingSchemaSupportLib
   DfciSettingPermissionLib
