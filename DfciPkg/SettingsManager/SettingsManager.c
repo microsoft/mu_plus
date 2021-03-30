@@ -131,6 +131,19 @@ InternalSystemSettingAccessSet (
     //Status was good and flags don't indicate that value was already set.
     //need to clear the cache
     ClearCacheOfCurrentSettings();
+
+    Status = DfciSettingChangedNotification (
+               Id,
+               AuthToken,
+               Type,
+               ValueSize,
+               Value,
+               *Flags
+               );
+
+    if (EFI_ERROR(Status)) {
+        DEBUG((DEBUG_ERROR, "DfciSettingChangedNotification returned error code=%r\n"));
+    }
   }
 
   return Status;

@@ -33,6 +33,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/DfciDeviceIdSupportLib.h>
 #include <Library/DfciGroupLib.h>
+#include <Library/DfciSettingChangedNotificationLib.h>
 #include <Library/DfciSettingPermissionLib.h>
 #include <Library/DfciV1SupportLib.h>
 #include <Library/DfciXmlDeviceIdSchemaSupportLib.h>

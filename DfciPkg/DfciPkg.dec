@@ -65,6 +65,10 @@
   ##
   DfciAssetTagSettingLib|Include/Library/DfciAssetTagSettingLib.h
 
+  ##  @libraryclass  Library supports notifying the platform that a setting has changed
+  ##
+  DfciSettingChangedNotificationLib|Include/Library/DfciSettingChangedNotificationLib.h
+
 [Protocols]
   ## DFCI Setting Permission Protocol
   # {83FB5B14-8FBA-4D55-9578-A5314F3633A5}
