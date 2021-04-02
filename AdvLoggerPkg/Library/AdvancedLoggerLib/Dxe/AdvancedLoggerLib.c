@@ -34,7 +34,7 @@ STATIC BOOLEAN                   mInitialized = FALSE;
 VOID
 EFIAPI
 AdvancedLoggerWrite (
-    IN       UINT32   DebugLevel,
+    IN       UINTN    DebugLevel,
     IN CONST CHAR8   *Buffer,
     IN       UINTN    NumberOfBytes
   ) {
