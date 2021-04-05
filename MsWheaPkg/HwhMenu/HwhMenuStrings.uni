@@ -1,0 +1,90 @@
+/** @file
+HwhMenuStrings.uni
+
+This file maintains the text strings used by the Hardware Health Menu.
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#langdef   en-US " English "
+#langdef   en    " Standard English "
+
+// Common Form strings
+
+#string STR_NULL_STRING                       #language en-US  ""
+#string STR_HWH_MENU_TITLE                    #language en-US  "Hardware Health"
+
+/////////////////////////////////////////////////////////////////////////////
+// Dialog: Hardware Health
+//
+#string STR_HWH_PAGE_RIGHT                   #language en-US  "Next"                 
+#string STR_HWH_PAGE_LEFT                    #language en-US  "Previous"       
+#string STR_HWH_PAGE_NUM                     #language en-US  "Page 1 of 1"
+#string STR_FP_HW_HEADER_LOGS_TRUE           #language en-US  "\fh!48!Error Logs"
+#string STR_FP_HW_HEADER_LOGS_FALSE          #language en-US  "\fh!48!No Logs To Display"
+#string STR_HWH_VIEW_LOGS                    #language en-US  "View Logs"
+#string STR_HWH_LOG_DATE                     #language en-US  "Date (MM/DD/YY):"
+#string STR_HWH_LOG_TIME                     #language en-US  "Time:"
+#string STR_HWH_LOG_SEVERITY                 #language en-US  "Severity:"
+#string STR_HWH_LOG_NUMSECTIONS              #language en-US  "Number of Sections:"
+#string STR_HWH_LOG_CREATORID                #language en-US  "Creator ID:"
+#string STR_HWH_LOG_SOURCEID                 #language en-US  "Source ID:"
+
+/////////////////////////////////////////////////////////////////////////////
+// Error Report Strings
+//
+
+#string STR_HWH_LOG_SEVERITY_VALUE            #language en-US  "SEVERITY"
+#string STR_HWH_LOG_TIME_VALUE                #language en-US  "TIME"
+#string STR_HWH_LOG_DATE_VALUE                #language en-US  "DATE"
+#string STR_HWH_LOG_NUMSECTIONS_VALUE         #language en-US  "NUMBER OF SECTIONS"
+#string STR_HWH_LOG_CREATORID_VALUE           #language en-US  "CREATOR ID"
+#string STR_HWH_LOG_SOURCEID_VALUE            #language en-US  "SOURCE ID"
+
+#string STR_HWH_LOG_LINE_0_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_0_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_0_2                  #language en-US  ""                    
+#string STR_HWH_LOG_LINE_1_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_1_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_1_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_2_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_2_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_2_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_3_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_3_1                  #language en-US  ""                 
+#string STR_HWH_LOG_LINE_3_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_4_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_4_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_4_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_5_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_5_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_5_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_6_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_6_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_6_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_7_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_7_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_7_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_8_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_8_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_8_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_9_0                  #language en-US  ""
+#string STR_HWH_LOG_LINE_9_1                  #language en-US  ""
+#string STR_HWH_LOG_LINE_9_2                  #language en-US  ""
+#string STR_HWH_LOG_LINE_10_0                 #language en-US  ""
+#string STR_HWH_LOG_LINE_10_1                 #language en-US  ""
+#string STR_HWH_LOG_LINE_10_2                 #language en-US  ""
+#string STR_HWH_LOG_LINE_11_0                 #language en-US  ""
+#string STR_HWH_LOG_LINE_11_1                 #language en-US  ""
+#string STR_HWH_LOG_LINE_11_2                 #language en-US  ""
+#string STR_HWH_LOG_LINE_12_0                 #language en-US  ""
+#string STR_HWH_LOG_LINE_12_1                 #language en-US  ""
+#string STR_HWH_LOG_LINE_12_2                 #language en-US  ""
+#string STR_HWH_LOG_LINE_13_0                 #language en-US  ""
+#string STR_HWH_LOG_LINE_13_1                 #language en-US  ""
+#string STR_HWH_LOG_LINE_13_2                 #language en-US  ""
+#string STR_HWH_LOG_LINE_14_0                 #language en-US  ""
+#string STR_HWH_LOG_LINE_14_1                 #language en-US  ""
+#string STR_HWH_LOG_LINE_14_2                 #language en-US  ""

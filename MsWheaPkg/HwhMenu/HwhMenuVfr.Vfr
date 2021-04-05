@@ -1,0 +1,542 @@
+/** @file
+HwhMenuVfr.Vfr
+
+The Vfr to support the HwhMenu display.
+
+Copyright (c) Microsoft Corporation. All rights reserved.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include "HwhMenuVfr.h"
+
+formset
+    guid      = HWH_MENU_FORMSET_GUID,
+    title     = STRING_TOKEN(STR_HWH_MENU_TITLE),
+    help      = STRING_TOKEN(STR_NULL_STRING),
+    classguid = HWH_MENU_FORMSET_GUID,
+    class     = EFI_OTHER_DEVICE_CLASS,
+    subclass  = EFI_GENERAL_APPLICATION_SUBCLASS,
+
+    varstore HWH_MENU_CONFIG,
+        varid = HWH_MENU_VARID,
+        name  = HwhMenuConfig,
+        guid  = HWH_MENU_FORMSET_GUID;
+
+/////////////////////////////////////////////////////////////////////////////
+// Form ID 6: HW
+//
+
+  form formid = HWH_MENU_FORM_ID,
+        title = STRING_TOKEN(STR_NULL_STRING);
+      
+    suppressif ideqval HwhMenuConfig.Logs == LOGS_FALSE;
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_FP_HW_HEADER_LOGS_TRUE);
+    endif;
+
+    suppressif ideqval HwhMenuConfig.Logs == LOGS_TRUE;
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_FP_HW_HEADER_LOGS_FALSE);
+    endif;
+    
+    suppressif ideqval HwhMenuConfig.Logs == LOGS_FALSE;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 70,                                                                    // Grid cell height in pixels.
+    endguidop;
+
+      subtitle
+        text    = STRING_TOKEN(STR_NULL_STRING),
+        flags   = HORIZONTAL;
+      
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_HWH_LOG_DATE);
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                          
+        text    = STRING_TOKEN(STR_HWH_LOG_DATE_VALUE);  
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        //Blank Column For Spacing
+        text    = STRING_TOKEN(STR_NULL_STRING);   
+
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 70,                                                                    // Grid cell height in pixels.
+    endguidop;
+
+      subtitle
+        text    = STRING_TOKEN(STR_NULL_STRING),
+        flags   = HORIZONTAL;
+      
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_HWH_LOG_TIME);
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                          
+        text    = STRING_TOKEN(STR_HWH_LOG_TIME_VALUE);  
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        //Blank Column For Spacing    
+        text    = STRING_TOKEN(STR_NULL_STRING);                        
+
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 70,                                                                    // Grid cell height in pixels.
+    endguidop;
+
+      subtitle
+        text    = STRING_TOKEN(STR_NULL_STRING),
+        flags   = HORIZONTAL;
+      
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_HWH_LOG_SEVERITY);
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                          
+        text    = STRING_TOKEN(STR_HWH_LOG_SEVERITY_VALUE);  
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        //Blank Column For Spacing     
+        text    = STRING_TOKEN(STR_NULL_STRING);   
+
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 70,                                                                    // Grid cell height in pixels.
+    endguidop;
+
+      subtitle
+        text    = STRING_TOKEN(STR_NULL_STRING),
+        flags   = HORIZONTAL;
+      
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_HWH_LOG_NUMSECTIONS);
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                          
+        text    = STRING_TOKEN(STR_HWH_LOG_NUMSECTIONS_VALUE);  
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        //Blank Column For Spacing      
+        text    = STRING_TOKEN(STR_NULL_STRING);   
+
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 70,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+        text    = STRING_TOKEN(STR_NULL_STRING),
+        flags   = HORIZONTAL;
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_HWH_LOG_CREATORID);
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                      
+        text    = STRING_TOKEN(STR_HWH_LOG_CREATORID_VALUE);
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        //Blank Column For Spacing      
+        text    = STRING_TOKEN(STR_NULL_STRING);   
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+        text    = STRING_TOKEN(STR_NULL_STRING),
+        flags   = HORIZONTAL;
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        
+        text    = STRING_TOKEN(STR_HWH_LOG_SOURCEID);
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                          
+        text    = STRING_TOKEN(STR_HWH_LOG_SOURCEID_VALUE);  
+      text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                       //Blank Column For Spacing     
+        text    = STRING_TOKEN(STR_NULL_STRING);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                           // Custom UI Grid opcode - END
+    endguidop;
+
+    text                                                                                
+        help    = STRING_TOKEN(STR_NULL_STRING),                                          
+        text    = STRING_TOKEN(STR_NULL_STRING);
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_0_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_0_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_0_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_1_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_1_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_1_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_2_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_2_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_2_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_3_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_3_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_3_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_4_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_4_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_4_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_5_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_5_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_5_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_6_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_6_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_6_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_7_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_7_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_7_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_8_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_8_1);
+      text                                                                               
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_8_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_9_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_9_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_9_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_10_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_10_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_10_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_11_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_11_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_11_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_12_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_12_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_12_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_13_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_13_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_13_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 65,                                                                    // Grid cell height in pixels.
+    endguidop;
+      subtitle
+          text    = STRING_TOKEN(STR_NULL_STRING),
+          flags   = HORIZONTAL;
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                          
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_14_0);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_14_1);
+      text                                                                                
+          help    = STRING_TOKEN(STR_NULL_STRING),                                         
+          text    = STRING_TOKEN(STR_HWH_LOG_LINE_14_2);
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+    
+    
+    guidop
+      guid     = GRID_CLASS_START_OPCODE_GUID,                                          // Custom UI Grid opcode - START
+      datatype = UINT32,                                                                //
+      data     = 100,                                                                   // Grid cell height in pixels.
+    endguidop;
+      
+      subtitle
+        text    = STRING_TOKEN(STR_NULL_STRING),
+        flags   = HORIZONTAL;
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        //Page Left Button                                        
+        text    = STRING_TOKEN(STR_HWH_PAGE_LEFT),
+        flags  = INTERACTIVE,
+        key     = HWH_MENU_LEFT_ID;
+      text  
+        help    = STRING_TOKEN(STR_NULL_STRING),                      
+        text  = STRING_TOKEN(STR_HWH_PAGE_NUM);
+      text
+        help    = STRING_TOKEN(STR_NULL_STRING),                                        //Page Right Button  
+        text    = STRING_TOKEN(STR_HWH_PAGE_RIGHT),
+        flags   = INTERACTIVE,
+        key     = HWH_MENU_RIGHT_ID;
+      
+    guidop
+      guid     = GRID_CLASS_END_OPCODE_GUID,                                            // Custom UI Grid opcode - END
+    endguidop;
+  
+    endif;
+
+    label LABEL_UPDATE_LOCATION;
+    //
+    // This is an unused update label location to force the form to be redrawn after UpdateForm() is called
+    //
+    label LABEL_UPDATE_END;
+
+  endform;
+
+endformset;

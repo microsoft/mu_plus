@@ -1,0 +1,61 @@
+## @file
+# HwhMenu.inf
+#
+# Presents HwErrRecs to the user on Frontpage
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = HwhMenu
+  FILE_GUID                      = af8f0389-6ba2-47d3-9e55-80b3dd9b8a98
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = HwhMenuEntry
+
+[Sources]
+  HwhMenu.h
+  HwhMenu.c
+  HwhMenuVfr.h
+  HwhMenuStrings.uni
+  HwhMenuVfr.Vfr
+  CreatorIDParser.h
+  CreatorIDParser.c
+  PlatformIDParser.h
+  PlatformIDParser.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  DevicePathLib
+  PrintLib
+  HiiLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiHiiServicesLib
+  CheckHwErrRecHeaderLib
+  MuTelemetryHelperLib
+  ParserRegistryLib
+
+[Guids]
+  gHwhMenuFormsetGuid                 ## PRODUCES
+  gEfiHardwareErrorVariableGuid       ## CONSUMES
+  gEfiIfrTianoGuid                    ## CONSUMES
+
+[Protocols]
+  gEfiHiiConfigAccessProtocolGuid
+
+[Depex]
+  gEfiHiiConfigRoutingProtocolGuid
+
+[BuildOptions]
+ MSFT:*_*_*_CC_FLAGS = /FAcs /Oi-
+

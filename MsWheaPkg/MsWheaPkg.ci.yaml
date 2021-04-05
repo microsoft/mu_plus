@@ -71,7 +71,13 @@
             "MSCHANGE",
             "BERTs",
             "DXEIPL",
-            "hwerrrec"
+            "hwerrrec",
+            "hwhmenu",
+            "creatorid",
+            "hwhmenu",
+            "sectionfunctionptr",
+            "frontpage",
+            "fvdxe"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
