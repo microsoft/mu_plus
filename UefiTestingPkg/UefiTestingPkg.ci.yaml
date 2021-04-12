@@ -25,6 +25,7 @@
             "UefiCpuPkg/UefiCpuPkg.dec",
             "SecurityPkg/SecurityPkg.dec",
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec",
+            "StandaloneMmPkg/StandaloneMmPkg.dec",
             "IntelSiliconPkg/IntelSiliconPkg.dec" #this is bad layering.  Need to fix.
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests

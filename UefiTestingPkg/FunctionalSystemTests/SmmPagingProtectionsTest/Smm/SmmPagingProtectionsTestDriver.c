@@ -15,7 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/SmmServicesTableLib.h>
+#include <Library/MmServicesTableLib.h>
 #include <Library/SmmMemLib.h>
 
 #include <Library/PlatformSmmProtectionsTestLib.h>
@@ -23,6 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/SmmExceptionTestProtocol.h>
 
 #include "../SmmPagingProtectionsTestCommon.h"
+#include "SmmPagingProtectionsTestDriver.h"
 
 
 //=============================================================================
@@ -44,7 +45,7 @@ EnableExceptionTestMode (
   // different handlers are used based on what features are enabled.
   Handles = NULL;
   HandleBuffSize = 0;
-  Status = gSmst->SmmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
+  Status = gMmst->MmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
   if (Status != EFI_BUFFER_TOO_SMALL) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to locate any instances of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Status));
     return;
@@ -56,7 +57,7 @@ EnableExceptionTestMode (
     return;
   }
 
-  Status = gSmst->SmmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
+  Status = gMmst->MmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Error getting instances of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Status));
     return;
@@ -64,7 +65,7 @@ EnableExceptionTestMode (
 
   //Iterate over all instacnes and call EnableTestMode() on each.
   for (Idx = 0; Idx < (HandleBuffSize/sizeof (EFI_HANDLE)); Idx++) {
-    Status = gSmst->SmmHandleProtocol (Handles[Idx], &gSmmExceptionTestProtocolGuid, (VOID **)&SmmExceptionTestProtocol);
+    Status = gMmst->MmHandleProtocol (Handles[Idx], &gSmmExceptionTestProtocolGuid, (VOID **)&SmmExceptionTestProtocol);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "[%a] - Error getting instance %d of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Idx, Status));
       continue;
@@ -241,7 +242,7 @@ SmmMemoryProtectionsTestInvalidRange (
     // Make sure that these lie outside of valid SMRAM access locations.
     // If we don't find at least one address outside these locations, this test pass
     // is invalid.
-    if (SmmIsBufferOutsideSmmValid (ReadAddress, sizeof (ReadData))) {
+    if (IsBufferOutsideMmValid (ReadAddress, sizeof (ReadData))) {
       continue;
     }
 
@@ -541,7 +542,7 @@ MemoryProtectionTestHandler (
     DEBUG ((DEBUG_ERROR, "[%a] SMM Communication buffer size is invalid for this handler!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
-  if (!SmmIsBufferOutsideSmmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
+  if (!IsBufferOutsideMmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
     DEBUG ((DEBUG_ERROR, "[%a] - SMM Communication buffer in invalid location!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
@@ -613,10 +614,7 @@ MemoryProtectionTestHandler (
 }
 
 /**
-  The module Entry Point of the driver.
-
-  @param[in]  ImageHandle    The firmware allocated handle for the EFI image.
-  @param[in]  SystemTable    A pointer to the EFI System Table.
+  Common initialization routine of MM Paging Protection driver.
 
   @retval EFI_SUCCESS    The entry point is executed successfully.
   @retval Other          Some error occurs when executing this entry point.
@@ -624,9 +622,8 @@ MemoryProtectionTestHandler (
 **/
 EFI_STATUS
 EFIAPI
-SmmPagingProtectionsTestEntryPoint (
-  IN EFI_HANDLE          ImageHandle,
-  IN EFI_SYSTEM_TABLE    *SystemTable
+SmmPagingProtectionsTestInitialization (
+  VOID
   )
 {
   EFI_STATUS                Status;
@@ -636,7 +633,7 @@ SmmPagingProtectionsTestEntryPoint (
   // Register SMI handler.
   //
   DiscardedHandle = NULL;
-  Status = gSmst->SmiHandlerRegister (MemoryProtectionTestHandler, &gSmmPagingProtectionsTestSmiHandlerGuid, &DiscardedHandle);
+  Status = gMmst->MmiHandlerRegister (MemoryProtectionTestHandler, &gSmmPagingProtectionsTestSmiHandlerGuid, &DiscardedHandle);
   ASSERT_EFI_ERROR (Status);
 
   return Status;

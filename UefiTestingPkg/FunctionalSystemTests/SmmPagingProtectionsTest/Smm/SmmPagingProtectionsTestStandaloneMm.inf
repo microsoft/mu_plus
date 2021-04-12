@@ -12,12 +12,12 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = SmmPagingProtectionsTestSmm
-  FILE_GUID                      = E78CF4BA-7AEF-4EFB-AF0C-03ED8ECC495B
-  MODULE_TYPE                    = DXE_SMM_DRIVER
+  BASE_NAME                      = SmmPagingProtectionsTestStandaloneMm
+  FILE_GUID                      = E1A3A284-D6C7-4C44-B913-A460CC269DE2
+  MODULE_TYPE                    = MM_STANDALONE
   VERSION_STRING                 = 1.0
-  PI_SPECIFICATION_VERSION       = 0x0001000A
-  ENTRY_POINT                    = TraditionalMmPagingProtectionsTestEntryPoint
+  PI_SPECIFICATION_VERSION       = 0x00010032
+  ENTRY_POINT                    = StandaloneMmPagingProtectionsTestEntryPoint
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -29,22 +29,23 @@
 [Sources]
   SmmPagingProtectionsTestDriver.c
   SmmPagingProtectionsTestDriver.h
-  SmmPagingProtectionsTestTraditionalMm.c
+  SmmPagingProtectionsTestStandaloneMm.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
+  StandaloneMmPkg/StandaloneMmPkg.dec
 
 [LibraryClasses]
   BaseLib
   BaseMemoryLib
   DebugLib
   MemoryAllocationLib
-  SmmMemLib
+  MemLib
   MmServicesTableLib
-  UefiDriverEntryPoint
+  StandaloneMmDriverEntryPoint
   PlatformSmmProtectionsTestLib
 
 [Protocols]
