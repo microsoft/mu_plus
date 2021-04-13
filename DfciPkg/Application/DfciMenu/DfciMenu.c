@@ -33,12 +33,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 #include <Library/DfciUiSupportLib.h>
+#include <Library/DfciSettingChangedNotificationLib.h>
 #include <Library/HiiLib.h>
 #include <Library/HttpLib.h>
 #include <Library/JsonLiteParser.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
+#include <Library/ResetSystemLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
@@ -715,10 +717,17 @@ RebootToFrontPage (
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Unable to set OsIndications\n"));
     }
-    DEBUG((DEBUG_INFO, "%a: Resetting system.\n", __FUNCTION__));
-    gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
 
-    CpuDeadLoop ();
+    DEBUG((DEBUG_INFO, "%a: Resetting system.\n", __FUNCTION__));
+
+    DfciSettingChangedResetNotification ();
+
+    //
+    // ResetNotification may reset the system immediately, or delay for platform reasons. This code
+    // is running in the Boot Menu application, so the system needs to be reset immediately.  If
+    // DfciSettingChangedResetNotification () returns, explicitly call ResetWarm ().
+    //
+    ResetWarm ();
 }
 
 /**
@@ -734,7 +743,7 @@ IssueDfciNetworkRequest (
     VOID
   ) {
     //
-    //  TODO: Verify requirement for on prem network
+    //  TODO: Verify requirement for on premises network
     //
 
     BOOLEAN         OnPrem = FALSE;
@@ -948,6 +957,8 @@ DriverCallback (
                 Status = EFI_SUCCESS;
                 // OptIn requires a restart
                 DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, TRUE, NULL);
+
+                DfciSettingChangedResetNotification ();
                 break;
 
             case DFCI_MENU_ZUM_OPT_OUT_QUESTION_ID:
@@ -960,6 +971,8 @@ DriverCallback (
                 Status = EFI_SUCCESS;
                 // OptOut requires a restart
                 DisplayMessageBox (STRING_TOKEN(STR_DFCI_MB_OPT_CHANGE), Status, TRUE, NULL);
+
+                DfciSettingChangedResetNotification ();
                 break;
 
             default:

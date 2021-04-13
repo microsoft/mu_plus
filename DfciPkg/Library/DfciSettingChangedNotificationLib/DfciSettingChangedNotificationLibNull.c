@@ -14,6 +14,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
+#include <Library/ResetSystemLib.h>
 #include <Library/DfciSettingChangedNotificationLib.h>
 
 /**
@@ -42,4 +43,23 @@ DfciSettingChangedNotification (
   )
 {
     return EFI_SUCCESS;
+}
+
+/**
+ * Process Reset notification - called when DFCI is requesting a Reset
+ *
+ * Allows some implementations to delay the requested reset.  The default is to
+ * reset the system immediately.
+ *
+ * @param NONE
+ *
+ * @return NONE         - Handle Reset Request
+ **/
+VOID
+EFIAPI
+DfciSettingChangedResetNotification (
+  VOID
+  )
+{
+    ResetCold();
 }
