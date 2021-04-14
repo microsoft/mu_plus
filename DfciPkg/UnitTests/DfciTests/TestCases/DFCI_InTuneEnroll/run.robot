@@ -243,17 +243,19 @@ Get the ending DFCI Settings
 Clean Up Mailboxes
     Verify No Mailboxes Have Data
 
-
-Restart System to Verify Device Setting
-# Start serial log to capture UEFI log during the restart
-    [Setup]    Require test case    Restart System to Apply Enrollment
-
-    Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}VerifyDeviceSettings.log
-
-    Log To Console    Restarting to firmware
-    Log To Console    Check the device settings to insure that all
-    Log To Console    of the camera devices, and radio devices, are
-    Log To Console    off and grayed out. Other devices should be
-    Log To Console    available for the user to control.
-
-    Reboot System To Firmware And Wait For System Online
+#
+# Temporarily remove this last step as the OS doesn't always restart the system with -fw
+#
+##Restart System to Verify Device Setting
+## Start serial log to capture UEFI log during the restart
+#    [Setup]    Require test case    Restart System to Apply Enrollment
+#
+#    Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}VerifyDeviceSettings.log
+#
+#    Log To Console    Restarting to firmware
+#    Log To Console    Check the device settings to insure that all
+#    Log To Console    of the camera devices, and radio devices, are
+#    Log To Console    off and grayed out. Other devices should be
+#    Log To Console    available for the user to control.
+#
+#    Reboot System To Firmware And Wait For System Online

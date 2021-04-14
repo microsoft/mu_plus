@@ -36,6 +36,7 @@
   BaseMemoryLib
   DebugLib
   DfciDeviceIdSupportLib
+  DfciSettingChangedNotificationLib
   DfciUiSupportLib
   MemoryAllocationLib
   PcdLib
@@ -43,7 +44,6 @@
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   UefiLib
-  UefiRuntimeServicesTableLib
 
 [Guids]
   gDfciAuthProvisionVarNamespace

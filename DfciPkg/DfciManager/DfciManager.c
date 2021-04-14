@@ -921,7 +921,7 @@ COMPLETE_AS_FAILED:
     }
 
     if (mRebootRequired) {
-        gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+        DfciSettingChangedResetNotification ();
     }
 
     return Status;

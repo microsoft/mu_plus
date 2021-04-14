@@ -52,6 +52,7 @@
   DebugLib
   DevicePathLib
   DfciDeviceIdSupportLib
+  DfciSettingChangedNotificationLib
   DfciUiSupportLib
   FileHandleLib
   HiiLib
@@ -60,6 +61,7 @@
   JsonLiteParserLib
   PcdLib
   PrintLib
+  ResetSystemLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   UefiHiiServicesLib

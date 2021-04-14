@@ -28,10 +28,12 @@
 [Packages]
   DfciPkg/DfciPkg.dec
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
 
 [LibraryClasses]
   BaseLib
   DebugLib
+  ResetSystemLib
 
 [Depex]
   TRUE

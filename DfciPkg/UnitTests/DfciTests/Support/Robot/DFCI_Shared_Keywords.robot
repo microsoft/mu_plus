@@ -68,19 +68,19 @@ Get System Under Test ProductName
 ############################################################
 Print Provisioning Package
     [Arguments]     ${binfile}  ${stdoutfile}
-    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GenerateCertProvisionData.py  -p  ${binfile}  shell=Yes   timeout=5sec    stdout=${stdoutfile}
+    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GenerateCertProvisionData.py  -p  ${binfile}  shell=Yes   timeout=10sec    stdout=${stdoutfile}
     Log File    ${stdoutfile}
     Should Be Equal As Integers     ${result.rc}    0
 
 Print Permission Package
     [Arguments]     ${binfile}  ${stdoutfile}
-    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GeneratePermissionPacketData.py  -p  ${binfile}  shell=Yes   timeout=5sec    stdout=${stdoutfile}
+    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GeneratePermissionPacketData.py  -p  ${binfile}  shell=Yes   timeout=10sec    stdout=${stdoutfile}
     Log File    ${stdoutfile}
     Should Be Equal As Integers     ${result.rc}    0
 
 Print Settings Package
     [Arguments]     ${binfile}  ${stdoutfile}
-    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GenerateSettingsPacketData.py    -p  ${binfile}  shell=Yes   timeout=5sec    stdout=${stdoutfile}
+    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GenerateSettingsPacketData.py    -p  ${binfile}  shell=Yes   timeout=10sec    stdout=${stdoutfile}
     Log File    ${stdoutfile}
     Should Be Equal As Integers     ${result.rc}    0
 
@@ -90,21 +90,21 @@ Print Settings Package
 ############################################################
 Get Provisioning Result Package
     [Arguments]     ${stdoutfile}
-    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --Provisioning  --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=5sec    stdout=${stdoutfile}
+    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --Provisioning  --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=10sec    stdout=${stdoutfile}
     Log File    ${stdoutfile}
     Should Be Equal As Integers     ${result.rc}    0
 
 
 Get Permission Result Package
     [Arguments]     ${stdoutfile}
-    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --Permissions   --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=5sec    stdout=${stdoutfile}
+    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --Permissions   --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=10sec    stdout=${stdoutfile}
     Log File    ${stdoutfile}
     Should Be Equal As Integers     ${result.rc}    0
 
 
 Get Settings Result Package
     [Arguments]     ${stdoutfile}
-    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --Settings  --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=5sec    stdout=${stdoutfile}
+    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --Settings  --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=10sec    stdout=${stdoutfile}
     Log File    ${stdoutfile}
     Should Be Equal As Integers     ${result.rc}    0
 
@@ -114,7 +114,7 @@ Get Settings Result Package
 ############################################################
 Get Current Settings Package
     [Arguments]     ${stdoutfile}
-    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --CurrentSettings   --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=5sec    stdout=${stdoutfile}
+    ${result} =     Run Process     ${DFCI_PY_PATH}${/}GetSEMResultData.py  --CurrentSettings   --IpAddress ${IP_OF_DUT}    shell=Yes   timeout=10sec    stdout=${stdoutfile}
     Log File    ${stdoutfile}
     Should Be Equal As Integers     ${result.rc}    0
 
