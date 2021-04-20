@@ -1,0 +1,50 @@
+## @file
+# PEI Library for controlling memory protection variables/settings
+#
+# 
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = PeiMemoryProtectionLib
+  FILE_GUID                      = 3ab788e1-3c84-40c5-a0d5-0d262c0f1949
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MemoryProtectionLib|PEIM
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  PeiMemoryProtectionLib.c
+  MemoryProtectionCommon.c
+  MemoryProtectionCommon.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  PeiServicesLib
+  HobLib
+  MemoryProtectionExceptionLib
+  PcdLib
+
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid   ## CONSUMES
+
+[Pcd]
+  gMsCorePkgTokenSpaceGuid.PcdDefaultMemoryProtectionGlobalToggle
+
+[Guids]
+  gMemoryProtectionsGuid
+  gHobMemoryProtectionsGuid
+
+[DEPEX]
+  gEfiPeiReadOnlyVariable2PpiGuid

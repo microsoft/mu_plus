@@ -23,7 +23,8 @@
             "CryptoPkg/CryptoPkg.dec",
             "MsCorePkg/MsCorePkg.dec",
             "MsWheaPkg/MsWheaPkg.dec",
-            "SecurityPkg/SecurityPkg.dec"
+            "SecurityPkg/SecurityPkg.dec",
+            "UefiCpuPkg/UefiCpuPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
 
@@ -73,7 +74,8 @@
             "hibit",
             "XIPFLAGS",
             "mstrict",
-            "mgeneral"
+            "mgeneral",
+            "frontpage"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

@@ -33,6 +33,8 @@ This package has shared drivers and libraries that are silicon and platform inde
 | **PeiDebugLib**                    | [PeiDebugLib](../Library/PeiDebugLib/ReadMe.md) |
 | **PlatformBootManagerLib**         | [PlatformBootManagerLib](../Library/PlatformBootManagerLib/ReadMe.md) |
 | **TpmSgNvIndexLib**                | [TpmSgNvIndexLib](../Library/TpmSgNvIndexLib/ReadMe.md) |
+| **MemoryProtectionExceptionLib**   | [MemoryProtectionExceptionLib](../Library/MemoryProtectionExceptionCmosLib/Readme.md)
+| **MemoryProtectionLib**            | [MemoryProtectionLib](../Library/MemoryProtectionLib/Readme.md)
 
 ## Testing
 
