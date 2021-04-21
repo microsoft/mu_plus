@@ -51,7 +51,8 @@ BOOLEAN EFIAPI CheckDeviceNode(
 }
 
 BOOLEAN EFIAPI IsDevicePathUSB(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {
-    return CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_USB_DP);
+    return (CheckDeviceNode(DevicePath, MESSAGING_DEVICE_PATH, MSG_USB_DP) ||
+            MsBootPolicyLibIsDevicePathUsb (DevicePath));
 }
 
 BOOLEAN EFIAPI IsDevicePathIPv4(EFI_DEVICE_PATH_PROTOCOL *DevicePath) {

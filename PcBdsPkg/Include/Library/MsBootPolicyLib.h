@@ -70,6 +70,22 @@ MsBootPolicyLibIsDevicePathBootable (
   );
 
 /**
+  Asks the platform if the DevicePath provided is a valid bootable 'USB' device.
+  USB here indicates the port connection type not the device protocol.
+  With TBT or USB4 support PCIe storage devices are valid 'USB' boot options.
+
+  @param DevicePath Pointer to DevicePath to check
+
+  @retval TRUE     Device is a valid USB boot option
+  @retval FALSE    Device is not a valid USB boot option
+ **/
+BOOLEAN
+EFIAPI
+MsBootPolicyLibIsDevicePathUsb (
+  EFI_DEVICE_PATH_PROTOCOL  *DevicePath
+  );
+
+/**
  *Ask if the platform is requesting an Alternate Boot
 
  *@retval EFI_SUCCESS  BootSequence pointer returned

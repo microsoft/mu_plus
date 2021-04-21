@@ -22,6 +22,20 @@ GetSdCardDevicePath (
 }
 
 /**
+  Library function used to determine if the DevicePath is a valid bootable 'USB' device.
+  USB here indicates the port connection type not the device protocol.
+  With TBT or USB4 support PCIe storage devices are valid 'USB' boot options.
+**/
+BOOLEAN
+EFIAPI
+PlatformIsDevicePathUsb (
+  IN EFI_DEVICE_PATH_PROTOCOL  *DevicePath
+)
+{
+  return FALSE;
+}
+
+/**
 Library function used to proivide the list of platform devices that MUST be
 connected at the beginning of BDS
 **/

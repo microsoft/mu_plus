@@ -25,4 +25,8 @@
 [Packages]
   MdePkg/MdePkg.dec
   PcBdsPkg/PcBdsPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
 
+[LibraryClasses]
+  MsPlatformDevices
