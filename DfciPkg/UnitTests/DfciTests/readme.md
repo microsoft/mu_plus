@@ -38,13 +38,14 @@ DeviceUnderTest\CollectFilesForDut.cmd D:\DfciSetup
 ```
 
 This will create a directory on the USB key named `DfciSetup` with the required files for setting up the remote server.
-Mount the removable device on the DUT and run:  
+Mount the removable device on the DUT and start an administrator CMD Window, then run (where x: is the drive letter where
+the USB key is mounted):
 
 ```text
-SetupDUT.cmd
+x:\DfciSetup\SetupDUT.cmd
 ```
 
-This will download and install Python 3.7.4, robotframework, robotremoteserver, and pypiwin32.
+This will download and install Python 3.9.4, robotframework, robotremoteserver, and pypiwin32.
 In addition, the SetupDUT command will update the firewall for the robot framework testing, and a make a couple of
 configuration changes to Windows for a better test experience.
 
@@ -54,14 +55,13 @@ The HOST system requires the following software (NOTE - There are dependencies o
 
 1. A current version of Windows 10 x86-64.
 2. The current Windows SDK, available here [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk).
-3. Python 3.7.4 x86-64 (the version tested), available here [Python 3.7.4](https://www.python.org/downloads/release/python-374/).
-4. python -m pip install pip --upgrade
-5. python -m pip install robotframework
-   NOTE: Dfci now requires RobotFramework 3.2.  Until 3.2 is the default, install using
-   pip install --pre --upgrade robotframework
-6. python -m pip install edk2-pytool-library
+3. Python 3.9.4 x86-64 (the version tested), available here [Python 3.9.4](https://www.python.org/ftp/python/3.9.4/python-3.9.4-amd64.exe).
+4. Copy the DfciTests directory, including all of the contents of the subdirectories, onto the HOST system.
+5. Install the required python packages by running using the pip-requirements.txt file in the DfciTests directory:
 
-Copy the DfciTests directory, including all of the contents of the subdirectories, onto the HOST system.
+```text
+   python -m pip install --upgrade -r pip-requirements.txt
+```
 
 ## Test Cases Collections
 
@@ -70,7 +70,7 @@ Table of DFCI Test case collections:
 | Test Case Collection | Description of Test Case |
 | ----- | ----- |
 | DFCI_CertChainingTest | Verifies that a ZeroTouch enroll actually prompts for authorization to Enroll when the enroll package is not signed by the proper key.|
-| DFCI_InitialState | Verifies that the firmware indicates support for DFCI and that the system is not already enrolled into DFCI. |
+| DFCI_InitialState | Verifies that the firmware indicates support for DFCI and that the system is Opted In for InTune, and is not already enrolled into DFCI. |
 | DFCI_InTuneBadUpdate | Tries to apply a settings package signed with the wrong key |
 | DFCI_InTunePermissions | Applies multiple sets of permissions to an InTune Enrolled system. |
 | DFCI_InTuneEnroll | Applies a InTune Owner, an InTune Manager, and the appropriate permissions and settings. |

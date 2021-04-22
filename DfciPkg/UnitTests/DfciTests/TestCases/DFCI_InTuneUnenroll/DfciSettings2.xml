@@ -3,7 +3,7 @@
 
     @file
 
-    Sample DFCI User initial enroll settings
+    Sample DFCI User restore settings during UnEnroll
 
     Copyright (c), Microsoft Corporation
     SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -16,36 +16,28 @@
     <LowestSupportedVersion>2</LowestSupportedVersion>
     <Settings>
         <Setting>
-            <Id>MDM.FriendlyName.String</Id>
-            <Value>The DFCI Test Lab</Value>
-        </Setting>
-        <Setting>
-            <Id>MDM.TenantName.String</Id>
-            <Value>The DFCI Test Lab Tenant</Value>
-        </Setting>
-        <Setting>
             <Id>Dfci.OnboardCameras.Enable</Id>
-            <Value>Disabled</Value>
+            <Value>Enabled</Value>
         </Setting>
         <Setting>
             <Id>Dfci.OnboardRadios.Enable</Id>
-            <Value>Disabled</Value>
+            <Value>Enabled</Value>
         </Setting>
         <Setting>
             <Id>Dfci.BootExternalMedia.Enable</Id>
-            <Value>Disabled</Value>
+            <Value>Enabled</Value>
         </Setting>
         <Setting>
             <Id>Dfci3.OnboardWpbt.Enable</Id>
-            <Value>Disabled</Value>
+            <Value>Enabled</Value>
         </Setting>
         <Setting>
             <Id>Dfci3.ProcessorSMT.Enable</Id>
-            <Value>Disabled</Value>
+            <Value>Enabled</Value>
         </Setting>
         <Setting>
             <Id>Dfci3.AssetTag.String</Id>
-            <Value>DFCI.LAB.001234</Value>
+            <Value></Value>
         </Setting>
     </Settings>
 </SettingsPacket>

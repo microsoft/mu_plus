@@ -101,6 +101,7 @@ Get the current DFCI Settings Before Unenroll
 
     Initialize Thumbprints    '${OwnerThumbprint}'    '${UserThumbprint}'
 
+
 Obtain Target Parameters From Target
     [Setup]    Require test case    Get the current DFCI Settings Before UnEnroll
     ${nameofTest}=    Set Variable     GetParameters
@@ -116,8 +117,18 @@ Obtain Target Parameters From Target
     Verify Identity Current  ${currentXmlFile}  ${Manufacturer}  ${Model}  ${SerialNumber}
 
 
-Send Owner Unenroll to System
+Send User Settings Packet to Enrolled System
     [Setup]    Require test case    Obtain Target Parameters From Target
+    #Initial settings for Enrolled System
+    ${nameofTest}=      Set Variable    UserSettings
+    ${xmlPayloadFile}=  Set Variable    ${TEST_CASE_DIR}${/}DfciSettings2.xml
+
+
+    Process Settings Packet     ${nameofTest}  2  ${OLD_USER_PFX}  ${xmlPayloadFile}  @{TARGET_PARAMETERS}
+
+
+Send Owner Unenroll to System
+    [Setup]    Require test case    Send User Settings Packet to Enrolled System
     ${nameofTest}=       Set Variable    Unenroll
 
     Process UnEnroll Packet     ${nameofTest}  1  ${OLD_OWNER_PFX}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
@@ -130,6 +141,14 @@ Restart System to UnEnroll
     Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}InTuneUnenroll.log
 
     Reboot System And Wait For System Online
+
+
+Verify User Enrolled System Settings Results
+    ${nameofTest}=   Set Variable    UserSettings
+
+    ${xmlUserSettingsRslt}=   Validate Settings Status    ${nameofTest}    2    ${STATUS_SUCCESS}  FULL
+    ${rc}    Check All Setting Status    ${xmlUserSettingsRslt}    ${STATUS_SUCCESS}
+    Should Be True    ${rc}
 
 
 Verify Owner UnEnroll Results
@@ -149,10 +168,13 @@ Get the current DFCI Settings after Unenroll
     ${rc}=   Get Thumbprint Element    ${currentIdxmlFile}    User
     Should Be True    '${rc}' == 'Cert not installed'
 
+
 Verify Settings Returned To Defaults
     ${nameofTest}=              Set Variable   VerifyDefaults
     ${currentSettingXmlFile}=   Set Variable   ${TOOL_DATA_OUT_DIR}${/}${Testname}_CurrentSettings.xml
 
+
+#Documentation  Verify the no preboot UI settings are back to default
     @{RTD_CHECK01}=   Create List   Dfci.HttpsCert.Binary              ${EMPTY}
     @{RTD_CHECK02}=   Create List   Dfci.RecoveryBootstrapUrl.String   ${EMPTY}
     @{RTD_CHECK03}=   Create List   Dfci.RecoveryUrl.String            ${EMPTY}
@@ -163,6 +185,13 @@ Verify Settings Returned To Defaults
     @{RTD_CHECK08}=   Create List   MDM.FriendlyName.String            ${EMPTY}
     @{RTD_CHECK09}=   Create List   MDM.TenantName.String              ${EMPTY}
 
+#Documentation  Verify the settings that require explicit reset reset to default
+    @{RTD_CHECK10}=   Create List   Dfci.OnboardCameras.Enable         Enabled
+    @{RTD_CHECK11}=   Create List   Dfci.OnboardRadios.Enable          Enabled
+    @{RTD_CHECK12}=   Create List   Dfci.BootExternalMedia.Enable      Enabled
+    @{RTD_CHECK13}=   Create List   Dfci3.ProcessorSMT.Enable          Enabled
+    @{RTD_CHECK14}=   Create List   Dfci3.AssetTag.String              ${EMPTY}
+
     @{RTD_CHECKS}=    Create List   ${RTD_CHECK01}
 ...                                 ${RTD_CHECK02}
 ...                                 ${RTD_CHECK03}
@@ -172,6 +201,11 @@ Verify Settings Returned To Defaults
 ...                                 ${RTD_CHECK07}
 ...                                 ${RTD_CHECK08}
 ...                                 ${RTD_CHECK09}
+...                                 ${RTD_CHECK10}
+...                                 ${RTD_CHECK11}
+...                                 ${RTD_CHECK12}
+...                                 ${RTD_CHECK13}
+...                                 ${RTD_CHECK14}
 
     Get and Print Current Settings     ${currentSettingXmlFile}
 

@@ -143,6 +143,8 @@ Get the starting DFCI Settings
     Should Be True    '${UserThumbprint}' == 'Cert not installed'
     Should Be True    '${User1Thumbprint}' == 'Cert not installed'
     Should Be True    '${User2Thumbprint}' == 'Cert not installed'
+    Log To Console    .
+    Log To Console    Verifying the system under test is Opted In for InTune
     Should Be True    '${ZtdThumbprint}' != 'Cert not installed'
 
 

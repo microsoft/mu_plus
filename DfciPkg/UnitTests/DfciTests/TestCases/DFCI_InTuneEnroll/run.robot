@@ -214,15 +214,15 @@ Verify User Enrolled System Permission Results
 Verify Owner Enrolled System Settings Results
     ${nameofTest}=   Set Variable    OwnerSettings
 
-    ${xmlPermissionsRslt}=   Validate Settings Status    ${nameofTest}    1    ${STATUS_SUCCESS}  FULL
-    ${rc}    Check All Setting Status    ${xmlPermissionsRslt}    ${STATUS_SUCCESS}
+    ${xmlOwnerSettingsRslt}=   Validate Settings Status    ${nameofTest}    1    ${STATUS_SUCCESS}  FULL
+    ${rc}    Check All Setting Status    ${xmlOwnerSettingsRslt}    ${STATUS_SUCCESS}
     Should Be True    ${rc}
 
 Verify User Enrolled System Settings Results
     ${nameofTest}=   Set Variable    UserSettings
 
-    ${xmlPermissionsRslt}=   Validate Settings Status    ${nameofTest}    2    ${STATUS_SUCCESS}  FULL
-    ${rc}    Check All Setting Status    ${xmlPermissionsRslt}    ${STATUS_SUCCESS}
+    ${xmlUserSettingsRslt}=   Validate Settings Status    ${nameofTest}    2    ${STATUS_SUCCESS}  FULL
+    ${rc}    Check All Setting Status    ${xmlUserSettingsRslt}    ${STATUS_SUCCESS}
     Should Be True    ${rc}
 
 

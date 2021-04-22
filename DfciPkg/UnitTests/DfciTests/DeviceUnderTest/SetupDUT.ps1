@@ -46,22 +46,22 @@ function MyStartProcess {
 
 $storageDir = $Env:temp
 $webclient = New-Object System.Net.WebClient
-$url = "https://www.python.org/ftp/python/3.7.4/python-3.7.4-amd64.exe"
-$file = "$storageDir\python-3.7.4-amd64.exe"
+$url = "https://www.python.org/ftp/python/3.9.4/python-3.9.4-amd64.exe"
+$file = "$storageDir\python-3.9.4-amd64.exe"
 
 Write-Host "Downloading " + $url
 $webclient.DownloadFile($url,$file)
 
-Write-Host "Installing Python37"
-$rc = MyStartProcess $File "/quiet PrependPath=1 InstallAllUsers=1 TargetDir=`"C:\Python37`" "
+Write-Host "Installing Python39"
+$rc = MyStartProcess $File "/quiet PrependPath=1 InstallAllUsers=1 TargetDir=`"C:\Python39`" "
 
 if ($rc -eq 0)
 {
     #install modules
-    MyStartProcess "C:\Python37\python.exe" "-m pip install --upgrade pip"
-    MyStartProcess "C:\Python37\python.exe" "-m pip install robotframework"
-    MyStartProcess "C:\Python37\python.exe" "-m pip install robotremoteserver"
-    MyStartProcess "C:\Python37\python.exe" "-m pip install pypiwin32"
+    MyStartProcess "C:\Python39\python.exe" "-m pip install --upgrade pip"
+    MyStartProcess "C:\Python39\python.exe" "-m pip install robotframework"
+    MyStartProcess "C:\Python39\python.exe" "-m pip install robotremoteserver"
+    MyStartProcess "C:\Python39\python.exe" "-m pip install pypiwin32"
 }
 
 ## Disable windows recovery during boot - With frequent rebooting, the OS will
