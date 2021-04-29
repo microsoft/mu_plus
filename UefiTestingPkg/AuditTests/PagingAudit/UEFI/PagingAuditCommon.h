@@ -41,6 +41,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define AMD_64_SMM_ADDR   0xC0010112
 #define AMD_64_SMM_MASK   0xC0010113
 
+#define VALID_SMRR_LOW_POS    BIT17
+#define VALID_SMRR_HIGH_POS   BIT51
+#define VALID_SMRR_BIT_MASK   (~(~(BIT51 - 1) | (BIT17 - 1)))
+
 // volatile UINT32 jason = 0;
 
 #pragma pack(1)

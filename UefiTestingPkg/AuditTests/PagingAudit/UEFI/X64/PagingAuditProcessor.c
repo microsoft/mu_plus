@@ -16,6 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 #include <Register/Msr.h>
+#include <Library/UefiCpuLib.h>
 #include "../PagingAuditCommon.h"
 
 
@@ -194,61 +195,6 @@ LookupSmrrAMD (
   return Status;
 }
 
-/*
-  Helper function inherited from MinPlatformPkg TestPointCheckSmrr()
-
-  @param[out]   SmrrPhysBaseMsr     Input pointer to hold SMRR Base Msr
-  @param[out]   SmrrPhysMaskMsr     Input pointer to hold SMRR Mask Msr
-
-  @retval   EFI_STATUS              The system supports SMRR and pointers will be put in pointers passed in
-  @retval   EFI_INVALID_PARAMETER   Input arguments have NULL pointers
-  @retval   EFI_UNSUPPORTED         This system does not predefined SMRR in this module
-
-*/
-STATIC
-EFI_STATUS
-CheckSmrrSupported (
-  OUT   UINT32    *SmrrPhysBaseMsr,
-  OUT   UINT32    *SmrrPhysMaskMsr
-  )
-{
-  EFI_STATUS  Status;
-
-  UINT32      RegEbx;
-  UINT32      RegEcx;
-  UINT32      RegEdx;
-
-  DEBUG (( DEBUG_INFO, "%a - Enter\n", __FUNCTION__ ));
-
-  Status = EFI_UNSUPPORTED;
-  if ((SmrrPhysBaseMsr == NULL) || (SmrrPhysMaskMsr == NULL)) {
-    Status = EFI_INVALID_PARAMETER;
-    goto Cleanup;
-  }
-
-  AsmCpuid (CPUID_SIGNATURE, NULL, &RegEbx, &RegEcx, &RegEdx);
-  if ((RegEbx == CPUID_SIGNATURE_GENUINE_INTEL_EBX) &&
-      (RegEcx == CPUID_SIGNATURE_GENUINE_INTEL_ECX) &&
-      (RegEdx == CPUID_SIGNATURE_GENUINE_INTEL_EDX)) {
-    // Deal with intel cpus
-    Status = LookupSmrrIntel (SmrrPhysBaseMsr, SmrrPhysMaskMsr);
-  }
-  else if ((RegEbx == CPUID_SIGNATURE_AUTHENTIC_AMD_EBX) &&
-          (RegEcx == CPUID_SIGNATURE_AUTHENTIC_AMD_ECX) &&
-          (RegEdx == CPUID_SIGNATURE_AUTHENTIC_AMD_EDX)) {
-    // Deal with AMD cpus
-    Status = LookupSmrrAMD (SmrrPhysBaseMsr, SmrrPhysMaskMsr);
-  }
-  else {
-    Status = EFI_UNSUPPORTED;
-  }
-
-Cleanup:
-  DEBUG (( DEBUG_INFO, "%a - Exit %r\n", __FUNCTION__, Status ));
-  return Status;
-}
-
-
 STATIC
 EFI_STATUS
 TSEGDumpHandler (
@@ -262,8 +208,15 @@ TSEGDumpHandler (
   UINT64      Length;
   UINT64      MtrrValidBitsMask;
   UINT64      MtrrValidAddressMask;
+  INTN        LowBitPosition;
+  INTN        HighBitPosition;
+  UINTN       NumberOfTseg;
+  UINTN       Index;
+  UINTN       BitIndex;
+  UINTN       RecordIndex;
   CHAR8       TempString[MAX_STRING_SIZE];
   EFI_STATUS  Status;
+  EFI_PHYSICAL_ADDRESS *TempBuffer;
 
   DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
 
@@ -272,37 +225,123 @@ TSEGDumpHandler (
 
   InitializeMtrrMask( &MtrrValidBitsMask, &MtrrValidAddressMask );
 
-  DEBUG(( DEBUG_VERBOSE, "%a MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", __FUNCTION__, MtrrValidBitsMask , MtrrValidAddressMask ));
+  DEBUG(( DEBUG_INFO, "%a MTRR valid bits 0x%016lx, address mask: 0x%016lx\n", __FUNCTION__, MtrrValidBitsMask , MtrrValidAddressMask ));
 
-  Status = CheckSmrrSupported(&mSmrrPhysBaseMsr, &mSmrrPhysMaskMsr);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a SMRR base and mask cannot be queried! Bail from here!\n", __FUNCTION__ ));
-    return Status;
+  if (!StandardSignatureIsAuthenticAMD ()) {
+    Status = LookupSmrrIntel (&mSmrrPhysBaseMsr, &mSmrrPhysMaskMsr);
+    if (EFI_ERROR(Status)) {
+      DEBUG(( DEBUG_ERROR, "%a Intel SMRR base and mask cannot be queried! Bail from here!\n", __FUNCTION__ ));
+      return Status;
+    }
+
+    // This is a 64-bit read, but the SMRR registers bits 63:32 are reserved.
+    SmrrBase = AsmReadMsr64( mSmrrPhysBaseMsr );
+    SmrrMask = AsmReadMsr64( mSmrrPhysMaskMsr );
+    // Extend the mask to account for the reserved bits.
+    SmrrMask |= 0xffffffff00000000ULL;
+
+    DEBUG(( DEBUG_VERBOSE, "%a SMRR base 0x%016lx, mask: 0x%016lx\n", __FUNCTION__, SmrrBase , SmrrMask ));
+
+    // Extend the top bits of the mask to account for the reserved
+
+    Length = ((~(SmrrMask & MtrrValidAddressMask)) & MtrrValidBitsMask) + 1;
+
+    DEBUG(( DEBUG_VERBOSE, "%a Calculated length: 0x%016lx\n", __FUNCTION__, Length ));
+
+    // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
+    AsciiSPrint( TempString, MAX_STRING_SIZE,
+                "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+                16,
+                (SmrrBase & MtrrValidAddressMask),
+                0,
+                EFI_SIZE_TO_PAGES( Length ),
+                0 );
+    AppendToMemoryInfoDatabase( TempString );
   }
+  else {
+    Status = LookupSmrrAMD (&mSmrrPhysBaseMsr, &mSmrrPhysMaskMsr);
+    if (EFI_ERROR(Status)) {
+      DEBUG(( DEBUG_ERROR, "%a AMD SMRR base and mask cannot be queried! Bail from here!\n", __FUNCTION__ ));
+      return Status;
+    }
 
-  // This is a 64-bit read, but the SMRR registers bits 63:32 are reserved.
-  SmrrBase = AsmReadMsr64( mSmrrPhysBaseMsr );
-  SmrrMask = AsmReadMsr64( mSmrrPhysMaskMsr );
-  // Extend the mask to account for the reserved bits.
-  SmrrMask |= 0xffffffff00000000ULL;
+    // This is a 64-bit read, but the SMRR registers bits 63:32 are reserved.
+    SmrrBase = AsmReadMsr64( mSmrrPhysBaseMsr );
+    SmrrMask = AsmReadMsr64( mSmrrPhysMaskMsr );
 
-  DEBUG(( DEBUG_VERBOSE, "%a SMRR base 0x%016lx, mask: 0x%016lx\n", __FUNCTION__, SmrrBase , SmrrMask ));
+    // Apply the bit mask according to AMD64 Architecture Programmer's Manual Vol. 2-Rev. 3.33 Section 10.2.5:
+    // Each CPU memory access is in the TSeg range if the following is true:
+    // Phys Addr[51:17] & SMM_MASK[51:17] = SMM_ADDR[51:17] & SMM_MASK[51:17].
+    SmrrBase &= (VALID_SMRR_BIT_MASK & MtrrValidAddressMask);
+    SmrrMask &= (VALID_SMRR_BIT_MASK & MtrrValidAddressMask);
+    DEBUG(( DEBUG_INFO, "%a SMRR base 0x%016lx, mask: 0x%016lx\n", __FUNCTION__, SmrrBase , SmrrMask ));
 
-  // Extend the top bits of the mask to account for the reserved
+    LowBitPosition = LowBitSet64 (SmrrMask);
+    HighBitPosition = HighBitSet64 (SmrrMask);
+    ASSERT (LowBitPosition > 0 && HighBitPosition > 0);
 
-  Length = ((~(SmrrMask & MtrrValidAddressMask)) & MtrrValidBitsMask) + 1;
+    // For simplicity, let's not allow SMM_ADDR[51:17] != SMM_ADDR[51:17] & SMM_MASK[51:17]
+    // Since it means there are bits in SMM BASE ADDR that cannot be honored, why bother setting it...
+    ASSERT (SmrrBase == (SmrrBase & SmrrMask));
 
-  DEBUG(( DEBUG_VERBOSE, "%a Calculated length: 0x%016lx\n", __FUNCTION__, Length ));
+    // Base: | 0 0 1 0 1 1 0 1 1 1 1 0 0 0 0 0 |
+    // Mask: | 0 1 1 0 1 1 0 1 1 1 1 1 0 0 0 0 |
+    // HiBitPos--^                   ^--LoBitPos
+    // Addr: | 0 0 1 ? 1 1 ? 1 1 1 1 0 x x x x |
+    // Ranges:       ^     ^          | Length |
 
-  // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
-  AsciiSPrint( TempString, MAX_STRING_SIZE,
-               "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-               16,
-               (SmrrBase & MtrrValidAddressMask),
-               0,
-               EFI_SIZE_TO_PAGES( Length ),
-               0 );
-  AppendToMemoryInfoDatabase( TempString );
+    // So the length for each TSEG range will be (1 << LowBitPosition) - 1
+    Length = ((UINT64)1 << LowBitPosition);
+    DEBUG(( DEBUG_INFO, "%a Calculated length: 0x%016lx\n", __FUNCTION__, Length ));
+
+    // The number of ranges will be 2 ^ (number of 0 bits in the valid region)
+    NumberOfTseg = 1;
+    for (BitIndex = LowBitPosition + 1; BitIndex <= (UINTN)HighBitPosition; BitIndex ++) {
+      if ((((UINT64)BIT0<<BitIndex) & SmrrMask) == 0) {
+        NumberOfTseg <<= 1;
+      }
+    }
+
+    TempBuffer = AllocatePool (NumberOfTseg * sizeof (EFI_PHYSICAL_ADDRESS));
+    ASSERT (TempBuffer != NULL);
+
+    RecordIndex = 0;
+    TempBuffer[RecordIndex] = SmrrBase;
+    // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
+    AsciiSPrint( TempString, MAX_STRING_SIZE,
+                "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+                16,
+                TempBuffer[RecordIndex++],
+                0,
+                EFI_SIZE_TO_PAGES( Length ),
+                0 );
+    AppendToMemoryInfoDatabase( TempString );
+
+    for (BitIndex = LowBitPosition + 1; BitIndex <= (UINTN)HighBitPosition; BitIndex ++) {
+      if ((((UINT64)BIT0<<BitIndex) & SmrrMask) == 0) {
+        // Mask is 0 here, basically memory being 0 or 1 can both fit the equations above
+        for (Index = 0; Index < RecordIndex; Index ++) {
+          // Double the content here
+          TempBuffer[Index + RecordIndex] = (TempBuffer[Index] | ((UINT64)BIT0<<BitIndex));
+
+          // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
+          AsciiSPrint( TempString, MAX_STRING_SIZE,
+                      "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+                      16,
+                      TempBuffer[Index + RecordIndex],
+                      0,
+                      EFI_SIZE_TO_PAGES( Length ),
+                      0 );
+          AppendToMemoryInfoDatabase( TempString );
+        }
+        RecordIndex <<= 1;
+      }
+    }
+
+    if (TempBuffer != NULL) {
+      FreePool (TempBuffer);
+    }
+  }
 
   return EFI_SUCCESS;
 }

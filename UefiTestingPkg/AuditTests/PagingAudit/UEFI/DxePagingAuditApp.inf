@@ -41,6 +41,7 @@
   PeCoffGetEntryPointLib
   UefiApplicationEntryPoint
   ShellLib
+  UefiCpuLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
