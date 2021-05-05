@@ -425,12 +425,14 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
 {
   EFI_STATUS Status;
   DFCI_PERM_INTERNAL_PROVISONED_VAR *Var = NULL;
-  UINTN VarSize = 0;
-  UINTN NumEntries = 0;
-  EFI_TIME t;
-  UINTN                           TotalIdSize;
-  DFCI_PERM_INTERNAL_TABLE_ENTRY *PermEntry;
-  CHAR8                          *PermPtr;
+  UINTN                             VarSize = 0;
+  UINTN                             NumEntries = 0;
+  EFI_TIME                          t;
+  UINTN                             TotalIdSize;
+  DFCI_PERM_INTERNAL_TABLE_ENTRY    *PermEntry;
+  CHAR8                             *PermPtr;
+  DFCI_PERM_INTERNAL_PROVISONED_VAR *OldVar = NULL;
+  UINTN                              OldVarSize;
 
   if (Store == NULL)
   {
@@ -442,6 +444,7 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
     DEBUG((DEBUG_INFO, "%a - Not Modified.  No action needed.\n", __FUNCTION__));
     return EFI_SUCCESS;
   }
+
   NumEntries = GetNumberOfPermissionEntires(Store, &TotalIdSize);
 
   //Figure out our size
@@ -491,6 +494,21 @@ SaveToFlash(IN DFCI_PERMISSION_STORE *Store)
     DEBUG((DEBUG_ERROR, "%a - Failed to get time %r\n", __FUNCTION__, Status));
     //Leave time zeroed by allocate zero pool
   }
+
+  //
+  // Check if there are any changes to _SPP other than the date
+  //
+  Status = GetVariable2 (VAR_NAME, &gDfciInternalVariableGuid, (VOID **) &OldVar, &OldVarSize);
+  if (!EFI_ERROR (Status) &&
+    OldVarSize == VarSize) {
+      ZeroMem (&OldVar->SavedOn, sizeof(OldVar->SavedOn));
+      ZeroMem (&Var->SavedOn, sizeof(Var->SavedOn));
+      if (0 == CompareMem (Var, OldVar, OldVarSize)) {
+        DEBUG((DEBUG_INFO, "%a - Save not necessary.\n", __FUNCTION__));
+        goto EXIT;
+      }
+  }
+
   CopyMem(&(Var->SavedOn), &t, sizeof(Var->SavedOn));
 
   Status = gRT->SetVariable(VAR_NAME, &gDfciInternalVariableGuid, DFCI_INTERNAL_VAR_ATTRIBUTES, VarSize, Var);
@@ -509,6 +527,11 @@ EXIT:
   if (Var != NULL)
   {
     FreePool(Var);
+  }
+
+  if (OldVar != NULL)
+  {
+    FreePool(OldVar);
   }
   return Status;
 }
