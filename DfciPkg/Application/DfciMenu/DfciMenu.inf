@@ -94,7 +94,6 @@
   gEfiSimpleFileSystemProtocolGuid
   gEfiTlsConfigurationProtocolGuid
   gEfiUsbIoProtocolGuid
-  gMsOSKProtocolGuid
 
 [FeaturePcd]
 
