@@ -17,7 +17,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 //Helper functions
- 
+
 /**
 Creates a new XmlNode list following the List
 format.
@@ -73,7 +73,7 @@ GetNameGuidMembersFromNode(
   EFI_STATUS Status;
   LIST_ENTRY *Link = NULL;
   UINTN i, Length;
-  
+
   if (Node == NULL)
   {
     DEBUG((DEBUG_ERROR, "%a - Node is NULL\n", __FUNCTION__));
@@ -107,8 +107,8 @@ GetNameGuidMembersFromNode(
   {
     XmlAttribute* CurrentAttribute = (XmlAttribute*)Link;
     //
-    //TODO:  this code should change to do string compare on attribute name.  
-    //Assuming order is not safe. 
+    //TODO:  this code should change to do string compare on attribute name.
+    //Assuming order is not safe.
     //
     switch (i)
     {
@@ -177,7 +177,7 @@ New_VariableNodeInList(
   XmlNode* NewVarNode = NULL;
   XmlNode* TempNode = NULL;
   CHAR8     *AsciiString = NULL;
-  EFI_STATUS Status; 
+  EFI_STATUS Status;
   UINTN     i;
 
   AsciiString = AllocatePages(EFI_SIZE_TO_PAGES(MAX_STRING_LENGTH));  //allocate 64kb
@@ -207,7 +207,7 @@ New_VariableNodeInList(
     return NULL;
   }
 
-  //RootNode is good. 
+  //RootNode is good.
 
   //Create the var node with no parent
   Status = AddNode(NULL, VARIABLE_ENTRY_ELEMENT_NAME, NULL, &NewVarNode);
@@ -241,9 +241,9 @@ New_VariableNodeInList(
   AsciiString[0] = '0';
   AsciiString[1] = 'x';
   AsciiString[2] = '\0';
-  AsciiValueToString(AsciiString + 2, (RADIX_HEX), (INT64)Attributes, 30);
+  AsciiValueToStringS(AsciiString + 2, MAX_STRING_LENGTH - 2, (RADIX_HEX), (INT64)Attributes, 30);
 
-  if ((Attributes & EFI_VARIABLE_NON_VOLATILE) == EFI_VARIABLE_NON_VOLATILE) 
+  if ((Attributes & EFI_VARIABLE_NON_VOLATILE) == EFI_VARIABLE_NON_VOLATILE)
   {
     AsciiStrCatS(AsciiString, MAX_STRING_LENGTH, " NV");
     Attributes ^= EFI_VARIABLE_NON_VOLATILE;
@@ -255,30 +255,30 @@ New_VariableNodeInList(
     Attributes ^= EFI_VARIABLE_BOOTSERVICE_ACCESS;
   }
 
-  if ((Attributes & EFI_VARIABLE_RUNTIME_ACCESS) == EFI_VARIABLE_RUNTIME_ACCESS) 
+  if ((Attributes & EFI_VARIABLE_RUNTIME_ACCESS) == EFI_VARIABLE_RUNTIME_ACCESS)
   {
     AsciiStrCatS(AsciiString, MAX_STRING_LENGTH, " RT");
     Attributes ^= EFI_VARIABLE_RUNTIME_ACCESS;
   }
 
-  if ((Attributes & EFI_VARIABLE_HARDWARE_ERROR_RECORD) == EFI_VARIABLE_HARDWARE_ERROR_RECORD) 
+  if ((Attributes & EFI_VARIABLE_HARDWARE_ERROR_RECORD) == EFI_VARIABLE_HARDWARE_ERROR_RECORD)
   {
     AsciiStrCatS(AsciiString, MAX_STRING_LENGTH, " HW-Error");
     Attributes ^= EFI_VARIABLE_HARDWARE_ERROR_RECORD;
   }
 
-  if ((Attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) == EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) 
+  if ((Attributes & EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS) == EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS)
   {
     AsciiStrCatS(AsciiString, MAX_STRING_LENGTH, " Auth-WA");
     Attributes ^= EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS;
   }
-  
+
   if ((Attributes & EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS) == EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS)
   {
     AsciiStrCatS(AsciiString, MAX_STRING_LENGTH, " Auth-TIME-WA");
     Attributes ^= EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS;
   }
-  
+
   if ((Attributes & EFI_VARIABLE_APPEND_WRITE) == EFI_VARIABLE_APPEND_WRITE)
   {
 	  AsciiStrCatS(AsciiString, MAX_STRING_LENGTH, " APPEND-W");
@@ -299,7 +299,7 @@ New_VariableNodeInList(
 
   //Create the size element
   *AsciiString = '\0';
-  AsciiValueToString(AsciiString, 0, (INT64)DataSize, 30);
+  AsciiValueToStringS(AsciiString, MAX_STRING_LENGTH, 0, (INT64)DataSize, 30);
   Status = AddNode(NewVarNode, VAR_SIZE_ELEMENT_NAME, AsciiString, &TempNode);
   if (EFI_ERROR(Status))
   {
@@ -313,7 +313,7 @@ New_VariableNodeInList(
     //convert the data into hex bytes
     for (i = 0; i < DataSize; i++)
     {
-      AsciiValueToString((AsciiString + (i * 2)), (RADIX_HEX | PREFIX_ZERO), (INT64)Data[i], 2);
+      AsciiValueToStringS((AsciiString + (i * 2)), MAX_STRING_LENGTH - (i * 2), (RADIX_HEX | PREFIX_ZERO), (INT64)Data[i], 2);
     }
     Status = AddNode(NewVarNode, VAR_DATA_ELEMENT_NAME, AsciiString, &TempNode);
   }
@@ -323,7 +323,7 @@ New_VariableNodeInList(
     Status = AddNode(NewVarNode, VAR_DATA_ELEMENT_NAME, DATA_TO_BIG, &TempNode);
   }
 
-  
+
   if (EFI_ERROR(Status))
   {
     DEBUG((DEBUG_ERROR, "%a - AddNode for Data Failed.  Status %r\n", __FUNCTION__, Status));

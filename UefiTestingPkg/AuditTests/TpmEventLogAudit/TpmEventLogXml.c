@@ -1,4 +1,4 @@
-/** @file 
+/** @file
 Audit test code to collect tpm event log for offline processing or validation
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -16,8 +16,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 //Helper functions
- 
- 
+
+
 /**
 Creates a new XmlNode list following the List
 format.
@@ -85,13 +85,15 @@ New_NodeInList(
   XmlNode*                  TempNode = NULL;
   XmlNode*                  DigestNode = NULL;
   CHAR8                     *AsciiString = NULL;
-  EFI_STATUS                Status; 
+  EFI_STATUS                Status;
   UINTN                     i;
   UINTN                     DigestIndex;
   TPMI_ALG_HASH             HashAlgo;
   UINTN                     DigestSize;
   UINT8                     *DigestBuffer;
+  UINT32                    BufferSize;
 
+  BufferSize = NUM_OF_PAGES * SIZE_4KB;
   AsciiString = AllocatePages(NUM_OF_PAGES);  //allocate 64kb
   if (AsciiString == NULL)
   {
@@ -106,22 +108,22 @@ New_NodeInList(
     return NULL;
   }
 
-  if (RootNode->XmlDeclaration.Declaration == NULL) 
+  if (RootNode->XmlDeclaration.Declaration == NULL)
   {
     DEBUG((DEBUG_ERROR, "%a - RootNode is not the root node\n", __FUNCTION__));
     ASSERT(RootNode->XmlDeclaration.Declaration != NULL);
     return NULL;
   }
 
-  if (AsciiStrnCmp(RootNode->Name, LIST_ELEMENT_NAME, sizeof(LIST_ELEMENT_NAME)) != 0) 
+  if (AsciiStrnCmp(RootNode->Name, LIST_ELEMENT_NAME, sizeof(LIST_ELEMENT_NAME)) != 0)
   {
     DEBUG((DEBUG_ERROR, "%a - RootNode is not Event List\n", __FUNCTION__));
     return NULL;
   }
 
-  //RootNode is good. 
+  //RootNode is good.
 
-  if (DigestCount > 0) 
+  if (DigestCount > 0)
   {
   //Create the event node with no parent
   Status = AddNode(NULL, EVENT_ENTRY_ELEMENT_NAME, NULL, &NewEventNode);
@@ -140,7 +142,7 @@ New_NodeInList(
 
   //Create the PcrIndex element
   *AsciiString = '\0';
-  AsciiValueToString(AsciiString, 0, (INT64)PcrIndex, 30); 
+  AsciiValueToStringS(AsciiString, BufferSize, 0, (INT64)PcrIndex, 30);
   Status = AddNode(NewEventNode, EVENT_PCR_ELEMENT_NAME, AsciiString, &TempNode);
   if (EFI_ERROR(Status))
   {
@@ -150,7 +152,7 @@ New_NodeInList(
 
   //Create the EventType element
   *AsciiString = '\0';
-  AsciiValueToString(AsciiString, 0, (INT64)EventType, 30); 
+  AsciiValueToStringS(AsciiString, BufferSize, 0, (INT64)EventType, 30);
   Status = AddNode(NewEventNode, EVENT_TYPE_ELEMENT_NAME, AsciiString, &TempNode);
   if (EFI_ERROR(Status))
   {
@@ -160,7 +162,7 @@ New_NodeInList(
 
   //Create the EventSize element
   *AsciiString = '\0';
-  AsciiValueToString(AsciiString, 0, (INT64)EventSize, 30); 
+  AsciiValueToStringS(AsciiString, BufferSize, 0, (INT64)EventSize, 30);
   Status = AddNode(NewEventNode, EVENT_SIZE_ELEMENT_NAME, AsciiString, &TempNode);
   if (EFI_ERROR(Status))
   {
@@ -178,9 +180,9 @@ New_NodeInList(
 
   for (i = 0; i < EventSize; i++)
   {
-     AsciiValueToString((AsciiString + (i * 2)), (RADIX_HEX | PREFIX_ZERO), (INT64)EventBuffer[i], 2); 
+     AsciiValueToStringS((AsciiString + (i * 2)), BufferSize - (i * 2), (RADIX_HEX | PREFIX_ZERO), (INT64)EventBuffer[i], 2);
   }
-    
+
   Status = AddNode(NewEventNode, EVENT_DATA_ELEMENT_NAME, AsciiString, &TempNode);
   if (EFI_ERROR(Status))
   {
@@ -192,7 +194,7 @@ New_NodeInList(
   {
     //Create the Event DigestCount element
     *AsciiString = '\0';
-    AsciiValueToString(AsciiString, 0, (INT64)DigestCount, 30); 
+    AsciiValueToStringS(AsciiString, BufferSize, 0, (INT64)DigestCount, 30);
     Status = AddNode(NewEventNode, EVENT_DIGEST_COUNT_ELEMENT_NAME, AsciiString, &TempNode);
     if (EFI_ERROR(Status))
     {
@@ -221,7 +223,7 @@ New_NodeInList(
 
       for (i = 0; i < DigestSize; i++)
       {
-         AsciiValueToString((AsciiString + (i * 2)), (RADIX_HEX | PREFIX_ZERO), (INT64)DigestBuffer[i], 2); 
+         AsciiValueToStringS((AsciiString + (i * 2)), BufferSize - (i * 2), (RADIX_HEX | PREFIX_ZERO), (INT64)DigestBuffer[i], 2);
       }
 
       Status = AddNode(DigestNode, EVENT_DIGEST_ELEMENT_NAME, AsciiString, &TempNode);
