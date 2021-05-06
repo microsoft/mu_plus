@@ -79,7 +79,6 @@
   gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
   gEfiBootManagerPolicyNetworkGuid
-  gEfiEventPreReadyToBootGuid
   gEfiTlsCaCertificateGuid
   gEfiCertX509Guid
 
@@ -95,7 +94,6 @@
   gEfiSimpleFileSystemProtocolGuid
   gEfiTlsConfigurationProtocolGuid
   gEfiUsbIoProtocolGuid
-  gMsOSKProtocolGuid
 
 [FeaturePcd]
 

@@ -1,7 +1,7 @@
 ## @file
-# DfciMenu.inf
+# DfciSARecovery.inf
 #
-# DfciMenu is an application that presents & manages the Dfci settings page.
+# Stand alone application/example for DFCI recovery
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -69,15 +69,11 @@
 
 [Guids]
   gDfciAuthProvisionVarNamespace
-  gDfciConfigCompleteEventGroupGuid
-  gDfciConfigStartEventGroupGuid
   gDfciMenuFormsetGuid
   gDfciRecoveryFormsetGuid
   gDfciPermissionManagerVarNamespace
-  gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
   gEfiBootManagerPolicyNetworkGuid
-  gEfiEventPreReadyToBootGuid
   gEfiTlsCaCertificateGuid
   gEfiCertX509Guid
 
@@ -87,21 +83,8 @@
   gDfciSettingPermissionsProtocolGuid
   gEfiBlockIoProtocolGuid
   gEfiBootManagerPolicyProtocolGuid
-  gEfiHiiConfigAccessProtocolGuid
   gEfiHttpProtocolGuid
   gEfiHttpServiceBindingProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
   gEfiTlsConfigurationProtocolGuid
   gEfiUsbIoProtocolGuid
-  gMsOSKProtocolGuid
-
-[FeaturePcd]
-
-[Pcd]
-  gDfciPkgTokenSpaceGuid.PcdSetupUiReducedFunction
-
-[Depex]
-  gEfiVariableArchProtocolGuid  AND
-  gDfciSettingAccessProtocolGuid AND
-  gDfciAuthenticationProtocolGuid AND
-  gDfciSettingPermissionsProtocolGuid
