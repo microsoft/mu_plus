@@ -77,7 +77,6 @@
   gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
   gEfiBootManagerPolicyNetworkGuid
-  gEfiEventPreReadyToBootGuid
   gEfiTlsCaCertificateGuid
   gEfiCertX509Guid
 
