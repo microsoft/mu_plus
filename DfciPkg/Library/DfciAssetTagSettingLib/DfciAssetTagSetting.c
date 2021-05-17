@@ -468,7 +468,7 @@ DfciAssetTagSettingSetDefault (
 DFCI_SETTING_PROVIDER mDfciAssetTagSettingProviderTemplate = {
     DFCI_STD_SETTING_ID_V3_ASSET_TAG,
     DFCI_SETTING_TYPE_STRING,
-    DFCI_SETTING_FLAGS_NO_PREBOOT_UI,
+    0,
     DfciAssetTagSettingSet,
     DfciAssetTagSettingGet,
     DfciAssetTagSettingGetDefault,
