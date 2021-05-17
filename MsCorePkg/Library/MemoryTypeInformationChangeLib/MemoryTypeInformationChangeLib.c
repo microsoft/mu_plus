@@ -32,7 +32,7 @@ ReportMemoryTypeInformationChange (
   // This telemetry event is logged by a lib linked to BdsDxe, thus a EFI_SOFTWARE_DXE_BS_DRIVER
   // subclass; the class EFI_SW_EC_MEMORY_TYPE_INFORMATION_CHANGE is custom for this event.
   //
-  return LogTelemetry (TRUE,
+  return LogTelemetry (FALSE,
                        NULL,
                        (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_EC_MEMORY_TYPE_INFORMATION_CHANGE),
                        NULL,
