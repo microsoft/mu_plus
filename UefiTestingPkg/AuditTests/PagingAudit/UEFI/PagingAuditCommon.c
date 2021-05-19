@@ -3,12 +3,16 @@ This DXE Driver writes page table and memory map information to SFS when trigger
 by an event.
 
 Copyright (c) Microsoft Corporation.
+Copyright (c) 2009 - 2019, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2017, AMD Incorporated. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 
 #include "PagingAuditCommon.h"
+#include <PiHob.h>
+#include <Library/HobLib.h>
 
 /**
 
@@ -30,6 +34,45 @@ EFI_FILE  *mFs_Handle;
 CHAR8     *mMemoryInfoDatabaseBuffer = NULL;
 UINTN      mMemoryInfoDatabaseSize = 0;
 UINTN      mMemoryInfoDatabaseAllocSize = 0;
+
+/**
+  Calculate the maximum physical address bits supported.
+
+  @return the maximum support physical address bits supported.
+**/
+UINT8
+CalculateMaximumSupportAddressBits (
+  VOID
+  )
+{
+  UINT32                                        RegEax;
+  UINT8                                         PhysicalAddressBits;
+  VOID                                          *Hob;
+
+  //
+  // Get physical address bits supported.
+  //
+  Hob = GetFirstHob (EFI_HOB_TYPE_CPU);
+  if (Hob != NULL) {
+    PhysicalAddressBits = ((EFI_HOB_CPU *) Hob)->SizeOfMemorySpace;
+  } else {
+    // Ref. 1: Intel Software Developer's Manual Vol.2, Chapter 3, Section "CPU-Identification".
+    // Ref. 2: AMD Software Developer's Manual Vol. 3, Appendix E.
+    // Use the 0x80000000 in EAX to determine the largest extended function this CPU supports
+    AsmCpuid (0x80000000, &RegEax, NULL, NULL, NULL);
+    if (RegEax >= 0x80000008) {
+      // If 0x80000008 is supported, query the supported physical address size with it
+      AsmCpuid (0x80000008, &RegEax, NULL, NULL, NULL);
+      PhysicalAddressBits = (UINT8) RegEax;
+    } else {
+      // Note: below assumption is only found in Intel Software Developer's Manual Vol.3A, 11.11.2.3
+      // If CPUID.80000008H is not available, software may assume that the processor supports
+      // a 36-bit physical address size
+      PhysicalAddressBits = 36;
+    }
+  }
+  return PhysicalAddressBits;
+}
 
 /**
   This helper function writes a string entry to the memory info database buffer.
@@ -299,8 +342,18 @@ MemoryMapDumpHandler (
   EFI_MEMORY_DESCRIPTOR       *EfiMemoryMapEnd;
   EFI_MEMORY_DESCRIPTOR       *EfiMemNext;
   CHAR8                       TempString[MAX_STRING_SIZE];
+  UINT8                       MaxPhysicalAddressWidth;
 
   DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
+
+  //
+  // Add remaining misc data to the database.
+  //
+  MaxPhysicalAddressWidth = CalculateMaximumSupportAddressBits ();
+  AsciiSPrint( &TempString[0], MAX_STRING_SIZE,
+               "Bitwidth,0x%02x\n",
+               MaxPhysicalAddressWidth );
+  AppendToMemoryInfoDatabase( &TempString[0] );
 
   //
   // Get the EFI memory map.

@@ -42,6 +42,7 @@
   UefiApplicationEntryPoint
   ShellLib
   UefiCpuLib
+  HobLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

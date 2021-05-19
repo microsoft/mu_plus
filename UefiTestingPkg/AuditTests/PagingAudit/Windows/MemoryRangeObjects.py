@@ -72,9 +72,10 @@ class MemoryRange(object):
         self.NumberOfEntries = 1
         self.Found = False
         self.Attribute = 0
+        self.AddressBitwidth = None
 
         # Check to see whether we're a type that we recognize.
-        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT", "GuardPage"):
+        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT", "GuardPage", "Bitwidth"):
             raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
 
         # Continue processing according to the data type.
@@ -88,6 +89,8 @@ class MemoryRange(object):
             self.PteInit(*args)
         elif self.RecordType in ("GuardPage"):
             self.GuardPageInit(*args)
+        elif self.RecordType in ("Bitwidth"):
+            self.BitwidthInit(int(args[0], 16))
 
         self.CalculateEnd()
 
@@ -161,6 +164,11 @@ class MemoryRange(object):
         self.ReadWrite = 0
         self.UserPrivilege = 1
         self.Nx = 0
+
+    def BitwidthInit(self, Bitwidth):
+        self.AddressBitwidth = Bitwidth
+        self.PhysicalStart = 0
+        self.PhysicalSize = (1 << self.AddressBitwidth)
 
     #
     # Initializes page table entries

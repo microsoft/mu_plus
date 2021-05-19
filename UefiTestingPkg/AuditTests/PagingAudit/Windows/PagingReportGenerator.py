@@ -26,7 +26,7 @@ VERSION = "0.80"
 
 class ParsingTool(object):
 
-    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type, AddressBits):
+    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type):
         self.Logger = logging.getLogger("ParsingTool")
         self.MemoryAttributesTable = []
         self.MemoryRangeInfo = []
@@ -36,7 +36,7 @@ class ParsingTool(object):
         self.PlatformName = PlatformName
         self.PlatformVersion = PlatformVersion
         self.Type = Type
-        self.AddressBits = (1 << AddressBits) - 1
+        self.AddressBits = 0
 
     def Parse(self):
         #Get Info Files
@@ -60,6 +60,21 @@ class ParsingTool(object):
         # or "memory contents" for loaded image information or IDT/GDT
         for info in InfoFileList:
             self.MemoryRangeInfo.extend(ParseInfoFile(info))
+
+        for mr in self.MemoryRangeInfo:
+            if mr.AddressBitwidth is not None:
+                if self.AddressBits == 0:
+                    self.AddressBits = (1 << mr.AddressBitwidth) - 1
+                    self.MemoryRangeInfo.remove(mr)
+                elif self.AddressBits != (1 << mr.AddressBitwidth) - 1:
+                    self.ErrorMsg.append("Bitwidth discrepancy, %d and %d.  Should not proceed with mixed bitwidth files in the same folder", self.AddressBits, (1 << mr.AddressBitwidth) - 1)
+                    logging.error("Bitwidth discrepancy, %d and %d.  Should not proceed with mixed bitwidth files in the same folder", self.AddressBits, (1 << mr.AddressBitwidth) - 1)
+                else:
+                    self.MemoryRangeInfo.remove(mr)
+
+        if self.AddressBits == 0:
+            self.ErrorMsg.append("Did not find bitwidth from memory information file. Assuming 39 here and the results may not be accurate")
+            self.AddressBits = (1 << 39) - 1
 
         for pte1g in Pte1gbFileList:
             self.PageDirectoryInfo.extend(Parse1gPages(pte1g, self.AddressBits))
@@ -191,8 +206,6 @@ def main():
     parser.add_argument('-o', "--OutputReport", dest="OutputReport", help="Path to output html report (default is report.html)", default=os.path.join(os.getcwd(), "report.html"))
     parser.add_argument('-p', "--PlatformName", dest="PlatformName", help="Name of Platform.  Will show up on report", default="Test Platform")
     parser.add_argument('-t', "--type", choices=['SMM', 'DXE'], dest="Type", help="SMM or DXE Paging Report", required=True)
-    parser.add_argument('-b', "--AddressBits", dest="AddressBits", help="Bit width of CPU address, could be found in processor datasheet or EFI_HOB_TYPE_CPU. \
-                        i.e. For a processor supports 39 bits in address bit width, please pass in '-b 39'", type=int, required=True)
     parser.add_argument("--PlatformVersion", dest="PlatformVersion", help="Version of Platform.  Will show up report", default="1.0.0")
 
     #Turn on dubug level logging
@@ -232,7 +245,7 @@ def main():
     logging.debug("Input Folder Path is: %s" % options.InputFolder)
     logging.debug("Output Report is: %s" % options.OutputReport)
 
-    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type, options.AddressBits)
+    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type)
     spt.Parse()
     return spt.OutputHtmlReport(VERSION, options.OutputReport)
 

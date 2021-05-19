@@ -41,6 +41,7 @@
   UefiLib
   CpuExceptionHandlerLib
   UefiCpuLib
+  HobLib
 
 [Protocols]
   gEfiBlockIoProtocolGuid

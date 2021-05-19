@@ -145,6 +145,16 @@ typedef union {
 #pragma pack()
 
 /**
+  Calculate the maximum support address.
+
+  @return the maximum support address.
+**/
+UINT8
+CalculateMaximumSupportAddress (
+  VOID
+  );
+
+/**
   This helper function writes a string entry to the memory info database buffer.
   If string would exceed current buffer allocation, it will realloc.
 
