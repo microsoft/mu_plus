@@ -26,53 +26,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #define MS_WHEA_EARLY_STORAGE_SIGNATURE       SIGNATURE_32('M', 'E', 'S', '1')
 
-#pragma pack(1)
-
-/**
-
- Header of early storage, reserved for area sanity check, storage full check, etc.
-
- Signature:         Needs to be MS_WHEA_EARLY_STORAGE_SIGNATURE to indicate this is valid.
- IsStorageFull:     Indicator whether this early storage is full or not, if full, a error
-                    report will be generated.
- FullPhase:         Phase of boot process when early storage is full.
-
-**/
-typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
-  UINT32                              Signature;
-  UINT32                              ActiveRange;
-  UINT8                               IsStorageFull;
-  UINT8                               FullPhase;
-  UINT16                              Checksum;
-  UINT32                              Reserved;
-} MS_WHEA_EARLY_STORAGE_HEADER;
-
-/**
-
- Minimal information reported for reported status codes under Rev 0 and fatal severity
-
- Rev:               Revision used for parser to identify supplied payload format.
- Phase:             Phase of boot process reporting module, will be filled at the backend.
- ErrorStatusValue:  Reported Status Code Value upon calling ReportStatusCode*
- AdditionalInfo1:   Critical information to be filled by caller
- AdditionalInfo2:   AdditionalInfo2 to be filled by caller, same usage as AdditionalInfo1
- PartitionID:       IHV Guid for the party reporting this error
- ModuleID:          Driver Guid that reports this error
-
-**/
-typedef struct MS_WHEA_EARLY_STORAGE_ENTRY_V0_T_DEF {
-  UINT8                               Rev;
-  UINT8                               Phase;
-  UINT16                              Reserved;
-  UINT32                              ErrorStatusValue;
-  UINT64                              AdditionalInfo1;
-  UINT64                              AdditionalInfo2;
-  EFI_GUID                            ModuleID;
-  EFI_GUID                            PartitionID;
-} MS_WHEA_EARLY_STORAGE_ENTRY_V0, MS_WHEA_EARLY_STORAGE_ENTRY_COMMON;
-
-#pragma pack()
-
 /**
 
 This routine initialized the Early Storage MS WHEA store.

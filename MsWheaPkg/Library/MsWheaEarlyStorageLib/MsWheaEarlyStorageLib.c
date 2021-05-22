@@ -13,6 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/IoLib.h>
 #include <Library/PcdLib.h>
+#include <Library/BaseLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 
 #define PCAT_RTC_LO_ADDRESS_PORT              0x70
@@ -21,6 +22,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define PCAT_RTC_HI_DATA_PORT                 0x73
 
 #define MS_WHEA_EARLY_STORAGE_OFFSET          0x40
+
+#define MS_WHEA_EARLY_STORAGE_HEADER_SIZE     (sizeof(MS_WHEA_EARLY_STORAGE_HEADER))
+#define MS_WHEA_EARLY_STORAGE_DATA_OFFSET     MS_WHEA_EARLY_STORAGE_HEADER_SIZE
 
 /**
 
@@ -285,6 +289,107 @@ MsWheaEarlyStorageClear (
   }
 
   Status = __MsWheaCMOSRawClear(Size, MS_WHEA_EARLY_STORAGE_OFFSET + Offset);
+
+Cleanup:
+  return Status;
+}
+
+/**
+
+This is a helper function that returns the maximal capacity for header excluded data.
+
+@retval Count    The maximum number of bytes that can be stored in the MS WHEA store.
+
+**/
+UINT8
+EFIAPI
+MsWheaESGetMaxDataCount (
+  VOID
+  )
+{
+  return (UINT8)((MsWheaEarlyStorageGetMaxSize() - (MS_WHEA_EARLY_STORAGE_DATA_OFFSET)) & 0xFF);
+}
+
+/**
+
+This routine finds a contiguous memory that has default value of specified size in data region
+from the MS WHEA store.
+
+@param[in]  Size                      The size of intended clear data
+@param[out] Offset                    The pointer to receive returned offset value, starting from
+                                      Early MS_WHEA_EARLY_STORAGE_DATA_OFFSET
+
+@retval EFI_SUCCESS                   Operation is successful
+@retval EFI_OUT_OF_RESOURCES          Null pointer or zero or over length request detected
+
+**/
+EFI_STATUS
+EFIAPI
+MsWheaESFindSlot (
+  IN UINT8 Size,
+  IN UINT8 *Offset
+  )
+{
+  EFI_STATUS  Status = EFI_OUT_OF_RESOURCES;
+  MS_WHEA_EARLY_STORAGE_HEADER Header;
+
+  MsWheaEarlyStorageRead(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
+
+  if (Header.ActiveRange + Size <= MsWheaESGetMaxDataCount()) {
+    *Offset = (UINT8) Header.ActiveRange;
+    Status = EFI_SUCCESS;
+  }
+  return Status;
+}
+
+/**
+
+This routine checks the checksum of early storage region: starting from the signature of header to
+the last byte of active range (excluding checksum field).
+
+**/
+EFI_STATUS
+EFIAPI
+MsWheaESCalculateChecksum16 (
+  MS_WHEA_EARLY_STORAGE_HEADER    *Header,
+  UINT16                          *Checksum
+  )
+{
+  UINT16      Data;
+  UINT8       Index;
+  UINT16      Sum;
+  EFI_STATUS  Status;
+
+  DEBUG((DEBUG_INFO, "%a Calculate sum...\n", __FUNCTION__));
+
+  Status = EFI_SUCCESS;
+
+  if ((Checksum == NULL) || (Header == NULL)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Cleanup;
+  }
+  else if ((Header->ActiveRange > MsWheaEarlyStorageGetMaxSize()) ||
+           ((Header->ActiveRange & BIT0) != 0)) {
+    Status = EFI_BAD_BUFFER_SIZE;
+    goto Cleanup;
+  }
+
+  // Clear the checksum field for calculation then restore...
+  *Checksum = Header->Checksum;
+  Header->Checksum = 0;
+  Sum = CalculateSum16 ((UINT16*)Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE);
+  Header->Checksum = *Checksum;
+
+  for (Index = 0; Index < Header->ActiveRange; Index += sizeof(Data)) {
+    Status = MsWheaEarlyStorageRead(&Data, sizeof(Data), MS_WHEA_EARLY_STORAGE_DATA_OFFSET + Index);
+    if (EFI_ERROR(Status) != FALSE) {
+      DEBUG((DEBUG_ERROR, "%a: Reading Early Storage %d failed %r\n", __FUNCTION__, Index, Status));
+      goto Cleanup;
+    }
+    Sum = Sum + Data;
+  }
+
+  *Checksum = (UINT16) (0x10000 - Sum);
 
 Cleanup:
   return Status;

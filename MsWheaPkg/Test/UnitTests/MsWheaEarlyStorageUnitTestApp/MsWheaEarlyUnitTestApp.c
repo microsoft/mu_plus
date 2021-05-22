@@ -54,11 +54,6 @@ MsWheaESDump (
   VOID
   );
 
-UINT8
-MsWheaESGetMaxDataCount (
-  VOID
-  );
-
 VOID
 MsWheaESClearAllData (
   VOID
@@ -88,12 +83,6 @@ MsWheaESWriteHeader (
   MS_WHEA_EARLY_STORAGE_HEADER        *Header
   );
 
-EFI_STATUS
-MsWheaESChecksum16 (
-  MS_WHEA_EARLY_STORAGE_HEADER    *Header,
-  UINT16                          *Checksum
-  );
-
 VOID
 MsWheaESContentChangeChecksumHelper (
   UINT16*         Buffer,
@@ -108,12 +97,6 @@ MsWheaESHeaderChangeChecksumHelper (
 BOOLEAN
 MsWheaESRegionIsValid (
   OUT MS_WHEA_EARLY_STORAGE_HEADER *OutPutHeader OPTIONAL
-  );
-
-EFI_STATUS
-MsWheaESFindSlot (
-  IN UINT8 Size,
-  IN UINT8 *Offset
   );
 
 EFI_STATUS
@@ -241,7 +224,7 @@ MsWheaESChecksumTest (
   Header->Checksum = CalculateCheckSum16(Data, sizeof(MS_WHEA_EARLY_STORAGE_HEADER) + Header->ActiveRange);
 
   MsWheaESReadHeader(&UnitTestHeader);
-  Status = MsWheaESChecksum16 (&UnitTestHeader, &Checksum16);
+  Status = MsWheaESCalculateChecksum16 (&UnitTestHeader, &Checksum16);
 
   // ES calculated, Base lib return and stored values should be the same
   UT_ASSERT_NOT_EFI_ERROR (Status);
