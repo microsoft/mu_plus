@@ -112,10 +112,6 @@ ResetAllProvidersToDefaultsWithMatchingFlags(
 VOID
 DebugPrintProviderList();
 
-VOID
-EFIAPI
-ClearCacheOfCurrentSettings();
-
 EFI_STATUS
 EFIAPI
 PopulateCurrentSettingsIfNeeded();

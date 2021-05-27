@@ -129,8 +129,6 @@ InternalSystemSettingAccessSet (
   if ((*Flags & DFCI_SETTING_FLAGS_OUT_ALREADY_SET) == 0)
   {
     //Status was good and flags don't indicate that value was already set.
-    //need to clear the cache
-    ClearCacheOfCurrentSettings();
 
     Status = DfciSettingChangedNotification (
                Id,
@@ -438,7 +436,6 @@ SystemSettingsAccessReset (
     ASSERT_EFI_ERROR(Status);  //if cleanup fails on production system nothing we can do...keep going
   }
 
-  ClearCacheOfCurrentSettings();  //clear current settings XML
   return EFI_SUCCESS;
 }
 

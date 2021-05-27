@@ -576,9 +576,6 @@ ApplyNewSettingsPacket (
     goto CLEANUP;
   }
 
-  //clear current settings
-  ClearCacheOfCurrentSettings();
-
 CLEANUP:
   if (InternalData != NULL) {
     UpdateSettingsResult(Data, InternalData);

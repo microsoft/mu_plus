@@ -9,19 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 #include "SettingsManager.h"
 
-/**
-Clear the cached Current Settings string
-so the next boot it will be repopulated.
-**/
-VOID
-EFIAPI
-ClearCacheOfCurrentSettings()
-{
-  EFI_STATUS Status;
-  Status = gRT->SetVariable(DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, 0, 0, NULL);
-  DEBUG((DEBUG_INFO, "Delete Current Xml Settings %r\n", Status));
-}
-
 
 /**
 Create an XML string from all the current settings
@@ -237,57 +224,103 @@ EXIT:
   return Status;
 }
 
+/**
+  PopulateCurrentSettingsIfNeeded
+
+  Populate the current settings if they don't exist or if the settings have changed
+
+  @param  NONE
+
+  @retval  EFI_SUCCESS  - Settings not changed, or settings updated.
+  @retval  other        - error occurred creating the settings XML
+**/
 EFI_STATUS
 EFIAPI
-PopulateCurrentSettingsIfNeeded()
+PopulateCurrentSettingsIfNeeded (
+  VOID
+  )
 {
   EFI_STATUS Status;
-  CHAR8* Var = NULL;
-  UINTN  VarSize = 0;
-  Status = GetVariable2(DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
-    &gDfciSettingsManagerVarNamespace,
-    (VOID **) &Var,
-    &VarSize
-    );
+  UINTN      Len;
+  UINTN      OldLen;
+  CHAR8*     OldVar         = NULL;
+  CHAR8*     OldVarCompare1 = NULL;
+  CHAR8*     OldVarCompare2 = NULL;
+  UINTN      OldVarSize     = 0;
+  CHAR8*     Var            = NULL;
+  CHAR8*     VarCompare1    = NULL;
+  CHAR8*     VarCompare2    = NULL;
+  UINTN      VarSize        = 0;
 
-  if (!EFI_ERROR(Status))
-  {
-    FreePool(Var);
-    DEBUG((DEBUG_INFO, "%a - Current Settings already set\n", __FUNCTION__));
-    return EFI_SUCCESS;
-  }
 
-  //Error.  Need to repopulate after first cleaning up
-  if (Status != EFI_NOT_FOUND)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Unexpected Error getting Current Settings %r\n", __FUNCTION__, Status));
-    ClearCacheOfCurrentSettings();
-    if (Var != NULL)
-    {
-      FreePool(Var);
-      Var = NULL;
-    }
-    VarSize = 0;
+  DEBUG ((DEBUG_INFO, "%a: Entry\n", __FUNCTION__));
+
+  Status = GetVariable2 (
+             DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
+             &gDfciSettingsManagerVarNamespace,
+             (VOID **) &OldVar,
+             &OldVarSize
+             );
+
+  if (EFI_ERROR (Status)) {
+    OldVar = NULL;
+    OldVarSize = 0;
+  } else {
+    ASSERT (OldVar[OldVarSize - 1] == 0);            // Ensure null terminator is present
+    OldVarCompare1 = AsciiStrStr (OldVar, "<Date>"); // Find the start of the date
+    OldVarCompare2 = AsciiStrStr (OldVar, "/Date>"); // Find the end of the date
+    ASSERT (OldVarCompare1 != NULL);                 // Ensure end of date found
+    ASSERT (OldVarCompare2 != NULL);                 // Ensure end of date found
   }
 
   //Create string of Xml
-  Status = CreateXmlStringFromCurrentSettings(&Var, &VarSize, FALSE);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to create xml string from current %r\n", __FUNCTION__, Status));
+  Status = CreateXmlStringFromCurrentSettings (&Var, &VarSize, FALSE);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to create xml string from current %r\n", __FUNCTION__, Status));
     goto EXIT;
   }
 
+  if (OldVarCompare1 != NULL) {
+    ASSERT (Var[VarSize - 1] == 0);                    // Ensure null terminator is present
+    VarCompare1 = AsciiStrStr (Var, "<Date>");         // Find the start of the date
+    VarCompare2 = AsciiStrStr (Var, "/Date>");         // Find the end of the date
+    ASSERT (VarCompare1 != NULL);                      // Ensure end of date found
+    ASSERT (VarCompare2 != NULL);                      // Ensure end of date found
+
+    Len = VarCompare1 - Var;
+    OldLen = OldVarCompare1 - OldVar;
+
+    DEBUG ((DEBUG_INFO, "OldVar = %p, OldVarCompare1=%p, OldVarCompare2=%p, OldLen = %d\n", OldVar, OldVarCompare1, OldVarCompare2, OldLen));
+    DEBUG ((DEBUG_INFO, "   Var = %p,    VarCompare1=%p,    VarCompare2=%p,    Len = %d\n",    Var,    VarCompare1,    VarCompare2,    Len));
+
+    if ((Len == OldLen) &&
+        (0 == CompareMem (Var, OldVar, Len)) &&               // Compare Xml up to <Date
+        (0 == AsciiStrCmp (OldVarCompare2, VarCompare2))) {   // Resume compare of Xml at /Date>
+      //
+      // Compare the settings, ignoring the date.  If none of the settings have changed,
+      // skip updating the settings variables.
+      //
+      DEBUG ((DEBUG_INFO, "%a - Settings not changed, skipping write of current settings\n", __FUNCTION__));
+      goto EXIT;
+    }
+  }
+
   //Save variable
-  Status = gRT->SetVariable(DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME, &gDfciSettingsManagerVarNamespace, DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES, VarSize, Var);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to write current setting Xml variable %r\n", __FUNCTION__, Status));
+  Status = gRT->SetVariable (
+                  DFCI_SETTINGS_CURRENT_OUTPUT_VAR_NAME,
+                  &gDfciSettingsManagerVarNamespace,
+                  DFCI_SECURED_SETTINGS_VAR_ATTRIBUTES,
+                  VarSize,
+                  Var
+                  );
+
+  if (EFI_ERROR(Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to write current setting Xml variable %r\n", __FUNCTION__, Status));
     goto EXIT;
   }
+
   //Success
-  DEBUG((DEBUG_INFO, "%a - Current Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
-  Status = EFI_SUCCESS;
+  DEBUG ((DEBUG_INFO, "%a - Current Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
 
   //
   //
@@ -298,11 +331,11 @@ PopulateCurrentSettingsIfNeeded()
   FreePool (Var);
   Var = NULL;
 
-  //Create string of Xml
+  //Create V1 string of Xml
   Status = CreateXmlStringFromCurrentSettings(&Var, &VarSize, TRUE);
   if (EFI_ERROR(Status))
   {
-    DEBUG((DEBUG_ERROR, "%a - Failed to create xml string from current %r\n", __FUNCTION__, Status));
+    DEBUG((DEBUG_ERROR, "%a - V1 Failed to create xml string from current %r\n", __FUNCTION__, Status));
     goto EXIT;
   }
 
@@ -314,17 +347,21 @@ PopulateCurrentSettingsIfNeeded()
     goto EXIT;
   }
   //Success
-  DEBUG((DEBUG_INFO, "%a - Current Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
-  Status = EFI_SUCCESS;
-
-
+  DEBUG((DEBUG_INFO, "%a - V1 Current Settings Xml Var Set with data size: 0x%X\n", __FUNCTION__, VarSize));
 
 EXIT:
+  if (OldVar != NULL)
+  {
+    FreePool(OldVar);
+    OldVar = NULL;
+  }
+
   if (Var != NULL)
   {
     FreePool(Var);
     Var = NULL;
   }
+
   return Status;
 }
 
