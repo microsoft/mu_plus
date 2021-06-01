@@ -93,3 +93,60 @@ MsWheaEarlyStorageClear (
 {
   return EFI_UNSUPPORTED;
 }
+
+
+/**
+
+This routine checks the checksum of early storage region: starting from the signature of header to
+the last byte of active range (excluding checksum field).
+
+**/
+EFI_STATUS
+EFIAPI
+MsWheaESCalculateChecksum16 (
+  MS_WHEA_EARLY_STORAGE_HEADER    *Header,
+  UINT16                          *Checksum
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+
+/**
+
+This is a helper function that returns the maximal capacity for header excluded data.
+
+@retval Count    The maximum number of bytes that can be stored in the MS WHEA store.
+
+**/
+UINT8
+EFIAPI
+MsWheaESGetMaxDataCount (
+  VOID
+  )
+{
+  return (UINT8)(0);
+}
+
+/**
+
+This routine finds a contiguous memory that has default value of specified size in data region
+from the MS WHEA store.
+
+@param[in]  Size                      The size of intended clear data
+@param[out] Offset                    The pointer to receive returned offset value, starting from
+                                      Early MS_WHEA_EARLY_STORAGE_DATA_OFFSET
+
+@retval EFI_SUCCESS                   Operation is successful
+@retval EFI_OUT_OF_RESOURCES          Null pointer or zero or over length request detected
+
+**/
+EFI_STATUS
+EFIAPI
+MsWheaESFindSlot (
+  IN UINT8 Size,
+  IN UINT8 *Offset
+  )
+{
+  return EFI_UNSUPPORTED;
+}
