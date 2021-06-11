@@ -125,7 +125,7 @@ OsIndicationsSupportTest (
 
     // EFI_OS_INDICATIONS_START_OS_RECOVERY is not defined in TianoCore yet
     #define EFI_OS_INDICATIONS_START_OS_RECOVERY 0x0000000000000020
-    UT_ASSERT_EQUAL (OsIndicationsSupported & EFI_OS_INDICATIONS_START_OS_RECOVERY, 0); 0);
+    UT_ASSERT_EQUAL (OsIndicationsSupported & EFI_OS_INDICATIONS_START_OS_RECOVERY, 0);
     UT_ASSERT_EQUAL (Attributes, Btc->Attributes );
 
     Status = gRT->SetVariable ( Btc->TestName,
