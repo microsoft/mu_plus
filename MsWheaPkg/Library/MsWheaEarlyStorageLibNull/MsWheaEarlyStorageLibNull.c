@@ -37,6 +37,7 @@ This routine reads the specified data region from the MS WHEA store.
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
+@retval EFI_UNSUPPORTED               The function is unimplemented
 
 **/
 EFI_STATUS
@@ -60,6 +61,7 @@ This routine writes the specified data region from the MS WHEA store.
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
+@retval EFI_UNSUPPORTED               The function is unimplemented
 
 **/
 EFI_STATUS
@@ -82,6 +84,7 @@ This routine clears the specified data region from the MS WHEA store to PcdMsWhe
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_INVALID_PARAMETER         Null pointer or zero or over length request detected
+@retval EFI_UNSUPPORTED               The function is unimplemented
 
 **/
 EFI_STATUS
@@ -99,6 +102,14 @@ MsWheaEarlyStorageClear (
 
 This routine checks the checksum of early storage region: starting from the signature of header to
 the last byte of active range (excluding checksum field).
+
+@param[in]  Header                    Whea Early Store Header
+@param[out] Checksum                  Checksum of the Whea Early Store
+
+@retval EFI_SUCCESS                   Checksum is now valid
+@retval EFI_INVALID_PARAMETER         Checksum or Header were NULL
+@retval EFI_BAD_BUFFER_SIZE           Header active range was too large
+@retval EFI_UNSUPPORTED               The function is unimplemented
 
 **/
 EFI_STATUS
@@ -139,6 +150,7 @@ from the MS WHEA store.
 
 @retval EFI_SUCCESS                   Operation is successful
 @retval EFI_OUT_OF_RESOURCES          Null pointer or zero or over length request detected
+@retval EFI_UNSUPPORTED               The function is unimplemented
 
 **/
 EFI_STATUS
@@ -146,6 +158,34 @@ EFIAPI
 MsWheaESFindSlot (
   IN UINT8 Size,
   IN UINT8 *Offset
+  )
+{
+  return EFI_UNSUPPORTED;
+}
+
+/**
+This routine adds an MS_WHEA_EARLY_STORAGE_ENTRY_V0 record to the WHEA early store region using the supplied
+metadata. The header checksum and active range will be updated in the process.
+
+@param[in]  UINT32    ErrorStatusValue
+@param[in]  UINT64    AdditionalInfo1
+@param[in]  UINT64    AdditionalInfo2
+@param[in]  EFI_GUID  *ModuleId
+@param[in]  EFI_GUID  *PartitionId
+
+@retval     EFI_SUCCESS             The record was added
+@retval     EFI_OUT_OF_RESOURCES    The CMOS ES region is full
+@retval     EFI_UNSUPPORTED         The function is unimplemented
+
+**/
+EFI_STATUS
+EFIAPI
+MsWheaESAddRecordV0 (
+  IN  UINT32    ErrorStatusValue,
+  IN  UINT64    AdditionalInfo1,
+  IN  UINT64    AdditionalInfo2,
+  IN  EFI_GUID  *ModuleId OPTIONAL,
+  IN  EFI_GUID  *PartitionId OPTIONAL
   )
 {
   return EFI_UNSUPPORTED;

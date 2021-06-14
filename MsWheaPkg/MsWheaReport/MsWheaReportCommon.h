@@ -18,6 +18,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/MsWheaEarlyStorageLib.h>
 #include <MsWheaErrorStatus.h>
 
 /************************************ Definition Section *************************************/

@@ -14,20 +14,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 /**
 
- Accepted revision values
-
-**/
-#define MS_WHEA_REV_0                 0x00
-
-/**
-
- Indicator for early storage header to be valid
-
-**/
-#define MS_WHEA_EARLY_STORAGE_SIGNATURE       SIGNATURE_32('M', 'E', 'S', '1')
-
-/**
-
 This routine initialized the Early Storage MS WHEA store.
 
 **/
