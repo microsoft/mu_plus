@@ -25,6 +25,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Register\ArchitecturalMsr.h>
+#include <Library/ResetSystemLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
 
@@ -62,8 +63,10 @@ InterruptHandler (
   IN EFI_SYSTEM_CONTEXT   SystemContext
   )
 {
-  DEBUG((DEBUG_ERROR, "%a SystemContextX64->ExceptionData: %x - InterruptType: %x\n", __FUNCTION__, SystemContext.SystemContextX64->ExceptionData, InterruptType));
-  gRT->ResetSystem(EfiResetWarm, EFI_SUCCESS, 0, NULL);
+  // We need to avoid using runtime services to reset the system due because doing so will raise the TPL level
+  // when it is already on TPL_HIGH. HwResetSystemLib is used here instead to perform a bare-metal reset and sidestep
+  // this issue.
+  ResetWarm ();
 } // InterruptHandler()
 
 

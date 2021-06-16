@@ -54,6 +54,7 @@
   ShellLib
   UefiLib
   CpuExceptionHandlerLib
+  HwResetSystemLib
 
 [Protocols]
   gEfiSmmCommunicationProtocolGuid
