@@ -60,6 +60,10 @@ DEVICE_STATE mSupportedNotifications[] = {
   (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_1,
   (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_2,
   (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_3,
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_4,
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_5,
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_6,
+  (DEVICE_STATE)DEVICE_STATE_PLATFORM_MODE_7,
   (DEVICE_STATE)DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED,
   (DEVICE_STATE)DEVICE_STATE_SOURCE_DEBUG_ENABLED,
   (DEVICE_STATE)DEVICE_STATE_MANUFACTURING_MODE,
@@ -100,6 +104,26 @@ PrintValues(DEVICE_STATE Notifications)
   if (Notifications & DEVICE_STATE_PLATFORM_MODE_3)
   {
     DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_3\n"));
+  }
+
+  if (Notifications & DEVICE_STATE_PLATFORM_MODE_4)
+  {
+    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_4\n"));
+  }
+
+  if (Notifications & DEVICE_STATE_PLATFORM_MODE_5)
+  {
+    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_5\n"));
+  }
+
+  if (Notifications & DEVICE_STATE_PLATFORM_MODE_6)
+  {
+    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_6\n"));
+  }
+
+  if (Notifications & DEVICE_STATE_PLATFORM_MODE_7)
+  {
+    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_PLATFORM_MODE_7\n"));
   }
 
   if (Notifications & DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED)
@@ -200,7 +224,6 @@ IN  INT32  HeightInPixels
   POINT ul;
   INT32 SingleBannerHeight = ((HeightInPixels * HEIGHT_OF_SINGLE_BANNER) / 100);
 
-
   Notifications = GetDeviceState();
   PrintValues(Notifications);
 
@@ -244,6 +267,34 @@ IN  INT32  HeightInPixels
       {
         si.FillType = FILL_SOLID;
         si.FillTypeInfo.SolidFill.FillColor = COLOR_BROWN;
+      }
+      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_4)
+      {
+        si.FillType = FILL_CHECKERBOARD;
+        si.FillTypeInfo.CheckerboardFill.Color1 = COLOR_ORANGE;
+        si.FillTypeInfo.CheckerboardFill.Color2 = COLOR_BLACK;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
+      }
+      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_5)
+      {
+        si.FillType = FILL_CHECKERBOARD;
+        si.FillTypeInfo.CheckerboardFill.Color1 = COLOR_YELLOW;
+        si.FillTypeInfo.CheckerboardFill.Color2 = COLOR_BLACK;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
+      }
+      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_6)
+      {
+        si.FillType = FILL_CHECKERBOARD;
+        si.FillTypeInfo.CheckerboardFill.Color1 = COLOR_INDIGO;
+        si.FillTypeInfo.CheckerboardFill.Color2 = COLOR_BLACK;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
+      }
+      else if (*SupportedNotification & DEVICE_STATE_PLATFORM_MODE_7)
+      {
+        si.FillType = FILL_CHECKERBOARD;
+        si.FillTypeInfo.CheckerboardFill.Color1 = COLOR_BROWN;
+        si.FillTypeInfo.CheckerboardFill.Color2 = COLOR_BLACK;
+        si.FillTypeInfo.CheckerboardFill.CheckboardWidth = SingleBannerHeight/4;
       }
       else if (*SupportedNotification & DEVICE_STATE_DEVELOPMENT_BUILD_ENABLED)
       {
