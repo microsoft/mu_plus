@@ -15,10 +15,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 typedef UINT8  MEMORY_PROTECTION_VAR_TOKEN;
 
-// The definition for the flags of each memory protection setting can be found in
-// MdeModulePkg.dec with their related Pcds (PcdHeapGuardPropertyMask etc.)
-typedef UINT32 MEMORY_PROTECTION_FLAGS;
-
 #define MEM_PROT_GLOBAL_TOGGLE_SETTING ((MEMORY_PROTECTION_VAR_TOKEN) 0x0)
 
 /**
@@ -41,6 +37,19 @@ MemoryProtectionExceptionOverrideCheck (
   );
 
 /**
+  Checks if an exception was hit on a previous boot.
+
+  @retval TRUE          Checksum is valid and an exception was hit on a previous boot.
+  @retval FALSE         Checksum was false or an exception was not hit on a previous boot.
+
+**/
+BOOLEAN
+EFIAPI
+MemoryProtectionDidSystemHitException (
+  VOID
+  );
+
+/**
   Clears the memory protection setting from the platform-specific early store.
 
   @retval EFI_SUCCESS       Always return success
@@ -48,7 +57,7 @@ MemoryProtectionExceptionOverrideCheck (
 **/
 VOID
 EFIAPI
-ClearMemoryProtectionExceptionOverride (
+MemoryProtectionExceptionOverrideClear (
   VOID
   );
 

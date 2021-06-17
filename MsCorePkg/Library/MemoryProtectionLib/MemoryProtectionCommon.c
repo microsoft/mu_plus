@@ -6,6 +6,13 @@ Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+#include <Pi/PiMultiPhase.h>
+
+#include <Library/DebugLib.h>
+#include <Library/MemoryProtectionExceptionLib.h>
+#include <Library/HobLib.h>
+#include <Library/BaseMemoryLib.h>
+
 #include "MemoryProtectionCommon.h"
 
 /**

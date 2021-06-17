@@ -7,11 +7,15 @@ Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+#include <Uefi/UefiSpec.h>
+#include <Uefi/UefiBaseType.h>
+
 #include <Library/CpuExceptionHandlerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryProtectionLib.h>
+#include <Library/IoLib.h>
 
 #include "MemoryProtectionExceptionCommon.h"
 
@@ -33,13 +37,13 @@ MemoryProtectionExceptionHandlerCmos (
   IN EFI_SYSTEM_CONTEXT   SystemContext
   )
 {
-  UINT8 val = CMOS_MEM_PROT_VALID_BIT_MASK;
+  UINT16 val = CMOS_MEM_PROT_VALID_BIT | CMOS_MEM_PROT_EX_HIT_BIT;
 
   DEBUG((DEBUG_ERROR, "%a - ExceptionData: 0x%x - InterruptType: 0x%x\n", __FUNCTION__, SystemContext.SystemContextX64->ExceptionData, InterruptType));
 
   DumpCpuContext(InterruptType, SystemContext);
 
-  CmosWriteMemoryProtectionByte(val);
+  MemoryProtectionWriteCmosBytes(val);
 
   DEBUG((DEBUG_INFO, "%a - Resetting...\n", __FUNCTION__));
 

@@ -9,9 +9,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <PiPei.h>
 
 #include <Ppi/ReadOnlyVariable2.h>
+#include <Pi/PiMultiPhase.h>
 
 #include <Library/PeiServicesLib.h>
 #include <Library/PcdLib.h>
+#include <Library/DebugLib.h>
+#include <Library/HobLib.h>
+#include <Library/MemoryProtectionExceptionLib.h>
+#include <Library/BaseMemoryLib.h>
 
 #include "MemoryProtectionCommon.h"
 

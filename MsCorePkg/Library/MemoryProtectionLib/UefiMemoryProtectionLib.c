@@ -8,9 +8,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Uefi.h>
 
+#include <Pi/PiMultiPhase.h>
+
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
+#include <Library/DebugLib.h>
+#include <Library/MemoryProtectionExceptionLib.h>
+#include <Library/HobLib.h>
+#include <Library/BaseMemoryLib.h>
 
 #include "MemoryProtectionCommon.h"
 
@@ -95,7 +101,7 @@ InternalSetMemoryProtectionSetting (
 
   // Clear the exception override to ensure we use this updated setting from now on
   if(!EFI_ERROR (Status)) {
-    ClearMemoryProtectionExceptionOverride();
+    MemoryProtectionExceptionOverrideClear();
   }  
 
   return Status;

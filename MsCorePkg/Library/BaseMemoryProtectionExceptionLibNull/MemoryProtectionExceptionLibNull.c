@@ -1,6 +1,8 @@
 /**@file
 
-TODO: Write Description
+NULL implementation of library which provides access to the memory
+protection setting which may exist in the platform-specific early store
+due to a memory related exception being triggered.
 
 Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -38,9 +40,25 @@ MemoryProtectionExceptionOverrideCheck (
 **/
 VOID
 EFIAPI
-ClearMemoryProtectionExceptionOverride (
+MemoryProtectionExceptionOverrideClear (
   VOID
   )
 {
   return;
+}
+
+/**
+  Checks if an exception was hit on a previous boot.
+
+  @retval TRUE          Checksum is valid and an exception was hit on a previous boot
+  @retval FALSE         Checksum was false or an exception was not hit on a previous boot
+
+**/
+BOOLEAN
+EFIAPI
+MemoryProtectionDidSystemHitException (
+  VOID
+  )
+{
+  return FALSE;
 }

@@ -8,6 +8,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <PiDxe.h>
 
+#include <Pi/PiMultiPhase.h>
+
+#include <Library/DebugLib.h>
+#include <Library/MemoryProtectionExceptionLib.h>
+#include <Library/HobLib.h>
+#include <Library/BaseMemoryLib.h>
+
 #include "MemoryProtectionCommon.h"
 
 STATIC BOOLEAN           HaveFetchedHob = FALSE;
@@ -49,12 +56,12 @@ InternalGetMemoryProtectionSettings (
   Sets a memory protections setting. Valid MEMORY_PROTECTION_VAR_TOKEN values are
   defined MemoryProtectionExceptionLib.h.
 
-  @param VarToken   MEMORY_PROTECTION_VAR_TOKEN representing variable.
-  @param Setting    UINT32 populated with desired bitmask for memory protection setting.
+  @param[in] VarToken   MEMORY_PROTECTION_VAR_TOKEN representing variable
+  @param[in] Setting    UINT32 populated with desired bitmask for memory protection setting
 
-  @retval EFI_SUCCESS       Uefi variable has been updated.
-  @retval EFI_NOT_READY     gBS hasn't been initialized yet.
-  @retval EFI_NOT_FOUND     Could not find the variable.
+  @retval EFI_SUCCESS       Uefi variable has been updated
+  @retval EFI_NOT_READY     gBS hasn't been initialized yet
+  @retval EFI_NOT_FOUND     Could not find the variable
 
 **/
 EFI_STATUS
@@ -65,7 +72,6 @@ InternalSetMemoryProtectionSetting (
 {
   return EFI_UNSUPPORTED;
 }
-
 
 /**
   Constructor for Dxe/Smm memory protection lib
