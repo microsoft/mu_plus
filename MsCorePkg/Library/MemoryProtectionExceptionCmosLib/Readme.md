@@ -6,24 +6,32 @@ MemoryProtectionExceptionHandlerLib registers a page fault exception handler whi
 memory protection toggle handled by MemoryProtectionLib. If the toggle is already off, this library does nothing.
 
 MemoryProtectionExceptionLib implements calls to MemoryProtectionExceptionOverrideCheck() and
-ClearMemoryProtectionExceptionOverride(). MemoryProtectionExceptionOverrideCheck() returns the value held in early
-store (if it exists due to an exception) and ClearMemoryProtectionExceptionOverride() clears the early
-store.
+MemoryProtectionExceptionOverrideClear(). MemoryProtectionExceptionOverrideCheck() returns the value held in early
+store (if it exists due to an exception) and MemoryProtectionExceptionOverrideClear() clears the early
+store. MemoryProtectionDidSystemHitException() returns TRUE if an exception was hit on a previous boot.
+The validity of the data
+stored in CMOS is verified through the use of a two-byte checksum. Checks will
+first evaluate the checksum and return an EFI_ERROR if it is invalid.
 
-See MemoryProtectionLib for more information on how this library is used in conjunction with the global toggle logic.
+See the MemoryProtectionLib for more information on how this library is used in
+conjunction with the memory protection global toggle logic.
 
 ## Usage
 
-To use this library, make MemoryProtectionExceptionHandlerLib a null library for a dxe core library such as DxeMain:
+To use this library, make MemoryProtectionExceptionHandlerLib a null library for a
+library such as CpuDxe:
 
 ```C
-MdeModulePkg/Core/Dxe/DxeMain.inf {
+UefiCpuPkg\CpuDxe\CpuDxe.inf {
 <LibraryClasses>
 NULL|MsCorePkg/Library/MemoryProtectionExceptionCmosLibMemoryProtectionExceptionHandlerLib.inf
 }
 ```
 
-and MemoryProtectionExceptionLib under [LibraryClasses].
+CpuDxe is preferable because the page fault exception handler is only registered after
+gEfiCpuArchProtocolGuid has been installed.
+
+MemoryProtectionExceptionLib can be included under [LibraryClasses].
 
 ## Copyright
 
