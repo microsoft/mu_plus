@@ -3,7 +3,7 @@
 # protection test infrastructure exercise a particular test.
 #
 ##
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -42,6 +42,7 @@
   CpuExceptionHandlerLib
   UefiCpuLib
   HobLib
+  PeCoffGetEntryPointLib
 
 [Protocols]
   gEfiBlockIoProtocolGuid

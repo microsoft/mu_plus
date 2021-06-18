@@ -2,7 +2,7 @@
 This user-facing application requests that the underlying SMM memory
 protection test infrastructure exercise a particular test.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -158,7 +158,8 @@ LocateSmmCommonCommBuffer (
 
     UT_ASSERT_TRUE (Index < PiSmmCommunicationRegionTable->NumberOfEntries);
 
-    mPiSmmCommonCommBufferAddress = (VOID*)SmmCommMemRegion->PhysicalStart;
+    UT_ASSERT_TRUE (SmmCommMemRegion->PhysicalStart < MAX_UINTN);
+    mPiSmmCommonCommBufferAddress = (VOID*)(UINTN)SmmCommMemRegion->PhysicalStart;
     mPiSmmCommonCommBufferSize = BufferSize;
   }
 
@@ -685,7 +686,7 @@ CodeOutSideSmmShouldNotRun (
     UT_ASSERT_NOT_EFI_ERROR (Status);
 
     CommBuffer->Function = SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE;
-    CommBuffer->TargetAddress = (EFI_PHYSICAL_ADDRESS)&DummyFunctionForCodeSelfTest;
+    CommBuffer->TargetAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)&DummyFunctionForCodeSelfTest;
 
     // This should cause the system to reboot.
     Status = SmmMemoryProtectionsDxeToSmmCommunicate ();
@@ -736,7 +737,7 @@ CodeInCommBufferShouldNotRun (
 
     CommBuffer->Function = SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE;
     CommBuffer->TargetValue = 0xC3; //ret instruction.
-    CommBuffer->TargetAddress = (EFI_PHYSICAL_ADDRESS)&CommBuffer->TargetValue;
+    CommBuffer->TargetAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)&CommBuffer->TargetValue;
 
     // This should cause the system to reboot.
     Status = SmmMemoryProtectionsDxeToSmmCommunicate ();

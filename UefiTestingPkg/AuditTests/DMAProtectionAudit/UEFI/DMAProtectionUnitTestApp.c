@@ -5,7 +5,7 @@ This is an EFI Shell application meant to check
 2) Check the Global Status Registers of the DRHDs to verify VTd is enabled
 3) Check IVMD memory ranges are set as reserved
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -36,7 +36,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define GET_MEMORY_MAP_RETRIES  4
 
 extern EFI_GUID                          gDMAUnitTestVariableGuid;
-EFI_HANDLE                               gImageHandle;
+EFI_HANDLE                               gTestImageHandle;
 
 ///================================================================================================
 ///================================================================================================
@@ -226,9 +226,9 @@ CheckBMETeardown (
         //
         DEBUG((DEBUG_INFO, "Calling ExitBootServices - Retry = %d\n", Retry));
         Status = gBS->ExitBootServices (
-                        gImageHandle,
+                        gTestImageHandle,
                         EfiMapKey
-                      );
+                        );
 
     } while (EFI_ERROR(Status) && Retry++ < GET_MEMORY_MAP_RETRIES);
 
@@ -389,7 +389,7 @@ DMAProtectionUnitTestApp (
   UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
   BME_TEST_CONTEXT            *BMEContext;
 
-  gImageHandle = ImageHandle;
+  gTestImageHandle = ImageHandle;
 
   //
   // Setup Unit Test Framework

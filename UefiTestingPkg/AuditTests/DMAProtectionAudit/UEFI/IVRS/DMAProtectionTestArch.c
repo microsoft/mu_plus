@@ -160,7 +160,8 @@ CheckIOMMUEnabled (
   for(iterator = 0; iterator < mIvhdUnitNumber; iterator++)
   {
     UT_LOG_INFO("Global Status Register %X\n", mIvhdUnitInformation[iterator].IOMMUBaseAddress);
-    IommuEn = (MmioRead64(mIvhdUnitInformation[iterator].IOMMUBaseAddress + IOMMU_CONTROL_REG)) & BIT0;
+    UT_ASSERT_TRUE (mIvhdUnitInformation[iterator].IOMMUBaseAddress < MAX_UINTN);
+    IommuEn = (MmioRead64((UINTN)mIvhdUnitInformation[iterator].IOMMUBaseAddress + IOMMU_CONTROL_REG)) & BIT0;
     UT_ASSERT_EQUAL(IommuEn, 1);
   }
 

@@ -3,7 +3,7 @@
 # by an event.
 #
 ##
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
@@ -41,6 +41,7 @@
   UefiLib
   PeCoffGetEntryPointLib
   UefiCpuLib
+  HobLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

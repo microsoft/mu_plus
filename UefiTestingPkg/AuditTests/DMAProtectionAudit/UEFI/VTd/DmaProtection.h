@@ -5,12 +5,15 @@ https://github.com/tianocore/edk2-platforms/tree/master/Silicon/Intel/IntelSilic
 for purpose of easy DMAR/BME parsing
 
   Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
 #ifndef _DMAR_PROTECTION_H_
 #define _DMAR_PROTECTION_H_
+
+#include <Uefi.h>
 
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>

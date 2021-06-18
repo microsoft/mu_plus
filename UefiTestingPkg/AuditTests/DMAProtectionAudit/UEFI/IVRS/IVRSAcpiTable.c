@@ -5,7 +5,7 @@ https://github.com/tianocore/edk2-platforms/tree/master/Silicon/Intel/IntelSilic
 for purpose of easy IVRS/BME parsing
 
   Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
-  Copyright (C) Microsoft Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -120,9 +120,13 @@ GetIvrsAcpiTableIvmd (
   )
 {
   IVMD_Header                    *IvrsHeader;
+  IVMDListNode                   *NewNode;
+  IVMDListNode                   *Head;
+  IVMDListNode                   *Tail;
 
-  IVMDListNode*                  Head = NULL;
-  IVMDListNode*                  Tail = Head;
+  NewNode = NULL;
+  Head    = NULL;
+  Tail    = Head;
 
   IvrsHeader = (IVMD_Header *)((UINTN)(mAcpiIVRSTable + 1));
   while ((UINTN)IvrsHeader < (UINTN)mAcpiIVRSTable + mAcpiIVRSTable->Header.Length) {
@@ -131,17 +135,17 @@ GetIvrsAcpiTableIvmd (
     case IVMD_TYPE_21H:
     case IVMD_TYPE_22H:
       //If IVMD found add to end of linked list
-      IVMDListNode* newNode = (IVMDListNode*)AllocateZeroPool(sizeof(IVMDListNode));
-      newNode->IVMD = (IVMD_Header *)IvrsHeader;
-      newNode->Next = NULL;
+      NewNode = (IVMDListNode*)AllocateZeroPool(sizeof(IVMDListNode));
+      NewNode->IVMD = (IVMD_Header *)IvrsHeader;
+      NewNode->Next = NULL;
 
       if (Head == NULL) {
-        Head = newNode;
-        Tail = newNode;
+        Head = NewNode;
+        Tail = NewNode;
       }
       else {
-        Tail->Next = newNode;
-        Tail = newNode;
+        Tail->Next = NewNode;
+        Tail = NewNode;
       }
       break;
     default:
@@ -245,5 +249,5 @@ GetIvrsAcpiTable (
   VOID
   )
 {
-  return GetAcpiTable (IVRS_HEADER_SIGNATURE, &mAcpiIVRSTable);
+  return GetAcpiTable (IVRS_HEADER_SIGNATURE, (VOID**)&mAcpiIVRSTable);
 }

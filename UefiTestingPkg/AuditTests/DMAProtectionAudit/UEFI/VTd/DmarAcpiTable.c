@@ -5,6 +5,7 @@ https://github.com/tianocore/edk2-platforms/tree/master/Silicon/Intel/IntelSilic
 for purpose of easy DMAR/BME parsing
 
   Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -181,27 +182,31 @@ GetDmarAcpiTableRmrr (
   VOID
   )
 {
-  EFI_ACPI_DMAR_STRUCTURE_HEADER                    *DmarHeader;
+  EFI_ACPI_DMAR_STRUCTURE_HEADER        *DmarHeader;
+  RMRRListNode                          *Head;
+  RMRRListNode                          *Tail;
+  RMRRListNode                          *NewNode;
 
-  RMRRListNode*                                     Head = NULL;
-  RMRRListNode*                                     Tail = Head;
+  NewNode   = NULL;
+  Head      = NULL;
+  Tail      = Head;
 
   DmarHeader = (EFI_ACPI_DMAR_STRUCTURE_HEADER *)((UINTN)(mAcpiDmarTable + 1));
   while ((UINTN)DmarHeader < (UINTN)mAcpiDmarTable + mAcpiDmarTable->Header.Length) {
     switch (DmarHeader->Type) {
     case EFI_ACPI_DMAR_TYPE_RMRR:
       //If RMRR found add to end of linked list
-      RMRRListNode* newNode = (RMRRListNode*)AllocateZeroPool(sizeof(RMRRListNode));
-      newNode->RMRR = (EFI_ACPI_DMAR_RMRR_HEADER *)DmarHeader;
-      newNode->Next = NULL;
+      NewNode = (RMRRListNode*)AllocateZeroPool(sizeof(RMRRListNode));
+      NewNode->RMRR = (EFI_ACPI_DMAR_RMRR_HEADER *)DmarHeader;
+      NewNode->Next = NULL;
       
       if (Head == NULL) {
-        Head = newNode;
-        Tail = newNode;
+        Head = NewNode;
+        Tail = NewNode;
       }
       else {
-        Tail->Next = newNode;
-        Tail = newNode;
+        Tail->Next = NewNode;
+        Tail = NewNode;
       }
       break;
     default:
@@ -306,5 +311,5 @@ GetDmarAcpiTable (
   VOID
   )
 {
-  return GetAcpiTable (EFI_ACPI_4_0_DMA_REMAPPING_TABLE_SIGNATURE, &mAcpiDmarTable);
+  return GetAcpiTable (EFI_ACPI_4_0_DMA_REMAPPING_TABLE_SIGNATURE, (VOID**)&mAcpiDmarTable);
 }

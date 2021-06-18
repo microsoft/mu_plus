@@ -1,6 +1,6 @@
 # @file
 #
-# Copyright (c) Microsoft Corporation.
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 import os
@@ -49,18 +49,18 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         These should be edk2 workspace relative paths '''
 
         return (
-                "AdvLoggerPkg",
-                "DfciPkg",
-                "MfciPkg",
-                "HidPkg",
-                "MsCorePkg",
-                "MsGraphicsPkg",
-                "MsWheaPkg",
-                "PcBdsPkg",
-                "UefiTestingPkg",
-                "XmlSupportPkg",
-                "ZeroTouchPkg"
-                )
+            "AdvLoggerPkg",
+            "DfciPkg",
+            "MfciPkg",
+            "HidPkg",
+            "MsCorePkg",
+            "MsGraphicsPkg",
+            "MsWheaPkg",
+            "PcBdsPkg",
+            "UefiTestingPkg",
+            "XmlSupportPkg",
+            "ZeroTouchPkg"
+        )
 
     def GetArchitecturesSupported(self):
         ''' return iterable of edk2 architectures supported by this build '''
@@ -165,7 +165,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         ''' return iterable containing RequiredSubmodule objects.
         If no RequiredSubmodules return an empty iterable
         '''
-        rs=[]
+        rs = []
         return rs
 
     def GetName(self):
@@ -196,12 +196,16 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
                 "Branch": "release/202102"
             },
             {
+                "Path": "Silicon/Intel/MU_TIANO",
+                "Url": "https://github.com/Microsoft/mu_silicon_intel_tiano.git",
+                "Branch": "release/202102"
+            },
+            {
                 "Path": "Common/MU_TIANO",
                 "Url": "https://github.com/Microsoft/mu_tiano_plus.git",
                 "Branch": "release/202102"
             }
         ]
-
 
     def GetPackagesPath(self):
         ''' Return a list of workspace relative paths that should be mapped as edk2 PackagesPath '''

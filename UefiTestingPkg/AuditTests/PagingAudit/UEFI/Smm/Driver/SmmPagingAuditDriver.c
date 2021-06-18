@@ -2,7 +2,7 @@
 This is the SMM portion of the SmmPagingAuditApp driver.
 It copies valid entries from the page tables into the communication buffer.
 
-Copyright (c) Microsoft Corporation.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -106,8 +106,8 @@ SmmLoadedImageTableDump (
         continue;
       }
 
-      CommBuffer->SmmImage[DestinationIndex].ImageBase = (UINT64)LoadedImage->ImageBase;
-      CommBuffer->SmmImage[DestinationIndex].ImageSize = (UINT64)LoadedImage->ImageSize;
+      CommBuffer->SmmImage[DestinationIndex].ImageBase = (UINT64)(UINTN)LoadedImage->ImageBase;
+      CommBuffer->SmmImage[DestinationIndex].ImageSize = (UINT64)(UINTN)LoadedImage->ImageSize;
 
       ImageName = PeCoffLoaderGetPdbPointer( LoadedImage->ImageBase );
       AsciiStrnCpyS( &CommBuffer->SmmImage[DestinationIndex].ImageName[0],
@@ -242,19 +242,19 @@ GetFlatPageTableData (
   // If we have room for more PDE Entries, add one.
   MyPdeCount++;
   if (MyPdeCount <= *PdeCount) {
-    PdeEntries[MyPdeCount-1] = (UINT64)Pml4;
+    PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pml4;
   }
 
   for (Index4 = 0x0; Index4 < 0x200; Index4 ++) {
     if (!Pml4[Index4].Bits.Present) {
       continue;
     }
-    Pte1G = (PAGE_TABLE_1G_ENTRY *) (Pml4[Index4].Bits.PageTableBaseAddress << 12);
+    Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
     // Increase the count.
     // If we have room for more PDE Entries, add one.
     MyPdeCount++;
     if (MyPdeCount <= *PdeCount) {
-      PdeEntries[MyPdeCount-1] = (UINT64)Pte1G;
+      PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte1G;
     }
     for (Index3 = 0x0;  Index3 < 0x200; Index3 ++ ) {
       if (!Pte1G[Index3].Bits.Present) {
@@ -271,12 +271,12 @@ GetFlatPageTableData (
         // get all of their address bits.
         //
         Work = (PAGE_MAP_AND_DIRECTORY_POINTER *) Pte1G;
-        Pte2M = (PAGE_TABLE_ENTRY *) (Work[Index3].Bits.PageTableBaseAddress << 12);
+        Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
         // Increase the count.
         // If we have room for more PDE Entries, add one.
         MyPdeCount ++;
         if (MyPdeCount <= *PdeCount) {
-          PdeEntries[MyPdeCount-1] = (UINT64)Pte2M;
+          PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte2M;
         }
         for (Index2 = 0x0; Index2 < 0x200; Index2 ++ ) {
           if (!Pte2M[Index2].Bits.Present) {
@@ -285,12 +285,12 @@ GetFlatPageTableData (
           }
           if (!(Pte2M[Index2].Bits.MustBe1)) {
             Work = (PAGE_MAP_AND_DIRECTORY_POINTER *) Pte2M;
-            Pte4K = (PAGE_TABLE_4K_ENTRY *) (Work[Index2].Bits.PageTableBaseAddress << 12);
+            Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
             // Increase the count.
             // If we have room for more PDE Entries, add one.
             MyPdeCount ++;
             if (MyPdeCount <= *PdeCount) {
-              PdeEntries[MyPdeCount-1] = (UINT64)Pte4K;
+              PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte4K;
             }
             for (Index1 = 0x0; Index1 < 0x200; Index1 ++ ) {
               if (!Pte4K[Index1].Bits.Present) {

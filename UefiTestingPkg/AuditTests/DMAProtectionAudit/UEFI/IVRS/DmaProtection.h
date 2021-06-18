@@ -5,7 +5,7 @@ https://github.com/tianocore/edk2-platforms/tree/master/Silicon/Intel/IntelSilic
 for purpose of easy IVRS/BME parsing
 
   Copyright (c) 2017 - 2018, Intel Corporation. All rights reserved.<BR>
-  Copyright (C) Microsoft Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -13,7 +13,7 @@ for purpose of easy IVRS/BME parsing
 #ifndef _DMA_PROTECTION_H_
 #define _DMA_PROTECTION_H_
 
-#include <uefi.h>
+#include <Uefi.h>
 
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>

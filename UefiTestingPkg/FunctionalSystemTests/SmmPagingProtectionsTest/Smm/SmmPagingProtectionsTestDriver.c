@@ -3,7 +3,7 @@ This is the SMM portion of the SmmPagingProtectionsTest driver.
 This driver will be signalled by the DXE portion and will perform requested operations
 to probe the extent of the SMM memory protections (like NX).
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -145,8 +145,8 @@ SmmMemoryProtectionsSelfTestCode (
   // Assign UINTN pointer to function address.
   // This will throw a warning with the Microsoft compiler, so we have to suppress it.
   // Behavior is unknown in other environments.
-  #pragma warning(suppress:4054)
-  CodeRegionToWriteTo = (VOID*)DummyFunctionForCodeSelfTest;
+
+  CodeRegionToWriteTo = (VOID*)(UINTN)DummyFunctionForCodeSelfTest;
 
   // Attempt to write to function address.
   DEBUG ((DEBUG_INFO, "[%a] - Attempting to write to 0x%16lX...\n", __FUNCTION__, CodeRegionToWriteTo ));
@@ -182,6 +182,7 @@ SmmMemoryProtectionsSelfTestData (
 {
   UINT8   *CodeRegionToCopyFrom;
 
+
   DEBUG ((DEBUG_VERBOSE, "%a()\n",__FUNCTION__));
 
   // Make sure that the required telemetry/handling is
@@ -191,8 +192,8 @@ SmmMemoryProtectionsSelfTestData (
   // Assign UINTN pointer to function address.
   // This will throw a warning with the Microsoft compiler, so we have to suppress it.
   // Behavior is unknown in other environments.
-  #pragma warning(suppress:4054)
-  CodeRegionToCopyFrom = (UINT8*)DummyFunctionForCodeSelfTest;
+
+  CodeRegionToCopyFrom = (UINT8*)(UINTN)DummyFunctionForCodeSelfTest;
 
   // Copy the data that is necessary.
   CopyMem (&mDataExecutionTestBuffer[0], CodeRegionToCopyFrom, sizeof(mDataExecutionTestBuffer));
@@ -201,8 +202,8 @@ SmmMemoryProtectionsSelfTestData (
   // This will throw a warning with the Microsoft compiler, so we have to suppress it.
   // Behavior is unknown in other environments.
   DEBUG ((DEBUG_INFO, "[%a] - Attempting to execute from 0x%16lX...\n", __FUNCTION__, &mDataExecutionTestBuffer[0]));
-  #pragma warning(suppress:4055)
-  ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)&mDataExecutionTestBuffer[0])();
+
+  ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)(UINTN)&mDataExecutionTestBuffer[0])();
 
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
@@ -250,7 +251,10 @@ SmmMemoryProtectionsTestInvalidRange (
     ResultsValid = TRUE;
 
     // Attempt to read from the address. This *should* fail.
-    ReadData = *(UINTN*)ReadAddress;
+    if (ReadAddress > MAX_UINTN) {
+      return EFI_DEVICE_ERROR;
+    }
+    ReadData = *(UINTN*)(UINTN)ReadAddress;
   }
 
   // Note whether this was a valid test pass for debugging.
@@ -486,7 +490,7 @@ SmmMemoryProtectionsRunArbitraryCode (
 
   // Now attempt to call the function.
   DEBUG ((DEBUG_INFO, "[%a] - Attempting to execute from 0x%16lX...\n", __FUNCTION__, TargetAddress));
-  ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)TargetAddress)();
+  ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)(UINTN)TargetAddress)();
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
   return EFI_SECURITY_VIOLATION;

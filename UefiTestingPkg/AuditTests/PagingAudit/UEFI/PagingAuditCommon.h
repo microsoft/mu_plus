@@ -3,7 +3,7 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (c) Microsoft Corporation.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -36,7 +36,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define    MEM_INFO_DATABASE_MAX_STRING_SIZE 0x400
 #define    MAX_STRING_SIZE 0x1000
 
-#define IndexToAddress(a, b, c, d)   ((UINT64) (a << 39) + (b << 30) + (c <<  21) + (d << 12))
+#define IndexToAddress(a, b, c, d)   ((UINT64) ((UINT64)a << 39) + ((UINT64)b << 30) + ((UINT64)c <<  21) + ((UINT64)d << 12))
 
 #define AMD_64_SMM_ADDR   0xC0010112
 #define AMD_64_SMM_MASK   0xC0010113
@@ -209,6 +209,7 @@ DumpPagingInfo (
  * @param[in]  WriteCount   Number to append to the end of the file.
  */
 VOID
+EFIAPI
 WriteBufferToFile (
   IN CONST CHAR16                   *FileName,
   IN       VOID                     *Buffer,

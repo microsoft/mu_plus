@@ -1,6 +1,6 @@
 /** @file
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -9,9 +9,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
-#include <Register\ArchitecturalMsr.h>
+#include <Register/ArchitecturalMsr.h>
 #include <Library/UnitTestLib.h>
-#include "../HeapGuardTestCommon.h"
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -21,7 +20,7 @@ UefiHardwareNxProtectionEnabled (
 {
   MSR_IA32_EFER_REGISTER Efer;
 
-  DEBUG((DEBUG_ERROR, __FUNCTION__"\n"));
+  DEBUG ((DEBUG_ERROR, "%a\n", __FUNCTION__));
   Efer.Uint64 = AsmReadMsr64 (MSR_IA32_EFER);
   if (Efer.Bits.NXE == 1) {
     return UNIT_TEST_PASSED;

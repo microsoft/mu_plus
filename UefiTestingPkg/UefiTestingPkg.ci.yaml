@@ -1,13 +1,13 @@
 ##
 # CI configuration for UefiTestingPkg
 #
-# Copyright (c) Microsoft Corporation
+# Copyright (c) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 {
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
-        "DscPath": ""
+        "DscPath": "UefiTestingPkg.dsc"
     },
 
     ## options defined ci/Plugin/CharEncodingCheck
@@ -41,7 +41,7 @@
     ## options defined ci/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
         "IgnoreInf": [],
-        "DscPath": ""
+        "DscPath": "UefiTestingPkg.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck

@@ -2,7 +2,7 @@
 Platform specific memory handler dump function. Handler(s) need to be in compliance
 with existed Windows\PagingReportGenerator.py, i.e. TSEG.
 
-Copyright (c) Microsoft Corporation.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -182,7 +182,7 @@ LookupSmrrAMD (
 
   if (FamilyId == 0x0f) {
     // Extended family id and model in use
-    FamilyId = FamilyId + (RegEax >> 20) & 0xff;
+    FamilyId = FamilyId + ((RegEax >> 20) & 0xff);
     ModelId = ModelId | ((RegEax >> 12) & 0xf0);
   }
   DEBUG (( DEBUG_INFO, "%a - FamilyId 0x%02x, ModelId 0x%02x\n", __FUNCTION__, FamilyId, ModelId ));

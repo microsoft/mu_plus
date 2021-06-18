@@ -14,7 +14,7 @@
      DriverOrder
      Driver####
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
   **/
@@ -70,17 +70,17 @@ CleanUpTestContext (
     IN UNIT_TEST_CONTEXT           Context
   ) {
     BASIC_TEST_CONTEXT *Btc;
-    EFI_STATUS          Status;
 
     Btc = (BASIC_TEST_CONTEXT *) Context;
 
     if (NULL != Btc->VariableDeleteName) {
-        Status = gRT->SetVariable (
-                  Btc->VariableDeleteName,
-                  &gEfiGlobalVariableGuid,
-                  0,
-                  0,
-                  NULL);
+      gRT->SetVariable (
+             Btc->VariableDeleteName,
+             &gEfiGlobalVariableGuid,
+             0,
+             0,
+             NULL
+             );
     }
 
     Btc->VariableDeleteName = NULL;

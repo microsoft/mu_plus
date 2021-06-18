@@ -2,7 +2,7 @@
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
-Copyright (c) Microsoft Corporation.
+Copyright (c) Microsoft Corporation. All rights reserved.
 Copyright (c) 2009 - 2019, Intel Corporation. All rights reserved.<BR>
 Copyright (c) 2017, AMD Incorporated. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -11,7 +11,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 
 #include "PagingAuditCommon.h"
-#include <PiHob.h>
+#include <Pi/PiBootMode.h>
+#include <Pi/PiHob.h>
 #include <Library/HobLib.h>
 
 /**
@@ -31,9 +32,9 @@ OpenVolumeSFS (
 
 HEAP_GUARD_DEBUG_PROTOCOL *mHgDumpBitMap;
 EFI_FILE  *mFs_Handle;
-CHAR8     *mMemoryInfoDatabaseBuffer = NULL;
-UINTN      mMemoryInfoDatabaseSize = 0;
-UINTN      mMemoryInfoDatabaseAllocSize = 0;
+extern CHAR8     *mMemoryInfoDatabaseBuffer;
+extern UINTN      mMemoryInfoDatabaseSize;
+extern UINTN      mMemoryInfoDatabaseAllocSize;
 
 /**
   Calculate the maximum physical address bits supported.
@@ -250,8 +251,8 @@ MemoryAttributesTableDump (
   EFI_STATUS                      Status;
   EFI_MEMORY_ATTRIBUTES_TABLE     *MatMap;
   EFI_MEMORY_DESCRIPTOR           *Map;
-  UINT64                          EntrySize;
-  UINT64                          EntryCount;
+  UINTN                           EntrySize;
+  UINTN                           EntryCount;
   CHAR8                           *WriteString;
   CHAR8                           *Buffer;
   UINT64                          Index;
@@ -264,7 +265,7 @@ MemoryAttributesTableDump (
   //
   // First, we need to locate the MAT table.
   //
-  Status = EfiGetSystemConfigurationTable( &gEfiMemoryAttributesTableGuid, &MatMap );
+  Status = EfiGetSystemConfigurationTable( &gEfiMemoryAttributesTableGuid, (VOID *)&MatMap );
 
   if (EFI_ERROR(Status)) {
     DEBUG((DEBUG_ERROR, "%a Failed to retrieve MAT %r\n", __FUNCTION__, Status));
@@ -414,7 +415,7 @@ LoadedImageTableDump (
   EFI_DEBUG_IMAGE_INFO_TABLE_HEADER           *TableHeader;
   EFI_DEBUG_IMAGE_INFO                        *Table;
   EFI_LOADED_IMAGE_PROTOCOL                   *LoadedImageProtocolInstance;
-  UINT64                                       ImageBase;
+  UINTN                                        ImageBase;
   UINT64                                       ImageSize;
   UINT64                                       Index;
   UINT32                                       TableSize;
@@ -446,7 +447,7 @@ LoadedImageTableDump (
     NormalImage = Table[Index].NormalImage;
     LoadedImageProtocolInstance = NormalImage->LoadedImageProtocolInstance;
     ImageSize = LoadedImageProtocolInstance->ImageSize;
-    ImageBase = (UINT64) LoadedImageProtocolInstance->ImageBase;
+    ImageBase = (UINTN) LoadedImageProtocolInstance->ImageBase;
 
     if (ImageSize == 0) {
       // No need to register empty slots in the table as images.
@@ -699,19 +700,19 @@ GetFlatPageTableData (
   // If we have room for more PDE Entries, add one.
   MyPdeCount++;
   if (MyPdeCount <= *PdeCount) {
-    PdeEntries[MyPdeCount-1] = (UINT64)Pml4;
+    PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pml4;
   }
 
   for (Index4 = 0x0; Index4 < 0x200; Index4 ++) {
     if (!Pml4[Index4].Bits.Present) {
       continue;
     }
-    Pte1G = (PAGE_TABLE_1G_ENTRY *) (Pml4[Index4].Bits.PageTableBaseAddress << 12);
+    Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
     // Increase the count.
     // If we have room for more PDE Entries, add one.
     MyPdeCount++;
     if (MyPdeCount <= *PdeCount) {
-      PdeEntries[MyPdeCount-1] = (UINT64)Pte1G;
+      PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte1G;
     }
     for (Index3 = 0x0;  Index3 < 0x200; Index3 ++ ) {
       if (!Pte1G[Index3].Bits.Present) {
@@ -728,12 +729,12 @@ GetFlatPageTableData (
         // get all of their address bits.
         //
         Work = (PAGE_MAP_AND_DIRECTORY_POINTER *) Pte1G;
-        Pte2M = (PAGE_TABLE_ENTRY *) (Work[Index3].Bits.PageTableBaseAddress << 12);
+        Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
         // Increase the count.
         // If we have room for more PDE Entries, add one.
         MyPdeCount ++;
         if (MyPdeCount <= *PdeCount) {
-          PdeEntries[MyPdeCount-1] = (UINT64)Pte2M;
+          PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte2M;
         }
         for (Index2 = 0x0; Index2 < 0x200; Index2 ++ ) {
           if (!Pte2M[Index2].Bits.Present) {
@@ -742,12 +743,12 @@ GetFlatPageTableData (
           }
           if (!(Pte2M[Index2].Bits.MustBe1)) {
             Work = (PAGE_MAP_AND_DIRECTORY_POINTER *) Pte2M;
-            Pte4K = (PAGE_TABLE_4K_ENTRY *) (Work[Index2].Bits.PageTableBaseAddress << 12);
+            Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
             // Increase the count.
             // If we have room for more PDE Entries, add one.
             MyPdeCount ++;
             if (MyPdeCount <= *PdeCount) {
-              PdeEntries[MyPdeCount-1] = (UINT64)Pte4K;
+              PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte4K;
             }
             for (Index1 = 0x0; Index1 < 0x200; Index1 ++ ) {
               if (!Pte4K[Index1].Bits.Present) {
@@ -939,6 +940,7 @@ LoadFlatPageTableData(
 
 **/
 EFI_STATUS
+EFIAPI
 FlushAndClearMemoryInfoDatabase (
   IN CONST CHAR16     *FileName
   )

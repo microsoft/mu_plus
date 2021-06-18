@@ -2,7 +2,7 @@
 This user-facing application collects information from the SMM page tables and
 writes it to files.
 
-Copyright (c) Microsoft Corporation.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -108,6 +108,12 @@ SmmLoadedImageTableDump (
     Status = SmmCommunication->Communicate( SmmCommunication,
                                             CommBufferBase,
                                             &BufferSize );
+    if (EFI_ERROR(Status)) {
+      AsciiSPrint ( &TempString[0], MAX_STRING_SIZE,
+                    "%a: Error %r from Communicate\n",
+                    __FUNCTION__,
+                    Status);
+    }
 
     //
     // Get the data out of the comm buffer.
@@ -338,6 +344,12 @@ SmmPdeEntriesDump (
     Status = SmmCommunication->Communicate( SmmCommunication,
                                             CommBufferBase,
                                             &BufferSize );
+    if (EFI_ERROR(Status)) {
+      AsciiSPrint ( &TempString[0], MAX_STRING_SIZE,
+                    "%a: Error %r from Communicate\n",
+                    __FUNCTION__,
+                    Status);
+    }
 
     //
     // Get the data out of the comm buffer.
@@ -507,7 +519,10 @@ LocateSmmCommonCommBuffer (
       SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)SmmCommMemRegion + PiSmmCommunicationRegionTable->DescriptorSize);
     }
 
-    mPiSmmCommonCommBufferAddress = (VOID*)SmmCommMemRegion->PhysicalStart;
+    if (SmmCommMemRegion->PhysicalStart > MAX_UINTN) {
+      return EFI_DEVICE_ERROR;
+    }
+    mPiSmmCommonCommBufferAddress = (VOID*)(UINTN)SmmCommMemRegion->PhysicalStart;
     mPiSmmCommonCommBufferSize = BufferSize;
   }
 

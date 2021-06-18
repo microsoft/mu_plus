@@ -2,7 +2,7 @@
 
 Tests for page guard, pool guard, NX protections, stack guard, and null pointer detection.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (c) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -24,7 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UnitTestBootLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
-#include <Register\ArchitecturalMsr.h>
+#include <Register/ArchitecturalMsr.h>
 #include <Library/ResetSystemLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
@@ -157,6 +157,9 @@ LocateSmmCommonCommBuffer (
 
   if (mPiSmmCommonCommBufferAddress == NULL) {
     Status = EfiGetSystemConfigurationTable( &gEdkiiPiSmmCommunicationRegionTableGuid, (VOID**)&PiSmmCommunicationRegionTable );
+    if (EFI_ERROR (Status)) {
+      return;
+    }
 
     // We only need a region large enough to hold a HEAP_GUARD_TEST_COMM_BUFFER,
     // so this shouldn't be too hard.
@@ -171,8 +174,11 @@ LocateSmmCommonCommBuffer (
       }
       SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)SmmCommMemRegion + PiSmmCommunicationRegionTable->DescriptorSize);
     }
-
-    mPiSmmCommonCommBufferAddress = (VOID*)SmmCommMemRegion->PhysicalStart;
+    
+    if (SmmCommMemRegion->PhysicalStart > MAX_UINTN) {
+      return;
+    }
+    mPiSmmCommonCommBufferAddress = (VOID*)(UINTN)SmmCommMemRegion->PhysicalStart;
     mPiSmmCommonCommBufferSize = BufferSize;
   }
 } // LocateSmmCommonCommBuffer()
@@ -207,7 +213,7 @@ PoolTest (
     //
     // Get to the beginning of the page the pool tail is on.
     //
-    ptrLoc = (UINT64*) (((UINTN) ptr) + AllocationSize);
+    ptrLoc = (UINT64*) (((UINTN) ptr) + (UINTN)AllocationSize);
     ptrLoc = ALIGN_POINTER(ptrLoc, 0x1000);
 
     //
@@ -350,7 +356,8 @@ UefiNxProtectionPreReq (
   )
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
+  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
   DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
   if ((PcdGet64(PcdDxeNxMemoryProtectionPolicy) & TestBit) == 0) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
@@ -371,7 +378,8 @@ UefiPageGuardPreReq (
   )
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
+  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
   if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT0) == 0) || ((PcdGet64(PcdHeapGuardPageType) & TestBit) == 0)) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -387,7 +395,8 @@ UefiPoolGuardPreReq (
   )
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
+  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
   if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT1) == 0) || ((PcdGet64(PcdHeapGuardPoolType) & TestBit) == 0)) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -431,7 +440,8 @@ SmmNxProtectionPreReq (
   )
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
+  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
   if ((PcdGet64(PcdDxeNxMemoryProtectionPolicy) & TestBit) == 0) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -452,7 +462,8 @@ SmmPageGuardPreReq (
   )
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
+  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
   if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT2) == 0) || ((PcdGet64(PcdHeapGuardPageType) & TestBit) == 0)) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -468,7 +479,8 @@ SmmPoolGuardPreReq (
   )
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64 TestBit = LShiftU64(1, HeapGuardContext.TargetMemoryType);
+  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
   if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT3) == 0) || ((PcdGet64(PcdHeapGuardPoolType) & TestBit) == 0)) {
     UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -530,7 +542,7 @@ UefiPageGuard (
     }
     else if (HeapGuardContext.TestProgress == 1)
     {
-      HeadPageTest((UINT64 *) ptr);
+      HeadPageTest((UINT64 *)(UINTN) ptr);
 
       //
       // Anything executing past this point indicates a failure.
@@ -539,7 +551,7 @@ UefiPageGuard (
     }
     else
     {
-      TailPageTest((UINT64 *) ptr);
+      TailPageTest((UINT64 *)(UINTN) ptr);
 
       //
       // Anything executing past this point indicates a failure.
@@ -568,7 +580,7 @@ UefiPoolGuard (
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UINT64 *ptr;
   EFI_STATUS Status;
-  UINT64 AllocationSize;
+  UINTN AllocationSize;
 
   if (HeapGuardContext.TestProgress < NUM_POOL_SIZES) {
     //
