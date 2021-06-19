@@ -149,14 +149,30 @@ CreateXmlStringFromCurrentSettings(
     UINT8  Value;
     CHAR8 *ReturnValue;
     DFCI_GROUP_LIST_ENTRY *Group;
+    DFCI_SETTING_TYPE GroupType;
+    DFCI_MEMBER_LIST_ENTRY *Member;
+    DFCI_SETTING_PROVIDER *Provider;
 
     ValueSize = sizeof(*ReturnValue);
     Group = GROUP_LIST_ENTRY_FROM_GROUP_LINK(Link);
+    GroupType = DFCI_SETTING_TYPE_UNDEFINED;
+
+    if (!IsListEmpty(&Group->MemberHead)) {
+      Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Group->MemberHead.ForwardLink);
+      Provider = FindProviderById (Member->Id);
+      if (Provider == NULL) {
+        return EFI_NOT_FOUND;
+      }
+      GroupType = Provider->Type;
+    } else {
+      return EFI_NOT_FOUND;
+    }
+
     Status = SystemSettingAccessGet (
                    &mSystemSettingAccessProtocol,
                     Group->GroupId,
                     NULL,
-                    DFCI_SETTING_TYPE_ENABLE,
+                    GroupType,
                   &ValueSize,
                   &Value,
                    NULL);
@@ -168,23 +184,61 @@ CreateXmlStringFromCurrentSettings(
     }
     else
     {
-      switch (Value) {
-        case ENABLE_FALSE:
-            ReturnValue = "Disabled";
-            break;
-        case ENABLE_TRUE:
-            ReturnValue = "Enabled";
-            break;
-        case ENABLE_INCONSISTENT:
-            ReturnValue = "Inconsistent";
-            break;
+      switch (GroupType) {
+        case DFCI_SETTING_TYPE_ENABLE:
+          switch (Value) {
+            case ENABLE_FALSE:
+              ReturnValue = "Disabled";
+              break;
+
+            case ENABLE_TRUE:
+              ReturnValue = "Enabled";
+              break;
+
+            case ENABLE_INCONSISTENT:
+              ReturnValue = "Inconsistent";
+              break;
+
+            default:
+              ReturnValue = "Unknown";
+              break;
+          }
+
+          break;
+
+        case DFCI_SETTING_TYPE_USBPORTENUM:
+          switch (Value) {
+            case DfciUsbPortHwDisabled:
+              ReturnValue = "UsbPortHwDisabled";
+              break;
+
+            case DfciUsbPortEnabled:
+              ReturnValue = "UsbPortEnabled";
+              break;
+
+            case DfciUsbPortDataDisabled:
+              ReturnValue = "UsbPortDataDisabled";
+              break;
+
+            case ENABLE_INCONSISTENT:
+              ReturnValue = "Inconsistent";
+              break;
+
+            default:
+              ReturnValue = "UnsupportedValue";
+              break;
+          }
+
+          break;
+
         default:
-            ReturnValue = "Unknown";
-            break;
+          DEBUG ((DEBUG_ERROR, "%a: Group entries for type(%d) not supported\n", __FUNCTION__, GroupType));
+          ReturnValue = "UnsupportedValue";
+          break;
       }
     }
 
-    DEBUG((DEBUG_INFO, "   Setting Group Setting %a to %a\n", Group->GroupId, ReturnValue));
+    DEBUG((DEBUG_INFO, "   Group Setting %a is %a\n", Group->GroupId, ReturnValue));
     Status = SetCurrentSettings(CurrentSettingsListNode, Group->GroupId, ReturnValue);
     if (EFI_ERROR(Status)) {
       DEBUG((DEBUG_ERROR, "Error %r\n", Status));

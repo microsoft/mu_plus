@@ -42,11 +42,13 @@ ProviderTypeAsAscii(DFCI_SETTING_TYPE Type)
     case DFCI_SETTING_TYPE_BINARY:
       return "BINARY TYPE";
 
-  case DFCI_SETTING_TYPE_CERT:
-    return "CERT TYPE";
-  }
+    case DFCI_SETTING_TYPE_CERT:
+      return "CERT TYPE";
 
-  return "UNKNOWN TYPE";
+    default:
+      return "Unknown";
+      break;
+  }
 }
 
 EFI_STATUS
@@ -397,7 +399,10 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
         DEBUG((DEBUG_ERROR, "Failed - Couldn't allocate for string. \n"));
         break;
       }
-      if (v) {
+      if (v == ENABLE_INCONSISTENT) {
+        AsciiStrCpyS(Value, ENABLED_STRING_SIZE , "Inconsistent");
+      }
+      else if (v) {
         AsciiStrCpyS(Value, ENABLED_STRING_SIZE , "Enabled");
       }
       else {
@@ -503,6 +508,10 @@ ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current)
       else if (b == DfciUsbPortDataDisabled)
       {
         AsciiStrCpyS(Value, USB_PORT_STATE_STRING_SIZE, "UsbPortDataDisabled");
+      }
+      else if (b == ENABLE_INCONSISTENT)
+      {
+        AsciiStrCpyS(Value, USB_PORT_STATE_STRING_SIZE, "Inconsistent");
       }
       else
       {

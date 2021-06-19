@@ -62,12 +62,13 @@ typedef enum {
   DFCI_SETTING_TYPE_USBPORTENUM = 4,
   DFCI_SETTING_TYPE_STRING = 5,             // CHAR8 string
   DFCI_SETTING_TYPE_BINARY = 6,             // Opaque Binary Data on read/write, b64data in XML
-  DFCI_SETTING_TYPE_CERT = 7                // Opaque Binary Data on read/write, Thumbprint in XML
+  DFCI_SETTING_TYPE_CERT = 7,               // Opaque Binary Data on read/write, Thumbprint in XML
+  DFCI_SETTING_TYPE_UNDEFINED = 0x8000      // Used for Group mismatch identification
 } DFCI_SETTING_TYPE;
 
 #define ENABLE_FALSE        0
 #define ENABLE_TRUE         1
-#define ENABLE_INCONSISTENT 2
+#define ENABLE_INCONSISTENT 0xff
 
 //
 // Most of the settings types have a fixed length.  Limit the String and Binary

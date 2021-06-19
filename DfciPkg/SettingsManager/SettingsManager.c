@@ -248,21 +248,13 @@ InternalSystemSettingAccessGet (
       return EFI_NOT_FOUND;
     }
 
-    //
-    // Group Settings are limited to DFCI_SETTING_TYPE_ENABLE
-    //
-    if (DFCI_SETTING_TYPE_ENABLE != Type) {
-      DEBUG((DEBUG_ERROR, "%a - Requested ID (%a) type not Enable.\n", __FUNCTION__, Id));
-      return EFI_UNSUPPORTED;
-    }
-
     if (*ValueSize < 1) {
       *ValueSize = sizeof(UINT8);
       return EFI_BUFFER_TOO_SMALL;
     }
 
     ReturnStatus = EFI_SUCCESS;
-    MasterValue = 0x80;  // Some value not ENABLE_TRUE or ENABLE_FALSE
+    MasterValue = ENABLE_INCONSISTENT;  // Some value not ENABLE_TRUE or ENABLE_FALSE
     EFI_LIST_FOR_EACH(Link, &Group->MemberHead)
     {
       Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
@@ -284,7 +276,7 @@ InternalSystemSettingAccessGet (
 
       DEBUG((DEBUG_INFO,"Value of %a is %x\n", Member->Id, (UINTN) LocalValue));
 
-      if (0x80 == MasterValue) {
+      if (ENABLE_INCONSISTENT == MasterValue) {
         MasterValue = LocalValue;
       } else {
         if (MasterValue != LocalValue) {
