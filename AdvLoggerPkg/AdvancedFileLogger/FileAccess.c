@@ -164,7 +164,6 @@ VolumeFromFileSystemHandle (
 
     // Close directory
     File->Close(File);
-    LogDevice->Volume = Volume;
 
     return Volume;
 }
@@ -408,6 +407,7 @@ CleanUp:
   Read the index value from the log index file.
 
   @param   LogDevice        Which log device to write the log to
+  @param   Volume           Open Volume
 
   @retval  EFI_SUCCESS      The LogData->FileIndex was updated
   @retval  other            An error occurred.  The log device was disabled
@@ -416,20 +416,14 @@ CleanUp:
 STATIC
 EFI_STATUS
 DetermineLogFile (
-    IN LOG_DEVICE *LogDevice
+    IN LOG_DEVICE *LogDevice,
+    IN EFI_FILE   *Volume
     )
 {
     UINTN           BufferSize;
     EFI_FILE       *File;
     CHAR8           FileIndex;
     EFI_STATUS      Status;
-    EFI_FILE       *Volume;
-
-    Volume = VolumeFromFileSystemHandle (LogDevice);
-    if (NULL == Volume) {
-        LogDevice->Valid = FALSE;
-        return EFI_INVALID_PARAMETER;
-    }
 
     //
     // Open Index File
@@ -527,7 +521,7 @@ WriteALogFile (
     }
 
     if (LogDevice->FileIndex == 0) {
-        Status = DetermineLogFile (LogDevice);
+        Status = DetermineLogFile (LogDevice, Volume);
         if (EFI_ERROR(Status)) {
             goto CloseAndExit;
         }
@@ -607,7 +601,6 @@ CloseAndExit:
     }
 
     if (Volume != NULL) {
-        LogDevice->Volume = NULL;
         Volume->Close (Volume);
     }
 
@@ -718,7 +711,6 @@ ErrorExit:
 
     FreePages (DataBuffer, EFI_SIZE_TO_PAGES(DEBUG_LOG_CHUNK_SIZE));
 
-    LogDevice->Volume = NULL;
     Volume->Close (Volume);
 
     return Status;

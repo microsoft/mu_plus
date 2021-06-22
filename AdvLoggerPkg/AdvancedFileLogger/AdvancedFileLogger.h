@@ -43,7 +43,6 @@ typedef struct {
     UINT32                                     Signature;
     LIST_ENTRY                                 Link;
     EFI_HANDLE                                 Handle;
-    EFI_FILE                                  *Volume;
     UINTN                                      FileIndex;
     UINT64                                     CurrentOffset;         // Current offset to start writing
     ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  AccessEntry;
