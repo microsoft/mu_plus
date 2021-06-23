@@ -83,7 +83,7 @@
 [Depex]
    gEfiVariableWriteArchProtocolGuid
    AND gEfiVariableArchProtocolGuid
-   AND gEdkiiVariableLockProtocolGuid
+   AND gEdkiiVariablePolicyProtocolGuid
    AND gDfciSettingPermissionsProtocolGuid
    AND gMuPKCS7ProtocolGuid
    AND gEfiRngProtocolGuid

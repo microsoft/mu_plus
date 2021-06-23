@@ -50,6 +50,7 @@
   BootGraphicsLib
   GraphicsConsoleHelperLib
   MuTelemetryHelperLib
+  VariablePolicyHelperLib
 
 [Guids]
   gUefiShellFileGuid

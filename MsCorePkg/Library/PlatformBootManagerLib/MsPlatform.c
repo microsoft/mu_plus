@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Guid/GlobalVariable.h>
 
-#include <Protocol/VariableLock.h>
-
 #include <Library/UefiLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>

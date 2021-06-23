@@ -53,7 +53,6 @@ CONSTRUCTOR                    = PlatformBootManagerEntry
   UefiRuntimeServicesTableLib
 
 [Protocols]
-  gEdkiiVariableLockProtocolGuid      ## CONSUMES
   gEfiPciRootBridgeIoProtocolGuid     ## CONSUMES
   gEfiDxeSmmReadyToLockProtocolGuid   ## PRODUCES
   gEfiGenericMemTestProtocolGuid      ## CONSUMES

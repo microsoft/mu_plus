@@ -74,4 +74,4 @@
 [Depex]
    gEfiVariableWriteArchProtocolGuid
    AND gEfiVariableArchProtocolGuid
-   AND gEdkiiVariableLockProtocolGuid
+   AND gEdkiiVariablePolicyProtocolGuid

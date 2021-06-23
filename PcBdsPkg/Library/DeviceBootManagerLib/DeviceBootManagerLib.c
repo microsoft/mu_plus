@@ -20,7 +20,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/AcpiSystemDescriptionTable.h>
 #include <Protocol/OnScreenKeyboard.h>
 #include <Protocol/PciIo.h>
-#include <Protocol/VariableLock.h>
 #include <Protocol/TpmPpProtocol.h>
 
 #include <Library/BaseMemoryLib.h>
@@ -48,6 +47,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MuUefiVersionLib.h>
 #include <Library/MsNVBootReasonLib.h>
 #include <Library/MuTelemetryHelperLib.h>
+#include <Library/VariablePolicyHelperLib.h>
 
 #include <Settings/BootMenuSettings.h>
 #include <Settings/DfciSettings.h>
@@ -285,14 +285,14 @@ CleanUp:
 static
 VOID
 BdsBootLockBootVariables ( VOID ) {
-    EFI_STATUS                    Status;
-    BOOLEAN                       EnableBootOrderLock = FALSE;
-    EDKII_VARIABLE_LOCK_PROTOCOL *VarLockProtocol = NULL;
-    UINT16                       *BootOrder;
-    UINTN                         BootOrderSize;
-    CHAR16                        OptionName[sizeof ("Boot####")];
-    UINTN                         i;
-    static BOOLEAN                AlreadyLocked = FALSE;
+    EFI_STATUS                     Status;
+    BOOLEAN                        EnableBootOrderLock = FALSE;
+    EDKII_VARIABLE_POLICY_PROTOCOL *VarPolicyProtocol = NULL;
+    UINT16                         *BootOrder;
+    UINTN                          BootOrderSize;
+    CHAR16                         OptionName[sizeof ("Boot####")];
+    UINTN                          i;
+    static BOOLEAN                 AlreadyLocked = FALSE;
 
     if (AlreadyLocked) {   // This can happen as we may call ready to boot a number of times;
         return;
@@ -310,13 +310,23 @@ BdsBootLockBootVariables ( VOID ) {
         DEBUG((DEBUG_INFO, "%a - BootOrder is not locked\n", __FUNCTION__));
         return;
     }
-    Status = gBS->LocateProtocol(&gEdkiiVariableLockProtocolGuid, NULL, (VOID**)&VarLockProtocol);
+    
+    Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **) &VarPolicyProtocol);
     if (EFI_ERROR(Status))
     {
-      DEBUG((DEBUG_ERROR, "%a - Failed to locate var lock protocol (%r).  Can't lock variables\n", __FUNCTION__, Status));
-      return;
+        DEBUG((DEBUG_ERROR, "%a - Failed to locate var policy protocol (%r).  Can't lock variables\n", __FUNCTION__, Status));
+        return;
     }
-    Status = VarLockProtocol->RequestToLock(VarLockProtocol, EFI_BOOT_ORDER_VARIABLE_NAME, &gEfiGlobalVariableGuid);
+    Status = RegisterBasicVariablePolicy (
+               VarPolicyProtocol,
+               &gEfiGlobalVariableGuid,
+               EFI_BOOT_ORDER_VARIABLE_NAME,
+               VARIABLE_POLICY_NO_MIN_SIZE,
+               VARIABLE_POLICY_NO_MAX_SIZE,
+               VARIABLE_POLICY_NO_MUST_ATTR,
+               VARIABLE_POLICY_NO_CANT_ATTR,
+               VARIABLE_POLICY_TYPE_LOCK_NOW
+               );
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Unable to lock BootOrder. Code=%r\n",Status));
     } else {
@@ -332,7 +342,16 @@ BdsBootLockBootVariables ( VOID ) {
                     );
     DEBUG((DEBUG_INFO,"Status from deleting BootNext prior to lock. Code=%r\n",Status));
 
-    Status = VarLockProtocol->RequestToLock(VarLockProtocol, EFI_BOOT_NEXT_VARIABLE_NAME, &gEfiGlobalVariableGuid);
+    Status = RegisterBasicVariablePolicy (
+               VarPolicyProtocol,
+               &gEfiGlobalVariableGuid,
+               EFI_BOOT_NEXT_VARIABLE_NAME,
+               VARIABLE_POLICY_NO_MIN_SIZE,
+               VARIABLE_POLICY_NO_MAX_SIZE,
+               VARIABLE_POLICY_NO_MUST_ATTR,
+               VARIABLE_POLICY_NO_CANT_ATTR,
+               VARIABLE_POLICY_TYPE_LOCK_NOW
+               );
     if (EFI_ERROR(Status)) {
         DEBUG((DEBUG_ERROR,"Unable to lock BootNext. Code=%r\n",Status));
     } else {
@@ -350,7 +369,16 @@ BdsBootLockBootVariables ( VOID ) {
     }
     for (i=0; i < (BootOrderSize / sizeof(UINT16)); i++) {
         UnicodeSPrint (OptionName, sizeof (OptionName), L"Boot%04x", BootOrder[i]);
-        Status = VarLockProtocol->RequestToLock(VarLockProtocol, OptionName, &gEfiGlobalVariableGuid);
+        Status = RegisterBasicVariablePolicy (
+                   VarPolicyProtocol,
+                   &gEfiGlobalVariableGuid,
+                   OptionName,
+                   VARIABLE_POLICY_NO_MIN_SIZE,
+                   VARIABLE_POLICY_NO_MAX_SIZE,
+                   VARIABLE_POLICY_NO_MUST_ATTR,
+                   VARIABLE_POLICY_NO_CANT_ATTR,
+                   VARIABLE_POLICY_TYPE_LOCK_NOW
+                   );
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR,"Unable to lock %s. Code=%r\n",OptionName,Status));
         } else {
