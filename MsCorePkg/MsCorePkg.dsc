@@ -169,8 +169,8 @@
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
   MsCorePkg/AcpiRGRT/AcpiRgrt.inf
   MsCorePkg/Library/BaseMemoryProtectionExceptionLibNull/BaseMemoryProtectionExceptionLibNull.inf
-  MsCorePkg/Library/MemoryProtectionExceptionCmosLib/MemoryProtectionExceptionLib.inf
-  MsCorePkg/Library/MemoryProtectionExceptionCmosLib/MemoryProtectionExceptionHandlerLib.inf
+  MsCorePkg/Library/MemoryProtectionExceptionLibCmos/MemoryProtectionExceptionLibCmos.inf
+  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
   MsCorePkg/Library/MemoryProtectionLib/DxeSmmMemoryProtectionLib.inf
   MsCorePkg/Library/MemoryProtectionLib/PeiMemoryProtectionLib.inf
   MsCorePkg/Library/MemoryProtectionLib/UefiMemoryProtectionLib.inf

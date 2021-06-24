@@ -1,6 +1,6 @@
 ## @file
 # Library provides access to the memory protection setting which may exist
-# in the platform-specific early store due to a memory related exception being triggered.
+# in the platform-specific early store (in this case, CMOS) due to a memory related exception being triggered.
 #
 #
 # Copyright (c) Microsoft Corporation.
@@ -9,20 +9,18 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = CmosBackedMemoryProtectionExceptionLib
+  BASE_NAME                      = MemoryProtectionExceptionLibCmos
   FILE_GUID                      = 8e991a09-1d4d-4747-bf6a-4dc22d11978d
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = CmosBackedMemoryProtectionExceptionLib
+  LIBRARY_CLASS                  = MemoryProtectionExceptionLib
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64
 #
 
 [Sources]
-  MemoryProtectionExceptionLib.c
-  MemoryProtectionExceptionCommon.h
-  MemoryProtectionExceptionCommon.c
+  MemoryProtectionExceptionLibCmos.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -31,7 +29,6 @@
   UefiCpuPkg/UefiCpuPkg.dec
 
 [LibraryClasses]
-  DebugLib
   IoLib
   MemoryProtectionLib
   BaseLib

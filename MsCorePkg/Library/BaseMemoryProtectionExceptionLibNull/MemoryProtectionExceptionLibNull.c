@@ -56,9 +56,24 @@ MemoryProtectionExceptionOverrideClear (
 **/
 BOOLEAN
 EFIAPI
-MemoryProtectionDidSystemHitException (
+MemoryProtectionExceptionOccurred (
   VOID
   )
 {
   return FALSE;
+}
+
+/**
+  Writes Input Value to early store
+
+  @param Val MEMORY_PROTECTION_OVERRIDE value to write
+
+**/
+VOID
+EFIAPI
+MemoryProtectionExceptionOverrideWrite (
+  MEMORY_PROTECTION_OVERRIDE Val
+  )
+{
+  return;
 }

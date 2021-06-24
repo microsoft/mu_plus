@@ -9,12 +9,12 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = MemoryProtectionExceptionHandlerCmosLib
+  BASE_NAME                      = MemoryProtectionExceptionHandlerLib
   FILE_GUID                      = 079cc3b7-a618-4024-8cc5-a36480df9261
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = NULL
-  CONSTRUCTOR                    = MemoryProtectionExceptionHandlerCmosConstructor
+  CONSTRUCTOR                    = MemoryProtectionExceptionHandlerConstructor
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64
@@ -22,8 +22,6 @@
 
 [Sources]
   MemoryProtectionExceptionHandlerLib.c
-  MemoryProtectionExceptionCommon.h
-  MemoryProtectionExceptionCommon.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -34,10 +32,10 @@
 [LibraryClasses]
   CpuExceptionHandlerLib
   DebugLib
-  IoLib
-  UefiRuntimeServicesTableLib
   UefiBootServicesTableLib
   MemoryProtectionLib
+  MemoryProtectionExceptionLib
+  HwResetSystemLib
 
 [DEPEX]
   TRUE
