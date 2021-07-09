@@ -81,7 +81,7 @@ InstallPermanentMemoryBuffer (
   IN VOID                       *Ppi
   )
 {
-    UINTN                       BufferSize;
+    UINTN                       CurrentLogOffset;
     UINTN                       DebugLevel;
     EFI_HOB_GUID_TYPE          *GuidHob;
     ADVANCED_LOGGER_INFO       *LoggerInfo;
@@ -108,23 +108,24 @@ InstallPermanentMemoryBuffer (
             if (!EFI_ERROR(Status)) {
                 NewLoggerInfo = ALI_FROM_PA(NewLogBuffer);
                 CopyMem ((VOID *)NewLoggerInfo, (VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
-                BufferSize = (UINTN) (LoggerInfo->LogCurrent - LoggerInfo->LogBuffer);
+                CurrentLogOffset = (UINTN) (LoggerInfo->LogCurrent - LoggerInfo->LogBuffer);
                 NewLoggerInfo->LogBuffer = PA_FROM_PTR( (CHAR8 *) (NewLoggerInfo + 1));
 
-                if (BufferSize > 0) {
+                if (CurrentLogOffset > 0) {
                     CopyMem (PTR_FROM_PA(NewLoggerInfo->LogBuffer),
                              PTR_FROM_PA(LoggerInfo->LogBuffer),
-                            (BufferSize));
+                            (CurrentLogOffset));
                 }
 
                 NewLoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
-                NewLoggerInfo->LogCurrent = PA_FROM_PTR( CHAR8_FROM_PA(NewLogBuffer) + BufferSize );
+                NewLoggerInfo->LogCurrent = PA_FROM_PTR( CHAR8_FROM_PA(NewLoggerInfo->LogBuffer) + CurrentLogOffset );
                 NewLoggerInfo->InPermanentRAM = TRUE;
                 //
                 // Update the HOB pointer
                 //
                 OldLoggerBuffer = LogPtr->LogBuffer;
                 LogPtr->LogBuffer = NewLogBuffer;
+                mLoggerInfo = NewLoggerInfo;
 
                 Status = MmUnblockMemoryRequest (NewLogBuffer,  FixedPcdGet32 (PcdAdvancedLoggerPages));
                 if (EFI_ERROR(Status)) {
@@ -312,20 +313,6 @@ AdvancedLoggerGetLoggerInfo (
                     LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
                     AdvancedLoggerHdwPortInitialize ();
                     LoggerInfo->HdwPortInitialized = TRUE;
-                    if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
-                        LoggerInfo->InPermanentRAM = TRUE;
-                        Status = MmUnblockMemoryRequest (NewLoggerInfo, Pages);
-                        if (EFI_ERROR(Status)) {
-                            if (Status != EFI_UNSUPPORTED) {
-                                DEBUG((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
-                            }
-                        } else {
-                            DEBUG((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
-                        }
-
-                    } else {
-                        PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
-                    }
                 }
             } else {
                 LoggerInfo = LoggerInfoSec;
@@ -340,7 +327,7 @@ AdvancedLoggerGetLoggerInfo (
 
                 //
                 // Publish the mAdvancedLoggerPpiList
-                GuidHob->Name = gAdvancedLoggerHobGuid;
+                CopyGuid (&GuidHob->Name, &gAdvancedLoggerHobGuid);
                 Status = PeiServicesInstallPpi (mAdvancedLoggerPpiList);
                 ASSERT_EFI_ERROR(Status);
 
@@ -351,6 +338,14 @@ AdvancedLoggerGetLoggerInfo (
                 if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
                     LoggerInfo->InPermanentRAM = TRUE;
                     mLoggerInfo = LoggerInfo;
+                    Status = MmUnblockMemoryRequest (NewLoggerInfo, Pages);
+                    if (EFI_ERROR(Status)) {
+                        if (Status != EFI_UNSUPPORTED) {
+                            DEBUG((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
+                        }
+                    } else {
+                        DEBUG((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
+                    }
                 } else {
                     PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
                 }
