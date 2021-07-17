@@ -93,8 +93,8 @@ Get the starting DFCI Settings
 
     Initialize Thumbprints    '${OwnerThumbprint}'    '${UserThumbprint}'
 
-    Should Be True    '${OwnerThumbprint}' == ${DDS_CA_THUMBPRINT}
-    Should Be True    '${UserThumbprint}' == ${MDM_CA_THUMBPRINT}
+    Should Be True    '${OwnerThumbprint}' != 'Cert not installed'
+    Should Be True    '${UserThumbprint}' != 'Cert not installed'
 
 
 Obtain Target Parameters From Target
