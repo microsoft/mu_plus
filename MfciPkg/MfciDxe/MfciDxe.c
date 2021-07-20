@@ -31,8 +31,6 @@
 
 #include "MfciDxe.h"
 
-#define ALIGN_BYTES(Length)   (4 - ((Length) % 4))            // Additional bytes for 4-byte alignment
-
 MFCI_POLICY_TYPE                  mCurrentPolicy;
 BOOLEAN                           mVarPolicyRegistered;
 
@@ -592,8 +590,8 @@ VerifyPolicyAndChange (
   PublicKeyData = PublicKeyDataXdr + sizeof (UINT32);
 
   // Only 1 certificate is supported
-  // Length + ALIGN_BYTES(Length) for 4-byte alignment (XDR standard).
-  if (PublicKeyData + PublicKeyDataLength + ALIGN_BYTES((PublicKeyDataLength)) != PublicKeyDataXdrEnd) {
+  // Length + ALIGN_VALUE(Length, 4) for 4-byte alignment (XDR standard).
+  if ((PublicKeyData + ALIGN_VALUE (PublicKeyDataLength, 4)) != PublicKeyDataXdrEnd) {
     DEBUG ((DEBUG_ERROR, "PcdMfciPkcs7CertBufferXdr size mismatch: PublicKeyData(0x%x) PublicKeyDataLength(0x%x) PublicKeyDataXdrEnd(0x%x)", PublicKeyData, PublicKeyDataLength, PublicKeyDataXdrEnd));
     Status = EFI_ABORTED;
     goto Exit;
