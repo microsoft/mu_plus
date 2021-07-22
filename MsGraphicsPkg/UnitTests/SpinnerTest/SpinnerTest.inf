@@ -1,0 +1,73 @@
+## @file SpinnerTest.inf
+#
+#  This is a test UEFI Application to start and stop the spinners
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION    = 0x00010017
+  BASE_NAME      = SpinnerTest
+  FILE_GUID      = 1214a9e8-597a-4b5b-9de0-b19cb49be494
+  VERSION_STRING = 1.0
+  MODULE_TYPE    = UEFI_APPLICATION
+  ENTRY_POINT    = SpinnerTestEntry
+#
+# The following information is for reference only and not required by the build tools.
+#
+# VALID_ARCHITECTURES = IA32 X64 AARCH64
+#
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  PrintLib
+  TimerLib
+  UefiApplicationEntryPoint
+  UefiLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[Sources]
+  SpinnerTest.c
+
+[Protocols]
+  gMsOSKProtocolGuid
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5Type        ##CONSUMES
+
+[Guids]
+  gNVMeEnableStartEventGroupGuid                      ##CONSUMES
+  gNVMeEnableCompleteEventGroupGuid                   ##CONSUMES
+
+  gGeneralSpinner1StartEventGroupGuid                 ##CONSUMES
+  gGeneralSpinner1CompleteEventGroupGuid              ##CONSUMES
+  gGeneralSpinner2StartEventGroupGuid                 ##CONSUMES
+  gGeneralSpinner2CompleteEventGroupGuid              ##CONSUMES
+  gGeneralSpinner3StartEventGroupGuid                 ##CONSUMES
+  gGeneralSpinner3CompleteEventGroupGuid              ##CONSUMES
+  gGeneralSpinner4StartEventGroupGuid                 ##CONSUMES
+  gGeneralSpinner4CompleteEventGroupGuid              ##CONSUMES
+
+[Depex]
+  TRUE

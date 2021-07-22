@@ -1,0 +1,77 @@
+## @file TimeoutSpinner.inf
+#
+#  Copyright (c) Microsoft Corporation.  All rights reserved.
+#
+#  TimeoutSpinner
+#
+# @par Specification Reference:
+#
+##
+
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = TimeoutSpinner
+  FILE_GUID           = 7f2e29ef-fd95-47ba-8843-865934f268d1
+  MODULE_TYPE         = DXE_DRIVER
+  VERSION_STRING      = 1.0
+  ENTRY_POINT         = TimeoutSpinnerEntry
+
+[Sources]
+  TimeoutSpinner.c
+  TimeoutSpinner.h
+  TimeoutGeneral.c
+  TimeoutGeneral.h
+  ScreenGraphics.c
+  ScreenGraphics.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  BmpSupportLib
+  DebugLib
+  DxeServicesLib
+  PcdLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+  UiProgressCircleLib
+
+[Protocols]
+
+[Guids]
+  gNVMeEnableStartEventGroupGuid            ##CONSUMES
+  gNVMeEnableCompleteEventGroupGuid         ##CONSUMES
+
+  gGeneralSpinner1StartEventGroupGuid       ##CONSUMES
+  gGeneralSpinner1CompleteEventGroupGuid    ##CONSUMES
+  gGeneralSpinner2StartEventGroupGuid       ##CONSUMES
+  gGeneralSpinner2CompleteEventGroupGuid    ##CONSUMES
+  gGeneralSpinner3StartEventGroupGuid       ##CONSUMES
+  gGeneralSpinner3CompleteEventGroupGuid    ##CONSUMES
+  gGeneralSpinner4StartEventGroupGuid       ##CONSUMES
+  gGeneralSpinner4CompleteEventGroupGuid    ##CONSUMES
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5File        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5Location    ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4Type        ##CONSUMES
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5Type        ##CONSUMES
+
+[Depex]
+  TRUE

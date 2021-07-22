@@ -133,6 +133,8 @@
   MsGraphicsPkg/Library/BootGraphicsProviderLibNull/BootGraphicsProviderLib.inf
   MsGraphicsPkg/Library/QrEncoderLib/QrEncoderLib.inf
   MsGraphicsPkg/Application/BmpDisplay/BmpDisplay.inf
+  MsGraphicsPkg/Universal/TimeoutSpinner/TimeoutSpinner.inf
+  MsGraphicsPkg/UnitTests/SpinnerTest/SpinnerTest.inf
 
 [Components.IA32]
   # Early Graphics driver.

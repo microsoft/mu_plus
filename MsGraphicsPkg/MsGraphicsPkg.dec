@@ -1,5 +1,5 @@
 ## @file  MsGraphicsPkg.dec
-# This Package provides all definitions, library classes and libraries instances for MsGraphics. 
+# This Package provides all definitions, library classes and libraries instances for MsGraphics.
 # MsGraphics is common code used in the Microsoft UEFI Core code base
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
@@ -49,7 +49,7 @@
   ## Microsoft Boot Manager Settings GUID
   #
   gMsUiThemeHobGuid = {  0xb07c8481, 0xb02f, 0x44ca, {0xa9, 0x09, 0x64, 0xf8, 0xcd, 0x47, 0x0b, 0x6f }}
-  
+
   # {B24FD789-0ADF-46B6-B385-7003E83654D2}
   gMsEventMasterFrameNotifyGroupGuid    = { 0xb24fd789, 0xadf, 0x46b6, { 0xb3, 0x85, 0x70, 0x3, 0xe8, 0x36, 0x54, 0xd2 } }
 
@@ -59,13 +59,39 @@
   ## Used for signalling boot graphics has been displayed
   gLogoDisplayedEventGroup  = { 0x3C4F1430, 0x56D3, 0x45B6, { 0x8A, 0x1D, 0xB3, 0xE0, 0x0D, 0xEB,0xD8, 0xAF }}
 
+  # Guids for the the four General Purpose Timeout Events
+  #
+  # Start General 1 (Used by DFCI)         {a56178b0-57a3-42d4-ac05-f2ebb588b876}
+  gGeneralSpinner1StartEventGroupGuid    = {0xa56178b0, 0x57a3, 0x42d4, { 0xac, 0x05, 0xf2, 0xeb, 0xb5, 0x88, 0xb8, 0x76}}
+
+  # Stop General 1 (Used by DFCI)          {bca42a0c-0a80-4d51-a2ee-430bec2230dd}
+  gGeneralSpinner1CompleteEventGroupGuid = {0xbca42a0c, 0x0a80, 0x4d51, { 0xa2, 0xee, 0x43, 0x0b, 0xec, 0x22, 0x30, 0xdd}}
+
+  # Start General 2                        {095be340-cfab-4dc8-8453-834147e51e54}
+  gGeneralSpinner2StartEventGroupGuid    = {0x095be340, 0xcfab, 0x4dc8, {0x84, 0x53, 0x83, 0x41, 0x47, 0xe5, 0x1e, 0x54}}
+
+  # Stop General 2                         {be5a9684-4f07-4886-b55f-99c33b5ec43e}
+  gGeneralSpinner2CompleteEventGroupGuid = {0xbe5a9684, 0x4f07, 0x4886, {0xb5, 0x5f, 0x99, 0xc3, 0x3b, 0x5e, 0xc4, 0x3e}}
+
+  # Start General 3                        {6928e1fb-d88f-4647-8981-09446dd7f416}
+  gGeneralSpinner3StartEventGroupGuid    = {0x6928e1fb, 0xd88f, 0x4647, {0x89, 0x81, 0x09, 0x44, 0x6d, 0xd7, 0xf4, 0x16}}
+
+  # Stop General 3                         {dac7f0e5-a5f7-4eb3-91d6-848c785b8c46}
+  gGeneralSpinner3CompleteEventGroupGuid = {0xdac7f0e5, 0xa5f7, 0x4eb3, {0x91, 0xd6, 0x84, 0x8c, 0x78, 0x5b, 0x8c, 0x46}}
+
+  # Start General 4                        {aab017be-0aca-4bb0-a2fc-b671c1abe072}
+  gGeneralSpinner4StartEventGroupGuid    = {0xaab017be, 0x0aca, 0x4bb0, {0xa2, 0xfc, 0xb6, 0x71, 0xc1, 0xab, 0xe0, 0x72}}
+
+  # Stop General 4                         {459a7f69-22c7-4e06-b058-5db3560d3bf3}
+  gGeneralSpinner4CompleteEventGroupGuid = {0x459a7f69, 0x22c7, 0x4e06, {0xb0, 0x58, 0x5d, 0xb3, 0x56, 0x0d, 0x3b, 0xf3}}
+
 [Ppis]
   ## <Path to the header file>
   #<global guid name>  = <GUID VALUE>
 
   # Include/Protocol/MsUiThemeProtocol.h ## Yes, Protocol, not Ppi
   gMsUiThemePpiGuid = { 0x74367a5b, 0x27fb, 0x45e2, {0xa5, 0x92, 0x01, 0x7b, 0x63, 0x03, 0x9d, 0x51 }}
-    
+
 [Protocols]
   ## On-Screen Keyboard protocol guid
   #
@@ -106,8 +132,40 @@
   gMsGraphicsPkgTokenSpaceGuid.PcdPowerOffHold|30|UINT16|0x4000012B                    # Default is 30 seconds
   gMsGraphicsPkgTokenSpaceGuid.PcdSmallAssetMaxScreenWidth|1280|UINT32|0x4000012C      # Default is 1280 pixels
 
-[PcdsDynamic, PcdsDynamicEx]
+  gMsGraphicsPkgTokenSpaceGuid.PcdNVMeTimerFile |{ 0x2e, 0x8e, 0x9d, 0xe4, 0x06, 0xa7, 0x54, 0x4a, 0x49, 0xb6, 0x8d, 0x42, 0x3b, 0x39, 0x74, 0x61 }|VOID*|0x4000011a
+
+[PcdsDynamicEx]
   gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009
+
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1File |{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }|VOID*|0x40000129
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2File |{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }|VOID*|0x40000128
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3File |{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }|VOID*|0x40000127
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4File |{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }|VOID*|0x40000126
+
+  # Initialize to the same UUID at PcdNVMETimerFile.  This will specify which bitmap to use at runtime.
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5File |{ 0x2e, 0x8e, 0x9d, 0xe4, 0x06, 0xa7, 0x54, 0x4a, 0x49, 0xb6, 0x8d, 0x42, 0x3b, 0x39, 0x74, 0x61 }|VOID*|0x40000125
+
+  # Spinner Locations.  Currently, only the 4 corners and the center of the display are supported
+  # 1 = Lower Right
+  # 2 = Lower Left
+  # 3 = Upper Right
+  # 4 = Upper Left
+  # 5 = Center of display
+  #
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1Location|5|UINT8|0x40000124
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2Location|5|UINT8|0x40000123
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3Location|5|UINT8|0x40000122
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4Location|5|UINT8|0x40000121
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5Location|1|UINT8|0x40000120
+
+  # Spinner Type.  Currently, there are only standard and delay.  Standard displays immediately, and delay starts after 5 seconds
+  # 1 = Standard
+  # 2 = Delay
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral1Type|1|UINT8|0x4000011f
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral2Type|1|UINT8|0x4000011e
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral3Type|1|UINT8|0x4000011d
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral4Type|1|UINT8|0x4000011c
+  gMsGraphicsPkgTokenSpaceGuid.PcdGeneral5Type|2|UINT8|0x4000011b
 
   ##
   # POST background coloring skip counter's initial/default value.

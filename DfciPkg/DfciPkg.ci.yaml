@@ -45,7 +45,10 @@
     ## options defined ci/Plugin/GuidCheck
     "GuidCheck": {
         "IgnoreGuidName": [],
-        "IgnoreGuidValue": [],
+        "IgnoreGuidValue": [
+            "BCA42A0C-0A80-4D51-A2EE-430BEC2230DD", #GUID duplicated in DfciPkg
+            "A56178B0-57A3-42D4-AC05-F2EBB588B876", #GUID duplicated in DfciPkg
+        ],
         "IgnoreFoldersAndFiles": [],
         "IgnoreDuplicates": []
     },
