@@ -62,10 +62,11 @@
   gDfciSettingsManagerVarNamespace
 
 [Protocols]
-  gMsOSKProtocolGuid      ## CONSUMES
-  gMsSWMProtocolGuid      ## CONSUMES
-  gEfiAcpiSdtProtocolGuid ## CONSUMES
-  gTpmPpProtocolGuid      ## CONSUMES
+  gMsOSKProtocolGuid                ## CONSUMES
+  gMsSWMProtocolGuid                ## CONSUMES
+  gEfiAcpiSdtProtocolGuid           ## CONSUMES
+  gTpmPpProtocolGuid                ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid  ## CONSUMES
 
 [Pcd]
   gPcBdsPkgTokenSpaceGuid.PcdPowerAndThermalRetries
