@@ -64,6 +64,7 @@
 [Pcd]
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr                    ## CONSUMES
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU                  ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdEnforceWindowsPcr11PrivacyPolicy          ## CONSUMES
 
 [Guids]
   gMfciVendorGuid                     ## CONSUMES

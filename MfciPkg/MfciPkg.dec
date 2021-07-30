@@ -61,3 +61,6 @@
 
   # The trusted EKU required on the leaf certificate of the signer, a NULL-terminated CHAR8 string
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU|"0"|VOID*|0x40000043
+
+[PcdsFeatureFlag]
+  gMfciPkgTokenSpaceGuid.PcdEnforceWindowsPcr11PrivacyPolicy|TRUE|BOOLEAN|0x40000084

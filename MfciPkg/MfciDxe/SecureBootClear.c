@@ -40,7 +40,16 @@ EFIAPI MfciPolicyChangeCallbackSecureBoot (
 {
   EFI_STATUS Status = EFI_UNSUPPORTED;
 
-  if ( (NewPolicy & STD_ACTION_SECURE_BOOT_CLEAR) != 0) {
+  DEBUG(( DEBUG_INFO, "%a - MFCI Secure Boot Callback Entry\n", __FUNCTION__));
+  if ( (NewPolicy & STD_ACTION_SECURE_BOOT_CLEAR) == STD_ACTION_SECURE_BOOT_CLEAR) {
+    if (FeaturePcdGet (PcdEnforceWindowsPcr11PrivacyPolicy) &&
+        (NewPolicy & STD_ACTION_TPM_CLEAR) != STD_ACTION_TPM_CLEAR) {
+      // Transitions that clear Secure Boot should clear the TPM to provide defence in depth of privacy
+      DEBUG(( DEBUG_ERROR, "%a - MFCI attempt to clear Secure Boot without clearing TPM, possible security concern, aborting...\n", __FUNCTION__));
+      ASSERT (FALSE);
+      return EFI_SECURITY_VIOLATION;
+    }
+    DEBUG(( DEBUG_INFO, "%a - MFCI clearing Secure Boot\n", __FUNCTION__));
     Status = DeleteSecureBootVariables();
   }
   else {
