@@ -216,7 +216,7 @@ SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode)
           else
           {
             //
-            // If current text mode is different from requried text mode.  Set new video mode
+            // If current text mode is different from required text mode.  Set new video mode
             //
             for (Index = 0; Index < MaxTextMode; Index++)
             {

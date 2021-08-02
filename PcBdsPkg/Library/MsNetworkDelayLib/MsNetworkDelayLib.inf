@@ -1,5 +1,5 @@
-## @file
-# Library that is attached to SNPDXE to prevent the network from starting until
+## @file  /* cspell: disable-next-line */
+# Library that is attached to SnpDxe.inf to prevent the network from starting until
 # networking has been requested.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.

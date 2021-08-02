@@ -539,7 +539,7 @@ BootManagerSettingsProviderSupportProtocolNotify(
     Status = sp->RegisterProvider(sp, &mBootManagerProviderTemplate);
     if (EFI_ERROR(Status))
     {
-        DEBUG((DEBUG_ERROR, "Failed to Register BOOT_OREER_LOCK.  Status = %r\n", Status));
+        DEBUG((DEBUG_ERROR, "Failed to Register BOOT_ORDER_LOCK.  Status = %r\n", Status));
     }
     mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__ENABLE_USB_BOOT;
     Status = sp->RegisterProvider(sp, &mBootManagerProviderTemplate);

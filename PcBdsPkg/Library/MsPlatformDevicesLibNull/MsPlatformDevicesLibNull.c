@@ -10,7 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DeviceBootManagerLib.h>
 #include <Library/MsPlatformDevicesLib.h>
 /**
-Library function used to proivide the platform SD Card device path
+Library function used to provide the platform SD Card device path
 **/
 EFI_DEVICE_PATH_PROTOCOL *
 EFIAPI
@@ -36,7 +36,7 @@ PlatformIsDevicePathUsb (
 }
 
 /**
-Library function used to proivide the list of platform devices that MUST be
+Library function used to provide the list of platform devices that MUST be
 connected at the beginning of BDS
 **/
 EFI_DEVICE_PATH_PROTOCOL **
@@ -63,7 +63,7 @@ GetPlatformConsoleList (
 /**
 Library function used to provide the list of platform devices that MUST be connected
 to support ConsoleIn activity.  This call occurs on the ConIn connect event, and
-allows platforms to do specific enablements for ConsoleIn support.
+allows platforms to do enable specific devices ConsoleIn support.
 **/
 EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
