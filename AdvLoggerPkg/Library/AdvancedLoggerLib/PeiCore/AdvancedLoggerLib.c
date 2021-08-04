@@ -7,8 +7,18 @@
 **/
 
 #include <Base.h>
+#include <Uefi.h>
 
 #include <AdvancedLoggerInternal.h>
+
+/**
+  Including the PeiMain.h from PeiCore in order to access the Platform Blob data member.
+
+  This is breaking the rules, but PeiCore on a system using ROM for PeiPremem has no place
+  to store long term data besides the Hob or Ppi list.  Accessing these list for high
+  frequency operations is a performance issue.
+**/
+#include <Core/Pei/PeiMain.h>
 
 #include <Ppi/AdvancedLogger.h>
 
@@ -22,13 +32,15 @@
 #include <Library/MmUnblockMemoryLib.h>
 #include <Library/PeiServicesTablePointerLib.h>
 #include <Library/PcdLib.h>
+#include <Library/PrintLib.h>
 #include <Library/PeiServicesLib.h>
 #include <Library/SynchronizationLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
-STATIC ADVANCED_LOGGER_INFO *mLoggerInfo = NULL;
-
+//
+// Prototype function used in Memory Discovered Ppi
+//
 EFI_STATUS
 EFIAPI
 InstallPermanentMemoryBuffer (
@@ -89,6 +101,7 @@ InstallPermanentMemoryBuffer (
     EFI_PHYSICAL_ADDRESS        NewLogBuffer;
     ADVANCED_LOGGER_INFO       *NewLoggerInfo;
     EFI_PHYSICAL_ADDRESS        OldLoggerBuffer;
+    PEI_CORE_INSTANCE          *PeiCoreInstance;
     EFI_STATUS                  Status;
 
     DEBUG((DEBUG_INFO, "%a: Find PeiCore HOB...\n",  __FUNCTION__));
@@ -120,12 +133,15 @@ InstallPermanentMemoryBuffer (
                 NewLoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
                 NewLoggerInfo->LogCurrent = PA_FROM_PTR( CHAR8_FROM_PA(NewLoggerInfo->LogBuffer) + CurrentLogOffset );
                 NewLoggerInfo->InPermanentRAM = TRUE;
+
+                PeiCoreInstance = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
+                PeiCoreInstance->PlatformBlob = PA_FROM_PTR (NewLoggerInfo);
+
                 //
                 // Update the HOB pointer
                 //
                 OldLoggerBuffer = LogPtr->LogBuffer;
                 LogPtr->LogBuffer = NewLogBuffer;
-                mLoggerInfo = NewLoggerInfo;
 
                 Status = MmUnblockMemoryRequest (NewLogBuffer,  FixedPcdGet32 (PcdAdvancedLoggerPages));
                 if (EFI_ERROR(Status)) {
@@ -161,6 +177,10 @@ InstallPermanentMemoryBuffer (
 
 /**
   Get the SEC Logger Information block
+
+  @param    NONE
+
+  @return   ADVANCED_LOGGER_INFO *    Pointer to the SEC Logger Info Block
 
  **/
 STATIC
@@ -199,6 +219,10 @@ GetSecLoggerInfo (
   Updates the SEC LoggerInfo pointer with the one used by PEI.  This
   way, additional SEC messages will occur in the proper place in the
   log buffer.
+
+  @param  LoggerInfo  - Pointer to the new Logger Info block
+
+  @return NONE
   **/
 STATIC
 VOID
@@ -222,11 +246,15 @@ UpdateSecLoggerInfo (
 /**
   Get the Logger Information block
 
- **/
+  If the PeiCore ADVANCED_LOGGER_INFO block has not been created, create the a new one. Then
+  store a pointer to the block in the Hob for DXE, and update the saved Log Pointer to SEC (if
+  present) and in the PeiCoreInstance.
 
-/*
-   No special security checks before EndOfDxe
-*/
+  @param  NONE
+
+  @return  ADVANCED_LOGGER_INFO *   - Advanced Logger Info pointer.
+
+ **/
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerGetLoggerInfo (
@@ -234,7 +262,7 @@ AdvancedLoggerGetLoggerInfo (
 ) {
     UINTN                       BufferSize;
     EFI_HOB_GUID_TYPE          *GuidHob;
-    VOID                       *HobList;
+    PEI_CORE_INSTANCE          *PeiCoreInstance;
     ADVANCED_LOGGER_INFO       *LoggerInfo;
     ADVANCED_LOGGER_INFO       *LoggerInfoSec;
     ADVANCED_LOGGER_PTR        *LogPtr;
@@ -243,118 +271,119 @@ AdvancedLoggerGetLoggerInfo (
     CONST EFI_PEI_SERVICES    **PeiServices;
     EFI_STATUS                  Status;
 
-    //
-    // Once memory is installed, the static variable will work.
-    //
-    if (mLoggerInfo != NULL) {
-        return mLoggerInfo;
-    }
-
-    // Debug messages prior to the proper initialization of the HOB
-    // is valid.  If there is a SEC Logger Info block, use it.
-    //
-    LoggerInfoSec = GetSecLoggerInfo ();
+    // Try to do the minimum work at the start of this function as this
+    // is called quite often.
     PeiServices = GetPeiServicesTablePointer ();
     if (PeiServices == NULL) {
+
+        // In reality, the GetPeiServicesTablePointer will ASSERT if the
+        // PeiServices table pointer is NULL.  So, this would fail miserably
+        // on DEBUG builds.  It doesn't, so that means there are no DEBUG prints
+        // from PEI_CORE before the PeiServices table pointer is set.
+
+        LoggerInfoSec = GetSecLoggerInfo ();
+
         // Return with possible SEC LoggerInfo
         return LoggerInfoSec;
     }
 
-    HobList = NULL;
-    Status = (*PeiServices)->GetHobList (PeiServices, &HobList);
-    if (EFI_ERROR(Status) || HobList == NULL) {
-        // Return with possible SEC LoggerInfo
-        return LoggerInfoSec;
+    PeiCoreInstance = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
+    LoggerInfo = ALI_FROM_PA(PeiCoreInstance->PlatformBlob);
+    if (LoggerInfo != NULL) {
+        // Logger Info was saved from an earlier call - Return LoggerInfo.
+        return LoggerInfo;
     }
 
     //
-    // If the above tests pass, PEI should be initialized enough to create the HOB,
-    // create the Ppi to capture and display PEIM Debug messages, and register for
-    // the memory available notification.
+    // No Logger Info - this must be the time to allocate a new LoggerInfo and save
+    // the pointer in the PeiCoreInstance.
     //
-    LoggerInfo = LoggerInfoSec;
-    GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
-    if (GuidHob != NULL) {
+    LoggerInfoSec = GetSecLoggerInfo ();
+    Status = PeiServicesCreateHob (
+               EFI_HOB_TYPE_GUID_EXTENSION,
+               (UINT16) (sizeof (EFI_HOB_GUID_TYPE) + sizeof (ADVANCED_LOGGER_PTR)),
+               (VOID **) &GuidHob);
+    if (!EFI_ERROR(Status)) {
         LogPtr = (ADVANCED_LOGGER_PTR *) GET_GUID_HOB_DATA(GuidHob);
-        LoggerInfo = ALI_FROM_PA(LogPtr->LogBuffer);
-    } else {
-        Status = PeiServicesCreateHob (EFI_HOB_TYPE_GUID_EXTENSION,
-                                       (UINT16) (sizeof(EFI_HOB_GUID_TYPE) + sizeof(ADVANCED_LOGGER_PTR)),
-                                       (VOID **) &GuidHob);
-        if (!EFI_ERROR(Status)) {
-            LogPtr = (ADVANCED_LOGGER_PTR *) GET_GUID_HOB_DATA(GuidHob);
-            if (LoggerInfoSec == NULL) {
-                //
-                // This is the "No SEC Debug Agent" path.
-                //
-                // PEI Core must allocate the small temporary buffer for the in memory log,
-                // and register for the Memory Discovered Ppi.  At that time, the full
-                // in memory log buffer is allocated.
-                //
+        if (LoggerInfoSec == NULL) {
+            //
+            // This is the "No SEC Debug Agent" path.
+            //
+            // If PEI Core has the available RAM, the PeiAdvancedLoggerPeiInRAM PCD can be set
+            // to allow the full Logger Buffer to be allocated here.  Otherwise, PEI Core must
+            // allocate the small temporary buffer for the in memory log, and register for the
+            // Memory Discovered Ppi.  At that time, the full in memory log buffer is allocated.
+            //
 
-                if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
-                    Pages =  FixedPcdGet32 (PcdAdvancedLoggerPages);
-                } else {
-                    Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
-                }
-
-                BufferSize = EFI_PAGES_TO_SIZE(Pages);
-
-                Status = PeiServicesAllocatePages (EfiReservedMemoryType,
-                                                   Pages,
-                                                   &NewLoggerInfo);
-                if (!EFI_ERROR(Status)) {
-                    LoggerInfo = (ADVANCED_LOGGER_INFO *) (UINTN) NewLoggerInfo;
-                    ZeroMem ((VOID *)LoggerInfo, BufferSize);
-                    LoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
-                    LoggerInfo->Version = ADVANCED_LOGGER_VERSION;
-                    LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
-                    LoggerInfo->LogBufferSize = BufferSize - sizeof(ADVANCED_LOGGER_INFO);
-                    LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
-                    AdvancedLoggerHdwPortInitialize ();
-                    LoggerInfo->HdwPortInitialized = TRUE;
-                }
+            if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
+                Pages =  FixedPcdGet32 (PcdAdvancedLoggerPages);
             } else {
-                LoggerInfo = LoggerInfoSec;
+                Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
             }
 
-            if (LoggerInfo != NULL) {
-                //
-                // Update the HOB pointer to point to current LoggerInfo
-                //
-                LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
-                LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
+            BufferSize = EFI_PAGES_TO_SIZE (Pages);
 
-                //
-                // Publish the mAdvancedLoggerPpiList
-                CopyGuid (&GuidHob->Name, &gAdvancedLoggerHobGuid);
-                Status = PeiServicesInstallPpi (mAdvancedLoggerPpiList);
-                ASSERT_EFI_ERROR(Status);
-
-                if (LoggerInfoSec != NULL) {
-                    UpdateSecLoggerInfo (LoggerInfo);
-                }
-
-                if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
-                    LoggerInfo->InPermanentRAM = TRUE;
-                    mLoggerInfo = LoggerInfo;
-                    Status = MmUnblockMemoryRequest (NewLoggerInfo, Pages);
-                    if (EFI_ERROR(Status)) {
-                        if (Status != EFI_UNSUPPORTED) {
-                            DEBUG((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
-                        }
-                    } else {
-                        DEBUG((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
-                    }
-                } else {
-                    PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
-                }
-            } else {
-                DEBUG((DEBUG_ERROR, "Error creating Advanced Logger Info Block 1\n"));
+            Status = PeiServicesAllocatePages (
+                        EfiReservedMemoryType,
+                        Pages,
+                        &NewLoggerInfo);
+            if (!EFI_ERROR(Status)) {
+                LoggerInfo = ALI_FROM_PA (NewLoggerInfo);
+                ZeroMem ((VOID *)LoggerInfo, BufferSize);
+                LoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
+                LoggerInfo->Version = ADVANCED_LOGGER_VERSION;
+                LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
+                LoggerInfo->LogBufferSize = BufferSize - sizeof(ADVANCED_LOGGER_INFO);
+                LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
+                AdvancedLoggerHdwPortInitialize ();
+                LoggerInfo->HdwPortInitialized = TRUE;
             }
         } else {
-            DEBUG((DEBUG_ERROR, "Error creating Advanced Logger Info Block 2\n"));
+            LoggerInfo = LoggerInfoSec;
         }
+
+        if (LoggerInfo != NULL) {
+            // Mark the Hob valid by setting its GUID
+
+            CopyGuid (&GuidHob->Name, &gAdvancedLoggerHobGuid);
+            //
+            // Update the HOB pointers to point to the current LoggerInfo
+            //
+            LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
+            LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
+            (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
+
+            //
+            // If LoggerInfo from SEC, then update the SEC pointer to point to the new
+            // PEI Core version of LoggerInfo
+            if (LoggerInfoSec != NULL) {
+                UpdateSecLoggerInfo (LoggerInfo);
+            }
+
+            //
+            // Publish the Advanced Logger Ppi
+            //
+            Status = PeiServicesInstallPpi (mAdvancedLoggerPpiList);
+            ASSERT_EFI_ERROR(Status);
+
+            if (FeaturePcdGet(PcdAdvancedLoggerPeiInRAM)) {
+                LoggerInfo->InPermanentRAM = TRUE;
+                Status = MmUnblockMemoryRequest (NewLoggerInfo, Pages);
+                if (EFI_ERROR(Status)) {
+                    if (Status != EFI_UNSUPPORTED) {
+                        DEBUG ((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
+                    }
+                } else {
+                    DEBUG ((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
+                }
+            } else {
+                PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
+            }
+        } else {
+            DEBUG ((DEBUG_ERROR, "Error creating Advanced Logger Info Block 1\n"));
+        }
+    } else {
+        DEBUG ((DEBUG_ERROR, "Error creating Advanced Logger Info Block 2\n"));
     }
 
     return LoggerInfo;

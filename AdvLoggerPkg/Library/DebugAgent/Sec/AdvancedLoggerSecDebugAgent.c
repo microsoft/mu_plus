@@ -11,6 +11,15 @@
 
 #include <AdvancedLoggerInternal.h>
 
+/**
+  Including the PeiMain.h from PeiCore in order to access the Platform Blob data member.
+
+  This is breaking the rules, but PeiCore on a system using ROM for PeiPremem has no place
+  to store long term data besides the Hob or Ppi list.  Accessing these list for high
+  frequency operations is a performance issue.
+**/
+#include <Core/Pei/PeiMain.h>
+
 #include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -49,12 +58,14 @@ InitializeDebugAgent (
     EFI_PHYSICAL_ADDRESS        CarBase;
     UINTN                       DebugLevel;
     EFI_HOB_GUID_TYPE          *GuidHob;
+    UINTN                       LogBufferSize;
     ADVANCED_LOGGER_INFO       *LoggerInfo;
     ADVANCED_LOGGER_PTR        *LogPtr;
     ADVANCED_LOGGER_PTR        *LogPtrSec;
     EFI_PHYSICAL_ADDRESS        NewLogBuffer;
     ADVANCED_LOGGER_INFO       *NewLoggerInfo;
-    UINTN                       LogBufferSize;
+    PEI_CORE_INSTANCE          *PeiCoreInstance;
+    CONST EFI_PEI_SERVICES    **PeiServices;
     EFI_SEC_PEI_HAND_OFF       *SecCoreData;
     EFI_PHYSICAL_ADDRESS        SecLogBuffer;
     EFI_STATUS                  Status;
@@ -192,11 +203,15 @@ InitializeDebugAgent (
                     NewLoggerInfo->LogCurrent = PA_FROM_PTR( TargetLog + BufferSize );
                     NewLoggerInfo->InPermanentRAM = TRUE;
 
+                    PeiServices = GetPeiServicesTablePointer ();
+                    PeiCoreInstance = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
+                    PeiCoreInstance->PlatformBlob = PA_FROM_PTR (NewLoggerInfo);
+
                     //
-                    // Update the HOB pointer
+                    // Update the HOB Buffer LoggerInfo pointers
                     //
                     LogPtr->LogBuffer = NewLogBuffer;
-                    //
+
                     // Update the SEC pointer and free the RamForSEC buffer.
                     //
                     LogPtrSec = (ADVANCED_LOGGER_PTR *) (VOID *) FixedPcdGet64 (PcdAdvancedLoggerBase);
