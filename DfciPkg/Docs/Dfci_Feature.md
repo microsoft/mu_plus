@@ -80,9 +80,9 @@ The DFCI source code and public certificate are available on GitHub under a perm
 source license (SPDX-License-Identifier: BSD-2-Clause-Patent).
 
 Links to the source code (last updaded to release/202102)
+
 * <https://github.com/microsoft/mu_plus/tree/release/202102/DfciPkg>
 * <https://github.com/microsoft/mu_plus/tree/release/202102/ZeroTouchPkg>
-
 
 There is also an example UEFI BIOS menu that demonstrates how to integrate DFCI:
 
