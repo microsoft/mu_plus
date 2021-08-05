@@ -300,7 +300,7 @@ certain settings.
 ### Settings provider for enabled features without platform control
 
 Please refer to the DfciVirtualizationSettings provider in [Project mu_plus](
-https://github.com/microsoft/mu_plus/tree/release/202002/DfciPkg/Library/DfciVirtualizationSettings)
+https://github.com/microsoft/mu_plus/tree/release/202102/DfciPkg/Library/DfciVirtualizationSettings)
 for this section.
 A platform may conform to a Enabled setting, but have no method to control this setting.
 The CPU and I/O virtualization setting is one of those.
