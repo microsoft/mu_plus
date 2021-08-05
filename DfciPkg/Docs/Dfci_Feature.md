@@ -80,8 +80,8 @@ The DFCI source code and public certificate are available on GitHub under a perm
 source license (SPDX-License-Identifier: BSD-2-Clause-Patent).
 
 Source code hard links to the source
-* <https://github.com/microsoft/mu_plus/tree/dev/202102/DfciPkg>
-* <https://github.com/microsoft/mu_plus/tree/dev/202102/ZeroTouchPkg>
+* <https://github.com/microsoft/mu_plus/tree/release/202102/DfciPkg>
+* <https://github.com/microsoft/mu_plus/tree/release/202102/ZeroTouchPkg>
 
 Source code relative from this version of the documentation:
 
