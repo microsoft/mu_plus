@@ -79,7 +79,7 @@ included in the UEFI BIOS image.
 The DFCI source code and public certificate are available on GitHub under a permissive open
 source license (SPDX-License-Identifier: BSD-2-Clause-Patent).
 
-Links to the source code (last updaded to release/202102)
+Links to the source code (last updated to release/202102)
 
 * <https://github.com/microsoft/mu_plus/tree/release/202102/DfciPkg>
 * <https://github.com/microsoft/mu_plus/tree/release/202102/ZeroTouchPkg>
