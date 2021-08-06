@@ -32,6 +32,7 @@
 #define DELAY_NVME         5
 #define DELAY_BETWEEN_TEST 2
 #define DELAY_SPINNER_ON   5
+#define DELAY_TO_STOP      1
 
 //
 // All test status messages printed on row 0 are assumed to be the same length.  This way,
@@ -44,6 +45,8 @@
 #define MSG_DFCI_START     L"The Dfci spinner should be displayed for %d seconds                   "
 #define MSG_DFCI_DISMISSED L"The Dfci spinner should have been dismissed. Continuing in %d seconds "
 #define MSG_GENERAL_START  L"The NVMe spinner should be displayed in 3 corners for %d seconds      "
+#define MSG_GENERAL_MID    L"Adding the 4th and 5th spinner for %d seconds                         "
+#define MSG_GENERAL_STOP   L"Removing each spinner, one at a time one second apart                 "
 #define MSG_FINISHED       L"The Spinner Test has completed\n"
 
 #define MSG_HELP L"\
@@ -308,14 +311,17 @@ SpinnerTestEntry (
   EfiEventGroupSignal (&gGeneralSpinner3StartEventGroupGuid);
   EfiEventGroupSignal (&gGeneralSpinner4StartEventGroupGuid);
   EfiEventGroupSignal (&gNVMeEnableStartEventGroupGuid);
-  MicroSecondDelay (DELAY_ONE_SECOND);
+  DisplayMessageWithTimeout (MSG_GENERAL_START, DELAY_NVME);
+
   EfiEventGroupSignal (&gGeneralSpinner1StartEventGroupGuid);
-  DisplayMessageWithTimeout (MSG_GENERAL_START, DELAY_SPINNER_ON);
+  DisplayMessageWithTimeout (MSG_GENERAL_MID, DELAY_BETWEEN_TEST);
 
   //
   // Step 10. Start stopping the GP spinners one at a time
   //
+  DisplayMessageWithTimeout (MSG_GENERAL_STOP, DELAY_TO_STOP);
   EfiEventGroupSignal (&gNVMeEnableCompleteEventGroupGuid);
+  MicroSecondDelay (DELAY_ONE_SECOND);
 
   EfiEventGroupSignal (&gGeneralSpinner4CompleteEventGroupGuid);
   MicroSecondDelay (DELAY_ONE_SECOND);
@@ -327,6 +333,7 @@ SpinnerTestEntry (
   MicroSecondDelay (DELAY_ONE_SECOND);
 
   EfiEventGroupSignal (&gGeneralSpinner1CompleteEventGroupGuid);
+  MicroSecondDelay (DELAY_ONE_SECOND);
 
   //
   // Step 11.  Clear the screen, display complete message, and restore the OSK Icon
