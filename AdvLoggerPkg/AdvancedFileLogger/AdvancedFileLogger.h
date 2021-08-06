@@ -67,7 +67,7 @@ typedef struct {
 #define DEBUG_LOG_CHUNK_SIZE (EFI_PAGE_SIZE * 16)            // # of pages per write to log (64KB)
 #define DEBUG_LOG_FILE_SIZE  (DEBUG_LOG_CHUNK_SIZE * (FixedPcdGet32 (PcdAdvancedLoggerPages) / 16))     // # chunks per log file
 
-#define LOG_DIRECTORY_NAME L"\\Logs"
+#define LOG_DIRECTORY_NAME L"\\UefiLogs"
 
 //
 //Iterate through the double linked list. NOT delete safe

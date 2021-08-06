@@ -22,7 +22,7 @@ PCD's used by Advanced Logger
 
 | PCD                                     | Function of the PCD|
 | ---                                     | --- |
-|PcdAdvancedLoggerForceEnable             | The default operation is to check if a Logs directory is present in the root of the filesystem.  If the logs directory is present, logging is enabled. When PcdAdvancedLoggerForceEnable is TRUE, and the device is not a USB device, a Logs directory will be created and logging is enabled.  When logging is enabled, the proper log files will be created if not already preset.|
+|PcdAdvancedLoggerForceEnable             | The default operation is to check if a Logs directory is present in the root of the filesystem.  If the UefiLogs directory is present, logging is enabled. When PcdAdvancedLoggerForceEnable is TRUE, and the device is not a USB device, a UefiLogs directory will be created and logging is enabled.  When logging is enabled, the proper log files will be created if not already preset.|
 |PcdAdvancedLoggerPeiInRAM                | For system that have memory at PeiCore entry. The full in memory log buffer if PcdAdvancedLoggerPages is allocated in the Pei Core constructor and PcdAdvancedLoggerPreMemPages is ignored.|
 |PcdAdvancedHdwLoggerDebugPrintErrorLevel | The standard debug flags filter which log messages are produced.  This PCD allow a subset of log messages to be forwarded to the Hdw Port Lib.|
 |PcdAdvancedHdwLoggerDisable              | Specifies when to disable writing to the Hdw Port.|
@@ -111,7 +111,7 @@ The Advanced File Logger monitors for file systems mounted during boot.
 When an eligible file system is detected, the log is flushed to the file system.
 The log is flushed if the system is reset during POST, and at Exit Boot Services.
 
-An eligible file system is one with a Logs directory in the root of the file system.
+An eligible file system is one with a UefiLogs directory in the root of the file system.
 If no log files are present, the Advanced File Logger will create a log index file which
 contains the index of the last log file written, and nine log files each PcdAdvancedLoggerPages
 in size.
