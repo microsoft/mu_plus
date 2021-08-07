@@ -10,16 +10,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "AdvancedFileLogger.h"
 
 
-STATIC DEBUG_LOG_FILE_INFO  mLogFiles[] = { { L"\\Logs\\UEFI_Index.txt", INDEX_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log1.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log2.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log3.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log4.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log5.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log6.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log7.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log8.txt", DEBUG_LOG_FILE_SIZE },
-                                            { L"\\Logs\\UEFI_Log9.txt", DEBUG_LOG_FILE_SIZE } };
+STATIC DEBUG_LOG_FILE_INFO  mLogFiles[] = { { LOG_DIRECTORY_NAME L"\\UEFI_Index.txt", INDEX_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log1.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log2.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log3.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log4.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log5.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log6.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log7.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log8.txt", DEBUG_LOG_FILE_SIZE },
+                                            { LOG_DIRECTORY_NAME L"\\UEFI_Log9.txt", DEBUG_LOG_FILE_SIZE } };
 #define DEBUG_LOG_FILE_COUNT ARRAY_SIZE(mLogFiles)
 
 
