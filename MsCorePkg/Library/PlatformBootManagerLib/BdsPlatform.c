@@ -111,7 +111,7 @@ IsGopDevicePath (
 }
 
 /**
-  Remove all GOP device path instance from DevicePath and add the Gop to the DevicePath.
+  Remove all GOP device path instance from DevicePath and add the GOP to the DevicePath.
 **/
 EFI_DEVICE_PATH_PROTOCOL *
 UpdateGopDevicePath (
@@ -176,24 +176,7 @@ PlatformBootManagerBeforeConsole (
   EFI_HANDLE                          Handle;
   BDS_CONSOLE_CONNECT_ENTRY          *PlatformConsoles;
 
-  UINTN                     TempSize;
-  BOOLEAN                   IsConsoleConfigured;
-
   mBootMode = GetBootModeHob();  // BeforeConsole has to be called before AfterConsole.
-
-  IsConsoleConfigured = TRUE;
-  // Try to find ConIn and ConOut from variable services, either variable is not configured will set flag to FALSE
-  TempSize = 0;
-  Status = gRT->GetVariable (EFI_CON_IN_VARIABLE_NAME, &gEfiGlobalVariableGuid, NULL, &TempSize, NULL);
-  if (Status != EFI_BUFFER_TOO_SMALL) {
-      IsConsoleConfigured = FALSE;
-  }
-
-  TempSize = 0;
-  Status = gRT->GetVariable (EFI_CON_OUT_VARIABLE_NAME, &gEfiGlobalVariableGuid, NULL, &TempSize, NULL);
-  if (Status != EFI_BUFFER_TOO_SMALL) {
-      IsConsoleConfigured = FALSE;
-  }
 
   //
   // Append Usb Keyboard short form DevicePath into "ConIn"
@@ -213,7 +196,7 @@ PlatformBootManagerBeforeConsole (
   Handle = DeviceBootManagerBeforeConsole (&TempDevicePath, &PlatformConsoles);
 
   //
-  // Update ConOut variable accordign to the Console Handle
+  // Update ConOut variable according to the Console Handle
   //
   ConsoleOut = NULL;
   GetEfiGlobalVariable2 (L"ConOut", (VOID **) &ConsoleOut,NULL);
@@ -233,6 +216,9 @@ PlatformBootManagerBeforeConsole (
                       GetDevicePathSize (ConsoleOut),
                       ConsoleOut
                       );
+      if (EFI_ERROR(Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Error setting ConOut. Code = %r\n", __FUNCTION__, Status));
+      }
     }
   }
 
@@ -249,29 +235,22 @@ PlatformBootManagerBeforeConsole (
       mBootMode == BOOT_WITH_FULL_CONFIGURATION_PLUS_DIAGNOSTICS ||
       mBootMode == BOOT_IN_RECOVERY_MODE) {
 
-
-    if (IsConsoleConfigured == FALSE) {
-      //
-      // Only fill ConIn/ConOut when ConIn/ConOut is empty because we may drop to Full Configuration boot mode in non-first boot
-      //
-
-      if (PlatformConsoles != NULL) {
-          while ((*PlatformConsoles).DevicePath != NULL) {
-            //
-            // Update the console variable with the connect type
-            //
-            if (((*PlatformConsoles).ConnectType & CONSOLE_IN) == CONSOLE_IN) {
-              EfiBootManagerUpdateConsoleVariable (ConIn, (*PlatformConsoles).DevicePath, NULL);
-            }
-            if (((*PlatformConsoles).ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
-              EfiBootManagerUpdateConsoleVariable (ConOut, (*PlatformConsoles).DevicePath, NULL);
-            }
-            if (((*PlatformConsoles).ConnectType & STD_ERROR) == STD_ERROR) {
-              EfiBootManagerUpdateConsoleVariable (ErrOut, (*PlatformConsoles).DevicePath, NULL);
-            }
-            PlatformConsoles++;
+    if (PlatformConsoles != NULL) {
+        while ((*PlatformConsoles).DevicePath != NULL) {
+          //
+          // Update the console variable with the connect type
+          //
+          if (((*PlatformConsoles).ConnectType & CONSOLE_IN) == CONSOLE_IN) {
+            EfiBootManagerUpdateConsoleVariable (ConIn, (*PlatformConsoles).DevicePath, NULL);
           }
-      }
+          if (((*PlatformConsoles).ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
+            EfiBootManagerUpdateConsoleVariable (ConOut, (*PlatformConsoles).DevicePath, NULL);
+          }
+          if (((*PlatformConsoles).ConnectType & STD_ERROR) == STD_ERROR) {
+            EfiBootManagerUpdateConsoleVariable (ErrOut, (*PlatformConsoles).DevicePath, NULL);
+          }
+          PlatformConsoles++;
+        }
     }
   }
 
@@ -351,7 +330,7 @@ SetMorControl (
 
 
 /**
-  The function will excute with as the platform policy, current policy
+  The function will execute with as the platform policy, current policy
   is driven by boot mode. IBV/OEM can customize this code for their specific
   policy action.
 
