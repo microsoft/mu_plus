@@ -49,10 +49,42 @@ InstallPermanentMemoryBuffer (
   IN VOID                       *Ppi
 );
 
-ADVANCED_LOGGER_PPI                 mAdvancedLoggerPpi = {
-    AdvancedLoggerWrite,
-    DebugVPrint,
-    DebugAssert,
+//
+// Prototype functions used in Advanced Logger Ppi
+//
+VOID
+EFIAPI
+AdvancedLoggerWritePpi (
+  IN        UINTN                ErrorLevel,
+  IN  CONST CHAR8               *Buffer,
+  IN        UINTN                NumberOfBytes
+);
+
+VOID
+EFIAPI
+AdvancedLoggerPrintPpi (
+  IN        UINTN                ErrorLevel,
+  IN  CONST CHAR8               *Format,
+  IN        VA_LIST              VaListMarker
+);
+
+VOID
+EFIAPI
+AdvancedLoggerAssertPpi (
+  IN CONST CHAR8               *FileName,
+  IN       UINTN                LineNumber,
+  IN CONST CHAR8               *Description
+);
+
+//
+// Ppi and Notification lists
+//
+ADVANCED_LOGGER_PPI       mAdvancedLoggerPpi = {
+  ADVANCED_LOGGER_PPI_SIGNATURE,
+  ADVANCED_LOGGER_PPI_VERSION,
+  AdvancedLoggerWritePpi,
+  AdvancedLoggerPrintPpi,
+  AdvancedLoggerAssertPpi,
 };
 
 CONST EFI_PEI_PPI_DESCRIPTOR        mAdvancedLoggerPpiList[] = {
@@ -70,6 +102,63 @@ CONST EFI_PEI_NOTIFY_DESCRIPTOR     mMemoryDiscoveredNotifyList[] = {
         InstallPermanentMemoryBuffer
     }
 };
+
+/**
+  Ppi Function for routing Advanced Logger Write
+
+  @param  ErrorLevel      The error level of the debug message.
+  @param  Buffer          The debug message to log.
+  @param  NumberOfBytes   Number of bytes in the debug message.
+
+**/
+VOID
+EFIAPI
+AdvancedLoggerWritePpi (
+    IN        UINTN                ErrorLevel,
+    IN  CONST CHAR8               *Buffer,
+    IN        UINTN                NumberOfBytes
+    ) {
+
+  AdvancedLoggerWrite (ErrorLevel, Buffer, NumberOfBytes);
+}
+
+/**
+  Ppi Function pointer for routing DebugVPrint
+
+  @param  ErrorLevel    The error level of the debug message.
+  @param  Format        Format string for the debug message to print.
+  @param  VaListMarker  VA_LIST marker for the variable argument list.
+
+**/
+VOID
+EFIAPI
+AdvancedLoggerPrintPpi (
+    IN  UINTN                ErrorLevel,
+    IN  CONST CHAR8         *Format,
+    VA_LIST                  VaListMarker
+   ) {
+
+    DebugVPrint (ErrorLevel, Format, VaListMarker);
+}
+
+/**
+  Ppi Function for routing DebugAssert function
+
+  @param  FileName        The pointer to the name of the source file that generated the assert condition.
+  @param  LineNumber      The line number in the source file that generated the assert condition
+  @param  Description     The pointer to the description of the assert condition.
+
+**/
+VOID
+EFIAPI
+AdvancedLoggerAssertPpi (
+    IN CONST CHAR8               *FileName,
+    IN       UINTN                LineNumber,
+    IN CONST CHAR8               *Description
+   ) {
+
+    DebugAssert (FileName, LineNumber, Description);
+}
 
 /**
    This function installs the full Advanced Logger memory buffer.
@@ -104,7 +193,7 @@ InstallPermanentMemoryBuffer (
     PEI_CORE_INSTANCE          *PeiCoreInstance;
     EFI_STATUS                  Status;
 
-    DEBUG((DEBUG_INFO, "%a: Find PeiCore HOB...\n",  __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Find PeiCore HOB for Install Permanent Buffer...\n",  __FUNCTION__));
     GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
     if (GuidHob == NULL) {
         DEBUG((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n",  __FUNCTION__));

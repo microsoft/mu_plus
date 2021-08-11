@@ -20,8 +20,6 @@
     @param  Buffer           Pointer to the data buffer to be written.
     @param  NumberOfBytes    Number of bytes to written to the log.
 
-  @retval LoggerInfo       Returns the logger info block. Returns NULL
-                           if it cannot be located. This occurs prior to SEC completion.
 **/
 VOID
 EFIAPI

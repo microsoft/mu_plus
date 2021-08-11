@@ -1,6 +1,6 @@
 /** @file
   Base Assert library instance with telemetry
-  Proviced the Assert functionality for DebugLib
+  Provided the Assert functionality for DebugLib
 
   Copyright (c) 2006 - 2019, Intel Corporation. All rights reserved.<BR>
   Copyright (c) Microsoft Corporation. All rights reserved.
@@ -8,7 +8,11 @@
 
 **/
 
+#include <Uefi.h>
 #include <Base.h>
+
+#include <AdvancedLoggerInternal.h>
+
 #include <Library/AdvancedLoggerLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>

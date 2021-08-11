@@ -49,6 +49,9 @@ SmmInitializeLoggerInfo (
 
         if (EFI_ERROR(Status)) {
             mSmmLoggerProtocol = NULL;
+        } else {
+            ASSERT(mSmmLoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+            ASSERT(mSmmLoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
         }
 
         //
@@ -79,7 +82,7 @@ AdvancedLoggerWrite (
     SmmInitializeLoggerInfo ();
 
     if (mSmmLoggerProtocol != NULL) {
-        mSmmLoggerProtocol->AdvancedLoggerWrite (ErrorLevel, Buffer, NumberOfBytes);
+        mSmmLoggerProtocol->AdvancedLoggerWriteProtocol (mSmmLoggerProtocol, ErrorLevel, Buffer, NumberOfBytes);
     }
 }
 

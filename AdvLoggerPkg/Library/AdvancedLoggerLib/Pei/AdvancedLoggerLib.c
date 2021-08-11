@@ -7,11 +7,14 @@
 **/
 
 #include <Base.h>
+#include <Uefi.h>
+
+#include <AdvancedLoggerInternal.h>
 
 #include <Ppi/AdvancedLogger.h>
 
+#include <Library/DebugLib.h>
 #include <Library/PeiServicesLib.h>
-
 
 /**
   Advanced Logger Write
@@ -37,7 +40,11 @@ AdvancedLoggerWrite (
               NULL,
               (VOID **) &AdvancedLoggerPpi
               );
+
     if (Status == EFI_SUCCESS) {
-        AdvancedLoggerPpi->AdvancedLoggerWrite (ErrorLevel, Buffer, NumberOfBytes);
+        ASSERT (AdvancedLoggerPpi->Signature == ADVANCED_LOGGER_PPI_SIGNATURE);
+        ASSERT (AdvancedLoggerPpi->Version == ADVANCED_LOGGER_PPI_VERSION);
+
+        AdvancedLoggerPpi->AdvancedLoggerWritePpi (ErrorLevel, Buffer, NumberOfBytes);
     }
 }

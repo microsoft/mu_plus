@@ -8,7 +8,10 @@
 
 #include <PiDxe.h>
 
+#include <AdvancedLoggerInternal.h>
+
 #include <Protocol/AdvancedLogger.h>
+#include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/AdvancedLoggerAccessLib.h>
 #include <Library/BaseLib.h>
@@ -18,9 +21,6 @@
 #include <Library/PrintLib.h>
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-
-#include <AdvancedLoggerInternal.h>
-
 
 STATIC  ADVANCED_LOGGER_INFO          *mLoggerInfo = NULL;
 STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY *mLowAddress = NULL;
@@ -332,7 +332,7 @@ AdvancedLoggerAccessLibUnitTestInitialize (
     }
 
     if (!EFI_ERROR(Status)) {
-        mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
+        mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
         mLowAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer);
         mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
     }
@@ -356,7 +356,7 @@ AdvancedLoggerAccessLibConstructor (
                                    NULL,
                                   (VOID **) &LoggerProtocol);
     if (!EFI_ERROR(Status)) {
-        mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
+        mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
         mLowAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer);
         mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
 

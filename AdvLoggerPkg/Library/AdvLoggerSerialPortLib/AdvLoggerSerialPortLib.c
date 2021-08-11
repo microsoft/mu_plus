@@ -9,7 +9,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include <Uefi/UefiBaseType.h>
+#include <Uefi.h>
+
+#include <AdvancedLoggerInternal.h>
+
 #include <Protocol/SerialIo.h>
 
 #include <Library/AdvancedLoggerLib.h>

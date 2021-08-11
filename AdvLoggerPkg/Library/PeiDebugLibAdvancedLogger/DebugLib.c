@@ -10,6 +10,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <PiPei.h>
 
+#include <AdvancedLoggerInternal.h>
+
 #include <Guid/StatusCodeDataTypeId.h>
 #include <Guid/StatusCodeDataTypeDebug.h>
 #include <Ppi/AdvancedLogger.h>
@@ -45,7 +47,7 @@ DebugVPrint (
   IN  CONST CHAR8   *Format,
   IN  VA_LIST       VaListMarker
   ) {
-  ADVANCED_LOGGER_PPI *AdvLoggerPPI;
+  ADVANCED_LOGGER_PPI *AdvLoggerPpi;
   EFI_STATUS           Status;
 
   //
@@ -64,10 +66,10 @@ DebugVPrint (
               &gAdvancedLoggerPpiGuid,
               0,
               NULL,
-              (VOID **) &AdvLoggerPPI
+              (VOID **) &AdvLoggerPpi
               );
   if (Status == EFI_SUCCESS) {
-    AdvLoggerPPI->AdvancedLoggerPrint (ErrorLevel, Format, VaListMarker);
+    AdvLoggerPpi->AdvancedLoggerPrintPpi (ErrorLevel, Format, VaListMarker);
   }
 }
 
@@ -132,18 +134,18 @@ DebugAssert (
   IN CONST CHAR8  *Description
   )
 {
-  ADVANCED_LOGGER_PPI *AdvLoggerPPI;
+  ADVANCED_LOGGER_PPI *AdvLoggerPpi;
   EFI_STATUS           Status;
 
   Status = PeiServicesLocatePpi (
               &gAdvancedLoggerPpiGuid,
               0,
               NULL,
-              (VOID **) &AdvLoggerPPI
+              (VOID **) &AdvLoggerPpi
               );
 
   if (!EFI_ERROR (Status)) {
-    AdvLoggerPPI->AdvancedLoggerAssert (FileName, LineNumber, Description);
+    AdvLoggerPpi->AdvancedLoggerAssertPpi (FileName, LineNumber, Description);
   }
   else {
     //

@@ -41,6 +41,7 @@ AdvancedLoggerHdwPortInitialize (
   If Buffer is NULL, then ASSERT().
   If NumberOfBytes is zero, then return 0.
 
+  @param  DebugLevel       Debug flags
   @param  Buffer           Pointer to the data buffer to be written.
   @param  NumberOfBytes    Number of bytes to written to the hardware device.
 

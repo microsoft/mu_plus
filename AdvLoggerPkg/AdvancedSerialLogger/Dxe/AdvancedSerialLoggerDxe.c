@@ -384,9 +384,12 @@ AdvancedSerialLoggerEntry (
         goto Exit;
     }
 
+    ASSERT(LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+    ASSERT(LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+
     SerialPortInitialize();
 
-    mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
+    mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
 
     //
     // Step 1 - Start the first group of messages

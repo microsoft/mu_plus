@@ -11,6 +11,7 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseLib.h>
@@ -31,19 +32,51 @@ STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
 STATIC UINT32                   mBufferSize = 0;
 STATIC EFI_PHYSICAL_ADDRESS     mMaxAddress = 0;
 
-STATIC ADVANCED_LOGGER_PROTOCOL mLoggerProtocol = {
-                                                   ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
-                                                   0,
-                                                   AdvancedLoggerWrite,
-                                                   0
+VOID
+EFIAPI
+AdvancedLoggerWriteProtocol (
+    IN  ADVANCED_LOGGER_PROTOCOL *This,
+    IN  UINTN                     ErrorLevel,
+    IN  CONST CHAR8              *Buffer,
+    IN  UINTN                    NumberOfBytes
+);
+
+STATIC ADVANCED_LOGGER_PROTOCOL_CONTAINER  mAdvLoggerProtocol = {
+  .AdvLoggerProtocol = {
+    .Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
+    .Version = ADVANCED_LOGGER_PROTOCOL_VERSION,
+    .AdvancedLoggerWriteProtocol = AdvancedLoggerWriteProtocol
+  },
+  .LoggerInfo = NULL
 };
+
+/**
+  AdvancedLoggerWriteProtocol
+
+  @param  This            Pointer to Protocol,
+  @param  ErrorLevel      The error level of the debug message.
+  @param  Buffer          The debug message to log.
+  @param  NumberOfBytes   Number of bytes in the debug message.
+
+**/
+VOID
+EFIAPI
+AdvancedLoggerWriteProtocol (
+    IN        ADVANCED_LOGGER_PROTOCOL *This,
+    IN        UINTN                     ErrorLevel,
+    IN  CONST CHAR8                    *Buffer,
+    IN        UINTN                     NumberOfBytes
+) {
+
+  AdvancedLoggerWrite (ErrorLevel, Buffer, NumberOfBytes);
+}
 
 /**
     ValidateInfoBlock
 
     The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.  The
     pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here, we check that
-    the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which is used in multiple places
+    the pointers are within the allocated LoggerInfo space, and that LogBufferSize, which is used in multiple places
     to see if a new message will fit into the log buffer, is valid.
 
     @param          NONE
@@ -81,6 +114,7 @@ ValidateInfoBlock (
             return FALSE;
         }
     }
+
     return TRUE;
 }
 
@@ -104,7 +138,6 @@ AdvancedLoggerGetLoggerInfo (
         if (GuidHob != NULL) {
             LogPtr = (ADVANCED_LOGGER_PTR * ) GET_GUID_HOB_DATA(GuidHob);
             mLoggerInfo = ALI_FROM_PA(LogPtr->LogBuffer);
-            mLoggerProtocol.Context = (VOID *) mLoggerInfo;
             if (!mLoggerInfo->HdwPortInitialized) {
                 AdvancedLoggerHdwPortInitialize();
                 mLoggerInfo->HdwPortInitialized = TRUE;
@@ -255,7 +288,7 @@ DxeCoreAdvancedLoggerLibConstructor (
     ADVANCED_LOGGER_INFO *LoggerInfo;
     EFI_STATUS            Status;
 
-    LoggerInfo = AdvancedLoggerGetLoggerInfo ();    // Sets mLoggerInfo if LoggerInfo found
+    LoggerInfo = AdvancedLoggerGetLoggerInfo ();    // Sets LoggerInfo if LoggerInfo found
 
     //
     // For an implementation of the AdvancedLogger with a PEI implementation, there will be a
@@ -270,22 +303,20 @@ DxeCoreAdvancedLoggerLibConstructor (
             LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
             LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
             LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
-            mLoggerInfo = LoggerInfo;
             mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
-            mLoggerProtocol.Context = (VOID *) mLoggerInfo;
         } else {
             DEBUG((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));
         }
-    } else {
-        mLoggerProtocol.Context = (VOID *) mLoggerInfo;
     }
 
-    if (mLoggerInfo != NULL) {
+    mLoggerInfo = LoggerInfo;
+    if (LoggerInfo != NULL) {
+        mAdvLoggerProtocol.LoggerInfo = LoggerInfo;
         mLoggerInfo->TimerFrequency = GetPerformanceCounterProperties (NULL, NULL);
         Status = SystemTable->BootServices->InstallProtocolInterface (&ImageHandle,
                                                                       &gAdvancedLoggerProtocolGuid,
                                                                        EFI_NATIVE_INTERFACE,
-                                                                      &mLoggerProtocol);
+                                                                      &mAdvLoggerProtocol.AdvLoggerProtocol);
 
         if (EFI_ERROR(Status)) {
             DEBUG((DEBUG_ERROR, "%a: Error installing protocol - %r\n", __FUNCTION__, Status));
@@ -293,7 +324,7 @@ DxeCoreAdvancedLoggerLibConstructor (
         }
     }
 
-    DEBUG((DEBUG_INFO, "%a Initialized. mLoggerInfo = %p\n", __FUNCTION__, mLoggerInfo));
+    DEBUG((DEBUG_INFO, "%a Initialized. mLoggerInfo = %p, Container=%p\n", __FUNCTION__, mLoggerInfo, &mAdvLoggerProtocol));
 
     ProcessProtocolRegistration (
         SystemTable,

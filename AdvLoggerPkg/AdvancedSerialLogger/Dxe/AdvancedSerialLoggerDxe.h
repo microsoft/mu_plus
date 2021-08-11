@@ -17,6 +17,8 @@
 #include <Guid/EventGroup.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <AdvancedLoggerInternalProtocol.h>
+
 #include <Protocol/ResetNotification.h>
 
 #include <Library/AdvancedLoggerAccessLib.h>

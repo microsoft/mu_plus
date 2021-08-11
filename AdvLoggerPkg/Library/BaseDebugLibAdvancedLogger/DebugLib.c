@@ -11,7 +11,11 @@
 
 **/
 
+#include <Uefi.h>
 #include <Base.h>
+
+#include <AdvancedLoggerInternal.h>
+
 #include <Library/AdvancedLoggerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/BaseLib.h>

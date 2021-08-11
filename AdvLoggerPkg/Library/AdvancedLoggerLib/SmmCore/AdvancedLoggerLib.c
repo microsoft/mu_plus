@@ -11,6 +11,7 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <AdvancedLoggerInternalProtocol.h>
 
 #include <Pi/PiSmmCis.h>
 
@@ -22,11 +23,49 @@
 
 #include "../AdvancedLoggerCommon.h"
 
-STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
-STATIC UINT32                   mBufferSize = 0;
-STATIC EFI_PHYSICAL_ADDRESS     mMaxAddress = 0;
-STATIC BOOLEAN                  mInitialized = FALSE;
-STATIC ADVANCED_LOGGER_PROTOCOL mSmmLoggerProtocol;
+STATIC ADVANCED_LOGGER_INFO *mLoggerInfo;
+STATIC UINT32                mBufferSize = 0;
+STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress = 0;
+STATIC BOOLEAN               mInitialized = FALSE;
+
+VOID
+EFIAPI
+AdvancedLoggerWriteProtocol (
+    IN        ADVANCED_LOGGER_PROTOCOL *This,
+    IN        UINTN                     ErrorLevel,
+    IN  CONST CHAR8                    *Buffer,
+    IN        UINTN                     NumberOfBytes
+);
+
+STATIC ADVANCED_LOGGER_PROTOCOL_CONTAINER  mAdvLoggerProtocol = {
+  .AdvLoggerProtocol = {
+    .Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
+    .Version = ADVANCED_LOGGER_PROTOCOL_VERSION,
+    .AdvancedLoggerWriteProtocol = AdvancedLoggerWriteProtocol
+  },
+  .LoggerInfo = NULL
+};
+
+/**
+  AdvancedLoggerWriteProtocol
+
+  @param  This            Pointer to Advanced Logger Protocol,
+  @param  ErrorLevel      The error level of the debug message.
+  @param  Buffer          The debug message to log.
+  @param  NumberOfBytes   Number of bytes in the debug message.
+
+**/
+VOID
+EFIAPI
+AdvancedLoggerWriteProtocol (
+    IN        ADVANCED_LOGGER_PROTOCOL *This,
+    IN        UINTN                     ErrorLevel,
+    IN  CONST CHAR8                    *Buffer,
+    IN        UINTN                     NumberOfBytes
+) {
+
+    AdvancedLoggerWrite (ErrorLevel, Buffer, NumberOfBytes);
+}
 
 /**
     CheckAddress
@@ -104,20 +143,15 @@ SmmInitializeLoggerInfo (
                                        NULL,
                                       (VOID **) &LoggerProtocol);
         if (!EFI_ERROR(Status)) {
-            mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
+            mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
             if (mLoggerInfo != NULL) {
                 mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
-
-                mSmmLoggerProtocol.Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE;
-                mSmmLoggerProtocol.Reserved = 0;
-                mSmmLoggerProtocol.Context = (VOID *) mLoggerInfo;
-                mSmmLoggerProtocol.AdvancedLoggerWrite = AdvancedLoggerWrite;
 
                 Status = gSmst->SmmInstallProtocolInterface (
                                   &Handle,
                                   &gAdvancedLoggerProtocolGuid,
                                   EFI_NATIVE_INTERFACE,
-                                  &mSmmLoggerProtocol
+                                  &mAdvLoggerProtocol.AdvLoggerProtocol
                                   );
             }
         }

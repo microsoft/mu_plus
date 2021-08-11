@@ -9,7 +9,10 @@
 
 **/
 
-#include <Base.h>
+#include <Uefi.h>
+
+#include <AdvancedLoggerInternal.h>
+
 #include <Library/AdvancedLoggerLib.h>
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>

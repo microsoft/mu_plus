@@ -12,6 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/AdvancedLoggerAccessLib.h>
 #include <Library/BaseLib.h>
@@ -58,30 +59,30 @@ CHAR8       *InternalMemoryLog[] = {
 // The following text represents the output lines from the line parser given the above input
 
 /* spell-checker: disable */
-CHAR8    Line00[] = " 9:06:45.012 First normal test line\n";
-CHAR8    Line01[] = " 9:06:45.012 The QueryMode() function returns information for an available graphics mod\n";
-CHAR8    Line02[] = " 9:06:45.012 e that the graphics device and the set of active video output devices supp\n";
-CHAR8    Line03[] = " 9:06:45.012 orts.\n";
-CHAR8    Line04[] = " 9:06:45.012 If ModeNumber is not between 0 and MaxMode - 1, then EFI_INVALID_PARAMETER\n";
-CHAR8    Line05[] = " 9:06:45.012  is returned.\n";
-CHAR8    Line06[] = " 9:06:45.012 MaxMode is available from the Mode structure of the EFI_GRAPHICS_OUTPUT_PR\n";
-CHAR8    Line07[] = " 9:06:45.012 OTOCOL.\n";
-CHAR8    Line08[] = " 9:06:45.012 The size of the Info structure should never be assumed and the value of Si\n";
-CHAR8    Line09[] = " 9:06:45.012 zeOfInfo is the only valid way to know the size of Info.\n";
-CHAR8    Line10[] = " 9:06:45.012 \n";
-CHAR8    Line11[] = " 9:06:45.012 If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
-CHAR8    Line12[] = " 9:06:45.012 ents a single video output device, then the set of modes returned by this \n";
-CHAR8    Line13[] = " 9:06:45.012 service is the subset of modes supported by both the graphics controller a\n";
-CHAR8    Line14[] = " 9:06:45.012 nd the video output device.\n";
-CHAR8    Line15[] = " 9:06:45.012 \n";
-CHAR8    Line16[] = " 9:06:45.012 If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
-CHAR8    Line17[] = " 9:06:45.012 ents a combination of video output devices, then the set of modes returned\n";
-CHAR8    Line18[] = " 9:06:45.012  by this service is the subset of modes supported by the graphics controll\n";
-CHAR8    Line19[] = " 9:06:45.012 er and the all of the video output devices represented by the handle.\n";
+CHAR8    Line00[] = "09:06:45.012 : First normal test line\n";
+CHAR8    Line01[] = "09:06:45.012 : The QueryMode() function returns information for an available graphics mod\n";
+CHAR8    Line02[] = "09:06:45.012 : e that the graphics device and the set of active video output devices supp\n";
+CHAR8    Line03[] = "09:06:45.012 : orts.\n";
+CHAR8    Line04[] = "09:06:45.012 : If ModeNumber is not between 0 and MaxMode - 1, then EFI_INVALID_PARAMETER\n";
+CHAR8    Line05[] = "09:06:45.012 :  is returned.\n";
+CHAR8    Line06[] = "09:06:45.012 : MaxMode is available from the Mode structure of the EFI_GRAPHICS_OUTPUT_PR\n";
+CHAR8    Line07[] = "09:06:45.012 : OTOCOL.\n";
+CHAR8    Line08[] = "09:06:45.012 : The size of the Info structure should never be assumed and the value of Si\n";
+CHAR8    Line09[] = "09:06:45.012 : zeOfInfo is the only valid way to know the size of Info.\n";
+CHAR8    Line10[] = "09:06:45.012 : \n";
+CHAR8    Line11[] = "09:06:45.012 : If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8    Line12[] = "09:06:45.012 : ents a single video output device, then the set of modes returned by this \n";
+CHAR8    Line13[] = "09:06:45.012 : service is the subset of modes supported by both the graphics controller a\n";
+CHAR8    Line14[] = "09:06:45.012 : nd the video output device.\n";
+CHAR8    Line15[] = "09:06:45.012 : \n";
+CHAR8    Line16[] = "09:06:45.012 : If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8    Line17[] = "09:06:45.012 : ents a combination of video output devices, then the set of modes returned\n";
+CHAR8    Line18[] = "09:06:45.012 :  by this service is the subset of modes supported by the graphics controll\n";
+CHAR8    Line19[] = "09:06:45.012 : er and the all of the video output devices represented by the handle.\n";
 
 /* spell-checker: enable */
 
-ADVANCED_LOGGER_INFO mLoggerInfo = {
+STATIC ADVANCED_LOGGER_INFO mLoggerInfo = {
     ADVANCED_LOGGER_SIGNATURE,
     0,
     0,
@@ -96,20 +97,24 @@ ADVANCED_LOGGER_INFO mLoggerInfo = {
 VOID
 EFIAPI
 TestLoggerWrite (
-    IN  UINTN           ErrorLevel,
-    IN  CONST CHAR8    *Buffer,
-    IN  UINTN           NumberOfBytes
+    IN        ADVANCED_LOGGER_PROTOCOL *AdvancedLoggerProtocol OPTIONAL,
+    IN  UINTN                           ErrorLevel,
+    IN  CONST CHAR8                    *Buffer,
+    IN  UINTN                           NumberOfBytes
     ) {
 
     DEBUG((DEBUG_ERROR, "Function not implemented\n"));
     ASSERT(TRUE);
 }
 
-ADVANCED_LOGGER_PROTOCOL mLoggerProtocol = {
-    ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
-    0,
-    TestLoggerWrite,
-    NULL
+
+STATIC ADVANCED_LOGGER_PROTOCOL_CONTAINER  mLoggerProtocol = {
+  .AdvLoggerProtocol = {
+    .Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
+    .Version = ADVANCED_LOGGER_PROTOCOL_VERSION,
+    .AdvancedLoggerWriteProtocol = TestLoggerWrite
+  },
+  .LoggerInfo = NULL
 };
 
 ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY mMessageEntry;
@@ -323,8 +328,8 @@ InitializeInMemoryLog (
         UT_ASSERT_TRUE(UnitTestStatus == UNIT_TEST_PASSED);
     }
 
-    mLoggerProtocol.Context = (VOID *) &mLoggerInfo;
-    Status = AdvancedLoggerAccessLibUnitTestInitialize (&mLoggerProtocol, ADV_LOG_MAX_SIZE);
+    mLoggerProtocol.LoggerInfo = &mLoggerInfo;
+    Status = AdvancedLoggerAccessLibUnitTestInitialize (&mLoggerProtocol.AdvLoggerProtocol, ADV_LOG_MAX_SIZE);
     UT_ASSERT_NOT_EFI_ERROR(Status)
 
     return UNIT_TEST_PASSED;
@@ -351,8 +356,16 @@ BasicTests (
 
     UT_ASSERT_STATUS_EQUAL(Status, Btc->ExpectedStatus);
     UT_ASSERT_NOT_NULL (mMessageEntry.Message);
-    UT_LOG_INFO ("Return Length=%d\n", mMessageEntry.MessageLen);
+    UT_LOG_INFO ("\nReturn Length=%d\n", mMessageEntry.MessageLen);
     UT_LOG_INFO ("\n = %a =\n", mMessageEntry.Message);
+    UT_LOG_INFO ("\nExpected Length=%d\n", AsciiStrLen(Btc->ExpectedLine));
+    UT_LOG_INFO ("\n = %a =\n", Btc->ExpectedLine);
+
+    if (mMessageEntry.MessageLen != AsciiStrLen(Btc->ExpectedLine)) {
+      DUMP_HEX (DEBUG_ERROR, 0, mMessageEntry.Message, mMessageEntry.MessageLen,   "Actual   - ");
+      DUMP_HEX (DEBUG_ERROR, 0, Btc->ExpectedLine, AsciiStrLen(Btc->ExpectedLine), "Expected - ");
+    }
+
     UT_ASSERT_EQUAL (mMessageEntry.MessageLen, AsciiStrLen(Btc->ExpectedLine));
 
     // The following also verifies that the string is NULL terminated.

@@ -13,6 +13,8 @@
 #include <Guid/EventGroup.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <AdvancedLoggerInternalProtocol.h>
+
 #include <Library/DebugLib.h>
 
 #include "../AdvancedLoggerCommon.h"
@@ -89,7 +91,11 @@ AdvancedLoggerGetLoggerInfo (
                                        NULL,
                                        (VOID **) &LoggerProtocol);
         if (!EFI_ERROR(Status) && (LoggerProtocol != NULL)) {
-            mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
+            ASSERT(LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+            ASSERT(LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+
+            mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+
             if (mLoggerInfo != NULL) {
                 mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
             }

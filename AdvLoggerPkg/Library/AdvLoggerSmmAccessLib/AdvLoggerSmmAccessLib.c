@@ -8,9 +8,12 @@
 
 #include <PiDxe.h>
 
+#include <AdvancedLoggerInternal.h>
+
 #include <Guid/SmmVariableCommon.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/AdvLoggerAccessLib.h>
 #include <Library/BaseLib.h>
@@ -19,8 +22,6 @@
 #include <Library/PcdLib.h>
 #include <Library/SafeIntLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-
-#include <AdvancedLoggerInternal.h>
 
 STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
 STATIC UINT32                   mBufferSize = 0;
@@ -120,7 +121,7 @@ AdvLoggerAccessInit (
                                    NULL,
                                   (VOID **) &LoggerProtocol);
     if (!EFI_ERROR(Status)) {
-        mLoggerInfo = (ADVANCED_LOGGER_INFO *) LoggerProtocol->Context;
+        mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
         if (mLoggerInfo != NULL) {
             mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
         }

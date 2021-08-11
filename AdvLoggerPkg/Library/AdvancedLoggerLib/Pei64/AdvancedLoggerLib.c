@@ -7,6 +7,7 @@
 **/
 
 #include <Base.h>
+#include <Uefi.h>
 
 #include <AdvancedLoggerInternal.h>
 

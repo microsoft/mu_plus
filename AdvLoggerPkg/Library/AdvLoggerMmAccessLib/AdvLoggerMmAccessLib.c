@@ -10,6 +10,8 @@
 
 #include <Guid/SmmVariableCommon.h>
 
+#include <AdvancedLoggerInternal.h>
+
 #include <Protocol/AdvancedLogger.h>
 
 #include <Library/AdvLoggerAccessLib.h>
@@ -20,8 +22,6 @@
 #include <Library/PcdLib.h>
 #include <Library/SafeIntLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-
-#include <AdvancedLoggerInternal.h>
 
 STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
 STATIC UINT32                   mBufferSize = 0;

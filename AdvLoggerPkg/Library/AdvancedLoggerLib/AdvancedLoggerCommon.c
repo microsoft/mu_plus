@@ -28,11 +28,12 @@
   @param  Buffer           Pointer to the data buffer to be written.
   @param  NumberOfBytes    Number of bytes to be written to the Advanced Logger log.
 
-  @retval LoggerInfo       Returns the logger info block. Returns NULL
-                           if it cannot be located. This occurs prior to SEC completion.
+  @retval LoggerInfo       Returns the logger info block. Returns NULL if it cannot
+                           be located. This occurs prior to SEC completion.
 **/
 STATIC
 ADVANCED_LOGGER_INFO *
+EFIAPI
 AdvancedLoggerMemoryLoggerWrite (
     IN       UINTN    DebugLevel,
     IN CONST CHAR8   *Buffer,
@@ -121,6 +122,8 @@ AdvancedLoggerMemoryLoggerWrite (
   @param  Buffer           Pointer to the data buffer to be written.
   @param  NumberOfBytes    Number of bytes to be written to the Advanced Logger log.
 
+  @retval LoggerInfo       Returns the logger info block. Returns NULL if it cannot
+                           be located. This occurs prior to SEC completion.
 
 **/
 VOID
@@ -134,7 +137,6 @@ AdvancedLoggerWrite (
 
 
     // All messages go to the in memory log.
-
     LoggerInfo = AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 
     // Only selected messages go to the hdw port.
