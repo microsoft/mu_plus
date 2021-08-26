@@ -39,6 +39,7 @@
   DevicePathLib
   MemoryAllocationLib
   PcdLib
+  PerformanceLib
   PrintLib
   ReportStatusCodeLib
   SynchronizationLib

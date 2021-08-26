@@ -28,6 +28,7 @@
 #include <Library/DevicePathLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
+#include <Library/PerformanceLib.h>
 #include <Library/PrintLib.h>
 #include <Library/SynchronizationLib.h>
 #include <Library/TimerLib.h>

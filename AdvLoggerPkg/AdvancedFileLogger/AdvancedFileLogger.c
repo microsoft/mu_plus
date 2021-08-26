@@ -45,11 +45,17 @@ WriteLogFiles (
 
     TimeStart = GetPerformanceCounter ();
 
+    #define WRITING_ALL_LOG_FILES "AdvLogger All files"
+
+    PERF_INMODULE_BEGIN(WRITING_ALL_LOG_FILES);
+
     EFI_LIST_FOR_EACH(Link, &(mLoggingDeviceHead)) {
         LogDevice = LOG_DEVICE_FROM_LINK (Link);
 
         WriteALogFile (LogDevice);
     }
+
+    PERF_INMODULE_END(WRITING_ALL_LOG_FILES);
 
     TimeEnd = GetPerformanceCounter ();
     DEBUG((DEBUG_INFO, "Time to write logs: %ld ms\n", (GetTimeInNanoSecond(TimeEnd-TimeStart) / (1000 * 1000)) ));
