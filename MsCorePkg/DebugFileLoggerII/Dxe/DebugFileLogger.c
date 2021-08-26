@@ -168,7 +168,7 @@ WriteLogFiles (
     }
 
     TimeEnd = GetPerformanceCounter ();
-    DEBUG((DEBUG_ERROR, "Time to write logs: %ld ms\n\n", (GetTimeInNanoSecond(TimeEnd-TimeStart) / (1024 * 1024)) ));
+    DEBUG((DEBUG_ERROR, "Time to write logs: %ld ms\n\n", (GetTimeInNanoSecond(TimeEnd-TimeStart) / (1000 * 1000)) ));
 
     //
     // Release the lock.
