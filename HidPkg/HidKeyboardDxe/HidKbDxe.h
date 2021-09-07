@@ -29,7 +29,6 @@ Environment:
 #include <Protocol/SimpleTextIn.h>
 #include <Protocol/SimpleTextInEx.h>
 #include <Protocol/HiiDatabase.h>
-#include <Protocol/UsbIo.h>
 #include <Protocol/DevicePath.h>
 
 #include <Guid/HiiKeyBoardLayout.h>
@@ -225,12 +224,12 @@ HIDKeyboardDriverBindingSupported (
   will call this callback when ever a key stroke event happens.
 
 
-  @param  This                   The USB keyboard driver binding instance.
+  @param  This                   The keyboard driver binding instance.
   @param  Controller             Handle of device to bind driver to.
   @param  RemainingDevicePath    Optional parameter use to pick a specific child
                                  device to start.
 
-  @retval EFI_SUCCESS            The controller is controlled by the usb keyboard driver.
+  @retval EFI_SUCCESS            The controller is controlled by the keyboard driver.
   @retval EFI_UNSUPPORTED        No interrupt endpoint can be found.
   @retval Other                  This controller cannot be started.
 
@@ -246,7 +245,7 @@ HIDKeyboardDriverBindingStart (
 /**
   Stop the HID keyboard device handled by this driver.
 
-  @param  This                   The USB keyboard driver binding protocol.
+  @param  This                   The keyboard driver binding protocol.
   @param  Controller             The controller to release.
   @param  NumberOfChildren       The number of handles in ChildHandleBuffer.
   @param  ChildHandleBuffer      The array of child handle.
