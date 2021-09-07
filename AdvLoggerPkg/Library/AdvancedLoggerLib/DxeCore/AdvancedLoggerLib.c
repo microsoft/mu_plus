@@ -288,7 +288,7 @@ DxeCoreAdvancedLoggerLibConstructor (
     ADVANCED_LOGGER_INFO *LoggerInfo;
     EFI_STATUS            Status;
 
-    LoggerInfo = AdvancedLoggerGetLoggerInfo ();    // Sets LoggerInfo if LoggerInfo found
+    LoggerInfo = AdvancedLoggerGetLoggerInfo ();    // Sets mLoggerInfo if Logger Information block found in HOB.
 
     //
     // For an implementation of the AdvancedLogger with a PEI implementation, there will be a
@@ -303,7 +303,7 @@ DxeCoreAdvancedLoggerLibConstructor (
             LoggerInfo->LogBuffer = PA_FROM_PTR(LoggerInfo + 1);
             LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof(ADVANCED_LOGGER_INFO);
             LoggerInfo->LogCurrent = LoggerInfo->LogBuffer;
-            mMaxAddress = PA_FROM_PTR(mLoggerInfo) + mLoggerInfo->LogBufferSize;
+            mMaxAddress = PA_FROM_PTR(LoggerInfo) + LoggerInfo->LogBufferSize;
         } else {
             DEBUG((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));
         }
