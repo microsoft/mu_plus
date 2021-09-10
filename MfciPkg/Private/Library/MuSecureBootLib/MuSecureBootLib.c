@@ -71,6 +71,21 @@ EFI_TIME  mDefaultPayloadTimestamp = {
   0     // Pad2
 };
 
+// This time can be used when deleting variables, as it should be greater than any variable time.
+EFI_TIME mMaxTimestamp = {
+  0xFFFF,     // Year
+  0xFF,       // Month
+  0xFF,       // Day
+  0xFF,       // Hour
+  0xFF,       // Minute
+  0xFF,       // Second
+  0x00,
+  0xFFFFFFFF, // Nanosecond
+  0,
+  0,
+  0x00
+};
+
 //  ***** START: not needed by MfciPkg **
 //  
 //  //
@@ -113,6 +128,7 @@ EFI_TIME  mDefaultPayloadTimestamp = {
   @retval EFI_SUCCESS              Create time based payload successfully.
   @retval EFI_OUT_OF_RESOURCES     There are not enough memory resources to create time based payload.
   @retval EFI_INVALID_PARAMETER    The parameter is invalid.
+  @retval EFI_NOT_READY            Time is NULL, but gEfiRealTimeClockArchProtocolGuid is not installed yet.
   @retval Others                   Unexpected error happens.
 
 **/
@@ -131,6 +147,7 @@ CreateTimeBasedPayload (
   EFI_VARIABLE_AUTHENTICATION_2    *DescriptorData;
   UINTN                            DescriptorSize;
   EFI_TIME                         NewTime;
+  VOID                             *TestPointer;
 
   if (Data == NULL || DataSize == NULL) {
     DEBUG((EFI_D_ERROR, "CreateTimeBasedPayload(), invalid arg\n"));
@@ -165,6 +182,12 @@ CreateTimeBasedPayload (
   // If Time is NULL, create a new timestamp.
   if (Time == NULL)
   {
+    Status = gBS->LocateProtocol (&gEfiRealTimeClockArchProtocolGuid, NULL, &TestPointer);
+    if (EFI_ERROR (Status)) {
+      FreePool(NewData);
+      NewData = NULL;
+      return EFI_NOT_READY;
+    }
     ZeroMem (&NewTime, sizeof (EFI_TIME));
     Status = gRT->GetTime (&NewTime, NULL);
     if (EFI_ERROR (Status)) {
@@ -322,7 +345,7 @@ Return Value:
   // It is effectively DataSize = 0 and Data = NULL, but for authenticated variables.
   DataSize = 0;
   Data = NULL;
-  Status = CreateTimeBasedPayload( &DataSize, &Data, NULL );
+  Status = CreateTimeBasedPayload( &DataSize, &Data, &mMaxTimestamp );
   if (EFI_ERROR( Status ) || Data == NULL)
   {
     DEBUG((DEBUG_ERROR, "DeleteSecureBoot: - Failed to build payload! %r\r\n", Status));

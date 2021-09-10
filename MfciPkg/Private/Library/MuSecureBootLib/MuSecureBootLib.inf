@@ -36,7 +36,7 @@
 
 
 [Protocols]
-  gEfiRealTimeClockArchProtocolGuid             ## PROTOCOL CONSUMES
+  gEfiRealTimeClockArchProtocolGuid             # SOMETIMES_CONSUMES
   gEdkiiVariablePolicyProtocolGuid              # CONSUMES
 
   
@@ -49,5 +49,4 @@
 
 
 [Depex]
-  gEfiRealTimeClockArchProtocolGuid AND
   gEdkiiVariablePolicyProtocolGuid
