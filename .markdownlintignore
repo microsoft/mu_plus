@@ -7,4 +7,5 @@
 # Ignore cloned dependencies
 /Common/MU_TIANO
 /Silicon/Arm/MU_TIANO
+/Silicon/Intel/MU_TIANO
 /MU_BASECORE
