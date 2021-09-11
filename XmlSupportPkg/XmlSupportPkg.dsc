@@ -15,6 +15,7 @@
   BUILD_TARGETS                  = DEBUG|RELEASE
   SKUID_IDENTIFIER               = DEFAULT
 
+!include MdePkg/MdeLibs.dsc.inc
 !include UnitTestFrameworkPkg/UnitTestFrameworkPkgTarget.dsc.inc
 
 [LibraryClasses]

@@ -22,6 +22,8 @@
 
 [PcdsFixedAtBuild]
 
+!include MdePkg/MdeLibs.dsc.inc
+
 [LibraryClasses.common]
   XmlTreeLib|XmlSupportPkg/Library/XmlTreeLib/XmlTreeLib.inf
   XmlTreeQueryLib|XmlSupportPkg/Library/XmlTreeQueryLib/XmlTreeQueryLib.inf

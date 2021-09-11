@@ -19,6 +19,8 @@
 
 [PcdsFixedAtBuild]
 
+!include MdePkg/MdeLibs.dsc.inc
+
 [LibraryClasses.common]
   BaseLib                     |MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib               |MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf

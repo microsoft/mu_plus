@@ -17,6 +17,8 @@
 
 [PcdsFeatureFlag]
 
+!include MdePkg/MdeLibs.dsc.inc
+
 [LibraryClasses.common]
 
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf

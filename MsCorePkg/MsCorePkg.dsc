@@ -20,6 +20,8 @@
 
 [PcdsFixedAtBuild]
 
+!include MdePkg/MdeLibs.dsc.inc
+
 [LibraryClasses.common]
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   MemoryTypeInformationChangeLib|MdeModulePkg/Library/MemoryTypeInformationChangeLibNull/MemoryTypeInformationChangeLibNull.inf

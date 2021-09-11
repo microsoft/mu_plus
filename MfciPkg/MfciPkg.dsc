@@ -34,6 +34,8 @@
 # Library Class section - list of all Library Classes needed by this Platform.
 #
 ################################################################################
+!include MdePkg/MdeLibs.dsc.inc
+
 [LibraryClasses]
   #
   # Entry Point Libraries
@@ -133,7 +135,7 @@
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/BaseCryptLib.inf
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
- 
+
 
 ################################################################################
 #

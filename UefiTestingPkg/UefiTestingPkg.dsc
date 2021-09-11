@@ -19,6 +19,8 @@
 #        If you would like to build these tests to run on your platform,
 #        you should substitute your LibraryClasses configuration.
 
+!include MdePkg/MdeLibs.dsc.inc
+
 [LibraryClasses.common]
   BaseLib|MdePkg/Library/BaseLib/BaseLib.inf
   BaseMemoryLib|MdePkg/Library/BaseMemoryLib/BaseMemoryLib.inf
