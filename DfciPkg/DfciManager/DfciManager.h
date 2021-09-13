@@ -16,11 +16,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <DfciSystemSettingTypes.h>
 
 #include <Guid/DfciPacketHeader.h>
+#include <Guid/DfciDeviceIdVariables.h>
 #include <Guid/DfciIdentityAndAuthManagerVariables.h>
+#include <Guid/DfciInternalVariableGuid.h>
+#include <Guid/DfciPacketHeader.h>
 #include <Guid/DfciPermissionManagerVariables.h>
+#include <Guid/DfciSettingsGuid.h>
 #include <Guid/DfciSettingsManagerVariables.h>
+#include <Guid/MuVarPolicyFoundationDxe.h>
+#include <Guid/ZeroTouchVariables.h>
 
 #include <Protocol/DfciApplyPacket.h>
+#include <Protocol/VariablePolicy.h>
 
 #include <Private/DfciGlobalPrivate.h>
 
@@ -36,5 +43,29 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/VariablePolicyHelperLib.h>
 
-#endif
+#define _DBGMSGID_  "[DM]"
+
+/**
+  InitializeAndSetPolicyForAllDfciVariables
+
+**/
+EFI_STATUS
+InitializeAndSetPolicyForAllDfciVariables (
+  VOID
+  );
+
+/**
+  DelateAllMailboxes
+
+  Delete all mailboxes in the error case when DfciManager cannot process variables
+
+**/
+EFI_STATUS
+DeleteAllMailboxes (
+  VOID
+  );
+
+#endif    // __DFCI_MANAGER_H__

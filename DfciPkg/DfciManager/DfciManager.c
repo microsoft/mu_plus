@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "DfciManager.h"
 
-#define _DBGMSGID_  "[DM]"
-
 typedef
 EFI_STATUS
 (EFIAPI *DECODE_PACKET) (
@@ -952,6 +950,12 @@ DfciManagerEntry(
 
     PERF_FUNCTION_BEGIN ();
 
+    Status = InitializeAndSetPolicyForAllDfciVariables ();
+    if (EFI_ERROR (Status)) {
+        DEBUG((DEBUG_ERROR, "%a %a: Unable to set variable policies. Code=%r\n", _DBGMSGID_, __FUNCTION__, Status));
+        goto ERROR_EXIT;
+    }
+
     if (!PcdGetBool(PcdSKUEnableDfci)) {
         Status = EFI_UNSUPPORTED;
         DEBUG((DEBUG_INFO, "%a %a: DFCI not enabled.\n", _DBGMSGID_, __FUNCTION__));
@@ -1031,6 +1035,8 @@ ERROR_EXIT:
     DEBUG((DEBUG_ERROR, "%a %a: Exiting with error. Code = %r\n", _DBGMSGID_, __FUNCTION__, Status));
 
     FreeManagerData ();
+
+    DeleteAllMailboxes ();
 
     PERF_FUNCTION_END ();
 
