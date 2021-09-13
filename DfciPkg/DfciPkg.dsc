@@ -89,6 +89,7 @@
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   PasswordStoreLib|MsCorePkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+  VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
 
 !if $(TARGET) == DEBUG
 !if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019

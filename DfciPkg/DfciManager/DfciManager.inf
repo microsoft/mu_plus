@@ -25,11 +25,15 @@
 
 [Sources]
   DfciManager.c
+  DfciManager.h
+  DfciVarPolicies.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
   DfciPkg/DfciPkg.dec
+  ZeroTouchPkg/ZeroTouchPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -44,18 +48,25 @@
   UefiBootServicesTableLib
   UefiDriverEntryPoint
   UefiLib
+  VariablePolicyHelperLib
 
 [Guids]
   gDfciAuthProvisionVarNamespace
+  gDfciDeviceIdVarNamespace
+  gDfciInternalVariableGuid
   gDfciPermissionManagerVarNamespace
+  gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
   gEfiEndOfDxeEventGroupGuid
+  gMuVarPolicyDxePhaseGuid
+  gZeroTouchVariableGuid
 
 [Protocols]
   gDfciApplyIdentityProtocolGuid
   gDfciApplyPermissionsProtocolGuid
   gDfciApplySettingsProtocolGuid
   gDfciSettingAccessProtocolGuid
+  gEdkiiVariablePolicyProtocolGuid
 
 [FeaturePcd]
 
@@ -63,7 +74,8 @@
   gDfciPkgTokenSpaceGuid.PcdSKUEnableDfci
 
 [Depex]
-  gEfiVariableWriteArchProtocolGuid
+  gEdkiiVariablePolicyProtocolGuid
+  AND gEfiVariableWriteArchProtocolGuid
   AND gEfiVariableArchProtocolGuid
   AND gDfciSettingPermissionsProtocolGuid
   AND gDfciApplyPermissionsProtocolGuid
