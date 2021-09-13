@@ -28,6 +28,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
   AdvLoggerPkg/AdvLoggerPkg.dec
 
 [LibraryClasses]
@@ -40,6 +41,7 @@
   PcdLib
   SynchronizationLib
   TimerLib
+  VariablePolicyHelperLib
 
 [Guids]
   gAdvancedLoggerHobGuid
@@ -47,6 +49,7 @@
 
 [Protocols]
   gAdvancedLoggerProtocolGuid                                               ## PRODUCES
+  gEdkiiVariablePolicyProtocolGuid                                          ## CONSUMES
   gEfiRealTimeClockArchProtocolGuid                                         ## CONSUMES
   gEfiVariableWriteArchProtocolGuid                                         ## CONSUMES
 

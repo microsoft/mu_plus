@@ -11,6 +11,7 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <Protocol/VariablePolicy.h>
 #include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/AdvancedLoggerHdwPortLib.h>
@@ -22,6 +23,7 @@
 #include <Library/PcdLib.h>
 #include <Library/SynchronizationLib.h>
 #include <Library/TimerLib.h>
+#include <Library/VariablePolicyHelperLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
@@ -222,6 +224,53 @@ OnVariableWriteNotification (
 }
 
 /**
+    OnVariablePolicyProtocolNotification
+
+    Sets the AdvancedLogger Locator variable policy.
+
+  **/
+STATIC
+VOID
+EFIAPI
+OnVariablePolicyProtocolNotification (
+    IN  EFI_EVENT   Event,
+    IN  VOID        *Context
+    )
+{
+    EDKII_VARIABLE_POLICY_PROTOCOL *VariablePolicy = NULL;
+    EFI_SYSTEM_TABLE               *SystemTable;
+    EFI_STATUS                      Status;
+
+    SystemTable = (EFI_SYSTEM_TABLE *) Context;
+
+    DEBUG((DEBUG_INFO, "%a: writing locator variable policy\n", __FUNCTION__));
+
+    Status = SystemTable->BootServices->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID**)&VariablePolicy);
+    if (EFI_ERROR (Status)) {
+        DEBUG (( DEBUG_ERROR, "%a: - Locating Variable Policy failed - Code=%r\n", __FUNCTION__, Status));
+        ASSERT_EFI_ERROR (Status);
+        return;
+    }
+
+    Status = RegisterBasicVariablePolicy (
+               VariablePolicy,
+               &gAdvancedLoggerHobGuid,
+               ADVANCED_LOGGER_LOCATOR_NAME,
+               sizeof(mLoggerInfo),
+               sizeof(mLoggerInfo),
+               EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+               (UINT32) ~(EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS),
+               VARIABLE_POLICY_TYPE_LOCK_ON_CREATE             // Will act as LOCK now if already created
+               );
+    if (EFI_ERROR (Status)) {
+        DEBUG (( DEBUG_ERROR, "%a: - Error registering AdvancedLoggerLocator - Code=%r\n", __FUNCTION__, Status));
+        ASSERT_EFI_ERROR (Status);
+    }
+
+    return;
+}
+
+/**
     ProcessProtocolRegistration
 
     This function registers for Variable Write being available.
@@ -337,6 +386,11 @@ DxeCoreAdvancedLoggerLibConstructor (
             SystemTable,
             &gEfiVariableWriteArchProtocolGuid,
             OnVariableWriteNotification
+            );
+        ProcessProtocolRegistration (
+            SystemTable,
+            &gEdkiiVariablePolicyProtocolGuid,
+            OnVariablePolicyProtocolNotification
             );
     }
 
