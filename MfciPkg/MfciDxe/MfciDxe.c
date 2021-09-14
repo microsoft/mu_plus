@@ -350,7 +350,7 @@ RegisterVarPolicies ()
                                         sizeof(UINT64),
                                         sizeof(UINT64),
                                         MFCI_POLICY_VARIABLE_ATTR,
-                                        VARIABLE_POLICY_NO_CANT_ATTR,
+                                        (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
                                         &gMuVarPolicyWriteOnceStateVarGuid,
                                         MFCI_LOCK_VAR_NAME,
                                         MFCI_LOCK_VAR_VALUE);
@@ -365,7 +365,7 @@ RegisterVarPolicies ()
                                         sizeof(UINT64),
                                         sizeof(UINT64),
                                         MFCI_POLICY_VARIABLE_ATTR,
-                                        VARIABLE_POLICY_NO_CANT_ATTR,
+                                        (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
                                         &gMuVarPolicyWriteOnceStateVarGuid,
                                         MFCI_LOCK_VAR_NAME,
                                         MFCI_LOCK_VAR_VALUE);
@@ -380,7 +380,7 @@ RegisterVarPolicies ()
                                         sizeof(UINT64),
                                         sizeof(UINT64),
                                         MFCI_POLICY_VARIABLE_ATTR,
-                                        VARIABLE_POLICY_NO_CANT_ATTR,
+                                        (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
                                         &gMuVarPolicyWriteOnceStateVarGuid,
                                         MFCI_LOCK_VAR_NAME,
                                         MFCI_LOCK_VAR_VALUE);
@@ -403,7 +403,7 @@ RegisterVarPolicies ()
                                         VARIABLE_POLICY_NO_MIN_SIZE,
                                         MFCI_POLICY_FIELD_MAX_LEN,
                                         MFCI_POLICY_TARGETING_VARIABLE_ATTR,
-                                        VARIABLE_POLICY_NO_CANT_ATTR,
+                                        (UINT32) ~MFCI_POLICY_TARGETING_VARIABLE_ATTR,
                                         &gMuVarPolicyDxePhaseGuid,
                                         END_OF_DXE_INDICATOR_VAR_NAME,
                                         PHASE_INDICATOR_SET);
@@ -413,6 +413,38 @@ RegisterVarPolicies ()
     }
 
   } // Walk the list of OEM-supplied targeting variables to register variable policy
+
+  // Register NO_LOCK policies for the OS writable mailboxes
+  Status = RegisterBasicVariablePolicy (
+                                     VariablePolicy,
+                                     &MFCI_VAR_VENDOR_GUID,
+                                     CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                                     VARIABLE_POLICY_NO_MIN_SIZE,
+                                     VARIABLE_POLICY_NO_MAX_SIZE,
+                                     MFCI_POLICY_VARIABLE_ATTR,
+                                     (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
+                                     VARIABLE_POLICY_TYPE_NO_LOCK
+                                     );
+  if (EFI_ERROR(Status)) {
+    DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for the Current Policy Blob failed - %r\n", __FUNCTION__, Status ));
+    goto Done;
+  }
+
+  Status = RegisterBasicVariablePolicy (
+                                     VariablePolicy,
+                                     &MFCI_VAR_VENDOR_GUID,
+                                     NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                                     VARIABLE_POLICY_NO_MIN_SIZE,
+                                     VARIABLE_POLICY_NO_MAX_SIZE,
+                                     MFCI_POLICY_VARIABLE_ATTR,
+                                     (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
+                                     VARIABLE_POLICY_TYPE_NO_LOCK
+                                     );
+  if (EFI_ERROR(Status)) {
+    DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for the Next Policy Blob failed - %r\n", __FUNCTION__, Status ));
+    goto Done;
+  }
+
 
   // reaching here means that all variable policy was successfully registered
   mVarPolicyRegistered = TRUE;
