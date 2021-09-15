@@ -31,7 +31,7 @@ See the Platforms\SimpleFTDI\ folder.
 
 Copy the files needed for the DUT.
 There is a script to help you do this.
-For example, with a removable device mounted at drive D:, issue the command:  
+For example, with a removable device mounted at drive D:, issue the command:
 
 ```text
 DeviceUnderTest\CollectFilesForDut.cmd D:\DfciSetup
@@ -161,8 +161,9 @@ This tests also start with a DUT that is not enrolled in DFCI, and will leave th
 
 ## Recovering from errors
 
-Code issues an present issues with DFCI that may require deleting the Identity and Permission data bases. Using
-privileged access of a DUT that unlocks the varstore, you can delete the two master variables of DFCI. These variable are:
+Code issues can present issues with DFCI that may require deleting the Identity and Permission databases.
+Using privileged access of a DUT that unlocks the varstore, you can delete the two master variables of DFCI.
+These variables are:
 
 1. \_SPP
 2. \_IPCVN
@@ -181,3 +182,6 @@ If there is a space or other special characters, add double quotes as in:
 ```txt
 GenUsb Fabrikam "Fabrikam Spelunker Kit" "SN-47599011345"
 ```
+
+After producing your .dfi file, place it on a USB drive and take it to the system under test.
+Press the Install from USB button to apply the packets.
