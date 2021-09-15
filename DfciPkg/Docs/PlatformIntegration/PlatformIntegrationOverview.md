@@ -119,3 +119,7 @@ INF  DfciPkg/IdentityAndAuthManager/IdentityAndAuthManagerDxe.inf
 INF  DfciPkg/Application/DfciMenu/DfciMenu.inf
 INF  DfciPkg/DfciManager/DfciManager.inf
 ```
+
+## Testing DFCI operation
+
+Please refer to the [DFCI TestCase documentation](../../UnitTests/DfciTests/readme.md)
