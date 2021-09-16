@@ -91,7 +91,6 @@
   UnitTestResultReportLib|XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
   FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
-  MemoryProtectionLib|MsCorePkg/Library/MemoryProtectionLib/UefiMemoryProtectionLib.inf
 
 [LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_RUNTIME_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
@@ -120,6 +119,7 @@
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/PeiCpuExceptionHandlerLib.inf
+  MemoryProtectionLib|MsCorePkg/Library/MemoryProtectionLib/PeiMemoryProtectionLib.inf
 
 !if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019
 [LibraryClasses.IA32]
@@ -175,7 +175,6 @@
   MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
   MsCorePkg/Library/MemoryProtectionLib/DxeSmmMemoryProtectionLib.inf
   MsCorePkg/Library/MemoryProtectionLib/PeiMemoryProtectionLib.inf
-  MsCorePkg/Library/MemoryProtectionLib/UefiMemoryProtectionLib.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf

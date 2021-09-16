@@ -8,7 +8,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <PiPei.h>
 
-#include <Ppi/ReadOnlyVariable2.h>
 #include <Pi/PiMultiPhase.h>
 
 #include <Library/PeiServicesLib.h>
@@ -40,49 +39,6 @@ GetMemoryProtectionDefaultSetting (
   }
 
   ASSERT (FALSE);
-}
-
-/**
-  Gets the memory protections setting struct from Varstore.
-
-  @param[out] Entry  The location to which the variable struct should be written
-
-  @retval EFI_SUCCESS           The memory protection variable was fetched
-  @retval EFI_OUT_OF_RESOURCES  There is no additional space in the PPI database
-  @retval EFI_NOT_FOUND         The variable was not found
-  @retval EFI_DEVICE_ERROR      The variable could not be retrieved because of a device error
-
-**/
-STATIC
-EFI_STATUS
-PeiGetMemProtUefiVariable (
-  OUT   MEM_PROT_SETTINGS  *Entry
-  )
-{
-  EFI_PEI_READ_ONLY_VARIABLE2_PPI *VariablePpi;
-  EFI_STATUS                       Status;
-  UINTN                            Size = sizeof (MEM_PROT_SETTINGS);
-
-  Status = PeiServicesLocatePpi (
-              &gEfiPeiReadOnlyVariable2PpiGuid,
-              0,
-              NULL,
-              (VOID **) &VariablePpi
-              );
-
-  if (!EFI_ERROR (Status)){
-
-    Status = VariablePpi->GetVariable (
-                            VariablePpi,
-                            MEMORY_PROTECTION_SETTINGS_VAR_NAME,
-                            &gMemoryProtectionsGuid,
-                            NULL,
-                            &Size,
-                            Entry
-                            );
-  }
-
-  return Status;
 }
 
 /**
@@ -141,25 +97,19 @@ GenerateMemoryProtectionHobEntry (
     return;
   }
 
-  Status = PeiGetMemProtUefiVariable (Entry);
+  GetMemoryProtectionDefaultSetting (
+    MEM_PROT_GLOBAL_TOGGLE_SETTING,
+    &Setting
+    );
 
-  // Check if the memory protection variable exists and, if not, populate the setting with the PCD default
-  if (EFI_ERROR (Status)) {
-    GetMemoryProtectionDefaultSetting (
-      MEM_PROT_GLOBAL_TOGGLE_SETTING,
-      &Setting
-      );
-
-    Entry->MemProtGlobalToggle = (BOOLEAN) Setting;
-  }
+  Entry->MemProtGlobalToggle = (BOOLEAN) Setting;
 
   Status = MemoryProtectionExceptionOverrideCheck (
              MEM_PROT_GLOBAL_TOGGLE_SETTING,
              &Setting
              );
 
-  // Check if an override exists in platform early store indicating that on a previous boot and exception
-  // potentially related to memory protections was hit
+  // Check if an override exists in platform early store
   if (!EFI_ERROR (Status)) {
     Entry->MemProtGlobalToggle = (BOOLEAN) Setting;
   }
