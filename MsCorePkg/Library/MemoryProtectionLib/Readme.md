@@ -22,16 +22,14 @@ IsMemoryProtectionGlobalToggleEnabled(). The HOB entry can be populated two ways
 See the flow chart to understand the logic behind how the HOB entry is populated in this case.
 
 2. A call to SetMemoryProtectionGlobalToggle() is allowed in this phase **IF**
-IsMemoryProtectionGlobalToggleEnabled() has not yet been called elsewhere in PEI. The best place to call
-SetMemoryProtectionGlobalToggle() is in pre-mem. Doing this will allow you to force the toggle to be on/off.
+IsMemoryProtectionGlobalToggleEnabled() has not yet been called elsewhere in PEI and
+SetMemoryProtectionGlobalToggle() memory hasn't yet been discovered.
+Doing this will allow you to force the toggle to be on/off.
 
 **DxeSmmMemoryProtectionLib** is capable of checking the settings held in the MEM_PROT_SETTINGS struct in the
 HOB entry. For faster querying and to fix a potential complication where SmmReadyToLock blocks access to the HOB,
 the value of the struct held in the HOB is cached.
 The call to set the memory protection global toggle is not allowed in this phase.
-
-**UefiMemoryProtectionLib** is for the frontpage interface - both get and set of the global toggle work in this
-implementation.
 
 ## MemoryProtectionExceptionLib
 
@@ -49,10 +47,7 @@ boot due to a memory
 protection violation. This override always takes priority when creating the HOB unless the platform
 explicitly set the
 global toggle during PEI (see PeiMemoryProtectionLib under [Implementation](#Implementation)).
-MemoryProtectionExceptionOverrideClear() clears the override store. This is done automatically when the memory
-protection variable is set using the UefiMemoryProtectionLib implementation to ensure the
-manually set value is used next boot. For some platforms, this frequency of clearing the override may not be
-sufficient.
+MemoryProtectionExceptionOverrideClear() clears the override store.
 
 ## Copyright
 

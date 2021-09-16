@@ -36,15 +36,9 @@
   MemoryProtectionExceptionLib
   PcdLib
 
-[Ppis]
-  gEfiPeiReadOnlyVariable2PpiGuid   ## CONSUMES
-
 [Pcd]
   gMsCorePkgTokenSpaceGuid.PcdDefaultMemoryProtectionGlobalToggle
 
 [Guids]
   gMemoryProtectionsGuid
   gHobMemoryProtectionsGuid
-
-[DEPEX]
-  gEfiPeiReadOnlyVariable2PpiGuid

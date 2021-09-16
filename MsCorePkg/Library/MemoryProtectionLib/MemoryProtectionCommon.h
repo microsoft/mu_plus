@@ -13,8 +13,6 @@ typedef struct {
     BOOLEAN  MemProtGlobalToggle;
 } MEM_PROT_SETTINGS;
 
-#define MEMORY_PROTECTION_SETTINGS_VAR_NAME L"MemProtUefiVar"
-
 /**
   Gets a memory protection setting from the HOB. 
 
