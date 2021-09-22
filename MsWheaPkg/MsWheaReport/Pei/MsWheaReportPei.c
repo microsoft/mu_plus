@@ -123,9 +123,9 @@ PopulateTime(EFI_TIME* CurrentTime)
 //A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling GetRecordID() during Pei phase.
 //Dxe phase drivers actually populate time, see GetRecordID() in MsWheaReportDxe.c
 EFI_STATUS
-GetRecordID(UINT64* RecordID,
-            EFI_GUID *RecordIDGuid OPTIONAL
-            )
+GetRecordID(
+  UINT64* RecordID
+  )
 {
   return EFI_UNSUPPORTED;
 }

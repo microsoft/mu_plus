@@ -118,8 +118,7 @@ PopulateTime (
 
 EFI_STATUS
 GetRecordID (
-  UINT64    *RecordID,
-  EFI_GUID  *RecordIDGuid
+  UINT64    *RecordID
   )
 {
   // Stub implementation.

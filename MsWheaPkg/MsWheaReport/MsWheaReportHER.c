@@ -91,7 +91,7 @@ CreateCperHdrDefaultMin (
   // Default to Boot Error
   CopyMem(&CperHdr->NotificationType, &gEfiEventNotificationTypeBootGuid, sizeof(EFI_GUID));
 
-  if(EFI_ERROR(GetRecordID(&RecordID, &gMsWheaReportRecordIDGuid))) {
+  if(EFI_ERROR (GetRecordID (&RecordID))) {
     DEBUG ((DEBUG_INFO, "%a - RECORD ID NOT UPDATED\n", __FUNCTION__));
   }
 

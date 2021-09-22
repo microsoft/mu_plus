@@ -19,6 +19,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/VariablePolicyHelperLib.h>
 #include "MsWheaReportCommon.h"
 #include "MsWheaReportHER.h"
 #include "MsWheaEarlyStorageMgr.h"
@@ -30,11 +31,13 @@ STATIC EFI_EVENT                      mWriteArchAvailEvent    = NULL;
 STATIC EFI_EVENT                      mVarArchAvailEvent      = NULL;
 STATIC EFI_EVENT                      mExitBootServicesEvent  = NULL;
 STATIC EFI_EVENT                      mClockArchAvailEvent    = NULL;
+STATIC EFI_EVENT                      mVarPolicyAvailEvent    = NULL;
 
 STATIC BOOLEAN                        mWriteArchAvailable     = FALSE;
 STATIC BOOLEAN                        mVarArchAvailable       = FALSE;
 STATIC BOOLEAN                        mExitBootHasOccurred    = FALSE;
 STATIC BOOLEAN                        mClockArchAvailable     = FALSE;
+STATIC BOOLEAN                        mVarPolicyAvailable     = FALSE;
 
 STATIC LIST_ENTRY                     mMsWheaEntryList;
 
@@ -155,7 +158,7 @@ ReadyToWriteVariable(
 {
   BOOLEAN Res;
   Res = FALSE;
-  if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE) && (mClockArchAvailable != FALSE)) {
+  if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE) && (mClockArchAvailable != FALSE) && (mVarPolicyAvailable != FALSE)) {
     Res = TRUE;
   }
   return Res;
@@ -357,6 +360,47 @@ MsWheaProcList (
 }
 
 /**
+This routine applies variable protocol to targeted variables. This routine should be invoked before writing to var storage.
+
+@retval EFI_SUCCESS                   Operation is successful
+@retval EFI_INVALID_PARAMETER         Null head entry pointer detected
+@retval Others                        See MsWheaReportHandlerDxe function for more details
+**/
+STATIC
+EFI_STATUS
+MsWheaApplyVarPolicy ()
+{
+  EDKII_VARIABLE_POLICY_PROTOCOL      *VariablePolicy = NULL;
+  EFI_STATUS                          Status;
+
+  DEBUG ((DEBUG_INFO, "MsWheaDxe: %a() - Enter\n", __FUNCTION__));
+
+  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID**)&VariablePolicy);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Locating Variable Policy failed - %r\n", __FUNCTION__, Status));
+    goto Done;
+  }
+
+  // Register policies to protect the RecordID on variable size and attributes
+  Status = RegisterBasicVariablePolicy (VariablePolicy,
+                                        &gMsWheaReportRecordIDGuid,
+                                        MS_WHEA_RECORD_ID_VAR_NAME,
+                                        MS_WHEA_RECORD_ID_VAR_LEN,
+                                        MS_WHEA_RECORD_ID_VAR_LEN,
+                                        MS_WHEA_RECORD_ID_VAR_ATTR,
+                                        (UINT32) ~MS_WHEA_RECORD_ID_VAR_ATTR,
+                                        VARIABLE_POLICY_TYPE_NO_LOCK);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for Record ID failed - %r\n", __FUNCTION__, Status));
+    goto Done;
+  }
+
+Done:
+  DEBUG ((DEBUG_INFO, "MsWheaDxe: %a() Exit - %r\n", __FUNCTION__, Status));
+  return Status;
+}
+
+/**
 Process all previously reported status errors during PEI/early Dxe/previous boots
 
 @retval EFI_SUCCESS                   Operation is successful
@@ -369,6 +413,11 @@ MsWheaProcessPrevError (
   )
 {
   EFI_STATUS Status;
+
+  Status = MsWheaApplyVarPolicy();
+  if (EFI_ERROR(Status) != FALSE) {
+    DEBUG((DEBUG_ERROR, "%a: Attempting to apply variable policy failed %r\n", __FUNCTION__, Status));
+  }
 
   Status = MsWheaESProcess(MsWheaReportHandlerDxe);
   if (EFI_ERROR(Status) != FALSE) {
@@ -446,6 +495,9 @@ MsWheaArchCallback (
   else if ((Event == mClockArchAvailEvent) && (mClockArchAvailable == FALSE)) {
     mClockArchAvailable = TRUE;
   }
+  else if ((Event == mVarPolicyAvailEvent) && (mVarPolicyAvailable == FALSE)) {
+    mVarPolicyAvailable = TRUE;
+  }
   else {
     // Unrecognized event or all available already, do nothing
     goto Cleanup;
@@ -488,7 +540,6 @@ PopulateTime(EFI_TIME* CurrentTime)
 Gets the Record ID variable and increments it for WHEA records
 
 @param[in,out]  *RecordID                   Pointer to a UINT64 which will contain the record ID to be put on the next WHEA Record
-@param[in]      *RecordIDGuid               Pointer to guid used to get the record ID variable
 
 @retval          EFI_SUCCESS                The firmware has successfully stored the variable and its data as
                                             defined by the Attributes.
@@ -504,25 +555,59 @@ Gets the Record ID variable and increments it for WHEA records
 @retval          EFI_NOT_FOUND              The variable trying to be updated or deleted was not found.
 **/
 EFI_STATUS
-GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
+GetRecordID (
+  UINT64* RecordID
+  )
 {
-  UINTN Size = sizeof(UINT64);
+  UINTN Size = 0;
+  UINT32 Attr;
+  EFI_STATUS Status;
 
   //Get the last record ID number used
-  if(EFI_ERROR(gRT->GetVariable(L"RecordID",RecordIDGuid,NULL,&Size,RecordID))) {
-
+  Status = gRT->GetVariable (
+             MS_WHEA_RECORD_ID_VAR_NAME,
+             &gMsWheaReportRecordIDGuid,
+             &Attr,
+             &Size,
+             NULL
+             );
+  if (Status == EFI_NOT_FOUND) {
     DEBUG ((DEBUG_INFO, "%a Record ID variable not retrieved, initializing to 0\n", __FUNCTION__));
     *RecordID = 0;
-
+  }
+  else if ((Status != EFI_BUFFER_TOO_SMALL) ||
+           (Attr != MS_WHEA_RECORD_ID_VAR_ATTR) ||
+           (Size != MS_WHEA_RECORD_ID_VAR_LEN)) {
+    DEBUG ((
+      DEBUG_INFO,
+      "%a Record ID variable has size: 0x%x, attribute: %08x; but expecting size: 0x%x, attribute: %08x. Deleting the variable for re-initialization.\n",
+      __FUNCTION__,
+      Size,
+      Attr,
+      MS_WHEA_RECORD_ID_VAR_LEN,
+      MS_WHEA_RECORD_ID_VAR_ATTR
+      ));
+    // This variable is whacked, flush it...
+    Status = gRT->SetVariable(MS_WHEA_RECORD_ID_VAR_NAME, &gMsWheaReportRecordIDGuid, Attr, 0, NULL);
+    ASSERT_EFI_ERROR (Status);
+    *RecordID = 0;
+  } else {
+    Status = gRT->GetVariable (
+              MS_WHEA_RECORD_ID_VAR_NAME,
+              &gMsWheaReportRecordIDGuid,
+              &Attr,
+              &Size,
+              RecordID
+              );
+    ASSERT_EFI_ERROR (Status);
   }
 
   (*RecordID)++; //increment the record ID number
 
   //Set the variable so the next record uses a unique record ID
-  return gRT->SetVariable(L"RecordID",
-                          RecordIDGuid,
-                          EFI_VARIABLE_NON_VOLATILE |
-                          EFI_VARIABLE_BOOTSERVICE_ACCESS,
+  return gRT->SetVariable(MS_WHEA_RECORD_ID_VAR_NAME,
+                          &gMsWheaReportRecordIDGuid,
+                          MS_WHEA_RECORD_ID_VAR_ATTR,
                           Size,
                           RecordID);
 }
@@ -558,6 +643,13 @@ MsWheaRegisterCallbacks (
 
   // register for Clock Architecture Protocol Callback
   mClockArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiRealTimeClockArchProtocolGuid,
+                                                    TPL_CALLBACK,
+                                                    MsWheaArchCallback,
+                                                    NULL,
+                                                    &Registration);
+
+  // register for Variable Policy Protocol Callback
+  mVarPolicyAvailEvent = EfiCreateProtocolNotifyEvent(&gEdkiiVariablePolicyProtocolGuid,
                                                     TPL_CALLBACK,
                                                     MsWheaArchCallback,
                                                     NULL,
