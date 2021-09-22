@@ -2,8 +2,8 @@
 
 ## About
 
-MemoryProtectionExceptionHandlerLib registers a page fault exception handler which toggles off the global
-memory protection toggle handled by MemoryProtectionLib. If the toggle is already off, this library does nothing.
+If memory protections are on, MemoryProtectionExceptionHandlerLib registers an exception handler which
+uses platform early store to log the page fault.
 
 ## Usage
 

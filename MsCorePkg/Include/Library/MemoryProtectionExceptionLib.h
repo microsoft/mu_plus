@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _MEM_PROT_EX_LIB_H_
 #define _MEM_PROT_EX_LIB_H_
 
-#include <Library/MemoryProtectionLib.h>
-
 typedef UINT8   MEMORY_PROTECTION_VAR_TOKEN;
 typedef UINT16  MEMORY_PROTECTION_OVERRIDE;
 

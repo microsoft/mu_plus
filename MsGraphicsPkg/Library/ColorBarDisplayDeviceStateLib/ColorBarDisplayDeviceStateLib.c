@@ -68,7 +68,6 @@ DEVICE_STATE mSupportedNotifications[] = {
   (DEVICE_STATE)DEVICE_STATE_SOURCE_DEBUG_ENABLED,
   (DEVICE_STATE)DEVICE_STATE_MANUFACTURING_MODE,
   (DEVICE_STATE)DEVICE_STATE_UNIT_TEST_MODE,
-  (DEVICE_STATE)DEVICE_STATE_MEM_PROTECTIONS_OFF,
 
   (DEVICE_STATE)DEVICE_STATE_MAX  //this needs to be the last one
 };
@@ -144,11 +143,6 @@ PrintValues(DEVICE_STATE Notifications)
   if (Notifications & DEVICE_STATE_UNIT_TEST_MODE)
   {
     DEBUG((DEBUG_INFO, "\tDEVICE_STATE_UNIT_TEST_MODE\n"));
-  }
-
-  if (Notifications & DEVICE_STATE_MEM_PROTECTIONS_OFF)
-  {
-    DEBUG((DEBUG_INFO, "\tDEVICE_STATE_MEM_PROTECTIONS_OFF\n"));
   }
 
   if (Notifications & DEVICE_STATE_MAX)
@@ -317,11 +311,6 @@ IN  INT32  HeightInPixels
         si.FillTypeInfo.StripeFill.Color1 = COLOR_DARK_GREY;
         si.FillTypeInfo.StripeFill.Color2 = COLOR_YELLOW;
         si.FillTypeInfo.StripeFill.StripeSize = FORWARD_STRIPE_WIDTH;
-      }
-      else if (*SupportedNotification & DEVICE_STATE_MEM_PROTECTIONS_OFF)
-      {
-        si.FillType = FILL_SOLID;
-        si.FillTypeInfo.SolidFill.FillColor = COLOR_CYAN;
       }
       else
       {

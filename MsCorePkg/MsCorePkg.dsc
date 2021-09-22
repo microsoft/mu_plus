@@ -43,7 +43,6 @@
   MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
   DeviceSpecificBusInfoLib|MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf
   MemoryProtectionExceptionLib|MsCorePkg/Library/BaseMemoryProtectionExceptionLibNull/BaseMemoryProtectionExceptionLibNull.inf
-  MemoryProtectionLib|MdeModulePkg/Library/BaseMemoryProtectionLibNull/BaseMemoryProtectionLibNull.inf
 
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
 
@@ -119,7 +118,6 @@
   HobLib|MdePkg/Library/PeiHobLib/PeiHobLib.inf
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/PeiCpuExceptionHandlerLib.inf
-  MemoryProtectionLib|MsCorePkg/Library/MemoryProtectionLib/PeiMemoryProtectionLib.inf
 
 !if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019
 [LibraryClasses.IA32]
@@ -129,9 +127,6 @@
 [LibraryClasses.common.DXE_CORE]
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
-
-[LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.SMM_CORE, LibraryClasses.common.DXE_CORE, LibraryClasses.common.DXE_SMM_DRIVER]
-  MemoryProtectionLib|MsCorePkg/Library/MemoryProtectionLib/DxeSmmMemoryProtectionLib.inf
 
 [LibraryClasses.common.DXE_SMM_DRIVER]
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
@@ -173,8 +168,6 @@
   MsCorePkg/Library/BaseMemoryProtectionExceptionLibNull/BaseMemoryProtectionExceptionLibNull.inf
   MsCorePkg/Library/MemoryProtectionExceptionLibCmos/MemoryProtectionExceptionLibCmos.inf
   MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
-  MsCorePkg/Library/MemoryProtectionLib/DxeSmmMemoryProtectionLib.inf
-  MsCorePkg/Library/MemoryProtectionLib/PeiMemoryProtectionLib.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
