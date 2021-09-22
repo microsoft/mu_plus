@@ -33,6 +33,10 @@ Definition wrapper to unify all bert/hwerrrec related specification versioning
 #define EFI_HW_ERR_REC_VAR_NAME       L"HwErrRec"
 #define EFI_HW_ERR_REC_VAR_NAME_LEN   16      // Buffer length covers at least "HwErrRec####\0"
 
+#define MS_WHEA_RECORD_ID_VAR_NAME    L"RecordID"
+#define MS_WHEA_RECORD_ID_VAR_LEN     sizeof (UINT64)
+#define MS_WHEA_RECORD_ID_VAR_ATTR    (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+
 /**
 
  Accepted phase values
@@ -145,7 +149,6 @@ PopulateTime(EFI_TIME* CurrentTime);
 Gets the Record ID variable and increments it for WHEA records
 
 @param[in,out]  *RecordID                   Pointer to a UINT64 which will contain the record ID to be put on the next WHEA Record
-@param[in]      *RecordIDGuid               Pointer to guid used to get the record ID variable
 
 @retval          EFI_SUCCESS                The firmware has successfully stored the variable and its data as
                                             defined by the Attributes.
@@ -161,8 +164,8 @@ Gets the Record ID variable and increments it for WHEA records
 @retval          EFI_NOT_FOUND              The variable trying to be updated or deleted was not found.
 **/
 EFI_STATUS
-GetRecordID(UINT64* RecordID,
-            EFI_GUID *RecordIDGuid
-);
+GetRecordID (
+  UINT64* RecordID
+  );
 
 #endif //__MS_WHEA_REPORT_COMMON__

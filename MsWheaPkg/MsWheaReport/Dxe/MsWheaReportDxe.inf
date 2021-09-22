@@ -51,6 +51,7 @@
   UefiDriverEntryPoint
   UefiRuntimeServicesTableLib
   MsWheaEarlyStorageLib
+  VariablePolicyHelperLib
 
 [Protocols]
   gEfiAcpiTableProtocolGuid           ## CONSUMES
@@ -59,6 +60,7 @@
   gEfiVariableWriteArchProtocolGuid   ## CONSUMES
   gEfiVariableArchProtocolGuid        ## CONSUMES
   gEfiRealTimeClockArchProtocolGuid   ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid    ## CONSUMES
 
 [Pcd]
   gMsWheaPkgTokenSpaceGuid.PcdMsWheaReportEarlyStorageCapacity

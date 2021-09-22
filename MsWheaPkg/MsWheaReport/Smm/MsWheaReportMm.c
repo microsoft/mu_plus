@@ -232,7 +232,6 @@ PopulateTime(EFI_TIME* CurrentTime)
 Gets the Record ID variable and increments it for WHEA records
 
 @param[in,out]  *RecordID                   Pointer to a UINT64 which will contain the record ID to be put on the next WHEA Record
-@param[in]      *RecordIDGuid               Pointer to guid used to get the record ID variable
 
 @retval          EFI_SUCCESS                The firmware has successfully stored the variable and its data as
                                             defined by the Attributes.
@@ -248,27 +247,61 @@ Gets the Record ID variable and increments it for WHEA records
 @retval          EFI_NOT_FOUND              The variable trying to be updated or deleted was not found.
 **/
 EFI_STATUS
-GetRecordID(UINT64* RecordID, EFI_GUID *RecordIDGuid)
+GetRecordID (
+  UINT64* RecordID
+  )
 {
-  UINTN Size = sizeof(UINT64);
+  UINTN Size = 0;
+  UINT32 Attr;
+  EFI_STATUS Status;
 
   //Get the last record ID number used
-  if(EFI_ERROR(mSmmVariable->SmmGetVariable(L"RecordID",RecordIDGuid,NULL,&Size,RecordID))) {
-
+  Status = mSmmVariable->SmmGetVariable (
+             MS_WHEA_RECORD_ID_VAR_NAME,
+             &gMsWheaReportRecordIDGuid,
+             &Attr,
+             &Size,
+             NULL
+             );
+  if (Status == EFI_NOT_FOUND) {
     DEBUG ((DEBUG_INFO, "%a Record ID variable not retrieved, initializing to 0\n", __FUNCTION__));
     *RecordID = 0;
-
+  }
+  else if ((Status != EFI_BUFFER_TOO_SMALL) ||
+           (Attr != MS_WHEA_RECORD_ID_VAR_ATTR) ||
+           (Size != MS_WHEA_RECORD_ID_VAR_LEN)) {
+    DEBUG ((
+      DEBUG_INFO,
+      "%a Record ID variable has odd properties size: 0x%x, attribute: %08x. Re-initializing to 0\n",
+      __FUNCTION__,
+      Size,
+      Attr
+      ));
+    // This variable is whacked, flush it...
+    Status = mSmmVariable->SmmSetVariable (MS_WHEA_RECORD_ID_VAR_NAME, &gMsWheaReportRecordIDGuid, Attr, 0, NULL);
+    ASSERT_EFI_ERROR (Status);
+    *RecordID = 0;
+  } else {
+    Status = mSmmVariable->SmmGetVariable (
+               MS_WHEA_RECORD_ID_VAR_NAME,
+               &gMsWheaReportRecordIDGuid,
+               &Attr,
+               &Size,
+               RecordID
+               );
+    ASSERT_EFI_ERROR (Status);
   }
 
   (*RecordID)++; //increment the record ID number
 
   //Set the variable so the next record uses a unique record ID
-  return mSmmVariable->SmmSetVariable(L"RecordID",
-                                      RecordIDGuid,
-                                      EFI_VARIABLE_NON_VOLATILE |
-                                      EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                                      Size,
-                                      RecordID);
+  return mSmmVariable->SmmSetVariable (
+           MS_WHEA_RECORD_ID_VAR_NAME,
+           &gMsWheaReportRecordIDGuid,
+           MS_WHEA_RECORD_ID_VAR_ATTR,
+           Size,
+           RecordID
+           );
 }
 
 /**
