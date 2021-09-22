@@ -35,7 +35,6 @@ This package has shared drivers and libraries that are silicon and platform inde
 | **TpmSgNvIndexLib**                       | [TpmSgNvIndexLib](../Library/TpmSgNvIndexLib/ReadMe.md) |
 | **MemoryProtectionExceptionLib**          | [MemoryProtectionExceptionLib](../Library/MemoryProtectionExceptionLibCmos/Readme.md) |
 | **MemoryProtectionExceptionHandlerLib**   | [MemoryProtectionExceptionHandlerLib](../Library/MemoryProtectionExceptionHandlerLib/Readme.md) |
-| **MemoryProtectionLib**                   | [MemoryProtectionLib](../Library/MemoryProtectionLib/Readme.md) |
 
 ## Testing
 

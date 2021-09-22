@@ -33,7 +33,7 @@
   CpuExceptionHandlerLib
   DebugLib
   UefiBootServicesTableLib
-  MemoryProtectionLib
+  MemoryProtectionHobLib
   MemoryProtectionExceptionLib
   HwResetSystemLib
 

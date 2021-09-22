@@ -70,14 +70,6 @@
   #  { 2AB1C860-E697-4EDE-8C0F-65CD6E444435 }
   gMuReadyToProcessCapsulesNotifyGuid = { 0x2AB1C860, 0xE697, 0x4EDE, {0x8C, 0x0F, 0x65, 0xCD, 0x6E, 0x44, 0x44, 0x35}}
 
-  ## Variable namespace GUID for Memory Protections Settings
-  # 29FC7537-505A-4497-BA4D-A4CE416F5539
-  gMemoryProtectionsGuid              = {0x29FC7537, 0x505A, 0x4497, { 0xBA, 0x4D, 0xA4, 0xCE, 0x41, 0x6F, 0x55, 0x39 }}
-
-  ## HOB Guid for Memory Protections Settings
-  # 9abfd639-d1d0-4eff-bdb6-7ec4190d17d5
-  gHobMemoryProtectionsGuid           = {0x9abfd639, 0xd1d0, 0x4eff, { 0xbd, 0xb6, 0x7e, 0xc4, 0x19, 0x0d, 0x17, 0xd5 }}
-
 [Ppis]
   gDebugPortPpiGuid = { 0x9d83f2d1, 0x9832, 0x4ded, { 0xaf, 0x78, 0x0e, 0xfe, 0x93, 0x07, 0xe8, 0xb1 }}
 
@@ -106,11 +98,6 @@
   ## Number of pages (EFI_PAGE_SIZE) to allocate in the EFI partition for each file log
   ## Default: 1024 * 4KiB = 4MB
   gMsCorePkgTokenSpaceGuid.PcdDebugFileLoggerAllocatedPages|1024|UINT32|0x4000001C
-
-  ## This PCD is the default global setting for memory protections.
-  #   TRUE  - UEFI memory protections CAN be enabled.<BR>
-  #   FALSE - UEFI memory protections WILL be disabled.<BR>
-  gMsCorePkgTokenSpaceGuid.PcdDefaultMemoryProtectionGlobalToggle|TRUE|BOOLEAN|0x30001059
 
 [PcdsDynamic, PcdsDynamicEx]
   gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask|0x00000000|UINT32|0x00010178

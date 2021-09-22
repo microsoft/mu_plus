@@ -75,7 +75,8 @@
             "XIPFLAGS",
             "mstrict",
             "mgeneral",
-            "frontpage"
+            "frontpage",
+            "mitigations"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

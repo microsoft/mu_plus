@@ -8,6 +8,8 @@ Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+#include <Uefi.h>
+
 #include <Library/MemoryProtectionExceptionLib.h>
 
 /**
