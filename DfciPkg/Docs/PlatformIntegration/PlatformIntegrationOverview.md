@@ -10,7 +10,7 @@ scenario there maybe custom requirements in adjacent UEFI firmware components.
 
 ## Dfci Menu application
 
-The [DfciMenu](https://github.com/microsoft/mu_plus/tree/dev/201908/DfciPkg/Application/DfciMenu) application is
+The [DfciMenu](https://github.com/microsoft/mu_plus/tree/release/202102/DfciPkg/Application/DfciMenu) application is
 optimized for **mu_plus MsGraphicsPkg**. It is VFR but since many platforms use custom layouts and graphical
 representation this area might need some adjustments.  The DfciMenu application publishes a HII formset that should be
 located by your pre-boot UEFI menu application (e.g. "FrontPage") and displayed.

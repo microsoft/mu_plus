@@ -97,7 +97,7 @@ not externally attached devices.
 * Boot to external media (e.g. USB, SD, ...)
 * Boot via on-board network devices
 
-Refer to the "Group Settings" section of [DfciSettings.h](https://github.com/microsoft/mu_plus/blob/dev/201908/DfciPkg/Include/Settings/DfciSettings.h)
+Refer to the "Group Settings" section of [DfciSettings.h](https://github.com/microsoft/mu_plus/tree/release/202102/DfciPkg/Include/Settings/DfciSettings.h)
 
 ## Device Ownership
 
