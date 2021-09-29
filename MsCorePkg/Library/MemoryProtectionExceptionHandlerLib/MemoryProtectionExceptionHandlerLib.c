@@ -10,12 +10,20 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi/UefiSpec.h>
 #include <Uefi/UefiBaseType.h>
 
+#include <Pi/PiStatusCode.h>
+
+#include <Protocol/DebugSupport.h>
+
 #include <Library/CpuExceptionHandlerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/MemoryProtectionHobLib.h>
 #include <Library/MemoryProtectionExceptionLib.h>
 #include <Library/ResetSystemLib.h>
+#include <Library/MsWheaEarlyStorageLib.h>
+#include <Library/PeCoffGetEntryPointLib.h>
+
+#define IA32_PF_EC_ID   BIT4
 
 /**
   Page Fault handler which turns off memory protections and does a warm reset.
@@ -33,14 +41,42 @@ MemoryProtectionExceptionHandler (
   IN EFI_SYSTEM_CONTEXT   SystemContext
   )
 {
-  MEMORY_PROTECTION_OVERRIDE val = MEM_PROT_VALID_BIT | MEM_PROT_EX_HIT_BIT;
-
-  DEBUG((DEBUG_ERROR, "%a - ExceptionData: 0x%x - InterruptType: 0x%x\n", __FUNCTION__, SystemContext.SystemContextX64->ExceptionData, InterruptType));
+  MEMORY_PROTECTION_OVERRIDE val;
+  UINTN pointer;
+  
+  val = MEM_PROT_VALID_BIT | MEM_PROT_EX_HIT_BIT;
 
   DumpCpuContext (
     InterruptType,
     SystemContext
-    );
+  );
+
+  if (SystemContext.SystemContextX64 != NULL) {
+
+    if ((InterruptType == EXCEPT_IA32_PAGE_FAULT) &&
+        ((SystemContext.SystemContextX64->ExceptionData & IA32_PF_EC_ID) != 0)) {
+      // The RIP in SystemContext could not be used if it is page fault with I/D set.
+      pointer = (UINTN) SystemContext.SystemContextX64->Rsp;
+    } else {
+      pointer = (UINTN) SystemContext.SystemContextX64->Rip;
+    }
+
+    MsWheaESAddRecordV0 (
+      EFI_ERROR_MAJOR | EFI_SW_EC_IA32_PAGE_FAULT,
+      (UINT64) PeCoffSearchImageBase (pointer),
+      SystemContext.SystemContextX64->Rip,
+      NULL,
+      NULL
+      );
+  } else {
+    MsWheaESAddRecordV0 (
+      EFI_ERROR_MAJOR | EFI_SW_EC_IA32_PAGE_FAULT,
+      SIGNATURE_64('M', 'E', 'M', ' ', 'P', 'R', 'O', 'T'),
+      SIGNATURE_64('E', 'X', 'C', 'E', 'P', 'T', ' ', ' '),
+      NULL,
+      NULL
+      );
+  }
 
   MemoryProtectionExceptionOverrideWrite (val);
 

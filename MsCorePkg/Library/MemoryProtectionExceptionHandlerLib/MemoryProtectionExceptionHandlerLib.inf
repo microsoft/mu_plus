@@ -28,6 +28,7 @@
   MdeModulePkg/MdeModulePkg.dec
   MsCorePkg/MsCorePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
 
 [LibraryClasses]
   CpuExceptionHandlerLib
@@ -36,6 +37,8 @@
   MemoryProtectionHobLib
   MemoryProtectionExceptionLib
   HwResetSystemLib
+  MsWheaEarlyStorageLib
+  PeCoffGetEntryPointLib
 
 [DEPEX]
   TRUE
