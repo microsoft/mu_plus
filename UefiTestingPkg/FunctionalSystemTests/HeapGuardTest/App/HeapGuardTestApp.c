@@ -11,6 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Protocol/Cpu.h>
 #include <Protocol/SmmCommunication.h>
+#include <Uefi/UefiMultiPhase.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -26,6 +27,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Register/ArchitecturalMsr.h>
 #include <Library/ResetSystemLib.h>
+#include <Library/MemoryProtectionHobLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
 
@@ -208,7 +210,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if ((PcdGet8(PcdHeapGuardPropertyMask) & BIT7) == 0)
+  if (gMPS.HeapGuardPolicy.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)
   {
     //
     // Get to the beginning of the page the pool tail is on.
@@ -323,8 +325,7 @@ UefiHardwareNxProtectionEnabledPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
-  if (PcdGetBool(PcdSetNxForStack) || PcdGet64(PcdDxeNxMemoryProtectionPolicy)) {
+  if (gMPS.SetNxForStack || NX_PROTECTION_ACTIVE) {
     return UNIT_TEST_PASSED;
   }
   return UNIT_TEST_SKIPPED;
@@ -337,8 +338,7 @@ UefiNxStackPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
-  if (PcdGetBool(PcdSetNxForStack) == FALSE) {
+  if (!gMPS.SetNxForStack) {
     return UNIT_TEST_SKIPPED;
   }
   if (UefiHardwareNxProtectionEnabled(Context) != UNIT_TEST_PASSED) {
@@ -357,10 +357,8 @@ UefiNxProtectionPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
-  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
-  if ((PcdGet64(PcdDxeNxMemoryProtectionPolicy) & TestBit) == 0) {
-    UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+  if (!GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.DxeNxProtectionPolicy)) {
+    UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
   if (UefiHardwareNxProtectionEnabled(Context) != UNIT_TEST_PASSED) {
@@ -379,9 +377,9 @@ UefiPageGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
-  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT0) == 0) || ((PcdGet64(PcdHeapGuardPageType) & TestBit) == 0)) {
-    UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+  if (!(gMPS.HeapGuardPolicy.UefiPageGuard && 
+      GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPageType))) {
+    UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -396,9 +394,9 @@ UefiPoolGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
-  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT1) == 0) || ((PcdGet64(PcdHeapGuardPoolType) & TestBit) == 0)) {
-    UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+  if (!(gMPS.HeapGuardPolicy.UefiPoolGuard && 
+      GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPoolType))) {
+    UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -411,8 +409,8 @@ UefiStackGuardPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (PcdGetBool(PcdCpuStackGuard) == FALSE) {
-    UT_LOG_WARNING("PCD for this feature is disabled");
+  if (!gMPS.CpuStackGuard) {
+    UT_LOG_WARNING("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -425,8 +423,8 @@ UefiNullPointerPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if ((PcdGet8(PcdNullPointerDetectionPropertyMask) & BIT0) == 0) {
-    UT_LOG_WARNING("PCD for this feature is disabled");
+  if (!gMPS.NullPointerDetectionPolicy.UefiNullDetection) {
+    UT_LOG_WARNING("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -441,9 +439,8 @@ SmmNxProtectionPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
-  if ((PcdGet64(PcdDxeNxMemoryProtectionPolicy) & TestBit) == 0) {
-    UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+  if (!GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.DxeNxProtectionPolicy)) {
+    UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
   if (UefiHardwareNxProtectionEnabled(Context) != UNIT_TEST_PASSED) {
@@ -463,9 +460,9 @@ SmmPageGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
-  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT2) == 0) || ((PcdGet64(PcdHeapGuardPageType) & TestBit) == 0)) {
-    UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+  if (!(gMPS.HeapGuardPolicy.SmmPageGuard &&
+      GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPageType))) {
+    UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -480,9 +477,9 @@ SmmPoolGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  UINT64 TestBit = LShiftU64(1, (UINTN)HeapGuardContext.TargetMemoryType);
-  if (((PcdGet8(PcdHeapGuardPropertyMask) & BIT3) == 0) || ((PcdGet64(PcdHeapGuardPoolType) & TestBit) == 0)) {
-    UT_LOG_WARNING("PCD for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+  if (!(gMPS.HeapGuardPolicy.SmmPoolGuard &&
+      GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPoolType))) {
+    UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -495,8 +492,8 @@ SmmNullPointerPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (((PcdGet8(PcdNullPointerDetectionPropertyMask) & BIT1) == 0)) {
-    UT_LOG_WARNING("PCD for this feature is disabled");
+  if (!gMPS.NullPointerDetectionPolicy.SmmNullDetection) {
+    UT_LOG_WARNING("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
   return UNIT_TEST_PASSED;
@@ -937,7 +934,7 @@ AddUefiNxTest(
   //
   for (Index = 0; Index < NUM_MEMORY_TYPES; Index ++) {
     //
-    // Set memory type according to the bitmask for PcdDxeNxMemoryProtectionPolicy.
+    // Set memory type according to the bitmask for Dxe NX Memory Protection Policy.
     // The test progress should start at 0.
     //
     HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
@@ -995,7 +992,7 @@ AddUefiPoolTest(
   //
   for (Index = 0; Index < NUM_MEMORY_TYPES; Index ++) {
     //
-    // Set memory type according to the bitmask for PcdHeapGuardPoolType.
+    // Set memory type according to the Heap Guard Pool Type setting.
     // The test progress should start at 0.
     //
     HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
@@ -1053,7 +1050,7 @@ AddUefiPageTest(
   //
   for (Index = 0; Index < NUM_MEMORY_TYPES; Index ++) {
     //
-    // Set memory type according to the bitmask for PcdHeapGuardPageType.
+    // Set memory type according to the Heap Guard Page Type setting.
     // The test progress should start at 0.
     //
     HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
@@ -1111,7 +1108,7 @@ AddSmmPoolTest(
   //
   for (Index = 0; Index < NUM_MEMORY_TYPES; Index ++) {
     //
-    // Set memory type according to the bitmask for PcdHeapGuardPoolType.
+    // Set memory type according to the Heap Guard Pool Type setting.
     // The test progress should start at 0.
     //
     HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
@@ -1169,7 +1166,7 @@ AddSmmPageTest(
   //
   for (Index = 0; Index < NUM_MEMORY_TYPES; Index ++) {
     //
-    // Set memory type according to the bitmask for PcdHeapGuardPageType.
+    // Set memory type according to the Heap Guard Page Type setting.
     // The test progress should start at 0.
     //
     HeapGuardContext =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool(sizeof(HEAP_GUARD_TEST_CONTEXT));
@@ -1293,7 +1290,8 @@ HeapGuardTestAppEntryPoint (
   // Install an interrupt handler to reboot on page faults.
   //
   Status = mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, InterruptHandler);
-  if (EFI_ERROR( Status ))
+
+  if (Status != EFI_SUCCESS && Status != EFI_ALREADY_STARTED)
   {
     DEBUG(( DEBUG_ERROR, "Failed to install interrupt handler. Status = %r\n", Status ));
     goto EXIT;
