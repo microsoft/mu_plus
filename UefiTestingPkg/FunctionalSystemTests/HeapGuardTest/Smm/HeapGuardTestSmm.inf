@@ -25,7 +25,6 @@
 [Sources]
   HeapGuardTestSmm.c
 
-
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
@@ -39,18 +38,11 @@
   PcdLib
   BaseMemoryLib
   UefiBootServicesTableLib
+  MemoryProtectionHobLib
 
 
 [Protocols]
   gSmmExceptionTestProtocolGuid           ## CONSUMES
-
-[FixedPcd]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPropertyMask              ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPageType                  ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdHeapGuardPoolType                  ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdNullPointerDetectionPropertyMask   ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdCpuStackGuard                      ## CONSUMES
-  gEfiMdeModulePkgTokenSpaceGuid.PcdDxeNxMemoryProtectionPolicy        ## CONSUMES
 
 [Depex]
   gSmmExceptionTestProtocolGuid

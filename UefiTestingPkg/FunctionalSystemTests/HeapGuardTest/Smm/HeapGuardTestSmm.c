@@ -21,6 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseMemoryLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/MemoryProtectionHobLib.h>
 
 #include <Protocol/SmmExceptionTestProtocol.h>
 
@@ -82,7 +83,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if ((PcdGet8(PcdHeapGuardPropertyMask) & BIT7) == 0) {
+  if ((gMPS.HeapGuardPolicy.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)) {
     //
     // Get to the beginning of the page the pool tail is on.
     //
@@ -162,7 +163,7 @@ SmmPageGuard (
   DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
 
   //
-  // Memory type refers to the bitmask for the PcdHeapGuardPageType,
+  // Memory type refers to the bitmask for the Heap Guard Page Type,
   // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
   //
   MemoryType = Context->TargetMemoryType;
@@ -205,7 +206,7 @@ SmmPoolGuard (
   DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
 
   //
-  // Memory type refers to the bitmask for the PcdHeapGuardPageType,
+  // Memory type refers to the bitmask for the Heap Guard Page Type,
   // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
   //
   MemoryType = Context->TargetMemoryType;
