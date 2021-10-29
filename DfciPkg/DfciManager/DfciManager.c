@@ -913,6 +913,7 @@ COMPLETE_AS_FAILED:
     DEBUG((DEBUG_INFO, "%a ProcessMailboxes Final Exit\n", _DBGMSGID_));
 
     FreeManagerData ();
+    DeleteAllMailboxes ();
     if (mEndOfDxeEvent != NULL) {
         gBS->CloseEvent(mEndOfDxeEvent);
         mEndOfDxeEvent = NULL;
