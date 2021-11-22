@@ -36,6 +36,7 @@
   BaseLib
   SynchronizationLib
   TimerLib
+  UefiRuntimeLib
 
 [Guids]
 
