@@ -16,6 +16,7 @@
 #include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/DebugLib.h>
+#include <Library/UefiRuntimeLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
@@ -24,6 +25,21 @@ STATIC UINT32                   mBufferSize = 0;
 STATIC EFI_PHYSICAL_ADDRESS     mMaxAddress = 0;
 STATIC EFI_BOOT_SERVICES       *mBS = NULL;
 STATIC EFI_EVENT                mExitBootServicesEvent = NULL;
+
+STATIC ADVANCED_LOGGER_INFO    mRuntimeAdvancedLoggerInfo = {
+  .Signature = ADVANCED_LOGGER_SIGNATURE,
+  .Version = ADVANCED_LOGGER_VERSION,
+  .Reserved = 0,
+  .LogBuffer = sizeof (ADVANCED_LOGGER_INFO),
+  .LogCurrent = sizeof (ADVANCED_LOGGER_INFO),
+  .DiscardedSize = 0,
+  .LogBufferSize = 0,
+  .InPermanentRAM = TRUE,
+  .AtRuntime = TRUE,
+  .GoneVirtual = TRUE,
+  .HdwPortInitialized = TRUE,
+  .HdwPortDisabled = TRUE,
+};
 
 
 /**
@@ -86,20 +102,27 @@ AdvancedLoggerGetLoggerInfo (
     ADVANCED_LOGGER_PROTOCOL   *LoggerProtocol;
     EFI_STATUS                  Status;
 
-    if ((mLoggerInfo == NULL) && (mBS != NULL)) {
-        Status = mBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
-                                       NULL,
-                                       (VOID **) &LoggerProtocol);
-        if (!EFI_ERROR(Status) && (LoggerProtocol != NULL)) {
-            ASSERT(LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
-            ASSERT(LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+    if (EfiAtRuntime ()) {
+      // Return a dummy Advanced Logger Info block that indicates HdwPort is disabled,
+      // and that the log is full.
+      mLoggerInfo = &mRuntimeAdvancedLoggerInfo;
+      mMaxAddress = mLoggerInfo->LogBuffer;
+    } else {
+      if ((mLoggerInfo == NULL) && (mBS != NULL)) {
+          Status = mBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
+                                         NULL,
+                                         (VOID **) &LoggerProtocol);
+          if (!EFI_ERROR(Status) && (LoggerProtocol != NULL)) {
+              ASSERT(LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+              ASSERT(LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
 
-            mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+              mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
 
-            if (mLoggerInfo != NULL) {
-                mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
-            }
-        }
+              if (mLoggerInfo != NULL) {
+                  mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+              }
+          }
+      }
     }
 
     if (!ValidateInfoBlock()) {
