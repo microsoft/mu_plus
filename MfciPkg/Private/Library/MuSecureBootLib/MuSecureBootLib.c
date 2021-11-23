@@ -80,7 +80,7 @@ EFI_TIME mMaxTimestamp = {
   0xFF,       // Minute
   0xFF,       // Second
   0x00,
-  0xFFFFFFFF, // Nanosecond
+  0x00000000, // Nanosecond
   0,
   0,
   0x00

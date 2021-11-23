@@ -71,7 +71,7 @@ AdvancedLoggerWriteProtocol (
     CheckAddress
 
     The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.  The
-    pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here, we check that
+    pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by un trusted code.  Here, we check that
     the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which is used in multiple places
     to see if a new message will fit into the log buffer, is valid.
 
@@ -124,35 +124,29 @@ VOID
 SmmInitializeLoggerInfo (
     VOID
     ) {
-    EFI_HANDLE                Handle = 0;
     ADVANCED_LOGGER_PROTOCOL *LoggerProtocol;
     EFI_STATUS                Status;
 
-    if ((gBS == NULL) || (gSmst == NULL)) {
-        return;
-    }
 
     if (!mInitialized) {
         //
         // Locate the Logger Information block.
         //
+        if (gBS == NULL) {
+            return;
+        }
 
         mInitialized = TRUE;            // Only one attempt at getting the logger info block.
 
         Status = gBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
                                        NULL,
                                       (VOID **) &LoggerProtocol);
+        ASSERT_EFI_ERROR (Status);
         if (!EFI_ERROR(Status)) {
             mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+            ASSERT (mLoggerInfo != NULL);
             if (mLoggerInfo != NULL) {
-                mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
-
-                Status = gSmst->SmmInstallProtocolInterface (
-                                  &Handle,
-                                  &gAdvancedLoggerProtocolGuid,
-                                  EFI_NATIVE_INTERFACE,
-                                  &mAdvLoggerProtocol.AdvLoggerProtocol
-                                  );
+              mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
             }
         }
 
@@ -160,7 +154,7 @@ SmmInitializeLoggerInfo (
         // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
         //
 
-        DEBUG((DEBUG_INFO, "%a: LoggerInfo=%p, code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+        DEBUG((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
     }
 
     if (!ValidateInfoBlock()) {
@@ -186,6 +180,7 @@ AdvancedLoggerGetLoggerInfo (
 /**
   The constructor function initializes Logger Information pointer to ensure that the
   pointer is initialized in DXE - either by the constructor, or the first DEBUG message.
+  It is also responsible for publishing the Smm Advanced Logger protocol for SMM drivers.
 
   @param  ImageHandle   The firmware allocated handle for the EFI image.
   @param  SystemTable   A pointer to the EFI System Table.
@@ -195,13 +190,34 @@ AdvancedLoggerGetLoggerInfo (
 **/
 EFI_STATUS
 EFIAPI
-SmmAdvancedLoggerLibConstructor (
+SmmCoreAdvancedLoggerLibConstructor (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+    EFI_HANDLE   Handle;
+    EFI_STATUS   Status;
+
+    ASSERT ((gBS != NULL) && (gSmst != NULL));
 
     SmmInitializeLoggerInfo ();
+
+    //
+    // SMM_CORE does not allow SmmInstallProtocolInterface until after the SmmInitializeMemoryServices
+    // call from MemoryAllocationLib.  Leave MemoryAllocationLib in the INF to ensure that
+    // MemoryAllocationLib constructor runs before Advanced Logger.
+    //
+
+    Handle = NULL;
+    Status = gSmst->SmmInstallProtocolInterface (
+                      &Handle,
+                      &gAdvancedLoggerProtocolGuid,
+                      EFI_NATIVE_INTERFACE,
+                      &mAdvLoggerProtocol.AdvLoggerProtocol
+                      );
+
+    DEBUG((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+    ASSERT_EFI_ERROR (Status);
 
     return EFI_SUCCESS;
 }
