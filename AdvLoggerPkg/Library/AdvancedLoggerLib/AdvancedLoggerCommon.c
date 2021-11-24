@@ -141,10 +141,14 @@ AdvancedLoggerWrite (
 
     // Only selected messages go to the hdw port.
 
+#ifdef ADVANCED_LOGGER_SEC
     // If LoggerInfo == NULL, assume there is a HdwPort and it has not been disabled. This
-    // can occur in SEC and other points of darkness for logging debug messages
-
-    if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled)) {
+    // does occur in SEC
+    if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled))
+#else
+    if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled))
+#endif
+    {
         AdvancedLoggerHdwPortWrite(DebugLevel, (UINT8 *) Buffer, NumberOfBytes);
     }
 }
