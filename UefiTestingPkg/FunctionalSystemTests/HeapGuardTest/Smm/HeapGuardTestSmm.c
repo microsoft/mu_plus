@@ -83,7 +83,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if ((gMPS.HeapGuardPolicy.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)) {
+  if ((gMPS.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)) {
     //
     // Get to the beginning of the page the pool tail is on.
     //
