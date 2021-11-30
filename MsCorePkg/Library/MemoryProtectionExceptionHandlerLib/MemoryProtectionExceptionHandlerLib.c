@@ -153,14 +153,12 @@ MemoryProtectionExceptionHandlerConstructor (
   VOID       *mCpuArchExHandlerRegistration = NULL;
 
   // Don't install exception handler if all memory mitigations are off
-  if (!(gMPS.CpuStackGuard                ||
-        HEAP_GUARD_ACTIVE                 ||
-        HEAP_GUARD_PAGE_PROTECTION_ACTIVE ||
-        HEAP_GUARD_POOL_PROTECTION_ACTIVE ||
-        NX_PROTECTION_ACTIVE              ||
-        IMAGE_PROTECTION_ACTIVE           ||
-        NULL_POINTER_DETECTION_ACTIVE     ||
-        gMPS.SetNxForStack)) {
+  // if (!(gMPS.CpuStackGuard                    ||
+  //       (gMPS.HeapGuardPolicy.Data && (gMPS.HeapGuardPageType.Data || gMPS.HeapGuardPoolType.Data)) ||
+  //       gMPS.DxeNxProtectionPolicy.Data       ||
+  //       gMPS.ImageProtectionPolicy.Data       ||
+  //       gMPS.NullPointerDetectionPolicy.Data)) {
+  if (TRUE) {  
     return EFI_SUCCESS;
   }
 

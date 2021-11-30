@@ -210,7 +210,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if (gMPS.HeapGuardPolicy.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)
+  if (gMPS.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)
   {
     //
     // Get to the beginning of the page the pool tail is on.
@@ -325,13 +325,13 @@ UefiHardwareNxProtectionEnabledPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (gMPS.SetNxForStack || NX_PROTECTION_ACTIVE) {
+  if (gMPS.DxeNxProtectionPolicy.Data) {
     return UNIT_TEST_PASSED;
   }
   return UNIT_TEST_SKIPPED;
 }
 
-
+/* SetNxForStack is deprecated. This function is left here in case the setting returns.
 UNIT_TEST_STATUS
 EFIAPI
 UefiNxStackPreReq (
@@ -347,7 +347,7 @@ UefiNxStackPreReq (
   }
   return UNIT_TEST_PASSED;
 } // UefiNxStackPreReq()
-
+*/
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -377,7 +377,7 @@ UefiPageGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.UefiPageGuard && 
+  if (!(gMPS.HeapGuardPolicy.Fields.UefiPageGuard && 
       GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPageType))) {
     UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -394,7 +394,7 @@ UefiPoolGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.UefiPoolGuard && 
+  if (!(gMPS.HeapGuardPolicy.Fields.UefiPoolGuard && 
       GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPoolType))) {
     UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -423,7 +423,7 @@ UefiNullPointerPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (!gMPS.NullPointerDetectionPolicy.UefiNullDetection) {
+  if (!gMPS.NullPointerDetectionPolicy.Fields.UefiNullDetection) {
     UT_LOG_WARNING("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -460,7 +460,7 @@ SmmPageGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.SmmPageGuard &&
+  if (!(gMPS.HeapGuardPolicy.Fields.SmmPageGuard &&
       GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPageType))) {
     UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -477,7 +477,7 @@ SmmPoolGuardPreReq (
 {
   HEAP_GUARD_TEST_CONTEXT HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.SmmPoolGuard &&
+  if (!(gMPS.HeapGuardPolicy.Fields.SmmPoolGuard &&
       GetMemoryTypeSettingFromBitfield((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPoolType))) {
     UT_LOG_WARNING("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -492,7 +492,7 @@ SmmNullPointerPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (!gMPS.NullPointerDetectionPolicy.SmmNullDetection) {
+  if (!gMPS.NullPointerDetectionPolicy.Fields.SmmNullDetection) {
     UT_LOG_WARNING("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -1284,7 +1284,7 @@ HeapGuardTestAppEntryPoint (
   AddTestCase( Misc, "Null pointer access in SMM should trigger a page fault", "Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, HeapGuardContext );
   AddTestCase( Misc, "Blowing the stack should trigger a page fault", "Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, HeapGuardContext );
   AddTestCase( NxProtection, "Check hardware configuration of HardwareNxProtection bit", "Security.HeapGuardMisc.UefiHardwareNxProtectionEnabled", UefiHardwareNxProtectionEnabled, UefiHardwareNxProtectionEnabledPreReq, NULL, HeapGuardContext );
-  AddTestCase( NxProtection, "Stack NX Protection", "Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, UefiNxStackPreReq, NULL, HeapGuardContext );
+  AddTestCase( NxProtection, "Stack NX Protection", "Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, NULL, NULL, HeapGuardContext );
 
   //
   // Install an interrupt handler to reboot on page faults.
