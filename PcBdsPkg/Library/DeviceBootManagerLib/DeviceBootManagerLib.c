@@ -266,13 +266,13 @@ CleanUp:
 
     if (!ThermalGood) {
         DEBUG((DEBUG_ERROR, "MsPreBootChecks failed when calling Thermal Good function. %r\n", Status));
-        LogTelemetry (TRUE, NULL, EFI_CU_HP_EC_THERMAL, NULL, NULL, 0, 0);
+        LogTelemetry (TRUE, NULL, EFI_COMPUTING_UNIT_HOST_PROCESSOR | EFI_CU_HP_EC_THERMAL, NULL, NULL, 0, 0);
         ThermalFailureShutdown(); // Should never return from this function
     }
 
     if (!PowerGood) {
         DEBUG((DEBUG_ERROR, "MsPreBootChecks failed when calling Power Good function. %r\n", Status));
-        LogTelemetry (TRUE, NULL, EFI_CU_HP_EC_LOW_VOLTAGE, NULL, NULL, 0, 0);
+        LogTelemetry (TRUE, NULL, EFI_COMPUTING_UNIT_HOST_PROCESSOR | EFI_CU_HP_EC_LOW_VOLTAGE, NULL, NULL, 0, 0);
         PowerFailureShutdown(); // Should never return from this function
     }
 
