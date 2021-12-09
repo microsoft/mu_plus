@@ -5,7 +5,7 @@
 # Tianocore standards
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
-## SPDX-License-Identifier: BSD-2-Clause-Patent
+# SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 [Defines]
@@ -50,6 +50,10 @@
   ## @libraryclass Provides support for a queue system
   #
   QueueLib|Include/Library/QueueLib.h
+
+  ## @libraryclass Supports storing capsule updates in EFI partition
+  #
+  CapsulePersistenceLib|Include/Library/CapsulePersistenceLib.h
 
 [Guids]
   #  {a2966407-1f6b-4c86-b21e-fcc474c6f28e}
