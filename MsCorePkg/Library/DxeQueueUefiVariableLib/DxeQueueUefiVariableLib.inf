@@ -1,0 +1,43 @@
+## @file
+#  Library responsible for managing a queue stored in the variable store
+#  Since each entry in the queue is backed by the store, every write/modification
+#  to the queue could potentially be quite expensive in terms of flash space.
+#
+#  Copyright (c) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = DxeQueueUefiVariableLib
+  FILE_GUID                      = DBF71409-0585-4A22-BCF6-636FEECC6300
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = QueueLib|DXE_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64 RISCV64
+#
+
+[Sources]
+  DxeQueueUefiVariableLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  PcdLib
+  DebugLib
+  UefiRuntimeServicesTableLib
+  BaseLib
+  PrintLib
+  BaseMemoryLib
+  MemoryAllocationLib
+
+[Depex]
+  gEfiVariableWriteArchProtocolGuid             # Depends on variable write functionality to produce capsule data variable
