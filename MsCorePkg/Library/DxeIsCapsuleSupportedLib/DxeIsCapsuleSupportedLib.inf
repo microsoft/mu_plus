@@ -1,0 +1,50 @@
+## @file
+#  Library for checking if Capsules are supported by the current firmware
+#  This includes some light validation and verification of the capsule
+#  structure.
+#
+#  While this library says it is a RuntimeDriver, it will not work past the
+#  memory change. For its use case it assumes the capsule interface will lock
+#  at ExitBootServices.
+#
+#  Copyright (c) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DxeIsCapsuleSupportedLib
+  FILE_GUID                      = 12A8DFE6-F6EA-4746-8F71-2652D97210BC
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = IsCapsuleSupportedLib|DXE_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64 RISCV64
+#
+
+[Sources]
+  CapsuleSupported.c
+  CapsuleEsrtTableLayer.c
+  CapsuleEsrtTableLayer.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  FmpDevicePkg/FmpDevicePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  UefiBootServicesTableLib
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  UefiLib
+
+[Guids]
+  ## SOMETIMES_PRODUCES   ## Variable:L"CapsuleXXXX.bin" # (Process across reset capsule image) for capsule updated data
+  gEfiFmpCapsuleGuid                            ## SOMETIMES_CONSUMES   ## GUID # FMP capsule GUID
+  gWindowsUxCapsuleGuid                         ## SOMETIMES_CONSUMES ## GUID

@@ -24,7 +24,8 @@
             "MsCorePkg/MsCorePkg.dec",
             "MsWheaPkg/MsWheaPkg.dec",
             "SecurityPkg/SecurityPkg.dec",
-            "UefiCpuPkg/UefiCpuPkg.dec"
+            "UefiCpuPkg/UefiCpuPkg.dec",
+            "FmpDevicePkg/FmpDevicePkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
 
