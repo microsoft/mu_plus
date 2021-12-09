@@ -166,6 +166,8 @@
   MsCorePkg/Library/BaseMemoryProtectionExceptionLibNull/BaseMemoryProtectionExceptionLibNull.inf
   MsCorePkg/Library/MemoryProtectionExceptionLibCmos/MemoryProtectionExceptionLibCmos.inf
   MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
+  MsCorePkg/Library/DxeQueueUefiVariableLib/DxeQueueUefiVariableLib.inf
+  MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
