@@ -172,6 +172,8 @@
   MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
   MsCorePkg/Library/DxeCapsulePersistenceLib/DxeCapsulePersistenceLib.inf
   MsCorePkg/Library/BaseCapsulePersistenceLibNull/BaseCapsulePersistenceLibNull.inf
+  MsCorePkg/Library/DxeIsCapsuleSupportedLib/DxeIsCapsuleSupportedLib.inf
+  MsCorePkg/Library/BaseIsCapsuleSupportedLibNull/BaseIsCapsuleSupportedLibNull.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
