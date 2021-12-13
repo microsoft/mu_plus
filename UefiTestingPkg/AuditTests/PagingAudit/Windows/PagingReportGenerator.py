@@ -113,7 +113,7 @@ class ParsingTool(object):
         # use index based iteration so that page splitting
         # is supported.
         index = 0
-        while index < len(self.PageDirectoryInfo) - 1:
+        while index < len(self.PageDirectoryInfo):
             pte = self.PageDirectoryInfo[index]
             for mr in self.MemoryRangeInfo:
                 if pte.overlap(mr):
