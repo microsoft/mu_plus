@@ -16,11 +16,10 @@ if .%DFCI_TARGET_IP% EQU . (
 )
 
 setlocal
-for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
-set "YY=%dt:~2,2%" & set "YYYY=%dt:~0,4%" & set "MM=%dt:~4,2%" & set "DD=%dt:~6,2%"
-set "HH=%dt:~8,2%" & set "Min=%dt:~10,2%" & set "Sec=%dt:~12,2%"
+set hh=%time:~0,2%
+if "%time:~0,1%"==" " set hh=0%hh:~1,1%
 
-set date=%YYYY%%MM%%DD%_%HH%%Min%%Sec%
+set date=%date:~10,4%%date:~4,2%%date:~7,2%_%hh%%time:~3,2%%time:~6,2%
 
 set Platform=Platforms\SimpleFTDI\Args.txt
 

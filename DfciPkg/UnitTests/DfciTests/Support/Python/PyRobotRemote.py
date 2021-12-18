@@ -21,8 +21,8 @@ from Lib.UefiVariablesSupportLib import UefiVariable
 
 
 # update this whenever you make a change
-RobotRemoteChangeDate = "2020-10-02 09:30"
-RobotRemoteVersion = 1.05
+RobotRemoteChangeDate = "2021-12-14 11:00"
+RobotRemoteVersion = 1.06
 
 
 class UefiRemoteTesting(object):
@@ -35,18 +35,13 @@ class UefiRemoteTesting(object):
         self.filepath = None
         self.lines = []
 
-    def Run_Command_And_Return_Output(self, cmdline):
-        cmd = shlex.split(cmdline)
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.wait()
-        out = p.communicate()[0]
-        rc = p.returncode
-        lines = out.splitlines()
+    def Run_PowerShell_And_Return_Output(self, cmdline):
+        completed = subprocess.run(["powershell", "-Command", cmdline], capture_output=True)
 
-        if rc != 0 or len(lines) < 3:
+        if completed.returncode != 0:
             return "Error"
         else:
-            return lines[2].decode('utf-8').strip()
+            return completed.stdout.decode('utf-8').strip()
 
     #
     # String variables are designed to have a NULL.  This does
