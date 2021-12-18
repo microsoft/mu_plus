@@ -13,10 +13,10 @@ Library     Support${/}Python${/}DFCI_SupportLib.py
 
 
 *** Variables ***
-${CMD_MFG}              wmic computersystem get manufacturer
-${CMD_MODEL}            wmic computersystem get model
-${CMD_SERIALNUMBER}     wmic path win32_systemenclosure get serialnumber
-${CMD_UUID}             wmic path win32_computersystemproduct get uuid
+${CMD_MFG}              Get-CimInstance -ClassName Win32_ComputerSystem -Property Manufacturer | Select-Object -ExpandProperty Manufacturer
+${CMD_MODEL}            Get-CimInstance -ClassName Win32_ComputerSystem -Property Model | Select-Object -ExpandProperty Model
+${CMD_SERIALNUMBER}     Get-CimInstance -ClassName Win32_systemenclosure -Property SerialNumber  | Select-Object -ExpandProperty SerialNumber
+${CMD_UUID}             Get-CimInstance -ClassName Win32_computersystemproduct -Property uuid | Select-Object -ExpandProperty uuid
 
 
 *** Keywords ***
@@ -43,21 +43,21 @@ Compare Files
 ############################################################
 
 Get System Under Test SerialNumber
-    ${Value}=   Run Command And Return Output   ${CMD_SERIALNUMBER}
+    ${Value}=   Run PowerShell And Return Output   ${CMD_SERIALNUMBER}
     Should Be True  '${Value}' != 'Error'
     Should Be True  '${Value}' != ''
     [Return]        ${Value}
 
 
 Get System Under Test Manufacturer
-    ${Value}=   Run Command And Return Output   ${CMD_MFG}
+    ${Value}=   Run PowerShell And Return Output   ${CMD_MFG}
     Should Be True  '${Value}' != 'Error'
     Should Be True  '${Value}' != ''
     [Return]        ${Value}
 
 
 Get System Under Test ProductName
-    ${Value}=   Run Command And Return Output   ${CMD_MODEL}
+    ${Value}=   Run PowerShell And Return Output   ${CMD_MODEL}
     Should Be True  '${Value}' != 'Error'
     Should Be True  '${Value}' != ''
     [Return]        ${Value}
