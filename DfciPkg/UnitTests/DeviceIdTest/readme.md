@@ -1,4 +1,4 @@
-# Verify DfciDevicedIdLib library functionality
+# Verify DfciDeviceIdLib library functionality
 
 The library DfciDeviceIdLib provided Dfci with platform information that Dfci needs.  This include the manufacturer
 name, product name, and serial number.  Dfci has limit on the characters supported, and the length of the strings returned.

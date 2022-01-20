@@ -102,6 +102,7 @@
             "pytool",
             "robotframework", # python package dependency
             "robotremoteserver", # python package dependency
+            "yourplatformpkg",
         ]
     }
 }
