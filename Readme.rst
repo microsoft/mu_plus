@@ -15,13 +15,13 @@ Branch Status - release/202108
 ==============================
 
 :Status:
-  In Development
+  Stabilized
 
 :Entered Development:
   2021/09
 
 :Anticipated Stabilization:
-  March 2022
+  Jan 2022
 
 Branch Changes - release/202108
 ===============================
@@ -41,8 +41,8 @@ Bug Fixes-dev
 Branched from 202102
 --------------------
 
-Commit: 30064d31666cb335bbbf1348be6e1374e429dbe0
-
+Original sync Commit: 30064d31666cb335bbbf1348be6e1374e429dbe0
+Updated on 1/21/22 to include all changes up to in 202102: a0073c472e260cfb47d705003c66505c31009b17
 
 
 Code of Conduct
