@@ -1,6 +1,6 @@
 ## @file
-#  This module consolidates all crypto needed for Project Mu UEFI and provides 
-#  protocol for those functions. 
+#  This module consolidates all crypto needed for Project Mu UEFI and provides
+#  protocol for those functions.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -32,6 +32,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   CryptoPkg/CryptoPkg.dec
+  SecurityPkg/SecurityPkg.dec
   MsCorePkg/MsCorePkg.dec
 
 [LibraryClasses]
@@ -39,6 +40,7 @@
   DebugLib
   BaseCryptLib
   UefiDriverEntryPoint
+  Hash2CryptoLib
 
 [Protocols]
   gMuPKCS7ProtocolGuid

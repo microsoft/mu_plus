@@ -11,12 +11,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DebugLib.h>
+#include <Library/Hash2CryptoLib.h>
 
 #include "MuCryptoDxe.h"
 
 
 /**
-  The module Entry Point of the Project Mu Crypto Dxe Driver.  
+  The module Entry Point of the Project Mu Crypto Dxe Driver.
 
   @param[in]  ImageHandle    The firmware allocated handle for the EFI image.
   @param[in]  SystemTable    A pointer to the EFI System Table.
@@ -32,10 +33,12 @@ MuCryptoDxeEntry(
   IN EFI_SYSTEM_TABLE    *SystemTable
   )
 {
-  
+
   InstallPkcs7Support(ImageHandle);
 
   InstallPkcs5Support(ImageHandle);
+
+  InstallHash2ServiceBindingProtocol ();
 
   return EFI_SUCCESS;
 }
