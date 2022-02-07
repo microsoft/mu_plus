@@ -28,7 +28,7 @@ Finally the SMM stage driver will be included in the Components.X64 or DXE_SMM_D
 
 ## Important Notes
 
-The PCD value of __gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid__ must be overriden by *each* platform as this is later
+The PCD value of __gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid__ must be overriden by _each_ platform as this is later
 used in the CPER as the Platform ID (byte offset 32 in the record).
 
 In the DXE phase, errors will be picked up by MsWhea for you. In early phases of boot, the errors must be explicitly logged.
@@ -61,7 +61,7 @@ will report errors under EFI_GENERIC_ERROR_INFO severity.
 ## Testing
 
 There is a UEFI shell application based unit test for WHEA reports.  This test attempts to verify basic functionality of
-public interfaces.  Check the **UnitTests** folder at the root of the package.
+public interfaces.  Check the __UnitTests__ folder at the root of the package.
 
 There is also a feature flag that can inject reports on each boot during various uefi stages. This flag should be off in
 production.

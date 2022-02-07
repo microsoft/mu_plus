@@ -128,11 +128,11 @@ provide various recovery paths.
 When a DFCI owner is enrolled, DFCI must take precedence over any other UEFI management solution.  Physically-present
 user, including authenticated, may not bypass DFCI permissions on `DFCI_IDENTITY_LOCAL`.
 
-**Protection:** The hardware/firmware implementation of DFCI must __protect__ DFCI configuration code and data such that
+**Protection:** The hardware/firmware implementation of DFCI must **protect** DFCI configuration code and data such that
 they cannot by bypassed by an operating system or casual physical attacker.  For example, non-volatile storage that is
 locked prior to Boot Device Selection.
 
-**Enforcement:** The hardware/firmware implementation of DFCI must __enforce__ DFCI configurations such that they cannot
+**Enforcement:** The hardware/firmware implementation of DFCI must **enforce** DFCI configurations such that they cannot
 by bypassed by an operating system or casual physical attacker.  For example, power to devices is disabled or busses
 disabled and the configuration is locked prior to Boot Device Selection.
 
@@ -154,7 +154,7 @@ For this workflow, the server is not authenticated, but the payload will be auth
 
 ### Unknown Certificate Enrollment
 
-This is *not* a Microsoft-supported scenario but might be encountered during development and testing.  On an unenrolled
+This is _not_ a Microsoft-supported scenario but might be encountered during development and testing.  On an unenrolled
 system, if enrollment packets are supplied to the DFCI mailboxes that are signed by an unknown certificate, a red
 authorization prompt is displayed during boot.  The prompt requests the physically-present user to authorize the
 enrollment of the unknown certificate by typing the last 2 characters of the certificate's SHA-1 thumbprint.  If a BIOS
