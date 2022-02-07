@@ -12,9 +12,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 // Preprocessor constants.
 //
-#define UIT_INVALID_SELECTION              (UINT32)-1
-#define MAX_FONT_NAME_SIZE                 256
-
+#define UIT_INVALID_SELECTION  (UINT32)-1
+#define MAX_FONT_NAME_SIZE     256
 
 /**
 Calculates the bitmap width and height of the specified text string based on the current font size & style.
@@ -30,22 +29,24 @@ Calculates the bitmap width and height of the specified text string based on the
 **/
 EFI_STATUS
 EFIAPI
-GetTextStringBitmapSize (IN     CHAR16           *pString,
-                         IN     EFI_FONT_INFO    *FontInfo,
-                         IN     BOOLEAN           BoundsLimit,
-                         IN     EFI_HII_OUT_FLAGS HiiFlags,
-                         IN OUT SWM_RECT         *Bounds,
-                         OUT    UINT32           *MaxFontGlyphDescent);
-
+GetTextStringBitmapSize (
+  IN     CHAR16             *pString,
+  IN     EFI_FONT_INFO      *FontInfo,
+  IN     BOOLEAN            BoundsLimit,
+  IN     EFI_HII_OUT_FLAGS  HiiFlags,
+  IN OUT SWM_RECT           *Bounds,
+  OUT    UINT32             *MaxFontGlyphDescent
+  );
 
 // Given two canvas, find the "control" that is "InThisList" that is the equivalent control
 // "InOtherList"
 UIT_CANVAS_CHILD_CONTROL *
 EFIAPI
-GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
-                      IN Canvas                   *InThisList,
-                      IN Canvas                   *InOtherList);
-
+GetEquivalentControl (
+  IN UIT_CANVAS_CHILD_CONTROL  *Control,
+  IN Canvas                    *InThisList,
+  IN Canvas                    *InOtherList
+  );
 
 /**
     Draws a rectangular outline to the screen at location and in the size, line width, and color specified.
@@ -63,13 +64,14 @@ GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
 
 EFI_STATUS
 EFIAPI
-DrawRectangleOutline (IN UINT32                        OrigX,
-                      IN UINT32                        OrigY,
-                      IN UINT32                        Width,
-                      IN UINT32                        Height,
-                      IN UINT32                        LineWidth,
-                      IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Color);
-
+DrawRectangleOutline (
+  IN UINT32                         OrigX,
+  IN UINT32                         OrigY,
+  IN UINT32                         Width,
+  IN UINT32                         Height,
+  IN UINT32                         LineWidth,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *Color
+  );
 
 /**
     Returns a copy of the FONT_INFO structure.
@@ -82,7 +84,9 @@ DrawRectangleOutline (IN UINT32                        OrigX,
 
 EFI_FONT_INFO *
 EFIAPI
-DupFontInfo (IN EFI_FONT_INFO *FontInfo);
+DupFontInfo (
+  IN EFI_FONT_INFO  *FontInfo
+  );
 
 /**
     Returns a new FontDisplayInfo populated with callers FontInfo.
@@ -96,6 +100,8 @@ DupFontInfo (IN EFI_FONT_INFO *FontInfo);
 
 EFI_FONT_DISPLAY_INFO *
 EFIAPI
-BuildFontDisplayInfoFromFontInfo (IN EFI_FONT_INFO *FontInfo);
+BuildFontDisplayInfoFromFontInfo (
+  IN EFI_FONT_INFO  *FontInfo
+  );
 
-#endif  // _UIT_UTILITIES_H_.
+#endif // _UIT_UTILITIES_H_.

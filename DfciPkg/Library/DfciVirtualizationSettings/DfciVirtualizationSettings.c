@@ -29,18 +29,19 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciOemSample.h>
 
 EFI_EVENT  mDfciVirtualSettingsProviderSupportInstallEvent;
-VOID      *mDfciVirtualSettingsProviderSupportInstallEventRegistration = NULL;
+VOID       *mDfciVirtualSettingsProviderSupportInstallEventRegistration = NULL;
 
 typedef enum {
-    ID_IS_BAD,
-    ID_IS_VIRTUALIZATION,
+  ID_IS_BAD,
+  ID_IS_VIRTUALIZATION,
 }  ID_IS;
 
 // There are no setting to change the support for CPU and I/O virtualization
 
-#define HARD_CODED_VIRTUALIZATION 1
+#define HARD_CODED_VIRTUALIZATION  1
 
 // Forward declarations needed
+
 /**
  * Settings Provider GetDefault routine
  *
@@ -54,9 +55,9 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciVirtSettingsGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   );
 
 /**
@@ -85,16 +86,16 @@ DfciVirtSettingsGet (
 STATIC
 ID_IS
 IsIdSupported (
-	IN  DFCI_SETTING_ID_STRING Id
-  ) {
+  IN  DFCI_SETTING_ID_STRING  Id
+  )
+{
+  if (0 == AsciiStrnCmp (Id, DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS, DFCI_MAX_ID_LEN)) {
+    return ID_IS_VIRTUALIZATION;
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
+  }
 
-    if (0 == AsciiStrnCmp (Id, DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS, DFCI_MAX_ID_LEN)) {
-        return ID_IS_VIRTUALIZATION;
-    } else {
-        DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
-    }
-
-    return ID_IS_BAD;
+  return ID_IS_BAD;
 }
 
 /////---------------------Interface for Settings Provider ---------------------//////
@@ -113,41 +114,42 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciVirtSettingsSet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN        UINTN                     ValueSize,
-    IN  CONST VOID                     *Value,
-    OUT       DFCI_SETTING_FLAGS       *Flags
-  ) {
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN        UINTN                  ValueSize,
+  IN  CONST VOID                   *Value,
+  OUT       DFCI_SETTING_FLAGS     *Flags
+  )
+{
+  EFI_STATUS  Status;
+  ID_IS       Id;
+  UINT8       NewValue;
 
-    EFI_STATUS      Status;
-    ID_IS           Id;
-    UINT8           NewValue;
+  if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize < sizeof (UINT8))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize < sizeof(UINT8))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  NewValue = *((UINT8 *)Value);
 
-    NewValue = *((UINT8 *) Value);
+  Id = IsIdSupported (This->Id);
+  switch (Id) {
+    case ID_IS_VIRTUALIZATION:
+      if (NewValue != HARD_CODED_VIRTUALIZATION) {
+        Status = EFI_UNSUPPORTED;
+      } else {
+        *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+        Status  = EFI_SUCCESS;
+      }
 
-    Id = IsIdSupported(This->Id);
-    switch (Id) {
-        case ID_IS_VIRTUALIZATION:
-            if (NewValue != HARD_CODED_VIRTUALIZATION) {
-                Status = EFI_UNSUPPORTED;
-            } else {
-                *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-                Status = EFI_SUCCESS;
-            }
-            break;
+      break;
 
-        default:
-            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
-            Status = EFI_UNSUPPORTED;
-            break;
-    }
+    default:
+      DEBUG ((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+      Status = EFI_UNSUPPORTED;
+      break;
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -163,45 +165,44 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciVirtSettingsGet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN  OUT   UINTN                    *ValueSize,
-    OUT       VOID                     *Value
-  ) {
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
+  )
+{
+  ID_IS       Id;
+  EFI_STATUS  Status;
+  UINT8       *CurrentValue;
 
-    ID_IS               Id;
-    EFI_STATUS          Status;
-    UINT8              *CurrentValue;
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if (*ValueSize < sizeof (UINT8)) {
+    *ValueSize = sizeof (UINT8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    if (*ValueSize < sizeof(UINT8)) {
-        *ValueSize = sizeof(UINT8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  CurrentValue = (UINT8 *)Value;
 
-    CurrentValue = (UINT8 *) Value;
+  Id     = IsIdSupported (This->Id);
+  Status = EFI_SUCCESS;
 
-    Id = IsIdSupported(This->Id);
-    Status = EFI_SUCCESS;
+  switch (Id) {
+    // Current setting is hard coded to Enabled.
+    case ID_IS_VIRTUALIZATION:
+      *CurrentValue = HARD_CODED_VIRTUALIZATION;
+      *ValueSize    = sizeof (UINT8);
+      break;
 
-    switch (Id) {
+    default:
+      DEBUG ((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+      Status = EFI_UNSUPPORTED;
+      break;
+  }
 
-        // Current setting is hard coded to Enabled.
-        case ID_IS_VIRTUALIZATION:
-            *CurrentValue = HARD_CODED_VIRTUALIZATION;
-            *ValueSize = sizeof(UINT8);
-            break;
-
-        default:
-            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
-            Status = EFI_UNSUPPORTED;
-            break;
-    }
-
-    return Status;
+  return Status;
 }
 
 /**
@@ -217,34 +218,34 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciVirtSettingsGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
-  ) {
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
+  )
+{
+  ID_IS  Id;
+  UINT8  *DefaultValue;
 
-    ID_IS    Id;
-    UINT8   *DefaultValue;
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || (Value == NULL)) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if (*ValueSize < sizeof (UINT8)) {
+    *ValueSize = sizeof (UINT8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    if (*ValueSize < sizeof(UINT8)) {
-        *ValueSize = sizeof(UINT8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  Id = IsIdSupported (This->Id);
+  if (Id == ID_IS_BAD) {
+    return EFI_UNSUPPORTED;
+  }
 
-    Id = IsIdSupported(This->Id);
-    if (Id == ID_IS_BAD) {
-        return EFI_UNSUPPORTED;
-    }
+  DefaultValue  = (UINT8 *)Value;
+  *ValueSize    = sizeof (UINT8);
+  *DefaultValue = HARD_CODED_VIRTUALIZATION;
 
-    DefaultValue = (UINT8 *) Value;
-    *ValueSize = sizeof(UINT8);
-    *DefaultValue = HARD_CODED_VIRTUALIZATION;
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -258,25 +259,25 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciVirtSettingsSetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This
-  ) {
+  IN  CONST DFCI_SETTING_PROVIDER  *This
+  )
+{
+  DFCI_SETTING_FLAGS  Flags = 0;
+  EFI_STATUS          Status;
+  UINT8               Value;
+  UINTN               ValueSize;
 
-    DFCI_SETTING_FLAGS Flags = 0;
-    EFI_STATUS         Status;
-    UINT8              Value;
-    UINTN              ValueSize;
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (This == NULL) {
-        return EFI_INVALID_PARAMETER;
-    }
+  ValueSize = sizeof (ValueSize);
+  Status    = DfciVirtSettingsGetDefault (This, &ValueSize, &Value);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    ValueSize = sizeof(ValueSize);
-    Status = DfciVirtSettingsGetDefault (This, &ValueSize, &Value);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    return DfciVirtSettingsSet (This, ValueSize, &Value, &Flags);
+  return DfciVirtSettingsSet (This, ValueSize, &Value, &Flags);
 }
 
 //
@@ -284,7 +285,7 @@ DfciVirtSettingsSetDefault (
 // allocated memory this code can use a single "template" and just change
 // the id, type, and flags field as needed for registration.
 //
-STATIC DFCI_SETTING_PROVIDER mDfciCpuAndIoProviderTemplate = {
+STATIC DFCI_SETTING_PROVIDER  mDfciCpuAndIoProviderTemplate = {
   0,
   0,
   0,
@@ -312,19 +313,20 @@ not cause the default to be set.
 EFI_STATUS
 EFIAPI
 GetVirtualizationSetting (
-    IN      DFCI_SETTING_ID_STRING   Id,
-    IN  OUT UINTN                   *ValueSize,
-    OUT     VOID                    *Value
-  ) {
+  IN      DFCI_SETTING_ID_STRING  Id,
+  IN  OUT UINTN                   *ValueSize,
+  OUT     VOID                    *Value
+  )
+{
+  EFI_STATUS  Status;
 
-    EFI_STATUS      Status;
+  mDfciCpuAndIoProviderTemplate.Id = Id;
+  Status                           = DfciVirtSettingsGet (&mDfciCpuAndIoProviderTemplate, ValueSize, Value);
+  if (EFI_ERROR (Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
+    Status = DfciVirtSettingsGetDefault (&mDfciCpuAndIoProviderTemplate, ValueSize, Value);
+  }
 
-    mDfciCpuAndIoProviderTemplate.Id = Id;
-    Status = DfciVirtSettingsGet (&mDfciCpuAndIoProviderTemplate, ValueSize, Value);
-    if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        Status = DfciVirtSettingsGetDefault (&mDfciCpuAndIoProviderTemplate, ValueSize, Value);
-    }
-    return Status;
+  return Status;
 }
 
 /**
@@ -348,37 +350,38 @@ STATIC
 VOID
 EFIAPI
 DfciSettingsProviderSupportProtocolNotify (
-    IN  EFI_EVENT       Event,
-    IN  VOID            *Context
-  ) {
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
+{
+  STATIC UINT8                            CallCount = 0;
+  DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *sp;
+  EFI_STATUS                              Status;
 
-    STATIC UINT8                            CallCount = 0;
-    DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
-    EFI_STATUS                              Status;
-
-    //locate protocol
-    Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
-    if (EFI_ERROR(Status)) {
-      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
-        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
-      }
-      return;
+  // locate protocol
+  Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID **)&sp);
+  if (EFI_ERROR (Status)) {
+    if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
+      DEBUG ((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
     }
 
-    //
-    // Register items that are NOT in the PREBOOT_UI
-    //
-    mDfciCpuAndIoProviderTemplate.Id = DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS;
-    mDfciCpuAndIoProviderTemplate.Type = DFCI_SETTING_TYPE_ENABLE;
-    mDfciCpuAndIoProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider (sp, &mDfciCpuAndIoProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register Virtual Settings.  Status = %r\n", Status));
-    }
+    return;
+  }
 
-    //We got here, this means all protocols were installed and we didn't exit early.
-    //close the event as we dont' need to be signaled again. (shouldn't happen anyway)
-    gBS->CloseEvent(Event);
+  //
+  // Register items that are NOT in the PREBOOT_UI
+  //
+  mDfciCpuAndIoProviderTemplate.Id    = DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS;
+  mDfciCpuAndIoProviderTemplate.Type  = DFCI_SETTING_TYPE_ENABLE;
+  mDfciCpuAndIoProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
+  Status                              = sp->RegisterProvider (sp, &mDfciCpuAndIoProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register Virtual Settings.  Status = %r\n", Status));
+  }
+
+  // We got here, this means all protocols were installed and we didn't exit early.
+  // close the event as we dont' need to be signaled again. (shouldn't happen anyway)
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -396,21 +399,22 @@ DfciSettingsProviderSupportProtocolNotify (
 EFI_STATUS
 EFIAPI
 DfciVirtualizationSettingsConstructor (
-    IN EFI_HANDLE        ImageHandle,
-    IN EFI_SYSTEM_TABLE  *SystemTable
-  ) {
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
+    // Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
+    mDfciVirtualSettingsProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+                                                        &gDfciSettingsProviderSupportProtocolGuid,
+                                                        TPL_CALLBACK,
+                                                        DfciSettingsProviderSupportProtocolNotify,
+                                                        NULL,
+                                                        &mDfciVirtualSettingsProviderSupportInstallEventRegistration
+                                                        );
 
-    if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
-        //Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
-        mDfciVirtualSettingsProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
-            &gDfciSettingsProviderSupportProtocolGuid,
-             TPL_CALLBACK,
-             DfciSettingsProviderSupportProtocolNotify,
-             NULL,
-            &mDfciVirtualSettingsProviderSupportInstallEventRegistration
-            );
+    DEBUG ((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
+  }
 
-        DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
-    }
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

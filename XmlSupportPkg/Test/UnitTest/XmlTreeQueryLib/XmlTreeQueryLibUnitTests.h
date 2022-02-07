@@ -20,28 +20,31 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
 
+#define UNIT_TEST_APP_NAME     "XML Query Lib Unit Test Application"
+#define UNIT_TEST_APP_VERSION  "0.2"
 
-#define UNIT_TEST_APP_NAME        "XML Query Lib Unit Test Application"
-#define UNIT_TEST_APP_VERSION     "0.2"
-
-//global node tree so we only have to create once
-extern XmlNode *mNode;
+// global node tree so we only have to create once
+extern XmlNode  *mNode;
 
 /**
 Simple clean up method to make sure string parsing tests clean up even if interrupted and fail in the middle.
 **/
 UNIT_TEST_STATUS
 EFIAPI
-PreReqNodeTreeIsValid(
-  IN UNIT_TEST_CONTEXT           Context
-);
+PreReqNodeTreeIsValid (
+  IN UNIT_TEST_CONTEXT  Context
+  );
 
 EFI_STATUS
 EFIAPI
-RegisterAttributeTests(UNIT_TEST_SUITE_HANDLE TestSuite);
+RegisterAttributeTests (
+  UNIT_TEST_SUITE_HANDLE  TestSuite
+  );
 
 EFI_STATUS
 EFIAPI
-RegisterElementTests(UNIT_TEST_SUITE_HANDLE TestSuite);
+RegisterElementTests (
+  UNIT_TEST_SUITE_HANDLE  TestSuite
+  );
 
 #endif

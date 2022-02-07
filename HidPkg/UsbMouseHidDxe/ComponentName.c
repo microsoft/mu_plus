@@ -17,7 +17,6 @@
  *
  */
 
-
 #include "UsbMouseHid.h"
 
 //
@@ -32,16 +31,15 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL  gUsbMouseHidComponent
 //
 // EFI Component Name 2 Protocol
 //
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gUsbMouseHidComponentName2 = {
-  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) UsbMouseHidComponentNameGetDriverName,
-  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) UsbMouseHidComponentNameGetControllerName,
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL  gUsbMouseHidComponentName2 = {
+  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME)UsbMouseHidComponentNameGetDriverName,
+  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME)UsbMouseHidComponentNameGetControllerName,
   "en"
 };
 
-
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mUsbMouseHidDriverNameTable[] = {
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE  mUsbMouseHidDriverNameTable[] = {
   { "eng;en", L"USB HID Mouse Driver" },
-  { NULL , NULL }
+  { NULL,     NULL                    }
 };
 
 /**
@@ -156,11 +154,11 @@ UsbMouseHidComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 UsbMouseHidComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   )
 {
   EFI_STATUS            Status;
@@ -181,7 +179,7 @@ UsbMouseHidComponentNameGetControllerName (
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gEfiUsbIoProtocolGuid,
-                  (VOID **) &UsbIoProtocol,
+                  (VOID **)&UsbIoProtocol,
                   gUsbMouseHidDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -200,13 +198,14 @@ UsbMouseHidComponentNameGetControllerName (
   if (Status != EFI_ALREADY_STARTED) {
     return EFI_UNSUPPORTED;
   }
+
   //
   // Get the device context
   //
   Status = gBS->OpenProtocol (
                   ControllerHandle,
-                 &gHidPointerProtocolGuid,
-                  (VOID **) &HidPointerProtocol,
+                  &gHidPointerProtocolGuid,
+                  (VOID **)&HidPointerProtocol,
                   gUsbMouseHidDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -225,5 +224,4 @@ UsbMouseHidComponentNameGetControllerName (
            ControllerName,
            (BOOLEAN)(This == &gUsbMouseHidComponentName)
            );
-
 }

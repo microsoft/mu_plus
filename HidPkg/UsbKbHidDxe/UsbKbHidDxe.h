@@ -7,6 +7,7 @@ Copyright (c) 2004 - 2017, Intel Corporation. All rights reserved.<BR>
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
+
 #ifndef _EFI_USB_HID_KB_H_
 #define _EFI_USB_HID_KB_H_
 
@@ -29,14 +30,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <IndustryStandard/Usb.h>
 
-#define USB_HID_KEYBOARD_DRIVER_VERSION 0x10
+#define USB_HID_KEYBOARD_DRIVER_VERSION  0x10
 
-#define CLASS_HID           3
-#define SUBCLASS_BOOT       1
-#define PROTOCOL_KEYBOARD   1
+#define CLASS_HID          3
+#define SUBCLASS_BOOT      1
+#define PROTOCOL_KEYBOARD  1
 
-#define BOOT_PROTOCOL       0
-#define REPORT_PROTOCOL     1
+#define BOOT_PROTOCOL    0
+#define REPORT_PROTOCOL  1
 
 #define USB_HID_KB_DEV_SIGNATURE  SIGNATURE_32 ('u', 'k', 'h', 'd')
 
@@ -44,17 +45,17 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /// Structure to describe USB keyboard device
 ///
 typedef struct {
-  UINTN                             Signature;
-  EFI_HANDLE                        ControllerHandle;
-  EFI_DEVICE_PATH_PROTOCOL          *DevicePath;
-  EFI_UNICODE_STRING_TABLE          *ControllerNameTable;
-  EFI_EVENT                         DelayedRecoveryEvent;
-  EFI_USB_IO_PROTOCOL               *UsbIo;
-  EFI_USB_INTERFACE_DESCRIPTOR      InterfaceDescriptor;
-  EFI_USB_ENDPOINT_DESCRIPTOR       IntEndpointDescriptor;
-  HID_KEYBOARD_PROTOCOL             HidKeyboard;
-  KEYBOARD_HID_REPORT_CALLBACK      KeyReportCallback;
-  VOID                              *KeyReportCallbackContext;
+  UINTN                           Signature;
+  EFI_HANDLE                      ControllerHandle;
+  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
+  EFI_UNICODE_STRING_TABLE        *ControllerNameTable;
+  EFI_EVENT                       DelayedRecoveryEvent;
+  EFI_USB_IO_PROTOCOL             *UsbIo;
+  EFI_USB_INTERFACE_DESCRIPTOR    InterfaceDescriptor;
+  EFI_USB_ENDPOINT_DESCRIPTOR     IntEndpointDescriptor;
+  HID_KEYBOARD_PROTOCOL           HidKeyboard;
+  KEYBOARD_HID_REPORT_CALLBACK    KeyReportCallback;
+  VOID                            *KeyReportCallbackContext;
 } USB_KB_HID_DEV;
 
 //
@@ -70,6 +71,7 @@ extern EFI_COMPONENT_NAME2_PROTOCOL  gUsbKbHidComponentName2;
 //
 // Functions of Driver Binding Protocol
 //
+
 /**
   Check whether USB HID keyboard driver supports this device.
 
@@ -84,9 +86,9 @@ extern EFI_COMPONENT_NAME2_PROTOCOL  gUsbKbHidComponentName2;
 EFI_STATUS
 EFIAPI
 UsbKbHidDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -109,9 +111,9 @@ UsbKbHidDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 UsbKbHidDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -132,15 +134,16 @@ UsbKbHidDriverBindingStart (
 EFI_STATUS
 EFIAPI
 UsbKbHidDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN  EFI_HANDLE                     Controller,
-  IN  UINTN                          NumberOfChildren,
-  IN  EFI_HANDLE                     *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   );
 
 //
 // EFI Component Name Functions
 //
+
 /**
   Retrieves a Unicode string that is the user readable name of the driver.
 
@@ -244,16 +247,17 @@ UsbKbHidComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 UsbKbHidComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   );
 
 //
 // HID Keyboard Protocol functions
 //
+
 /**
   This function registers a callback function to occur whenever there is a HID Keyboard Report packet available.
   Note: Only one callback registration is permitted.
@@ -287,7 +291,7 @@ RegisterKeyboardHidReportCallback (
 EFI_STATUS
 EFIAPI
 UnRegisterKeyboardHidReportCallback (
-  IN HID_KEYBOARD_PROTOCOL *This
+  IN HID_KEYBOARD_PROTOCOL  *This
   );
 
 /**
@@ -304,15 +308,16 @@ UnRegisterKeyboardHidReportCallback (
 EFI_STATUS
 EFIAPI
 SetOutputReport (
-  IN HID_KEYBOARD_PROTOCOL  *This,
-  IN KEYBOARD_HID_INTERFACE Interface,
-  IN UINT8                  *HidOutputReportBuffer,
-  IN UINTN                  HidOutputReportBufferSize
+  IN HID_KEYBOARD_PROTOCOL   *This,
+  IN KEYBOARD_HID_INTERFACE  Interface,
+  IN UINT8                   *HidOutputReportBuffer,
+  IN UINTN                   HidOutputReportBufferSize
   );
 
 //
 // Module-global utility functions
 //
+
 /**
   Uses USB I/O to check whether the device is a USB keyboard device.
 
@@ -324,7 +329,7 @@ SetOutputReport (
 **/
 BOOLEAN
 IsUSBKeyboard (
-  IN  EFI_USB_IO_PROTOCOL       *UsbIo
+  IN  EFI_USB_IO_PROTOCOL  *UsbIo
   );
 
 /**
@@ -338,7 +343,7 @@ IsUSBKeyboard (
 **/
 EFI_STATUS
 InitUsbKeyboard (
-  IN OUT USB_KB_HID_DEV   *UsbKeyboardDevice
+  IN OUT USB_KB_HID_DEV  *UsbKeyboardDevice
   );
 
 /**
@@ -362,10 +367,10 @@ InitUsbKeyboard (
 EFI_STATUS
 EFIAPI
 KeyboardHandler (
-  IN  VOID          *Data,
-  IN  UINTN         DataLength,
-  IN  VOID          *Context,
-  IN  UINT32        Result
+  IN  VOID    *Data,
+  IN  UINTN   DataLength,
+  IN  VOID    *Context,
+  IN  UINT32  Result
   );
 
 /**
@@ -384,9 +389,8 @@ KeyboardHandler (
 VOID
 EFIAPI
 UsbKbHidRecoveryHandler (
-  IN    EFI_EVENT    Event,
-  IN    VOID         *Context
+  IN    EFI_EVENT  Event,
+  IN    VOID       *Context
   );
 
 #endif
-

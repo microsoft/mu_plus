@@ -45,7 +45,7 @@ DebugPrint (
   ...
   )
 {
-  DEBUG_PORT_PPI *DebugPortPPI;
+  DEBUG_PORT_PPI  *DebugPortPPI;
   VA_LIST         Marker;
   EFI_STATUS      Status;
 
@@ -62,11 +62,11 @@ DebugPrint (
   }
 
   Status = PeiServicesLocatePpi (
-              &gDebugPortPpiGuid,
-              0,
-              NULL,
-              (VOID **) &DebugPortPPI
-              );
+             &gDebugPortPpiGuid,
+             0,
+             NULL,
+             (VOID **)&DebugPortPPI
+             );
   if (Status == EFI_SUCCESS) {
     VA_START (Marker, Format);
     DebugPortPPI->DebugPortPrint (ErrorLevel, Format, Marker);
@@ -103,20 +103,19 @@ DebugAssert (
   IN CONST CHAR8  *Description
   )
 {
-  DEBUG_PORT_PPI *DebugPortPPI;
+  DEBUG_PORT_PPI  *DebugPortPPI;
   EFI_STATUS      Status;
 
   Status = PeiServicesLocatePpi (
-              &gDebugPortPpiGuid,
-              0,
-              NULL,
-              (VOID **) &DebugPortPPI
-              );
+             &gDebugPortPpiGuid,
+             0,
+             NULL,
+             (VOID **)&DebugPortPPI
+             );
 
   if (!EFI_ERROR (Status)) {
     DebugPortPPI->DebugPortAssert (FileName, LineNumber, Description);
-  }
-  else {
+  } else {
     //
     // Generate a Breakpoint, DeadLoop, or NOP based on PCD settings
     //
@@ -129,7 +128,6 @@ DebugAssert (
     }
   }
 }
-
 
 /**
   Fills a target buffer with PcdDebugClearMemoryValue, and returns the target buffer.
@@ -161,9 +159,8 @@ DebugClearMemory (
   //
   // SetMem() checks for the the ASSERT() condition on Length and returns Buffer
   //
-  return SetMem (Buffer, Length, PcdGet8(PcdDebugClearMemoryValue));
+  return SetMem (Buffer, Length, PcdGet8 (PcdDebugClearMemoryValue));
 }
-
 
 /**
   Returns TRUE if ASSERT() macros are enabled.
@@ -181,9 +178,8 @@ DebugAssertEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG() macros are enabled.
@@ -201,9 +197,8 @@ DebugPrintEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_PRINT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_PRINT_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG_CODE() macros are enabled.
@@ -221,9 +216,8 @@ DebugCodeEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_CODE_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_CODE_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG_CLEAR_MEMORY() macro is enabled.
@@ -241,7 +235,7 @@ DebugClearMemoryEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED) != 0);
 }
 
 /**
@@ -256,8 +250,8 @@ DebugClearMemoryEnabled (
 BOOLEAN
 EFIAPI
 DebugPrintLevelEnabled (
-  IN  CONST UINTN        ErrorLevel
+  IN  CONST UINTN  ErrorLevel
   )
 {
-  return (BOOLEAN) ((ErrorLevel & PcdGet32(PcdFixedDebugPrintErrorLevel)) != 0);
+  return (BOOLEAN)((ErrorLevel & PcdGet32 (PcdFixedDebugPrintErrorLevel)) != 0);
 }

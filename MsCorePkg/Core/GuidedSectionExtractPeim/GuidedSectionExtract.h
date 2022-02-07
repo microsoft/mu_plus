@@ -31,7 +31,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PeiServicesTablePointerLib.h>
 #include <Library/PerformanceLib.h>
 
-
 /**
   The ExtractSection() function processes the input section and
   returns a pointer to the section contents. If the section being
@@ -89,13 +88,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 CustomGuidedSectionExtract (
-  IN CONST  EFI_PEI_GUIDED_SECTION_EXTRACTION_PPI *This,
-  IN CONST  VOID                                  *InputSection,
-  OUT       VOID                                  **OutputBuffer,
-  OUT       UINTN                                 *OutputSize,
-  OUT       UINT32                                *AuthenticationStatus
+  IN CONST  EFI_PEI_GUIDED_SECTION_EXTRACTION_PPI  *This,
+  IN CONST  VOID                                   *InputSection,
+  OUT       VOID                                   **OutputBuffer,
+  OUT       UINTN                                  *OutputSize,
+  OUT       UINT32                                 *AuthenticationStatus
   );
-
 
 /**
    Decompresses a section to the output buffer.
@@ -120,10 +118,10 @@ CustomGuidedSectionExtract (
 EFI_STATUS
 EFIAPI
 Decompress (
-  IN CONST  EFI_PEI_DECOMPRESS_PPI  *This,
-  IN CONST  EFI_COMPRESSION_SECTION *CompressionSection,
-  OUT       VOID                    **OutputBuffer,
-  OUT       UINTN                   *OutputSize
+  IN CONST  EFI_PEI_DECOMPRESS_PPI   *This,
+  IN CONST  EFI_COMPRESSION_SECTION  *CompressionSection,
+  OUT       VOID                     **OutputBuffer,
+  OUT       UINTN                    *OutputSize
   );
 
 #endif // __PEI_GUIDEDSECTIONEXTRACT_H__

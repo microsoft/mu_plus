@@ -32,6 +32,4 @@
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-
-
-#endif  // __ADVANCED_FILE_LOGGER_H__
+#endif // __ADVANCED_FILE_LOGGER_H__

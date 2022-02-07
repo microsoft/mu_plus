@@ -11,11 +11,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi.h>
 #include <Library/BootGraphicsProviderLib.h>
 
-
 EFI_STATUS
 EFIAPI
-DisplayBootGraphic(
-    BOOT_GRAPHIC Graphic)
-{ 
+DisplayBootGraphic (
+  BOOT_GRAPHIC  Graphic
+  )
+{
   return EFI_UNSUPPORTED;
 }

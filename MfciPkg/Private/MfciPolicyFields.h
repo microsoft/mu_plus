@@ -46,7 +46,7 @@ typedef enum {
 /**
   The strings of the names in the MFCI Policy name/value pairs
 **/
-STATIC CONST CHAR16 gPolicyBlobFieldName[MFCI_POLICY_FIELD_COUNT][MFCI_POLICY_FIELD_MAX_LEN] = {
+STATIC CONST CHAR16  gPolicyBlobFieldName[MFCI_POLICY_FIELD_COUNT][MFCI_POLICY_FIELD_MAX_LEN] = {
   L"Target\\Manufacturer",
   L"Target\\Product",
   L"Target\\SerialNumber",
@@ -59,8 +59,8 @@ STATIC CONST CHAR16 gPolicyBlobFieldName[MFCI_POLICY_FIELD_COUNT][MFCI_POLICY_FI
 /**
   A helper that maps static MFCI Policy targeting fields to their corresponding UEFI variable names
 **/
-#define TARGET_POLICY_COUNT 5
-STATIC CONST CHAR16 gPolicyTargetFieldVarNames[TARGET_POLICY_COUNT][MFCI_VAR_NAME_MAX_LENGTH] = {
+#define TARGET_POLICY_COUNT  5
+STATIC CONST CHAR16  gPolicyTargetFieldVarNames[TARGET_POLICY_COUNT][MFCI_VAR_NAME_MAX_LENGTH] = {
   MFCI_MANUFACTURER_VARIABLE_NAME,
   MFCI_PRODUCT_VARIABLE_NAME,
   MFCI_SERIALNUMBER_VARIABLE_NAME,

@@ -27,9 +27,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 
-#define PRINT_SCREEN_ENABLE_FILENAME   L"PrintScreenEnable.txt"
-#define MAX_PRINT_SCREEN_FILES         512
-#define PRINT_SCREEN_DEBUG_WARNING     32
+#define PRINT_SCREEN_ENABLE_FILENAME  L"PrintScreenEnable.txt"
+#define MAX_PRINT_SCREEN_FILES        512
+#define PRINT_SCREEN_DEBUG_WARNING    32
 
 //
 // Print Screen Delay.  There appears to be no way to see the difference between
@@ -38,6 +38,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // PrtScn keys for 3 seconds after completing a PrtScn.
 //
 // 3 seconds in 100ns intervals = 3 * ms in 1 second * us in 1 ms * 100ns in 1us
-#define PRINT_SCREEN_DELAY       (3 * 1000           * 1000       * 10)
+#define PRINT_SCREEN_DELAY  (3 * 1000           * 1000       * 10)
 
-#endif  // __PRINTSCREEN_LOGGER_H__
+#endif // __PRINTSCREEN_LOGGER_H__

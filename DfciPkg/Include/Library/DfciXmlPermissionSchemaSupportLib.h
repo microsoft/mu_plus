@@ -11,19 +11,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __DFCI_XML_PERMISSION_SCHEMA_SUPPORT_LIB__
 #define __DFCI_XML_PERMISSION_SCHEMA_SUPPORT_LIB__
 
-
-#define PERMISSIONS_PACKET_ELEMENT_NAME  "PermissionsPacket"
-#define PERMISSIONS_VERSION_ELEMENT_NAME "Version"
-#define PERMISSIONS_LSV_ELEMENT_NAME     "LowestSupportedVersion"
-#define PERMISSIONS_LIST_ELEMENT_NAME    "Permissions"
-#define PERMISSIONS_LIST_DELEGATED_ATTRIBUTE_NAME "Delegated"
-#define PERMISSIONS_LIST_DEFAULT_ATTRIBUTE_NAME "Default"
-#define PERMISSIONS_LIST_APPEND_ATTRIBUTE_NAME  "Append"
+#define PERMISSIONS_PACKET_ELEMENT_NAME               "PermissionsPacket"
+#define PERMISSIONS_VERSION_ELEMENT_NAME              "Version"
+#define PERMISSIONS_LSV_ELEMENT_NAME                  "LowestSupportedVersion"
+#define PERMISSIONS_LIST_ELEMENT_NAME                 "Permissions"
+#define PERMISSIONS_LIST_DELEGATED_ATTRIBUTE_NAME     "Delegated"
+#define PERMISSIONS_LIST_DEFAULT_ATTRIBUTE_NAME       "Default"
+#define PERMISSIONS_LIST_APPEND_ATTRIBUTE_NAME        "Append"
 #define PERMISSIONS_LIST_APPEND_ATTRIBUTE_TRUE_VALUE  "True"
-#define PERMISSION_ELEMENT_NAME          "Permission"
-#define PERMISSION_ID_ELEMENT_NAME       "Id"
-#define PERMISSION_MASK_VALUE_ELEMENT_NAME    "PMask"
-#define PERMISSION_DELEGATED_MASK_VALUE_ELEMENT_NAME    "DMask"
+#define PERMISSION_ELEMENT_NAME                       "Permission"
+#define PERMISSION_ID_ELEMENT_NAME                    "Id"
+#define PERMISSION_MASK_VALUE_ELEMENT_NAME            "PMask"
+#define PERMISSION_DELEGATED_MASK_VALUE_ELEMENT_NAME  "DMask"
 
 /**
 <Permissions>
@@ -35,13 +34,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 ...
 </Permissions>
 **/
-#define RESULTS_PACKET_ELEMENT_NAME             "ResultsPacket"
-#define RESULTS_APPLIED_ON_ELEMENT_NAME         "AppliedOn"
-#define RESULTS_PERMISSIONS_LIST_ELEMENT_NAME   PERMISSIONS_LIST_ELEMENT_NAME
-#define RESULTS_PERMISSIONS_ELEMENT_NAME        "PermissionResult"
-#define RESULTS_PERMISSIONS_ID_ELEMENT_NAME     "Id"
-#define RESULTS_PERMISSIONS_STATUS_ELEMENT_NAME "Result"
-
+#define RESULTS_PACKET_ELEMENT_NAME              "ResultsPacket"
+#define RESULTS_APPLIED_ON_ELEMENT_NAME          "AppliedOn"
+#define RESULTS_PERMISSIONS_LIST_ELEMENT_NAME    PERMISSIONS_LIST_ELEMENT_NAME
+#define RESULTS_PERMISSIONS_ELEMENT_NAME         "PermissionResult"
+#define RESULTS_PERMISSIONS_ID_ELEMENT_NAME      "Id"
+#define RESULTS_PERMISSIONS_STATUS_ELEMENT_NAME  "Result"
 
 #define CURRENT_PERMISSION_PACKET_ELEMENT_NAME  "CurrentPermissionsPacket"
 #define CURRENT_PERMISSION_DATE_ELEMENT_NAME    "Date"
@@ -51,21 +49,23 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define CURRENT_PERMISSION_ID_ELEMENT_NAME      "Id"
 #define CURRENT_PERMISSION_VALUE_ELEMENT_NAME   "PMask"
 
-
-XmlNode*
+XmlNode *
 EFIAPI
-GetPermissionPacketNode(
-  IN CONST XmlNode* RootNode);
+GetPermissionPacketNode (
+  IN CONST XmlNode  *RootNode
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetCurrentPermissionsPacketNode(
-    IN CONST XmlNode* RootNode);
+GetCurrentPermissionsPacketNode (
+  IN CONST XmlNode  *RootNode
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetPermissionsListNodeFromPacketNode(
-    IN CONST XmlNode* PacketNode);
+GetPermissionsListNodeFromPacketNode (
+  IN CONST XmlNode  *PacketNode
+  );
 
 /**
  * Get Permissin attributes DefaultPMask and DefaultMask
@@ -81,10 +81,11 @@ GetPermissionsListNodeFromPacketNode(
  */
 EFI_STATUS
 EFIAPI
-GetPermissionsListDefaultPMask(
-    IN CONST XmlNode      *PermissionListNode,
-    OUT DFCI_PERMISSION_MASK  *PMask,
-    OUT DFCI_PERMISSION_MASK  *DMask);
+GetPermissionsListDefaultPMask (
+  IN CONST XmlNode          *PermissionListNode,
+  OUT DFCI_PERMISSION_MASK  *PMask,
+  OUT DFCI_PERMISSION_MASK  *DMask
+  );
 
 /**
   Returns true if Permission Entries should be
@@ -92,21 +93,22 @@ GetPermissionsListDefaultPMask(
   **/
 EFI_STATUS
 EFIAPI
-PermissionListEntriesAppend(
-    IN CONST XmlNode *PermissionListNode,
-    OUT BOOLEAN        *Result);
+PermissionListEntriesAppend (
+  IN CONST XmlNode  *PermissionListNode,
+  OUT BOOLEAN       *Result
+  );
 
 EFI_STATUS
 EFIAPI
-GetInputPermission(
-  IN CONST XmlNode* ParentPermissionNode,
-  OUT DFCI_SETTING_ID_STRING *Id,
-  OUT DFCI_PERMISSION_MASK *PMask,
-  OUT DFCI_PERMISSION_MASK *DMask);
+GetInputPermission (
+  IN CONST XmlNode            *ParentPermissionNode,
+  OUT DFCI_SETTING_ID_STRING  *Id,
+  OUT DFCI_PERMISSION_MASK    *PMask,
+  OUT DFCI_PERMISSION_MASK    *DMask
+  );
 
+// ***************************** EXAMPLE PERMISSION PACKET (INTPUT TO UEFI) *******************************//
 
-
-//***************************** EXAMPLE PERMISSION PACKET (INTPUT TO UEFI) *******************************//
 /*
 <?xml version="1.0" encoding="utf-8"?>
 <PermissionsPacket xmlns="urn:UefiSettings-Schema">
@@ -133,29 +135,33 @@ Create a new Current Permissions Packet Node List
 **/
 XmlNode *
 EFIAPI
-New_CurrentPermissionsPacketNodeList(EFI_TIME *Date);
+New_CurrentPermissionsPacketNodeList (
+  EFI_TIME  *Date
+  );
 
 EFI_STATUS
 EFIAPI
-SetCurrentPermissions(
-  IN CONST XmlNode *ParentPermissionsListNode,
-  IN CONST CHAR8* Id,
-  IN CONST UINT8  Value,
-  IN CONST UINT8  DelegatedValue);
+SetCurrentPermissions (
+  IN CONST XmlNode  *ParentPermissionsListNode,
+  IN CONST CHAR8    *Id,
+  IN CONST UINT8    Value,
+  IN CONST UINT8    DelegatedValue
+  );
 
 EFI_STATUS
 EFIAPI
-AddPermissionsLsvNode(
-  IN CONST XmlNode* CurrentPermissionsPacketNode,
-  IN CONST CHAR8* Lsv);
+AddPermissionsLsvNode (
+  IN CONST XmlNode  *CurrentPermissionsPacketNode,
+  IN CONST CHAR8    *Lsv
+  );
 
 EFI_STATUS
 EFIAPI
-AddCurrentAttributes(
-  IN CONST XmlNode *CurrentPermissionsPacketNode,
-  IN CONST UINT8  Value,
-  IN CONST UINT8  DelegatedValue);
-
+AddCurrentAttributes (
+  IN CONST XmlNode  *CurrentPermissionsPacketNode,
+  IN CONST UINT8    Value,
+  IN CONST UINT8    DelegatedValue
+  );
 
 /**
 Creates a new XmlNode list following the ResultPacket
@@ -169,19 +175,22 @@ List must be freed using FreeNodeList
 **/
 XmlNode *
 EFIAPI
-New_ResultPermissionPacketNodeList(EFI_TIME *Date);
+New_ResultPermissionPacketNodeList (
+  EFI_TIME  *Date
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetResultsPermissionPacketNode(CONST XmlNode* RootNode);
+GetResultsPermissionPacketNode (
+  CONST XmlNode  *RootNode
+  );
 
 EFI_STATUS
 EFIAPI
-SetOutputPermissionStatus(
-  IN CONST XmlNode* ParentPermissionsListNode,
-  IN CONST CHAR8* Id,
-  IN CONST CHAR8* Result
+SetOutputPermissionStatus (
+  IN CONST XmlNode  *ParentPermissionsListNode,
+  IN CONST CHAR8    *Id,
+  IN CONST CHAR8    *Result
   );
-
 
 #endif //__DFCI_XML_PERMISSION_SCHEMA_SUPPORT_LIB__

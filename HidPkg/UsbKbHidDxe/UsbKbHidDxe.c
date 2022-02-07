@@ -20,7 +20,7 @@
 //
 // USB Keyboard Driver Global Variables
 //
-EFI_DRIVER_BINDING_PROTOCOL gUsbKbHidDriverBinding = {
+EFI_DRIVER_BINDING_PROTOCOL  gUsbKbHidDriverBinding = {
   UsbKbHidDriverBindingSupported,
   UsbKbHidDriverBindingStart,
   UsbKbHidDriverBindingStop,
@@ -44,11 +44,11 @@ EFI_DRIVER_BINDING_PROTOCOL gUsbKbHidDriverBinding = {
 EFI_STATUS
 EFIAPI
 UsbKbHidDriverBindingEntryPoint (
-  IN EFI_HANDLE           ImageHandle,
-  IN EFI_SYSTEM_TABLE     *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS              Status;
+  EFI_STATUS  Status;
 
   Status = EfiLibInstallDriverBindingComponentName2 (
              ImageHandle,
@@ -77,13 +77,13 @@ UsbKbHidDriverBindingEntryPoint (
 EFI_STATUS
 EFIAPI
 UsbKbHidDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-  EFI_STATUS          Status;
-  EFI_USB_IO_PROTOCOL *UsbIo;
+  EFI_STATUS           Status;
+  EFI_USB_IO_PROTOCOL  *UsbIo;
 
   //
   // Check if USB I/O Protocol is attached on the controller handle.
@@ -91,7 +91,7 @@ UsbKbHidDriverBindingSupported (
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiUsbIoProtocolGuid,
-                  (VOID **) &UsbIo,
+                  (VOID **)&UsbIo,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -140,22 +140,22 @@ UsbKbHidDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 UsbKbHidDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-  EFI_STATUS                    Status;
-  EFI_USB_IO_PROTOCOL           *UsbIo;
-  USB_KB_HID_DEV                *UsbKeyboardDevice;
-  UINT8                         EndpointNumber;
-  EFI_USB_ENDPOINT_DESCRIPTOR   EndpointDescriptor;
-  UINT8                         Index;
-  UINT8                         EndpointAddr;
-  UINT8                         PollingInterval;
-  UINT8                         PacketSize;
-  BOOLEAN                       Found;
-  EFI_TPL                       OldTpl;
+  EFI_STATUS                   Status;
+  EFI_USB_IO_PROTOCOL          *UsbIo;
+  USB_KB_HID_DEV               *UsbKeyboardDevice;
+  UINT8                        EndpointNumber;
+  EFI_USB_ENDPOINT_DESCRIPTOR  EndpointDescriptor;
+  UINT8                        Index;
+  UINT8                        EndpointAddr;
+  UINT8                        PollingInterval;
+  UINT8                        PacketSize;
+  BOOLEAN                      Found;
+  EFI_TPL                      OldTpl;
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
   //
@@ -164,7 +164,7 @@ UsbKbHidDriverBindingStart (
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiUsbIoProtocolGuid,
-                  (VOID **) &UsbIo,
+                  (VOID **)&UsbIo,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -179,13 +179,14 @@ UsbKbHidDriverBindingStart (
     Status = EFI_OUT_OF_RESOURCES;
     goto ErrorExit;
   }
+
   //
   // Get the Device Path Protocol on Controller's handle
   //
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiDevicePathProtocolGuid,
-                  (VOID **) &UsbKeyboardDevice->DevicePath,
+                  (VOID **)&UsbKeyboardDevice->DevicePath,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -194,6 +195,7 @@ UsbKbHidDriverBindingStart (
   if (EFI_ERROR (Status)) {
     goto ErrorExit;
   }
+
   //
   // Report that the USB keyboard is being enabled
   //
@@ -229,7 +231,6 @@ UsbKbHidDriverBindingStart (
   //
   Found = FALSE;
   for (Index = 0; Index < EndpointNumber; Index++) {
-
     UsbIo->UsbGetEndpointDescriptor (
              UsbIo,
              Index,
@@ -237,11 +238,12 @@ UsbKbHidDriverBindingStart (
              );
 
     if (((EndpointDescriptor.Attributes & (BIT0 | BIT1)) == USB_ENDPOINT_INTERRUPT) &&
-        ((EndpointDescriptor.EndpointAddress & USB_ENDPOINT_DIR_IN) != 0)) {
+        ((EndpointDescriptor.EndpointAddress & USB_ENDPOINT_DIR_IN) != 0))
+    {
       //
       // We only care interrupt endpoint here
       //
-      CopyMem(&UsbKeyboardDevice->IntEndpointDescriptor, &EndpointDescriptor, sizeof(EndpointDescriptor));
+      CopyMem (&UsbKeyboardDevice->IntEndpointDescriptor, &EndpointDescriptor, sizeof (EndpointDescriptor));
       Found = TRUE;
       break;
     }
@@ -269,14 +271,14 @@ UsbKbHidDriverBindingStart (
     UsbKeyboardDevice->DevicePath
     );
 
-  UsbKeyboardDevice->Signature = USB_HID_KB_DEV_SIGNATURE;
-  UsbKeyboardDevice->HidKeyboard.RegisterKeyboardHidReportCallback = RegisterKeyboardHidReportCallback;
+  UsbKeyboardDevice->Signature                                       = USB_HID_KB_DEV_SIGNATURE;
+  UsbKeyboardDevice->HidKeyboard.RegisterKeyboardHidReportCallback   = RegisterKeyboardHidReportCallback;
   UsbKeyboardDevice->HidKeyboard.UnRegisterKeyboardHidReportCallback = UnRegisterKeyboardHidReportCallback;
-  UsbKeyboardDevice->HidKeyboard.SetOutputReport = SetOutputReport;
+  UsbKeyboardDevice->HidKeyboard.SetOutputReport                     = SetOutputReport;
 
   UsbKeyboardDevice->ControllerHandle = Controller;
 
-  Status = InitUsbKeyboard(UsbKeyboardDevice);
+  Status = InitUsbKeyboard (UsbKeyboardDevice);
   if (EFI_ERROR (Status)) {
     //
     // Report Status Code to indicate keyboard init failure
@@ -295,7 +297,7 @@ UsbKbHidDriverBindingStart (
   //
   EndpointAddr    = UsbKeyboardDevice->IntEndpointDescriptor.EndpointAddress;
   PollingInterval = UsbKeyboardDevice->IntEndpointDescriptor.Interval;
-  PacketSize      = (UINT8) (UsbKeyboardDevice->IntEndpointDescriptor.MaxPacketSize);
+  PacketSize      = (UINT8)(UsbKeyboardDevice->IntEndpointDescriptor.MaxPacketSize);
 
   Status = UsbIo->UsbAsyncInterruptTransfer (
                     UsbIo,
@@ -350,14 +352,15 @@ UsbKbHidDriverBindingStart (
   gBS->RestoreTPL (OldTpl);
   return EFI_SUCCESS;
 
-//
-// Error handler
-//
+  //
+  // Error handler
+  //
 ErrorExit:
   if (UsbKeyboardDevice != NULL) {
     FreePool (UsbKeyboardDevice);
     UsbKeyboardDevice = NULL;
   }
+
   gBS->CloseProtocol (
          Controller,
          &gEfiUsbIoProtocolGuid,
@@ -389,20 +392,20 @@ ErrorExitNoUsbIo:
 EFI_STATUS
 EFIAPI
 UsbKbHidDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN  EFI_HANDLE                     Controller,
-  IN  UINTN                          NumberOfChildren,
-  IN  EFI_HANDLE                     *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   )
 {
-  EFI_STATUS            Status;
-  HID_KEYBOARD_PROTOCOL *HidKeyboard;
-  USB_KB_HID_DEV        *UsbKeyboardDevice;
+  EFI_STATUS             Status;
+  HID_KEYBOARD_PROTOCOL  *HidKeyboard;
+  USB_KB_HID_DEV         *UsbKeyboardDevice;
 
   Status = gBS->OpenProtocol (
                   Controller,
                   &gHidKeyboardProtocolGuid,
-                  (VOID **) &HidKeyboard,
+                  (VOID **)&HidKeyboard,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -440,7 +443,7 @@ UsbKbHidDriverBindingStop (
                   &UsbKeyboardDevice->HidKeyboard,
                   NULL
                   );
-  ASSERT_EFI_ERROR (Status); //Proceed on error in non-debug case.
+  ASSERT_EFI_ERROR (Status); // Proceed on error in non-debug case.
 
   // Close the recovery event, if one exists.
   if (UsbKeyboardDevice->DelayedRecoveryEvent != NULL) {
@@ -454,7 +457,7 @@ UsbKbHidDriverBindingStop (
          This->DriverBindingHandle,
          Controller
          );
-  ASSERT_EFI_ERROR (Status); //Proceed on error in non-debug case.
+  ASSERT_EFI_ERROR (Status); // Proceed on error in non-debug case.
 
   //
   // Free all resources.
@@ -471,6 +474,7 @@ UsbKbHidDriverBindingStop (
 //
 // HID Keyboard Protocol functions
 //
+
 /**
   This function registers a callback function to occur whenever there is a HID Keyboard Report packet available.
   Note: Only one callback registration is permitted.
@@ -503,7 +507,7 @@ RegisterKeyboardHidReportCallback (
     return EFI_ALREADY_STARTED;
   }
 
-  HidKeyboard->KeyReportCallback = KeyboardReportCallback;
+  HidKeyboard->KeyReportCallback        = KeyboardReportCallback;
   HidKeyboard->KeyReportCallbackContext = Context;
 
   return EFI_SUCCESS;
@@ -522,7 +526,7 @@ RegisterKeyboardHidReportCallback (
 EFI_STATUS
 EFIAPI
 UnRegisterKeyboardHidReportCallback (
-  IN HID_KEYBOARD_PROTOCOL *This
+  IN HID_KEYBOARD_PROTOCOL  *This
   )
 {
   USB_KB_HID_DEV  *HidKeyboard;
@@ -537,7 +541,7 @@ UnRegisterKeyboardHidReportCallback (
     return EFI_NOT_FOUND;
   }
 
-  HidKeyboard->KeyReportCallback = NULL;
+  HidKeyboard->KeyReportCallback        = NULL;
   HidKeyboard->KeyReportCallbackContext = NULL;
 
   return EFI_SUCCESS;
@@ -557,10 +561,10 @@ UnRegisterKeyboardHidReportCallback (
 EFI_STATUS
 EFIAPI
 SetOutputReport (
-  IN HID_KEYBOARD_PROTOCOL  *This,
-  IN KEYBOARD_HID_INTERFACE Interface,
-  IN UINT8                  *HidOutputReportBuffer,
-  IN UINTN                  HidOutputReportBufferSize
+  IN HID_KEYBOARD_PROTOCOL   *This,
+  IN KEYBOARD_HID_INTERFACE  Interface,
+  IN UINT8                   *HidOutputReportBuffer,
+  IN UINTN                   HidOutputReportBufferSize
   )
 {
   EFI_STATUS      Status;
@@ -598,6 +602,7 @@ SetOutputReport (
 //
 // Module-global utility functions
 //
+
 /**
   Uses USB I/O to check whether the device is a USB keyboard device.
 
@@ -609,7 +614,7 @@ SetOutputReport (
 **/
 BOOLEAN
 IsUSBKeyboard (
-  IN  EFI_USB_IO_PROTOCOL       *UsbIo
+  IN  EFI_USB_IO_PROTOCOL  *UsbIo
   )
 {
   EFI_STATUS                    Status;
@@ -627,10 +632,11 @@ IsUSBKeyboard (
     return FALSE;
   }
 
-  if (InterfaceDescriptor.InterfaceClass == CLASS_HID &&
-      InterfaceDescriptor.InterfaceSubClass == SUBCLASS_BOOT &&
-      InterfaceDescriptor.InterfaceProtocol == PROTOCOL_KEYBOARD
-      ) {
+  if ((InterfaceDescriptor.InterfaceClass == CLASS_HID) &&
+      (InterfaceDescriptor.InterfaceSubClass == SUBCLASS_BOOT) &&
+      (InterfaceDescriptor.InterfaceProtocol == PROTOCOL_KEYBOARD)
+      )
+  {
     return TRUE;
   }
 
@@ -648,13 +654,13 @@ IsUSBKeyboard (
 **/
 EFI_STATUS
 InitUsbKeyboard (
-  IN OUT USB_KB_HID_DEV   *UsbKeyboardDevice
+  IN OUT USB_KB_HID_DEV  *UsbKeyboardDevice
   )
 {
-  UINT16              ConfigValue;
-  UINT8               Protocol;
-  EFI_STATUS          Status;
-  UINT32              TransferResult;
+  UINT16      ConfigValue;
+  UINT8       Protocol;
+  EFI_STATUS  Status;
+  UINT32      TransferResult;
 
   REPORT_STATUS_CODE_WITH_DEVICE_PATH (
     EFI_PROGRESS_CODE,
@@ -733,7 +739,6 @@ InitUsbKeyboard (
   return EFI_SUCCESS;
 }
 
-
 /**
   Handler function for USB keyboard's asynchronous interrupt transfer.
 
@@ -755,20 +760,20 @@ InitUsbKeyboard (
 EFI_STATUS
 EFIAPI
 KeyboardHandler (
-  IN  VOID          *Data,
-  IN  UINTN         DataLength,
-  IN  VOID          *Context,
-  IN  UINT32        Result
+  IN  VOID    *Data,
+  IN  UINTN   DataLength,
+  IN  VOID    *Context,
+  IN  UINT32  Result
   )
 {
-  USB_KB_HID_DEV      *UsbKeyboardDevice;
-  EFI_USB_IO_PROTOCOL *UsbIo;
-  UINT32              UsbStatus;
-  UINT8               EmptyKeyPacket[8];
+  USB_KB_HID_DEV       *UsbKeyboardDevice;
+  EFI_USB_IO_PROTOCOL  *UsbIo;
+  UINT32               UsbStatus;
+  UINT8                EmptyKeyPacket[8];
 
   ASSERT (Context != NULL);
 
-  UsbKeyboardDevice = (USB_KB_HID_DEV *) Context;
+  UsbKeyboardDevice = (USB_KB_HID_DEV *)Context;
   UsbIo             = UsbKeyboardDevice->UsbIo;
 
   //
@@ -784,16 +789,16 @@ KeyboardHandler (
       UsbKeyboardDevice->DevicePath
       );
 
-    //send a HID packet with no keys pressed so that
-    //the HID layer will cancel repeat.
-    ZeroMem(EmptyKeyPacket, sizeof (EmptyKeyPacket));
+    // send a HID packet with no keys pressed so that
+    // the HID layer will cancel repeat.
+    ZeroMem (EmptyKeyPacket, sizeof (EmptyKeyPacket));
     if (UsbKeyboardDevice->KeyReportCallback != NULL) {
       UsbKeyboardDevice->KeyReportCallback (
-        BootKeyboard,
-        EmptyKeyPacket,
-        sizeof (EmptyKeyPacket),
-        UsbKeyboardDevice->KeyReportCallbackContext
-      );
+                           BootKeyboard,
+                           EmptyKeyPacket,
+                           sizeof (EmptyKeyPacket),
+                           UsbKeyboardDevice->KeyReportCallbackContext
+                           );
     }
 
     if ((Result & EFI_USB_ERR_STALL) == EFI_USB_ERR_STALL) {
@@ -832,7 +837,7 @@ KeyboardHandler (
   //
   // If no error and no data, just return EFI_SUCCESS.
   //
-  if (DataLength == 0 || Data == NULL) {
+  if ((DataLength == 0) || (Data == NULL)) {
     return EFI_SUCCESS;
   }
 
@@ -841,16 +846,15 @@ KeyboardHandler (
   //
   if (UsbKeyboardDevice->KeyReportCallback != NULL) {
     UsbKeyboardDevice->KeyReportCallback (
-        BootKeyboard,
-        (UINT8 *)Data,
-        DataLength,
-        UsbKeyboardDevice->KeyReportCallbackContext
-      );
+                         BootKeyboard,
+                         (UINT8 *)Data,
+                         DataLength,
+                         UsbKeyboardDevice->KeyReportCallbackContext
+                         );
   }
 
   return EFI_SUCCESS;
 }
-
 
 /**
   Handler for Delayed Recovery event.
@@ -868,21 +872,21 @@ KeyboardHandler (
 VOID
 EFIAPI
 UsbKbHidRecoveryHandler (
-  IN    EFI_EVENT    Event,
-  IN    VOID         *Context
+  IN    EFI_EVENT  Event,
+  IN    VOID       *Context
   )
 {
-  USB_KB_HID_DEV      *UsbKeyboardDevice;
-  EFI_USB_IO_PROTOCOL *UsbIo;
-  UINT8               PacketSize;
+  USB_KB_HID_DEV       *UsbKeyboardDevice;
+  EFI_USB_IO_PROTOCOL  *UsbIo;
+  UINT8                PacketSize;
 
-  UsbKeyboardDevice = (USB_KB_HID_DEV *) Context;
+  UsbKeyboardDevice = (USB_KB_HID_DEV *)Context;
 
   ASSERT (Context != NULL);
 
-  UsbIo             = UsbKeyboardDevice->UsbIo;
+  UsbIo = UsbKeyboardDevice->UsbIo;
 
-  PacketSize        = (UINT8) (UsbKeyboardDevice->IntEndpointDescriptor.MaxPacketSize);
+  PacketSize = (UINT8)(UsbKeyboardDevice->IntEndpointDescriptor.MaxPacketSize);
 
   //
   // Re-submit Asynchronous Interrupt Transfer for recovery.

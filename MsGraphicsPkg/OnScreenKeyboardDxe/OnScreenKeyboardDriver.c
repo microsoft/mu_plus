@@ -50,31 +50,31 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // *** Small format ***
 #include <Resources/KeyboardIcon_Small.h>
 
-STATIC EFI_HANDLE mControllerHandle = NULL;
+STATIC EFI_HANDLE  mControllerHandle = NULL;
 
 //
 // Onscreen Keyboard Vendor Device Path
 //
-STATIC OSK_DEVICE_PATH mPlatformOSKDevice = {
+STATIC OSK_DEVICE_PATH  mPlatformOSKDevice = {
+  {
     {
-        {
-            HARDWARE_DEVICE_PATH,
-            HW_VENDOR_DP,
-            {
-                (UINT8)(sizeof(VENDOR_DEVICE_PATH)),
-                (UINT8)((sizeof(VENDOR_DEVICE_PATH)) >> 8)
-            }
-        },
-        OSK_DEVICE_PATH_GUID
+      HARDWARE_DEVICE_PATH,
+      HW_VENDOR_DP,
+      {
+        (UINT8)(sizeof (VENDOR_DEVICE_PATH)),
+        (UINT8)((sizeof (VENDOR_DEVICE_PATH)) >> 8)
+      }
     },
+    OSK_DEVICE_PATH_GUID
+  },
+  {
+    END_DEVICE_PATH_TYPE,
+    END_ENTIRE_DEVICE_PATH_SUBTYPE,
     {
-        END_DEVICE_PATH_TYPE,
-        END_ENTIRE_DEVICE_PATH_SUBTYPE,
-        {
-            END_DEVICE_PATH_LENGTH,
-            0
-        }
+      END_DEVICE_PATH_LENGTH,
+      0
     }
+  }
 };
 
 // Preprocessor Constants
@@ -82,33 +82,40 @@ STATIC OSK_DEVICE_PATH mPlatformOSKDevice = {
 
 // Global variables
 //
-EFI_HANDLE                          mImageHandle;
+EFI_HANDLE  mImageHandle;
 
 // Common structures and protocols
-EFI_GRAPHICS_OUTPUT_PROTOCOL        *mGop;
-EFI_HII_FONT_PROTOCOL               *mFont;
-MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *mSWMProtocol;
+EFI_GRAPHICS_OUTPUT_PROTOCOL       *mGop;
+EFI_HII_FONT_PROTOCOL              *mFont;
+MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *mSWMProtocol;
 
-EFI_EVENT                           mKeyRepeatTimerEvent;
-EFI_EVENT                           mCheckDisplayModeTimerEvent;
-EFI_ABSOLUTE_POINTER_PROTOCOL      *mOSKPointerProtocol;
-EFI_EVENT                           mOSKPaintEvent;
-KEYBOARD_CONTEXT                    mOSK;
+EFI_EVENT                      mKeyRepeatTimerEvent;
+EFI_EVENT                      mCheckDisplayModeTimerEvent;
+EFI_ABSOLUTE_POINTER_PROTOCOL  *mOSKPointerProtocol;
+EFI_EVENT                      mOSKPaintEvent;
+KEYBOARD_CONTEXT               mOSK;
 
 // Local function prototypes
 //
 EFI_STATUS
-NormalizeKeyRectsForRendering (IN SCREEN_ANGLE Angle);
+NormalizeKeyRectsForRendering (
+  IN SCREEN_ANGLE  Angle
+  );
 
 EFI_STATUS
-ShowKeyboardIcon (IN BOOLEAN bShowKeyboard);
+ShowKeyboardIcon (
+  IN BOOLEAN  bShowKeyboard
+  );
 
 VOID
-GetKeyboardIconBoundingRect (OUT SWM_RECT *pRect);
+GetKeyboardIconBoundingRect (
+  OUT SWM_RECT  *pRect
+  );
 
 EFI_STATUS
 EFIAPI
-OSKDriverInit();
+OSKDriverInit (
+  );
 
 /**
 Checks to see if the incoming handle has a OSK device path installed on it.
@@ -127,43 +134,44 @@ device to start.
 **/
 EFI_STATUS
 EFIAPI
-OSKDriverBindingSupported(
-IN EFI_DRIVER_BINDING_PROTOCOL  *This,
-IN EFI_HANDLE                   Controller,
-IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-)
+OSKDriverBindingSupported (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+  )
 {
-    EFI_STATUS       Status;
+  EFI_STATUS  Status;
 
-    OSK_DEVICE_PATH OskDevicePath;
-    //Check if the incoming handle is the same handle as what you installed your device path on
-    if (Controller != mControllerHandle){
-        return EFI_UNSUPPORTED;
-    }
+  OSK_DEVICE_PATH  OskDevicePath;
 
-    //
-    // Try to Bind to Device Path Protocol.
-    //
-    Status = gBS->OpenProtocol(
-        Controller,
-        &gEfiDevicePathProtocolGuid,
-        (VOID **)&OskDevicePath,
-        This->DriverBindingHandle,
-        Controller,
-        EFI_OPEN_PROTOCOL_BY_DRIVER
-        );
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+  // Check if the incoming handle is the same handle as what you installed your device path on
+  if (Controller != mControllerHandle) {
+    return EFI_UNSUPPORTED;
+  }
 
-    gBS->CloseProtocol(
-        Controller,
-        &gEfiDevicePathProtocolGuid,
-        This->DriverBindingHandle,
-        Controller
-        );
+  //
+  // Try to Bind to Device Path Protocol.
+  //
+  Status = gBS->OpenProtocol (
+                  Controller,
+                  &gEfiDevicePathProtocolGuid,
+                  (VOID **)&OskDevicePath,
+                  This->DriverBindingHandle,
+                  Controller,
+                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    return EFI_SUCCESS;
+  gBS->CloseProtocol (
+         Controller,
+         &gEfiDevicePathProtocolGuid,
+         This->DriverBindingHandle,
+         Controller
+         );
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -182,109 +190,111 @@ device to start.
 **/
 EFI_STATUS
 EFIAPI
-OSKDriverBindingStart(
-IN EFI_DRIVER_BINDING_PROTOCOL  *This,
-IN EFI_HANDLE                   Controller,
-IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-)
+OSKDriverBindingStart (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+  )
 {
-    EFI_STATUS       Status = EFI_SUCCESS;
-    OSK_DEVICE_PATH OskDevicePath;
+  EFI_STATUS       Status = EFI_SUCCESS;
+  OSK_DEVICE_PATH  OskDevicePath;
 
-    //Check if the incoming handle is the same handle as what you installed your device path on
-    if (Controller != mControllerHandle){
-        return EFI_UNSUPPORTED;
+  // Check if the incoming handle is the same handle as what you installed your device path on
+  if (Controller != mControllerHandle) {
+    return EFI_UNSUPPORTED;
+  }
+
+  Status = gBS->OpenProtocol (
+                  Controller,
+                  &gEfiDevicePathProtocolGuid,
+                  (VOID **)&OskDevicePath,
+                  This->DriverBindingHandle,
+                  Controller,
+                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "INFO [OSK]: Device Path already opened (%r).\r\n", Status));
+    return Status;
+  }
+
+  // Determine if the Simple Window Manager protocol is available
+  //
+  Status = gBS->LocateProtocol (
+                  &gMsSWMProtocolGuid,
+                  NULL,
+                  (VOID **)&mSWMProtocol
+                  );
+
+  if (EFI_ERROR (Status)) {
+    mSWMProtocol = NULL;
+    DEBUG ((DEBUG_WARN, "ERROR [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
+    goto ErrorExit;
+  }
+
+  // Determine if the Graphics Output Protocol is available
+  //
+  Status = gBS->LocateProtocol (
+                  &gEfiGraphicsOutputProtocolGuid,
+                  NULL,
+                  (VOID **)&mGop
+                  );
+
+  if (EFI_ERROR (Status)) {
+    mGop = NULL;
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to find GOP protocol (%r).\r\n", Status));
+    goto ErrorExit;
+  }
+
+  // Initialize OSK
+  Status = OSKDriverInit ();
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Init OSK Failed (%r).\r\n", Status));
+
+    if (mKeyRepeatTimerEvent != NULL) {
+      // you would be here if the driver init failed
+      gBS->CloseEvent (mKeyRepeatTimerEvent);
+      // if we got this far the protocol got installed, lets try to uninstall it
+      gBS->UninstallMultipleProtocolInterfaces (
+             Controller,
+             &gEfiSimpleTextInProtocolGuid,
+             (VOID **)&mOSK.SimpleTextIn,
+             &gEfiSimpleTextInputExProtocolGuid,
+             (VOID **)&mOSK.SimpleTextInEx,
+             &gEfiConsoleInDeviceGuid,
+             NULL,
+             NULL
+             );
+
+      if (mCheckDisplayModeTimerEvent != NULL) {
+        gBS->CloseEvent (mCheckDisplayModeTimerEvent);
+      }
     }
 
-    Status = gBS->OpenProtocol(
-        Controller,
-        &gEfiDevicePathProtocolGuid,
-        (VOID **)&OskDevicePath,
-        This->DriverBindingHandle,
-        Controller,
-        EFI_OPEN_PROTOCOL_BY_DRIVER
-        );
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Device Path already opened (%r).\r\n", Status));
-        return Status;
+    if (mOSK.SimpleTextIn.WaitForKey != NULL) {
+      gBS->CloseEvent (mOSK.SimpleTextIn.WaitForKey);
     }
 
-    // Determine if the Simple Window Manager protocol is available
-    //
-    Status = gBS->LocateProtocol(&gMsSWMProtocolGuid,
-        NULL,
-        (VOID **)&mSWMProtocol
-        );
-
-    if (EFI_ERROR(Status))
-    {
-        mSWMProtocol = NULL;
-        DEBUG((DEBUG_WARN, "ERROR [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
-        goto ErrorExit;
+    if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL) {
+      gBS->CloseEvent (mOSK.SimpleTextInEx.WaitForKeyEx);
     }
 
-    // Determine if the Graphics Output Protocol is available
-    //
-    Status = gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid,
-        NULL,
-        (VOID **)&mGop
-        );
+    goto ErrorExit;
+  }
 
-    if (EFI_ERROR(Status))
-    {
-        mGop = NULL;
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to find GOP protocol (%r).\r\n", Status));
-        goto ErrorExit;
-    }
-
-    // Initialize OSK
-    Status = OSKDriverInit();
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Init OSK Failed (%r).\r\n", Status));
-
-        if (mKeyRepeatTimerEvent != NULL){
-            // you would be here if the driver init failed
-            gBS->CloseEvent(mKeyRepeatTimerEvent);
-            //if we got this far the protocol got installed, lets try to uninstall it
-            gBS->UninstallMultipleProtocolInterfaces(Controller,
-                &gEfiSimpleTextInProtocolGuid,
-                (VOID**)&mOSK.SimpleTextIn,
-                &gEfiSimpleTextInputExProtocolGuid,
-                (VOID**)&mOSK.SimpleTextInEx,
-                &gEfiConsoleInDeviceGuid,
-                NULL,
-                NULL
-                );
-
-            if (mCheckDisplayModeTimerEvent != NULL){
-                gBS->CloseEvent(mCheckDisplayModeTimerEvent);
-            }
-        }
-
-        if (mOSK.SimpleTextIn.WaitForKey != NULL){
-            gBS->CloseEvent(mOSK.SimpleTextIn.WaitForKey);
-        }
-        if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL){
-            gBS->CloseEvent(mOSK.SimpleTextInEx.WaitForKeyEx);
-        }
-        goto ErrorExit;
-    }
-
-    //everything successful
-    DEBUG((DEBUG_INFO, "INFO [OSK]: Init OSK Successful (%r).\r\n", Status));
-    goto Exit;
+  // everything successful
+  DEBUG ((DEBUG_INFO, "INFO [OSK]: Init OSK Successful (%r).\r\n", Status));
+  goto Exit;
 
 ErrorExit:
-    gBS->CloseProtocol(
-        Controller,
-        &gEfiDevicePathProtocolGuid,
-        This->DriverBindingHandle,
-        Controller
-        );
+  gBS->CloseProtocol (
+         Controller,
+         &gEfiDevicePathProtocolGuid,
+         This->DriverBindingHandle,
+         Controller
+         );
 
 Exit:
-    return Status;
+  return Status;
 }
 
 /**
@@ -303,54 +313,60 @@ children is zero stop the entire bus driver.
 **/
 EFI_STATUS
 EFIAPI
-OSKDriverBindingStop(
-IN EFI_DRIVER_BINDING_PROTOCOL  *This,
-IN EFI_HANDLE                   ControllerHandle,
-IN UINTN                        NumberOfChildren,
-IN EFI_HANDLE                   *ChildHandleBuffer OPTIONAL
-)
+OSKDriverBindingStop (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   ControllerHandle,
+  IN UINTN                        NumberOfChildren,
+  IN EFI_HANDLE                   *ChildHandleBuffer OPTIONAL
+  )
 {
-    EFI_STATUS Status;
-    DEBUG((DEBUG_INFO, "INFO [OSK]: DriverBindingStop. \r\n"));
-    Status = gBS->UninstallMultipleProtocolInterfaces(ControllerHandle,
-        &gEfiSimpleTextInProtocolGuid,
-        (VOID**)&mOSK.SimpleTextIn,
-        &gEfiSimpleTextInputExProtocolGuid,
-        (VOID**)&mOSK.SimpleTextInEx,
-        &gEfiConsoleInDeviceGuid,
-        NULL,
-        NULL
-        );
+  EFI_STATUS  Status;
 
-    if (EFI_ERROR(Status)) {
-        return EFI_UNSUPPORTED;
-    }
-    if (mOSK.SimpleTextIn.WaitForKey != NULL){
-        gBS->CloseEvent(mOSK.SimpleTextIn.WaitForKey);
-    }
-    if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL){
-        gBS->CloseEvent(mOSK.SimpleTextInEx.WaitForKeyEx);
-    }
-    if (mKeyRepeatTimerEvent != NULL){
-        gBS->CloseEvent(mKeyRepeatTimerEvent);
-    }
-    if (mCheckDisplayModeTimerEvent != NULL){
-        gBS->CloseEvent(mCheckDisplayModeTimerEvent);
-    }
+  DEBUG ((DEBUG_INFO, "INFO [OSK]: DriverBindingStop. \r\n"));
+  Status = gBS->UninstallMultipleProtocolInterfaces (
+                  ControllerHandle,
+                  &gEfiSimpleTextInProtocolGuid,
+                  (VOID **)&mOSK.SimpleTextIn,
+                  &gEfiSimpleTextInputExProtocolGuid,
+                  (VOID **)&mOSK.SimpleTextInEx,
+                  &gEfiConsoleInDeviceGuid,
+                  NULL,
+                  NULL
+                  );
 
-    return EFI_SUCCESS;
+  if (EFI_ERROR (Status)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  if (mOSK.SimpleTextIn.WaitForKey != NULL) {
+    gBS->CloseEvent (mOSK.SimpleTextIn.WaitForKey);
+  }
+
+  if (mOSK.SimpleTextInEx.WaitForKeyEx != NULL) {
+    gBS->CloseEvent (mOSK.SimpleTextInEx.WaitForKeyEx);
+  }
+
+  if (mKeyRepeatTimerEvent != NULL) {
+    gBS->CloseEvent (mKeyRepeatTimerEvent);
+  }
+
+  if (mCheckDisplayModeTimerEvent != NULL) {
+    gBS->CloseEvent (mCheckDisplayModeTimerEvent);
+  }
+
+  return EFI_SUCCESS;
 }
 
 ///
 /// Driver Binding Protocol instance
 ///
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_DRIVER_BINDING_PROTOCOL gOSKDriverBinding = {
-    OSKDriverBindingSupported,
-    OSKDriverBindingStart,
-    OSKDriverBindingStop,
-    0x01,
-    NULL,
-    NULL
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_DRIVER_BINDING_PROTOCOL  gOSKDriverBinding = {
+  OSKDriverBindingSupported,
+  OSKDriverBindingStart,
+  OSKDriverBindingStop,
+  0x01,
+  NULL,
+  NULL
 };
 
 /**
@@ -361,51 +377,49 @@ Allocates working buffers for managing screen assets.
 @retval     EFI_SUCCESS     Successfully allocated required buffers.
 **/
 EFI_STATUS
-AllocateBackBuffers (VOID)
+AllocateBackBuffers (
+  VOID
+  )
 {
+  // Compute maximum (to screen limits) keyboard dimensions possible (including rotation scenarios).
+  //
+  UINTN  Width;
 
-    // Compute maximum (to screen limits) keyboard dimensions possible (including rotation scenarios).
+  if (mGop->Mode->Info->HorizontalResolution > mGop->Mode->Info->VerticalResolution) {
+    Width = mGop->Mode->Info->HorizontalResolution;             // Landscape
+  } else {
+    Width = mGop->Mode->Info->VerticalResolution;               // Portrait
+  }
+
+  mOSK.KeyboardMaxWidth  = Width;
+  mOSK.KeyboardMaxHeight = (UINTN)((mOSK.KeyboardRectOriginal.botR.pt.y / mOSK.KeyboardRectOriginal.botR.pt.x) * (float)Width);
+
+  // Allocate back buffer and capture buffer.
+  //
+  UINTN  BufferSize = (mOSK.KeyboardMaxWidth * mOSK.KeyboardMaxHeight * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+
+  if (NULL != mOSK.pBackBuffer) {
+    FreePool (mOSK.pBackBuffer);
+  }
+
+  mOSK.pBackBuffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)AllocatePool (BufferSize);
+  ASSERT (mOSK.pBackBuffer != NULL);
+
+  // Allocate string rendering buffer.
+  //
+  mOSK.pKeyTextBltBuffer = (EFI_IMAGE_OUTPUT *)AllocateZeroPool (sizeof (EFI_IMAGE_OUTPUT));
+  ASSERT (mOSK.pKeyTextBltBuffer != NULL);
+
+  if (NULL != mOSK.pKeyTextBltBuffer) {
+    // Define current display resolution.
     //
-    UINTN Width;
-    if (mGop->Mode->Info->HorizontalResolution > mGop->Mode->Info->VerticalResolution)
-    {
-        Width  = mGop->Mode->Info->HorizontalResolution;        // Landscape
-    }
-    else
-    {
-        Width  = mGop->Mode->Info->VerticalResolution;          // Portrait
-    }
+    mOSK.pKeyTextBltBuffer->Width        = (UINT16)mGop->Mode->Info->HorizontalResolution;
+    mOSK.pKeyTextBltBuffer->Height       = (UINT16)mGop->Mode->Info->VerticalResolution;
+    mOSK.pKeyTextBltBuffer->Image.Screen = mGop;
+  }
 
-    mOSK.KeyboardMaxWidth  = Width;
-    mOSK.KeyboardMaxHeight = (UINTN)((mOSK.KeyboardRectOriginal.botR.pt.y / mOSK.KeyboardRectOriginal.botR.pt.x) * (float)Width);
-
-    // Allocate back buffer and capture buffer.
-    //
-    UINTN BufferSize = (mOSK.KeyboardMaxWidth * mOSK.KeyboardMaxHeight * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-
-    if (NULL != mOSK.pBackBuffer) {
-        FreePool (mOSK.pBackBuffer);
-    }
-    mOSK.pBackBuffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)AllocatePool(BufferSize);
-    ASSERT (mOSK.pBackBuffer != NULL);
-
-    // Allocate string rendering buffer.
-    //
-    mOSK.pKeyTextBltBuffer = (EFI_IMAGE_OUTPUT *) AllocateZeroPool (sizeof (EFI_IMAGE_OUTPUT));
-    ASSERT (mOSK.pKeyTextBltBuffer != NULL);
-
-    if (NULL != mOSK.pKeyTextBltBuffer)
-    {
-        // Define current display resolution.
-        //
-        mOSK.pKeyTextBltBuffer->Width        = (UINT16)mGop->Mode->Info->HorizontalResolution;
-        mOSK.pKeyTextBltBuffer->Height       = (UINT16)mGop->Mode->Info->VerticalResolution;
-        mOSK.pKeyTextBltBuffer->Image.Screen = mGop;
-    }
-
-    return ((NULL != mOSK.pBackBuffer && NULL != mOSK.pKeyTextBltBuffer) ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES);
+  return ((NULL != mOSK.pBackBuffer && NULL != mOSK.pKeyTextBltBuffer) ? EFI_SUCCESS : EFI_OUT_OF_RESOURCES);
 }
-
 
 /**
 Calculates the bitmap width and height of the specified text string based on the current font size & style.
@@ -416,81 +430,82 @@ Calculates the bitmap width and height of the specified text string based on the
 **/
 STATIC
 EFI_STATUS
-LocalGetTextStringBitmapSize (IN CHAR16    *pString,
-OUT UINTN    *Width,
-OUT UINTN    *Height)
+LocalGetTextStringBitmapSize (
+  IN CHAR16  *pString,
+  OUT UINTN  *Width,
+  OUT UINTN  *Height
+  )
 {
-    EFI_STATUS              Status = EFI_SUCCESS;
-    EFI_FONT_DISPLAY_INFO   *StringInfo;
-    EFI_IMAGE_OUTPUT        *pBltBuffer;
-    EFI_HII_ROW_INFO        *pStringRowInfo;
-    UINTN                   RowInfoSize;
+  EFI_STATUS             Status = EFI_SUCCESS;
+  EFI_FONT_DISPLAY_INFO  *StringInfo;
+  EFI_IMAGE_OUTPUT       *pBltBuffer;
+  EFI_HII_ROW_INFO       *pStringRowInfo;
+  UINTN                  RowInfoSize;
 
+  // Set default values.
+  //
+  *Width  = MsUiGetMediumFontWidth ();
+  *Height = MsUiGetMediumFontHeight ();
 
-    // Set default values.
+  // Get the current preferred font size and style (selected based on current display resolution).
+  //
+  StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
+  if (NULL == StringInfo) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+
+  // Set to NULL to have a buffers allocated for us.
+  //
+  pBltBuffer     = NULL;
+  pStringRowInfo = NULL;
+
+  // Draw the key label into a bitmap in order to get width and height.
+  //
+  Status = mSWMProtocol->StringToWindow (
+                           mSWMProtocol,
+                           mImageHandle,
+                           EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_IGNORE_LINE_BREAK, // NOTE: clipping isn't possible when rendering to a bitmap buffer.
+                           pString,
+                           StringInfo,
+                           &pBltBuffer,
+                           0,
+                           0,
+                           &pStringRowInfo,
+                           &RowInfoSize,
+                           NULL
+                           );
+
+  // Store the label size based on results.
+  //
+  if ((EFI_SUCCESS == Status) && (NULL != pStringRowInfo)) {
+    // We know key label is only a single row.  Get the width and height.
     //
-    *Width  = MsUiGetMediumFontWidth();
-    *Height = MsUiGetMediumFontHeight();
+    *Width  = pStringRowInfo->LineWidth;
+    *Height = pStringRowInfo->LineHeight;
+  }
 
-    // Get the current preferred font size and style (selected based on current display resolution).
-    //
-    StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
-    if (NULL == StringInfo) {
-        return EFI_OUT_OF_RESOURCES;
-    }
-    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+  // Free the buffers allocated by StringToWindow.
+  //
+  if ((NULL != pBltBuffer) && (NULL != pBltBuffer->Image.Bitmap)) {
+    FreePool (pBltBuffer->Image.Bitmap);
+  }
 
-    // Set to NULL to have a buffers allocated for us.
-    //
-    pBltBuffer      = NULL;
-    pStringRowInfo  = NULL;
+  if (NULL != pBltBuffer) {
+    FreePool (pBltBuffer);
+  }
 
-    // Draw the key label into a bitmap in order to get width and height.
-    //
-    Status = mSWMProtocol->StringToWindow (mSWMProtocol,
-        mImageHandle,
-        EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_IGNORE_LINE_BREAK,       // NOTE: clipping isn't possible when rendering to a bitmap buffer.
-        pString,
-        StringInfo,
-        &pBltBuffer,
-        0,
-        0,
-        &pStringRowInfo,
-        &RowInfoSize,
-        NULL
-        );
+  if (NULL != pStringRowInfo) {
+    FreePool (pStringRowInfo);
+  }
 
-    // Store the label size based on results.
-    //
-    if (EFI_SUCCESS == Status && NULL != pStringRowInfo)
-    {
-        // We know key label is only a single row.  Get the width and height.
-        //
-        *Width  = pStringRowInfo->LineWidth;
-        *Height = pStringRowInfo->LineHeight;
-    }
+  if (NULL != StringInfo) {
+    FreePool (StringInfo);
+  }
 
-    // Free the buffers allocated by StringToWindow.
-    //
-    if (NULL != pBltBuffer && NULL != pBltBuffer->Image.Bitmap)
-    {
-        FreePool(pBltBuffer->Image.Bitmap);
-    }
-    if (NULL != pBltBuffer)
-    {
-        FreePool(pBltBuffer);
-    }
-    if (NULL != pStringRowInfo)
-    {
-        FreePool(pStringRowInfo);
-    }
-    if (NULL != StringInfo) {
-        FreePool (StringInfo);
-    }
-
-    return Status;
+  return Status;
 }
-
 
 /**
 Calculates the width and height of all key labels based on current font size/style.
@@ -501,42 +516,42 @@ Calculates the width and height of all key labels based on current font size/sty
 **/
 STATIC
 EFI_STATUS
-CalculateKeyLabelSizes (VOID)
+CalculateKeyLabelSizes (
+  VOID
+  )
 {
-    EFI_STATUS          Status = EFI_SUCCESS;
-    UINTN               TableCount;
-    UINTN               KeyCount;
-    OSK_KEY_MAPPING     *pKeyMap;
-    VOID                *Collection[] = { mOSK_StdMode_US_EN,        // NOTE: US-EN only supported at the moment.
-        mOSK_ShiftMode_US_EN,
-        mOSK_NumSymMode_US_EN,
-        mOSK_FnctMode_US_EN,
-        NULL
-    };
+  EFI_STATUS       Status = EFI_SUCCESS;
+  UINTN            TableCount;
+  UINTN            KeyCount;
+  OSK_KEY_MAPPING  *pKeyMap;
+  VOID             *Collection[] = {
+    mOSK_StdMode_US_EN,                                              // NOTE: US-EN only supported at the moment.
+    mOSK_ShiftMode_US_EN,
+    mOSK_NumSymMode_US_EN,
+    mOSK_FnctMode_US_EN,
+    NULL
+  };
 
-
-    // Walk through each mapping table in the collection to update key label sizes.
+  // Walk through each mapping table in the collection to update key label sizes.
+  //
+  for (TableCount = 0; Collection[TableCount] != NULL; TableCount++) {
+    // Get the key mapping table.
     //
-    for (TableCount=0 ; Collection[TableCount] != NULL ; TableCount++)
-    {
-        // Get the key mapping table.
-        //
-        pKeyMap = Collection[TableCount];
+    pKeyMap = Collection[TableCount];
 
-        // Walk through each key in the mapping table to update key label sizes.
-        //
-        for (KeyCount=0 ; KeyCount < NUMBER_OF_KEYS ; KeyCount++)
-        {
-            LocalGetTextStringBitmapSize(pKeyMap[KeyCount].KeyLabel,
-                &pKeyMap[KeyCount].KeyLabelWidth,
-                &pKeyMap[KeyCount].KeyLabelHeight
-                );
-        }
+    // Walk through each key in the mapping table to update key label sizes.
+    //
+    for (KeyCount = 0; KeyCount < NUMBER_OF_KEYS; KeyCount++) {
+      LocalGetTextStringBitmapSize (
+        pKeyMap[KeyCount].KeyLabel,
+        &pKeyMap[KeyCount].KeyLabelWidth,
+        &pKeyMap[KeyCount].KeyLabelHeight
+        );
     }
+  }
 
-    return Status;
+  return Status;
 }
-
 
 /**
 Calculates the width and height of all special OSK button labels based on current font size/style.
@@ -547,38 +562,41 @@ Calculates the width and height of all special OSK button labels based on curren
 **/
 STATIC
 EFI_STATUS
-CalculateSpecialButtonSizes (VOID)
+CalculateSpecialButtonSizes (
+  VOID
+  )
 {
-    EFI_STATUS              Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  // Keyboard close button.
+  //
+  mOSK.KeyboardCloseButton.pBitmap = NULL;       // Using Unicode character.
+  LocalGetTextStringBitmapSize (
+    mCloseButtonLabel,
+    &mOSK.KeyboardCloseButton.Width,
+    &mOSK.KeyboardCloseButton.Height
+    );
 
-    // Keyboard close button.
-    //
-    mOSK.KeyboardCloseButton.pBitmap = NULL;     // Using Unicode character.
-    LocalGetTextStringBitmapSize(mCloseButtonLabel,
-        &mOSK.KeyboardCloseButton.Width,
-        &mOSK.KeyboardCloseButton.Height
-        );
+  // Keyboard dock button.
+  //
+  mOSK.KeyboardDockButton.pBitmap = NULL;       // Using Unicode character.
+  LocalGetTextStringBitmapSize (
+    mDockButtonLabel,
+    &mOSK.KeyboardDockButton.Width,
+    &mOSK.KeyboardDockButton.Height
+    );
 
-    // Keyboard dock button.
-    //
-    mOSK.KeyboardDockButton.pBitmap = NULL;     // Using Unicode character.
-    LocalGetTextStringBitmapSize(mDockButtonLabel,
-        &mOSK.KeyboardDockButton.Width,
-        &mOSK.KeyboardDockButton.Height
-        );
+  // Keyboard undock button.
+  //
+  mOSK.KeyboardUndockButton.pBitmap = NULL;       // Using Unicode character.
+  LocalGetTextStringBitmapSize (
+    mUndockButtonLabel,
+    &mOSK.KeyboardUndockButton.Width,
+    &mOSK.KeyboardUndockButton.Height
+    );
 
-    // Keyboard undock button.
-    //
-    mOSK.KeyboardUndockButton.pBitmap = NULL;     // Using Unicode character.
-    LocalGetTextStringBitmapSize(mUndockButtonLabel,
-        &mOSK.KeyboardUndockButton.Width,
-        &mOSK.KeyboardUndockButton.Height
-        );
-
-    return Status;
+  return Status;
 }
-
 
 /**
 Recalculates OSK assets when the screen resolution changes.
@@ -588,98 +606,96 @@ Recalculates OSK assets when the screen resolution changes.
 @retval     EFI_SUCCESS     Success.
 **/
 EFI_STATUS
-HandleDisplayModeChange (UINT32 ScreenWidth,
-UINT32 ScreenHeight)
+HandleDisplayModeChange (
+  UINT32  ScreenWidth,
+  UINT32  ScreenHeight
+  )
 {
-    EFI_STATUS              Status              = EFI_SUCCESS;
-    BOOLEAN                 bShowKeyboardIcon   = mOSK.bDisplayKeyboardIcon;
-    BOOLEAN                 bShowKeyboard       = mOSK.bDisplayKeyboard;
-    SWM_RECT                Rect;
+  EFI_STATUS  Status            = EFI_SUCCESS;
+  BOOLEAN     bShowKeyboardIcon = mOSK.bDisplayKeyboardIcon;
+  BOOLEAN     bShowKeyboard     = mOSK.bDisplayKeyboard;
+  SWM_RECT    Rect;
 
+  DEBUG ((DEBUG_INFO, "INFO [OSK]: Display mode change detected (Old=%dx%d  New=%dx%d).\r\n", mOSK.ScreenResolutionWidth, mOSK.ScreenResolutionHeight, ScreenWidth, ScreenHeight));
 
-    DEBUG((DEBUG_INFO, "INFO [OSK]: Display mode change detected (Old=%dx%d  New=%dx%d).\r\n", mOSK.ScreenResolutionWidth, mOSK.ScreenResolutionHeight, ScreenWidth, ScreenHeight));
+  AllocateBackBuffers ();
 
-    AllocateBackBuffers ();
+  // Hide keyboard and icon.
+  //
+  ShowKeyboard (FALSE);
+  ShowKeyboardIcon (FALSE);
 
-    // Hide keyboard and icon.
-    //
-    ShowKeyboard(FALSE);
-    ShowKeyboardIcon(FALSE);
+  // Select screen size-appropriate bitmaps.
+  //
+  if (ScreenWidth >= PcdGet32 (PcdSmallAssetMaxScreenWidth)) {
+    // Keyboard icon.
+    mOSK.KeyboardIcon.pBitmap = gKeyboardIcon_Medium;
+    mOSK.KeyboardIcon.Width   = KEYBOARD_ICON_BMPWIDTH_MEDIUM;
+    mOSK.KeyboardIcon.Height  = KEYBOARD_ICON_BMPHEIGHT_MEDIUM;
 
-    // Select screen size-appropriate bitmaps.
-    //
-    if (ScreenWidth >= PcdGet32(PcdSmallAssetMaxScreenWidth))
-    {
-        // Keyboard icon.
-        mOSK.KeyboardIcon.pBitmap               = gKeyboardIcon_Medium;
-        mOSK.KeyboardIcon.Width                 = KEYBOARD_ICON_BMPWIDTH_MEDIUM;
-        mOSK.KeyboardIcon.Height                = KEYBOARD_ICON_BMPHEIGHT_MEDIUM;
+    // Select preferred font display large size/format.
+    mOSK.PreferredFontInfo.FontSize  = MsUiGetMediumFontHeight ();
+    mOSK.PreferredFontInfo.FontStyle = EFI_HII_FONT_STYLE_NORMAL;
+  } else {
+    // Keyboard icon.
+    mOSK.KeyboardIcon.pBitmap = gKeyboardIcon_Small;
+    mOSK.KeyboardIcon.Width   = KEYBOARD_ICON_BMPWIDTH_SMALL;
+    mOSK.KeyboardIcon.Height  = KEYBOARD_ICON_BMPHEIGHT_SMALL;
 
-        // Select preferred font display large size/format.
-        mOSK.PreferredFontInfo.FontSize         = MsUiGetMediumFontHeight();
-        mOSK.PreferredFontInfo.FontStyle        = EFI_HII_FONT_STYLE_NORMAL;
-    }
-    else
-    {
-        // Keyboard icon.
-        mOSK.KeyboardIcon.pBitmap               = gKeyboardIcon_Small;
-        mOSK.KeyboardIcon.Width                 = KEYBOARD_ICON_BMPWIDTH_SMALL;
-        mOSK.KeyboardIcon.Height                = KEYBOARD_ICON_BMPHEIGHT_SMALL;
+    // Select preferred font display small size/format.
+    mOSK.PreferredFontInfo.FontSize  = MsUiGetSmallOSKFontHeight ();
+    mOSK.PreferredFontInfo.FontStyle = EFI_HII_FONT_STYLE_NORMAL;
+  }
 
-        // Select preferred font display small size/format.
-        mOSK.PreferredFontInfo.FontSize         = MsUiGetSmallOSKFontHeight();
-        mOSK.PreferredFontInfo.FontStyle        = EFI_HII_FONT_STYLE_NORMAL;
-    }
+  // Recalculate key label sizes based on current font.
+  //
+  CalculateKeyLabelSizes ();
 
-    // Recalculate key label sizes based on current font.
-    //
-    CalculateKeyLabelSizes();
+  // Recalculate special button sizes based on current font.
+  //
+  CalculateSpecialButtonSizes ();
 
-    // Recalculate special button sizes based on current font.
-    //
-    CalculateSpecialButtonSizes();
+  // Recalculate all on-screen geometries relative to the current display resolution.
+  //
+  SetKeyboardSize (mOSK.PercentOfScreenWidth);
+  SetKeyboardPosition (mOSK.KeyboardPosition, mOSK.DockedState);
+  RotateKeyboard (mOSK.KeyboardAngle);
 
-    // Recalculate all on-screen geometries relative to the current display resolution.
-    //
-    SetKeyboardSize(mOSK.PercentOfScreenWidth);
-    SetKeyboardPosition(mOSK.KeyboardPosition, mOSK.DockedState);
-    RotateKeyboard(mOSK.KeyboardAngle);
+  SetKeyboardIconPosition (mOSK.KeyboardIconPosition);
 
-    SetKeyboardIconPosition(mOSK.KeyboardIconPosition);
+  // Set the appropriate window frame (bounding rectangle) and display as appropriate.
+  //
+  if (TRUE == bShowKeyboardIcon) {
+    // *** Show Keyboard Icon ***
+    GetKeyboardIconBoundingRect (&Rect);
 
-    // Set the appropriate window frame (bounding rectangle) and display as appropriate.
-    //
-    if (TRUE == bShowKeyboardIcon)          // *** Show Keyboard Icon ***
-    {
-        GetKeyboardIconBoundingRect (&Rect);
+    mSWMProtocol->SetWindowFrame (
+                    mSWMProtocol,
+                    mImageHandle,
+                    (SWM_RECT *)&Rect
+                    );
 
-        mSWMProtocol->SetWindowFrame(mSWMProtocol,
-            mImageHandle,
-            (SWM_RECT *)&Rect
-            );
+    ShowKeyboardIcon (TRUE);
+  } else if (TRUE == bShowKeyboard) {
+    // *** Show Keyboard ***
+    GetKeyboardBoundingRect (&Rect);
 
-        ShowKeyboardIcon(TRUE);
-    }
-    else if (TRUE == bShowKeyboard)         // *** Show Keyboard ***
-    {
-        GetKeyboardBoundingRect (&Rect);
+    mSWMProtocol->SetWindowFrame (
+                    mSWMProtocol,
+                    mImageHandle,
+                    (SWM_RECT *)&Rect
+                    );
 
-        mSWMProtocol->SetWindowFrame(mSWMProtocol,
-            mImageHandle,
-            (SWM_RECT *)&Rect
-            );
+    ShowKeyboard (TRUE);
+  }
 
-        ShowKeyboard(TRUE);
-    }
+  // Capture the screen resolution used to compute location and size of keyboard assets.
+  //
+  mOSK.ScreenResolutionWidth  = mGop->Mode->Info->HorizontalResolution;
+  mOSK.ScreenResolutionHeight = mGop->Mode->Info->VerticalResolution;
 
-    // Capture the screen resolution used to compute location and size of keyboard assets.
-    //
-    mOSK.ScreenResolutionWidth  = mGop->Mode->Info->HorizontalResolution;
-    mOSK.ScreenResolutionHeight = mGop->Mode->Info->VerticalResolution;
-
-    return Status;
+  return Status;
 }
-
 
 /**
 Initialize the default keyboard context.
@@ -690,77 +706,77 @@ Initialize the default keyboard context.
 
 **/
 EFI_STATUS
-InitializeKeyboardContext (VOID)
+InitializeKeyboardContext (
+  VOID
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  // Configure key press input queue initial state
+  //
+  mOSK.bQueueEmpty         = TRUE;
+  mOSK.QueueInputPosition  = 0;
+  mOSK.QueueOutputPosition = 0;
 
-    // Configure key press input queue initial state
-    //
-    mOSK.bQueueEmpty                        = TRUE;
-    mOSK.QueueInputPosition                 = 0;
-    mOSK.QueueOutputPosition                = 0;
+  // Configure initial keyboard display state
+  //
+  mOSK.bKeyboardMoving          = FALSE;
+  mOSK.bKeyboardIconAutoEnable  = FALSE;
+  mOSK.bKeyboardSelfRefresh     = FALSE;
+  mOSK.bDisplayKeyboardIcon     = FALSE;
+  mOSK.bDisplayKeyboard         = FALSE;
+  mOSK.bKeyboardStateChanged    = FALSE;
+  mOSK.bKeyboardSizeChanged     = TRUE;
+  mOSK.bShowDockAndCloseButtons = TRUE;
 
-    // Configure initial keyboard display state
-    //
-    mOSK.bKeyboardMoving                    = FALSE;
-    mOSK.bKeyboardIconAutoEnable            = FALSE;
-    mOSK.bKeyboardSelfRefresh               = FALSE;
-    mOSK.bDisplayKeyboardIcon               = FALSE;
-    mOSK.bDisplayKeyboard                   = FALSE;
-    mOSK.bKeyboardStateChanged              = FALSE;
-    mOSK.bKeyboardSizeChanged               = TRUE;
-    mOSK.bShowDockAndCloseButtons           = TRUE;
+  // Key selection state.
+  //
+  mOSK.SelectedKey = NUMBER_OF_KEYS;
+  mOSK.DeselectKey = NUMBER_OF_KEYS;
 
-    // Key selection state.
-    //
-    mOSK.SelectedKey                        = NUMBER_OF_KEYS;
-    mOSK.DeselectKey                        = NUMBER_OF_KEYS;
+  // Configure default docking state
+  //
+  mOSK.DockedState = Docked;
 
-    // Configure default docking state
-    //
-    mOSK.DockedState                        = Docked;
+  // Set default keyboard icon location
+  //
+  mOSK.KeyboardIconPosition = DEFAULT_OSK_ICON_LOCATION;
 
-    // Set default keyboard icon location
-    //
-    mOSK.KeyboardIconPosition               = DEFAULT_OSK_ICON_LOCATION;
+  // Set default keyboard position, angle, and size.
+  //
+  mOSK.KeyboardPosition     = DEFAULT_OSK_LOCATION;
+  mOSK.KeyboardAngle        = DEFAULT_OSK_ANGLE;
+  mOSK.PercentOfScreenWidth = DEFAULT_OSK_SIZE;
 
-    // Set default keyboard position, angle, and size.
-    //
-    mOSK.KeyboardPosition                   = DEFAULT_OSK_LOCATION;
-    mOSK.KeyboardAngle                      = DEFAULT_OSK_ANGLE;
-    mOSK.PercentOfScreenWidth               = DEFAULT_OSK_SIZE;
+  // Set default keyboard bitmaps (by default choose small format).
+  //
+  mOSK.KeyboardIcon.pBitmap = gKeyboardIcon_Small;
+  mOSK.KeyboardIcon.Width   = KEYBOARD_ICON_BMPWIDTH_SMALL;
+  mOSK.KeyboardIcon.Height  = KEYBOARD_ICON_BMPHEIGHT_SMALL;
 
-    // Set default keyboard bitmaps (by default choose small format).
-    //
-    mOSK.KeyboardIcon.pBitmap               = gKeyboardIcon_Small;
-    mOSK.KeyboardIcon.Width                 = KEYBOARD_ICON_BMPWIDTH_SMALL;
-    mOSK.KeyboardIcon.Height                = KEYBOARD_ICON_BMPHEIGHT_SMALL;
+  mOSK.KeyboardCloseButton.pBitmap = NULL;
+  mOSK.KeyboardCloseButton.Width   = 0;
+  mOSK.KeyboardCloseButton.Height  = 0;
 
-    mOSK.KeyboardCloseButton.pBitmap        = NULL;
-    mOSK.KeyboardCloseButton.Width          = 0;
-    mOSK.KeyboardCloseButton.Height         = 0;
+  mOSK.KeyboardDockButton.pBitmap = NULL;
+  mOSK.KeyboardDockButton.Width   = 0;
+  mOSK.KeyboardDockButton.Height  = 0;
 
-    mOSK.KeyboardDockButton.pBitmap         = NULL;
-    mOSK.KeyboardDockButton.Width           = 0;
-    mOSK.KeyboardDockButton.Height          = 0;
+  mOSK.KeyboardUndockButton.pBitmap = NULL;
+  mOSK.KeyboardUndockButton.Width   = 0;
+  mOSK.KeyboardUndockButton.Height  = 0;
 
-    mOSK.KeyboardUndockButton.pBitmap       = NULL;
-    mOSK.KeyboardUndockButton.Width         = 0;
-    mOSK.KeyboardUndockButton.Height        = 0;
+  // Set default custom font size/style (by default choose small format).
+  //
+  mOSK.PreferredFontInfo.FontSize  = MsUiGetSmallFontHeight ();
+  mOSK.PreferredFontInfo.FontStyle = EFI_HII_FONT_STYLE_NORMAL;
 
-    // Set default custom font size/style (by default choose small format).
-    //
-    mOSK.PreferredFontInfo.FontSize         = MsUiGetSmallFontHeight();
-    mOSK.PreferredFontInfo.FontStyle        = EFI_HII_FONT_STYLE_NORMAL;
+  // NOTE: A font name cannot be specified unless there is space allocated for
+  //       the name.  See OnScreenKeyboard.h for more info.
+  mOSK.PreferredFontInfo.FontName[0] = L'\0';
 
-    // NOTE: A font name cannot be specified unless there is space allocated for
-    //       the name.  See OnScreenKeyboard.h for more info.
-    mOSK.PreferredFontInfo.FontName[0]      = L'\0';
-
-    return Status;
+  return Status;
 }
-
 
 /**
     Creates the initial keyboard layout irrespective of screen dimensions/restrictions.
@@ -771,134 +787,131 @@ InitializeKeyboardContext (VOID)
 
 **/
 EFI_STATUS
-InitializeKeyboardGeometry (VOID)
+InitializeKeyboardGeometry (
+  VOID
+  )
 {
-    UINTN KeyCount;
-    float KeyOrigX, KeyOrigY;
-    float KeyWidth, KeyHeight;
-    float KeySpacing;
+  UINTN  KeyCount;
+  float  KeyOrigX, KeyOrigY;
+  float  KeyWidth, KeyHeight;
+  float  KeySpacing;
 
+  // Configure default key mapping table (US-EN)
+  //
+  mOSK.pKeyMap = mOSK_StdMode_US_EN;
 
-    // Configure default key mapping table (US-EN)
+  // Keyboard origin is (0,0,0) however it may be translated to another location for rendering
+  //
+  KeyOrigX   = (INDENT_SPACING_PERCENT * STANDARD_KEY_WIDTH);
+  KeySpacing = (KEY_SPACING_PERCENT    * STANDARD_KEY_WIDTH);
+  KeyOrigY   = ((TOP_BORDER_HEIGHT_PERCENT * STANDARD_KEY_HEIGHT) + KeySpacing);
+
+  for (KeyCount = 0; KeyCount < NUMBER_OF_KEYS; KeyCount++) {
+    // Determine key size
     //
-    mOSK.pKeyMap = mOSK_StdMode_US_EN;
-
-    // Keyboard origin is (0,0,0) however it may be translated to another location for rendering
-    //
-    KeyOrigX   = (INDENT_SPACING_PERCENT * STANDARD_KEY_WIDTH);
-    KeySpacing = (KEY_SPACING_PERCENT    * STANDARD_KEY_WIDTH);
-    KeyOrigY   = ((TOP_BORDER_HEIGHT_PERCENT * STANDARD_KEY_HEIGHT) + KeySpacing);
-
-    for (KeyCount=0 ; KeyCount < NUMBER_OF_KEYS ; KeyCount++)
-    {
-        // Determine key size
-        //
-        switch(mOSK.pKeyMap[KeyCount].EfiKey)
-        {
-        case EfiKeyBackSpace:   // Backspace
-            KeyWidth  = (STANDARD_KEY_WIDTH * BKSP_KEY_WIDTH_PERCENT);
-            KeyHeight = STANDARD_KEY_HEIGHT;
-            break;
-        case EfiKeyEnter:       // Enter
-            KeyWidth  = (STANDARD_KEY_WIDTH * ENTER_KEY_WIDTH_PERCENT);
-            KeyHeight = STANDARD_KEY_HEIGHT;
-            break;
-        case EfiKeySpaceBar:    // Space
-            KeyWidth  = (STANDARD_KEY_WIDTH * SPACE_KEY_WIDTH_PERCENT);
-            KeyHeight = STANDARD_KEY_HEIGHT;
-            break;
-        default:                // All other keys
-            KeyWidth  = STANDARD_KEY_WIDTH;
-            KeyHeight = STANDARD_KEY_HEIGHT;
-            break;
-        }
-
-        // Compute key bounding box
-        //
-        mOSK.KeyRectOriginal[KeyCount].topL.pt.x    = KeyOrigX;
-        mOSK.KeyRectOriginal[KeyCount].topL.pt.y    = KeyOrigY;
-        mOSK.KeyRectOriginal[KeyCount].topL.pt.z    = 0.0;
-        mOSK.KeyRectOriginal[KeyCount].topL.pt.rsvd = 1.0;
-
-        mOSK.KeyRectOriginal[KeyCount].topR.pt.x    = (KeyOrigX + KeyWidth);
-        mOSK.KeyRectOriginal[KeyCount].topR.pt.y    = KeyOrigY;
-        mOSK.KeyRectOriginal[KeyCount].topR.pt.z    = 0.0;
-        mOSK.KeyRectOriginal[KeyCount].topR.pt.rsvd = 1.0;
-
-        mOSK.KeyRectOriginal[KeyCount].botL.pt.x    = KeyOrigX;
-        mOSK.KeyRectOriginal[KeyCount].botL.pt.y    = (KeyOrigY + KeyHeight);
-        mOSK.KeyRectOriginal[KeyCount].botL.pt.z    = 0.0;
-        mOSK.KeyRectOriginal[KeyCount].botL.pt.rsvd = 1.0;
-
-        mOSK.KeyRectOriginal[KeyCount].botR.pt.x    = (KeyOrigX + KeyWidth);
-        mOSK.KeyRectOriginal[KeyCount].botR.pt.y    = (KeyOrigY + KeyHeight);
-        mOSK.KeyRectOriginal[KeyCount].botR.pt.z    = 0.0;
-        mOSK.KeyRectOriginal[KeyCount].botR.pt.rsvd = 1.0;
-
-        // Determine next row indent
-        //
-        switch(mOSK.pKeyMap[KeyCount].EfiKey)
-        {
-        case EfiKeyBackSpace:   // Backspace
-            KeyOrigX  = (INDENT2_SPACING_PERCENT * STANDARD_KEY_WIDTH);
-            KeyOrigY += (KeyHeight + KeySpacing);
-            break;
-        case EfiKeyEnter:       // Enter
-        case EfiKeyRShift:      // Right Shift
-            KeyOrigX  = (INDENT_SPACING_PERCENT * STANDARD_KEY_WIDTH);
-            KeyOrigY += (KeyHeight + KeySpacing);
-            break;
-        default:                // All other keys
-            KeyOrigX += (KeyWidth + KeySpacing);
-            break;
-        }
+    switch (mOSK.pKeyMap[KeyCount].EfiKey) {
+      case EfiKeyBackSpace:     // Backspace
+        KeyWidth  = (STANDARD_KEY_WIDTH * BKSP_KEY_WIDTH_PERCENT);
+        KeyHeight = STANDARD_KEY_HEIGHT;
+        break;
+      case EfiKeyEnter:         // Enter
+        KeyWidth  = (STANDARD_KEY_WIDTH * ENTER_KEY_WIDTH_PERCENT);
+        KeyHeight = STANDARD_KEY_HEIGHT;
+        break;
+      case EfiKeySpaceBar:      // Space
+        KeyWidth  = (STANDARD_KEY_WIDTH * SPACE_KEY_WIDTH_PERCENT);
+        KeyHeight = STANDARD_KEY_HEIGHT;
+        break;
+      default:                  // All other keys
+        KeyWidth  = STANDARD_KEY_WIDTH;
+        KeyHeight = STANDARD_KEY_HEIGHT;
+        break;
     }
 
-    // Compute keyboard bounding box
+    // Compute key bounding box
     //
-    mOSK.KeyboardRectOriginal.topL.pt.x    = 0.0;
-    mOSK.KeyboardRectOriginal.topL.pt.y    = 0.0;
-    mOSK.KeyboardRectOriginal.topL.pt.z    = 0.0;
-    mOSK.KeyboardRectOriginal.topL.pt.rsvd = 1.0;
+    mOSK.KeyRectOriginal[KeyCount].topL.pt.x    = KeyOrigX;
+    mOSK.KeyRectOriginal[KeyCount].topL.pt.y    = KeyOrigY;
+    mOSK.KeyRectOriginal[KeyCount].topL.pt.z    = 0.0;
+    mOSK.KeyRectOriginal[KeyCount].topL.pt.rsvd = 1.0;
 
-    mOSK.KeyboardRectOriginal.topR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH));
-    mOSK.KeyboardRectOriginal.topR.pt.y    = 0.0;
-    mOSK.KeyboardRectOriginal.topR.pt.z    = 0.0;
-    mOSK.KeyboardRectOriginal.topR.pt.rsvd = 1.0;
+    mOSK.KeyRectOriginal[KeyCount].topR.pt.x    = (KeyOrigX + KeyWidth);
+    mOSK.KeyRectOriginal[KeyCount].topR.pt.y    = KeyOrigY;
+    mOSK.KeyRectOriginal[KeyCount].topR.pt.z    = 0.0;
+    mOSK.KeyRectOriginal[KeyCount].topR.pt.rsvd = 1.0;
 
-    mOSK.KeyboardRectOriginal.botL.pt.x    = 0.0;
-    mOSK.KeyboardRectOriginal.botL.pt.y    = (KeyOrigY + KeyHeight + KeySpacing);
-    mOSK.KeyboardRectOriginal.botL.pt.z    = 0.0;
-    mOSK.KeyboardRectOriginal.botL.pt.rsvd = 1.0;
+    mOSK.KeyRectOriginal[KeyCount].botL.pt.x    = KeyOrigX;
+    mOSK.KeyRectOriginal[KeyCount].botL.pt.y    = (KeyOrigY + KeyHeight);
+    mOSK.KeyRectOriginal[KeyCount].botL.pt.z    = 0.0;
+    mOSK.KeyRectOriginal[KeyCount].botL.pt.rsvd = 1.0;
 
-    mOSK.KeyboardRectOriginal.botR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH));
-    mOSK.KeyboardRectOriginal.botR.pt.y    = (KeyOrigY + KeyHeight + KeySpacing);
-    mOSK.KeyboardRectOriginal.botR.pt.z    = 0.0;
-    mOSK.KeyboardRectOriginal.botR.pt.rsvd = 1.0;
+    mOSK.KeyRectOriginal[KeyCount].botR.pt.x    = (KeyOrigX + KeyWidth);
+    mOSK.KeyRectOriginal[KeyCount].botR.pt.y    = (KeyOrigY + KeyHeight);
+    mOSK.KeyRectOriginal[KeyCount].botR.pt.z    = 0.0;
+    mOSK.KeyRectOriginal[KeyCount].botR.pt.rsvd = 1.0;
 
-    // Compute Un/Dock & Close button center points
+    // Determine next row indent
     //
-    mOSK.DockingButtonOriginal.pt.x        = (mOSK.KeyboardRectOriginal.topR.pt.x * DOCK_BUTTON_X_PERCENT);
-    mOSK.DockingButtonOriginal.pt.y        = (float)((TOP_BORDER_HEIGHT_PERCENT * STANDARD_KEY_HEIGHT) / 2);
-    mOSK.DockingButtonOriginal.pt.z        = 0.0;
-    mOSK.DockingButtonOriginal.pt.rsvd     = 1.0;
+    switch (mOSK.pKeyMap[KeyCount].EfiKey) {
+      case EfiKeyBackSpace:     // Backspace
+        KeyOrigX  = (INDENT2_SPACING_PERCENT * STANDARD_KEY_WIDTH);
+        KeyOrigY += (KeyHeight + KeySpacing);
+        break;
+      case EfiKeyEnter:         // Enter
+      case EfiKeyRShift:        // Right Shift
+        KeyOrigX  = (INDENT_SPACING_PERCENT * STANDARD_KEY_WIDTH);
+        KeyOrigY += (KeyHeight + KeySpacing);
+        break;
+      default:                  // All other keys
+        KeyOrigX += (KeyWidth + KeySpacing);
+        break;
+    }
+  }
 
-    mOSK.CloseButtonOriginal.pt.x          = (mOSK.KeyboardRectOriginal.topR.pt.x * CLOSE_BUTTON_X_PERCENT);
-    mOSK.CloseButtonOriginal.pt.y          = (float)((TOP_BORDER_HEIGHT_PERCENT * STANDARD_KEY_HEIGHT) / 2);
-    mOSK.CloseButtonOriginal.pt.z          = 0.0;
-    mOSK.CloseButtonOriginal.pt.rsvd       = 1.0;
+  // Compute keyboard bounding box
+  //
+  mOSK.KeyboardRectOriginal.topL.pt.x    = 0.0;
+  mOSK.KeyboardRectOriginal.topL.pt.y    = 0.0;
+  mOSK.KeyboardRectOriginal.topL.pt.z    = 0.0;
+  mOSK.KeyboardRectOriginal.topL.pt.rsvd = 1.0;
 
-    // Copy original keyboard pointsets to display-ready pointsets.  Since screen and touch coordinate systems don't change with
-    // keyboard rotation angle, the display-ready pointsets are used to compensate and allow blit and touch point hit detect routines
-    // to function as normal despite possible keyboard rotation angle changes.
-    //
-    NormalizeKeyRectsForRendering(mOSK.KeyboardAngle);
+  mOSK.KeyboardRectOriginal.topR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH));
+  mOSK.KeyboardRectOriginal.topR.pt.y    = 0.0;
+  mOSK.KeyboardRectOriginal.topR.pt.z    = 0.0;
+  mOSK.KeyboardRectOriginal.topR.pt.rsvd = 1.0;
 
-    // Allocate Capture, Back, and String blt buffers
-    //
-    return (AllocateBackBuffers());
+  mOSK.KeyboardRectOriginal.botL.pt.x    = 0.0;
+  mOSK.KeyboardRectOriginal.botL.pt.y    = (KeyOrigY + KeyHeight + KeySpacing);
+  mOSK.KeyboardRectOriginal.botL.pt.z    = 0.0;
+  mOSK.KeyboardRectOriginal.botL.pt.rsvd = 1.0;
+
+  mOSK.KeyboardRectOriginal.botR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH));
+  mOSK.KeyboardRectOriginal.botR.pt.y    = (KeyOrigY + KeyHeight + KeySpacing);
+  mOSK.KeyboardRectOriginal.botR.pt.z    = 0.0;
+  mOSK.KeyboardRectOriginal.botR.pt.rsvd = 1.0;
+
+  // Compute Un/Dock & Close button center points
+  //
+  mOSK.DockingButtonOriginal.pt.x    = (mOSK.KeyboardRectOriginal.topR.pt.x * DOCK_BUTTON_X_PERCENT);
+  mOSK.DockingButtonOriginal.pt.y    = (float)((TOP_BORDER_HEIGHT_PERCENT * STANDARD_KEY_HEIGHT) / 2);
+  mOSK.DockingButtonOriginal.pt.z    = 0.0;
+  mOSK.DockingButtonOriginal.pt.rsvd = 1.0;
+
+  mOSK.CloseButtonOriginal.pt.x    = (mOSK.KeyboardRectOriginal.topR.pt.x * CLOSE_BUTTON_X_PERCENT);
+  mOSK.CloseButtonOriginal.pt.y    = (float)((TOP_BORDER_HEIGHT_PERCENT * STANDARD_KEY_HEIGHT) / 2);
+  mOSK.CloseButtonOriginal.pt.z    = 0.0;
+  mOSK.CloseButtonOriginal.pt.rsvd = 1.0;
+
+  // Copy original keyboard pointsets to display-ready pointsets.  Since screen and touch coordinate systems don't change with
+  // keyboard rotation angle, the display-ready pointsets are used to compensate and allow blit and touch point hit detect routines
+  // to function as normal despite possible keyboard rotation angle changes.
+  //
+  NormalizeKeyRectsForRendering (mOSK.KeyboardAngle);
+
+  // Allocate Capture, Back, and String blt buffers
+  //
+  return (AllocateBackBuffers ());
 }
-
 
 /**
     Updates the "hit rectangle" for each key, used to determine key selection.  The area is computed based on the
@@ -912,23 +925,23 @@ InitializeKeyboardGeometry (VOID)
 
 **/
 VOID
-UpdateKeyDisplayHitRect (OUT KEY_INFO *pKeyList,
-                         IN  RECT3D   *pTransformRectSet,
-                         IN  UINTN     NumberOfKeys)
+UpdateKeyDisplayHitRect (
+  OUT KEY_INFO  *pKeyList,
+  IN  RECT3D    *pTransformRectSet,
+  IN  UINTN     NumberOfKeys
+  )
 {
-    UINTN    Count;
+  UINTN  Count;
 
-    for (Count=0 ; Count < NumberOfKeys ; Count++)
-    {
-        pKeyList[Count].KeyDisplayHitRect.Left   = (UINTN)pTransformRectSet[Count].topL.pt.x;
-        pKeyList[Count].KeyDisplayHitRect.Top    = (UINTN)pTransformRectSet[Count].topL.pt.y;
-        pKeyList[Count].KeyDisplayHitRect.Right  = (UINTN)pTransformRectSet[Count].botR.pt.x;
-        pKeyList[Count].KeyDisplayHitRect.Bottom = (UINTN)pTransformRectSet[Count].botR.pt.y;
-    }
+  for (Count = 0; Count < NumberOfKeys; Count++) {
+    pKeyList[Count].KeyDisplayHitRect.Left   = (UINTN)pTransformRectSet[Count].topL.pt.x;
+    pKeyList[Count].KeyDisplayHitRect.Top    = (UINTN)pTransformRectSet[Count].topL.pt.y;
+    pKeyList[Count].KeyDisplayHitRect.Right  = (UINTN)pTransformRectSet[Count].botR.pt.x;
+    pKeyList[Count].KeyDisplayHitRect.Bottom = (UINTN)pTransformRectSet[Count].botR.pt.y;
+  }
 
-    return;
+  return;
 }
-
 
 /**
     Initialize default key information.
@@ -941,43 +954,42 @@ UpdateKeyDisplayHitRect (OUT KEY_INFO *pKeyList,
 
 **/
 VOID
-InitializeKeyInformation(OUT KEY_INFO *pKeyList,
-                         IN  RECT3D   *pTransformRectSet,
-                         IN  UINTN     NumberOfKeys)
+InitializeKeyInformation (
+  OUT KEY_INFO  *pKeyList,
+  IN  RECT3D    *pTransformRectSet,
+  IN  UINTN     NumberOfKeys
+  )
 {
-    UINTN     Count;
-    KEY_INFO *pKey;
+  UINTN     Count;
+  KEY_INFO  *pKey;
 
-    for (Count=0 ; Count < NumberOfKeys ; Count++)
-    {
-        pKey = &pKeyList[Count];
+  for (Count = 0; Count < NumberOfKeys; Count++) {
+    pKey = &pKeyList[Count];
 
-        // Select key text and fill colors
-        //
-        pKey->pKeyLabelColor   = &gMsColorTable.KeyLabelColor;
-        switch(mOSK.pKeyMap[Count].EfiKey)
-        {
-        case EfiKeyLShift:
-        case EfiKeyRShift:
-        case EfiKeyA0:
-        case EfiKeyA2:
-        case EfiKeyUpArrow:
-        case EfiKeyDownArrow:
-        case EfiKeyLeftArrow:
-        case EfiKeyRightArrow:
-            pKey->pKeyFillColor = &gMsColorTable.KeyShiftnNavFillColor;
-            break;
-        default:
-            pKey->pKeyFillColor = &gMsColorTable.KeyDefaultFillColor;
-            break;
-        }
-
-        pKey->pKeyBoundingRect  = &pTransformRectSet[Count];
+    // Select key text and fill colors
+    //
+    pKey->pKeyLabelColor = &gMsColorTable.KeyLabelColor;
+    switch (mOSK.pKeyMap[Count].EfiKey) {
+      case EfiKeyLShift:
+      case EfiKeyRShift:
+      case EfiKeyA0:
+      case EfiKeyA2:
+      case EfiKeyUpArrow:
+      case EfiKeyDownArrow:
+      case EfiKeyLeftArrow:
+      case EfiKeyRightArrow:
+        pKey->pKeyFillColor = &gMsColorTable.KeyShiftnNavFillColor;
+        break;
+      default:
+        pKey->pKeyFillColor = &gMsColorTable.KeyDefaultFillColor;
+        break;
     }
 
-    return;
-}
+    pKey->pKeyBoundingRect = &pTransformRectSet[Count];
+  }
 
+  return;
+}
 
 /**
     Apply the current transform matrix to all keyboard pointsets.
@@ -988,34 +1000,33 @@ InitializeKeyInformation(OUT KEY_INFO *pKeyList,
 
 **/
 VOID
-Apply3DTransform (IN BOOLEAN bKeyboardFrameOnly)
+Apply3DTransform (
+  IN BOOLEAN  bKeyboardFrameOnly
+  )
 {
+  // Transform keyboard bounding rectangle pointset
+  //
+  TransformPointSet ((POINT3D *)&mOSK.KeyboardRectDisplay, (POINT3D *)&mOSK.KeyboardRectXformed, 4);
 
-    // Transform keyboard bounding rectangle pointset
+  // Optimization - when the keyboard is dragged, no need to transform everything until dragging stops
+  //
+  if (FALSE == bKeyboardFrameOnly) {
+    // Transform the key pointset
     //
-    TransformPointSet((POINT3D *)&mOSK.KeyboardRectDisplay, (POINT3D *)&mOSK.KeyboardRectXformed, 4);
+    TransformPointSet ((POINT3D *)mOSK.KeyRectDisplay, (POINT3D *)mOSK.KeyRectXformed, (4 * NUMBER_OF_KEYS));
 
-    // Optimization - when the keyboard is dragged, no need to transform everything until dragging stops
+    // Transform Un/Dock and Close button points
     //
-    if (FALSE == bKeyboardFrameOnly)
-    {
-        // Transform the key pointset
-        //
-        TransformPointSet((POINT3D *)mOSK.KeyRectDisplay, (POINT3D *)mOSK.KeyRectXformed, (4 * NUMBER_OF_KEYS));
+    TransformPointSet ((POINT3D *)&mOSK.CloseButtonDisplay, (POINT3D *)&mOSK.CloseButtonXformed, 1);
+    TransformPointSet ((POINT3D *)&mOSK.DockingButtonDisplay, (POINT3D *)&mOSK.DockingButtonXformed, 1);
 
-        // Transform Un/Dock and Close button points
-        //
-        TransformPointSet((POINT3D *)&mOSK.CloseButtonDisplay, (POINT3D *)&mOSK.CloseButtonXformed, 1);
-        TransformPointSet((POINT3D *)&mOSK.DockingButtonDisplay, (POINT3D *)&mOSK.DockingButtonXformed, 1);
+    // Update individual key "hit" rectangles for matching against touch/mouse coordinate
+    //
+    UpdateKeyDisplayHitRect (mOSK.KeyList, (RECT3D *)mOSK.KeyRectXformed, NUMBER_OF_KEYS);
+  }
 
-        // Update individual key "hit" rectangles for matching against touch/mouse coordinate
-        //
-        UpdateKeyDisplayHitRect(mOSK.KeyList, (RECT3D *)mOSK.KeyRectXformed, NUMBER_OF_KEYS);
-    }
-
-    return;
+  return;
 }
-
 
 /**
     Gets the current keyboard icon bounding (outer) rectangle.
@@ -1026,47 +1037,46 @@ Apply3DTransform (IN BOOLEAN bKeyboardFrameOnly)
 
 **/
 VOID
-GetKeyboardIconBoundingRect (OUT SWM_RECT    *pRect)
+GetKeyboardIconBoundingRect (
+  OUT SWM_RECT  *pRect
+  )
 {
-    UINT32 ScreenWidth  = mGop->Mode->Info->HorizontalResolution;
-    UINT32 ScreenHeight = mGop->Mode->Info->VerticalResolution;
-    UINT32 IconOrigX    = 0;
-    UINT32 IconOrigY    = 0;
-    UINT32 IconWidth    = (UINT32)mOSK.KeyboardIcon.Width;
-    UINT32 IconHeight   = (UINT32)mOSK.KeyboardIcon.Height;
+  UINT32  ScreenWidth  = mGop->Mode->Info->HorizontalResolution;
+  UINT32  ScreenHeight = mGop->Mode->Info->VerticalResolution;
+  UINT32  IconOrigX    = 0;
+  UINT32  IconOrigY    = 0;
+  UINT32  IconWidth    = (UINT32)mOSK.KeyboardIcon.Width;
+  UINT32  IconHeight   = (UINT32)mOSK.KeyboardIcon.Height;
 
-
-    // Compute icon screen coordinate based on icon position.
-    //
-    switch (mOSK.KeyboardIconPosition)
-    {
+  // Compute icon screen coordinate based on icon position.
+  //
+  switch (mOSK.KeyboardIconPosition) {
     case BottomLeft:
-        IconOrigX = 0;
-        IconOrigY = (ScreenHeight - IconHeight);
-        break;
+      IconOrigX = 0;
+      IconOrigY = (ScreenHeight - IconHeight);
+      break;
     case TopRight:
-        IconOrigX = (ScreenWidth  - IconWidth);
-        IconOrigY = 0;
-        break;
+      IconOrigX = (ScreenWidth  - IconWidth);
+      IconOrigY = 0;
+      break;
     case TopLeft:
-        IconOrigX = 0;
-        IconOrigY = 0;
-        break;
+      IconOrigX = 0;
+      IconOrigY = 0;
+      break;
     case BottomRight:
     default:
-        IconOrigX = (ScreenWidth  - IconWidth);
-        IconOrigY = (ScreenHeight - IconHeight);
-        break;
-    }
+      IconOrigX = (ScreenWidth  - IconWidth);
+      IconOrigY = (ScreenHeight - IconHeight);
+      break;
+  }
 
-    pRect->Left   = IconOrigX;
-    pRect->Top    = IconOrigY;
-    pRect->Right  = (IconOrigX + IconWidth  - 1);
-    pRect->Bottom = (IconOrigY + IconHeight - 1);
+  pRect->Left   = IconOrigX;
+  pRect->Top    = IconOrigY;
+  pRect->Right  = (IconOrigX + IconWidth  - 1);
+  pRect->Bottom = (IconOrigY + IconHeight - 1);
 
-    return;
+  return;
 }
-
 
 /**
 Gets the current keyboard bounding (outer) rectangle.
@@ -1077,16 +1087,17 @@ Gets the current keyboard bounding (outer) rectangle.
 
 **/
 VOID
-GetKeyboardBoundingRect (OUT SWM_RECT    *pRect)
+GetKeyboardBoundingRect (
+  OUT SWM_RECT  *pRect
+  )
 {
-    pRect->Left   = (UINT32)mOSK.KeyboardRectXformed.topL.pt.x;
-    pRect->Top    = (UINT32)mOSK.KeyboardRectXformed.topL.pt.y;
-    pRect->Right  = (UINT32)mOSK.KeyboardRectXformed.topR.pt.x;
-    pRect->Bottom = (UINT32)mOSK.KeyboardRectXformed.botL.pt.y;
+  pRect->Left   = (UINT32)mOSK.KeyboardRectXformed.topL.pt.x;
+  pRect->Top    = (UINT32)mOSK.KeyboardRectXformed.topL.pt.y;
+  pRect->Right  = (UINT32)mOSK.KeyboardRectXformed.topR.pt.x;
+  pRect->Bottom = (UINT32)mOSK.KeyboardRectXformed.botL.pt.y;
 
-    return;
+  return;
 }
-
 
 /**
 Renders the keyboard.
@@ -1097,336 +1108,304 @@ Renders the keyboard.
 
 **/
 EFI_STATUS
-RenderKeyboard (IN BOOLEAN bShowKeyLabels)
+RenderKeyboard (
+  IN BOOLEAN  bShowKeyLabels
+  )
 {
-    EFI_STATUS              Status = EFI_SUCCESS;
-    UINTN                   KeyOrigX, KeyOrigY, KeyWidth, KeyHeight;
-    SWM_RECT                Rect;
-    UINT32                  KeyboardWidth, KeyboardHeight;
-    UINTN                   KeyLabelOrigX, KeyLabelOrigY;
-    UINTN                   Count;
-    EFI_FONT_DISPLAY_INFO   *StringInfo = NULL;
+  EFI_STATUS             Status = EFI_SUCCESS;
+  UINTN                  KeyOrigX, KeyOrigY, KeyWidth, KeyHeight;
+  SWM_RECT               Rect;
+  UINT32                 KeyboardWidth, KeyboardHeight;
+  UINTN                  KeyLabelOrigX, KeyLabelOrigY;
+  UINTN                  Count;
+  EFI_FONT_DISPLAY_INFO  *StringInfo = NULL;
 
+  // First check whether there's something to do.
+  //
+  if (FALSE == mOSK.bDisplayKeyboard) {
+    goto Exit;
+  }
 
-    // First check whether there's something to do.
+  StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
+  if (NULL == StringInfo) {
+    goto Exit;
+  }
+
+  StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+
+  // Determine the keyboard outer bounding rectangle
+  //
+  GetKeyboardBoundingRect (&Rect);
+  KeyboardWidth  = (Rect.Right - Rect.Left + 1);
+  KeyboardHeight = (Rect.Bottom - Rect.Top + 1);
+
+  // If the keyboard hasn't (visually) changed, we can just blt the captured buffer for better performance
+  //
+  if ((FALSE == mOSK.bKeyboardSizeChanged) && (FALSE == mOSK.bKeyboardStateChanged) && (NUMBER_OF_KEYS == mOSK.SelectedKey)) {
+    mSWMProtocol->BltWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    mOSK.pBackBuffer,
+                    EfiBltBufferToVideo,
+                    0,
+                    0,
+                    Rect.Left,
+                    Rect.Top,
+                    KeyboardWidth,
+                    KeyboardHeight,
+                    KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                    );
+
+    goto Exit;
+  }
+
+  // If the keyboard has changed dimensionally, re-render the background and (optionally) the buttons otherwise
+  // we can continue to refresh the keyboard image with a single, stored blit buffer
+  //
+  if (TRUE == mOSK.bKeyboardSizeChanged) {
+    // Draw a near-black box where the keyboard will be rendered
     //
-    if (FALSE == mOSK.bDisplayKeyboard)
-    {
-        goto Exit;
+    mSWMProtocol->BltWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    &gMsColorTable.KeyboardSizeChangeBackgroundColor,
+                    EfiBltVideoFill,
+                    0,
+                    0,
+                    Rect.Left,
+                    Rect.Top,
+                    KeyboardWidth,
+                    (Rect.Bottom - Rect.Top + 1),
+                    KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                    );
+
+    // Draw close and docking buttons.
+    //
+    if (TRUE == mOSK.bShowDockAndCloseButtons) {
+      CHAR16  *pButtonLabel;
+      UINTN   ButtonWidth, ButtonHeight;
+      UINTN   ButtonOrigX, ButtonOrigY;
+
+      // Select preferred font size and style for these buttons.
+      //
+      CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyLabelColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+
+      // Draw the Un/Dock button
+      //
+      if (Docked == mOSK.DockedState) {
+        pButtonLabel = mDockButtonLabel;
+        ButtonWidth  = mOSK.KeyboardDockButton.Width;
+        ButtonHeight = mOSK.KeyboardDockButton.Height;
+      } else {
+        pButtonLabel = mUndockButtonLabel;
+        ButtonWidth  = mOSK.KeyboardUndockButton.Width;
+        ButtonHeight = mOSK.KeyboardUndockButton.Height;
+      }
+
+      ButtonOrigX = (UINTN)(mOSK.DockingButtonXformed.pt.x - (float)(ButtonWidth  / 2));
+      ButtonOrigY = (UINTN)(mOSK.DockingButtonXformed.pt.y - (float)(ButtonHeight / 2));
+
+      mSWMProtocol->StringToWindow (
+                      mSWMProtocol,
+                      mImageHandle,
+                      EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_OUT_FLAG_CLIP |
+                      EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+                      EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
+                      pButtonLabel,
+                      StringInfo,
+                      &mOSK.pKeyTextBltBuffer,
+                      ButtonOrigX,
+                      ButtonOrigY,
+                      NULL,
+                      NULL,
+                      NULL
+                      );
+
+      // Draw the Close button
+      //
+      pButtonLabel = mCloseButtonLabel;
+      ButtonWidth  = mOSK.KeyboardCloseButton.Width;
+      ButtonHeight = mOSK.KeyboardCloseButton.Height;
+      ButtonOrigX  = (UINTN)(mOSK.CloseButtonXformed.pt.x - (float)(ButtonWidth  / 2));
+      ButtonOrigY  = (UINTN)(mOSK.CloseButtonXformed.pt.y - (float)(ButtonHeight / 2));
+
+      mSWMProtocol->StringToWindow (
+                      mSWMProtocol,
+                      mImageHandle,
+                      EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_OUT_FLAG_CLIP |
+                      EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+                      EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
+                      pButtonLabel,
+                      StringInfo,
+                      &mOSK.pKeyTextBltBuffer,
+                      ButtonOrigX,
+                      ButtonOrigY,
+                      NULL,
+                      NULL,
+                      NULL
+                      );
+    }
+  }
+
+  // Draw each of the individual keys based on key mapping, keyboard modifier state, and color scheme
+  //
+  for (Count = 0; Count < NUMBER_OF_KEYS; Count++) {
+    // Optimization - if the keyboard size and state aren't being changed then we only need to draw the currently selected key
+    // or the previously selected (now deselected) key.
+    //
+    if ((FALSE == mOSK.bKeyboardSizeChanged) && (FALSE == mOSK.bKeyboardStateChanged) && (Count != mOSK.SelectedKey) && (Count != mOSK.DeselectKey)) {
+      // Only process the key(s) that are selected or need to be deselected if the keyboard isn't changing.
+      //
+      continue;
     }
 
-    StringInfo = BuildFontDisplayInfoFromFontInfo (&mOSK.PreferredFontInfo);
-    if (NULL == StringInfo)
-    {
-        goto Exit;
+    KeyWidth  = (mOSK.KeyList[Count].KeyDisplayHitRect.Right  - mOSK.KeyList[Count].KeyDisplayHitRect.Left);
+    KeyHeight = (mOSK.KeyList[Count].KeyDisplayHitRect.Bottom - mOSK.KeyList[Count].KeyDisplayHitRect.Top);
+    KeyOrigX  =  mOSK.KeyList[Count].KeyDisplayHitRect.Left;
+    KeyOrigY  =  mOSK.KeyList[Count].KeyDisplayHitRect.Top;
+
+    // Fill the key background with the correct color based on state
+    //
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pFillColor = mOSK.KeyList[Count].pKeyFillColor;
+
+    if ((Shift == mOSK.KeyModifierState) && ((EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey) || (EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))) {
+      pFillColor = &gMsColorTable.KeyboardShiftStateKeyColor;
+    } else if ((CapsLock == mOSK.KeyModifierState) && ((EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey) || (EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))) {
+      pFillColor = &gMsColorTable.KeyboardCapsLockStateKeyColor;
+    } else if (((NumSym == mOSK.KeyModifierState) || (Function == mOSK.KeyModifierState)) && ((EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey) || (EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))) {
+      pFillColor = mOSK.KeyList[Count].pKeyFillColor;
+    } else if ((NumSym == mOSK.KeyModifierState) && (EfiKeyA0 == mOSK.pKeyMap[Count].EfiKey)) {
+      pFillColor = &gMsColorTable.KeyboardNumSymStateKeyColor;
+    } else if ((Function == mOSK.KeyModifierState) && (EfiKeyA2 == mOSK.pKeyMap[Count].EfiKey)) {
+      pFillColor = &gMsColorTable.KeyboardFunctionStateKeyColor;
+    } else if (mOSK.SelectedKey == Count) {
+      pFillColor = &gMsColorTable.KeyboardSelectedStateKeyColor;
     }
 
-    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+    mSWMProtocol->BltWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    pFillColor,
+                    EfiBltVideoFill,
+                    0,
+                    0,
+                    KeyOrigX,
+                    KeyOrigY,
+                    KeyWidth,
+                    KeyHeight,
+                    KeyWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                    );
 
-    // Determine the keyboard outer bounding rectangle
+    // Draw key text if requested
     //
-    GetKeyboardBoundingRect(&Rect);
-    KeyboardWidth   = (Rect.Right - Rect.Left + 1);
-    KeyboardHeight  = (Rect.Bottom - Rect.Top + 1);
+    if (TRUE == bShowKeyLabels) {
+      // Use correct color for key text, based on state
+      //
+      if ((Shift == mOSK.KeyModifierState) && ((EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey) || (EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))) {
+        CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardShiftStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardShiftStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      } else if ((CapsLock == mOSK.KeyModifierState) && ((EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey) || (EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))) {
+        CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardCapsLockStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardCapsLockStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      } else if (((NumSym == mOSK.KeyModifierState) || (Function == mOSK.KeyModifierState)) && ((EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey) || (EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))) {
+        CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));                    // Gray-out shift keys in these modes
+        CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      } else if ((NumSym == mOSK.KeyModifierState) && (EfiKeyA0 == mOSK.pKeyMap[Count].EfiKey)) {
+        CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymA0StateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardNumSymA0StateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      } else if ((Function == mOSK.KeyModifierState) && (EfiKeyA2 == mOSK.pKeyMap[Count].EfiKey)) {
+        CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardFunctionStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardFunctionStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      } else if (mOSK.SelectedKey == Count) {
+        CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardSelectedStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardSelectedStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      } else {
+        CopyMem (&StringInfo->ForegroundColor, mOSK.KeyList[Count].pKeyLabelColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+        CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+      }
 
-    // If the keyboard hasn't (visually) changed, we can just blt the captured buffer for better performance
-    //
-    if (FALSE == mOSK.bKeyboardSizeChanged && FALSE == mOSK.bKeyboardStateChanged && NUMBER_OF_KEYS == mOSK.SelectedKey)
-    {
-        mSWMProtocol->BltWindow (mSWMProtocol,
-            mImageHandle,
-            mOSK.pBackBuffer,
-            EfiBltBufferToVideo,
-            0,
-            0,
-            Rect.Left,
-            Rect.Top,
-            KeyboardWidth,
-            KeyboardHeight,
-            KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
-            );
+      // Select preferred font size/style.
+      //
+      StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
-        goto Exit;
+      // Center the label on the key.
+      //
+      KeyLabelOrigX = (KeyOrigX + (KeyWidth  / 2) - (mOSK.pKeyMap[Count].KeyLabelWidth  / 2));
+      KeyLabelOrigY = (KeyOrigY + (KeyHeight / 2) - (mOSK.pKeyMap[Count].KeyLabelHeight / 2));
+
+      // Draw the key label.
+      //
+      mSWMProtocol->StringToWindow (
+                      mSWMProtocol,
+                      mImageHandle,
+                      EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_OUT_FLAG_CLIP |
+                      EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+                      EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
+                      mOSK.pKeyMap[Count].KeyLabel,
+                      StringInfo,
+                      &mOSK.pKeyTextBltBuffer,
+                      KeyLabelOrigX,
+                      KeyLabelOrigY,
+                      NULL,
+                      NULL,
+                      NULL
+                      );
     }
+  }
 
-    // If the keyboard has changed dimensionally, re-render the background and (optionally) the buttons otherwise
-    // we can continue to refresh the keyboard image with a single, stored blit buffer
+  // Capture the keyboard to the back buffer so we can directly blt it later if the keyboard hasn't changed.  Note that if it wasn't a full
+  // keyboard render, don't capture since the keyboard may have been stepped on by other rendering (ex: Shell).
+  //
+  if ((TRUE == mOSK.bKeyboardSizeChanged) && (NUMBER_OF_KEYS == mOSK.SelectedKey)) {
+    // Disable the mouse pointer so we don't capture it
     //
-    if (TRUE == mOSK.bKeyboardSizeChanged)
-    {
-        // Draw a near-black box where the keyboard will be rendered
-        //
-        mSWMProtocol->BltWindow (mSWMProtocol,
-            mImageHandle,
-            &gMsColorTable.KeyboardSizeChangeBackgroundColor,
-            EfiBltVideoFill,
-            0,
-            0,
-            Rect.Left,
-            Rect.Top,
-            KeyboardWidth,
-            (Rect.Bottom - Rect.Top + 1),
-            KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
-            );
+    mSWMProtocol->EnableMousePointer (
+                    mSWMProtocol,
+                    FALSE
+                    );
 
-        // Draw close and docking buttons.
-        //
-        if (TRUE == mOSK.bShowDockAndCloseButtons)
-        {
-            CHAR16  *pButtonLabel;
-            UINTN   ButtonWidth, ButtonHeight;
-            UINTN   ButtonOrigX, ButtonOrigY;
-
-
-            // Select preferred font size and style for these buttons.
-            //
-            CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyLabelColor,                     sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardDocknCloseBackgroundColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-
-            // Draw the Un/Dock button
-            //
-            if (Docked == mOSK.DockedState)
-            {
-                pButtonLabel = mDockButtonLabel;
-                ButtonWidth  = mOSK.KeyboardDockButton.Width;
-                ButtonHeight = mOSK.KeyboardDockButton.Height;
-            }
-            else
-            {
-                pButtonLabel = mUndockButtonLabel;
-                ButtonWidth  = mOSK.KeyboardUndockButton.Width;
-                ButtonHeight = mOSK.KeyboardUndockButton.Height;
-            }
-
-            ButtonOrigX = (UINTN)(mOSK.DockingButtonXformed.pt.x - (float)(ButtonWidth  / 2));
-            ButtonOrigY = (UINTN)(mOSK.DockingButtonXformed.pt.y - (float)(ButtonHeight / 2));
-
-            mSWMProtocol->StringToWindow (mSWMProtocol,
-                mImageHandle,
-                EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_OUT_FLAG_CLIP |
-                EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-                EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
-                pButtonLabel,
-                StringInfo,
-                &mOSK.pKeyTextBltBuffer,
-                ButtonOrigX,
-                ButtonOrigY,
-                NULL,
-                NULL,
-                NULL
-                );
-
-            // Draw the Close button
-            //
-            pButtonLabel = mCloseButtonLabel;
-            ButtonWidth  = mOSK.KeyboardCloseButton.Width;
-            ButtonHeight = mOSK.KeyboardCloseButton.Height;
-            ButtonOrigX  = (UINTN)(mOSK.CloseButtonXformed.pt.x - (float)(ButtonWidth  / 2));
-            ButtonOrigY  = (UINTN)(mOSK.CloseButtonXformed.pt.y - (float)(ButtonHeight / 2));
-
-            mSWMProtocol->StringToWindow (mSWMProtocol,
-                mImageHandle,
-                EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_OUT_FLAG_CLIP |
-                EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-                EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
-                pButtonLabel,
-                StringInfo,
-                &mOSK.pKeyTextBltBuffer,
-                ButtonOrigX,
-                ButtonOrigY,
-                NULL,
-                NULL,
-                NULL
-                );
-
-        }
-    }
-
-    // Draw each of the individual keys based on key mapping, keyboard modifier state, and color scheme
+    // Capture the keyboard to the back buffer.
     //
-    for (Count=0 ; Count < NUMBER_OF_KEYS ; Count++)
-    {
-        // Optimization - if the keyboard size and state aren't being changed then we only need to draw the currently selected key
-        // or the previously selected (now deselected) key.
-        //
-        if (FALSE == mOSK.bKeyboardSizeChanged && FALSE == mOSK.bKeyboardStateChanged && Count != mOSK.SelectedKey && Count != mOSK.DeselectKey)
-        {
-            // Only process the key(s) that are selected or need to be deselected if the keyboard isn't changing.
-            //
-            continue;
-        }
+    mSWMProtocol->BltWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    mOSK.pBackBuffer,
+                    EfiBltVideoToBltBuffer,
+                    Rect.Left,
+                    Rect.Top,
+                    0,
+                    0,
+                    KeyboardWidth,
+                    KeyboardHeight,
+                    KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                    );
+  }
 
-        KeyWidth  = (mOSK.KeyList[Count].KeyDisplayHitRect.Right  - mOSK.KeyList[Count].KeyDisplayHitRect.Left);
-        KeyHeight = (mOSK.KeyList[Count].KeyDisplayHitRect.Bottom - mOSK.KeyList[Count].KeyDisplayHitRect.Top);
-        KeyOrigX  =  mOSK.KeyList[Count].KeyDisplayHitRect.Left;
-        KeyOrigY  =  mOSK.KeyList[Count].KeyDisplayHitRect.Top;
+  // Enable the mouse pointer.
+  //
+  mSWMProtocol->EnableMousePointer (
+                  mSWMProtocol,
+                  TRUE
+                  );
 
-        // Fill the key background with the correct color based on state
-        //
-        EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pFillColor = mOSK.KeyList[Count].pKeyFillColor;
+  // If there is no selected key, we may have just rendered a key deselection.  Now that
+  // we're done rendering, clear the deselection state.
+  //
+  mOSK.DeselectKey = NUMBER_OF_KEYS;
 
-        if (Shift == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
-        {
-            pFillColor = &gMsColorTable.KeyboardShiftStateKeyColor;
-        }
-        else if (CapsLock == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
-        {
-            pFillColor = &gMsColorTable.KeyboardCapsLockStateKeyColor;
-        }
-        else if ((NumSym == mOSK.KeyModifierState || Function == mOSK.KeyModifierState) && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
-        {
-            pFillColor = mOSK.KeyList[Count].pKeyFillColor;
-        }
-        else if (NumSym == mOSK.KeyModifierState && EfiKeyA0 == mOSK.pKeyMap[Count].EfiKey)
-        {
-            pFillColor = &gMsColorTable.KeyboardNumSymStateKeyColor;
-        }
-        else if (Function == mOSK.KeyModifierState && EfiKeyA2 == mOSK.pKeyMap[Count].EfiKey)
-        {
-            pFillColor = &gMsColorTable.KeyboardFunctionStateKeyColor;
-        }
-        else if (mOSK.SelectedKey == Count)
-        {
-            pFillColor = &gMsColorTable.KeyboardSelectedStateKeyColor;
-        }
-
-        mSWMProtocol->BltWindow (mSWMProtocol,
-            mImageHandle,
-            pFillColor,
-            EfiBltVideoFill,
-            0,
-            0,
-            KeyOrigX,
-            KeyOrigY,
-            KeyWidth,
-            KeyHeight,
-            KeyWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
-            );
-
-        // Draw key text if requested
-        //
-        if (TRUE == bShowKeyLabels)
-        {
-
-            // Use correct color for key text, based on state
-            //
-            if (Shift == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
-            {
-                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardShiftStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardShiftStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            }
-            else if (CapsLock == mOSK.KeyModifierState && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
-            {
-                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardCapsLockStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardCapsLockStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            }
-            else if ((NumSym == mOSK.KeyModifierState || Function == mOSK.KeyModifierState) && (EfiKeyLShift == mOSK.pKeyMap[Count].EfiKey || EfiKeyRShift == mOSK.pKeyMap[Count].EfiKey))
-            {
-                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));            // Gray-out shift keys in these modes
-                CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            }
-            else if (NumSym == mOSK.KeyModifierState && EfiKeyA0 == mOSK.pKeyMap[Count].EfiKey)
-            {
-                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardNumSymA0StateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardNumSymA0StateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            }
-            else if (Function == mOSK.KeyModifierState && EfiKeyA2 == mOSK.pKeyMap[Count].EfiKey)
-            {
-                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardFunctionStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardFunctionStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            }
-            else if (mOSK.SelectedKey == Count)
-            {
-                CopyMem (&StringInfo->ForegroundColor, &gMsColorTable.KeyboardSelectedStateFGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo->BackgroundColor, &gMsColorTable.KeyboardSelectedStateBGColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            }
-            else
-            {
-                CopyMem (&StringInfo->ForegroundColor, mOSK.KeyList[Count].pKeyLabelColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-                CopyMem (&StringInfo->BackgroundColor, mOSK.KeyList[Count].pKeyFillColor,  sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-            }
-
-            // Select preferred font size/style.
-            //
-            StringInfo->FontInfoMask   = EFI_FONT_INFO_ANY_FONT;
-
-            // Center the label on the key.
-            //
-            KeyLabelOrigX = (KeyOrigX + (KeyWidth  / 2) - (mOSK.pKeyMap[Count].KeyLabelWidth  / 2));
-            KeyLabelOrigY = (KeyOrigY + (KeyHeight / 2) - (mOSK.pKeyMap[Count].KeyLabelHeight / 2));
-
-            // Draw the key label.
-            //
-            mSWMProtocol->StringToWindow (mSWMProtocol,
-                mImageHandle,
-                EFI_HII_IGNORE_IF_NO_GLYPH | EFI_HII_OUT_FLAG_CLIP |
-                EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-                EFI_HII_IGNORE_LINE_BREAK | EFI_HII_DIRECT_TO_SCREEN,
-                mOSK.pKeyMap[Count].KeyLabel,
-                StringInfo,
-                &mOSK.pKeyTextBltBuffer,
-                KeyLabelOrigX,
-                KeyLabelOrigY,
-                NULL,
-                NULL,
-                NULL
-                );
-        }
-    }
-
-    // Capture the keyboard to the back buffer so we can directly blt it later if the keyboard hasn't changed.  Note that if it wasn't a full
-    // keyboard render, don't capture since the keyboard may have been stepped on by other rendering (ex: Shell).
-    //
-    if (TRUE == mOSK.bKeyboardSizeChanged && NUMBER_OF_KEYS == mOSK.SelectedKey)
-    {
-        // Disable the mouse pointer so we don't capture it
-        //
-        mSWMProtocol->EnableMousePointer(mSWMProtocol,
-            FALSE
-            );
-
-        // Capture the keyboard to the back buffer.
-        //
-        mSWMProtocol->BltWindow (mSWMProtocol,
-            mImageHandle,
-            mOSK.pBackBuffer,
-            EfiBltVideoToBltBuffer,
-            Rect.Left,
-            Rect.Top,
-            0,
-            0,
-            KeyboardWidth,
-            KeyboardHeight,
-            KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
-            );
-
-    }
-
-    // Enable the mouse pointer.
-    //
-    mSWMProtocol->EnableMousePointer(mSWMProtocol,
-        TRUE
-        );
-
-    // If there is no selected key, we may have just rendered a key deselection.  Now that
-    // we're done rendering, clear the deselection state.
-    //
-    mOSK.DeselectKey = NUMBER_OF_KEYS;
-
-    // Reset keyboard size change tracking flag now that we've rendered and captured the updated keyboard.
-    //
-    mOSK.bKeyboardSizeChanged = FALSE;
+  // Reset keyboard size change tracking flag now that we've rendered and captured the updated keyboard.
+  //
+  mOSK.bKeyboardSizeChanged = FALSE;
 
 Exit:
 
-    if (NULL != StringInfo)
-    {
-        FreePool (StringInfo);
-    }
+  if (NULL != StringInfo) {
+    FreePool (StringInfo);
+  }
 
-    return Status;
+  return Status;
 }
-
 
 /**
 Translates the keyboard in the xy plane while enforcing screen boundaries since we don't support clipping.
@@ -1438,85 +1417,78 @@ Translates the keyboard in the xy plane while enforcing screen boundaries since 
 
 **/
 EFI_STATUS
-TranslateKeyboardLocation (IN float dx,
-IN float dy)
+TranslateKeyboardLocation (
+  IN float  dx,
+  IN float  dy
+  )
 {
-    UINTN ScreenWidth    = (UINTN)mGop->Mode->Info->HorizontalResolution;
-    UINTN ScreenHeight   = (UINTN)mGop->Mode->Info->VerticalResolution;
-    SWM_RECT Rect;
+  UINTN     ScreenWidth  = (UINTN)mGop->Mode->Info->HorizontalResolution;
+  UINTN     ScreenHeight = (UINTN)mGop->Mode->Info->VerticalResolution;
+  SWM_RECT  Rect;
 
+  // Keep keyboard within screen bounds (blitting isn't clipped)
+  //
+  GetKeyboardBoundingRect (&Rect);
+  if (((INTN)Rect.Left + (INTN)dx) < 0) {
+    dx = (float)Rect.Left;                                                  // Limit at current position
+  } else if ((UINTN)((INTN)(Rect.Right) + (INTN)dx) >= ScreenWidth) {
+    dx = (float)((INTN)(ScreenWidth - 1) - (INTN)(Rect.Right));             // Limit at screen width
+  }
 
-    // Keep keyboard within screen bounds (blitting isn't clipped)
-    //
-    GetKeyboardBoundingRect (&Rect);
-    if (((INTN)Rect.Left + (INTN)dx) < 0)
-    {
-        dx = (float)Rect.Left;                                              // Limit at current position
-    }
-    else if ((UINTN)((INTN)(Rect.Right) + (INTN)dx) >= ScreenWidth)
-    {
-        dx = (float)((INTN)(ScreenWidth - 1) - (INTN)(Rect.Right));         // Limit at screen width
-    }
+  if (((INTN)Rect.Top + (INTN)dy) < 0) {
+    dy = (float)Rect.Top;                                                   // Limit at current position
+  } else if ((UINTN)((INTN)(Rect.Bottom) + (INTN)dy) >= ScreenHeight) {
+    dy = (float)((INTN)(ScreenHeight - 1) - (INTN)(Rect.Bottom));           // Limit at screen height
+  }
 
-    if (((INTN)Rect.Top + (INTN)dy) < 0)
-    {
-        dy = (float)Rect.Top;                                               // Limit at current position
-    }
-    else if ((UINTN)((INTN)(Rect.Bottom) + (INTN)dy) >= ScreenHeight)
-    {
-        dy = (float)((INTN)(ScreenHeight - 1) - (INTN)(Rect.Bottom));       // Limit at screen height
-    }
+  // Translate the keyboard position by a relative amount
+  //
+  //
+  Translate (dx, dy, 0.0);
 
-    // Translate the keyboard position by a relative amount
-    //
-    //
-    Translate(dx, dy, 0.0);
+  // Apply the initial transform to the keyboard geometry point set
+  //
+  Apply3DTransform (TRUE);
+  mOSK.bKeyboardStateChanged = FALSE;     // Force blitting of the stored keyboard image
+  mOSK.bKeyboardSizeChanged  = FALSE;     //  "
 
-    // Apply the initial transform to the keyboard geometry point set
-    //
-    Apply3DTransform(TRUE);
-    mOSK.bKeyboardStateChanged  = FALSE;  // Force blitting of the stored keyboard image
-    mOSK.bKeyboardSizeChanged   = FALSE;  //  "
+  // Update client window frame.
+  //
+  GetKeyboardBoundingRect (&Rect);
 
-    // Update client window frame.
-    //
-    GetKeyboardBoundingRect (&Rect);
+  mSWMProtocol->SetWindowFrame (
+                  mSWMProtocol,
+                  mImageHandle,
+                  (SWM_RECT *)&Rect
+                  );
 
-    mSWMProtocol->SetWindowFrame(mSWMProtocol,
-        mImageHandle,
-        (SWM_RECT *)&Rect
-        );
+  // Render the keyboard with key text
+  //
+  RenderKeyboard (TRUE);
 
-    // Render the keyboard with key text
-    //
-    RenderKeyboard(TRUE);
-
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
-
 EFI_STATUS
-SetKeyboardIconPosition (IN SCREEN_POSITION Position)
+SetKeyboardIconPosition (
+  IN SCREEN_POSITION  Position
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  // Unsupported positions
+  //
+  if ((TopCenter == Position) || (BottomCenter == Position)) {
+    Status = EFI_UNSUPPORTED;
+    goto Exit;
+  }
 
-    // Unsupported positions
-    //
-    if (TopCenter == Position || BottomCenter == Position)
-    {
-        Status = EFI_UNSUPPORTED;
-        goto Exit;
-    }
-
-    mOSK.KeyboardIconPosition = Position;
+  mOSK.KeyboardIconPosition = Position;
 
 Exit:
 
-    return Status;
+  return Status;
 }
-
 
 /**
 Sets the keyboard's position on the screen (justified position) and docking state.
@@ -1528,232 +1500,233 @@ Sets the keyboard's position on the screen (justified position) and docking stat
 
 **/
 EFI_STATUS
-SetKeyboardPosition (IN SCREEN_POSITION      Position,
-IN OSK_DOCKED_STATE     DockedState)
+SetKeyboardPosition (
+  IN SCREEN_POSITION   Position,
+  IN OSK_DOCKED_STATE  DockedState
+  )
 {
-    EFI_STATUS Status    = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    if (mGop == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, GOP not yet initialized %x %x\n", Position, DockedState));
-        mOSK.KeyboardPosition = Position;
-        mOSK.DockedState      = DockedState;
-        goto Exit;
-    }
-    if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, SWM protocol not yet initialized %x %x\n", Position, DockedState));
-        mOSK.KeyboardPosition = Position;
-        mOSK.DockedState = DockedState;
-        goto Exit;
-    }
-
-    UINTN ScreenWidth    = (UINTN)mGop->Mode->Info->HorizontalResolution;
-    UINTN ScreenHeight   = (UINTN)mGop->Mode->Info->VerticalResolution;
-    SWM_RECT Rect;
-    UINT32 KeyboardWidth, KeyboardHeight;
-    SCREEN_POSITION AdjustedPosition;
-    float dx = 0.0;
-    float dy = 0.0;
-
-    // Get current keyboard location and size
-    //
-    GetKeyboardBoundingRect(&Rect);
-    KeyboardWidth  = (Rect.Right - Rect.Left + 1);
-    KeyboardHeight = (Rect.Bottom - Rect.Top + 1);
-
-    // Save keyboard position for later use.
-    //
+  if (mGop == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, GOP not yet initialized %x %x\n", Position, DockedState));
     mOSK.KeyboardPosition = Position;
+    mOSK.DockedState      = DockedState;
+    goto Exit;
+  }
 
-    // Adjust screen position based on keyboard rotation angle.  Screen position when the keyboard is rotated needs to be transformed
-    // into a "universal" non-rotated position.
-    //
-    switch (Position)
-    {
+  if (mSWMProtocol == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, SWM protocol not yet initialized %x %x\n", Position, DockedState));
+    mOSK.KeyboardPosition = Position;
+    mOSK.DockedState      = DockedState;
+    goto Exit;
+  }
+
+  UINTN            ScreenWidth  = (UINTN)mGop->Mode->Info->HorizontalResolution;
+  UINTN            ScreenHeight = (UINTN)mGop->Mode->Info->VerticalResolution;
+  SWM_RECT         Rect;
+  UINT32           KeyboardWidth, KeyboardHeight;
+  SCREEN_POSITION  AdjustedPosition;
+  float            dx = 0.0;
+  float            dy = 0.0;
+
+  // Get current keyboard location and size
+  //
+  GetKeyboardBoundingRect (&Rect);
+  KeyboardWidth  = (Rect.Right - Rect.Left + 1);
+  KeyboardHeight = (Rect.Bottom - Rect.Top + 1);
+
+  // Save keyboard position for later use.
+  //
+  mOSK.KeyboardPosition = Position;
+
+  // Adjust screen position based on keyboard rotation angle.  Screen position when the keyboard is rotated needs to be transformed
+  // into a "universal" non-rotated position.
+  //
+  switch (Position) {
     case BottomLeft:
-        switch (mOSK.KeyboardAngle)
-        {
+      switch (mOSK.KeyboardAngle) {
         case Angle_90:
-            AdjustedPosition = TopLeft;
-            break;
+          AdjustedPosition = TopLeft;
+          break;
         case Angle_180:
-            AdjustedPosition = TopRight;
-            break;
+          AdjustedPosition = TopRight;
+          break;
         case Angle_270:
-            AdjustedPosition = BottomRight;
-            break;
+          AdjustedPosition = BottomRight;
+          break;
         case Angle_0:
         default:
-            AdjustedPosition = Position;
-            break;
-        }
-        break;
+          AdjustedPosition = Position;
+          break;
+      }
+
+      break;
     case BottomCenter:
-        switch (mOSK.KeyboardAngle)
-        {
+      switch (mOSK.KeyboardAngle) {
         case Angle_90:
-            AdjustedPosition = LeftCenter;
-            break;
+          AdjustedPosition = LeftCenter;
+          break;
         case Angle_180:
-            AdjustedPosition = TopCenter;
-            break;
+          AdjustedPosition = TopCenter;
+          break;
         case Angle_270:
-            AdjustedPosition = RightCenter;
-            break;
+          AdjustedPosition = RightCenter;
+          break;
         case Angle_0:
         default:
-            AdjustedPosition = Position;
-            break;
-        }
-        break;
+          AdjustedPosition = Position;
+          break;
+      }
+
+      break;
     case BottomRight:
-        switch (mOSK.KeyboardAngle)
-        {
+      switch (mOSK.KeyboardAngle) {
         case Angle_90:
-            AdjustedPosition = BottomLeft;
-            break;
+          AdjustedPosition = BottomLeft;
+          break;
         case Angle_180:
-            AdjustedPosition = TopLeft;
-            break;
+          AdjustedPosition = TopLeft;
+          break;
         case Angle_270:
-            AdjustedPosition = TopRight;
-            break;
+          AdjustedPosition = TopRight;
+          break;
         case Angle_0:
         default:
-            AdjustedPosition = Position;
-            break;
-        }
-        break;
+          AdjustedPosition = Position;
+          break;
+      }
+
+      break;
     case TopLeft:
-        switch (mOSK.KeyboardAngle)
-        {
+      switch (mOSK.KeyboardAngle) {
         case Angle_90:
-            AdjustedPosition = TopRight;
-            break;
+          AdjustedPosition = TopRight;
+          break;
         case Angle_180:
-            AdjustedPosition = BottomRight;
-            break;
+          AdjustedPosition = BottomRight;
+          break;
         case Angle_270:
-            AdjustedPosition = BottomLeft;
-            break;
+          AdjustedPosition = BottomLeft;
+          break;
         case Angle_0:
         default:
-            AdjustedPosition = Position;
-            break;
-        }
-        break;
+          AdjustedPosition = Position;
+          break;
+      }
+
+      break;
     case TopRight:
-        switch (mOSK.KeyboardAngle)
-        {
+      switch (mOSK.KeyboardAngle) {
         case Angle_90:
-            AdjustedPosition = BottomRight;
-            break;
+          AdjustedPosition = BottomRight;
+          break;
         case Angle_180:
-            AdjustedPosition = BottomLeft;
-            break;
+          AdjustedPosition = BottomLeft;
+          break;
         case Angle_270:
-            AdjustedPosition = TopLeft;
-            break;
+          AdjustedPosition = TopLeft;
+          break;
         case Angle_0:
         default:
-            AdjustedPosition = Position;
-            break;
-        }
-        break;
+          AdjustedPosition = Position;
+          break;
+      }
+
+      break;
     case TopCenter:
     default:
-        switch (mOSK.KeyboardAngle)
-        {
+      switch (mOSK.KeyboardAngle) {
         case Angle_90:
-            AdjustedPosition = RightCenter;
-            break;
+          AdjustedPosition = RightCenter;
+          break;
         case Angle_180:
-            AdjustedPosition = BottomCenter;
-            break;
+          AdjustedPosition = BottomCenter;
+          break;
         case Angle_270:
-            AdjustedPosition = LeftCenter;
-            break;
+          AdjustedPosition = LeftCenter;
+          break;
         case Angle_0:
         default:
-            AdjustedPosition = Position;
-            break;
-        }
-        break;
-    }
+          AdjustedPosition = Position;
+          break;
+      }
 
-    // Compute x,y screen coordinate based on location specifier
-    //
-    switch (AdjustedPosition)
-    {
+      break;
+  }
+
+  // Compute x,y screen coordinate based on location specifier
+  //
+  switch (AdjustedPosition) {
     case BottomLeft:
-        dx = (float)((INTN)Rect.Left * -1);
-        dy = (float)((INTN)(ScreenHeight - KeyboardHeight) - (INTN)Rect.Top);
-        break;
+      dx = (float)((INTN)Rect.Left * -1);
+      dy = (float)((INTN)(ScreenHeight - KeyboardHeight) - (INTN)Rect.Top);
+      break;
     case BottomCenter:
-        dx = (float)((INTN)((ScreenWidth - KeyboardWidth) / 2) - (INTN)Rect.Left);
-        dy = (float)((INTN)(ScreenHeight - KeyboardHeight) - (INTN)Rect.Top);
-        break;
+      dx = (float)((INTN)((ScreenWidth - KeyboardWidth) / 2) - (INTN)Rect.Left);
+      dy = (float)((INTN)(ScreenHeight - KeyboardHeight) - (INTN)Rect.Top);
+      break;
     case BottomRight:
-        dx = (float)((INTN)(ScreenWidth - KeyboardWidth) - (INTN)Rect.Left);
-        dy = (float)((INTN)(ScreenHeight - KeyboardHeight) - (INTN)Rect.Top);
-        break;
+      dx = (float)((INTN)(ScreenWidth - KeyboardWidth) - (INTN)Rect.Left);
+      dy = (float)((INTN)(ScreenHeight - KeyboardHeight) - (INTN)Rect.Top);
+      break;
     case LeftCenter:
-        // TODO
-        break;
+      // TODO
+      break;
     case TopLeft:
-        dx = (float)((INTN)Rect.Left * -1);
-        dy = (float)((INTN)Rect.Top * -1);
-        break;
+      dx = (float)((INTN)Rect.Left * -1);
+      dy = (float)((INTN)Rect.Top * -1);
+      break;
     case TopRight:
-        dx = (float)((INTN)(ScreenWidth - KeyboardWidth) - (INTN)Rect.Left);
-        dy = (float)((INTN)Rect.Top * -1);
-        break;
+      dx = (float)((INTN)(ScreenWidth - KeyboardWidth) - (INTN)Rect.Left);
+      dy = (float)((INTN)Rect.Top * -1);
+      break;
     case RightCenter:
-        // TODO
-        break;
+      // TODO
+      break;
     case TopCenter:
     default:
-        dx = (float)((INTN)((ScreenWidth - KeyboardWidth) / 2) - (INTN)Rect.Left);
-        dy = (float)((INTN)Rect.Top * -1);
-        break;
-    }
+      dx = (float)((INTN)((ScreenWidth - KeyboardWidth) / 2) - (INTN)Rect.Left);
+      dy = (float)((INTN)Rect.Top * -1);
+      break;
+  }
 
-    // Configure dock state
+  // Configure dock state
+  //
+  mOSK.DockedState = DockedState;
+
+  // Translate the keyboard location
+  //
+  Translate (dx, dy, 0.0);
+
+  // Apply the initial transform to the keyboard geometry point set
+  //
+  Apply3DTransform (FALSE);
+
+  // Update client window frame.
+  //
+  GetKeyboardBoundingRect (&Rect);
+
+  mSWMProtocol->SetWindowFrame (
+                  mSWMProtocol,
+                  mImageHandle,
+                  (SWM_RECT *)&Rect
+                  );
+
+  // Note that the keyboard size has changed so the renderer can refresh correctly
+  //
+  mOSK.bKeyboardSizeChanged = TRUE;
+
+  // Render the keyboard with key text if it should be displayed
+  //
+  if (TRUE == mOSK.bDisplayKeyboard) {
+    // Render the keyboard in the new position.
     //
-    mOSK.DockedState = DockedState;
+    RenderKeyboard (TRUE);
+  }
 
-    // Translate the keyboard location
-    //
-    Translate(dx, dy, 0.0);
-
-    // Apply the initial transform to the keyboard geometry point set
-    //
-    Apply3DTransform(FALSE);
-
-    // Update client window frame.
-    //
-    GetKeyboardBoundingRect (&Rect);
-
-    mSWMProtocol->SetWindowFrame(mSWMProtocol,
-        mImageHandle,
-        (SWM_RECT *)&Rect
-        );
-
-    // Note that the keyboard size has changed so the renderer can refresh correctly
-    //
-    mOSK.bKeyboardSizeChanged = TRUE;
-
-    // Render the keyboard with key text if it should be displayed
-    //
-    if (TRUE == mOSK.bDisplayKeyboard)
-    {
-        // Render the keyboard in the new position.
-        //
-        RenderKeyboard(TRUE);
-    }
 Exit:
-    return Status;
+  return Status;
 }
-
 
 /**
 Sets the keyboard's overall size as a percentage of the total screen "width".
@@ -1764,89 +1737,90 @@ Sets the keyboard's overall size as a percentage of the total screen "width".
 
 **/
 EFI_STATUS
-SetKeyboardSize (IN float    PercentOfScreenWidth)
+SetKeyboardSize (
+  IN float  PercentOfScreenWidth
+  )
 {
-    EFI_STATUS Status    = EFI_SUCCESS;
-    SWM_RECT Rect;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  SWM_RECT    Rect;
 
-    if (mGop == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] GOP not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
-        mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
-        goto Exit;
-    }
-    if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] SWM protocol not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
-        mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
-        goto Exit;
-    }
-
-    UINTN ScreenWidth    = (UINTN)mGop->Mode->Info->HorizontalResolution;
-    UINTN ScreenHeight   = (UINTN)mGop->Mode->Info->VerticalResolution;
-    UINTN KeyboardWidth  = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x);
-    UINTN KeyboardHeight = (UINTN)(mOSK.KeyboardRectOriginal.botL.pt.y - mOSK.KeyboardRectOriginal.topL.pt.y);
-
-
-    // Compute the maximum keyboard size scale factor based on screen dimensions
-    //
-    float ScaleFactor = ((float)ScreenWidth / (float)KeyboardWidth);
-
-    // Reduce the scale factor by the amount specified
-    //
-    ScaleFactor *= (float)PercentOfScreenWidth;
-
-    // Make sure height doesn't scale past screen limits since we haven't implemented clipping
-    //
-    if ((UINTN)((float)KeyboardHeight * ScaleFactor) >= ScreenHeight)
-    {
-        Status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
-
-    // Save the specified size for later use.
-    //
+  if (mGop == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] GOP not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
     mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
+    goto Exit;
+  }
 
-    // Initialize display transform
-    //
-    // TODO - Maintain rotation angle and origin when the scale is changed
-    //
-    InitializeXformWithParams (ScaleFactor,     // Scale
-        0.0,             // X-axis angle
-        0.0,             // Y-axis angle
-        0.0              // Z-axis angle
-        );
+  if (mSWMProtocol == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] SWM protocol not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
+    mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
+    goto Exit;
+  }
 
-    // Apply the initial transform to the keyboard geometry point set
-    //
-    Apply3DTransform(FALSE);
+  UINTN  ScreenWidth    = (UINTN)mGop->Mode->Info->HorizontalResolution;
+  UINTN  ScreenHeight   = (UINTN)mGop->Mode->Info->VerticalResolution;
+  UINTN  KeyboardWidth  = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x);
+  UINTN  KeyboardHeight = (UINTN)(mOSK.KeyboardRectOriginal.botL.pt.y - mOSK.KeyboardRectOriginal.topL.pt.y);
 
-    // Note that the keyboard size has changed so the renderer can refresh correctly
-    //
-    mOSK.bKeyboardSizeChanged = TRUE;
+  // Compute the maximum keyboard size scale factor based on screen dimensions
+  //
+  float  ScaleFactor = ((float)ScreenWidth / (float)KeyboardWidth);
 
-    // Update client window frame.
-    //
-    GetKeyboardBoundingRect (&Rect);
+  // Reduce the scale factor by the amount specified
+  //
+  ScaleFactor *= (float)PercentOfScreenWidth;
 
-    mSWMProtocol->SetWindowFrame(mSWMProtocol,
-        mImageHandle,
-        (SWM_RECT *)&Rect
-        );
+  // Make sure height doesn't scale past screen limits since we haven't implemented clipping
+  //
+  if ((UINTN)((float)KeyboardHeight * ScaleFactor) >= ScreenHeight) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Exit;
+  }
 
-    // Render the keyboard with key text if it needs to be displayed
+  // Save the specified size for later use.
+  //
+  mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
+
+  // Initialize display transform
+  //
+  // TODO - Maintain rotation angle and origin when the scale is changed
+  //
+  InitializeXformWithParams (
+    ScaleFactor,         // Scale
+    0.0,                 // X-axis angle
+    0.0,                 // Y-axis angle
+    0.0                  // Z-axis angle
+    );
+
+  // Apply the initial transform to the keyboard geometry point set
+  //
+  Apply3DTransform (FALSE);
+
+  // Note that the keyboard size has changed so the renderer can refresh correctly
+  //
+  mOSK.bKeyboardSizeChanged = TRUE;
+
+  // Update client window frame.
+  //
+  GetKeyboardBoundingRect (&Rect);
+
+  mSWMProtocol->SetWindowFrame (
+                  mSWMProtocol,
+                  mImageHandle,
+                  (SWM_RECT *)&Rect
+                  );
+
+  // Render the keyboard with key text if it needs to be displayed
+  //
+  if (TRUE == mOSK.bDisplayKeyboard) {
+    // Render the keyboard at the new size.
     //
-    if (TRUE == mOSK.bDisplayKeyboard)
-    {
-        // Render the keyboard at the new size.
-        //
-        RenderKeyboard(TRUE);
-    }
+    RenderKeyboard (TRUE);
+  }
 
 Exit:
 
-    return Status;
+  return Status;
 }
-
 
 /**
 Retrieves the keyboard's current operating mode(s).
@@ -1857,32 +1831,30 @@ Retrieves the keyboard's current operating mode(s).
 
 **/
 EFI_STATUS
-GetKeyboardMode (IN UINT32  *ModeBitfield)
+GetKeyboardMode (
+  IN UINT32  *ModeBitfield
+  )
 {
-    EFI_STATUS Status    = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  *ModeBitfield = 0;
 
-    *ModeBitfield = 0;
+  // Icon auto-enable mode (used to automatically display the OSK icon when a client waits on an input event).
+  //
+  if (TRUE == mOSK.bKeyboardIconAutoEnable) {
+    *ModeBitfield |= OSK_MODE_AUTOENABLEICON;
+  }
 
-    // Icon auto-enable mode (used to automatically display the OSK icon when a client waits on an input event).
-    //
-    if (TRUE == mOSK.bKeyboardIconAutoEnable)
-    {
-        *ModeBitfield |= OSK_MODE_AUTOENABLEICON;
-    }
+  // Keyboard self-refresh mode (periodically redraws the keyboard).
+  //
+  if (TRUE == mOSK.bKeyboardSelfRefresh) {
+    *ModeBitfield |= OSK_MODE_SELF_REFRESH;
+  }
 
-    // Keyboard self-refresh mode (periodically redraws the keyboard).
-    //
-    if (TRUE == mOSK.bKeyboardSelfRefresh)
-    {
-        *ModeBitfield |= OSK_MODE_SELF_REFRESH;
-    }
+  DEBUG ((DEBUG_INFO, "INFO [OSK]: Retrieved keyboard mode 0x%08x.  Status = %r\r\n", *ModeBitfield, Status));
 
-    DEBUG((DEBUG_INFO, "INFO [OSK]: Retrieved keyboard mode 0x%08x.  Status = %r\r\n", *ModeBitfield, Status));
-
-    return Status;
+  return Status;
 }
-
 
 /**
 Sets the keyboard's current operating mode.
@@ -1893,31 +1865,31 @@ Sets the keyboard's current operating mode.
 
 **/
 EFI_STATUS
-SetKeyboardMode (IN UINT32  ModeBitfield)
+SetKeyboardMode (
+  IN UINT32  ModeBitfield
+  )
 {
-    EFI_STATUS Status    = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  // Configure icon auto-enable mode (used to automatically display the OSK icon when a client waits on an input event).
+  //
+  mOSK.bKeyboardIconAutoEnable = ((ModeBitfield & OSK_MODE_AUTOENABLEICON) ? TRUE : FALSE);
 
-    // Configure icon auto-enable mode (used to automatically display the OSK icon when a client waits on an input event).
-    //
-    mOSK.bKeyboardIconAutoEnable = ((ModeBitfield & OSK_MODE_AUTOENABLEICON) ? TRUE : FALSE);
+  // Configure keyboard self-refresh mode (periodically redraws the keyboard).
+  //
+  mOSK.bKeyboardSelfRefresh = ((ModeBitfield & OSK_MODE_SELF_REFRESH) ? TRUE : FALSE);
 
-    // Configure keyboard self-refresh mode (periodically redraws the keyboard).
-    //
-    mOSK.bKeyboardSelfRefresh = ((ModeBitfield & OSK_MODE_SELF_REFRESH) ? TRUE : FALSE);
+  DEBUG ((DEBUG_INFO, "INFO [OSK]: Set keyboard mode 0x%08x.  Status = %r\r\n", ModeBitfield, Status));
+  // Disable the key repeat timer
+  //
+  gBS->SetTimer (
+         mKeyRepeatTimerEvent,
+         TimerCancel,
+         0
+         );
 
-    DEBUG((DEBUG_INFO, "INFO [OSK]: Set keyboard mode 0x%08x.  Status = %r\r\n", ModeBitfield, Status));
-    // Disable the key repeat timer
-    //
-    gBS->SetTimer (mKeyRepeatTimerEvent,
-        TimerCancel,
-        0
-        );
-
-
-    return Status;
+  return Status;
 }
-
 
 /**
 Configures the keyboard docked/undocked state (undocked allows it to be dragged around the screen).
@@ -1928,316 +1900,315 @@ Configures the keyboard docked/undocked state (undocked allows it to be dragged 
 
 **/
 EFI_STATUS
-SetKeyboardDockState (IN OSK_DOCKED_STATE State)
+SetKeyboardDockState (
+  IN OSK_DOCKED_STATE  State
+  )
 {
-    EFI_STATUS Status    = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  Status = SetKeyboardPosition (mOSK.KeyboardPosition, State);
 
-    Status = SetKeyboardPosition(mOSK.KeyboardPosition, State);
-
-    return Status;
+  return Status;
 }
 
-
 EFI_STATUS
-ShowKeyboard (IN BOOLEAN bShowKeyboard)
+ShowKeyboard (
+  IN BOOLEAN  bShowKeyboard
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    // Disable the key repeat timer
+  // Disable the key repeat timer
+  //
+  gBS->SetTimer (
+         mKeyRepeatTimerEvent,
+         TimerCancel,
+         0
+         );
+
+  // First check whether there's something to do.  We don't want to go through the process of
+  // showing the keyboard if it's already being showed in order to avoid capturing it in the back-buffer
+  // and later restoring the OSK image instead of what underlies it.
+  //
+  if (bShowKeyboard == mOSK.bDisplayKeyboard) {
+    goto Exit;
+  }
+
+  if (mSWMProtocol == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboard mode 0x%08x.\n", bShowKeyboard));
+    mOSK.bDisplayKeyboard = bShowKeyboard;
+    goto Exit;
+  }
+
+  if (TRUE == bShowKeyboard) {
+    // *** Show ***
+    // Note that the keyboard size has changed so the renderer can refresh correctly
     //
-    gBS->SetTimer (mKeyRepeatTimerEvent,
-                   TimerCancel,
-                   0
-                   );
+    mOSK.bKeyboardSizeChanged = TRUE;
 
-    // First check whether there's something to do.  We don't want to go through the process of
-    // showing the keyboard if it's already being showed in order to avoid capturing it in the back-buffer
-    // and later restoring the OSK image instead of what underlies it.
+    // Indicate that we're now showing the keyboard (needs to be set so RenderKeyboard does something).
     //
-    if (bShowKeyboard == mOSK.bDisplayKeyboard)
-    {
-        goto Exit;
-    }
+    mOSK.bDisplayKeyboard = TRUE;
 
-    if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboard mode 0x%08x.\n", bShowKeyboard));
-        mOSK.bDisplayKeyboard = bShowKeyboard;
-        goto Exit;
-    }
+    // Make ourselves active with the window manager now that we're displaying.
+    //
+    mSWMProtocol->ActivateWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    TRUE
+                    );
 
-    if (TRUE == bShowKeyboard)      // *** Show ***
-    {
-        // Note that the keyboard size has changed so the renderer can refresh correctly
-        //
-        mOSK.bKeyboardSizeChanged = TRUE;
+    // Render keyboard with key text
+    //
+    RenderKeyboard (TRUE);
 
-        // Indicate that we're now showing the keyboard (needs to be set so RenderKeyboard does something).
-        //
-        mOSK.bDisplayKeyboard = TRUE;
+    // Enable the mouse pointer to be displayed.
+    //
+    mSWMProtocol->EnableMousePointer (
+                    mSWMProtocol,
+                    TRUE
+                    );
+  } else {
+    // *** Hide ***
+    // Indicate that we're no longer showing the keyboard.  Note that this should come *before* we restore the
+    // underlying screen to avoid a race condition with RenderKeyboard.
+    //
+    mOSK.bDisplayKeyboard = FALSE;
 
-        // Make ourselves active with the window manager now that we're displaying.
-        //
-        mSWMProtocol->ActivateWindow(mSWMProtocol,
-            mImageHandle,
-            TRUE
-            );
-
-        // Render keyboard with key text
-        //
-        RenderKeyboard(TRUE);
-
-        // Enable the mouse pointer to be displayed.
-        //
-        mSWMProtocol->EnableMousePointer(mSWMProtocol,
-            TRUE
-            );
-    }
-    else                            // *** Hide ***
-    {
-        // Indicate that we're no longer showing the keyboard.  Note that this should come *before* we restore the
-        // underlying screen to avoid a race condition with RenderKeyboard.
-        //
-        mOSK.bDisplayKeyboard = FALSE;
-
-        // Make ourselves inactive with the window manager now that we're *not* displaying.
-        //
-        mSWMProtocol->ActivateWindow(mSWMProtocol,
-            mImageHandle,
-            FALSE
-            );
-    }
+    // Make ourselves inactive with the window manager now that we're *not* displaying.
+    //
+    mSWMProtocol->ActivateWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    FALSE
+                    );
+  }
 
 Exit:
-    return (Status);
+  return (Status);
 }
 
-
 EFI_STATUS
-ShowKeyboardIcon (IN BOOLEAN bShowKeyboardIcon)
+ShowKeyboardIcon (
+  IN BOOLEAN  bShowKeyboardIcon
+  )
 {
-    EFI_STATUS Status   = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    if (mGop == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x\n", bShowKeyboardIcon));
-        mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
-        goto Exit;
-    }
+  if (mGop == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x\n", bShowKeyboardIcon));
+    mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
+    goto Exit;
+  }
 
-    if (mSWMProtocol == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboardIcon 0x%08x\n", bShowKeyboardIcon));
-        mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
-        goto Exit;
-    }
+  if (mSWMProtocol == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboardIcon 0x%08x\n", bShowKeyboardIcon));
+    mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
+    goto Exit;
+  }
 
-    UINT32 ScreenWidth  = mGop->Mode->Info->HorizontalResolution;
-    UINT32 ScreenHeight = mGop->Mode->Info->VerticalResolution;
-    UINT32 IconOrigX, IconOrigY;
-    UINT32 IconWidth    = (UINT32)mOSK.KeyboardIcon.Width;
-    UINT32 IconHeight   = (UINT32)mOSK.KeyboardIcon.Height;
-    SWM_RECT Rect;
+  UINT32    ScreenWidth = mGop->Mode->Info->HorizontalResolution;
+  UINT32    ScreenHeight = mGop->Mode->Info->VerticalResolution;
+  UINT32    IconOrigX, IconOrigY;
+  UINT32    IconWidth  = (UINT32)mOSK.KeyboardIcon.Width;
+  UINT32    IconHeight = (UINT32)mOSK.KeyboardIcon.Height;
+  SWM_RECT  Rect;
 
+  // First check whether there's something to do (allow both conditions being true to pass
+  // through and allow for icon refreshing).
+  //
+  if (((FALSE == bShowKeyboardIcon) && (FALSE == mOSK.bDisplayKeyboardIcon))) {
+    goto Exit;
+  }
 
-    // First check whether there's something to do (allow both conditions being true to pass
-    // through and allow for icon refreshing).
-    //
-    if ((FALSE == bShowKeyboardIcon && FALSE == mOSK.bDisplayKeyboardIcon))
-    {
-        goto Exit;
-    }
-
-    // Compute screen coordinate based on location specifier
-    //
-    switch (mOSK.KeyboardIconPosition)
-    {
+  // Compute screen coordinate based on location specifier
+  //
+  switch (mOSK.KeyboardIconPosition) {
     case BottomLeft:
-        IconOrigX = 0;
-        IconOrigY = (ScreenHeight - IconHeight);
-        break;
+      IconOrigX = 0;
+      IconOrigY = (ScreenHeight - IconHeight);
+      break;
     case TopRight:
-        IconOrigX = (ScreenWidth  - IconWidth);
-        IconOrigY = 0;
-        break;
+      IconOrigX = (ScreenWidth  - IconWidth);
+      IconOrigY = 0;
+      break;
     case TopLeft:
-        IconOrigX = 0;
-        IconOrigY = 0;
-        break;
+      IconOrigX = 0;
+      IconOrigY = 0;
+      break;
     case BottomRight:
     default:
-        IconOrigX = (ScreenWidth  - IconWidth);
-        IconOrigY = (ScreenHeight - IconHeight);
-        break;
+      IconOrigX = (ScreenWidth  - IconWidth);
+      IconOrigY = (ScreenHeight - IconHeight);
+      break;
+  }
+
+  // If we hadn't previously been showing the keyboard icon, update the client window frame now.
+  //
+  if (TRUE == bShowKeyboardIcon) {
+    if (FALSE == mOSK.bDisplayKeyboardIcon) {
+      // Update client window frame.
+      //
+      GetKeyboardIconBoundingRect (&Rect);
+
+      mSWMProtocol->SetWindowFrame (
+                      mSWMProtocol,
+                      mImageHandle,
+                      (SWM_RECT *)&Rect
+                      );
+
+      // Set client focus for the icon "window".
+      //
+      mSWMProtocol->ActivateWindow (
+                      mSWMProtocol,
+                      mImageHandle,
+                      TRUE
+                      );
     }
 
-    // If we hadn't previously been showing the keyboard icon, update the client window frame now.
+    EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBltBuffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)mOSK.KeyboardIcon.pBitmap;
+
+    // Display the keyboard icon or blank it it out if we're hiding it.
     //
-    if (TRUE == bShowKeyboardIcon)
-    {
-        if (FALSE == mOSK.bDisplayKeyboardIcon)
-        {
-            // Update client window frame.
-            //
-            GetKeyboardIconBoundingRect (&Rect);
-
-            mSWMProtocol->SetWindowFrame(mSWMProtocol,
-                mImageHandle,
-                (SWM_RECT *)&Rect
-                );
-
-            // Set client focus for the icon "window".
-            //
-            mSWMProtocol->ActivateWindow(mSWMProtocol,
-                mImageHandle,
-                TRUE
-                );
-        }
-
-        EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBltBuffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)mOSK.KeyboardIcon.pBitmap;
-
-        // Display the keyboard icon or blank it it out if we're hiding it.
-        //
-        mSWMProtocol->BltWindow (mSWMProtocol,
-            mImageHandle,
-            pBltBuffer,
-            EfiBltBufferToVideo,
-            0,
-            0,
-            IconOrigX,
-            IconOrigY,
-            IconWidth,
-            IconHeight,
-            IconWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
-            );
-
-    }
-    else if (FALSE == bShowKeyboardIcon)
-    {
-        // Set make ourselves inactive (messages will by default go to the default client).
-        //
-        mSWMProtocol->ActivateWindow(mSWMProtocol,
-            mImageHandle,
-            FALSE
-            );
-    }
-
-    // Save keyboard icon display state.
+    mSWMProtocol->BltWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    pBltBuffer,
+                    EfiBltBufferToVideo,
+                    0,
+                    0,
+                    IconOrigX,
+                    IconOrigY,
+                    IconWidth,
+                    IconHeight,
+                    IconWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                    );
+  } else if (FALSE == bShowKeyboardIcon) {
+    // Set make ourselves inactive (messages will by default go to the default client).
     //
-    mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
+    mSWMProtocol->ActivateWindow (
+                    mSWMProtocol,
+                    mImageHandle,
+                    FALSE
+                    );
+  }
+
+  // Save keyboard icon display state.
+  //
+  mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
 
 Exit:
-    return Status;
+  return Status;
 }
 
-
 EFI_STATUS
-CheckForKeyboardIconHit (IN UINT32 TouchX,
-IN UINT32 TouchY)
+CheckForKeyboardIconHit (
+  IN UINT32  TouchX,
+  IN UINT32  TouchY
+  )
 {
-    SWM_RECT Rect;
+  SWM_RECT  Rect;
 
-
-    // If the icon isn't being displayed, there's no possibility of selecting it.
-    //
-    if (FALSE == mOSK.bDisplayKeyboardIcon)
-    {
-        return EFI_NO_MAPPING;
-    }
-
-    GetKeyboardIconBoundingRect (&Rect);
-
-
-    if (TouchX >= Rect.Left   &&
-        TouchX <= Rect.Right  &&
-        TouchY >= Rect.Top    &&
-        TouchY <= Rect.Bottom )
-    {
-        return EFI_SUCCESS;
-    }
-
+  // If the icon isn't being displayed, there's no possibility of selecting it.
+  //
+  if (FALSE == mOSK.bDisplayKeyboardIcon) {
     return EFI_NO_MAPPING;
+  }
+
+  GetKeyboardIconBoundingRect (&Rect);
+
+  if ((TouchX >= Rect.Left) &&
+      (TouchX <= Rect.Right) &&
+      (TouchY >= Rect.Top) &&
+      (TouchY <= Rect.Bottom))
+  {
+    return EFI_SUCCESS;
+  }
+
+  return EFI_NO_MAPPING;
 }
 
-
 EFI_STATUS
-CheckForKeyboardFrameHit (IN UINTN TouchX,
-IN UINTN TouchY)
+CheckForKeyboardFrameHit (
+  IN UINTN  TouchX,
+  IN UINTN  TouchY
+  )
 {
-    UINTN FrameLeft   = (UINTN)mOSK.KeyboardRectXformed.topL.pt.x;
-    UINTN FrameRight  = (UINTN)mOSK.KeyboardRectXformed.topR.pt.x;
-    UINTN FrameTop    = (UINTN)mOSK.KeyboardRectXformed.topR.pt.y;
-    UINTN FrameBottom = (UINTN)mOSK.KeyboardRectXformed.botL.pt.y;
+  UINTN  FrameLeft   = (UINTN)mOSK.KeyboardRectXformed.topL.pt.x;
+  UINTN  FrameRight  = (UINTN)mOSK.KeyboardRectXformed.topR.pt.x;
+  UINTN  FrameTop    = (UINTN)mOSK.KeyboardRectXformed.topR.pt.y;
+  UINTN  FrameBottom = (UINTN)mOSK.KeyboardRectXformed.botL.pt.y;
 
-    if (TouchX >= FrameLeft  &&
-        TouchX <= FrameRight &&
-        TouchY >= FrameTop   &&
-        TouchY <= FrameBottom)
-    {
-        return EFI_SUCCESS;
-    }
+  if ((TouchX >= FrameLeft) &&
+      (TouchX <= FrameRight) &&
+      (TouchY >= FrameTop) &&
+      (TouchY <= FrameBottom))
+  {
+    return EFI_SUCCESS;
+  }
 
-    return EFI_NO_MAPPING;
+  return EFI_NO_MAPPING;
 }
 
-
 EFI_STATUS
-CheckForDockingButtonHit (IN UINTN TouchX,
-IN UINTN TouchY)
+CheckForDockingButtonHit (
+  IN UINTN  TouchX,
+  IN UINTN  TouchY
+  )
 {
-    UINTN ButtonLeft   = ((UINTN)mOSK.DockingButtonXformed.pt.x - (mOSK.KeyboardDockButton.Width  / 2));
-    UINTN ButtonRight  = ((UINTN)mOSK.DockingButtonXformed.pt.x + (mOSK.KeyboardDockButton.Width  / 2));
-    UINTN ButtonTop    = ((UINTN)mOSK.DockingButtonXformed.pt.y - (mOSK.KeyboardDockButton.Height / 2));
-    UINTN ButtonBottom = ((UINTN)mOSK.DockingButtonXformed.pt.y + (mOSK.KeyboardDockButton.Height / 2));
+  UINTN  ButtonLeft   = ((UINTN)mOSK.DockingButtonXformed.pt.x - (mOSK.KeyboardDockButton.Width  / 2));
+  UINTN  ButtonRight  = ((UINTN)mOSK.DockingButtonXformed.pt.x + (mOSK.KeyboardDockButton.Width  / 2));
+  UINTN  ButtonTop    = ((UINTN)mOSK.DockingButtonXformed.pt.y - (mOSK.KeyboardDockButton.Height / 2));
+  UINTN  ButtonBottom = ((UINTN)mOSK.DockingButtonXformed.pt.y + (mOSK.KeyboardDockButton.Height / 2));
 
-    // If the button isn't being displayed, it shouldn't be selectable.
-    //
-    if (FALSE == mOSK.bShowDockAndCloseButtons)
-    {
-        goto Exit;
-    }
+  // If the button isn't being displayed, it shouldn't be selectable.
+  //
+  if (FALSE == mOSK.bShowDockAndCloseButtons) {
+    goto Exit;
+  }
 
-    if (TouchX >= ButtonLeft  &&
-        TouchX <= ButtonRight &&
-        TouchY >= ButtonTop   &&
-        TouchY <= ButtonBottom)
-    {
-        return EFI_SUCCESS;
-    }
+  if ((TouchX >= ButtonLeft) &&
+      (TouchX <= ButtonRight) &&
+      (TouchY >= ButtonTop) &&
+      (TouchY <= ButtonBottom))
+  {
+    return EFI_SUCCESS;
+  }
 
 Exit:
 
-    return EFI_NO_MAPPING;
+  return EFI_NO_MAPPING;
 }
 
-
 EFI_STATUS
-CheckForCloseButtonHit (IN UINTN TouchX,
-IN UINTN TouchY)
+CheckForCloseButtonHit (
+  IN UINTN  TouchX,
+  IN UINTN  TouchY
+  )
 {
-    UINTN ButtonLeft   = ((UINTN)mOSK.CloseButtonXformed.pt.x - (mOSK.KeyboardCloseButton.Width  / 2));
-    UINTN ButtonRight  = ((UINTN)mOSK.CloseButtonXformed.pt.x + (mOSK.KeyboardCloseButton.Width  / 2));
-    UINTN ButtonTop    = ((UINTN)mOSK.CloseButtonXformed.pt.y - (mOSK.KeyboardCloseButton.Height / 2));
-    UINTN ButtonBottom = ((UINTN)mOSK.CloseButtonXformed.pt.y + (mOSK.KeyboardCloseButton.Height / 2));
+  UINTN  ButtonLeft   = ((UINTN)mOSK.CloseButtonXformed.pt.x - (mOSK.KeyboardCloseButton.Width  / 2));
+  UINTN  ButtonRight  = ((UINTN)mOSK.CloseButtonXformed.pt.x + (mOSK.KeyboardCloseButton.Width  / 2));
+  UINTN  ButtonTop    = ((UINTN)mOSK.CloseButtonXformed.pt.y - (mOSK.KeyboardCloseButton.Height / 2));
+  UINTN  ButtonBottom = ((UINTN)mOSK.CloseButtonXformed.pt.y + (mOSK.KeyboardCloseButton.Height / 2));
 
-    // If the button isn't being displayed, it shouldn't be selectable.
-    //
-    if (FALSE == mOSK.bShowDockAndCloseButtons)
-    {
-        goto Exit;
-    }
+  // If the button isn't being displayed, it shouldn't be selectable.
+  //
+  if (FALSE == mOSK.bShowDockAndCloseButtons) {
+    goto Exit;
+  }
 
-    if (TouchX >= ButtonLeft  &&
-        TouchX <= ButtonRight &&
-        TouchY >= ButtonTop   &&
-        TouchY <= ButtonBottom)
-    {
-        return EFI_SUCCESS;
-    }
+  if ((TouchX >= ButtonLeft) &&
+      (TouchX <= ButtonRight) &&
+      (TouchY >= ButtonTop) &&
+      (TouchY <= ButtonBottom))
+  {
+    return EFI_SUCCESS;
+  }
 
 Exit:
 
-    return EFI_NO_MAPPING;
+  return EFI_NO_MAPPING;
 }
-
 
 /**
 
@@ -2255,129 +2226,128 @@ such that "top left" is always "top left" in screen and touch coordinate space.
 
 **/
 EFI_STATUS
-NormalizeKeyRectsForRendering(IN SCREEN_ANGLE Angle)
+NormalizeKeyRectsForRendering (
+  IN SCREEN_ANGLE  Angle
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
-    RECT3D Temp;
-    UINTN KeyPointCount = 0;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  RECT3D      Temp;
+  UINTN       KeyPointCount = 0;
 
+  mOSK.DockingButtonDisplay = mOSK.DockingButtonOriginal;
+  mOSK.CloseButtonDisplay   = mOSK.CloseButtonOriginal;
 
-    mOSK.DockingButtonDisplay   = mOSK.DockingButtonOriginal;
-    mOSK.CloseButtonDisplay     = mOSK.CloseButtonOriginal;
+  Temp.topL = mOSK.KeyboardRectOriginal.topL;
+  Temp.topR = mOSK.KeyboardRectOriginal.topR;
+  Temp.botL = mOSK.KeyboardRectOriginal.botL;
+  Temp.botR = mOSK.KeyboardRectOriginal.botR;
 
-    Temp.topL = mOSK.KeyboardRectOriginal.topL;
-    Temp.topR = mOSK.KeyboardRectOriginal.topR;
-    Temp.botL = mOSK.KeyboardRectOriginal.botL;
-    Temp.botR = mOSK.KeyboardRectOriginal.botR;
-
-    switch (Angle)
-    {
+  switch (Angle) {
     case Angle_90:
     {
-        // Transform keyboard bounding rectangle pointset
-        //
-        mOSK.KeyboardRectDisplay.topL = Temp.botL;
-        mOSK.KeyboardRectDisplay.topR = Temp.topL;
-        mOSK.KeyboardRectDisplay.botL = Temp.botR;
-        mOSK.KeyboardRectDisplay.botR = Temp.topR;
+      // Transform keyboard bounding rectangle pointset
+      //
+      mOSK.KeyboardRectDisplay.topL = Temp.botL;
+      mOSK.KeyboardRectDisplay.topR = Temp.topL;
+      mOSK.KeyboardRectDisplay.botL = Temp.botR;
+      mOSK.KeyboardRectDisplay.botR = Temp.topR;
 
-        // Transform the key pointset
-        //
-        for (KeyPointCount=0 ; KeyPointCount < NUMBER_OF_KEYS ; KeyPointCount++)
-        {
-            Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
-            Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
-            Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
-            Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
+      // Transform the key pointset
+      //
+      for (KeyPointCount = 0; KeyPointCount < NUMBER_OF_KEYS; KeyPointCount++) {
+        Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
+        Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
+        Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
+        Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
 
-            mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.botL;
-            mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.topL;
-            mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.botR;
-            mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.topR;
-        }
+        mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.botL;
+        mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.topL;
+        mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.botR;
+        mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.topR;
+      }
+
+      break;
     }
-    break;
     case Angle_180:
     {
-        // Transform keyboard bounding rectangle pointset
-        //
-        mOSK.KeyboardRectDisplay.topL = Temp.botR;
-        mOSK.KeyboardRectDisplay.topR = Temp.botL;
-        mOSK.KeyboardRectDisplay.botL = Temp.topR;
-        mOSK.KeyboardRectDisplay.botR = Temp.topL;
+      // Transform keyboard bounding rectangle pointset
+      //
+      mOSK.KeyboardRectDisplay.topL = Temp.botR;
+      mOSK.KeyboardRectDisplay.topR = Temp.botL;
+      mOSK.KeyboardRectDisplay.botL = Temp.topR;
+      mOSK.KeyboardRectDisplay.botR = Temp.topL;
 
-        // Transform the key pointset
-        //
-        for (KeyPointCount=0 ; KeyPointCount < NUMBER_OF_KEYS ; KeyPointCount++)
-        {
-            Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
-            Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
-            Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
-            Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
+      // Transform the key pointset
+      //
+      for (KeyPointCount = 0; KeyPointCount < NUMBER_OF_KEYS; KeyPointCount++) {
+        Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
+        Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
+        Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
+        Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
 
-            mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.botR;
-            mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.botL;
-            mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.topR;
-            mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.topL;
-        }
+        mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.botR;
+        mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.botL;
+        mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.topR;
+        mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.topL;
+      }
+
+      break;
     }
-    break;
     case Angle_270:
     {
-        // Transform keyboard bounding rectangle pointset
-        //
-        mOSK.KeyboardRectDisplay.topL = Temp.topR;
-        mOSK.KeyboardRectDisplay.topR = Temp.botR;
-        mOSK.KeyboardRectDisplay.botL = Temp.topL;
-        mOSK.KeyboardRectDisplay.botR = Temp.botL;
+      // Transform keyboard bounding rectangle pointset
+      //
+      mOSK.KeyboardRectDisplay.topL = Temp.topR;
+      mOSK.KeyboardRectDisplay.topR = Temp.botR;
+      mOSK.KeyboardRectDisplay.botL = Temp.topL;
+      mOSK.KeyboardRectDisplay.botR = Temp.botL;
 
-        // Transform the key pointset
-        //
-        for (KeyPointCount=0 ; KeyPointCount < NUMBER_OF_KEYS ; KeyPointCount++)
-        {
-            Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
-            Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
-            Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
-            Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
+      // Transform the key pointset
+      //
+      for (KeyPointCount = 0; KeyPointCount < NUMBER_OF_KEYS; KeyPointCount++) {
+        Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
+        Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
+        Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
+        Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
 
-            mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.topR;
-            mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.botR;
-            mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.topL;
-            mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.botL;
-        }
+        mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.topR;
+        mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.botR;
+        mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.topL;
+        mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.botL;
+      }
+
+      break;
     }
-    break;
     case Angle_0:
     default:
     {
-        // Transform keyboard bounding rectangle pointset
-        //
-        mOSK.KeyboardRectDisplay.topL = Temp.topL;
-        mOSK.KeyboardRectDisplay.topR = Temp.topR;
-        mOSK.KeyboardRectDisplay.botL = Temp.botL;
-        mOSK.KeyboardRectDisplay.botR = Temp.botR;
+      // Transform keyboard bounding rectangle pointset
+      //
+      mOSK.KeyboardRectDisplay.topL = Temp.topL;
+      mOSK.KeyboardRectDisplay.topR = Temp.topR;
+      mOSK.KeyboardRectDisplay.botL = Temp.botL;
+      mOSK.KeyboardRectDisplay.botR = Temp.botR;
 
-        // Transform the key pointset
-        //
-        for (KeyPointCount=0 ; KeyPointCount < NUMBER_OF_KEYS ; KeyPointCount++)
-        {
-            Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
-            Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
-            Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
-            Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
+      // Transform the key pointset
+      //
+      for (KeyPointCount = 0; KeyPointCount < NUMBER_OF_KEYS; KeyPointCount++) {
+        Temp.topL = mOSK.KeyRectOriginal[KeyPointCount].topL;
+        Temp.topR = mOSK.KeyRectOriginal[KeyPointCount].topR;
+        Temp.botL = mOSK.KeyRectOriginal[KeyPointCount].botL;
+        Temp.botR = mOSK.KeyRectOriginal[KeyPointCount].botR;
 
-            mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.topL;
-            mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.topR;
-            mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.botL;
-            mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.botR;
-        }
+        mOSK.KeyRectDisplay[KeyPointCount].topL = Temp.topL;
+        mOSK.KeyRectDisplay[KeyPointCount].topR = Temp.topR;
+        mOSK.KeyRectDisplay[KeyPointCount].botL = Temp.botL;
+        mOSK.KeyRectDisplay[KeyPointCount].botR = Temp.botR;
+      }
+
+      break;
     }
-    break;
-    }
+  }
 
-    return Status;
+  return Status;
 }
-
 
 /**
 
@@ -2389,618 +2359,582 @@ Rotates the keyboard about the z-axis by the fixed angle specified.
 
 **/
 EFI_STATUS
-RotateKeyboard(IN SCREEN_ANGLE    Angle)
+RotateKeyboard (
+  IN SCREEN_ANGLE  Angle
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
-    float ScaleFactor = 0.0;
-    float Zang = 0.0;
+  EFI_STATUS  Status      = EFI_SUCCESS;
+  float       ScaleFactor = 0.0;
+  float       Zang        = 0.0;
 
-    if (mGop == NULL){
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] Failed to find GOP protocol \n"));
-        mOSK.KeyboardAngle = Angle;
-        goto Exit;
-    }
-
-    UINTN ScreenWidth    = (UINTN)mGop->Mode->Info->HorizontalResolution;
-    UINTN ScreenHeight   = (UINTN)mGop->Mode->Info->VerticalResolution;
-    UINTN KeyboardWidth  = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x);
-
-
-    // Save keyboard angle for later.
-    //
+  if (mGop == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] Failed to find GOP protocol \n"));
     mOSK.KeyboardAngle = Angle;
+    goto Exit;
+  }
 
-    // Configure keyboard rectangles to be compatible with display and touch coordinate systems based on rotation angle.
-    //
-    NormalizeKeyRectsForRendering(Angle);
+  UINTN  ScreenWidth   = (UINTN)mGop->Mode->Info->HorizontalResolution;
+  UINTN  ScreenHeight  = (UINTN)mGop->Mode->Info->VerticalResolution;
+  UINTN  KeyboardWidth = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x);
 
-    // Compute the maximum keyboard size scale factor based on screen dimensions and set rotation angle.
-    //
-    switch (Angle)
-    {
+  // Save keyboard angle for later.
+  //
+  mOSK.KeyboardAngle = Angle;
+
+  // Configure keyboard rectangles to be compatible with display and touch coordinate systems based on rotation angle.
+  //
+  NormalizeKeyRectsForRendering (Angle);
+
+  // Compute the maximum keyboard size scale factor based on screen dimensions and set rotation angle.
+  //
+  switch (Angle) {
     case Angle_90:
-        ScaleFactor = ((float)ScreenHeight / (float)KeyboardWidth);
-        Zang        = HALF_PI;
-        break;
+      ScaleFactor = ((float)ScreenHeight / (float)KeyboardWidth);
+      Zang        = HALF_PI;
+      break;
     case Angle_180:
-        ScaleFactor = ((float)ScreenWidth / (float)KeyboardWidth);
-        Zang        = PI;
-        break;
+      ScaleFactor = ((float)ScreenWidth / (float)KeyboardWidth);
+      Zang        = PI;
+      break;
     case Angle_270:
-        ScaleFactor = ((float)ScreenHeight / (float)KeyboardWidth);
-        Zang        = PI + HALF_PI;
-        break;
+      ScaleFactor = ((float)ScreenHeight / (float)KeyboardWidth);
+      Zang        = PI + HALF_PI;
+      break;
     case Angle_0:
     default:
-        ScaleFactor = ((float)ScreenWidth / (float)KeyboardWidth);
-        Zang        = 0.0;
-        break;
-    }
+      ScaleFactor = ((float)ScreenWidth / (float)KeyboardWidth);
+      Zang        = 0.0;
+      break;
+  }
 
-    // Reduce the scale factor by the amount specified.  Note that we adjust scaling to ensure the same percentage of screen width
-    // irrespective of rotation angle.
-    //
-    ScaleFactor *= (float)mOSK.PercentOfScreenWidth;
+  // Reduce the scale factor by the amount specified.  Note that we adjust scaling to ensure the same percentage of screen width
+  // irrespective of rotation angle.
+  //
+  ScaleFactor *= (float)mOSK.PercentOfScreenWidth;
 
-    // Initialize display transform
-    //
-    InitializeXformWithParams (ScaleFactor,           // Scale
-        0.0,                   // X-axis angle
-        0.0,                   // Y-axis angle
-        Zang                   // Z-axis angle
-        );
+  // Initialize display transform
+  //
+  InitializeXformWithParams (
+    ScaleFactor,               // Scale
+    0.0,                       // X-axis angle
+    0.0,                       // Y-axis angle
+    Zang                       // Z-axis angle
+    );
 
-    // Apply the initial transform to the keyboard geometry point set
-    //
-    Apply3DTransform(FALSE);
+  // Apply the initial transform to the keyboard geometry point set
+  //
+  Apply3DTransform (FALSE);
 
-    // Update the keyboard position (and render) based on the rotation result.
-    //
-    Status = SetKeyboardPosition(mOSK.KeyboardPosition, mOSK.DockedState);
+  // Update the keyboard position (and render) based on the rotation result.
+  //
+  Status = SetKeyboardPosition (mOSK.KeyboardPosition, mOSK.DockedState);
 Exit:
-    return Status;
+  return Status;
 }
-
 
 EFI_STATUS
-CheckForKeyHit (IN  UINTN TouchX,
-IN  UINTN TouchY,
-OUT UINTN *pKeyNumber)
+CheckForKeyHit (
+  IN  UINTN  TouchX,
+  IN  UINTN  TouchY,
+  OUT UINTN  *pKeyNumber
+  )
 {
-    UINTN Count;
+  UINTN  Count;
 
-    // TODO - need to optimize this routine and/or point set...
+  // TODO - need to optimize this routine and/or point set...
 
-    for (Count=0 ; Count < NUMBER_OF_KEYS ; Count++)
+  for (Count = 0; Count < NUMBER_OF_KEYS; Count++) {
+    if ((TouchX >= mOSK.KeyList[Count].KeyDisplayHitRect.Left) &&
+        (TouchX <= mOSK.KeyList[Count].KeyDisplayHitRect.Right) &&
+        (TouchY >= mOSK.KeyList[Count].KeyDisplayHitRect.Top) &&
+        (TouchY <= mOSK.KeyList[Count].KeyDisplayHitRect.Bottom))
     {
-        if (TouchX >= mOSK.KeyList[Count].KeyDisplayHitRect.Left  &&
-            TouchX <= mOSK.KeyList[Count].KeyDisplayHitRect.Right &&
-            TouchY >= mOSK.KeyList[Count].KeyDisplayHitRect.Top   &&
-            TouchY <= mOSK.KeyList[Count].KeyDisplayHitRect.Bottom)
-        {
-            *pKeyNumber = Count;
-            return EFI_SUCCESS;
-        }
+      *pKeyNumber = Count;
+      return EFI_SUCCESS;
     }
+  }
 
-    return EFI_NOT_FOUND;
+  return EFI_NOT_FOUND;
 }
-
 
 EFI_STATUS
-InsertKeyPressIntoQueue (IN UINT16 ScanCode,
-IN CHAR16 UnicodeChar)
+InsertKeyPressIntoQueue (
+  IN UINT16  ScanCode,
+  IN CHAR16  UnicodeChar
+  )
 {
+  // If queue input and output positions collide, there is a buffer overflow
+  //
+  if ((mOSK.QueueInputPosition == mOSK.QueueOutputPosition) && (FALSE == mOSK.bQueueEmpty)) {
+    DEBUG ((DEBUG_INFO, "INFO [OSK]: Key press input queue overflow!\r\n"));
+    return EFI_OUT_OF_RESOURCES;
+  }
 
-    // If queue input and output positions collide, there is a buffer overflow
-    //
-    if (mOSK.QueueInputPosition == mOSK.QueueOutputPosition && FALSE == mOSK.bQueueEmpty)
-    {
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Key press input queue overflow!\r\n"));
-        return EFI_OUT_OF_RESOURCES;
-    }
+  // Store key press data in the queue
+  //
+  mOSK.KeyPressQueue[mOSK.QueueInputPosition].ScanCode    = ScanCode;
+  mOSK.KeyPressQueue[mOSK.QueueInputPosition].UnicodeChar = UnicodeChar;
 
-    // Store key press data in the queue
-    //
-    mOSK.KeyPressQueue[mOSK.QueueInputPosition].ScanCode    = ScanCode;
-    mOSK.KeyPressQueue[mOSK.QueueInputPosition].UnicodeChar = UnicodeChar;
+  // Increment the input position to the next slot and handle wrap-around
+  //
+  ++mOSK.QueueInputPosition;
+  mOSK.QueueInputPosition %= KEYBOARD_INPUT_QUEUE_SIZE;
 
-    // Increment the input position to the next slot and handle wrap-around
-    //
-    ++mOSK.QueueInputPosition;
-    mOSK.QueueInputPosition %= KEYBOARD_INPUT_QUEUE_SIZE;
+  // No longer the first insertion
+  //
+  mOSK.bQueueEmpty = FALSE;
 
-    // No longer the first insertion
-    //
-    mOSK.bQueueEmpty = FALSE;
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-
 
 EFI_STATUS
-ExtractKeyPressFromQueue (OUT EFI_INPUT_KEY *pKey)
+ExtractKeyPressFromQueue (
+  OUT EFI_INPUT_KEY  *pKey
+  )
 {
+  pKey->UnicodeChar = mOSK.KeyPressQueue[mOSK.QueueOutputPosition].UnicodeChar;
+  pKey->ScanCode    = mOSK.KeyPressQueue[mOSK.QueueOutputPosition].ScanCode;
 
-    pKey->UnicodeChar = mOSK.KeyPressQueue[mOSK.QueueOutputPosition].UnicodeChar;
-    pKey->ScanCode    = mOSK.KeyPressQueue[mOSK.QueueOutputPosition].ScanCode;
+  // Increment the output position to the next slot and handle wrap-around
+  //
+  ++mOSK.QueueOutputPosition;
+  mOSK.QueueOutputPosition %= KEYBOARD_INPUT_QUEUE_SIZE;
 
-    // Increment the output position to the next slot and handle wrap-around
-    //
-    ++mOSK.QueueOutputPosition;
-    mOSK.QueueOutputPosition %= KEYBOARD_INPUT_QUEUE_SIZE;
+  // If queue input and output positions are the same, the queue is empty
+  //
+  if (mOSK.QueueInputPosition == mOSK.QueueOutputPosition) {
+    mOSK.bQueueEmpty = TRUE;
+  }
 
-    // If queue input and output positions are the same, the queue is empty
-    //
-    if (mOSK.QueueInputPosition == mOSK.QueueOutputPosition)
-    {
-        mOSK.bQueueEmpty = TRUE;
-    }
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-
 
 // Return Value: TRUE == Key press was a modifier key therefore we don't need to insert it into the key input queue
 //
 BOOLEAN
-KeyModifierStateMachine (IN EFI_KEY Key)
+KeyModifierStateMachine (
+  IN EFI_KEY  Key
+  )
 {
-    BOOLEAN bModifierKey = FALSE;
-    STATIC BOOLEAN bDelayedTransitionfromShiftState = FALSE;    // Delays the transition from shift state until after the next key press
+  BOOLEAN         bModifierKey                     = FALSE;
+  STATIC BOOLEAN  bDelayedTransitionfromShiftState = FALSE;     // Delays the transition from shift state until after the next key press
 
-    // Was a modifier key pressed?
-    //
-    if (EfiKeyLShift == Key ||  // Left Shift
-        EfiKeyRShift == Key ||  // Right Shift
-        EfiKeyA2     == Key ||  // Function
-        EfiKeyA0     == Key)    // Number & Symbols
-    {
-        bModifierKey = TRUE;
-    }
+  // Was a modifier key pressed?
+  //
+  if ((EfiKeyLShift == Key) ||  // Left Shift
+      (EfiKeyRShift == Key) ||  // Right Shift
+      (EfiKeyA2     == Key) ||  // Function
+      (EfiKeyA0     == Key))    // Number & Symbols
+  {
+    bModifierKey = TRUE;
+  }
 
-    // Manage modifier key transitions
-    //
-    switch (mOSK.KeyModifierState)
-    {
+  // Manage modifier key transitions
+  //
+  switch (mOSK.KeyModifierState) {
     case Normal:
-        if (EfiKeyLShift == Key ||
-            EfiKeyRShift == Key)
-        {
-            mOSK.KeyModifierState = Shift;
-            bDelayedTransitionfromShiftState = TRUE;
-        }
-        else if (EfiKeyA0 == Key)
-        {
-            mOSK.KeyModifierState = NumSym;
-        }
-        else if (EfiKeyA2 == Key)
-        {
-            mOSK.KeyModifierState = Function;
-        }
-        break;
-    case Shift:
-        if (EfiKeyLShift == Key ||
-            EfiKeyRShift == Key)
-        {
-            mOSK.KeyModifierState = CapsLock;
-            bDelayedTransitionfromShiftState = FALSE;
-        }
-        else if (EfiKeyA0 == Key)
-        {
-            mOSK.KeyModifierState = NumSym;
-            bDelayedTransitionfromShiftState = FALSE;
-        }
-        else if (EfiKeyA2 == Key)
-        {
-            mOSK.KeyModifierState = Function;
-            bDelayedTransitionfromShiftState = FALSE;
-        }
-        else
-        {
-            mOSK.KeyModifierState = Normal;
-        }
-        break;
-    case CapsLock:
-        if (EfiKeyLShift == Key ||
-            EfiKeyRShift == Key)
-        {
-            mOSK.KeyModifierState = Normal;
-        }
-        else if (EfiKeyA0 == Key)
-        {
-            mOSK.KeyModifierState = NumSym;
-        }
-        else if (EfiKeyA2 == Key)
-        {
-            mOSK.KeyModifierState = Function;
-        }
-        break;
-    case NumSym:
-        if (EfiKeyA0 == Key)
-        {
-            mOSK.KeyModifierState = Normal;
-        }
-        else if (EfiKeyA2 == Key)
-        {
-            mOSK.KeyModifierState = Function;
-        }
-        break;
-    case Function:
-        if (EfiKeyA0 == Key)
-        {
-            mOSK.KeyModifierState = NumSym;
-        }
-        else if (EfiKeyA2 == Key)
-        {
-            mOSK.KeyModifierState = Normal;
-        }
-        break;
-    default:
-        break;
-    }
+      if ((EfiKeyLShift == Key) ||
+          (EfiKeyRShift == Key))
+      {
+        mOSK.KeyModifierState            = Shift;
+        bDelayedTransitionfromShiftState = TRUE;
+      } else if (EfiKeyA0 == Key) {
+        mOSK.KeyModifierState = NumSym;
+      } else if (EfiKeyA2 == Key) {
+        mOSK.KeyModifierState = Function;
+      }
 
-    // Select the correct key mapping table based on the modifier state
-    //
-    switch (mOSK.KeyModifierState)
-    {
+      break;
+    case Shift:
+      if ((EfiKeyLShift == Key) ||
+          (EfiKeyRShift == Key))
+      {
+        mOSK.KeyModifierState            = CapsLock;
+        bDelayedTransitionfromShiftState = FALSE;
+      } else if (EfiKeyA0 == Key) {
+        mOSK.KeyModifierState            = NumSym;
+        bDelayedTransitionfromShiftState = FALSE;
+      } else if (EfiKeyA2 == Key) {
+        mOSK.KeyModifierState            = Function;
+        bDelayedTransitionfromShiftState = FALSE;
+      } else {
+        mOSK.KeyModifierState = Normal;
+      }
+
+      break;
+    case CapsLock:
+      if ((EfiKeyLShift == Key) ||
+          (EfiKeyRShift == Key))
+      {
+        mOSK.KeyModifierState = Normal;
+      } else if (EfiKeyA0 == Key) {
+        mOSK.KeyModifierState = NumSym;
+      } else if (EfiKeyA2 == Key) {
+        mOSK.KeyModifierState = Function;
+      }
+
+      break;
+    case NumSym:
+      if (EfiKeyA0 == Key) {
+        mOSK.KeyModifierState = Normal;
+      } else if (EfiKeyA2 == Key) {
+        mOSK.KeyModifierState = Function;
+      }
+
+      break;
+    case Function:
+      if (EfiKeyA0 == Key) {
+        mOSK.KeyModifierState = NumSym;
+      } else if (EfiKeyA2 == Key) {
+        mOSK.KeyModifierState = Normal;
+      }
+
+      break;
+    default:
+      break;
+  }
+
+  // Select the correct key mapping table based on the modifier state
+  //
+  switch (mOSK.KeyModifierState) {
     case Shift:
     case CapsLock:
-        mOSK.pKeyMap = mOSK_ShiftMode_US_EN;
-        break;
+      mOSK.pKeyMap = mOSK_ShiftMode_US_EN;
+      break;
     case NumSym:
-        mOSK.pKeyMap = mOSK_NumSymMode_US_EN;
-        break;
+      mOSK.pKeyMap = mOSK_NumSymMode_US_EN;
+      break;
     case Function:
-        mOSK.pKeyMap = mOSK_FnctMode_US_EN;
-        break;
+      mOSK.pKeyMap = mOSK_FnctMode_US_EN;
+      break;
     case Normal:
     default:
-        if (TRUE == bDelayedTransitionfromShiftState)
-        {
-            mOSK.pKeyMap = mOSK_ShiftMode_US_EN;
-            bDelayedTransitionfromShiftState = FALSE;
-        }
-        else
-        {
-            mOSK.pKeyMap = mOSK_StdMode_US_EN;
-        }
-        break;
-    }
+      if (TRUE == bDelayedTransitionfromShiftState) {
+        mOSK.pKeyMap                     = mOSK_ShiftMode_US_EN;
+        bDelayedTransitionfromShiftState = FALSE;
+      } else {
+        mOSK.pKeyMap = mOSK_StdMode_US_EN;
+      }
 
+      break;
+  }
 
-    return (bModifierKey);
+  return (bModifierKey);
 }
 
-
 VOID
-KeyboardInputHandler (IN MS_SWM_ABSOLUTE_POINTER_STATE  *pTouchState)
+KeyboardInputHandler (
+  IN MS_SWM_ABSOLUTE_POINTER_STATE  *pTouchState
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    // Capture the touch state
+  // Capture the touch state
+  //
+  BOOLEAN  bFingerDown    = ((pTouchState->ActiveButtons & 0x1) == 1);
+  UINTN    AdjustedTouchX = (UINTN)pTouchState->CurrentX;
+  UINTN    AdjustedTouchY = (UINTN)pTouchState->CurrentY;
+  UINTN    KeyNumber      = 0;
+
+  // If the keyboard is in the process of being dragged, compute new dx, dy offset and look for finger-up to terminate the operation
+  //
+  if (TRUE == mOSK.bKeyboardMoving) {
+    // Stop dragging if finger was lifted
     //
-    BOOLEAN bFingerDown    = ((pTouchState->ActiveButtons & 0x1) == 1);
-    UINTN   AdjustedTouchX = (UINTN)pTouchState->CurrentX;
-    UINTN   AdjustedTouchY = (UINTN)pTouchState->CurrentY;
-    UINTN   KeyNumber      = 0;
+    if (FALSE == bFingerDown) {
+      // Apply transform to all pointsets now that the keybard is in the final location.
+      //
+      Apply3DTransform (FALSE);
 
+      mOSK.bKeyboardMoving = FALSE;
+      goto Exit;
+    }
 
-    // If the keyboard is in the process of being dragged, compute new dx, dy offset and look for finger-up to terminate the operation
+    float  dx = (float)((INTN)AdjustedTouchX - (INTN)mOSK.KeyboardDragOrigX);
+    float  dy = (float)((INTN)AdjustedTouchY - (INTN)mOSK.KeyboardDragOrigY);
+
+    // Translate the keyboard's location
     //
-    if (TRUE == mOSK.bKeyboardMoving)
-    {
-        // Stop dragging if finger was lifted
+    TranslateKeyboardLocation (dx, dy);
+
+    // Capture latest sampling position
+    //
+    mOSK.KeyboardDragOrigX = AdjustedTouchX;
+    mOSK.KeyboardDragOrigY = AdjustedTouchY;
+
+    goto Exit;
+  }
+
+  // Check whether there's a touch "hit" on the keyboard
+  //
+  Status = CheckForKeyHit (AdjustedTouchX, AdjustedTouchY, &KeyNumber);
+  if (EFI_ERROR (Status)) {
+    // No hit.  If this is a finger-up event, force keyboard rendering to deselect the highlighted key(s).
+    //
+    if (FALSE == bFingerDown) {
+      goto RefreshKeyboard;
+    }
+
+    // Check whether the keyboard "close" button is being presented and is selected
+    //
+    Status = CheckForCloseButtonHit (AdjustedTouchX, AdjustedTouchY);
+    if (EFI_ERROR (Status)) {
+      // Check whether the keyboard "docking" button  is being presented and is selected
+      //
+      Status = CheckForDockingButtonHit (AdjustedTouchX, AdjustedTouchY);
+      if (EFI_ERROR (Status)) {
+        // Check whether the keyboard frame is selected
         //
-        if (FALSE == bFingerDown)
-        {
-            // Apply transform to all pointsets now that the keybard is in the final location.
-            //
-            Apply3DTransform(FALSE);
-
-            mOSK.bKeyboardMoving = FALSE;
-            goto Exit;
+        Status = CheckForKeyboardFrameHit (AdjustedTouchX, AdjustedTouchY);
+        if (EFI_ERROR (Status)) {
+          goto Exit;
         }
 
-        float dx = (float)((INTN)AdjustedTouchX - (INTN)mOSK.KeyboardDragOrigX);
-        float dy = (float)((INTN)AdjustedTouchY - (INTN)mOSK.KeyboardDragOrigY);
-
-        // Translate the keyboard's location
+        // The keyboard can only be dragged if it's undocked
         //
-        TranslateKeyboardLocation(dx, dy);
+        if (Docked == mOSK.DockedState) {
+          goto Exit;
+        }
 
-        // Capture latest sampling position
+        //
+        // Keyboard frame was selected - translate keyboard location...
         //
         mOSK.KeyboardDragOrigX = AdjustedTouchX;
         mOSK.KeyboardDragOrigY = AdjustedTouchY;
+        mOSK.bKeyboardMoving   = TRUE;
 
         goto Exit;
+      }
+
+      DEBUG ((DEBUG_INFO, "INFO [OSK]: Keyboard dock-undock button selected.\r\n"));
+
+      //
+      // Docking/Undocking button was selected - toggle docked state.
+      //
+      Status = SetKeyboardDockState ((Docked == mOSK.DockedState ? Undocked : Docked));
+
+      goto Exit;
     }
 
-    // Check whether there's a touch "hit" on the keyboard
     //
-    Status = CheckForKeyHit(AdjustedTouchX, AdjustedTouchY, &KeyNumber);
-    if (EFI_ERROR(Status))
-    {
-        // No hit.  If this is a finger-up event, force keyboard rendering to deselect the highlighted key(s).
-        //
-        if (FALSE == bFingerDown)
-        {
-            goto RefreshKeyboard;
-        }
-
-        // Check whether the keyboard "close" button is being presented and is selected
-        //
-        Status = CheckForCloseButtonHit(AdjustedTouchX, AdjustedTouchY);
-        if (EFI_ERROR(Status))
-        {
-            // Check whether the keyboard "docking" button  is being presented and is selected
-            //
-            Status = CheckForDockingButtonHit(AdjustedTouchX, AdjustedTouchY);
-            if (EFI_ERROR(Status))
-            {
-                // Check whether the keyboard frame is selected
-                //
-                Status = CheckForKeyboardFrameHit(AdjustedTouchX, AdjustedTouchY);
-                if (EFI_ERROR(Status))
-                {
-                    goto Exit;
-                }
-
-                // The keyboard can only be dragged if it's undocked
-                //
-                if (Docked == mOSK.DockedState)
-                {
-                    goto Exit;
-                }
-
-                //
-                // Keyboard frame was selected - translate keyboard location...
-                //
-                mOSK.KeyboardDragOrigX = AdjustedTouchX;
-                mOSK.KeyboardDragOrigY = AdjustedTouchY;
-                mOSK.bKeyboardMoving   = TRUE;
-
-                goto Exit;
-            }
-
-            DEBUG((DEBUG_INFO, "INFO [OSK]: Keyboard dock-undock button selected.\r\n"));
-
-            //
-            // Docking/Undocking button was selected - toggle docked state.
-            //
-            Status = SetKeyboardDockState((Docked == mOSK.DockedState ? Undocked : Docked));
-
-            goto Exit;
-        }
-
-        //
-        // Close button was selected - dismiss the keyboard...
-        //
-        DEBUG((DEBUG_INFO, "INFO [OSK]: Keyboard close button selected.\r\n"));
-
-        // Hide the keyboard and show the keyboard icon
-        //
-        ShowKeyboard(FALSE);
-        ShowKeyboardIcon(TRUE);
-
-        goto Exit;
-    }
-
-    // Handle key press processing from this point forward...
+    // Close button was selected - dismiss the keyboard...
     //
+    DEBUG ((DEBUG_INFO, "INFO [OSK]: Keyboard close button selected.\r\n"));
 
-    // If the same key is being selected again (i.e., finger/button weren't lifted first), there's no need to insert a key-press event
-    // again since the key repeat timer will handle this if needed.
+    // Hide the keyboard and show the keyboard icon
     //
-    if (TRUE == bFingerDown && mOSK.SelectedKey == KeyNumber)
-    {
-        goto Exit;
-    }
+    ShowKeyboard (FALSE);
+    ShowKeyboardIcon (TRUE);
 
-    // If the event is a finger/button down event, add the selected key to the queue...
+    goto Exit;
+  }
+
+  // Handle key press processing from this point forward...
+  //
+
+  // If the same key is being selected again (i.e., finger/button weren't lifted first), there's no need to insert a key-press event
+  // again since the key repeat timer will handle this if needed.
+  //
+  if ((TRUE == bFingerDown) && (mOSK.SelectedKey == KeyNumber)) {
+    goto Exit;
+  }
+
+  // If the event is a finger/button down event, add the selected key to the queue...
+  //
+  if (TRUE == bFingerDown) {
+    if (FALSE == KeyModifierStateMachine (mOSK.pKeyMap[KeyNumber].EfiKey)) {
+      // Insert the key press data
+      //
+      InsertKeyPressIntoQueue (mOSK.pKeyMap[KeyNumber].ScanCode, mOSK.pKeyMap[KeyNumber].Unicode);
+
+      // Start the key repeat timer - initial interval is different from later steady-state value
+      //
+      Status = gBS->SetTimer (
+                      mKeyRepeatTimerEvent,
+                      TimerRelative,
+                      INITIAL_KEYREPEAT_INTERVAL
+                      );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_WARN, "WARN [OSK]: Failed to start key repeat timer.  Status = %r\r\n", Status));
+      }
+    } else {
+      // Keyboard modifier state changed.
+      //
+      mOSK.bKeyboardStateChanged = TRUE;
+    }
+  } else {
+    // Disable the key repeat timer
     //
-    if (TRUE == bFingerDown)
-    {
-        if (FALSE == KeyModifierStateMachine(mOSK.pKeyMap[KeyNumber].EfiKey))
-        {
-            // Insert the key press data
-            //
-            InsertKeyPressIntoQueue(mOSK.pKeyMap[KeyNumber].ScanCode, mOSK.pKeyMap[KeyNumber].Unicode);
+    gBS->SetTimer (
+           mKeyRepeatTimerEvent,
+           TimerCancel,
+           0
+           );
 
-            // Start the key repeat timer - initial interval is different from later steady-state value
-            //
-            Status = gBS->SetTimer (mKeyRepeatTimerEvent,
-                TimerRelative,
-                INITIAL_KEYREPEAT_INTERVAL
-                );
-
-            if (EFI_ERROR (Status))
-            {
-                DEBUG((DEBUG_WARN, "WARN [OSK]: Failed to start key repeat timer.  Status = %r\r\n", Status));
-            }
-        }
-        else
-        {
-            // Keyboard modifier state changed.
-            //
-            mOSK.bKeyboardStateChanged = TRUE;
-        }
+    // Special case: When shift is pressed once we transition to "shift" modifier state.  When a second non-modifier key
+    // is pressed, we delay transition from "shift" modifier state in order to use the "shift" mapping table for the key
+    // lookup, however this impacts key text rendering (i.e., key text still shows the "shift" mapping until a third
+    // non-modifier key is pressed).  Instead, update the key mapping table now that we've inserted the key into the queue
+    // and any key repeat activity has ended.
+    //
+    if (Normal == mOSK.KeyModifierState) {
+      mOSK.pKeyMap = mOSK_StdMode_US_EN;
     }
-    else
-    {
-        // Disable the key repeat timer
-        //
-        gBS->SetTimer (mKeyRepeatTimerEvent,
-            TimerCancel,
-            0
-            );
-
-        // Special case: When shift is pressed once we transition to "shift" modifier state.  When a second non-modifier key
-        // is pressed, we delay transition from "shift" modifier state in order to use the "shift" mapping table for the key
-        // lookup, however this impacts key text rendering (i.e., key text still shows the "shift" mapping until a third
-        // non-modifier key is pressed).  Instead, update the key mapping table now that we've inserted the key into the queue
-        // and any key repeat activity has ended.
-        //
-        if (Normal == mOSK.KeyModifierState)
-        {
-            mOSK.pKeyMap = mOSK_StdMode_US_EN;
-        }
-    }
-
+  }
 
 RefreshKeyboard:
 
-    // Keep track of the keys to be selected and (possibly) deselected.  Note that it could be the same key.
-    //
-    mOSK.DeselectKey = mOSK.SelectedKey;
-    mOSK.SelectedKey = (TRUE == bFingerDown ? KeyNumber : NUMBER_OF_KEYS);
+  // Keep track of the keys to be selected and (possibly) deselected.  Note that it could be the same key.
+  //
+  mOSK.DeselectKey = mOSK.SelectedKey;
+  mOSK.SelectedKey = (TRUE == bFingerDown ? KeyNumber : NUMBER_OF_KEYS);
 
-    // Render the keyboard with key text (key mapping/text may have changed) if it should be displayed.
-    //
-    if (TRUE == mOSK.bDisplayKeyboard)
-    {
-        RenderKeyboard(TRUE);
-    }
+  // Render the keyboard with key text (key mapping/text may have changed) if it should be displayed.
+  //
+  if (TRUE == mOSK.bDisplayKeyboard) {
+    RenderKeyboard (TRUE);
+  }
 
 Exit:
 
-    return;
+  return;
 }
 
 EFI_STATUS
 EFIAPI
-OSKResetInputDevice (IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
-IN BOOLEAN                          ExtendedVerification)
+OSKResetInputDevice (
+  IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
+  IN BOOLEAN                         ExtendedVerification
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    mOSK.QueueInputPosition  = 0;
-    mOSK.QueueOutputPosition = 0;
-    mOSK.bQueueEmpty         = TRUE;
+  mOSK.QueueInputPosition  = 0;
+  mOSK.QueueOutputPosition = 0;
+  mOSK.bQueueEmpty         = TRUE;
 
-    return Status;
+  return Status;
 }
-
 
 EFI_STATUS
 EFIAPI
-OSKReadKeyStroke (IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL     *This,
-OUT EFI_INPUT_KEY                      *pKey)
+OSKReadKeyStroke (
+  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
+  OUT EFI_INPUT_KEY                   *pKey
+  )
 {
+  // BDS uses the OSK protocol to enable "icon auto activate mode" when booting to Windows.  In this
+  // routine we'll check to see if both the mode is enabled *and* the keyboard & icon aren't being displayed
+  // (but a caller is trying to read a keystroke from us).  If so we'll automatically present the keyboard icon.
+  // This is primarily for the Bitlocker PIN screen which first tries to reads a keystroke rather than waiting
+  // on the event to signal that there is one.
+  //
+  if ((FALSE == mOSK.bDisplayKeyboardIcon) && (FALSE == mOSK.bDisplayKeyboard) && (TRUE == mOSK.bKeyboardIconAutoEnable)) {
+    DEBUG ((DEBUG_INFO, "INFO [OSK]: OSKReadKeyStroke: Auto-activating the keyboard icon.\r\n"));
 
-    // BDS uses the OSK protocol to enable "icon auto activate mode" when booting to Windows.  In this
-    // routine we'll check to see if both the mode is enabled *and* the keyboard & icon aren't being displayed
-    // (but a caller is trying to read a keystroke from us).  If so we'll automatically present the keyboard icon.
-    // This is primarily for the Bitlocker PIN screen which first tries to reads a keystroke rather than waiting
-    // on the event to signal that there is one.
+    // Display the keyboard icon.  Assume the keyboard and icon positions, sizes, and states have already been configured.
     //
-    if (FALSE == mOSK.bDisplayKeyboardIcon && FALSE == mOSK.bDisplayKeyboard && TRUE == mOSK.bKeyboardIconAutoEnable)
-    {
-        DEBUG((DEBUG_INFO, "INFO [OSK]: OSKReadKeyStroke: Auto-activating the keyboard icon.\r\n"));
+    ShowKeyboardIcon (TRUE);
+  }
 
-        // Display the keyboard icon.  Assume the keyboard and icon positions, sizes, and states have already been configured.
-        //
-        ShowKeyboardIcon(TRUE);
-    }
+  // Check whether there's data pending in the key press input queue
+  //
+  if (mOSK.QueueOutputPosition == mOSK.QueueInputPosition) {
+    return EFI_NOT_READY;
+  }
 
-
-    // Check whether there's data pending in the key press input queue
-    //
-    if (mOSK.QueueOutputPosition == mOSK.QueueInputPosition)
-    {
-        return EFI_NOT_READY;
-    }
-
-    return (ExtractKeyPressFromQueue(pKey));
+  return (ExtractKeyPressFromQueue (pKey));
 }
-
 
 EFI_STATUS
 EFIAPI
-OSKResetInputDeviceEx (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-IN BOOLEAN                             ExtendedVerification)
+OSKResetInputDeviceEx (
+  IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+  IN BOOLEAN                            ExtendedVerification
+  )
 {
-    return OSKResetInputDevice(&mOSK.SimpleTextIn, ExtendedVerification);
+  return OSKResetInputDevice (&mOSK.SimpleTextIn, ExtendedVerification);
 }
-
 
 EFI_STATUS
 EFIAPI
-OSKReadKeyStrokeEx (IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL     *This,
-OUT EFI_KEY_DATA                          *pKey)
+OSKReadKeyStrokeEx (
+  IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+  OUT EFI_KEY_DATA                       *pKey
+  )
 {
-    ZeroMem(pKey, sizeof(EFI_KEY_DATA));
+  ZeroMem (pKey, sizeof (EFI_KEY_DATA));
 
-    pKey->KeyState.KeyShiftState  = EFI_SHIFT_STATE_VALID;
-    pKey->KeyState.KeyToggleState = EFI_TOGGLE_STATE_VALID;
+  pKey->KeyState.KeyShiftState  = EFI_SHIFT_STATE_VALID;
+  pKey->KeyState.KeyToggleState = EFI_TOGGLE_STATE_VALID;
 
-    return (OSKReadKeyStroke(&mOSK.SimpleTextIn, &pKey->Key));
+  return (OSKReadKeyStroke (&mOSK.SimpleTextIn, &pKey->Key));
 }
-
 
 EFI_STATUS
 EFIAPI
-OSKSetState (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-IN EFI_KEY_TOGGLE_STATE               *KeyToggleState)
+OSKSetState (
+  IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+  IN EFI_KEY_TOGGLE_STATE               *KeyToggleState
+  )
 {
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-
 
 EFI_STATUS
 EFIAPI
-OSKRegisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-IN EFI_KEY_DATA                       *KeyData,
-IN EFI_KEY_NOTIFY_FUNCTION            KeyNotificationFunction,
-OUT EFI_HANDLE                        *NotifyHandle)
+OSKRegisterKeyNotify (
+  IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+  IN EFI_KEY_DATA                       *KeyData,
+  IN EFI_KEY_NOTIFY_FUNCTION            KeyNotificationFunction,
+  OUT EFI_HANDLE                        *NotifyHandle
+  )
 {
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-
 
 EFI_STATUS
 EFIAPI
-OSKUnregisterKeyNotify (IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
-IN EFI_HANDLE                         NotificationHandle)
+OSKUnregisterKeyNotify (
+  IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+  IN EFI_HANDLE                         NotificationHandle
+  )
 {
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-
 
 VOID
 EFIAPI
-OSKWaitForKey (IN  EFI_EVENT    Event,
-IN  VOID         *Context)
+OSKWaitForKey (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
 {
+  // BDS uses the OSK protocol to enable "icon auto activate mode" when booting to Windows.  In this
+  // routine we'll check to see if both the mode is enabled *and* the keyboard & icon aren't being displayed
+  // (but a caller is waiting on our simple text input event).  If so we'll automatically present the keyboard icon.
+  // This is primarily for the Bitlocker PIN screen which first tries to reads a keystroke rather than waiting
+  // on the event to signal that there is one.
+  //
+  if ((FALSE == mOSK.bDisplayKeyboardIcon) && (FALSE == mOSK.bDisplayKeyboard) && (TRUE == mOSK.bKeyboardIconAutoEnable)) {
+    DEBUG ((DEBUG_INFO, "INFO [OSK]: OSKWaitForKey: Auto-activating the keyboard icon.\r\n"));
 
-    // BDS uses the OSK protocol to enable "icon auto activate mode" when booting to Windows.  In this
-    // routine we'll check to see if both the mode is enabled *and* the keyboard & icon aren't being displayed
-    // (but a caller is waiting on our simple text input event).  If so we'll automatically present the keyboard icon.
-    // This is primarily for the Bitlocker PIN screen which first tries to reads a keystroke rather than waiting
-    // on the event to signal that there is one.
+    // Display the keyboard icon.  Assume the keyboard and icon positions, sizes, and states have already been configured.
     //
-    if (FALSE == mOSK.bDisplayKeyboardIcon && FALSE == mOSK.bDisplayKeyboard && TRUE == mOSK.bKeyboardIconAutoEnable)
-    {
-        DEBUG((DEBUG_INFO, "INFO [OSK]: OSKWaitForKey: Auto-activating the keyboard icon.\r\n"));
+    ShowKeyboardIcon (TRUE);
+  }
 
-        // Display the keyboard icon.  Assume the keyboard and icon positions, sizes, and states have already been configured.
-        //
-        ShowKeyboardIcon(TRUE);
-    }
+  // Check whether there's data pending in the key press input queue
+  //
+  if (mOSK.QueueOutputPosition == mOSK.QueueInputPosition) {
+    return;
+  }
 
-    // Check whether there's data pending in the key press input queue
-    //
-    if (mOSK.QueueOutputPosition == mOSK.QueueInputPosition)
-    {
-        return;
-    }
-
-    // If there is pending key press, signal the event
-    //
-    gBS->SignalEvent (Event);
+  // If there is pending key press, signal the event
+  //
+  gBS->SignalEvent (Event);
 }
-
 
 /**
     Handles Repeat timer callback
@@ -3010,155 +2944,148 @@ IN  VOID         *Context)
 **/
 VOID
 EFIAPI
-OSKKeyRepeatCallback (IN EFI_EVENT  Event,
-                      IN VOID      *Context)
+OSKKeyRepeatCallback (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
-    UINTN KeyCount;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINTN       KeyCount;
 
-    // Find the currently selected key
+  // Find the currently selected key
+  //
+  KeyCount = mOSK.SelectedKey;
+
+  if (NUMBER_OF_KEYS == KeyCount) {
+    // Didn't find a selected key...
     //
-    KeyCount = mOSK.SelectedKey;
+    return;
+  }
 
-    if (NUMBER_OF_KEYS == KeyCount)
-    {
-        // Didn't find a selected key...
-        //
-        return;
-    }
+  // Re-insert the last key pressed
+  //
+  InsertKeyPressIntoQueue (mOSK.pKeyMap[KeyCount].ScanCode, mOSK.pKeyMap[KeyCount].Unicode);
 
-    // Re-insert the last key pressed
-    //
-    InsertKeyPressIntoQueue(mOSK.pKeyMap[KeyCount].ScanCode, mOSK.pKeyMap[KeyCount].Unicode);
+  // Update the key repeat interval to a faster steady-state value
+  //
+  Status = gBS->SetTimer (
+                  mKeyRepeatTimerEvent,
+                  TimerRelative,
+                  STEADYST_KEYREPEAT_INTERVAL
+                  );
 
-    // Update the key repeat interval to a faster steady-state value
-    //
-    Status = gBS->SetTimer (mKeyRepeatTimerEvent,
-        TimerRelative,
-        STEADYST_KEYREPEAT_INTERVAL
-        );
-
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_WARN, "WARN [OSK]: Failed to update key repeat timer interval.  Status = %r\r\n", Status));
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "WARN [OSK]: Failed to update key repeat timer interval.  Status = %r\r\n", Status));
+  }
 }
-
 
 BOOLEAN
 EFIAPI
-OSKProcessPointerCallback (IN VOID     *Context)
+OSKProcessPointerCallback (
+  IN VOID  *Context
+  )
 {
-    EFI_STATUS                     Status = EFI_SUCCESS;
-    MS_SWM_ABSOLUTE_POINTER_STATE  TouchState;
-    SWM_RECT                       Rect;
-    STATIC BOOLEAN                 WatchForFirstFingerUpEvent = FALSE;
-    BOOLEAN                        WatchForFirstFingerUpEvent2;
+  EFI_STATUS                     Status = EFI_SUCCESS;
+  MS_SWM_ABSOLUTE_POINTER_STATE  TouchState;
+  SWM_RECT                       Rect;
+  STATIC BOOLEAN                 WatchForFirstFingerUpEvent = FALSE;
+  BOOLEAN                        WatchForFirstFingerUpEvent2;
 
+  // If the OSK icon and keyboard aren't being shown, ignore touch/mouse events
+  //
+  if ((FALSE == mOSK.bDisplayKeyboard) && (FALSE == mOSK.bDisplayKeyboardIcon)) {
+    return FALSE;
+  }
 
-    // If the OSK icon and keyboard aren't being shown, ignore touch/mouse events
+  // Get touch state (i.e, x, y, and finger up/down)
+  //
+  Status = mOSKPointerProtocol->GetState (
+                                  mOSKPointerProtocol,
+                                  &TouchState
+                                  );
+
+  if (EFI_ERROR (Status)) {
+    return FALSE;
+  }
+
+  // Filter out all extra pointer moves with finger UP.
+  WatchForFirstFingerUpEvent2 = WatchForFirstFingerUpEvent;
+  WatchForFirstFingerUpEvent  = SWM_IS_FINGER_DOWN (TouchState);
+  if (!SWM_IS_FINGER_DOWN (TouchState) && (FALSE == WatchForFirstFingerUpEvent2)) {
+    return FALSE;
+  }
+
+  // If the keyboard is being displayed, input handler should process the touch point
+  //
+  if (TRUE == mOSK.bDisplayKeyboard) {
+    // Process keyboard input until the keyboard is dismissed
     //
-    if (FALSE == mOSK.bDisplayKeyboard && FALSE == mOSK.bDisplayKeyboardIcon)
-    {
-        return FALSE;
-    }
-
-    // Get touch state (i.e, x, y, and finger up/down)
-    //
-    Status = mOSKPointerProtocol->GetState (mOSKPointerProtocol,
-                                           &TouchState
-                                            );
-
-    if (EFI_ERROR(Status))
-    {
-        return FALSE;
-    }
-
-    // Filter out all extra pointer moves with finger UP.
-    WatchForFirstFingerUpEvent2 = WatchForFirstFingerUpEvent;
-    WatchForFirstFingerUpEvent = SWM_IS_FINGER_DOWN(TouchState);
-    if (!SWM_IS_FINGER_DOWN (TouchState) && (FALSE == WatchForFirstFingerUpEvent2))
-    {
-        return FALSE;
-    }
-
-
-    // If the keyboard is being displayed, input handler should process the touch point
-    //
-    if (TRUE == mOSK.bDisplayKeyboard)
-    {
-        // Process keyboard input until the keyboard is dismissed
-        //
-        KeyboardInputHandler(&TouchState);
-
-        return FALSE;
-    }
-
-    // Determine whether the keyboard icon is selected. Ignore finger-up events.
-    //
-    Status = CheckForKeyboardIconHit ((UINT32)TouchState.CurrentX, (UINT32)TouchState.CurrentY);
-    if (Status != EFI_SUCCESS || (TouchState.ActiveButtons & 0x1) == 0)
-    {
-        return FALSE;
-    }
-
-    DEBUG((DEBUG_INFO, "INFO [OSK]: Keyboard icon selected.\r\n"));
-
-    // Determine the keyboard outer bounding rectangle
-    //
-    GetKeyboardBoundingRect(&Rect);
-
-    // Update the window manager to let it know our size and location
-    //
-    mSWMProtocol->SetWindowFrame(mSWMProtocol,
-        mImageHandle,
-        (SWM_RECT *)&Rect
-        );
-
-    // Hide the keyboard icon and show the keyboard
-    //
-    ShowKeyboardIcon(FALSE);
-    ShowKeyboard(TRUE);
+    KeyboardInputHandler (&TouchState);
 
     return FALSE;
-}
+  }
 
+  // Determine whether the keyboard icon is selected. Ignore finger-up events.
+  //
+  Status = CheckForKeyboardIconHit ((UINT32)TouchState.CurrentX, (UINT32)TouchState.CurrentY);
+  if ((Status != EFI_SUCCESS) || ((TouchState.ActiveButtons & 0x1) == 0)) {
+    return FALSE;
+  }
+
+  DEBUG ((DEBUG_INFO, "INFO [OSK]: Keyboard icon selected.\r\n"));
+
+  // Determine the keyboard outer bounding rectangle
+  //
+  GetKeyboardBoundingRect (&Rect);
+
+  // Update the window manager to let it know our size and location
+  //
+  mSWMProtocol->SetWindowFrame (
+                  mSWMProtocol,
+                  mImageHandle,
+                  (SWM_RECT *)&Rect
+                  );
+
+  // Hide the keyboard icon and show the keyboard
+  //
+  ShowKeyboardIcon (FALSE);
+  ShowKeyboard (TRUE);
+
+  return FALSE;
+}
 
 VOID
 EFIAPI
-OSKCheckDisplayModeTimerCallback (IN EFI_EVENT  Event,
-IN VOID       *Context)
+OSKCheckDisplayModeTimerCallback (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
 {
+  // Check whether the display mode has changed since we last computed screen asset locations.
+  //
+  if ((mOSK.ScreenResolutionWidth  != mGop->Mode->Info->HorizontalResolution) ||
+      (mOSK.ScreenResolutionHeight != mGop->Mode->Info->VerticalResolution))
+  {
+    HandleDisplayModeChange (mGop->Mode->Info->HorizontalResolution, mGop->Mode->Info->VerticalResolution);
+  }
 
-    // Check whether the display mode has changed since we last computed screen asset locations.
+  // Check whether there's a paint event to handle.
+  //
+  if (gBS->CheckEvent (mOSKPaintEvent) == EFI_SUCCESS) {
+    // Refresh the keyboard or icon as needed.
     //
-    if (mOSK.ScreenResolutionWidth  != mGop->Mode->Info->HorizontalResolution ||
-        mOSK.ScreenResolutionHeight != mGop->Mode->Info->VerticalResolution)
-    {
-        HandleDisplayModeChange(mGop->Mode->Info->HorizontalResolution, mGop->Mode->Info->VerticalResolution);
-    }
+    if (TRUE == mOSK.bDisplayKeyboardIcon) {
+      // Refresh keyboard icon.
+      //
+      ShowKeyboardIcon (TRUE);
+    } else if (TRUE == mOSK.bDisplayKeyboard) {
+      // Refresh keyboard (do a full redraw).
+      //
+      mOSK.bKeyboardSizeChanged = TRUE;
 
-    // Check whether there's a paint event to handle.
-    //
-    if (gBS->CheckEvent(mOSKPaintEvent) == EFI_SUCCESS)
-    {
-        // Refresh the keyboard or icon as needed.
-        //
-        if (TRUE == mOSK.bDisplayKeyboardIcon)
-        {
-            // Refresh keyboard icon.
-            //
-            ShowKeyboardIcon(TRUE);
-        }
-        else if (TRUE == mOSK.bDisplayKeyboard)
-        {
-            // Refresh keyboard (do a full redraw).
-            //
-            mOSK.bKeyboardSizeChanged = TRUE;
-
-            RenderKeyboard(TRUE);
-        }
+      RenderKeyboard (TRUE);
     }
+  }
 }
 
 /**
@@ -3172,138 +3099,139 @@ Main entry point for this driver.
 **/
 EFI_STATUS
 EFIAPI
-OSKDriverInit()
+OSKDriverInit (
+  )
 {
-    EFI_STATUS  Status  = EFI_SUCCESS;
-    EFI_HANDLE ImageHandle = mImageHandle;
-    SWM_RECT    FrameRect;
-    DEBUG((DEBUG_INFO, "OSK Init \n"));
+  EFI_STATUS  Status      = EFI_SUCCESS;
+  EFI_HANDLE  ImageHandle = mImageHandle;
+  SWM_RECT    FrameRect;
 
-    // Install Simple Text Input and Simple Text Extended protocol handlers
-    //
-    mOSK.SimpleTextIn.Reset = OSKResetInputDevice;
-    mOSK.SimpleTextIn.ReadKeyStroke = OSKReadKeyStroke;
+  DEBUG ((DEBUG_INFO, "OSK Init \n"));
 
-    mOSK.SimpleTextInEx.Reset = OSKResetInputDeviceEx;
-    mOSK.SimpleTextInEx.ReadKeyStrokeEx = OSKReadKeyStrokeEx;
-    mOSK.SimpleTextInEx.SetState = OSKSetState;
-    mOSK.SimpleTextInEx.RegisterKeyNotify = OSKRegisterKeyNotify;
-    mOSK.SimpleTextInEx.UnregisterKeyNotify = OSKUnregisterKeyNotify;
+  // Install Simple Text Input and Simple Text Extended protocol handlers
+  //
+  mOSK.SimpleTextIn.Reset         = OSKResetInputDevice;
+  mOSK.SimpleTextIn.ReadKeyStroke = OSKReadKeyStroke;
 
-    mOSK.pBackBuffer = NULL;
+  mOSK.SimpleTextInEx.Reset               = OSKResetInputDeviceEx;
+  mOSK.SimpleTextInEx.ReadKeyStrokeEx     = OSKReadKeyStrokeEx;
+  mOSK.SimpleTextInEx.SetState            = OSKSetState;
+  mOSK.SimpleTextInEx.RegisterKeyNotify   = OSKRegisterKeyNotify;
+  mOSK.SimpleTextInEx.UnregisterKeyNotify = OSKUnregisterKeyNotify;
 
-    Status = gBS->InstallMultipleProtocolInterfaces(&mControllerHandle,
-        &gEfiSimpleTextInProtocolGuid,         // 2. Simple Text In Protocol.
-        (VOID**)&mOSK.SimpleTextIn,            //
-        &gEfiSimpleTextInputExProtocolGuid,    // 3. Simple Text In Ex Protocol.
-        (VOID**)&mOSK.SimpleTextInEx,          //
-        &gEfiConsoleInDeviceGuid,              // 4. Indicates that OSK is a ConIn device (picked up by Consplitter).
-        NULL,                                  //
-        NULL
-        );
+  mOSK.pBackBuffer = NULL;
 
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
-        goto Exit;
-    }
+  Status = gBS->InstallMultipleProtocolInterfaces (
+                  &mControllerHandle,
+                  &gEfiSimpleTextInProtocolGuid,      // 2. Simple Text In Protocol.
+                  (VOID **)&mOSK.SimpleTextIn,        //
+                  &gEfiSimpleTextInputExProtocolGuid, // 3. Simple Text In Ex Protocol.
+                  (VOID **)&mOSK.SimpleTextInEx,      //
+                  &gEfiConsoleInDeviceGuid,           // 4. Indicates that OSK is a ConIn device (picked up by Consplitter).
+                  NULL,                               //
+                  NULL
+                  );
 
-    // Create a periodic timer for key repeat
-    //
-    Status = gBS->CreateEvent(EVT_TIMER | EVT_NOTIFY_SIGNAL,
-        TPL_CALLBACK,
-        OSKKeyRepeatCallback,
-        NULL,
-        &mKeyRepeatTimerEvent
-        );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
+    goto Exit;
+  }
 
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to create key repeat timer event.  Status = %r\r\n", Status));
-        goto Exit;
-    }
+  // Create a periodic timer for key repeat
+  //
+  Status = gBS->CreateEvent (
+                  EVT_TIMER | EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OSKKeyRepeatCallback,
+                  NULL,
+                  &mKeyRepeatTimerEvent
+                  );
 
-    // Create a periodic timer for checking whether the display mode changed.
-    //
-    Status = gBS->CreateEvent (EVT_TIMER | EVT_NOTIFY_SIGNAL,
-        TPL_CALLBACK,
-        OSKCheckDisplayModeTimerCallback,
-        NULL,
-        &mCheckDisplayModeTimerEvent
-        );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to create key repeat timer event.  Status = %r\r\n", Status));
+    goto Exit;
+  }
 
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to create display mode timer callback event.  Status = %r\r\n", Status));
-        goto Exit;
-    }
+  // Create a periodic timer for checking whether the display mode changed.
+  //
+  Status = gBS->CreateEvent (
+                  EVT_TIMER | EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OSKCheckDisplayModeTimerCallback,
+                  NULL,
+                  &mCheckDisplayModeTimerEvent
+                  );
 
-    // Full screen.
-    //
-    FrameRect.Left      = 0;
-    FrameRect.Top       = 0;
-    FrameRect.Right     = mGop->Mode->Info->HorizontalResolution;
-    FrameRect.Bottom    = mGop->Mode->Info->VerticalResolution;
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to create display mode timer callback event.  Status = %r\r\n", Status));
+    goto Exit;
+  }
 
-    // Register with the Simple Window Manager to get pointer input events.
-    //
-    Status = mSWMProtocol->RegisterClient(mSWMProtocol,
-        ImageHandle,
-        SWM_Z_ORDER_OSK,
-        &FrameRect,
-        OSKProcessPointerCallback,
-        NULL,
-        &mOSKPointerProtocol,
-        &mOSKPaintEvent
-        );
+  // Full screen.
+  //
+  FrameRect.Left   = 0;
+  FrameRect.Top    = 0;
+  FrameRect.Right  = mGop->Mode->Info->HorizontalResolution;
+  FrameRect.Bottom = mGop->Mode->Info->VerticalResolution;
 
-    ASSERT_EFI_ERROR(Status);
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to register with the Simple Window Manager.  Status = %r\r\n", Status));
-        goto Exit;
-    }
+  // Register with the Simple Window Manager to get pointer input events.
+  //
+  Status = mSWMProtocol->RegisterClient (
+                           mSWMProtocol,
+                           ImageHandle,
+                           SWM_Z_ORDER_OSK,
+                           &FrameRect,
+                           OSKProcessPointerCallback,
+                           NULL,
+                           &mOSKPointerProtocol,
+                           &mOSKPaintEvent
+                           );
 
-    // Initialize keyboard layout
-    //
-    Status = InitializeKeyboardGeometry();
+  ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to register with the Simple Window Manager.  Status = %r\r\n", Status));
+    goto Exit;
+  }
 
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to initialize keyboard geometry.  Status = %r\r\n", Status));
-        goto Exit;
-    }
+  // Initialize keyboard layout
+  //
+  Status = InitializeKeyboardGeometry ();
 
-    // Initialize key information
-    //
-    InitializeKeyInformation(mOSK.KeyList, (RECT3D *)mOSK.KeyRectXformed, NUMBER_OF_KEYS);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to initialize keyboard geometry.  Status = %r\r\n", Status));
+    goto Exit;
+  }
 
-    // Perform final calculations based on current screen resolution.
-    //
-    HandleDisplayModeChange(mGop->Mode->Info->HorizontalResolution, mGop->Mode->Info->VerticalResolution);
+  // Initialize key information
+  //
+  InitializeKeyInformation (mOSK.KeyList, (RECT3D *)mOSK.KeyRectXformed, NUMBER_OF_KEYS);
 
-    // Disable the watchdog timer
-    //
-    gBS->SetWatchdogTimer (0, 0, 0, NULL);
+  // Perform final calculations based on current screen resolution.
+  //
+  HandleDisplayModeChange (mGop->Mode->Info->HorizontalResolution, mGop->Mode->Info->VerticalResolution);
 
-    // Start periodic timer for keyboard/icon refresh.
-    //
-    Status = gBS->SetTimer (mCheckDisplayModeTimerEvent,
-        TimerPeriodic,
-        PERIODIC_REFRESH_INTERVAL
-        );
+  // Disable the watchdog timer
+  //
+  gBS->SetWatchdogTimer (0, 0, 0, NULL);
 
-    if (EFI_ERROR (Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK]: Failed to start keyboard/icon refresh timer.  Status = %r\r\n", Status));
-        goto Exit;
-    }
+  // Start periodic timer for keyboard/icon refresh.
+  //
+  Status = gBS->SetTimer (
+                  mCheckDisplayModeTimerEvent,
+                  TimerPeriodic,
+                  PERIODIC_REFRESH_INTERVAL
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to start keyboard/icon refresh timer.  Status = %r\r\n", Status));
+    goto Exit;
+  }
 
 Exit:
 
-    // TODO - Close Protocol on Absolute Pointer if an error occurs?
+  // TODO - Close Protocol on Absolute Pointer if an error occurs?
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -3317,27 +3245,26 @@ Exit:
 VOID
 EFIAPI
 OnPreExitBootServicesNotification (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-    ShowKeyboardIcon(FALSE);
-    ShowKeyboard(FALSE);
+  ShowKeyboardIcon (FALSE);
+  ShowKeyboard (FALSE);
 }
-
-
 
 EFI_STATUS
 EFIAPI
-DriverUnload (IN EFI_HANDLE  ImageHandle)
+DriverUnload (
+  IN EFI_HANDLE  ImageHandle
+  )
 {
-    EFI_STATUS    Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    // TODO - Needs to be implemented
+  // TODO - Needs to be implemented
 
-    return Status;
+  return Status;
 }
-
 
 /**
 This is the declaration of an EFI image entry point. This entry point is
@@ -3352,120 +3279,118 @@ both device drivers and bus drivers.
 **/
 EFI_STATUS
 EFIAPI
-OSKDriverEntryPoint(
-IN EFI_HANDLE        ImageHandle,
-IN EFI_SYSTEM_TABLE  *SystemTable
-)
+OSKDriverEntryPoint (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
 {
-    EFI_EVENT               InitEvent;
-    EFI_STATUS              Status;
+  EFI_EVENT   InitEvent;
+  EFI_STATUS  Status;
 
+  // Create Controller handle with the proper device path protocol
+  Status = gBS->InstallProtocolInterface (
+                  &mControllerHandle,
+                  &gEfiDevicePathProtocolGuid,
+                  EFI_NATIVE_INTERFACE,
+                  &mPlatformOSKDevice
+                  );
+  ASSERT_EFI_ERROR (Status);
 
-    // Create Controller handle with the proper device path protocol
-    Status = gBS->InstallProtocolInterface(
-        &mControllerHandle,
-        &gEfiDevicePathProtocolGuid,
-        EFI_NATIVE_INTERFACE,
-        &mPlatformOSKDevice
-        );
-    ASSERT_EFI_ERROR(Status);
+  DEBUG ((DEBUG_INFO, "%a OSK DEVICE Handle %x\n", __FUNCTION__, mControllerHandle));
+  //
+  // Install UEFI Driver Model protocol(s).
+  //
+  Status = EfiLibInstallDriverBindingComponentName2 (
+             ImageHandle,
+             SystemTable,
+             &gOSKDriverBinding,
+             ImageHandle,
+             NULL,
+             NULL
+             );
+  ASSERT_EFI_ERROR (Status);
 
-    DEBUG((DEBUG_INFO, "%a OSK DEVICE Handle %x\n", __FUNCTION__, mControllerHandle));
-    //
-    // Install UEFI Driver Model protocol(s).
-    //
-    Status = EfiLibInstallDriverBindingComponentName2(
-        ImageHandle,
-        SystemTable,
-        &gOSKDriverBinding,
-        ImageHandle,
-        NULL,
-        NULL
-        );
-    ASSERT_EFI_ERROR(Status);
+  // Save the image handle for later
+  //
+  mImageHandle = ImageHandle;
 
-    // Save the image handle for later
-    //
-    mImageHandle = ImageHandle;
+  // Initialize the Simple Text Input and Simple Text Input Extended wait events
+  //
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_WAIT,
+                  TPL_NOTIFY,
+                  OSKWaitForKey,
+                  NULL,
+                  &mOSK.SimpleTextIn.WaitForKey
+                  );
 
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to initialize Simple Text Input protocol wait event, Status: %r\r\n", Status));
+    goto Exit;
+  }
 
-    // Initialize the Simple Text Input and Simple Text Input Extended wait events
-    //
-    Status = gBS->CreateEvent(EVT_NOTIFY_WAIT,
-        TPL_NOTIFY,
-        OSKWaitForKey,
-        NULL,
-        &mOSK.SimpleTextIn.WaitForKey
-        );
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_WAIT,
+                  TPL_NOTIFY,
+                  OSKWaitForKey,
+                  NULL,
+                  &mOSK.SimpleTextInEx.WaitForKeyEx
+                  );
 
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] - Failed to initialize Simple Text Input protocol wait event, Status: %r\r\n", Status));
-        goto Exit;
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to initialize Simple Text Input Extended protocol wait event, Status: %r\r\n", Status));
+    goto Exit;
+  }
 
-    Status = gBS->CreateEvent(EVT_NOTIFY_WAIT,
-        TPL_NOTIFY,
-        OSKWaitForKey,
-        NULL,
-        &mOSK.SimpleTextInEx.WaitForKeyEx
-        );
+  // Install OSK protocol handlers
+  //
+  mOSK.OSKProtocol.ShowKeyboard             = OSKShowKeyboard;
+  mOSK.OSKProtocol.ShowKeyboardIcon         = OSKShowIcon;
+  mOSK.OSKProtocol.ShowDockAndCloseButtons  = OSKShowDockAndCloseButtons;
+  mOSK.OSKProtocol.SetKeyboardIconPosition  = OSKSetIconPosition;
+  mOSK.OSKProtocol.SetKeyboardPosition      = OSKSetKeyboardPosition;
+  mOSK.OSKProtocol.SetKeyboardRotationAngle = OSKSetKeyboardRotationAngle;
+  mOSK.OSKProtocol.SetKeyboardSize          = OSKSetKeyboardSize;
+  mOSK.OSKProtocol.GetKeyboardMode          = OSKGetKeyboardMode;
+  mOSK.OSKProtocol.SetKeyboardMode          = OSKSetKeyboardMode;
+  mOSK.OSKProtocol.GetKeyboardBounds        = OSKGetKeyboardBounds;
 
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] - Failed to initialize Simple Text Input Extended protocol wait event, Status: %r\r\n", Status));
-        goto Exit;
+  Status = gBS->InstallMultipleProtocolInterfaces (
+                  &mControllerHandle,
+                  &gMsOSKProtocolGuid,         // 1. OSK Protocol for controlling OSK presentation.
+                  (VOID **)&mOSK.OSKProtocol,  //
+                  NULL
+                  );
 
-    }
+  ASSERT_EFI_ERROR (Status);
 
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
+    goto Exit;
+  }
 
-    // Install OSK protocol handlers
-    //
-    mOSK.OSKProtocol.ShowKeyboard = OSKShowKeyboard;
-    mOSK.OSKProtocol.ShowKeyboardIcon = OSKShowIcon;
-    mOSK.OSKProtocol.ShowDockAndCloseButtons = OSKShowDockAndCloseButtons;
-    mOSK.OSKProtocol.SetKeyboardIconPosition = OSKSetIconPosition;
-    mOSK.OSKProtocol.SetKeyboardPosition = OSKSetKeyboardPosition;
-    mOSK.OSKProtocol.SetKeyboardRotationAngle = OSKSetKeyboardRotationAngle;
-    mOSK.OSKProtocol.SetKeyboardSize = OSKSetKeyboardSize;
-    mOSK.OSKProtocol.GetKeyboardMode = OSKGetKeyboardMode;
-    mOSK.OSKProtocol.SetKeyboardMode = OSKSetKeyboardMode;
-    mOSK.OSKProtocol.GetKeyboardBounds = OSKGetKeyboardBounds;
+  // Context information should be initialized here since it can be changed by different drivers after this  ex: password dialog, bds boot .
+  // We dont want to change this later in the UEFI driver binding start and lose the settings set by other drivers
+  // Initialize keyboard context (initial operating state)
+  //
+  InitializeKeyboardContext ();
 
-    Status = gBS->InstallMultipleProtocolInterfaces(&mControllerHandle,
-        &gMsOSKProtocolGuid,                   // 1. OSK Protocol for controlling OSK presentation.
-        (VOID**)&mOSK.OSKProtocol,             //
-        NULL
-        );
+  //
+  // Register notify function to dismiss the keyboard and icon at PreExitBootServices.
+  //
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnPreExitBootServicesNotification,
+                  gImageHandle,
+                  &gMuEventPreExitBootServicesGuid,
+                  &InitEvent
+                  );
 
-    ASSERT_EFI_ERROR(Status);
-
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "ERROR [OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
-        goto Exit;
-    }
-    // Context information should be initialized here since it can be changed by different drivers after this  ex: password dialog, bds boot .
-    // We dont want to change this later in the UEFI driver binding start and lose the settings set by other drivers
-    // Initialize keyboard context (initial operating state)
-    //
-    InitializeKeyboardContext();
-
-    //
-    // Register notify function to dismiss the keyboard and icon at PreExitBootServices.
-    //
-    Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
-                                  TPL_CALLBACK,
-                                  OnPreExitBootServicesNotification,
-                                  gImageHandle,
-                                 &gMuEventPreExitBootServicesGuid,
-                                 &InitEvent );
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
-    }
-
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+  }
 
 Exit:
-    return Status;
+  return Status;
 }

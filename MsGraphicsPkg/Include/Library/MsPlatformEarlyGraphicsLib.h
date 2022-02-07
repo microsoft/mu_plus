@@ -1,4 +1,3 @@
-
 // MsPlatformEarlyGraphicsLib
 
 /** @file
@@ -35,7 +34,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
  */
 EFI_STATUS
 EFIAPI
-MsEarlyGraphicsGetFrameBufferInfo(EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE **GraphicsMode);
+MsEarlyGraphicsGetFrameBufferInfo (
+  EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE  **GraphicsMode
+  );
 
 #endif // __MS_EARLY_GRAPHICS_LIB_H__
-

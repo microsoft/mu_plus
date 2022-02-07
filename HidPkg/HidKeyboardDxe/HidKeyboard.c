@@ -23,125 +23,125 @@ HID_KEYBOARD_LAYOUT_PACK_BIN  mHidKeyboardLayoutBin = {
     sizeof (HID_KEYBOARD_LAYOUT_PACK_BIN) - sizeof (UINT32),
     EFI_HII_PACKAGE_KEYBOARD_LAYOUT
   },
-  1,  // LayoutCount
-  sizeof (HID_KEYBOARD_LAYOUT_PACK_BIN) - sizeof (UINT32) - sizeof (EFI_HII_PACKAGE_HEADER) - sizeof (UINT16), // LayoutLength
-  HID_KEYBOARD_LAYOUT_KEY_GUID,  // KeyGuid
+  1,                                                                                                                               // LayoutCount
+  sizeof (HID_KEYBOARD_LAYOUT_PACK_BIN) - sizeof (UINT32) - sizeof (EFI_HII_PACKAGE_HEADER) - sizeof (UINT16),                     // LayoutLength
+  HID_KEYBOARD_LAYOUT_KEY_GUID,                                                                                                    // KeyGuid
   sizeof (UINT16) + sizeof (EFI_GUID) + sizeof (UINT32) + sizeof (UINT8) + (HID_KEYBOARD_KEY_COUNT * sizeof (EFI_KEY_DESCRIPTOR)), // LayoutDescriptorStringOffset
-  HID_KEYBOARD_KEY_COUNT, // DescriptorCount
+  HID_KEYBOARD_KEY_COUNT,                                                                                                          // DescriptorCount
   {
     //
     // EFI_KEY_DESCRIPTOR (total number is HID_KEYBOARD_KEY_COUNT)
     //
-    {EfiKeyC1,         'a',      'A',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyB5,         'b',      'B',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyB3,         'c',      'C',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC3,         'd',      'D',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD3,         'e',      'E',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC4,         'f',      'F',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC5,         'g',      'G',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC6,         'h',      'H',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD8,         'i',      'I',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC7,         'j',      'J',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC8,         'k',      'K',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC9,         'l',      'L',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyB7,         'm',      'M',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyB6,         'n',      'N',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD9,         'o',      'O',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD10,        'p',      'P',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD1,         'q',      'Q',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD4,         'r',      'R',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyC2,         's',      'S',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD5,         't',      'T',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD7,         'u',      'U',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyB4,         'v',      'V',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD2,         'w',      'W',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyB2,         'x',      'X',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyD6,         'y',      'Y',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyB1,         'z',      'Z',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK},
-    {EfiKeyE1,         '1',      '!',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE2,         '2',      '@',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE3,         '3',      '#',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE4,         '4',      '$',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE5,         '5',      '%',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE6,         '6',      '^',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE7,         '7',      '&',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE8,         '8',      '*',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE9,         '9',      '(',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE10,        '0',      ')',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyEnter,      0x0d,     0x0d, 0, 0,  EFI_NULL_MODIFIER,   0},
-    {EfiKeyEsc,        0x1b,     0x1b, 0, 0,  EFI_NULL_MODIFIER,   0},
-    {EfiKeyBackSpace,  0x08,     0x08, 0, 0,  EFI_NULL_MODIFIER,   0},
-    {EfiKeyTab,        0x09,     0x09, 0, 0,  EFI_NULL_MODIFIER,   0},
-    {EfiKeySpaceBar,   ' ',      ' ',  0, 0,  EFI_NULL_MODIFIER,   0},
-    {EfiKeyE11,        '-',      '_',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE12,        '=',      '+',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyD11,        '[',      '{',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyD12,        ']',      '}',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyD13,        '\\',     '|',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyC12,        '\\',     '|',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyC10,        ';',      ':',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyC11,        '\'',     '"',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyE0,         '`',      '~',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyB8,         ',',      '<',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyB9,         '.',      '>',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyB10,        '/',      '?',  0, 0,  EFI_NULL_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT},
-    {EfiKeyCapsLock,   0x00,     0x00, 0, 0,  EFI_CAPS_LOCK_MODIFIER,            0},
-    {EfiKeyF1,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_ONE_MODIFIER,     0},
-    {EfiKeyF2,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_TWO_MODIFIER,     0},
-    {EfiKeyF3,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_THREE_MODIFIER,   0},
-    {EfiKeyF4,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_FOUR_MODIFIER,    0},
-    {EfiKeyF5,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_FIVE_MODIFIER,    0},
-    {EfiKeyF6,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_SIX_MODIFIER,     0},
-    {EfiKeyF7,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_SEVEN_MODIFIER,   0},
-    {EfiKeyF8,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_EIGHT_MODIFIER,   0},
-    {EfiKeyF9,         0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_NINE_MODIFIER,    0},
-    {EfiKeyF10,        0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_TEN_MODIFIER,     0},
-    {EfiKeyF11,        0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_ELEVEN_MODIFIER,  0},
-    {EfiKeyF12,        0x00,     0x00, 0, 0,  EFI_FUNCTION_KEY_TWELVE_MODIFIER,  0},
-    {EfiKeyPrint,      0x00,     0x00, 0, 0,  EFI_PRINT_MODIFIER,                0},
-    {EfiKeySLck,       0x00,     0x00, 0, 0,  EFI_SCROLL_LOCK_MODIFIER,          0},
-    {EfiKeyPause,      0x00,     0x00, 0, 0,  EFI_PAUSE_MODIFIER,                0},
-    {EfiKeyIns,        0x00,     0x00, 0, 0,  EFI_INSERT_MODIFIER,               0},
-    {EfiKeyHome,       0x00,     0x00, 0, 0,  EFI_HOME_MODIFIER,                 0},
-    {EfiKeyPgUp,       0x00,     0x00, 0, 0,  EFI_PAGE_UP_MODIFIER,              0},
-    {EfiKeyDel,        0x00,     0x00, 0, 0,  EFI_DELETE_MODIFIER,               0},
-    {EfiKeyEnd,        0x00,     0x00, 0, 0,  EFI_END_MODIFIER,                  0},
-    {EfiKeyPgDn,       0x00,     0x00, 0, 0,  EFI_PAGE_DOWN_MODIFIER,            0},
-    {EfiKeyRightArrow, 0x00,     0x00, 0, 0,  EFI_RIGHT_ARROW_MODIFIER,          0},
-    {EfiKeyLeftArrow,  0x00,     0x00, 0, 0,  EFI_LEFT_ARROW_MODIFIER,           0},
-    {EfiKeyDownArrow,  0x00,     0x00, 0, 0,  EFI_DOWN_ARROW_MODIFIER,           0},
-    {EfiKeyUpArrow,    0x00,     0x00, 0, 0,  EFI_UP_ARROW_MODIFIER,             0},
-    {EfiKeyNLck,       0x00,     0x00, 0, 0,  EFI_NUM_LOCK_MODIFIER,             0},
-    {EfiKeySlash,      '/',      '/',  0, 0,  EFI_NULL_MODIFIER,                 0},
-    {EfiKeyAsterisk,   '*',      '*',  0, 0,  EFI_NULL_MODIFIER,                 0},
-    {EfiKeyMinus,      '-',      '-',  0, 0,  EFI_NULL_MODIFIER,                 0},
-    {EfiKeyPlus,       '+',      '+',  0, 0,  EFI_NULL_MODIFIER,                 0},
-    {EfiKeyEnter,      0x0d,     0x0d, 0, 0,  EFI_NULL_MODIFIER,                 0},
-    {EfiKeyOne,        '1',      '1',  0, 0,  EFI_END_MODIFIER,         EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyTwo,        '2',      '2',  0, 0,  EFI_DOWN_ARROW_MODIFIER,  EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyThree,      '3',      '3',  0, 0,  EFI_PAGE_DOWN_MODIFIER,   EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyFour,       '4',      '4',  0, 0,  EFI_LEFT_ARROW_MODIFIER,  EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyFive,       '5',      '5',  0, 0,  EFI_NULL_MODIFIER,        EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeySix,        '6',      '6',  0, 0,  EFI_RIGHT_ARROW_MODIFIER, EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeySeven,      '7',      '7',  0, 0,  EFI_HOME_MODIFIER,        EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyEight,      '8',      '8',  0, 0,  EFI_UP_ARROW_MODIFIER,    EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyNine,       '9',      '9',  0, 0,  EFI_PAGE_UP_MODIFIER,     EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyZero,       '0',      '0',  0, 0,  EFI_INSERT_MODIFIER,      EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyPeriod,     '.',      '.',  0, 0,  EFI_DELETE_MODIFIER,      EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK},
-    {EfiKeyA4,         0x00,     0x00, 0, 0,  EFI_MENU_MODIFIER,            0},
-    {EfiKeyLCtrl,      0,        0,    0, 0,  EFI_LEFT_CONTROL_MODIFIER,    0},
-    {EfiKeyLShift,     0,        0,    0, 0,  EFI_LEFT_SHIFT_MODIFIER,      0},
-    {EfiKeyLAlt,       0,        0,    0, 0,  EFI_LEFT_ALT_MODIFIER,        0},
-    {EfiKeyA0,         0,        0,    0, 0,  EFI_LEFT_LOGO_MODIFIER,       0},
-    {EfiKeyRCtrl,      0,        0,    0, 0,  EFI_RIGHT_CONTROL_MODIFIER,   0},
-    {EfiKeyRShift,     0,        0,    0, 0,  EFI_RIGHT_SHIFT_MODIFIER,     0},
-    {EfiKeyA2,         0,        0,    0, 0,  EFI_RIGHT_ALT_MODIFIER,       0},
-    {EfiKeyA3,         0,        0,    0, 0,  EFI_RIGHT_LOGO_MODIFIER,      0},
+    { EfiKeyC1,         'a',  'A',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyB5,         'b',  'B',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyB3,         'c',  'C',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC3,         'd',  'D',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD3,         'e',  'E',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC4,         'f',  'F',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC5,         'g',  'G',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC6,         'h',  'H',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD8,         'i',  'I',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC7,         'j',  'J',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC8,         'k',  'K',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC9,         'l',  'L',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyB7,         'm',  'M',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyB6,         'n',  'N',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD9,         'o',  'O',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD10,        'p',  'P',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD1,         'q',  'Q',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD4,         'r',  'R',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyC2,         's',  'S',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD5,         't',  'T',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD7,         'u',  'U',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyB4,         'v',  'V',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD2,         'w',  'W',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyB2,         'x',  'X',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyD6,         'y',  'Y',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyB1,         'z',  'Z',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_CAPS_LOCK },
+    { EfiKeyE1,         '1',  '!',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE2,         '2',  '@',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE3,         '3',  '#',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE4,         '4',  '$',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE5,         '5',  '%',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE6,         '6',  '^',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE7,         '7',  '&',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE8,         '8',  '*',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE9,         '9',  '(',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE10,        '0',  ')',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyEnter,      0x0d, 0x0d, 0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyEsc,        0x1b, 0x1b, 0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyBackSpace,  0x08, 0x08, 0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyTab,        0x09, 0x09, 0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeySpaceBar,   ' ',  ' ',  0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyE11,        '-',  '_',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE12,        '=',  '+',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyD11,        '[',  '{',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyD12,        ']',  '}',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyD13,        '\\', '|',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyC12,        '\\', '|',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyC10,        ';',  ':',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyC11,        '\'', '"',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyE0,         '`',  '~',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyB8,         ',',  '<',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyB9,         '.',  '>',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyB10,        '/',  '?',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT                             },
+    { EfiKeyCapsLock,   0x00, 0x00, 0,   0,   EFI_CAPS_LOCK_MODIFIER,           0                                                          },
+    { EfiKeyF1,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_ONE_MODIFIER,    0                                                          },
+    { EfiKeyF2,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_TWO_MODIFIER,    0                                                          },
+    { EfiKeyF3,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_THREE_MODIFIER,  0                                                          },
+    { EfiKeyF4,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_FOUR_MODIFIER,   0                                                          },
+    { EfiKeyF5,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_FIVE_MODIFIER,   0                                                          },
+    { EfiKeyF6,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_SIX_MODIFIER,    0                                                          },
+    { EfiKeyF7,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_SEVEN_MODIFIER,  0                                                          },
+    { EfiKeyF8,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_EIGHT_MODIFIER,  0                                                          },
+    { EfiKeyF9,         0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_NINE_MODIFIER,   0                                                          },
+    { EfiKeyF10,        0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_TEN_MODIFIER,    0                                                          },
+    { EfiKeyF11,        0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_ELEVEN_MODIFIER, 0                                                          },
+    { EfiKeyF12,        0x00, 0x00, 0,   0,   EFI_FUNCTION_KEY_TWELVE_MODIFIER, 0                                                          },
+    { EfiKeyPrint,      0x00, 0x00, 0,   0,   EFI_PRINT_MODIFIER,               0                                                          },
+    { EfiKeySLck,       0x00, 0x00, 0,   0,   EFI_SCROLL_LOCK_MODIFIER,         0                                                          },
+    { EfiKeyPause,      0x00, 0x00, 0,   0,   EFI_PAUSE_MODIFIER,               0                                                          },
+    { EfiKeyIns,        0x00, 0x00, 0,   0,   EFI_INSERT_MODIFIER,              0                                                          },
+    { EfiKeyHome,       0x00, 0x00, 0,   0,   EFI_HOME_MODIFIER,                0                                                          },
+    { EfiKeyPgUp,       0x00, 0x00, 0,   0,   EFI_PAGE_UP_MODIFIER,             0                                                          },
+    { EfiKeyDel,        0x00, 0x00, 0,   0,   EFI_DELETE_MODIFIER,              0                                                          },
+    { EfiKeyEnd,        0x00, 0x00, 0,   0,   EFI_END_MODIFIER,                 0                                                          },
+    { EfiKeyPgDn,       0x00, 0x00, 0,   0,   EFI_PAGE_DOWN_MODIFIER,           0                                                          },
+    { EfiKeyRightArrow, 0x00, 0x00, 0,   0,   EFI_RIGHT_ARROW_MODIFIER,         0                                                          },
+    { EfiKeyLeftArrow,  0x00, 0x00, 0,   0,   EFI_LEFT_ARROW_MODIFIER,          0                                                          },
+    { EfiKeyDownArrow,  0x00, 0x00, 0,   0,   EFI_DOWN_ARROW_MODIFIER,          0                                                          },
+    { EfiKeyUpArrow,    0x00, 0x00, 0,   0,   EFI_UP_ARROW_MODIFIER,            0                                                          },
+    { EfiKeyNLck,       0x00, 0x00, 0,   0,   EFI_NUM_LOCK_MODIFIER,            0                                                          },
+    { EfiKeySlash,      '/',  '/',  0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyAsterisk,   '*',  '*',  0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyMinus,      '-',  '-',  0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyPlus,       '+',  '+',  0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyEnter,      0x0d, 0x0d, 0,   0,   EFI_NULL_MODIFIER,                0                                                          },
+    { EfiKeyOne,        '1',  '1',  0,   0,   EFI_END_MODIFIER,                 EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyTwo,        '2',  '2',  0,   0,   EFI_DOWN_ARROW_MODIFIER,          EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyThree,      '3',  '3',  0,   0,   EFI_PAGE_DOWN_MODIFIER,           EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyFour,       '4',  '4',  0,   0,   EFI_LEFT_ARROW_MODIFIER,          EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyFive,       '5',  '5',  0,   0,   EFI_NULL_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeySix,        '6',  '6',  0,   0,   EFI_RIGHT_ARROW_MODIFIER,         EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeySeven,      '7',  '7',  0,   0,   EFI_HOME_MODIFIER,                EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyEight,      '8',  '8',  0,   0,   EFI_UP_ARROW_MODIFIER,            EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyNine,       '9',  '9',  0,   0,   EFI_PAGE_UP_MODIFIER,             EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyZero,       '0',  '0',  0,   0,   EFI_INSERT_MODIFIER,              EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyPeriod,     '.',  '.',  0,   0,   EFI_DELETE_MODIFIER,              EFI_AFFECTED_BY_STANDARD_SHIFT | EFI_AFFECTED_BY_NUM_LOCK  },
+    { EfiKeyA4,         0x00, 0x00, 0,   0,   EFI_MENU_MODIFIER,                0                                                          },
+    { EfiKeyLCtrl,      0,    0,    0,   0,   EFI_LEFT_CONTROL_MODIFIER,        0                                                          },
+    { EfiKeyLShift,     0,    0,    0,   0,   EFI_LEFT_SHIFT_MODIFIER,          0                                                          },
+    { EfiKeyLAlt,       0,    0,    0,   0,   EFI_LEFT_ALT_MODIFIER,            0                                                          },
+    { EfiKeyA0,         0,    0,    0,   0,   EFI_LEFT_LOGO_MODIFIER,           0                                                          },
+    { EfiKeyRCtrl,      0,    0,    0,   0,   EFI_RIGHT_CONTROL_MODIFIER,       0                                                          },
+    { EfiKeyRShift,     0,    0,    0,   0,   EFI_RIGHT_SHIFT_MODIFIER,         0                                                          },
+    { EfiKeyA2,         0,    0,    0,   0,   EFI_RIGHT_ALT_MODIFIER,           0                                                          },
+    { EfiKeyA3,         0,    0,    0,   0,   EFI_RIGHT_LOGO_MODIFIER,          0                                                          },
   },
-  1,                          // DescriptionCount
-  {'e', 'n', '-', 'U', 'S'},  // RFC4646 language code
-  ' ',                        // Space
-  {'E', 'n', 'g', 'l', 'i', 's', 'h', ' ', 'K', 'e', 'y', 'b', 'o', 'a', 'r', 'd', '\0'}, // DescriptionString[]
+  1,                                                                                                                                        // DescriptionCount
+  { 'e',              'n',  '-',  'U', 'S' },                                                                                               // RFC4646 language code
+  ' ',                                                                                                                                      // Space
+  { 'E',              'n',  'g',  'l', 'i', 's',                              'h', ' ', 'K', 'e', 'y', 'b', 'o', 'a', 'r', 'd', '\0'     }, // DescriptionString[]
 };
 
 //
@@ -149,7 +149,7 @@ HID_KEYBOARD_LAYOUT_PACK_BIN  mHidKeyboardLayoutBin = {
 // EFI_KEY is defined in UEFI spec.
 // HID Keycode is defined in HID HID Firmware spec.
 //
-UINT8 EfiKeyToHidKeyCodeConvertionTable[] = {
+UINT8  EfiKeyToHidKeyCodeConvertionTable[] = {
   0xe0,  //  EfiKeyLCtrl
   0xe3,  //  EfiKeyA0
   0xe2,  //  EfiKeyLAlt
@@ -261,7 +261,7 @@ UINT8 EfiKeyToHidKeyCodeConvertionTable[] = {
 // Keyboard modifier value to EFI Scan Code conversion table
 // EFI Scan Code and the modifier values are defined in UEFI spec.
 //
-UINT8 ModifierValueToEfiScanCodeConvertionTable[] = {
+UINT8  ModifierValueToEfiScanCodeConvertionTable[] = {
   SCAN_NULL,       // EFI_NULL_MODIFIER
   SCAN_NULL,       // EFI_LEFT_CONTROL_MODIFIER
   SCAN_NULL,       // EFI_RIGHT_CONTROL_MODIFIER
@@ -319,12 +319,12 @@ UINT8 ModifierValueToEfiScanCodeConvertionTable[] = {
 **/
 EFI_STATUS
 InstallDefaultKeyboardLayout (
-   IN OUT HID_KB_DEV           *HidKeyboardDevice
+  IN OUT HID_KB_DEV  *HidKeyboardDevice
   )
 {
-  EFI_STATUS                   Status;
-  EFI_HII_DATABASE_PROTOCOL    *HiiDatabase;
-  EFI_HII_HANDLE               HiiHandle;
+  EFI_STATUS                 Status;
+  EFI_HII_DATABASE_PROTOCOL  *HiiDatabase;
+  EFI_HII_HANDLE             HiiHandle;
 
   //
   // Locate Hii database protocol
@@ -332,7 +332,7 @@ InstallDefaultKeyboardLayout (
   Status = gBS->LocateProtocol (
                   &gEfiHiiDatabaseProtocolGuid,
                   NULL,
-                  (VOID **) &HiiDatabase
+                  (VOID **)&HiiDatabase
                   );
   if (EFI_ERROR (Status)) {
     return Status;
@@ -371,10 +371,10 @@ GetCurrentKeyboardLayout (
   VOID
   )
 {
-  EFI_STATUS                Status;
-  EFI_HII_DATABASE_PROTOCOL *HiiDatabase;
-  EFI_HII_KEYBOARD_LAYOUT   *KeyboardLayout;
-  UINT16                    Length;
+  EFI_STATUS                 Status;
+  EFI_HII_DATABASE_PROTOCOL  *HiiDatabase;
+  EFI_HII_KEYBOARD_LAYOUT    *KeyboardLayout;
+  UINT16                     Length;
 
   //
   // Locate HII Database Protocol
@@ -382,7 +382,7 @@ GetCurrentKeyboardLayout (
   Status = gBS->LocateProtocol (
                   &gEfiHiiDatabaseProtocolGuid,
                   NULL,
-                  (VOID **) &HiiDatabase
+                  (VOID **)&HiiDatabase
                   );
   if (EFI_ERROR (Status)) {
     return NULL;
@@ -391,14 +391,14 @@ GetCurrentKeyboardLayout (
   //
   // Get current keyboard layout from HII database
   //
-  Length = 0;
+  Length         = 0;
   KeyboardLayout = NULL;
-  Status = HiiDatabase->GetKeyboardLayout (
-                          HiiDatabase,
-                          NULL,
-                          &Length,
-                          KeyboardLayout
-                          );
+  Status         = HiiDatabase->GetKeyboardLayout (
+                                  HiiDatabase,
+                                  NULL,
+                                  &Length,
+                                  KeyboardLayout
+                                  );
   if (Status == EFI_BUFFER_TOO_SMALL) {
     KeyboardLayout = AllocatePool (Length);
     if (KeyboardLayout == NULL) {
@@ -433,8 +433,8 @@ GetCurrentKeyboardLayout (
 **/
 EFI_KEY_DESCRIPTOR *
 GetKeyDescriptor (
-  IN HID_KB_DEV        *HidKeyboardDevice,
-  IN UINT8             KeyCode
+  IN HID_KB_DEV  *HidKeyboardDevice,
+  IN UINT8       KeyCode
   )
 {
   UINT8  Index;
@@ -450,9 +450,9 @@ GetKeyDescriptor (
   // Calculate the index of Key Descriptor in Key Convertion Table
   //
   if (KeyCode <= 0x65) {
-    Index = (UINT8) (KeyCode - 4);
+    Index = (UINT8)(KeyCode - 4);
   } else {
-    Index = (UINT8) (KeyCode - 0xe0 + NUMBER_OF_VALID_NON_MODIFIER_HID_KEYCODE);
+    Index = (UINT8)(KeyCode - 0xe0 + NUMBER_OF_VALID_NON_MODIFIER_HID_KEYCODE);
   }
 
   return &HidKeyboardDevice->KeyConvertionTable[Index];
@@ -474,12 +474,12 @@ FindHidNsKey (
   IN EFI_KEY_DESCRIPTOR  *KeyDescriptor
   )
 {
-  LIST_ENTRY      *Link;
-  LIST_ENTRY      *NsKeyList;
-  HID_NS_KEY      *HidNsKey;
+  LIST_ENTRY  *Link;
+  LIST_ENTRY  *NsKeyList;
+  HID_NS_KEY  *HidNsKey;
 
   NsKeyList = &HidKeyboardDevice->NsKeyList;
-  Link = GetFirstNode (NsKeyList);
+  Link      = GetFirstNode (NsKeyList);
   while (!IsNull (NsKeyList, Link)) {
     HidNsKey = HID_NS_KEY_FORM_FROM_LINK (Link);
 
@@ -546,23 +546,23 @@ FindPhysicalKey (
 VOID
 EFIAPI
 SetKeyboardLayoutEvent (
-  IN EFI_EVENT              Event,
-  IN VOID                   *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-  HID_KB_DEV                *HidKeyboardDevice;
-  EFI_HII_KEYBOARD_LAYOUT   *KeyboardLayout;
-  EFI_KEY_DESCRIPTOR        TempKey;
-  EFI_KEY_DESCRIPTOR        *KeyDescriptor;
-  EFI_KEY_DESCRIPTOR        *TableEntry;
-  EFI_KEY_DESCRIPTOR        *NsKey;
-  HID_NS_KEY                *HidNsKey;
-  UINTN                     Index;
-  UINTN                     Index2;
-  UINTN                     KeyCount;
-  UINT8                     KeyCode;
+  HID_KB_DEV               *HidKeyboardDevice;
+  EFI_HII_KEYBOARD_LAYOUT  *KeyboardLayout;
+  EFI_KEY_DESCRIPTOR       TempKey;
+  EFI_KEY_DESCRIPTOR       *KeyDescriptor;
+  EFI_KEY_DESCRIPTOR       *TableEntry;
+  EFI_KEY_DESCRIPTOR       *NsKey;
+  HID_NS_KEY               *HidNsKey;
+  UINTN                    Index;
+  UINTN                    Index2;
+  UINTN                    KeyCount;
+  UINT8                    KeyCode;
 
-  HidKeyboardDevice = (HID_KB_DEV *) Context;
+  HidKeyboardDevice = (HID_KB_DEV *)Context;
   if (HidKeyboardDevice->Signature != HID_KB_DEV_SIGNATURE) {
     return;
   }
@@ -579,13 +579,13 @@ SetKeyboardLayoutEvent (
   // Re-allocate resource for KeyConvertionTable
   //
   ReleaseKeyboardLayoutResources (HidKeyboardDevice);
-  HidKeyboardDevice->KeyConvertionTable = AllocateZeroPool ((NUMBER_OF_VALID_HID_KEYCODE) * sizeof (EFI_KEY_DESCRIPTOR));
+  HidKeyboardDevice->KeyConvertionTable = AllocateZeroPool ((NUMBER_OF_VALID_HID_KEYCODE)*sizeof (EFI_KEY_DESCRIPTOR));
   ASSERT (HidKeyboardDevice->KeyConvertionTable != NULL);
 
   //
   // Traverse the list of key descriptors following the header of EFI_HII_KEYBOARD_LAYOUT
   //
-  KeyDescriptor = (EFI_KEY_DESCRIPTOR *) (((UINT8 *) KeyboardLayout) + sizeof (EFI_HII_KEYBOARD_LAYOUT));
+  KeyDescriptor = (EFI_KEY_DESCRIPTOR *)(((UINT8 *)KeyboardLayout) + sizeof (EFI_HII_KEYBOARD_LAYOUT));
   for (Index = 0; Index < KeyboardLayout->DescriptorCount; Index++) {
     //
     // Copy from HII keyboard layout package binary for alignment
@@ -595,13 +595,14 @@ SetKeyboardLayoutEvent (
     //
     // Fill the key into KeyConvertionTable, whose index is calculated from HID keycode.
     //
-    KeyCode = EfiKeyToHidKeyCodeConvertionTable [(UINT8) (TempKey.Key)];
+    KeyCode    = EfiKeyToHidKeyCodeConvertionTable[(UINT8)(TempKey.Key)];
     TableEntry = GetKeyDescriptor (HidKeyboardDevice, KeyCode);
     if (TableEntry == NULL) {
       ReleaseKeyboardLayoutResources (HidKeyboardDevice);
       FreePool (KeyboardLayout);
       return;
     }
+
     CopyMem (TableEntry, KeyDescriptor, sizeof (EFI_KEY_DESCRIPTOR));
 
     //
@@ -615,29 +616,30 @@ SetKeyboardLayoutEvent (
       // Search for sequential children physical key definitions
       //
       KeyCount = 0;
-      NsKey = KeyDescriptor + 1;
-      for (Index2 = (UINT8) Index + 1; Index2 < KeyboardLayout->DescriptorCount; Index2++) {
+      NsKey    = KeyDescriptor + 1;
+      for (Index2 = (UINT8)Index + 1; Index2 < KeyboardLayout->DescriptorCount; Index2++) {
         CopyMem (&TempKey, NsKey, sizeof (EFI_KEY_DESCRIPTOR));
         if (TempKey.Modifier == EFI_NS_KEY_DEPENDENCY_MODIFIER) {
           KeyCount++;
         } else {
           break;
         }
+
         NsKey++;
       }
 
       HidNsKey->Signature = HID_NS_KEY_SIGNATURE;
-      HidNsKey->KeyCount = KeyCount;
-      HidNsKey->NsKey = AllocateCopyPool (
-                          (KeyCount + 1) * sizeof (EFI_KEY_DESCRIPTOR),
-                          KeyDescriptor
-                          );
+      HidNsKey->KeyCount  = KeyCount;
+      HidNsKey->NsKey     = AllocateCopyPool (
+                              (KeyCount + 1) * sizeof (EFI_KEY_DESCRIPTOR),
+                              KeyDescriptor
+                              );
       InsertTailList (&HidKeyboardDevice->NsKeyList, &HidNsKey->Link);
 
       //
       // Skip over the child physical keys
       //
-      Index += KeyCount;
+      Index         += KeyCount;
       KeyDescriptor += KeyCount;
     }
 
@@ -647,7 +649,7 @@ SetKeyboardLayoutEvent (
   //
   // There are two EfiKeyEnter, duplicate its key descriptor
   //
-  TableEntry = GetKeyDescriptor (HidKeyboardDevice, 0x58);
+  TableEntry    = GetKeyDescriptor (HidKeyboardDevice, 0x58);
   KeyDescriptor = GetKeyDescriptor (HidKeyboardDevice, 0x28);
   CopyMem (TableEntry, KeyDescriptor, sizeof (EFI_KEY_DESCRIPTOR));
 
@@ -662,19 +664,20 @@ SetKeyboardLayoutEvent (
 **/
 VOID
 ReleaseKeyboardLayoutResources (
-  IN OUT HID_KB_DEV              *HidKeyboardDevice
+  IN OUT HID_KB_DEV  *HidKeyboardDevice
   )
 {
-  HID_NS_KEY      *HidNsKey;
-  LIST_ENTRY      *Link;
+  HID_NS_KEY  *HidNsKey;
+  LIST_ENTRY  *Link;
 
   if (HidKeyboardDevice->KeyConvertionTable != NULL) {
     FreePool (HidKeyboardDevice->KeyConvertionTable);
   }
+
   HidKeyboardDevice->KeyConvertionTable = NULL;
 
   while (!IsListEmpty (&HidKeyboardDevice->NsKeyList)) {
-    Link = GetFirstNode (&HidKeyboardDevice->NsKeyList);
+    Link     = GetFirstNode (&HidKeyboardDevice->NsKeyList);
     HidNsKey = HID_NS_KEY_FORM_FROM_LINK (Link);
     RemoveEntryList (&HidNsKey->Link);
 
@@ -701,17 +704,17 @@ ReleaseKeyboardLayoutResources (
 **/
 EFI_STATUS
 InitKeyboardLayout (
-  OUT HID_KB_DEV   *HidKeyboardDevice
+  OUT HID_KB_DEV  *HidKeyboardDevice
   )
 {
-  EFI_HII_KEYBOARD_LAYOUT   *KeyboardLayout;
-  EFI_STATUS                Status;
+  EFI_HII_KEYBOARD_LAYOUT  *KeyboardLayout;
+  EFI_STATUS               Status;
 
-  HidKeyboardDevice->KeyConvertionTable = AllocateZeroPool ((NUMBER_OF_VALID_HID_KEYCODE) * sizeof (EFI_KEY_DESCRIPTOR));
+  HidKeyboardDevice->KeyConvertionTable = AllocateZeroPool ((NUMBER_OF_VALID_HID_KEYCODE)*sizeof (EFI_KEY_DESCRIPTOR));
   ASSERT (HidKeyboardDevice->KeyConvertionTable != NULL);
 
   InitializeListHead (&HidKeyboardDevice->NsKeyList);
-  HidKeyboardDevice->CurrentNsKey = NULL;
+  HidKeyboardDevice->CurrentNsKey        = NULL;
   HidKeyboardDevice->KeyboardLayoutEvent = NULL;
 
   //
@@ -745,6 +748,7 @@ InitKeyboardLayout (
       //
       return EFI_NOT_READY;
     }
+
     //
     // If no keyboard layout can be retrieved from HII database, and default layout
     // is enabled, then load the default keyboard layout.
@@ -754,7 +758,6 @@ InitKeyboardLayout (
 
   return EFI_SUCCESS;
 }
-
 
 /**
   Initialize HID keyboard device and all private data structures.
@@ -767,19 +770,19 @@ InitKeyboardLayout (
 **/
 EFI_STATUS
 InitHidKeyboard (
-  IN OUT HID_KB_DEV   *HidKeyboardDevice
+  IN OUT HID_KB_DEV  *HidKeyboardDevice
   )
 {
   InitQueue (&HidKeyboardDevice->HidKeyQueue, sizeof (HID_KEY));
   InitQueue (&HidKeyboardDevice->EfiKeyQueue, sizeof (EFI_KEY_DATA));
   InitQueue (&HidKeyboardDevice->EfiKeyQueueForNotify, sizeof (EFI_KEY_DATA));
 
-  HidKeyboardDevice->CtrlOn     = FALSE;
-  HidKeyboardDevice->AltOn      = FALSE;
-  HidKeyboardDevice->ShiftOn    = FALSE;
-  HidKeyboardDevice->NumLockOn  = FALSE;
-  HidKeyboardDevice->CapsOn     = FALSE;
-  HidKeyboardDevice->ScrollOn   = FALSE;
+  HidKeyboardDevice->CtrlOn    = FALSE;
+  HidKeyboardDevice->AltOn     = FALSE;
+  HidKeyboardDevice->ShiftOn   = FALSE;
+  HidKeyboardDevice->NumLockOn = FALSE;
+  HidKeyboardDevice->CapsOn    = FALSE;
+  HidKeyboardDevice->ScrollOn  = FALSE;
 
   HidKeyboardDevice->LeftCtrlOn   = FALSE;
   HidKeyboardDevice->LeftAltOn    = FALSE;
@@ -792,7 +795,7 @@ InitHidKeyboard (
   HidKeyboardDevice->MenuKeyOn    = FALSE;
   HidKeyboardDevice->SysReqOn     = FALSE;
 
-  HidKeyboardDevice->AltGrOn      = FALSE;
+  HidKeyboardDevice->AltGrOn = FALSE;
 
   HidKeyboardDevice->CurrentNsKey = NULL;
 
@@ -802,10 +805,10 @@ InitHidKeyboard (
   SetKeyLED (HidKeyboardDevice);
 
   if (HidKeyboardDevice->LastReport != NULL) {
-    FreePool(HidKeyboardDevice->LastReport);
+    FreePool (HidKeyboardDevice->LastReport);
   }
 
-  HidKeyboardDevice->LastReport = NULL;
+  HidKeyboardDevice->LastReport     = NULL;
   HidKeyboardDevice->LastReportSize = 0;
 
   //
@@ -843,11 +846,11 @@ InitHidKeyboard (
 **/
 VOID
 EFIAPI
-HIDProcessKeyStrokesCallback(
-  IN KEYBOARD_HID_INTERFACE Interface,
-  IN UINT8                  *HidInputReportBuffer,
-  IN UINTN                  HidInputReportBufferSize,
-  IN VOID                   *Context
+HIDProcessKeyStrokesCallback (
+  IN KEYBOARD_HID_INTERFACE  Interface,
+  IN UINT8                   *HidInputReportBuffer,
+  IN UINTN                   HidInputReportBufferSize,
+  IN VOID                    *Context
   )
 {
   EFI_STATUS    Status;
@@ -864,11 +867,11 @@ HIDProcessKeyStrokesCallback(
 
   if ((HidKeyboardDevice == NULL) || (HidInputReportBuffer == NULL)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Invalid input pointer.\n", __FUNCTION__));
-    ASSERT((HidKeyboardDevice != NULL) && (HidInputReportBuffer != NULL));
+    ASSERT ((HidKeyboardDevice != NULL) && (HidInputReportBuffer != NULL));
     return;
   }
 
-  //Process the HID keystrokes and enqueue them for further processing.
+  // Process the HID keystrokes and enqueue them for further processing.
   ProcessKeyStroke (HidInputReportBuffer, HidInputReportBufferSize, HidKeyboardDevice);
 
   while (!IsQueueEmpty (&HidKeyboardDevice->HidKeyQueue)) {
@@ -885,7 +888,7 @@ HIDProcessKeyStrokesCallback(
 
     if (HIDKey.Down) {
       if (HIDKeyCodeToEfiInputKey (HidKeyboardDevice, HIDKey.KeyCode, &KeyData) == EFI_SUCCESS) {
-          Enqueue (&HidKeyboardDevice->EfiKeyQueue, &KeyData, sizeof (KeyData));
+        Enqueue (&HidKeyboardDevice->EfiKeyQueue, &KeyData, sizeof (KeyData));
       }
     }
   }
@@ -902,30 +905,30 @@ HIDProcessKeyStrokesCallback(
   @retval VOID                  None
 
 **/
-VOID ProcessKeyStroke (
-  IN UINT8                  *HidInputReportBuffer,
-  IN UINTN                  HidInputReportBufferSize,
-  IN HID_KB_DEV             *HidKeyboardDevice
-)
+VOID
+ProcessKeyStroke (
+  IN UINT8       *HidInputReportBuffer,
+  IN UINTN       HidInputReportBufferSize,
+  IN HID_KB_DEV  *HidKeyboardDevice
+  )
 {
-
-  HID_KEY            HIDKey;
-  UINT8              ModifierIndex;
-  UINT8              Mask;
-  UINT8              KeyCode;
-  UINT8              LastKeyCode;
-  UINT8              NewRepeatKey = 0;
-  BOOLEAN            KeyPress;
-  BOOLEAN            KeyRelease;
-  EFI_KEY_DESCRIPTOR *KeyDescriptor;
-  KEYBOARD_HID_INPUT_BUFFER *LastReport;
-  UINTN              LastReportKeyCount;
-  KEYBOARD_HID_INPUT_BUFFER *CurrentReport;
-  UINTN              CurrentReportKeyCount;
+  HID_KEY                    HIDKey;
+  UINT8                      ModifierIndex;
+  UINT8                      Mask;
+  UINT8                      KeyCode;
+  UINT8                      LastKeyCode;
+  UINT8                      NewRepeatKey = 0;
+  BOOLEAN                    KeyPress;
+  BOOLEAN                    KeyRelease;
+  EFI_KEY_DESCRIPTOR         *KeyDescriptor;
+  KEYBOARD_HID_INPUT_BUFFER  *LastReport;
+  UINTN                      LastReportKeyCount;
+  KEYBOARD_HID_INPUT_BUFFER  *CurrentReport;
+  UINTN                      CurrentReportKeyCount;
 
   if ((HidKeyboardDevice == NULL) || (HidInputReportBuffer == NULL)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Invalid input pointer.\n", __FUNCTION__));
-    ASSERT((HidKeyboardDevice != NULL) && (HidInputReportBuffer != NULL));
+    ASSERT ((HidKeyboardDevice != NULL) && (HidInputReportBuffer != NULL));
     return;
   }
 
@@ -937,16 +940,16 @@ VOID ProcessKeyStroke (
   // if Last response doesn't exist, create it.
   if (HidKeyboardDevice->LastReport == NULL) {
     HidKeyboardDevice->LastReportSize = INPUT_REPORT_HEADER_SIZE;
-    HidKeyboardDevice->LastReport = AllocateZeroPool(INPUT_REPORT_HEADER_SIZE);
+    HidKeyboardDevice->LastReport     = AllocateZeroPool (INPUT_REPORT_HEADER_SIZE);
     if (HidKeyboardDevice->LastReport == NULL) {
       DEBUG ((DEBUG_ERROR, "[%a] - Could not allocate empty last report.\n", __FUNCTION__));
       return;
     }
-
   }
-  LastReport = HidKeyboardDevice->LastReport;
-  LastReportKeyCount = HidKeyboardDevice->LastReportSize - INPUT_REPORT_HEADER_SIZE;
-  CurrentReport = (KEYBOARD_HID_INPUT_BUFFER *)HidInputReportBuffer;
+
+  LastReport            = HidKeyboardDevice->LastReport;
+  LastReportKeyCount    = HidKeyboardDevice->LastReportSize - INPUT_REPORT_HEADER_SIZE;
+  CurrentReport         = (KEYBOARD_HID_INPUT_BUFFER *)HidInputReportBuffer;
   CurrentReportKeyCount = HidInputReportBufferSize - INPUT_REPORT_HEADER_SIZE;
 
   //
@@ -962,19 +965,18 @@ VOID ProcessKeyStroke (
   // Bit7: Right GUI,     Keycode: 0xe7
   //
   for (ModifierIndex = 0; ModifierIndex < 8; ModifierIndex++) {
-    Mask = (UINT8) (1 << ModifierIndex);
+    Mask = (UINT8)(1 << ModifierIndex);
     if ((CurrentReport->ModifierKeys & Mask) != (LastReport->ModifierKeys & Mask)) {
       //
       // If current modifier key is up, then CurModifierMap & Mask = 0;
       // otherwise it is a non-zero value.
       // Insert the changed modifier key into key buffer.
       //
-      HIDKey.KeyCode = (UINT8) (0xe0 + ModifierIndex);
-      HIDKey.Down    = (BOOLEAN) ((CurrentReport->ModifierKeys & Mask) != 0);
+      HIDKey.KeyCode = (UINT8)(0xe0 + ModifierIndex);
+      HIDKey.Down    = (BOOLEAN)((CurrentReport->ModifierKeys & Mask) != 0);
       Enqueue (&HidKeyboardDevice->HidKeyQueue, &HIDKey, sizeof (HID_KEY));
     }
   }
-
 
   //
   // Handle normal key's releasing situation
@@ -982,17 +984,16 @@ VOID ProcessKeyStroke (
   //
   KeyRelease = FALSE;
   for (LastKeyCode = 0; LastKeyCode < LastReportKeyCount; LastKeyCode++) {
-
     if (!HIDKBD_VALID_KEYCODE (LastReport->KeyCode[LastKeyCode])) {
       continue;
     }
+
     //
     // For any key in old keycode buffer, if it is not in current keycode buffer,
     // then it is released. Otherwise, it is not released.
     //
     KeyRelease = TRUE;
     for (KeyCode = 0; KeyCode < CurrentReportKeyCount; KeyCode++) {
-
       if (!HIDKBD_VALID_KEYCODE (CurrentReport->KeyCode[KeyCode])) {
         continue;
       }
@@ -1033,17 +1034,16 @@ VOID ProcessKeyStroke (
   //
   KeyPress = FALSE;
   for (KeyCode = 0; KeyCode < CurrentReportKeyCount; KeyCode++) {
-
     if (!HIDKBD_VALID_KEYCODE (CurrentReport->KeyCode[KeyCode])) {
       continue;
     }
+
     //
     // For any key in current keycode buffer, if it is not in old keycode buffer,
     // then it is pressed. Otherwise, it is not pressed.
     //
     KeyPress = TRUE;
     for (LastKeyCode = 0; LastKeyCode < LastReportKeyCount; LastKeyCode++) {
-
       if (!HIDKBD_VALID_KEYCODE (LastReport->KeyCode[LastKeyCode])) {
         continue;
       }
@@ -1065,10 +1065,10 @@ VOID ProcessKeyStroke (
       //
       KeyDescriptor = GetKeyDescriptor (HidKeyboardDevice, CurrentReport->KeyCode[KeyCode]);
       if (KeyDescriptor == NULL) {
-          return;
+        return;
       }
 
-      if (KeyDescriptor->Modifier == EFI_NUM_LOCK_MODIFIER || KeyDescriptor->Modifier == EFI_CAPS_LOCK_MODIFIER) {
+      if ((KeyDescriptor->Modifier == EFI_NUM_LOCK_MODIFIER) || (KeyDescriptor->Modifier == EFI_CAPS_LOCK_MODIFIER)) {
         //
         // For NumLock or CapsLock pressed, there is no need to handle repeat key for them.
         //
@@ -1077,16 +1077,17 @@ VOID ProcessKeyStroke (
         //
         // Prepare new repeat key, and clear the original one.
         //
-        NewRepeatKey = CurrentReport->KeyCode[KeyCode];
+        NewRepeatKey                 = CurrentReport->KeyCode[KeyCode];
         HidKeyboardDevice->RepeatKey = 0;
       }
     }
   }
+
   //
   // Copy the current report buffer as the last report buffer
   //
-  FreePool(LastReport);
-  HidKeyboardDevice->LastReport = AllocateCopyPool(HidInputReportBufferSize, HidInputReportBuffer);
+  FreePool (LastReport);
+  HidKeyboardDevice->LastReport = AllocateCopyPool (HidInputReportBufferSize, HidInputReportBuffer);
   if (HidKeyboardDevice->LastReport == NULL) {
     DEBUG ((DEBUG_ERROR, "[%a] - could not allocate last report buffer\n", __FUNCTION__));
     HidKeyboardDevice->LastReportSize = 0;
@@ -1114,6 +1115,7 @@ VOID ProcessKeyStroke (
     HidKeyboardDevice->RepeatKey = NewRepeatKey;
   }
 }
+
 /**
   This function parses the Modifier Key Code and sets the
   appropriate flags for Key Stroke processing.
@@ -1128,7 +1130,7 @@ VOID ProcessKeyStroke (
 
 **/
 EFI_STATUS
-HIDProcessModifierKey(
+HIDProcessModifierKey (
   IN HID_KB_DEV  *HidKeyboardDevice,
   IN HID_KEY     *HIDKey
   )
@@ -1137,7 +1139,7 @@ HIDProcessModifierKey(
 
   KeyDescriptor = GetKeyDescriptor (HidKeyboardDevice, HIDKey->KeyCode);
   if (KeyDescriptor == NULL) {
-      return EFI_INVALID_PARAMETER;
+    return EFI_INVALID_PARAMETER;
   }
 
   if (!HIDKey->Down) {
@@ -1145,188 +1147,185 @@ HIDProcessModifierKey(
     // Key is released.
     //
     switch (KeyDescriptor->Modifier) {
+      //
+      // Ctrl release
+      //
+      case EFI_LEFT_CONTROL_MODIFIER:
+        HidKeyboardDevice->LeftCtrlOn = FALSE;
+        HidKeyboardDevice->CtrlOn     = FALSE;
+        break;
+      case EFI_RIGHT_CONTROL_MODIFIER:
+        HidKeyboardDevice->RightCtrlOn = FALSE;
+        HidKeyboardDevice->CtrlOn      = FALSE;
+        break;
 
-    //
-    // Ctrl release
-    //
-    case EFI_LEFT_CONTROL_MODIFIER:
-      HidKeyboardDevice->LeftCtrlOn = FALSE;
-      HidKeyboardDevice->CtrlOn = FALSE;
-      break;
-    case EFI_RIGHT_CONTROL_MODIFIER:
-      HidKeyboardDevice->RightCtrlOn = FALSE;
-      HidKeyboardDevice->CtrlOn = FALSE;
-      break;
+      //
+      // Shift release
+      //
+      case EFI_LEFT_SHIFT_MODIFIER:
+        HidKeyboardDevice->LeftShiftOn = FALSE;
+        HidKeyboardDevice->ShiftOn     = FALSE;
+        break;
+      case EFI_RIGHT_SHIFT_MODIFIER:
+        HidKeyboardDevice->RightShiftOn = FALSE;
+        HidKeyboardDevice->ShiftOn      = FALSE;
+        break;
 
-    //
-    // Shift release
-    //
-    case EFI_LEFT_SHIFT_MODIFIER:
-      HidKeyboardDevice->LeftShiftOn = FALSE;
-      HidKeyboardDevice->ShiftOn = FALSE;
-      break;
-    case EFI_RIGHT_SHIFT_MODIFIER:
-      HidKeyboardDevice->RightShiftOn = FALSE;
-      HidKeyboardDevice->ShiftOn = FALSE;
-      break;
+      //
+      // Alt release
+      //
+      case EFI_LEFT_ALT_MODIFIER:
+        HidKeyboardDevice->LeftAltOn = FALSE;
+        HidKeyboardDevice->AltOn     = FALSE;
+        break;
+      case EFI_RIGHT_ALT_MODIFIER:
+        HidKeyboardDevice->RightAltOn = FALSE;
+        HidKeyboardDevice->AltOn      = FALSE;
+        break;
 
-    //
-    // Alt release
-    //
-    case EFI_LEFT_ALT_MODIFIER:
-      HidKeyboardDevice->LeftAltOn = FALSE;
-      HidKeyboardDevice->AltOn = FALSE;
-      break;
-    case EFI_RIGHT_ALT_MODIFIER:
-      HidKeyboardDevice->RightAltOn = FALSE;
-      HidKeyboardDevice->AltOn = FALSE;
-      break;
+      //
+      // Left Logo release
+      //
+      case EFI_LEFT_LOGO_MODIFIER:
+        HidKeyboardDevice->LeftLogoOn = FALSE;
+        break;
 
-    //
-    // Left Logo release
-    //
-    case EFI_LEFT_LOGO_MODIFIER:
-      HidKeyboardDevice->LeftLogoOn = FALSE;
-      break;
+      //
+      // Right Logo release
+      //
+      case EFI_RIGHT_LOGO_MODIFIER:
+        HidKeyboardDevice->RightLogoOn = FALSE;
+        break;
 
-    //
-    // Right Logo release
-    //
-    case EFI_RIGHT_LOGO_MODIFIER:
-      HidKeyboardDevice->RightLogoOn = FALSE;
-      break;
+      //
+      // Menu key release
+      //
+      case EFI_MENU_MODIFIER:
+        HidKeyboardDevice->MenuKeyOn = FALSE;
+        break;
 
-    //
-    // Menu key release
-    //
-    case EFI_MENU_MODIFIER:
-      HidKeyboardDevice->MenuKeyOn = FALSE;
-      break;
+      //
+      // SysReq release
+      //
+      case EFI_PRINT_MODIFIER:
+      case EFI_SYS_REQUEST_MODIFIER:
+        HidKeyboardDevice->SysReqOn = FALSE;
+        break;
 
-    //
-    // SysReq release
-    //
-    case EFI_PRINT_MODIFIER:
-    case EFI_SYS_REQUEST_MODIFIER:
-      HidKeyboardDevice->SysReqOn = FALSE;
-      break;
+      //
+      // AltGr release
+      //
+      case EFI_ALT_GR_MODIFIER:
+        HidKeyboardDevice->AltGrOn = FALSE;
+        break;
 
-    //
-    // AltGr release
-    //
-    case EFI_ALT_GR_MODIFIER:
-      HidKeyboardDevice->AltGrOn = FALSE;
-      break;
-
-    default:
-      break;
+      default:
+        break;
     }
   }
-
   //
   // Analyzes key pressing situation
   //
   else if (HIDKey->Down) {
     switch (KeyDescriptor->Modifier) {
-
-    //
-    // Ctrl press
-    //
-    case EFI_LEFT_CONTROL_MODIFIER:
-      HidKeyboardDevice->LeftCtrlOn = TRUE;
-      HidKeyboardDevice->CtrlOn = TRUE;
-      break;
-    case EFI_RIGHT_CONTROL_MODIFIER:
-      HidKeyboardDevice->RightCtrlOn = TRUE;
-      HidKeyboardDevice->CtrlOn = TRUE;
-      break;
-
-    //
-    // Shift press
-    //
-    case EFI_LEFT_SHIFT_MODIFIER:
-      HidKeyboardDevice->LeftShiftOn = TRUE;
-      HidKeyboardDevice->ShiftOn = TRUE;
-      break;
-    case EFI_RIGHT_SHIFT_MODIFIER:
-      HidKeyboardDevice->RightShiftOn = TRUE;
-      HidKeyboardDevice->ShiftOn = TRUE;
-      break;
-
-    //
-    // Alt press
-    //
-    case EFI_LEFT_ALT_MODIFIER:
-      HidKeyboardDevice->LeftAltOn = TRUE;
-      HidKeyboardDevice->AltOn = TRUE;
-      break;
-    case EFI_RIGHT_ALT_MODIFIER:
-      HidKeyboardDevice->RightAltOn = TRUE;
-      HidKeyboardDevice->AltOn = TRUE;
-      break;
-
-    //
-    // Left Logo press
-    //
-    case EFI_LEFT_LOGO_MODIFIER:
-      HidKeyboardDevice->LeftLogoOn = TRUE;
-      break;
-
-    //
-    // Right Logo press
-    //
-    case EFI_RIGHT_LOGO_MODIFIER:
-      HidKeyboardDevice->RightLogoOn = TRUE;
-      break;
-
-    //
-    // Menu key press
-    //
-    case EFI_MENU_MODIFIER:
-      HidKeyboardDevice->MenuKeyOn = TRUE;
-      break;
-
-    //
-    // SysReq press
-    //
-    case EFI_PRINT_MODIFIER:
-    case EFI_SYS_REQUEST_MODIFIER:
-      HidKeyboardDevice->SysReqOn = TRUE;
-      break;
-
-    //
-    // AltGr press
-    //
-    case EFI_ALT_GR_MODIFIER:
-      HidKeyboardDevice->AltGrOn = TRUE;
-      break;
-
-    case EFI_NUM_LOCK_MODIFIER:
       //
-      // Toggle NumLock
+      // Ctrl press
       //
-      HidKeyboardDevice->NumLockOn = (BOOLEAN) (!(HidKeyboardDevice->NumLockOn));
-      SetKeyLED (HidKeyboardDevice);
-      break;
+      case EFI_LEFT_CONTROL_MODIFIER:
+        HidKeyboardDevice->LeftCtrlOn = TRUE;
+        HidKeyboardDevice->CtrlOn     = TRUE;
+        break;
+      case EFI_RIGHT_CONTROL_MODIFIER:
+        HidKeyboardDevice->RightCtrlOn = TRUE;
+        HidKeyboardDevice->CtrlOn      = TRUE;
+        break;
 
-    case EFI_CAPS_LOCK_MODIFIER:
       //
-      // Toggle CapsLock
+      // Shift press
       //
-      HidKeyboardDevice->CapsOn = (BOOLEAN) (!(HidKeyboardDevice->CapsOn));
-      SetKeyLED (HidKeyboardDevice);
-      break;
+      case EFI_LEFT_SHIFT_MODIFIER:
+        HidKeyboardDevice->LeftShiftOn = TRUE;
+        HidKeyboardDevice->ShiftOn     = TRUE;
+        break;
+      case EFI_RIGHT_SHIFT_MODIFIER:
+        HidKeyboardDevice->RightShiftOn = TRUE;
+        HidKeyboardDevice->ShiftOn      = TRUE;
+        break;
 
-    case EFI_SCROLL_LOCK_MODIFIER:
       //
-      // Toggle ScrollLock
+      // Alt press
       //
-      HidKeyboardDevice->ScrollOn = (BOOLEAN) (!(HidKeyboardDevice->ScrollOn));
-      SetKeyLED (HidKeyboardDevice);
-      break;
+      case EFI_LEFT_ALT_MODIFIER:
+        HidKeyboardDevice->LeftAltOn = TRUE;
+        HidKeyboardDevice->AltOn     = TRUE;
+        break;
+      case EFI_RIGHT_ALT_MODIFIER:
+        HidKeyboardDevice->RightAltOn = TRUE;
+        HidKeyboardDevice->AltOn      = TRUE;
+        break;
 
-    default:
-      break;
+      //
+      // Left Logo press
+      //
+      case EFI_LEFT_LOGO_MODIFIER:
+        HidKeyboardDevice->LeftLogoOn = TRUE;
+        break;
+
+      //
+      // Right Logo press
+      //
+      case EFI_RIGHT_LOGO_MODIFIER:
+        HidKeyboardDevice->RightLogoOn = TRUE;
+        break;
+
+      //
+      // Menu key press
+      //
+      case EFI_MENU_MODIFIER:
+        HidKeyboardDevice->MenuKeyOn = TRUE;
+        break;
+
+      //
+      // SysReq press
+      //
+      case EFI_PRINT_MODIFIER:
+      case EFI_SYS_REQUEST_MODIFIER:
+        HidKeyboardDevice->SysReqOn = TRUE;
+        break;
+
+      //
+      // AltGr press
+      //
+      case EFI_ALT_GR_MODIFIER:
+        HidKeyboardDevice->AltGrOn = TRUE;
+        break;
+
+      case EFI_NUM_LOCK_MODIFIER:
+        //
+        // Toggle NumLock
+        //
+        HidKeyboardDevice->NumLockOn = (BOOLEAN)(!(HidKeyboardDevice->NumLockOn));
+        SetKeyLED (HidKeyboardDevice);
+        break;
+
+      case EFI_CAPS_LOCK_MODIFIER:
+        //
+        // Toggle CapsLock
+        //
+        HidKeyboardDevice->CapsOn = (BOOLEAN)(!(HidKeyboardDevice->CapsOn));
+        SetKeyLED (HidKeyboardDevice);
+        break;
+
+      case EFI_SCROLL_LOCK_MODIFIER:
+        //
+        // Toggle ScrollLock
+        //
+        HidKeyboardDevice->ScrollOn = (BOOLEAN)(!(HidKeyboardDevice->ScrollOn));
+        SetKeyLED (HidKeyboardDevice);
+        break;
+
+      default:
+        break;
     }
   }
 
@@ -1350,8 +1349,8 @@ HIDProcessModifierKey(
 **/
 VOID
 InitializeKeyState (
-  IN  HID_KB_DEV           *HidKeyboardDevice,
-  OUT EFI_KEY_STATE        *KeyState
+  IN  HID_KB_DEV     *HidKeyboardDevice,
+  OUT EFI_KEY_STATE  *KeyState
   )
 {
   KeyState->KeyShiftState  = EFI_SHIFT_STATE_VALID;
@@ -1360,30 +1359,39 @@ InitializeKeyState (
   if (HidKeyboardDevice->LeftCtrlOn) {
     KeyState->KeyShiftState |= EFI_LEFT_CONTROL_PRESSED;
   }
+
   if (HidKeyboardDevice->RightCtrlOn) {
     KeyState->KeyShiftState |= EFI_RIGHT_CONTROL_PRESSED;
   }
+
   if (HidKeyboardDevice->LeftAltOn) {
     KeyState->KeyShiftState |= EFI_LEFT_ALT_PRESSED;
   }
+
   if (HidKeyboardDevice->RightAltOn) {
     KeyState->KeyShiftState |= EFI_RIGHT_ALT_PRESSED;
   }
+
   if (HidKeyboardDevice->LeftShiftOn) {
     KeyState->KeyShiftState |= EFI_LEFT_SHIFT_PRESSED;
   }
+
   if (HidKeyboardDevice->RightShiftOn) {
     KeyState->KeyShiftState |= EFI_RIGHT_SHIFT_PRESSED;
   }
+
   if (HidKeyboardDevice->LeftLogoOn) {
     KeyState->KeyShiftState |= EFI_LEFT_LOGO_PRESSED;
   }
+
   if (HidKeyboardDevice->RightLogoOn) {
     KeyState->KeyShiftState |= EFI_RIGHT_LOGO_PRESSED;
   }
+
   if (HidKeyboardDevice->MenuKeyOn) {
     KeyState->KeyShiftState |= EFI_MENU_KEY_PRESSED;
   }
+
   if (HidKeyboardDevice->SysReqOn) {
     KeyState->KeyShiftState |= EFI_SYS_REQ_PRESSED;
   }
@@ -1391,12 +1399,15 @@ InitializeKeyState (
   if (HidKeyboardDevice->ScrollOn) {
     KeyState->KeyToggleState |= EFI_SCROLL_LOCK_ACTIVE;
   }
+
   if (HidKeyboardDevice->NumLockOn) {
     KeyState->KeyToggleState |= EFI_NUM_LOCK_ACTIVE;
   }
+
   if (HidKeyboardDevice->CapsOn) {
     KeyState->KeyToggleState |= EFI_CAPS_LOCK_ACTIVE;
   }
+
   if (HidKeyboardDevice->IsSupportPartialKey) {
     KeyState->KeyToggleState |= EFI_KEY_STATE_EXPOSED;
   }
@@ -1420,22 +1431,22 @@ InitializeKeyState (
 **/
 EFI_STATUS
 HIDKeyCodeToEfiInputKey (
-  IN  HID_KB_DEV                *HidKeyboardDevice,
-  IN  UINT8                     KeyCode,
-  OUT EFI_KEY_DATA              *KeyData
+  IN  HID_KB_DEV    *HidKeyboardDevice,
+  IN  UINT8         KeyCode,
+  OUT EFI_KEY_DATA  *KeyData
   )
 {
-  EFI_KEY_DESCRIPTOR            *KeyDescriptor;
-  LIST_ENTRY                    *Link;
-  LIST_ENTRY                    *NotifyList;
-  KEYBOARD_CONSOLE_IN_EX_NOTIFY *CurrentNotify;
+  EFI_KEY_DESCRIPTOR             *KeyDescriptor;
+  LIST_ENTRY                     *Link;
+  LIST_ENTRY                     *NotifyList;
+  KEYBOARD_CONSOLE_IN_EX_NOTIFY  *CurrentNotify;
 
   //
   // KeyCode must in the range of  [0x4, 0x65] or [0xe0, 0xe7].
   //
   KeyDescriptor = GetKeyDescriptor (HidKeyboardDevice, KeyCode);
   if (KeyDescriptor == NULL) {
-      return EFI_INVALID_PARAMETER;
+    return EFI_INVALID_PARAMETER;
   }
 
   if (KeyDescriptor->Modifier == EFI_NS_KEY_MODIFIER) {
@@ -1451,7 +1462,7 @@ HIDKeyCodeToEfiInputKey (
     // If this keystroke follows a non-spacing key, then find the descriptor for corresponding
     // physical key.
     //
-    KeyDescriptor = FindPhysicalKey (HidKeyboardDevice->CurrentNsKey, KeyDescriptor);
+    KeyDescriptor                   = FindPhysicalKey (HidKeyboardDevice->CurrentNsKey, KeyDescriptor);
     HidKeyboardDevice->CurrentNsKey = NULL;
   }
 
@@ -1465,7 +1476,7 @@ HIDKeyCodeToEfiInputKey (
   KeyData->Key.ScanCode    = ModifierValueToEfiScanCodeConvertionTable[KeyDescriptor->Modifier];
   KeyData->Key.UnicodeChar = KeyDescriptor->Unicode;
 
-  if ((KeyDescriptor->AffectedAttribute & EFI_AFFECTED_BY_STANDARD_SHIFT)!= 0) {
+  if ((KeyDescriptor->AffectedAttribute & EFI_AFFECTED_BY_STANDARD_SHIFT) != 0) {
     if (HidKeyboardDevice->ShiftOn) {
       KeyData->Key.UnicodeChar = KeyDescriptor->ShiftedUnicode;
 
@@ -1474,8 +1485,9 @@ HIDKeyCodeToEfiInputKey (
       // are normally adjusted by shift modifiers. e.g. Shift Key + 'f' key = 'F'
       //
       if ((KeyDescriptor->Unicode != CHAR_NULL) && (KeyDescriptor->ShiftedUnicode != CHAR_NULL) &&
-          (KeyDescriptor->Unicode != KeyDescriptor->ShiftedUnicode)) {
-        HidKeyboardDevice->LeftShiftOn = FALSE;
+          (KeyDescriptor->Unicode != KeyDescriptor->ShiftedUnicode))
+      {
+        HidKeyboardDevice->LeftShiftOn  = FALSE;
         HidKeyboardDevice->RightShiftOn = FALSE;
       }
 
@@ -1520,17 +1532,17 @@ HIDKeyCodeToEfiInputKey (
   //
   // Translate Unicode 0x1B (ESC) to EFI Scan Code
   //
-  if (KeyData->Key.UnicodeChar == 0x1B && KeyData->Key.ScanCode == SCAN_NULL) {
-    KeyData->Key.ScanCode = SCAN_ESC;
+  if ((KeyData->Key.UnicodeChar == 0x1B) && (KeyData->Key.ScanCode == SCAN_NULL)) {
+    KeyData->Key.ScanCode    = SCAN_ESC;
     KeyData->Key.UnicodeChar = CHAR_NULL;
   }
 
   //
   // Not valid for key without both unicode key code and EFI Scan Code.
   //
-  if (KeyData->Key.UnicodeChar == 0 && KeyData->Key.ScanCode == SCAN_NULL) {
+  if ((KeyData->Key.UnicodeChar == 0) && (KeyData->Key.ScanCode == SCAN_NULL)) {
     if (!HidKeyboardDevice->IsSupportPartialKey) {
-    return EFI_NOT_READY;
+      return EFI_NOT_READY;
     }
   }
 
@@ -1559,7 +1571,6 @@ HIDKeyCodeToEfiInputKey (
   return EFI_SUCCESS;
 }
 
-
 /**
   Create the queue.
 
@@ -1569,15 +1580,15 @@ HIDKeyCodeToEfiInputKey (
 **/
 VOID
 InitQueue (
-  IN OUT  HID_SIMPLE_QUEUE   *Queue,
-  IN      UINTN              ItemSize
+  IN OUT  HID_SIMPLE_QUEUE  *Queue,
+  IN      UINTN             ItemSize
   )
 {
-  UINTN                      Index;
+  UINTN  Index;
 
-  Queue->ItemSize  = ItemSize;
-  Queue->Head      = 0;
-  Queue->Tail      = 0;
+  Queue->ItemSize = ItemSize;
+  Queue->Head     = 0;
+  Queue->Tail     = 0;
 
   if (Queue->Buffer[0] != NULL) {
     FreePool (Queue->Buffer[0]);
@@ -1587,7 +1598,7 @@ InitQueue (
   ASSERT (Queue->Buffer[0] != NULL);
 
   for (Index = 1; Index < sizeof (Queue->Buffer) / sizeof (Queue->Buffer[0]); Index++) {
-    Queue->Buffer[Index] = ((UINT8 *) Queue->Buffer[Index - 1]) + ItemSize;
+    Queue->Buffer[Index] = ((UINT8 *)Queue->Buffer[Index - 1]) + ItemSize;
   }
 }
 
@@ -1598,12 +1609,11 @@ InitQueue (
 **/
 VOID
 DestroyQueue (
-  IN OUT HID_SIMPLE_QUEUE   *Queue
+  IN OUT HID_SIMPLE_QUEUE  *Queue
   )
 {
   FreePool (Queue->Buffer[0]);
 }
-
 
 /**
   Check whether the queue is empty.
@@ -1616,15 +1626,14 @@ DestroyQueue (
 **/
 BOOLEAN
 IsQueueEmpty (
-  IN  HID_SIMPLE_QUEUE   *Queue
+  IN  HID_SIMPLE_QUEUE  *Queue
   )
 {
   //
   // Meet FIFO empty condition
   //
-  return (BOOLEAN) (Queue->Head == Queue->Tail);
+  return (BOOLEAN)(Queue->Head == Queue->Tail);
 }
-
 
 /**
   Check whether the queue is full.
@@ -1637,12 +1646,11 @@ IsQueueEmpty (
 **/
 BOOLEAN
 IsQueueFull (
-  IN  HID_SIMPLE_QUEUE   *Queue
+  IN  HID_SIMPLE_QUEUE  *Queue
   )
 {
-  return (BOOLEAN) (((Queue->Tail + 1) % (MAX_KEY_ALLOWED + 1)) == Queue->Head);
+  return (BOOLEAN)(((Queue->Tail + 1) % (MAX_KEY_ALLOWED + 1)) == Queue->Head);
 }
-
 
 /**
   Enqueue the item to the queue.
@@ -1653,9 +1661,9 @@ IsQueueFull (
 **/
 VOID
 Enqueue (
-  IN OUT  HID_SIMPLE_QUEUE *Queue,
-  IN      VOID             *Item,
-  IN      UINTN            ItemSize
+  IN OUT  HID_SIMPLE_QUEUE  *Queue,
+  IN      VOID              *Item,
+  IN      UINTN             ItemSize
   )
 {
   ASSERT (ItemSize == Queue->ItemSize);
@@ -1675,7 +1683,6 @@ Enqueue (
   Queue->Tail = (Queue->Tail + 1) % (MAX_KEY_ALLOWED + 1);
 }
 
-
 /**
   Dequeue a item from the queue.
 
@@ -1689,9 +1696,9 @@ Enqueue (
 **/
 EFI_STATUS
 Dequeue (
-  IN OUT  HID_SIMPLE_QUEUE *Queue,
-     OUT  VOID             *Item,
-     IN   UINTN            ItemSize
+  IN OUT  HID_SIMPLE_QUEUE  *Queue,
+  OUT  VOID                 *Item,
+  IN   UINTN                ItemSize
   )
 {
   ASSERT (Queue->ItemSize == ItemSize);
@@ -1718,10 +1725,11 @@ Sets HID keyboard LED state.
 **/
 VOID
 SetKeyLED (
-    IN  HID_KB_DEV      *HidKeyboardDevice
-)
+  IN  HID_KB_DEV  *HidKeyboardDevice
+  )
 {
-  KEYBOARD_HID_OUTPUT_BUFFER HidOutput;
+  KEYBOARD_HID_OUTPUT_BUFFER  HidOutput;
+
   ASSERT (NULL != HidKeyboardDevice->KeyboardProtocol);
 
   ZeroMem (&HidOutput, sizeof (KEYBOARD_HID_OUTPUT_BUFFER));
@@ -1730,18 +1738,21 @@ SetKeyLED (
   if (HidKeyboardDevice->CapsOn) {
     HidOutput.CapsLock = 1;
   }
+
   if (HidKeyboardDevice->NumLockOn) {
     HidOutput.NumLock = 1;
   }
+
   if (HidKeyboardDevice->ScrollOn) {
     HidOutput.ScrollLock = 1;
   }
+
   HidKeyboardDevice->KeyboardProtocol->SetOutputReport (
-    HidKeyboardDevice->KeyboardProtocol,
-    BootKeyboard,
-    (UINT8*)&HidOutput,
-    sizeof (KEYBOARD_HID_OUTPUT_BUFFER)
-    );
+                                         HidKeyboardDevice->KeyboardProtocol,
+                                         BootKeyboard,
+                                         (UINT8 *)&HidOutput,
+                                         sizeof (KEYBOARD_HID_OUTPUT_BUFFER)
+                                         );
 }
 
 /**
@@ -1760,15 +1771,15 @@ SetKeyLED (
 VOID
 EFIAPI
 HidKeyboardRepeatHandler (
-  IN    EFI_EVENT    Event,
-  IN    VOID         *Context
+  IN    EFI_EVENT  Event,
+  IN    VOID       *Context
   )
 {
-  HID_KB_DEV         *HidKeyboardDevice;
-  HID_KEY            HIDKey;
-  EFI_KEY_DATA       KeyData;
+  HID_KB_DEV    *HidKeyboardDevice;
+  HID_KEY       HIDKey;
+  EFI_KEY_DATA  KeyData;
 
-  HidKeyboardDevice = (HID_KB_DEV *) Context;
+  HidKeyboardDevice = (HID_KB_DEV *)Context;
 
   //
   // Do nothing when there is no repeat key.
@@ -1782,6 +1793,7 @@ HidKeyboardRepeatHandler (
     if (HIDKeyCodeToEfiInputKey (HidKeyboardDevice, HIDKey.KeyCode, &KeyData) == EFI_SUCCESS) {
       Enqueue (&HidKeyboardDevice->EfiKeyQueue, &KeyData, sizeof (KeyData));
     }
+
     //
     // Set repeat rate for next repeat key generation.
     //
@@ -1792,4 +1804,3 @@ HidKeyboardRepeatHandler (
            );
   }
 }
-

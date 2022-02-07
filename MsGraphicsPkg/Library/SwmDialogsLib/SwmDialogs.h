@@ -31,8 +31,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <UIToolKit/SimpleUIToolKit.h>
 #include <UIToolKit/Label.h>
 
-extern EFI_GRAPHICS_OUTPUT_PROTOCOL      *gGop;
-extern EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *gSimpleTextInEx;
+extern EFI_GRAPHICS_OUTPUT_PROTOCOL       *gGop;
+extern EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *gSimpleTextInEx;
 extern EFI_HANDLE                         gPriorityHandle;
 extern EFI_HII_HANDLE                     gSwmDialogsHiiHandle;
 
@@ -42,23 +42,23 @@ extern EFI_HII_HANDLE                     gSwmDialogsHiiHandle;
     0x567d4f03, 0x6ff1, 0x45cd, { 0x8f, 0xc5, 0x9f, 0x19, 0x2b, 0xc1, 0x45, 0x0a } \
 }
 
-typedef struct{
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogTextColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       TitleBarTextColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       ErrorTextColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       EditBoxBackGroundColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       EditBoxTextColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       EditBoxGrayOutColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       EditBoxGrayOutTextColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogTextSelectColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogBackGroundColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogFrameColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogButtonHoverColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogButtonSelectColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogButtonGrayOutColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogButtonRingColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogButtonTextColor;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       DialogButtonSelectTextColor;
+typedef struct {
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogTextColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    TitleBarTextColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    ErrorTextColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    EditBoxBackGroundColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    EditBoxTextColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    EditBoxGrayOutColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    EditBoxGrayOutTextColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogTextSelectColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogBackGroundColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogFrameColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogButtonHoverColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogButtonSelectColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogButtonGrayOutColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogButtonRingColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogButtonTextColor;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL    DialogButtonSelectTextColor;
 } DIALOG_THEME;
 
 /**
@@ -76,13 +76,15 @@ typedef struct{
 
 **/
 EFI_STATUS
-MessageBoxInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL     *this,
-                    IN  CHAR16                                *pTitleBarText,
-                    IN  CHAR16                                *pText,
-                    IN  CHAR16                                *pCaption,
-                    IN  UINT32                                 Type,
-                    IN  UINT64                                Timeout,
-                    OUT SWM_MB_RESULT                         *Result);
+MessageBoxInternal (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL     *this,
+  IN  CHAR16         *pTitleBarText,
+  IN  CHAR16         *pText,
+  IN  CHAR16         *pCaption,
+  IN  UINT32         Type,
+  IN  UINT64         Timeout,
+  OUT SWM_MB_RESULT  *Result
+  );
 
 /**
     Displays a modal dialog box used to prompt for or to confirm a password. The password dialog returns a typed integer value
@@ -103,14 +105,16 @@ MessageBoxInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL     *this,
 
 **/
 EFI_STATUS
-PasswordDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
-                        IN  CHAR16                              *pTitleBarText,
-                        IN  CHAR16                              *pCaptionText,
-                        IN  CHAR16                              *pBodyText,
-                        IN  CHAR16                              *pErrorText,
-                        IN  SWM_PWD_DIALOG_TYPE                 Type,
-                        OUT SWM_MB_RESULT                       *Result,
-                        OUT CHAR16                              **Password);
+PasswordDialogInternal (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password
+  );
 
 /**
     Displays a modal dialog box that presents a list of choices to the user and allows them to select
@@ -130,14 +134,16 @@ PasswordDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
 
 **/
 EFI_STATUS
-SingleSelectDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                            IN  CHAR16                              *pTitleBarText,
-                            IN  CHAR16                              *pCaptionText,
-                            IN  CHAR16                              *pBodyText,
-                            IN  CHAR16                              **ppOptionsList,
-                            IN  UINTN                               OptionsCount,
-                            OUT SWM_MB_RESULT                       *Result,
-                            OUT UINTN                               *SelectedIndex);
+SingleSelectDialogInternal (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN  CHAR16                             *pTitleBarText,
+  IN  CHAR16                             *pCaptionText,
+  IN  CHAR16                             *pBodyText,
+  IN  CHAR16                             **ppOptionsList,
+  IN  UINTN                              OptionsCount,
+  OUT SWM_MB_RESULT                      *Result,
+  OUT UINTN                              *SelectedIndex
+  );
 
 /**
 Displays a modal dialog box used to prompt for or to confirm a password. The password dialog returns a typed integer value
@@ -159,16 +165,18 @@ NOTE: Password dialog layout is designed for high resolution displays and won't 
 
 **/
 EFI_STATUS
-VerifyThumbprintInternal(IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
-                         IN  CHAR16                              *pTitleBarText,
-                         IN  CHAR16                              *pCaptionText,
-                         IN  CHAR16                              *pBodyText,
-                         IN  CHAR16                              *pCertText,
-                         IN  CHAR16                              *pConfirmText,
-                         IN  CHAR16                              *pErrorText,
-                         IN  SWM_PWD_DIALOG_TYPE                 Type,
-                         OUT SWM_MB_RESULT                       *Result,
-                         OUT CHAR16                              **Password OPTIONAL,
-                         OUT CHAR16                              **Thumbprint OPTIONAL);
+VerifyThumbprintInternal (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pCertText,
+  IN  CHAR16               *pConfirmText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password OPTIONAL,
+  OUT CHAR16               **Thumbprint OPTIONAL
+  );
 
-#endif  // __SWM_DIALOGS_INTERNAL_H__
+#endif // __SWM_DIALOGS_INTERNAL_H__

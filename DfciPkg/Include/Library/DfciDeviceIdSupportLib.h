@@ -14,6 +14,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // *-------------------------------------------------------------------*
 // * This function is now DEPRECATED.  Always return 0                 *
 // *-------------------------------------------------------------------*
+
 /**
 Gets the serial number for this device.
 
@@ -26,7 +27,7 @@ Gets the serial number for this device.
 EFI_STATUS
 EFIAPI
 DfciIdSupportV1GetSerialNumber (
-  OUT UINTN*  SerialNumber
+  OUT UINTN  *SerialNumber
   );
 
 /**
@@ -42,8 +43,8 @@ DfciIdSupportV1GetSerialNumber (
 EFI_STATUS
 EFIAPI
 DfciIdSupportGetManufacturer (
-    CHAR8   **Manufacturer,
-    UINTN    *ManufacturerSize  OPTIONAL
+  CHAR8  **Manufacturer,
+  UINTN  *ManufacturerSize  OPTIONAL
   );
 
 /**
@@ -60,8 +61,8 @@ DfciIdSupportGetManufacturer (
 EFI_STATUS
 EFIAPI
 DfciIdSupportGetProductName (
-    CHAR8   **ProductName,
-    UINTN    *ProductNameSize  OPTIONAL
+  CHAR8  **ProductName,
+  UINTN  *ProductNameSize  OPTIONAL
   );
 
 /**
@@ -77,8 +78,8 @@ DfciIdSupportGetProductName (
 EFI_STATUS
 EFIAPI
 DfciIdSupportGetSerialNumber (
-    CHAR8   **SerialNumber,
-    UINTN    *SerialNumberSize  OPTIONAL
+  CHAR8  **SerialNumber,
+  UINTN  *SerialNumberSize  OPTIONAL
   );
 
 #endif //__DFCI_DEVICE_ID_SUPPORT_LIB_H__

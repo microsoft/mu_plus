@@ -28,14 +28,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciPrivateSettings.h>
 
 STATIC EFI_EVENT  mDfciWpbtSettingProviderSupportInstallEvent;
-STATIC VOID      *mDfciWpbtSettingProviderSupportInstallEventRegistration = NULL;
+STATIC VOID       *mDfciWpbtSettingProviderSupportInstallEventRegistration = NULL;
 
 typedef enum {
-    ID_IS_BAD,
-    ID_IS_WPBT_ENABLE,
+  ID_IS_BAD,
+  ID_IS_WPBT_ENABLE,
 }  ID_IS;
 
 // Forward declarations needed
+
 /**
  * Settings Provider GetDefault routine
  *
@@ -49,9 +50,9 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciWpbtSettingGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   );
 
 /**
@@ -79,16 +80,17 @@ DfciWpbtSettingGet (
 **/
 STATIC
 ID_IS
-IsIdSupported (DFCI_SETTING_ID_STRING Id)
+IsIdSupported (
+  DFCI_SETTING_ID_STRING  Id
+  )
 {
+  if (0 == AsciiStrnCmp (Id, DFCI_STD_SETTING_ID_V3_ENABLE_WPBT, DFCI_MAX_ID_LEN)) {
+    return ID_IS_WPBT_ENABLE;
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
+  }
 
-    if (0 == AsciiStrnCmp (Id, DFCI_STD_SETTING_ID_V3_ENABLE_WPBT, DFCI_MAX_ID_LEN)) {
-        return ID_IS_WPBT_ENABLE;
-    } else {
-        DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
-    }
-
-    return ID_IS_BAD;
+  return ID_IS_BAD;
 }
 
 /**
@@ -101,41 +103,47 @@ IsIdSupported (DFCI_SETTING_ID_STRING Id)
 STATIC
 EFI_STATUS
 ValidateNvVariable (
-    CHAR16 *VariableName
+  CHAR16  *VariableName
   )
 {
-    EFI_STATUS  Status;
-    UINT32      Attributes = 0;
-    UINTN       ValueSize = 0;
-    VOID       *Value = NULL;
+  EFI_STATUS  Status;
+  UINT32      Attributes = 0;
+  UINTN       ValueSize  = 0;
+  VOID        *Value     = NULL;
 
+  Status = GetVariable3 (
+             VariableName,
+             &gDfciSettingsGuid,
+             (VOID *)&Value,
+             &ValueSize,
+             &Attributes
+             );
 
-    Status = GetVariable3 (VariableName,
-                          &gDfciSettingsGuid,
-                          (VOID *) &Value,
-                          &ValueSize,
-                          &Attributes);
-
-    if (!EFI_ERROR(Status)) {             // We have a variable
-        FreePool (Value);
-        if (DFCI_SETTINGS_ATTRIBUTES != Attributes) {  // Check if Attributes are wrong
-            // Delete invalid URL variable
-            Status = gRT->SetVariable (VariableName,
-                                      &gDfciSettingsGuid,
-                                       0,
-                                       0,
-                                       NULL);
-            if (EFI_ERROR(Status)) {                   // What???
-                DEBUG((DEBUG_ERROR, "%a: Unable to delete invalid variable %s\n", __FUNCTION__, VariableName));
-            } else {
-                DEBUG((DEBUG_INFO, "%a: Deleting invalid variable %s, with attributes %x\n", __FUNCTION__, VariableName, Attributes));
-            }
-        }
-    } else {
-        Status = EFI_SUCCESS;
+  if (!EFI_ERROR (Status)) {
+    // We have a variable
+    FreePool (Value);
+    if (DFCI_SETTINGS_ATTRIBUTES != Attributes) {
+      // Check if Attributes are wrong
+      // Delete invalid URL variable
+      Status = gRT->SetVariable (
+                      VariableName,
+                      &gDfciSettingsGuid,
+                      0,
+                      0,
+                      NULL
+                      );
+      if (EFI_ERROR (Status)) {
+        // What???
+        DEBUG ((DEBUG_ERROR, "%a: Unable to delete invalid variable %s\n", __FUNCTION__, VariableName));
+      } else {
+        DEBUG ((DEBUG_INFO, "%a: Deleting invalid variable %s, with attributes %x\n", __FUNCTION__, VariableName, Attributes));
+      }
     }
+  } else {
+    Status = EFI_SUCCESS;
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -148,14 +156,14 @@ ValidateNvVariable (
 STATIC
 EFI_STATUS
 InitializeNvVariables (
-    VOID
+  VOID
   )
 {
-    EFI_STATUS  Status;
+  EFI_STATUS  Status;
 
-    Status  = ValidateNvVariable (DFCI_SETTINGS_WPBT_NAME);
+  Status = ValidateNvVariable (DFCI_SETTINGS_WPBT_NAME);
 
-    return Status;
+  return Status;
 }
 
 /////---------------------Interface for Settings Provider ---------------------//////
@@ -174,61 +182,62 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciWpbtSettingSet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN        UINTN                     ValueSize,
-    IN  CONST VOID                     *Value,
-    OUT       DFCI_SETTING_FLAGS       *Flags
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN        UINTN                  ValueSize,
+  IN  CONST VOID                   *Value,
+  OUT       DFCI_SETTING_FLAGS     *Flags
   )
 {
-    UINT8           CurrentValue;
-    UINTN           BufferSize;
-    EFI_STATUS      Status;
-    CHAR16         *VariableName;
-    ID_IS           Id;
+  UINT8       CurrentValue;
+  UINTN       BufferSize;
+  EFI_STATUS  Status;
+  CHAR16      *VariableName;
+  ID_IS       Id;
 
-    if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize != sizeof(UINT8))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) || (ValueSize != sizeof (UINT8))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    Id = IsIdSupported(This->Id);
-    switch (Id) {
-        case ID_IS_WPBT_ENABLE:
-            VariableName = DFCI_SETTINGS_WPBT_NAME;
-            break;
+  Id = IsIdSupported (This->Id);
+  switch (Id) {
+    case ID_IS_WPBT_ENABLE:
+      VariableName = DFCI_SETTINGS_WPBT_NAME;
+      break;
 
-        default:
-            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
-            return EFI_UNSUPPORTED;
-    }
+    default:
+      DEBUG ((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+      return EFI_UNSUPPORTED;
+  }
 
-    BufferSize = sizeof(CurrentValue);
-    Status = DfciWpbtSettingGet (This, &BufferSize, &CurrentValue);
+  BufferSize = sizeof (CurrentValue);
+  Status     = DfciWpbtSettingGet (This, &BufferSize, &CurrentValue);
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Error getting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
-        return Status;
-    }
-
-
-    if (CurrentValue == *((UINT8 *) Value)) {
-       *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-        DEBUG((DEBUG_INFO, "Setting %s ignored, value didn't change\n", VariableName));
-        return EFI_SUCCESS;
-    }
-
-    Status = gRT->SetVariable (VariableName,
-                              &gDfciSettingsGuid,
-                               DFCI_SETTINGS_ATTRIBUTES,
-                               ValueSize,
-                               (VOID *) Value);  // SetVariable should not touch *Value
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Error setting variable %s.  Code = %r\n", VariableName, Status));
-    } else {
-        DEBUG((DEBUG_INFO, "Variable %s set Attributes=%x, Size=%d.\n", VariableName, DFCI_SETTINGS_ATTRIBUTES, ValueSize));
-    }
-
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Error getting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
     return Status;
+  }
+
+  if (CurrentValue == *((UINT8 *)Value)) {
+    *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+    DEBUG ((DEBUG_INFO, "Setting %s ignored, value didn't change\n", VariableName));
+    return EFI_SUCCESS;
+  }
+
+  Status = gRT->SetVariable (
+                  VariableName,
+                  &gDfciSettingsGuid,
+                  DFCI_SETTINGS_ATTRIBUTES,
+                  ValueSize,
+                  (VOID *)Value
+                  );                             // SetVariable should not touch *Value
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Error setting variable %s.  Code = %r\n", VariableName, Status));
+  } else {
+    DEBUG ((DEBUG_INFO, "Variable %s set Attributes=%x, Size=%d.\n", VariableName, DFCI_SETTINGS_ATTRIBUTES, ValueSize));
+  }
+
+  return Status;
 }
 
 /**
@@ -244,51 +253,53 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciWpbtSettingGet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN  OUT   UINTN                    *ValueSize,
-    OUT       VOID                     *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   )
 {
-    ID_IS               Id;
-    EFI_STATUS          Status;
-    CHAR16             *VariableName;
+  ID_IS       Id;
+  EFI_STATUS  Status;
+  CHAR16      *VariableName;
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Id = IsIdSupported (This->Id);
+  switch (Id) {
+    case ID_IS_WPBT_ENABLE:
+      VariableName = DFCI_SETTINGS_WPBT_NAME;
+      break;
+
+    default:
+      DEBUG ((DEBUG_ERROR, "%a: Invalid id(%a).\n", __FUNCTION__, This->Id));
+      return EFI_UNSUPPORTED;
+      break;
+  }
+
+  Status = gRT->GetVariable (
+                  VariableName,
+                  &gDfciSettingsGuid,
+                  NULL,
+                  ValueSize,
+                  Value
+                  );
+  if (EFI_NOT_FOUND == Status) {
+    DEBUG ((DEBUG_INFO, "%a - Variable %s not found. Getting default value.\n", __FUNCTION__, VariableName));
+    Status = DfciWpbtSettingGetDefault (This, ValueSize, Value);
+  }
+
+  if (EFI_ERROR (Status)) {
+    if (EFI_BUFFER_TOO_SMALL != Status) {
+      DEBUG ((DEBUG_ERROR, "%a - Error retrieving setting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "%a - Setting %s retrieved.\n", __FUNCTION__, VariableName));
+  }
 
-    Id = IsIdSupported(This->Id);
-    switch (Id) {
-        case ID_IS_WPBT_ENABLE:
-            VariableName = DFCI_SETTINGS_WPBT_NAME;
-            break;
-
-        default:
-            DEBUG((DEBUG_ERROR, "%a: Invalid id(%a).\n", __FUNCTION__, This->Id));
-            return EFI_UNSUPPORTED;
-            break;
-    }
-
-    Status = gRT->GetVariable (VariableName,
-                              &gDfciSettingsGuid,
-                               NULL,
-                               ValueSize,
-                               Value );
-    if (EFI_NOT_FOUND == Status) {
-        DEBUG((DEBUG_INFO, "%a - Variable %s not found. Getting default value.\n", __FUNCTION__, VariableName));
-        Status = DfciWpbtSettingGetDefault (This, ValueSize, Value);
-    }
-
-    if (EFI_ERROR(Status)) {
-        if (EFI_BUFFER_TOO_SMALL != Status) {
-            DEBUG((DEBUG_ERROR, "%a - Error retrieving setting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
-        }
-    } else {
-        DEBUG((DEBUG_INFO, "%a - Setting %s retrieved.\n", __FUNCTION__ , VariableName));
-    }
-
-    return Status;
+  return Status;
 }
 
 /**
@@ -304,32 +315,32 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciWpbtSettingGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   )
 {
-    ID_IS    Id;
+  ID_IS  Id;
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    Id = IsIdSupported(This->Id);
-    if (Id == ID_IS_BAD) {
-        return EFI_UNSUPPORTED;
-    }
+  Id = IsIdSupported (This->Id);
+  if (Id == ID_IS_BAD) {
+    return EFI_UNSUPPORTED;
+  }
 
-    if (*ValueSize < sizeof(UINT8)) {
-        *ValueSize = sizeof(UINT8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  if (*ValueSize < sizeof (UINT8)) {
+    *ValueSize = sizeof (UINT8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    *ValueSize = sizeof(UINT8);
-    *((UINT8 *)Value) = 1;  // Indicates Enabled default
+  *ValueSize        = sizeof (UINT8);
+  *((UINT8 *)Value) = 1;    // Indicates Enabled default
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -343,41 +354,40 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciWpbtSettingSetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This
+  IN  CONST DFCI_SETTING_PROVIDER  *This
   )
 {
-    DFCI_SETTING_FLAGS Flags = 0;
-    EFI_STATUS         Status;
-    UINT8              Value;
-    UINTN              ValueSize;
+  DFCI_SETTING_FLAGS  Flags = 0;
+  EFI_STATUS          Status;
+  UINT8               Value;
+  UINTN               ValueSize;
 
-    if (This == NULL) {
-        return EFI_INVALID_PARAMETER;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    ValueSize = sizeof(Value);
-    Status = DfciWpbtSettingGetDefault (This, &ValueSize, &Value);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+  ValueSize = sizeof (Value);
+  Status    = DfciWpbtSettingGetDefault (This, &ValueSize, &Value);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    return DfciWpbtSettingSet (This, ValueSize, &Value, &Flags);
+  return DfciWpbtSettingSet (This, ValueSize, &Value, &Flags);
 }
-
 
 //
 // Since ProviderSupport Registration copies the provider to its own
 // allocated memory this code can use a single "template" and just change
 // the id, type, and flags field as needed for registration.
 //
-DFCI_SETTING_PROVIDER mDfciWpbtSettingProviderTemplate = {
-    DFCI_STD_SETTING_ID_V3_ENABLE_WPBT,
-    DFCI_SETTING_TYPE_ENABLE,
-    DFCI_SETTING_FLAGS_NO_PREBOOT_UI | DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED,
-    DfciWpbtSettingSet,
-    DfciWpbtSettingGet,
-    DfciWpbtSettingGetDefault,
-    DfciWpbtSettingSetDefault
+DFCI_SETTING_PROVIDER  mDfciWpbtSettingProviderTemplate = {
+  DFCI_STD_SETTING_ID_V3_ENABLE_WPBT,
+  DFCI_SETTING_TYPE_ENABLE,
+  DFCI_SETTING_FLAGS_NO_PREBOOT_UI | DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED,
+  DfciWpbtSettingSet,
+  DfciWpbtSettingGet,
+  DfciWpbtSettingGetDefault,
+  DfciWpbtSettingSetDefault
 };
 
 /////---------------------Interface for Library  ---------------------//////
@@ -405,31 +415,32 @@ STATIC
 VOID
 EFIAPI
 DfciWpbtSettingProviderSupportProtocolNotify (
-    IN  EFI_EVENT       Event,
-    IN  VOID            *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-    STATIC UINT8                            CallCount = 0;
-    DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
-    EFI_STATUS                              Status;
+  STATIC UINT8                            CallCount = 0;
+  DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *sp;
+  EFI_STATUS                              Status;
 
-    //locate protocol
-    Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
-    if (EFI_ERROR(Status)) {
-      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
-        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
-      }
-      return;
+  // locate protocol
+  Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID **)&sp);
+  if (EFI_ERROR (Status)) {
+    if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
+      DEBUG ((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
     }
 
-    Status = sp->RegisterProvider (sp, &mDfciWpbtSettingProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciWpbtSettingProviderTemplate.Id, Status));
-    }
+    return;
+  }
 
-    //We got here, this means all protocols were installed and we didn't exit early.
-    //close the event as we don't need to be signaled again. (shouldn't happen anyway)
-    gBS->CloseEvent(Event);
+  Status = sp->RegisterProvider (sp, &mDfciWpbtSettingProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciWpbtSettingProviderTemplate.Id, Status));
+  }
+
+  // We got here, this means all protocols were installed and we didn't exit early.
+  // close the event as we don't need to be signaled again. (shouldn't happen anyway)
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -453,46 +464,47 @@ DfciWpbtSettingConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    EFI_STATUS Status;
-    UINT8      Value;
-    UINTN      ValueSize;
+  EFI_STATUS  Status;
+  UINT8       Value;
+  UINTN       ValueSize;
 
-    if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
-        //Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
-        mDfciWpbtSettingProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
-            &gDfciSettingsProviderSupportProtocolGuid,
-             TPL_CALLBACK,
-             DfciWpbtSettingProviderSupportProtocolNotify,
-             NULL,
-            &mDfciWpbtSettingProviderSupportInstallEventRegistration
-            );
+  if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
+    // Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
+    mDfciWpbtSettingProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+                                                    &gDfciSettingsProviderSupportProtocolGuid,
+                                                    TPL_CALLBACK,
+                                                    DfciWpbtSettingProviderSupportProtocolNotify,
+                                                    NULL,
+                                                    &mDfciWpbtSettingProviderSupportInstallEventRegistration
+                                                    );
 
-        DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
 
-        //Initialize nonvolatile variables
-        Status = InitializeNvVariables ();
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
-        }
-
-        ValueSize = sizeof(Value);
-        Status = DfciWpbtSettingGet (&mDfciWpbtSettingProviderTemplate, &ValueSize, &Value);
-
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: unable to get Wpbt Enabled setting. %r.\n", __FUNCTION__, Status));
-        } else {
-            if (Value == 0x01) {
-                Status = gBS->InstallProtocolInterface (&ImageHandle,
-                                        &gDfciWpbtEnabledProtocolGuid,
-                                         EFI_NATIVE_INTERFACE,
-                                         NULL);
-                if (EFI_ERROR(Status)) {
-                    DEBUG((DEBUG_ERROR, "%a: unable to install Wpbt Enabled protocol. %r.\n", __FUNCTION__, Status));
-                }
-            }
-        }
+    // Initialize nonvolatile variables
+    Status = InitializeNvVariables ();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
     }
 
-    return EFI_SUCCESS;
-}
+    ValueSize = sizeof (Value);
+    Status    = DfciWpbtSettingGet (&mDfciWpbtSettingProviderTemplate, &ValueSize, &Value);
 
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: unable to get Wpbt Enabled setting. %r.\n", __FUNCTION__, Status));
+    } else {
+      if (Value == 0x01) {
+        Status = gBS->InstallProtocolInterface (
+                        &ImageHandle,
+                        &gDfciWpbtEnabledProtocolGuid,
+                        EFI_NATIVE_INTERFACE,
+                        NULL
+                        );
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "%a: unable to install Wpbt Enabled protocol. %r.\n", __FUNCTION__, Status));
+        }
+      }
+    }
+  }
+
+  return EFI_SUCCESS;
+}

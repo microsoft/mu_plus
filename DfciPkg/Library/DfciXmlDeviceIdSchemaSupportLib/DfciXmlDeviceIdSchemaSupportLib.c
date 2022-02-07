@@ -19,81 +19,78 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 
 // YYYY-MM-DDTHH:MM:SS  //spell-checker: disable-line
-#define DATE_STRING_SIZE 20
+#define DATE_STRING_SIZE  20
 
-#define DEVICE_ID_XML_TEMPLATE "<?xml version=\"1.0\" encoding=\"utf-8\"?><UEFIDeviceIdentifierPacket></UEFIDeviceIdentifierPacket>"
+#define DEVICE_ID_XML_TEMPLATE  "<?xml version=\"1.0\" encoding=\"utf-8\"?><UEFIDeviceIdentifierPacket></UEFIDeviceIdentifierPacket>"
 
 // LIBRARY CLASS FUNCTIONS //
-XmlNode*
+XmlNode *
 EFIAPI
-GetDeviceIdPacketNode(
-IN CONST XmlNode* RootNode)
+GetDeviceIdPacketNode (
+  IN CONST XmlNode  *RootNode
+  )
 {
-  if (RootNode == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a - RootNode is NULL\n", __FUNCTION__));
+  if (RootNode == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - RootNode is NULL\n", __FUNCTION__));
     return NULL;
   }
 
-  if (RootNode->XmlDeclaration.Declaration == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a - RootNode is not the root node\n", __FUNCTION__));
-    ASSERT(RootNode->XmlDeclaration.Declaration != NULL);
+  if (RootNode->XmlDeclaration.Declaration == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - RootNode is not the root node\n", __FUNCTION__));
+    ASSERT (RootNode->XmlDeclaration.Declaration != NULL);
     return NULL;
   }
 
-  if (AsciiStrnCmp(RootNode->Name, DEVICE_ID_PACKET_ELEMENT_NAME, sizeof(DEVICE_ID_PACKET_ELEMENT_NAME)) != 0)
-  {
-    DEBUG((DEBUG_ERROR, "%a - RootNode is not Device Id Packet Element\n", __FUNCTION__));
+  if (AsciiStrnCmp (RootNode->Name, DEVICE_ID_PACKET_ELEMENT_NAME, sizeof (DEVICE_ID_PACKET_ELEMENT_NAME)) != 0) {
+    DEBUG ((DEBUG_ERROR, "%a - RootNode is not Device Id Packet Element\n", __FUNCTION__));
     return NULL;
   }
 
-  return (XmlNode*)RootNode;
-}
-
-XmlNode*
-EFIAPI
-GetDeviceIdListNodeFromPacketNode(
-IN CONST XmlNode* PacketNode)
-{
-  ASSERT(PacketNode != NULL);
-  return FindFirstChildNodeByName(PacketNode, DEVICE_ID_LIST_ELEMENT_NAME);
-
+  return (XmlNode *)RootNode;
 }
 
 XmlNode *
 EFIAPI
-New_DeviceIdPacketNodeList(VOID)
+GetDeviceIdListNodeFromPacketNode (
+  IN CONST XmlNode  *PacketNode
+  )
 {
-  EFI_STATUS Status;
-  XmlNode *Root = NULL;
-  XmlNode *Temp = NULL;
+  ASSERT (PacketNode != NULL);
+  return FindFirstChildNodeByName (PacketNode, DEVICE_ID_LIST_ELEMENT_NAME);
+}
 
+XmlNode *
+EFIAPI
+New_DeviceIdPacketNodeList (
+  VOID
+  )
+{
+  EFI_STATUS  Status;
+  XmlNode     *Root = NULL;
+  XmlNode     *Temp = NULL;
 
-  Status = CreateXmlTree(DEVICE_ID_XML_TEMPLATE, sizeof(DEVICE_ID_XML_TEMPLATE) - 1, &Root);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed.  Status %r\n", __FUNCTION__, Status));
+  Status = CreateXmlTree (DEVICE_ID_XML_TEMPLATE, sizeof (DEVICE_ID_XML_TEMPLATE) - 1, &Root);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed.  Status %r\n", __FUNCTION__, Status));
     goto ERROR;
   }
 
   // Add IdentifiersList Node
-  Status = AddNode(Root, DEVICE_ID_LIST_ELEMENT_NAME, NULL, &Temp);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to add node for Identifiers. %r\n", __FUNCTION__, Status));
+  Status = AddNode (Root, DEVICE_ID_LIST_ELEMENT_NAME, NULL, &Temp);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to add node for Identifiers. %r\n", __FUNCTION__, Status));
     goto ERROR;
   }
 
-  //Return the root
+  // Return the root
   return Root;
 
 ERROR:
-  if (Root)
-  {
-    FreeXmlTree(&Root);
-    //root will be NULL and null returned
+  if (Root) {
+    FreeXmlTree (&Root);
+    // root will be NULL and null returned
   }
+
   return Root;
 }
 
@@ -105,28 +102,29 @@ ERROR:
  */
 EFI_STATUS
 EFIAPI
-AddDfciVersionNode(
-  IN CONST XmlNode *IdPacketNode,
-  IN CONST CHAR8   *DfciVersion)
+AddDfciVersionNode (
+  IN CONST XmlNode  *IdPacketNode,
+  IN CONST CHAR8    *DfciVersion
+  )
 {
-  EFI_STATUS Status;
-  if ((IdPacketNode == NULL) || (DfciVersion == NULL))
-  {
-    return EFI_INVALID_PARAMETER;
-  }
-  //Make sure its our expected node
-  if (AsciiStrnCmp(IdPacketNode->Name, DEVICE_ID_PACKET_ELEMENT_NAME, sizeof(DEVICE_ID_PACKET_ELEMENT_NAME)) != 0)
-  {
-    DEBUG((DEBUG_ERROR, "%a - IdPacketNode is not Id Packet Element\n", __FUNCTION__));
+  EFI_STATUS  Status;
+
+  if ((IdPacketNode == NULL) || (DfciVersion == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  //Add Dfci Version Node
-  Status = AddNode((XmlNode*)IdPacketNode, DEVICE_ID_DFCI_VERSION_ELEMENT_NAME, DfciVersion, NULL);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to create Dfci Version node %r\n", __FUNCTION__, Status));
+  // Make sure its our expected node
+  if (AsciiStrnCmp (IdPacketNode->Name, DEVICE_ID_PACKET_ELEMENT_NAME, sizeof (DEVICE_ID_PACKET_ELEMENT_NAME)) != 0) {
+    DEBUG ((DEBUG_ERROR, "%a - IdPacketNode is not Id Packet Element\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
   }
+
+  // Add Dfci Version Node
+  Status = AddNode ((XmlNode *)IdPacketNode, DEVICE_ID_DFCI_VERSION_ELEMENT_NAME, DfciVersion, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to create Dfci Version node %r\n", __FUNCTION__, Status));
+  }
+
   return Status;
 }
 
@@ -140,53 +138,46 @@ AddDfciVersionNode(
  *
  * @return EFI_STATUS EFIAPI
  */
-
 EFI_STATUS
 EFIAPI
 SetDeviceIdIdentifier (
-  IN CONST XmlNode *ParentIdentifiersListNode,
-  IN CONST CHAR8 *Id,
-  IN CONST CHAR8 *Value) {
+  IN CONST XmlNode  *ParentIdentifiersListNode,
+  IN CONST CHAR8    *Id,
+  IN CONST CHAR8    *Value
+  )
+{
+  XmlNode     *Temp       = NULL;
+  XmlNode     *Identifier = NULL;
+  EFI_STATUS  Status;
 
-  XmlNode   *Temp = NULL;
-  XmlNode   *Identifier = NULL;
-  EFI_STATUS Status;
-
-  if ((ParentIdentifiersListNode == NULL) || (Id == NULL))
-  {
+  if ((ParentIdentifiersListNode == NULL) || (Id == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (AsciiStrnCmp(ParentIdentifiersListNode->Name, DEVICE_ID_LIST_ELEMENT_NAME, sizeof(DEVICE_ID_LIST_ELEMENT_NAME)) != 0)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Parent Identifier Node is not an Identifiers Node List\n", __FUNCTION__));
+  if (AsciiStrnCmp (ParentIdentifiersListNode->Name, DEVICE_ID_LIST_ELEMENT_NAME, sizeof (DEVICE_ID_LIST_ELEMENT_NAME)) != 0) {
+    DEBUG ((DEBUG_ERROR, "%a - Parent Identifier Node is not an Identifiers Node List\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
-  //Make the <Identifier>
-  Status = AddNode((XmlNode*)ParentIdentifiersListNode, DEVICE_ID_ELEMENT_NAME, NULL, &Identifier);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to create Identifier node %r\n", __FUNCTION__, Status));
+  // Make the <Identifier>
+  Status = AddNode ((XmlNode *)ParentIdentifiersListNode, DEVICE_ID_ELEMENT_NAME, NULL, &Identifier);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to create Identifier node %r\n", __FUNCTION__, Status));
     return EFI_DEVICE_ERROR;
   }
 
-  //Make the <Id>
-  Status = AddNode((XmlNode*)Identifier, DEVICE_ID_ID_ELEMENT_NAME, Id, &Temp);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to create Id node %r\n", __FUNCTION__, Status));
+  // Make the <Id>
+  Status = AddNode ((XmlNode *)Identifier, DEVICE_ID_ID_ELEMENT_NAME, Id, &Temp);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to create Id node %r\n", __FUNCTION__, Status));
     return EFI_DEVICE_ERROR;
   }
 
-  Status = AddNode((XmlNode*)Identifier, DEVICE_ID_VALUE_ELEMENT_NAME, Value, &Temp);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to create Value node %r\n", __FUNCTION__, Status));
+  Status = AddNode ((XmlNode *)Identifier, DEVICE_ID_VALUE_ELEMENT_NAME, Value, &Temp);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to create Value node %r\n", __FUNCTION__, Status));
     return EFI_DEVICE_ERROR;
   }
 
   return EFI_SUCCESS;
 }
-
-

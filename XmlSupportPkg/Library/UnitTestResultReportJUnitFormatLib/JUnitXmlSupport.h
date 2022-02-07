@@ -16,7 +16,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 #include <Library/PrintLib.h>
 
-
 /**
 
 // Note: JUnit schema definition doesn't seem to be completely clear.  Sounds like since no real "owner" different projects have changed and adapted
@@ -30,19 +29,19 @@ http://help.catchsoftware.com/display/ET/JUnit+Format
 <testsuites>
   <testsuite name=""      <!-- Full (class) name of the test for non-aggregated testsuite documents.
                                Class name without the package for aggregated testsuites documents. Required -->
-	     tests=""     <!-- The total number of tests in the suite, required. -->
-	     disabled=""  <!-- the total number of disabled tests in the suite. optional -->
+             tests=""     <!-- The total number of tests in the suite, required. -->
+             disabled=""  <!-- the total number of disabled tests in the suite. optional -->
              errors=""    <!-- The total number of tests in the suite that errored. An errored test is one that had an unanticipated problem,
                                for example an unchecked throwable; or a problem with the implementation of the test. optional -->
              failures=""  <!-- The total number of tests in the suite that failed. A failure is a test which the code has explicitly failed
                                by using the mechanisms for that purpose. e.g., via an assertEquals. optional -->
              hostname=""  <!-- Host on which the tests were executed. 'localhost' should be used if the hostname cannot be determined. optional -->
-	     id=""        <!-- Starts at 0 for the first testsuite and is incremented by 1 for each following testsuite -->
-	     package=""   <!-- Derived from testsuite/@name in the non-aggregated documents. optional -->
-	     skipped=""   <!-- The total number of skipped tests. optional -->
-	     time=""      <!-- Time taken (in seconds) to execute the tests in the suite. optional -->
-	     timestamp="" <!-- when the test was executed in ISO 8601 format (2014-01-21T16:17:18). Timezone may not be specified. optional -->
-	     >
+             id=""        <!-- Starts at 0 for the first testsuite and is incremented by 1 for each following testsuite -->
+             package=""   <!-- Derived from testsuite/@name in the non-aggregated documents. optional -->
+             skipped=""   <!-- The total number of skipped tests. optional -->
+             time=""      <!-- Time taken (in seconds) to execute the tests in the suite. optional -->
+             timestamp="" <!-- when the test was executed in ISO 8601 format (2014-01-21T16:17:18). Timezone may not be specified. optional -->
+             >
          <!-- testcase can appear multiple times, see /testsuites/testsuite@tests -->
          <testcase name=""       <!-- Name of the test method, required. -->
          assertions="" <!-- number of assertions in the test case. optional -->
@@ -90,13 +89,12 @@ http://help.catchsoftware.com/display/ET/JUnit+Format
 </testsuites>
 **/
 
-#define TESTSUITE_LIST_ELEMENT_NAME "testsuites"
-#define TESTSUITE_ELEMENT_NAME "testsuite"
-#define TESTCASE_ELEMENT_NAME  "testcase"
-#define TESTCASE_FAILURE_ELEMENT_NAME "failure"
-#define TESTCASE_LOG_ELEMENT_NAME "system-out"
-#define TESTCASE_SKIPPED_ELEMENT_NAME "skipped"
-
+#define TESTSUITE_LIST_ELEMENT_NAME    "testsuites"
+#define TESTSUITE_ELEMENT_NAME         "testsuite"
+#define TESTCASE_ELEMENT_NAME          "testcase"
+#define TESTCASE_FAILURE_ELEMENT_NAME  "failure"
+#define TESTCASE_LOG_ELEMENT_NAME      "system-out"
+#define TESTCASE_SKIPPED_ELEMENT_NAME  "skipped"
 
 /**
 Creates a new MsXmlNode list following the List
@@ -111,8 +109,8 @@ List must be freed using FreeXmlTree
 **/
 XmlNode *
 EFIAPI
-New_JUnitXmlDocNodeList();
-
+New_JUnitXmlDocNodeList (
+  );
 
 /**
 Creates a new MsXmlNode for a Test Suite and adds it to the list
@@ -123,13 +121,12 @@ return pointer will be the newly created test suite element node
 **/
 XmlNode *
 EFIAPI
-New_TestSuiteNodeInList(
-  IN CONST  XmlNode*  RootNode,
-  IN CONST  CHAR8*      Name,
-  IN CONST  CHAR8*      Package,
-  UINTN                 Id
-);
-
+New_TestSuiteNodeInList (
+  IN CONST  XmlNode  *RootNode,
+  IN CONST  CHAR8    *Name,
+  IN CONST  CHAR8    *Package,
+  UINTN              Id
+  );
 
 /**
 Creates a new MsXmlNode for a Test case and adds it to the list
@@ -140,16 +137,16 @@ return pointer will be the newly created test case element node
 **/
 XmlNode *
 EFIAPI
-New_TestCaseInSuite(
-  IN CONST XmlNode *TestSuite,
-  IN CONST  CHAR8*    Name,
-  IN CONST  CHAR8*    ClassName,
+New_TestCaseInSuite (
+  IN CONST XmlNode   *TestSuite,
+  IN CONST  CHAR8    *Name,
+  IN CONST  CHAR8    *ClassName,
   UINTN              TimeInSeconds,
-  IN CONST  CHAR8*    Log  OPTIONAL,
-  IN CONST  CHAR8*    FailureMsg   OPTIONAL,
-  IN CONST  CHAR8*    FailureType  OPTIONAL,
-  IN        BOOLEAN   Skipped
-);
+  IN CONST  CHAR8    *Log  OPTIONAL,
+  IN CONST  CHAR8    *FailureMsg   OPTIONAL,
+  IN CONST  CHAR8    *FailureType  OPTIONAL,
+  IN        BOOLEAN  Skipped
+  );
 
 /**
 Creates a new MsXmlNode for a Test case failure and add it to the test case
@@ -160,22 +157,20 @@ return pointer will be the newly created failure element node
 **/
 XmlNode *
 EFIAPI
-New_FailureForTestCase(
-  IN CONST  XmlNode*  TestCase,
-  IN CONST  CHAR8*      Msg  OPTIONAL,
-  IN CONST  CHAR8*      Type OPTIONAL
-);
+New_FailureForTestCase (
+  IN CONST  XmlNode  *TestCase,
+  IN CONST  CHAR8    *Msg  OPTIONAL,
+  IN CONST  CHAR8    *Type OPTIONAL
+  );
 
 EFI_STATUS
 EFIAPI
-AddTestSuiteStats(
-  IN    XmlNode*  TestSuite,
-  UINTN TotalTests,
-  UINTN TotalFailures,
-  UINTN TotalSkips,
-  UINTN TotalErrors
-);
-
-
+AddTestSuiteStats (
+  IN    XmlNode  *TestSuite,
+  UINTN          TotalTests,
+  UINTN          TotalFailures,
+  UINTN          TotalSkips,
+  UINTN          TotalErrors
+  );
 
 #endif

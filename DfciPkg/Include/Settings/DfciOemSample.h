@@ -16,9 +16,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 
 // Device setting for use with DfciPkg\Library\DfciVirtualizationSettings
-#define DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS       "Device.CpuAndIoVirtualization.Enable"
+#define DFCI_OEM_SETTING_ID__ENABLE_VIRT_SETTINGS  "Device.CpuAndIoVirtualization.Enable"
 
 // Device setting for use with DfciPkg\Library\DfciPasswordProvider
-#define DFCI_OEM_SETTING_ID__PASSWORD                   "Device.Password.Password"
+#define DFCI_OEM_SETTING_ID__PASSWORD  "Device.Password.Password"
 
 #endif //  __DFCI_OEM_SAMPLE_H__

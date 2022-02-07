@@ -1,4 +1,3 @@
-
 /** @file
 Library to display the platform specific debug messages on the display
 
@@ -15,7 +14,8 @@ Display the platform specific debug messages
 **/
 VOID
 EFIAPI
-ConsoleMsgLibDisplaySystemInfoOnConsole ( VOID );
-
+ConsoleMsgLibDisplaySystemInfoOnConsole (
+  VOID
+  );
 
 #endif

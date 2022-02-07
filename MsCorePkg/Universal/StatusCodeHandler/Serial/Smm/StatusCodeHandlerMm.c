@@ -27,30 +27,27 @@ EFI_MM_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol = NULL;
 EFI_STATUS
 MmEntry (
   VOID
-)
+  )
 {
-  EFI_STATUS                Status;
+  EFI_STATUS  Status;
 
   Status = gMmst->MmLocateProtocol (
                     &gEfiMmRscHandlerProtocolGuid,
                     NULL,
                     (VOID **)&mRscHandlerProtocol
                     );
-  if (EFI_ERROR(Status))
-  {
-    ASSERT_EFI_ERROR(Status);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
     return Status;
   }
 
-
-  Status = SerialPortInitialize();
-  if (EFI_ERROR(Status))
-  {
-    ASSERT_EFI_ERROR(Status);
+  Status = SerialPortInitialize ();
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
     return Status;
   }
 
-  mRscHandlerProtocol->Register((EFI_MM_RSC_HANDLER_CALLBACK)SerialStatusCode);
+  mRscHandlerProtocol->Register ((EFI_MM_RSC_HANDLER_CALLBACK)SerialStatusCode);
 
   return EFI_SUCCESS;
 }
@@ -66,8 +63,8 @@ MmEntry (
 VOID
 EFIAPI
 WriteStatusCode (
-  IN UINT8     *Buffer,
-  IN UINTN     NumberOfBytes
+  IN UINT8  *Buffer,
+  IN UINTN  NumberOfBytes
   )
 {
   //

@@ -31,31 +31,31 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 DummyErrorDriverEntryPoint (
-  IN    EFI_HANDLE                  ImageHandle,
-  IN    EFI_SYSTEM_TABLE            *SystemTable
+  IN    EFI_HANDLE        ImageHandle,
+  IN    EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  UINTN       EnableDisable         = 0;
+  UINTN       SetValueEnableDisable = 0;
+  UINTN       Size                  = sizeof (UINTN);
+  EFI_STATUS  Status;
 
-  UINTN EnableDisable = 0;
-  UINTN SetValueEnableDisable = 0;
-  UINTN Size = sizeof(UINTN);
-  EFI_STATUS Status;
-
-  if(!EFI_ERROR(gRT->GetVariable(L"EnableDisableErrors", &gRaiseTelemetryErrorsAtBoot, NULL, &Size, &EnableDisable))) {
-
-    switch(EnableDisable) {
-
+  if (!EFI_ERROR (gRT->GetVariable (L"EnableDisableErrors", &gRaiseTelemetryErrorsAtBoot, NULL, &Size, &EnableDisable))) {
+    switch (EnableDisable) {
       case 2:
-        Status =  gRT->SetVariable(L"EnableDisableErrors",
-                        &gRaiseTelemetryErrorsAtBoot,
-                        EFI_VARIABLE_NON_VOLATILE |
-                        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                        sizeof(UINTN),
-                        &SetValueEnableDisable);
+        Status =  gRT->SetVariable (
+                         L"EnableDisableErrors",
+                         &gRaiseTelemetryErrorsAtBoot,
+                         EFI_VARIABLE_NON_VOLATILE |
+                         EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                         sizeof (UINTN),
+                         &SetValueEnableDisable
+                         );
 
-        if(EFI_ERROR(Status)) {
-            DEBUG((DEBUG_INFO, "%a Could not set the enable/disable variable!\n", __FUNCTION__));
-          }
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "%a Could not set the enable/disable variable!\n", __FUNCTION__));
+        }
+
         break;
 
       default:
@@ -63,8 +63,7 @@ DummyErrorDriverEntryPoint (
     }
   }
 
-  if(EnableDisable) {
-
+  if (EnableDisable) {
     // //NvmExpressHci.c
     // ReportStatusCode((EFI_ERROR_MAJOR | EFI_ERROR_CODE), (EFI_IO_BUS_SCSI | EFI_IOB_EC_INTERFACE_ERROR));
 
@@ -81,8 +80,8 @@ DummyErrorDriverEntryPoint (
     // REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR,(EFI_SOFTWARE_DXE_CORE | EFI_SW_DXE_CORE_EC_NO_ARCH));
 
     // //DxeLoad.c
-    REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR,(EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_S3_RESUME_PPI_NOT_FOUND));
-    REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR,(EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_NO_RECOVERY_CAPSULE));
+    REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR, (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_S3_RESUME_PPI_NOT_FOUND));
+    REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR, (EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_NO_RECOVERY_CAPSULE));
 
     // //PeiMain.c
     // REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR, (EFI_SOFTWARE_PEI_CORE | EFI_SW_PEI_CORE_EC_DXEIPL_NOT_FOUND));
@@ -96,10 +95,7 @@ DummyErrorDriverEntryPoint (
     // //S3Resume.c
     // REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR,(EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_S3_OS_WAKE_ERROR));
     // REPORT_STATUS_CODE (EFI_ERROR_CODE | EFI_ERROR_MAJOR,(EFI_SOFTWARE_PEI_MODULE | EFI_SW_PEI_EC_S3_RESUME_FAILED));
-
   }
-
-
 
   return EFI_SUCCESS;
 }

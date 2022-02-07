@@ -17,15 +17,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseMemoryLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 
-#define PCAT_RTC_LO_ADDRESS_PORT              0x70
-#define PCAT_RTC_LO_DATA_PORT                 0x71
-#define PCAT_RTC_HI_ADDRESS_PORT              0x72
-#define PCAT_RTC_HI_DATA_PORT                 0x73
+#define PCAT_RTC_LO_ADDRESS_PORT  0x70
+#define PCAT_RTC_LO_DATA_PORT     0x71
+#define PCAT_RTC_HI_ADDRESS_PORT  0x72
+#define PCAT_RTC_HI_DATA_PORT     0x73
 
-#define MS_WHEA_EARLY_STORAGE_OFFSET          0x40
+#define MS_WHEA_EARLY_STORAGE_OFFSET  0x40
 
-#define MS_WHEA_EARLY_STORAGE_HEADER_SIZE     (sizeof(MS_WHEA_EARLY_STORAGE_HEADER))
-#define MS_WHEA_EARLY_STORAGE_DATA_OFFSET     MS_WHEA_EARLY_STORAGE_HEADER_SIZE
+#define MS_WHEA_EARLY_STORAGE_HEADER_SIZE  (sizeof(MS_WHEA_EARLY_STORAGE_HEADER))
+#define MS_WHEA_EARLY_STORAGE_DATA_OFFSET  MS_WHEA_EARLY_STORAGE_HEADER_SIZE
 
 /**
 
@@ -42,9 +42,9 @@ This routine has the highest privilege to read any byte(s) on the CMOS
 STATIC
 EFI_STATUS
 __MsWheaCMOSRawRead (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   )
 {
   UINT8       mIndex;
@@ -55,7 +55,8 @@ __MsWheaCMOSRawRead (
   mBuf = Ptr;
   if ((mBuf == NULL) ||
       (Size == 0) ||
-      ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
+      ((UINT8)(PcdGet32 (PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset))
+  {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -63,14 +64,14 @@ __MsWheaCMOSRawRead (
   for (i = 0; i < Size; i++) {
     mIndex = Offset + i;
     if ((mIndex >= 0) && (mIndex <= 127)) {
-      IoWrite8(PCAT_RTC_LO_ADDRESS_PORT, mIndex);
-      mBuf[i] = IoRead8(PCAT_RTC_LO_DATA_PORT);
-    }
-    else {
-      IoWrite8(PCAT_RTC_HI_ADDRESS_PORT, mIndex);
-      mBuf[i] = IoRead8(PCAT_RTC_HI_DATA_PORT);
+      IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, mIndex);
+      mBuf[i] = IoRead8 (PCAT_RTC_LO_DATA_PORT);
+    } else {
+      IoWrite8 (PCAT_RTC_HI_ADDRESS_PORT, mIndex);
+      mBuf[i] = IoRead8 (PCAT_RTC_HI_DATA_PORT);
     }
   }
+
   Status = EFI_SUCCESS;
 
 Cleanup:
@@ -92,9 +93,9 @@ This routine has the highest privilege to write any byte(s) on the CMOS
 STATIC
 EFI_STATUS
 __MsWheaCMOSRawWrite (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   )
 {
   UINT8       mIndex;
@@ -105,7 +106,8 @@ __MsWheaCMOSRawWrite (
   mBuf = Ptr;
   if ((mBuf == NULL) ||
       (Size == 0) ||
-      ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
+      ((UINT8)(PcdGet32 (PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset))
+  {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -113,14 +115,14 @@ __MsWheaCMOSRawWrite (
   for (i = 0; i < Size; i++) {
     mIndex = Offset + i;
     if ((mIndex >= 0) && (mIndex <= 127)) {
-      IoWrite8(PCAT_RTC_LO_ADDRESS_PORT, mIndex);
-      IoWrite8(PCAT_RTC_LO_DATA_PORT, mBuf[i]);
-    }
-    else {
-      IoWrite8(PCAT_RTC_HI_ADDRESS_PORT, mIndex);
-      IoWrite8(PCAT_RTC_HI_DATA_PORT, mBuf[i]);
+      IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, mIndex);
+      IoWrite8 (PCAT_RTC_LO_DATA_PORT, mBuf[i]);
+    } else {
+      IoWrite8 (PCAT_RTC_HI_ADDRESS_PORT, mIndex);
+      IoWrite8 (PCAT_RTC_HI_DATA_PORT, mBuf[i]);
     }
   }
+
   Status = EFI_SUCCESS;
 
 Cleanup:
@@ -141,8 +143,8 @@ This routine has the highest privilege to 'clear' any byte(s) on the CMOS
 STATIC
 EFI_STATUS
 __MsWheaCMOSRawClear (
-  UINT8                               Size,
-  UINT8                               Offset
+  UINT8  Size,
+  UINT8  Offset
   )
 {
   UINT8       mIndex;
@@ -150,7 +152,8 @@ __MsWheaCMOSRawClear (
   EFI_STATUS  Status;
 
   if ((Size == 0) ||
-      ((UINT8)(PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset)) {
+      ((UINT8)(PcdGet32 (PcdMsWheaReportEarlyStorageCapacity) - Size) < Offset))
+  {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
@@ -158,14 +161,14 @@ __MsWheaCMOSRawClear (
   for (i = 0; i < Size; i++) {
     mIndex = Offset + i;
     if ((mIndex >= 0) && (mIndex <= 127)) {
-      IoWrite8(PCAT_RTC_LO_ADDRESS_PORT, mIndex);
-      IoWrite8(PCAT_RTC_LO_DATA_PORT, PcdGet8(PcdMsWheaEarlyStorageDefaultValue));
-    }
-    else {
-      IoWrite8(PCAT_RTC_HI_ADDRESS_PORT, mIndex);
-      IoWrite8(PCAT_RTC_HI_DATA_PORT, PcdGet8(PcdMsWheaEarlyStorageDefaultValue));
+      IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, mIndex);
+      IoWrite8 (PCAT_RTC_LO_DATA_PORT, PcdGet8 (PcdMsWheaEarlyStorageDefaultValue));
+    } else {
+      IoWrite8 (PCAT_RTC_HI_ADDRESS_PORT, mIndex);
+      IoWrite8 (PCAT_RTC_HI_DATA_PORT, PcdGet8 (PcdMsWheaEarlyStorageDefaultValue));
     }
   }
+
   Status = EFI_SUCCESS;
 Cleanup:
   return Status;
@@ -182,7 +185,7 @@ MsWheaCMOSStoreClearAll (
   VOID
   )
 {
-  __MsWheaCMOSRawClear(MsWheaEarlyStorageGetMaxSize(), MS_WHEA_EARLY_STORAGE_OFFSET);
+  __MsWheaCMOSRawClear (MsWheaEarlyStorageGetMaxSize (), MS_WHEA_EARLY_STORAGE_OFFSET);
 }
 
 /**
@@ -198,7 +201,7 @@ MsWheaEarlyStorageGetMaxSize (
   VOID
   )
 {
-  return (UINT8)((PcdGet32(PcdMsWheaReportEarlyStorageCapacity) - (MS_WHEA_EARLY_STORAGE_OFFSET)) & 0xFF);
+  return (UINT8)((PcdGet32 (PcdMsWheaReportEarlyStorageCapacity) - (MS_WHEA_EARLY_STORAGE_OFFSET)) & 0xFF);
 }
 
 /**
@@ -217,18 +220,19 @@ This routine reads the specified data region from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageRead (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   )
 {
-  EFI_STATUS Status;
-  if (Offset >= MsWheaEarlyStorageGetMaxSize()) {
+  EFI_STATUS  Status;
+
+  if (Offset >= MsWheaEarlyStorageGetMaxSize ()) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  Status = __MsWheaCMOSRawRead(Ptr, Size, MS_WHEA_EARLY_STORAGE_OFFSET + Offset);
+  Status = __MsWheaCMOSRawRead (Ptr, Size, MS_WHEA_EARLY_STORAGE_OFFSET + Offset);
 
 Cleanup:
   return Status;
@@ -250,18 +254,19 @@ This routine writes the specified data region from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageWrite (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   )
 {
-  EFI_STATUS Status;
-  if (Offset >= MsWheaEarlyStorageGetMaxSize()) {
+  EFI_STATUS  Status;
+
+  if (Offset >= MsWheaEarlyStorageGetMaxSize ()) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  Status = __MsWheaCMOSRawWrite(Ptr, Size, MS_WHEA_EARLY_STORAGE_OFFSET + Offset);
+  Status = __MsWheaCMOSRawWrite (Ptr, Size, MS_WHEA_EARLY_STORAGE_OFFSET + Offset);
 
 Cleanup:
   return Status;
@@ -282,17 +287,18 @@ This routine clears the specified data region from the MS WHEA store to PcdMsWhe
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageClear (
-  UINT8                               Size,
-  UINT8                               Offset
+  UINT8  Size,
+  UINT8  Offset
   )
 {
-  EFI_STATUS Status;
-  if (Offset >= MsWheaEarlyStorageGetMaxSize()) {
+  EFI_STATUS  Status;
+
+  if (Offset >= MsWheaEarlyStorageGetMaxSize ()) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
-  Status = __MsWheaCMOSRawClear(Size, MS_WHEA_EARLY_STORAGE_OFFSET + Offset);
+  Status = __MsWheaCMOSRawClear (Size, MS_WHEA_EARLY_STORAGE_OFFSET + Offset);
 
 Cleanup:
   return Status;
@@ -311,7 +317,7 @@ MsWheaESGetMaxDataCount (
   VOID
   )
 {
-  return (UINT8)((MsWheaEarlyStorageGetMaxSize() - (MS_WHEA_EARLY_STORAGE_DATA_OFFSET)) & 0xFF);
+  return (UINT8)((MsWheaEarlyStorageGetMaxSize () - (MS_WHEA_EARLY_STORAGE_DATA_OFFSET)) & 0xFF);
 }
 
 /**
@@ -331,19 +337,20 @@ from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaESFindSlot (
-  IN UINT8 Size,
-  IN UINT8 *Offset
+  IN UINT8  Size,
+  IN UINT8  *Offset
   )
 {
-  EFI_STATUS  Status = EFI_OUT_OF_RESOURCES;
-  MS_WHEA_EARLY_STORAGE_HEADER Header;
+  EFI_STATUS                    Status = EFI_OUT_OF_RESOURCES;
+  MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
-  MsWheaEarlyStorageRead(&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
+  MsWheaEarlyStorageRead (&Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE, 0);
 
-  if (Header.ActiveRange + Size <= MsWheaESGetMaxDataCount()) {
-    *Offset = (UINT8) Header.ActiveRange;
-    Status = EFI_SUCCESS;
+  if (Header.ActiveRange + Size <= MsWheaESGetMaxDataCount ()) {
+    *Offset = (UINT8)Header.ActiveRange;
+    Status  = EFI_SUCCESS;
   }
+
   return Status;
 }
 
@@ -364,8 +371,8 @@ the last byte of active range (excluding checksum field).
 EFI_STATUS
 EFIAPI
 MsWheaESCalculateChecksum16 (
-  MS_WHEA_EARLY_STORAGE_HEADER    *Header,
-  UINT16                          *Checksum
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header,
+  UINT16                        *Checksum
   )
 {
   UINT16      Data;
@@ -373,36 +380,37 @@ MsWheaESCalculateChecksum16 (
   UINT16      Sum;
   EFI_STATUS  Status;
 
-  DEBUG((DEBUG_INFO, "%a Calculate sum...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a Calculate sum...\n", __FUNCTION__));
 
   Status = EFI_SUCCESS;
 
   if ((Checksum == NULL) || (Header == NULL)) {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
-  }
-  else if ((Header->ActiveRange > MsWheaEarlyStorageGetMaxSize()) ||
-           ((Header->ActiveRange & BIT0) != 0)) {
+  } else if ((Header->ActiveRange > MsWheaEarlyStorageGetMaxSize ()) ||
+             ((Header->ActiveRange & BIT0) != 0))
+  {
     Status = EFI_BAD_BUFFER_SIZE;
     goto Cleanup;
   }
 
   // Clear the checksum field for calculation then restore...
-  *Checksum = Header->Checksum;
+  *Checksum        = Header->Checksum;
   Header->Checksum = 0;
-  Sum = CalculateSum16 ((UINT16*)Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE);
+  Sum              = CalculateSum16 ((UINT16 *)Header, MS_WHEA_EARLY_STORAGE_HEADER_SIZE);
   Header->Checksum = *Checksum;
 
-  for (Index = 0; Index < Header->ActiveRange; Index += sizeof(Data)) {
-    Status = MsWheaEarlyStorageRead(&Data, sizeof(Data), MS_WHEA_EARLY_STORAGE_DATA_OFFSET + Index);
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, "%a: Reading Early Storage %d failed %r\n", __FUNCTION__, Index, Status));
+  for (Index = 0; Index < Header->ActiveRange; Index += sizeof (Data)) {
+    Status = MsWheaEarlyStorageRead (&Data, sizeof (Data), MS_WHEA_EARLY_STORAGE_DATA_OFFSET + Index);
+    if (EFI_ERROR (Status) != FALSE) {
+      DEBUG ((DEBUG_ERROR, "%a: Reading Early Storage %d failed %r\n", __FUNCTION__, Index, Status));
       goto Cleanup;
     }
+
     Sum = Sum + Data;
   }
 
-  *Checksum = (UINT16) (0x10000 - Sum);
+  *Checksum = (UINT16)(0x10000 - Sum);
 
 Cleanup:
   return Status;
@@ -422,13 +430,13 @@ checksum and active range will be updated in the process.
 STATIC
 EFI_STATUS
 MsWheaESAddRecordV0Internal (
-  IN MS_WHEA_EARLY_STORAGE_ENTRY_V0   *MsWheaEntry
-  ) 
+  IN MS_WHEA_EARLY_STORAGE_ENTRY_V0  *MsWheaEntry
+  )
 {
-  UINT8                           Offset = 0;
-  EFI_STATUS                      Status;
-  MS_WHEA_EARLY_STORAGE_HEADER    Header;
-  UINT16                          Checksum;
+  UINT8                         Offset = 0;
+  EFI_STATUS                    Status;
+  MS_WHEA_EARLY_STORAGE_HEADER  Header;
+  UINT16                        Checksum;
 
   if (MsWheaEntry == NULL) {
     Status = EFI_INVALID_PARAMETER;
@@ -436,7 +444,7 @@ MsWheaESAddRecordV0Internal (
   }
 
   Status = MsWheaESFindSlot (
-             sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0),
+             sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0),
              &Offset
              );
 
@@ -479,7 +487,7 @@ MsWheaESAddRecordV0Internal (
              &Checksum
              );
 
-   if (EFI_ERROR (Status)) {
+  if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
 
@@ -541,8 +549,8 @@ MsWheaESAddRecordV0 (
   IN  EFI_GUID  *PartitionId OPTIONAL
   )
 {
-  MS_WHEA_EARLY_STORAGE_ENTRY_V0   WheaV0;
-  
+  MS_WHEA_EARLY_STORAGE_ENTRY_V0  WheaV0;
+
   ZeroMem (
     &WheaV0,
     sizeof (WheaV0)

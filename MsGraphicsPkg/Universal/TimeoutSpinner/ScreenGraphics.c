@@ -12,10 +12,9 @@
 
 #include <PiDxe.h>
 
-
 #include "ScreenGraphics.h"
 
-STATIC CONST UINTN                   gStep = 100 / STEPS_PER_ROTATION;
+STATIC CONST UINTN                   gStep            = 100 / STEPS_PER_ROTATION;
 STATIC EFI_GRAPHICS_OUTPUT_PROTOCOL  *gGraphicsOutput = NULL;
 
 /**
@@ -29,14 +28,14 @@ STATIC EFI_GRAPHICS_OUTPUT_PROTOCOL  *gGraphicsOutput = NULL;
 EFI_STATUS
 EFIAPI
 GetBitmapFromFile (
-  IN SPINNER_CONTAINER *Spc
+  IN SPINNER_CONTAINER  *Spc
 
   )
 {
-  EFI_STATUS        Status;
-  UINTN             BMPDataSize      = 0;
-  UINT8             *BMPData         = NULL;
-  TIMEOUT_CONTAINER *Toc;
+  EFI_STATUS         Status;
+  UINTN              BMPDataSize = 0;
+  UINT8              *BMPData    = NULL;
+  TIMEOUT_CONTAINER  *Toc;
 
   // Get the specified image from FV.
   //
@@ -90,12 +89,12 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 DisplayBitmap (
-  IN TIMEOUT_CONTAINER *Toc
+  IN TIMEOUT_CONTAINER  *Toc
   )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-  //Verify icon exists
+  // Verify icon exists
   if (Toc == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -104,20 +103,20 @@ DisplayBitmap (
     return EFI_INVALID_PARAMETER;
   }
 
-  //Render the bitmap into the pixel buffer
-  if (gGraphicsOutput!=NULL) {
-  Status = gGraphicsOutput->Blt (
-                              gGraphicsOutput,
-                              Toc->Icon->BitmapData,
-                              EfiBltBufferToVideo,
-                              0,
-                              0,
-                              Toc->Icon->UpperLeft.X,
-                              Toc->Icon->UpperLeft.Y,
-                              Toc->Icon->Width,
-                              Toc->Icon->Height,
-                              0
-                              );
+  // Render the bitmap into the pixel buffer
+  if (gGraphicsOutput != NULL) {
+    Status = gGraphicsOutput->Blt (
+                                gGraphicsOutput,
+                                Toc->Icon->BitmapData,
+                                EfiBltBufferToVideo,
+                                0,
+                                0,
+                                Toc->Icon->UpperLeft.X,
+                                Toc->Icon->UpperLeft.Y,
+                                Toc->Icon->Width,
+                                Toc->Icon->Height,
+                                0
+                                );
   }
 
   return Status;
@@ -138,13 +137,13 @@ DisplayBitmap (
 EFI_STATUS
 EFIAPI
 CaptureOriginalBackground (
-  IN TIMEOUT_CONTAINER *Toc
+  IN TIMEOUT_CONTAINER  *Toc
   )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
-  UINTN      SquareSize;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINTN       SquareSize;
 
-  //Verify necessary structure exist
+  // Verify necessary structure exist
   if (Toc == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -153,20 +152,19 @@ CaptureOriginalBackground (
     return EFI_INVALID_PARAMETER;
   }
 
-
   SquareSize = sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL) *
-                 (Toc->Spinner->OuterRadius * 2 + 1) *
-                 (Toc->Spinner->OuterRadius * 2 + 1);
+               (Toc->Spinner->OuterRadius * 2 + 1) *
+               (Toc->Spinner->OuterRadius * 2 + 1);
 
-  //Create Pixel Buffer
+  // Create Pixel Buffer
   Toc->OriginalSquare = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)AllocateZeroPool (SquareSize);
 
   if (Toc->OriginalSquare == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  //Capture the initial square from the video out
-  if (gGraphicsOutput!=NULL) {
+  // Capture the initial square from the video out
+  if (gGraphicsOutput != NULL) {
     Status = gGraphicsOutput->Blt (
                                 gGraphicsOutput,
                                 Toc->OriginalSquare,
@@ -198,12 +196,12 @@ CaptureOriginalBackground (
 EFI_STATUS
 EFIAPI
 RestoreBackground (
-  IN TIMEOUT_CONTAINER *Toc
+  IN TIMEOUT_CONTAINER  *Toc
   )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-  //Verify original data exists
+  // Verify original data exists
   if (Toc == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -212,8 +210,8 @@ RestoreBackground (
     return EFI_INVALID_PARAMETER;
   }
 
-  //Restore initial video out square from stored pixel buffer
-  if (gGraphicsOutput!=NULL) {
+  // Restore initial video out square from stored pixel buffer
+  if (gGraphicsOutput != NULL) {
     Status = gGraphicsOutput->Blt (
                                 gGraphicsOutput,
                                 Toc->OriginalSquare,
@@ -243,10 +241,10 @@ RestoreBackground (
 VOID
 EFIAPI
 FreeSpinnerMemory (
-  IN TIMEOUT_CONTAINER *Toc
+  IN TIMEOUT_CONTAINER  *Toc
   )
 {
-  //Free All Allocated Pools
+  // Free All Allocated Pools
   if (Toc != NULL) {
     if (Toc->Icon != NULL) {
       if (Toc->Icon->BitmapData != NULL) {
@@ -283,11 +281,11 @@ FreeSpinnerMemory (
 EFI_STATUS
 EFIAPI
 SetupTimeoutContainer (
-  IN SPINNER_CONTAINER *Spc
+  IN SPINNER_CONTAINER  *Spc
   )
 {
-  EFI_STATUS        Status;
-  TIMEOUT_CONTAINER *Toc;
+  EFI_STATUS         Status;
+  TIMEOUT_CONTAINER  *Toc;
 
   if (gGraphicsOutput == NULL) {
     Status = gBS->LocateProtocol (
@@ -298,13 +296,13 @@ SetupTimeoutContainer (
 
     if (EFI_ERROR (Status)) {
       gGraphicsOutput = NULL;
-      DEBUG ((DEBUG_ERROR,"%a: Error %r locating GOP\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: Error %r locating GOP\n", __FUNCTION__, Status));
       return Status;
     }
   }
 
-  //Allocate Container
-  Toc = (TIMEOUT_CONTAINER*)AllocateZeroPool (sizeof (TIMEOUT_CONTAINER));
+  // Allocate Container
+  Toc = (TIMEOUT_CONTAINER *)AllocateZeroPool (sizeof (TIMEOUT_CONTAINER));
   if (NULL == Toc) {
     DEBUG ((DEBUG_ERROR, "%a: Failed to allocate memory pool for timeout container\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
@@ -313,7 +311,7 @@ SetupTimeoutContainer (
 
   Spc->Toc = Toc;
 
-  //Allocate structure for Bitmap Icon
+  // Allocate structure for Bitmap Icon
   Toc->Icon = (TIMEOUT_ICON *)AllocateZeroPool (sizeof (TIMEOUT_ICON));
   if (NULL == Toc->Icon) {
     DEBUG ((DEBUG_ERROR, "%a: Failed to allocate memory pool for timeout icon\n", __FUNCTION__));
@@ -321,7 +319,7 @@ SetupTimeoutContainer (
     goto Error;
   }
 
-  //Allocate Structure for Progress Spinner
+  // Allocate Structure for Progress Spinner
   Toc->Spinner = (TIMEOUT_SPINNER *)AllocateZeroPool (sizeof (TIMEOUT_SPINNER));
   if (Toc->Spinner == NULL) {
     DEBUG ((DEBUG_ERROR, "%a: Failed to allocate memory pool for timeout container\n", __FUNCTION__));
@@ -329,43 +327,43 @@ SetupTimeoutContainer (
     goto Error;
   }
 
-  //Load Bitmap from File
+  // Load Bitmap from File
   Status = GetBitmapFromFile (Spc);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: Failed to get IconFile. Code=%r\n", __FUNCTION__, Status));
     goto Error;
   }
 
-  //Calculate Outer Radius, Inner Radius based on the size of the Icon
-  Toc->Spinner->OuterRadius = (UINT16) MIN (Toc->Icon->Width, Toc->Icon->Height);
+  // Calculate Outer Radius, Inner Radius based on the size of the Icon
+  Toc->Spinner->OuterRadius = (UINT16)MIN (Toc->Icon->Width, Toc->Icon->Height);
   Toc->Spinner->InnerRadius = Toc->Spinner->OuterRadius * 85 / 100;
 
-  //Calculate the Icon position on the screen based on location requested
+  // Calculate the Icon position on the screen based on location requested
   switch (Spc->Location) {
-  case Location_LR_Corner:
-    Toc->Icon->UpperLeft.X = gGraphicsOutput->Mode->Info->HorizontalResolution - (Toc->Icon->Width / 2) - Toc->Spinner->OuterRadius - 1;
-    Toc->Icon->UpperLeft.Y = gGraphicsOutput->Mode->Info->VerticalResolution - (Toc->Icon->Height / 2) - Toc->Spinner->OuterRadius - 1;
-    break;
+    case Location_LR_Corner:
+      Toc->Icon->UpperLeft.X = gGraphicsOutput->Mode->Info->HorizontalResolution - (Toc->Icon->Width / 2) - Toc->Spinner->OuterRadius - 1;
+      Toc->Icon->UpperLeft.Y = gGraphicsOutput->Mode->Info->VerticalResolution - (Toc->Icon->Height / 2) - Toc->Spinner->OuterRadius - 1;
+      break;
 
-  case Location_LL_Corner:
-    Toc->Icon->UpperLeft.X = Toc->Spinner->OuterRadius - (Toc->Icon->Width / 2);
-    Toc->Icon->UpperLeft.Y = gGraphicsOutput->Mode->Info->VerticalResolution - (Toc->Icon->Height / 2) - Toc->Spinner->OuterRadius - 1;
-    break;
+    case Location_LL_Corner:
+      Toc->Icon->UpperLeft.X = Toc->Spinner->OuterRadius - (Toc->Icon->Width / 2);
+      Toc->Icon->UpperLeft.Y = gGraphicsOutput->Mode->Info->VerticalResolution - (Toc->Icon->Height / 2) - Toc->Spinner->OuterRadius - 1;
+      break;
 
-  case Location_UR_Corner:
-    Toc->Icon->UpperLeft.X = gGraphicsOutput->Mode->Info->HorizontalResolution - (Toc->Icon->Width / 2) -  Toc->Spinner->OuterRadius - 1;
-    Toc->Icon->UpperLeft.Y = Toc->Spinner->OuterRadius - (Toc->Icon->Height / 2);
-    break;
+    case Location_UR_Corner:
+      Toc->Icon->UpperLeft.X = gGraphicsOutput->Mode->Info->HorizontalResolution - (Toc->Icon->Width / 2) -  Toc->Spinner->OuterRadius - 1;
+      Toc->Icon->UpperLeft.Y = Toc->Spinner->OuterRadius - (Toc->Icon->Height / 2);
+      break;
 
-  case Location_UL_Corner:
-    Toc->Icon->UpperLeft.X = Toc->Spinner->OuterRadius - (Toc->Icon->Width / 2);
-    Toc->Icon->UpperLeft.Y = Toc->Spinner->OuterRadius - (Toc->Icon->Height / 2);
-    break;
+    case Location_UL_Corner:
+      Toc->Icon->UpperLeft.X = Toc->Spinner->OuterRadius - (Toc->Icon->Width / 2);
+      Toc->Icon->UpperLeft.Y = Toc->Spinner->OuterRadius - (Toc->Icon->Height / 2);
+      break;
 
-  case Location_Center:
-    Toc->Icon->UpperLeft.X = (gGraphicsOutput->Mode->Info->HorizontalResolution / 2) - (Toc->Icon->Width / 2)  - 1;
-    Toc->Icon->UpperLeft.Y = (gGraphicsOutput->Mode->Info->VerticalResolution / 2) - (Toc->Icon->Height / 2) - 1;
-    break;
+    case Location_Center:
+      Toc->Icon->UpperLeft.X = (gGraphicsOutput->Mode->Info->HorizontalResolution / 2) - (Toc->Icon->Width / 2)  - 1;
+      Toc->Icon->UpperLeft.Y = (gGraphicsOutput->Mode->Info->VerticalResolution / 2) - (Toc->Icon->Height / 2) - 1;
+      break;
   }
 
   // Calculate the Spinner origin (center of circle) within the Icon
@@ -380,7 +378,7 @@ SetupTimeoutContainer (
     goto Error;
   }
 
-  Status  = UpdateSpinnerGraphic (Toc);   // Don't wait for a timer tick to display the first image
+  Status = UpdateSpinnerGraphic (Toc);    // Don't wait for a timer tick to display the first image
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: Initial Graphics Update failed. Code = %r\n", __FUNCTION__, Status));
@@ -410,33 +408,34 @@ Error:
 EFI_STATUS
 EFIAPI
 UpdateSpinnerGraphic (
-  IN TIMEOUT_CONTAINER *Toc
+  IN TIMEOUT_CONTAINER  *Toc
   )
 {
   UINTN       j;
   EFI_STATUS  Status;
 
-  //Verify containers exists
+  // Verify containers exists
   if (Toc == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (Toc->Icon == NULL || Toc->Spinner == NULL) {
+  if ((Toc->Icon == NULL) || (Toc->Spinner == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  //If First iteration, i.e. ProgressCircle hasn't been initialized yet
+  // If First iteration, i.e. ProgressCircle hasn't been initialized yet
   if (Toc->Spinner->pc == NULL) {
-    //Draw Icon
+    // Draw Icon
     Status = DisplayBitmap (Toc);
-    if (EFI_ERROR (Status))
+    if (EFI_ERROR (Status)) {
       return Status;
+    }
 
-    //Get Frame buffer and pixels per scan line
-    UINT8 *fb = (UINT8*)((UINTN)(gGraphicsOutput->Mode->FrameBufferBase));
-    UINTN ppsl = (UINTN)(gGraphicsOutput->Mode->Info->PixelsPerScanLine);
+    // Get Frame buffer and pixels per scan line
+    UINT8  *fb  = (UINT8 *)((UINTN)(gGraphicsOutput->Mode->FrameBufferBase));
+    UINTN  ppsl = (UINTN)(gGraphicsOutput->Mode->Info->PixelsPerScanLine);
 
-    //Create Spinner
+    // Create Spinner
     Toc->Spinner->pc = new_ProgressCircle (
                          &Toc->Spinner->Origin,
                          fb,
@@ -451,16 +450,16 @@ UpdateSpinnerGraphic (
 
     DrawAll (Toc->Spinner->pc, BACKGROUND_COLOR);
 
-    //Initialize Step
+    // Initialize Step
     Toc->Spinner->CurrentStep = gStep;
   }
 
-  //Update Progress Circle
+  // Update Progress Circle
   for (j = Toc->Spinner->CurrentStep; j < Toc->Spinner->CurrentStep + (gStep*BAR_LENGTH_COEFFICIENT); j++) {
     DrawSegment (Toc->Spinner->pc, (UINT8)(j % 100)+1, SPINNER_COLOR);
   }
 
-  //clear old step
+  // clear old step
   for (j = Toc->Spinner->CurrentStep-gStep; j < Toc->Spinner->CurrentStep; j++) {
     DrawSegment (Toc->Spinner->pc, (UINT8)(j % 100)+1, BACKGROUND_COLOR);
   }

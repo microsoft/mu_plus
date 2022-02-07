@@ -11,8 +11,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #ifndef __DFCI_SETTING_PERMISSIONS_H__
-#define __DFCI_SETTING_PERMISSIONS_H__  
-
+#define __DFCI_SETTING_PERMISSIONS_H__
 
 /**
 Define the DFCI_SETTING_PERMISSIONS_PROTOCOL related structures
@@ -24,19 +23,19 @@ Get the Permission Mask for a given setting
 
 @param[in]  This:           Permission Protocol
 @param[in]  Id:             Setting ID to Get Permission for
-@param[OUT] PermissionMask  Permission Mask for the requested setting.     
+@param[OUT] PermissionMask  Permission Mask for the requested setting.
 
 @retval EFI_SUCCESS - PermissionMask Parameter value is set to the value in System Permissions
-@retval Error -  Error and PermissionMask Parameter is not updated. 
+@retval Error -  Error and PermissionMask Parameter is not updated.
 
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_PERMISSIONS_GET_PERMISSION) (
+(EFIAPI *DFCI_SETTING_PERMISSIONS_GET_PERMISSION)(
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
   IN  DFCI_SETTING_ID_STRING                   Id,
   OUT DFCI_PERMISSION_MASK                    *PermissionMask
-);
+  );
 
 /*
 Clear All the System Permissions
@@ -50,7 +49,7 @@ Clear All the System Permissions
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_PERMISSIONS_RESET_PERMISSIONS) (
+(EFIAPI *DFCI_SETTING_PERMISSIONS_RESET_PERMISSIONS)(
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
   IN  CONST DFCI_AUTH_TOKEN                   *AuthToken
   );
@@ -67,7 +66,7 @@ Inform Permissions that the Owner Key Changed
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_PERMISSIONS_IDENTITY_CHANGE) (
+(EFIAPI *DFCI_SETTING_PERMISSIONS_IDENTITY_CHANGE)(
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
   IN  CONST DFCI_AUTH_TOKEN                   *AuthToken,
   IN        DFCI_IDENTITY_ID                   CertIdentity,
@@ -79,13 +78,13 @@ EFI_STATUS
 //
 #pragma pack (push, 1)
 struct _DFCI_SETTING_PERMISSIONS_PROTOCOL {
-  DFCI_SETTING_PERMISSIONS_GET_PERMISSION     GetPermission;
-  DFCI_SETTING_PERMISSIONS_RESET_PERMISSIONS  ResetPermissions;
-  DFCI_SETTING_PERMISSIONS_IDENTITY_CHANGE    IdentityChange;
+  DFCI_SETTING_PERMISSIONS_GET_PERMISSION       GetPermission;
+  DFCI_SETTING_PERMISSIONS_RESET_PERMISSIONS    ResetPermissions;
+  DFCI_SETTING_PERMISSIONS_IDENTITY_CHANGE      IdentityChange;
 };
+
 #pragma pack (pop)
 
-
-extern EFI_GUID     gDfciSettingPermissionsProtocolGuid;
+extern EFI_GUID  gDfciSettingPermissionsProtocolGuid;
 
 #endif // __DFCI_SETTING_PERMISSIONS_H__

@@ -20,11 +20,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "DxeDebugLibRouter.h"
 
-static volatile BOOLEAN       mIsRscAvailable = FALSE;
-static volatile BOOLEAN       mIsBSAvailable = TRUE;
-EFI_EVENT                     mReportStatusCodeRegisterEvent;
-EFI_EVENT                     mExitBootServicesRegisterEvent;
-static EFI_BOOT_SERVICES     *mBS = NULL;
+static volatile BOOLEAN   mIsRscAvailable = FALSE;
+static volatile BOOLEAN   mIsBSAvailable  = TRUE;
+EFI_EVENT                 mReportStatusCodeRegisterEvent;
+EFI_EVENT                 mExitBootServicesRegisterEvent;
+static EFI_BOOT_SERVICES  *mBS = NULL;
 
 /**
   Report Status Code Callback Handler
@@ -37,15 +37,15 @@ static EFI_BOOT_SERVICES     *mBS = NULL;
 **/
 VOID
 EFIAPI
-ReportStatusCodeHandlerCallback(
-    IN  EFI_EVENT    Event,
-    IN  VOID    *Context
-) {
-    mIsRscAvailable = TRUE;
-    mBS->CloseEvent (mReportStatusCodeRegisterEvent);
-    return;
+ReportStatusCodeHandlerCallback (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
+{
+  mIsRscAvailable = TRUE;
+  mBS->CloseEvent (mReportStatusCodeRegisterEvent);
+  return;
 }
-
 
 /**
   Exit Boot Services Callback Handler
@@ -58,19 +58,21 @@ ReportStatusCodeHandlerCallback(
 **/
 VOID
 EFIAPI
-ExitBootServicesHandlerCallback(
-    IN  EFI_EVENT    Event,
-    IN  VOID    *Context
-) {
-    EFI_STATUS Status;
-    mIsBSAvailable = FALSE;
-    if(mExitBootServicesRegisterEvent != NULL) {
-      Status = mBS->CloseEvent(mExitBootServicesRegisterEvent);
-      ASSERT_EFI_ERROR (Status);
-    }
-    return;
-}
+ExitBootServicesHandlerCallback (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
+{
+  EFI_STATUS  Status;
 
+  mIsBSAvailable = FALSE;
+  if (mExitBootServicesRegisterEvent != NULL) {
+    Status = mBS->CloseEvent (mExitBootServicesRegisterEvent);
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  return;
+}
 
 /**
 * The constructor sets up the callback routine for ReportStatusCode if
@@ -84,63 +86,70 @@ ExitBootServicesHandlerCallback(
 **/
 EFI_STATUS
 EFIAPI
-DxeDebugLibConstructor(
-    IN      EFI_HANDLE                ImageHandle,
-    IN      EFI_SYSTEM_TABLE          *SystemTable
-) {
-    EFI_STATUS                 Status;
-    VOID*                      *mRscHandlerProtocol;
-    VOID*                      Registration;
+DxeDebugLibConstructor (
+  IN      EFI_HANDLE        ImageHandle,
+  IN      EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS  Status;
+  VOID        **mRscHandlerProtocol;
+  VOID        *Registration;
 
+  //
+  // Get BootServices Table
+  //
+  mBS = SystemTable->BootServices;
+
+  //
+  // Check if Report Status Code handler is installed
+  //
+  Status = mBS->LocateProtocol (
+                  &gMsSerialStatusCodeHandlerDxeProtocolGuid,
+                  NULL,
+                  (VOID **)&mRscHandlerProtocol
+                  );
+
+  //
+  // Report Status Code may become available later
+  //
+  if (EFI_ERROR (Status)) {
+    Status = mBS->CreateEvent (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_NOTIFY,
+                    ReportStatusCodeHandlerCallback,
+                    NULL,
+                    &mReportStatusCodeRegisterEvent
+                    );
 
     //
-    // Get BootServices Table
+    // If tag GUID is installed switch over to Report Status Code
     //
-    mBS = SystemTable->BootServices;
-
-    //
-    // Check if Report Status Code handler is installed
-    //
-    Status = mBS->LocateProtocol(&gMsSerialStatusCodeHandlerDxeProtocolGuid,
-                                 NULL,
-                                 (VOID**)&mRscHandlerProtocol);
-
-    //
-    // Report Status Code may become available later
-    //
-    if(EFI_ERROR(Status)){
-      Status = mBS->CreateEvent(EVT_NOTIFY_SIGNAL,
-                                TPL_NOTIFY,
-                                ReportStatusCodeHandlerCallback,
-                                NULL,
-                                &mReportStatusCodeRegisterEvent);
-
-        //
-        // If tag GUID is installed switch over to Report Status Code
-        //
-        if (!EFI_ERROR(Status)) {
-            Status = mBS->RegisterProtocolNotify(&gMsSerialStatusCodeHandlerDxeProtocolGuid,
-                                                 mReportStatusCodeRegisterEvent,
-                                                 &Registration);
-        }
+    if (!EFI_ERROR (Status)) {
+      Status = mBS->RegisterProtocolNotify (
+                      &gMsSerialStatusCodeHandlerDxeProtocolGuid,
+                      mReportStatusCodeRegisterEvent,
+                      &Registration
+                      );
     }
-    else {
-      mIsRscAvailable = TRUE;
-    }
+  } else {
+    mIsRscAvailable = TRUE;
+  }
 
-    //
-    // Setup callback in case Exit BS is called and other callbacks needs to print
-    // This should be set to a level higher than Status Code Handler callback
-    //
-    Status = mBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
-                                TPL_NOTIFY,
-                                ExitBootServicesHandlerCallback,
-                                NULL,
-                                &gEfiEventExitBootServicesGuid,
-                                &mExitBootServicesRegisterEvent);
-    ASSERT_EFI_ERROR (Status);
+  //
+  // Setup callback in case Exit BS is called and other callbacks needs to print
+  // This should be set to a level higher than Status Code Handler callback
+  //
+  Status = mBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_NOTIFY,
+                  ExitBootServicesHandlerCallback,
+                  NULL,
+                  &gEfiEventExitBootServicesGuid,
+                  &mExitBootServicesRegisterEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -155,13 +164,15 @@ DxeDebugLibConstructor(
 **/
 EFI_STATUS
 EFIAPI
-DxeDebugLibDestructor(
-    IN      EFI_HANDLE                ImageHandle,
-    IN      EFI_SYSTEM_TABLE          *SystemTable
-) {
-  EFI_STATUS Status;
-  if(mExitBootServicesRegisterEvent != NULL) {
-    Status = mBS->CloseEvent(mExitBootServicesRegisterEvent);
+DxeDebugLibDestructor (
+  IN      EFI_HANDLE        ImageHandle,
+  IN      EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS  Status;
+
+  if (mExitBootServicesRegisterEvent != NULL) {
+    Status = mBS->CloseEvent (mExitBootServicesRegisterEvent);
     ASSERT_EFI_ERROR (Status);
   }
 
@@ -189,23 +200,22 @@ DebugPrint (
   IN  UINTN        ErrorLevel,
   IN  CONST CHAR8  *Format,
   ...
-) {
-  VA_LIST       Marker;
-  DEBUG_PRINT   *DebugPrintFunction;
+  )
+{
+  VA_LIST      Marker;
+  DEBUG_PRINT  *DebugPrintFunction;
 
   if (mIsBSAvailable && mIsRscAvailable) {
     DebugPrintFunction = ReportStatusCodeDebugPrint;
-  }
-  else {
+  } else {
     DebugPrintFunction = SerialDebugPrint;
   }
 
-  //Forward the DebugPrint to the correct function
+  // Forward the DebugPrint to the correct function
   VA_START (Marker, Format);
-  (*DebugPrintFunction)(ErrorLevel,Format,Marker);
+  (*DebugPrintFunction)(ErrorLevel, Format, Marker);
   VA_END (Marker);
 }
-
 
 /**
 If any bit in ErrorLevel is also set in DebugPrintErrorLevelLib function
@@ -224,23 +234,24 @@ record length, then directly return and not print it.
 **/
 VOID
 EFIAPI
-DebugVPrint(
+DebugVPrint (
   IN  UINTN        ErrorLevel,
   IN  CONST CHAR8  *Format,
   VA_LIST          VaListMarker
-) {
-  DEBUG_PRINT   *DebugPrintFunction;
+  )
+{
+  DEBUG_PRINT  *DebugPrintFunction;
 
   if (mIsBSAvailable && mIsRscAvailable) {
     DebugPrintFunction = ReportStatusCodeDebugPrint;
-  }
-  else {
+  } else {
     DebugPrintFunction = SerialDebugPrint;
   }
 
-  //Forward the DebugPrint to the correct function
-  (*DebugPrintFunction)(ErrorLevel,Format,VaListMarker);
+  // Forward the DebugPrint to the correct function
+  (*DebugPrintFunction)(ErrorLevel, Format, VaListMarker);
 }
+
 // END
 
 /**
@@ -272,19 +283,17 @@ DebugAssert (
   IN CONST CHAR8  *Description
   )
 {
-  DEBUG_ASSERT   *DebugAssertFunction;
+  DEBUG_ASSERT  *DebugAssertFunction;
 
   if (mIsBSAvailable && mIsRscAvailable) {
     DebugAssertFunction = ReportStatusCodeDebugAssert;
-  }
-  else {
+  } else {
     DebugAssertFunction = SerialDebugAssert;
   }
 
-  //Forward the DebugAssert to the correct function
-  (*DebugAssertFunction)(FileName,LineNumber,Description);
+  // Forward the DebugAssert to the correct function
+  (*DebugAssertFunction)(FileName, LineNumber, Description);
 }
-
 
 /**
   Fills a target buffer with PcdDebugClearMemoryValue, and returns the target buffer.
@@ -316,9 +325,8 @@ DebugClearMemory (
   //
   // SetMem() checks for the the ASSERT() condition on Length and returns Buffer
   //
-  return SetMem (Buffer, Length, PcdGet8(PcdDebugClearMemoryValue));
+  return SetMem (Buffer, Length, PcdGet8 (PcdDebugClearMemoryValue));
 }
-
 
 /**
   Returns TRUE if ASSERT() macros are enabled.
@@ -336,9 +344,8 @@ DebugAssertEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG() macros are enabled.
@@ -356,9 +363,8 @@ DebugPrintEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_PRINT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_PRINT_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG_CODE() macros are enabled.
@@ -376,9 +382,8 @@ DebugCodeEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_CODE_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_CODE_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG_CLEAR_MEMORY() macro is enabled.
@@ -396,7 +401,7 @@ DebugClearMemoryEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED) != 0);
 }
 
 /**
@@ -411,8 +416,8 @@ DebugClearMemoryEnabled (
 BOOLEAN
 EFIAPI
 DebugPrintLevelEnabled (
-  IN  CONST UINTN        ErrorLevel
+  IN  CONST UINTN  ErrorLevel
   )
 {
-  return (BOOLEAN) ((ErrorLevel & PcdGet32(PcdFixedDebugPrintErrorLevel)) != 0);
+  return (BOOLEAN)((ErrorLevel & PcdGet32 (PcdFixedDebugPrintErrorLevel)) != 0);
 }

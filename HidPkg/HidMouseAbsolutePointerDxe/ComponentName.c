@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include "HidMouseAbsolutePointer.h"
 
 //
@@ -24,16 +23,15 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL  mHidMouseAbsolutePoin
 //
 // EFI Component Name 2 Protocol
 //
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL mHidMouseAbsolutePointerComponentName2 = {
-  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) HidMouseAbsolutePointerComponentNameGetDriverName,
-  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) HidMouseAbsolutePointerComponentNameGetControllerName,
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL  mHidMouseAbsolutePointerComponentName2 = {
+  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME)HidMouseAbsolutePointerComponentNameGetDriverName,
+  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME)HidMouseAbsolutePointerComponentNameGetControllerName,
   "en"
 };
 
-
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mHidMouseAbsolutePointerDriverNameTable[] = {
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE  mHidMouseAbsolutePointerDriverNameTable[] = {
   { "eng;en", L"HID Mouse Absolute Pointer Driver" },
-  { NULL , NULL }
+  { NULL,     NULL                                 }
 };
 
 /**
@@ -148,17 +146,17 @@ HidMouseAbsolutePointerComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   )
 {
-  EFI_STATUS                        Status;
-  HID_MOUSE_ABSOLUTE_POINTER_DEV    *HidMouseDev;
-  HID_POINTER_PROTOCOL              *HidMouseProtocol;
-  EFI_ABSOLUTE_POINTER_PROTOCOL     *AbsolutePointerProtocol;
+  EFI_STATUS                      Status;
+  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
+  HID_POINTER_PROTOCOL            *HidMouseProtocol;
+  EFI_ABSOLUTE_POINTER_PROTOCOL   *AbsolutePointerProtocol;
 
   //
   // This is a device driver, so ChildHandle must be NULL.
@@ -173,7 +171,7 @@ HidMouseAbsolutePointerComponentNameGetControllerName (
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gHidPointerProtocolGuid,
-                  (VOID **) &HidMouseProtocol,
+                  (VOID **)&HidMouseProtocol,
                   mHidMouseAbsolutePointerDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -192,13 +190,14 @@ HidMouseAbsolutePointerComponentNameGetControllerName (
   if (Status != EFI_ALREADY_STARTED) {
     return EFI_UNSUPPORTED;
   }
+
   //
   // Get the device context
   //
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gEfiAbsolutePointerProtocolGuid,
-                  (VOID **) &AbsolutePointerProtocol,
+                  (VOID **)&AbsolutePointerProtocol,
                   mHidMouseAbsolutePointerDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL

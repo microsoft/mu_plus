@@ -25,21 +25,21 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "MsWheaEarlyStorageMgr.h"
 #include "MsWheaReportList.h"
 
-STATIC EFI_RSC_HANDLER_PROTOCOL       *mRscHandlerProtocol    = NULL;
+STATIC EFI_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol = NULL;
 
-STATIC EFI_EVENT                      mWriteArchAvailEvent    = NULL;
-STATIC EFI_EVENT                      mVarArchAvailEvent      = NULL;
-STATIC EFI_EVENT                      mExitBootServicesEvent  = NULL;
-STATIC EFI_EVENT                      mClockArchAvailEvent    = NULL;
-STATIC EFI_EVENT                      mVarPolicyAvailEvent    = NULL;
+STATIC EFI_EVENT  mWriteArchAvailEvent   = NULL;
+STATIC EFI_EVENT  mVarArchAvailEvent     = NULL;
+STATIC EFI_EVENT  mExitBootServicesEvent = NULL;
+STATIC EFI_EVENT  mClockArchAvailEvent   = NULL;
+STATIC EFI_EVENT  mVarPolicyAvailEvent   = NULL;
 
-STATIC BOOLEAN                        mWriteArchAvailable     = FALSE;
-STATIC BOOLEAN                        mVarArchAvailable       = FALSE;
-STATIC BOOLEAN                        mExitBootHasOccurred    = FALSE;
-STATIC BOOLEAN                        mClockArchAvailable     = FALSE;
-STATIC BOOLEAN                        mVarPolicyAvailable     = FALSE;
+STATIC BOOLEAN  mWriteArchAvailable  = FALSE;
+STATIC BOOLEAN  mVarArchAvailable    = FALSE;
+STATIC BOOLEAN  mExitBootHasOccurred = FALSE;
+STATIC BOOLEAN  mClockArchAvailable  = FALSE;
+STATIC BOOLEAN  mVarPolicyAvailable  = FALSE;
 
-STATIC LIST_ENTRY                     mMsWheaEntryList;
+STATIC LIST_ENTRY  mMsWheaEntryList;
 
 /**
 
@@ -53,25 +53,27 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaGetVariable (
-  IN     CHAR16                      *VariableName,
-  IN     EFI_GUID                    *VendorGuid,
-  OUT    UINT32                      *Attributes,    OPTIONAL
+  IN     CHAR16 *VariableName,
+  IN     EFI_GUID *VendorGuid,
+  OUT    UINT32 *Attributes, OPTIONAL
   IN OUT UINTN                       *DataSize,
   OUT    VOID                        *Data           OPTIONAL
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if ((gRT == NULL) || (gRT->GetVariable == NULL)) {
     Status = EFI_NOT_READY;
     goto Cleanup;
   }
 
-  Status = gRT->GetVariable (VariableName,
-                             VendorGuid,
-                             Attributes,
-                             DataSize,
-                             Data);
+  Status = gRT->GetVariable (
+                  VariableName,
+                  VendorGuid,
+                  Attributes,
+                  DataSize,
+                  Data
+                  );
 
 Cleanup:
   return Status;
@@ -89,21 +91,23 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaGetNextVariableName (
-  IN OUT UINTN                    *VariableNameSize,
-  IN OUT CHAR16                   *VariableName,
-  IN OUT EFI_GUID                 *VendorGuid
+  IN OUT UINTN     *VariableNameSize,
+  IN OUT CHAR16    *VariableName,
+  IN OUT EFI_GUID  *VendorGuid
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if ((gRT == NULL) || (gRT->GetNextVariableName == NULL)) {
     Status = EFI_NOT_READY;
     goto Cleanup;
   }
 
-  Status = gRT->GetNextVariableName (VariableNameSize,
-                                     VariableName,
-                                     VendorGuid);
+  Status = gRT->GetNextVariableName (
+                  VariableNameSize,
+                  VariableName,
+                  VendorGuid
+                  );
 
 Cleanup:
   return Status;
@@ -120,25 +124,27 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaSetVariable (
-  IN  CHAR16                       *VariableName,
-  IN  EFI_GUID                     *VendorGuid,
-  IN  UINT32                       Attributes,
-  IN  UINTN                        DataSize,
-  IN  VOID                         *Data
+  IN  CHAR16    *VariableName,
+  IN  EFI_GUID  *VendorGuid,
+  IN  UINT32    Attributes,
+  IN  UINTN     DataSize,
+  IN  VOID      *Data
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if ((gRT == NULL) || (gRT->SetVariable == NULL)) {
     Status = EFI_NOT_READY;
     goto Cleanup;
   }
 
-  Status = gRT->SetVariable (VariableName,
-                             VendorGuid,
-                             Attributes,
-                             DataSize,
-                             Data);
+  Status = gRT->SetVariable (
+                  VariableName,
+                  VendorGuid,
+                  Attributes,
+                  DataSize,
+                  Data
+                  );
 
 Cleanup:
   return Status;
@@ -152,15 +158,17 @@ Handler function that checks whether the system can write errors to UEFI variabl
 **/
 STATIC
 BOOLEAN
-ReadyToWriteVariable(
+ReadyToWriteVariable (
   VOID
   )
 {
-  BOOLEAN Res;
+  BOOLEAN  Res;
+
   Res = FALSE;
   if ((mWriteArchAvailable != FALSE) && (mVarArchAvailable != FALSE) && (mClockArchAvailable != FALSE) && (mVarPolicyAvailable != FALSE)) {
     Res = TRUE;
   }
+
   return Res;
 }
 
@@ -180,13 +188,13 @@ with specifications. Malformed data will fail the entire reporting.
 STATIC
 EFI_STATUS
 EFIAPI
-MsWheaReportHandlerDxe(
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
+MsWheaReportHandlerDxe (
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   if (mExitBootHasOccurred != FALSE) {
     // This function is locked due to Exit Boot has occurred
@@ -200,15 +208,14 @@ MsWheaReportHandlerDxe(
     goto Cleanup;
   }
 
-  if (ReadyToWriteVariable()) {
+  if (ReadyToWriteVariable ()) {
     // Variable service is ready, store to HwErrRecXXXX
-    Status = MsWheaReportHERAdd(MsWheaEntryMD);
-    DEBUG((DEBUG_INFO, "%a: error record written to flash - %r\n", __FUNCTION__, Status));
-  }
-  else {
+    Status = MsWheaReportHERAdd (MsWheaEntryMD);
+    DEBUG ((DEBUG_INFO, "%a: error record written to flash - %r\n", __FUNCTION__, Status));
+  } else {
     // Add to linked list, similar to hob list
-    Status = MsWheaAddReportEvent(&mMsWheaEntryList, MsWheaEntryMD);
-    DEBUG((DEBUG_INFO, "%a: error record added to linked list - %r\n", __FUNCTION__, Status));
+    Status = MsWheaAddReportEvent (&mMsWheaEntryList, MsWheaEntryMD);
+    DEBUG ((DEBUG_INFO, "%a: error record added to linked list - %r\n", __FUNCTION__, Status));
   }
 
 Cleanup:
@@ -238,29 +245,30 @@ STATIC
 EFI_STATUS
 EFIAPI
 MsWheaRscHandlerDxe (
-  IN EFI_STATUS_CODE_TYPE             CodeType,
-  IN EFI_STATUS_CODE_VALUE            Value,
-  IN UINT32                           Instance,
-  IN EFI_GUID                         *CallerId,
-  IN EFI_STATUS_CODE_DATA             *Data OPTIONAL
+  IN EFI_STATUS_CODE_TYPE   CodeType,
+  IN EFI_STATUS_CODE_VALUE  Value,
+  IN UINT32                 Instance,
+  IN EFI_GUID               *CallerId,
+  IN EFI_STATUS_CODE_DATA   *Data OPTIONAL
   )
 {
-  UINT8 CurrentPhase;
+  UINT8  CurrentPhase;
 
-  if (ReadyToWriteVariable()) {
+  if (ReadyToWriteVariable ()) {
     CurrentPhase = MS_WHEA_PHASE_DXE_VAR;
-  }
-  else {
+  } else {
     CurrentPhase = MS_WHEA_PHASE_DXE;
   }
 
-  return ReportHwErrRecRouter(CodeType,
-                              Value,
-                              Instance,
-                              CallerId,
-                              Data,
-                              CurrentPhase,
-                              MsWheaReportHandlerDxe);
+  return ReportHwErrRecRouter (
+           CodeType,
+           Value,
+           Instance,
+           CallerId,
+           Data,
+           CurrentPhase,
+           MsWheaReportHandlerDxe
+           );
 }
 
 /**
@@ -276,15 +284,15 @@ MsWheaProcHob (
   VOID
   )
 {
-  EFI_STATUS              Status = EFI_SUCCESS;
-  UINT16                  EntrySize = 0;
-  VOID                    *GuidHob = NULL;
+  EFI_STATUS              Status             = EFI_SUCCESS;
+  UINT16                  EntrySize          = 0;
+  VOID                    *GuidHob           = NULL;
   VOID                    *MsWheaReportEntry = NULL;
-  MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD = NULL;
+  MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD     = NULL;
 
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
-  GuidHob = GetFirstGuidHob(&gMsWheaReportServiceGuid);
+  GuidHob = GetFirstGuidHob (&gMsWheaReportServiceGuid);
   if (GuidHob == NULL) {
     // This means no reported errors during Pei phase, job done!
     Status = EFI_SUCCESS;
@@ -292,27 +300,30 @@ MsWheaProcHob (
   }
 
   while (GuidHob != NULL) {
-    MsWheaReportEntry = GET_GUID_HOB_DATA(GuidHob);
-    EntrySize = GET_GUID_HOB_DATA_SIZE(GuidHob);
-    MsWheaEntryMD = (MS_WHEA_ERROR_ENTRY_MD *) MsWheaReportEntry;
+    MsWheaReportEntry = GET_GUID_HOB_DATA (GuidHob);
+    EntrySize         = GET_GUID_HOB_DATA_SIZE (GuidHob);
+    MsWheaEntryMD     = (MS_WHEA_ERROR_ENTRY_MD *)MsWheaReportEntry;
     if ((EntrySize != 0) && (EntrySize >= MsWheaEntryMD->PayloadSize)) {
       // Report this entry
-      Status = MsWheaReportHandlerDxe(MsWheaEntryMD);
-      if (EFI_ERROR(Status) != FALSE) {
-        DEBUG((DEBUG_ERROR, "%a: Hob entry process failed %r\n", __FUNCTION__, Status));
+      Status = MsWheaReportHandlerDxe (MsWheaEntryMD);
+      if (EFI_ERROR (Status) != FALSE) {
+        DEBUG ((DEBUG_ERROR, "%a: Hob entry process failed %r\n", __FUNCTION__, Status));
       }
-    }
-    else {
-      DEBUG((DEBUG_ERROR, "%a: Bad entry: EntrySize: %08X, PayloadSize: %08X\n", __FUNCTION__,
-                                      EntrySize,
-                                      MsWheaEntryMD->PayloadSize));
+    } else {
+      DEBUG ((
+        DEBUG_ERROR,
+        "%a: Bad entry: EntrySize: %08X, PayloadSize: %08X\n",
+        __FUNCTION__,
+        EntrySize,
+        MsWheaEntryMD->PayloadSize
+        ));
     }
 
-    GuidHob = GetNextGuidHob(&gMsWheaReportServiceGuid, GET_NEXT_HOB(GuidHob));
+    GuidHob = GetNextGuidHob (&gMsWheaReportServiceGuid, GET_NEXT_HOB (GuidHob));
   }
 
 Cleanup:
-  DEBUG((DEBUG_INFO, "%a: exit...%r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: exit...%r\n", __FUNCTION__, Status));
   return Status;
 }
 
@@ -329,33 +340,33 @@ MsWheaProcList (
   VOID
   )
 {
-  EFI_STATUS              Status = EFI_SUCCESS;
+  EFI_STATUS              Status             = EFI_SUCCESS;
   VOID                    *MsWheaReportEntry = NULL;
-  MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD = NULL;
-  MS_WHEA_LIST_ENTRY      *MsWheaListEntry = NULL;
-  LIST_ENTRY              *HeadList = NULL;
+  MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD     = NULL;
+  MS_WHEA_LIST_ENTRY      *MsWheaListEntry   = NULL;
+  LIST_ENTRY              *HeadList          = NULL;
 
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
-  while (IsListEmpty(&mMsWheaEntryList) == FALSE) {
-    HeadList = GetFirstNode(&mMsWheaEntryList);
-    MsWheaListEntry = CR(HeadList, MS_WHEA_LIST_ENTRY, Link, MS_WHEA_LIST_ENTRY_SIGNATURE);
+  while (IsListEmpty (&mMsWheaEntryList) == FALSE) {
+    HeadList        = GetFirstNode (&mMsWheaEntryList);
+    MsWheaListEntry = CR (HeadList, MS_WHEA_LIST_ENTRY, Link, MS_WHEA_LIST_ENTRY_SIGNATURE);
 
     if (MsWheaListEntry->PayloadPtr != NULL) {
       MsWheaReportEntry = MsWheaListEntry->PayloadPtr;
-      MsWheaEntryMD = (MS_WHEA_ERROR_ENTRY_MD *) MsWheaReportEntry;
+      MsWheaEntryMD     = (MS_WHEA_ERROR_ENTRY_MD *)MsWheaReportEntry;
 
-      Status = MsWheaReportHandlerDxe(MsWheaEntryMD);
+      Status = MsWheaReportHandlerDxe (MsWheaEntryMD);
 
-      if (EFI_ERROR(Status) != FALSE) {
-        DEBUG((DEBUG_ERROR, "%a: Linked list entry process failed %r\n", __FUNCTION__, Status));
+      if (EFI_ERROR (Status) != FALSE) {
+        DEBUG ((DEBUG_ERROR, "%a: Linked list entry process failed %r\n", __FUNCTION__, Status));
       }
     }
 
-    MsWheaDeleteReportEvent(&mMsWheaEntryList);
+    MsWheaDeleteReportEvent (&mMsWheaEntryList);
   }
 
-  DEBUG((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: exit...\n", __FUNCTION__));
   return Status;
 }
 
@@ -368,28 +379,31 @@ This routine applies variable protocol to targeted variables. This routine shoul
 **/
 STATIC
 EFI_STATUS
-MsWheaApplyVarPolicy ()
+MsWheaApplyVarPolicy (
+  )
 {
-  EDKII_VARIABLE_POLICY_PROTOCOL      *VariablePolicy = NULL;
-  EFI_STATUS                          Status;
+  EDKII_VARIABLE_POLICY_PROTOCOL  *VariablePolicy = NULL;
+  EFI_STATUS                      Status;
 
   DEBUG ((DEBUG_INFO, "MsWheaDxe: %a() - Enter\n", __FUNCTION__));
 
-  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID**)&VariablePolicy);
+  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&VariablePolicy);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - Locating Variable Policy failed - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
   // Register policies to protect the RecordID on variable size and attributes
-  Status = RegisterBasicVariablePolicy (VariablePolicy,
-                                        &gMsWheaReportRecordIDGuid,
-                                        MS_WHEA_RECORD_ID_VAR_NAME,
-                                        MS_WHEA_RECORD_ID_VAR_LEN,
-                                        MS_WHEA_RECORD_ID_VAR_LEN,
-                                        MS_WHEA_RECORD_ID_VAR_ATTR,
-                                        (UINT32) ~MS_WHEA_RECORD_ID_VAR_ATTR,
-                                        VARIABLE_POLICY_TYPE_NO_LOCK);
+  Status = RegisterBasicVariablePolicy (
+             VariablePolicy,
+             &gMsWheaReportRecordIDGuid,
+             MS_WHEA_RECORD_ID_VAR_NAME,
+             MS_WHEA_RECORD_ID_VAR_LEN,
+             MS_WHEA_RECORD_ID_VAR_LEN,
+             MS_WHEA_RECORD_ID_VAR_ATTR,
+             (UINT32) ~MS_WHEA_RECORD_ID_VAR_ATTR,
+             VARIABLE_POLICY_TYPE_NO_LOCK
+             );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for Record ID failed - %r\n", __FUNCTION__, Status));
     goto Done;
@@ -412,26 +426,26 @@ MsWheaProcessPrevError (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  Status = MsWheaApplyVarPolicy();
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Attempting to apply variable policy failed %r\n", __FUNCTION__, Status));
+  Status = MsWheaApplyVarPolicy ();
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: Attempting to apply variable policy failed %r\n", __FUNCTION__, Status));
   }
 
-  Status = MsWheaESProcess(MsWheaReportHandlerDxe);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_WARN, "%a: CMOS entries process failed %r\n", __FUNCTION__, Status));
+  Status = MsWheaESProcess (MsWheaReportHandlerDxe);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_WARN, "%a: CMOS entries process failed %r\n", __FUNCTION__, Status));
   }
 
-  Status = MsWheaProcHob();
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Hob entries process failed %r\n", __FUNCTION__, Status));
+  Status = MsWheaProcHob ();
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: Hob entries process failed %r\n", __FUNCTION__, Status));
   }
 
-  Status = MsWheaProcList();
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: List entries process failed %r\n", __FUNCTION__, Status));
+  Status = MsWheaProcList ();
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: List entries process failed %r\n", __FUNCTION__, Status));
   }
 
   return Status;
@@ -448,25 +462,24 @@ STATIC
 VOID
 EFIAPI
 MsWheaReportDxeExitBoot (
-  IN  EFI_EVENT                   Event,
-  IN  VOID                        *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   if (mExitBootHasOccurred != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Been here already...\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: Been here already...\n", __FUNCTION__));
     Status = EFI_ACCESS_DENIED;
-  }
-  else {
+  } else {
     mExitBootHasOccurred = TRUE;
-    Status = mRscHandlerProtocol->Unregister(MsWheaRscHandlerDxe);
-    DEBUG((DEBUG_INFO, "%a: Protocol unregister result %r\n", __FUNCTION__, Status));
+    Status               = mRscHandlerProtocol->Unregister (MsWheaRscHandlerDxe);
+    DEBUG ((DEBUG_INFO, "%a: Protocol unregister result %r\n", __FUNCTION__, Status));
   }
 
-  DEBUG((DEBUG_INFO, "%a: exit...%r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: exit...%r\n", __FUNCTION__, Status));
 }
 
 /**
@@ -480,38 +493,34 @@ STATIC
 VOID
 EFIAPI
 MsWheaArchCallback (
-  IN  EFI_EVENT             Event,
-  IN  VOID                  *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
   if ((Event == mWriteArchAvailEvent) && (mWriteArchAvailable == FALSE)) {
     mWriteArchAvailable = TRUE;
-  }
-  else if ((Event == mVarArchAvailEvent) && (mVarArchAvailable == FALSE)) {
+  } else if ((Event == mVarArchAvailEvent) && (mVarArchAvailable == FALSE)) {
     mVarArchAvailable = TRUE;
-  }
-  else if ((Event == mClockArchAvailEvent) && (mClockArchAvailable == FALSE)) {
+  } else if ((Event == mClockArchAvailEvent) && (mClockArchAvailable == FALSE)) {
     mClockArchAvailable = TRUE;
-  }
-  else if ((Event == mVarPolicyAvailEvent) && (mVarPolicyAvailable == FALSE)) {
+  } else if ((Event == mVarPolicyAvailEvent) && (mVarPolicyAvailable == FALSE)) {
     mVarPolicyAvailable = TRUE;
-  }
-  else {
+  } else {
     // Unrecognized event or all available already, do nothing
     goto Cleanup;
   }
 
-  if (!ReadyToWriteVariable()) {
+  if (!ReadyToWriteVariable ()) {
     // Some protocol(s) not ready
     goto Cleanup;
   }
 
   // collect all reported events during PEI and pre-DXE Runtime
-  Status = MsWheaProcessPrevError();
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a processing hob list failed (%r)\n", __FUNCTION__, Status));
+  Status = MsWheaProcessPrevError ();
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a processing hob list failed (%r)\n", __FUNCTION__, Status));
   }
 
 Cleanup:
@@ -528,12 +537,15 @@ Populates the current time for WHEA records
                                           False otherwise.
 **/
 BOOLEAN
-PopulateTime(EFI_TIME* CurrentTime)
+PopulateTime (
+  EFI_TIME  *CurrentTime
+  )
 {
-  EFI_STATUS Status;
-  Status = gRT->GetTime(CurrentTime, NULL);
+  EFI_STATUS  Status;
+
+  Status = gRT->GetTime (CurrentTime, NULL);
   DEBUG ((DEBUG_INFO, "%a - %r\n", __FUNCTION__, Status));
-  return !EFI_ERROR(Status);
+  return !EFI_ERROR (Status);
 }
 
 /**
@@ -556,28 +568,28 @@ Gets the Record ID variable and increments it for WHEA records
 **/
 EFI_STATUS
 GetRecordID (
-  UINT64* RecordID
+  UINT64  *RecordID
   )
 {
-  UINTN Size = 0;
-  UINT32 Attr;
-  EFI_STATUS Status;
+  UINTN       Size = 0;
+  UINT32      Attr;
+  EFI_STATUS  Status;
 
-  //Get the last record ID number used
+  // Get the last record ID number used
   Status = gRT->GetVariable (
-             MS_WHEA_RECORD_ID_VAR_NAME,
-             &gMsWheaReportRecordIDGuid,
-             &Attr,
-             &Size,
-             NULL
-             );
+                  MS_WHEA_RECORD_ID_VAR_NAME,
+                  &gMsWheaReportRecordIDGuid,
+                  &Attr,
+                  &Size,
+                  NULL
+                  );
   if (Status == EFI_NOT_FOUND) {
     DEBUG ((DEBUG_INFO, "%a Record ID variable not retrieved, initializing to 0\n", __FUNCTION__));
     *RecordID = 0;
-  }
-  else if ((Status != EFI_BUFFER_TOO_SMALL) ||
-           (Attr != MS_WHEA_RECORD_ID_VAR_ATTR) ||
-           (Size != MS_WHEA_RECORD_ID_VAR_LEN)) {
+  } else if ((Status != EFI_BUFFER_TOO_SMALL) ||
+             (Attr != MS_WHEA_RECORD_ID_VAR_ATTR) ||
+             (Size != MS_WHEA_RECORD_ID_VAR_LEN))
+  {
     DEBUG ((
       DEBUG_INFO,
       "%a Record ID variable has size: 0x%x, attribute: %08x; but expecting size: 0x%x, attribute: %08x. Deleting the variable for re-initialization.\n",
@@ -588,28 +600,30 @@ GetRecordID (
       MS_WHEA_RECORD_ID_VAR_ATTR
       ));
     // This variable is whacked, flush it...
-    Status = gRT->SetVariable(MS_WHEA_RECORD_ID_VAR_NAME, &gMsWheaReportRecordIDGuid, Attr, 0, NULL);
+    Status = gRT->SetVariable (MS_WHEA_RECORD_ID_VAR_NAME, &gMsWheaReportRecordIDGuid, Attr, 0, NULL);
     ASSERT_EFI_ERROR (Status);
     *RecordID = 0;
   } else {
     Status = gRT->GetVariable (
-              MS_WHEA_RECORD_ID_VAR_NAME,
-              &gMsWheaReportRecordIDGuid,
-              &Attr,
-              &Size,
-              RecordID
-              );
+                    MS_WHEA_RECORD_ID_VAR_NAME,
+                    &gMsWheaReportRecordIDGuid,
+                    &Attr,
+                    &Size,
+                    RecordID
+                    );
     ASSERT_EFI_ERROR (Status);
   }
 
-  (*RecordID)++; //increment the record ID number
+  (*RecordID)++; // increment the record ID number
 
-  //Set the variable so the next record uses a unique record ID
-  return gRT->SetVariable(MS_WHEA_RECORD_ID_VAR_NAME,
-                          &gMsWheaReportRecordIDGuid,
-                          MS_WHEA_RECORD_ID_VAR_ATTR,
-                          Size,
-                          RecordID);
+  // Set the variable so the next record uses a unique record ID
+  return gRT->SetVariable (
+                MS_WHEA_RECORD_ID_VAR_NAME,
+                &gMsWheaReportRecordIDGuid,
+                MS_WHEA_RECORD_ID_VAR_ATTR,
+                Size,
+                RecordID
+                );
 }
 
 /**
@@ -625,35 +639,43 @@ MsWheaRegisterCallbacks (
   VOID
   )
 {
-  VOID *Registration; // Just a dummy, not used
+  VOID  *Registration; // Just a dummy, not used
 
   // register for Write Architecture Protocol Callback
-  mWriteArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiVariableWriteArchProtocolGuid,
-                                                    TPL_CALLBACK,
-                                                    MsWheaArchCallback,
-                                                    NULL,
-                                                    &Registration);
+  mWriteArchAvailEvent = EfiCreateProtocolNotifyEvent (
+                           &gEfiVariableWriteArchProtocolGuid,
+                           TPL_CALLBACK,
+                           MsWheaArchCallback,
+                           NULL,
+                           &Registration
+                           );
 
   // register for Variable Architecture Protocol Callback
-  mVarArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiVariableArchProtocolGuid,
-                                                    TPL_CALLBACK,
-                                                    MsWheaArchCallback,
-                                                    NULL,
-                                                    &Registration);
+  mVarArchAvailEvent = EfiCreateProtocolNotifyEvent (
+                         &gEfiVariableArchProtocolGuid,
+                         TPL_CALLBACK,
+                         MsWheaArchCallback,
+                         NULL,
+                         &Registration
+                         );
 
   // register for Clock Architecture Protocol Callback
-  mClockArchAvailEvent = EfiCreateProtocolNotifyEvent(&gEfiRealTimeClockArchProtocolGuid,
-                                                    TPL_CALLBACK,
-                                                    MsWheaArchCallback,
-                                                    NULL,
-                                                    &Registration);
+  mClockArchAvailEvent = EfiCreateProtocolNotifyEvent (
+                           &gEfiRealTimeClockArchProtocolGuid,
+                           TPL_CALLBACK,
+                           MsWheaArchCallback,
+                           NULL,
+                           &Registration
+                           );
 
   // register for Variable Policy Protocol Callback
-  mVarPolicyAvailEvent = EfiCreateProtocolNotifyEvent(&gEdkiiVariablePolicyProtocolGuid,
-                                                    TPL_CALLBACK,
-                                                    MsWheaArchCallback,
-                                                    NULL,
-                                                    &Registration);
+  mVarPolicyAvailEvent = EfiCreateProtocolNotifyEvent (
+                           &gEdkiiVariablePolicyProtocolGuid,
+                           TPL_CALLBACK,
+                           MsWheaArchCallback,
+                           NULL,
+                           &Registration
+                           );
 }
 
 /**
@@ -667,46 +689,48 @@ Entry to MsWheaReportDxe, register RSC handler and callback functions
 EFI_STATUS
 EFIAPI
 MsWheaReportDxeEntry (
-  IN EFI_HANDLE         ImageHandle,
-  IN EFI_SYSTEM_TABLE   *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
 
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   // init linked list, all fields should be 0
-  InitializeListHead(&mMsWheaEntryList);
+  InitializeListHead (&mMsWheaEntryList);
 
   // locate the RSC protocol
-  Status = gBS->LocateProtocol(&gEfiRscHandlerProtocolGuid, NULL, (VOID**)&mRscHandlerProtocol);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
+  Status = gBS->LocateProtocol (&gEfiRscHandlerProtocolGuid, NULL, (VOID **)&mRscHandlerProtocol);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // register for the RSC callback handler
-  Status = mRscHandlerProtocol->Register(MsWheaRscHandlerDxe, (EFI_TPL) FixedPcdGet32(PcdMsWheaRSCHandlerTpl));
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
+  Status = mRscHandlerProtocol->Register (MsWheaRscHandlerDxe, (EFI_TPL)FixedPcdGet32 (PcdMsWheaRSCHandlerTpl));
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
-  MsWheaRegisterCallbacks();
+  MsWheaRegisterCallbacks ();
 
   // register for the exit boot event
-  Status = gBS->CreateEventEx(EVT_NOTIFY_SIGNAL,
-                              TPL_NOTIFY,
-                              MsWheaReportDxeExitBoot,
-                              NULL,
-                              &gEfiEventExitBootServicesGuid,
-                              &mExitBootServicesEvent);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a failed to register of MsWhea report exit boot (%r)\n", __FUNCTION__, Status));
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_NOTIFY,
+                  MsWheaReportDxeExitBoot,
+                  NULL,
+                  &gEfiEventExitBootServicesGuid,
+                  &mExitBootServicesEvent
+                  );
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a failed to register of MsWhea report exit boot (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
 Cleanup:
-  DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
   return Status;
 }

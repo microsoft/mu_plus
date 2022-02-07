@@ -23,101 +23,106 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/TimerLib.h>
 #include <Library/DevicePathLib.h>
 
-#define MAX_SIZE_FOR_TEST (0x100000 * 20)
+#define MAX_SIZE_FOR_TEST  (0x100000 * 20)
 
-#define ONE_MICROSECOND (1000)
-#define ONE_MILLISECOND (1000 * ONE_MICROSECOND)
-#define ONE_SECOND (1000 * ONE_MILLISECOND)
+#define ONE_MICROSECOND  (1000)
+#define ONE_MILLISECOND  (1000 * ONE_MICROSECOND)
+#define ONE_SECOND       (1000 * ONE_MILLISECOND)
 
-#define GET_SECONDS(a)        (DivU64x32 ((a), ONE_SECOND))
-#define GET_MILLISECONDS(a)   (DivU64x32 ((a), ONE_MILLISECOND))
-#define GET_MICROSECONDS(a)   (DivU64x32 ((a), ONE_MICROSECOND))
-
+#define GET_SECONDS(a)       (DivU64x32 ((a), ONE_SECOND))
+#define GET_MILLISECONDS(a)  (DivU64x32 ((a), ONE_MILLISECOND))
+#define GET_MICROSECONDS(a)  (DivU64x32 ((a), ONE_MICROSECOND))
 
 VOID
-PrintTimeFromNs(UINT64 TimeInNs)
+PrintTimeFromNs (
+  UINT64  TimeInNs
+  )
 {
-  UINT64 Sec = 0;
-  UINT64 Milli = 0;
-  UINT64 Micro = 0;
-  UINT64 Nano = 0;
-  UINT64 RemainingTime = TimeInNs;
+  UINT64  Sec           = 0;
+  UINT64  Milli         = 0;
+  UINT64  Micro         = 0;
+  UINT64  Nano          = 0;
+  UINT64  RemainingTime = TimeInNs;
 
-  if(RemainingTime > ONE_SECOND)  {
-    Sec = GET_SECONDS(RemainingTime);
+  if (RemainingTime > ONE_SECOND) {
+    Sec            = GET_SECONDS (RemainingTime);
     RemainingTime -= MultU64x32 (Sec, ONE_SECOND);
   }
 
-  if(RemainingTime > ONE_MILLISECOND) {
-    Milli = GET_MILLISECONDS(RemainingTime);
+  if (RemainingTime > ONE_MILLISECOND) {
+    Milli          = GET_MILLISECONDS (RemainingTime);
     RemainingTime -= MultU64x32 (Milli, ONE_MILLISECOND);
   }
 
-  if(RemainingTime > ONE_MICROSECOND) {
-    Micro = GET_MICROSECONDS(RemainingTime);
+  if (RemainingTime > ONE_MICROSECOND) {
+    Micro          = GET_MICROSECONDS (RemainingTime);
     RemainingTime -= MultU64x32 (Micro, ONE_MICROSECOND);
   }
 
-  if(RemainingTime > 0) {
+  if (RemainingTime > 0) {
     Nano = RemainingTime;
   }
 
-  if(Sec > 0) {
-    Print(L"%d.%d%d%d seconds\n", Sec, Milli, Micro, Nano);
+  if (Sec > 0) {
+    Print (L"%d.%d%d%d seconds\n", Sec, Milli, Micro, Nano);
   } else if (Milli > 0) {
-    Print(L"%d.%d%d milliseconds\n", Milli, Micro, Nano);
+    Print (L"%d.%d%d milliseconds\n", Milli, Micro, Nano);
   } else if (Micro > 0) {
-    Print(L"%d.%d microseconds\n", Micro, Nano);
+    Print (L"%d.%d microseconds\n", Micro, Nano);
   } else {
-    Print(L"%d nanoseconds\n", Nano);
+    Print (L"%d nanoseconds\n", Nano);
   }
 }
 
 VOID
-TestBlockIo(EFI_BLOCK_IO_PROTOCOL *BlkIo)
+TestBlockIo (
+  EFI_BLOCK_IO_PROTOCOL  *BlkIo
+  )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
-  UINT32 MediaId;
-  EFI_LBA Lba;
-  UINT8 *Buffer = NULL;
-  UINTN  ReadSizes[] = {0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x100000, MAX_SIZE_FOR_TEST};
-  UINTN  Index;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINT32      MediaId;
+  EFI_LBA     Lba;
+  UINT8       *Buffer     = NULL;
+  UINTN       ReadSizes[] = { 0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x100000, MAX_SIZE_FOR_TEST };
+  UINTN       Index;
 
-  if(BlkIo == NULL) {
-    Print(L"BlockIo is NULL\n");
+  if (BlkIo == NULL) {
+    Print (L"BlockIo is NULL\n");
     return;
   }
 
-  Buffer = AllocatePages(EFI_SIZE_TO_PAGES(MAX_SIZE_FOR_TEST));
-  if(Buffer == NULL)
-  {
-    Print(L"Failed to allocate memory");
+  Buffer = AllocatePages (EFI_SIZE_TO_PAGES (MAX_SIZE_FOR_TEST));
+  if (Buffer == NULL) {
+    Print (L"Failed to allocate memory");
     return;
   }
 
   MediaId = BlkIo->Media->MediaId;
-  Print(L" Revision: 0x%lX\n WriteCaching: 0x%X\n BlockSize: 0x%X\n",
-        BlkIo->Revision, BlkIo->Media->WriteCaching, BlkIo->Media->BlockSize);
-  Print(L" IoAlign: 0x%X\n", BlkIo->Media->IoAlign);
+  Print (
+    L" Revision: 0x%lX\n WriteCaching: 0x%X\n BlockSize: 0x%X\n",
+    BlkIo->Revision,
+    BlkIo->Media->WriteCaching,
+    BlkIo->Media->BlockSize
+    );
+  Print (L" IoAlign: 0x%X\n", BlkIo->Media->IoAlign);
 
-  for(Index =0; Index < ARRAY_SIZE(ReadSizes); Index++)
-  {
-    UINT64 Start = 0;
-    UINT64 End = 0;
+  for (Index = 0; Index < ARRAY_SIZE (ReadSizes); Index++) {
+    UINT64  Start = 0;
+    UINT64  End   = 0;
     Lba = 0;
-    Print(L"Test %dKB\n", ReadSizes[Index]/1024);
-    Start = GetPerformanceCounter();
-    Status = BlkIo->ReadBlocks (BlkIo, MediaId, Lba, ReadSizes[Index], (VOID*)Buffer);
-    End = GetPerformanceCounter();
-    if(EFI_ERROR(Status))
-    {
-      Print(L"Error reading blocks.  Status = %r\n", Status);
+    Print (L"Test %dKB\n", ReadSizes[Index]/1024);
+    Start  = GetPerformanceCounter ();
+    Status = BlkIo->ReadBlocks (BlkIo, MediaId, Lba, ReadSizes[Index], (VOID *)Buffer);
+    End    = GetPerformanceCounter ();
+    if (EFI_ERROR (Status)) {
+      Print (L"Error reading blocks.  Status = %r\n", Status);
     }
-    PrintTimeFromNs(GetTimeInNanoSecond(End-Start));
-    Print(L"\n\n");
+
+    PrintTimeFromNs (GetTimeInNanoSecond (End-Start));
+    Print (L"\n\n");
   }
 
-  FreePages(Buffer, EFI_SIZE_TO_PAGES(MAX_SIZE_FOR_TEST));
+  FreePages (Buffer, EFI_SIZE_TO_PAGES (MAX_SIZE_FOR_TEST));
 }
 
 /**
@@ -136,71 +141,67 @@ TestMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                  Status;
-  UINTN                       BlockIoHandleCount;
-  EFI_HANDLE                  *BlockIoBuffer = NULL;
-  UINTN                       Index;
-  EFI_DEVICE_PATH_PROTOCOL    *BlockIoDevicePath = NULL;
-  CHAR16                      *DevicePathString = NULL;
-  EFI_BLOCK_IO_PROTOCOL       *BlockIoProtocol = NULL;
+  EFI_STATUS                Status;
+  UINTN                     BlockIoHandleCount;
+  EFI_HANDLE                *BlockIoBuffer = NULL;
+  UINTN                     Index;
+  EFI_DEVICE_PATH_PROTOCOL  *BlockIoDevicePath = NULL;
+  CHAR16                    *DevicePathString  = NULL;
+  EFI_BLOCK_IO_PROTOCOL     *BlockIoProtocol   = NULL;
 
   //
   // Initialize the shell lib (we must be in non-auto-init...)
   //  NOTE: This may not be necessary, but whatever.
   //
-  Status = ShellInitialize();
-  if (EFI_ERROR( Status ))
-  {
-    DEBUG((DEBUG_ERROR, "Failed to init Shell.  %r\n", Status));
+  Status = ShellInitialize ();
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to init Shell.  %r\n", Status));
     return Status;
   }
 
-  //locate all handles with blockio
+  // locate all handles with blockio
   Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiBlockIoProtocolGuid, NULL, &BlockIoHandleCount, &BlockIoBuffer);
-  if (EFI_ERROR (Status) || BlockIoHandleCount == 0 || BlockIoBuffer == NULL) {
+  if (EFI_ERROR (Status) || (BlockIoHandleCount == 0) || (BlockIoBuffer == NULL)) {
     //
     // If there was an error or there are no device handles that support
     // the BLOCK_IO Protocol, then return.
     //
-    Print(L"No BlockIO in this system\n");
+    Print (L"No BlockIO in this system\n");
     return EFI_SUCCESS;
   }
 
-  Print(L"Found %d BlockIO handles\n", BlockIoHandleCount);
+  Print (L"Found %d BlockIO handles\n", BlockIoHandleCount);
   //
   // Loop through all the device handles that support the BLOCK_IO Protocol
   //
   for (Index = 0; Index < BlockIoHandleCount; Index++) {
-
-    Status = gBS->HandleProtocol (BlockIoBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID *) &BlockIoDevicePath);
-    if (EFI_ERROR (Status) || BlockIoDevicePath == NULL) {
-      Print(L"No Device Path Protocol for this block io\n");
+    Status = gBS->HandleProtocol (BlockIoBuffer[Index], &gEfiDevicePathProtocolGuid, (VOID *)&BlockIoDevicePath);
+    if (EFI_ERROR (Status) || (BlockIoDevicePath == NULL)) {
+      Print (L"No Device Path Protocol for this block io\n");
     } else {
-      DevicePathString = ConvertDevicePathToText(BlockIoDevicePath, TRUE, FALSE);
-      if(DevicePathString != NULL)
-      {
-        Print(L"DevicePath is %s\n", DevicePathString);
-        FreePool(DevicePathString);
+      DevicePathString = ConvertDevicePathToText (BlockIoDevicePath, TRUE, FALSE);
+      if (DevicePathString != NULL) {
+        Print (L"DevicePath is %s\n", DevicePathString);
+        FreePool (DevicePathString);
         DevicePathString = NULL;
       } else {
-        Print(L"DevicePath to text was NULL\n");
+        Print (L"DevicePath to text was NULL\n");
       }
     }
-    Status = gBS->HandleProtocol (BlockIoBuffer[Index], &gEfiBlockIoProtocolGuid, (VOID *) &BlockIoProtocol);
-    if (EFI_ERROR (Status) || BlockIoProtocol == NULL) {
-      Print(L"BlockIoProtocol failed.  Can't test this one");
-      Print(L"\n\n");
+
+    Status = gBS->HandleProtocol (BlockIoBuffer[Index], &gEfiBlockIoProtocolGuid, (VOID *)&BlockIoProtocol);
+    if (EFI_ERROR (Status) || (BlockIoProtocol == NULL)) {
+      Print (L"BlockIoProtocol failed.  Can't test this one");
+      Print (L"\n\n");
       continue;
     }
 
-    TestBlockIo(BlockIoProtocol);
-    Print(L"\n\n");
-
-
-  } //end for loop
+    TestBlockIo (BlockIoProtocol);
+    Print (L"\n\n");
+  } // end for loop
 
   if (BlockIoBuffer != NULL) {
-      gBS->FreePool (BlockIoBuffer);
+    gBS->FreePool (BlockIoBuffer);
   }
 
   return Status;

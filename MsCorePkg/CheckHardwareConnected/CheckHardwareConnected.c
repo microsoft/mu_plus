@@ -29,28 +29,28 @@ PerformPciChecks (
   VOID
   )
 {
-  EFI_STATUS                Status;
-  PCIE_LINK_SPEED           DeviceLinkSpeed;
-  DEVICE_PCI_CHECK_RESULT   *DeviceCheckResult;
-  DEVICE_PCI_INFO           *Devices;
-  EFI_PCI_IO_PROTOCOL       **ProtocolList;
+  EFI_STATUS               Status;
+  PCIE_LINK_SPEED          DeviceLinkSpeed;
+  DEVICE_PCI_CHECK_RESULT  *DeviceCheckResult;
+  DEVICE_PCI_INFO          *Devices;
+  EFI_PCI_IO_PROTOCOL      **ProtocolList;
 
-  UINTN   ProtocolCount;
-  UINTN   Seg;
-  UINTN   Bus;
-  UINTN   Dev;
-  UINTN   Fun;
-  UINTN   NumDevices;
-  UINTN   AdditionalData1;
-  UINTN   Index;
-  UINTN   DeviceIndex;
+  UINTN  ProtocolCount;
+  UINTN  Seg;
+  UINTN  Bus;
+  UINTN  Dev;
+  UINTN  Fun;
+  UINTN  NumDevices;
+  UINTN  AdditionalData1;
+  UINTN  Index;
+  UINTN  DeviceIndex;
 
-  Devices       = NULL;
-  ProtocolList  = NULL;
+  Devices      = NULL;
+  ProtocolList = NULL;
 
   // Get the set of platform-defined PCI devices
   NumDevices = GetPciCheckDevices (&Devices);
-  if (NumDevices == 0 || Devices == NULL) {
+  if ((NumDevices == 0) || (Devices == NULL)) {
     return;
   }
 
@@ -59,7 +59,7 @@ PerformPciChecks (
     return;
   }
 
-  Status = EfiLocateProtocolBuffer (&gEfiPciIoProtocolGuid, &ProtocolCount, (VOID ***) &ProtocolList);
+  Status = EfiLocateProtocolBuffer (&gEfiPciIoProtocolGuid, &ProtocolCount, (VOID ***)&ProtocolList);
   if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
@@ -72,10 +72,11 @@ PerformPciChecks (
 
     for (DeviceIndex = 0; DeviceIndex < NumDevices; DeviceIndex++) {
       // Check if that device matches the current protocol
-      if (Seg == Devices[DeviceIndex].SegmentNumber &&
-        Bus == Devices[DeviceIndex].BusNumber &&
-        Dev == Devices[DeviceIndex].DeviceNumber &&
-        Fun == Devices[DeviceIndex].FunctionNumber) {
+      if ((Seg == Devices[DeviceIndex].SegmentNumber) &&
+          (Bus == Devices[DeviceIndex].BusNumber) &&
+          (Dev == Devices[DeviceIndex].DeviceNumber) &&
+          (Fun == Devices[DeviceIndex].FunctionNumber))
+      {
         DeviceCheckResult[DeviceIndex].DevicePresent = TRUE;
       }
     }
@@ -103,11 +104,11 @@ PerformPciChecks (
           &gDeviceSpecificBusInfoLibTelemetryGuid,
           NULL,
           AdditionalData1,
-          *((UINT64 *) Devices[Index].DeviceName)
+          *((UINT64 *)Devices[Index].DeviceName)
           );
       } else {
         DeviceCheckResult[Index].LinkSpeedResult.ActualSpeed = DeviceLinkSpeed;
-        if (Devices[Index].MinimumLinkSpeed <= DeviceLinkSpeed && DeviceLinkSpeed != Unknown) {
+        if ((Devices[Index].MinimumLinkSpeed <= DeviceLinkSpeed) && (DeviceLinkSpeed != Unknown)) {
           DeviceCheckResult[Index].LinkSpeedResult.MinimumSatisfied = TRUE;
         } else {
           // Log to telemetry that a specified minimum link speed was not satisfied
@@ -118,7 +119,7 @@ PerformPciChecks (
             &gDeviceSpecificBusInfoLibTelemetryGuid,
             NULL,
             AdditionalData1,
-            *((UINT64 *) Devices[Index].DeviceName)
+            *((UINT64 *)Devices[Index].DeviceName)
             );
         }
       }
@@ -132,16 +133,18 @@ PerformPciChecks (
         &gDeviceSpecificBusInfoLibTelemetryGuid,
         NULL,
         AdditionalData1,
-        *((UINT64 *) Devices[Index].DeviceName)
+        *((UINT64 *)Devices[Index].DeviceName)
         );
     }
   }
+
   ProcessPciDeviceResults (NumDevices, DeviceCheckResult);
 
 Cleanup:
   if (DeviceCheckResult != NULL) {
     FreePool (DeviceCheckResult);
   }
+
   if (ProtocolList != NULL) {
     FreePool (ProtocolList);
   }
@@ -162,8 +165,8 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 CheckHardwareConnectedEntryPoint (
-  IN    EFI_HANDLE                  ImageHandle,
-  IN    EFI_SYSTEM_TABLE            *SystemTable
+  IN    EFI_HANDLE        ImageHandle,
+  IN    EFI_SYSTEM_TABLE  *SystemTable
   )
 {
   PerformPciChecks ();

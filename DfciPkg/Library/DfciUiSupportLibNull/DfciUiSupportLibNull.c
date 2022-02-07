@@ -22,8 +22,8 @@ BOOLEAN
 EFIAPI
 DfciUiIsManufacturingMode (
   VOID
-  ) {
-
+  )
+{
   return FALSE;
 }
 
@@ -37,42 +37,39 @@ DfciUiIsManufacturingMode (
 BOOLEAN
 EFIAPI
 DfciUiIsUiAvailable (
-   VOID
+  VOID
   )
 {
-
   return TRUE;
 }
 
 EFI_STATUS
 EFIAPI
 DfciUiDisplayMessageBox (
-    IN  CHAR16          *TitleBarText,
-    IN  CHAR16          *Text,
-    IN  CHAR16          *Caption,
-    IN  UINT32          Type,
-    IN  UINT64          Timeout,
-    OUT DFCI_MB_RESULT   *Result
-    )
+  IN  CHAR16          *TitleBarText,
+  IN  CHAR16          *Text,
+  IN  CHAR16          *Caption,
+  IN  UINT32          Type,
+  IN  UINT64          Timeout,
+  OUT DFCI_MB_RESULT  *Result
+  )
 {
-
   return EFI_SUCCESS;
 }
 
 EFI_STATUS
 EFIAPI
 DfciUiDisplayPasswordDialog (
-  IN  CHAR16                              *TitleText,
-  IN  CHAR16                              *CaptionText,
-  IN  CHAR16                              *BodyText,
-  IN  CHAR16                              *ErrorText,
-  OUT DFCI_MB_RESULT                      *Result,
-  OUT CHAR16                              **Password
-  ) {
-
-    return EFI_SUCCESS;
+  IN  CHAR16          *TitleText,
+  IN  CHAR16          *CaptionText,
+  IN  CHAR16          *BodyText,
+  IN  CHAR16          *ErrorText,
+  OUT DFCI_MB_RESULT  *Result,
+  OUT CHAR16          **Password
+  )
+{
+  return EFI_SUCCESS;
 }
-
 
 /**
  * DfciUiDisplayDfciAuthDialog
@@ -93,19 +90,19 @@ DfciUiDisplayPasswordDialog (
 EFI_STATUS
 EFIAPI
 DfciUiDisplayAuthDialog (
-  IN  CHAR16                              *TitleText,
-  IN  CHAR16                              *CaptionText,
-  IN  CHAR16                              *BodyText,
-  IN  CHAR16                              *CertText,
-  IN  CHAR16                              *ConfirmText,
-  IN  CHAR16                              *ErrorText,
-  IN  BOOLEAN                             PasswordType,
-  IN  CHAR16                              *Thumbprint,
-  OUT DFCI_MB_RESULT                      *Result,
-  OUT CHAR16                              **Password OPTIONAL
-)  {
-
-    return EFI_UNSUPPORTED;
+  IN  CHAR16          *TitleText,
+  IN  CHAR16          *CaptionText,
+  IN  CHAR16          *BodyText,
+  IN  CHAR16          *CertText,
+  IN  CHAR16          *ConfirmText,
+  IN  CHAR16          *ErrorText,
+  IN  BOOLEAN         PasswordType,
+  IN  CHAR16          *Thumbprint,
+  OUT DFCI_MB_RESULT  *Result,
+  OUT CHAR16          **Password OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -127,14 +124,13 @@ DfciUiDisplayAuthDialog (
 **/
 EFI_STATUS
 EFIAPI
-DfciUiGetAnswerFromUser(
-  DFCI_AUTHENTICATION_PROTOCOL* AuthMgrProtocol,
-  UINT8* TrustedCert,
-  UINT16 TrustedCertSize,
-  OUT DFCI_AUTH_TOKEN* AuthToken
+DfciUiGetAnswerFromUser (
+  DFCI_AUTHENTICATION_PROTOCOL  *AuthMgrProtocol,
+  UINT8                         *TrustedCert,
+  UINT16                        TrustedCertSize,
+  OUT DFCI_AUTH_TOKEN           *AuthToken
   )
 {
-
   return EFI_SUCCESS;
 }
 
@@ -151,7 +147,9 @@ DfciUiGetAnswerFromUser(
 **/
 VOID
 EFIAPI
-DfciUiExitSecurityBoundary (VOID)
+DfciUiExitSecurityBoundary (
+  VOID
+  )
 {
   return;
 }

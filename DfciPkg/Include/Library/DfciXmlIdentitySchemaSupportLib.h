@@ -1,4 +1,3 @@
-
 /** @file
 DfciDeviceIdSupportLib.h
 
@@ -12,32 +11,34 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __DFCI_XML_IDENTITY_CURRENT_SCHEMA_SUPPORT_LIB__
 #define __DFCI_XML_IDENTITY_CURRENT_SCHEMA_SUPPORT_LIB__
 
+#define IDENTITY_CURRENT_PACKET_ELEMENT_NAME   "UEFIIdentityCurrentPacket"
+#define IDENTITY_CURRENT_VERSION_ELEMENT_NAME  "Version"
+#define IDENTITY_CURRENT_LIST_ELEMENT_NAME     "Certificates"
+#define IDENTITY_CURRENT_ELEMENT_NAME          "Certificate"
+#define IDENTITY_CURRENT_ID_ELEMENT_NAME       "Id"
+#define IDENTITY_CURRENT_VALUE_ELEMENT_NAME    "Value"
+#define IDENTITY_CURRENT_ZTD_CERT_NAME         "ZeroTouch"
+#define IDENTITY_CURRENT_OWNER_CERT_NAME       "Owner"
+#define IDENTITY_CURRENT_USER_CERT_NAME        "User"
+#define IDENTITY_CURRENT_USER1_CERT_NAME       "User1"
+#define IDENTITY_CURRENT_USER2_CERT_NAME       "User2"
+#define IDENTITY_CURRENT_NO_CERTIFICATE_VALUE  "Cert not installed"
+#define IDENTITY_CURRENT_THUMBPRINT_NAME       "Thumbprint"
 
-#define IDENTITY_CURRENT_PACKET_ELEMENT_NAME           "UEFIIdentityCurrentPacket"
-#define IDENTITY_CURRENT_VERSION_ELEMENT_NAME          "Version"
-#define IDENTITY_CURRENT_LIST_ELEMENT_NAME             "Certificates"
-#define IDENTITY_CURRENT_ELEMENT_NAME                  "Certificate"
-#define IDENTITY_CURRENT_ID_ELEMENT_NAME               "Id"
-#define IDENTITY_CURRENT_VALUE_ELEMENT_NAME            "Value"
-#define IDENTITY_CURRENT_ZTD_CERT_NAME                 "ZeroTouch"
-#define IDENTITY_CURRENT_OWNER_CERT_NAME               "Owner"
-#define IDENTITY_CURRENT_USER_CERT_NAME                "User"
-#define IDENTITY_CURRENT_USER1_CERT_NAME               "User1"
-#define IDENTITY_CURRENT_USER2_CERT_NAME               "User2"
-#define IDENTITY_CURRENT_NO_CERTIFICATE_VALUE          "Cert not installed"
-#define IDENTITY_CURRENT_THUMBPRINT_NAME               "Thumbprint"
-
-XmlNode*
+XmlNode *
 EFIAPI
-GetIdentityCurrentPacketNode(
-  IN CONST XmlNode* RootNode);
+GetIdentityCurrentPacketNode (
+  IN CONST XmlNode  *RootNode
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetIdentityCurrentListNodeFromPacketNode(
-    IN CONST XmlNode* PacketNode);
+GetIdentityCurrentListNodeFromPacketNode (
+  IN CONST XmlNode  *PacketNode
+  );
 
-//***************************** EXAMPLE IDENTITY CURRENT PACKET (OUTPUT FROM UEFI) *******************************//
+// ***************************** EXAMPLE IDENTITY CURRENT PACKET (OUTPUT FROM UEFI) *******************************//
+
 /*
 <?xml version="1.0" encoding="utf-8"?>
 <UEFIIdentityCurrentPacket>
@@ -68,7 +69,9 @@ Create a new Device Id Packet Node List
 **/
 XmlNode *
 EFIAPI
-New_IdentityCurrentPacketNodeList(VOID);
+New_IdentityCurrentPacketNodeList (
+  VOID
+  );
 
 /**
  * Add the current DFCI Version
@@ -78,9 +81,10 @@ New_IdentityCurrentPacketNodeList(VOID);
  */
 EFI_STATUS
 EFIAPI
-AddVersionNode(
-  IN CONST XmlNode *IdPacketNode,
-  IN CONST CHAR8   *Version);
+AddVersionNode (
+  IN CONST XmlNode  *IdPacketNode,
+  IN CONST CHAR8    *Version
+  );
 
 /**
  * Set Identity Certificate Element
@@ -95,8 +99,9 @@ AddVersionNode(
 EFI_STATUS
 EFIAPI
 SetIdentityCurrentCertificate (
-  IN CONST XmlNode *ParentCertificateListNode,
-  IN CONST CHAR8 *Id,
-  IN CONST CHAR8 *Thumbprint);
+  IN CONST XmlNode  *ParentCertificateListNode,
+  IN CONST CHAR8    *Id,
+  IN CONST CHAR8    *Thumbprint
+  );
 
 #endif //__DFCI_XML_DEVICE_ID_SCHEMA_SUPPORT_LIB__

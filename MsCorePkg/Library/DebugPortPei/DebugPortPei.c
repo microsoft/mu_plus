@@ -36,7 +36,8 @@ DebugPortPrint (
   IN  UINTN        ErrorLevel,
   IN  CONST CHAR8  *Format,
   VA_LIST          VaListMarker
-) {
+  )
+{
   DebugVPrint (ErrorLevel, Format, VaListMarker);
 }
 
@@ -67,20 +68,21 @@ DebugPortAssert (
   IN CONST CHAR8  *FileName,
   IN UINTN        LineNumber,
   IN CONST CHAR8  *Description
-) {
-    DebugAssert(FileName, LineNumber, Description);
+  )
+{
+  DebugAssert (FileName, LineNumber, Description);
 }
 
-DEBUG_PORT_PPI mDebugPortPpi = {
+DEBUG_PORT_PPI  mDebugPortPpi = {
   DebugPortPrint,
   DebugPortAssert,
 };
 
-EFI_PEI_PPI_DESCRIPTOR mPpiList[] = {
+EFI_PEI_PPI_DESCRIPTOR  mPpiList[] = {
   {
     (EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST),
     &gDebugPortPpiGuid,
-    (VOID *) &mDebugPortPpi
+    (VOID *)&mDebugPortPpi
   }
 };
 
@@ -95,7 +97,7 @@ DebugPortInitialize (
   IN CONST EFI_PEI_SERVICES     **PeiServices
   )
 {
-  EFI_STATUS               Status;
+  EFI_STATUS  Status;
 
   Status = PeiServicesInstallPpi (&mPpiList[0]);
   ASSERT_EFI_ERROR (Status);

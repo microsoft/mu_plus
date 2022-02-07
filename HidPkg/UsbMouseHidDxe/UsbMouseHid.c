@@ -18,7 +18,7 @@
  */
 #include "UsbMouseHid.h"
 
-EFI_DRIVER_BINDING_PROTOCOL gUsbMouseHidDriverBinding = {
+EFI_DRIVER_BINDING_PROTOCOL  gUsbMouseHidDriverBinding = {
   UsbMouseHidDriverBindingSupported,
   UsbMouseHidDriverBindingStart,
   UsbMouseHidDriverBindingStop,
@@ -42,11 +42,11 @@ EFI_DRIVER_BINDING_PROTOCOL gUsbMouseHidDriverBinding = {
 EFI_STATUS
 EFIAPI
 UsbMouseHidDriverBindingEntryPoint (
-  IN EFI_HANDLE           ImageHandle,
-  IN EFI_SYSTEM_TABLE     *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS              Status;
+  EFI_STATUS  Status;
 
   Status = EfiLibInstallDriverBindingComponentName2 (
              ImageHandle,
@@ -60,7 +60,6 @@ UsbMouseHidDriverBindingEntryPoint (
 
   return EFI_SUCCESS;
 }
-
 
 /**
   Check whether USB Mouse Absolute Pointer Driver supports this device.
@@ -76,18 +75,18 @@ UsbMouseHidDriverBindingEntryPoint (
 EFI_STATUS
 EFIAPI
 UsbMouseHidDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-  EFI_STATUS          Status;
-  EFI_USB_IO_PROTOCOL *UsbIo;
+  EFI_STATUS           Status;
+  EFI_USB_IO_PROTOCOL  *UsbIo;
 
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiUsbIoProtocolGuid,
-                  (VOID **) &UsbIo,
+                  (VOID **)&UsbIo,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -106,15 +105,14 @@ UsbMouseHidDriverBindingSupported (
   }
 
   gBS->CloseProtocol (
-        Controller,
-        &gEfiUsbIoProtocolGuid,
-        This->DriverBindingHandle,
-        Controller
-        );
+         Controller,
+         &gEfiUsbIoProtocolGuid,
+         This->DriverBindingHandle,
+         Controller
+         );
 
   return Status;
 }
-
 
 /**
   Starts the mouse device with this driver.
@@ -138,22 +136,22 @@ UsbMouseHidDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 UsbMouseHidDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-  EFI_STATUS                     Status;
-  EFI_USB_IO_PROTOCOL            *UsbIo;
-  USB_MOUSE_HID_DEV              *UsbMouseHidDevice;
-  UINT8                          EndpointNumber;
-  EFI_USB_ENDPOINT_DESCRIPTOR    EndpointDescriptor;
-  UINT8                          Index;
-  UINT8                          EndpointAddr;
-  UINT8                          PollingInterval;
-  UINT8                          PacketSize;
-  BOOLEAN                        Found;
-  EFI_TPL                        OldTpl;
+  EFI_STATUS                   Status;
+  EFI_USB_IO_PROTOCOL          *UsbIo;
+  USB_MOUSE_HID_DEV            *UsbMouseHidDevice;
+  UINT8                        EndpointNumber;
+  EFI_USB_ENDPOINT_DESCRIPTOR  EndpointDescriptor;
+  UINT8                        Index;
+  UINT8                        EndpointAddr;
+  UINT8                        PollingInterval;
+  UINT8                        PacketSize;
+  BOOLEAN                      Found;
+  EFI_TPL                      OldTpl;
 
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK);
   //
@@ -162,7 +160,7 @@ UsbMouseHidDriverBindingStart (
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiUsbIoProtocolGuid,
-                  (VOID **) &UsbIo,
+                  (VOID **)&UsbIo,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -178,7 +176,6 @@ UsbMouseHidDriverBindingStart (
     goto ErrorExit;
   }
 
-
   UsbMouseHidDevice->UsbIo     = UsbIo;
   UsbMouseHidDevice->Signature = USB_MOUSE_HID_DEV_SIGNATURE;
 
@@ -188,7 +185,7 @@ UsbMouseHidDriverBindingStart (
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiDevicePathProtocolGuid,
-                  (VOID **) &UsbMouseHidDevice->DevicePath,
+                  (VOID **)&UsbMouseHidDevice->DevicePath,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -229,11 +226,12 @@ UsbMouseHidDriverBindingStart (
              );
 
     if (((EndpointDescriptor.Attributes & (BIT0 | BIT1)) == USB_ENDPOINT_INTERRUPT) &&
-        ((EndpointDescriptor.EndpointAddress & USB_ENDPOINT_DIR_IN) != 0)) {
+        ((EndpointDescriptor.EndpointAddress & USB_ENDPOINT_DIR_IN) != 0))
+    {
       //
       // We only care interrupt endpoint here
       //
-      CopyMem (&UsbMouseHidDevice->IntEndpointDescriptor, &EndpointDescriptor, sizeof(EndpointDescriptor));
+      CopyMem (&UsbMouseHidDevice->IntEndpointDescriptor, &EndpointDescriptor, sizeof (EndpointDescriptor));
       Found = TRUE;
       break;
     }
@@ -277,7 +275,6 @@ UsbMouseHidDriverBindingStart (
     goto ErrorExit;
   }
 
-
   //
   // The next step would be submitting Asynchronous Interrupt Transfer on this mouse device.
   // After that we will be able to get key data from it. Thus this is deemed as
@@ -294,7 +291,7 @@ UsbMouseHidDriverBindingStart (
   //
   EndpointAddr    = UsbMouseHidDevice->IntEndpointDescriptor.EndpointAddress;
   PollingInterval = UsbMouseHidDevice->IntEndpointDescriptor.Interval;
-  PacketSize      = (UINT8) (UsbMouseHidDevice->IntEndpointDescriptor.MaxPacketSize);
+  PacketSize      = (UINT8)(UsbMouseHidDevice->IntEndpointDescriptor.MaxPacketSize);
 
   Status = UsbIo->UsbAsyncInterruptTransfer (
                     UsbIo,
@@ -313,14 +310,14 @@ UsbMouseHidDriverBindingStart (
   //
   // Initialize and install HID Pointer Protocol.
   //
-  UsbMouseHidDevice->HidPointerProtocol.RegisterPointerReportCallback = RegisterPointerReportCallback;
+  UsbMouseHidDevice->HidPointerProtocol.RegisterPointerReportCallback   = RegisterPointerReportCallback;
   UsbMouseHidDevice->HidPointerProtocol.UnRegisterPointerReportCallback = UnRegisterPointerReportCallback;
-  Status = gBS->InstallMultipleProtocolInterfaces (
-                  &Controller,
-                  &gHidPointerProtocolGuid,
-                  &UsbMouseHidDevice->HidPointerProtocol,
-                  NULL
-                  );
+  Status                                                                = gBS->InstallMultipleProtocolInterfaces (
+                                                                                 &Controller,
+                                                                                 &gHidPointerProtocolGuid,
+                                                                                 &UsbMouseHidDevice->HidPointerProtocol,
+                                                                                 NULL
+                                                                                 );
   if (EFI_ERROR (Status)) {
     goto ErrorExit;
   }
@@ -331,8 +328,8 @@ UsbMouseHidDriverBindingStart (
     gUsbMouseHidComponentName.SupportedLanguages,
     &UsbMouseHidDevice->ControllerNameTable,
     L"Generic Usb Mouse Absolute Pointer",
-      TRUE
-      );
+    TRUE
+    );
   AddUnicodeString2 (
     "en",
     gUsbMouseHidComponentName2.SupportedLanguages,
@@ -344,17 +341,17 @@ UsbMouseHidDriverBindingStart (
   gBS->RestoreTPL (OldTpl);
   return EFI_SUCCESS;
 
-//
-// Error handler
-//
+  //
+  // Error handler
+  //
 ErrorExit:
   if (EFI_ERROR (Status)) {
     gBS->CloseProtocol (
-          Controller,
-          &gEfiUsbIoProtocolGuid,
-          This->DriverBindingHandle,
-          Controller
-          );
+           Controller,
+           &gEfiUsbIoProtocolGuid,
+           This->DriverBindingHandle,
+           Controller
+           );
 
     if (UsbMouseHidDevice != NULL) {
       FreePool (UsbMouseHidDevice);
@@ -384,10 +381,10 @@ ErrorExitNoUsbIo:
 EFI_STATUS
 EFIAPI
 UsbMouseHidDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL   *This,
-  IN  EFI_HANDLE                    Controller,
-  IN  UINTN                         NumberOfChildren,
-  IN  EFI_HANDLE                    *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   )
 {
   EFI_STATUS            Status;
@@ -398,7 +395,7 @@ UsbMouseHidDriverBindingStop (
   Status = gBS->OpenProtocol (
                   Controller,
                   &gHidPointerProtocolGuid,
-                  (VOID **) &HidPointerProtocol,
+                  (VOID **)&HidPointerProtocol,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -440,21 +437,21 @@ UsbMouseHidDriverBindingStop (
                   &UsbMouseHidDevice->HidPointerProtocol,
                   NULL
                   );
-  ASSERT_EFI_ERROR (Status); //Proceed on error in non-debug case.
+  ASSERT_EFI_ERROR (Status); // Proceed on error in non-debug case.
 
-  //Close the recovery event if one exists
+  // Close the recovery event if one exists
   if (UsbMouseHidDevice->DelayedRecoveryEvent != NULL) {
     gBS->CloseEvent (UsbMouseHidDevice->DelayedRecoveryEvent);
     UsbMouseHidDevice->DelayedRecoveryEvent = NULL;
   }
 
   Status = gBS->CloseProtocol (
-         Controller,
-         &gEfiUsbIoProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-         );
-  ASSERT_EFI_ERROR (Status); //Proceed on error in non-debug case.
+                  Controller,
+                  &gEfiUsbIoProtocolGuid,
+                  This->DriverBindingHandle,
+                  Controller
+                  );
+  ASSERT_EFI_ERROR (Status); // Proceed on error in non-debug case.
 
   //
   // Free all resources.
@@ -485,9 +482,9 @@ UsbMouseHidDriverBindingStop (
 EFI_STATUS
 EFIAPI
 RegisterPointerReportCallback (
-  HID_POINTER_PROTOCOL        *This,
-  POINTER_HID_REPORT_CALLBACK PointerReportCallback,
-  VOID                        *Context
+  HID_POINTER_PROTOCOL         *This,
+  POINTER_HID_REPORT_CALLBACK  PointerReportCallback,
+  VOID                         *Context
   )
 {
   USB_MOUSE_HID_DEV  *UsbMouseHidDevice;
@@ -502,7 +499,7 @@ RegisterPointerReportCallback (
     return EFI_ALREADY_STARTED;
   }
 
-  UsbMouseHidDevice->MouseReportCallback = PointerReportCallback;
+  UsbMouseHidDevice->MouseReportCallback        = PointerReportCallback;
   UsbMouseHidDevice->MouseReportCallbackContext = Context;
 
   return EFI_SUCCESS;
@@ -520,7 +517,7 @@ RegisterPointerReportCallback (
 EFI_STATUS
 EFIAPI
 UnRegisterPointerReportCallback (
-  HID_POINTER_PROTOCOL *This
+  HID_POINTER_PROTOCOL  *This
   )
 {
   USB_MOUSE_HID_DEV  *UsbMouseHidDevice;
@@ -535,7 +532,7 @@ UnRegisterPointerReportCallback (
     return EFI_NOT_FOUND;
   }
 
-  UsbMouseHidDevice->MouseReportCallback = NULL;
+  UsbMouseHidDevice->MouseReportCallback        = NULL;
   UsbMouseHidDevice->MouseReportCallbackContext = NULL;
 
   return EFI_SUCCESS;
@@ -552,7 +549,7 @@ UnRegisterPointerReportCallback (
 **/
 BOOLEAN
 IsUsbMouse (
-  IN  EFI_USB_IO_PROTOCOL     *UsbIo
+  IN  EFI_USB_IO_PROTOCOL  *UsbIo
   )
 {
   EFI_STATUS                    Status;
@@ -573,13 +570,13 @@ IsUsbMouse (
   if ((InterfaceDescriptor.InterfaceClass == CLASS_HID) &&
       (InterfaceDescriptor.InterfaceSubClass == SUBCLASS_BOOT) &&
       (InterfaceDescriptor.InterfaceProtocol == PROTOCOL_MOUSE)
-      ) {
+      )
+  {
     return TRUE;
   }
 
   return FALSE;
 }
-
 
 /**
   Initialize the USB mouse device.
@@ -593,12 +590,12 @@ IsUsbMouse (
 **/
 EFI_STATUS
 InitializeUsbMouseDevice (
-  IN  USB_MOUSE_HID_DEV   *UsbMouseHidDev
+  IN  USB_MOUSE_HID_DEV  *UsbMouseHidDev
   )
 {
-  EFI_USB_IO_PROTOCOL       *UsbIo;
-  UINT8                     Protocol;
-  EFI_STATUS                Status;
+  EFI_USB_IO_PROTOCOL  *UsbIo;
+  UINT8                Protocol;
+  EFI_STATUS           Status;
 
   UsbIo = UsbMouseHidDev->UsbIo;
 
@@ -607,13 +604,14 @@ InitializeUsbMouseDevice (
   // This driver only supports boot protocol.
   //
   Status = UsbGetProtocolRequest (
-    UsbIo,
-    UsbMouseHidDev->InterfaceDescriptor.InterfaceNumber,
-    &Protocol
-    );
+             UsbIo,
+             UsbMouseHidDev->InterfaceDescriptor.InterfaceNumber,
+             &Protocol
+             );
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
   if (Protocol != BOOT_PROTOCOL) {
     Status = UsbSetProtocolRequest (
                UsbIo,
@@ -665,19 +663,19 @@ InitializeUsbMouseDevice (
 EFI_STATUS
 EFIAPI
 OnMouseInterruptComplete (
-  IN  VOID        *Data,
-  IN  UINTN       DataLength,
-  IN  VOID        *Context,
-  IN  UINT32      Result
+  IN  VOID    *Data,
+  IN  UINTN   DataLength,
+  IN  VOID    *Context,
+  IN  UINT32  Result
   )
 {
-  USB_MOUSE_HID_DEV     *UsbMouseHidDevice;
-  EFI_USB_IO_PROTOCOL   *UsbIo;
-  UINT8                 EndpointAddr;
-  UINT32                UsbResult;
+  USB_MOUSE_HID_DEV    *UsbMouseHidDevice;
+  EFI_USB_IO_PROTOCOL  *UsbIo;
+  UINT8                EndpointAddr;
+  UINT32               UsbResult;
 
-  UsbMouseHidDevice  = (USB_MOUSE_HID_DEV *) Context;
-  UsbIo              = UsbMouseHidDevice->UsbIo;
+  UsbMouseHidDevice = (USB_MOUSE_HID_DEV *)Context;
+  UsbIo             = UsbMouseHidDevice->UsbIo;
 
   if (Result != EFI_USB_NOERROR) {
     //
@@ -726,7 +724,7 @@ OnMouseInterruptComplete (
   //
   // If no error and no data, just return EFI_SUCCESS.
   //
-  if (DataLength == 0 || Data == NULL) {
+  if ((DataLength == 0) || (Data == NULL)) {
     return EFI_SUCCESS;
   }
 
@@ -741,6 +739,7 @@ OnMouseInterruptComplete (
                          UsbMouseHidDevice->MouseReportCallbackContext
                          );
   }
+
   return EFI_SUCCESS;
 }
 
@@ -760,16 +759,16 @@ OnMouseInterruptComplete (
 VOID
 EFIAPI
 UsbMouseHidRecoveryHandler (
-  IN    EFI_EVENT    Event,
-  IN    VOID         *Context
+  IN    EFI_EVENT  Event,
+  IN    VOID       *Context
   )
 {
-  USB_MOUSE_HID_DEV       *UsbMouseHidDev;
-  EFI_USB_IO_PROTOCOL                  *UsbIo;
+  USB_MOUSE_HID_DEV    *UsbMouseHidDev;
+  EFI_USB_IO_PROTOCOL  *UsbIo;
 
-  UsbMouseHidDev = (USB_MOUSE_HID_DEV *) Context;
+  UsbMouseHidDev = (USB_MOUSE_HID_DEV *)Context;
 
-  UsbIo       = UsbMouseHidDev->UsbIo;
+  UsbIo = UsbMouseHidDev->UsbIo;
 
   //
   // Re-submit Asynchronous Interrupt Transfer for recovery.

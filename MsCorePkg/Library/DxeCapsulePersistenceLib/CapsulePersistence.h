@@ -1,4 +1,4 @@
-/** 
+/**
   An interface for persisting Capsules across reset.
   This file is concerned with disk manipulation and file management.
 
@@ -58,10 +58,10 @@ InternalPersistCapsuleImageAcrossReset (
 **/
 EFI_STATUS
 InternalGetPersistedCapsuleData (
-  IN UINT32              CapsuleId,
-  IN UINT64              CapsuleHash,
-  OUT EFI_CAPSULE_HEADER *CapsuleData OPTIONAL,
-  OUT UINTN              *CapsuleDataSize
+  IN UINT32               CapsuleId,
+  IN UINT64               CapsuleHash,
+  OUT EFI_CAPSULE_HEADER  *CapsuleData OPTIONAL,
+  OUT UINTN               *CapsuleDataSize
   );
 
 /**
@@ -76,7 +76,7 @@ InternalGetPersistedCapsuleData (
 **/
 EFI_STATUS
 InternalDeletePersistedCapsuleData (
-  IN UINT32 CapsuleId
+  IN UINT32  CapsuleId
   );
 
 /**

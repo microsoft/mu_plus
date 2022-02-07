@@ -13,65 +13,63 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 // Message Box Button Configuration Types
 //
-#define SWM_MB_BASE_TYPE(A)         (A & 0xF)   // Mask off everything but the base type.
-#define SWM_MB_ABORTRETRYIGNORE     0x00000002  // The message box contains three push buttons: Abort, Retry, and Ignore.
-#define SWM_MB_CANCELTRYCONTINUE    0x00000006  // The message box contains three push buttons: Cancel, Try Again, Continue. Use this message box type instead of MB_ABORTRETRYIGNORE.
-#define SWM_MB_OK                   0x00000000  // The message box contains one push button: OK. This is the default.
-#define SWM_MB_OKCANCEL             0x00000001  // The message box contains two push buttons: OK and Cancel.
-#define SWM_MB_RETRYCANCEL          0x00000005  // The message box contains two push buttons: Retry and Cancel.
-#define SWM_MB_YESNO                0x00000004  // The message box contains two push buttons: Yes and No.
-#define SWM_MB_YESNOCANCEL          0x00000003  // The message box contains three push buttons: Yes, No, and Cancel.
-#define SWM_MB_CANCEL               0x00000007  // The message box contains one push button: Cancel.
-#define SWM_MB_CANCELNEXT           0x00000008  // The message box contains two push buttons: Cancel and Next (ID_OK).
-#define SWM_MB_RESTART              0x00000009  // The message box contains one push button: Restart (ID_OK).
+#define SWM_MB_BASE_TYPE(A)  (A & 0xF)          // Mask off everything but the base type.
+#define SWM_MB_ABORTRETRYIGNORE   0x00000002    // The message box contains three push buttons: Abort, Retry, and Ignore.
+#define SWM_MB_CANCELTRYCONTINUE  0x00000006    // The message box contains three push buttons: Cancel, Try Again, Continue. Use this message box type instead of MB_ABORTRETRYIGNORE.
+#define SWM_MB_OK                 0x00000000    // The message box contains one push button: OK. This is the default.
+#define SWM_MB_OKCANCEL           0x00000001    // The message box contains two push buttons: OK and Cancel.
+#define SWM_MB_RETRYCANCEL        0x00000005    // The message box contains two push buttons: Retry and Cancel.
+#define SWM_MB_YESNO              0x00000004    // The message box contains two push buttons: Yes and No.
+#define SWM_MB_YESNOCANCEL        0x00000003    // The message box contains three push buttons: Yes, No, and Cancel.
+#define SWM_MB_CANCEL             0x00000007    // The message box contains one push button: Cancel.
+#define SWM_MB_CANCELNEXT         0x00000008    // The message box contains two push buttons: Cancel and Next (ID_OK).
+#define SWM_MB_RESTART            0x00000009    // The message box contains one push button: Restart (ID_OK).
 
 // Message Box Optional Button Types
 //
-#define SWM_MB_HELP                 0x00004000  // Adds a Help button to the message box. When the user clicks the Help button or presses F1, the system sends a WM_HELP message to the owner.
+#define SWM_MB_HELP  0x00004000                 // Adds a Help button to the message box. When the user clicks the Help button or presses F1, the system sends a WM_HELP message to the owner.
 
 // Message Box Default Button Configuration Types
 //
-#define SWM_MB_DEFAULT(A)           (A & 0xF00) // Mask off everything but the Default button.
-#define SWM_MB_DEFAULT_ACTION       0x00000000  // The current default action
-#define SWM_MB_DEFBUTTON1           0x00000100  // The first button is the default button. MB_DEFBUTTON1 is the default unless MB_DEFBUTTON2, MB_DEFBUTTON3, or MB_DEFBUTTON4 is specified.
-#define SWM_MB_DEFBUTTON2           0x00000200  // The second button is the default button.
-//#define SWM_MB_DEFBUTTON3           0x00000300  // The third button is the default button.
-//#define SWM_MB_DEFBUTTON4           0x00000400  // The fourth button is the default button.
-#define SWM_MB_NO_DEFAULT           0x00000f00  // No button is the default button. MB_DEFBUTTON1 is the default unless MB_DEFBUTTON2, MB_DEFBUTTON3, or MB_DEFBUTTON4 is specified.
+#define SWM_MB_DEFAULT(A)  (A & 0xF00)          // Mask off everything but the Default button.
+#define SWM_MB_DEFAULT_ACTION  0x00000000       // The current default action
+#define SWM_MB_DEFBUTTON1      0x00000100       // The first button is the default button. MB_DEFBUTTON1 is the default unless MB_DEFBUTTON2, MB_DEFBUTTON3, or MB_DEFBUTTON4 is specified.
+#define SWM_MB_DEFBUTTON2      0x00000200       // The second button is the default button.
+// #define SWM_MB_DEFBUTTON3           0x00000300  // The third button is the default button.
+// #define SWM_MB_DEFBUTTON4           0x00000400  // The fourth button is the default button.
+#define SWM_MB_NO_DEFAULT  0x00000f00           // No button is the default button. MB_DEFBUTTON1 is the default unless MB_DEFBUTTON2, MB_DEFBUTTON3, or MB_DEFBUTTON4 is specified.
 
 // MessageBox Styles
-#define SWM_MB_STYLE_TYPE(A)        (A & 0xF0000)      // Mask off everything but the style type.
-#define SWM_MB_STYLE_NORMAL         0x00000000         // The normal MessageBox.
-#define SWM_MB_STYLE_ALERT1         0x00010000         // The First alert message box (yesslow)
-#define SWM_MB_STYLE_ALERT2         0x00020000         // The Second alert message box (Red)
+#define SWM_MB_STYLE_TYPE(A)  (A & 0xF0000)            // Mask off everything but the style type.
+#define SWM_MB_STYLE_NORMAL  0x00000000                // The normal MessageBox.
+#define SWM_MB_STYLE_ALERT1  0x00010000                // The First alert message box (yesslow)
+#define SWM_MB_STYLE_ALERT2  0x00020000                // The Second alert message box (Red)
 
 // Message Box Return Values.
 //
-typedef enum
-{
-    SWM_MB_IDOK = 1,                // The OK button was selected.
-    SWM_MB_IDCANCEL,                // The Cancel button was selected.
-    SWM_MB_IDABORT,                 // The Abort button was selected.
-    SWM_MB_IDRETRY,                 // The Retry button was selected.
-    SWM_MB_IDIGNORE,                // The Ignore button was selected.
-    SWM_MB_IDYES,                   // The Yes button was selected.
-    SWM_MB_IDNO,                    // The No button was selected.
-    SWM_MB_IDTRYAGAIN = 10,         // The Try Again button was selected.
-    SWM_MB_IDCONTINUE,              // The Continue button was selected.
-    SWM_MB_TIMEOUT,                 // MessageBox with Timeout timed out
-    SWM_MB_IDNEXT,                  // The Next button was selected
-    SWM_MB_IDRESTART                // The Restart button was selected
+typedef enum {
+  SWM_MB_IDOK = 1,                  // The OK button was selected.
+  SWM_MB_IDCANCEL,                  // The Cancel button was selected.
+  SWM_MB_IDABORT,                   // The Abort button was selected.
+  SWM_MB_IDRETRY,                   // The Retry button was selected.
+  SWM_MB_IDIGNORE,                  // The Ignore button was selected.
+  SWM_MB_IDYES,                     // The Yes button was selected.
+  SWM_MB_IDNO,                      // The No button was selected.
+  SWM_MB_IDTRYAGAIN = 10,           // The Try Again button was selected.
+  SWM_MB_IDCONTINUE,                // The Continue button was selected.
+  SWM_MB_TIMEOUT,                   // MessageBox with Timeout timed out
+  SWM_MB_IDNEXT,                    // The Next button was selected
+  SWM_MB_IDRESTART                  // The Restart button was selected
 } SWM_MB_RESULT;
 
 // Password Dialog Types.
 //
-typedef enum
-{
-    SWM_PWD_TYPE_PROMPT_PASSWORD,   // Display standard password prompt dialog.
-    SWM_PWD_TYPE_SET_PASSWORD,      // Display set/change password dialog.
-    SWM_PWD_TYPE_ALERT_PASSWORD,    //Display Standard password prompt Dialog in Alert mode
-    SWM_THMB_TYPE_ALERT_PASSWORD,    //Display Standard password prompt Dialog in Alert mode with an additional editbox for entering thumbprint. (SEMM enroll)
-    SWM_THMB_TYPE_ALERT_THUMBPRINT    //Display Standard password prompt Dialog in Alert mode with an editbox for entering thumbprint and no password. (SEMM enroll)
+typedef enum {
+  SWM_PWD_TYPE_PROMPT_PASSWORD,     // Display standard password prompt dialog.
+  SWM_PWD_TYPE_SET_PASSWORD,        // Display set/change password dialog.
+  SWM_PWD_TYPE_ALERT_PASSWORD,      // Display Standard password prompt Dialog in Alert mode
+  SWM_THMB_TYPE_ALERT_PASSWORD,     // Display Standard password prompt Dialog in Alert mode with an additional editbox for entering thumbprint. (SEMM enroll)
+  SWM_THMB_TYPE_ALERT_THUMBPRINT    // Display Standard password prompt Dialog in Alert mode with an editbox for entering thumbprint and no password. (SEMM enroll)
 } SWM_PWD_DIALOG_TYPE;
 
 /**
@@ -90,12 +88,12 @@ typedef enum
 EFI_STATUS
 EFIAPI
 SwmDialogsMessageBox (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaption,
-    IN  CHAR16              *pBodyText,
-    IN  UINT32              Type,
-    IN  UINT64              Timeout,
-    OUT SWM_MB_RESULT       *Result
+  IN  CHAR16         *pTitleBarText,
+  IN  CHAR16         *pCaption,
+  IN  CHAR16         *pBodyText,
+  IN  UINT32         Type,
+  IN  UINT64         Timeout,
+  OUT SWM_MB_RESULT  *Result
   );
 
 /**
@@ -115,13 +113,13 @@ SwmDialogsMessageBox (
 EFI_STATUS
 EFIAPI
 SwmDialogsPasswordPrompt (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,
-    IN  CHAR16              *pBodyText,
-    IN  CHAR16              *pErrorText,
-    IN  SWM_PWD_DIALOG_TYPE Type,
-    OUT SWM_MB_RESULT       *Result,
-    OUT CHAR16              **Password
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password
   );
 
 /**
@@ -141,13 +139,13 @@ SwmDialogsPasswordPrompt (
 EFI_STATUS
 EFIAPI
 SwmDialogsSelectPrompt (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,
-    IN  CHAR16              *pBodyText,
-    IN  CHAR16              **pOptionsList,
-    IN  UINTN               OptionsCount,
-    OUT SWM_MB_RESULT       *Result,
-    OUT UINTN               *SelectedIndex
+  IN  CHAR16         *pTitleBarText,
+  IN  CHAR16         *pCaptionText,
+  IN  CHAR16         *pBodyText,
+  IN  CHAR16         **pOptionsList,
+  IN  UINTN          OptionsCount,
+  OUT SWM_MB_RESULT  *Result,
+  OUT UINTN          *SelectedIndex
   );
 
 /**
@@ -171,16 +169,16 @@ SwmDialogsSelectPrompt (
 EFI_STATUS
 EFIAPI
 SwmDialogsVerifyThumbprintPrompt (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,
-    IN  CHAR16              *pBodyText,
-    IN  CHAR16              *pCertText,
-    IN  CHAR16              *pConfirmText,
-    IN  CHAR16              *pErrorText,
-    IN  SWM_PWD_DIALOG_TYPE Type,
-    OUT SWM_MB_RESULT       *Result,
-    OUT CHAR16              **Password,
-    OUT CHAR16              **Thumbprint
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pCertText,
+  IN  CHAR16               *pConfirmText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password,
+  OUT CHAR16               **Thumbprint
   );
 
 /**
@@ -190,7 +188,7 @@ SwmDialogsVerifyThumbprintPrompt (
 BOOLEAN
 EFIAPI
 SwmDialogsReady (
-    VOID
+  VOID
   );
 
-#endif      // _SIMPLE_WINDOW_MANAGER_DIALOGS_H_
+#endif // _SIMPLE_WINDOW_MANAGER_DIALOGS_H_

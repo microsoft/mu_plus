@@ -6,12 +6,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include <Uefi.h>
 
-
 #include <Library/DeviceBootManagerLib.h>
-
 
 /**
  * Constructor   - This runs when BdsDxe is loaded, before BdsArch protocol is published
@@ -21,11 +18,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 DeviceBootManagerConstructor (
-    IN EFI_HANDLE ImageHandle,
-    IN EFI_SYSTEM_TABLE *SystemTable
-  ) {
-
-    return EFI_SUCCESS;
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  return EFI_SUCCESS;
 }
 
 /**
@@ -35,9 +32,9 @@ EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
 DeviceBootManagerOnDemandConInConnect (
   VOID
-  ) {
-
-    return NULL;
+  )
+{
+  return NULL;
 }
 
 /**
@@ -47,7 +44,8 @@ VOID
 EFIAPI
 DeviceBootManagerBdsEntry (
   VOID
-  ) {
+  )
+{
 }
 
 /**
@@ -60,13 +58,13 @@ DeviceBootManagerBdsEntry (
 EFI_HANDLE
 EFIAPI
 DeviceBootManagerBeforeConsole (
-  EFI_DEVICE_PATH_PROTOCOL    **DevicePath,
-  BDS_CONSOLE_CONNECT_ENTRY   **PlatformConsoles
-  ) {
-
-    *DevicePath = NULL;
-    *PlatformConsoles = NULL;
-    return NULL;
+  EFI_DEVICE_PATH_PROTOCOL   **DevicePath,
+  BDS_CONSOLE_CONNECT_ENTRY  **PlatformConsoles
+  )
+{
+  *DevicePath       = NULL;
+  *PlatformConsoles = NULL;
+  return NULL;
 }
 
 /**
@@ -78,9 +76,9 @@ EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
 DeviceBootManagerAfterConsole (
   VOID
-  ) {
-
-    return NULL;
+  )
+{
+  return NULL;
 }
 
 /**
@@ -89,10 +87,10 @@ ProcessBootCompletion
 VOID
 EFIAPI
 DeviceBootManagerProcessBootCompletion (
-  IN EFI_BOOT_MANAGER_LOAD_OPTION *BootOption
-) {
-
-    return;
+  IN EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption
+  )
+{
+  return;
 }
 
 /**
@@ -109,10 +107,10 @@ DeviceBootManagerProcessBootCompletion (
 EFI_STATUS
 EFIAPI
 DeviceBootManagerPriorityBoot (
-    EFI_BOOT_MANAGER_LOAD_OPTION   *BootOption
-    ) {
-
-    return EFI_NOT_FOUND;
+  EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption
+  )
+{
+  return EFI_NOT_FOUND;
 }
 
 /**
@@ -123,5 +121,6 @@ VOID
 EFIAPI
 DeviceBootManagerUnableToBoot (
   VOID
-  ) {
+  )
+{
 }

@@ -10,9 +10,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __XML_TREE_QUERY_LIB__
 #define __XML_TREE_QUERY_LIB__
 
-//Max length of an Element Name
-#define MAX_ELEMENT_NAME_LENGTH   (50)
-#define MAX_ATTRIBUTE_NAME_LENGTH (50)
+// Max length of an Element Name
+#define MAX_ELEMENT_NAME_LENGTH    (50)
+#define MAX_ATTRIBUTE_NAME_LENGTH  (50)
 
 /**
 Find the first 1st generation child that has a matching ElementName
@@ -22,13 +22,12 @@ Find the first 1st generation child that has a matching ElementName
 
 @retval
 **/
-XmlNode*
+XmlNode *
 EFIAPI
-FindFirstChildNodeByName(
-  IN CONST XmlNode *ParentNode,
-  IN CONST CHAR8     *ElementName
+FindFirstChildNodeByName (
+  IN CONST XmlNode  *ParentNode,
+  IN CONST CHAR8    *ElementName
   );
-
 
 /**
 Find the first 1st attribute of the node that has a matching name
@@ -38,11 +37,11 @@ Find the first 1st attribute of the node that has a matching name
 
 @retval XmlAttribute that matches or NULL if not found
 **/
-XmlAttribute*
+XmlAttribute *
 EFIAPI
-FindFirstAttributeByName(
-  IN CONST XmlNode *Node,
-  IN CONST CHAR8     *AttributeName
+FindFirstAttributeByName (
+  IN CONST XmlNode  *Node,
+  IN CONST CHAR8    *AttributeName
   );
 
 #endif

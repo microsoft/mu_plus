@@ -19,8 +19,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 UpdateSecureBootViolation (
-  IN  EFI_STATUS    RebootStatus
-);
+  IN  EFI_STATUS  RebootStatus
+  );
 
 /**
   Set the Reboot Reason
@@ -32,8 +32,8 @@ UpdateSecureBootViolation (
 **/
 EFI_STATUS
 SetRebootReason (
-  IN  EFI_STATUS     RebootStatus
-);
+  IN  EFI_STATUS  RebootStatus
+  );
 
 /**
   Remove reboot reason
@@ -43,15 +43,15 @@ SetRebootReason (
 **/
 EFI_STATUS
 EFIAPI
-ClearRebootReason(
+ClearRebootReason (
   VOID
-);
+  );
 
 /**
   Read reboot reason
 
   @param[out]       Buffer        Buffer to hold returned data
-  @param[in, out]   BufferSize    Input as available data buffer size, output as data 
+  @param[in, out]   BufferSize    Input as available data buffer size, output as data
                                   size filled
 
   @retval  EFI_SUCCESS  Fetched version information successfully
@@ -59,10 +59,10 @@ ClearRebootReason(
 **/
 EFI_STATUS
 EFIAPI
-GetRebootReason(
-      OUT UINT8                  *Buffer,          OPTIONAL
+GetRebootReason (
+  OUT UINT8 *Buffer, OPTIONAL
   IN  OUT UINTN                  *BufferSize
-);
+  );
 
 /**
   Get the current Reboot Reason and update based on OS entry to FrontPage
@@ -74,6 +74,6 @@ EFI_STATUS
 EFIAPI
 UpdateRebootReason (
   VOID
-);
+  );
 
-#endif  // _MS_NV_BOOT_REASON_LIB_H_
+#endif // _MS_NV_BOOT_REASON_LIB_H_

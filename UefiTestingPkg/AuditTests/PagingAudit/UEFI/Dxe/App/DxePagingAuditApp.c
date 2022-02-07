@@ -6,13 +6,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include "../../PagingAuditCommon.h"
 
-CHAR8     *mMemoryInfoDatabaseBuffer = NULL;
-UINTN     mMemoryInfoDatabaseSize = 0;
-UINTN     mMemoryInfoDatabaseAllocSize = 0;
-
+CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
+UINTN  mMemoryInfoDatabaseSize      = 0;
+UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
 /**
   SmmPagingAuditAppEntryPoint
@@ -27,16 +25,17 @@ UINTN     mMemoryInfoDatabaseAllocSize = 0;
 EFI_STATUS
 EFIAPI
 PagingAuditDxeAppEntryPoint (
-  IN     EFI_HANDLE         ImageHandle,
+  IN     EFI_HANDLE        ImageHandle,
   IN     EFI_SYSTEM_TABLE  *SystemTable
-)
+  )
 {
-  EFI_STATUS    Status = EFI_SUCCESS;
-  DEBUG((DEBUG_ERROR, "%a entered - %r\n", __FUNCTION__, Status));
+  EFI_STATUS  Status = EFI_SUCCESS;
+
+  DEBUG ((DEBUG_ERROR, "%a entered - %r\n", __FUNCTION__, Status));
 
   DumpPagingInfo (NULL, NULL);
 
-  DEBUG((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 
   return EFI_SUCCESS;
 } // PagingAuditDxeAppEntryPoint()

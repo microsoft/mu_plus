@@ -9,18 +9,18 @@
 
 #include "AdvancedSerialLoggerDxe.h"
 
-#define ADV_LOG_REFRESH_INTERVAL  (200 * 10 * 1000)   // Refresh interval: 200ms in 100ns units
-#define ADV_LOG_MESSAGES_PER_EVENT 1000
+#define ADV_LOG_REFRESH_INTERVAL    (200 * 10 * 1000) // Refresh interval: 200ms in 100ns units
+#define ADV_LOG_MESSAGES_PER_EVENT  1000
 
 //
 // Global variables.
 //
 STATIC ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  mAccessEntry;
 STATIC EFI_EVENT                                  mWriteToSerialPortTimerEvent = NULL;
-STATIC EFI_EVENT                                  mExitBootServicesEvent = NULL;
-STATIC EFI_EVENT                                  mResetNotificationEvent = NULL;
-STATIC EFI_RESET_NOTIFICATION_PROTOCOL           *mResetNotificationProtocol = NULL;
-STATIC ADVANCED_LOGGER_INFO                      *mLoggerInfo;
+STATIC EFI_EVENT                                  mExitBootServicesEvent       = NULL;
+STATIC EFI_EVENT                                  mResetNotificationEvent      = NULL;
+STATIC EFI_RESET_NOTIFICATION_PROTOCOL            *mResetNotificationProtocol  = NULL;
+STATIC ADVANCED_LOGGER_INFO                       *mLoggerInfo;
 
 /**
   WriteToSerialPort
@@ -34,57 +34,57 @@ STATIC ADVANCED_LOGGER_INFO                      *mLoggerInfo;
   **/
 VOID
 WriteToSerialPort (
-    IN UINTN MaxLineCount
+  IN UINTN  MaxLineCount
   )
 {
-    UINTN               LineCount;
-    EFI_STATUS          Status;
-    UINTN               WriteSize;
+  UINTN       LineCount;
+  EFI_STATUS  Status;
+  UINTN       WriteSize;
 
-#if 0
+ #if 0
 
-    // Currently, this is only a DXE driver, so all logging will end
-    // at EXIT BOOT SERVICES by default.
+  // Currently, this is only a DXE driver, so all logging will end
+  // at EXIT BOOT SERVICES by default.
 
-    if (mLoggerInfo != NULL) {
-        DisableFlags = FixedPcdGet8(PcdAdvancedSerialLoggerDisable);
-        if (DisableFlags & ADV_PCD_DISABLE_SERIAL_FLAGS_EXIT_BOOT_SERVICES) {
-            if (mLoggerInfo->AtRuntime) {
-                return;
-            }
-        }
-
-        if (DisableFlags & ADV_PCD_DISABLE_SERIAL_FLAGS_VIRTUAL_ADDRESS_CHANGE) {
-            if (mLoggerInfo->GoneVirtual) {
-                return;
-            }
-        }
+  if (mLoggerInfo != NULL) {
+    DisableFlags = FixedPcdGet8 (PcdAdvancedSerialLoggerDisable);
+    if (DisableFlags & ADV_PCD_DISABLE_SERIAL_FLAGS_EXIT_BOOT_SERVICES) {
+      if (mLoggerInfo->AtRuntime) {
+        return;
+      }
     }
-#endif
 
-    LineCount = 0;
+    if (DisableFlags & ADV_PCD_DISABLE_SERIAL_FLAGS_VIRTUAL_ADDRESS_CHANGE) {
+      if (mLoggerInfo->GoneVirtual) {
+        return;
+      }
+    }
+  }
+
+ #endif
+
+  LineCount = 0;
+  Status    = AdvancedLoggerAccessLibGetNextFormattedLine (&mAccessEntry);
+  while ((Status == EFI_SUCCESS) && (LineCount < MaxLineCount)) {
+    WriteSize = mAccessEntry.MessageLen;
+    if (WriteSize > 0) {
+      // Only selected messages go to the serial port.
+
+      if (mAccessEntry.DebugLevel & PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
+        Status = SerialPortWrite ((UINT8 *)mAccessEntry.Message, mAccessEntry.MessageLen);
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "%a: Failed to write to serial port: %r\n", __FUNCTION__, Status));
+          break;
+        }
+      }
+    }
+
     Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mAccessEntry);
-    while ((Status == EFI_SUCCESS) && (LineCount < MaxLineCount)) {
+    LineCount++;
+  }
 
-        WriteSize = mAccessEntry.MessageLen;
-        if (WriteSize > 0) {
-            // Only selected messages go to the serial port.
-
-            if (mAccessEntry.DebugLevel & PcdGet32(PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
-                Status = SerialPortWrite((UINT8 *) mAccessEntry.Message, mAccessEntry.MessageLen);
-                if (EFI_ERROR(Status)) {
-                    DEBUG((DEBUG_ERROR, "%a: Failed to write to serial port: %r\n", __FUNCTION__, Status));
-                    break;
-                }
-            }
-        }
-
-        Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mAccessEntry);
-        LineCount++;
-    }
-
-    return;
-};
+  return;
+}
 
 /**
     OnResetNotification
@@ -96,16 +96,15 @@ STATIC
 VOID
 EFIAPI
 OnResetNotification (
-    IN EFI_RESET_TYPE ResetType,
-    IN EFI_STATUS     ResetStatus,
-    IN UINTN          DataSize,
-    IN VOID          *ResetData OPTIONAL
-    )
+  IN EFI_RESET_TYPE  ResetType,
+  IN EFI_STATUS      ResetStatus,
+  IN UINTN           DataSize,
+  IN VOID            *ResetData OPTIONAL
+  )
 {
+  WriteToSerialPort (MAX_UINTN);
 
-    WriteToSerialPort (MAX_UINTN);
-
-    return;
+  return;
 }
 
 /**
@@ -124,38 +123,40 @@ OnResetNotification (
 VOID
 EFIAPI
 OnResetNotificationProtocolInstalled (
-    IN  EFI_EVENT   Event,
-    IN  VOID        *Context
-    )
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
 {
-    EFI_STATUS                       Status;
+  EFI_STATUS  Status;
 
-    DEBUG((DEBUG_INFO, "OnResetNotification protocol detected\n"));
+  DEBUG ((DEBUG_INFO, "OnResetNotification protocol detected\n"));
+  //
+  // Get a pointer to the report status code protocol.
+  //
+  Status = gBS->LocateProtocol (
+                  &gEfiResetNotificationProtocolGuid,
+                  NULL,
+                  (VOID **)&mResetNotificationProtocol
+                  );
+
+  if (!EFI_ERROR (Status)) {
     //
-    // Get a pointer to the report status code protocol.
+    // Register our reset notification request
     //
-    Status = gBS->LocateProtocol (&gEfiResetNotificationProtocolGuid,
-                                   NULL,
-                                   (VOID**)&mResetNotificationProtocol);
-
-    if (!EFI_ERROR(Status)) {
-        //
-        // Register our reset notification request
-        //
-        DEBUG((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
-        Status = mResetNotificationProtocol->RegisterResetNotify (mResetNotificationProtocol, OnResetNotification);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
-        }
-
-        if (Event != NULL) {
-            gBS->CloseEvent (Event);
-        }
-    } else {
-        DEBUG((DEBUG_ERROR, "%a: Unable to locate Reset Notification Protocol.\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
+    Status = mResetNotificationProtocol->RegisterResetNotify (mResetNotificationProtocol, OnResetNotification);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
     }
 
-    return;
+    if (Event != NULL) {
+      gBS->CloseEvent (Event);
+    }
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a: Unable to locate Reset Notification Protocol.\n", __FUNCTION__));
+  }
+
+  return;
 }
 
 /**
@@ -172,12 +173,11 @@ OnResetNotificationProtocolInstalled (
 VOID
 EFIAPI
 OnWriteSerialTimerCallback (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-
-    WriteToSerialPort (ADV_LOG_MESSAGES_PER_EVENT);
+  WriteToSerialPort (ADV_LOG_MESSAGES_PER_EVENT);
 }
 
 /**
@@ -194,17 +194,14 @@ OnWriteSerialTimerCallback (
 VOID
 EFIAPI
 OnExitBootServicesNotification (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
+  WriteToSerialPort (MAX_UINTN);
 
-    WriteToSerialPort (MAX_UINTN);
-
-    gBS->CloseEvent (Event);
+  gBS->CloseEvent (Event);
 }
-
-
 
 /**
    ProcessResetEventRegistration
@@ -219,54 +216,59 @@ OnExitBootServicesNotification (
  **/
 EFI_STATUS
 ProcessResetEventRegistration (
-    VOID
-    )
+  VOID
+  )
 {
-    VOID                            *ResetNotificationRegistration;
-    EFI_STATUS                       Status;
+  VOID        *ResetNotificationRegistration;
+  EFI_STATUS  Status;
 
+  //
+  // Try to get a pointer to the Reset Notification Protocol. If successful,
+  // register our reset handler here. Otherwise, register a protocol notify
+  // handler and we'll register when the protocol is installed.
+  //
+  Status = gBS->LocateProtocol (
+                  &gEfiResetNotificationProtocolGuid,
+                  NULL,
+                  (VOID **)&mResetNotificationProtocol
+                  );
 
+  if (!EFI_ERROR (Status)) {
     //
-    // Try to get a pointer to the Reset Notification Protocol. If successful,
-    // register our reset handler here. Otherwise, register a protocol notify
-    // handler and we'll register when the protocol is installed.
+    // Register our reset notification request
     //
-    Status = gBS->LocateProtocol (&gEfiResetNotificationProtocolGuid,
-                                  NULL,
-                                  (VOID**)&mResetNotificationProtocol);
-
-    if (!EFI_ERROR(Status)) {
-        //
-        // Register our reset notification request
-        //
-        DEBUG((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
-        Status = mResetNotificationProtocol->RegisterResetNotify (mResetNotificationProtocol, OnResetNotification);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
-        }
-    } else {
-        DEBUG((DEBUG_INFO, "%a: Reset Notification protocol not installed. Registering for notification\n", __FUNCTION__));
-        Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL,
-                                   TPL_CALLBACK,
-                                   OnResetNotificationProtocolInstalled,
-                                   NULL,
-                                  &mResetNotificationEvent);
-
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: failed to create Reset Protocol protocol callback event (%r)\n", __FUNCTION__, Status));
-        } else {
-            Status = gBS->RegisterProtocolNotify (&gEfiResetNotificationProtocolGuid,
-                                                   mResetNotificationEvent,
-                                                  &ResetNotificationRegistration);
-
-            if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "%a: failed to register for Reset Protocol notification (%r)\n", __FUNCTION__, Status));
-                gBS->CloseEvent (mResetNotificationEvent);
-            }
-        }
+    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
+    Status = mResetNotificationProtocol->RegisterResetNotify (mResetNotificationProtocol, OnResetNotification);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "%a: Reset Notification protocol not installed. Registering for notification\n", __FUNCTION__));
+    Status = gBS->CreateEvent (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_CALLBACK,
+                    OnResetNotificationProtocolInstalled,
+                    NULL,
+                    &mResetNotificationEvent
+                    );
 
-    return Status;
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to create Reset Protocol protocol callback event (%r)\n", __FUNCTION__, Status));
+    } else {
+      Status = gBS->RegisterProtocolNotify (
+                      &gEfiResetNotificationProtocolGuid,
+                      mResetNotificationEvent,
+                      &ResetNotificationRegistration
+                      );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: failed to register for Reset Protocol notification (%r)\n", __FUNCTION__, Status));
+        gBS->CloseEvent (mResetNotificationEvent);
+      }
+    }
+  }
+
+  return Status;
 }
 
 /**
@@ -282,39 +284,40 @@ This function creates a group event handler for writing to the serial port on Ti
 **/
 EFI_STATUS
 ProcessTimerRegistration (
-    VOID
+  VOID
   )
 {
-EFI_STATUS      Status;
+  EFI_STATUS  Status;
 
-//
-// Create a timer event to regularly sample active surface frames and confirm someone hasn't used the framebuffer pointer directly to step on the surface.
-//
-Status = gBS->CreateEvent (EVT_TIMER | EVT_NOTIFY_SIGNAL,
-                           TPL_CALLBACK,
-                           OnWriteSerialTimerCallback,
-                           NULL,
-                           &mWriteToSerialPortTimerEvent
-                          );
-if (EFI_ERROR (Status))
-{
+  //
+  // Create a timer event to regularly sample active surface frames and confirm someone hasn't used the framebuffer pointer directly to step on the surface.
+  //
+  Status = gBS->CreateEvent (
+                  EVT_TIMER | EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnWriteSerialTimerCallback,
+                  NULL,
+                  &mWriteToSerialPortTimerEvent
+                  );
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: ERROR: Failed to create timer event for sampling surface frame (%r).\n", __FUNCTION__, Status));
     goto Exit;
-}
+  }
 
-// Start a periodic timer to sample active surface frames.
-//
-Status = gBS->SetTimer (mWriteToSerialPortTimerEvent,
-                        TimerPeriodic,
-                        ADV_LOG_REFRESH_INTERVAL
-                       );
+  // Start a periodic timer to sample active surface frames.
+  //
+  Status = gBS->SetTimer (
+                  mWriteToSerialPortTimerEvent,
+                  TimerPeriodic,
+                  ADV_LOG_REFRESH_INTERVAL
+                  );
 
-if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: ERROR: Failed to create timer event for writing log data (%r).\n", __FUNCTION__, Status));
-}
+  }
 
 Exit:
-return Status;
+  return Status;
 }
 
 /**
@@ -330,30 +333,31 @@ return Status;
   **/
 EFI_STATUS
 ProcessExitBootServicesRegistration (
-    VOID
-    )
+  VOID
+  )
 {
-    EFI_STATUS      Status;
+  EFI_STATUS  Status;
 
-    //
-    // Register notify function for writing the log files.
-    //
-    // - Note: Nonstandard TPL used in order to be the last running item in the ExitBootServices
-    //         callback list to insure log messages are written to the the log.
-    Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
-                                 (TPL_APPLICATION + 1),
-                                  OnExitBootServicesNotification,
-                                  gImageHandle,
-                                 &gEfiEventExitBootServicesGuid,
-                                 &mExitBootServicesEvent );
+  //
+  // Register notify function for writing the log files.
+  //
+  // - Note: Nonstandard TPL used in order to be the last running item in the ExitBootServices
+  //         callback list to insure log messages are written to the the log.
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  (TPL_APPLICATION + 1),
+                  OnExitBootServicesNotification,
+                  gImageHandle,
+                  &gEfiEventExitBootServicesGuid,
+                  &mExitBootServicesEvent
+                  );
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+  }
 
-    return Status;
+  return Status;
 }
-
 
 /**
     Main entry point for this driver.
@@ -368,83 +372,84 @@ ProcessExitBootServicesRegistration (
 EFI_STATUS
 EFIAPI
 AdvancedSerialLoggerEntry (
-    IN EFI_HANDLE           ImageHandle,
-    IN EFI_SYSTEM_TABLE    *SystemTable
-    )
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
 {
-    ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
-    EFI_STATUS                 Status;
+  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
+  EFI_STATUS                Status;
 
-    DEBUG((DEBUG_INFO, "%a: enter...\n",  __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
-    Status = gBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
-                                   NULL,
-                                  (VOID **) &LoggerProtocol);
-    if (EFI_ERROR(Status)) {
-        goto Exit;
-    }
+  Status = gBS->LocateProtocol (
+                  &gAdvancedLoggerProtocolGuid,
+                  NULL,
+                  (VOID **)&LoggerProtocol
+                  );
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    ASSERT(LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
-    ASSERT(LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+  ASSERT (LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+  ASSERT (LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
 
-    SerialPortInitialize();
+  SerialPortInitialize ();
 
-    mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+  mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
 
-    //
-    // Step 1 - Start the first group of messages
-    //
-    WriteToSerialPort (ADV_LOG_MESSAGES_PER_EVENT);
+  //
+  // Step 1 - Start the first group of messages
+  //
+  WriteToSerialPort (ADV_LOG_MESSAGES_PER_EVENT);
 
-    //
-    // Step 2 - Register for timer events
-    //
-    Status = ProcessTimerRegistration ();
-    if (EFI_ERROR(Status)) {
-        goto Exit;
-    }
+  //
+  // Step 2 - Register for timer events
+  //
+  Status = ProcessTimerRegistration ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    //
-    // Step 3 - Register for ExitBootServices
-    //
-    Status = ProcessExitBootServicesRegistration ();
-    if (EFI_ERROR(Status)) {
-        goto Exit;
-    }
+  //
+  // Step 3 - Register for ExitBootServices
+  //
+  Status = ProcessExitBootServicesRegistration ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    //
-    // Step 4. Register for Reset Event
-    //
-    Status = ProcessResetEventRegistration ();
+  //
+  // Step 4. Register for Reset Event
+  //
+  Status = ProcessResetEventRegistration ();
 
 Exit:
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
 
-        if (mWriteToSerialPortTimerEvent != NULL) {
-            gBS->CloseEvent (mWriteToSerialPortTimerEvent);
-        }
-
-        if (mExitBootServicesEvent != NULL) {
-            gBS->CloseEvent (mExitBootServicesEvent);
-        }
-
-        if (mResetNotificationProtocol != NULL) {
-             mResetNotificationProtocol->UnregisterResetNotify (mResetNotificationProtocol, OnResetNotification);
-        }
-
-        if (mResetNotificationEvent != NULL) {
-            gBS->CloseEvent (mResetNotificationEvent);
-        }
-
-    } else {
-        DEBUG((DEBUG_INFO, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
+    if (mWriteToSerialPortTimerEvent != NULL) {
+      gBS->CloseEvent (mWriteToSerialPortTimerEvent);
     }
 
-    // Always return EFI_SUCCESS.  This means any partial registration of functions
-    // will still exist, reducing the complexity of the uninstall process after a partial
-    // install.
+    if (mExitBootServicesEvent != NULL) {
+      gBS->CloseEvent (mExitBootServicesEvent);
+    }
 
-    return EFI_SUCCESS;
+    if (mResetNotificationProtocol != NULL) {
+      mResetNotificationProtocol->UnregisterResetNotify (mResetNotificationProtocol, OnResetNotification);
+    }
+
+    if (mResetNotificationEvent != NULL) {
+      gBS->CloseEvent (mResetNotificationEvent);
+    }
+  } else {
+    DEBUG ((DEBUG_INFO, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
+  }
+
+  // Always return EFI_SUCCESS.  This means any partial registration of functions
+  // will still exist, reducing the complexity of the uninstall process after a partial
+  // install.
+
+  return EFI_SUCCESS;
 }

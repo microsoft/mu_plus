@@ -17,7 +17,7 @@ UINT32
 EFIAPI
 GetUefiVersionNumber (
   VOID
-)
+  )
 {
   return 0;
 }
@@ -42,9 +42,9 @@ GetUefiVersionNumber (
 EFI_STATUS
 EFIAPI
 GetUefiVersionStringAscii (
-      OUT CHAR8   *Buffer,            OPTIONAL
+  OUT CHAR8 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-)
+  )
 {
   return EFI_UNSUPPORTED;
 }
@@ -69,9 +69,9 @@ GetUefiVersionStringAscii (
 EFI_STATUS
 EFIAPI
 GetUefiVersionStringUnicode (
-      OUT CHAR16  *Buffer,            OPTIONAL
+  OUT CHAR16 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-)
+  )
 {
   return EFI_UNSUPPORTED;
 }
@@ -96,9 +96,9 @@ GetUefiVersionStringUnicode (
 EFI_STATUS
 EFIAPI
 GetBuildDateStringAscii (
-      OUT CHAR8   *Buffer,            OPTIONAL
+  OUT CHAR8 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-)
+  )
 {
   return EFI_UNSUPPORTED;
 }
@@ -123,9 +123,9 @@ GetBuildDateStringAscii (
 EFI_STATUS
 EFIAPI
 GetBuildDateStringUnicode (
-      OUT CHAR16  *Buffer,            OPTIONAL
+  OUT CHAR16 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-)
+  )
 {
   return EFI_UNSUPPORTED;
 }

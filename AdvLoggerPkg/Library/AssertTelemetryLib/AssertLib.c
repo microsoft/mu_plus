@@ -21,7 +21,6 @@
 #include <Library/PrintLib.h>
 #include <Library/MuTelemetryHelperLib.h>
 
-
 //
 // Define the maximum debug and assert message length that this library supports
 //
@@ -56,7 +55,7 @@ DebugAssert (
   IN CONST CHAR8  *Description
   )
 {
-  CHAR8   Buffer[MAX_DEBUG_MESSAGE_LENGTH];
+  CHAR8  Buffer[MAX_DEBUG_MESSAGE_LENGTH];
 
   // BEGIN LOGTELEMETRY
   // We use the first two bytes of Data1 to record the line number where the assert occurred, and the
@@ -66,9 +65,9 @@ DebugAssert (
   // For example, if we were to hit the ASSERT on line 402 of MdeModulePkg\Bus\Pci\PciHostBridgeDxe\PciHostBridge.c,
   // we would have Data1 = 0x6F486963505C0192, and Data2 = 0x6567646972427473. This would give us a
   // filename string of "\PciHostBridge", and a line number of 0x0192 (402 in decimal).
-  UINTN   FileNameLength  = 0;
-  UINT64  Data1           = 0xFFFFFFFFFFFFFFFF;
-  UINT64  Data2           = 0xFFFFFFFFFFFFFFFF;
+  UINTN   FileNameLength = 0;
+  UINT64  Data1          = 0xFFFFFFFFFFFFFFFF;
+  UINT64  Data2          = 0xFFFFFFFFFFFFFFFF;
 
   // Check to make sure the file name is valid and at least two characters long (which would be just the extension)
   if ((FileName != NULL) &&
@@ -76,6 +75,7 @@ DebugAssert (
   {
     FileNameLength = AsciiStrLen (FileName) - (2 * sizeof (CHAR8)); // We don't care about the extension
   }
+
   // END LOGTELEMETRY
 
   //
@@ -93,34 +93,40 @@ DebugAssert (
   //
   // BEGIN LOGTELEMETRY
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_TELEMETRY_ENABLED) != 0) {
-    CopyMem (&Data1, (UINT16*)(&LineNumber), sizeof(UINT16)); // Use the first two bytes of Data1 for the line number
-    if (FileNameLength <= 6) { // We can fit everything into Data1
-      CopyMem ((UINT8*)&Data1 + 2, FileName, FileNameLength);
-    } else if (FileNameLength > 6 && FileNameLength <= 14) { // Use all of Data1 and some of Data2
-      CopyMem ((UINT8*)&Data1 + 2, FileName, 6);
+    CopyMem (&Data1, (UINT16 *)(&LineNumber), sizeof (UINT16)); // Use the first two bytes of Data1 for the line number
+    if (FileNameLength <= 6) {
+      // We can fit everything into Data1
+      CopyMem ((UINT8 *)&Data1 + 2, FileName, FileNameLength);
+    } else if ((FileNameLength > 6) && (FileNameLength <= 14)) {
+      // Use all of Data1 and some of Data2
+      CopyMem ((UINT8 *)&Data1 + 2, FileName, 6);
       CopyMem (&Data2, FileName + 6, FileNameLength - 6);
-    } else { // Take the last 14 characters of the file name
-      CopyMem ((UINT8*)&Data1 + 2, FileName + (FileNameLength - 14), 6);
+    } else {
+      // Take the last 14 characters of the file name
+      CopyMem ((UINT8 *)&Data1 + 2, FileName + (FileNameLength - 14), 6);
       CopyMem (&Data2, FileName + (FileNameLength - 8), 8);
     }
-    LogTelemetry (TRUE,
+
+    LogTelemetry (
+      TRUE,
       NULL,
       (EFI_SOFTWARE_UNSPECIFIED | EFI_SW_EC_RELEASE_ASSERT),
       NULL,
       NULL,
       Data1,
       Data2
-    );
+      );
   }
+
   // END LOGTELEMETRY
-  if ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
+  if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
     CpuBreakpoint ();
   }
-  if ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED) != 0) {
+
+  if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED) != 0) {
     CpuDeadLoop ();
   }
 }
-
 
 /**
   Returns TRUE if ASSERT() macros are enabled.
@@ -138,5 +144,5 @@ DebugAssertEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
 }

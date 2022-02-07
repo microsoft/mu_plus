@@ -17,13 +17,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 typedef struct _DFCI_AUTHENTICATION_PROTOCOL DFCI_AUTHENTICATION_PROTOCOL;
 
 typedef struct {
-  DFCI_IDENTITY_ID Identity;
+  DFCI_IDENTITY_ID    Identity;
 } DFCI_IDENTITY_PROPERTIES;
 
-typedef UINT8 DFCI_IDENTITY_MASK;  //compatible type as enum DFCI_IDENTITY_ID
+typedef UINT8 DFCI_IDENTITY_MASK;  // compatible type as enum DFCI_IDENTITY_ID
 
 typedef enum {
-  DFCI_CERT_FORMAT_CHAR8  = 0x00,
+  DFCI_CERT_FORMAT_CHAR8 = 0x00,
   DFCI_CERT_FORMAT_CHAR16,
   DFCI_CERT_FORMAT_BINARY,
   DFCI_CERT_FORMAT_CHAR8_UI,
@@ -32,7 +32,7 @@ typedef enum {
 } DFCI_CERT_FORMAT;
 
 typedef enum {
-  DFCI_CERT_SUBJECT      = 0x00,
+  DFCI_CERT_SUBJECT = 0x00,
   DFCI_CERT_ISSUER,
   DFCI_CERT_THUMBPRINT,
   DFCI_CERT_REQUEST_MAX
@@ -48,21 +48,19 @@ DFCI_CERT_ISSUER         |   X   |   X   |       |       |
 DFCI_CERT_THUMBPRINT     |   X   |   X   |   X   |   X   |
 */
 
-
 typedef struct {
-  DFCI_IDENTITY_ID Identity;
-  UINT64           DataLength;
-  UINT8            Data[];
+  DFCI_IDENTITY_ID    Identity;
+  UINT64              DataLength;
+  UINT8               Data[];
 } DFCI_AUTH_RECOVERY_PACKET;
 
-//Required size of the response byte array
-#define RECOVERY_RESPONSE_SIZE (10)
-
+// Required size of the response byte array
+#define RECOVERY_RESPONSE_SIZE  (10)
 
 /////////////////////*** AUTH FUNCTIONS ***////////////////////////
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_WITH_PASSWORD) (
+(EFIAPI *DFCI_AUTHENTICATE_WITH_PASSWORD)(
   IN  CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
   IN  CONST CHAR16                        *Password OPTIONAL,
   IN  UINTN                                PasswordLength,
@@ -71,7 +69,7 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_SIGNED_DATA) (
+(EFIAPI *DFCI_AUTHENTICATE_SIGNED_DATA)(
   IN  CONST DFCI_AUTHENTICATION_PROTOCOL   *This,
   IN  CONST UINT8                          *SignedData,
   IN  UINTN                                SignedDataLength,
@@ -81,11 +79,10 @@ EFI_STATUS
 
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_DISPOSE_AUTH_TOKEN) (
+(EFIAPI *DFCI_AUTHENTICATE_DISPOSE_AUTH_TOKEN)(
   IN  CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
   IN OUT DFCI_AUTH_TOKEN                  *IdentityToken
   );
-
 
 /////////////////*** VERIFY/QUERY FUNCTIONS ***////////////////
 
@@ -105,12 +102,11 @@ attack by rate limiting or some other means as the IdentityToken values are limi
 **/
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_GET_IDENTITY_PROPERTIES) (
+(EFIAPI *DFCI_AUTHENTICATE_GET_IDENTITY_PROPERTIES)(
   IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
   IN  CONST DFCI_AUTH_TOKEN                  *IdentityToken,
   IN OUT DFCI_IDENTITY_PROPERTIES            *Properties
   );
-
 
 /**
 Function to return the currently enrolled identities within the system.
@@ -127,11 +123,10 @@ This is a combination of all identities (not just keys).
 **/
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_GET_ENROLLED_IDENTITY_MASK) (
+(EFIAPI *DFCI_AUTHENTICATE_GET_ENROLLED_IDENTITY_MASK)(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
   OUT      DFCI_IDENTITY_MASK               *EnrolledIdentities
   );
-
 
 /**
 This function returns a field from a certificate in the format requested.
@@ -154,7 +149,7 @@ If Cert is not NULL, the Identity parameter is not used.
 **/
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_GET_CERT_INFO) (
+(EFIAPI *DFCI_AUTHENTICATE_GET_CERT_INFO)(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
   IN       DFCI_IDENTITY_ID                  Identity,
   IN CONST UINT8                            *Cert          OPTIONAL,
@@ -164,7 +159,6 @@ EFI_STATUS
   OUT      VOID                            **Value,
   OUT      UINTN                            *ValueSize     OPTIONAL
   );
-
 
 /**
 This function returns a dynamically allocated Recovery Packet.
@@ -180,12 +174,11 @@ Identity must be a valid key and have permission to do recovery
 **/
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_GET_RECOVERY_PACKET) (
+(EFIAPI *DFCI_AUTHENTICATE_GET_RECOVERY_PACKET)(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
   IN       DFCI_IDENTITY_ID                    Identity,
   OUT      DFCI_AUTH_RECOVERY_PACKET         **Packet
   );
-
 
 /**
 This function validates the user provided Recovery response against
@@ -204,31 +197,30 @@ the active recovery packet for this session.  (1 packet at a given time/boot)
 **/
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_AUTHENTICATE_SET_RECOVERY_RESPONSE) (
+(EFIAPI *DFCI_AUTHENTICATE_SET_RECOVERY_RESPONSE)(
   IN CONST DFCI_AUTHENTICATION_PROTOCOL    *This,
   IN CONST UINT8                           *RecoveryResponse,
   IN       UINTN                            Size
   );
 
-
 //
 // DFCI AUTHENTICATION protocol structure
 //
 #pragma pack (push, 1)
-struct _DFCI_AUTHENTICATION_PROTOCOL
-{
-  DFCI_AUTHENTICATE_GET_ENROLLED_IDENTITY_MASK  GetEnrolledIdentities;
-  DFCI_AUTHENTICATE_WITH_PASSWORD               AuthWithPW;
-  DFCI_AUTHENTICATE_SIGNED_DATA                 AuthWithSignedData;
-  DFCI_AUTHENTICATE_DISPOSE_AUTH_TOKEN          DisposeAuthToken;
-  DFCI_AUTHENTICATE_GET_IDENTITY_PROPERTIES     GetIdentityProperties;
-  DFCI_AUTHENTICATE_GET_CERT_INFO               GetCertInfo;
-  DFCI_AUTHENTICATE_GET_RECOVERY_PACKET         GetRecoveryPacket;
-  DFCI_AUTHENTICATE_SET_RECOVERY_RESPONSE       SetRecoveryResponse;
+struct _DFCI_AUTHENTICATION_PROTOCOL {
+  DFCI_AUTHENTICATE_GET_ENROLLED_IDENTITY_MASK    GetEnrolledIdentities;
+  DFCI_AUTHENTICATE_WITH_PASSWORD                 AuthWithPW;
+  DFCI_AUTHENTICATE_SIGNED_DATA                   AuthWithSignedData;
+  DFCI_AUTHENTICATE_DISPOSE_AUTH_TOKEN            DisposeAuthToken;
+  DFCI_AUTHENTICATE_GET_IDENTITY_PROPERTIES       GetIdentityProperties;
+  DFCI_AUTHENTICATE_GET_CERT_INFO                 GetCertInfo;
+  DFCI_AUTHENTICATE_GET_RECOVERY_PACKET           GetRecoveryPacket;
+  DFCI_AUTHENTICATE_SET_RECOVERY_RESPONSE         SetRecoveryResponse;
 };
+
 #pragma pack (pop)
 
-extern EFI_GUID gDfciAuthenticationProtocolGuid;
-extern EFI_GUID gDfciAuthenticationProvisioningPendingGuid;  //This protocol is only a flag to tell other modules in the system that Update pending
+extern EFI_GUID  gDfciAuthenticationProtocolGuid;
+extern EFI_GUID  gDfciAuthenticationProvisioningPendingGuid; // This protocol is only a flag to tell other modules in the system that Update pending
 
 #endif //__DFCI_AUTHENTICATION_PROTOCOL_H__

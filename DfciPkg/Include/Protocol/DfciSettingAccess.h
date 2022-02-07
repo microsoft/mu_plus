@@ -18,13 +18,12 @@ Define the DFCI_SYSTEM_SETTING_ACCESS related structures
 **/
 typedef struct _DFCI_SETTING_ACCESS_PROTOCOL DFCI_SETTING_ACCESS_PROTOCOL;
 
-
 /*
 Set a single setting
 
 @param[in] This:       Access Protocol
 @param[in] Id:         Setting ID to set
-@param[in] AuthToken:  A valid auth token to apply the setting using.  This auth token will be validated 
+@param[in] AuthToken:  A valid auth token to apply the setting using.  This auth token will be validated
                        to check permissions for changing the setting.
 @param[in] Type:       Type that caller expects this setting to be.
 @param[in] Value:      A pointer to a datatype defined by the Type for this setting.
@@ -36,7 +35,7 @@ Set a single setting
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_ACCESS_SET) (
+(EFIAPI *DFCI_SETTING_ACCESS_SET)(
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL   *This,
   IN  DFCI_SETTING_ID_STRING                Id,
   IN  CONST DFCI_AUTH_TOKEN                *AuthToken,
@@ -45,7 +44,6 @@ EFI_STATUS
   IN  CONST VOID                           *Value,
   IN OUT DFCI_SETTING_FLAGS                *Flags
   );
-
 
 /*
 Get a single setting
@@ -67,7 +65,7 @@ Get a single setting
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_ACCESS_GET) (
+(EFIAPI *DFCI_SETTING_ACCESS_GET)(
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
   IN  DFCI_SETTING_ID_STRING              Id,
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken  OPTIONAL,
@@ -93,7 +91,7 @@ This will reset all settings that have DFCI_SETTING_FLAGS_NO_PREBOOT_UI set
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_ACCESS_RESET) (
+(EFIAPI *DFCI_SETTING_ACCESS_RESET)(
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
   IN  CONST DFCI_AUTH_TOKEN              *AuthToken
   );
@@ -103,13 +101,13 @@ EFI_STATUS
 //
 #pragma pack (push, 1)
 struct _DFCI_SETTING_ACCESS_PROTOCOL {
-  DFCI_SETTING_ACCESS_SET            Set;
-  DFCI_SETTING_ACCESS_GET            Get;
-  DFCI_SETTING_ACCESS_RESET          Reset;
+  DFCI_SETTING_ACCESS_SET      Set;
+  DFCI_SETTING_ACCESS_GET      Get;
+  DFCI_SETTING_ACCESS_RESET    Reset;
 };
+
 #pragma pack (pop)
 
+extern EFI_GUID  gDfciSettingAccessProtocolGuid;
 
-extern EFI_GUID     gDfciSettingAccessProtocolGuid;
-
-#endif      // __DFCI_SETTING_ACCESS_H__
+#endif // __DFCI_SETTING_ACCESS_H__

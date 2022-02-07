@@ -20,7 +20,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 DebugPortReset (
-  IN EFI_DEBUGPORT_PROTOCOL   *This
+  IN EFI_DEBUGPORT_PROTOCOL  *This
   )
 {
   return EFI_SUCCESS;
@@ -40,30 +40,31 @@ DebugPortReset (
 EFI_STATUS
 EFIAPI
 DebugPortWrite (
-  IN EFI_DEBUGPORT_PROTOCOL   *This,
-  IN UINT32                   Timeout,
-  IN OUT UINTN                *BufferSize,
-  OUT VOID                    *Buffer
+  IN EFI_DEBUGPORT_PROTOCOL  *This,
+  IN UINT32                  Timeout,
+  IN OUT UINTN               *BufferSize,
+  OUT VOID                   *Buffer
   )
 {
-    UINT8 DbgString[100];       //Some convenient size
-    UINTN Size;
-    UINTN CopySize;
-    CHAR8 *Data;
+  UINT8  DbgString[100];        // Some convenient size
+  UINTN  Size;
+  UINTN  CopySize;
+  CHAR8  *Data;
 
-    // Break up the array of char8's as there is no implied NULL
-    // in the input buffer.
-    Data = (CHAR8 *) Buffer;
-    Size = *BufferSize;
-    while (Size > 0) {
-        CopySize = MIN(Size,sizeof(DbgString)-1);
-        CopyMem (DbgString,Data,CopySize);
-        DbgString[CopySize] = '\0';
-        DebugPrint(DEBUG_ERROR,"%a",DbgString);
-        Size -= CopySize;
-        Data += CopySize;
-    }
-    return EFI_SUCCESS;
+  // Break up the array of char8's as there is no implied NULL
+  // in the input buffer.
+  Data = (CHAR8 *)Buffer;
+  Size = *BufferSize;
+  while (Size > 0) {
+    CopySize = MIN (Size, sizeof (DbgString)-1);
+    CopyMem (DbgString, Data, CopySize);
+    DbgString[CopySize] = '\0';
+    DebugPrint (DEBUG_ERROR, "%a", DbgString);
+    Size -= CopySize;
+    Data += CopySize;
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -80,14 +81,14 @@ DebugPortWrite (
 EFI_STATUS
 EFIAPI
 DebugPortRead (
-  IN EFI_DEBUGPORT_PROTOCOL   *This,
-  IN UINT32                   Timeout,
-  IN OUT UINTN                *BufferSize,
-  IN VOID                     *Buffer
+  IN EFI_DEBUGPORT_PROTOCOL  *This,
+  IN UINT32                  Timeout,
+  IN OUT UINTN               *BufferSize,
+  IN VOID                    *Buffer
   )
 {
-    *BufferSize = 0;
-    return EFI_TIMEOUT;
+  *BufferSize = 0;
+  return EFI_TIMEOUT;
 }
 
 /**
@@ -100,19 +101,19 @@ DebugPortRead (
 EFI_STATUS
 EFIAPI
 DebugPortPoll (
-  IN EFI_DEBUGPORT_PROTOCOL   *This
+  IN EFI_DEBUGPORT_PROTOCOL  *This
   )
 {
   return EFI_NOT_READY;
 }
 
-EFI_DEBUGPORT_PROTOCOL    mDebugPortInterface =
-    {
-    DebugPortReset,
-    DebugPortWrite,
-    DebugPortRead,
-    DebugPortPoll
-  };
+EFI_DEBUGPORT_PROTOCOL  mDebugPortInterface =
+{
+  DebugPortReset,
+  DebugPortWrite,
+  DebugPortRead,
+  DebugPortPoll
+};
 
 /**
   Install the Debug Port protocol
@@ -122,23 +123,22 @@ EFI_DEBUGPORT_PROTOCOL    mDebugPortInterface =
 EFI_STATUS
 EFIAPI
 InstallDebugPortProtocol (
-    IN EFI_HANDLE          ImageHandle,
-    IN EFI_SYSTEM_TABLE   *SystemTable
-) {
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS  Status;
 
-    EFI_STATUS              Status;
+  Status = SystemTable->BootServices->InstallProtocolInterface (
+                                        &ImageHandle,
+                                        &gEfiDebugPortProtocolGuid,
+                                        EFI_NATIVE_INTERFACE,
+                                        &mDebugPortInterface
+                                        );
 
-    Status = SystemTable->BootServices->InstallProtocolInterface (
-                  &ImageHandle,
-                  &gEfiDebugPortProtocolGuid,
-                  EFI_NATIVE_INTERFACE,
-                  &mDebugPortInterface);
-
-  if (EFI_ERROR(Status))
-  {
-    ASSERT_EFI_ERROR(Status);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
   }
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-

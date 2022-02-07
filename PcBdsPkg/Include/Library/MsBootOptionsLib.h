@@ -18,9 +18,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 MsBootOptionsLibGetDefaultBootApp (
-    IN OUT EFI_BOOT_MANAGER_LOAD_OPTION *BootOption,
-    IN     CHAR8                        *Parameter
-);
+  IN OUT EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption,
+  IN     CHAR8                         *Parameter
+  );
 
 /**
   Return the boot option corresponding to the Boot Manager Menu.
@@ -35,9 +35,9 @@ MsBootOptionsLibGetDefaultBootApp (
 EFI_STATUS
 EFIAPI
 MsBootOptionsLibGetBootManagerMenu (
-    IN OUT EFI_BOOT_MANAGER_LOAD_OPTION *BootOption,
-    IN     CHAR8                        *Parameter
-);
+  IN OUT EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption,
+  IN     CHAR8                         *Parameter
+  );
 
 /**
  * Register Default Boot Options
@@ -50,7 +50,7 @@ VOID
 EFIAPI
 MsBootOptionsLibRegisterDefaultBootOptions (
   VOID
-);
+  );
 
 /**
  * Get default boot options
@@ -62,8 +62,7 @@ MsBootOptionsLibRegisterDefaultBootOptions (
 EFI_BOOT_MANAGER_LOAD_OPTION *
 EFIAPI
 MsBootOptionsLibGetDefaultOptions (
-    OUT UINTN    *OptionCount
-);
+  OUT UINTN  *OptionCount
+  );
 
-#endif  // _MS_BOOT_OPTIONS_LIB_H_
-
+#endif // _MS_BOOT_OPTIONS_LIB_H_

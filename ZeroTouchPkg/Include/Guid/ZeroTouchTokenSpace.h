@@ -20,6 +20,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     0x353455c8, 0xb2ec,0x44f3, { 0x91, 0xcf, 0x0f, 0x76, 0x33, 0xc2, 0xde, 0x6b } \
   }
 
-extern EFI_GUID gZeroTouchPkgTokenSpaceGuid;
+extern EFI_GUID  gZeroTouchPkgTokenSpaceGuid;
 
 #endif // _ZEROTOUCHPKG_TOKEN_SPACE_GUID_H_

@@ -24,23 +24,25 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 STATIC
 VOID
 FillOutMsWheaData (
-  IN  CONST EFI_GUID*           LibraryId OPTIONAL,
-  IN  CONST EFI_GUID*           IhvId OPTIONAL,
-  IN  UINT64                    ExtraData1,
-  IN  UINT64                    ExtraData2,
-  OUT MS_WHEA_RSC_INTERNAL_ERROR_DATA   *ErrorData
+  IN  CONST EFI_GUID                   *LibraryId OPTIONAL,
+  IN  CONST EFI_GUID                   *IhvId OPTIONAL,
+  IN  UINT64                           ExtraData1,
+  IN  UINT64                           ExtraData2,
+  OUT MS_WHEA_RSC_INTERNAL_ERROR_DATA  *ErrorData
   )
 {
   // Zero structure.
-  ZeroMem(ErrorData, sizeof(*ErrorData));
+  ZeroMem (ErrorData, sizeof (*ErrorData));
 
   // set the values, and report the event.
   if (LibraryId != NULL) {
-    CopyGuid(&ErrorData->LibraryID, LibraryId);
+    CopyGuid (&ErrorData->LibraryID, LibraryId);
   }
-  if (IhvId != NULL){
-    CopyGuid(&ErrorData->IhvSharingGuid, IhvId);
+
+  if (IhvId != NULL) {
+    CopyGuid (&ErrorData->IhvSharingGuid, IhvId);
   }
+
   ErrorData->AdditionalInfo1 = ExtraData1;
   ErrorData->AdditionalInfo2 = ExtraData2;
 } // FillOutMsWheaData()
@@ -74,18 +76,18 @@ FillOutMsWheaData (
 EFI_STATUS
 EFIAPI
 LogTelemetry (
-  IN  BOOLEAN                   IsFatal,
-  IN  EFI_GUID*                 ComponentId OPTIONAL,
-  IN  EFI_STATUS_CODE_VALUE     ClassId,
-  IN  EFI_GUID*                 LibraryId OPTIONAL,
-  IN  EFI_GUID*                 IhvId OPTIONAL,
-  IN  UINT64                    ExtraData1,
-  IN  UINT64                    ExtraData2
+  IN  BOOLEAN                IsFatal,
+  IN  EFI_GUID               *ComponentId OPTIONAL,
+  IN  EFI_STATUS_CODE_VALUE  ClassId,
+  IN  EFI_GUID               *LibraryId OPTIONAL,
+  IN  EFI_GUID               *IhvId OPTIONAL,
+  IN  UINT64                 ExtraData1,
+  IN  UINT64                 ExtraData2
   )
 {
-  EFI_STATUS                        Status;
-  MS_WHEA_RSC_INTERNAL_ERROR_DATA   EventHeader;
-  EFI_STATUS_CODE_TYPE              Severity;
+  EFI_STATUS                       Status;
+  MS_WHEA_RSC_INTERNAL_ERROR_DATA  EventHeader;
+  EFI_STATUS_CODE_TYPE             Severity;
 
   Status = EFI_SUCCESS;
 
@@ -94,17 +96,24 @@ LogTelemetry (
     Severity = MS_WHEA_ERROR_STATUS_TYPE_INFO;
   }
 
-  FillOutMsWheaData(LibraryId, IhvId, ExtraData1,
-                      ExtraData2, &EventHeader);
+  FillOutMsWheaData (
+    LibraryId,
+    IhvId,
+    ExtraData1,
+    ExtraData2,
+    &EventHeader
+    );
 
   // Report the event
-  Status = ReportStatusCodeEx(Severity,
-                              ClassId,
-                              0,
-                              ComponentId,
-                              &gMsWheaRSCDataTypeGuid,
-                              &EventHeader,
-                              sizeof(EventHeader));
+  Status = ReportStatusCodeEx (
+             Severity,
+             ClassId,
+             0,
+             ComponentId,
+             &gMsWheaRSCDataTypeGuid,
+             &EventHeader,
+             sizeof (EventHeader)
+             );
 
   return Status;
 } // LogTelemetry()
@@ -143,42 +152,43 @@ LogTelemetry (
 EFI_STATUS
 EFIAPI
 LogTelemetryEx (
-  IN  BOOLEAN                   IsFatal,
-  IN  EFI_GUID*                 ComponentId OPTIONAL,
-  IN  EFI_STATUS_CODE_VALUE     ClassId,
-  IN  EFI_GUID*                 LibraryId OPTIONAL,
-  IN  EFI_GUID*                 IhvId OPTIONAL,
-  IN  UINT64                    ExtraData1,
-  IN  UINT64                    ExtraData2,
-  IN  CONST EFI_GUID*           ExtraExtraId,
-  IN  UINTN                     ExtraExtraSize,
-  IN  CONST VOID*               ExtraExtraData
+  IN  BOOLEAN                IsFatal,
+  IN  EFI_GUID               *ComponentId OPTIONAL,
+  IN  EFI_STATUS_CODE_VALUE  ClassId,
+  IN  EFI_GUID               *LibraryId OPTIONAL,
+  IN  EFI_GUID               *IhvId OPTIONAL,
+  IN  UINT64                 ExtraData1,
+  IN  UINT64                 ExtraData2,
+  IN  CONST EFI_GUID         *ExtraExtraId,
+  IN  UINTN                  ExtraExtraSize,
+  IN  CONST VOID             *ExtraExtraData
   )
 {
-  EFI_STATUS                        Status;
-  UINTN                             FullBufferSize;
-  UINT8                             *FullBuffer;
-  EFI_STATUS_CODE_TYPE              Severity;
-  
-  Status      = EFI_SUCCESS;
-  FullBuffer  = NULL;
+  EFI_STATUS            Status;
+  UINTN                 FullBufferSize;
+  UINT8                 *FullBuffer;
+  EFI_STATUS_CODE_TYPE  Severity;
+
+  Status     = EFI_SUCCESS;
+  FullBuffer = NULL;
 
   // If only SOME of the parameters are provided, fail.
-  if ((ExtraExtraId != NULL && ExtraExtraData == NULL) ||
-      (ExtraExtraId == NULL && ExtraExtraData != NULL)) {
+  if (((ExtraExtraId != NULL) && (ExtraExtraData == NULL)) ||
+      ((ExtraExtraId == NULL) && (ExtraExtraData != NULL)))
+  {
     return EFI_INVALID_PARAMETER;
   }
 
   //
   // Only need to figure out the buffer allocation if there's extra data.
-  // 
-  if (ExtraExtraSize > 0 && ExtraExtraData != NULL) {
-    FullBufferSize = sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof(EFI_GUID) + ExtraExtraSize;
-    ASSERT(FullBufferSize > sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA));
+  //
+  if ((ExtraExtraSize > 0) && (ExtraExtraData != NULL)) {
+    FullBufferSize = sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof (EFI_GUID) + ExtraExtraSize;
+    ASSERT (FullBufferSize > sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA));
     // TODO: Consider doing this with a stack buffer and max size for maximum
     //        flexibility.
-    if (FullBufferSize > (sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof(EFI_GUID))) {
-      FullBuffer = AllocatePool(FullBufferSize);
+    if (FullBufferSize > (sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof (EFI_GUID))) {
+      FullBuffer = AllocatePool (FullBufferSize);
     }
   }
 
@@ -187,33 +197,49 @@ LogTelemetryEx (
   // the buffer allocation failed), just alias back to the lesser call.
   //
   if (FullBuffer == NULL) {
-    return LogTelemetry(IsFatal, ComponentId, ClassId, LibraryId,
-                          IhvId, ExtraData1, ExtraData2);
+    return LogTelemetry (
+             IsFatal,
+             ComponentId,
+             ClassId,
+             LibraryId,
+             IhvId,
+             ExtraData1,
+             ExtraData2
+             );
   }
-  
+
   Severity = MS_WHEA_ERROR_STATUS_TYPE_FATAL;
   if (!IsFatal) {
     Severity = MS_WHEA_ERROR_STATUS_TYPE_INFO;
   }
 
-  FillOutMsWheaData(LibraryId, IhvId, ExtraData1, ExtraData2,
-                      (MS_WHEA_RSC_INTERNAL_ERROR_DATA*)FullBuffer);
-  CopyGuid((EFI_GUID*)(FullBuffer + sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA)), ExtraExtraId);
-  CopyMem(FullBuffer + sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof(EFI_GUID),
-            ExtraExtraData,
-            (FullBufferSize - sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA)) - sizeof(EFI_GUID));
+  FillOutMsWheaData (
+    LibraryId,
+    IhvId,
+    ExtraData1,
+    ExtraData2,
+    (MS_WHEA_RSC_INTERNAL_ERROR_DATA *)FullBuffer
+    );
+  CopyGuid ((EFI_GUID *)(FullBuffer + sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA)), ExtraExtraId);
+  CopyMem (
+    FullBuffer + sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof (EFI_GUID),
+    ExtraExtraData,
+    (FullBufferSize - sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA)) - sizeof (EFI_GUID)
+    );
 
   // Report the event
-  Status = ReportStatusCodeEx(Severity,
-                              ClassId,
-                              0,
-                              ComponentId,
-                              &gMsWheaRSCDataTypeGuid,
-                              FullBuffer,
-                              FullBufferSize);
+  Status = ReportStatusCodeEx (
+             Severity,
+             ClassId,
+             0,
+             ComponentId,
+             &gMsWheaRSCDataTypeGuid,
+             FullBuffer,
+             FullBufferSize
+             );
 
   if (FullBuffer != NULL) {
-    FreePool(FullBuffer);
+    FreePool (FullBuffer);
   }
 
   return Status;

@@ -1,6 +1,6 @@
 /** @file
   Verifies that the targeting information in a MFCI Policy
-  matches the platform targeting 
+  matches the platform targeting
 
   Copyright (c) Microsoft Corporation
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -21,29 +21,31 @@
 
 #include "MfciDxe.h"
 
-
 STATIC
 EFI_STATUS
 GetOemField (
-  CONST CHAR16            *MfciPolicyFieldName,
-  VOID                    *Data,
-  UINTN                   *DataSize
-)
+  CONST CHAR16  *MfciPolicyFieldName,
+  VOID          *Data,
+  UINTN         *DataSize
+  )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if ((DataSize == NULL) || (Data == NULL) || (MfciPolicyFieldName == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
+
   if (*DataSize == 0) {
     return EFI_BAD_BUFFER_SIZE;
   }
 
-  Status = gRT->GetVariable((CHAR16*)MfciPolicyFieldName,
-                            &MFCI_VAR_VENDOR_GUID,
-                            NULL,   // We do not check variable attributes
-                            DataSize,
-                            Data);
+  Status = gRT->GetVariable (
+                  (CHAR16 *)MfciPolicyFieldName,
+                  &MFCI_VAR_VENDOR_GUID,
+                  NULL,             // We do not check variable attributes
+                  DataSize,
+                  Data
+                  );
 
   return Status;
 }
@@ -51,86 +53,92 @@ GetOemField (
 STATIC
 EFI_STATUS
 VerifyStringFieldHelper (
-  VOID                    *PolicyBlob,
-  UINTN                   PolicyBlobSize,
-  MFCI_POLICY_FIELD       TargetField
-)
+  VOID               *PolicyBlob,
+  UINTN              PolicyBlobSize,
+  MFCI_POLICY_FIELD  TargetField
+  )
 {
   EFI_STATUS  Status;
 
-  CHAR16      *MfciPolData = NULL;
-  CHAR16      ThisMfciPolData[MFCI_POLICY_FIELD_MAX_LEN];
-  UINTN       DataSize = MFCI_POLICY_FIELD_MAX_LEN * sizeof(CHAR16);
+  CHAR16  *MfciPolData = NULL;
+  CHAR16  ThisMfciPolData[MFCI_POLICY_FIELD_MAX_LEN];
+  UINTN   DataSize = MFCI_POLICY_FIELD_MAX_LEN * sizeof (CHAR16);
 
   if ((PolicyBlob == NULL) ||
       (PolicyBlobSize == 0) ||
-      (TargetField >= MFCI_POLICY_FIELD_COUNT)) {
+      (TargetField >= MFCI_POLICY_FIELD_COUNT))
+  {
     return EFI_INVALID_PARAMETER;
   }
 
   Status = ExtractChar16 (PolicyBlob, PolicyBlobSize, gPolicyBlobFieldName[TargetField], &MfciPolData);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Extracting String Field '%s' from Blob failed - %r.\n", __FUNCTION__, gPolicyBlobFieldName[TargetField], Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Extracting String Field '%s' from Blob failed - %r.\n", __FUNCTION__, gPolicyBlobFieldName[TargetField], Status));
     goto Done;
   }
 
   Status = GetOemField (gPolicyTargetFieldVarNames[TargetField], ThisMfciPolData, &DataSize);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to read UEFI variable %s with return status %r\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField], Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to read UEFI variable %s with return status %r\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField], Status));
     goto Done;
   }
+
   // Verify the variable read is a multiple of CHAR16's
-  if (DataSize % sizeof(CHAR16)) {
-    DEBUG(( DEBUG_ERROR, "%a - OEM variable '%s' size(0x%x) is not a multiple of sizeof(CHAR16)\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField], DataSize ));
+  if (DataSize % sizeof (CHAR16)) {
+    DEBUG ((DEBUG_ERROR, "%a - OEM variable '%s' size(0x%x) is not a multiple of sizeof(CHAR16)\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField], DataSize));
     Status = EFI_COMPROMISED_DATA;
     goto Done;
   }
+
   // Verify the variable read is wide NULL terminated
-  if (ThisMfciPolData[DataSize/sizeof(CHAR16) - 1] != L'\0') {
-    DEBUG(( DEBUG_ERROR, "%a - OEM variable '%s' lacks NULL termination\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField] ));
+  if (ThisMfciPolData[DataSize/sizeof (CHAR16) - 1] != L'\0') {
+    DEBUG ((DEBUG_ERROR, "%a - OEM variable '%s' lacks NULL termination\n", __FUNCTION__, gPolicyTargetFieldVarNames[TargetField]));
     Status = EFI_COMPROMISED_DATA;
     goto Done;
   }
+
   // Ensure there are no embedded wide NULLs
-  if (StrSize(ThisMfciPolData) != DataSize) {
-    DEBUG ((DEBUG_ERROR, "StrSize(%x) does not match DataSize(%x), there must be embedded NULLs (not permitted)\n", StrSize(ThisMfciPolData), DataSize));
+  if (StrSize (ThisMfciPolData) != DataSize) {
+    DEBUG ((DEBUG_ERROR, "StrSize(%x) does not match DataSize(%x), there must be embedded NULLs (not permitted)\n", StrSize (ThisMfciPolData), DataSize));
     Status = EFI_COMPROMISED_DATA;
     goto Done;
   }
 
   if (StrnCmp (ThisMfciPolData, MfciPolData, MFCI_POLICY_FIELD_MAX_LEN) != 0) {
     // String comparison failed
-    DEBUG(( DEBUG_ERROR, "%a - Target Field '%s' policy target '%s' does not match system value '%s'\n", __FUNCTION__, gPolicyBlobFieldName[TargetField], MfciPolData, ThisMfciPolData ));
+    DEBUG ((DEBUG_ERROR, "%a - Target Field '%s' policy target '%s' does not match system value '%s'\n", __FUNCTION__, gPolicyBlobFieldName[TargetField], MfciPolData, ThisMfciPolData));
     Status = EFI_SECURITY_VIOLATION;
     goto Done;
   }
 
-  DEBUG(( DEBUG_VERBOSE, "%a - Successful match\n", __FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "%a - Successful match\n", __FUNCTION__));
 
 Done:
   if (MfciPolData != NULL) {
     FreePool (MfciPolData);
     MfciPolData = NULL;
   }
+
   return Status;
 }
 
 EFI_STATUS
 EFIAPI
 VerifyTargeting (
-  VOID                              *PolicyBlob,
-  UINTN                             PolicyBlobSize,
-  UINT64                            ExpectedNonce,
-  MFCI_POLICY_TYPE                  *ExtractedPolicy
-)
+  VOID              *PolicyBlob,
+  UINTN             PolicyBlobSize,
+  UINT64            ExpectedNonce,
+  MFCI_POLICY_TYPE  *ExtractedPolicy
+  )
 {
-  EFI_STATUS                        Status;
-  UINT64                            BlobNonce;
+  EFI_STATUS  Status;
+  UINT64      BlobNonce;
 
-  DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
   if ((PolicyBlob == NULL) ||
-      (ExtractedPolicy == NULL)) {
+      (ExtractedPolicy == NULL))
+  {
     Status = EFI_INVALID_PARAMETER;
     goto Done;
   }
@@ -143,25 +151,28 @@ VerifyTargeting (
        fieldIndex++)
   {
     Status = VerifyStringFieldHelper (PolicyBlob, PolicyBlobSize, fieldIndex);
-    if (EFI_ERROR(Status)) { goto Done; }  // helper function above takes care of debug logging
+    if (EFI_ERROR (Status)) {
+      goto Done;
+    }                                      // helper function above takes care of debug logging
   }
 
   // Step 6: Verify nonce
   Status = ExtractUint64 (PolicyBlob, PolicyBlobSize, gPolicyBlobFieldName[MFCI_POLICY_TARGET_NONCE], &BlobNonce);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to extract nonce from policy blob with return status %r\n", __FUNCTION__, gPolicyBlobFieldName[MFCI_POLICY_TARGET_NONCE], Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to extract nonce from policy blob with return status %r\n", __FUNCTION__, gPolicyBlobFieldName[MFCI_POLICY_TARGET_NONCE], Status));
     goto Done;
   }
+
   if (BlobNonce != ExpectedNonce) {
-    DEBUG(( DEBUG_ERROR, "%a - Blob nonce (0x%lx) does not match platform's target nonce (0x%lx), the blob is not fresh.\n", __FUNCTION__, BlobNonce, ExpectedNonce));
+    DEBUG ((DEBUG_ERROR, "%a - Blob nonce (0x%lx) does not match platform's target nonce (0x%lx), the blob is not fresh.\n", __FUNCTION__, BlobNonce, ExpectedNonce));
     Status = EFI_SECURITY_VIOLATION;
     goto Done;
   }
 
   // Step 7: Extract policy
   Status = ExtractUint64 (PolicyBlob, PolicyBlobSize, gPolicyBlobFieldName[MFCI_POLICY_FIELD_UEFI_POLICY], ExtractedPolicy);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to extract the MFCI Policy from the binary blob with return status %r\n", __FUNCTION__, Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to extract the MFCI Policy from the binary blob with return status %r\n", __FUNCTION__, Status));
     goto Done;
   }
 

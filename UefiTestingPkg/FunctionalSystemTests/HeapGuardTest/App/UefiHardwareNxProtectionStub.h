@@ -12,7 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 UNIT_TEST_STATUS
 EFIAPI
 UefiHardwareNxProtectionEnabled (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   );
 
 #endif // _HEAP_GUARD_HARDWARE_NX_ENABLED_H_

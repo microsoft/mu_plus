@@ -27,21 +27,19 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "../SmmPagingProtectionsTestCommon.h"
 
+#define UNIT_TEST_APP_NAME     "SMM Memory Protections Test"
+#define UNIT_TEST_APP_VERSION  "0.5"
 
-#define UNIT_TEST_APP_NAME        "SMM Memory Protections Test"
-#define UNIT_TEST_APP_VERSION     "0.5"
+VOID   *mPiSmmCommonCommBufferAddress = NULL;
+UINTN  mPiSmmCommonCommBufferSize;
 
-VOID      *mPiSmmCommonCommBufferAddress = NULL;
-UINTN     mPiSmmCommonCommBufferSize;
-
-
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 ///
 /// HELPER FUNCTIONS
 ///
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 
 /**
   This helper function preps the shared CommBuffer for use by the test step.
@@ -55,11 +53,11 @@ UINTN     mPiSmmCommonCommBufferSize;
 STATIC
 EFI_STATUS
 SmmMemoryProtectionsGetCommBuffer (
-  OUT  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER **CommBuffer
+  OUT  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  **CommBuffer
   )
 {
-  EFI_SMM_COMMUNICATE_HEADER              *CommHeader;
-  UINTN                                   CommBufferSize;
+  EFI_SMM_COMMUNICATE_HEADER  *CommHeader;
+  UINTN                       CommBufferSize;
 
   if (mPiSmmCommonCommBufferAddress == NULL) {
     DEBUG ((DEBUG_ERROR, "[%a] - Communication buffer not found!\n", __FUNCTION__));
@@ -67,12 +65,13 @@ SmmMemoryProtectionsGetCommBuffer (
   }
 
   // First, let's zero the comm buffer. Couldn't hurt.
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER*)mPiSmmCommonCommBufferAddress;
+  CommHeader     = (EFI_SMM_COMMUNICATE_HEADER *)mPiSmmCommonCommBufferAddress;
   CommBufferSize = sizeof (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER) + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
   if (CommBufferSize > mPiSmmCommonCommBufferSize) {
     DEBUG ((DEBUG_ERROR, "[%a] - Communication buffer is too small!\n", __FUNCTION__));
     return EFI_ABORTED;
   }
+
   ZeroMem (CommHeader, CommBufferSize);
 
   // SMM Communication Parameters
@@ -80,7 +79,7 @@ SmmMemoryProtectionsGetCommBuffer (
   CommHeader->MessageLength = sizeof (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER);
 
   // Return a pointer to the CommBuffer for the test to modify.
-  *CommBuffer = (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER*)CommHeader->Data;
+  *CommBuffer = (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *)CommHeader->Data;
 
   return EFI_SUCCESS;
 }
@@ -99,23 +98,23 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
   VOID
   )
 {
-  EFI_STATUS                              Status = EFI_SUCCESS;
-  EFI_SMM_COMMUNICATE_HEADER              *CommHeader;
-  UINTN                                   CommBufferSize;
-  static EFI_SMM_COMMUNICATION_PROTOCOL   *SmmCommunication = NULL;
+  EFI_STATUS                             Status = EFI_SUCCESS;
+  EFI_SMM_COMMUNICATE_HEADER             *CommHeader;
+  UINTN                                  CommBufferSize;
+  static EFI_SMM_COMMUNICATION_PROTOCOL  *SmmCommunication = NULL;
 
   if (mPiSmmCommonCommBufferAddress == NULL) {
-    DEBUG ((DEBUG_ERROR, "[%a] - Communication buffer not found!\n" , __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "[%a] - Communication buffer not found!\n", __FUNCTION__));
     return EFI_ABORTED;
   }
 
   // Grab the CommBuffer
-  CommHeader = (EFI_SMM_COMMUNICATE_HEADER*)mPiSmmCommonCommBufferAddress;
+  CommHeader     = (EFI_SMM_COMMUNICATE_HEADER *)mPiSmmCommonCommBufferAddress;
   CommBufferSize = sizeof (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER) + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
 
   // Locate the protocol, if not done yet.
   if (!SmmCommunication) {
-    Status = gBS->LocateProtocol (&gEfiSmmCommunicationProtocolGuid, NULL, (VOID**)&SmmCommunication);
+    Status = gBS->LocateProtocol (&gEfiSmmCommunicationProtocolGuid, NULL, (VOID **)&SmmCommunication);
   }
 
   // Signal SMM.
@@ -130,22 +129,22 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
 UNIT_TEST_STATUS
 EFIAPI
 LocateSmmCommonCommBuffer (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS                                Status;
-  EDKII_PI_SMM_COMMUNICATION_REGION_TABLE   *PiSmmCommunicationRegionTable;
-  EFI_MEMORY_DESCRIPTOR                     *SmmCommMemRegion;
-  UINTN                                     Index, BufferSize;
+  EFI_STATUS                               Status;
+  EDKII_PI_SMM_COMMUNICATION_REGION_TABLE  *PiSmmCommunicationRegionTable;
+  EFI_MEMORY_DESCRIPTOR                    *SmmCommMemRegion;
+  UINTN                                    Index, BufferSize;
 
   if (mPiSmmCommonCommBufferAddress == NULL) {
-    Status = EfiGetSystemConfigurationTable (&gEdkiiPiSmmCommunicationRegionTableGuid, (VOID**)&PiSmmCommunicationRegionTable);
+    Status = EfiGetSystemConfigurationTable (&gEdkiiPiSmmCommunicationRegionTableGuid, (VOID **)&PiSmmCommunicationRegionTable);
     UT_ASSERT_NOT_EFI_ERROR (Status);
 
     // We only need a region large enough to hold a SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER,
     // so this shouldn't be too hard.
-    BufferSize = 0;
-    SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR*)(PiSmmCommunicationRegionTable + 1);
+    BufferSize       = 0;
+    SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR *)(PiSmmCommunicationRegionTable + 1);
     for (Index = 0; Index < PiSmmCommunicationRegionTable->NumberOfEntries; Index++) {
       if (SmmCommMemRegion->Type == EfiConventionalMemory) {
         BufferSize = EFI_PAGES_TO_SIZE ((UINTN)SmmCommMemRegion->NumberOfPages);
@@ -153,42 +152,41 @@ LocateSmmCommonCommBuffer (
           break;
         }
       }
-      SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)SmmCommMemRegion + PiSmmCommunicationRegionTable->DescriptorSize);
+
+      SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)SmmCommMemRegion + PiSmmCommunicationRegionTable->DescriptorSize);
     }
 
     UT_ASSERT_TRUE (Index < PiSmmCommunicationRegionTable->NumberOfEntries);
 
     UT_ASSERT_TRUE (SmmCommMemRegion->PhysicalStart < MAX_UINTN);
-    mPiSmmCommonCommBufferAddress = (VOID*)(UINTN)SmmCommMemRegion->PhysicalStart;
-    mPiSmmCommonCommBufferSize = BufferSize;
+    mPiSmmCommonCommBufferAddress = (VOID *)(UINTN)SmmCommMemRegion->PhysicalStart;
+    mPiSmmCommonCommBufferSize    = BufferSize;
   }
 
   return UNIT_TEST_PASSED;
 } // LocateSmmCommonCommBuffer()
 
-
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 ///
 /// TEST CASES
 ///
-///================================================================================================
-///================================================================================================
-
+/// ================================================================================================
+/// ================================================================================================
 
 UNIT_TEST_STATUS
 EFIAPI
 CodeShouldBeWriteProtected (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN     PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -202,8 +200,8 @@ CodeShouldBeWriteProtected (
     // it a "pass". If we fall through we will consider it a "fail".
     //
     PostReset = TRUE;
-    SetBootNextDevice();
-    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
+    SetBootNextDevice ();
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
 
     // Grab the CommBuffer and fill it in for this test
     Status = SmmMemoryProtectionsGetCommBuffer (&CommBuffer);
@@ -215,9 +213,9 @@ CodeShouldBeWriteProtected (
     Status = SmmMemoryProtectionsDxeToSmmCommunicate ();
 
     // If we're still here, things have gone wrong.
-    UT_LOG_ERROR( "System was expected to reboot, but didn't." );
+    UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -228,16 +226,16 @@ CodeShouldBeWriteProtected (
 UNIT_TEST_STATUS
 EFIAPI
 DataShouldBeExecuteProtected (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -251,8 +249,8 @@ DataShouldBeExecuteProtected (
     // it a "pass". If we fall through we will consider it a "fail".
     //
     PostReset = TRUE;
-    SetBootNextDevice();
-    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
+    SetBootNextDevice ();
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
 
     // Grab the CommBuffer and fill it in for this test
     Status = SmmMemoryProtectionsGetCommBuffer (&CommBuffer);
@@ -266,7 +264,7 @@ DataShouldBeExecuteProtected (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -277,16 +275,16 @@ DataShouldBeExecuteProtected (
 UNIT_TEST_STATUS
 EFIAPI
 InvalidRangesShouldBeReadProtected (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -300,8 +298,8 @@ InvalidRangesShouldBeReadProtected (
     // it a "pass". If we fall through we will consider it a "fail".
     //
     PostReset = TRUE;
-    SetBootNextDevice();
-    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
+    SetBootNextDevice ();
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
 
     // Grab the CommBuffer and fill it in for this test
     Status = SmmMemoryProtectionsGetCommBuffer (&CommBuffer);
@@ -326,16 +324,16 @@ InvalidRangesShouldBeReadProtected (
 UNIT_TEST_STATUS
 EFIAPI
 UnauthorizedIoShouldBeReadProtected (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -350,7 +348,7 @@ UnauthorizedIoShouldBeReadProtected (
     //
     PostReset = TRUE;
     SetBootNextDevice ();
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
 
     // Grab the CommBuffer and fill it in for this test
     Status = SmmMemoryProtectionsGetCommBuffer (&CommBuffer);
@@ -367,7 +365,7 @@ UnauthorizedIoShouldBeReadProtected (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -378,16 +376,16 @@ UnauthorizedIoShouldBeReadProtected (
 UNIT_TEST_STATUS
 EFIAPI
 UnauthorizedIoShouldBeWriteProtected (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -419,7 +417,7 @@ UnauthorizedIoShouldBeWriteProtected (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState (&PostReset, sizeof( PostReset ));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -430,16 +428,16 @@ UnauthorizedIoShouldBeWriteProtected (
 UNIT_TEST_STATUS
 EFIAPI
 UnauthorizedMsrShouldBeReadProtected (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -482,16 +480,16 @@ UnauthorizedMsrShouldBeReadProtected (
 UNIT_TEST_STATUS
 EFIAPI
 UnauthorizedMsrShouldBeWriteProtected (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -534,16 +532,16 @@ UnauthorizedMsrShouldBeWriteProtected (
 UNIT_TEST_STATUS
 EFIAPI
 PrivilegedInstructionsShouldBePrevented (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -575,7 +573,7 @@ PrivilegedInstructionsShouldBePrevented (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -586,16 +584,16 @@ PrivilegedInstructionsShouldBePrevented (
 UNIT_TEST_STATUS
 EFIAPI
 AccessToSmmEntryPointShouldBePrevented (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -610,7 +608,7 @@ AccessToSmmEntryPointShouldBePrevented (
     //
     PostReset = TRUE;
     SetBootNextDevice ();
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
 
     // Grab the CommBuffer and fill it in for this test
     Status = SmmMemoryProtectionsGetCommBuffer (&CommBuffer);
@@ -624,7 +622,7 @@ AccessToSmmEntryPointShouldBePrevented (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -636,7 +634,7 @@ typedef
 VOID
 (*DUMMY_VOID_FUNCTION_FOR_DATA_TEST)(
   VOID
-);
+  );
 
 /**
   This is a function that serves as a placeholder in non-SMM code region.
@@ -647,7 +645,8 @@ DummyFunctionForCodeSelfTest (
   VOID
   )
 {
-  volatile UINT8    DontCompileMeOut = 0;
+  volatile UINT8  DontCompileMeOut = 0;
+
   DontCompileMeOut++;
   return;
 }
@@ -655,16 +654,16 @@ DummyFunctionForCodeSelfTest (
 UNIT_TEST_STATUS
 EFIAPI
 CodeOutSideSmmShouldNotRun (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -679,13 +678,13 @@ CodeOutSideSmmShouldNotRun (
     //
     PostReset = TRUE;
     SetBootNextDevice ();
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
 
     // Grab the CommBuffer and fill it in for this test
     Status = SmmMemoryProtectionsGetCommBuffer (&CommBuffer);
     UT_ASSERT_NOT_EFI_ERROR (Status);
 
-    CommBuffer->Function = SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE;
+    CommBuffer->Function      = SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE;
     CommBuffer->TargetAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)&DummyFunctionForCodeSelfTest;
 
     // This should cause the system to reboot.
@@ -694,7 +693,7 @@ CodeOutSideSmmShouldNotRun (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -705,16 +704,16 @@ CodeOutSideSmmShouldNotRun (
 UNIT_TEST_STATUS
 EFIAPI
 CodeInCommBufferShouldNotRun (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS  Status;
-  BOOLEAN   PostReset = FALSE;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *CommBuffer;
+  EFI_STATUS                               Status;
+  BOOLEAN                                  PostReset = FALSE;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommBuffer;
 
   // Check to see whether we're loading a context, potentially after a reboot.
   if (Context != NULL) {
-    PostReset = *(BOOLEAN*)Context;
+    PostReset = *(BOOLEAN *)Context;
   }
 
   // If we're not post-reset, this should be the first time this test runs.
@@ -729,14 +728,14 @@ CodeInCommBufferShouldNotRun (
     //
     PostReset = TRUE;
     SetBootNextDevice ();
-    SaveFrameworkState ( &PostReset, sizeof (PostReset));
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
 
     // Grab the CommBuffer and fill it in for this test
     Status = SmmMemoryProtectionsGetCommBuffer (&CommBuffer);
     UT_ASSERT_NOT_EFI_ERROR (Status);
 
-    CommBuffer->Function = SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE;
-    CommBuffer->TargetValue = 0xC3; //ret instruction.
+    CommBuffer->Function      = SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE;
+    CommBuffer->TargetValue   = 0xC3; // ret instruction.
     CommBuffer->TargetAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)&CommBuffer->TargetValue;
 
     // This should cause the system to reboot.
@@ -745,7 +744,7 @@ CodeInCommBufferShouldNotRun (
     // If we're still here, things have gone wrong.
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     PostReset = FALSE;
-    SaveFrameworkState( &PostReset, sizeof( PostReset ) );
+    SaveFrameworkState (&PostReset, sizeof (PostReset));
   }
 
   UT_ASSERT_TRUE (PostReset);
@@ -753,14 +752,13 @@ CodeInCommBufferShouldNotRun (
   return UNIT_TEST_PASSED;
 }
 
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 ///
 /// TEST ENGINE
 ///
-///================================================================================================
-///================================================================================================
-
+/// ================================================================================================
+/// ================================================================================================
 
 /**
   SmmPagingProtectionsTestAppEntryPoint
@@ -784,15 +782,14 @@ SmmPagingProtectionsTestAppEntryPoint (
   UNIT_TEST_SUITE_HANDLE      PagingSuite;
   UNIT_TEST_SUITE_HANDLE      ProtectionsSuite;
 
-  DEBUG(( DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG ((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   //
   // Start setting up the test framework for running the tests.
   //
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
-  if (EFI_ERROR( Status ))
-  {
-    DEBUG((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
+  Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
     goto Cleanup;
   }
 
@@ -800,14 +797,14 @@ SmmPagingProtectionsTestAppEntryPoint (
   // Populate the TestSuite Unit Test Suite.
   //
   Status = CreateUnitTestSuite (&PagingSuite, Fw, "SMM Paging Protections Tests", "Security.SMMPaging", NULL, NULL);
-  if (EFI_ERROR( Status ))
-  {
-    DEBUG((DEBUG_ERROR, "Failed in CreateUnitTestSuite for PagingSuite\n"));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for PagingSuite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
-  AddTestCase( PagingSuite, "Code regions should be write-protected", "Security.SMMPaging.CodeProtections", CodeShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
-  AddTestCase( PagingSuite, "Data regions should be protected against execution", "Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL );
+
+  AddTestCase (PagingSuite, "Code regions should be write-protected", "Security.SMMPaging.CodeProtections", CodeShouldBeWriteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
+  AddTestCase (PagingSuite, "Data regions should be protected against execution", "Security.SMMPaging.DataProtections", DataShouldBeExecuteProtected, LocateSmmCommonCommBuffer, NULL, NULL);
   AddTestCase (PagingSuite, "Invalid ranges should be protected against access from SMM", "Security.SMMPaging.InvalidRangeProtections", InvalidRangesShouldBeReadProtected, LocateSmmCommonCommBuffer, NULL, NULL);
   AddTestCase (PagingSuite, "Execution of code outside of SMM should be prevented", "Security.SMMPaging.CodeOutSideSmmShouldNotRun", CodeOutSideSmmShouldNotRun, LocateSmmCommonCommBuffer, NULL, NULL);
   AddTestCase (PagingSuite, "Execution of code in SMM Comm Buffer should be prevented", "Security.SMMPaging.CodeInCommBufferShouldNotRun", CodeInCommBufferShouldNotRun, LocateSmmCommonCommBuffer, NULL, NULL);
@@ -817,8 +814,7 @@ SmmPagingProtectionsTestAppEntryPoint (
   // Populate the ProtectionsSuite with general SMM Protection Unit tests
   //
   Status = CreateUnitTestSuite (&ProtectionsSuite, Fw, "SMM Protections Tests", "Security.SMMProtections", NULL, NULL);
-  if (EFI_ERROR (Status)) 
-  {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for ProtectionsSuite\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;

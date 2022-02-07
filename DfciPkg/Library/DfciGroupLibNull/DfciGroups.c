@@ -14,14 +14,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/DfciGroupLib.h>
 
-
 /**
  * Return a pointer to the Group Array to DFCI.  This NULL
  * library does not return any group settings.
  */
 DFCI_GROUP_ENTRY *
 EFIAPI
-DfciGetGroupEntries (VOID) {
-
-    return NULL;
+DfciGetGroupEntries (
+  VOID
+  )
+{
+  return NULL;
 }

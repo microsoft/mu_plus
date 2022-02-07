@@ -43,7 +43,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/HobLib.h>
 #include <Library/PerformanceLib.h>
 
-
 #include <IndustryStandard/Pci30.h>
 
 #define gPciRootBridge \
@@ -61,34 +60,34 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // Platform Root Bridge
 //
 typedef struct {
-  ACPI_HID_DEVICE_PATH      PciRootBridge;
-  EFI_DEVICE_PATH_PROTOCOL  End;
+  ACPI_HID_DEVICE_PATH        PciRootBridge;
+  EFI_DEVICE_PATH_PROTOCOL    End;
 } PLATFORM_ROOT_BRIDGE_DEVICE_PATH;
 
 typedef struct {
-  ACPI_HID_DEVICE_PATH      PciRootBridge;
-  PCI_DEVICE_PATH           PciDevice;
-  EFI_DEVICE_PATH_PROTOCOL  End;
+  ACPI_HID_DEVICE_PATH        PciRootBridge;
+  PCI_DEVICE_PATH             PciDevice;
+  EFI_DEVICE_PATH_PROTOCOL    End;
 } PLATFORM_ONBOARD_CONTROLLER_DEVICE_PATH;
 
 typedef struct {
-  ACPI_HID_DEVICE_PATH      PciRootBridge;
-  PCI_DEVICE_PATH           PciBridge;
-  PCI_DEVICE_PATH           PciDevice;
-  EFI_DEVICE_PATH_PROTOCOL  End;
+  ACPI_HID_DEVICE_PATH        PciRootBridge;
+  PCI_DEVICE_PATH             PciBridge;
+  PCI_DEVICE_PATH             PciDevice;
+  EFI_DEVICE_PATH_PROTOCOL    End;
 } PLATFORM_PCI_CONTROLLER_DEVICE_PATH;
 
 //
 // Below is the boot option device path
 //
 
-#define CLASS_HID           3
-#define SUBCLASS_BOOT       1
-#define PROTOCOL_KEYBOARD   1
+#define CLASS_HID          3
+#define SUBCLASS_BOOT      1
+#define PROTOCOL_KEYBOARD  1
 
 typedef struct {
-  USB_CLASS_DEVICE_PATH           UsbClass;
-  EFI_DEVICE_PATH_PROTOCOL        End;
+  USB_CLASS_DEVICE_PATH       UsbClass;
+  EFI_DEVICE_PATH_PROTOCOL    End;
 } USB_CLASS_FORMAT_DEVICE_PATH;
 
 //
@@ -107,7 +106,7 @@ typedef struct {
 **/
 EFI_STATUS
 MemoryTest (
-  IN EXTENDMEM_COVERAGE_LEVEL Level
+  IN EXTENDMEM_COVERAGE_LEVEL  Level
   );
 
 /*++
@@ -142,7 +141,7 @@ EfiPlatformBootManagerProcessCapsules (
 //
 BOOLEAN
 IsGopDevicePath (
-  EFI_DEVICE_PATH_PROTOCOL *DevicePath
+  EFI_DEVICE_PATH_PROTOCOL  *DevicePath
   );
 
 #endif

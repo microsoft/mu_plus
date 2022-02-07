@@ -41,32 +41,29 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "SimpleWindowManagerProtocol.h"
 
-
 // ****** Preprocessor constants ******
 //
 
-#define POINTER_STATE_INPUT_QUEUE_SIZE                  50                  // Depth of aggregate pointer event queue.
-#define PERIODIC_REFRESH_INTERVAL                       (5 * 10 * 1000)     // Interval for scanning AP providers: 5ms in 100ns units.
+#define POINTER_STATE_INPUT_QUEUE_SIZE  50                                  // Depth of aggregate pointer event queue.
+#define PERIODIC_REFRESH_INTERVAL       (5 * 10 * 1000)                     // Interval for scanning AP providers: 5ms in 100ns units.
 
-#define SWM_POINTER_EVENT_FILTER_BOX_SIZE_PERCENT       50                  // Filter window in fraction of a percent (0.50%) of the absolute pointer maximum width.
+#define SWM_POINTER_EVENT_FILTER_BOX_SIZE_PERCENT  50                       // Filter window in fraction of a percent (0.50%) of the absolute pointer maximum width.
 
 // Common variables with SimpleWindowManager
 extern EFI_HII_HANDLE             mSWMHiiHandle;
 extern EFI_ABSOLUTE_POINTER_MODE  mAbsPointerMode;
 
-
 // Pointer state event input queue (holds pointer event data until consumer reads them out, FIFO)
 //
 typedef struct {
-    BOOLEAN                             bQueueEmpty;
-    UINTN                               QueueInputPosition;
-    UINTN                               QueueOutputPosition;
-    MS_SWM_ABSOLUTE_POINTER_STATE       PointerStateQueue[POINTER_STATE_INPUT_QUEUE_SIZE];
+  BOOLEAN                          bQueueEmpty;
+  UINTN                            QueueInputPosition;
+  UINTN                            QueueOutputPosition;
+  MS_SWM_ABSOLUTE_POINTER_STATE    PointerStateQueue[POINTER_STATE_INPUT_QUEUE_SIZE];
 } MS_SWM_ABSOLUTE_POINTER_QUEUE;
 
 // ****** Function prototypes ******
 //
-
 
 /**
     Checks whether the specified controller exposes the Absolute Pointer interface that we will manage.
@@ -82,9 +79,11 @@ typedef struct {
 **/
 EFI_STATUS
 EFIAPI
-SWMDriverSupported (IN EFI_DRIVER_BINDING_PROTOCOL  *this,
-                    IN EFI_HANDLE                   Controller,
-                    IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath);
+SWMDriverSupported (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *this,
+  IN EFI_HANDLE                Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL  *RemainingDevicePath
+  );
 
 /**
     Start supporting specified controller exposing Absolute Pointer interface.
@@ -100,9 +99,11 @@ SWMDriverSupported (IN EFI_DRIVER_BINDING_PROTOCOL  *this,
 **/
 EFI_STATUS
 EFIAPI
-SWMDriverStart (IN EFI_DRIVER_BINDING_PROTOCOL      *this,
-                IN EFI_HANDLE                       Controller,
-                IN EFI_DEVICE_PATH_PROTOCOL         *RemainingDevicePath);
+SWMDriverStart (
+  IN EFI_DRIVER_BINDING_PROTOCOL      *this,
+  IN EFI_HANDLE                Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL  *RemainingDevicePath
+  );
 
 /**
     Stops supporting specified controller exposing Absolute Pointer interface.
@@ -117,12 +118,12 @@ SWMDriverStart (IN EFI_DRIVER_BINDING_PROTOCOL      *this,
 **/
 EFI_STATUS
 EFIAPI
-SWMDriverStop (IN  EFI_DRIVER_BINDING_PROTOCOL     *this,
-               IN  EFI_HANDLE                      Controller,
-               IN  UINTN                           NumberOfChildren,
-               IN  EFI_HANDLE                      *ChildHandleBuffer);
-
-
+SWMDriverStop (
+  IN  EFI_DRIVER_BINDING_PROTOCOL     *this,
+  IN  EFI_HANDLE  Controller,
+  IN  UINTN       NumberOfChildren,
+  IN  EFI_HANDLE  *ChildHandleBuffer
+  );
 
 /**
     Hides the mouse pointer.
@@ -133,8 +134,9 @@ SWMDriverStop (IN  EFI_DRIVER_BINDING_PROTOCOL     *this,
 
 **/
 EFI_STATUS
-HideMousePointer (VOID);
-
+HideMousePointer (
+  VOID
+  );
 
 /**
     Shows the mouse pointer.
@@ -146,7 +148,9 @@ HideMousePointer (VOID);
 
 **/
 EFI_STATUS
-ShowMousePointer (VOID);
+ShowMousePointer (
+  VOID
+  );
 
 /**
  * Wait for an event, and display the POWER OFF dialog if the Power Timer expires
@@ -161,11 +165,12 @@ ShowMousePointer (VOID);
  */
 EFI_STATUS
 WaitForEventInternal (
-    IN UINTN           NumberOfEvents,
-    IN EFI_EVENT      *Events,
-    IN UINTN          *Index,
-    IN UINT64          Timeout,
-    IN BOOLEAN         ContinueTimer);
+  IN UINTN      NumberOfEvents,
+  IN EFI_EVENT  *Events,
+  IN UINTN      *Index,
+  IN UINT64     Timeout,
+  IN BOOLEAN    ContinueTimer
+  );
 
 /**
     Displays a modal dialog box for obtaining or confirming a password. The password dialog returns a typed integer value
@@ -188,15 +193,16 @@ WaitForEventInternal (
 
 **/
 EFI_STATUS
-PasswordDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
-                        IN  CHAR16                              *pTitleBarText,
-                        IN  CHAR16                              *pCaptionText,
-                        IN  CHAR16                              *pBodyText,
-                        IN  CHAR16                              *pErrorText,
-                        IN  SWM_PWD_DIALOG_TYPE                 Type,
-                        OUT SWM_MB_RESULT                       *Result,
-                        OUT CHAR16                              **Password);
-
+PasswordDialogInternal (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password
+  );
 
 /**
     Displays a modal dialog box that presents a list of choices to the user and allows them to select
@@ -217,14 +223,14 @@ PasswordDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
 **/
 EFI_STATUS
 SingleSelectDialogInternal (
-  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-  IN  CHAR16                              *pTitleBarText,
-  IN  CHAR16                              *pCaptionText,
-  IN  CHAR16                              *pBodyText,
-  IN  CHAR16                              **ppOptionsList,
-  IN  UINTN                               OptionsCount,
-  OUT SWM_MB_RESULT                       *Result,
-  OUT UINTN                               *SelectedIndex
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN  CHAR16                             *pTitleBarText,
+  IN  CHAR16                             *pCaptionText,
+  IN  CHAR16                             *pBodyText,
+  IN  CHAR16                             **ppOptionsList,
+  IN  UINTN                              OptionsCount,
+  OUT SWM_MB_RESULT                      *Result,
+  OUT UINTN                              *SelectedIndex
   );
 
 /**
@@ -248,42 +254,43 @@ good at lower resolutions.
 
 **/
 EFI_STATUS
-SemmAuthDialogInternal (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
-IN  CHAR16                              *pTitleBarText,
-IN  CHAR16                              *pCaptionText,
-IN  CHAR16                              *pBodyText,
-IN  CHAR16                              *pCertText,
-IN  CHAR16                              *pConfirmText,
-IN  CHAR16                              *pErrorText,
-IN  SWM_PWD_DIALOG_TYPE                 Type,
-OUT SWM_MB_RESULT                       *Result,
-OUT CHAR16                              **Password OPTIONAL,
-OUT CHAR16                              **Thumbprint OPTIONAL);
+SemmAuthDialogInternal (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *this,
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pCertText,
+  IN  CHAR16               *pConfirmText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password OPTIONAL,
+  OUT CHAR16               **Thumbprint OPTIONAL
+  );
 
 // ****** Common data structures ******
 //
-#define WINMGR_CLIENT_SIGNATURE SIGNATURE_32 ('W', 'i', 'n', 'M')
+#define WINMGR_CLIENT_SIGNATURE  SIGNATURE_32 ('W', 'i', 'n', 'M')
 
 // Client being supported via the SWM protocol.
 //
-typedef struct _WINMGR_CLIENTLIST_tag
-{
-    UINTN                               Signature;          // Signature of this block
-    BOOLEAN                             HasDisplaySurface;  // TRUE = client has an associated display surface (i.e., not just a user input queue).
-    BOOLEAN                             Active;             // TRUE = currently active and processing events.
-    SWM_RECT                            WindowFrame;        // Clients on-screen window frame rectangle (used for hit detection).
-    BOOLEAN                             WindowAreaCaptured; // TRUE = screen underlying the client's window has been captured.
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       *pCaptureBuffer;    // Buffer for capturing screen contents underlying the client's window area.
-    EFI_HANDLE                          ImageHandle;        // Image handle associated with the client context.
-    struct _WINMGR_CLIENTLIST_tag       *pNext;             // Next client in the list.
-    struct _WINMGR_CLIENTLIST_tag       *pPrev;             // Previous client in the list.
-    // Per Client Absolute Pointer protocol
-    //
-    EFI_ABSOLUTE_POINTER_PROTOCOL       ClientAbsPtr;       // Absolute Pointer Protocol for each client that registers.
-    MS_SWM_ABSOLUTE_POINTER_QUEUE       Queue;              // Queue for this Window
-    MS_SWM_CLIENT_NOTIFICATION_CALLBACK  DataNotificationCallback; // Function to call when data is available.  Optional
-    VOID                               *DataNotificationContext;  // Client Context parameter for Callback.
-    UINT32                              Z_Order;            // Limited Z-order (fixed, not dynamic)
+typedef struct _WINMGR_CLIENTLIST_tag {
+  UINTN                                  Signature;          // Signature of this block
+  BOOLEAN                                HasDisplaySurface;  // TRUE = client has an associated display surface (i.e., not just a user input queue).
+  BOOLEAN                                Active;             // TRUE = currently active and processing events.
+  SWM_RECT                               WindowFrame;        // Clients on-screen window frame rectangle (used for hit detection).
+  BOOLEAN                                WindowAreaCaptured; // TRUE = screen underlying the client's window has been captured.
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL          *pCaptureBuffer;    // Buffer for capturing screen contents underlying the client's window area.
+  EFI_HANDLE                             ImageHandle;        // Image handle associated with the client context.
+  struct _WINMGR_CLIENTLIST_tag          *pNext;             // Next client in the list.
+  struct _WINMGR_CLIENTLIST_tag          *pPrev;             // Previous client in the list.
+  // Per Client Absolute Pointer protocol
+  //
+  EFI_ABSOLUTE_POINTER_PROTOCOL          ClientAbsPtr;             // Absolute Pointer Protocol for each client that registers.
+  MS_SWM_ABSOLUTE_POINTER_QUEUE          Queue;                    // Queue for this Window
+  MS_SWM_CLIENT_NOTIFICATION_CALLBACK    DataNotificationCallback; // Function to call when data is available.  Optional
+  VOID                                   *DataNotificationContext; // Client Context parameter for Callback.
+  UINT32                                 Z_Order;                  // Limited Z-order (fixed, not dynamic)
 } WINMGR_CLIENT;
 
 #define WINMGR_CLIENT_FROM_ABS_PTR(a) \
@@ -291,86 +298,80 @@ typedef struct _WINMGR_CLIENTLIST_tag
 
 // Absolute Pointer provider being watched for pointer state events.
 //
-typedef struct _WINMGR_AP_WATCHLIST_tag
-{
-    EFI_HANDLE                          Controller;         // Handle of the controller providing this interface.
-    EFI_ABSOLUTE_POINTER_PROTOCOL       *AbsolutePointer;   // Absolute Pointer provider interface.
-    BOOLEAN                             bNeedsMousePointer; // Needs the mouse pointer to be displayed.
-    struct _WINMGR_AP_WATCHLIST_tag     *pNext;             // Next provider in the list.
-    struct _WINMGR_AP_WATCHLIST_tag     *pPrev;             // Previous provider in the list.
-
+typedef struct _WINMGR_AP_WATCHLIST_tag {
+  EFI_HANDLE                         Controller;            // Handle of the controller providing this interface.
+  EFI_ABSOLUTE_POINTER_PROTOCOL      *AbsolutePointer;      // Absolute Pointer provider interface.
+  BOOLEAN                            bNeedsMousePointer;    // Needs the mouse pointer to be displayed.
+  struct _WINMGR_AP_WATCHLIST_tag    *pNext;                // Next provider in the list.
+  struct _WINMGR_AP_WATCHLIST_tag    *pPrev;                // Previous provider in the list.
 } WINMGR_AP_WATCHLIST;
 
 // Mouse pointer bitmap information.
 //
-typedef struct _MOUSEPTR_BITMAPINFO_tag
-{
-    const UINT32 *pBitmap;
-    UINT32 Width;
-    UINT32 Height;
+typedef struct _MOUSEPTR_BITMAPINFO_tag {
+  const UINT32    *pBitmap;
+  UINT32          Width;
+  UINT32          Height;
 } MOUSEPTR_BITMAP_INFO;
 
 // Simple Window Manager context
 //
-typedef struct _WINMGR_CONTEXT_tag
-{
-    // Current screen resolution.
-    //
-    UINTN                               ScreenWidth;
-    UINTN                               ScreenHeight;
+typedef struct _WINMGR_CONTEXT_tag {
+  // Current screen resolution.
+  //
+  UINTN                                ScreenWidth;
+  UINTN                                ScreenHeight;
 
-    // Whether or not to display the mouse pointer and buffers to manage rendering
-    //
-    BOOLEAN                             bDisplayingMousePointer;        // Tracks whether or not we're currently displaying the mouse pointer.
-    BOOLEAN                             bMousePointerEnabled;           // Global flag to prohibit mouse pointer from being rendered regardless of the Absolute Pointer protocol providers configuration.
-    BOOLEAN                             bLastMoveRequiredMousePointer;  // Used when (re)enabling the mouse pointer via the SWM protocol - if enabling the pointer and the last move required the mouse pointer we should immediately render it else we'll wait until the mouse moves to render.
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       *pBltBuffer;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL       *pRestoreBuffer;
+  // Whether or not to display the mouse pointer and buffers to manage rendering
+  //
+  BOOLEAN                              bDisplayingMousePointer;         // Tracks whether or not we're currently displaying the mouse pointer.
+  BOOLEAN                              bMousePointerEnabled;            // Global flag to prohibit mouse pointer from being rendered regardless of the Absolute Pointer protocol providers configuration.
+  BOOLEAN                              bLastMoveRequiredMousePointer;   // Used when (re)enabling the mouse pointer via the SWM protocol - if enabling the pointer and the last move required the mouse pointer we should immediately render it else we'll wait until the mouse moves to render.
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL        *pBltBuffer;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL        *pRestoreBuffer;
 
-    // Current mouse pointer position and button state.
-    //
-    UINTN                               CurrentMousePointerOrigX;
-    UINTN                               CurrentMousePointerOrigY;
-    MOUSEPTR_BITMAP_INFO                MousePointer;
+  // Current mouse pointer position and button state.
+  //
+  UINTN                                CurrentMousePointerOrigX;
+  UINTN                                CurrentMousePointerOrigY;
+  MOUSEPTR_BITMAP_INFO                 MousePointer;
 
-    // SWM protocol
-    //
-    MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   SWMProtocol;
+  // SWM protocol
+  //
+  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    SWMProtocol;
 
-    // User Abolute Pointer protocol
-    EFI_ABSOLUTE_POINTER_PROTOCOL       *UserAbsolutePointerProtocol;
+  // User Abolute Pointer protocol
+  EFI_ABSOLUTE_POINTER_PROTOCOL        *UserAbsolutePointerProtocol;
 
-    // List of Absolute Pointer protocol providers to watch & aggregate
-    //
-    WINMGR_AP_WATCHLIST                 *AbsolutePointerProviders;
+  // List of Absolute Pointer protocol providers to watch & aggregate
+  //
+  WINMGR_AP_WATCHLIST                  *AbsolutePointerProviders;
 
-    // List of clients supported by the window manager
-    //
-    WINMGR_CLIENT                       *Clients;
+  // List of clients supported by the window manager
+  //
+  WINMGR_CLIENT                        *Clients;
 } WINMGR_CONTEXT;
 
 // Font package definition.
 //
-//#pragma pack (push, 1)
-//typedef struct _SWM_FONT_PACKAGE_tag_
-//{
+// #pragma pack (push, 1)
+// typedef struct _SWM_FONT_PACKAGE_tag_
+// {
 //    EFI_HII_FONT_PACKAGE_HDR FontHeader;
 //    CHAR16 FontFamilyNameContd[25];
-//} SWM_FONT_PACKAGE_HEADER;
-//#pragma pack (pop)
-
+// } SWM_FONT_PACKAGE_HEADER;
+// #pragma pack (pop)
 
 // ****** External definitions ******
 //
-extern WINMGR_CONTEXT                       mSWM;
-extern EFI_GRAPHICS_OUTPUT_PROTOCOL         *mGop;
-extern EFI_HII_FONT_PROTOCOL                *mFont;
-extern EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL    *mSimpleTextInEx;
-extern MS_RENDERING_ENGINE_PROTOCOL         *mRenderingEngine;
-extern EFI_HANDLE                           mImageHandle;
-extern EFI_HANDLE                           gPriorityHandle;
-extern MS_UI_THEME_DESCRIPTION              *mTheme;
-
+extern WINMGR_CONTEXT                     mSWM;
+extern EFI_GRAPHICS_OUTPUT_PROTOCOL       *mGop;
+extern EFI_HII_FONT_PROTOCOL              *mFont;
+extern EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *mSimpleTextInEx;
+extern MS_RENDERING_ENGINE_PROTOCOL       *mRenderingEngine;
+extern EFI_HANDLE                         mImageHandle;
+extern EFI_HANDLE                         gPriorityHandle;
+extern MS_UI_THEME_DESCRIPTION            *mTheme;
 
 /**
     Peeks at the pending pointer event state in the aggregate event queue.
@@ -382,9 +383,10 @@ extern MS_UI_THEME_DESCRIPTION              *mTheme;
 
 **/
 EFI_STATUS
-PeekAtAbsolutePointerEventInQueue (IN WINMGR_CLIENT                  *Client,
-                                   OUT MS_SWM_ABSOLUTE_POINTER_STATE *PointerState);
-
+PeekAtAbsolutePointerEventInQueue (
+  IN WINMGR_CLIENT                   *Client,
+  OUT MS_SWM_ABSOLUTE_POINTER_STATE  *PointerState
+  );
 
 /**
     Removes pending pointer event state from the aggregate event queue.
@@ -396,7 +398,9 @@ PeekAtAbsolutePointerEventInQueue (IN WINMGR_CLIENT                  *Client,
 
 **/
 EFI_STATUS
-ExtractAbsolutePointerEventFromQueue (IN WINMGR_CLIENT                  *Client,
-                                      OUT MS_SWM_ABSOLUTE_POINTER_STATE *pPointerState);
+ExtractAbsolutePointerEventFromQueue (
+  IN WINMGR_CLIENT                   *Client,
+  OUT MS_SWM_ABSOLUTE_POINTER_STATE  *pPointerState
+  );
 
-#endif  // _WINDOW_MANAGER_H_
+#endif // _WINDOW_MANAGER_H_

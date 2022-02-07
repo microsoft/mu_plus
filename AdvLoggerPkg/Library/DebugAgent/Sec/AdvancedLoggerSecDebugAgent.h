@@ -25,10 +25,9 @@
 EFI_PHYSICAL_ADDRESS
 EFIAPI
 AllocateRamForSEC (
-    EFI_PHYSICAL_ADDRESS LogAddress,
-    UINTN                LogSize
+  EFI_PHYSICAL_ADDRESS  LogAddress,
+  UINTN                 LogSize
   );
-
 
 /**
   FreeRamForSEC
@@ -41,10 +40,8 @@ AllocateRamForSEC (
 VOID
 EFIAPI
 FreeRamForSEC (
-    EFI_PHYSICAL_ADDRESS LogAddress
+  EFI_PHYSICAL_ADDRESS  LogAddress
   );
-
-
 
 /**
   Executes a rep lodsd (repeated load dword string instruction).  While there is no valid
@@ -60,7 +57,7 @@ UINT32 *
 EFIAPI
 AsmRepLodsd (
   IN UINT32  *Address,
-  IN UINT32   Length
+  IN UINT32  Length
   );
 
-#endif  // __ADVANCED_LOGGER_SEC_DEBUGAGENT_H__
+#endif // __ADVANCED_LOGGER_SEC_DEBUGAGENT_H__

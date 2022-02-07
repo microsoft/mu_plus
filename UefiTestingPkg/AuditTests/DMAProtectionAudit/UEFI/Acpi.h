@@ -16,13 +16,13 @@ for purpose of easy ACPI table parsing
 #pragma pack(1)
 
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER  Header;
-  UINT32                       Entry;
+  EFI_ACPI_DESCRIPTION_HEADER    Header;
+  UINT32                         Entry;
 } RSDT_TABLE;
 
 typedef struct {
-  EFI_ACPI_DESCRIPTION_HEADER  Header;
-  UINT64                       Entry;
+  EFI_ACPI_DESCRIPTION_HEADER    Header;
+  UINT64                         Entry;
 } XSDT_TABLE;
 
 #pragma pack()
@@ -35,8 +35,8 @@ typedef struct {
 **/
 EFI_STATUS
 GetAcpiTable (
-  IN  UINT32        AcpiSignature,
-  OUT VOID          **AcpiTable
+  IN  UINT32  AcpiSignature,
+  OUT VOID    **AcpiTable
   );
 
 #endif // __ACPI_UNIT_TEST_H__

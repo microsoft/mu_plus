@@ -22,16 +22,15 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL  gUsbKbHidComponentNam
 //
 // EFI Component Name 2 Protocol
 //
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gUsbKbHidComponentName2 = {
-  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) UsbKbHidComponentNameGetDriverName,
-  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) UsbKbHidComponentNameGetControllerName,
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL  gUsbKbHidComponentName2 = {
+  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME)UsbKbHidComponentNameGetDriverName,
+  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME)UsbKbHidComponentNameGetControllerName,
   "en"
 };
 
-
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mUsbKbHidDriverNameTable[] = {
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE  mUsbKbHidDriverNameTable[] = {
   { "eng;en", L"USB HID Keyboard Driver" },
-  { NULL , NULL }
+  { NULL,     NULL                       }
 };
 
 /**
@@ -146,17 +145,18 @@ UsbKbHidComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 UsbKbHidComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   )
 {
-  EFI_STATUS              Status;
-  USB_KB_HID_DEV          *UsbKbDev;
-  HID_KEYBOARD_PROTOCOL   *HidKeyboard;
-  EFI_USB_IO_PROTOCOL     *UsbIoProtocol;
+  EFI_STATUS             Status;
+  USB_KB_HID_DEV         *UsbKbDev;
+  HID_KEYBOARD_PROTOCOL  *HidKeyboard;
+  EFI_USB_IO_PROTOCOL    *UsbIoProtocol;
+
   //
   // This is a device driver, so ChildHandle must be NULL.
   //
@@ -170,7 +170,7 @@ UsbKbHidComponentNameGetControllerName (
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gEfiUsbIoProtocolGuid,
-                  (VOID **) &UsbIoProtocol,
+                  (VOID **)&UsbIoProtocol,
                   gUsbKbHidDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -189,13 +189,14 @@ UsbKbHidComponentNameGetControllerName (
   if (Status != EFI_ALREADY_STARTED) {
     return EFI_UNSUPPORTED;
   }
+
   //
   // Get the device context
   //
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gHidKeyboardProtocolGuid,
-                  (VOID **) &HidKeyboard,
+                  (VOID **)&HidKeyboard,
                   gUsbKbHidDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -214,5 +215,4 @@ UsbKbHidComponentNameGetControllerName (
            ControllerName,
            (BOOLEAN)(This == &gUsbKbHidComponentName)
            );
-
 }

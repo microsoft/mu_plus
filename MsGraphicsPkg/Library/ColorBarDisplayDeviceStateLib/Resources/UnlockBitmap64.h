@@ -1,18 +1,17 @@
 /** @file
     Pixel data for 42 x 64 unlock bitmap
-    
+
     Copyright (C) Microsoft Corporation. All rights reserved.
     SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #pragma once
 
-#define UNLOCK64_WIDTH  (42)
-#define UNLOCK64_HEIGHT (64)
+#define UNLOCK64_WIDTH   (42)
+#define UNLOCK64_HEIGHT  (64)
 
-
-//42  x 64  x 32bpp
-CONST UINT32 mUnlockBltBuffer64[] = {
+// 42  x 64  x 32bpp
+CONST UINT32  mUnlockBltBuffer64[] = {
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000,
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000,
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000,
@@ -687,5 +686,5 @@ CONST UINT32 mUnlockBltBuffer64[] = {
   0x00FF3939, 0x00FF3939, 0x00FF3737, 0x00FF0F0F
 };
 
-STATIC_ASSERT((UNLOCK64_WIDTH * UNLOCK64_HEIGHT) == ARRAY_SIZE(mUnlockBltBuffer64), "Width x Height not equal to blt buffer size.");
-BITMAPDATA unlock64 = {UNLOCK64_HEIGHT, UNLOCK64_WIDTH, mUnlockBltBuffer64, sizeof(mUnlockBltBuffer64)};
+STATIC_ASSERT ((UNLOCK64_WIDTH * UNLOCK64_HEIGHT) == ARRAY_SIZE (mUnlockBltBuffer64), "Width x Height not equal to blt buffer size.");
+BITMAPDATA  unlock64 = { UNLOCK64_HEIGHT, UNLOCK64_WIDTH, mUnlockBltBuffer64, sizeof (mUnlockBltBuffer64) };

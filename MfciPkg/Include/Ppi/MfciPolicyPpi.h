@@ -10,7 +10,7 @@
 
 #include <MfciPolicyType.h>
 
-typedef struct _MFCI_POLICY_PPI  MFCI_POLICY_PPI;
+typedef struct _MFCI_POLICY_PPI MFCI_POLICY_PPI;
 
 /**
   GetMfciPolicy()
@@ -24,16 +24,14 @@ typedef struct _MFCI_POLICY_PPI  MFCI_POLICY_PPI;
 **/
 typedef
 MFCI_POLICY_TYPE
-(EFIAPI *GET_MFCI_POLICY) (
-IN CONST MFCI_POLICY_PPI   *This
-);
+(EFIAPI *GET_MFCI_POLICY)(
+  IN CONST MFCI_POLICY_PPI   *This
+  );
 
-
-struct _MFCI_POLICY_PPI
-{
-  GET_MFCI_POLICY GetMfciPolicy;
+struct _MFCI_POLICY_PPI {
+  GET_MFCI_POLICY    GetMfciPolicy;
 };
 
-extern EFI_GUID gMfciPpiGuid;
+extern EFI_GUID  gMfciPpiGuid;
 
 #endif // __MFCI_POLICY_PPI_H__

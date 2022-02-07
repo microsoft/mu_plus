@@ -38,80 +38,78 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #pragma pack(1)
 
 // Struct Containing a HWErrRec
-typedef struct ErrorRecord
-{
-  LIST_ENTRY                      entry; // Necessary for linked list structure
-  EFI_COMMON_ERROR_RECORD_HEADER *error; // Pointer to the HWErrRec
-  UINT32                          val;   // Page number
+typedef struct ErrorRecord {
+  LIST_ENTRY                        entry;  // Necessary for linked list structure
+  EFI_COMMON_ERROR_RECORD_HEADER    *error; // Pointer to the HWErrRec
+  UINT32                            val;    // Page number
 } ErrorRecord;
 
 #pragma pack()
 
-//*---------------------------------------------------------------------------------------*
-//* Global Variables                                                                      *
-//*---------------------------------------------------------------------------------------*
-STATIC  HWH_MENU_CONFIG mHwhMenuConfiguration = {LOGS_TRUE};                              // Configuration for VFR
-        LIST_ENTRY      mListHead             = INITIALIZE_LIST_HEAD_VARIABLE(mListHead); // Head of the linked list
-        UINT32          NumErrorEntries       = 0;                                        // Number of HwErrRec(s)
-        ErrorRecord     *currentPage          = NULL;                                     // Current record displayed on the page
-        CHAR16          UnicodeString[MAX_DISPLAY_STRING_LENGTH + 1];                     // Unicode buffer for printing
+// *---------------------------------------------------------------------------------------*
+// * Global Variables                                                                      *
+// *---------------------------------------------------------------------------------------*
+STATIC  HWH_MENU_CONFIG  mHwhMenuConfiguration = { LOGS_TRUE };                             // Configuration for VFR
+LIST_ENTRY               mListHead             = INITIALIZE_LIST_HEAD_VARIABLE (mListHead); // Head of the linked list
+UINT32                   NumErrorEntries       = 0;                                         // Number of HwErrRec(s)
+ErrorRecord              *currentPage          = NULL;                                      // Current record displayed on the page
+CHAR16                   UnicodeString[MAX_DISPLAY_STRING_LENGTH + 1];                      // Unicode buffer for printing
 
-#define HWH_MENU_SIGNATURE SIGNATURE_32('H', 'w', 'h', 'm')
-#define NUM_SEC_DATA_ROWS 15
-#define NUM_SEC_DATA_COLUMNS 3
+#define HWH_MENU_SIGNATURE    SIGNATURE_32('H', 'w', 'h', 'm')
+#define NUM_SEC_DATA_ROWS     15
+#define NUM_SEC_DATA_COLUMNS  3
 
 // Writable UNI strings. NOTE: We are using row-column addressing
-CONST EFI_STRING_ID DisplayLines[NUM_SEC_DATA_ROWS][NUM_SEC_DATA_COLUMNS] =
+CONST EFI_STRING_ID  DisplayLines[NUM_SEC_DATA_ROWS][NUM_SEC_DATA_COLUMNS] =
 {
-  {STRING_TOKEN (STR_HWH_LOG_LINE_0_0),  STRING_TOKEN (STR_HWH_LOG_LINE_0_1),  STRING_TOKEN (STR_HWH_LOG_LINE_0_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_1_0),  STRING_TOKEN (STR_HWH_LOG_LINE_1_1),  STRING_TOKEN (STR_HWH_LOG_LINE_1_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_2_0),  STRING_TOKEN (STR_HWH_LOG_LINE_2_1),  STRING_TOKEN (STR_HWH_LOG_LINE_2_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_3_0),  STRING_TOKEN (STR_HWH_LOG_LINE_3_1),  STRING_TOKEN (STR_HWH_LOG_LINE_3_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_4_0),  STRING_TOKEN (STR_HWH_LOG_LINE_4_1),  STRING_TOKEN (STR_HWH_LOG_LINE_4_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_5_0),  STRING_TOKEN (STR_HWH_LOG_LINE_5_1),  STRING_TOKEN (STR_HWH_LOG_LINE_5_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_6_0),  STRING_TOKEN (STR_HWH_LOG_LINE_6_1),  STRING_TOKEN (STR_HWH_LOG_LINE_6_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_7_0),  STRING_TOKEN (STR_HWH_LOG_LINE_7_1),  STRING_TOKEN (STR_HWH_LOG_LINE_7_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_8_0),  STRING_TOKEN (STR_HWH_LOG_LINE_8_1),  STRING_TOKEN (STR_HWH_LOG_LINE_8_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_9_0),  STRING_TOKEN (STR_HWH_LOG_LINE_9_1),  STRING_TOKEN (STR_HWH_LOG_LINE_9_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_10_0), STRING_TOKEN (STR_HWH_LOG_LINE_10_1), STRING_TOKEN (STR_HWH_LOG_LINE_10_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_11_0), STRING_TOKEN (STR_HWH_LOG_LINE_11_1), STRING_TOKEN (STR_HWH_LOG_LINE_11_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_12_0), STRING_TOKEN (STR_HWH_LOG_LINE_12_1), STRING_TOKEN (STR_HWH_LOG_LINE_12_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_13_0), STRING_TOKEN (STR_HWH_LOG_LINE_13_1), STRING_TOKEN (STR_HWH_LOG_LINE_13_2)},
-  {STRING_TOKEN (STR_HWH_LOG_LINE_14_0), STRING_TOKEN (STR_HWH_LOG_LINE_14_1), STRING_TOKEN (STR_HWH_LOG_LINE_14_2)}
+  { STRING_TOKEN (STR_HWH_LOG_LINE_0_0),  STRING_TOKEN (STR_HWH_LOG_LINE_0_1),  STRING_TOKEN (STR_HWH_LOG_LINE_0_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_1_0),  STRING_TOKEN (STR_HWH_LOG_LINE_1_1),  STRING_TOKEN (STR_HWH_LOG_LINE_1_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_2_0),  STRING_TOKEN (STR_HWH_LOG_LINE_2_1),  STRING_TOKEN (STR_HWH_LOG_LINE_2_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_3_0),  STRING_TOKEN (STR_HWH_LOG_LINE_3_1),  STRING_TOKEN (STR_HWH_LOG_LINE_3_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_4_0),  STRING_TOKEN (STR_HWH_LOG_LINE_4_1),  STRING_TOKEN (STR_HWH_LOG_LINE_4_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_5_0),  STRING_TOKEN (STR_HWH_LOG_LINE_5_1),  STRING_TOKEN (STR_HWH_LOG_LINE_5_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_6_0),  STRING_TOKEN (STR_HWH_LOG_LINE_6_1),  STRING_TOKEN (STR_HWH_LOG_LINE_6_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_7_0),  STRING_TOKEN (STR_HWH_LOG_LINE_7_1),  STRING_TOKEN (STR_HWH_LOG_LINE_7_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_8_0),  STRING_TOKEN (STR_HWH_LOG_LINE_8_1),  STRING_TOKEN (STR_HWH_LOG_LINE_8_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_9_0),  STRING_TOKEN (STR_HWH_LOG_LINE_9_1),  STRING_TOKEN (STR_HWH_LOG_LINE_9_2)  },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_10_0), STRING_TOKEN (STR_HWH_LOG_LINE_10_1), STRING_TOKEN (STR_HWH_LOG_LINE_10_2) },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_11_0), STRING_TOKEN (STR_HWH_LOG_LINE_11_1), STRING_TOKEN (STR_HWH_LOG_LINE_11_2) },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_12_0), STRING_TOKEN (STR_HWH_LOG_LINE_12_1), STRING_TOKEN (STR_HWH_LOG_LINE_12_2) },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_13_0), STRING_TOKEN (STR_HWH_LOG_LINE_13_1), STRING_TOKEN (STR_HWH_LOG_LINE_13_2) },
+  { STRING_TOKEN (STR_HWH_LOG_LINE_14_0), STRING_TOKEN (STR_HWH_LOG_LINE_14_1), STRING_TOKEN (STR_HWH_LOG_LINE_14_2) }
 };
 
-//*---------------------------------------------------------------------------------------*
-//* HII specific Vendor Device Path definition.                                           *
-//*---------------------------------------------------------------------------------------*
-struct
-{
-  VENDOR_DEVICE_PATH        VendorDevicePath;
-  EFI_DEVICE_PATH_PROTOCOL  End;
+// *---------------------------------------------------------------------------------------*
+// * HII specific Vendor Device Path definition.                                           *
+// *---------------------------------------------------------------------------------------*
+struct {
+  VENDOR_DEVICE_PATH          VendorDevicePath;
+  EFI_DEVICE_PATH_PROTOCOL    End;
 } mHiiVendorDevicePath = {
+  {
     {
+      HARDWARE_DEVICE_PATH,
+      HW_VENDOR_DP,
       {
-        HARDWARE_DEVICE_PATH,
-        HW_VENDOR_DP,
-        {
-          (UINT8) (sizeof (VENDOR_DEVICE_PATH)),
-          (UINT8) ((sizeof (VENDOR_DEVICE_PATH)) >> 8)
-        }
-      },
-      EFI_CALLER_ID_GUID
-    },
-    {
-      END_DEVICE_PATH_TYPE,
-      END_ENTIRE_DEVICE_PATH_SUBTYPE,
-      {
-        (UINT8) (END_DEVICE_PATH_LENGTH),
-        (UINT8) ((END_DEVICE_PATH_LENGTH) >> 8)
+        (UINT8)(sizeof (VENDOR_DEVICE_PATH)),
+        (UINT8)((sizeof (VENDOR_DEVICE_PATH)) >> 8)
       }
+    },
+    EFI_CALLER_ID_GUID
+  },
+  {
+    END_DEVICE_PATH_TYPE,
+    END_ENTIRE_DEVICE_PATH_SUBTYPE,
+    {
+      (UINT8)(END_DEVICE_PATH_LENGTH),
+      (UINT8)((END_DEVICE_PATH_LENGTH) >> 8)
     }
+  }
 };
 
-//*---------------------------------------------------------------------------------------*
-//* Doubly Linked List Methods                                                            *
-//*---------------------------------------------------------------------------------------*
+// *---------------------------------------------------------------------------------------*
+// * Doubly Linked List Methods                                                            *
+// *---------------------------------------------------------------------------------------*
 
 /**
  *  Deletes the list structure containing WHEA Errors
@@ -119,17 +117,15 @@ struct
  *  @retval     VOID
 **/
 VOID
-DeleteList(
+DeleteList (
   VOID
   )
 {
-
   while (!IsListEmpty (&mListHead)) {
-    
-    currentPage = (ErrorRecord *) GetFirstNode (&mListHead); //get ErrorRecord being deleted
-    RemoveEntryList ((LIST_ENTRY *) currentPage);            //remove ErrorRecord from list
-    FreePool (currentPage->error);                          //free HwErrRecXXXX in record
-    FreePool (currentPage);                                 //free ErrorRecord
+    currentPage = (ErrorRecord *)GetFirstNode (&mListHead); // get ErrorRecord being deleted
+    RemoveEntryList ((LIST_ENTRY *)currentPage);            // remove ErrorRecord from list
+    FreePool (currentPage->error);                          // free HwErrRecXXXX in record
+    FreePool (currentPage);                                 // free ErrorRecord
   }
 
   currentPage = NULL;
@@ -146,18 +142,18 @@ PageForward (
   VOID
   )
 {
+  LIST_ENTRY  *tmp;
 
-  LIST_ENTRY *tmp;
-  
   tmp = GetNextNode (
           &mListHead,
-          (LIST_ENTRY *) currentPage
+          (LIST_ENTRY *)currentPage
           );
 
   if (tmp != &mListHead) {
-    currentPage = (ErrorRecord *) tmp;
+    currentPage = (ErrorRecord *)tmp;
     return TRUE;
   }
+
   return FALSE;
 }
 
@@ -172,31 +168,31 @@ PageBackward (
   VOID
   )
 {
+  LIST_ENTRY  *tmp;
 
-  LIST_ENTRY *tmp;
-  
   tmp = GetPreviousNode (
           &mListHead,
-          (LIST_ENTRY *) currentPage
+          (LIST_ENTRY *)currentPage
           );
 
   if (tmp != &mListHead) {
-    currentPage = (ErrorRecord *) tmp;
+    currentPage = (ErrorRecord *)tmp;
     return TRUE;
   }
+
   return FALSE;
 }
 
-//*---------------------------------------------------------------------------------------*
-//* Hii Config Access functions                                                           *
-//*---------------------------------------------------------------------------------------*
+// *---------------------------------------------------------------------------------------*
+// * Hii Config Access functions                                                           *
+// *---------------------------------------------------------------------------------------*
 EFI_STATUS
 EFIAPI
 ExtractConfig (
   IN     CONST  EFI_HII_CONFIG_ACCESS_PROTOCOL  *This,
   IN     CONST  EFI_STRING                      Request,
-     OUT        EFI_STRING                      *Progress,
-     OUT        EFI_STRING                      *Results
+  OUT        EFI_STRING                         *Progress,
+  OUT        EFI_STRING                         *Results
   );
 
 EFI_STATUS
@@ -204,7 +200,7 @@ EFIAPI
 RouteConfig (
   IN     CONST  EFI_HII_CONFIG_ACCESS_PROTOCOL  *This,
   IN     CONST  EFI_STRING                      Configuration,
-     OUT        EFI_STRING                      *Progress
+  OUT        EFI_STRING                         *Progress
   );
 
 EFI_STATUS
@@ -215,32 +211,31 @@ DriverCallback (
   IN            EFI_QUESTION_ID                 QuestionId,
   IN            UINT8                           Type,
   IN            EFI_IFR_TYPE_VALUE              *Value,
-     OUT        EFI_BROWSER_ACTION_REQUEST      *ActionRequest
+  OUT        EFI_BROWSER_ACTION_REQUEST         *ActionRequest
   );
 
-//*---------------------------------------------------------------------------------------*
-//* Private internal data                                                                 *
-//*---------------------------------------------------------------------------------------*
-struct
-{
-  UINTN                           Signature;
-  EFI_HANDLE                      DriverHandle;
-  EFI_HII_HANDLE                  HiiHandle;
-  EFI_HII_CONFIG_ACCESS_PROTOCOL  ConfigAccess;
+// *---------------------------------------------------------------------------------------*
+// * Private internal data                                                                 *
+// *---------------------------------------------------------------------------------------*
+struct {
+  UINTN                             Signature;
+  EFI_HANDLE                        DriverHandle;
+  EFI_HII_HANDLE                    HiiHandle;
+  EFI_HII_CONFIG_ACCESS_PROTOCOL    ConfigAccess;
 } mHwhMenuPrivate = {
-    HWH_MENU_SIGNATURE,
-    NULL,
-    NULL,
-    {
-      ExtractConfig,
-      RouteConfig,
-      DriverCallback
-    }
+  HWH_MENU_SIGNATURE,
+  NULL,
+  NULL,
+  {
+    ExtractConfig,
+    RouteConfig,
+    DriverCallback
+  }
 };
 
-//*---------------------------------------------------------------------------------------*
-//* Main Functions                                                                        *
-//*---------------------------------------------------------------------------------------*
+// *---------------------------------------------------------------------------------------*
+// * Main Functions                                                                        *
+// *---------------------------------------------------------------------------------------*
 
 /**
  *  Writes a maximum of MAX_DISPLAY_STRING_LENGTH characters to the
@@ -249,7 +244,7 @@ struct
  *  @param[in]  Str           EFI_STRING being written to
  *  @param[in]  Format        Format string
  *  @param[in]  ...           Variables placed into format string
- * 
+ *
  *  @retval     0             No characters were written to Str. Note
  *                            that it could be a blank string was written
  *              UINTN         Number of characters written
@@ -261,10 +256,9 @@ UnicodeDataToVFR (
   ...
   )
 {
-
-  CHAR16  Buffer[MAX_DISPLAY_STRING_LENGTH + 1];
-  VA_LIST Marker;
-  UINTN   NumWritten;
+  CHAR16   Buffer[MAX_DISPLAY_STRING_LENGTH + 1];
+  VA_LIST  Marker;
+  UINTN    NumWritten;
 
   VA_START (Marker, Format);
   NumWritten = UnicodeVSPrint (
@@ -294,15 +288,14 @@ UpdateForm (
   VOID
   )
 {
-  EFI_STATUS              Status;
-  VOID                    *StartOpCodeHandle;
-  VOID                    *EndOpCodeHandle    = NULL;
-  EFI_IFR_GUID_LABEL      *StartLabel;
-  EFI_IFR_GUID_LABEL      *EndLabel;
-  BOOLEAN                 Aborted             = TRUE;
+  EFI_STATUS          Status;
+  VOID                *StartOpCodeHandle;
+  VOID                *EndOpCodeHandle = NULL;
+  EFI_IFR_GUID_LABEL  *StartLabel;
+  EFI_IFR_GUID_LABEL  *EndLabel;
+  BOOLEAN             Aborted = TRUE;
 
   do {
-
     // Init OpCode Handle and Allocate space for creation of UpdateData Buffer
     StartOpCodeHandle = HiiAllocateOpCodeHandle ();
     ASSERT (StartOpCodeHandle != NULL);
@@ -317,39 +310,41 @@ UpdateForm (
     }
 
     // Create Hii Extend Label OpCode as the start opcode
-    StartLabel = (EFI_IFR_GUID_LABEL *) HiiCreateGuidOpCode (
-                                          StartOpCodeHandle,
-                                          &gEfiIfrTianoGuid,
-                                          NULL, 
-                                          sizeof(EFI_IFR_GUID_LABEL)
-                                          );
+    StartLabel = (EFI_IFR_GUID_LABEL *)HiiCreateGuidOpCode (
+                                         StartOpCodeHandle,
+                                         &gEfiIfrTianoGuid,
+                                         NULL,
+                                         sizeof (EFI_IFR_GUID_LABEL)
+                                         );
     if (NULL == StartLabel) {
       break;
     }
+
     StartLabel->ExtendOpCode = EFI_IFR_EXTEND_OP_LABEL;
 
     // Create Hii Extend Label OpCode as the end opcode
-    EndLabel = (EFI_IFR_GUID_LABEL *) HiiCreateGuidOpCode(
-                                        EndOpCodeHandle,
-                                        &gEfiIfrTianoGuid,
-                                        NULL,
-                                        sizeof(EFI_IFR_GUID_LABEL)
-                                        );
+    EndLabel = (EFI_IFR_GUID_LABEL *)HiiCreateGuidOpCode (
+                                       EndOpCodeHandle,
+                                       &gEfiIfrTianoGuid,
+                                       NULL,
+                                       sizeof (EFI_IFR_GUID_LABEL)
+                                       );
     if (NULL == EndLabel) {
       break;
     }
+
     EndLabel->ExtendOpCode = EFI_IFR_EXTEND_OP_LABEL;
 
     StartLabel->Number = LABEL_UPDATE_LOCATION;
-    EndLabel->Number = LABEL_UPDATE_END;
+    EndLabel->Number   = LABEL_UPDATE_END;
 
     Status = HiiUpdateForm (
-              mHwhMenuPrivate.HiiHandle,
-              &gHwhMenuFormsetGuid,
-              HWH_MENU_FORM_ID,
-              StartOpCodeHandle,
-              EndOpCodeHandle
-              );
+               mHwhMenuPrivate.HiiHandle,
+               &gHwhMenuFormsetGuid,
+               HWH_MENU_FORM_ID,
+               StartOpCodeHandle,
+               EndOpCodeHandle
+               );
 
     if (EFI_ERROR (Status)) {
       DEBUG ((
@@ -374,6 +369,7 @@ UpdateForm (
   if (StartOpCodeHandle != NULL) {
     HiiFreeOpCodeHandle (StartOpCodeHandle);
   }
+
   if (StartOpCodeHandle != NULL) {
     HiiFreeOpCodeHandle (EndOpCodeHandle);
   }
@@ -381,27 +377,28 @@ UpdateForm (
 
 /**
  *  Dump the Section data in byte and ascii form
- * 
+ *
  *  @param[in]     Strings          Pointer to unallocated array of strings which will be populated by the parser
  *  @param[in]     Err              Pointer to the HwErrRec bing parsed
  *  @param[in]     SectionHeader    Pointer to Section Header of data being parsed
- * 
+ *
  *  @retval        UINTN            Number of CHAR16* allocated in Strings to be written to the form
 **/
 UINTN
 SectionDump (
-        IN OUT CHAR16                         ***Strings,
-  CONST IN     EFI_COMMON_ERROR_RECORD_HEADER *Err,
-  CONST IN     EFI_ERROR_SECTION_DESCRIPTOR   *SecHead)
+  IN OUT CHAR16                                ***Strings,
+  CONST IN     EFI_COMMON_ERROR_RECORD_HEADER  *Err,
+  CONST IN     EFI_ERROR_SECTION_DESCRIPTOR    *SecHead
+  )
 {
-  CONST UINT8       *Ptr2Data;
-        UINT32      BytesCurrentLine = 0;
-        UINT32      NumLines, OuterLoop, InnerLoop;
-        CHAR16      *Ptr2Buffer;
-        CHAR8       Ascii[17];
+  CONST UINT8  *Ptr2Data;
+  UINT32       BytesCurrentLine = 0;
+  UINT32       NumLines, OuterLoop, InnerLoop;
+  CHAR16       *Ptr2Buffer;
+  CHAR8        Ascii[17];
 
   // Quick Null-check
-  if (Err == NULL || SecHead == NULL || Strings == NULL) {
+  if ((Err == NULL) || (SecHead == NULL) || (Strings == NULL)) {
     return 0;
   }
 
@@ -412,25 +409,23 @@ SectionDump (
   *Strings = AllocatePool (sizeof (CHAR16 *) * NumLines);
 
   // Get a pointer to the beginning of the data
-  Ptr2Data = (CONST UINT8 *) Err + SecHead->SectionOffset;
+  Ptr2Data = (CONST UINT8 *)Err + SecHead->SectionOffset;
 
   // For each line...
   for (OuterLoop = 0; OuterLoop < NumLines; OuterLoop++) {
-
     ZeroMem (&Ascii[0], sizeof (Ascii));
 
     // Allocate the line
-    (*Strings) [OuterLoop] = AllocatePool (sizeof (CHAR16) * MAX_DISPLAY_STRING_LENGTH);
+    (*Strings)[OuterLoop] = AllocatePool (sizeof (CHAR16) * MAX_DISPLAY_STRING_LENGTH);
 
     // Get a pointer to the beginning of that line
-    Ptr2Buffer = (*Strings) [OuterLoop];
+    Ptr2Buffer = (*Strings)[OuterLoop];
 
     // See how many bytes need to be printed on this line
     BytesCurrentLine = MIN (SecHead->SectionLength - (OuterLoop * 16), 16);
 
     // For each byte in the line...
     for (InnerLoop = 0; InnerLoop < BytesCurrentLine; InnerLoop++) {
-
       // Check if there is an ascii interpretation of the byte. If so, add it or just add a '.'
       Ascii[InnerLoop] = ((*Ptr2Data >= 0x20) && (*Ptr2Data <= 0x7e)) ? *Ptr2Data : '.';
 
@@ -445,6 +440,7 @@ SectionDump (
       // Increment our data pointer two bytes
       Ptr2Data++;
     }
+
     Ascii[BytesCurrentLine] = '\n';
 
     // Finally, print the ascii interpretation of this line
@@ -471,7 +467,7 @@ ParseDateTime (
   )
 {
   UnicodeDataToVFR (
-    (EFI_STRING_ID) STR_HWH_LOG_DATE_VALUE,
+    (EFI_STRING_ID)STR_HWH_LOG_DATE_VALUE,
     L"%02X/%02X/%02X",
     currentPage->error->TimeStamp.Month,
     currentPage->error->TimeStamp.Day,
@@ -479,7 +475,7 @@ ParseDateTime (
     );
 
   UnicodeDataToVFR (
-    (EFI_STRING_ID) STR_HWH_LOG_TIME_VALUE,
+    (EFI_STRING_ID)STR_HWH_LOG_TIME_VALUE,
     L"%02X:%02X:%02X",
     currentPage->error->TimeStamp.Hours,
     currentPage->error->TimeStamp.Minutes,
@@ -498,7 +494,7 @@ ParseNumberOfSections (
   )
 {
   UnicodeDataToVFR (
-    (EFI_STRING_ID) STR_HWH_LOG_NUMSECTIONS_VALUE,
+    (EFI_STRING_ID)STR_HWH_LOG_NUMSECTIONS_VALUE,
     L"%d",
     currentPage->error->SectionCount
     );
@@ -514,9 +510,8 @@ ParseSeverity (
   VOID
   )
 {
-
   UnicodeDataToVFR (
-    (EFI_STRING_ID) STR_HWH_LOG_SEVERITY_VALUE,
+    (EFI_STRING_ID)STR_HWH_LOG_SEVERITY_VALUE,
     L"%d",
     currentPage->error->ErrorSeverity
     );
@@ -534,7 +529,7 @@ ParsePageNumber (
   )
 {
   UnicodeDataToVFR (
-    (EFI_STRING_ID) STR_HWH_PAGE_NUM,
+    (EFI_STRING_ID)STR_HWH_PAGE_NUM,
     L"          Error %d of %d",
     currentPage->val,
     NumErrorEntries
@@ -545,21 +540,21 @@ ParsePageNumber (
  *  Finds the number of CHAR16s between source and either '\n' or '\0'
  *
  *  @param[in]     Str      Pointer to string being parsed
- * 
+ *
  *  @retval        UINTN    Number of CHAR16s from source address where '\n' or '\0' is encountered
 **/
 UINTN
 FindNewline (
-  IN CHAR16 **Source
+  IN CHAR16  **Source
   )
 {
   // Null-check
-  if (Source == NULL || *Source == NULL) {
+  if ((Source == NULL) || (*Source == NULL)) {
     return 0;
   }
 
-  UINTN Counter = 0;
-  CHAR16 *End = *Source;
+  UINTN   Counter = 0;
+  CHAR16  *End    = *Source;
 
   // Walk the string until one of the following is true
   while (*End != '\n' && *End != '\0' && Counter < MAX_DISPLAY_STRING_LENGTH + 1) {
@@ -576,34 +571,34 @@ FindNewline (
  *
  *  @param[in]     Err              Pointer to HwErrRec being parsed
  *  @param[in]     SectionHeader    Pointer to Section Header of data being parsed
- *  @param[in]     index            Pointer to to the current line of the section data portion of 
+ *  @param[in]     index            Pointer to to the current line of the section data portion of
  *                                  front page being written to
- * 
+ *
  *  @retval        VOID
 **/
-VOID 
-ParseSectionData(
-  IN     CONST EFI_COMMON_ERROR_RECORD_HEADER *Err,
-  IN     CONST EFI_ERROR_SECTION_DESCRIPTOR   *SectionHeader,
-  IN OUT       UINT8                          *index
+VOID
+ParseSectionData (
+  IN     CONST EFI_COMMON_ERROR_RECORD_HEADER  *Err,
+  IN     CONST EFI_ERROR_SECTION_DESCRIPTOR    *SectionHeader,
+  IN OUT       UINT8                           *index
   )
 {
-  if (Err == NULL || SectionHeader == NULL || index == NULL) {
+  if ((Err == NULL) || (SectionHeader == NULL) || (index == NULL)) {
     return;
   }
 
-  CHAR16              **SectionDataStrings  = NULL;      // Array of strings which are written in the section data area of page
-  SECTIONFUNCTIONPTR  SectionParser         = NULL;      // Pointer to function which can parse the section data
-  CHAR16              *StringParsePtr       = NULL;      // Pointer to current place in string being written
-  UINTN               NumberOfStrings       = 0;         // Number of strings within SectionDataStrings
-  UINTN               StringParseChars      = 0;         // Number of chars from CHAR16* to '\n' or '\0'
+  CHAR16              **SectionDataStrings = NULL;       // Array of strings which are written in the section data area of page
+  SECTIONFUNCTIONPTR  SectionParser = NULL;              // Pointer to function which can parse the section data
+  CHAR16              *StringParsePtr = NULL;            // Pointer to current place in string being written
+  UINTN               NumberOfStrings = 0;               // Number of strings within SectionDataStrings
+  UINTN               StringParseChars = 0;              // Number of chars from CHAR16* to '\n' or '\0'
   UINTN               OuterLoop, InnerLoop;
 
   // Get parser for the section data if available
   SectionParser = ParserLibFindSectionParser (&(SectionHeader->SectionType));
 
   if (SectionParser == NULL) {
-    SectionParser = (SECTIONFUNCTIONPTR) &SectionDump;
+    SectionParser = (SECTIONFUNCTIONPTR)&SectionDump;
   }
 
   // Call the parser and get how many strings were returned
@@ -631,9 +626,8 @@ ParseSectionData(
 
     // For each column in the row being written to
     for (InnerLoop = 0; InnerLoop < NUM_SEC_DATA_COLUMNS; InnerLoop++) {
-
       // Make sure we still have more chars to parse from the string. If not, just clear the uni string
-      if (StringParsePtr >= SectionDataStrings[OuterLoop] + StrnLenS(SectionDataStrings[OuterLoop], MAX_DISPLAY_STRING_LENGTH)) {
+      if (StringParsePtr >= SectionDataStrings[OuterLoop] + StrnLenS (SectionDataStrings[OuterLoop], MAX_DISPLAY_STRING_LENGTH)) {
         HiiSetString (
           mHwhMenuPrivate.HiiHandle,
           DisplayLines[*index][InnerLoop],
@@ -641,14 +635,19 @@ ParseSectionData(
           NULL
           );
       } else {
-
         // Find distance from StringParsePtr to a '\0' or '\n'
         StringParseChars = FindNewline (&StringParsePtr);
 
         // Create null-terminated string from StringParsePtr to StringParsePtr + StringParseChars
-        if (!EFI_ERROR (StrnCpyS (UnicodeString,  MAX_DISPLAY_STRING_LENGTH + 1,
-                                  StringParsePtr, StringParseChars))) {
-
+        if (!EFI_ERROR (
+               StrnCpyS (
+                 UnicodeString,
+                 MAX_DISPLAY_STRING_LENGTH + 1,
+                 StringParsePtr,
+                 StringParseChars
+                 )
+               ))
+        {
           // Write the string to .uni string in the InnerLoop-th column
           HiiSetString (
             mHwhMenuPrivate.HiiHandle,
@@ -657,7 +656,6 @@ ParseSectionData(
             NULL
             );
         } else {
-
           // Just clear the string if for some reason it could not be copied
           HiiSetString (
             mHwhMenuPrivate.HiiHandle,
@@ -706,15 +704,15 @@ UpdateDisplayStrings (
   VOID
   )
 {
-  UINT8 OuterLoop;
+  UINT8  OuterLoop;
 
   // Make sure there is data to populate the page
   if (currentPage == NULL) {
     return;
   }
 
-  CONST EFI_COMMON_ERROR_RECORD_HEADER *Err         = currentPage->error;   // Pointer to Error being displayed
-  UINT8 SecLineIndex                                = 0;                    // Index of section line being written to
+  CONST EFI_COMMON_ERROR_RECORD_HEADER  *Err         = currentPage->error;  // Pointer to Error being displayed
+  UINT8                                 SecLineIndex = 0;                   // Index of section line being written to
 
   // DebugDumpMemory(DEBUG_INFO, Err, currentPage->error->RecordLength, DEBUG_DM_PRINT_ASCII);
 
@@ -725,12 +723,10 @@ UpdateDisplayStrings (
   ParseSourceID (&(Err->PlatformID));  // Publish Source ID field
   ParseCreatorID (&(Err->CreatorID));  // Publish Creator ID field
 
-  //display at most 2 Sections.
+  // display at most 2 Sections.
   for (OuterLoop = 0; OuterLoop < 2; OuterLoop++) {
-
-    //if We have another section to display
+    // if We have another section to display
     if (OuterLoop < Err->SectionCount) {
-
       UnicodeDataToVFR (
         DisplayLines[SecLineIndex++][0],
         L"Section %d",
@@ -739,7 +735,7 @@ UpdateDisplayStrings (
 
       ParseSectionData (
         Err,
-        (((EFI_ERROR_SECTION_DESCRIPTOR *) (Err + 1)) + OuterLoop),
+        (((EFI_ERROR_SECTION_DESCRIPTOR *)(Err + 1)) + OuterLoop),
         &SecLineIndex
         );
     }
@@ -747,7 +743,6 @@ UpdateDisplayStrings (
 
   // Set the rest of the lines to blank
   while (SecLineIndex < NUM_SEC_DATA_ROWS) {
-
     for (OuterLoop = 0; OuterLoop < NUM_SEC_DATA_COLUMNS; OuterLoop++) {
       HiiSetString (
         mHwhMenuPrivate.HiiHandle,
@@ -756,14 +751,14 @@ UpdateDisplayStrings (
         NULL
         );
     }
-    
+
     SecLineIndex++;
   }
 }
 
 /**
  *  Finds the XXXX in the HwRecRecXXXX -> the next index at which a Whea record will be inserted.
- * 
+ *
  *  @retval     UINT32     A Whea Index.
  *
 **/
@@ -778,13 +773,12 @@ GetMaxWheaIndex (
   CHAR16      VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];     // HwRecRecXXXX used to find variable
 
   for (OuterLoop = 0; OuterLoop <= MAX_UINT32; OuterLoop++) {
-
     UnicodeSPrint (
       VarName,
       sizeof (VarName),
       L"%s%04X",
       EFI_HW_ERR_REC_VAR_NAME,
-      (UINT16) (OuterLoop & MAX_UINT16)
+      (UINT16)(OuterLoop & MAX_UINT16)
       );
 
     Status = gRT->GetVariable (
@@ -807,7 +801,7 @@ GetMaxWheaIndex (
 /**
  *  Populates list structure with Whea Errors.
  *
- *  @retval     VOID  
+ *  @retval     VOID
  *
 **/
 EFI_STATUS
@@ -816,7 +810,7 @@ PopulateWheaErrorList (
   )
 {
   EFI_STATUS                      Status;                               // Return status
-  UINTN                           Size                = 0;              // Size of variable being stored
+  UINTN                           Size = 0;                             // Size of variable being stored
   CHAR16                          VarName[EFI_HW_ERR_REC_VAR_NAME_LEN]; // HwRecRecXXXX name of var being stored
   EFI_COMMON_ERROR_RECORD_HEADER  *ErrorRecordPointer = NULL;           // Pointer to the start of the record
   ErrorRecord                     *new;                                 // New record being added
@@ -825,7 +819,6 @@ PopulateWheaErrorList (
   NumErrorEntries = GetMaxWheaIndex ();
 
   for (OuterLoop = NumErrorEntries; OuterLoop > 0; --OuterLoop) {
-
     // Create HwRecRecXXXX string
     UnicodeSPrint (
       VarName,
@@ -845,7 +838,6 @@ PopulateWheaErrorList (
                     );
 
     if (Status != EFI_NOT_FOUND) {
-
       ErrorRecordPointer = AllocatePool (Size);
 
       // Populate the error record
@@ -858,22 +850,21 @@ PopulateWheaErrorList (
                       );
 
       if (ValidateCperHeader (ErrorRecordPointer, Size)) {
-
         new = AllocateZeroPool (sizeof (ErrorRecord));
 
         new->error = ErrorRecordPointer;
-        new->val = OuterLoop;
+        new->val   = OuterLoop;
 
         InsertHeadList (
           &mListHead,
-          (LIST_ENTRY *) new
+          (LIST_ENTRY *)new
           );
       }
     }
   }
 
   if (!IsListEmpty (&mListHead)) {
-    currentPage = (ErrorRecord *) GetFirstNode (&mListHead);
+    currentPage = (ErrorRecord *)GetFirstNode (&mListHead);
     return EFI_SUCCESS;
   } else {
     return EFI_ABORTED;
@@ -904,16 +895,17 @@ PopulateWheaErrorList (
 EFI_STATUS
 EFIAPI
 DriverCallback (
-  IN     CONST EFI_HII_CONFIG_ACCESS_PROTOCOL *This,
-  IN           EFI_BROWSER_ACTION             Action,
-  IN           EFI_QUESTION_ID                QuestionId,
-  IN           UINT8                          Type,
-  IN           EFI_IFR_TYPE_VALUE             *Value,
-     OUT       EFI_BROWSER_ACTION_REQUEST   *ActionRequest
+  IN     CONST EFI_HII_CONFIG_ACCESS_PROTOCOL  *This,
+  IN           EFI_BROWSER_ACTION              Action,
+  IN           EFI_QUESTION_ID                 QuestionId,
+  IN           UINT8                           Type,
+  IN           EFI_IFR_TYPE_VALUE              *Value,
+  OUT       EFI_BROWSER_ACTION_REQUEST         *ActionRequest
   )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
-  *ActionRequest    = EFI_BROWSER_ACTION_REQUEST_NONE;
+  EFI_STATUS  Status = EFI_SUCCESS;
+
+  *ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE;
 
   DEBUG ((
     DEBUG_INFO,
@@ -925,46 +917,46 @@ DriverCallback (
     ));
 
   switch (Action) {
+    case EFI_BROWSER_ACTION_FORM_OPEN:
 
-  case EFI_BROWSER_ACTION_FORM_OPEN:
-
-    // Capture form opening
-    if (QuestionId == HWH_MENU_LEFT_ID) {
-
-      // Make sure there are errors to display. If not, set the configuration
-      // to suppress most of the page and set the "No Logs To Display" string at top
-      if (currentPage == NULL && mHwhMenuConfiguration.Logs != LOGS_FALSE) {
-
-        if (EFI_ERROR (PopulateWheaErrorList ())) {
-          mHwhMenuConfiguration.Logs = LOGS_FALSE;
-          UpdateForm ();
-          *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
+      // Capture form opening
+      if (QuestionId == HWH_MENU_LEFT_ID) {
+        // Make sure there are errors to display. If not, set the configuration
+        // to suppress most of the page and set the "No Logs To Display" string at top
+        if ((currentPage == NULL) && (mHwhMenuConfiguration.Logs != LOGS_FALSE)) {
+          if (EFI_ERROR (PopulateWheaErrorList ())) {
+            mHwhMenuConfiguration.Logs = LOGS_FALSE;
+            UpdateForm ();
+            *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
+          }
         }
+
+        UpdateDisplayStrings ();
       }
 
-      UpdateDisplayStrings ();
-    }
-    break;
+      break;
 
-  case EFI_BROWSER_ACTION_FORM_CLOSE:
+    case EFI_BROWSER_ACTION_FORM_CLOSE:
 
-    // Capture form closing
-    if (QuestionId == HWH_MENU_LEFT_ID) {
-      currentPage = (ErrorRecord *) GetFirstNode (&mListHead);
-    }
-    break;
+      // Capture form closing
+      if (QuestionId == HWH_MENU_LEFT_ID) {
+        currentPage = (ErrorRecord *)GetFirstNode (&mListHead);
+      }
 
-  case EFI_BROWSER_ACTION_CHANGED:
-    //Rely on short-circuiting of && statement to avoid paging when unnecessary
-    if ((QuestionId == HWH_MENU_RIGHT_ID && PageForward ()) || (QuestionId == HWH_MENU_LEFT_ID && PageBackward ())) {
-      UpdateDisplayStrings ();
-      UpdateForm ();
-      *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
-    }
-    break;
+      break;
 
-  default:
-    break;
+    case EFI_BROWSER_ACTION_CHANGED:
+      // Rely on short-circuiting of && statement to avoid paging when unnecessary
+      if (((QuestionId == HWH_MENU_RIGHT_ID) && PageForward ()) || ((QuestionId == HWH_MENU_LEFT_ID) && PageBackward ())) {
+        UpdateDisplayStrings ();
+        UpdateForm ();
+        *ActionRequest = EFI_BROWSER_ACTION_REQUEST_FORM_APPLY;
+      }
+
+      break;
+
+    default:
+      break;
   }
 
   return Status;
@@ -991,22 +983,25 @@ DriverCallback (
 EFI_STATUS
 EFIAPI
 RouteConfig (
-  IN     CONST EFI_HII_CONFIG_ACCESS_PROTOCOL *This,
-  IN     CONST EFI_STRING                     Configuration,
-     OUT       EFI_STRING                     *Progress
+  IN     CONST EFI_HII_CONFIG_ACCESS_PROTOCOL  *This,
+  IN     CONST EFI_STRING                      Configuration,
+  OUT       EFI_STRING                         *Progress
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  if (Configuration == NULL || Progress == NULL) {
+  if ((Configuration == NULL) || (Progress == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
+
   if (Configuration == NULL) {
     return EFI_UNSUPPORTED;
   }
+
   if (StrStr (Configuration, L"OFFSET") == NULL) {
     return EFI_UNSUPPORTED;
   }
+
   Status = EFI_SUCCESS;
 
   DEBUG ((
@@ -1048,20 +1043,23 @@ RouteConfig (
 EFI_STATUS
 EFIAPI
 ExtractConfig (
-  IN     CONST EFI_HII_CONFIG_ACCESS_PROTOCOL *This,
-  IN     CONST EFI_STRING                     Request,
-     OUT       EFI_STRING                     *Progress,
-     OUT       EFI_STRING                     *Results)
+  IN     CONST EFI_HII_CONFIG_ACCESS_PROTOCOL  *This,
+  IN     CONST EFI_STRING                      Request,
+  OUT       EFI_STRING                         *Progress,
+  OUT       EFI_STRING                         *Results
+  )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  if (Progress == NULL || Results == NULL) {
+  if ((Progress == NULL) || (Results == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
+
   if (Request == NULL) {
     return EFI_UNSUPPORTED;
   }
-  if (StrStr(Request, L"OFFSET") == NULL) {
+
+  if (StrStr (Request, L"OFFSET") == NULL) {
     return EFI_UNSUPPORTED;
   }
 
@@ -1087,7 +1085,7 @@ ExtractConfig (
     Status = gHiiConfigRouting->BlockToConfig (
                                   gHiiConfigRouting,
                                   Request,
-                                  (UINT8 *) &mHwhMenuConfiguration,
+                                  (UINT8 *)&mHwhMenuConfiguration,
                                   sizeof (mHwhMenuConfiguration),
                                   Results,
                                   Progress
@@ -1122,11 +1120,11 @@ ExtractConfig (
 EFI_STATUS
 EFIAPI
 HwhMenuEntry (
-  IN EFI_HANDLE       ImageHandle,
-  IN EFI_SYSTEM_TABLE *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   Status = gBS->InstallMultipleProtocolInterfaces (
                   &mHwhMenuPrivate.DriverHandle,
@@ -1138,7 +1136,6 @@ HwhMenuEntry (
                   );
 
   if (!EFI_ERROR (Status)) {
-
     mHwhMenuPrivate.HiiHandle = HiiAddPackages (
                                   &gHwhMenuFormsetGuid,
                                   mHwhMenuPrivate.DriverHandle,
@@ -1149,7 +1146,6 @@ HwhMenuEntry (
   }
 
   if (mHwhMenuPrivate.HiiHandle != NULL) {
-
     Status = gBS->InstallProtocolInterface (
                     &mHwhMenuPrivate.DriverHandle,
                     &gHwhMenuFormsetGuid,

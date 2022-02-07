@@ -21,7 +21,6 @@
 #include <Library/XmlTreeQueryLib.h>
 #include <Library/ShellLib.h>
 
-
 /**
 <Variables>
   <Variable Name="" Guid="">
@@ -40,19 +39,17 @@
 ...
 </Variables>
 **/
-#define LIST_ELEMENT_NAME               "Variables"
-#define VARIABLE_ENTRY_ELEMENT_NAME       "Variable"
-#define VAR_NAME_ATTRIBUTE_NAME               "Name"
-#define VAR_GUID_ATTRIBUTE_NAME               "Guid"
-#define VAR_ATTRIBUTES_ELEMENT_NAME         "Attributes"
-#define VAR_SIZE_ELEMENT_NAME               "Size"
-#define VAR_DATA_ELEMENT_NAME               "Data"
-#define VAR_READYTOBOOT_ELEMENT_NAME        "ReadyToBoot"
-#define VAR_OSRUNTIME_ELEMENT_NAME          "OsRuntime"
-#define VAR_READ_STATUS_ELEMENT_NAME          "ReadStatus"
-#define VAR_WRITE_STATUS_ELEMENT_NAME         "WriteStatus"
-
-
+#define LIST_ELEMENT_NAME              "Variables"
+#define VARIABLE_ENTRY_ELEMENT_NAME    "Variable"
+#define VAR_NAME_ATTRIBUTE_NAME        "Name"
+#define VAR_GUID_ATTRIBUTE_NAME        "Guid"
+#define VAR_ATTRIBUTES_ELEMENT_NAME    "Attributes"
+#define VAR_SIZE_ELEMENT_NAME          "Size"
+#define VAR_DATA_ELEMENT_NAME          "Data"
+#define VAR_READYTOBOOT_ELEMENT_NAME   "ReadyToBoot"
+#define VAR_OSRUNTIME_ELEMENT_NAME     "OsRuntime"
+#define VAR_READ_STATUS_ELEMENT_NAME   "ReadStatus"
+#define VAR_WRITE_STATUS_ELEMENT_NAME  "WriteStatus"
 
 /**
 Creates a new XmlNode list following the List
@@ -69,8 +66,8 @@ LIST Xml Template
 **/
 XmlNode *
 EFIAPI
-New_VariablesNodeList();
-
+New_VariablesNodeList (
+  );
 
 /**
 Creates a new XmlNode for a var and adds it to the list
@@ -85,37 +82,36 @@ VAR_XML_TEMPLATE
 **/
 XmlNode *
 EFIAPI
-New_VariableNodeInList(
+New_VariableNodeInList (
   IN CONST XmlNode  *RootNode,
-  IN CONST CHAR16* VarName,
-  IN CONST GUID*   VarGuid,
-  IN UINT32 Attributes,
-  IN UINTN DataSize,
-  IN CONST UINT8* Data
-);
+  IN CONST CHAR16   *VarName,
+  IN CONST GUID     *VarGuid,
+  IN UINT32         Attributes,
+  IN UINTN          DataSize,
+  IN CONST UINT8    *Data
+  );
 
 EFI_STATUS
 EFIAPI
-AddReadyToBootStatusToNode(
-  IN CONST XmlNode *Node,
-  IN EFI_STATUS ReadStatus,
-  IN EFI_STATUS WriteStatus
-);
-
+AddReadyToBootStatusToNode (
+  IN CONST XmlNode  *Node,
+  IN EFI_STATUS     ReadStatus,
+  IN EFI_STATUS     WriteStatus
+  );
 
 EFI_STATUS
 EFIAPI
-GetNameGuidMembersFromNode(
+GetNameGuidMembersFromNode (
   IN CONST  XmlNode   *Node,
-  OUT       CHAR16      **VarName,
-  OUT       EFI_GUID    *VarGuid
-);
+  OUT       CHAR16    **VarName,
+  OUT       EFI_GUID  *VarGuid
+  );
 
 EFI_STATUS
 EFIAPI
-ConvertAsciiStringToGuid(
-  IN CONST CHAR8 *StringGuid,
-  IN OUT EFI_GUID *Guid
-);
+ConvertAsciiStringToGuid (
+  IN CONST CHAR8   *StringGuid,
+  IN OUT EFI_GUID  *Guid
+  );
 
 #endif

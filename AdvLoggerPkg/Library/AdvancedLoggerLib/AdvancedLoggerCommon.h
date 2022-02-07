@@ -24,10 +24,10 @@
 VOID
 EFIAPI
 AdvancedLoggerWrite (
-    IN       UINTN    ErrorLevel,
-    IN CONST CHAR8   *Buffer,
-    IN       UINTN    NumberOfBytes
-);
+  IN       UINTN  ErrorLevel,
+  IN CONST CHAR8  *Buffer,
+  IN       UINTN  NumberOfBytes
+  );
 
 /**
     Get the Logger Information block
@@ -41,7 +41,7 @@ AdvancedLoggerWrite (
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerGetLoggerInfo (
-    VOID
-);
+  VOID
+  );
 
-#endif  // __ADVANCED_LOGGER_COMMON_H__
+#endif // __ADVANCED_LOGGER_COMMON_H__

@@ -21,7 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "HidMouseAbsolutePointer.h"
 
-EFI_DRIVER_BINDING_PROTOCOL mHidMouseAbsolutePointerDriverBinding = {
+EFI_DRIVER_BINDING_PROTOCOL  mHidMouseAbsolutePointerDriverBinding = {
   HidMouseAbsolutePointerDriverBindingSupported,
   HidMouseAbsolutePointerDriverBindingStart,
   HidMouseAbsolutePointerDriverBindingStop,
@@ -45,11 +45,11 @@ EFI_DRIVER_BINDING_PROTOCOL mHidMouseAbsolutePointerDriverBinding = {
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerDriverBindingEntryPoint (
-  IN EFI_HANDLE           ImageHandle,
-  IN EFI_SYSTEM_TABLE     *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS              Status;
+  EFI_STATUS  Status;
 
   Status = EfiLibInstallDriverBindingComponentName2 (
              ImageHandle,
@@ -63,7 +63,6 @@ HidMouseAbsolutePointerDriverBindingEntryPoint (
 
   return EFI_SUCCESS;
 }
-
 
 /**
   Check whether HID Mouse Absolute Pointer Driver supports this device.
@@ -79,19 +78,19 @@ HidMouseAbsolutePointerDriverBindingEntryPoint (
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-  EFI_STATUS          Status;
+  EFI_STATUS            Status;
   HID_POINTER_PROTOCOL  *HidMouseProtocol;
 
-  //Check to see if controller has unbound MS Mouse Protocol installed.
+  // Check to see if controller has unbound MS Mouse Protocol installed.
   Status = gBS->OpenProtocol (
                   Controller,
                   &gHidPointerProtocolGuid,
-                  (VOID**) (HID_POINTER_PROTOCOL **) &HidMouseProtocol,
+                  (VOID **)(HID_POINTER_PROTOCOL **)&HidMouseProtocol,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -131,22 +130,22 @@ HidMouseAbsolutePointerDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
   EFI_STATUS                      Status;
   HID_POINTER_PROTOCOL            *HidMouseProtocol;
   HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
 
-  DEBUG((DEBUG_VERBOSE, "[%a]\n",__FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "[%a]\n", __FUNCTION__));
 
-  //Get our HID mouse abstraction
+  // Get our HID mouse abstraction
   Status = gBS->OpenProtocol (
                   Controller,
                   &gHidPointerProtocolGuid,
-                  (VOID **) (HID_POINTER_PROTOCOL **) &HidMouseProtocol,
+                  (VOID **)(HID_POINTER_PROTOCOL **)&HidMouseProtocol,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -155,19 +154,19 @@ HidMouseAbsolutePointerDriverBindingStart (
     goto Cleanup;
   }
 
-  HidMouseDev = AllocateZeroPool(sizeof(HID_MOUSE_ABSOLUTE_POINTER_DEV));
+  HidMouseDev = AllocateZeroPool (sizeof (HID_MOUSE_ABSOLUTE_POINTER_DEV));
   if (HidMouseDev == NULL) {
-    ASSERT(HidMouseDev != NULL);
+    ASSERT (HidMouseDev != NULL);
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
 
-  HidMouseDev->Signature = HID_MOUSE_ABSOLUTE_POINTER_DEV_SIGNATURE;
+  HidMouseDev->Signature        = HID_MOUSE_ABSOLUTE_POINTER_DEV_SIGNATURE;
   HidMouseDev->HidMouseProtocol = HidMouseProtocol;
 
-  //Initialize the mouse device.
-  Status = InitializeMouseDevice(HidMouseDev);
-  if (EFI_ERROR(Status)) {
+  // Initialize the mouse device.
+  Status = InitializeMouseDevice (HidMouseDev);
+  if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
 
@@ -198,14 +197,14 @@ HidMouseAbsolutePointerDriverBindingStart (
     goto Cleanup;
   }
 
-  //Register for Async Mouse HID reports from HID layer.
-  Status = HidMouseDev->HidMouseProtocol->RegisterPointerReportCallback(
+  // Register for Async Mouse HID reports from HID layer.
+  Status = HidMouseDev->HidMouseProtocol->RegisterPointerReportCallback (
                                             HidMouseDev->HidMouseProtocol,
                                             OnMouseReport,
                                             HidMouseDev
                                             );
   if (EFI_ERROR (Status)) {
-    //If failure on start, uninstall the protocol interface before exiting.
+    // If failure on start, uninstall the protocol interface before exiting.
     gBS->UninstallProtocolInterface (
            Controller,
            &gEfiAbsolutePointerProtocolGuid,
@@ -214,15 +213,15 @@ HidMouseAbsolutePointerDriverBindingStart (
     goto Cleanup;
   }
 
-  //Set up Controller name support.
+  // Set up Controller name support.
   HidMouseDev->ControllerNameTable = NULL;
   AddUnicodeString2 (
     "eng",
     mHidMouseAbsolutePointerComponentName.SupportedLanguages,
     &HidMouseDev->ControllerNameTable,
     L"HID Mouse Absolute Pointer",
-      TRUE
-      );
+    TRUE
+    );
   AddUnicodeString2 (
     "en",
     mHidMouseAbsolutePointerComponentName2.SupportedLanguages,
@@ -233,13 +232,13 @@ HidMouseAbsolutePointerDriverBindingStart (
 
 Cleanup:
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_VERBOSE, "[%a] - Error Status = %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_VERBOSE, "[%a] - Error Status = %r\n", __FUNCTION__, Status));
     gBS->CloseProtocol (
-          Controller,
-          &gHidPointerProtocolGuid,
-          This->DriverBindingHandle,
-          Controller
-          );
+           Controller,
+           &gHidPointerProtocolGuid,
+           This->DriverBindingHandle,
+           Controller
+           );
 
     if (HidMouseDev != NULL) {
       if ((HidMouseDev->AbsolutePointerProtocol).WaitForInput != NULL) {
@@ -249,6 +248,7 @@ Cleanup:
       FreePool (HidMouseDev);
     }
   }
+
   return Status;
 }
 
@@ -268,39 +268,38 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL   *This,
-  IN  EFI_HANDLE                    Controller,
-  IN  UINTN                         NumberOfChildren,
-  IN  EFI_HANDLE                    *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   )
 {
   EFI_STATUS                      Status;
   HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
   EFI_ABSOLUTE_POINTER_PROTOCOL   *AbsolutePointerProtocol;
 
-
   // Get the Absolute Pointer instance from this controller and use it to retrieve context.
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiAbsolutePointerProtocolGuid,
-                  (VOID **) &AbsolutePointerProtocol,
+                  (VOID **)&AbsolutePointerProtocol,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
 
   if (EFI_ERROR (Status)) {
-    ASSERT_EFI_ERROR(Status);
+    ASSERT_EFI_ERROR (Status);
     return EFI_UNSUPPORTED;
   }
 
   HidMouseDev = HID_MOUSE_ABSOLUTE_POINTER_DEV_FROM_MOUSE_PROTOCOL (AbsolutePointerProtocol);
 
-  //Unregister Mouse HID report callback.
-  Status = HidMouseDev->HidMouseProtocol->UnRegisterPointerReportCallback(HidMouseDev->HidMouseProtocol);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "[%a] - Error stopping mouse device. Status=%r\n", __FUNCTION__, Status));
-    //Continue tear-down on error.
+  // Unregister Mouse HID report callback.
+  Status = HidMouseDev->HidMouseProtocol->UnRegisterPointerReportCallback (HidMouseDev->HidMouseProtocol);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[%a] - Error stopping mouse device. Status=%r\n", __FUNCTION__, Status));
+    // Continue tear-down on error.
   }
 
   Status = gBS->UninstallProtocolInterface (
@@ -308,10 +307,10 @@ HidMouseAbsolutePointerDriverBindingStop (
                   &gEfiAbsolutePointerProtocolGuid,
                   &HidMouseDev->AbsolutePointerProtocol
                   );
-  if (EFI_ERROR(Status)) {
-    ASSERT_EFI_ERROR(Status);
-    //This is unexpected and should never happen, but we can't really proceed with teardown if we can't uninstall the protocol.
-    //We don't want to free resources the protocol points to or might be using.
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    // This is unexpected and should never happen, but we can't really proceed with teardown if we can't uninstall the protocol.
+    // We don't want to free resources the protocol points to or might be using.
     return Status;
   }
 
@@ -351,15 +350,14 @@ HidMouseAbsolutePointerDriverBindingStop (
 **/
 EFI_STATUS
 InitializeMouseDevice (
-  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV           *HidMouseDev
+  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev
   )
 {
-
-  //Future improvement - we could actually read and parse the descriptor and
-  //set up the Absolute Pointer mode attributes accordingly. We could also change the
-  //protocol to something other than boot protocol for mouse.
-  //For now, we only support boot protocol for mouse, so we just hard
-  //code the attributes.
+  // Future improvement - we could actually read and parse the descriptor and
+  // set up the Absolute Pointer mode attributes accordingly. We could also change the
+  // protocol to something other than boot protocol for mouse.
+  // For now, we only support boot protocol for mouse, so we just hard
+  // code the attributes.
 
   HidMouseDev->Mode.AbsoluteMaxX = 1024;
   HidMouseDev->Mode.AbsoluteMaxY = 1024;
@@ -401,7 +399,7 @@ GetMouseAbsolutePointerState (
   OUT  EFI_ABSOLUTE_POINTER_STATE     *State
   )
 {
-  HID_MOUSE_ABSOLUTE_POINTER_DEV *HidMouseDev;
+  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
 
   if (State == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -446,9 +444,9 @@ HidMouseAbsolutePointerReset (
   IN BOOLEAN                        ExtendedVerification
   )
 {
-  HID_MOUSE_ABSOLUTE_POINTER_DEV       *HidMouseDev;
+  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
 
-  HidMouseDev  = HID_MOUSE_ABSOLUTE_POINTER_DEV_FROM_MOUSE_PROTOCOL (This);
+  HidMouseDev = HID_MOUSE_ABSOLUTE_POINTER_DEV_FROM_MOUSE_PROTOCOL (This);
 
   //
   // Clear mouse state.
@@ -469,7 +467,6 @@ HidMouseAbsolutePointerReset (
   HidMouseDev->StateChanged = FALSE;
 
   return EFI_SUCCESS;
-
 }
 
 /**
@@ -482,13 +479,13 @@ HidMouseAbsolutePointerReset (
 VOID
 EFIAPI
 HidMouseAbsolutePointerWaitForInput (
-  IN  EFI_EVENT               Event,
-  IN  VOID                    *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-  HID_MOUSE_ABSOLUTE_POINTER_DEV       *HidMouseDev;
+  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
 
-  HidMouseDev  = (HID_MOUSE_ABSOLUTE_POINTER_DEV *)Context;
+  HidMouseDev = (HID_MOUSE_ABSOLUTE_POINTER_DEV *)Context;
 
   //
   // If there's input from mouse, signal the event.
@@ -515,21 +512,21 @@ HidMouseAbsolutePointerWaitForInput (
 VOID
 EFIAPI
 OnMouseReport (
-  IN HID_POINTER_INTERFACE Interface,
-  IN UINT8                 *HidInputReportBuffer,
-  IN UINTN                 HidInputReportBufferSize,
-  IN VOID                  *Context
+  IN HID_POINTER_INTERFACE  Interface,
+  IN UINT8                  *HidInputReportBuffer,
+  IN UINTN                  HidInputReportBufferSize,
+  IN VOID                   *Context
   )
 {
-  HID_MOUSE_ABSOLUTE_POINTER_DEV       *HidMouseDev;
-  SINGLETOUCH_HID_INPUT_BUFFER         *SingleTouchInput;
-  MOUSE_HID_INPUT_BUFFER               *MouseInput;
+  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
+  SINGLETOUCH_HID_INPUT_BUFFER    *SingleTouchInput;
+  MOUSE_HID_INPUT_BUFFER          *MouseInput;
 
-  HidMouseDev  = (HID_MOUSE_ABSOLUTE_POINTER_DEV *)Context;
+  HidMouseDev = (HID_MOUSE_ABSOLUTE_POINTER_DEV *)Context;
 
   if ((HidMouseDev == NULL) || (HidInputReportBuffer == NULL)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Invalid input pointer.\n", __FUNCTION__));
-    ASSERT((HidMouseDev != NULL) && (HidInputReportBuffer != NULL));
+    ASSERT ((HidMouseDev != NULL) && (HidInputReportBuffer != NULL));
     return;
   }
 
@@ -550,10 +547,11 @@ OnMouseReport (
         ASSERT (HidInputReportBufferSize == sizeof (SINGLETOUCH_HID_INPUT_BUFFER));
         return;
       }
-      SingleTouchInput = (SINGLETOUCH_HID_INPUT_BUFFER *)HidInputReportBuffer;
+
+      SingleTouchInput                 = (SINGLETOUCH_HID_INPUT_BUFFER *)HidInputReportBuffer;
       HidMouseDev->State.ActiveButtons = SingleTouchInput->Touch;
-      HidMouseDev->State.CurrentX = SingleTouchInput->CurrentX;
-      HidMouseDev->State.CurrentY = SingleTouchInput->CurrentY;
+      HidMouseDev->State.CurrentX      = SingleTouchInput->CurrentX;
+      HidMouseDev->State.CurrentY      = SingleTouchInput->CurrentY;
       break;
     case BootMouse:
       //
@@ -569,40 +567,48 @@ OnMouseReport (
       // 3       0 to 7  Y displacement
       // 4 to n  0 to 7  Device specific (optional)
       //
-      //Check the size. Note that Z displacement is optional, so don't include it in the check.
+      // Check the size. Note that Z displacement is optional, so don't include it in the check.
       if (HidInputReportBufferSize < (sizeof (MOUSE_HID_INPUT_BUFFER) - sizeof (INT8))) {
         DEBUG ((DEBUG_ERROR, "[%a] - invalid mouse report size\n", __FUNCTION__));
         ASSERT (HidInputReportBufferSize >= (sizeof (MOUSE_HID_INPUT_BUFFER) - sizeof (INT8)));
         return;
       }
+
       MouseInput = (MOUSE_HID_INPUT_BUFFER *)HidInputReportBuffer;
-      //copy first byte with button state straight from report buffer - it's already formatted correctly.
+      // copy first byte with button state straight from report buffer - it's already formatted correctly.
       HidMouseDev->State.ActiveButtons = HidInputReportBuffer[0];
 
       HidMouseDev->State.CurrentX =
         MIN (
-          MAX ((INT64) HidMouseDev->State.CurrentX + MouseInput->XDisplacement,
-              (INT64) HidMouseDev->Mode.AbsoluteMinX),
-          (INT64) HidMouseDev->Mode.AbsoluteMaxX
+          MAX (
+            (INT64)HidMouseDev->State.CurrentX + MouseInput->XDisplacement,
+            (INT64)HidMouseDev->Mode.AbsoluteMinX
+            ),
+          (INT64)HidMouseDev->Mode.AbsoluteMaxX
           );
       HidMouseDev->State.CurrentY =
         MIN (
-          MAX ((INT64) HidMouseDev->State.CurrentY + MouseInput->YDisplacement,
-              (INT64) HidMouseDev->Mode.AbsoluteMinY),
-          (INT64) HidMouseDev->Mode.AbsoluteMaxY
+          MAX (
+            (INT64)HidMouseDev->State.CurrentY + MouseInput->YDisplacement,
+            (INT64)HidMouseDev->Mode.AbsoluteMinY
+            ),
+          (INT64)HidMouseDev->Mode.AbsoluteMaxY
           );
       // only use Z if optional byte is included (as indicated by the report size)
       if (HidInputReportBufferSize == sizeof (MOUSE_HID_INPUT_BUFFER)) {
         HidMouseDev->State.CurrentZ =
           MIN (
-            MAX ((INT64) HidMouseDev->State.CurrentZ + MouseInput->ZDisplacement,
-                (INT64) HidMouseDev->Mode.AbsoluteMinZ),
-            (INT64) HidMouseDev->Mode.AbsoluteMaxZ
+            MAX (
+              (INT64)HidMouseDev->State.CurrentZ + MouseInput->ZDisplacement,
+              (INT64)HidMouseDev->Mode.AbsoluteMinZ
+              ),
+            (INT64)HidMouseDev->Mode.AbsoluteMaxZ
             );
       }
+
       break;
     default:
-      DEBUG ((DEBUG_ERROR, "[%a] - unrecognized HID report type.\n",__FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "[%a] - unrecognized HID report type.\n", __FUNCTION__));
       ASSERT (FALSE);
       return;
   }

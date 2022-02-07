@@ -44,34 +44,35 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 STATIC
 EFI_STATUS
 LocalAsciiStrCatS (
-          CHAR8 *Dest,
-          UINTN  DestMax,
-    CONST CHAR8 *Src,
-          UINTN  Count
-    ) {
+  CHAR8        *Dest,
+  UINTN        DestMax,
+  CONST CHAR8  *Src,
+  UINTN        Count
+  )
+{
+  while ((*Dest != '\0') && (DestMax > 0)) {
+    Dest++;
+    DestMax--;
+  }
 
-    while ((*Dest != '\0') && (DestMax > 0)){
-        Dest++;
-        DestMax--;
+  if (Count > DestMax) {
+    return EFI_BUFFER_TOO_SMALL;
+  }
+
+  while (Count > 0) {
+    if (*Src == '\0') {
+      *Dest = '\0';
+      return EFI_INVALID_PARAMETER;
     }
 
-    if (Count > DestMax) {
-        return EFI_BUFFER_TOO_SMALL;
-    }
+    *Dest++ = *Src++;
+    Count--;
+  }
 
-    while (Count > 0) {
-        if (*Src == '\0') {
-            *Dest = '\0';
-            return EFI_INVALID_PARAMETER;
-        }
-
-        *Dest++ = *Src++;
-        Count--;
-    }
-
-    *Dest = '\0';
-    return EFI_SUCCESS;
+  *Dest = '\0';
+  return EFI_SUCCESS;
 }
+
 /**
  * EncodeJson
  *
@@ -89,82 +90,84 @@ LocalAsciiStrCatS (
 EFI_STATUS
 EFIAPI
 JsonLibEncode (
-    IN  JSON_REQUEST_ELEMENT *Request,
-    IN  UINTN                 RequestCount,
-    OUT CHAR8               **JsonString,
-    OUT UINTN                *JsonStringSize) {
+  IN  JSON_REQUEST_ELEMENT  *Request,
+  IN  UINTN                 RequestCount,
+  OUT CHAR8                 **JsonString,
+  OUT UINTN                 *JsonStringSize
+  )
+{
+  UINTN       i;
+  UINTN       ValueLen;
+  CHAR8       *RequestBuffer;
+  UINTN       RequestSize;
+  EFI_STATUS  Status;
 
-    UINTN      i;
-    UINTN      ValueLen;
-    CHAR8     *RequestBuffer;
-    UINTN      RequestSize;
-    EFI_STATUS Status;
+  if ((NULL == Request) || (0 == RequestCount) || (NULL == JsonString) | (NULL == JsonStringSize)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if ((NULL == Request) || (0 == RequestCount) || (NULL == JsonString) | (NULL == JsonStringSize)) {
-        return EFI_INVALID_PARAMETER;
-    }
+  //
+  // Account for
+  //    2                  the enclosing braces {}
+  //    3*RequestCount     " characters for the name, and the : separator
+  //    1*RequestCount     for the , separators and the terminating NULL
+  //
+  RequestSize = 2 + (4 * RequestCount);
+  Status      = EFI_SUCCESS;
 
-    //
-    // Account for
-    //    2                  the enclosing braces {}
-    //    3*RequestCount     " characters for the name, and the : separator
-    //    1*RequestCount     for the , separators and the terminating NULL
-    //
-    RequestSize = 2 + (4 * RequestCount);
-    Status = EFI_SUCCESS;
-
-    for (i = 0; i < RequestCount; i++) {
-        if (NULL != Request[i].Value) {
-            ValueLen = Request[i].ValueLen;
-            RequestSize += (2 * sizeof(CHAR8));
-        } else {
-            ValueLen = AsciiStrLen(JSON_NULL);
-        }
-        RequestSize += Request[i].FieldLen + ValueLen;
-    }
-
-    RequestBuffer = AllocatePool (RequestSize);
-    if (NULL == RequestBuffer) {
-        return EFI_OUT_OF_RESOURCES;
-    }
-
-    RequestBuffer[0] = '{';
-    RequestBuffer[1] = '\0';
-    for (i = 0; i < RequestCount; i++) {
-        if (0 != i) {
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, ",");
-        }
-
-        Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-        Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].FieldName, Request[i].FieldLen);
-        Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\":");
-        if (NULL != Request[i].Value) {
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-            Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].Value, Request[i].ValueLen);
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
-        } else {
-            Status |= AsciiStrCatS (RequestBuffer, RequestSize, JSON_NULL);
-            RequestSize = RequestSize - (2 * sizeof(CHAR8));
-        }
-
-        if (EFI_ERROR(Status)) {
-            break;
-        }
-    }
-
-    Status |= AsciiStrCatS (RequestBuffer, RequestSize, "}");
-
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR,"Error parsing encode request.  Code may be =%r\n", Status));
-        FreePool (RequestBuffer);
+  for (i = 0; i < RequestCount; i++) {
+    if (NULL != Request[i].Value) {
+      ValueLen     = Request[i].ValueLen;
+      RequestSize += (2 * sizeof (CHAR8));
     } else {
-        DEBUG((DEBUG_INFO,"Request Buffer:\n"));
-        DUMP_HEX(DEBUG_INFO, 0, RequestBuffer, RequestSize, "");
-        *JsonString = RequestBuffer;
-        *JsonStringSize = RequestSize;
+      ValueLen = AsciiStrLen (JSON_NULL);
     }
 
-    return Status;
+    RequestSize += Request[i].FieldLen + ValueLen;
+  }
+
+  RequestBuffer = AllocatePool (RequestSize);
+  if (NULL == RequestBuffer) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  RequestBuffer[0] = '{';
+  RequestBuffer[1] = '\0';
+  for (i = 0; i < RequestCount; i++) {
+    if (0 != i) {
+      Status |= AsciiStrCatS (RequestBuffer, RequestSize, ",");
+    }
+
+    Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
+    Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].FieldName, Request[i].FieldLen);
+    Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\":");
+    if (NULL != Request[i].Value) {
+      Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
+      Status |= LocalAsciiStrCatS (RequestBuffer, RequestSize, Request[i].Value, Request[i].ValueLen);
+      Status |= AsciiStrCatS (RequestBuffer, RequestSize, "\"");
+    } else {
+      Status     |= AsciiStrCatS (RequestBuffer, RequestSize, JSON_NULL);
+      RequestSize = RequestSize - (2 * sizeof (CHAR8));
+    }
+
+    if (EFI_ERROR (Status)) {
+      break;
+    }
+  }
+
+  Status |= AsciiStrCatS (RequestBuffer, RequestSize, "}");
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Error parsing encode request.  Code may be =%r\n", Status));
+    FreePool (RequestBuffer);
+  } else {
+    DEBUG ((DEBUG_INFO, "Request Buffer:\n"));
+    DUMP_HEX (DEBUG_INFO, 0, RequestBuffer, RequestSize, "");
+    *JsonString     = RequestBuffer;
+    *JsonStringSize = RequestSize;
+  }
+
+  return Status;
 }
 
 /**
@@ -188,175 +191,176 @@ JsonLibEncode (
 EFI_STATUS
 EFIAPI
 JsonLibParse (
-    IN  CHAR8               *JsonString,
-    IN  UINTN                JsonStringSize,
-    IN  JSON_PROCESS_ELEMENT ProcessFunction,
-    IN  VOID                *Context
-  ) {
+  IN  CHAR8                 *JsonString,
+  IN  UINTN                 JsonStringSize,
+  IN  JSON_PROCESS_ELEMENT  ProcessFunction,
+  IN  VOID                  *Context
+  )
+{
+  CHAR8                 *JsonChar;
+  UINTN                 Length;
+  JSON_REQUEST_ELEMENT  Rqst;
+  EFI_STATUS            Status;
+  BOOLEAN               Processed;
+  BOOLEAN               Changed;
+  BOOLEAN               SkipNULL;
 
-    CHAR8               *JsonChar;
-    UINTN                Length;
-    JSON_REQUEST_ELEMENT Rqst;
-    EFI_STATUS           Status;
-    BOOLEAN              Processed;
-    BOOLEAN              Changed;
-    BOOLEAN              SkipNULL;
+  if ((NULL == JsonString) || (NULL == ProcessFunction) || (0 == JsonStringSize)) {
+    DEBUG ((DEBUG_INFO, "Parse buffer received NULL buffer or NULL function\n"));
+    return EFI_INVALID_PARAMETER;
+  }
 
+  Processed = FALSE;
+  Changed   = FALSE;
+  DEBUG ((DEBUG_INFO, "Parse buffer @ %p, Size = %d:\n", JsonString, JsonStringSize));
+  DUMP_HEX (DEBUG_INFO, 0, JsonString, JsonStringSize, "");
 
-    if ((NULL == JsonString) || (NULL == ProcessFunction) || (0 == JsonStringSize)) {
-            DEBUG((DEBUG_INFO,"Parse buffer received NULL buffer or NULL function\n"));
-            return EFI_INVALID_PARAMETER;
-    }
+  Length = AsciiStrnLenS (JsonString, JsonStringSize);
+  if (Length == JsonStringSize) {
+    DEBUG ((DEBUG_ERROR, "No NULL in JsonString\n"));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    Processed = FALSE;
-    Changed = FALSE;
-    DEBUG((DEBUG_INFO,"Parse buffer @ %p, Size = %d:\n", JsonString, JsonStringSize));
-    DUMP_HEX(DEBUG_INFO, 0, JsonString, JsonStringSize, "");
+  JsonChar = JsonString;
 
-    Length = AsciiStrnLenS (JsonString, JsonStringSize);
-    if (Length == JsonStringSize) {
-        DEBUG((DEBUG_ERROR,"No NULL in JsonString\n"));
-        return EFI_INVALID_PARAMETER;
-    }
+  SKIP_WHITE_SPACE (JsonChar);
 
-    JsonChar = JsonString;
+  // Consume start character
+  if ('{' != *JsonChar) {
+    DEBUG ((DEBUG_INFO, "Invalid Json Start character\n"));
+    return EFI_INVALID_PARAMETER;
+  }
 
+  JsonChar++;
+  while (TRUE) {
     SKIP_WHITE_SPACE (JsonChar);
-
-    // Consume start character
-    if ('{' != *JsonChar) {
-        DEBUG((DEBUG_INFO,"Invalid Json Start character\n"));
-        return EFI_INVALID_PARAMETER;
+    DEBUG ((DEBUG_ERROR, "Parsing at %p\n", JsonChar));
+    // Expect a quoted name
+    if ('\"' != *JsonChar) {
+      DEBUG ((DEBUG_INFO, "Name did not start with a quote\n"));
+      return EFI_INVALID_PARAMETER;
     }
 
     JsonChar++;
-    while (TRUE) {
+    Rqst.FieldName = JsonChar;
 
-        SKIP_WHITE_SPACE (JsonChar);
-        DEBUG((DEBUG_ERROR,"Parsing at %p\n", JsonChar));
-        // Expect a quoted name
-        if ('\"' != *JsonChar) {
-            DEBUG((DEBUG_INFO,"Name did not start with a quote\n"));
-            return EFI_INVALID_PARAMETER;
-        }
+    SKIP_TO_NEXT_QUOTE (JsonChar);
 
-        JsonChar++;
-        Rqst.FieldName = JsonChar;
+    if ('\"' != *JsonChar) {
+      DEBUG ((DEBUG_INFO, "Name did not end with a quote\n"));
+      return EFI_INVALID_PARAMETER;
+    }
+
+    Rqst.FieldLen = JsonChar - Rqst.FieldName;       // Len does not include quote
+    JsonChar++;
+
+    SKIP_WHITE_SPACE (JsonChar);
+
+    if (':' != *JsonChar) {
+      DEBUG ((DEBUG_INFO, "Value separator incorrect\n"));
+      return EFI_INVALID_PARAMETER;
+    }
+
+    JsonChar++;
+    SKIP_WHITE_SPACE (JsonChar);
+
+    // The value may be quoted, the word null, or a sequence of decimal digits.
+    SkipNULL = FALSE;
+    switch (*JsonChar) {
+      case '\"':                // Handle quoted value
+        JsonChar++;             // Skip quote
+        Rqst.Value = JsonChar;
 
         SKIP_TO_NEXT_QUOTE (JsonChar);
 
         if ('\"' != *JsonChar) {
-            DEBUG((DEBUG_INFO,"Name did not end with a quote\n"));
-            return EFI_INVALID_PARAMETER;
+          DEBUG ((DEBUG_ERROR, "Value did not end with a quote\n"));
+          return EFI_INVALID_PARAMETER;
         }
 
-        Rqst.FieldLen = JsonChar - Rqst.FieldName;   // Len does not include quote
+        Rqst.ValueLen = JsonChar - Rqst.Value; // Len does not include trailing quote
+        JsonChar++;                            // Skip trailing quote
+        break;
+
+      case 'n':                 // Handle the word null
         JsonChar++;
-
-        SKIP_WHITE_SPACE (JsonChar);
-
-        if (':' != *JsonChar) {
-            DEBUG((DEBUG_INFO,"Value separator incorrect\n"));
-            return EFI_INVALID_PARAMETER;
+        if ('u' != *JsonChar++) {
+          goto INVALID;
         }
 
-        JsonChar++;
-        SKIP_WHITE_SPACE (JsonChar);
+        if ('l' != *JsonChar++) {
+          goto INVALID;
+        }
 
-        // The value may be quoted, the word null, or a sequence of decimal digits.
-        SkipNULL = FALSE;
-        switch (*JsonChar) {
-            case '\"':          // Handle quoted value
-                JsonChar++;     // Skip quote
-                Rqst.Value = JsonChar;
-
-                SKIP_TO_NEXT_QUOTE (JsonChar);
-
-                if ('\"' != *JsonChar) {
-                    DEBUG((DEBUG_ERROR,"Value did not end with a quote\n"));
-                    return EFI_INVALID_PARAMETER;
-                }
-                Rqst.ValueLen = JsonChar - Rqst.Value;  // Len does not include trailing quote
-                JsonChar++;  // Skip trailing quote
-            break;
-
-            case 'n':           // Handle the word null
-                JsonChar++;
-                if ('u' != *JsonChar++) {
-                    goto INVALID;
-                }
-
-                if ('l' != *JsonChar++) {
-                    goto INVALID;
-                }
-
-                if ('l' != *JsonChar++) {
+        if ('l' != *JsonChar++) {
 INVALID:
-                    DEBUG((DEBUG_ERROR, "Invalid value\n"));
-                    return EFI_INVALID_PARAMETER;
-                }
-
-                SkipNULL = TRUE;
-            break;
-
-            default:
-                Rqst.Value = JsonChar;
-                if ((*JsonChar < '0') || (*JsonChar > '9')) {
-                    goto INVALID;
-                }
-
-                JsonChar++;
-                while ((*JsonChar >= '0') && (*JsonChar <= '9')) {
-                    JsonChar++;
-                }
-                                                           // JsonChar now points to next item
-                Rqst.ValueLen = JsonChar - Rqst.Value;
-            break;
+          DEBUG ((DEBUG_ERROR, "Invalid value\n"));
+          return EFI_INVALID_PARAMETER;
         }
 
-        if (!SkipNULL) {
-            Status = (ProcessFunction) (&Rqst, Context);
-            if (EFI_MEDIA_CHANGED == Status) {
-                Status = EFI_SUCCESS;
-                Changed = TRUE;
-                DEBUG((DEBUG_INFO, "Media Changed from Process Function\n"));
-            }
+        SkipNULL = TRUE;
+        break;
 
-            if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "Error from Element Apply. Code = %r\n",Status));
-                return Status;
-            }
+      default:
+        Rqst.Value = JsonChar;
+        if ((*JsonChar < '0') || (*JsonChar > '9')) {
+          goto INVALID;
         }
 
-        Processed = TRUE;
-
-        SKIP_WHITE_SPACE (JsonChar);
-
-        if (',' == *JsonChar) {
-            JsonChar++;
-            if ('\0' == *JsonChar) {
-                DEBUG((DEBUG_ERROR, "End of string without terminator\n"));
-                return EFI_INVALID_PARAMETER;
-            }
-
-            continue;
+        JsonChar++;
+        while ((*JsonChar >= '0') && (*JsonChar <= '9')) {
+          JsonChar++;
         }
 
-        if ('}' == *JsonChar) {
-            if (Changed) {
-                Status = EFI_MEDIA_CHANGED;
-            } else if (Processed) {
-                Status = EFI_SUCCESS;
-            } else {
-                Status = EFI_NOT_FOUND;
-            }
-            return Status;
-        }
-
-        DEBUG((DEBUG_ERROR,"Malformed JsonString\n"));
-        return EFI_INVALID_PARAMETER;
+        // JsonChar now points to next item
+        Rqst.ValueLen = JsonChar - Rqst.Value;
+        break;
     }
 
-    ASSERT(FALSE);  // Cannot get here
+    if (!SkipNULL) {
+      Status = (ProcessFunction)(&Rqst, Context);
+      if (EFI_MEDIA_CHANGED == Status) {
+        Status  = EFI_SUCCESS;
+        Changed = TRUE;
+        DEBUG ((DEBUG_INFO, "Media Changed from Process Function\n"));
+      }
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Error from Element Apply. Code = %r\n", Status));
+        return Status;
+      }
+    }
+
+    Processed = TRUE;
+
+    SKIP_WHITE_SPACE (JsonChar);
+
+    if (',' == *JsonChar) {
+      JsonChar++;
+      if ('\0' == *JsonChar) {
+        DEBUG ((DEBUG_ERROR, "End of string without terminator\n"));
+        return EFI_INVALID_PARAMETER;
+      }
+
+      continue;
+    }
+
+    if ('}' == *JsonChar) {
+      if (Changed) {
+        Status = EFI_MEDIA_CHANGED;
+      } else if (Processed) {
+        Status = EFI_SUCCESS;
+      } else {
+        Status = EFI_NOT_FOUND;
+      }
+
+      return Status;
+    }
+
+    DEBUG ((DEBUG_ERROR, "Malformed JsonString\n"));
     return EFI_INVALID_PARAMETER;
+  }
+
+  ASSERT (FALSE);   // Cannot get here
+  return EFI_INVALID_PARAMETER;
 }

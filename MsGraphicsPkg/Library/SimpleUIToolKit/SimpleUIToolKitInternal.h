@@ -10,7 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _SIMPLE_UI_TOOLKIT_INTERNAL_H_
 #define _SIMPLE_UI_TOOLKIT_INTERNAL_H_
 
-
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
@@ -27,13 +26,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <UIToolKit/SimpleUIToolKit.h>
 
-
 // Protocols.
 //
-extern EFI_GRAPHICS_OUTPUT_PROTOCOL         *mUITGop;
-extern EFI_HII_FONT_PROTOCOL                *mUITFont;
-extern MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *mUITSWM;
-extern EFI_HANDLE                           mClientImageHandle;
+extern EFI_GRAPHICS_OUTPUT_PROTOCOL       *mUITGop;
+extern EFI_HII_FONT_PROTOCOL              *mUITFont;
+extern MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *mUITSWM;
+extern EFI_HANDLE                         mClientImageHandle;
 
-
-#endif  // _SIMPLE_UI_TOOLKIT_INTERNAL_H_.
+#endif // _SIMPLE_UI_TOOLKIT_INTERNAL_H_.

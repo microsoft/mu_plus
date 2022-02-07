@@ -22,7 +22,6 @@
 #ifndef _HID_MOUSE_ABSOLUTE_POINTER_H_
 #define _HID_MOUSE_ABSOLUTE_POINTER_H_
 
-
 #include <Uefi.h>
 
 #include <Protocol/AbsolutePointer.h>
@@ -41,19 +40,18 @@
 // Private structs
 //
 typedef struct {
-  UINTN                           Signature;
-  HID_POINTER_PROTOCOL            *HidMouseProtocol;
-  EFI_ABSOLUTE_POINTER_PROTOCOL   AbsolutePointerProtocol;
-  EFI_ABSOLUTE_POINTER_STATE      State;
-  EFI_ABSOLUTE_POINTER_MODE       Mode;
-  BOOLEAN                         StateChanged;
-  EFI_UNICODE_STRING_TABLE        *ControllerNameTable;
+  UINTN                            Signature;
+  HID_POINTER_PROTOCOL             *HidMouseProtocol;
+  EFI_ABSOLUTE_POINTER_PROTOCOL    AbsolutePointerProtocol;
+  EFI_ABSOLUTE_POINTER_STATE       State;
+  EFI_ABSOLUTE_POINTER_MODE        Mode;
+  BOOLEAN                          StateChanged;
+  EFI_UNICODE_STRING_TABLE         *ControllerNameTable;
 } HID_MOUSE_ABSOLUTE_POINTER_DEV;
 
-#define HID_MOUSE_ABSOLUTE_POINTER_DEV_SIGNATURE SIGNATURE_32 ('H', 'I', 'D', 'M')
+#define HID_MOUSE_ABSOLUTE_POINTER_DEV_SIGNATURE  SIGNATURE_32 ('H', 'I', 'D', 'M')
 #define HID_MOUSE_ABSOLUTE_POINTER_DEV_FROM_MOUSE_PROTOCOL(a) \
     CR(a, HID_MOUSE_ABSOLUTE_POINTER_DEV, AbsolutePointerProtocol, HID_MOUSE_ABSOLUTE_POINTER_DEV_SIGNATURE)
-
 
 //
 // Global Variables
@@ -80,9 +78,9 @@ extern EFI_COMPONENT_NAME2_PROTOCOL  mHidMouseAbsolutePointerComponentName2;
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -106,9 +104,9 @@ HidMouseAbsolutePointerDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -127,10 +125,10 @@ HidMouseAbsolutePointerDriverBindingStart (
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL   *This,
-  IN  EFI_HANDLE                    Controller,
-  IN  UINTN                         NumberOfChildren,
-  IN  EFI_HANDLE                    *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   );
 
 //
@@ -240,11 +238,11 @@ HidMouseAbsolutePointerComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 HidMouseAbsolutePointerComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   );
 
 /**
@@ -262,9 +260,8 @@ HidMouseAbsolutePointerComponentNameGetControllerName (
 **/
 EFI_STATUS
 InitializeMouseDevice (
-  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV           *HidMouseDev
+  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev
   );
-
 
 /**
   Start the HID mouse device receiving reports.
@@ -280,7 +277,7 @@ InitializeMouseDevice (
 **/
 EFI_STATUS
 StartMouseDevice (
-  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV           *HidMouseDev
+  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev
   );
 
 /**
@@ -297,7 +294,7 @@ StartMouseDevice (
 **/
 EFI_STATUS
 StopMouseDevice (
-  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV           *HidMouseDev
+  IN  HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev
   );
 
 /**
@@ -349,8 +346,8 @@ HidMouseAbsolutePointerReset (
 VOID
 EFIAPI
 HidMouseAbsolutePointerWaitForInput (
-  IN  EFI_EVENT               Event,
-  IN  VOID                    *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   );
 
 /**
@@ -370,9 +367,10 @@ HidMouseAbsolutePointerWaitForInput (
 VOID
 EFIAPI
 OnMouseReport (
-  IN HID_POINTER_INTERFACE Interface,
-  IN UINT8                 *HidInputReportBuffer,
-  IN UINTN                 HidInputReportBufferSize,
-  IN VOID                  *Context
+  IN HID_POINTER_INTERFACE  Interface,
+  IN UINT8                  *HidInputReportBuffer,
+  IN UINTN                  HidInputReportBufferSize,
+  IN VOID                   *Context
   );
+
 #endif

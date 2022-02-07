@@ -14,7 +14,7 @@ VOID
 EFIAPI
 ClearAltBoot (
   VOID
-)
+  )
 {
   return;
 }
@@ -29,7 +29,7 @@ EFI_STATUS
 EFIAPI
 SetAltBoot (
   VOID
-)
+  )
 {
   return EFI_SUCCESS;
 }

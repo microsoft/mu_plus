@@ -19,7 +19,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/MsUiThemeLib.h>
 
-extern MS_UI_THEME_DESCRIPTION   *gPlatformTheme;
+extern MS_UI_THEME_DESCRIPTION  *gPlatformTheme;
 
 /**
  Parse all glyph blocks to find a glyph block specified by CharValue.
@@ -37,9 +37,10 @@ extern MS_UI_THEME_DESCRIPTION   *gPlatformTheme;
 **/
 EFI_STATUS
 FindGlyph (
-    IN  CHAR16                          CharValue,
-    OUT EFI_HII_GLYPH_INFO            **Cell,
-    OUT UINT8                         **GlyphBlock);
+  IN  CHAR16              CharValue,
+  OUT EFI_HII_GLYPH_INFO  **Cell,
+  OUT UINT8               **GlyphBlock
+  );
 
 /**
   Convert bitmap data of the glyph to blt structure.
@@ -61,15 +62,16 @@ FindGlyph (
 **/
 EFI_STATUS
 GlyphToBlt (
-    IN     UINT8                         *GlyphBuffer,
-    IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Foreground,
-    IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Background,
-    IN     UINT16                         ImageWidth,
-    IN     UINT16                         BaseLine,
-    IN     UINT32                         RowWidth,
-    IN     UINT32                         RowHeight,
-    IN     CONST EFI_HII_GLYPH_INFO      *Cell,
-    OUT    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Origin);
+  IN     UINT8                          *GlyphBuffer,
+  IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Foreground,
+  IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Background,
+  IN     UINT16                         ImageWidth,
+  IN     UINT16                         BaseLine,
+  IN     UINT32                         RowWidth,
+  IN     UINT32                         RowHeight,
+  IN     CONST EFI_HII_GLYPH_INFO       *Cell,
+  OUT    EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *Origin
+  );
 
 /**
     SimpleBlt
@@ -86,12 +88,13 @@ GlyphToBlt (
 EFI_STATUS
 EFIAPI
 SimpleBlt (
-    IN  MS_EARLY_GRAPHICS_PROTOCOL          *This,
-    IN  CONST EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Image,
-    IN  UINT32                               DestinationX,
-    IN  UINT32                               DestinationY,
-    IN  UINT32                               Width,
-    IN  UINT32                               Height);
+  IN  MS_EARLY_GRAPHICS_PROTOCOL           *This,
+  IN  CONST EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *Image,
+  IN  UINT32                               DestinationX,
+  IN  UINT32                               DestinationY,
+  IN  UINT32                               Width,
+  IN  UINT32                               Height
+  );
 
 /**
   SimpleFill
@@ -108,12 +111,13 @@ SimpleBlt (
 EFI_STATUS
 EFIAPI
 SimpleFill (
-    IN  MS_EARLY_GRAPHICS_PROTOCOL    *This,
-    IN  UINT32                         Color,
-    IN  UINT32                         DestinationX,
-    IN  UINT32                         DestinationY,
-    IN  UINT32                         Width,
-    IN  UINT32                         Height);
+  IN  MS_EARLY_GRAPHICS_PROTOCOL  *This,
+  IN  UINT32                      Color,
+  IN  UINT32                      DestinationX,
+  IN  UINT32                      DestinationY,
+  IN  UINT32                      Width,
+  IN  UINT32                      Height
+  );
 
 /**
 *  Print a line at the row specified. There is no line
@@ -130,13 +134,14 @@ SimpleFill (
 */
 EFI_STATUS
 EFIAPI
-PrintLn(
+PrintLn (
   IN  MS_EARLY_GRAPHICS_PROTOCOL      *this,
-  IN  UINT32                          Row,
-  IN  UINT32                          Column,
-  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   ForegroundColor,
-  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   BackgroundColor,
-  IN  CONST CHAR8                     *Msg);
+  IN  UINT32                         Row,
+  IN  UINT32                         Column,
+  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  ForegroundColor,
+  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  BackgroundColor,
+  IN  CONST CHAR8                    *Msg
+  );
 
 /**
  * GetCellHeight
@@ -146,7 +151,8 @@ PrintLn(
  */
 UINT32
 EFIAPI
-GetCellHeight();
+GetCellHeight (
+  );
 
 /**
  * GetCellWidth
@@ -156,6 +162,7 @@ GetCellHeight();
  */
 UINT32
 EFIAPI
-GetCellWidth();
+GetCellWidth (
+  );
 
 #endif // __MS_EARLY_GRAPHICS_COMMON_H__

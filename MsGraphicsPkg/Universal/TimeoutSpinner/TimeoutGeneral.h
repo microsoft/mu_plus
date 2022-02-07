@@ -20,7 +20,7 @@
 **/
 EFI_STATUS
 InitializeGeneralSpinner (
-  IN SPINNER_CONTAINER *Spc
+  IN SPINNER_CONTAINER  *Spc
   );
 
 #endif // __TIMEOUT_GENERAL_H__

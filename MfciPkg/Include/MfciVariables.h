@@ -11,7 +11,6 @@
 #ifndef __MFCI_POLICY_VAR_H__
 #define __MFCI_POLICY_VAR_H__
 
-
 /**
   The Vendor Guid for all of the MFCI Policy UEFI variables
   Ideally this would have been split into 2 Vendor Guids, one for state engine variables and
@@ -30,12 +29,12 @@
 /**
   Defines the maximum number of CHAR16's in a MFCI Policy variable name (including the terminating NULL)
 **/
-#define MFCI_VAR_NAME_MAX_LENGTH 32
+#define MFCI_VAR_NAME_MAX_LENGTH  32
 
 /**
   Defines the maximum number of bytes in a MFCI Policy variable value
 **/
-#define MFCI_VAR_MAX_SIZE (1 << 9)
+#define MFCI_VAR_MAX_SIZE  (1 << 9)
 
 /**
   Policy Engine Runtime Variables
@@ -65,7 +64,6 @@
 #define NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME \
         L"NextMfciPolicyBlob"
 
-
 /**
   Policy Engine Read-Only Variables
   Below are the variables that hold security-sensitive policy engine state information
@@ -93,7 +91,6 @@
 **/
 #define NEXT_MFCI_NONCE_VARIABLE_NAME \
         L"NextMfciPolicyNonce"
-
 
 /**
   Policy Engine Per-Device Targeting Variable Names
@@ -168,13 +165,11 @@
 #define MFCI_OEM_02_VARIABLE_NAME \
         L"Target\\OEM_02"
 
-
 /**
   Invalid Nonce value placeholder
   The server will refuse to sign policies with this nonce value
 **/
-#define MFCI_POLICY_INVALID_NONCE 0
-
+#define MFCI_POLICY_INVALID_NONCE  0
 
 /**
   The following variable uses Variable Policy to lock protected Windows

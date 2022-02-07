@@ -14,16 +14,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // Rectangle context
 //
-typedef struct
-{
-  POINT                        UpperLeft;
-  UINT32                       Width;
-  UINT32                       Height;
-  UINT8*                       FrameBufferBase;
-  UINTN                        PixelsPerScanLine;  //in framebuffer
-  UI_STYLE_INFO                StyleInfo;
+typedef struct {
+  POINT            UpperLeft;
+  UINT32           Width;
+  UINT32           Height;
+  UINT8            *FrameBufferBase;
+  UINTN            PixelsPerScanLine;              // in framebuffer
+  UI_STYLE_INFO    StyleInfo;
 } UI_RECTANGLE;
-
 
 /*
 Method to use create a new UI_RECTANGLE struct.
@@ -40,17 +38,16 @@ This structure is used by all the other functions to modify and draw the object
 @ret   A new UI_RECTANGLE structure used for updating and drawing the rectangle
 
 */
-UI_RECTANGLE*
+UI_RECTANGLE *
 EFIAPI
-new_UI_RECTANGLE(
-  IN POINT *UpperLeft,
-  IN UINT8 *FrameBufferBase,
-  IN UINTN PixelsPerScanLine,
-  IN UINT32 Width,
-  IN UINT32 Height,
-  IN UI_STYLE_INFO* StyleInfo
+new_UI_RECTANGLE (
+  IN POINT          *UpperLeft,
+  IN UINT8          *FrameBufferBase,
+  IN UINTN          PixelsPerScanLine,
+  IN UINT32         Width,
+  IN UINT32         Height,
+  IN UI_STYLE_INFO  *StyleInfo
   );
-
 
 /*
 Method to free all allocated memory of the UI_RECTANGLE
@@ -60,11 +57,9 @@ Method to free all allocated memory of the UI_RECTANGLE
 */
 VOID
 EFIAPI
-delete_UI_RECTANGLE(
-IN UI_RECTANGLE *this
-);
-
-
+delete_UI_RECTANGLE (
+  IN UI_RECTANGLE *this
+  );
 
 /*
 Method to draw the rectangle to the framebuffer.
@@ -74,9 +69,8 @@ Method to draw the rectangle to the framebuffer.
 */
 VOID
 EFIAPI
-DrawRect(
-IN  UI_RECTANGLE *this
-);
-
+DrawRect (
+  IN  UI_RECTANGLE *this
+  );
 
 #endif

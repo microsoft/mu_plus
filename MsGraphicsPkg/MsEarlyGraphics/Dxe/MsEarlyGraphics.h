@@ -14,7 +14,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 #include <Protocol/GraphicsOutput.h>
 #include <Protocol/MsEarlyGraphics.h>
 
-
 #include <Library/UefiDriverEntryPoint.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>

@@ -43,10 +43,10 @@ VOID
   );
 
 typedef struct {
-  DEBUG_PORT_PRINT            DebugPortPrint;
-  DEBUG_PORT_ASSERT           DebugPortAssert;
+  DEBUG_PORT_PRINT     DebugPortPrint;
+  DEBUG_PORT_ASSERT    DebugPortAssert;
 } DEBUG_PORT_PPI;
 
-extern EFI_GUID gDebugPortPpiGuid;
+extern EFI_GUID  gDebugPortPpiGuid;
 
 #endif

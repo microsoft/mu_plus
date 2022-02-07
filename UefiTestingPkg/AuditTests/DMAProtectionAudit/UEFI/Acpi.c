@@ -37,20 +37,20 @@ for purpose of easy ACPI table parsing
 **/
 VOID *
 ScanTableInRSDT (
-  IN RSDT_TABLE                   *Rsdt,
-  IN UINT32                       Signature
+  IN RSDT_TABLE  *Rsdt,
+  IN UINT32      Signature
   )
 {
-  UINTN                         Index;
-  UINT32                        EntryCount;
-  UINT32                        *EntryPtr;
-  EFI_ACPI_DESCRIPTION_HEADER   *Table;
+  UINTN                        Index;
+  UINT32                       EntryCount;
+  UINT32                       *EntryPtr;
+  EFI_ACPI_DESCRIPTION_HEADER  *Table;
 
-  EntryCount = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT32);
+  EntryCount = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
 
   EntryPtr = &Rsdt->Entry;
-  for (Index = 0; Index < EntryCount; Index ++, EntryPtr ++) {
-    Table = (EFI_ACPI_DESCRIPTION_HEADER*)((UINTN)(*EntryPtr));
+  for (Index = 0; Index < EntryCount; Index++, EntryPtr++) {
+    Table = (EFI_ACPI_DESCRIPTION_HEADER *)((UINTN)(*EntryPtr));
     if ((Table != NULL) && (Table->Signature == Signature)) {
       return Table;
     }
@@ -69,8 +69,8 @@ ScanTableInRSDT (
 **/
 VOID *
 ScanTableInXSDT (
-  IN XSDT_TABLE                   *Xsdt,
-  IN UINT32                       Signature
+  IN XSDT_TABLE  *Xsdt,
+  IN UINT32      Signature
   )
 {
   UINTN                        Index;
@@ -79,12 +79,12 @@ ScanTableInXSDT (
   UINTN                        BasePtr;
   EFI_ACPI_DESCRIPTION_HEADER  *Table;
 
-  EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT64);
+  EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
 
   BasePtr = (UINTN)(&(Xsdt->Entry));
-  for (Index = 0; Index < EntryCount; Index ++) {
-    CopyMem (&EntryPtr, (VOID *)(BasePtr + Index * sizeof(UINT64)), sizeof(UINT64));
-    Table = (EFI_ACPI_DESCRIPTION_HEADER*)((UINTN)(EntryPtr));
+  for (Index = 0; Index < EntryCount; Index++) {
+    CopyMem (&EntryPtr, (VOID *)(BasePtr + Index * sizeof (UINT64)), sizeof (UINT64));
+    Table = (EFI_ACPI_DESCRIPTION_HEADER *)((UINTN)(EntryPtr));
     if ((Table != NULL) && (Table->Signature == Signature)) {
       return Table;
     }
@@ -103,13 +103,13 @@ ScanTableInXSDT (
 **/
 VOID *
 FindAcpiPtr (
-  IN EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER *Rsdp,
-  IN UINT32                                       Signature
+  IN EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER  *Rsdp,
+  IN UINT32                                        Signature
   )
 {
-  EFI_ACPI_DESCRIPTION_HEADER                    *AcpiTable;
-  RSDT_TABLE                                     *Rsdt;
-  XSDT_TABLE                                     *Xsdt;
+  EFI_ACPI_DESCRIPTION_HEADER  *AcpiTable;
+  RSDT_TABLE                   *Rsdt;
+  XSDT_TABLE                   *Xsdt;
 
   AcpiTable = NULL;
 
@@ -121,12 +121,14 @@ FindAcpiPtr (
   if ((Rsdp->Revision >= 2) && (Rsdp->XsdtAddress < (UINT64)(UINTN)-1)) {
     Xsdt = (XSDT_TABLE *)(UINTN)Rsdp->XsdtAddress;
   }
+
   //
   // Check Xsdt
   //
   if (Xsdt != NULL) {
     AcpiTable = ScanTableInXSDT (Xsdt, Signature);
   }
+
   //
   // Check Rsdt
   //
@@ -145,44 +147,46 @@ FindAcpiPtr (
 **/
 EFI_STATUS
 GetAcpiTable (
-  IN  UINT32        AcpiSignature,
-  OUT VOID          **AcpiTable
+  IN  UINT32  AcpiSignature,
+  OUT VOID    **AcpiTable
   )
 {
-  EFI_STATUS                        Status;
-  VOID                              *AcpiConfigurationTable = NULL;
+  EFI_STATUS  Status;
+  VOID        *AcpiConfigurationTable = NULL;
 
   if (AcpiTable == NULL) {
     return EFI_INVALID_PARAMETER;
-  }
-  else if (*AcpiTable != NULL) {
+  } else if (*AcpiTable != NULL) {
     return EFI_ALREADY_STARTED;
   }
 
   *AcpiTable = NULL;
-  Status = EfiGetSystemConfigurationTable (
-             &gEfiAcpi20TableGuid,
-             &AcpiConfigurationTable
-             );
+  Status     = EfiGetSystemConfigurationTable (
+                 &gEfiAcpi20TableGuid,
+                 &AcpiConfigurationTable
+                 );
   if (EFI_ERROR (Status)) {
     Status = EfiGetSystemConfigurationTable (
                &gEfiAcpi10TableGuid,
                &AcpiConfigurationTable
                );
   }
+
   if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
   }
+
   ASSERT (AcpiConfigurationTable != NULL);
 
   *AcpiTable = FindAcpiPtr (
-                      (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)AcpiConfigurationTable,
-                      AcpiSignature
-                      );
+                 (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER *)AcpiConfigurationTable,
+                 AcpiSignature
+                 );
   if (*AcpiTable == NULL) {
     return EFI_NOT_FOUND;
   }
-  DEBUG ((DEBUG_INFO,"ACPI Table - 0x%08x\n", *AcpiTable));
+
+  DEBUG ((DEBUG_INFO, "ACPI Table - 0x%08x\n", *AcpiTable));
 
   return EFI_SUCCESS;
 }

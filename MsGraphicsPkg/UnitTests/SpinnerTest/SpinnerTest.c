@@ -29,27 +29,27 @@
 //
 // Delay times for the messages with a delay time.
 //
-#define DELAY_NVME         5
-#define DELAY_BETWEEN_TEST 2
-#define DELAY_SPINNER_ON   5
-#define DELAY_TO_STOP      1
+#define DELAY_NVME          5
+#define DELAY_BETWEEN_TEST  2
+#define DELAY_SPINNER_ON    5
+#define DELAY_TO_STOP       1
 
 //
 // All test status messages printed on row 0 are assumed to be the same length.  This way,
 // the message line looks correct regardless of the actual text length.
 //
-#define MSG_INIT           L"Initializing the display                                              "
-#define MSG_NVME_DELAY     L"The NVMe spinner should start in %d Seconds                           "
-#define MSG_NVME_STARTED   L"The NVMe spinner will display for %d seconds                          "
-#define MSG_NVME_DISMISSED L"The NVMe spinner should have been dismissed. Continuing in %d seconds "
-#define MSG_DFCI_START     L"The Dfci spinner should be displayed for %d seconds                   "
-#define MSG_DFCI_DISMISSED L"The Dfci spinner should have been dismissed. Continuing in %d seconds "
-#define MSG_GENERAL_START  L"The NVMe spinner should be displayed in 3 corners for %d seconds      "
-#define MSG_GENERAL_MID    L"Adding the 4th and 5th spinner for %d seconds                         "
-#define MSG_GENERAL_STOP   L"Removing each spinner, one at a time one second apart                 "
-#define MSG_FINISHED       L"The Spinner Test has completed\n"
+#define MSG_INIT            L"Initializing the display                                              "
+#define MSG_NVME_DELAY      L"The NVMe spinner should start in %d Seconds                           "
+#define MSG_NVME_STARTED    L"The NVMe spinner will display for %d seconds                          "
+#define MSG_NVME_DISMISSED  L"The NVMe spinner should have been dismissed. Continuing in %d seconds "
+#define MSG_DFCI_START      L"The Dfci spinner should be displayed for %d seconds                   "
+#define MSG_DFCI_DISMISSED  L"The Dfci spinner should have been dismissed. Continuing in %d seconds "
+#define MSG_GENERAL_START   L"The NVMe spinner should be displayed in 3 corners for %d seconds      "
+#define MSG_GENERAL_MID     L"Adding the 4th and 5th spinner for %d seconds                         "
+#define MSG_GENERAL_STOP    L"Removing each spinner, one at a time one second apart                 "
+#define MSG_FINISHED        L"The Spinner Test has completed\n"
 
-#define MSG_HELP L"\
+#define MSG_HELP  L"\
 \r\n\
 *******************************************************************************************\r\n\
 * Spinner Test - The spinner test will:                                                   *\r\n\
@@ -83,8 +83,8 @@
 //
 // Global variables
 //
-STATIC  EFI_SIMPLE_TEXT_INPUT_PROTOCOL    *gConIn;
-STATIC  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL   *gConOut;
+STATIC  EFI_SIMPLE_TEXT_INPUT_PROTOCOL   *gConIn;
+STATIC  EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL  *gConOut;
 
 /**
   WaitForKey    - Wait for a keyboard press
@@ -98,9 +98,9 @@ WaitForKey (
   VOID
   )
 {
-  UINTN           EventIndex;
-  EFI_INPUT_KEY   Key;
-  EFI_STATUS      Status;
+  UINTN          EventIndex;
+  EFI_INPUT_KEY  Key;
+  EFI_STATUS     Status;
 
   //
   // Pause - wait for a keystroke
@@ -133,8 +133,8 @@ WaitForKey (
 **/
 VOID
 DisplayMessageWithTimeout (
-  IN CHAR16 *Msg,
-  IN UINTN  Timeout
+  IN CHAR16  *Msg,
+  IN UINTN   Timeout
   )
 {
   CHAR16      LocalMessage[sizeof (MSG_INIT) / sizeof (CHAR16)];
@@ -144,8 +144,8 @@ DisplayMessageWithTimeout (
     Timeout = 20;
   }
 
-  for (; Timeout > 0; Timeout--) {
-    UnicodeSPrint (LocalMessage, sizeof(LocalMessage), Msg, Timeout);
+  for ( ; Timeout > 0; Timeout--) {
+    UnicodeSPrint (LocalMessage, sizeof (LocalMessage), Msg, Timeout);
 
     Status = gConOut->SetCursorPosition (gConOut, 0, 0);
     ASSERT_EFI_ERROR (Status);
@@ -170,20 +170,20 @@ DisplayMessageWithTimeout (
 EFI_STATUS
 EFIAPI
 SpinnerTestEntry (
-  IN EFI_HANDLE         ImageHandle,
-  IN EFI_SYSTEM_TABLE   *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  UINTN                              Column;
-  UINTN                              Columns;
-  EFI_GUID                           *IconGuid;
-  UINTN                              IconGuidSize;
-  MS_ONSCREEN_KEYBOARD_PROTOCOL     *OSKProtocol = NULL;
-  UINTN                              Row;
-  UINTN                              Rows;
-  EFI_STATUS                         Status;
+  UINTN                          Column;
+  UINTN                          Columns;
+  EFI_GUID                       *IconGuid;
+  UINTN                          IconGuidSize;
+  MS_ONSCREEN_KEYBOARD_PROTOCOL  *OSKProtocol = NULL;
+  UINTN                          Row;
+  UINTN                          Rows;
+  EFI_STATUS                     Status;
 
-  gConIn = SystemTable->ConIn;
+  gConIn  = SystemTable->ConIn;
   gConOut = SystemTable->ConOut;
 
   if ((gConIn == NULL) || (gConOut == NULL)) {
@@ -242,16 +242,16 @@ SpinnerTestEntry (
 
   for (Row = 1; Row < Rows; Row++) {
     for (Column = 0; Column < Columns; Column++) {
-        //
-        // Skip writing the last character on the last line - this causes the page to scroll.
-        //
-        if ((Row != (Rows - 1)) || (Column != (Columns - 1))) {
-          Status = gConOut->SetCursorPosition (gConOut, Column, Row);
-          ASSERT_EFI_ERROR (Status);
+      //
+      // Skip writing the last character on the last line - this causes the page to scroll.
+      //
+      if ((Row != (Rows - 1)) || (Column != (Columns - 1))) {
+        Status = gConOut->SetCursorPosition (gConOut, Column, Row);
+        ASSERT_EFI_ERROR (Status);
 
-          Status = gConOut->OutputString (gConOut, L"-");
-          ASSERT_EFI_ERROR (Status);
-        }
+        Status = gConOut->OutputString (gConOut, L"-");
+        ASSERT_EFI_ERROR (Status);
+      }
     }
   }
 

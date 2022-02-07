@@ -24,9 +24,9 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 EFI_STATUS
 EFIAPI
 StandaloneEntry (
-  IN EFI_HANDLE             ImageHandle,
-  IN EFI_MM_SYSTEM_TABLE    *SystemTable
-)
+  IN EFI_HANDLE           ImageHandle,
+  IN EFI_MM_SYSTEM_TABLE  *SystemTable
+  )
 {
   return MmEntry ();
 }

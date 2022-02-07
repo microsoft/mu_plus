@@ -14,7 +14,9 @@ Library function used to provide the platform SD Card device path
 **/
 EFI_DEVICE_PATH_PROTOCOL *
 EFIAPI
-GetSdCardDevicePath (VOID);
+GetSdCardDevicePath (
+  VOID
+  );
 
 /**
   Library function used to determine if the DevicePath is a valid bootable 'USB' device.
@@ -25,7 +27,7 @@ BOOLEAN
 EFIAPI
 PlatformIsDevicePathUsb (
   IN EFI_DEVICE_PATH_PROTOCOL  *DevicePath
-);
+  );
 
 /**
 Library function used to provide the list of platform devices that MUST be
@@ -33,14 +35,18 @@ connected at the beginning of BDS
 **/
 EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
-GetPlatformConnectList (VOID);
+GetPlatformConnectList (
+  VOID
+  );
 
 /**
  * Library function used to provide the list of platform console devices.
  */
 BDS_CONSOLE_CONNECT_ENTRY *
 EFIAPI
-GetPlatformConsoleList (VOID);
+GetPlatformConsoleList (
+  VOID
+  );
 
 /**
 Library function used to provide the list of platform devices that MUST be connected
@@ -49,8 +55,9 @@ allows platforms to do specific enablement for ConsoleIn support.
 **/
 EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
-GetPlatformConnectOnConInList (VOID);
-
+GetPlatformConnectOnConInList (
+  VOID
+  );
 
 /**
 Library function used to provide the console type.  For ConType == DisplayPath,
@@ -61,6 +68,6 @@ EFI_HANDLE
 EFIAPI
 GetPlatformPreferredConsole (
   OUT EFI_DEVICE_PATH_PROTOCOL  **DevicePath
-);
+  );
 
 #endif

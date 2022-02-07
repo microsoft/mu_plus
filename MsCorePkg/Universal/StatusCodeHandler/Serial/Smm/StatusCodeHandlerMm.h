@@ -21,6 +21,6 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 EFI_STATUS
 MmEntry (
   VOID
-);
+  );
 
 #endif // _STATUS_CODE_HANDLER_MM_H_

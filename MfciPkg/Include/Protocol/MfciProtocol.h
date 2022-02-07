@@ -9,7 +9,7 @@
 #ifndef __MFCI_PROTOCOL_H__
 #define __MFCI_PROTOCOL_H__
 
-typedef struct _MFCI_PROTOCOL  MFCI_PROTOCOL;
+typedef struct _MFCI_PROTOCOL MFCI_PROTOCOL;
 
 /**
   GetMfciPolicy()
@@ -23,9 +23,9 @@ typedef struct _MFCI_PROTOCOL  MFCI_PROTOCOL;
 **/
 typedef
 MFCI_POLICY_TYPE
-(EFIAPI *GET_MFCI_POLICY) (
-IN CONST MFCI_PROTOCOL   *This
-);
+(EFIAPI *GET_MFCI_POLICY)(
+  IN CONST MFCI_PROTOCOL   *This
+  );
 
 /**
   Callback invocation for MFCI policy changes.
@@ -45,7 +45,7 @@ IN CONST MFCI_PROTOCOL   *This
 **/
 typedef
 EFI_STATUS
-(EFIAPI *MFCI_POLICY_CHANGE_CALLBACK) (
+(EFIAPI *MFCI_POLICY_CHANGE_CALLBACK)(
   IN CONST MFCI_POLICY_TYPE   NewPolicy,
   IN CONST MFCI_POLICY_TYPE   PreviousPolicy
   );
@@ -68,18 +68,16 @@ EFI_STATUS
 **/
 typedef
 EFI_STATUS
-(EFIAPI *REGISTER_MFCI_POLICY_CHANGE_CALLBACK) (
-IN CONST MFCI_PROTOCOL   *This,
-IN MFCI_POLICY_CHANGE_CALLBACK   Callback
-);
+(EFIAPI *REGISTER_MFCI_POLICY_CHANGE_CALLBACK)(
+  IN CONST MFCI_PROTOCOL   *This,
+  IN MFCI_POLICY_CHANGE_CALLBACK   Callback
+  );
 
-
-struct _MFCI_PROTOCOL
-{
-  GET_MFCI_POLICY                       GetMfciPolicy;
-  REGISTER_MFCI_POLICY_CHANGE_CALLBACK  RegisterMfciPolicyChangeCallback;
+struct _MFCI_PROTOCOL {
+  GET_MFCI_POLICY                         GetMfciPolicy;
+  REGISTER_MFCI_POLICY_CHANGE_CALLBACK    RegisterMfciPolicyChangeCallback;
 };
 
-extern EFI_GUID gMfciProtocolGuid;
+extern EFI_GUID  gMfciProtocolGuid;
 
 #endif // __MFCI_PROTOCOL_H__

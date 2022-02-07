@@ -44,13 +44,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 LogTelemetry (
-  IN  BOOLEAN                   IsFatal,
-  IN  EFI_GUID*                 ComponentId OPTIONAL,
-  IN  EFI_STATUS_CODE_VALUE     ClassId,
-  IN  EFI_GUID*                 LibraryId OPTIONAL,
-  IN  EFI_GUID*                 IhvId OPTIONAL,
-  IN  UINT64                    ExtraData1,
-  IN  UINT64                    ExtraData2
+  IN  BOOLEAN                IsFatal,
+  IN  EFI_GUID               *ComponentId OPTIONAL,
+  IN  EFI_STATUS_CODE_VALUE  ClassId,
+  IN  EFI_GUID               *LibraryId OPTIONAL,
+  IN  EFI_GUID               *IhvId OPTIONAL,
+  IN  UINT64                 ExtraData1,
+  IN  UINT64                 ExtraData2
   );
 
 /**
@@ -88,16 +88,16 @@ LogTelemetry (
 EFI_STATUS
 EFIAPI
 LogTelemetryEx (
-  IN  BOOLEAN                   IsFatal,
-  IN  EFI_GUID*                 ComponentId OPTIONAL,
-  IN  EFI_STATUS_CODE_VALUE     ClassId,
-  IN  EFI_GUID*                 LibraryId OPTIONAL,
-  IN  EFI_GUID*                 IhvId OPTIONAL,
-  IN  UINT64                    ExtraData1,
-  IN  UINT64                    ExtraData2,
-  IN  CONST EFI_GUID*           ExtraExtraId,
-  IN  UINTN                     ExtraExtraSize,
-  IN  CONST VOID*               ExtraExtraData
+  IN  BOOLEAN                IsFatal,
+  IN  EFI_GUID               *ComponentId OPTIONAL,
+  IN  EFI_STATUS_CODE_VALUE  ClassId,
+  IN  EFI_GUID               *LibraryId OPTIONAL,
+  IN  EFI_GUID               *IhvId OPTIONAL,
+  IN  UINT64                 ExtraData1,
+  IN  UINT64                 ExtraData2,
+  IN  CONST EFI_GUID         *ExtraExtraId,
+  IN  UINTN                  ExtraExtraSize,
+  IN  CONST VOID             *ExtraExtraData
   );
 
 #endif // _MU_TELEMETRY_HELPER_LIB_H_

@@ -11,40 +11,39 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __DFCI_UPDATE_H__
 #define __DFCI_UPDATE_H__
 
-
 typedef struct {
-    CHAR16   *MailboxName;
-    EFI_GUID *MailboxNamespace;
-    UINT32    MailboxAttributes;
-    UINT32    Signature;
+  CHAR16      *MailboxName;
+  EFI_GUID    *MailboxNamespace;
+  UINT32      MailboxAttributes;
+  UINT32      Signature;
 } JSON_SET_VARIABLE_TABLE_ENTRY;
 
-#define JSON_SET_IDENTITY     0
-#define JSON_SET_IDENTITY2    1
-#define JSON_SET_PERMISSIONS  2
-#define JSON_SET_PERMISSIONS2 3
-#define JSON_SET_SETTINGS     4
-#define JSON_SET_SETTINGS2    5
+#define JSON_SET_IDENTITY      0
+#define JSON_SET_IDENTITY2     1
+#define JSON_SET_PERMISSIONS   2
+#define JSON_SET_PERMISSIONS2  3
+#define JSON_SET_SETTINGS      4
+#define JSON_SET_SETTINGS2     5
 
-#define JSON_ACTION_SET_VARIABLE     0
-#define JSON_ACTION_SET_RETURN_CODE  1
-#define JSON_ACTION_SET_HTTP_MESSAGE 2
+#define JSON_ACTION_SET_VARIABLE      0
+#define JSON_ACTION_SET_RETURN_CODE   1
+#define JSON_ACTION_SET_HTTP_MESSAGE  2
 
 typedef struct {
-    CHAR8    *FieldName;
-    CHAR8   **Message;
-    UINTN    *MessageSize;
-    UINTN     Action;
-    UINTN     VariableIndex;   // Only for action SET_VARIABLE
-    BOOLEAN   DecodeBase64;
+  CHAR8      *FieldName;
+  CHAR8      **Message;
+  UINTN      *MessageSize;
+  UINTN      Action;
+  UINTN      VariableIndex;    // Only for action SET_VARIABLE
+  BOOLEAN    DecodeBase64;
 } JSON_RESPONSE_TO_ACTION_ENTRY;
 
 //
 // Expected JSON Results
 //
-extern JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryBootstrapResponse[];
-extern JSON_RESPONSE_TO_ACTION_ENTRY mRecoveryResponse[];
-extern JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[];
+extern JSON_RESPONSE_TO_ACTION_ENTRY  mRecoveryBootstrapResponse[];
+extern JSON_RESPONSE_TO_ACTION_ENTRY  mRecoveryResponse[];
+extern JSON_RESPONSE_TO_ACTION_ENTRY  mUsbRecovery[];
 
 /**
  * BuildUsbRequest
@@ -56,8 +55,8 @@ extern JSON_RESPONSE_TO_ACTION_ENTRY mUsbRecovery[];
 EFI_STATUS
 EFIAPI
 BuildUsbRequest (
-    IN  CHAR16       *FileExtension,
-    OUT CHAR16      **FileName
+  IN  CHAR16  *FileExtension,
+  OUT CHAR16  **FileName
   );
 
 /**
@@ -71,7 +70,7 @@ BuildUsbRequest (
 EFI_STATUS
 EFIAPI
 BuildJsonBootstrapRequest (
-  IN DFCI_NETWORK_REQUEST *NetworkRequest
+  IN DFCI_NETWORK_REQUEST  *NetworkRequest
   );
 
 /**
@@ -85,7 +84,7 @@ BuildJsonBootstrapRequest (
 EFI_STATUS
 EFIAPI
 BuildJsonRecoveryRequest (
-  IN DFCI_NETWORK_REQUEST *NetworkRequest
+  IN DFCI_NETWORK_REQUEST  *NetworkRequest
   );
 
 /**
@@ -101,9 +100,9 @@ BuildJsonRecoveryRequest (
 EFI_STATUS
 EFIAPI
 DfciUpdateFromJson (
-    IN  CHAR8   *JsonString,
-    IN  UINTN    JsonStringSize,
-    IN  JSON_RESPONSE_TO_ACTION_ENTRY *ResponseTable
-    );
+  IN  CHAR8                          *JsonString,
+  IN  UINTN                          JsonStringSize,
+  IN  JSON_RESPONSE_TO_ACTION_ENTRY  *ResponseTable
+  );
 
-#endif  // __DFCI_UPDATE_H__
+#endif // __DFCI_UPDATE_H__

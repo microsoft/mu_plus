@@ -43,48 +43,59 @@ Arguments:
 EFI_STATUS
 EFIAPI
 MfciRetrievePolicy (
-    OUT  MFCI_POLICY_TYPE  *MfciPolicyValue
- )
+  OUT  MFCI_POLICY_TYPE  *MfciPolicyValue
+  )
 {
   EFI_STATUS        Status;
   MFCI_POLICY_TYPE  Policy;
-  UINTN             DataSize = sizeof(Policy);
+  UINTN             DataSize = sizeof (Policy);
   UINT32            VariableAttr;
 
   if ( MfciPolicyValue == NULL ) {
-    ASSERT(MfciPolicyValue != NULL);
+    ASSERT (MfciPolicyValue != NULL);
     Status = EFI_INVALID_PARAMETER;
     goto Exit;
   }
 
-  Status = gRT->GetVariable (CURRENT_MFCI_POLICY_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &DataSize,
-                             &Policy);
-  if (EFI_ERROR(Status)) {
+  Status = gRT->GetVariable (
+                  CURRENT_MFCI_POLICY_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  &VariableAttr,
+                  &DataSize,
+                  &Policy
+                  );
+  if (EFI_ERROR (Status)) {
     if (Status != EFI_NOT_FOUND) {
-      DEBUG(( DEBUG_ERROR, "%a - Failure reading Current Policy - Status(%r)\n", __FUNCTION__, Status ));
+      DEBUG ((DEBUG_ERROR, "%a - Failure reading Current Policy - Status(%r)\n", __FUNCTION__, Status));
     }
+
     goto Exit;
-  }
-  else if (DataSize != sizeof (Policy) || VariableAttr != MFCI_POLICY_VARIABLE_ATTR) {
-    DEBUG(( DEBUG_ERROR, "%a - Invalid current policy size or attributes - DataSize(%d) VariableAttr(0x%x)\n"\
-      "Will attempt to delete invalid current policy\n", __FUNCTION__, DataSize, VariableAttr ));
-    Status = gRT->SetVariable (CURRENT_MFCI_POLICY_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             MFCI_POLICY_VARIABLE_ATTR,
-                             0,
-                             NULL);
+  } else if ((DataSize != sizeof (Policy)) || (VariableAttr != MFCI_POLICY_VARIABLE_ATTR)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a - Invalid current policy size or attributes - DataSize(%d) VariableAttr(0x%x)\n" \
+      "Will attempt to delete invalid current policy\n",
+      __FUNCTION__,
+      DataSize,
+      VariableAttr
+      ));
+    Status = gRT->SetVariable (
+                    CURRENT_MFCI_POLICY_VARIABLE_NAME,
+                    &MFCI_VAR_VENDOR_GUID,
+                    MFCI_POLICY_VARIABLE_ATTR,
+                    0,
+                    NULL
+                    );
     if (Status != EFI_SUCCESS) {
-      DEBUG(( DEBUG_ERROR, "%a - Failed to delete %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_VARIABLE_NAME, Status));
+      DEBUG ((DEBUG_ERROR, "%a - Failed to delete %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_VARIABLE_NAME, Status));
     }
+
     Status = EFI_SECURITY_VIOLATION;
     goto Exit;
   }
 
   *MfciPolicyValue = Policy;
-  DEBUG(( DEBUG_INFO, "%a() - MFCI Policy From Variable 0x%lx\n", __FUNCTION__, *MfciPolicyValue ));
+  DEBUG ((DEBUG_INFO, "%a() - MFCI Policy From Variable 0x%lx\n", __FUNCTION__, *MfciPolicyValue));
 
 Exit:
 

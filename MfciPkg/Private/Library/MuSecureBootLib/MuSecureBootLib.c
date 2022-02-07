@@ -40,8 +40,8 @@ Environment:
 //  ***** END:   not needed by MfciPkg */
 
 // Definitions to make code self-documenting.
-#define PK_UPDATE_AUTHORIZED        TRUE
-#define PK_UPDATE_NOT_AUTHORIZED    FALSE
+#define PK_UPDATE_AUTHORIZED      TRUE
+#define PK_UPDATE_NOT_AUTHORIZED  FALSE
 
 //
 // MS Default Signature Owner GUID
@@ -72,7 +72,7 @@ EFI_TIME  mDefaultPayloadTimestamp = {
 };
 
 // This time can be used when deleting variables, as it should be greater than any variable time.
-EFI_TIME mMaxTimestamp = {
+EFI_TIME  mMaxTimestamp = {
   0xFFFF,     // Year
   0xFF,       // Month
   0xFF,       // Day
@@ -87,13 +87,13 @@ EFI_TIME mMaxTimestamp = {
 };
 
 //  ***** START: not needed by MfciPkg **
-//  
+//
 //  //
 //  // SELECT PLATFORM KEY
 //  //
 //  #define PLATFORM_KEY_BUFFER   ProductionPlatformKeyCertificate
 //  #define PLATFORM_KEY_SIZE     ProductionSizeOfPlatformKeyCertificate
-//  
+//
 //  //
 //  // QUICK PROTOTYPES
 //  // So that we don't have to create a whole header file...
@@ -106,7 +106,7 @@ EFI_TIME mMaxTimestamp = {
 //    IN UINTN                   DataSize,
 //    IN VOID                    *Data
 //    );
-//  
+//
 //  ***** END:   not needed by MfciPkg */
 
 /**
@@ -135,22 +135,22 @@ EFI_TIME mMaxTimestamp = {
 STATIC
 EFI_STATUS
 CreateTimeBasedPayload (
-  IN OUT UINTN            *DataSize,
-  IN OUT UINT8            **Data,
-  IN     EFI_TIME         *Time OPTIONAL
+  IN OUT UINTN     *DataSize,
+  IN OUT UINT8     **Data,
+  IN     EFI_TIME  *Time OPTIONAL
   )
 {
-  EFI_STATUS                       Status;
-  UINT8                            *NewData;
-  UINT8                            *Payload;
-  UINTN                            PayloadSize;
-  EFI_VARIABLE_AUTHENTICATION_2    *DescriptorData;
-  UINTN                            DescriptorSize;
-  EFI_TIME                         NewTime;
-  VOID                             *TestPointer;
+  EFI_STATUS                     Status;
+  UINT8                          *NewData;
+  UINT8                          *Payload;
+  UINTN                          PayloadSize;
+  EFI_VARIABLE_AUTHENTICATION_2  *DescriptorData;
+  UINTN                          DescriptorSize;
+  EFI_TIME                       NewTime;
+  VOID                           *TestPointer;
 
-  if (Data == NULL || DataSize == NULL) {
-    DEBUG((EFI_D_ERROR, "CreateTimeBasedPayload(), invalid arg\n"));
+  if ((Data == NULL) || (DataSize == NULL)) {
+    DEBUG ((EFI_D_ERROR, "CreateTimeBasedPayload(), invalid arg\n"));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -163,47 +163,52 @@ CreateTimeBasedPayload (
   Payload     = *Data;
   PayloadSize = *DataSize;
 
-  DescriptorSize    = OFFSET_OF (EFI_VARIABLE_AUTHENTICATION_2, AuthInfo) + OFFSET_OF (WIN_CERTIFICATE_UEFI_GUID, CertData);
-  NewData = (UINT8*) AllocateZeroPool (DescriptorSize + PayloadSize);
+  DescriptorSize = OFFSET_OF (EFI_VARIABLE_AUTHENTICATION_2, AuthInfo) + OFFSET_OF (WIN_CERTIFICATE_UEFI_GUID, CertData);
+  NewData        = (UINT8 *)AllocateZeroPool (DescriptorSize + PayloadSize);
   if (NewData == NULL) {
-    DEBUG((EFI_D_ERROR, "CreateTimeBasedPayload() Out of resources.\n"));
+    DEBUG ((EFI_D_ERROR, "CreateTimeBasedPayload() Out of resources.\n"));
     return EFI_OUT_OF_RESOURCES;
   }
-  
+
   if ((Payload != NULL) && (PayloadSize != 0)) {
     CopyMem (NewData + DescriptorSize, Payload, PayloadSize);
   }
 
-  DescriptorData = (EFI_VARIABLE_AUTHENTICATION_2 *) (NewData);
+  DescriptorData = (EFI_VARIABLE_AUTHENTICATION_2 *)(NewData);
 
   //
   // Use or create the timestamp.
   //
   // If Time is NULL, create a new timestamp.
-  if (Time == NULL)
-  {
+  if (Time == NULL) {
     Status = gBS->LocateProtocol (&gEfiRealTimeClockArchProtocolGuid, NULL, &TestPointer);
     if (EFI_ERROR (Status)) {
-      FreePool(NewData);
+      FreePool (NewData);
       NewData = NULL;
       return EFI_NOT_READY;
     }
+
     ZeroMem (&NewTime, sizeof (EFI_TIME));
     Status = gRT->GetTime (&NewTime, NULL);
     if (EFI_ERROR (Status)) {
-      DEBUG((EFI_D_ERROR, "CreateTimeBasedPayload(), GetTime() failed, status = '%r'\n",
-             Status));
-      FreePool(NewData);
+      DEBUG ((
+        EFI_D_ERROR,
+        "CreateTimeBasedPayload(), GetTime() failed, status = '%r'\n",
+        Status
+        ));
+      FreePool (NewData);
       NewData = NULL;
       return Status;
     }
+
     NewTime.Pad1       = 0;
     NewTime.Nanosecond = 0;
     NewTime.TimeZone   = 0;
     NewTime.Daylight   = 0;
     NewTime.Pad2       = 0;
-    Time = &NewTime;        // Use the new timestamp.
+    Time               = &NewTime; // Use the new timestamp.
   }
+
   CopyMem (&DescriptorData->TimeStamp, Time, sizeof (EFI_TIME));
 
   DescriptorData->AuthInfo.Hdr.dwLength         = OFFSET_OF (WIN_CERTIFICATE_UEFI_GUID, CertData);
@@ -212,7 +217,7 @@ CreateTimeBasedPayload (
   CopyGuid (&DescriptorData->AuthInfo.CertType, &gEfiCertPkcs7Guid);
 
   if (Payload != NULL) {
-    FreePool(Payload);
+    FreePool (Payload);
     Payload = NULL;
   }
 
@@ -220,7 +225,6 @@ CreateTimeBasedPayload (
   *Data     = NewData;
   return EFI_SUCCESS;
 } // CreateTimeBasedPayload()
-
 
 /**
   Signals the Variable services that an "authorized" PK
@@ -240,21 +244,20 @@ CreateTimeBasedPayload (
 STATIC
 EFI_STATUS
 SetAuthorizedPkUpdateState (
-  IN  BOOLEAN   State
+  IN  BOOLEAN  State
   )
 {
-  EFI_STATUS                        TempStatus, Status = EFI_SUCCESS;
-  UINT32                            Attributes;
-  PHASE_INDICATOR                   PhaseIndicator;
-  UINTN                             DataSize;
-  EDKII_VARIABLE_POLICY_PROTOCOL    *VariablePolicy;
+  EFI_STATUS                      TempStatus, Status = EFI_SUCCESS;
+  UINT32                          Attributes;
+  PHASE_INDICATOR                 PhaseIndicator;
+  UINTN                           DataSize;
+  EDKII_VARIABLE_POLICY_PROTOCOL  *VariablePolicy;
 
-  DEBUG(( DEBUG_INFO, "[SB] %a()\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "[SB] %a()\n", __FUNCTION__));
 
   // Make sure that the State makes sense (because BOOL can technically be neither TRUE nor FALSE).
-  if (State != PK_UPDATE_NOT_AUTHORIZED && State != PK_UPDATE_AUTHORIZED)
-  {
-    DEBUG(( DEBUG_ERROR, "%a - Invalid State passed: %d\n", __FUNCTION__, State ));
+  if ((State != PK_UPDATE_NOT_AUTHORIZED) && (State != PK_UPDATE_AUTHORIZED)) {
+    DEBUG ((DEBUG_ERROR, "%a - Invalid State passed: %d\n", __FUNCTION__, State));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -262,20 +265,21 @@ SetAuthorizedPkUpdateState (
   // Step 1: Determine whether we are post-ReadyToBoot.
   //  If so, only allow the state to be cleared, not set.
   //
-  DataSize = sizeof( PhaseIndicator );
-  TempStatus = gRT->GetVariable( READY_TO_BOOT_INDICATOR_VAR_NAME,
-                                 &gMuVarPolicyDxePhaseGuid,
-                                 &Attributes,
-                                 &DataSize,
-                                 &PhaseIndicator );
+  DataSize   = sizeof (PhaseIndicator);
+  TempStatus = gRT->GetVariable (
+                      READY_TO_BOOT_INDICATOR_VAR_NAME,
+                      &gMuVarPolicyDxePhaseGuid,
+                      &Attributes,
+                      &DataSize,
+                      &PhaseIndicator
+                      );
 
   // If we're past ReadyToBoot, make sure we're not attempting to allow an update.
   // Assume we are post-ReadyToBoot as long as the variable is not "missing".
   // This leaves the possibility of other errors tripping this mechanism, but
   //   if the variables infrastructure is failing, what else are we to do?
-  if (TempStatus != EFI_NOT_FOUND && State == PK_UPDATE_AUTHORIZED)
-  {
-    DEBUG(( DEBUG_ERROR, "%a - Cannot set state to %d when ReadyToBoot indicator test returns %r.\n", __FUNCTION__, State, Status ));
+  if ((TempStatus != EFI_NOT_FOUND) && (State == PK_UPDATE_AUTHORIZED)) {
+    DEBUG ((DEBUG_ERROR, "%a - Cannot set state to %d when ReadyToBoot indicator test returns %r.\n", __FUNCTION__, State, Status));
     return EFI_SECURITY_VIOLATION;
   }
 
@@ -283,13 +287,12 @@ SetAuthorizedPkUpdateState (
   // Step 2: If we are enabling, let's do that.
   //
   // NOTE: This is fine if it's called twice in a row.
-  if (State == PK_UPDATE_AUTHORIZED)
-  {
+  if (State == PK_UPDATE_AUTHORIZED) {
     // IMPORTANT NOTE: This operation is sticky and leaves variable protections disabled.
     //                  The system *MUST* be reset after performing this operation.
-    Status = gBS->LocateProtocol( &gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **) &VariablePolicy );
-    if (!EFI_ERROR( Status )) {
-      Status = VariablePolicy->DisableVariablePolicy();
+    Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&VariablePolicy);
+    if (!EFI_ERROR (Status)) {
+      Status = VariablePolicy->DisableVariablePolicy ();
       // EFI_ALREADY_STARTED means that everything is currently disabled.
       // This should be considered SUCCESS.
       if (Status == EFI_ALREADY_STARTED) {
@@ -297,12 +300,10 @@ SetAuthorizedPkUpdateState (
       }
     }
   }
-
   //
   // Step 3: If we are disabling, let's do that.
   //
-  else
-  {
+  else {
     // NOTE: Currently, there's no way to disable the suspension of protections.
     //        This will be revisited in later versions of the VariablePolicy protocol.
     //        For now, the caller is responsible for resetting the system after attempting.
@@ -311,10 +312,11 @@ SetAuthorizedPkUpdateState (
   return Status;
 } // SetAuthorizedPkUpdateState()
 
-
 EFI_STATUS
 EFIAPI
-DeleteSecureBootVariables()
+DeleteSecureBootVariables (
+  )
+
 /*++
 
 Routine Description:
@@ -332,34 +334,31 @@ Return Value:
 
 --*/
 {
-  EFI_STATUS                      Status, TempStatus;
-  UINT32                          Attributes = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS;
-  UINTN                           DataSize;
-  UINT8                           *Data;
+  EFI_STATUS  Status, TempStatus;
+  UINT32      Attributes = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS;
+  UINTN       DataSize;
+  UINT8       *Data;
 
-  DEBUG((DEBUG_INFO, "INFO: Attempting to delete the Secure Boot variables.\r\n"));
+  DEBUG ((DEBUG_INFO, "INFO: Attempting to delete the Secure Boot variables.\r\n"));
 
   //
   // Step 1: Create a dummy payload.
   // This payload should be a valid cert/auth header and nothing more.
   // It is effectively DataSize = 0 and Data = NULL, but for authenticated variables.
   DataSize = 0;
-  Data = NULL;
-  Status = CreateTimeBasedPayload( &DataSize, &Data, &mMaxTimestamp );
-  if (EFI_ERROR( Status ) || Data == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "DeleteSecureBoot: - Failed to build payload! %r\r\n", Status));
+  Data     = NULL;
+  Status   = CreateTimeBasedPayload (&DataSize, &Data, &mMaxTimestamp);
+  if (EFI_ERROR (Status) || (Data == NULL)) {
+    DEBUG ((DEBUG_ERROR, "DeleteSecureBoot: - Failed to build payload! %r\r\n", Status));
     Status = EFI_OUT_OF_RESOURCES;
   }
 
   //
   // Step 2: Notify that a PK update is coming shortly...
-  if (!EFI_ERROR( Status ))
-  {
-    Status = SetAuthorizedPkUpdateState( PK_UPDATE_AUTHORIZED );
-    if (EFI_ERROR( Status ))
-    {
-      DEBUG((DEBUG_ERROR, "DeleteSecureBoot - Failed to signal PK update start! %r\r\n", Status));
+  if (!EFI_ERROR (Status)) {
+    Status = SetAuthorizedPkUpdateState (PK_UPDATE_AUTHORIZED);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "DeleteSecureBoot - Failed to signal PK update start! %r\r\n", Status));
       // Classify this as a PK deletion error.
       Status = EFI_ABORTED;
     }
@@ -368,28 +367,32 @@ Return Value:
   //
   // Step 3: Attempt to delete the PK.
   // Let's try to nuke the PK, why not...
-  if (!EFI_ERROR( Status ))
-  {
-    Status = gRT->SetVariable( EFI_PLATFORM_KEY_NAME,
-                               &gEfiGlobalVariableGuid,
-                               Attributes,
-                               DataSize,
-                               Data );
-    DEBUG((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_PLATFORM_KEY_NAME, Status));
+  if (!EFI_ERROR (Status)) {
+    Status = gRT->SetVariable (
+                    EFI_PLATFORM_KEY_NAME,
+                    &gEfiGlobalVariableGuid,
+                    Attributes,
+                    DataSize,
+                    Data
+                    );
+    DEBUG ((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_PLATFORM_KEY_NAME, Status));
     // If the PK is not found, then our work here is done.
-    if (Status == EFI_NOT_FOUND) Status = EFI_SUCCESS;
+    if (Status == EFI_NOT_FOUND) {
+      Status = EFI_SUCCESS;
+    }
     // If any other error occurred, let's inform the caller that the PK delete in particular failed.
-    else if (EFI_ERROR( Status )) Status = EFI_ABORTED;
+    else if (EFI_ERROR (Status)) {
+      Status = EFI_ABORTED;
+    }
   }
 
   //
   // Step 4: Regardless of whether the PK update succeeded, notify that the update is done.
-  if (EFI_ERROR( SetAuthorizedPkUpdateState( PK_UPDATE_NOT_AUTHORIZED ) ))
-  {
-    DEBUG((DEBUG_ERROR, "DeleteSecureBoot - Failed to signal PK update stop! %r\r\n", Status));
+  if (EFI_ERROR (SetAuthorizedPkUpdateState (PK_UPDATE_NOT_AUTHORIZED))) {
+    DEBUG ((DEBUG_ERROR, "DeleteSecureBoot - Failed to signal PK update stop! %r\r\n", Status));
     // In this case, assert, because this is bad: the PK is still unlocked.
     // It's not the end of the world, though... PK will lock at ReadyToBoot.
-    ASSERT_EFI_ERROR( Status );
+    ASSERT_EFI_ERROR (Status);
     // Classify this as a PK deletion error.
     Status = EFI_ABORTED;
   }
@@ -400,8 +403,7 @@ Return Value:
   // Arguably we could leave these variables in place and let them be deleted by whoever wants to
   // update all the SecureBoot variables. However, for cleanliness sake, let's try to
   // get rid of them here.
-  if (!EFI_ERROR( Status ))
-  {
+  if (!EFI_ERROR (Status)) {
     //
     // If any of THESE steps have an error, report the error but attempt to delete all keys.
     // Using TempStatus will prevent an error from being trampled by an EFI_SUCCESS.
@@ -410,42 +412,52 @@ Return Value:
     // If the error is EFI_NOT_FOUND, we can safely ignore it since we were trying to delete
     // the variables anyway.
     //
-    TempStatus = gRT->SetVariable( EFI_KEY_EXCHANGE_KEY_NAME,
-                                   &gEfiGlobalVariableGuid,
-                                   Attributes,
-                                   DataSize,
-                                   Data );
-    DEBUG((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_KEY_EXCHANGE_KEY_NAME, TempStatus));
-    if (EFI_ERROR( TempStatus ) && TempStatus != EFI_NOT_FOUND) Status = EFI_ACCESS_DENIED;
-    
-    TempStatus = gRT->SetVariable( EFI_IMAGE_SECURITY_DATABASE,
-                                   &gEfiImageSecurityDatabaseGuid,
-                                   Attributes,
-                                   DataSize,
-                                   Data );
-    DEBUG((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_IMAGE_SECURITY_DATABASE, TempStatus));
-    if (EFI_ERROR( TempStatus ) && TempStatus != EFI_NOT_FOUND) Status = EFI_ACCESS_DENIED;
+    TempStatus = gRT->SetVariable (
+                        EFI_KEY_EXCHANGE_KEY_NAME,
+                        &gEfiGlobalVariableGuid,
+                        Attributes,
+                        DataSize,
+                        Data
+                        );
+    DEBUG ((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_KEY_EXCHANGE_KEY_NAME, TempStatus));
+    if (EFI_ERROR (TempStatus) && (TempStatus != EFI_NOT_FOUND)) {
+      Status = EFI_ACCESS_DENIED;
+    }
 
-    TempStatus = gRT->SetVariable( EFI_IMAGE_SECURITY_DATABASE1,
-                                   &gEfiImageSecurityDatabaseGuid,
-                                   Attributes,
-                                   DataSize,
-                                   Data );
-    DEBUG((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_IMAGE_SECURITY_DATABASE1, TempStatus));
-    if (EFI_ERROR( TempStatus ) && TempStatus != EFI_NOT_FOUND) Status = EFI_ACCESS_DENIED;
+    TempStatus = gRT->SetVariable (
+                        EFI_IMAGE_SECURITY_DATABASE,
+                        &gEfiImageSecurityDatabaseGuid,
+                        Attributes,
+                        DataSize,
+                        Data
+                        );
+    DEBUG ((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_IMAGE_SECURITY_DATABASE, TempStatus));
+    if (EFI_ERROR (TempStatus) && (TempStatus != EFI_NOT_FOUND)) {
+      Status = EFI_ACCESS_DENIED;
+    }
+
+    TempStatus = gRT->SetVariable (
+                        EFI_IMAGE_SECURITY_DATABASE1,
+                        &gEfiImageSecurityDatabaseGuid,
+                        Attributes,
+                        DataSize,
+                        Data
+                        );
+    DEBUG ((DEBUG_INFO, "DeleteSecureBoot - %s Delete = %r\r\n", EFI_IMAGE_SECURITY_DATABASE1, TempStatus));
+    if (EFI_ERROR (TempStatus) && (TempStatus != EFI_NOT_FOUND)) {
+      Status = EFI_ACCESS_DENIED;
+    }
   }
 
   //
   // Always Put Away Your Toys
-  if (Data != NULL)
-  {
-    FreePool(Data);
+  if (Data != NULL) {
+    FreePool (Data);
     Data = NULL;
   }
 
   return Status;
-}//DeleteSecureBootVariables()
-
+}// DeleteSecureBootVariables()
 
 /**
   Helper function to quickly determine whether SecureBoot is enabled.
@@ -459,11 +471,11 @@ IsSecureBootEnable (
   VOID
   )
 {
-  UINT8                   SecureBoot;
-  UINTN                   VarSize;
-  EFI_STATUS              Status;
+  UINT8       SecureBoot;
+  UINTN       VarSize;
+  EFI_STATUS  Status;
 
-  VarSize = sizeof(SecureBoot);
+  VarSize = sizeof (SecureBoot);
 
   Status = gRT->GetVariable (
                   L"SecureBoot",
@@ -473,7 +485,7 @@ IsSecureBootEnable (
                   &SecureBoot
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR,"Cannot check SecureBoot variable %r \n ", Status));
+    DEBUG ((DEBUG_ERROR, "Cannot check SecureBoot variable %r \n ", Status));
     return FALSE;
   }
 
@@ -484,14 +496,13 @@ IsSecureBootEnable (
   }
 }
 
-
 //  ***** START: not needed by MfciPkg
-//  
+//
 //  /**
 //    Returns the current config of the SecureBoot variables, if it can be determined.
-//  
+//
 //    @retval     UINTN   Will return an MS_SB_CONFIG token or -1 if the config cannot be determined.
-//  
+//
 //  **/
 //  UINTN
 //  GetCurrentSecureBootConfig (
@@ -502,7 +513,7 @@ IsSecureBootEnable (
 //    UINTN         Config = (UINTN)-1;     // Default to "Unknown"
 //    UINTN         DbVarSize;
 //    UINT8         *DbVar = NULL;
-//  
+//
 //    //
 //    // Determine whether the PK is set.
 //    // If it's not set, we'll indicate that we're in NONE regardless of db state.
@@ -517,7 +528,7 @@ IsSecureBootEnable (
 //    {
 //      return MS_SB_CONFIG_NONE;
 //    }
-//  
+//
 //    //
 //    // Load the current db.
 //    DbVarSize = 0;
@@ -544,7 +555,7 @@ IsSecureBootEnable (
 //    {
 //      Config = MS_SB_CONFIG_NONE;
 //    }
-//  
+//
 //    //
 //    // Compare the current db to the stored dbs and determine whether either matches.
 //    if (!EFI_ERROR( Status ))
@@ -558,33 +569,33 @@ IsSecureBootEnable (
 //        Config = MS_SB_CONFIG_MS_3P;
 //      }
 //    }
-//  
+//
 //    // Clean up if necessary.
 //    if (DbVar != NULL)
 //    {
 //      FreePool( DbVar );
 //    }
-//  
+//
 //    return Config;
 //  }
-//  
-//  
+//
+//
 //  /**
 //    Similar to DeleteSecureBootVariables, this function is used to unilaterally
 //    force the state of all 4 SB variables. Use built-in, hardcoded default vars.
-//  
+//
 //    NOTE: The UseThirdParty parameter can be used to set either strict MS or
 //          MS+3rdParty keys.
-//  
+//
 //    @param[in]  UseThirdParty  Flag to indicate whether to use 3rd party keys or
 //                               strict MS-only keys.
-//  
+//
 //    @retval     EFI_SUCCESS               SecureBoot keys are now set to defaults.
 //    @retval     EFI_ABORTED               SecureBoot keys are not empty. Please delete keys first
 //                                          or follow standard methods of altering keys (ie. use the signing system).
 //    @retval     EFI_SECURITY_VIOLATION    Failed to create the PK.
 //    @retval     Others                    Something failed in one of the subfunctions.
-//  
+//
 //  **/
 //  EFI_STATUS
 //  SetDefaultSecureBootVariables (
@@ -596,9 +607,9 @@ IsSecureBootEnable (
 //    UINT32              DataSize;
 //    EFI_GUID            EfiX509Guid = EFI_CERT_X509_GUID, MsDefaultOwner = MS_DEFAULT_SIGNATURE_OWNER_GUID;
 //    EFI_SIGNATURE_LIST  *SigListBuffer = NULL;
-//  
+//
 //    DEBUG(( DEBUG_INFO, "MuSecureBootLib::%a()\n", __FUNCTION__ ));
-//  
+//
 //    //
 //    // Right off the bat, if SecureBoot is currently enabled, bail.
 //    if (IsSecureBootEnable())
@@ -606,7 +617,7 @@ IsSecureBootEnable (
 //      DEBUG(( DEBUG_ERROR, "%a - Cannot set default keys while SecureBoot is enabled!\n", __FUNCTION__ ));
 //      return EFI_ABORTED;
 //    }
-//  
+//
 //    //
 //    // Start running down the list, creating variables in our wake.
 //    // dbx is a good place to start.
@@ -616,7 +627,7 @@ IsSecureBootEnable (
 //                                           &gEfiImageSecurityDatabaseGuid,
 //                                           DataSize,
 //                                           Data );
-//  
+//
 //    // If that went well, try the db (make sure to pick the right one!).
 //    if (!EFI_ERROR( Status ))
 //    {
@@ -635,7 +646,7 @@ IsSecureBootEnable (
 //                                             DataSize,
 //                                             Data );
 //    }
-//  
+//
 //    // Keep it going. Keep it going. KEK...
 //    if (!EFI_ERROR( Status ))
 //    {
@@ -646,7 +657,7 @@ IsSecureBootEnable (
 //                                             DataSize,
 //                                             Data );
 //    }
-//  
+//
 //    //
 //    // Finally! The Big Daddy of them all.
 //    // The PK!
@@ -668,7 +679,7 @@ IsSecureBootEnable (
 //      ASSERT( (DataSize >= PLATFORM_KEY_SIZE) &&
 //              (DataSize >= sizeof( EFI_SIGNATURE_LIST )) &&
 //              (DataSize >= OFFSET_OF( EFI_SIGNATURE_DATA, SignatureData )) );
-//  
+//
 //      // Allocate a sufficient buffer.
 //      SigListBuffer = AllocateZeroPool( DataSize );
 //      if (!SigListBuffer)
@@ -684,18 +695,18 @@ IsSecureBootEnable (
 //      // Adjust the Data pointer to be the start of the SignatureOwner section of the buffer.
 //      Data = (UINT8*)SigListBuffer + sizeof( EFI_SIGNATURE_LIST ) + OFFSET_OF( EFI_SIGNATURE_DATA, SignatureOwner );
 //      CopyGuid( (EFI_GUID*)Data, &MsDefaultOwner );
-//  
+//
 //      // Copy the cert data.
 //      // Adjust the Data pointer to be the start of the SignatureData section of the buffer.
 //      Data = (UINT8*)SigListBuffer + sizeof( EFI_SIGNATURE_LIST ) + OFFSET_OF( EFI_SIGNATURE_DATA, SignatureData );
 //      CopyMem( Data, PLATFORM_KEY_BUFFER, PLATFORM_KEY_SIZE );
-//  
+//
 //      // Set up the rest of the header.
 //      CopyGuid( &SigListBuffer->SignatureType, &EfiX509Guid );
 //      SigListBuffer->SignatureListSize    = DataSize;
 //      SigListBuffer->SignatureHeaderSize  = 0;       // Always 0 for x509 type certs.
 //      SigListBuffer->SignatureSize        = PLATFORM_KEY_SIZE + OFFSET_OF( EFI_SIGNATURE_DATA, SignatureData );
-//  
+//
 //      //
 //      // Finally, install the key.
 //      Status = SetAuthorizedPkUpdateState( PK_UPDATE_AUTHORIZED );
@@ -715,7 +726,7 @@ IsSecureBootEnable (
 //          Status = EFI_ABORTED;
 //        }
 //      }
-//  
+//
 //      //
 //      // Report PK creation errors.
 //      if (EFI_ERROR( Status ))
@@ -724,14 +735,14 @@ IsSecureBootEnable (
 //        Status = EFI_SECURITY_VIOLATION;
 //      }
 //    }
-//  
+//
 //    //
 //    // Always put away your toys.
 //    if (SigListBuffer)
 //    {
 //      FreePool( SigListBuffer );
 //    }
-//  
+//
 //    return Status;
 //  } // SetDefaultSecureBootVariables()
 
@@ -814,5 +825,5 @@ InstallSecureBootVariable (
   return Status;
 } // InstallSecureBootVariable()
 */
-//  
+//
 //  ****** END:   not needed by MfciPkg

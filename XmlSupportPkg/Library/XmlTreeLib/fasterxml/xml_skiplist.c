@@ -6,7 +6,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include <Uefi.h>                   // UEFI base types
 #include <Library/BaseMemoryLib.h>  // SetMem()
 #include "fasterxml.h"              // XML Engine
@@ -14,12 +13,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "xmlstructure.h"           // XML structures
 
 EFI_STATUS
-RtlpFindChunkForElementIndex(
-    PRTL_GROWING_LIST        pList,
-    UINT32                    ulIndex,
-    PRTL_GROWING_LIST_CHUNK *ppListChunk,
-    UINT32                  *pulChunkOffset
-    )
+RtlpFindChunkForElementIndex (
+  PRTL_GROWING_LIST        pList,
+  UINT32                   ulIndex,
+  PRTL_GROWING_LIST_CHUNK  *ppListChunk,
+  UINT32                   *pulChunkOffset
+  )
+
 /*++
 
 
@@ -49,110 +49,99 @@ RtlpFindChunkForElementIndex(
 
 --*/
 {
-    PRTL_GROWING_LIST_CHUNK pHere = NULL;
+  PRTL_GROWING_LIST_CHUNK  pHere = NULL;
 
-    if (ppListChunk) {
-        *ppListChunk = NULL;
-    }
+  if (ppListChunk) {
+    *ppListChunk = NULL;
+  }
 
-    if (pulChunkOffset) {
-        *pulChunkOffset = 0;
-    }
+  if (pulChunkOffset) {
+    *pulChunkOffset = 0;
+  }
 
-    if (!ppListChunk || !pList || (ulIndex < pList->cInternalElements)) {
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER);
-    }
+  if (!ppListChunk || !pList || (ulIndex < pList->cInternalElements)) {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER);
+  }
 
-    //
-    // Chop off the number of elements in the internal list
-    //
-    ulIndex -= pList->cInternalElements;
+  //
+  // Chop off the number of elements in the internal list
+  //
+  ulIndex -= pList->cInternalElements;
 
+  //
+  // Move through list chunks until the index is inside one
+  // of them.  A smarter bear would have made all the chunks the
+  // same size and could then have just skipped ahead the right
+  // number, avoiding comparisons.
+  //
+  pHere = pList->pFirstChunk;
 
-    //
-    // Move through list chunks until the index is inside one
-    // of them.  A smarter bear would have made all the chunks the
-    // same size and could then have just skipped ahead the right
-    // number, avoiding comparisons.
-    //
-    pHere = pList->pFirstChunk;
+  while ((ulIndex >= pList->cElementsPerChunk) && pHere) {
+    pHere    = pHere->pNextChunk;
+    ulIndex -= pList->cElementsPerChunk;
+  }
 
-    while ((ulIndex >= pList->cElementsPerChunk) && pHere) {
-        pHere = pHere->pNextChunk;
-        ulIndex -= pList->cElementsPerChunk;
-    }
+  //
+  // Set pointer over
+  //
+  if (ulIndex < pList->cElementsPerChunk) {
+    *ppListChunk = pHere;
+  }
 
-    //
-    // Set pointer over
-    //
-    if (ulIndex < pList->cElementsPerChunk) {
-        *ppListChunk = pHere;
-    }
+  //
+  // And if the caller cared what chunk this was in, then tell them.
+  //
+  if (pulChunkOffset && *ppListChunk) {
+    *pulChunkOffset = ulIndex;
+  }
 
-    //
-    // And if the caller cared what chunk this was in, then tell them.
-    //
-    if (pulChunkOffset && *ppListChunk) {
-        *pulChunkOffset = ulIndex;
-    }
-
-    return pHere ? EFI_SUCCESS : STATUS_NOT_FOUND;
+  return pHere ? EFI_SUCCESS : STATUS_NOT_FOUND;
 }
 
-
-
-
 EFI_STATUS
-RtlInitializeGrowingList(
-    PRTL_GROWING_LIST       pList,
-    UINT32                  cbElementSize,
-    UINT32                   cElementsPerChunk,
-    VOID*                   pvInitialListBuffer,
-    UINT32                  cbInitialListBuffer,
-    PRTL_ALLOCATOR          Allocation
-    )
+RtlInitializeGrowingList (
+  PRTL_GROWING_LIST  pList,
+  UINT32             cbElementSize,
+  UINT32             cElementsPerChunk,
+  VOID               *pvInitialListBuffer,
+  UINT32             cbInitialListBuffer,
+  PRTL_ALLOCATOR     Allocation
+  )
 {
+  if ((pList == NULL) ||
+      (cElementsPerChunk == 0) ||
+      (cbElementSize == 0))
+  {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER);
+  }
 
-    if ((pList == NULL) ||
-        (cElementsPerChunk == 0) ||
-        (cbElementSize == 0))
-    {
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER);
-    }
+  ZeroMem (pList, sizeof (*pList));
 
+  pList->cbElementSize     = cbElementSize;
+  pList->cElementsPerChunk = cElementsPerChunk;
+  pList->Allocator         = *Allocation;
 
-    ZeroMem(pList, sizeof(*pList));
+  //
+  // Set up  the initial list pointer
+  //
+  if (pvInitialListBuffer != NULL) {
+    pList->pvInternalList = pvInitialListBuffer;
 
-    pList->cbElementSize        = cbElementSize;
-    pList->cElementsPerChunk    = cElementsPerChunk;
-    pList->Allocator            = *Allocation;
+    // Conversion downwards to a ulong, but it's still valid, right?
+    pList->cInternalElements = (UINT32)(cbInitialListBuffer / cbElementSize);
 
-    //
-    // Set up  the initial list pointer
-    //
-    if (pvInitialListBuffer != NULL) {
+    pList->cTotalElements = pList->cInternalElements;
+  }
 
-        pList->pvInternalList = pvInitialListBuffer;
-
-        // Conversion downwards to a ulong, but it's still valid, right?
-        pList->cInternalElements = (UINT32)(cbInitialListBuffer / cbElementSize);
-
-        pList->cTotalElements = pList->cInternalElements;
-
-    }
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
-
-
-
-
 EFI_STATUS
-RtlpExpandGrowingList(
-    PRTL_GROWING_LIST       pList,
-    UINT32                   ulMinimalIndexCount
-    )
+RtlpExpandGrowingList (
+  PRTL_GROWING_LIST  pList,
+  UINT32             ulMinimalIndexCount
+  )
+
 /*++
 
   Purpose:
@@ -182,207 +171,182 @@ RtlpExpandGrowingList(
 
 --*/
 {
-    EFI_STATUS status = EFI_SUCCESS;
-    UINT32 ulNecessaryChunks = 0;
-    UINT32 ulExtraElements = ulMinimalIndexCount;
-    UINT32 UINT8sInChunk;
+  EFI_STATUS  status            = EFI_SUCCESS;
+  UINT32      ulNecessaryChunks = 0;
+  UINT32      ulExtraElements   = ulMinimalIndexCount;
+  UINT32      UINT8sInChunk;
 
-    if ((pList == NULL) || (pList->Allocator.pfnAlloc == NULL)) {
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER);
-    }
+  if ((pList == NULL) || (pList->Allocator.pfnAlloc == NULL)) {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER);
+  }
 
-    //
-    // Already got enough elements in the list?  Great.  The caller
-    // was a bit overactive.
-    //
-    if (pList->cTotalElements > ulMinimalIndexCount) {
-        return EFI_SUCCESS;
-    }
-
-    //
-    // Whack off the number of elements already on the list.
-    //
-    ulExtraElements -= pList->cTotalElements;
-
-    //
-    // How many chunks is that?  Remember to round up.
-    //
-    ulNecessaryChunks = ulExtraElements / pList->cElementsPerChunk;
-    ulNecessaryChunks++;
-
-    //
-    // Let's go allocate them, one by one
-    //
-    if (pList->cbElementSize != 0)
-    {
-        //if (((MAXUINT32 - sizeof(RTL_GROWING_LIST_CHUNK)) / pList->cbElementSize) < pList->cElementsPerChunk)
-        //    return RtlpReportXmlError(EFI_INVALID_PARAMETER);
-    }
-
-    UINT8sInChunk = (pList->cbElementSize * pList->cElementsPerChunk) + sizeof(RTL_GROWING_LIST_CHUNK);
-
-    while (ulNecessaryChunks--) {
-
-        PRTL_GROWING_LIST_CHUNK pNewChunk = NULL;
-
-        //
-        // Allocate some memory for the chunk
-        //
-        status = pList->Allocator.pfnAlloc(UINT8sInChunk, (VOID**)&pNewChunk, pList->Allocator.pvContext);
-        if (EFI_ERROR(status)) {
-            return RtlpReportXmlError(EFI_OUT_OF_RESOURCES);
-        }
-
-        //
-        // Set up the new chunk
-        //
-        pNewChunk->pGrowingListParent = pList;
-        pNewChunk->pNextChunk = NULL;
-
-        if (pList->pLastChunk) {
-            //
-            // Swizzle the list of chunks to include this one
-            //
-            pList->pLastChunk->pNextChunk = pNewChunk;
-        }
-
-        pList->pLastChunk = pNewChunk;
-        pList->cTotalElements += pList->cElementsPerChunk;
-
-        //
-        // If there wasn't a first chunk, this one is.
-        //
-        if (pList->pFirstChunk == NULL) {
-            pList->pFirstChunk = pNewChunk;
-        }
-    }
-
+  //
+  // Already got enough elements in the list?  Great.  The caller
+  // was a bit overactive.
+  //
+  if (pList->cTotalElements > ulMinimalIndexCount) {
     return EFI_SUCCESS;
+  }
 
+  //
+  // Whack off the number of elements already on the list.
+  //
+  ulExtraElements -= pList->cTotalElements;
+
+  //
+  // How many chunks is that?  Remember to round up.
+  //
+  ulNecessaryChunks = ulExtraElements / pList->cElementsPerChunk;
+  ulNecessaryChunks++;
+
+  //
+  // Let's go allocate them, one by one
+  //
+  if (pList->cbElementSize != 0) {
+    // if (((MAXUINT32 - sizeof(RTL_GROWING_LIST_CHUNK)) / pList->cbElementSize) < pList->cElementsPerChunk)
+    //    return RtlpReportXmlError(EFI_INVALID_PARAMETER);
+  }
+
+  UINT8sInChunk = (pList->cbElementSize * pList->cElementsPerChunk) + sizeof (RTL_GROWING_LIST_CHUNK);
+
+  while (ulNecessaryChunks--) {
+    PRTL_GROWING_LIST_CHUNK  pNewChunk = NULL;
+
+    //
+    // Allocate some memory for the chunk
+    //
+    status = pList->Allocator.pfnAlloc (UINT8sInChunk, (VOID **)&pNewChunk, pList->Allocator.pvContext);
+    if (EFI_ERROR (status)) {
+      return RtlpReportXmlError (EFI_OUT_OF_RESOURCES);
+    }
+
+    //
+    // Set up the new chunk
+    //
+    pNewChunk->pGrowingListParent = pList;
+    pNewChunk->pNextChunk         = NULL;
+
+    if (pList->pLastChunk) {
+      //
+      // Swizzle the list of chunks to include this one
+      //
+      pList->pLastChunk->pNextChunk = pNewChunk;
+    }
+
+    pList->pLastChunk      = pNewChunk;
+    pList->cTotalElements += pList->cElementsPerChunk;
+
+    //
+    // If there wasn't a first chunk, this one is.
+    //
+    if (pList->pFirstChunk == NULL) {
+      pList->pFirstChunk = pNewChunk;
+    }
+  }
+
+  return EFI_SUCCESS;
 }
 
-
-
-
-
-
-
 EFI_STATUS
-RtlIndexIntoGrowingList(
-    PRTL_GROWING_LIST       pList,
-    UINT32                   ulIndex,
-    VOID*                  *ppvPointerToSpace,
-    BOOLEAN                 fGrowingAllowed
-    )
+RtlIndexIntoGrowingList (
+  PRTL_GROWING_LIST  pList,
+  UINT32             ulIndex,
+  VOID               **ppvPointerToSpace,
+  BOOLEAN            fGrowingAllowed
+  )
 {
-    EFI_STATUS status = EFI_SUCCESS;
+  EFI_STATUS  status = EFI_SUCCESS;
 
-    if ((pList == NULL) || (ppvPointerToSpace == NULL)) {
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER);
+  if ((pList == NULL) || (ppvPointerToSpace == NULL)) {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER);
+  }
+
+  *ppvPointerToSpace = NULL;
+
+  //
+  // If the index is beyond the current total number of elements, but we're
+  // not allowing growing, then say it wasn't found.  Otherwise, we'll always
+  // grow the array as necessary to contain the index passed.
+  //
+  if ((ulIndex >= pList->cTotalElements) && !fGrowingAllowed) {
+    return RtlpReportXmlError (STATUS_NOT_FOUND);
+  }
+
+  //
+  // This element is in the internal list, so just figure out where
+  // and point at it.  Do this only if there's an internal element
+  // list.
+  //
+  if ((ulIndex < pList->cInternalElements) && pList->cInternalElements) {
+    //
+    // The pointer to the space they want is ulIndex*pList->cbElementSize
+    // UINT8s down the pointer pList->pvInternalList
+    //
+    *ppvPointerToSpace = ((UINT8 *)(pList->pvInternalList)) + (ulIndex * pList->cbElementSize);
+    return EFI_SUCCESS;
+  }
+  //
+  // Otherwise, the index is outside the internal list, find out which one
+  // it was supposed to be in.
+  //
+  else {
+    PRTL_GROWING_LIST_CHUNK  pThisChunk  = NULL;
+    UINT32                   ulNewOffset = 0;
+    UINT8                    *pbData     = NULL;
+
+    status = RtlpFindChunkForElementIndex (pList, ulIndex, &pThisChunk, &ulNewOffset);
+
+    //
+    // Success! Go move the chunk pointer past the header of the growing list
+    // chunk, and then index off it to find the right place.
+    //
+    if (NT_SUCCESS (status)) {
+      pbData = ((UINT8 *)(pThisChunk + 1)) + (pList->cbElementSize * ulNewOffset);
+    }
+    //
+    // Otherwise, the chunk wasn't found, so we have to go allocate some new
+    // chunks to hold it, then try again.
+    //
+    else if (status == STATUS_NOT_FOUND) {
+      //
+      // Expand the list
+      //
+      if (EFI_ERROR (status = RtlpExpandGrowingList (pList, ulIndex))) {
+        goto Exit;
+      }
+
+      //
+      // Look again
+      //
+      status = RtlpFindChunkForElementIndex (pList, ulIndex, &pThisChunk, &ulNewOffset);
+      if (EFI_ERROR (status)) {
+        goto Exit;
+      }
+
+      //
+      // Adjust pointers
+      //
+      pbData = ((UINT8 *)(pThisChunk + 1)) + (pList->cbElementSize * ulNewOffset);
+    } else {
+      goto Exit;
     }
 
-    *ppvPointerToSpace = NULL;
-
     //
-    // If the index is beyond the current total number of elements, but we're
-    // not allowing growing, then say it wasn't found.  Otherwise, we'll always
-    // grow the array as necessary to contain the index passed.
+    // One of the above should have set the pbData pointer to point at the requested
+    // grown-list space.
     //
-    if ((ulIndex >= pList->cTotalElements) && !fGrowingAllowed) {
-        return RtlpReportXmlError(STATUS_NOT_FOUND);
-    }
-
-    //
-    // This element is in the internal list, so just figure out where
-    // and point at it.  Do this only if there's an internal element
-    // list.
-    //
-    if ((ulIndex < pList->cInternalElements) && pList->cInternalElements) {
-
-        //
-        // The pointer to the space they want is ulIndex*pList->cbElementSize
-        // UINT8s down the pointer pList->pvInternalList
-        //
-        *ppvPointerToSpace = ((UINT8*)(pList->pvInternalList)) + (ulIndex * pList->cbElementSize);
-        return EFI_SUCCESS;
-    }
-    //
-    // Otherwise, the index is outside the internal list, find out which one
-    // it was supposed to be in.
-    //
-    else {
-
-        PRTL_GROWING_LIST_CHUNK pThisChunk = NULL;
-        UINT32 ulNewOffset = 0;
-        UINT8* pbData = NULL;
-
-        status = RtlpFindChunkForElementIndex(pList, ulIndex, &pThisChunk, &ulNewOffset);
-
-        //
-        // Success! Go move the chunk pointer past the header of the growing list
-        // chunk, and then index off it to find the right place.
-        //
-        if (NT_SUCCESS(status)) {
-
-            pbData = ((UINT8*)(pThisChunk + 1)) + (pList->cbElementSize * ulNewOffset);
-
-        }
-        //
-        // Otherwise, the chunk wasn't found, so we have to go allocate some new
-        // chunks to hold it, then try again.
-        //
-        else if (status == STATUS_NOT_FOUND) {
-
-            //
-            // Expand the list
-            //
-            if (EFI_ERROR(status = RtlpExpandGrowingList(pList, ulIndex))) {
-                goto Exit;
-            }
-
-            //
-            // Look again
-            //
-            status = RtlpFindChunkForElementIndex(pList, ulIndex, &pThisChunk, &ulNewOffset);
-            if (EFI_ERROR(status)) {
-                goto Exit;
-            }
-
-            //
-            // Adjust pointers
-            //
-            pbData = ((UINT8*)(pThisChunk + 1)) + (pList->cbElementSize * ulNewOffset);
-
-
-        }
-        else {
-            goto Exit;
-        }
-
-        //
-        // One of the above should have set the pbData pointer to point at the requested
-        // grown-list space.
-        //
-        *ppvPointerToSpace = pbData;
-
-
-    }
-
+    *ppvPointerToSpace = pbData;
+  }
 
 Exit:
-    return status;
+  return status;
 }
 
-
-
-
-
-
-
 EFI_STATUS
-RtlDestroyGrowingList(
-    PRTL_GROWING_LIST       pList
-    )
+RtlDestroyGrowingList (
+  PRTL_GROWING_LIST  pList
+  )
+
 /*++
 
   Purpose:
@@ -401,245 +365,239 @@ RtlDestroyGrowingList(
 
 --*/
 {
-    EFI_STATUS status = EFI_SUCCESS;
+  EFI_STATUS  status = EFI_SUCCESS;
 
-    //
-    // Fails if the list is null, or there's things to free but there's no freer.
-    //
-    if ((pList == NULL) || ((pList->pFirstChunk != NULL) && (pList->Allocator.pfnFree == NULL))) {
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER);
+  //
+  // Fails if the list is null, or there's things to free but there's no freer.
+  //
+  if ((pList == NULL) || ((pList->pFirstChunk != NULL) && (pList->Allocator.pfnFree == NULL))) {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER);
+  }
+
+  //
+  // Zing through and kill all the list bits
+  //
+  while (pList->pFirstChunk != NULL) {
+    PRTL_GROWING_LIST_CHUNK  pHere;
+
+    pHere              = pList->pFirstChunk;
+    pList->pFirstChunk = pList->pFirstChunk->pNextChunk;
+
+    if (EFI_ERROR (status = pList->Allocator.pfnFree (pHere, pList->Allocator.pvContext))) {
+      return status;
     }
 
-    //
-    // Zing through and kill all the list bits
-    //
-    while (pList->pFirstChunk != NULL) {
+    pList->cTotalElements -= pList->cElementsPerChunk;
+  }
 
-        PRTL_GROWING_LIST_CHUNK pHere;
+  ASSERT (pList->pFirstChunk == NULL);
 
-        pHere = pList->pFirstChunk;
-        pList->pFirstChunk = pList->pFirstChunk->pNextChunk;
+  //
+  // Reset the things that change as we expand the list
+  //
+  pList->pLastChunk     = pList->pFirstChunk = NULL;
+  pList->cTotalElements = pList->cInternalElements;
 
-        if (EFI_ERROR(status = pList->Allocator.pfnFree(pHere, pList->Allocator.pvContext))) {
-            return status;
-        }
-
-        pList->cTotalElements -= pList->cElementsPerChunk;
-    }
-
-    ASSERT(pList->pFirstChunk == NULL);
-
-    //
-    // Reset the things that change as we expand the list
-    //
-    pList->pLastChunk = pList->pFirstChunk = NULL;
-    pList->cTotalElements = pList->cInternalElements;
-
-    return status;
+  return status;
 }
 
-
 EFI_STATUS
-RtlCloneGrowingList(
-    UINT32                   ulFlags,
-    PRTL_GROWING_LIST       pDestination,
-    PRTL_GROWING_LIST       pSource,
-    UINT32                   ulSourceCount
-    )
+RtlCloneGrowingList (
+  UINT32             ulFlags,
+  PRTL_GROWING_LIST  pDestination,
+  PRTL_GROWING_LIST  pSource,
+  UINT32             ulSourceCount
+  )
 {
-    EFI_STATUS status = EFI_SUCCESS;
-    UINT32 ul;
-    VOID* pvSourceCursor;
-    VOID* pvDestCursor;
-    UINT32 cbUINT8s;
+  EFI_STATUS  status = EFI_SUCCESS;
+  UINT32      ul;
+  VOID        *pvSourceCursor;
+  VOID        *pvDestCursor;
+  UINT32      cbUINT8s;
 
-    //
-    // No flags, no null values, element UINT8 size has to match,
-    // and the source/dest can't be the same.
-    //
-    if (((ulFlags != 0) || !pDestination || !pSource) ||
-        (pDestination->cbElementSize != pSource->cbElementSize) ||
-        (pDestination == pSource))
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER);
+  //
+  // No flags, no null values, element UINT8 size has to match,
+  // and the source/dest can't be the same.
+  //
+  if (((ulFlags != 0) || !pDestination || !pSource) ||
+      (pDestination->cbElementSize != pSource->cbElementSize) ||
+      (pDestination == pSource))
+  {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER);
+  }
 
-    cbUINT8s = pDestination->cbElementSize;
+  cbUINT8s = pDestination->cbElementSize;
 
-    //
-    // Now copy UINT8s around
-    //
-    for (ul = 0; ul < ulSourceCount; ul++) {
-        status = RtlIndexIntoGrowingList(pSource, ul, &pvSourceCursor, FALSE);
-        if (EFI_ERROR(status))
-            goto Exit;
-
-        status = RtlIndexIntoGrowingList(pDestination, ul, &pvDestCursor, TRUE);
-        if (EFI_ERROR(status))
-            goto Exit;
-
-        CopyMem(pvDestCursor, pvSourceCursor, cbUINT8s);
+  //
+  // Now copy UINT8s around
+  //
+  for (ul = 0; ul < ulSourceCount; ul++) {
+    status = RtlIndexIntoGrowingList (pSource, ul, &pvSourceCursor, FALSE);
+    if (EFI_ERROR (status)) {
+      goto Exit;
     }
 
-    status = EFI_SUCCESS;
+    status = RtlIndexIntoGrowingList (pDestination, ul, &pvDestCursor, TRUE);
+    if (EFI_ERROR (status)) {
+      goto Exit;
+    }
+
+    CopyMem (pvDestCursor, pvSourceCursor, cbUINT8s);
+  }
+
+  status = EFI_SUCCESS;
 Exit:
-    return status;
+  return status;
 }
 
+EFI_STATUS
+RtlAllocateGrowingList (
+  PRTL_GROWING_LIST  *ppGrowingList,
+  UINT32             cbThingSize,
+  PRTL_ALLOCATOR     Allocation
+  )
+{
+  PRTL_GROWING_LIST  pvWorkingList = NULL;
+  EFI_STATUS         status        = EFI_SUCCESS;
 
+  if (ppGrowingList != NULL) {
+    *ppGrowingList = NULL;
+  } else {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER_1);
+  }
 
+  if (!Allocation) {
+    return RtlpReportXmlError (EFI_INVALID_PARAMETER_3);
+  }
+
+  //
+  // Allocate space
+  //
+  status = Allocation->pfnAlloc (sizeof (RTL_GROWING_LIST), (VOID **)&pvWorkingList, Allocation->pvContext);
+  if (EFI_ERROR (status)) {
+    goto Exit;
+  }
+
+  //
+  // Set up the structure
+  //
+  status = RtlInitializeGrowingList (
+             pvWorkingList,
+             cbThingSize,
+             8,
+             NULL,
+             0,
+             Allocation
+             );
+
+  if (EFI_ERROR (status)) {
+    goto Exit;
+  }
+
+  *ppGrowingList = pvWorkingList;
+  pvWorkingList  = NULL;
+  status         = EFI_SUCCESS;
+Exit:
+  if (pvWorkingList) {
+    Allocation->pfnFree (pvWorkingList, Allocation->pvContext);
+  }
+
+  return status;
+}
 
 EFI_STATUS
-RtlAllocateGrowingList(
-    PRTL_GROWING_LIST  *ppGrowingList,
-    UINT32              cbThingSize,
-    PRTL_ALLOCATOR      Allocation
-    )
+RtlSearchGrowingList (
+  PRTL_GROWING_LIST             TheList,
+  UINT32                        ItemCount,
+  PFN_LIST_COMPARISON_CALLBACK  SearchCallback,
+  VOID                          *SearchTarget,
+  VOID                          *SearchContext,
+  VOID                          **pvFoundItem
+  )
 {
-    PRTL_GROWING_LIST pvWorkingList = NULL;
-    EFI_STATUS status = EFI_SUCCESS;
+  EFI_STATUS  status = EFI_SUCCESS;
+  UINT32      ul;
+  int         CompareResult = 0;
 
-    if (ppGrowingList != NULL)
-        *ppGrowingList = NULL;
-    else
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER_1);
+  if (pvFoundItem) {
+    *pvFoundItem = NULL;
+  }
 
-    if (!Allocation)
-        return RtlpReportXmlError(EFI_INVALID_PARAMETER_3);
+  //    if (TheList->ulFlags & GROWING_LIST_FLAG_IS_SORTED) {
+  if (0) {
+  } else {
+    UINT32                   uOffset = 0;
+    PRTL_GROWING_LIST_CHUNK  Chunklet;
+
+    ul = 0;
 
     //
-    // Allocate space
+    // Scan the internal item list.
     //
-    status = Allocation->pfnAlloc(sizeof(RTL_GROWING_LIST), (VOID**)&pvWorkingList, Allocation->pvContext);
-    if (EFI_ERROR(status)) {
+    while ((ul < ItemCount) && (ul < TheList->cInternalElements)) {
+      VOID  *pvHere = (VOID *)(((UINTN)TheList->pvInternalList) + uOffset);
+
+      status = SearchCallback (TheList, SearchTarget, pvHere, SearchContext, &CompareResult);
+      if (EFI_ERROR (status)) {
         goto Exit;
-    }
+      }
 
-    //
-    // Set up the structure
-    //
-    status = RtlInitializeGrowingList(
-        pvWorkingList,
-        cbThingSize,
-        8,
-        NULL,
-        0,
-        Allocation);
+      if (CompareResult == 0) {
+        if (pvFoundItem) {
+          *pvFoundItem = pvHere;
+        }
 
-    if (EFI_ERROR(status)) {
+        status = EFI_SUCCESS;
         goto Exit;
+      }
+
+      uOffset += TheList->cbElementSize;
+      ul++;
     }
 
-    *ppGrowingList = pvWorkingList;
-    pvWorkingList = NULL;
-    status = EFI_SUCCESS;
-Exit:
-    if (pvWorkingList) {
-        Allocation->pfnFree(pvWorkingList, Allocation->pvContext);
-    }
+    //
+    // Ok, we ran out of internal elements, do the same thing here but on the chunk list
+    //
+    Chunklet = TheList->pFirstChunk;
+    while ((ul < ItemCount) && Chunklet) {
+      VOID    *Data        = (VOID *)(Chunklet + 1);
+      UINT32  ulHighOffset = TheList->cElementsPerChunk * TheList->cbElementSize;
 
-    return status;
+      uOffset = 0;
 
-}
+      //
+      // Spin through the items in this chunklet
+      //
+      while (uOffset < ulHighOffset) {
+        VOID  *pvHere = (VOID *)(((UINTN)Data) + uOffset);
 
-
-
-
-
-EFI_STATUS
-RtlSearchGrowingList(
-    PRTL_GROWING_LIST TheList,
-    UINT32 ItemCount,
-    PFN_LIST_COMPARISON_CALLBACK SearchCallback,
-    VOID* SearchTarget,
-    VOID* SearchContext,
-    VOID* *pvFoundItem
-    )
-{
-    EFI_STATUS status = EFI_SUCCESS;
-    UINT32 ul;
-    int CompareResult = 0;
-
-    if (pvFoundItem)
-        *pvFoundItem = NULL;
-
-//    if (TheList->ulFlags & GROWING_LIST_FLAG_IS_SORTED) {
-    if (0) {
-    }
-    else {
-
-        UINT32 uOffset = 0;
-        PRTL_GROWING_LIST_CHUNK Chunklet;
-
-        ul = 0;
-
-        //
-        // Scan the internal item list.
-        //
-        while ((ul < ItemCount) && (ul < TheList->cInternalElements)) {
-
-            VOID* pvHere = (VOID*)(((UINTN)TheList->pvInternalList) + uOffset);
-
-            status = SearchCallback(TheList, SearchTarget, pvHere, SearchContext, &CompareResult);
-            if (EFI_ERROR(status)) {
-                goto Exit;
-            }
-
-            if (CompareResult == 0) {
-                if (pvFoundItem)
-                    *pvFoundItem = pvHere;
-                status = EFI_SUCCESS;
-                goto Exit;
-            }
-
-            uOffset += TheList->cbElementSize;
-            ul++;
+        status = SearchCallback (TheList, SearchTarget, pvHere, SearchContext, &CompareResult);
+        if (EFI_ERROR (status)) {
+          goto Exit;
         }
 
-        //
-        // Ok, we ran out of internal elements, do the same thing here but on the chunk list
-        //
-        Chunklet = TheList->pFirstChunk;
-        while ((ul < ItemCount) && Chunklet) {
+        if (CompareResult == 0) {
+          if (pvFoundItem) {
+            *pvFoundItem = pvHere;
+          }
 
-            VOID* Data = (VOID*)(Chunklet + 1);
-            UINT32 ulHighOffset = TheList->cElementsPerChunk * TheList->cbElementSize;
-
-            uOffset = 0;
-
-            //
-            // Spin through the items in this chunklet
-            //
-            while (uOffset < ulHighOffset) {
-
-                VOID* pvHere = (VOID*)(((UINTN)Data) + uOffset);
-
-                status = SearchCallback(TheList, SearchTarget, pvHere, SearchContext, &CompareResult);
-                if (EFI_ERROR(status)) {
-                    goto Exit;
-                }
-
-                if (CompareResult == 0) {
-                    if (pvFoundItem)
-                        *pvFoundItem = pvHere;
-                    status = EFI_SUCCESS;
-                    goto Exit;
-                }
-
-                uOffset += TheList->cbElementSize;
-            }
-
+          status = EFI_SUCCESS;
+          goto Exit;
         }
 
-        //
-        // If we got here, we didn't find it in either the internal list or the external one.
-        //
-        status = STATUS_NOT_FOUND;
-        if (pvFoundItem)
-            *pvFoundItem = NULL;
-
+        uOffset += TheList->cbElementSize;
+      }
     }
 
+    //
+    // If we got here, we didn't find it in either the internal list or the external one.
+    //
+    status = STATUS_NOT_FOUND;
+    if (pvFoundItem) {
+      *pvFoundItem = NULL;
+    }
+  }
+
 Exit:
-    return status;
+  return status;
 }
-
-

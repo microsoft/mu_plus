@@ -24,8 +24,8 @@
 EFI_STATUS
 EFIAPI
 GetQueueItemCount (
-  IN  EFI_GUID *QueueGuid,
-  OUT UINTN    *ItemCount
+  IN  EFI_GUID  *QueueGuid,
+  OUT UINTN     *ItemCount
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a NULL lib and should not be used in production.\n", __FUNCTION__));
@@ -46,9 +46,9 @@ GetQueueItemCount (
 EFI_STATUS
 EFIAPI
 QueueAddItem (
-  IN  EFI_GUID *QueueGuid,
-  IN  VOID     *ItemData,
-  IN  UINTN    ItemDataSize
+  IN  EFI_GUID  *QueueGuid,
+  IN  VOID      *ItemData,
+  IN  UINTN     ItemDataSize
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a NULL lib and should not be used in production.\n", __FUNCTION__));
@@ -78,10 +78,10 @@ QueueAddItem (
 EFI_STATUS
 EFIAPI
 QueuePopItemAtIndex (
-  IN  EFI_GUID *QueueGuid,
-  IN  UINTN    ItemIndex,
-  OUT VOID     **ItemData OPTIONAL,
-  OUT UINTN    *ItemDataSize OPTIONAL
+  IN  EFI_GUID  *QueueGuid,
+  IN  UINTN     ItemIndex,
+  OUT VOID      **ItemData OPTIONAL,
+  OUT UINTN     *ItemDataSize OPTIONAL
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a NULL lib and should not be used in production.\n", __FUNCTION__));
@@ -107,16 +107,15 @@ QueuePopItemAtIndex (
 EFI_STATUS
 EFIAPI
 QueuePopItem (
-  IN  EFI_GUID *QueueGuid,
-  OUT VOID     **ItemData,
-  OUT UINTN    *ItemDataSize
+  IN  EFI_GUID  *QueueGuid,
+  OUT VOID      **ItemData,
+  OUT UINTN     *ItemDataSize
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a NULL lib and should not be used in production.\n", __FUNCTION__));
   ASSERT (FALSE);
   return EFI_UNSUPPORTED;
 }
-
 
 /**
   Peaks at a specific item currently in the queue.
@@ -137,10 +136,10 @@ QueuePopItem (
 EFI_STATUS
 EFIAPI
 QueuePeekAtIndex (
-  IN  EFI_GUID *QueueGuid,
-  IN  UINTN    ItemIndex,
-  OUT VOID     **ItemData,
-  OUT UINTN    *ItemDataSize
+  IN  EFI_GUID  *QueueGuid,
+  IN  UINTN     ItemIndex,
+  OUT VOID      **ItemData,
+  OUT UINTN     *ItemDataSize
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a NULL lib and should not be used in production.\n", __FUNCTION__));

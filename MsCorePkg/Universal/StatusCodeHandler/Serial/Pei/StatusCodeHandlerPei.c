@@ -39,17 +39,16 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 **/
 EFI_STATUS
 EFIAPI
-SerialStatusCodePei
-(
-  IN CONST  EFI_PEI_SERVICES        **PeiServices,
-  IN        EFI_STATUS_CODE_TYPE    Type,
-  IN        EFI_STATUS_CODE_VALUE   Value,
-  IN        UINT32                  Instance,
-  IN CONST  EFI_GUID                *CallerId,
-  IN CONST  EFI_STATUS_CODE_DATA    *Data
-)
+SerialStatusCodePei (
+  IN CONST  EFI_PEI_SERVICES       **PeiServices,
+  IN        EFI_STATUS_CODE_TYPE   Type,
+  IN        EFI_STATUS_CODE_VALUE  Value,
+  IN        UINT32                 Instance,
+  IN CONST  EFI_GUID               *CallerId,
+  IN CONST  EFI_STATUS_CODE_DATA   *Data
+  )
 {
-  return SerialStatusCode(Type, Value, Instance, CallerId, Data);
+  return SerialStatusCode (Type, Value, Instance, CallerId, Data);
 }
 
 /**
@@ -70,25 +69,23 @@ PeiEntry (
   IN CONST EFI_PEI_SERVICES     **PeiServices
   )
 {
-  EFI_STATUS                  Status;
-  EFI_PEI_RSC_HANDLER_PPI     *Ppi;
+  EFI_STATUS               Status;
+  EFI_PEI_RSC_HANDLER_PPI  *Ppi;
 
   Status = PeiServicesLocatePpi (
              &gEfiPeiRscHandlerPpiGuid,
              0,
              NULL,
-             (VOID **) &Ppi
+             (VOID **)&Ppi
              );
-  if (EFI_ERROR(Status))
-  {
-    ASSERT_EFI_ERROR(Status);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
     return Status;
   }
 
-  Status = SerialPortInitialize();
-  if (EFI_ERROR(Status))
-  {
-    ASSERT_EFI_ERROR(Status);
+  Status = SerialPortInitialize ();
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
     return Status;
   }
 
@@ -109,9 +106,9 @@ PeiEntry (
 VOID
 EFIAPI
 WriteStatusCode (
-  IN UINT8     *Buffer,
-  IN UINTN     NumberOfBytes
+  IN UINT8  *Buffer,
+  IN UINTN  NumberOfBytes
   )
 {
-    SerialPortWrite(Buffer, NumberOfBytes);
+  SerialPortWrite (Buffer, NumberOfBytes);
 }

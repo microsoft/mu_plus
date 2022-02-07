@@ -21,8 +21,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 UpdateSecureBootViolation (
-  IN  EFI_STATUS    RebootStatus
-) 
+  IN  EFI_STATUS  RebootStatus
+  )
 {
   return EFI_SUCCESS;
 }
@@ -37,8 +37,8 @@ UpdateSecureBootViolation (
 **/
 EFI_STATUS
 SetRebootReason (
-  IN  EFI_STATUS     RebootStatus
-) 
+  IN  EFI_STATUS  RebootStatus
+  )
 {
   return EFI_SUCCESS;
 }
@@ -51,9 +51,9 @@ SetRebootReason (
 **/
 EFI_STATUS
 EFIAPI
-ClearRebootReason(
+ClearRebootReason (
   VOID
-)
+  )
 {
   return EFI_SUCCESS;
 }
@@ -62,7 +62,7 @@ ClearRebootReason(
   Read reboot reason
 
   @param[out]       Buffer        Buffer to hold returned data
-  @param[in, out]   BufferSize    Input as available data buffer size, output as data 
+  @param[in, out]   BufferSize    Input as available data buffer size, output as data
                                   size filled
 
   @retval  EFI_SUCCESS  Fetched version information successfully
@@ -70,10 +70,10 @@ ClearRebootReason(
 **/
 EFI_STATUS
 EFIAPI
-GetRebootReason(
-      OUT UINT8                  *Buffer,          OPTIONAL
+GetRebootReason (
+  OUT UINT8 *Buffer, OPTIONAL
   IN  OUT UINTN                  *BufferSize
-)
+  )
 {
   return EFI_NOT_FOUND;
 }
@@ -88,7 +88,7 @@ EFI_STATUS
 EFIAPI
 UpdateRebootReason (
   VOID
-)
+  )
 {
   return EFI_SUCCESS;
 }

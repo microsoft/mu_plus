@@ -1,4 +1,3 @@
-
 /** @file
  *Header file for Ms Boot Policy Library
 
@@ -10,13 +9,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _MS_BOOT_POLICY_LIB_H_
 #define _MS_BOOT_POLICY_LIB_H_
 
-
 typedef enum {
-    MsBootDone,
-    MsBootPXE4,
-    MsBootPXE6,
-    MsBootHDD,
-    MsBootUSB
+  MsBootDone,
+  MsBootPXE4,
+  MsBootPXE6,
+  MsBootHDD,
+  MsBootUSB
 } BOOT_SEQUENCE;
 
 /**
@@ -53,7 +51,7 @@ MsBootPolicyLibIsAltBoot (
 BOOLEAN
 EFIAPI
 MsBootPolicyLibIsDeviceBootable (
-  EFI_HANDLE   ControllerHandle
+  EFI_HANDLE  ControllerHandle
   );
 
 /**
@@ -98,8 +96,8 @@ MsBootPolicyLibIsDevicePathUsb (
 EFI_STATUS
 EFIAPI
 MsBootPolicyLibGetBootSequence (
-  BOOT_SEQUENCE **BootSequence,
-  BOOLEAN         AltBootRequest
+  BOOT_SEQUENCE  **BootSequence,
+  BOOLEAN        AltBootRequest
   );
 
 /**
@@ -111,8 +109,8 @@ MsBootPolicyLibGetBootSequence (
 **/
 EFI_STATUS
 EFIAPI
-MsBootPolicyLibClearBootRequests(
-   VOID
-   );
-#endif
+MsBootPolicyLibClearBootRequests (
+  VOID
+  );
 
+#endif

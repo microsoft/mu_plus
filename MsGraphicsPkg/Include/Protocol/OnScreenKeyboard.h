@@ -11,7 +11,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Protocol/SimpleWindowManager.h>
 
-
 // Global ID for the On-Screen Keyboard Protocol
 //
 #define MS_ONSCREEN_KEYBOARD_PROTOCOL_GUID                                          \
@@ -19,47 +18,41 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     0x3c4ca20d, 0xc95a, 0x4b8b, { 0x81, 0xaf, 0x94, 0xa9, 0x83, 0x9, 0x23, 0xe2 }   \
   }
 
-typedef struct  _MS_ONSCREEN_KEYBOARD_PROTOCOL  MS_ONSCREEN_KEYBOARD_PROTOCOL;
+typedef struct  _MS_ONSCREEN_KEYBOARD_PROTOCOL MS_ONSCREEN_KEYBOARD_PROTOCOL;
 
 // Keyboard mode values (used in mode bitfield since multiple can be set at once).
 //
-#define OSK_MODE_AUTOENABLEICON 0x00000001      // Auto-Enable mode causes OSK icon to be displayed when client waits on input.
-#define OSK_MODE_NUMERIC        0x00000002      // Numeric mode causes OSK to switch to numeric input page.
-#define OSK_MODE_SELF_REFRESH   0x00000004      // Keyboard self-refresh mode (periodically redraws itself).
-
+#define OSK_MODE_AUTOENABLEICON  0x00000001     // Auto-Enable mode causes OSK icon to be displayed when client waits on input.
+#define OSK_MODE_NUMERIC         0x00000002     // Numeric mode causes OSK to switch to numeric input page.
+#define OSK_MODE_SELF_REFRESH    0x00000004     // Keyboard self-refresh mode (periodically redraws itself).
 
 // Screen position values - used for keyboard & icon placement
 //
-typedef enum
-{
-    BottomRight = 0,
-    BottomCenter,
-    BottomLeft,
-    LeftCenter,
-    TopRight,
-    TopCenter,
-    TopLeft,
-    RightCenter
+typedef enum {
+  BottomRight = 0,
+  BottomCenter,
+  BottomLeft,
+  LeftCenter,
+  TopRight,
+  TopCenter,
+  TopLeft,
+  RightCenter
 } SCREEN_POSITION;
-
 
 // Screen fixed rotation angles - used for keyboard rotation angle
 //
-typedef enum
-{
-    Angle_0 = 0,
-    Angle_90,
-    Angle_180,
-    Angle_270
+typedef enum {
+  Angle_0 = 0,
+  Angle_90,
+  Angle_180,
+  Angle_270
 } SCREEN_ANGLE;
-
 
 // Current keyboard docked state
 //
-typedef enum
-{
-    Docked = 0,
-    Undocked
+typedef enum {
+  Docked = 0,
+  Undocked
 } OSK_DOCKED_STATE;
 
 /**
@@ -75,9 +68,9 @@ typedef enum
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SHOW_KEYBOARD_ICON)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN BOOLEAN                          bShowIcon
-);
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN BOOLEAN                          bShowIcon
+  );
 
 /**
   Selects the OSK icon position
@@ -92,9 +85,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SET_KEYBOARD_ICON_POSITION)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN SCREEN_POSITION                  Position
-);
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN SCREEN_POSITION                  Position
+  );
 
 /**
   Selects the OSK position
@@ -110,10 +103,10 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SET_KEYBOARD_POSITION)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN SCREEN_POSITION                  Position,
-    IN OSK_DOCKED_STATE                 DockedState
-);
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN SCREEN_POSITION                  Position,
+  IN OSK_DOCKED_STATE                 DockedState
+  );
 
 /**
   Sets the OSK size
@@ -128,9 +121,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SET_KEYBOARD_SIZE)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN UINTN                            PercentOfScreenWidth
-);
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN UINTN                            PercentOfScreenWidth
+  );
 
 /**
   Sets the OSK rotation angle
@@ -145,10 +138,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SET_KEYBOARD_ANGLE)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN SCREEN_ANGLE                     KeyboardAngle
-);
-
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN SCREEN_ANGLE                     KeyboardAngle
+  );
 
 /**
   Retrieves the current OSK mode
@@ -162,10 +154,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_GET_KEYBOARD_MODE)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN UINT32                           *ModeBitfield
-);
-
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN UINT32                           *ModeBitfield
+  );
 
 /**
   Sets the OSK mode
@@ -179,9 +170,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SET_KEYBOARD_MODE)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN UINT32                           ModeBitfield
-);
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN UINT32                           ModeBitfield
+  );
 
 /**
   Shows or Hides the OSK
@@ -195,10 +186,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SHOW_KEYBOARD)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN BOOLEAN                          bShowKeyboard
-);
-
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN BOOLEAN                          bShowKeyboard
+  );
 
 /**
   Shows or Hides the OSK's (Un)docking and Close buttons, thereby disabling those features.
@@ -212,16 +202,15 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_SHOW_DOCKANDCLOSE_BUTTONS)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN BOOLEAN                          bShowDockAndCloseButtons
-);
-
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN BOOLEAN                          bShowDockAndCloseButtons
+  );
 
 /**
   Gets the current OSK outer bounding frame (position and size).
 
   @param  This              Protocol instance pointer.
-  @param  FrameRect         OSK frame rectangle.             
+  @param  FrameRect         OSK frame rectangle.
 
   @retval EFI_SUCCESS       The request was successful.
 
@@ -229,28 +218,25 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_OSK_GET_KEYBOARD_BOUNDS)(
-    IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
-    IN SWM_RECT                         *FrameRect
-);
-
+  IN MS_ONSCREEN_KEYBOARD_PROTOCOL    *This,
+  IN SWM_RECT                         *FrameRect
+  );
 
 // OSK protocol structure
 //
-struct _MS_ONSCREEN_KEYBOARD_PROTOCOL
-{
-    MS_OSK_SHOW_KEYBOARD_ICON           ShowKeyboardIcon;
-    MS_OSK_SHOW_KEYBOARD                ShowKeyboard;
-    MS_OSK_SHOW_DOCKANDCLOSE_BUTTONS    ShowDockAndCloseButtons;
-    MS_OSK_SET_KEYBOARD_ICON_POSITION   SetKeyboardIconPosition;
-    MS_OSK_SET_KEYBOARD_POSITION        SetKeyboardPosition;
-    MS_OSK_SET_KEYBOARD_ANGLE           SetKeyboardRotationAngle;
-    MS_OSK_SET_KEYBOARD_SIZE            SetKeyboardSize;
-    MS_OSK_GET_KEYBOARD_MODE            GetKeyboardMode;
-    MS_OSK_SET_KEYBOARD_MODE            SetKeyboardMode;
-    MS_OSK_GET_KEYBOARD_BOUNDS          GetKeyboardBounds;
+struct _MS_ONSCREEN_KEYBOARD_PROTOCOL {
+  MS_OSK_SHOW_KEYBOARD_ICON            ShowKeyboardIcon;
+  MS_OSK_SHOW_KEYBOARD                 ShowKeyboard;
+  MS_OSK_SHOW_DOCKANDCLOSE_BUTTONS     ShowDockAndCloseButtons;
+  MS_OSK_SET_KEYBOARD_ICON_POSITION    SetKeyboardIconPosition;
+  MS_OSK_SET_KEYBOARD_POSITION         SetKeyboardPosition;
+  MS_OSK_SET_KEYBOARD_ANGLE            SetKeyboardRotationAngle;
+  MS_OSK_SET_KEYBOARD_SIZE             SetKeyboardSize;
+  MS_OSK_GET_KEYBOARD_MODE             GetKeyboardMode;
+  MS_OSK_SET_KEYBOARD_MODE             SetKeyboardMode;
+  MS_OSK_GET_KEYBOARD_BOUNDS           GetKeyboardBounds;
 };
 
+extern EFI_GUID  gMsOSKProtocolGuid;
 
-extern EFI_GUID     gMsOSKProtocolGuid;
-
-#endif      // _OSK_PROTOCOL_H_
+#endif // _OSK_PROTOCOL_H_

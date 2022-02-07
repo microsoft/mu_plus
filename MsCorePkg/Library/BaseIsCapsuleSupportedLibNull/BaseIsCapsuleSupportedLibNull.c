@@ -74,13 +74,12 @@ IsFmpCapsuleGuid (
 BOOLEAN
 EFIAPI
 IsFmpCapsule (
-  IN EFI_CAPSULE_HEADER         *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a null lib and should not be used in production\n", __FUNCTION__));
   return FALSE;
 }
-
 
 /**
   Return if this FMP is a graphics capsule
@@ -94,7 +93,7 @@ IsFmpCapsule (
 BOOLEAN
 EFIAPI
 IsGraphicsCapsule (
-  IN EFI_CAPSULE_HEADER         *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a null lib and should not be used in production\n", __FUNCTION__));

@@ -7,12 +7,12 @@ Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
+
 #ifndef __XML_TREE_LIB_H__
 #define __XML_TREE_LIB_H__
 
-
-#define XML_MAX_ATTRIBUTE_VALUE_LENGTH	(1024)
-#define XML_MAX_ELEMENT_VALUE_LENGTH	(0xFFFF)
+#define XML_MAX_ATTRIBUTE_VALUE_LENGTH  (1024)
+#define XML_MAX_ELEMENT_VALUE_LENGTH    (0xFFFF)
 
 /**
 This function will create a xml tree given an XML document as a ascii string.
@@ -26,11 +26,11 @@ This function will create a xml tree given an XML document as a ascii string.
 **/
 EFI_STATUS
 EFIAPI
-CreateXmlTree(
-  IN  CONST CHAR8*      XmlDocument,
-  IN        UINTN       SizeXmlDocument,
-  OUT       XmlNode**   RootNode
-);
+CreateXmlTree (
+  IN  CONST CHAR8    *XmlDocument,
+  IN        UINTN    SizeXmlDocument,
+  OUT       XmlNode  **RootNode
+  );
 
 /**
   This function creates a new XML tree.
@@ -45,13 +45,12 @@ CreateXmlTree(
 **/
 EFI_STATUS
 EFIAPI
-AddNode(
-  IN        XmlNode*     Parent OPTIONAL,
-  IN  CONST CHAR8*       Name,
-  IN  CONST CHAR8*       Value OPTIONAL,
-  OUT       XmlNode**    Node OPTIONAL
-);
-
+AddNode (
+  IN        XmlNode  *Parent OPTIONAL,
+  IN  CONST CHAR8    *Name,
+  IN  CONST CHAR8    *Value OPTIONAL,
+  OUT       XmlNode  **Node OPTIONAL
+  );
 
 /**
   This function adds an existing tree to a parent node.
@@ -65,11 +64,10 @@ AddNode(
 
 EFI_STATUS
 EFIAPI
-AddChildTree(
-  IN XmlNode* Parent,
-  IN XmlNode* Tree
-);
-
+AddChildTree (
+  IN XmlNode  *Parent,
+  IN XmlNode  *Tree
+  );
 
 /**
   This adds an attribute to an existing XmlNode.
@@ -83,11 +81,11 @@ AddChildTree(
 **/
 EFI_STATUS
 EFIAPI
-AddAttributeToNode(
-  IN       XmlNode*   Parent,
-  IN CONST CHAR8*     Name,
-  IN CONST CHAR8*     Value
-);
+AddAttributeToNode (
+  IN       XmlNode  *Parent,
+  IN CONST CHAR8    *Name,
+  IN CONST CHAR8    *Value
+  );
 
 /**
   This function frees the string resources associated with the node,
@@ -100,10 +98,9 @@ AddAttributeToNode(
 **/
 EFI_STATUS
 EFIAPI
-DeleteNode(
-  IN XmlNode* Node
-);
-
+DeleteNode (
+  IN XmlNode  *Node
+  );
 
 /**
   This function frees the string resources associated with the attribute,
@@ -116,9 +113,9 @@ DeleteNode(
 **/
 EFI_STATUS
 EFIAPI
-DeleteAttribute(
-  IN XmlAttribute* Attribute
-);
+DeleteAttribute (
+  IN XmlAttribute  *Attribute
+  );
 
 /**
   This function will free all of the resources allocated for an XML Tree.
@@ -130,11 +127,9 @@ DeleteAttribute(
 **/
 EFI_STATUS
 EFIAPI
-FreeXmlTree(
-  IN XmlNode** RootNode
-);
-
-
+FreeXmlTree (
+  IN XmlNode  **RootNode
+  );
 
 /**
   This function uses DEBUG to print the Xml tree
@@ -142,14 +137,14 @@ FreeXmlTree(
   @param[in] Node  - Pointer to head xml element to print
   @param[in] Level - IndentLevel to make printing pretty.
                      Each child element will be indented.
-					 When calling externally this parameter should be 0
+                                         When calling externally this parameter should be 0
 **/
 VOID
 EFIAPI
-DebugPrintXmlTree(
-  IN CONST XmlNode *Node,
-  IN UINTN Level
-);
+DebugPrintXmlTree (
+  IN CONST XmlNode  *Node,
+  IN UINTN          Level
+  );
 
 /**
 Public function to create an ascii string from an xml tree.
@@ -162,12 +157,12 @@ This will use shortened XML notation and no whitespace and xml escaped strings. 
 **/
 EFI_STATUS
 EFIAPI
-XmlTreeToString(
-  IN  CONST XmlNode    *Node,
-  IN        BOOLEAN    Escaped,
-  OUT       UINTN      *BufferSize,
-  OUT       CHAR8      **String
-);
+XmlTreeToString (
+  IN  CONST XmlNode  *Node,
+  IN        BOOLEAN  Escaped,
+  OUT       UINTN    *BufferSize,
+  OUT       CHAR8    **String
+  );
 
 /**
 Function to calculate the size of the Ascii string needed
@@ -182,11 +177,11 @@ This uses a shortened XML format (for empty elements), minimal whitespace, and x
 **/
 EFI_STATUS
 EFIAPI
-CalculateXmlDocSize(
-  IN  CONST XmlNode* Node,
-  IN        BOOLEAN    Escaped,
-  OUT       UINTN*   Size
-);
+CalculateXmlDocSize (
+  IN  CONST XmlNode  *Node,
+  IN        BOOLEAN  Escaped,
+  OUT       UINTN    *Size
+  );
 
 /**
 Escape the string so any XML invalid chars are
@@ -200,11 +195,11 @@ converted into valid chars.
 **/
 EFI_STATUS
 EFIAPI
-XmlEscape(
-  IN CONST CHAR8* String,
+XmlEscape (
+  IN CONST CHAR8  *String,
   IN UINTN        MaxStringLength,
-  OUT CHAR8**     EscapedString
-);
+  OUT CHAR8       **EscapedString
+  );
 
 /**
 Remove XML escape sequences in the string so strings are valid for string operations
@@ -217,32 +212,31 @@ Remove XML escape sequences in the string so strings are valid for string operat
 **/
 EFI_STATUS
 EFIAPI
-XmlUnEscape(
-	IN CONST CHAR8* EscapedString,
-	IN UINTN        MaxEscapedStringLength,
-	OUT CHAR8**     String
-);
-
+XmlUnEscape (
+  IN CONST CHAR8  *EscapedString,
+  IN UINTN        MaxEscapedStringLength,
+  OUT CHAR8       **String
+  );
 
 /**
 Function to go thru a tree and count the nodes
 **/
 EFI_STATUS
 EFIAPI
-XmlTreeNumberOfNodes(
-  IN  CONST XmlNode* Node,
-  OUT       UINTN* Count
-);
+XmlTreeNumberOfNodes (
+  IN  CONST XmlNode  *Node,
+  OUT       UINTN    *Count
+  );
 
 /**
 Function to go thru a tree and count the attributes
 **/
 EFI_STATUS
 EFIAPI
-XmlTreeNumberOfAttributes(
-  IN  CONST XmlNode* Node,
-  OUT       UINTN* Count
-);
+XmlTreeNumberOfAttributes (
+  IN  CONST XmlNode  *Node,
+  OUT       UINTN    *Count
+  );
 
 /**
 Function to go thru a tree and report the max depth
@@ -250,10 +244,10 @@ Function to go thru a tree and report the max depth
 **/
 EFI_STATUS
 EFIAPI
-XmlTreeMaxDepth(
-  IN  CONST XmlNode* Node,
-  IN OUT    UINTN* Depth
-);
+XmlTreeMaxDepth (
+  IN  CONST XmlNode  *Node,
+  IN OUT    UINTN    *Depth
+  );
 
 /**
 Function to go thru a tree and report the max number of attributes on any element
@@ -261,11 +255,9 @@ Function to go thru a tree and report the max number of attributes on any elemen
 **/
 EFI_STATUS
 EFIAPI
-XmlTreeMaxAttributes(
-  IN  CONST XmlNode* Node,
-  IN OUT    UINTN* MaxAttributes
-);
-
-
+XmlTreeMaxAttributes (
+  IN  CONST XmlNode  *Node,
+  IN OUT    UINTN    *MaxAttributes
+  );
 
 #endif // __MS_XML_NODE_INC__

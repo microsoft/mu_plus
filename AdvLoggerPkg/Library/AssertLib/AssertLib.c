@@ -19,7 +19,6 @@
 #include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
 
-
 //
 // Define the maximum debug and assert message length that this library supports
 //
@@ -54,7 +53,7 @@ DebugAssert (
   IN CONST CHAR8  *Description
   )
 {
-  CHAR8   Buffer[MAX_DEBUG_MESSAGE_LENGTH];
+  CHAR8  Buffer[MAX_DEBUG_MESSAGE_LENGTH];
 
   //
   // Generate the ASSERT() message in ASCII format
@@ -66,14 +65,14 @@ DebugAssert (
   //
   AdvancedLoggerWrite (DEBUG_ERROR, Buffer, AsciiStrLen (Buffer));
 
-  if ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
+  if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
     CpuBreakpoint ();
   }
-  if ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED) != 0) {
+
+  if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_DEADLOOP_ENABLED) != 0) {
     CpuDeadLoop ();
   }
 }
-
 
 /**
   Returns TRUE if ASSERT() macros are enabled.
@@ -91,5 +90,5 @@ DebugAssertEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
 }

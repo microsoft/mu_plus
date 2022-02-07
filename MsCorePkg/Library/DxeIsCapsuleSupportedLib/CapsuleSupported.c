@@ -55,15 +55,19 @@ IsValidCapsuleHeader (
   IN UINT64              CapsuleSize
   )
 {
-  if (CapsuleHeader == NULL) { // do a quick investment
+  if (CapsuleHeader == NULL) {
+    // do a quick investment
     return FALSE;
   }
+
   if (CapsuleHeader->CapsuleImageSize != CapsuleSize) {
     return FALSE;
   }
+
   if (CapsuleHeader->HeaderSize >= CapsuleHeader->CapsuleImageSize) {
     return FALSE;
   }
+
   return TRUE;
 }
 
@@ -78,11 +82,11 @@ IsValidCapsuleHeader (
 STATIC
 BOOLEAN
 IsNestedFmpCapsule (
-  IN EFI_CAPSULE_HEADER         *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   )
 {
-  EFI_CAPSULE_HEADER         *NestedCapsuleHeader;
-  UINTN                      NestedCapsuleSize;
+  EFI_CAPSULE_HEADER  *NestedCapsuleHeader;
+  UINTN               NestedCapsuleSize;
 
   // Do a quick null check
   if (CapsuleHeader == NULL) {
@@ -93,28 +97,31 @@ IsNestedFmpCapsule (
   if (IsCapsuleGuidInEsrtTable (&CapsuleHeader->CapsuleGuid) == FALSE) {
     return FALSE;
   }
-  
+
   //
   // Check nested capsule header
   // FMP GUID after ESRT one
   //
   NestedCapsuleHeader = (EFI_CAPSULE_HEADER *)((UINT8 *)CapsuleHeader + CapsuleHeader->HeaderSize);
-  NestedCapsuleSize = (UINTN)CapsuleHeader + CapsuleHeader->CapsuleImageSize - (UINTN)NestedCapsuleHeader;
-  if (NestedCapsuleSize < sizeof(EFI_CAPSULE_HEADER)) {
+  NestedCapsuleSize   = (UINTN)CapsuleHeader + CapsuleHeader->CapsuleImageSize - (UINTN)NestedCapsuleHeader;
+  if (NestedCapsuleSize < sizeof (EFI_CAPSULE_HEADER)) {
     return FALSE;
   }
+
   if (!IsValidCapsuleHeader (NestedCapsuleHeader, NestedCapsuleSize)) {
     return FALSE;
   }
+
   if (!IsFmpCapsuleGuid (&NestedCapsuleHeader->CapsuleGuid)) {
     return FALSE;
   }
+
   return TRUE;
 }
 
 /**
   Does a rough sanity check for an fmp capsule.
-  
+
   It focuses on layout and general correctness rather than authentication
   or if this capsule matches an FMP device on this system.
 
@@ -140,17 +147,17 @@ DoSanityCheckOnFmpCapsule (
   IN EFI_CAPSULE_HEADER  *CapsuleHeader
   )
 {
-  EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER       *FmpCapsuleHeader;
-  UINT8                                        *EndOfCapsule;
-  EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER *ImageHeader;
-  UINT8                                        *EndOfPayload;
-  UINT64                                       *ItemOffsetList;
-  UINT32                                       ItemNum;
-  UINTN                                        Index;
-  UINTN                                        FmpCapsuleSize;
-  UINTN                                        FmpCapsuleHeaderSize;
-  UINT64                                       FmpImageSize;
-  UINTN                                        FmpImageHeaderSize;
+  EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER        *FmpCapsuleHeader;
+  UINT8                                         *EndOfCapsule;
+  EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER  *ImageHeader;
+  UINT8                                         *EndOfPayload;
+  UINT64                                        *ItemOffsetList;
+  UINT32                                        ItemNum;
+  UINTN                                         Index;
+  UINTN                                         FmpCapsuleSize;
+  UINTN                                         FmpCapsuleHeaderSize;
+  UINT64                                        FmpImageSize;
+  UINTN                                         FmpImageHeaderSize;
 
   // Do a quick null check
   if (CapsuleHeader == NULL) {
@@ -166,11 +173,11 @@ DoSanityCheckOnFmpCapsule (
     return EFI_INVALID_PARAMETER;
   }
 
-  FmpCapsuleHeader = (EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER *) ((UINT8 *) CapsuleHeader + CapsuleHeader->HeaderSize);
-  EndOfCapsule     = (UINT8 *) CapsuleHeader + CapsuleHeader->CapsuleImageSize;
+  FmpCapsuleHeader = (EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER *)((UINT8 *)CapsuleHeader + CapsuleHeader->HeaderSize);
+  EndOfCapsule     = (UINT8 *)CapsuleHeader + CapsuleHeader->CapsuleImageSize;
   FmpCapsuleSize   = (UINTN)EndOfCapsule - (UINTN)FmpCapsuleHeader;
 
-  if (FmpCapsuleSize < sizeof(EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER)) {
+  if (FmpCapsuleSize < sizeof (EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER)) {
     DEBUG ((DEBUG_ERROR, "[%a] -FmpCapsuleSize(0x%x) < EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER\n", __FUNCTION__, FmpCapsuleSize));
     return EFI_INVALID_PARAMETER;
   }
@@ -180,23 +187,24 @@ DoSanityCheckOnFmpCapsule (
     DEBUG ((DEBUG_ERROR, "[%a] -FmpCapsuleHeader->Version(0x%x) != EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER_INIT_VERSION\n", __FUNCTION__, FmpCapsuleHeader->Version));
     return EFI_INVALID_PARAMETER;
   }
+
   ItemOffsetList = (UINT64 *)(FmpCapsuleHeader + 1);
 
   ItemNum = FmpCapsuleHeader->PayloadItemCount;
 
   // Currently we do not support Embedded Drivers.
   // This opens up concerns about validating the driver as we can't trust secure boot chain (pk)
-  if (FmpCapsuleHeader->EmbeddedDriverCount != 0)
-  {
+  if (FmpCapsuleHeader->EmbeddedDriverCount != 0) {
     DEBUG ((DEBUG_ERROR, "[%a] - FMP Capsule contains an embedded driver.  This is not supported by this implementation\n", __FUNCTION__));
     return EFI_UNSUPPORTED;
   }
 
-  if ((FmpCapsuleSize - sizeof(EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER))/sizeof(UINT64) < ItemNum) {
+  if ((FmpCapsuleSize - sizeof (EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER))/sizeof (UINT64) < ItemNum) {
     DEBUG ((DEBUG_ERROR, "[%a] -ItemNum(0x%x) too big\n", ItemNum));
     return EFI_INVALID_PARAMETER;
   }
-  FmpCapsuleHeaderSize = sizeof(EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER) + (sizeof(UINT64) * ItemNum);
+
+  FmpCapsuleHeaderSize = sizeof (EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER) + (sizeof (UINT64) * ItemNum);
 
   // Check ItemOffsetList
   for (Index = 0; Index < ItemNum; Index++) {
@@ -204,10 +212,12 @@ DoSanityCheckOnFmpCapsule (
       DEBUG ((DEBUG_ERROR, "[%a] -ItemOffsetList[%d](0x%lx) >= FmpCapsuleSize(0x%x)\n", __FUNCTION__, Index, ItemOffsetList[Index], FmpCapsuleSize));
       return EFI_INVALID_PARAMETER;
     }
+
     if (ItemOffsetList[Index] < FmpCapsuleHeaderSize) {
       DEBUG ((DEBUG_ERROR, "[%a] -ItemOffsetList[%d](0x%lx) < FmpCapsuleHeaderSize(0x%x)\n", __FUNCTION__, Index, ItemOffsetList[Index], FmpCapsuleHeaderSize));
       return EFI_INVALID_PARAMETER;
     }
+
     //
     // All the address in ItemOffsetList must be stored in ascending order
     //
@@ -221,25 +231,29 @@ DoSanityCheckOnFmpCapsule (
 
   // Check EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER
   for (Index = 0; Index < ItemNum; Index++) {
-    ImageHeader  = (EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER *)((UINT8 *)FmpCapsuleHeader + ItemOffsetList[Index]);
+    ImageHeader = (EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER *)((UINT8 *)FmpCapsuleHeader + ItemOffsetList[Index]);
     if (Index == ItemNum - 1) {
       EndOfPayload = (UINT8 *)((UINTN)EndOfCapsule - (UINTN)FmpCapsuleHeader);
     } else {
       EndOfPayload = (UINT8 *)(UINTN)ItemOffsetList[Index+1];
     }
+
     FmpImageSize = (UINTN)EndOfPayload - ItemOffsetList[Index];
 
-    FmpImageHeaderSize = sizeof(EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER);
+    FmpImageHeaderSize = sizeof (EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER);
     if ((ImageHeader->Version > EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER_INIT_VERSION) ||
-        (ImageHeader->Version < 1)) {
+        (ImageHeader->Version < 1))
+    {
       DEBUG ((DEBUG_ERROR, "[%a] -ImageHeader->Version(0x%x) Unknown\n", __FUNCTION__, ImageHeader->Version));
       return EFI_INVALID_PARAMETER;
     }
+
     if (ImageHeader->Version == 1) {
-      FmpImageHeaderSize = OFFSET_OF(EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER, UpdateHardwareInstance);
+      FmpImageHeaderSize = OFFSET_OF (EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER, UpdateHardwareInstance);
     } else if (ImageHeader->Version == 2) {
-      FmpImageHeaderSize = OFFSET_OF(EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER, ImageCapsuleSupport);
+      FmpImageHeaderSize = OFFSET_OF (EFI_FIRMWARE_MANAGEMENT_CAPSULE_IMAGE_HEADER, ImageCapsuleSupport);
     }
+
     if (FmpImageSize < FmpImageHeaderSize) {
       DEBUG ((DEBUG_ERROR, "[%a] -FmpImageSize(0x%lx) < FmpImageHeaderSize(0x%x)\n", __FUNCTION__, FmpImageSize, FmpImageHeaderSize));
       return EFI_INVALID_PARAMETER;
@@ -259,6 +273,7 @@ DoSanityCheckOnFmpCapsule (
       DEBUG ((DEBUG_ERROR, "[%a] -EndOfPayload(0x%x) mismatch, EndOfCapsule(0x%x)\n", __FUNCTION__, EndOfPayload, EndOfCapsule));
       return EFI_INVALID_PARAMETER;
     }
+
     return EFI_UNSUPPORTED;
   }
 
@@ -288,13 +303,15 @@ IsCapsuleImageSupported (
   if (CapsuleHeader == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+
   // check Display Capsule Guid
-  if (IsGraphicsCapsule(CapsuleHeader)) {
+  if (IsGraphicsCapsule (CapsuleHeader)) {
     // Simple sanity check
     if (CapsuleHeader->HeaderSize >= CapsuleHeader->CapsuleImageSize) {
       DEBUG ((DEBUG_ERROR, "[%a] -HeaderSize(0x%x) >= CapsuleImageSize(0x%x)\n", __FUNCTION__, CapsuleHeader->HeaderSize, CapsuleHeader->CapsuleImageSize));
       return EFI_INVALID_PARAMETER;
     }
+
     return EFI_SUCCESS;
   }
 
@@ -303,10 +320,12 @@ IsCapsuleImageSupported (
     if (CapsuleHeader->HeaderSize == CapsuleHeader->CapsuleImageSize) {
       return EFI_SUCCESS;
     }
+
     //
     // Check layout of FMP capsule
     return DoSanityCheckOnFmpCapsule (CapsuleHeader);
   }
+
   DEBUG ((DEBUG_ERROR, "Unknown Capsule Guid - %g\n", &CapsuleHeader->CapsuleGuid));
   return EFI_UNSUPPORTED;
 }
@@ -330,6 +349,7 @@ IsFmpCapsuleGuid (
   if (CapsuleGuid == NULL) {
     return FALSE;
   }
+
   return CompareGuid (&gEfiFmpCapsuleGuid, CapsuleGuid);
 }
 
@@ -345,13 +365,14 @@ IsFmpCapsuleGuid (
 BOOLEAN
 EFIAPI
 IsFmpCapsule (
-  IN EFI_CAPSULE_HEADER         *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   )
 {
   // Do a quick null check
   if (CapsuleHeader == NULL) {
     return FALSE;
   }
+
   return IsFmpCapsuleGuid (&CapsuleHeader->CapsuleGuid) || IsNestedFmpCapsule (CapsuleHeader);
 }
 
@@ -367,12 +388,13 @@ IsFmpCapsule (
 BOOLEAN
 EFIAPI
 IsGraphicsCapsule (
-  IN EFI_CAPSULE_HEADER         *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   )
 {
   // Do a quick null check
   if (CapsuleHeader == NULL) {
     return FALSE;
   }
+
   return CompareGuid (&(CapsuleHeader->CapsuleGuid), &gWindowsUxCapsuleGuid);
 }

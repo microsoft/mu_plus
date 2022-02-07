@@ -12,7 +12,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include <Uefi.h>
 
 #include <Library/DeviceSpecificBusInfoLib.h>
@@ -28,8 +27,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 UINTN
-GetPciCheckDevices(
-  OUT DEVICE_PCI_INFO **DevicesArray
+GetPciCheckDevices (
+  OUT DEVICE_PCI_INFO  **DevicesArray
   )
 {
   return 0;
@@ -46,8 +45,8 @@ GetPciCheckDevices(
 **/
 VOID
 ProcessPciDeviceResults (
-  IN  UINTN                       ResultCount,
-  IN  DEVICE_PCI_CHECK_RESULT     *Results
+  IN  UINTN                    ResultCount,
+  IN  DEVICE_PCI_CHECK_RESULT  *Results
   )
 {
   return;

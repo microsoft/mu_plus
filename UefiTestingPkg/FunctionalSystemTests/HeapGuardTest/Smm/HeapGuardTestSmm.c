@@ -27,10 +27,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "../HeapGuardTestCommon.h"
 
-
-//=============================================================================
+// =============================================================================
 // TEST HELPERS
-//=============================================================================
+// =============================================================================
 
 /**
 
@@ -42,43 +41,43 @@ EnableExceptionTestMode (
   VOID
   )
 {
-  EFI_STATUS    Status;
-  static SMM_EXCEPTION_TEST_PROTOCOL    *SmmExceptionTestProtocol = NULL;
+  EFI_STATUS                          Status;
+  static SMM_EXCEPTION_TEST_PROTOCOL  *SmmExceptionTestProtocol = NULL;
 
   // If we haven't found the protocol yet, do that now.
   if (SmmExceptionTestProtocol == NULL) {
-    Status = gSmst->SmmLocateProtocol( &gSmmExceptionTestProtocolGuid, NULL, (VOID**)&SmmExceptionTestProtocol );
-    if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, "%a - Failed to locate SmmExceptionTestProtocol! %r\n", __FUNCTION__, Status ));
+    Status = gSmst->SmmLocateProtocol (&gSmmExceptionTestProtocolGuid, NULL, (VOID **)&SmmExceptionTestProtocol);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Failed to locate SmmExceptionTestProtocol! %r\n", __FUNCTION__, Status));
       SmmExceptionTestProtocol = NULL;
     }
-
   }
 
   // If we have, request test mode.
   if (SmmExceptionTestProtocol != NULL) {
-    Status = SmmExceptionTestProtocol->EnableTestMode();
-    if (EFI_ERROR( Status )) {
-      DEBUG(( DEBUG_ERROR, "%a - Failed to enable test mode!\n", __FUNCTION__));
+    Status = SmmExceptionTestProtocol->EnableTestMode ();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Failed to enable test mode!\n", __FUNCTION__));
     }
   }
 
   return;
 } // EnableExceptionTestMode()
 
-//=============================================================================
+// =============================================================================
 // TEST ASSETS
 // These resources are used (and abused) by the test cases.
-//=============================================================================
+// =============================================================================
 
 VOID
 PoolTest (
-  IN UINT64* ptr,
-  IN UINT64 AllocationSize
+  IN UINT64  *ptr,
+  IN UINT64  AllocationSize
   )
 {
-  UINT64 *ptrLoc;
-  DEBUG((DEBUG_ERROR, "%a Allocated pool at 0x%p\n", __FUNCTION__, ptr));
+  UINT64  *ptrLoc;
+
+  DEBUG ((DEBUG_ERROR, "%a Allocated pool at 0x%p\n", __FUNCTION__, ptr));
 
   //
   // Check if guard page is going to be at the head or tail.
@@ -87,65 +86,62 @@ PoolTest (
     //
     // Get to the beginning of the page the pool tail is on.
     //
-    ptrLoc = (UINT64*) (((UINTN) ptr) + (UINTN)AllocationSize);
-    ptrLoc = ALIGN_POINTER(ptrLoc, 0x1000);
+    ptrLoc = (UINT64 *)(((UINTN)ptr) + (UINTN)AllocationSize);
+    ptrLoc = ALIGN_POINTER (ptrLoc, 0x1000);
 
     //
     // The guard page will be on the next page.
     //
-    ptr = (UINT64*) (((UINTN) ptr) + 0x1000);
-  }
-  else {
+    ptr = (UINT64 *)(((UINTN)ptr) + 0x1000);
+  } else {
     //
     // Get to the beginning of the page the pool head is on.
     //
-    ptrLoc = ALIGN_POINTER(ptr, 0x1000);
+    ptrLoc = ALIGN_POINTER (ptr, 0x1000);
 
     //
     // The guard page will be immediately preceding the page the pool starts on.
     //
-    ptrLoc = (UINT64*) (((UINTN) ptrLoc) - 0x1);
+    ptrLoc = (UINT64 *)(((UINTN)ptrLoc) - 0x1);
   }
-  DEBUG((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptrLoc));
-  *ptrLoc = 1;
-  DEBUG((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
-} // PoolTest()
 
+  DEBUG ((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptrLoc));
+  *ptrLoc = 1;
+  DEBUG ((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
+} // PoolTest()
 
 VOID
 HeadPageTest (
-  IN UINT64* ptr
+  IN UINT64  *ptr
   )
 {
-  DEBUG((DEBUG_ERROR, "%a Allocated page at 0x%p\n", __FUNCTION__, ptr));
+  DEBUG ((DEBUG_ERROR, "%a Allocated page at 0x%p\n", __FUNCTION__, ptr));
 
   // Hit the head guard page
-  ptr = (UINT64*) (((UINTN) ptr) - 0x1);
-  DEBUG((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptr));
+  ptr = (UINT64 *)(((UINTN)ptr) - 0x1);
+  DEBUG ((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptr));
   *ptr = 1;
 
-  DEBUG((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
 }
 
 VOID
 TailPageTest (
-  IN UINT64* ptr
+  IN UINT64  *ptr
   )
 {
-  DEBUG((DEBUG_ERROR, "%a Allocated page at 0x%p\n", __FUNCTION__, ptr));
+  DEBUG ((DEBUG_ERROR, "%a Allocated page at 0x%p\n", __FUNCTION__, ptr));
 
   // Hit the tail guard page
-  ptr = (UINT64*) (((UINTN) ptr) + 0x1000);
-  DEBUG((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptr));
+  ptr = (UINT64 *)(((UINTN)ptr) + 0x1000);
+  DEBUG ((DEBUG_ERROR, "%a Writing to 0x%p\n", __FUNCTION__, ptr));
   *ptr = 1;
-  DEBUG((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "%a failure \n", __FUNCTION__));
 } // HeadPageTest()
 
-
-
-//=============================================================================
+// =============================================================================
 // TEST CASES
-//=============================================================================
+// =============================================================================
 
 /**
   Page Guard
@@ -154,38 +150,36 @@ TailPageTest (
 **/
 VOID
 SmmPageGuard (
-  IN HEAP_GUARD_TEST_CONTEXT           *Context
+  IN HEAP_GUARD_TEST_CONTEXT  *Context
   )
 {
-  EFI_PHYSICAL_ADDRESS ptr;
-  EFI_STATUS Status;
-  UINT64 MemoryType;
-  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
+  EFI_PHYSICAL_ADDRESS  ptr;
+  EFI_STATUS            Status;
+  UINT64                MemoryType;
+
+  DEBUG ((DEBUG_ERROR, "%a\n", __FUNCTION__));
 
   //
   // Memory type refers to the bitmask for the Heap Guard Page Type,
   // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
   //
   MemoryType = Context->TargetMemoryType;
-  MemoryType = RShiftU64(MemoryType, 1);
-  Status = gBS->AllocatePages(AllocateAnyPages, (EFI_MEMORY_TYPE) MemoryType, 1, &ptr);
+  MemoryType = RShiftU64 (MemoryType, 1);
+  Status     = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)MemoryType, 1, &ptr);
 
   //
   // Context.TestProgress indicates progress within this specific test.
   // 1 - Complete head guard test.
   // 2 - Complete tail guard test.
   //
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a Memory allocation failed for %x- %r\n", __FUNCTION__, MemoryType, Status));
-  }
-  else if (Context->TestProgress == 1)
-  {
-    HeadPageTest((UINT64 *)(UINTN) ptr);
-    DEBUG((DEBUG_ERROR, "Head guard page failed."));
-  }
-  else {
-    TailPageTest((UINT64 *)(UINTN) ptr);
-    DEBUG((DEBUG_ERROR, "Tail guard page failed"));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Memory allocation failed for %x- %r\n", __FUNCTION__, MemoryType, Status));
+  } else if (Context->TestProgress == 1) {
+    HeadPageTest ((UINT64 *)(UINTN)ptr);
+    DEBUG ((DEBUG_ERROR, "Head guard page failed."));
+  } else {
+    TailPageTest ((UINT64 *)(UINTN)ptr);
+    DEBUG ((DEBUG_ERROR, "Tail guard page failed"));
   }
 } // SmmPageGuard()
 
@@ -196,21 +190,22 @@ SmmPageGuard (
 **/
 VOID
 SmmPoolGuard (
-  IN HEAP_GUARD_TEST_CONTEXT           *Context
+  IN HEAP_GUARD_TEST_CONTEXT  *Context
   )
 {
-  EFI_PHYSICAL_ADDRESS ptr;
-  EFI_STATUS Status;
-  UINTN  AllocationSize;
-  UINT64 MemoryType;
-  DEBUG((DEBUG_ERROR, "%a\n", __FUNCTION__));
+  EFI_PHYSICAL_ADDRESS  ptr;
+  EFI_STATUS            Status;
+  UINTN                 AllocationSize;
+  UINT64                MemoryType;
+
+  DEBUG ((DEBUG_ERROR, "%a\n", __FUNCTION__));
 
   //
   // Memory type refers to the bitmask for the Heap Guard Page Type,
   // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
   //
   MemoryType = Context->TargetMemoryType;
-  MemoryType = RShiftU64(MemoryType, 1);
+  MemoryType = RShiftU64 (MemoryType, 1);
 
   //
   // Context.TestProgress indicates progress within this specific test.
@@ -219,19 +214,17 @@ SmmPoolGuard (
   // for pool allocation.
   //
   AllocationSize = mPoolSizeTable[Context->TestProgress];
-  Status = gBS->AllocatePool((EFI_MEMORY_TYPE) MemoryType, AllocationSize, (VOID**)&ptr);
+  Status         = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryType, AllocationSize, (VOID **)&ptr);
 
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a Memory allocation failed for %x- %r\n", __FUNCTION__, MemoryType, Status));
-  }
-  else {
-    PoolTest((UINT64 *)(UINTN) ptr, AllocationSize);
-    DEBUG((DEBUG_ERROR, "Pool test failed."));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Memory allocation failed for %x- %r\n", __FUNCTION__, MemoryType, Status));
+  } else {
+    PoolTest ((UINT64 *)(UINTN)ptr, AllocationSize);
+    DEBUG ((DEBUG_ERROR, "Pool test failed."));
   }
 } // SmmPoolGuard()
 
-
-volatile HEAP_GUARD_TEST_CONTEXT       *mContext = NULL;
+volatile HEAP_GUARD_TEST_CONTEXT  *mContext = NULL;
 
 /**
   Null Pointer Detection
@@ -240,17 +233,17 @@ volatile HEAP_GUARD_TEST_CONTEXT       *mContext = NULL;
 **/
 VOID
 SmmNullPointerDetection (
-  IN HEAP_GUARD_TEST_CONTEXT           *Context
+  IN HEAP_GUARD_TEST_CONTEXT  *Context
   )
 {
   if (Context->TestProgress == 1) {
     if (mContext->TargetMemoryType == 0) {
     }
-  }
-  else {
+  } else {
     mContext->TargetMemoryType = 1;
   }
-  DEBUG((DEBUG_ERROR,  "%a should have failed \n", __FUNCTION__));
+
+  DEBUG ((DEBUG_ERROR, "%a should have failed \n", __FUNCTION__));
 } // SmmNullPointerDetection()
 
 /**
@@ -278,60 +271,61 @@ SmmNullPointerDetection (
 EFI_STATUS
 EFIAPI
 MemoryProtectionTestHandler (
-  IN     EFI_HANDLE                   DispatchHandle,
-  IN     CONST VOID                   *RegisterContext,
-  IN OUT VOID                         *CommBuffer,
-  IN OUT UINTN                        *CommBufferSize
+  IN     EFI_HANDLE  DispatchHandle,
+  IN     CONST VOID  *RegisterContext,
+  IN OUT VOID        *CommBuffer,
+  IN OUT UINTN       *CommBufferSize
   )
 {
-  EFI_STATUS                                Status;
-  UINTN                                     TempCommBufferSize;
-  HEAP_GUARD_TEST_COMM_BUFFER   *CommParams;
+  EFI_STATUS                   Status;
+  UINTN                        TempCommBufferSize;
+  HEAP_GUARD_TEST_COMM_BUFFER  *CommParams;
 
-  DEBUG(( DEBUG_ERROR, "%a()\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
 
   //
   // If input is invalid, stop processing this SMI
   //
-  if (CommBuffer == NULL || CommBufferSize == NULL) {
+  if ((CommBuffer == NULL) || (CommBufferSize == NULL)) {
     return EFI_SUCCESS;
   }
 
   TempCommBufferSize = *CommBufferSize;
 
-  if(TempCommBufferSize != sizeof( HEAP_GUARD_TEST_COMM_BUFFER )) {
-    DEBUG(( DEBUG_ERROR, "%a: SMM Communication buffer size is invalid for this handler!\n", __FUNCTION__ ));
+  if (TempCommBufferSize != sizeof (HEAP_GUARD_TEST_COMM_BUFFER)) {
+    DEBUG ((DEBUG_ERROR, "%a: SMM Communication buffer size is invalid for this handler!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
-  if (!SmmIsBufferOutsideSmmValid( (UINTN)CommBuffer, TempCommBufferSize )) {
-    DEBUG(( DEBUG_ERROR, "%a: SMM Communication buffer in invalid location!\n", __FUNCTION__ ));
+
+  if (!SmmIsBufferOutsideSmmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
+    DEBUG ((DEBUG_ERROR, "%a: SMM Communication buffer in invalid location!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
 
   //
   // Farm out the job to individual functions based on what was requested.
   //
-  CommParams = (HEAP_GUARD_TEST_COMM_BUFFER*)CommBuffer;
+  CommParams         = (HEAP_GUARD_TEST_COMM_BUFFER *)CommBuffer;
   CommParams->Status = EFI_SUCCESS;
-  Status = EFI_SUCCESS;
+  Status             = EFI_SUCCESS;
   switch (CommParams->Function) {
     case HEAP_GUARD_TEST_POOL:
-      DEBUG((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_POOL\n", __FUNCTION__));
-      SmmPageGuard(&CommParams->Context);
+      DEBUG ((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_POOL\n", __FUNCTION__));
+      SmmPageGuard (&CommParams->Context);
       break;
 
     case HEAP_GUARD_TEST_PAGE:
-      DEBUG((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_PAGE\n", __FUNCTION__));
-      SmmPoolGuard(&CommParams->Context);
+      DEBUG ((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_PAGE\n", __FUNCTION__));
+      SmmPoolGuard (&CommParams->Context);
       break;
 
     case HEAP_GUARD_TEST_NULL_POINTER:
-      DEBUG((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_NULL_POINTER\n", __FUNCTION__));
-      SmmNullPointerDetection(&CommParams->Context);
+      DEBUG ((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_NULL_POINTER\n", __FUNCTION__));
+      SmmNullPointerDetection (&CommParams->Context);
       break;
 
     default:
-      DEBUG(( DEBUG_INFO, "%a - Unknown function - %d\n", __FUNCTION__, CommParams->Function ));
+      DEBUG ((DEBUG_INFO, "%a - Unknown function - %d\n", __FUNCTION__, CommParams->Function));
       Status = EFI_UNSUPPORTED;
       break;
   }
@@ -352,19 +346,19 @@ MemoryProtectionTestHandler (
 EFI_STATUS
 EFIAPI
 HeapGuardTestEntryPoint (
-  IN EFI_HANDLE          ImageHandle,
-  IN EFI_SYSTEM_TABLE    *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                Status;
-  EFI_HANDLE                DiscardedHandle;
+  EFI_STATUS  Status;
+  EFI_HANDLE  DiscardedHandle;
 
   //
   // Register SMI handler.
   //
   DiscardedHandle = NULL;
-  Status = gSmst->SmiHandlerRegister( MemoryProtectionTestHandler, &gHeapGuardTestSmiHandlerGuid, &DiscardedHandle );
-  ASSERT_EFI_ERROR( Status );
+  Status          = gSmst->SmiHandlerRegister (MemoryProtectionTestHandler, &gHeapGuardTestSmiHandlerGuid, &DiscardedHandle);
+  ASSERT_EFI_ERROR (Status);
 
   return Status;
 } // HeapGuardTestEntryPoint()

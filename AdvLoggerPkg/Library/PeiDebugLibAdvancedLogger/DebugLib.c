@@ -24,7 +24,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugPrintErrorLevelLib.h>
 #include <Library/PeiServicesLib.h>
 
-
 /**
   Prints a debug message to the debug output device if the specified
   error level is enabled.
@@ -43,11 +42,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 VOID
 EFIAPI
 DebugVPrint (
-  IN  UINTN         ErrorLevel,
-  IN  CONST CHAR8   *Format,
-  IN  VA_LIST       VaListMarker
-  ) {
-  ADVANCED_LOGGER_PPI *AdvLoggerPpi;
+  IN  UINTN        ErrorLevel,
+  IN  CONST CHAR8  *Format,
+  IN  VA_LIST      VaListMarker
+  )
+{
+  ADVANCED_LOGGER_PPI  *AdvLoggerPpi;
   EFI_STATUS           Status;
 
   //
@@ -63,16 +63,15 @@ DebugVPrint (
   }
 
   Status = PeiServicesLocatePpi (
-              &gAdvancedLoggerPpiGuid,
-              0,
-              NULL,
-              (VOID **) &AdvLoggerPpi
-              );
+             &gAdvancedLoggerPpiGuid,
+             0,
+             NULL,
+             (VOID **)&AdvLoggerPpi
+             );
   if (Status == EFI_SUCCESS) {
     AdvLoggerPpi->AdvancedLoggerPrintPpi (ErrorLevel, Format, VaListMarker);
   }
 }
-
 
 /**
   Prints a debug message to the debug output device if the specified error level is enabled.
@@ -97,13 +96,12 @@ DebugPrint (
   ...
   )
 {
-  VA_LIST              Marker;
+  VA_LIST  Marker;
 
-    VA_START (Marker, Format);
-    DebugVPrint (ErrorLevel, Format, Marker);
-    VA_END (Marker);
+  VA_START (Marker, Format);
+  DebugVPrint (ErrorLevel, Format, Marker);
+  VA_END (Marker);
 }
-
 
 /**
   Prints an assert message containing a filename, line number, and description.
@@ -134,20 +132,19 @@ DebugAssert (
   IN CONST CHAR8  *Description
   )
 {
-  ADVANCED_LOGGER_PPI *AdvLoggerPpi;
+  ADVANCED_LOGGER_PPI  *AdvLoggerPpi;
   EFI_STATUS           Status;
 
   Status = PeiServicesLocatePpi (
-              &gAdvancedLoggerPpiGuid,
-              0,
-              NULL,
-              (VOID **) &AdvLoggerPpi
-              );
+             &gAdvancedLoggerPpiGuid,
+             0,
+             NULL,
+             (VOID **)&AdvLoggerPpi
+             );
 
   if (!EFI_ERROR (Status)) {
     AdvLoggerPpi->AdvancedLoggerAssertPpi (FileName, LineNumber, Description);
-  }
-  else {
+  } else {
     //
     // Generate a Breakpoint, DeadLoop, or NOP based on PCD settings
     //
@@ -160,7 +157,6 @@ DebugAssert (
     }
   }
 }
-
 
 /**
   Fills a target buffer with PcdDebugClearMemoryValue, and returns the target buffer.
@@ -192,9 +188,8 @@ DebugClearMemory (
   //
   // SetMem() checks for the the ASSERT() condition on Length and returns Buffer
   //
-  return SetMem (Buffer, Length, PcdGet8(PcdDebugClearMemoryValue));
+  return SetMem (Buffer, Length, PcdGet8 (PcdDebugClearMemoryValue));
 }
-
 
 /**
   Returns TRUE if ASSERT() macros are enabled.
@@ -212,9 +207,8 @@ DebugAssertEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_ASSERT_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG() macros are enabled.
@@ -232,9 +226,8 @@ DebugPrintEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_PRINT_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_PRINT_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG_CODE() macros are enabled.
@@ -252,9 +245,8 @@ DebugCodeEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_CODE_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_DEBUG_CODE_ENABLED) != 0);
 }
-
 
 /**
   Returns TRUE if DEBUG_CLEAR_MEMORY() macro is enabled.
@@ -272,7 +264,7 @@ DebugClearMemoryEnabled (
   VOID
   )
 {
-  return (BOOLEAN) ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED) != 0);
+  return (BOOLEAN)((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_CLEAR_MEMORY_ENABLED) != 0);
 }
 
 /**
@@ -287,8 +279,8 @@ DebugClearMemoryEnabled (
 BOOLEAN
 EFIAPI
 DebugPrintLevelEnabled (
-  IN  CONST UINTN        ErrorLevel
+  IN  CONST UINTN  ErrorLevel
   )
 {
-  return (BOOLEAN) ((ErrorLevel & PcdGet32(PcdFixedDebugPrintErrorLevel)) != 0);
+  return (BOOLEAN)((ErrorLevel & PcdGet32 (PcdFixedDebugPrintErrorLevel)) != 0);
 }

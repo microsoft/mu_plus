@@ -24,7 +24,7 @@ EFI_STATUS
 EFIAPI
 MsWheaClearAllEntries (
   VOID
-);
+  );
 
 /**
 
@@ -41,8 +41,8 @@ then store on the flash as HwErrRec awaiting to be picked up by OS (Refer to UEF
 EFI_STATUS
 EFIAPI
 MsWheaReportHERAdd (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
-);
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
+  );
 
 /********************** HELPER FUNCTIONS **********************/
 
@@ -58,12 +58,12 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaGetVariable (
-  IN     CHAR16                      *VariableName,
-  IN     EFI_GUID                    *VendorGuid,
-  OUT    UINT32                      *Attributes,    OPTIONAL
+  IN     CHAR16 *VariableName,
+  IN     EFI_GUID *VendorGuid,
+  OUT    UINT32 *Attributes, OPTIONAL
   IN OUT UINTN                       *DataSize,
   OUT    VOID                        *Data           OPTIONAL
-);
+  );
 
 /**
 
@@ -77,10 +77,10 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaGetNextVariableName (
-  IN OUT UINTN                    *VariableNameSize,
-  IN OUT CHAR16                   *VariableName,
-  IN OUT EFI_GUID                 *VendorGuid
-);
+  IN OUT UINTN     *VariableNameSize,
+  IN OUT CHAR16    *VariableName,
+  IN OUT EFI_GUID  *VendorGuid
+  );
 
 /**
 Sets the value of a variable. See definition of EFI_SET_VARIABLE in
@@ -93,11 +93,11 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaSetVariable (
-  IN  CHAR16                       *VariableName,
-  IN  EFI_GUID                     *VendorGuid,
-  IN  UINT32                       Attributes,
-  IN  UINTN                        DataSize,
-  IN  VOID                         *Data
-);
+  IN  CHAR16    *VariableName,
+  IN  EFI_GUID  *VendorGuid,
+  IN  UINT32    Attributes,
+  IN  UINTN     DataSize,
+  IN  VOID      *Data
+  );
 
 #endif // __MS_WHEA_REPORT_HER__

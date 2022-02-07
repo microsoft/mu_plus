@@ -9,6 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi.h>
 #include <Library/DeviceBootManagerLib.h>
 #include <Library/MsPlatformDevicesLib.h>
+
 /**
 Library function used to provide the platform SD Card device path
 **/
@@ -16,7 +17,7 @@ EFI_DEVICE_PATH_PROTOCOL *
 EFIAPI
 GetSdCardDevicePath (
   VOID
-)
+  )
 {
   return NULL;
 }
@@ -30,7 +31,7 @@ BOOLEAN
 EFIAPI
 PlatformIsDevicePathUsb (
   IN EFI_DEVICE_PATH_PROTOCOL  *DevicePath
-)
+  )
 {
   return FALSE;
 }
@@ -43,7 +44,7 @@ EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
 GetPlatformConnectList (
   VOID
-)
+  )
 {
   return NULL;
 }
@@ -55,7 +56,7 @@ BDS_CONSOLE_CONNECT_ENTRY *
 EFIAPI
 GetPlatformConsoleList (
   VOID
-)
+  )
 {
   return NULL;
 }
@@ -69,7 +70,7 @@ EFI_DEVICE_PATH_PROTOCOL **
 EFIAPI
 GetPlatformConnectOnConInList (
   VOID
-)
+  )
 {
   return NULL;
 }
@@ -83,7 +84,7 @@ EFI_HANDLE
 EFIAPI
 GetPlatformPreferredConsole (
   OUT EFI_DEVICE_PATH_PROTOCOL  **DevicePath
-)
+  )
 {
   return NULL;
 }

@@ -16,14 +16,14 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 
-#define MAX_NUMBER_OF_ARGS    1
+#define MAX_NUMBER_OF_ARGS  1
 
-STATIC CONST SHELL_PARAM_ITEM mParamList[] = {
-  {L"-?",                      TypeFlag},   // ? - Help
-  {L"-h",                      TypeFlag},   // h - Help
-  {L"-i",                      TypeValue},  // i - Input file path
-  {NULL,                       TypeMax},
-  };
+STATIC CONST SHELL_PARAM_ITEM  mParamList[] = {
+  { L"-?", TypeFlag  },                     // ? - Help
+  { L"-h", TypeFlag  },                     // h - Help
+  { L"-i", TypeValue },                     // i - Input file path
+  { NULL,  TypeMax   },
+};
 
 /**
   Displays application usage information.
@@ -65,15 +65,15 @@ PrintUsage (
 **/
 EFI_STATUS
 ParseCommandLine (
-  OUT CONST CHAR16      **BmpFilePath
+  OUT CONST CHAR16  **BmpFilePath
   )
 {
-  EFI_STATUS            Status;
-  LIST_ENTRY            *Package;
-  CHAR16                *ProblemParam;
-  CONST CHAR16          *LocalBmpFilePath;
+  EFI_STATUS    Status;
+  LIST_ENTRY    *Package;
+  CHAR16        *ProblemParam;
+  CONST CHAR16  *LocalBmpFilePath;
 
-  Package = NULL;
+  Package      = NULL;
   ProblemParam = NULL;
 
   if (BmpFilePath == NULL) {
@@ -82,7 +82,7 @@ ParseCommandLine (
 
   Status = ShellCommandLineParse (mParamList, &Package, &ProblemParam, FALSE);
   if (EFI_ERROR (Status)) {
-    if (Status == EFI_VOLUME_CORRUPTED && ProblemParam != NULL) {
+    if ((Status == EFI_VOLUME_CORRUPTED) && (ProblemParam != NULL)) {
       Print (L"Error: Unknown parameter input: %s\n", ProblemParam);
       goto Done;
     }
@@ -96,7 +96,7 @@ ParseCommandLine (
 
   if (ShellCommandLineGetFlag (Package, L"-?") || ShellCommandLineGetFlag (Package, L"-h")) {
     PrintUsage ();
-    Status = EFI_SUCCESS;
+    Status       = EFI_SUCCESS;
     *BmpFilePath = NULL;
     goto Done;
   }
@@ -139,39 +139,39 @@ Done:
 EFI_STATUS
 EFIAPI
 BmpDisplayEntrypoint (
-  IN EFI_HANDLE           ImageHandle,
-  IN EFI_SYSTEM_TABLE     *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                        Status;
-  CONST CHAR16                      *BmpFilePath;
-  CONST CHAR16                      *BmpFullFilePath;
-  VOID                              *BmpFileData;
-  VOID                              *OriginalVideoBufferData;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Blt;
-  EFI_FILE_INFO                     *BmpFileInfo;
-  BOOLEAN                           CursorModified;
-  BOOLEAN                           CursorVisible;
-  SHELL_FILE_HANDLE                 BmpFileHandle;
-  EFI_INPUT_KEY                     Key;
-  UINTN                             EventIndex;
-  UINTN                             OriginalVideoBltBufferSize;
-  UINTN                             BmpFileSize;
-  UINTN                             BltSize;
-  UINTN                             ImageWidth;
-  UINTN                             ImageHeight;
-  INTN                              ImageDestinationX;
-  INTN                              ImageDestinationY;
-  UINT32                            HorizontalResolution;
-  UINT32                            VerticalResolution;
+  EFI_STATUS                     Status;
+  CONST CHAR16                   *BmpFilePath;
+  CONST CHAR16                   *BmpFullFilePath;
+  VOID                           *BmpFileData;
+  VOID                           *OriginalVideoBufferData;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL   *GraphicsOutput;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *Blt;
+  EFI_FILE_INFO                  *BmpFileInfo;
+  BOOLEAN                        CursorModified;
+  BOOLEAN                        CursorVisible;
+  SHELL_FILE_HANDLE              BmpFileHandle;
+  EFI_INPUT_KEY                  Key;
+  UINTN                          EventIndex;
+  UINTN                          OriginalVideoBltBufferSize;
+  UINTN                          BmpFileSize;
+  UINTN                          BltSize;
+  UINTN                          ImageWidth;
+  UINTN                          ImageHeight;
+  INTN                           ImageDestinationX;
+  INTN                           ImageDestinationY;
+  UINT32                         HorizontalResolution;
+  UINT32                         VerticalResolution;
 
-  CursorModified = FALSE;
-  BmpFileData = NULL;
+  CursorModified          = FALSE;
+  BmpFileData             = NULL;
   OriginalVideoBufferData = NULL;
 
   Status = ParseCommandLine (&BmpFilePath);
-  if (EFI_ERROR (Status) || BmpFilePath == NULL) {
+  if (EFI_ERROR (Status) || (BmpFilePath == NULL)) {
     return Status;
   }
 
@@ -182,9 +182,9 @@ BmpDisplayEntrypoint (
   //
   // First, try to open GOP on the Console Out handle. If that fails, try a global database search.
   //
-  Status = gBS->HandleProtocol (SystemTable->ConsoleOutHandle, &gEfiGraphicsOutputProtocolGuid, (VOID **) &GraphicsOutput);
+  Status = gBS->HandleProtocol (SystemTable->ConsoleOutHandle, &gEfiGraphicsOutputProtocolGuid, (VOID **)&GraphicsOutput);
   if (EFI_ERROR (Status)) {
-    Status = gBS->LocateProtocol (&gEfiGraphicsOutputProtocolGuid, NULL, (VOID **) &GraphicsOutput);
+    Status = gBS->LocateProtocol (&gEfiGraphicsOutputProtocolGuid, NULL, (VOID **)&GraphicsOutput);
     if (EFI_ERROR (Status)) {
       Print (L"Error: Could not find a GOP instance!\n");
       Status = EFI_NOT_FOUND;
@@ -222,7 +222,8 @@ BmpDisplayEntrypoint (
     Status = EFI_LOAD_ERROR;
     goto Done;
   }
-  BmpFileSize = (UINTN) BmpFileInfo->FileSize;
+
+  BmpFileSize = (UINTN)BmpFileInfo->FileSize;
 
   BmpFileData = AllocateZeroPool (BmpFileSize);
   if (BmpFileData == NULL) {
@@ -241,28 +242,28 @@ BmpDisplayEntrypoint (
   }
 
   HorizontalResolution = GraphicsOutput->Mode->Info->HorizontalResolution;
-  VerticalResolution = GraphicsOutput->Mode->Info->VerticalResolution;
+  VerticalResolution   = GraphicsOutput->Mode->Info->VerticalResolution;
 
   if (SystemTable->ConOut != NULL) {
     CursorModified = TRUE;
-    CursorVisible = SystemTable->ConOut->Mode->CursorVisible;
+    CursorVisible  = SystemTable->ConOut->Mode->CursorVisible;
     SystemTable->ConOut->EnableCursor (SystemTable->ConOut, FALSE);
   }
 
   //
   // Translate the GOP image buffer to a BLT buffer
   //
-  Blt = NULL;
-  ImageWidth = 0;
+  Blt         = NULL;
+  ImageWidth  = 0;
   ImageHeight = 0;
-  Status =  TranslateBmpToGopBlt (
-              BmpFileData,
-              BmpFileSize,
-              &Blt,
-              &BltSize,
-              &ImageHeight,
-              &ImageWidth
-              );
+  Status      =  TranslateBmpToGopBlt (
+                   BmpFileData,
+                   BmpFileSize,
+                   &Blt,
+                   &BltSize,
+                   &ImageHeight,
+                   &ImageWidth
+                   );
   if (EFI_ERROR (Status)) {
     Print (L"Error: An error occurred translating the BMP to a GOP BLT - %r.\n", Status);
     goto Done;
@@ -277,6 +278,7 @@ BmpDisplayEntrypoint (
     Status = EFI_ABORTED;
     goto Done;
   }
+
   if (ImageHeight > VerticalResolution) {
     Print (L"Error: The image height (%d px) is too tall for the vertical resolution (%d px).\n", ImageHeight, VerticalResolution);
     Status = EFI_ABORTED;
@@ -298,7 +300,7 @@ BmpDisplayEntrypoint (
   ImageDestinationX = (HorizontalResolution - ImageWidth) / 2;
   ImageDestinationY = (VerticalResolution - ImageHeight) / 2;
 
-  if (ImageDestinationX < 0 || ImageDestinationY < 0) {
+  if ((ImageDestinationX < 0) || (ImageDestinationY < 0)) {
     Print (L"Error: The image size and/or orientation are invalid for this display.\n");
     Status = EFI_ABORTED;
     goto Done;
@@ -308,8 +310,8 @@ BmpDisplayEntrypoint (
                               GraphicsOutput,
                               OriginalVideoBufferData,
                               EfiBltVideoToBltBuffer,
-                              (UINTN) ImageDestinationX,
-                              (UINTN) ImageDestinationY,
+                              (UINTN)ImageDestinationX,
+                              (UINTN)ImageDestinationY,
                               0,
                               0,
                               ImageWidth,
@@ -331,8 +333,8 @@ BmpDisplayEntrypoint (
                               EfiBltBufferToVideo,
                               0,
                               0,
-                              (UINTN) ImageDestinationX,
-                              (UINTN) ImageDestinationY,
+                              (UINTN)ImageDestinationX,
+                              (UINTN)ImageDestinationY,
                               ImageWidth,
                               ImageHeight,
                               ImageWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
@@ -369,8 +371,8 @@ BmpDisplayEntrypoint (
                               EfiBltBufferToVideo,
                               0,
                               0,
-                              (UINTN) ImageDestinationX,
-                              (UINTN) ImageDestinationY,
+                              (UINTN)ImageDestinationX,
+                              (UINTN)ImageDestinationY,
                               ImageWidth,
                               ImageHeight,
                               ImageWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
@@ -388,9 +390,11 @@ Done:
   if (Blt != NULL) {
     FreePool (Blt);
   }
+
   if (BmpFileData != NULL) {
     FreePool (BmpFileData);
   }
+
   if (OriginalVideoBufferData != NULL) {
     FreePool (OriginalVideoBufferData);
   }

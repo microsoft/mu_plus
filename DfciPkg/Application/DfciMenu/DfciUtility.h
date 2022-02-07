@@ -17,15 +17,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/HiiLib.h>
 
-#define DFCI_MAX_STRING_LEN (1024)
+#define DFCI_MAX_STRING_LEN  (1024)
 
 typedef struct {
-    CHAR8      *SerialNumber;
-    UINTN       SerialNumberSize;
-    CHAR8      *Manufacturer;
-    UINTN       ManufacturerSize;
-    CHAR8      *ProductName;
-    UINTN       ProductNameSize;
+  CHAR8    *SerialNumber;
+  UINTN    SerialNumberSize;
+  CHAR8    *Manufacturer;
+  UINTN    ManufacturerSize;
+  CHAR8    *ProductName;
+  UINTN    ProductNameSize;
 } DFCI_SYSTEM_INFORMATION;
 
 /**
@@ -41,10 +41,10 @@ typedef struct {
  */
 EFI_STATUS
 DfciConvertToCHAR16 (
-    IN CHAR8    *Text8,
-    IN UINTN     Text8Len,
-    OUT CHAR16 **Text16,
-    OUT UINTN   *Text16Size  OPTIONAL
+  IN CHAR8    *Text8,
+  IN UINTN    Text8Len,
+  OUT CHAR16  **Text16,
+  OUT UINTN   *Text16Size  OPTIONAL
   );
 
 /**
@@ -60,10 +60,10 @@ DfciConvertToCHAR16 (
  */
 EFI_STATUS
 DfciConvertToCHAR8 (
-    IN CHAR16    *Text16,
-    IN UINTN      Test16Len,
-    OUT CHAR8   **Text8,
-    OUT UINTN    *Text8Len  OPTIONAL
+  IN CHAR16  *Text16,
+  IN UINTN   Test16Len,
+  OUT CHAR8  **Text8,
+  OUT UINTN  *Text8Len  OPTIONAL
   );
 
 /**
@@ -77,9 +77,9 @@ DfciConvertToCHAR8 (
  */
 EFI_STATUS
 DfciSetString16Entry (
-    IN  EFI_HII_HANDLE HiiHandle,
-    IN  EFI_STRING_ID  IdName,
-    IN  CHAR16        *StringValue
+  IN  EFI_HII_HANDLE  HiiHandle,
+  IN  EFI_STRING_ID   IdName,
+  IN  CHAR16          *StringValue
   );
 
 /**
@@ -93,9 +93,9 @@ DfciSetString16Entry (
  */
 EFI_STATUS
 DfciSetStringEntry (
-    IN  EFI_HII_HANDLE HiiHandle,
-    IN  EFI_STRING_ID  IdName,
-    IN  CHAR8         *StringValue
+  IN  EFI_HII_HANDLE  HiiHandle,
+  IN  EFI_STRING_ID   IdName,
+  IN  CHAR8           *StringValue
   );
 
 /**
@@ -110,10 +110,10 @@ DfciSetStringEntry (
  */
 EFI_STATUS
 DfciGetASetting (
-    IN  DFCI_SETTING_ID_STRING  IdName,
-    IN  DFCI_SETTING_TYPE       Type,
-    IN  VOID                  **ValuePtr,
-    OUT UINTN                  *ValueSize
+  IN  DFCI_SETTING_ID_STRING  IdName,
+  IN  DFCI_SETTING_TYPE       Type,
+  IN  VOID                    **ValuePtr,
+  OUT UINTN                   *ValueSize
   );
 
 /**
@@ -126,7 +126,7 @@ DfciGetASetting (
  **/
 EFI_STATUS
 DfciGetSystemInfo (
-    IN DFCI_SYSTEM_INFORMATION *DfciInfo
+  IN DFCI_SYSTEM_INFORMATION  *DfciInfo
   );
 
 /**
@@ -138,7 +138,7 @@ DfciGetSystemInfo (
  **/
 VOID
 DfciFreeSystemInfo (
-    IN DFCI_SYSTEM_INFORMATION *DfciInfo
+  IN DFCI_SYSTEM_INFORMATION  *DfciInfo
   );
 
 #endif

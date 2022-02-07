@@ -10,11 +10,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __NETWORK_DEPENDENCY_LIB__
 
 /**
-Library function used to enable the network stack  
+Library function used to enable the network stack
 **/
-EFI_STATUS 
-EFIAPI 
-StartNetworking();
-
+EFI_STATUS
+EFIAPI
+StartNetworking (
+  );
 
 #endif

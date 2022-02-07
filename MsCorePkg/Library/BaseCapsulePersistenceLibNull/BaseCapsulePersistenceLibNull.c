@@ -31,8 +31,8 @@
 EFI_STATUS
 EFIAPI
 PersistCapsuleImageAcrossReset (
-  IN  EFI_CAPSULE_HEADER           *CapsuleHeader,
-  OUT CAPSULE_PERSISTED_IDENTIFIER *CapsuleIdentifier    OPTIONAL
+  IN  EFI_CAPSULE_HEADER            *CapsuleHeader,
+  OUT CAPSULE_PERSISTED_IDENTIFIER  *CapsuleIdentifier    OPTIONAL
   )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a NULL lib and should not be used in production.\n", __FUNCTION__));
@@ -61,10 +61,10 @@ PersistCapsuleImageAcrossReset (
 EFI_STATUS
 EFIAPI
 GrabPersistedCapsuleByIdentifier (
-  IN  CAPSULE_PERSISTED_IDENTIFIER *CapsuleIdentifier,
-  OUT EFI_CAPSULE_HEADER           *CapsuleData,
-  OUT UINTN                        *CapsuleDataSize
-)
+  IN  CAPSULE_PERSISTED_IDENTIFIER  *CapsuleIdentifier,
+  OUT EFI_CAPSULE_HEADER            *CapsuleData,
+  OUT UINTN                         *CapsuleDataSize
+  )
 {
   DEBUG ((DEBUG_ERROR, "[%a] This is a NULL lib and should not be used in production\n", __FUNCTION__));
   ASSERT (FALSE);

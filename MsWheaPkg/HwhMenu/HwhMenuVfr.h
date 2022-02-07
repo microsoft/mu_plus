@@ -17,12 +17,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define EFI_GENERAL_APPLICATION_SUBCLASS  0x01
 
 //                           Aligned with 0x3000
-#define HWH_MENU_MAIN_ID                  0x3001
-#define HWH_MENU_LEFT_ID                  0x3002
-#define HWH_MENU_RIGHT_ID                 0x3003
-#define LABEL_UPDATE_LOCATION             0x3100
-#define LABEL_UPDATE_END                  0x3101
-#define HWH_MENU_VARID                    0x3200
+#define HWH_MENU_MAIN_ID       0x3001
+#define HWH_MENU_LEFT_ID       0x3002
+#define HWH_MENU_RIGHT_ID      0x3003
+#define LABEL_UPDATE_LOCATION  0x3100
+#define LABEL_UPDATE_END       0x3101
+#define HWH_MENU_VARID         0x3200
 
 // Grid class Start delimeter (GUID opcode).
 //
@@ -36,17 +36,17 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define GRID_CLASS_END_OPCODE_GUID                                                 \
   {                                                                                \
     0x30879de9, 0x7e69, 0x4f1b, { 0xb5, 0xa5, 0xda, 0x15, 0xbf, 0x6, 0x25, 0xce }  \
-  }           
+  }
 
 #define LOGS_FALSE  0x00
 #define LOGS_TRUE   0x01
 
-#pragma pack(1)                                                               
+  #pragma pack(1)
 
 typedef struct {
-  UINT8      Logs; // If equal to LOGS_TRUE, there are errors to display
+  UINT8    Logs;   // If equal to LOGS_TRUE, there are errors to display
 } HWH_MENU_CONFIG;
 
-#pragma pack()
+  #pragma pack()
 
 #endif

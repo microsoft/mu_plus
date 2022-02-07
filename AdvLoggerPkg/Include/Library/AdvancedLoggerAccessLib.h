@@ -11,14 +11,13 @@
 #ifndef __ADVANCED_LOGGER_ACCESS_LIB_H__
 #define __ADVANCED_LOGGER_ACCESS_LIB_H__
 
-
 /**
 
 This file logger access method will break up lines longer than the
 MAX MESSAGE size.
 */
 
-#define ADVANCED_LOGGER_MAX_MESSAGE_SIZE    512
+#define ADVANCED_LOGGER_MAX_MESSAGE_SIZE  512
 
 //
 // NOTE:
@@ -40,39 +39,36 @@ MAX MESSAGE size.
 //
 
 typedef struct {
-
-    // Message is IN/OUT. On the first input, it must be NULL.  On subsequent
-    // calls, the previously returned pointer to know where to get the next
-    // message.  Message is a pointer into the physical memory buffer, and it NOT
-    // properly terminated.
-    CONST CHAR8    *Message;                // NULL (first), Pointer to Current  Message Text
-    UINT32          DebugLevel;             // DEBUG Message Level
-    UINT16          MessageLen;             // Number of bytes in Message
-    UINT16          Reserved;
-    UINT64          TimeStamp;              // Time stamp
+  // Message is IN/OUT. On the first input, it must be NULL.  On subsequent
+  // calls, the previously returned pointer to know where to get the next
+  // message.  Message is a pointer into the physical memory buffer, and it NOT
+  // properly terminated.
+  CONST CHAR8    *Message;                  // NULL (first), Pointer to Current  Message Text
+  UINT32         DebugLevel;                // DEBUG Message Level
+  UINT16         MessageLen;                // Number of bytes in Message
+  UINT16         Reserved;
+  UINT64         TimeStamp;                 // Time stamp
 } ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY;
 
 typedef struct {
+  // Message is IN/OUT. On the first input, it must be NULL.  On subsequent
+  // calls, it must be the value previously returned.  It is a LineBuffer to be used for
+  // formatting a line.  Message will point to a properly NULL terminated ASCII STRING.
 
-    // Message is IN/OUT. On the first input, it must be NULL.  On subsequent
-    // calls, it must be the value previously returned.  It is a LineBuffer to be used for
-    // formatting a line.  Message will point to a properly NULL terminated ASCII STRING.
+  // BlockEntry is used to manage the current place in the physical memory buffer.
+  CHAR8                                         *Message;   // Pointer to Message Text
+  UINT32                                        DebugLevel; // DEBUG Message Level
+  UINT16                                        MessageLen; // Number of bytes in Message
+  UINT16                                        Reserved;
+  UINT64                                        TimeStamp; // Time stamp
 
-    // BlockEntry is used to manage the current place in the physical memory buffer.
-    CHAR8          *Message;                // Pointer to Message Text
-    UINT32          DebugLevel;             // DEBUG Message Level
-    UINT16          MessageLen;             // Number of bytes in Message
-    UINT16          Reserved;
-    UINT64          TimeStamp;              // Time stamp
+  // The following are private members for GetNextBlock.  Initialize these
+  // members to NULL and 0 respectively.
 
-    // The following are private members for GetNextBlock.  Initialize these
-    // members to NULL and 0 respectively.
-
-    CONST CHAR8    *ResidualChar;           // (Private) Initialize to NULL.
-    UINT16          ResidualLen;            // (Private) Initialize to 0
-    ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY BlockEntry;
+  CONST CHAR8                                   *ResidualChar; // (Private) Initialize to NULL.
+  UINT16                                        ResidualLen;   // (Private) Initialize to 0
+  ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY    BlockEntry;
 } ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY;
-
 
 /**
   Get Next Message Block.
@@ -99,9 +95,8 @@ typedef struct {
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibGetNextMessageBlock (
-    IN ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY *BlockEntry
+  IN ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY  *BlockEntry
   );
-
 
 /**
   Get Next Formatted line.
@@ -125,7 +120,7 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibGetNextFormattedLine (
-    IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY *LineEntry
+  IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  *LineEntry
   );
 
 /**
@@ -146,8 +141,8 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
 **/
 EFI_STATUS
 EFIAPI
-AdvancedLoggerAccessLibReset(
-    IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY *AccessEntry
+AdvancedLoggerAccessLibReset (
+  IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  *AccessEntry
   );
 
 /**
@@ -162,8 +157,8 @@ AdvancedLoggerAccessLibReset(
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibUnitTestInitialize (
-    IN  ADVANCED_LOGGER_PROTOCOL *TestProtocol  OPTIONAL,
-    IN  UINTN                     MaxMessageSize
+  IN  ADVANCED_LOGGER_PROTOCOL  *TestProtocol  OPTIONAL,
+  IN  UINTN                     MaxMessageSize
   );
 
-#endif  // __ADVANCED_LOGGER_ACCESS_LIB_H__
+#endif // __ADVANCED_LOGGER_ACCESS_LIB_H__

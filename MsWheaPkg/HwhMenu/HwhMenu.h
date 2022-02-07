@@ -14,7 +14,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 extern UINT8  HwhMenuVfrBin[];
 
-extern unsigned char HwhMenuStrings[];
+extern unsigned char  HwhMenuStrings[];
 
 /**
  *  Writes the input string to the input vfr string
@@ -22,13 +22,13 @@ extern unsigned char HwhMenuStrings[];
  *  @param[in]  Str                  EFI_STRING being written to
  *  @param[in]  Format               Format string
  *  @param[in]  ...                  Variables placed into format string
- * 
+ *
  *  @retval     VOID
 **/
-UINTN 
-UnicodeDataToVFR(
-  IN CONST EFI_STRING_ID Str,
-  IN CONST CHAR16 *Format,
+UINTN
+UnicodeDataToVFR (
+  IN CONST EFI_STRING_ID  Str,
+  IN CONST CHAR16         *Format,
   ...
   );
 

@@ -25,7 +25,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 /**
 <Events>
-  <HeaderEvent>  
+  <HeaderEvent>
     <PcrIndex></PcrIndex>
     <EventType></EventType>
     <EventSize></EventSize>
@@ -34,7 +34,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   <Event>
     <PcrIndex></PcrIndex>
     <EventType></EventType>
-    <EventSize></EventSize>  
+    <EventSize></EventSize>
     <EventData></EventData>
     <DigestCount></DigestCount>
     <Digests>
@@ -42,25 +42,24 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
       ...
     </Digests>
   </Event>
-  <Event>  
-    ...  
+  <Event>
+    ...
   </Event>
 ...
 </Events>
 **/
 
-#define LIST_ELEMENT_NAME                   "Events"
-#define HEADER_ENTRY_ELEMENT_NAME           "HeaderEvent"
-#define EVENT_ENTRY_ELEMENT_NAME            "Event"
-#define EVENT_PCR_ELEMENT_NAME              "PcrIndex"
-#define EVENT_TYPE_ELEMENT_NAME             "EventType"
-#define EVENT_SIZE_ELEMENT_NAME             "EventSize"
-#define EVENT_DATA_ELEMENT_NAME             "EventData"
-#define EVENT_DIGEST_COUNT_ELEMENT_NAME     "DigestCount"
-#define EVENT_DIGESTS_ELEMENT_NAME          "Digests"
-#define EVENT_HASH_ALGO_ATTRIBUTE_NAME      "HashAlgo"
-#define EVENT_DIGEST_ELEMENT_NAME           "Digest"
-
+#define LIST_ELEMENT_NAME                "Events"
+#define HEADER_ENTRY_ELEMENT_NAME        "HeaderEvent"
+#define EVENT_ENTRY_ELEMENT_NAME         "Event"
+#define EVENT_PCR_ELEMENT_NAME           "PcrIndex"
+#define EVENT_TYPE_ELEMENT_NAME          "EventType"
+#define EVENT_SIZE_ELEMENT_NAME          "EventSize"
+#define EVENT_DATA_ELEMENT_NAME          "EventData"
+#define EVENT_DIGEST_COUNT_ELEMENT_NAME  "DigestCount"
+#define EVENT_DIGESTS_ELEMENT_NAME       "Digests"
+#define EVENT_HASH_ALGO_ATTRIBUTE_NAME   "HashAlgo"
+#define EVENT_DIGEST_ELEMENT_NAME        "Digest"
 
 /**
 Creates a new XmlNode list following the List
@@ -77,7 +76,8 @@ LIST Xml Template
 **/
 XmlNode *
 EFIAPI
-New_EventsNodeList();
+New_EventsNodeList (
+  );
 
 /**
 Creates a new XmlNode for an event and adds it to the list
@@ -92,14 +92,14 @@ EVENT_XML_TEMPLATE
 **/
 XmlNode *
 EFIAPI
-New_NodeInList(
-  IN CONST XmlNode            *RootNode,
-  IN UINTN                    PcrIndex,
-  IN UINTN                    EventType,
-  IN UINTN                    EventSize,
-  IN UINT8                    *EventBuffer,
-  IN UINTN                    DigestCount,
-  IN TPML_DIGEST_VALUES       *Digest
-);
+New_NodeInList (
+  IN CONST XmlNode       *RootNode,
+  IN UINTN               PcrIndex,
+  IN UINTN               EventType,
+  IN UINTN               EventSize,
+  IN UINT8               *EventBuffer,
+  IN UINTN               DigestCount,
+  IN TPML_DIGEST_VALUES  *Digest
+  );
 
-#endif  // TPM_EVENT_LOG_XML_H
+#endif // TPM_EVENT_LOG_XML_H

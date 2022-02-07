@@ -9,8 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "SimpleUIToolKitInternal.h"
 
-
-#define MS_DEFAULT_FONT_SIZE       MsUiGetStandardFontHeight ()   // Default font size is 32px high.  (TODO - merge with MsDisplayEngine.h copy).
+#define MS_DEFAULT_FONT_SIZE  MsUiGetStandardFontHeight ()        // Default font size is 32px high.  (TODO - merge with MsDisplayEngine.h copy).
 
 /**
 Calculates the bitmap width and height of the specified text string based on the current font size & style.
@@ -26,209 +25,205 @@ Calculates the bitmap width and height of the specified text string based on the
 **/
 EFI_STATUS
 EFIAPI
-GetTextStringBitmapSize (IN     CHAR16           *pString,
-                         IN     EFI_FONT_INFO    *FontInfo,
-                         IN     BOOLEAN           BoundsLimit,
-                         IN     EFI_HII_OUT_FLAGS HiiFlags,
-                         IN OUT SWM_RECT         *Bounds,
-                         OUT    UINT32           *MaxFontGlyphDescent)
+GetTextStringBitmapSize (
+  IN     CHAR16             *pString,
+  IN     EFI_FONT_INFO      *FontInfo,
+  IN     BOOLEAN            BoundsLimit,
+  IN     EFI_HII_OUT_FLAGS  HiiFlags,
+  IN OUT SWM_RECT           *Bounds,
+  OUT    UINT32             *MaxFontGlyphDescent
+  )
 {
-    EFI_STATUS              Status = EFI_SUCCESS;
-    EFI_FONT_DISPLAY_INFO   *StringInfo     = NULL;
-    EFI_IMAGE_OUTPUT        *BltBuffer      = NULL;
-    EFI_HII_ROW_INFO        *StringRowInfo  = NULL;
-    UINTN                   RowInfoSize;
-    UINT32                  RowIndex;
-    UINT16                  Width, Height;
-    CHAR16                 *xString;
+  EFI_STATUS             Status         = EFI_SUCCESS;
+  EFI_FONT_DISPLAY_INFO  *StringInfo    = NULL;
+  EFI_IMAGE_OUTPUT       *BltBuffer     = NULL;
+  EFI_HII_ROW_INFO       *StringRowInfo = NULL;
+  UINTN                  RowInfoSize;
+  UINT32                 RowIndex;
+  UINT16                 Width, Height;
+  CHAR16                 *xString;
 
-
-    // Calculate maximum width and height allowed by the specified bounding rectangle.
+  // Calculate maximum width and height allowed by the specified bounding rectangle.
+  //
+  if (TRUE == BoundsLimit) {
+    Width  = (UINT16)(Bounds->Right - Bounds->Left + 1);
+    Height = (UINT16)(Bounds->Bottom - Bounds->Top + 1);
+  } else {
+    // Caller hasn't provided any boundary to enforce.  Assume we have the whole screen.
     //
-    if (TRUE == BoundsLimit)
-    {
-        Width    = (UINT16)(Bounds->Right - Bounds->Left + 1);
-        Height   = (UINT16)(Bounds->Bottom - Bounds->Top + 1);
-    }
-    else
-    {
-        // Caller hasn't provided any boundary to enforce.  Assume we have the whole screen.
-        //
-        ZeroMem (Bounds, sizeof(SWM_RECT));
-        Width    = (UINT16)mUITGop->Mode->Info->HorizontalResolution;
-        Height   = (UINT16)mUITGop->Mode->Info->VerticalResolution;
-    }
+    ZeroMem (Bounds, sizeof (SWM_RECT));
+    Width  = (UINT16)mUITGop->Mode->Info->HorizontalResolution;
+    Height = (UINT16)mUITGop->Mode->Info->VerticalResolution;
+  }
 
-    // Get the current preferred font size and style.
-    //
-    StringInfo = BuildFontDisplayInfoFromFontInfo (FontInfo);
-    if (NULL == StringInfo)
-    {
-        Status = EFI_OUT_OF_RESOURCES;
-        goto Exit;
-    }
+  // Get the current preferred font size and style.
+  //
+  StringInfo = BuildFontDisplayInfoFromFontInfo (FontInfo);
+  if (NULL == StringInfo) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
 
-    StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
+  StringInfo->FontInfoMask = EFI_FONT_INFO_ANY_FONT;
 
-    // If a null string was provided, return a standard single character-sizes rectangle.  Null strings are used for UI padding/alignment.
-    //
-    if (NULL == pString || L'\0' == *pString)
-    {
-        xString = L" ";
-//        Bounds->Right   = (Bounds->Left + MS_DEFAULT_FONT_SIZE);        // Use for both width and height.
-//        Bounds->Bottom  = (Bounds->Top + MS_DEFAULT_FONT_SIZE);
-//        goto CalcFontDescent;
-    } else {
-        xString = pString;
-    }
+  // If a null string was provided, return a standard single character-sizes rectangle.  Null strings are used for UI padding/alignment.
+  //
+  if ((NULL == pString) || (L'\0' == *pString)) {
+    xString = L" ";
+    //        Bounds->Right   = (Bounds->Left + MS_DEFAULT_FONT_SIZE);        // Use for both width and height.
+    //        Bounds->Bottom  = (Bounds->Top + MS_DEFAULT_FONT_SIZE);
+    //        goto CalcFontDescent;
+  } else {
+    xString = pString;
+  }
 
-    // Prepare string blitting buffer.
-    //
-    BltBuffer = (EFI_IMAGE_OUTPUT *) AllocatePool (sizeof (EFI_IMAGE_OUTPUT));
+  // Prepare string blitting buffer.
+  //
+  BltBuffer = (EFI_IMAGE_OUTPUT *)AllocatePool (sizeof (EFI_IMAGE_OUTPUT));
 
-    ASSERT (NULL != BltBuffer);
-    if (NULL == BltBuffer)
-    {
-        Status = EFI_OUT_OF_RESOURCES;
-        goto Exit;
-    }
+  ASSERT (NULL != BltBuffer);
+  if (NULL == BltBuffer) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
 
-    // Fill out string blit buffer details.
-    //
-    BltBuffer->Width         = Width;
-    BltBuffer->Height        = Height;
-    BltBuffer->Image.Bitmap  = AllocatePool (Width * Height * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  // Fill out string blit buffer details.
+  //
+  BltBuffer->Width        = Width;
+  BltBuffer->Height       = Height;
+  BltBuffer->Image.Bitmap = AllocatePool (Width * Height * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
-    ASSERT (NULL != BltBuffer->Image.Bitmap);
-    if (NULL == BltBuffer->Image.Bitmap)
-    {
-        Status = EFI_OUT_OF_RESOURCES;
-        goto Exit;
-    }
+  ASSERT (NULL != BltBuffer->Image.Bitmap);
+  if (NULL == BltBuffer->Image.Bitmap) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
 
-    // Send in a NULL pointer so we can receive back width and height results.
-    //
-    StringRowInfo  = (EFI_HII_ROW_INFO *)NULL;
-    RowInfoSize = 0;
+  // Send in a NULL pointer so we can receive back width and height results.
+  //
+  StringRowInfo = (EFI_HII_ROW_INFO *)NULL;
+  RowInfoSize   = 0;
 
-    mUITSWM->StringToWindow (mUITSWM,
-                             mClientImageHandle,
-                             HiiFlags,
-                             xString,
-                             StringInfo,
-                             &BltBuffer,
-                             0,
-                             0,
-                             &StringRowInfo,
-                             &RowInfoSize,
-                             (UINTN *)NULL
-                            );
+  mUITSWM->StringToWindow (
+             mUITSWM,
+             mClientImageHandle,
+             HiiFlags,
+             xString,
+             StringInfo,
+             &BltBuffer,
+             0,
+             0,
+             &StringRowInfo,
+             &RowInfoSize,
+             (UINTN *)NULL
+             );
 
-    if (EFI_ERROR(Status))
-    {
-        DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Failed to calculate string bitmap size: %r.\n", Status));
-        goto Exit;
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Failed to calculate string bitmap size: %r.\n", Status));
+    goto Exit;
+  }
 
-    if (NULL == StringRowInfo || 0 == RowInfoSize)
-    {
-        goto Exit;
-    }
+  if ((NULL == StringRowInfo) || (0 == RowInfoSize)) {
+    goto Exit;
+  }
 
-    // Calculate the bounding rectangle around the text as rendered (note this it may be in multiple rows).
-    //
-    for (RowIndex=0, Width=0, Height=0 ; RowIndex < RowInfoSize ; RowIndex++)
-    {
-        Width   = (UINT16)(Width < (UINT32)StringRowInfo[RowIndex].LineWidth ? (UINT32)StringRowInfo[RowIndex].LineWidth : Width);
-        Height += (UINT16)StringRowInfo[RowIndex].LineHeight;
-    }
+  // Calculate the bounding rectangle around the text as rendered (note this it may be in multiple rows).
+  //
+  for (RowIndex = 0, Width = 0, Height = 0; RowIndex < RowInfoSize; RowIndex++) {
+    Width   = (UINT16)(Width < (UINT32)StringRowInfo[RowIndex].LineWidth ? (UINT32)StringRowInfo[RowIndex].LineWidth : Width);
+    Height += (UINT16)StringRowInfo[RowIndex].LineHeight;
+  }
 
-    // Adjust the caller's right and bottom bounding box limits based on the results.
-        //
-    Bounds->Right    = (Bounds->Left + Width - 1);
-    Bounds->Bottom   = (Bounds->Top + Height - 1);
+  // Adjust the caller's right and bottom bounding box limits based on the results.
+  //
+  Bounds->Right  = (Bounds->Left + Width - 1);
+  Bounds->Bottom = (Bounds->Top + Height - 1);
 
-    DEBUG ((DEBUG_VERBOSE, "INFO [SUIT]: Calculated string bitmap size (Actual=L%d,R%d,T%d,B%d  MaxWidth=%d  MaxHeight=%d  TextRows=%d).\n", Bounds->Left, Bounds->Right, Bounds->Top, Bounds->Bottom, Width, Height, RowInfoSize));
+  DEBUG ((DEBUG_VERBOSE, "INFO [SUIT]: Calculated string bitmap size (Actual=L%d,R%d,T%d,B%d  MaxWidth=%d  MaxHeight=%d  TextRows=%d).\n", Bounds->Left, Bounds->Right, Bounds->Top, Bounds->Bottom, Width, Height, RowInfoSize));
 
-//CalcFontDescent:
+  // CalcFontDescent:
 
-        // Determine the maximum font descent value from the font selected.
-        // TODO - Need a better way to determine this.  Currently hard-coded based on knowledge of the custom registered fonts in the Simple Window Manager driver.
-        //
+  // Determine the maximum font descent value from the font selected.
+  // TODO - Need a better way to determine this.  Currently hard-coded based on knowledge of the custom registered fonts in the Simple Window Manager driver.
+  //
 
-//        if (StringInfo.FontInfo.FontSize == MsUiGetFixedFontHeight ()) {
-            *MaxFontGlyphDescent = 0;
-//        } else {
-//            *MaxFontGlyphDescent =  (StringInfo.FontInfo.FontSize * 20) / 100;
-//        }
+  //        if (StringInfo.FontInfo.FontSize == MsUiGetFixedFontHeight ()) {
+  *MaxFontGlyphDescent = 0;
+  //        } else {
+  //            *MaxFontGlyphDescent =  (StringInfo.FontInfo.FontSize * 20) / 100;
+  //        }
 
 Exit:
-    // Free the buffers.
-    //
-    if (NULL != BltBuffer && NULL != BltBuffer->Image.Bitmap)
-    {
-        FreePool(BltBuffer->Image.Bitmap);
-    }
-    if (NULL != BltBuffer)
-    {
-        FreePool(BltBuffer);
-    }
-    if (NULL != StringRowInfo)
-    {
-        FreePool(StringRowInfo);
-    }
-    if (NULL != StringInfo)
-    {
-        FreePool (StringInfo);
-    }
+  // Free the buffers.
+  //
+  if ((NULL != BltBuffer) && (NULL != BltBuffer->Image.Bitmap)) {
+    FreePool (BltBuffer->Image.Bitmap);
+  }
 
+  if (NULL != BltBuffer) {
+    FreePool (BltBuffer);
+  }
 
+  if (NULL != StringRowInfo) {
+    FreePool (StringRowInfo);
+  }
 
-    return Status;
+  if (NULL != StringInfo) {
+    FreePool (StringInfo);
+  }
+
+  return Status;
 }
+
 // Given two canvas, find the "control" that is in "this" list, and return the equivalent control
 // from "prev" list.
 
 UIT_CANVAS_CHILD_CONTROL *
 EFIAPI
-GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
-                      IN Canvas                   *src,       // Canvas that has the source Control
-                      IN Canvas                   *tgt) {     // Canvas that has the target control
+GetEquivalentControl (
+  IN UIT_CANVAS_CHILD_CONTROL  *Control,
+  IN Canvas                    *src,                          // Canvas that has the source Control
+  IN Canvas                    *tgt
+  )
+{
+  // Canvas that has the target control
 
-    UIT_CANVAS_CHILD_CONTROL    *pSrcChildControl  = src->m_pControls;
-    UIT_CANVAS_CHILD_CONTROL    *pTgtChildControl  = tgt->m_pControls;
-    ControlBase                 *pSrcControlBase;
-    ControlBase                 *pTgtControlBase;
+  UIT_CANVAS_CHILD_CONTROL  *pSrcChildControl = src->m_pControls;
+  UIT_CANVAS_CHILD_CONTROL  *pTgtChildControl = tgt->m_pControls;
+  ControlBase               *pSrcControlBase;
+  ControlBase               *pTgtControlBase;
 
-    if (Control == NULL) {
-        return NULL;
-    }
-
-    while (pSrcChildControl != NULL) {
-        if (pTgtChildControl == NULL) {
-            DEBUG((DEBUG_ERROR, "%a control mismatch - Tgt = NULL\n", __FUNCTION__));
-            return NULL;
-        }
-
-        pSrcControlBase = (ControlBase *) pSrcChildControl->pControl;
-        pTgtControlBase = (ControlBase *) pTgtChildControl->pControl;
-        if (pSrcControlBase->ControlType != pTgtControlBase->ControlType) {
-            DEBUG((DEBUG_ERROR, "%a control mismatch. Src=%d, Tgt=%d\n",__FUNCTION__, pSrcControlBase->ControlType, pTgtControlBase->ControlType));
-            return NULL;
-        }
-
-        if (pSrcChildControl == Control) {
-            return pTgtChildControl;
-        }
-        pSrcChildControl = pSrcChildControl->pNext;
-        pTgtChildControl = pTgtChildControl->pNext;
-    }
-    if (pTgtChildControl != NULL) {
-        DEBUG((DEBUG_ERROR, "%a control mismatch - Srct = NULL\n", __FUNCTION__));
-    }
+  if (Control == NULL) {
     return NULL;
-}
+  }
 
+  while (pSrcChildControl != NULL) {
+    if (pTgtChildControl == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a control mismatch - Tgt = NULL\n", __FUNCTION__));
+      return NULL;
+    }
+
+    pSrcControlBase = (ControlBase *)pSrcChildControl->pControl;
+    pTgtControlBase = (ControlBase *)pTgtChildControl->pControl;
+    if (pSrcControlBase->ControlType != pTgtControlBase->ControlType) {
+      DEBUG ((DEBUG_ERROR, "%a control mismatch. Src=%d, Tgt=%d\n", __FUNCTION__, pSrcControlBase->ControlType, pTgtControlBase->ControlType));
+      return NULL;
+    }
+
+    if (pSrcChildControl == Control) {
+      return pTgtChildControl;
+    }
+
+    pSrcChildControl = pSrcChildControl->pNext;
+    pTgtChildControl = pTgtChildControl->pNext;
+  }
+
+  if (pTgtChildControl != NULL) {
+    DEBUG ((DEBUG_ERROR, "%a control mismatch - Srct = NULL\n", __FUNCTION__));
+  }
+
+  return NULL;
+}
 
 /**
     Draws a rectangular outline to the screen at location and in the size, line width, and color specified.
@@ -242,84 +237,86 @@ GetEquivalentControl (IN UIT_CANVAS_CHILD_CONTROL *Control,
     @retval         EFI_SUCCESS
 
 **/
-
 EFI_STATUS
 EFIAPI
-DrawRectangleOutline (IN UINT32                        OrigX,
-                      IN UINT32                        OrigY,
-                      IN UINT32                        Width,
-                      IN UINT32                        Height,
-                      IN UINT32                        LineWidth,
-                      IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Color)
+DrawRectangleOutline (
+  IN UINT32                         OrigX,
+  IN UINT32                         OrigY,
+  IN UINT32                         Width,
+  IN UINT32                         Height,
+  IN UINT32                         LineWidth,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *Color
+  )
 {
-    EFI_STATUS  Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  if ((NULL == mUITGop) || (NULL == Color)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Exit;
+  }
 
-    if (NULL == mUITGop || NULL == Color)
-    {
-        Status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
+  // For performance (and visual) reasons, it's better to render four individual "line" blits rather than a solid rectangle fill.
+  //
+  mUITSWM->BltWindow (
+             mUITSWM,
+             mClientImageHandle,
+             Color,
+             EfiBltVideoFill,
+             0,
+             0,
+             OrigX,
+             OrigY,
+             Width,
+             LineWidth,
+             0
+             );
 
-    // For performance (and visual) reasons, it's better to render four individual "line" blits rather than a solid rectangle fill.
-    //
-    mUITSWM->BltWindow (mUITSWM,
-                        mClientImageHandle,
-                        Color,
-                        EfiBltVideoFill,
-                        0,
-                        0,
-                        OrigX,
-                        OrigY,
-                        Width,
-                        LineWidth,
-                        0
-                       );
+  mUITSWM->BltWindow (
+             mUITSWM,
+             mClientImageHandle,
+             Color,
+             EfiBltVideoFill,
+             0,
+             0,
+             OrigX,
+             (OrigY + Height - LineWidth),
+             Width,
+             LineWidth,
+             0
+             );
 
-    mUITSWM->BltWindow (mUITSWM,
-                        mClientImageHandle,
-                        Color,
-                        EfiBltVideoFill,
-                        0,
-                        0,
-                        OrigX,
-                        (OrigY + Height - LineWidth),
-                        Width,
-                        LineWidth,
-                        0
-                       );
+  mUITSWM->BltWindow (
+             mUITSWM,
+             mClientImageHandle,
+             Color,
+             EfiBltVideoFill,
+             0,
+             0,
+             OrigX,
+             OrigY,
+             LineWidth,
+             Height,
+             0
+             );
 
-    mUITSWM->BltWindow (mUITSWM,
-                        mClientImageHandle,
-                        Color,
-                        EfiBltVideoFill,
-                        0,
-                        0,
-                        OrigX,
-                        OrigY,
-                        LineWidth,
-                        Height,
-                        0
-                       );
-
-    mUITSWM->BltWindow (mUITSWM,
-                        mClientImageHandle,
-                        Color,
-                        EfiBltVideoFill,
-                        0,
-                        0,
-                        (OrigX + Width - LineWidth),
-                        OrigY,
-                        LineWidth,
-                        Height,
-                        0
-                       );
+  mUITSWM->BltWindow (
+             mUITSWM,
+             mClientImageHandle,
+             Color,
+             EfiBltVideoFill,
+             0,
+             0,
+             (OrigX + Width - LineWidth),
+             OrigY,
+             LineWidth,
+             Height,
+             0
+             );
 
 Exit:
 
-    return Status;
+  return Status;
 }
-
 
 /**
     Returns a copy of the FONT_INFO structure.
@@ -331,29 +328,30 @@ Exit:
 **/
 EFI_FONT_INFO *
 EFIAPI
-DupFontInfo (IN EFI_FONT_INFO *FontInfo)
+DupFontInfo (
+  IN EFI_FONT_INFO  *FontInfo
+  )
 {
+  EFI_FONT_INFO  *NewFontInfo;
+  UINTN          FontNameSize;
 
-    EFI_FONT_INFO  *NewFontInfo;
-    UINTN           FontNameSize;
-
-    if (NULL == FontInfo) {
-        FontNameSize = 0;
-    } else {
-        FontNameSize = StrnLenS (FontInfo->FontName, MAX_FONT_NAME_SIZE) * sizeof(FontInfo->FontName[0]);
-        if (FontNameSize > MAX_FONT_NAME_SIZE) {
-            FontNameSize = 0;
-        }
+  if (NULL == FontInfo) {
+    FontNameSize = 0;
+  } else {
+    FontNameSize = StrnLenS (FontInfo->FontName, MAX_FONT_NAME_SIZE) * sizeof (FontInfo->FontName[0]);
+    if (FontNameSize > MAX_FONT_NAME_SIZE) {
+      FontNameSize = 0;
     }
+  }
 
-   NewFontInfo =  AllocatePool (sizeof (EFI_FONT_INFO) + FontNameSize);
+  NewFontInfo =  AllocatePool (sizeof (EFI_FONT_INFO) + FontNameSize);
 
-   CopyMem (NewFontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
-   if (FontNameSize <= sizeof(FontInfo->FontName[0])) {
-      NewFontInfo->FontName[0] = '\0';
-   }
+  CopyMem (NewFontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
+  if (FontNameSize <= sizeof (FontInfo->FontName[0])) {
+    NewFontInfo->FontName[0] = '\0';
+  }
 
-   return NewFontInfo;
+  return NewFontInfo;
 }
 
 /**
@@ -367,28 +365,29 @@ DupFontInfo (IN EFI_FONT_INFO *FontInfo)
 **/
 EFI_FONT_DISPLAY_INFO *
 EFIAPI
-BuildFontDisplayInfoFromFontInfo (IN EFI_FONT_INFO *FontInfo)
+BuildFontDisplayInfoFromFontInfo (
+  IN EFI_FONT_INFO  *FontInfo
+  )
 {
+  EFI_FONT_DISPLAY_INFO  *NewFontDisplayInfo;
+  UINTN                  FontNameSize;
 
-    EFI_FONT_DISPLAY_INFO  *NewFontDisplayInfo;
-    UINTN                   FontNameSize;
-
-    if (NULL == FontInfo) {
-        FontNameSize = 0;
-    } else {
-        FontNameSize = StrnLenS (FontInfo->FontName, MAX_FONT_NAME_SIZE) * sizeof(FontInfo->FontName[0]);
-        if (FontNameSize > MAX_FONT_NAME_SIZE) {
-            FontNameSize = 0;
-        }
+  if (NULL == FontInfo) {
+    FontNameSize = 0;
+  } else {
+    FontNameSize = StrnLenS (FontInfo->FontName, MAX_FONT_NAME_SIZE) * sizeof (FontInfo->FontName[0]);
+    if (FontNameSize > MAX_FONT_NAME_SIZE) {
+      FontNameSize = 0;
     }
+  }
 
-   NewFontDisplayInfo =  AllocateZeroPool (sizeof (EFI_FONT_DISPLAY_INFO) + FontNameSize);
-   if (NULL != NewFontDisplayInfo) {
-       CopyMem (&NewFontDisplayInfo->FontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
-       if (FontNameSize <= sizeof(FontInfo->FontName[0])) {
-           NewFontDisplayInfo->FontInfo.FontName[0] = L'\0';
-       }
-   }
+  NewFontDisplayInfo =  AllocateZeroPool (sizeof (EFI_FONT_DISPLAY_INFO) + FontNameSize);
+  if (NULL != NewFontDisplayInfo) {
+    CopyMem (&NewFontDisplayInfo->FontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
+    if (FontNameSize <= sizeof (FontInfo->FontName[0])) {
+      NewFontDisplayInfo->FontInfo.FontName[0] = L'\0';
+    }
+  }
 
-   return NewFontDisplayInfo;
+  return NewFontDisplayInfo;
 }

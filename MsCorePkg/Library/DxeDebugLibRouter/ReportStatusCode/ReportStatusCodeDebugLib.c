@@ -120,37 +120,41 @@ ReportStatusCodeDebugPrint (
   // of format in DEBUG string, which is followed by the DEBUG format string.
   // Here we will process the variable arguments and pack them in this area.
   //
-  for (; *Format != '\0'; Format++) {
+  for ( ; *Format != '\0'; Format++) {
     //
     // Only format with prefix % is processed.
     //
     if (*Format != '%') {
       continue;
     }
+
     Long = FALSE;
     //
     // Parse Flags and Width
     //
     for (Format++; TRUE; Format++) {
-      if (*Format == '.' || *Format == '-' || *Format == '+' || *Format == ' ') {
+      if ((*Format == '.') || (*Format == '-') || (*Format == '+') || (*Format == ' ')) {
         //
         // These characters in format field are omitted.
         //
         continue;
       }
-      if (*Format >= '0' && *Format <= '9') {
+
+      if ((*Format >= '0') && (*Format <= '9')) {
         //
         // These characters in format field are omitted.
         //
         continue;
       }
-      if (*Format == 'L' || *Format == 'l') {
+
+      if ((*Format == 'L') || (*Format == 'l')) {
         //
         // 'L" or "l" in format field means the number being printed is a UINT64
         //
         Long = TRUE;
         continue;
       }
+
       if (*Format == '*') {
         //
         // '*' in format field means the precision of the field is specified by
@@ -159,6 +163,7 @@ ReportStatusCodeDebugPrint (
         BASE_ARG (BaseListMarker, UINTN) = VA_ARG (VaListMarker, UINTN);
         continue;
       }
+
       if (*Format == '\0') {
         //
         // Make no output if Format string terminates unexpectedly when
@@ -166,6 +171,7 @@ ReportStatusCodeDebugPrint (
         //
         Format--;
       }
+
       //
       // When valid argument type detected or format string terminates unexpectedly,
       // the inner loop is done.
@@ -179,13 +185,14 @@ ReportStatusCodeDebugPrint (
     if ((*Format == 'p') && (sizeof (VOID *) > 4)) {
       Long = TRUE;
     }
-    if (*Format == 'p' || *Format == 'X' || *Format == 'x' || *Format == 'd' || *Format == 'u') {
+
+    if ((*Format == 'p') || (*Format == 'X') || (*Format == 'x') || (*Format == 'd') || (*Format == 'u')) {
       if (Long) {
         BASE_ARG (BaseListMarker, INT64) = VA_ARG (VaListMarker, INT64);
       } else {
         BASE_ARG (BaseListMarker, int) = VA_ARG (VaListMarker, int);
       }
-    } else if (*Format == 's' || *Format == 'S' || *Format == 'a' || *Format == 'g' || *Format == 't') {
+    } else if ((*Format == 's') || (*Format == 'S') || (*Format == 'a') || (*Format == 'g') || (*Format == 't')) {
       BASE_ARG (BaseListMarker, VOID *) = VA_ARG (VaListMarker, VOID *);
     } else if (*Format == 'c') {
       BASE_ARG (BaseListMarker, UINTN) = VA_ARG (VaListMarker, UINTN);
@@ -251,7 +258,7 @@ ReportStatusCodeDebugAssert (
   IN CONST CHAR8  *Description
   )
 {
-  UINT64                 Buffer[EFI_STATUS_CODE_DATA_MAX_SIZE / sizeof(UINT64)];
+  UINT64                 Buffer[EFI_STATUS_CODE_DATA_MAX_SIZE / sizeof (UINT64)];
   EFI_DEBUG_ASSERT_DATA  *AssertData;
   UINTN                  HeaderSize;
   UINTN                  TotalSize;
@@ -263,13 +270,13 @@ ReportStatusCodeDebugAssert (
   //
   // Get string size
   //
-  HeaderSize       = sizeof (EFI_DEBUG_ASSERT_DATA);
+  HeaderSize = sizeof (EFI_DEBUG_ASSERT_DATA);
   //
   // Compute string size of module name enclosed by []
   //
-  ModuleNameSize   = 2 + AsciiStrSize (gEfiCallerBaseName);
-  FileNameSize     = AsciiStrSize (FileName);
-  DescriptionSize  = AsciiStrSize (Description);
+  ModuleNameSize  = 2 + AsciiStrSize (gEfiCallerBaseName);
+  FileNameSize    = AsciiStrSize (FileName);
+  DescriptionSize = AsciiStrSize (Description);
 
   //
   // Make sure it will all fit in the passed in buffer.
@@ -298,12 +305,13 @@ ReportStatusCodeDebugAssert (
       }
     }
   }
+
   //
   // Fill in EFI_DEBUG_ASSERT_DATA
   //
-  AssertData = (EFI_DEBUG_ASSERT_DATA *)Buffer;
+  AssertData             = (EFI_DEBUG_ASSERT_DATA *)Buffer;
   AssertData->LineNumber = (UINT32)LineNumber;
-  TotalSize  = sizeof (EFI_DEBUG_ASSERT_DATA);
+  TotalSize              = sizeof (EFI_DEBUG_ASSERT_DATA);
 
   Temp = (CHAR8 *)(AssertData + 1);
 
@@ -311,24 +319,24 @@ ReportStatusCodeDebugAssert (
   // Copy Ascii [ModuleName].
   //
   if (ModuleNameSize != 0) {
-    CopyMem(Temp, "[", 1);
-    CopyMem(Temp + 1, gEfiCallerBaseName, ModuleNameSize - 3);
-    CopyMem(Temp + ModuleNameSize - 2, "] ", 2);
+    CopyMem (Temp, "[", 1);
+    CopyMem (Temp + 1, gEfiCallerBaseName, ModuleNameSize - 3);
+    CopyMem (Temp + ModuleNameSize - 2, "] ", 2);
   }
 
   //
   // Copy Ascii FileName including NULL terminator.
   //
-  Temp = CopyMem (Temp + ModuleNameSize, FileName, FileNameSize);
+  Temp                   = CopyMem (Temp + ModuleNameSize, FileName, FileNameSize);
   Temp[FileNameSize - 1] = 0;
-  TotalSize += (ModuleNameSize + FileNameSize);
+  TotalSize             += (ModuleNameSize + FileNameSize);
 
   //
   // Copy Ascii Description include NULL terminator.
   //
-  Temp = CopyMem (Temp + FileNameSize, Description, DescriptionSize);
+  Temp                      = CopyMem (Temp + FileNameSize, Description, DescriptionSize);
   Temp[DescriptionSize - 1] = 0;
-  TotalSize += DescriptionSize;
+  TotalSize                += DescriptionSize;
 
   REPORT_STATUS_CODE_EX (
     (EFI_ERROR_CODE | EFI_ERROR_UNRECOVERED),
@@ -343,7 +351,7 @@ ReportStatusCodeDebugAssert (
   //
   // Generate an Assertion Break, Breakpoint, DeadLoop, or NOP based on PCD settings
   //
-  if ((PcdGet8(PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED) != 0) {
+  if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKASSERT_ENABLED) != 0) {
     CpuBreakAssert ();
   }
 

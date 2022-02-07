@@ -25,12 +25,9 @@ not cause the default to be set.
 **/
 EFI_STATUS
 EFIAPI
-GetBootManagerSetting
-(
-  IN  DFCI_SETTING_ID_STRING   Id,
+GetBootManagerSetting (
+  IN  DFCI_SETTING_ID_STRING  Id,
   OUT BOOLEAN                 *Value
-);
+  );
 
-#endif  // _MS_BOOT_MANAGER_SETTINGS_LIB_H_
-
-
+#endif // _MS_BOOT_MANAGER_SETTINGS_LIB_H_

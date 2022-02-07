@@ -1,4 +1,3 @@
-
 /** @file
 Library that exports the platform theme
 
@@ -16,7 +15,8 @@ Get the UI_THEME_DESCRIPTION
 
 MS_UI_THEME_DESCRIPTION *
 EFIAPI
-PlatformThemeGet ( VOID );
-
+PlatformThemeGet (
+  VOID
+  );
 
 #endif

@@ -11,11 +11,11 @@
 #ifndef __ADVANCED_LOGGER_PPI_H__
 #define __ADVANCED_LOGGER_PPI_H__
 
-typedef struct _ADVANCED_LOGGER_PPI   ADVANCED_LOGGER_PPI;
+typedef struct _ADVANCED_LOGGER_PPI ADVANCED_LOGGER_PPI;
 
-#define ADVANCED_LOGGER_PPI_SIGNATURE     SIGNATURE_32('L','O','P','I')
+#define ADVANCED_LOGGER_PPI_SIGNATURE  SIGNATURE_32('L','O','P','I')
 
-#define ADVANCED_LOGGER_PPI_VERSION (2)
+#define ADVANCED_LOGGER_PPI_VERSION  (2)
 
 /**
   Function pointer for PPI routing to AdvancedLoggerWrite
@@ -28,9 +28,9 @@ typedef struct _ADVANCED_LOGGER_PPI   ADVANCED_LOGGER_PPI;
 typedef
 VOID
 (EFIAPI *ADVANCED_LOGGER_WRITE_PPI)(
-    IN        UINTN                ErrorLevel,
-    IN  CONST CHAR8               *Buffer,
-    IN        UINTN                NumberOfBytes
+  IN        UINTN                ErrorLevel,
+  IN  CONST CHAR8               *Buffer,
+  IN        UINTN                NumberOfBytes
   );
 
 /**
@@ -44,9 +44,9 @@ VOID
 typedef
 VOID
 (EFIAPI *ADVANCED_LOGGER_PRINT_PPI)(
-    IN        UINTN                ErrorLevel,
-    IN  CONST CHAR8               *Format,
-    IN        VA_LIST              VaListMarker
+  IN        UINTN                ErrorLevel,
+  IN  CONST CHAR8               *Format,
+  IN        VA_LIST              VaListMarker
   );
 
 /**
@@ -60,19 +60,19 @@ VOID
 typedef
 VOID
 (EFIAPI *ADVANCED_LOGGER_ASSERT_PPI)(
-    IN CONST CHAR8               *FileName,
-    IN       UINTN                LineNumber,
-    IN CONST CHAR8               *Description
+  IN CONST CHAR8               *FileName,
+  IN       UINTN                LineNumber,
+  IN CONST CHAR8               *Description
   );
 
 struct _ADVANCED_LOGGER_PPI {
-    UINT32                       Signature;
-    UINT32                       Version;
-    ADVANCED_LOGGER_WRITE_PPI    AdvancedLoggerWritePpi;
-    ADVANCED_LOGGER_PRINT_PPI    AdvancedLoggerPrintPpi;
-    ADVANCED_LOGGER_ASSERT_PPI   AdvancedLoggerAssertPpi;
+  UINT32                        Signature;
+  UINT32                        Version;
+  ADVANCED_LOGGER_WRITE_PPI     AdvancedLoggerWritePpi;
+  ADVANCED_LOGGER_PRINT_PPI     AdvancedLoggerPrintPpi;
+  ADVANCED_LOGGER_ASSERT_PPI    AdvancedLoggerAssertPpi;
 };
 
 extern  EFI_GUID  gAdvancedLoggerPpiGuid;
 
-#endif  // __ADVANCED_LOGGER_PPI_H__
+#endif // __ADVANCED_LOGGER_PPI_H__

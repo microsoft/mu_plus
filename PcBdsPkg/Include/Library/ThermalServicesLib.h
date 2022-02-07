@@ -20,7 +20,6 @@ typedef enum {
   ThermalCaseMax
 } THERMAL_CASE;
 
-
 /**
   This function tries to determine if the thermal state of the system is compatible
   with one of the cases enumerated above
@@ -35,12 +34,11 @@ EFI_STATUS
 EFIAPI
 SystemThermalCheck (
   IN  THERMAL_CASE  Case,
-  OUT BOOLEAN*      Good
-);
-
+  OUT BOOLEAN       *Good
+  );
 
 /**
-  This function is called in response to a successful call to SystemThermalCheck that 
+  This function is called in response to a successful call to SystemThermalCheck that
   returns success (thermal state was able to be determined), but has returned a test
   value that indicates the case has failed.
 
@@ -56,8 +54,6 @@ EFIAPI
 SystemThermalMitigate (
   IN  THERMAL_CASE  Case,
   IN  UINT32        TimeoutPeriod
-);
-
+  );
 
 #endif
-

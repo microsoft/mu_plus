@@ -16,11 +16,9 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 #include <Protocol/ReportStatusCodeHandler.h>
 #include "../Common/SerialStatusCodeHandler.h"
 
-EFI_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol = NULL;
+EFI_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol   = NULL;
 EFI_EVENT                 mExitBootServicesEvent = NULL;
-EFI_EVENT                 mRscRegisterEvent = NULL;
-
-
+EFI_EVENT                 mRscRegisterEvent      = NULL;
 
 /**
 
@@ -35,11 +33,11 @@ report status code router when exiting boot services.
 VOID
 EFIAPI
 UnregisterBootTimeHandlers (
-  IN EFI_EVENT        Event,
-  IN VOID             *Context
-)
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
 {
-  mRscHandlerProtocol->Unregister((EFI_RSC_HANDLER_CALLBACK)SerialStatusCode);
+  mRscHandlerProtocol->Unregister ((EFI_RSC_HANDLER_CALLBACK)SerialStatusCode);
 }
 
 /**
@@ -56,32 +54,30 @@ UnregisterBootTimeHandlers (
 EFI_STATUS
 EFIAPI
 DxeEntry (
-  IN EFI_HANDLE         ImageHandle,
-  IN EFI_SYSTEM_TABLE   *SystemTable
-)
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
 {
-  EFI_STATUS                Status;
-  EFI_HANDLE                Handle;
+  EFI_STATUS  Status;
+  EFI_HANDLE  Handle;
 
   Status = gBS->LocateProtocol (
                   &gEfiRscHandlerProtocolGuid,
                   NULL,
-                  (VOID **) &mRscHandlerProtocol
+                  (VOID **)&mRscHandlerProtocol
                   );
-  if (EFI_ERROR(Status))
-  {
-    ASSERT_EFI_ERROR(Status);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
     return Status;
   }
 
-  Status = SerialPortInitialize();
-  if (EFI_ERROR(Status))
-  {
-    ASSERT_EFI_ERROR(Status);
+  Status = SerialPortInitialize ();
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
     return Status;
   }
 
-  mRscHandlerProtocol->Register((EFI_RSC_HANDLER_CALLBACK)SerialStatusCode, TPL_HIGH_LEVEL);
+  mRscHandlerProtocol->Register ((EFI_RSC_HANDLER_CALLBACK)SerialStatusCode, TPL_HIGH_LEVEL);
 
   //
   // This callback should be invoked AFTER the ExitBootServices callback
@@ -90,34 +86,33 @@ DxeEntry (
   // could be routed to serial ports. TPL is used to guarantee sequence
   //
   Status = gBS->CreateEventEx (
-              EVT_NOTIFY_SIGNAL,
-              TPL_CALLBACK,
-              UnregisterBootTimeHandlers,
-              NULL,
-              &gEfiEventExitBootServicesGuid,
-              &mExitBootServicesEvent
-              );
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  UnregisterBootTimeHandlers,
+                  NULL,
+                  &gEfiEventExitBootServicesGuid,
+                  &mExitBootServicesEvent
+                  );
 
   //
   // Installation of this protocol notifies the DxeCore DebugLib that
   // it can switch to using RSC.
   //
   Handle = NULL;
-  Status = gBS->InstallProtocolInterface(
-             &Handle,
-             &gMsSerialStatusCodeHandlerDxeProtocolGuid,
-             EFI_NATIVE_INTERFACE,
-             NULL);
+  Status = gBS->InstallProtocolInterface (
+                  &Handle,
+                  &gMsSerialStatusCodeHandlerDxeProtocolGuid,
+                  EFI_NATIVE_INTERFACE,
+                  NULL
+                  );
 
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a: failed to install DXE serial status code handler protocol (%r)\n", __FUNCTION__, Status));
-    ASSERT_EFI_ERROR(Status);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to install DXE serial status code handler protocol (%r)\n", __FUNCTION__, Status));
+    ASSERT_EFI_ERROR (Status);
   }
 
   return Status;
 }
-
 
 /**
   This routine writes a status code string to the correct place.
@@ -130,8 +125,8 @@ DxeEntry (
 VOID
 EFIAPI
 WriteStatusCode (
-  IN UINT8     *Buffer,
-  IN UINTN     NumberOfBytes
+  IN UINT8  *Buffer,
+  IN UINTN  NumberOfBytes
   )
 {
   SerialPortWrite (Buffer, NumberOfBytes);

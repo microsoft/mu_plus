@@ -28,63 +28,61 @@ to check permissions for changing the setting.
 */
 EFI_STATUS
 InternalSystemSettingAccessSet (
-  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL    *This,
-  IN  DFCI_SETTING_ID_STRING                 Id,
-  IN  CONST DFCI_AUTH_TOKEN                 *AuthToken,
-  IN  DFCI_SETTING_TYPE                      Type,
-  IN  UINTN                                  ValueSize,
-  IN  CONST VOID                            *Value,
-  IN OUT DFCI_SETTING_FLAGS                 *Flags
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL  *This,
+  IN  DFCI_SETTING_ID_STRING              Id,
+  IN  CONST DFCI_AUTH_TOKEN               *AuthToken,
+  IN  DFCI_SETTING_TYPE                   Type,
+  IN  UINTN                               ValueSize,
+  IN  CONST VOID                          *Value,
+  IN OUT DFCI_SETTING_FLAGS               *Flags
   )
 {
-  DFCI_SETTING_PROVIDER *prov;
-  DFCI_GROUP_LIST_ENTRY *Group;
-  DFCI_MEMBER_LIST_ENTRY *Member;
-  LIST_ENTRY *Link;
-  EFI_STATUS ReturnStatus;
-  EFI_STATUS Status;
-  BOOLEAN AuthStatus = FALSE;
-  STATIC BOOLEAN SetRecurse = FALSE;
+  DFCI_SETTING_PROVIDER   *prov;
+  DFCI_GROUP_LIST_ENTRY   *Group;
+  DFCI_MEMBER_LIST_ENTRY  *Member;
+  LIST_ENTRY              *Link;
+  EFI_STATUS              ReturnStatus;
+  EFI_STATUS              Status;
+  BOOLEAN                 AuthStatus = FALSE;
+  STATIC BOOLEAN          SetRecurse = FALSE;
 
-  //Check parameters
-  if ((This == NULL) || (Value == NULL) || (AuthToken == NULL) || (Flags == NULL) | (Id == NULL))
-  {
+  // Check parameters
+  if ((This == NULL) || (Value == NULL) || (AuthToken == NULL) || (Flags == NULL) | (Id == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  //Get provider and verify type
-  prov = FindProviderById(Id);
+  // Get provider and verify type
+  prov = FindProviderById (Id);
 
-  if (prov == NULL)
-  {
+  if (prov == NULL) {
     if (SetRecurse) {
-      DEBUG((DEBUG_ERROR,"%a: Unexpected recursion.\n"));
-      ASSERT(!SetRecurse);
+      DEBUG ((DEBUG_ERROR, "%a: Unexpected recursion.\n"));
+      ASSERT (!SetRecurse);
       return EFI_UNSUPPORTED;
     }
 
     // May be group setting
     Group = FindGroup (Id);
-    if (Group == NULL)
-    {
-      DEBUG((DEBUG_ERROR, "%a - Requested ID (%a) not found.\n", __FUNCTION__, Id));
+    if (Group == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Requested ID (%a) not found.\n", __FUNCTION__, Id));
       return EFI_NOT_FOUND;
     }
 
     ReturnStatus = EFI_SUCCESS;
-    EFI_LIST_FOR_EACH(Link, &Group->MemberHead)
-    {
-      Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
+    EFI_LIST_FOR_EACH (Link, &Group->MemberHead) {
+      Member     = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
       SetRecurse = TRUE;
-      Status = InternalSystemSettingAccessSet (This,
-                                       Member->Id,
-                                       AuthToken,
-                                       Type,
-                                       ValueSize,
-                                       Value,
-                                       Flags);
+      Status     = InternalSystemSettingAccessSet (
+                     This,
+                     Member->Id,
+                     AuthToken,
+                     Type,
+                     ValueSize,
+                     Value,
+                     Flags
+                     );
       SetRecurse = FALSE;
-      if (EFI_ERROR(Status)) {
+      if (EFI_ERROR (Status)) {
         ReturnStatus = Status;
       }
     }
@@ -92,43 +90,39 @@ InternalSystemSettingAccessSet (
     return ReturnStatus;
   }
 
-  //Check Auth for the setting Id.
-  Status = HasWritePermissions(Id, AuthToken, &AuthStatus);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - HasWritePermissions returned an error %r\n", __FUNCTION__, Status));
+  // Check Auth for the setting Id.
+  Status = HasWritePermissions (Id, AuthToken, &AuthStatus);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - HasWritePermissions returned an error %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  //if no write access to group ID return access denied
-  if (!AuthStatus)
-  {
-    DEBUG((DEBUG_INFO, "%a - No Permission to write setting %a\n", __FUNCTION__, Id));
+  // if no write access to group ID return access denied
+  if (!AuthStatus) {
+    DEBUG ((DEBUG_INFO, "%a - No Permission to write setting %a\n", __FUNCTION__, Id));
     return EFI_ACCESS_DENIED;
   }
 
-  if (Type != prov->Type)
-  {
-    DEBUG((DEBUG_ERROR, "Caller supplied type (0x%X) and provider type (0x%X) don't match\n", Type, prov->Type));
-    ASSERT(Type == prov->Type);
+  if (Type != prov->Type) {
+    DEBUG ((DEBUG_ERROR, "Caller supplied type (0x%X) and provider type (0x%X) don't match\n", Type, prov->Type));
+    ASSERT (Type == prov->Type);
     return EFI_INVALID_PARAMETER;
   }
 
-  //Set the current setting to the new value.
-  Status = prov->SetSettingValue(prov, ValueSize, Value, Flags);
-  if (EFI_ERROR(Status))
-  {
+  // Set the current setting to the new value.
+  Status = prov->SetSettingValue (prov, ValueSize, Value, Flags);
+  if (EFI_ERROR (Status)) {
     if (Status == EFI_BAD_BUFFER_SIZE) {
-      DEBUG((DEBUG_ERROR, "%a: Bad size requested for setting provider!\n", __FUNCTION__));
-      ASSERT_EFI_ERROR( Status );
+      DEBUG ((DEBUG_ERROR, "%a: Bad size requested for setting provider!\n", __FUNCTION__));
+      ASSERT_EFI_ERROR (Status);
     }
-    DEBUG((DEBUG_ERROR, "Failed to Set Settings\n"));
+
+    DEBUG ((DEBUG_ERROR, "Failed to Set Settings\n"));
     return Status;
   }
 
-  if ((*Flags & DFCI_SETTING_FLAGS_OUT_ALREADY_SET) == 0)
-  {
-    //Status was good and flags don't indicate that value was already set.
+  if ((*Flags & DFCI_SETTING_FLAGS_OUT_ALREADY_SET) == 0) {
+    // Status was good and flags don't indicate that value was already set.
 
     Status = DfciSettingChangedNotification (
                Id,
@@ -139,8 +133,8 @@ InternalSystemSettingAccessSet (
                *Flags
                );
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "DfciSettingChangedNotification returned error code=%r\n"));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "DfciSettingChangedNotification returned error code=%r\n"));
     }
   }
 
@@ -166,21 +160,24 @@ to check permissions for changing the setting.
 EFI_STATUS
 EFIAPI
 SystemSettingAccessSet (
-  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL    *This,
-  IN  DFCI_SETTING_ID_STRING                 Id,
-  IN  CONST DFCI_AUTH_TOKEN                 *AuthToken,
-  IN  DFCI_SETTING_TYPE                      Type,
-  IN  UINTN                                  ValueSize,
-  IN  CONST VOID                            *Value,
-  IN OUT DFCI_SETTING_FLAGS                 *Flags
-  ) {
-  return InternalSystemSettingAccessSet ( This,
-                                          Id,
-                                          AuthToken,
-                                          Type,
-                                          ValueSize,
-                                          Value,
-                                          Flags);
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL  *This,
+  IN  DFCI_SETTING_ID_STRING              Id,
+  IN  CONST DFCI_AUTH_TOKEN               *AuthToken,
+  IN  DFCI_SETTING_TYPE                   Type,
+  IN  UINTN                               ValueSize,
+  IN  CONST VOID                          *Value,
+  IN OUT DFCI_SETTING_FLAGS               *Flags
+  )
+{
+  return InternalSystemSettingAccessSet (
+           This,
+           Id,
+           AuthToken,
+           Type,
+           ValueSize,
+           Value,
+           Flags
+           );
 }
 
 /*
@@ -204,77 +201,75 @@ flags for the given auth.
 EFI_STATUS
 InternalSystemSettingAccessGet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_STRING              Id,
-  IN  CONST DFCI_AUTH_TOKEN              *AuthToken, OPTIONAL
+  IN  DFCI_SETTING_ID_STRING Id,
+  IN  CONST DFCI_AUTH_TOKEN *AuthToken, OPTIONAL
   IN  DFCI_SETTING_TYPE                   Type,
   IN OUT UINTN                           *ValueSize,
   OUT VOID                               *Value,
   IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
   )
 {
-  DFCI_SETTING_PROVIDER *prov = NULL;
-  DFCI_GROUP_LIST_ENTRY *Group;
-  DFCI_MEMBER_LIST_ENTRY *Member;
-  LIST_ENTRY *Link;
-  EFI_STATUS ReturnStatus;
-  EFI_STATUS Status = EFI_SUCCESS;
-  STATIC BOOLEAN GetRecurse = FALSE;
-  UINT8 LocalValue;
-  UINT8 MasterValue;
-  UINTN LocalSize;
+  DFCI_SETTING_PROVIDER   *prov = NULL;
+  DFCI_GROUP_LIST_ENTRY   *Group;
+  DFCI_MEMBER_LIST_ENTRY  *Member;
+  LIST_ENTRY              *Link;
+  EFI_STATUS              ReturnStatus;
+  EFI_STATUS              Status     = EFI_SUCCESS;
+  STATIC BOOLEAN          GetRecurse = FALSE;
+  UINT8                   LocalValue;
+  UINT8                   MasterValue;
+  UINTN                   LocalSize;
 
-  //Check parameters
-  if ((This == NULL) || (Value == NULL))
-  {
+  // Check parameters
+  if ((This == NULL) || (Value == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  //Get provider and verify type
-  prov = FindProviderById(Id);
+  // Get provider and verify type
+  prov = FindProviderById (Id);
 
-  if (prov == NULL)
-  {
+  if (prov == NULL) {
     if (GetRecurse) {
-      DEBUG((DEBUG_ERROR,"%a: Unexpected recursion.\n"));
-      ASSERT(!GetRecurse);
+      DEBUG ((DEBUG_ERROR, "%a: Unexpected recursion.\n"));
+      ASSERT (!GetRecurse);
       return EFI_UNSUPPORTED;
     }
 
     // May be group setting
     Group = FindGroup (Id);
-    if (Group == NULL)
-    {
-      DEBUG((DEBUG_ERROR, "%a - Requested ID (%a) not found.\n", __FUNCTION__, Id));
+    if (Group == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Requested ID (%a) not found.\n", __FUNCTION__, Id));
       return EFI_NOT_FOUND;
     }
 
     if (*ValueSize < 1) {
-      *ValueSize = sizeof(UINT8);
+      *ValueSize = sizeof (UINT8);
       return EFI_BUFFER_TOO_SMALL;
     }
 
     ReturnStatus = EFI_SUCCESS;
-    MasterValue = ENABLE_INCONSISTENT;  // Some value not ENABLE_TRUE or ENABLE_FALSE
-    EFI_LIST_FOR_EACH(Link, &Group->MemberHead)
-    {
-      Member = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
-      LocalSize = sizeof(LocalValue);
-      GetRecurse= TRUE;
-      Status = InternalSystemSettingAccessGet (This,
-                                       Member->Id,
-                                       AuthToken,
-                                       Type,
-                                      &LocalSize,
-                                      &LocalValue,
-                                       Flags);
+    MasterValue  = ENABLE_INCONSISTENT; // Some value not ENABLE_TRUE or ENABLE_FALSE
+    EFI_LIST_FOR_EACH (Link, &Group->MemberHead) {
+      Member     = MEMBER_LIST_ENTRY_FROM_MEMBER_LINK (Link);
+      LocalSize  = sizeof (LocalValue);
+      GetRecurse = TRUE;
+      Status     = InternalSystemSettingAccessGet (
+                     This,
+                     Member->Id,
+                     AuthToken,
+                     Type,
+                     &LocalSize,
+                     &LocalValue,
+                     Flags
+                     );
       GetRecurse = FALSE;
-      if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Unexpected return from AccessGet. Code=%r\n", __FUNCTION__, Status));
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Unexpected return from AccessGet. Code=%r\n", __FUNCTION__, Status));
         ReturnStatus = Status;
         continue;
       }
 
-      DEBUG((DEBUG_INFO,"Value of %a is %x\n", Member->Id, (UINTN) LocalValue));
+      DEBUG ((DEBUG_INFO, "Value of %a is %x\n", Member->Id, (UINTN)LocalValue));
 
       if (ENABLE_INCONSISTENT == MasterValue) {
         MasterValue = LocalValue;
@@ -293,44 +288,41 @@ InternalSystemSettingAccessGet (
       case EFI_SUCCESS:
         *((UINT8 *)Value) = MasterValue;
       case EFI_BUFFER_TOO_SMALL:
-        *ValueSize = sizeof(UINT8);
-      break;
+        *ValueSize = sizeof (UINT8);
+        break;
     }
 
     return ReturnStatus;
   }
 
-  if (Type != prov->Type)
-  {
-    DEBUG((DEBUG_ERROR, "Caller supplied type (0x%X) and provider type (0x%X) don't match\n", Type, prov->Type));
-    ASSERT(Type == prov->Type);
+  if (Type != prov->Type) {
+    DEBUG ((DEBUG_ERROR, "Caller supplied type (0x%X) and provider type (0x%X) don't match\n", Type, prov->Type));
+    ASSERT (Type == prov->Type);
     return EFI_INVALID_PARAMETER;
   }
 
-  if (Flags != NULL)
-  {
-    //return the provider flags
+  if (Flags != NULL) {
+    // return the provider flags
     *Flags = prov->Flags;
   }
 
   //
   // Go check the permission
   //
-  if ((AuthToken != NULL) && (Flags != NULL))
-  {
-    BOOLEAN AuthStatus = FALSE;
-    Status = HasWritePermissions(Id, AuthToken, &AuthStatus);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_INFO, "%a - Failed to get Write Permission for Id %a Status %r\n", __FUNCTION__, Id, Status));
+  if ((AuthToken != NULL) && (Flags != NULL)) {
+    BOOLEAN  AuthStatus = FALSE;
+    Status = HasWritePermissions (Id, AuthToken, &AuthStatus);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "%a - Failed to get Write Permission for Id %a Status %r\n", __FUNCTION__, Id, Status));
       AuthStatus = FALSE;
     }
-    if (AuthStatus)
-    {
-      *Flags |= DFCI_SETTING_FLAGS_OUT_WRITE_ACCESS;  //add write access if AuthStatus is TRUE
+
+    if (AuthStatus) {
+      *Flags |= DFCI_SETTING_FLAGS_OUT_WRITE_ACCESS;  // add write access if AuthStatus is TRUE
     }
   }
-  return prov->GetSettingValue(prov, ValueSize, Value);
+
+  return prov->GetSettingValue (prov, ValueSize, Value);
 }
 
 /*
@@ -354,21 +346,23 @@ EFI_STATUS
 EFIAPI
 SystemSettingAccessGet (
   IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
-  IN  DFCI_SETTING_ID_STRING              Id,
-  IN  CONST DFCI_AUTH_TOKEN              *AuthToken, OPTIONAL
+  IN  DFCI_SETTING_ID_STRING Id,
+  IN  CONST DFCI_AUTH_TOKEN *AuthToken, OPTIONAL
   IN  DFCI_SETTING_TYPE                   Type,
   IN OUT UINTN                           *ValueSize,
   OUT VOID                               *Value,
   IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
   )
 {
-  return InternalSystemSettingAccessGet ( This,
-                                          Id,
-                                          AuthToken,
-                                          Type,
-                                          ValueSize,
-                                          Value,
-                                          Flags);
+  return InternalSystemSettingAccessGet (
+           This,
+           Id,
+           AuthToken,
+           Type,
+           ValueSize,
+           Value,
+           Flags
+           );
 }
 
 /*
@@ -388,44 +382,39 @@ can perform a reset.
 EFI_STATUS
 EFIAPI
 SystemSettingsAccessReset (
-  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
-  IN  CONST DFCI_AUTH_TOKEN              *AuthToken
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL  *This,
+  IN  CONST DFCI_AUTH_TOKEN               *AuthToken
   )
 {
-  BOOLEAN CanUnenroll = FALSE;
-  EFI_STATUS Status;
+  BOOLEAN     CanUnenroll = FALSE;
+  EFI_STATUS  Status;
 
-  //Check parameters
-  if ((This == NULL) ||(AuthToken == NULL))
-  {
+  // Check parameters
+  if ((This == NULL) || (AuthToken == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = HasUnenrollPermission ( AuthToken, &CanUnenroll);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to get recovery permission. Status = %r\n", __FUNCTION__, Status));
+  Status = HasUnenrollPermission (AuthToken, &CanUnenroll);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to get recovery permission. Status = %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  if (!CanUnenroll)
-  {
-    DEBUG((DEBUG_INFO, "%a - Auth Token doesn't have permission to reset settings\n", __FUNCTION__));
+  if (!CanUnenroll) {
+    DEBUG ((DEBUG_INFO, "%a - Auth Token doesn't have permission to reset settings\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
 
-  Status = ResetAllProvidersToDefaultsWithMatchingFlags(DFCI_SETTING_FLAGS_NO_PREBOOT_UI);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to reset all settings to defaults. Status = %r\n", __FUNCTION__, Status));
-    ASSERT_EFI_ERROR(Status); //if cleanup fails on production system nothing we can do...keep going
+  Status = ResetAllProvidersToDefaultsWithMatchingFlags (DFCI_SETTING_FLAGS_NO_PREBOOT_UI);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to reset all settings to defaults. Status = %r\n", __FUNCTION__, Status));
+    ASSERT_EFI_ERROR (Status); // if cleanup fails on production system nothing we can do...keep going
   }
 
-  Status = SMID_ResetInFlash();  //clear the internal storage
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to Reset Settings Internal Data Status = %r\n", __FUNCTION__, Status));
-    ASSERT_EFI_ERROR(Status);  //if cleanup fails on production system nothing we can do...keep going
+  Status = SMID_ResetInFlash ();  // clear the internal storage
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to Reset Settings Internal Data Status = %r\n", __FUNCTION__, Status));
+    ASSERT_EFI_ERROR (Status);  // if cleanup fails on production system nothing we can do...keep going
   }
 
   return EFI_SUCCESS;
@@ -434,37 +423,34 @@ SystemSettingsAccessReset (
 EFI_STATUS
 EFIAPI
 SystemSettingPermissionGetPermission (
-  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
   IN  DFCI_SETTING_ID_STRING                   Id,
-  OUT DFCI_PERMISSION_MASK                    *PermissionMask
+  OUT DFCI_PERMISSION_MASK                     *PermissionMask
   )
 {
-  if ((This == NULL) || (PermissionMask == NULL))
-  {
+  if ((This == NULL) || (PermissionMask == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  return QueryPermission(Id, PermissionMask);
-
+  return QueryPermission (Id, PermissionMask);
 }
 
 EFI_STATUS
 EFIAPI
 SystemSettingPermissionResetPermission (
-  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
-  IN  CONST DFCI_AUTH_TOKEN                   *AuthToken
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
+  IN  CONST DFCI_AUTH_TOKEN                    *AuthToken
   )
 {
-  EFI_STATUS Status;
-  if ((This == NULL) || (AuthToken == NULL))
-  {
+  EFI_STATUS  Status;
+
+  if ((This == NULL) || (AuthToken == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = ResetPermissionsToDefault(AuthToken);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to Reset Permissions Status = %r\n", __FUNCTION__, Status));
+  Status = ResetPermissionsToDefault (AuthToken);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to Reset Permissions Status = %r\n", __FUNCTION__, Status));
   }
 
   return Status;
@@ -473,22 +459,21 @@ SystemSettingPermissionResetPermission (
 EFI_STATUS
 EFIAPI
 SystemSettingPermissionIdentityChange (
-  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
-  IN  CONST DFCI_AUTH_TOKEN                   *AuthToken,
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
+  IN  CONST DFCI_AUTH_TOKEN                    *AuthToken,
   IN        DFCI_IDENTITY_ID                   CertIdentity,
   IN        BOOLEAN                            Enroll
   )
 {
-  EFI_STATUS Status;
-  if ((This == NULL) || (AuthToken == NULL))
-  {
+  EFI_STATUS  Status;
+
+  if ((This == NULL) || (AuthToken == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = IdentityChange(AuthToken, CertIdentity, Enroll);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to Reset Permissions. Status = %r\n", __FUNCTION__, Status));
+  Status = IdentityChange (AuthToken, CertIdentity, Enroll);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to Reset Permissions. Status = %r\n", __FUNCTION__, Status));
   }
 
   return Status;

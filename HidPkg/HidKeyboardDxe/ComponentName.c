@@ -23,16 +23,15 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL  mHidKeyboardComponent
 //
 // EFI Component Name 2 Protocol
 //
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL mHidKeyboardComponentName2 = {
-  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) HidKeyboardComponentNameGetDriverName,
-  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) HidKeyboardComponentNameGetControllerName,
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL  mHidKeyboardComponentName2 = {
+  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME)HidKeyboardComponentNameGetDriverName,
+  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME)HidKeyboardComponentNameGetControllerName,
   "en"
 };
 
-
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mHidKeyboardDriverNameTable[] = {
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE  mHidKeyboardDriverNameTable[] = {
   { "eng;en", L"HID Keyboard Driver" },
-  { NULL , NULL }
+  { NULL,     NULL                   }
 };
 
 /**
@@ -147,17 +146,18 @@ HidKeyboardComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 HidKeyboardComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   )
 {
   EFI_STATUS                      Status;
   HID_KB_DEV                      *HidKbDev;
   EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *SimpleTxtIn;
   HID_KEYBOARD_PROTOCOL           *KeyboardProtocol;
+
   //
   // This is a device driver, so ChildHandle must be NULL.
   //
@@ -171,7 +171,7 @@ HidKeyboardComponentNameGetControllerName (
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gHidKeyboardProtocolGuid,
-                  (VOID **) &KeyboardProtocol,
+                  (VOID **)&KeyboardProtocol,
                   mHidKeyboardDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -190,13 +190,14 @@ HidKeyboardComponentNameGetControllerName (
   if (Status != EFI_ALREADY_STARTED) {
     return EFI_UNSUPPORTED;
   }
+
   //
   // Get the device context
   //
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gEfiSimpleTextInProtocolGuid,
-                  (VOID **) &SimpleTxtIn,
+                  (VOID **)&SimpleTxtIn,
                   mHidKeyboardDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -215,5 +216,4 @@ HidKeyboardComponentNameGetControllerName (
            ControllerName,
            (BOOLEAN)(This == &mHidKeyboardComponentName)
            );
-
 }

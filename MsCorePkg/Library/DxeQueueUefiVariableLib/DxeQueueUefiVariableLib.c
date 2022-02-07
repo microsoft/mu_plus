@@ -18,12 +18,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/QueueLib.h>
 
-
 // TODO: should this be a PCD? So that it can be modified?
-#define DEFAULT_QUEUE_VAR_ATTR (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
-#define DEFAULT_QUEUE_VAR_NAME   L"00000"
-#define DEFAULT_QUEUE_VAR_FORMAT L"%d"
-#define DEFAULT_QUEUE_MODULO     100000
+#define DEFAULT_QUEUE_VAR_ATTR    (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+#define DEFAULT_QUEUE_VAR_NAME    L"00000"
+#define DEFAULT_QUEUE_VAR_FORMAT  L"%d"
+#define DEFAULT_QUEUE_MODULO      100000
 
 /**
   Writes a variable name string for a given ID
@@ -47,9 +46,11 @@ GenerateVarName (
   if (VarName == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  if (VarNameSize < sizeof(DEFAULT_QUEUE_VAR_NAME)) {
+
+  if (VarNameSize < sizeof (DEFAULT_QUEUE_VAR_NAME)) {
     return EFI_BUFFER_TOO_SMALL;
   }
+
   UnicodeSPrint (VarName, VarNameSize, DEFAULT_QUEUE_VAR_FORMAT, VarId);
   return EFI_SUCCESS;
 }
@@ -72,23 +73,26 @@ GetIdFromVarName (
   UINTN   *VarId
   )
 {
-  EFI_STATUS Status;
-  CHAR16     *EndPointer;
+  EFI_STATUS  Status;
+  CHAR16      *EndPointer;
 
-  if (VarName == NULL || VarId == NULL) {
+  if ((VarName == NULL) || (VarId == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
+
   Status = StrDecimalToUintnS (
-                 VarName,
-                 &EndPointer,
-                 VarId);
-  if (EFI_ERROR(Status)) {
+             VarName,
+             &EndPointer,
+             VarId
+             );
+  if (EFI_ERROR (Status)) {
     return EFI_INVALID_PARAMETER;
   }
 
   if (*EndPointer != L'\0') {
     return EFI_INVALID_PARAMETER;
   }
+
   return EFI_SUCCESS;
 }
 
@@ -111,62 +115,64 @@ GetIdFromVarName (
 EFI_STATUS
 EFIAPI
 GetNextQueueVariableName (
-  IN OUT  CHAR16   **VariableNamePtr,
-  IN      EFI_GUID *VariableGuid,
-  IN      UINTN    *VariableNameSize,
-  IN      EFI_GUID *DesiredVariableGuid
+  IN OUT  CHAR16    **VariableNamePtr,
+  IN      EFI_GUID  *VariableGuid,
+  IN      UINTN     *VariableNameSize,
+  IN      EFI_GUID  *DesiredVariableGuid
   )
 {
-  EFI_STATUS Status;
-  UINTN      RequestedVariableNameSize;
-  UINTN      CurrentVariableSize;
-  CHAR16     *VariableName;
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+  EFI_STATUS  Status;
+  UINTN       RequestedVariableNameSize;
+  UINTN       CurrentVariableSize;
+  CHAR16      *VariableName;
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
 
   if (VariableNamePtr == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   VariableName = *VariableNamePtr;
   // if they passed us a pointer to a null, allocate with the default size
   if (VariableName == NULL) {
     CurrentVariableSize = 60;
-    VariableName = AllocateZeroPool (CurrentVariableSize);
-    DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
-  }
-  else {
-    DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+    VariableName        = AllocateZeroPool (CurrentVariableSize);
+    DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+  } else {
+    DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
     CurrentVariableSize = *VariableNameSize;
   }
 
   if (VariableName == NULL) {
-    DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
-   return EFI_OUT_OF_RESOURCES;
+    DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+    return EFI_OUT_OF_RESOURCES;
   }
 
   Status = EFI_SUCCESS;
   while (Status == EFI_SUCCESS) {
     RequestedVariableNameSize = CurrentVariableSize;
-    Status = gRT->GetNextVariableName (&RequestedVariableNameSize, VariableName, VariableGuid);
+    Status                    = gRT->GetNextVariableName (&RequestedVariableNameSize, VariableName, VariableGuid);
     // check if it's too small, if so, reallocate and start over.
     if (Status == EFI_BUFFER_TOO_SMALL) {
       // reallocate so that we can resume where we were in the variable store
-      VariableName = ReallocatePool (CurrentVariableSize, RequestedVariableNameSize, VariableName);
+      VariableName        = ReallocatePool (CurrentVariableSize, RequestedVariableNameSize, VariableName);
       CurrentVariableSize = RequestedVariableNameSize;
       // loop back around and try again
       Status = EFI_SUCCESS;
       continue;
     }
+
     // check if we have a variable
     if (!EFI_ERROR (Status) && CompareGuid (VariableGuid, DesiredVariableGuid)) {
-      DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+      DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
       break;
     }
   }
 
   *VariableNameSize = CurrentVariableSize;
-  *VariableNamePtr = VariableName;
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+  *VariableNamePtr  = VariableName;
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   return Status;
 }
 
@@ -182,8 +188,8 @@ GetNextQueueVariableName (
 EFI_STATUS
 EFIAPI
 GetQueueItemCount (
-  IN  EFI_GUID *QueueGuid,
-  OUT UINTN    *ItemCount
+  IN  EFI_GUID  *QueueGuid,
+  OUT UINTN     *ItemCount
   )
 {
   EFI_STATUS  Status;
@@ -192,14 +198,13 @@ GetQueueItemCount (
   UINTN       CurrenQueueCount;
   EFI_GUID    VariableGuid;
 
-
-  if (ItemCount == NULL || QueueGuid == NULL) {
+  if ((ItemCount == NULL) || (QueueGuid == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  VariableName = NULL;
+  VariableName     = NULL;
   CurrenQueueCount = 0;
-  Status = EFI_SUCCESS;
+  Status           = EFI_SUCCESS;
 
   // look for all the capsule queue variables
   while (Status == EFI_SUCCESS) {
@@ -208,6 +213,7 @@ GetQueueItemCount (
       CurrenQueueCount += 1;
     }
   }
+
   // going all the way to the end of the varstore gives us a EFI_NOT_FOUND
   if (Status == EFI_NOT_FOUND) {
     Status = EFI_SUCCESS;
@@ -219,6 +225,7 @@ GetQueueItemCount (
     FreePool (VariableName);
     VariableName = NULL;
   }
+
   return Status;
 }
 
@@ -235,9 +242,9 @@ GetQueueItemCount (
 EFI_STATUS
 EFIAPI
 QueueAddItem (
-  IN  EFI_GUID *QueueGuid,
-  IN  VOID     *ItemData,
-  IN  UINTN    ItemDataSize
+  IN  EFI_GUID  *QueueGuid,
+  IN  VOID      *ItemData,
+  IN  UINTN     ItemDataSize
   )
 {
   EFI_STATUS  Status;
@@ -246,16 +253,15 @@ QueueAddItem (
   EFI_GUID    VariableGuid;
   UINTN       VarCurrentId;
   UINTN       VarMaxId;
-  CHAR16      NewVarName []= DEFAULT_QUEUE_VAR_NAME;
+  CHAR16      NewVarName[] = DEFAULT_QUEUE_VAR_NAME;
 
-
-  if (QueueGuid == NULL || ItemData == NULL) {
+  if ((QueueGuid == NULL) || (ItemData == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
   VariableName = NULL;
-  Status = EFI_SUCCESS;
-  VarMaxId = 0;
+  Status       = EFI_SUCCESS;
+  VarMaxId     = 0;
 
   // Step 1: get the ID of the last item in the queue
   while (Status == EFI_SUCCESS) {
@@ -264,33 +270,39 @@ QueueAddItem (
       Status = EFI_SUCCESS;
       break;
     }
+
     if (EFI_ERROR (Status)) {
       break;
     }
-    Status = GetIdFromVarName (VariableName, VariableNameSize, &VarCurrentId);
+
+    Status   = GetIdFromVarName (VariableName, VariableNameSize, &VarCurrentId);
     VarMaxId = MAX (VarMaxId, VarCurrentId);
   }
+
   if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
+
   // step 2: Add one to that and generate a new variable name
   VarMaxId += 1;
   if (VarMaxId >= DEFAULT_QUEUE_MODULO) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
+
   Status = GenerateVarName (VarMaxId, NewVarName, sizeof (NewVarName));
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
   // step 3: save data to that variable
   Status = gRT->SetVariable (
-          NewVarName,
-          QueueGuid,
-          DEFAULT_QUEUE_VAR_ATTR,
-          ItemDataSize,
-          ItemData
-          );
+                  NewVarName,
+                  QueueGuid,
+                  DEFAULT_QUEUE_VAR_ATTR,
+                  ItemDataSize,
+                  ItemData
+                  );
 
 Cleanup:
   if (VariableName != NULL) {
@@ -323,10 +335,10 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 QueuePopItemAtIndex (
-  IN  EFI_GUID *QueueGuid,
-  IN  UINTN    ItemIndex,
-  OUT VOID     **ItemData OPTIONAL,
-  OUT UINTN    *ItemDataSize OPTIONAL
+  IN  EFI_GUID  *QueueGuid,
+  IN  UINTN     ItemIndex,
+  OUT VOID      **ItemData OPTIONAL,
+  OUT UINTN     *ItemDataSize OPTIONAL
   )
 {
   EFI_STATUS  Status;
@@ -341,29 +353,30 @@ QueuePopItemAtIndex (
     return EFI_INVALID_PARAMETER;
   }
 
-  VariableName = NULL;
-  Status = EFI_SUCCESS;
-  VariableData = NULL;
-  QueueIndex = 0;
+  VariableName     = NULL;
+  Status           = EFI_SUCCESS;
+  VariableData     = NULL;
+  QueueIndex       = 0;
   VariableDataSize = 0;
 
   // Step 1: find the variable of the first item in the queue.
   do {
     Status = GetNextQueueVariableName (&VariableName, &VariableGuid, &VariableNameSize, QueueGuid);
     if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "[%a] - failed to find next item in queue\n", __FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "[%a] - failed to find next item in queue\n", __FUNCTION__));
       goto Cleanup;
     }
+
     QueueIndex += 1;
   } while (Status == EFI_SUCCESS && QueueIndex <= ItemIndex);
 
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "[%a] - failed to find the queue item at index %d\n", __FUNCTION__, ItemIndex));
+    DEBUG ((DEBUG_ERROR, "[%a] - failed to find the queue item at index %d\n", __FUNCTION__, ItemIndex));
     goto Cleanup;
   }
 
   // if they passed in non null pointers, we should return the variable data
-  if (ItemData != NULL && ItemDataSize != NULL) {
+  if ((ItemData != NULL) && (ItemDataSize != NULL)) {
     // Step 2: figure out how big the variable is and allocate the data for it
     Status = gRT->GetVariable (
                     VariableName,
@@ -376,12 +389,14 @@ QueuePopItemAtIndex (
       DEBUG ((DEBUG_ERROR, "[%a] - failed to get size of variable data\n", __FUNCTION__));
       goto Cleanup;
     }
+
     VariableData = AllocatePool (VariableDataSize);
     if (VariableData == NULL) {
       DEBUG ((DEBUG_ERROR, "[%a] - failed to allocate resources\n", __FUNCTION__));
       Status = EFI_OUT_OF_RESOURCES;
       goto Cleanup;
     }
+
     // step 3: read in the data to the new allocated buffer
     Status = gRT->GetVariable (
                     VariableName,
@@ -396,7 +411,7 @@ QueuePopItemAtIndex (
     }
 
     // step 4: set the return pointer correctly
-    *ItemData = VariableData;
+    *ItemData     = VariableData;
     *ItemDataSize = VariableDataSize;
   }
 
@@ -412,7 +427,6 @@ QueuePopItemAtIndex (
     DEBUG ((DEBUG_ERROR, "[%a] - failed to delete variable\n", __FUNCTION__));
     goto Cleanup;
   }
-
 
 Cleanup:
   if (VariableName != NULL) {
@@ -441,12 +455,12 @@ Cleanup:
 EFI_STATUS
 EFIAPI
 QueuePopItem (
-  IN  EFI_GUID *QueueGuid,
-  OUT VOID     **ItemData OPTIONAL,
-  OUT UINTN    *ItemDataSize OPTIONAL
+  IN  EFI_GUID  *QueueGuid,
+  OUT VOID      **ItemData OPTIONAL,
+  OUT UINTN     *ItemDataSize OPTIONAL
   )
 {
- return QueuePopItemAtIndex(QueueGuid, 0, ItemData, ItemDataSize);
+  return QueuePopItemAtIndex (QueueGuid, 0, ItemData, ItemDataSize);
 }
 
 /**
@@ -468,10 +482,10 @@ QueuePopItem (
 EFI_STATUS
 EFIAPI
 QueuePeekAtIndex (
-  IN  EFI_GUID *QueueGuid,
-  IN  UINTN    ItemIndex,
-  OUT VOID     **ItemData,
-  OUT UINTN    *ItemDataSize
+  IN  EFI_GUID  *QueueGuid,
+  IN  UINTN     ItemIndex,
+  OUT VOID      **ItemData,
+  OUT UINTN     *ItemDataSize
   )
 {
   EFI_STATUS  Status;
@@ -481,7 +495,6 @@ QueuePeekAtIndex (
   UINTN       VariableDataSize;
   VOID        *VariableData;
   UINTN       QueueIndex;
-
 
   if (QueueGuid == NULL) {
     DEBUG ((DEBUG_ERROR, "[%a] - invalid parameter as QueueGuid is NULL\n", __FUNCTION__));
@@ -499,24 +512,25 @@ QueuePeekAtIndex (
   }
 
   // Step 1: find the variable name of the item at the specific index (if it exists)
-  VariableName = NULL;
-  Status = EFI_SUCCESS;
-  VariableData = NULL;
-  QueueIndex = 0;
+  VariableName     = NULL;
+  Status           = EFI_SUCCESS;
+  VariableData     = NULL;
+  QueueIndex       = 0;
   VariableDataSize = 0;
 
   do {
     Status = GetNextQueueVariableName (&VariableName, &VariableGuid, &VariableNameSize, QueueGuid);
-    
+
     if (EFI_ERROR (Status)) {
-      DEBUG((DEBUG_ERROR, "[%a] - failed to find next item in queue\n", __FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "[%a] - failed to find next item in queue\n", __FUNCTION__));
       goto Cleanup;
     }
+
     QueueIndex += 1;
   } while (Status == EFI_SUCCESS && QueueIndex <= ItemIndex);
 
   if (EFI_ERROR (Status)) {
-    DEBUG((DEBUG_ERROR, "[%a] - failed to find the queue item at index %d\n", __FUNCTION__, ItemIndex));
+    DEBUG ((DEBUG_ERROR, "[%a] - failed to find the queue item at index %d\n", __FUNCTION__, ItemIndex));
     goto Cleanup;
   }
 
@@ -528,14 +542,15 @@ QueuePeekAtIndex (
                   &VariableDataSize,
                   NULL
                   );
-  if (EFI_ERROR (Status) && Status != EFI_BUFFER_TOO_SMALL) {
-    DEBUG((DEBUG_ERROR, "[%a] - failed to find variable\n", __FUNCTION__));
+  if (EFI_ERROR (Status) && (Status != EFI_BUFFER_TOO_SMALL)) {
+    DEBUG ((DEBUG_ERROR, "[%a] - failed to find variable\n", __FUNCTION__));
     goto Cleanup;
   }
+
   VariableData = AllocatePool (VariableDataSize);
   if (VariableData == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
-    DEBUG((DEBUG_ERROR, "[%a] - failed to allocate resources\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "[%a] - failed to allocate resources\n", __FUNCTION__));
     goto Cleanup;
   }
 
@@ -549,12 +564,12 @@ QueuePeekAtIndex (
                   );
   if (EFI_ERROR (Status)) {
     FreePool (VariableData);
-    DEBUG((DEBUG_ERROR, "[%a] - failed to read in variable\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "[%a] - failed to read in variable\n", __FUNCTION__));
     goto Cleanup;
   }
 
   // step 4: set the return pointer correctly
-  *ItemData = VariableData;
+  *ItemData     = VariableData;
   *ItemDataSize = VariableDataSize;
 
 Cleanup:

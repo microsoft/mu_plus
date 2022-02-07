@@ -41,4 +41,4 @@ IsBufferOutsideMmValid (
   IN UINT64                Length
   );
 
-#endif  // SMM_PAGING_PROTECTION_TEST_DRIVER_H_
+#endif // SMM_PAGING_PROTECTION_TEST_DRIVER_H_

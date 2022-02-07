@@ -35,10 +35,10 @@
 
 typedef
 EFI_STATUS
-(EFIAPI *MFCI_DEVICE_ID_FN) (
+(EFIAPI *MFCI_DEVICE_ID_FN)(
   OUT CHAR16 **String,
   OUT UINTN *StringSize
-);
+  );
 
 /**
  * Get the Manufacturer Name
@@ -53,8 +53,8 @@ EFI_STATUS
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetManufacturer (
-    OUT CHAR16  **Manufacturer,
-    OUT UINTN    *ManufacturerSize  OPTIONAL
+  OUT CHAR16  **Manufacturer,
+  OUT UINTN   *ManufacturerSize  OPTIONAL
   );
 
 /**
@@ -71,8 +71,8 @@ MfciIdSupportGetManufacturer (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetProductName (
-    OUT CHAR16  **ProductName,
-    OUT UINTN    *ProductNameSize  OPTIONAL
+  OUT CHAR16  **ProductName,
+  OUT UINTN   *ProductNameSize  OPTIONAL
   );
 
 /**
@@ -88,8 +88,8 @@ MfciIdSupportGetProductName (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetSerialNumber (
-    OUT CHAR16  **SerialNumber,
-    OUT UINTN    *SerialNumberSize  OPTIONAL
+  OUT CHAR16  **SerialNumber,
+  OUT UINTN   *SerialNumberSize  OPTIONAL
   );
 
 /**
@@ -105,8 +105,8 @@ MfciIdSupportGetSerialNumber (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem1 (
-    OUT CHAR16  **Oem1,
-    OUT UINTN    *Oem1Size  OPTIONAL
+  OUT CHAR16  **Oem1,
+  OUT UINTN   *Oem1Size  OPTIONAL
   );
 
 /**
@@ -122,8 +122,8 @@ MfciIdSupportGetOem1 (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem2 (
-    OUT CHAR16  **Oem2,
-    OUT UINTN    *Oem2Size  OPTIONAL
+  OUT CHAR16  **Oem2,
+  OUT UINTN   *Oem2Size  OPTIONAL
   );
 
 /**
@@ -132,18 +132,18 @@ MfciIdSupportGetOem2 (
 
 // define a structure that pairs up the function pointer with the UEFI variable name
 typedef struct {
-  MFCI_DEVICE_ID_FN DeviceIdFn;
-  CHAR16 *DeviceIdVarName;
+  MFCI_DEVICE_ID_FN    DeviceIdFn;
+  CHAR16               *DeviceIdVarName;
 } MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP;
 
 // populate the array of structures that pair up the functions with variable names
-#define MFCI_TARGET_VAR_COUNT 5
-STATIC CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT] = {
+#define MFCI_TARGET_VAR_COUNT  5
+STATIC CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT] = {
   { MfciIdSupportGetManufacturer, MFCI_MANUFACTURER_VARIABLE_NAME },
-  { MfciIdSupportGetProductName, MFCI_PRODUCT_VARIABLE_NAME },
+  { MfciIdSupportGetProductName,  MFCI_PRODUCT_VARIABLE_NAME      },
   { MfciIdSupportGetSerialNumber, MFCI_SERIALNUMBER_VARIABLE_NAME },
-  { MfciIdSupportGetOem1, MFCI_OEM_01_VARIABLE_NAME },
-  { MfciIdSupportGetOem2, MFCI_OEM_02_VARIABLE_NAME }
+  { MfciIdSupportGetOem1,         MFCI_OEM_01_VARIABLE_NAME       },
+  { MfciIdSupportGetOem2,         MFCI_OEM_02_VARIABLE_NAME       }
 };
 
 #endif //__MFCI_DEVICE_ID_SUPPORT_LIB_H__

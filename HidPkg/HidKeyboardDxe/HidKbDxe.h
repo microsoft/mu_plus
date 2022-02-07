@@ -20,9 +20,9 @@ Environment:
   UEFI pre-boot Driver Execution Environment (DXE).
 
 --*/
+
 #ifndef _EFI_HID_KB_DXE_H_
 #define _EFI_HID_KB_DXE_H_
-
 
 #include <Uefi.h>
 
@@ -45,56 +45,56 @@ Environment:
 #include <Protocol/HidKeyboardProtocol.h>
 #include <Library/HiiLib.h>
 
-#define KEYBOARD_TIMER_INTERVAL         200000  // 0.02s
+#define KEYBOARD_TIMER_INTERVAL  200000         // 0.02s
 
-#define MAX_KEY_ALLOWED                 32
+#define MAX_KEY_ALLOWED  32
 
-#define HZ                              1000 * 1000 * 10
-#define HIDKBD_REPEAT_DELAY             ((HZ) / 2)
-#define HIDKBD_REPEAT_RATE              ((HZ) / 50)
+#define HZ                   1000 * 1000 * 10
+#define HIDKBD_REPEAT_DELAY  ((HZ) / 2)
+#define HIDKBD_REPEAT_RATE   ((HZ) / 50)
 
-#define HID_KEYBOARD_DRIVER_VERSION     0x10
+#define HID_KEYBOARD_DRIVER_VERSION  0x10
 
-#define INPUT_REPORT_HEADER_SIZE        (OFFSET_OF(KEYBOARD_HID_INPUT_BUFFER, KeyCode))
+#define INPUT_REPORT_HEADER_SIZE  (OFFSET_OF(KEYBOARD_HID_INPUT_BUFFER, KeyCode))
 
 typedef struct {
-  BOOLEAN  Down;
-  UINT8    KeyCode;
+  BOOLEAN    Down;
+  UINT8      KeyCode;
 } HID_KEY;
 
 typedef struct {
-  VOID          *Buffer[MAX_KEY_ALLOWED + 1];
-  UINTN         Head;
-  UINTN         Tail;
-  UINTN         ItemSize;
+  VOID     *Buffer[MAX_KEY_ALLOWED + 1];
+  UINTN    Head;
+  UINTN    Tail;
+  UINTN    ItemSize;
 } HID_SIMPLE_QUEUE;
 
-#define HID_KB_DEV_SIGNATURE  SIGNATURE_32 ('h', 'k', 'b', 'd')
-#define HID_KB_CONSOLE_IN_EX_NOTIFY_SIGNATURE SIGNATURE_32 ('h', 'k', 'b', 'x')
+#define HID_KB_DEV_SIGNATURE                   SIGNATURE_32 ('h', 'k', 'b', 'd')
+#define HID_KB_CONSOLE_IN_EX_NOTIFY_SIGNATURE  SIGNATURE_32 ('h', 'k', 'b', 'x')
 
 typedef struct _KEYBOARD_CONSOLE_IN_EX_NOTIFY {
-  UINTN                                 Signature;
-  EFI_KEY_DATA                          KeyData;
-  EFI_KEY_NOTIFY_FUNCTION               KeyNotificationFn;
-  LIST_ENTRY                            NotifyEntry;
+  UINTN                      Signature;
+  EFI_KEY_DATA               KeyData;
+  EFI_KEY_NOTIFY_FUNCTION    KeyNotificationFn;
+  LIST_ENTRY                 NotifyEntry;
 } KEYBOARD_CONSOLE_IN_EX_NOTIFY;
 
 #define HID_NS_KEY_SIGNATURE  SIGNATURE_32 ('h', 'n', 's', 'k')
 
 typedef struct {
-  UINTN                         Signature;
-  LIST_ENTRY                    Link;
+  UINTN                 Signature;
+  LIST_ENTRY            Link;
 
   //
   // The number of EFI_NS_KEY_MODIFIER children definitions
   //
-  UINTN                         KeyCount;
+  UINTN                 KeyCount;
 
   //
   // NsKey[0] : Non-spacing key
   // NsKey[1] ~ NsKey[KeyCount] : Physical keys
   //
-  EFI_KEY_DESCRIPTOR            *NsKey;
+  EFI_KEY_DESCRIPTOR    *NsKey;
 } HID_NS_KEY;
 
 #define HID_NS_KEY_FORM_FROM_LINK(a)  CR (a, HID_NS_KEY, Link, HID_NS_KEY_SIGNATURE)
@@ -103,60 +103,60 @@ typedef struct {
 /// Structure to describe HID keyboard device
 ///
 typedef struct {
-  UINTN                                 Signature;
-  EFI_HANDLE                            ControllerHandle;
-  EFI_DEVICE_PATH_PROTOCOL              *DevicePath;
-  EFI_UNICODE_STRING_TABLE              *ControllerNameTable;
-  EFI_SIMPLE_TEXT_INPUT_PROTOCOL        SimpleInput;
-  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL     SimpleInputEx;
-  HID_KEYBOARD_PROTOCOL                 *KeyboardProtocol;
+  UINTN                                Signature;
+  EFI_HANDLE                           ControllerHandle;
+  EFI_DEVICE_PATH_PROTOCOL             *DevicePath;
+  EFI_UNICODE_STRING_TABLE             *ControllerNameTable;
+  EFI_SIMPLE_TEXT_INPUT_PROTOCOL       SimpleInput;
+  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL    SimpleInputEx;
+  HID_KEYBOARD_PROTOCOL                *KeyboardProtocol;
 
-  HID_SIMPLE_QUEUE                      HidKeyQueue;
-  HID_SIMPLE_QUEUE                      EfiKeyQueue;
-  HID_SIMPLE_QUEUE                      EfiKeyQueueForNotify;
+  HID_SIMPLE_QUEUE                     HidKeyQueue;
+  HID_SIMPLE_QUEUE                     EfiKeyQueue;
+  HID_SIMPLE_QUEUE                     EfiKeyQueueForNotify;
 
-  KEYBOARD_HID_INPUT_BUFFER             *LastReport;
-  UINTN                                 LastReportSize;
-  UINT8                                 CurKeyCode;
+  KEYBOARD_HID_INPUT_BUFFER            *LastReport;
+  UINTN                                LastReportSize;
+  UINT8                                CurKeyCode;
 
-  UINT8                                 RepeatKey;
-  EFI_EVENT                             RepeatTimer;
+  UINT8                                RepeatKey;
+  EFI_EVENT                            RepeatTimer;
 
-  BOOLEAN                               CtrlOn;
-  BOOLEAN                               AltOn;
-  BOOLEAN                               ShiftOn;
-  BOOLEAN                               NumLockOn;
-  BOOLEAN                               CapsOn;
-  BOOLEAN                               ScrollOn;
-  BOOLEAN                               LeftCtrlOn;
-  BOOLEAN                               LeftAltOn;
-  BOOLEAN                               LeftShiftOn;
-  BOOLEAN                               LeftLogoOn;
-  BOOLEAN                               RightCtrlOn;
-  BOOLEAN                               RightAltOn;
-  BOOLEAN                               RightShiftOn;
-  BOOLEAN                               RightLogoOn;
-  BOOLEAN                               MenuKeyOn;
-  BOOLEAN                               SysReqOn;
-  BOOLEAN                               AltGrOn;
+  BOOLEAN                              CtrlOn;
+  BOOLEAN                              AltOn;
+  BOOLEAN                              ShiftOn;
+  BOOLEAN                              NumLockOn;
+  BOOLEAN                              CapsOn;
+  BOOLEAN                              ScrollOn;
+  BOOLEAN                              LeftCtrlOn;
+  BOOLEAN                              LeftAltOn;
+  BOOLEAN                              LeftShiftOn;
+  BOOLEAN                              LeftLogoOn;
+  BOOLEAN                              RightCtrlOn;
+  BOOLEAN                              RightAltOn;
+  BOOLEAN                              RightShiftOn;
+  BOOLEAN                              RightLogoOn;
+  BOOLEAN                              MenuKeyOn;
+  BOOLEAN                              SysReqOn;
+  BOOLEAN                              AltGrOn;
 
-  BOOLEAN                               IsSupportPartialKey;
+  BOOLEAN                              IsSupportPartialKey;
 
-  EFI_KEY_STATE                         KeyState;
+  EFI_KEY_STATE                        KeyState;
 
   //
   // Notification function list
   //
-  LIST_ENTRY                            NotifyList;
-  EFI_EVENT                             KeyNotifyProcessEvent;
+  LIST_ENTRY                           NotifyList;
+  EFI_EVENT                            KeyNotifyProcessEvent;
 
   //
   // Non-spacing key list
   //
-  LIST_ENTRY                            NsKeyList;
-  HID_NS_KEY                            *CurrentNsKey;
-  EFI_KEY_DESCRIPTOR                    *KeyConvertionTable;
-  EFI_EVENT                             KeyboardLayoutEvent;
+  LIST_ENTRY                           NsKeyList;
+  HID_NS_KEY                           *CurrentNsKey;
+  EFI_KEY_DESCRIPTOR                   *KeyConvertionTable;
+  EFI_EVENT                            KeyboardLayoutEvent;
 } HID_KB_DEV;
 
 //
@@ -179,23 +179,24 @@ extern EFI_COMPONENT_NAME2_PROTOCOL  mHidKeyboardComponentName2;
 // So the number of valid non-modifier HID keycodes is 0x62, and the number of
 // valid keycodes is 0x6A.
 //
-#define NUMBER_OF_VALID_NON_MODIFIER_HID_KEYCODE      0x62
-#define NUMBER_OF_VALID_HID_KEYCODE                   0x6A
+#define NUMBER_OF_VALID_NON_MODIFIER_HID_KEYCODE  0x62
+#define NUMBER_OF_VALID_HID_KEYCODE               0x6A
 //
 // 0x0 to 0x3 are reserved for typical keyboard status or keyboard errors.
 //
-#define HIDKBD_VALID_KEYCODE(Key) ((UINT8) (Key) > 3)
+#define HIDKBD_VALID_KEYCODE(Key)  ((UINT8) (Key) > 3)
 
 typedef struct {
-  UINT8 NumLock : 1;
-  UINT8 CapsLock : 1;
-  UINT8 ScrollLock : 1;
-  UINT8 Resrvd : 5;
+  UINT8    NumLock    : 1;
+  UINT8    CapsLock   : 1;
+  UINT8    ScrollLock : 1;
+  UINT8    Resrvd     : 5;
 } LED_MAP;
 
 //
 // Functions of Driver Binding Protocol
 //
+
 /**
   Check whether HID keyboard driver supports this device.
 
@@ -210,9 +211,9 @@ typedef struct {
 EFI_STATUS
 EFIAPI
 HIDKeyboardDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -237,9 +238,9 @@ HIDKeyboardDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 HIDKeyboardDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -260,15 +261,16 @@ HIDKeyboardDriverBindingStart (
 EFI_STATUS
 EFIAPI
 HIDKeyboardDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN  EFI_HANDLE                     Controller,
-  IN  UINTN                          NumberOfChildren,
-  IN  EFI_HANDLE                     *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   );
 
 //
 // EFI Component Name Functions
 //
+
 /**
   Retrieves a Unicode string that is the user readable name of the driver.
 
@@ -372,16 +374,17 @@ HidKeyboardComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 HidKeyboardComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   );
 
 //
 // Functions of Simple Text Input Protocol
 //
+
 /**
   Reset the input device and optionally run diagnostics
 
@@ -400,8 +403,8 @@ HidKeyboardComponentNameGetControllerName (
 EFI_STATUS
 EFIAPI
 HIDKeyboardReset (
-  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL   *This,
-  IN  BOOLEAN                          ExtendedVerification
+  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
+  IN  BOOLEAN                         ExtendedVerification
   );
 
 /**
@@ -420,13 +423,14 @@ HIDKeyboardReset (
 EFI_STATUS
 EFIAPI
 HIDKeyboardReadKeyStroke (
-  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL   *This,
-  OUT EFI_INPUT_KEY                    *Key
+  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
+  OUT EFI_INPUT_KEY                   *Key
   );
 
 //
 // Simple Text Input Ex protocol functions
 //
+
 /**
   Resets the input device hardware.
 
@@ -473,8 +477,8 @@ HIDKeyboardResetEx (
 EFI_STATUS
 EFIAPI
 HIDKeyboardReadKeyStrokeEx (
-  IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
-  OUT EFI_KEY_DATA                      *KeyData
+  IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+  OUT EFI_KEY_DATA                       *KeyData
   );
 
 /**
@@ -555,8 +559,8 @@ HIDKeyboardUnregisterKeyNotify (
 VOID
 EFIAPI
 HIDKeyboardWaitForKey (
-  IN  EFI_EVENT               Event,
-  IN  VOID                    *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   );
 
 /**
@@ -570,7 +574,7 @@ HIDKeyboardWaitForKey (
 **/
 EFI_STATUS
 KbdFreeNotifyList (
-  IN OUT LIST_ENTRY           *NotifyList
+  IN OUT LIST_ENTRY  *NotifyList
   );
 
 /**
@@ -598,9 +602,8 @@ IsKeyRegistered (
 VOID
 EFIAPI
 KeyNotifyProcessHandler (
-  IN  EFI_EVENT                 Event,
-  IN  VOID                      *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   );
 
 #endif
-

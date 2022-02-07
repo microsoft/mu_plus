@@ -19,12 +19,11 @@
 
 #include "../AdvancedLoggerCommon.h"
 
-STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
-STATIC UINT32                   mBufferSize = 0;
-STATIC EFI_PHYSICAL_ADDRESS     mMaxAddress = 0;
-STATIC EFI_BOOT_SERVICES       *mBS = NULL;
-STATIC EFI_EVENT                mExitBootServicesEvent = NULL;
-
+STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo           = NULL;
+STATIC UINT32                mBufferSize            = 0;
+STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress            = 0;
+STATIC EFI_BOOT_SERVICES     *mBS                   = NULL;
+STATIC EFI_EVENT             mExitBootServicesEvent = NULL;
 
 /**
     CheckAddress
@@ -43,35 +42,36 @@ STATIC EFI_EVENT                mExitBootServicesEvent = NULL;
 STATIC
 BOOLEAN
 ValidateInfoBlock (
-    VOID
-  ) {
+  VOID
+  )
+{
+  if (mLoggerInfo == NULL) {
+    return FALSE;
+  }
 
-    if (mLoggerInfo == NULL) {
-        return FALSE;
+  if (mLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+    return FALSE;
+  }
+
+  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR (mLoggerInfo + 1))) {
+    return FALSE;
+  }
+
+  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
+      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  {
+    return FALSE;
+  }
+
+  if (mBufferSize == 0) {
+    mBufferSize = mLoggerInfo->LogBufferSize;
+  } else {
+    if (mLoggerInfo->LogBufferSize != mBufferSize) {
+      return FALSE;
     }
+  }
 
-    if (mLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
-        return FALSE;
-    }
-
-    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo + 1))) {
-        return FALSE;
-    }
-
-    if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-        (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
-        return FALSE;
-    }
-
-    if (mBufferSize == 0) {
-        mBufferSize = mLoggerInfo->LogBufferSize;
-    } else {
-        if (mLoggerInfo->LogBufferSize != mBufferSize) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
+  return TRUE;
 }
 
 /**
@@ -81,32 +81,35 @@ ValidateInfoBlock (
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerGetLoggerInfo (
-    VOID
-) {
-    ADVANCED_LOGGER_PROTOCOL   *LoggerProtocol;
-    EFI_STATUS                  Status;
+  VOID
+  )
+{
+  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
+  EFI_STATUS                Status;
 
-    if ((mLoggerInfo == NULL) && (mBS != NULL)) {
-        Status = mBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
-                                       NULL,
-                                       (VOID **) &LoggerProtocol);
-        if (!EFI_ERROR(Status) && (LoggerProtocol != NULL)) {
-            ASSERT(LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
-            ASSERT(LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+  if ((mLoggerInfo == NULL) && (mBS != NULL)) {
+    Status = mBS->LocateProtocol (
+                    &gAdvancedLoggerProtocolGuid,
+                    NULL,
+                    (VOID **)&LoggerProtocol
+                    );
+    if (!EFI_ERROR (Status) && (LoggerProtocol != NULL)) {
+      ASSERT (LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+      ASSERT (LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
 
-            mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+      mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
 
-            if (mLoggerInfo != NULL) {
-                mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
-            }
-        }
+      if (mLoggerInfo != NULL) {
+        mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+      }
     }
+  }
 
-    if (!ValidateInfoBlock()) {
-        mLoggerInfo = NULL;
-    }
+  if (!ValidateInfoBlock ()) {
+    mLoggerInfo = NULL;
+  }
 
-    return mLoggerInfo;
+  return mLoggerInfo;
 }
 
 /**
@@ -120,16 +123,15 @@ AdvancedLoggerGetLoggerInfo (
 VOID
 EFIAPI
 OnExitBootServicesNotification (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-
-    //
-    // Runtime logging is currently not supported, so clear mLoggerInfo.
-    //
-    mLoggerInfo = NULL;
-    mBS = NULL;
+  //
+  // Runtime logging is currently not supported, so clear mLoggerInfo.
+  //
+  mLoggerInfo = NULL;
+  mBS         = NULL;
 }
 
 /**
@@ -144,37 +146,39 @@ OnExitBootServicesNotification (
 EFI_STATUS
 EFIAPI
 DxeRuntimeAdvancedLoggerLibConstructor (
-    IN EFI_HANDLE        ImageHandle,
-    IN EFI_SYSTEM_TABLE  *SystemTable
-    )
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
 {
-    EFI_STATUS                      Status;
+  EFI_STATUS  Status;
 
+  //
+  // Cache BootServices pointer as AdvLogger calls may be made before
+  // the constructor runs.
+  //
+  mBS = SystemTable->BootServices;
+  AdvancedLoggerGetLoggerInfo ();
+
+  ASSERT (mLoggerInfo != NULL);
+
+  if (mLoggerInfo != 0) {
     //
-    // Cache BootServices pointer as AdvLogger calls may be made before
-    // the constructor runs.
+    // Register notify function for ExitBootServices.
     //
-    mBS = SystemTable->BootServices;
-    AdvancedLoggerGetLoggerInfo ();
+    Status = mBS->CreateEvent (
+                    EVT_SIGNAL_EXIT_BOOT_SERVICES,
+                    TPL_CALLBACK,
+                    OnExitBootServicesNotification,
+                    NULL,
+                    &mExitBootServicesEvent
+                    );
 
-    ASSERT (mLoggerInfo != NULL);
-
-    if (mLoggerInfo != 0) {
-        //
-        // Register notify function for ExitBootServices.
-        //
-        Status = mBS->CreateEvent ( EVT_SIGNAL_EXIT_BOOT_SERVICES,
-                                    TPL_CALLBACK,
-                                    OnExitBootServicesNotification,
-                                    NULL,
-                                   &mExitBootServicesEvent);
-
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a - Create Event for Address Change failed. Code = %r\n", __FUNCTION__, Status));
-        }
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Create Event for Address Change failed. Code = %r\n", __FUNCTION__, Status));
     }
+  }
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -189,14 +193,13 @@ DxeRuntimeAdvancedLoggerLibConstructor (
 EFI_STATUS
 EFIAPI
 DxeRuntimeAdvancedLoggerLibDestructor (
-    IN EFI_HANDLE        ImageHandle,
-    IN EFI_SYSTEM_TABLE  *SystemTable
-    )
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
 {
+  if (mExitBootServicesEvent != NULL) {
+    mBS->CloseEvent (mExitBootServicesEvent);
+  }
 
-    if (mExitBootServicesEvent != NULL) {
-        mBS->CloseEvent (mExitBootServicesEvent);
-    }
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

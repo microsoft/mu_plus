@@ -30,9 +30,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  */
 EFI_STATUS
 EFIAPI
-MsEarlyGraphicsGetFrameBufferInfo(
-  EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE **GraphicsMode
-)
+MsEarlyGraphicsGetFrameBufferInfo (
+  EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE  **GraphicsMode
+  )
 {
   return EFI_NOT_FOUND;
 }

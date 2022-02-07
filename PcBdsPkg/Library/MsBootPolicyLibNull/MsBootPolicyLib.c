@@ -20,7 +20,7 @@ BOOLEAN
 EFIAPI
 MsBootPolicyLibIsSettingsBoot (
   VOID
-)
+  )
 {
   return FALSE;
 }
@@ -35,7 +35,7 @@ BOOLEAN
 EFIAPI
 MsBootPolicyLibIsAltBoot (
   VOID
-)
+  )
 {
   return FALSE;
 }
@@ -50,8 +50,8 @@ MsBootPolicyLibIsAltBoot (
 BOOLEAN
 EFIAPI
 MsBootPolicyLibIsDeviceBootable (
-  EFI_HANDLE   ControllerHandle
-)
+  EFI_HANDLE  ControllerHandle
+  )
 {
   return FALSE;
 }
@@ -67,7 +67,7 @@ BOOLEAN
 EFIAPI
 MsBootPolicyLibIsDevicePathBootable (
   EFI_DEVICE_PATH_PROTOCOL  *DevicePath
-)
+  )
 {
   return FALSE;
 }
@@ -89,7 +89,7 @@ BOOLEAN
 EFIAPI
 MsBootPolicyLibIsDevicePathUsb (
   EFI_DEVICE_PATH_PROTOCOL  *DevicePath
-)
+  )
 {
   return PlatformIsDevicePathUsb (DevicePath);
 }
@@ -107,9 +107,9 @@ MsBootPolicyLibIsDevicePathUsb (
 EFI_STATUS
 EFIAPI
 MsBootPolicyLibGetBootSequence (
-  BOOT_SEQUENCE **BootSequence,
-  BOOLEAN         AltBootRequest
-)
+  BOOT_SEQUENCE  **BootSequence,
+  BOOLEAN        AltBootRequest
+  )
 {
   return EFI_UNSUPPORTED;
 }
@@ -123,9 +123,9 @@ MsBootPolicyLibGetBootSequence (
 **/
 EFI_STATUS
 EFIAPI
-MsBootPolicyLibClearBootRequests(
-   VOID
-)
+MsBootPolicyLibClearBootRequests (
+  VOID
+  )
 {
   return EFI_SUCCESS;
 }

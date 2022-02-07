@@ -21,15 +21,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 
+#define INTERNAL_UEFI_SHELL_NAME  L"Internal UEFI Shell 2.0"
 
-#define INTERNAL_UEFI_SHELL_NAME      L"Internal UEFI Shell 2.0"
-
-#define MS_SDD_BOOT                   L"Internal Storage"
-#define MS_SDD_BOOT_PARM               "SDD"
-#define MS_USB_BOOT                   L"USB Storage"
-#define MS_USB_BOOT_PARM               "USB"
-#define MS_PXE_BOOT                   L"PXE Network"
-#define MS_PXE_BOOT_PARM               "PXE"
+#define MS_SDD_BOOT       L"Internal Storage"
+#define MS_SDD_BOOT_PARM  "SDD"
+#define MS_USB_BOOT       L"USB Storage"
+#define MS_USB_BOOT_PARM  "USB"
+#define MS_PXE_BOOT       L"PXE Network"
+#define MS_PXE_BOOT_PARM  "PXE"
 
 /**
  * Constructor
@@ -39,11 +38,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 MsBootOptionsLibEntry (
-    IN EFI_HANDLE ImageHandle,
-    IN EFI_SYSTEM_TABLE *SystemTable
-) {
-
-    return EFI_SUCCESS;
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  return EFI_SUCCESS;
 }
 
 /**
@@ -58,57 +57,59 @@ MsBootOptionsLibEntry (
 static
 EFI_STATUS
 BuildFwLoadOption (
-    EFI_BOOT_MANAGER_LOAD_OPTION *BootOption,
-    EFI_GUID                     *FwFile,
-    CHAR8                        *Parameter
-) {
-    EFI_STATUS                         Status;
-    CHAR16                             *Description;
-    UINTN                              DescriptionLength;
-    EFI_DEVICE_PATH_PROTOCOL           *DevicePath;
-    EFI_LOADED_IMAGE_PROTOCOL          *LoadedImage;
-    MEDIA_FW_VOL_FILEPATH_DEVICE_PATH  FileNode;
+  EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption,
+  EFI_GUID                      *FwFile,
+  CHAR8                         *Parameter
+  )
+{
+  EFI_STATUS                         Status;
+  CHAR16                             *Description;
+  UINTN                              DescriptionLength;
+  EFI_DEVICE_PATH_PROTOCOL           *DevicePath;
+  EFI_LOADED_IMAGE_PROTOCOL          *LoadedImage;
+  MEDIA_FW_VOL_FILEPATH_DEVICE_PATH  FileNode;
 
-    Status = GetSectionFromFv (
-               FwFile,
-               EFI_SECTION_USER_INTERFACE,
-               0,
-               (VOID **) &Description,
-               &DescriptionLength
-               );
-    if (EFI_ERROR (Status)) {
-        Description = NULL;
-    }
+  Status = GetSectionFromFv (
+             FwFile,
+             EFI_SECTION_USER_INTERFACE,
+             0,
+             (VOID **)&Description,
+             &DescriptionLength
+             );
+  if (EFI_ERROR (Status)) {
+    Description = NULL;
+  }
 
-    EfiInitializeFwVolDevicepathNode (&FileNode, FwFile);
-    Status = gBS->HandleProtocol (
-                    gImageHandle,
-                    &gEfiLoadedImageProtocolGuid,
-                    (VOID **) &LoadedImage
-                    );
-    ASSERT_EFI_ERROR (Status);
-    DevicePath = AppendDevicePathNode (
-                   DevicePathFromHandle (LoadedImage->DeviceHandle),
-                   (EFI_DEVICE_PATH_PROTOCOL *) &FileNode
-                   );
-    ASSERT (DevicePath != NULL);
+  EfiInitializeFwVolDevicepathNode (&FileNode, FwFile);
+  Status = gBS->HandleProtocol (
+                  gImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&LoadedImage
+                  );
+  ASSERT_EFI_ERROR (Status);
+  DevicePath = AppendDevicePathNode (
+                 DevicePathFromHandle (LoadedImage->DeviceHandle),
+                 (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
+                 );
+  ASSERT (DevicePath != NULL);
 
-    Status = EfiBootManagerInitializeLoadOption (
-               BootOption,
-               LoadOptionNumberUnassigned,
-               LoadOptionTypeBoot,
-               LOAD_OPTION_CATEGORY_APP | LOAD_OPTION_ACTIVE | LOAD_OPTION_HIDDEN,
-               (Description != NULL) ? Description : L"Boot Manager Menu",
-               DevicePath,
-               (UINT8 *)Parameter,
-               (Parameter != NULL)  ? (UINT32) AsciiStrSize (Parameter) : 0
-               );
-    ASSERT_EFI_ERROR (Status);
-    FreePool (DevicePath);
-    if (Description != NULL) {
-        FreePool (Description);
-    }
-    return Status;
+  Status = EfiBootManagerInitializeLoadOption (
+             BootOption,
+             LoadOptionNumberUnassigned,
+             LoadOptionTypeBoot,
+             LOAD_OPTION_CATEGORY_APP | LOAD_OPTION_ACTIVE | LOAD_OPTION_HIDDEN,
+             (Description != NULL) ? Description : L"Boot Manager Menu",
+             DevicePath,
+             (UINT8 *)Parameter,
+             (Parameter != NULL)  ? (UINT32)AsciiStrSize (Parameter) : 0
+             );
+  ASSERT_EFI_ERROR (Status);
+  FreePool (DevicePath);
+  if (Description != NULL) {
+    FreePool (Description);
+  }
+
+  return Status;
 }
 
 /**
@@ -119,11 +120,11 @@ BuildFwLoadOption (
 EFI_STATUS
 EFIAPI
 MsBootOptionsLibGetDefaultBootApp (
-    IN OUT EFI_BOOT_MANAGER_LOAD_OPTION *BootOption,
-    IN     CHAR8                        *Parameter
-) {
-
-    return BuildFwLoadOption (BootOption, &gMsBootPolicyFileGuid, Parameter);
+  IN OUT EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption,
+  IN     CHAR8                         *Parameter
+  )
+{
+  return BuildFwLoadOption (BootOption, &gMsBootPolicyFileGuid, Parameter);
 }
 
 /**
@@ -139,11 +140,11 @@ MsBootOptionsLibGetDefaultBootApp (
 EFI_STATUS
 EFIAPI
 MsBootOptionsLibGetBootManagerMenu (
-    IN OUT EFI_BOOT_MANAGER_LOAD_OPTION *BootOption,
-    IN     CHAR8                        *Parameter
-) {
-
-    return BuildFwLoadOption (BootOption, PcdGetPtr(PcdBootManagerMenuFile), Parameter);
+  IN OUT EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption,
+  IN     CHAR8                         *Parameter
+  )
+{
+  return BuildFwLoadOption (BootOption, PcdGetPtr (PcdBootManagerMenuFile), Parameter);
 }
 
 /**
@@ -152,81 +153,84 @@ MsBootOptionsLibGetBootManagerMenu (
 static
 EFI_DEVICE_PATH_PROTOCOL *
 CreateShellDevicePath (
-    VOID
-) {
-    UINTN                             FvHandleCount;
-    EFI_HANDLE                        *FvHandleBuffer;
-    UINTN                             Index;
-    EFI_STATUS                        Status;
-    EFI_FIRMWARE_VOLUME2_PROTOCOL     *Fv;
-    UINTN                             Size;
-    UINT32                            AuthenticationStatus;
-    EFI_DEVICE_PATH_PROTOCOL          *DevicePath;
-    VOID                              *Buffer;
+  VOID
+  )
+{
+  UINTN                          FvHandleCount;
+  EFI_HANDLE                     *FvHandleBuffer;
+  UINTN                          Index;
+  EFI_STATUS                     Status;
+  EFI_FIRMWARE_VOLUME2_PROTOCOL  *Fv;
+  UINTN                          Size;
+  UINT32                         AuthenticationStatus;
+  EFI_DEVICE_PATH_PROTOCOL       *DevicePath;
+  VOID                           *Buffer;
 
-    DevicePath  = NULL;
-    Status      = EFI_SUCCESS;
+  DevicePath = NULL;
+  Status     = EFI_SUCCESS;
 
-    DEBUG ((DEBUG_INFO, "CreateShellDevicePath\n"));
-    gBS->LocateHandleBuffer (
-           ByProtocol,
+  DEBUG ((DEBUG_INFO, "CreateShellDevicePath\n"));
+  gBS->LocateHandleBuffer (
+         ByProtocol,
+         &gEfiFirmwareVolume2ProtocolGuid,
+         NULL,
+         &FvHandleCount,
+         &FvHandleBuffer
+         );
+
+  for (Index = 0; Index < FvHandleCount; Index++) {
+    gBS->HandleProtocol (
+           FvHandleBuffer[Index],
            &gEfiFirmwareVolume2ProtocolGuid,
-           NULL,
-           &FvHandleCount,
-           &FvHandleBuffer
+           (VOID **)&Fv
            );
 
-    for (Index = 0; Index < FvHandleCount; Index++) {
-        gBS->HandleProtocol (
-               FvHandleBuffer[Index],
-               &gEfiFirmwareVolume2ProtocolGuid,
-               (VOID **) &Fv
-               );
-
-        Buffer  = NULL;
-        Size    = 0;
-        Status  = Fv->ReadSection (
-                        Fv,
-                        PcdGetPtr(PcdShellFile),
-                        EFI_SECTION_PE32,
-                        0,
-                        &Buffer,
-                        &Size,
-                        &AuthenticationStatus
-                        );
-        DEBUG((DEBUG_INFO,"Fv->Read of Internal Shell - Code=%r\n", Status));
-        if (EFI_ERROR (Status)) {
-            //
-            // Skip if no shell file in the FV
-            //
-            continue;
-        } else {
-            //
-            // Found the shell
-            //
-            break;
-        }
-    }
-
+    Buffer = NULL;
+    Size   = 0;
+    Status = Fv->ReadSection (
+                   Fv,
+                   PcdGetPtr (PcdShellFile),
+                   EFI_SECTION_PE32,
+                   0,
+                   &Buffer,
+                   &Size,
+                   &AuthenticationStatus
+                   );
+    DEBUG ((DEBUG_INFO, "Fv->Read of Internal Shell - Code=%r\n", Status));
     if (EFI_ERROR (Status)) {
-        //
-        // No shell present
-        //
-        if (FvHandleCount) {
-            FreePool (FvHandleBuffer);
-        }
-        return NULL;
+      //
+      // Skip if no shell file in the FV
+      //
+      continue;
+    } else {
+      //
+      // Found the shell
+      //
+      break;
     }
-    //
-    // Build the shell boot option
-    //
-    DevicePath = DevicePathFromHandle (FvHandleBuffer[Index]);
+  }
 
+  if (EFI_ERROR (Status)) {
+    //
+    // No shell present
+    //
     if (FvHandleCount) {
-        FreePool (FvHandleBuffer);
+      FreePool (FvHandleBuffer);
     }
 
-    return DevicePath;
+    return NULL;
+  }
+
+  //
+  // Build the shell boot option
+  //
+  DevicePath = DevicePathFromHandle (FvHandleBuffer[Index]);
+
+  if (FvHandleCount) {
+    FreePool (FvHandleBuffer);
+  }
+
+  return DevicePath;
 }
 
 /**
@@ -237,88 +241,91 @@ CreateShellDevicePath (
 static
 EFI_STATUS
 CreateFvBootOption (
-    EFI_GUID                     *FileGuid,
-    CHAR16                       *Description,
-    EFI_BOOT_MANAGER_LOAD_OPTION *BootOption,
-    UINT32                       Attributes,
-    UINT8                        *OptionalData,    OPTIONAL
-    UINT32                       OptionalDataSize
-) {
-    EFI_STATUS                         Status;
-    EFI_DEVICE_PATH_PROTOCOL           *DevicePath;
-    EFI_LOADED_IMAGE_PROTOCOL          *LoadedImage;
-    MEDIA_FW_VOL_FILEPATH_DEVICE_PATH  FileNode;
-    EFI_FIRMWARE_VOLUME2_PROTOCOL      *Fv;
-    UINT32                             AuthenticationStatus;
-    VOID                               *Buffer;
-    UINTN                              Size;
+  EFI_GUID *FileGuid,
+  CHAR16 *Description,
+  EFI_BOOT_MANAGER_LOAD_OPTION *BootOption,
+  UINT32 Attributes,
+  UINT8 *OptionalData, OPTIONAL
+  UINT32                       OptionalDataSize
+  )
+{
+  EFI_STATUS                         Status;
+  EFI_DEVICE_PATH_PROTOCOL           *DevicePath;
+  EFI_LOADED_IMAGE_PROTOCOL          *LoadedImage;
+  MEDIA_FW_VOL_FILEPATH_DEVICE_PATH  FileNode;
+  EFI_FIRMWARE_VOLUME2_PROTOCOL      *Fv;
+  UINT32                             AuthenticationStatus;
+  VOID                               *Buffer;
+  UINTN                              Size;
 
-    if ((BootOption == NULL) || (FileGuid == NULL) || (Description == NULL)) {
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((BootOption == NULL) || (FileGuid == NULL) || (Description == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    EfiInitializeFwVolDevicepathNode (&FileNode, FileGuid);
+  EfiInitializeFwVolDevicepathNode (&FileNode, FileGuid);
 
-    if (!CompareGuid (PcdGetPtr (PcdShellFile), FileGuid)) {
-        Status = gBS->HandleProtocol (
-                        gImageHandle,
-                        &gEfiLoadedImageProtocolGuid,
-                        (VOID **) &LoadedImage
-                        );
-        if (!EFI_ERROR (Status)) {
-            Status = gBS->HandleProtocol (
-                             LoadedImage->DeviceHandle,
-                             &gEfiFirmwareVolume2ProtocolGuid,
-                             (VOID **) &Fv
-                             );
-            if (!EFI_ERROR (Status)) {
-                Buffer  = NULL;
-                Size    = 0;
-                Status  = Fv->ReadSection (
-                                Fv,
-                                FileGuid,
-                                EFI_SECTION_PE32,
-                                0,
-                                &Buffer,
-                                &Size,
-                                &AuthenticationStatus
-                                );
-                if (Buffer != NULL) {
-                    FreePool (Buffer);
-                }
-            }
-        }
-        if (EFI_ERROR (Status)) {
-            return EFI_NOT_FOUND;
-        }
-
-        DevicePath = AppendDevicePathNode (
-                         DevicePathFromHandle (LoadedImage->DeviceHandle),
-                         (EFI_DEVICE_PATH_PROTOCOL *) &FileNode
-                         );
-    } else {
-        DevicePath = CreateShellDevicePath ();
-        if (DevicePath == NULL) {
-            return EFI_NOT_FOUND;
-        }
-        DevicePath = AppendDevicePathNode(
-                       DevicePath,
-                       (EFI_DEVICE_PATH_PROTOCOL *) &FileNode
+  if (!CompareGuid (PcdGetPtr (PcdShellFile), FileGuid)) {
+    Status = gBS->HandleProtocol (
+                    gImageHandle,
+                    &gEfiLoadedImageProtocolGuid,
+                    (VOID **)&LoadedImage
+                    );
+    if (!EFI_ERROR (Status)) {
+      Status = gBS->HandleProtocol (
+                      LoadedImage->DeviceHandle,
+                      &gEfiFirmwareVolume2ProtocolGuid,
+                      (VOID **)&Fv
+                      );
+      if (!EFI_ERROR (Status)) {
+        Buffer = NULL;
+        Size   = 0;
+        Status = Fv->ReadSection (
+                       Fv,
+                       FileGuid,
+                       EFI_SECTION_PE32,
+                       0,
+                       &Buffer,
+                       &Size,
+                       &AuthenticationStatus
                        );
+        if (Buffer != NULL) {
+          FreePool (Buffer);
+        }
+      }
     }
 
-    Status = EfiBootManagerInitializeLoadOption (
-               BootOption,
-               LoadOptionNumberUnassigned,
-               LoadOptionTypeBoot,
-               Attributes,
-               Description,
-               DevicePath,
-               OptionalData,
-               OptionalDataSize
-               );
-    FreePool (DevicePath);
-    return Status;
+    if (EFI_ERROR (Status)) {
+      return EFI_NOT_FOUND;
+    }
+
+    DevicePath = AppendDevicePathNode (
+                   DevicePathFromHandle (LoadedImage->DeviceHandle),
+                   (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
+                   );
+  } else {
+    DevicePath = CreateShellDevicePath ();
+    if (DevicePath == NULL) {
+      return EFI_NOT_FOUND;
+    }
+
+    DevicePath = AppendDevicePathNode (
+                   DevicePath,
+                   (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
+                   );
+  }
+
+  Status = EfiBootManagerInitializeLoadOption (
+             BootOption,
+             LoadOptionNumberUnassigned,
+             LoadOptionTypeBoot,
+             Attributes,
+             Description,
+             DevicePath,
+             OptionalData,
+             OptionalDataSize
+             );
+  FreePool (DevicePath);
+  return Status;
 }
 
 /**
@@ -336,58 +343,61 @@ CreateFvBootOption (
 static
 UINTN
 RegisterFvBootOption (
-  EFI_GUID                         *FileGuid,
-  CHAR16                           *Description,
-  UINTN                            Position,
-  UINT32                           Attributes,
-  UINT8                            *OptionalData,    OPTIONAL
+  EFI_GUID *FileGuid,
+  CHAR16 *Description,
+  UINTN Position,
+  UINT32 Attributes,
+  UINT8 *OptionalData, OPTIONAL
   UINT32                           OptionalDataSize
-) {
-    EFI_STATUS                     Status;
-    UINTN                          OptionIndex;
-    EFI_BOOT_MANAGER_LOAD_OPTION   NewOption;
-    EFI_BOOT_MANAGER_LOAD_OPTION   *BootOptions;
-    UINTN                          BootOptionCount;
-    UINTN                          i;
+  )
+{
+  EFI_STATUS                    Status;
+  UINTN                         OptionIndex;
+  EFI_BOOT_MANAGER_LOAD_OPTION  NewOption;
+  EFI_BOOT_MANAGER_LOAD_OPTION  *BootOptions;
+  UINTN                         BootOptionCount;
+  UINTN                         i;
 
-    NewOption.OptionNumber = LoadOptionNumberUnassigned;
-    Status = CreateFvBootOption (FileGuid, Description, &NewOption, Attributes, OptionalData, OptionalDataSize);
-    if (!EFI_ERROR (Status)) {
-        BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
+  NewOption.OptionNumber = LoadOptionNumberUnassigned;
+  Status                 = CreateFvBootOption (FileGuid, Description, &NewOption, Attributes, OptionalData, OptionalDataSize);
+  if (!EFI_ERROR (Status)) {
+    BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
 
-        OptionIndex = EfiBootManagerFindLoadOption (&NewOption, BootOptions, BootOptionCount);
-        if (OptionIndex == -1) {
-            NewOption.Attributes ^= LOAD_OPTION_ACTIVE;
-            OptionIndex = EfiBootManagerFindLoadOption(&NewOption, BootOptions, BootOptionCount);
-            NewOption.Attributes ^= LOAD_OPTION_ACTIVE;
-        }
-
-        if (OptionIndex == -1) {
-            Status = EfiBootManagerAddLoadOptionVariable (&NewOption, Position);
-            DEBUG((DEBUG_INFO,"Added   Boot option as Boot%04x - %s\n",NewOption.OptionNumber,Description));
-            ASSERT_EFI_ERROR (Status);
-        } else {
-            NewOption.OptionNumber = BootOptions[OptionIndex].OptionNumber;
-            DEBUG((DEBUG_INFO,"Reusing Boot option as Boot%04x - %s\n",NewOption.OptionNumber,Description));
-        }
-        EfiBootManagerFreeLoadOption (&NewOption);
-        EfiBootManagerFreeLoadOptions (BootOptions, BootOptionCount);
-    } else {
-        // The Shell is optional.  If the shell cannot be created (due to not in image), then
-        // ensure the boot option for INTERNAL SHELL is deleted.
-        if (0 == StrCmp (INTERNAL_UEFI_SHELL_NAME ,Description)) {
-            BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
-            for (i=0; i<BootOptionCount; i++) {
-                if (0 == StrCmp(INTERNAL_UEFI_SHELL_NAME ,BootOptions[i].Description)) {
-                    EfiBootManagerDeleteLoadOptionVariable (BootOptions[i].OptionNumber, LoadOptionTypeBoot);
-                    DEBUG((DEBUG_INFO,"Deleting Boot option as Boot%04x - %s\n",BootOptions[i].OptionNumber,BootOptions[i].Description));
-                }
-            }
-            EfiBootManagerFreeLoadOptions (BootOptions, BootOptionCount);
-        }
+    OptionIndex = EfiBootManagerFindLoadOption (&NewOption, BootOptions, BootOptionCount);
+    if (OptionIndex == -1) {
+      NewOption.Attributes ^= LOAD_OPTION_ACTIVE;
+      OptionIndex           = EfiBootManagerFindLoadOption (&NewOption, BootOptions, BootOptionCount);
+      NewOption.Attributes ^= LOAD_OPTION_ACTIVE;
     }
 
-    return NewOption.OptionNumber;
+    if (OptionIndex == -1) {
+      Status = EfiBootManagerAddLoadOptionVariable (&NewOption, Position);
+      DEBUG ((DEBUG_INFO, "Added   Boot option as Boot%04x - %s\n", NewOption.OptionNumber, Description));
+      ASSERT_EFI_ERROR (Status);
+    } else {
+      NewOption.OptionNumber = BootOptions[OptionIndex].OptionNumber;
+      DEBUG ((DEBUG_INFO, "Reusing Boot option as Boot%04x - %s\n", NewOption.OptionNumber, Description));
+    }
+
+    EfiBootManagerFreeLoadOption (&NewOption);
+    EfiBootManagerFreeLoadOptions (BootOptions, BootOptionCount);
+  } else {
+    // The Shell is optional.  If the shell cannot be created (due to not in image), then
+    // ensure the boot option for INTERNAL SHELL is deleted.
+    if (0 == StrCmp (INTERNAL_UEFI_SHELL_NAME, Description)) {
+      BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
+      for (i = 0; i < BootOptionCount; i++) {
+        if (0 == StrCmp (INTERNAL_UEFI_SHELL_NAME, BootOptions[i].Description)) {
+          EfiBootManagerDeleteLoadOptionVariable (BootOptions[i].OptionNumber, LoadOptionTypeBoot);
+          DEBUG ((DEBUG_INFO, "Deleting Boot option as Boot%04x - %s\n", BootOptions[i].OptionNumber, BootOptions[i].Description));
+        }
+      }
+
+      EfiBootManagerFreeLoadOptions (BootOptions, BootOptionCount);
+    }
+  }
+
+  return NewOption.OptionNumber;
 }
 
 /**
@@ -401,13 +411,14 @@ VOID
 EFIAPI
 MsBootOptionsLibRegisterDefaultBootOptions (
   VOID
-) {
-    DEBUG((DEBUG_INFO,"%a\n",__FUNCTION__));
+  )
+{
+  DEBUG ((DEBUG_INFO, "%a\n", __FUNCTION__));
 
-    RegisterFvBootOption(&gMsBootPolicyFileGuid, MS_SDD_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8*)MS_SDD_BOOT_PARM, sizeof(MS_SDD_BOOT_PARM));
-    RegisterFvBootOption(&gMsBootPolicyFileGuid, MS_USB_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8*)MS_USB_BOOT_PARM, sizeof(MS_USB_BOOT_PARM));
-    RegisterFvBootOption(&gMsBootPolicyFileGuid, MS_PXE_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8*)MS_PXE_BOOT_PARM, sizeof(MS_PXE_BOOT_PARM));
-    RegisterFvBootOption(PcdGetPtr(PcdShellFile),  INTERNAL_UEFI_SHELL_NAME, (UINTN)-1, LOAD_OPTION_ACTIVE, NULL, 0);
+  RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_SDD_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_SDD_BOOT_PARM, sizeof (MS_SDD_BOOT_PARM));
+  RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_USB_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_USB_BOOT_PARM, sizeof (MS_USB_BOOT_PARM));
+  RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_PXE_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_PXE_BOOT_PARM, sizeof (MS_PXE_BOOT_PARM));
+  RegisterFvBootOption (PcdGetPtr (PcdShellFile), INTERNAL_UEFI_SHELL_NAME, (UINTN)-1, LOAD_OPTION_ACTIVE, NULL, 0);
 }
 
 /**
@@ -420,36 +431,39 @@ MsBootOptionsLibRegisterDefaultBootOptions (
 EFI_BOOT_MANAGER_LOAD_OPTION *
 EFIAPI
 MsBootOptionsLibGetDefaultOptions (
-    OUT UINTN    *OptionCount
-) {
-    UINTN                         LocalOptionCount = 4;
-    EFI_BOOT_MANAGER_LOAD_OPTION *Option;
-    EFI_STATUS                    Status;
-    EFI_STATUS                    Status2;
+  OUT UINTN  *OptionCount
+  )
+{
+  UINTN                         LocalOptionCount = 4;
+  EFI_BOOT_MANAGER_LOAD_OPTION  *Option;
+  EFI_STATUS                    Status;
+  EFI_STATUS                    Status2;
 
-    Option = (EFI_BOOT_MANAGER_LOAD_OPTION *)  AllocateZeroPool (sizeof(EFI_BOOT_MANAGER_LOAD_OPTION) * LocalOptionCount);
-    ASSERT (Option != NULL);
-    if (Option == NULL) {
-        *OptionCount = 0;
-        return NULL;
-    }
+  Option = (EFI_BOOT_MANAGER_LOAD_OPTION *)AllocateZeroPool (sizeof (EFI_BOOT_MANAGER_LOAD_OPTION) * LocalOptionCount);
+  ASSERT (Option != NULL);
+  if (Option == NULL) {
+    *OptionCount = 0;
+    return NULL;
+  }
 
-    Status = CreateFvBootOption (&gMsBootPolicyFileGuid, MS_SDD_BOOT, &Option[0], LOAD_OPTION_ACTIVE, (UINT8*)MS_SDD_BOOT_PARM, sizeof(MS_SDD_BOOT_PARM));
-    Status |= CreateFvBootOption (&gMsBootPolicyFileGuid, MS_USB_BOOT, &Option[1], LOAD_OPTION_ACTIVE, (UINT8*)MS_USB_BOOT_PARM, sizeof(MS_USB_BOOT_PARM));
-    Status |= CreateFvBootOption (&gMsBootPolicyFileGuid, MS_PXE_BOOT, &Option[2], LOAD_OPTION_ACTIVE, (UINT8*)MS_PXE_BOOT_PARM, sizeof(MS_PXE_BOOT_PARM));
+  Status  = CreateFvBootOption (&gMsBootPolicyFileGuid, MS_SDD_BOOT, &Option[0], LOAD_OPTION_ACTIVE, (UINT8 *)MS_SDD_BOOT_PARM, sizeof (MS_SDD_BOOT_PARM));
+  Status |= CreateFvBootOption (&gMsBootPolicyFileGuid, MS_USB_BOOT, &Option[1], LOAD_OPTION_ACTIVE, (UINT8 *)MS_USB_BOOT_PARM, sizeof (MS_USB_BOOT_PARM));
+  Status |= CreateFvBootOption (&gMsBootPolicyFileGuid, MS_PXE_BOOT, &Option[2], LOAD_OPTION_ACTIVE, (UINT8 *)MS_PXE_BOOT_PARM, sizeof (MS_PXE_BOOT_PARM));
 
-    Status2 = CreateFvBootOption (PcdGetPtr(PcdShellFile), INTERNAL_UEFI_SHELL_NAME, &Option[3], LOAD_OPTION_ACTIVE, NULL, 0);
-    if (EFI_ERROR(Status2)) {     // The shell is optional.  So, ignore that we cannot create it.
-        LocalOptionCount--;
-    }
+  Status2 = CreateFvBootOption (PcdGetPtr (PcdShellFile), INTERNAL_UEFI_SHELL_NAME, &Option[3], LOAD_OPTION_ACTIVE, NULL, 0);
+  if (EFI_ERROR (Status2)) {
+    // The shell is optional.  So, ignore that we cannot create it.
+    LocalOptionCount--;
+  }
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a Error creating defatult boot options\n", __FUNCTION__));
-        FreePool(Option);
-        Option = NULL;
-        LocalOptionCount = 0;
-    }
-    *OptionCount = LocalOptionCount;
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Error creating defatult boot options\n", __FUNCTION__));
+    FreePool (Option);
+    Option           = NULL;
+    LocalOptionCount = 0;
+  }
 
-    return Option;
+  *OptionCount = LocalOptionCount;
+
+  return Option;
 }

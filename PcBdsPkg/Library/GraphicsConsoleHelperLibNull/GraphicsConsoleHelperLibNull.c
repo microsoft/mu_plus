@@ -1,5 +1,5 @@
 /** @file
-This GraphicsConsoleHelper is only intended to be used by BDS to configure 
+This GraphicsConsoleHelper is only intended to be used by BDS to configure
 the console mode / graphic mode
 
 Null Instance which is just for compiling
@@ -14,7 +14,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 EFI_STATUS
 EFIAPI
-SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode)
+SetGraphicsConsoleMode (
+  GRAPHICS_CONSOLE_MODE  Mode
+  )
 {
   return EFI_UNSUPPORTED;
 }

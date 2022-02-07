@@ -10,15 +10,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _TPM_PP_PROTOCOL_H_
 #define _TPM_PP_PROTOCOL_H_
 
-extern EFI_GUID gTpmPpProtocolGuid;
+extern EFI_GUID  gTpmPpProtocolGuid;
 
-//=================================================================================================
+// =================================================================================================
 //
 //  Protocol Definition
 //
-//=================================================================================================
+// =================================================================================================
 
-typedef struct  _TPM_PP_PROTOCOL  TPM_PP_PROTOCOL;
+typedef struct  _TPM_PP_PROTOCOL TPM_PP_PROTOCOL;
 
 /**
   Handles all the logic to prompt the user for confirmation of a
@@ -36,15 +36,13 @@ typedef struct  _TPM_PP_PROTOCOL  TPM_PP_PROTOCOL;
 typedef
 EFI_STATUS
 (EFIAPI *TPM_PP_USER_CONFIRM)(
-    IN TPM_PP_PROTOCOL    *This
-);
-
+  IN TPM_PP_PROTOCOL    *This
+  );
 
 // TPM PP protocol structure
 //
-struct _TPM_PP_PROTOCOL
-{
-    TPM_PP_USER_CONFIRM                PromptForConfirmation;
+struct _TPM_PP_PROTOCOL {
+  TPM_PP_USER_CONFIRM    PromptForConfirmation;
 };
 
 #endif // _TPM_PP_PROTOCOL_H_

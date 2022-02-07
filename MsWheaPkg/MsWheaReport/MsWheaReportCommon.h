@@ -23,29 +23,29 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 /************************************ Definition Section *************************************/
 
-#define MS_WHEA_ERROR_SIGNATURE       SIGNATURE_32('W', 'H', 'E', 'A')
+#define MS_WHEA_ERROR_SIGNATURE  SIGNATURE_32('W', 'H', 'E', 'A')
 
 /**
 Definition wrapper to unify all bert/hwerrrec related specification versioning
 **/
-#define MS_WHEA_SECTION_REVISION      0x0100 // Set Section Descriptor Revision to 1.0 as per UEFI Spec 2.7A
+#define MS_WHEA_SECTION_REVISION  0x0100     // Set Section Descriptor Revision to 1.0 as per UEFI Spec 2.7A
 
-#define EFI_HW_ERR_REC_VAR_NAME       L"HwErrRec"
-#define EFI_HW_ERR_REC_VAR_NAME_LEN   16      // Buffer length covers at least "HwErrRec####\0"
+#define EFI_HW_ERR_REC_VAR_NAME      L"HwErrRec"
+#define EFI_HW_ERR_REC_VAR_NAME_LEN  16       // Buffer length covers at least "HwErrRec####\0"
 
-#define MS_WHEA_RECORD_ID_VAR_NAME    L"RecordID"
-#define MS_WHEA_RECORD_ID_VAR_LEN     sizeof (UINT64)
-#define MS_WHEA_RECORD_ID_VAR_ATTR    (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
+#define MS_WHEA_RECORD_ID_VAR_NAME  L"RecordID"
+#define MS_WHEA_RECORD_ID_VAR_LEN   sizeof (UINT64)
+#define MS_WHEA_RECORD_ID_VAR_ATTR  (EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS)
 
 /**
 
  Accepted phase values
 
 **/
-#define MS_WHEA_PHASE_PEI             0x00
-#define MS_WHEA_PHASE_DXE             0x01
-#define MS_WHEA_PHASE_DXE_VAR         0x02
-#define MS_WHEA_PHASE_MM              0x03
+#define MS_WHEA_PHASE_PEI      0x00
+#define MS_WHEA_PHASE_DXE      0x01
+#define MS_WHEA_PHASE_DXE_VAR  0x02
+#define MS_WHEA_PHASE_MM       0x03
 
 #pragma pack(1)
 
@@ -60,18 +60,18 @@ MS WHEA error entry metadata, used for intermediate data storage and preliminari
 raw data. All fields usage is the same as in their own header unless listed otherwise.
 **/
 typedef struct MS_WHEA_ERROR_ENTRY_MD_T_DEF {
-  UINT8                               Rev;
-  UINT8                               Phase;
-  UINT16                              Reserved;
-  UINT32                              ErrorSeverity;
-  UINT32                              PayloadSize;
-  EFI_STATUS_CODE_VALUE               ErrorStatusValue;
-  UINT64                              AdditionalInfo1;
-  UINT64                              AdditionalInfo2;
-  EFI_GUID                            ModuleID;
-  EFI_GUID                            LibraryID;
-  EFI_GUID                            IhvSharingGuid;
-  EFI_PHYSICAL_ADDRESS                ExtraSection;
+  UINT8                    Rev;
+  UINT8                    Phase;
+  UINT16                   Reserved;
+  UINT32                   ErrorSeverity;
+  UINT32                   PayloadSize;
+  EFI_STATUS_CODE_VALUE    ErrorStatusValue;
+  UINT64                   AdditionalInfo1;
+  UINT64                   AdditionalInfo2;
+  EFI_GUID                 ModuleID;
+  EFI_GUID                 LibraryID;
+  EFI_GUID                 IhvSharingGuid;
+  EFI_PHYSICAL_ADDRESS     ExtraSection;
 } MS_WHEA_ERROR_ENTRY_MD;
 
 #pragma pack()
@@ -89,9 +89,9 @@ Descriptor and correspthen store on the flash as HwErrRec awaiting to be picked 
 **/
 typedef
 EFI_STATUS
-(EFIAPI *MS_WHEA_ERR_REPORT_PS_FN) (
+(EFIAPI *MS_WHEA_ERR_REPORT_PS_FN)(
   IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
-);
+  );
 
 /************************************ Function Section *************************************/
 
@@ -124,14 +124,14 @@ certain requirements
 EFI_STATUS
 EFIAPI
 ReportHwErrRecRouter (
-  IN EFI_STATUS_CODE_TYPE             CodeType,
-  IN EFI_STATUS_CODE_VALUE            Value,
-  IN UINT32                           Instance,
-  IN CONST EFI_GUID                   *CallerId,
-  IN CONST EFI_STATUS_CODE_DATA       *Data OPTIONAL,
-  IN UINT8                            CurrentPhase,
-  IN MS_WHEA_ERR_REPORT_PS_FN         ReportFn
-);
+  IN EFI_STATUS_CODE_TYPE        CodeType,
+  IN EFI_STATUS_CODE_VALUE       Value,
+  IN UINT32                      Instance,
+  IN CONST EFI_GUID              *CallerId,
+  IN CONST EFI_STATUS_CODE_DATA  *Data OPTIONAL,
+  IN UINT8                       CurrentPhase,
+  IN MS_WHEA_ERR_REPORT_PS_FN    ReportFn
+  );
 
 /**
 Populates the current time for WHEA records
@@ -143,7 +143,9 @@ Populates the current time for WHEA records
                                           False otherwise.
 **/
 BOOLEAN
-PopulateTime(EFI_TIME* CurrentTime);
+PopulateTime (
+  EFI_TIME  *CurrentTime
+  );
 
 /**
 Gets the Record ID variable and increments it for WHEA records
@@ -165,7 +167,7 @@ Gets the Record ID variable and increments it for WHEA records
 **/
 EFI_STATUS
 GetRecordID (
-  UINT64* RecordID
+  UINT64  *RecordID
   );
 
 #endif //__MS_WHEA_REPORT_COMMON__

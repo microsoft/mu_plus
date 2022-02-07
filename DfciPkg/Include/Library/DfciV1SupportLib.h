@@ -17,7 +17,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  */
 DFCI_SETTING_ID_STRING
 EFIAPI
-DfciV1TranslateString (DFCI_SETTING_ID_STRING V1Id);
+DfciV1TranslateString (
+  DFCI_SETTING_ID_STRING  V1Id
+  );
 
 /**
  * Return V2 string from V1 Id ENUM
@@ -28,7 +30,9 @@ DfciV1TranslateString (DFCI_SETTING_ID_STRING V1Id);
  */
 DFCI_SETTING_ID_STRING
 EFIAPI
-DfciV1TranslateEnum (DFCI_SETTING_ID_V1_ENUM V1Id);
+DfciV1TranslateEnum (
+  DFCI_SETTING_ID_V1_ENUM  V1Id
+  );
 
 /**
  * Return V1 number string from V2 string Id
@@ -42,6 +46,6 @@ DfciV1TranslateEnum (DFCI_SETTING_ID_V1_ENUM V1Id);
  */
 DFCI_SETTING_ID_STRING
 EFIAPI
-DfciV1NumberFromId (DFCI_SETTING_ID_STRING Id);
-
-
+DfciV1NumberFromId (
+  DFCI_SETTING_ID_STRING  Id
+  );

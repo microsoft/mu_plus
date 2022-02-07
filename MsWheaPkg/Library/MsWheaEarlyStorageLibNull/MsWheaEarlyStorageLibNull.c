@@ -1,6 +1,6 @@
 /** @file -- MsWheaEarlyStorageLib.c
 
-This header defines APIs to utilize special memory for MsWheaReport during 
+This header defines APIs to utilize special memory for MsWheaReport during
 early stage.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -43,9 +43,9 @@ This routine reads the specified data region from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageRead (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   )
 {
   return EFI_UNSUPPORTED;
@@ -67,9 +67,9 @@ This routine writes the specified data region from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageWrite (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   )
 {
   return EFI_UNSUPPORTED;
@@ -90,13 +90,12 @@ This routine clears the specified data region from the MS WHEA store to PcdMsWhe
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageClear (
-  UINT8                               Size,
-  UINT8                               Offset
+  UINT8  Size,
+  UINT8  Offset
   )
 {
   return EFI_UNSUPPORTED;
 }
-
 
 /**
 
@@ -115,13 +114,12 @@ the last byte of active range (excluding checksum field).
 EFI_STATUS
 EFIAPI
 MsWheaESCalculateChecksum16 (
-  MS_WHEA_EARLY_STORAGE_HEADER    *Header,
-  UINT16                          *Checksum
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header,
+  UINT16                        *Checksum
   )
 {
   return EFI_UNSUPPORTED;
 }
-
 
 /**
 
@@ -156,8 +154,8 @@ from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaESFindSlot (
-  IN UINT8 Size,
-  IN UINT8 *Offset
+  IN UINT8  Size,
+  IN UINT8  *Offset
   )
 {
   return EFI_UNSUPPORTED;

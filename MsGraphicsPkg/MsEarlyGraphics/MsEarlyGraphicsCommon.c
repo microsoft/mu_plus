@@ -6,9 +6,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include "MsEarlyGraphicsCommon.h"
-
 
 #define MS_EARLY_GRAPHICS_FONT          MsUiGetFixedFontGlyphs ()
 #define MS_EARLY_GRAPHICS_CELL_HEIGHT   MsUiGetFixedFontHeight ()
@@ -16,7 +14,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MS_EARLY_GRAPHICS_CELL_ADVANCE  MsUiGetFixedFontMaxAdvance ()
 
 #define BITMAP_LEN_1_BIT(Width, Height)  (((Width) + 7) / 8 * (Height))
-
 
 /**
   Parse all glyph blocks to find a glyph block specified by CharValue.
@@ -34,90 +31,91 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 FindGlyph (
-    IN  CHAR16                          CharValue,
-    OUT EFI_HII_GLYPH_INFO            **Cell,
-    OUT UINT8                         **GlyphBlock
-    ) {
+  IN  CHAR16              CharValue,
+  OUT EFI_HII_GLYPH_INFO  **Cell,
+  OUT UINT8               **GlyphBlock
+  )
+{
+  UINT8                      *BlockPtr;
+  EFI_HII_GIBT_GLYPHS_BLOCK  *BlockGlyphs;
+  UINT16                     CharCurrent;
+  UINT16                     Length16;
+  UINTN                      BufferLen;
+  EFI_HII_GLYPH_INFO         *DefaultCell;
 
-    UINT8                              *BlockPtr;
-    EFI_HII_GIBT_GLYPHS_BLOCK          *BlockGlyphs;
-    UINT16                              CharCurrent;
-    UINT16                              Length16;
-    UINTN                               BufferLen;
-    EFI_HII_GLYPH_INFO                 *DefaultCell;
+  BlockPtr    = MS_EARLY_GRAPHICS_FONT;
+  CharCurrent = 1;
+  BufferLen   = 0;
+  DefaultCell = NULL;
 
+  while (*BlockPtr != EFI_HII_GIBT_END) {
+    switch (*BlockPtr) {
+      case EFI_HII_GIBT_DEFAULTS:
+        //
+        // Collect all default character cell information specified by
+        // EFI_HII_GIBT_DEFAULTS.
+        //
+        //        AsciiPrint("Ignoring GIBT_DEFAULTS\n");
+        DefaultCell = &((EFI_HII_GIBT_DEFAULTS_BLOCK *)BlockPtr)->Cell;
+        BlockPtr   += sizeof (EFI_HII_GIBT_DEFAULTS_BLOCK);
+        break;
 
-    BlockPtr    = MS_EARLY_GRAPHICS_FONT;
-    CharCurrent = 1;
-    BufferLen   = 0;
-    DefaultCell = NULL;
-
-    while (*BlockPtr != EFI_HII_GIBT_END) {
-        switch (*BlockPtr) {
-        case EFI_HII_GIBT_DEFAULTS:
-            //
-            // Collect all default character cell information specified by
-            // EFI_HII_GIBT_DEFAULTS.
-            //
-            //        AsciiPrint("Ignoring GIBT_DEFAULTS\n");
-            DefaultCell = &((EFI_HII_GIBT_DEFAULTS_BLOCK *)BlockPtr)->Cell;
-            BlockPtr += sizeof(EFI_HII_GIBT_DEFAULTS_BLOCK);
-            break;
-
-        case EFI_HII_GIBT_GLYPH_DEFAULT:
-            if (DefaultCell == NULL)
-            {
-              ASSERT(DefaultCell != NULL);
-              return EFI_NOT_FOUND;  //mschange - check with MT.  What is best way to exit this func
-            }
-            BufferLen = BITMAP_LEN_1_BIT(DefaultCell->Width, DefaultCell->Height);
-            if (CharCurrent == CharValue) {
-                *GlyphBlock = (UINT8 *)((UINTN)BlockPtr + sizeof(EFI_HII_GIBT_GLYPH_DEFAULT_BLOCK) - sizeof(UINT8));
-                *Cell = DefaultCell;
-                //  DumpMemory(*GlyphBlock, 16);
-                return EFI_SUCCESS;
-            }
-            CharCurrent++;
-            BlockPtr += sizeof(EFI_HII_GIBT_GLYPH_DEFAULT_BLOCK) - sizeof(UINT8) + BufferLen;
-            break;
-
-        case EFI_HII_GIBT_GLYPH:
-            BlockGlyphs = (EFI_HII_GIBT_GLYPHS_BLOCK *)BlockPtr;
-            *Cell = &BlockGlyphs->Cell;
-            BufferLen = BITMAP_LEN_1_BIT(BlockGlyphs->Cell.Width, BlockGlyphs->Cell.Height);
-            if (CharCurrent == CharValue) {
-                *GlyphBlock = (UINT8 *)((UINTN)BlockPtr + sizeof(EFI_HII_GIBT_GLYPH_BLOCK) - sizeof(UINT8));
-                *Cell = &BlockGlyphs->Cell;
-                //DumpMemory (*GlyphBlock,16);
-                return EFI_SUCCESS;
-            }
-            CharCurrent++;
-            BlockPtr += sizeof(EFI_HII_GIBT_GLYPH_BLOCK) - sizeof(UINT8) + BufferLen;
-            break;
-
-        case EFI_HII_GIBT_SKIP1:
-            CharCurrent = (UINT16)(CharCurrent + (UINT16)(*(BlockPtr + sizeof(EFI_HII_GLYPH_BLOCK))));
-            BlockPtr    += sizeof(EFI_HII_GIBT_SKIP1_BLOCK);
-            break;
-
-        case EFI_HII_GIBT_SKIP2:
-            CopyMem(&Length16, BlockPtr + sizeof(EFI_HII_GLYPH_BLOCK), sizeof(UINT16));
-            CharCurrent = (UINT16)(CharCurrent + Length16);
-            BlockPtr    += sizeof(EFI_HII_GIBT_SKIP2_BLOCK);
-            break;
-
-        default:
-            return EFI_NOT_FOUND;
-            break;
+      case EFI_HII_GIBT_GLYPH_DEFAULT:
+        if (DefaultCell == NULL) {
+          ASSERT (DefaultCell != NULL);
+          return EFI_NOT_FOUND;      // mschange - check with MT.  What is best way to exit this func
         }
 
-        if (CharValue < CharCurrent) {
-            return EFI_NOT_FOUND;
+        BufferLen = BITMAP_LEN_1_BIT (DefaultCell->Width, DefaultCell->Height);
+        if (CharCurrent == CharValue) {
+          *GlyphBlock = (UINT8 *)((UINTN)BlockPtr + sizeof (EFI_HII_GIBT_GLYPH_DEFAULT_BLOCK) - sizeof (UINT8));
+          *Cell       = DefaultCell;
+          //  DumpMemory(*GlyphBlock, 16);
+          return EFI_SUCCESS;
         }
+
+        CharCurrent++;
+        BlockPtr += sizeof (EFI_HII_GIBT_GLYPH_DEFAULT_BLOCK) - sizeof (UINT8) + BufferLen;
+        break;
+
+      case EFI_HII_GIBT_GLYPH:
+        BlockGlyphs = (EFI_HII_GIBT_GLYPHS_BLOCK *)BlockPtr;
+        *Cell       = &BlockGlyphs->Cell;
+        BufferLen   = BITMAP_LEN_1_BIT (BlockGlyphs->Cell.Width, BlockGlyphs->Cell.Height);
+        if (CharCurrent == CharValue) {
+          *GlyphBlock = (UINT8 *)((UINTN)BlockPtr + sizeof (EFI_HII_GIBT_GLYPH_BLOCK) - sizeof (UINT8));
+          *Cell       = &BlockGlyphs->Cell;
+          // DumpMemory (*GlyphBlock,16);
+          return EFI_SUCCESS;
+        }
+
+        CharCurrent++;
+        BlockPtr += sizeof (EFI_HII_GIBT_GLYPH_BLOCK) - sizeof (UINT8) + BufferLen;
+        break;
+
+      case EFI_HII_GIBT_SKIP1:
+        CharCurrent = (UINT16)(CharCurrent + (UINT16)(*(BlockPtr + sizeof (EFI_HII_GLYPH_BLOCK))));
+        BlockPtr   += sizeof (EFI_HII_GIBT_SKIP1_BLOCK);
+        break;
+
+      case EFI_HII_GIBT_SKIP2:
+        CopyMem (&Length16, BlockPtr + sizeof (EFI_HII_GLYPH_BLOCK), sizeof (UINT16));
+        CharCurrent = (UINT16)(CharCurrent + Length16);
+        BlockPtr   += sizeof (EFI_HII_GIBT_SKIP2_BLOCK);
+        break;
+
+      default:
+        return EFI_NOT_FOUND;
+        break;
     }
-    return EFI_NOT_FOUND;
-}
 
+    if (CharValue < CharCurrent) {
+      return EFI_NOT_FOUND;
+    }
+  }
+
+  return EFI_NOT_FOUND;
+}
 
 /**
   Convert bitmap data of the glyph to blt structure.
@@ -139,70 +137,71 @@ FindGlyph (
 **/
 EFI_STATUS
 GlyphToBlt (
-    IN     UINT8                         *GlyphBuffer,
-    IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Foreground,
-    IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Background,
-    IN     UINT16                         ImageWidth,
-    IN     UINT16                         BaseLine,
-    IN     UINT32                         RowWidth,
-    IN     UINT32                         RowHeight,
-    IN     CONST EFI_HII_GLYPH_INFO      *Cell,
-    OUT    EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Origin
-    ) {
+  IN     UINT8                          *GlyphBuffer,
+  IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Foreground,
+  IN     EFI_GRAPHICS_OUTPUT_BLT_PIXEL  Background,
+  IN     UINT16                         ImageWidth,
+  IN     UINT16                         BaseLine,
+  IN     UINT32                         RowWidth,
+  IN     UINT32                         RowHeight,
+  IN     CONST EFI_HII_GLYPH_INFO       *Cell,
+  OUT    EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *Origin
+  )
+{
+  UINT16                         Xpos;
+  UINT16                         Ypos;
+  UINT8                          Data;
+  UINT16                         Index;
+  UINT16                         YposOffset;
+  UINTN                          OffsetY;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *BltBuffer;
 
-    UINT16                                Xpos;
-    UINT16                                Ypos;
-    UINT8                                 Data;
-    UINT16                                Index;
-    UINT16                                YposOffset;
-    UINTN                                 OffsetY;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL         *BltBuffer;
+  if ((GlyphBuffer == NULL) || (Cell == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (GlyphBuffer == NULL || Cell == NULL) {
-        return EFI_INVALID_PARAMETER;
+  // Move position to the left-top corner of char.
+  //
+  BltBuffer  = Origin + Cell->OffsetX - (Cell->OffsetY + Cell->Height) * ImageWidth;
+  YposOffset = (UINT16)(BaseLine - (Cell->OffsetY + Cell->Height));
+
+  //
+  // The glyph's upper left hand corner pixel is the most significant bit of the
+  // first bitmap byte.
+  //
+  for (Ypos = 0; Ypos < Cell->Height && ((UINTN)(Ypos + YposOffset) < RowHeight); Ypos++) {
+    OffsetY = BITMAP_LEN_1_BIT (Cell->Width, Ypos);
+
+    //
+    // All bits in these bytes are meaningful.
+    //
+    for (Xpos = 0; Xpos < Cell->Width / 8; Xpos++) {
+      Data = *(GlyphBuffer + OffsetY + Xpos);
+      for (Index = 0; Index < 8 && ((UINTN)(Xpos * 8 + Index + Cell->OffsetX) < RowWidth); Index++) {
+        if ((Data & (1 << (8 - Index - 1))) != 0) {
+          BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Foreground;
+        } else {
+          BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Background;
+        }
+      }
     }
 
-    // Move position to the left-top corner of char.
-    //
-    BltBuffer  = Origin + Cell->OffsetX - (Cell->OffsetY + Cell->Height) * ImageWidth;
-    YposOffset = (UINT16)(BaseLine - (Cell->OffsetY + Cell->Height));
-
-    //
-    // The glyph's upper left hand corner pixel is the most significant bit of the
-    // first bitmap byte.
-    //
-    for (Ypos = 0; Ypos < Cell->Height && ((UINTN)(Ypos + YposOffset) < RowHeight); Ypos++) {
-        OffsetY = BITMAP_LEN_1_BIT(Cell->Width, Ypos);
-
-        //
-        // All bits in these bytes are meaningful.
-        //
-        for (Xpos = 0; Xpos < Cell->Width / 8; Xpos++) {
-            Data  = *(GlyphBuffer + OffsetY + Xpos);
-            for (Index = 0; Index < 8 && ((UINTN)(Xpos * 8 + Index + Cell->OffsetX) < RowWidth); Index++) {
-                if ((Data & (1 << (8 - Index - 1))) != 0) {
-                    BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Foreground;
-                } else {
-                    BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Background;
-                }
-            }
+    if (Cell->Width % 8 != 0) {
+      //
+      // There are some padding bits in this byte. Ignore them.
+      //
+      Data = *(GlyphBuffer + OffsetY + Xpos);
+      for (Index = 0; Index < Cell->Width % 8 && ((UINTN)(Xpos * 8 + Index + Cell->OffsetX) < RowWidth); Index++) {
+        if ((Data & (1 << (8 - Index - 1))) != 0) {
+          BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Foreground;
+        } else {
+          BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Background;
         }
+      }
+    }     // end of if (Width % 8...)
+  }   // end of for (Ypos=0...)
 
-        if (Cell->Width % 8 != 0) {
-            //
-            // There are some padding bits in this byte. Ignore them.
-            //
-            Data  = *(GlyphBuffer + OffsetY + Xpos);
-            for (Index = 0; Index < Cell->Width % 8 && ((UINTN)(Xpos * 8 + Index + Cell->OffsetX) < RowWidth); Index++) {
-                if ((Data & (1 << (8 - Index - 1))) != 0) {
-                    BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Foreground;
-                } else {
-                    BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Background;
-                }
-            }
-        } // end of if (Width % 8...)
-    } // end of for (Ypos=0...)
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -220,34 +219,35 @@ GlyphToBlt (
 EFI_STATUS
 EFIAPI
 SimpleBlt (
-    IN  MS_EARLY_GRAPHICS_PROTOCOL          *this,
-    IN  CONST EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Image,
-    IN  UINT32                               DestinationX,
-    IN  UINT32                               DestinationY,
-    IN  UINT32                               Width,
-    IN  UINT32                               Height
-    ) {
+  IN  MS_EARLY_GRAPHICS_PROTOCOL           *this,
+  IN  CONST EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *Image,
+  IN  UINT32                               DestinationX,
+  IN  UINT32                               DestinationY,
+  IN  UINT32                               Width,
+  IN  UINT32                               Height
+  )
+{
+  UINT32  Row;
+  UINT32  *Dest;
+  UINT32  *Src = (UINT32 *)Image;
 
-    UINT32           Row;
-    UINT32          *Dest;
-    UINT32          *Src = (UINT32 *)Image;
+  this->UpdateFrameBufferBase (this);
+  //    if (this->Mode->Info->PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {
+  //        DEBUG((DEBUG_ERROR,__FUNCTION__ " Invalid Pixel formal %d",this->Mode->Info->PixelFormat));
+  //        return EFI_DEVICE_ERROR;
+  //    }
+  // FrameBuffer has to be in low 4GB to work in PEI anyway.  Allw full 64 bit memory address in DXE
+  Dest = (UINT32 *)((UINTN)this->Mode->FrameBufferBase +
+                    DestinationX *sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL) +
+                    DestinationY * this->Mode->Info->PixelsPerScanLine * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
-    this->UpdateFrameBufferBase(this);
-//    if (this->Mode->Info->PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {
-//        DEBUG((DEBUG_ERROR,__FUNCTION__ " Invalid Pixel formal %d",this->Mode->Info->PixelFormat));
-//        return EFI_DEVICE_ERROR;
-//    }
-// FrameBuffer has to be in low 4GB to work in PEI anyway.  Allw full 64 bit memory address in DXE
-    Dest = (UINT32 *)((UINTN)this->Mode->FrameBufferBase +
-                      DestinationX *sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) +
-                      DestinationY * this->Mode->Info->PixelsPerScanLine * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  for (Row = 0; Row < Height; Row++) {
+    CopyMem (Dest, Src, Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    Src  = Src + Width;
+    Dest = Dest + this->Mode->Info->PixelsPerScanLine;
+  }
 
-    for (Row = 0; Row < Height; Row++) {
-        CopyMem(Dest, Src, Width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-        Src = Src + Width;
-        Dest = Dest + this->Mode->Info->PixelsPerScanLine;
-    }
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -264,33 +264,34 @@ SimpleBlt (
  */
 EFI_STATUS
 EFIAPI
-SimpleFill(
-    IN  MS_EARLY_GRAPHICS_PROTOCOL    *this,
-    IN  UINT32                         Color,
-    IN  UINT32                         DestinationX,
-    IN  UINT32                         DestinationY,
-    IN  UINT32                         Width,
-    IN  UINT32                         Height
-    ) {
+SimpleFill (
+  IN  MS_EARLY_GRAPHICS_PROTOCOL  *this,
+  IN  UINT32                      Color,
+  IN  UINT32                      DestinationX,
+  IN  UINT32                      DestinationY,
+  IN  UINT32                      Width,
+  IN  UINT32                      Height
+  )
+{
+  UINT32  Row;
+  UINT32  *p;
 
-    UINT32           Row;
-    UINT32          *p;
+  this->UpdateFrameBufferBase (this);
+  //  if (this->Mode->Info->PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {
+  //        DEBUG((DEBUG_ERROR,__FUNCTION__ " Invalid Pixed formal %d",this->Mode->Info->PixelFormat));
+  //        return EFI_DEVICE_ERROR;
+  //    }
+  // FrameBuffer has to be in low 4GB to work in PEI anyway.
+  p = (UINT32 *)((UINTN)this->Mode->FrameBufferBase +
+                 DestinationX * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL) +
+                 DestinationY * this->Mode->Info->PixelsPerScanLine * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
-    this->UpdateFrameBufferBase(this);
-//  if (this->Mode->Info->PixelFormat != PixelBlueGreenRedReserved8BitPerColor) {
-//        DEBUG((DEBUG_ERROR,__FUNCTION__ " Invalid Pixed formal %d",this->Mode->Info->PixelFormat));
-//        return EFI_DEVICE_ERROR;
-//    }
-// FrameBuffer has to be in low 4GB to work in PEI anyway.
-    p = (UINT32 *)((UINTN)this->Mode->FrameBufferBase +
-                   DestinationX * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL) +
-                   DestinationY * this->Mode->Info->PixelsPerScanLine * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  for (Row = 0; Row < Height; Row++) {
+    SetMem32 (p, Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL), Color);
+    p = p + this->Mode->Info->PixelsPerScanLine;
+  }
 
-    for (Row = 0; Row < Height; Row++) {
-        SetMem32(p, Width * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL), Color);
-        p = p + this->Mode->Info->PixelsPerScanLine;
-    }
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -308,58 +309,63 @@ SimpleFill(
  */
 EFI_STATUS
 EFIAPI
-PrintLn(
-    IN  MS_EARLY_GRAPHICS_PROTOCOL      *this,
-    IN  UINT32                          Row,
-    IN  UINT32                          Column,
-    IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   ForegroundColor,
-    IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL   BackgroundColor,
-    IN  CONST CHAR8                     *Msg)
+PrintLn (
+  IN  MS_EARLY_GRAPHICS_PROTOCOL     *this,
+  IN  UINT32                         Row,
+  IN  UINT32                         Column,
+  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  ForegroundColor,
+  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  BackgroundColor,
+  IN  CONST CHAR8                    *Msg
+  )
 {
-    EFI_STATUS                      Status;
-    OUT EFI_HII_GLYPH_INFO          *Cell;
-    OUT UINT8                       *GlyphBlock;
-    UINT16                          BaseLine;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *BufferPtr;
-    EFI_GRAPHICS_OUTPUT_BLT_PIXEL   *ImageBuffer;
+  EFI_STATUS                     Status;
+  OUT EFI_HII_GLYPH_INFO         *Cell;
+  OUT UINT8                      *GlyphBlock;
+  UINT16                         BaseLine;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *BufferPtr;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *ImageBuffer;
 
-    this->UpdateFrameBufferBase(this);
-    ImageBuffer = AllocatePool (MS_EARLY_GRAPHICS_CELL_HEIGHT * MS_EARLY_GRAPHICS_CELL_ADVANCE * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-    if (ImageBuffer == NULL) {
-        return EFI_OUT_OF_RESOURCES;
+  this->UpdateFrameBufferBase (this);
+  ImageBuffer = AllocatePool (MS_EARLY_GRAPHICS_CELL_HEIGHT * MS_EARLY_GRAPHICS_CELL_ADVANCE * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  if (ImageBuffer == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  Status = EFI_SUCCESS;
+  while ('\0' != *Msg) {
+    Status = FindGlyph ((UINT8)*Msg, &Cell, &GlyphBlock);    // Poor man's CHAR8 to CHAR16 conversion
+    if (!EFI_ERROR (Status)) {
+      BaseLine  = Cell->Height + Cell->OffsetY;
+      BufferPtr = ImageBuffer + BaseLine * Cell->Width;
+      Status    = GlyphToBlt (
+                    GlyphBlock,
+                    ForegroundColor,
+                    BackgroundColor,
+                    Cell->Width,
+                    BaseLine,
+                    Cell->Width,
+                    Cell->Height,
+                    Cell,
+                    BufferPtr
+                    );
+      if (!EFI_ERROR (Status)) {
+        Status = SimpleBlt (
+                   this,
+                   ImageBuffer,
+                   Column * MS_EARLY_GRAPHICS_CELL_WIDTH,
+                   Row * MS_EARLY_GRAPHICS_CELL_HEIGHT,
+                   Cell->Width,
+                   Cell->Height
+                   );
+      }
     }
 
-    Status = EFI_SUCCESS;
-    while ('\0' != *Msg) {
-        Status = FindGlyph((UINT8)*Msg, &Cell, &GlyphBlock); // Poor man's CHAR8 to CHAR16 conversion
-        if (!EFI_ERROR(Status)) {
-            BaseLine = Cell->Height + Cell->OffsetY;
-            BufferPtr = ImageBuffer + BaseLine * Cell->Width;
-            Status = GlyphToBlt(GlyphBlock,
-                                ForegroundColor,
-                                BackgroundColor,
-                                Cell->Width,
-                                BaseLine,
-                                Cell->Width,
-                                Cell->Height,
-                                Cell,
-                                BufferPtr);
-            if (!EFI_ERROR(Status)) {
-                Status = SimpleBlt(this,
-                                   ImageBuffer,
-                                   Column * MS_EARLY_GRAPHICS_CELL_WIDTH,
-                                   Row * MS_EARLY_GRAPHICS_CELL_HEIGHT,
-                                   Cell->Width,
-                                   Cell->Height);
-            }
-        }
+    Msg++;
+    Column++;
+  }
 
-        Msg++;
-        Column++;
-    }
-
-    FreePool (ImageBuffer );
-    return Status;
+  FreePool (ImageBuffer);
+  return Status;
 }
 
 /**
@@ -370,8 +376,10 @@ PrintLn(
  */
 UINT32
 EFIAPI
-GetCellHeight() {
-    return MS_EARLY_GRAPHICS_CELL_HEIGHT;
+GetCellHeight (
+  )
+{
+  return MS_EARLY_GRAPHICS_CELL_HEIGHT;
 }
 
 /**
@@ -382,7 +390,8 @@ GetCellHeight() {
  */
 UINT32
 EFIAPI
-GetCellWidth() {
-    return MS_EARLY_GRAPHICS_CELL_WIDTH;
+GetCellWidth (
+  )
+{
+  return MS_EARLY_GRAPHICS_CELL_WIDTH;
 }
-

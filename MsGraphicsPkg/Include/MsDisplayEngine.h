@@ -28,25 +28,25 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // ****************************************************************************
 //
 
-#define MS_DEFAULT_FONT_SIZE                     MsUiGetStandardFontHeight ()     // Default font size
- 
+#define MS_DEFAULT_FONT_SIZE  MsUiGetStandardFontHeight ()                        // Default font size
+
 // FrontPage TitleBar (NOTE: Y origins are based on vertically centering the element in the TitleBar).
-#define FP_TBAR_HEIGHT_PERCENT                   8                      // TitleBar height is 8% the height of the screen.
-#define FP_TBAR_MSLOGO_X_PERCENT                 4                      // TitleBar: Microsoft Logo x origin starts at 4% of *Master Frame* width.
-#define FP_TBAR_TEXT_X_PERCENT                   25                     // TitleBar: Title text x origin starts at 25% of the *Master Frame* width.
-#define FP_TBAR_TEXT_FONT_HEIGHT                 MsUiGetLargeFontHeight ()  // TitleBar: Title text font height.
-#define FP_TBAR_ENTRY_INDICATOR_X_PERCENT        96                     // TitleBar: Entry icon location upper right corner
+#define FP_TBAR_HEIGHT_PERCENT             8                            // TitleBar height is 8% the height of the screen.
+#define FP_TBAR_MSLOGO_X_PERCENT           4                            // TitleBar: Microsoft Logo x origin starts at 4% of *Master Frame* width.
+#define FP_TBAR_TEXT_X_PERCENT             25                           // TitleBar: Title text x origin starts at 25% of the *Master Frame* width.
+#define FP_TBAR_TEXT_FONT_HEIGHT           MsUiGetLargeFontHeight ()    // TitleBar: Title text font height.
+#define FP_TBAR_ENTRY_INDICATOR_X_PERCENT  96                           // TitleBar: Entry icon location upper right corner
 
 // FrontPage Master Frame
-#define FP_MFRAME_WIDTH_PERCENT                  25                     // Master Frame is 25% the width of the screen.
-#define FP_MFRAME_MENU_TEXT_OFFSET_PERCENT       4                      // Master Frame: Indent menu text 4% of the Master Frame width.
-#define FP_MFRAME_MENU_CELL_HEIGHT_PERCENT       6                      // Master Frame: Menu cell height is 6% of the Master Frame height.
-#define FP_MFRAME_MENU_TEXT_FONT_HEIGHT          MsUiGetStandardFontHeight ()  // Master Frame: Menu text font height.
-#define FP_MFRAME_DIVIDER_LINE_WIDTH_PIXELS      MsUiScaleByTheme (3)   // Master Frame: Divider line between Master Frame and form canvas is 3 pixel.
+#define FP_MFRAME_WIDTH_PERCENT              25                           // Master Frame is 25% the width of the screen.
+#define FP_MFRAME_MENU_TEXT_OFFSET_PERCENT   4                            // Master Frame: Indent menu text 4% of the Master Frame width.
+#define FP_MFRAME_MENU_CELL_HEIGHT_PERCENT   6                            // Master Frame: Menu cell height is 6% of the Master Frame height.
+#define FP_MFRAME_MENU_TEXT_FONT_HEIGHT      MsUiGetStandardFontHeight () // Master Frame: Menu text font height.
+#define FP_MFRAME_DIVIDER_LINE_WIDTH_PIXELS  MsUiScaleByTheme (3)         // Master Frame: Divider line between Master Frame and form canvas is 3 pixel.
 
 // FrontPage Form Canvas
-#define FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT      8                      // Form Canvas: Left & Right canvas border padding is 8% the width of the screen.
-#define FP_FCANVAS_BORDER_PAD_HEIGHT_PERCENT     4                      // Form Canvas: Top & Bottom canvas border padding is 4% the height of the screen.
+#define FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT   8                         // Form Canvas: Left & Right canvas border padding is 8% the width of the screen.
+#define FP_FCANVAS_BORDER_PAD_HEIGHT_PERCENT  4                         // Form Canvas: Top & Bottom canvas border padding is 4% the height of the screen.
 
 // Grid class Start delimeter (GUID opcode).
 //
@@ -83,14 +83,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     0x2166d685, 0x70a0, 0x4cd8, { 0x89, 0x50, 0x82, 0x9e, 0x4d, 0xc1, 0x05, 0x5a } \
   }
 
-
 // Shared FrontPage - Display Engine notification types.
 //
-typedef enum
-{
-    NONE = 0,   // No action to be taken.
-    REDRAW,     // Redraw the Top Menu.
-    USERINPUT   // User input provided.
+typedef enum {
+  NONE = 0,     // No action to be taken.
+  REDRAW,       // Redraw the Top Menu.
+  USERINPUT     // User input provided.
 } FPDE_SHARED_NOTIFY_TYPE;
 
 // ****** Structure Definitions ******
@@ -99,13 +97,11 @@ typedef enum
 // Custom structure for sharing user event and operating state information between the Simple FrontPage
 // and our custom display engine.
 //
-typedef struct _DISPLAY_ENGINE_SHARED_STATE_
-{
-    BOOLEAN                 CloseFormRequest;       // Request from FrontPage to display engine (forms browser) to close the current form.
-    BOOLEAN                 ShowTopMenuHighlight;   // Indicates whether the Top Menu should show keyboard tab highlight.
-    FPDE_SHARED_NOTIFY_TYPE NotificationType;       // FrontPage notification type.
-    SWM_INPUT_STATE         InputState;             // User input (i.e., keyboard event, touch/mouse event, etc.).
-
+typedef struct _DISPLAY_ENGINE_SHARED_STATE_ {
+  BOOLEAN                    CloseFormRequest;      // Request from FrontPage to display engine (forms browser) to close the current form.
+  BOOLEAN                    ShowTopMenuHighlight;  // Indicates whether the Top Menu should show keyboard tab highlight.
+  FPDE_SHARED_NOTIFY_TYPE    NotificationType;      // FrontPage notification type.
+  SWM_INPUT_STATE            InputState;            // User input (i.e., keyboard event, touch/mouse event, etc.).
 } DISPLAY_ENGINE_SHARED_STATE;
 
-#endif  // _MS_DISPLAY_ENGINE_H_.
+#endif // _MS_DISPLAY_ENGINE_H_.

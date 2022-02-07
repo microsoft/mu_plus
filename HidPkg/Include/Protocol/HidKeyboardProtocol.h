@@ -19,36 +19,37 @@ Spec:
   Refer to USB Device Class Definition for Human Interface Devices (HID) version 1.11 Appendix B.1
 
 --*/
+
 #ifndef __HID_KEYBOARD_PROTOCOL_H__
 #define __HID_KEYBOARD_PROTOCOL_H__
 
-typedef struct _HID_KEYBOARD_PROTOCOL  HID_KEYBOARD_PROTOCOL;
+typedef struct _HID_KEYBOARD_PROTOCOL HID_KEYBOARD_PROTOCOL;
 
-//Define the supported HID interfaces.
-//Currently only Boot Keyboard as defined in HID 1.11 B.1 is supported.
+// Define the supported HID interfaces.
+// Currently only Boot Keyboard as defined in HID 1.11 B.1 is supported.
 typedef enum {
   BootKeyboard
 } KEYBOARD_HID_INTERFACE;
 
-//Structures for BootKeyboard interface
+// Structures for BootKeyboard interface
 #pragma pack(1)
-//Note: HID spec defines only 6 keycodes by default, but we extend that here to
-//allow for an arbitrary number of additional keycodes. If there more or fewer
-//than 6, then the HID report may actually be larger or smaller than
-//sizeof(KEYBOARD_HID_INPUT_BUFFER).
+// Note: HID spec defines only 6 keycodes by default, but we extend that here to
+// allow for an arbitrary number of additional keycodes. If there more or fewer
+// than 6, then the HID report may actually be larger or smaller than
+// sizeof(KEYBOARD_HID_INPUT_BUFFER).
 typedef struct {
-  UINT8 ModifierKeys;
-  UINT8 Reserved;
-  UINT8 KeyCode[6];
+  UINT8    ModifierKeys;
+  UINT8    Reserved;
+  UINT8    KeyCode[6];
 } KEYBOARD_HID_INPUT_BUFFER;
 
 typedef struct {
-    UINT8   NumLock:1;
-    UINT8   CapsLock:1;
-    UINT8   ScrollLock:1;
-    UINT8   Compose:1;
-    UINT8   Kana:1;
-    UINT8   Constant:3;
+  UINT8    NumLock    : 1;
+  UINT8    CapsLock   : 1;
+  UINT8    ScrollLock : 1;
+  UINT8    Compose    : 1;
+  UINT8    Kana       : 1;
+  UINT8    Constant   : 3;
 } KEYBOARD_HID_OUTPUT_BUFFER;
 #pragma pack()
 
@@ -65,7 +66,7 @@ typedef struct {
 **/
 typedef
 VOID
-(EFIAPI *KEYBOARD_HID_REPORT_CALLBACK) (
+(EFIAPI *KEYBOARD_HID_REPORT_CALLBACK)(
   IN KEYBOARD_HID_INTERFACE Interface,
   IN UINT8                  *HidInputReportBuffer,
   IN UINTN                  HidInputReportBufferSize,
@@ -129,11 +130,11 @@ EFI_STATUS
   );
 
 struct _HID_KEYBOARD_PROTOCOL {
-  REGISTER_KEYBOARD_HID_REPORT_CALLBACK   RegisterKeyboardHidReportCallback;
-  UNREGISTER_KEYBOARD_HID_REPORT_CALLBACK UnRegisterKeyboardHidReportCallback;
-  SET_OUTPUT_REPORT                       SetOutputReport;
+  REGISTER_KEYBOARD_HID_REPORT_CALLBACK      RegisterKeyboardHidReportCallback;
+  UNREGISTER_KEYBOARD_HID_REPORT_CALLBACK    UnRegisterKeyboardHidReportCallback;
+  SET_OUTPUT_REPORT                          SetOutputReport;
 };
 
-extern EFI_GUID gHidKeyboardProtocolGuid;
+extern EFI_GUID  gHidKeyboardProtocolGuid;
 
 #endif //__HID_KEYBOARD_PROTOCOL_H__

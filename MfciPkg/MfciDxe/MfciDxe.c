@@ -31,47 +31,53 @@
 
 #include "MfciDxe.h"
 
-MFCI_POLICY_TYPE                  mCurrentPolicy;
-BOOLEAN                           mVarPolicyRegistered;
+MFCI_POLICY_TYPE  mCurrentPolicy;
+BOOLEAN           mVarPolicyRegistered;
 
 STATIC
 EFI_STATUS
 CleanCurrentVariables (
   VOID
-)
+  )
 {
-  EFI_STATUS Status;
-  EFI_STATUS ReturnStatus = EFI_SUCCESS;
-  UINT64     InvalidNonce = 0;
-  MFCI_POLICY_TYPE CustomerPolicy = CUSTOMER_STATE;
+  EFI_STATUS        Status;
+  EFI_STATUS        ReturnStatus   = EFI_SUCCESS;
+  UINT64            InvalidNonce   = 0;
+  MFCI_POLICY_TYPE  CustomerPolicy = CUSTOMER_STATE;
 
-  Status = gRT->SetVariable (CURRENT_MFCI_NONCE_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             MFCI_POLICY_VARIABLE_ATTR,
-                             sizeof(InvalidNonce),
-                             &InvalidNonce);
+  Status = gRT->SetVariable (
+                  CURRENT_MFCI_NONCE_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  MFCI_POLICY_VARIABLE_ATTR,
+                  sizeof (InvalidNonce),
+                  &InvalidNonce
+                  );
   if (Status != EFI_SUCCESS) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to set %s to InvalidNonce, returned %r\n", __FUNCTION__, CURRENT_MFCI_NONCE_VARIABLE_NAME, Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set %s to InvalidNonce, returned %r\n", __FUNCTION__, CURRENT_MFCI_NONCE_VARIABLE_NAME, Status));
     ReturnStatus = Status;
   }
 
-  Status = gRT->SetVariable (CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             MFCI_POLICY_VARIABLE_ATTR,
-                             0,
-                             NULL);
+  Status = gRT->SetVariable (
+                  CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  MFCI_POLICY_VARIABLE_ATTR,
+                  0,
+                  NULL
+                  );
   if ((Status != EFI_NOT_FOUND) && (Status != EFI_SUCCESS)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to delete %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME, Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to delete %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME, Status));
     ReturnStatus = Status;
   }
 
-  Status = gRT->SetVariable (CURRENT_MFCI_POLICY_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             MFCI_POLICY_VARIABLE_ATTR,
-                             sizeof(CustomerPolicy),
-                             &CustomerPolicy);
+  Status = gRT->SetVariable (
+                  CURRENT_MFCI_POLICY_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  MFCI_POLICY_VARIABLE_ATTR,
+                  sizeof (CustomerPolicy),
+                  &CustomerPolicy
+                  );
   if ((Status != EFI_NOT_FOUND) && (Status != EFI_SUCCESS)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to set %s to CUSTOMER_STATE, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_VARIABLE_NAME, Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set %s to CUSTOMER_STATE, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_VARIABLE_NAME, Status));
     ReturnStatus = Status;
   }
 
@@ -82,39 +88,43 @@ STATIC
 EFI_STATUS
 CleanTargetVariables (
   VOID
-)
+  )
 {
-  EFI_STATUS Status;
-  EFI_STATUS ReturnStatus = EFI_SUCCESS;
-  BOOLEAN RngResult;
-  UINT64 TargetNonce;
+  EFI_STATUS  Status;
+  EFI_STATUS  ReturnStatus = EFI_SUCCESS;
+  BOOLEAN     RngResult;
+  UINT64      TargetNonce;
 
   TargetNonce = MFCI_POLICY_INVALID_NONCE;
-  RngResult = GetRandomNumber64 (&TargetNonce);
+  RngResult   = GetRandomNumber64 (&TargetNonce);
   if (!RngResult) {
-    DEBUG(( DEBUG_ERROR, "%a - Generating random number 64 failed.\n", __FUNCTION__ ));
-    ASSERT(FALSE);
-    TargetNonce = MFCI_POLICY_INVALID_NONCE;
+    DEBUG ((DEBUG_ERROR, "%a - Generating random number 64 failed.\n", __FUNCTION__));
+    ASSERT (FALSE);
+    TargetNonce  = MFCI_POLICY_INVALID_NONCE;
     ReturnStatus = EFI_DEVICE_ERROR;
   }
 
-  Status = gRT->SetVariable (NEXT_MFCI_NONCE_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             MFCI_POLICY_VARIABLE_ATTR,
-                             sizeof(TargetNonce),
-                             &TargetNonce);
+  Status = gRT->SetVariable (
+                  NEXT_MFCI_NONCE_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  MFCI_POLICY_VARIABLE_ATTR,
+                  sizeof (TargetNonce),
+                  &TargetNonce
+                  );
   if (Status != EFI_SUCCESS) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to set TargetNonce 0x%lx, returned %r\n", __FUNCTION__, TargetNonce, Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set TargetNonce 0x%lx, returned %r\n", __FUNCTION__, TargetNonce, Status));
     ReturnStatus = Status;
   }
 
-  Status = gRT->SetVariable (NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             MFCI_POLICY_VARIABLE_ATTR,
-                             0,
-                             NULL);
+  Status = gRT->SetVariable (
+                  NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  MFCI_POLICY_VARIABLE_ATTR,
+                  0,
+                  NULL
+                  );
   if ((Status != EFI_NOT_FOUND) && (Status != EFI_SUCCESS)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to delete %s, returned %r\n", __FUNCTION__, NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME, Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to delete %s, returned %r\n", __FUNCTION__, NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME, Status));
     ReturnStatus = Status;
   }
 
@@ -125,9 +135,9 @@ STATIC
 EFI_STATUS
 InternalCleanupCurrentPolicy (
   VOID
-)
+  )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mCurrentPolicy != CUSTOMER_STATE) {
     // Call the callbacks
@@ -138,9 +148,9 @@ InternalCleanupCurrentPolicy (
   Status = CleanCurrentVariables ();
 
   if (mCurrentPolicy != CUSTOMER_STATE) {
-    ResetSystemWithSubtype(EfiResetCold, &gMfciPolicyChangeResetGuid);
+    ResetSystemWithSubtype (EfiResetCold, &gMfciPolicyChangeResetGuid);
     // Reset System should not return, deadloop if it does
-    CpuDeadLoop();
+    CpuDeadLoop ();
   }
 
   // Otherwise, someone else might be interested in it..
@@ -151,9 +161,9 @@ STATIC
 EFI_STATUS
 InternalCleanupTargetPolicy (
   VOID
-)
+  )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   DEBUG ((DEBUG_INFO, "%a() Entry\n", __FUNCTION__));
 
@@ -169,14 +179,13 @@ InternalCleanupTargetPolicy (
   Status = CleanCurrentVariables ();
 
   if (mCurrentPolicy != CUSTOMER_STATE) {
-    ResetSystemWithSubtype(EfiResetCold, &gMfciPolicyChangeResetGuid);
-    CpuDeadLoop();
+    ResetSystemWithSubtype (EfiResetCold, &gMfciPolicyChangeResetGuid);
+    CpuDeadLoop ();
   }
 
   // Otherwise, someone else might be interested in it..
   return Status;
 }
-
 
 /**
   A helper function to lock all protected variables that control
@@ -192,14 +201,14 @@ LockPolicyVariables (
   VOID
   )
 {
-  EFI_STATUS                    Status;
-  EFI_STATUS                    ReturnStatus = EFI_SUCCESS;
-  POLICY_LOCK_VAR               LockVar;
+  EFI_STATUS       Status;
+  EFI_STATUS       ReturnStatus = EFI_SUCCESS;
+  POLICY_LOCK_VAR  LockVar;
 
-  DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
   if (mVarPolicyRegistered != TRUE) {
-    DEBUG (( DEBUG_ERROR, "MFCI's Variable Policy was not completely registered!  Will still attempt to lock any that were registered...\n"));
+    DEBUG ((DEBUG_ERROR, "MFCI's Variable Policy was not completely registered!  Will still attempt to lock any that were registered...\n"));
     ASSERT (FALSE);
     ReturnStatus = EFI_SECURITY_VIOLATION;
   }
@@ -208,30 +217,29 @@ LockPolicyVariables (
   // Lock all protected variables.
   // Creating this variable will cause the write-protection to be enforced in the policy engine.
   LockVar = MFCI_LOCK_VAR_VALUE;
-  Status = gRT->SetVariable (
-                  MFCI_LOCK_VAR_NAME,
-                  &gMuVarPolicyWriteOnceStateVarGuid,
-                  WRITE_ONCE_STATE_VAR_ATTR,
-                  sizeof (LockVar),
-                  &LockVar
-                  );
+  Status  = gRT->SetVariable (
+                   MFCI_LOCK_VAR_NAME,
+                   &gMuVarPolicyWriteOnceStateVarGuid,
+                   WRITE_ONCE_STATE_VAR_ATTR,
+                   sizeof (LockVar),
+                   &LockVar
+                   );
   if (EFI_ERROR (Status)) {
     DEBUG ((
       DEBUG_ERROR,
       "[%a] - Failed to lock MFCI Policy variables! %r\n",
       __FUNCTION__,
-      Status));
+      Status
+      ));
     ASSERT (FALSE);
     ReturnStatus = EFI_SECURITY_VIOLATION;
-  }
-  else {
-    DEBUG((DEBUG_VERBOSE, "Successfully set MFCI Policy Lock\n"));
+  } else {
+    DEBUG ((DEBUG_VERBOSE, "Successfully set MFCI Policy Lock\n"));
     ReturnStatus = Status;
   }
 
   return ReturnStatus;
 } // LockPolicyVariables()
-
 
 /*
   InternalTransitionRoutine()
@@ -267,15 +275,15 @@ LockPolicyVariables (
 STATIC
 VOID
 InternalTransitionRoutine (
-  MFCI_POLICY_TYPE                TargetPolicy,
-  UINT64                          TargetNonce,
-  VOID                            *TargetBlob,
-  UINTN                           TargetBlobSize
-)
+  MFCI_POLICY_TYPE  TargetPolicy,
+  UINT64            TargetNonce,
+  VOID              *TargetBlob,
+  UINTN             TargetBlobSize
+  )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
   // Step a: Call the callbacks
   NotifyMfciPolicyChange (TargetPolicy);
@@ -286,106 +294,119 @@ InternalTransitionRoutine (
   }
 
   // Step b: copy target stuff to current stuff
-  Status =  gRT->SetVariable (CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                              &MFCI_VAR_VENDOR_GUID,
-                              MFCI_POLICY_VARIABLE_ATTR,
-                              TargetBlobSize,
-                              TargetBlob);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to set %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME, Status));
+  Status =  gRT->SetVariable (
+                   CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                   &MFCI_VAR_VENDOR_GUID,
+                   MFCI_POLICY_VARIABLE_ATTR,
+                   TargetBlobSize,
+                   TargetBlob
+                   );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME, Status));
     goto Done;
   }
 
-  Status =  gRT->SetVariable (CURRENT_MFCI_NONCE_VARIABLE_NAME,
-                              &MFCI_VAR_VENDOR_GUID,
-                              MFCI_POLICY_VARIABLE_ATTR,
-                              sizeof(TargetNonce),
-                              &TargetNonce);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to set %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_NONCE_VARIABLE_NAME, Status));
+  Status =  gRT->SetVariable (
+                   CURRENT_MFCI_NONCE_VARIABLE_NAME,
+                   &MFCI_VAR_VENDOR_GUID,
+                   MFCI_POLICY_VARIABLE_ATTR,
+                   sizeof (TargetNonce),
+                   &TargetNonce
+                   );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_NONCE_VARIABLE_NAME, Status));
     goto Done;
   }
 
   // Step c: set current policy to target policy
-  Status =  gRT->SetVariable (CURRENT_MFCI_POLICY_VARIABLE_NAME,
-                              &MFCI_VAR_VENDOR_GUID,
-                              MFCI_POLICY_VARIABLE_ATTR,
-                              sizeof(TargetPolicy),
-                              &TargetPolicy);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to set %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_VARIABLE_NAME, Status));
+  Status =  gRT->SetVariable (
+                   CURRENT_MFCI_POLICY_VARIABLE_NAME,
+                   &MFCI_VAR_VENDOR_GUID,
+                   MFCI_POLICY_VARIABLE_ATTR,
+                   sizeof (TargetPolicy),
+                   &TargetPolicy
+                   );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set %s, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_VARIABLE_NAME, Status));
     goto Done;
   }
 
 Done:
   // Step d: Delete target blob, set new random target nonce
-  CleanTargetVariables();
+  CleanTargetVariables ();
 
   // Step e: reboot!
-  ResetSystemWithSubtype(EfiResetCold, &gMfciPolicyChangeResetGuid);
-  CpuDeadLoop();
+  ResetSystemWithSubtype (EfiResetCold, &gMfciPolicyChangeResetGuid);
+  CpuDeadLoop ();
 
   return;
 } // InternalTransitionRoutine()
 
 STATIC
 EFI_STATUS
-RegisterVarPolicies ()
+RegisterVarPolicies (
+  )
 {
-  EDKII_VARIABLE_POLICY_PROTOCOL            *VariablePolicy = NULL;
-  EFI_STATUS                          Status;
+  EDKII_VARIABLE_POLICY_PROTOCOL  *VariablePolicy = NULL;
+  EFI_STATUS                      Status;
 
-  DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
-  Status = gBS->LocateProtocol( &gEdkiiVariablePolicyProtocolGuid, NULL, (VOID**)&VariablePolicy );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Locating Variable Policy failed - %r\n", __FUNCTION__, Status ));
+  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&VariablePolicy);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Locating Variable Policy failed - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
   // Register policies to protect the protected state variables
-  Status = RegisterVarStateVariablePolicy (VariablePolicy,
-                                        &MFCI_VAR_VENDOR_GUID,
-                                        CURRENT_MFCI_POLICY_VARIABLE_NAME,
-                                        sizeof(UINT64),
-                                        sizeof(UINT64),
-                                        MFCI_POLICY_VARIABLE_ATTR,
-                                        (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
-                                        &gMuVarPolicyWriteOnceStateVarGuid,
-                                        MFCI_LOCK_VAR_NAME,
-                                        MFCI_LOCK_VAR_VALUE);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for Current Policy failed - %r\n", __FUNCTION__, Status ));
+  Status = RegisterVarStateVariablePolicy (
+             VariablePolicy,
+             &MFCI_VAR_VENDOR_GUID,
+             CURRENT_MFCI_POLICY_VARIABLE_NAME,
+             sizeof (UINT64),
+             sizeof (UINT64),
+             MFCI_POLICY_VARIABLE_ATTR,
+             (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
+             &gMuVarPolicyWriteOnceStateVarGuid,
+             MFCI_LOCK_VAR_NAME,
+             MFCI_LOCK_VAR_VALUE
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for Current Policy failed - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
-  Status = RegisterVarStateVariablePolicy (VariablePolicy,
-                                        &MFCI_VAR_VENDOR_GUID,
-                                        NEXT_MFCI_NONCE_VARIABLE_NAME,
-                                        sizeof(UINT64),
-                                        sizeof(UINT64),
-                                        MFCI_POLICY_VARIABLE_ATTR,
-                                        (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
-                                        &gMuVarPolicyWriteOnceStateVarGuid,
-                                        MFCI_LOCK_VAR_NAME,
-                                        MFCI_LOCK_VAR_VALUE);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for Target Nonce failed - %r\n", __FUNCTION__, Status ));
+  Status = RegisterVarStateVariablePolicy (
+             VariablePolicy,
+             &MFCI_VAR_VENDOR_GUID,
+             NEXT_MFCI_NONCE_VARIABLE_NAME,
+             sizeof (UINT64),
+             sizeof (UINT64),
+             MFCI_POLICY_VARIABLE_ATTR,
+             (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
+             &gMuVarPolicyWriteOnceStateVarGuid,
+             MFCI_LOCK_VAR_NAME,
+             MFCI_LOCK_VAR_VALUE
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for Target Nonce failed - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
-  Status = RegisterVarStateVariablePolicy (VariablePolicy,
-                                        &MFCI_VAR_VENDOR_GUID,
-                                        CURRENT_MFCI_NONCE_VARIABLE_NAME,
-                                        sizeof(UINT64),
-                                        sizeof(UINT64),
-                                        MFCI_POLICY_VARIABLE_ATTR,
-                                        (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
-                                        &gMuVarPolicyWriteOnceStateVarGuid,
-                                        MFCI_LOCK_VAR_NAME,
-                                        MFCI_LOCK_VAR_VALUE);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for Current Nonce failed - %r\n", __FUNCTION__, Status ));
+  Status = RegisterVarStateVariablePolicy (
+             VariablePolicy,
+             &MFCI_VAR_VENDOR_GUID,
+             CURRENT_MFCI_NONCE_VARIABLE_NAME,
+             sizeof (UINT64),
+             sizeof (UINT64),
+             MFCI_POLICY_VARIABLE_ATTR,
+             (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
+             &gMuVarPolicyWriteOnceStateVarGuid,
+             MFCI_LOCK_VAR_NAME,
+             MFCI_LOCK_VAR_VALUE
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for Current Nonce failed - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
@@ -395,65 +416,63 @@ RegisterVarPolicies ()
        fieldIndex < TARGET_POLICY_COUNT;
        fieldIndex++)
   {
-
-    DEBUG(( DEBUG_VERBOSE, "Registering Variable Policy for %s... \n", gPolicyTargetFieldVarNames[fieldIndex]));
-    Status = RegisterVarStateVariablePolicy (VariablePolicy,
-                                        &MFCI_VAR_VENDOR_GUID,
-                                        gPolicyTargetFieldVarNames[fieldIndex],
-                                        VARIABLE_POLICY_NO_MIN_SIZE,
-                                        MFCI_POLICY_FIELD_MAX_LEN,
-                                        MFCI_POLICY_TARGETING_VARIABLE_ATTR,
-                                        (UINT32) ~MFCI_POLICY_TARGETING_VARIABLE_ATTR,
-                                        &gMuVarPolicyDxePhaseGuid,
-                                        END_OF_DXE_INDICATOR_VAR_NAME,
-                                        PHASE_INDICATOR_SET);
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for Target Variable %s failed - %r\n", __FUNCTION__, gPolicyTargetFieldVarNames[fieldIndex], Status ));
+    DEBUG ((DEBUG_VERBOSE, "Registering Variable Policy for %s... \n", gPolicyTargetFieldVarNames[fieldIndex]));
+    Status = RegisterVarStateVariablePolicy (
+               VariablePolicy,
+               &MFCI_VAR_VENDOR_GUID,
+               gPolicyTargetFieldVarNames[fieldIndex],
+               VARIABLE_POLICY_NO_MIN_SIZE,
+               MFCI_POLICY_FIELD_MAX_LEN,
+               MFCI_POLICY_TARGETING_VARIABLE_ATTR,
+               (UINT32) ~MFCI_POLICY_TARGETING_VARIABLE_ATTR,
+               &gMuVarPolicyDxePhaseGuid,
+               END_OF_DXE_INDICATOR_VAR_NAME,
+               PHASE_INDICATOR_SET
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for Target Variable %s failed - %r\n", __FUNCTION__, gPolicyTargetFieldVarNames[fieldIndex], Status));
       goto Done;
     }
-
   } // Walk the list of OEM-supplied targeting variables to register variable policy
 
   // Register NO_LOCK policies for the OS writable mailboxes
   Status = RegisterBasicVariablePolicy (
-                                     VariablePolicy,
-                                     &MFCI_VAR_VENDOR_GUID,
-                                     CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                                     VARIABLE_POLICY_NO_MIN_SIZE,
-                                     VARIABLE_POLICY_NO_MAX_SIZE,
-                                     MFCI_POLICY_VARIABLE_ATTR,
-                                     (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
-                                     VARIABLE_POLICY_TYPE_NO_LOCK
-                                     );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for the Current Policy Blob failed - %r\n", __FUNCTION__, Status ));
+             VariablePolicy,
+             &MFCI_VAR_VENDOR_GUID,
+             CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+             VARIABLE_POLICY_NO_MIN_SIZE,
+             VARIABLE_POLICY_NO_MAX_SIZE,
+             MFCI_POLICY_VARIABLE_ATTR,
+             (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
+             VARIABLE_POLICY_TYPE_NO_LOCK
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for the Current Policy Blob failed - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
   Status = RegisterBasicVariablePolicy (
-                                     VariablePolicy,
-                                     &MFCI_VAR_VENDOR_GUID,
-                                     NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                                     VARIABLE_POLICY_NO_MIN_SIZE,
-                                     VARIABLE_POLICY_NO_MAX_SIZE,
-                                     MFCI_POLICY_VARIABLE_ATTR,
-                                     (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
-                                     VARIABLE_POLICY_TYPE_NO_LOCK
-                                     );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering Variable Policy for the Next Policy Blob failed - %r\n", __FUNCTION__, Status ));
+             VariablePolicy,
+             &MFCI_VAR_VENDOR_GUID,
+             NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+             VARIABLE_POLICY_NO_MIN_SIZE,
+             VARIABLE_POLICY_NO_MAX_SIZE,
+             MFCI_POLICY_VARIABLE_ATTR,
+             (UINT32) ~MFCI_POLICY_VARIABLE_ATTR,
+             VARIABLE_POLICY_TYPE_NO_LOCK
+             );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering Variable Policy for the Next Policy Blob failed - %r\n", __FUNCTION__, Status));
     goto Done;
   }
-
 
   // reaching here means that all variable policy was successfully registered
   mVarPolicyRegistered = TRUE;
 
 Done:
-  DEBUG(( DEBUG_VERBOSE, "MfciDxe: %a() - Exit\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_VERBOSE, "MfciDxe: %a() - Exit\n", __FUNCTION__));
   return Status;
 }
-
 
 BOOLEAN
 CheckTargetVarsExist (
@@ -463,20 +482,22 @@ CheckTargetVarsExist (
   UINTN       Size;
   UINT32      VariableAttr;
 
-  for (int i = 0; i < ARRAY_SIZE(gDeviceIdFnToTargetVarNameMap); i++) {
+  for (int i = 0; i < ARRAY_SIZE (gDeviceIdFnToTargetVarNameMap); i++) {
     VariableAttr = 0;
-    Size = 0;
-    Status = gRT->GetVariable (
-                             gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &Size,
-                             NULL);
+    Size         = 0;
+    Status       = gRT->GetVariable (
+                          gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName,
+                          &MFCI_VAR_VENDOR_GUID,
+                          &VariableAttr,
+                          &Size,
+                          NULL
+                          );
     if (Status != EFI_BUFFER_TOO_SMALL) {
-      DEBUG(( DEBUG_VERBOSE, "MFCI targeting variable %s returned %r\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName, Status ));
+      DEBUG ((DEBUG_VERBOSE, "MFCI targeting variable %s returned %r\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName, Status));
       return FALSE;
     }
   }
+
   return TRUE;
 }
 
@@ -484,44 +505,46 @@ EFI_STATUS
 PopulateTargetVarsFromLib (
   )
 {
-  EFI_STATUS    Status;
-  CHAR16       *TargetString;
-  UINTN         TargetStringSize;
+  EFI_STATUS  Status;
+  CHAR16      *TargetString;
+  UINTN       TargetStringSize;
 
-  DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
-  for (int i = 0; i < ARRAY_SIZE(gDeviceIdFnToTargetVarNameMap); i++) {
-    DEBUG(( DEBUG_VERBOSE, "Calling MfciDeviceIdSupportLib to populate MFCI target variable: %s\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName));
+  for (int i = 0; i < ARRAY_SIZE (gDeviceIdFnToTargetVarNameMap); i++) {
+    DEBUG ((DEBUG_VERBOSE, "Calling MfciDeviceIdSupportLib to populate MFCI target variable: %s\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName));
 
     TargetStringSize = 0;
-    TargetString = NULL;
+    TargetString     = NULL;
 
     // invoke the target DeviceId function corresponding to the current index
-    Status = gDeviceIdFnToTargetVarNameMap[i].DeviceIdFn ( &TargetString, &TargetStringSize);
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "MfciDeviceIdSupportLib function index %d returned %r\n", i, Status ));
+    Status = gDeviceIdFnToTargetVarNameMap[i].DeviceIdFn (&TargetString, &TargetStringSize);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "MfciDeviceIdSupportLib function index %d returned %r\n", i, Status));
       if (TargetString != NULL) {
-        FreePool(TargetString);
+        FreePool (TargetString);
         TargetString = NULL;
       }
+
       break;
     }
 
     // set the targeting variable name corresponding to the current index
     Status = gRT->SetVariable (
-                             gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName,
-                             &MFCI_VAR_VENDOR_GUID,
-                             MFCI_POLICY_TARGETING_VARIABLE_ATTR,
-                             TargetStringSize,
-                             TargetString);
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "Failed to set MFCI targeting variable %s, returned %r\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName, Status ));
-      FreePool(TargetString);
+                    gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName,
+                    &MFCI_VAR_VENDOR_GUID,
+                    MFCI_POLICY_TARGETING_VARIABLE_ATTR,
+                    TargetStringSize,
+                    TargetString
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to set MFCI targeting variable %s, returned %r\n", gDeviceIdFnToTargetVarNameMap[i].DeviceIdVarName, Status));
+      FreePool (TargetString);
       TargetString = NULL;
       break;
     }
 
-    FreePool(TargetString);
+    FreePool (TargetString);
   }
 
   return Status;
@@ -538,13 +561,12 @@ PopulateTargetVarsFromLib (
 VOID
 EFIAPI
 VarPolicyCallback (
-  IN  EFI_EVENT             Event,
-  IN  VOID                  *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
   RegisterVarPolicies ();
 }
-
 
 /**
  * Executes after DXE modules get opportunity to publish the OEM, model, SN, ... variables that
@@ -565,49 +587,50 @@ VarPolicyCallback (
 VOID
 EFIAPI
 VerifyPolicyAndChange (
-  IN EFI_EVENT        Event,
-  IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-  EFI_STATUS                        Status;
+  EFI_STATUS  Status;
 
-  BOOLEAN                           RngResult;
-  UINT32                            VariableAttr = 0;
-  UINTN                             DataSize;
-  VOID                              *CurrentBlob = NULL;
-  UINTN                             CurrentBlobSize;
-  UINT64                            CurrentNonce;
-  VOID                              *TargetBlob = NULL;
-  UINTN                             TargetBlobSize;
-  UINT64                            TargetNonce;
-  MFCI_POLICY_TYPE                  BlobPolicy;
-  UINT8                             *PublicKeyDataXdr;
-  UINT8                             *PublicKeyDataXdrEnd;
-  UINT8                             *PublicKeyData;
-  UINTN                             PublicKeyDataLength;
-  CHAR8                             *RequiredEKUs;
+  BOOLEAN           RngResult;
+  UINT32            VariableAttr = 0;
+  UINTN             DataSize;
+  VOID              *CurrentBlob = NULL;
+  UINTN             CurrentBlobSize;
+  UINT64            CurrentNonce;
+  VOID              *TargetBlob = NULL;
+  UINTN             TargetBlobSize;
+  UINT64            TargetNonce;
+  MFCI_POLICY_TYPE  BlobPolicy;
+  UINT8             *PublicKeyDataXdr;
+  UINT8             *PublicKeyDataXdrEnd;
+  UINT8             *PublicKeyData;
+  UINTN             PublicKeyDataLength;
+  CHAR8             *RequiredEKUs;
 
-  DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
-  if (! CheckTargetVarsExist () ) {
+  if (!CheckTargetVarsExist ()) {
     Status = PopulateTargetVarsFromLib ();
-    if (EFI_ERROR(Status)) {
+    if (EFI_ERROR (Status)) {
       if (Status == EFI_UNSUPPORTED) {
-        DEBUG(( DEBUG_ERROR, "MfciDeviceIdSupportLib returned EFI_UNSUPPORTED. Did you forget to either create the MFCI targeting variables, or implement MfciDeviceIdSupportLib?\n"));
+        DEBUG ((DEBUG_ERROR, "MfciDeviceIdSupportLib returned EFI_UNSUPPORTED. Did you forget to either create the MFCI targeting variables, or implement MfciDeviceIdSupportLib?\n"));
       }
+
       Status = EFI_ABORTED;
       goto Exit;
     }
   }
 
   // Initialize configuration from PCDs, consider moving elsewhere and only initializing if there is a blob to validate
-  RequiredEKUs = (CHAR8*)FixedPcdGetPtr(PcdMfciPkcs7RequiredLeafEKU);
+  RequiredEKUs = (CHAR8 *)FixedPcdGetPtr (PcdMfciPkcs7RequiredLeafEKU);
 
   // below is inspired/borrowed from FmpDxe.c
-  PublicKeyDataXdr = FixedPcdGetPtr(PcdMfciPkcs7CertBufferXdr);
-  PublicKeyDataXdrEnd = PublicKeyDataXdr + FixedPcdGetSize(PcdMfciPkcs7CertBufferXdr);
+  PublicKeyDataXdr    = FixedPcdGetPtr (PcdMfciPkcs7CertBufferXdr);
+  PublicKeyDataXdrEnd = PublicKeyDataXdr + FixedPcdGetSize (PcdMfciPkcs7CertBufferXdr);
 
-  if (PublicKeyDataXdr == NULL || ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd) ) {
+  if ((PublicKeyDataXdr == NULL) || ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd)) {
     DEBUG ((DEBUG_ERROR, "Pcd PcdMfciPkcs7CertBufferXdr NULL or invalid size\n"));
     Status = EFI_ABORTED;
     goto Exit;
@@ -628,79 +651,86 @@ VerifyPolicyAndChange (
     Status = EFI_ABORTED;
     goto Exit;
   }
+
   // above is inspired/borrowed from FmpDxe.c
 
   // Step 1: Check target nonce exist
   TargetNonce = MFCI_POLICY_INVALID_NONCE;
-  DataSize = sizeof (TargetNonce);
-  Status = gRT->GetVariable (NEXT_MFCI_NONCE_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &DataSize,
-                             &TargetNonce);
-  if (EFI_ERROR(Status) ||
-      DataSize != sizeof (TargetNonce) ||
-      VariableAttr != MFCI_POLICY_VARIABLE_ATTR ||
-      TargetNonce == MFCI_POLICY_INVALID_NONCE) {
-
-    DEBUG(( DEBUG_INFO, "%a - Refreshing Target Nonce - DataSize(%d) VariableAttr(%x) TargetNonce(0x%lx) Status(%r)\n", __FUNCTION__, DataSize, VariableAttr, TargetNonce, Status ));
+  DataSize    = sizeof (TargetNonce);
+  Status      = gRT->GetVariable (
+                       NEXT_MFCI_NONCE_VARIABLE_NAME,
+                       &MFCI_VAR_VENDOR_GUID,
+                       &VariableAttr,
+                       &DataSize,
+                       &TargetNonce
+                       );
+  if (EFI_ERROR (Status) ||
+      (DataSize != sizeof (TargetNonce)) ||
+      (VariableAttr != MFCI_POLICY_VARIABLE_ATTR) ||
+      (TargetNonce == MFCI_POLICY_INVALID_NONCE))
+  {
+    DEBUG ((DEBUG_INFO, "%a - Refreshing Target Nonce - DataSize(%d) VariableAttr(%x) TargetNonce(0x%lx) Status(%r)\n", __FUNCTION__, DataSize, VariableAttr, TargetNonce, Status));
 
     // Create a new one if we do not like it..
     TargetNonce = MFCI_POLICY_INVALID_NONCE;
-    RngResult = GetRandomNumber64 (&TargetNonce);
+    RngResult   = GetRandomNumber64 (&TargetNonce);
     if (!RngResult) {
-      DEBUG(( DEBUG_ERROR, "%a - Generating random number 64 failed.\n", __FUNCTION__ ));
-      ASSERT(FALSE);
+      DEBUG ((DEBUG_ERROR, "%a - Generating random number 64 failed.\n", __FUNCTION__));
+      ASSERT (FALSE);
       TargetNonce = MFCI_POLICY_INVALID_NONCE;
     }
 
-    Status = gRT->SetVariable (NEXT_MFCI_NONCE_VARIABLE_NAME,
-                               &MFCI_VAR_VENDOR_GUID,
-                               MFCI_POLICY_VARIABLE_ATTR,
-                               sizeof (TargetNonce),
-                               &TargetNonce);
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a - Set TARGET nonce failed! - %r\n", __FUNCTION__, Status ));
-      ASSERT(FALSE);
+    Status = gRT->SetVariable (
+                    NEXT_MFCI_NONCE_VARIABLE_NAME,
+                    &MFCI_VAR_VENDOR_GUID,
+                    MFCI_POLICY_VARIABLE_ATTR,
+                    sizeof (TargetNonce),
+                    &TargetNonce
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Set TARGET nonce failed! - %r\n", __FUNCTION__, Status));
+      ASSERT (FALSE);
       goto Exit;
     }
   }
 
   // Step 2: Check current policy related variables
   // Step 2.1: grab current blob
-  DEBUG(( DEBUG_INFO, "%a - Step 2: Check current policy related variables.\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "%a - Step 2: Check current policy related variables.\n", __FUNCTION__));
   // Check for presence of current MFCI policy blob.  It is either:
   // i. not found
   // ii. other error
   // iii. found with correct attributes
   CurrentBlobSize = 0;
-  Status = gRT->GetVariable (CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &CurrentBlobSize,
-                             CurrentBlob);
+  Status          = gRT->GetVariable (
+                           CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                           &MFCI_VAR_VENDOR_GUID,
+                           &VariableAttr,
+                           &CurrentBlobSize,
+                           CurrentBlob
+                           );
   // i. not found
   if (Status == EFI_NOT_FOUND) {
-    DEBUG(( DEBUG_INFO, "%a - Get current MFCI Policy blob - %r\n", __FUNCTION__, Status ));
+    DEBUG ((DEBUG_INFO, "%a - Get current MFCI Policy blob - %r\n", __FUNCTION__, Status));
 
     // If there is no current blob found, make sure all current stuff looks good
-    Status = InternalCleanupCurrentPolicy();
+    Status = InternalCleanupCurrentPolicy ();
 
     // If we return check result and decide whether we should go for target side
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a - Clear other current variables returned - %r\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Clear other current variables returned - %r\n", __FUNCTION__, Status));
       goto Exit;
-    }
-    else {
-      DEBUG(( DEBUG_INFO, "%a - Clear other current variables returned, proceeding to TARGET step.\n", __FUNCTION__ ));
+    } else {
+      DEBUG ((DEBUG_INFO, "%a - Clear other current variables returned, proceeding to TARGET step.\n", __FUNCTION__));
       goto VerifyTarget;
     }
   }
   // ii. other error
   else if ((Status != EFI_BUFFER_TOO_SMALL) ||
-           (VariableAttr != MFCI_POLICY_VARIABLE_ATTR)) {
+           (VariableAttr != MFCI_POLICY_VARIABLE_ATTR))
+  {
     // Something is wrong, bail here..
-    DEBUG(( DEBUG_ERROR, "%a - Initial get current MFCI Policy blob failed - %r with attribute %08x\n", __FUNCTION__, Status, VariableAttr ));
+    DEBUG ((DEBUG_ERROR, "%a - Initial get current MFCI Policy blob failed - %r with attribute %08x\n", __FUNCTION__, Status, VariableAttr));
     Status = EFI_DEVICE_ERROR;
     goto Exit;
   }
@@ -709,92 +739,96 @@ VerifyPolicyAndChange (
 
   CurrentBlob = AllocatePool (CurrentBlobSize);
   if (CurrentBlob == NULL) {
-    DEBUG(( DEBUG_ERROR, "%a - Allocating memory for current MFCI Policy blob of size %d failed.\n", __FUNCTION__, CurrentBlobSize ));
+    DEBUG ((DEBUG_ERROR, "%a - Allocating memory for current MFCI Policy blob of size %d failed.\n", __FUNCTION__, CurrentBlobSize));
     Status = EFI_OUT_OF_RESOURCES;
     goto Exit;
   }
 
-  Status = gRT->GetVariable (CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &CurrentBlobSize,
-                             CurrentBlob);
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_WARN, "%a - Second get current MFCI Policy blob failed - %r\n", __FUNCTION__, Status ));
+  Status = gRT->GetVariable (
+                  CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  &VariableAttr,
+                  &CurrentBlobSize,
+                  CurrentBlob
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_WARN, "%a - Second get current MFCI Policy blob failed - %r\n", __FUNCTION__, Status));
 
     // If there is error reading current blob, make sure clearing all current staff looks good
-    Status = InternalCleanupCurrentPolicy();
+    Status = InternalCleanupCurrentPolicy ();
 
     // If we return check result and decide whether we should go for target side
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a - Clear ALL current variables returned - %r\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Clear ALL current variables returned - %r\n", __FUNCTION__, Status));
       goto Exit;
-    }
-    else {
-      DEBUG(( DEBUG_INFO, "%a - Clear ALL current variables returned, proceeding to TARGET step.\n", __FUNCTION__ ));
+    } else {
+      DEBUG ((DEBUG_INFO, "%a - Clear ALL current variables returned, proceeding to TARGET step.\n", __FUNCTION__));
       goto VerifyTarget;
     }
   }
 
   // Step 2.2: grab current nonce
   DataSize = sizeof (CurrentNonce);
-  Status = gRT->GetVariable (CURRENT_MFCI_NONCE_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &DataSize,
-                             &CurrentNonce);
-  if (EFI_ERROR(Status) ||
-      DataSize != sizeof (CurrentNonce) ||
-      VariableAttr != MFCI_POLICY_VARIABLE_ATTR) {
+  Status   = gRT->GetVariable (
+                    CURRENT_MFCI_NONCE_VARIABLE_NAME,
+                    &MFCI_VAR_VENDOR_GUID,
+                    &VariableAttr,
+                    &DataSize,
+                    &CurrentNonce
+                    );
+  if (EFI_ERROR (Status) ||
+      (DataSize != sizeof (CurrentNonce)) ||
+      (VariableAttr != MFCI_POLICY_VARIABLE_ATTR))
+  {
     // Something we do not like about this.. bail here
-    DEBUG(( DEBUG_ERROR, "%a - Reading current nonce failed - %r with size: %d and attribute: 0x%08x.\n", __FUNCTION__, Status, DataSize, VariableAttr ));
+    DEBUG ((DEBUG_ERROR, "%a - Reading current nonce failed - %r with size: %d and attribute: 0x%08x.\n", __FUNCTION__, Status, DataSize, VariableAttr));
     goto Exit;
   }
 
   // Step 2.3: validate current blob signature
 
   Status = ValidateBlob (CurrentBlob, CurrentBlobSize, PublicKeyData, PublicKeyDataLength, RequiredEKUs);
-  if (EFI_ERROR(Status)) {
-
-    DEBUG(( DEBUG_ERROR, "%a - validate current blob failed - %r.\n", __FUNCTION__, Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - validate current blob failed - %r.\n", __FUNCTION__, Status));
 
     // If there is no current blob found, make sure all current staff looks good
-    Status = InternalCleanupCurrentPolicy();
+    Status = InternalCleanupCurrentPolicy ();
 
     // If we return check result and decide whether we should go for target side
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a - Clean invalid current policy failed - %r.\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Clean invalid current policy failed - %r.\n", __FUNCTION__, Status));
       goto Exit;
-    }
-    else {
-      DEBUG(( DEBUG_INFO, "%a - Clean invalid current policy returned, proceeding to TARGET step.\n", __FUNCTION__ ));
+    } else {
+      DEBUG ((DEBUG_INFO, "%a - Clean invalid current policy returned, proceeding to TARGET step.\n", __FUNCTION__));
       goto VerifyTarget;
     }
   }
 
   // Step 2.4: verify targetting is for this machine
-  Status = VerifyTargeting (CurrentBlob,
-                            CurrentBlobSize,
-                            CurrentNonce,
-                            &BlobPolicy);
+  Status = VerifyTargeting (
+             CurrentBlob,
+             CurrentBlobSize,
+             CurrentNonce,
+             &BlobPolicy
+             );
 
   BlobPolicy &= ~MFCI_POLICY_VALUE_ACTIONS_MASK; // clear the action bits as they would have been processed upon installation
 
-  if (EFI_ERROR(Status) ||
-      (BlobPolicy != mCurrentPolicy)) {
+  if (EFI_ERROR (Status) ||
+      (BlobPolicy != mCurrentPolicy))
+  {
     // TODO: Telemetry here
-    DEBUG(( DEBUG_ERROR, "%a Verify targeting return error - %r. mCurrentPolicy: 0x%16x, BlobPolicy: 0x%16x.\n", __FUNCTION__, Status, mCurrentPolicy, BlobPolicy ));
+    DEBUG ((DEBUG_ERROR, "%a Verify targeting return error - %r. mCurrentPolicy: 0x%16x, BlobPolicy: 0x%16x.\n", __FUNCTION__, Status, mCurrentPolicy, BlobPolicy));
 
     // If targetting is incorrect, or current policy and extracted has mismatch, fall back
-    Status = InternalCleanupCurrentPolicy();
+    Status = InternalCleanupCurrentPolicy ();
 
     // If we return check result and decide whether we should go for target side
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a - Clean invalid targeting current policy failed - %r.\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Clean invalid targeting current policy failed - %r.\n", __FUNCTION__, Status));
       goto Exit;
-    }
-    else {
-      DEBUG(( DEBUG_INFO, "%a - Clean invalid targeting current policy returned, proceeding to TARGET step.\n", __FUNCTION__ ));
+    } else {
+      DEBUG ((DEBUG_INFO, "%a - Clean invalid targeting current policy returned, proceeding to TARGET step.\n", __FUNCTION__));
       goto VerifyTarget;
     }
   }
@@ -802,49 +836,53 @@ VerifyPolicyAndChange (
 VerifyTarget:
 
   // Step 3: If we got here, check target policy related variables
-  DEBUG(( DEBUG_ERROR, "%a - Verify targeting step!\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_ERROR, "%a - Verify targeting step!\n", __FUNCTION__));
 
   // Step 3.1: grab target blob
   TargetBlobSize = 0;
-  Status = gRT->GetVariable (NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &TargetBlobSize,
-                             TargetBlob);
+  Status         = gRT->GetVariable (
+                          NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                          &MFCI_VAR_VENDOR_GUID,
+                          &VariableAttr,
+                          &TargetBlobSize,
+                          TargetBlob
+                          );
   if (Status == EFI_NOT_FOUND) {
     // If there is no target blob found, we are done!!!
-    DEBUG(( DEBUG_INFO, "%a - No target blob found, bail here.\n", __FUNCTION__ ));
+    DEBUG ((DEBUG_INFO, "%a - No target blob found, bail here.\n", __FUNCTION__));
     Status = EFI_SUCCESS;
     goto Exit;
-  }
-  else if ((Status != EFI_BUFFER_TOO_SMALL) ||
-           (VariableAttr != MFCI_POLICY_VARIABLE_ATTR)) {
+  } else if ((Status != EFI_BUFFER_TOO_SMALL) ||
+             (VariableAttr != MFCI_POLICY_VARIABLE_ATTR))
+  {
     // Something is wrong, bail here..
-    DEBUG(( DEBUG_ERROR, "%a - Failed to read target blob - %r with attribute 0x%08x.\n", __FUNCTION__, Status, VariableAttr ));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to read target blob - %r with attribute 0x%08x.\n", __FUNCTION__, Status, VariableAttr));
     Status = EFI_DEVICE_ERROR;
     goto Exit;
   }
 
   TargetBlob = AllocatePool (TargetBlobSize);
   if (TargetBlob == NULL) {
-    DEBUG(( DEBUG_ERROR, "%a - Allocating memory for target MFCI Policy blob of size %d failed.\n", __FUNCTION__, TargetBlobSize ));
+    DEBUG ((DEBUG_ERROR, "%a - Allocating memory for target MFCI Policy blob of size %d failed.\n", __FUNCTION__, TargetBlobSize));
     Status = EFI_OUT_OF_RESOURCES;
     goto Exit;
   }
 
-  Status = gRT->GetVariable (NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
-                             &MFCI_VAR_VENDOR_GUID,
-                             &VariableAttr,
-                             &TargetBlobSize,
-                             TargetBlob);
-  if (EFI_ERROR(Status)) {
+  Status = gRT->GetVariable (
+                  NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME,
+                  &MFCI_VAR_VENDOR_GUID,
+                  &VariableAttr,
+                  &TargetBlobSize,
+                  TargetBlob
+                  );
+  if (EFI_ERROR (Status)) {
     // There is something wrong here...
     // Try to tear down everything and bail
-    DEBUG(( DEBUG_ERROR, "%a - Failed to read target blob - %r.\n", __FUNCTION__, Status ));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to read target blob - %r.\n", __FUNCTION__, Status));
 
-    Status = InternalCleanupTargetPolicy();
+    Status = InternalCleanupTargetPolicy ();
 
-    DEBUG(( DEBUG_WARN, "%a - Clean up bad target variable returned - %r.\n", __FUNCTION__, Status ));
+    DEBUG ((DEBUG_WARN, "%a - Clean up bad target variable returned - %r.\n", __FUNCTION__, Status));
     goto Exit;
   }
 
@@ -853,38 +891,42 @@ VerifyTarget:
 
   // Step 3.3: validate target blob signature
   Status = ValidateBlob (TargetBlob, TargetBlobSize, PublicKeyData, PublicKeyDataLength, RequiredEKUs);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     // In effort of being fail safe, we let it fail here
-    DEBUG(( DEBUG_ERROR, "%a - Target blob validation failed - %r.\n", __FUNCTION__, Status ));
+    DEBUG ((DEBUG_ERROR, "%a - Target blob validation failed - %r.\n", __FUNCTION__, Status));
 
-    Status = InternalCleanupTargetPolicy();
+    Status = InternalCleanupTargetPolicy ();
 
-    DEBUG(( DEBUG_WARN, "%a - Clean up invalid target variable returned - %r.\n", __FUNCTION__, Status ));
+    DEBUG ((DEBUG_WARN, "%a - Clean up invalid target variable returned - %r.\n", __FUNCTION__, Status));
     goto Exit;
   }
 
   // Step 3.4: verify targetting is for this machine
-  Status = VerifyTargeting (TargetBlob,
-                            TargetBlobSize,
-                            TargetNonce,
-                            &BlobPolicy);
+  Status = VerifyTargeting (
+             TargetBlob,
+             TargetBlobSize,
+             TargetNonce,
+             &BlobPolicy
+             );
 
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     // If target is wrong, we fail, back to safe zone
-    DEBUG(( DEBUG_ERROR, "%a - Target blob validation failed - %r.\n", __FUNCTION__, Status ));
+    DEBUG ((DEBUG_ERROR, "%a - Target blob validation failed - %r.\n", __FUNCTION__, Status));
 
-    Status = InternalCleanupTargetPolicy();
+    Status = InternalCleanupTargetPolicy ();
 
-    DEBUG(( DEBUG_WARN, "%a - Clean up mistargeted target variable returned - %r.\n", __FUNCTION__, Status ));
+    DEBUG ((DEBUG_WARN, "%a - Clean up mistargeted target variable returned - %r.\n", __FUNCTION__, Status));
     goto Exit;
   }
 
   // Step 4: If we are still here, probably it is time to do transition
   // This routine will not return
-  InternalTransitionRoutine (BlobPolicy,
-                             TargetNonce,
-                             TargetBlob,
-                             TargetBlobSize);
+  InternalTransitionRoutine (
+    BlobPolicy,
+    TargetNonce,
+    TargetBlob,
+    TargetBlobSize
+    );
 
   // Should not be here
   ASSERT (FALSE);
@@ -896,26 +938,30 @@ Exit:
     FreePool (CurrentBlob);
     CurrentBlob = NULL;
   }
+
   if (TargetBlob != NULL) {
     FreePool (TargetBlob);
     TargetBlob = NULL;
   }
 
-  EFI_STATUS Status2 = LockPolicyVariables ();
+  EFI_STATUS  Status2 = LockPolicyVariables ();
 
-  if (EFI_ERROR( Status ) || EFI_ERROR( Status2 )) {
-    DEBUG(( DEBUG_ERROR,
-            "%a !!! An error occurred while processing MFCI Policy - Status(%r), Status2(%r)\n",
-            __FUNCTION__, Status, Status2 ));
+  if (EFI_ERROR (Status) || EFI_ERROR (Status2)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a !!! An error occurred while processing MFCI Policy - Status(%r), Status2(%r)\n",
+      __FUNCTION__,
+      Status,
+      Status2
+      ));
 
     // TODO uncomment the below after debugging is complete
     // InternalCleanupCurrentPolicy ();
     // TODO: Log telemetry for any errors that occur.
   }
 
-  DEBUG(( DEBUG_VERBOSE, "MfciDxe: %a() - Exit\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_VERBOSE, "MfciDxe: %a() - Exit\n", __FUNCTION__));
 }
-
 
 /**
 
@@ -938,44 +984,43 @@ EFI_STATUS
 EFIAPI
 MfciDxeEntry (
   IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE* SystemTable
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                        Status;
-  EFI_EVENT                         VarPolicyEvent;
-  EFI_EVENT                         MfciPolicyCheckEvent = NULL;
-  VOID                              *NotUsed;
+  EFI_STATUS  Status;
+  EFI_EVENT   VarPolicyEvent;
+  EFI_EVENT   MfciPolicyCheckEvent = NULL;
+  VOID        *NotUsed;
 
-  mCurrentPolicy = CUSTOMER_STATE; // safety net
+  mCurrentPolicy       = CUSTOMER_STATE; // safety net
   mVarPolicyRegistered = FALSE;
 
-  DEBUG(( DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
   // First initialize the variable policies & prepare locks
   // NOTE:  we _always_ lock the variables to prevent tampering by an attacker.
-  Status = gBS->LocateProtocol( &gEdkiiVariablePolicyProtocolGuid, NULL, &NotUsed );
-  if (EFI_ERROR( Status )) {
+  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, &NotUsed);
+  if (EFI_ERROR (Status)) {
     // The DepEx should have ensured that Variable Policy was already available.  If we fail to locate the protocol,
     // ASSERT on debug builds, and for retail register a notification in hopes the system will recovery (defence in depth)
-    DEBUG(( DEBUG_ERROR, "%a() - Failed to locate VariablePolicy protocol with status %r, will register protocol notification\n", __FUNCTION__, Status ));
-    ASSERT(FALSE);
+    DEBUG ((DEBUG_ERROR, "%a() - Failed to locate VariablePolicy protocol with status %r, will register protocol notification\n", __FUNCTION__, Status));
+    ASSERT (FALSE);
 
     Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL, TPL_CALLBACK, VarPolicyCallback, NULL, &VarPolicyEvent);
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a() - CreateEvent failed returning %r\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a() - CreateEvent failed returning %r\n", __FUNCTION__, Status));
       goto Error;
     }
 
-    Status = gBS->RegisterProtocolNotify (&gEdkiiVariablePolicyProtocolGuid, VarPolicyEvent, (VOID **) &NotUsed);
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a() - RegisterProtocolNotify failed returning %r\n", __FUNCTION__, Status ));
+    Status = gBS->RegisterProtocolNotify (&gEdkiiVariablePolicyProtocolGuid, VarPolicyEvent, (VOID **)&NotUsed);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a() - RegisterProtocolNotify failed returning %r\n", __FUNCTION__, Status));
       goto Error;
     }
-  }
-  else {
+  } else {
     Status = RegisterVarPolicies ();
-    if (EFI_ERROR(Status)) {
-      DEBUG(( DEBUG_ERROR, "%a() - RegisterVarPolicies failed returning %r\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a() - RegisterVarPolicies failed returning %r\n", __FUNCTION__, Status));
       goto Error; // attempt to lock anything that might have registered successfully...
     }
   }
@@ -996,30 +1041,35 @@ MfciDxeEntry (
     CUSTOMER_STATE.  When events are called back, the variables should be
     properly initialized and resynchronized.
   **/
-  if (EFI_ERROR(Status)) {
-    DEBUG(( ((Status == EFI_NOT_FOUND) ? DEBUG_INFO : DEBUG_ERROR),
-      "%a() - MfciRetrievePolicy failed returning %r\n", __FUNCTION__, Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      ((Status == EFI_NOT_FOUND) ? DEBUG_INFO : DEBUG_ERROR),
+      "%a() - MfciRetrievePolicy failed returning %r\n",
+      __FUNCTION__,
+      Status
+      ));
     // Continue in CUSTOMER_STATE, may be first boot with variable not initialized, clear error status
     mCurrentPolicy = CUSTOMER_STATE;
-    Status = EFI_SUCCESS;
+    Status         = EFI_SUCCESS;
   }
-  DEBUG(( DEBUG_INFO, "%a() - MFCI Policy after retrieve 0x%lx\n", __FUNCTION__, mCurrentPolicy ));
+
+  DEBUG ((DEBUG_INFO, "%a() - MFCI Policy after retrieve 0x%lx\n", __FUNCTION__, mCurrentPolicy));
 
   Status = InitPublicInterface ();
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a() - InitPublicInterface failed returning %r\n", __FUNCTION__, Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a() - InitPublicInterface failed returning %r\n", __FUNCTION__, Status));
     goto Error;
   }
 
-  Status = InitSecureBootListener();
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a() - Initializing Secure Boot Callback failed! %r\n", __FUNCTION__, Status ));
+  Status = InitSecureBootListener ();
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a() - Initializing Secure Boot Callback failed! %r\n", __FUNCTION__, Status));
     goto Error;
   }
 
-  Status = InitTpmListener();
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a() - Initializing Tpm Callback failed! %r\n", __FUNCTION__, Status ));
+  Status = InitTpmListener ();
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a() - Initializing Tpm Callback failed! %r\n", __FUNCTION__, Status));
     goto Error;
   }
 
@@ -1036,8 +1086,8 @@ MfciDxeEntry (
                   &gMsStartOfBdsNotifyGuid,
                   &MfciPolicyCheckEvent
                   );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering Start of BDS failed!!! %r\n", __FUNCTION__, Status ));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering Start of BDS failed!!! %r\n", __FUNCTION__, Status));
     goto Error;
   }
 
@@ -1048,6 +1098,6 @@ Error:
 
 Exit:
 
-  DEBUG(( DEBUG_VERBOSE, "MfciDxe: %a() - Exit\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_VERBOSE, "MfciDxe: %a() - Exit\n", __FUNCTION__));
   return Status;
 }// MfciDxeEntry()

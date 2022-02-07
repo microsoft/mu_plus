@@ -27,8 +27,8 @@
 EFI_STATUS
 EFIAPI
 GetQueueItemCount (
-  IN  EFI_GUID *QueueGuid,
-  OUT UINTN    *ItemCount
+  IN  EFI_GUID  *QueueGuid,
+  OUT UINTN     *ItemCount
   );
 
 /**
@@ -44,9 +44,9 @@ GetQueueItemCount (
 EFI_STATUS
 EFIAPI
 QueueAddItem (
-  IN  EFI_GUID *QueueGuid,
-  IN  VOID     *ItemData,
-  IN  UINTN    ItemDataSize
+  IN  EFI_GUID  *QueueGuid,
+  IN  VOID      *ItemData,
+  IN  UINTN     ItemDataSize
   );
 
 /**
@@ -67,9 +67,9 @@ QueueAddItem (
 EFI_STATUS
 EFIAPI
 QueuePopItem (
-  IN  EFI_GUID *QueueGuid,
-  OUT VOID     **ItemData,
-  OUT UINTN    *ItemDataSize
+  IN  EFI_GUID  *QueueGuid,
+  OUT VOID      **ItemData,
+  OUT UINTN     *ItemDataSize
   );
 
 /**
@@ -94,10 +94,10 @@ QueuePopItem (
 EFI_STATUS
 EFIAPI
 QueuePopItemAtIndex (
-  IN  EFI_GUID *QueueGuid,
-  IN  UINTN    ItemIndex,
-  OUT VOID     **ItemData OPTIONAL,
-  OUT UINTN    *ItemDataSize OPTIONAL
+  IN  EFI_GUID  *QueueGuid,
+  IN  UINTN     ItemIndex,
+  OUT VOID      **ItemData OPTIONAL,
+  OUT UINTN     *ItemDataSize OPTIONAL
   );
 
 /**
@@ -119,10 +119,10 @@ QueuePopItemAtIndex (
 EFI_STATUS
 EFIAPI
 QueuePeekAtIndex (
-  IN  EFI_GUID *QueueGuid,
-  IN  UINTN    ItemIndex,
-  OUT VOID     **ItemData OPTIONAL,
-  OUT UINTN    *ItemDataSize OPTIONAL
+  IN  EFI_GUID  *QueueGuid,
+  IN  UINTN     ItemIndex,
+  OUT VOID      **ItemData OPTIONAL,
+  OUT UINTN     *ItemDataSize OPTIONAL
   );
 
 #endif

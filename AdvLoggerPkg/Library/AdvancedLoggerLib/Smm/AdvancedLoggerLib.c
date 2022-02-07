@@ -15,10 +15,8 @@
 #include <Library/DebugLib.h>
 #include <Library/SmmServicesTableLib.h>
 
-
 STATIC BOOLEAN                   mInitialized = FALSE;
-STATIC ADVANCED_LOGGER_PROTOCOL *mSmmLoggerProtocol;
-
+STATIC ADVANCED_LOGGER_PROTOCOL  *mSmmLoggerProtocol;
 
 /**
     Get the Logger Information Block published by SmmCore.
@@ -26,41 +24,41 @@ STATIC ADVANCED_LOGGER_PROTOCOL *mSmmLoggerProtocol;
 STATIC
 VOID
 SmmInitializeLoggerInfo (
-    VOID
-    ) {
-    EFI_STATUS                Status;
+  VOID
+  )
+{
+  EFI_STATUS  Status;
 
-    if (gSmst == NULL)  {
-        return;
+  if (gSmst == NULL) {
+    return;
+  }
+
+  if (!mInitialized) {
+    //
+    // Locate the Logger Information block.
+    //
+
+    mInitialized = TRUE;                // Only one attempt at getting the logger info block.
+
+    Status = gSmst->SmmLocateProtocol (
+                      &gAdvancedLoggerProtocolGuid,
+                      NULL,
+                      (VOID **)&mSmmLoggerProtocol
+                      );
+
+    if (EFI_ERROR (Status)) {
+      mSmmLoggerProtocol = NULL;
+    } else {
+      ASSERT (mSmmLoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+      ASSERT (mSmmLoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
     }
 
-    if (!mInitialized) {
-        //
-        // Locate the Logger Information block.
-        //
+    //
+    // If mSmmLoggerProtocol is NULL at this point, there is no Advanced Logger for SMM modules.
+    //
 
-        mInitialized = TRUE;            // Only one attempt at getting the logger info block.
-
-        Status = gSmst->SmmLocateProtocol (
-                          &gAdvancedLoggerProtocolGuid,
-                          NULL,
-                          (VOID **) &mSmmLoggerProtocol
-                          );
-
-        if (EFI_ERROR(Status)) {
-            mSmmLoggerProtocol = NULL;
-        } else {
-            ASSERT(mSmmLoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
-            ASSERT(mSmmLoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
-        }
-
-        //
-        // If mSmmLoggerProtocol is NULL at this point, there is no Advanced Logger for SMM modules.
-        //
-
-        DEBUG((DEBUG_INFO, "%a: SmmLoggerProtocol=%p, code=%r\n", __FUNCTION__, mSmmLoggerProtocol, Status));
-    }
-
+    DEBUG ((DEBUG_INFO, "%a: SmmLoggerProtocol=%p, code=%r\n", __FUNCTION__, mSmmLoggerProtocol, Status));
+  }
 }
 
 /**
@@ -74,16 +72,16 @@ SmmInitializeLoggerInfo (
 VOID
 EFIAPI
 AdvancedLoggerWrite (
-    IN        UINTN     ErrorLevel,
-    IN  CONST CHAR8    *Buffer,
-    IN        UINTN     NumberOfBytes
-  ) {
+  IN        UINTN  ErrorLevel,
+  IN  CONST CHAR8  *Buffer,
+  IN        UINTN  NumberOfBytes
+  )
+{
+  SmmInitializeLoggerInfo ();
 
-    SmmInitializeLoggerInfo ();
-
-    if (mSmmLoggerProtocol != NULL) {
-        mSmmLoggerProtocol->AdvancedLoggerWriteProtocol (mSmmLoggerProtocol, ErrorLevel, Buffer, NumberOfBytes);
-    }
+  if (mSmmLoggerProtocol != NULL) {
+    mSmmLoggerProtocol->AdvancedLoggerWriteProtocol (mSmmLoggerProtocol, ErrorLevel, Buffer, NumberOfBytes);
+  }
 }
 
 /**
@@ -103,8 +101,7 @@ SmmAdvancedLoggerLibConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  SmmInitializeLoggerInfo ();
 
-    SmmInitializeLoggerInfo ();
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

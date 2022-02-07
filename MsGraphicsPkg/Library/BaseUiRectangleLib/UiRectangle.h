@@ -9,14 +9,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UI_RECTANGLE_H
 
 typedef struct {
-  UI_RECTANGLE Public;
-  INTN FillDataSize;
-  UINT8  FillData[0];
+  UI_RECTANGLE    Public;
+  INTN            FillDataSize;
+  UINT8           FillData[0];
 } PRIVATE_UI_RECTANGLE;
 
 /***  PRIVATE METHODS ***/
 
-/** 
+/**
 Method checks to see if the StyleInfo is supported by
 this implementation of UiRectangle
 
@@ -24,34 +24,34 @@ this implementation of UiRectangle
 @retval FALSE:  Not Supported
 **/
 BOOLEAN
-IsStyleSupported(IN UI_STYLE_INFO* StyleInfo);
+IsStyleSupported (
+  IN UI_STYLE_INFO  *StyleInfo
+  );
 
-
-/** 
+/**
 Method returns the private datasize in bytes needed to support this style info for this rectangle
 
 **/
 INTN
-GetFillDataSize(
-IN UINTN Width,
-IN UINTN Height,
-IN UI_STYLE_INFO* StyleInfo
-);
-
-
-VOID
-PRIVATE_Init(
-IN PRIVATE_UI_RECTANGLE* priv
-);
+GetFillDataSize (
+  IN UINTN          Width,
+  IN UINTN          Height,
+  IN UI_STYLE_INFO  *StyleInfo
+  );
 
 VOID
-DrawBorder(
-IN PRIVATE_UI_RECTANGLE* priv
-);
+PRIVATE_Init (
+  IN PRIVATE_UI_RECTANGLE  *priv
+  );
 
 VOID
-DrawIcon(
-IN PRIVATE_UI_RECTANGLE* priv
-);
+DrawBorder (
+  IN PRIVATE_UI_RECTANGLE  *priv
+  );
+
+VOID
+DrawIcon (
+  IN PRIVATE_UI_RECTANGLE  *priv
+  );
 
 #endif

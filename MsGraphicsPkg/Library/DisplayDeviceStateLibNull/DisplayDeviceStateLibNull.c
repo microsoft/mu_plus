@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Base.h>
 
-
-
 /**
 Function to Display all Active Device States
 
@@ -22,12 +20,12 @@ Function to Display all Active Device States
 **/
 VOID
 EFIAPI
-DisplayDeviceState(
-IN  UINT8* FrameBufferBase,
-IN  INT32  PixelsPerScanLine,
-IN  INT32  WidthInPixels,
-IN  INT32  HeightInPixels
-)
+DisplayDeviceState (
+  IN  UINT8  *FrameBufferBase,
+  IN  INT32  PixelsPerScanLine,
+  IN  INT32  WidthInPixels,
+  IN  INT32  HeightInPixels
+  )
 {
-	return;
+  return;
 }

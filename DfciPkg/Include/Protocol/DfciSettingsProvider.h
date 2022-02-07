@@ -13,7 +13,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __DFCI_SETTING_PROVIDER_H__
 #define __DFCI_SETTING_PROVIDER_H__
 
-
 /**
 Define the DFCI_SETTING_PROVIDER related structures
 **/
@@ -33,7 +32,7 @@ Set a single setting
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_PROVIDER_SET) (
+(EFIAPI *DFCI_SETTING_PROVIDER_SET)(
   IN  CONST DFCI_SETTING_PROVIDER     *This,
   IN        UINTN                      ValueSize,
   IN  CONST VOID                      *Value,
@@ -55,7 +54,7 @@ Get a single setting
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_PROVIDER_GET) (
+(EFIAPI *DFCI_SETTING_PROVIDER_GET)(
   IN  CONST DFCI_SETTING_PROVIDER     *This,
   IN  OUT   UINTN                     *ValueSize,
   OUT VOID                            *Value
@@ -77,7 +76,7 @@ Get the default value of a single setting
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_PROVIDER_GET_DEFAULT) (
+(EFIAPI *DFCI_SETTING_PROVIDER_GET_DEFAULT)(
   IN  CONST DFCI_SETTING_PROVIDER     *This,
   IN  OUT   UINTN                     *ValueSize,
   OUT VOID                            *DefaultValue
@@ -93,30 +92,29 @@ Set to default value
 */
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_PROVIDER_SET_DEFAULT) (
+(EFIAPI *DFCI_SETTING_PROVIDER_SET_DEFAULT)(
   IN  CONST DFCI_SETTING_PROVIDER     *This
   );
 
-
 #pragma pack (push, 1)
 struct _DFCI_SETTING_PROVIDER {
-  DFCI_SETTING_ID_STRING                 Id;                 //Setting Id String
-  DFCI_SETTING_TYPE                      Type;               //Enum setting type
-  DFCI_SETTING_FLAGS                     Flags;              //Flag for this setting.
-  DFCI_SETTING_PROVIDER_SET              SetSettingValue;    //Set the setting
-  DFCI_SETTING_PROVIDER_GET              GetSettingValue;    //Get the setting
-  DFCI_SETTING_PROVIDER_GET_DEFAULT      GetDefaultValue;    //Get the default value
-  DFCI_SETTING_PROVIDER_SET_DEFAULT      SetDefaultValue;    //Set the setting to the default value
+  DFCI_SETTING_ID_STRING               Id;                   // Setting Id String
+  DFCI_SETTING_TYPE                    Type;                 // Enum setting type
+  DFCI_SETTING_FLAGS                   Flags;                // Flag for this setting.
+  DFCI_SETTING_PROVIDER_SET            SetSettingValue;      // Set the setting
+  DFCI_SETTING_PROVIDER_GET            GetSettingValue;      // Get the setting
+  DFCI_SETTING_PROVIDER_GET_DEFAULT    GetDefaultValue;      // Get the default value
+  DFCI_SETTING_PROVIDER_SET_DEFAULT    SetDefaultValue;      // Set the setting to the default value
 };
+
 #pragma pack (pop)
 
 ////////////////////////// END DFCI_SETTING_PROVIDER ///////////////////////////////////////////
 
-
 /**
 Define the DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL related structures
 **/
-typedef struct  _DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL;
+typedef struct  _DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL;
 
 /**
 Registers a Setting Provider with the System Settings module
@@ -130,22 +128,21 @@ Registers a Setting Provider with the System Settings module
 **/
 typedef
 EFI_STATUS
-(EFIAPI *DFCI_SETTING_REGISTER_PROVIDER) (
+(EFIAPI *DFCI_SETTING_REGISTER_PROVIDER)(
   IN DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL       *This,
   IN DFCI_SETTING_PROVIDER                        *Provider
   );
-
 
 //
 // DFCI SYSTEM SETTINGS PROVIDER SUPPORT protocol structure
 //
 #pragma pack (push, 1)
-struct _DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL
-{
+struct _DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL {
   DFCI_SETTING_REGISTER_PROVIDER    RegisterProvider;
 };
+
 #pragma pack (pop)
 
-extern EFI_GUID     gDfciSettingsProviderSupportProtocolGuid;
+extern EFI_GUID  gDfciSettingsProviderSupportProtocolGuid;
 
-#endif      // __DFCI_SETTING_PROVIDER_H__
+#endif // __DFCI_SETTING_PROVIDER_H__

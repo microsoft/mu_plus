@@ -10,7 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __MU_PKCS7_H__
 #define __MU_PKCS7_H__
 
-typedef struct _MU_PKCS7_PROTOCOL  MU_PKCS7_PROTOCOL;
+typedef struct _MU_PKCS7_PROTOCOL MU_PKCS7_PROTOCOL;
 
 /**
 Verifies the validity of a PKCS#7 signed data as described in "PKCS #7:
@@ -36,16 +36,15 @@ is used for certificate chain verification.
 **/
 typedef
 EFI_STATUS
-(EFIAPI *MU_PKCS7_VERIFY) (
-IN  CONST MU_PKCS7_PROTOCOL     *This,
-IN  CONST UINT8                   *P7Data,
-IN  UINTN                          P7DataLength,
-IN  CONST UINT8                   *TrustedCert,
-IN  UINTN                          TrustedCertLength,
-IN  CONST UINT8                   *Data,
-IN  UINTN                          DataLength
-);
-
+(EFIAPI *MU_PKCS7_VERIFY)(
+  IN  CONST MU_PKCS7_PROTOCOL     *This,
+  IN  CONST UINT8                   *P7Data,
+  IN  UINTN                          P7DataLength,
+  IN  CONST UINT8                   *TrustedCert,
+  IN  UINTN                          TrustedCertLength,
+  IN  CONST UINT8                   *Data,
+  IN  UINTN                          DataLength
+  );
 
 /**
   VerifyEKUsInPkcs7Signature()
@@ -88,25 +87,23 @@ IN  UINTN                          DataLength
 **/
 typedef
 EFI_STATUS
-(EFIAPI *MU_PKCS7_VERIFY_EKU) (
-IN CONST MU_PKCS7_PROTOCOL  *This,
-IN CONST UINT8                *Pkcs7Signature,
-IN CONST UINT32                SignatureSize,
-IN CONST CHAR8                *RequiredEKUs[],
-IN CONST UINT32                RequiredEKUsSize,
-IN BOOLEAN                     RequireAllPresent
-);
-
+(EFIAPI *MU_PKCS7_VERIFY_EKU)(
+  IN CONST MU_PKCS7_PROTOCOL  *This,
+  IN CONST UINT8                *Pkcs7Signature,
+  IN CONST UINT32                SignatureSize,
+  IN CONST CHAR8                *RequiredEKUs[],
+  IN CONST UINT32                RequiredEKUsSize,
+  IN BOOLEAN                     RequireAllPresent
+  );
 
 ///
 /// PKCS7 protocol
 ///
-struct _MU_PKCS7_PROTOCOL
-{
-  MU_PKCS7_VERIFY_EKU VerifyEKU;
-  MU_PKCS7_VERIFY Verify;
+struct _MU_PKCS7_PROTOCOL {
+  MU_PKCS7_VERIFY_EKU    VerifyEKU;
+  MU_PKCS7_VERIFY        Verify;
 };
 
-extern EFI_GUID gMuPKCS7ProtocolGuid;
+extern EFI_GUID  gMuPKCS7ProtocolGuid;
 
 #endif // __MU_PKCS7_H__

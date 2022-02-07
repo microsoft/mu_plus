@@ -7,20 +7,19 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "GuidedSectionExtract.h"
 
-
-CONST EFI_PEI_GUIDED_SECTION_EXTRACTION_PPI mCustomGuidedSectionExtractionPpi = {
+CONST EFI_PEI_GUIDED_SECTION_EXTRACTION_PPI  mCustomGuidedSectionExtractionPpi = {
   CustomGuidedSectionExtract
 };
 
-CONST EFI_PEI_DECOMPRESS_PPI mDecompressPpi = {
+CONST EFI_PEI_DECOMPRESS_PPI  mDecompressPpi = {
   Decompress
 };
 
-CONST EFI_PEI_PPI_DESCRIPTOR mPpiList[] = {
+CONST EFI_PEI_PPI_DESCRIPTOR  mPpiList[] = {
   {
     (EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST),
     &gEfiPeiDecompressPpiGuid,
-    (VOID *) &mDecompressPpi
+    (VOID *)&mDecompressPpi
   }
 };
 
@@ -41,22 +40,20 @@ PeimInitializeGuidedSectionExtract (
   IN CONST EFI_PEI_SERVICES     **PeiServices
   )
 {
-
-  EFI_STATUS                                Status;
-  EFI_BOOT_MODE                             BootMode;
-  EFI_GUID                                  *ExtractHandlerGuidTable;
-  UINTN                                     ExtractHandlerNumber;
-  EFI_PEI_PPI_DESCRIPTOR                    *GuidPpi;
+  EFI_STATUS              Status;
+  EFI_BOOT_MODE           BootMode;
+  EFI_GUID                *ExtractHandlerGuidTable;
+  UINTN                   ExtractHandlerNumber;
+  EFI_PEI_PPI_DESCRIPTOR  *GuidPpi;
 
   Status = EFI_SUCCESS;
 
-  BootMode = GetBootModeHob();
+  BootMode = GetBootModeHob ();
   if (BootMode != BOOT_ON_S3_RESUME) {
-
     //
     // EFI_SUCCESS means it is the first time to call register for shadow.
     //
-    Status = PeiServicesRegisterForShadow(FileHandle);
+    Status = PeiServicesRegisterForShadow (FileHandle);
     if (Status == EFI_SUCCESS) {
       return Status;
     }
@@ -76,14 +73,14 @@ PeimInitializeGuidedSectionExtract (
   // Install custom extraction guid PPI
   //
   if (ExtractHandlerNumber > 0) {
-    GuidPpi = (EFI_PEI_PPI_DESCRIPTOR *) AllocatePool (ExtractHandlerNumber * sizeof (EFI_PEI_PPI_DESCRIPTOR));
+    GuidPpi = (EFI_PEI_PPI_DESCRIPTOR *)AllocatePool (ExtractHandlerNumber * sizeof (EFI_PEI_PPI_DESCRIPTOR));
     ASSERT (GuidPpi != NULL);
     while (ExtractHandlerNumber-- > 0) {
       GuidPpi->Flags = EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST;
-      GuidPpi->Ppi   = (VOID *) &mCustomGuidedSectionExtractionPpi;
+      GuidPpi->Ppi   = (VOID *)&mCustomGuidedSectionExtractionPpi;
       GuidPpi->Guid  = &ExtractHandlerGuidTable[ExtractHandlerNumber];
-      Status = PeiServicesInstallPpi (GuidPpi++);
-      ASSERT_EFI_ERROR(Status);
+      Status         = PeiServicesInstallPpi (GuidPpi++);
+      ASSERT_EFI_ERROR (Status);
     }
   }
 
@@ -91,7 +88,7 @@ PeimInitializeGuidedSectionExtract (
   // Install DxeIpl and Decompress PPIs.
   //
   Status = PeiServicesInstallPpi (mPpiList);
-  ASSERT_EFI_ERROR(Status);
+  ASSERT_EFI_ERROR (Status);
 
   return Status;
 }
@@ -153,18 +150,18 @@ PeimInitializeGuidedSectionExtract (
 EFI_STATUS
 EFIAPI
 CustomGuidedSectionExtract (
-  IN CONST  EFI_PEI_GUIDED_SECTION_EXTRACTION_PPI *This,
-  IN CONST  VOID                                  *InputSection,
-  OUT       VOID                                  **OutputBuffer,
-  OUT       UINTN                                 *OutputSize,
-  OUT       UINT32                                *AuthenticationStatus
+  IN CONST  EFI_PEI_GUIDED_SECTION_EXTRACTION_PPI  *This,
+  IN CONST  VOID                                   *InputSection,
+  OUT       VOID                                   **OutputBuffer,
+  OUT       UINTN                                  *OutputSize,
+  OUT       UINT32                                 *AuthenticationStatus
   )
 {
-  EFI_STATUS      Status;
-  UINT8           *ScratchBuffer;
-  UINT32          ScratchBufferSize;
-  UINT32          OutputBufferSize;
-  UINT16          SectionAttribute;
+  EFI_STATUS  Status;
+  UINT8       *ScratchBuffer;
+  UINT32      ScratchBufferSize;
+  UINT32      OutputBufferSize;
+  UINT16      SectionAttribute;
 
   PERF_FUNCTION_BEGIN ();
 
@@ -199,7 +196,7 @@ CustomGuidedSectionExtract (
     }
   }
 
-  if (((SectionAttribute & EFI_GUIDED_SECTION_PROCESSING_REQUIRED) != 0) && OutputBufferSize > 0) {
+  if (((SectionAttribute & EFI_GUIDED_SECTION_PROCESSING_REQUIRED) != 0) && (OutputBufferSize > 0)) {
     //
     // Allocate output buffer
     //
@@ -208,12 +205,13 @@ CustomGuidedSectionExtract (
       Status = EFI_OUT_OF_RESOURCES;
       goto Done;
     }
+
     DEBUG ((DEBUG_INFO, "Customized Guided section Memory Size required is 0x%x and address is 0x%p\n", OutputBufferSize, *OutputBuffer));
     //
     // *OutputBuffer still is one section. Adjust *OutputBuffer offset,
     // skip EFI section header to make section data at page alignment.
     //
-    *OutputBuffer = (VOID *)((UINT8 *) *OutputBuffer + EFI_PAGE_SIZE - sizeof (EFI_COMMON_SECTION_HEADER));
+    *OutputBuffer = (VOID *)((UINT8 *)*OutputBuffer + EFI_PAGE_SIZE - sizeof (EFI_COMMON_SECTION_HEADER));
   }
 
   PERF_INMODULE_BEGIN ("Extract guided section");
@@ -233,7 +231,7 @@ CustomGuidedSectionExtract (
     goto Done;
   }
 
-  *OutputSize = (UINTN) OutputBufferSize;
+  *OutputSize = (UINTN)OutputBufferSize;
 
   Status = EFI_SUCCESS;
 
@@ -241,7 +239,6 @@ Done:
   PERF_FUNCTION_END ();
   return Status;
 }
-
 
 /**
    Decompresses a section to the output buffer.
@@ -266,21 +263,21 @@ Done:
 EFI_STATUS
 EFIAPI
 Decompress (
-  IN CONST  EFI_PEI_DECOMPRESS_PPI  *This,
-  IN CONST  EFI_COMPRESSION_SECTION *CompressionSection,
-  OUT       VOID                    **OutputBuffer,
-  OUT       UINTN                   *OutputSize
+  IN CONST  EFI_PEI_DECOMPRESS_PPI   *This,
+  IN CONST  EFI_COMPRESSION_SECTION  *CompressionSection,
+  OUT       VOID                     **OutputBuffer,
+  OUT       UINTN                    *OutputSize
   )
 {
-  EFI_STATUS                      Status;
-  UINT8                           *DstBuffer;
-  UINT8                           *ScratchBuffer;
-  UINT32                          DstBufferSize;
-  UINT32                          ScratchBufferSize;
-  VOID                            *CompressionSource;
-  UINT32                          CompressionSourceSize;
-  UINT32                          UncompressedLength;
-  UINT8                           CompressionType;
+  EFI_STATUS  Status;
+  UINT8       *DstBuffer;
+  UINT8       *ScratchBuffer;
+  UINT32      DstBufferSize;
+  UINT32      ScratchBufferSize;
+  VOID        *CompressionSource;
+  UINT32      CompressionSourceSize;
+  UINT32      UncompressedLength;
+  UINT8       CompressionType;
 
   if (CompressionSection->CommonHeader.Type != EFI_SECTION_COMPRESSION) {
     ASSERT (FALSE);
@@ -288,113 +285,118 @@ Decompress (
   }
 
   if (IS_SECTION2 (CompressionSection)) {
-    CompressionSource = (VOID *) ((UINT8 *) CompressionSection + sizeof (EFI_COMPRESSION_SECTION2));
-    CompressionSourceSize = (UINT32) (SECTION2_SIZE (CompressionSection) - sizeof (EFI_COMPRESSION_SECTION2));
-    UncompressedLength = ((EFI_COMPRESSION_SECTION2 *) CompressionSection)->UncompressedLength;
-    CompressionType = ((EFI_COMPRESSION_SECTION2 *) CompressionSection)->CompressionType;
+    CompressionSource     = (VOID *)((UINT8 *)CompressionSection + sizeof (EFI_COMPRESSION_SECTION2));
+    CompressionSourceSize = (UINT32)(SECTION2_SIZE (CompressionSection) - sizeof (EFI_COMPRESSION_SECTION2));
+    UncompressedLength    = ((EFI_COMPRESSION_SECTION2 *)CompressionSection)->UncompressedLength;
+    CompressionType       = ((EFI_COMPRESSION_SECTION2 *)CompressionSection)->CompressionType;
   } else {
-    CompressionSource = (VOID *) ((UINT8 *) CompressionSection + sizeof (EFI_COMPRESSION_SECTION));
-    CompressionSourceSize = (UINT32) (SECTION_SIZE (CompressionSection) - sizeof (EFI_COMPRESSION_SECTION));
-    UncompressedLength = CompressionSection->UncompressedLength;
-    CompressionType = CompressionSection->CompressionType;
+    CompressionSource     = (VOID *)((UINT8 *)CompressionSection + sizeof (EFI_COMPRESSION_SECTION));
+    CompressionSourceSize = (UINT32)(SECTION_SIZE (CompressionSection) - sizeof (EFI_COMPRESSION_SECTION));
+    UncompressedLength    = CompressionSection->UncompressedLength;
+    CompressionType       = CompressionSection->CompressionType;
   }
 
   //
   // This is a compression set, expand it
   //
   switch (CompressionType) {
-  case EFI_STANDARD_COMPRESSION:
-    if (FeaturePcdGet(PcdDxeIplSupportUefiDecompress)) {
-      //
-      // Load EFI standard compression.
-      // For compressed data, decompress them to destination buffer.
-      //
-      Status = UefiDecompressGetInfo (
-                 CompressionSource,
-                 CompressionSourceSize,
-                 &DstBufferSize,
-                 &ScratchBufferSize
-                 );
-      if (EFI_ERROR (Status)) {
+    case EFI_STANDARD_COMPRESSION:
+      if (FeaturePcdGet (PcdDxeIplSupportUefiDecompress)) {
         //
-        // GetInfo failed
+        // Load EFI standard compression.
+        // For compressed data, decompress them to destination buffer.
         //
-        DEBUG ((DEBUG_ERROR, "Decompress GetInfo Failed - %r\n", Status));
+        Status = UefiDecompressGetInfo (
+                   CompressionSource,
+                   CompressionSourceSize,
+                   &DstBufferSize,
+                   &ScratchBufferSize
+                   );
+        if (EFI_ERROR (Status)) {
+          //
+          // GetInfo failed
+          //
+          DEBUG ((DEBUG_ERROR, "Decompress GetInfo Failed - %r\n", Status));
+          return EFI_NOT_FOUND;
+        }
+
+        //
+        // Allocate scratch buffer
+        //
+        ScratchBuffer = AllocatePages (EFI_SIZE_TO_PAGES (ScratchBufferSize));
+        if (ScratchBuffer == NULL) {
+          return EFI_OUT_OF_RESOURCES;
+        }
+
+        //
+        // Allocate destination buffer, extra one page for adjustment
+        //
+        DstBuffer = AllocatePages (EFI_SIZE_TO_PAGES (DstBufferSize) + 1);
+        if (DstBuffer == NULL) {
+          return EFI_OUT_OF_RESOURCES;
+        }
+
+        //
+        // DstBuffer still is one section. Adjust DstBuffer offset, skip EFI section header
+        // to make section data at page alignment.
+        //
+        DstBuffer = DstBuffer + EFI_PAGE_SIZE - sizeof (EFI_COMMON_SECTION_HEADER);
+        //
+        // Call decompress function
+        //
+        Status = UefiDecompress (
+                   CompressionSource,
+                   DstBuffer,
+                   ScratchBuffer
+                   );
+        if (EFI_ERROR (Status)) {
+          //
+          // Decompress failed
+          //
+          DEBUG ((DEBUG_ERROR, "Decompress Failed - %r\n", Status));
+          return EFI_NOT_FOUND;
+        }
+
+        break;
+      } else {
+        //
+        // PcdDxeIplSupportUefiDecompress is FALSE
+        // Don't support UEFI decompression algorithm.
+        //
+        ASSERT (FALSE);
         return EFI_NOT_FOUND;
       }
+
+    case EFI_NOT_COMPRESSED:
       //
-      // Allocate scratch buffer
+      // Allocate destination buffer
       //
-      ScratchBuffer = AllocatePages (EFI_SIZE_TO_PAGES (ScratchBufferSize));
-      if (ScratchBuffer == NULL) {
-        return EFI_OUT_OF_RESOURCES;
-      }
-      //
-      // Allocate destination buffer, extra one page for adjustment
-      //
-      DstBuffer = AllocatePages (EFI_SIZE_TO_PAGES (DstBufferSize) + 1);
+      DstBufferSize = UncompressedLength;
+      DstBuffer     = AllocatePages (EFI_SIZE_TO_PAGES (DstBufferSize) + 1);
       if (DstBuffer == NULL) {
         return EFI_OUT_OF_RESOURCES;
       }
+
       //
-      // DstBuffer still is one section. Adjust DstBuffer offset, skip EFI section header
+      // Adjust DstBuffer offset, skip EFI section header
       // to make section data at page alignment.
       //
       DstBuffer = DstBuffer + EFI_PAGE_SIZE - sizeof (EFI_COMMON_SECTION_HEADER);
       //
-      // Call decompress function
+      // stream is not actually compressed, just encapsulated.  So just copy it.
       //
-      Status = UefiDecompress (
-                  CompressionSource,
-                  DstBuffer,
-                  ScratchBuffer
-                  );
-      if (EFI_ERROR (Status)) {
-        //
-        // Decompress failed
-        //
-        DEBUG ((DEBUG_ERROR, "Decompress Failed - %r\n", Status));
-        return EFI_NOT_FOUND;
-      }
+      CopyMem (DstBuffer, CompressionSource, DstBufferSize);
       break;
-    } else {
+
+    default:
       //
-      // PcdDxeIplSupportUefiDecompress is FALSE
-      // Don't support UEFI decompression algorithm.
+      // Don't support other unknown compression type.
       //
       ASSERT (FALSE);
       return EFI_NOT_FOUND;
-    }
-
-  case EFI_NOT_COMPRESSED:
-    //
-    // Allocate destination buffer
-    //
-    DstBufferSize = UncompressedLength;
-    DstBuffer     = AllocatePages (EFI_SIZE_TO_PAGES (DstBufferSize) + 1);
-    if (DstBuffer == NULL) {
-      return EFI_OUT_OF_RESOURCES;
-    }
-    //
-    // Adjust DstBuffer offset, skip EFI section header
-    // to make section data at page alignment.
-    //
-    DstBuffer = DstBuffer + EFI_PAGE_SIZE - sizeof (EFI_COMMON_SECTION_HEADER);
-    //
-    // stream is not actually compressed, just encapsulated.  So just copy it.
-    //
-    CopyMem (DstBuffer, CompressionSource, DstBufferSize);
-    break;
-
-  default:
-    //
-    // Don't support other unknown compression type.
-    //
-    ASSERT (FALSE);
-    return EFI_NOT_FOUND;
   }
 
-  *OutputSize = DstBufferSize;
+  *OutputSize   = DstBufferSize;
   *OutputBuffer = DstBuffer;
   return EFI_SUCCESS;
 }

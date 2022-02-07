@@ -7,15 +7,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __MS_WHEA_REPORT_DATA_TYPE__ 
-#define __MS_WHEA_REPORT_DATA_TYPE__ 
+#ifndef __MS_WHEA_REPORT_DATA_TYPE__
+#define __MS_WHEA_REPORT_DATA_TYPE__
 
 #define MS_WHEA_RSC_DATA_TYPE \
   { \
     0x91deea05, 0x8c0a, 0x4dcd, { 0xb9, 0x1e, 0xf2, 0x1c, 0xa0, 0xc6, 0x84, 0x5 } \
   }
 
-extern EFI_GUID gMsWheaRSCDataTypeGuid;
+extern EFI_GUID  gMsWheaRSCDataTypeGuid;
 
 #pragma pack(1)
 
@@ -30,12 +30,12 @@ extern EFI_GUID gMsWheaRSCDataTypeGuid;
  AdditionalInfo2:   64 bit value used for caller to include necessary interrogative information
 **/
 typedef struct {
- EFI_GUID           LibraryID;
- EFI_GUID           IhvSharingGuid;
- UINT64             AdditionalInfo1;
- UINT64             AdditionalInfo2;
+  EFI_GUID    LibraryID;
+  EFI_GUID    IhvSharingGuid;
+  UINT64      AdditionalInfo1;
+  UINT64      AdditionalInfo2;
 } MS_WHEA_RSC_INTERNAL_ERROR_DATA;
 
 #pragma pack()
 
-#endif // __MS_WHEA_REPORT_DATA_TYPE__ 
+#endif // __MS_WHEA_REPORT_DATA_TYPE__

@@ -24,7 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciSettings.h>
 
 STATIC EFI_EVENT  mDfciSampleProviderProviderSupportInstallEvent;
-STATIC VOID      *mDfciSampleProviderProviderSupportInstallEventRegistration = NULL;
+STATIC VOID       *mDfciSampleProviderProviderSupportInstallEventRegistration = NULL;
 
 // Sample provider STORE is a global variable.  It will not keep a setting across a restart, but
 // the idea of this code is to highlight the DFCI mechanics involved with a settings provider
@@ -33,8 +33,8 @@ STATIC VOID      *mDfciSampleProviderProviderSupportInstallEventRegistration = N
 
 STATIC  UINT8  mMySettingStore;
 
-
 // Forward declarations needed
+
 /**
  * Settings Provider GetDefault routine
  *
@@ -48,9 +48,9 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciSampleProviderGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   );
 
 /**
@@ -78,14 +78,15 @@ DfciSampleProviderGet (
 **/
 STATIC
 BOOLEAN
-IsIdSupported (DFCI_SETTING_ID_STRING Id)
+IsIdSupported (
+  DFCI_SETTING_ID_STRING  Id
+  )
 {
+  if (0 == AsciiStrnCmp (Id, MY_SETTING_ID__SETTING1, DFCI_MAX_ID_LEN)) {
+    return TRUE;
+  }
 
-    if (0 == AsciiStrnCmp (Id, MY_SETTING_ID__SETTING1, DFCI_MAX_ID_LEN)) {
-        return TRUE;
-    }
-
-    return FALSE;
+  return FALSE;
 }
 
 /**
@@ -98,14 +99,14 @@ IsIdSupported (DFCI_SETTING_ID_STRING Id)
 STATIC
 EFI_STATUS
 InitializeSettingStore (
-    VOID
+  VOID
   )
 {
-    // This sample is just using a global variable as the settings storage.
+  // This sample is just using a global variable as the settings storage.
 
-    mMySettingStore = 1;
+  mMySettingStore = 1;
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /////---------------------Interface for Settings Provider ---------------------//////
@@ -124,52 +125,53 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciSampleProviderSet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN        UINTN                     ValueSize,
-    IN  CONST VOID                     *Value,
-    OUT       DFCI_SETTING_FLAGS       *Flags
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN        UINTN                  ValueSize,
+  IN  CONST VOID                   *Value,
+  OUT       DFCI_SETTING_FLAGS     *Flags
   )
 {
-    UINTN           BufferSize;
-    EFI_STATUS      Status;
-    UINT8           CurrentValue;
-    UINT8           NewValue;
+  UINTN       BufferSize;
+  EFI_STATUS  Status;
+  UINT8       CurrentValue;
+  UINT8       NewValue;
 
-    if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) ||
-        (ValueSize > DFCI_SETTING_MAXIMUM_SIZE) ||
-        (ValueSize < sizeof(UINT8))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
+  if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL) ||
+      (ValueSize > DFCI_SETTING_MAXIMUM_SIZE) ||
+      (ValueSize < sizeof (UINT8)))
+  {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (!IsIdSupported (This->Id)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+    return EFI_UNSUPPORTED;
+  }
+
+  // Only use the first UINT8 of the value
+  NewValue   = *((UINT8 *)Value);
+  BufferSize = sizeof (CurrentValue);
+  Status     = DfciSampleProviderGet (This, &BufferSize, &CurrentValue);
+
+  if (Status != EFI_NOT_FOUND) {
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Error getting %a. Code=%r\n", __FUNCTION__, This->Id, Status));
+      return Status;
     }
 
-    if (!IsIdSupported(This->Id)) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
-        return EFI_UNSUPPORTED;
+    if (NewValue == CurrentValue) {
+      *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+      DEBUG ((DEBUG_INFO, "Setting %a ignored, value didn't change\n", This->Id));
+      return EFI_SUCCESS;
     }
+  }
 
-    // Only use the first UINT8 of the value
-    NewValue = *((UINT8 *) Value);
-    BufferSize = sizeof(CurrentValue);
-    Status = DfciSampleProviderGet (This, &BufferSize, &CurrentValue);
+  mMySettingStore = NewValue;
 
-    if (Status != EFI_NOT_FOUND) {
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Error getting %a. Code=%r\n", __FUNCTION__, This->Id, Status));
-            return Status;
-        }
+  Status = EFI_SUCCESS;
 
-        if (NewValue == CurrentValue) {
-                *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-                DEBUG((DEBUG_INFO, "Setting %a ignored, value didn't change\n", This->Id));
-                return EFI_SUCCESS;
-        }
-    }
-
-    mMySettingStore = NewValue;
-
-    Status = EFI_SUCCESS;
-
-    return Status;
+  return Status;
 }
 
 /**
@@ -185,33 +187,33 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciSampleProviderGet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN  OUT   UINTN                    *ValueSize,
-    OUT       VOID                     *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   )
 {
-    EFI_STATUS          Status;
+  EFI_STATUS  Status;
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (!IsIdSupported(This->Id)) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid id(%a).\n", __FUNCTION__, This->Id));
-        return EFI_UNSUPPORTED;
-    }
+  if (!IsIdSupported (This->Id)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid id(%a).\n", __FUNCTION__, This->Id));
+    return EFI_UNSUPPORTED;
+  }
 
-    if (*ValueSize < sizeof(UINT8)) {
-        *ValueSize = sizeof(UINT8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  if (*ValueSize < sizeof (UINT8)) {
+    *ValueSize = sizeof (UINT8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    Status = EFI_SUCCESS;
-    *ValueSize = sizeof(UINT8);
-    *((UINT8 *) Value) = mMySettingStore;
+  Status            = EFI_SUCCESS;
+  *ValueSize        = sizeof (UINT8);
+  *((UINT8 *)Value) = mMySettingStore;
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -227,30 +229,29 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciSampleProviderGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   )
 {
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if (!IsIdSupported (This->Id)) {
+    return EFI_UNSUPPORTED;
+  }
 
-    if (!IsIdSupported(This->Id)) {
-        return EFI_UNSUPPORTED;
-    }
+  if (*ValueSize < sizeof (UINT8)) {
+    *ValueSize = sizeof (UINT8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    if (*ValueSize < sizeof(UINT8)) {
-        *ValueSize = sizeof(UINT8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  *ValueSize        = sizeof (UINT8);
+  *((UINT8 *)Value) = 1;    // Indicates Enabled default
 
-    *ValueSize = sizeof(UINT8);
-    *((UINT8 *)Value) = 1;  // Indicates Enabled default
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -264,26 +265,26 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciSampleProviderSetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This
+  IN  CONST DFCI_SETTING_PROVIDER  *This
   )
 {
-    DFCI_SETTING_FLAGS Flags;
-    EFI_STATUS         Status;
-    UINT8              Value;
-    UINTN              ValueSize;
+  DFCI_SETTING_FLAGS  Flags;
+  EFI_STATUS          Status;
+  UINT8               Value;
+  UINTN               ValueSize;
 
-    if (This == NULL) {
-        return EFI_INVALID_PARAMETER;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    ValueSize = sizeof(ValueSize);
-    Status = DfciSampleProviderGetDefault (This, &ValueSize, &Value);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+  ValueSize = sizeof (ValueSize);
+  Status    = DfciSampleProviderGetDefault (This, &ValueSize, &Value);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    Flags = 0;
-    return DfciSampleProviderSet (This, ValueSize, &Value, &Flags);
+  Flags = 0;
+  return DfciSampleProviderSet (This, ValueSize, &Value, &Flags);
 }
 
 //
@@ -293,14 +294,14 @@ DfciSampleProviderSetDefault (
 //
 // NO_PREBOOT_UI indicates there is no UI element for the user to change
 // the value.  Therefore, set this setting to its default value on an UnEnroll
-DFCI_SETTING_PROVIDER mDfciSampleProviderProviderSetting1 = {
-    MY_SETTING_ID__SETTING1,
-    DFCI_SETTING_TYPE_ENABLE,
-    DFCI_SETTING_FLAGS_NO_PREBOOT_UI,   // NO UI element for user to change
-    DfciSampleProviderSet,
-    DfciSampleProviderGet,
-    DfciSampleProviderGetDefault,
-    DfciSampleProviderSetDefault
+DFCI_SETTING_PROVIDER  mDfciSampleProviderProviderSetting1 = {
+  MY_SETTING_ID__SETTING1,
+  DFCI_SETTING_TYPE_ENABLE,
+  DFCI_SETTING_FLAGS_NO_PREBOOT_UI,     // NO UI element for user to change
+  DfciSampleProviderSet,
+  DfciSampleProviderGet,
+  DfciSampleProviderGetDefault,
+  DfciSampleProviderSetDefault
 };
 
 /////---------------------Interface for Library  ---------------------//////
@@ -309,21 +310,22 @@ DFCI_SETTING_PROVIDER mDfciSampleProviderProviderSetting1 = {
 
 EFI_STATUS
 OEM_GetSampleSetting1 (
-  OUT UINT8    *LocalSetting
-  ) {
+  OUT UINT8  *LocalSetting
+  )
+{
+  UINTN       LocalSettingSize;
+  EFI_STATUS  Status;
 
-    UINTN       LocalSettingSize;
-    EFI_STATUS  Status;
+  LocalSettingSize = sizeof (*LocalSetting);
 
-    LocalSettingSize = sizeof (*LocalSetting);
+  Status = DfciSampleProviderGet (
+             &mDfciSampleProviderProviderSetting1,
+             &LocalSettingSize,
+             &LocalSetting
+             );
 
-    Status = DfciSampleProviderGet ( &mDfciSampleProviderProviderSetting1,
-                                     &LocalSettingSize,
-                                     &LocalSetting);
-
-    return Status;
+  return Status;
 }
-
 
 /**
  * Library design is such that a dependency on gDfciSettingsProviderSupportProtocolGuid
@@ -346,31 +348,32 @@ STATIC
 VOID
 EFIAPI
 DfciSampleProviderProviderSupportProtocolNotify (
-    IN  EFI_EVENT       Event,
-    IN  VOID            *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-    STATIC UINT8                            CallCount = 0;
-    DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
-    EFI_STATUS                              Status;
+  STATIC UINT8                            CallCount = 0;
+  DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *sp;
+  EFI_STATUS                              Status;
 
-    //locate protocol
-    Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
-    if (EFI_ERROR(Status)) {
-      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
-        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
-      }
-      return;
+  // locate protocol
+  Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID **)&sp);
+  if (EFI_ERROR (Status)) {
+    if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
+      DEBUG ((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
     }
 
-    Status = sp->RegisterProvider (sp, &mDfciSampleProviderProviderSetting1);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciSampleProviderProviderSetting1.Id, Status));
-    }
+    return;
+  }
 
-    //We got here, this means all protocols were installed and we didn't exit early.
-    //close the event as we don't need to be signaled again. (shouldn't happen anyway)
-    gBS->CloseEvent(Event);
+  Status = sp->RegisterProvider (sp, &mDfciSampleProviderProviderSetting1);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciSampleProviderProviderSetting1.Id, Status));
+  }
+
+  // We got here, this means all protocols were installed and we didn't exit early.
+  // close the event as we don't need to be signaled again. (shouldn't happen anyway)
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -393,26 +396,26 @@ DfciSampleProviderConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-    if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
-        //Install callback on the SettingsManager gDfciSettingsProviderSupportProtocolGuid protocol
-        mDfciSampleProviderProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
-            &gDfciSettingsProviderSupportProtocolGuid,
-             TPL_CALLBACK,
-             DfciSampleProviderProviderSupportProtocolNotify,
-             NULL,
-            &mDfciSampleProviderProviderSupportInstallEventRegistration
-            );
+  if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
+    // Install callback on the SettingsManager gDfciSettingsProviderSupportProtocolGuid protocol
+    mDfciSampleProviderProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+                                                       &gDfciSettingsProviderSupportProtocolGuid,
+                                                       TPL_CALLBACK,
+                                                       DfciSampleProviderProviderSupportProtocolNotify,
+                                                       NULL,
+                                                       &mDfciSampleProviderProviderSupportInstallEventRegistration
+                                                       );
 
-        DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
 
-        //Initialize the settings store
-        Status = InitializeSettingStore ();
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Initialize Store failed. %r.\n", __FUNCTION__, Status));
-        }
+    // Initialize the settings store
+    Status = InitializeSettingStore ();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Initialize Store failed. %r.\n", __FUNCTION__, Status));
     }
-    return EFI_SUCCESS;
-}
+  }
 
+  return EFI_SUCCESS;
+}

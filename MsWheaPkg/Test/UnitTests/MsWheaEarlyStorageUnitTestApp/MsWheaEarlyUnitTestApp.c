@@ -26,27 +26,27 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "../../../MsWheaReport/MsWheaEarlyStorageMgr.h"
 
 #ifndef INTERNAL_UNIT_TEST
-#error Make sure to build thie with INTERNAL_UNIT_TEST enabled! Otherwise, some important tests may be skipped!
+  #error Make sure to build thie with INTERNAL_UNIT_TEST enabled! Otherwise, some important tests may be skipped!
 #endif
 
-#define UNIT_TEST_APP_NAME            "MsWhea Early Storage Test"
-#define UNIT_TEST_APP_VERSION         "0.1"
+#define UNIT_TEST_APP_NAME     "MsWhea Early Storage Test"
+#define UNIT_TEST_APP_VERSION  "0.1"
 
-#define   TEST_ERROR_STATUS_VALUE     0xA0A0A0A0
-#define   TEST_ADDITIONAL_INFO_1      0xDEADBEEF
-#define   TEST_ADDITIONAL_INFO_2      0xFEEDF00D
+#define   TEST_ERROR_STATUS_VALUE  0xA0A0A0A0
+#define   TEST_ADDITIONAL_INFO_1   0xDEADBEEF
+#define   TEST_ADDITIONAL_INFO_2   0xFEEDF00D
 
-MS_WHEA_EARLY_STORAGE_HEADER          UnitTestHeader;
-UINT16                                TestDataArray[5] = {1, 2, 3, 4, 5};
-MS_WHEA_ERROR_ENTRY_MD                *pMsWheaEntryMD = NULL;
+MS_WHEA_EARLY_STORAGE_HEADER  UnitTestHeader;
+UINT16                        TestDataArray[5] = { 1, 2, 3, 4, 5 };
+MS_WHEA_ERROR_ENTRY_MD        *pMsWheaEntryMD  = NULL;
 
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 ///
 /// HELPER FUNCTIONS
 ///
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 
 VOID
 EFIAPI
@@ -61,71 +61,71 @@ MsWheaESClearAllData (
 
 EFI_STATUS
 MsWheaESReadData (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   );
 
 EFI_STATUS
 MsWheaESWriteData (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
   );
 
 VOID
 MsWheaESReadHeader (
-  MS_WHEA_EARLY_STORAGE_HEADER        *Header
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header
   );
 
 VOID
 MsWheaESWriteHeader (
-  MS_WHEA_EARLY_STORAGE_HEADER        *Header
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header
   );
 
 VOID
 MsWheaESContentChangeChecksumHelper (
-  UINT16*         Buffer,
-  UINTN           Length
+  UINT16  *Buffer,
+  UINTN   Length
   );
 
 VOID
 MsWheaESHeaderChangeChecksumHelper (
-  MS_WHEA_EARLY_STORAGE_HEADER    *Header
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header
   );
 
 BOOLEAN
 MsWheaESRegionIsValid (
-  OUT MS_WHEA_EARLY_STORAGE_HEADER *OutPutHeader OPTIONAL
+  OUT MS_WHEA_EARLY_STORAGE_HEADER  *OutPutHeader OPTIONAL
   );
 
 EFI_STATUS
 EFIAPI
 TestReportFunction (
-  IN MS_WHEA_ERROR_ENTRY_MD           *InMsWheaEntryMD
+  IN MS_WHEA_ERROR_ENTRY_MD  *InMsWheaEntryMD
   )
 {
   if (InMsWheaEntryMD == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  pMsWheaEntryMD = AllocatePool (sizeof(MS_WHEA_ERROR_ENTRY_MD));
+  pMsWheaEntryMD = AllocatePool (sizeof (MS_WHEA_ERROR_ENTRY_MD));
   if (InMsWheaEntryMD == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  CopyMem (pMsWheaEntryMD, InMsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD));
+  CopyMem (pMsWheaEntryMD, InMsWheaEntryMD, sizeof (MS_WHEA_ERROR_ENTRY_MD));
 
   return EFI_SUCCESS;
 }
 
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 ///
 /// PRE REQ FUNCTIONS
 ///
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 
 /**
   Function verifies that the early storage starts from a good condition
@@ -139,24 +139,24 @@ TestReportFunction (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESVerify (
-  IN UNIT_TEST_CONTEXT                Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  MS_WHEA_EARLY_STORAGE_HEADER          Header;
+  MS_WHEA_EARLY_STORAGE_HEADER  Header;
 
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(&Header));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (&Header));
   UT_ASSERT_EQUAL (Header.ActiveRange, 0);
 
   return UNIT_TEST_PASSED;
 } // MsWheaESVerify ()
 
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 ///
 /// CLEANUP FUNCTIONS
 ///
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 
 /**
   Clear all the HwErrRec entries on flash
@@ -170,36 +170,34 @@ MsWheaESVerify (
 VOID
 EFIAPI
 MsWheaESCleanUp (
-  IN UNIT_TEST_CONTEXT                Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  MsWheaESDump();
+  MsWheaESDump ();
 
   // This is needed incase there is leftover garbage in default/failed cases
-  MsWheaESClearAllData();
+  MsWheaESClearAllData ();
 
   // Zero all the fields in the
-  SetMem(&UnitTestHeader, sizeof(MS_WHEA_EARLY_STORAGE_HEADER), 0);
+  SetMem (&UnitTestHeader, sizeof (MS_WHEA_EARLY_STORAGE_HEADER), 0);
 
   // Sign the header signature.
-  UnitTestHeader.Signature = MS_WHEA_EARLY_STORAGE_SIGNATURE;
+  UnitTestHeader.Signature   = MS_WHEA_EARLY_STORAGE_SIGNATURE;
   UnitTestHeader.ActiveRange = 0;
   MsWheaESHeaderChangeChecksumHelper (&UnitTestHeader);
 
   if (pMsWheaEntryMD != NULL) {
     FreePool (pMsWheaEntryMD);
   }
-
 } // MsWheaESCleanUp ()
 
-///================================================================================================
-///================================================================================================
+/// ================================================================================================
+/// ================================================================================================
 ///
 /// TEST CASES
 ///
-///================================================================================================
-///================================================================================================
-
+/// ================================================================================================
+/// ================================================================================================
 
 /**
   This routine should verify internal checksum vs BaseLib checksum
@@ -207,23 +205,23 @@ MsWheaESCleanUp (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESChecksumTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT16* Data;
-  EFI_STATUS Status;
-  UINT16 Checksum16;
-  MS_WHEA_EARLY_STORAGE_HEADER *Header;
+  UINT16                        *Data;
+  EFI_STATUS                    Status;
+  UINT16                        Checksum16;
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header;
 
-  Data = AllocatePool (MsWheaEarlyStorageGetMaxSize());
-  MsWheaEarlyStorageRead(Data, MsWheaEarlyStorageGetMaxSize(), 0);
+  Data = AllocatePool (MsWheaEarlyStorageGetMaxSize ());
+  MsWheaEarlyStorageRead (Data, MsWheaEarlyStorageGetMaxSize (), 0);
 
   // Zero the checksum before calculation
-  Header = (MS_WHEA_EARLY_STORAGE_HEADER*) Data;
+  Header           = (MS_WHEA_EARLY_STORAGE_HEADER *)Data;
   Header->Checksum = 0;
-  Header->Checksum = CalculateCheckSum16(Data, sizeof(MS_WHEA_EARLY_STORAGE_HEADER) + Header->ActiveRange);
+  Header->Checksum = CalculateCheckSum16 (Data, sizeof (MS_WHEA_EARLY_STORAGE_HEADER) + Header->ActiveRange);
 
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
   Status = MsWheaESCalculateChecksum16 (&UnitTestHeader, &Checksum16);
 
   // ES calculated, Base lib return and stored values should be the same
@@ -240,22 +238,23 @@ MsWheaESChecksumTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESDataCorruptTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
   // All test cases here:
-  UINT8 Data;
+  UINT8  Data;
+
   Data = 1;
 
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
 
-  MsWheaESWriteData(&Data, (UINT8) (PcdGet8(PcdMsWheaEarlyStorageDefaultValue) - 1), (UINT8) UnitTestHeader.ActiveRange);
+  MsWheaESWriteData (&Data, (UINT8)(PcdGet8 (PcdMsWheaEarlyStorageDefaultValue) - 1), (UINT8)UnitTestHeader.ActiveRange);
   // should pass
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (NULL));
 
-  MsWheaESWriteData(&Data, (UINT8) (PcdGet8(PcdMsWheaEarlyStorageDefaultValue) - 2), MsWheaESGetMaxDataCount() - 1);
+  MsWheaESWriteData (&Data, (UINT8)(PcdGet8 (PcdMsWheaEarlyStorageDefaultValue) - 2), MsWheaESGetMaxDataCount () - 1);
   // should pass
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (NULL));
 
   return UNIT_TEST_PASSED;
 }
@@ -266,25 +265,25 @@ MsWheaESDataCorruptTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESHeaderCorruptTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
   // Header signature corruption
-  MsWheaESReadHeader(&UnitTestHeader);
-  UnitTestHeader.Signature = SIGNATURE_32('W','H','E','A');
-  MsWheaESWriteHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
+  UnitTestHeader.Signature = SIGNATURE_32 ('W', 'H', 'E', 'A');
+  MsWheaESWriteHeader (&UnitTestHeader);
 
   // should fail
-  UT_ASSERT_FALSE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_FALSE (MsWheaESRegionIsValid (NULL));
 
   UnitTestHeader.Signature = MS_WHEA_EARLY_STORAGE_SIGNATURE;
 
   // Header checksum corruption
   UnitTestHeader.Checksum = 0;
-  MsWheaESWriteHeader(&UnitTestHeader);
+  MsWheaESWriteHeader (&UnitTestHeader);
 
   // should fail
-  UT_ASSERT_FALSE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_FALSE (MsWheaESRegionIsValid (NULL));
 
   return UNIT_TEST_PASSED;
 }
@@ -295,24 +294,24 @@ MsWheaESHeaderCorruptTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESHeaderUpdateTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
 
   // Try to update the active range the header
-  UnitTestHeader.ActiveRange = sizeof(TestDataArray);
+  UnitTestHeader.ActiveRange = sizeof (TestDataArray);
   MsWheaESHeaderChangeChecksumHelper (&UnitTestHeader);
 
   // should pass
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (NULL));
 
   // change active range without updating checksum
   UnitTestHeader.ActiveRange = 0;
-  MsWheaESWriteHeader(&UnitTestHeader);
+  MsWheaESWriteHeader (&UnitTestHeader);
 
   // should fail
-  UT_ASSERT_FALSE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_FALSE (MsWheaESRegionIsValid (NULL));
 
   return UNIT_TEST_PASSED;
 }
@@ -323,47 +322,47 @@ MsWheaESHeaderUpdateTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESContentUpdateTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT8 OriginData;
-  UINT8 Data;
+  UINT8  OriginData;
+  UINT8  Data;
 
-  MsWheaESWriteData(TestDataArray, sizeof(TestDataArray), 0);
-  MsWheaESContentChangeChecksumHelper(TestDataArray, sizeof(TestDataArray));
+  MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
+  MsWheaESContentChangeChecksumHelper (TestDataArray, sizeof (TestDataArray));
 
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
 
   // should pass
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(NULL));
-  UT_ASSERT_EQUAL (UnitTestHeader.ActiveRange, sizeof(TestDataArray));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (NULL));
+  UT_ASSERT_EQUAL (UnitTestHeader.ActiveRange, sizeof (TestDataArray));
 
   // Tamper active data region
-  Data = PcdGet8(PcdMsWheaEarlyStorageDefaultValue);
-  MsWheaESReadData(&OriginData, sizeof(OriginData), 0);
-  MsWheaESWriteData(&Data, sizeof(Data), 0);
+  Data = PcdGet8 (PcdMsWheaEarlyStorageDefaultValue);
+  MsWheaESReadData (&OriginData, sizeof (OriginData), 0);
+  MsWheaESWriteData (&Data, sizeof (Data), 0);
 
   // should fail
-  UT_ASSERT_FALSE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_FALSE (MsWheaESRegionIsValid (NULL));
 
   // Recover corrupted byte
-  MsWheaESWriteData(&OriginData, sizeof(OriginData), 0);
+  MsWheaESWriteData (&OriginData, sizeof (OriginData), 0);
 
   // should pass
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (NULL));
 
   // Corrupt another place within active range
-  MsWheaESReadData(&OriginData, sizeof(OriginData), (UINT8)UnitTestHeader.ActiveRange-1);
-  MsWheaESWriteData(&Data, sizeof(Data), (UINT8)UnitTestHeader.ActiveRange-1);
+  MsWheaESReadData (&OriginData, sizeof (OriginData), (UINT8)UnitTestHeader.ActiveRange-1);
+  MsWheaESWriteData (&Data, sizeof (Data), (UINT8)UnitTestHeader.ActiveRange-1);
 
   // should fail
-  UT_ASSERT_FALSE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_FALSE (MsWheaESRegionIsValid (NULL));
 
   // Restore the change byte
-  MsWheaESWriteData(&OriginData, sizeof(OriginData), (UINT8)UnitTestHeader.ActiveRange-1);
+  MsWheaESWriteData (&OriginData, sizeof (OriginData), (UINT8)UnitTestHeader.ActiveRange-1);
 
   // should pass
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (NULL));
 
   return UNIT_TEST_PASSED;
 }
@@ -374,17 +373,17 @@ MsWheaESContentUpdateTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESFindSlotTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT8 Slot;
+  UINT8  Slot;
 
-  MsWheaESWriteData(TestDataArray, sizeof(TestDataArray), 0);
-  MsWheaESContentChangeChecksumHelper(TestDataArray, sizeof(TestDataArray));
+  MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
+  MsWheaESContentChangeChecksumHelper (TestDataArray, sizeof (TestDataArray));
 
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
 
-  MsWheaESFindSlot(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_COMMON), &Slot);
+  MsWheaESFindSlot (sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON), &Slot);
 
   UT_ASSERT_EQUAL (Slot, UnitTestHeader.ActiveRange);
 
@@ -397,23 +396,23 @@ MsWheaESFindSlotTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESInitTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
   // Tamper the early storage first
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
   UnitTestHeader.Checksum = 0;
-  MsWheaESWriteHeader(&UnitTestHeader);
+  MsWheaESWriteHeader (&UnitTestHeader);
 
   // Should fail
-  UT_ASSERT_FALSE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_FALSE (MsWheaESRegionIsValid (NULL));
 
   // Holy grail to retore everything
   MsWheaESInit ();
 
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
   UT_ASSERT_EQUAL (0, UnitTestHeader.ActiveRange);
-  UT_ASSERT_TRUE (MsWheaESRegionIsValid(NULL));
+  UT_ASSERT_TRUE (MsWheaESRegionIsValid (NULL));
 
   return UNIT_TEST_PASSED;
 }
@@ -424,43 +423,45 @@ MsWheaESInitTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESStoreEntryTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT8 *Data;
-  MS_WHEA_ERROR_ENTRY_MD  MsWheaEntryMD;
-  MS_WHEA_EARLY_STORAGE_ENTRY_V0 ESEntry;
-  MS_WHEA_EARLY_STORAGE_ENTRY_V0 *tESEntry;
+  UINT8                           *Data;
+  MS_WHEA_ERROR_ENTRY_MD          MsWheaEntryMD;
+  MS_WHEA_EARLY_STORAGE_ENTRY_V0  ESEntry;
+  MS_WHEA_EARLY_STORAGE_ENTRY_V0  *tESEntry;
 
-  SetMem (&MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD), 0);
-  SetMem (&ESEntry, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0), 0);
+  SetMem (&MsWheaEntryMD, sizeof (MS_WHEA_ERROR_ENTRY_MD), 0);
+  SetMem (&ESEntry, sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0), 0);
 
-  MsWheaEntryMD.Rev = ESEntry.Rev = MS_WHEA_REV_0;
-  MsWheaEntryMD.Phase = ESEntry.Phase = 0;
+  MsWheaEntryMD.Rev              = ESEntry.Rev = MS_WHEA_REV_0;
+  MsWheaEntryMD.Phase            = ESEntry.Phase = 0;
   MsWheaEntryMD.ErrorStatusValue = ESEntry.ErrorStatusValue = TEST_ERROR_STATUS_VALUE;
-  MsWheaEntryMD.AdditionalInfo1 = ESEntry.AdditionalInfo1 = TEST_ADDITIONAL_INFO_1;
-  MsWheaEntryMD.AdditionalInfo2 = ESEntry.AdditionalInfo2 = TEST_ADDITIONAL_INFO_2;
+  MsWheaEntryMD.AdditionalInfo1  = ESEntry.AdditionalInfo1 = TEST_ADDITIONAL_INFO_1;
+  MsWheaEntryMD.AdditionalInfo2  = ESEntry.AdditionalInfo2 = TEST_ADDITIONAL_INFO_2;
 
-  CopyGuid(&(MsWheaEntryMD.ModuleID), &gEfiCallerIdGuid);
-  CopyGuid(&(MsWheaEntryMD.IhvSharingGuid), &gMsWheaReportServiceGuid);
-  CopyGuid(&(ESEntry.ModuleID), &gEfiCallerIdGuid);
-  CopyGuid(&(ESEntry.PartitionID), &gMsWheaReportServiceGuid);
+  CopyGuid (&(MsWheaEntryMD.ModuleID), &gEfiCallerIdGuid);
+  CopyGuid (&(MsWheaEntryMD.IhvSharingGuid), &gMsWheaReportServiceGuid);
+  CopyGuid (&(ESEntry.ModuleID), &gEfiCallerIdGuid);
+  CopyGuid (&(ESEntry.PartitionID), &gMsWheaReportServiceGuid);
 
   MsWheaESStoreEntry (&MsWheaEntryMD);
   MsWheaESStoreEntry (&MsWheaEntryMD);
 
   MsWheaESReadHeader (&UnitTestHeader);
-  UT_ASSERT_EQUAL(sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0) + sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0),
-                  UnitTestHeader.ActiveRange);
+  UT_ASSERT_EQUAL (
+    sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0) + sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0),
+    UnitTestHeader.ActiveRange
+    );
 
-  Data = AllocatePool(MsWheaEarlyStorageGetMaxSize());
-  MsWheaEarlyStorageRead(Data, MsWheaEarlyStorageGetMaxSize(), 0);
+  Data = AllocatePool (MsWheaEarlyStorageGetMaxSize ());
+  MsWheaEarlyStorageRead (Data, MsWheaEarlyStorageGetMaxSize (), 0);
 
-  tESEntry = (MS_WHEA_EARLY_STORAGE_ENTRY_V0*) (Data + sizeof(MS_WHEA_EARLY_STORAGE_HEADER));
-  UT_ASSERT_MEM_EQUAL (tESEntry, &ESEntry, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0));
+  tESEntry = (MS_WHEA_EARLY_STORAGE_ENTRY_V0 *)(Data + sizeof (MS_WHEA_EARLY_STORAGE_HEADER));
+  UT_ASSERT_MEM_EQUAL (tESEntry, &ESEntry, sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0));
 
   tESEntry = tESEntry + 1;
-  UT_ASSERT_MEM_EQUAL (tESEntry, &ESEntry, sizeof(MS_WHEA_EARLY_STORAGE_ENTRY_V0));
+  UT_ASSERT_MEM_EQUAL (tESEntry, &ESEntry, sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0));
 
   return UNIT_TEST_PASSED;
 }
@@ -471,20 +472,20 @@ MsWheaESStoreEntryTest (
 UNIT_TEST_STATUS
 EFIAPI
 MsWheaESProcessTest (
-  IN UNIT_TEST_CONTEXT           Context
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
   MS_WHEA_ERROR_ENTRY_MD  MsWheaEntryMD;
 
-  SetMem (&MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD), 0);
+  SetMem (&MsWheaEntryMD, sizeof (MS_WHEA_ERROR_ENTRY_MD), 0);
 
-  MsWheaEntryMD.Rev = MS_WHEA_REV_0;
-  MsWheaEntryMD.Phase = 0;
+  MsWheaEntryMD.Rev              = MS_WHEA_REV_0;
+  MsWheaEntryMD.Phase            = 0;
   MsWheaEntryMD.ErrorStatusValue = TEST_ERROR_STATUS_VALUE;
-  MsWheaEntryMD.AdditionalInfo1 = TEST_ADDITIONAL_INFO_1;
-  MsWheaEntryMD.AdditionalInfo2 = TEST_ADDITIONAL_INFO_2;
-  CopyGuid(&(MsWheaEntryMD.ModuleID), &gEfiCallerIdGuid);
-  CopyGuid(&(MsWheaEntryMD.IhvSharingGuid), &gMsWheaReportServiceGuid);
+  MsWheaEntryMD.AdditionalInfo1  = TEST_ADDITIONAL_INFO_1;
+  MsWheaEntryMD.AdditionalInfo2  = TEST_ADDITIONAL_INFO_2;
+  CopyGuid (&(MsWheaEntryMD.ModuleID), &gEfiCallerIdGuid);
+  CopyGuid (&(MsWheaEntryMD.IhvSharingGuid), &gMsWheaReportServiceGuid);
 
   MsWheaESStoreEntry (&MsWheaEntryMD);
 
@@ -494,10 +495,10 @@ MsWheaESProcessTest (
 
   // These two fields are populated by the process routine
   MsWheaEntryMD.ErrorSeverity = EFI_GENERIC_ERROR_FATAL;
-  MsWheaEntryMD.PayloadSize = sizeof(MS_WHEA_ERROR_ENTRY_MD);
-  UT_ASSERT_MEM_EQUAL (pMsWheaEntryMD, &MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD));
+  MsWheaEntryMD.PayloadSize   = sizeof (MS_WHEA_ERROR_ENTRY_MD);
+  UT_ASSERT_MEM_EQUAL (pMsWheaEntryMD, &MsWheaEntryMD, sizeof (MS_WHEA_ERROR_ENTRY_MD));
 
-  MsWheaESReadHeader(&UnitTestHeader);
+  MsWheaESReadHeader (&UnitTestHeader);
 
   UT_ASSERT_EQUAL (0, UnitTestHeader.ActiveRange);
 
@@ -517,70 +518,134 @@ MsWheaESProcessTest (
 EFI_STATUS
 EFIAPI
 MsWheaEarlyUnitTestAppEntryPoint (
-  IN EFI_HANDLE                       ImageHandle,
-  IN EFI_SYSTEM_TABLE                 *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
   EFI_STATUS                  Status = EFI_ABORTED;
-  UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
-  UNIT_TEST_SUITE_HANDLE      Misc = NULL;
+  UNIT_TEST_FRAMEWORK_HANDLE  Fw     = NULL;
+  UNIT_TEST_SUITE_HANDLE      Misc   = NULL;
 
-  DEBUG((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "%a enter\n", __FUNCTION__));
 
-  DEBUG(( DEBUG_ERROR, "%a %a v%a\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION ));
+  DEBUG ((DEBUG_ERROR, "%a %a v%a\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   // Start setting up the test framework for running the tests.
-  Status = InitUnitTestFramework( &Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION );
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a Failed in InitUnitTestFramework. Status = %r\n", __FUNCTION__, Status));
+  Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a Failed in InitUnitTestFramework. Status = %r\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // Misc test suite for all tests.
-  CreateUnitTestSuite( &Misc, Fw, "MS WHEA Early Storage Checksum Test cases", "MsWhea.Miscellaneous", NULL, NULL);
+  CreateUnitTestSuite (&Misc, Fw, "MS WHEA Early Storage Checksum Test cases", "MsWhea.Miscellaneous", NULL, NULL);
 
   if (Misc == NULL) {
-    DEBUG((DEBUG_ERROR, "%a Failed in CreateUnitTestSuite for TestSuite\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a Failed in CreateUnitTestSuite for TestSuite\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
 
-  AddTestCase(Misc, "Checksum calculation test", "MsWhea.Miscellaneous.MsWheaESChecksumTest",
-              MsWheaESChecksumTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "Checksum calculation test",
+    "MsWhea.Miscellaneous.MsWheaESChecksumTest",
+    MsWheaESChecksumTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "Inactive data corruption test", "MsWhea.Miscellaneous.MsWheaESDataCorruptTest",
-              MsWheaESDataCorruptTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "Inactive data corruption test",
+    "MsWhea.Miscellaneous.MsWheaESDataCorruptTest",
+    MsWheaESDataCorruptTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "Header corruption test", "MsWhea.Miscellaneous.MsWheaESHeaderCorruptTest",
-              MsWheaESHeaderCorruptTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "Header corruption test",
+    "MsWhea.Miscellaneous.MsWheaESHeaderCorruptTest",
+    MsWheaESHeaderCorruptTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "Header update test", "MsWhea.Miscellaneous.MsWheaESHeaderUpdateTest",
-              MsWheaESHeaderUpdateTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "Header update test",
+    "MsWhea.Miscellaneous.MsWheaESHeaderUpdateTest",
+    MsWheaESHeaderUpdateTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "Content update and corrupt", "MsWhea.Miscellaneous.MsWheaESContentUpdateTest",
-              MsWheaESContentUpdateTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "Content update and corrupt",
+    "MsWhea.Miscellaneous.MsWheaESContentUpdateTest",
+    MsWheaESContentUpdateTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "Free ES slot find", "MsWhea.Miscellaneous.MsWheaESFindSlotTest",
-              MsWheaESFindSlotTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "Free ES slot find",
+    "MsWhea.Miscellaneous.MsWheaESFindSlotTest",
+    MsWheaESFindSlotTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "MsWhea ES Init", "MsWhea.Miscellaneous.MsWheaESInitTest",
-              MsWheaESInitTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "MsWhea ES Init",
+    "MsWhea.Miscellaneous.MsWheaESInitTest",
+    MsWheaESInitTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "MsWhea ES store entry", "MsWhea.Miscellaneous.MsWheaESStoreEntryTest",
-              MsWheaESStoreEntryTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "MsWhea ES store entry",
+    "MsWhea.Miscellaneous.MsWheaESStoreEntryTest",
+    MsWheaESStoreEntryTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
-  AddTestCase(Misc, "MsWhea ES process entry", "MsWhea.Miscellaneous.MsWheaESProcessTest",
-              MsWheaESProcessTest, MsWheaESVerify, MsWheaESCleanUp, NULL );
+  AddTestCase (
+    Misc,
+    "MsWhea ES process entry",
+    "MsWhea.Miscellaneous.MsWheaESProcessTest",
+    MsWheaESProcessTest,
+    MsWheaESVerify,
+    MsWheaESCleanUp,
+    NULL
+    );
 
   //
   // Execute the tests.
   //
-  Status = RunAllTestSuites(Fw);
+  Status = RunAllTestSuites (Fw);
 
 Cleanup:
   if (Fw != NULL) {
-    FreeUnitTestFramework(Fw);
+    FreeUnitTestFramework (Fw);
   }
-  DEBUG((DEBUG_ERROR, "%a exit\n", __FUNCTION__));
+
+  DEBUG ((DEBUG_ERROR, "%a exit\n", __FUNCTION__));
   return Status;
 } // MsWheaEarlyUnitTestAppEntryPoint ()

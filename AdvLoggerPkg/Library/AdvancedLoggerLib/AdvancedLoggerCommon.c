@@ -35,80 +35,77 @@ STATIC
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerMemoryLoggerWrite (
-    IN       UINTN    DebugLevel,
-    IN CONST CHAR8   *Buffer,
-    IN       UINTN    NumberOfBytes
-  ) {
+  IN       UINTN  DebugLevel,
+  IN CONST CHAR8  *Buffer,
+  IN       UINTN  NumberOfBytes
+  )
+{
+  ADVANCED_LOGGER_INFO           *LoggerInfo;
+  EFI_PHYSICAL_ADDRESS           CurrentBuffer;
+  EFI_PHYSICAL_ADDRESS           NewBuffer;
+  EFI_PHYSICAL_ADDRESS           OldValue;
+  UINT32                         OldSize;
+  UINT32                         NewSize;
+  UINT32                         CurrentSize;
+  UINTN                          EntrySize;
+  UINTN                          UsedSize;
+  ADVANCED_LOGGER_MESSAGE_ENTRY  *Entry;
 
-    ADVANCED_LOGGER_INFO           *LoggerInfo;
-    EFI_PHYSICAL_ADDRESS            CurrentBuffer;
-    EFI_PHYSICAL_ADDRESS            NewBuffer;
-    EFI_PHYSICAL_ADDRESS            OldValue;
-    UINT32                          OldSize;
-    UINT32                          NewSize;
-    UINT32                          CurrentSize;
-    UINTN                           EntrySize;
-    UINTN                           UsedSize;
-    ADVANCED_LOGGER_MESSAGE_ENTRY  *Entry;
+  if ((NumberOfBytes == 0) || (Buffer == NULL)) {
+    return NULL;
+  }
 
-    if ((NumberOfBytes == 0) || (Buffer == NULL)) {
-        return NULL;
-    }
+  if (NumberOfBytes > MAX_UINT16) {
+    return NULL;
+  }
 
-    if (NumberOfBytes > MAX_UINT16) {
-        return NULL;
-    }
+  LoggerInfo = AdvancedLoggerGetLoggerInfo ();
 
-    LoggerInfo = AdvancedLoggerGetLoggerInfo ();
-
-    if (LoggerInfo != NULL) {
-        EntrySize = MESSAGE_ENTRY_SIZE(NumberOfBytes);
+  if (LoggerInfo != NULL) {
+    EntrySize = MESSAGE_ENTRY_SIZE (NumberOfBytes);
+    do {
+      CurrentBuffer = LoggerInfo->LogCurrent;
+      UsedSize      = (UINTN)(CurrentBuffer - LoggerInfo->LogBuffer);
+      if ((UsedSize >= LoggerInfo->LogBufferSize) ||
+          ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize))
+      {
+        //
+        // Update the number of bytes of log that have not been captured
+        //
         do {
-            CurrentBuffer = LoggerInfo->LogCurrent;
-            UsedSize = (UINTN) (CurrentBuffer - LoggerInfo->LogBuffer);
-            if ((UsedSize >= LoggerInfo->LogBufferSize) ||
-               ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize)) {
+          CurrentSize = LoggerInfo->DiscardedSize;
+          NewSize     = CurrentSize + (UINT32)NumberOfBytes;
+          OldSize     = InterlockedCompareExchange32 (
+                          (UINT32 *)&LoggerInfo->DiscardedSize,
+                          (UINT32)CurrentSize,
+                          (UINT32)NewSize
+                          );
+        } while (OldSize != CurrentSize);
 
-                //
-                // Update the number of bytes of log that have not been captured
-                //
-                do {
-                    CurrentSize = LoggerInfo->DiscardedSize;
-                    NewSize = CurrentSize + (UINT32) NumberOfBytes;
-                    OldSize = InterlockedCompareExchange32 (
-                                (UINT32 *) &LoggerInfo->DiscardedSize,
-                                (UINT32) CurrentSize,
-                                (UINT32) NewSize
-                                );
+        return LoggerInfo;
+      }
 
-                } while (OldSize != CurrentSize);
+      NewBuffer = PA_FROM_PTR ((CHAR8_FROM_PA (CurrentBuffer) + EntrySize));
+      OldValue  = InterlockedCompareExchange64 (
+                    (UINT64 *)&LoggerInfo->LogCurrent,
+                    (UINT64)CurrentBuffer,
+                    (UINT64)NewBuffer
+                    );
+    } while (OldValue != CurrentBuffer);
 
-                return LoggerInfo;
-            }
+    Entry            = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (CurrentBuffer);
+    Entry->TimeStamp = GetPerformanceCounter ();    // AdvancedLoggerGetTimeStamp();
 
-            NewBuffer = PA_FROM_PTR((CHAR8_FROM_PA(CurrentBuffer) + EntrySize));
-            OldValue = InterlockedCompareExchange64 (
-                         (UINT64 *) &LoggerInfo->LogCurrent,
-                         (UINT64) CurrentBuffer,
-                         (UINT64) NewBuffer
-                         );
+    // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
+    // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
+    Entry->DebugLevel = (UINT32)DebugLevel;
+    Entry->MessageLen = (UINT16)NumberOfBytes;
+    CopyMem (Entry->MessageText, Buffer, NumberOfBytes);
+    Entry->Signature = MESSAGE_ENTRY_SIGNATURE;
+  }
 
-        } while (OldValue != CurrentBuffer);
-
-        Entry = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(CurrentBuffer);
-        Entry->TimeStamp = GetPerformanceCounter(); //AdvancedLoggerGetTimeStamp();
-
-        // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
-        // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
-        Entry->DebugLevel = (UINT32) DebugLevel;
-        Entry->MessageLen = (UINT16) NumberOfBytes;
-        CopyMem(Entry->MessageText, Buffer, NumberOfBytes);
-        Entry->Signature = MESSAGE_ENTRY_SIGNATURE;
-    }
-
-    return LoggerInfo;
+  return LoggerInfo;
 }
-
 
 /**
   Write data from buffer to possible debugging devices.
@@ -129,26 +126,26 @@ AdvancedLoggerMemoryLoggerWrite (
 VOID
 EFIAPI
 AdvancedLoggerWrite (
-    IN       UINTN    DebugLevel,
-    IN CONST CHAR8   *Buffer,
-    IN       UINTN    NumberOfBytes
-  ) {
-    ADVANCED_LOGGER_INFO    *LoggerInfo;
+  IN       UINTN  DebugLevel,
+  IN CONST CHAR8  *Buffer,
+  IN       UINTN  NumberOfBytes
+  )
+{
+  ADVANCED_LOGGER_INFO  *LoggerInfo;
 
+  // All messages go to the in memory log.
+  LoggerInfo = AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 
-    // All messages go to the in memory log.
-    LoggerInfo = AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
+  // Only selected messages go to the hdw port.
 
-    // Only selected messages go to the hdw port.
-
-#ifdef ADVANCED_LOGGER_SEC
-    // If LoggerInfo == NULL, assume there is a HdwPort and it has not been disabled. This
-    // does occur in SEC
-    if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled))
-#else
-    if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled))
-#endif
-    {
-        AdvancedLoggerHdwPortWrite(DebugLevel, (UINT8 *) Buffer, NumberOfBytes);
-    }
+ #ifdef ADVANCED_LOGGER_SEC
+  // If LoggerInfo == NULL, assume there is a HdwPort and it has not been disabled. This
+  // does occur in SEC
+  if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled))
+ #else
+  if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled))
+ #endif
+  {
+    AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
+  }
 }

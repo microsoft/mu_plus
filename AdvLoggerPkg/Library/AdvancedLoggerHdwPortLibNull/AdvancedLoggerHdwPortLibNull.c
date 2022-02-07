@@ -25,7 +25,7 @@ AdvancedLoggerHdwPortInitialize (
   VOID
   )
 {
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -48,11 +48,10 @@ AdvancedLoggerHdwPortInitialize (
 UINTN
 EFIAPI
 AdvancedLoggerHdwPortWrite (
-  IN UINTN     DebugLevel,
-  IN UINT8     *Buffer,
-  IN UINTN     NumberOfBytes
+  IN UINTN  DebugLevel,
+  IN UINT8  *Buffer,
+  IN UINTN  NumberOfBytes
   )
 {
-
-    return NumberOfBytes;
+  return NumberOfBytes;
 }

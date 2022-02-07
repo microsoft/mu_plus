@@ -52,52 +52,52 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciSettings.h>
 
 typedef enum {
-  DfciUsbPortEnabled = 0,   //Port Enabled and Usable in preboot and os.  Including Boot
-  DfciUsbPortNoBoot,        //Port Enabled and Usable in preboot and os.  BDS will not boot from port         //<<< Not implemented. Can use BDS option for this to block all USB.
-  DfciUsbPortHwDisabledExceptAuthorizedRecover,  //Port Disabled in HW except when factory requested R&R  //<<< Not implemented
-  DfciUsbPortHwDisabled  = 0xF0,                 //This blocks factory recovery process
-  DfciUsbPortDataDisabled = 0xF1,                //Applies to Type C ports only; disables USB Data while leaving USB Power Delivery and Alternate Modes intact
-  DfciUsbPortStateMax   = 0xFF
+  DfciUsbPortEnabled = 0,                       // Port Enabled and Usable in preboot and os.  Including Boot
+  DfciUsbPortNoBoot,                            // Port Enabled and Usable in preboot and os.  BDS will not boot from port         //<<< Not implemented. Can use BDS option for this to block all USB.
+  DfciUsbPortHwDisabledExceptAuthorizedRecover, // Port Disabled in HW except when factory requested R&R  //<<< Not implemented
+  DfciUsbPortHwDisabled   = 0xF0,               // This blocks factory recovery process
+  DfciUsbPortDataDisabled = 0xF1,               // Applies to Type C ports only; disables USB Data while leaving USB Power Delivery and Alternate Modes intact
+  DfciUsbPortStateMax     = 0xFF
 } DFCI_VIRTUAL_USB_PORT_STATE;
 
 //
 // List of Settings Providers
 //
-#define DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','S','S','P')
-#define PROV_LIST_ENTRY_FROM_PROVIDER(a) CR (a, DFCI_SETTING_PROVIDER_LIST_ENTRY, Provider, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE)
-#define PROV_LIST_ENTRY_FROM_LINK(a)     CR (a, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE)
+#define DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE  SIGNATURE_32('M','S','S','P')
+#define PROV_LIST_ENTRY_FROM_PROVIDER(a)  CR (a, DFCI_SETTING_PROVIDER_LIST_ENTRY, Provider, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE)
+#define PROV_LIST_ENTRY_FROM_LINK(a)      CR (a, DFCI_SETTING_PROVIDER_LIST_ENTRY, Link, DFCI_SETTING_PROVIDER_LIST_ENTRY_SIGNATURE)
 
 typedef struct {
-  UINTN Signature;
-  LIST_ENTRY Link;
-  DFCI_SETTING_PROVIDER Provider;
+  UINTN                    Signature;
+  LIST_ENTRY               Link;
+  DFCI_SETTING_PROVIDER    Provider;
 } DFCI_SETTING_PROVIDER_LIST_ENTRY;
 
 extern LIST_ENTRY  mProviderList;         // Head of a list of DFCI_SETTING_PROVIDER_LIST_ENTRY
 
-extern DFCI_SETTING_ACCESS_PROTOCOL             mSystemSettingAccessProtocol;
-extern DFCI_APPLY_PACKET_PROTOCOL               mApplySettingsProtocol;
+extern DFCI_SETTING_ACCESS_PROTOCOL  mSystemSettingAccessProtocol;
+extern DFCI_APPLY_PACKET_PROTOCOL    mApplySettingsProtocol;
 
 //
 // Internal Data struct
 //
 typedef struct {
-  UINT32 CurrentVersion;
-  UINT32 LSV;
-  EFI_TIME CreatedOn;
-  BOOLEAN Modified;
+  UINT32      CurrentVersion;
+  UINT32      LSV;
+  EFI_TIME    CreatedOn;
+  BOOLEAN     Modified;
 } DFCI_SETTING_INTERNAL_DATA;
 
 EFI_STATUS
 EFIAPI
 RegisterProvider (
-  IN DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL   *This,
-  IN DFCI_SETTING_PROVIDER                    *Provider
+  IN DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *This,
+  IN DFCI_SETTING_PROVIDER                   *Provider
   );
 
-DFCI_SETTING_PROVIDER*
+DFCI_SETTING_PROVIDER *
 FindProviderById (
-    DFCI_SETTING_ID_STRING Id
+  DFCI_SETTING_ID_STRING  Id
   );
 
 /**
@@ -106,56 +106,63 @@ any provider that contains the FilterFlag in its flags
 **/
 EFI_STATUS
 EFIAPI
-ResetAllProvidersToDefaultsWithMatchingFlags(
-  DFCI_SETTING_FLAGS FilterFlag);
+ResetAllProvidersToDefaultsWithMatchingFlags (
+  DFCI_SETTING_FLAGS  FilterFlag
+  );
 
 VOID
-DebugPrintProviderList();
-
-EFI_STATUS
-EFIAPI
-PopulateCurrentSettingsIfNeeded();
-
-CHAR8*
-ProviderValueAsAscii(DFCI_SETTING_PROVIDER *Provider, BOOLEAN Current);
-
-EFI_STATUS
-EFIAPI
-SetProviderValueFromAscii(
-  IN CONST DFCI_SETTING_PROVIDER *Provider,
-  IN CONST CHAR8* Value,
-  IN CONST DFCI_AUTH_TOKEN *AuthToken,
-  IN OUT DFCI_SETTING_FLAGS *Flags
+DebugPrintProviderList (
   );
 
 EFI_STATUS
 EFIAPI
-SetSettingFromAscii(
-  IN CONST CHAR8*  Id,
-  IN CONST CHAR8*  Value,
-  IN CONST DFCI_AUTH_TOKEN *AuthToken,
-  IN OUT DFCI_SETTING_FLAGS *Flags);
+PopulateCurrentSettingsIfNeeded (
+  );
+
+CHAR8 *
+ProviderValueAsAscii (
+  DFCI_SETTING_PROVIDER  *Provider,
+  BOOLEAN                Current
+  );
+
+EFI_STATUS
+EFIAPI
+SetProviderValueFromAscii (
+  IN CONST DFCI_SETTING_PROVIDER  *Provider,
+  IN CONST CHAR8                  *Value,
+  IN CONST DFCI_AUTH_TOKEN        *AuthToken,
+  IN OUT DFCI_SETTING_FLAGS       *Flags
+  );
+
+EFI_STATUS
+EFIAPI
+SetSettingFromAscii (
+  IN CONST CHAR8             *Id,
+  IN CONST CHAR8             *Value,
+  IN CONST DFCI_AUTH_TOKEN   *AuthToken,
+  IN OUT DFCI_SETTING_FLAGS  *Flags
+  );
 
 EFI_STATUS
 EFIAPI
 ApplyNewSettingsPacket (
-    IN CONST DFCI_APPLY_PACKET_PROTOCOL *This,
-    IN       DFCI_INTERNAL_PACKET       *ApplyPacket
+  IN CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN       DFCI_INTERNAL_PACKET        *ApplyPacket
   );
 
 EFI_STATUS
 EFIAPI
-SetSettingsResponse(
+SetSettingsResponse (
   IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
   IN        DFCI_INTERNAL_PACKET        *Data
   );
 
 EFI_STATUS
 EFIAPI
-SettingsLKG_Handler(
-    IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
-    IN        DFCI_INTERNAL_PACKET        *ApplyPacket,
-    IN        UINT8                        Operation
+SettingsLKG_Handler (
+  IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN        DFCI_INTERNAL_PACKET        *ApplyPacket,
+  IN        UINT8                       Operation
   );
 
 /**
@@ -169,10 +176,10 @@ Pass thru function for using the Auth Protocol to get auth and token
 **/
 EFI_STATUS
 EFIAPI
-CheckAuthAndGetToken(
-  IN     UINT8           *SignedData,
+CheckAuthAndGetToken (
+  IN     UINT8            *SignedData,
   IN     UINTN            SignedDataLen,
-  IN     WIN_CERTIFICATE *Signature,
+  IN     WIN_CERTIFICATE  *Signature,
   IN OUT DFCI_AUTH_TOKEN  *AuthToken
   );
 
@@ -184,7 +191,7 @@ so it can no longer be used in the system.
 **/
 EFI_STATUS
 EFIAPI
-AuthTokenDispose(
+AuthTokenDispose (
   IN DFCI_AUTH_TOKEN  *AuthToken
   );
 
@@ -207,15 +214,14 @@ to check permissions for changing the setting.
 EFI_STATUS
 EFIAPI
 SystemSettingAccessSet (
-  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL    *This,
-  IN  DFCI_SETTING_ID_STRING                 Id,
-  IN  CONST DFCI_AUTH_TOKEN                 *AuthToken,
-  IN  DFCI_SETTING_TYPE                      Type,
-  IN  UINTN                                  ValueSize,
-  IN  CONST VOID                            *Value,
-  IN OUT DFCI_SETTING_FLAGS                 *Flags
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL  *This,
+  IN  DFCI_SETTING_ID_STRING              Id,
+  IN  CONST DFCI_AUTH_TOKEN               *AuthToken,
+  IN  DFCI_SETTING_TYPE                   Type,
+  IN  UINTN                               ValueSize,
+  IN  CONST VOID                          *Value,
+  IN OUT DFCI_SETTING_FLAGS               *Flags
   );
-
 
 /*
 Get a single setting
@@ -237,13 +243,13 @@ flags for the given auth.
 EFI_STATUS
 EFIAPI
 SystemSettingAccessGet (
-  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL  *This,
   IN  DFCI_SETTING_ID_STRING              Id,
-  IN  CONST DFCI_AUTH_TOKEN              *AuthToken OPTIONAL,
+  IN  CONST DFCI_AUTH_TOKEN               *AuthToken OPTIONAL,
   IN  DFCI_SETTING_TYPE                   Type,
-  IN  OUT UINTN                          *ValueSize,
-  OUT VOID                               *Value,
-  IN OUT DFCI_SETTING_FLAGS              *Flags OPTIONAL
+  IN  OUT UINTN                           *ValueSize,
+  OUT VOID                                *Value,
+  IN OUT DFCI_SETTING_FLAGS               *Flags OPTIONAL
   );
 
 /*
@@ -263,50 +269,56 @@ can perform a reset.
 EFI_STATUS
 EFIAPI
 SystemSettingsAccessReset (
-  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL *This,
-  IN  CONST DFCI_AUTH_TOKEN              *AuthToken
+  IN  CONST DFCI_SETTING_ACCESS_PROTOCOL  *This,
+  IN  CONST DFCI_AUTH_TOKEN               *AuthToken
   );
-
 
 EFI_STATUS
 EFIAPI
 SystemSettingPermissionGetPermission (
-  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
   IN  DFCI_SETTING_ID_STRING                   Id,
-  OUT DFCI_PERMISSION_MASK                    *PermissionMask
+  OUT DFCI_PERMISSION_MASK                     *PermissionMask
   );
 
 EFI_STATUS
 EFIAPI
 SystemSettingPermissionResetPermission (
-  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
-  IN  CONST DFCI_AUTH_TOKEN                   *AuthToken OPTIONAL
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
+  IN  CONST DFCI_AUTH_TOKEN                    *AuthToken OPTIONAL
   );
 
 EFI_STATUS
 EFIAPI
 SystemSettingPermissionIdentityChange (
-  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
-  IN  CONST DFCI_AUTH_TOKEN                   *AuthToken,
+  IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
+  IN  CONST DFCI_AUTH_TOKEN                    *AuthToken,
   IN        DFCI_IDENTITY_ID                   CertIdentity,
   IN        BOOLEAN                            Enroll
   );
 
-//functions to support internal data store management
+// functions to support internal data store management
 EFI_STATUS
 EFIAPI
-SMID_SaveToFlash(IN DFCI_SETTING_INTERNAL_DATA *InternalData);
+SMID_SaveToFlash (
+  IN DFCI_SETTING_INTERNAL_DATA  *InternalData
+  );
 
 EFI_STATUS
 EFIAPI
-SMID_LoadFromFlash(IN DFCI_SETTING_INTERNAL_DATA **InternalData);
+SMID_LoadFromFlash (
+  IN DFCI_SETTING_INTERNAL_DATA  **InternalData
+  );
 
 EFI_STATUS
 EFIAPI
-SMID_InitInternalData(IN DFCI_SETTING_INTERNAL_DATA **InternalData);
+SMID_InitInternalData (
+  IN DFCI_SETTING_INTERNAL_DATA  **InternalData
+  );
 
 EFI_STATUS
 EFIAPI
-SMID_ResetInFlash();
+SMID_ResetInFlash (
+  );
 
 #endif // SETTINGS_MANAGER_H

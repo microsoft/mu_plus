@@ -25,9 +25,9 @@
 
 #include "CapsulePersistence.h"
 
-#define CAPSULE_DIR L"Capsules"
-#define CAPSULE_DEFAULT_FILENAME L"capsule00000.bin"
-#define CAPSULE_ID_MODULO 100000  // because we have five digits
+#define CAPSULE_DIR               L"Capsules"
+#define CAPSULE_DEFAULT_FILENAME  L"capsule00000.bin"
+#define CAPSULE_ID_MODULO         100000// because we have five digits
 
 /**
   Gets the SFS protocol handle for the the first disk that has a GPT partition.
@@ -45,30 +45,32 @@ UefiGetSfsProtocolHandle (
   IN  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  **SfsProtocol
   )
 {
-  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
-  BOOLEAN                         Found;
-  EFI_HANDLE                      Handle;
-  EFI_HANDLE                      *HandleBuffer;
-  UINTN                           Index;
-  UINTN                           NumHandles;
-  EFI_STRING                      PathNameStr;
-  EFI_GUID                        *DummyInterface;
-  EFI_STATUS                      Status;
+  EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
+  BOOLEAN                   Found;
+  EFI_HANDLE                Handle;
+  EFI_HANDLE                *HandleBuffer;
+  UINTN                     Index;
+  UINTN                     NumHandles;
+  EFI_STRING                PathNameStr;
+  EFI_GUID                  *DummyInterface;
+  EFI_STATUS                Status;
 
   if (SfsProtocol == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = EFI_SUCCESS;
-  NumHandles = 0;
+  Status       = EFI_SUCCESS;
+  NumHandles   = 0;
   HandleBuffer = NULL;
 
   // Locate all handles that are using the SFS protocol.
-  Status = gBS->LocateHandleBuffer (ByProtocol,
-                                    &gEfiSimpleFileSystemProtocolGuid,
-                                    NULL,
-                                    &NumHandles,
-                                    &HandleBuffer);
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumHandles,
+                  &HandleBuffer
+                  );
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
@@ -82,12 +84,12 @@ UefiGetSfsProtocolHandle (
   for (Index = 0; (Index < NumHandles) && (Found == FALSE); Index += 1) {
     Handle = HandleBuffer[Index];
 
-    Status = gBS->HandleProtocol (Handle, &gEfiPartTypeSystemPartGuid, (VOID **) &DummyInterface);
-    if (!EFI_ERROR(Status)) {
+    Status = gBS->HandleProtocol (Handle, &gEfiPartTypeSystemPartGuid, (VOID **)&DummyInterface);
+    if (!EFI_ERROR (Status)) {
       Found = TRUE;
 
-      DevicePath = DevicePathFromHandle (Handle);
-      PathNameStr = ConvertDevicePathToText (DevicePath,TRUE,TRUE);
+      DevicePath  = DevicePathFromHandle (Handle);
+      PathNameStr = ConvertDevicePathToText (DevicePath, TRUE, TRUE);
       DEBUG ((DEBUG_VERBOSE, "%a: found ESP device path %d -> %s\n", __FUNCTION__, Index, PathNameStr));
 
       break;
@@ -101,9 +103,11 @@ UefiGetSfsProtocolHandle (
     goto CleanUp;
   }
 
-  Status = gBS->HandleProtocol (HandleBuffer[Index],
-                               &gEfiSimpleFileSystemProtocolGuid,
-                               (VOID**)SfsProtocol);
+  Status = gBS->HandleProtocol (
+                  HandleBuffer[Index],
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  (VOID **)SfsProtocol
+                  );
 
   if (EFI_ERROR (Status) != FALSE) {
     DEBUG ((DEBUG_ERROR, "%a: Failed to locate Simple FS protocol using the handle to fs0: %r \n", __FUNCTION__, Status));
@@ -131,11 +135,11 @@ CleanUp:
 EFI_STATUS
 STATIC
 OpenVolumeSFS (
-  OUT EFI_FILE** FileSystemHandle
+  OUT EFI_FILE  **FileSystemHandle
   )
 {
-  EFI_STATUS                      Status;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *SfsProtocol;
+  EFI_STATUS                       Status;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SfsProtocol;
 
   if (FileSystemHandle == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -170,25 +174,26 @@ OpenVolumeSFS (
 EFI_STATUS
 STATIC
 IsThereEnoughFreeSpaceOnDisk (
-  IN EFI_FILE *FileSystemHandle,
-  IN UINTN    SpaceRequired
+  IN EFI_FILE  *FileSystemHandle,
+  IN UINTN     SpaceRequired
   )
 {
   EFI_STATUS            Status;
-  EFI_FILE_SYSTEM_INFO *FsInfo = NULL;
-  UINTN                FsInfoSize;
+  EFI_FILE_SYSTEM_INFO  *FsInfo = NULL;
+  UINTN                 FsInfoSize;
 
   if (FileSystemHandle == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   FsInfoSize = 0;
-  Status = FileSystemHandle->GetInfo (FileSystemHandle, &gEfiFileSystemInfoGuid, &FsInfoSize, FsInfo);
+  Status     = FileSystemHandle->GetInfo (FileSystemHandle, &gEfiFileSystemInfoGuid, &FsInfoSize, FsInfo);
   if (Status != EFI_BUFFER_TOO_SMALL) {
     ASSERT (Status == EFI_BUFFER_TOO_SMALL);
     Status = EFI_DEVICE_ERROR;
     goto Cleanup;
   }
+
   FsInfo = AllocatePool (FsInfoSize);
   if (FsInfo == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
@@ -210,6 +215,7 @@ Cleanup:
   if (FsInfo != NULL) {
     FreePool (FsInfo);
   }
+
   return Status;
 }
 
@@ -240,9 +246,10 @@ OpenCapsulesDirectory (
   UINTN          FileInfoSize;
 
   FileInfo = NULL;
-  if (FileSystemHandle == NULL || DirHandle == NULL) {
+  if ((FileSystemHandle == NULL) || (DirHandle == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
+
   OpenMode = EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE;
 
   // otherwise continue on
@@ -250,20 +257,22 @@ OpenCapsulesDirectory (
     OpenMode |= EFI_FILE_MODE_CREATE;
   }
 
-  //Open Capsule directory, if it exists.
-  Status = FileSystemHandle->Open (FileSystemHandle,
-                              DirHandle,
-                              CapsuleDir,
-                              OpenMode,
-                              EFI_FILE_DIRECTORY);
+  // Open Capsule directory, if it exists.
+  Status = FileSystemHandle->Open (
+                               FileSystemHandle,
+                               DirHandle,
+                               CapsuleDir,
+                               OpenMode,
+                               EFI_FILE_DIRECTORY
+                               );
   if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
 
-  //Allocate space to hold the file info for the directory.
+  // Allocate space to hold the file info for the directory.
   FileInfoSize = SIZE_OF_EFI_FILE_INFO + sizeof (CapsuleDir);
-  FileInfo = AllocatePool (FileInfoSize);
-  if (FileInfo == NULL){
+  FileInfo     = AllocatePool (FileInfoSize);
+  if (FileInfo == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
@@ -273,14 +282,15 @@ OpenCapsulesDirectory (
     goto Cleanup;
   }
 
-  //Validate that it is actually a directory.
+  // Validate that it is actually a directory.
   if ((FileInfo->Attribute & EFI_FILE_DIRECTORY) == 0) {
-    //file opened is not a directory as expected.
+    // file opened is not a directory as expected.
     DEBUG ((DEBUG_INFO, "%a: Capsules is a file, not a directory, deleting\n", __FUNCTION__));
     Status = (*DirHandle)->Delete (*DirHandle); // delete implies close
     if (EFI_ERROR (Status)) {
       goto Cleanup;
     }
+
     // Call the Open Capsule Directory again once the file is deleted
     Status = OpenCapsulesDirectory (FileSystemHandle, DirHandle, CreateIfNotExists);
   }
@@ -306,15 +316,15 @@ Cleanup:
 EFI_STATUS
 STATIC
 RemoveStaleCapsulesOnFileSystem (
-  IN EFI_FILE *FileSystemHandle
+  IN EFI_FILE  *FileSystemHandle
   )
 {
-  EFI_STATUS    Status;
-  EFI_FILE      *DirHandle = NULL;
-  EFI_FILE_INFO *FileInfo = NULL;
-  EFI_FILE      *File;
-  UINTN         FileInfoSize;
-  UINTN         AllocatedFileInfoSize;
+  EFI_STATUS     Status;
+  EFI_FILE       *DirHandle = NULL;
+  EFI_FILE_INFO  *FileInfo  = NULL;
+  EFI_FILE       *File;
+  UINTN          FileInfoSize;
+  UINTN          AllocatedFileInfoSize;
 
   if (FileSystemHandle == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -322,8 +332,8 @@ RemoveStaleCapsulesOnFileSystem (
 
   Status = OpenCapsulesDirectory (FileSystemHandle, &DirHandle, FALSE);
   if (Status == EFI_NOT_FOUND) {
-    DEBUG((DEBUG_INFO, "%a:%d - Capsules directory doesn't exist\n", __FUNCTION__, __LINE__));
-    Status = EFI_SUCCESS; //Great - it already doesn't exist. Success.
+    DEBUG ((DEBUG_INFO, "%a:%d - Capsules directory doesn't exist\n", __FUNCTION__, __LINE__));
+    Status = EFI_SUCCESS; // Great - it already doesn't exist. Success.
     goto Cleanup;
   }
 
@@ -333,42 +343,50 @@ RemoveStaleCapsulesOnFileSystem (
   }
 
   AllocatedFileInfoSize = 0;
-  //Iterate through the FileInfos in the capsule directory handle and delete them.
+  // Iterate through the FileInfos in the capsule directory handle and delete them.
   do {
     FileInfoSize = AllocatedFileInfoSize;
-    Status = DirHandle->Read (DirHandle, &FileInfoSize, FileInfo);
+    Status       = DirHandle->Read (DirHandle, &FileInfoSize, FileInfo);
     if (EFI_ERROR (Status)) {
       if (Status == EFI_BUFFER_TOO_SMALL) {
-        //Re-allocate FileInfo to be be big enough and try again.
+        // Re-allocate FileInfo to be be big enough and try again.
         if (FileInfo != NULL) {
           FreePool (FileInfo);
         }
+
         FileInfo = AllocatePool (FileInfoSize);
         if (FileInfo == NULL) {
           Status = EFI_OUT_OF_RESOURCES;
           DEBUG ((DEBUG_ERROR, "[%a] - Failed to allocate memory.\n", __FUNCTION__));
           goto Cleanup;
         }
+
         AllocatedFileInfoSize = FileInfoSize;
         continue;
       }
-      //other errors, bail.
+
+      // other errors, bail.
       goto Cleanup;
     }
+
     if ((FileInfo->Attribute & EFI_FILE_DIRECTORY) != 0) {
-      continue; //Skip directories.
+      continue; // Skip directories.
     }
+
     if (FileInfoSize != 0) {
-      //Open the file so we can delete it.
-      Status = DirHandle->Open (DirHandle,
+      // Open the file so we can delete it.
+      Status = DirHandle->Open (
+                            DirHandle,
                             &File,
                             FileInfo->FileName,
                             EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE,
-                            0);
+                            0
+                            );
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "[%a] - Failed to open the dir handle.\n", __FUNCTION__));
         goto Cleanup;
       }
+
       Status = File->Delete (File);
       DEBUG ((DEBUG_WARN, "[%a] - deleting stale capsule: %s\n", __FUNCTION__, FileInfo->FileName));
       if (EFI_ERROR (Status)) {
@@ -378,7 +396,7 @@ RemoveStaleCapsulesOnFileSystem (
     }
   } while (FileInfoSize != 0);
 
-  //Now all the files are gone, delete the directory itself
+  // Now all the files are gone, delete the directory itself
   Status = DirHandle->Delete (DirHandle);
   DEBUG ((DEBUG_WARN, "[%a] - deleting capsule directory\n", __FUNCTION__));
 
@@ -387,6 +405,7 @@ Cleanup:
   if (FileInfo != NULL) {
     FreePool (FileInfo);
   }
+
   return Status;
 }
 
@@ -403,20 +422,23 @@ Cleanup:
 EFI_STATUS
 STATIC
 GenerateFileName (
-  IN UINTN   CapsuleId,
+  IN UINTN    CapsuleId,
   OUT CHAR16  *Filename,
-  IN UINTN   FilenameSize
+  IN UINTN    FilenameSize
   )
 {
   if (Filename == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  if (FilenameSize < sizeof(CAPSULE_DEFAULT_FILENAME)) {
+
+  if (FilenameSize < sizeof (CAPSULE_DEFAULT_FILENAME)) {
     return EFI_BUFFER_TOO_SMALL;
   }
+
   if (CapsuleId >= CAPSULE_ID_MODULO) {
     return EFI_INVALID_PARAMETER;
   }
+
   UnicodeSPrint (Filename, FilenameSize, L"capsule%d.bin", CapsuleId);
   return EFI_SUCCESS;
 }
@@ -434,34 +456,35 @@ GenerateFileName (
 EFI_STATUS
 STATIC
 FindNextFreeCapsuleID (
-  IN  EFI_FILE *FileSystemHandle,
-  OUT UINT32   *CapsuleId
+  IN  EFI_FILE  *FileSystemHandle,
+  OUT UINT32    *CapsuleId
   )
 {
-  STATIC UINT32 CapsuleNum = 1;
-  EFI_STATUS    Status;
-  UINT32        CapsuleNumberModulo = CAPSULE_ID_MODULO;
-  CHAR16        Filename[] = CAPSULE_DEFAULT_FILENAME;
-  UINTN         FilenameSize;
-  EFI_FILE      *DirHandle;
-  EFI_FILE      *File;
-  UINTN         Attempts;
+  STATIC UINT32  CapsuleNum = 1;
+  EFI_STATUS     Status;
+  UINT32         CapsuleNumberModulo = CAPSULE_ID_MODULO;
+  CHAR16         Filename[]          = CAPSULE_DEFAULT_FILENAME;
+  UINTN          FilenameSize;
+  EFI_FILE       *DirHandle;
+  EFI_FILE       *File;
+  UINTN          Attempts;
 
-  if (FileSystemHandle == NULL || CapsuleId == NULL) {
+  if ((FileSystemHandle == NULL) || (CapsuleId == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  FilenameSize  = sizeof (Filename);
-  File          = NULL;
-  DirHandle     = NULL;
+  FilenameSize = sizeof (Filename);
+  File         = NULL;
+  DirHandle    = NULL;
 
-  //Open Capsule directory
+  // Open Capsule directory
   Status = OpenCapsulesDirectory (FileSystemHandle, &DirHandle, FALSE);
   if (Status == EFI_NOT_FOUND) {
     // if we didn't find the capsule directory, we can just the number currently in CapsuleNum
     *CapsuleId = (CapsuleNum) % CapsuleNumberModulo;
     return EFI_SUCCESS;
   }
+
   if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
@@ -472,7 +495,7 @@ FindNextFreeCapsuleID (
     Attempts += 1; // increment the number of attempts
     // generate a new capsule id and filename
     CapsuleNum = (CapsuleNum + Attempts) % CapsuleNumberModulo;
-    Status = GenerateFileName (CapsuleNum, Filename, FilenameSize);
+    Status     = GenerateFileName (CapsuleNum, Filename, FilenameSize);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "[%a] - failed to generate a filename: %r\n", __FUNCTION__, Status));
       goto Cleanup;
@@ -480,10 +503,12 @@ FindNextFreeCapsuleID (
 
     // check if this particular file already exists
     Status = DirHandle->Open (DirHandle, &File, Filename, EFI_FILE_MODE_READ, 0);
-    if (Status == EFI_NOT_FOUND) { // if we didn't find it, success
+    if (Status == EFI_NOT_FOUND) {
+      // if we didn't find it, success
       Status = EFI_SUCCESS;
       break;
     }
+
     // otherwise close it
     File->Close (File);
     File = NULL;
@@ -493,13 +518,15 @@ FindNextFreeCapsuleID (
       goto Cleanup;
     }
   }
+
   *CapsuleId = CapsuleNum;
 
 Cleanup:
 
-  if (DirHandle != NULL){
+  if (DirHandle != NULL) {
     DirHandle->Close (DirHandle);
   }
+
   if (File != NULL) {
     File->Close (File);
   }
@@ -520,25 +547,25 @@ Cleanup:
 **/
 EFI_STATUS
 STATIC
-CreateCapsuleFileOnFileSystem(
+CreateCapsuleFileOnFileSystem (
   IN EFI_FILE   *FileSystemHandle,
   OUT EFI_FILE  **File,
   IN UINT32     CapsuleId
   )
 {
-  EFI_STATUS    Status;
-  CHAR16        Filename[sizeof(CAPSULE_DEFAULT_FILENAME)];
-  UINTN         FilenameSize;
-  EFI_FILE      *DirHandle;
+  EFI_STATUS  Status;
+  CHAR16      Filename[sizeof (CAPSULE_DEFAULT_FILENAME)];
+  UINTN       FilenameSize;
+  EFI_FILE    *DirHandle;
 
-  if (FileSystemHandle == NULL || File == NULL) {
+  if ((FileSystemHandle == NULL) || (File == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
   FilenameSize = sizeof (Filename);
-  DirHandle = NULL;
+  DirHandle    = NULL;
 
-  //Open Capsule directory, creating it if it doesn't exist.
+  // Open Capsule directory, creating it if it doesn't exist.
   Status = OpenCapsulesDirectory (FileSystemHandle, &DirHandle, TRUE);
   if (EFI_ERROR (Status)) {
     goto Cleanup;
@@ -551,11 +578,13 @@ CreateCapsuleFileOnFileSystem(
 
   DEBUG ((DEBUG_VERBOSE, "[%a] - Saving capsule to %s\n", __FUNCTION__, Filename));
 
-  Status = DirHandle->Open (DirHandle,
-                      File,
-                      Filename,
-                      EFI_FILE_MODE_READ,
-                      0);
+  Status = DirHandle->Open (
+                        DirHandle,
+                        File,
+                        Filename,
+                        EFI_FILE_MODE_READ,
+                        0
+                        );
   if (!EFI_ERROR (Status)) {
     // if the file already exists, something has gone wrong
     DEBUG ((DEBUG_ERROR, "[%a] - The capsule file already exists: %a\n", __FUNCTION__, Filename));
@@ -565,11 +594,13 @@ CreateCapsuleFileOnFileSystem(
   }
 
   // create the file we want to use
-  Status = DirHandle->Open (DirHandle,
-                      File,
-                      Filename,
-                      EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
-                      0);
+  Status = DirHandle->Open (
+                        DirHandle,
+                        File,
+                        Filename,
+                        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+                        0
+                        );
   if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
@@ -597,8 +628,8 @@ Cleanup:
 EFI_STATUS
 STATIC
 CalculateCapsuleHash (
-  IN  EFI_CAPSULE_HEADER *CapsuleHeader,
-  OUT UINT64             *CapsuleHash
+  IN  EFI_CAPSULE_HEADER  *CapsuleHeader,
+  OUT UINT64              *CapsuleHash
   )
 {
   VOID        *HashContext;
@@ -609,13 +640,14 @@ CalculateCapsuleHash (
   if (CapsuleHeader == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+
   if (CapsuleHash == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+
   // use SHA256 to hash the context
-  HashContext = AllocateZeroPool (Sha256GetContextSize());
-  if (HashContext == NULL)
-  {
+  HashContext = AllocateZeroPool (Sha256GetContextSize ());
+  if (HashContext == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -623,24 +655,24 @@ CalculateCapsuleHash (
   // start by initing the context
   ZeroMem (Digest, SHA256_DIGEST_SIZE);
   HashStatus = Sha256Init (HashContext);
-  if (!HashStatus)
-  {
+  if (!HashStatus) {
     Status = EFI_DEVICE_ERROR;
     goto Cleanup;
   }
+
   HashStatus = Sha256Update (HashContext, (VOID *)CapsuleHeader, CapsuleHeader->CapsuleImageSize);
-  if (!HashStatus)
-  {
+  if (!HashStatus) {
     Status = EFI_DEVICE_ERROR;
     goto Cleanup;
   }
+
   HashStatus = Sha256Final (HashContext, Digest);
-  if (!HashStatus)
-  {
+  if (!HashStatus) {
     Status = EFI_DEVICE_ERROR;
     goto Cleanup;
   }
-  *CapsuleHash = ((UINT64*)Digest)[0]; //grab the top 64 bits of the digest
+
+  *CapsuleHash = ((UINT64 *)Digest)[0]; // grab the top 64 bits of the digest
 
 Cleanup:
   if (HashContext != NULL) {
@@ -666,11 +698,11 @@ Cleanup:
 
 **/
 EFI_STATUS
-OpenCapsuleFileOnFileSystem(
-  IN  EFI_FILE      *FileSystemHandle,
-  OUT EFI_FILE      **FileHandle,
-  IN  UINT32        CapsuleId,
-  IN  EFI_FILE_INFO **OutFileInfo OPTIONAL
+OpenCapsuleFileOnFileSystem (
+  IN  EFI_FILE       *FileSystemHandle,
+  OUT EFI_FILE       **FileHandle,
+  IN  UINT32         CapsuleId,
+  IN  EFI_FILE_INFO  **OutFileInfo OPTIONAL
   )
 {
   EFI_STATUS     Status;
@@ -680,39 +712,41 @@ OpenCapsuleFileOnFileSystem(
   EFI_FILE_INFO  *FileInfo;
   UINTN          FileInfoSize;
 
-  DEBUG((DEBUG_INFO, "%a: Start\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: Start\n", __FUNCTION__));
 
-  if (FileSystemHandle == NULL || FileHandle == NULL)
-  {
+  if ((FileSystemHandle == NULL) || (FileHandle == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  FilenameSize = sizeof(Filename);
-  DirHandle = NULL;
-  FileInfo = NULL;
+  FilenameSize = sizeof (Filename);
+  DirHandle    = NULL;
+  FileInfo     = NULL;
   FileInfoSize = 0;
 
-  //Open Capsule directory, creating it if it doesn't exist.
-  Status = OpenCapsulesDirectory(FileSystemHandle, &DirHandle, FALSE);
-  if (EFI_ERROR(Status))
-  {
+  // Open Capsule directory, creating it if it doesn't exist.
+  Status = OpenCapsulesDirectory (FileSystemHandle, &DirHandle, FALSE);
+  if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
+
   // get the file name
   Status = GenerateFileName (CapsuleId, Filename, FilenameSize);
   if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
+
   // open the file
-  Status = DirHandle->Open(DirHandle,
-                           FileHandle,
-                           Filename,
-                           EFI_FILE_MODE_READ|EFI_FILE_MODE_WRITE,
-                           0);
-  if (EFI_ERROR(Status))
-  {
+  Status = DirHandle->Open (
+                        DirHandle,
+                        FileHandle,
+                        Filename,
+                        EFI_FILE_MODE_READ|EFI_FILE_MODE_WRITE,
+                        0
+                        );
+  if (EFI_ERROR (Status)) {
     goto Cleanup;
   }
+
   // if user didn't give us a fileinfo pointer, don't request it
   if (OutFileInfo == NULL) {
     DEBUG ((DEBUG_INFO, "%a - skipping reading in file info\n", __FUNCTION__));
@@ -726,8 +760,7 @@ OpenCapsuleFileOnFileSystem(
     DEBUG ((DEBUG_ERROR, "%a We had an unexpected status while getting the info: %r.\n", __FUNCTION__, Status));
     Status = EFI_DEVICE_ERROR;
     goto Cleanup;
-  }
-  else if (Status != EFI_BUFFER_TOO_SMALL) {
+  } else if (Status != EFI_BUFFER_TOO_SMALL) {
     DEBUG ((DEBUG_ERROR, "%a We had an unexpected status while getting the info: %r.\n", __FUNCTION__, Status));
     goto Cleanup;
   }
@@ -737,25 +770,27 @@ OpenCapsuleFileOnFileSystem(
     Status = EFI_NOT_FOUND;
     goto Cleanup;
   }
+
   // reallocate and try again
   FileInfo = AllocatePool (FileInfoSize);
   if (FileInfo == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
+
   Status = (*FileHandle)->GetInfo (*FileHandle, &gEfiFileInfoGuid, &FileInfoSize, FileInfo);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a failed to read file info: %r.\n", __FUNCTION__, Status));
     goto Cleanup;
   }
+
   *OutFileInfo = FileInfo; // make sure to set the file info to go out
 
 Cleanup:
-  DEBUG((DEBUG_INFO, "%a: exit status %r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: exit status %r\n", __FUNCTION__, Status));
 
-  if (DirHandle != NULL)
-  {
-    DirHandle->Close(DirHandle);
+  if (DirHandle != NULL) {
+    DirHandle->Close (DirHandle);
   }
 
   return Status;
@@ -781,76 +816,84 @@ InternalPersistCapsuleImageAcrossReset (
   OUT CAPSULE_PERSISTED_IDENTIFIER  *CapsuleIdentifier OPTIONAL
   )
 {
-  EFI_STATUS Status;
-  EFI_FILE   *FileSystemHandle;
-  EFI_FILE   *FileHandle;
-  UINTN      CapsuleSize;
-  UINT64     CapsuleHash;
-  UINT32     CapsuleId;
+  EFI_STATUS  Status;
+  EFI_FILE    *FileSystemHandle;
+  EFI_FILE    *FileHandle;
+  UINTN       CapsuleSize;
+  UINT64      CapsuleHash;
+  UINT32      CapsuleId;
 
   if (CapsuleHeader == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
   FileSystemHandle = NULL;
-  FileHandle = NULL;
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+  FileHandle       = NULL;
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Open the file system if it isn't already opened
   Status = OpenVolumeSFS (&FileSystemHandle);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to open the filesystem to persist the capsule\n", __FUNCTION__));
     goto Cleanup;
   }
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Check to make sure we have enough free space
   CapsuleSize = CapsuleHeader->CapsuleImageSize;
-  Status = IsThereEnoughFreeSpaceOnDisk (FileSystemHandle, CapsuleSize);
+  Status      = IsThereEnoughFreeSpaceOnDisk (FileSystemHandle, CapsuleSize);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Not enough free space on the target partition\n", __FUNCTION__));
     goto Cleanup;
   }
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // get the id for the capsule
   Status = FindNextFreeCapsuleID (FileSystemHandle, &CapsuleId);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Couldn't find next ready ID\n", __FUNCTION__));
     goto Cleanup;
   }
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Get the hash of the Capsule to save into the system
   Status = CalculateCapsuleHash (CapsuleHeader, &CapsuleHash);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to calculate hash of capsule\n", __FUNCTION__));
     goto Cleanup;
   }
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Create the file on the disk to store the capsule
   Status = CreateCapsuleFileOnFileSystem (FileSystemHandle, &FileHandle, CapsuleId);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to create a capsule file\n", __FUNCTION__));
     goto Cleanup;
   }
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Write the capsule to the disk with the file handle we created
   Status = FileHandle->Write (FileHandle, &CapsuleSize, CapsuleHeader);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to write the capsule file to disk\n", __FUNCTION__));
     goto Cleanup;
   }
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   if (CapsuleIdentifier != NULL) {
     CapsuleIdentifier->CapsuleHash = CapsuleHash;
     CapsuleIdentifier->CapsuleId   = CapsuleId;
   }
 
 Cleanup:
-  DEBUG((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   if (FileHandle != NULL) {
     FileHandle->Close (FileHandle);
   }
+
   if (FileSystemHandle != NULL) {
     FileSystemHandle->Close (FileSystemHandle);
   }
+
   return Status;
 }
 
@@ -879,29 +922,30 @@ Cleanup:
 
 **/
 EFI_STATUS
-InternalGetPersistedCapsuleData(
-  IN UINT32              CapsuleId,
-  IN UINT64              CapsuleHash,
-  OUT EFI_CAPSULE_HEADER *CapsuleData OPTIONAL,
-  OUT UINTN              *CapsuleDataSize
+InternalGetPersistedCapsuleData (
+  IN UINT32               CapsuleId,
+  IN UINT64               CapsuleHash,
+  OUT EFI_CAPSULE_HEADER  *CapsuleData OPTIONAL,
+  OUT UINTN               *CapsuleDataSize
   )
 {
-  EFI_STATUS         Status;
-  UINTN              CapsuleSize;
-  UINT64             CalculatedCapsuleHash;
-  EFI_FILE           *FileSystemHandle;
-  EFI_FILE           *File;
-  EFI_FILE_INFO      *FileInfo;
+  EFI_STATUS     Status;
+  UINTN          CapsuleSize;
+  UINT64         CalculatedCapsuleHash;
+  EFI_FILE       *FileSystemHandle;
+  EFI_FILE       *File;
+  EFI_FILE_INFO  *FileInfo;
 
   DEBUG ((DEBUG_INFO, "%a: start\n", __FUNCTION__));
 
   if (CapsuleDataSize == NULL) {
     return EFI_INVALID_PARAMETER;
   }
-  FileInfo = NULL;
-  File = NULL;
+
+  FileInfo         = NULL;
+  File             = NULL;
   FileSystemHandle = NULL;
-  CapsuleSize = 0;
+  CapsuleSize      = 0;
 
   // Open the file system if it isn't already opened
   Status = OpenVolumeSFS (&FileSystemHandle);
@@ -912,7 +956,7 @@ InternalGetPersistedCapsuleData(
 
   // open the capsule file
   Status = OpenCapsuleFileOnFileSystem (FileSystemHandle, &File, CapsuleId, &FileInfo);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to open the capsule file requested\n", __FUNCTION__));
     goto Cleanup;
   }
@@ -924,7 +968,7 @@ InternalGetPersistedCapsuleData(
   }
 
   // look at the size of the capsule we need
-  CapsuleSize = (UINTN) FileInfo->FileSize;
+  CapsuleSize = (UINTN)FileInfo->FileSize;
   if (CapsuleSize > (*CapsuleDataSize)) {
     Status = EFI_BUFFER_TOO_SMALL;
     goto Cleanup;
@@ -941,7 +985,7 @@ InternalGetPersistedCapsuleData(
 
   // read in the file from the disk
   Status = File->Read (File, &CapsuleSize, CapsuleData);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to read capsule file\n"));
     goto Cleanup;
   }
@@ -954,7 +998,7 @@ InternalGetPersistedCapsuleData(
 
   // calculate the hash of the capsule we just loaded from disk
   Status = CalculateCapsuleHash (CapsuleData, &CalculatedCapsuleHash);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to calculate hash for capsule\n", __FUNCTION__));
     goto Cleanup;
   }
@@ -998,12 +1042,12 @@ Cleanup:
 **/
 EFI_STATUS
 InternalDeletePersistedCapsuleData (
-  IN UINT32 CapsuleId
+  IN UINT32  CapsuleId
   )
 {
-  EFI_STATUS         Status;
-  EFI_FILE           *FileSystemHandle = NULL;
-  EFI_FILE           *File = NULL;
+  EFI_STATUS  Status;
+  EFI_FILE    *FileSystemHandle = NULL;
+  EFI_FILE    *File             = NULL;
 
   DEBUG ((DEBUG_INFO, "%a: start\n", __FUNCTION__));
 
@@ -1015,20 +1059,22 @@ InternalDeletePersistedCapsuleData (
   }
 
   // open the capsule file
-  File = NULL;
+  File   = NULL;
   Status = OpenCapsuleFileOnFileSystem (FileSystemHandle, &File, CapsuleId, NULL);
   if (Status == EFI_NOT_FOUND) {
     // the file has already been deleted?
     Status = EFI_SUCCESS;
     goto Cleanup;
   }
-  if (EFI_ERROR(Status)) {
+
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] Failed to open the capsule file requested\n", __FUNCTION__));
     goto Cleanup;
   }
+
   // delete the file
   Status = File->Delete (File);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] Failed to delete the capsule file requested\n", __FUNCTION__));
     goto Cleanup;
   }
@@ -1039,6 +1085,7 @@ Cleanup:
   if (FileSystemHandle != NULL) {
     FileSystemHandle->Close (FileSystemHandle);
   }
+
   return Status;
 }
 
@@ -1054,9 +1101,8 @@ InternalDeleteAllCapsulesOnFileSystem (
   VOID
   )
 {
-  EFI_STATUS         Status;
-  EFI_FILE           *FileSystemHandle = NULL;
-
+  EFI_STATUS  Status;
+  EFI_FILE    *FileSystemHandle = NULL;
 
   // Open the file system if it isn't already opened
   Status = OpenVolumeSFS (&FileSystemHandle);
@@ -1067,7 +1113,7 @@ InternalDeleteAllCapsulesOnFileSystem (
 
   // Delete all the capsules
   Status = RemoveStaleCapsulesOnFileSystem (FileSystemHandle);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[%a] Failed to delete the capsule files\n", __FUNCTION__));
     goto Cleanup;
   }
@@ -1078,5 +1124,6 @@ Cleanup:
   if (FileSystemHandle != NULL) {
     FileSystemHandle->Close (FileSystemHandle);
   }
+
   return Status;
 }

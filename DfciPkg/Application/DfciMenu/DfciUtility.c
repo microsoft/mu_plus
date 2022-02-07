@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Uefi.h>
 
-
-
 #include <DfciSystemSettingTypes.h>
 
 #include <Protocol/DfciSettingAccess.h>
@@ -39,37 +37,38 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  */
 EFI_STATUS
 DfciConvertToCHAR16 (
-    IN CHAR8    *Text8,
-    IN UINTN     Text8Len,
-    OUT CHAR16 **Text16,
-    OUT UINTN   *Text16Size  OPTIONAL
-  ) {
+  IN CHAR8    *Text8,
+  IN UINTN    Text8Len,
+  OUT CHAR16  **Text16,
+  OUT UINTN   *Text16Size  OPTIONAL
+  )
+{
+  EFI_STATUS  Status;
+  CHAR16      *WideString;
+  UINTN       WideStringLen;
+  UINTN       WideStringSize;
 
-    EFI_STATUS  Status;
-    CHAR16     *WideString;
-    UINTN       WideStringLen;
-    UINTN       WideStringSize;
+  WideStringLen  = Text8Len + 1;    // WideStringLen has to include NULL
+  WideStringSize = WideStringLen * sizeof (CHAR16);
 
-    WideStringLen = Text8Len + 1;   // WideStringLen has to include NULL
-    WideStringSize = WideStringLen * sizeof(CHAR16);
+  WideString = AllocatePool (WideStringSize);
+  if (NULL == WideString) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
-    WideString = AllocatePool (WideStringSize);
-    if (NULL == WideString) {
-        return EFI_OUT_OF_RESOURCES;
-    }
-
-    Status = AsciiStrToUnicodeStrS (Text8, WideString, WideStringLen);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Unable to convert Ascii to Unicode. Code=%r\n"));
-        FreePool (WideString);
-        return Status;
-    }
-
-    *Text16 = WideString;
-    if (Text16Size != NULL) {
-        *Text16Size = WideStringSize;
-    }
+  Status = AsciiStrToUnicodeStrS (Text8, WideString, WideStringLen);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to convert Ascii to Unicode. Code=%r\n"));
+    FreePool (WideString);
     return Status;
+  }
+
+  *Text16 = WideString;
+  if (Text16Size != NULL) {
+    *Text16Size = WideStringSize;
+  }
+
+  return Status;
 }
 
 /**
@@ -85,39 +84,38 @@ DfciConvertToCHAR16 (
  */
 EFI_STATUS
 DfciConvertToCHAR8 (
-    IN CHAR16    *Text16,
-    IN UINTN      Text16Len,
-    OUT CHAR8   **Text8,
-    OUT UINTN    *Text8Size  OPTIONAL
-  ) {
+  IN CHAR16  *Text16,
+  IN UINTN   Text16Len,
+  OUT CHAR8  **Text8,
+  OUT UINTN  *Text8Size  OPTIONAL
+  )
+{
+  EFI_STATUS  Status;
+  CHAR8       *String;
+  UINTN       StringLen;
+  UINTN       StringSize;
 
-    EFI_STATUS  Status;
-    CHAR8     *String;
-    UINTN       StringLen;
-    UINTN       StringSize;
+  StringLen  = Text16Len;
+  StringSize = StringLen + sizeof (CHAR8);
 
+  String = AllocatePool (StringSize);
+  if (NULL == String) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
-    StringLen = Text16Len;
-    StringSize = StringLen + sizeof(CHAR8);
-
-    String = AllocatePool (StringSize);
-    if (NULL == String) {
-        return EFI_OUT_OF_RESOURCES;
-    }
-
-    Status = UnicodeStrnToAsciiStrS (Text16, Text16Len, String, StringSize, &StringLen);
-    if (EFI_ERROR(Status)) {
-        FreePool (String);
-        DEBUG((DEBUG_ERROR, "Unable to convert Unicode to Ascii. Code=%r\n", Status));
-        return Status;
-    }
-
-    *Text8 = String;
-    if (Text8Size != NULL) {
-        *Text8Size = StringSize;
-    }
-
+  Status = UnicodeStrnToAsciiStrS (Text16, Text16Len, String, StringSize, &StringLen);
+  if (EFI_ERROR (Status)) {
+    FreePool (String);
+    DEBUG ((DEBUG_ERROR, "Unable to convert Unicode to Ascii. Code=%r\n", Status));
     return Status;
+  }
+
+  *Text8 = String;
+  if (Text8Size != NULL) {
+    *Text8Size = StringSize;
+  }
+
+  return Status;
 }
 
 /**
@@ -131,20 +129,19 @@ DfciConvertToCHAR8 (
  */
 EFI_STATUS
 DfciSetString16Entry (
-    IN  EFI_HII_HANDLE HiiHandle,
-    IN  EFI_STRING_ID  IdName,
-    IN  CHAR16        *StringValue
-  ) {
+  IN  EFI_HII_HANDLE  HiiHandle,
+  IN  EFI_STRING_ID   IdName,
+  IN  CHAR16          *StringValue
+  )
+{
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    EFI_STATUS  Status = EFI_SUCCESS;
+  if (IdName != HiiSetString (HiiHandle, IdName, StringValue, NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set string for %d: %s. \n", __FUNCTION__, IdName, StringValue));
+    Status = EFI_NO_MAPPING;
+  }
 
-
-    if (IdName != HiiSetString(HiiHandle,IdName, StringValue, NULL)) {
-       DEBUG((DEBUG_ERROR, "%a - Failed to set string for %d: %s. \n", __FUNCTION__,  IdName, StringValue));
-       Status = EFI_NO_MAPPING;
-    }
-
-    return Status;
+  return Status;
 }
 
 /**
@@ -158,28 +155,26 @@ DfciSetString16Entry (
  */
 EFI_STATUS
 DfciSetStringEntry (
-    IN  EFI_HII_HANDLE HiiHandle,
-    IN  EFI_STRING_ID  IdName,
-    IN  CHAR8         *StringValue
-  ) {
+  IN  EFI_HII_HANDLE  HiiHandle,
+  IN  EFI_STRING_ID   IdName,
+  IN  CHAR8           *StringValue
+  )
+{
+  EFI_STATUS  Status = EFI_SUCCESS;
+  CHAR16      *WideString;
 
-    EFI_STATUS  Status = EFI_SUCCESS;
-    CHAR16     *WideString;
-
-
-    Status = DfciConvertToCHAR16 (StringValue, AsciiStrLen(StringValue), &WideString, NULL);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    Status = DfciSetString16Entry (HiiHandle, IdName, WideString);
-    if (NULL != WideString) {
-        FreePool (WideString);
-    }
-
+  Status = DfciConvertToCHAR16 (StringValue, AsciiStrLen (StringValue), &WideString, NULL);
+  if (EFI_ERROR (Status)) {
     return Status;
-}
+  }
 
+  Status = DfciSetString16Entry (HiiHandle, IdName, WideString);
+  if (NULL != WideString) {
+    FreePool (WideString);
+  }
+
+  return Status;
+}
 
 /**
  * Get A Setting
@@ -193,82 +188,87 @@ DfciSetStringEntry (
  */
 EFI_STATUS
 DfciGetASetting (
-    IN  DFCI_SETTING_ID_STRING  IdName,
-    IN  DFCI_SETTING_TYPE       Type,
-    IN  VOID                  **ValuePtr,
-    OUT UINTN                  *ValueSize
-  ) {
+  IN  DFCI_SETTING_ID_STRING  IdName,
+  IN  DFCI_SETTING_TYPE       Type,
+  IN  VOID                    **ValuePtr,
+  OUT UINTN                   *ValueSize
+  )
+{
+  EFI_STATUS                           Status;
+  STATIC DFCI_SETTING_ACCESS_PROTOCOL  *SettingAccess = NULL;
+  UINT8                                Dummy;
 
-       EFI_STATUS                    Status;
-STATIC DFCI_SETTING_ACCESS_PROTOCOL *SettingAccess = NULL;
-       UINT8                         Dummy;
+  *ValuePtr  = NULL;
+  *ValueSize = 0;
 
+  if (NULL == SettingAccess) {
+    Status = gBS->LocateProtocol (
+                    &gDfciSettingAccessProtocolGuid,
+                    NULL,
+                    (VOID **)&SettingAccess
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Unable to obtain the Setting Access protocol. Code = %r\n", __FUNCTION__, Status));
+      ASSERT_EFI_ERROR (Status);
+      return Status;
+    }
+  }
 
-    *ValuePtr = NULL;
+  Status = SettingAccess->Get (
+                            SettingAccess,
+                            IdName,
+                            NULL,
+                            Type,
+                            ValueSize,
+                            &Dummy,       // Get doesn't like a NULL pointer
+                            NULL
+                            );
+  if (EFI_ERROR (Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Unable to check %a. %r\n", __FUNCTION__, IdName, Status));
     *ValueSize = 0;
+  }
 
-    if (NULL == SettingAccess) {
-        Status = gBS->LocateProtocol (&gDfciSettingAccessProtocolGuid,
-                                      NULL,
-                                      (VOID **)&SettingAccess
-                                     );
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Unable to obtain the Setting Access protocol. Code = %r\n", __FUNCTION__, Status));
-            ASSERT_EFI_ERROR(Status);
-            return Status;
-        }
+  if (0 == *ValueSize) {
+    DEBUG ((DEBUG_ERROR, "%a - Invalid size for %a.\n", __FUNCTION__, IdName));
+    goto CLEANUP_SETTING_EXIT;
+  }
+
+  *ValuePtr = (UINT8 *)AllocatePool (*ValueSize);
+  if (NULL == *ValuePtr) {
+    DEBUG ((DEBUG_ERROR, "%a - Unable to allocate memory for %a. %r\n", __FUNCTION__, IdName, Status));
+    goto CLEANUP_SETTING_EXIT;
+  }
+
+  Status = SettingAccess->Get (
+                            SettingAccess,
+                            IdName,
+                            NULL,
+                            Type,
+                            ValueSize,
+                            *ValuePtr,
+                            NULL
+                            );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Unable to get %a. %r\n", __FUNCTION__, IdName, Status));
+    goto CLEANUP_SETTING_EXIT;
+  }
+
+  if (Type == DFCI_SETTING_TYPE_STRING) {
+    if (*ValueSize == AsciiStrnLenS (*ValuePtr, *ValueSize)) {
+      // No terminating NULL
+      DEBUG ((DEBUG_ERROR, "%a - No terminating NULL in URL string\n", __FUNCTION__));
+      goto CLEANUP_SETTING_EXIT;
     }
+  }
 
-    Status = SettingAccess->Get(SettingAccess,
-                                IdName,
-                                NULL,
-                                Type,
-                                ValueSize,
-                               &Dummy,    // Get doesn't like a NULL pointer
-                                NULL);
-    if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Unable to check %a. %r\n", __FUNCTION__, IdName, Status));
-        *ValueSize = 0;
-    }
-
-    if (0 == *ValueSize) {
-        DEBUG((DEBUG_ERROR, "%a - Invalid size for %a.\n", __FUNCTION__, IdName));
-        goto CLEANUP_SETTING_EXIT;
-    }
-
-    *ValuePtr = (UINT8 *) AllocatePool (*ValueSize);
-    if (NULL == *ValuePtr) {
-        DEBUG((DEBUG_ERROR, "%a - Unable to allocate memory for %a. %r\n", __FUNCTION__, IdName, Status));
-        goto CLEANUP_SETTING_EXIT;
-    }
-
-    Status = SettingAccess->Get(SettingAccess,
-                                IdName,
-                                NULL,
-                                Type,
-                                ValueSize,
-                                *ValuePtr,
-                                NULL);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Unable to get %a. %r\n", __FUNCTION__, IdName, Status));
-        goto CLEANUP_SETTING_EXIT;
-    }
-
-    if (Type == DFCI_SETTING_TYPE_STRING) {
-        if (*ValueSize == AsciiStrnLenS (*ValuePtr, *ValueSize)) { // No terminating NULL
-            DEBUG((DEBUG_ERROR, "%a - No terminating NULL in URL string\n",  __FUNCTION__));
-            goto CLEANUP_SETTING_EXIT;
-        }
-    }
-
-    return Status;
+  return Status;
 
 CLEANUP_SETTING_EXIT:
-    if (*ValuePtr != NULL) {
-        FreePool (*ValuePtr);
-    }
+  if (*ValuePtr != NULL) {
+    FreePool (*ValuePtr);
+  }
 
-    return EFI_NOT_FOUND;
+  return EFI_NOT_FOUND;
 }
 
 /**
@@ -280,20 +280,20 @@ CLEANUP_SETTING_EXIT:
  **/
 VOID
 DfciFreeSystemInfo (
-    IN DFCI_SYSTEM_INFORMATION *DfciInfo
-  ) {
+  IN DFCI_SYSTEM_INFORMATION  *DfciInfo
+  )
+{
+  if (NULL != DfciInfo->SerialNumber) {
+    FreePool (DfciInfo->SerialNumber);
+  }
 
-    if (NULL != DfciInfo->SerialNumber) {
-        FreePool (DfciInfo->SerialNumber);
-    }
+  if (NULL != DfciInfo->Manufacturer) {
+    FreePool (DfciInfo->Manufacturer);
+  }
 
-    if (NULL != DfciInfo->Manufacturer) {
-        FreePool (DfciInfo->Manufacturer);
-    }
-
-    if (NULL != DfciInfo->ProductName) {
-        FreePool (DfciInfo->ProductName);
-    }
+  if (NULL != DfciInfo->ProductName) {
+    FreePool (DfciInfo->ProductName);
+  }
 }
 
 /**
@@ -306,34 +306,34 @@ DfciFreeSystemInfo (
  **/
 EFI_STATUS
 DfciGetSystemInfo (
-    IN DFCI_SYSTEM_INFORMATION *DfciInfo
-  ) {
+  IN DFCI_SYSTEM_INFORMATION  *DfciInfo
+  )
+{
+  EFI_STATUS  Status;
 
-    EFI_STATUS      Status;
+  ZeroMem (DfciInfo, sizeof (DFCI_SYSTEM_INFORMATION));
 
-    ZeroMem (DfciInfo, sizeof(DFCI_SYSTEM_INFORMATION));
+  Status = DfciIdSupportGetSerialNumber (&DfciInfo->SerialNumber, &DfciInfo->SerialNumberSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to get ProductName. Code=%r\n", Status));
+    goto Error;
+  }
 
-    Status = DfciIdSupportGetSerialNumber (&DfciInfo->SerialNumber, &DfciInfo->SerialNumberSize);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Unable to get ProductName. Code=%r\n", Status));
-        goto Error;
-    }
+  Status = DfciIdSupportGetManufacturer (&DfciInfo->Manufacturer, &DfciInfo->ManufacturerSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to get ProductName. Code=%r\n", Status));
+    goto Error;
+  }
 
-    Status = DfciIdSupportGetManufacturer (&DfciInfo->Manufacturer, &DfciInfo->ManufacturerSize);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Unable to get ProductName. Code=%r\n", Status));
-        goto Error;
-    }
+  Status = DfciIdSupportGetProductName (&DfciInfo->ProductName, &DfciInfo->ProductNameSize);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Unable to get ProductName. Code=%r\n", Status));
+    goto Error;
+  }
 
-    Status = DfciIdSupportGetProductName (&DfciInfo->ProductName, &DfciInfo->ProductNameSize);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Unable to get ProductName. Code=%r\n", Status));
-        goto Error;
-    }
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 
 Error:
-    DfciFreeSystemInfo (DfciInfo);
-    return Status;
+  DfciFreeSystemInfo (DfciInfo);
+  return Status;
 }

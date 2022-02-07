@@ -21,8 +21,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 VOID
 EFIAPI
 WriteStatusCode (
-  IN UINT8     *Buffer,
-  IN UINTN     NumberOfBytes
+  IN UINT8  *Buffer,
+  IN UINTN  NumberOfBytes
   );
 
 /**
@@ -49,34 +49,33 @@ WriteStatusCode (
 **/
 EFI_STATUS
 EFIAPI
-SerialStatusCode(
-  IN EFI_STATUS_CODE_TYPE           CodeType,
-  IN EFI_STATUS_CODE_VALUE          Value,
-  IN UINT32                         Instance,
-  IN CONST EFI_GUID                 *CallerId,
-  IN CONST EFI_STATUS_CODE_DATA     *Data OPTIONAL
+SerialStatusCode (
+  IN EFI_STATUS_CODE_TYPE        CodeType,
+  IN EFI_STATUS_CODE_VALUE       Value,
+  IN UINT32                      Instance,
+  IN CONST EFI_GUID              *CallerId,
+  IN CONST EFI_STATUS_CODE_DATA  *Data OPTIONAL
   )
 {
-  CHAR8           *Filename;
-  CHAR8           *Description;
-  CHAR8           *Format;
-  CHAR8           Buffer[EFI_STATUS_CODE_DATA_MAX_SIZE];
-  CHAR8           *BufferPtr;
-  UINT32          ErrorLevel;
-  UINT32          LineNumber;
-  UINTN           CharCount;
-  BASE_LIST       Marker;
+  CHAR8      *Filename;
+  CHAR8      *Description;
+  CHAR8      *Format;
+  CHAR8      Buffer[EFI_STATUS_CODE_DATA_MAX_SIZE];
+  CHAR8      *BufferPtr;
+  UINT32     ErrorLevel;
+  UINT32     LineNumber;
+  UINTN      CharCount;
+  BASE_LIST  Marker;
 
-  BufferPtr = &Buffer[0];
+  BufferPtr    = &Buffer[0];
   BufferPtr[0] = '\0';
 
-  if (Data != NULL && ReportStatusCodeExtractAssertInfo (CodeType, Value, Data, &Filename, &Description, &LineNumber))
-  {
+  if ((Data != NULL) && ReportStatusCodeExtractAssertInfo (CodeType, Value, Data, &Filename, &Description, &LineNumber)) {
     //
     // Print ASSERT() information into output buffer.
     //
-    CharCount = AsciiSPrint ( BufferPtr, sizeof (Buffer),"\nASSERT!: %a (%d): %a\n", Filename, LineNumber, Description);
-  } else if (Data != NULL &&  ReportStatusCodeExtractDebugInfo (Data, &ErrorLevel, &Marker, &Format)) {
+    CharCount = AsciiSPrint (BufferPtr, sizeof (Buffer), "\nASSERT!: %a (%d): %a\n", Filename, LineNumber, Description);
+  } else if ((Data != NULL) &&  ReportStatusCodeExtractDebugInfo (Data, &ErrorLevel, &Marker, &Format)) {
     //
     // Print DEBUG() information into output buffer.
     //
@@ -85,9 +84,9 @@ SerialStatusCode(
     //
     // Print ERROR information into output buffer.
     //
-    CharCount = AsciiSPrint ( BufferPtr, sizeof (Buffer),"ERROR: C%08x:V%08x I%x", CodeType, Value, Instance);
+    CharCount = AsciiSPrint (BufferPtr, sizeof (Buffer), "ERROR: C%08x:V%08x I%x", CodeType, Value, Instance);
 
-    ASSERT(CharCount > 0);
+    ASSERT (CharCount > 0);
 
     if (CallerId != NULL) {
       CharCount += AsciiSPrint (
@@ -113,12 +112,11 @@ SerialStatusCode(
                    "\n\r"
                    );
   } else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_PROGRESS_CODE) {
-
     //
     // Progress codes are considered info-level. Do not print them if the error
     // level is does not include info-level messages.
     //
-    if ((DEBUG_INFO & GetDebugPrintErrorLevel()) == 0) {
+    if ((DEBUG_INFO & GetDebugPrintErrorLevel ()) == 0) {
       goto Cleanup;
     }
 
@@ -132,14 +130,14 @@ SerialStatusCode(
                   Value,
                   Instance
                   );
-  } else if (Data != NULL && CompareGuid (&Data->Type, &gEfiStatusCodeDataTypeStringGuid) &&
-             ((EFI_STATUS_CODE_STRING_DATA *) Data)->StringType == EfiStringAscii) {
+  } else if ((Data != NULL) && CompareGuid (&Data->Type, &gEfiStatusCodeDataTypeStringGuid) &&
+             (((EFI_STATUS_CODE_STRING_DATA *)Data)->StringType == EfiStringAscii))
+  {
     //
     // EFI_STATUS_CODE_STRING_DATA
     //
-    BufferPtr = ((EFI_STATUS_CODE_STRING_DATA *) Data)->String.Ascii;
-    CharCount = ((EFI_STATUS_CODE_STRING_DATA *) Data)->DataHeader.Size;
-
+    BufferPtr = ((EFI_STATUS_CODE_STRING_DATA *)Data)->String.Ascii;
+    CharCount = ((EFI_STATUS_CODE_STRING_DATA *)Data)->DataHeader.Size;
   } else {
     //
     // Code type is not defined.
@@ -157,9 +155,8 @@ SerialStatusCode(
   //
   // Call SerialPort Lib function to do print.
   //
-  WriteStatusCode((UINT8 *)BufferPtr, CharCount);
+  WriteStatusCode ((UINT8 *)BufferPtr, CharCount);
 
 Cleanup:
   return EFI_SUCCESS;
 }
-

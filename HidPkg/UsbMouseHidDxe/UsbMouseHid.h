@@ -37,22 +37,22 @@
 
 #include <IndustryStandard/Usb.h>
 
-#define CLASS_HID               3
-#define SUBCLASS_BOOT           1
-#define PROTOCOL_MOUSE          2
+#define CLASS_HID       3
+#define SUBCLASS_BOOT   1
+#define PROTOCOL_MOUSE  2
 
-#define BOOT_PROTOCOL           0
-#define REPORT_PROTOCOL         1
+#define BOOT_PROTOCOL    0
+#define REPORT_PROTOCOL  1
 
-#define USB_MOUSE_HID_DEV_SIGNATURE SIGNATURE_32 ('u', 'm', 'h', 'd')
+#define USB_MOUSE_HID_DEV_SIGNATURE  SIGNATURE_32 ('u', 'm', 'h', 'd')
 //
 // A common header for usb standard descriptor.
 // Each standard descriptor has a length and type.
 //
 #pragma pack(1)
 typedef struct {
-  UINT8                   Len;
-  UINT8                   Type;
+  UINT8    Len;
+  UINT8    Type;
 } USB_DESC_HEAD;
 #pragma pack()
 
@@ -60,16 +60,16 @@ typedef struct {
 /// Device instance of USB mouse.
 ///
 typedef struct {
-  UINTN                         Signature;
-  EFI_DEVICE_PATH_PROTOCOL      *DevicePath;
-  EFI_EVENT                     DelayedRecoveryEvent;
-  EFI_USB_IO_PROTOCOL           *UsbIo;
-  EFI_USB_INTERFACE_DESCRIPTOR  InterfaceDescriptor;
-  EFI_USB_ENDPOINT_DESCRIPTOR   IntEndpointDescriptor;
-  EFI_UNICODE_STRING_TABLE      *ControllerNameTable;
-  HID_POINTER_PROTOCOL          HidPointerProtocol;
-  POINTER_HID_REPORT_CALLBACK   MouseReportCallback;
-  VOID                          *MouseReportCallbackContext;
+  UINTN                           Signature;
+  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
+  EFI_EVENT                       DelayedRecoveryEvent;
+  EFI_USB_IO_PROTOCOL             *UsbIo;
+  EFI_USB_INTERFACE_DESCRIPTOR    InterfaceDescriptor;
+  EFI_USB_ENDPOINT_DESCRIPTOR     IntEndpointDescriptor;
+  EFI_UNICODE_STRING_TABLE        *ControllerNameTable;
+  HID_POINTER_PROTOCOL            HidPointerProtocol;
+  POINTER_HID_REPORT_CALLBACK     MouseReportCallback;
+  VOID                            *MouseReportCallbackContext;
 } USB_MOUSE_HID_DEV;
 
 #define USB_MOUSE_HID_DEV_FROM_HID_POINTER_PROTOCOL(a) \
@@ -100,9 +100,9 @@ extern EFI_COMPONENT_NAME2_PROTOCOL  gUsbMouseHidComponentName2;
 EFI_STATUS
 EFIAPI
 UsbMouseHidDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -127,9 +127,9 @@ UsbMouseHidDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 UsbMouseHidDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   );
 
 /**
@@ -148,10 +148,10 @@ UsbMouseHidDriverBindingStart (
 EFI_STATUS
 EFIAPI
 UsbMouseHidDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL   *This,
-  IN  EFI_HANDLE                    Controller,
-  IN  UINTN                         NumberOfChildren,
-  IN  EFI_HANDLE                    *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   );
 
 //
@@ -261,11 +261,11 @@ UsbMouseHidComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 UsbMouseHidComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle        OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   );
 
 //
@@ -288,9 +288,9 @@ UsbMouseHidComponentNameGetControllerName (
 EFI_STATUS
 EFIAPI
 RegisterPointerReportCallback (
-  HID_POINTER_PROTOCOL        *This,
-  POINTER_HID_REPORT_CALLBACK PointerReportCallback,
-  VOID                        *Context
+  HID_POINTER_PROTOCOL         *This,
+  POINTER_HID_REPORT_CALLBACK  PointerReportCallback,
+  VOID                         *Context
   );
 
 /**
@@ -305,7 +305,7 @@ RegisterPointerReportCallback (
 EFI_STATUS
 EFIAPI
 UnRegisterPointerReportCallback (
-  HID_POINTER_PROTOCOL *This
+  HID_POINTER_PROTOCOL  *This
   );
 
 //
@@ -323,7 +323,7 @@ UnRegisterPointerReportCallback (
 **/
 BOOLEAN
 IsUsbMouse (
-  IN  EFI_USB_IO_PROTOCOL     *UsbIo
+  IN  EFI_USB_IO_PROTOCOL  *UsbIo
   );
 
 /**
@@ -338,7 +338,7 @@ IsUsbMouse (
 **/
 EFI_STATUS
 InitializeUsbMouseDevice (
-  IN  USB_MOUSE_HID_DEV           *UsbMouseAbsolutePointerDev
+  IN  USB_MOUSE_HID_DEV  *UsbMouseAbsolutePointerDev
   );
 
 /**
@@ -361,10 +361,10 @@ InitializeUsbMouseDevice (
 EFI_STATUS
 EFIAPI
 OnMouseInterruptComplete (
-  IN  VOID        *Data,
-  IN  UINTN       DataLength,
-  IN  VOID        *Context,
-  IN  UINT32      Result
+  IN  VOID    *Data,
+  IN  UINTN   DataLength,
+  IN  VOID    *Context,
+  IN  UINT32  Result
   );
 
 /**
@@ -383,7 +383,8 @@ OnMouseInterruptComplete (
 VOID
 EFIAPI
 UsbMouseHidRecoveryHandler (
-  IN    EFI_EVENT    Event,
-  IN    VOID         *Context
+  IN    EFI_EVENT  Event,
+  IN    VOID       *Context
   );
+
 #endif

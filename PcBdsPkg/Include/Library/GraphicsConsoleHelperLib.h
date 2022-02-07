@@ -10,17 +10,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _GRAPHICS_CONSOLE_HELPER_LIB_H_
 #define _GRAPHICS_CONSOLE_HELPER_LIB_H_
 
-
 typedef UINT8 GRAPHICS_CONSOLE_MODE;
 
-#define GCM_LOW_RES    (1)
-#define GCM_NATIVE_RES (2)
+#define GCM_LOW_RES     (1)
+#define GCM_NATIVE_RES  (2)
 
 EFI_STATUS
 EFIAPI
-SetGraphicsConsoleMode(GRAPHICS_CONSOLE_MODE Mode);
-
-
-
+SetGraphicsConsoleMode (
+  GRAPHICS_CONSOLE_MODE  Mode
+  );
 
 #endif

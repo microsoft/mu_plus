@@ -30,7 +30,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 UINT32
 EFIAPI
 MsUiScaleByTheme (
-    IN UINT32  PixelCount );
+  IN UINT32  PixelCount
+  );
 
 /**
  * MsUiGetSmallFontSize
@@ -42,8 +43,9 @@ MsUiScaleByTheme (
  */
 UINT16
 EFIAPI
-MsUiGetSmallOSKFontHeight (VOID);
-
+MsUiGetSmallOSKFontHeight (
+  VOID
+  );
 
 /**
  * MsUiGetSmallFontCellWidth
@@ -55,7 +57,9 @@ MsUiGetSmallOSKFontHeight (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetSmallOSKFontWidth (VOID);
+MsUiGetSmallOSKFontWidth (
+  VOID
+  );
 
 /**
  * MsUiGetSmallFontMaxAdvance
@@ -67,7 +71,9 @@ MsUiGetSmallOSKFontWidth (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetSmallOSKFontMaxAdvance (VOID);
+MsUiGetSmallOSKFontMaxAdvance (
+  VOID
+  );
 
 /**
  * MsUiGetSmallFontGlyphs
@@ -79,7 +85,9 @@ MsUiGetSmallOSKFontMaxAdvance (VOID);
  */
 UINT8 *
 EFIAPI
-MsUiGetSmallOSKFontGlyphs (VOID);
+MsUiGetSmallOSKFontGlyphs (
+  VOID
+  );
 
 /**
  * MsUiGetSmallFontSize
@@ -91,8 +99,9 @@ MsUiGetSmallOSKFontGlyphs (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetSmallFontHeight (VOID);
-
+MsUiGetSmallFontHeight (
+  VOID
+  );
 
 /**
  * MsUiGetSmallFontCellWidth
@@ -104,7 +113,9 @@ MsUiGetSmallFontHeight (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetSmallFontWidth (VOID);
+MsUiGetSmallFontWidth (
+  VOID
+  );
 
 /**
  * MsUiGetSmallFontMaxAdvance
@@ -116,7 +127,9 @@ MsUiGetSmallFontWidth (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetSmallFontMaxAdvance (VOID);
+MsUiGetSmallFontMaxAdvance (
+  VOID
+  );
 
 /**
  * MsUiGetSmallFontGlyphs
@@ -128,7 +141,9 @@ MsUiGetSmallFontMaxAdvance (VOID);
  */
 UINT8 *
 EFIAPI
-MsUiGetSmallFontGlyphs (VOID);
+MsUiGetSmallFontGlyphs (
+  VOID
+  );
 
 /**
  * MsUiGetStandardFontSize
@@ -140,7 +155,9 @@ MsUiGetSmallFontGlyphs (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetStandardFontHeight (VOID);
+MsUiGetStandardFontHeight (
+  VOID
+  );
 
 /**
  * MsUiGetStandardFontCellWidth
@@ -152,7 +169,9 @@ MsUiGetStandardFontHeight (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetStandardFontWidth (VOID);
+MsUiGetStandardFontWidth (
+  VOID
+  );
 
 /**
  * MsUiGetStandardFontMaxAdvance
@@ -164,7 +183,9 @@ MsUiGetStandardFontWidth (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetStandardFontMaxAdvance (VOID);
+MsUiGetStandardFontMaxAdvance (
+  VOID
+  );
 
 /**
  * MsUiGetStandardFontGlyphs
@@ -176,7 +197,9 @@ MsUiGetStandardFontMaxAdvance (VOID);
  */
 UINT8 *
 EFIAPI
-MsUiGetStandardFontGlyphs (VOID);
+MsUiGetStandardFontGlyphs (
+  VOID
+  );
 
 /**
  * MsUiGetMediumFontSize
@@ -188,7 +211,9 @@ MsUiGetStandardFontGlyphs (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetMediumFontHeight (VOID);
+MsUiGetMediumFontHeight (
+  VOID
+  );
 
 /**
  * MsUiGetMediumFontCellWidth
@@ -200,7 +225,9 @@ MsUiGetMediumFontHeight (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetMediumFontWidth (VOID);
+MsUiGetMediumFontWidth (
+  VOID
+  );
 
 /**
  * MsUiGetMediumFontMaxAdvance
@@ -212,7 +239,9 @@ MsUiGetMediumFontWidth (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetMediumFontMaxAdvance (VOID);
+MsUiGetMediumFontMaxAdvance (
+  VOID
+  );
 
 /**
  * MsUiGetMediumFontGlyphs
@@ -224,7 +253,9 @@ MsUiGetMediumFontMaxAdvance (VOID);
  */
 UINT8 *
 EFIAPI
-MsUiGetMediumFontGlyphs (VOID);
+MsUiGetMediumFontGlyphs (
+  VOID
+  );
 
 /**
  * MsUiGetLargeFontSize
@@ -236,7 +267,9 @@ MsUiGetMediumFontGlyphs (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetLargeFontHeight (VOID);
+MsUiGetLargeFontHeight (
+  VOID
+  );
 
 /**
  * MsUiGetLargeFontCellWidth
@@ -248,7 +281,9 @@ MsUiGetLargeFontHeight (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetLargeFontWidth (VOID);
+MsUiGetLargeFontWidth (
+  VOID
+  );
 
 /**
  * MsUiGetLargeFontMaxAdvance
@@ -260,7 +295,9 @@ MsUiGetLargeFontWidth (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetLargeFontMaxAdvance (VOID);
+MsUiGetLargeFontMaxAdvance (
+  VOID
+  );
 
 /**
  * MsUiGetLargeFontGlyphs
@@ -272,7 +309,9 @@ MsUiGetLargeFontMaxAdvance (VOID);
  */
 UINT8 *
 EFIAPI
-MsUiGetLargeFontGlyphs (VOID);
+MsUiGetLargeFontGlyphs (
+  VOID
+  );
 
 /**
  * MsUiGetFixedFontSize
@@ -284,7 +323,9 @@ MsUiGetLargeFontGlyphs (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetFixedFontHeight (VOID);
+MsUiGetFixedFontHeight (
+  VOID
+  );
 
 /**
  * MsUiGetFixedFontCellWidth
@@ -296,7 +337,9 @@ MsUiGetFixedFontHeight (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetFixedFontWidth (VOID);
+MsUiGetFixedFontWidth (
+  VOID
+  );
 
 /**
  * MsUiGetFixedFontMaxAdvance
@@ -308,7 +351,9 @@ MsUiGetFixedFontWidth (VOID);
  */
 UINT16
 EFIAPI
-MsUiGetFixedFontMaxAdvance (VOID);
+MsUiGetFixedFontMaxAdvance (
+  VOID
+  );
 
 /**
  * MsUiGetFixedFontGlyphs
@@ -320,7 +365,9 @@ MsUiGetFixedFontMaxAdvance (VOID);
  */
 UINT8 *
 EFIAPI
-MsUiGetFixedFontGlyphs (VOID);
+MsUiGetFixedFontGlyphs (
+  VOID
+  );
 
 /**
  *  Returns the Platform Theme
@@ -330,6 +377,8 @@ MsUiGetFixedFontGlyphs (VOID);
  */
 MS_UI_THEME_DESCRIPTION *
 EFIAPI
-MsUiGetPlatformTheme (VOID);
+MsUiGetPlatformTheme (
+  VOID
+  );
 
 #endif // __MS_UI_THEME_LIB_H__

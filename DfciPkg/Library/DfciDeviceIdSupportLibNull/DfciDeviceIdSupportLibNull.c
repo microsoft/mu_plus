@@ -24,11 +24,11 @@ Gets the serial number for this device.
 **/
 EFI_STATUS
 EFIAPI
-DfciIdSupportV1GetSerialNumber(
-  OUT UINTN*  SerialNumber
-  ) {
-
-   return EFI_UNSUPPORTED;
+DfciIdSupportV1GetSerialNumber (
+  OUT UINTN  *SerialNumber
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -44,11 +44,11 @@ DfciIdSupportV1GetSerialNumber(
 EFI_STATUS
 EFIAPI
 DfciIdSupportGetManufacturer (
-    CHAR8   **Manufacturer,
-    UINTN    *ManufacturerSize   OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  CHAR8  **Manufacturer,
+  UINTN  *ManufacturerSize   OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -64,11 +64,11 @@ DfciIdSupportGetManufacturer (
 EFI_STATUS
 EFIAPI
 DfciIdSupportGetProductName (
-    CHAR8   **ProductName,
-    UINTN    *ProductNameSize  OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  CHAR8  **ProductName,
+  UINTN  *ProductNameSize  OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -84,9 +84,9 @@ DfciIdSupportGetProductName (
 EFI_STATUS
 EFIAPI
 DfciIdSupportGetSerialNumber (
-    CHAR8   **SerialNumber,
-    UINTN    *SerialNumberSize  OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  CHAR8  **SerialNumber,
+  UINTN  *SerialNumberSize  OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }

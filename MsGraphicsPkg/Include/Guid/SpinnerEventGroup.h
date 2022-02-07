@@ -13,19 +13,19 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __SPINNER_EVENT_GROUP_GUID__
 
 // Event groups for spinner1
-extern  EFI_GUID   gGeneralSpinner1StartEventGroupGuid;
-extern  EFI_GUID   gGeneralSpinner1CompleteEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner1StartEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner1CompleteEventGroupGuid;
 
 // Event groups for spinner2
-extern  EFI_GUID   gGeneralSpinner2StartEventGroupGuid;
-extern  EFI_GUID   gGeneralSpinner2CompleteEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner2StartEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner2CompleteEventGroupGuid;
 
 // Event groups for spinner3
-extern  EFI_GUID   gGeneralSpinner3tartEventGroupGuid;
-extern  EFI_GUID   gGeneralSpinner3CompleteEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner3tartEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner3CompleteEventGroupGuid;
 
 // Event groups for spinner4
-extern  EFI_GUID   gGeneralSpinner4StartEventGroupGuid;
-extern  EFI_GUID   gGeneralSpinner4CompleteEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner4StartEventGroupGuid;
+extern  EFI_GUID  gGeneralSpinner4CompleteEventGroupGuid;
 
 #endif

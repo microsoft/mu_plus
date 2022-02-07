@@ -34,15 +34,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 DfciSettingChangedNotification (
-  IN DFCI_SETTING_ID_STRING    Id,
-  IN CONST DFCI_AUTH_TOKEN    *AuthToken,
-  IN DFCI_SETTING_TYPE         Type,
-  IN UINTN                     ValueSize,
-  IN CONST VOID               *Value,
-  IN DFCI_SETTING_FLAGS        Flags
+  IN DFCI_SETTING_ID_STRING  Id,
+  IN CONST DFCI_AUTH_TOKEN   *AuthToken,
+  IN DFCI_SETTING_TYPE       Type,
+  IN UINTN                   ValueSize,
+  IN CONST VOID              *Value,
+  IN DFCI_SETTING_FLAGS      Flags
   )
 {
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -61,5 +61,5 @@ DfciSettingChangedResetNotification (
   VOID
   )
 {
-    ResetCold();
+  ResetCold ();
 }

@@ -16,7 +16,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include <Uefi.h>                                     // UEFI base types
 #include <Library/DebugLib.h>
 #include <Library/HobLib.h>
@@ -33,26 +32,27 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  **/
 EFI_STATUS
 EFIAPI
-MsUiThemeProtocolEntry(
-    IN EFI_HANDLE           ImageHandle,
-    IN EFI_SYSTEM_TABLE    *SystemTable
-    ) {
-    EFI_STATUS              Status = EFI_NOT_FOUND;
-    EFI_HOB_GUID_TYPE      *GuidHob;
+MsUiThemeProtocolEntry (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS         Status = EFI_NOT_FOUND;
+  EFI_HOB_GUID_TYPE  *GuidHob;
 
-
-    // Locate the MsUeiThemePpi data.
+  // Locate the MsUeiThemePpi data.
+  //
+  GuidHob = GetFirstGuidHob (&gMsUiThemeHobGuid);
+  if (NULL != GuidHob) {
     //
-    GuidHob = GetFirstGuidHob(&gMsUiThemeHobGuid);
-    if (NULL != GuidHob) {
-        //
-        mPlatformTheme = * ((MS_UI_THEME_DESCRIPTION **) (UINTN)(GET_GUID_HOB_DATA(GuidHob)));
-        if (mPlatformTheme != NULL) {
-            ASSERT (mPlatformTheme->Signature == MS_UI_THEME_PROTOCOL_SIGNATURE );
-            Status = gBS->InstallProtocolInterface (&ImageHandle,& gMsUiThemeProtocolGuid, EFI_NATIVE_INTERFACE, mPlatformTheme);
-        }
+    mPlatformTheme = *((MS_UI_THEME_DESCRIPTION **)(UINTN)(GET_GUID_HOB_DATA (GuidHob)));
+    if (mPlatformTheme != NULL) {
+      ASSERT (mPlatformTheme->Signature == MS_UI_THEME_PROTOCOL_SIGNATURE);
+      Status = gBS->InstallProtocolInterface (&ImageHandle, &gMsUiThemeProtocolGuid, EFI_NATIVE_INTERFACE, mPlatformTheme);
     }
-    DEBUG((DEBUG_ERROR,"Unable to find Theme, or install theme protocol\n"));
-    ASSERT_EFI_ERROR( Status );
-    return Status;
+  }
+
+  DEBUG ((DEBUG_ERROR, "Unable to find Theme, or install theme protocol\n"));
+  ASSERT_EFI_ERROR (Status);
+  return Status;
 }

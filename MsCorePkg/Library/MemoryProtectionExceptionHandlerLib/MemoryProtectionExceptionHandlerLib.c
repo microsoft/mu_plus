@@ -23,7 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
 
-#define IA32_PF_EC_ID   BIT4
+#define IA32_PF_EC_ID  BIT4
 
 /**
   Page Fault handler which turns off memory protections and does a warm reset.
@@ -37,33 +37,33 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 VOID
 EFIAPI
 MemoryProtectionExceptionHandler (
-  IN EFI_EXCEPTION_TYPE   InterruptType,
-  IN EFI_SYSTEM_CONTEXT   SystemContext
+  IN EFI_EXCEPTION_TYPE  InterruptType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
   )
 {
-  MEMORY_PROTECTION_OVERRIDE val;
-  UINTN pointer;
-  
+  MEMORY_PROTECTION_OVERRIDE  val;
+  UINTN                       pointer;
+
   val = MEM_PROT_VALID_BIT | MEM_PROT_EX_HIT_BIT;
 
   DumpCpuContext (
     InterruptType,
     SystemContext
-  );
+    );
 
   if (SystemContext.SystemContextX64 != NULL) {
-
     if ((InterruptType == EXCEPT_IA32_PAGE_FAULT) &&
-        ((SystemContext.SystemContextX64->ExceptionData & IA32_PF_EC_ID) != 0)) {
+        ((SystemContext.SystemContextX64->ExceptionData & IA32_PF_EC_ID) != 0))
+    {
       // The RIP in SystemContext could not be used if it is page fault with I/D set.
-      pointer = (UINTN) SystemContext.SystemContextX64->Rsp;
+      pointer = (UINTN)SystemContext.SystemContextX64->Rsp;
     } else {
-      pointer = (UINTN) SystemContext.SystemContextX64->Rip;
+      pointer = (UINTN)SystemContext.SystemContextX64->Rip;
     }
 
     MsWheaESAddRecordV0 (
       EFI_ERROR_MAJOR | EFI_SW_EC_IA32_PAGE_FAULT,
-      (UINT64) PeCoffSearchImageBase (pointer),
+      (UINT64)PeCoffSearchImageBase (pointer),
       SystemContext.SystemContextX64->Rip,
       NULL,
       NULL
@@ -71,8 +71,8 @@ MemoryProtectionExceptionHandler (
   } else {
     MsWheaESAddRecordV0 (
       EFI_ERROR_MAJOR | EFI_SW_EC_IA32_PAGE_FAULT,
-      SIGNATURE_64('M', 'E', 'M', ' ', 'P', 'R', 'O', 'T'),
-      SIGNATURE_64('E', 'X', 'C', 'E', 'P', 'T', ' ', ' '),
+      SIGNATURE_64 ('M', 'E', 'M', ' ', 'P', 'R', 'O', 'T'),
+      SIGNATURE_64 ('E', 'X', 'C', 'E', 'P', 'T', ' ', ' '),
       NULL,
       NULL
       );
@@ -93,9 +93,9 @@ MemoryProtectionExceptionHandler (
 VOID
 EFIAPI
 CpuArchRegisterMemoryProtectionExceptionHandler (
-    IN  EFI_EVENT   Event,
-    IN  VOID       *Context
-    )
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
 {
   EFI_STATUS             Status;
   EFI_CPU_ARCH_PROTOCOL  *mCpu = NULL;
@@ -103,7 +103,7 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
   Status = gBS->LocateProtocol (
                   &gEfiCpuArchProtocolGuid,
                   NULL,
-                  (VOID**) &mCpu
+                  (VOID **)&mCpu
                   );
 
   if (EFI_ERROR (Status)) {
@@ -144,20 +144,21 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 EFI_STATUS
 EFIAPI
 MemoryProtectionExceptionHandlerConstructor (
-  IN EFI_HANDLE         ImageHandle,
-  IN EFI_SYSTEM_TABLE   *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS Status;
-  EFI_EVENT  CpuArchExHandlerCallBackEvent;
-  VOID       *mCpuArchExHandlerRegistration = NULL;
+  EFI_STATUS  Status;
+  EFI_EVENT   CpuArchExHandlerCallBackEvent;
+  VOID        *mCpuArchExHandlerRegistration = NULL;
 
   // Don't install exception handler if all memory mitigations are off
   if (!(gMPS.CpuStackGuard                    ||
         (gMPS.HeapGuardPolicy.Data && (gMPS.HeapGuardPageType.Data || gMPS.HeapGuardPoolType.Data)) ||
         gMPS.DxeNxProtectionPolicy.Data       ||
         gMPS.ImageProtectionPolicy.Data       ||
-        gMPS.NullPointerDetectionPolicy.Data)) { 
+        gMPS.NullPointerDetectionPolicy.Data))
+  {
     return EFI_SUCCESS;
   }
 

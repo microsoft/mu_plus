@@ -10,6 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <PiDxe.h>
 
 #include <Library/PasswordStoreLib.h>
+
 /**
   Set the password variable.
 
@@ -22,13 +23,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 PasswordStoreSetPassword (
-  IN  CONST UINT8     *PasswordHashValue,
-  IN        UINTN      PasswordHashSize
-)
+  IN  CONST UINT8  *PasswordHashValue,
+  IN        UINTN  PasswordHashSize
+  )
 {
   return EFI_UNSUPPORTED;
 }
-
 
 /**
   Public interface for determining whether a given password is set.
@@ -51,7 +51,6 @@ PasswordStoreIsPasswordSet (
   return FALSE;
 } // PasswordStoreIsPasswordSet()
 
-
 /**
   Public interface for validating a password against the current password.
 
@@ -73,14 +72,11 @@ PasswordStoreIsPasswordSet (
 BOOLEAN
 EFIAPI
 PasswordStoreAuthenticatePassword (
-  IN  CONST CHAR16   *Password
+  IN  CONST CHAR16  *Password
   )
 {
-
   return FALSE;
 } // PasswordStoreAuthenticatePassword()
-
-
 
 /**
 The constructor function initializes the Lib for Dxe.
@@ -101,13 +97,10 @@ It will ASSERT() if one of these operations fails and it will always return EFI_
 **/
 EFI_STATUS
 EFIAPI
-PasswordStoreLibConstructor
-(
+PasswordStoreLibConstructor (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-
-
   return EFI_SUCCESS;
 }

@@ -15,7 +15,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "MuCryptoDxe.h"
 
-
 /**
   The module Entry Point of the Project Mu Crypto Dxe Driver.
 
@@ -28,15 +27,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 EFIAPI
-MuCryptoDxeEntry(
-  IN EFI_HANDLE          ImageHandle,
-  IN EFI_SYSTEM_TABLE    *SystemTable
+MuCryptoDxeEntry (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  InstallPkcs7Support (ImageHandle);
 
-  InstallPkcs7Support(ImageHandle);
-
-  InstallPkcs5Support(ImageHandle);
+  InstallPkcs5Support (ImageHandle);
 
   InstallHash2ServiceBindingProtocol ();
 

@@ -15,7 +15,7 @@ VOID
 EFIAPI
 ClearAltBoot (
   VOID
-);
+  );
 
 /**
   Set the Alternate boot flag
@@ -27,6 +27,6 @@ EFI_STATUS
 EFIAPI
 SetAltBoot (
   VOID
-);
+  );
 
 #endif //__MS_ALT_BOOT_LIB__

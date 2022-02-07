@@ -31,42 +31,43 @@ Handler function that validates input arguments, and create a hob list entry for
 **/
 STATIC
 EFI_STATUS
-MsWheaReportHandlerPei(
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
+MsWheaReportHandlerPei (
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
   )
 {
-  EFI_STATUS              Status = EFI_SUCCESS;
-  UINT32                  Index;
-  UINT32                  Size;
-  VOID                    *MsWheaReportEntry = NULL;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINT32      Index;
+  UINT32      Size;
+  VOID        *MsWheaReportEntry = NULL;
 
   if ((MsWheaEntryMD == NULL) ||
-      ((sizeof(EFI_COMMON_ERROR_RECORD_HEADER) +
-        sizeof(EFI_ERROR_SECTION_DESCRIPTOR) +
-        sizeof(AUTHENTICATED_VARIABLE_HEADER) +
-        EFI_HW_ERR_REC_VAR_NAME_LEN * sizeof(CHAR16)) >
-        PcdGet32 (PcdMaxHardwareErrorVariableSize)) ) {
+      ((sizeof (EFI_COMMON_ERROR_RECORD_HEADER) +
+        sizeof (EFI_ERROR_SECTION_DESCRIPTOR) +
+        sizeof (AUTHENTICATED_VARIABLE_HEADER) +
+        EFI_HW_ERR_REC_VAR_NAME_LEN * sizeof (CHAR16)) >
+       PcdGet32 (PcdMaxHardwareErrorVariableSize)))
+  {
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
 
   // Add this block to the list
-  Size =  sizeof(MS_WHEA_ERROR_ENTRY_MD);
+  Size =  sizeof (MS_WHEA_ERROR_ENTRY_MD);
 
-  MsWheaReportEntry = BuildGuidHob(&gMsWheaReportServiceGuid, Size);
+  MsWheaReportEntry = BuildGuidHob (&gMsWheaReportServiceGuid, Size);
   if (MsWheaReportEntry == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto Cleanup;
   }
 
-  ZeroMem(MsWheaReportEntry, Size);
+  ZeroMem (MsWheaReportEntry, Size);
 
   Index = 0;
-  CopyMem(&((UINT8*)MsWheaReportEntry)[Index], MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD));
+  CopyMem (&((UINT8 *)MsWheaReportEntry)[Index], MsWheaEntryMD, sizeof (MS_WHEA_ERROR_ENTRY_MD));
 
-  Index += sizeof(MS_WHEA_ERROR_ENTRY_MD);
+  Index += sizeof (MS_WHEA_ERROR_ENTRY_MD);
 
-  ((MS_WHEA_ERROR_ENTRY_MD*)MsWheaReportEntry)->PayloadSize = Index;
+  ((MS_WHEA_ERROR_ENTRY_MD *)MsWheaReportEntry)->PayloadSize = Index;
 
 Cleanup:
   return Status;
@@ -95,36 +96,40 @@ for further processing.
 STATIC
 EFI_STATUS
 MsWheaRscHandlerPei (
-  IN CONST EFI_PEI_SERVICES**         PeiServices,
-  IN EFI_STATUS_CODE_TYPE             CodeType,
-  IN EFI_STATUS_CODE_VALUE            Value,
-  IN UINT32                           Instance,
-  IN CONST EFI_GUID                   *CallerId,
-  IN CONST EFI_STATUS_CODE_DATA       *Data OPTIONAL
+  IN CONST EFI_PEI_SERVICES      **PeiServices,
+  IN EFI_STATUS_CODE_TYPE        CodeType,
+  IN EFI_STATUS_CODE_VALUE       Value,
+  IN UINT32                      Instance,
+  IN CONST EFI_GUID              *CallerId,
+  IN CONST EFI_STATUS_CODE_DATA  *Data OPTIONAL
   )
 {
-  return ReportHwErrRecRouter(CodeType,
-                              Value,
-                              Instance,
-                              CallerId,
-                              Data,
-                              MS_WHEA_PHASE_PEI,
-                              MsWheaReportHandlerPei);
+  return ReportHwErrRecRouter (
+           CodeType,
+           Value,
+           Instance,
+           CallerId,
+           Data,
+           MS_WHEA_PHASE_PEI,
+           MsWheaReportHandlerPei
+           );
 }
 
-//A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling PopulateTime() during Pei phase.
-//Dxe phase drivers actually populate time, see PopulateTime() in MsWheaReportDxe.c
+// A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling PopulateTime() during Pei phase.
+// Dxe phase drivers actually populate time, see PopulateTime() in MsWheaReportDxe.c
 BOOLEAN
-PopulateTime(EFI_TIME* CurrentTime)
+PopulateTime (
+  EFI_TIME  *CurrentTime
+  )
 {
   return FALSE;
 }
 
-//A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling GetRecordID() during Pei phase.
-//Dxe phase drivers actually populate time, see GetRecordID() in MsWheaReportDxe.c
+// A do-nothing function so MsWHeaReportCommon.c doesn't encounter an error when calling GetRecordID() during Pei phase.
+// Dxe phase drivers actually populate time, see GetRecordID() in MsWheaReportDxe.c
 EFI_STATUS
-GetRecordID(
-  UINT64* RecordID
+GetRecordID (
+  UINT64  *RecordID
   )
 {
   return EFI_UNSUPPORTED;
@@ -141,35 +146,36 @@ Entry to MsWheaReportPei.
 EFI_STATUS
 EFIAPI
 MsWheaReportPeiEntry (
-  IN EFI_PEI_FILE_HANDLE              FileHandle,
-  IN CONST EFI_PEI_SERVICES           **PeiServices
+  IN EFI_PEI_FILE_HANDLE     FileHandle,
+  IN CONST EFI_PEI_SERVICES  **PeiServices
   )
 {
+  EFI_STATUS               Status = EFI_SUCCESS;
+  EFI_PEI_RSC_HANDLER_PPI  *RscHandlerPpi;
 
-  EFI_STATUS                Status = EFI_SUCCESS;
-  EFI_PEI_RSC_HANDLER_PPI   *RscHandlerPpi;
-
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   // Insert signature and clear the space, if not already clear
-  MsWheaESInit();
+  MsWheaESInit ();
 
-  Status = PeiServicesLocatePpi(&gEfiPeiRscHandlerPpiGuid,
-                                0,
-                                NULL,
-                                (VOID**)&RscHandlerPpi);
+  Status = PeiServicesLocatePpi (
+             &gEfiPeiRscHandlerPpiGuid,
+             0,
+             NULL,
+             (VOID **)&RscHandlerPpi
+             );
 
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: failed to locate PEI RSC Handler PPI (%r)\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to locate PEI RSC Handler PPI (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
-  Status = RscHandlerPpi->Register(MsWheaRscHandlerPei);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: failed to register PEI RSC Handler PPI (%r)\n", __FUNCTION__, Status));
+  Status = RscHandlerPpi->Register (MsWheaRscHandlerPei);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to register PEI RSC Handler PPI (%r)\n", __FUNCTION__, Status));
   }
 
 Cleanup:
-  DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
   return Status;
 }

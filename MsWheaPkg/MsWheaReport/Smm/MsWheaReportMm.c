@@ -28,7 +28,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 EFI_SMM_VARIABLE_PROTOCOL  *mSmmVariable = NULL;
 
-STATIC EFI_MM_RSC_HANDLER_PROTOCOL   *mRscHandlerProtocol    = NULL;
+STATIC EFI_MM_RSC_HANDLER_PROTOCOL  *mRscHandlerProtocol = NULL;
 
 /**
 
@@ -42,25 +42,27 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaGetVariable (
-  IN     CHAR16                      *VariableName,
-  IN     EFI_GUID                    *VendorGuid,
-  OUT    UINT32                      *Attributes,    OPTIONAL
+  IN     CHAR16 *VariableName,
+  IN     EFI_GUID *VendorGuid,
+  OUT    UINT32 *Attributes, OPTIONAL
   IN OUT UINTN                       *DataSize,
   OUT    VOID                        *Data           OPTIONAL
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if ((mSmmVariable == NULL) || (mSmmVariable->SmmGetVariable == NULL)) {
     Status = EFI_NOT_READY;
     goto Cleanup;
   }
 
-  Status = mSmmVariable->SmmGetVariable (VariableName,
-                                         VendorGuid,
-                                         Attributes,
-                                         DataSize,
-                                         Data);
+  Status = mSmmVariable->SmmGetVariable (
+                           VariableName,
+                           VendorGuid,
+                           Attributes,
+                           DataSize,
+                           Data
+                           );
 
 Cleanup:
   return Status;
@@ -78,21 +80,23 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaGetNextVariableName (
-  IN OUT UINTN                    *VariableNameSize,
-  IN OUT CHAR16                   *VariableName,
-  IN OUT EFI_GUID                 *VendorGuid
+  IN OUT UINTN     *VariableNameSize,
+  IN OUT CHAR16    *VariableName,
+  IN OUT EFI_GUID  *VendorGuid
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if ((mSmmVariable == NULL) || (mSmmVariable->SmmGetNextVariableName == NULL)) {
     Status = EFI_NOT_READY;
     goto Cleanup;
   }
 
-  Status = mSmmVariable->SmmGetNextVariableName (VariableNameSize,
-                                                 VariableName,
-                                                 VendorGuid);
+  Status = mSmmVariable->SmmGetNextVariableName (
+                           VariableNameSize,
+                           VariableName,
+                           VendorGuid
+                           );
 
 Cleanup:
   return Status;
@@ -109,25 +113,27 @@ Include/Uefi/UefiSpec.h.
 EFI_STATUS
 EFIAPI
 WheaSetVariable (
-  IN  CHAR16                       *VariableName,
-  IN  EFI_GUID                     *VendorGuid,
-  IN  UINT32                       Attributes,
-  IN  UINTN                        DataSize,
-  IN  VOID                         *Data
+  IN  CHAR16    *VariableName,
+  IN  EFI_GUID  *VendorGuid,
+  IN  UINT32    Attributes,
+  IN  UINTN     DataSize,
+  IN  VOID      *Data
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if ((mSmmVariable == NULL) || (mSmmVariable->SmmSetVariable == NULL)) {
     Status = EFI_NOT_READY;
     goto Cleanup;
   }
 
-  Status = mSmmVariable->SmmSetVariable (VariableName,
-                                         VendorGuid,
-                                         Attributes,
-                                         DataSize,
-                                         Data);
+  Status = mSmmVariable->SmmSetVariable (
+                           VariableName,
+                           VendorGuid,
+                           Attributes,
+                           DataSize,
+                           Data
+                           );
 
 Cleanup:
   return Status;
@@ -150,12 +156,12 @@ STATIC
 EFI_STATUS
 EFIAPI
 MsWheaReportHandlerMm (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   // Input argument sanity check
   if (MsWheaEntryMD == NULL) {
@@ -164,8 +170,8 @@ MsWheaReportHandlerMm (
   }
 
   // Variable service is ready, store to HwErrRecXXXX
-  Status = MsWheaReportHERAdd(MsWheaEntryMD);
-  DEBUG((DEBUG_INFO, "%a: error record written to flash - %r\n", __FUNCTION__, Status));
+  Status = MsWheaReportHERAdd (MsWheaEntryMD);
+  DEBUG ((DEBUG_INFO, "%a: error record written to flash - %r\n", __FUNCTION__, Status));
 
 Cleanup:
   return Status;
@@ -194,22 +200,24 @@ STATIC
 EFI_STATUS
 EFIAPI
 MsWheaRscHandlerMm (
-  IN EFI_STATUS_CODE_TYPE             CodeType,
-  IN EFI_STATUS_CODE_VALUE            Value,
-  IN UINT32                           Instance,
-  IN EFI_GUID                         *CallerId,
-  IN EFI_STATUS_CODE_DATA             *Data OPTIONAL
+  IN EFI_STATUS_CODE_TYPE   CodeType,
+  IN EFI_STATUS_CODE_VALUE  Value,
+  IN UINT32                 Instance,
+  IN EFI_GUID               *CallerId,
+  IN EFI_STATUS_CODE_DATA   *Data OPTIONAL
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  Status = ReportHwErrRecRouter(CodeType,
-                                Value,
-                                Instance,
-                                CallerId,
-                                Data,
-                                MS_WHEA_PHASE_MM,
-                                MsWheaReportHandlerMm);
+  Status = ReportHwErrRecRouter (
+             CodeType,
+             Value,
+             Instance,
+             CallerId,
+             Data,
+             MS_WHEA_PHASE_MM,
+             MsWheaReportHandlerMm
+             );
   return Status;
 }
 
@@ -223,7 +231,9 @@ Populates the current time for WHEA records
                                           False otherwise.
 **/
 BOOLEAN
-PopulateTime(EFI_TIME* CurrentTime)
+PopulateTime (
+  EFI_TIME  *CurrentTime
+  )
 {
   return FALSE;
 }
@@ -248,28 +258,28 @@ Gets the Record ID variable and increments it for WHEA records
 **/
 EFI_STATUS
 GetRecordID (
-  UINT64* RecordID
+  UINT64  *RecordID
   )
 {
-  UINTN Size = 0;
-  UINT32 Attr;
-  EFI_STATUS Status;
+  UINTN       Size = 0;
+  UINT32      Attr;
+  EFI_STATUS  Status;
 
-  //Get the last record ID number used
+  // Get the last record ID number used
   Status = mSmmVariable->SmmGetVariable (
-             MS_WHEA_RECORD_ID_VAR_NAME,
-             &gMsWheaReportRecordIDGuid,
-             &Attr,
-             &Size,
-             NULL
-             );
+                           MS_WHEA_RECORD_ID_VAR_NAME,
+                           &gMsWheaReportRecordIDGuid,
+                           &Attr,
+                           &Size,
+                           NULL
+                           );
   if (Status == EFI_NOT_FOUND) {
     DEBUG ((DEBUG_INFO, "%a Record ID variable not retrieved, initializing to 0\n", __FUNCTION__));
     *RecordID = 0;
-  }
-  else if ((Status != EFI_BUFFER_TOO_SMALL) ||
-           (Attr != MS_WHEA_RECORD_ID_VAR_ATTR) ||
-           (Size != MS_WHEA_RECORD_ID_VAR_LEN)) {
+  } else if ((Status != EFI_BUFFER_TOO_SMALL) ||
+             (Attr != MS_WHEA_RECORD_ID_VAR_ATTR) ||
+             (Size != MS_WHEA_RECORD_ID_VAR_LEN))
+  {
     DEBUG ((
       DEBUG_INFO,
       "%a Record ID variable has odd properties size: 0x%x, attribute: %08x. Re-initializing to 0\n",
@@ -283,25 +293,25 @@ GetRecordID (
     *RecordID = 0;
   } else {
     Status = mSmmVariable->SmmGetVariable (
-               MS_WHEA_RECORD_ID_VAR_NAME,
-               &gMsWheaReportRecordIDGuid,
-               &Attr,
-               &Size,
-               RecordID
-               );
+                             MS_WHEA_RECORD_ID_VAR_NAME,
+                             &gMsWheaReportRecordIDGuid,
+                             &Attr,
+                             &Size,
+                             RecordID
+                             );
     ASSERT_EFI_ERROR (Status);
   }
 
-  (*RecordID)++; //increment the record ID number
+  (*RecordID)++; // increment the record ID number
 
-  //Set the variable so the next record uses a unique record ID
+  // Set the variable so the next record uses a unique record ID
   return mSmmVariable->SmmSetVariable (
-           MS_WHEA_RECORD_ID_VAR_NAME,
-           &gMsWheaReportRecordIDGuid,
-           MS_WHEA_RECORD_ID_VAR_ATTR,
-           Size,
-           RecordID
-           );
+                         MS_WHEA_RECORD_ID_VAR_NAME,
+                         &gMsWheaReportRecordIDGuid,
+                         MS_WHEA_RECORD_ID_VAR_ATTR,
+                         Size,
+                         RecordID
+                         );
 }
 
 /**
@@ -317,30 +327,30 @@ MsWheaReportCommonEntry (
 {
   EFI_STATUS  Status = EFI_SUCCESS;
 
-  DEBUG((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   // locate the RSC protocol
-  Status = gMmst->MmLocateProtocol (&gEfiMmRscHandlerProtocolGuid, NULL, (VOID**)&mRscHandlerProtocol);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a failed to RSC handler protocol (%r)\n", __FUNCTION__, Status));
+  Status = gMmst->MmLocateProtocol (&gEfiMmRscHandlerProtocolGuid, NULL, (VOID **)&mRscHandlerProtocol);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a failed to RSC handler protocol (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // register for the RSC callback handler
-  Status = mRscHandlerProtocol->Register(MsWheaRscHandlerMm);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
+  Status = mRscHandlerProtocol->Register (MsWheaRscHandlerMm);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a failed to register MsWhea report RSC handler (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
   // Locate global smm variable service. By depex, this should not fail
-  Status = gMmst->MmLocateProtocol (&gEfiSmmVariableProtocolGuid, NULL, (VOID**)&mSmmVariable);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a failed to locate smm variable protocol (%r)\n", __FUNCTION__, Status));
+  Status = gMmst->MmLocateProtocol (&gEfiSmmVariableProtocolGuid, NULL, (VOID **)&mSmmVariable);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a failed to locate smm variable protocol (%r)\n", __FUNCTION__, Status));
     goto Cleanup;
   }
 
 Cleanup:
-  DEBUG((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: exit (%r)\n", __FUNCTION__, Status));
   return Status;
 }

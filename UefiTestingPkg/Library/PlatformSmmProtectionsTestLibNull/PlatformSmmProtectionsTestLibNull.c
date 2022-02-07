@@ -20,7 +20,8 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 EFI_STATUS
 TestUnauthorizedIoRead (
   VOID
-) {
+  )
+{
   return EFI_UNSUPPORTED;
 }
 
@@ -36,7 +37,8 @@ TestUnauthorizedIoRead (
 EFI_STATUS
 TestUnauthorizedIoWrite (
   VOID
-) {
+  )
+{
   return EFI_UNSUPPORTED;
 }
 
@@ -52,7 +54,8 @@ TestUnauthorizedIoWrite (
 EFI_STATUS
 TestUnauthorizedMsrRead (
   VOID
-) {
+  )
+{
   return EFI_UNSUPPORTED;
 }
 
@@ -68,7 +71,8 @@ TestUnauthorizedMsrRead (
 EFI_STATUS
 TestUnauthorizedMsrWrite (
   VOID
-) {
+  )
+{
   return EFI_UNSUPPORTED;
 }
 
@@ -85,7 +89,8 @@ TestUnauthorizedMsrWrite (
 EFI_STATUS
 TestPrivilegedInstruction (
   VOID
-) {
+  )
+{
   return EFI_UNSUPPORTED;
 }
 
@@ -102,6 +107,7 @@ TestPrivilegedInstruction (
 EFI_STATUS
 TestEntryPointAccess (
   VOID
-) {
+  )
+{
   return EFI_UNSUPPORTED;
 }

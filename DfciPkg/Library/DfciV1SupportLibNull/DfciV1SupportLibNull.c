@@ -25,10 +25,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  */
 DFCI_SETTING_ID_STRING
 EFIAPI
-DfciV1TranslateString (DFCI_SETTING_ID_STRING V1Id) {
-
-    DEBUG((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
-    return NULL;
+DfciV1TranslateString (
+  DFCI_SETTING_ID_STRING  V1Id
+  )
+{
+  DEBUG ((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
+  return NULL;
 }
 
 /**
@@ -40,10 +42,12 @@ DfciV1TranslateString (DFCI_SETTING_ID_STRING V1Id) {
  */
 DFCI_SETTING_ID_STRING
 EFIAPI
-DfciV1TranslateEnum (DFCI_SETTING_ID_V1_ENUM V1Id) {
-
-    DEBUG((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
-    return NULL;
+DfciV1TranslateEnum (
+  DFCI_SETTING_ID_V1_ENUM  V1Id
+  )
+{
+  DEBUG ((DEBUG_INFO, "%a: Called - NULL library returns NULL\n", __FUNCTION__));
+  return NULL;
 }
 
 /**
@@ -58,8 +62,10 @@ DfciV1TranslateEnum (DFCI_SETTING_ID_V1_ENUM V1Id) {
  */
 DFCI_SETTING_ID_STRING
 EFIAPI
-DfciV1NumberFromId (DFCI_SETTING_ID_STRING Id) {
-
-    DEBUG((DEBUG_INFO, "%a: Called - Returning standard Id\n", __FUNCTION__));
-    return Id;
+DfciV1NumberFromId (
+  DFCI_SETTING_ID_STRING  Id
+  )
+{
+  DEBUG ((DEBUG_INFO, "%a: Called - Returning standard Id\n", __FUNCTION__));
+  return Id;
 }

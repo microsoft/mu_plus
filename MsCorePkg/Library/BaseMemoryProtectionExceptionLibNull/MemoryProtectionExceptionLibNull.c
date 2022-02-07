@@ -27,8 +27,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 MemoryProtectionExceptionOverrideCheck (
-  IN    MEMORY_PROTECTION_VAR_TOKEN      VarToken,
-  OUT   UINT32                          *Setting
+  IN    MEMORY_PROTECTION_VAR_TOKEN  VarToken,
+  OUT   UINT32                       *Setting
   )
 {
   return EFI_UNSUPPORTED;
@@ -74,7 +74,7 @@ MemoryProtectionExceptionOccurred (
 VOID
 EFIAPI
 MemoryProtectionExceptionOverrideWrite (
-  MEMORY_PROTECTION_OVERRIDE Val
+  MEMORY_PROTECTION_OVERRIDE  Val
   )
 {
   return;

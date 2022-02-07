@@ -22,14 +22,13 @@
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-STATIC  ADVANCED_LOGGER_INFO          *mLoggerInfo = NULL;
-STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY *mLowAddress = NULL;
-STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY *mHighAddress = NULL;
+STATIC  ADVANCED_LOGGER_INFO           *mLoggerInfo    = NULL;
+STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mLowAddress    = NULL;
+STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mHighAddress   = NULL;
 STATIC  UINTN                          mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
 
-#define ADV_TIME_STAMP_FORMAT "%2.2d:%2.2d:%2.2d.%3.3d : "
-#define ADV_TIME_STAMP_RESULT "hh:mm:ss:ttt : "
-
+#define ADV_TIME_STAMP_FORMAT  "%2.2d:%2.2d:%2.2d.%3.3d : "
+#define ADV_TIME_STAMP_RESULT  "hh:mm:ss:ttt : "
 
 /**
 
@@ -48,40 +47,42 @@ of "hh:mm:ss.ttt ".
 STATIC
 UINT16
 FormatTimeStamp (
-    IN CHAR8   *MessageBuffer,
-    IN UINTN    MessageBufferSize,
-    IN UINT64   TimeStamp
-  ) {
-    UINTN   Hours;
-    UINTN   Minutes;
-    UINTN   Seconds;
-    UINTN   Milliseconds;
-    UINTN   Temp;
-    UINTN   TimeStampLen;
+  IN CHAR8   *MessageBuffer,
+  IN UINTN   MessageBufferSize,
+  IN UINT64  TimeStamp
+  )
+{
+  UINTN  Hours;
+  UINTN  Minutes;
+  UINTN  Seconds;
+  UINTN  Milliseconds;
+  UINTN  Temp;
+  UINTN  TimeStampLen;
 
-    Temp = GetTimeInNanoSecond (TimeStamp);
-    Temp = Temp / (1000 * 1000);              // Get time in ms.
-    Hours = Temp / (1000 * 60 * 60);
-    Temp = Temp % (1000 * 60 * 60);
-    Minutes = Temp / (1000 * 60);
-    Temp = Temp % (1000 * 60);
-    Seconds = Temp / 1000;
-    Milliseconds = Temp % 1000;
+  Temp         = GetTimeInNanoSecond (TimeStamp);
+  Temp         = Temp / (1000 * 1000);        // Get time in ms.
+  Hours        = Temp / (1000 * 60 * 60);
+  Temp         = Temp % (1000 * 60 * 60);
+  Minutes      = Temp / (1000 * 60);
+  Temp         = Temp % (1000 * 60);
+  Seconds      = Temp / 1000;
+  Milliseconds = Temp % 1000;
 
-//             prints        "hh:mm:ss:ttt "
+  //             prints        "hh:mm:ss:ttt "
 
-    TimeStampLen = AsciiSPrint(MessageBuffer,
-                               MessageBufferSize,
-                               ADV_TIME_STAMP_FORMAT,
-                               Hours,
-                               Minutes,
-                               Seconds,
-                               Milliseconds);
+  TimeStampLen = AsciiSPrint (
+                   MessageBuffer,
+                   MessageBufferSize,
+                   ADV_TIME_STAMP_FORMAT,
+                   Hours,
+                   Minutes,
+                   Seconds,
+                   Milliseconds
+                   );
 
-    ASSERT (TimeStampLen == AsciiStrLen (ADV_TIME_STAMP_RESULT));
+  ASSERT (TimeStampLen == AsciiStrLen (ADV_TIME_STAMP_RESULT));
 
-    return (UINT16) TimeStampLen;
-
+  return (UINT16)TimeStampLen;
 }
 
 /**
@@ -108,60 +109,63 @@ FormatTimeStamp (
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibGetNextMessageBlock (
-    IN  ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY *BlockEntry
-  ) {
-    ADVANCED_LOGGER_MESSAGE_ENTRY           *LogEntry;
+  IN  ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY  *BlockEntry
+  )
+{
+  ADVANCED_LOGGER_MESSAGE_ENTRY  *LogEntry;
 
-    if (mLoggerInfo == NULL) {
-        return EFI_NOT_STARTED;
-    }
+  if (mLoggerInfo == NULL) {
+    return EFI_NOT_STARTED;
+  }
 
-    if (BlockEntry == NULL) {
-        return EFI_INVALID_PARAMETER;
-    }
+  if (BlockEntry == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (mLoggerInfo->LogCurrent == mLoggerInfo->LogBuffer) {
-        return EFI_END_OF_FILE;
-    }
+  if (mLoggerInfo->LogCurrent == mLoggerInfo->LogBuffer) {
+    return EFI_END_OF_FILE;
+  }
 
-    if (BlockEntry->Message == NULL) {
-        LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer);
-    } else {
-        LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *) MESSAGE_ENTRY_FROM_MSG(BlockEntry->Message);
-        if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
-            DEBUG((DEBUG_ERROR, "Resume LogEntry invalid signature at %p\n", LogEntry));
-            DUMP_HEX(DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
-            return EFI_INVALID_PARAMETER;
-        }
-        LogEntry = NEXT_LOG_ENTRY (LogEntry);
-    }
-
-    // Validate that LogEntry points within the proper Memory Log region
-    // in memory log buffer
-    if  ((LogEntry != (ADVANCED_LOGGER_MESSAGE_ENTRY *) ALIGN_POINTER(LogEntry, 8)) ||   // Insure pointer is on boundary
-         (LogEntry < mLowAddress) ||                   // and within the log region
-         (LogEntry > mHighAddress)) {
-        DEBUG((DEBUG_ERROR, "Invalid Address for LogEntry %p. Low=%p, High=%p\n", LogEntry, mLowAddress, mHighAddress));
-        return EFI_INVALID_PARAMETER;
-    }
-
-    if (LogEntry >= (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogCurrent)) {
-        return EFI_END_OF_FILE;
-    }
-
+  if (BlockEntry->Message == NULL) {
+    LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
+  } else {
+    LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)MESSAGE_ENTRY_FROM_MSG (BlockEntry->Message);
     if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
-        DEBUG((DEBUG_ERROR, "Next LogEntry invalid signature at %p, Last=%p\n", LogEntry, BlockEntry->Message));
-        DUMP_HEX(DEBUG_INFO, 0, (CHAR8 *)BlockEntry->Message - 128, 256, "");
-        DUMP_HEX(DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
-        return EFI_COMPROMISED_DATA;
+      DEBUG ((DEBUG_ERROR, "Resume LogEntry invalid signature at %p\n", LogEntry));
+      DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
+      return EFI_INVALID_PARAMETER;
     }
 
-    BlockEntry->TimeStamp = LogEntry->TimeStamp;
-    BlockEntry->DebugLevel = LogEntry->DebugLevel;
-    BlockEntry->Message = LogEntry->MessageText;
-    BlockEntry->MessageLen = LogEntry->MessageLen;
+    LogEntry = NEXT_LOG_ENTRY (LogEntry);
+  }
 
-    return EFI_SUCCESS;
+  // Validate that LogEntry points within the proper Memory Log region
+  // in memory log buffer
+  if ((LogEntry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (LogEntry, 8)) || // Insure pointer is on boundary
+      (LogEntry < mLowAddress) ||                                                   // and within the log region
+      (LogEntry > mHighAddress))
+  {
+    DEBUG ((DEBUG_ERROR, "Invalid Address for LogEntry %p. Low=%p, High=%p\n", LogEntry, mLowAddress, mHighAddress));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (LogEntry >= (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogCurrent)) {
+    return EFI_END_OF_FILE;
+  }
+
+  if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
+    DEBUG ((DEBUG_ERROR, "Next LogEntry invalid signature at %p, Last=%p\n", LogEntry, BlockEntry->Message));
+    DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)BlockEntry->Message - 128, 256, "");
+    DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
+    return EFI_COMPROMISED_DATA;
+  }
+
+  BlockEntry->TimeStamp  = LogEntry->TimeStamp;
+  BlockEntry->DebugLevel = LogEntry->DebugLevel;
+  BlockEntry->Message    = LogEntry->MessageText;
+  BlockEntry->MessageLen = LogEntry->MessageLen;
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -189,113 +193,113 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibGetNextFormattedLine (
-    IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY *LineEntry
-  ) {
-    CHAR8                                    LastChar;
-    CHAR8                                   *LineBuffer;
-    EFI_STATUS                               Status;
-    CHAR8                                   *TargetPtr;
-    UINT16                                   TargetLen;
-    CHAR8                                    TimeStampString[] = {ADV_TIME_STAMP_RESULT};
+  IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  *LineEntry
+  )
+{
+  CHAR8       LastChar;
+  CHAR8       *LineBuffer;
+  EFI_STATUS  Status;
+  CHAR8       *TargetPtr;
+  UINT16      TargetLen;
+  CHAR8       TimeStampString[] = { ADV_TIME_STAMP_RESULT };
 
-    if (LineEntry == NULL) {
-        return EFI_INVALID_PARAMETER;
+  if (LineEntry == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //
+  // Only allocate one LineBuffer for an BlockEntry.  Once it is allocated,
+  // reuse the previous LineBuffer
+  //
+  if (LineEntry->Message == NULL) {
+    LineBuffer = AllocatePool (mMaxMessageSize+sizeof (TimeStampString));
+    if (LineBuffer == NULL) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+
+    LineEntry->Message = LineBuffer;
+  } else {
+    LineBuffer = LineEntry->Message;
+  }
+
+  // Treat the incoming messages as a character pipe, and pull characters from the character
+  // pipe up to and including '\n'.  Any characters in a MessageLog message after
+  // the first '\n' are left in the ResidualMemoryBuffer for use on the next call to
+  // GetNextLine.
+
+  // In case this is a restart of the same Message, initialize the time stamp.
+  if (LineEntry->BlockEntry.Message != NULL) {
+    FormatTimeStamp (TimeStampString, sizeof (TimeStampString), LineEntry->BlockEntry.TimeStamp);
+    CopyMem (LineBuffer, TimeStampString, sizeof (TimeStampString) - sizeof (CHAR8));
+  }
+
+  TargetPtr = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8)];
+  TargetLen = 0;
+  Status    = EFI_SUCCESS;
+
+  do {
+    // Check for existing data.
+
+    if (LineEntry->ResidualLen > 0) {
+      LastChar = '\0';
+      while ((LineEntry->ResidualLen > 0) &&
+             (LastChar != '\n') &&
+             (TargetLen < (mMaxMessageSize - 2)))
+      {
+        LastChar     = *LineEntry->ResidualChar++;
+        *TargetPtr++ = LastChar;
+        TargetLen++;
+        LineEntry->ResidualLen--;
+      }
+
+      if (LastChar == '\n') {
+        *TargetPtr = '\0';
+        break;
+      }
+
+      if (TargetLen >= (mMaxMessageSize - 2)) {
+        *TargetPtr++ = '\n';
+        *TargetPtr   = '\0';
+        TargetLen++;
+        break;
+      }
+
+      if (LineEntry->ResidualLen != 0) {
+        Status = EFI_ABORTED;
+        break;
+      }
     }
 
     //
-    // Only allocate one LineBuffer for an BlockEntry.  Once it is allocated,
-    // reuse the previous LineBuffer
+    // Get next message block using the formatted line master
+    // access entry.
     //
-    if (LineEntry->Message == NULL) {
-        LineBuffer = AllocatePool (mMaxMessageSize+sizeof(TimeStampString));
-        if (LineBuffer == NULL) {
-            return EFI_OUT_OF_RESOURCES;
-        }
+    Status = AdvancedLoggerAccessLibGetNextMessageBlock (&LineEntry->BlockEntry);
 
-        LineEntry->Message = LineBuffer;
-    } else {
-        LineBuffer = LineEntry->Message;
+    if (Status == EFI_END_OF_FILE) {
+      if (TargetLen > 0) {
+        Status = EFI_SUCCESS;
+      }
+
+      break;
     }
 
-    // Treat the incoming messages as a character pipe, and pull characters from the character
-    // pipe up to and including '\n'.  Any characters in a MessageLog message after
-    // the first '\n' are left in the ResidualMemoryBuffer for use on the next call to
-    // GetNextLine.
-
-    // In case this is a restart of the same Message, initialize the time stamp.
-    if (LineEntry->BlockEntry.Message != NULL) {
-        FormatTimeStamp (TimeStampString, sizeof(TimeStampString), LineEntry->BlockEntry.TimeStamp);
-        CopyMem (LineBuffer, TimeStampString, sizeof(TimeStampString) - sizeof(CHAR8));
+    if (!EFI_ERROR (Status)) {
+      LineEntry->ResidualChar = LineEntry->BlockEntry.Message;
+      LineEntry->ResidualLen  = LineEntry->BlockEntry.MessageLen;
+      FormatTimeStamp (TimeStampString, sizeof (TimeStampString), LineEntry->BlockEntry.TimeStamp);
+      CopyMem (LineBuffer, TimeStampString, sizeof (TimeStampString) - sizeof (CHAR8));
     }
+  } while (!EFI_ERROR (Status));
 
-    TargetPtr = &LineBuffer[sizeof(TimeStampString) - sizeof(CHAR8)];
-    TargetLen = 0;
-    Status = EFI_SUCCESS;
+  if (!EFI_ERROR (Status)) {
+    LineEntry->MessageLen = TargetLen + sizeof (TimeStampString) - sizeof (CHAR8);
+    LineEntry->TimeStamp  = LineEntry->BlockEntry.TimeStamp;
+    LineEntry->DebugLevel = LineEntry->BlockEntry.DebugLevel;
+  }
 
-    do {
-        // Check for existing data.
-
-        if (LineEntry->ResidualLen > 0) {
-            LastChar = '\0';
-            while ((LineEntry->ResidualLen > 0) &&
-                   (LastChar != '\n') &&
-                   (TargetLen < (mMaxMessageSize - 2))) {
-                LastChar = *LineEntry->ResidualChar++;
-               *TargetPtr++ = LastChar;
-                TargetLen++;
-                LineEntry->ResidualLen--;
-            }
-
-            if (LastChar == '\n') {
-               *TargetPtr = '\0';
-                break;
-            }
-
-            if (TargetLen >= (mMaxMessageSize - 2)) {
-               *TargetPtr++ = '\n';
-               *TargetPtr = '\0';
-                TargetLen++;
-                break;
-            }
-
-            if (LineEntry->ResidualLen != 0) {
-                Status = EFI_ABORTED;
-                break;
-            }
-        }
-
-        //
-        // Get next message block using the formatted line master
-        // access entry.
-        //
-        Status = AdvancedLoggerAccessLibGetNextMessageBlock (&LineEntry->BlockEntry);
-
-        if (Status == EFI_END_OF_FILE) {
-            if (TargetLen > 0) {
-                Status = EFI_SUCCESS;
-            }
-            break;
-        }
-
-        if (!EFI_ERROR(Status)) {
-            LineEntry->ResidualChar = LineEntry->BlockEntry.Message;
-            LineEntry->ResidualLen = LineEntry->BlockEntry.MessageLen;
-            FormatTimeStamp (TimeStampString, sizeof(TimeStampString), LineEntry->BlockEntry.TimeStamp);
-            CopyMem (LineBuffer, TimeStampString, sizeof(TimeStampString) - sizeof(CHAR8));
-        }
-
-    } while (!EFI_ERROR(Status));
-
-
-    if (!EFI_ERROR(Status)) {
-        LineEntry->MessageLen = TargetLen + sizeof(TimeStampString) - sizeof(CHAR8);
-        LineEntry->TimeStamp = LineEntry->BlockEntry.TimeStamp;
-        LineEntry->DebugLevel = LineEntry->BlockEntry.DebugLevel;
-    }
-
-    return Status;
+  return Status;
 }
-
 
 /**
   Advanced Logger Unit Test Initialize
@@ -310,34 +314,37 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibUnitTestInitialize (
-    IN ADVANCED_LOGGER_PROTOCOL *TestProtocol  OPTIONAL,
-    IN UINTN                     MaxMessageSize
-  ) {
-    ADVANCED_LOGGER_PROTOCOL   *LoggerProtocol = NULL;
-    EFI_STATUS                  Status;
+  IN ADVANCED_LOGGER_PROTOCOL  *TestProtocol  OPTIONAL,
+  IN UINTN                     MaxMessageSize
+  )
+{
+  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol = NULL;
+  EFI_STATUS                Status;
 
-    if (TestProtocol == NULL) {
-        Status = gBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
-                                       NULL,
-                                      (VOID **) &LoggerProtocol);
-    } else {
-        LoggerProtocol = TestProtocol;
-        Status = EFI_SUCCESS;
-    }
+  if (TestProtocol == NULL) {
+    Status = gBS->LocateProtocol (
+                    &gAdvancedLoggerProtocolGuid,
+                    NULL,
+                    (VOID **)&LoggerProtocol
+                    );
+  } else {
+    LoggerProtocol = TestProtocol;
+    Status         = EFI_SUCCESS;
+  }
 
-    if (MaxMessageSize == 0) {
-        mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
-    } else {
-        mMaxMessageSize = MaxMessageSize;
-    }
+  if (MaxMessageSize == 0) {
+    mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
+  } else {
+    mMaxMessageSize = MaxMessageSize;
+  }
 
-    if (!EFI_ERROR(Status)) {
-        mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-        mLowAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer);
-        mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
-    }
+  if (!EFI_ERROR (Status)) {
+    mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+    mLowAddress  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
+    mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -346,27 +353,30 @@ AdvancedLoggerAccessLibUnitTestInitialize (
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibConstructor (
-    IN EFI_HANDLE        ImageHandle,
-    IN EFI_SYSTEM_TABLE  *SystemTable
-  ) {
-    ADVANCED_LOGGER_PROTOCOL   *LoggerProtocol = NULL;
-    EFI_STATUS                  Status;
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol = NULL;
+  EFI_STATUS                Status;
 
-    Status = gBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
-                                   NULL,
-                                  (VOID **) &LoggerProtocol);
-    if (!EFI_ERROR(Status)) {
-        mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-        mLowAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer);
-        mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *) PTR_FROM_PA(mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
+  Status = gBS->LocateProtocol (
+                  &gAdvancedLoggerProtocolGuid,
+                  NULL,
+                  (VOID **)&LoggerProtocol
+                  );
+  if (!EFI_ERROR (Status)) {
+    mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+    mLowAddress  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
+    mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
 
-        // Leave this debug message as ERROR.
+    // Leave this debug message as ERROR.
 
-        DEBUG((DEBUG_ERROR, "Advanced Logger Info = %p, Max = %p\n", mLoggerInfo, mHighAddress));
-    }
+    DEBUG ((DEBUG_ERROR, "Advanced Logger Info = %p, Max = %p\n", mLoggerInfo, mHighAddress));
+  }
 
-    // Don't fail module load...
-    return EFI_SUCCESS;
+  // Don't fail module load...
+  return EFI_SUCCESS;
 }
 
 /**
@@ -383,18 +393,18 @@ AdvancedLoggerAccessLibConstructor (
 **/
 EFI_STATUS
 EFIAPI
-AdvancedLoggerAccessLibReset(
-    IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY *LineEntry
-  ) {
+AdvancedLoggerAccessLibReset (
+  IN  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  *LineEntry
+  )
+{
+  if (LineEntry == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (LineEntry == NULL) {
-        return EFI_INVALID_PARAMETER;
-    }
+  if (LineEntry->Message != NULL) {
+    FreePool (LineEntry->Message);
+    LineEntry->Message = NULL;
+  }
 
-    if (LineEntry->Message != NULL) {
-        FreePool (LineEntry->Message);
-        LineEntry->Message = NULL;
-    }
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

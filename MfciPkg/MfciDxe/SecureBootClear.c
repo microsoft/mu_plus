@@ -15,7 +15,6 @@
 #include <Protocol/MfciProtocol.h>
 #include <Library/MuSecureBootLib.h>
 
-
 /**
   Callback invocation for MFCI policy changes.
   This function will be called prior to system reset when a MFCI policy change is detected.
@@ -33,53 +32,56 @@
 
 **/
 EFI_STATUS
-EFIAPI MfciPolicyChangeCallbackSecureBoot (
-  IN CONST MFCI_POLICY_TYPE   NewPolicy,
-  IN CONST MFCI_POLICY_TYPE   PreviousPolicy
-)
+EFIAPI
+MfciPolicyChangeCallbackSecureBoot (
+  IN CONST MFCI_POLICY_TYPE  NewPolicy,
+  IN CONST MFCI_POLICY_TYPE  PreviousPolicy
+  )
 {
-  EFI_STATUS Status = EFI_UNSUPPORTED;
+  EFI_STATUS  Status = EFI_UNSUPPORTED;
 
-  DEBUG(( DEBUG_INFO, "%a - MFCI Secure Boot Callback Entry\n", __FUNCTION__));
-  if ( (NewPolicy & STD_ACTION_SECURE_BOOT_CLEAR) == STD_ACTION_SECURE_BOOT_CLEAR) {
+  DEBUG ((DEBUG_INFO, "%a - MFCI Secure Boot Callback Entry\n", __FUNCTION__));
+  if ((NewPolicy & STD_ACTION_SECURE_BOOT_CLEAR) == STD_ACTION_SECURE_BOOT_CLEAR) {
     if (FeaturePcdGet (PcdEnforceWindowsPcr11PrivacyPolicy) &&
-        (NewPolicy & STD_ACTION_TPM_CLEAR) != STD_ACTION_TPM_CLEAR) {
+        ((NewPolicy & STD_ACTION_TPM_CLEAR) != STD_ACTION_TPM_CLEAR))
+    {
       // Transitions that clear Secure Boot should clear the TPM to provide defence in depth of privacy
-      DEBUG(( DEBUG_ERROR, "%a - MFCI attempt to clear Secure Boot without clearing TPM, possible security concern, aborting...\n", __FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "%a - MFCI attempt to clear Secure Boot without clearing TPM, possible security concern, aborting...\n", __FUNCTION__));
       ASSERT (FALSE);
       return EFI_SECURITY_VIOLATION;
     }
-    DEBUG(( DEBUG_INFO, "%a - MFCI clearing Secure Boot\n", __FUNCTION__));
-    Status = DeleteSecureBootVariables();
-  }
-  else {
+
+    DEBUG ((DEBUG_INFO, "%a - MFCI clearing Secure Boot\n", __FUNCTION__));
+    Status = DeleteSecureBootVariables ();
+  } else {
     Status = EFI_UNSUPPORTED;
   }
+
   return Status;
 }
-
 
 EFI_STATUS
 EFIAPI
 InitSecureBootListener (
   VOID
-)
+  )
 {
-  EFI_STATUS Status;
-  MFCI_PROTOCOL *MfciPolicyProtocol = NULL;
+  EFI_STATUS     Status;
+  MFCI_PROTOCOL  *MfciPolicyProtocol = NULL;
 
-  DEBUG(( DEBUG_INFO, "%a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
 
-  Status = gBS->LocateProtocol( &gMfciProtocolGuid, NULL, (VOID**) &MfciPolicyProtocol );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Locating MFCI Policy failed - %r\n", __FUNCTION__, Status ));
+  Status = gBS->LocateProtocol (&gMfciProtocolGuid, NULL, (VOID **)&MfciPolicyProtocol);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Locating MFCI Policy failed - %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  REGISTER_MFCI_POLICY_CHANGE_CALLBACK RegisterMfciPolicyChangeCallback = MfciPolicyProtocol->RegisterMfciPolicyChangeCallback;
-  Status = RegisterMfciPolicyChangeCallback( MfciPolicyProtocol, MfciPolicyChangeCallbackSecureBoot );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering SecureBootClear Callback failed - %r\n", __FUNCTION__, Status ));
+  REGISTER_MFCI_POLICY_CHANGE_CALLBACK  RegisterMfciPolicyChangeCallback = MfciPolicyProtocol->RegisterMfciPolicyChangeCallback;
+
+  Status = RegisterMfciPolicyChangeCallback (MfciPolicyProtocol, MfciPolicyChangeCallbackSecureBoot);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering SecureBootClear Callback failed - %r\n", __FUNCTION__, Status));
     return Status;
   }
 

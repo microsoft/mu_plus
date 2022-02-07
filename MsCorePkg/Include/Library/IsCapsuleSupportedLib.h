@@ -28,7 +28,7 @@
 EFI_STATUS
 EFIAPI
 IsCapsuleImageSupported (
-  IN EFI_CAPSULE_HEADER *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   );
 
 /**
@@ -58,7 +58,7 @@ IsFmpCapsuleGuid (
 BOOLEAN
 EFIAPI
 IsFmpCapsule (
-  IN EFI_CAPSULE_HEADER         *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   );
 
 /**
@@ -73,7 +73,7 @@ IsFmpCapsule (
 BOOLEAN
 EFIAPI
 IsGraphicsCapsule (
-  IN EFI_CAPSULE_HEADER         *CapsuleHeader
+  IN EFI_CAPSULE_HEADER  *CapsuleHeader
   );
 
 #endif

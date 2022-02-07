@@ -34,13 +34,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // are character counts, without the quotes.
 //
 typedef struct {
-    CONST CHAR8    *FieldName;
-    UINTN           FieldLen;
-    CONST CHAR8    *Value;
-    UINTN           ValueLen;
+  CONST CHAR8    *FieldName;
+  UINTN          FieldLen;
+  CONST CHAR8    *Value;
+  UINTN          ValueLen;
 } JSON_REQUEST_ELEMENT;
 
-#define JSON_NULL "null"
+#define JSON_NULL  "null"
 
 /**
  *  Function to process a Json Element
@@ -53,10 +53,10 @@ typedef struct {
  */
 typedef
 EFI_STATUS
-(EFIAPI *JSON_PROCESS_ELEMENT) (
-    IN  JSON_REQUEST_ELEMENT *JsonElement,
-    IN  VOID                 *Context
-);
+(EFIAPI *JSON_PROCESS_ELEMENT)(
+  IN  JSON_REQUEST_ELEMENT *JsonElement,
+  IN  VOID                 *Context
+  );
 
 /**
  * EncodeJson
@@ -76,10 +76,11 @@ EFI_STATUS
 EFI_STATUS
 EFIAPI
 JsonLibEncode (
-    IN  JSON_REQUEST_ELEMENT *Request,
-    IN  UINTN                 RequestCount,
-    OUT CHAR8               **JsonString,
-    OUT UINTN                *JsonStringSize);
+  IN  JSON_REQUEST_ELEMENT  *Request,
+  IN  UINTN                 RequestCount,
+  OUT CHAR8                 **JsonString,
+  OUT UINTN                 *JsonStringSize
+  );
 
 /**
  * ParseJson
@@ -102,10 +103,10 @@ JsonLibEncode (
 EFI_STATUS
 EFIAPI
 JsonLibParse (
-    IN  CHAR8                  *JsonString,
-    IN  UINTN                   JsonStringSize,
-    IN  JSON_PROCESS_ELEMENT    ApplyFunction,
-    IN  VOID                   *Context
-);
+  IN  CHAR8                 *JsonString,
+  IN  UINTN                 JsonStringSize,
+  IN  JSON_PROCESS_ELEMENT  ApplyFunction,
+  IN  VOID                  *Context
+  );
 
 #endif // __JSON_LITE_H__

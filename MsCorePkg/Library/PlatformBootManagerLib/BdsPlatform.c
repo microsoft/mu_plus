@@ -8,16 +8,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "BdsPlatform.h"
 
-static EFI_BOOT_MODE                  mBootMode;
-static EFI_DEVICE_PATH_PROTOCOL     **mPlatformConnectSequence;
-static USB_CLASS_FORMAT_DEVICE_PATH   mUsbClassKeyboardDevicePath = {
+static EFI_BOOT_MODE                 mBootMode;
+static EFI_DEVICE_PATH_PROTOCOL      **mPlatformConnectSequence;
+static USB_CLASS_FORMAT_DEVICE_PATH  mUsbClassKeyboardDevicePath = {
   {
     {
       MESSAGING_DEVICE_PATH,
       MSG_USB_CLASS_DP,
       {
-        (UINT8) (sizeof (USB_CLASS_DEVICE_PATH)),
-        (UINT8) ((sizeof (USB_CLASS_DEVICE_PATH)) >> 8)
+        (UINT8)(sizeof (USB_CLASS_DEVICE_PATH)),
+        (UINT8)((sizeof (USB_CLASS_DEVICE_PATH)) >> 8)
       }
     },
     0xffff,           // VendorId
@@ -34,20 +34,19 @@ ExitPmAuth (
   VOID
   )
 {
-  EFI_HANDLE                  Handle;
-  EFI_STATUS                  Status;
-
+  EFI_HANDLE  Handle;
+  EFI_STATUS  Status;
 
   PERF_FUNCTION_BEGIN (); // MS_CHANGE
 
-  DEBUG((DEBUG_INFO,"ExitPmAuth ()- Start\n"));
+  DEBUG ((DEBUG_INFO, "ExitPmAuth ()- Start\n"));
 
   //
   // Since PI1.2.1, we need signal EndOfDxe as ExitPmAuth
   //
   EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
 
-  DEBUG((DEBUG_INFO,"All EndOfDxe callbacks have returned successfully\n"));
+  DEBUG ((DEBUG_INFO, "All EndOfDxe callbacks have returned successfully\n"));
 
   //
   // NOTE: We need install DxeSmmReadyToLock directly here because many boot script is added via ExitPmAuth/EndOfDxe callback.
@@ -63,19 +62,19 @@ ExitPmAuth (
                   NULL
                   );
   ASSERT_EFI_ERROR (Status);
-  DEBUG((DEBUG_INFO,"ExitPmAuth ()- End\n"));
+  DEBUG ((DEBUG_INFO, "ExitPmAuth ()- End\n"));
 
   PERF_FUNCTION_END (); // MS_CHANGE
 }
 
 VOID
 ConnectRootBridge (
-  BOOLEAN Recursive
+  BOOLEAN  Recursive
   )
 {
-  UINTN                            RootBridgeHandleCount;
-  EFI_HANDLE                       *RootBridgeHandleBuffer;
-  UINTN                            RootBridgeIndex;
+  UINTN       RootBridgeHandleCount;
+  EFI_HANDLE  *RootBridgeHandleBuffer;
+  UINTN       RootBridgeIndex;
 
   PERF_FUNCTION_BEGIN (); // MS_CHANGE
 
@@ -94,19 +93,21 @@ ConnectRootBridge (
   PERF_FUNCTION_END (); // MS_CHANGE
 }
 
-
 BOOLEAN
 IsGopDevicePath (
   IN EFI_DEVICE_PATH_PROTOCOL  *DevicePath
   )
 {
   while (!IsDevicePathEndType (DevicePath)) {
-    if (DevicePathType (DevicePath) == ACPI_DEVICE_PATH &&
-        DevicePathSubType (DevicePath) == ACPI_ADR_DP) {
+    if ((DevicePathType (DevicePath) == ACPI_DEVICE_PATH) &&
+        (DevicePathSubType (DevicePath) == ACPI_ADR_DP))
+    {
       return TRUE;
     }
+
     DevicePath = NextDevicePathNode (DevicePath);
   }
+
   return FALSE;
 }
 
@@ -115,47 +116,52 @@ IsGopDevicePath (
 **/
 EFI_DEVICE_PATH_PROTOCOL *
 UpdateGopDevicePath (
-  EFI_DEVICE_PATH_PROTOCOL *DevicePath,
-  EFI_DEVICE_PATH_PROTOCOL *Gop
+  EFI_DEVICE_PATH_PROTOCOL  *DevicePath,
+  EFI_DEVICE_PATH_PROTOCOL  *Gop
   )
 {
-  UINTN                    Size;
-  UINTN                    GopSize;
-  EFI_DEVICE_PATH_PROTOCOL *Temp;
-  EFI_DEVICE_PATH_PROTOCOL *Return;
-  EFI_DEVICE_PATH_PROTOCOL *Instance;
-  BOOLEAN                  Exist;
+  UINTN                     Size;
+  UINTN                     GopSize;
+  EFI_DEVICE_PATH_PROTOCOL  *Temp;
+  EFI_DEVICE_PATH_PROTOCOL  *Return;
+  EFI_DEVICE_PATH_PROTOCOL  *Instance;
+  BOOLEAN                   Exist;
 
-  Exist = FALSE;
-  Return = NULL;
+  Exist   = FALSE;
+  Return  = NULL;
   GopSize = GetDevicePathSize (Gop);
   do {
     Instance = GetNextDevicePathInstance (&DevicePath, &Size);
     if (Instance == NULL) {
       break;
     }
+
     if (!IsGopDevicePath (Instance) ||
-        (Size == GopSize && CompareMem (Instance, Gop, GopSize) == 0)
-       ) {
-      if (Size == GopSize && CompareMem (Instance, Gop, GopSize) == 0) {
+        ((Size == GopSize) && (CompareMem (Instance, Gop, GopSize) == 0))
+        )
+    {
+      if ((Size == GopSize) && (CompareMem (Instance, Gop, GopSize) == 0)) {
         Exist = TRUE;
       }
-      Temp = Return;
+
+      Temp   = Return;
       Return = AppendDevicePathInstance (Return, Instance);
       if (Temp != NULL) {
         FreePool (Temp);
       }
     }
+
     FreePool (Instance);
   } while (DevicePath != NULL);
 
   if (!Exist) {
-    Temp = Return;
+    Temp   = Return;
     Return = AppendDevicePathInstance (Return, Gop);
     if (Temp != NULL) {
       FreePool (Temp);
     }
   }
+
   return Return;
 }
 
@@ -169,21 +175,21 @@ PlatformBootManagerBeforeConsole (
   VOID
   )
 {
-  EFI_STATUS                Status;
-  EFI_DEVICE_PATH_PROTOCOL            *TempDevicePath;
-  EFI_DEVICE_PATH_PROTOCOL            *ConsoleOut;
-  EFI_DEVICE_PATH_PROTOCOL            *Temp;
-  EFI_HANDLE                          Handle;
-  BDS_CONSOLE_CONNECT_ENTRY          *PlatformConsoles;
+  EFI_STATUS                 Status;
+  EFI_DEVICE_PATH_PROTOCOL   *TempDevicePath;
+  EFI_DEVICE_PATH_PROTOCOL   *ConsoleOut;
+  EFI_DEVICE_PATH_PROTOCOL   *Temp;
+  EFI_HANDLE                 Handle;
+  BDS_CONSOLE_CONNECT_ENTRY  *PlatformConsoles;
 
-  mBootMode = GetBootModeHob();  // BeforeConsole has to be called before AfterConsole.
+  mBootMode = GetBootModeHob ();  // BeforeConsole has to be called before AfterConsole.
 
   //
   // Append Usb Keyboard short form DevicePath into "ConIn"
   //
   EfiBootManagerUpdateConsoleVariable (
     ConIn,
-    (EFI_DEVICE_PATH_PROTOCOL *) &mUsbClassKeyboardDevicePath,
+    (EFI_DEVICE_PATH_PROTOCOL *)&mUsbClassKeyboardDevicePath,
     NULL
     );
 
@@ -193,21 +199,22 @@ PlatformBootManagerBeforeConsole (
   ConnectRootBridge (FALSE);
 
   TempDevicePath = NULL;
-  Handle = DeviceBootManagerBeforeConsole (&TempDevicePath, &PlatformConsoles);
+  Handle         = DeviceBootManagerBeforeConsole (&TempDevicePath, &PlatformConsoles);
 
   //
   // Update ConOut variable according to the Console Handle
   //
   ConsoleOut = NULL;
-  GetEfiGlobalVariable2 (L"ConOut", (VOID **) &ConsoleOut,NULL);
+  GetEfiGlobalVariable2 (L"ConOut", (VOID **)&ConsoleOut, NULL);
 
   if (Handle != NULL) {
     if (TempDevicePath != NULL) {
-      Temp = ConsoleOut;
+      Temp       = ConsoleOut;
       ConsoleOut = UpdateGopDevicePath (ConsoleOut, TempDevicePath);
       if (Temp != NULL) {
         FreePool (Temp);
       }
+
       FreePool (TempDevicePath);
       Status = gRT->SetVariable (
                       L"ConOut",
@@ -216,41 +223,44 @@ PlatformBootManagerBeforeConsole (
                       GetDevicePathSize (ConsoleOut),
                       ConsoleOut
                       );
-      if (EFI_ERROR(Status)) {
+      if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_ERROR, "%a: Error setting ConOut. Code = %r\n", __FUNCTION__, Status));
       }
     }
   }
 
   if (ConsoleOut != NULL) {
-    FreePool(ConsoleOut);
+    FreePool (ConsoleOut);
   }
 
   //
   // Fill ConIn/ConOut in Full Configuration boot mode
   //
   DEBUG ((DEBUG_INFO, "%a - %x\n", __FUNCTION__, mBootMode));
-  if (mBootMode == BOOT_WITH_FULL_CONFIGURATION ||
-      mBootMode == BOOT_WITH_DEFAULT_SETTINGS ||
-      mBootMode == BOOT_WITH_FULL_CONFIGURATION_PLUS_DIAGNOSTICS ||
-      mBootMode == BOOT_IN_RECOVERY_MODE) {
-
+  if ((mBootMode == BOOT_WITH_FULL_CONFIGURATION) ||
+      (mBootMode == BOOT_WITH_DEFAULT_SETTINGS) ||
+      (mBootMode == BOOT_WITH_FULL_CONFIGURATION_PLUS_DIAGNOSTICS) ||
+      (mBootMode == BOOT_IN_RECOVERY_MODE))
+  {
     if (PlatformConsoles != NULL) {
-        while ((*PlatformConsoles).DevicePath != NULL) {
-          //
-          // Update the console variable with the connect type
-          //
-          if (((*PlatformConsoles).ConnectType & CONSOLE_IN) == CONSOLE_IN) {
-            EfiBootManagerUpdateConsoleVariable (ConIn, (*PlatformConsoles).DevicePath, NULL);
-          }
-          if (((*PlatformConsoles).ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
-            EfiBootManagerUpdateConsoleVariable (ConOut, (*PlatformConsoles).DevicePath, NULL);
-          }
-          if (((*PlatformConsoles).ConnectType & STD_ERROR) == STD_ERROR) {
-            EfiBootManagerUpdateConsoleVariable (ErrOut, (*PlatformConsoles).DevicePath, NULL);
-          }
-          PlatformConsoles++;
+      while ((*PlatformConsoles).DevicePath != NULL) {
+        //
+        // Update the console variable with the connect type
+        //
+        if (((*PlatformConsoles).ConnectType & CONSOLE_IN) == CONSOLE_IN) {
+          EfiBootManagerUpdateConsoleVariable (ConIn, (*PlatformConsoles).DevicePath, NULL);
         }
+
+        if (((*PlatformConsoles).ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
+          EfiBootManagerUpdateConsoleVariable (ConOut, (*PlatformConsoles).DevicePath, NULL);
+        }
+
+        if (((*PlatformConsoles).ConnectType & STD_ERROR) == STD_ERROR) {
+          EfiBootManagerUpdateConsoleVariable (ErrOut, (*PlatformConsoles).DevicePath, NULL);
+        }
+
+        PlatformConsoles++;
+      }
     }
   }
 
@@ -271,9 +281,9 @@ ConnectSequence (
   VOID
   )
 {
-  EFI_HANDLE               DeviceHandle;
-  EFI_STATUS               Status;
-  EFI_DEVICE_PATH_PROTOCOL **PlatformConnectSequence;
+  EFI_HANDLE                DeviceHandle;
+  EFI_STATUS                Status;
+  EFI_DEVICE_PATH_PROTOCOL  **PlatformConnectSequence;
 
   PERF_FUNCTION_BEGIN (); // MS_CHANGE
 
@@ -284,16 +294,17 @@ ConnectSequence (
   //
   PlatformConnectSequence = mPlatformConnectSequence;
   if (PlatformConnectSequence != NULL) {
-      while (*PlatformConnectSequence != NULL) {
-        //
-        // Build the platform boot option
-        //
-        Status = EfiBootManagerConnectDevicePath (*PlatformConnectSequence, &DeviceHandle);
-        if (!EFI_ERROR (Status)) {
-            gBS->ConnectController (DeviceHandle, NULL, NULL, TRUE);
-        }
-        PlatformConnectSequence++;
+    while (*PlatformConnectSequence != NULL) {
+      //
+      // Build the platform boot option
+      //
+      Status = EfiBootManagerConnectDevicePath (*PlatformConnectSequence, &DeviceHandle);
+      if (!EFI_ERROR (Status)) {
+        gBS->ConnectController (DeviceHandle, NULL, NULL, TRUE);
       }
+
+      PlatformConnectSequence++;
+    }
   }
 
   //
@@ -310,14 +321,14 @@ SetMorControl (
   VOID
   )
 {
-  UINT8                        MorControl;
-  UINTN                        VariableSize;
-  EFI_STATUS                   Status;
+  UINT8       MorControl;
+  UINTN       VariableSize;
+  EFI_STATUS  Status;
 
   VariableSize = sizeof (MorControl);
-  MorControl = 1;
+  MorControl   = 1;
 
-  Status = gRT->SetVariable(
+  Status = gRT->SetVariable (
                   MEMORY_OVERWRITE_REQUEST_VARIABLE_NAME,
                   &gEfiMemoryOverwriteControlDataGuid,
                   EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -327,7 +338,6 @@ SetMorControl (
 
   return Status;
 }
-
 
 /**
   The function will execute with as the platform policy, current policy
@@ -345,12 +355,13 @@ PlatformBootManagerAfterConsole (
   VOID
   )
 {
-  EFI_STATUS                    Status;
-//  EFI_INPUT_KEY                 Key;
+  EFI_STATUS  Status;
 
-  if (PcdGetBool(PcdTestKeyUsed) == TRUE) {
-    Print(L"WARNING: Capsule Test Key is used.\n");
-    DEBUG((DEBUG_INFO, "WARNING: Capsule Test Key is used.\n"));
+  //  EFI_INPUT_KEY                 Key;
+
+  if (PcdGetBool (PcdTestKeyUsed) == TRUE) {
+    Print (L"WARNING: Capsule Test Key is used.\n");
+    DEBUG ((DEBUG_INFO, "WARNING: Capsule Test Key is used.\n"));
   }
 
   mPlatformConnectSequence = DeviceBootManagerAfterConsole ();
@@ -358,7 +369,7 @@ PlatformBootManagerAfterConsole (
   //
   // Boot Mode obtained in BeforeConsole action.
   //
-  DEBUG((DEBUG_INFO,"BootMode 0x%x\n", mBootMode));
+  DEBUG ((DEBUG_INFO, "BootMode 0x%x\n", mBootMode));
 
   //
   // Go the different platform policy with different boot mode
@@ -367,12 +378,12 @@ PlatformBootManagerAfterConsole (
   switch (mBootMode) {
     case BOOT_ON_S4_RESUME:
     case BOOT_WITH_MINIMAL_CONFIGURATION:
-      DEBUG((DEBUG_ERROR, "THIS BOOT MODE IS UNSUPPORTED.  0x%X \n", mBootMode));
+      DEBUG ((DEBUG_ERROR, "THIS BOOT MODE IS UNSUPPORTED.  0x%X \n", mBootMode));
 
     case BOOT_ASSUMING_NO_CONFIGURATION_CHANGES:
 
       // run memory test here to mark all memory good.  This is a hack until we get real BDS.
-      Status = MemoryTest(QUICK);  //we use NULL memory test so level doesn't matter.
+      Status = MemoryTest (QUICK);  // we use NULL memory test so level doesn't matter.
 
       //
       // Perform some platform specific connect sequence
@@ -382,26 +393,24 @@ PlatformBootManagerAfterConsole (
       break;
 
     case BOOT_ON_FLASH_UPDATE:
-      EfiBootManagerConnectAll();
+      EfiBootManagerConnectAll ();
       DEBUG ((DEBUG_INFO, "[%a] - signalling capsules are ready for processing\n", __FUNCTION__));
       EfiEventGroupSignal (&gMuReadyToProcessCapsulesNotifyGuid);
-      Status = ProcessCapsules();
+      Status = ProcessCapsules ();
 
       // If capsule update require reboot
       // this function will not return.
-      if (EFI_ERROR(Status))
-      {
-        SetMorControl();
-        DEBUG((DEBUG_INFO, "Locate and Process Capsules returned error (Status=%r). Setting MOR to clear memory and initiating reset.\n", Status));
+      if (EFI_ERROR (Status)) {
+        SetMorControl ();
+        DEBUG ((DEBUG_INFO, "Locate and Process Capsules returned error (Status=%r). Setting MOR to clear memory and initiating reset.\n", Status));
       }
 
-      //If we get here we need to reboot as we never want to boot in Flash Update mode.
-      gRT->ResetSystem(EfiResetCold, EFI_SUCCESS, 0, NULL);
+      // If we get here we need to reboot as we never want to boot in Flash Update mode.
+      gRT->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
       break;
 
-
     case BOOT_IN_RECOVERY_MODE:
-      DEBUG((DEBUG_ERROR, "THIS BOOT MODE IS UNSUPPORTED.  0x%X \n", mBootMode));
+      DEBUG ((DEBUG_ERROR, "THIS BOOT MODE IS UNSUPPORTED.  0x%X \n", mBootMode));
 
       //
       // In recovery boot mode, we still enter to the
@@ -412,12 +421,12 @@ PlatformBootManagerAfterConsole (
 
     case BOOT_WITH_FULL_CONFIGURATION:
     case BOOT_WITH_FULL_CONFIGURATION_PLUS_DIAGNOSTICS:
-      DEBUG((DEBUG_ERROR, "THIS BOOT MODE IS UNSUPPORTED.  0x%X \n", mBootMode));
+      DEBUG ((DEBUG_ERROR, "THIS BOOT MODE IS UNSUPPORTED.  0x%X \n", mBootMode));
 
     case BOOT_WITH_DEFAULT_SETTINGS:
     default:
       // run memory test here to mark all memory good.  This is a hack until we get real BDS.
-      Status = MemoryTest(QUICK);  //we use NULL memory test so level doesn't matter.
+      Status = MemoryTest (QUICK);  // we use NULL memory test so level doesn't matter.
       //
       // Perform some platform specific connect sequence
       //
@@ -434,7 +443,7 @@ PlatformBootManagerAfterConsole (
   // routine but the system is always reset in that case before reaching this
   // point.
   //
-  (void)ProcessCapsules();
+  (void)ProcessCapsules ();
 }
 
 /**
@@ -442,11 +451,11 @@ PlatformBootManagerAfterConsole (
 
   @param TimeoutRemain  The remaining timeout.
 **/
- VOID
- EFIAPI
+VOID
+EFIAPI
 PlatformBootManagerWaitCallback (
-  UINT16          TimeoutRemain
+  UINT16  TimeoutRemain
   )
- {
+{
   return;
- }
+}

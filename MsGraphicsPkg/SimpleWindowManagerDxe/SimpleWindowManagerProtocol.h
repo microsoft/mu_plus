@@ -10,7 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _SIMPLE_WINDOW_MANAGER_PROTOCOL_H_
 #define _SIMPLE_WINDOW_MANAGER_PROTOCOL_H_
 
-
 /**
     Resets the aggregate pointer event state queue and providers.
 
@@ -22,8 +21,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 EFIAPI
-SWMAbsolutePointerReset (IN EFI_ABSOLUTE_POINTER_PROTOCOL    *This,
-                         IN BOOLEAN                           ExtendedVerification);
+SWMAbsolutePointerReset (
+  IN EFI_ABSOLUTE_POINTER_PROTOCOL  *This,
+  IN BOOLEAN                        ExtendedVerification
+  );
 
 /**
     Get pointer stat from the aggregate pointer event state queue.
@@ -37,8 +38,10 @@ SWMAbsolutePointerReset (IN EFI_ABSOLUTE_POINTER_PROTOCOL    *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMAbsolutePointerGetState (IN EFI_ABSOLUTE_POINTER_PROTOCOL      *This,
-                            IN OUT MS_SWM_ABSOLUTE_POINTER_STATE  *State);
+SWMAbsolutePointerGetState (
+  IN EFI_ABSOLUTE_POINTER_PROTOCOL      *This,
+  IN OUT MS_SWM_ABSOLUTE_POINTER_STATE  *State
+  );
 
 /**
     Registers the specified client for receiving Simple Window Manager services.
@@ -59,15 +62,16 @@ SWMAbsolutePointerGetState (IN EFI_ABSOLUTE_POINTER_PROTOCOL      *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMRegisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                   IN  EFI_HANDLE                           ImageHandle,
-                   IN  UINT32                               Flags,
-                   IN  SWM_RECT                            *FrameRect,
-                   IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK   DataNotificationCallback OPTIONAL,
-                   IN  VOID                                *Context,
-                   OUT EFI_ABSOLUTE_POINTER_PROTOCOL      **AbsolutePointer,
-                   OUT EFI_EVENT                           *PaintEvent);
-
+SWMRegisterClient (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
+  IN  EFI_HANDLE                           ImageHandle,
+  IN  UINT32                               Flags,
+  IN  SWM_RECT                             *FrameRect,
+  IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK  DataNotificationCallback OPTIONAL,
+  IN  VOID                                 *Context,
+  OUT EFI_ABSOLUTE_POINTER_PROTOCOL        **AbsolutePointer,
+  OUT EFI_EVENT                            *PaintEvent
+  );
 
 /**
     Unregisters the specified client and stop receiving Simple Window Manager services.
@@ -82,9 +86,10 @@ SWMRegisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMUnregisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                     IN  EFI_HANDLE                          ImageHandle);
-
+SWMUnregisterClient (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN  EFI_HANDLE                         ImageHandle
+  );
 
 /**
     Tells the Simple Window Manager that the client is active and will be handling events.
@@ -101,10 +106,11 @@ SWMUnregisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMActivateWindow (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
-                   IN EFI_HANDLE                           ImageHandle,
-                   IN BOOLEAN                              MakeActive);
-
+SWMActivateWindow (
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN EFI_HANDLE                         ImageHandle,
+  IN BOOLEAN                            MakeActive
+  );
 
 /**
     Sets the outer window frame (bounding rectangle) for the client window.
@@ -118,10 +124,11 @@ SWMActivateWindow (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMSetWindowFrame (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
-                   IN EFI_HANDLE                           ImageHandle,
-                   IN SWM_RECT                             *FrameRect);
-
+SWMSetWindowFrame (
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN EFI_HANDLE                         ImageHandle,
+  IN SWM_RECT                           *FrameRect
+  );
 
 /**
     Performs a block copy (blit) to the client window associated with the image handle provided.  Blitting to
@@ -151,18 +158,19 @@ SWMSetWindowFrame (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMBltWindow (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL       *This,
-              IN  EFI_HANDLE                              ImageHandle,
-              IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL           *BltBuffer,   OPTIONAL
-              IN  EFI_GRAPHICS_OUTPUT_BLT_OPERATION       BltOperation,
-              IN  UINTN                                   SourceX,
-              IN  UINTN                                   SourceY,
-              IN  UINTN                                   DestinationX,
-              IN  UINTN                                   DestinationY,
-              IN  UINTN                                   Width,
-              IN  UINTN                                   Height,
-              IN  UINTN                                   Delta         OPTIONAL);
-
+SWMBltWindow (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL *This,
+  IN  EFI_HANDLE ImageHandle,
+  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer, OPTIONAL
+  IN  EFI_GRAPHICS_OUTPUT_BLT_OPERATION       BltOperation,
+  IN  UINTN                                   SourceX,
+  IN  UINTN                                   SourceY,
+  IN  UINTN                                   DestinationX,
+  IN  UINTN                                   DestinationY,
+  IN  UINTN                                   Width,
+  IN  UINTN                                   Height,
+  IN  UINTN                                   Delta         OPTIONAL
+  );
 
 /**
     Draws a string in the specified format to a client window associated with the specified image handle.  Drawing to
@@ -228,18 +236,19 @@ SWMBltWindow (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL       *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMStringToWindow (IN        MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                   IN        EFI_HANDLE                          ImageHandle,
-                   IN        EFI_HII_OUT_FLAGS                   Flags,
-                   IN        EFI_STRING                          String,
-                   IN        EFI_FONT_DISPLAY_INFO               *StringInfo,
-                   IN OUT    EFI_IMAGE_OUTPUT                    **Blt,
-                   IN        UINTN                               BltX,
-                   IN        UINTN                               BltY,
-                   OUT       EFI_HII_ROW_INFO                    **RowInfoArray OPTIONAL,
-                   OUT       UINTN                               *RowInfoArraySize OPTIONAL,
-                   OUT       UINTN                               *ColumnInfoArray OPTIONAL);
-
+SWMStringToWindow (
+  IN        MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN        EFI_HANDLE                         ImageHandle,
+  IN        EFI_HII_OUT_FLAGS                  Flags,
+  IN        EFI_STRING                         String,
+  IN        EFI_FONT_DISPLAY_INFO              *StringInfo,
+  IN OUT    EFI_IMAGE_OUTPUT                   **Blt,
+  IN        UINTN                              BltX,
+  IN        UINTN                              BltY,
+  OUT       EFI_HII_ROW_INFO                   **RowInfoArray OPTIONAL,
+  OUT       UINTN                              *RowInfoArraySize OPTIONAL,
+  OUT       UINTN                              *ColumnInfoArray OPTIONAL
+  );
 
 /**
     Enables the mouse pointer to be displayed if the Absolute Pointer provider is a "mouse" (i.e., not touch).
@@ -252,8 +261,10 @@ SWMStringToWindow (IN        MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMEnableMousePointer (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                       IN BOOLEAN                             bEnableMouse);
+SWMEnableMousePointer (
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN BOOLEAN                            bEnableMouse
+  );
 
 /**
  * Wait for an event, and display the POWER OFF dialog if the Power Timer expires
@@ -268,10 +279,12 @@ SWMEnableMousePointer (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
  */
 EFI_STATUS
 EFIAPI
-SWMWaitForEvent (IN UINTN           NumberOfEvents,
-                 IN EFI_EVENT      *Events,
-                 IN UINTN          *Index,
-                 IN UINT64          Timeout,
-                 IN BOOLEAN         ContinueTimer);
+SWMWaitForEvent (
+  IN UINTN      NumberOfEvents,
+  IN EFI_EVENT  *Events,
+  IN UINTN      *Index,
+  IN UINT64     Timeout,
+  IN BOOLEAN    ContinueTimer
+  );
 
-#endif  // _SIMPLE_WINDOW_MANAGER_PROTOCOL_H_
+#endif // _SIMPLE_WINDOW_MANAGER_PROTOCOL_H_

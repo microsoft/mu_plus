@@ -27,5 +27,4 @@
 
 #include "../DebugFileLoggerCommon.h"
 
-
-#endif  // _PEI_DEBUGFILE_LOGGER_H
+#endif // _PEI_DEBUGFILE_LOGGER_H

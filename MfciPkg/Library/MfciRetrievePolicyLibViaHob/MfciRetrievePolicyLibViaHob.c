@@ -41,8 +41,8 @@ Arguments:
 EFI_STATUS
 EFIAPI
 MfciRetrievePolicy (
-    OUT  MFCI_POLICY_TYPE  *MfciPolicyValue
- )
+  OUT  MFCI_POLICY_TYPE  *MfciPolicyValue
+  )
 {
   EFI_STATUS        Status;
   VOID              *GuidHob;
@@ -51,32 +51,32 @@ MfciRetrievePolicy (
 
   if ( MfciPolicyValue == NULL ) {
     DEBUG ((DEBUG_ERROR, "MfciPolicyValue must be non-NULL\n"));
-    ASSERT(MfciPolicyValue != NULL);
+    ASSERT (MfciPolicyValue != NULL);
     Status = EFI_INVALID_PARAMETER;
     goto Exit;
   }
 
-  GuidHob = GetFirstGuidHob(&gMfciHobGuid);
+  GuidHob = GetFirstGuidHob (&gMfciHobGuid);
   if (GuidHob == NULL) {
-    DEBUG(( DEBUG_ERROR, "%a() - MFCI Policy HOB not found!\n", __FUNCTION__ ));
-    ASSERT(GuidHob != NULL);
+    DEBUG ((DEBUG_ERROR, "%a() - MFCI Policy HOB not found!\n", __FUNCTION__));
+    ASSERT (GuidHob != NULL);
     Status = EFI_NOT_FOUND;
     goto Exit;
   }
 
-  PolicyPtr = GET_GUID_HOB_DATA(GuidHob);
-  EntrySize = GET_GUID_HOB_DATA_SIZE(GuidHob);
-  if ((PolicyPtr == NULL) || (EntrySize != sizeof(MFCI_POLICY_TYPE))) {
-    DEBUG(( DEBUG_ERROR, "%a() - MFCI Policy HOB malformed, PolicyPtr(%p) , EntrySize(%x)\n", __FUNCTION__, PolicyPtr, EntrySize ));
-    ASSERT(PolicyPtr != NULL);
-    ASSERT(EntrySize == sizeof(MFCI_POLICY_TYPE));
+  PolicyPtr = GET_GUID_HOB_DATA (GuidHob);
+  EntrySize = GET_GUID_HOB_DATA_SIZE (GuidHob);
+  if ((PolicyPtr == NULL) || (EntrySize != sizeof (MFCI_POLICY_TYPE))) {
+    DEBUG ((DEBUG_ERROR, "%a() - MFCI Policy HOB malformed, PolicyPtr(%p) , EntrySize(%x)\n", __FUNCTION__, PolicyPtr, EntrySize));
+    ASSERT (PolicyPtr != NULL);
+    ASSERT (EntrySize == sizeof (MFCI_POLICY_TYPE));
     Status = EFI_NOT_FOUND;
     goto Exit;
   }
 
   *MfciPolicyValue = *PolicyPtr;
-  Status = EFI_SUCCESS;
-  DEBUG(( DEBUG_INFO, "%a() - MFCI Policy from HOB 0x%lx\n", __FUNCTION__, *MfciPolicyValue ));
+  Status           = EFI_SUCCESS;
+  DEBUG ((DEBUG_INFO, "%a() - MFCI Policy from HOB 0x%lx\n", __FUNCTION__, *MfciPolicyValue));
 
 Exit:
 

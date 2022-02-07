@@ -25,11 +25,10 @@ On success
 EFI_STATUS
 EFIAPI
 GetBootGraphic (
-  BOOT_GRAPHIC Graphic,
-  OUT UINTN    *ImageSize,
-  OUT UINT8    **ImageData
+  BOOT_GRAPHIC  Graphic,
+  OUT UINTN     *ImageSize,
+  OUT UINT8     **ImageData
   );
-
 
 /**
   Get the pixel color for the background
@@ -37,7 +36,7 @@ GetBootGraphic (
 **/
 UINT32
 EFIAPI
-GetBackgroundColor();
-
+GetBackgroundColor (
+  );
 
 #endif

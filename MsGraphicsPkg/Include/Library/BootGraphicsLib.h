@@ -11,10 +11,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define _BOOT_GRAPHICS_LIB_H_
 
 typedef UINT8 BOOT_GRAPHIC;
-#define BG_NONE (0)
-#define BG_SYSTEM_LOGO (1)
-#define BG_CRITICAL_OVER_TEMP (2)
-#define BG_CRITICAL_LOW_BATTERY (3)
+#define BG_NONE                  (0)
+#define BG_SYSTEM_LOGO           (1)
+#define BG_CRITICAL_OVER_TEMP    (2)
+#define BG_CRITICAL_LOW_BATTERY  (3)
 
 /**
   Display Main System Boot Graphic
@@ -23,9 +23,7 @@ typedef UINT8 BOOT_GRAPHIC;
 EFI_STATUS
 EFIAPI
 DisplayBootGraphic (
-  BOOT_GRAPHIC graphic
+  BOOT_GRAPHIC  graphic
   );
-
-
 
 #endif

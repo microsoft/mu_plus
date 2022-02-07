@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include "PagingAuditCommon.h"
 #include <Pi/PiBootMode.h>
 #include <Pi/PiHob.h>
@@ -27,14 +26,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 OpenVolumeSFS (
-  OUT EFI_FILE** Fs_Handle
+  OUT EFI_FILE  **Fs_Handle
   );
 
-HEAP_GUARD_DEBUG_PROTOCOL *mHgDumpBitMap;
-EFI_FILE  *mFs_Handle;
-extern CHAR8     *mMemoryInfoDatabaseBuffer;
-extern UINTN      mMemoryInfoDatabaseSize;
-extern UINTN      mMemoryInfoDatabaseAllocSize;
+HEAP_GUARD_DEBUG_PROTOCOL  *mHgDumpBitMap;
+EFI_FILE                   *mFs_Handle;
+extern CHAR8               *mMemoryInfoDatabaseBuffer;
+extern UINTN               mMemoryInfoDatabaseSize;
+extern UINTN               mMemoryInfoDatabaseAllocSize;
 
 /**
   Calculate the maximum physical address bits supported.
@@ -46,16 +45,16 @@ CalculateMaximumSupportAddressBits (
   VOID
   )
 {
-  UINT32                                        RegEax;
-  UINT8                                         PhysicalAddressBits;
-  VOID                                          *Hob;
+  UINT32  RegEax;
+  UINT8   PhysicalAddressBits;
+  VOID    *Hob;
 
   //
   // Get physical address bits supported.
   //
   Hob = GetFirstHob (EFI_HOB_TYPE_CPU);
   if (Hob != NULL) {
-    PhysicalAddressBits = ((EFI_HOB_CPU *) Hob)->SizeOfMemorySpace;
+    PhysicalAddressBits = ((EFI_HOB_CPU *)Hob)->SizeOfMemorySpace;
   } else {
     // Ref. 1: Intel Software Developer's Manual Vol.2, Chapter 3, Section "CPU-Identification".
     // Ref. 2: AMD Software Developer's Manual Vol. 3, Appendix E.
@@ -64,7 +63,7 @@ CalculateMaximumSupportAddressBits (
     if (RegEax >= 0x80000008) {
       // If 0x80000008 is supported, query the supported physical address size with it
       AsmCpuid (0x80000008, &RegEax, NULL, NULL, NULL);
-      PhysicalAddressBits = (UINT8) RegEax;
+      PhysicalAddressBits = (UINT8)RegEax;
     } else {
       // Note: below assumption is only found in Intel Software Developer's Manual Vol.3A, 11.11.2.3
       // If CPUID.80000008H is not available, software may assume that the processor supports
@@ -72,6 +71,7 @@ CalculateMaximumSupportAddressBits (
       PhysicalAddressBits = 36;
     }
   }
+
   return PhysicalAddressBits;
 }
 
@@ -92,46 +92,48 @@ CalculateMaximumSupportAddressBits (
 EFI_STATUS
 EFIAPI
 AppendToMemoryInfoDatabase (
-  IN CONST CHAR8    *DatabaseString
+  IN CONST CHAR8  *DatabaseString
   )
 {
-  EFI_STATUS    Status = EFI_SUCCESS;
-  UINTN         NewStringSize, NewDatabaseSize;
-  CHAR8         *NewDatabaseBuffer;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINTN       NewStringSize, NewDatabaseSize;
+  CHAR8       *NewDatabaseBuffer;
 
   // If the incoming string is NULL or empty, get out of here.
-  if (DatabaseString == NULL || DatabaseString[0] == '\0') {
+  if ((DatabaseString == NULL) || (DatabaseString[0] == '\0')) {
     return EFI_SUCCESS;
   }
 
   // Determine the length of the incoming string.
   // NOTE: This size includes the NULL terminator.
-  NewStringSize = AsciiStrnSizeS( DatabaseString, MEM_INFO_DATABASE_MAX_STRING_SIZE );
-  NewStringSize = NewStringSize - sizeof(CHAR8);    // Remove NULL.
+  NewStringSize = AsciiStrnSizeS (DatabaseString, MEM_INFO_DATABASE_MAX_STRING_SIZE);
+  NewStringSize = NewStringSize - sizeof (CHAR8);    // Remove NULL.
 
   // If we need more space, realloc now.
   // Subtract 1 because we only need a single NULL terminator.
   NewDatabaseSize = NewStringSize + mMemoryInfoDatabaseSize;
   if (NewDatabaseSize > mMemoryInfoDatabaseAllocSize) {
-    NewDatabaseBuffer = ReallocatePool( mMemoryInfoDatabaseAllocSize,
-                                        mMemoryInfoDatabaseAllocSize + MEM_INFO_DATABASE_REALLOC_CHUNK,
-                                        mMemoryInfoDatabaseBuffer );
+    NewDatabaseBuffer = ReallocatePool (
+                          mMemoryInfoDatabaseAllocSize,
+                          mMemoryInfoDatabaseAllocSize + MEM_INFO_DATABASE_REALLOC_CHUNK,
+                          mMemoryInfoDatabaseBuffer
+                          );
     // If we failed, don't change anything.
     if (NewDatabaseBuffer == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
     }
     // Otherwise, updated the pointers and sizes.
     else {
-      mMemoryInfoDatabaseBuffer = NewDatabaseBuffer;
+      mMemoryInfoDatabaseBuffer     = NewDatabaseBuffer;
       mMemoryInfoDatabaseAllocSize += MEM_INFO_DATABASE_REALLOC_CHUNK;
     }
   }
 
   // If we're still good, copy the new string to the end of
   // the buffer and update the size.
-  if (!EFI_ERROR( Status )) {
+  if (!EFI_ERROR (Status)) {
     // Subtract 1 to remove the previous NULL terminator.
-    CopyMem( &mMemoryInfoDatabaseBuffer[mMemoryInfoDatabaseSize], DatabaseString, NewStringSize );
+    CopyMem (&mMemoryInfoDatabaseBuffer[mMemoryInfoDatabaseSize], DatabaseString, NewStringSize);
     mMemoryInfoDatabaseSize = NewDatabaseSize;
   }
 
@@ -152,56 +154,56 @@ AppendToMemoryInfoDatabase (
 **/
 EFI_STATUS
 CreateAndWriteFileSFS (
-    IN EFI_FILE*  Fs_Handle,
-    IN CHAR16*    FileName,
-    IN UINTN      DataBufferSize,
-    IN VOID*      Data
-)
+  IN EFI_FILE  *Fs_Handle,
+  IN CHAR16    *FileName,
+  IN UINTN     DataBufferSize,
+  IN VOID      *Data
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
-    EFI_FILE    *FileHandle = NULL;
+  EFI_STATUS  Status      = EFI_SUCCESS;
+  EFI_FILE    *FileHandle = NULL;
 
-    DEBUG((DEBUG_ERROR, "%a: Creating file: %s \n", __FUNCTION__, FileName));
+  DEBUG ((DEBUG_ERROR, "%a: Creating file: %s \n", __FUNCTION__, FileName));
 
-    // Create the file with RW permissions.
-    //
-    Status = Fs_Handle->Open (
-                            Fs_Handle,
-                            &FileHandle,
-                            FileName,
-                            EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
-                            0
-                            );
+  // Create the file with RW permissions.
+  //
+  Status = Fs_Handle->Open (
+                        Fs_Handle,
+                        &FileHandle,
+                        FileName,
+                        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE,
+                        0
+                        );
 
-    if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Failed to create file %s: %r !\n", __FUNCTION__, FileName, Status));
-        goto CleanUp;
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to create file %s: %r !\n", __FUNCTION__, FileName, Status));
+    goto CleanUp;
+  }
 
-    // Write the contents of the caller's data buffer to the file.
-    //
-    Status = FileHandle->Write (
-                                FileHandle,
-                                &DataBufferSize,
-                                Data
-                                );
+  // Write the contents of the caller's data buffer to the file.
+  //
+  Status = FileHandle->Write (
+                         FileHandle,
+                         &DataBufferSize,
+                         Data
+                         );
 
-    if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Failed to write to file %s: %r !\n", __FUNCTION__, FileName, Status));
-        goto CleanUp;
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to write to file %s: %r !\n", __FUNCTION__, FileName, Status));
+    goto CleanUp;
+  }
 
-    FileHandle->Flush(Fs_Handle);
+  FileHandle->Flush (Fs_Handle);
 
 CleanUp:
 
-    // Close the file if it was successfully opened.
-    //
-    if (FileHandle != NULL) {
-        FileHandle->Close (FileHandle);
-    }
+  // Close the file if it was successfully opened.
+  //
+  if (FileHandle != NULL) {
+    FileHandle->Close (FileHandle);
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -215,28 +217,28 @@ CleanUp:
 VOID
 EFIAPI
 WriteBufferToFile (
-  IN CONST CHAR16                   *FileName,
-  IN       VOID                     *Buffer,
-  IN       UINTN                     BufferSize
+  IN CONST CHAR16  *FileName,
+  IN       VOID    *Buffer,
+  IN       UINTN   BufferSize
   )
 {
-  EFI_STATUS          Status;
-  CHAR16              FileNameAndExt[MAX_STRING_SIZE];
+  EFI_STATUS  Status;
+  CHAR16      FileNameAndExt[MAX_STRING_SIZE];
 
   if (mFs_Handle == NULL) {
     Status = OpenVolumeSFS (&mFs_Handle);
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
       return;
     }
   }
 
   // Calculate final file name.
-  ZeroMem( FileNameAndExt, sizeof(CHAR16) * MAX_STRING_SIZE );
-  UnicodeSPrint( FileNameAndExt, MAX_STRING_SIZE, L"%s.dat", FileName );
+  ZeroMem (FileNameAndExt, sizeof (CHAR16) * MAX_STRING_SIZE);
+  UnicodeSPrint (FileNameAndExt, MAX_STRING_SIZE, L"%s.dat", FileName);
 
-  Status = CreateAndWriteFileSFS(mFs_Handle, FileNameAndExt, BufferSize, Buffer);
-  DEBUG((DEBUG_ERROR, "%a Writing file %s - %r\n", __FUNCTION__, FileNameAndExt, Status));
+  Status = CreateAndWriteFileSFS (mFs_Handle, FileNameAndExt, BufferSize, Buffer);
+  DEBUG ((DEBUG_ERROR, "%a Writing file %s - %r\n", __FUNCTION__, FileNameAndExt, Status));
 }
 
 /**
@@ -248,35 +250,34 @@ MemoryAttributesTableDump (
   VOID
   )
 {
-  EFI_STATUS                      Status;
-  EFI_MEMORY_ATTRIBUTES_TABLE     *MatMap;
-  EFI_MEMORY_DESCRIPTOR           *Map;
-  UINTN                           EntrySize;
-  UINTN                           EntryCount;
-  CHAR8                           *WriteString;
-  CHAR8                           *Buffer;
-  UINT64                          Index;
-  UINTN                           BufferSize;
-  UINTN                           FormattedStringSize;
+  EFI_STATUS                   Status;
+  EFI_MEMORY_ATTRIBUTES_TABLE  *MatMap;
+  EFI_MEMORY_DESCRIPTOR        *Map;
+  UINTN                        EntrySize;
+  UINTN                        EntryCount;
+  CHAR8                        *WriteString;
+  CHAR8                        *Buffer;
+  UINT64                       Index;
+  UINTN                        BufferSize;
+  UINTN                        FormattedStringSize;
   // NOTE: Important to use fixed-size formatters for pointer movement.
-  CHAR8                           MatFormatString[] = "MAT,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n";
-  CHAR8                           TempString[MAX_STRING_SIZE];
+  CHAR8  MatFormatString[] = "MAT,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n";
+  CHAR8  TempString[MAX_STRING_SIZE];
 
   //
   // First, we need to locate the MAT table.
   //
-  Status = EfiGetSystemConfigurationTable( &gEfiMemoryAttributesTableGuid, (VOID *)&MatMap );
+  Status = EfiGetSystemConfigurationTable (&gEfiMemoryAttributesTableGuid, (VOID *)&MatMap);
 
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a Failed to retrieve MAT %r\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Failed to retrieve MAT %r\n", __FUNCTION__, Status));
     return;
   }
 
   // MAT should now be at the pointer.
-  EntrySize    = MatMap->DescriptorSize;
-  EntryCount   = MatMap->NumberOfEntries;
-  Map          = (VOID*)((UINT8*)MatMap + sizeof( *MatMap ));
-
+  EntrySize  = MatMap->DescriptorSize;
+  EntryCount = MatMap->NumberOfEntries;
+  Map        = (VOID *)((UINT8 *)MatMap + sizeof (*MatMap));
 
   //
   // Next, we need to allocate a buffer to hold all of the entries.
@@ -284,45 +285,43 @@ MemoryAttributesTableDump (
   //
   // Do a dummy format to determine the size of a string.
   // We're safe to use 0's, since the formatters are fixed-size.
-  FormattedStringSize = AsciiSPrint( TempString, MAX_STRING_SIZE, MatFormatString, 0, 0, 0, 0, 0 );
+  FormattedStringSize = AsciiSPrint (TempString, MAX_STRING_SIZE, MatFormatString, 0, 0, 0, 0, 0);
   // Make sure to add space for the NULL terminator at the end.
-  BufferSize = (EntryCount * FormattedStringSize) + sizeof(CHAR8);
-  Buffer = AllocatePool(BufferSize);
+  BufferSize = (EntryCount * FormattedStringSize) + sizeof (CHAR8);
+  Buffer     = AllocatePool (BufferSize);
   if (!Buffer) {
-    DEBUG((DEBUG_ERROR, "%a Failed to allocate buffer for data dump!\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a Failed to allocate buffer for data dump!\n", __FUNCTION__));
     return;
   }
-
 
   //
   // Add all entries to the buffer.
   //
   WriteString = Buffer;
-  for (Index = 0; Index < EntryCount; Index ++)
-  {
-    AsciiSPrint( WriteString,
-                 FormattedStringSize+1,
-                 MatFormatString,
-                 Map->Type,
-                 Map->PhysicalStart,
-                 Map->VirtualStart,
-                 Map->NumberOfPages,
-                 Map->Attribute );
+  for (Index = 0; Index < EntryCount; Index++) {
+    AsciiSPrint (
+      WriteString,
+      FormattedStringSize+1,
+      MatFormatString,
+      Map->Type,
+      Map->PhysicalStart,
+      Map->VirtualStart,
+      Map->NumberOfPages,
+      Map->Attribute
+      );
 
     WriteString += FormattedStringSize;
-    Map = NEXT_MEMORY_DESCRIPTOR( Map, EntrySize );
+    Map          = NEXT_MEMORY_DESCRIPTOR (Map, EntrySize);
   }
-
 
   //
   // Finally, write the strings to the dump file.
   //
   // NOTE: Don't need to save the NULL terminator.
-  WriteBufferToFile( L"MAT", Buffer, BufferSize-1 );
+  WriteBufferToFile (L"MAT", Buffer, BufferSize-1);
 
-  FreePool(Buffer);
+  FreePool (Buffer);
 }
-
 
 /**
  * @brief      Writes the UEFI memory map to file.
@@ -333,72 +332,81 @@ MemoryMapDumpHandler (
   VOID
   )
 {
+  EFI_STATUS             Status;
+  UINTN                  EfiMemoryMapSize;
+  UINTN                  EfiMapKey;
+  UINTN                  EfiDescriptorSize;
+  UINT32                 EfiDescriptorVersion;
+  EFI_MEMORY_DESCRIPTOR  *EfiMemoryMap;
+  EFI_MEMORY_DESCRIPTOR  *EfiMemoryMapEnd;
+  EFI_MEMORY_DESCRIPTOR  *EfiMemNext;
+  CHAR8                  TempString[MAX_STRING_SIZE];
+  UINT8                  MaxPhysicalAddressWidth;
 
-  EFI_STATUS                  Status;
-  UINTN                       EfiMemoryMapSize;
-  UINTN                       EfiMapKey;
-  UINTN                       EfiDescriptorSize;
-  UINT32                      EfiDescriptorVersion;
-  EFI_MEMORY_DESCRIPTOR       *EfiMemoryMap;
-  EFI_MEMORY_DESCRIPTOR       *EfiMemoryMapEnd;
-  EFI_MEMORY_DESCRIPTOR       *EfiMemNext;
-  CHAR8                       TempString[MAX_STRING_SIZE];
-  UINT8                       MaxPhysicalAddressWidth;
-
-  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
 
   //
   // Add remaining misc data to the database.
   //
   MaxPhysicalAddressWidth = CalculateMaximumSupportAddressBits ();
-  AsciiSPrint( &TempString[0], MAX_STRING_SIZE,
-               "Bitwidth,0x%02x\n",
-               MaxPhysicalAddressWidth );
-  AppendToMemoryInfoDatabase( &TempString[0] );
+  AsciiSPrint (
+    &TempString[0],
+    MAX_STRING_SIZE,
+    "Bitwidth,0x%02x\n",
+    MaxPhysicalAddressWidth
+    );
+  AppendToMemoryInfoDatabase (&TempString[0]);
 
   //
   // Get the EFI memory map.
   //
-  EfiMemoryMapSize  = 0;
-  EfiMemoryMap      = NULL;
-  Status = gBS->GetMemoryMap( &EfiMemoryMapSize,
-                              EfiMemoryMap,
-                              &EfiMapKey,
-                              &EfiDescriptorSize,
-                              &EfiDescriptorVersion );
+  EfiMemoryMapSize = 0;
+  EfiMemoryMap     = NULL;
+  Status           = gBS->GetMemoryMap (
+                            &EfiMemoryMapSize,
+                            EfiMemoryMap,
+                            &EfiMapKey,
+                            &EfiDescriptorSize,
+                            &EfiDescriptorVersion
+                            );
   //
   // Loop to allocate space for the memory map and then copy it in.
   //
   do {
-    EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR*)AllocateZeroPool( EfiMemoryMapSize );
-    ASSERT( EfiMemoryMap != NULL );
-    Status = gBS->GetMemoryMap( &EfiMemoryMapSize,
-                                EfiMemoryMap,
-                                &EfiMapKey,
-                                &EfiDescriptorSize,
-                                &EfiDescriptorVersion );
-    if (EFI_ERROR( Status )) {
-      FreePool( EfiMemoryMap );
+    EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocateZeroPool (EfiMemoryMapSize);
+    ASSERT (EfiMemoryMap != NULL);
+    Status = gBS->GetMemoryMap (
+                    &EfiMemoryMapSize,
+                    EfiMemoryMap,
+                    &EfiMapKey,
+                    &EfiDescriptorSize,
+                    &EfiDescriptorVersion
+                    );
+    if (EFI_ERROR (Status)) {
+      FreePool (EfiMemoryMap);
     }
   } while (Status == EFI_BUFFER_TOO_SMALL);
 
-  EfiMemoryMapEnd = (EFI_MEMORY_DESCRIPTOR*)((UINT8*)EfiMemoryMap + EfiMemoryMapSize);
-  EfiMemNext = EfiMemoryMap;
+  EfiMemoryMapEnd = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)EfiMemoryMap + EfiMemoryMapSize);
+  EfiMemNext      = EfiMemoryMap;
 
   while (EfiMemNext < EfiMemoryMapEnd) {
-    AsciiSPrint( TempString, MAX_STRING_SIZE,
-                 "MemoryMap,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-                 EfiMemNext->Type,
-                 EfiMemNext->PhysicalStart,
-                 EfiMemNext->VirtualStart,
-                 EfiMemNext->NumberOfPages,
-                 EfiMemNext->Attribute );
-    AppendToMemoryInfoDatabase( TempString );
-    EfiMemNext = NEXT_MEMORY_DESCRIPTOR( EfiMemNext, EfiDescriptorSize );
+    AsciiSPrint (
+      TempString,
+      MAX_STRING_SIZE,
+      "MemoryMap,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+      EfiMemNext->Type,
+      EfiMemNext->PhysicalStart,
+      EfiMemNext->VirtualStart,
+      EfiMemNext->NumberOfPages,
+      EfiMemNext->Attribute
+      );
+    AppendToMemoryInfoDatabase (TempString);
+    EfiMemNext = NEXT_MEMORY_DESCRIPTOR (EfiMemNext, EfiDescriptorSize);
   }
 
   if (EfiMemoryMap) {
-    FreePool( EfiMemoryMap );
+    FreePool (EfiMemoryMap);
   }
 }
 
@@ -411,55 +419,59 @@ LoadedImageTableDump (
   VOID
   )
 {
-  EFI_STATUS                                   Status;
-  EFI_DEBUG_IMAGE_INFO_TABLE_HEADER           *TableHeader;
-  EFI_DEBUG_IMAGE_INFO                        *Table;
-  EFI_LOADED_IMAGE_PROTOCOL                   *LoadedImageProtocolInstance;
-  UINTN                                        ImageBase;
-  UINT64                                       ImageSize;
-  UINT64                                       Index;
-  UINT32                                       TableSize;
-  EFI_DEBUG_IMAGE_INFO_NORMAL                 *NormalImage;
-  CHAR8                                       *PdbFileName;
-  CHAR8                                       TempString[MAX_STRING_SIZE];
+  EFI_STATUS                         Status;
+  EFI_DEBUG_IMAGE_INFO_TABLE_HEADER  *TableHeader;
+  EFI_DEBUG_IMAGE_INFO               *Table;
+  EFI_LOADED_IMAGE_PROTOCOL          *LoadedImageProtocolInstance;
+  UINTN                              ImageBase;
+  UINT64                             ImageSize;
+  UINT64                             Index;
+  UINT32                             TableSize;
+  EFI_DEBUG_IMAGE_INFO_NORMAL        *NormalImage;
+  CHAR8                              *PdbFileName;
+  CHAR8                              TempString[MAX_STRING_SIZE];
 
-  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
 
   //
   // locate DebugImageInfoTable
   //
-  Status = EfiGetSystemConfigurationTable( &gEfiDebugImageInfoTableGuid, (VOID**)&TableHeader );
-  if (EFI_ERROR( Status )) {
-    DEBUG(( DEBUG_ERROR, "Failed to retrieve loaded image table %r", Status ));
+  Status = EfiGetSystemConfigurationTable (&gEfiDebugImageInfoTableGuid, (VOID **)&TableHeader);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to retrieve loaded image table %r", Status));
     return;
   }
 
-  Table = TableHeader->EfiDebugImageInfoTable;
+  Table     = TableHeader->EfiDebugImageInfoTable;
   TableSize = TableHeader->TableSize;
 
-  DEBUG(( DEBUG_VERBOSE, "%a\n\nLength %lx Start x0x%016lx\n\n", __FUNCTION__, TableHeader->TableSize, Table ));
+  DEBUG ((DEBUG_VERBOSE, "%a\n\nLength %lx Start x0x%016lx\n\n", __FUNCTION__, TableHeader->TableSize, Table));
 
-  for (Index = 0; Index < TableSize; Index ++) {
+  for (Index = 0; Index < TableSize; Index++) {
     if (Table[Index].NormalImage == NULL) {
       continue;
     }
 
-    NormalImage = Table[Index].NormalImage;
+    NormalImage                 = Table[Index].NormalImage;
     LoadedImageProtocolInstance = NormalImage->LoadedImageProtocolInstance;
-    ImageSize = LoadedImageProtocolInstance->ImageSize;
-    ImageBase = (UINTN) LoadedImageProtocolInstance->ImageBase;
+    ImageSize                   = LoadedImageProtocolInstance->ImageSize;
+    ImageBase                   = (UINTN)LoadedImageProtocolInstance->ImageBase;
 
     if (ImageSize == 0) {
       // No need to register empty slots in the table as images.
       continue;
     }
-    PdbFileName = PeCoffLoaderGetPdbPointer( LoadedImageProtocolInstance->ImageBase );
-    AsciiSPrint( TempString, MAX_STRING_SIZE,
-                 "LoadedImage,0x%016lx,0x%016lx,%a\n",
-                 ImageBase,
-                 ImageSize,
-                 PdbFileName );
-    AppendToMemoryInfoDatabase( TempString );
+
+    PdbFileName = PeCoffLoaderGetPdbPointer (LoadedImageProtocolInstance->ImageBase);
+    AsciiSPrint (
+      TempString,
+      MAX_STRING_SIZE,
+      "LoadedImage,0x%016lx,0x%016lx,%a\n",
+      ImageBase,
+      ImageSize,
+      PdbFileName
+      );
+    AppendToMemoryInfoDatabase (TempString);
   }
 }
 
@@ -475,37 +487,38 @@ LoadedImageTableDump (
 **/
 EFI_STATUS
 OpenVolumeSFS (
-  OUT EFI_FILE** Fs_Handle
+  OUT EFI_FILE  **Fs_Handle
   )
 {
+  EFI_DEVICE_PATH_PROTOCOL         *DevicePath;
+  BOOLEAN                          Found;
+  EFI_HANDLE                       Handle;
+  EFI_HANDLE                       *HandleBuffer;
+  UINTN                            Index;
+  UINTN                            NumHandles;
+  EFI_DEVICE_PATH_PROTOCOL         *OrigDevicePath;
+  EFI_STRING                       PathNameStr;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SfProtocol;
+  EFI_STATUS                       Status;
 
-  EFI_DEVICE_PATH_PROTOCOL* DevicePath;
-  BOOLEAN Found;
-  EFI_HANDLE Handle;
-  EFI_HANDLE* HandleBuffer;
-  UINTN Index;
-  UINTN NumHandles;
-  EFI_DEVICE_PATH_PROTOCOL* OrigDevicePath;
-  EFI_STRING PathNameStr;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* SfProtocol;
-  EFI_STATUS Status;
-
-  Status = EFI_SUCCESS;
-  SfProtocol = NULL;
-  NumHandles = 0;
+  Status       = EFI_SUCCESS;
+  SfProtocol   = NULL;
+  NumHandles   = 0;
   HandleBuffer = NULL;
 
   //
   // Locate all handles that are using the SFS protocol.
   //
-  Status = gBS->LocateHandleBuffer(ByProtocol,
-                                   &gEfiSimpleFileSystemProtocolGuid,
-                                   NULL,
-                                   &NumHandles,
-                                   &HandleBuffer);
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumHandles,
+                  &HandleBuffer
+                  );
 
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
     goto CleanUp;
   }
 
@@ -514,7 +527,7 @@ OpenVolumeSFS (
   //
   Found = FALSE;
   for (Index = 0; (Index < NumHandles) && (Found == FALSE); Index += 1) {
-    DevicePath = DevicePathFromHandle(HandleBuffer[Index]);
+    DevicePath = DevicePathFromHandle (HandleBuffer[Index]);
     if (DevicePath == NULL) {
       continue;
     }
@@ -528,20 +541,22 @@ OpenVolumeSFS (
     //
     // Convert the device path to a string to print it.
     //
-    PathNameStr = ConvertDevicePathToText(DevicePath,TRUE,TRUE);
-    DEBUG((DEBUG_ERROR, "%a: device path %d -> %s\n", __FUNCTION__, Index, PathNameStr));
+    PathNameStr = ConvertDevicePathToText (DevicePath, TRUE, TRUE);
+    DEBUG ((DEBUG_ERROR, "%a: device path %d -> %s\n", __FUNCTION__, Index, PathNameStr));
 
     //
     // Check if this is a block IO device path. If it is not, keep searching.
     // This changes our locate device path variable, so we'll have to restore
     // it afterwards.
     //
-    Status = gBS->LocateDevicePath(&gEfiBlockIoProtocolGuid,
-                                   &DevicePath,
-                                   &Handle);
+    Status = gBS->LocateDevicePath (
+                    &gEfiBlockIoProtocolGuid,
+                    &DevicePath,
+                    &Handle
+                    );
 
-    if (EFI_ERROR(Status) != FALSE) {
-      DEBUG((DEBUG_ERROR, "%a: not a block IO device path\n", __FUNCTION__));
+    if (EFI_ERROR (Status) != FALSE) {
+      DEBUG ((DEBUG_ERROR, "%a: not a block IO device path\n", __FUNCTION__));
       continue;
     }
 
@@ -550,22 +565,22 @@ OpenVolumeSFS (
     // want to write our log on GPT partitions.
     //
     DevicePath = OrigDevicePath;
-    while (IsDevicePathEnd(DevicePath) == FALSE) {
+    while (IsDevicePathEnd (DevicePath) == FALSE) {
       //
       // If the device path is not a hard drive, we don't want it.
       //
-      if (DevicePathType(DevicePath) == MEDIA_DEVICE_PATH &&
-          DevicePathSubType(DevicePath) == MEDIA_HARDDRIVE_DP) {
-
+      if ((DevicePathType (DevicePath) == MEDIA_DEVICE_PATH) &&
+          (DevicePathSubType (DevicePath) == MEDIA_HARDDRIVE_DP))
+      {
         //
         // Check if this is a gpt partition. If it is, we'll use it. Otherwise,
         // keep searching.
         //
-        if (((HARDDRIVE_DEVICE_PATH*)DevicePath)->MBRType == MBR_TYPE_EFI_PARTITION_TABLE_HEADER &&
-            ((HARDDRIVE_DEVICE_PATH*)DevicePath)->SignatureType == SIGNATURE_TYPE_GUID) {
-
+        if ((((HARDDRIVE_DEVICE_PATH *)DevicePath)->MBRType == MBR_TYPE_EFI_PARTITION_TABLE_HEADER) &&
+            (((HARDDRIVE_DEVICE_PATH *)DevicePath)->SignatureType == SIGNATURE_TYPE_GUID))
+        {
           DevicePath = OrigDevicePath;
-          Found = TRUE;
+          Found      = TRUE;
           break;
         }
       }
@@ -573,14 +588,14 @@ OpenVolumeSFS (
       //
       // Still searching. Advance to the next device path node.
       //
-      DevicePath = NextDevicePathNode(DevicePath);
+      DevicePath = NextDevicePathNode (DevicePath);
     }
 
     //
     // If we found a good device path, stop searching.
     //
     if (Found != FALSE) {
-      DEBUG((DEBUG_ERROR, "%a: found GPT partition Index:%d\n", __FUNCTION__, Index));
+      DEBUG ((DEBUG_ERROR, "%a: found GPT partition Index:%d\n", __FUNCTION__, Index));
       break;
     }
   }
@@ -593,27 +608,29 @@ OpenVolumeSFS (
     goto CleanUp;
   }
 
-  Status = gBS->HandleProtocol(HandleBuffer[Index],
-                               &gEfiSimpleFileSystemProtocolGuid,
-                               (VOID**)&SfProtocol);
+  Status = gBS->HandleProtocol (
+                  HandleBuffer[Index],
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  (VOID **)&SfProtocol
+                  );
 
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Failed to locate Simple FS protocol using the handle to fs0: %r \n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to locate Simple FS protocol using the handle to fs0: %r \n", __FUNCTION__, Status));
     goto CleanUp;
   }
 
   //
   // Open the volume/partition.
   //
-  Status = SfProtocol->OpenVolume(SfProtocol, Fs_Handle);
-  if (EFI_ERROR(Status) != FALSE) {
-    DEBUG((DEBUG_ERROR, "%a: Failed to open Simple FS volume fs0: %r \n", __FUNCTION__, Status));
+  Status = SfProtocol->OpenVolume (SfProtocol, Fs_Handle);
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to open Simple FS volume fs0: %r \n", __FUNCTION__, Status));
     goto CleanUp;
   }
 
 CleanUp:
   if (HandleBuffer != NULL) {
-    FreePool(HandleBuffer);
+    FreePool (HandleBuffer);
   }
 
   return Status;
@@ -645,16 +662,16 @@ CleanUp:
 STATIC
 EFI_STATUS
 GetFlatPageTableData (
-  IN OUT UINTN                    *Pte1GCount,
-  IN OUT UINTN                    *Pte2MCount,
-  IN OUT UINTN                    *Pte4KCount,
-  IN OUT UINTN                    *PdeCount,
-  IN OUT UINTN                    *GuardCount,
-  OUT PAGE_TABLE_1G_ENTRY         *Pte1GEntries,
-  OUT PAGE_TABLE_ENTRY            *Pte2MEntries,
-  OUT PAGE_TABLE_4K_ENTRY         *Pte4KEntries,
-  OUT UINT64                      *PdeEntries,
-  OUT UINT64                      *GuardEntries
+  IN OUT UINTN             *Pte1GCount,
+  IN OUT UINTN             *Pte2MCount,
+  IN OUT UINTN             *Pte4KCount,
+  IN OUT UINTN             *PdeCount,
+  IN OUT UINTN             *GuardCount,
+  OUT PAGE_TABLE_1G_ENTRY  *Pte1GEntries,
+  OUT PAGE_TABLE_ENTRY     *Pte2MEntries,
+  OUT PAGE_TABLE_4K_ENTRY  *Pte4KEntries,
+  OUT UINT64               *PdeEntries,
+  OUT UINT64               *GuardEntries
   )
 {
   EFI_STATUS                      Status = EFI_SUCCESS;
@@ -667,11 +684,11 @@ GetFlatPageTableData (
   UINTN                           Index2;
   UINTN                           Index3;
   UINTN                           Index4;
-  UINTN                           MyGuardCount = 0;
-  UINTN                           MyPdeCount = 0;
-  UINTN                           My4KCount = 0;
-  UINTN                           My2MCount = 0;
-  UINTN                           My1GCount = 0;
+  UINTN                           MyGuardCount        = 0;
+  UINTN                           MyPdeCount          = 0;
+  UINTN                           My4KCount           = 0;
+  UINTN                           My2MCount           = 0;
+  UINTN                           My1GCount           = 0;
   UINTN                           NumPage4KNotPresent = 0;
   UINTN                           NumPage2MNotPresent = 0;
   UINTN                           NumPage1GNotPresent = 0;
@@ -681,21 +698,23 @@ GetFlatPageTableData (
   // First, fail fast if some of the parameters don't look right.
   //
   // ALL count parameters should be provided.
-  if (Pte1GCount == NULL || Pte2MCount == NULL || Pte4KCount == NULL || PdeCount == NULL || GuardCount == NULL) {
+  if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (PdeCount == NULL) || (GuardCount == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
+
   // If a count is greater than 0, the corresponding buffer pointer MUST be provided.
   // It will be assumed that all buffers have space for any corresponding count.
-  if ((*Pte1GCount > 0 && Pte1GEntries == NULL) || (*Pte2MCount > 0 && Pte2MEntries == NULL) ||
-      (*Pte4KCount > 0 && Pte4KEntries == NULL) || (*PdeCount > 0 && PdeEntries == NULL) ||
-      (*GuardCount > 0 && GuardEntries == NULL)) {
+  if (((*Pte1GCount > 0) && (Pte1GEntries == NULL)) || ((*Pte2MCount > 0) && (Pte2MEntries == NULL)) ||
+      ((*Pte4KCount > 0) && (Pte4KEntries == NULL)) || ((*PdeCount > 0) && (PdeEntries == NULL)) ||
+      ((*GuardCount > 0) && (GuardEntries == NULL)))
+  {
     return EFI_INVALID_PARAMETER;
   }
 
   //
   // Alright, let's get to work.
   //
-  Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *) AsmReadCr3 ();
+  Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *)AsmReadCr3 ();
   // Increase the count.
   // If we have room for more PDE Entries, add one.
   MyPdeCount++;
@@ -703,10 +722,11 @@ GetFlatPageTableData (
     PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pml4;
   }
 
-  for (Index4 = 0x0; Index4 < 0x200; Index4 ++) {
+  for (Index4 = 0x0; Index4 < 0x200; Index4++) {
     if (!Pml4[Index4].Bits.Present) {
       continue;
     }
+
     Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
     // Increase the count.
     // If we have room for more PDE Entries, add one.
@@ -714,11 +734,13 @@ GetFlatPageTableData (
     if (MyPdeCount <= *PdeCount) {
       PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte1G;
     }
-    for (Index3 = 0x0;  Index3 < 0x200; Index3 ++ ) {
+
+    for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
       if (!Pte1G[Index3].Bits.Present) {
         NumPage1GNotPresent++;
         continue;
       }
+
       //
       // MustBe1 is the bit that indicates whether the pointer is a directory
       // pointer or a page table entry.
@@ -728,40 +750,45 @@ GetFlatPageTableData (
         // We have to cast 1G and 2M directories to this to
         // get all of their address bits.
         //
-        Work = (PAGE_MAP_AND_DIRECTORY_POINTER *) Pte1G;
+        Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
         Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
         // Increase the count.
         // If we have room for more PDE Entries, add one.
-        MyPdeCount ++;
+        MyPdeCount++;
         if (MyPdeCount <= *PdeCount) {
           PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte2M;
         }
-        for (Index2 = 0x0; Index2 < 0x200; Index2 ++ ) {
+
+        for (Index2 = 0x0; Index2 < 0x200; Index2++ ) {
           if (!Pte2M[Index2].Bits.Present) {
             NumPage2MNotPresent++;
             continue;
           }
+
           if (!(Pte2M[Index2].Bits.MustBe1)) {
-            Work = (PAGE_MAP_AND_DIRECTORY_POINTER *) Pte2M;
+            Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
             Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
             // Increase the count.
             // If we have room for more PDE Entries, add one.
-            MyPdeCount ++;
+            MyPdeCount++;
             if (MyPdeCount <= *PdeCount) {
               PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte4K;
             }
-            for (Index1 = 0x0; Index1 < 0x200; Index1 ++ ) {
+
+            for (Index1 = 0x0; Index1 < 0x200; Index1++ ) {
               if (!Pte4K[Index1].Bits.Present) {
                 NumPage4KNotPresent++;
-                Address = IndexToAddress(Index4, Index3, Index2, Index1);
-                if ((mHgDumpBitMap != NULL) && (mHgDumpBitMap->IsGuardPage(Address))) {
-                  MyGuardCount ++;
+                Address = IndexToAddress (Index4, Index3, Index2, Index1);
+                if ((mHgDumpBitMap != NULL) && (mHgDumpBitMap->IsGuardPage (Address))) {
+                  MyGuardCount++;
                   if (MyGuardCount <= *GuardCount) {
                     GuardEntries[MyGuardCount - 1] = Address;
                   }
                 }
+
                 continue;
               }
+
               // Increase the count.
               // If we have room for more Page Table entries, add one.
               My4KCount++;
@@ -769,8 +796,7 @@ GetFlatPageTableData (
                 Pte4KEntries[My4KCount-1] = Pte4K[Index1];
               }
             }
-          }
-          else {
+          } else {
             // Increase the count.
             // If we have room for more Page Table entries, add one.
             My2MCount++;
@@ -779,8 +805,7 @@ GetFlatPageTableData (
             }
           }
         }
-      }
-      else {
+      } else {
         // Increase the count.
         // If we have room for more Page Table entries, add one.
         My1GCount++;
@@ -791,19 +816,20 @@ GetFlatPageTableData (
     }
   }
 
-  DEBUG(( DEBUG_ERROR, "Pages used for Page Tables   = %d\n", MyPdeCount ));
-  DEBUG(( DEBUG_ERROR, "Number of   4K Pages active  = %d - NotPresent = %d\n", My4KCount, NumPage4KNotPresent ));
-  DEBUG(( DEBUG_ERROR, "Number of   2M Pages active  = %d - NotPresent = %d\n", My2MCount, NumPage2MNotPresent ));
-  DEBUG(( DEBUG_ERROR, "Number of   1G Pages active  = %d - NotPresent = %d\n", My1GCount, NumPage1GNotPresent ));
-  DEBUG(( DEBUG_ERROR, "Number of   Guard Pages active  = %d\n",MyGuardCount));
+  DEBUG ((DEBUG_ERROR, "Pages used for Page Tables   = %d\n", MyPdeCount));
+  DEBUG ((DEBUG_ERROR, "Number of   4K Pages active  = %d - NotPresent = %d\n", My4KCount, NumPage4KNotPresent));
+  DEBUG ((DEBUG_ERROR, "Number of   2M Pages active  = %d - NotPresent = %d\n", My2MCount, NumPage2MNotPresent));
+  DEBUG ((DEBUG_ERROR, "Number of   1G Pages active  = %d - NotPresent = %d\n", My1GCount, NumPage1GNotPresent));
+  DEBUG ((DEBUG_ERROR, "Number of   Guard Pages active  = %d\n", MyGuardCount));
 
   //
   // determine whether any of the buffers were too small.
   // Only matters if a given buffer was provided.
   //
-  if ((Pte1GEntries != NULL && *Pte1GCount < My1GCount) || (Pte2MEntries != NULL && *Pte2MCount < My2MCount) ||
-      (Pte4KEntries != NULL && *Pte4KCount < My4KCount) || (PdeEntries != NULL && *PdeCount < MyPdeCount) ||
-      (GuardEntries != NULL && *GuardCount < MyGuardCount)) {
+  if (((Pte1GEntries != NULL) && (*Pte1GCount < My1GCount)) || ((Pte2MEntries != NULL) && (*Pte2MCount < My2MCount)) ||
+      ((Pte4KEntries != NULL) && (*Pte4KCount < My4KCount)) || ((PdeEntries != NULL) && (*PdeCount < MyPdeCount)) ||
+      ((GuardEntries != NULL) && (*GuardCount < MyGuardCount)))
+  {
     Status = EFI_BUFFER_TOO_SMALL;
   }
 
@@ -813,121 +839,143 @@ GetFlatPageTableData (
   *Pte1GCount = My1GCount;
   *Pte2MCount = My2MCount;
   *Pte4KCount = My4KCount;
-  *PdeCount = MyPdeCount;
+  *PdeCount   = MyPdeCount;
   *GuardCount = MyGuardCount;
 
   return Status;
 } // GetFlatPageTableData()
 
-
 STATIC
 BOOLEAN
-LoadFlatPageTableData(
-  OUT UINTN                       *Pte1GCount,
-  OUT UINTN                       *Pte2MCount,
-  OUT UINTN                       *Pte4KCount,
-  OUT UINTN                       *PdeCount,
-  OUT UINTN                       *GuardCount,
-  OUT PAGE_TABLE_1G_ENTRY         **Pte1GEntries,
-  OUT PAGE_TABLE_ENTRY            **Pte2MEntries,
-  OUT PAGE_TABLE_4K_ENTRY         **Pte4KEntries,
-  OUT UINT64                      **PdeEntries,
-  OUT UINT64                      **GuardEntries
+LoadFlatPageTableData (
+  OUT UINTN                *Pte1GCount,
+  OUT UINTN                *Pte2MCount,
+  OUT UINTN                *Pte4KCount,
+  OUT UINTN                *PdeCount,
+  OUT UINTN                *GuardCount,
+  OUT PAGE_TABLE_1G_ENTRY  **Pte1GEntries,
+  OUT PAGE_TABLE_ENTRY     **Pte2MEntries,
+  OUT PAGE_TABLE_4K_ENTRY  **Pte4KEntries,
+  OUT UINT64               **PdeEntries,
+  OUT UINT64               **GuardEntries
   )
 {
-  EFI_STATUS    Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
   // Run once to get counts.
-  DEBUG(( DEBUG_ERROR, "%a - First call to determine required buffer sizes.\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_ERROR, "%a - First call to determine required buffer sizes.\n", __FUNCTION__));
   *Pte1GCount = 0;
   *Pte2MCount = 0;
   *Pte4KCount = 0;
-  *PdeCount = 0;
+  *PdeCount   = 0;
   *GuardCount = 0;
-  Status = GetFlatPageTableData( Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, GuardCount, NULL, NULL, NULL, NULL, NULL );
+  Status      = GetFlatPageTableData (Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, GuardCount, NULL, NULL, NULL, NULL, NULL);
 
   (*Pte1GCount) += 15;
   (*Pte2MCount) += 15;
   (*Pte4KCount) += 15;
-  (*PdeCount) += 15;
+  (*PdeCount)   += 15;
 
   // Allocate buffers if successful.
-  if (!EFI_ERROR( Status )) {
-    *Pte1GEntries = AllocateZeroPool( *Pte1GCount * sizeof( PAGE_TABLE_1G_ENTRY ) );
-    *Pte2MEntries = AllocateZeroPool( *Pte2MCount * sizeof( PAGE_TABLE_ENTRY ) );
-    *Pte4KEntries = AllocateZeroPool( *Pte4KCount * sizeof( PAGE_TABLE_4K_ENTRY ) );
-    *PdeEntries = AllocateZeroPool( *PdeCount * sizeof( UINT64 ) );
-    *GuardEntries = AllocateZeroPool( *GuardCount * sizeof( UINT64 ) );
+  if (!EFI_ERROR (Status)) {
+    *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (PAGE_TABLE_1G_ENTRY));
+    *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (PAGE_TABLE_ENTRY));
+    *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (PAGE_TABLE_4K_ENTRY));
+    *PdeEntries   = AllocateZeroPool (*PdeCount * sizeof (UINT64));
+    *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
 
     // Check for errors.
-    if (*Pte1GEntries == NULL || *Pte2MEntries == NULL || *Pte4KEntries == NULL || *PdeEntries == NULL || *GuardEntries == NULL) {
+    if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL) || (*PdeEntries == NULL) || (*GuardEntries == NULL)) {
       Status = EFI_OUT_OF_RESOURCES;
     }
   }
 
   // If still good, grab the data.
-  if (!EFI_ERROR( Status )) {
-    DEBUG(( DEBUG_INFO, "%a - Second call to grab the data.\n", __FUNCTION__ ));
-    Status = GetFlatPageTableData( Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, GuardCount,
-                                   *Pte1GEntries, *Pte2MEntries, *Pte4KEntries, *PdeEntries, *GuardEntries );
-    if (Status == EFI_BUFFER_TOO_SMALL)
-    {
-      DEBUG(( DEBUG_ERROR, "%a Second GetFlatPageTableData call returned - %r\n", __FUNCTION__, Status ));
-      FreePool( *Pte1GEntries );
-      FreePool( *Pte2MEntries );
-      FreePool( *Pte4KEntries );
-      FreePool( *PdeEntries );
-      FreePool( *GuardEntries );
+  if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a - Second call to grab the data.\n", __FUNCTION__));
+    Status = GetFlatPageTableData (
+               Pte1GCount,
+               Pte2MCount,
+               Pte4KCount,
+               PdeCount,
+               GuardCount,
+               *Pte1GEntries,
+               *Pte2MEntries,
+               *Pte4KEntries,
+               *PdeEntries,
+               *GuardEntries
+               );
+    if (Status == EFI_BUFFER_TOO_SMALL) {
+      DEBUG ((DEBUG_ERROR, "%a Second GetFlatPageTableData call returned - %r\n", __FUNCTION__, Status));
+      FreePool (*Pte1GEntries);
+      FreePool (*Pte2MEntries);
+      FreePool (*Pte4KEntries);
+      FreePool (*PdeEntries);
+      FreePool (*GuardEntries);
 
       (*Pte1GCount) += 15;
       (*Pte2MCount) += 15;
       (*Pte4KCount) += 15;
-      (*PdeCount) += 15;
+      (*PdeCount)   += 15;
       (*GuardCount) += 15;
 
-      *Pte1GEntries = AllocateZeroPool( *Pte1GCount * sizeof( PAGE_TABLE_1G_ENTRY ) );
-      *Pte2MEntries = AllocateZeroPool( *Pte2MCount * sizeof( PAGE_TABLE_ENTRY ) );
-      *Pte4KEntries = AllocateZeroPool( *Pte4KCount * sizeof( PAGE_TABLE_4K_ENTRY ) );
-      *PdeEntries = AllocateZeroPool( *PdeCount * sizeof( UINT64 ) );
-      *GuardEntries = AllocateZeroPool( *GuardCount * sizeof( UINT64 ) );
+      *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (PAGE_TABLE_1G_ENTRY));
+      *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (PAGE_TABLE_ENTRY));
+      *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (PAGE_TABLE_4K_ENTRY));
+      *PdeEntries   = AllocateZeroPool (*PdeCount * sizeof (UINT64));
+      *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
 
-
-      Status = GetFlatPageTableData( Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, GuardCount,
-                                     *Pte1GEntries, *Pte2MEntries, *Pte4KEntries, *PdeEntries, *GuardEntries );
+      Status = GetFlatPageTableData (
+                 Pte1GCount,
+                 Pte2MCount,
+                 Pte4KCount,
+                 PdeCount,
+                 GuardCount,
+                 *Pte1GEntries,
+                 *Pte2MEntries,
+                 *Pte4KEntries,
+                 *PdeEntries,
+                 *GuardEntries
+                 );
     }
   }
 
   // If an error occurred, bail and free.
-  if (EFI_ERROR( Status )) {
+  if (EFI_ERROR (Status)) {
     if (*Pte1GEntries != NULL) {
-      FreePool( *Pte1GEntries );
+      FreePool (*Pte1GEntries);
       *Pte1GEntries = NULL;
     }
+
     if (*Pte2MEntries != NULL) {
-      FreePool( *Pte2MEntries );
+      FreePool (*Pte2MEntries);
       *Pte2MEntries = NULL;
     }
+
     if (*Pte4KEntries != NULL) {
-      FreePool( *Pte4KEntries );
+      FreePool (*Pte4KEntries);
       *Pte4KEntries = NULL;
     }
+
     if (*PdeEntries != NULL) {
-      FreePool( *PdeEntries );
+      FreePool (*PdeEntries);
       *PdeEntries = NULL;
     }
+
     if (*GuardEntries != NULL) {
-      FreePool( *GuardEntries );
+      FreePool (*GuardEntries);
       *GuardEntries = NULL;
     }
+
     *Pte1GCount = 0;
     *Pte2MCount = 0;
     *Pte4KCount = 0;
-    *PdeCount = 0;
+    *PdeCount   = 0;
     *GuardCount = 0;
   }
 
-  DEBUG(( DEBUG_ERROR, "%a - Exit... - %r\n", __FUNCTION__, Status ));
-  return !EFI_ERROR( Status );
+  DEBUG ((DEBUG_ERROR, "%a - Exit... - %r\n", __FUNCTION__, Status));
+  return !EFI_ERROR (Status);
 }
 
 /**
@@ -942,26 +990,25 @@ LoadFlatPageTableData(
 EFI_STATUS
 EFIAPI
 FlushAndClearMemoryInfoDatabase (
-  IN CONST CHAR16     *FileName
+  IN CONST CHAR16  *FileName
   )
 {
   // If we have database contents, flush them to the file.
   if (mMemoryInfoDatabaseSize > 0) {
-    WriteBufferToFile( FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize );
+    WriteBufferToFile (FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
   }
 
   // If we have a database, free it, and reset all counters.
   if (mMemoryInfoDatabaseBuffer != NULL) {
-    FreePool( mMemoryInfoDatabaseBuffer );
+    FreePool (mMemoryInfoDatabaseBuffer);
     mMemoryInfoDatabaseBuffer = NULL;
   }
+
   mMemoryInfoDatabaseAllocSize = 0;
-  mMemoryInfoDatabaseSize = 0;
+  mMemoryInfoDatabaseSize      = 0;
 
   return EFI_SUCCESS;
 } // FlushAndClearMemoryInfoDatabase()
-
-
 
 /**
    Event notification handler. Will dump paging information to disk.
@@ -973,79 +1020,96 @@ FlushAndClearMemoryInfoDatabase (
 VOID
 EFIAPI
 DumpPagingInfo (
-  IN      EFI_EVENT                 Event,
-  IN      VOID                      *Context
+  IN      EFI_EVENT  Event,
+  IN      VOID       *Context
   )
 {
-  EFI_STATUS                      Status = EFI_SUCCESS;
-  UINTN                           Pte1GCount = 0;
-  UINTN                           Pte2MCount = 0;
-  UINTN                           Pte4KCount = 0;
-  UINTN                           PdeCount = 0;
-  UINTN                           GuardCount = 0;
-  PAGE_TABLE_1G_ENTRY            *Pte1GEntries = NULL;
-  PAGE_TABLE_ENTRY               *Pte2MEntries = NULL;
-  PAGE_TABLE_4K_ENTRY            *Pte4KEntries = NULL;
-  UINT64                         *PdeEntries = NULL;
-  UINT64                         *GuardEntries = NULL;
-  CHAR8                           TempString[MAX_STRING_SIZE];
+  EFI_STATUS           Status        = EFI_SUCCESS;
+  UINTN                Pte1GCount    = 0;
+  UINTN                Pte2MCount    = 0;
+  UINTN                Pte4KCount    = 0;
+  UINTN                PdeCount      = 0;
+  UINTN                GuardCount    = 0;
+  PAGE_TABLE_1G_ENTRY  *Pte1GEntries = NULL;
+  PAGE_TABLE_ENTRY     *Pte2MEntries = NULL;
+  PAGE_TABLE_4K_ENTRY  *Pte4KEntries = NULL;
+  UINT64               *PdeEntries   = NULL;
+  UINT64               *GuardEntries = NULL;
+  CHAR8                TempString[MAX_STRING_SIZE];
 
-  Status = gBS->LocateProtocol(&gHeapGuardDebugProtocolGuid, NULL, (VOID **) &mHgDumpBitMap);
-  if (EFI_ERROR(Status)){
-    DEBUG((DEBUG_ERROR, "%a error finding hg bitmap protocol - %r\n", __FUNCTION__, Status));
+  Status = gBS->LocateProtocol (&gHeapGuardDebugProtocolGuid, NULL, (VOID **)&mHgDumpBitMap);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a error finding hg bitmap protocol - %r\n", __FUNCTION__, Status));
     mHgDumpBitMap = NULL;
   }
+
   Status = OpenVolumeSFS (&mFs_Handle);
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
     return;
   }
 
-  if (LoadFlatPageTableData( &Pte1GCount, &Pte2MCount, &Pte4KCount, &PdeCount, &GuardCount,
-                         &Pte1GEntries, &Pte2MEntries, &Pte4KEntries, &PdeEntries, &GuardEntries ))
+  if (LoadFlatPageTableData (
+        &Pte1GCount,
+        &Pte2MCount,
+        &Pte4KCount,
+        &PdeCount,
+        &GuardCount,
+        &Pte1GEntries,
+        &Pte2MEntries,
+        &Pte4KEntries,
+        &PdeEntries,
+        &GuardEntries
+        ))
   {
-    CreateAndWriteFileSFS(mFs_Handle, L"1G.dat", Pte1GCount * sizeof( PAGE_TABLE_1G_ENTRY ), Pte1GEntries);
-    CreateAndWriteFileSFS(mFs_Handle, L"2M.dat", Pte2MCount * sizeof( PAGE_TABLE_ENTRY ), Pte2MEntries);
-    CreateAndWriteFileSFS(mFs_Handle, L"4K.dat", Pte4KCount * sizeof( PAGE_TABLE_4K_ENTRY ), Pte4KEntries);
-    CreateAndWriteFileSFS(mFs_Handle, L"PDE.dat", PdeCount * sizeof( UINT64 ), PdeEntries);
+    CreateAndWriteFileSFS (mFs_Handle, L"1G.dat", Pte1GCount * sizeof (PAGE_TABLE_1G_ENTRY), Pte1GEntries);
+    CreateAndWriteFileSFS (mFs_Handle, L"2M.dat", Pte2MCount * sizeof (PAGE_TABLE_ENTRY), Pte2MEntries);
+    CreateAndWriteFileSFS (mFs_Handle, L"4K.dat", Pte4KCount * sizeof (PAGE_TABLE_4K_ENTRY), Pte4KEntries);
+    CreateAndWriteFileSFS (mFs_Handle, L"PDE.dat", PdeCount * sizeof (UINT64), PdeEntries);
 
     // Only populate guard pages when function call is successful
-    for (UINT64 i = 0; i < GuardCount; i ++) {
-      AsciiSPrint( TempString, MAX_STRING_SIZE,
+    for (UINT64 i = 0; i < GuardCount; i++) {
+      AsciiSPrint (
+        TempString,
+        MAX_STRING_SIZE,
         "GuardPage,0x%016lx\n",
-        GuardEntries[i] );
-      DEBUG((DEBUG_ERROR, "%a  %s\n", __FUNCTION__, TempString));
-      AppendToMemoryInfoDatabase( TempString );
+        GuardEntries[i]
+        );
+      DEBUG ((DEBUG_ERROR, "%a  %s\n", __FUNCTION__, TempString));
+      AppendToMemoryInfoDatabase (TempString);
     }
-  }
-  else {
-    DEBUG(( DEBUG_ERROR, "%a - LoadFlatPageTableData returned with failure, bail from here!\n", __FUNCTION__ ));
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a - LoadFlatPageTableData returned with failure, bail from here!\n", __FUNCTION__));
     goto Cleanup;
   }
 
-  FlushAndClearMemoryInfoDatabase( L"GuardPage" );
-  DumpProcessorSpecificHandlers();
-  MemoryMapDumpHandler();
-  LoadedImageTableDump();
-  MemoryAttributesTableDump();
-  FlushAndClearMemoryInfoDatabase( L"MemoryInfoDatabase" );
+  FlushAndClearMemoryInfoDatabase (L"GuardPage");
+  DumpProcessorSpecificHandlers ();
+  MemoryMapDumpHandler ();
+  LoadedImageTableDump ();
+  MemoryAttributesTableDump ();
+  FlushAndClearMemoryInfoDatabase (L"MemoryInfoDatabase");
 
 Cleanup:
   if (Pte1GEntries != NULL) {
-    FreePool( Pte1GEntries );
-  }
-  if (Pte2MEntries != NULL) {
-    FreePool( Pte2MEntries );
-  }
-  if (Pte4KEntries != NULL) {
-    FreePool( Pte4KEntries );
-  }
-  if (PdeEntries != NULL) {
-    FreePool( PdeEntries );
-  }
-  if (GuardEntries != NULL) {
-    FreePool( GuardEntries );
+    FreePool (Pte1GEntries);
   }
 
-  DEBUG((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
+  if (Pte2MEntries != NULL) {
+    FreePool (Pte2MEntries);
+  }
+
+  if (Pte4KEntries != NULL) {
+    FreePool (Pte4KEntries);
+  }
+
+  if (PdeEntries != NULL) {
+    FreePool (PdeEntries);
+  }
+
+  if (GuardEntries != NULL) {
+    FreePool (GuardEntries);
+  }
+
+  DEBUG ((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 }

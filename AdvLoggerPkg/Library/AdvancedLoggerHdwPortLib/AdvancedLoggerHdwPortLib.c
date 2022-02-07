@@ -29,7 +29,7 @@ AdvancedLoggerHdwPortInitialize (
   VOID
   )
 {
-    return SerialPortInitialize ();
+  return SerialPortInitialize ();
 }
 
 /**
@@ -53,17 +53,17 @@ AdvancedLoggerHdwPortInitialize (
 UINTN
 EFIAPI
 AdvancedLoggerHdwPortWrite (
-  IN UINTN     DebugLevel,
-  IN UINT8     *Buffer,
-  IN UINTN     NumberOfBytes
+  IN UINTN  DebugLevel,
+  IN UINT8  *Buffer,
+  IN UINTN  NumberOfBytes
   )
 {
-    UINTN  NumberReturned;
+  UINTN  NumberReturned;
 
-    NumberReturned = NumberOfBytes;
-    if (DebugLevel & PcdGet32(PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
-        NumberReturned = SerialPortWrite(Buffer, NumberOfBytes);
-    }
+  NumberReturned = NumberOfBytes;
+  if (DebugLevel & PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
+    NumberReturned = SerialPortWrite (Buffer, NumberOfBytes);
+  }
 
-    return NumberReturned;
+  return NumberReturned;
 }

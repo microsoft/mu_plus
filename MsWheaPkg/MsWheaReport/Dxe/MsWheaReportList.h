@@ -16,10 +16,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 // The linked list node to recover necessary information from each error block
 typedef struct MS_WHEA_LIST_ENTRY_T_DEF {
-  UINT32                              Signature;
-  UINT32                              PayloadSize;
-  VOID                                *PayloadPtr;
-  LIST_ENTRY                          Link;
+  UINT32        Signature;
+  UINT32        PayloadSize;
+  VOID          *PayloadPtr;
+  LIST_ENTRY    Link;
 } MS_WHEA_LIST_ENTRY;
 
 /**
@@ -38,10 +38,10 @@ existed list, First In First Out (FIFO)
 **/
 EFI_STATUS
 EFIAPI
-MsWheaAddReportEvent(
-  IN LIST_ENTRY                       *MsWheaLinkedList,
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
-);
+MsWheaAddReportEvent (
+  IN LIST_ENTRY              *MsWheaLinkedList,
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
+  );
 
 /**
 
@@ -55,8 +55,8 @@ This routine accepts the MS WHEA metadata, remove and free an element from the l
 **/
 EFI_STATUS
 EFIAPI
-MsWheaDeleteReportEvent(
-  IN LIST_ENTRY                       *MsWheaLinkedList
-);
+MsWheaDeleteReportEvent (
+  IN LIST_ENTRY  *MsWheaLinkedList
+  );
 
 #endif // __MS_WHEA_REPORT_LIST__

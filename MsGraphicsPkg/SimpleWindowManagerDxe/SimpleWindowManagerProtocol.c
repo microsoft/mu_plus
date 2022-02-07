@@ -9,7 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "WindowManager.h"
 
-
 /**
     Resets the aggregate pointer event state queue and providers.
 
@@ -21,51 +20,48 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 EFIAPI
-SWMAbsolutePointerReset (IN EFI_ABSOLUTE_POINTER_PROTOCOL *this,
-                         IN BOOLEAN                        ExtendedVerification)
+SWMAbsolutePointerReset (
+  IN EFI_ABSOLUTE_POINTER_PROTOCOL  *this,
+  IN BOOLEAN                        ExtendedVerification
+  )
 {
-    EFI_STATUS                      Status      = EFI_SUCCESS;
-    WINMGR_AP_WATCHLIST            *pProvider  = mSWM.AbsolutePointerProviders;
-    WINMGR_CLIENT                  *Client = WINMGR_CLIENT_FROM_ABS_PTR(this);
-    EFI_TPL                         PreviousTPL;
+  EFI_STATUS           Status     = EFI_SUCCESS;
+  WINMGR_AP_WATCHLIST  *pProvider = mSWM.AbsolutePointerProviders;
+  WINMGR_CLIENT        *Client    = WINMGR_CLIENT_FROM_ABS_PTR (this);
+  EFI_TPL              PreviousTPL;
 
+  DEBUG ((DEBUG_INFO, "INFO [SWM]: Purging event queue and resetting all Absolute Pointer sources.\r\n"));
 
-    DEBUG((DEBUG_INFO, "INFO [SWM]: Purging event queue and resetting all Absolute Pointer sources.\r\n"));
+  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
+  // Purge the event queue (removes old pending events).
+  //
+  Client->Queue.bQueueEmpty         = TRUE;
+  Client->Queue.QueueInputPosition  = 0;
+  Client->Queue.QueueOutputPosition = 0;
 
-    PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+  // Restore the TPL
+  //
+  if (PreviousTPL) {
+    gBS->RestoreTPL (PreviousTPL);
+  }
 
-    // Purge the event queue (removes old pending events).
-    //
-    Client->Queue.bQueueEmpty     = TRUE;
-    Client->Queue.QueueInputPosition = 0;
-    Client->Queue.QueueOutputPosition = 0;
+  // Call each aggregated Absolute Pointer protocol providers Reset function.
+  //
+  while (pProvider != NULL) {
+    Status = pProvider->AbsolutePointer->Reset (pProvider->AbsolutePointer, ExtendedVerification);
 
-    // Restore the TPL
-    //
-    if (PreviousTPL)
-    {
-        gBS->RestoreTPL (PreviousTPL);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to reset Absolute Pointer (Provider=0x%x), Status: %r\r\n", (UINTN)pProvider, Status));
+      goto Exit;
     }
 
-    // Call each aggregated Absolute Pointer protocol providers Reset function.
-    //
-    while (pProvider != NULL)
-    {
-        Status = pProvider->AbsolutePointer->Reset(pProvider->AbsolutePointer, ExtendedVerification);
-
-        if (EFI_ERROR(Status))
-        {
-            DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to reset Absolute Pointer (Provider=0x%x), Status: %r\r\n", (UINTN)pProvider, Status));
-            goto Exit;
-        }
-        pProvider = pProvider->pNext;
-    }
+    pProvider = pProvider->pNext;
+  }
 
 Exit:
-    return Status;
+  return Status;
 }
-
 
 /**
     Get pointer state from the aggregate pointer event state queue.
@@ -79,27 +75,29 @@ Exit:
 **/
 EFI_STATUS
 EFIAPI
-SWMAbsolutePointerGetState (IN EFI_ABSOLUTE_POINTER_PROTOCOL     *this,
-                            IN OUT MS_SWM_ABSOLUTE_POINTER_STATE *State)
+SWMAbsolutePointerGetState (
+  IN EFI_ABSOLUTE_POINTER_PROTOCOL      *this,
+  IN OUT MS_SWM_ABSOLUTE_POINTER_STATE  *State
+  )
 {
-    EFI_STATUS      Status = EFI_SUCCESS;
-    WINMGR_CLIENT  *Client = WINMGR_CLIENT_FROM_ABS_PTR(this);
+  EFI_STATUS     Status  = EFI_SUCCESS;
+  WINMGR_CLIENT  *Client = WINMGR_CLIENT_FROM_ABS_PTR (this);
 
-    // Check whether there's data pending in the pointer state input queue.
-    //
-    if (TRUE == Client->Queue.bQueueEmpty)
-    {
-        Status = EFI_NOT_READY;
-        goto Exit;
-    }
-    gBS->CheckEvent (this->WaitForInput);
-    // Retrieve pointer state from the aggregated event queue and return it.
-    //
-    Status = ExtractAbsolutePointerEventFromQueue (Client, State);
+  // Check whether there's data pending in the pointer state input queue.
+  //
+  if (TRUE == Client->Queue.bQueueEmpty) {
+    Status = EFI_NOT_READY;
+    goto Exit;
+  }
+
+  gBS->CheckEvent (this->WaitForInput);
+  // Retrieve pointer state from the aggregated event queue and return it.
+  //
+  Status = ExtractAbsolutePointerEventFromQueue (Client, State);
 
 Exit:
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -113,27 +111,28 @@ Exit:
 **/
 VOID
 EFIAPI
-AbsolutePointerWaitForInput (IN  EFI_EVENT    Event,
-                             IN  VOID         *Context)
+AbsolutePointerWaitForInput (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
 {
-    EFI_STATUS                      Status = EFI_SUCCESS;
-    MS_SWM_ABSOLUTE_POINTER_STATE   PointerState;
-    WINMGR_CLIENT                  *Client = (WINMGR_CLIENT*) Context;
+  EFI_STATUS                     Status = EFI_SUCCESS;
+  MS_SWM_ABSOLUTE_POINTER_STATE  PointerState;
+  WINMGR_CLIENT                  *Client = (WINMGR_CLIENT *)Context;
 
-    // Peek at the next event in the queue (if there is one).
-    //
-    Status = PeekAtAbsolutePointerEventInQueue (Client, &PointerState);
-    if (EFI_ERROR(Status))
-    {
-        goto Exit;
-    }
+  // Peek at the next event in the queue (if there is one).
+  //
+  Status = PeekAtAbsolutePointerEventInQueue (Client, &PointerState);
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    // There's pointer event data in the queue, signal the event.
-    //
-    gBS->SignalEvent (Event);
+  // There's pointer event data in the queue, signal the event.
+  //
+  gBS->SignalEvent (Event);
 
 Exit:
-    return;
+  return;
 }
 
 /**
@@ -155,171 +154,178 @@ Exit:
 **/
 EFI_STATUS
 EFIAPI
-SWMRegisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                   IN  EFI_HANDLE                           ImageHandle,
-                   IN  UINT32                               Z_Order,
-                   IN  SWM_RECT                            *FrameRect,
-                   IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK   DataNotificationCallback OPTIONAL,
-                   IN  VOID                                *Context,
-                   OUT EFI_ABSOLUTE_POINTER_PROTOCOL      **AbsolutePointer,
-                   OUT EFI_EVENT                           *PaintEvent)
+SWMRegisterClient (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
+  IN  EFI_HANDLE                           ImageHandle,
+  IN  UINT32                               Z_Order,
+  IN  SWM_RECT                             *FrameRect,
+  IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK  DataNotificationCallback OPTIONAL,
+  IN  VOID                                 *Context,
+  OUT EFI_ABSOLUTE_POINTER_PROTOCOL        **AbsolutePointer,
+  OUT EFI_EVENT                            *PaintEvent
+  )
 {
-    EFI_STATUS      Status = EFI_SUCCESS;
-    WINMGR_CLIENT   *pList = mSWM.Clients;
-    WINMGR_CLIENT   *NewClient;
-    WINMGR_CLIENT   *pPrev;
-    EFI_TPL         PreviousTPL = 0;
+  EFI_STATUS     Status = EFI_SUCCESS;
+  WINMGR_CLIENT  *pList = mSWM.Clients;
+  WINMGR_CLIENT  *NewClient;
+  WINMGR_CLIENT  *pPrev;
+  EFI_TPL        PreviousTPL = 0;
 
+  DEBUG ((DEBUG_INFO, "INFO [SWM]: Registering new client (ImageHandle=0x%x).\r\n", (UINTN)ImageHandle));
 
-    DEBUG((DEBUG_INFO, "INFO [SWM]: Registering new client (ImageHandle=0x%x).\r\n", (UINTN)ImageHandle));
+  // Insure Z_Order requirement of BASE must be first registered client.
+  if (((Z_Order == SWM_Z_ORDER_BASE) && (pList != NULL)) ||
+      ((Z_Order != SWM_Z_ORDER_BASE) && (pList == NULL)))
+  {
+    Status = EFI_INVALID_PARAMETER;
+    goto Exit;
+  }
 
-    // Insure Z_Order requirement of BASE must be first registered client.
-    if (((Z_Order == SWM_Z_ORDER_BASE) && (pList != NULL)) ||
-        ((Z_Order != SWM_Z_ORDER_BASE) && (pList == NULL))) {
-        Status = EFI_INVALID_PARAMETER;
-        goto Exit;
+  // Check whether this client has already been registered.
+  //
+  while (pList != NULL) {
+    if (pList->ImageHandle == ImageHandle) {
+      Status = EFI_ALREADY_STARTED;
+      goto Exit;
     }
-    // Check whether this client has already been registered.
+
+    pList = pList->pNext;
+  }
+
+  // Allocate a new node for this client.
+  //
+  NewClient = (WINMGR_CLIENT *)AllocateZeroPool (sizeof (WINMGR_CLIENT));
+  ASSERT (NewClient != NULL);
+  if (NULL == NewClient) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
+
+  // Capture client information.
+  //
+  NewClient->Signature                 = WINMGR_CLIENT_SIGNATURE;
+  NewClient->pNext                     = NULL;
+  NewClient->pPrev                     = NULL;
+  NewClient->ImageHandle               = ImageHandle;
+  NewClient->Active                    = FALSE;
+  NewClient->HasDisplaySurface         = FALSE;
+  NewClient->ClientAbsPtr.Mode         = &mAbsPointerMode;
+  NewClient->Z_Order                   = Z_Order;
+  NewClient->DataNotificationCallback  = DataNotificationCallback;
+  NewClient->DataNotificationContext   = Context;
+  NewClient->ClientAbsPtr.Reset        = SWMAbsolutePointerReset;          // SWM functions
+  NewClient->ClientAbsPtr.GetState     = SWMAbsolutePointerGetState;
+  NewClient->Queue.bQueueEmpty         = TRUE;
+  NewClient->Queue.QueueInputPosition  = 0;
+  NewClient->Queue.QueueOutputPosition = 0;
+  // Return Abs Pointer Protocol to client
+  *AbsolutePointer = &NewClient->ClientAbsPtr;
+
+  // Clients that have a data notification callback don't need a WaitForInput event.
+  // Creating it for compatibility in case the client uses it.
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_WAIT,
+                  TPL_NOTIFY,
+                  AbsolutePointerWaitForInput,
+                  (VOID *)NewClient,
+                  &NewClient->ClientAbsPtr.WaitForInput
+                  );
+
+  CopyMem (&NewClient->WindowFrame, FrameRect, sizeof (SWM_RECT));
+
+  // Create a surface if caller provided a paint event.
+  //
+  if (NULL != PaintEvent) {
+    NewClient->HasDisplaySurface = TRUE;
+
+    // Create a rendering engine surface for this client window.
     //
-    while (pList != NULL)
-    {
-        if (pList->ImageHandle == ImageHandle)
-        {
-            Status = EFI_ALREADY_STARTED;
-            goto Exit;
+    Status = mRenderingEngine->CreateSurface (
+                                 mRenderingEngine,
+                                 ImageHandle,
+                                 *FrameRect,
+                                 PaintEvent
+                                 );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to create rendering engine surface, Status: %r\r\n", Status));
+      FreePool (NewClient);
+      goto Exit;
+    }
+  }
+
+  // Raise the TPL to avoid getting interrupted while we access shared data structures.
+  //
+  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+
+  DEBUG ((DEBUG_INFO, "INFO [SWM]: Registering Image %p with event=%p.\r\n", NewClient->ImageHandle, NewClient->ClientAbsPtr.WaitForInput));
+
+  // Attach it to the list in Z_Order
+  // Z_Order == 0 is always added first, so we only have to add in front of a current entry.
+  if (mSWM.Clients == NULL) {
+    // Adding first element to the Queue
+    mSWM.Clients = NewClient;
+  } else {
+    pList = mSWM.Clients;
+    pPrev = NULL;
+    while (pList != NULL) {
+      if (NewClient->Z_Order > pList->Z_Order) {
+        // Z_Order - 0 is bottom window
+        if (pPrev == NULL) {
+          // adding to the head of the queue
+          NewClient->pNext = mSWM.Clients;
+          if (mSWM.Clients != NULL) {
+            mSWM.Clients->pPrev = NewClient;
+          }
+
+          mSWM.Clients = NewClient;
+        } else {
+          // Inserting before current node
+          NewClient->pPrev = pPrev;
+          NewClient->pNext = pList;
+          pList->pPrev     = NewClient;
+          pPrev->pNext     = NewClient;
         }
-        pList = pList->pNext;
+
+        break;
+      }
+
+      pPrev = pList;
+      pList = pList->pNext;
     }
-
-    // Allocate a new node for this client.
-    //
-    NewClient = (WINMGR_CLIENT *) AllocateZeroPool(sizeof(WINMGR_CLIENT));
-    ASSERT (NewClient != NULL);
-    if (NULL == NewClient)
-    {
-        Status = EFI_OUT_OF_RESOURCES;
-        goto Exit;
-    }
-
-    // Capture client information.
-    //
-    NewClient->Signature             = WINMGR_CLIENT_SIGNATURE;
-    NewClient->pNext                 = NULL;
-    NewClient->pPrev                 = NULL;
-    NewClient->ImageHandle           = ImageHandle;
-    NewClient->Active                = FALSE;
-    NewClient->HasDisplaySurface     = FALSE;
-    NewClient->ClientAbsPtr.Mode     = &mAbsPointerMode;
-    NewClient->Z_Order               = Z_Order;
-    NewClient->DataNotificationCallback = DataNotificationCallback;
-    NewClient->DataNotificationContext  = Context;
-    NewClient->ClientAbsPtr.Reset    = SWMAbsolutePointerReset;            // SWM functions
-    NewClient->ClientAbsPtr.GetState = SWMAbsolutePointerGetState;
-    NewClient->Queue.bQueueEmpty     = TRUE;
-    NewClient->Queue.QueueInputPosition = 0;
-    NewClient->Queue.QueueOutputPosition = 0;
-    // Return Abs Pointer Protocol to client
-    *AbsolutePointer = &NewClient->ClientAbsPtr;
-
-    // Clients that have a data notification callback don't need a WaitForInput event.
-    // Creating it for compatibility in case the client uses it.
-    Status = gBS->CreateEvent(EVT_NOTIFY_WAIT,
-                              TPL_NOTIFY,
-                              AbsolutePointerWaitForInput,
-                              (VOID *)NewClient,
-                              &NewClient->ClientAbsPtr.WaitForInput
-                              );
-
-    CopyMem (&NewClient->WindowFrame, FrameRect, sizeof(SWM_RECT));
-
-    // Create a surface if caller provided a paint event.
-    //
-    if (NULL != PaintEvent)
-    {
-        NewClient->HasDisplaySurface = TRUE;
-
-        // Create a rendering engine surface for this client window.
-        //
-        Status = mRenderingEngine->CreateSurface (mRenderingEngine,
-                                                  ImageHandle,
-                                                  *FrameRect,
-                                                  PaintEvent
-                                                 );
-
-        if (EFI_ERROR (Status))
-        {
-            DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to create rendering engine surface, Status: %r\r\n", Status));
-            FreePool(NewClient);
-            goto Exit;
-        }
-    }
-
-    // Raise the TPL to avoid getting interrupted while we access shared data structures.
-    //
-    PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
-
-    DEBUG((DEBUG_INFO, "INFO [SWM]: Registering Image %p with event=%p.\r\n", NewClient->ImageHandle,NewClient->ClientAbsPtr.WaitForInput));
-
-    // Attach it to the list in Z_Order
-    // Z_Order == 0 is always added first, so we only have to add in front of a current entry.
-    if (mSWM.Clients == NULL) {       // Adding first element to the Queue
-        mSWM.Clients = NewClient;
-    } else {
-        pList = mSWM.Clients;
-        pPrev = NULL;
-        while (pList != NULL)
-        {
-            if (NewClient->Z_Order > pList->Z_Order)   // Z_Order - 0 is bottom window
-            {
-                if (pPrev == NULL) {               // adding to the head of the queue
-                    NewClient->pNext = mSWM.Clients;
-                    if (mSWM.Clients != NULL) {
-                        mSWM.Clients->pPrev = NewClient;
-                    }
-                    mSWM.Clients = NewClient;
-                } else {                           // Inserting before current node
-                    NewClient->pPrev = pPrev;
-                    NewClient->pNext = pList;
-                    pList->pPrev = NewClient;
-                    pPrev->pNext = NewClient;
-                }
-                break;
-            }
-            pPrev = pList;
-            pList = pList->pNext;
-        }
-    }
+  }
 
 Exit:
 
-    // Restore the TPL
-    //
-    if (PreviousTPL)
-    {
-        gBS->RestoreTPL (PreviousTPL);
-    }
+  // Restore the TPL
+  //
+  if (PreviousTPL) {
+    gBS->RestoreTPL (PreviousTPL);
+  }
 
-    // Display client list for debugging purposes.
-    //
-    DEBUG((DEBUG_INFO, "INFO [SWM]: Client list:\r\n"));
-    pList = mSWM.Clients;
-    while (pList != NULL)
-    {
-        DEBUG((DEBUG_INFO, "            - ImageHandle=0x%x, Active=%s, Z=%3d, Event=%p Window=L[%d]:R[%d]:T[%d]:B[%d]\r\n", (UINTN)pList->ImageHandle,
-                                                                                                                            (pList->Active ? L"YES" : L"NO"),
-                                                                                                                             pList->Z_Order,
-                                                                                                                             pList->ClientAbsPtr.WaitForInput,
-                                                                                                                             pList->WindowFrame.Left,
-                                                                                                                             pList->WindowFrame.Right,
-                                                                                                                             pList->WindowFrame.Top,
-                                                                                                                             pList->WindowFrame.Bottom));
+  // Display client list for debugging purposes.
+  //
+  DEBUG ((DEBUG_INFO, "INFO [SWM]: Client list:\r\n"));
+  pList = mSWM.Clients;
+  while (pList != NULL) {
+    DEBUG ((
+      DEBUG_INFO,
+      "            - ImageHandle=0x%x, Active=%s, Z=%3d, Event=%p Window=L[%d]:R[%d]:T[%d]:B[%d]\r\n",
+      (UINTN)pList->ImageHandle,
+      (pList->Active ? L"YES" : L"NO"),
+      pList->Z_Order,
+      pList->ClientAbsPtr.WaitForInput,
+      pList->WindowFrame.Left,
+      pList->WindowFrame.Right,
+      pList->WindowFrame.Top,
+      pList->WindowFrame.Bottom
+      ));
 
-        pList = pList->pNext;
-    }
+    pList = pList->pNext;
+  }
 
-    return Status;
+  return Status;
 }
-
 
 /**
     Unregisters the specified client and stop receiving Simple Window Manager services.
@@ -334,95 +340,92 @@ Exit:
 **/
 EFI_STATUS
 EFIAPI
-SWMUnregisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                     IN  EFI_HANDLE                          ImageHandle)
+SWMUnregisterClient (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN  EFI_HANDLE                         ImageHandle
+  )
 {
-    EFI_STATUS                      Status = EFI_SUCCESS;
-    WINMGR_CLIENT                   *pList = mSWM.Clients;
+  EFI_STATUS     Status = EFI_SUCCESS;
+  WINMGR_CLIENT  *pList = mSWM.Clients;
 
-    DEBUG((DEBUG_INFO, "INFO [SWM]: Unregistering client (ImageHandle=0x%x).\r\n", (UINTN)ImageHandle));
+  DEBUG ((DEBUG_INFO, "INFO [SWM]: Unregistering client (ImageHandle=0x%x).\r\n", (UINTN)ImageHandle));
 
-    // Raise the TPL to avoid getting interrupted while we access shared data structures.
-    //
-    EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+  // Raise the TPL to avoid getting interrupted while we access shared data structures.
+  //
+  EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
-    // Set focus for the specified client (note this assumes we'll find a match for ImageHandle).
-    //
-    while (pList != NULL)
-    {
-        if (pList->ImageHandle == ImageHandle)
-        {
-            // Delete the rendering engine surface used for this client window.
-            //
-            if (pList->HasDisplaySurface) {
-                Status = mRenderingEngine->DeleteSurface(mRenderingEngine,
-                                                          ImageHandle
-                                                         );
+  // Set focus for the specified client (note this assumes we'll find a match for ImageHandle).
+  //
+  while (pList != NULL) {
+    if (pList->ImageHandle == ImageHandle) {
+      // Delete the rendering engine surface used for this client window.
+      //
+      if (pList->HasDisplaySurface) {
+        Status = mRenderingEngine->DeleteSurface (
+                                     mRenderingEngine,
+                                     ImageHandle
+                                     );
 
-                if (EFI_ERROR (Status))
-                {
-                    DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to delete rendering engine surface, Status: %r\r\n", Status));
-                }
-            }
-
-            // Unlink the current client node and free it.
-            //
-            if (NULL == pList->pPrev)
-            {
-                mSWM.Clients = pList->pNext;
-                if (NULL != mSWM.Clients)
-                {
-                    mSWM.Clients->pPrev = NULL;
-                }
-            }
-            else
-            {
-                pList->pPrev->pNext = pList->pNext;
-                if (NULL != pList->pNext)
-                {
-                    pList->pNext->pPrev = pList->pPrev;
-                }
-            }
-            gBS->CloseEvent(pList->ClientAbsPtr.WaitForInput);
-            FreePool(pList);
-
-            break;
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to delete rendering engine surface, Status: %r\r\n", Status));
         }
+      }
 
-        pList = pList->pNext;
+      // Unlink the current client node and free it.
+      //
+      if (NULL == pList->pPrev) {
+        mSWM.Clients = pList->pNext;
+        if (NULL != mSWM.Clients) {
+          mSWM.Clients->pPrev = NULL;
+        }
+      } else {
+        pList->pPrev->pNext = pList->pNext;
+        if (NULL != pList->pNext) {
+          pList->pNext->pPrev = pList->pPrev;
+        }
+      }
+
+      gBS->CloseEvent (pList->ClientAbsPtr.WaitForInput);
+      FreePool (pList);
+
+      break;
     }
 
-    // Print out a debug message if we didn't remove anything.
-    //
-    if (NULL == pList)
-    {
-        DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to unregister client with image handle %p.\r\n", (UINTN)ImageHandle));
-    }
+    pList = pList->pNext;
+  }
 
-    // Restore the TPL.
-    //
-    gBS->RestoreTPL (PreviousTPL);
+  // Print out a debug message if we didn't remove anything.
+  //
+  if (NULL == pList) {
+    DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to unregister client with image handle %p.\r\n", (UINTN)ImageHandle));
+  }
 
-    // Display client list for debugging purposes.
-    //
-    DEBUG((DEBUG_INFO, "INFO [SWM]: Client list:\r\n"));
-    pList = mSWM.Clients;
-    while (pList != NULL)
-    {
-        DEBUG((DEBUG_INFO, "            - ImageHandle=0x%x, Active=%s, Z=%3d, Event=%p, Window=L[%d]:R[%d]:T[%d]:B[%d]\r\n", (UINTN)pList->ImageHandle,
-                                                                                                                             (pList->Active ? L"YES" : L"NO"),
-                                                                                                                              pList->Z_Order,
-                                                                                                                              pList->ClientAbsPtr.WaitForInput,
-                                                                                                                              pList->WindowFrame.Left,
-                                                                                                                              pList->WindowFrame.Right,
-                                                                                                                              pList->WindowFrame.Top,
-                                                                                                                              pList->WindowFrame.Bottom));
-        pList = pList->pNext;
-    }
+  // Restore the TPL.
+  //
+  gBS->RestoreTPL (PreviousTPL);
 
-    return Status;
+  // Display client list for debugging purposes.
+  //
+  DEBUG ((DEBUG_INFO, "INFO [SWM]: Client list:\r\n"));
+  pList = mSWM.Clients;
+  while (pList != NULL) {
+    DEBUG ((
+      DEBUG_INFO,
+      "            - ImageHandle=0x%x, Active=%s, Z=%3d, Event=%p, Window=L[%d]:R[%d]:T[%d]:B[%d]\r\n",
+      (UINTN)pList->ImageHandle,
+      (pList->Active ? L"YES" : L"NO"),
+      pList->Z_Order,
+      pList->ClientAbsPtr.WaitForInput,
+      pList->WindowFrame.Left,
+      pList->WindowFrame.Right,
+      pList->WindowFrame.Top,
+      pList->WindowFrame.Bottom
+      ));
+    pList = pList->pNext;
+  }
+
+  return Status;
 }
-
 
 /**
     Tells the Simple Window Manager that the client is active and will be handling events.
@@ -440,57 +443,54 @@ SWMUnregisterClient (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMActivateWindow (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
-                   IN EFI_HANDLE                           ImageHandle,
-                   IN BOOLEAN                              MakeActive)
+SWMActivateWindow (
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN EFI_HANDLE                         ImageHandle,
+  IN BOOLEAN                            MakeActive
+  )
 {
-    EFI_STATUS      Status = EFI_INVALID_PARAMETER;
-    WINMGR_CLIENT   *pList = mSWM.Clients;
+  EFI_STATUS     Status = EFI_INVALID_PARAMETER;
+  WINMGR_CLIENT  *pList = mSWM.Clients;
 
+  DEBUG ((DEBUG_INFO, "INFO [SWM]: Setting client active (ImageHandle=0x%x, MakeActive=%s).\r\n", (UINTN)ImageHandle, (TRUE == MakeActive ? L"TRUE" : L"FALSE")));
 
-    DEBUG ((DEBUG_INFO, "INFO [SWM]: Setting client active (ImageHandle=0x%x, MakeActive=%s).\r\n", (UINTN)ImageHandle, (TRUE == MakeActive ? L"TRUE" : L"FALSE")));
+  // Raise the TPL to avoid getting interrupted while we access shared data structures.
+  //
+  EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
-    // Raise the TPL to avoid getting interrupted while we access shared data structures.
-    //
-    EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+  // Set active state for the specified client (note this assumes we'll find a match for ImageHandle).
+  //
+  while (pList != NULL) {
+    if (pList->ImageHandle == ImageHandle) {
+      pList->Active = MakeActive;
+      Status        = EFI_SUCCESS;
 
-    // Set active state for the specified client (note this assumes we'll find a match for ImageHandle).
-    //
-    while (pList != NULL)
-    {
-        if (pList->ImageHandle == ImageHandle)
-        {
-            pList->Active  = MakeActive;
-            Status         = EFI_SUCCESS;
+      if (TRUE == pList->HasDisplaySurface) {
+        // Activate the rendering engine surface used for this client window.
+        //
+        Status = mRenderingEngine->ActivateSurface (
+                                     mRenderingEngine,
+                                     ImageHandle,
+                                     MakeActive
+                                     );
 
-            if (TRUE == pList->HasDisplaySurface)
-            {
-                // Activate the rendering engine surface used for this client window.
-                //
-                Status = mRenderingEngine->ActivateSurface (mRenderingEngine,
-                                                            ImageHandle,
-                                                            MakeActive
-                                                           );
-
-                if (EFI_ERROR (Status))
-                {
-                    DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to activate rendering engine surface (%r).\r\n", Status));
-                }
-            }
-
-            break;
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to activate rendering engine surface (%r).\r\n", Status));
         }
+      }
 
-        pList = pList->pNext;
+      break;
     }
 
-    // Restore the TPL.
-    //
-    gBS->RestoreTPL (PreviousTPL);
+    pList = pList->pNext;
+  }
 
-    return Status;
+  // Restore the TPL.
+  //
+  gBS->RestoreTPL (PreviousTPL);
+
+  return Status;
 }
-
 
 /**
     Sets the outer window frame (bounding rectangle) for the client window.
@@ -504,67 +504,68 @@ SWMActivateWindow (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMSetWindowFrame (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
-                   IN EFI_HANDLE                           ImageHandle,
-                   IN SWM_RECT                             *FrameRect)
+SWMSetWindowFrame (
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN EFI_HANDLE                         ImageHandle,
+  IN SWM_RECT                           *FrameRect
+  )
 {
-    EFI_STATUS      Status = EFI_SUCCESS;
-    WINMGR_CLIENT   *pList = mSWM.Clients;
+  EFI_STATUS     Status = EFI_SUCCESS;
+  WINMGR_CLIENT  *pList = mSWM.Clients;
 
+  DEBUG ((
+    DEBUG_INFO,
+    "INFO [SWM]: Setting client window frame (ImageHandle=0x%x, Frame=L[%d]:R[%d]:T[%d]:B[%d]).\r\n",
+    (UINTN)ImageHandle,
+    FrameRect->Left,
+    FrameRect->Right,
+    FrameRect->Top,
+    FrameRect->Bottom
+    ));
 
-    DEBUG ((DEBUG_INFO, "INFO [SWM]: Setting client window frame (ImageHandle=0x%x, Frame=L[%d]:R[%d]:T[%d]:B[%d]).\r\n", (UINTN)ImageHandle,
-                                                                                                                          FrameRect->Left,
-                                                                                                                          FrameRect->Right,
-                                                                                                                          FrameRect->Top,
-                                                                                                                          FrameRect->Bottom));
+  // Raise the TPL to avoid getting interrupted while we access shared data structures.
+  //
+  EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
-    // Raise the TPL to avoid getting interrupted while we access shared data structures.
-    //
-    EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+  // Locates the client by the image handle provided and sets the window frame.
+  //
+  while (pList != NULL) {
+    if (pList->ImageHandle == ImageHandle) {
+      CopyMem (&pList->WindowFrame, FrameRect, sizeof (SWM_RECT));
 
-    // Locates the client by the image handle provided and sets the window frame.
-    //
-    while (pList != NULL)
-    {
-        if (pList->ImageHandle == ImageHandle)
-        {
-            CopyMem(&pList->WindowFrame, FrameRect, sizeof(SWM_RECT));
+      // If the client has a display surface, resize it based on the new size specified.
+      //
+      if (TRUE == pList->HasDisplaySurface) {
+        Status = mRenderingEngine->ResizeSurface (
+                                     mRenderingEngine,
+                                     ImageHandle,
+                                     FrameRect
+                                     );
 
-            // If the client has a display surface, resize it based on the new size specified.
-            //
-            if (TRUE == pList->HasDisplaySurface)
-            {
-                Status = mRenderingEngine->ResizeSurface (mRenderingEngine,
-                                                          ImageHandle,
-                                                          FrameRect
-                                                         );
-
-                if (EFI_ERROR (Status))
-                {
-                    DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to resize rendering engine surface (%r).\r\n", Status));
-                }
-            }
-            break;
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_WARN, "WARN [SWM]: Failed to resize rendering engine surface (%r).\r\n", Status));
         }
+      }
 
-        pList = pList->pNext;
+      break;
     }
 
-    // Check whether we found the specified client.
-    //
-    if (NULL == pList)
-    {
-        Status = EFI_NOT_FOUND;
-        DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to update clients window frame (bounding rectangle), Status: %r\r\n", Status));
-    }
+    pList = pList->pNext;
+  }
 
-    // Restore the TPL.
-    //
-    gBS->RestoreTPL (PreviousTPL);
+  // Check whether we found the specified client.
+  //
+  if (NULL == pList) {
+    Status = EFI_NOT_FOUND;
+    DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to update clients window frame (bounding rectangle), Status: %r\r\n", Status));
+  }
 
-    return Status;
+  // Restore the TPL.
+  //
+  gBS->RestoreTPL (PreviousTPL);
+
+  return Status;
 }
-
 
 /**
     Performs a block copy (blit) to the client window associated with the image handle provided.  Blitting to
@@ -594,51 +595,55 @@ SWMSetWindowFrame (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMBltWindow (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL       *This,
-              IN  EFI_HANDLE                              ImageHandle,
-              IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL           *BltBuffer,   OPTIONAL
-              IN  EFI_GRAPHICS_OUTPUT_BLT_OPERATION       BltOperation,
-              IN  UINTN                                   SourceX,
-              IN  UINTN                                   SourceY,
-              IN  UINTN                                   DestinationX,
-              IN  UINTN                                   DestinationY,
-              IN  UINTN                                   Width,
-              IN  UINTN                                   Height,
-              IN  UINTN                                   Delta         OPTIONAL)
+SWMBltWindow (
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL *This,
+  IN  EFI_HANDLE ImageHandle,
+  IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer, OPTIONAL
+  IN  EFI_GRAPHICS_OUTPUT_BLT_OPERATION       BltOperation,
+  IN  UINTN                                   SourceX,
+  IN  UINTN                                   SourceY,
+  IN  UINTN                                   DestinationX,
+  IN  UINTN                                   DestinationY,
+  IN  UINTN                                   Width,
+  IN  UINTN                                   Height,
+  IN  UINTN                                   Delta         OPTIONAL
+  )
 {
-    EFI_STATUS  Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    // Denote the start of surface updating.
-    //
-    mRenderingEngine->SetModeSurface (mRenderingEngine,
-                                      ImageHandle,
-                                      PAINT_BEGIN
-                                     );
+  // Denote the start of surface updating.
+  //
+  mRenderingEngine->SetModeSurface (
+                      mRenderingEngine,
+                      ImageHandle,
+                      PAINT_BEGIN
+                      );
 
-    // Update the surface.
-    //
-    Status = mGop->Blt (mGop,
-                        BltBuffer,
-                        BltOperation,
-                        SourceX,
-                        SourceY,
-                        DestinationX,
-                        DestinationY,
-                        Width,
-                        Height,
-                        Delta
-                       );
+  // Update the surface.
+  //
+  Status = mGop->Blt (
+                   mGop,
+                   BltBuffer,
+                   BltOperation,
+                   SourceX,
+                   SourceY,
+                   DestinationX,
+                   DestinationY,
+                   Width,
+                   Height,
+                   Delta
+                   );
 
-    // Denote the end of surface updating.
-    //
-    mRenderingEngine->SetModeSurface (mRenderingEngine,
-                                      ImageHandle,
-                                      PAINT_END
-                                     );
+  // Denote the end of surface updating.
+  //
+  mRenderingEngine->SetModeSurface (
+                      mRenderingEngine,
+                      ImageHandle,
+                      PAINT_END
+                      );
 
-    return Status;
+  return Status;
 }
-
 
 /**
     Draws a string in the specified format to a client window associated with the specified image handle.  Drawing to
@@ -704,52 +709,55 @@ SWMBltWindow (IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL       *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMStringToWindow (IN        MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                   IN        EFI_HANDLE                          ImageHandle,
-                   IN        EFI_HII_OUT_FLAGS                   Flags,
-                   IN        EFI_STRING                          String,
-                   IN        EFI_FONT_DISPLAY_INFO               *StringInfo,
-                   IN OUT    EFI_IMAGE_OUTPUT                    **Blt,
-                   IN        UINTN                               BltX,
-                   IN        UINTN                               BltY,
-                   OUT       EFI_HII_ROW_INFO                    **RowInfoArray OPTIONAL,
-                   OUT       UINTN                               *RowInfoArraySize OPTIONAL,
-                   OUT       UINTN                               *ColumnInfoArray OPTIONAL)
+SWMStringToWindow (
+  IN        MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN        EFI_HANDLE                         ImageHandle,
+  IN        EFI_HII_OUT_FLAGS                  Flags,
+  IN        EFI_STRING                         String,
+  IN        EFI_FONT_DISPLAY_INFO              *StringInfo,
+  IN OUT    EFI_IMAGE_OUTPUT                   **Blt,
+  IN        UINTN                              BltX,
+  IN        UINTN                              BltY,
+  OUT       EFI_HII_ROW_INFO                   **RowInfoArray OPTIONAL,
+  OUT       UINTN                              *RowInfoArraySize OPTIONAL,
+  OUT       UINTN                              *ColumnInfoArray OPTIONAL
+  )
 {
-    EFI_STATUS  Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  // Denote the start of surface updating.
+  //
+  mRenderingEngine->SetModeSurface (
+                      mRenderingEngine,
+                      ImageHandle,
+                      PAINT_BEGIN
+                      );
 
-    // Denote the start of surface updating.
-    //
-    mRenderingEngine->SetModeSurface (mRenderingEngine,
-                                      ImageHandle,
-                                      PAINT_BEGIN
-                                     );
+  // Update the surface.
+  //
+  Status = mFont->StringToImage (
+                    mFont,
+                    Flags,
+                    String,
+                    StringInfo,
+                    Blt,
+                    BltX,
+                    BltY,
+                    RowInfoArray,
+                    RowInfoArraySize,
+                    ColumnInfoArray
+                    );
 
-    // Update the surface.
-    //
-    Status = mFont->StringToImage (mFont,
-                                   Flags,
-                                   String,
-                                   StringInfo,
-                                   Blt,
-                                   BltX,
-                                   BltY,
-                                   RowInfoArray,
-                                   RowInfoArraySize,
-                                   ColumnInfoArray
-                                  );
+  // Denote the end of surface updating.
+  //
+  mRenderingEngine->SetModeSurface (
+                      mRenderingEngine,
+                      ImageHandle,
+                      PAINT_END
+                      );
 
-    // Denote the end of surface updating.
-    //
-    mRenderingEngine->SetModeSurface (mRenderingEngine,
-                                      ImageHandle,
-                                      PAINT_END
-                                     );
-
-    return Status;
+  return Status;
 }
-
 
 /**
     Enables the mouse pointer to be displayed if the Absolute Pointer provider is a "mouse" (i.e., not touch).
@@ -762,29 +770,27 @@ SWMStringToWindow (IN        MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
 **/
 EFI_STATUS
 EFIAPI
-SWMEnableMousePointer (IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-                       IN BOOLEAN                             bEnableMouse)
+SWMEnableMousePointer (
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *This,
+  IN BOOLEAN                            bEnableMouse
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  // Save the enabled state for later.
+  //
+  mSWM.bMousePointerEnabled = bEnableMouse;
 
-    // Save the enabled state for later.
+  // Hide the mouse pointer if we're disabling it.
+  //
+  if (FALSE == bEnableMouse) {
+    Status = HideMousePointer ();
+  } else if (TRUE == mSWM.bLastMoveRequiredMousePointer) {
+    // If the last absolute pointer event required rendering the mouse pointer, we'll
+    // render it immediately here instead of waiting for the next event.
     //
-    mSWM.bMousePointerEnabled       = bEnableMouse;
+    Status = ShowMousePointer ();
+  }
 
-    // Hide the mouse pointer if we're disabling it.
-    //
-    if (FALSE == bEnableMouse)
-    {
-        Status = HideMousePointer();
-    }
-    else if (TRUE == mSWM.bLastMoveRequiredMousePointer)
-    {
-        // If the last absolute pointer event required rendering the mouse pointer, we'll
-        // render it immediately here instead of waiting for the next event.
-        //
-        Status = ShowMousePointer();
-    }
-
-    return Status;
+  return Status;
 }

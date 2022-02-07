@@ -1,4 +1,4 @@
- /** @file
+/** @file
   STANDALONE_MM_CORE and STANDALONE_MM implementation of Advanced Logger Library.
 
   Copyright (c) Microsoft Corporation. All rights reserved.<BR>
@@ -17,9 +17,9 @@
 
 #include "../AdvancedLoggerCommon.h"
 
-STATIC ADVANCED_LOGGER_INFO    *mLoggerInfo = NULL;
-STATIC UINT32                   mBufferSize = 0;
-STATIC EFI_PHYSICAL_ADDRESS     mMaxAddress = 0;
+STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo = NULL;
+STATIC UINT32                mBufferSize  = 0;
+STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress  = 0;
 
 /**
   Validate Info Blocks
@@ -39,8 +39,8 @@ STATIC
 BOOLEAN
 ValidateInfoBlock (
   VOID
-  ) {
-
+  )
+{
   if (mLoggerInfo == NULL) {
     return FALSE;
   }
@@ -49,19 +49,19 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo + 1))) {
+  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR (mLoggerInfo + 1))) {
     return FALSE;
   }
 
   if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-    (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
+      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  {
     return FALSE;
   }
 
   if (mBufferSize == 0) {
     mBufferSize = mLoggerInfo->LogBufferSize;
-  }
-  else if (mLoggerInfo->LogBufferSize != mBufferSize) {
+  } else if (mLoggerInfo->LogBufferSize != mBufferSize) {
     return FALSE;
   }
 
@@ -84,10 +84,11 @@ ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerGetLoggerInfo (
   VOID
-) {
-  EFI_HOB_GUID_TYPE              *GuidHob;
-  ADVANCED_LOGGER_PTR            *LogPtr;
-  STATIC BOOLEAN                  Initialized = FALSE;
+  )
+{
+  EFI_HOB_GUID_TYPE    *GuidHob;
+  ADVANCED_LOGGER_PTR  *LogPtr;
+  STATIC BOOLEAN       Initialized = FALSE;
 
   if (!Initialized) {
     Initialized = TRUE;   // Only one attempt at getting the logger info block.
@@ -97,12 +98,12 @@ AdvancedLoggerGetLoggerInfo (
     //
     GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
     if (GuidHob == NULL) {
-      DEBUG((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n",  __FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n", __FUNCTION__));
     } else {
-      LogPtr = (ADVANCED_LOGGER_PTR *) GET_GUID_HOB_DATA (GuidHob);
-      mLoggerInfo = ALI_FROM_PA(LogPtr->LogBuffer);
+      LogPtr      = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
+      mLoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
       if (mLoggerInfo != NULL) {
-          mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+        mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
       }
 
       //
@@ -112,9 +113,9 @@ AdvancedLoggerGetLoggerInfo (
     }
   }
 
-  if ((mLoggerInfo) != NULL && !ValidateInfoBlock()) {
+  if (((mLoggerInfo) != NULL) && !ValidateInfoBlock ()) {
     mLoggerInfo = NULL;
-    DEBUG((DEBUG_ERROR, "%a: LoggerInfo marked invalid\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: LoggerInfo marked invalid\n", __FUNCTION__));
   }
 
   return mLoggerInfo;
@@ -134,13 +135,12 @@ EFI_STATUS
 EFIAPI
 MmAdvancedLoggerLibConstructor (
   IN EFI_HANDLE           ImageHandle,
-  IN EFI_MM_SYSTEM_TABLE *MmSystemTable
+  IN EFI_MM_SYSTEM_TABLE  *MmSystemTable
   )
 {
-
   AdvancedLoggerGetLoggerInfo ();
 
-  ASSERT(mLoggerInfo != NULL);
+  ASSERT (mLoggerInfo != NULL);
 
   return EFI_SUCCESS;
 }

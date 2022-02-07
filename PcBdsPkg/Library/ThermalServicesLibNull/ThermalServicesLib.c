@@ -12,8 +12,8 @@ EFI_STATUS
 EFIAPI
 SystemThermalCheck (
   IN  THERMAL_CASE  Case,
-  OUT BOOLEAN*      Good
-)
+  OUT BOOLEAN       *Good
+  )
 {
   // return TRUE always, which means mitigation will never be invoked.
   *Good = TRUE;
@@ -25,9 +25,8 @@ EFIAPI
 SystemThermalMitigate (
   IN  THERMAL_CASE  Case,
   IN  UINT32        TimeoutPeriod
-)
+  )
 {
   // Should never be called because SystemThermalCheck always returns TRUE, so return Unsupported
   return EFI_UNSUPPORTED;
 }
-

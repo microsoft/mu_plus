@@ -35,50 +35,49 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 
+#define LOG_DEVICE_SIGNATURE  SIGNATURE_32('D','L','o','g')
 
-#define LOG_DEVICE_SIGNATURE    SIGNATURE_32('D','L','o','g')
-
-#define LOG_DEVICE_FROM_LINK(a) CR (a, LOG_DEVICE, Link, LOG_DEVICE_SIGNATURE)
+#define LOG_DEVICE_FROM_LINK(a)  CR (a, LOG_DEVICE, Link, LOG_DEVICE_SIGNATURE)
 
 typedef struct {
-    UINT32                                     Signature;
-    LIST_ENTRY                                 Link;
-    EFI_HANDLE                                 Handle;
-    UINTN                                      FileIndex;
-    UINT64                                     CurrentOffset;         // Current offset to start writing
-    ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  AccessEntry;
-    BOOLEAN                                    Valid;
+  UINT32                                       Signature;
+  LIST_ENTRY                                   Link;
+  EFI_HANDLE                                   Handle;
+  UINTN                                        FileIndex;
+  UINT64                                       CurrentOffset;         // Current offset to start writing
+  ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY    AccessEntry;
+  BOOLEAN                                      Valid;
 } LOG_DEVICE;
 
 typedef struct {
-    CHAR16   *LogFileName;
-    UINT64    LogFileSize;
+  CHAR16    *LogFileName;
+  UINT64    LogFileSize;
 } DEBUG_LOG_FILE_INFO;
 
 // When creating the Index file, create it with Index 0.  This means there
 // are no logs with valid data. The sequence of log files will be
 // 0->1->2->3->4->5->6->7->8->9->1......
 
-#define INDEX_FILE_VALUE "0\n"
-#define INDEX_FILE_SIZE (sizeof(INDEX_FILE_VALUE) - 1)
+#define INDEX_FILE_VALUE  "0\n"
+#define INDEX_FILE_SIZE   (sizeof(INDEX_FILE_VALUE) - 1)
 
 // The code depends on the Chunk size being a multiple of the page size, and
 // the log file size being a multiple of the chunk size.
 
-#define DEBUG_LOG_CHUNK_SIZE (EFI_PAGE_SIZE * 16)            // # of pages per write to log (64KB)
-#define DEBUG_LOG_FILE_SIZE  (DEBUG_LOG_CHUNK_SIZE * (FixedPcdGet32 (PcdAdvancedLoggerPages) / 16))     // # chunks per log file
+#define DEBUG_LOG_CHUNK_SIZE  (EFI_PAGE_SIZE * 16)                                                   // # of pages per write to log (64KB)
+#define DEBUG_LOG_FILE_SIZE   (DEBUG_LOG_CHUNK_SIZE * (FixedPcdGet32 (PcdAdvancedLoggerPages) / 16)) // # chunks per log file
 
-#define LOG_DIRECTORY_NAME L"\\UefiLogs"
+#define LOG_DIRECTORY_NAME  L"\\UefiLogs"
 
 //
-//Iterate through the double linked list. NOT delete safe
+// Iterate through the double linked list. NOT delete safe
 //
 #define EFI_LIST_FOR_EACH(Entry, ListHead)    \
   for(Entry = (ListHead)->ForwardLink; Entry != (ListHead); Entry = Entry->ForwardLink)
 
 //
-//Iterate through the double linked list. This is delete-safe.
-//Don't touch NextEntry
+// Iterate through the double linked list. This is delete-safe.
+// Don't touch NextEntry
 //
 #define EFI_LIST_FOR_EACH_SAFE(Entry, NextEntry, ListHead)            \
   for(Entry = (ListHead)->ForwardLink, NextEntry = Entry->ForwardLink;\
@@ -97,8 +96,8 @@ typedef struct {
   **/
 EFI_STATUS
 WriteALogFile (
-    IN LOG_DEVICE *LogDevice
-    );
+  IN LOG_DEVICE  *LogDevice
+  );
 
 /**
   Enable Logging on this device
@@ -120,7 +119,7 @@ WriteALogFile (
 EFI_STATUS
 EFIAPI
 EnableLoggingOnThisDevice (
-    IN  LOG_DEVICE  *LogDevice
-    );
+  IN  LOG_DEVICE  *LogDevice
+  );
 
-#endif  // __ADVANCED_FILE_LOGGER_H__
+#endif // __ADVANCED_FILE_LOGGER_H__

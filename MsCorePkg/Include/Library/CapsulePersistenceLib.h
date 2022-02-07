@@ -15,8 +15,8 @@
 
 #pragma pack(push, 1)
 typedef struct {
-  UINT64 CapsuleHash; // the truncated hash of the capsule
-  UINT32 CapsuleId;   // the id of the capsule (used in the file name)
+  UINT64    CapsuleHash; // the truncated hash of the capsule
+  UINT32    CapsuleId;   // the id of the capsule (used in the file name)
 } CAPSULE_PERSISTED_IDENTIFIER;
 #pragma pack(pop)
 
@@ -38,8 +38,8 @@ typedef struct {
 EFI_STATUS
 EFIAPI
 PersistCapsuleImageAcrossReset (
-  IN  EFI_CAPSULE_HEADER           *CapsuleHeader,
-  OUT CAPSULE_PERSISTED_IDENTIFIER *CapsuleIdentifier    OPTIONAL
+  IN  EFI_CAPSULE_HEADER            *CapsuleHeader,
+  OUT CAPSULE_PERSISTED_IDENTIFIER  *CapsuleIdentifier    OPTIONAL
   );
 
 /**
@@ -63,10 +63,10 @@ PersistCapsuleImageAcrossReset (
 EFI_STATUS
 EFIAPI
 GrabPersistedCapsuleByIdentifier (
-  IN  CAPSULE_PERSISTED_IDENTIFIER *CapsuleIdentifier,
-  OUT EFI_CAPSULE_HEADER           *CapsuleData OPTIONAL,
-  OUT UINTN                        *CapsuleDataSize
-);
+  IN  CAPSULE_PERSISTED_IDENTIFIER  *CapsuleIdentifier,
+  OUT EFI_CAPSULE_HEADER            *CapsuleData OPTIONAL,
+  OUT UINTN                         *CapsuleDataSize
+  );
 
 /**
   Deletes a capsule by id. This function does not check the hash of the file

@@ -14,15 +14,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseLib.h>
 #include <Library/IoLib.h>
 
-typedef UINT16  MEMORY_PROTECTION_OVERRIDE_CHECKSUM;
+typedef UINT16 MEMORY_PROTECTION_OVERRIDE_CHECKSUM;
 
 #define CMOS_MEM_PROT_CHECKSUM_START  0x10
 #define CMOS_MEM_PROT_CHECKSUM_SIZE   sizeof (MEMORY_PROTECTION_OVERRIDE_CHECKSUM)
 #define CMOS_MEM_PROT_DATA_START      CMOS_MEM_PROT_CHECKSUM_START + CMOS_MEM_PROT_CHECKSUM_SIZE
 #define CMOS_MEM_PROT_DATA_SIZE       sizeof (MEMORY_PROTECTION_OVERRIDE)
 
-#define PCAT_RTC_LO_ADDRESS_PORT      0x70
-#define PCAT_RTC_LO_DATA_PORT         0x71
+#define PCAT_RTC_LO_ADDRESS_PORT  0x70
+#define PCAT_RTC_LO_DATA_PORT     0x71
 
 /**
 
@@ -36,13 +36,13 @@ Reads bytes from CMOS. FOR INTERNAL USE ONLY - does not check the input sanity.
 STATIC
 VOID
 MemProtCmosRead (
-      OUT   VOID      *Ptr,
-  IN        UINT8     Size,
-  IN        UINT8     Address
+  OUT   VOID       *Ptr,
+  IN        UINT8  Size,
+  IN        UINT8  Address
   )
 {
-  UINT8 *buffer = Ptr;
-  UINT8 i;
+  UINT8  *buffer = Ptr;
+  UINT8  i;
 
   for (i = 0; i < Size; i++) {
     IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, Address + i);
@@ -62,13 +62,13 @@ Writes bytes to CMOS. FOR INTERNAL USE ONLY - does not check the input sanity.
 STATIC
 VOID
 MemProtCmosWrite (
-  IN  VOID       *Ptr,
-  IN  UINT8      Size,
-  IN  UINT8      Address
+  IN  VOID   *Ptr,
+  IN  UINT8  Size,
+  IN  UINT8  Address
   )
 {
-  UINT8 *buffer = Ptr;
-  UINT8 i;
+  UINT8  *buffer = Ptr;
+  UINT8  i;
 
   for (i = 0; i < Size; i++) {
     IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, Address + i);
@@ -85,10 +85,10 @@ STATIC
 MEMORY_PROTECTION_OVERRIDE_CHECKSUM
 MemProtSum (
   VOID
-  ) 
+  )
 {
-  UINT8                               i, Address;
-  MEMORY_PROTECTION_OVERRIDE_CHECKSUM Sum = 0;
+  UINT8                                i, Address;
+  MEMORY_PROTECTION_OVERRIDE_CHECKSUM  Sum = 0;
 
   Address = CMOS_MEM_PROT_DATA_START;
 
@@ -111,8 +111,8 @@ MemoryProtectionIsChecksumValid (
   VOID
   )
 {
-  MEMORY_PROTECTION_OVERRIDE          Sum;
-  MEMORY_PROTECTION_OVERRIDE_CHECKSUM Checksum;
+  MEMORY_PROTECTION_OVERRIDE           Sum;
+  MEMORY_PROTECTION_OVERRIDE_CHECKSUM  Checksum;
 
   MemProtCmosRead (
     &Checksum,
@@ -136,11 +136,10 @@ MemoryProtectionIsChecksumValid (
 **/
 EFI_STATUS
 MemoryProtectionReadCmosBytes (
-  OUT  MEMORY_PROTECTION_OVERRIDE      *CmosBytes
+  OUT  MEMORY_PROTECTION_OVERRIDE  *CmosBytes
   )
 {
-
-  if (!MemoryProtectionIsChecksumValid () || CmosBytes == NULL) {
+  if (!MemoryProtectionIsChecksumValid () || (CmosBytes == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -162,7 +161,7 @@ MemoryProtectionUpdateChecksumCmos (
   VOID
   )
 {
-  MEMORY_PROTECTION_OVERRIDE_CHECKSUM Checksum = 0;
+  MEMORY_PROTECTION_OVERRIDE_CHECKSUM  Checksum = 0;
 
   Checksum = MemProtSum ();
 
@@ -181,7 +180,7 @@ MemoryProtectionUpdateChecksumCmos (
 **/
 VOID
 MemoryProtectionWriteCmosBytes (
-  IN  MEMORY_PROTECTION_OVERRIDE Value
+  IN  MEMORY_PROTECTION_OVERRIDE  Value
   )
 {
   MemProtCmosWrite (
@@ -206,21 +205,20 @@ MemoryProtectionWriteCmosBytes (
 **/
 EFI_STATUS
 GetMemoryProtectionCmosSetting (
-  IN    MEMORY_PROTECTION_VAR_TOKEN      VarToken,
-  OUT   UINT32                          *Setting
+  IN    MEMORY_PROTECTION_VAR_TOKEN  VarToken,
+  OUT   UINT32                       *Setting
   )
 {
-  MEMORY_PROTECTION_OVERRIDE CmosVal;
-  EFI_STATUS                 Status;
+  MEMORY_PROTECTION_OVERRIDE  CmosVal;
+  EFI_STATUS                  Status;
 
   Status = MemoryProtectionReadCmosBytes (&CmosVal);
 
-  if (Setting == NULL || EFI_ERROR (Status)) {
+  if ((Setting == NULL) || EFI_ERROR (Status)) {
     return EFI_INVALID_PARAMETER;
   }
 
   if (CmosVal & MEM_PROT_VALID_BIT) {
-  
     if (VarToken == MEM_PROT_GLOBAL_TOGGLE_SETTING) {
       *Setting = (CmosVal & MEM_PROT_TOG_BIT) >> 1;
       return EFI_SUCCESS;
@@ -243,12 +241,13 @@ MemoryProtectionExceptionOccurred (
   VOID
   )
 {
-  MEMORY_PROTECTION_OVERRIDE CmosVal = 0;
+  MEMORY_PROTECTION_OVERRIDE  CmosVal = 0;
 
   MemoryProtectionReadCmosBytes (&CmosVal);
 
   if ((CmosVal & (MEM_PROT_VALID_BIT | MEM_PROT_EX_HIT_BIT)) ==
-      (MEM_PROT_VALID_BIT | MEM_PROT_EX_HIT_BIT)) {
+      (MEM_PROT_VALID_BIT | MEM_PROT_EX_HIT_BIT))
+  {
     return TRUE;
   }
 
@@ -270,8 +269,8 @@ MemoryProtectionExceptionOccurred (
 EFI_STATUS
 EFIAPI
 MemoryProtectionExceptionOverrideCheck (
-  IN    MEMORY_PROTECTION_VAR_TOKEN      VarToken,
-  OUT   UINT32                          *Setting
+  IN    MEMORY_PROTECTION_VAR_TOKEN  VarToken,
+  OUT   UINT32                       *Setting
   )
 {
   if (Setting == NULL) {
@@ -293,7 +292,7 @@ MemoryProtectionExceptionOverrideClear (
   VOID
   )
 {
-  MemoryProtectionWriteCmosBytes ((MEMORY_PROTECTION_OVERRIDE) 0);
+  MemoryProtectionWriteCmosBytes ((MEMORY_PROTECTION_OVERRIDE)0);
 }
 
 /**
@@ -305,7 +304,7 @@ MemoryProtectionExceptionOverrideClear (
 VOID
 EFIAPI
 MemoryProtectionExceptionOverrideWrite (
-  MEMORY_PROTECTION_OVERRIDE Val
+  MEMORY_PROTECTION_OVERRIDE  Val
   )
 {
   MemoryProtectionWriteCmosBytes (Val);

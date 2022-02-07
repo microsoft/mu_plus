@@ -29,16 +29,15 @@ for purpose of easy IVRS/BME parsing
 
 #include <IndustryStandard/Pci.h>
 
-//Linked List node used for IVMD Test
-typedef struct IVMDListNode_t_def
-{
-  IVMD_Header*                  IVMD;
-  struct IVMDListNode_t_def*    Next;
+// Linked List node used for IVMD Test
+typedef struct IVMDListNode_t_def {
+  IVMD_Header                  *IVMD;
+  struct IVMDListNode_t_def    *Next;
 } IVMDListNode;
 
-extern EFI_ACPI_IVRS_HEADER             *mAcpiIVRSTable;
-extern UINTN                            mIvhdUnitNumber;
-extern IVHD_Header                      *mIvhdUnitInformation;
+extern EFI_ACPI_IVRS_HEADER  *mAcpiIVRSTable;
+extern UINTN                 mIvhdUnitNumber;
+extern IVHD_Header           *mIvhdUnitInformation;
 
 /**
   Get the IVRS ACPI table.
@@ -67,7 +66,7 @@ ParseIvrsAcpiTableIvhd (
 
   @return Linked List to all IVMD headers. Caller is required to check for NULL if no IVMDs found.
 **/
-IVMDListNode*
+IVMDListNode *
 GetIvrsAcpiTableIvmd (
   VOID
   );

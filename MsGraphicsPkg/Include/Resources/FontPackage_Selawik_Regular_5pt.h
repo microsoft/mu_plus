@@ -27,1720 +27,1719 @@ SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007 included by reference
 
 //
 
-#define MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_HEIGHT        7
-#define MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_WIDTH         7
-#define MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_MAX_ADVANCE        7
+#define MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_HEIGHT  7
+#define MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_WIDTH   7
+#define MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_MAX_ADVANCE  7
 
 // NOTE: Don't define as a constant since we're updating structure size elements elsewhere.
 //
-MS_UI_FONT_PACKAGE_HEADER mMsUiFontPackageHdr_Selawik_Regular_5pt =
+MS_UI_FONT_PACKAGE_HEADER  mMsUiFontPackageHdr_Selawik_Regular_5pt =
 {
+  {
     {
-        {
-            0,                                              // Size of this single font package in bytes (Filled in later).
-            EFI_HII_PACKAGE_FONTS,                          // Font package.
-        },
-        sizeof(MS_UI_FONT_PACKAGE_HEADER),                    // Size of header in bytes.
-        sizeof(MS_UI_FONT_PACKAGE_HEADER),                    // Offset in bytes to the start of the package data.
-        {
-            MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_WIDTH,        // Maximum font width.
-            MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_HEIGHT,       // Maximum font height.
-            0,                                              // Offset to the vertical edge of the character cell.
-            0,                                              // Offset to the horizontal edge of the character cell.
-            MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_MAX_ADVANCE,       // Number of pixels to advance horizontally when moving from origin to next glyph.
-        },
-        EFI_HII_FONT_STYLE_NORMAL,                          // Font style (i.e., normal, bold, italic, etc.)
-        {L'S'},                                               // Font Family name.
+      0,                                                    // Size of this single font package in bytes (Filled in later).
+      EFI_HII_PACKAGE_FONTS,                                // Font package.
     },
-    L"urfaceSelawik_Regular_5pt"                                        // Font Family name continued.
+    sizeof (MS_UI_FONT_PACKAGE_HEADER),                       // Size of header in bytes.
+    sizeof (MS_UI_FONT_PACKAGE_HEADER),                       // Offset in bytes to the start of the package data.
+    {
+      MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_WIDTH,     // Maximum font width.
+      MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_CELL_HEIGHT,    // Maximum font height.
+      0,                                                    // Offset to the vertical edge of the character cell.
+      0,                                                    // Offset to the horizontal edge of the character cell.
+      MS_UI_CUSTOM_FONT_Selawik_Regular_5pt_MAX_ADVANCE,    // Number of pixels to advance horizontally when moving from origin to next glyph.
+    },
+    EFI_HII_FONT_STYLE_NORMAL,                              // Font style (i.e., normal, bold, italic, etc.)
+    { L'S' },                                               // Font Family name.
+  },
+  L"urfaceSelawik_Regular_5pt"                                          // Font Family name continued.
 };
 
-
-UINT8 mMsUiFontPackageGlyphs_Selawik_Regular_5pt[] =
+UINT8  mMsUiFontPackageGlyphs_Selawik_Regular_5pt[] =
 {
-// Capture settings:
+  // Capture settings:
 
-//     Font            = Selawik Regular, 5pt
+  //     Font            = Selawik Regular, 5pt
 
-    EFI_HII_GIBT_SKIP2,                    // Skip 31 Unicode characters.
-    0x1F,
-    0x00,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x01,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x00,          // Character: ' ' (0x0020)
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: '!' (0x0021)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x02,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '"' (0x0022)
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x50,          // Character: '#' (0x0023)
-    0xF0,
-    0x60,
-    0xF0,
-    0xA0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x07,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x40,          // Character: '$' (0x0024)
-    0x60,
-    0xC0,
-    0x60,
-    0x50,
-    0xE0,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x06,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x06,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE8,          // Character: '%' (0x0025)
-    0xB0,
-    0x58,
-    0x34,
-    0x7C,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '&' (0x0026)
-    0x60,
-    0x60,
-    0x90,
-    0x70,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x02,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: ''' (0x0027)
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x40,          // Character: '(' (0x0028)
-    0x40,
-    0x80,
-    0x80,
-    0x80,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: ')' (0x0029)
-    0x40,
-    0x40,
-    0x40,
-    0x40,
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x02,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x03,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '*' (0x002A)
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x03,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x20,          // Character: '+' (0x002B)
-    0xF0,
-    0x20,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x02,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: ',' (0x002C)
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x01,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '-' (0x002D)
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x01,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: '.' (0x002E)
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x40,          // Character: '/' (0x002F)
-    0x40,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '0' (0x0030)
-    0x90,
-    0x90,
-    0x90,
-    0x60,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '1' (0x0031)
-    0x40,
-    0x40,
-    0x40,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '2' (0x0032)
-    0x90,
-    0x20,
-    0x40,
-    0xF0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: '3' (0x0033)
-    0x20,
-    0x20,
-    0x10,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x20,          // Character: '4' (0x0034)
-    0x60,
-    0xA0,
-    0xF0,
-    0x20,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '5' (0x0035)
-    0x80,
-    0xF0,
-    0x10,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '6' (0x0036)
-    0x90,
-    0xE0,
-    0x90,
-    0x60,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: '7' (0x0037)
-    0x20,
-    0x20,
-    0x20,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '8' (0x0038)
-    0xA0,
-    0x60,
-    0x90,
-    0x60,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '9' (0x0039)
-    0x90,
-    0xF0,
-    0x10,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: ':' (0x003A)
-    0x00,
-    0x00,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: ';' (0x003B)
-    0x00,
-    0x00,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x03,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x30,          // Character: '<' (0x003C)
-    0xC0,
-    0x30,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x03,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: '=' (0x003D)
-    0x00,
-    0xF0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x03,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '>' (0x003E)
-    0x30,
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: '?' (0x003F)
-    0x90,
-    0x20,
-    0x40,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x07,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x07,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x3C,          // Character: '@' (0x0040)
-    0x5A,
-    0xAA,
-    0xAA,
-    0xBC,
-    0x7C,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x20,          // Character: 'A' (0x0041)
-    0x60,
-    0x50,
-    0xB0,
-    0x88,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'B' (0x0042)
-    0xA0,
-    0xE0,
-    0xA0,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x70,          // Character: 'C' (0x0043)
-    0x88,
-    0x80,
-    0x88,
-    0x70,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'D' (0x0044)
-    0x90,
-    0x90,
-    0x90,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'E' (0x0045)
-    0x80,
-    0xE0,
-    0x80,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'F' (0x0046)
-    0x80,
-    0xE0,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x70,          // Character: 'G' (0x0047)
-    0x88,
-    0x98,
-    0x88,
-    0x78,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x90,          // Character: 'H' (0x0048)
-    0x90,
-    0xF0,
-    0x90,
-    0x90,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'I' (0x0049)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x20,          // Character: 'J' (0x004A)
-    0x20,
-    0x20,
-    0x20,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xB0,          // Character: 'K' (0x004B)
-    0xC0,
-    0xC0,
-    0xA0,
-    0xB0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'L' (0x004C)
-    0x80,
-    0x80,
-    0x80,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x06,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x90,          // Character: 'M' (0x004D)
-    0x90,
-    0xB0,
-    0xF0,
-    0xD0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x90,          // Character: 'N' (0x004E)
-    0x90,
-    0xD0,
-    0xB0,
-    0xB0,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x70,          // Character: 'O' (0x004F)
-    0x88,
-    0x88,
-    0x88,
-    0x70,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'P' (0x0050)
-    0xA0,
-    0xE0,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x70,          // Character: 'Q' (0x0051)
-    0x88,
-    0x88,
-    0x98,
-    0x78,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'R' (0x0052)
-    0x90,
-    0xE0,
-    0xA0,
-    0x90,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x70,          // Character: 'S' (0x0053)
-    0x80,
-    0x70,
-    0x90,
-    0x70,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: 'T' (0x0054)
-    0x20,
-    0x20,
-    0x20,
-    0x20,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x90,          // Character: 'U' (0x0055)
-    0x90,
-    0x90,
-    0x90,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x88,          // Character: 'V' (0x0056)
-    0x90,
-    0x50,
-    0x60,
-    0x20,
-    EFI_HII_GIBT_GLYPH,
-    0x07,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x07,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x92,          // Character: 'W' (0x0057)
-    0xB4,
-    0x6C,
-    0x6C,
-    0x48,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x90,          // Character: 'X' (0x0058)
-    0x60,
-    0x20,
-    0x50,
-    0x98,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x98,          // Character: 'Y' (0x0059)
-    0x50,
-    0x20,
-    0x20,
-    0x20,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: 'Z' (0x005A)
-    0x20,
-    0x20,
-    0x40,
-    0xF0,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '[' (0x005B)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: '\' (0x005C)
-    0x80,
-    0x80,
-    0x40,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: ']' (0x005D)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x02,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x03,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x40,          // Character: '^' (0x005E)
-    0xA0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x01,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: '_' (0x005F)
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x01,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '`' (0x0060)
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: 'a' (0x0061)
-    0xA0,
-    0xE0,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'b' (0x0062)
-    0xE0,
-    0x90,
-    0x90,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: 'c' (0x0063)
-    0x80,
-    0x80,
-    0x60,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x20,          // Character: 'd' (0x0064)
-    0x60,
-    0xA0,
-    0xA0,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: 'e' (0x0065)
-    0x90,
-    0xE0,
-    0x70,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x40,          // Character: 'f' (0x0066)
-    0xC0,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: 'g' (0x0067)
-    0xA0,
-    0xA0,
-    0xE0,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'h' (0x0068)
-    0xE0,
-    0xA0,
-    0xA0,
-    0xA0,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'i' (0x0069)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'j' (0x006A)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'k' (0x006B)
-    0xA0,
-    0xC0,
-    0xA0,
-    0xA0,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 'l' (0x006C)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x06,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF8,          // Character: 'm' (0x006D)
-    0xA8,
-    0xA8,
-    0xA8,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'n' (0x006E)
-    0xA0,
-    0xA0,
-    0xA0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: 'o' (0x006F)
-    0x90,
-    0x90,
-    0x60,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'p' (0x0070)
-    0x90,
-    0x90,
-    0xE0,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: 'q' (0x0071)
-    0xA0,
-    0xA0,
-    0xE0,
-    0x20,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: 'r' (0x0072)
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x60,          // Character: 's' (0x0073)
-    0x80,
-    0x60,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: 't' (0x0074)
-    0xC0,
-    0x80,
-    0x80,
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xA0,          // Character: 'u' (0x0075)
-    0xA0,
-    0xA0,
-    0x60,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xA0,          // Character: 'v' (0x0076)
-    0xA0,
-    0x60,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xA8,          // Character: 'w' (0x0077)
-    0xA8,
-    0xD0,
-    0x50,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xA0,          // Character: 'x' (0x0078)
-    0x60,
-    0x40,
-    0xA0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xA0,          // Character: 'y' (0x0079)
-    0xA0,
-    0x60,
-    0x40,
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: 'z' (0x007A)
-    0x20,
-    0x40,
-    0xE0,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x40,          // Character: '{' (0x007B)
-    0x40,
-    0x40,
-    0x80,
-    0x40,
-    0x40,
-    EFI_HII_GIBT_GLYPH,
-    0x01,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: '|' (0x007C)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: '}' (0x007D)
-    0x40,
-    0x40,
-    0x40,
-    0x40,
-    0xC0,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x01,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x05,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: '~' (0x007E)
-    EFI_HII_GIBT_SKIP2,                    // Skip 8099 Unicode characters.
-    0xA3,
-    0x1F,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x01,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x03,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xC0,          // Character: '•' (0x2022)
-    EFI_HII_GIBT_SKIP2,                    // Skip 365 Unicode characters.
-    0x6D,
-    0x01,
-    EFI_HII_GIBT_GLYPH,
-    0x07,          // Cell width in pixels.
-    0x00,
-    0x02,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x07,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x40,          // Character: '←' (0x2190)
-    0xFE,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: '↑' (0x2191)
-    0xC0,
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    EFI_HII_GIBT_GLYPH,
-    0x07,          // Cell width in pixels.
-    0x00,
-    0x02,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x07,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x04,          // Character: '→' (0x2192)
-    0xFE,
-    EFI_HII_GIBT_GLYPH,
-    0x02,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x00,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x80,          // Character: '↓' (0x2193)
-    0x80,
-    0x80,
-    0x80,
-    0x80,
-    0xC0,
-    EFI_HII_GIBT_SKIP2,                    // Skip 407 Unicode characters.
-    0x97,
-    0x01,
-    EFI_HII_GIBT_GLYPH,
-    0x06,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x06,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x3C,          // Character: '⌫' (0x232B)
-    0x6C,
-    0x94,
-    0x7C,
-    EFI_HII_GIBT_SKIP2,                    // Skip 162 Unicode characters.
-    0xA2,
-    0x00,
-    EFI_HII_GIBT_GLYPH,
-    0x06,          // Cell width in pixels.
-    0x00,
-    0x06,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x07,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x0C,          // Character: '⏎' (0x23CE)
-    0x14,
-    0x34,
-    0xF4,
-    0x84,
-    0x78,
-    EFI_HII_GIBT_SKIP2,                    // Skip 468 Unicode characters.
-    0xD4,
-    0x01,
-    EFI_HII_GIBT_GLYPH,
-    0x03,          // Cell width in pixels.
-    0x00,
-    0x03,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x02,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xE0,          // Character: '▣' (0x25A3)
-    0xE0,
-    0xE0,
-    EFI_HII_GIBT_SKIP2,                    // Skip 369 Unicode characters.
-    0x71,
-    0x01,
-    EFI_HII_GIBT_GLYPH,
-    0x05,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x07,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x88,          // Character: '✕' (0x2715)
-    0x50,
-    0x20,
-    0x50,
-    0x88,
-    EFI_HII_GIBT_SKIP2,                    // Skip 1021 Unicode characters.
-    0xFD,
-    0x03,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: '⬓' (0x2B13)
-    0x90,
-    0xF0,
-    0xF0,
-    EFI_HII_GIBT_SKIP2,                    // Skip 46579 Unicode characters.
-    0xF3,
-    0xB5,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x04,          // Cell height in pixels.
-    0x00,
-    0x01,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x06,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0xF0,          // Character: '' (0xE107)
-    0xB0,
-    0xB0,
-    0xF0,
-    EFI_HII_GIBT_SKIP2,                    // Skip 7925 Unicode characters.
-    0xF5,
-    0x1E,
-    EFI_HII_GIBT_GLYPH,
-    0x04,          // Cell width in pixels.
-    0x00,
-    0x05,          // Cell height in pixels.
-    0x00,
-    0x00,          // Horizontal offset from cell boundary to start of glyph.
-    0x00,
-    0x01,          // Vertical offset from cell boundary to start of glyph.
-    0x00,
-    0x04,          // Number of pixels to the right to advance to next glyph.
-    0x00,
-    0x20,          // Character: '�' (0xFFFD)
-    0x50,
-    0xF0,
-    0x60,
-    0x20,
-    EFI_HII_GIBT_END            // Glyph list terminator.
+  EFI_HII_GIBT_SKIP2,                      // Skip 31 Unicode characters.
+  0x1F,
+  0x00,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x01,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x00,            // Character: ' ' (0x0020)
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: '!' (0x0021)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x02,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: '"' (0x0022)
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x50,            // Character: '#' (0x0023)
+  0xF0,
+  0x60,
+  0xF0,
+  0xA0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x07,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x40,            // Character: '$' (0x0024)
+  0x60,
+  0xC0,
+  0x60,
+  0x50,
+  0xE0,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x06,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x06,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE8,            // Character: '%' (0x0025)
+  0xB0,
+  0x58,
+  0x34,
+  0x7C,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '&' (0x0026)
+  0x60,
+  0x60,
+  0x90,
+  0x70,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x02,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: ''' (0x0027)
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x40,            // Character: '(' (0x0028)
+  0x40,
+  0x80,
+  0x80,
+  0x80,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: ')' (0x0029)
+  0x40,
+  0x40,
+  0x40,
+  0x40,
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x02,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x03,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: '*' (0x002A)
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x03,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x20,            // Character: '+' (0x002B)
+  0xF0,
+  0x20,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x02,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: ',' (0x002C)
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x01,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: '-' (0x002D)
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x01,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: '.' (0x002E)
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x40,            // Character: '/' (0x002F)
+  0x40,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '0' (0x0030)
+  0x90,
+  0x90,
+  0x90,
+  0x60,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: '1' (0x0031)
+  0x40,
+  0x40,
+  0x40,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '2' (0x0032)
+  0x90,
+  0x20,
+  0x40,
+  0xF0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: '3' (0x0033)
+  0x20,
+  0x20,
+  0x10,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x20,            // Character: '4' (0x0034)
+  0x60,
+  0xA0,
+  0xF0,
+  0x20,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '5' (0x0035)
+  0x80,
+  0xF0,
+  0x10,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '6' (0x0036)
+  0x90,
+  0xE0,
+  0x90,
+  0x60,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,            // Character: '7' (0x0037)
+  0x20,
+  0x20,
+  0x20,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '8' (0x0038)
+  0xA0,
+  0x60,
+  0x90,
+  0x60,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '9' (0x0039)
+  0x90,
+  0xF0,
+  0x10,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: ':' (0x003A)
+  0x00,
+  0x00,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: ';' (0x003B)
+  0x00,
+  0x00,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x03,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x30,            // Character: '<' (0x003C)
+  0xC0,
+  0x30,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x03,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,            // Character: '=' (0x003D)
+  0x00,
+  0xF0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x03,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: '>' (0x003E)
+  0x30,
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: '?' (0x003F)
+  0x90,
+  0x20,
+  0x40,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x07,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x07,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x3C,            // Character: '@' (0x0040)
+  0x5A,
+  0xAA,
+  0xAA,
+  0xBC,
+  0x7C,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x20,            // Character: 'A' (0x0041)
+  0x60,
+  0x50,
+  0xB0,
+  0x88,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'B' (0x0042)
+  0xA0,
+  0xE0,
+  0xA0,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x70,            // Character: 'C' (0x0043)
+  0x88,
+  0x80,
+  0x88,
+  0x70,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'D' (0x0044)
+  0x90,
+  0x90,
+  0x90,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'E' (0x0045)
+  0x80,
+  0xE0,
+  0x80,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'F' (0x0046)
+  0x80,
+  0xE0,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x70,            // Character: 'G' (0x0047)
+  0x88,
+  0x98,
+  0x88,
+  0x78,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x90,            // Character: 'H' (0x0048)
+  0x90,
+  0xF0,
+  0x90,
+  0x90,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'I' (0x0049)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x20,            // Character: 'J' (0x004A)
+  0x20,
+  0x20,
+  0x20,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xB0,            // Character: 'K' (0x004B)
+  0xC0,
+  0xC0,
+  0xA0,
+  0xB0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'L' (0x004C)
+  0x80,
+  0x80,
+  0x80,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x06,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x90,            // Character: 'M' (0x004D)
+  0x90,
+  0xB0,
+  0xF0,
+  0xD0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x90,            // Character: 'N' (0x004E)
+  0x90,
+  0xD0,
+  0xB0,
+  0xB0,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x70,            // Character: 'O' (0x004F)
+  0x88,
+  0x88,
+  0x88,
+  0x70,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'P' (0x0050)
+  0xA0,
+  0xE0,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x70,            // Character: 'Q' (0x0051)
+  0x88,
+  0x88,
+  0x98,
+  0x78,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'R' (0x0052)
+  0x90,
+  0xE0,
+  0xA0,
+  0x90,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x70,            // Character: 'S' (0x0053)
+  0x80,
+  0x70,
+  0x90,
+  0x70,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,            // Character: 'T' (0x0054)
+  0x20,
+  0x20,
+  0x20,
+  0x20,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x90,            // Character: 'U' (0x0055)
+  0x90,
+  0x90,
+  0x90,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x88,            // Character: 'V' (0x0056)
+  0x90,
+  0x50,
+  0x60,
+  0x20,
+  EFI_HII_GIBT_GLYPH,
+  0x07,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x07,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x92,            // Character: 'W' (0x0057)
+  0xB4,
+  0x6C,
+  0x6C,
+  0x48,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x90,            // Character: 'X' (0x0058)
+  0x60,
+  0x20,
+  0x50,
+  0x98,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x98,            // Character: 'Y' (0x0059)
+  0x50,
+  0x20,
+  0x20,
+  0x20,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,            // Character: 'Z' (0x005A)
+  0x20,
+  0x20,
+  0x40,
+  0xF0,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: '[' (0x005B)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: '\' (0x005C)
+  0x80,
+  0x80,
+  0x40,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: ']' (0x005D)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x02,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x03,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x40,            // Character: '^' (0x005E)
+  0xA0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x01,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,            // Character: '_' (0x005F)
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x01,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: '`' (0x0060)
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: 'a' (0x0061)
+  0xA0,
+  0xE0,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'b' (0x0062)
+  0xE0,
+  0x90,
+  0x90,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: 'c' (0x0063)
+  0x80,
+  0x80,
+  0x60,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x20,            // Character: 'd' (0x0064)
+  0x60,
+  0xA0,
+  0xA0,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: 'e' (0x0065)
+  0x90,
+  0xE0,
+  0x70,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x40,            // Character: 'f' (0x0066)
+  0xC0,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: 'g' (0x0067)
+  0xA0,
+  0xA0,
+  0xE0,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'h' (0x0068)
+  0xE0,
+  0xA0,
+  0xA0,
+  0xA0,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'i' (0x0069)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'j' (0x006A)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'k' (0x006B)
+  0xA0,
+  0xC0,
+  0xA0,
+  0xA0,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 'l' (0x006C)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x06,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF8,            // Character: 'm' (0x006D)
+  0xA8,
+  0xA8,
+  0xA8,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'n' (0x006E)
+  0xA0,
+  0xA0,
+  0xA0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: 'o' (0x006F)
+  0x90,
+  0x90,
+  0x60,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'p' (0x0070)
+  0x90,
+  0x90,
+  0xE0,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: 'q' (0x0071)
+  0xA0,
+  0xA0,
+  0xE0,
+  0x20,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,            // Character: 'r' (0x0072)
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x60,            // Character: 's' (0x0073)
+  0x80,
+  0x60,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: 't' (0x0074)
+  0xC0,
+  0x80,
+  0x80,
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xA0,            // Character: 'u' (0x0075)
+  0xA0,
+  0xA0,
+  0x60,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xA0,            // Character: 'v' (0x0076)
+  0xA0,
+  0x60,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xA8,            // Character: 'w' (0x0077)
+  0xA8,
+  0xD0,
+  0x50,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xA0,            // Character: 'x' (0x0078)
+  0x60,
+  0x40,
+  0xA0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xA0,            // Character: 'y' (0x0079)
+  0xA0,
+  0x60,
+  0x40,
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: 'z' (0x007A)
+  0x20,
+  0x40,
+  0xE0,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x40,            // Character: '{' (0x007B)
+  0x40,
+  0x40,
+  0x80,
+  0x40,
+  0x40,
+  EFI_HII_GIBT_GLYPH,
+  0x01,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: '|' (0x007C)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: '}' (0x007D)
+  0x40,
+  0x40,
+  0x40,
+  0x40,
+  0xC0,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x01,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x05,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,               // Character: '~' (0x007E)
+  EFI_HII_GIBT_SKIP2, // Skip 8099 Unicode characters.
+  0xA3,
+  0x1F,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x01,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x03,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xC0,               // Character: '•' (0x2022)
+  EFI_HII_GIBT_SKIP2, // Skip 365 Unicode characters.
+  0x6D,
+  0x01,
+  EFI_HII_GIBT_GLYPH,
+  0x07,            // Cell width in pixels.
+  0x00,
+  0x02,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x07,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x40,            // Character: '←' (0x2190)
+  0xFE,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: '↑' (0x2191)
+  0xC0,
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  EFI_HII_GIBT_GLYPH,
+  0x07,            // Cell width in pixels.
+  0x00,
+  0x02,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x07,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x04,            // Character: '→' (0x2192)
+  0xFE,
+  EFI_HII_GIBT_GLYPH,
+  0x02,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x00,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x80,            // Character: '↓' (0x2193)
+  0x80,
+  0x80,
+  0x80,
+  0x80,
+  0xC0,
+  EFI_HII_GIBT_SKIP2,                      // Skip 407 Unicode characters.
+  0x97,
+  0x01,
+  EFI_HII_GIBT_GLYPH,
+  0x06,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x06,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x3C,            // Character: '⌫' (0x232B)
+  0x6C,
+  0x94,
+  0x7C,
+  EFI_HII_GIBT_SKIP2,                      // Skip 162 Unicode characters.
+  0xA2,
+  0x00,
+  EFI_HII_GIBT_GLYPH,
+  0x06,            // Cell width in pixels.
+  0x00,
+  0x06,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x07,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x0C,            // Character: '⏎' (0x23CE)
+  0x14,
+  0x34,
+  0xF4,
+  0x84,
+  0x78,
+  EFI_HII_GIBT_SKIP2,                      // Skip 468 Unicode characters.
+  0xD4,
+  0x01,
+  EFI_HII_GIBT_GLYPH,
+  0x03,            // Cell width in pixels.
+  0x00,
+  0x03,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x02,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xE0,            // Character: '▣' (0x25A3)
+  0xE0,
+  0xE0,
+  EFI_HII_GIBT_SKIP2,                      // Skip 369 Unicode characters.
+  0x71,
+  0x01,
+  EFI_HII_GIBT_GLYPH,
+  0x05,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x07,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x88,            // Character: '✕' (0x2715)
+  0x50,
+  0x20,
+  0x50,
+  0x88,
+  EFI_HII_GIBT_SKIP2,                      // Skip 1021 Unicode characters.
+  0xFD,
+  0x03,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,            // Character: '⬓' (0x2B13)
+  0x90,
+  0xF0,
+  0xF0,
+  EFI_HII_GIBT_SKIP2,                      // Skip 46579 Unicode characters.
+  0xF3,
+  0xB5,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x04,            // Cell height in pixels.
+  0x00,
+  0x01,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x06,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0xF0,            // Character: '' (0xE107)
+  0xB0,
+  0xB0,
+  0xF0,
+  EFI_HII_GIBT_SKIP2,                      // Skip 7925 Unicode characters.
+  0xF5,
+  0x1E,
+  EFI_HII_GIBT_GLYPH,
+  0x04,            // Cell width in pixels.
+  0x00,
+  0x05,            // Cell height in pixels.
+  0x00,
+  0x00,            // Horizontal offset from cell boundary to start of glyph.
+  0x00,
+  0x01,            // Vertical offset from cell boundary to start of glyph.
+  0x00,
+  0x04,            // Number of pixels to the right to advance to next glyph.
+  0x00,
+  0x20,            // Character: '�' (0xFFFD)
+  0x50,
+  0xF0,
+  0x60,
+  0x20,
+  EFI_HII_GIBT_END              // Glyph list terminator.
 };

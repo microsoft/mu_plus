@@ -22,7 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 TestUnauthorizedIoRead (
   VOID
-);
+  );
 
 /**
   Execute unauthorized IO write.
@@ -36,7 +36,7 @@ TestUnauthorizedIoRead (
 EFI_STATUS
 TestUnauthorizedIoWrite (
   VOID
-);
+  );
 
 /**
   Execute unauthorized MSR read.
@@ -50,7 +50,7 @@ TestUnauthorizedIoWrite (
 EFI_STATUS
 TestUnauthorizedMsrRead (
   VOID
-);
+  );
 
 /**
   Execute unauthorized MSR write.
@@ -64,7 +64,7 @@ TestUnauthorizedMsrRead (
 EFI_STATUS
 TestUnauthorizedMsrWrite (
   VOID
-);
+  );
 
 /**
   Execute unauthorized privileged instruction.
@@ -79,7 +79,7 @@ TestUnauthorizedMsrWrite (
 EFI_STATUS
 TestPrivilegedInstruction (
   VOID
-);
+  );
 
 /**
   Attempt to access the SMM entry point.
@@ -94,6 +94,6 @@ TestPrivilegedInstruction (
 EFI_STATUS
 TestEntryPointAccess (
   VOID
-);
+  );
 
 #endif

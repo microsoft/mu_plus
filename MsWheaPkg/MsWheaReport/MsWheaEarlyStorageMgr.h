@@ -21,7 +21,7 @@ VOID
 EFIAPI
 MsWheaESInit (
   VOID
-);
+  );
 
 /**
 This routine will store data onto Early Storage data region based on supplied MS WHEA metadata
@@ -34,8 +34,8 @@ This routine will store data onto Early Storage data region based on supplied MS
 EFI_STATUS
 EFIAPI
 MsWheaESStoreEntry (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
-);
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
+  );
 
 /**
 This routine processes the stored errors on Early Storage data region
@@ -43,13 +43,13 @@ This routine processes the stored errors on Early Storage data region
 @param[in]  ReportFn                  Callback function when a MS WHEA metadata is ready to report
 
 @retval EFI_SUCCESS                   Operation is successful
-@retval Others                        See implementation specific functions and MS_WHEA_ERR_REPORT_PS_FN 
+@retval Others                        See implementation specific functions and MS_WHEA_ERR_REPORT_PS_FN
                                       definition for more details
 **/
 EFI_STATUS
 EFIAPI
 MsWheaESProcess (
-  IN MS_WHEA_ERR_REPORT_PS_FN         ReportFn
-);
+  IN MS_WHEA_ERR_REPORT_PS_FN  ReportFn
+  );
 
 #endif // __MS_WHEA_EARLY_STORAGE_MGR__

@@ -14,11 +14,11 @@ typedef UINT8   MEMORY_PROTECTION_VAR_TOKEN;
 typedef UINT16  MEMORY_PROTECTION_OVERRIDE;
 
 // Bit definitions for MEMORY_PROTECTION_OVERRIDE
-#define MEM_PROT_VALID_BIT       BIT0   // Is the override valid
-#define MEM_PROT_TOG_BIT         BIT1   // Is the global toggle on
-#define MEM_PROT_EX_HIT_BIT      BIT7   // Was an exception hit
+#define MEM_PROT_VALID_BIT   BIT0       // Is the override valid
+#define MEM_PROT_TOG_BIT     BIT1       // Is the global toggle on
+#define MEM_PROT_EX_HIT_BIT  BIT7       // Was an exception hit
 
-#define MEM_PROT_GLOBAL_TOGGLE_SETTING ((MEMORY_PROTECTION_VAR_TOKEN) 0x0)
+#define MEM_PROT_GLOBAL_TOGGLE_SETTING  ((MEMORY_PROTECTION_VAR_TOKEN) 0x0)
 
 /**
   Gets a memory protection setting from the platform-specific early store. This setting value is only intended
@@ -35,8 +35,8 @@ typedef UINT16  MEMORY_PROTECTION_OVERRIDE;
 EFI_STATUS
 EFIAPI
 MemoryProtectionExceptionOverrideCheck (
-  IN    MEMORY_PROTECTION_VAR_TOKEN      VarToken,
-  OUT   UINT32                          *Setting
+  IN    MEMORY_PROTECTION_VAR_TOKEN  VarToken,
+  OUT   UINT32                       *Setting
   );
 
 /**
@@ -64,7 +64,6 @@ MemoryProtectionExceptionOverrideClear (
   VOID
   );
 
-
 /**
   Writes Input Value to early store
 
@@ -74,7 +73,7 @@ MemoryProtectionExceptionOverrideClear (
 VOID
 EFIAPI
 MemoryProtectionExceptionOverrideWrite (
-  MEMORY_PROTECTION_OVERRIDE Val
+  MEMORY_PROTECTION_OVERRIDE  Val
   );
 
 #endif

@@ -20,13 +20,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 ...
 </Settings>
 **/
-#define SETTINGS_PACKET_ELEMENT_NAME  "SettingsPacket"
-#define SETTINGS_VERSION_ELEMENT_NAME "Version"
-#define SETTINGS_LSV_ELEMENT_NAME     "LowestSupportedVersion"
-#define SETTINGS_LIST_ELEMENT_NAME    "Settings"
-#define SETTING_ELEMENT_NAME          "Setting"
-#define SETTING_ID_ELEMENT_NAME       "Id"
-#define SETTING_VALUE_ELEMENT_NAME    "Value"
+#define SETTINGS_PACKET_ELEMENT_NAME   "SettingsPacket"
+#define SETTINGS_VERSION_ELEMENT_NAME  "Version"
+#define SETTINGS_LSV_ELEMENT_NAME      "LowestSupportedVersion"
+#define SETTINGS_LIST_ELEMENT_NAME     "Settings"
+#define SETTING_ELEMENT_NAME           "Setting"
+#define SETTING_ID_ELEMENT_NAME        "Id"
+#define SETTING_VALUE_ELEMENT_NAME     "Value"
 
 /**
 <Settings>
@@ -38,66 +38,71 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 ...
 </Settings>
 **/
-#define RESULTS_PACKET_ELEMENT_NAME           "ResultsPacket"
-#define RESULTS_APPLIED_ON_ELEMENT_NAME       "AppliedOn"
-#define RESULTS_SETTINGS_LIST_ELEMENT_NAME    SETTINGS_LIST_ELEMENT_NAME
-#define RESULTS_SETTING_ELEMENT_NAME          "SettingResult"
-#define RESULTS_SETTING_ID_ELEMENT_NAME       "Id"
+#define RESULTS_PACKET_ELEMENT_NAME          "ResultsPacket"
+#define RESULTS_APPLIED_ON_ELEMENT_NAME      "AppliedOn"
+#define RESULTS_SETTINGS_LIST_ELEMENT_NAME   SETTINGS_LIST_ELEMENT_NAME
+#define RESULTS_SETTING_ELEMENT_NAME         "SettingResult"
+#define RESULTS_SETTING_ID_ELEMENT_NAME      "Id"
 #define RESULTS_SETTING_FLAG_ELEMENT_NAME    "Flags"
-#define RESULTS_SETTING_STATUS_ELEMENT_NAME   "Result"
+#define RESULTS_SETTING_STATUS_ELEMENT_NAME  "Result"
 
-
-
-#define CURRENT_PACKET_ELEMENT_NAME           "CurrentSettingsPacket"
-#define CURRENT_DATE_ELEMENT_NAME             "Date"
-#define CURRENT_LSV_ELEMENT_NAME              "LSV"
-#define CURRENT_SETTINGS_LIST_ELEMENT_NAME    SETTINGS_LIST_ELEMENT_NAME
-#define CURRENT_SETTING_ELEMENT_NAME          "SettingCurrent"
-#define CURRENT_SETTING_ID_ELEMENT_NAME       "Id"
-#define CURRENT_SETTING_VALUE_ELEMENT_NAME    "Value"
-
-
+#define CURRENT_PACKET_ELEMENT_NAME         "CurrentSettingsPacket"
+#define CURRENT_DATE_ELEMENT_NAME           "Date"
+#define CURRENT_LSV_ELEMENT_NAME            "LSV"
+#define CURRENT_SETTINGS_LIST_ELEMENT_NAME  SETTINGS_LIST_ELEMENT_NAME
+#define CURRENT_SETTING_ELEMENT_NAME        "SettingCurrent"
+#define CURRENT_SETTING_ID_ELEMENT_NAME     "Id"
+#define CURRENT_SETTING_VALUE_ELEMENT_NAME  "Value"
 
 /**
 Creates a new XmlNode list following the ResultPacket
 format.
 
-Return NULL if error occurs. Otherwise return a pointer to xml doc root element 
-of a ResultPacketNodeList. 
+Return NULL if error occurs. Otherwise return a pointer to xml doc root element
+of a ResultPacketNodeList.
 
 List must be freed using FreeNodeList
 
 **/
 XmlNode *
 EFIAPI
-New_ResultPacketNodeList(EFI_TIME *Date);
+New_ResultPacketNodeList (
+  EFI_TIME  *Date
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetSettingsPacketNode(CONST XmlNode* RootNode);
+GetSettingsPacketNode (
+  CONST XmlNode  *RootNode
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetResultsPacketNode(CONST XmlNode* RootNode);
+GetResultsPacketNode (
+  CONST XmlNode  *RootNode
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetSettingsListNodeFromPacketNode(CONST XmlNode* PacketNode);
+GetSettingsListNodeFromPacketNode (
+  CONST XmlNode  *PacketNode
+  );
 
 EFI_STATUS
 EFIAPI
-GetInputSettings(
-  IN CONST XmlNode* ParentSettingNode,
-  OUT CONST CHAR8** Id,
-  OUT CONST CHAR8** Value);
+GetInputSettings (
+  IN CONST XmlNode  *ParentSettingNode,
+  OUT CONST CHAR8   **Id,
+  OUT CONST CHAR8   **Value
+  );
 
 EFI_STATUS
 EFIAPI
-SetOutputSettingsStatus(
-  IN CONST XmlNode* ParentSettingsListNode,
-  IN CONST CHAR8* Id,
-  IN CONST CHAR8* Result, 
-  IN CONST CHAR8* Flags  OPTIONAL
+SetOutputSettingsStatus (
+  IN CONST XmlNode  *ParentSettingsListNode,
+  IN CONST CHAR8    *Id,
+  IN CONST CHAR8    *Result,
+  IN CONST CHAR8    *Flags  OPTIONAL
   );
 
 /**
@@ -105,29 +110,33 @@ Create a new Current Settings Packet Node List
 **/
 XmlNode *
 EFIAPI
-New_CurrentSettingsPacketNodeList(EFI_TIME *Date);
+New_CurrentSettingsPacketNodeList (
+  EFI_TIME  *Date
+  );
 
 EFI_STATUS
 EFIAPI
-SetCurrentSettings(
-  IN CONST XmlNode *ParentSettingsListNode,
-  IN CONST CHAR8* Id,
-  IN CONST CHAR8* Value);
+SetCurrentSettings (
+  IN CONST XmlNode  *ParentSettingsListNode,
+  IN CONST CHAR8    *Id,
+  IN CONST CHAR8    *Value
+  );
 
-XmlNode*
+XmlNode *
 EFIAPI
-GetCurrentSettingsPacketNode(
-  IN CONST XmlNode* RootNode);
+GetCurrentSettingsPacketNode (
+  IN CONST XmlNode  *RootNode
+  );
 
 EFI_STATUS
 EFIAPI
-AddSettingsLsvNode(
-  IN CONST XmlNode* CurrentSettingsPacketNode,
-  IN CONST CHAR8* Lsv);
+AddSettingsLsvNode (
+  IN CONST XmlNode  *CurrentSettingsPacketNode,
+  IN CONST CHAR8    *Lsv
+  );
 
+// ***************************** EXAMPLE SETTINGS PACKET (INTPUT TO UEFI) *******************************//
 
-
-//***************************** EXAMPLE SETTINGS PACKET (INTPUT TO UEFI) *******************************//
 /*
 <?xml version="1.0" encoding="us-ascii"?>
 <SettingsPacket xmlns="urn:UefiSettings-Schema">
@@ -160,7 +169,8 @@ AddSettingsLsvNode(
 </SettingsPacket>
 */
 
-//***************************** EXAMPLE RESULTS PACKET (OUTPUT FROM UEFI) *****************************//
+// ***************************** EXAMPLE RESULTS PACKET (OUTPUT FROM UEFI) *****************************//
+
 /*
 <?xml version="1.0" encoding="us-ascii"?>
 <ResultsPacket xmlns="urn:UefiSettings-Schema">
@@ -181,6 +191,5 @@ AddSettingsLsvNode(
   </Settings>
 </ResultsPacket>
 */
-
 
 #endif //__DFCI_XML_SETTING_SCHEMA_SUPPORT_LIB__

@@ -24,29 +24,30 @@
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerGetLoggerInfo (
-    VOID
-) {
-    ADVANCED_LOGGER_INFO       *LoggerInfoSec;
-    ADVANCED_LOGGER_PTR        *LogPtr;
+  VOID
+  )
+{
+  ADVANCED_LOGGER_INFO  *LoggerInfoSec;
+  ADVANCED_LOGGER_PTR   *LogPtr;
 
-    //
-    // Locate the SEC Logger Information block.  The Ppi is not accessible in X64.PEIM.
-    //
-    // The PCD AdvancedLoggerBase MAY be a 64 bit address.  However, it is
-    // trimmed to be a pointer the size of the actual platform - and the Pcd is expected
-    // to be set accordingly.
-    LogPtr = (ADVANCED_LOGGER_PTR *) (VOID *) (UINTN) FixedPcdGet64 (PcdAdvancedLoggerBase);
-    LoggerInfoSec = NULL;
-    if ((LogPtr != NULL) &&
-        (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
-        (LogPtr->LogBuffer != 0ULL))
-    {
-        LoggerInfoSec = ALI_FROM_PA(LogPtr->LogBuffer);
-        if (!LoggerInfoSec->HdwPortInitialized) {
-            AdvancedLoggerHdwPortInitialize();
-            LoggerInfoSec->HdwPortInitialized = TRUE;
-        }
+  //
+  // Locate the SEC Logger Information block.  The Ppi is not accessible in X64.PEIM.
+  //
+  // The PCD AdvancedLoggerBase MAY be a 64 bit address.  However, it is
+  // trimmed to be a pointer the size of the actual platform - and the Pcd is expected
+  // to be set accordingly.
+  LogPtr        = (ADVANCED_LOGGER_PTR *)(VOID *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
+  LoggerInfoSec = NULL;
+  if ((LogPtr != NULL) &&
+      (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
+      (LogPtr->LogBuffer != 0ULL))
+  {
+    LoggerInfoSec = ALI_FROM_PA (LogPtr->LogBuffer);
+    if (!LoggerInfoSec->HdwPortInitialized) {
+      AdvancedLoggerHdwPortInitialize ();
+      LoggerInfoSec->HdwPortInitialized = TRUE;
     }
+  }
 
-    return LoggerInfoSec;
+  return LoggerInfoSec;
 }

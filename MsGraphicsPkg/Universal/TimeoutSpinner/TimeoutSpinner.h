@@ -23,8 +23,8 @@
 
 #include "TimeoutGeneral.h"
 
-#define SPINNER_TICK_RATE      2000000 // 200 milliseconds
-#define TIME_TO_SPINNER       50000000 // 5 Seconds
+#define SPINNER_TICK_RATE  2000000     // 200 milliseconds
+#define TIME_TO_SPINNER    50000000    // 5 Seconds
 
 /**
  * Start Spinner Common routine
@@ -36,7 +36,7 @@
  */
 VOID
 StartSpinnerCommon (
-  IN SPINNER_CONTAINER *Spc
+  IN SPINNER_CONTAINER  *Spc
   );
 
 /**
@@ -48,8 +48,7 @@ StartSpinnerCommon (
  */
 VOID
 StopSpinnerCommon (
-  IN SPINNER_CONTAINER *Spc
+  IN SPINNER_CONTAINER  *Spc
   );
-
 
 #endif

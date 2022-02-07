@@ -24,4 +24,4 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/PrintLib.h>
 
-#endif  // __LOG_DUMPER_H__
+#endif // __LOG_DUMPER_H__

@@ -20,16 +20,19 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/MathLib.h>
 
-
-#define UNIT_TEST_APP_NAME        "Math Lib Unit Test Application"
-#define UNIT_TEST_APP_VERSION     "0.1"
-
-EFI_STATUS
-EFIAPI
-RegisterAttributeTests(UNIT_TEST_SUITE_HANDLE   TestSuite);
+#define UNIT_TEST_APP_NAME     "Math Lib Unit Test Application"
+#define UNIT_TEST_APP_VERSION  "0.1"
 
 EFI_STATUS
 EFIAPI
-RegisterElementTests(UNIT_TEST_SUITE_HANDLE   TestSuite);
+RegisterAttributeTests (
+  UNIT_TEST_SUITE_HANDLE  TestSuite
+  );
+
+EFI_STATUS
+EFIAPI
+RegisterElementTests (
+  UNIT_TEST_SUITE_HANDLE  TestSuite
+  );
 
 #endif

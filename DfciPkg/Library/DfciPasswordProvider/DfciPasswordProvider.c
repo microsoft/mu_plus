@@ -24,120 +24,109 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciSettings.h>
 #include <Settings/DfciOemSample.h>
 
-EFI_EVENT      mPasswordProviderSupportInstallEvent = NULL;;
-VOID          *mPasswordProviderSupportInstallEventRegistration = NULL;
+EFI_EVENT  mPasswordProviderSupportInstallEvent              = NULL;
+VOID       *mPasswordProviderSupportInstallEventRegistration = NULL;
 
 EFI_STATUS
 EFIAPI
-PasswordGetDefault(
-IN  CONST DFCI_SETTING_PROVIDER     *This,
-IN  OUT   UINTN                     *ValueSize,
-OUT       UINT8                     *Value
-)
+PasswordGetDefault (
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       UINT8                  *Value
+  )
 {
-    if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (ValueSize == NULL))
-    {
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (ValueSize == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (*ValueSize < sizeof(UINT8))
-    {
-        *ValueSize = sizeof(UINT8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  if (*ValueSize < sizeof (UINT8)) {
+    *ValueSize = sizeof (UINT8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
-    {
-        DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
-        return EFI_UNSUPPORTED;
-    }
+  if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
+    DEBUG ((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
+    return EFI_UNSUPPORTED;
+  }
 
-    *ValueSize = sizeof(UINT8);
-    *Value = FALSE; // There is no system password set by default
-    return EFI_SUCCESS;
+  *ValueSize = sizeof (UINT8);
+  *Value     = FALSE; // There is no system password set by default
+  return EFI_SUCCESS;
 }
 
-
 EFI_STATUS
 EFIAPI
-PasswordGet(
-IN CONST DFCI_SETTING_PROVIDER     *This,
-IN OUT   UINTN                     *ValueSize,
-OUT      UINT8                     *Value
-)
+PasswordGet (
+  IN CONST DFCI_SETTING_PROVIDER  *This,
+  IN OUT   UINTN                  *ValueSize,
+  OUT      UINT8                  *Value
+  )
 {
-    if ((This == NULL) || (Value == NULL) || (ValueSize == NULL))
-    {
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (Value == NULL) || (ValueSize == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (*ValueSize < sizeof(UINT8))
-    {
-        *ValueSize = sizeof(UINT8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  if (*ValueSize < sizeof (UINT8)) {
+    *ValueSize = sizeof (UINT8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
-    {
-        DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (0x%X)\n", This->Id));
-        return EFI_UNSUPPORTED;
-    }
+  if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
+    DEBUG ((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (0x%X)\n", This->Id));
+    return EFI_UNSUPPORTED;
+  }
 
-    *ValueSize = sizeof(UINT8);
-    *Value = PasswordStoreIsPasswordSet(); // get the current password state.
+  *ValueSize = sizeof (UINT8);
+  *Value     = PasswordStoreIsPasswordSet (); // get the current password state.
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 EFI_STATUS
 EFIAPI
 PasswordSet (
-IN  CONST DFCI_SETTING_PROVIDER     *This,
-IN        UINTN                      ValueSize,
-IN  CONST UINT8                     *Value,
-OUT DFCI_SETTING_FLAGS              *Flags
-)
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN        UINTN                  ValueSize,
+  IN  CONST UINT8                  *Value,
+  OUT DFCI_SETTING_FLAGS           *Flags
+  )
 {
-    EFI_STATUS  Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    if ((This == NULL) || (Flags == NULL) || (Value == NULL))
-    {
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (Flags == NULL) || (Value == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    *Flags = 0;
+  *Flags = 0;
 
-    if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
-    {
-        DEBUG((DEBUG_ERROR, "PasswordSet was called with incorrect Provider Id (%a)\n", This->Id));
-        return EFI_UNSUPPORTED;
-    }
+  if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
+    DEBUG ((DEBUG_ERROR, "PasswordSet was called with incorrect Provider Id (%a)\n", This->Id));
+    return EFI_UNSUPPORTED;
+  }
 
-    // Store the password
-    // hash value which comes from xml or the CreatePasswordHash from password store.
-    Status = PasswordStoreSetPassword(Value, ValueSize);
+  // Store the password
+  // hash value which comes from xml or the CreatePasswordHash from password store.
+  Status = PasswordStoreSetPassword (Value, ValueSize);
 
-    if (!EFI_ERROR(Status)){
-        *Flags |= DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED;
-    }
+  if (!EFI_ERROR (Status)) {
+    *Flags |= DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED;
+  }
 
-    return Status;
+  return Status;
 }
 
 EFI_STATUS
 EFIAPI
 PasswordSetDefault (
-  IN  CONST DFCI_SETTING_PROVIDER     *This
+  IN  CONST DFCI_SETTING_PROVIDER  *This
   )
 {
-  if (This == NULL)
-  {
+  if (This == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN))
-  {
-    DEBUG((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
+  if (0 != AsciiStrnCmp (This->Id, DFCI_OEM_SETTING_ID__PASSWORD, DFCI_MAX_ID_LEN)) {
+    DEBUG ((DEBUG_ERROR, "PasswordProvider was called with incorrect Provider Id (%a)\n", This->Id));
     return EFI_UNSUPPORTED;
   }
 
@@ -147,14 +136,14 @@ PasswordSetDefault (
   return EFI_ACCESS_DENIED;
 }
 
-DFCI_SETTING_PROVIDER mPasswordProvider = {
-    DFCI_OEM_SETTING_ID__PASSWORD,
-    DFCI_SETTING_TYPE_PASSWORD,
-    DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED,
-    (DFCI_SETTING_PROVIDER_SET) PasswordSet,
-    (DFCI_SETTING_PROVIDER_GET) PasswordGet,
-    (DFCI_SETTING_PROVIDER_GET_DEFAULT) PasswordGetDefault,
-    (DFCI_SETTING_PROVIDER_SET_DEFAULT) PasswordSetDefault
+DFCI_SETTING_PROVIDER  mPasswordProvider = {
+  DFCI_OEM_SETTING_ID__PASSWORD,
+  DFCI_SETTING_TYPE_PASSWORD,
+  DFCI_SETTING_FLAGS_OUT_REBOOT_REQUIRED,
+  (DFCI_SETTING_PROVIDER_SET)PasswordSet,
+  (DFCI_SETTING_PROVIDER_GET)PasswordGet,
+  (DFCI_SETTING_PROVIDER_GET_DEFAULT)PasswordGetDefault,
+  (DFCI_SETTING_PROVIDER_SET_DEFAULT)PasswordSetDefault
 };
 
 /*
@@ -170,38 +159,35 @@ Context is NULL.
 */
 VOID
 EFIAPI
-PasswordProviderSupportProtocolNotify(
-IN  EFI_EVENT       Event,
-IN  VOID            *Context
-)
+PasswordProviderSupportProtocolNotify (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
 {
+  EFI_STATUS                              Status;
+  DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *sp;
+  STATIC UINT8                            CallCount = 0;
 
-    EFI_STATUS Status;
-    DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
-    STATIC UINT8 CallCount = 0;
-
-    //locate protocol
-    Status = gBS->LocateProtocol(&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
-    if (EFI_ERROR(Status))
-    {
-      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND))
-      {
-        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
-      }
-      return;
+  // locate protocol
+  Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID **)&sp);
+  if (EFI_ERROR (Status)) {
+    if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
+      DEBUG ((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
     }
 
-    //call function
-    DEBUG((DEBUG_INFO, "Registering Password Setting Provider\n"));
-    Status = sp->RegisterProvider(sp, &mPasswordProvider);
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to Register.  Status = %r\n", Status));
-    }
+    return;
+  }
 
-    //We got here, this means all protocols were installed and we didn't exit early.
-    //close the event as we dont' need to be signaled again. (shouldn't happen anyway)
-    gBS->CloseEvent(Event);
+  // call function
+  DEBUG ((DEBUG_INFO, "Registering Password Setting Provider\n"));
+  Status = sp->RegisterProvider (sp, &mPasswordProvider);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register.  Status = %r\n", Status));
+  }
+
+  // We got here, this means all protocols were installed and we didn't exit early.
+  // close the event as we dont' need to be signaled again. (shouldn't happen anyway)
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -223,28 +209,26 @@ It will ASSERT() if one of these operations fails and it will always return EFI_
 **/
 EFI_STATUS
 EFIAPI
-DfciPasswordProviderConstructor
-(
+DfciPasswordProviderConstructor (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    if (FeaturePcdGet(PcdSettingsManagerInstallProvider))
-    {
-        //Install callback on the SettingsManager gDfciSettingsProviderSupportProtocolGuid protocol
-        mPasswordProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent(
-            &gDfciSettingsProviderSupportProtocolGuid,
-            TPL_CALLBACK,
-            PasswordProviderSupportProtocolNotify,
-            NULL,
-            &mPasswordProviderSupportInstallEventRegistration);
+  if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
+    // Install callback on the SettingsManager gDfciSettingsProviderSupportProtocolGuid protocol
+    mPasswordProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+                                             &gDfciSettingsProviderSupportProtocolGuid,
+                                             TPL_CALLBACK,
+                                             PasswordProviderSupportProtocolNotify,
+                                             NULL,
+                                             &mPasswordProviderSupportInstallEventRegistration
+                                             );
 
-        DEBUG((DEBUG_INFO, "%a - Event Registered.\n", __FUNCTION__));
-    }
+    DEBUG ((DEBUG_INFO, "%a - Event Registered.\n", __FUNCTION__));
+  }
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-
 
 /**
 * Destructor for PasswordProvider to remove event notifications should other
@@ -258,14 +242,14 @@ DfciPasswordProviderConstructor
 **/
 EFI_STATUS
 EFIAPI
-DfciPasswordProviderDestructor(
-    IN      EFI_HANDLE                ImageHandle,
-    IN      EFI_SYSTEM_TABLE          *SystemTable
-) {
+DfciPasswordProviderDestructor (
+  IN      EFI_HANDLE        ImageHandle,
+  IN      EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  if (mPasswordProviderSupportInstallEvent != NULL) {
+    gBS->CloseEvent (mPasswordProviderSupportInstallEvent);
+  }
 
-    if (mPasswordProviderSupportInstallEvent != NULL) {
-        gBS->CloseEvent (mPasswordProviderSupportInstallEvent);
-    }
-
-   return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

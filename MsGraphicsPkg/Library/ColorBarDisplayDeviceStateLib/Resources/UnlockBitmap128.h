@@ -7,11 +7,11 @@
 **/
 #pragma once
 
-#define UNLOCK128_WIDTH  (83)
-#define UNLOCK128_HEIGHT (128)
+#define UNLOCK128_WIDTH   (83)
+#define UNLOCK128_HEIGHT  (128)
 
 // 83  x 128 x 32bpp
-CONST UINT32 mUnlockBltBuffer128[] = {
+CONST UINT32  mUnlockBltBuffer128[] = {
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000,
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000,
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000,
@@ -2670,5 +2670,5 @@ CONST UINT32 mUnlockBltBuffer128[] = {
   0x00FF0000, 0x00FF0000, 0x00FF0000, 0x00FF0000
 };
 
-STATIC_ASSERT((UNLOCK128_WIDTH * UNLOCK128_HEIGHT) == ARRAY_SIZE(mUnlockBltBuffer128), "Width x Height not equal to blt buffer size.");
-BITMAPDATA unlock128 = {UNLOCK128_HEIGHT, UNLOCK128_WIDTH, mUnlockBltBuffer128, sizeof(mUnlockBltBuffer128)};
+STATIC_ASSERT ((UNLOCK128_WIDTH * UNLOCK128_HEIGHT) == ARRAY_SIZE (mUnlockBltBuffer128), "Width x Height not equal to blt buffer size.");
+BITMAPDATA  unlock128 = { UNLOCK128_HEIGHT, UNLOCK128_WIDTH, mUnlockBltBuffer128, sizeof (mUnlockBltBuffer128) };

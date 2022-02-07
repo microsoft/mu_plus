@@ -21,13 +21,11 @@
 #include <Library/Tpm2CommandLib.h>
 #include <Protocol/Tcg2Protocol.h>
 
-
 // forward declaration, documentation below with implementation
 EFI_STATUS
 SimpleTpmClear (
   VOID
   );
-
 
 /**
   Callback invocation for MFCI policy changes.
@@ -46,51 +44,51 @@ SimpleTpmClear (
 
 **/
 EFI_STATUS
-EFIAPI MfciPolicyChangeCallbackTpm (
-  IN CONST MFCI_POLICY_TYPE   NewPolicy,
-  IN CONST MFCI_POLICY_TYPE   PreviousPolicy
-)
+EFIAPI
+MfciPolicyChangeCallbackTpm (
+  IN CONST MFCI_POLICY_TYPE  NewPolicy,
+  IN CONST MFCI_POLICY_TYPE  PreviousPolicy
+  )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  if ( (NewPolicy & STD_ACTION_TPM_CLEAR) != 0) {
-    Status = SimpleTpmClear();
+  if ((NewPolicy & STD_ACTION_TPM_CLEAR) != 0) {
+    Status = SimpleTpmClear ();
     // HINT: reset TPM to default?  Enable it if disabled?
-  }
-  else {
+  } else {
     Status = EFI_UNSUPPORTED;
   }
+
   return Status;
 }
-
 
 EFI_STATUS
 EFIAPI
 InitTpmListener (
   VOID
-)
+  )
 {
-  EFI_STATUS Status;
-  MFCI_PROTOCOL *MfciPolicyProtocol = NULL;
+  EFI_STATUS     Status;
+  MFCI_PROTOCOL  *MfciPolicyProtocol = NULL;
 
-  DEBUG(( DEBUG_INFO, "%a() - Enter\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
 
-  Status = gBS->LocateProtocol( &gMfciProtocolGuid, NULL, (VOID**) &MfciPolicyProtocol );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Locating MFCI Policy failed - %r\n", __FUNCTION__, Status ));
+  Status = gBS->LocateProtocol (&gMfciProtocolGuid, NULL, (VOID **)&MfciPolicyProtocol);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Locating MFCI Policy failed - %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  REGISTER_MFCI_POLICY_CHANGE_CALLBACK RegisterMfciPolicyChangeCallback = MfciPolicyProtocol->RegisterMfciPolicyChangeCallback;
-  Status = RegisterMfciPolicyChangeCallback( MfciPolicyProtocol, MfciPolicyChangeCallbackTpm );
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Registering TpmClear Callback failed - %r\n", __FUNCTION__, Status ));
+  REGISTER_MFCI_POLICY_CHANGE_CALLBACK  RegisterMfciPolicyChangeCallback = MfciPolicyProtocol->RegisterMfciPolicyChangeCallback;
+
+  Status = RegisterMfciPolicyChangeCallback (MfciPolicyProtocol, MfciPolicyChangeCallbackTpm);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Registering TpmClear Callback failed - %r\n", __FUNCTION__, Status));
     return Status;
   }
 
   return Status;
 }
-
 
 /**
   This function will perform a traditional TPM clear.
@@ -108,24 +106,21 @@ SimpleTpmClear (
   VOID
   )
 {
-  EFI_STATUS      Status;
+  EFI_STATUS  Status;
 
-  DEBUG(( DEBUG_INFO, "TpmClear::%a()\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, "TpmClear::%a()\n", __FUNCTION__));
 
   // Disable "clear" protections (use NULL auth).
-  Status = Tpm2ClearControl( TPM_RH_PLATFORM, NULL, NO );
-  if (EFI_ERROR( Status ))
-  {
-    DEBUG(( DEBUG_ERROR, "%a - Tpm2ClearControl = %r\n", __FUNCTION__, Status ));
+  Status = Tpm2ClearControl (TPM_RH_PLATFORM, NULL, NO);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Tpm2ClearControl = %r\n", __FUNCTION__, Status));
   }
 
   // If we're successful, actually clear the TPM (use NULL auth).
-  if (!EFI_ERROR( Status ))
-  {
-    Status = Tpm2Clear( TPM_RH_PLATFORM, NULL );
-    if (EFI_ERROR( Status ))
-    {
-      DEBUG(( DEBUG_ERROR, "%a - Tpm2Clear = %r\n", __FUNCTION__, Status ));
+  if (!EFI_ERROR (Status)) {
+    Status = Tpm2Clear (TPM_RH_PLATFORM, NULL);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Tpm2Clear = %r\n", __FUNCTION__, Status));
     }
   }
 

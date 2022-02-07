@@ -22,7 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MsUiThemeLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-extern MS_UI_THEME_DESCRIPTION *gPlatformTheme;
+extern MS_UI_THEME_DESCRIPTION  *gPlatformTheme;
 
 /**
   Constructor fo MsUiThemeLib
@@ -35,15 +35,14 @@ extern MS_UI_THEME_DESCRIPTION *gPlatformTheme;
 EFI_STATUS
 EFIAPI
 MsUiThemeLibConstructor (
-    IN EFI_HANDLE                            ImageHandle,
-    IN EFI_SYSTEM_TABLE                      *SystemTable
-    ) {
-    EFI_STATUS                          Status;
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS  Status;
 
+  Status = gBS->LocateProtocol (&gMsUiThemeProtocolGuid, NULL, (VOID **)&gPlatformTheme);
+  ASSERT_EFI_ERROR (Status);
 
-    Status = gBS->LocateProtocol (&gMsUiThemeProtocolGuid, NULL, (VOID **) &gPlatformTheme);
-    ASSERT_EFI_ERROR (Status);
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-

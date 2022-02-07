@@ -24,24 +24,23 @@ typedef enum {
 } PCIE_LINK_SPEED;
 
 typedef struct {
-  BOOLEAN                 MinimumSatisfied;
-  PCIE_LINK_SPEED         ActualSpeed;
+  BOOLEAN            MinimumSatisfied;
+  PCIE_LINK_SPEED    ActualSpeed;
 } PCIE_LINK_SPEED_RESULT;
 
 typedef struct {
-  BOOLEAN                 DevicePresent;
-  PCIE_LINK_SPEED_RESULT  LinkSpeedResult;
+  BOOLEAN                   DevicePresent;
+  PCIE_LINK_SPEED_RESULT    LinkSpeedResult;
 } DEVICE_PCI_CHECK_RESULT;
 
-typedef struct
-{
-    CHAR8                 DeviceName[8]; //So it fits within the 64 bits of Additional Code 2 in section data
-    BOOLEAN               IsFatal;
-    UINTN                 SegmentNumber;
-    UINTN                 BusNumber;
-    UINTN                 DeviceNumber;
-    UINTN                 FunctionNumber;
-    PCIE_LINK_SPEED       MinimumLinkSpeed;
+typedef struct {
+  CHAR8              DeviceName[8];      // So it fits within the 64 bits of Additional Code 2 in section data
+  BOOLEAN            IsFatal;
+  UINTN              SegmentNumber;
+  UINTN              BusNumber;
+  UINTN              DeviceNumber;
+  UINTN              FunctionNumber;
+  PCIE_LINK_SPEED    MinimumLinkSpeed;
 } DEVICE_PCI_INFO;
 
 /**
@@ -56,7 +55,7 @@ typedef struct
 **/
 UINTN
 GetPciCheckDevices (
-  OUT DEVICE_PCI_INFO **DevicesArray
+  OUT DEVICE_PCI_INFO  **DevicesArray
   );
 
 /**
@@ -70,6 +69,6 @@ GetPciCheckDevices (
 **/
 VOID
 ProcessPciDeviceResults (
-  IN  UINTN                       ResultCount,
-  IN  DEVICE_PCI_CHECK_RESULT     *Results
+  IN  UINTN                    ResultCount,
+  IN  DEVICE_PCI_CHECK_RESULT  *Results
   );

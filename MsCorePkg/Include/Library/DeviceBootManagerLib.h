@@ -15,18 +15,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 /// Console Type Information
 ///
-#define CONSOLE_OUT 0x00000001
-#define STD_ERROR   0x00000002
-#define CONSOLE_IN  0x00000004
-#define CONSOLE_ALL (CONSOLE_OUT | CONSOLE_IN | STD_ERROR)
+#define CONSOLE_OUT  0x00000001
+#define STD_ERROR    0x00000002
+#define CONSOLE_IN   0x00000004
+#define CONSOLE_ALL  (CONSOLE_OUT | CONSOLE_IN | STD_ERROR)
 
 #define OEM_REBOOT_TO_SETUP_KEY          (MAX_2_BITS | 0x4000 )
 #define OEM_REBOOT_TO_SETUP_OS           (MAX_2_BITS | 0x4001 )
 #define OEM_PREVIOUS_SECURITY_VIOLATION  (MAX_2_BITS | 0x4002 )
 
 typedef struct {
-  EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
-  UINTN                     ConnectType;
+  EFI_DEVICE_PATH_PROTOCOL    *DevicePath;
+  UINTN                       ConnectType;
 } BDS_CONSOLE_CONNECT_ENTRY;
 
 /**
@@ -57,8 +57,8 @@ DeviceBootManagerBdsEntry (
 EFI_HANDLE
 EFIAPI
 DeviceBootManagerBeforeConsole (
-  EFI_DEVICE_PATH_PROTOCOL    **DevicePath,
-  BDS_CONSOLE_CONNECT_ENTRY   **PlatformConsoles
+  EFI_DEVICE_PATH_PROTOCOL   **DevicePath,
+  BDS_CONSOLE_CONNECT_ENTRY  **PlatformConsoles
   );
 
 /**
@@ -78,7 +78,7 @@ ProcessBootCompletion
 VOID
 EFIAPI
 DeviceBootManagerProcessBootCompletion (
-  IN EFI_BOOT_MANAGER_LOAD_OPTION *BootOption
+  IN EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption
   );
 
 /**
@@ -95,7 +95,7 @@ DeviceBootManagerProcessBootCompletion (
 EFI_STATUS
 EFIAPI
 DeviceBootManagerPriorityBoot (
-  EFI_BOOT_MANAGER_LOAD_OPTION   *BootOption
+  EFI_BOOT_MANAGER_LOAD_OPTION  *BootOption
   );
 
 /**

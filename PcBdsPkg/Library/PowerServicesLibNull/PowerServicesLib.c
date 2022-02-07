@@ -11,9 +11,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 SystemPowerCheck (
-  IN  POWER_CASE    Case,
-  OUT BOOLEAN*      Good
-)
+  IN  POWER_CASE  Case,
+  OUT BOOLEAN     *Good
+  )
 {
   // For Platforms that do not have battery, always return EFI_SUCCESS
   *Good = TRUE;
@@ -24,12 +24,11 @@ SystemPowerCheck (
 EFI_STATUS
 EFIAPI
 SystemPowerMitigate (
-  IN  POWER_CASE    Case
-)
+  IN  POWER_CASE  Case
+  )
 {
   // For Platforms that do not have battery, should never be called
   // (See SystemPowerCheck above), so return unsupported.
 
   return EFI_UNSUPPORTED;
 }
-

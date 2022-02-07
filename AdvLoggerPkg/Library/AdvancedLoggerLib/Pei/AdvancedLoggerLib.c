@@ -27,24 +27,25 @@
 VOID
 EFIAPI
 AdvancedLoggerWrite (
-    IN        UINTN     ErrorLevel,
-    IN  CONST CHAR8    *Buffer,
-    IN        UINTN     NumberOfBytes
-  ) {
-    ADVANCED_LOGGER_PPI *AdvancedLoggerPpi;
-    EFI_STATUS           Status;
+  IN        UINTN  ErrorLevel,
+  IN  CONST CHAR8  *Buffer,
+  IN        UINTN  NumberOfBytes
+  )
+{
+  ADVANCED_LOGGER_PPI  *AdvancedLoggerPpi;
+  EFI_STATUS           Status;
 
-    Status = PeiServicesLocatePpi (
-              &gAdvancedLoggerPpiGuid,
-              0,
-              NULL,
-              (VOID **) &AdvancedLoggerPpi
-              );
+  Status = PeiServicesLocatePpi (
+             &gAdvancedLoggerPpiGuid,
+             0,
+             NULL,
+             (VOID **)&AdvancedLoggerPpi
+             );
 
-    if (Status == EFI_SUCCESS) {
-        ASSERT (AdvancedLoggerPpi->Signature == ADVANCED_LOGGER_PPI_SIGNATURE);
-        ASSERT (AdvancedLoggerPpi->Version == ADVANCED_LOGGER_PPI_VERSION);
+  if (Status == EFI_SUCCESS) {
+    ASSERT (AdvancedLoggerPpi->Signature == ADVANCED_LOGGER_PPI_SIGNATURE);
+    ASSERT (AdvancedLoggerPpi->Version == ADVANCED_LOGGER_PPI_VERSION);
 
-        AdvancedLoggerPpi->AdvancedLoggerWritePpi (ErrorLevel, Buffer, NumberOfBytes);
-    }
+    AdvancedLoggerPpi->AdvancedLoggerWritePpi (ErrorLevel, Buffer, NumberOfBytes);
+  }
 }

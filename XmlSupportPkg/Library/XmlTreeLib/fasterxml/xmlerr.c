@@ -6,7 +6,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include <Uefi.h>                 // UEFI base types
 #include "fasterxml.h"            // XML Engine
 #include "xmlerr.h"               // XML Errors.
@@ -14,17 +13,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 EFI_STATUS
 EFIAPI
-RtlXmlReportErrorFunction(
-    IN EFI_STATUS Status,
-    IN UINT32 Line,
-    IN UINT32 Indicator,
-    IN_OPT VOID* Context
-    )
+RtlXmlReportErrorFunction (
+  IN EFI_STATUS  Status,
+  IN UINT32      Line,
+  IN UINT32      Indicator,
+  IN_OPT VOID    *Context
+  )
 {
-    //
-    // Don't do anything for now, but don't allow inlining of the call.
-    //
-    return Status;
+  //
+  // Don't do anything for now, but don't allow inlining of the call.
+  //
+  return Status;
 }
-
-

@@ -10,7 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __MATH_LIB_H__
 #define __MATH_LIB_H__
 
-#define MU_PI 3.1415926535897932384626433832
+#define MU_PI  3.1415926535897932384626433832
 
 /**
 Find sine of a provided double in radians
@@ -21,10 +21,9 @@ Find sine of a provided double in radians
 **/
 double
 EFIAPI
-sin_d(
-  IN CONST double angleInRadians  
-);
-
+sin_d (
+  IN CONST double  angleInRadians
+  );
 
 /**
 Find cosine of a provided double in radians
@@ -35,9 +34,9 @@ Find cosine of a provided double in radians
 **/
 double
 EFIAPI
-cos_d(
-  IN CONST double angleInRadians
-);
+cos_d (
+  IN CONST double  angleInRadians
+  );
 
 /**
 Find square root of the provided double
@@ -48,10 +47,9 @@ Find square root of the provided double
 **/
 double
 EFIAPI
-sqrt_d(
-  IN CONST double input
-);
-
+sqrt_d (
+  IN CONST double  input
+  );
 
 /**
 Find square root of the provided unsigned integer
@@ -62,9 +60,9 @@ Find square root of the provided unsigned integer
 **/
 UINT32
 EFIAPI
-sqrt32(
-  IN CONST UINT32 input
-);
+sqrt32 (
+  IN CONST UINT32  input
+  );
 
 /**
 Find square root of the provided unsigned 64bit integer
@@ -75,8 +73,8 @@ Find square root of the provided unsigned 64bit integer
 **/
 UINT64
 EFIAPI
-sqrt64(
-  IN CONST UINT64 input
-);
+sqrt64 (
+  IN CONST UINT64  input
+  );
 
 #endif

@@ -15,7 +15,7 @@
 //
 // HID Keyboard Driver Global Variables
 //
-EFI_DRIVER_BINDING_PROTOCOL mHidKeyboardDriverBinding = {
+EFI_DRIVER_BINDING_PROTOCOL  mHidKeyboardDriverBinding = {
   HIDKeyboardDriverBindingSupported,
   HIDKeyboardDriverBindingStart,
   HIDKeyboardDriverBindingStop,
@@ -39,11 +39,11 @@ EFI_DRIVER_BINDING_PROTOCOL mHidKeyboardDriverBinding = {
 EFI_STATUS
 EFIAPI
 HIDKeyboardDriverEntryPoint (
-  IN EFI_HANDLE           ImageHandle,
-  IN EFI_SYSTEM_TABLE     *SystemTable
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS              Status;
+  EFI_STATUS  Status;
 
   Status = EfiLibInstallDriverBindingComponentName2 (
              ImageHandle,
@@ -73,37 +73,37 @@ HIDKeyboardDriverEntryPoint (
 EFI_STATUS
 EFIAPI
 HIDKeyboardDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-    EFI_STATUS                     Status = EFI_UNSUPPORTED;
-    HID_KEYBOARD_PROTOCOL           *KeyboardProtocol;
+  EFI_STATUS             Status = EFI_UNSUPPORTED;
+  HID_KEYBOARD_PROTOCOL  *KeyboardProtocol;
 
-    //
-    // Try to bind to HID Keyboard Protocol.
-    //
-    Status = gBS->OpenProtocol (
-                    Controller,
-                    &gHidKeyboardProtocolGuid,
-                    (VOID **) (HID_KEYBOARD_PROTOCOL **) &KeyboardProtocol,
-                    This->DriverBindingHandle,
-                    Controller,
-                    EFI_OPEN_PROTOCOL_BY_DRIVER
-                    );
-    if (EFI_ERROR (Status)) {
-        return Status;
-    }
+  //
+  // Try to bind to HID Keyboard Protocol.
+  //
+  Status = gBS->OpenProtocol (
+                  Controller,
+                  &gHidKeyboardProtocolGuid,
+                  (VOID **)(HID_KEYBOARD_PROTOCOL **)&KeyboardProtocol,
+                  This->DriverBindingHandle,
+                  Controller,
+                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                  );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    gBS->CloseProtocol (
-           Controller,
-           &gHidKeyboardProtocolGuid,
-           This->DriverBindingHandle,
-           Controller
-           );
+  gBS->CloseProtocol (
+         Controller,
+         &gHidKeyboardProtocolGuid,
+         This->DriverBindingHandle,
+         Controller
+         );
 
-    return (Status);
+  return (Status);
 }
 
 /**
@@ -127,14 +127,14 @@ HIDKeyboardDriverBindingSupported (
 EFI_STATUS
 EFIAPI
 HIDKeyboardDriverBindingStart (
-  IN EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN EFI_HANDLE                     Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL       *RemainingDevicePath
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
   )
 {
-  EFI_STATUS                      Status;
-  HID_KB_DEV                      *HidKeyboardDevice = NULL;
-  EFI_TPL                         OldTpl;
+  EFI_STATUS  Status;
+  HID_KB_DEV  *HidKeyboardDevice = NULL;
+  EFI_TPL     OldTpl;
 
   DEBUG ((DEBUG_VERBOSE, "[%a]\n", __FUNCTION__));
 
@@ -142,22 +142,22 @@ HIDKeyboardDriverBindingStart (
 
   // Allocate HidKeyboardDevice context.
   HidKeyboardDevice = AllocateZeroPool (sizeof (HID_KB_DEV));
-  ASSERT(NULL != HidKeyboardDevice);
+  ASSERT (NULL != HidKeyboardDevice);
 
   if (NULL == HidKeyboardDevice) {
-      DEBUG ((DEBUG_ERROR, "[%a] - Failed to allocate HID Keyboard context.\n", __FUNCTION__));
-      Status = EFI_OUT_OF_RESOURCES;
-      goto ErrorExit;
+    DEBUG ((DEBUG_ERROR, "[%a] - Failed to allocate HID Keyboard context.\n", __FUNCTION__));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto ErrorExit;
   }
 
-  HidKeyboardDevice->Signature          = HID_KB_DEV_SIGNATURE;
-  HidKeyboardDevice->ControllerHandle   = Controller;
+  HidKeyboardDevice->Signature        = HID_KB_DEV_SIGNATURE;
+  HidKeyboardDevice->ControllerHandle = Controller;
 
   // Get the Device Path Protocol on Controller's handle
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiDevicePathProtocolGuid,
-                  (VOID **) &HidKeyboardDevice->DevicePath,
+                  (VOID **)&HidKeyboardDevice->DevicePath,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -171,7 +171,7 @@ HIDKeyboardDriverBindingStart (
   Status = gBS->OpenProtocol (
                   Controller,
                   &gHidKeyboardProtocolGuid,
-                  (VOID **) (HID_KEYBOARD_PROTOCOL **) &HidKeyboardDevice->KeyboardProtocol,
+                  (VOID **)(HID_KEYBOARD_PROTOCOL **)&HidKeyboardDevice->KeyboardProtocol,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
@@ -184,9 +184,9 @@ HIDKeyboardDriverBindingStart (
     goto ErrorExit;
   }
 
-  //Set up SimpleTextIn
-  HidKeyboardDevice->SimpleInput.Reset          = HIDKeyboardReset;
-  HidKeyboardDevice->SimpleInput.ReadKeyStroke  = HIDKeyboardReadKeyStroke;
+  // Set up SimpleTextIn
+  HidKeyboardDevice->SimpleInput.Reset         = HIDKeyboardReset;
+  HidKeyboardDevice->SimpleInput.ReadKeyStroke = HIDKeyboardReadKeyStroke;
 
   HidKeyboardDevice->SimpleInputEx.Reset               = HIDKeyboardResetEx;
   HidKeyboardDevice->SimpleInputEx.ReadKeyStrokeEx     = HIDKeyboardReadKeyStrokeEx;
@@ -253,13 +253,13 @@ HIDKeyboardDriverBindingStart (
   Status = InitKeyboardLayout (HidKeyboardDevice);
   if (EFI_ERROR (Status)) {
     gBS->UninstallMultipleProtocolInterfaces (
-      Controller,
-      &gEfiSimpleTextInProtocolGuid,
-      &HidKeyboardDevice->SimpleInput,
-      &gEfiSimpleTextInputExProtocolGuid,
-      &HidKeyboardDevice->SimpleInputEx,
-      NULL
-      );
+           Controller,
+           &gEfiSimpleTextInProtocolGuid,
+           &HidKeyboardDevice->SimpleInput,
+           &gEfiSimpleTextInputExProtocolGuid,
+           &HidKeyboardDevice->SimpleInputEx,
+           NULL
+           );
     goto ErrorExit;
   }
 
@@ -268,9 +268,9 @@ HIDKeyboardDriverBindingStart (
   // keyboard data structs.
   //
   Status = HidKeyboardDevice->SimpleInputEx.Reset (
-                                            &HidKeyboardDevice->SimpleInputEx,
-                                            TRUE
-                                            );
+                                              &HidKeyboardDevice->SimpleInputEx,
+                                              TRUE
+                                              );
   if (EFI_ERROR (Status)) {
     gBS->UninstallMultipleProtocolInterfaces (
            Controller,
@@ -287,11 +287,10 @@ HIDKeyboardDriverBindingStart (
   // Register the Keyboard Callback function in KeyboardProtocol. The lower layer HID keyboard driver will call this
   // callback whenever Keystroke events happen.
   HidKeyboardDevice->KeyboardProtocol->RegisterKeyboardHidReportCallback (
-                                          HidKeyboardDevice->KeyboardProtocol,
-                                          HIDProcessKeyStrokesCallback,
-                                          (VOID *)HidKeyboardDevice
-                                          );
-
+                                         HidKeyboardDevice->KeyboardProtocol,
+                                         HIDProcessKeyStrokesCallback,
+                                         (VOID *)HidKeyboardDevice
+                                         );
 
   HidKeyboardDevice->ControllerNameTable = NULL;
   AddUnicodeString2 (
@@ -313,23 +312,27 @@ HIDKeyboardDriverBindingStart (
   DEBUG ((DEBUG_VERBOSE, "[%a] - Completed successfully\n", __FUNCTION__));
   return EFI_SUCCESS;
 
-//
-// Error handler
-//
+  //
+  // Error handler
+  //
 ErrorExit:
   if (HidKeyboardDevice != NULL) {
     if (HidKeyboardDevice->LastReport != NULL) {
-      FreePool(HidKeyboardDevice->LastReport);
+      FreePool (HidKeyboardDevice->LastReport);
     }
+
     if (HidKeyboardDevice->SimpleInput.WaitForKey != NULL) {
       gBS->CloseEvent (HidKeyboardDevice->SimpleInput.WaitForKey);
     }
+
     if (HidKeyboardDevice->SimpleInputEx.WaitForKeyEx != NULL) {
       gBS->CloseEvent (HidKeyboardDevice->SimpleInputEx.WaitForKeyEx);
     }
+
     if (HidKeyboardDevice->KeyboardLayoutEvent != NULL) {
       gBS->CloseEvent (HidKeyboardDevice->KeyboardLayoutEvent);
     }
+
     if (HidKeyboardDevice->KeyboardProtocol != NULL) {
       gBS->CloseProtocol (
              Controller,
@@ -338,13 +341,14 @@ ErrorExit:
              Controller
              );
     }
+
     FreePool (HidKeyboardDevice);
     HidKeyboardDevice = NULL;
   }
+
   DEBUG ((DEBUG_ERROR, "[%a] - Failed: %r\n", __FUNCTION__, Status));
   return Status;
 }
-
 
 /**
   Stop the Hid keyboard device handled by this driver.
@@ -364,22 +368,22 @@ ErrorExit:
 EFI_STATUS
 EFIAPI
 HIDKeyboardDriverBindingStop (
-  IN  EFI_DRIVER_BINDING_PROTOCOL    *This,
-  IN  EFI_HANDLE                     Controller,
-  IN  UINTN                          NumberOfChildren,
-  IN  EFI_HANDLE                     *ChildHandleBuffer
+  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN  EFI_HANDLE                   Controller,
+  IN  UINTN                        NumberOfChildren,
+  IN  EFI_HANDLE                   *ChildHandleBuffer
   )
 {
   EFI_STATUS                      Status;
   EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *SimpleInput;
   HID_KB_DEV                      *HidKeyboardDevice;
 
-  DEBUG ((DEBUG_VERBOSE,"[%a]\n", __FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "[%a]\n", __FUNCTION__));
 
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiSimpleTextInProtocolGuid,
-                  (VOID **) &SimpleInput,
+                  (VOID **)&SimpleInput,
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -403,20 +407,20 @@ HIDKeyboardDriverBindingStop (
   HidKeyboardDevice = HID_KB_DEV_FROM_THIS (SimpleInput);
   ASSERT (NULL != HidKeyboardDevice);
 
-  //Unregister the HID report callback from lower layer.
+  // Unregister the HID report callback from lower layer.
   HidKeyboardDevice->KeyboardProtocol->UnRegisterKeyboardHidReportCallback (
                                          HidKeyboardDevice->KeyboardProtocol
                                          );
 
-  //Release the HID keyboard binding.
+  // Release the HID keyboard binding.
   gBS->CloseProtocol (
-           Controller,
-           &gHidKeyboardProtocolGuid,
-           This->DriverBindingHandle,
-           Controller
-           );
+         Controller,
+         &gHidKeyboardProtocolGuid,
+         This->DriverBindingHandle,
+         Controller
+         );
 
-  //Uninstall the SimpleText interfaces.
+  // Uninstall the SimpleText interfaces.
   Status = gBS->UninstallMultipleProtocolInterfaces (
                   Controller,
                   &gEfiSimpleTextInProtocolGuid,
@@ -426,7 +430,7 @@ HIDKeyboardDriverBindingStop (
                   NULL
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR,"[%a] - failed to uninstall SimpleTextIn: %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "[%a] - failed to uninstall SimpleTextIn: %r\n", __FUNCTION__, Status));
   }
 
   //
@@ -450,12 +454,12 @@ HIDKeyboardDriverBindingStop (
   DestroyQueue (&HidKeyboardDevice->EfiKeyQueueForNotify);
 
   if (HidKeyboardDevice->LastReport != NULL) {
-    FreePool(HidKeyboardDevice->LastReport);
+    FreePool (HidKeyboardDevice->LastReport);
   }
 
   FreePool (HidKeyboardDevice);
 
-  DEBUG ((DEBUG_VERBOSE,"[%a] - Status: %r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_VERBOSE, "[%a] - Status: %r\n", __FUNCTION__, Status));
   return Status;
 }
 
@@ -476,8 +480,8 @@ HIDKeyboardDriverBindingStop (
 **/
 EFI_STATUS
 HIDKeyboardReadKeyStrokeWorker (
-  IN OUT HID_KB_DEV   *HidKeyboardDevice,
-     OUT EFI_KEY_DATA *KeyData
+  IN OUT HID_KB_DEV  *HidKeyboardDevice,
+  OUT EFI_KEY_DATA   *KeyData
   )
 {
   if (KeyData == NULL) {
@@ -487,6 +491,7 @@ HIDKeyboardReadKeyStrokeWorker (
   if (IsQueueEmpty (&HidKeyboardDevice->EfiKeyQueue)) {
     return EFI_NOT_READY;
   }
+
   Dequeue (&HidKeyboardDevice->EfiKeyQueue, KeyData, sizeof (*KeyData));
 
   return EFI_SUCCESS;
@@ -510,14 +515,14 @@ HIDKeyboardReadKeyStrokeWorker (
 EFI_STATUS
 EFIAPI
 HIDKeyboardReset (
-  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL   *This,
-  IN  BOOLEAN                          ExtendedVerification
+  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
+  IN  BOOLEAN                         ExtendedVerification
   )
 {
-  EFI_STATUS          Status = EFI_SUCCESS;
-  HID_KB_DEV          *HidKeyboardDevice;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  HID_KB_DEV  *HidKeyboardDevice;
 
-  DEBUG ((DEBUG_VERBOSE,"[%a]\n", __FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "[%a]\n", __FUNCTION__));
 
   HidKeyboardDevice = HID_KB_DEV_FROM_THIS (This);
   ASSERT (NULL != HidKeyboardDevice);
@@ -526,15 +531,15 @@ HIDKeyboardReset (
   // only reset private data structures.
   if (!ExtendedVerification) {
     // Clear the key buffer of this keyboard
-    InitQueue (&HidKeyboardDevice->HidKeyQueue, sizeof(HID_KEY));
-    InitQueue (&HidKeyboardDevice->EfiKeyQueue, sizeof(EFI_KEY_DATA));
+    InitQueue (&HidKeyboardDevice->HidKeyQueue, sizeof (HID_KEY));
+    InitQueue (&HidKeyboardDevice->EfiKeyQueue, sizeof (EFI_KEY_DATA));
     return EFI_SUCCESS;
   }
 
   // Exhaustive reset
   Status = InitHidKeyboard (HidKeyboardDevice);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR,"[%a] - HID keyboard reset failure: %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "[%a] - HID keyboard reset failure: %r\n", __FUNCTION__, Status));
     return EFI_DEVICE_ERROR;
   }
 
@@ -557,13 +562,13 @@ HIDKeyboardReset (
 EFI_STATUS
 EFIAPI
 HIDKeyboardReadKeyStroke (
-  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL   *This,
-  OUT EFI_INPUT_KEY                    *Key
+  IN  EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *This,
+  OUT EFI_INPUT_KEY                   *Key
   )
 {
-  HID_KB_DEV             *HidKeyboardDevice;
-  EFI_KEY_DATA           KeyData;
-  EFI_STATUS             Status = EFI_SUCCESS;
+  HID_KB_DEV    *HidKeyboardDevice;
+  EFI_KEY_DATA  KeyData;
+  EFI_STATUS    Status = EFI_SUCCESS;
 
   HidKeyboardDevice = HID_KB_DEV_FROM_THIS (This);
   ASSERT (NULL != HidKeyboardDevice);
@@ -578,21 +583,23 @@ HIDKeyboardReadKeyStroke (
     if (EFI_ERROR (Status)) {
       return Status;
     }
+
     //
     // SimpleTextIn Protocol doesn't support partial keystroke;
     //
     if ((KeyData.Key.ScanCode == CHAR_NULL) && (KeyData.Key.UnicodeChar == SCAN_NULL)) {
       continue;
     }
+
     //
     // Translate the CTRL-Alpha characters to their corresponding control value
     // (ctrl-a = 0x0001 through ctrl-Z = 0x001A)
     //
     if ((KeyData.KeyState.KeyShiftState & (EFI_LEFT_CONTROL_PRESSED | EFI_RIGHT_CONTROL_PRESSED)) != 0) {
       if ((KeyData.Key.UnicodeChar >= L'a') && (KeyData.Key.UnicodeChar <= L'z')) {
-        KeyData.Key.UnicodeChar = (CHAR16) (KeyData.Key.UnicodeChar - L'a' + 1);
+        KeyData.Key.UnicodeChar = (CHAR16)(KeyData.Key.UnicodeChar - L'a' + 1);
       } else if ((KeyData.Key.UnicodeChar >= L'A') && (KeyData.Key.UnicodeChar <= L'Z')) {
-        KeyData.Key.UnicodeChar = (CHAR16) (KeyData.Key.UnicodeChar - L'A' + 1);
+        KeyData.Key.UnicodeChar = (CHAR16)(KeyData.Key.UnicodeChar - L'A' + 1);
       }
     }
 
@@ -613,13 +620,13 @@ HIDKeyboardReadKeyStroke (
 VOID
 EFIAPI
 HIDKeyboardWaitForKey (
-  IN  EFI_EVENT               Event,
-  IN  VOID                    *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-  HID_KB_DEV  *HidKeyboardDevice;
-  EFI_KEY_DATA KeyData;
-  EFI_TPL      OldTpl;
+  HID_KB_DEV    *HidKeyboardDevice;
+  EFI_KEY_DATA  KeyData;
+  EFI_TPL       OldTpl;
 
   HidKeyboardDevice = (HID_KB_DEV *)Context;
   ASSERT (NULL != HidKeyboardDevice);
@@ -638,6 +645,7 @@ HIDKeyboardWaitForKey (
   if (IsQueueEmpty (&HidKeyboardDevice->EfiKeyQueue)) {
     DEBUG ((DEBUG_VERBOSE, "[%a] - WaitForKey Queue empty!\n", __FUNCTION__));
   }
+
   while (!IsQueueEmpty (&HidKeyboardDevice->EfiKeyQueue)) {
     //
     // If there is pending key, signal the event.
@@ -652,10 +660,12 @@ HIDKeyboardWaitForKey (
       Dequeue (&HidKeyboardDevice->EfiKeyQueue, &KeyData, sizeof (EFI_KEY_DATA));
       continue;
     }
+
     DEBUG ((DEBUG_VERBOSE, "[%a] - WaitForKey, Signaling event!\n", __FUNCTION__, KeyData.Key.ScanCode));
     gBS->SignalEvent (Event);
     break;
   }
+
   //
   // Leave critical section and return
   //
@@ -673,17 +683,18 @@ HIDKeyboardWaitForKey (
 **/
 EFI_STATUS
 KbdFreeNotifyList (
-  IN OUT LIST_ENTRY           *NotifyList
+  IN OUT LIST_ENTRY  *NotifyList
   )
 {
-  KEYBOARD_CONSOLE_IN_EX_NOTIFY *NotifyNode;
-  LIST_ENTRY                    *Link;
+  KEYBOARD_CONSOLE_IN_EX_NOTIFY  *NotifyNode;
+  LIST_ENTRY                     *Link;
 
   if (NotifyList == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+
   while (!IsListEmpty (NotifyList)) {
-    Link = GetFirstNode (NotifyList);
+    Link       = GetFirstNode (NotifyList);
     NotifyNode = CR (Link, KEYBOARD_CONSOLE_IN_EX_NOTIFY, NotifyEntry, HID_KB_CONSOLE_IN_EX_NOTIFY_SIGNATURE);
     RemoveEntryList (Link);
     FreePool (NotifyNode);
@@ -711,7 +722,8 @@ IsKeyRegistered (
   ASSERT (RegisteredData != NULL && InputData != NULL);
 
   if ((RegisteredData->Key.ScanCode    != InputData->Key.ScanCode) ||
-      (RegisteredData->Key.UnicodeChar != InputData->Key.UnicodeChar)) {
+      (RegisteredData->Key.UnicodeChar != InputData->Key.UnicodeChar))
+  {
     return FALSE;
   }
 
@@ -719,11 +731,14 @@ IsKeyRegistered (
   // Assume KeyShiftState/KeyToggleState = 0 in Registered key data means these state could be ignored.
   //
   if ((RegisteredData->KeyState.KeyShiftState != 0) &&
-      (RegisteredData->KeyState.KeyShiftState != InputData->KeyState.KeyShiftState)) {
+      (RegisteredData->KeyState.KeyShiftState != InputData->KeyState.KeyShiftState))
+  {
     return FALSE;
   }
-  if ((RegisteredData->KeyState.KeyToggleState) != 0 &&
-      (RegisteredData->KeyState.KeyToggleState != InputData->KeyState.KeyToggleState)) {
+
+  if (((RegisteredData->KeyState.KeyToggleState) != 0) &&
+      (RegisteredData->KeyState.KeyToggleState != InputData->KeyState.KeyToggleState))
+  {
     return FALSE;
   }
 
@@ -733,6 +748,7 @@ IsKeyRegistered (
 //
 // Simple Text Input Ex protocol functions
 //
+
 /**
   Resets the input device hardware.
 
@@ -762,8 +778,8 @@ HIDKeyboardResetEx (
   IN BOOLEAN                            ExtendedVerification
   )
 {
-  EFI_STATUS                Status = EFI_SUCCESS;
-  HID_KB_DEV                *HidKeyboardDevice;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  HID_KB_DEV  *HidKeyboardDevice;
 
   HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS (This);
   ASSERT (NULL != HidKeyboardDevice);
@@ -796,18 +812,18 @@ HIDKeyboardResetEx (
 EFI_STATUS
 EFIAPI
 HIDKeyboardReadKeyStrokeEx (
-  IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
-  OUT EFI_KEY_DATA                      *KeyData
+  IN  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *This,
+  OUT EFI_KEY_DATA                       *KeyData
   )
 {
-  HID_KB_DEV                        *HidKeyboardDevice;
+  HID_KB_DEV  *HidKeyboardDevice;
 
   if (KeyData == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS(This);
-  ASSERT(NULL != HidKeyboardDevice);
+  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS (This);
+  ASSERT (NULL != HidKeyboardDevice);
 
   return HIDKeyboardReadKeyStrokeWorker (HidKeyboardDevice, KeyData);
 }
@@ -833,42 +849,46 @@ HIDKeyboardSetState (
   IN EFI_KEY_TOGGLE_STATE               *KeyToggleState
   )
 {
-  HID_KB_DEV                        *HidKeyboardDevice;
+  HID_KB_DEV  *HidKeyboardDevice;
 
   if (KeyToggleState == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS(This);
-  ASSERT(NULL != HidKeyboardDevice);
+  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS (This);
+  ASSERT (NULL != HidKeyboardDevice);
 
   if (((HidKeyboardDevice->KeyState.KeyToggleState & EFI_TOGGLE_STATE_VALID) != EFI_TOGGLE_STATE_VALID) ||
-      ((*KeyToggleState & EFI_TOGGLE_STATE_VALID) != EFI_TOGGLE_STATE_VALID)) {
+      ((*KeyToggleState & EFI_TOGGLE_STATE_VALID) != EFI_TOGGLE_STATE_VALID))
+  {
     return EFI_UNSUPPORTED;
   }
 
   //
   // Update the status light
   //
-  HidKeyboardDevice->ScrollOn   = FALSE;
-  HidKeyboardDevice->NumLockOn  = FALSE;
-  HidKeyboardDevice->CapsOn     = FALSE;
+  HidKeyboardDevice->ScrollOn            = FALSE;
+  HidKeyboardDevice->NumLockOn           = FALSE;
+  HidKeyboardDevice->CapsOn              = FALSE;
   HidKeyboardDevice->IsSupportPartialKey = FALSE;
 
   if ((*KeyToggleState & EFI_SCROLL_LOCK_ACTIVE) == EFI_SCROLL_LOCK_ACTIVE) {
     HidKeyboardDevice->ScrollOn = TRUE;
   }
+
   if ((*KeyToggleState & EFI_NUM_LOCK_ACTIVE) == EFI_NUM_LOCK_ACTIVE) {
     HidKeyboardDevice->NumLockOn = TRUE;
   }
+
   if ((*KeyToggleState & EFI_CAPS_LOCK_ACTIVE) == EFI_CAPS_LOCK_ACTIVE) {
     HidKeyboardDevice->CapsOn = TRUE;
   }
+
   if ((*KeyToggleState & EFI_KEY_STATE_EXPOSED) == EFI_KEY_STATE_EXPOSED) {
     HidKeyboardDevice->IsSupportPartialKey = TRUE;
   }
 
-  SetKeyLED(HidKeyboardDevice);
+  SetKeyLED (HidKeyboardDevice);
 
   HidKeyboardDevice->KeyState.KeyToggleState = *KeyToggleState;
 
@@ -903,18 +923,18 @@ HIDKeyboardRegisterKeyNotify (
   OUT VOID                               **NotifyHandle
   )
 {
-  HID_KB_DEV                        *HidKeyboardDevice;
-  KEYBOARD_CONSOLE_IN_EX_NOTIFY     *NewNotify;
-  LIST_ENTRY                        *Link;
-  LIST_ENTRY                        *NotifyList;
-  KEYBOARD_CONSOLE_IN_EX_NOTIFY     *CurrentNotify;
+  HID_KB_DEV                     *HidKeyboardDevice;
+  KEYBOARD_CONSOLE_IN_EX_NOTIFY  *NewNotify;
+  LIST_ENTRY                     *Link;
+  LIST_ENTRY                     *NotifyList;
+  KEYBOARD_CONSOLE_IN_EX_NOTIFY  *CurrentNotify;
 
-  if (KeyData == NULL || NotifyHandle == NULL || KeyNotificationFunction == NULL) {
+  if ((KeyData == NULL) || (NotifyHandle == NULL) || (KeyNotificationFunction == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS(This);
-  ASSERT(NULL != HidKeyboardDevice);
+  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS (This);
+  ASSERT (NULL != HidKeyboardDevice);
 
   //
   // Return EFI_SUCCESS if the (KeyData, NotificationFunction) is already registered.
@@ -923,7 +943,8 @@ HIDKeyboardRegisterKeyNotify (
 
   for (Link = GetFirstNode (NotifyList);
        !IsNull (NotifyList, Link);
-       Link = GetNextNode (NotifyList, Link)) {
+       Link = GetNextNode (NotifyList, Link))
+  {
     CurrentNotify = CR (
                       Link,
                       KEYBOARD_CONSOLE_IN_EX_NOTIFY,
@@ -942,7 +963,7 @@ HIDKeyboardRegisterKeyNotify (
   //
   // Allocate resource to save the notification function
   //
-  NewNotify = (KEYBOARD_CONSOLE_IN_EX_NOTIFY *) AllocateZeroPool (sizeof (KEYBOARD_CONSOLE_IN_EX_NOTIFY));
+  NewNotify = (KEYBOARD_CONSOLE_IN_EX_NOTIFY *)AllocateZeroPool (sizeof (KEYBOARD_CONSOLE_IN_EX_NOTIFY));
   if (NewNotify == NULL) {
     DEBUG ((DEBUG_ERROR, "[%a] - allocation failed!\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
@@ -957,7 +978,6 @@ HIDKeyboardRegisterKeyNotify (
   *NotifyHandle = NewNotify;
 
   return EFI_SUCCESS;
-
 }
 
 /**
@@ -977,17 +997,17 @@ HIDKeyboardUnregisterKeyNotify (
   IN VOID                               *NotificationHandle
   )
 {
-  HID_KB_DEV                        *HidKeyboardDevice;
-  KEYBOARD_CONSOLE_IN_EX_NOTIFY     *CurrentNotify;
-  LIST_ENTRY                        *Link;
-  LIST_ENTRY                        *NotifyList;
+  HID_KB_DEV                     *HidKeyboardDevice;
+  KEYBOARD_CONSOLE_IN_EX_NOTIFY  *CurrentNotify;
+  LIST_ENTRY                     *Link;
+  LIST_ENTRY                     *NotifyList;
 
   if (NotificationHandle == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS(This);
-  ASSERT(NULL != HidKeyboardDevice);
+  HidKeyboardDevice = TEXT_INPUT_EX_HID_KB_DEV_FROM_THIS (This);
+  ASSERT (NULL != HidKeyboardDevice);
 
   //
   // Traverse notify list of HID keyboard and remove the entry of NotificationHandle.
@@ -995,7 +1015,8 @@ HIDKeyboardUnregisterKeyNotify (
   NotifyList = &HidKeyboardDevice->NotifyList;
   for (Link = GetFirstNode (NotifyList);
        !IsNull (NotifyList, Link);
-       Link = GetNextNode (NotifyList, Link)) {
+       Link = GetNextNode (NotifyList, Link))
+  {
     CurrentNotify = CR (
                       Link,
                       KEYBOARD_CONSOLE_IN_EX_NOTIFY,
@@ -1028,19 +1049,19 @@ HIDKeyboardUnregisterKeyNotify (
 VOID
 EFIAPI
 KeyNotifyProcessHandler (
-  IN  EFI_EVENT                 Event,
-  IN  VOID                      *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-  EFI_STATUS                    Status;
-  HID_KB_DEV                    *HidKeyboardDevice;
-  EFI_KEY_DATA                  KeyData;
-  LIST_ENTRY                    *Link;
-  LIST_ENTRY                    *NotifyList;
-  KEYBOARD_CONSOLE_IN_EX_NOTIFY *CurrentNotify;
-  EFI_TPL                       OldTpl;
+  EFI_STATUS                     Status;
+  HID_KB_DEV                     *HidKeyboardDevice;
+  EFI_KEY_DATA                   KeyData;
+  LIST_ENTRY                     *Link;
+  LIST_ENTRY                     *NotifyList;
+  KEYBOARD_CONSOLE_IN_EX_NOTIFY  *CurrentNotify;
+  EFI_TPL                        OldTpl;
 
-  HidKeyboardDevice = (HID_KB_DEV *) Context;
+  HidKeyboardDevice = (HID_KB_DEV *)Context;
 
   //
   // Invoke notification functions.
@@ -1059,6 +1080,7 @@ KeyNotifyProcessHandler (
     if (EFI_ERROR (Status)) {
       break;
     }
+
     for (Link = GetFirstNode (NotifyList); !IsNull (NotifyList, Link); Link = GetNextNode (NotifyList, Link)) {
       CurrentNotify = CR (Link, KEYBOARD_CONSOLE_IN_EX_NOTIFY, NotifyEntry, HID_KB_CONSOLE_IN_EX_NOTIFY_SIGNATURE);
       if (IsKeyRegistered (&CurrentNotify->KeyData, &KeyData)) {
@@ -1067,4 +1089,3 @@ KeyNotifyProcessHandler (
     }
   }
 }
-

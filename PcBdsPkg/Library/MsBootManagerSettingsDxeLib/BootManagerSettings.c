@@ -8,7 +8,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include <PiDxe.h>
 
 #include <DfciSystemSettingTypes.h>
@@ -28,8 +27,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/BootMenuSettings.h>
 
 EFI_EVENT  mBootManagerSettingsProviderSupportInstallEvent;
-VOID      *mBootManagerSettingsProviderSupportInstallEventRegistration = NULL;
-
+VOID       *mBootManagerSettingsProviderSupportInstallEventRegistration = NULL;
 
 /**
 @param Id - Setting ID to check for support status
@@ -38,22 +36,24 @@ VOID      *mBootManagerSettingsProviderSupportInstallEventRegistration = NULL;
 **/
 STATIC
 BOOLEAN
-IsIdSupported (DFCI_SETTING_ID_STRING Id)
+IsIdSupported (
+  DFCI_SETTING_ID_STRING  Id
+  )
 {
-    BOOLEAN Result = FALSE;
+  BOOLEAN  Result = FALSE;
 
+  if ((0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) ||
+      (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) ||
+      (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) ||
+      (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) ||
+      (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN)))
+  {
+    Result = TRUE;
+  } else {
+    Result = FALSE;
+  }
 
-    if ((0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) ||
-        (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) ||
-        (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) ||
-        (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) ||
-        (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN))) {
-        Result = TRUE;
-    } else {
-        Result = FALSE;
-    }
-
-    return Result;
+  return Result;
 }
 
 /**
@@ -64,145 +64,145 @@ Configure the Config variable so that on return it contains the same values
 **/
 STATIC
 EFI_STATUS
-InitializeNvVariable ()
+InitializeNvVariable (
+  )
 {
-    MS_BOOT_MANAGER_SETTINGS  Settings;
-    EFI_STATUS                Status;
-    UINT32                    Attributes = 0;
-    UINTN                     BufferSize;
+  MS_BOOT_MANAGER_SETTINGS  Settings;
+  EFI_STATUS                Status;
+  UINT32                    Attributes = 0;
+  UINTN                     BufferSize;
 
-    //1. Read the variable from VarStore
-    BufferSize = sizeof(Settings);
-    Status = gRT->GetVariable(MS_BOOT_MANAGER_SETTINGS_NAME,
-                             &gMsBootManagerSettingsGuid,
-                             &Attributes,
-                             &BufferSize,
-                             &Settings );
+  // 1. Read the variable from VarStore
+  BufferSize = sizeof (Settings);
+  Status     = gRT->GetVariable (
+                      MS_BOOT_MANAGER_SETTINGS_NAME,
+                      &gMsBootManagerSettingsGuid,
+                      &Attributes,
+                      &BufferSize,
+                      &Settings
+                      );
 
-    //2. Var Exists (check valid)
-      //I   - Check Size
-      //II  - Check attributes and confirm they are correct
-      //III - Check Signature
-    if (!EFI_ERROR(Status))
-    {
-        if (BufferSize != sizeof(Settings))
-        {
-            DEBUG((DEBUG_ERROR, "BootManager settings invalid size.\n"));
-            Status = EFI_COMPROMISED_DATA;
+  // 2. Var Exists (check valid)
+  // I   - Check Size
+  // II  - Check attributes and confirm they are correct
+  // III - Check Signature
+  if (!EFI_ERROR (Status)) {
+    if (BufferSize != sizeof (Settings)) {
+      DEBUG ((DEBUG_ERROR, "BootManager settings invalid size.\n"));
+      Status = EFI_COMPROMISED_DATA;
+    } else {
+      if ((Settings.Signature == MS_BOOT_MANAGER_SETTINGS_SIGNATURE_OLD) &&
+          (Attributes == (MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES | EFI_VARIABLE_RUNTIME_ACCESS)))
+      {
+        DEBUG ((DEBUG_INFO, "BootManager Variable is being converted."));
+        Settings.Signature     = MS_BOOT_MANAGER_SETTINGS_SIGNATURE;
+        Settings.BootOrderLock = FALSE;         // Set default for first conversion.
+        Settings.EnableUsbBoot = PcdGet8 (PcdEnableUsbBoot);
+        Settings.StartNetwork  = PcdGet8 (PcdStartNetwork);
+        Settings.Version       = MS_BOOT_MANAGER_SETTINGS_VERSION3;
+        // delete it first as it has RT set
+        Status = gRT->SetVariable (
+                        MS_BOOT_MANAGER_SETTINGS_NAME,
+                        &gMsBootManagerSettingsGuid,
+                        0,
+                        0,
+                        NULL
+                        );
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_INFO, "Error %r deleting old variable\n", Status));
         }
-        else
-        {
 
-            if ((Settings.Signature == MS_BOOT_MANAGER_SETTINGS_SIGNATURE_OLD) &&
-                (Attributes == (MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES | EFI_VARIABLE_RUNTIME_ACCESS)))
-            {
-                DEBUG((DEBUG_INFO, "BootManager Variable is being converted."));
-                Settings.Signature = MS_BOOT_MANAGER_SETTINGS_SIGNATURE;
-                Settings.BootOrderLock = FALSE; // Set default for first conversion.
-                Settings.EnableUsbBoot = PcdGet8 (PcdEnableUsbBoot);
-                Settings.StartNetwork  = PcdGet8 (PcdStartNetwork);
-                Settings.Version = MS_BOOT_MANAGER_SETTINGS_VERSION3;
-                //delete it first as it has RT set
-                Status = gRT->SetVariable (MS_BOOT_MANAGER_SETTINGS_NAME,
-                                          &gMsBootManagerSettingsGuid,
-                                           0,
-                                           0,
-                                           NULL);
-                if (EFI_ERROR(Status))
-                {
-                    DEBUG((DEBUG_INFO,"Error %r deleting old variable\n",Status));
-                }
-
-                Status = gRT->SetVariable (MS_BOOT_MANAGER_SETTINGS_NAME,
-                                          &gMsBootManagerSettingsGuid,
-                                           MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
-                                           sizeof(Settings),
-                                          &Settings);
-                if (EFI_ERROR(Status)) {
-                    DEBUG((DEBUG_ERROR, "Unable to recreate BootManager settings Variable Code=%r\n",Status));
-                    Status = EFI_SUCCESS;
-                }
-            }
-            else
-            {
-                if (Attributes != MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES)
-                {
-                    DEBUG((DEBUG_ERROR, "BootManager settings Variable Attributes are invalid.\n"));
-                    Status = EFI_COMPROMISED_DATA;
-                }
-                else if (Settings.Signature != MS_BOOT_MANAGER_SETTINGS_SIGNATURE)
-                {
-                    DEBUG((DEBUG_INFO, "BootManager Variable has corrupted signature."));
-                    Status = EFI_COMPROMISED_DATA;
-                }
-                else if ((Settings.Version >= MS_BOOT_MANAGER_SETTINGS_VERSION1) &&
-                         (Settings.Version < MS_BOOT_MANAGER_SETTINGS_VERSION3)) {
-                    // Handle the case where systems have the new settings varirable, but don't have
-                    // the correct value for USB Boot and, or StartNetworking
-                    if (Settings.Version == MS_BOOT_MANAGER_SETTINGS_VERSION1) {
-                        Settings.EnableUsbBoot  = PcdGet8(PcdEnableUsbBoot);
-                    }
-                    if (Settings.Version <= MS_BOOT_MANAGER_SETTINGS_VERSION2) {
-                        Settings.StartNetwork = PcdGet8(PcdStartNetwork);
-                    }
-                    Settings.Version = MS_BOOT_MANAGER_SETTINGS_VERSION3;
-                    Status = gRT->SetVariable (MS_BOOT_MANAGER_SETTINGS_NAME,
-                                              &gMsBootManagerSettingsGuid,
-                                               MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
-                                               sizeof(Settings),
-                                              &Settings);
-                    if (EFI_ERROR(Status)) {
-                        DEBUG((DEBUG_ERROR, "Unable to recreate BootManager settings Variable Code=%r\n",Status));
-                        Status = EFI_SUCCESS;
-                    }
-                }
-            }
+        Status = gRT->SetVariable (
+                        MS_BOOT_MANAGER_SETTINGS_NAME,
+                        &gMsBootManagerSettingsGuid,
+                        MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
+                        sizeof (Settings),
+                        &Settings
+                        );
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "Unable to recreate BootManager settings Variable Code=%r\n", Status));
+          Status = EFI_SUCCESS;
         }
+      } else {
+        if (Attributes != MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES) {
+          DEBUG ((DEBUG_ERROR, "BootManager settings Variable Attributes are invalid.\n"));
+          Status = EFI_COMPROMISED_DATA;
+        } else if (Settings.Signature != MS_BOOT_MANAGER_SETTINGS_SIGNATURE) {
+          DEBUG ((DEBUG_INFO, "BootManager Variable has corrupted signature."));
+          Status = EFI_COMPROMISED_DATA;
+        } else if ((Settings.Version >= MS_BOOT_MANAGER_SETTINGS_VERSION1) &&
+                   (Settings.Version < MS_BOOT_MANAGER_SETTINGS_VERSION3))
+        {
+          // Handle the case where systems have the new settings varirable, but don't have
+          // the correct value for USB Boot and, or StartNetworking
+          if (Settings.Version == MS_BOOT_MANAGER_SETTINGS_VERSION1) {
+            Settings.EnableUsbBoot = PcdGet8 (PcdEnableUsbBoot);
+          }
+
+          if (Settings.Version <= MS_BOOT_MANAGER_SETTINGS_VERSION2) {
+            Settings.StartNetwork = PcdGet8 (PcdStartNetwork);
+          }
+
+          Settings.Version = MS_BOOT_MANAGER_SETTINGS_VERSION3;
+          Status           = gRT->SetVariable (
+                                    MS_BOOT_MANAGER_SETTINGS_NAME,
+                                    &gMsBootManagerSettingsGuid,
+                                    MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
+                                    sizeof (Settings),
+                                    &Settings
+                                    );
+          if (EFI_ERROR (Status)) {
+            DEBUG ((DEBUG_ERROR, "Unable to recreate BootManager settings Variable Code=%r\n", Status));
+            Status = EFI_SUCCESS;
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Var Doesn't Exist or is not valid
+  // I   - Load the defaults
+  // II  - Set the attributes
+  // III - Set it to var store
+  if (EFI_ERROR (Status)) {
+    if (Status != EFI_NOT_FOUND) {
+      // delete it first as it is corrupted or has RT set
+      Status = gRT->SetVariable (
+                      MS_BOOT_MANAGER_SETTINGS_NAME,
+                      &gMsBootManagerSettingsGuid,
+                      0,
+                      0,
+                      NULL
+                      );
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_INFO, "Error %r deleting old variable\n", Status));
+      }
     }
 
-    //3. Var Doesn't Exist or is not valid
-      //I   - Load the defaults
-      //II  - Set the attributes
-      //III - Set it to var store
-    if (EFI_ERROR(Status))
-    {
-        if (Status != EFI_NOT_FOUND)
-        {
-            //delete it first as it is corrupted or has RT set
-            Status = gRT->SetVariable (MS_BOOT_MANAGER_SETTINGS_NAME,
-                                      &gMsBootManagerSettingsGuid,
-                                       0,
-                                       0,
-                                       NULL);
-            if (EFI_ERROR(Status))
-            {
-                DEBUG((DEBUG_INFO,"Error %r deleting old variable\n",Status));
-            }
-        }
+    ZeroMem (&Settings, sizeof (Settings));
 
-        ZeroMem (&Settings, sizeof(Settings));
+    /* Set Default Values Here */
+    Settings.Signature     = MS_BOOT_MANAGER_SETTINGS_SIGNATURE;
+    Settings.IPv6          = PcdGet8 (PcdEnableIPv6Boot);
+    Settings.AltBoot       = PcdGet8 (PcdEnableAltBoot);
+    Settings.BootOrderLock = PcdGet8 (PcdEnableBootOrderLock);
+    Settings.EnableUsbBoot = PcdGet8 (PcdEnableUsbBoot);
+    Settings.StartNetwork  = PcdGet8 (PcdStartNetwork);
 
-        /* Set Default Values Here */
-        Settings.Signature      = MS_BOOT_MANAGER_SETTINGS_SIGNATURE;
-        Settings.IPv6           = PcdGet8 (PcdEnableIPv6Boot);
-        Settings.AltBoot        = PcdGet8 (PcdEnableAltBoot);
-        Settings.BootOrderLock  = PcdGet8 (PcdEnableBootOrderLock);
-        Settings.EnableUsbBoot  = PcdGet8 (PcdEnableUsbBoot);
-        Settings.StartNetwork   = PcdGet8 (PcdStartNetwork);
+    Status = gRT->SetVariable (
+                    MS_BOOT_MANAGER_SETTINGS_NAME,
+                    &gMsBootManagerSettingsGuid,
+                    MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
+                    sizeof (Settings),
+                    &Settings
+                    );
+  }
 
-        Status = gRT->SetVariable (MS_BOOT_MANAGER_SETTINGS_NAME,
-                                  &gMsBootManagerSettingsGuid,
-                                   MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
-                                   sizeof(Settings),
-                                  &Settings);
-    }
+  // 4. Configure the var lock protocol if needed
 
-    //4. Configure the var lock protocol if needed
+  // TODO
 
-    //TODO
-
-
-    return Status;
+  return Status;
 }
 
 // Interface for Boot Manager
@@ -218,31 +218,29 @@ InitializeNvVariable ()
 EFI_STATUS
 EFIAPI
 GetBootManagerSettingDefault (
-  IN DFCI_SETTING_ID_STRING    Id,
-  OUT BOOLEAN *Value
-)
+  IN DFCI_SETTING_ID_STRING  Id,
+  OUT BOOLEAN                *Value
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) {
-        *Value =  PcdGet8 (PcdEnableIPv6Boot);
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) {
-        *Value  = PcdGet8 (PcdEnableAltBoot);
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) {
-        *Value  = PcdGet8 (PcdEnableBootOrderLock);
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) {
-        *Value  = PcdGet8 (PcdEnableUsbBoot);
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN)) {
-        *Value  = PcdGet8 (PcdStartNetwork);
-    } else {
-        DEBUG((DEBUG_ERROR, "%a - Called with Invalid ID (%a)\n", __FUNCTION__, Id));
-        Status = EFI_UNSUPPORTED;
-    }
+  if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) {
+    *Value =  PcdGet8 (PcdEnableIPv6Boot);
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) {
+    *Value = PcdGet8 (PcdEnableAltBoot);
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) {
+    *Value = PcdGet8 (PcdEnableBootOrderLock);
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) {
+    *Value = PcdGet8 (PcdEnableUsbBoot);
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN)) {
+    *Value = PcdGet8 (PcdStartNetwork);
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a - Called with Invalid ID (%a)\n", __FUNCTION__, Id));
+    Status = EFI_UNSUPPORTED;
+  }
 
-    return Status;
-
+  return Status;
 }
-
 
 /**
 Function to Get a Boot Manager Setting.
@@ -259,49 +257,49 @@ not cause the default to be set.
 EFI_STATUS
 EFIAPI
 GetBootManagerSetting (
-  IN  DFCI_SETTING_ID_STRING   Id,
+  IN  DFCI_SETTING_ID_STRING  Id,
   OUT BOOLEAN                 *Value
   )
 {
+  MS_BOOT_MANAGER_SETTINGS  Settings;
+  EFI_STATUS                Status;
+  UINT32                    Attributes;
+  UINTN                     BufferSize;
 
-    MS_BOOT_MANAGER_SETTINGS  Settings;
-    EFI_STATUS                Status;
-    UINT32                    Attributes;
-    UINTN                     BufferSize;
+  if (!IsIdSupported (Id)) {
+    DEBUG ((DEBUG_ERROR, "%a - Called with Invalid ID (%a)\n", __FUNCTION__, Id));
+    return EFI_UNSUPPORTED;
+  }
 
-    if (!IsIdSupported(Id))
-    {
-        DEBUG((DEBUG_ERROR, "%a - Called with Invalid ID (%a)\n", __FUNCTION__, Id));
-        return EFI_UNSUPPORTED;
-    }
-    BufferSize = sizeof(Settings);
-    Status = gRT->GetVariable(MS_BOOT_MANAGER_SETTINGS_NAME,
-                             &gMsBootManagerSettingsGuid,
-                             &Attributes,
-                             &BufferSize,
-                             &Settings );
+  BufferSize = sizeof (Settings);
+  Status     = gRT->GetVariable (
+                      MS_BOOT_MANAGER_SETTINGS_NAME,
+                      &gMsBootManagerSettingsGuid,
+                      &Attributes,
+                      &BufferSize,
+                      &Settings
+                      );
 
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_INFO, "%a - Error %r.  Returning Default.\n", __FUNCTION__, Status));
-        return GetBootManagerSettingDefault(Id, Value);
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a - Error %r.  Returning Default.\n", __FUNCTION__, Status));
+    return GetBootManagerSettingDefault (Id, Value);
+  }
 
-    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) {
-        *Value =  Settings.IPv6;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) {
-        *Value =  Settings.AltBoot;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) {
-        *Value =  Settings.BootOrderLock;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) {
-        *Value =  Settings.EnableUsbBoot;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN)) {
-        *Value =  Settings.StartNetwork;
-    } else {
-        // Cannot get here as checked above
-    }
+  if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) {
+    *Value =  Settings.IPv6;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) {
+    *Value =  Settings.AltBoot;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) {
+    *Value =  Settings.BootOrderLock;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) {
+    *Value =  Settings.EnableUsbBoot;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN)) {
+    *Value =  Settings.StartNetwork;
+  } else {
+    // Cannot get here as checked above
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -319,112 +317,109 @@ EFIAPI
 SetBootManagerSetting (
   IN    DFCI_SETTING_ID_STRING  Id,
   IN    BOOLEAN                 Value,
-  OUT   DFCI_SETTING_FLAGS     *Flags
+  OUT   DFCI_SETTING_FLAGS      *Flags
   )
 {
+  MS_BOOT_MANAGER_SETTINGS  Settings;
+  EFI_STATUS                Status;
+  UINTN                     BufferSize;
+  UINT32                    Attributes;
+  BOOLEAN                   Changed = FALSE;
 
-    MS_BOOT_MANAGER_SETTINGS  Settings;
-    EFI_STATUS                Status;
-    UINTN                     BufferSize;
-    UINT32                    Attributes;
-    BOOLEAN                   Changed = FALSE;
+  if (Flags == NULL) {
+    ASSERT (Flags != NULL);
+    return EFI_INVALID_PARAMETER;
+  }
 
-    if (Flags == NULL)
-    {
-        ASSERT(Flags != NULL);
-        return EFI_INVALID_PARAMETER;
-    }
+  if (!IsIdSupported (Id)) {
+    DEBUG ((DEBUG_ERROR, "%a - Called with Invalid ID (%a)\n", __FUNCTION__, Id));
+    return EFI_UNSUPPORTED;
+  }
 
-    if (!IsIdSupported(Id))
-    {
-        DEBUG((DEBUG_ERROR, "%a - Called with Invalid ID (%a)\n", __FUNCTION__, Id));
-        return EFI_UNSUPPORTED;
-    }
+  BufferSize = sizeof (Settings);
+  Status     = gRT->GetVariable (
+                      MS_BOOT_MANAGER_SETTINGS_NAME,
+                      &gMsBootManagerSettingsGuid,
+                      &Attributes,
+                      &BufferSize,
+                      &Settings
+                      );
 
-    BufferSize = sizeof(Settings);
-    Status = gRT->GetVariable(MS_BOOT_MANAGER_SETTINGS_NAME,
-                             &gMsBootManagerSettingsGuid,
-                             &Attributes,
-                             &BufferSize,
-                             &Settings );
-
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_INFO, "%a - Error %r.  Can't set until initialized.\n", __FUNCTION__, Status));
-        return Status;
-    }
-
-    if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) {
-        Changed = Settings.IPv6 != Value;
-        Settings.IPv6 = Value;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) {
-        Changed = Settings.AltBoot != Value;
-        Settings.AltBoot = Value;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) {
-        Changed = Settings.BootOrderLock != Value;
-        Settings.BootOrderLock = Value;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) {
-        Changed = Settings.EnableUsbBoot != Value;
-        Settings.EnableUsbBoot = Value;
-    } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN)) {
-        Changed = Settings.StartNetwork != Value;
-        Settings.StartNetwork = Value;
-    } else {
-        // Cannot get here as checked above
-    }
-
-    if (Changed) {
-        Status = gRT->SetVariable(MS_BOOT_MANAGER_SETTINGS_NAME,
-                                 &gMsBootManagerSettingsGuid,
-                                  MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
-                                  sizeof(Settings),
-                                 &Settings);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "ERROR on SetVariable.  Code=%r\n", Status));
-        }
-    } else {
-        *Flags = DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-        Status = EFI_SUCCESS;
-        DEBUG((DEBUG_INFO, "Setting %a ignored, value didn't change\n", Id));
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a - Error %r.  Can't set until initialized.\n", __FUNCTION__, Status));
     return Status;
+  }
+
+  if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__IPV6, DFCI_MAX_ID_LEN)) {
+    Changed       = Settings.IPv6 != Value;
+    Settings.IPv6 = Value;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ALT_BOOT, DFCI_MAX_ID_LEN)) {
+    Changed          = Settings.AltBoot != Value;
+    Settings.AltBoot = Value;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__BOOT_ORDER_LOCK, DFCI_MAX_ID_LEN)) {
+    Changed                = Settings.BootOrderLock != Value;
+    Settings.BootOrderLock = Value;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__ENABLE_USB_BOOT, DFCI_MAX_ID_LEN)) {
+    Changed                = Settings.EnableUsbBoot != Value;
+    Settings.EnableUsbBoot = Value;
+  } else if (0 == AsciiStrnCmp (Id, DFCI_SETTING_ID__START_NETWORK, DFCI_MAX_ID_LEN)) {
+    Changed               = Settings.StartNetwork != Value;
+    Settings.StartNetwork = Value;
+  } else {
+    // Cannot get here as checked above
+  }
+
+  if (Changed) {
+    Status = gRT->SetVariable (
+                    MS_BOOT_MANAGER_SETTINGS_NAME,
+                    &gMsBootManagerSettingsGuid,
+                    MS_BOOT_MANAGER_SETTINGS_ATTRIBUTES,
+                    sizeof (Settings),
+                    &Settings
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "ERROR on SetVariable.  Code=%r\n", Status));
+    }
+  } else {
+    *Flags = DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+    Status = EFI_SUCCESS;
+    DEBUG ((DEBUG_INFO, "Setting %a ignored, value didn't change\n", Id));
+  }
+
+  return Status;
 }
-
-
 
 /////---------------------Interface for Settings Provider ---------------------//////
 
 EFI_STATUS
 EFIAPI
 BootManagerSettingsSet (
-  IN  CONST DFCI_SETTING_PROVIDER     *This,
-  IN        UINTN                      ValueSize,
-  IN  CONST VOID                      *Value,
-  OUT DFCI_SETTING_FLAGS              *Flags
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN        UINTN                  ValueSize,
+  IN  CONST VOID                   *Value,
+  OUT DFCI_SETTING_FLAGS           *Flags
   )
 {
-  if ((This != NULL) && (Value != NULL) && (Flags != NULL) && (ValueSize == sizeof(BOOLEAN)))
-  {
-    return SetBootManagerSetting (This->Id, *((BOOLEAN*) Value), Flags);
+  if ((This != NULL) && (Value != NULL) && (Flags != NULL) && (ValueSize == sizeof (BOOLEAN))) {
+    return SetBootManagerSetting (This->Id, *((BOOLEAN *)Value), Flags);
   }
-  return EFI_INVALID_PARAMETER;
 
+  return EFI_INVALID_PARAMETER;
 }
 
 EFI_STATUS
 EFIAPI
-BootManagerSettingsGet(
-  IN CONST DFCI_SETTING_PROVIDER     *This,
-  IN OUT   UINTN                     *ValueSize,
-  OUT      VOID                      *Value
+BootManagerSettingsGet (
+  IN CONST DFCI_SETTING_PROVIDER  *This,
+  IN OUT   UINTN                  *ValueSize,
+  OUT      VOID                   *Value
   )
 {
-  if ((This != NULL) && (Value != NULL) && (ValueSize != NULL) && (*ValueSize == sizeof(BOOLEAN)))
-  {
-    return GetBootManagerSetting(This->Id, Value);
+  if ((This != NULL) && (Value != NULL) && (ValueSize != NULL) && (*ValueSize == sizeof (BOOLEAN))) {
+    return GetBootManagerSetting (This->Id, Value);
   }
-  return EFI_INVALID_PARAMETER;
 
+  return EFI_INVALID_PARAMETER;
 }
 
 //
@@ -432,18 +427,17 @@ BootManagerSettingsGet(
 //
 EFI_STATUS
 EFIAPI
-BootManagerSettingsGetDefault(
-  IN CONST  DFCI_SETTING_PROVIDER     *This,
-  IN OUT    UINTN                     *ValueSize,
-  OUT       VOID                      *Value
+BootManagerSettingsGetDefault (
+  IN CONST  DFCI_SETTING_PROVIDER  *This,
+  IN OUT    UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   )
 {
-  if ((This != NULL) && (Value != NULL) && (ValueSize != NULL) && (*ValueSize == sizeof(BOOLEAN)))
-  {
-    return GetBootManagerSettingDefault(This->Id, Value);
+  if ((This != NULL) && (Value != NULL) && (ValueSize != NULL) && (*ValueSize == sizeof (BOOLEAN))) {
+    return GetBootManagerSettingDefault (This->Id, Value);
   }
-  return EFI_INVALID_PARAMETER;
 
+  return EFI_INVALID_PARAMETER;
 }
 
 //
@@ -451,23 +445,22 @@ BootManagerSettingsGetDefault(
 //
 EFI_STATUS
 EFIAPI
-BootManagerSettingsSetDefault(
-  IN  CONST DFCI_SETTING_PROVIDER     *This
+BootManagerSettingsSetDefault (
+  IN  CONST DFCI_SETTING_PROVIDER  *This
   )
 {
-  BOOLEAN Value;
-  EFI_STATUS Status;
-  DFCI_SETTING_FLAGS Flags = 0;
-  if (This != NULL)
-  {
-    Status = GetBootManagerSettingDefault(This->Id, &Value);
-    if (!EFI_ERROR(Status))
-    {
-      return SetBootManagerSetting(This->Id, Value, &Flags);
+  BOOLEAN             Value;
+  EFI_STATUS          Status;
+  DFCI_SETTING_FLAGS  Flags = 0;
+
+  if (This != NULL) {
+    Status = GetBootManagerSettingDefault (This->Id, &Value);
+    if (!EFI_ERROR (Status)) {
+      return SetBootManagerSetting (This->Id, Value, &Flags);
     }
   }
-  return EFI_INVALID_PARAMETER;
 
+  return EFI_INVALID_PARAMETER;
 }
 
 //
@@ -475,7 +468,7 @@ BootManagerSettingsSetDefault(
 // allocated memory this code can use a single "template" and just change
 // the id field as needed for registration.
 //
-DFCI_SETTING_PROVIDER mBootManagerProviderTemplate = {
+DFCI_SETTING_PROVIDER  mBootManagerProviderTemplate = {
   0,
   DFCI_SETTING_TYPE_ENABLE,
   DFCI_SETTING_FLAGS_NONE,
@@ -484,7 +477,6 @@ DFCI_SETTING_PROVIDER mBootManagerProviderTemplate = {
   BootManagerSettingsGetDefault,
   BootManagerSettingsSetDefault
 };
-
 
 /*
   Library design is such that a dependency on gDfciSettingsProviderSupportProtocolGuid
@@ -499,69 +491,65 @@ DFCI_SETTING_PROVIDER mBootManagerProviderTemplate = {
 */
 VOID
 EFIAPI
-BootManagerSettingsProviderSupportProtocolNotify(
-  IN  EFI_EVENT       Event,
-  IN  VOID            *Context
+BootManagerSettingsProviderSupportProtocolNotify (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
+  EFI_STATUS                              Status;
+  DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *sp;
+  STATIC UINT8                            CallCount = 0;
 
-    EFI_STATUS Status;
-    DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
-    STATIC UINT8 CallCount = 0;
-
-    //locate protocol
-    Status = gBS->LocateProtocol(&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
-    if (EFI_ERROR(Status))
-    {
-      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND))
-      {
-        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__,  Status));
-      }
-      return;
+  // locate protocol
+  Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID **)&sp);
+  if (EFI_ERROR (Status)) {
+    if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
+      DEBUG ((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
     }
 
-    //
-    // Register items that are in the PREBOOT_UI
-    //
-    mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__IPV6;
-    Status = sp->RegisterProvider(sp, &mBootManagerProviderTemplate);
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to Register IPV6.  Status = %r\n", Status));
-    }
-    mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__ALT_BOOT;
-    Status = sp->RegisterProvider(sp, &mBootManagerProviderTemplate);
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to Register ALT_BOOT.  Status = %r\n", Status));
-    }
-    mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__BOOT_ORDER_LOCK;
-    Status = sp->RegisterProvider(sp, &mBootManagerProviderTemplate);
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to Register BOOT_ORDER_LOCK.  Status = %r\n", Status));
-    }
-    mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__ENABLE_USB_BOOT;
-    Status = sp->RegisterProvider(sp, &mBootManagerProviderTemplate);
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to Register ENABLE_USB_BOOT.  Status = %r\n", Status));
-    }
+    return;
+  }
 
-    //
-    // Register items that are NOT in the PREBOOT_UI
-    //
-    mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__START_NETWORK;
-    mBootManagerProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
-    Status = sp->RegisterProvider(sp, &mBootManagerProviderTemplate);
-    if (EFI_ERROR(Status))
-    {
-        DEBUG((DEBUG_ERROR, "Failed to Register START_NETWORK.  Status = %r\n", Status));
-    }
+  //
+  // Register items that are in the PREBOOT_UI
+  //
+  mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__IPV6;
+  Status                          = sp->RegisterProvider (sp, &mBootManagerProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register IPV6.  Status = %r\n", Status));
+  }
 
-    //We got here, this means all protocols were installed and we didn't exit early.
-    //close the event as we dont' need to be signaled again. (shouldn't happen anyway)
-    gBS->CloseEvent(Event);
+  mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__ALT_BOOT;
+  Status                          = sp->RegisterProvider (sp, &mBootManagerProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register ALT_BOOT.  Status = %r\n", Status));
+  }
+
+  mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__BOOT_ORDER_LOCK;
+  Status                          = sp->RegisterProvider (sp, &mBootManagerProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register BOOT_ORDER_LOCK.  Status = %r\n", Status));
+  }
+
+  mBootManagerProviderTemplate.Id = DFCI_SETTING_ID__ENABLE_USB_BOOT;
+  Status                          = sp->RegisterProvider (sp, &mBootManagerProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register ENABLE_USB_BOOT.  Status = %r\n", Status));
+  }
+
+  //
+  // Register items that are NOT in the PREBOOT_UI
+  //
+  mBootManagerProviderTemplate.Id    = DFCI_SETTING_ID__START_NETWORK;
+  mBootManagerProviderTemplate.Flags = DFCI_SETTING_FLAGS_NO_PREBOOT_UI;
+  Status                             = sp->RegisterProvider (sp, &mBootManagerProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register START_NETWORK.  Status = %r\n", Status));
+  }
+
+  // We got here, this means all protocols were installed and we didn't exit early.
+  // close the event as we dont' need to be signaled again. (shouldn't happen anyway)
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -583,33 +571,31 @@ It will ASSERT() if one of these operations fails and it will always return EFI_
 **/
 EFI_STATUS
 EFIAPI
-MsBootManagerSettingsConstructor
-(
+MsBootManagerSettingsConstructor (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
-    if (FeaturePcdGet(PcdSettingsManagerInstallProvider))
-    {
-        //Install callback on the SettingsManager gDfciSettingsProviderSupportProtocolGuid protocol
-        mBootManagerSettingsProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent(
-            &gDfciSettingsProviderSupportProtocolGuid,
-             TPL_CALLBACK,
-             BootManagerSettingsProviderSupportProtocolNotify,
-             NULL,
-            &mBootManagerSettingsProviderSupportInstallEventRegistration
-            );
+  EFI_STATUS  Status = EFI_SUCCESS;
 
-        DEBUG((DEBUG_INFO, "%a - Event Registered.\n", __FUNCTION__));
+  if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
+    // Install callback on the SettingsManager gDfciSettingsProviderSupportProtocolGuid protocol
+    mBootManagerSettingsProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+                                                        &gDfciSettingsProviderSupportProtocolGuid,
+                                                        TPL_CALLBACK,
+                                                        BootManagerSettingsProviderSupportProtocolNotify,
+                                                        NULL,
+                                                        &mBootManagerSettingsProviderSupportInstallEventRegistration
+                                                        );
 
-        //Init nv var
-        Status = InitializeNvVariable();
-        if (EFI_ERROR(Status))
-        {
-            DEBUG((DEBUG_ERROR, "%a - Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
-        }
+    DEBUG ((DEBUG_INFO, "%a - Event Registered.\n", __FUNCTION__));
+
+    // Init nv var
+    Status = InitializeNvVariable ();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
     }
-    return EFI_SUCCESS;
-}
+  }
 
+  return EFI_SUCCESS;
+}

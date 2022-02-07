@@ -18,8 +18,8 @@ EFIAPI
 MsNetworkDelayLibConstructor (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
-) {
-
-    DEBUG ((DEBUG_INFO, "%a: Network Delay satisfied\n", __FUNCTION__));
-    return EFI_SUCCESS;
+  )
+{
+  DEBUG ((DEBUG_INFO, "%a: Network Delay satisfied\n", __FUNCTION__));
+  return EFI_SUCCESS;
 }

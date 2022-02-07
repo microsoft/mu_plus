@@ -39,7 +39,8 @@ GetPciDataIndex (
     PciSourceId = &mVtdUnitInformation[VtdIndex].PciDeviceInfo.PciDeviceData[Index].PciSourceId;
     if ((PciSourceId->Bits.Bus == SourceId.Bits.Bus) &&
         (PciSourceId->Bits.Device == SourceId.Bits.Device) &&
-        (PciSourceId->Bits.Function == SourceId.Bits.Function) ) {
+        (PciSourceId->Bits.Function == SourceId.Bits.Function))
+    {
       return Index;
     }
   }
@@ -70,12 +71,12 @@ RegisterPciDevice (
   IN BOOLEAN        CheckExist
   )
 {
-  PCI_DEVICE_INFORMATION           *PciDeviceInfo;
-  VTD_SOURCE_ID                    *PciSourceId;
-  UINTN                            PciDataIndex;
-  UINTN                            Index;
-  PCI_DEVICE_DATA                  *NewPciDeviceData;
-  EDKII_PLATFORM_VTD_PCI_DEVICE_ID *PciDeviceId;
+  PCI_DEVICE_INFORMATION            *PciDeviceInfo;
+  VTD_SOURCE_ID                     *PciSourceId;
+  UINTN                             PciDataIndex;
+  UINTN                             Index;
+  PCI_DEVICE_DATA                   *NewPciDeviceData;
+  EDKII_PLATFORM_VTD_PCI_DEVICE_ID  *PciDeviceId;
 
   PciDeviceInfo = &mVtdUnitInformation[VtdIndex].PciDeviceInfo;
 
@@ -102,50 +103,56 @@ RegisterPciDevice (
       //
       // Reallocate
       //
-      NewPciDeviceData = AllocateZeroPool (sizeof(*NewPciDeviceData) * (PciDeviceInfo->PciDeviceDataMaxNumber + MAX_VTD_PCI_DATA_NUMBER));
+      NewPciDeviceData = AllocateZeroPool (sizeof (*NewPciDeviceData) * (PciDeviceInfo->PciDeviceDataMaxNumber + MAX_VTD_PCI_DATA_NUMBER));
       if (NewPciDeviceData == NULL) {
         return EFI_OUT_OF_RESOURCES;
       }
+
       PciDeviceInfo->PciDeviceDataMaxNumber += MAX_VTD_PCI_DATA_NUMBER;
       if (PciDeviceInfo->PciDeviceData != NULL) {
-        CopyMem (NewPciDeviceData, PciDeviceInfo->PciDeviceData, sizeof(*NewPciDeviceData) * PciDeviceInfo->PciDeviceDataNumber);
+        CopyMem (NewPciDeviceData, PciDeviceInfo->PciDeviceData, sizeof (*NewPciDeviceData) * PciDeviceInfo->PciDeviceDataNumber);
         FreePool (PciDeviceInfo->PciDeviceData);
       }
+
       PciDeviceInfo->PciDeviceData = NewPciDeviceData;
     }
 
     ASSERT (PciDeviceInfo->PciDeviceDataNumber < PciDeviceInfo->PciDeviceDataMaxNumber);
 
-    PciSourceId = &PciDeviceInfo->PciDeviceData[PciDeviceInfo->PciDeviceDataNumber].PciSourceId;
-    PciSourceId->Bits.Bus = SourceId.Bits.Bus;
-    PciSourceId->Bits.Device = SourceId.Bits.Device;
+    PciSourceId                = &PciDeviceInfo->PciDeviceData[PciDeviceInfo->PciDeviceDataNumber].PciSourceId;
+    PciSourceId->Bits.Bus      = SourceId.Bits.Bus;
+    PciSourceId->Bits.Device   = SourceId.Bits.Device;
     PciSourceId->Bits.Function = SourceId.Bits.Function;
 
     DEBUG ((DEBUG_INFO, "  RegisterPciDevice: PCI S%04x B%02x D%02x F%02x", Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function));
 
     PciDeviceId = &PciDeviceInfo->PciDeviceData[PciDeviceInfo->PciDeviceDataNumber].PciDeviceId;
     if ((DeviceType == EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT) ||
-        (DeviceType == EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE)) {
-      PciDeviceId->VendorId   = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS(Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_VENDOR_ID_OFFSET));
-      PciDeviceId->DeviceId   = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS(Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_DEVICE_ID_OFFSET));
-      PciDeviceId->RevisionId = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS(Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_REVISION_ID_OFFSET));
+        (DeviceType == EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE))
+    {
+      PciDeviceId->VendorId   = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS (Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_VENDOR_ID_OFFSET));
+      PciDeviceId->DeviceId   = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS (Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_DEVICE_ID_OFFSET));
+      PciDeviceId->RevisionId = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_REVISION_ID_OFFSET));
 
       DEBUG ((DEBUG_INFO, " (%04x:%04x:%02x", PciDeviceId->VendorId, PciDeviceId->DeviceId, PciDeviceId->RevisionId));
 
       if (DeviceType == EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT) {
-        PciDeviceId->SubsystemVendorId = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS(Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_SUBSYSTEM_VENDOR_ID_OFFSET));
-        PciDeviceId->SubsystemDeviceId = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS(Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_SUBSYSTEM_ID_OFFSET));
+        PciDeviceId->SubsystemVendorId = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS (Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_SUBSYSTEM_VENDOR_ID_OFFSET));
+        PciDeviceId->SubsystemDeviceId = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS (Segment, SourceId.Bits.Bus, SourceId.Bits.Device, SourceId.Bits.Function, PCI_SUBSYSTEM_ID_OFFSET));
         DEBUG ((DEBUG_INFO, ":%04x:%04x", PciDeviceId->SubsystemVendorId, PciDeviceId->SubsystemDeviceId));
       }
+
       DEBUG ((DEBUG_INFO, ")"));
     }
 
     PciDeviceInfo->PciDeviceData[PciDeviceInfo->PciDeviceDataNumber].DeviceType = DeviceType;
 
     if ((DeviceType != EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT) &&
-        (DeviceType != EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE)) {
+        (DeviceType != EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE))
+    {
       DEBUG ((DEBUG_INFO, " (*)"));
     }
+
     DEBUG ((DEBUG_INFO, "\n"));
 
     PciDeviceInfo->PciDeviceDataNumber++;
@@ -173,29 +180,29 @@ RegisterPciDevice (
 EFI_STATUS
 EFIAPI
 ScanBusCallbackRegisterPciDevice (
-  IN VOID           *Context,
-  IN UINT16         Segment,
-  IN UINT8          Bus,
-  IN UINT8          Device,
-  IN UINT8          Function
+  IN VOID    *Context,
+  IN UINT16  Segment,
+  IN UINT8   Bus,
+  IN UINT8   Device,
+  IN UINT8   Function
   )
 {
-  VTD_SOURCE_ID           SourceId;
-  UINTN                   VtdIndex;
-  UINT8                   BaseClass;
-  UINT8                   SubClass;
-  UINT8                   DeviceType;
-  EFI_STATUS              Status;
+  VTD_SOURCE_ID  SourceId;
+  UINTN          VtdIndex;
+  UINT8          BaseClass;
+  UINT8          SubClass;
+  UINT8          DeviceType;
+  EFI_STATUS     Status;
 
-  VtdIndex = (UINTN)Context;
-  SourceId.Bits.Bus = Bus;
-  SourceId.Bits.Device = Device;
+  VtdIndex               = (UINTN)Context;
+  SourceId.Bits.Bus      = Bus;
+  SourceId.Bits.Device   = Device;
   SourceId.Bits.Function = Function;
 
   DeviceType = EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_ENDPOINT;
-  BaseClass = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 2));
+  BaseClass  = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 2));
   if (BaseClass == PCI_CLASS_BRIDGE) {
-    SubClass = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 1));
+    SubClass = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 1));
     if (SubClass == PCI_CLASS_BRIDGE_P2P) {
       DeviceType = EFI_ACPI_DEVICE_SCOPE_ENTRY_TYPE_PCI_BRIDGE;
     }
@@ -223,28 +230,29 @@ ScanPciBus (
   IN SCAN_BUS_FUNC_CALLBACK_FUNC  Callback
   )
 {
-  UINT8                   Device;
-  UINT8                   Function;
-  UINT8                   SecondaryBusNumber;
-  UINT8                   HeaderType;
-  UINT8                   BaseClass;
-  UINT8                   SubClass;
-  UINT32                  MaxFunction;
-  UINT16                  VendorID;
-  UINT16                  DeviceID;
-  EFI_STATUS              Status;
+  UINT8       Device;
+  UINT8       Function;
+  UINT8       SecondaryBusNumber;
+  UINT8       HeaderType;
+  UINT8       BaseClass;
+  UINT8       SubClass;
+  UINT32      MaxFunction;
+  UINT16      VendorID;
+  UINT16      DeviceID;
+  EFI_STATUS  Status;
 
   // Scan the PCI bus for devices
   for (Device = 0; Device < PCI_MAX_DEVICE + 1; Device++) {
-    HeaderType = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, 0, PCI_HEADER_TYPE_OFFSET));
+    HeaderType  = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, 0, PCI_HEADER_TYPE_OFFSET));
     MaxFunction = PCI_MAX_FUNC + 1;
     if ((HeaderType & HEADER_TYPE_MULTI_FUNCTION) == 0x00) {
       MaxFunction = 1;
     }
+
     for (Function = 0; Function < MaxFunction; Function++) {
-      VendorID  = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, Function, PCI_VENDOR_ID_OFFSET));
-      DeviceID  = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, Function, PCI_DEVICE_ID_OFFSET));
-      if (VendorID == 0xFFFF && DeviceID == 0xFFFF) {
+      VendorID = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, Function, PCI_VENDOR_ID_OFFSET));
+      DeviceID = PciSegmentRead16 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, Function, PCI_DEVICE_ID_OFFSET));
+      if ((VendorID == 0xFFFF) && (DeviceID == 0xFFFF)) {
         continue;
       }
 
@@ -253,12 +261,12 @@ ScanPciBus (
         return Status;
       }
 
-      BaseClass = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 2));
+      BaseClass = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 2));
       if (BaseClass == PCI_CLASS_BRIDGE) {
-        SubClass = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 1));
+        SubClass = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, Function, PCI_CLASSCODE_OFFSET + 1));
         if (SubClass == PCI_CLASS_BRIDGE_P2P) {
-          SecondaryBusNumber = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS(Segment, Bus, Device, Function, PCI_BRIDGE_SECONDARY_BUS_REGISTER_OFFSET));
-          DEBUG ((DEBUG_INFO,"  ScanPciBus: PCI bridge S%04x B%02x D%02x F%02x (SecondBus:%02x)\n", Segment, Bus, Device, Function, SecondaryBusNumber));
+          SecondaryBusNumber = PciSegmentRead8 (PCI_SEGMENT_LIB_ADDRESS (Segment, Bus, Device, Function, PCI_BRIDGE_SECONDARY_BUS_REGISTER_OFFSET));
+          DEBUG ((DEBUG_INFO, "  ScanPciBus: PCI bridge S%04x B%02x D%02x F%02x (SecondBus:%02x)\n", Segment, Bus, Device, Function, SecondaryBusNumber));
           if (SecondaryBusNumber != 0) {
             Status = ScanPciBus (Context, Segment, SecondaryBusNumber, Callback);
             if (EFI_ERROR (Status)) {

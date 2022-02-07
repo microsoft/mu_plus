@@ -24,7 +24,7 @@
 BOOLEAN
 EFIAPI
 IsCapsuleGuidInEsrtTable (
-  IN EFI_GUID      *CapsuleGuid
-);
+  IN EFI_GUID  *CapsuleGuid
+  );
 
 #endif

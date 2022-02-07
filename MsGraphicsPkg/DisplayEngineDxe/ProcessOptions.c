@@ -23,15 +23,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 VOID
 NewStrCat (
-  IN OUT CHAR16               *Destination,
-  IN     UINTN                DestMax,
-  IN     CHAR16               *Source
+  IN OUT CHAR16  *Destination,
+  IN     UINTN   DestMax,
+  IN     CHAR16  *Source
   )
 {
-  UINTN Length;
+  UINTN  Length;
 
-  for (Length = 0; Destination[Length] != 0; Length++)
-    ;
+  for (Length = 0; Destination[Length] != 0; Length++) {
+  }
 
   //
   // We now have the length of the original string
@@ -55,7 +55,7 @@ NewStrCat (
 **/
 UINT64
 HiiValueToUINT64 (
-  IN EFI_HII_VALUE      *Value
+  IN EFI_HII_VALUE  *Value
   )
 {
   UINT64  RetVal;
@@ -63,33 +63,33 @@ HiiValueToUINT64 (
   RetVal = 0;
 
   switch (Value->Type) {
-  case EFI_IFR_TYPE_NUM_SIZE_8:
-    RetVal = Value->Value.u8;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_8:
+      RetVal = Value->Value.u8;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_16:
-    RetVal = Value->Value.u16;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_16:
+      RetVal = Value->Value.u16;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_32:
-    RetVal = Value->Value.u32;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_32:
+      RetVal = Value->Value.u32;
+      break;
 
-  case EFI_IFR_TYPE_BOOLEAN:
-    RetVal = Value->Value.b;
-    break;
+    case EFI_IFR_TYPE_BOOLEAN:
+      RetVal = Value->Value.b;
+      break;
 
-  case EFI_IFR_TYPE_DATE:
-    RetVal = *(UINT64*) &Value->Value.date;
-    break;
+    case EFI_IFR_TYPE_DATE:
+      RetVal = *(UINT64 *)&Value->Value.date;
+      break;
 
-  case EFI_IFR_TYPE_TIME:
-    RetVal = (*(UINT64*) &Value->Value.time) & 0xffffff;
-    break;
+    case EFI_IFR_TYPE_TIME:
+      RetVal = (*(UINT64 *)&Value->Value.time) & 0xffffff;
+      break;
 
-  default:
-    RetVal = Value->Value.u64;
-    break;
+    default:
+      RetVal = Value->Value.u64;
+      break;
   }
 
   return RetVal;
@@ -109,18 +109,18 @@ HiiValueToUINT64 (
 **/
 BOOLEAN
 IsTypeInBuffer (
-  IN  EFI_HII_VALUE   *Value
+  IN  EFI_HII_VALUE  *Value
   )
 {
   switch (Value->Type) {
-  case EFI_IFR_TYPE_BUFFER:
-  case EFI_IFR_TYPE_DATE:
-  case EFI_IFR_TYPE_TIME:
-  case EFI_IFR_TYPE_REF:
-    return TRUE;
+    case EFI_IFR_TYPE_BUFFER:
+    case EFI_IFR_TYPE_DATE:
+    case EFI_IFR_TYPE_TIME:
+    case EFI_IFR_TYPE_REF:
+      return TRUE;
 
-  default:
-    return FALSE;
+    default:
+      return FALSE;
   }
 }
 
@@ -135,19 +135,19 @@ IsTypeInBuffer (
 **/
 BOOLEAN
 IsTypeInUINT64 (
-  IN  EFI_HII_VALUE   *Value
+  IN  EFI_HII_VALUE  *Value
   )
 {
   switch (Value->Type) {
-  case EFI_IFR_TYPE_NUM_SIZE_8:
-  case EFI_IFR_TYPE_NUM_SIZE_16:
-  case EFI_IFR_TYPE_NUM_SIZE_32:
-  case EFI_IFR_TYPE_NUM_SIZE_64:
-  case EFI_IFR_TYPE_BOOLEAN:
-    return TRUE;
+    case EFI_IFR_TYPE_NUM_SIZE_8:
+    case EFI_IFR_TYPE_NUM_SIZE_16:
+    case EFI_IFR_TYPE_NUM_SIZE_32:
+    case EFI_IFR_TYPE_NUM_SIZE_64:
+    case EFI_IFR_TYPE_BOOLEAN:
+      return TRUE;
 
-  default:
-    return FALSE;
+    default:
+      return FALSE;
   }
 }
 
@@ -164,35 +164,35 @@ IsTypeInUINT64 (
 **/
 VOID
 GetBufAndLenForValue (
-  IN  EFI_HII_VALUE   *Value,
-  OUT UINT8           **Buf,
-  OUT UINT16          *BufLen
+  IN  EFI_HII_VALUE  *Value,
+  OUT UINT8          **Buf,
+  OUT UINT16         *BufLen
   )
 {
   switch (Value->Type) {
-  case EFI_IFR_TYPE_BUFFER:
-    *Buf    = Value->Buffer;
-    *BufLen = Value->BufferLen;
-    break;
+    case EFI_IFR_TYPE_BUFFER:
+      *Buf    = Value->Buffer;
+      *BufLen = Value->BufferLen;
+      break;
 
-  case EFI_IFR_TYPE_DATE:
-    *Buf    = (UINT8 *) (&Value->Value.date);
-    *BufLen = (UINT16) sizeof (EFI_HII_DATE);
-    break;
+    case EFI_IFR_TYPE_DATE:
+      *Buf    = (UINT8 *)(&Value->Value.date);
+      *BufLen = (UINT16)sizeof (EFI_HII_DATE);
+      break;
 
-  case EFI_IFR_TYPE_TIME:
-    *Buf    = (UINT8 *) (&Value->Value.time);
-    *BufLen = (UINT16) sizeof (EFI_HII_TIME);
-    break;
+    case EFI_IFR_TYPE_TIME:
+      *Buf    = (UINT8 *)(&Value->Value.time);
+      *BufLen = (UINT16)sizeof (EFI_HII_TIME);
+      break;
 
-  case EFI_IFR_TYPE_REF:
-    *Buf    = (UINT8 *) (&Value->Value.ref);
-    *BufLen = (UINT16) sizeof (EFI_HII_REF);
-    break;
+    case EFI_IFR_TYPE_REF:
+      *Buf    = (UINT8 *)(&Value->Value.ref);
+      *BufLen = (UINT16)sizeof (EFI_HII_REF);
+      break;
 
-  default:
-    *Buf    = NULL;
-    *BufLen = 0;
+    default:
+      *Buf    = NULL;
+      *BufLen = 0;
   }
 }
 
@@ -228,8 +228,8 @@ CompareHiiValue (
   UINT8   *Buf2;
   UINT16  Buf2Len;
 
-  if (Value1->Type == EFI_IFR_TYPE_STRING && Value2->Type == EFI_IFR_TYPE_STRING) {
-    if (Value1->Value.string == 0 || Value2->Value.string == 0) {
+  if ((Value1->Type == EFI_IFR_TYPE_STRING) && (Value2->Type == EFI_IFR_TYPE_STRING)) {
+    if ((Value1->Value.string == 0) || (Value2->Value.string == 0)) {
       //
       // StringId 0 is reserved
       //
@@ -266,11 +266,11 @@ CompareHiiValue (
   //
   // Take types(date, time, ref, buffer) as buffer
   //
-  if (IsTypeInBuffer(Value1) && IsTypeInBuffer(Value2)) {
-    GetBufAndLenForValue(Value1, &Buf1, &Buf1Len);
-    GetBufAndLenForValue(Value2, &Buf2, &Buf2Len);
+  if (IsTypeInBuffer (Value1) && IsTypeInBuffer (Value2)) {
+    GetBufAndLenForValue (Value1, &Buf1, &Buf1Len);
+    GetBufAndLenForValue (Value2, &Buf2, &Buf2Len);
 
-    Len = Buf1Len > Buf2Len ? Buf2Len : Buf1Len;
+    Len     = Buf1Len > Buf2Len ? Buf2Len : Buf1Len;
     *Result = CompareMem (Buf1, Buf2, Len);
     if ((*Result == 0) && (Buf1Len != Buf2Len)) {
       //
@@ -279,14 +279,15 @@ CompareHiiValue (
       //
       *Result = Buf1Len > Buf2Len ? 1 : -1;
     }
+
     return EFI_SUCCESS;
   }
 
   //
   // Take remain types(integer, boolean, date/time) as integer
   //
-  if (IsTypeInUINT64(Value1) && IsTypeInUINT64(Value2)) {
-    Temp64 = HiiValueToUINT64(Value1) - HiiValueToUINT64(Value2);
+  if (IsTypeInUINT64 (Value1) && IsTypeInUINT64 (Value2)) {
+    Temp64 = HiiValueToUINT64 (Value1) - HiiValueToUINT64 (Value2);
     if (Temp64 > 0) {
       *Result = 1;
     } else if (Temp64 < 0) {
@@ -294,6 +295,7 @@ CompareHiiValue (
     } else {
       *Result = 0;
     }
+
     return EFI_SUCCESS;
   }
 
@@ -312,8 +314,8 @@ CompareHiiValue (
 **/
 DISPLAY_QUESTION_OPTION *
 ValueToOption (
-  IN FORM_DISPLAY_ENGINE_STATEMENT   *Question,
-  IN EFI_HII_VALUE                   *OptionValue
+  IN FORM_DISPLAY_ENGINE_STATEMENT  *Question,
+  IN EFI_HII_VALUE                  *OptionValue
   )
 {
   LIST_ENTRY               *Link;
@@ -339,7 +341,6 @@ ValueToOption (
   return NULL;
 }
 
-
 /**
   Return data element in an Array by its Index.
 
@@ -352,40 +353,39 @@ ValueToOption (
 **/
 UINT64
 GetArrayData (
-  IN VOID                     *Array,
-  IN UINT8                    Type,
-  IN UINTN                    Index
+  IN VOID   *Array,
+  IN UINT8  Type,
+  IN UINTN  Index
   )
 {
-  UINT64 Data;
+  UINT64  Data;
 
   ASSERT (Array != NULL);
 
   Data = 0;
   switch (Type) {
-  case EFI_IFR_TYPE_NUM_SIZE_8:
-    Data = (UINT64) *(((UINT8 *) Array) + Index);
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_8:
+      Data = (UINT64)*(((UINT8 *)Array) + Index);
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_16:
-    Data = (UINT64) *(((UINT16 *) Array) + Index);
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_16:
+      Data = (UINT64)*(((UINT16 *)Array) + Index);
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_32:
-    Data = (UINT64) *(((UINT32 *) Array) + Index);
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_32:
+      Data = (UINT64)*(((UINT32 *)Array) + Index);
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_64:
-    Data = (UINT64) *(((UINT64 *) Array) + Index);
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_64:
+      Data = (UINT64)*(((UINT64 *)Array) + Index);
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 
   return Data;
 }
-
 
 /**
   Set value of a data element in an Array by its Index.
@@ -398,34 +398,33 @@ GetArrayData (
 **/
 VOID
 SetArrayData (
-  IN VOID                     *Array,
-  IN UINT8                    Type,
-  IN UINTN                    Index,
-  IN UINT64                   Value
+  IN VOID    *Array,
+  IN UINT8   Type,
+  IN UINTN   Index,
+  IN UINT64  Value
   )
 {
-
   ASSERT (Array != NULL);
 
   switch (Type) {
-  case EFI_IFR_TYPE_NUM_SIZE_8:
-    *(((UINT8 *) Array) + Index) = (UINT8) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_8:
+      *(((UINT8 *)Array) + Index) = (UINT8)Value;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_16:
-    *(((UINT16 *) Array) + Index) = (UINT16) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_16:
+      *(((UINT16 *)Array) + Index) = (UINT16)Value;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_32:
-    *(((UINT32 *) Array) + Index) = (UINT32) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_32:
+      *(((UINT32 *)Array) + Index) = (UINT32)Value;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_64:
-    *(((UINT64 *) Array) + Index) = (UINT64) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_64:
+      *(((UINT64 *)Array) + Index) = (UINT64)Value;
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 }
 
@@ -443,15 +442,15 @@ SetArrayData (
 **/
 BOOLEAN
 FindArrayData (
-  IN VOID                     *Array,
-  IN UINT8                    Type,
-  IN UINT64                   Value,
-  OUT UINTN                   *Index OPTIONAL
+  IN VOID    *Array,
+  IN UINT8   Type,
+  IN UINT64  Value,
+  OUT UINTN  *Index OPTIONAL
   )
 {
-  UINTN  Count;
-  UINT64 TmpValue;
-  UINT64 ValueComp;
+  UINTN   Count;
+  UINT64  TmpValue;
+  UINT64  ValueComp;
 
   ASSERT (Array != NULL);
 
@@ -459,25 +458,25 @@ FindArrayData (
   TmpValue = 0;
 
   switch (Type) {
-  case EFI_IFR_TYPE_NUM_SIZE_8:
-    ValueComp = (UINT8) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_8:
+      ValueComp = (UINT8)Value;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_16:
-    ValueComp = (UINT16) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_16:
+      ValueComp = (UINT16)Value;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_32:
-    ValueComp = (UINT32) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_32:
+      ValueComp = (UINT32)Value;
+      break;
 
-  case EFI_IFR_TYPE_NUM_SIZE_64:
-    ValueComp = (UINT64) Value;
-    break;
+    case EFI_IFR_TYPE_NUM_SIZE_64:
+      ValueComp = (UINT64)Value;
+      break;
 
-  default:
-    ValueComp = 0;
-    break;
+    default:
+      ValueComp = 0;
+      break;
   }
 
   while ((TmpValue = GetArrayData (Array, Type, Count)) != 0) {
@@ -485,10 +484,11 @@ FindArrayData (
       if (Index != NULL) {
         *Index = Count;
       }
+
       return TRUE;
     }
 
-    Count ++;
+    Count++;
   }
 
   return FALSE;
@@ -507,69 +507,69 @@ FindArrayData (
 **/
 EFI_STATUS
 PrintFormattedNumber (
-  IN FORM_DISPLAY_ENGINE_STATEMENT   *Question,
-  IN OUT CHAR16               *FormattedNumber,
-  IN UINTN                    BufferSize
+  IN FORM_DISPLAY_ENGINE_STATEMENT  *Question,
+  IN OUT CHAR16                     *FormattedNumber,
+  IN UINTN                          BufferSize
   )
 {
-  INT64          Value;
-  CHAR16         *Format;
-  EFI_HII_VALUE  *QuestionValue;
-  EFI_IFR_NUMERIC *NumericOp;
+  INT64            Value;
+  CHAR16           *Format;
+  EFI_HII_VALUE    *QuestionValue;
+  EFI_IFR_NUMERIC  *NumericOp;
 
   if (BufferSize < (21 * sizeof (CHAR16))) {
     return EFI_BUFFER_TOO_SMALL;
   }
 
   QuestionValue = &Question->CurrentValue;
-  NumericOp     = (EFI_IFR_NUMERIC *) Question->OpCode;
+  NumericOp     = (EFI_IFR_NUMERIC *)Question->OpCode;
 
-  Value = (INT64) QuestionValue->Value.u64;
+  Value = (INT64)QuestionValue->Value.u64;
   switch (NumericOp->Flags & EFI_IFR_DISPLAY) {
-  case EFI_IFR_DISPLAY_INT_DEC:
-    switch (QuestionValue->Type) {
-    case EFI_IFR_NUMERIC_SIZE_1:
-      Value = (INT64) ((INT8) QuestionValue->Value.u8);
+    case EFI_IFR_DISPLAY_INT_DEC:
+      switch (QuestionValue->Type) {
+        case EFI_IFR_NUMERIC_SIZE_1:
+          Value = (INT64)((INT8)QuestionValue->Value.u8);
+          break;
+
+        case EFI_IFR_NUMERIC_SIZE_2:
+          Value = (INT64)((INT16)QuestionValue->Value.u16);
+          break;
+
+        case EFI_IFR_NUMERIC_SIZE_4:
+          Value = (INT64)((INT32)QuestionValue->Value.u32);
+          break;
+
+        case EFI_IFR_NUMERIC_SIZE_8:
+        default:
+          break;
+      }
+
+      if (Value < 0) {
+        Value  = -Value;
+        Format = L"-%ld";
+      } else {
+        Format = L"%ld";
+      }
+
       break;
 
-    case EFI_IFR_NUMERIC_SIZE_2:
-      Value = (INT64) ((INT16) QuestionValue->Value.u16);
-      break;
-
-    case EFI_IFR_NUMERIC_SIZE_4:
-      Value = (INT64) ((INT32) QuestionValue->Value.u32);
-      break;
-
-    case EFI_IFR_NUMERIC_SIZE_8:
-    default:
-      break;
-    }
-
-    if (Value < 0) {
-      Value = -Value;
-      Format = L"-%ld";
-    } else {
+    case EFI_IFR_DISPLAY_UINT_DEC:
       Format = L"%ld";
-    }
-    break;
+      break;
 
-  case EFI_IFR_DISPLAY_UINT_DEC:
-    Format = L"%ld";
-    break;
+    case EFI_IFR_DISPLAY_UINT_HEX:
+      Format = L"%lx";
+      break;
 
-  case EFI_IFR_DISPLAY_UINT_HEX:
-    Format = L"%lx";
-    break;
-
-  default:
-    return EFI_UNSUPPORTED;
+    default:
+      return EFI_UNSUPPORTED;
   }
 
   UnicodeSPrint (FormattedNumber, BufferSize, Format, Value);
 
   return EFI_SUCCESS;
 }
-
 
 /**
   Process nothing.
@@ -581,11 +581,12 @@ PrintFormattedNumber (
 VOID
 EFIAPI
 EmptyEventProcess (
-  IN  EFI_EVENT    Event,
-  IN  VOID         *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
 }
+
 /**
   Process a Question's Option (whether selected or un-selected).
 
@@ -600,62 +601,63 @@ EmptyEventProcess (
 **/
 EFI_STATUS
 ProcessOptions (
-  IN  UI_MENU_OPTION              *MenuOption,
-  IN  BOOLEAN                     Selected,
-  OUT CHAR16                      **OptionString,
-  IN  BOOLEAN                     SkipErrorValue
+  IN  UI_MENU_OPTION  *MenuOption,
+  IN  BOOLEAN         Selected,
+  OUT CHAR16          **OptionString,
+  IN  BOOLEAN         SkipErrorValue
   )
 {
-  EFI_STATUS                      Status;
-  FORM_DISPLAY_ENGINE_STATEMENT   *Question;
-  CHAR16                          FormattedNumber[21];
-  UINTN                           BufferSize;
-  EFI_HII_VALUE                   *QuestionValue;
+  EFI_STATUS                     Status;
+  FORM_DISPLAY_ENGINE_STATEMENT  *Question;
+  CHAR16                         FormattedNumber[21];
+  UINTN                          BufferSize;
+  EFI_HII_VALUE                  *QuestionValue;
 
-  Status        = EFI_SUCCESS;
+  Status = EFI_SUCCESS;
 
   *OptionString = NULL;
 
   ZeroMem (FormattedNumber, 21 * sizeof (CHAR16));
   BufferSize = (gOptionBlockWidth + 1) * 2 * gStatementDimensions.BottomRow;
 
-  Question = MenuOption->ThisTag;
+  Question      = MenuOption->ThisTag;
   QuestionValue = &Question->CurrentValue;
 
   switch (Question->OpCode->OpCode) {
-  case EFI_IFR_CHECKBOX_OP:
-    if (Selected) {
-      //
-      // Since this is a BOOLEAN operation, flip it upon selection
-      //
-      gUserInput->InputValue.Type    = QuestionValue->Type;
-      gUserInput->InputValue.Value.b = (BOOLEAN) (QuestionValue->Value.b ? FALSE : TRUE);
+    case EFI_IFR_CHECKBOX_OP:
+      if (Selected) {
+        //
+        // Since this is a BOOLEAN operation, flip it upon selection
+        //
+        gUserInput->InputValue.Type    = QuestionValue->Type;
+        gUserInput->InputValue.Value.b = (BOOLEAN)(QuestionValue->Value.b ? FALSE : TRUE);
 
-      //
-      // Perform inconsistent check
-      //
-      return EFI_SUCCESS;
-    } else {
-      *OptionString = AllocateZeroPool (BufferSize);
-      ASSERT (*OptionString);
-
-      *OptionString[0] = LEFT_CHECKBOX_DELIMITER;
-
-      if (QuestionValue->Value.b) {
-        *(OptionString[0] + 1) = CHECK_ON;
+        //
+        // Perform inconsistent check
+        //
+        return EFI_SUCCESS;
       } else {
-        *(OptionString[0] + 1) = CHECK_OFF;
+        *OptionString = AllocateZeroPool (BufferSize);
+        ASSERT (*OptionString);
+
+        *OptionString[0] = LEFT_CHECKBOX_DELIMITER;
+
+        if (QuestionValue->Value.b) {
+          *(OptionString[0] + 1) = CHECK_ON;
+        } else {
+          *(OptionString[0] + 1) = CHECK_OFF;
+        }
+
+        *(OptionString[0] + 2) = RIGHT_CHECKBOX_DELIMITER;
       }
-      *(OptionString[0] + 2) = RIGHT_CHECKBOX_DELIMITER;
-    }
-    break;
-  default:
-    break;
+
+      break;
+    default:
+      break;
   }
 
   return Status;
 }
-
 
 /**
   Process the help string: Split StringPtr to several lines of strings stored in
@@ -684,17 +686,17 @@ ProcessHelpString (
   UINT16  MaxStringLen;
   UINT16  StringLen;
 
-  TotalRowNum    = 0;
-  CheckedNum     = 0;
-  GlyphWidth     = 1;
-  Index          = 0;
-  MaxStringLen   = 0;
-  StringLen      = 0;
+  TotalRowNum  = 0;
+  CheckedNum   = 0;
+  GlyphWidth   = 1;
+  Index        = 0;
+  MaxStringLen = 0;
+  StringLen    = 0;
 
   //
   // Set default help string width.
   //
-  LineWidth      = (UINT16) (gHelpBlockWidth - 1);
+  LineWidth = (UINT16)(gHelpBlockWidth - 1);
 
   //
   // Get row number of the String.
@@ -704,9 +706,10 @@ ProcessHelpString (
       MaxStringLen = StringLen;
     }
 
-    TotalRowNum ++;
+    TotalRowNum++;
     FreePool (OutputString);
   }
+
   *EachLineWidth = MaxStringLen;
 
   *FormattedString = AllocateZeroPool (TotalRowNum * MaxStringLen * sizeof (CHAR16));
@@ -715,11 +718,11 @@ ProcessHelpString (
   //
   // Generate formatted help string array.
   //
-  GlyphWidth  = 1;
-  Index       = 0;
-  while((StringLen = GetLineByWidth (StringPtr, LineWidth, &GlyphWidth, &Index, &OutputString)) != 0) {
+  GlyphWidth = 1;
+  Index      = 0;
+  while ((StringLen = GetLineByWidth (StringPtr, LineWidth, &GlyphWidth, &Index, &OutputString)) != 0) {
     CopyMem (*FormattedString + CheckedNum * MaxStringLen, OutputString, StringLen * sizeof (CHAR16));
-    CheckedNum ++;
+    CheckedNum++;
     FreePool (OutputString);
   }
 

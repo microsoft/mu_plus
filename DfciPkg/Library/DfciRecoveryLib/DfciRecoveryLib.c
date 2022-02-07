@@ -20,7 +20,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Protocol/Rng.h>               // EFI_RNG_PROTOCOL
 
-#define   RANDOM_SEED_BUFFER_SIZE   64  // We'll seed with 64 bytes of random so that OAEP can work its best.
+#define   RANDOM_SEED_BUFFER_SIZE  64   // We'll seed with 64 bytes of random so that OAEP can work its best.
 
 /**
   This function will attempt to allocate and populate a buffer
@@ -39,35 +39,34 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 GetRecoveryChallenge (
-  OUT DFCI_RECOVERY_CHALLENGE    **Challenge,
-  OUT UINTN                       *ChallengeSize
+  OUT DFCI_RECOVERY_CHALLENGE  **Challenge,
+  OUT UINTN                    *ChallengeSize
   )
 {
-  EFI_STATUS                     Status;
-  DFCI_RECOVERY_CHALLENGE       *NewChallenge;
-  EFI_RNG_PROTOCOL              *RngProtocol;
-  CHAR8                         *Element;
-  UINTN                          ElementSize;
+  EFI_STATUS               Status;
+  DFCI_RECOVERY_CHALLENGE  *NewChallenge;
+  EFI_RNG_PROTOCOL         *RngProtocol;
+  CHAR8                    *Element;
+  UINTN                    ElementSize;
 
-  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
 
   //
   // Check inputs...
-  if (Challenge == NULL)
-  {
-    DEBUG(( DEBUG_ERROR, "%a: NULL pointer provided!\n", __FUNCTION__));
+  if (Challenge == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: NULL pointer provided!\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
   //
   // Set default state...
-  *Challenge = NULL;
+  *Challenge   = NULL;
   NewChallenge = NULL;
 
   //
   // Locate the RNG Protocol. This will be needed for the nonce.
-  Status = gBS->LocateProtocol( &gEfiRngProtocolGuid, NULL, (VOID **) &RngProtocol);
-  DEBUG(( DEBUG_VERBOSE, "%a: LocateProtocol(RNG) = %r\n", __FUNCTION__, Status));
+  Status = gBS->LocateProtocol (&gEfiRngProtocolGuid, NULL, (VOID **)&RngProtocol);
+  DEBUG ((DEBUG_VERBOSE, "%a: LocateProtocol(RNG) = %r\n", __FUNCTION__, Status));
 
   //
   // From now on, don't proceed on errors.
@@ -75,11 +74,9 @@ GetRecoveryChallenge (
 
   //
   // Allocate the buffer...
-  if (!EFI_ERROR( Status ))
-  {
-    NewChallenge = AllocatePool( sizeof( DFCI_RECOVERY_CHALLENGE ) + DFCI_MULTI_STRING_MAX_SIZE);
-    if (NewChallenge == NULL)
-    {
+  if (!EFI_ERROR (Status)) {
+    NewChallenge = AllocatePool (sizeof (DFCI_RECOVERY_CHALLENGE) + DFCI_MULTI_STRING_MAX_SIZE);
+    if (NewChallenge == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
     }
   }
@@ -94,101 +91,101 @@ GetRecoveryChallenge (
 
   //
   // Grab a timestamp...
-  if (!EFI_ERROR( Status ))
-  {
-    Status = gRT->GetTime( &NewChallenge->Timestamp, NULL );
-    DEBUG(( DEBUG_VERBOSE, "%a: GetTime() = %r\n", __FUNCTION__, Status ));
+  if (!EFI_ERROR (Status)) {
+    Status = gRT->GetTime (&NewChallenge->Timestamp, NULL);
+    DEBUG ((DEBUG_VERBOSE, "%a: GetTime() = %r\n", __FUNCTION__, Status));
   }
 
   //
   // Generate the random nonce...
-  if (!EFI_ERROR( Status ))
-  {
-    Status = RngProtocol->GetRNG( RngProtocol,
-                                  &gEfiRngAlgorithmSp80090Ctr256Guid,
-                                  DFCI_RECOVERY_NONCE_SIZE,
-                                  &NewChallenge->Nonce.Bytes[0] );
-    DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Ctr256) = %r\n", __FUNCTION__, Status ));
+  if (!EFI_ERROR (Status)) {
+    Status = RngProtocol->GetRNG (
+                            RngProtocol,
+                            &gEfiRngAlgorithmSp80090Ctr256Guid,
+                            DFCI_RECOVERY_NONCE_SIZE,
+                            &NewChallenge->Nonce.Bytes[0]
+                            );
+    DEBUG ((DEBUG_VERBOSE, "%a: GetRNG(Ctr256) = %r\n", __FUNCTION__, Status));
     //
     // If Ctr256 failed, let's try Hmac256
-    if (EFI_ERROR( Status ))
-    {
-      Status = RngProtocol->GetRNG( RngProtocol,
-                                    &gEfiRngAlgorithmSp80090Hmac256Guid,
-                                    DFCI_RECOVERY_NONCE_SIZE,
-                                    &NewChallenge->Nonce.Bytes[0] );
-      DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hmac256) = %r\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      Status = RngProtocol->GetRNG (
+                              RngProtocol,
+                              &gEfiRngAlgorithmSp80090Hmac256Guid,
+                              DFCI_RECOVERY_NONCE_SIZE,
+                              &NewChallenge->Nonce.Bytes[0]
+                              );
+      DEBUG ((DEBUG_VERBOSE, "%a: GetRNG(Hmac256) = %r\n", __FUNCTION__, Status));
       //
       // Finally, try Hash256
-      if (EFI_ERROR( Status ))
-      {
-        Status = RngProtocol->GetRNG( RngProtocol,
-                                      &gEfiRngAlgorithmSp80090Hash256Guid,
-                                      DFCI_RECOVERY_NONCE_SIZE,
-                                      &NewChallenge->Nonce.Bytes[0] );
-        DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hash256) = %r\n", __FUNCTION__, Status ));
+      if (EFI_ERROR (Status)) {
+        Status = RngProtocol->GetRNG (
+                                RngProtocol,
+                                &gEfiRngAlgorithmSp80090Hash256Guid,
+                                DFCI_RECOVERY_NONCE_SIZE,
+                                &NewChallenge->Nonce.Bytes[0]
+                                );
+        DEBUG ((DEBUG_VERBOSE, "%a: GetRNG(Hash256) = %r\n", __FUNCTION__, Status));
       }
     }
   }
 
   //
   // If we're still good, set the pointer...
-  if (!EFI_ERROR( Status ))
-  {
+  if (!EFI_ERROR (Status)) {
     *Challenge = NewChallenge;
   }
 
   //
   // Always put away your toys...
   // If there was an error, but the buffer was allocated, free it.
-  if (EFI_ERROR(Status ))
-  {
+  if (EFI_ERROR (Status)) {
     if (NULL != NewChallenge) {
       FreePool (NewChallenge);
     }
+
     NewChallenge = NULL;
   }
 
-  if (NewChallenge != NULL)
-  {
+  if (NewChallenge != NULL) {
     //
     // There is only room for about 100 characters of identifier.  This should be enough to identify
     // the system that is being recovered.
     //
     NewChallenge->MultiString[0] = '\0';
-    Status = DfciIdSupportGetSerialNumber (&Element, &ElementSize);
-    if (!EFI_ERROR(Status)) {
-      Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof(CHAR8));
+    Status                       = DfciIdSupportGetSerialNumber (&Element, &ElementSize);
+    if (!EFI_ERROR (Status)) {
+      Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof (CHAR8));
       FreePool (Element);
     }
 
-    if (!EFI_ERROR(Status)) {
+    if (!EFI_ERROR (Status)) {
       Status = DfciIdSupportGetProductName (&Element, &ElementSize);
-      if (!EFI_ERROR(Status)) {
-        Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof(CHAR8));
+      if (!EFI_ERROR (Status)) {
+        Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof (CHAR8));
         FreePool (Element);
       }
     }
 
-    if (!EFI_ERROR(Status)) {
+    if (!EFI_ERROR (Status)) {
       Status = DfciIdSupportGetManufacturer (&Element, &ElementSize);
-      if (!EFI_ERROR(Status)) {
-        Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof(CHAR8));
+      if (!EFI_ERROR (Status)) {
+        Status = AsciiStrnCatS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE, Element, ElementSize - sizeof (CHAR8));
         FreePool (Element);
       }
     }
 
     // Print a debug message, but it isn't a big issue if the identification
     // doesn't get added to the recovery packet.
-    if (EFI_ERROR(Status)) {
-      DEBUG((DEBUG_ERROR, "Error getting system identifier for recovery packet\n"));
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Error getting system identifier for recovery packet\n"));
     }
-    *ChallengeSize = sizeof(DFCI_RECOVERY_CHALLENGE) + AsciiStrnSizeS (&NewChallenge->MultiString[0],DFCI_MULTI_STRING_MAX_SIZE);
+
+    *ChallengeSize = sizeof (DFCI_RECOVERY_CHALLENGE) + AsciiStrnSizeS (&NewChallenge->MultiString[0], DFCI_MULTI_STRING_MAX_SIZE);
   }
 
   return Status;
 } // GetRecoveryChallenge()
-
 
 /**
   Take in a DER-encoded x509 cert buffer and a challenge
@@ -211,31 +208,30 @@ GetRecoveryChallenge (
 **/
 EFI_STATUS
 EncryptRecoveryChallenge (
-  IN  DFCI_RECOVERY_CHALLENGE    *Challenge,
-  IN  UINTN                       ChallengeSize,
-  IN  CONST UINT8                *PublicKey,
-  IN  UINTN                       PublicKeySize,
-  OUT  UINT8                    **EncryptedData,
-  OUT  UINTN                     *EncryptedDataSize
+  IN  DFCI_RECOVERY_CHALLENGE  *Challenge,
+  IN  UINTN                    ChallengeSize,
+  IN  CONST UINT8              *PublicKey,
+  IN  UINTN                    PublicKeySize,
+  OUT  UINT8                   **EncryptedData,
+  OUT  UINTN                   *EncryptedDataSize
   )
 {
   EFI_STATUS        Status;
   EFI_RNG_PROTOCOL  *RngProtocol;
   UINT8             ExtraSeed[RANDOM_SEED_BUFFER_SIZE];
 
-  DEBUG(( DEBUG_INFO, "%a()\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
 
   //
   // Check inputs...
-  if (Challenge == NULL || PublicKey == NULL || EncryptedData == NULL || EncryptedDataSize == NULL)
-  {
-    DEBUG(( DEBUG_ERROR, "%a: NULL pointer provided!\n", __FUNCTION__));
+  if ((Challenge == NULL) || (PublicKey == NULL) || (EncryptedData == NULL) || (EncryptedDataSize == NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a: NULL pointer provided!\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
   //
   // Set default state...
-  *EncryptedData = NULL;
+  *EncryptedData     = NULL;
   *EncryptedDataSize = 0;
 
   //
@@ -243,52 +239,56 @@ EncryptRecoveryChallenge (
   // NOTE: This *could* be done with a direct call to RandomSeed() rather than
   //       passing it into the Pkcs1v2Encrypt() function. There are merits to
   //       each implementation.
-  Status = gBS->LocateProtocol( &gEfiRngProtocolGuid, NULL, (VOID **) &RngProtocol );
-  DEBUG(( DEBUG_VERBOSE, "%a: LocateProtocol(RNG) = %r\n", __FUNCTION__, Status));
+  Status = gBS->LocateProtocol (&gEfiRngProtocolGuid, NULL, (VOID **)&RngProtocol);
+  DEBUG ((DEBUG_VERBOSE, "%a: LocateProtocol(RNG) = %r\n", __FUNCTION__, Status));
   // Assuming we found the protocol, let's grab a seed.
-  if (!EFI_ERROR( Status ))
-  {
-    Status = RngProtocol->GetRNG( RngProtocol,
-                                  &gEfiRngAlgorithmSp80090Ctr256Guid,
-                                  RANDOM_SEED_BUFFER_SIZE,
-                                  &ExtraSeed[0] );
-    DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Ctr256) = %r\n", __FUNCTION__, Status));
+  if (!EFI_ERROR (Status)) {
+    Status = RngProtocol->GetRNG (
+                            RngProtocol,
+                            &gEfiRngAlgorithmSp80090Ctr256Guid,
+                            RANDOM_SEED_BUFFER_SIZE,
+                            &ExtraSeed[0]
+                            );
+    DEBUG ((DEBUG_VERBOSE, "%a: GetRNG(Ctr256) = %r\n", __FUNCTION__, Status));
     //
     // If Ctr256 failed, let's try Hmac256
-    if (EFI_ERROR( Status ))
-    {
-      Status = RngProtocol->GetRNG( RngProtocol,
-                                    &gEfiRngAlgorithmSp80090Hmac256Guid,
-                                    RANDOM_SEED_BUFFER_SIZE,
-                                    &ExtraSeed[0] );
-      DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hmac256) = %r\n", __FUNCTION__, Status ));
+    if (EFI_ERROR (Status)) {
+      Status = RngProtocol->GetRNG (
+                              RngProtocol,
+                              &gEfiRngAlgorithmSp80090Hmac256Guid,
+                              RANDOM_SEED_BUFFER_SIZE,
+                              &ExtraSeed[0]
+                              );
+      DEBUG ((DEBUG_VERBOSE, "%a: GetRNG(Hmac256) = %r\n", __FUNCTION__, Status));
       //
       // Finally, try Hash256
-      if (EFI_ERROR( Status ))
-      {
-        Status = RngProtocol->GetRNG( RngProtocol,
-                                      &gEfiRngAlgorithmSp80090Hash256Guid,
-                                      RANDOM_SEED_BUFFER_SIZE,
-                                      &ExtraSeed[0] );
-        DEBUG(( DEBUG_VERBOSE, "%a: GetRNG(Hash256) = %r\n", __FUNCTION__, Status ));
+      if (EFI_ERROR (Status)) {
+        Status = RngProtocol->GetRNG (
+                                RngProtocol,
+                                &gEfiRngAlgorithmSp80090Hash256Guid,
+                                RANDOM_SEED_BUFFER_SIZE,
+                                &ExtraSeed[0]
+                                );
+        DEBUG ((DEBUG_VERBOSE, "%a: GetRNG(Hash256) = %r\n", __FUNCTION__, Status));
       }
     }
   }
 
   //
   // Now, we should be able to encrypt the data and be done with it.
-  if (!EFI_ERROR( Status ))
-  {
-    if (!Pkcs1v2Encrypt( PublicKey,
-                         PublicKeySize,
-                         (UINT8*)Challenge,
-                         ChallengeSize,
-                         &ExtraSeed[0],
-                         RANDOM_SEED_BUFFER_SIZE,
-                         EncryptedData,
-                         EncryptedDataSize ))
+  if (!EFI_ERROR (Status)) {
+    if (!Pkcs1v2Encrypt (
+           PublicKey,
+           PublicKeySize,
+           (UINT8 *)Challenge,
+           ChallengeSize,
+           &ExtraSeed[0],
+           RANDOM_SEED_BUFFER_SIZE,
+           EncryptedData,
+           EncryptedDataSize
+           ))
     {
-      DEBUG((DEBUG_ERROR, "%a: Failed to encrypt the challenge!\n", __FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "%a: Failed to encrypt the challenge!\n", __FUNCTION__));
       Status = EFI_ABORTED;
     }
   }

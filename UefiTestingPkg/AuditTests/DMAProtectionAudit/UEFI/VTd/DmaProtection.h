@@ -36,21 +36,21 @@ for purpose of easy DMAR/BME parsing
 // This is the initial max PCI DATA number.
 // The number may be enlarged later.
 //
-#define MAX_VTD_PCI_DATA_NUMBER             0x100
+#define MAX_VTD_PCI_DATA_NUMBER  0x100
 
 typedef struct {
-  UINT8                            DeviceType;
-  VTD_SOURCE_ID                    PciSourceId;
-  EDKII_PLATFORM_VTD_PCI_DEVICE_ID PciDeviceId;
+  UINT8                               DeviceType;
+  VTD_SOURCE_ID                       PciSourceId;
+  EDKII_PLATFORM_VTD_PCI_DEVICE_ID    PciDeviceId;
   // for statistic analysis
-  UINTN                            AccessCount;
+  UINTN                               AccessCount;
 } PCI_DEVICE_DATA;
 
 typedef struct {
-  BOOLEAN                          IncludeAllFlag;
-  UINTN                            PciDeviceDataNumber;
-  UINTN                            PciDeviceDataMaxNumber;
-  PCI_DEVICE_DATA                  *PciDeviceData;
+  BOOLEAN            IncludeAllFlag;
+  UINTN              PciDeviceDataNumber;
+  UINTN              PciDeviceDataMaxNumber;
+  PCI_DEVICE_DATA    *PciDeviceData;
 } PCI_DEVICE_INFORMATION;
 
 typedef struct {
@@ -66,11 +66,10 @@ typedef struct {
   PCI_DEVICE_INFORMATION           PciDeviceInfo;
 } VTD_UNIT_INFORMATION;
 
-//Linked List node used for RMRR Test
-typedef struct RMRRListNode_t_def
-{
-  EFI_ACPI_DMAR_RMRR_HEADER*    RMRR;
-  struct RMRRListNode_t_def*    Next;
+// Linked List node used for RMRR Test
+typedef struct RMRRListNode_t_def {
+  EFI_ACPI_DMAR_RMRR_HEADER    *RMRR;
+  struct RMRRListNode_t_def    *Next;
 } RMRRListNode;
 
 /**
@@ -88,7 +87,7 @@ typedef struct RMRRListNode_t_def
 **/
 typedef
 EFI_STATUS
-(EFIAPI *SCAN_BUS_FUNC_CALLBACK_FUNC) (
+(EFIAPI *SCAN_BUS_FUNC_CALLBACK_FUNC)(
   IN VOID           *Context,
   IN UINT16         Segment,
   IN UINT8          Bus,
@@ -98,8 +97,8 @@ EFI_STATUS
 
 extern EFI_ACPI_DMAR_HEADER  *mAcpiDmarTable;
 
-extern UINTN                            mVtdUnitNumber;
-extern VTD_UNIT_INFORMATION             *mVtdUnitInformation;
+extern UINTN                 mVtdUnitNumber;
+extern VTD_UNIT_INFORMATION  *mVtdUnitInformation;
 
 /**
   Register PCI device to VTd engine.
@@ -138,11 +137,11 @@ RegisterPciDevice (
 EFI_STATUS
 EFIAPI
 ScanBusCallbackRegisterPciDevice (
-  IN VOID           *Context,
-  IN UINT16         Segment,
-  IN UINT8          Bus,
-  IN UINT8          Device,
-  IN UINT8          Function
+  IN VOID    *Context,
+  IN UINT16  Segment,
+  IN UINT8   Bus,
+  IN UINT8   Device,
+  IN UINT8   Function
   );
 
 /**
@@ -190,7 +189,7 @@ ParseDmarAcpiTableDrhd (
 
   @return Linked List to all RMRR headers. Caller is required to check for NULL if no RMRRs found.
 **/
-RMRRListNode*
+RMRRListNode *
 GetDmarAcpiTableRmrr (
   VOID
   );
@@ -216,11 +215,11 @@ GetVtdEngineNumber (
 **/
 EFI_STATUS
 GetPciBusDeviceFunction (
-  IN  UINT16                                      Segment,
-  IN  EFI_ACPI_DMAR_DEVICE_SCOPE_STRUCTURE_HEADER *DmarDevScopeEntry,
-  OUT UINT8                                       *Bus,
-  OUT UINT8                                       *Device,
-  OUT UINT8                                       *Function
+  IN  UINT16                                       Segment,
+  IN  EFI_ACPI_DMAR_DEVICE_SCOPE_STRUCTURE_HEADER  *DmarDevScopeEntry,
+  OUT UINT8                                        *Bus,
+  OUT UINT8                                        *Device,
+  OUT UINT8                                        *Function
   );
 
 #endif

@@ -23,12 +23,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // ****** Common data structures ******
 //
 
-typedef struct  _MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL;
+typedef struct  _MS_SIMPLE_WINDOW_MANAGER_PROTOCOL MS_SIMPLE_WINDOW_MANAGER_PROTOCOL;
 
 // Pointer Mode - defines coordinate limits.
 //
-//typedef struct
-//{
+// typedef struct
+// {
 //    UINT64 AbsoluteMinX;
 //    UINT64 AbsoluteMinY;
 //    UINT64 AbsoluteMinZ;
@@ -36,44 +36,41 @@ typedef struct  _MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  MS_SIMPLE_WINDOW_MANAGER_PRO
 //    UINT64 AbsoluteMaxY;
 //    UINT64 AbsoluteMaxZ;
 //    UINT32 Attributes;
-//} MS_SWM_ABSOLUTE_POINTER_MODE;
-#define MS_SWM_ABSOLUTE_POINTER_MODE EFI_ABSOLUTE_POINTER_MODE
+// } MS_SWM_ABSOLUTE_POINTER_MODE;
+#define MS_SWM_ABSOLUTE_POINTER_MODE  EFI_ABSOLUTE_POINTER_MODE
 
 // Pointer State - coordinate and button information.
 //
-//typedef struct
-//{
+// typedef struct
+// {
 //    UINT64 CurrentX;
 //    UINT64 CurrentY;
 //    UINT64 CurrentZ;
 //    UINT32 ActiveButtons;
-//} MS_SWM_ABSOLUTE_POINTER_STATE;
+// } MS_SWM_ABSOLUTE_POINTER_STATE;
 #define  MS_SWM_ABSOLUTE_POINTER_STATE  EFI_ABSOLUTE_POINTER_STATE
 // Standard bounding rectangle.
 //
-typedef struct _SWM_RECT_tag
-{
-    UINT32    Left;
-    UINT32    Top;
-    UINT32    Right;
-    UINT32    Bottom;
+typedef struct _SWM_RECT_tag {
+  UINT32    Left;
+  UINT32    Top;
+  UINT32    Right;
+  UINT32    Bottom;
 } SWM_RECT;
 
 // Supported user input types.
 //
-#define SWM_INPUT_TYPE_TOUCH   0x00000001
-#define SWM_INPUT_TYPE_KEY     0x00000002
+#define SWM_INPUT_TYPE_TOUCH  0x00000001
+#define SWM_INPUT_TYPE_KEY    0x00000002
 
 // Input State - aggregated touch and keyboard input state.
 //
-typedef struct
-{
-    UINT32  InputType;
-    union
-    {
-        MS_SWM_ABSOLUTE_POINTER_STATE   TouchState;
-        EFI_KEY_DATA                    KeyState;
-    } State;
+typedef struct {
+  UINT32    InputType;
+  union {
+    MS_SWM_ABSOLUTE_POINTER_STATE    TouchState;
+    EFI_KEY_DATA                     KeyState;
+  } State;
 } SWM_INPUT_STATE;
 
 // ****** Preprocessor constants ******
@@ -81,16 +78,15 @@ typedef struct
 
 // Simple Window Manager registration flags and limited Z-Order
 //
-#define SWM_Z_ORDER_OSK             0x00000040      // Top most window
-#define SWM_Z_ORDER_POPUP2          0x00000030      // Priority Popup (Power Down)
-#define SWM_Z_ORDER_POPUP           0x00000020      // Popups
-#define SWM_Z_ORDER_CLIENT          0x00000010      // Front Page
-#define SWM_Z_ORDER_BASE            0x00000000      // Default Client
+#define SWM_Z_ORDER_OSK     0x00000040              // Top most window
+#define SWM_Z_ORDER_POPUP2  0x00000030              // Priority Popup (Power Down)
+#define SWM_Z_ORDER_POPUP   0x00000020              // Popups
+#define SWM_Z_ORDER_CLIENT  0x00000010              // Front Page
+#define SWM_Z_ORDER_BASE    0x00000000              // Default Client
 
 // Macro to check for left-button/finger down state.
 //
-#define SWM_IS_FINGER_DOWN(State)   (((State).ActiveButtons & 0x1) == 1)
-
+#define SWM_IS_FINGER_DOWN(State)  (((State).ActiveButtons & 0x1) == 1)
 
 // ****** Function prototypes ******
 //
@@ -108,7 +104,7 @@ typedef struct
 **/
 typedef
 BOOLEAN
-(EFIAPI *MS_SWM_CLIENT_NOTIFICATION_CALLBACK) (IN VOID *Context);
+(EFIAPI *MS_SWM_CLIENT_NOTIFICATION_CALLBACK)(IN VOID *Context);
 
 /*++
 
@@ -128,44 +124,43 @@ BOOLEAN
 --*/
 typedef
 EFI_STATUS
-(EFIAPI *MS_SWM_REGISTER_CLIENT) (
-    IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-    IN  EFI_HANDLE                          ImageHandle,
-    IN  UINT32                              Z_Order,
-    IN  SWM_RECT                           *FrameRect,
-    IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK  DataNotificationCallback OPTIONAL,
-    IN  VOID                                *Context,
-    OUT EFI_ABSOLUTE_POINTER_PROTOCOL      **AbsolutePointer,
-    OUT EFI_EVENT                           *PaintEvent
-);
-
-
-typedef
-EFI_STATUS
-(EFIAPI *MS_SWM_UNREGISTER_CLIENT) (
-    IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
-    IN  EFI_HANDLE                          ImageHandle
-);
+(EFIAPI *MS_SWM_REGISTER_CLIENT)(
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
+  IN  EFI_HANDLE                          ImageHandle,
+  IN  UINT32                              Z_Order,
+  IN  SWM_RECT                           *FrameRect,
+  IN  MS_SWM_CLIENT_NOTIFICATION_CALLBACK  DataNotificationCallback OPTIONAL,
+  IN  VOID                                *Context,
+  OUT EFI_ABSOLUTE_POINTER_PROTOCOL      **AbsolutePointer,
+  OUT EFI_EVENT                           *PaintEvent
+  );
 
 typedef
 EFI_STATUS
-(EFIAPI *MS_SWM_ACTIVATE_WINDOW) (
-    IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
-    IN EFI_HANDLE                           ImageHandle,
-    IN BOOLEAN                              MakeActive
-);
+(EFIAPI *MS_SWM_UNREGISTER_CLIENT)(
+  IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
+  IN  EFI_HANDLE                          ImageHandle
+  );
 
 typedef
 EFI_STATUS
-(EFIAPI *MS_SWM_SET_WINDOW_FRAME) (
-    IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
-    IN EFI_HANDLE                           ImageHandle,
-    IN SWM_RECT                             *FrameRect
-);
+(EFIAPI *MS_SWM_ACTIVATE_WINDOW)(
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
+  IN EFI_HANDLE                           ImageHandle,
+  IN BOOLEAN                              MakeActive
+  );
 
 typedef
 EFI_STATUS
-(EFIAPI *MS_SWM_BLT_WINDOW) (
+(EFIAPI *MS_SWM_SET_WINDOW_FRAME)(
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
+  IN EFI_HANDLE                           ImageHandle,
+  IN SWM_RECT                             *FrameRect
+  );
+
+typedef
+EFI_STATUS
+(EFIAPI *MS_SWM_BLT_WINDOW)(
   IN  MS_SIMPLE_WINDOW_MANAGER_PROTOCOL       *This,
   IN  EFI_HANDLE                              ImageHandle,
   IN  EFI_GRAPHICS_OUTPUT_BLT_PIXEL           *BltBuffer,
@@ -177,11 +172,11 @@ EFI_STATUS
   IN  UINTN                                   Width,
   IN  UINTN                                   Height,
   IN  UINTN                                   Delta
-);
+  );
 
 typedef
 EFI_STATUS
-(EFIAPI *MS_SWM_STRING_TO_WINDOW) (
+(EFIAPI *MS_SWM_STRING_TO_WINDOW)(
   IN        MS_SIMPLE_WINDOW_MANAGER_PROTOCOL   *This,
   IN        EFI_HANDLE                          ImageHandle,
   IN        EFI_HII_OUT_FLAGS                   Flags,
@@ -193,41 +188,40 @@ EFI_STATUS
   OUT       EFI_HII_ROW_INFO                    **RowInfoArray OPTIONAL,
   OUT       UINTN                               *RowInfoArraySize OPTIONAL,
   OUT       UINTN                               *ColumnInfoArray OPTIONAL
-);
+  );
 
 typedef
 EFI_STATUS
-(EFIAPI *MS_SWM_ENABLE_MOUSE_POINTER) (
-    IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
-    IN BOOLEAN                              bEnablePointer
-);
+(EFIAPI *MS_SWM_ENABLE_MOUSE_POINTER)(
+  IN MS_SIMPLE_WINDOW_MANAGER_PROTOCOL    *This,
+  IN BOOLEAN                              bEnablePointer
+  );
 
 typedef
 EFI_STATUS
-(EFIAPI *MS_SWM_WAIT_FOR_EVENT) (
-    IN UINTN           NumberOfEvents,
-    IN EFI_EVENT      *Events,
-    IN UINTN          *Index,
-    IN UINT64          Timeout,
-    IN BOOLEAN         ContinueTimer
-);
+(EFIAPI *MS_SWM_WAIT_FOR_EVENT)(
+  IN UINTN           NumberOfEvents,
+  IN EFI_EVENT      *Events,
+  IN UINTN          *Index,
+  IN UINT64          Timeout,
+  IN BOOLEAN         ContinueTimer
+  );
 
 // SWM protocol structure
 //
-struct _MS_SIMPLE_WINDOW_MANAGER_PROTOCOL
-{
-    // Client Messaging and Window Interface
-    //
-    MS_SWM_REGISTER_CLIENT              RegisterClient;
-    MS_SWM_UNREGISTER_CLIENT            UnregisterClient;
-    MS_SWM_ACTIVATE_WINDOW              ActivateWindow;
-    MS_SWM_SET_WINDOW_FRAME             SetWindowFrame;
-    MS_SWM_BLT_WINDOW                   BltWindow;
-    MS_SWM_STRING_TO_WINDOW             StringToWindow;
-    MS_SWM_ENABLE_MOUSE_POINTER         EnableMousePointer;
-    MS_SWM_WAIT_FOR_EVENT               WaitForEvent;
+struct _MS_SIMPLE_WINDOW_MANAGER_PROTOCOL {
+  // Client Messaging and Window Interface
+  //
+  MS_SWM_REGISTER_CLIENT         RegisterClient;
+  MS_SWM_UNREGISTER_CLIENT       UnregisterClient;
+  MS_SWM_ACTIVATE_WINDOW         ActivateWindow;
+  MS_SWM_SET_WINDOW_FRAME        SetWindowFrame;
+  MS_SWM_BLT_WINDOW              BltWindow;
+  MS_SWM_STRING_TO_WINDOW        StringToWindow;
+  MS_SWM_ENABLE_MOUSE_POINTER    EnableMousePointer;
+  MS_SWM_WAIT_FOR_EVENT          WaitForEvent;
 };
 
-extern EFI_GUID     gMsSWMProtocolGuid;
+extern EFI_GUID  gMsSWMProtocolGuid;
 
-#endif      // _SIMPLE_WINDOW_MANAGER_H_
+#endif // _SIMPLE_WINDOW_MANAGER_H_

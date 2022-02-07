@@ -23,27 +23,27 @@
 
 #include "../AdvancedLoggerCommon.h"
 
-STATIC ADVANCED_LOGGER_INFO *mLoggerInfo;
-STATIC UINT32                mBufferSize = 0;
-STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress = 0;
+STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo;
+STATIC UINT32                mBufferSize  = 0;
+STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress  = 0;
 STATIC BOOLEAN               mInitialized = FALSE;
 
 VOID
 EFIAPI
 AdvancedLoggerWriteProtocol (
-    IN        ADVANCED_LOGGER_PROTOCOL *This,
-    IN        UINTN                     ErrorLevel,
-    IN  CONST CHAR8                    *Buffer,
-    IN        UINTN                     NumberOfBytes
-);
+  IN        ADVANCED_LOGGER_PROTOCOL  *This,
+  IN        UINTN                     ErrorLevel,
+  IN  CONST CHAR8                     *Buffer,
+  IN        UINTN                     NumberOfBytes
+  );
 
 STATIC ADVANCED_LOGGER_PROTOCOL_CONTAINER  mAdvLoggerProtocol = {
-  .AdvLoggerProtocol = {
-    .Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
-    .Version = ADVANCED_LOGGER_PROTOCOL_VERSION,
+  .AdvLoggerProtocol             = {
+    .Signature                   = ADVANCED_LOGGER_PROTOCOL_SIGNATURE,
+    .Version                     = ADVANCED_LOGGER_PROTOCOL_VERSION,
     .AdvancedLoggerWriteProtocol = AdvancedLoggerWriteProtocol
   },
-  .LoggerInfo = NULL
+  .LoggerInfo                    = NULL
 };
 
 /**
@@ -58,13 +58,13 @@ STATIC ADVANCED_LOGGER_PROTOCOL_CONTAINER  mAdvLoggerProtocol = {
 VOID
 EFIAPI
 AdvancedLoggerWriteProtocol (
-    IN        ADVANCED_LOGGER_PROTOCOL *This,
-    IN        UINTN                     ErrorLevel,
-    IN  CONST CHAR8                    *Buffer,
-    IN        UINTN                     NumberOfBytes
-) {
-
-    AdvancedLoggerWrite (ErrorLevel, Buffer, NumberOfBytes);
+  IN        ADVANCED_LOGGER_PROTOCOL  *This,
+  IN        UINTN                     ErrorLevel,
+  IN  CONST CHAR8                     *Buffer,
+  IN        UINTN                     NumberOfBytes
+  )
+{
+  AdvancedLoggerWrite (ErrorLevel, Buffer, NumberOfBytes);
 }
 
 /**
@@ -84,36 +84,36 @@ AdvancedLoggerWriteProtocol (
 STATIC
 BOOLEAN
 ValidateInfoBlock (
-    VOID
-  ) {
+  VOID
+  )
+{
+  if (mLoggerInfo == NULL) {
+    return FALSE;
+  }
 
-    if (mLoggerInfo == NULL) {
-        return FALSE;
+  if (mLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+    return FALSE;
+  }
+
+  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR (mLoggerInfo + 1))) {
+    return FALSE;
+  }
+
+  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
+      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  {
+    return FALSE;
+  }
+
+  if (mBufferSize == 0) {
+    mBufferSize = mLoggerInfo->LogBufferSize;
+  } else {
+    if (mLoggerInfo->LogBufferSize != mBufferSize) {
+      return FALSE;
     }
+  }
 
-    if (mLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
-        return FALSE;
-    }
-
-    if (mLoggerInfo->LogBuffer != (PA_FROM_PTR(mLoggerInfo + 1))) {
-        return FALSE;
-    }
-
-    if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-        (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer)) {
-        return FALSE;
-    }
-
-
-    if (mBufferSize == 0) {
-        mBufferSize = mLoggerInfo->LogBufferSize;
-    } else {
-        if (mLoggerInfo->LogBufferSize != mBufferSize) {
-            return FALSE;
-        }
-    }
-
-    return TRUE;
+  return TRUE;
 }
 
 /**
@@ -122,44 +122,46 @@ ValidateInfoBlock (
 STATIC
 VOID
 SmmInitializeLoggerInfo (
-    VOID
-    ) {
-    ADVANCED_LOGGER_PROTOCOL *LoggerProtocol;
-    EFI_STATUS                Status;
+  VOID
+  )
+{
+  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
+  EFI_STATUS                Status;
 
-
-    if (!mInitialized) {
-        //
-        // Locate the Logger Information block.
-        //
-        if (gBS == NULL) {
-            return;
-        }
-
-        mInitialized = TRUE;            // Only one attempt at getting the logger info block.
-
-        Status = gBS->LocateProtocol (&gAdvancedLoggerProtocolGuid,
-                                       NULL,
-                                      (VOID **) &LoggerProtocol);
-        ASSERT_EFI_ERROR (Status);
-        if (!EFI_ERROR(Status)) {
-            mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-            ASSERT (mLoggerInfo != NULL);
-            if (mLoggerInfo != NULL) {
-              mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
-            }
-        }
-
-        //
-        // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
-        //
-
-        DEBUG((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+  if (!mInitialized) {
+    //
+    // Locate the Logger Information block.
+    //
+    if (gBS == NULL) {
+      return;
     }
 
-    if (!ValidateInfoBlock()) {
-        mLoggerInfo = NULL;
+    mInitialized = TRUE;                // Only one attempt at getting the logger info block.
+
+    Status = gBS->LocateProtocol (
+                    &gAdvancedLoggerProtocolGuid,
+                    NULL,
+                    (VOID **)&LoggerProtocol
+                    );
+    ASSERT_EFI_ERROR (Status);
+    if (!EFI_ERROR (Status)) {
+      mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+      ASSERT (mLoggerInfo != NULL);
+      if (mLoggerInfo != NULL) {
+        mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+      }
     }
+
+    //
+    // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
+    //
+
+    DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+  }
+
+  if (!ValidateInfoBlock ()) {
+    mLoggerInfo = NULL;
+  }
 }
 
 /**
@@ -169,12 +171,12 @@ SmmInitializeLoggerInfo (
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerGetLoggerInfo (
-    VOID
-) {
+  VOID
+  )
+{
+  SmmInitializeLoggerInfo ();
 
-    SmmInitializeLoggerInfo ();
-
-    return mLoggerInfo;
+  return mLoggerInfo;
 }
 
 /**
@@ -195,29 +197,29 @@ SmmCoreAdvancedLoggerLibConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    EFI_HANDLE   Handle;
-    EFI_STATUS   Status;
+  EFI_HANDLE  Handle;
+  EFI_STATUS  Status;
 
-    ASSERT ((gBS != NULL) && (gSmst != NULL));
+  ASSERT ((gBS != NULL) && (gSmst != NULL));
 
-    SmmInitializeLoggerInfo ();
+  SmmInitializeLoggerInfo ();
 
-    //
-    // SMM_CORE does not allow SmmInstallProtocolInterface until after the SmmInitializeMemoryServices
-    // call from MemoryAllocationLib.  Leave MemoryAllocationLib in the INF to ensure that
-    // MemoryAllocationLib constructor runs before Advanced Logger.
-    //
+  //
+  // SMM_CORE does not allow SmmInstallProtocolInterface until after the SmmInitializeMemoryServices
+  // call from MemoryAllocationLib.  Leave MemoryAllocationLib in the INF to ensure that
+  // MemoryAllocationLib constructor runs before Advanced Logger.
+  //
 
-    Handle = NULL;
-    Status = gSmst->SmmInstallProtocolInterface (
-                      &Handle,
-                      &gAdvancedLoggerProtocolGuid,
-                      EFI_NATIVE_INTERFACE,
-                      &mAdvLoggerProtocol.AdvLoggerProtocol
-                      );
+  Handle = NULL;
+  Status = gSmst->SmmInstallProtocolInterface (
+                    &Handle,
+                    &gAdvancedLoggerProtocolGuid,
+                    EFI_NATIVE_INTERFACE,
+                    &mAdvLoggerProtocol.AdvLoggerProtocol
+                    );
 
-    DEBUG((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
-    ASSERT_EFI_ERROR (Status);
+  DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+  ASSERT_EFI_ERROR (Status);
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

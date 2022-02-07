@@ -15,7 +15,7 @@ VOID
 EFIAPI
 ConsoleMsgLibDisplaySystemInfoOnConsole (
   VOID
-)
+  )
 {
   // Do Nothing
   return;

@@ -12,9 +12,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define __ZERO_TOUCH_SETTINGS_LIB_H__
 
 typedef enum {
-    ZERO_TOUCH_INACTIVE,
-    ZERO_TOUCH_OPT_IN,
-    ZERO_TOUCH_OPT_OUT
+  ZERO_TOUCH_INACTIVE,
+  ZERO_TOUCH_OPT_IN,
+  ZERO_TOUCH_OPT_OUT
 } ZERO_TOUCH_STATE;
 
 /**
@@ -30,7 +30,10 @@ typedef enum {
  */
 EFI_STATUS
 EFIAPI
-GetZeroTouchCertificate(UINT8 **Certificate, UINTN *CertificateSize);
+GetZeroTouchCertificate (
+  UINT8  **Certificate,
+  UINTN  *CertificateSize
+  );
 
 /**
  * Function to Get Zero Touch State.
@@ -42,7 +45,9 @@ GetZeroTouchCertificate(UINT8 **Certificate, UINTN *CertificateSize);
  **/
 ZERO_TOUCH_STATE
 EFIAPI
-GetZeroTouchState (VOID);
+GetZeroTouchState (
+  VOID
+  );
 
 /**
 Function to Set Zero Touch State.
@@ -55,7 +60,7 @@ Function to Set Zero Touch State.
 EFI_STATUS
 EFIAPI
 SetZeroTouchState (
-    IN  ZERO_TOUCH_STATE NewState
+  IN  ZERO_TOUCH_STATE  NewState
   );
 
-#endif  // __ZERO_TOUCH_SETTINGS_LIB_H__
+#endif // __ZERO_TOUCH_SETTINGS_LIB_H__

@@ -25,37 +25,37 @@ This function creates a new entry to be added to the linked list
 STATIC
 MS_WHEA_LIST_ENTRY *
 CreateNewEntry (
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
   )
 {
-  MS_WHEA_LIST_ENTRY *MsWheaListEntry = NULL;
-  UINT32 Index = 0;
+  MS_WHEA_LIST_ENTRY  *MsWheaListEntry = NULL;
+  UINT32              Index            = 0;
 
   // Input argument sanity check
   if (MsWheaEntryMD == NULL) {
     goto Cleanup;
   }
 
-  MsWheaListEntry = AllocateZeroPool(sizeof(MS_WHEA_LIST_ENTRY));
+  MsWheaListEntry = AllocateZeroPool (sizeof (MS_WHEA_LIST_ENTRY));
   if (MsWheaListEntry == NULL) {
     goto Cleanup;
   }
 
   MsWheaListEntry->Signature = MS_WHEA_LIST_ENTRY_SIGNATURE;
 
-  MsWheaListEntry->PayloadPtr = AllocateZeroPool(sizeof(MS_WHEA_ERROR_ENTRY_MD));
+  MsWheaListEntry->PayloadPtr = AllocateZeroPool (sizeof (MS_WHEA_ERROR_ENTRY_MD));
   if (MsWheaListEntry->PayloadPtr == NULL) {
-    FreePool(MsWheaListEntry);
+    FreePool (MsWheaListEntry);
     MsWheaListEntry = NULL;
     goto Cleanup;
   }
 
   // Copy linked list and payload
   Index = 0;
-  CopyMem(&((UINT8*)MsWheaListEntry->PayloadPtr)[Index], MsWheaEntryMD, sizeof(MS_WHEA_ERROR_ENTRY_MD));
+  CopyMem (&((UINT8 *)MsWheaListEntry->PayloadPtr)[Index], MsWheaEntryMD, sizeof (MS_WHEA_ERROR_ENTRY_MD));
 
-  Index += sizeof(MS_WHEA_ERROR_ENTRY_MD);
-  ((MS_WHEA_ERROR_ENTRY_MD*)MsWheaListEntry->PayloadPtr)->PayloadSize = Index;
+  Index                                                               += sizeof (MS_WHEA_ERROR_ENTRY_MD);
+  ((MS_WHEA_ERROR_ENTRY_MD *)MsWheaListEntry->PayloadPtr)->PayloadSize = Index;
 
   MsWheaListEntry->PayloadSize = Index;
 
@@ -78,9 +78,9 @@ existed list, First In First Out (FIFO)
 **/
 EFI_STATUS
 EFIAPI
-MsWheaAddReportEvent(
-  IN LIST_ENTRY                       *MsWheaLinkedList,
-  IN MS_WHEA_ERROR_ENTRY_MD           *MsWheaEntryMD
+MsWheaAddReportEvent (
+  IN LIST_ENTRY              *MsWheaLinkedList,
+  IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
   )
 {
   EFI_STATUS          Status;
@@ -92,7 +92,7 @@ MsWheaAddReportEvent(
     goto Cleanup;
   }
 
-  MsWheaListEntry = CreateNewEntry(MsWheaEntryMD);
+  MsWheaListEntry = CreateNewEntry (MsWheaEntryMD);
   if (MsWheaListEntry == NULL) {
     // This error code may not be true, but something is knowingly wrong
     Status = EFI_OUT_OF_RESOURCES;
@@ -100,20 +100,22 @@ MsWheaAddReportEvent(
   }
 
   // Added the initialized entry into the linked list
-  InsertTailList(MsWheaLinkedList, &MsWheaListEntry->Link);
+  InsertTailList (MsWheaLinkedList, &MsWheaListEntry->Link);
 
   Status = EFI_SUCCESS;
 
 Cleanup:
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     // Clean up the memory remainder, if any errors
     if ((MsWheaListEntry != NULL) && (MsWheaListEntry->PayloadPtr != NULL)) {
-      FreePool(MsWheaListEntry->PayloadPtr);
+      FreePool (MsWheaListEntry->PayloadPtr);
     }
+
     if (MsWheaListEntry != NULL) {
-      FreePool(MsWheaListEntry);
+      FreePool (MsWheaListEntry);
     }
   }
+
   return Status;
 }
 
@@ -129,13 +131,13 @@ This routine accepts the MS WHEA linked list, remove and free an element from th
 **/
 EFI_STATUS
 EFIAPI
-MsWheaDeleteReportEvent(
-  IN LIST_ENTRY                       *MsWheaLinkedList
+MsWheaDeleteReportEvent (
+  IN LIST_ENTRY  *MsWheaLinkedList
   )
 {
   EFI_STATUS          Status;
   MS_WHEA_LIST_ENTRY  *MsWheaListEntry = NULL;
-  LIST_ENTRY          *HeadList = NULL;
+  LIST_ENTRY          *HeadList        = NULL;
 
   // Caller has to supply valid pointers to linked list.
   if (MsWheaLinkedList == NULL) {
@@ -144,26 +146,28 @@ MsWheaDeleteReportEvent(
   }
 
   // linked list needs to have content, if not, it shouldn't be an issue;
-  if (IsListEmpty(MsWheaLinkedList) != FALSE) {
+  if (IsListEmpty (MsWheaLinkedList) != FALSE) {
     Status = EFI_SUCCESS;
     goto Cleanup;
   }
 
   // Retrieve a temporary data holder
-  HeadList = GetFirstNode(MsWheaLinkedList);
+  HeadList = GetFirstNode (MsWheaLinkedList);
   if (HeadList == NULL) {
     // Shouldn't happen, since we've checked the linked list has more than one entry...
     Status = EFI_INVALID_PARAMETER;
     goto Cleanup;
   }
-  MsWheaListEntry = CR(HeadList, MS_WHEA_LIST_ENTRY, Link, MS_WHEA_LIST_ENTRY_SIGNATURE);
+
+  MsWheaListEntry = CR (HeadList, MS_WHEA_LIST_ENTRY, Link, MS_WHEA_LIST_ENTRY_SIGNATURE);
 
   // House keeping for the linked list
-  RemoveEntryList(HeadList);
+  RemoveEntryList (HeadList);
   if (MsWheaListEntry->PayloadPtr != NULL) {
-    FreePool(MsWheaListEntry->PayloadPtr);
+    FreePool (MsWheaListEntry->PayloadPtr);
   }
-  FreePool(MsWheaListEntry);
+
+  FreePool (MsWheaListEntry);
 
   Status = EFI_SUCCESS;
 

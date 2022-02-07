@@ -19,40 +19,41 @@ Spec:
   Refer to USB Device Class Definition for Human Interface Devices (HID) version 1.11 Appendix B.2
 
 --*/
+
 #ifndef __HID_POINTER_PROTOCOL_H__
 #define __HID_POINTER_PROTOCOL_H__
 
-typedef struct _HID_POINTER_PROTOCOL  HID_POINTER_PROTOCOL;
+typedef struct _HID_POINTER_PROTOCOL HID_POINTER_PROTOCOL;
 
-//Define the supported HID interfaces.
-//Currently supported interfaces:
-//Boot Mouse as defined in HID 1.11 B.1
-//Single Touch HID interface as defined below.
+// Define the supported HID interfaces.
+// Currently supported interfaces:
+// Boot Mouse as defined in HID 1.11 B.1
+// Single Touch HID interface as defined below.
 typedef enum {
   BootMouse,
   SingleTouch
 } HID_POINTER_INTERFACE;
 
-//Structures for BootMouse interface
+// Structures for BootMouse interface
 #pragma pack(1)
 typedef struct {
-  UINT8 Button1:1;
-  UINT8 Button2:1;
-  UINT8 Button3:1;
-  UINT8 Reserved:5;
-  INT8 XDisplacement;  //X displacement since last report: -127 to 127
-  INT8 YDisplacement;  //Y displacement since last report: -127 to 127
-  INT8 ZDisplacement;  //Z displacement since last report: -127 to 127. Optional: may not be present.
+  UINT8    Button1  : 1;
+  UINT8    Button2  : 1;
+  UINT8    Button3  : 1;
+  UINT8    Reserved : 5;
+  INT8     XDisplacement; // X displacement since last report: -127 to 127
+  INT8     YDisplacement; // Y displacement since last report: -127 to 127
+  INT8     ZDisplacement; // Z displacement since last report: -127 to 127. Optional: may not be present.
 } MOUSE_HID_INPUT_BUFFER;
 #pragma pack()
 
-//Structures for SingleTouch interface
+// Structures for SingleTouch interface
 #pragma pack(1)
 typedef struct {
-  UINT8   Touch:1;
-  UINT8   Reserved:7;
-  UINT16  CurrentX; //Absolute X: 0 to 1024
-  UINT16  CurrentY; //Absolute Y: 0 to 1024
+  UINT8     Touch    : 1;
+  UINT8     Reserved : 7;
+  UINT16    CurrentX; // Absolute X: 0 to 1024
+  UINT16    CurrentY; // Absolute Y: 0 to 1024
 } SINGLETOUCH_HID_INPUT_BUFFER;
 #pragma pack()
 
@@ -69,7 +70,7 @@ typedef struct {
 **/
 typedef
 VOID
-(EFIAPI *POINTER_HID_REPORT_CALLBACK) (
+(EFIAPI *POINTER_HID_REPORT_CALLBACK)(
   IN HID_POINTER_INTERFACE Interface,
   IN UINT8                 *HidInputReportBuffer,
   IN UINTN                 HidInputReportBufferSize,
@@ -116,10 +117,10 @@ EFI_STATUS
 // HID Pointer Protocol struct.
 //
 struct _HID_POINTER_PROTOCOL {
-  REGISTER_POINTER_HID_REPORT_CALLBACK    RegisterPointerReportCallback;
-  UNREGISTER_POINTER_HID_REPORT_CALLBACK  UnRegisterPointerReportCallback;
+  REGISTER_POINTER_HID_REPORT_CALLBACK      RegisterPointerReportCallback;
+  UNREGISTER_POINTER_HID_REPORT_CALLBACK    UnRegisterPointerReportCallback;
 };
 
-extern EFI_GUID gHidPointerProtocolGuid;
+extern EFI_GUID  gHidPointerProtocolGuid;
 
 #endif //__HID_POINTER_PROTOCOL_H__

@@ -13,16 +13,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     0xfa096591, 0xb216, 0x4ec8, { 0x9a, 0xa7, 0x09, 0xa4, 0xd5, 0x70, 0x0e, 0x82 } \
 }
 
-       EFI_GRAPHICS_OUTPUT_PROTOCOL      *gGop = NULL;
-       EFI_HANDLE                         gPriorityHandle = NULL;
-       EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *gSimpleTextInEx = NULL;
-       EFI_HII_HANDLE                     gSwmDialogsHiiHandle = NULL;
+EFI_GRAPHICS_OUTPUT_PROTOCOL       *gGop                = NULL;
+EFI_HANDLE                         gPriorityHandle      = NULL;
+EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *gSimpleTextInEx     = NULL;
+EFI_HII_HANDLE                     gSwmDialogsHiiHandle = NULL;
 
-static EFI_GUID                           gPriorityGuid = SWM_PRIORITY_PROTOCOL_GUID;
+static EFI_GUID                           gPriorityGuid                 = SWM_PRIORITY_PROTOCOL_GUID;
 static EFI_GUID                           gSwmDialogsHiiPackageListGuid = SWMDIALOGS_HII_PACKAGE_LIST_GUID;
-static MS_SIMPLE_WINDOW_MANAGER_PROTOCOL *gSwmProtocol = NULL;
-static EFI_EVENT                          gSwmRegisterEvent = NULL;
-static VOID                              *gSwmRegistration;
+static MS_SIMPLE_WINDOW_MANAGER_PROTOCOL  *gSwmProtocol                 = NULL;
+static EFI_EVENT                          gSwmRegisterEvent             = NULL;
+static VOID                               *gSwmRegistration;
 
 /**
  *  MessageBox.  Display a Message box
@@ -40,25 +40,27 @@ static VOID                              *gSwmRegistration;
 EFI_STATUS
 EFIAPI
 SwmDialogsMessageBox (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaption,
-    IN  CHAR16              *pBodyText,
-    IN  UINT32              Type,
-    IN  UINT64              Timeout,
-    OUT SWM_MB_RESULT       *Result)
+  IN  CHAR16         *pTitleBarText,
+  IN  CHAR16         *pCaption,
+  IN  CHAR16         *pBodyText,
+  IN  UINT32         Type,
+  IN  UINT64         Timeout,
+  OUT SWM_MB_RESULT  *Result
+  )
 {
+  if (gSwmProtocol == NULL) {
+    return EFI_ABORTED;
+  }
 
-    if (gSwmProtocol == NULL) {
-        return EFI_ABORTED;
-    }
-
-    return MessageBoxInternal(gSwmProtocol,
-                              pTitleBarText,
-                              pCaption,
-                              pBodyText,
-                              Type,
-                              Timeout,
-                              Result);
+  return MessageBoxInternal (
+           gSwmProtocol,
+           pTitleBarText,
+           pCaption,
+           pBodyText,
+           Type,
+           Timeout,
+           Result
+           );
 }
 
 /**
@@ -78,27 +80,29 @@ SwmDialogsMessageBox (
 EFI_STATUS
 EFIAPI
 SwmDialogsPasswordPrompt (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,
-    IN  CHAR16              *pBodyText,
-    IN  CHAR16              *pErrorText,
-    IN  SWM_PWD_DIALOG_TYPE Type,
-    OUT SWM_MB_RESULT       *Result,
-    OUT CHAR16              **Password
-  ) {
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password
+  )
+{
+  if (gSwmProtocol == NULL) {
+    return EFI_ABORTED;
+  }
 
-    if (gSwmProtocol == NULL) {
-        return EFI_ABORTED;
-    }
-
-    return PasswordDialogInternal (gSwmProtocol,
-                                   pTitleBarText,
-                                   pCaptionText,
-                                   pBodyText,
-                                   pErrorText,
-                                   Type,
-                                   Result,
-                                   Password);
+  return PasswordDialogInternal (
+           gSwmProtocol,
+           pTitleBarText,
+           pCaptionText,
+           pBodyText,
+           pErrorText,
+           Type,
+           Result,
+           Password
+           );
 }
 
 /**
@@ -118,27 +122,29 @@ SwmDialogsPasswordPrompt (
 EFI_STATUS
 EFIAPI
 SwmDialogsSelectPrompt (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,
-    IN  CHAR16              *pBodyText,
-    IN  CHAR16              **pOptionsList,
-    IN  UINTN               OptionsCount,
-    OUT SWM_MB_RESULT       *Result,
-    OUT UINTN               *SelectedIndex
-  ) {
+  IN  CHAR16         *pTitleBarText,
+  IN  CHAR16         *pCaptionText,
+  IN  CHAR16         *pBodyText,
+  IN  CHAR16         **pOptionsList,
+  IN  UINTN          OptionsCount,
+  OUT SWM_MB_RESULT  *Result,
+  OUT UINTN          *SelectedIndex
+  )
+{
+  if (gSwmProtocol == NULL) {
+    return EFI_ABORTED;
+  }
 
-    if (gSwmProtocol == NULL) {
-        return EFI_ABORTED;
-    }
-
-    return SingleSelectDialogInternal (gSwmProtocol,
-                                       pTitleBarText,
-                                       pCaptionText,
-                                       pBodyText,
-                                       pOptionsList,
-                                       OptionsCount,
-                                       Result,
-                                       SelectedIndex);
+  return SingleSelectDialogInternal (
+           gSwmProtocol,
+           pTitleBarText,
+           pCaptionText,
+           pBodyText,
+           pOptionsList,
+           OptionsCount,
+           Result,
+           SelectedIndex
+           );
 }
 
 /**
@@ -162,33 +168,35 @@ SwmDialogsSelectPrompt (
 EFI_STATUS
 EFIAPI
 SwmDialogsVerifyThumbprintPrompt (
-    IN  CHAR16              *pTitleBarText,
-    IN  CHAR16              *pCaptionText,
-    IN  CHAR16              *pBodyText,
-    IN  CHAR16              *pCertText,
-    IN  CHAR16              *pConfirmText,
-    IN  CHAR16              *pErrorText,
-    IN  SWM_PWD_DIALOG_TYPE Type,
-    OUT SWM_MB_RESULT       *Result,
-    OUT CHAR16              **Password OPTIONAL,
-    OUT CHAR16              **Thumbprint OPTIONAL
-  ) {
+  IN  CHAR16               *pTitleBarText,
+  IN  CHAR16               *pCaptionText,
+  IN  CHAR16               *pBodyText,
+  IN  CHAR16               *pCertText,
+  IN  CHAR16               *pConfirmText,
+  IN  CHAR16               *pErrorText,
+  IN  SWM_PWD_DIALOG_TYPE  Type,
+  OUT SWM_MB_RESULT        *Result,
+  OUT CHAR16               **Password OPTIONAL,
+  OUT CHAR16               **Thumbprint OPTIONAL
+  )
+{
+  if (gSwmProtocol == NULL) {
+    return EFI_ABORTED;
+  }
 
-    if (gSwmProtocol == NULL) {
-        return EFI_ABORTED;
-    }
-
-   return VerifyThumbprintInternal(gSwmProtocol,
-                                   pTitleBarText,
-                                   pCaptionText,
-                                   pBodyText,
-                                   pCertText,
-                                   pConfirmText,
-                                   pErrorText,
-                                   Type,
-                                   Result,
-                                   Password,
-                                   Thumbprint);
+  return VerifyThumbprintInternal (
+           gSwmProtocol,
+           pTitleBarText,
+           pCaptionText,
+           pBodyText,
+           pCertText,
+           pConfirmText,
+           pErrorText,
+           Type,
+           Result,
+           Password,
+           Thumbprint
+           );
 }
 
 /**
@@ -201,8 +209,8 @@ SwmDialogsVerifyThumbprintPrompt (
 BOOLEAN
 EFIAPI
 SwmDialogsReady (
-  ) {
-
+  )
+{
   return (gSwmProtocol != NULL);
 }
 
@@ -220,45 +228,48 @@ static
 EFI_STATUS
 AllocateRequiredProtocols (
   VOID
-  ){
-    EFI_STATUS  Status;
+  )
+{
+  EFI_STATUS  Status;
 
-    Status = gBS->LocateProtocol (&gEfiGraphicsOutputProtocolGuid, NULL, (VOID **) &gGop);
-    if (EFI_ERROR (Status)) {
-        DEBUG((DEBUG_INFO,"%a: Failed to get GraphicsOutput (%r).\r\n", __FUNCTION__, Status));
-        gSwmProtocol = NULL;
+  Status = gBS->LocateProtocol (&gEfiGraphicsOutputProtocolGuid, NULL, (VOID **)&gGop);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a: Failed to get GraphicsOutput (%r).\r\n", __FUNCTION__, Status));
+    gSwmProtocol = NULL;
+  } else {
+    if (gST->ConsoleInHandle != NULL) {
+      Status = gBS->OpenProtocol (
+                      gST->ConsoleInHandle,
+                      &gEfiSimpleTextInputExProtocolGuid,
+                      (VOID **)&gSimpleTextInEx,
+                      NULL,
+                      NULL,
+                      EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
+                      );
     } else {
-        if (gST->ConsoleInHandle != NULL) {
-            Status = gBS->OpenProtocol (
-                        gST->ConsoleInHandle,
-                        &gEfiSimpleTextInputExProtocolGuid,
-                        (VOID **) &gSimpleTextInEx,
-                        NULL,
-                        NULL,
-                        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL);
-        } else {
-          DEBUG((DEBUG_ERROR,"%a: SystemTable ConsoleInHandle is NULL\n", __FUNCTION__));
-          Status = EFI_NOT_READY;
-        }
-
-        if (EFI_ERROR (Status)) {
-            DEBUG((DEBUG_INFO,"%a: Failed to get SimpleTextInEx (%r).\r\n", __FUNCTION__, Status));
-            gSwmProtocol = NULL;
-        } else {
-            // Create a handle to use for the high priority power off dialog
-            gPriorityHandle = NULL;
-            Status = gBS->InstallProtocolInterface (&gPriorityHandle, &gPriorityGuid, EFI_NATIVE_INTERFACE, NULL);
-            if (EFI_ERROR (Status)) {
-                DEBUG ((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to create Priority Handle. Code=%r\n", Status));
-            } else {
-                Status = InitializeUIToolKit(gImageHandle);
-                if (EFI_ERROR(Status)) {
-                    DEBUG((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to initialize the UI toolkit (%r).\r\n", Status));
-                }
-            }
-        }
+      DEBUG ((DEBUG_ERROR, "%a: SystemTable ConsoleInHandle is NULL\n", __FUNCTION__));
+      Status = EFI_NOT_READY;
     }
-    return Status;
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "%a: Failed to get SimpleTextInEx (%r).\r\n", __FUNCTION__, Status));
+      gSwmProtocol = NULL;
+    } else {
+      // Create a handle to use for the high priority power off dialog
+      gPriorityHandle = NULL;
+      Status          = gBS->InstallProtocolInterface (&gPriorityHandle, &gPriorityGuid, EFI_NATIVE_INTERFACE, NULL);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to create Priority Handle. Code=%r\n", Status));
+      } else {
+        Status = InitializeUIToolKit (gImageHandle);
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to initialize the UI toolkit (%r).\r\n", Status));
+        }
+      }
+    }
+  }
+
+  return Status;
 }
 
 /**
@@ -273,26 +284,30 @@ AllocateRequiredProtocols (
 static
 VOID
 EFIAPI
-SwmRegisteredCallback (IN  EFI_EVENT    Event,
-                       IN  VOID         *Context) {
-    EFI_STATUS Status;
+SwmRegisteredCallback (
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
+{
+  EFI_STATUS  Status;
 
-    Status = gBS->LocateProtocol (&gMsSWMProtocolGuid,
-                                   gSwmRegistration,
-                                   (VOID **)&gSwmProtocol
-                                 );
-    if (EFI_ERROR(Status)) {
-        gSwmProtocol = NULL;
-        DEBUG((DEBUG_ERROR, "Unable to locate SWM. Code=%r\n",Status));
-    } else {
-        Status = AllocateRequiredProtocols ();
-        if (EFI_ERROR(Status)) {
-            gSwmProtocol = NULL;
-            DEBUG((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to find required protocols (%r).\r\n", Status));
-        }
+  Status = gBS->LocateProtocol (
+                  &gMsSWMProtocolGuid,
+                  gSwmRegistration,
+                  (VOID **)&gSwmProtocol
+                  );
+  if (EFI_ERROR (Status)) {
+    gSwmProtocol = NULL;
+    DEBUG ((DEBUG_ERROR, "Unable to locate SWM. Code=%r\n", Status));
+  } else {
+    Status = AllocateRequiredProtocols ();
+    if (EFI_ERROR (Status)) {
+      gSwmProtocol = NULL;
+      DEBUG ((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to find required protocols (%r).\r\n", Status));
     }
+  }
 
-    return;
+  return;
 }
 
 /**
@@ -306,50 +321,58 @@ SwmRegisteredCallback (IN  EFI_EVENT    Event,
 EFI_STATUS
 EFIAPI
 SwmDialogsConstructor (
-    IN EFI_HANDLE            ImageHandle,
-    IN EFI_SYSTEM_TABLE      *SystemTable
-    ) {
-    EFI_STATUS                          Status;
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  EFI_STATUS  Status;
 
-    Status = gBS->LocateProtocol (&gMsSWMProtocolGuid, NULL, (VOID **) &gSwmProtocol);
+  Status = gBS->LocateProtocol (&gMsSWMProtocolGuid, NULL, (VOID **)&gSwmProtocol);
 
-    if (EFI_ERROR(Status)) {
-        Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL,
-                                   TPL_CALLBACK,
-                                   SwmRegisteredCallback,
-                                   NULL,
-                                   &gSwmRegisterEvent
-                                  );
-        if (EFI_ERROR (Status)) {
-            DEBUG((DEBUG_INFO,"%a: Failed to create SWM registration event (%r).\r\n", __FUNCTION__, Status));
-        } else {
-            Status = gBS->RegisterProtocolNotify (&gMsSWMProtocolGuid,
-                                                   gSwmRegisterEvent,
-                                                  &gSwmRegistration
-                                                 );
-            if (EFI_ERROR (Status)) {
-                DEBUG((DEBUG_INFO, "%a: Failed to register for SWM registration notifications (%r).\r\n",
-                       __FUNCTION__, Status));
-            }
-        }
+  if (EFI_ERROR (Status)) {
+    Status = gBS->CreateEvent (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_CALLBACK,
+                    SwmRegisteredCallback,
+                    NULL,
+                    &gSwmRegisterEvent
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "%a: Failed to create SWM registration event (%r).\r\n", __FUNCTION__, Status));
     } else {
-        AllocateRequiredProtocols ();
+      Status = gBS->RegisterProtocolNotify (
+                      &gMsSWMProtocolGuid,
+                      gSwmRegisterEvent,
+                      &gSwmRegistration
+                      );
+      if (EFI_ERROR (Status)) {
+        DEBUG ((
+          DEBUG_INFO,
+          "%a: Failed to register for SWM registration notifications (%r).\r\n",
+          __FUNCTION__,
+          Status
+          ));
+      }
     }
+  } else {
+    AllocateRequiredProtocols ();
+  }
 
-    // Register all HII packages.
-    //
-    gSwmDialogsHiiHandle = HiiAddPackages (&gSwmDialogsHiiPackageListGuid,
-                                           gImageHandle,
-                                           SwmDialogsLibStrings,
-                                           NULL);
+  // Register all HII packages.
+  //
+  gSwmDialogsHiiHandle = HiiAddPackages (
+                           &gSwmDialogsHiiPackageListGuid,
+                           gImageHandle,
+                           SwmDialogsLibStrings,
+                           NULL
+                           );
 
-    if (NULL == gSwmDialogsHiiHandle)
-    {
-        Status = EFI_OUT_OF_RESOURCES;
-        DEBUG((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to register HII packages (%r).\r\n", Status));
-    }
+  if (NULL == gSwmDialogsHiiHandle) {
+    Status = EFI_OUT_OF_RESOURCES;
+    DEBUG ((DEBUG_ERROR, "ERROR [SwmDialogs]: Failed to register HII packages (%r).\r\n", Status));
+  }
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -367,20 +390,21 @@ SwmDialogsDestructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    if (gSwmRegisterEvent != NULL) {
-        gBS->CloseEvent(gSwmRegisterEvent);
-    }
+  if (gSwmRegisterEvent != NULL) {
+    gBS->CloseEvent (gSwmRegisterEvent);
+  }
 
-    if (gSwmDialogsHiiHandle != NULL) {
-        HiiRemovePackages(gSwmDialogsHiiHandle);
-    }
+  if (gSwmDialogsHiiHandle != NULL) {
+    HiiRemovePackages (gSwmDialogsHiiHandle);
+  }
 
-    if (gPriorityHandle != NULL) {
-        gBS->UninstallMultipleProtocolInterfaces(
-                         gPriorityHandle,
-                        &gPriorityGuid,
-                         NULL);
-    }
+  if (gPriorityHandle != NULL) {
+    gBS->UninstallMultipleProtocolInterfaces (
+           gPriorityHandle,
+           &gPriorityGuid,
+           NULL
+           );
+  }
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

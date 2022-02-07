@@ -20,14 +20,14 @@
 VOID
 EFIAPI
 DelayStartGeneralSpinner (
-  IN EFI_EVENT     Event,
-  IN VOID         *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
   SPINNER_CONTAINER  *Spc;
 
   DEBUG ((DEBUG_INFO, "%a Entered.\n", __FUNCTION__));
-  Spc = (SPINNER_CONTAINER *) Context;
+  Spc = (SPINNER_CONTAINER *)Context;
   StartSpinnerCommon (Spc);
 }
 
@@ -44,23 +44,23 @@ DelayStartGeneralSpinner (
 VOID
 EFIAPI
 StartGeneralSpinner (
-  IN EFI_EVENT     Event,
-  IN VOID         *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
   SPINNER_CONTAINER  *Spc;
   EFI_STATUS         Status;
 
   DEBUG ((DEBUG_INFO, "%a: Entered.\n", __FUNCTION__));
-  Spc = (SPINNER_CONTAINER *) Context;
+  Spc = (SPINNER_CONTAINER *)Context;
 
-  Spc->Icon = LibPcdGetExPtr (&gMsGraphicsPkgTokenSpaceGuid, Spc->IconFileToken);
-  Spc->Type = LibPcdGetEx8 (&gMsGraphicsPkgTokenSpaceGuid, Spc->SpinnerTypeToken);
+  Spc->Icon     = LibPcdGetExPtr (&gMsGraphicsPkgTokenSpaceGuid, Spc->IconFileToken);
+  Spc->Type     = LibPcdGetEx8 (&gMsGraphicsPkgTokenSpaceGuid, Spc->SpinnerTypeToken);
   Spc->Location = LibPcdGetEx8 (&gMsGraphicsPkgTokenSpaceGuid, Spc->SpinnerLocationToken);
 
-  if ( Spc->Icon == NULL ||
-      (Spc->Type < Standard || Spc->Type > Delay) ||
-      (Spc->Location < Location_LR_Corner || Spc->Location > Location_Center) )
+  if ((Spc->Icon == NULL) ||
+      ((Spc->Type < Standard) || (Spc->Type > Delay)) ||
+      ((Spc->Location < Location_LR_Corner) || (Spc->Location > Location_Center)))
   {
     DEBUG ((DEBUG_ERROR, "%a: Spinner[%d] invalid\n", __FUNCTION__, Spc->Id));
     return;
@@ -72,7 +72,7 @@ StartGeneralSpinner (
   }
 
   if (Spc->Type == Delay) {
-    //Start countdown timer to delay spinner display
+    // Start countdown timer to delay spinner display
     Status = gBS->CreateEvent (
                     EVT_TIMER | EVT_NOTIFY_SIGNAL,
                     TPL_CALLBACK,
@@ -112,8 +112,8 @@ StartGeneralSpinner (
 VOID
 EFIAPI
 StopGeneralSpinner (
-  IN EFI_EVENT     Event,
-  IN VOID         *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
   SPINNER_CONTAINER  *Spc;
@@ -121,16 +121,17 @@ StopGeneralSpinner (
 
   DEBUG ((DEBUG_INFO, "%a Entered.\n", __FUNCTION__));
 
-  Spc = (SPINNER_CONTAINER *) Context;
+  Spc = (SPINNER_CONTAINER *)Context;
 
   if ((Spc->Type == Delay) && (Spc->DelayEvent != NULL)) {
     //
-    //Stop countdown timer if running
+    // Stop countdown timer if running
     //
     Status = gBS->SetTimer (
                     Spc->DelayEvent,
                     TimerCancel,
-                    0);
+                    0
+                    );
 
     gBS->CloseEvent (Spc->DelayEvent);
     Spc->DelayEvent = NULL;
@@ -157,10 +158,10 @@ StopGeneralSpinner (
 **/
 EFI_STATUS
 InitializeGeneralSpinner (
-    IN SPINNER_CONTAINER *Spc
+  IN SPINNER_CONTAINER  *Spc
   )
 {
-  EFI_STATUS     Status;
+  EFI_STATUS  Status;
 
   // 1. External event used to initialize and start this General Spinner
 
@@ -174,7 +175,7 @@ InitializeGeneralSpinner (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG (( DEBUG_ERROR, "%a: Error %r Creating Start Spinner(%d) Event\n", __FUNCTION__, Status, Spc->Id));
+    DEBUG ((DEBUG_ERROR, "%a: Error %r Creating Start Spinner(%d) Event\n", __FUNCTION__, Status, Spc->Id));
     return Status;
   }
 
@@ -191,7 +192,7 @@ InitializeGeneralSpinner (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG (( DEBUG_ERROR, "%a: Error %r Creating Stop Spinner(%d) Event\n", __FUNCTION__, Status, Spc->Id));
+    DEBUG ((DEBUG_ERROR, "%a: Error %r Creating Stop Spinner(%d) Event\n", __FUNCTION__, Status, Spc->Id));
     return Status;
   }
 

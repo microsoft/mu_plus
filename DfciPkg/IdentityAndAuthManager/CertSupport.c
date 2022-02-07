@@ -29,49 +29,46 @@ allocated ASCII string.  Caller must free once finished
 EFI_STATUS
 EFIAPI
 GetSubjectName8 (
-  IN CONST UINT8    *TrustedCert,
-  IN       UINTN     CertLength,
-  IN       UINTN     MaxStringLength,
-  OUT      CHAR8   **Value,
-  OUT      UINTN    *ValueSize  OPTIONAL
+  IN CONST UINT8  *TrustedCert,
+  IN       UINTN  CertLength,
+  IN       UINTN  MaxStringLength,
+  OUT      CHAR8  **Value,
+  OUT      UINTN  *ValueSize  OPTIONAL
   )
 {
   CHAR8       *AsciiName = NULL;
-  UINTN        AsciiNameSize;
-  EFI_STATUS   Status;
+  UINTN       AsciiNameSize;
+  EFI_STATUS  Status;
 
   if ((TrustedCert == NULL) || (CertLength == 0) ||
       (Value == NULL) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
   {
-    DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
     return EFI_UNSUPPORTED;
   }
 
   Status = X509GetCommonName (TrustedCert, CertLength, NULL, &AsciiNameSize);
-  if (Status != EFI_BUFFER_TOO_SMALL)
-  {
-      DEBUG((DEBUG_ERROR, "%a: Couldn't get CommonName size\n", __FUNCTION__));
-      return Status;
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    DEBUG ((DEBUG_ERROR, "%a: Couldn't get CommonName size\n", __FUNCTION__));
+    return Status;
   }
 
   AsciiName = AllocatePool (AsciiNameSize);
-  if (AsciiName == NULL)
-  {
-     DEBUG((DEBUG_ERROR, "%a: Unable to allocate memory for common name Ascii.\n", __FUNCTION__));
-     return EFI_OUT_OF_RESOURCES;
+  if (AsciiName == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Unable to allocate memory for common name Ascii.\n", __FUNCTION__));
+    return EFI_OUT_OF_RESOURCES;
   }
 
   Status = X509GetCommonName (TrustedCert, CertLength, AsciiName, &AsciiNameSize);
-  if (EFI_ERROR(Status ))
-  {
-      DEBUG((DEBUG_ERROR, "%a: Couldn't get CommonName\n", __FUNCTION__));
-      FreePool (AsciiName);
-      return Status;
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Couldn't get CommonName\n", __FUNCTION__));
+    FreePool (AsciiName);
+    return Status;
   }
 
-  if (AsciiNameSize > (MaxStringLength + sizeof(CHAR8))) {
-    AsciiNameSize = MaxStringLength + sizeof(CHAR8);
-    AsciiStrCpyS(&AsciiName[MaxStringLength-sizeof(MORE_INDICATOR)+1], sizeof(MORE_INDICATOR), MORE_INDICATOR);
+  if (AsciiNameSize > (MaxStringLength + sizeof (CHAR8))) {
+    AsciiNameSize = MaxStringLength + sizeof (CHAR8);
+    AsciiStrCpyS (&AsciiName[MaxStringLength-sizeof (MORE_INDICATOR)+1], sizeof (MORE_INDICATOR), MORE_INDICATOR);
   }
 
   *Value = AsciiName;
@@ -96,50 +93,48 @@ allocated Unicode string.  Caller must free once finished
 **/
 EFI_STATUS
 EFIAPI
-GetSubjectName16(
+GetSubjectName16 (
   IN CONST UINT8   *TrustedCert,
-  IN       UINTN    CertLength,
-  IN       UINTN    MaxStringLength,
-  OUT      CHAR16 **Value,
+  IN       UINTN   CertLength,
+  IN       UINTN   MaxStringLength,
+  OUT      CHAR16  **Value,
   OUT      UINTN   *ValueSize  OPTIONAL
   )
 {
   CHAR8       *AsciiName = NULL;
-  UINTN        AsciiNameSize;
+  UINTN       AsciiNameSize;
   CHAR16      *NameBuffer = NULL;
-  UINTN        NameBufferSize;
-  EFI_STATUS   Status;
+  UINTN       NameBufferSize;
+  EFI_STATUS  Status;
 
-  if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
-  {
-    DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
+  if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
   Status = GetSubjectName8 (TrustedCert, CertLength, MaxStringLength, &AsciiName, &AsciiNameSize);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  //allocate CHAR16 and convert
-  NameBufferSize = AsciiNameSize * sizeof(CHAR16);
+  // allocate CHAR16 and convert
+  NameBufferSize = AsciiNameSize * sizeof (CHAR16);
 
-  NameBuffer = (CHAR16 *)AllocatePool(NameBufferSize);
-  if (NameBuffer == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a: failed to allocate memory for NameBuffer\n", __FUNCTION__));
+  NameBuffer = (CHAR16 *)AllocatePool (NameBufferSize);
+  if (NameBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to allocate memory for NameBuffer\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Status = AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize);
-  if (!EFI_ERROR(Status)) {
+  Status = AsciiStrToUnicodeStrS (AsciiName, NameBuffer, AsciiNameSize);
+  if (!EFI_ERROR (Status)) {
     *Value = NameBuffer;
     if (NULL != ValueSize) {
       *ValueSize = NameBufferSize;
     }
   }
 
-  FreePool(AsciiName);
+  FreePool (AsciiName);
 
   return Status;
 }
@@ -160,53 +155,50 @@ EFI_STATUS
 EFIAPI
 GetIssuerName8 (
   IN  CONST UINT8  *TrustedCert,
-  IN        UINTN   CertLength,
-  IN        UINTN   MaxStringLength,
-  OUT       CHAR8 **Value,
+  IN        UINTN  CertLength,
+  IN        UINTN  MaxStringLength,
+  OUT       CHAR8  **Value,
   OUT       UINTN  *ValueSize  OPTIONAL
   )
 {
   CHAR8       *AsciiName = NULL;
-  UINTN        AsciiNameSize;
-  EFI_STATUS   Status;
+  UINTN       AsciiNameSize;
+  EFI_STATUS  Status;
 
   if ((TrustedCert == NULL) || (CertLength == 0) ||
       (Value == NULL) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
   {
-      DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
-      return EFI_UNSUPPORTED;
+    DEBUG ((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
+    return EFI_UNSUPPORTED;
   }
 
   Status = X509GetOrganizationName (TrustedCert, CertLength, NULL, &AsciiNameSize);
-  if (Status != EFI_BUFFER_TOO_SMALL)
-  {
-      DEBUG((DEBUG_ERROR, "%a: Couldn't get OrganizationName size\n", __FUNCTION__));
-      return Status;
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    DEBUG ((DEBUG_ERROR, "%a: Couldn't get OrganizationName size\n", __FUNCTION__));
+    return Status;
   }
 
   AsciiName = AllocatePool (AsciiNameSize);
-  if (AsciiName == NULL)
-  {
-     DEBUG((DEBUG_ERROR, "%a: Unable to allocate memory for OrganizationName Ascii.\n", __FUNCTION__));
-     return EFI_OUT_OF_RESOURCES;
+  if (AsciiName == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Unable to allocate memory for OrganizationName Ascii.\n", __FUNCTION__));
+    return EFI_OUT_OF_RESOURCES;
   }
 
   Status = X509GetOrganizationName (TrustedCert, CertLength, AsciiName, &AsciiNameSize);
-  if (EFI_ERROR(Status ))
-  {
-      DEBUG((DEBUG_ERROR, "%a: Couldn't get CommonName\n", __FUNCTION__));
-      FreePool (AsciiName);
-      return Status;
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Couldn't get CommonName\n", __FUNCTION__));
+    FreePool (AsciiName);
+    return Status;
   }
 
   if (AsciiNameSize >= MaxStringLength) {
-    AsciiNameSize = MaxStringLength;
+    AsciiNameSize              = MaxStringLength;
     AsciiName[MaxStringLength] = '\0';
   }
 
   *Value = AsciiName;
   if (NULL != ValueSize) {
-      *ValueSize = AsciiNameSize;
+    *ValueSize = AsciiNameSize;
   }
 
   return Status;
@@ -228,41 +220,39 @@ EFI_STATUS
 EFIAPI
 GetIssuerName16 (
   IN CONST UINT8   *TrustedCert,
-  IN       UINTN    CertLength,
-  IN       UINTN    MaxStringLength,
-  OUT      CHAR16 **Value,
+  IN       UINTN   CertLength,
+  IN       UINTN   MaxStringLength,
+  OUT      CHAR16  **Value,
   OUT      UINTN   *ValueSize  OPTIONAL
 
   )
 {
   CHAR8       *AsciiName = NULL;
-  UINTN        AsciiNameSize;
+  UINTN       AsciiNameSize;
   CHAR16      *NameBuffer = NULL;
-  UINTN        NameBufferSize;
-  EFI_STATUS   Status;
+  UINTN       NameBufferSize;
+  EFI_STATUS  Status;
 
-  if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH))
-  {
-    DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
+  if ((TrustedCert == NULL) || (CertLength == 0) || (MaxStringLength == 0) || (MaxStringLength > MAX_SUBJECT_ISSUER_LENGTH)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
   Status = GetIssuerName8 (TrustedCert, CertLength, MaxStringLength, &AsciiName, &AsciiNameSize);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  //allocate CHAR16 and convert
-  NameBufferSize = AsciiNameSize * sizeof(CHAR16);
+  // allocate CHAR16 and convert
+  NameBufferSize = AsciiNameSize * sizeof (CHAR16);
 
-  NameBuffer = (CHAR16 *)AllocatePool(AsciiNameSize * sizeof(CHAR16));
-  if (NameBuffer == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a: failed to allocate memory for NameBuffer\n", __FUNCTION__));
+  NameBuffer = (CHAR16 *)AllocatePool (AsciiNameSize * sizeof (CHAR16));
+  if (NameBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to allocate memory for NameBuffer\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
   }
 
-  AsciiStrToUnicodeStrS(AsciiName, NameBuffer, AsciiNameSize);
+  AsciiStrToUnicodeStrS (AsciiName, NameBuffer, AsciiNameSize);
   FreePool (AsciiName);
   *Value = NameBuffer;
   if (NULL != ValueSize) {
@@ -285,64 +275,59 @@ with the sha1 hash.
 **/
 EFI_STATUS
 EFIAPI
-GetSha1Thumbprint(
-  IN  CONST UINT8   *TrustedCert,
-  IN        UINTN    CertLength,
-  OUT       UINT8    (*CertDigest)[SHA1_FINGERPRINT_DIGEST_SIZE])
+GetSha1Thumbprint (
+  IN  CONST UINT8  *TrustedCert,
+  IN        UINTN  CertLength,
+  OUT       UINT8 (*CertDigest)[SHA1_FINGERPRINT_DIGEST_SIZE]
+  )
 {
-  VOID      *Sha1Ctx= NULL;
-  UINTN     CtxSize;
-  BOOLEAN   Flag = FALSE;
-  EFI_STATUS Status;
+  VOID        *Sha1Ctx = NULL;
+  UINTN       CtxSize;
+  BOOLEAN     Flag = FALSE;
+  EFI_STATUS  Status;
 
-  if ((TrustedCert == NULL) || (CertLength == 0) || (CertDigest == NULL))
-  {
-    DEBUG((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
+  if ((TrustedCert == NULL) || (CertLength == 0) || (CertDigest == NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid input parameters.\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
-  //Thumbprint is nothing but SHA1 Digest. There are no library functions available to read this from X509 Cert.
-  CtxSize = Sha1GetContextSize();
-  Sha1Ctx = AllocatePool(CtxSize);
-  if (Sha1Ctx == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a: Failed to allocate Sha1Ctx.\n", __FUNCTION__));
+  // Thumbprint is nothing but SHA1 Digest. There are no library functions available to read this from X509 Cert.
+  CtxSize = Sha1GetContextSize ();
+  Sha1Ctx = AllocatePool (CtxSize);
+  if (Sha1Ctx == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to allocate Sha1Ctx.\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto CLEANUP;
   }
 
   Status = EFI_ABORTED;
-  Flag = Sha1Init(Sha1Ctx);
-  if (!Flag)
-  {
-    DEBUG((DEBUG_ERROR, "%a: Failed to Sha1Init.\n", __FUNCTION__));
+  Flag   = Sha1Init (Sha1Ctx);
+  if (!Flag) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to Sha1Init.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
-  Flag = Sha1Update(Sha1Ctx, TrustedCert, CertLength);
-  if (!Flag)
-  {
-    DEBUG((DEBUG_ERROR, "%a: Failed to Sha1Update.\n", __FUNCTION__));
+  Flag = Sha1Update (Sha1Ctx, TrustedCert, CertLength);
+  if (!Flag) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to Sha1Update.\n", __FUNCTION__));
     goto CLEANUP;
   }
 
-  Flag = Sha1Final(Sha1Ctx, (UINT8 *) CertDigest);
-  if (!Flag)
-  {
-    DEBUG((DEBUG_ERROR, "%a: Failed to Sha1Final.\n", __FUNCTION__));
+  Flag = Sha1Final (Sha1Ctx, (UINT8 *)CertDigest);
+  if (!Flag) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to Sha1Final.\n", __FUNCTION__));
     goto CLEANUP;
   }
+
   Status = EFI_SUCCESS;
 
-
 CLEANUP:
-  if (Sha1Ctx)
-  {
-    FreePool(Sha1Ctx);
+  if (Sha1Ctx) {
+    FreePool (Sha1Ctx);
   }
+
   return Status;
 }
-
 
 /**
 Function to compute the Sha1 Thumbprint from an X509 cert.  Will return a dynamically
@@ -360,62 +345,61 @@ EFI_STATUS
 EFIAPI
 GetSha1Thumbprint8 (
   IN CONST UINT8    *TrustedCert,
-  IN       UINTN     CertSize,
-  IN       BOOLEAN   UiFormat,
-  OUT      CHAR8   **Value,
+  IN       UINTN    CertSize,
+  IN       BOOLEAN  UiFormat,
+  OUT      CHAR8    **Value,
   OUT      UINTN    *ValueSize  OPTIONAL
   )
 {
-  UINT8      CertDigest[SHA1_FINGERPRINT_DIGEST_SIZE]; // SHA1 Digest size is 20 bytes
-  UINTN      FormatSize;
-  CHAR8     *Result;
-  UINTN      ResultSize;
-  EFI_STATUS Status;
-  CHAR8     *Temp;
+  UINT8       CertDigest[SHA1_FINGERPRINT_DIGEST_SIZE]; // SHA1 Digest size is 20 bytes
+  UINTN       FormatSize;
+  CHAR8       *Result;
+  UINTN       ResultSize;
+  EFI_STATUS  Status;
+  CHAR8       *Temp;
 
   if (NULL == Value) {
     return EFI_INVALID_PARAMETER;
   }
 
   Status = GetSha1Thumbprint (TrustedCert, CertSize, &CertDigest);
-  if (EFI_ERROR(Status)) {
+  if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  //each byte is 2 hex chars and, if UiFormat is TRUE, a space between each char, + finally a NULL terminator
+  // each byte is 2 hex chars and, if UiFormat is TRUE, a space between each char, + finally a NULL terminator
   FormatSize = (UiFormat) ? 3 : 2;
-  ResultSize = (sizeof(CertDigest) * FormatSize) + 1;
-  Result = AllocateZeroPool(ResultSize);
-  if (Result == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a: Failed to allocate Result string.\n", __FUNCTION__));
+  ResultSize = (sizeof (CertDigest) * FormatSize) + 1;
+  Result     = AllocateZeroPool (ResultSize);
+  if (Result == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to allocate Result string.\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
   }
 
   Status = EFI_INVALID_PARAMETER;
-  Temp = Result;
-  for (UINTN i = 0; i < sizeof(CertDigest); i++)
-  {
-    if (UiFormat && (i != 0)) //add space between each byte.
-    {
+  Temp   = Result;
+  for (UINTN i = 0; i < sizeof (CertDigest); i++) {
+    if (UiFormat && (i != 0)) {
+      // add space between each byte.
       *Temp = L' ';
       Temp++;
     }
+
     // Temp is within the result string as computed.  There will always be at least
     // 3 characters left in Temp
-    Status = AsciiValueToStringS(Temp, (FormatSize + 1), PREFIX_ZERO | RADIX_HEX, CertDigest[i], 2);
-    if (EFI_ERROR(Status)) {
+    Status = AsciiValueToStringS (Temp, (FormatSize + 1), PREFIX_ZERO | RADIX_HEX, CertDigest[i], 2);
+    if (EFI_ERROR (Status)) {
       break;
     }
 
     Temp += 2;
   }
 
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a: Error %r\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Error %r\n", __FUNCTION__, Status));
     FreePool (Result);
   } else {
-    *Temp = L'\0';
+    *Temp  = L'\0';
     *Value = Result;
     if (NULL != ValueSize) {
       *ValueSize = ResultSize;
@@ -439,64 +423,63 @@ allocated Unicode string.  Caller must free once finished
 **/
 EFI_STATUS
 EFIAPI
-GetSha1Thumbprint16(
+GetSha1Thumbprint16 (
   IN CONST UINT8    *TrustedCert,
-  IN       UINTN     CertSize,
-  IN       BOOLEAN   UiFormat,
-  OUT      CHAR16  **Value,
+  IN       UINTN    CertSize,
+  IN       BOOLEAN  UiFormat,
+  OUT      CHAR16   **Value,
   OUT      UINTN    *ValueSize  OPTIONAL
   )
 {
-  UINT8      CertDigest[SHA1_FINGERPRINT_DIGEST_SIZE]; // SHA1 Digest size is 20 bytes
-  UINTN      FormatSize;
-  CHAR16    *Result;
-  UINTN      ResultSize;
-  EFI_STATUS Status;
-  CHAR16    *Temp;
+  UINT8       CertDigest[SHA1_FINGERPRINT_DIGEST_SIZE]; // SHA1 Digest size is 20 bytes
+  UINTN       FormatSize;
+  CHAR16      *Result;
+  UINTN       ResultSize;
+  EFI_STATUS  Status;
+  CHAR16      *Temp;
 
   if (NULL == Value) {
     return EFI_INVALID_PARAMETER;
   }
 
-Status = GetSha1Thumbprint (TrustedCert, CertSize, &CertDigest);
-  if (EFI_ERROR(Status)) {
+  Status = GetSha1Thumbprint (TrustedCert, CertSize, &CertDigest);
+  if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  //each byte is 2 hex chars and, if UiFormat is TRUE, a space between each char, + finally a NULL terminator
+  // each byte is 2 hex chars and, if UiFormat is TRUE, a space between each char, + finally a NULL terminator
   FormatSize = (UiFormat) ? 3 : 2;
-  ResultSize = ((sizeof(CertDigest) * FormatSize) + 1) * sizeof(CHAR16);
-  Result = AllocateZeroPool(ResultSize);
-  if (Result == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a: Failed to allocate Result string.\n", __FUNCTION__));
+  ResultSize = ((sizeof (CertDigest) * FormatSize) + 1) * sizeof (CHAR16);
+  Result     = AllocateZeroPool (ResultSize);
+  if (Result == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Failed to allocate Result string.\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
   }
 
   Status = EFI_INVALID_PARAMETER;
-  Temp = Result;
-  for (UINTN i = 0; i < sizeof(CertDigest); i++)
-  {
-    if (UiFormat && (i != 0)) //add space between each byte if UiFormat == TRUE.
-    {
+  Temp   = Result;
+  for (UINTN i = 0; i < sizeof (CertDigest); i++) {
+    if (UiFormat && (i != 0)) {
+      // add space between each byte if UiFormat == TRUE.
       *Temp = L' ';
       Temp++;
     }
+
     // Temp is within the result string as computed.  There will always be at least
     // 3 characters left in Temp
-    Status = UnicodeValueToStringS(Temp, (FormatSize + 1) * sizeof(CHAR16), PREFIX_ZERO | RADIX_HEX, CertDigest[i], 2);
-    if (EFI_ERROR(Status)) {
+    Status = UnicodeValueToStringS (Temp, (FormatSize + 1) * sizeof (CHAR16), PREFIX_ZERO | RADIX_HEX, CertDigest[i], 2);
+    if (EFI_ERROR (Status)) {
       break;
     }
 
     Temp += 2;
   }
 
-  if (EFI_ERROR(Status)) {
-    DEBUG((DEBUG_ERROR, "%a: Error %r\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Error %r\n", __FUNCTION__, Status));
     FreePool (Result);
   } else {
-    *Temp = L'\0';
+    *Temp  = L'\0';
     *Value = Result;
     if (NULL != ValueSize) {
       *ValueSize = ResultSize;

@@ -9,17 +9,16 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __MS_POWER_SERVICES_LIBRARY_H__
 #define __MS_POWER_SERVICES_LIBRARY_H__
 
-/** 
+/**
   These gives information to the SystemPowerCheck and SystemPowerMitigate
   functions for the situation that is currently ocurring when the test or
   mitigation action is done.
 **/
 typedef enum {
-    PowerCaseBoot,
-    PowerCaseUpdate,
-    PowerCaseMax
+  PowerCaseBoot,
+  PowerCaseUpdate,
+  PowerCaseMax
 } POWER_CASE;
-
 
 /**
   This function tries to determine if the power state of the system is compatible
@@ -35,13 +34,12 @@ EFI_STATUS
 EFIAPI
 SystemPowerCheck (
   IN  POWER_CASE  Case,
-  OUT BOOLEAN*    Good
-);
-
+  OUT BOOLEAN     *Good
+  );
 
 /**
-  This function is called in response to a successful call to SystemPowerCheck that 
-  returns success (power suitability was able to be determined), but has returned a 
+  This function is called in response to a successful call to SystemPowerCheck that
+  returns success (power suitability was able to be determined), but has returned a
   test value that indicates the case has failed.
 
   @param[in]  Case      Situation currently ocurring
@@ -53,7 +51,6 @@ EFI_STATUS
 EFIAPI
 SystemPowerMitigate (
   IN  POWER_CASE  Case
-);
+  );
 
 #endif
-

@@ -19,11 +19,11 @@
 #include <Uefi/UefiInternalFormRepresentation.h>
 #include <Protocol/Smbios.h>
 
-#define ID_NOT_FOUND      "Not Found"
+#define ID_NOT_FOUND  "Not Found"
 
 // Note: This protocol will guarantee to be met by the Depex and located at the
 // constructor of this library, thus no null-pointer check in library code flow.
-EFI_SMBIOS_PROTOCOL       *mSmbiosProtocol;
+EFI_SMBIOS_PROTOCOL  *mSmbiosProtocol;
 
 /**
 
@@ -40,14 +40,14 @@ EFI_SMBIOS_PROTOCOL       *mSmbiosProtocol;
 **/
 EFI_STATUS
 GetOptionalStringByIndex (
-  IN      CHAR8                  *OptionalStrStart,
-  IN      UINT8                   Index,
-  OUT     CHAR16                **String,
-  OUT     UINTN                  *Size   OPTIONAL
+  IN      CHAR8   *OptionalStrStart,
+  IN      UINT8   Index,
+  OUT     CHAR16  **String,
+  OUT     UINTN   *Size   OPTIONAL
   )
 {
-  UINTN          StrSize;
-  CHAR8*        WhichStr;
+  UINTN  StrSize;
+  CHAR8  *WhichStr;
 
   StrSize = 0;
   if (Index != 0) {
@@ -63,8 +63,8 @@ GetOptionalStringByIndex (
     // Meet the end of strings set but Index is non-zero, or
     // found an empty string, or Index passed in was 0
     //
-    DEBUG(( DEBUG_ERROR, "SMBIOS string not found, returning \"%s\"\n", ID_NOT_FOUND));
-    StrSize = sizeof(ID_NOT_FOUND);
+    DEBUG ((DEBUG_ERROR, "SMBIOS string not found, returning \"%s\"\n", ID_NOT_FOUND));
+    StrSize  = sizeof (ID_NOT_FOUND);
     WhichStr = ID_NOT_FOUND;
   } else {
     WhichStr = OptionalStrStart;
@@ -97,30 +97,29 @@ GetOptionalStringByIndex (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetManufacturer (
-    CHAR16  **Manufacturer,
-    UINTN    *ManufacturerSize   OPTIONAL
-  ) {
-
-  EFI_STATUS                Status;
-  EFI_SMBIOS_HANDLE         SmbiosHandle;
-  EFI_SMBIOS_TABLE_HEADER   *Record;
-  SMBIOS_TYPE               Type;
-  SMBIOS_TABLE_TYPE1        *Type1Record;
+  CHAR16  **Manufacturer,
+  UINTN   *ManufacturerSize   OPTIONAL
+  )
+{
+  EFI_STATUS               Status;
+  EFI_SMBIOS_HANDLE        SmbiosHandle;
+  EFI_SMBIOS_TABLE_HEADER  *Record;
+  SMBIOS_TYPE              Type;
+  SMBIOS_TABLE_TYPE1       *Type1Record;
 
   if (Manufacturer == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED; // Reset handle
-  Type = SMBIOS_TYPE_SYSTEM_INFORMATION;    // Smbios type1
-  Status = mSmbiosProtocol->GetNext(mSmbiosProtocol, &SmbiosHandle, &Type, &Record, NULL);
-  if (EFI_ERROR(Status))
-  {
+  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;      // Reset handle
+  Type         = SMBIOS_TYPE_SYSTEM_INFORMATION; // Smbios type1
+  Status       = mSmbiosProtocol->GetNext (mSmbiosProtocol, &SmbiosHandle, &Type, &Record, NULL);
+  if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Type1Record = (SMBIOS_TABLE_TYPE1 *) Record;
-  Status = GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), Type1Record->Manufacturer, Manufacturer, ManufacturerSize);
+  Type1Record = (SMBIOS_TABLE_TYPE1 *)Record;
+  Status      = GetOptionalStringByIndex ((CHAR8 *)((UINT8 *)Type1Record + Type1Record->Hdr.Length), Type1Record->Manufacturer, Manufacturer, ManufacturerSize);
   return Status;
 }
 
@@ -137,30 +136,29 @@ MfciIdSupportGetManufacturer (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetProductName (
-    CHAR16  **ProductName,
-    UINTN    *ProductNameSize  OPTIONAL
-  ) {
-
-  EFI_STATUS                Status;
-  EFI_SMBIOS_HANDLE         SmbiosHandle;
-  EFI_SMBIOS_TABLE_HEADER   *Record;
-  SMBIOS_TYPE               Type;
-  SMBIOS_TABLE_TYPE1        *Type1Record;
+  CHAR16  **ProductName,
+  UINTN   *ProductNameSize  OPTIONAL
+  )
+{
+  EFI_STATUS               Status;
+  EFI_SMBIOS_HANDLE        SmbiosHandle;
+  EFI_SMBIOS_TABLE_HEADER  *Record;
+  SMBIOS_TYPE              Type;
+  SMBIOS_TABLE_TYPE1       *Type1Record;
 
   if (ProductName == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED; // Reset handle
-  Type = SMBIOS_TYPE_SYSTEM_INFORMATION;    // Smbios type1
-  Status = mSmbiosProtocol->GetNext(mSmbiosProtocol, &SmbiosHandle, &Type, &Record, NULL);
-  if (EFI_ERROR(Status))
-  {
+  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;      // Reset handle
+  Type         = SMBIOS_TYPE_SYSTEM_INFORMATION; // Smbios type1
+  Status       = mSmbiosProtocol->GetNext (mSmbiosProtocol, &SmbiosHandle, &Type, &Record, NULL);
+  if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Type1Record = (SMBIOS_TABLE_TYPE1 *) Record;
-  Status = GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), Type1Record->ProductName, ProductName, ProductNameSize);
+  Type1Record = (SMBIOS_TABLE_TYPE1 *)Record;
+  Status      = GetOptionalStringByIndex ((CHAR8 *)((UINT8 *)Type1Record + Type1Record->Hdr.Length), Type1Record->ProductName, ProductName, ProductNameSize);
   return Status;
 }
 
@@ -177,37 +175,38 @@ MfciIdSupportGetProductName (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetSerialNumber (
-    CHAR16  **SerialNumber,
-    UINTN    *SerialNumberSize  OPTIONAL
-  ) {
-  EFI_STATUS                Status;
-  EFI_SMBIOS_HANDLE         SmbiosHandle;
-  EFI_SMBIOS_TABLE_HEADER   *Record;
-  SMBIOS_TYPE               Type;
-  SMBIOS_TABLE_TYPE1        *Type1Record;
+  CHAR16  **SerialNumber,
+  UINTN   *SerialNumberSize  OPTIONAL
+  )
+{
+  EFI_STATUS               Status;
+  EFI_SMBIOS_HANDLE        SmbiosHandle;
+  EFI_SMBIOS_TABLE_HEADER  *Record;
+  SMBIOS_TYPE              Type;
+  SMBIOS_TABLE_TYPE1       *Type1Record;
 
-  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED; // Reset handle
-  Type = SMBIOS_TYPE_SYSTEM_INFORMATION;    // Smbios type1
-  Status = mSmbiosProtocol->GetNext(mSmbiosProtocol, &SmbiosHandle, &Type, &Record, NULL);
-  if (EFI_ERROR(Status))
-  {
+  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;      // Reset handle
+  Type         = SMBIOS_TYPE_SYSTEM_INFORMATION; // Smbios type1
+  Status       = mSmbiosProtocol->GetNext (mSmbiosProtocol, &SmbiosHandle, &Type, &Record, NULL);
+  if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  Type1Record = (SMBIOS_TABLE_TYPE1 *) Record;
-  Status = GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), Type1Record->SerialNumber, SerialNumber, SerialNumberSize);
+  Type1Record = (SMBIOS_TABLE_TYPE1 *)Record;
+  Status      = GetOptionalStringByIndex ((CHAR8 *)((UINT8 *)Type1Record + Type1Record->Hdr.Length), Type1Record->SerialNumber, SerialNumber, SerialNumberSize);
   return Status;
 }
 
 EFI_STATUS
 ReturnEmptyChar16 (
-    CHAR16  **String,
-    UINTN    *StringSize  OPTIONAL
-  ) {
-  CHAR16 *EmptyString;
+  CHAR16  **String,
+  UINTN   *StringSize  OPTIONAL
+  )
+{
+  CHAR16  *EmptyString;
 
   EmptyString = L"";
-  *String = AllocatePool (sizeof (*EmptyString));
+  *String     = AllocatePool (sizeof (*EmptyString));
   if (*String == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
@@ -234,9 +233,10 @@ ReturnEmptyChar16 (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem1 (
-    CHAR16  **Oem1,
-    UINTN    *Oem1Size  OPTIONAL
-  ) {
+  CHAR16  **Oem1,
+  UINTN   *Oem1Size  OPTIONAL
+  )
+{
   return ReturnEmptyChar16 (Oem1, Oem1Size);
 }
 
@@ -253,9 +253,10 @@ MfciIdSupportGetOem1 (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem2 (
-    CHAR16  **Oem2,
-    UINTN    *Oem2Size  OPTIONAL
-  ) {
+  CHAR16  **Oem2,
+  UINTN   *Oem2Size  OPTIONAL
+  )
+{
   return ReturnEmptyChar16 (Oem2, Oem2Size);
 }
 
@@ -274,11 +275,11 @@ MfciIdSupportConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                Status;
+  EFI_STATUS  Status;
 
-  Status = gBS->LocateProtocol(&gEfiSmbiosProtocolGuid, NULL, (VOID**)&mSmbiosProtocol);
-  if (EFI_ERROR(Status)) {
-    DEBUG((EFI_D_ERROR, "Could not locate SMBIOS protocol.  %r\n", Status));
+  Status = gBS->LocateProtocol (&gEfiSmbiosProtocolGuid, NULL, (VOID **)&mSmbiosProtocol);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, "Could not locate SMBIOS protocol.  %r\n", Status));
   }
 
   return Status;

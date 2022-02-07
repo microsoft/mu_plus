@@ -28,14 +28,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciPrivateSettings.h>
 
 STATIC EFI_EVENT  mDfciAssetTagSettingProviderSupportInstallEvent;
-STATIC VOID      *mDfciAssetTagSettingProviderSupportInstallEventRegistration = NULL;
+STATIC VOID       *mDfciAssetTagSettingProviderSupportInstallEventRegistration = NULL;
 
 typedef enum {
-    ID_IS_BAD = 0,
-    ID_IS_ASSET_TAG_STRING,
+  ID_IS_BAD = 0,
+  ID_IS_ASSET_TAG_STRING,
 }  ID_IS;
 
 // Forward declarations needed
+
 /**
  * Settings Provider GetDefault routine
  *
@@ -49,9 +50,9 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciAssetTagSettingGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   );
 
 /**
@@ -83,16 +84,17 @@ DfciAssetTagSettingGet (
 **/
 STATIC
 ID_IS
-IsIdSupported (DFCI_SETTING_ID_STRING Id)
+IsIdSupported (
+  DFCI_SETTING_ID_STRING  Id
+  )
 {
+  if (0 == AsciiStrnCmp (Id, DFCI_STD_SETTING_ID_V3_ASSET_TAG, DFCI_MAX_ID_LEN)) {
+    return ID_IS_ASSET_TAG_STRING;
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
+  }
 
-    if (0 == AsciiStrnCmp (Id, DFCI_STD_SETTING_ID_V3_ASSET_TAG, DFCI_MAX_ID_LEN)) {
-        return ID_IS_ASSET_TAG_STRING;
-    } else {
-        DEBUG((DEBUG_ERROR, "%a: Called with Invalid ID (%a)\n", __FUNCTION__, Id));
-    }
-
-    return ID_IS_BAD;
+  return ID_IS_BAD;
 }
 
 /**
@@ -105,41 +107,47 @@ IsIdSupported (DFCI_SETTING_ID_STRING Id)
 STATIC
 EFI_STATUS
 ValidateNvVariable (
-    CHAR16 *VariableName
+  CHAR16  *VariableName
   )
 {
-    EFI_STATUS  Status;
-    UINT32      Attributes = 0;
-    UINTN       ValueSize = 0;
-    VOID       *Value = NULL;
+  EFI_STATUS  Status;
+  UINT32      Attributes = 0;
+  UINTN       ValueSize  = 0;
+  VOID        *Value     = NULL;
 
+  Status = GetVariable3 (
+             VariableName,
+             &gDfciSettingsGuid,
+             (VOID *)&Value,
+             &ValueSize,
+             &Attributes
+             );
 
-    Status = GetVariable3 (VariableName,
-                          &gDfciSettingsGuid,
-                          (VOID *) &Value,
-                          &ValueSize,
-                          &Attributes);
-
-    if (!EFI_ERROR(Status)) {             // We have a variable
-        FreePool (Value);
-        if (DFCI_SETTINGS_ATTRIBUTES != Attributes) {  // Check if Attributes are wrong
-            // Delete invalid URL variable
-            Status = gRT->SetVariable (VariableName,
-                                      &gDfciSettingsGuid,
-                                       0,
-                                       0,
-                                       NULL);
-            if (EFI_ERROR(Status)) {                   // What???
-                DEBUG((DEBUG_ERROR, "%a: Unable to delete invalid variable %s\n", __FUNCTION__, VariableName));
-            } else {
-                DEBUG((DEBUG_INFO, "%a: Deleting invalid variable %s, with attributes %x\n", __FUNCTION__, VariableName, Attributes));
-            }
-        }
-    } else {
-        Status = EFI_SUCCESS;
+  if (!EFI_ERROR (Status)) {
+    // We have a variable
+    FreePool (Value);
+    if (DFCI_SETTINGS_ATTRIBUTES != Attributes) {
+      // Check if Attributes are wrong
+      // Delete invalid URL variable
+      Status = gRT->SetVariable (
+                      VariableName,
+                      &gDfciSettingsGuid,
+                      0,
+                      0,
+                      NULL
+                      );
+      if (EFI_ERROR (Status)) {
+        // What???
+        DEBUG ((DEBUG_ERROR, "%a: Unable to delete invalid variable %s\n", __FUNCTION__, VariableName));
+      } else {
+        DEBUG ((DEBUG_INFO, "%a: Deleting invalid variable %s, with attributes %x\n", __FUNCTION__, VariableName, Attributes));
+      }
     }
+  } else {
+    Status = EFI_SUCCESS;
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -152,14 +160,14 @@ ValidateNvVariable (
 STATIC
 EFI_STATUS
 InitializeNvVariables (
-    VOID
+  VOID
   )
 {
-    EFI_STATUS  Status;
+  EFI_STATUS  Status;
 
-    Status  = ValidateNvVariable (DFCI_SETTINGS_ASSET_TAG_NAME);
+  Status = ValidateNvVariable (DFCI_SETTINGS_ASSET_TAG_NAME);
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -173,47 +181,48 @@ InitializeNvVariables (
  */
 EFI_STATUS
 ValidateAssetTagValue (
-    IN CONST CHAR8    *Value,
-    IN       UINTN     ValueSize
-  ) {
-    UINTN           i;
-    VOID           *Ptr;
-    CONST CHAR8    *ValidChars;
-    UINTN           ValidCharsLen;
-    UINTN           ValidSize;
+  IN CONST CHAR8  *Value,
+  IN       UINTN  ValueSize
+  )
+{
+  UINTN        i;
+  VOID         *Ptr;
+  CONST CHAR8  *ValidChars;
+  UINTN        ValidCharsLen;
+  UINTN        ValidSize;
 
-    ValidChars = (CONST CHAR8 *) FixedPcdGetPtr (PcdDfciAssetTagChars);
-    ValidCharsLen = AsciiStrLen (ValidChars);
-    ValidSize = (UINTN) FixedPcdGet16 (PcdDfciAssetTagLen) + sizeof(CHAR8);
+  ValidChars    = (CONST CHAR8 *)FixedPcdGetPtr (PcdDfciAssetTagChars);
+  ValidCharsLen = AsciiStrLen (ValidChars);
+  ValidSize     = (UINTN)FixedPcdGet16 (PcdDfciAssetTagLen) + sizeof (CHAR8);
 
-    if (ValueSize > ValidSize) {
-        return EFI_INVALID_PARAMETER;
-    }
+  if (ValueSize > ValidSize) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    Ptr = ScanMem8 (Value, ValueSize, 0x00);
+  Ptr = ScanMem8 (Value, ValueSize, 0x00);
+  if (Ptr == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a: Not a NULL terminated string.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  //  Ptr should point to the first NULL in Value.  It must be the last character
+  //  of value.
+  if (((UINT8 *)Ptr - (UINT8 *)Value) != (INTN)(ValueSize - 1)) {
+    DEBUG ((DEBUG_ERROR, "%a: NULL not last character in string.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  for (i = 0; i < (ValueSize - 1); i++) {
+    Ptr = ScanMem8 (ValidChars, ValidCharsLen, ((UINT8 *)Value)[i]);
     if (Ptr == NULL) {
-        DEBUG((DEBUG_ERROR, "%a: Not a NULL terminated string.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
+      DEBUG ((DEBUG_ERROR, "ValidCharsLen=%d, BadIndex=%d\n", ValidCharsLen, i));
+      DEBUG ((DEBUG_ERROR, "ValidChars=%a\n", ValidChars));
+      DEBUG ((DEBUG_ERROR, "%a: Invalid ASSET_TAG %a\n", __FUNCTION__, Value));
+      return EFI_INVALID_PARAMETER;
     }
+  }
 
-    //  Ptr should point to the first NULL in Value.  It must be the last character
-    //  of value.
-    if (((UINT8 *)Ptr - (UINT8 *)Value) != (INTN)(ValueSize - 1)) {
-        DEBUG((DEBUG_ERROR, "%a: NULL not last character in string.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
-
-    for (i = 0; i < (ValueSize - 1); i++) {
-        Ptr = ScanMem8 (ValidChars, ValidCharsLen, ((UINT8 *) Value)[i]);
-        if (Ptr == NULL) {
-            DEBUG ((DEBUG_ERROR, "ValidCharsLen=%d, BadIndex=%d\n", ValidCharsLen, i));
-            DEBUG ((DEBUG_ERROR, "ValidChars=%a\n", ValidChars));
-            DEBUG ((DEBUG_ERROR, "%a: Invalid ASSET_TAG %a\n", __FUNCTION__, Value));
-            return EFI_INVALID_PARAMETER;
-        }
-    }
-
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /////---------------------Interface for Settings Provider ---------------------//////
@@ -232,94 +241,99 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciAssetTagSettingSet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN        UINTN                     ValueSize,
-    IN  CONST VOID                     *Value,
-    OUT       DFCI_SETTING_FLAGS       *Flags
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN        UINTN                  ValueSize,
+  IN  CONST VOID                   *Value,
+  OUT       DFCI_SETTING_FLAGS     *Flags
   )
 {
-    VOID           *Buffer = NULL;
-    UINTN           BufferSize;
-    ID_IS           Id;
-    EFI_STATUS      Status;
-    CHAR16         *VariableName;
+  VOID        *Buffer = NULL;
+  UINTN       BufferSize;
+  ID_IS       Id;
+  EFI_STATUS  Status;
+  CHAR16      *VariableName;
 
-    if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL)) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (This->Id == NULL) || (Value == NULL) || (Flags == NULL)) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    Status = ValidateAssetTagValue ((CONST CHAR8 *) Value, ValueSize);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
-
-    Id = IsIdSupported(This->Id);
-    switch (Id) {
-        case ID_IS_ASSET_TAG_STRING:
-            VariableName = DFCI_SETTINGS_ASSET_TAG_NAME;
-            break;
-
-        default:
-            DEBUG((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
-            return EFI_UNSUPPORTED;
-    }
-
-    BufferSize = 0;
-    Status = DfciAssetTagSettingGet (This, &BufferSize, NULL);
-
-    if (Status != EFI_NOT_FOUND) {
-        if (EFI_ERROR(Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
-            DEBUG((DEBUG_ERROR, "%a: Error getting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
-            return Status;
-        }
-
-        if ((BufferSize == 0) && (ValueSize == 0)) {
-            *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-            DEBUG((DEBUG_INFO, "Setting %s ignored, sizes are 0\n", VariableName));
-            return EFI_SUCCESS;
-        }
-
-        if ((ValueSize != 0) && (BufferSize == ValueSize)) {
-            Buffer = AllocatePool (BufferSize);
-            if (NULL == Buffer) {
-                DEBUG((DEBUG_ERROR, "%a: Cannot allocate %d bytes.%r\n", __FUNCTION__, BufferSize));
-                return EFI_OUT_OF_RESOURCES;
-            }
-
-            Status = gRT->GetVariable (VariableName,
-                                      &gDfciSettingsGuid,
-                                       NULL,
-                                      &BufferSize,
-                                       Buffer );
-            if (EFI_ERROR(Status)) {
-                FreePool (Buffer);
-                DEBUG((DEBUG_ERROR, "%a: Error getting variable %s. Code=%r\n", __FUNCTION__, VariableName, Status));
-                return Status;
-            }
-
-            if (0 == CompareMem(Buffer, Value, BufferSize)) {
-                FreePool (Buffer);
-                *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
-                DEBUG((DEBUG_INFO, "Setting %s ignored, value didn't change\n", VariableName));
-                return EFI_SUCCESS;
-            }
-            FreePool (Buffer);
-        }
-    }
-
-    Status = gRT->SetVariable (VariableName,
-                              &gDfciSettingsGuid,
-                               DFCI_SETTINGS_ATTRIBUTES,
-                               ValueSize,
-                               (VOID *) Value);  // SetVariable should not touch *Value
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Error setting variable %s.  Code = %r\n", VariableName, Status));
-    } else {
-        DEBUG((DEBUG_INFO, "Variable %s set Attributes=%x, Size=%d.\n", VariableName, DFCI_SETTINGS_ATTRIBUTES, ValueSize));
-    }
-
+  Status = ValidateAssetTagValue ((CONST CHAR8 *)Value, ValueSize);
+  if (EFI_ERROR (Status)) {
     return Status;
+  }
+
+  Id = IsIdSupported (This->Id);
+  switch (Id) {
+    case ID_IS_ASSET_TAG_STRING:
+      VariableName = DFCI_SETTINGS_ASSET_TAG_NAME;
+      break;
+
+    default:
+      DEBUG ((DEBUG_ERROR, "%a: Invalid id(%s).\n", __FUNCTION__, This->Id));
+      return EFI_UNSUPPORTED;
+  }
+
+  BufferSize = 0;
+  Status     = DfciAssetTagSettingGet (This, &BufferSize, NULL);
+
+  if (Status != EFI_NOT_FOUND) {
+    if (EFI_ERROR (Status) && (EFI_BUFFER_TOO_SMALL != Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: Error getting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
+      return Status;
+    }
+
+    if ((BufferSize == 0) && (ValueSize == 0)) {
+      *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+      DEBUG ((DEBUG_INFO, "Setting %s ignored, sizes are 0\n", VariableName));
+      return EFI_SUCCESS;
+    }
+
+    if ((ValueSize != 0) && (BufferSize == ValueSize)) {
+      Buffer = AllocatePool (BufferSize);
+      if (NULL == Buffer) {
+        DEBUG ((DEBUG_ERROR, "%a: Cannot allocate %d bytes.%r\n", __FUNCTION__, BufferSize));
+        return EFI_OUT_OF_RESOURCES;
+      }
+
+      Status = gRT->GetVariable (
+                      VariableName,
+                      &gDfciSettingsGuid,
+                      NULL,
+                      &BufferSize,
+                      Buffer
+                      );
+      if (EFI_ERROR (Status)) {
+        FreePool (Buffer);
+        DEBUG ((DEBUG_ERROR, "%a: Error getting variable %s. Code=%r\n", __FUNCTION__, VariableName, Status));
+        return Status;
+      }
+
+      if (0 == CompareMem (Buffer, Value, BufferSize)) {
+        FreePool (Buffer);
+        *Flags |= DFCI_SETTING_FLAGS_OUT_ALREADY_SET;
+        DEBUG ((DEBUG_INFO, "Setting %s ignored, value didn't change\n", VariableName));
+        return EFI_SUCCESS;
+      }
+
+      FreePool (Buffer);
+    }
+  }
+
+  Status = gRT->SetVariable (
+                  VariableName,
+                  &gDfciSettingsGuid,
+                  DFCI_SETTINGS_ATTRIBUTES,
+                  ValueSize,
+                  (VOID *)Value
+                  );                             // SetVariable should not touch *Value
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Error setting variable %s.  Code = %r\n", VariableName, Status));
+  } else {
+    DEBUG ((DEBUG_INFO, "Variable %s set Attributes=%x, Size=%d.\n", VariableName, DFCI_SETTINGS_ATTRIBUTES, ValueSize));
+  }
+
+  return Status;
 }
 
 /**
@@ -339,51 +353,53 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciAssetTagSettingGet (
-    IN  CONST DFCI_SETTING_PROVIDER    *This,
-    IN  OUT   UINTN                    *ValueSize,
-    OUT       VOID                     *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   )
 {
-    ID_IS               Id;
-    EFI_STATUS          Status;
-    CHAR16             *VariableName;
+  ID_IS       Id;
+  EFI_STATUS  Status;
+  CHAR16      *VariableName;
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Id = IsIdSupported (This->Id);
+  switch (Id) {
+    case ID_IS_ASSET_TAG_STRING:
+      VariableName = DFCI_SETTINGS_ASSET_TAG_NAME;
+      break;
+
+    default:
+      DEBUG ((DEBUG_ERROR, "%a: Invalid id(%a).\n", __FUNCTION__, This->Id));
+      return EFI_UNSUPPORTED;
+      break;
+  }
+
+  Status = gRT->GetVariable (
+                  VariableName,
+                  &gDfciSettingsGuid,
+                  NULL,
+                  ValueSize,
+                  Value
+                  );
+  if (EFI_NOT_FOUND == Status) {
+    DEBUG ((DEBUG_INFO, "%a - Variable %s not found. Getting default value.\n", __FUNCTION__, VariableName));
+    Status = DfciAssetTagSettingGetDefault (This, ValueSize, Value);
+  }
+
+  if (EFI_ERROR (Status)) {
+    if (EFI_BUFFER_TOO_SMALL != Status) {
+      DEBUG ((DEBUG_ERROR, "%a - Error retrieving setting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "%a - Setting %s retrieved.\n", __FUNCTION__, VariableName));
+  }
 
-    Id = IsIdSupported(This->Id);
-    switch (Id) {
-        case ID_IS_ASSET_TAG_STRING:
-            VariableName = DFCI_SETTINGS_ASSET_TAG_NAME;
-            break;
-
-        default:
-            DEBUG((DEBUG_ERROR, "%a: Invalid id(%a).\n", __FUNCTION__, This->Id));
-            return EFI_UNSUPPORTED;
-            break;
-    }
-
-    Status = gRT->GetVariable (VariableName,
-                              &gDfciSettingsGuid,
-                               NULL,
-                               ValueSize,
-                               Value );
-    if (EFI_NOT_FOUND == Status) {
-        DEBUG((DEBUG_INFO, "%a - Variable %s not found. Getting default value.\n", __FUNCTION__, VariableName));
-        Status = DfciAssetTagSettingGetDefault (This, ValueSize, Value);
-    }
-
-    if (EFI_ERROR(Status)) {
-        if (EFI_BUFFER_TOO_SMALL != Status) {
-            DEBUG((DEBUG_ERROR, "%a - Error retrieving setting %s. Code=%r\n", __FUNCTION__, VariableName, Status));
-        }
-    } else {
-        DEBUG((DEBUG_INFO, "%a - Setting %s retrieved.\n", __FUNCTION__ , VariableName));
-    }
-
-    return Status;
+  return Status;
 }
 
 /**
@@ -399,32 +415,32 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciAssetTagSettingGetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This,
-    IN  OUT   UINTN                     *ValueSize,
-    OUT       VOID                      *Value
+  IN  CONST DFCI_SETTING_PROVIDER  *This,
+  IN  OUT   UINTN                  *ValueSize,
+  OUT       VOID                   *Value
   )
 {
-    ID_IS    Id;
+  ID_IS  Id;
 
-    if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
-        DEBUG((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
-        return EFI_INVALID_PARAMETER;
-    }
+  if ((This == NULL) || (This->Id == NULL) || (ValueSize == NULL) || ((Value == NULL) && (*ValueSize != 0))) {
+    DEBUG ((DEBUG_ERROR, "%a: Invalid parameter.\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
-    Id = IsIdSupported(This->Id);
-    if (Id == ID_IS_BAD) {
-        return EFI_UNSUPPORTED;
-    }
+  Id = IsIdSupported (This->Id);
+  if (Id == ID_IS_BAD) {
+    return EFI_UNSUPPORTED;
+  }
 
-    if (*ValueSize < sizeof(CHAR8)) {
-        *ValueSize = sizeof(CHAR8);
-        return EFI_BUFFER_TOO_SMALL;
-    }
+  if (*ValueSize < sizeof (CHAR8)) {
+    *ValueSize = sizeof (CHAR8);
+    return EFI_BUFFER_TOO_SMALL;
+  }
 
-    *ValueSize = sizeof(CHAR8);
-    *((CHAR8 *)Value) = '\0';  // Indicates NULL string default
+  *ValueSize        = sizeof (CHAR8);
+  *((CHAR8 *)Value) = '\0';    // Indicates NULL string default
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -438,41 +454,40 @@ STATIC
 EFI_STATUS
 EFIAPI
 DfciAssetTagSettingSetDefault (
-    IN  CONST DFCI_SETTING_PROVIDER     *This
+  IN  CONST DFCI_SETTING_PROVIDER  *This
   )
 {
-    DFCI_SETTING_FLAGS Flags = 0;
-    EFI_STATUS         Status;
-    UINT8              Value;
-    UINTN              ValueSize;
+  DFCI_SETTING_FLAGS  Flags = 0;
+  EFI_STATUS          Status;
+  UINT8               Value;
+  UINTN               ValueSize;
 
-    if (This == NULL) {
-        return EFI_INVALID_PARAMETER;
-    }
+  if (This == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    ValueSize = sizeof(Value);
-    Status = DfciAssetTagSettingGetDefault (This, &ValueSize, &Value);
-    if (EFI_ERROR(Status)) {
-        return Status;
-    }
+  ValueSize = sizeof (Value);
+  Status    = DfciAssetTagSettingGetDefault (This, &ValueSize, &Value);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
-    return DfciAssetTagSettingSet (This, ValueSize, &Value, &Flags);
+  return DfciAssetTagSettingSet (This, ValueSize, &Value, &Flags);
 }
-
 
 //
 // Since ProviderSupport Registration copies the provider to its own
 // allocated memory this code can use a single "template" and just change
 // the id, type, and flags field as needed for registration.
 //
-DFCI_SETTING_PROVIDER mDfciAssetTagSettingProviderTemplate = {
-    DFCI_STD_SETTING_ID_V3_ASSET_TAG,
-    DFCI_SETTING_TYPE_STRING,
-    0,
-    DfciAssetTagSettingSet,
-    DfciAssetTagSettingGet,
-    DfciAssetTagSettingGetDefault,
-    DfciAssetTagSettingSetDefault
+DFCI_SETTING_PROVIDER  mDfciAssetTagSettingProviderTemplate = {
+  DFCI_STD_SETTING_ID_V3_ASSET_TAG,
+  DFCI_SETTING_TYPE_STRING,
+  0,
+  DfciAssetTagSettingSet,
+  DfciAssetTagSettingGet,
+  DfciAssetTagSettingGetDefault,
+  DfciAssetTagSettingSetDefault
 };
 
 /////---------------------Interface for Library  ---------------------//////
@@ -491,15 +506,18 @@ DFCI_SETTING_PROVIDER mDfciAssetTagSettingProviderTemplate = {
 EFI_STATUS
 EFIAPI
 DfciGetAssetTag (
-    IN  OUT   UINTN                    *ValueSize,
-    OUT       VOID                     *Value    )
+  IN  OUT   UINTN  *ValueSize,
+  OUT       VOID   *Value
+  )
 {
-    EFI_STATUS      Status;
+  EFI_STATUS  Status;
 
-    Status = DfciAssetTagSettingGet (&mDfciAssetTagSettingProviderTemplate,
-                                    ValueSize,
-                                    Value);
-    return Status;
+  Status = DfciAssetTagSettingGet (
+             &mDfciAssetTagSettingProviderTemplate,
+             ValueSize,
+             Value
+             );
+  return Status;
 }
 
 /**
@@ -523,31 +541,32 @@ STATIC
 VOID
 EFIAPI
 DfciAssetTagSettingProviderSupportProtocolNotify (
-    IN  EFI_EVENT       Event,
-    IN  VOID            *Context
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
   )
 {
-    STATIC UINT8                            CallCount = 0;
-    DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL *sp;
-    EFI_STATUS                              Status;
+  STATIC UINT8                            CallCount = 0;
+  DFCI_SETTING_PROVIDER_SUPPORT_PROTOCOL  *sp;
+  EFI_STATUS                              Status;
 
-    //locate protocol
-    Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID**)&sp);
-    if (EFI_ERROR(Status)) {
-      if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
-        DEBUG((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
-      }
-      return;
+  // locate protocol
+  Status = gBS->LocateProtocol (&gDfciSettingsProviderSupportProtocolGuid, NULL, (VOID **)&sp);
+  if (EFI_ERROR (Status)) {
+    if ((CallCount++ != 0) || (Status != EFI_NOT_FOUND)) {
+      DEBUG ((DEBUG_ERROR, "%a() - Failed to locate gDfciSettingsProviderSupportProtocolGuid in notify.  Status = %r\n", __FUNCTION__, Status));
     }
 
-    Status = sp->RegisterProvider (sp, &mDfciAssetTagSettingProviderTemplate);
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciAssetTagSettingProviderTemplate.Id, Status));
-    }
+    return;
+  }
 
-    //We got here, this means all protocols were installed and we didn't exit early.
-    //close the event as we don't need to be signaled again. (shouldn't happen anyway)
-    gBS->CloseEvent(Event);
+  Status = sp->RegisterProvider (sp, &mDfciAssetTagSettingProviderTemplate);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to Register %a.  Status = %r\n", mDfciAssetTagSettingProviderTemplate.Id, Status));
+  }
+
+  // We got here, this means all protocols were installed and we didn't exit early.
+  // close the event as we don't need to be signaled again. (shouldn't happen anyway)
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -570,27 +589,26 @@ DfciAssetTagSettingConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-    EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-    if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
-        //Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
-        mDfciAssetTagSettingProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
-            &gDfciSettingsProviderSupportProtocolGuid,
-             TPL_CALLBACK,
-             DfciAssetTagSettingProviderSupportProtocolNotify,
-             NULL,
-            &mDfciAssetTagSettingProviderSupportInstallEventRegistration
-            );
+  if (FeaturePcdGet (PcdSettingsManagerInstallProvider)) {
+    // Install callback on the SettingsManager gMsSystemSettingsProviderSupportProtocolGuid protocol
+    mDfciAssetTagSettingProviderSupportInstallEvent = EfiCreateProtocolNotifyEvent (
+                                                        &gDfciSettingsProviderSupportProtocolGuid,
+                                                        TPL_CALLBACK,
+                                                        DfciAssetTagSettingProviderSupportProtocolNotify,
+                                                        NULL,
+                                                        &mDfciAssetTagSettingProviderSupportInstallEventRegistration
+                                                        );
 
-        DEBUG((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
-    }
+    DEBUG ((DEBUG_INFO, "%a: Event Registered.\n", __FUNCTION__));
+  }
 
-    //Initialize nonvolatile variables
-    Status = InitializeNvVariables ();
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
-    }
+  // Initialize nonvolatile variables
+  Status = InitializeNvVariables ();
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Initialize Nv Var failed. %r.\n", __FUNCTION__, Status));
+  }
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-

@@ -10,42 +10,45 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "IdentityAndAuthManager.h"
 
-//PRIVATE VARIABLE INFO FOR STORAGE OF PROVISIONED VARS
-//Use gDfciAuthProvisionVarNamespace for the namespace
-//Internal var names
-#define _INTERNAL_PROVISIONED_CERT_VAR_NAME          L"_IPCVN" // spell-checker: disable-line
+// PRIVATE VARIABLE INFO FOR STORAGE OF PROVISIONED VARS
+// Use gDfciAuthProvisionVarNamespace for the namespace
+// Internal var names
+#define _INTERNAL_PROVISIONED_CERT_VAR_NAME  L"_IPCVN"         // spell-checker: disable-line
 
-//Internal var attributes
-#define _INTERNAL_VAR_VERSION_V1              (1)
-#define _INTERNAL_VAR_VERSION_V2              (2)
-#define _INTERNAL_VAR_SIGNATURE               SIGNATURE_32('I','P','C','V')
+// Internal var attributes
+#define _INTERNAL_VAR_VERSION_V1  (1)
+#define _INTERNAL_VAR_VERSION_V2  (2)
+#define _INTERNAL_VAR_SIGNATURE   SIGNATURE_32('I','P','C','V')
 
 #pragma pack (push, 1)
 
 typedef struct {
-  UINTN                 HeaderSignature;
-  UINT8                 HeaderVersion;
-  UINT8                 MaxCerts;
-  UINT16                CertSizes[MAX_NUMBER_OF_CERTS_V1];
-  UINT8                 PackedCertData[];
+  UINTN     HeaderSignature;
+  UINT8     HeaderVersion;
+  UINT8     MaxCerts;
+  UINT16    CertSizes[MAX_NUMBER_OF_CERTS_V1];
+  UINT8     PackedCertData[];
 } INTERNAL_VAR_STRUCT_V1;
 
 // NOTE - The code assumes that the Header, MaxCerts, and CertSizes is common
 //        in both versions of the internal structure
 typedef struct {
-  UINTN                 HeaderSignature;
-  UINT8                 HeaderVersion;
-  UINT8                 MaxCerts;
-  UINT16                CertSizes[MAX_NUMBER_OF_CERTS];
-  UINT32                Version;
-  UINT32                Lsv;
-  UINT8                 PackedCertData[];
+  UINTN     HeaderSignature;
+  UINT8     HeaderVersion;
+  UINT8     MaxCerts;
+  UINT16    CertSizes[MAX_NUMBER_OF_CERTS];
+  UINT32    Version;
+  UINT32    Lsv;
+  UINT8     PackedCertData[];
 } INTERNAL_VAR_STRUCT;
 
 #pragma pack (pop)
 
-
-INTERNAL_CERT_STORE mInternalCertStore = { 0, 0, DFCI_IDENTITY_LOCAL, {{NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}, {NULL, 0}} };
+INTERNAL_CERT_STORE  mInternalCertStore = {
+  0, 0, DFCI_IDENTITY_LOCAL, {
+    { NULL,0 }, { NULL,            0 },{ NULL,  0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }, { NULL, 0 }
+  }
+};
 
 /**
 Free any dynamically allocated memory from the cert store
@@ -53,18 +56,17 @@ and update cert ptr to NULL and size to 0. Retain ZTD if
 installed.
 **/
 VOID
-FreeCertStore()
+FreeCertStore (
+  )
 {
-  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
-  {
-    if (i != CERT_ZTD_INDEX)
-    {
-      if (mInternalCertStore.Certs[i].Cert != NULL)
-      {
-        FreePool((VOID *) mInternalCertStore.Certs[i].Cert);
+  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++) {
+    if (i != CERT_ZTD_INDEX) {
+      if (mInternalCertStore.Certs[i].Cert != NULL) {
+        FreePool ((VOID *)mInternalCertStore.Certs[i].Cert);
       }
+
       mInternalCertStore.Certs[i].CertSize = 0;
-      mInternalCertStore.Certs[i].Cert = NULL;
+      mInternalCertStore.Certs[i].Cert     = NULL;
     }
   }
 }
@@ -76,32 +78,31 @@ This will delete any existing variable and recreate it using the default values.
 */
 EFI_STATUS
 EFIAPI
-InitializeProvisionedData()
+InitializeProvisionedData (
+  )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
-  //Delete Internal NV Var to clear everything including var attributes
-  Status = gRT->SetVariable(_INTERNAL_PROVISIONED_CERT_VAR_NAME, &gDfciInternalVariableGuid, 0, 0, NULL);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_INFO, "%a - Failed to Delete internal provisioned var %r\n", __FUNCTION__, Status));
-    //If error that is OK as we will re-initialize anyway
-  }
-  Status = gRT->SetVariable(DFCI_IDENTITY_CURRENT_VAR_NAME, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_INFO, "%a - Failed to Delete Current Identities provisioned var %r\n", __FUNCTION__, Status));
-    //If error that is OK as we will re-initialize anyway
+  // Delete Internal NV Var to clear everything including var attributes
+  Status = gRT->SetVariable (_INTERNAL_PROVISIONED_CERT_VAR_NAME, &gDfciInternalVariableGuid, 0, 0, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a - Failed to Delete internal provisioned var %r\n", __FUNCTION__, Status));
+    // If error that is OK as we will re-initialize anyway
   }
 
-  FreeCertStore();  //free any allocated memory
+  Status = gRT->SetVariable (DFCI_IDENTITY_CURRENT_VAR_NAME, &gDfciAuthProvisionVarNamespace, 0, 0, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a - Failed to Delete Current Identities provisioned var %r\n", __FUNCTION__, Status));
+    // If error that is OK as we will re-initialize anyway
+  }
+
+  FreeCertStore ();  // free any allocated memory
   mInternalCertStore.PopulatedIdentities = DFCI_IDENTITY_LOCAL;
-  if (mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize != 0)
-  {
-    mInternalCertStore.PopulatedIdentities |= DFCI_IDENTITY_SIGNER_ZTD ;
+  if (mInternalCertStore.Certs[CERT_ZTD_INDEX].CertSize != 0) {
+    mInternalCertStore.PopulatedIdentities |= DFCI_IDENTITY_SIGNER_ZTD;
   }
 
-  return SaveProvisionedData();
+  return SaveProvisionedData ();
 }
 
 /**
@@ -113,12 +114,12 @@ changed.
 @return Status of the transition
 **/
 EFI_STATUS
-TransitionOldInternalVar()
+TransitionOldInternalVar (
+  )
 {
-  //DONT CURRENTLY SUPPORT ANY VERSION UPGRADE
+  // DONT CURRENTLY SUPPORT ANY VERSION UPGRADE
   return EFI_UNSUPPORTED;
 }
-
 
 /**
 Load the currently provisioned data
@@ -133,43 +134,42 @@ from NV Storage to Internal Cert Store.
 
 **/
 EFI_STATUS
-LoadProvisionedData()
+LoadProvisionedData (
+  )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
-  UINT32 Attributes = 0;
-  UINT8   *BytePtr = NULL;
-  UINTN    VarSize = 0;
-  INTERNAL_VAR_STRUCT *Var = NULL;
-  UINTN MaxCertsAllowed;
-  DFCI_IDENTITY_ID Identity;
+  EFI_STATUS           Status     = EFI_SUCCESS;
+  UINT32               Attributes = 0;
+  UINT8                *BytePtr   = NULL;
+  UINTN                VarSize    = 0;
+  INTERNAL_VAR_STRUCT  *Var       = NULL;
+  UINTN                MaxCertsAllowed;
+  DFCI_IDENTITY_ID     Identity;
 
-  //Get the variable.  This function will allocate memory
-  //so it must be freed if Status is not error.
-  Status = GetVariable3(_INTERNAL_PROVISIONED_CERT_VAR_NAME,
-    &gDfciInternalVariableGuid,
-    (VOID **) &Var,
-    &VarSize,
-    &Attributes
-    );
+  // Get the variable.  This function will allocate memory
+  // so it must be freed if Status is not error.
+  Status = GetVariable3 (
+             _INTERNAL_PROVISIONED_CERT_VAR_NAME,
+             &gDfciInternalVariableGuid,
+             (VOID **)&Var,
+             &VarSize,
+             &Attributes
+             );
 
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_INFO, "%a - Auth Manager Internal Var could not be loaded. %r\n", __FUNCTION__, Status));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a - Auth Manager Internal Var could not be loaded. %r\n", __FUNCTION__, Status));
     return Status;
   }
 
-  //Check attributes - if incorrect return corrupt
-  if (Attributes != DFCI_INTERNAL_VAR_ATTRIBUTES)
-  {
-    DEBUG((DEBUG_ERROR, "Auth Manager Internal Var attributes not valid.\n"));
+  // Check attributes - if incorrect return corrupt
+  if (Attributes != DFCI_INTERNAL_VAR_ATTRIBUTES) {
+    DEBUG ((DEBUG_ERROR, "Auth Manager Internal Var attributes not valid.\n"));
     Status = EFI_COMPROMISED_DATA;
     goto CLEANUP;
   }
 
-  //Check ascii signature to make sure var looks as expected.
-  if (Var->HeaderSignature != _INTERNAL_VAR_SIGNATURE)
-  {
-    DEBUG((DEBUG_ERROR, "Auth Manager Internal Var Signature not valid.\n"));
+  // Check ascii signature to make sure var looks as expected.
+  if (Var->HeaderSignature != _INTERNAL_VAR_SIGNATURE) {
+    DEBUG ((DEBUG_ERROR, "Auth Manager Internal Var Signature not valid.\n"));
     Status = EFI_COMPROMISED_DATA;
     goto CLEANUP;
   }
@@ -177,34 +177,33 @@ LoadProvisionedData()
   // NOTE - The code assumes that the HeaderSignature, Version, MaxCerts, and CertSizes is common
   //        in both versions of the internal structure
 
-  //Check Version
-  switch (Var->HeaderVersion)
-  {
-  case _INTERNAL_VAR_VERSION_V1:
-      {
-          INTERNAL_VAR_STRUCT_V1 *Var1 = NULL;
+  // Check Version
+  switch (Var->HeaderVersion) {
+    case _INTERNAL_VAR_VERSION_V1:
+    {
+      INTERNAL_VAR_STRUCT_V1  *Var1 = NULL;
 
-          Var1 = (INTERNAL_VAR_STRUCT_V1 *) Var;
-          VarSize -= sizeof(INTERNAL_VAR_STRUCT_V1);  //Track remaining var size to be processed.
-          BytePtr = Var1->PackedCertData;
-          mInternalCertStore.Version = 0;
-          mInternalCertStore.Lsv = 0;
-          MaxCertsAllowed = MAX_NUMBER_OF_CERTS_V1;
+      Var1                       = (INTERNAL_VAR_STRUCT_V1 *)Var;
+      VarSize                   -= sizeof (INTERNAL_VAR_STRUCT_V1); // Track remaining var size to be processed.
+      BytePtr                    = Var1->PackedCertData;
+      mInternalCertStore.Version = 0;
+      mInternalCertStore.Lsv     = 0;
+      MaxCertsAllowed            = MAX_NUMBER_OF_CERTS_V1;
 
-      }
       break;
-  case _INTERNAL_VAR_VERSION_V2:
-      {
-          VarSize -= sizeof(INTERNAL_VAR_STRUCT);  //Track remaining var size to be processed.
-          BytePtr = Var->PackedCertData;
-          mInternalCertStore.Version = Var->Version;
-          mInternalCertStore.Lsv = Var->Lsv;
-          MaxCertsAllowed = MAX_NUMBER_OF_CERTS;
-      }
+    }
+    case _INTERNAL_VAR_VERSION_V2:
+    {
+      VarSize                   -= sizeof (INTERNAL_VAR_STRUCT); // Track remaining var size to be processed.
+      BytePtr                    = Var->PackedCertData;
+      mInternalCertStore.Version = Var->Version;
+      mInternalCertStore.Lsv     = Var->Lsv;
+      MaxCertsAllowed            = MAX_NUMBER_OF_CERTS;
       break;
-  default:
+    }
+    default:
       MaxCertsAllowed = 0;
-      DEBUG((DEBUG_INFO, "Auth Manager Internal Var Version not recognized (%d).\n"));
+      DEBUG ((DEBUG_INFO, "Auth Manager Internal Var Version not recognized (%d).\n"));
       Status = EFI_INCOMPATIBLE_VERSION;
       goto CLEANUP;
       break;
@@ -214,93 +213,83 @@ LoadProvisionedData()
   // Check the max certs.
   // Code can't handle max cert change.
   //
-  if (Var->MaxCerts != MaxCertsAllowed)
-  {
-    DEBUG((DEBUG_ERROR, "Auth Manager Internal var max certs not correct. Cur=%d,Max=%d\n",Var->MaxCerts, MaxCertsAllowed));
-    ASSERT(Var->MaxCerts == MAX_NUMBER_OF_CERTS);
+  if (Var->MaxCerts != MaxCertsAllowed) {
+    DEBUG ((DEBUG_ERROR, "Auth Manager Internal var max certs not correct. Cur=%d,Max=%d\n", Var->MaxCerts, MaxCertsAllowed));
+    ASSERT (Var->MaxCerts == MAX_NUMBER_OF_CERTS);
     Status = EFI_UNSUPPORTED;
     goto CLEANUP;
   }
 
   Status = EFI_SUCCESS;
 
-  //We now have good data from variable store.  decompose and populate internal cert store
-  for (UINT8 i = 0; i < MaxCertsAllowed; i++)
-  {
+  // We now have good data from variable store.  decompose and populate internal cert store
+  for (UINT8 i = 0; i < MaxCertsAllowed; i++) {
     mInternalCertStore.Certs[i].CertSize = (UINTN)(Var->CertSizes[i]);
-    if (mInternalCertStore.Certs[i].Cert != NULL)
-    {
+    if (mInternalCertStore.Certs[i].Cert != NULL) {
       FreePool ((VOID *)mInternalCertStore.Certs[i].Cert);
       mInternalCertStore.Certs[i].Cert = NULL;
     }
-    if (Var->CertSizes[i] == 0)
-    {
+
+    if (Var->CertSizes[i] == 0) {
       continue;
     }
 
-    //Make sure Var internal size data is not corrupt
-    if (VarSize < Var->CertSizes[i])
-    {
-      DEBUG((DEBUG_ERROR, "%a Remaining VarSize less than CertSize\n", __FUNCTION__));
+    // Make sure Var internal size data is not corrupt
+    if (VarSize < Var->CertSizes[i]) {
+      DEBUG ((DEBUG_ERROR, "%a Remaining VarSize less than CertSize\n", __FUNCTION__));
       Status = EFI_COMPROMISED_DATA;
       goto CLEANUP;
     }
 
-    //Copy var cert data to our cert store
-    mInternalCertStore.Certs[i].Cert = AllocatePool(Var->CertSizes[i]);
-    if (mInternalCertStore.Certs[i].Cert == NULL)
-    {
-      DEBUG((DEBUG_ERROR, "Auth Manager Failed to Allocate Memory for Cert\n"));
+    // Copy var cert data to our cert store
+    mInternalCertStore.Certs[i].Cert = AllocatePool (Var->CertSizes[i]);
+    if (mInternalCertStore.Certs[i].Cert == NULL) {
+      DEBUG ((DEBUG_ERROR, "Auth Manager Failed to Allocate Memory for Cert\n"));
       Status = EFI_OUT_OF_RESOURCES;
       goto CLEANUP;
     }
 
-    CopyMem((VOID *)mInternalCertStore.Certs[i].Cert, BytePtr, mInternalCertStore.Certs[i].CertSize);
+    CopyMem ((VOID *)mInternalCertStore.Certs[i].Cert, BytePtr, mInternalCertStore.Certs[i].CertSize);
     BytePtr += mInternalCertStore.Certs[i].CertSize;
     VarSize -= mInternalCertStore.Certs[i].CertSize;
-    Status = EFI_SUCCESS;
-    Identity = CertIndexToDfciIdentity(i);
-    if (Identity != DFCI_IDENTITY_INVALID)
-    {
-      mInternalCertStore.PopulatedIdentities |= Identity;  //update Populated Identies value
+    Status   = EFI_SUCCESS;
+    Identity = CertIndexToDfciIdentity (i);
+    if (Identity != DFCI_IDENTITY_INVALID) {
+      mInternalCertStore.PopulatedIdentities |= Identity;  // update Populated Identies value
     }
-  } //Finish for loop for each cert
+  } // Finish for loop for each cert
 
-  if (VarSize != 0)
-  {
-    DEBUG((DEBUG_ERROR, "%a - VarSize not 0 at end of loop (%d)\n", __FUNCTION__, VarSize));
-    ASSERT(VarSize == 0);
+  if (VarSize != 0) {
+    DEBUG ((DEBUG_ERROR, "%a - VarSize not 0 at end of loop (%d)\n", __FUNCTION__, VarSize));
+    ASSERT (VarSize == 0);
   }
 
-  //now check that it follows the rules.
+  // now check that it follows the rules.
   // 1. Can't have user keys if no Owner Key
   //
   if (((mInternalCertStore.PopulatedIdentities & DFCI_IDENTITY_MASK_USER_KEYS) > 0) &&
-    ((mInternalCertStore.PopulatedIdentities & DFCI_IDENTITY_SIGNER_OWNER) == 0))
+      ((mInternalCertStore.PopulatedIdentities & DFCI_IDENTITY_SIGNER_OWNER) == 0))
   {
-    DEBUG((DEBUG_ERROR, "[AM] - %a - No Owner Key.  Must clear User keys and all data\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "[AM] - %a - No Owner Key.  Must clear User keys and all data\n", __FUNCTION__));
     Status = EFI_PROTOCOL_ERROR;
-    for (UINT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
-    {
-      Identity = CertIndexToDfciIdentity(i);
-      if ((Identity != DFCI_IDENTITY_INVALID) && (Identity & DFCI_IDENTITY_MASK_USER_KEYS))
-      {
-        if (mInternalCertStore.Certs[i].Cert != NULL)
-        {
-          FreePool ((VOID *) mInternalCertStore.Certs[i].Cert);
+    for (UINT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++) {
+      Identity = CertIndexToDfciIdentity (i);
+      if ((Identity != DFCI_IDENTITY_INVALID) && (Identity & DFCI_IDENTITY_MASK_USER_KEYS)) {
+        if (mInternalCertStore.Certs[i].Cert != NULL) {
+          FreePool ((VOID *)mInternalCertStore.Certs[i].Cert);
           mInternalCertStore.Certs[i].Cert = NULL;
-          mInternalCertStore.Version = 0;
-          mInternalCertStore.Lsv = 0;
+          mInternalCertStore.Version       = 0;
+          mInternalCertStore.Lsv           = 0;
         }
       }
     }
   }
 
 CLEANUP:
-  if (Var != NULL)
-  {
-    FreePool(Var);
+  if (Var != NULL) {
+    FreePool (Var);
   }
+
   return Status;
 }
 
@@ -308,66 +297,62 @@ CLEANUP:
 Save the Internal cert store to NV storage
 **/
 EFI_STATUS
-SaveProvisionedData()
+SaveProvisionedData (
+  )
 {
-  INTERNAL_VAR_STRUCT* Var = NULL;
-  UINT8  *BytePtr = NULL;
-  EFI_STATUS Status;
-  UINTN VarSize = sizeof(INTERNAL_VAR_STRUCT);  //will need to add dynamic size
-  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
-  {
-    if (mInternalCertStore.Certs[i].Cert != NULL)
-    {
+  INTERNAL_VAR_STRUCT  *Var     = NULL;
+  UINT8                *BytePtr = NULL;
+  EFI_STATUS           Status;
+  UINTN                VarSize = sizeof (INTERNAL_VAR_STRUCT); // will need to add dynamic size
+
+  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++) {
+    if (mInternalCertStore.Certs[i].Cert != NULL) {
       VarSize += mInternalCertStore.Certs[i].CertSize;
     }
   }
 
-  //now allocate memory for var
-  Var = (INTERNAL_VAR_STRUCT*) AllocatePool(VarSize);
-  if (Var == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a failed to allocate memory for var.\n", __FUNCTION__));
-    ASSERT(Var != NULL);
+  // now allocate memory for var
+  Var = (INTERNAL_VAR_STRUCT *)AllocatePool (VarSize);
+  if (Var == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a failed to allocate memory for var.\n", __FUNCTION__));
+    ASSERT (Var != NULL);
     return EFI_OUT_OF_RESOURCES;
   }
 
-  //populate standard data
+  // populate standard data
   Var->HeaderSignature = _INTERNAL_VAR_SIGNATURE;
-  Var->HeaderVersion = _INTERNAL_VAR_VERSION_V2;
-  Var->MaxCerts = MAX_NUMBER_OF_CERTS;
-  Var->Version = mInternalCertStore.Version;
-  Var->Lsv = mInternalCertStore.Lsv;
-  //Populate cert size array and packed data
-  BytePtr = Var->PackedCertData;  //set to first byte of data
+  Var->HeaderVersion   = _INTERNAL_VAR_VERSION_V2;
+  Var->MaxCerts        = MAX_NUMBER_OF_CERTS;
+  Var->Version         = mInternalCertStore.Version;
+  Var->Lsv             = mInternalCertStore.Lsv;
+  // Populate cert size array and packed data
+  BytePtr = Var->PackedCertData;  // set to first byte of data
 
-  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
-  {
+  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++) {
     Var->CertSizes[i] = (UINT16)mInternalCertStore.Certs[i].CertSize;
-    if ((mInternalCertStore.Certs[i].Cert != NULL) && (mInternalCertStore.Certs[i].CertSize > 0))
-    {
-      CopyMem(BytePtr, mInternalCertStore.Certs[i].Cert, mInternalCertStore.Certs[i].CertSize);
+    if ((mInternalCertStore.Certs[i].Cert != NULL) && (mInternalCertStore.Certs[i].CertSize > 0)) {
+      CopyMem (BytePtr, mInternalCertStore.Certs[i].Cert, mInternalCertStore.Certs[i].CertSize);
       BytePtr += mInternalCertStore.Certs[i].CertSize;
     }
   }
 
-  //now var is populated.  Now write it using var store
-  Status = gRT->SetVariable(_INTERNAL_PROVISIONED_CERT_VAR_NAME, &gDfciInternalVariableGuid, DFCI_INTERNAL_VAR_ATTRIBUTES, VarSize, Var);
-  if (EFI_ERROR(Status))
-  {
-    DEBUG((DEBUG_ERROR, "%a - Failed to set variable %r\n", __FUNCTION__, Status));
+  // now var is populated.  Now write it using var store
+  Status = gRT->SetVariable (_INTERNAL_PROVISIONED_CERT_VAR_NAME, &gDfciInternalVariableGuid, DFCI_INTERNAL_VAR_ATTRIBUTES, VarSize, Var);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to set variable %r\n", __FUNCTION__, Status));
   }
 
-  FreePool(Var);
+  FreePool (Var);
   return Status;
 }
-
 
 /*
 Check to see what identities are provisioned and if provisioned return a bit-mask
 that conveys the provisioned identities.
 */
 DFCI_IDENTITY_MASK
-Provisioned()
+Provisioned (
+  )
 {
   return mInternalCertStore.PopulatedIdentities;
 }
@@ -383,46 +368,42 @@ Get the CertData and Size for a given provisioned Cert
 @retval  SUCCESS on found otherwise error
 */
 EFI_STATUS
-GetProvisionedCertDataAndSize(
-  OUT UINT8 CONST **CertData,
-  OUT UINTN        *CertSize,
-  IN  DFCI_IDENTITY_ID Key)
+GetProvisionedCertDataAndSize (
+  OUT UINT8 CONST       **CertData,
+  OUT UINTN             *CertSize,
+  IN  DFCI_IDENTITY_ID  Key
+  )
 {
-  EFI_STATUS Status= EFI_SUCCESS;
-  UINT8 Index = 0;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINT8       Index  = 0;
 
-  if ((CertData == NULL) || (CertSize == NULL))
-  {
+  if ((CertData == NULL) || (CertSize == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  if ((Key & DFCI_IDENTITY_MASK_KEYS) == 0)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Key invalid (0x%X).  Not a key.", __FUNCTION__, Key));
+  if ((Key & DFCI_IDENTITY_MASK_KEYS) == 0) {
+    DEBUG ((DEBUG_ERROR, "%a - Key invalid (0x%X).  Not a key.", __FUNCTION__, Key));
     return EFI_INVALID_PARAMETER;
   }
 
-  //Check the input parameter to make sure its provisioned
-  if ( (Key & Provisioned()) == 0)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Key(0x%x) not provisioned\n", __FUNCTION__, Key));
+  // Check the input parameter to make sure its provisioned
+  if ((Key & Provisioned ()) == 0) {
+    DEBUG ((DEBUG_ERROR, "%a - Key(0x%x) not provisioned\n", __FUNCTION__, Key));
     return EFI_NOT_FOUND;
   }
 
-  //Convert KeyMask to Index
-  Index = DfciIdentityToCertIndex(Key);
-  if (Index == CERT_INVALID_INDEX)
-  {
-    DEBUG((DEBUG_ERROR, "%a - Key(0x%x) doesn't map to a cert\n", __FUNCTION__, Key));
+  // Convert KeyMask to Index
+  Index = DfciIdentityToCertIndex (Key);
+  if (Index == CERT_INVALID_INDEX) {
+    DEBUG ((DEBUG_ERROR, "%a - Key(0x%x) doesn't map to a cert\n", __FUNCTION__, Key));
     return EFI_INVALID_PARAMETER;
   }
 
-  //Update the data
+  // Update the data
   *CertData = mInternalCertStore.Certs[Index].Cert;
   *CertSize = mInternalCertStore.Certs[Index].CertSize;
   return Status;
 }
-
 
 /**
 Provisioned Data entry point.
@@ -433,56 +414,56 @@ every boot.  This also verifies the contents are valid in flash.
 **/
 EFI_STATUS
 EFIAPI
-PopulateInternalCertStore()
+PopulateInternalCertStore (
+  )
 
 {
-  EFI_STATUS Status;
-  Status = LoadProvisionedData();
-  if (EFI_ERROR(Status))
-  {
-    FreeCertStore();  //free any garbage from load failure.
+  EFI_STATUS  Status;
+
+  Status = LoadProvisionedData ();
+  if (EFI_ERROR (Status)) {
+    FreeCertStore ();  // free any garbage from load failure.
     switch (Status) {
-    case EFI_NOT_FOUND:
-      DEBUG((DEBUG_ERROR, "Failed to load provisioned data because it wasn't found. Probably first boot after flash\n"));
-      Status = InitializeProvisionedData();
-      break;
+      case EFI_NOT_FOUND:
+        DEBUG ((DEBUG_ERROR, "Failed to load provisioned data because it wasn't found. Probably first boot after flash\n"));
+        Status = InitializeProvisionedData ();
+        break;
 
-    case EFI_INCOMPATIBLE_VERSION:
-      DEBUG((DEBUG_ERROR, "Provisioned data in different version.  Trying to transition\n"));
-      Status = TransitionOldInternalVar();
-      break;
+      case EFI_INCOMPATIBLE_VERSION:
+        DEBUG ((DEBUG_ERROR, "Provisioned data in different version.  Trying to transition\n"));
+        Status = TransitionOldInternalVar ();
+        break;
 
-    case EFI_OUT_OF_RESOURCES:
-      DEBUG((DEBUG_ERROR, "%a - Out of resources\n", __FUNCTION__));
-      ASSERT_EFI_ERROR(Status);
-      //try again if release build
-      Status = EFI_SUCCESS;
-      break;
+      case EFI_OUT_OF_RESOURCES:
+        DEBUG ((DEBUG_ERROR, "%a - Out of resources\n", __FUNCTION__));
+        ASSERT_EFI_ERROR (Status);
+        // try again if release build
+        Status = EFI_SUCCESS;
+        break;
 
-    case EFI_UNSUPPORTED:
-    case EFI_COMPROMISED_DATA:
-      DEBUG((DEBUG_ERROR, "Data Corrupted or not valid.  Re-initialize. %r\n", Status));
-      //UEFI Blue screen - could be unowned system which might not be good.
-      Status = InitializeProvisionedData();
-      break;
+      case EFI_UNSUPPORTED:
+      case EFI_COMPROMISED_DATA:
+        DEBUG ((DEBUG_ERROR, "Data Corrupted or not valid.  Re-initialize. %r\n", Status));
+        // UEFI Blue screen - could be unowned system which might not be good.
+        Status = InitializeProvisionedData ();
+        break;
 
-    case EFI_PROTOCOL_ERROR:
-      DEBUG((DEBUG_ERROR, "Data Loaded but data didn't follow the rules. Clearing.... %r\n", Status));
-      Status = InitializeProvisionedData();
-      break;
+      case EFI_PROTOCOL_ERROR:
+        DEBUG ((DEBUG_ERROR, "Data Loaded but data didn't follow the rules. Clearing.... %r\n", Status));
+        Status = InitializeProvisionedData ();
+        break;
 
-    default:
-      DEBUG((DEBUG_ERROR, "%a - Error.  Unexpected Status Code. %r\n", Status));
-      ASSERT_EFI_ERROR(Status);
-      break;
-    } //close switch
+      default:
+        DEBUG ((DEBUG_ERROR, "%a - Error.  Unexpected Status Code. %r\n", Status));
+        ASSERT_EFI_ERROR (Status);
+        break;
+    } // close switch
 
-    Status = LoadProvisionedData();
+    Status = LoadProvisionedData ();
   }
 
   return Status;
 }
-
 
 /**
 Internal function to map external identities to the cert index used
@@ -490,31 +471,22 @@ internally to store the certificate.
 If the identity is invalid a invalid index will be returned.
 **/
 UINT8
-DfciIdentityToCertIndex(DFCI_IDENTITY_ID IdentityId)
+DfciIdentityToCertIndex (
+  DFCI_IDENTITY_ID  IdentityId
+  )
 {
-  if (IdentityId == DFCI_IDENTITY_SIGNER_ZTD )
-  {
+  if (IdentityId == DFCI_IDENTITY_SIGNER_ZTD ) {
     return CERT_ZTD_INDEX;
-  }
-  else if (IdentityId == DFCI_IDENTITY_SIGNER_USER)
-  {
+  } else if (IdentityId == DFCI_IDENTITY_SIGNER_USER) {
     return CERT_USER_INDEX;
-  }
-  else if (IdentityId == DFCI_IDENTITY_SIGNER_USER1)
-  {
+  } else if (IdentityId == DFCI_IDENTITY_SIGNER_USER1) {
     return CERT_USER1_INDEX;
-  }
-  else if (IdentityId == DFCI_IDENTITY_SIGNER_USER2)
-  {
+  } else if (IdentityId == DFCI_IDENTITY_SIGNER_USER2) {
     return CERT_USER2_INDEX;
-  }
-  else if (IdentityId == DFCI_IDENTITY_SIGNER_OWNER)
-  {
+  } else if (IdentityId == DFCI_IDENTITY_SIGNER_OWNER) {
     return CERT_OWNER_INDEX;
-  }
-  else
-  {
-    DEBUG((DEBUG_ERROR, "Invalid Cert Identity 0x%X\n", IdentityId));
+  } else {
+    DEBUG ((DEBUG_ERROR, "Invalid Cert Identity 0x%X\n", IdentityId));
     return CERT_INVALID_INDEX;
   }
 }
@@ -524,71 +496,54 @@ DfciIdentityToCertIndex(DFCI_IDENTITY_ID IdentityId)
  identity is invalid a invalid index will be returned.
 **/
 DFCI_IDENTITY_ID
-CertIndexToDfciIdentity(UINT8 Identity)
+CertIndexToDfciIdentity (
+  UINT8  Identity
+  )
 {
-  if (Identity == CERT_USER_INDEX)
-  {
+  if (Identity == CERT_USER_INDEX) {
     return DFCI_IDENTITY_SIGNER_USER;
-  }
-  else if (Identity == CERT_USER1_INDEX)
-  {
+  } else if (Identity == CERT_USER1_INDEX) {
     return DFCI_IDENTITY_SIGNER_USER1;
-  }
-  else if (Identity == CERT_USER2_INDEX)
-  {
+  } else if (Identity == CERT_USER2_INDEX) {
     return DFCI_IDENTITY_SIGNER_USER2;
-  }
-  else if (Identity == CERT_OWNER_INDEX)
-  {
+  } else if (Identity == CERT_OWNER_INDEX) {
     return DFCI_IDENTITY_SIGNER_OWNER;
-  }
-  else if (Identity == CERT_ZTD_INDEX)
-  {
-    return DFCI_IDENTITY_SIGNER_ZTD ;
-  }
-  else if (Identity == CERT_RSVD1_INDEX)
-  {
+  } else if (Identity == CERT_ZTD_INDEX) {
+    return DFCI_IDENTITY_SIGNER_ZTD;
+  } else if (Identity == CERT_RSVD1_INDEX) {
     return DFCI_IDENTITY_INVALID;
-  }
-  else if (Identity == CERT_RSVD2_INDEX)
-  {
+  } else if (Identity == CERT_RSVD2_INDEX) {
     return DFCI_IDENTITY_INVALID;
-  }
-  else
-  {
-    DEBUG((DEBUG_ERROR, "Invalid Cert Index 0x%X\n", Identity));
+  } else {
+    DEBUG ((DEBUG_ERROR, "Invalid Cert Index 0x%X\n", Identity));
     return DFCI_IDENTITY_INVALID;
   }
 }
 
 VOID
-DebugPrintCertStore(
-  IN CONST INTERNAL_CERT_STORE* Store)
+DebugPrintCertStore (
+  IN CONST INTERNAL_CERT_STORE  *Store
+  )
 {
-
-  if (Store == NULL)
-  {
-    DEBUG((DEBUG_ERROR, "%a - NULL Store pointer\n", __FUNCTION__));
+  if (Store == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - NULL Store pointer\n", __FUNCTION__));
     return;
   }
 
-  DEBUG((DEBUG_INFO, "\n---------- START PRINTING CERT STORE ---------\n"));
-  DEBUG((DEBUG_INFO, " Version: 0x%X\n", Store->Version));
-  DEBUG((DEBUG_INFO, " Lsv:     0x%X\n", Store->Lsv));
-  DEBUG((DEBUG_INFO, " Populated Identities: 0x%X\n", Store->PopulatedIdentities));
-  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++)
-  {
-    DEBUG((DEBUG_INFO, " Cert[%d]:", i));
-    if (Store->Certs[i].Cert != NULL)
-    {
-      DEBUG((DEBUG_INFO, " PROVISIONED.  Size = 0x%X\n", Store->Certs[i].CertSize));
-    }
-    else
-    {
-      DEBUG((DEBUG_INFO, " NOT PRESENT\n"));
+  DEBUG ((DEBUG_INFO, "\n---------- START PRINTING CERT STORE ---------\n"));
+  DEBUG ((DEBUG_INFO, " Version: 0x%X\n", Store->Version));
+  DEBUG ((DEBUG_INFO, " Lsv:     0x%X\n", Store->Lsv));
+  DEBUG ((DEBUG_INFO, " Populated Identities: 0x%X\n", Store->PopulatedIdentities));
+  for (INT8 i = 0; i < MAX_NUMBER_OF_CERTS; i++) {
+    DEBUG ((DEBUG_INFO, " Cert[%d]:", i));
+    if (Store->Certs[i].Cert != NULL) {
+      DEBUG ((DEBUG_INFO, " PROVISIONED.  Size = 0x%X\n", Store->Certs[i].CertSize));
+    } else {
+      DEBUG ((DEBUG_INFO, " NOT PRESENT\n"));
     }
   }
-  DEBUG((DEBUG_INFO, "---------- END PRINTING CERT STORE ---------\n\n"));
+
+  DEBUG ((DEBUG_INFO, "---------- END PRINTING CERT STORE ---------\n\n"));
 }
 
 /**
@@ -614,22 +569,20 @@ caller should free the CertInfo members once finished.
 **/
 EFI_STATUS
 EFIAPI
-GetCertInfo(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL      *This,
-  IN       DFCI_IDENTITY_ID                   Identity,
-  IN CONST UINT8                             *Cert          OPTIONAL,
-  IN       UINTN                              CertSize,
-  IN       DFCI_CERT_REQUEST                  CertRequest,
-  IN       DFCI_CERT_FORMAT                   CertFormat,
-  OUT      VOID                             **Value,
-  OUT      UINTN                             *ValueSize     OPTIONAL
+GetCertInfo (
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN       DFCI_IDENTITY_ID              Identity,
+  IN CONST UINT8                         *Cert          OPTIONAL,
+  IN       UINTN                         CertSize,
+  IN       DFCI_CERT_REQUEST             CertRequest,
+  IN       DFCI_CERT_FORMAT              CertFormat,
+  OUT      VOID                          **Value,
+  OUT      UINTN                         *ValueSize     OPTIONAL
   )
 {
-
-  EFI_STATUS Status;
-  BOOLEAN    UiFormat;
-  UINT8  CertDigest[SHA1_FINGERPRINT_DIGEST_SIZE]; // SHA1 Digest size is 20 bytes
-
+  EFI_STATUS  Status;
+  BOOLEAN     UiFormat;
+  UINT8       CertDigest[SHA1_FINGERPRINT_DIGEST_SIZE]; // SHA1 Digest size is 20 bytes
 
   if ((Value == NULL) || (This == NULL) ||
       (CertRequest >= DFCI_CERT_REQUEST_MAX) ||
@@ -640,66 +593,67 @@ GetCertInfo(
   }
 
   if (Cert == NULL) {
-    //Get the Cert
+    // Get the Cert
     CertSize = 0;
-    Status = GetProvisionedCertDataAndSize(&Cert, &CertSize, Identity);
-    if (EFI_ERROR(Status))
-    {
-      DEBUG((DEBUG_ERROR, "%a: failed to get cert data %r\n", __FUNCTION__, Status));
+    Status   = GetProvisionedCertDataAndSize (&Cert, &CertSize, Identity);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to get cert data %r\n", __FUNCTION__, Status));
       goto CLEANUP;
     }
   }
 
-  Status = EFI_UNSUPPORTED;
+  Status   = EFI_UNSUPPORTED;
   UiFormat = FALSE;
   switch (CertRequest) {
     case DFCI_CERT_SUBJECT:
       switch (CertFormat) {
         case DFCI_CERT_FORMAT_CHAR8:
-          Status = GetSubjectName8 (Cert, CertSize, CERT_STRING_SIZE, (CHAR8 **) Value, ValueSize);
+          Status = GetSubjectName8 (Cert, CertSize, CERT_STRING_SIZE, (CHAR8 **)Value, ValueSize);
           break;
         case DFCI_CERT_FORMAT_CHAR16:
-          Status = GetSubjectName16 (Cert,CertSize, CERT_STRING_SIZE, (CHAR16 **) Value, ValueSize);
+          Status = GetSubjectName16 (Cert, CertSize, CERT_STRING_SIZE, (CHAR16 **)Value, ValueSize);
           break;
         default:
-          DEBUG((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
           break;
       }
+
       break;
 
-    case   DFCI_CERT_ISSUER:
+    case DFCI_CERT_ISSUER:
       switch (CertFormat) {
         case DFCI_CERT_FORMAT_CHAR8:
-          Status = GetIssuerName8 (Cert, CertSize, CERT_STRING_SIZE, (CHAR8 **) Value, ValueSize);
+          Status = GetIssuerName8 (Cert, CertSize, CERT_STRING_SIZE, (CHAR8 **)Value, ValueSize);
           break;
         case DFCI_CERT_FORMAT_CHAR16:
-          Status = GetIssuerName16 (Cert, CertSize, CERT_STRING_SIZE, (CHAR16 **) Value, ValueSize);
+          Status = GetIssuerName16 (Cert, CertSize, CERT_STRING_SIZE, (CHAR16 **)Value, ValueSize);
           break;
         default:
-          DEBUG((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
           break;
       }
+
       break;
 
-    case   DFCI_CERT_THUMBPRINT:
+    case DFCI_CERT_THUMBPRINT:
       switch (CertFormat) {
         case DFCI_CERT_FORMAT_CHAR8_UI:
           UiFormat = TRUE;
-          // Fall through to next case
+        // Fall through to next case
         case DFCI_CERT_FORMAT_CHAR8:
-          Status = GetSha1Thumbprint8 (Cert, CertSize, UiFormat, (CHAR8 **) Value, ValueSize);
+          Status = GetSha1Thumbprint8 (Cert, CertSize, UiFormat, (CHAR8 **)Value, ValueSize);
           break;
 
         case DFCI_CERT_FORMAT_CHAR16_UI:
           UiFormat = TRUE;
-          // Fall through to next case
+        // Fall through to next case
         case DFCI_CERT_FORMAT_CHAR16:
-          Status = GetSha1Thumbprint16 (Cert, CertSize, UiFormat, (CHAR16 **) Value, ValueSize);
+          Status = GetSha1Thumbprint16 (Cert, CertSize, UiFormat, (CHAR16 **)Value, ValueSize);
           break;
 
         case DFCI_CERT_FORMAT_BINARY:
           Status = GetSha1Thumbprint (Cert, CertSize, &CertDigest);
-          if (!EFI_ERROR(Status)) {
+          if (!EFI_ERROR (Status)) {
             *Value = AllocateCopyPool (SHA1_FINGERPRINT_DIGEST_SIZE, CertDigest);
             if (NULL != *Value) {
               if (NULL != ValueSize) {
@@ -709,10 +663,11 @@ GetCertInfo(
               Status = EFI_OUT_OF_RESOURCES;
             }
           }
+
           break;
 
         default:
-          DEBUG((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
           break;
       }
 
@@ -742,16 +697,15 @@ This is a combination of all identities (not just keys).
 **/
 EFI_STATUS
 EFIAPI
-GetEnrolledIdentities(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
-  OUT      DFCI_IDENTITY_MASK                 *EnrolledIdentities
+GetEnrolledIdentities (
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  OUT      DFCI_IDENTITY_MASK            *EnrolledIdentities
   )
 {
-  if (This == NULL || EnrolledIdentities == NULL)
-  {
+  if ((This == NULL) || (EnrolledIdentities == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  *EnrolledIdentities = Provisioned();
+  *EnrolledIdentities = Provisioned ();
   return EFI_SUCCESS;
 }

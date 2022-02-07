@@ -42,50 +42,55 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Settings/DfciSettings.h>
 #include <Settings/DfciPrivateSettings.h>
 
-#define DFCI_PERMISSION_LIST_ENTRY_SIGNATURE SIGNATURE_32('M','P','L','S')
+#define DFCI_PERMISSION_LIST_ENTRY_SIGNATURE  SIGNATURE_32('M','P','L','S')
 
 typedef struct {
-  UINTN Signature;
-  LIST_ENTRY Link;
-  DFCI_SETTING_ID_STRING Id;              // Pointer to IdStore
-  DFCI_PERMISSION_MASK   PMask;
-  DFCI_PERMISSION_MASK   DMask;
-  UINT8                  IdSize;
-  CHAR8                  IdStore[];
+  UINTN                     Signature;
+  LIST_ENTRY                Link;
+  DFCI_SETTING_ID_STRING    Id;           // Pointer to IdStore
+  DFCI_PERMISSION_MASK      PMask;
+  DFCI_PERMISSION_MASK      DMask;
+  UINT8                     IdSize;
+  CHAR8                     IdStore[];
 } DFCI_PERMISSION_ENTRY;
 
-
 typedef struct {
-  UINT32 Version;
-  UINT32 Lsv;
-  BOOLEAN Modified;
-  EFI_TIME CreatedOn;
-  EFI_TIME SavedOn;
-  DFCI_PERMISSION_MASK DefaultPMask;
-  DFCI_PERMISSION_MASK DefaultDMask;
-  LIST_ENTRY PermissionsListHead;
+  UINT32                  Version;
+  UINT32                  Lsv;
+  BOOLEAN                 Modified;
+  EFI_TIME                CreatedOn;
+  EFI_TIME                SavedOn;
+  DFCI_PERMISSION_MASK    DefaultPMask;
+  DFCI_PERMISSION_MASK    DefaultDMask;
+  LIST_ENTRY              PermissionsListHead;
 } DFCI_PERMISSION_STORE;
 
-extern DFCI_AUTHENTICATION_PROTOCOL *mAuthenticationProtocol;
-extern DFCI_PERMISSION_STORE        *mPermStore;
+extern DFCI_AUTHENTICATION_PROTOCOL  *mAuthenticationProtocol;
+extern DFCI_PERMISSION_STORE         *mPermStore;
 extern DFCI_APPLY_PACKET_PROTOCOL    mApplyPermissionsProtocol;
 
 EFI_STATUS
 EFIAPI
-SaveToFlash(IN DFCI_PERMISSION_STORE *Store);
+SaveToFlash (
+  IN DFCI_PERMISSION_STORE  *Store
+  );
 
 EFI_STATUS
 EFIAPI
-LoadFromFlash(IN DFCI_PERMISSION_STORE **Store);
-
+LoadFromFlash (
+  IN DFCI_PERMISSION_STORE  **Store
+  );
 
 // ----- funcs for DFCI_PERMISSION_STORE --------
+
 /**
 Initialize a Permission Store to the defaults
 **/
 EFI_STATUS
 EFIAPI
-InitPermStore(DFCI_PERMISSION_STORE **Store);
+InitPermStore (
+  DFCI_PERMISSION_STORE  **Store
+  );
 
 /**
 Free all the linked list entries in the Permission Store and then
@@ -93,14 +98,18 @@ Free the store.
 **/
 VOID
 EFIAPI
-FreePermissionStore(IN DFCI_PERMISSION_STORE *Store);
+FreePermissionStore (
+  IN DFCI_PERMISSION_STORE  *Store
+  );
 
 /**
 Get the number of permission entires in the linked list
 **/
 UINTN
 EFIAPI
-GetNumberOfPermissionEntires(IN CONST DFCI_PERMISSION_STORE *Store, OPTIONAL OUT UINTN *TotalIdSize);
+GetNumberOfPermissionEntires (
+  IN CONST DFCI_PERMISSION_STORE *Store, OPTIONAL OUT UINTN *TotalIdSize
+  );
 
 /**
 Add a new Permission entry to the list at the end.
@@ -110,22 +119,24 @@ entry doesn't already exist.
 **/
 EFI_STATUS
 EFIAPI
-AddPermissionEntry(
-IN DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_STRING Id,
-IN DFCI_PERMISSION_MASK PMask,
-IN DFCI_PERMISSION_MASK DMask);
+AddPermissionEntry (
+  IN DFCI_PERMISSION_STORE   *Store,
+  IN DFCI_SETTING_ID_STRING  Id,
+  IN DFCI_PERMISSION_MASK    PMask,
+  IN DFCI_PERMISSION_MASK    DMask
+  );
 
 /**
 Find Permission Entry for a given Id.
 
 If doesn't exist return NULL
 **/
-DFCI_PERMISSION_ENTRY*
+DFCI_PERMISSION_ENTRY *
 EFIAPI
-FindPermissionEntry(
-IN CONST DFCI_PERMISSION_STORE *Store,
-IN DFCI_SETTING_ID_STRING       Id);
+FindPermissionEntry (
+  IN CONST DFCI_PERMISSION_STORE  *Store,
+  IN DFCI_SETTING_ID_STRING       Id
+  );
 
 /**
  * Mark permissions entries for deletion
@@ -133,8 +144,9 @@ IN DFCI_SETTING_ID_STRING       Id);
  */
 EFI_STATUS
 MarkPermissionEntriesForDeletion (
-IN DFCI_PERMISSION_STORE *Store,
-IN DFCI_IDENTITY_ID       Id);
+  IN DFCI_PERMISSION_STORE  *Store,
+  IN DFCI_IDENTITY_ID       Id
+  );
 
 /**
  * Delete permissions entries of this Id
@@ -142,7 +154,8 @@ IN DFCI_IDENTITY_ID       Id);
  */
 EFI_STATUS
 DeleteMarkedPermissionEntries (
-IN DFCI_PERMISSION_STORE *Store);
+  IN DFCI_PERMISSION_STORE  *Store
+  );
 
 /**
  * Add a new, or update an existing permission entry
@@ -151,42 +164,47 @@ IN DFCI_PERMISSION_STORE *Store);
 EFI_STATUS
 EFIAPI
 AddRequiredPermissionEntry (
-    IN DFCI_PERMISSION_STORE *Store,
-    IN DFCI_SETTING_ID_STRING Id,
-    IN DFCI_PERMISSION_MASK   PMask,
-    IN DFCI_PERMISSION_MASK   DMask);
+  IN DFCI_PERMISSION_STORE   *Store,
+  IN DFCI_SETTING_ID_STRING  Id,
+  IN DFCI_PERMISSION_MASK    PMask,
+  IN DFCI_PERMISSION_MASK    DMask
+  );
 
 /**
 Print the current state of the Permission Store using Debug
 **/
 VOID
 EFIAPI
-DebugPrintPermissionStore(IN CONST DFCI_PERMISSION_STORE *Store);
-
-EFI_STATUS
-EFIAPI
-ApplyNewPermissionsPacket (
-    IN CONST DFCI_APPLY_PACKET_PROTOCOL *This,
-    IN       DFCI_INTERNAL_PACKET       *ApplyPacket
+DebugPrintPermissionStore (
+  IN CONST DFCI_PERMISSION_STORE  *Store
   );
 
 EFI_STATUS
 EFIAPI
-SetPermissionsResponse(
+ApplyNewPermissionsPacket (
+  IN CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN       DFCI_INTERNAL_PACKET        *ApplyPacket
+  );
+
+EFI_STATUS
+EFIAPI
+SetPermissionsResponse (
   IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
   IN        DFCI_INTERNAL_PACKET        *Data
   );
 
 EFI_STATUS
 EFIAPI
-LKG_Handler(
-    IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
-    IN        DFCI_INTERNAL_PACKET        *ApplyPacket,
-    IN        UINT8                        Operation
+LKG_Handler (
+  IN  CONST DFCI_APPLY_PACKET_PROTOCOL  *This,
+  IN        DFCI_INTERNAL_PACKET        *ApplyPacket,
+  IN        UINT8                       Operation
   );
 
 EFI_STATUS
 EFIAPI
-PopulateCurrentPermissions(BOOLEAN Force);
+PopulateCurrentPermissions (
+  BOOLEAN  Force
+  );
 
 #endif // DFCI_SETTING_PERMISSION_H

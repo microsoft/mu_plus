@@ -20,6 +20,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     0x3e8b05f6, 0xdd48, 0x413c, { 0x87, 0xb9, 0x5, 0x7e, 0x6a, 0xc, 0xf, 0x93 } \
   }
 
-extern EFI_GUID gDfciPkgTokenSpaceGuid;
+extern EFI_GUID  gDfciPkgTokenSpaceGuid;
 
 #endif // _DFCIPKG_TOKEN_SPACE_GUID_H_

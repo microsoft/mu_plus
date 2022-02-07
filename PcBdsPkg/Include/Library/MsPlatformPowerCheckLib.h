@@ -1,5 +1,5 @@
 /** @file
-Library interface allowing Platform code to configure CPU Power Limits 
+Library interface allowing Platform code to configure CPU Power Limits
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -15,6 +15,7 @@ Set CPU power limits based on Internal Battery RSoC
 **/
 VOID
 EFIAPI
-PlatformPowerLevelCheck();
+PlatformPowerLevelCheck (
+  );
 
 #endif

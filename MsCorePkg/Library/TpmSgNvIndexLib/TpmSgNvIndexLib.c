@@ -19,8 +19,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // Definition from Mircosoft "System Guard Secure Launch and SMM Protection"
 // document, section "System requirements for System Guard", item "TPM NV Index"
-STATIC CONST TPM2B_DIGEST mSGAuthPolicyDigestBuffer = {
-  .size = SHA256_DIGEST_SIZE,
+STATIC CONST TPM2B_DIGEST  mSGAuthPolicyDigestBuffer = {
+  .size   = SHA256_DIGEST_SIZE,
   .buffer = {
     0xcb, 0x45, 0xc8, 0x1f, 0xf3, 0x4b, 0xcf, 0x0a,
     0xfb, 0x9e, 0x1a, 0x80, 0x29, 0xfa, 0x23, 0x1c,
@@ -45,19 +45,19 @@ DefineSgTpmNVIndexforOS (
   VOID
   )
 {
-  EFI_STATUS        Status;
-  TPM2B_AUTH        NullAuth;
-  TPM2B_NV_PUBLIC   NvData;
-  TPM2B_NAME        PubName;
+  EFI_STATUS       Status;
+  TPM2B_AUTH       NullAuth;
+  TPM2B_NV_PUBLIC  NvData;
+  TPM2B_NAME       PubName;
 
-  DEBUG(( DEBUG_INFO, " %a() Entry...\n", __FUNCTION__ ));
+  DEBUG ((DEBUG_INFO, " %a() Entry...\n", __FUNCTION__));
 
   //
   // First, we need to read whatever's there.
-  Status = Tpm2NvReadPublic( SG_NV_INDEX_HANDLE, &NvData, &PubName );
+  Status = Tpm2NvReadPublic (SG_NV_INDEX_HANDLE, &NvData, &PubName);
   // If an unexpected code is returned, we cannot handle that here.
-  if (Status != EFI_SUCCESS && Status != EFI_NOT_FOUND) {
-    DEBUG(( DEBUG_ERROR, "%a - Failed to read the index! %r\n", __FUNCTION__, Status ));
+  if ((Status != EFI_SUCCESS) && (Status != EFI_NOT_FOUND)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to read the index! %r\n", __FUNCTION__, Status));
     Status = EFI_DEVICE_ERROR;
     goto Done;
   }
@@ -72,15 +72,15 @@ DefineSgTpmNVIndexforOS (
   // Initialize the auth.
   // For a NULL auth, all that matters is the size is 0.
   // NOTE: This assumes the platform hierarchy is unlocked and has NULL auth.
-  ZeroMem( &NullAuth, sizeof( NullAuth ));
+  ZeroMem (&NullAuth, sizeof (NullAuth));
 
   //
   // Initialize the NV Index attribute data.
-  ZeroMem( &NvData, sizeof( NvData ) );
-  NvData.nvPublic.nvIndex                           = SG_NV_INDEX_HANDLE;
-  NvData.size                                       += sizeof( TPMI_RH_NV_INDEX );
-  NvData.nvPublic.nameAlg                           = TPM_ALG_SHA256;           // SHA-256 should be fine for name generation.
-  NvData.size                                       += sizeof( TPMI_ALG_HASH );
+  ZeroMem (&NvData, sizeof (NvData));
+  NvData.nvPublic.nvIndex = SG_NV_INDEX_HANDLE;
+  NvData.size            += sizeof (TPMI_RH_NV_INDEX);
+  NvData.nvPublic.nameAlg = TPM_ALG_SHA256;                                     // SHA-256 should be fine for name generation.
+  NvData.size            += sizeof (TPMI_ALG_HASH);
 
   // 0x420F0404 - Attributes
   NvData.nvPublic.attributes.TPMA_NV_POLICYWRITE    = 1;    // BIT2
@@ -91,28 +91,29 @@ DefineSgTpmNVIndexforOS (
   NvData.nvPublic.attributes.TPMA_NV_POLICYREAD     = 1;    // BIT19
   NvData.nvPublic.attributes.TPMA_NV_NO_DA          = 1;    // BIT25
   NvData.nvPublic.attributes.TPMA_NV_PLATFORMCREATE = 1;    // BIT30
-  NvData.size                                       += sizeof( TPMA_NV );
+  NvData.size                                      += sizeof (TPMA_NV);
 
   // NOTE: This will update the NvData.nvPublic.authPolicy.size to the correct value.
-  CopyMem( &NvData.nvPublic.authPolicy, &mSGAuthPolicyDigestBuffer, sizeof( TPM2B_DIGEST ) );
-  NvData.size                                       += sizeof( UINT16 ) + NvData.nvPublic.authPolicy.size;
-  NvData.nvPublic.dataSize                          = SG_NV_INDEX_SIZE;
-  NvData.size                                       += sizeof( UINT16 );
+  CopyMem (&NvData.nvPublic.authPolicy, &mSGAuthPolicyDigestBuffer, sizeof (TPM2B_DIGEST));
+  NvData.size             += sizeof (UINT16) + NvData.nvPublic.authPolicy.size;
+  NvData.nvPublic.dataSize = SG_NV_INDEX_SIZE;
+  NvData.size             += sizeof (UINT16);
 
   //
   // Attempt to create the NV Index.
-  Status = Tpm2NvDefineSpace( TPM_RH_PLATFORM,    // AuthHandle
-                              NULL,               // AuthSession
-                              &NullAuth,          // Auth
-                              &NvData );          // NvPublic
-  if (EFI_ERROR(Status)) {
-    DEBUG(( DEBUG_ERROR, "%a - Tpm2NvDefineSpace() = %r\n", __FUNCTION__, Status ));
-  }
-  else {
-    DEBUG(( DEBUG_INFO, "%a - Tpm2NvDefineSpace() = %r\n", __FUNCTION__, Status ));
+  Status = Tpm2NvDefineSpace (
+             TPM_RH_PLATFORM,                     // AuthHandle
+             NULL,                                // AuthSession
+             &NullAuth,                           // Auth
+             &NvData
+             );                                   // NvPublic
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Tpm2NvDefineSpace() = %r\n", __FUNCTION__, Status));
+  } else {
+    DEBUG ((DEBUG_INFO, "%a - Tpm2NvDefineSpace() = %r\n", __FUNCTION__, Status));
   }
 
 Done:
-  DEBUG(( DEBUG_INFO, "%a Exit - %r\n", __FUNCTION__, Status ));
+  DEBUG ((DEBUG_INFO, "%a Exit - %r\n", __FUNCTION__, Status));
   return Status;
 } // DefineSgTpmNVIndex()

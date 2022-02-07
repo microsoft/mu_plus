@@ -21,7 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 EFI_STATUS
 MemoryTest (
-  IN EXTENDMEM_COVERAGE_LEVEL Level
+  IN EXTENDMEM_COVERAGE_LEVEL  Level
   )
 {
   EFI_STATUS                        Status;
@@ -32,27 +32,27 @@ MemoryTest (
   BOOLEAN                           ErrorOut;
   BOOLEAN                           TestAbort;
 
-  TestedMemorySize  = 0;
-  TotalMemorySize   = 0;
-  ErrorOut          = FALSE;
-  TestAbort         = FALSE;
+  TestedMemorySize = 0;
+  TotalMemorySize  = 0;
+  ErrorOut         = FALSE;
+  TestAbort        = FALSE;
 
   RequireSoftECCInit = FALSE;
 
   Status = gBS->LocateProtocol (
                   &gEfiGenericMemTestProtocolGuid,
                   NULL,
-                  (VOID **) &GenMemoryTest
+                  (VOID **)&GenMemoryTest
                   );
   if (EFI_ERROR (Status)) {
     return EFI_SUCCESS;
   }
 
   Status = GenMemoryTest->MemoryTestInit (
-                                GenMemoryTest,
-                                Level,
-                                &RequireSoftECCInit
-                                );
+                            GenMemoryTest,
+                            Level,
+                            &RequireSoftECCInit
+                            );
   if (Status == EFI_NO_MEDIA) {
     //
     // The PEI codes also have the relevant memory test code to check the memory,

@@ -22,15 +22,15 @@ typedef enum {
 } PCI_HEADER_TYPE;
 
 typedef union {
-  PCI_DEVICE_HEADER_TYPE_REGION Device;
-  PCI_BRIDGE_CONTROL_REGISTER   Bridge;
-  PCI_CARDBUS_CONTROL_REGISTER  CardBus;
+  PCI_DEVICE_HEADER_TYPE_REGION    Device;
+  PCI_BRIDGE_CONTROL_REGISTER      Bridge;
+  PCI_CARDBUS_CONTROL_REGISTER     CardBus;
 } NON_COMMON_UNION;
 
 typedef struct {
-  PCI_DEVICE_INDEPENDENT_REGION Common;
-  NON_COMMON_UNION              NonCommon;
-  UINT32                        Data[48];
+  PCI_DEVICE_INDEPENDENT_REGION    Common;
+  NON_COMMON_UNION                 NonCommon;
+  UINT32                           Data[48];
 } PCI_CONFIG_SPACE;
 
 /**
@@ -44,8 +44,8 @@ typedef struct {
 **/
 UINT8
 LocatePciCapability (
-  IN PCI_CONFIG_SPACE   *ConfigSpace,
-  IN UINT8              CapabilityId
+  IN PCI_CONFIG_SPACE  *ConfigSpace,
+  IN UINT8             CapabilityId
   )
 {
   UINT8                   CapabilityPtr;
@@ -58,7 +58,7 @@ LocatePciCapability (
     return 0;
   }
 
-  switch ((PCI_HEADER_TYPE) (ConfigSpace->Common.HeaderType & HEADER_LAYOUT_CODE)) {
+  switch ((PCI_HEADER_TYPE)(ConfigSpace->Common.HeaderType & HEADER_LAYOUT_CODE)) {
     case PciDevice:
       CapabilityPtr = ConfigSpace->NonCommon.Device.CapabilityPtr;
       break;
@@ -73,7 +73,7 @@ LocatePciCapability (
   }
 
   while ((CapabilityPtr >= 0x40) && ((CapabilityPtr & 0x03) == 0x00)) {
-    CapabilityEntry = (EFI_PCI_CAPABILITY_HDR *) ((UINT8 *) ConfigSpace + CapabilityPtr);
+    CapabilityEntry = (EFI_PCI_CAPABILITY_HDR *)((UINT8 *)ConfigSpace + CapabilityPtr);
     if (CapabilityEntry->CapabilityID == CapabilityId) {
       return CapabilityPtr;
     }
@@ -108,20 +108,20 @@ LocatePciCapability (
 **/
 EFI_STATUS
 GetPciExpressDeviceLinkSpeed (
-  IN    EFI_PCI_IO_PROTOCOL   *DevicePciIoProtocol,
-  OUT   PCIE_LINK_SPEED       *DeviceLinkSpeed
+  IN    EFI_PCI_IO_PROTOCOL  *DevicePciIoProtocol,
+  OUT   PCIE_LINK_SPEED      *DeviceLinkSpeed
   )
 {
-  EFI_STATUS            Status;
-  PCI_CONFIG_SPACE      ConfigSpace;
-  UINTN                 Seg;
-  UINTN                 Bus;
-  UINTN                 Dev;
-  UINTN                 Fun;
-  UINT8                 PcieCapabilityPtr;
-  PCI_CAPABILITY_PCIEXP *DevicePciExpressCapability;
+  EFI_STATUS             Status;
+  PCI_CONFIG_SPACE       ConfigSpace;
+  UINTN                  Seg;
+  UINTN                  Bus;
+  UINTN                  Dev;
+  UINTN                  Fun;
+  UINT8                  PcieCapabilityPtr;
+  PCI_CAPABILITY_PCIEXP  *DevicePciExpressCapability;
 
-  if (DevicePciIoProtocol == NULL || DeviceLinkSpeed == NULL) {
+  if ((DevicePciIoProtocol == NULL) || (DeviceLinkSpeed == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
@@ -146,7 +146,7 @@ GetPciExpressDeviceLinkSpeed (
     return EFI_NOT_FOUND;
   }
 
-  DevicePciExpressCapability = (PCI_CAPABILITY_PCIEXP *) ((UINT8 *) &ConfigSpace + PcieCapabilityPtr);
+  DevicePciExpressCapability = (PCI_CAPABILITY_PCIEXP *)((UINT8 *)&ConfigSpace + PcieCapabilityPtr);
   switch (DevicePciExpressCapability->LinkStatus.Bits.CurrentLinkSpeed) {
     case 1:
       *DeviceLinkSpeed = Gen1;

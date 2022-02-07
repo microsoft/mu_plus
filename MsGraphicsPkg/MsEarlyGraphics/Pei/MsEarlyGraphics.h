@@ -28,4 +28,4 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "../MsEarlyGraphicsCommon.h"
 
-#endif  // _MS_EARLY_GRAPHICS_PEI_H_
+#endif // _MS_EARLY_GRAPHICS_PEI_H_

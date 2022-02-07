@@ -68,4 +68,4 @@ DeleteAllMailboxes (
   VOID
   );
 
-#endif    // __DFCI_MANAGER_H__
+#endif // __DFCI_MANAGER_H__

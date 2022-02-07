@@ -15,9 +15,9 @@ Set CPU power limits based on Internal Battery RSoC
 **/
 VOID
 EFIAPI
-PlatformPowerLevelCheck(
+PlatformPowerLevelCheck (
   VOID
-)
+  )
 {
   return;
 }

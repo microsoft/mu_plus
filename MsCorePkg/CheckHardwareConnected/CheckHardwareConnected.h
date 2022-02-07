@@ -25,8 +25,8 @@
 **/
 EFI_STATUS
 GetPciExpressDeviceLinkSpeed (
-  IN    EFI_PCI_IO_PROTOCOL   *DevicePciIoProtocol,
-  OUT   PCIE_LINK_SPEED       *DeviceLinkSpeed
+  IN    EFI_PCI_IO_PROTOCOL  *DevicePciIoProtocol,
+  OUT   PCIE_LINK_SPEED      *DeviceLinkSpeed
   );
 
 #endif

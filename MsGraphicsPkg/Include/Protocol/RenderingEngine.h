@@ -11,7 +11,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Protocol/SimpleWindowManager.h>
 
-
 // Global ID for the Rendering Engine Protocol
 //
 #define MS_RENDERING_ENGINE_PROTOCOL_GUID                                           \
@@ -19,7 +18,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     0x7768969c, 0x1d94, 0x4d19, { 0xb0, 0xcf, 0x9f, 0x66, 0xcc, 0x59, 0x34, 0xb4 }  \
   }
 
-typedef struct  _MS_RENDERING_ENGINE_PROTOCOL  MS_RENDERING_ENGINE_PROTOCOL;
+typedef struct  _MS_RENDERING_ENGINE_PROTOCOL MS_RENDERING_ENGINE_PROTOCOL;
 
 /**
   Configures the mouse pointer image.
@@ -35,13 +34,12 @@ typedef struct  _MS_RENDERING_ENGINE_PROTOCOL  MS_RENDERING_ENGINE_PROTOCOL;
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_SET_MOUSE_POINTER)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  const UINT32                    *MouseBitmap,
-    IN  UINT32                          Width,
-    IN  UINT32                          Height,
-    IN  UINT32                          Bpp
-);
-
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  const UINT32                    *MouseBitmap,
+  IN  UINT32                          Width,
+  IN  UINT32                          Height,
+  IN  UINT32                          Bpp
+  );
 
 /**
   Shows or hides the mouse pointer.
@@ -55,10 +53,9 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_SHOW_MOUSE_POINTER)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  BOOLEAN                         ShowPointer
-);
-
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  BOOLEAN                         ShowPointer
+  );
 
 /**
   Moves the mouse pointer.
@@ -73,80 +70,74 @@ EFI_STATUS
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_MOVE_MOUSE_POINTER)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  UINT32                          OrigX,
-    IN  UINT32                          OrigY
-);
-
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  UINT32                          OrigX,
+  IN  UINT32                          OrigY
+  );
 
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_CREATE_SURFACE)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  EFI_HANDLE                      ImageHandle,
-    IN  SWM_RECT                        SurfaceFrame,
-    OUT EFI_EVENT                       *PaintEvent
-);
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  EFI_HANDLE                      ImageHandle,
+  IN  SWM_RECT                        SurfaceFrame,
+  OUT EFI_EVENT                       *PaintEvent
+  );
 
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_RESIZE_SURFACE)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  EFI_HANDLE                      ImageHandle,
-    IN  SWM_RECT                        *SurfaceFrame
-);
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  EFI_HANDLE                      ImageHandle,
+  IN  SWM_RECT                        *SurfaceFrame
+  );
 
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_ACTIVATE_SURFACE)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  EFI_HANDLE                      ImageHandle,
-    IN  BOOLEAN                         Active
-);
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  EFI_HANDLE                      ImageHandle,
+  IN  BOOLEAN                         Active
+  );
 
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_DELETE_SURFACE)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  EFI_HANDLE                      ImageHandle
-);
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  EFI_HANDLE                      ImageHandle
+  );
 
-typedef enum
-{
-    PAINT_BEGIN = 1,
-    PAINT_END
+typedef enum {
+  PAINT_BEGIN = 1,
+  PAINT_END
 } MS_SRE_SURFACE_MODE;
-
 
 typedef
 EFI_STATUS
 (EFIAPI *MS_SRE_SET_MODE_SURFACE)(
-    IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
-    IN  EFI_HANDLE                      ImageHandle,
-    IN  MS_SRE_SURFACE_MODE             Mode
-);
-
+  IN  MS_RENDERING_ENGINE_PROTOCOL    *This,
+  IN  EFI_HANDLE                      ImageHandle,
+  IN  MS_SRE_SURFACE_MODE             Mode
+  );
 
 // SRE protocol structure
 //
-struct _MS_RENDERING_ENGINE_PROTOCOL
-{
-    // Mouse pointer related functions.
-    //
-    MS_SRE_SET_MOUSE_POINTER            SetMousePointer;
-    MS_SRE_SHOW_MOUSE_POINTER           ShowMousePointer;
-    MS_SRE_MOVE_MOUSE_POINTER           MoveMousePointer;
+struct _MS_RENDERING_ENGINE_PROTOCOL {
+  // Mouse pointer related functions.
+  //
+  MS_SRE_SET_MOUSE_POINTER     SetMousePointer;
+  MS_SRE_SHOW_MOUSE_POINTER    ShowMousePointer;
+  MS_SRE_MOVE_MOUSE_POINTER    MoveMousePointer;
 
-    // Rendering surface related functions.
-    //
-    MS_SRE_CREATE_SURFACE               CreateSurface;
-    MS_SRE_RESIZE_SURFACE               ResizeSurface;
-    MS_SRE_ACTIVATE_SURFACE             ActivateSurface;
-    MS_SRE_DELETE_SURFACE               DeleteSurface;
-    MS_SRE_SET_MODE_SURFACE             SetModeSurface;
+  // Rendering surface related functions.
+  //
+  MS_SRE_CREATE_SURFACE        CreateSurface;
+  MS_SRE_RESIZE_SURFACE        ResizeSurface;
+  MS_SRE_ACTIVATE_SURFACE      ActivateSurface;
+  MS_SRE_DELETE_SURFACE        DeleteSurface;
+  MS_SRE_SET_MODE_SURFACE      SetModeSurface;
 };
 
+extern EFI_GUID  gMsSREProtocolGuid;
 
-extern EFI_GUID     gMsSREProtocolGuid;
-
-#endif      // _SRE_PROTOCOL_H_.
+#endif // _SRE_PROTOCOL_H_.

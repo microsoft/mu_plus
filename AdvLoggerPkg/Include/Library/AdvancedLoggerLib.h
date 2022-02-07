@@ -12,7 +12,6 @@
 #ifndef __ADVANCED_LOGGER_LIB_H__
 #define __ADVANCED_LOGGER_LIB_H__
 
-
 /**
   Write data from the DebugLib buffer to the in memory logging buffer,
   and route it to the Hdw Port lib.
@@ -28,10 +27,9 @@
 VOID
 EFIAPI
 AdvancedLoggerWrite (
-    IN       UINTN    ErrorLevel,
-    IN CONST CHAR8   *Buffer,
-    IN       UINTN    NumberOfBytes
+  IN       UINTN  ErrorLevel,
+  IN CONST CHAR8  *Buffer,
+  IN       UINTN  NumberOfBytes
   );
 
-
-#endif  // __ADVANCED_LOGGER_LIB_H__
+#endif // __ADVANCED_LOGGER_LIB_H__

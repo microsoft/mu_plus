@@ -15,14 +15,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  Accepted revision values
 
 **/
-#define MS_WHEA_REV_0                 0x00
+#define MS_WHEA_REV_0  0x00
 
 /**
 
  Indicator for early storage header to be valid
 
 **/
-#define MS_WHEA_EARLY_STORAGE_SIGNATURE       SIGNATURE_32('M', 'E', 'S', '1')
+#define MS_WHEA_EARLY_STORAGE_SIGNATURE  SIGNATURE_32('M', 'E', 'S', '1')
 
 #pragma pack(1)
 
@@ -37,12 +37,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
-  UINT32                              Signature;
-  UINT32                              ActiveRange;
-  UINT8                               IsStorageFull;
-  UINT8                               FullPhase;
-  UINT16                              Checksum;
-  UINT32                              Reserved;
+  UINT32    Signature;
+  UINT32    ActiveRange;
+  UINT8     IsStorageFull;
+  UINT8     FullPhase;
+  UINT16    Checksum;
+  UINT32    Reserved;
 } MS_WHEA_EARLY_STORAGE_HEADER;
 
 /**
@@ -59,14 +59,14 @@ typedef struct _MS_WHEA_EARLY_STORAGE_HEADER {
 
 **/
 typedef struct MS_WHEA_EARLY_STORAGE_ENTRY_V0_T_DEF {
-  UINT8                               Rev;
-  UINT8                               Phase;
-  UINT16                              Reserved;
-  UINT32                              ErrorStatusValue;
-  UINT64                              AdditionalInfo1;
-  UINT64                              AdditionalInfo2;
-  EFI_GUID                            ModuleID;
-  EFI_GUID                            PartitionID;
+  UINT8       Rev;
+  UINT8       Phase;
+  UINT16      Reserved;
+  UINT32      ErrorStatusValue;
+  UINT64      AdditionalInfo1;
+  UINT64      AdditionalInfo2;
+  EFI_GUID    ModuleID;
+  EFI_GUID    PartitionID;
 } MS_WHEA_EARLY_STORAGE_ENTRY_V0, MS_WHEA_EARLY_STORAGE_ENTRY_COMMON;
 
 #pragma pack()
@@ -82,7 +82,7 @@ UINT8
 EFIAPI
 MsWheaEarlyStorageGetMaxSize (
   VOID
-);
+  );
 
 /**
 
@@ -100,10 +100,10 @@ This routine reads the specified data region from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageRead (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
-);
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
+  );
 
 /**
 
@@ -121,10 +121,10 @@ This routine writes the specified data region from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageWrite (
-  VOID                                *Ptr,
-  UINT8                               Size,
-  UINT8                               Offset
-);
+  VOID   *Ptr,
+  UINT8  Size,
+  UINT8  Offset
+  );
 
 /**
 
@@ -141,9 +141,9 @@ This routine clears the specified data region from the MS WHEA store to PcdMsWhe
 EFI_STATUS
 EFIAPI
 MsWheaEarlyStorageClear (
-  UINT8                               Size,
-  UINT8                               Offset
-);
+  UINT8  Size,
+  UINT8  Offset
+  );
 
 /**
 
@@ -162,9 +162,9 @@ the last byte of active range (excluding checksum field).
 EFI_STATUS
 EFIAPI
 MsWheaESCalculateChecksum16 (
-  MS_WHEA_EARLY_STORAGE_HEADER    *Header,
-  UINT16                          *Checksum
-);
+  MS_WHEA_EARLY_STORAGE_HEADER  *Header,
+  UINT16                        *Checksum
+  );
 
 /**
 
@@ -177,7 +177,7 @@ UINT8
 EFIAPI
 MsWheaESGetMaxDataCount (
   VOID
-);
+  );
 
 /**
 
@@ -196,9 +196,9 @@ from the MS WHEA store.
 EFI_STATUS
 EFIAPI
 MsWheaESFindSlot (
-  IN UINT8 Size,
-  IN UINT8 *Offset
-);
+  IN UINT8  Size,
+  IN UINT8  *Offset
+  );
 
 /**
 This routine adds an MS_WHEA_EARLY_STORAGE_ENTRY_V0 record to the WHEA early store region using the supplied

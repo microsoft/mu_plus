@@ -27,7 +27,7 @@
 BOOLEAN
 EFIAPI
 IsCapsuleGuidInEsrtTable (
-  IN EFI_GUID      *CapsuleGuid
+  IN EFI_GUID  *CapsuleGuid
   )
 {
   // TODO: query the ESRT cache to determine if the FWClass matches an entry

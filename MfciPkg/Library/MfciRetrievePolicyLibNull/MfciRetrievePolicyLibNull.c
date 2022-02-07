@@ -39,8 +39,8 @@ Arguments:
 EFI_STATUS
 EFIAPI
 MfciRetrievePolicy (
-    OUT  MFCI_POLICY_TYPE  *MfciPolicyValue
- )
+  OUT  MFCI_POLICY_TYPE  *MfciPolicyValue
+  )
 {
   return EFI_UNSUPPORTED;
 }

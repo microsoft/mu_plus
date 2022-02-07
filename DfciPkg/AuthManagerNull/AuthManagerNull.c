@@ -15,57 +15,55 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-EFI_HANDLE                         mImageHandle = NULL;
-
-
+EFI_HANDLE  mImageHandle = NULL;
 
 EFI_STATUS
 EFIAPI
-GetIdentityProperties(
-IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
-IN  CONST DFCI_AUTH_TOKEN                  *IdentityToken,
-IN OUT DFCI_IDENTITY_PROPERTIES            *Properties
-)
+GetIdentityProperties (
+  IN  CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN  CONST DFCI_AUTH_TOKEN               *IdentityToken,
+  IN OUT DFCI_IDENTITY_PROPERTIES         *Properties
+  )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
   return EFI_UNSUPPORTED;
 }
 
 EFI_STATUS
 EFIAPI
-DisposeAuthToken(
-IN  CONST DFCI_AUTHENTICATION_PROTOCOL        *This,
-IN OUT DFCI_AUTH_TOKEN                        *IdentityToken
-)
+DisposeAuthToken (
+  IN  CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN OUT DFCI_AUTH_TOKEN                  *IdentityToken
+  )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
   return EFI_UNSUPPORTED;
 }
 
 EFI_STATUS
 EFIAPI
-AuthWithSignedData(
-  IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
-  IN  CONST UINT8                            *SignedData,
-  IN  UINTN                                   SignedDataLength,
-  IN  CONST WIN_CERTIFICATE                  *Signature,
-  IN OUT DFCI_AUTH_TOKEN                     *IdentityToken
-)
+AuthWithSignedData (
+  IN  CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN  CONST UINT8                         *SignedData,
+  IN  UINTN                               SignedDataLength,
+  IN  CONST WIN_CERTIFICATE               *Signature,
+  IN OUT DFCI_AUTH_TOKEN                  *IdentityToken
+  )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
   return EFI_UNSUPPORTED;
 }
 
 EFI_STATUS
 EFIAPI
-AuthWithPW(
-IN  CONST DFCI_AUTHENTICATION_PROTOCOL     *This,
-IN  CONST CHAR16                           *Password OPTIONAL,
-IN  UINTN                                   PasswordLength,
-OUT DFCI_AUTH_TOKEN                        *IdentityToken
-)
+AuthWithPW (
+  IN  CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN  CONST CHAR16                        *Password OPTIONAL,
+  IN  UINTN                               PasswordLength,
+  OUT DFCI_AUTH_TOKEN                     *IdentityToken
+  )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
 
   *IdentityToken = 0x37;
   return EFI_SUCCESS;
@@ -73,65 +71,65 @@ OUT DFCI_AUTH_TOKEN                        *IdentityToken
 
 EFI_STATUS
 EFIAPI
-GetRecoveryPacket(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
-  IN       DFCI_IDENTITY_ID                   Identity,
-  OUT      DFCI_AUTH_RECOVERY_PACKET          **Packet
+GetRecoveryPacket (
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN       DFCI_IDENTITY_ID              Identity,
+  OUT      DFCI_AUTH_RECOVERY_PACKET     **Packet
   )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
   return EFI_UNSUPPORTED;
 }
 
 EFI_STATUS
 EFIAPI
-SetRecoveryResponse(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
-  IN CONST UINT8                              *RecoveryResponse,
-  IN       UINTN                               Size
+SetRecoveryResponse (
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN CONST UINT8                         *RecoveryResponse,
+  IN       UINTN                         Size
   )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
   return EFI_UNSUPPORTED;
 }
 
 EFI_STATUS
 EFIAPI
-GetEnrolledIdentities(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
-  OUT      DFCI_IDENTITY_MASK                 *EnrolledIdentities
+GetEnrolledIdentities (
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  OUT      DFCI_IDENTITY_MASK            *EnrolledIdentities
   )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
   return EFI_UNSUPPORTED;
 }
 
 EFI_STATUS
 EFIAPI
-GetCertInfo(
-  IN CONST DFCI_AUTHENTICATION_PROTOCOL       *This,
-  IN       DFCI_IDENTITY_ID                    Identity,
-  IN CONST UINT8                              *Cert          OPTIONAL,
-  IN       UINTN                               CertSize,
-  IN       DFCI_CERT_REQUEST                   CertRequest,
-  IN       DFCI_CERT_FORMAT                    CertFormat,
-  OUT      VOID                              **Value,
-  OUT      UINTN                              *ValueSize     OPTIONAL
+GetCertInfo (
+  IN CONST DFCI_AUTHENTICATION_PROTOCOL  *This,
+  IN       DFCI_IDENTITY_ID              Identity,
+  IN CONST UINT8                         *Cert          OPTIONAL,
+  IN       UINTN                         CertSize,
+  IN       DFCI_CERT_REQUEST             CertRequest,
+  IN       DFCI_CERT_FORMAT              CertFormat,
+  OUT      VOID                          **Value,
+  OUT      UINTN                         *ValueSize     OPTIONAL
   )
 {
-  DEBUG((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
+  DEBUG ((DEBUG_ERROR, "NullAuthManager - %a\n", __FUNCTION__));
   return EFI_UNSUPPORTED;
 }
 
 DFCI_AUTHENTICATION_PROTOCOL  mAuthProtocol = {
-    GetEnrolledIdentities,
-    AuthWithPW,
-    AuthWithSignedData,
-    DisposeAuthToken,
-    GetIdentityProperties,
-    GetCertInfo,
-    GetRecoveryPacket,
-    SetRecoveryResponse
+  GetEnrolledIdentities,
+  AuthWithPW,
+  AuthWithSignedData,
+  DisposeAuthToken,
+  GetIdentityProperties,
+  GetCertInfo,
+  GetRecoveryPacket,
+  SetRecoveryResponse
 };
 
 /**
@@ -143,19 +141,21 @@ DFCI_AUTHENTICATION_PROTOCOL  mAuthProtocol = {
 **/
 EFI_STATUS
 EFIAPI
-Init(
-  IN EFI_HANDLE                   ImageHandle,
-  IN EFI_SYSTEM_TABLE             *SystemTable
+Init (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS Status;
-  DEBUG((DEBUG_ERROR, "NullAuthManager %a, this is not a secure implementation of AuthManager!!\n", __FUNCTION__));
-  //Install Auth Provider Support Protocol and Apply Identity Protocol
-  Status = gBS->InstallMultipleProtocolInterfaces(
-    &mImageHandle,
-    &gDfciAuthenticationProtocolGuid,
-    &mAuthProtocol,
-    NULL);
+  EFI_STATUS  Status;
+
+  DEBUG ((DEBUG_ERROR, "NullAuthManager %a, this is not a secure implementation of AuthManager!!\n", __FUNCTION__));
+  // Install Auth Provider Support Protocol and Apply Identity Protocol
+  Status = gBS->InstallMultipleProtocolInterfaces (
+                  &mImageHandle,
+                  &gDfciAuthenticationProtocolGuid,
+                  &mAuthProtocol,
+                  NULL
+                  );
 
   return Status;
 }

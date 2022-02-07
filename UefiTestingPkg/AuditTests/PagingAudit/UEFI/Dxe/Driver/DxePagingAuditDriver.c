@@ -7,13 +7,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-
 #include "../../PagingAuditCommon.h"
 
-CHAR8     *mMemoryInfoDatabaseBuffer = NULL;
-UINTN     mMemoryInfoDatabaseSize = 0;
-UINTN     mMemoryInfoDatabaseAllocSize = 0;
-
+CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
+UINTN  mMemoryInfoDatabaseSize      = 0;
+UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
 /**
   SmmPagingAuditAppEntryPoint
@@ -28,23 +26,24 @@ UINTN     mMemoryInfoDatabaseAllocSize = 0;
 EFI_STATUS
 EFIAPI
 PagingAuditDriverEntryPoint (
-  IN     EFI_HANDLE         ImageHandle,
+  IN     EFI_HANDLE        ImageHandle,
   IN     EFI_SYSTEM_TABLE  *SystemTable
-)
+  )
 {
-  EFI_STATUS    Status = EFI_SUCCESS;
-  DEBUG((DEBUG_ERROR, "%a registered - %r\n", __FUNCTION__, Status));
-  EFI_EVENT                         Event;
+  EFI_STATUS  Status = EFI_SUCCESS;
+
+  DEBUG ((DEBUG_ERROR, "%a registered - %r\n", __FUNCTION__, Status));
+  EFI_EVENT  Event;
 
   Status = gBS->CreateEventEx (
-                      EVT_NOTIFY_SIGNAL,
-                      TPL_CALLBACK,
-                      DumpPagingInfo,
-                      NULL,
-                      &gMuEventPreExitBootServicesGuid,
-                      &Event
-                      );
-  DEBUG((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  DumpPagingInfo,
+                  NULL,
+                  &gMuEventPreExitBootServicesGuid,
+                  &Event
+                  );
+  DEBUG ((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 
   return EFI_SUCCESS;
 } // PagingAuditDxeEntryPoint()

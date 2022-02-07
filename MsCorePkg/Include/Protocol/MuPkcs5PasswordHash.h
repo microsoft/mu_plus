@@ -10,8 +10,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __MU_PKCS5_PASSWORD_HASH_H__
 #define __MU_PKCS5_PASSWORD_HASH_H__
 
-typedef struct _MU_PKCS5_PASSWORD_HASH_PROTOCOL  MU_PKCS5_PASSWORD_HASH_PROTOCOL;
-
+typedef struct _MU_PKCS5_PASSWORD_HASH_PROTOCOL MU_PKCS5_PASSWORD_HASH_PROTOCOL;
 
 /**
   Uses PKCS5 Defined algorithm to Hash a password string
@@ -34,8 +33,8 @@ typedef struct _MU_PKCS5_PASSWORD_HASH_PROTOCOL  MU_PKCS5_PASSWORD_HASH_PROTOCOL
 **/
 typedef
 EFI_STATUS
-(EFIAPI *MU_PKCS5_PW_HASH) (
-  IN CONST MU_PKCS5_PASSWORD_HASH_PROTOCOL   *This,   
+(EFIAPI *MU_PKCS5_PW_HASH)(
+  IN CONST MU_PKCS5_PASSWORD_HASH_PROTOCOL   *This,
   IN UINTN                                      PasswordSize,
   IN CONST  CHAR8                              *Password,
   IN UINTN                                      SaltSize,
@@ -49,11 +48,10 @@ EFI_STATUS
 ///
 /// PKCS5 protocol
 ///
-struct _MU_PKCS5_PASSWORD_HASH_PROTOCOL
-{
-  MU_PKCS5_PW_HASH HashPassword;
+struct _MU_PKCS5_PASSWORD_HASH_PROTOCOL {
+  MU_PKCS5_PW_HASH    HashPassword;
 };
 
-extern EFI_GUID gMuPKCS5PasswordHashProtocolGuid;
+extern EFI_GUID  gMuPKCS5PasswordHashProtocolGuid;
 
 #endif // __MU_PKCS5_PW_HASH_H__

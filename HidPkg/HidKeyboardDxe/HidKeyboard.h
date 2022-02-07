@@ -11,10 +11,9 @@
 #ifndef _HID_KEYBOARD_H_
 #define _HID_KEYBOARD_H_
 
-
 #include "HidKbDxe.h"
 
-#define HID_KEYBOARD_KEY_COUNT            105
+#define HID_KEYBOARD_KEY_COUNT  105
 
 #define HID_KEYBOARD_LANGUAGE_STR_LEN     5         // RFC4646 Language Code: "en-US"
 #define HID_KEYBOARD_DESCRIPTION_STR_LEN  (16 + 1)  // Description: "English Keyboard"
@@ -24,26 +23,26 @@ typedef struct {
   //
   // This 4-bytes total array length is required by PreparePackageList()
   //
-  UINT32                 Length;
+  UINT32                    Length;
 
   //
   // Keyboard Layout package definition
   //
-  EFI_HII_PACKAGE_HEADER PackageHeader;
-  UINT16                 LayoutCount;
+  EFI_HII_PACKAGE_HEADER    PackageHeader;
+  UINT16                    LayoutCount;
 
   //
   // EFI_HII_KEYBOARD_LAYOUT
   //
-  UINT16                 LayoutLength;
-  EFI_GUID               Guid;
-  UINT32                 LayoutDescriptorStringOffset;
-  UINT8                  DescriptorCount;
-  EFI_KEY_DESCRIPTOR     KeyDescriptor[HID_KEYBOARD_KEY_COUNT];
-  UINT16                 DescriptionCount;
-  CHAR16                 Language[HID_KEYBOARD_LANGUAGE_STR_LEN];
-  CHAR16                 Space;
-  CHAR16                 DescriptionString[HID_KEYBOARD_DESCRIPTION_STR_LEN];
+  UINT16                    LayoutLength;
+  EFI_GUID                  Guid;
+  UINT32                    LayoutDescriptorStringOffset;
+  UINT8                     DescriptorCount;
+  EFI_KEY_DESCRIPTOR        KeyDescriptor[HID_KEYBOARD_KEY_COUNT];
+  UINT16                    DescriptionCount;
+  CHAR16                    Language[HID_KEYBOARD_LANGUAGE_STR_LEN];
+  CHAR16                    Space;
+  CHAR16                    DescriptionString[HID_KEYBOARD_DESCRIPTION_STR_LEN];
 } HID_KEYBOARD_LAYOUT_PACK_BIN;
 #pragma pack()
 
@@ -59,7 +58,7 @@ typedef struct {
 **/
 EFI_STATUS
 InitHidKeyboard (
-  IN OUT HID_KB_DEV   *HidKeyboardDevice
+  IN OUT HID_KB_DEV  *HidKeyboardDevice
   );
 
 /**
@@ -79,7 +78,7 @@ InitHidKeyboard (
 **/
 EFI_STATUS
 InitKeyboardLayout (
-  OUT HID_KB_DEV   *HidKeyboardDevice
+  OUT HID_KB_DEV  *HidKeyboardDevice
   );
 
 /**
@@ -90,9 +89,8 @@ InitKeyboardLayout (
 **/
 VOID
 ReleaseKeyboardLayoutResources (
-  IN OUT HID_KB_DEV              *HidKeyboardDevice
+  IN OUT HID_KB_DEV  *HidKeyboardDevice
   );
-
 
 /**
   Initial processing of the HID key report. Processes and queues individual keys
@@ -105,10 +103,11 @@ ReleaseKeyboardLayoutResources (
   @retval VOID                  None
 
 **/
-VOID ProcessKeyStroke (
-  IN UINT8                  *HidInputReportBuffer,
-  IN UINTN                  HidInputReportBufferSize,
-  IN HID_KB_DEV             *HidKeyboardDevice
+VOID
+ProcessKeyStroke (
+  IN UINT8       *HidInputReportBuffer,
+  IN UINTN       HidInputReportBufferSize,
+  IN HID_KB_DEV  *HidKeyboardDevice
   );
 
 /**
@@ -125,7 +124,7 @@ VOID ProcessKeyStroke (
 
 **/
 EFI_STATUS
-HIDProcessModifierKey(
+HIDProcessModifierKey (
   IN HID_KB_DEV  *HidKeyboardDevice,
   IN HID_KEY     *HIDKey
   );
@@ -148,9 +147,9 @@ HIDProcessModifierKey(
 **/
 EFI_STATUS
 HIDKeyCodeToEfiInputKey (
-  IN  HID_KB_DEV      *HidKeyboardDevice,
-  IN  UINT8           KeyCode,
-  OUT EFI_KEY_DATA    *KeyData
+  IN  HID_KB_DEV    *HidKeyboardDevice,
+  IN  UINT8         KeyCode,
+  OUT EFI_KEY_DATA  *KeyData
   );
 
 /**
@@ -169,11 +168,11 @@ HIDKeyCodeToEfiInputKey (
 **/
 VOID
 EFIAPI
-HIDProcessKeyStrokesCallback(
-  IN KEYBOARD_HID_INTERFACE Interface,
-  IN UINT8                  *HidInputReportBuffer,
-  IN UINTN                  HidInputReportBufferSize,
-  IN VOID                   *Context
+HIDProcessKeyStrokesCallback (
+  IN KEYBOARD_HID_INTERFACE  Interface,
+  IN UINT8                   *HidInputReportBuffer,
+  IN UINTN                   HidInputReportBufferSize,
+  IN VOID                    *Context
   );
 
 /**
@@ -185,8 +184,8 @@ HIDProcessKeyStrokesCallback(
 **/
 VOID
 InitQueue (
-  IN OUT  HID_SIMPLE_QUEUE   *Queue,
-  IN      UINTN              ItemSize
+  IN OUT  HID_SIMPLE_QUEUE  *Queue,
+  IN      UINTN             ItemSize
   );
 
 /**
@@ -196,9 +195,8 @@ InitQueue (
 **/
 VOID
 DestroyQueue (
-  IN OUT HID_SIMPLE_QUEUE   *Queue
+  IN OUT HID_SIMPLE_QUEUE  *Queue
   );
-
 
 /**
   Check whether the queue is empty.
@@ -211,9 +209,8 @@ DestroyQueue (
 **/
 BOOLEAN
 IsQueueEmpty (
-  IN  HID_SIMPLE_QUEUE   *Queue
+  IN  HID_SIMPLE_QUEUE  *Queue
   );
-
 
 /**
   Check whether the queue is full.
@@ -226,9 +223,8 @@ IsQueueEmpty (
 **/
 BOOLEAN
 IsQueueFull (
-  IN  HID_SIMPLE_QUEUE   *Queue
+  IN  HID_SIMPLE_QUEUE  *Queue
   );
-
 
 /**
   Enqueue the item to the queue.
@@ -239,11 +235,10 @@ IsQueueFull (
 **/
 VOID
 Enqueue (
-  IN OUT  HID_SIMPLE_QUEUE *Queue,
-  IN      VOID             *Item,
-  IN      UINTN            ItemSize
+  IN OUT  HID_SIMPLE_QUEUE  *Queue,
+  IN      VOID              *Item,
+  IN      UINTN             ItemSize
   );
-
 
 /**
   Dequeue a item from the queue.
@@ -258,9 +253,9 @@ Enqueue (
 **/
 EFI_STATUS
 Dequeue (
-  IN OUT  HID_SIMPLE_QUEUE *Queue,
-     OUT  VOID             *Item,
-  IN      UINTN            ItemSize
+  IN OUT  HID_SIMPLE_QUEUE  *Queue,
+  OUT  VOID                 *Item,
+  IN      UINTN             ItemSize
   );
 
 /**
@@ -269,9 +264,9 @@ Sends CAPSLOCK LED status to keyboard
 @param  HidKeyboardDevice     The HID_KB_DEV instance.
 **/
 VOID
-SetKeyLED(
-    IN  HID_KB_DEV      *HidKeyboardDevice
-);
+SetKeyLED (
+  IN  HID_KB_DEV  *HidKeyboardDevice
+  );
 
 /**
   Handler for Repeat Key event.
@@ -289,8 +284,8 @@ SetKeyLED(
 VOID
 EFIAPI
 HidKeyboardRepeatHandler (
-  IN    EFI_EVENT    Event,
-  IN    VOID         *Context
+  IN    EFI_EVENT  Event,
+  IN    VOID       *Context
   );
 
 #endif

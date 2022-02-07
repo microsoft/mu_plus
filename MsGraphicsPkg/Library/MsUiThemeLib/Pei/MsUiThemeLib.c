@@ -23,9 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/HobLib.h>
 #include <Library/MsUiThemeLib.h>
 
-
-extern MS_UI_THEME_DESCRIPTION *gPlatformTheme;
-
+extern MS_UI_THEME_DESCRIPTION  *gPlatformTheme;
 
 /**
   The constructor function locates the Theme PPI
@@ -39,23 +37,22 @@ extern MS_UI_THEME_DESCRIPTION *gPlatformTheme;
 EFI_STATUS
 EFIAPI
 MsUiThemeLibConstructor (
-  IN EFI_PEI_FILE_HANDLE        FileHandle,
-  IN CONST EFI_PEI_SERVICES     **PeiServices
+  IN EFI_PEI_FILE_HANDLE     FileHandle,
+  IN CONST EFI_PEI_SERVICES  **PeiServices
   )
 {
-    EFI_HOB_GUID_TYPE                    *GuidHob;
+  EFI_HOB_GUID_TYPE  *GuidHob;
 
-    GuidHob = GetFirstGuidHob (&gMsUiThemeHobGuid);
-    ASSERT (GuidHob != NULL);
-    gPlatformTheme = * ((MS_UI_THEME_DESCRIPTION **) (UINTN)(GET_GUID_HOB_DATA(GuidHob)));
-    ASSERT (gPlatformTheme != NULL );
-    if (gPlatformTheme != 0) {
-        ASSERT (gPlatformTheme->Signature == MS_UI_THEME_PROTOCOL_SIGNATURE );
-        if (gPlatformTheme->Signature != MS_UI_THEME_PROTOCOL_SIGNATURE) {
-            gPlatformTheme = NULL;
-        }
+  GuidHob = GetFirstGuidHob (&gMsUiThemeHobGuid);
+  ASSERT (GuidHob != NULL);
+  gPlatformTheme = *((MS_UI_THEME_DESCRIPTION **)(UINTN)(GET_GUID_HOB_DATA (GuidHob)));
+  ASSERT (gPlatformTheme != NULL);
+  if (gPlatformTheme != 0) {
+    ASSERT (gPlatformTheme->Signature == MS_UI_THEME_PROTOCOL_SIGNATURE);
+    if (gPlatformTheme->Signature != MS_UI_THEME_PROTOCOL_SIGNATURE) {
+      gPlatformTheme = NULL;
     }
+  }
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
-

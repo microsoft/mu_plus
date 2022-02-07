@@ -13,21 +13,20 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
     function calls to the correct library
 **/
 typedef VOID (EFIAPI DEBUG_PRINT)(
-    IN  UINTN        ErrorLevel,
-    IN  CONST CHAR8  *Format,
-    IN  VA_LIST      VaListMarker
-    );
+  IN  UINTN        ErrorLevel,
+  IN  CONST CHAR8  *Format,
+  IN  VA_LIST      VaListMarker
+  );
 
 /**
     DebugAssert Protocol Shim used to route
     function calls to the correct library
 **/
 typedef VOID (EFIAPI DEBUG_ASSERT)(
-    IN CONST CHAR8  *FileName,
-    IN UINTN        LineNumber,
-    IN CONST CHAR8  *Description
-    );
-
+  IN CONST CHAR8  *FileName,
+  IN UINTN        LineNumber,
+  IN CONST CHAR8  *Description
+  );
 
 /**
     DebugPrint functions implemented

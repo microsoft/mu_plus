@@ -26,7 +26,6 @@ PasswordStoreIsPasswordSet (
   VOID
   );
 
-
 /**
   Set the password variable.
 
@@ -43,10 +42,9 @@ PasswordStoreIsPasswordSet (
 EFI_STATUS
 EFIAPI
 PasswordStoreSetPassword (
-  IN  CONST UINT8      *PasswordHash,
-  IN        UINTN       PasswordHashSize
-);
-
+  IN  CONST UINT8  *PasswordHash,
+  IN        UINTN  PasswordHashSize
+  );
 
 /**
   Public interface for validating a password against the current password.

@@ -1,4 +1,3 @@
-
 /** @file
 Library to provide platform version information
 
@@ -19,7 +18,7 @@ UINT32
 EFIAPI
 GetUefiVersionNumber (
   VOID
-);
+  );
 
 /**
   Return a Null-terminated Uefi version Ascii string defined by platform
@@ -41,9 +40,9 @@ GetUefiVersionNumber (
 EFI_STATUS
 EFIAPI
 GetUefiVersionStringAscii (
-      OUT CHAR8   *Buffer,            OPTIONAL
+  OUT CHAR8 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-);
+  );
 
 /**
   Return a Null-terminated Uefi version Unicode string defined by platform
@@ -65,9 +64,9 @@ GetUefiVersionStringAscii (
 EFI_STATUS
 EFIAPI
 GetUefiVersionStringUnicode (
-      OUT CHAR16  *Buffer,            OPTIONAL
+  OUT CHAR16 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-);
+  );
 
 /**
   Return a Null-terminated Uefi build date Ascii string defined by platform
@@ -89,9 +88,9 @@ GetUefiVersionStringUnicode (
 EFI_STATUS
 EFIAPI
 GetBuildDateStringAscii (
-      OUT CHAR8   *Buffer,            OPTIONAL
+  OUT CHAR8 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-);
+  );
 
 /**
   Return a Null-terminated Uefi build date Unicode defined by platform
@@ -113,8 +112,8 @@ GetBuildDateStringAscii (
 EFI_STATUS
 EFIAPI
 GetBuildDateStringUnicode (
-      OUT CHAR16  *Buffer,            OPTIONAL
+  OUT CHAR16 *Buffer, OPTIONAL
   IN  OUT UINTN   *Length
-);
+  );
 
 #endif // __MU_UEFI_VERSION_LIB__

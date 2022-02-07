@@ -11,7 +11,6 @@
 #ifndef __ADVANCED_LOGGER_HDW_PORT_LIB__
 #define __ADVANCED_LOGGER_HDW_PORT_LIB__
 
-
 /**
   Initialize the hardware port.
 
@@ -51,9 +50,9 @@ AdvancedLoggerHdwPortInitialize (
 UINTN
 EFIAPI
 AdvancedLoggerHdwPortWrite (
-  IN UINTN     DebugLevel,
-  IN UINT8     *Buffer,
-  IN UINTN     NumberOfBytes
+  IN UINTN  DebugLevel,
+  IN UINT8  *Buffer,
+  IN UINTN  NumberOfBytes
   );
 
 #endif

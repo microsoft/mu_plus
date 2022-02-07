@@ -15,15 +15,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // ProgressCircle context
 //
-typedef struct
-{
-  POINT                        Origin;
-  UINT8*                       FrameBufferBase;
-  UINTN                        PixelsPerScanLine;
-  UINT16                       OuterRadius;
-  UINT16                       InnerRadius;
+typedef struct {
+  POINT     Origin;
+  UINT8     *FrameBufferBase;
+  UINTN     PixelsPerScanLine;
+  UINT16    OuterRadius;
+  UINT16    InnerRadius;
 } ProgressCircle;
-
 
 /*
 Method to use create a new ProgressCircle struct.
@@ -41,16 +39,15 @@ draw the progress circle to the screen
 @ret   A new ProgressCircle structure used for updating and drawing the progress circle
 
 */
-ProgressCircle*
+ProgressCircle *
 EFIAPI
-new_ProgressCircle(
-  IN POINT *Origin,
-  IN UINT8 *FrameBufferBase,
-  IN UINTN PixelsPerScanLine,
-  IN UINT16 InnerRadius,
-  IN UINT16 OuterRadius
+new_ProgressCircle (
+  IN POINT   *Origin,
+  IN UINT8   *FrameBufferBase,
+  IN UINTN   PixelsPerScanLine,
+  IN UINT16  InnerRadius,
+  IN UINT16  OuterRadius
   );
-
 
 /*
 Method to free all allocated memory of the ProgressCircle
@@ -60,7 +57,7 @@ Method to free all allocated memory of the ProgressCircle
 */
 VOID
 EFIAPI
-delete_ProgressCircle(
+delete_ProgressCircle (
   IN ProgressCircle *this
   );
 
@@ -76,12 +73,11 @@ as it progresses.
 */
 VOID
 EFIAPI
-InitializeProgress(
-IN ProgressCircle *this,
-IN UINT32 BgColor,
-IN UINT32 ProgressColor
-);
-
+InitializeProgress (
+  IN ProgressCircle *this,
+  IN UINT32  BgColor,
+  IN UINT32  ProgressColor
+  );
 
 /*
 Method to use ProgressCircle as a Progress indicator.
@@ -95,11 +91,10 @@ as it progresses.
 */
 VOID
 EFIAPI
-UpdateProgress(
+UpdateProgress (
   IN ProgressCircle *this,
-  IN INT8 Progress
+  IN INT8  Progress
   );
-
 
 /*
 Method to draw/fill the entire progress circle.
@@ -110,9 +105,9 @@ Method to draw/fill the entire progress circle.
 */
 VOID
 EFIAPI
-DrawAll(
+DrawAll (
   IN  ProgressCircle *this,
-  UINT32 Color
+  UINT32  Color
   );
 
 /*
@@ -125,11 +120,10 @@ DrawAll(
 */
 VOID
 EFIAPI
-DrawSegment(
+DrawSegment (
   IN ProgressCircle *this,
-  INT8 Segment,
-  UINT32 Color
+  INT8    Segment,
+  UINT32  Color
   );
-
 
 #endif

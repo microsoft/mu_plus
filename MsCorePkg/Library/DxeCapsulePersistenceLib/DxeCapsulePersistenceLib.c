@@ -2,7 +2,7 @@
   This is a DXE version of the CapsulePersistenceLib.
   This implements the public interface of the library for DXE.
   It uses the disk to persist capsule images across reset
- 
+
   Copyright (c) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -35,8 +35,8 @@
 EFI_STATUS
 EFIAPI
 PersistCapsuleImageAcrossReset (
-  IN  EFI_CAPSULE_HEADER           *CapsuleHeader,
-  OUT CAPSULE_PERSISTED_IDENTIFIER *CapsuleIdentifier    OPTIONAL
+  IN  EFI_CAPSULE_HEADER            *CapsuleHeader,
+  OUT CAPSULE_PERSISTED_IDENTIFIER  *CapsuleIdentifier    OPTIONAL
   )
 {
   return InternalPersistCapsuleImageAcrossReset (CapsuleHeader, CapsuleIdentifier);
@@ -63,14 +63,15 @@ PersistCapsuleImageAcrossReset (
 EFI_STATUS
 EFIAPI
 GrabPersistedCapsuleByIdentifier (
-  IN  CAPSULE_PERSISTED_IDENTIFIER *CapsuleIdentifier,
-  OUT EFI_CAPSULE_HEADER           *CapsuleData OPTIONAL,
-  OUT UINTN                        *CapsuleDataSize
+  IN  CAPSULE_PERSISTED_IDENTIFIER  *CapsuleIdentifier,
+  OUT EFI_CAPSULE_HEADER            *CapsuleData OPTIONAL,
+  OUT UINTN                         *CapsuleDataSize
   )
 {
   if (CapsuleIdentifier == NULL) {
     return EFI_INVALID_PARAMETER;
   }
+
   return InternalGetPersistedCapsuleData (CapsuleIdentifier->CapsuleId, CapsuleIdentifier->CapsuleHash, CapsuleData, CapsuleDataSize);
 }
 
@@ -87,7 +88,7 @@ EFI_STATUS
 EFIAPI
 DeletePersistedCapsuleById (
   IN  UINT32  CapsuleId
- )
+  )
 {
   return InternalDeletePersistedCapsuleData (CapsuleId);
 }

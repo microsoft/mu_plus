@@ -23,7 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 */
 
-#define COPY_FONT(target,bufptr,source,font) \
+#define COPY_FONT(target, bufptr, source, font) \
     target->font = FONT_PTR_SET bufptr; \
     CopyMem (bufptr, (FONT_PTR_GET source->font), sizeof(MS_UI_FONT_DESCRIPTION)); \
     bufptr += sizeof(MS_UI_FONT_DESCRIPTION); \
@@ -36,62 +36,63 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 UINT32
 EFIAPI
-MsThemeGetSize(
-    IN CONST MS_UI_THEME_DESCRIPTION *Theme
-)
+MsThemeGetSize (
+  IN CONST MS_UI_THEME_DESCRIPTION  *Theme
+  )
 {
-    UINT32 FontSize;
+  UINT32  FontSize;
 
-    ASSERT(Theme != NULL);
+  ASSERT (Theme != NULL);
 
-    FontSize = sizeof(MS_UI_THEME_DESCRIPTION) +
+  FontSize = sizeof (MS_UI_THEME_DESCRIPTION) +
 
-               sizeof(MS_UI_FONT_DESCRIPTION) +
-               (FONT_PTR_GET Theme->FixedFont)->PackageSize + (FONT_PTR_GET Theme->FixedFont)->GlyphsSize +
+             sizeof (MS_UI_FONT_DESCRIPTION) +
+             (FONT_PTR_GET Theme->FixedFont)->PackageSize + (FONT_PTR_GET Theme->FixedFont)->GlyphsSize +
 
-               sizeof(MS_UI_FONT_DESCRIPTION) +
-               (FONT_PTR_GET Theme->SmallOSKFont)->PackageSize + (FONT_PTR_GET Theme->SmallOSKFont)->GlyphsSize +
+             sizeof (MS_UI_FONT_DESCRIPTION) +
+             (FONT_PTR_GET Theme->SmallOSKFont)->PackageSize + (FONT_PTR_GET Theme->SmallOSKFont)->GlyphsSize +
 
-               sizeof(MS_UI_FONT_DESCRIPTION) +
-               (FONT_PTR_GET Theme->SmallFont)->PackageSize + (FONT_PTR_GET Theme->SmallFont)->GlyphsSize +
+             sizeof (MS_UI_FONT_DESCRIPTION) +
+             (FONT_PTR_GET Theme->SmallFont)->PackageSize + (FONT_PTR_GET Theme->SmallFont)->GlyphsSize +
 
-               sizeof(MS_UI_FONT_DESCRIPTION) +
-               (FONT_PTR_GET Theme->StandardFont)->PackageSize + (FONT_PTR_GET Theme->StandardFont)->GlyphsSize +
+             sizeof (MS_UI_FONT_DESCRIPTION) +
+             (FONT_PTR_GET Theme->StandardFont)->PackageSize + (FONT_PTR_GET Theme->StandardFont)->GlyphsSize +
 
-               sizeof(MS_UI_FONT_DESCRIPTION) +
-               (FONT_PTR_GET Theme->MediumFont)->PackageSize + (FONT_PTR_GET Theme->MediumFont)->GlyphsSize +
+             sizeof (MS_UI_FONT_DESCRIPTION) +
+             (FONT_PTR_GET Theme->MediumFont)->PackageSize + (FONT_PTR_GET Theme->MediumFont)->GlyphsSize +
 
-               sizeof(MS_UI_FONT_DESCRIPTION) +
-               (FONT_PTR_GET Theme->LargeFont)->PackageSize + (FONT_PTR_GET Theme->LargeFont)->GlyphsSize;
+             sizeof (MS_UI_FONT_DESCRIPTION) +
+             (FONT_PTR_GET Theme->LargeFont)->PackageSize + (FONT_PTR_GET Theme->LargeFont)->GlyphsSize;
 
-    return FontSize;
+  return FontSize;
 }
 
 EFI_STATUS
 EFIAPI
-MsThemeCopy(
-    OUT MS_UI_THEME_DESCRIPTION *       Dest,
-    UINT32                              DestBytes,
-    IN CONST MS_UI_THEME_DESCRIPTION *  Source
-)
+MsThemeCopy (
+  OUT MS_UI_THEME_DESCRIPTION       *Dest,
+  UINT32                            DestBytes,
+  IN CONST MS_UI_THEME_DESCRIPTION  *Source
+  )
 {
-    UINT32  ThemeSize;
-    CHAR8 * ThemeCopy;
+  UINT32  ThemeSize;
+  CHAR8   *ThemeCopy;
 
-    ThemeSize = MsThemeGetSize(Source);
-    if (DestBytes < ThemeSize)
-        return EFI_INVALID_PARAMETER;
+  ThemeSize = MsThemeGetSize (Source);
+  if (DestBytes < ThemeSize) {
+    return EFI_INVALID_PARAMETER;
+  }
 
-    ThemeCopy = (CHAR8 *) Dest;
-    CopyMem (ThemeCopy, Source, sizeof(MS_UI_THEME_DESCRIPTION));
-    ThemeCopy += sizeof(MS_UI_THEME_DESCRIPTION);
+  ThemeCopy = (CHAR8 *)Dest;
+  CopyMem (ThemeCopy, Source, sizeof (MS_UI_THEME_DESCRIPTION));
+  ThemeCopy += sizeof (MS_UI_THEME_DESCRIPTION);
 
-    COPY_FONT(Dest,ThemeCopy,Source,FixedFont);
-    COPY_FONT(Dest,ThemeCopy,Source,SmallOSKFont);
-    COPY_FONT(Dest,ThemeCopy,Source,SmallFont);
-    COPY_FONT(Dest,ThemeCopy,Source,StandardFont);
-    COPY_FONT(Dest,ThemeCopy,Source,MediumFont);
-    COPY_FONT(Dest,ThemeCopy,Source,LargeFont);
+  COPY_FONT (Dest, ThemeCopy, Source, FixedFont);
+  COPY_FONT (Dest, ThemeCopy, Source, SmallOSKFont);
+  COPY_FONT (Dest, ThemeCopy, Source, SmallFont);
+  COPY_FONT (Dest, ThemeCopy, Source, StandardFont);
+  COPY_FONT (Dest, ThemeCopy, Source, MediumFont);
+  COPY_FONT (Dest, ThemeCopy, Source, LargeFont);
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }

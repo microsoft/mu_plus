@@ -29,11 +29,11 @@
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetManufacturer (
-    OUT CHAR16  **Manufacturer,
-    OUT UINTN    *ManufacturerSize   OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  OUT CHAR16  **Manufacturer,
+  OUT UINTN   *ManufacturerSize   OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -49,11 +49,11 @@ MfciIdSupportGetManufacturer (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetProductName (
-    OUT CHAR16  **ProductName,
-    OUT UINTN    *ProductNameSize  OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  OUT CHAR16  **ProductName,
+  OUT UINTN   *ProductNameSize  OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -69,11 +69,11 @@ MfciIdSupportGetProductName (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetSerialNumber (
-    OUT CHAR16  **SerialNumber,
-    OUT UINTN    *SerialNumberSize  OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  OUT CHAR16  **SerialNumber,
+  OUT UINTN   *SerialNumberSize  OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -89,11 +89,11 @@ MfciIdSupportGetSerialNumber (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem1 (
-    OUT CHAR16  **Oem1,
-    OUT UINTN    *Oem1Size  OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  OUT CHAR16  **Oem1,
+  OUT UINTN   *Oem1Size  OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }
 
 /**
@@ -109,9 +109,9 @@ MfciIdSupportGetOem1 (
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem2 (
-    OUT CHAR16  **Oem2,
-    OUT UINTN    *Oem2Size  OPTIONAL
-  ) {
-
-    return EFI_UNSUPPORTED;
+  OUT CHAR16  **Oem2,
+  OUT UINTN   *Oem2Size  OPTIONAL
+  )
+{
+  return EFI_UNSUPPORTED;
 }

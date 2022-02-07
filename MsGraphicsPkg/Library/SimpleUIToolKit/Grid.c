@@ -13,33 +13,33 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "SimpleUIToolKitInternal.h"
 
-
 //////////////////////////////////////////////////////////////////////////////
 // Private
 //
 static
 EFI_STATUS
-SetControlBounds (IN Grid       *this,
-                  IN SWM_RECT   Bounds)
+SetControlBounds (
+  IN Grid      *this,
+  IN SWM_RECT  Bounds
+  )
 {
-    // For now, do nothing.
-    return EFI_SUCCESS;
+  // For now, do nothing.
+  return EFI_SUCCESS;
 }
-
 
 static
 EFI_STATUS
-GetControlBounds (IN  Grid      *this,
-                  OUT SWM_RECT  *pBounds)
+GetControlBounds (
+  IN  Grid      *this,
+  OUT SWM_RECT  *pBounds
+  )
 {
-    EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
+  CopyMem (pBounds, &this->m_GridBounds, sizeof (SWM_RECT));
 
-    CopyMem (pBounds, &this->m_GridBounds, sizeof(SWM_RECT));
-
-    return Status;
+  return Status;
 }
-
 
 /**
     Adjusts the client controls origin to align with the grid location specified (the child's xy origin
@@ -58,143 +58,138 @@ GetControlBounds (IN  Grid      *this,
 **/
 static
 EFI_STATUS
-AddControl(IN Grid      *this,
-           IN BOOLEAN   Highlightable,
-           IN BOOLEAN   Invisible,
-           IN UINT32    Row,
-           IN UINT32    Column,
-           IN VOID      *pNewControl)
+AddControl (
+  IN Grid     *this,
+  IN BOOLEAN  Highlightable,
+  IN BOOLEAN  Invisible,
+  IN UINT32   Row,
+  IN UINT32   Column,
+  IN VOID     *pNewControl
+  )
 {
-    EFI_STATUS                  Status              = EFI_SUCCESS;
-    EFI_TPL                     PreviousTPL         = 0;
-    UIT_GRID_CHILD_CONTROL      *pControlList       = NULL;
-    ControlBase                 *pControlBase;
-    SWM_RECT                    ControlBounds;
+  EFI_STATUS              Status        = EFI_SUCCESS;
+  EFI_TPL                 PreviousTPL   = 0;
+  UIT_GRID_CHILD_CONTROL  *pControlList = NULL;
+  ControlBase             *pControlBase;
+  SWM_RECT                ControlBounds;
 
+  // DEBUG((DEBUG_INFO, "INFO [SUIT]: Adding control to grid (Control=0x%x, Row=%d, Column=%d).\r\n", (UINT32)pNewControl, Row, Column));
 
-    //DEBUG((DEBUG_INFO, "INFO [SUIT]: Adding control to grid (Control=0x%x, Row=%d, Column=%d).\r\n", (UINT32)pNewControl, Row, Column));
+  // Validate caller parameters.  Make sure the specified row-column address falls within the grid.
+  //
+  if ((NULL == this) || (NULL == pNewControl) || (Row >= this->m_Rows) || (Column >= this->m_Columns)) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Exit;
+  }
 
-    // Validate caller parameters.  Make sure the specified row-column address falls within the grid.
-    //
-    if (NULL == this || NULL == pNewControl || Row >= this->m_Rows || Column >= this->m_Columns)
-    {
-        Status = EFI_INVALID_PARAMETER;
-        goto Exit;
-    }
+  // Raise the TPL to avoid race condition with the scan or delete routines.
+  //
+  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
-    // Raise the TPL to avoid race condition with the scan or delete routines.
-    //
-    PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+  // Allocate space for the new control's context and add it to the list.
+  //
+  pControlList      = this->m_pControls;
+  this->m_pControls = (UIT_GRID_CHILD_CONTROL *)AllocatePool (sizeof (UIT_GRID_CHILD_CONTROL));
 
-    // Allocate space for the new control's context and add it to the list.
-    //
-    pControlList = this->m_pControls;
-    this->m_pControls = (UIT_GRID_CHILD_CONTROL *) AllocatePool(sizeof(UIT_GRID_CHILD_CONTROL));
+  ASSERT (NULL != this->m_pControls);
+  if (NULL == this->m_pControls) {
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
 
-    ASSERT (NULL != this->m_pControls);
-    if (NULL == this->m_pControls)
-    {
-        Status = EFI_OUT_OF_RESOURCES;
-        goto Exit;
-    }
+  this->m_pControls->pControl = pNewControl;
+  this->m_pControls->Row      = Row;
+  this->m_pControls->Column   = Column;
 
-    this->m_pControls->pControl = pNewControl;
-    this->m_pControls->Row      = Row;
-    this->m_pControls->Column   = Column;
+  this->m_pControls->pNext = pControlList;
+  this->m_pControls->pPrev = NULL;
 
-    this->m_pControls->pNext = pControlList;
-    this->m_pControls->pPrev = NULL;
+  if (NULL != pControlList) {
+    pControlList->pPrev = this->m_pControls;
+  }
 
-    if (NULL != pControlList)
-    {
-        pControlList->pPrev = this->m_pControls;
-    }
+  // Get the child controls origin - this will be the offset from the origin of the grid row-column address specified.
+  //
+  pControlBase = (ControlBase *)pNewControl;
+  Status       = pControlBase->GetControlBounds (
+                                 pNewControl,
+                                 &ControlBounds
+                                 );
 
-    // Get the child controls origin - this will be the offset from the origin of the grid row-column address specified.
-    //
-    pControlBase = (ControlBase *)pNewControl;
-    Status = pControlBase->GetControlBounds (pNewControl,
-                                             &ControlBounds
-                                            );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SUIT] - Grid class failed to obtain controls bounding rectangle.\r\n"));
+    goto Exit;
+  }
 
-    if (EFI_ERROR(Status))
-    {
-        DEBUG ((DEBUG_ERROR, "ERROR [SUIT] - Grid class failed to obtain controls bounding rectangle.\r\n"));
-        goto Exit;
-    }
+  // Compute the screen location associated with the specified grid row-column address.  Note that this may also restrict the
+  // control's size so it doesn't flow into the neighbors cell.
+  //
+  SWM_RECT  NewBounds;
+  UINT32    CellOrigX      = (this->m_GridBounds.Left + (Column * this->m_GridCellWidth));
+  UINT32    CellOrigY      = (this->m_GridBounds.Top + (Row * this->m_GridCellHeight));
+  UINT32    CellEndX       = (CellOrigX + this->m_GridCellWidth - 1);
+  UINT32    CellEndY       = (CellOrigY + this->m_GridCellHeight - 1);
+  UINT32    ControlWidth   = (ControlBounds.Right - ControlBounds.Left + 1);
+  UINT32    ControlHeight  = (ControlBounds.Bottom - ControlBounds.Top + 1);
+  UINT32    VerticalAdjust = (this->m_GridCellHeight - ControlHeight) / 2;
 
-    // Compute the screen location associated with the specified grid row-column address.  Note that this may also restrict the
-    // control's size so it doesn't flow into the neighbors cell.
-    //
-    SWM_RECT    NewBounds;
-    UINT32      CellOrigX       = (this->m_GridBounds.Left + (Column * this->m_GridCellWidth));
-    UINT32      CellOrigY       = (this->m_GridBounds.Top + (Row * this->m_GridCellHeight));
-    UINT32      CellEndX        = (CellOrigX + this->m_GridCellWidth - 1);
-    UINT32      CellEndY        = (CellOrigY + this->m_GridCellHeight - 1);
-    UINT32      ControlWidth    = (ControlBounds.Right - ControlBounds.Left + 1);
-    UINT32      ControlHeight   = (ControlBounds.Bottom - ControlBounds.Top + 1);
-    UINT32      VerticalAdjust  = (this->m_GridCellHeight - ControlHeight) / 2;
+  if (ControlHeight > this->m_GridCellHeight) {
+    DEBUG ((DEBUG_ERROR, "ERROR [Grid]: Found Grid element larger than specified height. GridH=%d,ElemetH=%d.\r\n", this->m_GridCellHeight, ControlHeight));
+    VerticalAdjust         = 0;
+    this->m_GridCellHeight = ControlHeight;
+  }
 
-    if (ControlHeight > this->m_GridCellHeight) {
-        DEBUG ((DEBUG_ERROR, "ERROR [Grid]: Found Grid element larger than specified height. GridH=%d,ElemetH=%d.\r\n",this->m_GridCellHeight,ControlHeight));
-        VerticalAdjust = 0;
-        this->m_GridCellHeight = ControlHeight;
-    }
+  NewBounds.Left   = (CellOrigX + ControlBounds.Left);
+  NewBounds.Top    = (CellOrigY + ControlBounds.Top + VerticalAdjust);
+  NewBounds.Right  = (0 != ControlWidth  ? (NewBounds.Left + ControlWidth - 1) : NewBounds.Left);
+  NewBounds.Bottom = (0 != ControlHeight ? (NewBounds.Top + ControlHeight - 1) : NewBounds.Top);
 
-    NewBounds.Left      = (CellOrigX + ControlBounds.Left);
-    NewBounds.Top       = (CellOrigY + ControlBounds.Top + VerticalAdjust);
-    NewBounds.Right     = (0 != ControlWidth  ? (NewBounds.Left + ControlWidth - 1) : NewBounds.Left);
-    NewBounds.Bottom    = (0 != ControlHeight ? (NewBounds.Top + ControlHeight - 1) : NewBounds.Top);
+  // If the child control is larger than the grid cell size and the truncate flag is set, limit the size to the cell size.
+  //
+  if ((NewBounds.Right > CellEndX) && (TRUE == this->m_TruncateControl)) {
+    NewBounds.Right = CellEndX;
+  }
 
-    // If the child control is larger than the grid cell size and the truncate flag is set, limit the size to the cell size.
-    //
-    if ((NewBounds.Right > CellEndX) && (TRUE == this->m_TruncateControl))
-    {
-        NewBounds.Right = CellEndX;
-    }
+  if ((NewBounds.Bottom > CellEndY) && (TRUE == this->m_TruncateControl)) {
+    NewBounds.Bottom = CellEndY;
+  }
 
-    if ((NewBounds.Bottom > CellEndY) && (TRUE == this->m_TruncateControl))
-    {
-        NewBounds.Bottom = CellEndY;
-    }
+  // Reposition the child control by moving it to the grid-specified cell location and offset.
+  //
+  Status = pControlBase->SetControlBounds (
+                           pNewControl,
+                           NewBounds
+                           );
 
-    // Reposition the child control by moving it to the grid-specified cell location and offset.
-    //
-    Status = pControlBase->SetControlBounds (pNewControl,
-                                             NewBounds
-                                            );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SUIT] - Grid class failed to place child control on the grid.\r\n"));
+    goto Exit;
+  }
 
-    if (EFI_ERROR(Status))
-    {
-        DEBUG ((DEBUG_ERROR, "ERROR [SUIT] - Grid class failed to place child control on the grid.\r\n"));
-        goto Exit;
-    }
+  // Now that the child control has been relocated, add it to the parent canvas controls list so it's rendered and managed.
+  //
+  Status = this->m_ParentCanvas->AddControl (
+                                   this->m_ParentCanvas,
+                                   Highlightable,
+                                   Invisible,
+                                   pNewControl
+                                   );
 
-    // Now that the child control has been relocated, add it to the parent canvas controls list so it's rendered and managed.
-    //
-    Status = this->m_ParentCanvas->AddControl (this->m_ParentCanvas,
-                                               Highlightable,
-                                               Invisible,
-                                               pNewControl);
-
-    if (EFI_ERROR(Status))
-    {
-        DEBUG ((DEBUG_ERROR, "ERROR [SUIT] - Grid class failed to add child control to the parent canvas.\r\n"));
-        goto Exit;
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SUIT] - Grid class failed to add child control to the parent canvas.\r\n"));
+    goto Exit;
+  }
 
 Exit:
 
-    // Restore the TPL.
-    //
-    if (PreviousTPL)
-    {
-        gBS->RestoreTPL (PreviousTPL);
-    }
+  // Restore the TPL.
+  //
+  if (PreviousTPL) {
+    gBS->RestoreTPL (PreviousTPL);
+  }
 
-    return Status;
+  return Status;
 }
-
 
 /**
     Cleans up the grid's child controls list.
@@ -205,195 +200,200 @@ Exit:
 
 **/
 static EFI_STATUS
-FreeControlsList(IN  Grid    *this)
+FreeControlsList (
+  IN  Grid  *this
+  )
 {
-    EFI_STATUS                  Status      = EFI_SUCCESS;
-    EFI_TPL                     PreviousTPL = 0;
-    UIT_GRID_CHILD_CONTROL      *pList      = this->m_pControls;
-    UIT_GRID_CHILD_CONTROL      *pNext      = NULL;
+  EFI_STATUS              Status      = EFI_SUCCESS;
+  EFI_TPL                 PreviousTPL = 0;
+  UIT_GRID_CHILD_CONTROL  *pList      = this->m_pControls;
+  UIT_GRID_CHILD_CONTROL  *pNext      = NULL;
 
+  // Raise the TPL to avoid race condition with the add routine.
+  //
+  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
-    // Raise the TPL to avoid race condition with the add routine.
+  // Walk the list and free the nodes.
+  //
+  while (NULL != pList) {
+    pNext = pList->pNext;
+
+    // Free the child control list node.
     //
-    PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
+    FreePool (pList);
 
-    // Walk the list and free the nodes.
-    //
-    while (NULL != pList)
-    {
-        pNext = pList->pNext;
+    pList = pNext;
+  }
 
-        // Free the child control list node.
-        //
-        FreePool(pList);
+  // Restore the TPL.
+  //
+  if (PreviousTPL) {
+    gBS->RestoreTPL (PreviousTPL);
+  }
 
-        pList = pNext;
-    }
-
-    // Restore the TPL.
-    //
-    if (PreviousTPL)
-    {
-        gBS->RestoreTPL (PreviousTPL);
-    }
-
-    return Status;
+  return Status;
 }
-
 
 static
 EFI_STATUS
-SetControlState (IN Grid            *this,
-                 IN OBJECT_STATE    State)
+SetControlState (
+  IN Grid          *this,
+  IN OBJECT_STATE  State
+  )
 {
-    return EFI_SUCCESS; //Object state cannot be changed
+  return EFI_SUCCESS;   // Object state cannot be changed
 }
 
 static
 OBJECT_STATE
-GetControlState(IN Grid            *this)
+GetControlState (
+  IN Grid  *this
+  )
 {
-    return NORMAL; //Object state not maintained for this control
+  return NORMAL;   // Object state not maintained for this control
 }
-
 
 static
 EFI_STATUS
-CopySettings (IN Grid  *this,
-              IN Grid  *prev) {
-
-    return EFI_SUCCESS;
+CopySettings (
+  IN Grid  *this,
+  IN Grid  *prev
+  )
+{
+  return EFI_SUCCESS;
 }
-
 
 static
 OBJECT_STATE
-Draw (IN    Grid                *this,
-      IN    BOOLEAN             DrawHighlight,
-      IN    SWM_INPUT_STATE     *pInputState,
-      OUT   VOID                **pSelectionContext)
+Draw (
+  IN    Grid             *this,
+  IN    BOOLEAN          DrawHighlight,
+  IN    SWM_INPUT_STATE  *pInputState,
+  OUT   VOID             **pSelectionContext
+  )
 {
-    // Grids don't draw.
-    //
-    return NORMAL;
+  // Grids don't draw.
+  //
+  return NORMAL;
 }
-
 
 //////////////////////////////////////////////////////////////////////////////
 //
 //
 static
 VOID
-Ctor(IN struct _Grid     *this,
-     IN Canvas           *ParentCanvas,
-     IN SWM_RECT         GridBounds,
-     IN UINT32           Rows,
-     IN UINT32           Columns,
-     IN BOOLEAN          TruncateChildControl)
+Ctor (
+  IN struct _Grid  *this,
+  IN Canvas        *ParentCanvas,
+  IN SWM_RECT      GridBounds,
+  IN UINT32        Rows,
+  IN UINT32        Columns,
+  IN BOOLEAN       TruncateChildControl
+  )
 {
+  // Save parent canvas.
+  //
+  this->m_ParentCanvas = ParentCanvas;
 
-    // Save parent canvas.
-    //
-    this->m_ParentCanvas = ParentCanvas;
+  // Save number of columns and rows.
+  //
+  this->m_Columns = Columns;
+  this->m_Rows    = Rows;
 
-    // Save number of columns and rows.
-    //
-    this->m_Columns = Columns;
-    this->m_Rows    = Rows;
+  // Remember whether we should truncate the child control to fix the grid cell's bounding box.
+  //
+  this->m_TruncateControl = TruncateChildControl;
 
-    // Remember whether we should truncate the child control to fix the grid cell's bounding box.
-    //
-    this->m_TruncateControl = TruncateChildControl;
+  // Save the grid bounding rectangle.
+  //
+  CopyMem (&this->m_GridBounds, &GridBounds, sizeof (SWM_RECT));
 
-    // Save the grid bounding rectangle.
-    //
-    CopyMem(&this->m_GridBounds, &GridBounds, sizeof(SWM_RECT));
+  // Compute grid cell size based on overall side and number of rows & columns.
+  //
+  this->m_GridCellWidth     = ((GridBounds.Right - GridBounds.Left + 1) / Columns);
+  this->m_GridCellHeight    = ((GridBounds.Bottom - GridBounds.Top + 1) / Rows);
+  this->m_GridInitialHeight = this->m_GridCellHeight;
 
-    // Compute grid cell size based on overall side and number of rows & columns.
-    //
-    this->m_GridCellWidth   = ((GridBounds.Right - GridBounds.Left + 1) / Columns);
-    this->m_GridCellHeight  = ((GridBounds.Bottom - GridBounds.Top + 1) / Rows);
-    this->m_GridInitialHeight = this->m_GridCellHeight;
+  // No child controls yet.
+  //
+  this->m_pControls = NULL;
 
-    // No child controls yet.
-    //
-    this->m_pControls           = NULL;
+  // Member Variables
+  this->Base.ControlType = GRID;
 
-    // Member Variables
-    this->Base.ControlType      = GRID;
+  // Functions.
+  //
+  this->Base.Draw             = (DrawFunctionPtr) &Draw;
+  this->Base.SetControlBounds = (SetControlBoundsFunctionPtr) &SetControlBounds;
+  this->Base.GetControlBounds = (GetControlBoundsFunctionPtr) &GetControlBounds;
+  this->Base.SetControlState  = (SetControlStateFunctionPtr) &SetControlState;
+  this->Base.GetControlState  = (GetControlStateFunctionPtr) &GetControlState;
+  this->Base.CopySettings     = (CopySettingsFunctionPtr) &CopySettings;
+  this->AddControl            = &AddControl;
 
-    // Functions.
-    //
-    this->Base.Draw             = (DrawFunctionPtr) &Draw;
-    this->Base.SetControlBounds = (SetControlBoundsFunctionPtr) &SetControlBounds;
-    this->Base.GetControlBounds = (GetControlBoundsFunctionPtr) &GetControlBounds;
-    this->Base.SetControlState  = (SetControlStateFunctionPtr) &SetControlState;
-    this->Base.GetControlState  = (GetControlStateFunctionPtr) &GetControlState;
-    this->Base.CopySettings     = (CopySettingsFunctionPtr) &CopySettings;
-    this->AddControl            = &AddControl;
-
-    return;
+  return;
 }
-
 
 static
 VOID
-Dtor(VOID *this)
+Dtor (
+  VOID  *this
+  )
 {
-    Grid *privthis = (Grid *)this;
+  Grid  *privthis = (Grid *)this;
 
+  // Walk the controls list and free each.
+  //
+  FreeControlsList (privthis);
 
-    // Walk the controls list and free each.
-    //
-    FreeControlsList(privthis);
+  if (NULL != privthis) {
+    FreePool (privthis);
+  }
 
-
-    if (NULL != privthis)
-    {
-        FreePool(privthis);
-    }
-
-    return;
+  return;
 }
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Public
 //
-Grid *new_Grid(IN Canvas    *ParentCanvas,
-               IN SWM_RECT  Rect,
-               IN UINT32    Rows,
-               IN UINT32    Columns,
-               IN BOOLEAN   TruncateChildControl)
+Grid *
+new_Grid (
+  IN Canvas    *ParentCanvas,
+  IN SWM_RECT  Rect,
+  IN UINT32    Rows,
+  IN UINT32    Columns,
+  IN BOOLEAN   TruncateChildControl
+  )
 {
+  Grid  *G = (Grid *)AllocateZeroPool (sizeof (Grid));
 
-    Grid *G = (Grid *)AllocateZeroPool(sizeof(Grid));
-    ASSERT(NULL != G);
+  ASSERT (NULL != G);
 
-    if (NULL != G)
-    {
-        G->Ctor         = &Ctor;
-        G->Base.Dtor    = &Dtor;
+  if (NULL != G) {
+    G->Ctor      = &Ctor;
+    G->Base.Dtor = &Dtor;
 
-        G->Ctor(G,
-                ParentCanvas,
-                Rect,
-                Rows,
-                Columns,
-                TruncateChildControl
-               );
-    }
+    G->Ctor (
+         G,
+         ParentCanvas,
+         Rect,
+         Rows,
+         Columns,
+         TruncateChildControl
+         );
+  }
 
-    //DEBUG ((DEBUG_INFO, "INFO [SUIT]: Created new Grid (Rows=%d, Columns=%d).\r\n", Rows, Columns));
+  // DEBUG ((DEBUG_INFO, "INFO [SUIT]: Created new Grid (Rows=%d, Columns=%d).\r\n", Rows, Columns));
 
-    return G;
+  return G;
 }
 
-
-VOID delete_Grid(IN Grid *this)
+VOID
+delete_Grid (
+  IN Grid  *this
+  )
 {
-    if (NULL != this)
-    {
-        this->Base.Dtor((VOID *)this);
-    }
+  if (NULL != this) {
+    this->Base.Dtor ((VOID *)this);
+  }
 }

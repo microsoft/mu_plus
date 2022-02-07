@@ -22,5 +22,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 EFI_STATUS
 EFIAPI
 DfciGetAssetTag (
-    IN  OUT   UINTN    *ValueSize,
-    OUT       VOID     *Value);
+  IN  OUT   UINTN  *ValueSize,
+  OUT       VOID   *Value
+  );

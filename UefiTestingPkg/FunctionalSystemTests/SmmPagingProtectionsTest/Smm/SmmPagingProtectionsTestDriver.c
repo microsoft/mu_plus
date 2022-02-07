@@ -25,33 +25,32 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "../SmmPagingProtectionsTestCommon.h"
 #include "SmmPagingProtectionsTestDriver.h"
 
-
-//=============================================================================
+// =============================================================================
 // TEST HELPERS
-//=============================================================================
+// =============================================================================
 
 VOID
 EnableExceptionTestMode (
   VOID
   )
 {
-  EFI_STATUS    Status;
-  UINTN         HandleBuffSize;
-  EFI_HANDLE   *Handles;
-  UINTN         Idx;
-  SMM_EXCEPTION_TEST_PROTOCOL    *SmmExceptionTestProtocol;
+  EFI_STATUS                   Status;
+  UINTN                        HandleBuffSize;
+  EFI_HANDLE                   *Handles;
+  UINTN                        Idx;
+  SMM_EXCEPTION_TEST_PROTOCOL  *SmmExceptionTestProtocol;
 
   // Find all the SmmExceptionTestProtocol instances. There might be more than one if
   // different handlers are used based on what features are enabled.
-  Handles = NULL;
+  Handles        = NULL;
   HandleBuffSize = 0;
-  Status = gMmst->MmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
+  Status         = gMmst->MmLocateHandle (ByProtocol, &gSmmExceptionTestProtocolGuid, NULL, &HandleBuffSize, Handles);
   if (Status != EFI_BUFFER_TOO_SMALL) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to locate any instances of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Status));
     return;
   }
 
-  Handles = AllocatePool(HandleBuffSize);
+  Handles = AllocatePool (HandleBuffSize);
   if (Handles == NULL) {
     DEBUG ((DEBUG_ERROR, "[%a] - Failed to allocate space for instances of SmmExceptionTestProtocol.\n", __FUNCTION__));
     return;
@@ -63,13 +62,14 @@ EnableExceptionTestMode (
     return;
   }
 
-  //Iterate over all instacnes and call EnableTestMode() on each.
+  // Iterate over all instacnes and call EnableTestMode() on each.
   for (Idx = 0; Idx < (HandleBuffSize/sizeof (EFI_HANDLE)); Idx++) {
     Status = gMmst->MmHandleProtocol (Handles[Idx], &gSmmExceptionTestProtocolGuid, (VOID **)&SmmExceptionTestProtocol);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "[%a] - Error getting instance %d of SmmExceptionTestProtocol: %r\n", __FUNCTION__, Idx, Status));
       continue;
     }
+
     Status = SmmExceptionTestProtocol->EnableTestMode ();
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "[%a] - Failed to enable test mode for instance %d: %r\n", __FUNCTION__, Idx, Status));
@@ -79,18 +79,18 @@ EnableExceptionTestMode (
   return;
 } // EnableExceptionTestMode()
 
-//=============================================================================
+// =============================================================================
 // TEST ASSETS
 // These resources are used (and abused) by the test cases.
-//=============================================================================
+// =============================================================================
 
-UINT8     mDataExecutionTestBuffer[512];
+UINT8  mDataExecutionTestBuffer[512];
 
 typedef
 VOID
 (*DUMMY_VOID_FUNCTION_FOR_DATA_TEST)(
   VOID
-);
+  );
 
 /**
   This is a function that serves as a placeholder in the driver code region.
@@ -104,14 +104,15 @@ DummyFunctionForCodeSelfTest (
   VOID
   )
 {
-  volatile UINT8    DontCompileMeOut = 0;
+  volatile UINT8  DontCompileMeOut = 0;
+
   DontCompileMeOut++;
   return;
 } // DummyFunctionForCodeSelfTest()
 
-//=============================================================================
+// =============================================================================
 // TEST CASES
-//=============================================================================
+// =============================================================================
 
 /**
   Self-Test Code
@@ -134,7 +135,7 @@ SmmMemoryProtectionsSelfTestCode (
   VOID
   )
 {
-  volatile UINTN   *CodeRegionToWriteTo;
+  volatile UINTN  *CodeRegionToWriteTo;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -146,10 +147,10 @@ SmmMemoryProtectionsSelfTestCode (
   // This will throw a warning with the Microsoft compiler, so we have to suppress it.
   // Behavior is unknown in other environments.
 
-  CodeRegionToWriteTo = (VOID*)(UINTN)DummyFunctionForCodeSelfTest;
+  CodeRegionToWriteTo = (VOID *)(UINTN)DummyFunctionForCodeSelfTest;
 
   // Attempt to write to function address.
-  DEBUG ((DEBUG_INFO, "[%a] - Attempting to write to 0x%16lX...\n", __FUNCTION__, CodeRegionToWriteTo ));
+  DEBUG ((DEBUG_INFO, "[%a] - Attempting to write to 0x%16lX...\n", __FUNCTION__, CodeRegionToWriteTo));
   *CodeRegionToWriteTo = 0xDEADBEEF;
   // This should fail.
 
@@ -157,7 +158,6 @@ SmmMemoryProtectionsSelfTestCode (
 
   return EFI_SECURITY_VIOLATION;
 } // SmmMemoryProtectionsSelfTestCode()
-
 
 /**
   Self-Test Data
@@ -180,10 +180,9 @@ SmmMemoryProtectionsSelfTestData (
   VOID
   )
 {
-  UINT8   *CodeRegionToCopyFrom;
+  UINT8  *CodeRegionToCopyFrom;
 
-
-  DEBUG ((DEBUG_VERBOSE, "%a()\n",__FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
   // Make sure that the required telemetry/handling is
   // performed to get accurate test results.
@@ -193,10 +192,10 @@ SmmMemoryProtectionsSelfTestData (
   // This will throw a warning with the Microsoft compiler, so we have to suppress it.
   // Behavior is unknown in other environments.
 
-  CodeRegionToCopyFrom = (UINT8*)(UINTN)DummyFunctionForCodeSelfTest;
+  CodeRegionToCopyFrom = (UINT8 *)(UINTN)DummyFunctionForCodeSelfTest;
 
   // Copy the data that is necessary.
-  CopyMem (&mDataExecutionTestBuffer[0], CodeRegionToCopyFrom, sizeof(mDataExecutionTestBuffer));
+  CopyMem (&mDataExecutionTestBuffer[0], CodeRegionToCopyFrom, sizeof (mDataExecutionTestBuffer));
 
   // Now attempt to call the function. Like a sane person.
   // This will throw a warning with the Microsoft compiler, so we have to suppress it.
@@ -209,7 +208,6 @@ SmmMemoryProtectionsSelfTestData (
 
   return EFI_SECURITY_VIOLATION;
 } // SmmMemoryProtectionsSelfTestData()
-
 
 /**
   Invalid Range Test
@@ -228,9 +226,9 @@ SmmMemoryProtectionsTestInvalidRange (
   VOID
   )
 {
-  volatile UINTN          ReadData;
-  EFI_PHYSICAL_ADDRESS    ReadAddress;
-  BOOLEAN                 ResultsValid = FALSE;
+  volatile UINTN        ReadData;
+  EFI_PHYSICAL_ADDRESS  ReadAddress;
+  BOOLEAN               ResultsValid = FALSE;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -254,7 +252,8 @@ SmmMemoryProtectionsTestInvalidRange (
     if (ReadAddress > MAX_UINTN) {
       return EFI_DEVICE_ERROR;
     }
-    ReadData = *(UINTN*)(UINTN)ReadAddress;
+
+    ReadData = *(UINTN *)(UINTN)ReadAddress;
   }
 
   // Note whether this was a valid test pass for debugging.
@@ -281,7 +280,7 @@ SmmMemoryProtectionsTestUnathorizedIoRead (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -290,10 +289,11 @@ SmmMemoryProtectionsTestUnathorizedIoRead (
   EnableExceptionTestMode ();
 
   DEBUG ((DEBUG_INFO, "[%a] - Attempting unauthorized I/O read.\n", __FUNCTION__));
-  Status = TestUnauthorizedIoRead();
+  Status = TestUnauthorizedIoRead ();
   if (Status == EFI_UNSUPPORTED) {
     return EFI_UNSUPPORTED;
   }
+
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure! Status = %r\n", __FUNCTION__, Status));
 
   return EFI_SECURITY_VIOLATION;
@@ -314,7 +314,7 @@ SmmMemoryProtectionsTestUnathorizedIoWrite (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -323,10 +323,11 @@ SmmMemoryProtectionsTestUnathorizedIoWrite (
   EnableExceptionTestMode ();
 
   DEBUG ((DEBUG_INFO, "[%a] - Attempting unauthorized I/O write.\n", __FUNCTION__));
-  Status = TestUnauthorizedIoWrite();
+  Status = TestUnauthorizedIoWrite ();
   if (Status == EFI_UNSUPPORTED) {
     return EFI_UNSUPPORTED;
   }
+
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure! Status = %r\n", __FUNCTION__, Status));
 
   return EFI_SECURITY_VIOLATION;
@@ -347,7 +348,7 @@ SmmMemoryProtectionsTestUnathorizedMsrRead (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -356,10 +357,11 @@ SmmMemoryProtectionsTestUnathorizedMsrRead (
   EnableExceptionTestMode ();
 
   DEBUG ((DEBUG_INFO, "[%a] - Attempting unauthorized MSR read.\n", __FUNCTION__));
-  Status = TestUnauthorizedMsrRead();
+  Status = TestUnauthorizedMsrRead ();
   if (Status == EFI_UNSUPPORTED) {
     return EFI_UNSUPPORTED;
   }
+
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
   return EFI_SECURITY_VIOLATION;
@@ -380,7 +382,7 @@ SmmMemoryProtectionsTestUnathorizedMsrWrite (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -389,10 +391,11 @@ SmmMemoryProtectionsTestUnathorizedMsrWrite (
   EnableExceptionTestMode ();
 
   DEBUG ((DEBUG_INFO, "[%a] - Attempting unauthorized MSR write.\n", __FUNCTION__));
-  Status = TestUnauthorizedMsrWrite();
+  Status = TestUnauthorizedMsrWrite ();
   if (Status == EFI_UNSUPPORTED) {
     return EFI_UNSUPPORTED;
   }
+
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
   return EFI_SECURITY_VIOLATION;
@@ -413,7 +416,8 @@ SmmMemoryProtectionsTestPrivilegedInstructions (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
+
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
   // Make sure that the required telemetry/handling is
@@ -421,10 +425,11 @@ SmmMemoryProtectionsTestPrivilegedInstructions (
   EnableExceptionTestMode ();
 
   DEBUG ((DEBUG_INFO, "[%a] - Attempting unauthorized privileged instruction.\n", __FUNCTION__));
-  Status = TestPrivilegedInstruction();
+  Status = TestPrivilegedInstruction ();
   if (Status == EFI_UNSUPPORTED) {
     return EFI_UNSUPPORTED;
   }
+
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
   return EFI_SECURITY_VIOLATION;
@@ -444,7 +449,8 @@ SmmMemoryProtectionsTestEntryPointAccess (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
+
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
   // Make sure that the required telemetry/handling is
@@ -452,10 +458,11 @@ SmmMemoryProtectionsTestEntryPointAccess (
 
   EnableExceptionTestMode ();
   DEBUG ((DEBUG_INFO, "[%a] - Attempting to access SMM EntryPoint\n", __FUNCTION__));
-  Status = TestEntryPointAccess();
+  Status = TestEntryPointAccess ();
   if (Status == EFI_UNSUPPORTED) {
     return EFI_UNSUPPORTED;
   }
+
   DEBUG ((DEBUG_ERROR, "[%a] - System proceeded through what should have been a critical failure!\n", __FUNCTION__));
 
   return EFI_SECURITY_VIOLATION;
@@ -479,10 +486,10 @@ SmmMemoryProtectionsTestEntryPointAccess (
 EFI_STATUS
 EFIAPI
 SmmMemoryProtectionsRunArbitraryCode (
-  EFI_PHYSICAL_ADDRESS TargetAddress
+  EFI_PHYSICAL_ADDRESS  TargetAddress
   )
 {
-  DEBUG ((DEBUG_VERBOSE, "%a()\n",__FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
   // Make sure that the required telemetry/handling is
   // performed to get accurate test results.
@@ -521,31 +528,32 @@ SmmMemoryProtectionsRunArbitraryCode (
 EFI_STATUS
 EFIAPI
 MemoryProtectionTestHandler (
-  IN     EFI_HANDLE                   DispatchHandle,
-  IN     CONST VOID                   *RegisterContext,
-  IN OUT VOID                         *CommBuffer,
-  IN OUT UINTN                        *CommBufferSize
+  IN     EFI_HANDLE  DispatchHandle,
+  IN     CONST VOID  *RegisterContext,
+  IN OUT VOID        *CommBuffer,
+  IN OUT UINTN       *CommBufferSize
   )
 {
-  EFI_STATUS                                Status;
-  UINTN                                     TempCommBufferSize;
-  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER   *CommParams;
+  EFI_STATUS                               Status;
+  UINTN                                    TempCommBufferSize;
+  SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER  *CommParams;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
   //
   // If input is invalid, stop processing this SMI
   //
-  if (CommBuffer == NULL || CommBufferSize == NULL) {
+  if ((CommBuffer == NULL) || (CommBufferSize == NULL)) {
     return EFI_SUCCESS;
   }
 
   TempCommBufferSize = *CommBufferSize;
 
-  if(TempCommBufferSize != sizeof (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER)) {
+  if (TempCommBufferSize != sizeof (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER)) {
     DEBUG ((DEBUG_ERROR, "[%a] SMM Communication buffer size is invalid for this handler!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
+
   if (!IsBufferOutsideMmValid ((UINTN)CommBuffer, TempCommBufferSize)) {
     DEBUG ((DEBUG_ERROR, "[%a] - SMM Communication buffer in invalid location!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
@@ -554,57 +562,57 @@ MemoryProtectionTestHandler (
   //
   // Farm out the job to individual functions based on what was requested.
   //
-  CommParams = (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER*)CommBuffer;
-  Status = EFI_SUCCESS;
+  CommParams = (SMM_PAGING_PROTECTIONS_TEST_COMM_BUFFER *)CommBuffer;
+  Status     = EFI_SUCCESS;
   switch (CommParams->Function) {
     case SMM_PAGING_PROTECTIONS_SELF_TEST_CODE:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PAGING_PROTECTIONS_SELF_TEST_CODE\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsSelfTestCode();
+      Status = SmmMemoryProtectionsSelfTestCode ();
       break;
 
     case SMM_PAGING_PROTECTIONS_SELF_TEST_DATA:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PAGING_PROTECTIONS_SELF_TEST_DATA\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsSelfTestData();
+      Status = SmmMemoryProtectionsSelfTestData ();
       break;
 
     case SMM_PAGING_PROTECTIONS_TEST_INVALID_RANGE:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PAGING_PROTECTIONS_TEST_INVALID_RANGE\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestInvalidRange();
+      Status = SmmMemoryProtectionsTestInvalidRange ();
       break;
 
     case SMM_PROTECTIONS_READ_UNAUTHORIZED_IO:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_READ_UNAUTHORIZED_IO\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedIoRead();
+      Status = SmmMemoryProtectionsTestUnathorizedIoRead ();
       break;
 
     case SMM_PROTECTIONS_WRITE_UNAUTHORIZED_IO:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_WRITE_UNAUTHORIZED_IO\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedIoWrite();
+      Status = SmmMemoryProtectionsTestUnathorizedIoWrite ();
       break;
 
     case SMM_PROTECTIONS_READ_UNAUTHORIZED_MSR:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_READ_UNAUTHORIZED_MSR\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedMsrRead();
+      Status = SmmMemoryProtectionsTestUnathorizedMsrRead ();
       break;
 
     case SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedMsrWrite();
+      Status = SmmMemoryProtectionsTestUnathorizedMsrWrite ();
       break;
 
     case SMM_PROTECTIONS_PRIVILEGED_INSTRUCTIONS:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_PRIVILEGED_INSTRUCTIONS\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestPrivilegedInstructions();
+      Status = SmmMemoryProtectionsTestPrivilegedInstructions ();
       break;
 
     case SMM_PROTECTIONS_ACCESS_ENTRY_POINT:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_ACCESS_ENTRY_POINT\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestEntryPointAccess();
+      Status = SmmMemoryProtectionsTestEntryPointAccess ();
       break;
 
     case SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_RUN_ARBITRARY_NON_SMM_CODE\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsRunArbitraryCode(CommParams->TargetAddress);
+      Status = SmmMemoryProtectionsRunArbitraryCode (CommParams->TargetAddress);
       break;
 
     default:
@@ -630,14 +638,14 @@ SmmPagingProtectionsTestInitialization (
   VOID
   )
 {
-  EFI_STATUS                Status;
-  EFI_HANDLE                DiscardedHandle;
+  EFI_STATUS  Status;
+  EFI_HANDLE  DiscardedHandle;
 
   //
   // Register SMI handler.
   //
   DiscardedHandle = NULL;
-  Status = gMmst->MmiHandlerRegister (MemoryProtectionTestHandler, &gSmmPagingProtectionsTestSmiHandlerGuid, &DiscardedHandle);
+  Status          = gMmst->MmiHandlerRegister (MemoryProtectionTestHandler, &gSmmPagingProtectionsTestSmiHandlerGuid, &DiscardedHandle);
   ASSERT_EFI_ERROR (Status);
 
   return Status;

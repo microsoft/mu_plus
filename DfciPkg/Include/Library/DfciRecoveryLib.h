@@ -11,30 +11,26 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _DFCI_RECOVERY_LIB_H_
 #define _DFCI_RECOVERY_LIB_H_
 
-#define DFCI_RECOVERY_NONCE_SIZE            (512 / 8)   // 512-Bit Nonce
-#define DFCI_RECOVERY_NONCE_KEY_SIZE        10          // Number of bytes at end of nonce that will be used for user auth.
+#define DFCI_RECOVERY_NONCE_SIZE      (512 / 8)         // 512-Bit Nonce
+#define DFCI_RECOVERY_NONCE_KEY_SIZE  10                // Number of bytes at end of nonce that will be used for user auth.
 
-
-typedef union
-{
-  UINT8 Bytes[DFCI_RECOVERY_NONCE_SIZE];
+typedef union {
+  UINT8    Bytes[DFCI_RECOVERY_NONCE_SIZE];
   struct {
-    UINT8 Nonce[DFCI_RECOVERY_NONCE_SIZE - DFCI_RECOVERY_NONCE_KEY_SIZE];
-    UINT8 Key[DFCI_RECOVERY_NONCE_KEY_SIZE];
+    UINT8    Nonce[DFCI_RECOVERY_NONCE_SIZE - DFCI_RECOVERY_NONCE_KEY_SIZE];
+    UINT8    Key[DFCI_RECOVERY_NONCE_KEY_SIZE];
   } Parts;
 } DFCI_CHALLENGE_NONCE;
 
 typedef CHAR8 DFCI_TARGET_MULTI_STRING;
-#define DFCI_MULTI_STRING_MAX_SIZE 104
+#define DFCI_MULTI_STRING_MAX_SIZE  104
 
-typedef struct _DFCI_RECOVERY_CHALLENGE
-{
-  UINTN                     SerialNumber;
-  EFI_TIME                  Timestamp;
-  DFCI_CHALLENGE_NONCE      Nonce;
-  DFCI_TARGET_MULTI_STRING  MultiString[];
+typedef struct _DFCI_RECOVERY_CHALLENGE {
+  UINTN                       SerialNumber;
+  EFI_TIME                    Timestamp;
+  DFCI_CHALLENGE_NONCE        Nonce;
+  DFCI_TARGET_MULTI_STRING    MultiString[];
 } DFCI_RECOVERY_CHALLENGE;
-
 
 /**
   This function will attempt to allocate and populate a buffer
@@ -54,9 +50,8 @@ typedef struct _DFCI_RECOVERY_CHALLENGE
 EFI_STATUS
 GetRecoveryChallenge (
   OUT DFCI_RECOVERY_CHALLENGE  **Challenge,
-  OUT UINTN                     *ChallengeSize
+  OUT UINTN                    *ChallengeSize
   );
-
 
 /**
   Take in a DER-encoded x509 cert buffer and a challenge
@@ -79,12 +74,12 @@ GetRecoveryChallenge (
 **/
 EFI_STATUS
 EncryptRecoveryChallenge (
-  IN  DFCI_RECOVERY_CHALLENGE    *Challenge,
-  IN  UINTN                       ChallengeSize,
-  IN  CONST UINT8                *PublicKey,
-  IN  UINTN                       PublicKeySize,
-  OUT  UINT8                    **EncryptedData,
-  OUT  UINTN                     *EncryptedDataSize
+  IN  DFCI_RECOVERY_CHALLENGE  *Challenge,
+  IN  UINTN                    ChallengeSize,
+  IN  CONST UINT8              *PublicKey,
+  IN  UINTN                    PublicKeySize,
+  OUT  UINT8                   **EncryptedData,
+  OUT  UINTN                   *EncryptedDataSize
   );
 
 #endif // _DFCI_RECOVERY_LIB_H_

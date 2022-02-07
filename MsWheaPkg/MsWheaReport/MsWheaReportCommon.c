@@ -19,7 +19,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // This library was designed with advanced unit-test features.
 // This define handles the configuration.
 #ifdef INTERNAL_UNIT_TEST
-#undef STATIC
+  #undef STATIC
 #define STATIC    // Nothing...
 #endif
 
@@ -54,30 +54,30 @@ certain requirements
 EFI_STATUS
 EFIAPI
 ReportHwErrRecRouter (
-  IN EFI_STATUS_CODE_TYPE             CodeType,
-  IN EFI_STATUS_CODE_VALUE            Value,
-  IN UINT32                           Instance,
-  IN CONST EFI_GUID                   *CallerId,
-  IN CONST EFI_STATUS_CODE_DATA       *Data OPTIONAL,
-  IN UINT8                            CurrentPhase,
-  IN MS_WHEA_ERR_REPORT_PS_FN         ReportFn
+  IN EFI_STATUS_CODE_TYPE        CodeType,
+  IN EFI_STATUS_CODE_VALUE       Value,
+  IN UINT32                      Instance,
+  IN CONST EFI_GUID              *CallerId,
+  IN CONST EFI_STATUS_CODE_DATA  *Data OPTIONAL,
+  IN UINT8                       CurrentPhase,
+  IN MS_WHEA_ERR_REPORT_PS_FN    ReportFn
   )
 {
-  EFI_STATUS                          Status;
-  UINT32                              ErrorSeverity;
-  MS_WHEA_ERROR_ENTRY_MD              MsWheaEntryMD;
-  MS_WHEA_RSC_INTERNAL_ERROR_DATA     *DataHeader;
-  MS_WHEA_ERROR_EXTRA_SECTION_DATA    *ExtraData;
-  UINT32                              ExtraDataSize;
+  EFI_STATUS                        Status;
+  UINT32                            ErrorSeverity;
+  MS_WHEA_ERROR_ENTRY_MD            MsWheaEntryMD;
+  MS_WHEA_RSC_INTERNAL_ERROR_DATA   *DataHeader;
+  MS_WHEA_ERROR_EXTRA_SECTION_DATA  *ExtraData;
+  UINT32                            ExtraDataSize;
 
   Status    = EFI_SUCCESS;
   ExtraData = NULL;
 
   // If we don't have a ReportFn, this is a problem with the caller.
   if (ReportFn == NULL) {
-    DEBUG((DEBUG_ERROR, "%a - Input function pointer cannot be null!\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a - Input function pointer cannot be null!\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
-    ASSERT_EFI_ERROR(Status);
+    ASSERT_EFI_ERROR (Status);
     goto Cleanup;
   }
 
@@ -94,11 +94,12 @@ ReportHwErrRecRouter (
   // If Data is provided, we need to validate it.
   // "&& Data->Size > 0": MU_CHANGE TCBZ3078 as temporary workaround for current
   // ReportDispatcher implementation
-  if (Data != NULL && Data->Size > 0) {
+  if ((Data != NULL) && (Data->Size > 0)) {
     // If the Data doesn't look right, bail.
-    if (Data->HeaderSize != sizeof(EFI_STATUS_CODE_DATA) ||
-        Data->Size < sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) ||
-        CompareMem(&Data->Type, &gMsWheaRSCDataTypeGuid, sizeof(EFI_GUID)) != 0) {
+    if ((Data->HeaderSize != sizeof (EFI_STATUS_CODE_DATA)) ||
+        (Data->Size < sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA)) ||
+        (CompareMem (&Data->Type, &gMsWheaRSCDataTypeGuid, sizeof (EFI_GUID)) != 0))
+    {
       // Bail logging telemetry, this is not for us...
       DEBUG ((DEBUG_ERROR, "%a - Unrecognized data provided! Bailing!\n", __FUNCTION__));
       Status = EFI_UNSUPPORTED;
@@ -106,57 +107,60 @@ ReportHwErrRecRouter (
     }
   }
 
-  // 
+  //
   // Alright, so if we're still here, we should have somewhat sanitized data to process.
-  // 
-  ZeroMem(&MsWheaEntryMD, sizeof(MsWheaEntryMD));
+  //
+  ZeroMem (&MsWheaEntryMD, sizeof (MsWheaEntryMD));
 
   // Populate the things we KNOW we have.
-  MsWheaEntryMD.Rev               = MS_WHEA_REV_0;
-  MsWheaEntryMD.Phase             = CurrentPhase;
-  MsWheaEntryMD.ErrorSeverity     = ErrorSeverity;
-  MsWheaEntryMD.ErrorStatusValue  = Value;
+  MsWheaEntryMD.Rev              = MS_WHEA_REV_0;
+  MsWheaEntryMD.Phase            = CurrentPhase;
+  MsWheaEntryMD.ErrorSeverity    = ErrorSeverity;
+  MsWheaEntryMD.ErrorStatusValue = Value;
   if (CallerId != NULL) {
-    CopyGuid(&MsWheaEntryMD.ModuleID, CallerId);
+    CopyGuid (&MsWheaEntryMD.ModuleID, CallerId);
   }
 
   // Now, if we've still got some data, we know if must at least have room
   // for the MS_WHEA_RSC_INTERNAL_ERROR_DATA.
   // "&& Data->Size > 0": MU_CHANGE TCBZ3078 as temporary workaround for current
   // ReportDispatcher implementation
-  if (Data != NULL && Data->Size > 0) {
-    DataHeader = (MS_WHEA_RSC_INTERNAL_ERROR_DATA*)((UINT8*)Data + Data->HeaderSize);
+  if ((Data != NULL) && (Data->Size > 0)) {
+    DataHeader                    = (MS_WHEA_RSC_INTERNAL_ERROR_DATA *)((UINT8 *)Data + Data->HeaderSize);
     MsWheaEntryMD.AdditionalInfo1 = DataHeader->AdditionalInfo1;
     MsWheaEntryMD.AdditionalInfo2 = DataHeader->AdditionalInfo2;
-    CopyGuid(&MsWheaEntryMD.LibraryID, &DataHeader->LibraryID);
-    CopyGuid(&MsWheaEntryMD.IhvSharingGuid, &DataHeader->IhvSharingGuid);
+    CopyGuid (&MsWheaEntryMD.LibraryID, &DataHeader->LibraryID);
+    CopyGuid (&MsWheaEntryMD.IhvSharingGuid, &DataHeader->IhvSharingGuid);
 
     // If the data size is larger, we must have extra data. Let's
     // try to store that, too.
     // NOTE: Don't allocate space for ExtraData if not in at least DXE.
-    if (Data->Size > (sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof(EFI_GUID)) && CurrentPhase != MS_WHEA_PHASE_PEI) {
-      ExtraDataSize = Data->Size - sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) - sizeof(EFI_GUID);
-      ExtraData = AllocatePool(sizeof(*ExtraData) + ExtraDataSize);
+    if ((Data->Size > (sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof (EFI_GUID))) && (CurrentPhase != MS_WHEA_PHASE_PEI)) {
+      ExtraDataSize = Data->Size - sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA) - sizeof (EFI_GUID);
+      ExtraData     = AllocatePool (sizeof (*ExtraData) + ExtraDataSize);
       if (ExtraData != NULL) {
         ExtraData->DataSize = ExtraDataSize;
-        CopyGuid(&ExtraData->SectionGuid, (EFI_GUID*)((UINT8*)DataHeader + sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA)));
-        CopyMem(ExtraData->Data, (UINT8*)DataHeader + sizeof(MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof(EFI_GUID), ExtraDataSize);
+        CopyGuid (&ExtraData->SectionGuid, (EFI_GUID *)((UINT8 *)DataHeader + sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA)));
+        CopyMem (ExtraData->Data, (UINT8 *)DataHeader + sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA) + sizeof (EFI_GUID), ExtraDataSize);
       }
-      MsWheaEntryMD.ExtraSection = (EFI_PHYSICAL_ADDRESS) (UINTN) ExtraData;
+
+      MsWheaEntryMD.ExtraSection = (EFI_PHYSICAL_ADDRESS)(UINTN)ExtraData;
     }
   }
 
   // Now we need to make a decision about how to report, either to EarlyStorage, or full reporting.
   if ((ErrorSeverity == EFI_GENERIC_ERROR_FATAL) &&
-      ((CurrentPhase == MS_WHEA_PHASE_DXE) || (CurrentPhase == MS_WHEA_PHASE_PEI))) {
-    Status = MsWheaESStoreEntry(&MsWheaEntryMD);
+      ((CurrentPhase == MS_WHEA_PHASE_DXE) || (CurrentPhase == MS_WHEA_PHASE_PEI)))
+  {
+    Status = MsWheaESStoreEntry (&MsWheaEntryMD);
   } else {
-    Status = ReportFn(&MsWheaEntryMD);
+    Status = ReportFn (&MsWheaEntryMD);
   }
 
 Cleanup:
   if (ExtraData != NULL) {
-    FreePool(ExtraData);
+    FreePool (ExtraData);
   }
+
   return Status;
 }

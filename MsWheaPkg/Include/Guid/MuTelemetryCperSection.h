@@ -8,15 +8,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __MU_TELEMETRY_CPER_SECTION_DATA__ 
-#define __MU_TELEMETRY_CPER_SECTION_DATA__ 
+#ifndef __MU_TELEMETRY_CPER_SECTION_DATA__
+#define __MU_TELEMETRY_CPER_SECTION_DATA__
 
 #define MU_TELEMETRY_SECTION_TYPE_GUID  \
   { \
     0x85183a8b, 0x9c41, 0x429c, { 0x93, 0x9c, 0x5c, 0x3c, 0x08, 0x7c, 0xa2, 0x80 } \
   }
 
-extern EFI_GUID gMuTelemetrySectionTypeGuid;
+extern EFI_GUID  gMuTelemetrySectionTypeGuid;
 
 #pragma pack(1)
 
@@ -38,14 +38,14 @@ extern EFI_GUID gMuTelemetrySectionTypeGuid;
 
 **/
 typedef struct {
-  EFI_GUID                            ComponentID;
-  EFI_GUID                            SubComponentID;
-  UINT32                              Reserved;
-  EFI_STATUS_CODE_VALUE               ErrorStatusValue;
-  UINT64                              AdditionalInfo1;
-  UINT64                              AdditionalInfo2;
+  EFI_GUID                 ComponentID;
+  EFI_GUID                 SubComponentID;
+  UINT32                   Reserved;
+  EFI_STATUS_CODE_VALUE    ErrorStatusValue;
+  UINT64                   AdditionalInfo1;
+  UINT64                   AdditionalInfo2;
 } MU_TELEMETRY_CPER_SECTION_DATA;
 
 #pragma pack()
 
-#endif // __MU_TELEMETRY_CPER_SECTION_DATA__ 
+#endif // __MU_TELEMETRY_CPER_SECTION_DATA__
