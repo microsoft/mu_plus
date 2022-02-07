@@ -11,19 +11,19 @@ Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverag
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
 
-Branch Status - release/202108
+Branch Status - release/202111
 ==============================
 
 :Status:
-  Stabilized
+  In Development
 
 :Entered Development:
-  2021/09
+  Feb 2022
 
 :Anticipated Stabilization:
-  Jan 2022
+  Feb 2022
 
-Branch Changes - release/202108
+Branch Changes - release/202111
 ===============================
 
 Breaking Changes-dev
@@ -38,11 +38,10 @@ Main Changes-dev
 Bug Fixes-dev
 -------------
 
-Branched from 202102
+Branched from 202108
 --------------------
 
-Original sync Commit: 30064d31666cb335bbbf1348be6e1374e429dbe0
-Updated on 1/21/22 to include all changes up to in 202102: a0073c472e260cfb47d705003c66505c31009b17
+Original sync Commit: 60a5445a2466176176a2dc42d0f3d6038714fa59
 
 
 Code of Conduct
@@ -72,12 +71,12 @@ Copyright & License
 
 .. CoreCI
 
-.. _Windows_VS2019: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202108
-.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2019?branchName=release%2F202108
+.. _Windows_VS2019: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202111
+.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2019?branchName=release%2F202111
 .. |WindowsCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/49.svg
 .. |WindowsCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
 
-.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202108
-.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202108
+.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202111
+.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202111
 .. |UbuntuCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/50.svg
 .. |UbuntuCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
