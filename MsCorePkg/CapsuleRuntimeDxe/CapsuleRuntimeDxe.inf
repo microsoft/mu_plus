@@ -1,0 +1,51 @@
+## @file
+#  Capsule Runtime Driver produces two UEFI capsule runtime services: (UpdateCapsule, QueryCapsuleCapabilities).
+#
+#  It installs the Capsule Architectural Protocol defined in PI1.0a to signify
+#  the capsule runtime services are ready.
+#
+# Copyright (c) Microsoft Corporation
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CapsuleRuntimeDxe
+  FILE_GUID                      = 55ABAC00-B2B2-44F1-860F-D9C6EFC4FC3A
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = CapsuleServiceInitialize
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64 RISCV64
+#
+
+[Sources]
+  CapsuleRuntimeDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  UefiBootServicesTableLib
+  DebugLib
+  UefiRuntimeServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeLib
+  BaseLib
+  BaseMemoryLib
+  SecurityLockAuditLib
+
+[Guids]
+  gEfiEventExitBootServicesGuid                 ## CONSUMES
+ 
+[Protocols]
+  gEfiCapsuleArchProtocolGuid                   ## PRODUCES
+  gCapsuleServiceProtocolGuid                   ## CONSUMES
+
+[Depex]
+  TRUE

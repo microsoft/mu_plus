@@ -40,6 +40,7 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
+  ResetSystemLib|MdeModulePkg/Library/BaseResetSystemLibNull/BaseResetSystemLibNull.inf
   MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
   DeviceSpecificBusInfoLib|MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf
   MemoryProtectionExceptionLib|MsCorePkg/Library/BaseMemoryProtectionExceptionLibNull/BaseMemoryProtectionExceptionLibNull.inf
@@ -85,6 +86,10 @@
   Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpm.inf
   Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
   Hash2CryptoLib|SecurityPkg/Library/BaseHash2CryptoLibNull/BaseHash2CryptoLibNull.inf
+
+  IsCapsuleSupportedLib|MsCorePkg/Library/BaseIsCapsuleSupportedLibNull/BaseIsCapsuleSupportedLibNull.inf
+  CapsulePersistenceLib|MsCorePkg/Library/BaseCapsulePersistenceLibNull/BaseCapsulePersistenceLibNull.inf
+  QueueLib|MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
 
 [LibraryClasses.common.UEFI_APPLICATION]
   UnitTestPersistenceLib|UnitTestFrameworkPkg/Library/UnitTestPersistenceLibSimpleFileSystem/UnitTestPersistenceLibSimpleFileSystem.inf
@@ -182,6 +187,7 @@
   MsCorePkg/Library/DebugPortPei/DebugPortPei.inf
   MsCorePkg/Library/PeiDebugLib/PeiDebugLib.inf
   MsCorePkg/DebugFileLoggerII/Pei/DebugFileLoggerPei.inf
+  MsCorePkg/CapsuleServicePei/CapsuleServicePei.inf
 
 [Components.X64]
   MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
@@ -199,6 +205,17 @@
   MsCorePkg/CheckHardwareConnected/CheckHardwareConnected.inf
   MsCorePkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
   MsCorePkg/DebugFileLoggerII/Dxe/DebugFileLogger.inf
+  MsCorePkg/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf {
+  <LibraryClasses>
+    UefiRuntimeLib      |MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
+    SecurityLockAuditLib|MdeModulePkg/Library/SecurityLockAuditLibNull/SecurityLockAuditLibNull.inf
+  }
+  MsCorePkg/CapsuleServiceProtocolDxe/CapsuleServiceProtocolDxe.inf {
+    <LibraryClasses>
+      ResetUtilityLib     |MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
+      RngLib              |MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
+      BaseCryptLib        |CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
+  }
 
 [BuildOptions]
 #force deprecated interfaces off

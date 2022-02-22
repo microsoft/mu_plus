@@ -1,0 +1,44 @@
+## @file
+#  Capsule update PEIM supports EFI and UEFI.
+#
+#  Caution: This module requires additional review when modified.
+#  This driver will have external input - capsule image.
+#  This external input must be validated carefully to avoid security issue like
+#  buffer overflow, integer overflow.
+#
+# Copyright (C) Microsoft Corporation. All Rights Reserved.
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = CapsuleServicePei
+  FILE_GUID                      = 60ADBBD9-AD61-4847-8532-3DBC301B4DAD
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = CapsulePeimEntry
+
+[Sources]
+  CapsuleServicePei.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  PeiServicesLib
+  PeimEntryPoint
+  DebugLib
+  PeiServicesTablePointerLib
+
+[Guids]
+  gCapsuleQueueDataGuid
+
+[Ppis]
+  gEfiPeiReadOnlyVariable2PpiGuid               ## CONSUMES
+  gEfiPeiCapsulePpiGuid                         ## PRODUCES
+
+[Depex]
+  gEfiPeiReadOnlyVariable2PpiGuid
