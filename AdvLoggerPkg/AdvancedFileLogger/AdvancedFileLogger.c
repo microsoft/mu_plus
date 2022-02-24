@@ -231,7 +231,7 @@ OnFileSystemNotification (
         // Get the next handle
         //
         Status = gBS->LocateHandleBuffer (ByRegisterNotify,
-                                         &gEfiSimpleFileSystemProtocolGuid,
+                                          NULL,
                                           mFileSystemRegistration,
                                          &HandleCount,
                                          &HandleBuffer);
@@ -245,7 +245,7 @@ OnFileSystemNotification (
         // Spec says we only get one at a time using ByRegisterNotify
         ASSERT (HandleCount == 1);
 
-        DEBUG((DEBUG_INFO,"%a: processing a potential log device\n", __FUNCTION__));
+        DEBUG((DEBUG_INFO,"%a: processing a potential log device on handle %p\n", __FUNCTION__, HandleBuffer[0]));
 
         RegisterLogDevice (HandleBuffer[0]);
 
@@ -340,9 +340,6 @@ ProcessFileSystemRegistration (
     )
 {
     EFI_EVENT       FileSystemCallBackEvent;
-    EFI_HANDLE     *HandleBuffer;
-    UINTN           HandleCount;
-    UINTN           i;
     EFI_STATUS      Status;
 
     //
@@ -373,22 +370,7 @@ ProcessFileSystemRegistration (
     //
     // Process any existing File System that were present before the registration.
     //
-    Status = gBS->LocateHandleBuffer (ByProtocol,
-                                     &gEfiSimpleFileSystemProtocolGuid,
-                                      NULL,
-                                     &HandleCount,
-                                     &HandleBuffer);
-    if (!EFI_ERROR(Status)) {
-        for (i = 0; i < HandleCount; i++) {
-            RegisterLogDevice (HandleBuffer[i]);
-        }
-        FreePool (HandleBuffer);
-    }
-
-    //
-    // File Systems are not required at this time, so return SUCCESS.
-    //
-    Status = EFI_SUCCESS;
+    OnFileSystemNotification (FileSystemCallBackEvent, NULL);
 
 Cleanup:
     return Status;
