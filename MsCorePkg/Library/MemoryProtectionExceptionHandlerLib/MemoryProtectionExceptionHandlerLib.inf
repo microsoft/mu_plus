@@ -40,5 +40,8 @@
   MsWheaEarlyStorageLib
   PeCoffGetEntryPointLib
 
+[Guids]
+  gMemoryProtectionExceptionHandlerGuid
+
 [DEPEX]
   TRUE

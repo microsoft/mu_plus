@@ -10,70 +10,109 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _MEM_PROT_EX_LIB_H_
 #define _MEM_PROT_EX_LIB_H_
 
-typedef UINT8   MEMORY_PROTECTION_VAR_TOKEN;
-typedef UINT16  MEMORY_PROTECTION_OVERRIDE;
-
-// Bit definitions for MEMORY_PROTECTION_OVERRIDE
-#define MEM_PROT_VALID_BIT   BIT0       // Is the override valid
-#define MEM_PROT_TOG_BIT     BIT1       // Is the global toggle on
-#define MEM_PROT_EX_HIT_BIT  BIT7       // Was an exception hit
-
-#define MEM_PROT_GLOBAL_TOGGLE_SETTING  ((MEMORY_PROTECTION_VAR_TOKEN) 0x0)
-
 /**
-  Gets a memory protection setting from the platform-specific early store. This setting value is only intended
-  to exist in early store if an exception was hit potentially related to memory protections.
+  Checks if an exception was hit on a previous boot.
 
-  @param[in]     VarToken   MEMORY_PROTECTION_VAR_TOKEN representing variable.
-  @param[in,out] Setting    UINT32 populated with bitmask for current memory protection setting.
+  @param[out]  ExceptionOccurred  Boolean TRUE if an exception occurred, FALSE otherwise.
+                                  ExceptionOccurred IS NOT updated if the function returns an error.
 
-  @retval EFI_SUCCESS             Setting now contains bitmask for String memory setting.
-  @retval EFI_NOT_FOUND           Memory protections variable region in CMOS is invalid.
-  @retval EFI_INVALID_PARAMETER   Setting was NULL
+  @retval EFI_SUCCESS             ExceptionOccurred contains the result of the check
+  @retval EFI_INVALID_PARAMETER   Unable to validate persistent storage contents
+  @retval EFI_UNSUPPORTED         Platform-specific persistent storage is unresponsive or NULL implementation called
 
 **/
 EFI_STATUS
 EFIAPI
-MemoryProtectionExceptionOverrideCheck (
-  IN    MEMORY_PROTECTION_VAR_TOKEN  VarToken,
-  OUT   UINT32                       *Setting
+MemProtExGetExceptionOccurred (
+  OUT   BOOLEAN  *ExceptionOccurred
   );
 
 /**
-  Checks if an exception was hit on a previous boot.
+  Sets memory protection exception value in platform-specific persistent storage to indicate that an
+  exception has occurred.
 
-  @retval TRUE          Checksum is valid and an exception was hit on a previous boot.
-  @retval FALSE         Checksum was false or an exception was not hit on a previous boot.
+  @retval EFI_SUCCESS       Value set
+  @retval EFI_UNSUPPORTED   Platform-specific persistent storage is unresponsive or NULL implementation called
 
 **/
-BOOLEAN
+EFI_STATUS
 EFIAPI
-MemoryProtectionExceptionOccurred (
+MemProtExSetExceptionOccurred (
   VOID
   );
 
 /**
-  Clears the memory protection setting from the platform-specific early store.
+  Clears from the platform-specific persistent storage the memory protection exception value indicating that
+  a memory violation exception occurred on a previous boot.
 
-  @retval EFI_SUCCESS       Always return success
+  @retval EFI_SUCCESS       Value cleared
+  @retval EFI_UNSUPPORTED   Platform-specific persistent storage is unresponsive or NULL implementation called
 
 **/
-VOID
+EFI_STATUS
 EFIAPI
-MemoryProtectionExceptionOverrideClear (
+MemProtExClearExceptionOccurred (
   VOID
   );
 
 /**
-  Writes Input Value to early store
+  Checks if the exception handler should ignore the next memory guard violation exception.
 
-  @param Val MEMORY_PROTECTION_OVERRIDE value to write
+  @param[out]  IgnoreNextException  Boolean TRUE if next exception should be ignored, FALSE otherwise.
+                                    IgnoreNextException IS NOT updated if the function returns an error.
+
+  @retval EFI_SUCCESS             IgnoreNextException contains the result of the check
+  @retval EFI_INVALID_PARAMETER   Unable to validate persistent storage contents
+  @retval EFI_UNSUPPORTED         Platform-specific persistent storage is unresponsive or NULL implementation called
 
 **/
-VOID
+EFI_STATUS
 EFIAPI
-MemoryProtectionExceptionOverrideWrite (
-  MEMORY_PROTECTION_OVERRIDE  Val
+MemProtExGetIgnoreNextException (
+  OUT BOOLEAN  *IgnoreNextException
+  );
+
+/**
+  Sets memory protection exception value in platform-specific persistent storage to indicate that the
+  next memory guard violation exception should be ignored, meaning when the exception occurs, the call
+  to MemProtExGetExceptionOccurred() will not reflect that an exception occurred the previous boot
+  (assuming that MemProtExGetExceptionOccurred() would have returned FALSE prior to the last exception).
+
+  @retval EFI_SUCCESS       Value set
+  @retval EFI_UNSUPPORTED   Platform-specific persistent storage is unresponsive or NULL implementation called
+
+**/
+EFI_STATUS
+EFIAPI
+MemProtExSetIgnoreNextException (
+  VOID
+  );
+
+/**
+  Clears from the platform-specific persistent storage the memory protection exception value indicating that the
+  next memory guard violation exception should be ignored.
+
+  @retval EFI_SUCCESS       Value cleared
+  @retval EFI_UNSUPPORTED   Platform-specific persistent storage is unresponsive or NULL implementation called
+
+**/
+EFI_STATUS
+EFIAPI
+MemProtExClearIgnoreNextException (
+  VOID
+  );
+
+/**
+  Clears all memory protection exception values from the platform-specific persistent storage.
+
+  @retval EFI_SUCCESS       Successfully cleared the exception bytes
+  @retval EFI_UNSUPPORTED   Platform-specific persistent storage is unresponsive or NULL implementation called
+
+**/
+EFI_STATUS
+EFIAPI
+MemProtExClearAll (
+  VOID
   );
 
 #endif

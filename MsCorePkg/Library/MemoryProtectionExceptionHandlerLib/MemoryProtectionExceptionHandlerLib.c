@@ -25,6 +25,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define IA32_PF_EC_ID  BIT4
 
+STATIC EFI_HANDLE  mImageHandle = NULL;
+
 /**
   Page Fault handler which turns off memory protections and does a warm reset.
 
@@ -41,10 +43,7 @@ MemoryProtectionExceptionHandler (
   IN EFI_SYSTEM_CONTEXT  SystemContext
   )
 {
-  MEMORY_PROTECTION_OVERRIDE  val;
-  UINTN                       pointer;
-
-  val = MEM_PROT_VALID_BIT | MEM_PROT_EX_HIT_BIT;
+  UINTN  pointer;
 
   DumpCpuContext (
     InterruptType,
@@ -78,7 +77,13 @@ MemoryProtectionExceptionHandler (
       );
   }
 
-  MemoryProtectionExceptionOverrideWrite (val);
+  if (EFI_ERROR (MemProtExSetExceptionOccurred ())) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a - Error mark exception occurred in platform early store\n",
+      __FUNCTION__
+      ));
+  }
 
   ResetWarm ();
 }
@@ -126,9 +131,24 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
   if (EFI_ERROR (Status)) {
     DEBUG ((
       DEBUG_ERROR,
-      "%a: - Failed to Register Exception Handler. Memory protections cannot be turned off via Page Fault handler.\n",
+      "%a: - Failed to Register Exception Handler. Page faults won't be logged via MemoryProtectionExceptionLib.\n",
       __FUNCTION__
       ));
+  } else {
+    Status = gBS->InstallMultipleProtocolInterfaces (
+                    &mImageHandle,
+                    &gMemoryProtectionExceptionHandlerGuid,
+                    NULL,
+                    NULL
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "%a: - Exception handler registered, but NULL protocol installation failed.\n",
+        __FUNCTION__
+        ));
+    }
   }
 }
 
@@ -151,6 +171,8 @@ MemoryProtectionExceptionHandlerConstructor (
   EFI_STATUS  Status;
   EFI_EVENT   CpuArchExHandlerCallBackEvent;
   VOID        *mCpuArchExHandlerRegistration = NULL;
+
+  mImageHandle = ImageHandle;
 
   // Don't install exception handler if all memory mitigations are off
   if (!(gMPS.CpuStackGuard                    ||
