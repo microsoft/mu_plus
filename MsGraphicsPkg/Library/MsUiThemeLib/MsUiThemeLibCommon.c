@@ -437,18 +437,18 @@ MsUiGetPlatformTheme (VOID) {
     ASSERT (gPlatformTheme != NULL);
     if (FirstTime) {
 
-        DUMP_HEX(DEBUG_VERBOSE, 0, gPlatformTheme, sizeof(MS_UI_THEME_DESCRIPTION), "");
-        DEBUG((DEBUG_VERBOSE,__FUNCTION__ " Theme information\n"));
-        DEBUG((DEBUG_VERBOSE,"Scale = %d\n",gPlatformTheme->Scale));
-        DEBUG((DEBUG_VERBOSE,"Fixed Font\n"));
+        DUMP_HEX (DEBUG_VERBOSE, 0, gPlatformTheme, sizeof (MS_UI_THEME_DESCRIPTION), "");
+        DEBUG ((DEBUG_VERBOSE,"[%a] Theme information\n", __FUNCTION__));
+        DEBUG ((DEBUG_VERBOSE,"Scale = %d\n",gPlatformTheme->Scale));
+        DEBUG ((DEBUG_VERBOSE,"Fixed Font\n"));
         DumpFontInfo (FONT_PTR_GET gPlatformTheme->FixedFont);
-        DEBUG((DEBUG_VERBOSE,"Small Font\n"));
+        DEBUG ((DEBUG_VERBOSE,"Small Font\n"));
         DumpFontInfo (FONT_PTR_GET gPlatformTheme->SmallFont);
-        DEBUG((DEBUG_VERBOSE,"Standard Font\n"));
+        DEBUG ((DEBUG_VERBOSE,"Standard Font\n"));
         DumpFontInfo (FONT_PTR_GET gPlatformTheme->StandardFont);
-        DEBUG((DEBUG_VERBOSE,"Medium Font\n"));
+        DEBUG ((DEBUG_VERBOSE,"Medium Font\n"));
         DumpFontInfo (FONT_PTR_GET gPlatformTheme->MediumFont);
-        DEBUG((DEBUG_VERBOSE,"Large Font\n"));
+        DEBUG ((DEBUG_VERBOSE,"Large Font\n"));
         DumpFontInfo (FONT_PTR_GET gPlatformTheme->LargeFont);
     }
     FirstTime = FALSE;
