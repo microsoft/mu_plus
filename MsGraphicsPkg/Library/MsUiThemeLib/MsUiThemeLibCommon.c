@@ -22,25 +22,34 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MsUiThemeLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-MS_UI_THEME_DESCRIPTION *gPlatformTheme = NULL;
+MS_UI_THEME_DESCRIPTION  *gPlatformTheme = NULL;
 
-
-
-#define FONT_DEBUG EFI_DEBUG
+#define FONT_DEBUG  EFI_DEBUG
 #if FONT_DEBUG
-VOID DumpFontInfo (MS_UI_FONT_DESCRIPTION *Font) {
-    DEBUG((DEBUG_VERBOSE,"CellH=%d, CellW=%d, Advance=%d\n",
-                Font->CellHeight,
-                Font->CellWidth,
-                Font->MaxAdvance));
-    DEBUG((DEBUG_VERBOSE,"Package Size=%d, GlyphsSize=%d\n",
-                Font->PackageSize,
-                Font->GlyphsSize));
-    DUMP_HEX(DEBUG_VERBOSE, 0, PACKAGE_PTR_GET Font->Package, 64, "");
-    DUMP_HEX(DEBUG_VERBOSE, 0, PACKAGE_PTR_GET Font->Glyphs, 64, "");
+VOID
+DumpFontInfo (
+  MS_UI_FONT_DESCRIPTION  *Font
+  )
+{
+  DEBUG ((
+    DEBUG_VERBOSE,
+    "CellH=%d, CellW=%d, Advance=%d\n",
+    Font->CellHeight,
+    Font->CellWidth,
+    Font->MaxAdvance
+    ));
+  DEBUG ((
+    DEBUG_VERBOSE,
+    "Package Size=%d, GlyphsSize=%d\n",
+    Font->PackageSize,
+    Font->GlyphsSize
+    ));
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET Font->Package, 64, "");
+  DUMP_HEX (DEBUG_VERBOSE, 0, PACKAGE_PTR_GET Font->Glyphs, 64, "");
 }
 
 #endif
+
 /**
  * For controls that scale to text size, this function scales
  * the number of pixels to the current theme scale.
@@ -55,9 +64,11 @@ VOID DumpFontInfo (MS_UI_FONT_DESCRIPTION *Font) {
  */
 UINT32
 EFIAPI
-MsUiScaleByTheme (UINT32 PixelCount) {
-
-    return (UINT32) (((PixelCount * gPlatformTheme->Scale) + 50) / 100);
+MsUiScaleByTheme (
+  UINT32  PixelCount
+  )
+{
+  return (UINT32)(((PixelCount * gPlatformTheme->Scale) + 50) / 100);
 }
 
 /**
@@ -70,9 +81,11 @@ MsUiScaleByTheme (UINT32 PixelCount) {
  */
 UINT16
 EFIAPI
-MsUiGetSmallOSKFontHeight (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->CellHeight;
+MsUiGetSmallOSKFontHeight (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->CellHeight;
 }
 
 /**
@@ -85,9 +98,11 @@ MsUiGetSmallOSKFontHeight (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetSmallOSKFontWidth (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->CellWidth;
+MsUiGetSmallOSKFontWidth (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->CellWidth;
 }
 
 /**
@@ -100,9 +115,11 @@ MsUiGetSmallOSKFontWidth (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetSmallOSKFontMaxAdvance (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->MaxAdvance;
+MsUiGetSmallOSKFontMaxAdvance (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->MaxAdvance;
 }
 
 /**
@@ -115,9 +132,11 @@ MsUiGetSmallOSKFontMaxAdvance (VOID) {
  */
 UINT8 *
 EFIAPI
-MsUiGetSmallOSKFontGlyphs (VOID) {
-
-    return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->Glyphs);
+MsUiGetSmallOSKFontGlyphs (
+  VOID
+  )
+{
+  return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->SmallOSKFont)->Glyphs);
 }
 
 /**
@@ -130,9 +149,11 @@ MsUiGetSmallOSKFontGlyphs (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetSmallFontHeight (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->SmallFont)->CellHeight;
+MsUiGetSmallFontHeight (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->SmallFont)->CellHeight;
 }
 
 /**
@@ -145,9 +166,11 @@ MsUiGetSmallFontHeight (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetSmallFontWidth (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->SmallFont)->CellWidth;
+MsUiGetSmallFontWidth (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->SmallFont)->CellWidth;
 }
 
 /**
@@ -160,9 +183,11 @@ MsUiGetSmallFontWidth (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetSmallFontMaxAdvance (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->SmallFont)->MaxAdvance;
+MsUiGetSmallFontMaxAdvance (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->SmallFont)->MaxAdvance;
 }
 
 /**
@@ -175,9 +200,11 @@ MsUiGetSmallFontMaxAdvance (VOID) {
  */
 UINT8 *
 EFIAPI
-MsUiGetSmallFontGlyphs (VOID) {
-
-    return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->SmallFont)->Glyphs);
+MsUiGetSmallFontGlyphs (
+  VOID
+  )
+{
+  return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->SmallFont)->Glyphs);
 }
 
 /**
@@ -190,9 +217,11 @@ MsUiGetSmallFontGlyphs (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetStandardFontHeight (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->StandardFont)->CellHeight;
+MsUiGetStandardFontHeight (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->StandardFont)->CellHeight;
 }
 
 /**
@@ -205,9 +234,11 @@ MsUiGetStandardFontHeight (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetStandardFontMWidth (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->StandardFont)->CellWidth;
+MsUiGetStandardFontMWidth (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->StandardFont)->CellWidth;
 }
 
 /**
@@ -220,9 +251,11 @@ MsUiGetStandardFontMWidth (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetStandardFontMaxAdvance (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->StandardFont)->MaxAdvance;
+MsUiGetStandardFontMaxAdvance (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->StandardFont)->MaxAdvance;
 }
 
 /**
@@ -235,9 +268,11 @@ MsUiGetStandardFontMaxAdvance (VOID) {
  */
 UINT8 *
 EFIAPI
-MsUiGetStandardFontGlyphs (VOID) {
-
-    return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->StandardFont)->Glyphs);
+MsUiGetStandardFontGlyphs (
+  VOID
+  )
+{
+  return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->StandardFont)->Glyphs);
 }
 
 /**
@@ -250,9 +285,11 @@ MsUiGetStandardFontGlyphs (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetMediumFontHeight (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->MediumFont)->CellHeight;
+MsUiGetMediumFontHeight (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->MediumFont)->CellHeight;
 }
 
 /**
@@ -265,9 +302,11 @@ MsUiGetMediumFontHeight (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetMediumFontWidth (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->MediumFont)->CellWidth;
+MsUiGetMediumFontWidth (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->MediumFont)->CellWidth;
 }
 
 /**
@@ -280,9 +319,11 @@ MsUiGetMediumFontWidth (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetMediumFontMaxAdvance (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->MediumFont)->MaxAdvance;
+MsUiGetMediumFontMaxAdvance (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->MediumFont)->MaxAdvance;
 }
 
 /**
@@ -295,9 +336,11 @@ MsUiGetMediumFontMaxAdvance (VOID) {
  */
 UINT8 *
 EFIAPI
-MsUiGetMediumFontGlyphs (VOID) {
-
-    return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->MediumFont)->Glyphs);
+MsUiGetMediumFontGlyphs (
+  VOID
+  )
+{
+  return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->MediumFont)->Glyphs);
 }
 
 /**
@@ -310,9 +353,11 @@ MsUiGetMediumFontGlyphs (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetLargeFontHeight (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->LargeFont)->CellHeight;
+MsUiGetLargeFontHeight (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->LargeFont)->CellHeight;
 }
 
 /**
@@ -325,9 +370,11 @@ MsUiGetLargeFontHeight (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetLargeFontWidth (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->LargeFont)->CellWidth;
+MsUiGetLargeFontWidth (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->LargeFont)->CellWidth;
 }
 
 /**
@@ -340,9 +387,11 @@ MsUiGetLargeFontWidth (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetLargeFontMaxAdvance (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->LargeFont)->MaxAdvance;
+MsUiGetLargeFontMaxAdvance (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->LargeFont)->MaxAdvance;
 }
 
 /**
@@ -355,9 +404,11 @@ MsUiGetLargeFontMaxAdvance (VOID) {
  */
 UINT8 *
 EFIAPI
-MsUiGetLargeFontGlyphs (VOID) {
-
-    return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->LargeFont)->Glyphs);
+MsUiGetLargeFontGlyphs (
+  VOID
+  )
+{
+  return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->LargeFont)->Glyphs);
 }
 
 /**
@@ -370,9 +421,11 @@ MsUiGetLargeFontGlyphs (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetFixedFontHeight (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->FixedFont)->CellHeight;
+MsUiGetFixedFontHeight (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->FixedFont)->CellHeight;
 }
 
 /**
@@ -385,9 +438,11 @@ MsUiGetFixedFontHeight (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetFixedFontWidth (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->FixedFont)->CellWidth;
+MsUiGetFixedFontWidth (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->FixedFont)->CellWidth;
 }
 
 /**
@@ -400,9 +455,11 @@ MsUiGetFixedFontWidth (VOID) {
  */
 UINT16
 EFIAPI
-MsUiGetFixedFontMaxAdvance (VOID) {
-
-    return (FONT_PTR_GET gPlatformTheme->FixedFont)->MaxAdvance;
+MsUiGetFixedFontMaxAdvance (
+  VOID
+  )
+{
+  return (FONT_PTR_GET gPlatformTheme->FixedFont)->MaxAdvance;
 }
 
 /**
@@ -415,9 +472,11 @@ MsUiGetFixedFontMaxAdvance (VOID) {
  */
 UINT8 *
 EFIAPI
-MsUiGetFixedFontGlyphs (VOID) {
-
-    return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->FixedFont)->Glyphs);
+MsUiGetFixedFontGlyphs (
+  VOID
+  )
+{
+  return (UINT8 *)(GLYPH_PTR_GET (FONT_PTR_GET gPlatformTheme->FixedFont)->Glyphs);
 }
 
 /**
@@ -428,33 +487,34 @@ MsUiGetFixedFontGlyphs (VOID) {
  */
 MS_UI_THEME_DESCRIPTION *
 EFIAPI
-MsUiGetPlatformTheme (VOID) {
+MsUiGetPlatformTheme (
+  VOID
+  )
+{
+ #if FONT_DEBUG
 
-#if FONT_DEBUG
+  static BOOLEAN  FirstTime = TRUE;
 
-    static BOOLEAN FirstTime = TRUE;
+  ASSERT (gPlatformTheme != NULL);
+  if (FirstTime) {
+    DUMP_HEX (DEBUG_VERBOSE, 0, gPlatformTheme, sizeof (MS_UI_THEME_DESCRIPTION), "");
+    DEBUG ((DEBUG_VERBOSE, "[%a] Theme information\n", __FUNCTION__));
+    DEBUG ((DEBUG_VERBOSE, "Scale = %d\n", gPlatformTheme->Scale));
+    DEBUG ((DEBUG_VERBOSE, "Fixed Font\n"));
+    DumpFontInfo (FONT_PTR_GET gPlatformTheme->FixedFont);
+    DEBUG ((DEBUG_VERBOSE, "Small Font\n"));
+    DumpFontInfo (FONT_PTR_GET gPlatformTheme->SmallFont);
+    DEBUG ((DEBUG_VERBOSE, "Standard Font\n"));
+    DumpFontInfo (FONT_PTR_GET gPlatformTheme->StandardFont);
+    DEBUG ((DEBUG_VERBOSE, "Medium Font\n"));
+    DumpFontInfo (FONT_PTR_GET gPlatformTheme->MediumFont);
+    DEBUG ((DEBUG_VERBOSE, "Large Font\n"));
+    DumpFontInfo (FONT_PTR_GET gPlatformTheme->LargeFont);
+  }
 
-    ASSERT (gPlatformTheme != NULL);
-    if (FirstTime) {
+  FirstTime = FALSE;
 
-        DUMP_HEX (DEBUG_VERBOSE, 0, gPlatformTheme, sizeof (MS_UI_THEME_DESCRIPTION), "");
-        DEBUG ((DEBUG_VERBOSE,"[%a] Theme information\n", __FUNCTION__));
-        DEBUG ((DEBUG_VERBOSE,"Scale = %d\n",gPlatformTheme->Scale));
-        DEBUG ((DEBUG_VERBOSE,"Fixed Font\n"));
-        DumpFontInfo (FONT_PTR_GET gPlatformTheme->FixedFont);
-        DEBUG ((DEBUG_VERBOSE,"Small Font\n"));
-        DumpFontInfo (FONT_PTR_GET gPlatformTheme->SmallFont);
-        DEBUG ((DEBUG_VERBOSE,"Standard Font\n"));
-        DumpFontInfo (FONT_PTR_GET gPlatformTheme->StandardFont);
-        DEBUG ((DEBUG_VERBOSE,"Medium Font\n"));
-        DumpFontInfo (FONT_PTR_GET gPlatformTheme->MediumFont);
-        DEBUG ((DEBUG_VERBOSE,"Large Font\n"));
-        DumpFontInfo (FONT_PTR_GET gPlatformTheme->LargeFont);
-    }
-    FirstTime = FALSE;
+ #endif
 
-#endif
-
-    return gPlatformTheme;    // PlatformTheme
+  return gPlatformTheme;      // PlatformTheme
 }
-

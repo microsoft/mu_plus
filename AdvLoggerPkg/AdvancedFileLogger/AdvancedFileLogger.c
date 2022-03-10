@@ -12,9 +12,9 @@
 //
 // Global variables.
 //
-VOID                       *mFileSystemRegistration = NULL;
-LIST_ENTRY                  mLoggingDeviceHead = INITIALIZE_LIST_HEAD_VARIABLE (mLoggingDeviceHead);
-UINT32                      mWritingSemaphore = 0;
+VOID        *mFileSystemRegistration = NULL;
+LIST_ENTRY  mLoggingDeviceHead       = INITIALIZE_LIST_HEAD_VARIABLE (mLoggingDeviceHead);
+UINT32      mWritingSemaphore        = 0;
 
 /**
     WriteLogFiles
@@ -24,47 +24,47 @@ UINT32                      mWritingSemaphore = 0;
   **/
 VOID
 WriteLogFiles (
-    VOID
-    )
+  VOID
+  )
 {
-    LIST_ENTRY           *Link;
-    LOG_DEVICE           *LogDevice;
-    UINT64                TimeEnd;
-    UINT64                TimeStart;
+  LIST_ENTRY  *Link;
+  LOG_DEVICE  *LogDevice;
+  UINT64      TimeEnd;
+  UINT64      TimeStart;
 
-    //
-    // Use an atomic lock to catch a re-entrant call. Non-zero means we've entered
-    // a second time.
-    //
-    DEBUG((DEBUG_INFO, "Entry to WriteLogFiles.\n"));
+  //
+  // Use an atomic lock to catch a re-entrant call. Non-zero means we've entered
+  // a second time.
+  //
+  DEBUG ((DEBUG_INFO, "Entry to WriteLogFiles.\n"));
 
-    if (InterlockedCompareExchange32 (&mWritingSemaphore, 0, 1) != 0) {
-        DEBUG((DEBUG_ERROR, "WriteLogFiles blocked.\n"));
-        return;
-    }
+  if (InterlockedCompareExchange32 (&mWritingSemaphore, 0, 1) != 0) {
+    DEBUG ((DEBUG_ERROR, "WriteLogFiles blocked.\n"));
+    return;
+  }
 
-    TimeStart = GetPerformanceCounter ();
+  TimeStart = GetPerformanceCounter ();
 
-    #define WRITING_ALL_LOG_FILES "AdvLogger All files"
+  #define WRITING_ALL_LOG_FILES  "AdvLogger All files"
 
-    PERF_INMODULE_BEGIN(WRITING_ALL_LOG_FILES);
+  PERF_INMODULE_BEGIN (WRITING_ALL_LOG_FILES);
 
-    EFI_LIST_FOR_EACH(Link, &(mLoggingDeviceHead)) {
-        LogDevice = LOG_DEVICE_FROM_LINK (Link);
+  EFI_LIST_FOR_EACH (Link, &(mLoggingDeviceHead)) {
+    LogDevice = LOG_DEVICE_FROM_LINK (Link);
 
-        WriteALogFile (LogDevice);
-    }
+    WriteALogFile (LogDevice);
+  }
 
-    PERF_INMODULE_END(WRITING_ALL_LOG_FILES);
+  PERF_INMODULE_END (WRITING_ALL_LOG_FILES);
 
-    TimeEnd = GetPerformanceCounter ();
-    DEBUG((DEBUG_INFO, "Time to write logs: %ld ms\n", (GetTimeInNanoSecond(TimeEnd-TimeStart) / (1000 * 1000)) ));
+  TimeEnd = GetPerformanceCounter ();
+  DEBUG ((DEBUG_INFO, "Time to write logs: %ld ms\n", (GetTimeInNanoSecond (TimeEnd-TimeStart) / (1000 * 1000))));
 
-    //
-    // Release the lock.
-    //
-    InterlockedCompareExchange32 (&mWritingSemaphore, 1, 0);
-    DEBUG((DEBUG_INFO, "Exit from WriteLogFiles.\n"));
+  //
+  // Release the lock.
+  //
+  InterlockedCompareExchange32 (&mWritingSemaphore, 1, 0);
+  DEBUG ((DEBUG_INFO, "Exit from WriteLogFiles.\n"));
 }
 
 /**
@@ -77,25 +77,25 @@ STATIC
 VOID
 EFIAPI
 OnResetNotification (
-    IN EFI_RESET_TYPE ResetType,
-    IN EFI_STATUS     ResetStatus,
-    IN UINTN          DataSize,
-    IN VOID          *ResetData OPTIONAL
-    )
+  IN EFI_RESET_TYPE  ResetType,
+  IN EFI_STATUS      ResetStatus,
+  IN UINTN           DataSize,
+  IN VOID            *ResetData OPTIONAL
+  )
 {
-    EFI_TPL         OldTpl;
+  EFI_TPL  OldTpl;
 
-    OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
-    gBS->RestoreTPL (OldTpl);
+  OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
+  gBS->RestoreTPL (OldTpl);
 
-    DEBUG((DEBUG_INFO, "OnResetNotification\n"));
-    if (OldTpl <= TPL_CALLBACK) {
-        WriteLogFiles ();
-    } else {
-        DEBUG((DEBUG_ERROR, "Unable to write log at reset\n"));
-    }
+  DEBUG ((DEBUG_INFO, "OnResetNotification\n"));
+  if (OldTpl <= TPL_CALLBACK) {
+    WriteLogFiles ();
+  } else {
+    DEBUG ((DEBUG_ERROR, "Unable to write log at reset\n"));
+  }
 
-    return;
+  return;
 }
 
 /**
@@ -114,39 +114,41 @@ OnResetNotification (
 VOID
 EFIAPI
 OnResetNotificationProtocolInstalled (
-    IN  EFI_EVENT   Event,
-    IN  VOID        *Context
-    )
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
 {
-    EFI_RESET_NOTIFICATION_PROTOCOL *ResetNotificationProtocol;
-    EFI_STATUS                       Status;
+  EFI_RESET_NOTIFICATION_PROTOCOL  *ResetNotificationProtocol;
+  EFI_STATUS                       Status;
 
-    DEBUG((DEBUG_INFO, "OnResetNotification protocol detected\n"));
+  DEBUG ((DEBUG_INFO, "OnResetNotification protocol detected\n"));
+  //
+  // Get a pointer to the report status code protocol.
+  //
+  Status = gBS->LocateProtocol (
+                  &gEfiResetNotificationProtocolGuid,
+                  NULL,
+                  (VOID **)&ResetNotificationProtocol
+                  );
+
+  if (!EFI_ERROR (Status)) {
     //
-    // Get a pointer to the report status code protocol.
+    // Register our reset notification request
     //
-    Status = gBS->LocateProtocol (&gEfiResetNotificationProtocolGuid,
-                                   NULL,
-                                   (VOID**)&ResetNotificationProtocol);
-
-    if (!EFI_ERROR(Status)) {
-        //
-        // Register our reset notification request
-        //
-        DEBUG((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
-        Status = ResetNotificationProtocol->RegisterResetNotify (ResetNotificationProtocol, OnResetNotification);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
-        }
-
-        if (Event != NULL) {
-            gBS->CloseEvent (Event);
-        }
-    } else {
-        DEBUG((DEBUG_ERROR, "%a: Unable to locate Reset Notification Protocol.\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
+    Status = ResetNotificationProtocol->RegisterResetNotify (ResetNotificationProtocol, OnResetNotification);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
     }
 
-    return;
+    if (Event != NULL) {
+      gBS->CloseEvent (Event);
+    }
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a: Unable to locate Reset Notification Protocol.\n", __FUNCTION__));
+  }
+
+  return;
 }
 
 /**
@@ -159,45 +161,45 @@ OnResetNotificationProtocolInstalled (
   **/
 VOID
 RegisterLogDevice (
-    IN EFI_HANDLE Handle
-    )
+  IN EFI_HANDLE  Handle
+  )
 {
-    EFI_DEVICE_PATH_PROTOCOL *DevicePath;
-    CHAR16                   *DevicePathString;
-    LOG_DEVICE               *LogDevice;
-    EFI_STATUS                Status;
-    UINT64                    TimeStart;
-    UINT64                    TimeEnd;
+  EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
+  CHAR16                    *DevicePathString;
+  LOG_DEVICE                *LogDevice;
+  EFI_STATUS                Status;
+  UINT64                    TimeStart;
+  UINT64                    TimeEnd;
 
-    TimeStart = GetPerformanceCounter ();
+  TimeStart = GetPerformanceCounter ();
 
-    LogDevice = (LOG_DEVICE *) AllocateZeroPool (sizeof(LOG_DEVICE));
-    ASSERT (LogDevice);
-    if (NULL == LogDevice) {
-        DEBUG((DEBUG_ERROR, "%a: Out of memory:\n", __FUNCTION__));
-        return;
+  LogDevice = (LOG_DEVICE *)AllocateZeroPool (sizeof (LOG_DEVICE));
+  ASSERT (LogDevice);
+  if (NULL == LogDevice) {
+    DEBUG ((DEBUG_ERROR, "%a: Out of memory:\n", __FUNCTION__));
+    return;
+  }
+
+  LogDevice->Signature = LOG_DEVICE_SIGNATURE;
+  LogDevice->Handle    = Handle;
+  LogDevice->Valid     = TRUE;
+
+  Status = EnableLoggingOnThisDevice (LogDevice);
+
+  if (EFI_ERROR (Status)) {
+    FreePool (LogDevice);
+  } else {
+    InsertTailList (&mLoggingDeviceHead, &LogDevice->Link);
+    DevicePath       = DevicePathFromHandle (Handle);
+    DevicePathString = ConvertDevicePathToText (DevicePath, TRUE, TRUE);
+    if (DevicePathString != NULL) {
+      DEBUG ((DEBUG_INFO, "File system registered on device:\n%s\n", DevicePathString));
+      FreePool (DevicePathString);
     }
+  }
 
-    LogDevice->Signature = LOG_DEVICE_SIGNATURE;
-    LogDevice->Handle = Handle;
-    LogDevice->Valid = TRUE;
-
-    Status = EnableLoggingOnThisDevice (LogDevice);
-
-    if (EFI_ERROR(Status)) {
-        FreePool (LogDevice);
-    } else {
-        InsertTailList (&mLoggingDeviceHead, &LogDevice->Link);
-        DevicePath = DevicePathFromHandle (Handle);
-        DevicePathString = ConvertDevicePathToText (DevicePath, TRUE, TRUE);
-        if (DevicePathString != NULL) {
-            DEBUG((DEBUG_INFO, "File system registered on device:\n%s\n", DevicePathString));
-            FreePool (DevicePathString);
-        }
-    }
-
-    TimeEnd = GetPerformanceCounter();
-    DEBUG((DEBUG_INFO, "Time to initialize logs: %ld ms\n\n", (GetTimeInNanoSecond(TimeEnd-TimeStart) / (1024 * 1024)) ));
+  TimeEnd = GetPerformanceCounter ();
+  DEBUG ((DEBUG_INFO, "Time to initialize logs: %ld ms\n\n", (GetTimeInNanoSecond (TimeEnd-TimeStart) / (1024 * 1024))));
 }
 
 /**
@@ -216,43 +218,45 @@ RegisterLogDevice (
 VOID
 EFIAPI
 OnFileSystemNotification (
-    IN  EFI_EVENT   Event,
-    IN  VOID       *Context
-    )
+  IN  EFI_EVENT  Event,
+  IN  VOID       *Context
+  )
 {
-    UINTN           HandleCount;
-    EFI_HANDLE     *HandleBuffer;
-    EFI_STATUS      Status;
+  UINTN       HandleCount;
+  EFI_HANDLE  *HandleBuffer;
+  EFI_STATUS  Status;
 
-    DEBUG((DEBUG_INFO, "%a: Entry...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: Entry...\n", __FUNCTION__));
 
-    for (;;) {
-        //
-        // Get the next handle
-        //
-        Status = gBS->LocateHandleBuffer (ByRegisterNotify,
-                                         NULL,
-                                          mFileSystemRegistration,
-                                         &HandleCount,
-                                         &HandleBuffer);
-        //
-        // If not found, or any other error, we're done
-        //
-        if (EFI_ERROR(Status)) {
-          break;
-        }
-
-        // Spec says we only get one at a time using ByRegisterNotify
-        ASSERT (HandleCount == 1);
-
-        DEBUG((DEBUG_INFO,"%a: processing a potential log device on handle %p\n", __FUNCTION__, HandleBuffer[0]));
-
-        RegisterLogDevice (HandleBuffer[0]);
-
-        FreePool (HandleBuffer);
+  for ( ; ;) {
+    //
+    // Get the next handle
+    //
+    Status = gBS->LocateHandleBuffer (
+                    ByRegisterNotify,
+                    NULL,
+                    mFileSystemRegistration,
+                    &HandleCount,
+                    &HandleBuffer
+                    );
+    //
+    // If not found, or any other error, we're done
+    //
+    if (EFI_ERROR (Status)) {
+      break;
     }
 
-    WriteLogFiles ();
+    // Spec says we only get one at a time using ByRegisterNotify
+    ASSERT (HandleCount == 1);
+
+    DEBUG ((DEBUG_INFO, "%a: processing a potential log device on handle %p\n", __FUNCTION__, HandleBuffer[0]));
+
+    RegisterLogDevice (HandleBuffer[0]);
+
+    FreePool (HandleBuffer);
+  }
+
+  WriteLogFiles ();
 }
 
 /**
@@ -269,12 +273,11 @@ OnFileSystemNotification (
 VOID
 EFIAPI
 OnWriteLogNotification (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-
-    WriteLogFiles ();
+  WriteLogFiles ();
 }
 
 /**
@@ -291,12 +294,11 @@ OnWriteLogNotification (
 VOID
 EFIAPI
 OnReadyToBootNotification (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-
-    WriteLogFiles ();
+  WriteLogFiles ();
 }
 
 /**
@@ -313,12 +315,11 @@ OnReadyToBootNotification (
 VOID
 EFIAPI
 OnPreExitBootServicesNotification (
-    IN EFI_EVENT        Event,
-    IN VOID             *Context
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
   )
 {
-
-    WriteLogFiles ();
+  WriteLogFiles ();
 }
 
 /**
@@ -336,46 +337,49 @@ OnPreExitBootServicesNotification (
  **/
 EFI_STATUS
 ProcessFileSystemRegistration (
-    VOID
-    )
+  VOID
+  )
 {
-    EFI_EVENT       FileSystemCallBackEvent;
-    EFI_STATUS      Status;
+  EFI_EVENT   FileSystemCallBackEvent;
+  EFI_STATUS  Status;
 
-    //
-    // Always register for file system notifications.  They may arrive at any time.
-    //
-    DEBUG((DEBUG_INFO, "Registering for file systems notifications\n"));
-    Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL,
-                               TPL_CALLBACK,
-                               OnFileSystemNotification,
-                               NULL,
-                              &FileSystemCallBackEvent);
+  //
+  // Always register for file system notifications.  They may arrive at any time.
+  //
+  DEBUG ((DEBUG_INFO, "Registering for file systems notifications\n"));
+  Status = gBS->CreateEvent (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnFileSystemNotification,
+                  NULL,
+                  &FileSystemCallBackEvent
+                  );
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: failed to create callback event (%r)\n", __FUNCTION__, Status));
-        goto Cleanup;
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to create callback event (%r)\n", __FUNCTION__, Status));
+    goto Cleanup;
+  }
 
-    Status = gBS->RegisterProtocolNotify (&gEfiSimpleFileSystemProtocolGuid,
-                                           FileSystemCallBackEvent,
-                                          &mFileSystemRegistration);
+  Status = gBS->RegisterProtocolNotify (
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  FileSystemCallBackEvent,
+                  &mFileSystemRegistration
+                  );
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: failed to register for file system notifications (%r)\n", __FUNCTION__, Status));
-        gBS->CloseEvent (FileSystemCallBackEvent);
-        goto Cleanup;
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to register for file system notifications (%r)\n", __FUNCTION__, Status));
+    gBS->CloseEvent (FileSystemCallBackEvent);
+    goto Cleanup;
+  }
 
-    //
-    // Process any existing File System that were present before the registration.
-    //
-    OnFileSystemNotification (FileSystemCallBackEvent, NULL);
+  //
+  // Process any existing File System that were present before the registration.
+  //
+  OnFileSystemNotification (FileSystemCallBackEvent, NULL);
 
 Cleanup:
-    return Status;
+  return Status;
 }
-
 
 /**
    ProcessResetEventRegistration
@@ -390,56 +394,61 @@ Cleanup:
  **/
 EFI_STATUS
 ProcessResetEventRegistration (
-    VOID
-    )
+  VOID
+  )
 {
-    EFI_RESET_NOTIFICATION_PROTOCOL *ResetNotificationProtocol;
-    EFI_EVENT                        ResetNotificationEvent;
-    VOID                            *ResetNotificationRegistration;
-    EFI_STATUS                       Status;
+  EFI_RESET_NOTIFICATION_PROTOCOL  *ResetNotificationProtocol;
+  EFI_EVENT                        ResetNotificationEvent;
+  VOID                             *ResetNotificationRegistration;
+  EFI_STATUS                       Status;
 
+  //
+  // Try to get a pointer to the Reset Notification Protocol. If successful,
+  // register our reset handler here. Otherwise, register a protocol notify
+  // handler and we'll register when the protocol is installed.
+  //
+  Status = gBS->LocateProtocol (
+                  &gEfiResetNotificationProtocolGuid,
+                  NULL,
+                  (VOID **)&ResetNotificationProtocol
+                  );
 
+  if (!EFI_ERROR (Status)) {
     //
-    // Try to get a pointer to the Reset Notification Protocol. If successful,
-    // register our reset handler here. Otherwise, register a protocol notify
-    // handler and we'll register when the protocol is installed.
+    // Register our reset notification request
     //
-    Status = gBS->LocateProtocol (&gEfiResetNotificationProtocolGuid,
-                                  NULL,
-                                  (VOID**)&ResetNotificationProtocol);
-
-    if (!EFI_ERROR(Status)) {
-        //
-        // Register our reset notification request
-        //
-        DEBUG((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
-        Status = ResetNotificationProtocol->RegisterResetNotify (ResetNotificationProtocol, OnResetNotification);
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
-        }
-    } else {
-        DEBUG((DEBUG_INFO, "%a: Reset Notification protocol not installed. Registering for notification\n", __FUNCTION__));
-        Status = gBS->CreateEvent (EVT_NOTIFY_SIGNAL,
-                                   TPL_CALLBACK,
-                                   OnResetNotificationProtocolInstalled,
-                                   NULL,
-                                  &ResetNotificationEvent);
-
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a: failed to create Reset Protocol protocol callback event (%r)\n", __FUNCTION__, Status));
-        } else {
-            Status = gBS->RegisterProtocolNotify (&gEfiResetNotificationProtocolGuid,
-                                                   ResetNotificationEvent,
-                                                  &ResetNotificationRegistration);
-
-            if (EFI_ERROR(Status)) {
-                DEBUG((DEBUG_ERROR, "%a: failed to register for Reset Protocol notification (%r)\n", __FUNCTION__, Status));
-                gBS->CloseEvent (ResetNotificationEvent);
-            }
-        }
+    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
+    Status = ResetNotificationProtocol->RegisterResetNotify (ResetNotificationProtocol, OnResetNotification);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
     }
+  } else {
+    DEBUG ((DEBUG_INFO, "%a: Reset Notification protocol not installed. Registering for notification\n", __FUNCTION__));
+    Status = gBS->CreateEvent (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_CALLBACK,
+                    OnResetNotificationProtocolInstalled,
+                    NULL,
+                    &ResetNotificationEvent
+                    );
 
-    return Status;
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: failed to create Reset Protocol protocol callback event (%r)\n", __FUNCTION__, Status));
+    } else {
+      Status = gBS->RegisterProtocolNotify (
+                      &gEfiResetNotificationProtocolGuid,
+                      ResetNotificationEvent,
+                      &ResetNotificationRegistration
+                      );
+
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: failed to register for Reset Protocol notification (%r)\n", __FUNCTION__, Status));
+        gBS->CloseEvent (ResetNotificationEvent);
+      }
+    }
+  }
+
+  return Status;
 }
 
 /**
@@ -456,27 +465,29 @@ ProcessResetEventRegistration (
   **/
 EFI_STATUS
 ProcessSyncRequestRegistration (
-    VOID
-    )
+  VOID
+  )
 {
-    EFI_EVENT       InitEvent;
-    EFI_STATUS      Status;
+  EFI_EVENT   InitEvent;
+  EFI_STATUS  Status;
 
-    //
-    // Register notify function for writing the log files.
-    //
-    Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
-                                  TPL_CALLBACK,
-                                  OnWriteLogNotification,
-                                  gImageHandle,
-                                 &gAdvancedFileLoggerWriteLogFiles,
-                                 &InitEvent );
+  //
+  // Register notify function for writing the log files.
+  //
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnWriteLogNotification,
+                  gImageHandle,
+                  &gAdvancedFileLoggerWriteLogFiles,
+                  &InitEvent
+                  );
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for file logger write. Code = %r\n", __FUNCTION__, Status));
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for file logger write. Code = %r\n", __FUNCTION__, Status));
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -493,33 +504,35 @@ ProcessSyncRequestRegistration (
   **/
 EFI_STATUS
 ProcessReadyToBootRegistration (
-    VOID
-    )
+  VOID
+  )
 {
-    EFI_EVENT       InitEvent;
-    EFI_STATUS      Status;
-    UINT8           FlushFlags;
+  EFI_EVENT   InitEvent;
+  EFI_STATUS  Status;
+  UINT8       FlushFlags;
 
-    FlushFlags = FixedPcdGet8(PcdAdvancedFileLoggerFlush);
+  FlushFlags = FixedPcdGet8 (PcdAdvancedFileLoggerFlush);
 
-    Status = EFI_SUCCESS;
-    if (FlushFlags & ADV_PCD_FLUSH_TO_MEDIA_FLAGS_READY_TO_BOOT) {
-        //
-        // Register notify function for writing the log files.
-        //
-        Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
-                                      TPL_CALLBACK,
-                                      OnReadyToBootNotification,
-                                      gImageHandle,
-                                     &gEfiEventReadyToBootGuid,
-                                     &InitEvent );
+  Status = EFI_SUCCESS;
+  if (FlushFlags & ADV_PCD_FLUSH_TO_MEDIA_FLAGS_READY_TO_BOOT) {
+    //
+    // Register notify function for writing the log files.
+    //
+    Status = gBS->CreateEventEx (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_CALLBACK,
+                    OnReadyToBootNotification,
+                    gImageHandle,
+                    &gEfiEventReadyToBootGuid,
+                    &InitEvent
+                    );
 
-        if (EFI_ERROR(Status)) {
-            DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ReadyToBoot. Code = %r\n", __FUNCTION__, Status));
-        }
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ReadyToBoot. Code = %r\n", __FUNCTION__, Status));
     }
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -535,27 +548,29 @@ ProcessReadyToBootRegistration (
   **/
 EFI_STATUS
 ProcessPreExitBootServicesRegistration (
-    VOID
-    )
+  VOID
+  )
 {
-    EFI_EVENT       InitEvent;
-    EFI_STATUS      Status;
+  EFI_EVENT   InitEvent;
+  EFI_STATUS  Status;
 
-    //
-    // Register notify function for writing the log files.
-    //
-    Status = gBS->CreateEventEx ( EVT_NOTIFY_SIGNAL,
-                                  TPL_CALLBACK,
-                                  OnPreExitBootServicesNotification,
-                                  gImageHandle,
-                                 &gMuEventPreExitBootServicesGuid,
-                                 &InitEvent );
+  //
+  // Register notify function for writing the log files.
+  //
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnPreExitBootServicesNotification,
+                  gImageHandle,
+                  &gMuEventPreExitBootServicesGuid,
+                  &InitEvent
+                  );
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+  }
 
-    return Status;
+  return Status;
 }
 
 /**
@@ -571,62 +586,62 @@ ProcessPreExitBootServicesRegistration (
 EFI_STATUS
 EFIAPI
 AdvancedFileLoggerEntry (
-    IN EFI_HANDLE           ImageHandle,
-    IN EFI_SYSTEM_TABLE    *SystemTable
-    )
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
 {
-    EFI_STATUS      Status;
+  EFI_STATUS  Status;
 
-    DEBUG((DEBUG_INFO, "%a: enter...\n",  __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
-    //
-    // Step 1. Register for file system notifications
-    //
-    Status = ProcessFileSystemRegistration ();
-    if (EFI_ERROR(Status)) {
-        goto Exit;
-    }
+  //
+  // Step 1. Register for file system notifications
+  //
+  Status = ProcessFileSystemRegistration ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    //
-    // Step 2. Register for Reset Event
-    //
-    Status = ProcessResetEventRegistration ();
-    if (EFI_ERROR(Status)) {
-        goto Exit;
-    }
+  //
+  // Step 2. Register for Reset Event
+  //
+  Status = ProcessResetEventRegistration ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    //
-    // Step 3. Register for general flush log files Notifications.
-    //
-    Status = ProcessSyncRequestRegistration ();
-    if (EFI_ERROR(Status)) {
-        goto Exit;
-    }
+  //
+  // Step 3. Register for general flush log files Notifications.
+  //
+  Status = ProcessSyncRequestRegistration ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    //
-    // Step 4. Register for ReadyToBoot Notifications.
-    //
-    Status = ProcessReadyToBootRegistration ();
-    if (EFI_ERROR(Status)) {
-        goto Exit;
-    }
+  //
+  // Step 4. Register for ReadyToBoot Notifications.
+  //
+  Status = ProcessReadyToBootRegistration ();
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
-    //
-    // Step 5. Register for PreExitBootServices Notifications.
-    //
-    Status = ProcessPreExitBootServicesRegistration ();
+  //
+  // Step 5. Register for PreExitBootServices Notifications.
+  //
+  Status = ProcessPreExitBootServicesRegistration ();
 
 Exit:
 
-    if (EFI_ERROR(Status)) {
-        DEBUG((DEBUG_ERROR, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
-    } else {
-        DEBUG((DEBUG_INFO, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
-    }
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
+  } else {
+    DEBUG ((DEBUG_INFO, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
+  }
 
-    // Always return EFI_SUCCESS.  This means any partial registration of functions
-    // will still exist, reducing the complexity of the uninstall process after a partial
-    // install.
+  // Always return EFI_SUCCESS.  This means any partial registration of functions
+  // will still exist, reducing the complexity of the uninstall process after a partial
+  // install.
 
-    return EFI_SUCCESS;
+  return EFI_SUCCESS;
 }
