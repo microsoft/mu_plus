@@ -22,6 +22,7 @@
 #include <Private/Library/MfciPolicyParsingLib.h>
 #include <Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLibInternal.h>
 
+#include "data/certs/CA.cer.h"
 #include "data/certs/CA_NotTrusted.cer.h"
 #include "data/packets/policy_good_manufacturing.bin.h"
 #include "data/packets/policy_good_manufacturing.bin.p7.h"
@@ -121,7 +122,7 @@ TestSanityCheckPolicy (
 {
   EFI_STATUS Status;
   SANITYCHECK_TEST_CONTEXT *btx = (SANITYCHECK_TEST_CONTEXT*)Context;
-  
+
   UT_LOG_VERBOSE( "\n%a()\n", __FUNCTION__ );
   UT_LOG_VERBOSE( "Parameters: 0x%p , 0x%X\n", btx->Blob, btx->Size);
 
@@ -141,7 +142,7 @@ TestExtractUint64 (
   EFI_STATUS Status;
   EXTRACT_UINT64_TEST_CONTEXT *btx = (EXTRACT_UINT64_TEST_CONTEXT*)Context;
   UINT64 u64 = MFCI_POLICY_VALUE_INVALID;
-  
+
   UT_LOG_VERBOSE( "\n%a():  %a\n", __FUNCTION__, btx->Description);
   DEBUG((DEBUG_INFO, "\n%a():  %a", __FUNCTION__, btx->Description ) );
 
@@ -172,7 +173,7 @@ TestExtractChar16 (
 
   if (btx->ExpectedValue == NULL || btx->ExtractedString == NULL) {
     UT_ASSERT_TRUE(btx->ExpectedValue == btx->ExtractedString);
-  } 
+  }
   else {
     DEBUG((DEBUG_INFO, "Found String: '%s'\n", btx->ExtractedString));
     DEBUG((DEBUG_INFO, "Expected String: '%s'\n", btx->ExpectedValue));
@@ -267,13 +268,20 @@ EntryPoint (
   //*----------------------------------------------------------------------------------*
   //* Test Contexts                                                                    *
   //*----------------------------------------------------------------------------------*
-  
-  // below is inspired/borrowed from FmpDxe.c
-  CONST UINT8* CONST PublicKeyDataXdr = FixedPcdGetPtr(PcdMfciPkcs7CertBufferXdr);
-  CONST UINT8* CONST PublicKeyDataXdrEnd = PublicKeyDataXdr + FixedPcdGetSize(PcdMfciPkcs7CertBufferXdr);
 
-  if (PublicKeyDataXdr == NULL || ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd) ) {
-    DEBUG ((DEBUG_ERROR, "Pcd PcdMfciPkcs7CertBufferXdr NULL or invalid size\n"));
+  // below is inspired/borrowed from FmpDxe.c
+  CONST UINT8* CONST PublicKeyDataXdr = (VOID *) mCert_Trusted_CA;
+
+  if (PublicKeyDataXdr == NULL) {
+    DEBUG ((DEBUG_ERROR, "PublicKeyDataXdr NULL \n"));
+    Status = EFI_ABORTED;
+    goto EXIT;
+  }
+
+  CONST UINT8* CONST PublicKeyDataXdrEnd = PublicKeyDataXdr + sizeof(mCert_Trusted_CA);
+
+  if ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd) {
+    DEBUG ((DEBUG_ERROR, "PublicKeyDataXdr invalid size\n"));
     Status = EFI_ABORTED;
     goto EXIT;
   }
@@ -287,8 +295,8 @@ EntryPoint (
   CONST UINT8* CONST PublicKeyData = PublicKeyDataXdr + sizeof (UINT32);
 
   // Only 1 certificate is supported
-  // Length + sizeof(CHAR8) because there is a terminating NULL byte
-  if (PublicKeyData + PublicKeyDataLength + sizeof(CHAR8) != PublicKeyDataXdrEnd) {
+  // Length + ALIGN_VALUE(Length, 4) for 4-byte alignment (XDR standard).
+  if ((PublicKeyData + ALIGN_VALUE (PublicKeyDataLength, 4)) != PublicKeyDataXdrEnd) {
     DEBUG ((DEBUG_ERROR, "PcdMfciPkcs7CertBufferXdr size mismatch: PublicKeyData(0x%x) PublicKeyDataLength(0x%x) PublicKeyDataXdrEnd(0x%x)", PublicKeyData, PublicKeyDataLength, PublicKeyDataXdrEnd));
     Status = EFI_ABORTED;
     goto EXIT;
@@ -312,7 +320,7 @@ EntryPoint (
   // static CONST UINT8*  (*mCertInvalidCaPtr)[sizeof(mCertCA_NotTrusted)] = NULL;
   static CONST UINT8    *mCertInvalidCaPtr = &mCertCA_NotTrusted[0];
   static UINTN           mCertInvalidCaLength = sizeof(mCertCA_NotTrusted);
-  static CONST CHAR8    *mTestEKU = FixedPcdGetPtr(PcdMfciPkcs7RequiredLeafEKU);
+  static CONST CHAR8    *mTestEKU = "1.3.6.1.4.1.311.45.255.255"; // Set EKU for MfciPkg/UnitTests/data/certs/Leaf-test.cer
   static CONST CHAR8    *mTestInvalidEKU = "1.3.6.1.4.1.311.45.255.0";
 
   static VALIDATEBLOB_TEST_CONTEXT mTestVB1  = { "Good Signature",        EFI_SUCCESS            , mSigned_policy_good_manufacturing, sizeof(mSigned_policy_good_manufacturing),   &mCertCA,            &mCertCaLength           , &mTestEKU};
@@ -337,7 +345,7 @@ EntryPoint (
   AddTestCase( SignatureVerificationTests, mTestVB8.Description, "MfciPolicy.ParserLib.SignatureVerification", TestValidateSignature, NULL, NULL, &mTestVB8 );
   AddTestCase( SignatureVerificationTests, mTestVB9.Description, "MfciPolicy.ParserLib.SignatureVerification", TestValidateSignature, NULL, NULL, &mTestVB9 );
 
-  
+
   //
   // Populate the SanityTest Unit Test Suite.
   //
@@ -352,7 +360,7 @@ EntryPoint (
   //*----------------------------------------------------------------------------------*
   //* Test Contexts                                                                    *
   //*----------------------------------------------------------------------------------*
-  
+
   static SANITYCHECK_TEST_CONTEXT  mTestSC1  = { "Good Policy"                  , EFI_SUCCESS          , mBin_policy_good_manufacturing, sizeof(mBin_policy_good_manufacturing) };
   static SANITYCHECK_TEST_CONTEXT  mTestSC2  = { "Policy Pointer NULL"          , EFI_INVALID_PARAMETER, NULL,                           sizeof(mBin_policy_good_manufacturing) };
   static SANITYCHECK_TEST_CONTEXT  mTestSC3  = { "Policy Too Small: Size 0"     , EFI_INVALID_PARAMETER, mBin_policy_good_manufacturing, 0 };
