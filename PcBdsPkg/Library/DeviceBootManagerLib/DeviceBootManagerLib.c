@@ -942,10 +942,11 @@ PostReadyToBoot (
   static BOOLEAN  FirstPass = TRUE;
 
   if (BootCurrentIsInternalShell ()) {
+    EfiBootManagerConnectAll ();
     if (PcdGetBool (PcdLowResolutionInternalShell)) {
       Status = SetGraphicsConsoleMode (GCM_LOW_RES);
       if (EFI_ERROR (Status) != FALSE) {
-        DEBUG ((DEBUG_ERROR, "%a Unabled to set console mode - %r\n", __FUNCTION__, Status));
+        DEBUG ((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, Status));
       }
     }
   }
