@@ -662,7 +662,7 @@ ProviderValueAsAscii (
         return NULL;
       }
 
-      Value = (CHAR8 *)AllocatePool (ValueSize);
+      Value = (CHAR8 *)AllocatePool (AsciiSize);
 
       Status = Base64Encode (Buffer, ValueSize, Value, &AsciiSize);
       if (EFI_ERROR (Status)) {
