@@ -196,8 +196,7 @@ Wait For System Online
        Exit For Loop If    '${result}' == 'True'
        Sleep   5sec    "Waiting for system to come back Online"
     END
-    Run Keyword Unless  ${result}   Log Failed Ping ${IP_OF_DUT} ${retries} times   ERROR
-    Should Be True  ${result}
+    Should Be True    ${result}    System failed to come online: pinging ${IP_OF_DUT} failed ${retries} times
 
 Wait For System Offline
     [Arguments]     ${retries}
@@ -206,8 +205,7 @@ Wait For System Offline
        Exit For Loop If    '${result}' == 'False'
        Sleep   5sec    "Waiting for system to go offline"
     END
-    Run Keyword If  ${result}   Log Ping ${IP_OF_DUT} ${retries} times  ERROR
-    Should Not Be True  ${result}
+    Should Not Be True    ${result}    System failed to go offline: pinged ${IP_OF_DUT} ${retries} times
 
 Wait For Remote Robot
     [Arguments]     ${timeinseconds}
