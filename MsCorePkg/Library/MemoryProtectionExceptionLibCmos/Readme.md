@@ -2,14 +2,12 @@
 
 ## About
 
-MemoryProtectionExceptionLib implements functionality for checking, updating, and clearing memory protection
-override values from the platform-specific early store. MemoryProtectionExceptionOverrideCheck() returns
-the relevant value held in early store (if it exists). MemoryProtectionExceptionOverrideClear() clears the early
-store. MemoryProtectionExceptionOccurred() returns TRUE if an exception was hit on a previous boot.
-MemoryProtectionExceptionOverrideWrite() writes to the early store.
-The validity of the data stored in CMOS is verified through the use of a two-byte checksum. Checks will
-first evaluate the checksum and return an EFI_ERROR if it is invalid. The checksum is updated when
-MemoryProtectionExceptionOverrideWrite() is called.
+MemoryProtectionExceptionLib implements functionality for getting, setting, and clearing memory protection
+override values from the platform-specific early store. All functions return an EFI_ERROR if the function was
+unsuccessful. The validity of the data stored in CMOS is verified through the use of a two-byte checksum.
+Sets/Gets/Clears will first evaluate the checksum and return an EFI_ERROR if it is invalid. Sets/Gets/Clears will
+also write and read a test value to CMOS to make sure the library is working as expected which also should catch
+instances where the library was linked improperly.
 
 ## Usage
 
