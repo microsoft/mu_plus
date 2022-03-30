@@ -125,7 +125,7 @@
   BaseCryptLib|CryptoPkg/Library/BaseCryptLib/PeiCryptLib.inf
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/PeiCpuExceptionHandlerLib.inf
 
-!if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019
+!if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
 [LibraryClasses.IA32]
   NULL|MdePkg/Library/VsIntrinsicLib/VsIntrinsicLib.inf
 !endif
