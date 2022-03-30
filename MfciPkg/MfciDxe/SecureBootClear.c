@@ -45,7 +45,7 @@ MfciPolicyChangeCallbackSecureBoot (
     if (FeaturePcdGet (PcdEnforceWindowsPcr11PrivacyPolicy) &&
         ((NewPolicy & STD_ACTION_TPM_CLEAR) != STD_ACTION_TPM_CLEAR))
     {
-      // Transitions that clear Secure Boot should clear the TPM to provide defence in depth of privacy
+      // Transitions that clear Secure Boot should clear the TPM to provide defense in depth of privacy
       DEBUG ((DEBUG_ERROR, "%a - MFCI attempt to clear Secure Boot without clearing TPM, possible security concern, aborting...\n", __FUNCTION__));
       ASSERT (FALSE);
       return EFI_SECURITY_VIOLATION;

@@ -1002,7 +1002,7 @@ MfciDxeEntry (
   Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, &NotUsed);
   if (EFI_ERROR (Status)) {
     // The DepEx should have ensured that Variable Policy was already available.  If we fail to locate the protocol,
-    // ASSERT on debug builds, and for retail register a notification in hopes the system will recovery (defence in depth)
+    // ASSERT on debug builds, and for retail register a notification in hopes the system will recovery (defense in depth)
     DEBUG ((DEBUG_ERROR, "%a() - Failed to locate VariablePolicy protocol with status %r, will register protocol notification\n", __FUNCTION__, Status));
     ASSERT (FALSE);
 
