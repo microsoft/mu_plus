@@ -202,6 +202,10 @@ CreateXmlStringFromCurrentSettings (
               ReturnValue = "UsbPortDataDisabled";
               break;
 
+            case DfciUsbPortAuthenticated:
+              ReturnValue = "UsbPortAuthenticated";
+              break;
+
             case ENABLE_INCONSISTENT:
               ReturnValue = "Inconsistent";
               break;

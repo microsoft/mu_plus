@@ -260,6 +260,9 @@ SetProviderValueFromAscii (
       } else if (AsciiStrCmp (Value, "UsbPortDataDisabled") == 0) {
         DEBUG ((DEBUG_INFO, "Setting to Usb Data Disabled\n"));
         UsbPortState = DfciUsbPortDataDisabled;
+      } else if (AsciiStrCmp (Value, "UsbPortAuthenticated") == 0) {
+        DEBUG ((DEBUG_INFO, "Setting to Usb Authenticated\n"));
+        UsbPortState = DfciUsbPortAuthenticated;
       } else {
         DEBUG ((DEBUG_INFO, "Invalid or unsupported Usb Port Setting. %a\n", Value));
         return EFI_INVALID_PARAMETER;
@@ -469,6 +472,8 @@ ProviderValueAsAscii (
         AsciiStrCpyS (Value, USB_PORT_STATE_STRING_SIZE, "UsbPortEnabled");
       } else if (b == DfciUsbPortDataDisabled) {
         AsciiStrCpyS (Value, USB_PORT_STATE_STRING_SIZE, "UsbPortDataDisabled");
+      } else if (b == DfciUsbPortAuthenticated) {
+        AsciiStrCpyS (Value, USB_PORT_STATE_STRING_SIZE, "UsbPortAuthenticated");
       } else if (b == ENABLE_INCONSISTENT) {
         AsciiStrCpyS (Value, USB_PORT_STATE_STRING_SIZE, "Inconsistent");
       } else {
