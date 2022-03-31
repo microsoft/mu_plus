@@ -22,6 +22,7 @@
 #include <Private/Library/MfciPolicyParsingLib.h>
 #include <Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLibInternal.h>
 
+#include "data/certs/CA.cer.h"
 #include "data/certs/CA_NotTrusted.cer.h"
 #include "data/packets/policy_good_manufacturing.bin.h"
 #include "data/packets/policy_good_manufacturing.bin.p7.h"
@@ -260,11 +261,18 @@ EntryPoint (
   // *----------------------------------------------------------------------------------*
 
   // below is inspired/borrowed from FmpDxe.c
-  CONST UINT8 *CONST  PublicKeyDataXdr    = FixedPcdGetPtr (PcdMfciPkcs7CertBufferXdr);
-  CONST UINT8 *CONST  PublicKeyDataXdrEnd = PublicKeyDataXdr + FixedPcdGetSize (PcdMfciPkcs7CertBufferXdr);
+  CONST UINT8 *CONST  PublicKeyDataXdr = (VOID *)mCert_Trusted_CA;
 
-  if ((PublicKeyDataXdr == NULL) || ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd)) {
-    DEBUG ((DEBUG_ERROR, "Pcd PcdMfciPkcs7CertBufferXdr NULL or invalid size\n"));
+  if (PublicKeyDataXdr == NULL) {
+    DEBUG ((DEBUG_ERROR, "PublicKeyDataXdr NULL \n"));
+    Status = EFI_ABORTED;
+    goto EXIT;
+  }
+
+  CONST UINT8 *CONST  PublicKeyDataXdrEnd = PublicKeyDataXdr + sizeof (mCert_Trusted_CA);
+
+  if ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd) {
+    DEBUG ((DEBUG_ERROR, "PublicKeyDataXdr invalid size\n"));
     Status = EFI_ABORTED;
     goto EXIT;
   }
@@ -278,8 +286,8 @@ EntryPoint (
   CONST UINT8 *CONST  PublicKeyData = PublicKeyDataXdr + sizeof (UINT32);
 
   // Only 1 certificate is supported
-  // Length + sizeof(CHAR8) because there is a terminating NULL byte
-  if (PublicKeyData + PublicKeyDataLength + sizeof (CHAR8) != PublicKeyDataXdrEnd) {
+  // Length + ALIGN_VALUE(Length, 4) for 4-byte alignment (XDR standard).
+  if ((PublicKeyData + ALIGN_VALUE (PublicKeyDataLength, 4)) != PublicKeyDataXdrEnd) {
     DEBUG ((DEBUG_ERROR, "PcdMfciPkcs7CertBufferXdr size mismatch: PublicKeyData(0x%x) PublicKeyDataLength(0x%x) PublicKeyDataXdrEnd(0x%x)", PublicKeyData, PublicKeyDataLength, PublicKeyDataXdrEnd));
     Status = EFI_ABORTED;
     goto EXIT;
@@ -305,7 +313,7 @@ EntryPoint (
   // static CONST UINT8*  (*mCertInvalidCaPtr)[sizeof(mCertCA_NotTrusted)] = NULL;
   static CONST UINT8  *mCertInvalidCaPtr   = &mCertCA_NotTrusted[0];
   static UINTN        mCertInvalidCaLength = sizeof (mCertCA_NotTrusted);
-  static CONST CHAR8  *mTestEKU            = FixedPcdGetPtr (PcdMfciPkcs7RequiredLeafEKU);
+  static CONST CHAR8  *mTestEKU            = "1.3.6.1.4.1.311.45.255.255"; // Set EKU for MfciPkg/UnitTests/data/certs/Leaf-test.cer
   static CONST CHAR8  *mTestInvalidEKU     = "1.3.6.1.4.1.311.45.255.0";
 
   static VALIDATEBLOB_TEST_CONTEXT  mTestVB1 = { "Good Signature", EFI_SUCCESS, mSigned_policy_good_manufacturing, sizeof (mSigned_policy_good_manufacturing), &mCertCA, &mCertCaLength, &mTestEKU };
