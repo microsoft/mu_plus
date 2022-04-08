@@ -72,14 +72,22 @@ GetNameGuidMembersFromNode (
   LIST_ENTRY  *Link = NULL;
   UINTN       i, Length;
 
+  if (VarName == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - VarName is NULL\n", __FUNCTION__));
+    Status = EFI_INVALID_PARAMETER;
+    goto EXIT;
+  }
+
+  *VarName = NULL;
+
   if (Node == NULL) {
     DEBUG ((DEBUG_ERROR, "%a - Node is NULL\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto EXIT;
   }
 
-  if ((VarName == NULL) || (VarGuid == NULL)) {
-    DEBUG ((DEBUG_ERROR, "%a - Input paramater is NULL\n", __FUNCTION__));
+  if (VarGuid == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - VarGuid is NULL\n", __FUNCTION__));
     Status = EFI_INVALID_PARAMETER;
     goto EXIT;
   }
@@ -114,7 +122,11 @@ GetNameGuidMembersFromNode (
           goto EXIT;
         }
 
-        AsciiStrToUnicodeStrS (CurrentAttribute->Value, *VarName, 1024);
+        Status = AsciiStrToUnicodeStrS (CurrentAttribute->Value, *VarName, Length + 1);
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "Error converting Ascii to Unicode for %a, Length=%d, code=%r\n", CurrentAttribute->Value, Length, Status));
+        }
+
         break;
 
       case 1: // guid
@@ -137,7 +149,7 @@ GetNameGuidMembersFromNode (
 
 EXIT:
   if (EFI_ERROR (Status)) {
-    if (*VarName != NULL) {
+    if ((VarName != NULL) && (*VarName != NULL)) {
       FreePool (*VarName);
       *VarName = NULL;
     }
