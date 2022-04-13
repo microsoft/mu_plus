@@ -20,17 +20,22 @@ DfciDeviceIdSupportLib provides DFCI with three platform strings:
 | ---                            | --- |
 | DfciIdSupportV1GetSerialNumber | DEPRECATED.  Always return 0. Will be removed. |
 | DfciIdSupportGetManufacturer   | Returns an allocated buffer with the system manufacturer name. |
-| DfciIdSupportGetProductName    | Return an allocated buffer with the system product name. |
-| DfciIdSupportGetSerialNumber   | Return an allocated buffer with the system serial number. |
+| DfciIdSupportGetProductName    | Returns an allocated buffer with the system product name. |
+| DfciIdSupportGetSerialNumber   | Returns an allocated buffer with the system serial number. |
 
 ## Additional Details
 
 These fields and their values are critical to the security of DFCI.
 These values should not be user configurable and should be protected from tampering.
 
----
+## Testing Requirements
+
+Your DfciDeviceIdSupportLib implementation must be linked with the included DeviceIdTest shell
+application.
+This shell application must be run on a system with production product strings for the product
+strings to be validated.
 
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.  
+Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent

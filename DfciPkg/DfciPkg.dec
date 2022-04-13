@@ -18,6 +18,7 @@
 
 [Includes]
   Include
+  Include/Private
 
 [LibraryClasses]
   ##  @libraryclass  Library used to obtain platform device

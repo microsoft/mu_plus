@@ -1,0 +1,64 @@
+
+## @file
+#  A UEFI Audit test app that enumerates all DFCI variables in NV ram
+#  collects the attribute information and then attempts to make changes
+#  to the variable in order to gather variable protection information.
+#
+#  If the variable is successfully deleted it will be recreated with the
+#  same data value.
+#
+#  The result data is output in XML
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = DfciVarLockAuditTestApp
+  FILE_GUID                      = 1a92094b-5650-4161-8868-c3b4968a8416
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DfciLockTestEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  DfciLockTest.c
+  DfciLockTestXml.h
+  DfciLockTestXml.c
+  InternalFunctions.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  DfciPkg/DfciPkg.dec
+  XmlSupportPkg/XmlSupportPkg.dec
+  ShellPkg/ShellPkg.dec
+  ZeroTouchPkg/ZeroTouchPkg.dec
+
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  UefiLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  ShellLib
+  PrintLib
+  XmlTreeLib
+  XmlTreeQueryLib
+
+[Guids]
+  gDfciDeviceIdVarNamespace
+  gDfciInternalVariableGuid
+  gDfciAuthProvisionVarNamespace
+  gDfciPermissionManagerVarNamespace
+  gDfciSettingsGuid
+  gDfciSettingsManagerVarNamespace
+  gZeroTouchVariableGuid

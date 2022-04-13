@@ -188,6 +188,10 @@
   DfciPkg/Application/SetRecovery/SetRecovery.inf
 
   DfciPkg/UnitTests/DeviceIdTest/DeviceIdTestApp.inf
+  DfciPkg/UnitTests/DfciVarLockAudit/UEFI/DfciVarLockAuditTestApp.inf {
+    <LibraryClasses>
+      DebugLib|MdePkg/Library/UefiDebugLibConOut/UefiDebugLibConOut.inf
+  }
 
 [BuildOptions]
 #force deprecated interfaces off

@@ -45,7 +45,7 @@ the USB key is mounted):
 x:\DfciSetup\SetupDUT.cmd
 ```
 
-This will download and install Python 3.9.4, robotframework, robotremoteserver, and pypiwin32.
+This will download and install Python, robotframework, robotremoteserver, and pypiwin32.
 In addition, the SetupDUT command will update the firewall for the robot framework testing, and a make a couple of
 configuration changes to Windows for a better test experience.
 
@@ -53,9 +53,9 @@ configuration changes to Windows for a better test experience.
 
 The HOST system requires the following software (NOTE - There are dependencies on x86-64 versions of Windows):
 
-1. A current version of Windows 10 x86-64.
+1. A current version of Windows x86-64.
 2. The current Windows SDK, available here [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk).
-3. Python 3.9.4 x86-64 (the version tested), available here [Python 3.9.4](https://www.python.org/ftp/python/3.9.4/python-3.9.4-amd64.exe).
+3. Python x86-64 (the version tested), available here [Python 3.9.4](https://www.python.org/ftp/python/3.9.4/python-3.9.4-amd64.exe).
 4. Copy the DfciTests directory, including all of the contents of the subdirectories, onto the HOST system.
 5. Install the required python packages by running using the pip-requirements.txt file in the DfciTests directory:
 
@@ -100,7 +100,9 @@ FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
 }
 ```
 
-> **WARNING: Do not ship with the ZTD_Leaf.cer certificate in your firmware**
+### WARNING: Do not ship with the ZTD_Leaf.cer certificate in your firmware
+
+Be sure your production systems are using the ZtdRecovery.cer file.
 
 ## Running The First Test Case
 
@@ -185,3 +187,12 @@ GenUsb Fabrikam "Fabrikam Spelunker Kit" "SN-47599011345"
 
 After producing your .dfi file, place it on a USB drive and take it to the system under test.
 Press the Install from USB button to apply the packets.
+
+## Variable Lock Test
+
+DfciPkg/UnitTest/DfciVarLockAudit contains a UEFI shell command to audit the state of the DFCI
+variables.
+This test should be run at multiple points during the development cycle, with the
+DfciVarLockAudit test run after enrollment and again after the system has been unenrolled.
+This verifies that the variables that secure the state of DFCI are not compromised.
+The automation to run DfciVarLock test automatically is not available at this time.
