@@ -1,5 +1,5 @@
 /**
-XML list implemenation for parsing.
+XML list implementation for parsing.
 
 Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
