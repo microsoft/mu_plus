@@ -48,7 +48,6 @@
 [LibraryClasses.Common.Private]
   MfciPolicyParsingLib|Private/Library/MfciPolicyParsingLib.h
   MfciPolicyParsingLib|Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLibInternal.h
-  MuSecureBootLib|Private/Library/MuSecureBootLib.h
   MfciRetrievePolicyLib|Private/Library/MfciRetrievePolicyLib.h
 
 [PcdsFixedAtBuild]

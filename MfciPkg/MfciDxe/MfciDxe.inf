@@ -47,7 +47,7 @@
   VariablePolicyHelperLib
   RngLib
   Tpm2CommandLib
-  MuSecureBootLib
+  SecureBootVariableLib
   MfciRetrievePolicyLib
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib

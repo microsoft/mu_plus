@@ -8,12 +8,14 @@
 **/
 
 #include <Uefi.h>
+#include <UefiSecureBoot.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>    // gBS
 
 #include <MfciPolicyType.h>
+#include <Guid/ImageAuthentication.h>
 #include <Protocol/MfciProtocol.h>
-#include <Library/MuSecureBootLib.h>
+#include <Library/SecureBootVariableLib.h>
 
 /**
   Callback invocation for MFCI policy changes.

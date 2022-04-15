@@ -39,7 +39,6 @@
 
   # The following 2 private libraries MUST NOT be overridden by a platform
   MfciPolicyParsingLib|MfciPkg/Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.inf
-  MuSecureBootLib|MfciPkg/Private/Library/MuSecureBootLib/MuSecureBootLib.inf
 
   !if $(OPT_INTO_MFCI_PRE_PRODUCTION) != TRUE
     BreakTheBuildLib|BreakTheBuildPkg/NotFound.inf # Break the build, MFCI is beta software and you need to define this var as TRUE to use it
