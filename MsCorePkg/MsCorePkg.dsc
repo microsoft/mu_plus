@@ -180,6 +180,7 @@
   MsCorePkg/Library/BaseCapsulePersistenceLibNull/BaseCapsulePersistenceLibNull.inf
   MsCorePkg/Library/DxeIsCapsuleSupportedLib/DxeIsCapsuleSupportedLib.inf
   MsCorePkg/Library/BaseIsCapsuleSupportedLibNull/BaseIsCapsuleSupportedLibNull.inf
+  MsCorePkg/Library/SecureBootKeyStoreLibNull/SecureBootKeyStoreLibNull.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
