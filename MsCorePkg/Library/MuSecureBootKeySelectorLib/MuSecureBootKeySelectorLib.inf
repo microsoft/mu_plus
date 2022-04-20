@@ -1,0 +1,46 @@
+## @file MuSecureBootKeySelectorLib.inf
+#
+#  This library implements functions to interact with platform supplied
+#  secure boot related keys through SecureBootKeyStoreLib.
+#
+#  Copyright (c) Microsoft Corporation
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MuSecureBootKeySelectorLib
+  FILE_GUID                      = CFDAC736-EB80-4227-8BB2-4A5C2ECAE119
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MuSecureBootKeySelectorLib | DXE_DRIVER UEFI_APPLICATION
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MuSecureBootKeySelectorLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SecurityPkg/SecurityPkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  SecureBootVariableLib
+  UefiBootServicesTableLib
+  SecureBootKeyStoreLib
+
+[Protocols]
+  gEfiRealTimeClockArchProtocolGuid             # SOMETIMES_CONSUMES
+  gEdkiiVariablePolicyProtocolGuid              # CONSUMES
+
+[Guids]
+  gEfiGlobalVariableGuid         # CONSUMES
+  gEfiImageSecurityDatabaseGuid  # CONSUMES
+
+[Depex]
+  gEdkiiVariablePolicyProtocolGuid
