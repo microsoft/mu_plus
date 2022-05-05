@@ -34,7 +34,7 @@
   CpuExceptionHandlerLib
   DebugLib
   UefiBootServicesTableLib
-  MemoryProtectionHobLib
+  DxeMemoryProtectionHobLib
   MemoryProtectionExceptionLib
   HwResetSystemLib
   MsWheaEarlyStorageLib

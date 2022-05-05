@@ -17,7 +17,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/CpuExceptionHandlerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Library/MemoryProtectionHobLib.h>
+#include <Library/DxeMemoryProtectionHobLib.h>
 #include <Library/MemoryProtectionExceptionLib.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
@@ -175,11 +175,10 @@ MemoryProtectionExceptionHandlerConstructor (
   mImageHandle = ImageHandle;
 
   // Don't install exception handler if all memory mitigations are off
-  if (!(gMPS.CpuStackGuard                    ||
-        (gMPS.HeapGuardPolicy.Data && (gMPS.HeapGuardPageType.Data || gMPS.HeapGuardPoolType.Data)) ||
-        gMPS.DxeNxProtectionPolicy.Data       ||
-        gMPS.ImageProtectionPolicy.Data       ||
-        gMPS.NullPointerDetectionPolicy.Data))
+  if (!((gDxeMps.HeapGuardPolicy.Data && (gDxeMps.HeapGuardPageType.Data || gDxeMps.HeapGuardPoolType.Data)) ||
+        gDxeMps.NxProtectionPolicy.Data          ||
+        gDxeMps.ImageProtectionPolicy.Data       ||
+        gDxeMps.NullPointerDetectionPolicy.Data))
   {
     return EFI_SUCCESS;
   }
