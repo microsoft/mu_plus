@@ -465,7 +465,6 @@ SaveToFlash (
   Var->LowestSupportedVersion = Store->Lsv;
   Var->DefaultPMask           = Store->DefaultPMask;
   Var->DefaultDMask           = Store->DefaultDMask;
-  CopyMem (&(Var->CreatedOn), &(Store->CreatedOn), sizeof (Var->CreatedOn));
 
   PermEntry = &Var->PermTableStart;
   PermPtr   = (CHAR8 *)PermEntry;
@@ -495,7 +494,9 @@ SaveToFlash (
   if (!EFI_ERROR (Status) &&
       (OldVarSize == VarSize))
   {
+    ZeroMem (&OldVar->CreatedOn, sizeof (OldVar->CreatedOn));
     ZeroMem (&OldVar->SavedOn, sizeof (OldVar->SavedOn));
+    ZeroMem (&Var->CreatedOn, sizeof (Var->CreatedOn));
     ZeroMem (&Var->SavedOn, sizeof (Var->SavedOn));
     if (0 == CompareMem (Var, OldVar, OldVarSize)) {
       DEBUG ((DEBUG_INFO, "%a - Save not necessary.\n", __FUNCTION__));
@@ -503,6 +504,7 @@ SaveToFlash (
     }
   }
 
+  CopyMem (&(Var->CreatedOn), &(Store->CreatedOn), sizeof (Var->CreatedOn));
   CopyMem (&(Var->SavedOn), &t, sizeof (Var->SavedOn));
 
   Status = gRT->SetVariable (VAR_NAME, &gDfciInternalVariableGuid, DFCI_INTERNAL_VAR_ATTRIBUTES, VarSize, Var);
