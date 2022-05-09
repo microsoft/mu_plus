@@ -74,7 +74,7 @@ key sets provided in `MuSecureBootKeySelectorLib`.
 
 ### Platform Code
 
-Platforms held the responsibility in authoring a library instance of `MuSecureBootKeySelectorLib` to provide certificates
+Platforms held the responsibility in authoring a library instance of `SecureBootKeyStoreLib` to provide certificates
 or signature lists for secure boot operation usage.
 
 Optional: if platforms do not use variable policy to protect `PK`, one should also author an instance of `PlatformPKProtectionLib`
