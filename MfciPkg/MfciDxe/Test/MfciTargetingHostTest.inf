@@ -1,0 +1,52 @@
+## @file
+# This module tests targeting logic of MfciDxe driver.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MfciTargetingHostTest
+  FILE_GUID                      = D14C304F-A759-4714-BB2E-E24FE4AC873A
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciTargetingHostTest.c
+  ../MfciTargeting.c
+  ../../Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+  CryptoPkg/CryptoPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  VariablePolicyHelperLib
+  MfciRetrievePolicyLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+  gMfciProtocolGuid                     ## CONSUMES
+
+[Protocols.common.Private]
+  gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
+
+[Pcd]
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr                    ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU                  ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdEnforceWindowsPcr11PrivacyPolicy          ## CONSUMES
+
+[Guids]
+  gMfciVendorGuid                     ## CONSUMES

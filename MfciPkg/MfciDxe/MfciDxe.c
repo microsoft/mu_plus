@@ -76,7 +76,7 @@ CleanCurrentVariables (
                   sizeof (CustomerPolicy),
                   &CustomerPolicy
                   );
-  if ((Status != EFI_NOT_FOUND) && (Status != EFI_SUCCESS)) {
+  if (Status != EFI_SUCCESS) {
     DEBUG ((DEBUG_ERROR, "%a - Failed to set %s to CUSTOMER_STATE, returned %r\n", __FUNCTION__, CURRENT_MFCI_POLICY_VARIABLE_NAME, Status));
     ReturnStatus = Status;
   }
@@ -955,9 +955,14 @@ Exit:
       Status2
       ));
 
-    // TODO uncomment the below after debugging is complete
-    // InternalCleanupCurrentPolicy ();
+    Status = InternalCleanupCurrentPolicy ();
     // TODO: Log telemetry for any errors that occur.
+    // If we return check result and decide whether we should go for target side
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Failed to clean targeting current policy on failed policy processing - %r!!!\n", __FUNCTION__, Status));
+    } else {
+      DEBUG ((DEBUG_INFO, "%a - Clean targeting current policy succeeded, returning.\n", __FUNCTION__));
+    }
   }
 
   DEBUG ((DEBUG_VERBOSE, "MfciDxe: %a() - Exit\n", __FUNCTION__));

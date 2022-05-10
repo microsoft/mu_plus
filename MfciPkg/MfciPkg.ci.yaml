@@ -20,12 +20,14 @@
         "AcceptableDependencies": [
             "MdePkg/MdePkg.dec",
             "MdeModulePkg/MdeModulePkg.dec",
-            "MsUnitTestPkg/MsUnitTestPkg.dec",
             "MfciPkg/MfciPkg.dec",
             "MsCorePkg/MsCorePkg.dec",
             "CryptoPkg/CryptoPkg.dec",
             "SecurityPkg/SecurityPkg.dec",
             "PcBdsPkg/PcBdsPkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
         ],
         "IgnoreInf": []
     },
@@ -34,6 +36,17 @@
     "DscCompleteCheck": {
         "IgnoreInf": [],
         "DscPath": "MfciPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "UnitTests/MfciPkgHostTest.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "UnitTests/MfciPkgHostTest.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck
@@ -64,7 +77,8 @@
             "mfci's",
             "mfcipkg",
             "pkg's",
-            "reprovisioned"
+            "reprovisioned",
+            "cmocka"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

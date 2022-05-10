@@ -1,0 +1,45 @@
+## @file
+#  Cryptographic Library instance for host based unit test in MFCI.
+#
+#  This library is designed to work with unit tests for MFCI
+#  framework logic without OpenSSL dependency.
+#
+#  This mocked version library provides interfaces based on cmocka
+#  implementation to inspect input arguments and return the corresponding
+#  outputs instead of truly performing the cryptographic computation
+#  steps.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MockBaseCryptLib
+  FILE_GUID                      = 4A5CEF5C-5F41-44B9-AB5B-4DEE093C9DAC
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = BaseCryptLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64 RISCV64
+#
+
+[Sources]
+  MockCryptPkcs7.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  CryptoPkg/CryptoPkg.dec
+  MfciPkg/MfciPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  MemoryAllocationLib
+
+[Pcd]
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU                  ## CONSUMES

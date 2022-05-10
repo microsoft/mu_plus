@@ -11,7 +11,6 @@
 #include <MfciVariables.h>
 
 #include <Library/DebugLib.h>
-#include <Library/HobLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -241,6 +240,11 @@ InternalRegisterMfciPolicyChangeNotifyCallback (
   EFI_EVENT              EndOfDxeCleanupEvent = NULL;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
+
+  if (Callback == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - Incoming callback function is NULL!!!\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
 
   //
   // First, make sure that we're not past EndOfDxe.

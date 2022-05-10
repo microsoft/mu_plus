@@ -1,0 +1,54 @@
+## @file
+# Unit tests of the DxeResetSystemLib instance of the ResetSystemLib class
+#
+#  This mocked version library provides interfaces based on cmocka
+#  implementation to inspect input arguments and perform "mocked"
+#  reset operations through long jump.
+#
+#  For unit tests regarding routines that expects the target system
+#  to reset when the logic is fully fulfilled, this library instance
+#  can be used for host based test to return the tested routine early.
+#
+#  To consume this library from host based unit tests, the unit test
+#  caller need to setup long jump buffer prior to test routine.
+#
+#  i.e.:
+#  ```
+#    expect_value (ResetSystemWithSubtype, ResetType, EfiResetCold);
+#    expect_value (ResetSystemWithSubtype, ResetSubtype, &gMfciPolicyChangeResetGuid);
+#    will_return (ResetSystemWithSubtype, &JumpBuf);
+#
+#    if (!SetJump (&JumpBuf)) {
+#      TestRoutine ();
+#    }
+#  ```
+#
+# Copyright (C) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = MockResetUtilityLib
+  FILE_GUID                      = 65247AFF-7E4F-4321-B12F-115E179F5841
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ResetUtilityLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  MockResetUtilityLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UnitTestLib

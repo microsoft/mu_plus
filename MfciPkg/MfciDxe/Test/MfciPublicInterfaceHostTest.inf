@@ -1,0 +1,45 @@
+## @file
+# This module tests public interface for the MfciDxe driver.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MfciPublicInterfaceHostTest
+  FILE_GUID                      = D59E2D34-C5D7-45C4-ADCA-ACCEB4ACAC35
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciPublicInterfaceHostTest.c
+  ../MfciPublicInterface.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+  gMfciProtocolGuid                     ## CONSUMES
+
+[Protocols.common.Private]
+  gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
+
+[Guids]
+  gEfiEndOfDxeEventGroupGuid          ## CONSUMES
+  gMuVarPolicyDxePhaseGuid            ## CONSUMES

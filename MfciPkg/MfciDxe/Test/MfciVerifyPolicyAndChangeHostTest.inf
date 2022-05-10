@@ -1,0 +1,65 @@
+## @file
+# This module tests MFCI blob verification and apply
+# logic for MfciDxe driver.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MfciVerifyPolicyAndChangeHostTest
+  FILE_GUID                      = FF16EB46-648E-4865-8307-0E9E2B13B2AC
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciVerifyPolicyAndChangeHostTest.c
+  ../MfciDxe.c
+  ../MfciTargeting.c
+  ../../Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+  CryptoPkg/CryptoPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  VariablePolicyHelperLib
+  MfciRetrievePolicyLib
+  MfciDeviceIdSupportLib
+  ResetUtilityLib
+  BaseCryptLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+  gMfciProtocolGuid                     ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid      ## CONSUMES
+
+[Protocols.common.Private]
+  gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
+
+[Pcd]
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr                    ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU                  ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdEnforceWindowsPcr11PrivacyPolicy          ## CONSUMES
+
+[Guids]
+  gMfciVendorGuid                     ## CONSUMES
+  gMsStartOfBdsNotifyGuid             ## CONSUMES  gMuVarPolicyDxePhaseGuid            ## CONSUMES
+  gEfiEndOfDxeEventGroupGuid          ## CONSUMES
+  gMuVarPolicyDxePhaseGuid            ## CONSUMES
+  gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES ## GUID ## Variable namespace
+  gMfciPolicyChangeResetGuid          ## CONSUMES

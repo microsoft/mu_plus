@@ -1,0 +1,34 @@
+## @file
+#  Mock implementation of the UEFI Runtime Services Table Library.
+#
+#  This mocked version library provides a shim layer that links the
+#  gRT symbol to test specific runtime services table implementations.
+#
+#  For unit tests needing to access runtime services, such as getting
+#  and setting variables, would implement their own runtime services
+#  table and the needed functionality under the name of `mMockRuntime`.
+#  The unit test should link to this instance of UefiRuntimeServicesTableLib
+#  from the corresponding host test dsc file.
+#
+#  Copyright (c) 2020, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MockUefiRuntimeServicesTableLib
+  FILE_GUID                      = 89FEB63B-0C9A-465C-B6DF-0428986768EF
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = UefiRuntimeServicesTableLib
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+
+[Sources]
+  MockUefiRuntimeServicesTableLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
