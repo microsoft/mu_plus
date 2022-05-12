@@ -129,6 +129,7 @@
 
 [Components.X64]
   PcBdsPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
+  PcBdsPkg/Library/UpdateFacsHardwareSignatureLib/UpdateFacsHardwareSignatureLib.inf
   PcBdsPkg/MsBootPolicy/MsBootPolicy.inf
 
 [BuildOptions]

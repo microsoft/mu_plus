@@ -1,6 +1,6 @@
 ## @file
-##
-##
+# DeviceBootManager - Ms Device specific extensions to BdsDxe.
+#
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
@@ -36,6 +36,7 @@
   BaseMemoryLib
   DevicePathLib
   UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
   MsPlatformDevicesLib
   MsNetworkDependencyLib
   MsBootOptionsLib
@@ -45,12 +46,12 @@
   MsPlatformPowerCheckLib
   ThermalServicesLib
   PowerServicesLib
-  MuUefiVersionLib
   MsNVBootReasonLib
   BootGraphicsLib
   GraphicsConsoleHelperLib
   MuTelemetryHelperLib
   VariablePolicyHelperLib
+  UpdateFacsHardwareSignatureLib
 
 [Guids]
   gUefiShellFileGuid
@@ -64,7 +65,6 @@
 [Protocols]
   gMsOSKProtocolGuid                ## CONSUMES
   gMsSWMProtocolGuid                ## CONSUMES
-  gEfiAcpiSdtProtocolGuid           ## CONSUMES
   gTpmPpProtocolGuid                ## CONSUMES
   gEdkiiVariablePolicyProtocolGuid  ## CONSUMES
 

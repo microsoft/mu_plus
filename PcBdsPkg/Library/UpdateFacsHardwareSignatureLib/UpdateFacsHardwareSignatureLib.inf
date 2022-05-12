@@ -1,0 +1,46 @@
+## @file
+# Update FACS Hardware Signature library definition. A device can implement
+# instances to support device specific behavior.
+#
+# Note: This library instance assumes system settings are stored using DFCI in
+# a variable called L"DfciSettingsCurrent". If that variable is not present,
+# the hardware signature will fail to be calculated properly and a different
+# library instance of UpdateFacsHardwareSignatureLib should be used.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  EDK_RELEASE_VERSION             = 0x00020000
+  INF_VERSION                     = 0x00010017
+  BASE_NAME                       = UpdateFacsHardwareSignatureLib
+  FILE_GUID                       = 5DB20123-C809-4A57-B917-07C0F3AB14CD
+  VERSION_STRING                  = 1.0
+  MODULE_TYPE                     = DXE_DRIVER
+  UEFI_SPECIFICATION_VERSION      = 2.70
+  LIBRARY_CLASS                   = UpdateFacsHardwareSignatureLib|DXE_DRIVER
+
+[Sources]
+  UpdateFacsHardwareSignatureLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  DfciPkg/DfciPkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  MemoryAllocationLib
+  MuUefiVersionLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gDfciSettingsManagerVarNamespace
+
+[Protocols]
+  gEfiAcpiSdtProtocolGuid         ## CONSUMES
+  gEfiPciIoProtocolGuid           ## CONSUMES
