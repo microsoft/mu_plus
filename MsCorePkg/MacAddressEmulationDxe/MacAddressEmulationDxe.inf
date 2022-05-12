@@ -1,0 +1,50 @@
+## @file
+#
+#  DXE Driver for handling MAC Address Emulation.
+#
+#  Copyright (C) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = MacAddressEmulation
+  FILE_GUID                      = 72AA9388-70DD-4669-8EC1-87444DD62CF3
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MacAddressEmulationEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#
+
+[Sources]
+  MacAddressEmulationDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  NetworkPkg/NetworkPkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  MacAddressEmulationPlatformLib
+  UefiDriverEntryPoint
+  UefiBootServicesTableLib
+  UefiLib
+
+[Guids]
+  gSnpNetworkInitializedEventGuid
+
+[Protocols]
+  gEfiSimpleNetworkProtocolGuid
+
+[Depex]
+  gEfiSimpleNetworkProtocolGuid
