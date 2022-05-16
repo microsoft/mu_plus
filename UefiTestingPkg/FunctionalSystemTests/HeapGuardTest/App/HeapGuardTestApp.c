@@ -12,6 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/Cpu.h>
 #include <Protocol/SmmCommunication.h>
 #include <Uefi/UefiMultiPhase.h>
+#include <Pi/PiMultiPhase.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -27,9 +28,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Register/ArchitecturalMsr.h>
 #include <Library/ResetSystemLib.h>
-#include <Library/MemoryProtectionHobLib.h>
+#include <Library/HobLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
+#include <Guid/DxeMemoryProtectionSettings.h>
+#include <Guid/MmMemoryProtectionSettings.h>
 
 #include "../HeapGuardTestCommon.h"
 #include "UefiHardwareNxProtectionStub.h"
@@ -37,9 +40,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_NAME     "Heap Guard Test"
 #define UNIT_TEST_APP_VERSION  "0.5"
 
-VOID                   *mPiSmmCommonCommBufferAddress = NULL;
-UINTN                  mPiSmmCommonCommBufferSize;
-EFI_CPU_ARCH_PROTOCOL  *mCpu = NULL;
+VOID                            *mPiSmmCommonCommBufferAddress = NULL;
+UINTN                           mPiSmmCommonCommBufferSize;
+EFI_CPU_ARCH_PROTOCOL           *mCpu = NULL;
+MM_MEMORY_PROTECTION_SETTINGS   gMmMps;
+DXE_MEMORY_PROTECTION_SETTINGS  gDxeMps;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -48,6 +53,161 @@ EFI_CPU_ARCH_PROTOCOL  *mCpu = NULL;
 ///
 /// ================================================================================================
 /// ================================================================================================
+
+/**
+  Gets the input EFI_MEMORY_TYPE from the input DXE_HEAP_GUARD_MEMORY_TYPES bitfield
+
+  @param[in]  MemoryType            Memory type to check.
+  @param[in]  HeapGuardMemoryType   DXE_HEAP_GUARD_MEMORY_TYPES bitfield
+
+  @return TRUE  The given EFI_MEMORY_TYPE is TRUE in the given DXE_HEAP_GUARD_MEMORY_TYPES
+  @return FALSE The given EFI_MEMORY_TYPE is FALSE in the given DXE_HEAP_GUARD_MEMORY_TYPES
+**/
+BOOLEAN
+STATIC
+GetDxeMemoryTypeSettingFromBitfield (
+  IN EFI_MEMORY_TYPE              MemoryType,
+  IN DXE_HEAP_GUARD_MEMORY_TYPES  HeapGuardMemoryType
+  )
+{
+  switch (MemoryType) {
+    case EfiReservedMemoryType:
+      return HeapGuardMemoryType.Fields.EfiReservedMemoryType;
+    case EfiLoaderCode:
+      return HeapGuardMemoryType.Fields.EfiLoaderCode;
+    case EfiLoaderData:
+      return HeapGuardMemoryType.Fields.EfiLoaderData;
+    case EfiBootServicesCode:
+      return HeapGuardMemoryType.Fields.EfiBootServicesCode;
+    case EfiBootServicesData:
+      return HeapGuardMemoryType.Fields.EfiBootServicesData;
+    case EfiRuntimeServicesCode:
+      return HeapGuardMemoryType.Fields.EfiRuntimeServicesCode;
+    case EfiRuntimeServicesData:
+      return HeapGuardMemoryType.Fields.EfiRuntimeServicesData;
+    case EfiConventionalMemory:
+      return HeapGuardMemoryType.Fields.EfiConventionalMemory;
+    case EfiUnusableMemory:
+      return HeapGuardMemoryType.Fields.EfiUnusableMemory;
+    case EfiACPIReclaimMemory:
+      return HeapGuardMemoryType.Fields.EfiACPIReclaimMemory;
+    case EfiACPIMemoryNVS:
+      return HeapGuardMemoryType.Fields.EfiACPIMemoryNVS;
+    case EfiMemoryMappedIO:
+      return HeapGuardMemoryType.Fields.EfiMemoryMappedIO;
+    case EfiMemoryMappedIOPortSpace:
+      return HeapGuardMemoryType.Fields.EfiMemoryMappedIOPortSpace;
+    case EfiPalCode:
+      return HeapGuardMemoryType.Fields.EfiPalCode;
+    case EfiPersistentMemory:
+      return HeapGuardMemoryType.Fields.EfiPersistentMemory;
+    default:
+      return FALSE;
+  }
+}
+
+/**
+  Gets the input EFI_MEMORY_TYPE from the input MM_HEAP_GUARD_MEMORY_TYPES bitfield
+
+  @param[in]  MemoryType            Memory type to check.
+  @param[in]  HeapGuardMemoryType   MM_HEAP_GUARD_MEMORY_TYPES bitfield
+
+  @return TRUE  The given EFI_MEMORY_TYPE is TRUE in the given MM_HEAP_GUARD_MEMORY_TYPES
+  @return FALSE The given EFI_MEMORY_TYPE is FALSE in the given MM_HEAP_GUARD_MEMORY_TYPES
+**/
+BOOLEAN
+STATIC
+GetMmMemoryTypeSettingFromBitfield (
+  IN EFI_MEMORY_TYPE             MemoryType,
+  IN MM_HEAP_GUARD_MEMORY_TYPES  HeapGuardMemoryType
+  )
+{
+  switch (MemoryType) {
+    case EfiReservedMemoryType:
+      return HeapGuardMemoryType.Fields.EfiReservedMemoryType;
+    case EfiLoaderCode:
+      return HeapGuardMemoryType.Fields.EfiLoaderCode;
+    case EfiLoaderData:
+      return HeapGuardMemoryType.Fields.EfiLoaderData;
+    case EfiBootServicesCode:
+      return HeapGuardMemoryType.Fields.EfiBootServicesCode;
+    case EfiBootServicesData:
+      return HeapGuardMemoryType.Fields.EfiBootServicesData;
+    case EfiRuntimeServicesCode:
+      return HeapGuardMemoryType.Fields.EfiRuntimeServicesCode;
+    case EfiRuntimeServicesData:
+      return HeapGuardMemoryType.Fields.EfiRuntimeServicesData;
+    case EfiConventionalMemory:
+      return HeapGuardMemoryType.Fields.EfiConventionalMemory;
+    case EfiUnusableMemory:
+      return HeapGuardMemoryType.Fields.EfiUnusableMemory;
+    case EfiACPIReclaimMemory:
+      return HeapGuardMemoryType.Fields.EfiACPIReclaimMemory;
+    case EfiACPIMemoryNVS:
+      return HeapGuardMemoryType.Fields.EfiACPIMemoryNVS;
+    case EfiMemoryMappedIO:
+      return HeapGuardMemoryType.Fields.EfiMemoryMappedIO;
+    case EfiMemoryMappedIOPortSpace:
+      return HeapGuardMemoryType.Fields.EfiMemoryMappedIOPortSpace;
+    case EfiPalCode:
+      return HeapGuardMemoryType.Fields.EfiPalCode;
+    case EfiPersistentMemory:
+      return HeapGuardMemoryType.Fields.EfiPersistentMemory;
+    default:
+      return FALSE;
+  }
+}
+
+/**
+  Abstraction layer which fetches the MM memory protection HOB.
+
+  @retval EFI_SUCCESS   The HOB entry has been fetched
+  @retval EFI_INVALID_PARAMETER The HOB entry could not be found
+**/
+EFI_STATUS
+STATIC
+FetchMemoryProtectionHobEntries (
+  VOID
+  )
+{
+  EFI_STATUS  Status = EFI_INVALID_PARAMETER;
+  VOID        *Ptr1;
+  VOID        *Ptr2;
+
+  ZeroMem (&gMmMps, sizeof (gMmMps));
+  ZeroMem (&gDxeMps, sizeof (gDxeMps));
+
+  Ptr1 = GetFirstGuidHob (&gMmMemoryProtectionSettingsGuid);
+  Ptr2 = GetFirstGuidHob (&gDxeMemoryProtectionSettingsGuid);
+
+  if (Ptr1 != NULL) {
+    if (*((UINT8 *)GET_GUID_HOB_DATA (Ptr1)) != (UINT8)MM_MEMORY_PROTECTION_SETTINGS_CURRENT_VERSION) {
+      DEBUG ((
+        DEBUG_INFO,
+        "%a: - Version number of the MM Memory Protection Settings HOB is invalid.\n",
+        __FUNCTION__
+        ));
+    } else {
+      Status = EFI_SUCCESS;
+      CopyMem (&gMmMps, GET_GUID_HOB_DATA (Ptr1), sizeof (MM_MEMORY_PROTECTION_SETTINGS));
+    }
+  }
+
+  if (Ptr2 != NULL) {
+    if (*((UINT8 *)GET_GUID_HOB_DATA (Ptr2)) != (UINT8)DXE_MEMORY_PROTECTION_SETTINGS_CURRENT_VERSION) {
+      DEBUG ((
+        DEBUG_INFO,
+        "%a: - Version number of the DXE Memory Protection Settings HOB is invalid.\n",
+        __FUNCTION__
+        ));
+    } else {
+      Status = EFI_SUCCESS;
+      CopyMem (&gDxeMps, GET_GUID_HOB_DATA (Ptr2), sizeof (DXE_MEMORY_PROTECTION_SETTINGS));
+    }
+  }
+
+  return Status;
+}
 
 /**
   Resets the system on interrupt
@@ -212,7 +372,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if (gMPS.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL) {
+  if (gDxeMps.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL) {
     //
     // Get to the beginning of the page the pool tail is on.
     //
@@ -323,7 +483,7 @@ UefiHardwareNxProtectionEnabledPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (gMPS.DxeNxProtectionPolicy.Data) {
+  if (gDxeMps.NxProtectionPolicy.Data) {
     return UNIT_TEST_PASSED;
   }
 
@@ -337,7 +497,7 @@ UefiNxStackPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (!gMPS.SetNxForStack) {
+  if (!gDxeMps.SetNxForStack) {
     return UNIT_TEST_SKIPPED;
   }
   if (UefiHardwareNxProtectionEnabled(Context) != UNIT_TEST_PASSED) {
@@ -356,7 +516,7 @@ UefiNxProtectionPreReq (
   HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!GetMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.DxeNxProtectionPolicy)) {
+  if (!GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gDxeMps.NxProtectionPolicy)) {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
@@ -378,8 +538,8 @@ UefiPageGuardPreReq (
   HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.Fields.UefiPageGuard &&
-        GetMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPageType)))
+  if (!(gDxeMps.HeapGuardPolicy.Fields.UefiPageGuard &&
+        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gDxeMps.HeapGuardPageType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -397,8 +557,8 @@ UefiPoolGuardPreReq (
   HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.Fields.UefiPoolGuard &&
-        GetMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPoolType)))
+  if (!(gDxeMps.HeapGuardPolicy.Fields.UefiPoolGuard &&
+        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gDxeMps.HeapGuardPoolType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -413,7 +573,7 @@ UefiStackGuardPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (!gMPS.CpuStackGuard) {
+  if (!gDxeMps.CpuStackGuard) {
     UT_LOG_WARNING ("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -427,7 +587,7 @@ UefiNullPointerPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (!gMPS.NullPointerDetectionPolicy.Fields.UefiNullDetection) {
+  if (!gDxeMps.NullPointerDetectionPolicy.Fields.UefiNullDetection) {
     UT_LOG_WARNING ("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -435,27 +595,27 @@ UefiNullPointerPreReq (
   return UNIT_TEST_PASSED;
 } // UefiNullPointerPreReq
 
-UNIT_TEST_STATUS
-EFIAPI
-SmmNxProtectionPreReq (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+// UNIT_TEST_STATUS
+// EFIAPI
+// SmmNxProtectionPreReq (
+//   IN UNIT_TEST_CONTEXT  Context
+//   )
+// {
+//   HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
 
-  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!GetMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.DxeNxProtectionPolicy)) {
-    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
-    return UNIT_TEST_SKIPPED;
-  }
+//   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+//   if (!GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMmMps.NxProtectionPolicy)) {
+//     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+//     return UNIT_TEST_SKIPPED;
+//   }
 
-  if (UefiHardwareNxProtectionEnabled (Context) != UNIT_TEST_PASSED) {
-    UT_LOG_WARNING ("HardwareNxProtection bit not on. NX Test would not be accurate.");
-    return UNIT_TEST_SKIPPED;
-  }
+//   if (UefiHardwareNxProtectionEnabled (Context) != UNIT_TEST_PASSED) {
+//     UT_LOG_WARNING ("HardwareNxProtection bit not on. NX Test would not be accurate.");
+//     return UNIT_TEST_SKIPPED;
+//   }
 
-  return UNIT_TEST_PASSED;
-} // SmmNxProtectionPreReq()
+//   return UNIT_TEST_PASSED;
+// } // SmmNxProtectionPreReq()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -466,8 +626,8 @@ SmmPageGuardPreReq (
   HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.Fields.SmmPageGuard &&
-        GetMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPageType)))
+  if (!(gMmMps.HeapGuardPolicy.Fields.MmPageGuard &&
+        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMmMps.HeapGuardPageType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -485,8 +645,8 @@ SmmPoolGuardPreReq (
   HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMPS.HeapGuardPolicy.Fields.SmmPoolGuard &&
-        GetMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMPS.HeapGuardPoolType)))
+  if (!(gMmMps.HeapGuardPolicy.Fields.MmPoolGuard &&
+        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMmMps.HeapGuardPoolType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -501,7 +661,7 @@ SmmNullPointerPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (!gMPS.NullPointerDetectionPolicy.Fields.SmmNullDetection) {
+  if (!gMmMps.NullPointerDetectionPolicy) {
     UT_LOG_WARNING ("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -1218,6 +1378,9 @@ HeapGuardTestAppEntryPoint (
   DEBUG ((DEBUG_ERROR, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   LocateSmmCommonCommBuffer ();
+
+  Status = FetchMemoryProtectionHobEntries ();
+  ASSERT_EFI_ERROR (Status);
 
   //
   // Find the CPU Arch protocol, we're going to install our own interrupt handler

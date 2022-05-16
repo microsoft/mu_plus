@@ -21,7 +21,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseMemoryLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/MemoryProtectionHobLib.h>
+#include <Library/HobLib.h>
+
+#include <Guid/MmMemoryProtectionSettings.h>
 
 #include <Protocol/SmmExceptionTestProtocol.h>
 
@@ -30,6 +32,48 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // =============================================================================
 // TEST HELPERS
 // =============================================================================
+
+MM_MEMORY_PROTECTION_SETTINGS  gMmMps;
+
+/**
+  Abstraction layer which fetches the MM memory protection HOB.
+
+  @retval EFI_SUCCESS   The HOB entry has been fetched
+  @retval EFI_INVALID_PARAMETER The HOB entry could not be found
+**/
+EFI_STATUS
+STATIC
+FetchMmMemoryProtectionHob (
+  VOID
+  )
+{
+  VOID  *Ptr;
+
+  ZeroMem (&gMmMps, sizeof (gMmMps));
+
+  Ptr = GetFirstGuidHob (&gMmMemoryProtectionSettingsGuid);
+
+  if (Ptr != NULL) {
+    if (*((UINT8 *)GET_GUID_HOB_DATA (Ptr)) != (UINT8)MM_MEMORY_PROTECTION_SETTINGS_CURRENT_VERSION) {
+      DEBUG ((
+        DEBUG_INFO,
+        "%a: - Version number of the MM Memory Protection Settings HOB is invalid.\n",
+        __FUNCTION__
+        ));
+    } else {
+      CopyMem (&gMmMps, GET_GUID_HOB_DATA (Ptr), sizeof (MM_MEMORY_PROTECTION_SETTINGS));
+      return EFI_SUCCESS;
+    }
+  }
+
+  DEBUG ((
+    DEBUG_INFO,
+    "%a: - Unable to fetch the MM memory protection HOB.\n",
+    __FUNCTION__
+    ));
+
+  return EFI_INVALID_PARAMETER;
+}
 
 /**
 
@@ -82,7 +126,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if ((gMPS.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)) {
+  if ((gMmMps.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)) {
     //
     // Get to the beginning of the page the pool tail is on.
     //
@@ -352,6 +396,10 @@ HeapGuardTestEntryPoint (
 {
   EFI_STATUS  Status;
   EFI_HANDLE  DiscardedHandle;
+
+  Status = FetchMmMemoryProtectionHob ();
+
+  ASSERT_EFI_ERROR (Status);
 
   //
   // Register SMI handler.

@@ -38,12 +38,13 @@
   PcdLib
   BaseMemoryLib
   UefiBootServicesTableLib
-  MemoryProtectionHobLib
+  HobLib
 
 
 [Protocols]
   gSmmExceptionTestProtocolGuid           ## CONSUMES
+[Guids]
+  gMmMemoryProtectionSettingsGuid
 
 [Depex]
   gSmmExceptionTestProtocolGuid
-

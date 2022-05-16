@@ -55,7 +55,7 @@
   UefiLib
   CpuExceptionHandlerLib
   HwResetSystemLib
-  MemoryProtectionHobLib
+  HobLib
 
 [Protocols]
   gEfiSmmCommunicationProtocolGuid
@@ -65,6 +65,8 @@
   gEdkiiPiSmmCommunicationRegionTableGuid
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
+  gMmMemoryProtectionSettingsGuid
+  gDxeMemoryProtectionSettingsGuid
 
 [BuildOptions]
   GCC:*_CLANG40WIN_AARCH64_CC_FLAGS = -Wno-infinite-recursion
