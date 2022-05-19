@@ -61,7 +61,7 @@ MemoryProtectionExceptionHandler (
     }
 
     MsWheaESAddRecordV0 (
-      EFI_ERROR_MAJOR | EFI_SW_EC_IA32_PAGE_FAULT,
+      (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
       (UINT64)PeCoffSearchImageBase (pointer),
       SystemContext.SystemContextX64->Rip,
       NULL,
@@ -69,7 +69,7 @@ MemoryProtectionExceptionHandler (
       );
   } else {
     MsWheaESAddRecordV0 (
-      EFI_ERROR_MAJOR | EFI_SW_EC_IA32_PAGE_FAULT,
+      (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
       SIGNATURE_64 ('M', 'E', 'M', ' ', 'P', 'R', 'O', 'T'),
       SIGNATURE_64 ('E', 'X', 'C', 'E', 'P', 'T', ' ', ' '),
       NULL,
