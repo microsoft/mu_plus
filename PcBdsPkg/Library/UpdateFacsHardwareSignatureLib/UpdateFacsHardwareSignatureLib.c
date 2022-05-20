@@ -96,13 +96,13 @@ UpdateFacsHardwareSignature (
   UINTN                                                Handle;
   EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE            *FadtPtr = NULL;
   static EFI_ACPI_2_0_FIRMWARE_ACPI_CONTROL_STRUCTURE  *FacsPtr = NULL;
-  UINT32                                               *Buffer;
+  UINT32                                               *Buffer = NULL;
   UINTN                                                BufferCount;     // Count of UINT32 items in Buffer
 
   // Variables for Part 1 PCI data
   EFI_PCI_IO_PROTOCOL  *PciIo;
   UINTN                PciHandleCount;
-  EFI_HANDLE           *PciHandleBuffer;
+  EFI_HANDLE           *PciHandleBuffer = NULL;
   UINT32               PciId;
 
   // Variables for Part 2 Firmware Version data
