@@ -23,7 +23,7 @@ typedef struct {
 STATIC VARIABLE_POLICY_ELEMENT  gReadyToBootPolicies[] =
 
 {
-  // Idenity and Auth variables
+  // Identity and Auth variables
   {
     .Namespace          = &gDfciAuthProvisionVarNamespace, .Name = DFCI_IDENTITY_CURRENT_VAR_NAME,
     .MinSize            = VARIABLE_POLICY_NO_MIN_SIZE, .MaxSize = MAX_ALLOWABLE_DFCI_CURRENT_VAR_SIZE,

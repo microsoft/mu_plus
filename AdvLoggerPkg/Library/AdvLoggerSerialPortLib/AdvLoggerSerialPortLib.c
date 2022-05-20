@@ -1,7 +1,7 @@
 /** @file
   AdvLoggerSerialPortLib is an implementation of SerialPortLib that doesn't write to a serial
   port - only to the AdvLogger, which might write to a serial port. Allows AdvLogger to
-  intercept FSP serial port writes.  Can be attaced to other serial port writers in place
+  intercept FSP serial port writes.  Can be attached to other serial port writers in place
   of serial port lib.
 
 Copyright (c) Microsoft Corporation. All rights reserved.

@@ -59,7 +59,13 @@
         "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
         "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
         "ExtendWords": [
-          lodsd              # 4 character Assembler instruction
+          lodsd,
+          debugport,
+          infor,
+          valist,
+          premem,
+          uncacheable,
+          physmask,
         ]
     }
 }

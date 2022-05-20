@@ -1,6 +1,6 @@
 
 ## @file
-#  A UEFI Audit test app that verifies the automaic (SysPrep, xxxRecovery)
+#  A UEFI Audit test app that verifies the automatic (SysPrep, xxxRecovery)
 #  boot options are disabled.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.

@@ -69,6 +69,17 @@
         "ExtendWords": [           # words to extend to the dictionary for this package
             "RMRRs",               # DMAProtectionAudit/Windows/Readme.md
             "Pywin",               # "
+            "Lockv",               # "
+            "readytoboot",
+            "OSRUNTIME",
+            "blockio",
+            "ivinfo",
+            "ivrsiv",
+            "drhds",
+            "ivhds",
+            "uefishelldebug",
+            "mtrrcap",
+            "dmaivrs"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

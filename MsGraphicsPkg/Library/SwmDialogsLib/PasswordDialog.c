@@ -455,7 +455,7 @@ CreateDialogControls (
   //
   ControlWidth  = (StringRect.Right - StringRect.Left + 1) + (SWM_PWD_DIALOG_BUTTONTEXT_PADDING_PX * 2);
   ControlHeight =  (ControlWidth / SWM_PWD_DIALOG_BUTTON_ASPECT_RATIO);
-  // Calculate the total width of the buttons plus the padding inbetween them
+  // Calculate the total width of the buttons plus the padding in between them
   TotalControlWidth = ControlWidth * (200 + SWM_PWD_DIALOG_BUTTON_SPACE_PERCENT) / 100;                                                   // the control width is 2 buttons + 30% spacing
   ControlOrigX      = DialogOrigX + DialogWidth - TotalControlWidth - ((ControlWidth * SWM_PWD_DIALOG_LAST_BTN_X_PADDING_PERCENT) / 100); // The right edge of the dialog - the total width of the controls - some padding
   ControlOrigY      = (DialogOrigY + DialogHeight) - ((DialogHeight * SWM_PWD_DIALOG_FIRST_BUTTON_Y_PERCENT) / 100);

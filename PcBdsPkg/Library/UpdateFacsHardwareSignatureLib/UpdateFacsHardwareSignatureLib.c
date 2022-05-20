@@ -33,7 +33,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   @param[in, out] Handle         - AcpiSupport protocol table handle for the table found
 
   @retval EFI_SUCCESS            - The function completed successfully and the table was found.
-  @retval Other                  - Some error occured or the table was not found.
+  @retval Other                  - Some error occurred or the table was not found.
 **/
 static
 EFI_STATUS

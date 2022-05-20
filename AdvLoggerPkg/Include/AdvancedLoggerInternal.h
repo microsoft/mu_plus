@@ -38,7 +38,7 @@ typedef volatile struct {
   UINT32                  LogBufferSize;          // Size of allocated buffer
   BOOLEAN                 InPermanentRAM;         // Log in permanent RAM
   BOOLEAN                 AtRuntime;              // After ExitBootServices
-  BOOLEAN                 GoneVirtual;            // After VirtualAddressChage
+  BOOLEAN                 GoneVirtual;            // After VirtualAddressChange
   BOOLEAN                 HdwPortInitialized;     // HdwPort initialized
   BOOLEAN                 HdwPortDisabled;        // HdwPort is Disabled
   BOOLEAN                 Reserved2[3];           //
