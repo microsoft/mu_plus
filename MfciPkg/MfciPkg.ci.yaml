@@ -78,7 +78,12 @@
             "mfcipkg",
             "pkg's",
             "reprovisioned",
-            "cmocka"
+            "cmocka",
+            "Contoso",
+            "SANITYCHECK",
+            "SECUREBOOT",
+            "SERIALNUMBER",
+            "VALIDATEBLOB"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

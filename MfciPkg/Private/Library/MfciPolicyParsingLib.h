@@ -19,7 +19,7 @@ ValidateBlob (
   );
 
 /*
-  MfciPolicyStringValue is allocated inside ExtractChar16() using AllocatePool().  It is callers responsability to free it.
+  MfciPolicyStringValue is allocated inside ExtractChar16() using AllocatePool().  It is callers responsibility to free it.
   MfciPolicyStringValue is guaranteed to be CHAR16 NULL terminated.  The pool allocation may be larger than the string.
 */
 EFI_STATUS

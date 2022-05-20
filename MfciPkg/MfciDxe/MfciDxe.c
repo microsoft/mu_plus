@@ -149,7 +149,7 @@ InternalCleanupCurrentPolicy (
 
   if (mCurrentPolicy != CUSTOMER_STATE) {
     ResetSystemWithSubtype (EfiResetCold, &gMfciPolicyChangeResetGuid);
-    // Reset System should not return, deadloop if it does
+    // Reset System should not return, dead loop if it does
     CpuDeadLoop ();
   }
 
@@ -804,7 +804,7 @@ VerifyPolicyAndChange (
     }
   }
 
-  // Step 2.4: verify targetting is for this machine
+  // Step 2.4: verify targeting is for this machine
   Status = VerifyTargeting (
              CurrentBlob,
              CurrentBlobSize,
@@ -820,7 +820,7 @@ VerifyPolicyAndChange (
     // TODO: Telemetry here
     DEBUG ((DEBUG_ERROR, "%a Verify targeting return error - %r. mCurrentPolicy: 0x%16x, BlobPolicy: 0x%16x.\n", __FUNCTION__, Status, mCurrentPolicy, BlobPolicy));
 
-    // If targetting is incorrect, or current policy and extracted has mismatch, fall back
+    // If targeting is incorrect, or current policy and extracted has mismatch, fall back
     Status = InternalCleanupCurrentPolicy ();
 
     // If we return check result and decide whether we should go for target side
@@ -901,7 +901,7 @@ VerifyTarget:
     goto Exit;
   }
 
-  // Step 3.4: verify targetting is for this machine
+  // Step 3.4: verify targeting is for this machine
   Status = VerifyTargeting (
              TargetBlob,
              TargetBlobSize,
@@ -915,7 +915,7 @@ VerifyTarget:
 
     Status = InternalCleanupTargetPolicy ();
 
-    DEBUG ((DEBUG_WARN, "%a - Clean up mistargeted target variable returned - %r.\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_WARN, "%a - Clean up mis-targeted target variable returned - %r.\n", __FUNCTION__, Status));
     goto Exit;
   }
 

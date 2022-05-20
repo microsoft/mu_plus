@@ -143,7 +143,7 @@ UnitTestLocateHandleBuffer (
   assert_non_null (NoHandles);
   assert_non_null (Buffer);
 
-  // Set the protcol to one of our mock protocols
+  // Set the protocol to one of our mock protocols
   *NoHandles = (UINTN)mock ();
   ret_buf    = (EFI_HANDLE *)mock ();
   *Buffer    = AllocateCopyPool (*NoHandles * sizeof (EFI_HANDLE), ret_buf);
