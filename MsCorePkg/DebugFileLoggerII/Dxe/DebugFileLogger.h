@@ -7,8 +7,8 @@
 
 **/
 
-#ifndef _DXE_DEBUGFILE_LOGGER_H
-#define _DXE_DEBUGFILE_LOGGER_H
+#ifndef _DXE_DEBUG_FILE_LOGGER_H
+#define _DXE_DEBUG_FILE_LOGGER_H
 
 #include <PiDxe.h>
 
@@ -140,4 +140,4 @@ EnableLoggingOnThisDevice (
   IN  LOG_DEVICE  *LogDevice
   );
 
-#endif // _DXE_DEBUGFILE_LOGGER_H
+#endif // _DXE_DEBUG_FILE_LOGGER_H

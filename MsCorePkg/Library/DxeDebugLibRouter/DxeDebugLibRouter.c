@@ -30,7 +30,7 @@ static EFI_BOOT_SERVICES  *mBS = NULL;
   Report Status Code Callback Handler
 
   @param[in] Event      Event that signalled the callback.
-  @param[in] Context    Pointer to an optional event contxt.
+  @param[in] Context    Pointer to an optional event context.
 
   @retval None.
 
@@ -51,7 +51,7 @@ ReportStatusCodeHandlerCallback (
   Exit Boot Services Callback Handler
 
   @param[in] Event      Event that signalled the callback.
-  @param[in] Context    Pointer to an optional event contxt.
+  @param[in] Context    Pointer to an optional event context.
 
   @retval None.
 
@@ -224,7 +224,7 @@ associated variable argument list to the debug output device.
 
 If Format is NULL, then ASSERT().
 
-If the length of the message string specificed by Format is larger than the maximum allowable
+If the length of the message string specified by Format is larger than the maximum allowable
 record length, then directly return and not print it.
 
 @param  ErrorLevel    The error level of the debug message.

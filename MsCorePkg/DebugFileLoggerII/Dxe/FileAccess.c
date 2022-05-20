@@ -1,7 +1,7 @@
 /** @file
 FileLogger.c
 
-This application will prepare a device for UEFI loggong, or turn off UEFI
+This application will prepare a device for UEFI logging, or turn off UEFI
 logging to a device.
 
 Copyright (C) Microsoft Corporation. All rights reserved.
@@ -528,7 +528,7 @@ WriteALogFile (
   }
 
   //
-  // Comput amount of data to write.  We cannot write more data
+  // Compute amount of data to write.  We cannot write more data
   // than the existing file size.  We do not want to alter the
   // metadata on the disk (new FAT entries etc).
   //

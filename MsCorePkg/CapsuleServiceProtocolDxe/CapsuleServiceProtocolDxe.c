@@ -224,7 +224,7 @@ QueryCapsuleCapabilitiesService (
                                     location in physical memory of a set of capsules.
 
   @retval     EFI_SUCCESS           Valid capsule was passed. If
-                                    CAPSULE_FLAGS_PERSIT_ACROSS_RESET is not set, the
+                                    CAPSULE_FLAGS_PERSIST_ACROSS_RESET is not set, the
                                     capsule has been successfully processed by the firmware.
   @retval     EFI_DEVICE_ERROR      The capsule update was started, but failed due to a device error.
   @retval     EFI_INVALID_PARAMETER CapsuleSize is NULL, or an incompatible set of flags were

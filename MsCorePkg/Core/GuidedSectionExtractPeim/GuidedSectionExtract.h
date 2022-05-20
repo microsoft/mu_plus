@@ -8,8 +8,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#ifndef __PEI_GUIDEDSECTIONEXTRACT_H__
-#define __PEI_GUIDEDSECTIONEXTRACT_H__
+#ifndef __PEI_GUIDED_SECTION_EXTRACT_H__
+#define __PEI_GUIDED_SECTION_EXTRACT_H__
 
 #include <PiPei.h>
 #include <Ppi/Decompress.h>
@@ -124,4 +124,4 @@ Decompress (
   OUT       UINTN                    *OutputSize
   );
 
-#endif // __PEI_GUIDEDSECTIONEXTRACT_H__
+#endif // __PEI_GUIDED_SECTION_EXTRACT_H__

@@ -7,8 +7,8 @@
 
 **/
 
-#ifndef _COMMON_DEBUGFILE_LOGGER_H
-#define _COMMON_DEBUGFILE_LOGGER_H
+#ifndef _COMMON_DEBUG_FILE_LOGGER_H
+#define _COMMON_DEBUG_FILE_LOGGER_H
 
 #include <Library/ReportStatusCodeLib.h>
 
@@ -31,4 +31,4 @@ WriteStatusCodeToBuffer (
   IN UINTN                       BufferSize
   );
 
-#endif // _COMMON_DEBUGFILE_LOGGER_H
+#endif // _COMMON_DEBUG_FILE_LOGGER_H

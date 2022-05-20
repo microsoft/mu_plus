@@ -78,7 +78,7 @@ sin_d (
     value = previousValue + (multiply*top/denom);
   }
 
-  // checking for convergence provides neglieble speedup and a drop in accuracy.
+  // checking for convergence provides negligible speedup and a drop in accuracy.
 
   return value;
 }
@@ -136,7 +136,7 @@ cos_d (
     value = previousValue + (multiply*top/denom);
   }
 
-  // checking for convergence provides neglieble speedup and a drop in accuracy.
+  // checking for convergence provides negligible speedup and a drop in accuracy.
   return value;
 }
 

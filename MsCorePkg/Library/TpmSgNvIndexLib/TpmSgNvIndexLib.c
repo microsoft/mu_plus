@@ -17,7 +17,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/TpmSgNvIndexLib.h>
 
 //
-// Definition from Mircosoft "System Guard Secure Launch and SMM Protection"
+// Definition from Microsoft "System Guard Secure Launch and SMM Protection"
 // document, section "System requirements for System Guard", item "TPM NV Index"
 STATIC CONST TPM2B_DIGEST  mSGAuthPolicyDigestBuffer = {
   .size   = SHA256_DIGEST_SIZE,
@@ -31,7 +31,7 @@ STATIC CONST TPM2B_DIGEST  mSGAuthPolicyDigestBuffer = {
 
 /**
   Executes DefineSpace for SystemGuard NV Index used by the OS, with
-  requirements in Mircosoft "System Guard Secure Launch and SMM Protection",
+  requirements in Microsoft "System Guard Secure Launch and SMM Protection",
   section "System requirements for System Guard", item "TPM NV Index"
 
   @retval     EFI_SUCCESS         NV Index was defined.

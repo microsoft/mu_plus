@@ -652,7 +652,7 @@ CalculateCapsuleHash (
   }
 
   Status = EFI_SUCCESS;
-  // start by initing the context
+  // start by initializing the context
   ZeroMem (Digest, SHA256_DIGEST_SIZE);
   HashStatus = Sha256Init (HashContext);
   if (!HashStatus) {
@@ -913,12 +913,12 @@ Cleanup:
                                       return values (OPTIONAL).
   @param[out]   CapsuleDataSize       The size of the capsule data buffer
 
-  @retval       EFI_SUCCESS           Capsules were de-perisisted, and output data is valid.
+  @retval       EFI_SUCCESS           Capsules were de-persisted, and output data is valid.
   @retval       EFI_INVALID_PARAMETER CapsuleData was NULL or the hash didn't match
   @retval       EFI_OUT_OF_RESOURCES  Failed to allocate a buffer
   @retval       EFI_BUFFER_TOO_SMALL  Buffer is too small
   @retval       EFI_NOT_FOUND         The capsule file was not found
-  @retval       EFI_DEVICE_ERROR      Something went wrong while trying to retrive the capsule.
+  @retval       EFI_DEVICE_ERROR      Something went wrong while trying to retrieve the capsule.
 
 **/
 EFI_STATUS
@@ -1035,9 +1035,9 @@ Cleanup:
 
   @param[in]  CapsuleId        The ID of the capsule that is going to be loaded
 
-  @retval     EFI_SUCCESS      Capsules were de-perisisted, and output data is valid.
+  @retval     EFI_SUCCESS      Capsules were de-persisted, and output data is valid.
   @retval     EFI_NOT_FOUND    The capsule file was not found
-  @retval     EFI_DEVICE_ERROR Something went wrong while trying to retrive the capsule.
+  @retval     EFI_DEVICE_ERROR Something went wrong while trying to retrieve the capsule.
 
 **/
 EFI_STATUS

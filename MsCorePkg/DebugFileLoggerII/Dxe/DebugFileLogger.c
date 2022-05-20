@@ -610,10 +610,10 @@ Cleanup:
   Process the registration of the Report Status Code handler
 
 
-  @parann       VOID
+  @param        VOID
 
   @retval       EFI_SUCCESS     Processed successfully
-  @retval       error           Unsuccessful at registring for Report Status Code events
+  @retval       error           Unsuccessful at registering for Report Status Code events
 
  **/
 EFI_STATUS

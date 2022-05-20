@@ -113,7 +113,7 @@ MemoryTest (
 
 Routine Description:
 
-Connect with predeined platform connect sequence,
+Connect with predefined platform connect sequence,
 the OEM/IBV can customize with their own connect sequence.
 
 Arguments:
