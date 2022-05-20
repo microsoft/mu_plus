@@ -96,7 +96,7 @@ UpdateFacsHardwareSignature (
   UINTN                                                Handle;
   EFI_ACPI_3_0_FIXED_ACPI_DESCRIPTION_TABLE            *FadtPtr = NULL;
   static EFI_ACPI_2_0_FIRMWARE_ACPI_CONTROL_STRUCTURE  *FacsPtr = NULL;
-  UINT32                                               *Buffer = NULL;
+  UINT32                                               *Buffer  = NULL;
   UINTN                                                BufferCount;     // Count of UINT32 items in Buffer
 
   // Variables for Part 1 PCI data
