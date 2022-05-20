@@ -235,7 +235,7 @@ DisposeAllIdentityMappings (
 
 /*
 Check to see what identities are provisioned and if provisioned return a bitmask
-that convers the provisioned identities.
+that covers the provisioned identities.
 */
 DFCI_IDENTITY_MASK
 Provisioned (

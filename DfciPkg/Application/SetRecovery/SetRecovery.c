@@ -242,7 +242,7 @@ SetRecoveryEntry (
 
   SnString    = "SN47866398211-779581006";
   MfgString   =  "-My Computer Corp the one in Outlandia";
-  ModelString = "-My Computer Corp Model 1 supporing Outlandia, -Just some more data to fill up the maximum space with data to test truncation at the suspected maximum size";
+  ModelString = "-My Computer Corp Model 1 supporting Outlandia, -Just some more data to fill up the maximum space with data to test truncation at the suspected maximum size";
 
   CurSz = 0;
   Sz    = AsciiStrLen (SnString);
@@ -289,7 +289,7 @@ SetRecoveryEntry (
 
   ChallengeV2Size = ChallengeSize + AsciiStrSize (ChallengeV2->MultiString);
 
-  AsciiPrint ("The multistring size is %d for a total size of %d\n", AsciiStrSize (ChallengeV2->MultiString), ChallengeV2Size);
+  AsciiPrint ("The multi-string size is %d for a total size of %d\n", AsciiStrSize (ChallengeV2->MultiString), ChallengeV2Size);
 
   // Encrypt Challenge
   Status = EncryptRecoveryChallenge (Challenge, ChallengeSize, Cert, CertSize, (UINT8 **)&EData, &EDataSize);

@@ -71,7 +71,7 @@ SetSettingsResponse (
  *
  * @param[in] This:            Apply Packet Protocol
  * @param[in] Operation
- *                        DISCARD   discards the in memory changes, and retores from NV STORE
+ *                        DISCARD   discards the in memory changes, and restores from NV STORE
  *                        COMMIT    Saves the current settings to NV Store
  *
  * @return EFI_STATUS EFIAPI

@@ -255,7 +255,7 @@ LoadProvisionedData (
     Status   = EFI_SUCCESS;
     Identity = CertIndexToDfciIdentity (i);
     if (Identity != DFCI_IDENTITY_INVALID) {
-      mInternalCertStore.PopulatedIdentities |= Identity;  // update Populated Identies value
+      mInternalCertStore.PopulatedIdentities |= Identity;  // update Populated Identities value
     }
   } // Finish for loop for each cert
 

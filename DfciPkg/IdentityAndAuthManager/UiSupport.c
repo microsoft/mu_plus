@@ -466,7 +466,7 @@ UiUnenrollRequest (
     BodyText = L"\rA request to deactivate DFCI has been made on this device.\r\rTo complete the request to deactivate DFCI, click OK. Cancel terminates the request ";
 
     //
-    // Display MessageBox and return userconfirmation for deactivation.
+    // Display MessageBox and return user confirmation for deactivation.
     //
     Status = DfciUiDisplayMessageBox (
                TitleText,

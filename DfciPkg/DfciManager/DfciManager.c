@@ -131,7 +131,7 @@ EndOfDxeCallback (
 
 /**
  * Event callback for End Of Dxe.
- * This is needed when a privisioning request that requires
+ * This is needed when a provisioning request that requires
  * user confirmation.
  *
  * @param Event
@@ -386,7 +386,7 @@ QueueMailboxAtEndOfDxe (
 }
 
 /**
- * Queue ProcessMailbox to run after SetingAccess published
+ * Queue ProcessMailbox to run after SettingAccess published
  *
  * Halt process of mailboxes until SettingAccess protocol is published.  Since UnEnrol calls SettingAccess,
  * it must wait for Setting Access.
@@ -860,7 +860,7 @@ ProcessMailBoxes (
       goto EARLY_EXIT;
     } else {
       LkgStatus = Status;
-      // For an error case, all subsequest identity and permissions operations are void
+      // For an error case, all subsequent identity and permissions operations are void
       goto COMPLETE_AS_FAILED;
     }
   }
@@ -869,7 +869,7 @@ ProcessMailBoxes (
 
   if (EFI_ERROR (Status)) {
     LkgStatus = Status;
-    // For an error case, all subsequest identity and permissions operations are void
+    // For an error case, all subsequent identity and permissions operations are void
     goto COMPLETE_AS_FAILED;
   }
 
@@ -881,7 +881,7 @@ ProcessMailBoxes (
       goto EARLY_EXIT;
     } else {
       LkgStatus = Status;
-      // For an error case, all subsequest identity and permissions operations are void
+      // For an error case, all subsequent identity and permissions operations are void
       goto COMPLETE_AS_FAILED;
     }
   }
@@ -890,7 +890,7 @@ ProcessMailBoxes (
 
   if (EFI_ERROR (Status)) {
     LkgStatus = Status;
-    // For an error case, all subsequest identity and permissions operations are void
+    // For an error case, all subsequent identity and permissions operations are void
     goto COMPLETE_AS_FAILED;
   }
 

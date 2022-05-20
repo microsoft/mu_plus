@@ -85,7 +85,7 @@ GetRecoveryChallenge (
   // Grab the system identifier
   //
   // The challenge serial number is now a string.  The UINTN V1 serial number is now deprecated,
-  // with the string version of the serial number located in the multstring field of NewChallenge.
+  // with the string version of the serial number located in the multi-string field of NewChallenge.
   //
   NewChallenge->SerialNumber = 0;
 
