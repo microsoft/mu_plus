@@ -6,8 +6,8 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef __FIRMWARE_PLOICY_DXE_H__
-#define __FIRMWARE_PLOICY_DXE_H__
+#ifndef __FIRMWARE_POLICY_DXE_H__
+#define __FIRMWARE_POLICY_DXE_H__
 
 extern MFCI_POLICY_TYPE  mCurrentPolicy;
 
@@ -50,4 +50,4 @@ InitTpmListener (
   VOID
   );
 
-#endif //__FIRMWARE_PLOICY_DXE_H__
+#endif //__FIRMWARE_POLICY_DXE_H__

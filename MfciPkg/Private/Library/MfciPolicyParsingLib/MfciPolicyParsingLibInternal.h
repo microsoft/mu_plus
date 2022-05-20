@@ -1,6 +1,6 @@
 /** @file
   Private header defining the structure of the binary MFCI
-  Policy packet and internal helper funcation declarations
+  Policy packet and internal helper function declarations
 
   Copyright (c) Microsoft Corporation
   SPDX-License-Identifier: BSD-2-Clause-Patent

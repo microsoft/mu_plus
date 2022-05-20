@@ -40,7 +40,7 @@
   Policy Engine Runtime Variables
   Below are the variables that control MFCI Policy change requests.  They are
   non-volatile and both visible and writable from the OS.
-  To set a new policy, write a correctly-signed, correctly-nonced, correctly
+  To set a new policy, write a correctly-signed, correctly-nonce, correctly
   targeted policy to NEXT_MFCI_POLICY_BLOB_VARIABLE_NAME variable and reboot.
   To delete an MFCI policy and return to default device policy, delete
   CURRENT_MFCI_POLICY_BLOB_VARIABLE_NAME and reboot.
