@@ -2,9 +2,9 @@
 
 ## About
 
-This package defines the abolute RGB values for each color that is used by users of the Simple
+This package defines the absolute RGB values for each color that is used by users of the Simple
 Window Manager.
-Each UI elelment is assigned a color.
+Each UI element is assigned a color.
 
 ## Copyright
 

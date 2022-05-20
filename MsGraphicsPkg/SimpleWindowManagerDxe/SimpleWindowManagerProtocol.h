@@ -132,7 +132,7 @@ SWMSetWindowFrame (
 
 /**
     Performs a block copy (blit) to the client window associated with the image handle provided.  Blitting to
-    a window is different from general GOP blitting in that the rendering engine knows to ignore any rectangle overlaps
+    a window is different from general GOP Blitting in that the rendering engine knows to ignore any rectangle overlaps
     with the client's window.
 
     @param[in]  This         Pointer to the instance of this driver.

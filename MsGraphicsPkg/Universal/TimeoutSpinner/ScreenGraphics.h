@@ -56,7 +56,7 @@ typedef struct {
 } TIMEOUT_CONTAINER;
 
 /**
- * Initialize Nvme Spinnter
+ * Initialize Nvme Spinner
  *
  * @param
  *

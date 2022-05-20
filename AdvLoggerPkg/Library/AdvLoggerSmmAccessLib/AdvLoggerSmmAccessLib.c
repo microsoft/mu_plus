@@ -266,7 +266,7 @@ AdvLoggerAccessAtRuntime (
 }
 
 /**
-    AdvLoggerAccessGonevirtual - Virtual Address Change.
+    AdvLoggerAccessGoneVirtual - Virtual Address Change.
 
     @param          NONE
 

@@ -216,7 +216,7 @@ AllocateRamForSEC (
       DEBUG ((DEBUG_ERROR, "Cache fill complete for AdvLogger buffer at %16.16lx\n", CarAddress));
     }
   } else {
-    DEBUG ((DEBUG_ERROR, "Cache failed.  AdvLogger memroy not available\n"));
+    DEBUG ((DEBUG_ERROR, "Cache failed.  AdvLogger memory not available\n"));
     Extendable = FALSE;
   }
 

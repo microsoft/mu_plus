@@ -44,13 +44,13 @@ FreeRamForSEC (
   );
 
 /**
-  Executes a rep lodsd (repeated load dword string instruction).  While there is no valid
+  Executes a rep Lodsd (repeated load dword string instruction).  While there is no valid
   data at the address, this allocates entries in the cache with the correct address tags.
 
   @param  Address The pointer to the cache location.
   @param  Length  The length in bytes of the region to load.
 
-  @return Value   Returns the next address to be touched (to verify the rep lodsd operation).
+  @return Value   Returns the next address to be touched (to verify the rep Lodsd operation).
 
 **/
 UINT32 *

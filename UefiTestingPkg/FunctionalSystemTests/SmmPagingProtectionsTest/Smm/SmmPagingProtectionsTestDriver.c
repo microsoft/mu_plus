@@ -276,7 +276,7 @@ SmmMemoryProtectionsTestInvalidRange (
 **/
 EFI_STATUS
 EFIAPI
-SmmMemoryProtectionsTestUnathorizedIoRead (
+SmmMemoryProtectionsTestUnauthorizedIoRead (
   VOID
   )
 {
@@ -310,7 +310,7 @@ SmmMemoryProtectionsTestUnathorizedIoRead (
 **/
 EFI_STATUS
 EFIAPI
-SmmMemoryProtectionsTestUnathorizedIoWrite (
+SmmMemoryProtectionsTestUnauthorizedIoWrite (
   VOID
   )
 {
@@ -344,7 +344,7 @@ SmmMemoryProtectionsTestUnathorizedIoWrite (
 **/
 EFI_STATUS
 EFIAPI
-SmmMemoryProtectionsTestUnathorizedMsrRead (
+SmmMemoryProtectionsTestUnauthorizedMsrRead (
   VOID
   )
 {
@@ -378,7 +378,7 @@ SmmMemoryProtectionsTestUnathorizedMsrRead (
 **/
 EFI_STATUS
 EFIAPI
-SmmMemoryProtectionsTestUnathorizedMsrWrite (
+SmmMemoryProtectionsTestUnauthorizedMsrWrite (
   VOID
   )
 {
@@ -582,22 +582,22 @@ MemoryProtectionTestHandler (
 
     case SMM_PROTECTIONS_READ_UNAUTHORIZED_IO:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_READ_UNAUTHORIZED_IO\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedIoRead ();
+      Status = SmmMemoryProtectionsTestUnauthorizedIoRead ();
       break;
 
     case SMM_PROTECTIONS_WRITE_UNAUTHORIZED_IO:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_WRITE_UNAUTHORIZED_IO\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedIoWrite ();
+      Status = SmmMemoryProtectionsTestUnauthorizedIoWrite ();
       break;
 
     case SMM_PROTECTIONS_READ_UNAUTHORIZED_MSR:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_READ_UNAUTHORIZED_MSR\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedMsrRead ();
+      Status = SmmMemoryProtectionsTestUnauthorizedMsrRead ();
       break;
 
     case SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR:
       DEBUG ((DEBUG_VERBOSE, "[%a] - Function requested: SMM_PROTECTIONS_WRITE_UNAUTHORIZED_MSR\n", __FUNCTION__));
-      Status = SmmMemoryProtectionsTestUnathorizedMsrWrite ();
+      Status = SmmMemoryProtectionsTestUnauthorizedMsrWrite ();
       break;
 
     case SMM_PROTECTIONS_PRIVILEGED_INSTRUCTIONS:

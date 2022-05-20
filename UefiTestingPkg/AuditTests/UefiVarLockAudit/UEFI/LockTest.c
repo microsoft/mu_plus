@@ -106,7 +106,7 @@ UpdateListWithReadWriteInfo (
       return Status;
     }
 
-    // Get current data - don't use XML stringized data...easier just to read binary again
+    // Get current data - don't use XML stringified data...easier just to read binary again
     Status = GetVariable3 (varName, &varGuid, (VOID **)&varData, &varDataSize, &varAttributes);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "%a Failed in GetVar3.  Status = %r\n", __FUNCTION__, Status));

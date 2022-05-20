@@ -63,7 +63,7 @@ FindGlyph (
       case EFI_HII_GIBT_GLYPH_DEFAULT:
         if (DefaultCell == NULL) {
           ASSERT (DefaultCell != NULL);
-          return EFI_NOT_FOUND;      // mschange - check with MT.  What is best way to exit this func
+          return EFI_NOT_FOUND;      // MS_CHANGE - check with MT.  What is best way to exit this func
         }
 
         BufferLen = BITMAP_LEN_1_BIT (DefaultCell->Width, DefaultCell->Height);
