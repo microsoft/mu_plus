@@ -29,7 +29,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 
   If Format is NULL, then ASSERT().
 
-  If the length of the message string specificed by Format is larger than the maximum allowable
+  If the length of the message string specified by Format is larger than the maximum allowable
   record length, then directly return and not print it.
 
   @param  ErrorLevel  The error level of the debug message.

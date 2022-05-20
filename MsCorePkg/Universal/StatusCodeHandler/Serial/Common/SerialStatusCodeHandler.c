@@ -1,5 +1,5 @@
 /** @file
-   Decode Status Code Message and write using serialport lib
+   Decode Status Code Message and write using serial port lib
 
 Copyright (C) Microsoft Corporation. All rights reserved.
 

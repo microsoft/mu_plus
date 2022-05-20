@@ -55,7 +55,7 @@ PersistCapsuleImageAcrossReset (
 
   @retval       EFI_SUCCESS           Capsule was found and output data is valid.
   @retval       EFI_BUFFER_TOO_SMALL  CapsuleData buffer is too small to hold all the data.
-  @retval       EFI_DEVICE_ERROR      Something went wrong while trying to retrive the capsule.
+  @retval       EFI_DEVICE_ERROR      Something went wrong while trying to retrieve the capsule.
 
 **/
 EFI_STATUS

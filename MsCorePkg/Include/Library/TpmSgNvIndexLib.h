@@ -11,14 +11,14 @@
 #define _TPM_SG_NV_INDEX_LIB_H_
 
 //
-// Constant definitions from Mircosoft "System Guard Secure Launch and SMM
+// Constant definitions from Microsoft "System Guard Secure Launch and SMM
 // Protection", section "System requirements for System Guard"
 #define SG_NV_INDEX_HANDLE  0x01C101C0
 #define SG_NV_INDEX_SIZE    128
 
 /**
   Executes DefineSpace for SystemGuard NV Index used by the OS, with
-  requirements in Mircosoft "System Guard Secure Launch and SMM Protection",
+  requirements in Microsoft "System Guard Secure Launch and SMM Protection",
   section "System requirements for System Guard", item "TPM NV Index"
 
   @retval     EFI_SUCCESS         NV Index was defined.

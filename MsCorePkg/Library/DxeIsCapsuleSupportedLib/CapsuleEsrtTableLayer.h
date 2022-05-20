@@ -13,7 +13,7 @@
 #define __DXE_CAPSULE_ESRT_TABLE_LAYER_H__
 
 /**
-  Checks if a given Capsule GUID matchs the FwClass of an item on the ESRT
+  Checks if a given Capsule GUID matches the FwClass of an item on the ESRT
 
   @param[in]  CapsuleGuid Pointer to a GUID
 
