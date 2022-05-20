@@ -28,7 +28,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // MessageBox Styles
 #define DFCI_MB_STYLE_TYPE(A)  (A & 0xF0000)            // Mask off everything but the style type.
 #define DFCI_MB_STYLE_NORMAL  0x00000000                // The normal MessageBox.
-#define DFCI_MB_STYLE_ALERT1  0x00010000                // The First alert message box (yesslow)
+#define DFCI_MB_STYLE_ALERT1  0x00010000                // The First alert message box (yellow)
 #define DFCI_MB_STYLE_ALERT2  0x00020000                // The Second alert message box (Red)
 
 typedef UINTN DFCI_AUTH_TOKEN;

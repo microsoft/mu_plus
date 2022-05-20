@@ -39,7 +39,7 @@ typedef struct {
   DFCI_PERMISSION_MASK                 DefaultPMask;    // For any ID not found in the entry list this is the permission
   UINT16                               NumberOfEntries; // Number of entries in the PermTable
   DFCI_PERM_INTERNAL_TABLE_ENTRY_V1    PermTable[];
-} DFCI_PERM_INTERNAL_PROVISONED_VAR_V1;
+} DFCI_PERM_INTERNAL_PROVISIONED_VAR_V1;
 
 typedef struct {
   DFCI_PERMISSION_MASK    Permissions;
@@ -57,7 +57,7 @@ typedef struct {
   DFCI_PERMISSION_MASK                 DefaultPMask;    // For any ID not found in the entry list this is the permission
   UINT16                               NumberOfEntries; // Number of entries in the PermTable
   DFCI_PERM_INTERNAL_TABLE_ENTRY_V2    PermTableStart;  // First variable length entry
-} DFCI_PERM_INTERNAL_PROVISONED_VAR_V2;
+} DFCI_PERM_INTERNAL_PROVISIONED_VAR_V2;
 
 typedef struct {
   DFCI_PERMISSION_MASK    Permissions;
@@ -77,7 +77,7 @@ typedef struct {
   DFCI_PERMISSION_MASK              DefaultDMask;    // For any ID not found in the entry list this is the delegated permission
   UINT16                            NumberOfEntries; // Number of entries in the PermTable
   DFCI_PERM_INTERNAL_TABLE_ENTRY    PermTableStart;  // First variable length entry
-} DFCI_PERM_INTERNAL_PROVISONED_VAR;
+} DFCI_PERM_INTERNAL_PROVISIONED_VAR;
 
 #pragma pack (pop)
 
@@ -89,18 +89,18 @@ typedef struct {
  **/
 EFI_STATUS
 ConvertFromV1 (
-  IN DFCI_PERMISSION_STORE              **Store,
-  IN DFCI_PERM_INTERNAL_PROVISONED_VAR  *Var,
-  UINTN                                 VarSize
+  IN DFCI_PERMISSION_STORE               **Store,
+  IN DFCI_PERM_INTERNAL_PROVISIONED_VAR  *Var,
+  UINTN                                  VarSize
   )
 {
-  EFI_STATUS                            Status;
-  DFCI_PERM_INTERNAL_PROVISONED_VAR_V1  *Var1;
-  UINTN                                 ComputedSize;
-  DFCI_SETTING_ID_STRING                Id;
+  EFI_STATUS                             Status;
+  DFCI_PERM_INTERNAL_PROVISIONED_VAR_V1  *Var1;
+  UINTN                                  ComputedSize;
+  DFCI_SETTING_ID_STRING                 Id;
 
-  Var1         = (DFCI_PERM_INTERNAL_PROVISONED_VAR_V1 *)Var;
-  ComputedSize = sizeof (DFCI_PERM_INTERNAL_PROVISONED_VAR_V1) + (Var1->NumberOfEntries * sizeof (DFCI_PERM_INTERNAL_TABLE_ENTRY_V1));
+  Var1         = (DFCI_PERM_INTERNAL_PROVISIONED_VAR_V1 *)Var;
+  ComputedSize = sizeof (DFCI_PERM_INTERNAL_PROVISIONED_VAR_V1) + (Var1->NumberOfEntries * sizeof (DFCI_PERM_INTERNAL_TABLE_ENTRY_V1));
   if (VarSize != ComputedSize) {
     DEBUG ((DEBUG_ERROR, "%a - VarSize (0x%X) != ComputedSize (0x%X)\n", __FUNCTION__, VarSize, ComputedSize));
     ASSERT (VarSize == ComputedSize);
@@ -138,19 +138,19 @@ ConvertFromV1 (
  **/
 EFI_STATUS
 ConvertFromV2 (
-  IN DFCI_PERMISSION_STORE              **Store,
-  IN DFCI_PERM_INTERNAL_PROVISONED_VAR  *Var,
-  UINTN                                 VarSize
+  IN DFCI_PERMISSION_STORE               **Store,
+  IN DFCI_PERM_INTERNAL_PROVISIONED_VAR  *Var,
+  UINTN                                  VarSize
   )
 {
-  EFI_STATUS                            Status;
-  DFCI_PERM_INTERNAL_TABLE_ENTRY_V2     *PermEntry;
-  DFCI_PERM_INTERNAL_PROVISONED_VAR_V2  *Var2;
-  UINTN                                 Count;
-  CHAR8                                 *PermPtr;
-  CHAR8                                 *EndPtr;
+  EFI_STATUS                             Status;
+  DFCI_PERM_INTERNAL_TABLE_ENTRY_V2      *PermEntry;
+  DFCI_PERM_INTERNAL_PROVISIONED_VAR_V2  *Var2;
+  UINTN                                  Count;
+  CHAR8                                  *PermPtr;
+  CHAR8                                  *EndPtr;
 
-  Var2    = (DFCI_PERM_INTERNAL_PROVISONED_VAR_V2 *)Var;
+  Var2    = (DFCI_PERM_INTERNAL_PROVISIONED_VAR_V2 *)Var;
   PermPtr = (CHAR8 *)&Var2->PermTableStart;
   EndPtr  = (CHAR8 *)Var2;
   EndPtr += VarSize;
@@ -224,9 +224,9 @@ ConvertFromV3 (
  **/
 EFI_STATUS
 LoadCurrentFromFlash (
-  IN DFCI_PERMISSION_STORE              **Store,
-  IN DFCI_PERM_INTERNAL_PROVISONED_VAR  *Var,
-  IN UINTN                              VarSize
+  IN DFCI_PERMISSION_STORE               **Store,
+  IN DFCI_PERM_INTERNAL_PROVISIONED_VAR  *Var,
+  IN UINTN                               VarSize
   )
 {
   EFI_STATUS                      Status;
@@ -275,10 +275,10 @@ LoadFromFlash (
   IN DFCI_PERMISSION_STORE  **Store
   )
 {
-  EFI_STATUS                         Status;
-  DFCI_PERM_INTERNAL_PROVISONED_VAR  *Var          = NULL;
-  UINTN                              VarSize       = 0;
-  UINT32                             VarAttributes = 0;
+  EFI_STATUS                          Status;
+  DFCI_PERM_INTERNAL_PROVISIONED_VAR  *Var          = NULL;
+  UINTN                               VarSize       = 0;
+  UINT32                              VarAttributes = 0;
 
   if (Store == NULL) {
     ASSERT (Store != NULL);
@@ -420,16 +420,16 @@ SaveToFlash (
   IN DFCI_PERMISSION_STORE  *Store
   )
 {
-  EFI_STATUS                         Status;
-  DFCI_PERM_INTERNAL_PROVISONED_VAR  *Var       = NULL;
-  UINTN                              VarSize    = 0;
-  UINTN                              NumEntries = 0;
-  EFI_TIME                           t;
-  UINTN                              TotalIdSize;
-  DFCI_PERM_INTERNAL_TABLE_ENTRY     *PermEntry;
-  CHAR8                              *PermPtr;
-  DFCI_PERM_INTERNAL_PROVISONED_VAR  *OldVar = NULL;
-  UINTN                              OldVarSize;
+  EFI_STATUS                          Status;
+  DFCI_PERM_INTERNAL_PROVISIONED_VAR  *Var       = NULL;
+  UINTN                               VarSize    = 0;
+  UINTN                               NumEntries = 0;
+  EFI_TIME                            t;
+  UINTN                               TotalIdSize;
+  DFCI_PERM_INTERNAL_TABLE_ENTRY      *PermEntry;
+  CHAR8                               *PermPtr;
+  DFCI_PERM_INTERNAL_PROVISIONED_VAR  *OldVar = NULL;
+  UINTN                               OldVarSize;
 
   if (Store == NULL) {
     ASSERT (Store != NULL);
@@ -444,7 +444,7 @@ SaveToFlash (
   NumEntries = GetNumberOfPermissionEntires (Store, &TotalIdSize);
 
   // Figure out our size
-  VarSize = sizeof (DFCI_PERM_INTERNAL_PROVISONED_VAR) + ((NumEntries -1) * sizeof (DFCI_PERM_INTERNAL_TABLE_ENTRY) + TotalIdSize);
+  VarSize = sizeof (DFCI_PERM_INTERNAL_PROVISIONED_VAR) + ((NumEntries -1) * sizeof (DFCI_PERM_INTERNAL_TABLE_ENTRY) + TotalIdSize);
   // Check the size
   if (VarSize > MAX_SIZE_FOR_VAR) {
     DEBUG ((DEBUG_INFO, "%a - Var too big. 0x%X\n", __FUNCTION__, VarSize));
@@ -452,7 +452,7 @@ SaveToFlash (
     return EFI_INVALID_PARAMETER;
   }
 
-  Var = (DFCI_PERM_INTERNAL_PROVISONED_VAR *)AllocateZeroPool (VarSize);
+  Var = (DFCI_PERM_INTERNAL_PROVISIONED_VAR *)AllocateZeroPool (VarSize);
   if (Var == NULL) {
     DEBUG ((DEBUG_ERROR, "%a - Failed to allocate memory for Store\n", __FUNCTION__));
     Status = EFI_ABORTED;

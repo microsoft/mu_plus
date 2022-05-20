@@ -1,7 +1,7 @@
 /** @file
 DfciEventGroup.h
 
-Contains definitions for Dfci remote conficuration started and ended. This event
+Contains definitions for Dfci remote configuration started and ended. This event
 group it meant to inform a platform when a long running operation is being performed.
 
 Copyright (C) Microsoft Corporation. All rights reserved.

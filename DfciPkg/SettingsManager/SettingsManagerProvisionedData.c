@@ -18,7 +18,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define VAR_HEADER_SIG  SIGNATURE_32('S', 'M', 'I', 'D')
 #define VAR_VERSION     (1)
 
-// determine min size to make sure variable is big enough to evaluate.  This is headersignature plus Headerversion
+// determine min size to make sure variable is big enough to evaluate.  This is header signature plus header version
 #define MIN_VAR_SIZE  (sizeof(UINT32) + sizeof(UINT8))
 
 #pragma pack (push, 1)
@@ -165,7 +165,7 @@ SMID_LoadFromFlash (
     goto EXIT;
   }
 
-  // size should be corect now
+  // size should be correct now
   if (VarSize != sizeof (DFCI_INTERNAL_DATA_VAR)) {
     DEBUG ((DEBUG_INFO, "%a - Var Header Version Wrong %d.\n", __FUNCTION__, Var->HeaderVersion));
     Status = EFI_COMPROMISED_DATA;

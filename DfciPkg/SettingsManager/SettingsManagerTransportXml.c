@@ -29,7 +29,7 @@ ValidateAndAuthenticateSettings (
 
   DEBUG ((DEBUG_INFO, "%a - Session ID = 0x%X\n", __FUNCTION__, Data->SessionId));
 
-  // Lets check for device specific targetting using Serial Number
+  // Lets check for device specific targeting using Serial Number
   Status = CheckAuthAndGetToken (Data->Packet->Hdr.Pkt, Data->SignedDataLength, Data->Signature, &Data->AuthToken);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - Failed to Authenticate Settings %r\n", __FUNCTION__, Status));

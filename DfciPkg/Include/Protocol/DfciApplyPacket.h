@@ -138,7 +138,7 @@ EFI_STATUS
  * @param[in] This:            Apply Packet Protocol
  * @param[in] Operation
  *                        SNAPSHOT  save the current settings to "LKG"
- *                        RESTORE   retores the current values from "LKG"
+ *                        RESTORE   restores the current values from "LKG"
  *                        COMMIT    discards the current "LKG"
  *
  * @return EFI_STATUS EFIAPI

@@ -62,7 +62,9 @@
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
         "AuditOnly": False,           # Fails test but run in AuditOnly mode to collect log
-        "IgnoreFiles": [],            # use gitignore syntax to ignore errors in matching files
+        "IgnoreFiles": [
+            "Application/EnrollInDfci/Compress.c"
+        ],            # use gitignore syntax to ignore errors in matching files
         "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
         "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
         "ExtendWords": [              # words to extend to the dictionary for this package
@@ -103,6 +105,16 @@
             "robotframework", # python package dependency
             "robotremoteserver", # python package dependency
             "yourplatformpkg",
+            "Authtoken",
+            "DBGMSGID",
+            "IDNEXT",
+            "IDABORT",
+            "DEFBUTTON",
+            "REGISTRATIONID",
+            "overlongs",
+            "SDCARD",
+            "SECUREBOOTKEYENUM",
+            "USBPORTENUM"
         ]
     }
 }

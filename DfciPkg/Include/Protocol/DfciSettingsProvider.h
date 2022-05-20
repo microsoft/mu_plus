@@ -42,7 +42,7 @@ EFI_STATUS
 /*
 Get a single setting
 
-@param This      Seting Provider
+@param This      Setting Provider
 @param ValueSize IN=Size of location to store value
                  OUT=Size of value stored
 @param Value     Output parameter for the setting value.
@@ -63,7 +63,7 @@ EFI_STATUS
 /*
 Get the default value of a single setting
 
-@param This          Seting Provider
+@param This          Setting Provider
 @param ValueSize     IN=Size of location to store value
                      OUT=Size of value stored
 @param DefaultValue  Output parameter for the settings default value.
@@ -85,7 +85,7 @@ EFI_STATUS
 /*
 Set to default value
 
-@param This          Seting Provider
+@param This          Setting Provider
 
 @retval EFI_SUCCESS  default set
 @retval ERROR        Error

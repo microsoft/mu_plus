@@ -200,7 +200,7 @@ PermissionListEntriesAppend (
  * Gets the PermissionMask and the DMask from the input XML
  *
  * The PermissionMask is required, and the DMask is optional. If
- * the DMask is not present, the return value is not distrubed.
+ * the DMask is not present, the return value is not disturbed.
  *
  *
  * @param ParentPermissionNode

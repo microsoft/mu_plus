@@ -46,7 +46,7 @@ GetIdentityCurrentListNodeFromPacketNode (
   <Certificates>
     <Certificate>
       <Id>Owner</Id>
-      <Thumbrint>45 d6 42 7a 83 9c ef 48 fa 36 c5 bc 0a 4a 27 c1 6f c5 72 f7</Thumbprint>
+      <Thumbprint>45 d6 42 7a 83 9c ef 48 fa 36 c5 bc 0a 4a 27 c1 6f c5 72 f7</Thumbprint>
     </Certificate>
     <Certificate>
       <Id>User</Id>
