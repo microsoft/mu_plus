@@ -147,7 +147,7 @@
   # MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
   MfciPkg/Private/Library/MfciPolicyParsingLibNull/MfciPolicyParsingLibNull.inf
   MfciPkg/Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.inf
-  MfciPkg/UnitTests/MfciPolicyParsingUnitTest/MfciPolicyParsingUnitTest.inf
+  MfciPkg/UnitTests/MfciPolicyParsingUnitTest/MfciPolicyParsingUnitTestApp.inf
 
 [Components.IA32]
   # MsWheaPkg/MsWheaReport/Pei/MsWheaReportPei.inf

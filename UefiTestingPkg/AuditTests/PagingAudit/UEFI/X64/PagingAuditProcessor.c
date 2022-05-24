@@ -1,4 +1,4 @@
-/** @file -- DxePagingAuditApp.c
+/** @file -- PagingAuditProcessor.c
 Platform specific memory handler dump function. Handler(s) need to be in compliance
 with existed Windows\PagingReportGenerator.py, i.e. TSEG.
 

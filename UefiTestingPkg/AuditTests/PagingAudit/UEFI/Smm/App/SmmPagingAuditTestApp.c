@@ -1,4 +1,4 @@
-/** @file -- SmmPagingAuditApp.c
+/** @file -- SmmPagingAuditTestApp.c
 This user-facing application collects information from the SMM page tables and
 writes it to files.
 
@@ -555,7 +555,7 @@ LocateSmmCommonCommBuffer (
 } // LocateSmmCommonCommBuffer()
 
 /**
-  SmmPagingAuditAppEntryPoint
+  SmmPagingAuditTestAppEntryPoint
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
   @param[in] SystemTable  A pointer to the EFI System Table.
@@ -566,7 +566,7 @@ LocateSmmCommonCommBuffer (
 **/
 EFI_STATUS
 EFIAPI
-SmmPagingAuditAppEntryPoint (
+SmmPagingAuditTestAppEntryPoint (
   IN     EFI_HANDLE        ImageHandle,
   IN     EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -588,4 +588,4 @@ SmmPagingAuditAppEntryPoint (
   DEBUG ((DEBUG_INFO, "%a the app's done!\n", __FUNCTION__));
 
   return EFI_SUCCESS;
-} // SmmPagingAuditAppEntryPoint()
+} // SmmPagingAuditTestAppEntryPoint()

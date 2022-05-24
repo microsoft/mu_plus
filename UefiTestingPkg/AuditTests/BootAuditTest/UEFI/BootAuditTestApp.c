@@ -32,7 +32,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UnitTestLib.h>
 
-#define UNIT_TEST_APP_NAME     "BootAuditTest"
+#define UNIT_TEST_APP_NAME     "BootAuditTestApp"
 #define UNIT_TEST_APP_VERSION  "1.0"
 
 typedef struct {

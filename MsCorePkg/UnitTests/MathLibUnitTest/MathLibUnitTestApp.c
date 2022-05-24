@@ -6,7 +6,7 @@ Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
-#include "MathLibUnitTests.h"
+#include "MathLibUnitTestApp.h"
 #include "TestData.h"
 #include <Library/MathLib.h>
 #include <Library/UnitTestLib.h>

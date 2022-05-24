@@ -1,0 +1,32 @@
+## @file CheckHwErrRecHeaderTestApp.inf
+#
+# The CheckHwErrRecHeaderLib test application
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = CheckHwErrRecHeaderTestApp
+  FILE_GUID                      = df5a6fad-8786-4a9d-9d02-eab39497b4a1
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = CheckHwErrRecHeaderTestsEntry
+
+[Sources]
+  CheckHwErrRecHeaderTestApp.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  UefiApplicationEntryPoint
+  DebugLib
+  UnitTestLib
+  PrintLib
+  CheckHwErrRecHeaderLib

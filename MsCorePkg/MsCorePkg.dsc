@@ -200,7 +200,7 @@
   MsCorePkg/Universal/StatusCodeHandler/Serial/Smm/SerialStatusCodeHandlerSmm.inf
   MsCorePkg/Universal/StatusCodeHandler/Serial/Smm/SerialStatusCodeHandlerStandaloneMm.inf
   MsCorePkg/IncompatiblePciDevices/NoOptionRomsAllowed/NoOptionRomsAllowed.inf
-  MsCorePkg/UnitTests/MathLibUnitTest/MathLibUnitTest.inf
+  MsCorePkg/UnitTests/MathLibUnitTest/MathLibUnitTestApp.inf
   MsCorePkg/Library/JsonLiteParser/JsonLiteParser.inf
   MsCorePkg/UnitTests/JsonTest/JsonTestApp.inf
   MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf

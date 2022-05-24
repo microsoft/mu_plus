@@ -119,8 +119,8 @@
   #       If needed on IA32, should port the functions.
   UefiTestingPkg/FunctionalSystemTests/HeapGuardTest/App/HeapGuardTestApp.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
-  UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditApp.inf
-  UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditApp.inf
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf
 
 [BuildOptions]
 #force deprecated interfaces off

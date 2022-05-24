@@ -45,11 +45,11 @@ Check the **UntTests** folder at the root of the package.
 | Library Tests          | Link to Documentation |
 | ---                    | --- |
 | **Json Test:**         | [Json Test](..\UnitTests/JsonTest/ReadMe.md) |
-| **MathLib UnitTests:** | [MathLib UnitTests](..\UnitTests/MathLibUnitTests/ReadMe.md) |
+| **MathLib UnitTests:** | [MathLib UnitTests](..\UnitTests/MathLibUnitTest/ReadMe.md) |
 
 ---
 
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.  
+Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent

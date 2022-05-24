@@ -1,4 +1,4 @@
-/** @file -- DxePagingAuditApp.c
+/** @file -- DxePagingAuditTestApp.c
 This Shell App writes page table and memory map information to SFS.
 
 Copyright (c) Microsoft Corporation.
@@ -13,7 +13,7 @@ UINTN  mMemoryInfoDatabaseSize      = 0;
 UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
 /**
-  SmmPagingAuditAppEntryPoint
+  DxePagingAuditTestAppEntryPoint
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
   @param[in] SystemTable  A pointer to the EFI System Table.
@@ -24,7 +24,7 @@ UINTN  mMemoryInfoDatabaseAllocSize = 0;
 **/
 EFI_STATUS
 EFIAPI
-PagingAuditDxeAppEntryPoint (
+DxePagingAuditTestAppEntryPoint (
   IN     EFI_HANDLE        ImageHandle,
   IN     EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -38,4 +38,4 @@ PagingAuditDxeAppEntryPoint (
   DEBUG ((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 
   return EFI_SUCCESS;
-} // PagingAuditDxeAppEntryPoint()
+} // DxePagingAuditTestAppEntryPoint()

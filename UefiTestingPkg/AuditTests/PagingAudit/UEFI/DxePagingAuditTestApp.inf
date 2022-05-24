@@ -1,24 +1,23 @@
-## @file DxePagingAuditDriver.inf
-# This DXE Driver writes page table and memory map information to SFS when triggered
-# by an event.
+## @file DxePagingAuditTestApp.inf
+# This Shell App writes page table and memory map information to SFS.
 #
 ##
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# SPDX-License-Identifier: BSD-2-Clause-Patent
+# Copyright (c) Microsoft Corporation.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = DxePagingAuditDriver
-  FILE_GUID           = 8C8CEAB1-6062-4777-BD21-7A1C034EF034
+  BASE_NAME           = DxePagingAuditTestApp
+  FILE_GUID           = 5CA3255F-0C91-4C8D-A4CF-36E8BC49D6C4
   VERSION_STRING      = 1.0
-  MODULE_TYPE         = DXE_DRIVER
-  ENTRY_POINT         = PagingAuditDriverEntryPoint
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = DxePagingAuditTestAppEntryPoint
 
 
 [Sources]
-  Dxe/Driver/DxePagingAuditDriver.c
+  Dxe/App/DxePagingAuditTestApp.c
   PagingAuditCommon.c
   PagingAuditCommon.h
 
@@ -31,27 +30,25 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
+  ShellPkg/ShellPkg.dec
 
 
 [LibraryClasses]
-  UefiDriverEntryPoint
   PrintLib
   DebugLib
   UefiBootServicesTableLib
   UefiLib
   PeCoffGetEntryPointLib
+  UefiApplicationEntryPoint
+  ShellLib
   UefiCpuLib
   HobLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
-  gMuEventPreExitBootServicesGuid
 
 [Protocols]
   gEfiBlockIoProtocolGuid
   gHeapGuardDebugProtocolGuid
-  gEfiSimpleFileSystemProtocolGuid
-
-[Depex]
   gEfiSimpleFileSystemProtocolGuid

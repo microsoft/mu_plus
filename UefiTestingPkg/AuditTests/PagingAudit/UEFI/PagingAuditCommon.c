@@ -1,4 +1,4 @@
-/** @file -- DxePagingAuditApp.c
+/** @file -- DxePagingAuditCommon.c
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 

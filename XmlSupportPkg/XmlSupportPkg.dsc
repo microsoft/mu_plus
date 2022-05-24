@@ -38,8 +38,8 @@
   ##
   # Uefi environment unit tests
   ##
-  XmlSupportPkg/Test/UnitTest/XmlTreeLib/XmlTreeLibUnitTestsUefi.inf
-  XmlSupportPkg/Test/UnitTest/XmlTreeQueryLib/XmlTreeQueryLibUnitTestsUefi.inf {
+  XmlSupportPkg/Test/UnitTest/XmlTreeLib/XmlTreeLibUnitTestApp.inf
+  XmlSupportPkg/Test/UnitTest/XmlTreeQueryLib/XmlTreeQueryLibUnitTestApp.inf {
     <PcdsFixedAtBuild>
     #Turn off Halt on Assert and Print Assert so that libraries can
     #be tested in more of a release mode environment
