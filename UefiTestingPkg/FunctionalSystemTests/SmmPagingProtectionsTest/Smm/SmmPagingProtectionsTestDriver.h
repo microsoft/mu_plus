@@ -41,4 +41,20 @@ IsBufferOutsideMmValid (
   IN UINT64                Length
   );
 
+/**
+  This function is wrapper function to validate the communicate buffer.
+
+  @param[in] Buffer  The buffer start address to be checked.
+  @param[in] Length  The buffer length to be checked.
+
+  @retval TRUE  This buffer is valid per processor architecture and not overlap with SMRAM.
+  @retval FALSE This buffer is not valid per processor architecture or overlap with SMRAM.
+**/
+BOOLEAN
+EFIAPI
+IsCommBufferValid (
+  IN EFI_PHYSICAL_ADDRESS  Buffer,
+  IN UINT64                Length
+  );
+
 #endif // SMM_PAGING_PROTECTION_TEST_DRIVER_H_
