@@ -83,7 +83,8 @@
             "SANITYCHECK",
             "SECUREBOOT",
             "SERIALNUMBER",
-            "VALIDATEBLOB"
+            "VALIDATEBLOB",
+            "malformatted"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

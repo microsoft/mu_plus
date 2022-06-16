@@ -17,7 +17,6 @@
   SKUID_IDENTIFIER               = DEFAULT
 
   DEFINE  MFCI_POLICY_EKU_TEST   = "1.3.6.1.4.1.311.45.255.255"
-  DEFINE  MFCI_POLICY_EKU_RETAIL = "1.3.6.1.4.1.311.79.8.1"
 
 [PcdsFixedAtBuild]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x3f
@@ -27,7 +26,6 @@
   # the unit test uses the test certificate that will also be used for testing end-to-end scenarios
   !include MfciPkg/Private/Certs/CA-test.dsc.inc
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU  |$(MFCI_POLICY_EKU_TEST)   # use the test version
-  # TODO: add the production certificate and EKU if/when we have test cases that use them
 
 ################################################################################
 #

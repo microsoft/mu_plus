@@ -22,7 +22,7 @@
 #include <Private/Library/MfciPolicyParsingLib.h>
 #include <Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLibInternal.h>
 
-#include "data/certs/CA.cer.h"
+#include "data/certs/CA.cer.xdr.h"
 #include "data/certs/CA_NotTrusted.cer.h"
 #include "data/packets/policy_good_manufacturing.bin.h"
 #include "data/packets/policy_good_manufacturing.bin.p7.h"
@@ -261,7 +261,7 @@ EntryPoint (
   // *----------------------------------------------------------------------------------*
 
   // below is inspired/borrowed from FmpDxe.c
-  CONST UINT8 *CONST  PublicKeyDataXdr = (VOID *)mCert_Trusted_CA;
+  CONST UINT8 *CONST  PublicKeyDataXdr = (VOID *)mCert_Trusted_CA_xdr;
 
   if (PublicKeyDataXdr == NULL) {
     DEBUG ((DEBUG_ERROR, "PublicKeyDataXdr NULL \n"));
@@ -269,7 +269,7 @@ EntryPoint (
     goto EXIT;
   }
 
-  CONST UINT8 *CONST  PublicKeyDataXdrEnd = PublicKeyDataXdr + sizeof (mCert_Trusted_CA);
+  CONST UINT8 *CONST  PublicKeyDataXdrEnd = PublicKeyDataXdr + sizeof (mCert_Trusted_CA_xdr);
 
   if ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd) {
     DEBUG ((DEBUG_ERROR, "PublicKeyDataXdr invalid size\n"));

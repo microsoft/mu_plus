@@ -1,0 +1,59 @@
+## @file
+# This module tests MFCI XDR formatted certificate extraction
+# logic for MfciDxe driver.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MfciMultipleCertsHostTest
+  FILE_GUID                      = 80779F41-7A31-48C7-9E20-7967469316DE
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciMultipleCertsHostTest.c
+  ../MfciDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+  CryptoPkg/CryptoPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  VariablePolicyHelperLib
+  MfciRetrievePolicyLib
+  MfciDeviceIdSupportLib
+
+[Protocols]
+  gMfciProtocolGuid                     ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid      ## CONSUMES
+
+[Protocols.common.Private]
+  gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
+
+[Pcd]
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr                    ## CONSUMES
+  gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU                  ## CONSUMES
+
+[Guids]
+  gMfciVendorGuid                     ## CONSUMES
+  gMsStartOfBdsNotifyGuid             ## CONSUMES
+  gEfiEndOfDxeEventGroupGuid          ## CONSUMES
+  gMuVarPolicyDxePhaseGuid            ## CONSUMES
+  gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES
+  gMfciPolicyChangeResetGuid          ## CONSUMES

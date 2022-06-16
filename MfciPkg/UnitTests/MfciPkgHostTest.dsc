@@ -80,5 +80,7 @@
 
   MfciPkg/MfciDxe/Test/MfciPublicInterfaceHostTest.inf
 
+  MfciPkg/MfciDxe/Test/MfciMultipleCertsHostTest.inf
+
 [BuildOptions]
   *_*_*_CC_FLAGS            = -D DISABLE_NEW_DEPRECATED_INTERFACES
