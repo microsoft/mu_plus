@@ -128,6 +128,7 @@ PlatformBootManagerPriorityBoot (
   )
 {
   EFI_BOOT_MANAGER_LOAD_OPTION  BootOption;
+  EFI_BOOT_MANAGER_LOAD_OPTION  BootManagerMenu;
   EFI_STATUS                    Status = EFI_SUCCESS;
 
   Status = DeviceBootManagerPriorityBoot (&BootOption);
@@ -155,8 +156,22 @@ PlatformBootManagerPriorityBoot (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[Bds] VOL/+ or VOL/- detected, and unable to boot. Code=%r\n", Status));
   } else {
+    // Attempt the priority boot option.
     EfiBootManagerBoot (&BootOption);
+    Status = BootOption.Status;
     EfiBootManagerFreeLoadOption (&BootOption);
+
+    //
+    // If the priority boot option returns with a status of EFI_SUCCESS, and platform firmware supports boot manager
+    // menu the boot manager will stop processing boot options here and present a boot manager menu to the user.
+    //
+    if (Status == EFI_SUCCESS) {
+      Status = EfiBootManagerGetBootManagerMenu (&BootManagerMenu);
+      if (!EFI_ERROR (Status)) {
+        EfiBootManagerBoot (&BootManagerMenu);
+        EfiBootManagerFreeLoadOption (&BootManagerMenu);
+      }
+    }
   }
 
   return;
