@@ -33,48 +33,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // TEST HELPERS
 // =============================================================================
 
-MM_MEMORY_PROTECTION_SETTINGS  gMmMps;
-
-/**
-  Abstraction layer which fetches the MM memory protection HOB.
-
-  @retval EFI_SUCCESS   The HOB entry has been fetched
-  @retval EFI_INVALID_PARAMETER The HOB entry could not be found
-**/
-EFI_STATUS
-STATIC
-FetchMmMemoryProtectionHob (
-  VOID
-  )
-{
-  VOID  *Ptr;
-
-  ZeroMem (&gMmMps, sizeof (gMmMps));
-
-  Ptr = GetFirstGuidHob (&gMmMemoryProtectionSettingsGuid);
-
-  if (Ptr != NULL) {
-    if (*((UINT8 *)GET_GUID_HOB_DATA (Ptr)) != (UINT8)MM_MEMORY_PROTECTION_SETTINGS_CURRENT_VERSION) {
-      DEBUG ((
-        DEBUG_INFO,
-        "%a: - Version number of the MM Memory Protection Settings HOB is invalid.\n",
-        __FUNCTION__
-        ));
-    } else {
-      CopyMem (&gMmMps, GET_GUID_HOB_DATA (Ptr), sizeof (MM_MEMORY_PROTECTION_SETTINGS));
-      return EFI_SUCCESS;
-    }
-  }
-
-  DEBUG ((
-    DEBUG_INFO,
-    "%a: - Unable to fetch the MM memory protection HOB.\n",
-    __FUNCTION__
-    ));
-
-  return EFI_INVALID_PARAMETER;
-}
-
 /**
 
   Trigger reboot on interrupt instead of hang.
@@ -116,7 +74,8 @@ EnableExceptionTestMode (
 VOID
 PoolTest (
   IN UINT64  *ptr,
-  IN UINT64  AllocationSize
+  IN UINT64  AllocationSize,
+  IN UINT8   Alignment
   )
 {
   UINT64  *ptrLoc;
@@ -126,7 +85,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if ((gMmMps.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL)) {
+  if ((Alignment == HEAP_GUARD_ALIGNED_TO_TAIL)) {
     //
     // Get to the beginning of the page the pool tail is on.
     //
@@ -263,7 +222,7 @@ SmmPoolGuard (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Memory allocation failed for %x- %r\n", __FUNCTION__, MemoryType, Status));
   } else {
-    PoolTest ((UINT64 *)(UINTN)ptr, AllocationSize);
+    PoolTest ((UINT64 *)(UINTN)ptr, AllocationSize, Context->GuardAlignment);
     DEBUG ((DEBUG_ERROR, "Pool test failed."));
   }
 } // SmmPoolGuard()
@@ -396,10 +355,6 @@ HeapGuardTestEntryPoint (
 {
   EFI_STATUS  Status;
   EFI_HANDLE  DiscardedHandle;
-
-  Status = FetchMmMemoryProtectionHob ();
-
-  ASSERT_EFI_ERROR (Status);
 
   //
   // Register SMI handler.

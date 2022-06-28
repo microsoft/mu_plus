@@ -1095,6 +1095,7 @@ AddUefiNxTest (
     //
     HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
+    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = AllocateZeroPool (TestNameSize);
@@ -1150,6 +1151,7 @@ AddUefiPoolTest (
     //
     HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
+    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
 
     //
     // Name of the test is Security.PoolGuard.Uefi + Memory Type Name (from MEMORY_TYPES)
@@ -1205,6 +1207,7 @@ AddUefiPageTest (
     //
     HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
+    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
@@ -1260,6 +1263,7 @@ AddSmmPoolTest (
     //
     HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
+    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
@@ -1315,6 +1319,7 @@ AddSmmPageTest (
     //
     HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
     HeapGuardContext->TargetMemoryType = Index;
+    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);

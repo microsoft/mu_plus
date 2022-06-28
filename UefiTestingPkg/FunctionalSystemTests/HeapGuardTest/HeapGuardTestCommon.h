@@ -17,6 +17,7 @@ CHAR8  *MEMORY_TYPES[] = { "ReservedMemoryType", "LoaderCode", "LoaderData", "Bo
 typedef struct _HEAP_GUARD_TEST_CONTEXT {
   UINT64    TargetMemoryType;
   UINT64    TestProgress;
+  UINT8     GuardAlignment;
 } HEAP_GUARD_TEST_CONTEXT;
 
 #define HEAP_GUARD_TEST_POOL          1
