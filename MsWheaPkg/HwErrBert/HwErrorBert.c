@@ -8,6 +8,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 #include <Guid/Cper.h>
+#include <Guid/VariableFormat.h>
 #include <Library/UefiLib.h>
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
@@ -41,6 +42,7 @@ SetupBert (
   )
 {
   UINTN         Size     = 0;
+  UINTN         NameSize = 0;
   CHAR16        *NamePtr = NULL;
   VOID          *Buffer  = NULL;
   EFI_STATUS    Status;
@@ -63,10 +65,11 @@ SetupBert (
   }
 
   // Iterate through the list of variable names
+  NamePtr = mVarNameList;
   for (UINTN Index = 0; Index < mVarNameListCount; Index++) {
-    Size    = 0;
-    Buffer  = NULL;
-    NamePtr = &mVarNameList[Index * EFI_HW_ERR_REC_VAR_NAME_LEN];
+    Size     = 0;
+    Buffer   = NULL;
+    NameSize = StrLen (NamePtr) + 1;
     DEBUG ((DEBUG_VERBOSE, "%a - Publishing %s\n", __FUNCTION__, NamePtr));
 
     //
@@ -83,13 +86,13 @@ SetupBert (
     if (Status != EFI_BUFFER_TOO_SMALL) {
       DEBUG ((DEBUG_ERROR, "%a - %s 0 size GetVariable returned %r\n", __FUNCTION__, NamePtr, Status));
       ASSERT (FALSE);
+      NamePtr += NameSize;
       continue;
     }
 
     Buffer = AllocateZeroPool (Size);
     if (Buffer == NULL) {
-      DEBUG ((DEBUG_VERBOSE, "%a - out of memory", __FUNCTION__));
-      FreePool (Buffer);
+      DEBUG ((DEBUG_ERROR, "%a - out of memory", __FUNCTION__));
       return;
     }
 
@@ -117,7 +120,11 @@ SetupBert (
     if (Buffer) {
       FreePool (Buffer);
     }
+
+    NamePtr += NameSize;
   }
+
+  DEBUG ((DEBUG_INFO, "%a - All variables added to BERT successfully.\n", __FUNCTION__));
 }
 
 /**
@@ -136,14 +143,21 @@ GenerateVariableList (
   UINTN       NewNameSize;
   EFI_GUID    Guid;
   EFI_STATUS  Status = EFI_SUCCESS;
+  CHAR16      *BertVars;
+  UINTN       BertVarsSize;
+  UINTN       Offset = 0;
+  CHAR16      *CurrentName;
+  UINTN       CurrentSize         = 0;
+  UINTN       VarNameUnicodeCount = 0;
+  UINTN       DummyVarSize;
 
   DEBUG ((DEBUG_VERBOSE, "%a enter\n", __FUNCTION__));
 
   NameSize = sizeof (CHAR16);
   Name     = AllocateZeroPool (NameSize);
 
-  // Go through all the variables on flash
-  while (TRUE) {
+  // Go through all the variables on flash, only when the HwErrRec is not supported
+  while (!PcdGetBool (PcdVariableHardwareErrorRecordAttributeSupported)) {
     // Get ready to receive the next name
     NewNameSize = NameSize;
     Status      = gRT->GetNextVariableName (&NewNameSize, Name, &Guid);
@@ -190,12 +204,84 @@ GenerateVariableList (
     mVarNameListCount++;
   }
 
+  // Only check potential extra variable CPER errors when HwErrRec works properly
+  // since otherwise all these errors will share 1 CPER header in BERT
+  if ((PcdGetBool (PcdVariableHardwareErrorRecordAttributeSupported)) &&
+      (FixedPcdGetPtr (PcdBertEntriesVariableNames) != NULL))
+  {
+    BertVarsSize = PcdGetSize (PcdBertEntriesVariableNames);
+
+    // The variable PCD has to be even sized
+    if (BertVarsSize & BIT0) {
+      ASSERT (FALSE);
+      goto cleanup;
+    }
+
+    BertVars    = AllocateCopyPool (BertVarsSize, PcdGetPtr (PcdBertEntriesVariableNames));
+    CurrentName = BertVars;
+
+    // Go through the ; separated string PCD
+    while (Offset < BertVarsSize / sizeof (CHAR16)) {
+      if ((BertVars[Offset] == L';') || (BertVars[Offset] == L'\0')) {
+        BertVars[Offset] = L'\0';
+
+        CurrentSize = (UINTN)&BertVars[Offset + 1] - (UINTN)CurrentName;
+
+        if (CurrentSize <= sizeof (CHAR16)) {
+          // This should just be a null terminator, EOF reached...
+          DEBUG ((DEBUG_WARN, "%a PCD ended with a ';' sign.\n", __FUNCTION__));
+          break;
+        }
+
+        DummyVarSize = 0;
+        Status       = gRT->GetVariable (
+                              CurrentName,
+                              &gEfiHardwareErrorVariableGuid,
+                              NULL,
+                              &DummyVarSize,
+                              NULL
+                              );
+
+        if (Status == EFI_BUFFER_TOO_SMALL) {
+          // Make room for populated variables
+          mVarNameList = ReallocatePool (
+                           VarNameUnicodeCount * sizeof (CHAR16),
+                           VarNameUnicodeCount * sizeof (CHAR16) + CurrentSize,
+                           mVarNameList
+                           );
+          if (mVarNameList == NULL) {
+            DEBUG ((DEBUG_ERROR, "%a - %d\n", __FUNCTION__, __LINE__));
+            Status = EFI_OUT_OF_RESOURCES;
+            goto cleanup;
+          }
+
+          StrCpyS (&mVarNameList[VarNameUnicodeCount], CurrentSize / sizeof (CHAR16), CurrentName);
+          VarNameUnicodeCount += CurrentSize / sizeof (CHAR16);
+          mVarNameListCount++;
+        } else if (Status != EFI_NOT_FOUND) {
+          // The expected variable is not populated
+          DEBUG ((DEBUG_ERROR, "%a Unexpected result when querying variable status - %r\n", __FUNCTION__, Status));
+          ASSERT (FALSE);
+          goto cleanup;
+        }
+
+        CurrentName = &BertVars[Offset + 1];
+      }
+
+      Offset++;
+    }
+  }
+
   // We succeeded! Let's not say otherwise.
   Status = EFI_SUCCESS;
 
 cleanup:
   if (Name) {
     FreePool (Name);
+  }
+
+  if (BertVars) {
+    FreePool (BertVars);
   }
 
   if (EFI_ERROR (Status)) {
@@ -229,9 +315,9 @@ ClearVariables (
     return;
   }
 
+  NamePtr = mVarNameList;
   for (Index = 0; Index < mVarNameListCount; Index++) {
-    NamePtr = &mVarNameList[Index * EFI_HW_ERR_REC_VAR_NAME_LEN];
-    Status  = gRT->SetVariable (NamePtr, &gEfiHardwareErrorVariableGuid, 0, 0, NULL);
+    Status = gRT->SetVariable (NamePtr, &gEfiHardwareErrorVariableGuid, 0, 0, NULL);
 
     // Can't really do much if this fails
     if (EFI_ERROR (Status)) {
@@ -240,6 +326,7 @@ ClearVariables (
     }
 
     DEBUG ((DEBUG_VERBOSE, "%a - Removed %s\n", __FUNCTION__, NamePtr));
+    NamePtr += (StrLen (NamePtr) + 1);
   }
 }
 

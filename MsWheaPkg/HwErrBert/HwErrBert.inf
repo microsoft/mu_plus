@@ -56,6 +56,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultOemRevision
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorId
   gEfiMdeModulePkgTokenSpaceGuid.PcdAcpiDefaultCreatorRevision
+  gMsWheaPkgTokenSpaceGuid.PcdBertEntriesVariableNames
 
 [Guids]
   gEfiHardwareErrorVariableGuid       ## CONSUMES
