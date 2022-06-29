@@ -20,7 +20,6 @@ UefiHardwareNxProtectionEnabled (
 {
   MSR_IA32_EFER_REGISTER  Efer;
 
-  DEBUG ((DEBUG_ERROR, "%a\n", __FUNCTION__));
   Efer.Uint64 = AsmReadMsr64 (MSR_IA32_EFER);
   if (Efer.Bits.NXE == 1) {
     return UNIT_TEST_PASSED;

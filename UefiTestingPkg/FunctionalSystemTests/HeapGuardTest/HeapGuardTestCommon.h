@@ -15,9 +15,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 CHAR8  *MEMORY_TYPES[] = { "ReservedMemoryType", "LoaderCode", "LoaderData", "BootServicesCode", "BootServicesData", "RuntimeServicesCode", "RuntimeServicesData", "ConventionalMemory", "UnusableMemory", "ACPIReclaimMemory", "ACPIMemoryNVS", "MemoryMappedIO", "MemoryMappedIOPortSpace", "PalCode", "PersistentMemory" };
 
 typedef struct _HEAP_GUARD_TEST_CONTEXT {
-  UINT64    TargetMemoryType;
-  UINT64    TestProgress;
-  UINT8     GuardAlignment;
+  UINT64     TargetMemoryType;
+  UINT64     TestProgress;
+  UINT8      GuardAlignment;
+  BOOLEAN    DynamicActive;
 } HEAP_GUARD_TEST_CONTEXT;
 
 #define HEAP_GUARD_TEST_POOL          1

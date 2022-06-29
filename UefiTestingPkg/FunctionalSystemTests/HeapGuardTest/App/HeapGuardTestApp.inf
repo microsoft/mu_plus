@@ -8,7 +8,7 @@
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = HeapGuardFunctionalTestApp
+  BASE_NAME           = HeapGuardTestApp
   FILE_GUID           = 0C187938-97DE-4B98-AFBB-A71C43A55F0E
   VERSION_STRING      = 1.0
   MODULE_TYPE         = UEFI_APPLICATION
@@ -19,7 +19,6 @@
 #
 #  VALID_ARCHITECTURES           = IA32 X64
 #
-
 
 [Sources]
   HeapGuardTestApp.c
@@ -39,6 +38,7 @@
   UefiCpuPkg/UefiCpuPkg.dec
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
   ShellPkg/ShellPkg.dec
+  MsCorePkg/MsCorePkg.dec
 
 
 [LibraryClasses]
@@ -56,10 +56,15 @@
   CpuExceptionHandlerLib
   HwResetSystemLib
   HobLib
+  MemoryProtectionExceptionLib
+
+[Guids]
+  gMemoryProtectionExceptionHandlerGuid               ## CONSUMES
 
 [Protocols]
   gEfiSmmCommunicationProtocolGuid
   gEfiCpuArchProtocolGuid                       ## CONSUMES
+  gMemoryProtectionNonstopModeProtocolGuid      ## CONSUMES
 
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid

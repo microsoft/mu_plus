@@ -41,6 +41,12 @@
   PeCoffGetEntryPointLib
 
 [Guids]
+  gMemoryProtectionExceptionHandlerGuid               ## PRODUCES
+
+[Protocols]
+  gMemoryProtectionNonstopModeProtocolGuid            ## CONSUMES
+
+[Guids]
   gMemoryProtectionExceptionHandlerGuid
 
 [DEPEX]
