@@ -24,7 +24,7 @@ typedef UINTN (*SECTIONFUNCTIONPTR)(
 
 #pragma pack(1)
 
-// Struct contained within the table in parserregistrylib.c
+// Struct contained within the table in ParserRegistryLib.c
 typedef struct SectionMapType {
   EFI_GUID              Guid;                  // Section type
   SECTIONFUNCTIONPTR    Parser;                // Function which parses the section data

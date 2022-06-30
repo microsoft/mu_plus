@@ -407,7 +407,7 @@ MsWheaESInitTest (
   // Should fail
   UT_ASSERT_FALSE (MsWheaESRegionIsValid (NULL));
 
-  // Holy grail to retore everything
+  // Holy grail to restore everything
   MsWheaESInit ();
 
   MsWheaESReadHeader (&UnitTestHeader);
