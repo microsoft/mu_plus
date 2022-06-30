@@ -334,7 +334,7 @@ ClearVariables (
   Exit Boot Services Callback Handler
 
   @param[in] Event      Event that signalled the callback.
-  @param[in] Context    Pointer to an optional event contxt.
+  @param[in] Context    Pointer to an optional event context.
 
   @retval None.
 
@@ -366,7 +366,7 @@ ExitBootServicesHandlerCallback (
 /**
 
   @param[in] Event      Event that signalled the callback.
-  @param[in] Context    Pointer to an optional event contxt.
+  @param[in] Context    Pointer to an optional event context.
 
   @retval None.
 

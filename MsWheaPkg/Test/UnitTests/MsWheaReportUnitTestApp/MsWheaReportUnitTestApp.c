@@ -112,7 +112,7 @@ MsWheaVerifyCPERHeader (
 
   if (CperHdr->SignatureStart != EFI_ERROR_RECORD_SIGNATURE_START) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR ("CPER Header Singnature Start mismatch: %08X.", CperHdr->SignatureStart);
+    UT_LOG_ERROR ("CPER Header Signature Start mismatch: %08X.", CperHdr->SignatureStart);
     goto Cleanup;
   }
 
@@ -124,7 +124,7 @@ MsWheaVerifyCPERHeader (
 
   if (CperHdr->SignatureEnd != EFI_ERROR_RECORD_SIGNATURE_END) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR ("CPER Header Singnature End mismatch: %08X.", CperHdr->SignatureEnd);
+    UT_LOG_ERROR ("CPER Header Signature End mismatch: %08X.", CperHdr->SignatureEnd);
     goto Cleanup;
   }
 
@@ -257,7 +257,7 @@ MsWheaVerifyCPERSecDesc (
 
   if (CperSecDecs->SectionOffset != HW_ERR_REC_HEADERS_OFFSET) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR ("CPER Section Descriptor Singnature Start mismatch: %08X.", CperSecDecs->SectionOffset);
+    UT_LOG_ERROR ("CPER Section Descriptor Signature Start mismatch: %08X.", CperSecDecs->SectionOffset);
     goto Cleanup;
   }
 
@@ -302,7 +302,7 @@ MsWheaVerifyCPERSecDesc (
   if (IsZeroBuffer (&CperSecDecs->FruId, sizeof (EFI_GUID)) == FALSE) {
     Status = EFI_PROTOCOL_ERROR;
     UT_LOG_ERROR (
-      "CPER Section Descriptor Fru ID not emptry. Has: %g.",
+      "CPER Section Descriptor Fru ID not empty. Has: %g.",
       CperSecDecs->FruId
       );
     goto Cleanup;
@@ -320,7 +320,7 @@ MsWheaVerifyCPERSecDesc (
 
   if (IsZeroBuffer (&CperSecDecs->FruString, sizeof (CperSecDecs->FruString)) == FALSE) {
     Status = EFI_PROTOCOL_ERROR;
-    UT_LOG_ERROR ("CPER Section Descriptor FruString not emptry.");
+    UT_LOG_ERROR ("CPER Section Descriptor FruString not empty.");
     goto Cleanup;
   }
 

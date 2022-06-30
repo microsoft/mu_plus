@@ -78,8 +78,8 @@ typedef struct MS_WHEA_ERROR_ENTRY_MD_T_DEF {
 
 /**
 This routine accepts the Common Platform Error Record header and Section
-Descriptor and correspthen store on the flash as HwErrRec awaiting to be picked up by OS
-(Refer to UEFI Spec 2.7A)
+Descriptor and corresponding error information, then store on the flash
+as HwErrRec awaiting to be picked up by OS (Refer to UEFI Spec 2.7A)
 
 @param[in]  MsWheaEntryMD             The pointer to reported MS WHEA error metadata
 
