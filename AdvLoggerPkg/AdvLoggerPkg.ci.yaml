@@ -66,6 +66,11 @@
           premem,
           uncacheable,
           physmask,
+          PHYSBASE,
+          DEADLOOP,
+          LOGTELEMETRY,
+          DEBUGAGENT,
+          POSTMEM
         ]
     }
 }
