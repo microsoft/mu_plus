@@ -61,6 +61,7 @@
 
 [Pcd]
   gMsGraphicsPkgTokenSpaceGuid.PcdSmallAssetMaxScreenWidth
+  gMsGraphicsPkgTokenSpaceGuid.PcdEnableTypematicOSK
 
 [Depex]
 

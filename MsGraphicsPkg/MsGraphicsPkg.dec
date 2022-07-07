@@ -134,6 +134,10 @@
 
   gMsGraphicsPkgTokenSpaceGuid.PcdNVMeTimerFile |{ 0x2e, 0x8e, 0x9d, 0xe4, 0x06, 0xa7, 0x54, 0x4a, 0x49, 0xb6, 0x8d, 0x42, 0x3b, 0x39, 0x74, 0x61 }|VOID*|0x4000011a
 
+  ## This fixed at build flag enables typematic keys on the On Screen Keyboard
+  #
+  gMsGraphicsPkgTokenSpaceGuid.PcdEnableTypematicOSK|TRUE|BOOLEAN|0x40000016
+
 [PcdsDynamicEx]
   gMsGraphicsPkgTokenSpaceGuid.PcdCurrentPointerState|0x00000000|UINT64|0x40000009
 

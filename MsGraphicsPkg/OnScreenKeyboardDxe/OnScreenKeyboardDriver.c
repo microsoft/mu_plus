@@ -2747,16 +2747,18 @@ KeyboardInputHandler (
       //
       InsertKeyPressIntoQueue (mOSK.pKeyMap[KeyNumber].ScanCode, mOSK.pKeyMap[KeyNumber].Unicode);
 
-      // Start the key repeat timer - initial interval is different from later steady-state value
-      //
-      Status = gBS->SetTimer (
-                      mKeyRepeatTimerEvent,
-                      TimerRelative,
-                      INITIAL_KEYREPEAT_INTERVAL
-                      );
+      if (PcdGetBool (PcdEnableTypematicOSK)) {
+        // Start the key repeat timer if enabled - initial interval is different from later steady-state value
+        //
+        Status = gBS->SetTimer (
+                        mKeyRepeatTimerEvent,
+                        TimerRelative,
+                        INITIAL_KEYREPEAT_INTERVAL
+                        );
 
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_WARN, "WARN [OSK]: Failed to start key repeat timer.  Status = %r\r\n", Status));
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_WARN, "WARN [OSK]: Failed to start key repeat timer.  Status = %r\r\n", Status));
+        }
       }
     } else {
       // Keyboard modifier state changed.
