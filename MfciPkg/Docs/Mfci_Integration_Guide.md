@@ -1,9 +1,5 @@
 # MFCI UEFI Integration Guide
 
-## **NOTE**
-
-The following is prerelease documentation for an upcoming feature.  Details are subject to change.
-
 ## MfciPkg Provides
 
 * a structure for encoding a manufacturer policy that is bound to a specific device and usage instance (they are 1-time use)
@@ -51,11 +47,9 @@ DEFINE OPT_INTO_MFCI_PRE_PRODUCTION = TRUE
 ### MfciPkg Dependencies
 
 * Variable Policy
-  * _NOTE:_ effort is underway to upstream Project Mu's Variable Policy into EDK2.  Until that completes, MfciPkg depends
-    upon the [Variable Policy implementation in Project Mu's mu_basecore repository](https://github.com/microsoft/mu_basecore/commits/0397ae87d80330e847670c1a747ed4f8eefe51f6/MdeModulePkg/Include/Protocol/VariablePolicy.h).
   * Variable policy is used to protect MFCI's security data (UEFI variables) from malicious tampering
-  * The provided example [Secure Boot Clear](../MfciDxe/SecureBootClear.c) expects that Secure Boot variables are
-    protected using Mu Variable Policy
+* EDK2's SecureBootVariableLib, specifically:
+  * ```DeleteSecureBootVariables()```
 * EDK2's BaseCryptLib, specifically:
   * ```Pkcs7GetAttachedContent()```
   * ```Pkcs7Verify()```

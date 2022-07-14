@@ -1,8 +1,4 @@
-# **DRAFT:** Manufacturer Firmware Configuration Interface (MFCI)
-
-## **NOTE**
-
-The following is prerelease documentation for an upcoming feature.  Details are subject to change.
+# Manufacturer Firmware Configuration Interface (MFCI)
 
 ## Overview
 
