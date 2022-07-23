@@ -1,0 +1,51 @@
+## @file
+# PEI Driver for FHR.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = FhrPei
+  FILE_GUID                      = E23EE02B-5DD5-41D1-ABAC-DC865C9E74A6
+  MODULE_TYPE                    = PEIM
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = FhrPeiEntry
+
+#
+# The following information is for reference only and not required by the
+# build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  FhrPei.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  FhrPkg/FhrPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  HobLib
+  PcdLib
+  PeimEntryPoint
+  PeiServicesLib
+  FhrLib
+
+[Pcd]
+  gFhrPkgTokenSpaceGuid.PcdFhrReservedBlockBase
+  gFhrPkgTokenSpaceGuid.PcdFhrReservedBlockLength
+
+[Ppis]
+
+[Guids]
+  gFhrHobGuid
+
+[Depex]
+  gEfiPeiMemoryDiscoveredPpiGuid

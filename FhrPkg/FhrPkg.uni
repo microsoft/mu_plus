@@ -1,0 +1,11 @@
+// /** @file
+// The UNI file for the FHR package.
+//
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+// **/
+
+
+#string STR_PACKAGE_ABSTRACT            #language en-US "This Package provides all definitions, library classes and libraries instances for FHR."
+
+#string STR_PACKAGE_DESCRIPTION         #language en-US "FHR is common code used in the Microsoft UEFI Core code base"

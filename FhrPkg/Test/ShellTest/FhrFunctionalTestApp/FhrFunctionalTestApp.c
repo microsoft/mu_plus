@@ -1,0 +1,411 @@
+/** @file
+UEFI Shell based application for unit testing the Variable Policy Protocol.
+
+Copyright (c) Microsoft Corporation.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+***/
+
+#include <Uefi.h>
+#include <Library/UefiLib.h>
+#include <Library/PrintLib.h>
+#include <Library/DebugLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Fhr.h>
+
+#define UNIT_TEST_APP_NAME     "FHR Test Application"
+#define UNIT_TEST_APP_VERSION  "1.0"
+#define RESET_STRING           L"FHR TEST"
+#define REBOOT_COUNT           (1)
+
+#define MEMORY_PATTERN  (0xCFCFCFCFCFCFCFCFllu)
+#define SCRATCH_PAGES   (10)
+#define SCRATCH_SIZE    (SCRATCH_PAGES * EFI_PAGE_SIZE)
+
+#define CHECK_START_ONLY  (TRUE)
+
+VOID                   *Scratch;
+UINT32                 ScratchCrc;
+EFI_MEMORY_DESCRIPTOR  *MemoryMap;
+UINTN                  DescriptorSize;
+UINTN                  MemoryMapSize;
+UINT32                 RebootCount;
+CONST EFI_GUID         ResetTypeGuid = FHR_RESET_TYPE_GUID;
+
+VOID
+EFIAPI
+InitiateFhr (
+  EFI_RUNTIME_SERVICES  *RuntimeServices
+  );
+
+BOOLEAN
+IsOsUsableMemory (
+  EFI_MEMORY_TYPE  MemoryType
+  )
+{
+  // ASSERT (MemoryType < EfiMaxMemoryType);
+
+  switch (MemoryType) {
+    // case EfiBootServicesCode: // TEMP, till paging attributes fixed
+    case EfiConventionalMemory:
+    case EfiACPIReclaimMemory:
+    case EfiPersistentMemory:
+      return TRUE;
+
+    // We must leave data pages alone or else
+    // we will stomp on our page tables.
+    case EfiBootServicesData:
+
+    // Exclude EfiLoader to make sure not to break ourselves.
+    case EfiLoaderCode:
+    case EfiLoaderData:
+    default:
+      return FALSE;
+  }
+}
+
+EFI_STATUS
+EFIAPI
+CheckMemory (
+  BOOLEAN  Verify
+  )
+
+{
+  EFI_MEMORY_DESCRIPTOR  *Entry;
+  EFI_MEMORY_DESCRIPTOR  *MemoryMapEnd;
+  EFI_STATUS             Status;
+  UINTN                  Page;
+  UINTN                  PageErrors;
+  UINT64                 *Blocks;
+  UINT32                 BlockIndex;
+
+  //
+  // For all memory that is OS usable, pattern it. Make sure not to pattern this
+  // application or it's data.
+  //
+
+  if (MemoryMap == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  Status = EFI_SUCCESS;
+  if (Verify) {
+    DEBUG ((DEBUG_INFO, "VERIFYING MEMORY PATTERN:\n"));
+  } else {
+    DEBUG ((DEBUG_INFO, "APPLYING MEMORY PATTERN:\n"));
+  }
+
+  Entry        = MemoryMap;
+  MemoryMapEnd = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)MemoryMap + MemoryMapSize);
+  while (Entry < MemoryMapEnd) {
+    if (!IsOsUsableMemory (Entry->Type)) {
+      Entry = NEXT_MEMORY_DESCRIPTOR (Entry, DescriptorSize);
+      continue;
+    }
+
+    DEBUG ((
+      DEBUG_INFO,
+      "    Base: %016llx  Pages: %x  Type:  %d\n",
+      Entry->PhysicalStart,
+      Entry->NumberOfPages,
+      Entry->Type
+      ));
+
+    PageErrors = 0;
+    for (Page = 0; Page < Entry->NumberOfPages; Page++) {
+      Blocks = (UINT64 *)(Entry->PhysicalStart + (Page * EFI_PAGE_SIZE));
+
+      // skip the 0 page to avoid faulting on memory protections.
+      if (Blocks == NULL) {
+        continue;
+      }
+
+      for (BlockIndex = 0; BlockIndex < (EFI_PAGE_SIZE / sizeof (Blocks[0])); BlockIndex += 1) {
+        if (Verify) {
+          if (Blocks[BlockIndex] != MEMORY_PATTERN) {
+            DEBUG ((DEBUG_ERROR, "    MEMORY FAILURE: 0x%x\n", &Blocks[BlockIndex]));
+            Status = EFI_VOLUME_CORRUPTED;
+            break;
+          }
+        } else {
+          // DEBUG ((DEBUG_INFO, "PATTERN: 0x%llx\n", &Blocks[BlockIndex]));
+          Blocks[BlockIndex] = MEMORY_PATTERN;
+        }
+
+        //
+        // As an optimization, check only the first block of each page.
+        //
+
+        if (CHECK_START_ONLY) {
+          break;
+        }
+      }
+    }
+
+    Entry = NEXT_MEMORY_DESCRIPTOR (Entry, DescriptorSize);
+  }
+
+  DEBUG ((DEBUG_INFO, "DONE\n"));
+  return Status;
+}
+
+EFI_STATUS
+EFIAPI
+CheckMemoryTypes (
+  VOID
+  )
+
+{
+  EFI_MEMORY_DESCRIPTOR  *Entry;
+  EFI_MEMORY_DESCRIPTOR  *MemoryMapEnd;
+  EFI_STATUS             Status;
+
+  if (MemoryMap == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Validating memory map types.\n"));
+  DEBUG ((DEBUG_INFO, "[FHR TEST]     Start             Pages             MemoryType\n"));
+  DEBUG ((DEBUG_INFO, "[FHR TEST]     -----------------------------------------------------\n"));
+
+  Status       = EFI_SUCCESS;
+  Entry        = MemoryMap;
+  MemoryMapEnd = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)MemoryMap + MemoryMapSize);
+  while (Entry < MemoryMapEnd) {
+    DEBUG ((DEBUG_INFO, "[FHR TEST]     %016llx  %016llx  %016llx \n", Entry->PhysicalStart, Entry->NumberOfPages, Entry->Type));
+    Entry = NEXT_MEMORY_DESCRIPTOR (Entry, DescriptorSize);
+  }
+
+  return Status;
+}
+
+VOID
+EFIAPI
+FhrTestPostReboot (
+  IN EFI_SYSTEM_TABLE  *SystemTable,
+  IN VOID              *ResetData,
+  IN UINT64            ResetDataSize
+  )
+
+{
+  EFI_STATUS  Status;
+
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Starting post-FHR code.\n"));
+
+  if (RebootCount == 0) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Unexpected zero reboot count!\n"));
+    CpuDeadLoop ();
+  }
+
+  if (ResetData != Scratch) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] ResetData pointer is incorrect! Expected: 0x%x Actual: 0x%x\n", Scratch, ResetData));
+    CpuDeadLoop ();
+  }
+
+  if (ResetDataSize != SCRATCH_SIZE) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] ResetDataSize is incorrect! Expected: 0x%x Actual: 0x%x\n", SCRATCH_SIZE, ResetDataSize));
+    CpuDeadLoop ();
+  }
+
+  if (ScratchCrc != CalculateCrc32 (Scratch, SCRATCH_SIZE)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Scratch memory CRC does not match!\n"));
+    CpuDeadLoop ();
+  }
+
+  // Self-check
+  Status = CheckMemory (TRUE);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to verify memory! (%r)\n", Status));
+    CpuDeadLoop ();
+  }
+
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Reboot successful! (%d/%d)\n", RebootCount, REBOOT_COUNT));
+  if (RebootCount < REBOOT_COUNT) {
+    InitiateFhr (SystemTable->RuntimeServices);
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Unexpected return from InitiateFhr.\n"));
+    CpuDeadLoop ();
+  }
+
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Success!\n"));
+  CpuDeadLoop ();
+}
+
+VOID
+EFIAPI
+InitiateFhr (
+  EFI_RUNTIME_SERVICES  *RuntimeServices
+  )
+
+{
+  UINT8           Buffer[sizeof (RESET_STRING) + sizeof (FHR_RESET_DATA)];
+  FHR_RESET_DATA  *ResetParams;
+
+  //
+  // Store the CRC of the scratch, makes sure we dont hit unexpected errors.
+  //
+
+  ScratchCrc = CalculateCrc32 (Scratch, SCRATCH_SIZE);
+
+  //
+  // Initiate FHR;
+  //
+
+  RebootCount++;
+  CopyMem (&Buffer[0], RESET_STRING, sizeof (RESET_STRING));
+  ResetParams                            = (FHR_RESET_DATA *)&Buffer[sizeof (RESET_STRING)];
+  ResetParams->PlatformSpecificResetType = ResetTypeGuid;
+  ResetParams->ResetVector               = FhrTestPostReboot;
+  ResetParams->ResetData                 = (EFI_PHYSICAL_ADDRESS)Scratch;
+  ResetParams->ResetDataSize             = SCRATCH_SIZE;
+
+  DEBUG ((
+    DEBUG_INFO,
+    "[FHR TEST] ResumeVector: %p ResetData: %p DataSize: 0x%x\n",
+    ResetParams->ResetVector,
+    ResetParams->ResetData,
+    ResetParams->ResetDataSize
+    ));
+
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Initiating FHR! (%d/%d)\n", RebootCount, REBOOT_COUNT));
+  RuntimeServices->ResetSystem (
+                     EfiResetPlatformSpecific,
+                     EFI_SUCCESS,
+                     sizeof (RESET_STRING) + sizeof (*ResetParams),
+                     &Buffer[0]
+                     );
+
+  DEBUG ((DEBUG_ERROR, "[FHR TEST] Unexpected return from ResetSystem!\n"));
+  CpuDeadLoop ();
+}
+
+EFI_STATUS
+EFIAPI
+FhrTestPreReboot (
+  VOID
+  )
+
+{
+  EFI_STATUS            Status;
+  EFI_PHYSICAL_ADDRESS  Memory;
+  UINTN                 MapKey;
+  UINT32                DescriptorVersion;
+
+  // // DEBUG LOOP
+  while (CfDebug) {
+  }
+
+  //
+  // Initialize the persisted memory block. This serves the dual purpose of
+  // providing space for the memory map and other data as well as being used as
+  // the persisted data.
+  //
+  Status = gBS->AllocatePages (
+                  AllocateMaxAddress,
+                  EfiLoaderData,
+                  SCRATCH_PAGES,
+                  &Memory
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to allocate scratch! (%r) \n", Status));
+    return Status;
+  }
+
+  Scratch = (VOID *)Memory;
+  ZeroMem (Scratch, SCRATCH_SIZE);
+  MemoryMap     = Scratch;
+  MemoryMapSize = SCRATCH_SIZE;
+
+  //
+  // Get the final memory map.
+  //
+
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Getting final memory map.\n"));
+  Status = gBS->GetMemoryMap (
+                  &MemoryMapSize,
+                  MemoryMap,
+                  &MapKey,
+                  &DescriptorSize,
+                  &DescriptorVersion
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to get memory map! (%r) \n", Status));
+    return Status;
+  }
+
+  ASSERT (DescriptorVersion == EFI_MEMORY_DESCRIPTOR_VERSION);
+
+  //
+  // Check memory types.
+  //
+  Status = CheckMemoryTypes ();
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed memory types check! (%r) \n", Status));
+    return Status;
+  }
+
+  //
+  // exit boot services in preparation for doing FHR.
+  //
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Exiting boot services.\n"));
+  Status = gBS->ExitBootServices (gImageHandle, MapKey);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed ExitBootServices! (%r) \n", Status));
+    return Status;
+  }
+
+  //
+  // Off into the unknown! No more returns!
+  //
+
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Running post boot services steps!\n"));
+
+  Status = CheckMemory (FALSE);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to pattern memory! (%r) \n", Status));
+    CpuDeadLoop ();
+  }
+
+  // Self-check
+  Status = CheckMemory (TRUE);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to verify memory! (%r) \n", Status));
+    CpuDeadLoop ();
+  }
+
+  //
+  // Initiate the FHR.
+  //
+
+  InitiateFhr (gRT);
+
+  //
+  // It is not safe to return, spin.
+  //
+  DEBUG ((DEBUG_ERROR, "[FHR TEST] Unexpected end of FhrTestPreReboot.\n"));
+  CpuDeadLoop ();
+  return EFI_SUCCESS;
+}
+
+/**
+  The applications entry point.
+
+  @param[in] ImageHandle  The firmware allocated handle for the EFI image.
+  @param[in] SystemTable  A pointer to the EFI System Table.
+
+  @retval EFI_SUCCESS     The entry point executed successfully.
+  @retval other           Some error occured when executing this entry point.
+**/
+EFI_STATUS
+EFIAPI
+UefiMain (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
+{
+  return FhrTestPreReboot ();
+}

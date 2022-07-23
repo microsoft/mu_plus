@@ -1,0 +1,48 @@
+## @file
+# DXE Driver for FHR support.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = FhrDxe
+  FILE_GUID                      = 8EB0CAC6-3385-4D4E-BCB9-C2D0373F8352
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = FhrDxeEntry
+
+
+#
+#  VALID_ARCHITECTURES           = X64 AARCH64
+#
+
+[Sources]
+  FhrDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  FhrPkg/FhrPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  UefiDriverEntryPoint
+  BaseMemoryLib
+  MemoryAllocationLib
+  HobLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+
+[Protocols]
+
+[Pcd]
+
+[Guids]
+  gFhrHobGuid
+  gEfiEventPostReadyToBootGuid
+
+[Depex]
+  TRUE

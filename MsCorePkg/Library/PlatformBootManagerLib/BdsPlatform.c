@@ -7,6 +7,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include "BdsPlatform.h"
+#include <Library/FhrBmLib.h>
 
 static EFI_BOOT_MODE                 mBootMode;
 static EFI_DEVICE_PATH_PROTOCOL      **mPlatformConnectSequence;
@@ -372,6 +373,9 @@ PlatformBootManagerAfterConsole (
   // Boot Mode obtained in BeforeConsole action.
   //
   DEBUG ((DEBUG_INFO, "BootMode 0x%x\n", mBootMode));
+
+  // TEST
+  FhrBootManager ();
 
   //
   // Go the different platform policy with different boot mode
