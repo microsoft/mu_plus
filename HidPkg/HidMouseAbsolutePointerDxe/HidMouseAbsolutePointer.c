@@ -620,7 +620,7 @@ OnMouseReport (
           (INT64)HidMouseDev->Mode.AbsoluteMaxY
           );
       // only use Z if optional byte is included (as indicated by the report size)
-      if (HidInputReportBufferSize == sizeof (MOUSE_HID_INPUT_BUFFER)) {
+      if (HidInputReportBufferSize >= sizeof (MOUSE_HID_INPUT_BUFFER)) {
         HidMouseDev->State.CurrentZ =
           MIN (
             MAX (
