@@ -1,0 +1,47 @@
+## @file
+# This module tests the HID Report to Absolute Pointer
+# logic of HidMouseAbsolutePointerDxe
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = HidMouseAbsolutePointerHostTest
+  FILE_GUID                      = 5b6e23e9-1d27-4cae-a224-0332ad498527
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  HidMouse.c
+  ../HidMouseAbsolutePointer.c  # contains code to unit test
+  ../HidMouseAbsolutePointer.h
+  ../ComponentName.c  # Only to resolve a few m Variables
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  HidPkg/HidPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  UnitTestLib
+  UefiLib
+  UefiBootServicesTableLib
+
+[Protocols]
+  gEfiAbsolutePointerProtocolGuid
+  gHidPointerProtocolGuid
+  
+
+[Pcd]
+
+
+[Guids]
+
