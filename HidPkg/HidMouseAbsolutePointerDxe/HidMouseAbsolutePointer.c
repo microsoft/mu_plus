@@ -562,7 +562,18 @@ OnMouseReport (
         return;
       }
 
-      SingleTouchInput                 = (SINGLETOUCH_HID_INPUT_BUFFER *)HidInputReportBuffer;
+      SingleTouchInput = (SINGLETOUCH_HID_INPUT_BUFFER *)HidInputReportBuffer;
+
+      // Check values against known good range before copy.
+      if ((SingleTouchInput->CurrentX < HidMouseDev->Mode.AbsoluteMinX) ||
+          (SingleTouchInput->CurrentX > HidMouseDev->Mode.AbsoluteMaxX) ||
+          (SingleTouchInput->CurrentY < HidMouseDev->Mode.AbsoluteMinY) ||
+          (SingleTouchInput->CurrentY > HidMouseDev->Mode.AbsoluteMaxY))
+      {
+        DEBUG ((DEBUG_ERROR, "[%a] - invalid SingleTouch Coordinates [%d, %d]\n", __FUNCTION__, SingleTouchInput->CurrentX, SingleTouchInput->CurrentY));
+        return;
+      }
+
       HidMouseDev->State.ActiveButtons = SingleTouchInput->Touch;
       HidMouseDev->State.CurrentX      = SingleTouchInput->CurrentX;
       HidMouseDev->State.CurrentY      = SingleTouchInput->CurrentY;
