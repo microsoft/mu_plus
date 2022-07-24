@@ -524,9 +524,23 @@ OnMouseReport (
 
   HidMouseDev = (HID_MOUSE_ABSOLUTE_POINTER_DEV *)Context;
 
-  if ((HidMouseDev == NULL) || (HidInputReportBuffer == NULL)) {
-    DEBUG ((DEBUG_ERROR, "[%a] - Invalid input pointer.\n", __FUNCTION__));
-    ASSERT ((HidMouseDev != NULL) && (HidInputReportBuffer != NULL));
+  if (HidMouseDev == NULL) {
+    DEBUG ((DEBUG_ERROR, "[%a] - Invalid Context pointer: Null.\n", __FUNCTION__));
+    ASSERT (HidMouseDev != NULL);
+    return;
+  }
+
+  // Since this is called by external module the function should do basic
+  // check on Context parameter.
+  if (HidMouseDev->Signature != HID_MOUSE_ABSOLUTE_POINTER_DEV_SIGNATURE) {
+    DEBUG ((DEBUG_ERROR, "[%a] - Invalid context pointer: Signature match failure.\n", __FUNCTION__));
+    ASSERT (HidMouseDev->Signature == HID_MOUSE_ABSOLUTE_POINTER_DEV_SIGNATURE);
+    return;
+  }
+
+  if (HidInputReportBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "[%a] - Invalid input HidInputReportBuffer pointer.\n", __FUNCTION__));
+    ASSERT (HidInputReportBuffer != NULL);
     return;
   }
 
