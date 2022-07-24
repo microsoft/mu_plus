@@ -16,7 +16,7 @@ use `apt` to update the system packages and add those necessary for Edk2 builds.
 
 ### pr-gate-build-job.yml
 
-This templates contains the jobs and most importantly the matrix of which packages and
+This template contains the jobs and most importantly the matrix of which packages and
 targets to run for Core CI.
 
 ### pr-gate-steps.yml
@@ -28,6 +28,12 @@ build type is "pull request"
 ### spell-check-prereq-steps.yml
 
 This template installs the node based tools used by the spell checker plugin. The steps
+in this template are conditional and will only run if variable `pkg_count` is greater than 0.
+
+
+### markdownlint-check-prereq-steps.yml
+
+This template installs the markdown lint tools used by the markdown linter plugin. The steps
 in this template are conditional and will only run if variable `pkg_count` is greater than 0.
 
 ## Platform CI templates
