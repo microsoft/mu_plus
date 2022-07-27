@@ -569,12 +569,12 @@ FilterPointerState (
   // * If it doesn't and there's an active default client, it's theirs.
   // * If none of the above, we give it to the current caller.
   //
-  DEBUG ((DEBUG_INFO, "%a - X=%5d, Y=%5d, Buttons=%x\n", __FUNCTION__, PointerState->CurrentX, PointerState->CurrentY, PointerState->ActiveButtons));
+  DEBUG ((DEBUG_VERBOSE, "%a - X=%5d, Y=%5d, Buttons=%x\n", __FUNCTION__, PointerState->CurrentX, PointerState->CurrentY, PointerState->ActiveButtons));
 
   pList = mSWM.Clients;
   while (pList != NULL) {
     DEBUG ((
-      DEBUG_INFO,
+      DEBUG_VERBOSE,
       "  - SignalChecking - ImageHandle=0x%x, Active=%s, Z=%3d, Event=%p, Window=L[%d]:R[%d]:T[%d]:B[%d]\r\n",
       (UINTN)pList->ImageHandle,
       (pList->Active ? L"YES" : L"NO"),
