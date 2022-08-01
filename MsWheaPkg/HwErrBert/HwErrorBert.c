@@ -142,8 +142,8 @@ GenerateVariableList (
   UINTN       NameSize;
   UINTN       NewNameSize;
   EFI_GUID    Guid;
-  EFI_STATUS  Status = EFI_SUCCESS;
-  CHAR16      *BertVars;
+  EFI_STATUS  Status    = EFI_SUCCESS;
+  CHAR16      *BertVars = NULL;
   UINTN       BertVarsSize;
   UINTN       Offset = 0;
   CHAR16      *CurrentName;
