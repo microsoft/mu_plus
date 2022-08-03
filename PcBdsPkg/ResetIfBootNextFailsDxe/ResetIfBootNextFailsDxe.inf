@@ -1,0 +1,51 @@
+## @file
+# A DXE driver that will reset the system if Boot Next fails.
+#
+# This can be useful if the platform would like to perform earlier boot
+# steps in PEI and DXE differently if a Boot Next option is not present.
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = ResetIfBootNextFailsDxe
+  FILE_GUID                      = 77EA9AC3-0B29-41FB-B404-DD25DBC72885
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = DxeResetIfBootNextFailsEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#
+
+[Sources]
+  ResetIfBootNextFailsDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  ReportStatusCodeLib
+  ResetSystemLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeServicesTableLib
+
+[Guids]
+  gMuEventPreExitBootServicesGuid     ## CONSUMES ## EVENT
+  ## CONSUMES
+  ## Variable:L"BootNext"
+  ## Variable:L"BootCurrent"
+  gEfiGlobalVariableGuid
+
+[Protocols]
+  gEfiRscHandlerProtocolGuid          ## CONSUMES
+
+[Depex]
+  gEfiVariableArchProtocolGuid AND gEfiRscHandlerProtocolGuid
