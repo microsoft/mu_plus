@@ -23,6 +23,15 @@
 
 volatile BOOLEAN  FhrLoop = TRUE;
 
+/**
+  Prepares the OS resume vector for execution. This includes ensuring that the
+  resume page is executable.
+
+  @param[in]  Vector      The physical address of the OS resume vector.
+
+  @retval   EFI_SUCCESS   The resume vector was successfully prepared for execution.
+  @retval   Other         Error returned by subroutine.
+**/
 EFI_STATUS
 FhrPrepareVectorExecution (
   IN EFI_PHYSICAL_ADDRESS  Vector
@@ -42,7 +51,7 @@ FhrPrepareVectorExecution (
   }
 
   //
-  // HACK, make sure the region is executable. This should be constrained later.
+  // TODO: reduce to only one page once test app is made more robust.
   //
 
   BaseAddress = (EFI_PHYSICAL_ADDRESS)ALIGN_POINTER (Vector, EFI_PAGE_SIZE) - (5 * EFI_PAGE_SIZE);
@@ -55,6 +64,15 @@ FhrPrepareVectorExecution (
                             );
 }
 
+/**
+  Checks if two descriptors overlap.
+
+  @param[in]  Memory1   The first memory descriptor.
+  @param[in]  Memory2   The second memory descriptor.
+
+  @retval   TRUE    The descriptors overlap.
+  @retval   FALSE   The descriptors do not overlap.
+**/
 BOOLEAN
 DescriptorsOverlap (
   EFI_MEMORY_DESCRIPTOR  *Memory1,
@@ -65,6 +83,20 @@ DescriptorsOverlap (
           (Memory2->PhysicalStart < (Memory1->PhysicalStart + (Memory1->NumberOfPages << EFI_PAGE_SHIFT))));
 }
 
+/**
+  Compares the memory map from the cold boot to the current final memory map
+  checking that the current memory map is compatible for a FHR resume.
+
+  @param[in]  StoredMemoryMap         The associated cold boot memory map.
+  @param[in]  StoredMemoryMapSize     Size of the cold boot memory map.
+  @param[in]  StoredDescriptorSize    Size of the cold boot memory descriptor.
+  @param[in]  FinalMemoryMap          The current final memory map.
+  @param[in]  FinalMemoryMapSize      The size of the final memory map.
+  @param[in]  FinalDescriptorSize     The size of the current memory descriptor.
+
+  @retval   EFI_SUCCESS         The memory maps are compatible.
+  @retval   EFI_MEDIA_CHANGED   The memory maps are not compatible.
+**/
 EFI_STATUS
 FhrValidateFinalMemoryMap (
   IN VOID   *StoredMemoryMap,
@@ -223,6 +255,12 @@ FhrValidateFinalMemoryMap (
   return EFI_SUCCESS;
 }
 
+/**
+  Resumes the system from an FHR. This function will exit boot services and
+  transition to the OS resume vector.
+
+  @param[in]  FhrHob        The hob providing FHR information.
+**/
 VOID
 FhrBmResume (
   IN FHR_HOB  *FhrHob
@@ -326,11 +364,6 @@ Exit:
   // TODO - diagnostics.
 
   DEBUG ((DEBUG_ERROR, "[FHR] FHR resume failed! (%r) \n", Status));
-
-  // TODO: remove
-  while (FhrLoop) {
-  }
-
   gRT->ResetSystem (EfiResetWarm, Status, 0, NULL);
   CpuDeadLoop ();
 }

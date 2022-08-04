@@ -35,6 +35,7 @@
   HobLib
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib
+  FhrLib
 
 [Protocols]
 

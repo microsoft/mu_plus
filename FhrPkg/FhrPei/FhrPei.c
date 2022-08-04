@@ -17,8 +17,16 @@
 #include <Fhr.h>
 #include <Library/FhrLib.h>
 
+/**
+  Reserves OS reclaimable memory from the associated cold boot to prevent future
+  allocations from overlapping with OS memory.
+
+  @param[in]  FwData      The firmware data stored by the associated cold boot.
+
+  @retval   EFI_SUCCESS             OS memory successfully reserved.
+  @retval   EFI_INVALID_PARAMETER   Firmware data is invalid.
+**/
 EFI_STATUS
-EFIAPI
 ReserveOsMemory (
   IN FHR_FW_DATA  *FwData
   )
@@ -28,7 +36,8 @@ ReserveOsMemory (
   EFI_PHYSICAL_ADDRESS   RegionStart;
   UINT64                 RegionLength;
 
-  if ((FwData->MemoryMapOffset == 0) ||
+  if ((FwData == NULL) ||
+      (FwData->MemoryMapOffset == 0) ||
       (FwData->MemoryMapSize == 0))
   {
     return EFI_INVALID_PARAMETER;
@@ -80,8 +89,14 @@ ReserveOsMemory (
   return EFI_SUCCESS;
 }
 
-volatile BOOLEAN  PeiLoop = FALSE;
+/**
+  Prepares the system for a resume from FHR.
 
+  @param[in]  FhrHob      The platform provided FHR HOB.
+
+  @retval   EFI_SUCCESS                 FHR resume successfully prepared.
+  @retval   EFI_INVALID_PARAMETER       FHR firmware data is invalid.
+**/
 EFI_STATUS
 EFIAPI
 PrepareFhrResume (
@@ -89,19 +104,34 @@ PrepareFhrResume (
   )
 
 {
-  EFI_STATUS   Status;
-  FHR_FW_DATA  *FwData;
+  EFI_STATUS                  Status;
+  FHR_FW_DATA                 *FwData;
+  EFI_HOB_HANDOFF_INFO_TABLE  *HandOffHob;
 
   DEBUG ((DEBUG_INFO, "[FHR PEI] Preparing FHR resume.\n"));
 
   ASSERT (FhrHob->IsFhrBoot);
 
-  while (PeiLoop) {
-  }
-
   //
   // Validate that the PEI memory exists within the FHR region.
   //
+
+  HandOffHob = (EFI_HOB_HANDOFF_INFO_TABLE *)GetHobList ();
+  if ((HandOffHob->EfiMemoryBottom < FhrHob->FhrReservedBase) ||
+      (HandOffHob->EfiMemoryTop > (FhrHob->FhrReservedBase + FhrHob->FhrReservedSize)))
+  {
+    DEBUG ((
+      DEBUG_ERROR,
+      "[FHR PEI] PEI memory outside of reserved region! "
+      "Memory: [0x%llx - 0x%llx] Reserved: [0x%llx - 0x%llx]\n",
+      HandOffHob->EfiMemoryBottom,
+      HandOffHob->EfiMemoryTop,
+      FhrHob->FhrReservedBase,
+      (FhrHob->FhrReservedBase + FhrHob->FhrReservedSize)
+      ));
+    Status = EFI_INVALID_PARAMETER;
+    goto Exit;
+  }
 
   //
   // Validate the FW data at the beginning of the FHR region.
@@ -145,6 +175,19 @@ Exit:
   return Status;
 }
 
+/**
+  Entry point for the FHR PEI module. On FHR resume, this is responsible for
+  doing initial validation and reserving OS owned memory on the system. On cold
+  boot, this routine will ensure that the FHR hob exists and allocate the
+  firmware reserved region.
+
+  @param[in]  FileHandle        Unused.
+  @param[in]  PeiServices       Unused.
+
+  @retval   EFI_SUCCESS             Successfully configured PEI FHR support.
+  @retval   EFI_INVALID_PARAMETER   Invalid platform configuration.
+  @retval   EFI_OUT_OF_RESOURCES    Unable to build HOBs.
+**/
 EFI_STATUS
 EFIAPI
 FhrPeiEntry (
@@ -185,12 +228,12 @@ FhrPeiEntry (
       ((ReservedLength & EFI_PAGE_MASK) != 0))
   {
     DEBUG ((DEBUG_ERROR, "[FHR PEI] Invalid FHR reserved region PCDs!\n"));
-    return EFI_PROTOCOL_ERROR;
+    return EFI_INVALID_PARAMETER;
   }
 
   if ((ReservedBase + ReservedLength) > MAX_UINTN) {
     DEBUG ((DEBUG_ERROR, "[FHR PEI] Reserved region exceeds addressable memory!\n"));
-    return EFI_PROTOCOL_ERROR;
+    return EFI_INVALID_PARAMETER;
   }
 
   //

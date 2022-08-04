@@ -16,16 +16,17 @@
 #include <Library/UefiRuntimeServicesTableLib.h>
 
 #include <Fhr.h>
+#include <Library/FhrLib.h>
 
 BOOLEAN      mIsFhrResume;
 FHR_FW_DATA  *mFwData;
 
 /**
-Notify function for running and acting on the requests (input, debug, etc)
+  Notify function for PostReadyToBoot event. This routine will capture final
+  memory state and determine reported FHR support.
 
-@param[in]  Event   The Event that is being processed.
-@param[in]  Context The Event Context.
-
+  @param[in]  Event   The Event that is being processed.
+  @param[in]  Context The Event Context.
 **/
 VOID
 EFIAPI
@@ -34,16 +35,16 @@ OnPostReadyToBootNotification (
   IN VOID       *Context
   )
 {
-  EFI_STATUS   Status;
-  VOID         *MemoryMap;
-  UINTN        MemoryMapSize;
-  UINTN        DescriptorSize;
-  UINT32       DescriptorVersion;
+  EFI_STATUS  Status;
+  VOID        *MemoryMap;
+  UINTN       MemoryMapSize;
+  UINTN       DescriptorSize;
+  UINT32      DescriptorVersion;
 
   ASSERT (!mIsFhrResume);
   ASSERT (mFwData != NULL);
 
-  DEBUG ((DEBUG_INFO, "[FHR DXE] Finalized FHR firmware data block.\n"));
+  DEBUG ((DEBUG_INFO, "[FHR DXE] Finalizing FHR firmware data block.\n"));
   gBS->CloseEvent (Event);
 
   //
@@ -75,12 +76,11 @@ OnPostReadyToBootNotification (
   // Update the size and checksum.
   //
 
-  mFwData->Size     = (UINT32)(mFwData->MemoryMapOffset + mFwData->MemoryMapSize);
-  mFwData->Checksum = 0;
-  mFwData->Checksum = CalculateCheckSum64 ((VOID *)mFwData, mFwData->Size);
+  mFwData->Size = (UINT32)(mFwData->MemoryMapOffset + mFwData->MemoryMapSize);
+  FhrUpdateFwDataChecksum (mFwData);
 
   //
-  // TODO: Implement OS indication for FHR support.
+  // TODO: Implement OS indication for FHR support. Not yet finalized in spec.
   //
 
   DEBUG ((DEBUG_INFO, "[FHR DXE] FHR support finalized.\n"));
@@ -88,10 +88,81 @@ OnPostReadyToBootNotification (
 }
 
 /**
+  Validates that no two PEI allocations overlap. This can occur if a PEI
+  allocation moves and intersects with OS memory or the FHR reserved region.
+  Such and overlap can cause unexpected use of memory or potential corruption,
+  especially during early memory allocation.
+
+  @param[in]  FhrHob      The platform provided FHR HOB.
+
+  @retval   TRUE    PEI memory successfully validated.
+  @retval   FALSE   PEI memory allocations failed.
+**/
+BOOLEAN
+FhrValidatePeiAllocations (
+  IN FHR_HOB  *FhrHob
+  )
+{
+  EFI_HOB_MEMORY_ALLOCATION  *AllocHob;
+  EFI_HOB_MEMORY_ALLOCATION  *CompareHob;
+  EFI_PHYSICAL_ADDRESS       AllocBase;
+  EFI_PHYSICAL_ADDRESS       CompareBase;
+  EFI_PHYSICAL_ADDRESS       AllocEnd;
+  EFI_PHYSICAL_ADDRESS       CompareEnd;
+
+  AllocHob = (EFI_HOB_MEMORY_ALLOCATION *)GetFirstHob (EFI_HOB_TYPE_MEMORY_ALLOCATION);
+  ASSERT (AllocHob != NULL);
+  while (AllocHob != NULL) {
+    CompareHob = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, GET_NEXT_HOB (AllocHob));
+    while (CompareHob != NULL) {
+      AllocBase   = AllocHob->AllocDescriptor.MemoryBaseAddress;
+      AllocEnd    = AllocBase + AllocHob->AllocDescriptor.MemoryLength;
+      CompareBase = CompareHob->AllocDescriptor.MemoryBaseAddress;
+      CompareEnd  = CompareBase + CompareHob->AllocDescriptor.MemoryLength;
+      if ((AllocBase < CompareEnd) && (CompareBase < AllocEnd)) {
+        if ((AllocBase == CompareBase) &&
+            (AllocEnd == CompareEnd) &&
+            (AllocHob->AllocDescriptor.MemoryType ==  CompareHob->AllocDescriptor.MemoryType))
+        {
+          //
+          // Duplicates should not be fatal, but might indicate a benign bug.
+          //
+          DEBUG ((
+            DEBUG_WARN,
+            "[FHR DXE] Found duplicate PEI allocation. 0x%llx : 0x%llx (%d)\n",
+            AllocHob->AllocDescriptor.MemoryBaseAddress,
+            AllocHob->AllocDescriptor.MemoryLength,
+            AllocHob->AllocDescriptor.MemoryType
+            ));
+        } else {
+          DEBUG ((
+            DEBUG_ERROR,
+            "[FHR DXE] Found overlapping PEI allocations. [0x%llx : 0x%llx (%d)] [0x%llx : 0x%llx (%d)]\n",
+            AllocHob->AllocDescriptor.MemoryBaseAddress,
+            AllocHob->AllocDescriptor.MemoryLength,
+            AllocHob->AllocDescriptor.MemoryType,
+            CompareHob->AllocDescriptor.MemoryBaseAddress,
+            CompareHob->AllocDescriptor.MemoryLength,
+            CompareHob->AllocDescriptor.MemoryType
+            ));
+          return FALSE;
+        }
+      }
+
+      CompareHob = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, GET_NEXT_HOB (CompareHob));
+    }
+
+    AllocHob = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, GET_NEXT_HOB (AllocHob));
+  }
+
+  return TRUE;
+}
+
+/**
 
 Routine Description:
 
-  TODO
+  Entry point for FHR DXE module. Prepares FHR data anf resume state.
 
 Arguments:
 
@@ -127,8 +198,8 @@ FhrDxeEntry (
   mFwData      = (VOID *)FhrHob->FhrReservedBase;
 
   if (mFwData == NULL) {
-    ASSERT (FALSE);
     DEBUG ((DEBUG_ERROR, "[FHR DXE] Firmware data pointer is NULL!\n"));
+    ASSERT (FALSE);
     return EFI_NOT_FOUND;
   }
 
@@ -140,6 +211,16 @@ FhrDxeEntry (
   ASSERT (mFwData->FwRegionBase == FhrHob->FhrReservedBase);
   ASSERT (mFwData->FwRegionLength == FhrHob->FhrReservedSize);
   ASSERT ((mIsFhrResume) || (mFwData->HeaderSize == sizeof (FHR_FW_DATA)));
+
+  //
+  // Validate PEI allocations to avoid memory conflicts.
+  //
+
+  if (!FhrValidatePeiAllocations (FhrHob)) {
+    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed to validate PEI memory allocations!\n"));
+    ASSERT (FALSE);
+    return EFI_PROTOCOL_ERROR;
+  }
 
   //
   // If this is not an FHR resume, then register for post ready to boot. This
@@ -157,7 +238,12 @@ FhrDxeEntry (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for PostReadyToBoot. Code = %r\n", __FUNCTION__, Status));
+      DEBUG ((
+        DEBUG_ERROR,
+        "[FHR DXE] Failed to create event for PostReadyToBoot. (%r)\n",
+        Status
+        ));
+
       return Status;
     }
   }

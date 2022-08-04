@@ -1,5 +1,5 @@
 /** @file
-UEFI Shell based application for unit testing the Variable Policy Protocol.
+UEFI Shell based application for unit testing the Firmware Hot Restart feature.
 
 Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -16,16 +16,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MemoryAllocationLib.h>
 #include <Fhr.h>
 
+//
+// Test constants.
+//
+
 #define UNIT_TEST_APP_NAME     "FHR Test Application"
 #define UNIT_TEST_APP_VERSION  "1.0"
 #define RESET_STRING           L"FHR TEST"
-#define REBOOT_COUNT           (1)
+#define REBOOT_COUNT           (3)
+#define MEMORY_PATTERN         (0xCACACACACACACACAllu)
+#define SCRATCH_PAGES          (10)
+#define SCRATCH_SIZE           (SCRATCH_PAGES * EFI_PAGE_SIZE)
+#define FAST_PATTERN           (TRUE)
 
-#define MEMORY_PATTERN  (0xCFCFCFCFCFCFCFCFllu)
-#define SCRATCH_PAGES   (10)
-#define SCRATCH_SIZE    (SCRATCH_PAGES * EFI_PAGE_SIZE)
-
-#define CHECK_START_ONLY  (TRUE)
+//
+// Test globals. These should persist across the FHR.
+//
 
 VOID                   *Scratch;
 UINT32                 ScratchCrc;
@@ -35,19 +41,30 @@ UINTN                  MemoryMapSize;
 UINT32                 RebootCount;
 CONST EFI_GUID         ResetTypeGuid = FHR_RESET_TYPE_GUID;
 
+//
+// Function prototypes.
+//
+
 VOID
 EFIAPI
 InitiateFhr (
   EFI_RUNTIME_SERVICES  *RuntimeServices
   );
 
+/**
+  Checks if a given memory type should be treated as OS reclaimable for memory
+  patterning.
+
+  @param[in]    MemoryType      The memory type to check.
+
+  @retval   TRUE    The memory should be treated as OS reclaimable.
+  @retval   TRUE    The memory should not be treated as OS reclaimable.
+**/
 BOOLEAN
 IsOsUsableMemory (
   EFI_MEMORY_TYPE  MemoryType
   )
 {
-  // ASSERT (MemoryType < EfiMaxMemoryType);
-
   switch (MemoryType) {
     // case EfiBootServicesCode: // TEMP, till paging attributes fixed
     case EfiConventionalMemory:
@@ -67,6 +84,17 @@ IsOsUsableMemory (
   }
 }
 
+/**
+  Scans through the memory map and either applies a memory pattern to validates
+  the memory pattern still exists.
+
+  @param[in]    Verify      If FALSE a memory pattern will be applied. If TRUE
+                            the memory pattern will be validated.
+
+  @retval   EFI_SUCCESS             The memory was successfully patterned or checked.
+  @retval   EFI_INVALID_PARAMETER   The memory map is not set.
+  @retval   EFI_VOLUME_CORRUPTED    The memory pattern check failed.
+**/
 EFI_STATUS
 EFIAPI
 CheckMemory (
@@ -123,6 +151,10 @@ CheckMemory (
         continue;
       }
 
+      //
+      // Pattern the memory in 64 bit chunks.
+      //
+
       for (BlockIndex = 0; BlockIndex < (EFI_PAGE_SIZE / sizeof (Blocks[0])); BlockIndex += 1) {
         if (Verify) {
           if (Blocks[BlockIndex] != MEMORY_PATTERN) {
@@ -131,7 +163,6 @@ CheckMemory (
             break;
           }
         } else {
-          // DEBUG ((DEBUG_INFO, "PATTERN: 0x%llx\n", &Blocks[BlockIndex]));
           Blocks[BlockIndex] = MEMORY_PATTERN;
         }
 
@@ -139,7 +170,7 @@ CheckMemory (
         // As an optimization, check only the first block of each page.
         //
 
-        if (CHECK_START_ONLY) {
+        if (FAST_PATTERN) {
           break;
         }
       }
@@ -152,9 +183,14 @@ CheckMemory (
   return Status;
 }
 
+/**
+  Runs through the cold boot memory map to check for incompatible configurations.
+
+  @retval   EFI_SUCCESS     Memory map successfully validated.
+**/
 EFI_STATUS
 EFIAPI
-CheckMemoryTypes (
+CheckMemoryMap (
   VOID
   )
 
@@ -182,6 +218,14 @@ CheckMemoryTypes (
   return Status;
 }
 
+/**
+  The entry point for an FHR resume. Checks that memory is intact and initiates
+  another FHR if more are left in the test.
+
+  @param[in]    SystemTable     Updated system table for FHR.
+  @param[in]    ResetData       Pointer to reset data provided by test.
+  @param[in]    ResetDataSize   Size of reset data.
+**/
 VOID
 EFIAPI
 FhrTestPostReboot (
@@ -215,7 +259,6 @@ FhrTestPostReboot (
     CpuDeadLoop ();
   }
 
-  // Self-check
   Status = CheckMemory (TRUE);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to verify memory! (%r)\n", Status));
@@ -233,6 +276,11 @@ FhrTestPostReboot (
   CpuDeadLoop ();
 }
 
+/**
+  Initiates a firmware hot restart. This function does not return.
+
+  @param[in]    RuntimeServices   The current runtime services tables.
+**/
 VOID
 EFIAPI
 InitiateFhr (
@@ -281,6 +329,14 @@ InitiateFhr (
   CpuDeadLoop ();
 }
 
+/**
+  Prepares the test for the first FHR byt initializing reset data, getting and
+  validating the memory map, and calling ExitBootServices. After these steps it
+  will call to initiate the FHR.
+
+  Does not return on success.
+  @retval   ANY     Error returned by subroutine.
+**/
 EFI_STATUS
 EFIAPI
 FhrTestPreReboot (
@@ -292,10 +348,6 @@ FhrTestPreReboot (
   EFI_PHYSICAL_ADDRESS  Memory;
   UINTN                 MapKey;
   UINT32                DescriptorVersion;
-
-  // // DEBUG LOOP
-  while (CfDebug) {
-  }
 
   //
   // Initialize the persisted memory block. This serves the dual purpose of
@@ -342,7 +394,7 @@ FhrTestPreReboot (
   //
   // Check memory types.
   //
-  Status = CheckMemoryTypes ();
+  Status = CheckMemoryMap ();
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed memory types check! (%r) \n", Status));
     return Status;
