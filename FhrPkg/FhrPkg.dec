@@ -13,7 +13,7 @@
   DEC_SPECIFICATION              = 0x00010005
   PACKAGE_NAME                   = FhrPkg
   PACKAGE_UNI_FILE               = FhrPkg.uni
-  PACKAGE_GUID                   = 5250e931-156b-4abe-aa35-5c3406d9927a
+  PACKAGE_GUID                   = 43FE444E-BC9D-4B05-BB5C-AFAA997BA1CD
   PACKAGE_VERSION                = 0.10
 
 [Includes]
@@ -26,15 +26,6 @@
   gFhrPkgTokenSpaceGuid = { 0x9bca14c7, 0xd610, 0x406e, { 0xba, 0xc3, 0x21, 0x87, 0x63, 0x80, 0x0c, 0xd5 } }
   gFhrHobGuid = { 0x02f84f77, 0xecbf, 0x47da, { 0xbc, 0xec, 0xe1, 0x70, 0xb3, 0xa3, 0xe4, 0xdf } }
 
-[Ppis]
-
-[Protocols]
-
-[PcdsFeatureFlag]
-  ## This PCD describes the base physical address of the reserved firmware block.
-  # @Prompt Base address of the reserved firmware block.
-  gFhrPkgTokenSpaceGuid.PcdFhrReservedBlock|FALSE|BOOLEAN|0x300015C0
-
 [PcdsFixedAtBuild]
   ## This PCD describes the base physical address of the reserved firmware block.
   # @Prompt Base address of the reserved firmware block.
@@ -43,8 +34,3 @@
   ## This PCD describes the length of the reserved firmware block.
   # @Prompt Length of the reserved firmware block.
   gFhrPkgTokenSpaceGuid.PcdFhrReservedBlockLength|0|UINT64|0x000005C2
-
-[PcdsFixedAtBuild, PcdsPatchableInModule]
-
-[PcdsDynamic, PcdsDynamicEx]
-

@@ -17,10 +17,17 @@
 #include <Library/FhrLib.h>
 #include <Fhr.h>
 
+//
+// Library globals.
+//
+
 STATIC BOOLEAN      mFhrInformationInitialized = FALSE;
 STATIC BOOLEAN      mIsFhrResume               = FALSE;
 STATIC FHR_FW_DATA  *mFhrData                  = NULL;
 
+/**
+  Initializes library state from the FHR HOB.
+**/
 VOID
 InitializeFhrInformation (
   VOID
@@ -28,6 +35,8 @@ InitializeFhrInformation (
 {
   EFI_HOB_GUID_TYPE  *GuidHob;
   FHR_HOB            *FhrHob;
+
+  ASSERT (!mFhrInformationInitialized);
 
   //
   // Check if this is an FHR resume.
@@ -40,13 +49,20 @@ InitializeFhrInformation (
     mFhrData                   = (FHR_FW_DATA *)FhrHob->FhrReservedBase;
     mFhrInformationInitialized = TRUE;
   } else {
-    DEBUG ((DEBUG_ERROR, "[FHR] Failed to find FHR hob in MemoryBinOverrideLib.\n"));
+    DEBUG ((DEBUG_ERROR, "[FHR BIN] Failed to find FHR hob in MemoryBinOverrideLib.\n"));
   }
 }
 
+/**
+  Records a runtime memory bin location for use in the FHR.
+
+  @param[in]    Type            The memory type the bin is for.
+  @param[in]    BaseAddress     The base address of the bin.
+  @param[in]    NumberOfPages   The number of pages in the bin.
+**/
 VOID
 EFIAPI
-ReportRuntimeMemoryBinLocation (
+ReportMemoryBinLocation (
   IN EFI_MEMORY_TYPE       Type,
   IN EFI_PHYSICAL_ADDRESS  BaseAddress,
   IN UINT64                NumberOfPages
@@ -69,30 +85,52 @@ ReportRuntimeMemoryBinLocation (
   //
 
   if (mIsFhrResume) {
-    DEBUG ((DEBUG_INFO, "[FHR] Reported memory bin. Base: 0x%llx Pages 0x%llx Type: %d\n", BaseAddress, NumberOfPages, Type));
+    DEBUG ((
+      DEBUG_INFO,
+      "[FHR BIN] Reported memory bin. Base: 0x%llx Pages 0x%llx Type: %d\n",
+      BaseAddress,
+      NumberOfPages,
+      Type
+      ));
     return;
   }
 
   if (mFhrData->MemoryBinCount >= FHR_MAX_MEMORY_BINS) {
     ASSERT (FALSE);
-    DEBUG ((DEBUG_ERROR, "[FHR] Not enough memory bins in array!\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "[FHR BIN] Not enough memory bins in array!\n", __FUNCTION__));
     return;
   }
 
-  DEBUG ((DEBUG_INFO, "[FHR] Saving memory bin. Base: 0x%llx Pages 0x%llx Type: %d\n", BaseAddress, NumberOfPages, Type));
+  DEBUG ((
+    DEBUG_INFO,
+    "[FHR BIN] Saving memory bin. Base: 0x%llx Pages 0x%llx Type: %d\n",
+    BaseAddress,
+    NumberOfPages,
+    Type
+    ));
+
   mFhrData->MemoryBins[mFhrData->MemoryBinCount].Type          = Type;
   mFhrData->MemoryBins[mFhrData->MemoryBinCount].BaseAddress   = BaseAddress;
   mFhrData->MemoryBins[mFhrData->MemoryBinCount].NumberOfPages = (UINT32)NumberOfPages;
   mFhrData->MemoryBinCount++;
 }
 
+/**
+  Checks if the provided bin type should be overriden with FHR saved range.
+
+  @param[in]    Type            The memory type of the bin.
+  @param[out]   BaseAddress     The base address of the bin override on return.
+  @param[out]   NumberOfPages   The number of pages of the bin override on return.
+  @param[out]   AllocationType  The allocation type for the bin, AllocateAddress
+                                if an override was provided.
+**/
 VOID
 EFIAPI
 CheckMemoryBinOverride (
   IN EFI_MEMORY_TYPE        Type,
   OUT EFI_PHYSICAL_ADDRESS  *BaseAddress,
-  IN OUT UINT32             *NumberOfPages,
-  IN OUT EFI_ALLOCATE_TYPE  *AllocationType
+  OUT UINT32                *NumberOfPages,
+  OUT EFI_ALLOCATE_TYPE     *AllocationType
   )
 {
   UINT32                Index;
@@ -106,13 +144,13 @@ CheckMemoryBinOverride (
     return;
   }
 
-  DEBUG ((DEBUG_INFO, "[FHR] Searching for bin for type %d.\n", Type));
+  DEBUG ((DEBUG_INFO, "[FHR BIN] Searching for bin for type %d.\n", Type));
   MinReserved = MAX_UINTN;
   for (Index = 0; Index < mFhrData->MemoryBinCount; Index++) {
     if (mFhrData->MemoryBins[Index].Type == Type) {
       *BaseAddress   = mFhrData->MemoryBins[Index].BaseAddress;
       *NumberOfPages = mFhrData->MemoryBins[Index].NumberOfPages;
-      DEBUG ((DEBUG_INFO, "[FHR] Found Base: 0x%llx Pages 0x%lx\n", *BaseAddress, *NumberOfPages));
+      DEBUG ((DEBUG_INFO, "[FHR BIN] Found Base: 0x%llx Pages 0x%lx\n", *BaseAddress, *NumberOfPages));
       *AllocationType = AllocateAddress;
       return;
     } else if (mFhrData->MemoryBins[Index].BaseAddress < MinReserved) {

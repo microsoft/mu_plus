@@ -24,7 +24,7 @@ jobs:
   strategy:
     matrix:
       TARGET_DFCI_ZERO_XML:
-        Build.Pkgs: 'DfciPkg,ZeroTouchPkg,XmlSupportPkg,MfciPkg'
+        Build.Pkgs: 'DfciPkg,ZeroTouchPkg,XmlSupportPkg,MfciPkg,FhrPkg'
         Build.Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
       TARGET_GRAPHICS:
         Build.Pkgs: 'MsGraphicsPkg'

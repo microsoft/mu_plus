@@ -131,9 +131,23 @@ FhrValidateFinalMemoryMap (
   FinalExpectedStart  = MAX_UINT64;
 
   while ((StoredEntry < StoredMemoryMapEnd) && (FinalEntry < FinalMemoryMapEnd)) {
-    DEBUG ((DEBUG_INFO, "COMPARING:\n"));
-    DEBUG ((DEBUG_INFO, "     STORED  0x%llx  0x%llx  %d\n", StoredEntry->PhysicalStart, StoredEntry->NumberOfPages, StoredEntry->Type));
-    DEBUG ((DEBUG_INFO, "     FINAL   0x%llx  0x%llx  %d\n", FinalEntry->PhysicalStart, FinalEntry->NumberOfPages, FinalEntry->Type));
+    DEBUG ((DEBUG_VERBOSE, "COMPARING:\n"));
+
+    DEBUG ((
+      DEBUG_VERBOSE,
+      "     STORED  0x%llx  0x%llx  %d\n",
+      StoredEntry->PhysicalStart,
+      StoredEntry->NumberOfPages,
+      StoredEntry->Type
+      ));
+
+    DEBUG ((
+      DEBUG_VERBOSE,
+      "     FINAL   0x%llx  0x%llx  %d\n",
+      FinalEntry->PhysicalStart,
+      FinalEntry->NumberOfPages,
+      FinalEntry->Type
+      ));
 
     //
     // Check that there is no unexpected gaps. This is done by tracking the
@@ -142,6 +156,7 @@ FhrValidateFinalMemoryMap (
     //
 
     if (StoredExpectedStart != MAX_UINT64) {
+      ASSERT (FinalExpectedStart == MAX_UINT64);
       if (StoredEntry->PhysicalStart != StoredExpectedStart) {
         DEBUG ((
           DEBUG_WARN,

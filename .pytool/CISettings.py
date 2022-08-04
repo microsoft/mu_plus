@@ -59,7 +59,8 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             "PcBdsPkg",
             "UefiTestingPkg",
             "XmlSupportPkg",
-            "ZeroTouchPkg"
+            "ZeroTouchPkg",
+            "FhrPkg"
         )
 
     def GetArchitecturesSupported(self):
