@@ -10,7 +10,7 @@
   INF_VERSION                    = 1.27
   BASE_NAME                      = FhrMemoryOverrideLib
   FILE_GUID                      = 94DF29E4-C2F6-4840-8993-405D3E96E324
-  MODULE_TYPE                    = DXE_DRIVER
+  MODULE_TYPE                    = DXE_CORE
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = MemoryBinOverrideLib
 

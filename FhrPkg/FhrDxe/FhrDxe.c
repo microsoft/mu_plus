@@ -1,6 +1,6 @@
 /** @file
-  This module handles re-authentication of existing MFCI
-  Policies and ingestion of new policies.
+  This module handles preparing the DXE phase of FHR. This includes validating
+  FHR state and preparing the final FHR support and data blocks.
 
   Copyright (c) Microsoft Corporation
   SPDX-License-Identifier: BSD-2-Clause-Patent

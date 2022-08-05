@@ -1,5 +1,7 @@
 /** @file
-  The PEI module for supporting FHR. This module will enforce
+  The PEI module for supporting FHR. For non-FHR boot, this will prepare the FHR
+  reserved region and data. On FHR resume, this module will validate memory
+  is contained to the FHR reserved region and reserve OS owned memory.
 
   Copyright (c) Microsoft Corporation
   SPDX-License-Identifier: BSD-2-Clause-Patent

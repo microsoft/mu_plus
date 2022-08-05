@@ -26,7 +26,6 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   FhrPkg/FhrPkg.dec
-  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
 [LibraryClasses]
   UefiApplicationEntryPoint
