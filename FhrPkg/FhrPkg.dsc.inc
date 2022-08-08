@@ -16,3 +16,4 @@
 
 [Components.X64,Components.AARCH64]
   FhrPkg/FhrDxe/FhrDxe.inf
+  FhrPkg/FhrResume/FhrResume.inf

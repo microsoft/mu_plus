@@ -34,7 +34,6 @@ CONSTRUCTOR                    = PlatformBootManagerEntry
   MdeModulePkg/MdeModulePkg.dec
   MsCorePkg/MsCorePkg.dec
   SecurityPkg/SecurityPkg.dec
-  FhrPkg/FhrPkg.dec
 
 [LibraryClasses]
   BaseLib
@@ -52,7 +51,6 @@ CONSTRUCTOR                    = PlatformBootManagerEntry
   UefiBootServicesTableLib
   UefiLib
   UefiRuntimeServicesTableLib
-  FhrBmLib
 
 [Protocols]
   gEfiPciRootBridgeIoProtocolGuid     ## CONSUMES
@@ -77,7 +75,6 @@ CONSTRUCTOR                    = PlatformBootManagerEntry
   gEfiMdeModulePkgTokenSpaceGuid.PcdTestKeyUsed
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution
-  gFhrPkgTokenSpaceGuid.PcdFhrReservedBlockBase
   gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType
 
 [Depex.common.DXE_DRIVER]

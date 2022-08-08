@@ -414,5 +414,6 @@ FhrBootManager (
     CpuDeadLoop ();
   }
 
+  DEBUG ((DEBUG_INFO, "[FHR] Not an FHR boot, exiting.\n"));
   return EFI_SUCCESS;
 }

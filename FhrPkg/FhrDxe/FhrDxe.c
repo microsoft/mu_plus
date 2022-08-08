@@ -17,9 +17,16 @@
 
 #include <Fhr.h>
 #include <Library/FhrLib.h>
+#include <Library/UefiBootManagerLib.h>
+
+#include <Library/DxeServicesLib.h>
+#include <Library/UefiLib.h>
+#include <Library/DevicePathLib.h>
+#include <Protocol/LoadedImage.h>
 
 BOOLEAN      mIsFhrResume;
 FHR_FW_DATA  *mFwData;
+UINT16       BootOptionNumber = MAX_UINT16;
 
 /**
   Notify function for PostReadyToBoot event. This routine will capture final
@@ -40,48 +47,84 @@ OnPostReadyToBootNotification (
   UINTN       MemoryMapSize;
   UINTN       DescriptorSize;
   UINT32      DescriptorVersion;
+  UINTN       VariableSize;
+  UINT16      BootCurrent;
 
-  ASSERT (!mIsFhrResume);
   ASSERT (mFwData != NULL);
 
-  DEBUG ((DEBUG_INFO, "[FHR DXE] Finalizing FHR firmware data block.\n"));
   gBS->CloseEvent (Event);
 
-  //
-  // Capture the memory map at boot to evaluate in FHR resume.
-  //
+  if (mIsFhrResume) {
+    //
+    // Validate that BootCurrent is pointer at FhrResume.
+    //
+    DEBUG ((DEBUG_INFO, "[FHR DXE] Verifying boot option number.\n"));
+    ASSERT (BootOptionNumber != MAX_UINT16);
 
-  MemoryMap     = (VOID *)(mFwData + 1);
-  MemoryMapSize = FHR_MAX_FW_DATA_SIZE - sizeof (FHR_FW_DATA);
+    //
+    // Get the number of the Boot#### option that the status code applies to.
+    //
+    VariableSize = sizeof BootCurrent;
+    Status       = gRT->GetVariable (
+                          L"BootCurrent",
+                          &gEfiGlobalVariableGuid,
+                          NULL,
+                          &VariableSize,
+                          &BootCurrent
+                          );
 
-  Status = gBS->GetMemoryMap (
-                  &MemoryMapSize,
-                  MemoryMap,
-                  NULL,
-                  &DescriptorSize,
-                  &DescriptorVersion
-                  );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "[FHR DXE] Failed to get BootCurrent to validate number! (%r)\n",
+        Status
+        ));
+    } else if (BootCurrent != BootOptionNumber) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "[FHR DXE] BootCurrent does not match FhrResume option! Found 0x%x Expected 0x%x\n",
+        BootCurrent,
+        BootOptionNumber
+        ));
+    }
+  } else {
+    //
+    // Capture the memory map at boot to evaluate in FHR resume.
+    //
+    DEBUG ((DEBUG_INFO, "[FHR DXE] Finalizing FHR firmware data block.\n"));
 
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed to collect BM memory map! (%r)\n", Status));
-    return;
+    MemoryMap     = (VOID *)(mFwData + 1);
+    MemoryMapSize = FHR_MAX_FW_DATA_SIZE - sizeof (FHR_FW_DATA);
+
+    Status = gBS->GetMemoryMap (
+                    &MemoryMapSize,
+                    MemoryMap,
+                    NULL,
+                    &DescriptorSize,
+                    &DescriptorVersion
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed to collect ReadyToBoot memory map! (%r)\n", Status));
+      return;
+    }
+
+    mFwData->MemoryMapOffset            = sizeof (FHR_FW_DATA);
+    mFwData->MemoryMapSize              = MemoryMapSize;
+    mFwData->MemoryMapDescriptorSize    = DescriptorSize;
+    mFwData->MemoryMapDescriptorVersion = DescriptorVersion;
+
+    //
+    // Update the size and checksum.
+    //
+
+    mFwData->Size = (UINT32)(mFwData->MemoryMapOffset + mFwData->MemoryMapSize);
+    FhrUpdateFwDataChecksum (mFwData);
+
+    //
+    // TODO: Implement OS indication for FHR support. Not yet finalized in spec.
+    //
   }
-
-  mFwData->MemoryMapOffset            = sizeof (FHR_FW_DATA);
-  mFwData->MemoryMapSize              = MemoryMapSize;
-  mFwData->MemoryMapDescriptorSize    = DescriptorSize;
-  mFwData->MemoryMapDescriptorVersion = DescriptorVersion;
-
-  //
-  // Update the size and checksum.
-  //
-
-  mFwData->Size = (UINT32)(mFwData->MemoryMapOffset + mFwData->MemoryMapSize);
-  FhrUpdateFwDataChecksum (mFwData);
-
-  //
-  // TODO: Implement OS indication for FHR support. Not yet finalized in spec.
-  //
 
   DEBUG ((DEBUG_INFO, "[FHR DXE] FHR support finalized.\n"));
   return;
@@ -159,17 +202,134 @@ FhrValidatePeiAllocations (
 }
 
 /**
+  Finds or creates the FhrResume boot option entry and sets it to BootNext.
 
-Routine Description:
+  @retval   EFI_SUCCESS     Successfully prepared FhrResume launch.
+  @retval   Other           Error returned by subroutine.
+**/
+EFI_STATUS
+PrepareFhrResumeLaunch (
+  VOID
+  )
+{
+  EFI_STATUS                         Status;
+  EFI_BOOT_MANAGER_LOAD_OPTION       BootOption;
+  CHAR16                             *Description;
+  UINTN                              DescriptionLength;
+  EFI_DEVICE_PATH_PROTOCOL           *DevicePath;
+  EFI_LOADED_IMAGE_PROTOCOL          *LoadedImage;
+  MEDIA_FW_VOL_FILEPATH_DEVICE_PATH  FileNode;
+  CONST EFI_GUID                     *FileNameGuid = &gFhrResumeFileGuid;
+
+  DevicePath  = NULL;
+  Description = NULL;
+
+  //
+  // Build the FV load option for the FhrResume application.
+  //
+
+  ZeroMem (&BootOption, sizeof (BootOption));
+  Status = GetSectionFromFv (
+             FileNameGuid,
+             EFI_SECTION_USER_INTERFACE,
+             0,
+             (VOID **)&Description,
+             &DescriptionLength
+             );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed get get FV section! (%r)\n", Status));
+    Description = NULL;
+    goto Exit;
+  }
+
+  EfiInitializeFwVolDevicepathNode (&FileNode, FileNameGuid);
+  Status = gBS->HandleProtocol (
+                  gImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&LoadedImage
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed get LoadedImageProtocolHandle! (%r)\n", Status));
+    goto Exit;
+  }
+
+  DevicePath = AppendDevicePathNode (
+                 DevicePathFromHandle (LoadedImage->DeviceHandle),
+                 (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
+                 );
+
+  if (DevicePath == NULL) {
+    Status = EFI_OUT_OF_RESOURCES;
+    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed append path node!\n"));
+    goto Exit;
+  }
+
+  Status = EfiBootManagerInitializeLoadOption (
+             &BootOption,
+             0x3FEC,   // TODO - Probably shouldn't use a well known value.
+             LoadOptionTypeBoot,
+             LOAD_OPTION_CATEGORY_APP | LOAD_OPTION_ACTIVE | LOAD_OPTION_HIDDEN,
+             Description,
+             DevicePath,
+             NULL,
+             0
+             );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed get initialize load option! (%r)\n", Status));
+    goto Exit;
+  }
+
+  Status = EfiBootManagerLoadOptionToVariable (&BootOption);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed to create FhrResume boot option variable! (%r)\n", Status));
+    goto Exit;
+  }
+
+  ASSERT (BootOption.OptionNumber < MAX_UINT16);
+  BootOptionNumber = (UINT16)BootOption.OptionNumber;
+
+  //
+  // Set BootNext to point to the FhrResume options number.
+  //
+
+  Status = gRT->SetVariable (
+                  L"BootNext",
+                  &gEfiGlobalVariableGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+                  sizeof (UINT16),
+                  &BootOption.OptionNumber
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "[FHR DXE] Failed to set BootNext (%r).\n", Status));
+    goto Exit;
+  }
+
+  DEBUG ((DEBUG_INFO, "[FHR DXE] FhrResume added as BootNext.\n"));
+
+Exit:
+  if (DevicePath != NULL) {
+    FreePool (DevicePath);
+  }
+
+  if (Description != NULL) {
+    FreePool (Description);
+  }
+
+  return Status;
+}
+
+/**
 
   Entry point for FHR DXE module. Prepares FHR data anf resume state.
-
-Arguments:
 
   @param[in]  ImageHandle -- Handle to this image.
   @param[in]  SystemTable -- Pointer to the system table.
 
-  @retval EFI_STATUS
+  @retval     EFI_STATUS
 **/
 EFI_STATUS
 EFIAPI
@@ -222,30 +382,46 @@ FhrDxeEntry (
     return EFI_PROTOCOL_ERROR;
   }
 
-  //
-  // If this is not an FHR resume, then register for post ready to boot. This
-  // will be used to evaluate memory usage and capture any final state.
-  //
+  if (mIsFhrResume) {
+    //
+    // If this is an FHR resume, then setup the BootNext target to FhrResume.
+    //
 
-  if (!mIsFhrResume) {
-    Status = gBS->CreateEventEx (
-                    EVT_NOTIFY_SIGNAL,
-                    TPL_CALLBACK,
-                    OnPostReadyToBootNotification,
-                    NULL,
-                    &gEfiEventPostReadyToBootGuid,
-                    &PostReadyToBootEvent
-                    );
-
+    Status = PrepareFhrResumeLaunch ();
     if (EFI_ERROR (Status)) {
       DEBUG ((
         DEBUG_ERROR,
-        "[FHR DXE] Failed to create event for PostReadyToBoot. (%r)\n",
+        "[FHR DXE] Failed to setup FhrResume launch. (%r)\n",
         Status
         ));
 
       return Status;
     }
+  }
+
+  //
+  // Register for post ready to boot. This will be used to evaluate memory usage
+  // and capture any final state. For an FHR boot this will ensure the entry
+  // being launched is what we expect it to be and reboot if not.
+  //
+
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnPostReadyToBootNotification,
+                  NULL,
+                  &gEfiEventPostReadyToBootGuid,
+                  &PostReadyToBootEvent
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "[FHR DXE] Failed to create event for PostReadyToBoot. (%r)\n",
+      Status
+      ));
+
+    return Status;
   }
 
   return EFI_SUCCESS;

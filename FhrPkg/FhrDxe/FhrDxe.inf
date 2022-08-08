@@ -36,14 +36,18 @@
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib
   FhrLib
+  UefiBootManagerLib
+  DevicePathLib
 
 [Protocols]
+  gEfiLoadedImageProtocolGuid
 
 [Pcd]
 
 [Guids]
   gFhrHobGuid
   gEfiEventPostReadyToBootGuid
+  gFhrResumeFileGuid
 
 [Depex]
-  TRUE
+  gEfiVariableWriteArchProtocolGuid
