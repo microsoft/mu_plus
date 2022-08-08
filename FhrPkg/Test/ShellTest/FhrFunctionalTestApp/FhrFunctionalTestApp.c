@@ -14,6 +14,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+
+#include <Protocol/ShellParameters.h>
+#include <Protocol/Shell.h>
+
 #include <Fhr.h>
 
 //
@@ -40,6 +44,7 @@ UINTN                  DescriptorSize;
 UINTN                  MemoryMapSize;
 UINT32                 RebootCount;
 CONST EFI_GUID         ResetTypeGuid = FHR_RESET_TYPE_GUID;
+BOOLEAN                FhrTestSkipMemory;
 
 //
 // Function prototypes.
@@ -109,6 +114,15 @@ CheckMemory (
   UINTN                  PageErrors;
   UINT64                 *Blocks;
   UINT32                 BlockIndex;
+
+  //
+  // Check if skipping memory was requested.
+  //
+
+  if (FhrTestSkipMemory) {
+    DEBUG ((DEBUG_INFO, "Skipping memory check.\n"));
+    return EFI_SUCCESS;
+  }
 
   //
   // For all memory that is OS usable, pattern it. Make sure not to pattern this
@@ -459,5 +473,29 @@ UefiMain (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
+  EFI_STATUS                     Status;
+  EFI_SHELL_PARAMETERS_PROTOCOL  *ShellParameters;
+  UINTN                          Argc;
+  CHAR16                         **Argv;
+  UINTN                          Index;
+
+  Status = gBS->HandleProtocol (
+                  gImageHandle,
+                  &gEfiShellParametersProtocolGuid,
+                  (VOID **)&ShellParameters
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed to get parameters protocol! (%r)\n", Status));
+  } else {
+    Argc = ShellParameters->Argc;
+    Argv = ShellParameters->Argv;
+    for (Index = 0; Index < Argc; Index++) {
+      if ((StrCmp (Argv[Index], L"-nomemory") == 0)) {
+        FhrTestSkipMemory = TRUE;
+      }
+    }
+  }
+
   return FhrTestPreReboot ();
 }

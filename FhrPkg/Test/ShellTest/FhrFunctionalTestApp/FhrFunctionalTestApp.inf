@@ -35,3 +35,6 @@
   UefiBootServicesTableLib
   UefiRuntimeServicesTableLib
   MemoryAllocationLib
+
+[Protocols]
+  gEfiShellParametersProtocolGuid
