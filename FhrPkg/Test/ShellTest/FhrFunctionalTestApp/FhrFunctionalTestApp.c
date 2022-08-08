@@ -24,14 +24,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // Test constants.
 //
 
-#define UNIT_TEST_APP_NAME     "FHR Test Application"
-#define UNIT_TEST_APP_VERSION  "1.0"
-#define RESET_STRING           L"FHR TEST"
-#define REBOOT_COUNT           (3)
-#define MEMORY_PATTERN         (0xCACACACACACACACAllu)
-#define SCRATCH_PAGES          (10)
-#define SCRATCH_SIZE           (SCRATCH_PAGES * EFI_PAGE_SIZE)
-#define FAST_PATTERN           (TRUE)
+#define RESET_STRING    L"FHR TEST"
+#define REBOOT_COUNT    (3)
+#define MEMORY_PATTERN  (0xCACACACACACACACAllu)
+#define SCRATCH_PAGES   (10)
+#define SCRATCH_SIZE    (SCRATCH_PAGES * EFI_PAGE_SIZE)
 
 //
 // Test globals. These should persist across the FHR.
@@ -44,7 +41,13 @@ UINTN                  DescriptorSize;
 UINTN                  MemoryMapSize;
 UINT32                 RebootCount;
 CONST EFI_GUID         ResetTypeGuid = FHR_RESET_TYPE_GUID;
-BOOLEAN                FhrTestSkipMemory;
+
+//
+// Test configuration globals.
+//
+
+BOOLEAN  TestSkipMemory;
+BOOLEAN  TestPatternFullPage;
 
 //
 // Function prototypes.
@@ -119,7 +122,7 @@ CheckMemory (
   // Check if skipping memory was requested.
   //
 
-  if (FhrTestSkipMemory) {
+  if (TestSkipMemory) {
     DEBUG ((DEBUG_INFO, "Skipping memory check.\n"));
     return EFI_SUCCESS;
   }
@@ -184,7 +187,7 @@ CheckMemory (
         // As an optimization, check only the first block of each page.
         //
 
-        if (FAST_PATTERN) {
+        if (!TestPatternFullPage) {
           break;
         }
       }
@@ -492,7 +495,11 @@ UefiMain (
     Argv = ShellParameters->Argv;
     for (Index = 0; Index < Argc; Index++) {
       if ((StrCmp (Argv[Index], L"-nomemory") == 0)) {
-        FhrTestSkipMemory = TRUE;
+        TestSkipMemory = TRUE;
+      }
+
+      if ((StrCmp (Argv[Index], L"-fullpage") == 0)) {
+        TestPatternFullPage = TRUE;
       }
     }
   }

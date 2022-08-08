@@ -14,3 +14,6 @@ tests the following.
 
 __-nomemory__ : Skips the setting and checking on the memory pattern. This
 significantly speeds up the test time, but will miss memory corruption issues.
+
+__-fullpage__ : Applies the memory pattern to the entirety of every page rather
+then to just the first 64 bits.

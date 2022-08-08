@@ -1,5 +1,5 @@
 /**
-  A library for FHR helper functions.
+  The FHR boot manager library.
 
   Copyright (c) Microsoft Corporation. All rights reserved.
   SPDX-License-Identifier: BSD-2-Clause-Patent

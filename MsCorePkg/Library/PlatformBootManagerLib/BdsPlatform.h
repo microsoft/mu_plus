@@ -144,9 +144,4 @@ IsGopDevicePath (
   EFI_DEVICE_PATH_PROTOCOL  *DevicePath
   );
 
-VOID
-FhrBdsResume (
-  VOID
-  );
-
 #endif
