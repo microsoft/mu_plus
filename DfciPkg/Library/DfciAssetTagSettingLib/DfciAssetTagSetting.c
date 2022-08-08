@@ -292,7 +292,7 @@ DfciAssetTagSettingSet (
     if ((ValueSize != 0) && (BufferSize == ValueSize)) {
       Buffer = AllocatePool (BufferSize);
       if (NULL == Buffer) {
-        DEBUG ((DEBUG_ERROR, "%a: Cannot allocate %d bytes.%r\n", __FUNCTION__, BufferSize));
+        DEBUG ((DEBUG_ERROR, "%a: Cannot allocate %d bytes.\n", __FUNCTION__, BufferSize));
         return EFI_OUT_OF_RESOURCES;
       }
 

@@ -3077,7 +3077,7 @@ InitializeDisplayEngine (
                   &mReadyToBootEvent
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [DE]: Failed to register OnReadyToBoot.\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "ERROR [DE]: Failed to register OnReadyToBoot (%r).\r\n", Status));
     Status = EFI_SUCCESS;      // Don't fail if this fails.
     goto Exit;
   }

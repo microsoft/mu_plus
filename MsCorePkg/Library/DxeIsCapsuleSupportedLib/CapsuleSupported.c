@@ -200,7 +200,7 @@ DoSanityCheckOnFmpCapsule (
   }
 
   if ((FmpCapsuleSize - sizeof (EFI_FIRMWARE_MANAGEMENT_CAPSULE_HEADER))/sizeof (UINT64) < ItemNum) {
-    DEBUG ((DEBUG_ERROR, "[%a] -ItemNum(0x%x) too big\n", ItemNum));
+    DEBUG ((DEBUG_ERROR, "[%a] -ItemNum(0x%x) too big\n", __FUNCTION__, ItemNum));
     return EFI_INVALID_PARAMETER;
   }
 

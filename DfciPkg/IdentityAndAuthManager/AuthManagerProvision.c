@@ -292,7 +292,7 @@ ValidateAndAuthenticatePendingProvisionData (
     // Success.  now get Identity
     Status = GetIdentityProperties (&mAuthProtocol, &(Data->AuthToken), &Properties);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "%a - Auth Passed but Identity failed. Should never happen. %r\n", Status));
+      DEBUG ((DEBUG_INFO, "%a - Auth Passed but Identity failed. Should never happen. %r\n", __FUNCTION__, Status));
       Data->StatusCode = EFI_ABORTED;
       Data->State      = DFCI_PACKET_STATE_DATA_AUTH_FAILED;
       return Data->StatusCode;

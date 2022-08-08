@@ -102,7 +102,7 @@ GetZeroTouchState (
     DEBUG ((DEBUG_INFO, "%a - retrieving ZTD State. Code=%r\n", __FUNCTION__, Status));
   } else {
     if ((Status == EFI_BUFFER_TOO_SMALL) || (Attributes != ZERO_TOUCH_VARIABLE_ATTRIBUTES)) {
-      DEBUG ((DEBUG_ERROR, "%a - Invalid variable size or attributes.\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a - Invalid variable size or attributes.\n", __FUNCTION__));
       Status = gRT->SetVariable (
                       ZERO_TOUCH_VARIABLE_OPT_IN_VAR_NAME,
                       &gZeroTouchVariableGuid,

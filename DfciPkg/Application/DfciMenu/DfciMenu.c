@@ -1116,7 +1116,7 @@ ExtractConfig (
   }
 
   // The Request string may be truncated as it is long.  Ensure \n gets out
-  DEBUG ((DEBUG_INFO, "%a: Request=%s\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: Request=\n", __FUNCTION__));
   DEBUG ((DEBUG_INFO, "%s", Request));
   DEBUG ((DEBUG_INFO, "\n"));
 

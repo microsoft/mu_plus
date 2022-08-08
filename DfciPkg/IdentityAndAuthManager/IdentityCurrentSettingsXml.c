@@ -114,7 +114,7 @@ CreateXmlStringFromCurrentIdentities (
                Thumbprint
                );
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a - Unable to populate XML. Code=%r. Certificate:\n", Status));
+      DEBUG ((DEBUG_ERROR, "%a - Unable to populate XML. Code=%r. Certificate:\n", __FUNCTION__, Status));
       DEBUG ((DEBUG_ERROR, "     for %s with certificate: %s\n", Id, Thumbprint));
     }
 

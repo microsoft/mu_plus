@@ -454,7 +454,7 @@ PopulateInternalCertStore (
         break;
 
       default:
-        DEBUG ((DEBUG_ERROR, "%a - Error.  Unexpected Status Code. %r\n", Status));
+        DEBUG ((DEBUG_ERROR, "%a - Error.  Unexpected Status Code. %r\n", __FUNCTION__, Status));
         ASSERT_EFI_ERROR (Status);
         break;
     } // close switch
@@ -614,7 +614,7 @@ GetCertInfo (
           Status = GetSubjectName16 (Cert, CertSize, CERT_STRING_SIZE, (CHAR16 **)Value, ValueSize);
           break;
         default:
-          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", __FUNCTION__, CertFormat, CertRequest));
           break;
       }
 
@@ -629,7 +629,7 @@ GetCertInfo (
           Status = GetIssuerName16 (Cert, CertSize, CERT_STRING_SIZE, (CHAR16 **)Value, ValueSize);
           break;
         default:
-          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", __FUNCTION__, CertFormat, CertRequest));
           break;
       }
 
@@ -667,7 +667,7 @@ GetCertInfo (
           break;
 
         default:
-          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", CertFormat, CertRequest));
+          DEBUG ((DEBUG_ERROR, "%a: Invalid request format %d for %d\n", __FUNCTION__, CertFormat, CertRequest));
           break;
       }
 
