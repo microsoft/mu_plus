@@ -77,8 +77,17 @@ DescriptorsOverlap (
   EFI_MEMORY_DESCRIPTOR  *Memory2
   )
 {
-  return ((Memory1->PhysicalStart < (Memory2->PhysicalStart + (Memory2->NumberOfPages << EFI_PAGE_SHIFT))) &&
-          (Memory2->PhysicalStart < (Memory1->PhysicalStart + (Memory1->NumberOfPages << EFI_PAGE_SHIFT))));
+  EFI_PHYSICAL_ADDRESS  Memory1End;
+  EFI_PHYSICAL_ADDRESS  Memory2End;
+
+  Memory1End = Memory1->PhysicalStart + EFI_PAGES_TO_SIZE (Memory1->NumberOfPages);
+  Memory2End = Memory2->PhysicalStart + EFI_PAGES_TO_SIZE (Memory2->NumberOfPages);
+
+  ASSERT (Memory1End > Memory1->PhysicalStart);
+  ASSERT (Memory2End > Memory2->PhysicalStart);
+
+  return ((Memory1->PhysicalStart < Memory2End) &&
+          (Memory2->PhysicalStart < Memory1End));
 }
 
 /**

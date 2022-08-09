@@ -28,6 +28,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MEMORY_PATTERN  (0xCACACACACACACACAllu)
 #define SCRATCH_PAGES   (10)
 #define SCRATCH_SIZE    (SCRATCH_PAGES * EFI_PAGE_SIZE)
+#define EXIT_RETRIES    (3)
 
 //
 // Test globals. These should persist across the FHR.
@@ -365,6 +366,7 @@ FhrTestPreReboot (
   EFI_PHYSICAL_ADDRESS  Memory;
   UINTN                 MapKey;
   UINT32                DescriptorVersion;
+  UINT32                Retries;
 
   //
   // Initialize the persisted memory block. This serves the dual purpose of
@@ -384,47 +386,59 @@ FhrTestPreReboot (
   }
 
   Scratch = (VOID *)Memory;
-  ZeroMem (Scratch, SCRATCH_SIZE);
-  MemoryMap     = Scratch;
-  MemoryMapSize = SCRATCH_SIZE;
+  Retries = 0;
 
   //
   // Get the final memory map.
   //
 
-  DEBUG ((DEBUG_INFO, "[FHR TEST] Getting final memory map.\n"));
-  Status = gBS->GetMemoryMap (
-                  &MemoryMapSize,
-                  MemoryMap,
-                  &MapKey,
-                  &DescriptorSize,
-                  &DescriptorVersion
-                  );
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to get memory map! (%r) \n", Status));
-    return Status;
-  }
-
-  ASSERT (DescriptorVersion == EFI_MEMORY_DESCRIPTOR_VERSION);
-
-  //
-  // Check memory types.
-  //
-  Status = CheckMemoryMap ();
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed memory types check! (%r) \n", Status));
-    return Status;
-  }
-
-  //
-  // exit boot services in preparation for doing FHR.
-  //
   Print (L"Exiting boot services.\n\r");
-  DEBUG ((DEBUG_INFO, "[FHR TEST] Exiting boot services.\n"));
-  Status = gBS->ExitBootServices (gImageHandle, MapKey);
+  do {
+    ZeroMem (Scratch, SCRATCH_SIZE);
+    MemoryMap     = Scratch;
+    MemoryMapSize = SCRATCH_SIZE;
+    DEBUG ((
+      DEBUG_INFO,
+      "[FHR TEST] Getting final memory map. (%d/%d)\n",
+      Retries + 1,
+      EXIT_RETRIES
+      ));
+
+    Status = gBS->GetMemoryMap (
+                    &MemoryMapSize,
+                    MemoryMap,
+                    &MapKey,
+                    &DescriptorSize,
+                    &DescriptorVersion
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed to get memory map! (%r) \n", Status));
+      return Status;
+    }
+
+    ASSERT (DescriptorVersion == EFI_MEMORY_DESCRIPTOR_VERSION);
+
+    //
+    // Check memory types.
+    //
+    Status = CheckMemoryMap ();
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed memory types check! (%r) \n", Status));
+      return Status;
+    }
+
+    //
+    // exit boot services in preparation for doing FHR.
+    //
+    DEBUG ((DEBUG_INFO, "[FHR TEST] Exiting boot services.\n"));
+    Status = gBS->ExitBootServices (gImageHandle, MapKey);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed ExitBootServices! (%r) \n", Status));
+    }
+  } while (EFI_ERROR (Status) && Retries++ < EXIT_RETRIES);
+
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[FHR TEST] Failed ExitBootServices! (%r) \n", Status));
     return Status;
   }
 
@@ -468,7 +482,7 @@ FhrTestPreReboot (
   @param[in] SystemTable  A pointer to the EFI System Table.
 
   @retval EFI_SUCCESS     The entry point executed successfully.
-  @retval other           Some error occured when executing this entry point.
+  @retval other           Some error occurred when executing this entry point.
 **/
 EFI_STATUS
 EFIAPI
@@ -500,9 +514,15 @@ UefiMain (
       } else if ((StrCmp (Argv[Index], L"-fullpage") == 0)) {
         TestPatternFullPage = TRUE;
       } else if ((StrCmp (Argv[Index], L"-reboots") == 0)) {
+        TestRebootCount = 0;
         if (Index + 1 < Argc) {
           TestRebootCount = StrDecimalToUintn (Argv[Index + 1]);
           Index++;
+        }
+
+        if ((TestRebootCount == 0) || (TestRebootCount == MAX_UINTN)) {
+          Print (L"Invalid reboot count.\n\r");
+          return EFI_INVALID_PARAMETER;
         }
       } else {
         Print (L"Unrecognized parameter '%ls'.\n\r", Argv[Index]);
