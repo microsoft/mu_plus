@@ -30,6 +30,11 @@ FhrValidateFwData (
   UINT64  OriginalChecksum;
   UINT64  Checksum;
 
+  if (FhrFwData == NULL) {
+    DEBUG ((DEBUG_ERROR, "[FHR] Invalid firmware data pointer!\n"));
+    return RETURN_INVALID_PARAMETER;
+  }
+
   if (FhrFwData->Signature != FHR_PAGE_SIGNATURE) {
     DEBUG ((DEBUG_ERROR, "[FHR] Invalid firmware data signature!\n"));
     return RETURN_INVALID_PARAMETER;

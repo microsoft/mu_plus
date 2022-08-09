@@ -25,7 +25,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 
 #define RESET_STRING    L"FHR TEST"
-#define REBOOT_COUNT    (3)
 #define MEMORY_PATTERN  (0xCACACACACACACACAllu)
 #define SCRATCH_PAGES   (10)
 #define SCRATCH_SIZE    (SCRATCH_PAGES * EFI_PAGE_SIZE)
@@ -48,6 +47,7 @@ CONST EFI_GUID         ResetTypeGuid = FHR_RESET_TYPE_GUID;
 
 BOOLEAN  TestSkipMemory;
 BOOLEAN  TestPatternFullPage;
+UINTN    TestRebootCount = 3;
 
 //
 // Function prototypes.
@@ -282,8 +282,8 @@ FhrTestPostReboot (
     CpuDeadLoop ();
   }
 
-  DEBUG ((DEBUG_INFO, "[FHR TEST] Reboot successful! (%d/%d)\n", RebootCount, REBOOT_COUNT));
-  if (RebootCount < REBOOT_COUNT) {
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Reboot successful! (%d/%d)\n", RebootCount, TestRebootCount));
+  if (RebootCount < TestRebootCount) {
     InitiateFhr (SystemTable->RuntimeServices);
     DEBUG ((DEBUG_ERROR, "[FHR TEST] Unexpected return from InitiateFhr.\n"));
     CpuDeadLoop ();
@@ -334,7 +334,7 @@ InitiateFhr (
     ResetParams->ResetDataSize
     ));
 
-  DEBUG ((DEBUG_INFO, "[FHR TEST] Initiating FHR! (%d/%d)\n", RebootCount, REBOOT_COUNT));
+  DEBUG ((DEBUG_INFO, "[FHR TEST] Initiating FHR! (%d/%d)\n", RebootCount, TestRebootCount));
   RuntimeServices->ResetSystem (
                      EfiResetPlatformSpecific,
                      EFI_SUCCESS,
@@ -496,10 +496,13 @@ UefiMain (
     for (Index = 0; Index < Argc; Index++) {
       if ((StrCmp (Argv[Index], L"-nomemory") == 0)) {
         TestSkipMemory = TRUE;
-      }
-
-      if ((StrCmp (Argv[Index], L"-fullpage") == 0)) {
+      } else if ((StrCmp (Argv[Index], L"-fullpage") == 0)) {
         TestPatternFullPage = TRUE;
+      } else if ((StrCmp (Argv[Index], L"-reboots") == 0)) {
+        if (Index + 1 < Argc) {
+          TestRebootCount = StrDecimalToUintn (Argv[Index + 1]);
+          Index++;
+        }
       }
     }
   }
