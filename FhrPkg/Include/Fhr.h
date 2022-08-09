@@ -72,6 +72,17 @@ typedef struct {
 #define FHR_MAX_FW_DATA_SIZE  (0x8000)
 #define FHR_MAX_MEMORY_BINS   (10)
 
+//
+// Failure codes for FHR.
+//
+typedef enum _FHR_FAILURE_REASON {
+  FhrFailureNone                 = 0,
+  FhrFailurePeiGeneric           = 1,
+  FhrFailureDxeGeneric           = 2,
+  FhrFailureResGeneric           = 3,
+  FhrFailureUnexpectedBootOption = 4,
+} FHR_FAILURE_REASON;
+
 #pragma pack(1)
 
 typedef struct _FHR_MEMORY_BIN {
@@ -108,6 +119,15 @@ typedef struct _FHR_HOB {
   EFI_PHYSICAL_ADDRESS    ResetVector;
   EFI_PHYSICAL_ADDRESS    ResetData;
   UINT64                  ResetDataSize;
+
+  //
+  // PEI failures. Only valid in FHR boot. Failures in PEI may not
+  // have full persistent capabilities so the failures are persisted
+  // to DXE.
+  //
+
+  FHR_FAILURE_REASON      PeiFailureReason;
+  EFI_STATUS              PeiFailureStatus;
 } FHR_HOB;
 
 #pragma pack()

@@ -29,6 +29,33 @@ FHR_FW_DATA  *mFwData;
 UINT16       BootOptionNumber = MAX_UINT16;
 
 /**
+  Handles a FHR resume critical failure. This routine does not return.
+
+  @param[in]  Failure     The reason for the FHR resume failure.
+**/
+VOID
+FailFhrResume (
+  IN FHR_FAILURE_REASON  Failure,
+  IN EFI_STATUS          FailureStatus
+  )
+{
+  //
+  // TODO: diagnostics.
+  //
+
+  DEBUG ((
+    DEBUG_ERROR,
+    "[FHR DXE] Fatal FHR resume failure! Reason: %d Status: %r\n",
+    Failure,
+    FailureStatus
+    ));
+
+  gRT->ResetSystem (EfiResetWarm, FailureStatus, 0, NULL);
+  CpuDeadLoop ();
+  ASSERT (FALSE);
+}
+
+/**
   Notify function for PostReadyToBoot event. This routine will capture final
   memory state and determine reported FHR support.
 
@@ -79,6 +106,8 @@ OnPostReadyToBootNotification (
         "[FHR DXE] Failed to get BootCurrent to validate number! (%r)\n",
         Status
         ));
+
+      FailFhrResume (FhrFailureUnexpectedBootOption, Status);
     } else if (BootCurrent != BootOptionNumber) {
       DEBUG ((
         DEBUG_ERROR,
@@ -86,6 +115,8 @@ OnPostReadyToBootNotification (
         BootCurrent,
         BootOptionNumber
         ));
+
+      FailFhrResume (FhrFailureUnexpectedBootOption, EFI_NOT_STARTED);
     }
   } else {
     //
@@ -361,6 +392,14 @@ FhrDxeEntry (
     DEBUG ((DEBUG_ERROR, "[FHR DXE] Firmware data pointer is NULL!\n"));
     ASSERT (FALSE);
     return EFI_NOT_FOUND;
+  }
+
+  //
+  // Check if PEI experienced a failure.
+  //
+
+  if (FhrHob->IsFhrBoot && (FhrHob->PeiFailureReason != FhrFailureNone)) {
+    FailFhrResume (FhrHob->PeiFailureReason, FhrHob->PeiFailureStatus);
   }
 
   //

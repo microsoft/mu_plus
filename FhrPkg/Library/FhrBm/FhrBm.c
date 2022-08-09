@@ -21,8 +21,6 @@
 #include <Library/FhrLib.h>
 #include <Fhr.h>
 
-volatile BOOLEAN  FhrLoop = TRUE;
-
 /**
   Prepares the OS resume vector for execution. This includes ensuring that the
   resume page is executable.

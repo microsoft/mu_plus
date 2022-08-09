@@ -420,6 +420,7 @@ FhrTestPreReboot (
   //
   // exit boot services in preparation for doing FHR.
   //
+  Print (L"Exiting boot services.\n\r");
   DEBUG ((DEBUG_INFO, "[FHR TEST] Exiting boot services.\n"));
   Status = gBS->ExitBootServices (gImageHandle, MapKey);
   if (EFI_ERROR (Status)) {
@@ -489,11 +490,11 @@ UefiMain (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to get parameters protocol! (%r)\n", Status));
+    Print (L"Failed to get parameters protocol! (%r)\n\r", Status);
   } else {
     Argc = ShellParameters->Argc;
     Argv = ShellParameters->Argv;
-    for (Index = 0; Index < Argc; Index++) {
+    for (Index = 1; Index < Argc; Index++) {
       if ((StrCmp (Argv[Index], L"-nomemory") == 0)) {
         TestSkipMemory = TRUE;
       } else if ((StrCmp (Argv[Index], L"-fullpage") == 0)) {
@@ -503,9 +504,15 @@ UefiMain (
           TestRebootCount = StrDecimalToUintn (Argv[Index + 1]);
           Index++;
         }
+      } else {
+        Print (L"Unrecognized parameter '%ls'.\n\r", Argv[Index]);
+        return EFI_INVALID_PARAMETER;
       }
     }
   }
 
-  return FhrTestPreReboot ();
+  Status = FhrTestPreReboot ();
+  Print (L"Test failed. %r \n\r", Status);
+  Print (L"See logs for more details.\n\r");
+  return Status;
 }
