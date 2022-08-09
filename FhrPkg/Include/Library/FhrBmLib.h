@@ -11,6 +11,12 @@
 
 #include <Uefi.h>
 
+/**
+  Handles the FHR resume process. This routine will not return if this is an
+  FHR resume.
+
+  @retval   EFI_SUCCESS     Not an FHR resume, no work needed.
+**/
 EFI_STATUS
 EFIAPI
 FhrBootManager (
