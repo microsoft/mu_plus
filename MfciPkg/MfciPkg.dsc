@@ -69,6 +69,7 @@
 [LibraryClasses]
   MfciPolicyParsingLib|MfciPkg/Private/Library/MfciPolicyParsingLibNull/MfciPolicyParsingLibNull.inf
   MfciDeviceIdSupportLib|MfciPkg/Library/MfciDeviceIdSupportLibNull/MfciDeviceIdSupportLibNull.inf
+  MfciRetrieveTargetPolicyLib|MfciPkg/Library/MfciRetrieveTargetPolicyLibPcd/MfciRetrieveTargetPolicyLibPcd.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
   ResetSystemLib|MdeModulePkg/Library/BaseResetSystemLibNull/BaseResetSystemLibNull.inf
   ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
@@ -92,7 +93,7 @@
 
   # MsWheaEarlyStorageLib|MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
   # CheckHwErrRecHeaderLib|MsWheaPkg/Library/CheckHwErrRecHeaderLib/CheckHwErrRecHeaderLib.inf
-  # MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
+  MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
 
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
@@ -146,6 +147,7 @@
   MfciPkg/Private/Library/MfciPolicyParsingLibNull/MfciPolicyParsingLibNull.inf
   MfciPkg/Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.inf
   MfciPkg/UnitTests/MfciPolicyParsingUnitTest/MfciPolicyParsingUnitTestApp.inf
+  MfciPkg/Library/MfciRetrieveTargetPolicyLibPcd/MfciRetrieveTargetPolicyLibPcd.inf
 
 [Components.IA32]
   # MsWheaPkg/MsWheaReport/Pei/MsWheaReportPei.inf
@@ -154,6 +156,7 @@
 [Components.X64]
   # MsWheaPkg/HwErrBert/HwErrBert.inf
   MfciPkg/MfciDxe/MfciDxe.inf
+  MfciPkg/MfciDxe/MfciDxeRoT.inf
   MfciPkg/Library/MfciRetrievePolicyLibNull/MfciRetrievePolicyLibNull.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf
@@ -162,6 +165,7 @@
 
 [Components.AARCH64]
   MfciPkg/MfciDxe/MfciDxe.inf
+  MfciPkg/MfciDxe/MfciDxeRoT.inf
   MfciPkg/Library/MfciRetrievePolicyLibNull/MfciRetrievePolicyLibNull.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf
