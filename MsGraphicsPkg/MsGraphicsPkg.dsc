@@ -55,12 +55,13 @@
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
+  DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
+  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
+
   HiiLib|MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   UefiHiiServicesLib|MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
-  DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
-
+  FrameBufferBltLib|MdeModulePkg/Library/FrameBufferBltLib/FrameBufferBltLib.inf
   BmpSupportLib|MdeModulePkg/Library/BaseBmpSupportLib/BaseBmpSupportLib.inf
-  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
 
   MsUiThemeCopyLib|MsGraphicsPkg/Library/MsUiThemeCopyLib/MsUiThemeCopyLib.inf
   PlatformThemeLib|MsGraphicsPkg/Library/SamplePlatformThemeLib/PlatformThemeLib.inf
@@ -180,6 +181,9 @@
 
   # Print screen module
   MsGraphicsPkg/PrintScreenLogger/PrintScreenLogger.inf
+
+  # NVidia Support Driver
+  MsGraphicsPkg/NvidiaSupportDxe/NvidiaSupportDxe.inf
 
 [BuildOptions]
 #force deprecated interfaces off

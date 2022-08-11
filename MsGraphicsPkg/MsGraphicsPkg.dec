@@ -85,6 +85,11 @@
   # Stop General 4                         {459a7f69-22c7-4e06-b058-5db3560d3bf3}
   gGeneralSpinner4CompleteEventGroupGuid = {0x459a7f69, 0x22c7, 0x4e06, {0xb0, 0x58, 0x5d, 0xb3, 0x56, 0x0d, 0x3b, 0xf3}}
 
+  ## GUID to identify the Nvidia GOP
+  #  {39C6B7CC-8847-4DA9-9B22-1BCC34A1A06B}
+  #
+  gNvidiaGop = {0x39C6B7CC, 0x8847, 0x4DA9, { 0x9B, 0x22, 0x1B, 0xCC, 0x34, 0xA1, 0xA0, 0x6B}}
+
 [Ppis]
   ## <Path to the header file>
   #<global guid name>  = <GUID VALUE>
