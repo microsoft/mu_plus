@@ -101,15 +101,6 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages|1024|UINT32|0x00010183
 
-  ## PcdAdvancedLoggerHdwPortDisable - When to turn off writing to the HdwPort.
-  ##
-  # The values supported are:
-  # 0 = Never
-  # 2 = Exit Boot Services
-  # 4 = Virtual Address Change
-  #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDisable|0x04|UINT8|0x00010188
-
   ## PcdAdvancedFileLoggerFlush - When the in memory log is flushed to media
   # The values supported are:
   # 0 = Never
