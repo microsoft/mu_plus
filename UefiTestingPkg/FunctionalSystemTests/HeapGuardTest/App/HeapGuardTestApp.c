@@ -432,10 +432,17 @@ Recursion (
   UINT64  Count
   )
 {
-  UINT64  Sum = 0;
+  UINT64            Sum            = 0;
+  volatile BOOLEAN  AlwaysTrueBool = TRUE;
 
   DEBUG ((DEBUG_INFO, "%a - %x\n", __FUNCTION__, Count));
-  Sum = Recursion (++Count);
+  // This code is meant to be an infinite recursion to trip a page fault. Some compilers will catch
+  // infinite recursions, so to sidestep those warnings, we block the next recursive call behind
+  // a boolean check.
+  if (AlwaysTrueBool) {
+    Sum = Recursion (++Count);
+  }
+
   return Sum + Count;
 }
 
