@@ -297,6 +297,7 @@ FhrBmResume (
   UINTN            MapKey;
   FHR_FW_DATA      *FhrData;
   OS_RESET_VECTOR  ResumeVector;
+  FHR_RESUME_DATA  ResumeData;
 
   MemoryMap      = NULL;
   MemoryMapSize  = 0;
@@ -314,7 +315,7 @@ FhrBmResume (
   // We need to make sure the resume vector is executable.
   //
 
-  Status = FhrPrepareVectorExecution (FhrHob->ResetVector);
+  Status = FhrPrepareVectorExecution (FhrHob->ResetData.OsEntry);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[FHR] Failed to prepare reset vector for execution! (%r) \n", Status));
     goto Exit;
@@ -374,9 +375,37 @@ FhrBmResume (
     goto Exit;
   }
 
-  ResumeVector = (OS_RESET_VECTOR)FhrHob->ResetVector;
+  //
+  // Build the OS resume data.
+  //
+
+  ZeroMem (&ResumeData, sizeof (ResumeData));
+  ResumeData.Signature  = FHR_RESUME_DATA_SIGNATURE;
+  ResumeData.Length     = sizeof (ResumeData);
+  ResumeData.Revision   = 0;
+  ResumeData.OsDataBase = FhrHob->ResetData.OsDataBase;
+  ResumeData.OsDataSize = FhrHob->ResetData.OsDataSize;
+  ResumeData.Flags      = FHR_MEMORY_PRESERVED;
+  ResumeData.Checksum   = CalculateCheckSum8 ((UINT8 *)(&ResumeData), sizeof (ResumeData));
+
+  //
+  // Log some useful information.
+  //
+
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData =             0x%llx\n", (EFI_PHYSICAL_ADDRESS)&ResumeData));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Length =      0x%x\n", ResumeData.Length));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Revision =    0x%x\n", ResumeData.Revision));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.OsDataBase =  0x%llx\n", ResumeData.OsDataBase));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.OsDataSize =  0x%llx\n", ResumeData.OsDataSize));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Flags =       0x%llx\n", ResumeData.Flags));
+
+  //
+  // Resume to the OS.
+  //
+
+  ResumeVector = (OS_RESET_VECTOR)FhrHob->ResetData.OsEntry;
   DEBUG ((DEBUG_INFO, "[FHR] Resuming to OS vector.\n"));
-  ResumeVector (gST, (VOID *)FhrHob->ResetData, FhrHob->ResetDataSize);
+  ResumeVector (0, gST, &ResumeData);
 
   //
   // This should never be reached.

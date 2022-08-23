@@ -11,31 +11,67 @@
 
 #include <Uefi.h>
 
-/**
-  The re-entry point for the OS after a FHR resume.
-
-  @param[in]  SystemTable       Pointer to the updated system table.
-  @param[in]  ResetData         Pointer to the OS provided reset data.
-  @param[in]  ResetData         Size of the OS provided reset data.
-**/
-typedef
-VOID
-(EFIAPI *OS_RESET_VECTOR)(
-  IN EFI_SYSTEM_TABLE *SystemTable,
-  IN VOID *ResetData,
-  IN UINT64 ResetDataSize
-  );
+#pragma pack(1)
 
 //
 // Structure used for the FHR platform specific reset.
 //
-typedef struct {
-  // CHAR16 FriendlyResetTypeString[ANY_SIZE];
-  EFI_GUID                PlatformSpecificResetType;
-  OS_RESET_VECTOR         ResetVector;
-  EFI_PHYSICAL_ADDRESS    ResetData;
-  UINT64                  ResetDataSize;
+// typedef struct {
+//   // CHAR16 FriendlyResetTypeString[ANY_SIZE];
+//   EFI_GUID                PlatformSpecificResetType;
+//   OS_RESET_VECTOR         ResetVector;
+//   EFI_PHYSICAL_ADDRESS    ResetData;
+//   UINT64                  ResetDataSize;
+// } FHR_RESET_DATA;
+
+#define FHR_RESET_DATA_SIGNATURE   SIGNATURE_32('M', 'P', 'R', 'B')
+#define FHR_RESUME_DATA_SIGNATURE  SIGNATURE_32('M', 'P', 'R', 'O')
+
+typedef struct _FHR_RESET_DATA {
+  UINT32    Signature;
+  UINT32    Length;
+  UINT8     Revision;
+  UINT8     Checksum;
+  UINT8     Reserved1[6];
+  UINT64    OsEntry;
+  UINT64    OsDataBase;
+  UINT64    OsDataSize;
+  UINT64    CompatabilityId;
+  UINT64    Reserved2[3];
 } FHR_RESET_DATA;
+
+typedef struct _FHR_RESUME_DATA {
+  UINT32    Signature;
+  UINT32    Length;
+  UINT8     Revision;
+  UINT8     Checksum;
+  UINT8     Reserved1[6];
+  UINT64    OsDataBase;
+  UINT64    OsDataSize;
+  UINT64    Flags;
+  UINT64    Reserved2[3];
+} FHR_RESUME_DATA;
+
+//
+// Feature flags for resume data.
+//
+
+#define FHR_MEMORY_PRESERVED  0x1
+
+/**
+  The re-entry point for the OS after a FHR resume.
+
+  @param[in]  Handle            Unused for FHR.
+  @param[in]  SystemTable       Pointer to the updated system table.
+  @param[in]  ResetData         The FHR resume data structure.
+**/
+typedef
+VOID
+(EFIAPI *OS_RESET_VECTOR)(
+  IN EFI_HANDLE        Handle,
+  IN EFI_SYSTEM_TABLE  *SystemTable,
+  IN FHR_RESUME_DATA   *ResumeData
+  );
 
 //
 // GUID identifying the FHR platform specific reset.
@@ -83,8 +119,6 @@ typedef enum _FHR_FAILURE_REASON {
   FhrFailureUnexpectedBootOption = 4,
 } FHR_FAILURE_REASON;
 
-#pragma pack(1)
-
 typedef struct _FHR_MEMORY_BIN {
   EFI_MEMORY_TYPE         Type;
   EFI_PHYSICAL_ADDRESS    BaseAddress;
@@ -108,17 +142,15 @@ typedef struct _FHR_FW_DATA {
 } FHR_FW_DATA;
 
 typedef struct _FHR_HOB {
-  BOOLEAN                 IsFhrBoot;
-  UINT64                  FhrReservedBase;
-  UINT64                  FhrReservedSize;
+  BOOLEAN               IsFhrBoot;
+  UINT64                FhrReservedBase;
+  UINT64                FhrReservedSize;
 
   //
   // OS provided data. Only valid in FHR boot.
   //
 
-  EFI_PHYSICAL_ADDRESS    ResetVector;
-  EFI_PHYSICAL_ADDRESS    ResetData;
-  UINT64                  ResetDataSize;
+  FHR_RESET_DATA        ResetData;
 
   //
   // PEI failures. Only valid in FHR boot. Failures in PEI may not
@@ -126,8 +158,8 @@ typedef struct _FHR_HOB {
   // to DXE.
   //
 
-  FHR_FAILURE_REASON      PeiFailureReason;
-  EFI_STATUS              PeiFailureStatus;
+  FHR_FAILURE_REASON    PeiFailureReason;
+  EFI_STATUS            PeiFailureStatus;
 } FHR_HOB;
 
 #pragma pack()

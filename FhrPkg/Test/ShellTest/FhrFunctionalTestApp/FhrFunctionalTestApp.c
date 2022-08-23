@@ -21,6 +21,21 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Fhr.h>
 
 //
+// Structures used for the test.
+//
+
+#pragma pack(1)
+
+typedef struct _FHR_RESET_PARAMETERS {
+  UINT16            FriendlyString;
+  EFI_GUID          ResetTypeGuid;
+  UINT16            Alignment[3];
+  FHR_RESET_DATA    FhrResetData;
+} FHR_RESET_PARAMETERS;
+
+#pragma pack()
+
+//
 // Test constants.
 //
 
@@ -240,16 +255,16 @@ CheckMemoryMap (
   The entry point for an FHR resume. Checks that memory is intact and initiates
   another FHR if more are left in the test.
 
-  @param[in]    SystemTable     Updated system table for FHR.
-  @param[in]    ResetData       Pointer to reset data provided by test.
-  @param[in]    ResetDataSize   Size of reset data.
+  @param[in]  Handle            Unused for FHR.
+  @param[in]  SystemTable       Pointer to the updated system table.
+  @param[in]  ResetData         The FHR resume data structure.
 **/
 VOID
 EFIAPI
 FhrTestPostReboot (
+  IN EFI_HANDLE        Handle,
   IN EFI_SYSTEM_TABLE  *SystemTable,
-  IN VOID              *ResetData,
-  IN UINT64            ResetDataSize
+  IN FHR_RESUME_DATA   *ResumeData
   )
 
 {
@@ -262,13 +277,33 @@ FhrTestPostReboot (
     CpuDeadLoop ();
   }
 
-  if (ResetData != Scratch) {
-    DEBUG ((DEBUG_ERROR, "[FHR TEST] ResetData pointer is incorrect! Expected: 0x%x Actual: 0x%x\n", Scratch, ResetData));
+  if (ResumeData->Signature != FHR_RESUME_DATA_SIGNATURE) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "[FHR TEST] Resume signature is incorrect! Expected: 0x%x Actual: 0x%x\n",
+      FHR_RESUME_DATA_SIGNATURE,
+      ResumeData->Signature
+      ));
     CpuDeadLoop ();
   }
 
-  if (ResetDataSize != SCRATCH_SIZE) {
-    DEBUG ((DEBUG_ERROR, "[FHR TEST] ResetDataSize is incorrect! Expected: 0x%x Actual: 0x%x\n", SCRATCH_SIZE, ResetDataSize));
+  if (ResumeData->OsDataBase != (EFI_PHYSICAL_ADDRESS)Scratch) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "[FHR TEST] OsDataBase pointer is incorrect! Expected: 0x%x Actual: 0x%x\n",
+      (EFI_PHYSICAL_ADDRESS)Scratch,
+      ResumeData->OsDataBase
+      ));
+    CpuDeadLoop ();
+  }
+
+  if (ResumeData->OsDataSize != SCRATCH_SIZE) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "[FHR TEST] OsDataSize is incorrect! Expected: 0x%x Actual: 0x%x\n",
+      SCRATCH_SIZE,
+      ResumeData->OsDataSize
+      ));
     CpuDeadLoop ();
   }
 
@@ -306,8 +341,7 @@ InitiateFhr (
   )
 
 {
-  UINT8           Buffer[sizeof (RESET_STRING) + sizeof (FHR_RESET_DATA)];
-  FHR_RESET_DATA  *ResetParams;
+  FHR_RESET_PARAMETERS  ResetParams;
 
   //
   // Store the CRC of the scratch, makes sure we dont hit unexpected errors.
@@ -320,27 +354,31 @@ InitiateFhr (
   //
 
   RebootCount++;
-  CopyMem (&Buffer[0], RESET_STRING, sizeof (RESET_STRING));
-  ResetParams                            = (FHR_RESET_DATA *)&Buffer[sizeof (RESET_STRING)];
-  ResetParams->PlatformSpecificResetType = ResetTypeGuid;
-  ResetParams->ResetVector               = FhrTestPostReboot;
-  ResetParams->ResetData                 = (EFI_PHYSICAL_ADDRESS)Scratch;
-  ResetParams->ResetDataSize             = SCRATCH_SIZE;
+  ZeroMem (&ResetParams, sizeof (ResetParams));
+  ResetParams.FriendlyString          = '\0';
+  ResetParams.ResetTypeGuid           = ResetTypeGuid;
+  ResetParams.FhrResetData.Signature  = FHR_RESET_DATA_SIGNATURE;
+  ResetParams.FhrResetData.Length     = sizeof (ResetParams.FhrResetData);
+  ResetParams.FhrResetData.OsEntry    = (EFI_PHYSICAL_ADDRESS)FhrTestPostReboot;
+  ResetParams.FhrResetData.OsDataBase = (EFI_PHYSICAL_ADDRESS)Scratch;
+  ResetParams.FhrResetData.OsDataSize = SCRATCH_SIZE;
+
+  ResetParams.FhrResetData.Checksum = CalculateCheckSum8 ((UINT8 *)(&ResetParams.FhrResetData), sizeof (ResetParams.FhrResetData));
 
   DEBUG ((
     DEBUG_INFO,
     "[FHR TEST] ResumeVector: %p ResetData: %p DataSize: 0x%x\n",
-    ResetParams->ResetVector,
-    ResetParams->ResetData,
-    ResetParams->ResetDataSize
+    ResetParams.FhrResetData.OsEntry,
+    ResetParams.FhrResetData.OsDataBase,
+    ResetParams.FhrResetData.OsDataSize
     ));
 
   DEBUG ((DEBUG_INFO, "[FHR TEST] Initiating FHR! (%d/%d)\n", RebootCount, TestRebootCount));
   RuntimeServices->ResetSystem (
                      EfiResetPlatformSpecific,
                      EFI_SUCCESS,
-                     sizeof (RESET_STRING) + sizeof (*ResetParams),
-                     &Buffer[0]
+                     sizeof (ResetParams),
+                     &ResetParams
                      );
 
   DEBUG ((DEBUG_ERROR, "[FHR TEST] Unexpected return from ResetSystem!\n"));
