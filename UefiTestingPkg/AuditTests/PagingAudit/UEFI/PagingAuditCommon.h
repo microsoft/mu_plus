@@ -12,6 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define _PAGING_AUDIT_COMMON_H_
 
 #include <Uefi.h>
+#include <PiDxe.h>
 
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
@@ -44,7 +45,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define VALID_SMRR_HIGH_POS  BIT51
 #define VALID_SMRR_BIT_MASK  (~(~(BIT51 - 1) | (BIT17 - 1)))
 
-// volatile UINT32 jason = 0;
+#define TSEG_EFI_MEMORY_TYPE  (EfiMaxMemoryType + 1)
+#define NONE_GCD_MEMORY_TYPE  (EfiGcdMemoryTypeMaximum + 1)
+#define NONE_EFI_MEMORY_TYPE  (EfiMaxMemoryType + 2)
 
 #pragma pack(1)
 

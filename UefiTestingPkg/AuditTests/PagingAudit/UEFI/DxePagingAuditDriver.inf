@@ -42,6 +42,7 @@
   PeCoffGetEntryPointLib
   UefiCpuLib
   HobLib
+  DxeServicesTableLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

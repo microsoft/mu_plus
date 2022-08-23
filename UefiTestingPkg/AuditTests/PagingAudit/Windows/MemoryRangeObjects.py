@@ -1,4 +1,5 @@
 import copy
+import logging
 
 # Memory range is either a page table entry, memory map entry,
 # or a description of the memory contents.
@@ -25,6 +26,17 @@ class MemoryRange(object):
         "EfiPalCode",
         "EfiPersistentMemory",
         "EfiMaxMemoryType"
+        ]
+
+    MemorySpaceTypes = [
+        "EfiGcdMemoryTypeNonExistent",
+        "EfiGcdMemoryTypeReserved",
+        "EfiGcdMemoryTypeSystemMemory",
+        "EfiGcdMemoryTypeMemoryMappedIo",
+        "EfiGcdMemoryTypePersistent",
+        "EfiGcdMemoryTypePersistentMemory",
+        "EfiGcdMemoryTypeMoreReliable",
+        "EfiGcdMemoryTypeMaximum"
         ]
 
     # Definitions from Uefi\UefiSpec.h
@@ -55,6 +67,8 @@ class MemoryRange(object):
         "4k" : 4 * 1024,
         }
 
+    TsegEfiMemoryType = 16
+    NoneGcdMemoryType = 7
 
     @staticmethod
     def attributes_to_flags(attributes):
@@ -67,6 +81,7 @@ class MemoryRange(object):
     def __init__(self, record_type, *args, **kwargs):
         self.RecordType = record_type
         self.MemoryType = None
+        self.GcdType = None
         self.SystemMemoryType = None
         self.MustBe1 = None
         self.UserPrivilege = None
@@ -106,6 +121,13 @@ class MemoryRange(object):
         else:
             try: return MemoryRange.MemoryMapTypes[self.MemoryType]
             except: raise Exception("Memory type is invalid")
+    
+    def GetGcdTypeDescription(self):
+        if self.GcdType is None:
+            return "None"
+        else:
+            try: return MemoryRange.MemorySpaceTypes[self.GcdType]
+            except: raise Exception("Gcd type is invalid")
 
     def GetSystemMemoryType(self):
         if self.SystemMemoryType is None:
@@ -119,10 +141,10 @@ class MemoryRange(object):
     #
     # Initializes memory descriptions
     #
-    def MemoryMapEntryInit(self, Type, PhysicalStart, VirtualStart, NumberOfPages, Attribute):
+    def MemoryMapEntryInit(self, Type, PhysicalStart, VirtualStart, NumberOfPages, Attribute, GcdType):
         if(Type < 16):
             self.MemoryType = Type
-        else:
+        if (Type == self.TsegEfiMemoryType):
             #set it as tseg
             self.SystemMemoryType = 0
         self.PhysicalStart = PhysicalStart
@@ -130,6 +152,8 @@ class MemoryRange(object):
         self.PhysicalSize = NumberOfPages * 4 * 1024
         self.Attribute = Attribute
         self.NumberOfPages = NumberOfPages
+        if (GcdType < self.NoneGcdMemoryType):
+            self.GcdType = GcdType
 
     def MemoryRangeToString(self):
         return """\n  Memory Map Entry
@@ -141,7 +165,8 @@ class MemoryRange(object):
     NumberOfPages           : 0x%010X
     Attribute               : 0x%010X
     PhysicalSize            : 0x%010X
-""" % (self.GetMemoryTypeDescription(), self.PhysicalStart, self.PhysicalEnd, self.VirtualStart, self.NumberOfPages, self.Attribute, self.PhysicalSize)
+    GcdType                 : 0x%010X
+""" % (self.GetMemoryTypeDescription(), self.PhysicalStart, self.PhysicalEnd, self.VirtualStart, self.NumberOfPages, self.Attribute, self.PhysicalSize, self.GcdType)
 
     #
     # intitalizes memory contents description
@@ -167,6 +192,7 @@ class MemoryRange(object):
         self.ReadWrite = 0
         self.UserPrivilege = 1
         self.Nx = 0
+        self.Present = 0
 
     def BitwidthInit(self, Bitwidth):
         self.AddressBitwidth = Bitwidth
@@ -176,7 +202,7 @@ class MemoryRange(object):
     #
     # Initializes page table entries
     #
-    def PteInit(self, PageSize, ReadWrite, Nx, MustBe1, User, VA):
+    def PteInit(self, PageSize, Present, ReadWrite, Nx, MustBe1, User, VA):
         self.MustBe1 = MustBe1
         self.PageSize = PageSize if self.MustBe1 == 1 else "pde"
         self.PhysicalStart = VA
@@ -184,12 +210,14 @@ class MemoryRange(object):
         self.Nx = Nx
         self.UserPrivilege = User
         self.PhysicalSize = self.getPageSize()
+        self.Present = Present
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
     def pteDebugStr(self):
         return """\n  %s
 ------------------------------------------------------------------
     MustBe1                 : 0x%010X
+    Present                 : 0x%010X
     ReadWrite               : 0x%010X
     Nx                      : 0x%010X
     PhysicalStart           : 0x%010X
@@ -198,7 +226,7 @@ class MemoryRange(object):
     Number                  : 0x%010X
     Type                    : %s
     LoadedImage             : %s
-""" % (self.getPageSizeStr(), self.MustBe1, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
+""" % (self.getPageSizeStr(), self.MustBe1, self.Present, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
 
     def getPageSize(self):
         return MemoryRange.PageSize[self.PageSize]
@@ -217,21 +245,23 @@ class MemoryRange(object):
         # Pre-process the Section Type
         # Set a reasonable default.
         section_type = "UNEXPECTED VALUE"
-        # If there are no attributes, we're done.
-        if not self.Attribute:
+        # If this range is not associated with an image, it does not have
+        # a section type.
+        if self.ImageName == None:
             section_type = "Not Tracked"
         else:
-            attribute_names = MemoryRange.attributes_to_flags(self.Attribute)
-            # If the attributes are both XP and RO, that's not good.
-            if "EFI_MEMORY_XP" in attribute_names and "EFI_MEMORY_RO" in attribute_names:
+            # if an image range can't be read or executed, this is almost certainly
+            # an error.
+            if self.Nx == 1 and self.ReadWrite == 0:
                 section_type = "ERROR"
-            elif "EFI_MEMORY_XP" in attribute_names:
+            elif self.Nx == 1:
                 section_type = "DATA"
-            elif "EFI_MEMORY_RO" in attribute_names:
+            elif self.ReadWrite == 0:
                 section_type = "CODE"
 
         return {
             "Page Size" : self.getPageSizeStr(),
+            "Present" : "Yes" if (self.Present == 1) else "No",
             "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
             "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
             "Privilege" : "User" if (self.UserPrivilege == 1) else "Supervisor",
@@ -239,6 +269,7 @@ class MemoryRange(object):
             "End" : "0x{0:010X}".format(self.PhysicalEnd),
             "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
             "Memory Type" : self.GetMemoryTypeDescription(),
+            "GCD Memory Type" : self.GetGcdTypeDescription(),
             "Section Type" : section_type,
             "System Memory": self.GetSystemMemoryType(),
             "Memory Contents" : self.ImageName,
@@ -302,6 +333,9 @@ class MemoryRange(object):
         if (self.MustBe1 != compare.MustBe1):
             return False
 
+        if (self.Present != compare.Present):
+            return False
+
         if (self.Nx != compare.Nx):
             return False
 
@@ -312,6 +346,9 @@ class MemoryRange(object):
             return False
 
         if (self.MemoryType != compare.MemoryType):
+            return False
+        
+        if (self.GcdType != compare.GcdType):
             return False
 
         if (self.SystemMemoryType != compare.SystemMemoryType):

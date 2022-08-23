@@ -43,6 +43,7 @@
   UefiCpuLib
   HobLib
   PeCoffGetEntryPointLib
+  DxeServicesTableLib
 
 [Protocols]
   gEfiBlockIoProtocolGuid

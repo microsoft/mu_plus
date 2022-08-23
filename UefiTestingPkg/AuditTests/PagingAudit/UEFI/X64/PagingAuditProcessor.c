@@ -247,16 +247,17 @@ TSEGDumpHandler (
 
     DEBUG ((DEBUG_VERBOSE, "%a Calculated length: 0x%016lx\n", __FUNCTION__, Length));
 
-    // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
+    // Writing this out in the format of a Memory Map entry (TSEG_EFI_MEMORY_TYPE will map to TSEG)
     AsciiSPrint (
       TempString,
       MAX_STRING_SIZE,
-      "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-      16,
+      "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+      TSEG_EFI_MEMORY_TYPE,
       (SmrrBase & MtrrValidAddressMask),
       0,
       EFI_SIZE_TO_PAGES (Length),
-      0
+      0,
+      NONE_GCD_MEMORY_TYPE
       );
     AppendToMemoryInfoDatabase (TempString);
   } else {
@@ -308,16 +309,17 @@ TSEGDumpHandler (
 
     RecordIndex             = 0;
     TempBuffer[RecordIndex] = SmrrBase;
-    // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
+    // Writing this out in the format of a Memory Map entry (TSEG_EFI_MEMORY_TYPE will map to TSEG)
     AsciiSPrint (
       TempString,
       MAX_STRING_SIZE,
-      "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-      16,
+      "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+      TSEG_EFI_MEMORY_TYPE,
       TempBuffer[RecordIndex++],
       0,
       EFI_SIZE_TO_PAGES (Length),
-      0
+      0,
+      NONE_GCD_MEMORY_TYPE
       );
     AppendToMemoryInfoDatabase (TempString);
 
@@ -328,16 +330,17 @@ TSEGDumpHandler (
           // Double the content here
           TempBuffer[Index + RecordIndex] = (TempBuffer[Index] | ((UINT64)BIT0<<BitIndex));
 
-          // Writing this out in the format of a Memory Map entry (Type 16 will map to TSEG)
+          // Writing this out in the format of a Memory Map entry (TSEG_EFI_MEMORY_TYPE will map to TSEG)
           AsciiSPrint (
             TempString,
             MAX_STRING_SIZE,
-            "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
-            16,
+            "TSEG,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+            TSEG_EFI_MEMORY_TYPE,
             TempBuffer[Index + RecordIndex],
             0,
             EFI_SIZE_TO_PAGES (Length),
-            0
+            0,
+            NONE_GCD_MEMORY_TYPE
             );
           AppendToMemoryInfoDatabase (TempString);
         }

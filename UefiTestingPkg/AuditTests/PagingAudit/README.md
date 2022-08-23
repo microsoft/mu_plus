@@ -26,7 +26,7 @@ writes this data to files and then that content is used by the windows scripts.
 ## DxePagingAudit
 
 The Dxe version of paging audit driver/shell app intends to inspect all 4 levels of page
-tables and their corresponding Read/Write/Executable permissions. The driver/shell app will
+tables and their corresponding Read/Write/Execute/Present attributes. The driver/shell app will
 collect necessary memory information from platform environment, then iterate through each
 page entries and log them on to available SimpleFileSystem. The collected *.dat files can be
 parsed using Windows\PagingReportGenerator.py.
@@ -65,7 +65,7 @@ First, for the SMM driver and app you need to add them to your DSC file for your
 Next, you must add the SMM driver to a firmware volume in your FDF that can dispatch SMM modules.
 
 ```text
-INF UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
+INF UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditDriver.inf
 ```
 
 Third, after compiling your new firmware you must:

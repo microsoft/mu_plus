@@ -45,12 +45,10 @@ def Parse4kPages(fileName, addressbits):
         # PageTableBaseAddress is 40 bits long
         PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & addressbits)
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
-        if Present == 0:
-            raise Exception ("Data error")
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange("PTEntry", "4k", ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
+        pages.append(MemoryRange("PTEntry", "4k", Present, ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
@@ -75,7 +73,7 @@ def Parse2mPages(fileName, addressbits):
 
         byteZeroIndex += 8
         num += 1
-        pages.append(MemoryRange("PTEntry", "2m", ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
+        pages.append(MemoryRange("PTEntry", "2m", Present, ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
 
@@ -99,7 +97,7 @@ def Parse1gPages(fileName, addressbits):
         Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
 
         byteZeroIndex += 8
-        pages.append(MemoryRange("PTEntry", "1g", ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
+        pages.append(MemoryRange("PTEntry", "1g", Present, ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
         num += 1
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages

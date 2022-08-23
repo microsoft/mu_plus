@@ -52,6 +52,11 @@
                         </div>
                         <p></p>
                         <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon2">Present Attribute</span>
+                            <select id="PresentFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon2"></select>
+                        </div>
+                        <p></p>
+                        <div class="input-group">
                                 <span class="input-group-addon" id="basic-addon2">Execute Attribute</span>
                                 <select id="ExecuteFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon2"></select>
                         </div>
@@ -75,6 +80,11 @@
                         <div class="input-group">
                             <span class="input-group-addon" id="basic-addon4">UEFI Memory Type</span>
                             <select id="MemoryTypeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon4"></select>
+                        </div>
+                        <p></p>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon4">GCD Memory Type</span>
+                            <select id="MemorySpaceTypeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon4"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
@@ -109,10 +119,12 @@
                             <th>End Address</th>
                             <th>Page Size</th>
                             <th># of Pages</th>
+                            <th>Present</th>
                             <th>Read/Write</th>
                             <th>Execute</th>
                             <th>Privilege</th>
                             <th>UEFI Memory Type</th>
+                            <th>GCD Memory Type</th>
                             <th>Section Type</th>
                             <th>Special Memory Usage</th>
                             <th>UEFI Memory Contents</th>
@@ -279,34 +291,43 @@
                         "targets": [3],
                     },
                     {
-                        "data": "Read/Write",
+                        "data": "Present",
                         "targets": [4],
                     },
                     {
-                        "data": "Execute",
+                        "data": "Read/Write",
                         "targets": [5],
                     },
                     {
-                        "data": "Privilege",
+                        "data": "Execute",
                         "targets": [6],
                     },
                     {
-                        "data": "Memory Type",
+                        "data": "Privilege",
                         "targets": [7],
+                    },
+                    {
+                        "data": "Memory Type",
+                        "targets": [8],
+                        "defaultContent": "None"
+                    },
+                    {
+                        "data": "GCD Memory Type",
+                        "targets": [9],
                         "defaultContent": "None"
                     },
                     {
                         "data": "Section Type",
-                        "targets": [8]
+                        "targets": [10]
                     },
                     {
                         "data": "System Memory",
-                        "targets": [9],
+                        "targets": [11],
                         "defaultContent": "SYSTEM"
                     },
                     {
                         "data": "Memory Contents",
-                        "targets": [10],
+                        "targets": [12],
                         "defaultContent": "Nothing Found"
                     }
                 ], //end of column def
@@ -327,7 +348,7 @@
                         });
                     }); //column 2 - Page Size
 
-                    this.api().column(5).every( function() {
+                    this.api().column(6).every( function() {
                         var column = this;
                         var select = $("#ExecuteFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -342,9 +363,26 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 5 - execute Attribute
+                    }); //column 6 - execute Attribute
 
                     this.api().column(4).every( function() {
+                        var column = this;
+                        var select = $("#PresentFilter").on( 'change', function () {     
+                            //var SelectedValues = $(this).val() || [];
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
+                             column
+                                //.search( val ? '^'+val+'$' : '', true, false )
+                                .search(SearchRegex, true, false)
+                                .draw();
+                        }); // on change
+                        
+                        //populate with options
+                        column.data().unique().sort().each( function ( d, j ) {
+                            select.append( '<option value="'+d+'">'+d+'</option>' )
+                        });
+                    }); //column 4 - Present Attribute
+
+                    this.api().column(5).every( function() {
                         var column = this;
                         var select = $("#RWFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -359,9 +397,9 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 4 - RW attribute
+                    }); //column 5 - RW attribute
                     
-                    this.api().column(6).every( function() {
+                    this.api().column(7).every( function() {
                         var column = this;
                         var select = $("#PrivilegeFilter").on( 'change', function () {
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -371,9 +409,9 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 6 - Privilege (User / Supervisor)
+                    }); //column 7 - Privilege (User / Supervisor)
 
-                    this.api().column(8).every( function() {
+                    this.api().column(10).every( function() {
                         var column = this;
                         var select = $("#SectionFilter").on( 'change', function () {
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -383,9 +421,9 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 8 - Section Type for code/data sections
+                    }); //column 10 - Section Type for code/data sections
 
-                    this.api().column(7).every( function() {
+                    this.api().column(8).every( function() {
                         var column = this;
                         var select = $("#MemoryTypeFilter").on( 'change', function () { 
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -398,9 +436,24 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 7 - Memory Type
+                    }); //column 8 - Memory Type
 
                     this.api().column(9).every( function() {
+                        var column = this;
+                        var select = $("#MemorySpaceTypeFilter").on( 'change', function () { 
+                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
+                             column
+                                .search(SearchRegex, true, false)
+                                .draw();
+                        }); // on change
+                        
+                        //populate with options
+                        column.data().unique().sort().each( function ( d, j ) {
+                            select.append( '<option value="'+d+'">'+d+'</option>' )
+                        });
+                    }); //column 9 - GCD Memory Type
+
+                    this.api().column(11).every( function() {
                         var column = this;
                         var select = $("#SpecialMemoryRegionsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -415,10 +468,10 @@
                         column.data().unique().sort().each( function ( d, j ) {
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 9 - special Memory Type
+                    }); //column 11 - special Memory Type
                     
 
-                    this.api().column(10).every( function() {
+                    this.api().column(12).every( function() {
                         var column = this;
                         var select = $("#MemoryContentsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -436,98 +489,88 @@
                             }
                             select.append( '<option value="'+d+'">'+d+'</option>' )
                         });
-                    }); //column 10 - Memory Contents
+                    }); //column 12 - Memory Contents
                 } //end init complete func
             }) //end of modules table 
 
             /** Memory Range JSON looks like: 
             {"Page Size": "4k", 
+            "Present": "Yes",
             "Read/Write": "Enabled", 
             "Execute": "Disabled", 
+            "Privilege": "User"
             "Start": "0x0000058000", 
             "End": "0x0000058FFF", 
             "Number of Entries": 1, 
             "Memory Type": "EfiReservedMemoryType", 
+            "GCD Memory Type": "EfiGcdMemoryTypeReserved"
             "Attributes": "EFI_MEMORY_RO, EFI_MEMORY_RUNTIME"
-            "System Memory": "hy"
-            "Memory Contents": null}
+            "System Memory": "None"
+            "Memory Contents": null,
+            "Partial Page": False
+            }
             **/
             var SavedFilters = [];
-            // SavedFilters.push({"Name": "RW+X", "Description": "No memory range should have page attributes that allow read, write, and execute", 
-            //     "Filter": function(mrObject) {
-            //         if( (mrObject["Read/Write"] === "Enabled") && (mrObject["Read/Write"] === mrObject["Execute"]) ) {
-            //             return true;
-            //         }
-            //         return false;
-            //     }, //end of Filter function
-            //     "ConfigureFilter":function() {
-            //         $("button#ClearAllFilter").click();  //clear the filters
-            //         if(!SetMultiselectTo("ExecuteFilter", ["Enabled"]))
-            //         {
-            //             return false
-            //         }
-            //         return SetMultiselectTo("RWFilter", ["Enabled"]);
-            //     } //end of configuring filter inputs
-            // });
-            // SavedFilters.push({"Name": "TSEG is Reserved", "Description": "TSEG should be marked as EFI Reserved Memory", "Filter": function(mrObject) {
-            //         if( (mrObject["System Memory"] === "TSEG") && (mrObject["Memory Type"] !== "EfiReservedMemoryType") ) {
-            //             return true;
-            //         }
-            //         return false;
-            //     }, //end of Filter function
-            //     "ConfigureFilter":function() {
-            //         $("button#ClearAllFilter").click(); //clear the filters
-            //         SetMultiselectToAllExcept("MemoryTypeFilter", ["EfiReservedMemoryType"]);
-            //         return SetMultiselectTo("SpecialMemoryRegionsFilter", ["TSEG"]);
-            //     } //end of configuring filter inputs
-            // });
+            SavedFilters.push({"Name": "RW+X", "Description": "No memory range should have page attributes that allow read, write, and execute", 
+                "Filter": function(mrObject) {
+                    if( (mrObject["Execute"] === "Enabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Present"] === "Yes")) {
+                        return true;
+                    }
+                    return false;
+                }, //end of Filter function
+                "ConfigureFilter":function() {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    if(!SetMultiselectTo("ExecuteFilter", ["Enabled"]))
+                    {
+                        return false
+                    }
+                    if(!SetMultiselectTo("PresentFilter", ["Yes"]))
+                    {
+                        return false
+                    }
+                    return SetMultiselectTo("RWFilter", ["Enabled"]);
+                } //end of configuring filter inputs
+            });
 
-            // SavedFilters.push({"Name": "Conventional Memory Mapped", "Description": "For OS security EfiConventionalMemory should not be mapped for SMM usage.", "Filter": function(mrObject) {
-            //         if( mrObject["Memory Type"] === "EfiConventionalMemory") {
-            //             return true;
-            //         }
-            //         return false;
-            //     }, //end of Filter function
-            //     "ConfigureFilter":function() {
-            //         $("button#ClearAllFilter").click();  //clear the filters
-            //         return SetMultiselectTo("MemoryTypeFilter", ["EfiConventionalMemory"]);
-            //     } //end of configuring filter inputs
-            // });
+            SavedFilters.push({"Name": "Data Sections are No-Execute", "Description": "Image data sections should be no-execute", "Filter": function(mrObject) {
+                    if((mrObject["Execute"] === "Enabled") && (mrObject["Section Type"] === "DATA")) {
+                        return true;
+                    }
+                    return false;
+                }, //end of Filter function
+                "ConfigureFilter":function() {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    if(!SetMultiselectTo("ExecuteFilter", ["Disabled"]))
+                    {
+                        return false;
+                    }
+                    if(!SetMultiselectTo("SectionFilter", ["DATA"]))
+                    {
+                        return false;
+                    }
+                    return SetMultiselectTo("MemoryTypeFilter", ["EfiRuntimeServicesCode"]);
+                } //end of configuring filter inputs
+            });
 
-            // SavedFilters.push({"Name": "Only TSEG is executable", "Description": "In SMM the only memory that should be executable is within TSEG", "Filter": function(mrObject) {
-            //         if((mrObject["Execute"] === "Enabled") && (mrObject["System Memory"] !== "TSEG")) {
-            //             return true;
-            //         }
-            //         return false;
-            //     }, //end of Filter function
-            //     "ConfigureFilter":function() {
-            //         $("button#ClearAllFilter").click();  //clear the filters
-            //         SetMultiselectToAllExcept("SpecialMemoryRegionsFilter", ["TSEG"]);
-            //         return SetMultiselectTo("ExecuteFilter", ["Enabled"]);
-            //     } //end of configuring filter inputs
-            // });
-
-            // SavedFilters.push({"Name": "Runtime Code RO", "Description": "Runtime code should be read-only or non-executable in SMM", "Filter": function(mrObject) {
-            //         if((mrObject["Read/Write"] === "Enabled") && (mrObject["Memory Type"] === "EfiRuntimeServicesCode") && (mrObject["Section Type"] == "CODE")) {
-            //             return true;
-            //         }
-            //         return false;
-            //     }, //end of Filter function
-            //     "ConfigureFilter":function() {
-            //         $("button#ClearAllFilter").click();  //clear the filters
-            //         if(!SetMultiselectTo("RWFilter", ["Enabled"]))
-            //         {
-            //             return false;
-            //         }
-            //         if(!SetMultiselectTo("SectionFilter", ["CODE"]))
-            //         {
-            //             return false;
-            //         }
-            //         return SetMultiselectTo("MemoryTypeFilter", ["EfiRuntimeServicesCode"]);
-            //     } //end of configuring filter inputs
-            // });
-
-            //Add more Test Filters here
+            SavedFilters.push({"Name": "Code Sections are Read-Only", "Description": "Image code sections should be read-only", "Filter": function(mrObject) {
+                    if((mrObject["Read/Write"] === "Enabled") && (mrObject["Section Type"] === "CODE")) {
+                        return true;
+                    }
+                    return false;
+                }, //end of Filter function
+                "ConfigureFilter":function() {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    if(!SetMultiselectTo("RWFilter", ["Enabled"]))
+                    {
+                        return false;
+                    }
+                    if(!SetMultiselectTo("SectionFilter", ["CODE"]))
+                    {
+                        return false;
+                    }
+                    return true;
+                } //end of configuring filter inputs
+            });
 
             //Fill in the test results tab
             SavedFilters.forEach(function(TestObject) {
