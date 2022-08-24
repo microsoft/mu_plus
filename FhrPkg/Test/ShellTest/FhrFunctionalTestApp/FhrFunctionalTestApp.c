@@ -40,7 +40,7 @@ typedef struct _FHR_RESET_PARAMETERS {
 //
 
 #define RESET_STRING    L"FHR TEST"
-#define MEMORY_PATTERN  (0xCACACACACACACACAllu)
+#define MEMORY_PATTERN  (0x5A5A5A5A5A5A5A5Allu)
 #define SCRATCH_PAGES   (10)
 #define SCRATCH_SIZE    (SCRATCH_PAGES * EFI_PAGE_SIZE)
 #define EXIT_RETRIES    (3)
@@ -133,6 +133,7 @@ CheckMemory (
   UINTN                  PageErrors;
   UINT64                 *Blocks;
   UINT32                 BlockIndex;
+  UINT64                 Pattern;
 
   //
   // Check if skipping memory was requested.
@@ -177,7 +178,8 @@ CheckMemory (
 
     PageErrors = 0;
     for (Page = 0; Page < Entry->NumberOfPages; Page++) {
-      Blocks = (UINT64 *)(Entry->PhysicalStart + (Page * EFI_PAGE_SIZE));
+      Pattern = MEMORY_PATTERN ^ ((Entry->PhysicalStart >> EFI_PAGE_SHIFT) + Page);
+      Blocks  = (UINT64 *)(Entry->PhysicalStart + (Page << EFI_PAGE_SHIFT));
 
       // skip the 0 page to avoid faulting on memory protections.
       if (Blocks == NULL) {
@@ -190,13 +192,13 @@ CheckMemory (
 
       for (BlockIndex = 0; BlockIndex < (EFI_PAGE_SIZE / sizeof (Blocks[0])); BlockIndex += 1) {
         if (Verify) {
-          if (Blocks[BlockIndex] != MEMORY_PATTERN) {
+          if (Blocks[BlockIndex] != Pattern) {
             DEBUG ((DEBUG_ERROR, "    MEMORY FAILURE: 0x%x\n", &Blocks[BlockIndex]));
             Status = EFI_VOLUME_CORRUPTED;
             break;
           }
         } else {
-          Blocks[BlockIndex] = MEMORY_PATTERN;
+          Blocks[BlockIndex] = Pattern;
         }
 
         //
