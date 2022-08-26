@@ -1,4 +1,4 @@
-/** @file -- HeapGuardTestApp.c
+/** @file -- MemoryProtectionTestApp.c
 
 Tests for page guard, pool guard, NX protections, stack guard, and null pointer detection.
 
@@ -36,7 +36,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/DxeMemoryProtectionSettings.h>
 #include <Guid/MmMemoryProtectionSettings.h>
 
-#include "../HeapGuardTestCommon.h"
+#include "../MemoryProtectionTestCommon.h"
 #include "UefiHardwareNxProtectionStub.h"
 
 #define UNIT_TEST_APP_NAME     "Heap Guard Test"
@@ -323,13 +323,13 @@ GetIgnoreNextEx (
 STATIC
 EFI_STATUS
 SmmMemoryProtectionsDxeToSmmCommunicate (
-  IN  UINT16                   RequestedFunction,
-  IN  HEAP_GUARD_TEST_CONTEXT  *Context
+  IN  UINT16                          RequestedFunction,
+  IN  MEMORY_PROTECTION_TEST_CONTEXT  *Context
   )
 {
   EFI_STATUS                             Status = EFI_SUCCESS;
   EFI_SMM_COMMUNICATE_HEADER             *CommHeader;
-  HEAP_GUARD_TEST_COMM_BUFFER            *VerificationCommBuffer;
+  MEMORY_PROTECTION_TEST_COMM_BUFFER     *VerificationCommBuffer;
   static EFI_SMM_COMMUNICATION_PROTOCOL  *SmmCommunication = NULL;
   UINTN                                  CommBufferSize;
 
@@ -342,7 +342,7 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
   // First, let's zero the comm buffer. Couldn't hurt.
   //
   CommHeader     = (EFI_SMM_COMMUNICATE_HEADER *)mPiSmmCommonCommBufferAddress;
-  CommBufferSize = sizeof (HEAP_GUARD_TEST_COMM_BUFFER) + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
+  CommBufferSize = sizeof (MEMORY_PROTECTION_TEST_COMM_BUFFER) + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
   if (CommBufferSize > mPiSmmCommonCommBufferSize) {
     DEBUG ((DEBUG_ERROR, "%a - Communication buffer is too small!\n", __FUNCTION__));
     return EFI_ABORTED;
@@ -354,14 +354,14 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
   // Update some parameters.
   //
   // SMM Communication Parameters
-  CopyGuid (&CommHeader->HeaderGuid, &gHeapGuardTestSmiHandlerGuid);
-  CommHeader->MessageLength = sizeof (HEAP_GUARD_TEST_COMM_BUFFER);
+  CopyGuid (&CommHeader->HeaderGuid, &gMemoryProtectionTestSmiHandlerGuid);
+  CommHeader->MessageLength = sizeof (MEMORY_PROTECTION_TEST_COMM_BUFFER);
 
   // Parameters Specific to this Implementation
-  VerificationCommBuffer           = (HEAP_GUARD_TEST_COMM_BUFFER *)CommHeader->Data;
+  VerificationCommBuffer           = (MEMORY_PROTECTION_TEST_COMM_BUFFER *)CommHeader->Data;
   VerificationCommBuffer->Function = RequestedFunction;
   VerificationCommBuffer->Status   = EFI_NOT_FOUND;
-  CopyMem (&VerificationCommBuffer->Context, Context, sizeof (HEAP_GUARD_TEST_CONTEXT));
+  CopyMem (&VerificationCommBuffer->Context, Context, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
   //
   // Locate the protocol, if not done yet.
@@ -402,14 +402,14 @@ LocateSmmCommonCommBuffer (
       return;
     }
 
-    // We only need a region large enough to hold a HEAP_GUARD_TEST_COMM_BUFFER,
+    // We only need a region large enough to hold a MEMORY_PROTECTION_TEST_COMM_BUFFER,
     // so this shouldn't be too hard.
     BufferSize       = 0;
     SmmCommMemRegion = (EFI_MEMORY_DESCRIPTOR *)(PiSmmCommunicationRegionTable + 1);
     for (Index = 0; Index < PiSmmCommunicationRegionTable->NumberOfEntries; Index++) {
       if (SmmCommMemRegion->Type == EfiConventionalMemory) {
         BufferSize = EFI_PAGES_TO_SIZE ((UINTN)SmmCommMemRegion->NumberOfPages);
-        if (BufferSize >= (sizeof (HEAP_GUARD_TEST_COMM_BUFFER) + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data))) {
+        if (BufferSize >= (sizeof (MEMORY_PROTECTION_TEST_COMM_BUFFER) + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data))) {
           break;
         }
       }
@@ -593,11 +593,11 @@ UefiNxProtectionPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
-  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-  if (!GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gDxeMps.NxProtectionPolicy)) {
-    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
+  if (!GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gDxeMps.NxProtectionPolicy)) {
+    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
 
@@ -615,13 +615,13 @@ UefiPageGuardPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
-  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
   if (!(gDxeMps.HeapGuardPolicy.Fields.UefiPageGuard &&
-        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gDxeMps.HeapGuardPageType)))
+        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gDxeMps.HeapGuardPageType)))
   {
-    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
 
@@ -634,13 +634,13 @@ UefiPoolGuardPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
-  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
   if (!(gDxeMps.HeapGuardPolicy.Fields.UefiPoolGuard &&
-        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gDxeMps.HeapGuardPoolType)))
+        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gDxeMps.HeapGuardPoolType)))
   {
-    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
 
@@ -681,11 +681,11 @@ UefiNullPointerPreReq (
 //   IN UNIT_TEST_CONTEXT  Context
 //   )
 // {
-//   HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+//   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
-//   UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
-//   if (!GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMmMps.NxProtectionPolicy)) {
-//     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+//   UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
+//   if (!GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gMmMps.NxProtectionPolicy)) {
+//     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
 //     return UNIT_TEST_SKIPPED;
 //   }
 
@@ -703,13 +703,13 @@ SmmPageGuardPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
-  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
   if (!(gMmMps.HeapGuardPolicy.Fields.MmPageGuard &&
-        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMmMps.HeapGuardPageType)))
+        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gMmMps.HeapGuardPageType)))
   {
-    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
 
@@ -722,13 +722,13 @@ SmmPoolGuardPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
-  UT_ASSERT_TRUE (HeapGuardContext.TargetMemoryType < MAX_UINTN);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
   if (!(gMmMps.HeapGuardPolicy.Fields.MmPoolGuard &&
-        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, gMmMps.HeapGuardPoolType)))
+        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gMmMps.HeapGuardPoolType)))
   {
-    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[HeapGuardContext.TargetMemoryType]);
+    UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
 
@@ -763,20 +763,20 @@ UefiPageGuard (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  EFI_PHYSICAL_ADDRESS     ptr;
-  EFI_STATUS               Status;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  EFI_PHYSICAL_ADDRESS            ptr;
+  EFI_STATUS                      Status;
 
-  DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[HeapGuardContext.TargetMemoryType]));
+  DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]));
 
-  if (HeapGuardContext.DynamicActive) {
+  if (MemoryProtectionContext.DynamicActive) {
     if (mNonstopModeProtocol == NULL) {
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
 
-    Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
+    Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
     if (EFI_ERROR (Status)) {
-      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], Status);
+      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
       return UNIT_TEST_SKIPPED;
     }
 
@@ -806,7 +806,7 @@ UefiPageGuard (
     return UNIT_TEST_PASSED;
   }
 
-  if (HeapGuardContext.TestProgress < 2) {
+  if (MemoryProtectionContext.TestProgress < 2) {
     //
     // Context.TestProgress indicates progress within this specific test.
     // 0 - Just started.
@@ -815,16 +815,16 @@ UefiPageGuard (
     //
     // We need to indicate we are working on the next part of the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
+    Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
 
     if (EFI_ERROR (Status)) {
-      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], Status);
+      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
       return UNIT_TEST_SKIPPED;
-    } else if (HeapGuardContext.TestProgress == 1) {
+    } else if (MemoryProtectionContext.TestProgress == 1) {
       DEBUG ((DEBUG_ERROR, "%a - Allocated page at 0x%p\n", __FUNCTION__, ptr));
 
       // Hit the head guard page
@@ -849,11 +849,11 @@ UefiPageGuard (
     //
     // Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 2);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 2);
 
   return UNIT_TEST_PASSED;
 } // UefiPageGuard()
@@ -864,15 +864,15 @@ UefiPoolGuard (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64                   *ptr;
-  EFI_STATUS               Status;
-  UINTN                    AllocationSize;
-  UINT8                    Index = 0;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  UINT64                          *ptr;
+  EFI_STATUS                      Status;
+  UINTN                           AllocationSize;
+  UINT8                           Index = 0;
 
-  DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[HeapGuardContext.TargetMemoryType]));
+  DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]));
 
-  if (HeapGuardContext.DynamicActive) {
+  if (MemoryProtectionContext.DynamicActive) {
     if (mNonstopModeProtocol == NULL) {
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
@@ -894,10 +894,10 @@ UefiPoolGuard (
       // Memory type rHardwareNxProtections to the bitmask for the PcdHeapGuardPoolType,
       // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
       //
-      Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
+      Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
 
       if (EFI_ERROR (Status)) {
-        UT_LOG_WARNING ("Memory allocation failed for type %a of size %x - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], AllocationSize, Status);
+        UT_LOG_WARNING ("Memory allocation failed for type %a of size %x - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], AllocationSize, Status);
         return UNIT_TEST_SKIPPED;
       }
 
@@ -910,7 +910,7 @@ UefiPoolGuard (
     return UNIT_TEST_PASSED;
   }
 
-  if (HeapGuardContext.TestProgress < NUM_POOL_SIZES) {
+  if (MemoryProtectionContext.TestProgress < NUM_POOL_SIZES) {
     //
     // Context.TestProgress indicates progress within this specific test.
     // The test progressively allocates larger areas to test the guard on.
@@ -919,19 +919,19 @@ UefiPoolGuard (
     //
     // We need to indicate we are working on the next part of the test and save our progress.
     //
-    AllocationSize = mPoolSizeTable[HeapGuardContext.TestProgress];
-    HeapGuardContext.TestProgress++;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    AllocationSize = mPoolSizeTable[MemoryProtectionContext.TestProgress];
+    MemoryProtectionContext.TestProgress++;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     SetBootNextDevice ();
 
     //
     // Memory type rHardwareNxProtections to the bitmask for the PcdHeapGuardPoolType,
     // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
     //
-    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
+    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
 
     if (EFI_ERROR (Status)) {
-      UT_LOG_WARNING ("Memory allocation failed for type %a of size %x - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], AllocationSize, Status);
+      UT_LOG_WARNING ("Memory allocation failed for type %a of size %x - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], AllocationSize, Status);
       return UNIT_TEST_SKIPPED;
     } else {
       PoolTest ((UINT64 *)ptr, AllocationSize);
@@ -939,13 +939,13 @@ UefiPoolGuard (
       //
       // At this point, the test has failed. Reset test progress so failure gets recorded.
       //
-      HeapGuardContext.TestProgress = 0;
-      SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+      MemoryProtectionContext.TestProgress = 0;
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
       UT_LOG_ERROR ("Pool guard failed: %p", ptr);
     }
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == NUM_POOL_SIZES);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == NUM_POOL_SIZES);
 
   return UNIT_TEST_PASSED;
 } // UefiPoolGuard()
@@ -956,11 +956,11 @@ UefiCpuStackGuard (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
   DEBUG ((DEBUG_INFO, "%a - Testing CPU Stack Guard\n", __FUNCTION__));
 
-  if (HeapGuardContext.DynamicActive) {
+  if (MemoryProtectionContext.DynamicActive) {
     if (mNonstopModeProtocol == NULL) {
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
@@ -975,27 +975,27 @@ UefiCpuStackGuard (
     return UNIT_TEST_PASSED;
   }
 
-  if (HeapGuardContext.TestProgress < 1) {
+  if (MemoryProtectionContext.TestProgress < 1) {
     //
     // Context.TestProgress 0 indicates the test hasn't started yet.
     //
     // We need to indicate we are working on the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
     Recursion (1);
 
     //
     // At this point, the test has failed. Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     UT_LOG_ERROR ("System was expected to reboot, but didn't.");
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 1);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // UefiCpuStackGuard()
@@ -1007,12 +1007,12 @@ UefiNullPointerDetection (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT8                    Index;
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
+  UINT8                           Index;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
   DEBUG ((DEBUG_INFO, "%a - Testing NULL Pointer Detection\n", __FUNCTION__));
 
-  if (HeapGuardContext.DynamicActive) {
+  if (MemoryProtectionContext.DynamicActive) {
     if (mNonstopModeProtocol == NULL) {
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
@@ -1045,7 +1045,7 @@ UefiNullPointerDetection (
     return UNIT_TEST_PASSED;
   }
 
-  if (HeapGuardContext.TestProgress < 2) {
+  if (MemoryProtectionContext.TestProgress < 2) {
     //
     // Context.TestProgress indicates progress within this specific test.
     // 0 - Just started.
@@ -1054,11 +1054,11 @@ UefiNullPointerDetection (
     //
     // We need to indicate we are working on the next part of the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    if (HeapGuardContext.TestProgress == 1) {
+    if (MemoryProtectionContext.TestProgress == 1) {
       if (mFw->Title == NULL) {
         DEBUG ((DEBUG_ERROR, "%a - Should have failed \n", __FUNCTION__));
       }
@@ -1072,11 +1072,11 @@ UefiNullPointerDetection (
     //
     // At this point, the test has failed. Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 2);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 2);
 
   return UNIT_TEST_PASSED;
 } // UefiNullPointerDetection()
@@ -1087,13 +1087,13 @@ UefiNxStackGuard (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT8                    CodeRegionToCopyTo[DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE];
-  UINT8                    *CodeRegionToCopyFrom = (UINT8 *)DummyFunctionForCodeSelfTest;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  UINT8                           CodeRegionToCopyTo[DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE];
+  UINT8                           *CodeRegionToCopyFrom = (UINT8 *)DummyFunctionForCodeSelfTest;
 
   DEBUG ((DEBUG_INFO, "%a - NX Stack Guard\n", __FUNCTION__));
 
-  if (HeapGuardContext.DynamicActive) {
+  if (MemoryProtectionContext.DynamicActive) {
     if (mNonstopModeProtocol == NULL) {
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
@@ -1109,15 +1109,15 @@ UefiNxStackGuard (
     return UNIT_TEST_PASSED;
   }
 
-  if (HeapGuardContext.TestProgress < 1) {
+  if (MemoryProtectionContext.TestProgress < 1) {
     //
     // Context.TestProgress 0 indicates the test hasn't started yet.
     //
     // We need to indicate we are working on the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
     CopyMem (CodeRegionToCopyTo, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
     ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
@@ -1125,12 +1125,12 @@ UefiNxStackGuard (
     //
     // At this point, the test has failed. Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     UT_LOG_ERROR ("NX Stack Guard Test failed.");
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 1);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // UefiNxStackGuard()
@@ -1141,14 +1141,14 @@ UefiNxProtection (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  UINT64                   *ptr;
-  EFI_STATUS               Status;
-  UINT8                    *CodeRegionToCopyFrom = (UINT8 *)DummyFunctionForCodeSelfTest;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  UINT64                          *ptr;
+  EFI_STATUS                      Status;
+  UINT8                           *CodeRegionToCopyFrom = (UINT8 *)DummyFunctionForCodeSelfTest;
 
-  DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[HeapGuardContext.TargetMemoryType]));
+  DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]));
 
-  if (HeapGuardContext.DynamicActive) {
+  if (MemoryProtectionContext.DynamicActive) {
     if (mNonstopModeProtocol == NULL) {
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
@@ -1156,10 +1156,10 @@ UefiNxProtection (
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
     UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
 
-    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
+    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
 
     if (EFI_ERROR (Status)) {
-      UT_LOG_ERROR ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], Status);
+      UT_LOG_ERROR ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
       return UNIT_TEST_SKIPPED;
     } else {
       CopyMem (ptr, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
@@ -1174,20 +1174,20 @@ UefiNxProtection (
     return UNIT_TEST_PASSED;
   }
 
-  if (HeapGuardContext.TestProgress < 1) {
+  if (MemoryProtectionContext.TestProgress < 1) {
     //
     // Context.TestProgress 0 indicates the test hasn't started yet.
     //
     // We need to indicate we are working on the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)HeapGuardContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
+    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
 
     if (EFI_ERROR (Status)) {
-      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[HeapGuardContext.TargetMemoryType], Status);
+      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
       return UNIT_TEST_SKIPPED;
     } else {
       CopyMem (ptr, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
@@ -1197,12 +1197,12 @@ UefiNxProtection (
     //
     // At this point, the test has failed. Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     UT_LOG_ERROR ("NX Test failed.");
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 1);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // UefiNxProtection()
@@ -1213,10 +1213,10 @@ SmmPageGuard (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  EFI_STATUS               Status;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  EFI_STATUS                      Status;
 
-  if (HeapGuardContext.TestProgress < 2) {
+  if (MemoryProtectionContext.TestProgress < 2) {
     //
     // Context.TestProgress indicates progress within this specific test.
     // 0 - Just started.
@@ -1225,11 +1225,11 @@ SmmPageGuard (
     //
     // We need to indicate we are working on the next part of the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    Status = SmmMemoryProtectionsDxeToSmmCommunicate (HEAP_GUARD_TEST_PAGE, &HeapGuardContext);
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate (MEMORY_PROTECTION_TEST_PAGE, &MemoryProtectionContext);
     if (Status == EFI_NOT_FOUND) {
       UT_LOG_ERROR ("SMM test driver is not loaded.");
     } else {
@@ -1239,11 +1239,11 @@ SmmPageGuard (
     //
     // At this point, the test has failed. Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 2);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 2);
 
   return UNIT_TEST_PASSED;
 } // SmmPageGuard()
@@ -1254,10 +1254,10 @@ SmmPoolGuard (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  EFI_STATUS               Status;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  EFI_STATUS                      Status;
 
-  if (HeapGuardContext.TestProgress < NUM_POOL_SIZES) {
+  if (MemoryProtectionContext.TestProgress < NUM_POOL_SIZES) {
     //
     // Context.TestProgress indicates progress within this specific test.
     // The test progressively allocates larger areas to test the guard on.
@@ -1266,11 +1266,11 @@ SmmPoolGuard (
     //
     // We need to indicate we are working on the next part of the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    Status = SmmMemoryProtectionsDxeToSmmCommunicate (HEAP_GUARD_TEST_POOL, &HeapGuardContext);
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate (MEMORY_PROTECTION_TEST_POOL, &MemoryProtectionContext);
 
     if (Status == EFI_NOT_FOUND) {
       UT_LOG_ERROR ("SMM test driver is not loaded.");
@@ -1281,11 +1281,11 @@ SmmPoolGuard (
     //
     // At this point, the test has failed. Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 1);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // SmmPoolGuard()
@@ -1296,20 +1296,20 @@ SmmNullPointerDetection (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  HeapGuardContext = (*(HEAP_GUARD_TEST_CONTEXT *)Context);
-  EFI_STATUS               Status;
+  MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  EFI_STATUS                      Status;
 
-  if (HeapGuardContext.TestProgress < 1) {
+  if (MemoryProtectionContext.TestProgress < 1) {
     //
     // Context.TestProgress 0 indicates the test hasn't started yet.
     //
     // We need to indicate we are working on the test and save our progress.
     //
-    HeapGuardContext.TestProgress++;
+    MemoryProtectionContext.TestProgress++;
     SetBootNextDevice ();
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    Status = SmmMemoryProtectionsDxeToSmmCommunicate (HEAP_GUARD_TEST_NULL_POINTER, &HeapGuardContext);
+    Status = SmmMemoryProtectionsDxeToSmmCommunicate (MEMORY_PROTECTION_TEST_NULL_POINTER, &MemoryProtectionContext);
 
     if (Status == EFI_NOT_FOUND) {
       UT_LOG_ERROR ("SMM test driver is not loaded.");
@@ -1320,11 +1320,11 @@ SmmNullPointerDetection (
     //
     // At this point, the test has failed. Reset test progress so failure gets recorded.
     //
-    HeapGuardContext.TestProgress = 0;
-    SaveFrameworkState (&HeapGuardContext, sizeof (HEAP_GUARD_TEST_CONTEXT));
+    MemoryProtectionContext.TestProgress = 0;
+    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
   }
 
-  UT_ASSERT_TRUE (HeapGuardContext.TestProgress == 1);
+  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // SmmNullPointerDetection()
@@ -1341,15 +1341,15 @@ AddUefiNxTest (
   UNIT_TEST_SUITE_HANDLE  TestSuite
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  *HeapGuardContext = NULL;
-  UINT8                    Index;
-  CHAR8                    NameStub[]        = "Security.NxProtection.Uefi";
-  CHAR8                    DescriptionStub[] = "Execution of a page of the following memory type should fail. Memory type: ";
-  CHAR8                    *TestName         = NULL;
-  CHAR8                    *TestDescription  = NULL;
-  UINTN                    TestNameSize;
-  UINTN                    TestDescriptionSize;
-  BOOLEAN                  Dynamic = FALSE;
+  MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
+  UINT8                           Index;
+  CHAR8                           NameStub[]        = "Security.NxProtection.Uefi";
+  CHAR8                           DescriptionStub[] = "Execution of a page of the following memory type should fail. Memory type: ";
+  CHAR8                           *TestName         = NULL;
+  CHAR8                           *TestDescription  = NULL;
+  UINTN                           TestNameSize;
+  UINTN                           TestDescriptionSize;
+  BOOLEAN                         Dynamic = FALSE;
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
 
@@ -1365,10 +1365,10 @@ AddUefiNxTest (
     // Set memory type according to the bitmask for Dxe NX Memory Protection Policy.
     // The test progress should start at 0.
     //
-    HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
-    HeapGuardContext->TargetMemoryType = Index;
-    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
-    HeapGuardContext->DynamicActive    = Dynamic;
+    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext->TargetMemoryType = Index;
+    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->DynamicActive    = Dynamic;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = AllocateZeroPool (TestNameSize);
@@ -1376,7 +1376,7 @@ AddUefiNxTest (
     TestDescriptionSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestDescription     = (CHAR8 *)AllocateZeroPool (TestDescriptionSize);
 
-    if ((TestName != NULL) && (TestDescription != NULL) && (HeapGuardContext != NULL)) {
+    if ((TestName != NULL) && (TestDescription != NULL) && (MemoryProtectionContext != NULL)) {
       //
       // Name of the test is Security.PageGuard.Uefi + Memory Type Name (from MEMORY_TYPES)
       //
@@ -1389,7 +1389,7 @@ AddUefiNxTest (
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, DescriptionStub);
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, MEMORY_TYPES[Index]);
 
-      AddTestCase (TestSuite, TestDescription, TestName, UefiNxProtection, UefiNxProtectionPreReq, NULL, HeapGuardContext);
+      AddTestCase (TestSuite, TestDescription, TestName, UefiNxProtection, UefiNxProtectionPreReq, NULL, MemoryProtectionContext);
 
       FreePool (TestName);
       FreePool (TestDescription);
@@ -1405,15 +1405,15 @@ AddUefiPoolTest (
   UNIT_TEST_SUITE_HANDLE  TestSuite
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  *HeapGuardContext = NULL;
-  UINT8                    Index;
-  CHAR8                    NameStub[]        = "Security.PoolGuard.Uefi";
-  CHAR8                    DescriptionStub[] = "Accesses before/after the pool should hit a guard page. Memory type: ";
-  CHAR8                    *TestName         = NULL;
-  CHAR8                    *TestDescription  = NULL;
-  UINTN                    TestNameSize;
-  UINTN                    TestDescriptionSize;
-  BOOLEAN                  Dynamic = FALSE;
+  MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
+  UINT8                           Index;
+  CHAR8                           NameStub[]        = "Security.PoolGuard.Uefi";
+  CHAR8                           DescriptionStub[] = "Accesses before/after the pool should hit a guard page. Memory type: ";
+  CHAR8                           *TestName         = NULL;
+  CHAR8                           *TestDescription  = NULL;
+  UINTN                           TestNameSize;
+  UINTN                           TestDescriptionSize;
+  BOOLEAN                         Dynamic = FALSE;
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
 
@@ -1429,10 +1429,10 @@ AddUefiPoolTest (
     // Set memory type according to the Heap Guard Pool Type setting.
     // The test progress should start at 0.
     //
-    HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
-    HeapGuardContext->TargetMemoryType = Index;
-    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
-    HeapGuardContext->DynamicActive    = Dynamic;
+    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext->TargetMemoryType = Index;
+    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->DynamicActive    = Dynamic;
 
     //
     // Name of the test is Security.PoolGuard.Uefi + Memory Type Name (from MEMORY_TYPES)
@@ -1443,7 +1443,7 @@ AddUefiPoolTest (
     TestDescriptionSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestDescription     = (CHAR8 *)AllocateZeroPool (TestDescriptionSize);
 
-    if ((TestName != NULL) && (TestDescription != NULL) && (HeapGuardContext != NULL)) {
+    if ((TestName != NULL) && (TestDescription != NULL) && (MemoryProtectionContext != NULL)) {
       AsciiStrCatS (TestName, UNIT_TEST_MAX_STRING_LENGTH, NameStub);
       AsciiStrCatS (TestName, UNIT_TEST_MAX_STRING_LENGTH, MEMORY_TYPES[Index]);
 
@@ -1453,7 +1453,7 @@ AddUefiPoolTest (
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, DescriptionStub);
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, MEMORY_TYPES[Index]);
 
-      AddTestCase (TestSuite, TestDescription, TestName, UefiPoolGuard, UefiPoolGuardPreReq, NULL, HeapGuardContext);
+      AddTestCase (TestSuite, TestDescription, TestName, UefiPoolGuard, UefiPoolGuardPreReq, NULL, MemoryProtectionContext);
 
       FreePool (TestName);
       FreePool (TestDescription);
@@ -1469,15 +1469,15 @@ AddUefiPageTest (
   UNIT_TEST_SUITE_HANDLE  TestSuite
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  *HeapGuardContext = NULL;
-  UINT8                    Index;
-  CHAR8                    NameStub[]        = "Security.PageGuard.Uefi";
-  CHAR8                    DescriptionStub[] = "Accesses before and after an allocated page should hit a guard page. Memory type: ";
-  CHAR8                    *TestName         = NULL;
-  CHAR8                    *TestDescription  = NULL;
-  UINTN                    TestNameSize;
-  UINTN                    TestDescriptionSize;
-  BOOLEAN                  Dynamic = FALSE;
+  MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
+  UINT8                           Index;
+  CHAR8                           NameStub[]        = "Security.PageGuard.Uefi";
+  CHAR8                           DescriptionStub[] = "Accesses before and after an allocated page should hit a guard page. Memory type: ";
+  CHAR8                           *TestName         = NULL;
+  CHAR8                           *TestDescription  = NULL;
+  UINTN                           TestNameSize;
+  UINTN                           TestDescriptionSize;
+  BOOLEAN                         Dynamic = FALSE;
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
 
@@ -1493,10 +1493,10 @@ AddUefiPageTest (
     // Set memory type according to the Heap Guard Page Type setting.
     // The test progress should start at 0.
     //
-    HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
-    HeapGuardContext->TargetMemoryType = Index;
-    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
-    HeapGuardContext->DynamicActive    = Dynamic;
+    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext->TargetMemoryType = Index;
+    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->DynamicActive    = Dynamic;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
@@ -1504,7 +1504,7 @@ AddUefiPageTest (
     TestDescriptionSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestDescription     = (CHAR8 *)AllocateZeroPool (TestDescriptionSize);
 
-    if ((TestName != NULL) && (TestDescription != NULL) && (HeapGuardContext != NULL)) {
+    if ((TestName != NULL) && (TestDescription != NULL) && (MemoryProtectionContext != NULL)) {
       //
       // Name of the test is Security.PageGuard.Uefi + Memory Type Name (from MEMORY_TYPES)
       //
@@ -1517,7 +1517,7 @@ AddUefiPageTest (
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, DescriptionStub);
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, MEMORY_TYPES[Index]);
 
-      AddTestCase (TestSuite, TestDescription, TestName, UefiPageGuard, UefiPageGuardPreReq, NULL, HeapGuardContext);
+      AddTestCase (TestSuite, TestDescription, TestName, UefiPageGuard, UefiPageGuardPreReq, NULL, MemoryProtectionContext);
 
       FreePool (TestName);
       FreePool (TestDescription);
@@ -1533,14 +1533,14 @@ AddSmmPoolTest (
   UNIT_TEST_SUITE_HANDLE  TestSuite
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  *HeapGuardContext = NULL;
-  UINT8                    Index;
-  CHAR8                    NameStub[]        = "Security.PoolGuard.Smm";
-  CHAR8                    DescriptionStub[] = "Accesses before/after the pool should hit a guard page in SMM. Memory type: ";
-  CHAR8                    *TestName         = NULL;
-  CHAR8                    *TestDescription  = NULL;
-  UINTN                    TestNameSize;
-  UINTN                    TestDescriptionSize;
+  MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
+  UINT8                           Index;
+  CHAR8                           NameStub[]        = "Security.PoolGuard.Smm";
+  CHAR8                           DescriptionStub[] = "Accesses before/after the pool should hit a guard page in SMM. Memory type: ";
+  CHAR8                           *TestName         = NULL;
+  CHAR8                           *TestDescription  = NULL;
+  UINTN                           TestNameSize;
+  UINTN                           TestDescriptionSize;
 
   //
   // Need to generate a test case for each type of memory.
@@ -1550,9 +1550,9 @@ AddSmmPoolTest (
     // Set memory type according to the Heap Guard Pool Type setting.
     // The test progress should start at 0.
     //
-    HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
-    HeapGuardContext->TargetMemoryType = Index;
-    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext->TargetMemoryType = Index;
+    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
@@ -1560,7 +1560,7 @@ AddSmmPoolTest (
     TestDescriptionSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestDescription     = (CHAR8 *)AllocateZeroPool (TestDescriptionSize);
 
-    if ((TestName != NULL) && (TestDescription != NULL) && (HeapGuardContext != NULL)) {
+    if ((TestName != NULL) && (TestDescription != NULL) && (MemoryProtectionContext != NULL)) {
       //
       // Name of the test is Security.PoolGuard.Smm + Memory Type Name (from MEMORY_TYPES)
       //
@@ -1573,7 +1573,7 @@ AddSmmPoolTest (
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, DescriptionStub);
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, MEMORY_TYPES[Index]);
 
-      AddTestCase (TestSuite, TestDescription, TestName, SmmPoolGuard, SmmPoolGuardPreReq, NULL, HeapGuardContext);
+      AddTestCase (TestSuite, TestDescription, TestName, SmmPoolGuard, SmmPoolGuardPreReq, NULL, MemoryProtectionContext);
 
       FreePool (TestName);
       FreePool (TestDescription);
@@ -1589,14 +1589,14 @@ AddSmmPageTest (
   UNIT_TEST_SUITE_HANDLE  TestSuite
   )
 {
-  HEAP_GUARD_TEST_CONTEXT  *HeapGuardContext = NULL;
-  UINT8                    Index;
-  CHAR8                    NameStub[]        = "Security.PageGuard.Smm";
-  CHAR8                    DescriptionStub[] = "Accesses before and after an allocated page should hit a guard page in SMM. Memory type: ";
-  CHAR8                    *TestName         = NULL;
-  CHAR8                    *TestDescription  = NULL;
-  UINTN                    TestNameSize;
-  UINTN                    TestDescriptionSize;
+  MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
+  UINT8                           Index;
+  CHAR8                           NameStub[]        = "Security.PageGuard.Smm";
+  CHAR8                           DescriptionStub[] = "Accesses before and after an allocated page should hit a guard page in SMM. Memory type: ";
+  CHAR8                           *TestName         = NULL;
+  CHAR8                           *TestDescription  = NULL;
+  UINTN                           TestNameSize;
+  UINTN                           TestDescriptionSize;
 
   //
   // Need to generate a test case for each type of memory.
@@ -1606,9 +1606,9 @@ AddSmmPageTest (
     // Set memory type according to the Heap Guard Page Type setting.
     // The test progress should start at 0.
     //
-    HeapGuardContext                   =  (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
-    HeapGuardContext->TargetMemoryType = Index;
-    HeapGuardContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext->TargetMemoryType = Index;
+    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
@@ -1616,7 +1616,7 @@ AddSmmPageTest (
     TestDescriptionSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (DescriptionStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestDescription     = (CHAR8 *)AllocateZeroPool (TestDescriptionSize);
 
-    if ((TestName != NULL) && (TestDescription != NULL) && (HeapGuardContext != NULL)) {
+    if ((TestName != NULL) && (TestDescription != NULL) && (MemoryProtectionContext != NULL)) {
       //
       // Name of the test is Security.PageGuard.Smm + Memory Type Name (from MEMORY_TYPES)
       //
@@ -1629,7 +1629,7 @@ AddSmmPageTest (
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, DescriptionStub);
       AsciiStrCatS (TestDescription, UNIT_TEST_MAX_STRING_LENGTH, MEMORY_TYPES[Index]);
 
-      AddTestCase (TestSuite, TestDescription, TestName, SmmPageGuard, SmmPageGuardPreReq, NULL, HeapGuardContext);
+      AddTestCase (TestSuite, TestDescription, TestName, SmmPageGuard, SmmPageGuardPreReq, NULL, MemoryProtectionContext);
 
       FreePool (TestName);
       FreePool (TestDescription);
@@ -1641,7 +1641,7 @@ AddSmmPageTest (
 } // AddSmmPageTest()
 
 /**
-  HeapGuardTestAppEntryPoint
+  MemoryProtectionTestAppEntryPoint
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
   @param[in] SystemTable  A pointer to the EFI System Table.
@@ -1652,21 +1652,21 @@ AddSmmPageTest (
 **/
 EFI_STATUS
 EFIAPI
-HeapGuardTestAppEntryPoint (
+MemoryProtectionTestAppEntryPoint (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                  Status;
-  UNIT_TEST_FRAMEWORK_HANDLE  Fw           = NULL;
-  UNIT_TEST_SUITE_HANDLE      PageGuard    = NULL;
-  UNIT_TEST_SUITE_HANDLE      PoolGuard    = NULL;
-  UNIT_TEST_SUITE_HANDLE      NxProtection = NULL;
-  UNIT_TEST_SUITE_HANDLE      Misc         = NULL;
-  HEAP_GUARD_TEST_CONTEXT     *HeapGuardContext;
+  EFI_STATUS                      Status;
+  UNIT_TEST_FRAMEWORK_HANDLE      Fw           = NULL;
+  UNIT_TEST_SUITE_HANDLE          PageGuard    = NULL;
+  UNIT_TEST_SUITE_HANDLE          PoolGuard    = NULL;
+  UNIT_TEST_SUITE_HANDLE          NxProtection = NULL;
+  UNIT_TEST_SUITE_HANDLE          Misc         = NULL;
+  MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext;
 
-  HeapGuardContext                = (HEAP_GUARD_TEST_CONTEXT *)AllocateZeroPool (sizeof (HEAP_GUARD_TEST_CONTEXT));
-  HeapGuardContext->DynamicActive = FALSE;
+  MemoryProtectionContext                = (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+  MemoryProtectionContext->DynamicActive = FALSE;
 
   DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
 
@@ -1712,7 +1712,7 @@ HeapGuardTestAppEntryPoint (
   }
 
   if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ()) && !EFI_ERROR (GetNonstopProtocol ())) {
-    HeapGuardContext->DynamicActive = TRUE;
+    MemoryProtectionContext->DynamicActive = TRUE;
   }
 
   AddUefiPoolTest (PoolGuard);
@@ -1721,11 +1721,11 @@ HeapGuardTestAppEntryPoint (
   AddSmmPoolTest (PoolGuard);
   AddUefiNxTest (NxProtection);
 
-  AddTestCase (Misc, "Null pointer access should trigger a page fault", "Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, HeapGuardContext);
-  AddTestCase (Misc, "Null pointer access in SMM should trigger a page fault", "Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, HeapGuardContext);
-  AddTestCase (Misc, "Blowing the stack should trigger a page fault", "Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, HeapGuardContext);
-  AddTestCase (NxProtection, "Check hardware configuration of HardwareNxProtection bit", "Security.HeapGuardMisc.UefiHardwareNxProtectionEnabled", UefiHardwareNxProtectionEnabled, UefiHardwareNxProtectionEnabledPreReq, NULL, HeapGuardContext);
-  AddTestCase (NxProtection, "Stack NX Protection", "Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, NULL, NULL, HeapGuardContext);
+  AddTestCase (Misc, "Null pointer access should trigger a page fault", "Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, MemoryProtectionContext);
+  AddTestCase (Misc, "Null pointer access in SMM should trigger a page fault", "Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, MemoryProtectionContext);
+  AddTestCase (Misc, "Blowing the stack should trigger a page fault", "Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, MemoryProtectionContext);
+  AddTestCase (NxProtection, "Check hardware configuration of HardwareNxProtection bit", "Security.HeapGuardMisc.UefiHardwareNxProtectionEnabled", UefiHardwareNxProtectionEnabled, UefiHardwareNxProtectionEnabledPreReq, NULL, MemoryProtectionContext);
+  AddTestCase (NxProtection, "Stack NX Protection", "Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, NULL, NULL, MemoryProtectionContext);
 
   //
   // Install an interrupt handler to reboot on page faults.
@@ -1749,4 +1749,4 @@ EXIT:
   }
 
   return Status;
-} // HeapGuardTestAppEntryPoint()
+} // MemoryProtectionTestAppEntryPoint()

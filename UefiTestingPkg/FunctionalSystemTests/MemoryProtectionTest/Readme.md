@@ -1,4 +1,4 @@
-# Heap Guard Tests
+# Memory Protection Tests
 
 ## Copyright
 

@@ -1,4 +1,4 @@
-/** @file -- HeapGuardTestSmm.c
+/** @file -- MemoryProtectionTestSmm.c
 
 Tests for page guard, pool guard, and null pointer detection in SMM.
 
@@ -27,7 +27,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Protocol/SmmExceptionTestProtocol.h>
 
-#include "../HeapGuardTestCommon.h"
+#include "../MemoryProtectionTestCommon.h"
 
 // =============================================================================
 // TEST HELPERS
@@ -153,7 +153,7 @@ TailPageTest (
 **/
 VOID
 SmmPageGuard (
-  IN HEAP_GUARD_TEST_CONTEXT  *Context
+  IN MEMORY_PROTECTION_TEST_CONTEXT  *Context
   )
 {
   EFI_PHYSICAL_ADDRESS  ptr;
@@ -193,7 +193,7 @@ SmmPageGuard (
 **/
 VOID
 SmmPoolGuard (
-  IN HEAP_GUARD_TEST_CONTEXT  *Context
+  IN MEMORY_PROTECTION_TEST_CONTEXT  *Context
   )
 {
   EFI_PHYSICAL_ADDRESS  ptr;
@@ -227,7 +227,7 @@ SmmPoolGuard (
   }
 } // SmmPoolGuard()
 
-volatile HEAP_GUARD_TEST_CONTEXT  *mContext = NULL;
+volatile MEMORY_PROTECTION_TEST_CONTEXT  *mContext = NULL;
 
 /**
   Null Pointer Detection
@@ -236,7 +236,7 @@ volatile HEAP_GUARD_TEST_CONTEXT  *mContext = NULL;
 **/
 VOID
 SmmNullPointerDetection (
-  IN HEAP_GUARD_TEST_CONTEXT  *Context
+  IN MEMORY_PROTECTION_TEST_CONTEXT  *Context
   )
 {
   if (Context->TestProgress == 1) {
@@ -280,9 +280,9 @@ MemoryProtectionTestHandler (
   IN OUT UINTN       *CommBufferSize
   )
 {
-  EFI_STATUS                   Status;
-  UINTN                        TempCommBufferSize;
-  HEAP_GUARD_TEST_COMM_BUFFER  *CommParams;
+  EFI_STATUS                          Status;
+  UINTN                               TempCommBufferSize;
+  MEMORY_PROTECTION_TEST_COMM_BUFFER  *CommParams;
 
   DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
 
@@ -295,7 +295,7 @@ MemoryProtectionTestHandler (
 
   TempCommBufferSize = *CommBufferSize;
 
-  if (TempCommBufferSize != sizeof (HEAP_GUARD_TEST_COMM_BUFFER)) {
+  if (TempCommBufferSize != sizeof (MEMORY_PROTECTION_TEST_COMM_BUFFER)) {
     DEBUG ((DEBUG_ERROR, "%a: SMM Communication buffer size is invalid for this handler!\n", __FUNCTION__));
     return EFI_ACCESS_DENIED;
   }
@@ -308,22 +308,22 @@ MemoryProtectionTestHandler (
   //
   // Farm out the job to individual functions based on what was requested.
   //
-  CommParams         = (HEAP_GUARD_TEST_COMM_BUFFER *)CommBuffer;
+  CommParams         = (MEMORY_PROTECTION_TEST_COMM_BUFFER *)CommBuffer;
   CommParams->Status = EFI_SUCCESS;
   Status             = EFI_SUCCESS;
   switch (CommParams->Function) {
-    case HEAP_GUARD_TEST_POOL:
-      DEBUG ((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_POOL\n", __FUNCTION__));
+    case MEMORY_PROTECTION_TEST_POOL:
+      DEBUG ((DEBUG_ERROR, "%a - Function Requested - MEMORY_PROTECTION_TEST_POOL\n", __FUNCTION__));
       SmmPageGuard (&CommParams->Context);
       break;
 
-    case HEAP_GUARD_TEST_PAGE:
-      DEBUG ((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_PAGE\n", __FUNCTION__));
+    case MEMORY_PROTECTION_TEST_PAGE:
+      DEBUG ((DEBUG_ERROR, "%a - Function Requested - MEMORY_PROTECTION_TEST_PAGE\n", __FUNCTION__));
       SmmPoolGuard (&CommParams->Context);
       break;
 
-    case HEAP_GUARD_TEST_NULL_POINTER:
-      DEBUG ((DEBUG_ERROR, "%a - Function Requested - HEAP_GUARD_TEST_NULL_POINTER\n", __FUNCTION__));
+    case MEMORY_PROTECTION_TEST_NULL_POINTER:
+      DEBUG ((DEBUG_ERROR, "%a - Function Requested - MEMORY_PROTECTION_TEST_NULL_POINTER\n", __FUNCTION__));
       SmmNullPointerDetection (&CommParams->Context);
       break;
 
@@ -348,7 +348,7 @@ MemoryProtectionTestHandler (
 **/
 EFI_STATUS
 EFIAPI
-HeapGuardTestEntryPoint (
+MemoryProtectionTestEntryPoint (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -360,8 +360,8 @@ HeapGuardTestEntryPoint (
   // Register SMI handler.
   //
   DiscardedHandle = NULL;
-  Status          = gSmst->SmiHandlerRegister (MemoryProtectionTestHandler, &gHeapGuardTestSmiHandlerGuid, &DiscardedHandle);
+  Status          = gSmst->SmiHandlerRegister (MemoryProtectionTestHandler, &gMemoryProtectionTestSmiHandlerGuid, &DiscardedHandle);
   ASSERT_EFI_ERROR (Status);
 
   return Status;
-} // HeapGuardTestEntryPoint()
+} // MemoryProtectionTestEntryPoint()

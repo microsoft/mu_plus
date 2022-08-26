@@ -106,7 +106,7 @@
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditDriver.inf
   UefiTestingPkg/AuditTests/TpmEventLogAudit/TpmEventLogAuditTestApp.inf
   UefiTestingPkg/AuditTests/UefiVarLockAudit/UEFI/UefiVarLockAuditTestApp.inf
-  UefiTestingPkg/FunctionalSystemTests/HeapGuardTest/Smm/HeapGuardTestSmm.inf
+  UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/Smm/MemoryProtectionTestSmm.inf
   UefiTestingPkg/FunctionalSystemTests/MemmapAndMatTestApp/MemmapAndMatTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MorLockTestApp/MorLockTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/SmmPagingProtectionsTest/App/SmmPagingProtectionsTestApp.inf
@@ -118,7 +118,7 @@
 [Components.X64]
   # NOTE: These currently have source files that are only implemented for X64.
   #       If needed on IA32, should port the functions.
-  UefiTestingPkg/FunctionalSystemTests/HeapGuardTest/App/HeapGuardTestApp.inf
+  UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/App/MemoryProtectionTestApp.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf

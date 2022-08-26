@@ -1,4 +1,4 @@
-## @file HeapGuardTestApp.inf
+## @file MemoryProtectionTestApp.inf
 #
 # Tests for page guard, pool guard, NX protections, stack guard, and null pointer detection.
 ##
@@ -8,11 +8,11 @@
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = HeapGuardTestApp
+  BASE_NAME           = MemoryProtectionTestApp
   FILE_GUID           = 0C187938-97DE-4B98-AFBB-A71C43A55F0E
   VERSION_STRING      = 1.0
   MODULE_TYPE         = UEFI_APPLICATION
-  ENTRY_POINT         = HeapGuardTestAppEntryPoint
+  ENTRY_POINT         = MemoryProtectionTestAppEntryPoint
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -21,7 +21,7 @@
 #
 
 [Sources]
-  HeapGuardTestApp.c
+  MemoryProtectionTestApp.c
 
 [Sources.X64]
   X64/UefiHardwareNxProtection.c
