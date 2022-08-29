@@ -47,8 +47,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 VOID                                     *mPiSmmCommonCommBufferAddress = NULL;
 UINTN                                    mPiSmmCommonCommBufferSize;
 EFI_CPU_ARCH_PROTOCOL                    *mCpu = NULL;
-MM_MEMORY_PROTECTION_SETTINGS            gMmMps;
-DXE_MEMORY_PROTECTION_SETTINGS           gDxeMps;
+MM_MEMORY_PROTECTION_SETTINGS            mMmMps;
+DXE_MEMORY_PROTECTION_SETTINGS           mDxeMps;
 MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *mNonstopModeProtocol = NULL;
 
 /// ================================================================================================
@@ -179,8 +179,8 @@ FetchMemoryProtectionHobEntries (
   VOID        *Ptr1;
   VOID        *Ptr2;
 
-  ZeroMem (&gMmMps, sizeof (gMmMps));
-  ZeroMem (&gDxeMps, sizeof (gDxeMps));
+  ZeroMem (&mMmMps, sizeof (mMmMps));
+  ZeroMem (&mDxeMps, sizeof (mDxeMps));
 
   Ptr1 = GetFirstGuidHob (&gMmMemoryProtectionSettingsGuid);
   Ptr2 = GetFirstGuidHob (&gDxeMemoryProtectionSettingsGuid);
@@ -194,7 +194,7 @@ FetchMemoryProtectionHobEntries (
         ));
     } else {
       Status = EFI_SUCCESS;
-      CopyMem (&gMmMps, GET_GUID_HOB_DATA (Ptr1), sizeof (MM_MEMORY_PROTECTION_SETTINGS));
+      CopyMem (&mMmMps, GET_GUID_HOB_DATA (Ptr1), sizeof (MM_MEMORY_PROTECTION_SETTINGS));
     }
   }
 
@@ -207,7 +207,7 @@ FetchMemoryProtectionHobEntries (
         ));
     } else {
       Status = EFI_SUCCESS;
-      CopyMem (&gDxeMps, GET_GUID_HOB_DATA (Ptr2), sizeof (DXE_MEMORY_PROTECTION_SETTINGS));
+      CopyMem (&mDxeMps, GET_GUID_HOB_DATA (Ptr2), sizeof (DXE_MEMORY_PROTECTION_SETTINGS));
     }
   }
 
@@ -476,7 +476,7 @@ PoolTest (
   //
   // Check if guard page is going to be at the head or tail.
   //
-  if (gDxeMps.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL) {
+  if (mDxeMps.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL) {
     //
     // Get to the beginning of the page the pool tail is on.
     //
@@ -563,7 +563,7 @@ UefiHardwareNxProtectionEnabledPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (gDxeMps.NxProtectionPolicy.Data) {
+  if (mDxeMps.NxProtectionPolicy.Data) {
     return UNIT_TEST_PASSED;
   }
 
@@ -577,7 +577,7 @@ UefiNxStackPreReq (
   IN UNIT_TEST_CONTEXT           Context
   )
 {
-  if (!gDxeMps.SetNxForStack) {
+  if (!mDxeMps.SetNxForStack) {
     return UNIT_TEST_SKIPPED;
   }
   if (UefiHardwareNxProtectionEnabled(Context) != UNIT_TEST_PASSED) {
@@ -596,7 +596,7 @@ UefiNxProtectionPreReq (
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
-  if (!GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gDxeMps.NxProtectionPolicy)) {
+  if (!GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mDxeMps.NxProtectionPolicy)) {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
@@ -618,8 +618,8 @@ UefiPageGuardPreReq (
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
-  if (!(gDxeMps.HeapGuardPolicy.Fields.UefiPageGuard &&
-        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gDxeMps.HeapGuardPageType)))
+  if (!(mDxeMps.HeapGuardPolicy.Fields.UefiPageGuard &&
+        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mDxeMps.HeapGuardPageType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -637,8 +637,8 @@ UefiPoolGuardPreReq (
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
-  if (!(gDxeMps.HeapGuardPolicy.Fields.UefiPoolGuard &&
-        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gDxeMps.HeapGuardPoolType)))
+  if (!(mDxeMps.HeapGuardPolicy.Fields.UefiPoolGuard &&
+        GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mDxeMps.HeapGuardPoolType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -653,7 +653,7 @@ UefiStackGuardPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (!gDxeMps.CpuStackGuard) {
+  if (!mDxeMps.CpuStackGuard) {
     UT_LOG_WARNING ("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -667,7 +667,7 @@ UefiNullPointerPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (!gDxeMps.NullPointerDetectionPolicy.Fields.UefiNullDetection) {
+  if (!mDxeMps.NullPointerDetectionPolicy.Fields.UefiNullDetection) {
     UT_LOG_WARNING ("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -684,7 +684,7 @@ UefiNullPointerPreReq (
 //   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
 //   UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
-//   if (!GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gMmMps.NxProtectionPolicy)) {
+//   if (!GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mMmMps.NxProtectionPolicy)) {
 //     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
 //     return UNIT_TEST_SKIPPED;
 //   }
@@ -706,8 +706,8 @@ SmmPageGuardPreReq (
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMmMps.HeapGuardPolicy.Fields.MmPageGuard &&
-        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gMmMps.HeapGuardPageType)))
+  if (!(mMmMps.HeapGuardPolicy.Fields.MmPageGuard &&
+        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mMmMps.HeapGuardPageType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -725,8 +725,8 @@ SmmPoolGuardPreReq (
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
 
   UT_ASSERT_TRUE (MemoryProtectionContext.TargetMemoryType < MAX_UINTN);
-  if (!(gMmMps.HeapGuardPolicy.Fields.MmPoolGuard &&
-        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, gMmMps.HeapGuardPoolType)))
+  if (!(mMmMps.HeapGuardPolicy.Fields.MmPoolGuard &&
+        GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mMmMps.HeapGuardPoolType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -741,7 +741,7 @@ SmmNullPointerPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (!gMmMps.NullPointerDetectionPolicy) {
+  if (!mMmMps.NullPointerDetectionPolicy) {
     UT_LOG_WARNING ("This feature is disabled");
     return UNIT_TEST_SKIPPED;
   }
@@ -1367,7 +1367,7 @@ AddUefiNxTest (
     //
     MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     MemoryProtectionContext->TargetMemoryType = Index;
-    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
     MemoryProtectionContext->DynamicActive    = Dynamic;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
@@ -1431,7 +1431,7 @@ AddUefiPoolTest (
     //
     MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     MemoryProtectionContext->TargetMemoryType = Index;
-    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
     MemoryProtectionContext->DynamicActive    = Dynamic;
 
     //
@@ -1495,7 +1495,7 @@ AddUefiPageTest (
     //
     MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     MemoryProtectionContext->TargetMemoryType = Index;
-    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
     MemoryProtectionContext->DynamicActive    = Dynamic;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
@@ -1552,7 +1552,7 @@ AddSmmPoolTest (
     //
     MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     MemoryProtectionContext->TargetMemoryType = Index;
-    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
@@ -1608,7 +1608,7 @@ AddSmmPageTest (
     //
     MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     MemoryProtectionContext->TargetMemoryType = Index;
-    MemoryProtectionContext->GuardAlignment   = gDxeMps.HeapGuardPolicy.Fields.Direction;
+    MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
