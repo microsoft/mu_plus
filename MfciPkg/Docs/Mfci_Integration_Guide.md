@@ -36,11 +36,9 @@ INF  MfciPkg/MfciDxe/MfciDxe.inf
 ### DSC
 
 MfciPkg provides a ```.dsc.inc``` that can be ```!include``` in your platform DSC.
-To denote that MfciPkg is currently in Beta status, platforms must opt-in by defining ```OPT_INTO_MFCI_PRE_PRODUCTION = TRUE```
 An example follows:
 
 ```INI
-DEFINE OPT_INTO_MFCI_PRE_PRODUCTION = TRUE
 !include MfciPkg/MfciPkg.dsc.inc
 ```
 
