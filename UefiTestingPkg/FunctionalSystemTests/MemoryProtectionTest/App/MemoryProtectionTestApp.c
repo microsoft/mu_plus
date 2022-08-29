@@ -1711,8 +1711,31 @@ MemoryProtectionTestAppEntryPoint (
     goto EXIT;
   }
 
-  if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ()) && !EFI_ERROR (GetNonstopProtocol ())) {
-    MemoryProtectionContext->DynamicActive = TRUE;
+  // Check if the Project Mu page fault handler is installed. This handler will warm-reset on page faults
+  // unless the Nonstop Protocol is installed to clear intentional page faults.
+  if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ())) {
+    // Clear the memory protection early store in case a fault was previously tripped and was not cleared
+    MemProtExClearAll ();
+
+    // Check if the nonstop protocol is active
+    if (!EFI_ERROR (GetNonstopProtocol ())) {
+      MemoryProtectionContext->DynamicActive = TRUE;
+    } else {
+      DEBUG ((
+        DEBUG_WARN,
+        "MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL is not installed! Note that using "
+        "the protocol with this test can reduce execution time by over 98%%.\n"
+        ));
+    }
+  } else {
+    // Uninstall the existing page fault handler
+    mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, NULL);
+
+    // Install an interrupt handler to reboot on page faults.
+    if (EFI_ERROR (mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, InterruptHandler))) {
+      DEBUG ((DEBUG_ERROR, "Failed to install interrupt handler. Status = %r\n", Status));
+      goto EXIT;
+    }
   }
 
   AddUefiPoolTest (PoolGuard);
@@ -1726,16 +1749,6 @@ MemoryProtectionTestAppEntryPoint (
   AddTestCase (Misc, "Blowing the stack should trigger a page fault", "Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, MemoryProtectionContext);
   AddTestCase (NxProtection, "Check hardware configuration of HardwareNxProtection bit", "Security.HeapGuardMisc.UefiHardwareNxProtectionEnabled", UefiHardwareNxProtectionEnabled, UefiHardwareNxProtectionEnabledPreReq, NULL, MemoryProtectionContext);
   AddTestCase (NxProtection, "Stack NX Protection", "Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, NULL, NULL, MemoryProtectionContext);
-
-  //
-  // Install an interrupt handler to reboot on page faults.
-  //
-  Status = mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, InterruptHandler);
-
-  if (EFI_ERROR (Status) && EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ())) {
-    DEBUG ((DEBUG_ERROR, "Failed to install interrupt handler. Status = %r\n", Status));
-    goto EXIT;
-  }
 
   //
   // Execute the tests.
