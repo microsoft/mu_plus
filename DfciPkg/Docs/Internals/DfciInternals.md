@@ -16,16 +16,18 @@ in the **DfciPkg** located in the **mu_plus** repository <https://github.com/mic
 Identity and Auth Manager is responsible for managing the Identities.
 The initial state of the system has the Local User with full authentication to make changes to
 any of the available settings.
-There are six Identities known by DFCI:
+There are seven Identities known by DFCI:
 
-| Identity   | Use of the Identity |
-| ---        | --- |
-| Owner      | The system owner. Used by a controlling agent - that authorizes Use to control some settings |
-| User       | A delegated user.  Used by Microsoft Intune.
-| User1      | Not currently used |
-| User2      | Not currently used |
-| Local User | Not a certificate - just a known, default, user |
-| Zero Touch | Limited use Identity to allow an Enroll from a controlling agent.  The system has the Zero Touch Certificate installed during manufacturing.  Zero Touch cannot be enrolled through the normal enroll operation. Zero Touch has no use when a system is enrolled. |
+| Identity   | Owner Mask | Use of the Identity |
+| ---        | ---  | --- |
+| Owner      | 0x80 | The system owner. Used by a controlling agent - that authorizes Use to control some settings |
+| User       | 0x40 |  A delegated user.  Used by Microsoft Intune.
+| User1      | 0x20 |  Not currently used |
+| User2      | 0x10 |  Not currently used |
+| Zero Touch | 0x08 |  Limited use Identity to allow an Enroll from a controlling agent.  The system has the Zero Touch Certificate installed during manufacturing.  Zero Touch cannot be enrolled through the normal enroll operation. Zero Touch has no use when a system is enrolled. |
+| Reserved   | 0x04 |  |
+| Unsigned   | 0x02 |  Not a certificate - Limited use Identity used as the Identity processing unsigned settings packets |
+| Local User | 0x01 |  Not a certificate - just a known, default, user |
 
 The Identity Manager reads the incoming mailbox to process a Identity enroll, Identity
 certificate update, and Identity unenroll operations.
@@ -103,12 +105,13 @@ Sample permission packet:
 
            Sample DDS initial enroll permissions
 
-           Permission Mask - 128 = Owner
-                              64 = User
-                              32 = User1
-                              16 = User2
-                               8 = ZTD
-                               1 = Local User
+           Permission Mask - 128 (0x80) = Owner
+                              64 (0x40) = User
+                              32 (0x20) = User1
+                              16 (0x10) = User2
+                               8 (0X08) = ZTD
+                               2 (0X02) = Unsigned Settings
+                               1 (0x01) = Local User
            Owner keeps the following settings for itself
          -->
         <Permission>
@@ -261,13 +264,13 @@ For more information on groups, see [Dfci Groups](../PlatformIntegration/DfciGro
 | Return Code           | Reason to return this code |
 | ---                   | --- |
 | EFI_SUCCESS           | Operation of get or set was successful, and the returned value, if any, is valid |
-| EFI_NOT_FOUND         | Returned by DFCI if a setting provider is not found. [See notes](#-Notes-on-EFI_NOT_FOUND) |
-| EFI_UNSUPPORTED       | Particular operation is not supported. [See notes](#-Notes-on-EFI_NOT_FOUND) |
+| EFI_NOT_FOUND         | Returned by DFCI if a setting provider is not found. [See notes](#notes-on-efi-not-found) |
+| EFI_UNSUPPORTED       | Particular operation is not supported. [See notes](#notes-on-efi-unsupported) |
 | EFI_BUFFER_TOO_SMALL  | Get operation called with 0 size to get the size of a buffer to allocate |
 | EFI_INVALID_PARAMETER | Coding error that provided incorrect parameters |
 | EFI_OUT_OF_RESOURCES  | Possibly out of memory, or some other lower function error |
 
-### Notes on EFI_NOT_FOUND
+### Notes on EFI NOT FOUND
 
 There are two expected reasons a settings provider could return EFI_NOT_FOUND.
 The first is that the settings is a DFCI standard setting from a newer version of DFCI than was
@@ -289,7 +292,7 @@ EFI_NOT_FOUND because it lacks a DFCI version 2 Standard WPBT settings provider.
 Intune would observe the DFCI version, and report non-compliant, because the platform cannot
 manage or reliably report the status of the requested setting.
 
-### Notes on EFI_UNSUPPORTED
+### Notes on EFI UNSUPPORTED
 
 There are reasons for an operation to be not supported.
 One example is that a platform may provide a setting provider that has a setting that is always

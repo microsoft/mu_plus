@@ -481,7 +481,7 @@ SaveToFlash (
     PermEntry = (DFCI_PERM_INTERNAL_TABLE_ENTRY *)PermPtr;
   }
 
-  Status = gRT->GetTime (&(t), NULL);
+  Status = gRT->GetTime (&t, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - Failed to get time %r\n", __FUNCTION__, Status));
     // Leave time zeroed by allocate zero pool

@@ -543,7 +543,8 @@ ApplyNewIdentityPacket (
   IN       DFCI_INTERNAL_PACKET        *Data
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS            Status;
+  IDENTITY_CHANGE_TYPE  ChangeType;
 
   if ((This != &mApplyIdentityProtocol) || (Data == NULL)) {
     DEBUG ((DEBUG_ERROR, "%a - Bad parameters received.\n", __FUNCTION__));
@@ -638,6 +639,20 @@ ApplyNewIdentityPacket (
   }
 
   //
+  // 4.5 Ensure Unsigned Permissions are removed when transitioning from
+  //     unenrolled to enrolled.
+  //
+  if (Data->PayloadSize == 0) {
+    ChangeType = UNENROLL;
+  } else if ((Data->DfciIdentity == DFCI_IDENTITY_SIGNER_OWNER) &&
+             ((mInternalCertStore.PopulatedIdentities & DFCI_IDENTITY_SIGNER_OWNER) == 0))
+  {
+    ChangeType = FIRST_ENROLL;
+  } else {
+    ChangeType = ENROLL;
+  }
+
+  //
   // 5 - Apply the change
   //
   Status = ApplyProvisionData (Data);
@@ -653,8 +668,8 @@ ApplyNewIdentityPacket (
                                               mDfciSettingsPermissionProtocol,
                                               &(Data->AuthToken),
                                               Data->DfciIdentity,
-                                              (Data->PayloadSize != 0)
-                                              ); // Send TRUE for Enroll
+                                              ChangeType
+                                              );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: IdentityChange notification failed. Status = %r\n", __FUNCTION__, Status));
     Data->StatusCode = Status;

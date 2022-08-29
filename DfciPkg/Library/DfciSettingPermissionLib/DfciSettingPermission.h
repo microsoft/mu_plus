@@ -26,7 +26,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DfciSettingPermissionLib.h>
 #include <Library/DfciV1SupportLib.h>
 #include <Library/DfciXmlPermissionSchemaSupportLib.h>
+#include <Library/DxeServicesLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
@@ -38,6 +40,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Protocol/DfciAuthentication.h>
 #include <Protocol/DfciApplyPacket.h>
+#include <Protocol/DfciSettingPermissions.h>
 
 #include <Settings/DfciSettings.h>
 #include <Settings/DfciPrivateSettings.h>
@@ -51,6 +54,14 @@ typedef struct {
   DFCI_PERMISSION_MASK      PMask;
   DFCI_PERMISSION_MASK      DMask;
   UINT8                     IdSize;
+  UINT8                     MarkedForDeletion : 1;
+  UINT8                     Reserved7         : 1;
+  UINT8                     Reserved6         : 1;
+  UINT8                     Reserved5         : 1;
+  UINT8                     Reserved4         : 1;
+  UINT8                     Reserved3         : 1;
+  UINT8                     Reserved2         : 1;
+  UINT8                     Reserved1         : 1;
   CHAR8                     IdStore[];
 } DFCI_PERMISSION_ENTRY;
 
@@ -158,6 +169,18 @@ DeleteMarkedPermissionEntries (
   );
 
 /**
+ Delete Permission Entry for a given Id.
+
+ If doesn't exist return EFI_NOT_FOUND
+ **/
+EFI_STATUS
+EFIAPI
+DeletePermissionEntry (
+  IN CONST DFCI_PERMISSION_STORE  *Store,
+  IN DFCI_SETTING_ID_STRING       Id
+  );
+
+/**
  * Add a new, or update an existing permission entry
  *
  */
@@ -205,6 +228,18 @@ EFI_STATUS
 EFIAPI
 PopulateCurrentPermissions (
   BOOLEAN  Force
+  );
+
+EFI_STATUS
+EFIAPI
+AddUnsignedPermissionEntries (
+  IN DFCI_PERMISSION_STORE  *Store
+  );
+
+EFI_STATUS
+EFIAPI
+RemoveUnsignedPermissionEntries (
+  IN DFCI_PERMISSION_STORE  *Store
   );
 
 #endif // DFCI_SETTING_PERMISSION_H

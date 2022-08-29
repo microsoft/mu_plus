@@ -1,6 +1,6 @@
 # Identity and Authentication Manager
 
-Basic overview of the IdentityAndAuthManager module.  
+Basic overview of the IdentityAndAuthManager module.
 
 ## File Overview
 

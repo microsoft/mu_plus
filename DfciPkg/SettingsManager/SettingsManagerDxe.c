@@ -317,7 +317,13 @@ CheckAuthAndGetToken (
     }
   }
 
-  return mAuthProtocol->AuthWithSignedData (mAuthProtocol, SignedData, SignedDataLen, Signature, AuthToken);
+  if (Signature == NULL) {
+    Status = mAuthProtocol->AuthWithPW (mAuthProtocol, DFCI_AUTH_WITH_NO_PASSWORD_UNSIGNED, 0, AuthToken);
+  } else {
+    Status = mAuthProtocol->AuthWithSignedData (mAuthProtocol, SignedData, SignedDataLen, Signature, AuthToken);
+  }
+
+  return Status;
 }
 
 /**
