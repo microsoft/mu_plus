@@ -29,13 +29,7 @@ DxePagingAuditTestAppEntryPoint (
   IN     EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS  Status = EFI_SUCCESS;
-
-  DEBUG ((DEBUG_ERROR, "%a entered - %r\n", __FUNCTION__, Status));
-
   DumpPagingInfo (NULL, NULL);
-
-  DEBUG ((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));
 
   return EFI_SUCCESS;
 } // DxePagingAuditTestAppEntryPoint()
