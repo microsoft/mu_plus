@@ -203,7 +203,7 @@ LoadProvisionedData (
     }
     default:
       MaxCertsAllowed = 0;
-      DEBUG ((DEBUG_INFO, "Auth Manager Internal Var Version not recognized (%d).\n"));
+      DEBUG ((DEBUG_INFO, "Auth Manager Internal Var Version not recognized (%d).\n", Var->HeaderVersion));
       Status = EFI_INCOMPATIBLE_VERSION;
       goto CLEANUP;
       break;

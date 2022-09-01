@@ -1067,7 +1067,8 @@ ExtractConfig (
   DEBUG ((
     DEBUG_INFO,
     "%a: Request=%s\n",
-    __FUNCTION__
+    __FUNCTION__,
+    Request
     ));
 
   DEBUG ((

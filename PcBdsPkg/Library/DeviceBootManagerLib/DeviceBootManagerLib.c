@@ -188,7 +188,7 @@ MsPreBootChecks (
 
       Status = SystemPowerMitigate (PowerCaseBoot);
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "SystemPowerMitigate(Boot) failed - %r.  Shutdown now\n"));
+        DEBUG ((DEBUG_INFO, "SystemPowerMitigate(Boot) failed - %r.  Shutdown now\n", Status));
 
         PowerGood = FALSE;
         goto CleanUp;

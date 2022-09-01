@@ -88,7 +88,7 @@ FormatTimeStamp (
 /**
   Get Next Message Block.
 
-  Get the next content of a DEBUG(()) message from the in memory buffer.
+  Get the next content of a message from the in memory buffer.
 
   When the CurrentMessage structure is initialized to NULL, the first message is returned. While
   not expected during normal use, to start reading from the beginning of the log again, set the
@@ -171,7 +171,7 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
 /**
   Get Next Formatted line.
 
-  Get the next set of DEBUG(()) output characters up to and including the next \n.  The
+  Get the next set of output characters up to and including the next \n.  The
   message is formatted with a time stamp.
 
   When the LineEntry structure is initialized to NULL, the first message is returned. Each

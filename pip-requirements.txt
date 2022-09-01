@@ -16,3 +16,4 @@ edk2-pytool-library~=0.11.0
 edk2-pytool-extensions~=0.17.1
 edk2-basetools==0.1.13
 antlr4-python3-runtime==4.7.1
+regex
