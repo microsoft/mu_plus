@@ -154,6 +154,10 @@
   AdvLoggerPkg/Library/AssertTelemetryLib/AssertLib.inf
   AdvLoggerPkg/Library/AdvLoggerMmAccessLib/AdvLoggerMmAccessLib.inf
 
+[Components.AARCH64]
+  AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
+  AdvLoggerPkg/Library/AdvancedLoggerLib/MmCoreArm/AdvancedLoggerLib.inf
+
 [BuildOptions]
 #force deprecated interfaces off
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES

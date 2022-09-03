@@ -1,0 +1,50 @@
+## @file
+#  MM_STANDALONE ARM instance of the Advanced Logger library.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = MmAdvancedLoggerLib
+  MODULE_UNI_FILE                = AdvancedLoggerLib.uni
+  FILE_GUID                      = f86cf2d7-1355-44ad-9cab-90f3247e3d67
+  MODULE_TYPE                    = MM_STANDALONE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvancedLoggerLib | MM_CORE_STANDALONE MM_STANDALONE
+  PI_SPECIFICATION_VERSION       = 0x00010032
+
+#
+#  VALID_ARCHITECTURES           = AARCH64
+#
+
+[Sources]
+  AdvancedLoggerLib.c
+  ../AdvancedLoggerCommon.h
+  ../AdvancedLoggerCommon.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+  ArmPkg/ArmPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerHdwPortLib
+  BaseMemoryLib
+  DebugLib
+  SynchronizationLib
+  ArmMmuLib
+
+[Guids]
+  gAdvancedLoggerHobGuid
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
+
+[Depex]
+  TRUE

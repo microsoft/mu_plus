@@ -17,13 +17,16 @@ The following configurations are supported:
 | PEI      | Uses PeiCore and Pei AdvancedLoggerLib libraries.  Creates the Advanced Logger Hob if PcdAdvancedLoggerPeiInRAM is set. |
 | SEC      | Uses the Sec Advanced Logger Library. SEC requires a fixed load address, so it piggy backs on the Temporary RAM PCD information.  Produces a Fixed Address temporary RAM log.  When memory is added, the Sec Advanced Logger library converts the Temporary RAM logging information to the PEI Advanced Logger Hob. |
 | PEI64    | Uses Pei64 Advanced Logger Library. Requires the SEC fixed address temporary log information in order to log Pei64 bit DEBUG messages. |
+| MM       | Standalone MM - Loads during PEI phase. |
+| MMARM    | Standalone MM that loads prior to UEFI with a fixed memory block shared with UEFI. |
 
 PCD's used by Advanced Logger
 
 | PCD                                     | Function of the PCD|
 | ---                                     | --- |
 |PcdAdvancedLoggerForceEnable             | The default operation is to check if a Logs directory is present in the root of the filesystem.  If the UefiLogs directory is present, logging is enabled. When PcdAdvancedLoggerForceEnable is TRUE, and the device is not a USB device, a UefiLogs directory will be created and logging is enabled.  When logging is enabled, the proper log files will be created if not already preset.|
-|PcdAdvancedLoggerPeiInRAM                | For system that have memory at PeiCore entry. The full in memory log buffer if PcdAdvancedLoggerPages is allocated in the Pei Core constructor and PcdAdvancedLoggerPreMemPages is ignored.|
+|PcdAdvancedLoggerPeiInRAM                | For systems that have memory at PeiCore entry. The full in memory log buffer if PcdAdvancedLoggerPages is allocated in the Pei Core constructor and PcdAdvancedLoggerPreMemPages is ignored.|
+|PcdAdvancedLoggerFixedInRAM              | For systems that have a fixed memory buffer prior to UEFI. The full in memory log buffer is assumed.|
 |PcdAdvancedHdwLoggerDebugPrintErrorLevel | The standard debug flags filter which log messages are produced.  This PCD allow a subset of log messages to be forwarded to the Hdw Port Lib.|
 |PcdAdvancedHdwLoggerDisable              | Specifies when to disable writing to the Hdw Port.|
 |PcdAdvancedLoggerPreMemPages             | Amount of temporary RAM used for the debug log.|
@@ -46,12 +49,19 @@ The following libraries are used with AdvancedLogger:
 
 ## Platform notes
 
+### IA32/X64
+
 The SEC version of the Advanced Logger uses the temporary RAM block. This block is fixed in size
-and location, and these need to be adjusted to make room for the Advanced Logger buffer.
+and location, and this temporary RAM block needs to be adjusted to make room for the Advanced
+Logger buffer.
 There may be cases where the processor cache size is too small to enable the Advanced Logger
 during SEC.
 
-The following changes are needed in the .dsc (Example assumes IA32/X64)
+The PEI versions of Advanced Logger work together to save space.  Rather than have the Debug Print
+libraries linked in all the PEIM's, only PEI_CORE has the Debug Print libraries.
+The PEI version of AdvancedLoggerLib uses the IDT to access a pointer to the PEI_CORE routines.
+
+The following changes are needed in the .dsc for IA32/X64.
 
 ```inf
 [LibraryClasses.common]
@@ -103,6 +113,107 @@ The following changes should be in the family .dsc where the processor specific 
 ```inf
 [PcdsFixedAtBuild.common]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages|24
+
+  #Advanced Logger configuration
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase         | 0xFA000000 # Must be TemporaryRamBase
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerCarBase      | 0xFA200000 # Address for CAR memory
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages  | 256        # Size is 1MB
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages        | 1024       # Size is 4MB
+
+```
+
+### ARM with Security Processor
+
+#### UEFI
+
+In this configuration, the Advanced Logger memory buffer is preallocated and setup from the BL31
+(secure partition loader) at a known address.
+This simplifies SEC and PEI as memory has already been configured.
+
+Due to the memory block being at a known address, the SEC, PEI_CORE, and PEI modules link to
+the BaseArm version of AdvancedLoggerLib.
+While the BaseArm version includes the Debug Print libraries, it is assumed that there are few
+PEI components in the ARM with Security Processor configuration.
+
+```inf
+################################################################
+#
+# Advanced Logger Configurations
+#
+################################################################
+[LibraryClasses.common]
+  DebugLib|AdvLoggerPkg/Library/BaseDebugLibAdvancedLogger/BaseDebugLibAdvancedLogger.inf
+  AssertLib|AdvLoggerPkg/Library/AssertLib/AssertLib.inf
+  AdvancedLoggerHdwPortLib|AdvLoggerPkg/Library/AdvancedLoggerHdwPortLib/AdvancedLoggerHdwPortLib.inf
+  AdvancedLoggerAccessLib|AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
+
+[LibraryClasses.common.SEC]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
+  AssertLib|AdvLoggerPkg/Library/AssertLib/AssertLib.inf
+
+[LibraryClasses.common.PEI_CORE]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
+
+[LibraryClasses.common.PEIM]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf
+  DebugLib|AdvLoggerPkg/Library/PeiDebugLibAdvancedLogger/PeiDebugLibAdvancedLogger.inf
+
+[LibraryClasses.common.DXE_DRIVER, LibraryClasses.common.UEFI_DRIVER, LibraryClasses.common.UEFI_APPLICATION]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Dxe/AdvancedLoggerLib.inf
+
+[LibraryClasses.common.DXE_CORE]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/DxeCore/AdvancedLoggerLib.inf
+
+[LibraryClasses.common.DXE_RUNTIME_DRIVER]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Runtime/AdvancedLoggerLib.inf
+
+[PcdsFeatureFlag]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|FALSE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator|TRUE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM|TRUE
+
+  # Set AdvLogger to flush at ReadyToBoot (0x01) and at ExitBootServices (0x02).
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush|0x03
+```
+
+The following changes should be in the family .dsc where the processor specific changes are specified
+
+```inf
+[PcdsFixedAtBuild.common]
+  #Advanced Logger configuration
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase   | 0xFF622000 # Buffer address
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages  | 0x400      # Size is 4MB
+```
+
+#### MM Standalone Arm with security processor
+
+In this configuration, the MM code needs to initialize the common buffer that was allocated from
+the BL31 (secure partition loader) in order to provide log messages prior to UEFI starting.
+
+```inf
+[LibraryClasses.common]
+  DebugLib|AdvLoggerPkg/Library/BaseDebugLibAdvancedLogger/BaseDebugLibAdvancedLogger.inf
+  AssertLib|AdvLoggerPkg/Library/AssertLib/AssertLib.inf
+  AdvancedLoggerHdwPortLib|AdvLoggerPkg/Library/AdvancedLoggerHdwPortLib/AdvancedLoggerHdwPortLib.inf
+
+[LibraryClasses.common.MM_CORE_STANDALONE]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/MmCoreArm/AdvancedLoggerLib.inf
+
+[LibraryClasses.common.MM_STANDALONE]
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
+  AdvLoggerAccessLib|AdvLoggerPkg/Library/AdvLoggerMmAccessLib/AdvLoggerMmAccessLib.inf
+
+[PcdsFeatureFlag]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|FALSE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator|TRUE
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM|TRUE
+  # Set AdvLogger to flush at ReadyToBoot (0x01) and at ExitBootServices (0x02).
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerFlush|0x03
+
+[PcdsFixedAtBuild.common]
+  #Advanced Logger configuration
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase   | 0xFF622000 # Buffer address
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages  | 0x400      # Size is 4MB
 ```
 
 ## Advanced File Logger
@@ -120,7 +231,7 @@ These files are pre allocated at one time to reduce interference with other user
 To enable the Advanced File Logger, the following change is needed in the .dsc:
 
 ```inf
-[Components.<ArchOfDXE>]
+[Components.<YourFvDXE>]
   AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 ```
 

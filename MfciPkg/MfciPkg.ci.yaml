@@ -86,7 +86,8 @@
             "SERIALNUMBER",
             "VALIDATEBLOB",
             "malformatted",
-            "nonced"
+            "nonced",
+            "eku's"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
