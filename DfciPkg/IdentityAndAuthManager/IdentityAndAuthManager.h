@@ -32,7 +32,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseCryptLib.h>
 #include <Library/ZeroTouchSettingsLib.h>
 
-#include <Protocol/MuPkcs7.h>
+// #include <Protocol/MuPkcs7.h>
 #include <Protocol/DfciSettingPermissions.h>
 #include <Protocol/DfciSettingAccess.h>
 #include <Protocol/DfciApplyPacket.h>
