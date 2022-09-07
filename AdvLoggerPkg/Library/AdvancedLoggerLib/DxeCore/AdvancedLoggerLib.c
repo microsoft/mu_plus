@@ -140,7 +140,7 @@ AdvancedLoggerGetLoggerInfo (
     //
 
     if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-      mLoggerInfo = (ADVANCED_LOGGER_INFO *)FixedPcdGet64 (PcdAdvancedLoggerBase);
+      mLoggerInfo = (ADVANCED_LOGGER_INFO *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
     } else {
       GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
       if (GuidHob != NULL) {
