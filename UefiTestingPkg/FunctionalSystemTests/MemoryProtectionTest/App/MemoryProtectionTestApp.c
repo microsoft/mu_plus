@@ -601,6 +601,14 @@ UefiNxProtectionPreReq (
     return UNIT_TEST_SKIPPED;
   }
 
+  // Skip memory types which cannot be allocated
+  if ((MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_CONVENTIONAL) ||
+      (MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_PERSISTENT))
+  {
+    UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
+    return UNIT_TEST_SKIPPED;
+  }
+
   if (UefiHardwareNxProtectionEnabled (Context) != UNIT_TEST_PASSED) {
     UT_LOG_WARNING ("HardwareNxProtection bit not on. NX Test would not be accurate.");
     return UNIT_TEST_SKIPPED;
@@ -625,6 +633,14 @@ UefiPageGuardPreReq (
     return UNIT_TEST_SKIPPED;
   }
 
+  // Skip memory types which cannot be allocated
+  if ((MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_CONVENTIONAL) ||
+      (MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_PERSISTENT))
+  {
+    UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
+    return UNIT_TEST_SKIPPED;
+  }
+
   return UNIT_TEST_PASSED;
 } // UefiPageGuardPreReq()
 
@@ -641,6 +657,14 @@ UefiPoolGuardPreReq (
         GetDxeMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mDxeMps.HeapGuardPoolType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
+    return UNIT_TEST_SKIPPED;
+  }
+
+  // Skip memory types which cannot be allocated
+  if ((MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_CONVENTIONAL) ||
+      (MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_PERSISTENT))
+  {
+    UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
 
@@ -713,6 +737,14 @@ SmmPageGuardPreReq (
     return UNIT_TEST_SKIPPED;
   }
 
+  // Skip memory types which cannot be allocated
+  if ((MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_CONVENTIONAL) ||
+      (MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_PERSISTENT))
+  {
+    UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
+    return UNIT_TEST_SKIPPED;
+  }
+
   return UNIT_TEST_PASSED;
 } // SmmPageGuardPreReq()
 
@@ -729,6 +761,14 @@ SmmPoolGuardPreReq (
         GetMmMemoryTypeSettingFromBitfield ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, mMmMps.HeapGuardPoolType)))
   {
     UT_LOG_WARNING ("Protection for this memory type is disabled: %a", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
+    return UNIT_TEST_SKIPPED;
+  }
+
+  // Skip memory types which cannot be allocated
+  if ((MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_CONVENTIONAL) ||
+      (MemoryProtectionContext.TargetMemoryType == MEMORY_TYPE_PERSISTENT))
+  {
+    UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
   }
 
