@@ -146,13 +146,17 @@
   AdvLoggerPkg/Library/AdvancedLoggerLib/Smm/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/SmmCore/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvLoggerSmmAccessLib/AdvLoggerSmmAccessLib.inf
-  AdvLoggerPkg/UnitTests/LineParser/LineParserTest.inf
+  AdvLoggerPkg/UnitTests/LineParser/LineParserTestApp.inf
   AdvLoggerPkg/Library/AdvancedLoggerHdwPortLibNull/AdvancedLoggerHdwPortLibNull.inf
   AdvLoggerPkg/Library/AdvancedLoggerHdwPortLib/AdvancedLoggerHdwPortLib.inf
   AdvLoggerPkg/Library/AdvLoggerSerialPortLib/AdvLoggerSerialPortLib.inf
   AdvLoggerPkg/Library/AssertLib/AssertLib.inf
   AdvLoggerPkg/Library/AssertTelemetryLib/AssertLib.inf
   AdvLoggerPkg/Library/AdvLoggerMmAccessLib/AdvLoggerMmAccessLib.inf
+
+[Components.AARCH64]
+  AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
+  AdvLoggerPkg/Library/AdvancedLoggerLib/MmCoreArm/AdvancedLoggerLib.inf
 
 [BuildOptions]
 #force deprecated interfaces off

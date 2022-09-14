@@ -1,0 +1,35 @@
+## @file
+# PCD based instance to supply the target policy consumed
+# by MFCI policy modules.
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MfciRetrieveTargetPolicyLibPcd
+  FILE_GUID                      = 77AC6C18-A803-410D-BC55-626050BD253D
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MfciRetrieveTargetPolicyLib
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 IPF EBC ARM AARCH64
+#
+
+[Sources]
+  MfciRetrieveTargetPolicyLibPcd.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  PcdLib
+
+[Pcd]
+  gMfciPkgTokenSpaceGuid.SystemCapabilities   ## CONSUMES

@@ -495,7 +495,7 @@ DetermineLogFile (
     BufferSize = sizeof (FileIndex);
     Status     = File->Write (File, &BufferSize, (VOID *)&FileIndex);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, ": Failed to update debug log index file: %r !\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: Failed to update debug log index file: %r !\n", __FUNCTION__, Status));
     }
   }
 

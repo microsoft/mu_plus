@@ -12,6 +12,9 @@ parameters:
   build_pkgs: ''
   build_targets: ''
   build_archs: ''
+  has_ci_dependencies: false    # MU_CHANGE - Enable toggle for stuart_ci_build
+  extra_steps: []               # MU_CHANGE - needed for clang
+  build_args: '' # MU_CHANGE - add build arguments to support code coverage
 
 steps:
 - checkout: self
@@ -20,7 +23,7 @@ steps:
 
 - task: UsePythonVersion@0
   inputs:
-    versionSpec: '3.8.x'    # MU_CHANGE
+    versionSpec: '>=3.10.6'    # MU_CHANGE
     architecture: 'x64'
 
 - script: pip install -r pip-requirements.txt --upgrade
@@ -54,18 +57,27 @@ steps:
 # install spell check prereqs
 - template: spell-check-prereq-steps.yml
 
+# MU_CHANGE - Add MarkdownLint
 # install markdownlint check prereqs
 - template: markdownlint-check-prereq-steps.yml
+
+
+# MU_CHANGE - [start] need support for extra steps for clang
+# Extra steps if needed
+- ${{ parameters.extra_steps }}
+# MU_CHANGE [end]
+
 
 # Build repo
 # MU_CHANGE - We use CI dependencies as well as submodules.
 - task: CmdLine@1
-  displayName: Setup ${{ parameters.build_pkgs }} ${{ parameters.build_archs}}
+  displayName: Dependency Setup ${{ parameters.build_pkgs }} ${{ parameters.build_archs}}
   inputs:
     filename: stuart_ci_setup
     arguments: -c .pytool/CISettings.py -p $(pkgs_to_build) --force-git -t ${{ parameters.build_targets}} -a ${{ parameters.build_archs}} TOOL_CHAIN_TAG=${{ parameters.tool_chain_tag}}
-  condition: and(gt(variables.pkg_count, 0), succeeded())
+  condition: and(gt(variables.pkg_count, 0), succeeded(), eq('${{ parameters.has_ci_dependencies }}', 'true'))
 
+# Build repo
 - task: CmdLine@1
   displayName: Setup ${{ parameters.build_pkgs }} ${{ parameters.build_archs}}
   inputs:
@@ -80,19 +92,21 @@ steps:
     arguments: -c .pytool/CISettings.py -p $(pkgs_to_build) -t ${{ parameters.build_targets}} -a ${{ parameters.build_archs}} TOOL_CHAIN_TAG=${{ parameters.tool_chain_tag}}
   condition: and(gt(variables.pkg_count, 0), succeeded())
 
-# MU_CHANGE - We use binary BaseTools
+# MU_CHANGE [BEGIN] - We use binary BaseTools
 # build basetools
 #   do this after setup and update so that code base dependencies
 #   are all resolved.
 # - template: basetools-build-steps.yml
 #   parameters:
 #     tool_chain_tag: ${{ parameters.tool_chain_tag }}
+# MU_CHANGE [END]
 
 - task: CmdLine@1
   displayName: Build and Test ${{ parameters.build_pkgs }} ${{ parameters.build_archs}}
   inputs:
     filename: stuart_ci_build
-    arguments: -c .pytool/CISettings.py -p $(pkgs_to_build) -t ${{ parameters.build_targets}} -a ${{ parameters.build_archs}} TOOL_CHAIN_TAG=${{ parameters.tool_chain_tag}}
+    # MU_CHANGE - Add build arguments parameter
+    arguments: -c .pytool/CISettings.py -p $(pkgs_to_build) -t ${{ parameters.build_targets}} -a ${{ parameters.build_archs}} TOOL_CHAIN_TAG=${{ parameters.tool_chain_tag}} ${{ parameters.build_args}}
   condition: and(gt(variables.pkg_count, 0), succeeded())
 
 # Publish Test Results to Azure Pipelines/TFS
@@ -143,6 +157,8 @@ steps:
       TestSuites.xml
       **/BUILD_TOOLS_REPORT.html
       **/OVERRIDELOG.TXT
+      coverage.xml
+      coverage.html
     flattenFolders: true
   condition: succeededOrFailed()
 
@@ -154,3 +170,11 @@ steps:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)'
     artifactName: 'Build Logs $(System.JobName)'
   condition: succeededOrFailed()
+
+# MU_CHANGE - Publish the LCOV coverage files.
+- task: PublishCodeCoverageResults@1
+  condition: and(succeededOrFailed(), and(gt(variables.pkg_count, 0), contains('${{ parameters.build_args }}', 'CODE_COVERAGE=TRUE')))
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: 'Build/coverage.xml'
+    pathToSources: '$(Build.SourcesDirectory)'

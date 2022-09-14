@@ -1,0 +1,60 @@
+## @file
+# This module tests MFCI policy verification and apply
+# logic for root of trust based MfciDxe driver.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MfciVerifyPolicyAndChangeRoTHostTest
+  FILE_GUID                      = 7DF718CC-4648-4D24-9B14-75E1D4DD309E
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciVerifyPolicyAndChangeRoTHostTest.c
+  ../MfciDxeRoT.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MfciPkg/MfciPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  VariablePolicyHelperLib
+  MfciRetrievePolicyLib
+  MfciRetrieveTargetPolicyLib
+  ResetUtilityLib
+  UefiRuntimeServicesTableLib
+  MuTelemetryHelperLib
+
+[Protocols]
+  gMfciProtocolGuid                     ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid      ## CONSUMES
+  gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
+
+[Pcd]
+
+
+[Guids]
+  gMfciVendorGuid                     ## CONSUMES
+  gMsStartOfBdsNotifyGuid             ## CONSUMES
+  gEfiEndOfDxeEventGroupGuid          ## CONSUMES
+  gMuVarPolicyDxePhaseGuid            ## CONSUMES
+  gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES ## GUID ## Variable namespace
+  gMfciPolicyChangeResetGuid          ## CONSUMES
+  gMfciHobGuid                        ## CONSUMES

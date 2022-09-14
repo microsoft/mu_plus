@@ -986,7 +986,7 @@ InternalGetPersistedCapsuleData (
   // read in the file from the disk
   Status = File->Read (File, &CapsuleSize, CapsuleData);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[%a] - Failed to read capsule file\n"));
+    DEBUG ((DEBUG_ERROR, "[%a] - Failed to read capsule file\n", __FUNCTION__));
     goto Cleanup;
   }
 

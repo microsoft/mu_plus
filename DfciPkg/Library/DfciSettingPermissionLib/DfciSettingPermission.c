@@ -288,9 +288,9 @@ QueryPermission (
 EFI_STATUS
 EFIAPI
 IdentityChange (
-  IN  CONST DFCI_AUTH_TOKEN   *AuthToken,
-  IN        DFCI_IDENTITY_ID  CertIdentity,
-  IN        BOOLEAN           Enroll
+  IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
+  IN        DFCI_IDENTITY_ID      CertIdentity,
+  IN        IDENTITY_CHANGE_TYPE  ChangeType
   )
 {
   EFI_STATUS                Status;
@@ -304,7 +304,7 @@ IdentityChange (
   }
 
   // 1. If the action is not Enroll, do nothing as owner unenroll has already reset permissions.
-  if (!Enroll) {
+  if (ChangeType == UNENROLL) {
     return EFI_SUCCESS;
   }
 
@@ -320,12 +320,15 @@ IdentityChange (
     return EFI_ACCESS_DENIED;
   }
 
-  DEBUG ((DEBUG_INFO, "%a: Signer=0x%2.2x, Identity=0x%2.2x, Enroll=%d\n", __FUNCTION__, Properties.Identity, CertIdentity, Enroll));
+  DEBUG ((DEBUG_INFO, "%a: Signer=0x%2.2x, Identity=0x%2.2x, ChangeType=%d\n", __FUNCTION__, Properties.Identity, CertIdentity, ChangeType));
 
   // 3. See if Owner is being enrolled
   if (CertIdentity == DFCI_IDENTITY_SIGNER_OWNER) {
     //  Disallow any future ZTD signing while an owner is applied.
     Status = AddRequiredPermissionEntry (mPermStore, DFCI_PRIVATE_SETTING_ID__ZTD_KEY, DFCI_IDENTITY_INVALID, DFCI_PERMISSION_MASK__NONE);
+    if (ChangeType == FIRST_ENROLL) {
+      Status = RemoveUnsignedPermissionEntries (mPermStore);
+    }
   }
 
   // 4. When an Owner is enrolled and the signer is ZTD:

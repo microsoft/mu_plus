@@ -764,7 +764,7 @@ XmlTreeToString (
   *XmlString = '\0';  // set to null for ascii str cat
   Status     = _ToStringRecursively (Node, Size, XmlString, 0, Escaped);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a - Failed to convert xml node tree into string. %r\n", Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to convert xml node tree into string. %r\n", __FUNCTION__, Status));
     return Status;
   }
 

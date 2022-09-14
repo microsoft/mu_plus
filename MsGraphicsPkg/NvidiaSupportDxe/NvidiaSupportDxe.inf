@@ -1,0 +1,58 @@
+## @file  NvidiaSupportDxe.inf
+#
+#  This is a driver for working around a specific defect in the Nvidia Graphics Output Protocol.
+#
+#   For whatever reason, the Nvidia device is very slow to read from the frame buffer.  To get GOP
+#   performance, the Nvidia GOP caches the frame buffer.  When Bitlocker PIN prompt writes to the
+#   display using frame buffer writes, the Nvidia GOP doesn't know this happened. Later, when the
+#   OSK or mouse pointer cod uses GOP to capture the current display, the GOP read returns the
+#   stale cache data.  The effect is the mouse move deposit mouse pointer rectangles of the gray
+#   UEFI background, and not the blue Bitlocker menu.  The OSK will leave gray rectangles.
+#
+#  Copyright (C) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = NvidiaSupportDxe
+  FILE_GUID                      = 5021d2ae-5b56-470b-a330-ade576830b4a
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = NvidiaSupportDxeEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  NvidiaSupportDxe.c
+  NvidiaSupportDxe.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  FrameBufferBltLib
+  MemoryAllocationLib
+  PrintLib
+  SafeIntLib
+  TimerLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+
+[Guids]
+  gEfiEventReadyToBootGuid
+
+[Pcd]
+  gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
+
+[Depex]
+  AFTER gNvidiaGop

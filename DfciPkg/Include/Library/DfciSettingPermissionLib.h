@@ -12,6 +12,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef __DFCI_SETTING_PERMISSION_LIB_H__
 #define __DFCI_SETTING_PERMISSION_LIB_H__
 
+#include <Protocol/DfciSettingPermissions.h>
+
+#include <Library/DfciUiSupportLib.h>
+
 /**
 Return if the User Identified by AuthToken
 has write permission to the setting identified
@@ -66,9 +70,9 @@ QueryPermission (
 EFI_STATUS
 EFIAPI
 IdentityChange (
-  IN  CONST DFCI_AUTH_TOKEN   *AuthToken,
-  IN        DFCI_IDENTITY_ID  CertIdentity,
-  IN        BOOLEAN           Enroll
+  IN  CONST DFCI_AUTH_TOKEN       *AuthToken,
+  IN        DFCI_IDENTITY_ID      CertIdentity,
+  IN        IDENTITY_CHANGE_TYPE  ChangeType
   );
 
 //

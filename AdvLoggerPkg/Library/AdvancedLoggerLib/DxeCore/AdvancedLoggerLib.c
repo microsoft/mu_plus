@@ -33,6 +33,7 @@
 STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo = NULL;
 STATIC UINT32                mBufferSize  = 0;
 STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress  = 0;
+STATIC BOOLEAN               mInitialized = FALSE;
 
 VOID
 EFIAPI
@@ -111,12 +112,8 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mBufferSize == 0) {
-    mBufferSize = mLoggerInfo->LogBufferSize;
-  } else {
-    if (mLoggerInfo->LogBufferSize != mBufferSize) {
-      return FALSE;
-    }
+  if (mLoggerInfo->LogBufferSize != mBufferSize) {
+    return FALSE;
   }
 
   return TRUE;
@@ -135,26 +132,34 @@ AdvancedLoggerGetLoggerInfo (
   EFI_HOB_GUID_TYPE    *GuidHob;
   ADVANCED_LOGGER_PTR  *LogPtr;
 
-  if (mLoggerInfo == NULL) {
+  if (!mInitialized) {
+    mInitialized = TRUE;
+
     //
     // Locate the Logger Information block.
     //
-    GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
-    if (GuidHob != NULL) {
-      LogPtr      = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
-      mLoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
-      if (!mLoggerInfo->HdwPortInitialized) {
-        AdvancedLoggerHdwPortInitialize ();
-        mLoggerInfo->HdwPortInitialized = TRUE;
-      }
 
-      if (mLoggerInfo != NULL) {
-        mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+    if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+      mLoggerInfo = (ADVANCED_LOGGER_INFO *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
+    } else {
+      GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
+      if (GuidHob != NULL) {
+        LogPtr      = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
+        mLoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
+        if (!mLoggerInfo->HdwPortInitialized) {
+          AdvancedLoggerHdwPortInitialize ();
+          mLoggerInfo->HdwPortInitialized = TRUE;
+        }
       }
+    }
+
+    if (mLoggerInfo != NULL) {
+      mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+      mBufferSize = mLoggerInfo->LogBufferSize;
     }
   }
 
-  if (!ValidateInfoBlock ()) {
+  if (((mLoggerInfo) != NULL) && !ValidateInfoBlock ()) {
     mLoggerInfo = NULL;
   }
 

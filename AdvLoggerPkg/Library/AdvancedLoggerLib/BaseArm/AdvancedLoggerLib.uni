@@ -1,0 +1,17 @@
+// /** @file
+// Base Arm Instance of Advanced Logger Library.
+//
+// Obtains the AdvLogger memory location.
+//
+//
+// Copyright (c) Microsoft Corporation
+//
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+// **/
+
+
+#string STR_MODULE_ABSTRACT             #language en-US "Base Arm Instance of AdvancedLoggerLib"
+
+#string STR_MODULE_DESCRIPTION          #language en-US "Obtains access to the logger buffer."
+

@@ -1,0 +1,50 @@
+## @file MemoryProtectionTestSmm.inf
+#
+# Tests for page guard, pool guard, and null pointer detection in SMM.
+##
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MemoryProtectionTestSmm
+  FILE_GUID                      = 4AFD1797-7010-493F-B4E2-2EE6A2AFF4CB
+  MODULE_TYPE                    = DXE_SMM_DRIVER
+  VERSION_STRING                 = 1.0
+  PI_SPECIFICATION_VERSION       = 0x0001000A
+  ENTRY_POINT                    = MemoryProtectionTestEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+
+[Sources]
+  MemoryProtectionTestSmm.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+  SmmServicesTableLib
+  DebugLib
+  SmmMemLib
+  PcdLib
+  BaseMemoryLib
+  UefiBootServicesTableLib
+  HobLib
+
+
+[Protocols]
+  gSmmExceptionTestProtocolGuid           ## CONSUMES
+[Guids]
+  gMmMemoryProtectionSettingsGuid
+
+[Depex]
+  gSmmExceptionTestProtocolGuid

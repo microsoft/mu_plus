@@ -32,6 +32,7 @@
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
+            "MsCorePkg/MsCorePkg.dec",
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec",
             "ShellPkg/ShellPkg.dec"
         ],

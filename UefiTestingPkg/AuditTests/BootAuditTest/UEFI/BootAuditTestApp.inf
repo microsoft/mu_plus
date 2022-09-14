@@ -22,7 +22,7 @@
 #
 
 [Sources]
-  BootAuditTest.c
+  BootAuditTestApp.c
 
 [Packages]
   MdePkg/MdePkg.dec

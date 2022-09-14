@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    @file
+
+    Sample Unsigned Permission file.  The following settings will be allowed to be updated
+    using unsigned settings packets.  This file must be customized for every platform, and
+    included in the platform .fdf file like:
+
+    FILE FREEFORM = PCD(gDfciPkgTokenSpaceGuid.PcdUnsignedPermissionsFile) {
+      SECTION RAW = YourPlatform/Somewhere/UnsignedPermissions.xml
+    }
+
+    Copyright (c), Microsoft Corporation
+
+NOTE:
+    None of the Permission Masks or the Delegated Masks are actually used.  However, they
+    must be present for the parser.  This include Default, Delegated, Append, PMask, and DMask
+    values. While this .xml file shows the actual values, they are not from this file.
+ -->
+<PermissionsPacket xmlns="urn:UefiSettings-Schema">
+    <Permissions Default="129" Delegated="192" Append="False">
+        <Permission>
+            <Id>Device.PlatformSetting1.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting2.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting3.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting4.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting5.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting6.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting7.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting8.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting9.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Surface.PlatformSetting10.Scenario</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+  </Permissions>
+</PermissionsPacket>

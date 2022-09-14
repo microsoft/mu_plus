@@ -58,7 +58,7 @@ DfciConvertToCHAR16 (
 
   Status = AsciiStrToUnicodeStrS (Text8, WideString, WideStringLen);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Unable to convert Ascii to Unicode. Code=%r\n"));
+    DEBUG ((DEBUG_ERROR, "Unable to convert Ascii to Unicode. Code=%r\n", Status));
     FreePool (WideString);
     return Status;
   }

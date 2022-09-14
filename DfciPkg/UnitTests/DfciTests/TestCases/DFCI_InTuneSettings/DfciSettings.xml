@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    @file
+
+    Sample DFCI Unsigned settings
+
+    Copyright (c), Microsoft Corporation
+
+ -->
+<SettingsPacket xmlns="urn:UefiSettings-Schema">
+    <CreatedBy>DFCI Tester</CreatedBy>
+    <CreatedOn>2022-05-02 10:22:00</CreatedOn>
+    <Version>2</Version>
+    <LowestSupportedVersion>2</LowestSupportedVersion>
+    <Settings>
+      <Setting>
+          <Id>Dfci.OnboardRadios.Enable</Id>
+          <Value>Disabled</Value>
+      </Setting>
+      <Setting>
+          <Id>Dfci.BootExternalMedia.Enable</Id>
+          <Value>Disabled</Value>
+      </Setting>
+      <Setting>
+          <Id>Dfci3.OnboardWpbt.Enable</Id>
+          <Value>Disabled</Value>
+      </Setting>
+      <Setting>
+          <Id>Dfci3.ProcessorSMT.Enable</Id>
+          <Value>Disabled</Value>
+      </Setting>
+      <Setting>
+          <Id>Dfci3.AssetTag.String</Id>
+          <Value>DFCI.LAB.001234</Value>
+      </Setting>
+    </Settings>
+</SettingsPacket>

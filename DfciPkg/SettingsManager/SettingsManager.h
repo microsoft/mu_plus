@@ -295,7 +295,7 @@ SystemSettingPermissionIdentityChange (
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
   IN  CONST DFCI_AUTH_TOKEN                    *AuthToken,
   IN        DFCI_IDENTITY_ID                   CertIdentity,
-  IN        BOOLEAN                            Enroll
+  IN        IDENTITY_CHANGE_TYPE               ChangeType
   );
 
 // functions to support internal data store management

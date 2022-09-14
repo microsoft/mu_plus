@@ -131,6 +131,7 @@
   PcBdsPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
   PcBdsPkg/Library/UpdateFacsHardwareSignatureLib/UpdateFacsHardwareSignatureLib.inf
   PcBdsPkg/MsBootPolicy/MsBootPolicy.inf
+  PcBdsPkg/ResetIfBootNextFailsDxe/ResetIfBootNextFailsDxe.inf
 
 [BuildOptions]
 #force deprecated interfaces off

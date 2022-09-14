@@ -26,7 +26,7 @@ writes this data to files and then that content is used by the windows scripts.
 ## DxePagingAudit
 
 The Dxe version of paging audit driver/shell app intends to inspect all 4 levels of page
-tables and their corresponding Read/Write/Executable permissions. The driver/shell app will
+tables and their corresponding Read/Write/Execute/Present attributes. The driver/shell app will
 collect necessary memory information from platform environment, then iterate through each
 page entries and log them on to available SimpleFileSystem. The collected *.dat files can be
 parsed using Windows\PagingReportGenerator.py.
@@ -59,19 +59,19 @@ First, for the SMM driver and app you need to add them to your DSC file for your
 ```text
 [Components.X64]
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditDriver.inf
-  UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditApp.inf
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
 ```
 
 Next, you must add the SMM driver to a firmware volume in your FDF that can dispatch SMM modules.
 
 ```text
-INF UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditApp.inf
+INF UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditDriver.inf
 ```
 
 Third, after compiling your new firmware you must:
 
 1. Flash that image on the system.
-2. Copy the SmmPagingAuditApp.efi to a USB key
+2. Copy the SmmPagingAuditTestApp.efi to a USB key
 
 Then, boot your system running the new firmware to the shell and run the app. The tool will create a set of *.dat files on
 the same USB key.
@@ -114,22 +114,22 @@ command for detailed script instruction:
 
 6. Double-click the HTML output file and check your results.
 
-#### DxePagingAuditApp
+#### DxePagingAuditTestApp
 
 1. Add the following entry to platform dsc file:
 
     ```text
     [Components.X64]
-        UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditApp.inf
+        UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf
     ```
 
-2. Compile the newly added application and copy DxePagingAuditApp.efi to a USB key.
+2. Compile the newly added application and copy DxePagingAuditTestApp.efi to a USB key.
 3. Boot your system to the shell with the USB plugged in. If the USB disk is `FS0:\`, the files
 should be in `FS1:\\`. Copy them to the flash drive:
 
     ```cmd
     FS0:\
-    DxePagingAuditApp.efi
+    DxePagingAuditTestApp.efi
     copy FS1:\*.dat FS0:\
     ```
 

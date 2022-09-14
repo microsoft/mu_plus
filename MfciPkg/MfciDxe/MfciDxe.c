@@ -569,6 +569,114 @@ VarPolicyCallback (
 }
 
 /**
+ * Validate blob on each certificate from preset XDR buffer.
+ *
+ * @param SignedPolicy        Pointer to hold the policy buffer to be validated.
+ * @param SignedPolicySize    Size of SignedPolicy, in bytes.
+ * @param Certificates        Pointer to hold the XDR formatted buffer of certificates.
+ * @param CertificatesSize    Size of Certificates, in bytes.
+ *
+ * @retval EFI_SUCCESS        The one certificate from Certificate is valid for input policy validation.
+ * @retval EFI_ABORTED        SignedPolicy is null data or at least one certificate from incoming Certificates is
+ *                            malformatted.
+ * @retval Others             Other errors from the underlying ValidateBlob function.
+ */
+EFI_STATUS
+ValidateBlobWithXdrCertificates (
+  IN CONST UINT8  *SignedPolicy,
+  IN UINTN        SignedPolicySize,
+  IN CONST UINT8  *Certificates,
+  IN UINTN        CertificatesSize
+  )
+{
+  EFI_STATUS   Status;
+  CONST UINT8  *PublicKeyDataXdr;
+  CONST UINT8  *PublicKeyDataCurrent;
+  CONST UINT8  *PublicKeyDataXdrEnd;
+  CONST UINT8  *PublicKeyData;
+  UINTN        PublicKeyDataLength;
+  CHAR8        *RequiredEKUs;
+  UINTN        Index;
+
+  if ((SignedPolicy == NULL) || (SignedPolicySize == 0)) {
+    DEBUG ((DEBUG_ERROR, "Incoming signed policy buffer is invalid, aborting validation!\n"));
+    Status = EFI_ABORTED;
+    goto Exit;
+  }
+
+  // Initialize configuration from PCDs, consider moving elsewhere and only initializing if there is a blob to validate
+  RequiredEKUs = (CHAR8 *)FixedPcdGetPtr (PcdMfciPkcs7RequiredLeafEKU);
+
+  // below is inspired/borrowed from FmpDxe.c
+  PublicKeyDataXdr    = Certificates;
+  PublicKeyDataXdrEnd = PublicKeyDataXdr + CertificatesSize;
+
+  if ((PublicKeyDataXdr == NULL) || ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd)) {
+    DEBUG ((DEBUG_ERROR, "Pcd PcdMfciPkcs7CertBufferXdr NULL or invalid size\n"));
+    Status = EFI_ABORTED;
+    goto Exit;
+  }
+
+  PublicKeyDataCurrent = PublicKeyDataXdr;
+  //
+  // Try each key from PcdFmpDevicePkcs7CertBufferXdr
+  //
+  for (Index = 1; PublicKeyDataCurrent < PublicKeyDataXdrEnd; Index++) {
+    DEBUG ((
+      DEBUG_INFO,
+      "%a: Certificate #%d [%p..%p].\n",
+      __FUNCTION__,
+      Index,
+      PublicKeyDataCurrent,
+      PublicKeyDataXdrEnd
+      ));
+
+    if ((PublicKeyDataCurrent + sizeof (UINT32)) > PublicKeyDataXdrEnd) {
+      //
+      // Key data extends beyond end of PCD
+      //
+      DEBUG ((DEBUG_ERROR, "%a: Certificate size extends beyond end of PCD, skipping it.\n", __FUNCTION__));
+      Status = EFI_ABORTED;
+      goto Exit;
+    }
+
+    // Read key length stored in big-endian format
+    //
+    PublicKeyDataLength = SwapBytes32 (*(UINT32 *)(PublicKeyDataCurrent));
+    //
+    // Point to the start of the key data
+    //
+    PublicKeyData = PublicKeyDataCurrent + sizeof (UINT32);
+
+    // Length + ALIGN_VALUE(Length, 4) for 4-byte alignment (XDR standard).
+    if ((PublicKeyData + ALIGN_VALUE (PublicKeyDataLength, 4)) > PublicKeyDataXdrEnd) {
+      DEBUG ((
+        DEBUG_ERROR,
+        "%a - PcdMfciPkcs7CertBufferXdr size incorrect: PublicKeyData(0x%x) PublicKeyDataLength(0x%x) PublicKeyDataXdrEnd(0x%x)",
+        __FUNCTION__,
+        PublicKeyData,
+        PublicKeyDataLength,
+        PublicKeyDataXdrEnd
+        ));
+      Status = EFI_ABORTED;
+      goto Exit;
+    }
+
+    Status = ValidateBlob (SignedPolicy, SignedPolicySize, PublicKeyData, PublicKeyDataLength, RequiredEKUs);
+    if (!EFI_ERROR (Status)) {
+      break;
+    }
+
+    PublicKeyDataCurrent = PublicKeyData + PublicKeyDataLength;
+    PublicKeyDataCurrent = (UINT8 *)ALIGN_POINTER (PublicKeyDataCurrent, sizeof (UINT32));
+  }
+
+  // above is inspired/borrowed from FmpDxe.c
+Exit:
+  return Status;
+}
+
+/**
  * Executes after DXE modules get opportunity to publish the OEM, model, SN, ... variables that
  * are used for per-device targeting of policies.
  * Always re-authenticate any policy that is currently installed.  Then check if a new policy
@@ -603,11 +711,6 @@ VerifyPolicyAndChange (
   UINTN             TargetBlobSize;
   UINT64            TargetNonce;
   MFCI_POLICY_TYPE  BlobPolicy;
-  UINT8             *PublicKeyDataXdr;
-  UINT8             *PublicKeyDataXdrEnd;
-  UINT8             *PublicKeyData;
-  UINTN             PublicKeyDataLength;
-  CHAR8             *RequiredEKUs;
 
   DEBUG ((DEBUG_INFO, "MfciDxe: %a() - Enter\n", __FUNCTION__));
 
@@ -622,37 +725,6 @@ VerifyPolicyAndChange (
       goto Exit;
     }
   }
-
-  // Initialize configuration from PCDs, consider moving elsewhere and only initializing if there is a blob to validate
-  RequiredEKUs = (CHAR8 *)FixedPcdGetPtr (PcdMfciPkcs7RequiredLeafEKU);
-
-  // below is inspired/borrowed from FmpDxe.c
-  PublicKeyDataXdr    = FixedPcdGetPtr (PcdMfciPkcs7CertBufferXdr);
-  PublicKeyDataXdrEnd = PublicKeyDataXdr + FixedPcdGetSize (PcdMfciPkcs7CertBufferXdr);
-
-  if ((PublicKeyDataXdr == NULL) || ((PublicKeyDataXdr + sizeof (UINT32)) > PublicKeyDataXdrEnd)) {
-    DEBUG ((DEBUG_ERROR, "Pcd PcdMfciPkcs7CertBufferXdr NULL or invalid size\n"));
-    Status = EFI_ABORTED;
-    goto Exit;
-  }
-
-  // Read key length stored in big-endian format
-  //
-  PublicKeyDataLength = SwapBytes32 (*(UINT32 *)(PublicKeyDataXdr));
-  //
-  // Point to the start of the key data
-  //
-  PublicKeyData = PublicKeyDataXdr + sizeof (UINT32);
-
-  // Only 1 certificate is supported
-  // Length + ALIGN_VALUE(Length, 4) for 4-byte alignment (XDR standard).
-  if ((PublicKeyData + ALIGN_VALUE (PublicKeyDataLength, 4)) != PublicKeyDataXdrEnd) {
-    DEBUG ((DEBUG_ERROR, "PcdMfciPkcs7CertBufferXdr size mismatch: PublicKeyData(0x%x) PublicKeyDataLength(0x%x) PublicKeyDataXdrEnd(0x%x)", PublicKeyData, PublicKeyDataLength, PublicKeyDataXdrEnd));
-    Status = EFI_ABORTED;
-    goto Exit;
-  }
-
-  // above is inspired/borrowed from FmpDxe.c
 
   // Step 1: Check target nonce exist
   TargetNonce = MFCI_POLICY_INVALID_NONCE;
@@ -787,7 +859,7 @@ VerifyPolicyAndChange (
 
   // Step 2.3: validate current blob signature
 
-  Status = ValidateBlob (CurrentBlob, CurrentBlobSize, PublicKeyData, PublicKeyDataLength, RequiredEKUs);
+  Status = ValidateBlobWithXdrCertificates (CurrentBlob, CurrentBlobSize, FixedPcdGetPtr (PcdMfciPkcs7CertBufferXdr), FixedPcdGetSize (PcdMfciPkcs7CertBufferXdr));
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - validate current blob failed - %r.\n", __FUNCTION__, Status));
 
@@ -890,7 +962,7 @@ VerifyTarget:
   // Do nothing.
 
   // Step 3.3: validate target blob signature
-  Status = ValidateBlob (TargetBlob, TargetBlobSize, PublicKeyData, PublicKeyDataLength, RequiredEKUs);
+  Status = ValidateBlobWithXdrCertificates (TargetBlob, TargetBlobSize, FixedPcdGetPtr (PcdMfciPkcs7CertBufferXdr), FixedPcdGetSize (PcdMfciPkcs7CertBufferXdr));
   if (EFI_ERROR (Status)) {
     // In effort of being fail safe, we let it fail here
     DEBUG ((DEBUG_ERROR, "%a - Target blob validation failed - %r.\n", __FUNCTION__, Status));

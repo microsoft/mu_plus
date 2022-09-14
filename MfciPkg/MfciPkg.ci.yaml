@@ -24,6 +24,7 @@
             "MsCorePkg/MsCorePkg.dec",
             "CryptoPkg/CryptoPkg.dec",
             "SecurityPkg/SecurityPkg.dec",
+            "MsWheaPkg/MsWheaPkg.dec",
             "PcBdsPkg/PcBdsPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
@@ -83,7 +84,10 @@
             "SANITYCHECK",
             "SECUREBOOT",
             "SERIALNUMBER",
-            "VALIDATEBLOB"
+            "VALIDATEBLOB",
+            "malformatted",
+            "nonced",
+            "eku's"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

@@ -120,6 +120,70 @@ INF  DfciPkg/Application/DfciMenu/DfciMenu.inf
 INF  DfciPkg/DfciManager/DfciManager.inf
 ```
 
+## Unsigned Settings packets
+
+Dfci has a feature where a platform can enable some settings to be changes with an
+unsigned packet.
+This is allowed only when the system is not enrolled in Dfci.
+This can allow setting parameters that don't affect the security of the system and there is
+a cost benefit to being able to deploy these setting changes easily, and not step up to full Dfci.
+To enable to platform to allow unsigned settings, the platform must produce an unsigned permission
+list in xml format and include this xml file in the platform build .fdf file:
+
+```xml
+<!--
+NOTE:
+    None of the Permission Masks or the Delegated Masks are actually used.
+    However, they must be present for the XML parser used by Dfci.
+    This include Default, Delegated, Append, PMask, and DMask values.
+ -->
+<PermissionsPacket xmlns="urn:UefiSettings-Schema">
+    <Permissions Default="243" Delegated="0" Append="False">
+        <Permission>
+            <Id>Device.PlatformSetting1.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+        <Permission>
+            <Id>Device.PlatformSetting2.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+
+        <Permission>
+            <Id>Device.PlatformSetting3.Enable</Id>
+            <PMask>243</PMask>
+            <DMask>0</DMask>
+        </Permission>
+      </Permissions>
+</PermissionsPacket>
+```
+
+To include this file in the platform .fdf file, do the following:
+
+```ini
+FILE FREEFORM = PCD(gDfciPkgTokenSpaceGuid.PcdUnsignedPermissionsFile) {
+    SECTION RAW = YourPlatformPkg/StaticFiles/UnsignedPermissions.xml
+}
+```
+
+Certain platforms may choose to enable all settings to be set via unsigned packets by
+building with the Pcd PcdUnsignedListFormatAllow set to FALSE.
+This will enable all settings to be changed using unsigned packets.
+When PcdUnsignedListFormatAllow is FALSE, the unsigned settings list becomes a disallow list,
+providing a list of settings that do NOT have the permission to be set by an unsigned
+packet.
+An Unsigned Permissions file is required to be read before the Disallow operation
+is enabled.
+
+To generate an unsigned settings packet, refer to the DFCI_UnsignedSettings test case.
+The GenUsb.bat file will produce an unsigned packet (Unsigned_Settings_apply.bin) from a
+settings xml file (UnsignedSettings.xml).
+
+To deploy the Unsigned_Settings_apply.bin file, set the UEFI Variable
+gDfciSettingsManagerVarNamespace:DfciSettingsRequest to the contents of the
+Unsigned_Settings_apply.bin file, and restart the system.
+
 ## Testing DFCI operation
 
 Please refer to the [DFCI TestCase documentation](../../UnitTests/DfciTests/readme.md)

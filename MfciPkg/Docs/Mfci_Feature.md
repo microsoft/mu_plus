@@ -1,8 +1,4 @@
-# **DRAFT:** Manufacturer Firmware Configuration Interface (MFCI)
-
-## **NOTE**
-
-The following is prerelease documentation for an upcoming feature.  Details are subject to change.
+# Manufacturer Firmware Configuration Interface (MFCI)
 
 ## Overview
 
@@ -10,7 +6,7 @@ The following is prerelease documentation for an upcoming feature.  Details are 
 
 Manufacturer Firmware Configuration Interface (MFCI) is a UEFI BIOS feature that provides a secure
 mechanism for an authorized agent, such as an OEM or ODM, to modify firmware security properties
-of a specific device, typically for the purposes of remanufacturing or refurbishment.  
+of a specific device, typically for the purposes of remanufacturing or refurbishment.
 
 ### Background
 
@@ -37,7 +33,7 @@ An MFCI-based solution requires:
 
 The Project Mu MfciPkg provides the reference code to enable device-side UEFI BIOS, and includes examples of signing
 authorities & processes needed to implement a solution.
-  
+
 ## A Remanufacturing Example
 
 ### Conceptual Workflow
@@ -49,7 +45,7 @@ remanufacturing to be performed (see [MFCI Structures](Mfci_Structures.md) for m
 4. Digitally sign the MFCI blob using the specified digital signing format and trusted signing keys
 5. Write the signed MFCI Policy blob to the "next" policy blob mailbox (a UEFI variable) on the target device
 6. Reboot the target device to trigger an installation attempt  
-   Prior to OS launch, UEFI attempts to verify the digital signature and targeting information  
+   Prior to OS launch, UEFI attempts to verify the digital signature and targeting information
     * If verification fails, the policy is deleted from the "next" policy blob mailbox, and
     the device proceeds with boot to the OS
     * If verification succeeds, MFCI policy is applied:

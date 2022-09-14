@@ -237,8 +237,8 @@ ApplySettings (
     CONST CHAR8             *Value    = NULL;
     CHAR8                   StatusString[25]; // 0xFFFFFFFFFFFFFFFF\n
     CHAR8                   FlagString[25];
-    Flags = 0;
 
+    Flags    = 0;
     NodeThis = (XmlNode *)Link;   // Link is first member so just cast it.  this is the <Setting> node
     Status   = GetInputSettings (NodeThis, &Id, &Value);
     if (EFI_ERROR (Status)) {
@@ -443,16 +443,23 @@ ValidateSettingsPacket (
     return EFI_COMPROMISED_DATA;
   }
 
-  if (Data->SignedDataLength >= Data->PacketSize) {
-    DEBUG ((DEBUG_ERROR, "%a - Signed Data too large. %d >= %d.\n", __FUNCTION__, Data->SignedDataLength, Data->PacketSize));
-    return EFI_COMPROMISED_DATA;
-  }
+  // == in size means unsigned packet
+  if ((UINT8 *)Data->Signature == NULL) {
+    if (Data->SignedDataLength != Data->PacketSize) {
+      DEBUG ((DEBUG_ERROR, "%a - Signed Data in unsigned packet. %d != %d.\n", __FUNCTION__, Data->SignedDataLength, Data->PacketSize));
+    }
+  } else {
+    if (Data->SignedDataLength >= Data->PacketSize) {
+      DEBUG ((DEBUG_ERROR, "%a - Signed Data too large. %d >= %d.\n", __FUNCTION__, Data->SignedDataLength, Data->PacketSize));
+      return EFI_COMPROMISED_DATA;
+    }
 
-  EndData = &Data->Packet->Hdr.Pkt[Data->SignedDataLength];
+    EndData = &Data->Packet->Hdr.Pkt[Data->SignedDataLength];
 
-  if ((UINT8 *)Data->Signature != EndData) {
-    DEBUG ((DEBUG_ERROR, "%a - Addr of Signature not at EndData. %p != %p.\n", __FUNCTION__, Data->Signature, EndData));
-    return EFI_COMPROMISED_DATA;
+    if ((UINT8 *)Data->Signature != EndData) {
+      DEBUG ((DEBUG_ERROR, "%a - Addr of Signature not at EndData. %p != %p.\n", __FUNCTION__, Data->Signature, EndData));
+      return EFI_COMPROMISED_DATA;
+    }
   }
 
   if (((UINT8 *)Data->Payload <= Data->Packet->Hdr.Pkt) ||

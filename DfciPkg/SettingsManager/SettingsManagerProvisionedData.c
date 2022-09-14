@@ -62,7 +62,6 @@ SMID_InitInternalData (
     // Leave time zeroed by allocate zero pool
   }
 
-  // SavedOn will be zero until it is saved.
   Status = EFI_SUCCESS;
 
 EXIT:

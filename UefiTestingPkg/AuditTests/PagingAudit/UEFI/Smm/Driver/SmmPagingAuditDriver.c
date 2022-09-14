@@ -1,5 +1,5 @@
-/** @file -- SmmPagingAuditSmm.c
-This is the SMM portion of the SmmPagingAuditApp driver.
+/** @file -- SmmPagingAuditDriver.c
+This is the SMM portion of the SmmPagingAudit driver.
 It copies valid entries from the page tables into the communication buffer.
 
 Copyright (c) Microsoft Corporation. All rights reserved.

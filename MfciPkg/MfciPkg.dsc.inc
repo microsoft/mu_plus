@@ -40,10 +40,6 @@
   # The following 2 private libraries MUST NOT be overridden by a platform
   MfciPolicyParsingLib|MfciPkg/Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.inf
 
-  !if $(OPT_INTO_MFCI_PRE_PRODUCTION) != TRUE
-    BreakTheBuildLib|BreakTheBuildPkg/NotFound.inf # Break the build, MFCI is beta software and you need to define this var as TRUE to use it
-  !endif
-
 # [Components]
 
   # =======
@@ -54,7 +50,8 @@
   # =======
   # MfciDxe
   # =======
-  # All MFCI platforms MUST include MfciPkg/MfciDxe/MfciDxe.inf
+  # All MFCI platforms treating MFCI mailbox variables as the source of truth MUST include MfciPkg/MfciDxe/MfciDxe.inf
+  # All MFCI platforms supporting external root of trust entity as the source of truth MUST include MfciPkg/MfciDxe/MfciDxeRoT.inf
   #
   # MfciDxe Overrides
   # =================
@@ -64,6 +61,11 @@
   # MfciPkg supplies 2 implementations below to choose from. For platforms that include MfciPei, they are expected to select ViaHob. For systems where MFCI begins at DXE, the policy is expected to be retrieved ViaVariable.
   # MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
   # MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf
+
+  # - MfciRetrieveTargetPolicyLib - REQUIRED for platforms supporting external root of trust
+  # A non-NULL instance of this Lib MUST be supplied by a platform. If using this DSC.INC, it can be overriden in a platform's Components section.
+  # For testing purpose only, MfciPkg supplies 1 PCD based implementation to allow platforms to mimic MFCI policy validation.
+  # MfciRetrieveTargetPolicyLib|YourPlatformPkg/Library/MfciRetrieveTargetPolicyLib/MfciRetrieveTargetPolicyLibRoT.inf
 
   # - MfciDeviceIdSupportLib - OPTIONAL
   # A platform MUST provide targeting information to MfciDxe by _either_ populating the targeting UEFI variables prior to EndOfDxe, OR by overriding and implementing MfciDeviceIdSupportLib. A sample instance that may work for SMBIOS-compatible platforms is provided below. If using this DSC.INC, it can be overriden in a platform's Components section.

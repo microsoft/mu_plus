@@ -18,6 +18,7 @@
     ## options defined ci/Plugin/DependencyCheck
     "DependencyCheck": {
         "AcceptableDependencies": [
+            "ArmPkg/ArmPkg.dec",
             "MdePkg/MdePkg.dec",
             "MdeModulePkg/MdeModulePkg.dec",
             "AdvLoggerPkg/AdvLoggerPkg.dec",
@@ -66,6 +67,12 @@
           premem,
           uncacheable,
           physmask,
+          PHYSBASE,
+          DEADLOOP,
+          LOGTELEMETRY,
+          DEBUGAGENT,
+          POSTMEM,
+          MMARM
         ]
     }
 }

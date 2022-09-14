@@ -13,6 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Pi/PiStatusCode.h>
 
 #include <Protocol/DebugSupport.h>
+#include <Protocol/MemoryProtectionNonstopMode.h>
 
 #include <Library/CpuExceptionHandlerLib.h>
 #include <Library/DebugLib.h>
@@ -43,7 +44,28 @@ MemoryProtectionExceptionHandler (
   IN EFI_SYSTEM_CONTEXT  SystemContext
   )
 {
-  UINTN  pointer;
+  UINTN                                    pointer;
+  MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *NonstopModeProtocol;
+  BOOLEAN                                  IgnoreNext = FALSE;
+  EFI_STATUS                               Status;
+
+  if (!EFI_ERROR (MemProtExGetIgnoreNextException (&IgnoreNext)) &&
+      IgnoreNext &&
+      (InterruptType == EXCEPT_IA32_PAGE_FAULT))
+  {
+    MemProtExClearIgnoreNextException ();
+    Status = gBS->LocateProtocol (&gMemoryProtectionNonstopModeProtocolGuid, NULL, (VOID **)&NonstopModeProtocol);
+    if (!EFI_ERROR (Status)) {
+      Status = NonstopModeProtocol->ClearPageFault (InterruptType, SystemContext);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a - Error Clearing Page Fault\n", __FUNCTION__));
+      } else {
+        DEBUG ((DEBUG_INFO, "%a - Page Fault Cleared\n", __FUNCTION__));
+      }
+
+      return;
+    }
+  }
 
   DumpCpuContext (
     InterruptType,

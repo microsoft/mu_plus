@@ -345,10 +345,14 @@ Create Dfci Permission Package
 #
 Create Dfci Settings Package
     [Arguments]     ${binfile}  ${signPfx}  ${xmlFile}  @{TargetParms}
-    File Should Exist   ${signPfx}
     File Should Exist   ${xmlFile}
 
-    ${Result}=    Run Process    python.exe    ${GEN_SETTINGS}  --Step2Enable  --SigningPfxFile  ${signPfx}  --Step3Enable  --FinalizeResultFile  ${binfile}  --Step1Enable  --XmlFilePath  ${xmlFile}  @{TargetParms}
+    IF  '${signPfx}' == 'UNSIGNED'
+        ${Result}=    Run Process    python.exe    ${GEN_SETTINGS}  --HdrVersion  2  --Step1Enable  --PrepResultFile  ${binfile}  --XmlFilePath  ${xmlFile}  @{TargetParms}
+    ELSE
+        File Should Exist   ${signPfx}
+        ${Result}=    Run Process    python.exe    ${GEN_SETTINGS}  --HdrVersion  2  --Step1Enable  --Step2Enable  --SigningPfxFile  ${signPfx}  --Step3Enable  --FinalizeResultFile  ${binfile}  --XmlFilePath  ${xmlFile}  @{TargetParms}
+    END
 
     Log     all stdout: ${result.stdout}
     Log     all stderr: ${result.stderr}

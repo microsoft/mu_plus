@@ -159,7 +159,7 @@ VerifyTargeting (
   // Step 6: Verify nonce
   Status = ExtractUint64 (PolicyBlob, PolicyBlobSize, gPolicyBlobFieldName[MFCI_POLICY_TARGET_NONCE], &BlobNonce);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a - Failed to extract nonce from policy blob with return status %r\n", __FUNCTION__, gPolicyBlobFieldName[MFCI_POLICY_TARGET_NONCE], Status));
+    DEBUG ((DEBUG_ERROR, "%a - Failed to extract nonce from policy blob with return status %r\n", __FUNCTION__, Status));
     goto Done;
   }
 

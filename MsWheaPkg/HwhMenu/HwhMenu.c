@@ -349,7 +349,7 @@ UpdateForm (
     if (EFI_ERROR (Status)) {
       DEBUG ((
         DEBUG_ERROR,
-        "%a Error in HiiUpdateform.  Code=%r\n",
+        "%a Error in HiiUpdateForm.  Code=%r\n",
         __FUNCTION__,
         Status
         ));
@@ -617,7 +617,7 @@ ParseSectionData (
       continue;
     }
 
-    // If we've run out of writtable lines, free this one and continue
+    // If we've run out of writable lines, free this one and continue
     // so the rest are freed as well
     if ((*index) >= NUM_SEC_DATA_ROWS) {
       FreePool (StringParsePtr);
@@ -1067,7 +1067,8 @@ ExtractConfig (
   DEBUG ((
     DEBUG_INFO,
     "%a: Request=%s\n",
-    __FUNCTION__
+    __FUNCTION__,
+    Request
     ));
 
   DEBUG ((

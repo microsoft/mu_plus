@@ -56,3 +56,5 @@
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase

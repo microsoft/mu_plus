@@ -1,0 +1,65 @@
+## @file
+# DXE Driver for determining the MFCI Policy in-effect and changes based on
+# Target policy indicated by system Root of Trust.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MfciDxeRootOfTrust
+  FILE_GUID                      = 90C72774-85AA-4AD9-B689-03328B4E11ED
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MfciDxeRootOfTrustEntry
+
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MfciDxeRoT.c
+  MfciDxe.h
+  MfciPublicInterface.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
+  MfciPkg/MfciPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  HobLib
+  UefiDriverEntryPoint
+  ResetUtilityLib
+  BaseMemoryLib
+  MemoryAllocationLib
+  VariablePolicyHelperLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  MfciRetrievePolicyLib
+  MfciRetrieveTargetPolicyLib
+  MuTelemetryHelperLib
+
+[Protocols]
+  gMfciProtocolGuid                     ## PRODUCES
+  gEdkiiVariablePolicyProtocolGuid      ## CONSUMES
+  gMfciPolicyChangeNotifyProtocolGuid   ## CONSUMES
+
+[Guids]
+  gMfciHobGuid                        ## CONSUMES
+  gMfciVendorGuid                     ## CONSUMES
+  gMsStartOfBdsNotifyGuid             ## CONSUMES
+  gEfiEndOfDxeEventGroupGuid          ## CONSUMES
+  gMuVarPolicyDxePhaseGuid            ## CONSUMES
+  gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES ## GUID ## Variable namespace
+  gMfciPolicyChangeResetGuid          ## CONSUMES
+
+[Depex]
+  gEdkiiVariablePolicyProtocolGuid

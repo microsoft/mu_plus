@@ -56,7 +56,7 @@ InternalSystemSettingAccessSet (
 
   if (prov == NULL) {
     if (SetRecurse) {
-      DEBUG ((DEBUG_ERROR, "%a: Unexpected recursion.\n"));
+      DEBUG ((DEBUG_ERROR, "%a: Unexpected recursion.\n", __FUNCTION__));
       ASSERT (!SetRecurse);
       return EFI_UNSUPPORTED;
     }
@@ -134,7 +134,7 @@ InternalSystemSettingAccessSet (
                );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "DfciSettingChangedNotification returned error code=%r\n"));
+      DEBUG ((DEBUG_ERROR, "DfciSettingChangedNotification returned error code=%r\n", Status));
     }
   }
 
@@ -230,7 +230,7 @@ InternalSystemSettingAccessGet (
 
   if (prov == NULL) {
     if (GetRecurse) {
-      DEBUG ((DEBUG_ERROR, "%a: Unexpected recursion.\n"));
+      DEBUG ((DEBUG_ERROR, "%a: Unexpected recursion.\n", __FUNCTION__));
       ASSERT (!GetRecurse);
       return EFI_UNSUPPORTED;
     }
@@ -462,7 +462,7 @@ SystemSettingPermissionIdentityChange (
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL  *This,
   IN  CONST DFCI_AUTH_TOKEN                    *AuthToken,
   IN        DFCI_IDENTITY_ID                   CertIdentity,
-  IN        BOOLEAN                            Enroll
+  IN        IDENTITY_CHANGE_TYPE               ChangeType
   )
 {
   EFI_STATUS  Status;
@@ -471,7 +471,7 @@ SystemSettingPermissionIdentityChange (
     return EFI_INVALID_PARAMETER;
   }
 
-  Status = IdentityChange (AuthToken, CertIdentity, Enroll);
+  Status = IdentityChange (AuthToken, CertIdentity, ChangeType);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a - Failed to Reset Permissions. Status = %r\n", __FUNCTION__, Status));
   }

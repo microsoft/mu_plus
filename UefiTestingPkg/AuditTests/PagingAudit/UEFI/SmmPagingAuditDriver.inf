@@ -49,6 +49,7 @@
   UefiLib
   PcdLib
   UefiCpuLib
+  DxeServicesTableLib
 
 [Depex]
   TRUE

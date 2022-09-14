@@ -54,6 +54,154 @@ ValidateAndAuthenticatePermissions (
 }
 
 //
+// Apply permissions for platform settings eligible for Unsigned Settings
+//
+EFI_STATUS
+ModifyUnsignedPermissionEntries (
+  IN DFCI_PERMISSION_STORE  *Store,
+  IN BOOLEAN                AddEntries
+  )
+{
+  DFCI_PERMISSION_MASK  DMask;         // No delegated authority
+  LIST_ENTRY            *Link = NULL;
+  DFCI_PERMISSION_MASK  Mask;
+  EFI_GUID              *PermFile;
+  UINT8                 *PermXml;
+  UINTN                 PermXmlSize;
+  EFI_STATUS            Status;
+  XmlNode               *UnsignedRootNode            = NULL;  // The root xml node for the Unsigned Permissions List.
+  XmlNode               *UnsignedPacketNode          = NULL;  // The Unsigned PermissionPacket node in the Input list
+  XmlNode               *UnsignedPermissionsListNode = NULL;  // The Node for the Unsigned Permissions list.
+
+  PermFile = (EFI_GUID *)PcdGetPtr (PcdUnsignedPermissionsFile);
+
+  Status = GetSectionFromAnyFv (
+             PermFile,
+             EFI_SECTION_RAW,
+             0,
+             (VOID **)&PermXml,
+             &PermXmlSize
+             );
+
+  if (EFI_ERROR (Status)) {
+    if (Status == EFI_NOT_FOUND) {
+      DEBUG ((DEBUG_INFO, "%a - Platform is not supporting unsigned packets.\n", __FUNCTION__));
+    } else {
+      DEBUG ((DEBUG_ERROR, "%a - Unable to get the platform Unsigned Settings permissions. Code=%r\n", __FUNCTION__, Status));
+    }
+
+    return EFI_SUCCESS;
+  }
+
+  //
+  // Create Node List from input
+  //
+  Status = CreateXmlTree ((CHAR8 *)PermXml, PermXmlSize, &UnsignedRootNode);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Couldn't create a node list from the unsigned permission xml  %r\n", __FUNCTION__, Status));
+    Status = EFI_NO_MAPPING;
+    goto Exit;
+  }
+
+  // print the list
+  DEBUG ((DEBUG_INFO, "PRINTING UNSIGNED PERMISSION INPUT XML - Start\n"));
+  DebugPrintXmlTree (UnsignedRootNode, 0);
+  DEBUG ((DEBUG_INFO, "PRINTING UNSIGNED PERMISSION INPUT XML - End\n"));
+
+  // Get Input SettingsPacket Node
+  UnsignedPacketNode = GetPermissionPacketNode (UnsignedRootNode);
+  if (UnsignedPacketNode == NULL) {
+    DEBUG ((DEBUG_INFO, "Failed to Get Unsigned PermissionsPacket Node\n"));
+    Status = EFI_NO_MAPPING;
+    goto Exit;
+  }
+
+  // Get the Xml Node for the PermissionsList
+  UnsignedPermissionsListNode = GetPermissionsListNodeFromPacketNode (UnsignedPacketNode);
+
+  if (UnsignedPermissionsListNode == NULL) {
+    DEBUG ((DEBUG_INFO, "Failed to Get Unsigned Input Permissions List Node\n"));
+    Status = EFI_NO_MAPPING;
+    goto Exit;
+  }
+
+  // Only interested in the name of the setting.  The Permission Mask will be for the local
+  // and unsigned identities.
+
+  if (PcdGetBool (PcdUnsignedListFormatAllow)) {
+    Mask = DFCI_PERMISSION_MASK__DEFAULT_UNSIGNED;
+    // Store->DefaultPMask already set to DFCI_PERMISSION_MASK__DEFAULT
+  } else {
+    Mask                = DFCI_PERMISSION_MASK__DEFAULT;
+    Store->DefaultPMask = DFCI_PERMISSION_MASK__DEFAULT_UNSIGNED;
+  }
+
+  DMask = 0;  // No delegated authority
+
+  // All verified.   Now lets walk through the Permission Entries and add them to our Permission List.
+  for (Link = UnsignedPermissionsListNode->ChildrenListHead.ForwardLink; Link != &(UnsignedPermissionsListNode->ChildrenListHead); Link = Link->ForwardLink) {
+    XmlNode                 *NodeThis = NULL;
+    DFCI_SETTING_ID_STRING  Id        = 0;
+
+    NodeThis = (XmlNode *)Link;   // Link is first member so just cast it.  this is the <Setting> node
+    Status   = GetInputPermission (NodeThis, &Id, &Mask, &DMask);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to Get Unsigned Permission.  Bad XML Data. %r\n", Status));
+      Status = EFI_NO_MAPPING;
+      goto Exit;
+    }
+
+    if (AddEntries) {
+      Status = AddPermissionEntry (Store, Id, Mask, DMask);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a - Failed to Add Unsigned Entry to Perm Store %r\n", __FUNCTION__, Status));
+        Status = EFI_ABORTED;
+        goto Exit;
+      }
+    } else {
+      Status = DeletePermissionEntry (Store, Id);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a - Failed to Remove Unsigned Entry from Perm Store %r\n", __FUNCTION__, Status));
+        Status = EFI_ABORTED;
+        goto Exit;
+      }
+    }
+  }
+
+Exit:
+
+  if (UnsignedRootNode) {
+    FreeXmlTree (&UnsignedRootNode);
+  }
+
+  return Status;
+}
+
+//
+// Apply permissions for platform settings eligible for Unsigned Settings
+//
+EFI_STATUS
+EFIAPI
+AddUnsignedPermissionEntries (
+  IN DFCI_PERMISSION_STORE  *Store
+  )
+{
+  return ModifyUnsignedPermissionEntries (Store, TRUE);
+}
+
+//
+// Apply permissions for platform settings eligible for Unsigned Settings
+//
+EFI_STATUS
+EFIAPI
+RemoveUnsignedPermissionEntries (
+  IN DFCI_PERMISSION_STORE  *Store
+  )
+{
+  return ModifyUnsignedPermissionEntries (Store, FALSE);
+}
+
+//
 // Apply all Permissions from XML to their associated setting providers
 //
 EFI_STATUS
@@ -301,6 +449,8 @@ ApplyPermissionsInXml (
     }
   }
 
+  DEBUG ((DEBUG_ERROR, "MRT PMask=%02x, DMask=%02x, Store->DefaultPMask=%02x, Store->DefaultDMask=%02x\n", PMask, DMask, Store->DefaultPMask, Store->DefaultDMask));
+
   // All verified.   Now lets walk through the Permission Entries and add them to our Permission List.
   for (Link = InputPermissionsListNode->ChildrenListHead.ForwardLink; Link != &(InputPermissionsListNode->ChildrenListHead); Link = Link->ForwardLink) {
     XmlNode                 *NodeThis = NULL;
@@ -331,7 +481,7 @@ ApplyPermissionsInXml (
           Entry->DMask = DMask;
         }
 
-        Entry->DMask &= ~DFCI_PERMISSION_DELETE;  // Insure entry is not deleted.
+        Entry->MarkedForDeletion = FALSE;  // Insure entry is not deleted.
       } else {
         Status = EFI_ACCESS_DENIED;
         DEBUG ((DEBUG_ERROR, "%a - failed to update permission. Access Denied. Id=%x, DMask=%x\n", __FUNCTION__, IdProps.Identity, Entry->DMask));

@@ -560,7 +560,7 @@ MsWheaReportHERAdd (
   Status = WheaSetVariable (VarName, &gEfiHardwareErrorVariableGuid, Attributes, Size, Buffer);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: Write size of %d at index %04X errored with (%r)\n", __FUNCTION__, Size, Index, Status));
+    DEBUG ((DEBUG_ERROR, "%a: Write size of %d at index %04X failed with (%r)\n", __FUNCTION__, Size, Index, Status));
   } else {
     DEBUG ((DEBUG_INFO, "%a: Write size of %d at index %04X succeeded\n", __FUNCTION__, Size, Index));
   }

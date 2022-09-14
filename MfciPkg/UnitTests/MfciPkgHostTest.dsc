@@ -59,6 +59,7 @@
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
   FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
+  MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
 
 ################################################################################
 #
@@ -69,6 +70,7 @@
   MfciPkg/UnitTests/Library/MockResetUtilityLib/MockResetUtilityLib.inf
   MfciPkg/UnitTests/Library/MockBaseCryptLib/MockBaseCryptLib.inf
   MfciPkg/UnitTests/Library/MockUefiRuntimeServicesTableLib/MockUefiRuntimeServicesTableLib.inf
+  MfciPkg/UnitTests/Library/MockMfciRetrieveTargetPolicyLib/MockMfciRetrieveTargetPolicyLib.inf
 
   MfciPkg/MfciDxe/Test/MfciTargetingHostTest.inf
 
@@ -78,7 +80,15 @@
       BaseCryptLib|MfciPkg/UnitTests/Library/MockBaseCryptLib/MockBaseCryptLib.inf
   }
 
+  MfciPkg/MfciDxe/Test/MfciVerifyPolicyAndChangeRoTHostTest.inf {
+    <LibraryClasses>
+      ResetUtilityLib|MfciPkg/UnitTests/Library/MockResetUtilityLib/MockResetUtilityLib.inf
+      MfciRetrieveTargetPolicyLib|MfciPkg/UnitTests/Library/MockMfciRetrieveTargetPolicyLib/MockMfciRetrieveTargetPolicyLib.inf
+  }
+
   MfciPkg/MfciDxe/Test/MfciPublicInterfaceHostTest.inf
+
+  MfciPkg/MfciDxe/Test/MfciMultipleCertsHostTest.inf
 
 [BuildOptions]
   *_*_*_CC_FLAGS            = -D DISABLE_NEW_DEPRECATED_INTERFACES

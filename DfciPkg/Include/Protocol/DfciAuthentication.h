@@ -58,6 +58,9 @@ typedef struct {
 #define RECOVERY_RESPONSE_SIZE  (10)
 
 /////////////////////*** AUTH FUNCTIONS ***////////////////////////
+#define DFCI_AUTH_WITH_NO_PASSWORD           (NULL)
+#define DFCI_AUTH_WITH_NO_PASSWORD_UNSIGNED  ((CHAR16 *)(UINTN)(-2))
+
 typedef
 EFI_STATUS
 (EFIAPI *DFCI_AUTHENTICATE_WITH_PASSWORD)(

@@ -13,7 +13,7 @@
   BASE_NAME                      = DfciSupportLib
   FILE_GUID                      = eaa7ea2a-bee2-4c30-986a-3c529ef1b01f
   MODULE_TYPE                    = BASE
-  VERSION_STRING                 = 1.0 
+  VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = DfciSupportLib
 
 #
@@ -28,11 +28,11 @@
 [Packages]
   DfciPkg/DfciPkg.dec
   MdePkg/MdePkg.dec
-   
+
 [LibraryClasses]
   BaseLib
   DebugLib
-  
+
 [Guids]
 
 [Protocols]

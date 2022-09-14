@@ -69,3 +69,8 @@
 
   # Platform identifier guid, set as Pcd. Platform SHOULD override this field during build!!!
   gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid|{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}|VOID*|0x00000004
+
+  # Variable names intended for extra BERT table entries, should be unicode string separated by ';'.
+  # Note: The variables for potential BERT candidate should be stored under GUID gEfiHardwareErrorVariableGuid.
+  #       If such variable exists, its content MUST comply with CPER error format.
+  gMsWheaPkgTokenSpaceGuid.PcdBertEntriesVariableNames|L""|VOID*|0x00000007

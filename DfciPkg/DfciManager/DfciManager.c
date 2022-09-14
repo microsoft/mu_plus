@@ -287,15 +287,6 @@ DecodePacket (
     Data->Payload = PKT_FIELD_FROM_OFFSET (Packet, Packet->PayloadOffset);
   }
 
-  Packet->SessionId = 0;        // Packet Session ID must be zero for signature.
-
-  if (Data->PacketSize < Data->SignedDataLength + sizeof (WIN_CERTIFICATE)) {
-    DEBUG ((DEBUG_ERROR, "[DM] Identity VarSize too small. Size: 0x%X MinSize: 0x%X\n", Data->PacketSize, Data->SignedDataLength + sizeof (WIN_CERTIFICATE)));
-    Data->StatusCode = EFI_COMPROMISED_DATA;
-    Data->State      = DFCI_PACKET_STATE_DATA_INVALID;
-    return Data->StatusCode;
-  }
-
   Data->Manufacturer     = (CHAR8 *)PKT_FIELD_FROM_OFFSET (Packet, Packet->SystemMfgOffset);
   Data->ManufacturerSize = Packet->SystemProductOffset - Packet->SystemMfgOffset;
   Data->ProductName      = (CHAR8 *)PKT_FIELD_FROM_OFFSET (Packet, Packet->SystemProductOffset);
@@ -303,13 +294,28 @@ DecodePacket (
   Data->SerialNumber     = (CHAR8 *)PKT_FIELD_FROM_OFFSET (Packet, Packet->SystemSerialOffset);
   Data->SerialNumberSize = Packet->PayloadOffset - Packet->SystemSerialOffset;
 
-  Data->Signature = (WIN_CERTIFICATE *)PKT_FIELD_FROM_OFFSET (Packet, Data->SignedDataLength);
+  Packet->SessionId = 0;        // Packet Session ID must be zero for signature.
 
-  if (Data->PacketSize < Data->SignedDataLength + Data->Signature->dwLength) {
-    DEBUG ((DEBUG_ERROR, "[DM] %a: Signature Data not expected size (0x%X) (0x%X)\n", __FUNCTION__, Data->PacketSize, Data->SignedDataLength + Data->Signature->dwLength));
-    Data->State      = DFCI_PACKET_STATE_DATA_INVALID;
-    Data->StatusCode = EFI_BAD_BUFFER_SIZE;
-    return Data->StatusCode;
+  if ((Packet->Sig.Hdr.Signature == DFCI_SECURED_SETTINGS_APPLY_VAR_SIGNATURE) &&
+      (Data->SignedDataLength == Data->PacketSize))
+  {
+    // This is a Settings Packet without a signature
+    Data->Signature = NULL;
+  } else {
+    if (Data->PacketSize < Data->SignedDataLength + sizeof (WIN_CERTIFICATE)) {
+      DEBUG ((DEBUG_ERROR, "[DM] Identity VarSize too small. Size: 0x%X MinSize: 0x%X\n", Data->PacketSize, Data->SignedDataLength + sizeof (WIN_CERTIFICATE)));
+      Data->StatusCode = EFI_COMPROMISED_DATA;
+      Data->State      = DFCI_PACKET_STATE_DATA_INVALID;
+      return Data->StatusCode;
+    }
+
+    Data->Signature = (WIN_CERTIFICATE *)PKT_FIELD_FROM_OFFSET (Packet, Data->SignedDataLength);
+    if (Data->PacketSize < Data->SignedDataLength + Data->Signature->dwLength) {
+      DEBUG ((DEBUG_ERROR, "[DM] %a: Signature Data not expected size (0x%X) (0x%X)\n", __FUNCTION__, Data->PacketSize, Data->SignedDataLength + Data->Signature->dwLength));
+      Data->State      = DFCI_PACKET_STATE_DATA_INVALID;
+      Data->StatusCode = EFI_BAD_BUFFER_SIZE;
+      return Data->StatusCode;
+    }
   }
 
   Status = CheckTarget (Data, DfciIdSupportGetManufacturer, Data->Manufacturer, Data->ManufacturerSize);
@@ -351,7 +357,7 @@ DecodeIdentityPacket (
     Data->LSV         = &IdentityPacket->LSV;
 
     if (Data->PayloadSize == 0) {
-      DEBUG ((DEBUG_INFO, "[DM] %a: Delaying UnEnroll until after permissions and settings\n", __FUNCTION__));
+      DEBUG ((DEBUG_INFO, "%a %a: Delaying UnEnroll until after permissions and settings\n", _DBGMSGID_, __FUNCTION__));
       Data->Unenroll = TRUE;
     }
   }
@@ -482,14 +488,15 @@ ProcessApplyPacket (
  * Initialize static packet information.
  *
  *
- * @param VariableName
- * @param ResultName
- * @param NameSpace
- * @param HdrSignature
- * @param HdrVersion
- * @param Decoder
- * @param ApplyProtocol
- * @param ManagerData
+ * @param[in] VariableName
+ * @param[in] ResultName
+ * @param[in] NameSpace
+
+ * @param[in] HdrSignature
+ * @param[in] HdrVersion
+ * @param[in] Decoder
+ * @param[in] ApplyProtocol
+ * @param[in] ManagerData
  *
  * @return EFI_STATUS
  */

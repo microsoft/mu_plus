@@ -14,12 +14,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ZeroTouchSettingsLib.h>
 
 // Statically allocate the supported identities.
-DFCI_IDENTITY_PROPERTIES  mIdentityProperties_Local        = { DFCI_IDENTITY_LOCAL };
-DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_USER1 = { DFCI_IDENTITY_SIGNER_USER1 };
-DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_USER2 = { DFCI_IDENTITY_SIGNER_USER2 };
-DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_USER  = { DFCI_IDENTITY_SIGNER_USER };
-DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_OWNER = { DFCI_IDENTITY_SIGNER_OWNER };
-DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_ZTD   = { DFCI_IDENTITY_SIGNER_ZTD };
+DFCI_IDENTITY_PROPERTIES  mIdentityProperties_Local          = { DFCI_IDENTITY_LOCAL };
+DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_USER1   = { DFCI_IDENTITY_SIGNER_USER1 };
+DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_USER2   = { DFCI_IDENTITY_SIGNER_USER2 };
+DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_USER    = { DFCI_IDENTITY_SIGNER_USER };
+DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_OWNER   = { DFCI_IDENTITY_SIGNER_OWNER };
+DFCI_IDENTITY_PROPERTIES  mIdentityProperties_SIGNER_ZTD     = { DFCI_IDENTITY_SIGNER_ZTD };
+DFCI_IDENTITY_PROPERTIES  mIdentityProperties_UNSIGNED_LOCAL = { DFCI_IDENTITY_UNSIGNED_LOCAL };
 
 // Random Number Protocol
 EFI_RNG_PROTOCOL  *mRngGenerator = NULL;
@@ -103,6 +104,10 @@ CreateAuthTokenWithMapping (
       Props = &mIdentityProperties_SIGNER_ZTD;
       break;
 
+    case DFCI_IDENTITY_UNSIGNED_LOCAL:
+      Props = &mIdentityProperties_UNSIGNED_LOCAL;
+      break;
+
     default:
       DEBUG ((DEBUG_ERROR, "%a: invalid Id\n", __FUNCTION__));
       return DFCI_AUTH_TOKEN_INVALID;
@@ -121,6 +126,10 @@ CreateAuthTokenWithMapping (
 /**
   Authenticate using a Password
 
+  Password may be two special values.  NULL means authenticate with no password set as the
+  Local user. DFCI_AUTH_WITH_NO_PASSWORD_UNSIGNED means authenticate with no password set as
+  the UNSIGNED local user (reduced permissions).
+
 **/
 EFI_STATUS
 EFIAPI
@@ -131,11 +140,19 @@ AuthWithPW (
   OUT DFCI_AUTH_TOKEN                     *IdentityToken
   )
 {
-  DFCI_AUTH_TOKEN  Random = DFCI_AUTH_TOKEN_INVALID;
-  EFI_STATUS       Status = EFI_SECURITY_VIOLATION;
+  DFCI_AUTH_TOKEN   Random = DFCI_AUTH_TOKEN_INVALID;
+  EFI_STATUS        Status = EFI_SECURITY_VIOLATION;
+  DFCI_IDENTITY_ID  Id;
 
   if ((This == NULL) || (IdentityToken == NULL)) {
     return EFI_INVALID_PARAMETER;
+  }
+
+  if (Password == DFCI_AUTH_WITH_NO_PASSWORD_UNSIGNED) {
+    Id       = DFCI_IDENTITY_UNSIGNED_LOCAL;
+    Password = NULL;
+  } else {
+    Id = DFCI_IDENTITY_LOCAL;
   }
 
   //
@@ -199,7 +216,7 @@ AuthWithPW (
 
 AUTH_APPROVED_EXIT:
 
-  Random = CreateAuthTokenWithMapping (DFCI_IDENTITY_LOCAL);
+  Random = CreateAuthTokenWithMapping (Id);
   if (Random == DFCI_AUTH_TOKEN_INVALID) {
     DEBUG ((DEBUG_ERROR, "%a - Couldn't create Auth Token.\n", __FUNCTION__));
     Status = EFI_DEVICE_ERROR;

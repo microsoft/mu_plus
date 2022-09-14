@@ -661,7 +661,7 @@ HIDKeyboardWaitForKey (
       continue;
     }
 
-    DEBUG ((DEBUG_VERBOSE, "[%a] - WaitForKey, Signaling event!\n", __FUNCTION__, KeyData.Key.ScanCode));
+    DEBUG ((DEBUG_VERBOSE, "[%a] - WaitForKey, Signaling event!\n", __FUNCTION__));
     gBS->SignalEvent (Event);
     break;
   }

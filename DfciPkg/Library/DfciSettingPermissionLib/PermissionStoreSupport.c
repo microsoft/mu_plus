@@ -49,9 +49,12 @@ AddRequiredPermissions (
     DFCI_IDENTITY_SIGNER_ZTD,
     DFCI_IDENTITY_SIGNER_OWNER
     );
+
   AddRequiredPermissionEntry (Store, DFCI_PRIVATE_SETTING_ID__ZTD_KEY, DFCI_IDENTITY_LOCAL, DFCI_PERMISSION_MASK__NONE);
   AddRequiredPermissionEntry (Store, DFCI_PRIVATE_SETTING_ID__ZTD_UNENROLL, DFCI_IDENTITY_INVALID, DFCI_PERMISSION_MASK__NONE);
   AddRequiredPermissionEntry (Store, DFCI_PRIVATE_SETTING_ID__ZTD_RECOVERY, DFCI_IDENTITY_INVALID, DFCI_PERMISSION_MASK__NONE);
+
+  AddUnsignedPermissionEntries (Store);
 
   return EFI_SUCCESS;
 }
@@ -83,6 +86,7 @@ InitPermStore (
   (*Store)->Modified     = TRUE;
   (*Store)->DefaultPMask = DFCI_PERMISSION_MASK__DEFAULT;            // Set to default which is local user
   (*Store)->DefaultDMask = DFCI_PERMISSION_MASK__DELEGATED_DEFAULT;  // Set to default which is SignerOwner
+
   InitializeListHead (&((*Store)->PermissionsListHead));
 
   Status = gRT->GetTime (&((*Store)->CreatedOn), NULL);
@@ -91,11 +95,9 @@ InitPermStore (
     // Leave time zeroed by allocate zero pool
   }
 
-  // SavedOn will be zero until it is saved.
+  CopyMem (&((*Store)->SavedOn), &((*Store)->CreatedOn), sizeof ((*Store)->SavedOn));
 
   Status = AddRequiredPermissions (*Store);
-
-  Status = EFI_SUCCESS;
 
 EXIT:
   return Status;
@@ -206,15 +208,16 @@ AddPermissionEntry (
     return EFI_INVALID_PARAMETER;
   }
 
-  Temp = AllocatePool (sizeof (DFCI_PERMISSION_ENTRY) + IdSize);
+  Temp = AllocateZeroPool (sizeof (DFCI_PERMISSION_ENTRY) + IdSize);
   if (Temp == NULL) {
     DEBUG ((DEBUG_ERROR, "%a - Failed to allocate Memory for entry\n", __FUNCTION__));
     return EFI_ABORTED;
   }
 
-  Temp->Signature = DFCI_PERMISSION_LIST_ENTRY_SIGNATURE;
-  Temp->Id        = (DFCI_SETTING_ID_STRING)&Temp->IdStore;
-  Temp->IdSize    = (UINT8)IdSize;  // Validated as < 255
+  Temp->Signature         = DFCI_PERMISSION_LIST_ENTRY_SIGNATURE;
+  Temp->Id                = (DFCI_SETTING_ID_STRING)&Temp->IdStore;
+  Temp->IdSize            = (UINT8)IdSize;  // Validated as < 255
+  Temp->MarkedForDeletion = FALSE;
 
   CopyMem (Temp->IdStore, Id, IdSize);
 
@@ -244,7 +247,7 @@ MarkPermissionEntriesForDeletion (
     if ((Temp->DMask & DFCI_PERMISSION_MASK__USERS) != 0) {
       if (Id & HIGHEST_IDENTITY (Temp->DMask)) {
         DEBUG ((DEBUG_INFO, "%a - marking perm Mask=%x, %a.\n", __FUNCTION__, Temp->DMask, Temp->Id));
-        Temp->DMask |= DFCI_PERMISSION_DELETE;
+        Temp->MarkedForDeletion = TRUE;
       }
     }
   }
@@ -267,7 +270,7 @@ DeleteMarkedPermissionEntries (
   EFI_LIST_FOR_EACH_SAFE (Link, NextLink, &(Store->PermissionsListHead)) {
     DFCI_PERMISSION_ENTRY  *Temp = CR (Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
 
-    if (Temp->DMask & DFCI_PERMISSION_DELETE) {
+    if (Temp->MarkedForDeletion == TRUE) {
       DEBUG ((DEBUG_INFO, "%a - deleting perm Mask=%x, Entry %a.\n", __FUNCTION__, Temp->DMask, Temp->Id));
       RemoveEntryList (Link);
       FreePool (Temp);
@@ -318,6 +321,52 @@ FindPermissionEntry (
 
   DEBUG ((DEBUG_VERBOSE, "%a - Didn't find Permission Entry\n", __FUNCTION__));
   return NULL;
+}
+
+/**
+ Delete Permission Entry for a given Id.
+
+ If doesn't exist return EFI_NOT_FOUND
+ **/
+EFI_STATUS
+EFIAPI
+DeletePermissionEntry (
+  IN CONST DFCI_PERMISSION_STORE  *Store,
+  IN DFCI_SETTING_ID_STRING       Id
+  )
+{
+  UINTN  IdSize;
+
+  if (Store == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - NULL Store pointer\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Id == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - NULL Id pointer\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  IdSize = AsciiStrnSizeS (Id, DFCI_MAX_ID_SIZE);
+  if ((IdSize < 1) || (IdSize > DFCI_MAX_ID_SIZE)) {
+    DEBUG ((DEBUG_ERROR, "%a - Invalid ID length\n", __FUNCTION__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  for (LIST_ENTRY *Link = Store->PermissionsListHead.ForwardLink; Link != &(Store->PermissionsListHead); Link = Link->ForwardLink) {
+    DFCI_PERMISSION_ENTRY  *Temp = CR (Link, DFCI_PERMISSION_ENTRY, Link, DFCI_PERMISSION_LIST_ENTRY_SIGNATURE);
+    if (IdSize == Temp->IdSize) {
+      if (0 == AsciiStrnCmp (Temp->Id, Id, IdSize)) {
+        DEBUG ((DEBUG_VERBOSE, "%a - Found Permission Entry\n", __FUNCTION__));
+        RemoveEntryList (Link);
+        FreePool (Temp);
+        return EFI_SUCCESS;
+      }
+    }
+  }
+
+  DEBUG ((DEBUG_VERBOSE, "%a - Didn't find Permission Entry\n", __FUNCTION__));
+  return EFI_NOT_FOUND;
 }
 
 /**

@@ -106,7 +106,7 @@ DeleteAllMailboxes (
                     NULL
                     );
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a %a: - Unable to delete mailbox %g:%s\n", _DBGMSGID_, __FUNCTION__, gMailBoxPolicies[i].Namespace, gMailBoxPolicies[i].Name));
+      DEBUG ((DEBUG_ERROR, "%a %a: - Unable to delete mailbox %g:%s. Code=%r\n", _DBGMSGID_, __FUNCTION__, gMailBoxPolicies[i].Namespace, gMailBoxPolicies[i].Name, Status));
       ReturnStatus = Status;
     }
   }

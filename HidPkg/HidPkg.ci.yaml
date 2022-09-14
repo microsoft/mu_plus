@@ -22,6 +22,9 @@
             "MdeModulePkg/MdeModulePkg.dec",
             "HidPkg/HidPkg.dec"
         ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
         "IgnoreInf": []
     },
 
@@ -29,6 +32,16 @@
     "DscCompleteCheck": {
         "IgnoreInf": [],
         "DscPath": "HidPkg.dsc"
+    },
+    ## options defined .pytool/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "UnitTests/HidPkgHostTest.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "UnitTests/HidPkgHostTest.dsc"
     },
 
     ## options defined ci/Plugin/GuidCheck

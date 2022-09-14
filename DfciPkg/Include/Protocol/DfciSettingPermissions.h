@@ -18,6 +18,12 @@ Define the DFCI_SETTING_PERMISSIONS_PROTOCOL related structures
 **/
 typedef struct _DFCI_SETTING_PERMISSIONS_PROTOCOL DFCI_SETTING_PERMISSIONS_PROTOCOL;
 
+typedef enum {
+  FIRST_ENROLL,            // Transitioning from unenrolled to enrolled.
+  ENROLL,                  // Rolling certs (enrolled to enrolled with different cert).
+  UNENROLL                 // Transitioning from enrolled to unenrolled.
+} IDENTITY_CHANGE_TYPE;
+
 /*
 Get the Permission Mask for a given setting
 
@@ -70,7 +76,7 @@ EFI_STATUS
   IN  CONST DFCI_SETTING_PERMISSIONS_PROTOCOL *This,
   IN  CONST DFCI_AUTH_TOKEN                   *AuthToken,
   IN        DFCI_IDENTITY_ID                   CertIdentity,
-  IN        BOOLEAN                            Enroll
+  IN        IDENTITY_CHANGE_TYPE               ChangeType
   );
 
 //

@@ -117,25 +117,32 @@ class ParsingTool(object):
             pte = self.PageDirectoryInfo[index]
             for mr in self.MemoryRangeInfo:
                 if pte.overlap(mr):
-                    if mr.MemoryType is not None:
+                    if (mr.MemoryType is not None) or (mr.GcdType is not None):
                         if (pte.PhysicalStart < mr.PhysicalStart):
                             next = pte.split(mr.PhysicalStart-1)
                             self.PageDirectoryInfo.insert(index+1, next)
-                            #decrement the index so that we process this partial PTE again
-                            # since we are breaking from the MemoryRange Loop
+                            # decrement the index so that we process this partial PTE again
+                            # because we are breaking from the MemoryRange Loop
                             index -= 1
                             break
 
                         if (pte.PhysicalEnd > mr.PhysicalEnd):
                             next = pte.split(mr.PhysicalEnd)
                             self.PageDirectoryInfo.insert(index +1, next)
-          
+
                         if pte.MemoryType is None:
                             pte.MemoryType = mr.MemoryType
                         else:
                             logging.error("Multiple memory types found for one region " + pte.pteDebugStr() +" " + mr.MemoryRangeToString())
                             self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  EFI Memory Type: %d and %d"% (pte.PhysicalStart, pte.MemoryType,mr.MemoryType))
-                    
+                        
+                        if pte.GcdType is None:
+                            pte.GcdType = mr.GcdType
+                            logging.info("pte.GcdType: %d"% (pte.GcdType))
+                        else:
+                            logging.error("Multiple memory types found for one region " + pte.pteDebugStr() +" " + mr.MemoryRangeToString())
+                            self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  GCD Memory Type: %d and %d"% (pte.PhysicalStart, pte.GcdType,mr.GcdType))
+
                     if mr.ImageName is not None:
                         if pte.ImageName is None:
                             pte.ImageName = mr.ImageName

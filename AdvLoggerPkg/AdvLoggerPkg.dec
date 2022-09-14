@@ -60,6 +60,11 @@
 
 
 [PcdsFeatureFlag]
+  ## PcdAdvancedLoggerFixedInRAM - Tells the Advanced Logger that the memory is preallocated at
+  #                                a fixed addres set in PcdAdvancedLoggerBase
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM|FALSE|BOOLEAN|0x00010189
+
   ## PcdAdvancedLoggerPeiInRAM - Tells the PEI Advanced Logger that this PEI can allocate memory
   #                              and there is no need for a temporary memory buffer
   #
@@ -100,15 +105,6 @@
   ## PcdAdvancedLoggerPages - Number of pages of in memory UEFI log.  The default allows for 4MB
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages|1024|UINT32|0x00010183
-
-  ## PcdAdvancedLoggerHdwPortDisable - When to turn off writing to the HdwPort.
-  ##
-  # The values supported are:
-  # 0 = Never
-  # 2 = Exit Boot Services
-  # 4 = Virtual Address Change
-  #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDisable|0x04|UINT8|0x00010188
 
   ## PcdAdvancedFileLoggerFlush - When the in memory log is flushed to media
   # The values supported are:

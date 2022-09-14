@@ -197,3 +197,17 @@
   ## Platform OptIn for DFCI based on SKU. Since SKU is a platform option, provide a dynamic PCD
   #  for the platform SKU detection logic to enable or disable DFCI based on SKU.
     gDfciPkgTokenSpaceGuid.PcdSKUEnableDfci|TRUE|BOOLEAN|0x40000019
+
+[PcdsFixedAtBuild, PcdsDynamicEx]
+  ## Dfci Unsigned Packet List Format
+  # When the platform wants to allow or disallow certain settings to be set with an unsigned packet, the platform
+  # supplies a list.  This list is either an allow list (PcdUnsignedListFormatAllow == True) or a disallow list
+  # (PcdUnsignedListFormatAllow == FALSE).
+  #
+  # When TRUE, only settings in the unsigned permissions list will be allowed to be set with an unsigned settings packet.
+  # When FALSE, all settings EXCEPT those in the unsigned permissions list will be allowed to be set with an unsigned settings packet.
+  gDfciPkgTokenSpaceGuid.PcdUnsignedListFormatAllow|TRUE|BOOLEAN|0x4000001B
+
+  ## FFS filename of the Unsigned Packet User settings permission xml file.
+  # {607ed5fe-acf4-4a05-9ace-6fa697037beb}
+  gDfciPkgTokenSpaceGuid.PcdUnsignedPermissionsFile |{ 0xfe, 0xd5, 0x7e, 0x60, 0xf4, 0xac, 0x05, 0x4a, 0x9a, 0xce, 0x6f, 0xa6, 0x97, 0x03, 0x7b, 0xeb}|VOID*|0x4000001A

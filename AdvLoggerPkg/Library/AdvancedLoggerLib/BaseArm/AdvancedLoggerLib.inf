@@ -1,0 +1,43 @@
+## @file
+#  MM_STANDALONE instance of the Advanced Logger library.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = BaseAdvancedLoggerLib
+  MODULE_UNI_FILE                = AdvancedLoggerLib.uni
+  FILE_GUID                      = 916f2e2d-1f55-4ca4-b229-18487e94c747
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvancedLoggerLib
+  PI_SPECIFICATION_VERSION       = 0x00010032
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  AdvancedLoggerLib.c
+  ../AdvancedLoggerCommon.h
+  ../AdvancedLoggerCommon.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerHdwPortLib
+  BaseLib
+  DebugLib
+  SynchronizationLib
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
+
+[Depex]
+  TRUE

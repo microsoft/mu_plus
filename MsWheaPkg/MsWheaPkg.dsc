@@ -145,7 +145,7 @@
   MsWheaPkg/MsWheaReport/Smm/MsWheaReportStandaloneMm.inf
 
   # Check HWErrRec headers
-  MsWheaPkg/Test/UnitTests/Library/LibraryClass/CheckHwErrRecHeaderTestsApp.inf
+  MsWheaPkg/Test/UnitTests/Library/LibraryClass/CheckHwErrRecHeaderTestApp.inf
 
   # Raises Report Status Codes
   MsWheaPkg/DummyErrorDriver/DummyErrorDriver.inf

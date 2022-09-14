@@ -17,7 +17,6 @@
   SKUID_IDENTIFIER               = DEFAULT
 
   DEFINE  MFCI_POLICY_EKU_TEST   = "1.3.6.1.4.1.311.45.255.255"
-  DEFINE  MFCI_POLICY_EKU_RETAIL = "1.3.6.1.4.1.311.79.8.1"
 
 [PcdsFixedAtBuild]
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x3f
@@ -27,7 +26,6 @@
   # the unit test uses the test certificate that will also be used for testing end-to-end scenarios
   !include MfciPkg/Private/Certs/CA-test.dsc.inc
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU  |$(MFCI_POLICY_EKU_TEST)   # use the test version
-  # TODO: add the production certificate and EKU if/when we have test cases that use them
 
 ################################################################################
 #
@@ -71,6 +69,7 @@
 [LibraryClasses]
   MfciPolicyParsingLib|MfciPkg/Private/Library/MfciPolicyParsingLibNull/MfciPolicyParsingLibNull.inf
   MfciDeviceIdSupportLib|MfciPkg/Library/MfciDeviceIdSupportLibNull/MfciDeviceIdSupportLibNull.inf
+  MfciRetrieveTargetPolicyLib|MfciPkg/Library/MfciRetrieveTargetPolicyLibPcd/MfciRetrieveTargetPolicyLibPcd.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
   ResetSystemLib|MdeModulePkg/Library/BaseResetSystemLibNull/BaseResetSystemLibNull.inf
   ResetUtilityLib|MdeModulePkg/Library/ResetUtilityLib/ResetUtilityLib.inf
@@ -94,7 +93,7 @@
 
   # MsWheaEarlyStorageLib|MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
   # CheckHwErrRecHeaderLib|MsWheaPkg/Library/CheckHwErrRecHeaderLib/CheckHwErrRecHeaderLib.inf
-  # MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
+  MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
 
 [LibraryClasses.common.PEIM]
   PeimEntryPoint|MdePkg/Library/PeimEntryPoint/PeimEntryPoint.inf
@@ -147,7 +146,8 @@
   # MsWheaPkg/Library/MsWheaEarlyStorageLib/MsWheaEarlyStorageLib.inf
   MfciPkg/Private/Library/MfciPolicyParsingLibNull/MfciPolicyParsingLibNull.inf
   MfciPkg/Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.inf
-  MfciPkg/UnitTests/MfciPolicyParsingUnitTest/MfciPolicyParsingUnitTest.inf
+  MfciPkg/UnitTests/MfciPolicyParsingUnitTest/MfciPolicyParsingUnitTestApp.inf
+  MfciPkg/Library/MfciRetrieveTargetPolicyLibPcd/MfciRetrieveTargetPolicyLibPcd.inf
 
 [Components.IA32]
   # MsWheaPkg/MsWheaReport/Pei/MsWheaReportPei.inf
@@ -156,6 +156,7 @@
 [Components.X64]
   # MsWheaPkg/HwErrBert/HwErrBert.inf
   MfciPkg/MfciDxe/MfciDxe.inf
+  MfciPkg/MfciDxe/MfciDxeRoT.inf
   MfciPkg/Library/MfciRetrievePolicyLibNull/MfciRetrievePolicyLibNull.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf
@@ -164,6 +165,7 @@
 
 [Components.AARCH64]
   MfciPkg/MfciDxe/MfciDxe.inf
+  MfciPkg/MfciDxe/MfciDxeRoT.inf
   MfciPkg/Library/MfciRetrievePolicyLibNull/MfciRetrievePolicyLibNull.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
   MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf

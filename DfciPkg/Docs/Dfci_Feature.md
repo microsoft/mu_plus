@@ -86,6 +86,15 @@ There is also an example UEFI BIOS menu that demonstrates how to integrate DFCI:
 
 * <https://github.com/microsoft/mu_oem_sample/search?q=dfci&unscoped_q=dfci>
 
+## Unsigned Settings
+
+Some platforms may choose to implement less secure deployment methods for certain settings.
+DFCI allows a platform to supply either an allow list, or a disallow list, of a set of settings
+that may be deployed using unsigned packets.
+Unsigned settings may only be deployed when no DFCI Owner has been enrolled in the system
+unless that DFCI owner has specifically allowed certain settings to be set by unsigned packets.
+See the [section on platform integRation](PlatformIntegration/PlatformIntegrationOverview.md) for more information.
+
 ## UEFI Implementation Details
 
 1. [**Scenarios:** Building the Microsoft Scenarios with DFCI](Scenarios/DfciScenarios.md)
@@ -96,5 +105,5 @@ There is also an example UEFI BIOS menu that demonstrates how to integrate DFCI:
 
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.  
+Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent

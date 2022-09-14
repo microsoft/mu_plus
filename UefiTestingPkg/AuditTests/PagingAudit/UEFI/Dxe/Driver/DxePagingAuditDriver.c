@@ -1,4 +1,4 @@
-/** @file -- DxePagingAuditApp.c
+/** @file -- DxePagingAuditDriver.c
 This DXE Driver writes page table and memory map information to SFS when triggered
 by an event.
 
@@ -14,7 +14,7 @@ UINTN  mMemoryInfoDatabaseSize      = 0;
 UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
 /**
-  SmmPagingAuditAppEntryPoint
+  PagingAuditDriverEntryPoint
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
   @param[in] SystemTable  A pointer to the EFI System Table.

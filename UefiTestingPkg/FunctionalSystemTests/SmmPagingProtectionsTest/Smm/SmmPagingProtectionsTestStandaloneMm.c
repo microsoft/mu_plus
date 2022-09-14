@@ -35,6 +35,25 @@ IsBufferOutsideMmValid (
 }
 
 /**
+  This function is wrapper function to validate the communicate buffer.
+
+  @param[in] Buffer  The buffer start address to be checked.
+  @param[in] Length  The buffer length to be checked.
+
+  @retval TRUE  This buffer is valid per processor architecture and not overlap with SMRAM.
+  @retval FALSE This buffer is not valid per processor architecture or overlap with SMRAM.
+**/
+BOOLEAN
+EFIAPI
+IsCommBufferValid (
+  IN EFI_PHYSICAL_ADDRESS  Buffer,
+  IN UINT64                Length
+  )
+{
+  return MmCommBufferValid (Buffer, Length);
+}
+
+/**
   The module Entry Point of the driver.
 
   @param[in]  ImageHandle    The firmware allocated handle for the EFI image.
