@@ -1,7 +1,6 @@
-## @file
-# Library provides access to the memory protection setting which may exist
-# in the platform-specific early store (in this case, CMOS) due to a memory related exception being triggered.
-#
+## @file ExceptionPersistenceLibCmos.inf
+# 
+# CMOS Implementation of ExceptionPersistenceLib
 #
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -9,18 +8,18 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = MemoryProtectionExceptionLibCmos
+  BASE_NAME                      = ExceptionPersistenceLibCmos
   FILE_GUID                      = 8e991a09-1d4d-4747-bf6a-4dc22d11978d
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = MemoryProtectionExceptionLib
+  LIBRARY_CLASS                  = ExceptionPersistenceLib
 
 #
 #  VALID_ARCHITECTURES           = IA32 X64
 #
 
 [Sources]
-  MemoryProtectionExceptionLibCmos.c
+  ExceptionPersistenceLibCmos.c
 
 [Packages]
   MdePkg/MdePkg.dec

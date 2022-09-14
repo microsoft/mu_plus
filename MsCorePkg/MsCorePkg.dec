@@ -42,11 +42,6 @@
   ## @libraryclass provides interfaces to define NV index for SystemGuard.
   TpmSgNvIndexLib|Include/Library/TpmSgNvIndexLib.h
 
-  ## @libraryclass Provides a way to turn off exceptions if an exception related to memory
-  ##               protection is tripped
-  #
-  MemoryProtectionExceptionLib|Include/Library/MemoryProtectionExceptionLib.h
-
   ## @libraryclass Provides support for a queue system
   #
   QueueLib|Include/Library/QueueLib.h

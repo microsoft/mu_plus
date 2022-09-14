@@ -43,7 +43,7 @@
   ResetSystemLib|MdeModulePkg/Library/BaseResetSystemLibNull/BaseResetSystemLibNull.inf
   MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
   DeviceSpecificBusInfoLib|MsCorePkg/Library/DeviceSpecificBusInfoLibNull/DeviceSpecificBusInfoLibNull.inf
-  MemoryProtectionExceptionLib|MsCorePkg/Library/BaseMemoryProtectionExceptionLibNull/BaseMemoryProtectionExceptionLibNull.inf
+  ExceptionPersistenceLib|MdeModulePkg/Library/BaseExceptionPersistenceLibNull/BaseExceptionPersistenceLibNull.inf
 
   SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
 
@@ -171,8 +171,7 @@
   MsCorePkg/MuCryptoDxe/MuCryptoDxe.inf
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
   MsCorePkg/AcpiRGRT/AcpiRgrt.inf
-  MsCorePkg/Library/BaseMemoryProtectionExceptionLibNull/BaseMemoryProtectionExceptionLibNull.inf
-  MsCorePkg/Library/MemoryProtectionExceptionLibCmos/MemoryProtectionExceptionLibCmos.inf
+  MsCorePkg/Library/ExceptionPersistenceLibCmos/ExceptionPersistenceLibCmos.inf
   MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
   MsCorePkg/Library/DxeQueueUefiVariableLib/DxeQueueUefiVariableLib.inf
   MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf

@@ -19,7 +19,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/DxeMemoryProtectionHobLib.h>
-#include <Library/MemoryProtectionExceptionLib.h>
+#include <Library/ExceptionPersistenceLib.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
@@ -49,11 +49,11 @@ MemoryProtectionExceptionHandler (
   BOOLEAN                                  IgnoreNext = FALSE;
   EFI_STATUS                               Status;
 
-  if (!EFI_ERROR (MemProtExGetIgnoreNextException (&IgnoreNext)) &&
+  if (!EFI_ERROR (ExPersistGetIgnoreNextPageFault (&IgnoreNext)) &&
       IgnoreNext &&
       (InterruptType == EXCEPT_IA32_PAGE_FAULT))
   {
-    MemProtExClearIgnoreNextException ();
+    ExPersistClearIgnoreNextPageFault ();
     Status = gBS->LocateProtocol (&gMemoryProtectionNonstopModeProtocolGuid, NULL, (VOID **)&NonstopModeProtocol);
     if (!EFI_ERROR (Status)) {
       Status = NonstopModeProtocol->ClearPageFault (InterruptType, SystemContext);
@@ -99,7 +99,7 @@ MemoryProtectionExceptionHandler (
       );
   }
 
-  if (EFI_ERROR (MemProtExSetExceptionOccurred ())) {
+  if (EFI_ERROR (ExPersistSetException (ExceptionPersistPageFault))) {
     DEBUG ((
       DEBUG_ERROR,
       "%a - Error mark exception occurred in platform early store\n",
@@ -153,7 +153,7 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
   if (EFI_ERROR (Status)) {
     DEBUG ((
       DEBUG_ERROR,
-      "%a: - Failed to Register Exception Handler. Page faults won't be logged via MemoryProtectionExceptionLib.\n",
+      "%a: - Failed to Register Exception Handler. Page faults won't be logged via ExceptionPersistenceLib.\n",
       __FUNCTION__
       ));
   } else {
