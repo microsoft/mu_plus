@@ -154,7 +154,7 @@ UpdateGopDevicePath (
     FreePool (Instance);
   } while (DevicePath != NULL);
 
-  if (!Exist) {
+  if ((!Exist) && (Return != NULL)) {
     Temp   = Return;
     Return = AppendDevicePathInstance (Return, Gop);
     if (Temp != NULL) {
@@ -216,15 +216,17 @@ PlatformBootManagerBeforeConsole (
       }
 
       FreePool (TempDevicePath);
-      Status = gRT->SetVariable (
-                      L"ConOut",
-                      &gEfiGlobalVariableGuid,
-                      EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS,
-                      GetDevicePathSize (ConsoleOut),
-                      ConsoleOut
-                      );
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "%a: Error setting ConOut. Code = %r\n", __FUNCTION__, Status));
+      if (ConsoleOut != NULL) {
+        Status = gRT->SetVariable (
+                        L"ConOut",
+                        &gEfiGlobalVariableGuid,
+                        EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                        GetDevicePathSize (ConsoleOut),
+                        ConsoleOut
+                        );
+        if (EFI_ERROR (Status)) {
+          DEBUG ((DEBUG_ERROR, "%a: Error setting ConOut. Code = %r\n", __FUNCTION__, Status));
+        }
       }
     }
   }

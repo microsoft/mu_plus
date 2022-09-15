@@ -365,7 +365,8 @@ Ctor (
   IN VOID                           *pSelectionContext
   )
 {
-  UINT32  MaxGlyphDescent;
+  UINT32      MaxGlyphDescent;
+  EFI_STATUS  Status;
 
   // Initialize variables.
   //
@@ -406,16 +407,20 @@ Ctor (
   //
   CopyMem (&this->m_pButton->ButtonTextBounds, &ButtonBox, sizeof (SWM_RECT));
 
-  GetTextStringBitmapSize (
-    pButtonText,
-    FontInfo,
-    TRUE,
-    EFI_HII_OUT_FLAG_CLIP |
-    EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-    EFI_HII_IGNORE_LINE_BREAK,
-    &this->m_pButton->ButtonTextBounds,
-    &MaxGlyphDescent
-    );
+  Status = GetTextStringBitmapSize (
+             pButtonText,
+             FontInfo,
+             TRUE,
+             EFI_HII_OUT_FLAG_CLIP |
+             EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+             EFI_HII_IGNORE_LINE_BREAK,
+             &this->m_pButton->ButtonTextBounds,
+             &MaxGlyphDescent
+             );
+
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
   UINT32  ButtonWidth  = (this->m_pButton->ButtonBounds.Right - this->m_pButton->ButtonBounds.Left + 1);
   UINT32  ButtonHeight = (this->m_pButton->ButtonBounds.Bottom - this->m_pButton->ButtonBounds.Top + 1);
@@ -499,8 +504,9 @@ new_Button (
   IN VOID                           *pSelectionContext
   )
 {
-  SWM_RECT  Rect, TempRect;
-  UINT32    MaxGlyphDescent;
+  SWM_RECT    Rect, TempRect;
+  UINT32      MaxGlyphDescent;
+  EFI_STATUS  Status;
 
   Button  *B = (Button *)AllocateZeroPool (sizeof (Button));
 
@@ -525,16 +531,21 @@ new_Button (
     if ((ButtonWidth == SUI_BUTTON_AUTO_SIZE) || (ButtonHeight == SUI_BUTTON_AUTO_SIZE)) {
       // Yes, this is wasteful and redundant.
       // Don't care.
-      GetTextStringBitmapSize (
-        pButtonText,
-        FontInfo,
-        FALSE,
-        EFI_HII_OUT_FLAG_CLIP |
-        EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-        EFI_HII_IGNORE_LINE_BREAK,
-        &TempRect,
-        &MaxGlyphDescent
-        );
+      Status = GetTextStringBitmapSize (
+                 pButtonText,
+                 FontInfo,
+                 FALSE,
+                 EFI_HII_OUT_FLAG_CLIP |
+                 EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+                 EFI_HII_IGNORE_LINE_BREAK,
+                 &TempRect,
+                 &MaxGlyphDescent
+                 );
+
+      if (EFI_ERROR (Status)) {
+        FreePool (B);
+        return NULL;
+      }
 
       Rect.Right  = Rect.Left + (TempRect.Right - TempRect.Left) + SUI_BUTTON_HIGHLIGHT_X_PAD;          // Add px to allow space for the "Tab highlight".
       Rect.Bottom = Rect.Top + (TempRect.Bottom - TempRect.Top) + SUI_BUTTON_HIGHLIGHT_Y_PAD;           // Add px to allow space for the "Tab highlight".

@@ -59,7 +59,7 @@ class SystemFirmwareTable(object):
     #Function to get an AcpiTable
     # return a tuple of error code, table data, and errorstring (None if not error)
     #
-    def GetAcpiTable(self, TableId):
+    def get_acpi_table(self, TableId):
         err = 0 #success
         TableType = struct.unpack(b'>i', b'ACPI')[0]  #big endian
         TableIdAsInt = struct.unpack(b'<i', TableId)[0]  #TableId is Little endian or native
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # 2. Inspect DMAR
     #
     table = SystemFirmwareTable()
-    (errorcode, data, errorstring) = table.GetAcpiTable(b'DMAR')
+    (errorcode, data, errorstring) = table.get_acpi_table(b'DMAR')
     dmar_table = DMARTable(data)
 
     DMARTest = dmar_table.DMARBitEnabled()

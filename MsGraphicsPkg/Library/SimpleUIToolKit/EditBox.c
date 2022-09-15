@@ -627,16 +627,20 @@ Ctor (
   SetMem16 (this->m_EditBoxText, (MaxDisplayChars * sizeof (CHAR16)), L'W');
   this->m_EditBoxText[MaxDisplayChars] = L'\0';
 
-  GetTextStringBitmapSize (
-    this->m_EditBoxText,
-    pFontInfo,
-    FALSE,
-    EFI_HII_OUT_FLAG_CLIP |
-    EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-    EFI_HII_IGNORE_LINE_BREAK,
-    &TextRect,
-    &MaxGlyphDescent
-    );
+  Status = GetTextStringBitmapSize (
+             this->m_EditBoxText,
+             pFontInfo,
+             FALSE,
+             EFI_HII_OUT_FLAG_CLIP |
+             EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+             EFI_HII_IGNORE_LINE_BREAK,
+             &TextRect,
+             &MaxGlyphDescent
+             );
+
+  if (EFI_ERROR (Status)) {
+    return;
+  }
 
   this->m_EditBoxText[0] = L'\0';
 

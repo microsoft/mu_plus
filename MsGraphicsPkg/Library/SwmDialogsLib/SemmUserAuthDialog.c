@@ -544,16 +544,20 @@ CreateDialogControls (
 
   // Calculate the string bitmap size of the largest button text.
   //
-  GetTextStringBitmapSize (
-    SWM_PWD_OK_TEXT_STRING,
-    &FontInfo,
-    FALSE,
-    EFI_HII_OUT_FLAG_CLIP |
-    EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-    EFI_HII_IGNORE_LINE_BREAK,
-    &StringRect,
-    &MaxGlyphDescent
-    );
+  Status = GetTextStringBitmapSize (
+             SWM_PWD_OK_TEXT_STRING,
+             &FontInfo,
+             FALSE,
+             EFI_HII_OUT_FLAG_CLIP |
+             EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+             EFI_HII_IGNORE_LINE_BREAK,
+             &StringRect,
+             &MaxGlyphDescent
+             );
+
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
   // Calculate the position and size of the first button.
   //
@@ -787,16 +791,20 @@ DrawDialogFrame (
   UINT32    MaxDescent;
   SWM_RECT  StringRect;
 
-  GetTextStringBitmapSize (
-    pTitleBarText,
-    &StringInfo.FontInfo,
-    FALSE,
-    EFI_HII_OUT_FLAG_CLIP |
-    EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-    EFI_HII_IGNORE_LINE_BREAK,
-    &StringRect,
-    &MaxDescent
-    );
+  Status = GetTextStringBitmapSize (
+             pTitleBarText,
+             &StringInfo.FontInfo,
+             FALSE,
+             EFI_HII_OUT_FLAG_CLIP |
+             EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+             EFI_HII_IGNORE_LINE_BREAK,
+             &StringRect,
+             &MaxDescent
+             );
+
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
   // Render the string to the screen, vertically centered.
   //

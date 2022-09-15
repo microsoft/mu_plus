@@ -1002,7 +1002,9 @@ CheckWatchListCallback (
         mSWM.bLastMoveRequiredMousePointer = pList->bNeedsMousePointer;
 
         Client = FilterPointerState (&PointerState);
-        InsertPointerEventIntoQueue (Client, &PointerState);
+        if (Client != NULL) {
+          InsertPointerEventIntoQueue (Client, &PointerState);
+        }
       }
     }
 

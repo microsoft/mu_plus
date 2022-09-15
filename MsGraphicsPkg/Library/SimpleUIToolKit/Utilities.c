@@ -104,19 +104,19 @@ GetTextStringBitmapSize (
   StringRowInfo = (EFI_HII_ROW_INFO *)NULL;
   RowInfoSize   = 0;
 
-  mUITSWM->StringToWindow (
-             mUITSWM,
-             mClientImageHandle,
-             HiiFlags,
-             xString,
-             StringInfo,
-             &BltBuffer,
-             0,
-             0,
-             &StringRowInfo,
-             &RowInfoSize,
-             (UINTN *)NULL
-             );
+  Status = mUITSWM->StringToWindow (
+                      mUITSWM,
+                      mClientImageHandle,
+                      HiiFlags,
+                      xString,
+                      StringInfo,
+                      &BltBuffer,
+                      0,
+                      0,
+                      &StringRowInfo,
+                      &RowInfoSize,
+                      (UINTN *)NULL
+                      );
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Failed to calculate string bitmap size: %r.\n", Status));
@@ -346,9 +346,11 @@ DupFontInfo (
 
   NewFontInfo =  AllocatePool (sizeof (EFI_FONT_INFO) + FontNameSize);
 
-  CopyMem (NewFontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
-  if (FontNameSize <= sizeof (FontInfo->FontName[0])) {
-    NewFontInfo->FontName[0] = '\0';
+  if (NewFontInfo != NULL) {
+    CopyMem (NewFontInfo, FontInfo, sizeof (EFI_FONT_INFO) + FontNameSize);
+    if (FontNameSize <= sizeof (FontInfo->FontName[0])) {
+      NewFontInfo->FontName[0] = '\0';
+    }
   }
 
   return NewFontInfo;

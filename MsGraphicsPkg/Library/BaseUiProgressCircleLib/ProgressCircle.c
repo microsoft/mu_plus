@@ -264,8 +264,8 @@ DrawAll (
 
   Pix = ((UINT32 *)thispri->PublicPC.FrameBufferBase) + (thispri->UpperLeft.Y * thispri->PublicPC.PixelsPerScanLine) + thispri->UpperLeft.X;
   cur = (UINT8 *)thispri->BitmapData;
-  for (UINT16 Y = 0; Y < thispri->BmpWidth; Y++) {
-    for (UINT16 X = 0; X < thispri->BmpWidth; X++) {
+  for (INTN Y = 0; Y < thispri->BmpWidth; Y++) {
+    for (INTN X = 0; X < thispri->BmpWidth; X++) {
       if (*cur != OUTSIDE_CONTROL) {
         *(Pix + X) = Color;
       }
@@ -317,10 +317,10 @@ DrawSegment (
   cur = (UINT8 *)thispri->BitmapData;
 
   // iterate each line looking for requested segment
-  for (UINT16 Y = 0; Y < thispri->BmpWidth; Y++) {
+  for (INTN Y = 0; Y < thispri->BmpWidth; Y++) {
     FoundInThisRow = FALSE;  // reset for next row
 
-    for (UINT16 X = 0; X < thispri->BmpWidth; X++) {
+    for (INTN X = 0; X < thispri->BmpWidth; X++) {
       if (*cur == Segment) {
         *(Pix + X)     = Color;
         FoundInThisRow = TRUE;
@@ -356,11 +356,11 @@ Fill (
   )
 {
   // go line by line vertically
-  for (UINT16 Y = 0; Y < this->BmpWidth; Y++) {
+  for (INTN Y = 0; Y < this->BmpWidth; Y++) {
     UINT8  *start = NULL;
     UINT8  *cur   = this->BitmapData + (Y * this->BmpWidth);
     // go across a line horizontally starting on the left side
-    for (UINT16 X = 0; X < this->BmpWidth; X++) {
+    for (INTN X = 0; X < this->BmpWidth; X++) {
       // find outer edge
       if (*cur == OUTER_RADIUS) {
         // find the left side
@@ -453,8 +453,8 @@ Segmatize (
 {
   UINT8  *cur = this->BitmapData;
 
-  for (UINT16 Y = 0; Y < this->BmpWidth; Y++) {
-    for (UINT16 X = 0; X < this->BmpWidth; X++) {
+  for (INTN Y = 0; Y < this->BmpWidth; Y++) {
+    for (INTN X = 0; X < this->BmpWidth; X++) {
       if (*cur != OUTSIDE_CONTROL) {
         POINT  t;
         t.X  = X;

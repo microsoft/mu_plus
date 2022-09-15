@@ -376,7 +376,7 @@ MsWheaESCalculateChecksum16 (
   )
 {
   UINT16      Data;
-  UINT8       Index;
+  UINT32      Index;
   UINT16      Sum;
   EFI_STATUS  Status;
 
@@ -401,7 +401,7 @@ MsWheaESCalculateChecksum16 (
   Header->Checksum = *Checksum;
 
   for (Index = 0; Index < Header->ActiveRange; Index += sizeof (Data)) {
-    Status = MsWheaEarlyStorageRead (&Data, sizeof (Data), MS_WHEA_EARLY_STORAGE_DATA_OFFSET + Index);
+    Status = MsWheaEarlyStorageRead (&Data, (UINT8)sizeof (Data), (UINT8)(MS_WHEA_EARLY_STORAGE_DATA_OFFSET + Index));
     if (EFI_ERROR (Status) != FALSE) {
       DEBUG ((DEBUG_ERROR, "%a: Reading Early Storage %d failed %r\n", __FUNCTION__, Index, Status));
       goto Cleanup;

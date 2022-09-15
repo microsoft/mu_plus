@@ -25,7 +25,7 @@
 STATIC  ADVANCED_LOGGER_INFO           *mLoggerInfo    = NULL;
 STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mLowAddress    = NULL;
 STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mHighAddress   = NULL;
-STATIC  UINTN                          mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
+STATIC  UINT16                         mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
 
 #define ADV_TIME_STAMP_FORMAT  "%2.2d:%2.2d:%2.2d.%3.3d : "
 #define ADV_TIME_STAMP_RESULT  "hh:mm:ss:ttt : "
@@ -315,7 +315,7 @@ EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibUnitTestInitialize (
   IN ADVANCED_LOGGER_PROTOCOL  *TestProtocol  OPTIONAL,
-  IN UINTN                     MaxMessageSize
+  IN UINT16                    MaxMessageSize
   )
 {
   ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol = NULL;

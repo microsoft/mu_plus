@@ -636,7 +636,8 @@ MsWheaESProcess (
   )
 {
   EFI_STATUS                    Status = EFI_SUCCESS;
-  UINT8                         Index  = 0;
+  UINT32                        Index  = 0;
+  UINT8                         IndexU8;
   UINT8                         mRevInfo;
   MS_WHEA_ERROR_ENTRY_MD        MsWheaEntryMD;
   MS_WHEA_EARLY_STORAGE_HEADER  Header;
@@ -669,9 +670,9 @@ MsWheaESProcess (
          (Index <= (Header.ActiveRange - sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON))))
   {
     Status = MsWheaESReadData (
-               &mRevInfo,
+               (VOID *)&mRevInfo,
                sizeof (mRevInfo),
-               Index + OFFSET_OF (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON, Rev)
+               (UINT8)(Index + OFFSET_OF (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON, Rev))
                );
     if (EFI_ERROR (Status) != FALSE) {
       DEBUG ((DEBUG_ERROR, "%a: Early Storage storage read Index %d failed: %r\n", __FUNCTION__, Index, Status));
@@ -681,7 +682,9 @@ MsWheaESProcess (
 
     switch (mRevInfo) {
       case MS_WHEA_REV_0:
-        Status = MsWheaESGetV0Info (&MsWheaEntryMD, &Index);
+        IndexU8 = (UINT8)(Index & 0xff);
+        Status  = MsWheaESGetV0Info ((VOID *)&MsWheaEntryMD, &IndexU8);
+        Index   = IndexU8;
         if (EFI_ERROR (Status) == FALSE) {
           Status = ReportFn (&MsWheaEntryMD);
         } else {

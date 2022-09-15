@@ -158,7 +158,7 @@ EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibUnitTestInitialize (
   IN  ADVANCED_LOGGER_PROTOCOL  *TestProtocol  OPTIONAL,
-  IN  UINTN                     MaxMessageSize
+  IN  UINT16                    MaxMessageSize
   );
 
 #endif // __ADVANCED_LOGGER_ACCESS_LIB_H__

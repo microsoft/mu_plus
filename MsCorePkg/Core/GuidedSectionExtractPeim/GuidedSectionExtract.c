@@ -72,7 +72,7 @@ PeimInitializeGuidedSectionExtract (
   //
   // Install custom extraction guid PPI
   //
-  if (ExtractHandlerNumber > 0) {
+  if ((ExtractHandlerNumber > 0) && (ExtractHandlerGuidTable != NULL)) {
     GuidPpi = (EFI_PEI_PPI_DESCRIPTOR *)AllocatePool (ExtractHandlerNumber * sizeof (EFI_PEI_PPI_DESCRIPTOR));
     ASSERT (GuidPpi != NULL);
     while (ExtractHandlerNumber-- > 0) {

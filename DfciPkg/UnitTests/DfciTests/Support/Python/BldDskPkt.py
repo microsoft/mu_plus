@@ -21,7 +21,7 @@ def set_delimiter (new_delimiter):
     global delimiter
     delimiter = new_delimiter
 
-def AddSection (outFile, sectionName, sectionFileName):
+def add_section(outFile, sectionName, sectionFileName):
 
 
     if (not sectionFileName):
@@ -72,14 +72,14 @@ def main():
     outFile = open (options.OutputFilePath, "w")
 
     set_delimiter ('{')
-    AddSection (outFile, 'ProvisioningPacket', options.IdFilePath)
-    AddSection (outFile, 'ProvisioningPacket2', options.Id2FilePath)
-    AddSection (outFile, 'PermissionsPacket', options.PermFilePath)
-    AddSection (outFile, 'PermissionsPacket2', options.Perm2FilePath)
-    AddSection (outFile, 'TransitionPacket1', options.Transition1FilePath)
-    AddSection (outFile, 'TransitionPacket2', options.Transition2FilePath)
-    AddSection (outFile, 'SettingsPacket', options.SettingsFilePath)
-    AddSection (outFile, 'SettingsPacket2', options.Settings2FilePath)
+    add_section(outFile, 'ProvisioningPacket', options.IdFilePath)
+    add_section(outFile, 'ProvisioningPacket2', options.Id2FilePath)
+    add_section(outFile, 'PermissionsPacket', options.PermFilePath)
+    add_section(outFile, 'PermissionsPacket2', options.Perm2FilePath)
+    add_section(outFile, 'TransitionPacket1', options.Transition1FilePath)
+    add_section(outFile, 'TransitionPacket2', options.Transition2FilePath)
+    add_section(outFile, 'SettingsPacket', options.SettingsFilePath)
+    add_section(outFile, 'SettingsPacket2', options.Settings2FilePath)
 
     if (delimiter == '{'):
         raise exception ("No package written")

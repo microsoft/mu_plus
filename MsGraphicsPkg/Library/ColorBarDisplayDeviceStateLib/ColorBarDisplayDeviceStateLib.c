@@ -280,8 +280,11 @@ DisplayDeviceState (
       }
 
       UI_RECTANGLE  *rect = new_UI_RECTANGLE (&ul, FrameBufferBase, PixelsPerScanLine, (UINT16)WidthInPixels, SingleBannerHeight, &si);
-      DrawRect (rect);
-      delete_UI_RECTANGLE (rect);
+      if (rect != NULL) {
+        DrawRect (rect);
+        delete_UI_RECTANGLE (rect);
+      }
+
       ul.Y          += SingleBannerHeight;
       Notifications -= *SupportedNotification;  // subtract notification so that we can break early.
     }  // close if notification is supported

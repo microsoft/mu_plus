@@ -464,16 +464,20 @@ RenderToggleSwitch (
   // TODO - bounds should apply to the toggle switch and it's text, combined.
   //
   CopyMem (&StringRect, &this->m_pToggleSwitch->ToggleSwitchBounds, sizeof (SWM_RECT));
-  GetTextStringBitmapSize (
-    pString,
-    &StringInfo->FontInfo,
-    TRUE,
-    EFI_HII_OUT_FLAG_CLIP |
-    EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
-    EFI_HII_IGNORE_LINE_BREAK,
-    &StringRect,
-    &MaxGlyphDescent
-    );
+  Status = GetTextStringBitmapSize (
+             pString,
+             &StringInfo->FontInfo,
+             TRUE,
+             EFI_HII_OUT_FLAG_CLIP |
+             EFI_HII_OUT_FLAG_CLIP_CLEAN_X | EFI_HII_OUT_FLAG_CLIP_CLEAN_Y |
+             EFI_HII_IGNORE_LINE_BREAK,
+             &StringRect,
+             &MaxGlyphDescent
+             );
+
+  if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
 
   SWM_RECT  *pRect      = &this->m_pToggleSwitch->ToggleSwitchBounds;
   UINTN     SwitchOrigY = (pRect->Top + ((pRect->Bottom - pRect->Top + 1) / 2) - ((StringRect.Bottom - StringRect.Top + 1) / 2));
