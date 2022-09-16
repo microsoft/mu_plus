@@ -30,7 +30,7 @@
   MdeModulePkg/MdeModulePkg.dec
   ShellPkg/ShellPkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
-
+  UefiTestingPkg/UefiTestingPkg.dec
 
 [LibraryClasses]
   ShellLib
@@ -54,3 +54,6 @@
   gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
+
+[FixedPcd]
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES

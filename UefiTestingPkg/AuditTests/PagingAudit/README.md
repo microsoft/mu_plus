@@ -57,6 +57,10 @@ First, for the SMM driver and app you need to add them to your DSC file for your
 ### SMM Paging Audit
 
 ```text
+[PcdsFixedAtBuild.X64]
+  # Optional: Virtual platforms that do not support SMRRs can add below change to skip the auditing related to SMRR
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported|TRUE
+
 [Components.X64]
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditDriver.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
@@ -87,6 +91,10 @@ Finally, double-click the HTML output file and check your results.
 1. Add the following entry to platform dsc file;
 
     ```text
+    [PcdsFixedAtBuild.X64]
+      # Optional: Virtual platforms that do not support SMRRs can add below change to skip the auditing related to SMRR
+      gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported|TRUE
+
     [Components.X64]
         UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
     ```

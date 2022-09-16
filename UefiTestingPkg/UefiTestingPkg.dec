@@ -27,3 +27,11 @@
   # Guid for DMA Protection Variable
   # {d1eef7c2-f719-41ae-a8c4-1dc434a862df}
   gDMAUnitTestVariableGuid = { 0xd1eef7c2, 0xf719, 0x41ae, {0xa8, 0xc4, 0x1d, 0xc4, 0x34, 0xa8, 0x62, 0xdf}}
+
+[PcdsFixedAtBuild]
+  ## UEFI testing SMRR unsupported flag
+  # When the platform wants to specifically indicate the unsupported SMRR features to skip certain tests.
+  #
+  # When TRUE, the platform indicate the SMRR related is not supported.
+  # When FALSE, the SMRR logic will follow the normal family/model ID identification to evaluate SMRAM regions.
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported|FALSE|BOOLEAN|0x00000001

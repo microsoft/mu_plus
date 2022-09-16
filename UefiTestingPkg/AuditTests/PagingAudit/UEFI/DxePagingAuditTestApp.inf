@@ -31,7 +31,7 @@
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
   ShellPkg/ShellPkg.dec
-
+  UefiTestingPkg/UefiTestingPkg.dec
 
 [LibraryClasses]
   PrintLib
@@ -53,3 +53,6 @@
   gEfiBlockIoProtocolGuid
   gHeapGuardDebugProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
+
+[FixedPcd]
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES

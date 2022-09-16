@@ -31,7 +31,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
-
+  UefiTestingPkg/UefiTestingPkg.dec
 
 [LibraryClasses]
   UefiDriverEntryPoint
@@ -53,6 +53,9 @@
   gEfiBlockIoProtocolGuid
   gHeapGuardDebugProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
+
+[FixedPcd]
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES
 
 [Depex]
   gEfiSimpleFileSystemProtocolGuid

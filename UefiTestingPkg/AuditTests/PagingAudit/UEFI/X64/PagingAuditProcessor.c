@@ -136,6 +136,15 @@ LookupSmrrIntel (
     }
   }
 
+  //
+  // The above check is great...
+  // However, there are some virtual platforms that does not really support them. This PCD check
+  // is to allow these virtual platforms to skip the SMRR check.
+  //
+  if (FixedPcdGetBool (PcdPlatformSmrrUnsupported)) {
+    Status = EFI_UNSUPPORTED;
+  }
+
   return Status;
 }
 
@@ -187,9 +196,15 @@ LookupSmrrAMD (
   DEBUG ((DEBUG_INFO, "%a - FamilyId 0x%02x, ModelId 0x%02x\n", __FUNCTION__, FamilyId, ModelId));
 
   //
-  // In processors implementing the AMD64 architecture, SMBASE relocation is always supported
+  // In processors implementing the AMD64 architecture, SMBASE relocation is always supported.
+  // However, there are some virtual platforms that does not really support them. This PCD check
+  // is to allow these virtual platforms to skip the SMRR check.
   //
-  Status = EFI_SUCCESS;
+  if (FixedPcdGetBool (PcdPlatformSmrrUnsupported)) {
+    Status = EFI_UNSUPPORTED;
+  } else {
+    Status = EFI_SUCCESS;
+  }
 
   return Status;
 }
