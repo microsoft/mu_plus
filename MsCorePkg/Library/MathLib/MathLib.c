@@ -39,12 +39,12 @@ sin_d (
   IN CONST double  angleInRadians
   )
 {
-  double  radians        = angleInRadians;
-  double  previousValue  = radians; // x0
+  double  radians = angleInRadians;
+  double  previousValue;
   INT16   multiply       = -1;      // we subtract first possibly faster
   UINT32  iterationCount = 5;       //
   double  top;                      // x^3
-  UINT64  denom = 3*2;              // 3!
+  double  denom = 3.0 * 2.0;        // 3!
   double  value;
 
   // Using taylor series expansions
@@ -59,6 +59,8 @@ sin_d (
     radians += 2*MU_PI;
   }
 
+  previousValue = radians;  // x0
+
   // compute the first iteration
   // Formula is sum over N to infinity with x being the radians
   // -1^n x^(2n+1)
@@ -68,8 +70,8 @@ sin_d (
   top   = radians * radians * radians; // x^3
   value = previousValue - (top/denom);
 
-  // iterate 7 iterations
-  for ( ; iterationCount <= 19; iterationCount += 2) {
+  // iterate 12 iterations
+  for ( ; iterationCount <= 27; iterationCount += 2) {
     previousValue = value;
     denom        *= iterationCount * (iterationCount-1); // n * n-1 * (previous computed n-2!)
     top          *= radians * radians;                   // x^2 * (previous computed x^n-2)
@@ -102,7 +104,7 @@ cos_d (
   INT16   multiply       = -1; // we subtract first possibly faster
   UINT32  iterationCount = 4;  // we start at four
   double  top;
-  UINT64  denom = 2;  // 2!
+  double  denom = 2.0;  // 2!
   double  value;
 
   // Using taylor series expansions
@@ -126,8 +128,8 @@ cos_d (
   top   = radians * radians; // x^2
   value = previousValue - (top/denom);
 
-  // iterate 7 iterations
-  for ( ; iterationCount <= 20; iterationCount += 2) {
+  // iterate 12 iterations
+  for ( ; iterationCount <= 26; iterationCount += 2) {
     previousValue = value;
     denom        *= iterationCount * (iterationCount-1); // n * n-1 * (previous computed n-2!)
     top          *= radians * radians;                   // x^2 * (previous computed x^n-2)

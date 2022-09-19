@@ -38,12 +38,13 @@ TestSine (
     error              = result - mathContext->data[Index];
     error             *= error;
     totalErrorSquared += error;
+
     if (error > maxError) {
       maxError = error;
     }
 
     if (maxError >= maxAllowedError) {
-      UT_LOG_WARNING ("COS at %llx = %llx", current, result);
+      UT_LOG_WARNING ("SIN at %llx = %llx", current, result);
     }
 
     UT_ASSERT_TRUE (maxError < maxAllowedError);
@@ -124,12 +125,17 @@ TestSqrt32 (
     error              = result - mathContext->data[Index];
     error             *= error;
     totalErrorSquared += error;
+
     if (error > maxError) {
       maxError = error;
     }
 
     if (maxError >= maxAllowedError) {
       UT_LOG_WARNING ("SQRT32 at %d = %d", current, result);
+    }
+
+    if (maxError >= maxAllowedError) {
+      UT_LOG_WARNING ("SQRT32 at %llx = %llx", current, result);
     }
 
     UT_ASSERT_TRUE (maxError < maxAllowedError);
@@ -167,6 +173,7 @@ TestSqrt64 (
     error              = (UINT32)(result - (UINT64)mathContext->data[Index]);
     error             *= error;
     totalErrorSquared += error;
+
     if (error > maxError) {
       maxError = error;
     }
@@ -211,6 +218,7 @@ TestCos (
     error              = result - mathContext->data[Index];
     error             *= error;
     totalErrorSquared += error;
+
     if (error > maxError) {
       maxError = error;
     }
