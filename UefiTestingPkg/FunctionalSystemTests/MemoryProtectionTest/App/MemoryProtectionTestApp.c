@@ -30,7 +30,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Register/ArchitecturalMsr.h>
 #include <Library/ResetSystemLib.h>
 #include <Library/HobLib.h>
-#include <Library/MemoryProtectionExceptionLib.h>
+#include <Library/ExceptionPersistenceLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
 #include <Guid/DxeMemoryProtectionSettings.h>
@@ -305,7 +305,7 @@ GetIgnoreNextEx (
 {
   BOOLEAN  Result = FALSE;
 
-  MemProtExGetIgnoreNextException (&Result);
+  ExPersistGetIgnoreNextPageFault (&Result);
 
   return Result;
 }
@@ -820,7 +820,7 @@ UefiPageGuard (
       return UNIT_TEST_SKIPPED;
     }
 
-    UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
+    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
     // Hit the head guard page
     HeadPageTest ((UINT64 *)(UINTN)ptr);
@@ -831,7 +831,7 @@ UefiPageGuard (
     }
 
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-    UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
+    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
     // Hit the tail guard page
     TailPageTest ((UINT64 *)(UINTN)ptr);
@@ -918,7 +918,7 @@ UefiPoolGuard (
     }
 
     for (Index = 0; Index < NUM_POOL_SIZES; Index++) {
-      UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
+      UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
       //
       // Context.TestProgress indicates progress within this specific test.
@@ -1005,7 +1005,7 @@ UefiCpuStackGuard (
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
 
-    UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
+    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
     RecursionDynamic (1);
 
@@ -1059,7 +1059,7 @@ UefiNullPointerDetection (
 
     for (Index = 0; Index < 2; Index++) {
       UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-      UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
+      UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
       if (Index < 1) {
         if (mFw->Title == NULL) {
@@ -1138,7 +1138,7 @@ UefiNxStackGuard (
       UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
     }
 
-    UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
+    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
     CopyMem (CodeRegionToCopyTo, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
     ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
@@ -1194,7 +1194,7 @@ UefiNxProtection (
     }
 
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-    UT_ASSERT_NOT_EFI_ERROR (MemProtExSetIgnoreNextException ());
+    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
     Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
 
@@ -1755,7 +1755,7 @@ MemoryProtectionTestAppEntryPoint (
   // unless the Nonstop Protocol is installed to clear intentional page faults.
   if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ())) {
     // Clear the memory protection early store in case a fault was previously tripped and was not cleared
-    MemProtExClearAll ();
+    ExPersistClearAll ();
 
     // Check if the nonstop protocol is active
     if (!EFI_ERROR (GetNonstopProtocol ())) {
