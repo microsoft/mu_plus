@@ -152,7 +152,7 @@ PEI components in the ARM with Security Processor configuration.
   AssertLib|AdvLoggerPkg/Library/AssertLib/AssertLib.inf
 
 [LibraryClasses.common.PEI_CORE]
-  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/PeiCore/AdvancedLoggerLib.inf
 
 [LibraryClasses.common.PEIM]
   AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf

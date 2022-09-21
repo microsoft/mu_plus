@@ -274,6 +274,47 @@ InstallPermanentMemoryBuffer (
 }
 
 /**
+  Validate Info Blocks
+
+  The address of the ADVANCE_LOGGER_INFO block pointer is captured during the first debug print.  The
+  pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here,
+  we check that the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which
+  is used in multiple places to see if a new message will fit into the log buffer, is valid.
+
+  @param          LoggerInfo  Logger information pointer needs to be validated.
+
+  @return         BOOLEAN     TRUE = mLoggerInfo Block passes security checks
+  @return         BOOLEAN     FALSE= mLoggerInfo Block failed security checks
+
+**/
+STATIC
+BOOLEAN
+ValidateInfoBlock (
+  IN  ADVANCED_LOGGER_INFO  *LoggerInfo
+  )
+{
+  if (LoggerInfo == NULL) {
+    return FALSE;
+  }
+
+  if (LoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+    return FALSE;
+  }
+
+  if (LoggerInfo->LogBuffer != (PA_FROM_PTR (LoggerInfo + 1))) {
+    return FALSE;
+  }
+
+  if ((LoggerInfo->LogCurrent > LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize) ||
+      (LoggerInfo->LogCurrent < LoggerInfo->LogBuffer))
+  {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
   Get the SEC Logger Information block
 
   @param    NONE
@@ -298,14 +339,20 @@ GetSecLoggerInfo (
   // to be set accordingly.
   LoggerInfoSec = NULL;
   LogPtr        = (ADVANCED_LOGGER_PTR *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
-  if ((LogPtr != NULL) &&
-      (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
-      (LogPtr->LogBuffer != 0ULL))
-  {
-    LoggerInfoSec = ALI_FROM_PA (LogPtr->LogBuffer);
-    if (!LoggerInfoSec->HdwPortInitialized) {
-      AdvancedLoggerHdwPortInitialize ();
-      LoggerInfoSec->HdwPortInitialized = TRUE;
+  if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    if ((LogPtr != NULL) &&
+        (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
+        (LogPtr->LogBuffer != 0ULL))
+    {
+      LoggerInfoSec = ALI_FROM_PA (LogPtr->LogBuffer);
+      if (!LoggerInfoSec->HdwPortInitialized) {
+        AdvancedLoggerHdwPortInitialize ();
+        LoggerInfoSec->HdwPortInitialized = TRUE;
+      }
+    }
+  } else {
+    if ((LogPtr != NULL) && ValidateInfoBlock ((ADVANCED_LOGGER_INFO *)LogPtr)) {
+      LoggerInfoSec = (ADVANCED_LOGGER_INFO *)(VOID *)LogPtr;
     }
   }
 
@@ -458,7 +505,7 @@ AdvancedLoggerGetLoggerInfo (
       //
       // If LoggerInfo from SEC, then update the SEC pointer to point to the new
       // PEI Core version of LoggerInfo
-      if (LoggerInfoSec != NULL) {
+      if ((LoggerInfoSec != NULL) && !(LoggerInfoSec->InPermanentRAM)) {
         UpdateSecLoggerInfo (LoggerInfo);
       }
 
@@ -478,6 +525,8 @@ AdvancedLoggerGetLoggerInfo (
         } else {
           DEBUG ((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
         }
+      } else if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+        DEBUG ((DEBUG_INFO, "%a: Standalone MM Hob of fixed data published\n", __FUNCTION__));
       } else {
         PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
       }
