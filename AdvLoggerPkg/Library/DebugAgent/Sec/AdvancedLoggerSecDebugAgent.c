@@ -132,6 +132,7 @@ InitializeDebugAgent (
       LoggerInfo->LogBuffer          = PA_FROM_PTR ((LoggerInfo + 1));
       LoggerInfo->LogCurrent         = LoggerInfo->LogBuffer;
       LoggerInfo->HdwPortInitialized = TRUE;
+      LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
       LogPtr->LogBuffer              = NewLogBuffer; // Set physical address of Logger Memory at TemporaryRamBase
       LogPtr->Signature              = ADVANCED_LOGGER_PTR_SIGNATURE;
 

@@ -51,9 +51,12 @@
   gAdvancedLoggerPpiGuid                                                    ## PRODUCES
   gEfiPeiMemoryDiscoveredPpiGuid                                            ## CONSUMES
 
-[Pcd]
+[FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPeiInRAM                     ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM                   ## CONSUMES
+
+[FixedPcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES

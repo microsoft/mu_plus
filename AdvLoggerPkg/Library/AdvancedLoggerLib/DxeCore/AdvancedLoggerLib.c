@@ -364,6 +364,7 @@ DxeCoreAdvancedLoggerLibConstructor (
       LoggerInfo->LogBuffer     = PA_FROM_PTR (LoggerInfo + 1);
       LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
       LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
+      LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
       mMaxAddress               = PA_FROM_PTR (LoggerInfo) + LoggerInfo->LogBufferSize;
       mBufferSize               = LoggerInfo->LogBufferSize;
     } else {

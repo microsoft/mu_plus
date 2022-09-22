@@ -11,8 +11,10 @@
 #ifndef __ADVANCED_LOGGER_INTERNAL_H__
 #define __ADVANCED_LOGGER_INTERNAL_H__
 
-#define ADVANCED_LOGGER_SIGNATURE  SIGNATURE_32('A','L','O','G')
-#define ADVANCED_LOGGER_VERSION    2
+#define ADVANCED_LOGGER_SIGNATURE   SIGNATURE_32('A','L','O','G')
+#define ADVANCED_LOGGER_HW_LVL_VER  3
+
+#define ADVANCED_LOGGER_VERSION  ADVANCED_LOGGER_HW_LVL_VER
 
 //
 // These Pcds are used to carve out a PEI memory buffer from the temporary RAM.
@@ -45,6 +47,8 @@ typedef volatile struct {
   UINT64                  TimerFrequency;         // Ticks per second for log timing
   UINT64                  TicksAtTime;            // Ticks when Time Acquired
   EFI_TIME                Time;                   // Uefi Time Field
+  UINT32                  HwPrintLevel;           // Logging level to be printed at hw port
+  UINT32                  Reserved3;              //
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {

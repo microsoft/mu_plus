@@ -53,8 +53,11 @@
   gEfiRealTimeClockArchProtocolGuid                                         ## CONSUMES
   gEfiVariableWriteArchProtocolGuid                                         ## CONSUMES
 
-[Pcd]
+[FixedPcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel
+
+[FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase

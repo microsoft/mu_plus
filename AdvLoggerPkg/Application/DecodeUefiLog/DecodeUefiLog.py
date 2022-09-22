@@ -163,6 +163,29 @@ class AdvLogParser ():
     V2_LOGGER_INFO_SIZE = 72
     V2_LOGGER_INFO_VERSION = 2
 
+    # typedef volatile struct {
+    # UINT32                  Signature;              // Signature 'ALOG'
+    # UINT16                  Version;                // Current Version
+    # UINT16                  Reserved;               // Reserved for future
+    # EFI_PHYSICAL_ADDRESS    LogBuffer;              // Fixed pointer to start of log
+    # EFI_PHYSICAL_ADDRESS    LogCurrent;             // Where to store next log entry.
+    # UINT32                  DiscardedSize;          // Number of bytes of messages missed
+    # UINT32                  LogBufferSize;          // Size of allocated buffer
+    # BOOLEAN                 InPermanentRAM;         // Log in permanent RAM
+    # BOOLEAN                 AtRuntime;              // After ExitBootServices
+    # BOOLEAN                 GoneVirtual;            // After VirtualAddressChange
+    # BOOLEAN                 HdwPortInitialized;     // HdwPort initialized
+    # BOOLEAN                 HdwPortDisabled;        // HdwPort is Disabled
+    # BOOLEAN                 Reserved2[3];           //
+    # UINT64                  TimerFrequency;         // Ticks per second for log timing
+    # UINT64                  TicksAtTime;            // Ticks when Time Acquired
+    # EFI_TIME                Time;                   // Uefi Time Field
+    # UINT32                  HwPrintLevel;           // Logging level to be printed at hw port
+    # UINT32                  Reserved3;              //
+    # } ADVANCED_LOGGER_INFO;
+    V3_LOGGER_INFO_SIZE = 80
+    V3_LOGGER_INFO_VERSION = 3
+
     # ---------------------------------------------------------------------- #
     #
     #
@@ -273,9 +296,10 @@ class AdvLogParser ():
             if InFile.tell() != (self.V1_LOGGER_INFO_SIZE):
                 raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
-        elif Version == self.V2_LOGGER_INFO_VERSION:
-            BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + self.V2_LOGGER_INFO_SIZE
-            LoggerInfo["LogBuffer"] = self.V2_LOGGER_INFO_SIZE
+        elif Version == self.V2_LOGGER_INFO_VERSION or Version == self.V3_LOGGER_INFO_VERSION:
+            Size = self.V2_LOGGER_INFO_SIZE if Version == self.V2_LOGGER_INFO_VERSION else self.V3_LOGGER_INFO_SIZE
+            BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + Size
+            LoggerInfo["LogBuffer"] = Size
             LoggerInfo["LogCurrent"] = struct.unpack("=Q", InFile.read(8))[0]
             LoggerInfo["DiscardedSize"] = struct.unpack("=I", InFile.read(4))[0]
             LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
@@ -301,10 +325,15 @@ class AdvLogParser ():
             LoggerInfo["DayLight"] = struct.unpack("=B", InFile.read(1))[0]
             InFile.read(1)                 # skip Pad2 field
 
+            # If at v3, there will be 8 bytes for print level and pads, which we do not care.
+            if Version == self.V3_LOGGER_INFO_VERSION:
+                InFile.read(4)
+                InFile.read(4)
+
             self._Compute_Basetime(LoggerInfo)
 
-            LoggerInfo["LogCurrent"] += self.V2_LOGGER_INFO_SIZE
-            if InFile.tell() != (self.V2_LOGGER_INFO_SIZE):
+            LoggerInfo["LogCurrent"] += Size
+            if InFile.tell() != (Size):
                 raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
         else:

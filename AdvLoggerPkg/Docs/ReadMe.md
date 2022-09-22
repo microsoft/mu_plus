@@ -242,6 +242,21 @@ and the follow change is needed in the .fdf:
   INF AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 ```
 
+## Hardware Logging Level
+
+The v3 data header supports a new field of hardware debugging level to support setting the serial print configurable
+during boot time.
+
+The default value will be initialized to the value of `PcdAdvancedLoggerHdwPortDebugPrintErrorLevel` in the PEI core,
+DXE core, or MM core, whichever comes first during the boot process.
+
+To override the initialized hardware print level, user needs to first get the advanced logger info region, this could
+be done, depending on the boot phase of consumer, through the `PcdAdvancedLoggerBase` in SEC phase and/or if `PcdAdvancedLoggerFixedInRAM`
+is set, or `gAdvancedLoggerHobGuid` HOB if setup in PEI phase.
+
+Note: This change will require all the firmware entities to update to v3 of advanced logger together. Torn state will
+result in hardware printing not functional.
+
 ---
 
 ## Copyright

@@ -53,11 +53,12 @@
 [Guids]
   gAdvancedLoggerHobGuid
 
-[Pcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase          ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerCarBase       ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages   ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages         ## CONSUMES
+[FixedPcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerCarBase                      ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES
 
 [UserExtensions.TianoCore."ExtraFiles"]
   AdvancedLoggerSecDebugAgent.uni

@@ -141,11 +141,14 @@ AdvancedLoggerWrite (
  #ifdef ADVANCED_LOGGER_SEC
   // If LoggerInfo == NULL, assume there is a HdwPort and it has not been disabled. This
   // does occur in SEC
-  if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled))
+  if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled)) {
  #else
-  if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled))
+  if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled)) {
+    if (LoggerInfo->Version >= ADVANCED_LOGGER_HW_LVL_VER) {
+      DebugLevel = (DebugLevel & LoggerInfo->HwPrintLevel);
+    }
+
  #endif
-  {
     AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
   }
 }

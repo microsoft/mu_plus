@@ -484,6 +484,7 @@ AdvancedLoggerGetLoggerInfo (
         LoggerInfo->LogBuffer     = PA_FROM_PTR (LoggerInfo + 1);
         LoggerInfo->LogBufferSize = BufferSize - sizeof (ADVANCED_LOGGER_INFO);
         LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
+        LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
         AdvancedLoggerHdwPortInitialize ();
         LoggerInfo->HdwPortInitialized = TRUE;
       }
