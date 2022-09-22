@@ -1,0 +1,28 @@
+
+## @file
+# A null library for drawing directly to the FrameBuffer memory region
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION = 0x00010017
+  BASE_NAME = FrameBufferMemDrawLibNull
+  FILE_GUID = 1C0E2E2F-9BE2-4E8E-94C3-1FEA80681CD9
+  VERSION_STRING = 1.0
+  MODULE_TYPE = BASE
+  LIBRARY_CLASS = FrameBufferMemDrawLib
+
+
+[LibraryClasses]
+  UefiLib
+  DebugLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[Sources]
+  FrameBufferMemDrawLibNull.c

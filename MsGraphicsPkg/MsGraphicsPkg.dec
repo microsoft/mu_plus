@@ -22,6 +22,7 @@
   #UIToolKitLib|Include/UIToolKit/SimpleUIToolKit.h  # temporarily disabled due to bug in pytools library parsing
   MsPlatformEarlyGraphicsLib|Include/Library/MsPlatformEarlyGraphicsLib.h
   UiProgressCircleLib|Include/Library/UiProgressCircleLib.h
+  FrameBufferMemDrawLib|Include/Library/FrameBufferMemDrawLib.h
   UiRectangleLib|Include/Library/UiRectangleLib.h
   PlatformThemeLib|Include/Library/PlatformThemeLib.h
   DisplayDeviceStateLib|Include/Library/DisplayDeviceStateLib.h

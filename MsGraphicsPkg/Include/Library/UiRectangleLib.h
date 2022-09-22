@@ -18,8 +18,6 @@ typedef struct {
   POINT            UpperLeft;
   UINT32           Width;
   UINT32           Height;
-  UINT8            *FrameBufferBase;
-  UINTN            PixelsPerScanLine;              // in framebuffer
   UI_STYLE_INFO    StyleInfo;
 } UI_RECTANGLE;
 
@@ -28,7 +26,6 @@ Method to use create a new UI_RECTANGLE struct.
 This structure is used by all the other functions to modify and draw the object
 
 @param UpperLeft         - Upper left point of rectangle in framebuffer coordinates
-@param FrameBufferBase   - pointer to framebuffer address of 0,0  (upper left)
 @param PixelsPerScanLine - Number of pixels per scan line in framebuffer.
                            This is to support aligned framebuffers
 @param Width             - The width of the rectangle
@@ -42,8 +39,6 @@ UI_RECTANGLE *
 EFIAPI
 new_UI_RECTANGLE (
   IN POINT          *UpperLeft,
-  IN UINT8          *FrameBufferBase,
-  IN UINTN          PixelsPerScanLine,
   IN UINT32         Width,
   IN UINT32         Height,
   IN UI_STYLE_INFO  *StyleInfo

@@ -12,6 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Protocol/GraphicsOutput.h>  // structure defs
 #include <Library/MemoryAllocationLib.h>
+#include <Library/FrameBufferMemDrawLib.h>
 #include "UiRectangle.h"
 
 /*
@@ -19,9 +20,6 @@ Method to use create a new UI_RECTANGLE struct.
 This structure is used by all the other functions to modify and draw the object
 
 @param UpperLeft         - Upper left point of rectangle in framebuffer coordinates
-@param FrameBufferBase   - pointer to framebuffer address of 0,0  (upper left)
-@param PixelsPerScanLine - Number of pixels per scan line in framebuffer.
-This is to support aligned framebuffers
 @param Width             - The width of the rectangle
 @param Height            - The height of the rectangle
 @param StyleInfo  - Style info for this (color, sizes, fill types, border, etc)
@@ -33,19 +31,12 @@ UI_RECTANGLE *
 EFIAPI
 new_UI_RECTANGLE (
   IN POINT          *UpperLeft,
-  IN UINT8          *FrameBufferBase,
-  IN UINTN          PixelsPerScanLine,
   IN UINT32         Width,
   IN UINT32         Height,
   IN UI_STYLE_INFO  *StyleInfo
   )
 {
   INTN  FillDataSize = 0;
-
-  if (FrameBufferBase == NULL) {
-    ASSERT (NULL != FrameBufferBase);
-    return NULL;
-  }
 
   if (UpperLeft == NULL) {
     ASSERT (NULL != UpperLeft);
@@ -62,13 +53,11 @@ new_UI_RECTANGLE (
 
   ASSERT (NULL != this);
   if (this != NULL) {
-    this->Public.UpperLeft         = *UpperLeft;
-    this->Public.FrameBufferBase   = FrameBufferBase;
-    this->Public.PixelsPerScanLine = PixelsPerScanLine;
-    this->Public.Width             = Width;
-    this->Public.Height            = Height;
-    this->Public.StyleInfo         = *StyleInfo;
-    this->FillDataSize             = FillDataSize;
+    this->Public.UpperLeft = *UpperLeft;
+    this->Public.Width     = Width;
+    this->Public.Height    = Height;
+    this->Public.StyleInfo = *StyleInfo;
+    this->FillDataSize     = FillDataSize;
 
     this->Public.StyleInfo.IconInfo.PixelData = NULL;
     if ((this->Public.StyleInfo.IconInfo.Height > 0) && (this->Public.StyleInfo.IconInfo.Width > 0) && (StyleInfo->IconInfo.PixelData != NULL)) {
@@ -119,9 +108,8 @@ DrawRect (
   IN  UI_RECTANGLE  *this
   )
 {
-  PRIVATE_UI_RECTANGLE  *priv                      = (PRIVATE_UI_RECTANGLE *)this;
-  UINT8                 *StartAddressInFrameBuffer = (UINT8 *)(((UINT32 *)this->FrameBufferBase) + ((this->UpperLeft.Y * this->PixelsPerScanLine) + this->UpperLeft.X));
-  UINTN                 RowLengthInBytes           = this->Width * sizeof (UINT32);
+  EFI_STATUS            Status;
+  PRIVATE_UI_RECTANGLE  *priv = (PRIVATE_UI_RECTANGLE *)this;
 
   for (INTN y = 0; y < (INTN)this->Height; y++) {
     // each row
@@ -174,8 +162,13 @@ DrawRect (
         return;
     }
 
-    CopyMem (StartAddressInFrameBuffer, temp, RowLengthInBytes);
-    StartAddressInFrameBuffer += (this->PixelsPerScanLine * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));  // move to next row
+    // we draw it one row at a time
+    Status = MemDrawOnFrameBuffer (temp, (INT32)this->UpperLeft.X, (INT32)(this->UpperLeft.Y + y), (INT32)this->Width, 1);
+    if (EFI_ERROR (Status)) {
+      // We check if we failed but we don't assert
+      DEBUG ((DEBUG_ERROR, "Failed to draw on the UIRectangle\n"));
+      break;
+    }
   }
 
   if (this->StyleInfo.Border.BorderWidth > 0) {
@@ -334,9 +327,7 @@ DrawBorder (
   IN PRIVATE_UI_RECTANGLE  *priv
   )
 {
-  UINT32  *TempFB = (UINT32 *)priv->Public.FrameBufferBase; // frame buffer pointer
-
-  TempFB += ((priv->Public.UpperLeft.Y * priv->Public.PixelsPerScanLine) + priv->Public.UpperLeft.X);  // move ptr to upper left of uirect
+  EFI_STATUS  Status;
 
   if (priv->Public.StyleInfo.Border.BorderWidth <= 0) {
     return;
@@ -346,15 +337,44 @@ DrawBorder (
   for (INTN Y = 0; Y < (INTN)priv->Public.Height; Y++) {
     if ((Y >= priv->Public.StyleInfo.Border.BorderWidth) && (Y < (INTN)(priv->Public.Height - priv->Public.StyleInfo.Border.BorderWidth))) {
       // left border
-      SetMem32 (TempFB, priv->Public.StyleInfo.Border.BorderWidth * sizeof (UINT32), priv->Public.StyleInfo.Border.BorderColor);
+      Status = MemFillOnFrameBuffer (
+                 priv->Public.StyleInfo.Border.BorderColor,
+                 (INT32)priv->Public.UpperLeft.X,
+                 (INT32)Y,
+                 priv->Public.StyleInfo.Border.BorderWidth,
+                 1
+                 );
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to draw icon in UI Rectangle\n"));
+        break;
+      }
+
       // right border
-      SetMem32 (TempFB + (priv->Public.Width - priv->Public.StyleInfo.Border.BorderWidth), priv->Public.StyleInfo.Border.BorderWidth * sizeof (UINT32), priv->Public.StyleInfo.Border.BorderColor);
+      Status = MemFillOnFrameBuffer (
+                 priv->Public.StyleInfo.Border.BorderColor,
+                 (INT32)priv->Public.UpperLeft.X + (priv->Public.Width - priv->Public.StyleInfo.Border.BorderWidth),
+                 (INT32)Y,
+                 priv->Public.StyleInfo.Border.BorderWidth,
+                 1
+                 );
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to draw icon in UI Rectangle\n"));
+        break;
+      }
     } else {
       // top or bottom border
-      SetMem32 (TempFB, priv->Public.Width * sizeof (UINT32), priv->Public.StyleInfo.Border.BorderColor);
+      Status = MemFillOnFrameBuffer (
+                 priv->Public.StyleInfo.Border.BorderColor,
+                 (INT32)priv->Public.UpperLeft.X,
+                 (INT32)Y,
+                 (INT32)priv->Public.Width,
+                 1
+                 );
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "Failed to draw icon in UI Rectangle\n"));
+        break;
+      }
     }
-
-    TempFB += priv->Public.PixelsPerScanLine;
   }
 
   return;
@@ -368,12 +388,12 @@ DrawIcon (
   IN PRIVATE_UI_RECTANGLE  *priv
   )
 {
-  INT32   OffsetX   = 0; // Left edge of icon in coordinate space of the rectangle
-  INT32   OffsetY   = 0; // Upper edge of icon in coordinate space of the rectangle
-  INT32   SizeX     = (priv->Public.Width - (priv->Public.StyleInfo.Border.BorderWidth * 2));
-  INT32   SizeY     = (priv->Public.Height - (priv->Public.StyleInfo.Border.BorderWidth * 2));
-  UINT32  *TempFB   = (UINT32 *)priv->Public.FrameBufferBase; // frame buffer pointer
-  UINT32  *TempIcon = priv->Public.StyleInfo.IconInfo.PixelData;
+  EFI_STATUS  Status;
+  INT32       OffsetX   = 0; // Left edge of icon in coordinate space of the rectangle
+  INT32       OffsetY   = 0; // Upper edge of icon in coordinate space of the rectangle
+  INT32       SizeX     = (priv->Public.Width - (priv->Public.StyleInfo.Border.BorderWidth * 2));
+  INT32       SizeY     = (priv->Public.Height - (priv->Public.StyleInfo.Border.BorderWidth * 2));
+  UINT32      *TempIcon = priv->Public.StyleInfo.IconInfo.PixelData;
 
   if (priv->Public.StyleInfo.IconInfo.PixelData != NULL) {
     if ((priv->Public.StyleInfo.IconInfo.Width > SizeX) || (priv->Public.StyleInfo.IconInfo.Height >  SizeY)) {
@@ -436,14 +456,9 @@ DrawIcon (
         return;
     } // close switch
 
-    // now convert offsetx and y to framebuffer coordinates and draw it
-    TempFB += ((priv->Public.UpperLeft.Y * priv->Public.PixelsPerScanLine) + priv->Public.UpperLeft.X); // move ptr to upper left of uirect
-    TempFB += ((OffsetY * priv->Public.PixelsPerScanLine) + OffsetX);                                   // move ptr to upper left of icon
-    for (INTN Y = 0; Y < priv->Public.StyleInfo.IconInfo.Height; Y++) {
-      // draw icon
-      CopyMem (TempFB, TempIcon, priv->Public.StyleInfo.IconInfo.Width * sizeof (UINT32));
-      TempFB   += priv->Public.PixelsPerScanLine;
-      TempIcon += priv->Public.StyleInfo.IconInfo.Width;
+    Status = MemDrawOnFrameBuffer (TempIcon, OffsetX, OffsetY, priv->Public.StyleInfo.IconInfo.Width, priv->Public.StyleInfo.IconInfo.Height);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "Failed to draw icon in UI Rectangle\n"));
     }
   } // close if pixel data not null
 }

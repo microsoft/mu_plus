@@ -70,6 +70,7 @@
   MsUiThemeLib|MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
   MsPlatformEarlyGraphicsLib|MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Dxe/MsEarlyGraphicsLibNull.inf
   DisplayDeviceStateLib|MsGraphicsPkg/Library/DisplayDeviceStateLibNull/DisplayDeviceStateLibNull.inf
+  FrameBufferMemDrawLib|MsGraphicsPkg/Library/FrameBufferMemDrawLibNull/FrameBufferMemDrawLibNull.inf
   MsColorTableLib|MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
   SwmDialogsLib|MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
   BootGraphicsLib|MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf
@@ -130,6 +131,7 @@
   MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
   MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
   MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
+  MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLib.inf
   MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
   MsGraphicsPkg/Library/BootGraphicsLib/BootGraphicsLib.inf
   MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf
@@ -138,7 +140,8 @@
   MsGraphicsPkg/Application/BmpDisplay/BmpDisplay.inf
   MsGraphicsPkg/Universal/TimeoutSpinner/TimeoutSpinner.inf
   MsGraphicsPkg/UnitTests/SpinnerTest/SpinnerTest.inf
-
+  # Null Version of FrameBufferMemDrawLib
+  MsGraphicsPkg/Library/FrameBufferMemDrawLibNull/FrameBufferMemDrawLibNull.inf
 [Components.IA32]
   # Early Graphics driver.
   MsGraphicsPkg/MsEarlyGraphics/Pei/MsEarlyGraphics.inf

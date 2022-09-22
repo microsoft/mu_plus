@@ -138,8 +138,6 @@ DisplayBootGraphic (
 
   // Draw our device state
   DisplayDeviceState (
-    (UINT8 *)((UINTN)GraphicsOutput->Mode->FrameBufferBase),
-    GraphicsOutput->Mode->Info->PixelsPerScanLine,
     (INT32)SizeOfX,
     (INT32)SizeOfY
     );

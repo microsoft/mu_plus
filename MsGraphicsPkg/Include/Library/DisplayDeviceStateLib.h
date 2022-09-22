@@ -12,16 +12,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
 Function to Display all Active Device States
 
-@param FrameBufferBase   - Address of point 0,0 in the frame buffer
-@param PixelsPerScanLine - Number of pixels per scan line.
 @param WidthInPixels     - Number of Columns in FrameBuffer
 @param HeightInPixels    - Number of Rows in FrameBuffer
 **/
 VOID
 EFIAPI
 DisplayDeviceState (
-  IN  UINT8  *FrameBufferBase,
-  IN  INT32  PixelsPerScanLine,
   IN  INT32  WidthInPixels,
   IN  INT32  HeightInPixels
   );

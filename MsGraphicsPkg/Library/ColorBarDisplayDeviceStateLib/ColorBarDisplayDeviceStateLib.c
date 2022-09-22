@@ -183,16 +183,12 @@ PopulateIconData (
 /**
 Function to Display all Active Device States
 
-@param FrameBufferBase   - Address of point 0,0 in the frame buffer
-@param PixelsPerScanLine - Number of pixels per scan line.
 @param WidthInPixels     - Number of Columns in FrameBuffer
 @param HeightInPixels    - Number of Rows in FrameBuffer
 **/
 VOID
 EFIAPI
 DisplayDeviceState (
-  IN  UINT8  *FrameBufferBase,
-  IN  INT32  PixelsPerScanLine,
   IN  INT32  WidthInPixels,
   IN  INT32  HeightInPixels
   )
@@ -279,7 +275,7 @@ DisplayDeviceState (
         continue;
       }
 
-      UI_RECTANGLE  *rect = new_UI_RECTANGLE (&ul, FrameBufferBase, PixelsPerScanLine, (UINT16)WidthInPixels, SingleBannerHeight, &si);
+      UI_RECTANGLE  *rect = new_UI_RECTANGLE (&ul, (UINT16)WidthInPixels, SingleBannerHeight, &si);
       if (rect != NULL) {
         DrawRect (rect);
         delete_UI_RECTANGLE (rect);
