@@ -13,14 +13,15 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // Parameters
 //
 STATIC CONST SHELL_PARAM_ITEM  ParamList[] = {
-  { L"-h", TypeFlag  },    // -h   Help
-  { L"-?", TypeFlag  },    // -?   Help
+  { L"-h", TypeFlag  },    // -h Help
+  { L"-r", TypeFlag  },    // -r Raw file
   { L"-v", TypeFlag  },    // -v Verbose
   { L"-o", TypeValue },    // -o output file
   { NULL,  TypeMax   }
 };
 
-BOOLEAN  mFlagVerbose = FALSE;
+BOOLEAN                                           mFlagVerbose = FALSE;
+STATIC ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  mAccessEntry = { 0 };
 
 /**
  * Requests the Advanced Logger variables and dumps the raw file to a file
@@ -34,7 +35,7 @@ BOOLEAN  mFlagVerbose = FALSE;
  */
 EFI_STATUS
 EFIAPI
-DumpToFile (
+RawDumpToFile (
   IN SHELL_FILE_HANDLE  FileHandle,
   IN BOOLEAN            Verbose
   )
@@ -52,14 +53,29 @@ DumpToFile (
   }
 
   // Initialize the variables
-  Index      = 0;
-  Status     = EFI_SUCCESS;
-  Buffer     = NULL;
-  BufferSize = 0;
-  // Since we don't know how many advanced logger entries there are, we need
-  // to loop until we get a not found return code
-  // Getting not found on the first variable means advanced logger didn't
-  // create a log, which is an error
+  Index  = 0;
+  Status = EFI_SUCCESS;
+
+  //
+  // When getting the AdvancedLogger log through the memory variable interface, you cannot
+  // rely on EFI_BUFFER_TOO_SMALL.  The reason is that more log messages can occur between
+  // the two calls to GetVariable, resulting in a second return of EFI_BUFFER_TOO_SMALL.
+  // To solve this issue, LogDumper allocates one buffer to hold the largest size block
+  // from variable services; the value of PcdMaxVariableSize.
+  //
+  // NOTE: The value of PcdMaxVariableSize must be the same or larger when building LogDumper
+  //       than the value used by the variable services code.
+  //
+  Buffer = AllocatePool (PcdGet32 (PcdMaxVariableSize));
+  if (Buffer == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  //
+  // Since we don't know how many advanced logger entries there are, we need to loop until
+  // we get an EFI_NOT_FOUND return code.  Getting EFI_NOT_FOUND on the first variable means
+  // Advanced logger didn't create a log, which is an error.
+  //
   while (!EFI_ERROR (Status)) {
     // Write the name of the block we want to access
     UnicodeSPrint (VarName, sizeof (VarName), L"V%d", Index);
@@ -67,16 +83,29 @@ DumpToFile (
       AsciiPrint ("Requesting Block %s\n", VarName);
     }
 
+    BufferSize = PcdGet32 (PcdMaxVariableSize);
+
     // Get the advanced logger through the variable
-    Status = GetVariable3 (
-               VarName,
-               &gAdvLoggerAccessGuid,
-               (VOID **)&Buffer,
-               &BufferSize,
-               &Attributes
-               );
+    Status = gRT->GetVariable (
+                    VarName,
+                    &gAdvLoggerAccessGuid,
+                    &Attributes,
+                    &BufferSize,
+                    (VOID **)Buffer
+                    );
+
     if (Verbose) {
-      AsciiPrint ("Got %d bytes. Status = %r\n", BufferSize, Status);
+      if (EFI_ERROR (Status)) {
+        if (Status == EFI_BUFFER_TOO_SMALL) {
+          AsciiPrint ("Need a buffer size of %d bytes. Status = %r\n", BufferSize, Status);
+        } else {
+          if ((Status == EFI_NOT_FOUND) && (Index != 0)) {
+            AsciiPrint ("Error from GetVariable. Status = %r\n", Status);
+          }
+        }
+      } else {
+        AsciiPrint ("Read %d bytes. Status = %r\n", BufferSize, Status);
+      }
     }
 
     // Check if the variable read was successful
@@ -93,15 +122,68 @@ DumpToFile (
     // Write the buffer out to the file
     Status = ShellWriteFile (FileHandle, &BufferSize, Buffer);
     Index += 1;     // Increment the log pointer
+  }
 
-    // Since GetVariable3 allocates new memory each time, we need to free it on every loop
-    if (Buffer != NULL) {
-      FreePool (Buffer);
-      Buffer = NULL;
-    }
+  // Free the memory buffer
+  if (Buffer != NULL) {
+    FreePool (Buffer);
   }
 
 Exit:
+  return Status;
+}
+
+/**
+  Dumps the Advanced Logger text to a test file.
+
+  @param[in] FileHandle         The handle of the file we want to write to
+
+  @retval EFI_SUCCESS           We were able to write to the file
+  @retval EFI_NOT_FOUND         If AdvLogger didn't create a buffer or isn't installed
+  @retval EFI_INVALID_PARAMETER The FileHandle was bad or null
+  @retval Others                Errors passed from ShellWriteFile
+ */
+EFI_STATUS
+EFIAPI
+TextDumpToFile (
+  IN SHELL_FILE_HANDLE  FileHandle,
+  IN BOOLEAN            Verbose
+  )
+{
+  UINTN       BufferSize;
+  UINTN       LineCount;
+  EFI_STATUS  Status;
+
+  if (FileHandle == NULL) {
+    AsciiPrint ("[%a] FileHandle is Null\n", __FUNCTION__);
+    return EFI_INVALID_PARAMETER;
+  }
+
+  LineCount = 0;
+  Status    = AdvancedLoggerAccessLibGetNextFormattedLine (&mAccessEntry);
+  while (!EFI_ERROR (Status)) {
+    BufferSize = mAccessEntry.MessageLen;
+    if (BufferSize > 0) {
+      // Only selected messages go to the serial port.
+      // Write the buffer out to the file
+      Status = ShellWriteFile (FileHandle, &BufferSize, (VOID *)mAccessEntry.Message);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Failed to write log data to file: %r\n", __FUNCTION__, Status));
+        break;
+      }
+    }
+
+    LineCount++;
+
+    Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mAccessEntry);
+  }
+
+  AsciiPrint ("Copied %d lines to the output file\n", LineCount);
+
+  if (Status == EFI_END_OF_FILE) {
+    Status = EFI_SUCCESS;
+  }
+
   return Status;
 }
 
@@ -124,6 +206,7 @@ EntryPoint (
   )
 {
   BOOLEAN            FlagH;
+  BOOLEAN            FlagR;
   EFI_STATUS         Status;
   LIST_ENTRY         *ParamPackage;
   CHAR16             *ProblemParm = NULL;
@@ -145,7 +228,7 @@ EntryPoint (
   }
 
   FlagH        = ShellCommandLineGetFlag (ParamPackage, L"-h");
-  FlagH       |= ShellCommandLineGetFlag (ParamPackage, L"-?");
+  FlagR        = ShellCommandLineGetFlag (ParamPackage, L"-r");
   mFlagVerbose = ShellCommandLineGetFlag (ParamPackage, L"-v");
 
   OutputFileName = ShellCommandLineGetValue (ParamPackage, L"-o");
@@ -156,10 +239,32 @@ EntryPoint (
   }
 
   if (FlagH) {
-    AsciiPrint ("%a [-o OutputFileName] [-?] [-h] [-d]\n", gEfiCallerBaseName);
+    AsciiPrint ("%a [-o OutputFileName] [-h] [-r] [-v]\n", gEfiCallerBaseName);
     AsciiPrint ("   -h    Print this Help\n");
+    AsciiPrint ("   -r    Dump the raw Advanced Logger binary data\n");
+    AsciiPrint ("   -v    Print verbose messages\n");
 
     return 0;
+  }
+
+  //
+  // First lets open the file if it exists so we can delete it...This is the work around for truncation
+  //
+  Status = ShellOpenFileByName (
+             OutputFileName,
+             &FileHandle,
+             EFI_FILE_MODE_WRITE | EFI_FILE_MODE_READ,
+             0
+             );
+
+  if (!EFI_ERROR (Status)) {
+    //
+    // If file handle above was opened it will be closed by the delete.
+    //
+    Status = ShellDeleteFile (&FileHandle);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a failed to delete file %r\n", __FUNCTION__, Status));
+    }
   }
 
   Status = ShellOpenFileByName (
@@ -168,14 +273,20 @@ EntryPoint (
              EFI_FILE_MODE_CREATE | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_READ,
              0
              );
+
   if (EFI_ERROR (Status)) {
     AsciiPrint ("ERROR: Failed to open %s file. Status = %r\n", OutputFileName, Status);
     return Status;
   }
 
-  Status = DumpToFile (FileHandle, mFlagVerbose);
+  if (FlagR) {
+    Status = RawDumpToFile (FileHandle, mFlagVerbose);
+  } else {
+    Status = TextDumpToFile (FileHandle, mFlagVerbose);
+  }
+
   if (EFI_ERROR (Status)) {
-    AsciiPrint ("ERROR: Failed to read in Advanced Log = %r\n", Status);
+    AsciiPrint ("ERROR: Failed to dump the Advanced Logger file = %r\n", Status);
   }
 
   ShellCloseFile (&FileHandle);

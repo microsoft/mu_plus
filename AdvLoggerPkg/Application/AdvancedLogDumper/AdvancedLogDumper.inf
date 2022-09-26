@@ -32,12 +32,16 @@
 [Guids]
   gAdvLoggerAccessGuid ## CONSUMES
 
+[Pcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize
+
 [LibraryClasses]
-  BaseLib
-  BaseMemoryLib
+  AdvancedLoggerAccessLib
+  DebugLib
   MemoryAllocationLib
+  PcdLib
+  PrintLib
   ShellLib
   UefiApplicationEntryPoint
-  UefiBootServicesTableLib
   UefiLib
-  PrintLib
+  UefiRuntimeServicesTableLib

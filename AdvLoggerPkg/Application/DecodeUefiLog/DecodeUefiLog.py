@@ -511,7 +511,7 @@ class AdvLogParser ():
 
         # define ADV_TIME_STAMP_FORMAT "%2d:%2.2d:%2.2d.%3.3d "
 
-        Timestamp = f"{Hours:02}:{Minutes:02}:{Seconds:02}:{Milliseconds:03} : "
+        Timestamp = f"{Hours:02}:{Minutes:02}:{Seconds:02}.{Milliseconds:03} : "
 
         return Timestamp
 

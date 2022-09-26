@@ -13,15 +13,18 @@
 
 #include <Uefi.h>
 
-#include <Library/BaseLib.h>
-#include <Library/BaseMemoryLib.h>
+#include <AdvancedLoggerInternal.h>
+
+#include <Protocol/AdvancedLogger.h>
+
+#include <Library/AdvancedLoggerAccessLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PcdLib.h>
+#include <Library/PrintLib.h>
 #include <Library/ShellLib.h>
 #include <Library/UefiApplicationEntryPoint.h>
-#include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/PrintLib.h>
 
 #endif // __LOG_DUMPER_H__

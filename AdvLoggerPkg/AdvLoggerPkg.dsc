@@ -125,7 +125,6 @@
 
 [Components]
   AdvLoggerPkg/Library/BaseDebugLibAdvancedLogger/BaseDebugLibAdvancedLogger.inf
-  AdvLoggerPkg/Application/AdvancedLogDumper/AdvancedLogDumper.inf
 
 [Components.IA32]
   AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf
@@ -136,9 +135,7 @@
   AdvLoggerPkg/Library/PeiDebugLibAdvancedLogger/PeiDebugLibAdvancedLogger.inf
 
 [Components.X64]
-  AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
   AdvLoggerPkg/AdvancedSerialLogger/Dxe/AdvancedSerialLoggerDxe.inf
-  AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/Dxe/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/DxeCore/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/MmCore/AdvancedLoggerLib.inf
@@ -146,17 +143,22 @@
   AdvLoggerPkg/Library/AdvancedLoggerLib/Smm/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/SmmCore/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvLoggerSmmAccessLib/AdvLoggerSmmAccessLib.inf
-  AdvLoggerPkg/UnitTests/LineParser/LineParserTestApp.inf
-  AdvLoggerPkg/Library/AdvancedLoggerHdwPortLibNull/AdvancedLoggerHdwPortLibNull.inf
-  AdvLoggerPkg/Library/AdvancedLoggerHdwPortLib/AdvancedLoggerHdwPortLib.inf
-  AdvLoggerPkg/Library/AdvLoggerSerialPortLib/AdvLoggerSerialPortLib.inf
-  AdvLoggerPkg/Library/AssertLib/AssertLib.inf
-  AdvLoggerPkg/Library/AssertTelemetryLib/AssertLib.inf
   AdvLoggerPkg/Library/AdvLoggerMmAccessLib/AdvLoggerMmAccessLib.inf
 
 [Components.AARCH64]
   AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/MmCoreArm/AdvancedLoggerLib.inf
+
+[Components.X64, Components.AARCH64]
+  AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
+  AdvLoggerPkg/Application/AdvancedLogDumper/AdvancedLogDumper.inf
+  AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
+  AdvLoggerPkg/Library/AdvancedLoggerHdwPortLibNull/AdvancedLoggerHdwPortLibNull.inf
+  AdvLoggerPkg/Library/AdvancedLoggerHdwPortLib/AdvancedLoggerHdwPortLib.inf
+  AdvLoggerPkg/Library/AdvLoggerSerialPortLib/AdvLoggerSerialPortLib.inf
+  AdvLoggerPkg/Library/AssertLib/AssertLib.inf
+  AdvLoggerPkg/Library/AssertTelemetryLib/AssertLib.inf
+  AdvLoggerPkg/UnitTests/LineParser/LineParserTestApp.inf
 
 [BuildOptions]
 #force deprecated interfaces off
