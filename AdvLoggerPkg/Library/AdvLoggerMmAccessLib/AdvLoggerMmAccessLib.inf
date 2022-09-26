@@ -43,5 +43,9 @@
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
+
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
 
 [Depex]

@@ -96,21 +96,26 @@ AdvLoggerAccessInit (
   //
   // Locate the Logger Information block.
   //
-  GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
-  if (GuidHob == NULL) {
-    DEBUG ((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n", __FUNCTION__));
+  if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    mLoggerInfo = (ADVANCED_LOGGER_INFO *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
   } else {
-    LogPtr      = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
-    mLoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
-    if (mLoggerInfo != NULL) {
-      mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+    GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
+    if (GuidHob == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n", __FUNCTION__));
+    } else {
+      LogPtr      = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
+      mLoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
     }
-
-    //
-    // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
-    //
-    DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
   }
+
+  if (mLoggerInfo != NULL) {
+    mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+  }
+
+  //
+  // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
+  //
+  DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
 
   //
   // PcdMaxVariableSize include the variable header and the variable name size.
