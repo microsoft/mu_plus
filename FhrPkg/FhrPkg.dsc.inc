@@ -10,6 +10,7 @@
   FhrLib|FhrPkg/Library/FhrLib/FhrLib.inf
   FhrBmLib|FhrPkg/Library/FhrBm/FhrBm.inf
   MemoryBinOverrideLib|FhrPkg/Library/FhrMemoryBinOverrideLib/MemoryBinOverrideLib.inf
+  FhrResetLib|FhrPkg/Library/FhrResetLibNull/FhrResetLibNull.inf
 
 [Components.IA32,Components.AARCH64]
   FhrPkg/FhrPei/FhrPei.inf

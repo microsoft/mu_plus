@@ -37,7 +37,7 @@ typedef struct _FHR_RESET_DATA {
   UINT64    OsDataBase;
   UINT64    OsDataSize;
   UINT64    CompatabilityId;
-  UINT64    Reserved2[3];
+  UINT64    Reserved2[2];
 } FHR_RESET_DATA;
 
 typedef struct _FHR_RESUME_DATA {
@@ -51,6 +51,13 @@ typedef struct _FHR_RESUME_DATA {
   UINT64    Flags;
   UINT64    Reserved2[3];
 } FHR_RESUME_DATA;
+
+//
+// Double check the correct size of FHR structures
+//
+
+STATIC_ASSERT (sizeof (FHR_RESET_DATA) == 64, "Invalid FHR structure size!");
+STATIC_ASSERT (sizeof (FHR_RESUME_DATA) == 64, "Invalid FHR structure size!");
 
 //
 // Feature flags for resume data.
@@ -161,6 +168,17 @@ typedef struct _FHR_HOB {
   FHR_FAILURE_REASON    PeiFailureReason;
   EFI_STATUS            PeiFailureStatus;
 } FHR_HOB;
+
+//
+// May be used internally to indicate an FHR boot if the indicator page is used.
+//
+
+#define FHR_INDICATOR_SIGNATURE  SIGNATURE_64('F', 'H', 'R', 'R', 'E', 'S', 'U', 'M')
+
+typedef struct _FHR_INDICATOR {
+  UINT64     Signature;
+  FHR_HOB    FhrHob;
+} FHR_INDICATOR;
 
 #pragma pack()
 

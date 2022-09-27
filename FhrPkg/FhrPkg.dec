@@ -21,6 +21,7 @@
 
 [LibraryClasses]
   FhrLib|Include/Library/FhrLib.h
+  FhrResetLib|Include/Library/FhrResetLib.h
 
 [Guids]
   gFhrPkgTokenSpaceGuid = { 0x9bca14c7, 0xd610, 0x406e, { 0xba, 0xc3, 0x21, 0x87, 0x63, 0x80, 0x0c, 0xd5 } }
@@ -35,3 +36,7 @@
   ## This PCD describes the length of the reserved firmware block.
   # @Prompt Length of the reserved firmware block.
   gFhrPkgTokenSpaceGuid.PcdFhrReservedBlockLength|0|UINT64|0x000005C2
+
+  ## This PCD describes the FHR indicator page if it is being used.
+  # @Prompt Address of the FHR indicator page.
+  gFhrPkgTokenSpaceGuid.PcdFhrIndicatorPage|0|UINT64|0x000005C3
