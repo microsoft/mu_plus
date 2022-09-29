@@ -33,6 +33,10 @@ Add the following to your EDK2 Flash Descriptor File (FDF)
 INF  MfciPkg/MfciDxe/MfciDxe.inf
 ```
 
+```INI
+INF  MfciPkg/MfciPei/MfciPei.inf
+```
+
 ### DSC
 
 MfciPkg provides a ```.dsc.inc``` that can be ```!include``` in your platform DSC.
@@ -42,6 +46,17 @@ An example follows:
 !include MfciPkg/MfciPkg.dsc.inc
 ```
 
+Mfci is still considered pre-production, so OPT_INTO_MFCI_PRE_PRODUCTION will need to be set at the top of the Dsc file
+```INI
+  DEFINE OPT_INTO_MFCI_PRE_PRODUCTION   = TRUE
+```
+
+Additionally, an instance of MfciRetrievePolicyLib will need to be specified. The default instance of MfciRetrievePolicyLibNull
+must be overridden. Two other instances are available in the MfciPkg, or a custom version can be authored.
+```INI
+  MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
+  MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf
+```
 ### MfciPkg Dependencies
 
 * Variable Policy
