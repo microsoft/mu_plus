@@ -16,7 +16,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/FrameBufferMemDrawLib.h>
 #include <Library/FrameBufferBltLib.h>
 
-EFI_GRAPHICS_OUTPUT_PROTOCOL  *mGraphicsOutput = NULL;
+STATIC EFI_GRAPHICS_OUTPUT_PROTOCOL  *mGraphicsOutput = NULL;
 
 /***
  Get Graphics Information
