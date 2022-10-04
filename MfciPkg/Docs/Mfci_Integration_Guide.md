@@ -40,6 +40,7 @@ INF  MfciPkg/MfciPei/MfciPei.inf
 ### DSC
 
 #### Including Modules
+
 MfciPkg provides a ```.dsc.inc``` that can be ```!include``` in your platform DSC.
 An example follows:
 
@@ -48,27 +49,30 @@ An example follows:
 ```
 
 Mfci is still considered pre-production, so OPT_INTO_MFCI_PRE_PRODUCTION will need to be set at the top of the Dsc file
+
 ```INI
   DEFINE OPT_INTO_MFCI_PRE_PRODUCTION   = TRUE
 ```
 
 Additionally, an instance of MfciRetrievePolicyLib will need to be specified. The default instance of MfciRetrievePolicyLibNull
 must be overridden. Two other instances are available in the MfciPkg, or a custom version can be authored.
+
 ```INI
   MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaHob/MfciRetrievePolicyLibViaHob.inf
   MfciRetrievePolicyLib|MfciPkg/Library/MfciRetrievePolicyLibViaVariable/MfciRetrievePolicyLibViaVariable.inf
 ```
 
 #### Including Pkcs Certificates
+
 [Mfci Policy Blobs](Mfci_Structures.md) need to be digitally signed for the system to consume their data.  
 The public portion of the Public/Private key needs to be included into for the MfciPkg to be able to verify
 policy blobs. This is done through the PCDs PcdMfciPkcs7CertBufferXdr.
 
-To help convert the Mfci Pkcs certificate into a PCD, the BinToPcd.py in MU_BASECORE can be used. 
+To help convert the Mfci Pkcs certificate into a PCD, the BinToPcd.py in MU_BASECORE can be used.
 
-Additionally, PcdMfciPkcs7RequiredLeafEKU needs to be filled out with the Extended Key Usage information. 
-The below examples are from the Unit Test portion of this package. The Unit Test implementation can be 
-followed to see how to convert a certificate into a binary pcd, and how to add the Extended Key Usage 
+Additionally, PcdMfciPkcs7RequiredLeafEKU needs to be filled out with the Extended Key Usage information.
+The below examples are from the Unit Test portion of this package. The Unit Test implementation can be
+followed to see how to convert a certificate into a binary pcd, and how to add the Extended Key Usage
 string into the PCD.
 
 ```INI
