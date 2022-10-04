@@ -67,8 +67,9 @@ policy blobs. This is done through the PCDs PcdMfciPkcs7CertBufferXdr.
 To help convert the Mfci Pkcs certificate into a PCD, the BinToPcd.py in MU_BASECORE can be used. 
 
 Additionally, PcdMfciPkcs7RequiredLeafEKU needs to be filled out with the Extended Key Usage information. 
-The below examples are from the Unit Test portion of this package. The Unit test can be followed to 
-see how to convert a Cert into a binary pcd, and how to add the Extended Key Usage string into the PCD.
+The below examples are from the Unit Test portion of this package. The Unit Test implementation can be 
+followed to see how to convert a certificate into a binary pcd, and how to add the Extended Key Usage 
+string into the PCD.
 
 ```INI
   DEFINE  MFCI_POLICY_EKU_TEST   = "1.3.6.1.4.1.311.45.255.255"
