@@ -651,7 +651,9 @@ SetKeyboardLayoutEvent (
   //
   TableEntry    = GetKeyDescriptor (HidKeyboardDevice, 0x58);
   KeyDescriptor = GetKeyDescriptor (HidKeyboardDevice, 0x28);
-  CopyMem (TableEntry, KeyDescriptor, sizeof (EFI_KEY_DESCRIPTOR));
+  if ((TableEntry != NULL) && (KeyDescriptor != NULL)) {
+    CopyMem (TableEntry, KeyDescriptor, sizeof (EFI_KEY_DESCRIPTOR));
+  }
 
   FreePool (KeyboardLayout);
 }
