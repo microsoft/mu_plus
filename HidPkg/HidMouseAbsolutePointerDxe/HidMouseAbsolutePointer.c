@@ -139,6 +139,8 @@ HidMouseAbsolutePointerDriverBindingStart (
   HID_POINTER_PROTOCOL            *HidMouseProtocol;
   HID_MOUSE_ABSOLUTE_POINTER_DEV  *HidMouseDev;
 
+  HidMouseDev = NULL;
+
   DEBUG ((DEBUG_VERBOSE, "[%a]\n", __FUNCTION__));
 
   // Get our HID mouse abstraction
