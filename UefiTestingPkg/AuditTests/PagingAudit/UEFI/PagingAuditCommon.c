@@ -82,11 +82,11 @@ OpenVolumeSFS (
   OUT EFI_FILE  **Fs_Handle
   );
 
-HEAP_GUARD_DEBUG_PROTOCOL  *mHeapGuardProtocol = NULL;
-EFI_FILE                   *mFs_Handle;
-extern CHAR8               *mMemoryInfoDatabaseBuffer;
-extern UINTN               mMemoryInfoDatabaseSize;
-extern UINTN               mMemoryInfoDatabaseAllocSize;
+MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol = NULL;
+EFI_FILE                          *mFs_Handle;
+extern CHAR8                      *mMemoryInfoDatabaseBuffer;
+extern UINTN                      mMemoryInfoDatabaseSize;
+extern UINTN                      mMemoryInfoDatabaseAllocSize;
 
 /**
   Populates the heap guard protocol global
@@ -100,11 +100,11 @@ PopulateHeapGuardDebugProtocol (
   VOID
   )
 {
-  if (mHeapGuardProtocol != NULL) {
+  if (mMemoryProtectionProtocol != NULL) {
     return EFI_SUCCESS;
   }
 
-  return gBS->LocateProtocol (&gHeapGuardDebugProtocolGuid, NULL, (VOID **)&mHeapGuardProtocol);
+  return gBS->LocateProtocol (&gMemoryProtectionDebugProtocolGuid, NULL, (VOID **)&mMemoryProtectionProtocol);
 }
 
 /**
@@ -1236,7 +1236,7 @@ GetFlatPageTableData (
               if (!Pte4K[Index1].Bits.Present) {
                 NumPage4KNotPresent++;
                 Address = IndexToAddress (Index4, Index3, Index2, Index1);
-                if ((mHeapGuardProtocol != NULL) && (mHeapGuardProtocol->IsGuardPage (Address))) {
+                if ((mMemoryProtectionProtocol != NULL) && (mMemoryProtectionProtocol->IsGuardPage (Address))) {
                   MyGuardCount++;
                   if (MyGuardCount <= *GuardCount) {
                     GuardEntries[MyGuardCount - 1] = Address;
