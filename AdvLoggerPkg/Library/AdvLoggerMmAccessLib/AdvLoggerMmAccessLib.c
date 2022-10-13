@@ -97,7 +97,7 @@ AdvLoggerAccessInit (
   // Locate the Logger Information block.
   //
   if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-    mLoggerInfo = (ADVANCED_LOGGER_INFO *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
+    mLoggerInfo = (ADVANCED_LOGGER_INFO *)(VOID *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
   } else {
     GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
     if (GuidHob == NULL) {
