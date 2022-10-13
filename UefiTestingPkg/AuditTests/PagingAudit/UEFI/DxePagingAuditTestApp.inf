@@ -51,7 +51,7 @@
 
 [Protocols]
   gEfiBlockIoProtocolGuid
-  gHeapGuardDebugProtocolGuid
+  gMemoryProtectionDebugProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
 
 [FixedPcd]

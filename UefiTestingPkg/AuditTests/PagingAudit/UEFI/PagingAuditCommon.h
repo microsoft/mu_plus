@@ -24,7 +24,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 #include <Guid/EventGroup.h>
 #include <Protocol/SimpleFileSystem.h>
-#include <Protocol/HeapGuardDebug.h>
+#include <Protocol/MemoryProtectionDebug.h>
 #include <Register/Cpuid.h>
 #include <Register/Amd/Cpuid.h>
 
