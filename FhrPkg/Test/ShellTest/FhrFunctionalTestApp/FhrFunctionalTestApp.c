@@ -63,6 +63,7 @@ CONST EFI_GUID         ResetTypeGuid = FHR_RESET_TYPE_GUID;
 
 BOOLEAN  TestSkipMemory;
 BOOLEAN  TestPatternFullPage;
+BOOLEAN  TestVerbosePrint;
 UINTN    TestRebootCount = 3;
 
 //
@@ -189,6 +190,10 @@ CheckMemory (
       //
       // Pattern the memory in 64 bit chunks.
       //
+
+      if (TestVerbosePrint) {
+        DEBUG ((DEBUG_INFO, "        Page: 0x%llx\n", &Blocks[0]));
+      }
 
       for (BlockIndex = 0; BlockIndex < (EFI_PAGE_SIZE / sizeof (Blocks[0])); BlockIndex += 1) {
         if (Verify) {
@@ -414,7 +419,7 @@ FhrTestPreReboot (
   // the persisted data.
   //
   Status = gBS->AllocatePages (
-                  AllocateMaxAddress,
+                  AllocateAnyPages,
                   EfiLoaderData,
                   SCRATCH_PAGES,
                   &Memory
@@ -553,6 +558,8 @@ UefiMain (
         TestSkipMemory = TRUE;
       } else if ((StrCmp (Argv[Index], L"-fullpage") == 0)) {
         TestPatternFullPage = TRUE;
+      } else if ((StrCmp (Argv[Index], L"-v") == 0)) {
+        TestVerbosePrint = TRUE;
       } else if ((StrCmp (Argv[Index], L"-reboots") == 0)) {
         TestRebootCount = 0;
         if (Index + 1 < Argc) {
