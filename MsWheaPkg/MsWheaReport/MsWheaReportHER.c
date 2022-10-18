@@ -275,8 +275,9 @@ MsWheaAnFBuffer (
   UINT8                             *ExtraSectionData;
   MS_WHEA_ERROR_EXTRA_SECTION_DATA  *ExtraSectionPtr;
 
-  CperErrSecDscp   = NULL;
-  ExtraSectionData = NULL;
+  CperErrSecDscp      = NULL;
+  CperErrExtraSecDscp = NULL;
+  ExtraSectionData    = NULL;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
