@@ -30,6 +30,7 @@
   Grid.c
   Label.c
   ListBox.c
+  ProgressBar.c
   SimpleUIToolKit.c
   ToggleSwitch.c
   Utilities.c
