@@ -497,7 +497,7 @@ Draw (
 
     // If the ListBox was created with the checkbox option flag, toggle the checkbox select state.
     //
-    if ((L' ' == pKey->Key.UnicodeChar) && (UIT_LISTBOX_FLAGS_CHECKBOX == (this->m_Flags & UIT_LISTBOX_FLAGS_CHECKBOX))) {
+    if ((L' ' == pKey->Key.UnicodeChar)) {
       if (UIT_INVALID_SELECTION != this->m_HighlightedCell) {
         // Selected cell becomes the highlighted cell.
         this->m_SelectedCell = this->m_HighlightedCell;
@@ -506,7 +506,7 @@ Draw (
       if (UIT_INVALID_SELECTION != this->m_SelectedCell) {
         // Indicate that the control is in a select state.
         //
-        this->m_LastAction = LB_ACTION_TOGGLE;
+        this->m_LastAction = (UIT_LISTBOX_FLAGS_CHECKBOX == (this->m_Flags & UIT_LISTBOX_FLAGS_CHECKBOX) ? LB_ACTION_TOGGLE : LB_ACTION_NONE);
         Context            = this->m_pSelectionContext;
         this->m_State      = SELECT;
       }
