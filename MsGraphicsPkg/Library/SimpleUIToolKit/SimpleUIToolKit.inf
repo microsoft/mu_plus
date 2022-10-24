@@ -1,10 +1,8 @@
 ## @file
-#  ManufacturingModeLib.inf
+#  SimpleUIToolKit.inf
 #
-#  Description:    Library for determining if Manufacturing mode should be
-#                  enabled on this boot.  This library is what everyone should
-#                  use to determine which mode we are in.  It can be called from
-#                  PEI or DXE.
+#  Description:    Simple UI Toolkit (SUIT) library comprised of various UI elements that can be
+#                  used to draw user interfaces in the DXE environment.
 #
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
