@@ -37,16 +37,16 @@ typedef struct _ProgressBar {
   VOID
   (*Ctor)(
     IN struct _ProgressBar           *this,
-    IN SWM_RECT                      *ProgressBarBox,
-    IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarColor,
-    IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarBackgroundColor,
-    IN UINT8                         InitialPercent
+    IN SWM_RECT                       *ProgressBarBox,
+    IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarColor,
+    IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarBackgroundColor,
+    IN UINT8                          InitialPercent
     );
 
   EFI_STATUS
   (*UpdateProgressPercent)(
     IN struct _ProgressBar *this,
-    IN UINT8               NewPercent
+    IN UINT8  NewPercent
     );
 } ProgressBar;
 
@@ -55,13 +55,13 @@ typedef struct _ProgressBar {
 //
 ProgressBar *
 new_ProgressBar (
-  IN UINT32                        OrigX,
-  IN UINT32                        OrigY,
-  IN UINT32                        ProgressBarWidth,
-  IN UINT32                        ProgressBarHeight,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarColor,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarBackgroundColor,
-  IN UINT8                         BarPercent
+  IN UINT32                         OrigX,
+  IN UINT32                         OrigY,
+  IN UINT32                         ProgressBarWidth,
+  IN UINT32                         ProgressBarHeight,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarColor,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarBackgroundColor,
+  IN UINT8                          BarPercent
   );
 
 VOID

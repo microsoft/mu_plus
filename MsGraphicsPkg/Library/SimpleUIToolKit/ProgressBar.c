@@ -15,8 +15,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 static
 EFI_STATUS
 UpdateProgressPercent (
-  IN     ProgressBar *this,
-  IN     UINT8       NewPercent
+  IN     ProgressBar  *this,
+  IN     UINT8        NewPercent
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
@@ -38,7 +38,7 @@ Exit:
 static
 EFI_STATUS
 RenderProgressBar (
-  IN ProgressBar *this
+  IN ProgressBar  *this
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
@@ -90,8 +90,8 @@ RenderProgressBar (
 static
 EFI_STATUS
 SetControlBounds (
-  IN ProgressBar *this,
-  IN SWM_RECT    Bounds
+  IN ProgressBar  *this,
+  IN SWM_RECT     Bounds
   )
 {
   EFI_STATUS  Status  = EFI_SUCCESS;
@@ -115,8 +115,8 @@ SetControlBounds (
 static
 EFI_STATUS
 GetControlBounds (
-  IN  ProgressBar *this,
-  OUT SWM_RECT    *pBounds
+  IN  ProgressBar  *this,
+  OUT SWM_RECT     *pBounds
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
@@ -129,8 +129,8 @@ GetControlBounds (
 static
 EFI_STATUS
 SetControlState (
-  IN ProgressBar  *this,
-  IN OBJECT_STATE State
+  IN ProgressBar   *this,
+  IN OBJECT_STATE  State
   )
 {
   return EFI_SUCCESS;  // Object state cannot be changed
@@ -139,7 +139,7 @@ SetControlState (
 static
 OBJECT_STATE
 GetControlState (
-  IN ProgressBar *this
+  IN ProgressBar  *this
   )
 {
   return NORMAL;   // Object state not maintained for this control. Return the default
@@ -148,10 +148,10 @@ GetControlState (
 static
 OBJECT_STATE
 Draw (
-  IN    ProgressBar     *this,
-  IN    BOOLEAN         DrawHighlight,
-  IN    SWM_INPUT_STATE *pInputState,
-  OUT   VOID            **pSelectionContext
+  IN    ProgressBar      *this,
+  IN    BOOLEAN          DrawHighlight,
+  IN    SWM_INPUT_STATE  *pInputState,
+  OUT   VOID             **pSelectionContext
   )
 {
   // Draw the progress bar.
@@ -173,16 +173,16 @@ Draw (
 static
 VOID
 Ctor (
-  IN struct _ProgressBar           *this,
-  IN SWM_RECT                      *ProgressBarBox,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarColor,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarBackgroundColor,
-  IN UINT8                         InitialPercent
+  IN struct _ProgressBar            *this,
+  IN SWM_RECT                       *ProgressBarBox,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarColor,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarBackgroundColor,
+  IN UINT8                          InitialPercent
   )
 {
   // Capture bar and bar background colors.
   //
-  this->m_BarColor = *pBarColor;
+  this->m_BarColor           = *pBarColor;
   this->m_BarBackgroundColor = *pBarBackgroundColor;
 
   // Allocate space for storing display information.
@@ -206,7 +206,7 @@ Ctor (
 
   // Functions.
   //
-  this->Base.Draw = (DrawFunctionPtr) &Draw;
+  this->Base.Draw             = (DrawFunctionPtr) &Draw;
   this->Base.SetControlBounds = (SetControlBoundsFunctionPtr) &SetControlBounds;
   this->Base.GetControlBounds = (GetControlBoundsFunctionPtr) &GetControlBounds;
   this->Base.SetControlState  = (SetControlStateFunctionPtr) &SetControlState;
@@ -221,7 +221,7 @@ Exit:
 static
 VOID
 Dtor (
-  VOID *this
+  VOID  *this
   )
 {
   ProgressBar  *privthis = (ProgressBar *)this;
@@ -242,13 +242,13 @@ Dtor (
 //
 ProgressBar *
 new_ProgressBar (
-  IN UINT32                        OrigX,
-  IN UINT32                        OrigY,
-  IN UINT32                        ProgressBarWidth,
-  IN UINT32                        ProgressBarHeight,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarColor,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL *pBarBackgroundColor,
-  IN UINT8                         InitialPercent
+  IN UINT32                         OrigX,
+  IN UINT32                         OrigY,
+  IN UINT32                         ProgressBarWidth,
+  IN UINT32                         ProgressBarHeight,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarColor,
+  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *pBarBackgroundColor,
+  IN UINT8                          InitialPercent
   )
 {
   SWM_RECT  Rect;
@@ -258,7 +258,7 @@ new_ProgressBar (
   ASSERT (NULL != P);
 
   if (NULL != P) {
-    P->Ctor = &Ctor;
+    P->Ctor      = &Ctor;
     P->Base.Dtor = &Dtor;
 
     Rect.Left   = OrigX;
@@ -280,7 +280,7 @@ new_ProgressBar (
 
 VOID
 delete_ProgressBar (
-  IN ProgressBar *this
+  IN ProgressBar  *this
   )
 {
   if (NULL != this) {
