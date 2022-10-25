@@ -497,7 +497,7 @@ Draw (
 
     // If the ListBox was created with the checkbox option flag, toggle the checkbox select state.
     //
-    if ((L' ' == pKey->Key.UnicodeChar)) {
+    if (L' ' == pKey->Key.UnicodeChar) {
       if (UIT_INVALID_SELECTION != this->m_HighlightedCell) {
         // Selected cell becomes the highlighted cell.
         this->m_SelectedCell = this->m_HighlightedCell;
