@@ -48,12 +48,6 @@ An example follows:
 !include MfciPkg/MfciPkg.dsc.inc
 ```
 
-Mfci is still considered pre-production, so OPT_INTO_MFCI_PRE_PRODUCTION will need to be set at the top of the Dsc file
-
-```INI
-  DEFINE OPT_INTO_MFCI_PRE_PRODUCTION   = TRUE
-```
-
 Additionally, an instance of MfciRetrievePolicyLib will need to be specified. The default instance of MfciRetrievePolicyLibNull
 must be overridden. Two other instances are available in the MfciPkg, or a custom version can be authored.
 
