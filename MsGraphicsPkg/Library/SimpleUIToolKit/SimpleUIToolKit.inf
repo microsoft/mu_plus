@@ -56,4 +56,3 @@
   gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid
 
 [BuildOptions]
-  *_VS2013x86_*_CC_FLAGS       = /Oi /Og /fp:fast /arch:SSE
