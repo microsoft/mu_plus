@@ -50,6 +50,7 @@ InitializeModeTable (
   EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  *Info  = NULL;
   UINT32                                Indx;
   UINT32                                MaxHRes = 800;
+  UINT32                                MaxVRes = 600;
   UINTN                                 Size    = 0;
 
   if (Gop == NULL) {
@@ -71,10 +72,12 @@ InitializeModeTable (
       for (Indx = 0; Indx < Gop->Mode->MaxMode; Indx++) {
         Status = Gop->QueryMode (Gop, Indx, &Size, &Info);
         if (!EFI_ERROR (Status)) {
-          if (MaxHRes < Info->HorizontalResolution) {
+          if (MaxHRes <= Info->HorizontalResolution &&
+              MaxVRes <= Info->VerticalResolution) {
             mNativeHorizontalResolution = Info->HorizontalResolution;
             mNativeVerticalResolution   = Info->VerticalResolution;
             MaxHRes                     = Info->HorizontalResolution;
+            MaxVRes                     = Info->VerticalResolution;
           }
 
           DEBUG ((DEBUG_INFO, "Mode Info for Mode %d\n", Indx));
