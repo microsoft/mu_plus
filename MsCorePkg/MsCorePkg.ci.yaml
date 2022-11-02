@@ -36,6 +36,17 @@
         "IgnoreInf": []
     },
 
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "UnitTests/MsCorePkgHostTest.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "UnitTests/MsCorePkgHostTest.dsc"
+    },
+
     ## options defined ci/Plugin/DscCompleteCheck
     "DscCompleteCheck": {
         "IgnoreInf": [],
