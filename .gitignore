@@ -6,6 +6,7 @@ __pycache__/
 tags/
 .vscode/
 *.bak
+.venv
 BuildConfig.conf
 
 # Repo-specific
