@@ -25,6 +25,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PeCoffGetEntryPointLib.h>
 
 #define IA32_PF_EC_ID  BIT4
+#define EXCEPT_I2C     0x2c
 
 STATIC EFI_HANDLE  mImageHandle = NULL;
 
@@ -111,6 +112,32 @@ MemoryProtectionExceptionHandler (
 }
 
 /**
+  I2C handler which does a warm reset if stack cookie protection is active.
+
+  @param  InterruptType    Defines the type of interrupt or exception that
+                           occurred on the processor.This parameter is processor architecture specific.
+  @param  SystemContext    A pointer to the processor context when
+                           the interrupt occurred on the processor.
+
+**/
+VOID
+EFIAPI
+MemoryProtectionI2CHandler (
+  IN EFI_EXCEPTION_TYPE  InterruptType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
+  )
+{
+  if (gDxeMps.StackCookies == TRUE) {
+    DEBUG ((DEBUG_ERROR, "Stack Cookie Exception!\n"));
+    ExPersistClearExceptions();
+    ExPersistSetException (ExceptionPersistI2C);
+    ResetWarm ();
+  } else {
+    return;
+  }
+}
+
+/**
   Registers MemoryProtectionExceptionHandler using the EFI_CPU_ARCH_PROTOCOL.
 
   @param  Event          The Event that is being processed, not used.
@@ -171,6 +198,20 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
         __FUNCTION__
         ));
     }
+  }
+
+  Status = mCpu->RegisterInterruptHandler (
+                   mCpu,
+                   EXCEPT_I2C,
+                   MemoryProtectionI2CHandler
+                   );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a: - Failed to Register I2C Exception Handler.\n",
+      __FUNCTION__
+      ));
   }
 }
 
