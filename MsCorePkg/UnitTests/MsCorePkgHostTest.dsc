@@ -8,7 +8,7 @@
 ################################################################################
 [Defines]
   PLATFORM_NAME                  = MsCorePkg
-  PLATFORM_GUID                  = 24621B71-FD5A-4724-87D2-AE9044FB6BC2
+  PLATFORM_GUID                  = 55442A6C-2455-414D-9842-23002F5B20C7
   PLATFORM_VERSION               = 0.1
   DSC_SPECIFICATION              = 0x00010005
   OUTPUT_DIRECTORY               = Build/MsCorePkg
@@ -30,34 +30,13 @@
 ################################################################################
 !include MdePkg/MdeLibs.dsc.inc
 
-[LibraryClasses.X64]
-  TimerLib|MdePkg/Library/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf
-  Tpm2CommandLib|SecurityPkg/Library/Tpm2CommandLib/Tpm2CommandLib.inf
-  Tpm2DeviceLib|SecurityPkg/Library/Tpm2DeviceLibDTpm/Tpm2DeviceLibDTpm.inf
-  Tpm2DebugLib|SecurityPkg/Library/Tpm2DebugLib/Tpm2DebugLibNull.inf
-
-[LibraryClasses]
-  VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
-  UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
-  UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
-  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
-  DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
-  ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
-  OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
-  HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
-  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
-  IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
-  SafeIntLib|MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
-  FltUsedLib|MdePkg/Library/FltUsedLib/FltUsedLib.inf
-  MuTelemetryHelperLib|MsWheaPkg/Library/MuTelemetryHelperLib/MuTelemetryHelperLib.inf
-
 ################################################################################
 #
 # Components section - list of all Components needed by this Platform.
 #
 ################################################################################
 [Components]
-
+    MsCorePkg/MacAddressEmulationDxe/Test/MacAddressEmulationDxeHostTest.inf
 
 [BuildOptions]
   *_*_*_CC_FLAGS            = -D DISABLE_NEW_DEPRECATED_INTERFACES
