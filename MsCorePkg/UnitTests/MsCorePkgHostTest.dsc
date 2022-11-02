@@ -30,6 +30,12 @@
 ################################################################################
 !include MdePkg/MdeLibs.dsc.inc
 
+[LibraryClasses]
+  UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
+  UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
+  UefiRuntimeServicesTableLib|MfciPkg/UnitTests/Library/MockUefiRuntimeServicesTableLib/MockUefiRuntimeServicesTableLib.inf
+  DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
+
 ################################################################################
 #
 # Components section - list of all Components needed by this Platform.

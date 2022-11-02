@@ -1,0 +1,42 @@
+## @file
+# This module tests targeting logic of MfciDxe driver.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010017
+  BASE_NAME                      = MacAddressEmulationDxeHostTest
+  FILE_GUID                      = 68141B30-895C-4802-BAB4-5C8A039C0999
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MacAddressEmulationDxeHostTest.c
+  ../MacAddressEmulationDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  NetworkPkg/NetworkPkg.dec
+  MsCorePkg/MsCorePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  UefiLib
+  UefiBootServicesTableLib
+
+[Guids]
+  gSnpNetworkInitializedEventGuid
+
+[Protocols]
+  gEfiSimpleNetworkProtocolGuid
