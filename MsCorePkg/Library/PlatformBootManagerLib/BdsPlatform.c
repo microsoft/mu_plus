@@ -154,7 +154,8 @@ UpdateGopDevicePath (
     FreePool (Instance);
   } while (DevicePath != NULL);
 
-  if ((!Exist) && (Return != NULL)) {
+  if (!Exist) {
+    // NOTE: Return MAY be NULL, and is proper if it is NULL
     Temp   = Return;
     Return = AppendDevicePathInstance (Return, Gop);
     if (Temp != NULL) {
