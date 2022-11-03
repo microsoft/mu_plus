@@ -24,8 +24,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
 
-#define IA32_PF_EC_ID  BIT4
-#define EXCEPT_I2C     0x2c
+#define IA32_PF_EC_ID        BIT4
+#define EXCEPT_STACK_COOKIE  0x40
 
 STATIC EFI_HANDLE  mImageHandle = NULL;
 
@@ -112,7 +112,7 @@ MemoryProtectionExceptionHandler (
 }
 
 /**
-  I2C handler which does a warm reset if stack cookie protection is active.
+  Stack cookie failure handler which does a warm reset if stack cookie protection is active.
 
   @param  InterruptType    Defines the type of interrupt or exception that
                            occurred on the processor.This parameter is processor architecture specific.
@@ -122,15 +122,15 @@ MemoryProtectionExceptionHandler (
 **/
 VOID
 EFIAPI
-MemoryProtectionI2CHandler (
+MemoryProtectionStackCookieFailureHandler (
   IN EFI_EXCEPTION_TYPE  InterruptType,
   IN EFI_SYSTEM_CONTEXT  SystemContext
   )
 {
   if (gDxeMps.StackCookies == TRUE) {
     DEBUG ((DEBUG_ERROR, "Stack Cookie Exception!\n"));
-    ExPersistClearExceptions();
-    ExPersistSetException (ExceptionPersistI2C);
+    ExPersistClearExceptions ();
+    ExPersistSetException (ExceptionPersistStackCookie);
     ResetWarm ();
   } else {
     return;
@@ -202,14 +202,14 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 
   Status = mCpu->RegisterInterruptHandler (
                    mCpu,
-                   EXCEPT_I2C,
-                   MemoryProtectionI2CHandler
+                   EXCEPT_STACK_COOKIE,
+                   MemoryProtectionStackCookieFailureHandler
                    );
 
   if (EFI_ERROR (Status)) {
     DEBUG ((
       DEBUG_ERROR,
-      "%a: - Failed to Register I2C Exception Handler.\n",
+      "%a: - Failed to Register Stack Cookie Failure Exception Handler.\n",
       __FUNCTION__
       ));
   }
