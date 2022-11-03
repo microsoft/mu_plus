@@ -29,6 +29,7 @@ typedef enum {
   GRID,
   LABEL,
   LISTBOX,
+  PROGRESSBAR,
   TOGGLESWITCH
 } OBJECT_TYPE;
 
@@ -42,6 +43,7 @@ typedef enum {
 #include <UIToolKit/Grid.h>
 #include <UIToolKit/Label.h>
 #include <UIToolKit/ListBox.h>
+#include <UIToolKit/ProgressBar.h>
 #include <UIToolKit/ToggleSwitch.h>
 #include <UIToolKit/Utilities.h>
 
