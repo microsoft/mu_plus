@@ -21,7 +21,8 @@ typedef UINT16  EXCEPTION_PERSISTENCE_VAL_CHECKSUM;
 #define EX_PERSIST_VALID_BIT         BIT0  // Is the override valid
 #define EX_PERSIST_IGNORE_NEXT_PF    BIT6  // Ignore and clear the next page fault (requires Memory Protection Nonstop Protocol)
 #define EX_PERSIST_PF_HIT_BIT        BIT10 // A page fault exception occurred
-#define EX_PERSIST_STACK_COOKIE_BIT  BIT11 // I2C occurred
+#define EX_PERSIST_STACK_COOKIE_BIT  BIT11 // Stack cookie exception occurred
+
 #define EX_PERSIST_OTHER_EX_BIT      BIT15 // An unknown exception occurred
 
 #define EX_PERSIST_EXCEPTION_BITS  (EX_PERSIST_PF_HIT_BIT | EX_PERSIST_STACK_COOKIE_BIT | EX_PERSIST_OTHER_EX_BIT)
