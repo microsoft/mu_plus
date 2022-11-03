@@ -15,8 +15,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DebugLib.h>
 #include <Library/PeiServicesLib.h>
 
-STATIC EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE  mMode;
-STATIC BOOLEAN                            mInitialized = FALSE;
+STATIC EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  mInfo        = { 0 };
+STATIC EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE     mMode        = { 0, 0, &mInfo, sizeof (mInfo), 0 };
+STATIC BOOLEAN                               mInitialized = FALSE;
 
 /***
  Get Graphics Information
@@ -27,9 +28,10 @@ GetGraphicsInfo (
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE  **Mode
   )
 {
-  EFI_PEI_GRAPHICS_PPI  *GfxInitPpi = NULL;
-  EFI_STATUS            Status      = EFI_SUCCESS;
+  EFI_PEI_GRAPHICS_PPI  *GfxInitPpi;
+  EFI_STATUS            Status;
 
+  Status = EFI_SUCCESS;
   if (!mInitialized) {
     Status = PeiServicesLocatePpi (&gEfiPeiGraphicsPpiGuid, 0, NULL, (VOID *)&GfxInitPpi);
     if (EFI_ERROR (Status)) {

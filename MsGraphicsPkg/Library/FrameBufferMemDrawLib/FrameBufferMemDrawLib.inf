@@ -43,7 +43,7 @@
   gEfiPeiGraphicsPpiGuid
 
 [Depex.IA32]
-  gEfiPeiGraphicsPpiGuid                        ## COMSUMES
+  gEfiPeiGraphicsPpiGuid                        ## CONSUMES
 
 ##
 ## X64, AARCH64 Versions
