@@ -18,13 +18,13 @@ typedef UINT16  EXCEPTION_PERSISTENCE_VAL;
 typedef UINT16  EXCEPTION_PERSISTENCE_VAL_CHECKSUM;
 
 // Bit definitions for EXCEPTION_PERSISTENCE_VAL
-#define EX_PERSIST_VALID_BIT       BIT0   // Is the override valid
-#define EX_PERSIST_IGNORE_NEXT_PF  BIT6   // Ignore and clear the next page fault (requires Memory Protection Nonstop Protocol)
-#define EX_PERSIST_PF_HIT_BIT      BIT10  // A page fault exception occurred
-#define EX_PERSIST_I2C_BIT         BIT11  // I2C occurred
-#define EX_PERSIST_OTHER_EX_BIT    BIT15  // An unknown exception occurred
+#define EX_PERSIST_VALID_BIT         BIT0  // Is the override valid
+#define EX_PERSIST_IGNORE_NEXT_PF    BIT6  // Ignore and clear the next page fault (requires Memory Protection Nonstop Protocol)
+#define EX_PERSIST_PF_HIT_BIT        BIT10 // A page fault exception occurred
+#define EX_PERSIST_STACK_COOKIE_BIT  BIT11 // I2C occurred
+#define EX_PERSIST_OTHER_EX_BIT      BIT15 // An unknown exception occurred
 
-#define EX_PERSIST_EXCEPTION_BITS  (EX_PERSIST_PF_HIT_BIT | EX_PERSIST_I2C_BIT | EX_PERSIST_OTHER_EX_BIT)
+#define EX_PERSIST_EXCEPTION_BITS  (EX_PERSIST_PF_HIT_BIT | EX_PERSIST_STACK_COOKIE_BIT | EX_PERSIST_OTHER_EX_BIT)
 
 #define CMOS_EX_PERSIST_CHECKSUM_START  0x10
 #define CMOS_EX_PERSIST_CHECKSUM_SIZE   sizeof (EXCEPTION_PERSISTENCE_VAL_CHECKSUM)
@@ -306,8 +306,8 @@ ExPersistGetException (
         case EX_PERSIST_OTHER_EX_BIT:
           *Exception = ExceptionPersistOther;
           break;
-        case EX_PERSIST_I2C_BIT:
-          *Exception = ExceptionPersistI2C;
+        case EX_PERSIST_STACK_COOKIE_BIT:
+          *Exception = ExceptionPersistStackCookie;
           break;
         case 0:
           *Exception = ExceptionPersistNone;
@@ -351,8 +351,8 @@ ExPersistSetException (
     case ExceptionPersistPageFault:
       ExceptionBit = EX_PERSIST_PF_HIT_BIT;
       break;
-    case ExceptionPersistI2C:
-      ExceptionBit = EX_PERSIST_I2C_BIT;
+    case ExceptionPersistStackCookie:
+      ExceptionBit = EX_PERSIST_STACK_COOKIE_BIT;
       break;
     case ExceptionPersistOther:
       ExceptionBit = EX_PERSIST_OTHER_EX_BIT;
