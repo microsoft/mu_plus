@@ -55,8 +55,8 @@ used to generate test signing keys are included in this repo for reference. Plea
 needs to include OID `1.3.6.1.5.5.7.3.3` as well as the user designed leaf EKU that is used as an
 additional test.  This second EKU must be set in pcd `PcdMfciPkcs7RequiredLeafEKU`.
 
-*[Windows Power Shell Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/CreateCertificates.ps1)
-*[Windows Batch Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/MakeChainingCerts.bat)
+* [Windows Power Shell Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/CreateCertificates.ps1)
+* [Windows Batch Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/MakeChainingCerts.bat)
 
 ### Example signing
 
