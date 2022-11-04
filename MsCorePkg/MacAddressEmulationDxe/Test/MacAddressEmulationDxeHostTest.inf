@@ -17,7 +17,16 @@
 #
 
 [Sources]
-  MacAddressEmulationDxeHostTest.c
+  MacAddressEmulationDxeHostTestMain.c
+  MacAddressEmulationDxeHostTestCommon.h
+  SnpSupportsMacEmuCheckTest.c
+  SnpSupportsMacEmuCheckTest.h
+  FindMatchingSnpTest.c
+  FindMatchingSnpTest.h
+  SimpleNetworkProtocolNotifyTest.c
+  SimpleNetworkProtocolNotifyTest.h
+  EntryPointTest.c
+  EntryPointTest.h
   ../MacAddressEmulationDxe.c
 
 [Packages]
@@ -34,6 +43,7 @@
   MemoryAllocationLib
   UefiLib
   UefiBootServicesTableLib
+  UnitTestLib
 
 [Guids]
   gSnpNetworkInitializedEventGuid

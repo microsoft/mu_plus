@@ -53,11 +53,11 @@ SnpSupportsMacEmuCheck (
     IsMatch = FALSE;
   }
 
-  if (IsMatch && Context->Assigned) {
+  if (IsMatch && Context->Assigned == TRUE) {
     // If emulation was already assigned, make sure that this is the same interface that was assigned previously
     // by comparing the permanent MAC address against the address cached during the first assignment (updated in
     // context below).
-    IsMatch = (CompareMem (&Snp->Mode->PermanentAddress, &Context->PermanentAddress, NET_ETHER_ADDR_LEN) != 0);
+    IsMatch = (CompareMem (&Snp->Mode->PermanentAddress, &Context->PermanentAddress, NET_ETHER_ADDR_LEN) == 0);
   }
 
   return IsMatch;
@@ -68,8 +68,8 @@ SnpSupportsMacEmuCheck (
 **/
 EFI_SIMPLE_NETWORK_PROTOCOL*
 FindMatchingSnp (
-  SNP_MATCH_FUNCTION MatchFunction,
-  VOID *MatchFunctionContext
+  IN SNP_MATCH_FUNCTION MatchFunction,
+  OPTIONAL IN VOID *MatchFunctionContext
   )
 {
   EFI_STATUS                        Status;
@@ -78,17 +78,28 @@ FindMatchingSnp (
   EFI_HANDLE                        *SnpHandleBuffer;
   EFI_SIMPLE_NETWORK_PROTOCOL       *SnpInstance;
 
+  SnpInstance = NULL;
   SnpHandleBuffer = NULL;
-  Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleNetworkProtocolGuid, NULL, &HandleCount, &SnpHandleBuffer);
-  if (EFI_ERROR (Status) && Status != EFI_NOT_FOUND) {
-    DEBUG ((DEBUG_ERROR, "[%a]: Unexpected error from LocateHandleBuffer. Status=%r\n", __FUNCTION__, Status));
+
+  if (MatchFunction != NULL) {
+    Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleNetworkProtocolGuid, NULL, &HandleCount, &SnpHandleBuffer);
     ASSERT_EFI_ERROR (Status);
+    if (EFI_ERROR(Status)) {
+      DEBUG ((DEBUG_ERROR, "[%a]: Unexpected error from LocateHandleBuffer. Status=%r\n", __FUNCTION__, Status));
+    }
+  } else {
+    Status = EFI_INVALID_PARAMETER;
   }
 
-  for (HandleIdx=0; HandleIdx < HandleCount && SnpHandleBuffer != NULL; HandleIdx++) {
-    Status = gBS->HandleProtocol (SnpHandleBuffer[HandleIdx], &gEfiSimpleNetworkProtocolGuid, (VOID **)&SnpInstance);
-    if (!EFI_ERROR(Status) && MatchFunction(SnpHandleBuffer[HandleIdx], SnpInstance, MatchFunctionContext)) {
-      break;
+  if (!EFI_ERROR(Status)) {
+    for (HandleIdx=0; HandleIdx < HandleCount; HandleIdx++) {
+      Status = gBS->HandleProtocol (SnpHandleBuffer[HandleIdx], &gEfiSimpleNetworkProtocolGuid, (VOID **)&SnpInstance);
+
+      if (!EFI_ERROR(Status) && MatchFunction(SnpHandleBuffer[HandleIdx], SnpInstance, MatchFunctionContext)) {
+        break;
+      } else {
+        SnpInstance = NULL;
+      }
     }
   }
 
@@ -149,7 +160,7 @@ SimpleNetworkProtocolNotify (
     return;
   }
 
-  MacContext = (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)Context;
+  MacContext = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*)Context;
 
   SnpToConfigureEmu = FindMatchingSnp(SnpSupportsMacEmuCheck, (VOID*) MacContext);
 
