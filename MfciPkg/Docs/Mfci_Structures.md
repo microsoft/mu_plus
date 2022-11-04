@@ -55,8 +55,8 @@ used to generate test signing keys are included in this repo for reference. Plea
 needs to include OID `1.3.6.1.5.5.7.3.3` as well as the user designed leaf EKU that is used as an
 additional test.  This second EKU must be set in pcd `PcdMfciPkcs7RequiredLeafEKU`.
 
-(../UnitTests/MfciPolicyParsingUnitTest/data/certs/CreateCertificates.ps1)
-(../UnitTests/MfciPolicyParsingUnitTest/data/certs/MakeChainingCerts.bat)
+[Windows Power Shell Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/CreateCertificates.ps1)
+[Windows Batch Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/MakeChainingCerts.bat)
 
 ### Example signing
 
@@ -71,7 +71,7 @@ has a .p7 extension, and this is the file that should be place into the MfciNext
     sign 
     /fd SHA256 
     /p7 .
-    /p7co 1.2.840.113549.1.7.1 
+    /p7co 1.2.840.113549.1.7.1
     /p7ce Embedded
     /f <pfx file of leaf key>.pfx
     /v /debug 
@@ -81,7 +81,7 @@ has a .p7 extension, and this is the file that should be place into the MfciNext
 
 ## Signed Packet Example
 
-`certutil.exe -asn`  output for an example MFCI Policy packet (signed) is as follows:
+Output of running `[certutil.exe -asn]`(<https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/certutil>) on a signed MFCI Policy packet
 
 ```ASN
 0000: 30 82 0e 6c                               ; SEQUENCE (e6c Bytes)
