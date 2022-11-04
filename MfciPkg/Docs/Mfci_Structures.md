@@ -81,9 +81,11 @@ has a .p7 extension, and this is the file that should be place into the MfciNext
 
 ## Signed Packet Example
 
-Output of running `[certutil.exe -asn]`(<https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/certutil>) on a signed MFCI Policy packet
+Output of running [certutil.exe](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/certutil) on a signed MFCI Policy packet (signed) is as follows:
 
 ```ASN
+Prompt >> certutil.exe -asn
+
 0000: 30 82 0e 6c                               ; SEQUENCE (e6c Bytes)
 0004:    06 09                                  ; OBJECT_ID (9 Bytes)
 0006:    |  2a 86 48 86 f7 0d 01 07  02
