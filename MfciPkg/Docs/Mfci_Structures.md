@@ -30,7 +30,7 @@ At runtime, a UEFI implementor may consider the policy blobs to be opaque, as Mf
 the task of authenticating, verifying targeting, and parsing the blobs down to the 64-bit policies.
 
 For the purpose of testing, a python library and commandline wrappers are provided to facilitate
-creation of signed MFCI policies.
+creation of unsigned MFCI policies. After the policies are created, they will still need to be signed.
 
 * <https://github.com/tianocore/edk2-pytool-library/blob/master/docs/features/windows_firmware_policy.md>
 * <https://github.com/tianocore/edk2-pytool-extensions/blob/master/docs/usability/using_firmware_policy_tool.md>
