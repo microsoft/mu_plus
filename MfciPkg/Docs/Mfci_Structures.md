@@ -45,8 +45,39 @@ remaining fields are unescaped, WIDE NULL-terminated UTF-16LE strings.
 
 The PKCS7 digital signature format familiar to the UEFI ecosystem is used with 2 key differences.
 First, a full PKCS7 is used, not the SignedData subset used by authenticated variables.  Second,
-the P7 is embedded, not detatched.  The policy targeting and flavor information are embedded in a
+the P7 is embedded, not detached.  The policy targeting and flavor information are embedded in a
 PKCS 7 Data inside the full PKCS 7 Signed object.
+
+### Signing Key
+
+To digitally sign a policy blob, a public/private key combination is required.  The scripts
+used to generate test signing keys are included in this repo for reference. Please note that the EKU
+needs to include OID `1.3.6.1.5.5.7.3.3` as well as the user designed leaf EKU that is used as an
+additional test.  This second EKU must be set in pcd `PcdMfciPkcs7RequiredLeafEKU`.
+
+(../UnitTests/MfciPolicyParsingUnitTest/data/certs/CreateCertificates.ps1)
+(../UnitTests/MfciPolicyParsingUnitTest/data/certs/MakeChainingCerts.bat)
+
+### Example signing
+
+[Signtool](https://learn.microsoft.com/en-us/windows/win32/seccrypto/signtool) is available in Windows Kits
+and can be used to sign the policy blob.
+
+After the policy blob is created, sign tool can be called, as in the below example. The signed policy blob
+has a .p7 extension, and this is the file that should be place into the MfciNext variable.
+
+```
+    c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17763.0\\x64\\signtool.exe
+    sign 
+    /fd SHA256 
+    /p7 .
+    /p7co 1.2.840.113549.1.7.1 
+    /p7ce Embedded
+    /f <pfx file of leaf key>.pfx
+    /v /debug 
+    /p <password used to secure the leaf key pfx file>
+    <input policy>.bin
+```
 
 ## Signed Packet Example
 
