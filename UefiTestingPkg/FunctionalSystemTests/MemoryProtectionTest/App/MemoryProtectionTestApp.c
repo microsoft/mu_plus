@@ -1271,7 +1271,8 @@ SmmPageGuard (
 
     Status = SmmMemoryProtectionsDxeToSmmCommunicate (MEMORY_PROTECTION_TEST_PAGE, &MemoryProtectionContext);
     if (Status == EFI_NOT_FOUND) {
-      UT_LOG_ERROR ("SMM test driver is not loaded.");
+      UT_LOG_WARNING ("SMM test driver is not loaded.");
+      return UNIT_TEST_SKIPPED;
     } else {
       UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     }
@@ -1313,7 +1314,8 @@ SmmPoolGuard (
     Status = SmmMemoryProtectionsDxeToSmmCommunicate (MEMORY_PROTECTION_TEST_POOL, &MemoryProtectionContext);
 
     if (Status == EFI_NOT_FOUND) {
-      UT_LOG_ERROR ("SMM test driver is not loaded.");
+      UT_LOG_WARNING ("SMM test driver is not loaded.");
+      return UNIT_TEST_SKIPPED;
     } else {
       UT_LOG_ERROR ("System was expected to reboot, but didn't.");
     }
@@ -1352,7 +1354,8 @@ SmmNullPointerDetection (
     Status = SmmMemoryProtectionsDxeToSmmCommunicate (MEMORY_PROTECTION_TEST_NULL_POINTER, &MemoryProtectionContext);
 
     if (Status == EFI_NOT_FOUND) {
-      UT_LOG_ERROR ("SMM test driver is not loaded.");
+      UT_LOG_WARNING ("SMM test driver is not loaded.");
+      return UNIT_TEST_SKIPPED;
     } else {
       UT_LOG_ERROR ("System was expected to reboot, but didn't. %r", Status);
     }
