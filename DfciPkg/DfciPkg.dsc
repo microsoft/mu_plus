@@ -91,15 +91,12 @@
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
   VariablePolicyHelperLib|MdeModulePkg/Library/VariablePolicyHelperLib/VariablePolicyHelperLib.inf
 
-!if $(TARGET) == DEBUG
 !if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
-  #if debug is enabled provide StackCookie support lib so that we can link to /GS exports
+  # Provide StackCookie support lib so that we can link to /GS exports for VS builds
   NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
 !else
-  # otherwise use the null version for GCC and CLANG
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
-!endif
 !endif
 
 [LibraryClasses.X64.UEFI_APPLICATION]
