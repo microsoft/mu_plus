@@ -87,6 +87,9 @@ string into the PCD.
 
 ```
 
+When using `!include MfciPkg/MfciPkg.dsc.inc`, please ensure the platform pcds for
+ `PcdMfciPkcs7RequiredLeafEKU` and `PcdMfciPkcs7RequiredLeafEKU` are included after the `MfciPkg.dsc.inc`.
+
 ### MfciPkg Dependencies
 
 * Variable Policy

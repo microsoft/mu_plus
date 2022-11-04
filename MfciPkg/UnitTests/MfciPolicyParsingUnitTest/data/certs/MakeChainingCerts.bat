@@ -1,7 +1,7 @@
 REM Copyright (c) Microsoft Corporation.
-REM Licensed under the MIT License.
+REM SPDX-License-Identifier: BSD-2-Clause-Patent
 
-REM MakeCert (inlcuded in Windows Kits) has been depreciated. The recomened replacement is  New-SelfSignedCertificate in windows power shell.
+REM MakeCert (inlcuded in Windows Kits) has been depreciated. The recommended replacement is  New-SelfSignedCertificate in windows power shell.
 REM Please see CreateCertificate.ps1 for example usage
 
 rem exit /B
