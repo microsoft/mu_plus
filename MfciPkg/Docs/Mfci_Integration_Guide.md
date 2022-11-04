@@ -66,7 +66,7 @@ To help convert the Mfci Pkcs certificate into a PCD, the BinToPcd.py in MU_BASE
 BinToPcd.py will ensure that the public key is properly formatted into RFC 4506 External Data
 Representation Standard.
 
-```
+```INI
 MU_BASECORE/BaseTools/Scripts/BinToPcd.py -i <PublicKey.cer> -o <Output.inc> -p gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr -x
 ```
 
@@ -88,7 +88,7 @@ string into the PCD.
 ```
 
 When using `!include MfciPkg/MfciPkg.dsc.inc`, please ensure the platform pcds for
- `PcdMfciPkcs7RequiredLeafEKU` and `PcdMfciPkcs7RequiredLeafEKU` are included after the `MfciPkg.dsc.inc`.
+ `PcdMfciPkcs7RequiredLeafEKU` and `PcdMfciPkcs7RequiredLeafEKU` are included after the `MfciPkg.dsc.inc`.git
 
 ### MfciPkg Dependencies
 

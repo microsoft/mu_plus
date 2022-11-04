@@ -66,7 +66,7 @@ and can be used to sign the policy blob.
 After the policy blob is created, sign tool can be called, as in the below example. The signed policy blob
 has a .p7 extension, and this is the file that should be place into the MfciNext variable.
 
-```
+```INI
     c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17763.0\\x64\\signtool.exe
     sign 
     /fd SHA256 
@@ -81,7 +81,9 @@ has a .p7 extension, and this is the file that should be place into the MfciNext
 
 ## Signed Packet Example
 
-Output of running [certutil.exe](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/certutil) on a signed MFCI Policy packet (signed) is as follows:
+Output of running
+[certutil.exe](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/certutil)
+ on a signed MFCI Policy packet (signed) is as follows:
 
 ```ASN
 Prompt >> certutil.exe -asn
