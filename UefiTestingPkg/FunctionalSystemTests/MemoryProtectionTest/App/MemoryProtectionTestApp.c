@@ -12,6 +12,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/Cpu.h>
 #include <Protocol/SmmCommunication.h>
 #include <Protocol/MemoryProtectionNonstopMode.h>
+#include <Protocol/MemoryProtectionDebug.h>
 #include <Uefi/UefiMultiPhase.h>
 #include <Pi/PiMultiPhase.h>
 
@@ -31,6 +32,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ResetSystemLib.h>
 #include <Library/HobLib.h>
 #include <Library/ExceptionPersistenceLib.h>
+#include <Library/CpuPageTableLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
 #include <Guid/DxeMemoryProtectionSettings.h>
@@ -49,7 +51,8 @@ UINTN                                    mPiSmmCommonCommBufferSize;
 EFI_CPU_ARCH_PROTOCOL                    *mCpu = NULL;
 MM_MEMORY_PROTECTION_SETTINGS            mMmMps;
 DXE_MEMORY_PROTECTION_SETTINGS           mDxeMps;
-MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *mNonstopModeProtocol = NULL;
+MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *mNonstopModeProtocol      = NULL;
+MEMORY_PROTECTION_DEBUG_PROTOCOL         *mMemoryProtectionProtocol = NULL;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -212,6 +215,25 @@ FetchMemoryProtectionHobEntries (
   }
 
   return Status;
+}
+
+/**
+  Populates the heap guard protocol global
+
+  @retval EFI_SUCCESS Protocol is already populated or was successfully populated
+  @retval other       Return value of LocateProtocol
+**/
+STATIC
+EFI_STATUS
+PopulateMemoryProtectionDebugProtocol (
+  VOID
+  )
+{
+  if (mMemoryProtectionProtocol != NULL) {
+    return EFI_SUCCESS;
+  }
+
+  return gBS->LocateProtocol (&gMemoryProtectionDebugProtocolGuid, NULL, (VOID **)&mMemoryProtectionProtocol);
 }
 
 /**
@@ -564,6 +586,19 @@ UefiHardwareNxProtectionEnabledPreReq (
   )
 {
   if (mDxeMps.NxProtectionPolicy.Data) {
+    return UNIT_TEST_PASSED;
+  }
+
+  return UNIT_TEST_SKIPPED;
+}
+
+UNIT_TEST_STATUS
+EFIAPI
+ImageProtectionPreReq (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  if (mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromFv) {
     return UNIT_TEST_PASSED;
   }
 
@@ -1247,6 +1282,118 @@ UefiNxProtection (
   return UNIT_TEST_PASSED;
 } // UefiNxProtection()
 
+STATIC
+EFI_STATUS
+CheckImageDescriptorRanges (
+  IN IA32_MAP_ENTRY          *Map,
+  IN UINTN                   MapCount,
+  IN IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptorHead
+  )
+{
+  UINTN                   CurrentMapIndex           = 0;
+  LIST_ENTRY              *ImageRangeDescriptorLink = NULL;
+  IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptor     = NULL;
+  EFI_PHYSICAL_ADDRESS    Start;
+  EFI_PHYSICAL_ADDRESS    End;
+  BOOLEAN                 TestFailed = FALSE;
+
+  if ((ImageRangeDescriptorHead == NULL) || (MapCount == 0) || (Map == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // Walk through each image
+  for (ImageRangeDescriptorLink = ImageRangeDescriptorHead->Link.ForwardLink;
+       ImageRangeDescriptorLink != &ImageRangeDescriptorHead->Link;
+       ImageRangeDescriptorLink = ImageRangeDescriptorLink->ForwardLink)
+  {
+    ImageRangeDescriptor = CR (
+                             ImageRangeDescriptorLink,
+                             IMAGE_RANGE_DESCRIPTOR,
+                             Link,
+                             IMAGE_RANGE_DESCRIPTOR_SIGNATURE
+                             );
+    if (ImageRangeDescriptor != NULL) {
+      Start = ImageRangeDescriptor->Base;
+      End   = ImageRangeDescriptor->Base + ImageRangeDescriptor->Length;
+
+      while (CurrentMapIndex < MapCount) {
+        if ((Map[CurrentMapIndex].LinearAddress <= Start) && (Map[CurrentMapIndex].LinearAddress + Map[CurrentMapIndex].Length > Start)) {
+          if ((ImageRangeDescriptor->Type == Code) && (Map[CurrentMapIndex].Attribute.Bits.ReadWrite != 0)) {
+            TestFailed = TRUE;
+            UT_LOG_ERROR ("Memory Range 0x%llx - 0x%llx should be non-writeable!", Start, End);
+          } else if ((ImageRangeDescriptor->Type == Data) && (Map[CurrentMapIndex].Attribute.Bits.Nx != 1)) {
+            TestFailed = TRUE;
+            UT_LOG_ERROR ("Memory Range 0x%llx - 0x%llx should be non-executable!", Start, End);
+          }
+
+          if (Map[CurrentMapIndex].LinearAddress + Map[CurrentMapIndex].Length >= End) {
+            Start = End;
+            break;
+          } else {
+            Start = Map[CurrentMapIndex].LinearAddress + Map[CurrentMapIndex].Length;
+          }
+        }
+
+        CurrentMapIndex++;
+      }
+
+      if (Start != End) {
+        UT_LOG_ERROR ("Memory Range 0x%llx - 0x%llx not found in the page table!", ImageRangeDescriptor->Base, ImageRangeDescriptor->Base + ImageRangeDescriptor->Length);
+        TestFailed = TRUE;
+      }
+    }
+  }
+
+  UT_ASSERT_FALSE (TestFailed);
+
+  return EFI_SUCCESS;
+}
+
+UNIT_TEST_STATUS
+EFIAPI
+ImageProtection (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS              Status;
+  IA32_MAP_ENTRY          *Map           = NULL;
+  UINTN                   MapCount       = 0;
+  UINTN                   PagesAllocated = 0;
+  IA32_CR4                Cr4;
+  PAGING_MODE             PagingMode;
+  IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptorHead = NULL;
+
+  DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
+
+  Cr4.UintN = AsmReadCr4 ();
+
+  if (Cr4.Bits.LA57 != 0) {
+    PagingMode = Paging5Level;
+  } else {
+    PagingMode = Paging4Level;
+  }
+
+  Status = PageTableParse (AsmReadCr3 (), PagingMode, NULL, &MapCount);
+  while (Status == RETURN_BUFFER_TOO_SMALL) {
+    if ((Map != NULL) && (PagesAllocated > 0)) {
+      FreePages (Map, PagesAllocated);
+    }
+
+    PagesAllocated = EFI_SIZE_TO_PAGES (MapCount * sizeof (IA32_MAP_ENTRY));
+    Map            = AllocatePages (PagesAllocated);
+    Status         = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
+  }
+
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  UT_ASSERT_NOT_EFI_ERROR (PopulateMemoryProtectionDebugProtocol ());
+  if (mMemoryProtectionProtocol != NULL) {
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryProtectionProtocol->GetImageList (&ImageRangeDescriptorHead, Protected));
+  }
+
+  UT_ASSERT_NOT_EFI_ERROR (CheckImageDescriptorRanges (Map, MapCount, ImageRangeDescriptorHead));
+  return UNIT_TEST_PASSED;
+}
+
 UNIT_TEST_STATUS
 EFIAPI
 SmmPageGuard (
@@ -1790,6 +1937,7 @@ MemoryProtectionTestAppEntryPoint (
   AddTestCase (Misc, "Null pointer access should trigger a page fault", "Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, MemoryProtectionContext);
   AddTestCase (Misc, "Null pointer access in SMM should trigger a page fault", "Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, MemoryProtectionContext);
   AddTestCase (Misc, "Blowing the stack should trigger a page fault", "Security.HeapGuardMisc.UefiCpuStackGuard", UefiCpuStackGuard, UefiStackGuardPreReq, NULL, MemoryProtectionContext);
+  AddTestCase (Misc, "Check that loaded images have proper attributes set", "Security.HeapGuardMisc.ImageProtectionEnabled", ImageProtection, ImageProtectionPreReq, NULL, MemoryProtectionContext);
   AddTestCase (NxProtection, "Check hardware configuration of HardwareNxProtection bit", "Security.HeapGuardMisc.UefiHardwareNxProtectionEnabled", UefiHardwareNxProtectionEnabled, UefiHardwareNxProtectionEnabledPreReq, NULL, MemoryProtectionContext);
   AddTestCase (NxProtection, "Stack NX Protection", "Security.HeapGuardMisc.UefiNxStackGuard", UefiNxStackGuard, NULL, NULL, MemoryProtectionContext);
 

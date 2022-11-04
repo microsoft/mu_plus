@@ -48,7 +48,7 @@
 [Protocols]
   gEfiBlockIoProtocolGuid
   gEfiSmmCommunicationProtocolGuid
-  gHeapGuardDebugProtocolGuid
+  gMemoryProtectionDebugProtocolGuid
 
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID
