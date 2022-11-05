@@ -62,9 +62,18 @@ must be overridden. Two other instances are available in the MfciPkg, or a custo
 The public portion of the Public/Private key needs to be included into for the MfciPkg to be able to verify
 policy blobs. This is done through the PCDs PcdMfciPkcs7CertBufferXdr.
 
-To help convert the Mfci Pkcs certificate into a PCD, the BinToPcd.py in MU_BASECORE can be used.
+To help convert the Mfci Pkcs certificate into a PCD, the BinToPcd.py in MU_BASECORE can be used. Using
+BinToPcd.py will ensure that the public key is properly formatted into RFC 4506 External Data
+Representation Standard.
+
+```INI
+MU_BASECORE/BaseTools/Scripts/BinToPcd.py -i <PublicKey.cer> -o <Output.inc> -p gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr -x
+```
 
 Additionally, PcdMfciPkcs7RequiredLeafEKU needs to be filled out with the Extended Key Usage information.
+The leaf EKU is used as an additional check during policy blob validation. Failure to include the correct
+EKU leaf will result in the policy blob being rejected.
+
 The below examples are from the Unit Test portion of this package. The Unit Test implementation can be
 followed to see how to convert a certificate into a binary pcd, and how to add the Extended Key Usage
 string into the PCD.
@@ -77,6 +86,9 @@ string into the PCD.
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7RequiredLeafEKU  |$(MFCI_POLICY_EKU_TEST)   # use the test version
 
 ```
+
+When using `!include MfciPkg/MfciPkg.dsc.inc`, please ensure the platform pcds for
+ `PcdMfciPkcs7RequiredLeafEKU` and `PcdMfciPkcs7RequiredLeafEKU` are included after the `MfciPkg.dsc.inc`
 
 ### MfciPkg Dependencies
 
