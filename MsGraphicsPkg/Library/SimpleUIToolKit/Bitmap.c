@@ -48,19 +48,10 @@ SetControlBounds (
   )
 {
   EFI_STATUS  Status  = EFI_SUCCESS;
-  INT32       XOffset = (Bounds.Left - this->m_BitmapBounds.Left);
-  INT32       YOffset = (Bounds.Top  - this->m_BitmapBounds.Top);
 
-  // Translate (and possibly truncate) the current bitmap bounding box.
+  // Translate the current bitmap bounding box.
   //
   CopyMem (&this->m_BitmapBounds, &Bounds, sizeof (SWM_RECT));
-
-  // Also translate the bounding box limit.
-  //
-  this->m_BitmapBounds.Left   += XOffset;
-  this->m_BitmapBounds.Right  += XOffset;
-  this->m_BitmapBounds.Top    += YOffset;
-  this->m_BitmapBounds.Bottom += YOffset;
 
   return Status;
 }
