@@ -77,8 +77,22 @@ Export-PfxCertificate -Cert $LeafTestBadEku -FilePath $currentdir\Leaf-NoEku.pfx
 Export-Certificate -Cert $LeafTestBadEku -FilePath $currentdir\Leaf-NoEku.cer -Type cer
 
 
-#Remove-Item $RootCert
-#Remove-Item $CA
-#Remove-Item $LeafTest
-#Remove-Item $CaNotTrusted
-#Remove-Item $LeafTestBadEku
+# New-SelfSignedCertificate adds the certificates to the local machine (CertMgr.msc).
+# These commands will remove the generated certificates from the local machine
+# The certificates will still exist in the pfx (personal exchange files)
+$path = "Cert:\LocalMachine\My\"
+
+$certtoremove = $path+$LeafTestBadEku.thumbprint
+Remove-Item $certtoremove
+
+$certtoremove = $path+$CaNotTrusted.thumbprint
+Remove-Item $certtoremove
+
+$certtoremove = $path+$LeafTest.thumbprint
+Remove-Item $certtoremove
+
+$certtoremove = $path+$CA.thumbprint
+Remove-Item $certtoremove
+
+$certtoremove = $path+$RootCert.thumbprint
+Remove-Item $certtoremove
