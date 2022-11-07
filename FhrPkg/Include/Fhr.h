@@ -65,10 +65,11 @@ typedef struct _FHR_RESUME_DATA {
 STATIC_ASSERT (sizeof (FHR_RESET_DATA) == 64, "Invalid FHR reset structure size!");
 STATIC_ASSERT (sizeof (FHR_RESUME_DATA) == 56, "Invalid FHR resume structure size!");
 
-#define FHR_ERROR                         0x80000000
-#define FHR_ERROR_RESET_BAD_SIGNATURE     (FHR_ERROR | 0x01)
-#define FHR_ERROR_RESET_BUFFER_TOO_SMALL  (FHR_ERROR | 0x02)
-#define FHR_ERROR_RESET_BAD_CHECKSUM      (FHR_ERROR | 0x03)
+#define FHR_ERROR                             0x80000000
+#define FHR_ERROR_RESET_BAD_SIGNATURE         (FHR_ERROR | 0x01)
+#define FHR_ERROR_RESET_BUFFER_TOO_SMALL      (FHR_ERROR | 0x02)
+#define FHR_ERROR_RESET_BAD_CHECKSUM          (FHR_ERROR | 0x03)
+#define FHR_ERROR_RESET_UNSUPPORTED_REVISION  (FHR_ERROR | 0x04)
 
 //
 // Feature flags for resume data.

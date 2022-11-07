@@ -108,8 +108,21 @@ FhrCheckResetData (
 
   Sum = CalculateSum8 ((UINT8 *)FhrData, FhrData->Length);
   if (Sum != 0) {
-    DEBUG ((DEBUG_ERROR, "Bad Checksum! Sum should be 0, but is actually 0x%x\n", Sum));
+    DEBUG ((DEBUG_ERROR, "Bad checksum! Sum should be 0, but is actually 0x%x\n", Sum));
     FhrStatus = FHR_ERROR_RESET_BAD_CHECKSUM;
+    Status    = EFI_INVALID_PARAMETER;
+    goto Exit;
+  }
+
+  if (FhrData->Revision != FHR_RESET_DATA_REVISION) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "Unsupported revision! Supported: 0x%x Found: 0x%x\n",
+      FHR_RESET_DATA_REVISION,
+      FhrData->Revision
+      ));
+
+    FhrStatus = FHR_ERROR_RESET_UNSUPPORTED_REVISION;
     Status    = EFI_INVALID_PARAMETER;
     goto Exit;
   }
