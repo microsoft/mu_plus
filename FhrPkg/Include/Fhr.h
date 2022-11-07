@@ -27,37 +27,48 @@
 #define FHR_RESET_DATA_SIGNATURE   SIGNATURE_32('M', 'P', 'R', 'B')
 #define FHR_RESUME_DATA_SIGNATURE  SIGNATURE_32('M', 'P', 'R', 'O')
 
+#define FHR_RESET_DATA_REVISION  1
+
 typedef struct _FHR_RESET_DATA {
   UINT32    Signature;
   UINT32    Length;
   UINT8     Revision;
   UINT8     Checksum;
-  UINT8     Reserved1[6];
-  UINT64    OsEntry;
+  UINT8     Reserved0[6];
+  UINT64    ResumeCodeBase;
+  UINT64    ResumeCodeSize;
   UINT64    OsDataBase;
   UINT64    OsDataSize;
   UINT64    CompatabilityId;
-  UINT64    Reserved2[2];
+  UINT64    StatusCode;
 } FHR_RESET_DATA;
+
+#define FHR_RESUME_DATA_REVISION  1
 
 typedef struct _FHR_RESUME_DATA {
   UINT32    Signature;
   UINT32    Length;
   UINT8     Revision;
   UINT8     Checksum;
-  UINT8     Reserved1[6];
+  UINT8     Reserved0[6];
+  UINT64    ResumeCodeBase;
+  UINT64    ResumeCodeSize;
   UINT64    OsDataBase;
   UINT64    OsDataSize;
   UINT64    Flags;
-  UINT64    Reserved2[3];
 } FHR_RESUME_DATA;
 
 //
 // Double check the correct size of FHR structures
 //
 
-STATIC_ASSERT (sizeof (FHR_RESET_DATA) == 64, "Invalid FHR structure size!");
-STATIC_ASSERT (sizeof (FHR_RESUME_DATA) == 64, "Invalid FHR structure size!");
+STATIC_ASSERT (sizeof (FHR_RESET_DATA) == 64, "Invalid FHR reset structure size!");
+STATIC_ASSERT (sizeof (FHR_RESUME_DATA) == 56, "Invalid FHR resume structure size!");
+
+#define FHR_ERROR                         0x80000000
+#define FHR_ERROR_RESET_BAD_SIGNATURE     (FHR_ERROR | 0x01)
+#define FHR_ERROR_RESET_BUFFER_TOO_SMALL  (FHR_ERROR | 0x02)
+#define FHR_ERROR_RESET_BAD_CHECKSUM      (FHR_ERROR | 0x03)
 
 //
 // Feature flags for resume data.

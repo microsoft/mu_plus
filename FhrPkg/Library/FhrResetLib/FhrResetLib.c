@@ -36,10 +36,15 @@ FhrCheckResetData (
   UINT16          *FriendlyString;
   FHR_RESET_DATA  *FhrData;
   UINTN           RemainingSize;
-  UINT8           Checksum;
+  UINT8           Sum;
+  UINT64          FhrStatus;
+  EFI_STATUS      Status;
 
   *IsFhr        = FALSE;
   *FhrResetData = NULL;
+  FhrData       = NULL;
+  FhrStatus     = 0;
+  Status        = EFI_SUCCESS;
 
   DEBUG ((DEBUG_INFO, "Checking for FHR reset data.\n"));
   if ((DataSize < sizeof (UINT16)) || (ResetData == NULL)) {
@@ -75,7 +80,6 @@ FhrCheckResetData (
 
   DEBUG ((DEBUG_INFO, "FHR guid found. Looking for reset data.\n"));
   *IsFhr        = TRUE;
-  FhrData       = ALIGN_POINTER ((VOID *)(ResetGuid + 1), sizeof (UINT64));
   RemainingSize = DataSize - (UINTN)((UINT8 *)FhrData - (UINT8 *)ResetData);
 
   if (RemainingSize < sizeof (FHR_RESET_DATA)) {
@@ -83,44 +87,60 @@ FhrCheckResetData (
     return EFI_BUFFER_TOO_SMALL;
   }
 
+  FhrData = ALIGN_POINTER ((VOID *)(ResetGuid + 1), sizeof (UINT64));
   if (FhrData->Signature != FHR_RESET_DATA_SIGNATURE) {
     DEBUG ((DEBUG_ERROR, "Incorrect signature (0x%lx)!\n", FhrData->Signature));
-    return EFI_INVALID_PARAMETER;
+    FhrStatus = FHR_ERROR_RESET_BAD_SIGNATURE;
+    Status    = EFI_INVALID_PARAMETER;
+    goto Exit;
   }
 
   if (RemainingSize < FhrData->Length) {
     DEBUG ((DEBUG_ERROR, "Data too small for self described length!\n"));
-    return EFI_BUFFER_TOO_SMALL;
+    FhrStatus = FHR_ERROR_RESET_BUFFER_TOO_SMALL;
+    Status    = EFI_BUFFER_TOO_SMALL;
+    goto Exit;
   }
 
-  Checksum          = FhrData->Checksum;
-  FhrData->Checksum = 0;
-  if (Checksum != CalculateCheckSum8 ((UINT8 *)FhrData, FhrData->Length)) {
-    DEBUG ((DEBUG_ERROR, "Checksum mismatched!\n"));
-    return EFI_INVALID_PARAMETER;
-  }
+  //
+  // The checksum should ensure the sum of the structure is 0.
+  //
 
-  FhrData->Checksum = Checksum;
+  Sum = CalculateSum8 ((UINT8 *)FhrData, FhrData->Length);
+  if (Sum != 0) {
+    DEBUG ((DEBUG_ERROR, "Bad Checksum! Sum should be 0, but is actually 0x%x\n", Sum));
+    FhrStatus = FHR_ERROR_RESET_BAD_CHECKSUM;
+    Status    = EFI_INVALID_PARAMETER;
+    goto Exit;
+  }
 
   DEBUG ((
     DEBUG_INFO,
     "FHR reset data:\n"
     "    Length:            0x%x\n"
     "    Revision:          0x%x\n"
-    "    OsEntry:           0x%llx\n"
+    "    ResumeCodeBase:    0x%llx\n"
+    "    ResumeCodeSize:    0x%llx\n"
     "    OsDataBase:        0x%llx\n"
     "    OsDataSize:        0x%llx\n"
     "    CompatabilityId:   0x%llx\n",
     FhrData->Length,
     FhrData->Revision,
-    FhrData->OsEntry,
+    FhrData->ResumeCodeBase,
+    FhrData->ResumeCodeSize,
     FhrData->OsDataBase,
     FhrData->OsDataSize,
     FhrData->CompatabilityId
     ));
 
   *FhrResetData = FhrData;
-  return EFI_SUCCESS;
+
+Exit:
+  if ((FhrStatus != 0) && (FhrData != NULL) && (FhrData->StatusCode != 0)) {
+    *((UINT64 *)(VOID *)FhrData->StatusCode) = FhrStatus;
+  }
+
+  return Status;
 }
 
 EFI_STATUS

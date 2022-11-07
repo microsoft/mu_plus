@@ -26,13 +26,15 @@
   resume page is executable.
 
   @param[in]  Vector      The physical address of the OS resume vector.
+  @param[in]  VectorSize  The size in bytes of the OS resume vector.
 
   @retval   EFI_SUCCESS   The resume vector was successfully prepared for execution.
   @retval   Other         Error returned by subroutine.
 **/
 EFI_STATUS
 FhrPrepareVectorExecution (
-  IN EFI_PHYSICAL_ADDRESS  Vector
+  IN EFI_PHYSICAL_ADDRESS  Vector,
+  IN UINT64                VectorSize
   )
 
 {
@@ -315,7 +317,11 @@ FhrBmResume (
   // We need to make sure the resume vector is executable.
   //
 
-  Status = FhrPrepareVectorExecution (FhrHob->ResetData.OsEntry);
+  Status = FhrPrepareVectorExecution (
+             FhrHob->ResetData.ResumeCodeBase,
+             FhrHob->ResetData.ResumeCodeSize
+             );
+
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "[FHR] Failed to prepare reset vector for execution! (%r) \n", Status));
     goto Exit;
@@ -380,30 +386,34 @@ FhrBmResume (
   //
 
   ZeroMem (&ResumeData, sizeof (ResumeData));
-  ResumeData.Signature  = FHR_RESUME_DATA_SIGNATURE;
-  ResumeData.Length     = sizeof (ResumeData);
-  ResumeData.Revision   = 0;
-  ResumeData.OsDataBase = FhrHob->ResetData.OsDataBase;
-  ResumeData.OsDataSize = FhrHob->ResetData.OsDataSize;
-  ResumeData.Flags      = FHR_MEMORY_PRESERVED;
-  ResumeData.Checksum   = CalculateCheckSum8 ((UINT8 *)(&ResumeData), sizeof (ResumeData));
+  ResumeData.Signature      = FHR_RESUME_DATA_SIGNATURE;
+  ResumeData.Length         = sizeof (ResumeData);
+  ResumeData.Revision       = FHR_RESUME_DATA_REVISION;
+  ResumeData.ResumeCodeBase = FhrHob->ResetData.ResumeCodeBase;
+  ResumeData.ResumeCodeSize = FhrHob->ResetData.ResumeCodeSize;
+  ResumeData.OsDataBase     = FhrHob->ResetData.OsDataBase;
+  ResumeData.OsDataSize     = FhrHob->ResetData.OsDataSize;
+  ResumeData.Flags          = FHR_MEMORY_PRESERVED;
+  ResumeData.Checksum       = CalculateCheckSum8 ((UINT8 *)(&ResumeData), sizeof (ResumeData));
 
   //
   // Log some useful information.
   //
 
-  DEBUG ((DEBUG_INFO, "[FHR] ResumeData =             0x%llx\n", (EFI_PHYSICAL_ADDRESS)&ResumeData));
-  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Length =      0x%x\n", ResumeData.Length));
-  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Revision =    0x%x\n", ResumeData.Revision));
-  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.OsDataBase =  0x%llx\n", ResumeData.OsDataBase));
-  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.OsDataSize =  0x%llx\n", ResumeData.OsDataSize));
-  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Flags =       0x%llx\n", ResumeData.Flags));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData =                 0x%llx\n", (EFI_PHYSICAL_ADDRESS)&ResumeData));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Length =          0x%x\n", ResumeData.Length));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Revision =        0x%x\n", ResumeData.Revision));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.ResumeCodeBase =  0x%llx\n", ResumeData.ResumeCodeBase));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.ResumeCodeSize =  0x%llx\n", ResumeData.ResumeCodeSize));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.OsDataBase =      0x%llx\n", ResumeData.OsDataBase));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.OsDataSize =      0x%llx\n", ResumeData.OsDataSize));
+  DEBUG ((DEBUG_INFO, "[FHR] ResumeData.Flags =           0x%llx\n", ResumeData.Flags));
 
   //
   // Resume to the OS.
   //
 
-  ResumeVector = (OS_RESET_VECTOR)FhrHob->ResetData.OsEntry;
+  ResumeVector = (OS_RESET_VECTOR)FhrHob->ResetData.ResumeCodeBase;
   DEBUG ((DEBUG_INFO, "[FHR] Resuming to OS vector.\n"));
   ResumeVector (0, gST, &ResumeData);
 

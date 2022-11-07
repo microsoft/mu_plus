@@ -93,7 +93,7 @@ IsOsUsableMemory (
   switch (MemoryType) {
     // case EfiBootServicesCode: // TEMP, till paging attributes fixed
     case EfiConventionalMemory:
-    case EfiACPIReclaimMemory:
+    // case EfiACPIReclaimMemory: TODO: figure this out...
     case EfiPersistentMemory:
       return TRUE;
 
@@ -362,20 +362,22 @@ InitiateFhr (
 
   RebootCount++;
   ZeroMem (&ResetParams, sizeof (ResetParams));
-  ResetParams.FriendlyString          = '\0';
-  ResetParams.ResetTypeGuid           = ResetTypeGuid;
-  ResetParams.FhrResetData.Signature  = FHR_RESET_DATA_SIGNATURE;
-  ResetParams.FhrResetData.Length     = sizeof (ResetParams.FhrResetData);
-  ResetParams.FhrResetData.OsEntry    = (EFI_PHYSICAL_ADDRESS)FhrTestPostReboot;
-  ResetParams.FhrResetData.OsDataBase = (EFI_PHYSICAL_ADDRESS)Scratch;
-  ResetParams.FhrResetData.OsDataSize = SCRATCH_SIZE;
+  ResetParams.FriendlyString              = '\0';
+  ResetParams.ResetTypeGuid               = ResetTypeGuid;
+  ResetParams.FhrResetData.Signature      = FHR_RESET_DATA_SIGNATURE;
+  ResetParams.FhrResetData.Length         = sizeof (ResetParams.FhrResetData);
+  ResetParams.FhrResetData.Revision       = FHR_RESET_DATA_REVISION;
+  ResetParams.FhrResetData.ResumeCodeBase = (EFI_PHYSICAL_ADDRESS)FhrTestPostReboot;
+  ResetParams.FhrResetData.ResumeCodeSize = EFI_PAGE_SIZE;
+  ResetParams.FhrResetData.OsDataBase     = (EFI_PHYSICAL_ADDRESS)Scratch;
+  ResetParams.FhrResetData.OsDataSize     = SCRATCH_SIZE;
 
   ResetParams.FhrResetData.Checksum = CalculateCheckSum8 ((UINT8 *)(&ResetParams.FhrResetData), sizeof (ResetParams.FhrResetData));
 
   DEBUG ((
     DEBUG_INFO,
     "[FHR TEST] ResumeVector: %p ResetData: %p DataSize: 0x%x\n",
-    ResetParams.FhrResetData.OsEntry,
+    ResetParams.FhrResetData.ResumeCodeBase,
     ResetParams.FhrResetData.OsDataBase,
     ResetParams.FhrResetData.OsDataSize
     ));
