@@ -47,7 +47,7 @@ SetControlBounds (
   IN SWM_RECT  Bounds
   )
 {
-  EFI_STATUS  Status  = EFI_SUCCESS;
+  EFI_STATUS  Status = EFI_SUCCESS;
 
   // Translate the current bitmap bounding box.
   //
