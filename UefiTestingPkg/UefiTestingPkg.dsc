@@ -57,6 +57,7 @@
 
   PlatformSmmProtectionsTestLib|UefiTestingPkg/Library/PlatformSmmProtectionsTestLibNull/PlatformSmmProtectionsTestLibNull.inf
   ExceptionPersistenceLib|MdeModulePkg/Library/BaseExceptionPersistenceLibNull/BaseExceptionPersistenceLibNull.inf
+  CpuPageTableLib|UefiCpuPkg/Library/CpuPageTableLib/CpuPageTableLib.inf
 
 [LibraryClasses.common.DXE_SMM_DRIVER]
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
@@ -80,6 +81,16 @@
   PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciSegmentLib|MdePkg/Library/BasePciSegmentLibPci/BasePciSegmentLibPci.inf
+
+[LibraryClasses.X64]
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+!if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
+  # Provide StackCookie support lib so that we can link to /GS exports for VS builds
+  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
+!else
+  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
+!endif
 
 ###############################################################
 #
