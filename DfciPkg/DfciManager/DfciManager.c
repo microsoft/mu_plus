@@ -83,7 +83,8 @@ RunProcessMailBoxes (
 
   ProcessMailBoxes ();
 
-  gBS->RaiseTPL (OldTpl);
+  gBS->RaiseTPL (TPL_NOTIFY);
+  gBS->RestoreTPL (OldTpl);
   return;
 }
 
