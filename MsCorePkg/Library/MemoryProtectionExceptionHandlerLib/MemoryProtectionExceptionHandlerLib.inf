@@ -49,5 +49,8 @@
 [Guids]
   gMemoryProtectionExceptionHandlerGuid
 
+[FixedPcd]
+  gEfiMdePkgTokenSpaceGuid.PcdStackCookieExceptionVector
+
 [DEPEX]
   TRUE
