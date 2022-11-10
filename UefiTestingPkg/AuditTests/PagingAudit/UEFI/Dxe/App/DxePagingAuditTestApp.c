@@ -245,11 +245,11 @@ DxePagingAuditTestAppEntryPoint (
   }
 
   if (ShellParams->Argc > 1) {
-    if (StrnCmp (ShellParams->Argv[1], L" -h", 4)) {
+    if (StrnCmp (ShellParams->Argv[1], L"-h", 4) == 0) {
       DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
       DEBUG ((DEBUG_INFO, "-d : Dump the page table files to the EFI partition\n"));
       RunTests = FALSE;
-    } else if (StrnCmp (ShellParams->Argv[1], L" -d", 4)) {
+    } else if (StrnCmp (ShellParams->Argv[1], L"-d", 4) == 0) {
       DumpPagingInfo (NULL, NULL);
       RunTests = FALSE;
     }
