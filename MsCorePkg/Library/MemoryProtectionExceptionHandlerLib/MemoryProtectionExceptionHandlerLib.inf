@@ -39,6 +39,7 @@
   HwResetSystemLib
   MsWheaEarlyStorageLib
   PeCoffGetEntryPointLib
+  PcdLib
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## PRODUCES
