@@ -39,6 +39,7 @@
   HwResetSystemLib
   MsWheaEarlyStorageLib
   PeCoffGetEntryPointLib
+  PcdLib
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## PRODUCES
@@ -48,6 +49,9 @@
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid
+
+[FixedPcd]
+  gEfiMdePkgTokenSpaceGuid.PcdStackCookieExceptionVector
 
 [DEPEX]
   TRUE
