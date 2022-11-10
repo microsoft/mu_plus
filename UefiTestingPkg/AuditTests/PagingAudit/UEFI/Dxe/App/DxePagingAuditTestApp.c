@@ -33,6 +33,15 @@ CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
 UINTN  mMemoryInfoDatabaseSize      = 0;
 UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
+/**
+  Check the page table for Read/Write/Execute regions.
+
+  @param[in] Context            Unit test context
+
+  @retval UNIT_TEST_PASSED      The unit test passed
+  @retval other                 The unit test failed
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 NoReadWriteExcecute (
@@ -197,6 +206,11 @@ DxePagingAuditTestAppEntryPoint (
   if (RunTests) {
     Context = (PAGING_AUDIT_TEST_CONTEXT *)AllocateZeroPool (sizeof (PAGING_AUDIT_TEST_CONTEXT));
 
+    if (Context == NULL) {
+      DEBUG ((DEBUG_ERROR, "Failed to allocate test context\n"));
+      goto EXIT;
+    }
+
     //
     // Start setting up the test framework for running the tests.
     //
@@ -223,7 +237,13 @@ DxePagingAuditTestAppEntryPoint (
 
       PagesAllocated = EFI_SIZE_TO_PAGES (MapCount * sizeof (IA32_MAP_ENTRY));
       Map            = AllocatePages (PagesAllocated);
-      Status         = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
+
+      if (Map == NULL) {
+        DEBUG ((DEBUG_ERROR, "Failed to allocate page table map\n"));
+        goto EXIT;
+      }
+
+      Status = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
     }
 
     Context->Entries = Map;
@@ -236,7 +256,6 @@ DxePagingAuditTestAppEntryPoint (
 
     if (Misc == NULL) {
       DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TestSuite\n"));
-      Status = EFI_OUT_OF_RESOURCES;
       goto EXIT;
     }
 
@@ -254,6 +273,10 @@ EXIT:
 
     if ((Map != NULL) && (PagesAllocated > 0)) {
       FreePages (Map, PagesAllocated);
+    }
+
+    if (Context != NULL) {
+      FreePool (Context);
     }
   }
 
