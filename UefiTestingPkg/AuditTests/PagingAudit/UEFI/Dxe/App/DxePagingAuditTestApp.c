@@ -120,12 +120,14 @@ NoReadWriteExcecute (
 
       if ((SpecialRegionCount > 0) && !IgnoreRWXAddress) {
         for (SpecialRegionIndex = 0; SpecialRegionIndex < SpecialRegionCount; SpecialRegionIndex++) {
-          if CHECK_SUBSUMPTION (
-               SpecialRegions[SpecialRegionIndex].Start,
-               SpecialRegions[SpecialRegionIndex].Start + SpecialRegions[SpecialRegionIndex].Length,
-               Map[Index].LinearAddress,
-               Map[Index].LinearAddress + Map[Index].Length
-               ) {
+          if (CHECK_SUBSUMPTION (
+                SpecialRegions[SpecialRegionIndex].Start,
+                SpecialRegions[SpecialRegionIndex].Start + SpecialRegions[SpecialRegionIndex].Length,
+                Map[Index].LinearAddress,
+                Map[Index].LinearAddress + Map[Index].Length
+                ) &&
+              (SpecialRegions[SpecialRegionIndex].EfiAttributes == 0))
+          {
             IgnoreRWXAddress = TRUE;
             break;
           }
