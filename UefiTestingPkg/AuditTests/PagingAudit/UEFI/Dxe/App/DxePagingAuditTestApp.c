@@ -223,15 +223,12 @@ DxePagingAuditTestAppEntryPoint (
   IA32_MAP_ENTRY                 *Map           = NULL;
   UINTN                          MapCount       = 0;
   UINTN                          PagesAllocated = 0;
+  BOOLEAN                        RunTests       = TRUE;
   EFI_SHELL_PARAMETERS_PROTOCOL  *ShellParams;
-  CHAR8                          Argument[MAX_CHARS_TO_READ + 1];
-  BOOLEAN                        RunTests = TRUE;
 
   DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
 
   DEBUG ((DEBUG_ERROR, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
-
-  Argument[MAX_CHARS_TO_READ] = '\0';
 
   Status = gBS->HandleProtocol (
                   gImageHandle,
