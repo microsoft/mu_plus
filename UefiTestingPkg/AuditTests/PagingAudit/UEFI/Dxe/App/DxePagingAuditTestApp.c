@@ -35,90 +35,23 @@ UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
 UNIT_TEST_STATUS
 EFIAPI
-CheckPageGuards (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  UINTN                             MapKey;
-  UINTN                             DescriptorSize;
-  UINT32                            DescriptorVersion;
-  EFI_STATUS                        Status;
-  EFI_MEMORY_DESCRIPTOR             *MemoryMapEnd;
-  EFI_MEMORY_DESCRIPTOR             *MemoryMapEntry;
-  UINTN                             MemoryMapSize             = 0;
-  EFI_MEMORY_DESCRIPTOR             *MemoryMap                = NULL;
-  BOOLEAN                           TestFailed                = FALSE;
-  MEMORY_PROTECTION_DEBUG_PROTOCOL  *MemoryProtectionProtocol = NULL;
-
-  Status = gBS->GetMemoryMap (
-                  &MemoryMapSize,
-                  MemoryMap,
-                  &MapKey,
-                  &DescriptorSize,
-                  &DescriptorVersion
-                  );
-
-  UT_ASSERT_EQUAL (Status, EFI_BUFFER_TOO_SMALL);
-  do {
-    MemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocatePool (MemoryMapSize);
-    ASSERT (MemoryMap != NULL);
-    Status = gBS->GetMemoryMap (
-                    &MemoryMapSize,
-                    MemoryMap,
-                    &MapKey,
-                    &DescriptorSize,
-                    &DescriptorVersion
-                    );
-    if (EFI_ERROR (Status)) {
-      FreePool (MemoryMap);
-    }
-  } while (Status == EFI_BUFFER_TOO_SMALL);
-
-  UT_ASSERT_NOT_EFI_ERROR (gBS->LocateProtocol (&gMemoryProtectionDebugProtocolGuid, NULL, (VOID **)&MemoryProtectionProtocol));
-
-  MemoryMapEnd   = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)MemoryMap + MemoryMapSize);
-  MemoryMapEntry = MemoryMap;
-  while ((UINTN)MemoryMapEntry < (UINTN)MemoryMapEnd) {
-    if (GetDxeMemoryTypeSettingFromBitfield (MemoryMapEntry->Type, gDxeMps.HeapGuardPageType)) {
-      if (!(MemoryProtectionProtocol->IsGuardPage (MemoryMapEntry->PhysicalStart) ||
-            !(MemoryProtectionProtocol->IsGuardPage (MemoryMapEntry->PhysicalStart + EFI_PAGES_TO_SIZE (MemoryMapEntry->NumberOfPages) - EFI_PAGE_SIZE))))
-      {
-        UT_LOG_ERROR (
-          "Memory Range 0x%llx-0x%llx is not flanked by guard pages! Memory type: 0x%d\n",
-          MemoryMapEntry->PhysicalStart,
-          MemoryMapEntry->PhysicalStart + EFI_PAGES_TO_SIZE (MemoryMapEntry->NumberOfPages),
-          MemoryMapEntry->Type
-          );
-        TestFailed = TRUE;
-      }
-    }
-
-    MemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (MemoryMapEntry, DescriptorSize);
-  }
-
-  UT_ASSERT_FALSE (TestFailed);
-
-  return UNIT_TEST_PASSED;
-}
-
-UNIT_TEST_STATUS
-EFIAPI
 NoReadWriteExcecute (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  IA32_MAP_ENTRY                             *Map                         = ((PAGING_AUDIT_TEST_CONTEXT *)Context)->Entries;
-  UINTN                                      MapCount                     = ((PAGING_AUDIT_TEST_CONTEXT *)Context)->Count;
-  UINTN                                      Index                        = 0;
-  BOOLEAN                                    FoundReadWriteExecuteAddress = FALSE;
-  MEMORY_PROTECTION_DEBUG_PROTOCOL           *MemoryProtectionProtocol    = NULL;
-  MEMORY_PROTECTION_SPECIAL_REGION_PROTOCOL  *SpecialRegionProtocol       = NULL;
-  MEMORY_PROTECTION_SPECIAL_REGION           *SpecialRegions              = NULL;
-  UINTN                                      SpecialRegionCount           = 0;
-  UINTN                                      SpecialRegionIndex           = 0;
-  IMAGE_RANGE_DESCRIPTOR                     *NonProtectedImageList       = NULL;
-  LIST_ENTRY                                 *NonProtectedImageLink       = NULL;
-  IMAGE_RANGE_DESCRIPTOR                     *NonProtectedImage           = NULL;
+  IA32_MAP_ENTRY                             *Map                      = ((PAGING_AUDIT_TEST_CONTEXT *)Context)->Entries;
+  UINTN                                      MapCount                  = ((PAGING_AUDIT_TEST_CONTEXT *)Context)->Count;
+  UINTN                                      Index                     = 0;
+  BOOLEAN                                    FoundRWXAddress           = FALSE;
+  BOOLEAN                                    IgnoreRWXAddress          = FALSE;
+  MEMORY_PROTECTION_DEBUG_PROTOCOL           *MemoryProtectionProtocol = NULL;
+  MEMORY_PROTECTION_SPECIAL_REGION_PROTOCOL  *SpecialRegionProtocol    = NULL;
+  MEMORY_PROTECTION_SPECIAL_REGION           *SpecialRegions           = NULL;
+  UINTN                                      SpecialRegionCount        = 0;
+  UINTN                                      SpecialRegionIndex        = 0;
+  IMAGE_RANGE_DESCRIPTOR                     *NonProtectedImageList    = NULL;
+  LIST_ENTRY                                 *NonProtectedImageLink    = NULL;
+  IMAGE_RANGE_DESCRIPTOR                     *NonProtectedImage        = NULL;
 
   UT_ASSERT_NOT_EFI_ERROR (
     gBS->LocateProtocol (
@@ -152,6 +85,7 @@ NoReadWriteExcecute (
 
   for ( ; Index < MapCount; Index++) {
     if ((Map[Index].Attribute.Bits.ReadWrite != 0) && (Map[Index].Attribute.Bits.Nx == 0)) {
+      IgnoreRWXAddress = FALSE;
       if (NonProtectedImageList != NULL) {
         for (NonProtectedImageLink = NonProtectedImageList->Link.ForwardLink;
              NonProtectedImageLink != &NonProtectedImageList->Link;
@@ -169,12 +103,13 @@ NoReadWriteExcecute (
                Map[Index].LinearAddress,
                Map[Index].LinearAddress + Map[Index].Length
                ) {
-            continue;
+            IgnoreRWXAddress = TRUE;
+            break;
           }
         }
       }
 
-      if (SpecialRegionCount > 0) {
+      if ((SpecialRegionCount > 0) && !IgnoreRWXAddress) {
         for (SpecialRegionIndex = 0; SpecialRegionIndex < SpecialRegionCount; SpecialRegionIndex++) {
           if CHECK_SUBSUMPTION (
                SpecialRegions[SpecialRegionIndex].Start,
@@ -182,17 +117,20 @@ NoReadWriteExcecute (
                Map[Index].LinearAddress,
                Map[Index].LinearAddress + Map[Index].Length
                ) {
-            continue;
+            IgnoreRWXAddress = TRUE;
+            break;
           }
         }
       }
 
-      UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
-      FoundReadWriteExecuteAddress = TRUE;
+      if (!IgnoreRWXAddress) {
+        UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
+        FoundRWXAddress = TRUE;
+      }
     }
   }
 
-  UT_ASSERT_FALSE (FoundReadWriteExecuteAddress);
+  UT_ASSERT_FALSE (FoundRWXAddress);
 
   return UNIT_TEST_PASSED;
 }
@@ -242,13 +180,17 @@ DxePagingAuditTestAppEntryPoint (
   }
 
   if (ShellParams->Argc > 1) {
-    if (StrnCmp (ShellParams->Argv[1], L"-h", 4) == 0) {
+    RunTests = FALSE;
+    if (StrnCmp (ShellParams->Argv[1], L"-r", 4) == 0) {
+      RunTests = TRUE;
+    } else if (StrnCmp (ShellParams->Argv[1], L"-h", 4) == 0) {
       DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
       DEBUG ((DEBUG_INFO, "-d : Dump the page table files to the EFI partition\n"));
-      RunTests = FALSE;
+      DEBUG ((DEBUG_INFO, "-r : Run the application tests\n"));
     } else if (StrnCmp (ShellParams->Argv[1], L"-d", 4) == 0) {
       DumpPagingInfo (NULL, NULL);
-      RunTests = FALSE;
+    } else {
+      DEBUG ((DEBUG_INFO, "Invalid argument. Use \'-h\' to see a list of valid arguments.\n"));
     }
   }
 
@@ -299,7 +241,6 @@ DxePagingAuditTestAppEntryPoint (
     }
 
     AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExcecute, NULL, NULL, Context);
-    AddTestCase (Misc, "Guarded heap ranges are flanked by page guards", "Security.Misc.CheckPageGuards", CheckPageGuards, NULL, NULL, Context);
 
     //
     // Execute the tests.
