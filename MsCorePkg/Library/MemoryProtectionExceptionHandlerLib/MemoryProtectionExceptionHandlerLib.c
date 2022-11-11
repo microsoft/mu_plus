@@ -23,9 +23,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ResetSystemLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
+#include <Library/PcdLib.h>
 
-#define IA32_PF_EC_ID        BIT4
-#define EXCEPT_STACK_COOKIE  0x40
+#define IA32_PF_EC_ID  BIT4
 
 STATIC EFI_HANDLE  mImageHandle = NULL;
 
@@ -202,7 +202,7 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 
   Status = mCpu->RegisterInterruptHandler (
                    mCpu,
-                   EXCEPT_STACK_COOKIE,
+                   PcdGet8 (PcdStackCookieExceptionVector),
                    MemoryProtectionStackCookieFailureHandler
                    );
 
