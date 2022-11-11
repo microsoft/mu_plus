@@ -204,6 +204,7 @@ DxePagingAuditTestAppEntryPoint (
       DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
       DEBUG ((DEBUG_INFO, "-d : Dump the page table files to the EFI partition\n"));
       DEBUG ((DEBUG_INFO, "-r : Run the application tests\n"));
+      DEBUG ((DEBUG_INFO, "NOTE: Combined flags (i.e. -rd) is not supported\n"));
     }
   }
 
