@@ -194,14 +194,16 @@ DxePagingAuditTestAppEntryPoint (
     RunTests = FALSE;
     if (StrnCmp (ShellParams->Argv[1], L"-r", 4) == 0) {
       RunTests = TRUE;
-    } else if (StrnCmp (ShellParams->Argv[1], L"-h", 4) == 0) {
-      DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
-      DEBUG ((DEBUG_INFO, "-d : Dump the page table files to the EFI partition\n"));
-      DEBUG ((DEBUG_INFO, "-r : Run the application tests\n"));
     } else if (StrnCmp (ShellParams->Argv[1], L"-d", 4) == 0) {
       DumpPagingInfo (NULL, NULL);
     } else {
-      DEBUG ((DEBUG_INFO, "Invalid argument. Use \'-h\' to see a list of valid arguments.\n"));
+      if (StrnCmp (ShellParams->Argv[1], L"-h", 4) != 0) {
+        DEBUG ((DEBUG_INFO, "Invalid argument. Use \'-h\' to see a list of valid arguments.\n"));
+      }
+
+      DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
+      DEBUG ((DEBUG_INFO, "-d : Dump the page table files to the EFI partition\n"));
+      DEBUG ((DEBUG_INFO, "-r : Run the application tests\n"));
     }
   }
 
@@ -222,6 +224,7 @@ DxePagingAuditTestAppEntryPoint (
       goto EXIT;
     }
 
+    // Poll CR4 to deterimine the page table depth
     Cr4.UintN = AsmReadCr4 ();
 
     if (Cr4.Bits.LA57 != 0) {
@@ -230,6 +233,7 @@ DxePagingAuditTestAppEntryPoint (
       PagingMode = Paging4Level;
     }
 
+    // CR3 is the page table pointer
     Status = PageTableParse (AsmReadCr3 (), PagingMode, NULL, &MapCount);
 
     while (Status == RETURN_BUFFER_TOO_SMALL) {
@@ -283,4 +287,4 @@ EXIT:
   }
 
   return EFI_SUCCESS;
-} // DxePagingAuditTestAppEntryPoint()
+}   // DxePagingAuditTestAppEntryPoint()
