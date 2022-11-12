@@ -137,6 +137,8 @@ NoReadWriteExcecute (
       if (!IgnoreRWXAddress) {
         UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
         FoundRWXAddress = TRUE;
+      } else {
+        UT_LOG_WARNING ("Memory Range 0x%llx-0x%llx is Read/Write/Execute. This range is excepted from the test.\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
       }
     }
   }
