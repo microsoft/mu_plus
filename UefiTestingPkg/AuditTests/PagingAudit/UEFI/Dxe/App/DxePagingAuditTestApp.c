@@ -200,7 +200,7 @@ DxePagingAuditTestAppEntryPoint (
       DumpPagingInfo (NULL, NULL);
     } else {
       if (StrnCmp (ShellParams->Argv[1], L"-h", 4) != 0) {
-        DEBUG ((DEBUG_INFO, "Invalid argument. Use \'-h\' to see a list of valid arguments.\n"));
+        DEBUG ((DEBUG_INFO, "Invalid argument!\n"));
       }
 
       DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
