@@ -1,2 +1,1 @@
-edk2-pytool-library>=0.10.13
-robotframework>=4.0.1
+robotframework>=6.0.1
