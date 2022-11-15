@@ -193,6 +193,8 @@ MfciMultipleCertificatesShouldParseSingleCert (
   EFI_STATUS  Status;
   UINT8       Dummy;
 
+  Dummy = 0;
+
   expect_value (ValidateBlob, SignedPolicy, &Dummy);
   expect_value (ValidateBlob, SignedPolicySize, sizeof (Dummy));
   expect_value (ValidateBlob, TrustAnchorCertSize, sizeof (mCert_Trusted_CA));
@@ -314,6 +316,8 @@ MfciMultipleCertificatesShouldCheckInputs (
   EFI_STATUS  Status;
   UINT8       Dummy;
 
+  Dummy = 0;
+
   Status = ValidateBlobWithXdrCertificates (&Dummy, sizeof (Dummy), NULL, sizeof (mCert_Trusted_CA_Root_xdr));
   UT_ASSERT_STATUS_EQUAL (Status, EFI_ABORTED);
 
@@ -355,6 +359,9 @@ MfciMultipleCertificatesShouldCheckGeneralCertificates (
   UINT8       Dummy;
   UINT8       FakeCertificate;
 
+  Dummy           = 0;
+  FakeCertificate = 0;
+
   Status = ValidateBlobWithXdrCertificates (&Dummy, sizeof (Dummy), &FakeCertificate, sizeof (FakeCertificate));
   UT_ASSERT_STATUS_EQUAL (Status, EFI_ABORTED);
 
@@ -385,6 +392,9 @@ MfciMultipleCertificatesShouldCheckIndividualCertificate (
 {
   EFI_STATUS  Status;
   UINT8       Dummy;
+
+  Dummy = 0;
+
   // Not enough for individual size field
   UINT8  FakeCertificate1[] = { 0x00, 0x01, 0x02, 0x03, 0x04 };
   // No content individual certificate
