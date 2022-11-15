@@ -1,0 +1,45 @@
+## @file
+#  TODO: Populate this.
+#
+#  Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.<BR>
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.29
+  BASE_NAME                      = MpManagement
+  FILE_GUID                      = 945DEFA8-8F4A-4049-BCFC-906D2B1D9455
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 0.1
+  ENTRY_POINT                    = MpManagementEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MpManagement.c
+  ApFunction.c
+  MpManagementInternal.h
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiTestingPkg/UefiTestingPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  CacheMaintenanceLib
+  UefiDriverEntryPoint
+  UefiLib
+
+[Protocols]
+  gEfiMpServiceProtocolGuid     ## CONSUMES
+  gMpManagementProtocolGuid     ## PRODUCES
+
+[Depex]
+  gEfiMpServiceProtocolGuid
