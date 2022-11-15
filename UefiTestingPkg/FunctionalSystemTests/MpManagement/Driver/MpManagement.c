@@ -150,13 +150,14 @@ MpMgmtApOn (
     EndIndex   = ProcessorNumber;
   }
 
+  Status = EFI_NOT_FOUND;
   for (Index = StartIndex; Index <= EndIndex; Index ++) {
     if (Index == mBspIndex) {
       continue;
     }
 
     if (mCommonBuffer[Index].ApStatus != AP_STATE_OFF) {
-      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is already started\n", __FUNCTION__, ProcessorNumber));
+      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is already started\n", __FUNCTION__, Index));
       Status = EFI_ALREADY_STARTED;
       break;
     }
@@ -177,7 +178,7 @@ MpMgmtApOn (
                  NULL,
                  NULL
                  );
-    // HACKHACK: This is not quite right. The protocol will only support blocking mode after RTB...
+    // TODO: This is not quite right. The protocol will only support blocking mode after RTB...
     if (Status != EFI_SUCCESS && Status != EFI_TIMEOUT) {
       DEBUG ((DEBUG_ERROR, "%a Failed to start processor %d: %r\n", __FUNCTION__, Index, Status));
       break;
@@ -186,7 +187,18 @@ MpMgmtApOn (
     }
   }
 
+  if (EFI_ERROR (Status)) {
+    goto Done;
+  }
+
+  // If successful, print the hellow world (blocking) from the APs.
   for (Index = StartIndex; Index <= EndIndex; Index++) {
+    if (Index == mBspIndex) {
+      continue;
+    }
+
+    // Loop till specified AP is up and running
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
     DEBUG ((DEBUG_INFO, "Initial message from common buffer %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
   }
 
@@ -205,6 +217,7 @@ MpMgmtApOff (
   EFI_STATUS  Status;
   UINTN       StartIndex;
   UINTN       EndIndex;
+  UINTN       Index;
 
   if ((ProcessorNumber == mBspIndex) || (ProcessorNumber > mNumCpus && ProcessorNumber != OPERATION_FOR_ALL_APS)) {
     DEBUG ((DEBUG_ERROR, "%a The specified processor is not acceptable %d\n", __FUNCTION__, ProcessorNumber));
@@ -226,21 +239,40 @@ MpMgmtApOff (
     EndIndex   = ProcessorNumber;
   }
 
-  for (StartIndex = StartIndex; StartIndex <= EndIndex; StartIndex ++) {
-    if (StartIndex == mBspIndex) {
+  Status = EFI_SUCCESS;
+  for (Index = StartIndex; Index <= EndIndex; Index ++) {
+    if (Index == mBspIndex) {
       continue;
     }
 
-    if (mCommonBuffer[StartIndex].ApStatus != AP_STATE_ON) {
-      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in ON state (%d)\n", __FUNCTION__, ProcessorNumber, mCommonBuffer[StartIndex].ApStatus));
+    if (mCommonBuffer[Index].ApStatus != AP_STATE_ON) {
+      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in ON state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
       Status = EFI_ALREADY_STARTED;
       break;
     }
 
     // Update the task flag to be active, AP will clear it once wake up.
-    mCommonBuffer[StartIndex].TargetStatus  = AP_STATE_OFF;
-    mCommonBuffer[StartIndex].ApTask        = AP_TASK_ACTIVE;
+    mCommonBuffer[Index].TargetStatus  = AP_STATE_OFF;
+    mCommonBuffer[Index].ApTask        = AP_TASK_ACTIVE;
   }
+
+  if (EFI_ERROR (Status)) {
+    goto Done;
+  }
+
+  // If successful, print the hellow world (blocking) from the APs.
+  for (Index = StartIndex; Index <= EndIndex; Index++) {
+    if (Index == mBspIndex) {
+      continue;
+    }
+
+    // Loop till specified AP is up and running
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
+    DEBUG ((DEBUG_INFO, "Initial message from common buffer %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+  }
+
+  // TODO: This is not ideal, but we could have messed up with the AP status here, wait for a bit to let the timer do the cleanup
+  gBS->Stall (50000);
 
 Done:
   return Status;

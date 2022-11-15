@@ -58,6 +58,7 @@ ApFunction (
     switch (MyBuffer->TargetStatus) {
       case AP_STATE_OFF:
         // Easy operation, just exit here
+        AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "CPU %ld says bye.\n", ProcessorId);
         BreakLoop = TRUE;
         break;
       case AP_STATE_SUSPEND:
