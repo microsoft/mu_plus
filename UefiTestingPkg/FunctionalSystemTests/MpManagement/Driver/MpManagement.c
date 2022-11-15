@@ -199,7 +199,7 @@ MpMgmtApOn (
 
     // Loop till specified AP is up and running
     while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
-    DEBUG ((DEBUG_INFO, "Initial message from common buffer %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+    DEBUG ((DEBUG_INFO, "Initial message from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
   }
 
 Done:
@@ -239,7 +239,7 @@ MpMgmtApOff (
     EndIndex   = ProcessorNumber;
   }
 
-  Status = EFI_SUCCESS;
+  Status = EFI_NOT_FOUND;
   for (Index = StartIndex; Index <= EndIndex; Index ++) {
     if (Index == mBspIndex) {
       continue;
@@ -254,6 +254,9 @@ MpMgmtApOff (
     // Update the task flag to be active, AP will clear it once wake up.
     mCommonBuffer[Index].TargetStatus  = AP_STATE_OFF;
     mCommonBuffer[Index].ApTask        = AP_TASK_ACTIVE;
+
+    // At least we are successful for this AP.
+    Status = EFI_SUCCESS;
   }
 
   if (EFI_ERROR (Status)) {
@@ -268,7 +271,7 @@ MpMgmtApOff (
 
     // Loop till specified AP is up and running
     while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
-    DEBUG ((DEBUG_INFO, "Initial message from common buffer %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+    DEBUG ((DEBUG_INFO, "Last word from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
   }
 
   // TODO: This is not ideal, but we could have messed up with the AP status here, wait for a bit to let the timer do the cleanup
