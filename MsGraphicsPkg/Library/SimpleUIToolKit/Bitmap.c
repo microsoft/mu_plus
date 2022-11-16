@@ -23,8 +23,9 @@ RenderBitmap (
 
   // Draw the bitmap.
   //
-  mUITGop->Blt (
-             mUITGop,
+  mUITSWM->BltWindow (
+             mUITSWM,
+             mClientImageHandle,
              this->m_Bitmap,
              EfiBltBufferToVideo,
              0,

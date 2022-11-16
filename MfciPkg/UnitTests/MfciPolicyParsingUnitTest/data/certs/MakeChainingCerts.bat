@@ -1,3 +1,9 @@
+REM Copyright (c) Microsoft Corporation.
+REM SPDX-License-Identifier: BSD-2-Clause-Patent
+
+REM MakeCert (inlcuded in Windows Kits) has been depreciated. The recommended replacement is  New-SelfSignedCertificate in windows power shell.
+REM Please see CreateCertificate.ps1 for example usage
+
 rem exit /B
 @echo off
 
@@ -8,6 +14,7 @@ REM Creating Certs requires the Win10 WDK.  If you don't have the MakeCert tool 
 
 set KIT=10
 set VER=bin\10.0.18362.0
+
 set EKU_TEST=1.3.6.1.4.1.311.45.255.255,1.3.6.1.5.5.7.3.3
 set EKU_INVALID=1.3.6.1.4.1.311.255.0.0,1.3.6.1.5.5.7.3.3
 

@@ -23,6 +23,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ResetSystemLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
+#include <Library/PcdLib.h>
 
 #define IA32_PF_EC_ID  BIT4
 
@@ -111,6 +112,32 @@ MemoryProtectionExceptionHandler (
 }
 
 /**
+  Stack cookie failure handler which does a warm reset if stack cookie protection is active.
+
+  @param  InterruptType    Defines the type of interrupt or exception that
+                           occurred on the processor.This parameter is processor architecture specific.
+  @param  SystemContext    A pointer to the processor context when
+                           the interrupt occurred on the processor.
+
+**/
+VOID
+EFIAPI
+MemoryProtectionStackCookieFailureHandler (
+  IN EFI_EXCEPTION_TYPE  InterruptType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
+  )
+{
+  if (gDxeMps.StackCookies == TRUE) {
+    DEBUG ((DEBUG_ERROR, "Stack Cookie Exception!\n"));
+    ExPersistClearExceptions ();
+    ExPersistSetException (ExceptionPersistStackCookie);
+    ResetWarm ();
+  } else {
+    return;
+  }
+}
+
+/**
   Registers MemoryProtectionExceptionHandler using the EFI_CPU_ARCH_PROTOCOL.
 
   @param  Event          The Event that is being processed, not used.
@@ -171,6 +198,20 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
         __FUNCTION__
         ));
     }
+  }
+
+  Status = mCpu->RegisterInterruptHandler (
+                   mCpu,
+                   PcdGet8 (PcdStackCookieExceptionVector),
+                   MemoryProtectionStackCookieFailureHandler
+                   );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((
+      DEBUG_ERROR,
+      "%a: - Failed to Register Stack Cookie Failure Exception Handler.\n",
+      __FUNCTION__
+      ));
   }
 }
 
