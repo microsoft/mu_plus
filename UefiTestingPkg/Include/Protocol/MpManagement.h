@@ -26,6 +26,7 @@ typedef enum {
   AP_POWER_C1,
   AP_POWER_C2,
   AP_POWER_C3,
+  AP_POWER_NUM
 } AP_POWER_STATE;
 
 ///
