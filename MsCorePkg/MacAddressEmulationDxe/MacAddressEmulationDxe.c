@@ -117,9 +117,18 @@ SetSnpMacViaContext (
   )
 {
   EFI_STATUS Status = EFI_NOT_STARTED;
+  EFI_TPL OldTpl;
+
+  DEBUG ((DEBUG_ERROR, "[%a]: Start\n", __FUNCTION__));
 
   if (Snp != NULL && Context != NULL) {
+    OldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
+    gBS->RestoreTPL(TPL_CALLBACK);
+
     Status = Snp->StationAddress (Snp, FALSE, &Context->EmulationAddress);
+
+    gBS->RaiseTPL(TPL_HIGH_LEVEL);
+    gBS->RestoreTPL(OldTpl);
   }
 
   if (EFI_ERROR (Status)) {
@@ -215,7 +224,7 @@ MacAddressEmulationEntry (
   // Set up a call back on Snp->Initialize() invocations.
   Status = EfiNamedEventListen (
              &gSnpNetworkInitializedEventGuid,
-             TPL_CALLBACK,
+             TPL_NOTIFY,
              SimpleNetworkProtocolNotify,
              Context,
              NULL
