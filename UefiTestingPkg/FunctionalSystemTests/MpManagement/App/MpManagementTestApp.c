@@ -39,6 +39,75 @@ UINTN                   mApDutIndex     = 0;
 /// ================================================================================================
 /// ================================================================================================
 ///
+/// PRE REQ FUNCTIONS
+///
+/// ================================================================================================
+/// ================================================================================================
+
+/**
+  Power on all APs before we test anything on them.
+
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+UNIT_TEST_STATUS
+EFIAPI
+PowerOnAps (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = mMpManagement->ApOn (mMpManagement, OPERATION_FOR_ALL_APS);
+
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  return UNIT_TEST_PASSED;
+} // PowerOnAps ()
+
+/// ================================================================================================
+/// ================================================================================================
+///
+/// CLEANUP FUNCTIONS
+///
+/// ================================================================================================
+/// ================================================================================================
+
+/**
+  Power off all APs to clean up the slate.
+
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+VOID
+EFIAPI
+PowerOffAps (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  ASSERT (mMpManagement != NULL);
+
+  Status = mMpManagement->ApOff (mMpManagement, OPERATION_FOR_ALL_APS);
+
+  ASSERT_EFI_ERROR (Status);
+
+} // PowerOffAps ()
+
+/// ================================================================================================
+/// ================================================================================================
+///
 /// TEST CASES
 ///
 /// ================================================================================================
@@ -200,6 +269,54 @@ TurnOffBsp (
   return UNIT_TEST_PASSED;
 } // TurnOffBsp()
 
+UNIT_TEST_STATUS
+EFIAPI
+SuspendAllApsToC1 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C1);
+
+  if (Status != EFI_INVALID_PARAMETER) {
+    // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+} // SuspendAllApsToC1()
+
+UNIT_TEST_STATUS
+EFIAPI
+ResumeAllApsFromC1 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  Status = mMpManagement->ApResume (mMpManagement, OPERATION_FOR_ALL_APS);
+
+  if (Status != EFI_INVALID_PARAMETER) {
+    // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+} // ResumeAllApsFromC1()
+
 /**
   This function will gather information and configure the
   environment for all tests to operate.
@@ -292,7 +409,7 @@ MpManagementTestApp (
   EFI_STATUS                  Status;
   UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
   UNIT_TEST_SUITE_HANDLE      BasicOperationTests;
-  // UNIT_TEST_SUITE_HANDLE      SuspendOperationTests;
+  UNIT_TEST_SUITE_HANDLE      SuspendOperationTests;
   UINTN                       Context = PROTOCOL_DOUBLE_CHECK;
 
   DEBUG ((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
@@ -325,30 +442,31 @@ MpManagementTestApp (
     goto EXIT;
   }
 
-  // //
-  // // Populate the SuspendOperationTests Unit Test Suite.
-  // //
-  // Status = CreateUnitTestSuite (&SuspendOperationTests, Fw, "Suspend Operation Tests", "MpManagement.Suspend", NULL, NULL);
-  // if (EFI_ERROR (Status)) {
-  //   DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for SuspendOperationTests\n"));
-  //   Status = EFI_OUT_OF_RESOURCES;
-  //   goto EXIT;
-  // }
+  //
+  // Populate the SuspendOperationTests Unit Test Suite.
+  //
+  Status = CreateUnitTestSuite (&SuspendOperationTests, Fw, "Suspend Operation Tests", "MpManagement.Suspend", NULL, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for SuspendOperationTests\n"));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto EXIT;
+  }
 
-  AddTestCase (BasicOperationTests, "Turn on all APs should succeed", "MpManagement.CpuOn.AllInit", TurnOnAllAps, NULL, NULL, NULL);
-  AddTestCase (BasicOperationTests, "Double turn on all APs should fail", "MpManagement.CpuOn.AllDouble", TurnOnAllAps, NULL, NULL, &Context);
-  AddTestCase (BasicOperationTests, "Turn off all APs should succeed", "MpManagement.CpuOff.AllInit", TurnOffAllAps, NULL, NULL, NULL);
-  AddTestCase (BasicOperationTests, "Double turn off all APs should fail", "MpManagement.CpuOff.AllDouble", TurnOffAllAps, NULL, NULL, &Context);
-  AddTestCase (BasicOperationTests, "Turn on a single AP should succeed", "MpManagement.CpuOn.ApInit", TurnOnSingleAp, NULL, NULL, NULL);
-  AddTestCase (BasicOperationTests, "Double turn on a single AP should fail", "MpManagement.CpuOn.ApDouble", TurnOnSingleAp, NULL, NULL, &Context);
-  AddTestCase (BasicOperationTests, "Turn off a single AP should succeed", "MpManagement.CpuOff.ApInit", TurnOffSingleAp, NULL, NULL, NULL);
-  AddTestCase (BasicOperationTests, "Double turn off a single AP should fail", "MpManagement.CpuOff.ApDouble", TurnOffSingleAp, NULL, NULL, &Context);
-  AddTestCase (BasicOperationTests, "Turn on BSP should fail", "MpManagement.CpuOn.Bsp", TurnOnBsp, NULL, NULL, NULL);
-  AddTestCase (BasicOperationTests, "Turn off BSP should fail", "MpManagement.CpuOff.Bsp", TurnOffBsp, NULL, NULL, NULL);
+  // AddTestCase (BasicOperationTests, "Turn on all APs should succeed", "MpManagement.CpuOn.AllInit", TurnOnAllAps, NULL, NULL, NULL);
+  // AddTestCase (BasicOperationTests, "Double turn on all APs should fail", "MpManagement.CpuOn.AllDouble", TurnOnAllAps, NULL, NULL, &Context);
+  // AddTestCase (BasicOperationTests, "Turn off all APs should succeed", "MpManagement.CpuOff.AllInit", TurnOffAllAps, NULL, NULL, NULL);
+  // AddTestCase (BasicOperationTests, "Double turn off all APs should fail", "MpManagement.CpuOff.AllDouble", TurnOffAllAps, NULL, NULL, &Context);
+  // AddTestCase (BasicOperationTests, "Turn on a single AP should succeed", "MpManagement.CpuOn.ApInit", TurnOnSingleAp, NULL, NULL, NULL);
+  // AddTestCase (BasicOperationTests, "Double turn on a single AP should fail", "MpManagement.CpuOn.ApDouble", TurnOnSingleAp, NULL, NULL, &Context);
+  // AddTestCase (BasicOperationTests, "Turn off a single AP should succeed", "MpManagement.CpuOff.ApInit", TurnOffSingleAp, NULL, NULL, NULL);
+  // AddTestCase (BasicOperationTests, "Double turn off a single AP should fail", "MpManagement.CpuOff.ApDouble", TurnOffSingleAp, NULL, NULL, &Context);
+  // AddTestCase (BasicOperationTests, "Turn on BSP should fail", "MpManagement.CpuOn.Bsp", TurnOnBsp, NULL, NULL, NULL);
+  // AddTestCase (BasicOperationTests, "Turn off BSP should fail", "MpManagement.CpuOff.Bsp", TurnOffBsp, NULL, NULL, NULL);
 
-  // AddTestCase (SuspendOperationTests, "Turn on all APs should succeed", "Security.MAT.NumEntries", TurnOnAllAps, NULL, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double turn on all APs should fail", "Security.MAT.MemMapZeroSizeEntries", NoLegacyMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Turn off all APs should succeed", "Security.MAT.DescriptorSize", ListsShouldHaveTheSameDescriptorSize, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Suspend to C1 on all APs should succeed", "MpManagement.SuspendC1.AllInit", SuspendAllApsToC1, PowerOnAps, NULL, NULL);
+  // AddTestCase (SuspendOperationTests, "Double suspend to C1 on all APs should fail", "MpManagement.SuspendC1.AllDouble", SuspendAllApsToC1, NULL, NULL, &Context);
+  // AddTestCase (SuspendOperationTests, "Resume all APs from C1 should succeed", "MpManagement.ResumeC1.AllInit", ResumeAllApsFromC1, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Turn off all APs should succeed", "MpManagement.ResumeC1.AllDouble", ResumeAllApsFromC1, NULL, PowerOffAps, &Context);
   // AddTestCase (SuspendOperationTests, "Double turn off all APs should fail", "Security.MAT.MemMapZeroSizeEntries", NoLegacyMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
   // AddTestCase (SuspendOperationTests, "Turn on a single AP should succeed", "Security.MAT.MemMapSize", LegacyMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
   // AddTestCase (SuspendOperationTests, "Double turn on a single AP should fail", "Security.MAT.MemMapZeroSizeEntries", NoLegacyMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
