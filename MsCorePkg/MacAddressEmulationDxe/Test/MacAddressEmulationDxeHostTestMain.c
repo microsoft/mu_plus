@@ -84,6 +84,24 @@ HandleProtocol (
   return (EFI_STATUS)mock();
 }
 
+VOID
+EFIAPI 
+RestoreTPL (
+  IN EFI_TPL      OldTpl
+  )
+{
+  return;
+}
+
+EFI_TPL
+EFIAPI 
+RaiseTPL (
+  IN EFI_TPL      NewTpl
+  )
+{
+  return TPL_CALLBACK;
+}
+
 /**
   Initialize the unit test framework, suite, and unit tests for the
   sample unit tests and run the unit tests.

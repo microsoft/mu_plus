@@ -167,6 +167,8 @@ SimpleNetworkProtocolNotifyTestSetup (
     gBS = &mBootServices;
     gBS->LocateHandleBuffer = LocateHandleBuffer;
     gBS->HandleProtocol = HandleProtocol;
+    gBS->RaiseTPL = RaiseTPL;
+    gBS->RestoreTPL = RestoreTPL;
 
     return UNIT_TEST_PASSED;
 }
