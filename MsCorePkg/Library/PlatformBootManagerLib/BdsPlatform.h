@@ -55,7 +55,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
       } \
     }, \
     EISA_PNP_ID (0x0A03), 0 \
-  } 
+  }
 
 #define gEndEntire \
   { \
