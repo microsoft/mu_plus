@@ -30,6 +30,12 @@ UINTN                               mNumCpus        = 0;
 UINTN                               mBspIndex       = 0;
 volatile MP_MANAGEMENT_METADATA     *mCommonBuffer  = NULL;
 
+VOID
+EFIAPI
+CpuArchWakeFromSleep (
+  UINTN   CpuIndex
+  );
+
 /**
   Fetches the number of processors and which processor is the BSP.
 
@@ -281,9 +287,187 @@ Done:
   return Status;
 }
 
+STATIC
+EFI_STATUS
+EFIAPI
+MpMgmtApSuspend (
+  IN  MP_MANAGEMENT_PROTOCOL  *This,
+  IN  UINTN                   ProcessorNumber,
+  IN  AP_POWER_STATE          ApPowerState,
+  IN  UINTN                   TargetPowerLevel  OPTIONAL
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       StartIndex;
+  UINTN       EndIndex;
+  UINTN       Index;
+  UINTN       InternalApPowerState;
+
+  if ((ProcessorNumber == mBspIndex) || (ProcessorNumber > mNumCpus && ProcessorNumber != OPERATION_FOR_ALL_APS)) {
+    DEBUG ((DEBUG_ERROR, "%a The specified processor is not acceptable %d\n", __FUNCTION__, ProcessorNumber));
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  if (mCommonBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a The common buffer is not set up\n", __FUNCTION__));
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  if (ApPowerState >= AP_POWER_NUM) {
+    DEBUG ((DEBUG_ERROR, "%a The power state is not supported %d\n", __FUNCTION__, ApPowerState));
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  // Translate it to the internal state
+  switch (ApPowerState) {
+    case AP_POWER_C1:
+      InternalApPowerState = AP_STATE_SUSPEND_HALT;
+      break;
+    case AP_POWER_C2:
+      InternalApPowerState = AP_STATE_SUSPEND_CLOCK_GATE;
+      break;
+    case AP_POWER_C3:
+      InternalApPowerState = AP_STATE_SUSPEND_SLEEP;
+      break;
+    default:
+      // Should not happen...
+      ASSERT (FALSE);
+      break;
+  }
+
+  if (ProcessorNumber == OPERATION_FOR_ALL_APS) {
+    StartIndex = 0;
+    EndIndex   = mNumCpus - 1;
+  } else {
+    StartIndex = ProcessorNumber;
+    EndIndex   = ProcessorNumber;
+  }
+
+  Status = EFI_NOT_FOUND;
+  for (Index = StartIndex; Index <= EndIndex; Index ++) {
+    if (Index == mBspIndex) {
+      continue;
+    }
+
+    if (mCommonBuffer[Index].ApStatus != AP_STATE_ON) {
+      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in ON state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
+      Status = EFI_ALREADY_STARTED;
+      break;
+    }
+
+    // Update the task flag to be active, AP will clear it once wake up.
+    mCommonBuffer[Index].TargetStatus       = InternalApPowerState;
+    mCommonBuffer[Index].TargetPowerState   = TargetPowerLevel;
+    mCommonBuffer[Index].ApTask             = AP_TASK_ACTIVE;
+
+    // At least we are successful for this AP.
+    Status = EFI_SUCCESS;
+  }
+
+  if (EFI_ERROR (Status)) {
+    goto Done;
+  }
+
+  // If successful, print the hellow world (blocking) from the APs.
+  for (Index = StartIndex; Index <= EndIndex; Index++) {
+    if (Index == mBspIndex) {
+      continue;
+    }
+
+    // Loop till specified AP is up and running
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
+    DEBUG ((DEBUG_INFO, "Last word from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+  }
+
+Done:
+  return Status;
+}
+
+STATIC
+EFI_STATUS
+EFIAPI
+MpMgmtApResume (
+  IN  MP_MANAGEMENT_PROTOCOL  *This,
+  IN  UINTN                   ProcessorNumber
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       StartIndex;
+  UINTN       EndIndex;
+  UINTN       Index;
+
+  if ((ProcessorNumber == mBspIndex) || (ProcessorNumber > mNumCpus && ProcessorNumber != OPERATION_FOR_ALL_APS)) {
+    DEBUG ((DEBUG_ERROR, "%a The specified processor is not acceptable %d\n", __FUNCTION__, ProcessorNumber));
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  if (mCommonBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a The common buffer is not set up\n", __FUNCTION__));
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  if (ProcessorNumber == OPERATION_FOR_ALL_APS) {
+    StartIndex = 0;
+    EndIndex   = mNumCpus - 1;
+  } else {
+    StartIndex = ProcessorNumber;
+    EndIndex   = ProcessorNumber;
+  }
+
+  Status = EFI_NOT_FOUND;
+  for (Index = StartIndex; Index <= EndIndex; Index ++) {
+    if (Index == mBspIndex) {
+      continue;
+    }
+
+    if (mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_HALT &&
+        mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_CLOCK_GATE &&
+        mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_SLEEP) {
+      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in ON state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
+      Status = EFI_ALREADY_STARTED;
+      break;
+    }
+
+    // Update the task flag to be active, AP will clear it once wake up.
+    mCommonBuffer[Index].TargetStatus  = AP_STATE_RESUME;
+    mCommonBuffer[Index].ApTask        = AP_TASK_ACTIVE;
+
+    // Abstracted call to allow arch specific method to wake up this CPU
+    CpuArchWakeFromSleep (Index);
+
+    // At least we are successful for this AP.
+    Status = EFI_SUCCESS;
+  }
+
+  if (EFI_ERROR (Status)) {
+    goto Done;
+  }
+
+  // If successful, print the hellow world (blocking) from the APs.
+  for (Index = StartIndex; Index <= EndIndex; Index++) {
+    if (Index == mBspIndex) {
+      continue;
+    }
+
+    // Loop till specified AP is up and running
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
+    DEBUG ((DEBUG_INFO, "Last word from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+  }
+
+Done:
+  return Status;
+}
+
 MP_MANAGEMENT_PROTOCOL mMpManagement = {
-  .ApOn   = MpMgmtApOn,
-  .ApOff  = MpMgmtApOff
+  .ApOn       = MpMgmtApOn,
+  .ApOff      = MpMgmtApOff,
+  .ApSuspend  = MpMgmtApSuspend,
+  .ApResume   = MpMgmtApResume
 };
 
 /**

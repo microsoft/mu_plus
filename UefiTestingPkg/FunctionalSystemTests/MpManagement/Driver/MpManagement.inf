@@ -27,15 +27,30 @@
   ApFunction.c
   MpManagementInternal.h
 
+[Sources.AARCH64]
+  AARCH64/SuspendHandling.c
+
 [Packages]
   MdePkg/MdePkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
+
+[Packages.AARCH64]
+  ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
   BaseLib
   CacheMaintenanceLib
   UefiDriverEntryPoint
   UefiLib
+
+[LibraryClasses.AARCH64]
+  ArmLib
+  ArmGicLib
+  ArmSmcLib
+
+[FixedPcd.AARCH64]
+  gArmTokenSpaceGuid.PcdGicDistributorBase
+  gArmTokenSpaceGuid.PcdGicRedistributorsBase
 
 [Protocols]
   gEfiMpServiceProtocolGuid     ## CONSUMES

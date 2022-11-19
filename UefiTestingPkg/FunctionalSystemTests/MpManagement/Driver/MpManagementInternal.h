@@ -18,7 +18,9 @@ typedef enum {
 typedef enum {
   AP_STATE_ON,
   AP_STATE_OFF,
-  AP_STATE_SUSPEND,
+  AP_STATE_SUSPEND_HALT,
+  AP_STATE_SUSPEND_CLOCK_GATE,
+  AP_STATE_SUSPEND_SLEEP,
   AP_STATE_RESUME,
   AP_STATE_NUM
 } AP_STATE;
@@ -30,6 +32,7 @@ typedef struct {
   AP_STATE    ApStatus;
   AP_STATE    TargetStatus;
   AP_TASK     ApTask;
+  UINTN       TargetPowerState;
   UINTN       ApBufferSize;
   VOID        *ApBuffer;
 } MP_MANAGEMENT_METADATA;

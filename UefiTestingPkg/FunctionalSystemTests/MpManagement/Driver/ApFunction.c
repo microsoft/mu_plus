@@ -18,6 +18,29 @@
 
 #include "MpManagementInternal.h"
 
+VOID
+EFIAPI
+CpuArchHalt (
+  VOID
+  );
+
+EFI_STATUS
+EFIAPI
+CpuArchClockGate (
+  UINTN         PowerState
+  );
+
+EFI_STATUS
+EFIAPI
+CpuArchSleep (
+  UINTN         PowerState
+  );
+
+EFI_STATUS
+SetupResumeContext (
+  IN  UINTN       CpuIndex
+  );
+
 /** The procedure to run with the MP Services interface.
 
   @param Arg The procedure argument.
@@ -43,6 +66,7 @@ ApFunction (
 
   // Initially start, populate greeting message
   MyBuffer            = &mCommonBuffer[ProcessorId];
+  // TODO: Prepare context here?
   MyBuffer->ApStatus  = AP_STATE_ON;
   AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "Hello from CPU %ld\n", ProcessorId);
 
@@ -61,7 +85,40 @@ ApFunction (
         AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "CPU %ld says bye.\n", ProcessorId);
         BreakLoop = TRUE;
         break;
-      case AP_STATE_SUSPEND:
+      case AP_STATE_SUSPEND_HALT:
+        // SetupResumeContext (ProcessorId);
+        AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "See you later - CPU %ld.\n", ProcessorId);
+        MyBuffer->ApStatus  = AP_STATE_SUSPEND_HALT;
+        MyBuffer->ApTask    = AP_TASK_IDLE;
+        // TODO: Register interrupt here?
+        // This call will not return from here
+        CpuArchHalt ();
+        break;
+      case AP_STATE_SUSPEND_CLOCK_GATE:
+        // SetupResumeContext (ProcessorId);
+        AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "Siesta time - CPU %ld.\n", ProcessorId);
+        MyBuffer->ApStatus  = AP_STATE_SUSPEND_CLOCK_GATE;
+        MyBuffer->ApTask    = AP_TASK_IDLE;
+        // TODO: Register interrupt here?
+        Status = CpuArchClockGate (MyBuffer->TargetPowerState);
+        if (EFI_ERROR (Status)) {
+          // if we ever return from this power level, something is off.
+          AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "CPU %ld failed to clock gate, and it is off now.\n", ProcessorId);
+          BreakLoop = TRUE;
+        }
+        break;
+      case AP_STATE_SUSPEND_SLEEP:
+        // SetupResumeContext (ProcessorId);
+        AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "Good night - CPU %ld.\n", ProcessorId);
+        MyBuffer->ApStatus  = AP_STATE_SUSPEND_SLEEP;
+        MyBuffer->ApTask    = AP_TASK_IDLE;
+        // TODO: Register interrupt here?
+        Status = CpuArchSleep (MyBuffer->TargetPowerState);
+        if (EFI_ERROR (Status)) {
+          // if we ever return from this power level, something is off.
+          AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "CPU %ld failed to sleep, and it is off now.\n", ProcessorId);
+          BreakLoop = TRUE;
+        }
         break;
       default:
         ASSERT (FALSE);
