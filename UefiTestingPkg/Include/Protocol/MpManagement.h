@@ -71,7 +71,8 @@ EFI_STATUS
 (EFIAPI *MP_MANAGEMENT_AP_SUSPEND)(
   IN  MP_MANAGEMENT_PROTOCOL  *This,
   IN  UINTN                   ProcessorNumber,
-  IN  AP_POWER_STATE          ApPowerState
+  IN  AP_POWER_STATE          ApPowerState,
+  IN  UINTN                   TargetPowerLevel  OPTIONAL
   );
 
 typedef
