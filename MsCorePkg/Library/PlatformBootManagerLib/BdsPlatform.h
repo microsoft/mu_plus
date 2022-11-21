@@ -47,8 +47,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define gPciRootBridge \
   { \
-    ACPI_DEVICE_PATH, ACPI_DP, (UINT8) (sizeof (ACPI_HID_DEVICE_PATH)), (UINT8) \
-      ((sizeof (ACPI_HID_DEVICE_PATH)) >> 8), EISA_PNP_ID (0x0A03), 0 \
+    { \
+      ACPI_DEVICE_PATH, ACPI_DP, \
+      { \
+        (UINT8) (sizeof (ACPI_HID_DEVICE_PATH)), (UINT8) \
+        ((sizeof (ACPI_HID_DEVICE_PATH)) >> 8) \
+      } \
+    }, \
+    EISA_PNP_ID (0x0A03), 0 \
   }
 
 #define gEndEntire \
