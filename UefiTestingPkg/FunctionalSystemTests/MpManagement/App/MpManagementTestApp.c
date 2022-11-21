@@ -72,6 +72,34 @@ PowerOnAps (
   return UNIT_TEST_PASSED;
 } // PowerOnAps ()
 
+/**
+  Power on a single AP before we test anything on it.
+
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+UNIT_TEST_STATUS
+EFIAPI
+PowerOnSingleAp (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = mMpManagement->ApOn (mMpManagement, mApDutIndex);
+
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  return UNIT_TEST_PASSED;
+} // PowerOnSingleAp ()
+
 /// ================================================================================================
 /// ================================================================================================
 ///
@@ -104,6 +132,31 @@ PowerOffAps (
   ASSERT_EFI_ERROR (Status);
 
 } // PowerOffAps ()
+
+/**
+  Power off a single AP to clean up the slate.
+
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+VOID
+EFIAPI
+PowerOffSingleAp (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  ASSERT (mMpManagement != NULL);
+
+  Status = mMpManagement->ApOff (mMpManagement, mApDutIndex);
+
+  ASSERT_EFI_ERROR (Status);
+
+} // PowerOffSingleAp ()
 
 /// ================================================================================================
 /// ================================================================================================
@@ -295,6 +348,30 @@ SuspendAllApsToC1 (
 
 UNIT_TEST_STATUS
 EFIAPI
+SuspendSingleApToC1 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C1, 0);
+
+  if (Status != EFI_INVALID_PARAMETER) {
+    // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+} // SuspendSingleApToC1()
+
+UNIT_TEST_STATUS
+EFIAPI
 SuspendAllApsToC2 (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -317,6 +394,31 @@ SuspendAllApsToC2 (
 
   return UNIT_TEST_PASSED;
 } // SuspendAllApsToC2()
+
+UNIT_TEST_STATUS
+EFIAPI
+SuspendSingleApToC2 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  // TODO: Replace this hardcode power level to a pcd
+  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C2, 1);
+
+  if (Status != EFI_INVALID_PARAMETER) {
+    // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+} // SuspendSingleApToC2()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -345,6 +447,31 @@ SuspendAllApsToC3 (
 
 UNIT_TEST_STATUS
 EFIAPI
+SuspendSingleApToC3 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  // TODO: Replace this hardcode power level to a pcd
+  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C3, 0x10002);//0x1010022);
+
+  if (Status != EFI_INVALID_PARAMETER) {
+    // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+} // SuspendSingleApToC3()
+
+UNIT_TEST_STATUS
+EFIAPI
 ResumeAllAps (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -366,6 +493,30 @@ ResumeAllAps (
 
   return UNIT_TEST_PASSED;
 } // ResumeAllAps()
+
+UNIT_TEST_STATUS
+EFIAPI
+ResumeSingleAp (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS Status;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  Status = mMpManagement->ApResume (mMpManagement, mApDutIndex);
+
+  if (Status != EFI_INVALID_PARAMETER) {
+    // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  return UNIT_TEST_PASSED;
+} // ResumeSingleAp()
 
 /**
   This function will gather information and configure the
@@ -516,18 +667,32 @@ MpManagementTestApp (
   AddTestCase (SuspendOperationTests, "Suspend to C1 on all APs should succeed", "MpManagement.SuspendC1.AllInit", SuspendAllApsToC1, PowerOnAps, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double suspend to C1 on all APs should fail", "MpManagement.SuspendC1.AllDouble", SuspendAllApsToC1, NULL, NULL, &Context);
   AddTestCase (SuspendOperationTests, "Resume all APs from C1 should succeed", "MpManagement.ResumeC1.AllInit", ResumeAllAps, NULL, NULL, NULL);
-  AddTestCase (SuspendOperationTests, "Resume all APs from C1 should succeed", "MpManagement.ResumeC1.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
-  // TODO: Single AP suspend to C1
+  AddTestCase (SuspendOperationTests, "Double resume all APs from C1 should fail", "MpManagement.ResumeC1.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
+
+  AddTestCase (SuspendOperationTests, "Suspend to C1 on a single AP should succeed", "MpManagement.SuspendC1.SingleInit", SuspendSingleApToC1, PowerOnSingleAp, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C1 on a single AP should fail", "MpManagement.SuspendC1.SingleDouble", SuspendSingleApToC1, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume a single AP from C1 should succeed", "MpManagement.ResumeC1.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double resume a single AP from C1 should fail", "MpManagement.ResumeC1.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
+
   AddTestCase (SuspendOperationTests, "Suspend to C2 on all APs should succeed", "MpManagement.SuspendC2.AllInit", SuspendAllApsToC2, PowerOnAps, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double suspend to C2 on all APs should fail", "MpManagement.SuspendC2.AllDouble", SuspendAllApsToC2, NULL, NULL, &Context);
   AddTestCase (SuspendOperationTests, "Resume all APs from C2 should succeed", "MpManagement.ResumeC2.AllInit", ResumeAllAps, NULL, NULL, NULL);
-  AddTestCase (SuspendOperationTests, "Resume all APs from C2 should succeed", "MpManagement.ResumeC2.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
-  // TODO: Single AP suspend to C2
+  AddTestCase (SuspendOperationTests, "Double resume all APs from C2 should fail", "MpManagement.ResumeC2.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
+
+  AddTestCase (SuspendOperationTests, "Suspend to C2 on single AP should succeed", "MpManagement.SuspendC2.SingleInit", SuspendSingleApToC2, PowerOnSingleAp, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C2 on single AP should fail", "MpManagement.SuspendC2.SingleDouble", SuspendSingleApToC2, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume single AP from C2 should succeed", "MpManagement.ResumeC2.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double resume single AP from C2 should fail", "MpManagement.ResumeC2.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
+
   AddTestCase (SuspendOperationTests, "Suspend to C3 on all APs should succeed", "MpManagement.SuspendC3.AllInit", SuspendAllApsToC3, PowerOnAps, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double suspend to C3 on all APs should fail", "MpManagement.SuspendC3.AllDouble", SuspendAllApsToC3, NULL, NULL, &Context);
   AddTestCase (SuspendOperationTests, "Resume all APs from C3 should succeed", "MpManagement.ResumeC3.AllInit", ResumeAllAps, NULL, NULL, NULL);
-  AddTestCase (SuspendOperationTests, "Resume all APs from C3 should succeed", "MpManagement.ResumeC3.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
-  // TODO: Single AP suspend to C3
+  AddTestCase (SuspendOperationTests, "Double resume all APs from C3 should fail", "MpManagement.ResumeC3.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
+
+  AddTestCase (SuspendOperationTests, "Suspend to C3 on single AP should succeed", "MpManagement.SuspendC3.AllInit", SuspendSingleApToC3, PowerOnAps, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C3 on single AP should fail", "MpManagement.SuspendC3.AllDouble", SuspendSingleApToC3, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume single AP from C3 should succeed", "MpManagement.ResumeC3.AllInit", ResumeSingleAp, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double resume single AP from C3 should fail", "MpManagement.ResumeC3.AllDouble", ResumeSingleAp, NULL, PowerOffAps, &Context);
 
   //
   // Execute the tests.
