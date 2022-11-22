@@ -92,24 +92,10 @@ void gicv3_raise_non_secure_g1_sgi(UINTN sgi_num, UINTN target)
 }
 
 EFI_STATUS
-SetupResumeContext (
+SetupInterruptStatus (
   IN  UINTN       CpuIndex
   )
 {
-  // UINT64      CpuTarget;
-  // UINT64      MpId;
-
-  // // Route the interrupt to this CPU
-  // MpId      = ArmReadMpidr ();
-  // CpuTarget = MpId &
-  //             (ARM_CORE_AFF0 | ARM_CORE_AFF1 | ARM_CORE_AFF2 | ARM_CORE_AFF3);
-
-  // // Route this SGI to the primary CPU. SPIs start at the INTID 32
-  // MmioWrite64 (
-  //   PcdGet64 (PcdGicDistributorBase) + ARM_GICD_IROUTER + (INTERRUPT_SOURCE_NUMBER * 8),
-  //   (UINT32)CpuTarget
-  //   );
-
   // Set binary point reg to 0x7 (no preemption)
   ArmGicV3SetBinaryPointer (0x7);
 
@@ -126,31 +112,22 @@ SetupResumeContext (
     0x0
   );
 
-  // MmioOr32 (
-  //         PcdGet64 (PcdGicRedistributorsBase) + BASE_64KB + 0x80 + (INTERRUPT_SOURCE_NUMBER / 8),
-  //         1 << (INTERRUPT_SOURCE_NUMBER & ((1 << 5) - 1))
-  //         );
-
-  // MmioAnd32 (
-  //         PcdGet64 (PcdGicRedistributorsBase) + BASE_64KB + 0xd00 + (INTERRUPT_SOURCE_NUMBER / 8),
-  //         (UINT32)(~(1 << (INTERRUPT_SOURCE_NUMBER & ((1 << 5) - 1))))
-  //         );
-
-  // UINT32 ctrl = MmioRead32 (PcdGet64 (PcdGicRedistributorsBase));
-  // if (ctrl != 0) {
-  //   ASSERT (FALSE);
-  // }
-
-  // UINT32 grp0 = MmioRead32 (PcdGet64 (PcdGicRedistributorsBase) + BASE_64KB + 0x80);
-  // if (grp0 == 0) {
-  //   ASSERT (FALSE);
-  // }
-
-  // // Enable gic distributor
-  // ArmGicEnableDistributor (PcdGet64 (PcdGicDistributorBase));
-
   // Enable the intended interrupt source
   ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), INTERRUPT_SOURCE_NUMBER);
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+RestoreInterruptStatus (
+  IN  UINTN       CpuIndex
+  )
+{
+  // Disable gic cpu interface
+  ArmGicV3DisableInterruptInterface ();
+
+  // Disable the intended interrupt source
+  ArmGicDisableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), INTERRUPT_SOURCE_NUMBER);
 
   return EFI_SUCCESS;
 }
@@ -162,7 +139,7 @@ CpuArchWakeFromSleep (
   )
 {
   // Sending SGI to the specified secondary CPU interfaces
-  gicv3_raise_non_secure_g1_sgi (INTERRUPT_SOURCE_NUMBER, 1);
+  gicv3_raise_non_secure_g1_sgi (INTERRUPT_SOURCE_NUMBER, CpuIndex);
 }
 
 EFI_STATUS
