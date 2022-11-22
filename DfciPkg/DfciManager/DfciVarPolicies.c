@@ -84,7 +84,7 @@ InitializeAndSetPolicyForAllDfciVariables (
   //
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
+                  TPL_CALLBACK - 1,  // Run this callback after all other ReadyToBoot callbacks
                   ReadyToBootCallback,
                   NULL,
                   &gEfiEventReadyToBootGuid,
