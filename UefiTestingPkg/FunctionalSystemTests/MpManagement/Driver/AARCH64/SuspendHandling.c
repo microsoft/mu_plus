@@ -96,21 +96,8 @@ SetupInterruptStatus (
   IN  UINTN       CpuIndex
   )
 {
-  // Set binary point reg to 0x7 (no preemption)
-  ArmGicV3SetBinaryPointer (0x7);
-
-  // Set priority mask reg to 0xff to allow all priorities through
-  ArmGicV3SetPriorityMask (0xff);
-
   // Enable gic cpu interface
   ArmGicV3EnableInterruptInterface ();
-
-  ArmGicSetInterruptPriority (
-    PcdGet64 (PcdGicDistributorBase),
-    PcdGet64 (PcdGicRedistributorsBase),
-    INTERRUPT_SOURCE_NUMBER,
-    0x0
-  );
 
   // Enable the intended interrupt source
   ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), INTERRUPT_SOURCE_NUMBER);
