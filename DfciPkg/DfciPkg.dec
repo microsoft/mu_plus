@@ -70,6 +70,15 @@
   ##
   DfciSettingChangedNotificationLib|Include/Library/DfciSettingChangedNotificationLib.h
 
+  ## @libraryclass provides support for simple json parsing
+  #
+  JsonLiteParserLib|Include/Library/JsonLiteParser.h
+
+  ## @libraryclass Provides the methods for storing the password
+  #
+  PasswordStoreLib|Include/Library/PasswordStoreLib.h
+
+
 [Protocols]
   ## DFCI Setting Permission Protocol
   # {83FB5B14-8FBA-4D55-9578-A5314F3633A5}

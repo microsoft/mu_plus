@@ -22,10 +22,8 @@
             "MdeModulePkg/MdeModulePkg.dec",
             "CryptoPkg/CryptoPkg.dec",
             "DfciPkg/DfciPkg.dec",
-            "MsCorePkg/MsCorePkg.dec",
             "XmlSupportPkg/XmlSupportPkg.dec",
             "ZeroTouchPkg/ZeroTouchPkg.dec",
-            "MsGraphicsPkg/MsGraphicsPkg.dec",
             "NetworkPkg/NetworkPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
