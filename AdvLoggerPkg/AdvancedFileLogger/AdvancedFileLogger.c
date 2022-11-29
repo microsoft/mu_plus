@@ -126,7 +126,7 @@ OnResetNotificationProtocolInstalled (
   // Get a pointer to the report status code protocol.
   //
   Status = gBS->LocateProtocol (
-                  &gEfiResetNotificationProtocolGuid,
+                  &gEdkiiPlatformSpecificResetFilterProtocolGuid,
                   NULL,
                   (VOID **)&ResetNotificationProtocol
                   );
@@ -408,7 +408,7 @@ ProcessResetEventRegistration (
   // handler and we'll register when the protocol is installed.
   //
   Status = gBS->LocateProtocol (
-                  &gEfiResetNotificationProtocolGuid,
+                  &gEdkiiPlatformSpecificResetFilterProtocolGuid,
                   NULL,
                   (VOID **)&ResetNotificationProtocol
                   );
@@ -436,7 +436,7 @@ ProcessResetEventRegistration (
       DEBUG ((DEBUG_ERROR, "%a: failed to create Reset Protocol protocol callback event (%r)\n", __FUNCTION__, Status));
     } else {
       Status = gBS->RegisterProtocolNotify (
-                      &gEfiResetNotificationProtocolGuid,
+                      &gEdkiiPlatformSpecificResetFilterProtocolGuid,
                       ResetNotificationEvent,
                       &ResetNotificationRegistration
                       );
