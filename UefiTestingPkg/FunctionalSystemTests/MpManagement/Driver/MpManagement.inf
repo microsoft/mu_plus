@@ -53,6 +53,7 @@
 [FixedPcd.AARCH64]
   gArmTokenSpaceGuid.PcdGicDistributorBase
   gArmTokenSpaceGuid.PcdGicRedistributorsBase
+  gArmTokenSpaceGuid.PcdGicSgiIntId
 
 [Protocols]
   gEfiMpServiceProtocolGuid     ## CONSUMES

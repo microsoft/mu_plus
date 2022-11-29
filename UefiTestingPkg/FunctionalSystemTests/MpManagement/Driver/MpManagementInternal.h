@@ -25,23 +25,28 @@ typedef enum {
   AP_STATE_NUM
 } AP_STATE;
 
+#pragma pack (push, 1)
 ///
 /// Structure that describes information about a logical CPU.
 ///
 typedef struct {
-  AP_STATE    ApStatus;
-  AP_STATE    TargetStatus;
-  AP_TASK     ApTask;
-  UINTN       TargetPowerState;
-  UINTN       ApBufferSize;
-  VOID        *ApBuffer;
+  UINTN                     ApStatus;       // AP_STATE
+  UINTN                     TargetStatus;       // AP_STATE
+  UINTN                     ApTask;       // AP_TASK
+  UINTN                     TargetPowerState;
+  BASE_LIBRARY_JUMP_BUFFER  JumpBuffer;
+  UINTN                     ApBufferSize;
+  VOID                      *ApBuffer;
+  VOID                      *CpuArchBuffer;
 } MP_MANAGEMENT_METADATA;
 
 typedef struct {
   EFI_MP_SERVICES_PROTOCOL    *Mp;
   CHAR16                      **Buffer;
 } APFUNC_ARG;
+#pragma pack (pop)
 
+extern UINTN                              mNumCpus;
 extern volatile MP_MANAGEMENT_METADATA    *mCommonBuffer;
 extern EFI_MP_SERVICES_PROTOCOL           *mMpServices;
 
@@ -54,6 +59,11 @@ VOID
 EFIAPI
 ApFunction (
   IN OUT VOID  *Arg
+  );
+
+EFI_STATUS
+CpuMpArchInit (
+  IN UINTN        NumOfCpus
   );
 
 #endif  //  MP_MANAGEMENT_INTERNAL_H_

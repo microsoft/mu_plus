@@ -2,7 +2,6 @@
   TODO: Populate this.
 
   Copyright (c) Microsoft Corporation.
-  Copyright (c) 2015-2020, ARM Limited and Contributors. All rights reserved.
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
@@ -44,6 +43,11 @@ SetupInterruptStatus (
   );
 
 EFI_STATUS
+CpuArchResumeCommon (
+  IN  UINTN       CpuIndex
+  );
+
+EFI_STATUS
 RestoreInterruptStatus (
   IN  UINTN       CpuIndex
   );
@@ -63,7 +67,6 @@ ApFunction (
   UINTN                             ProcessorId;
   BOOLEAN                           BreakLoop;
   volatile MP_MANAGEMENT_METADATA   *MyBuffer;
-  BASE_LIBRARY_JUMP_BUFFER          JumpBuffer;
 
   // First figure who am i.
   Status = mMpServices->WhoAmI (mMpServices, &ProcessorId);
@@ -82,8 +85,9 @@ ApFunction (
   MyBuffer            = &mCommonBuffer[ProcessorId];
 
   // Setup a long jump buffer so that the cores can come back to the same place after resuming.
-  if (SetJump (&JumpBuffer)) {
+  if (SetJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)))) {
     // Got back from the C-states, do some common clean up.
+    CpuArchResumeCommon (ProcessorId);
   }
 
   MyBuffer->ApStatus  = AP_STATE_ON;
@@ -105,7 +109,6 @@ ApFunction (
         BreakLoop = TRUE;
         break;
       case AP_STATE_SUSPEND_HALT:
-        // SetupResumeContext (ProcessorId);
         AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "See you later - CPU %ld.\n", ProcessorId);
         MyBuffer->ApStatus  = AP_STATE_SUSPEND_HALT;
         MyBuffer->ApTask    = AP_TASK_IDLE;
@@ -116,11 +119,10 @@ ApFunction (
           BreakLoop = TRUE;
         } else {
           // Recover from the previously saved jump buffer.
-          LongJump (&JumpBuffer, 1);
+          LongJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)), 1);
         }
         break;
       case AP_STATE_SUSPEND_CLOCK_GATE:
-        // SetupResumeContext (ProcessorId);
         AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "Siesta time - CPU %ld.\n", ProcessorId);
         MyBuffer->ApStatus  = AP_STATE_SUSPEND_CLOCK_GATE;
         MyBuffer->ApTask    = AP_TASK_IDLE;
@@ -131,11 +133,10 @@ ApFunction (
           BreakLoop = TRUE;
         } else {
           // Recover from the previously saved jump buffer.
-          LongJump (&JumpBuffer, 1);
+          LongJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)), 1);
         }
         break;
       case AP_STATE_SUSPEND_SLEEP:
-        // SetupResumeContext (ProcessorId);
         AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "Good night - CPU %ld.\n", ProcessorId);
         MyBuffer->ApStatus  = AP_STATE_SUSPEND_SLEEP;
         MyBuffer->ApTask    = AP_TASK_IDLE;
@@ -145,8 +146,8 @@ ApFunction (
           AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "CPU %ld failed to sleep, and it is off now.\n", ProcessorId);
           BreakLoop = TRUE;
         } else {
-          // Recover from the previously saved jump buffer.
-          LongJump (&JumpBuffer, 1);
+          // This does not make much sense, C3 sleep should not come back here.
+          ASSERT (FALSE);
         }
         break;
       default:

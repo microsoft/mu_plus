@@ -1,7 +1,9 @@
 /** @file
   TODO: Populate this.
 
+  Copyright (c) 2013-2020, ARM Limited and Contributors. All rights reserved.
   Copyright (c) Microsoft Corporation.
+
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -22,73 +24,83 @@
 
 #include "MpManagementInternal.h"
 
-#define INTERRUPT_SOURCE_NUMBER     0x04
+#define FF_PSTATE_SHIFT           1
+#define FF_PSTATE_ORIG            0
+#define FF_PSTATE_EXTENDED        1
 
-#define GICV3_MAX_SGI_TARGETS	16
+/* Features flags for CPU SUSPEND OS Initiated mode support. Bits [0:0] */
+#define FF_MODE_SUPPORT_SHIFT     0
+#define FF_SUPPORTS_OS_INIT_MODE  1
 
-#define MPIDR_AFFLVL_MASK	((UINT64)0xff)
-#define MPIDR_AFF0_SHIFT	0
-#define MPIDR_AFF1_SHIFT	8
-#define MPIDR_AFF2_SHIFT	16
-#define MPIDR_AFF3_SHIFT	32
-#define MPIDR_AFFLVL0_VAL(mpidr) \
-		(((mpidr) >> MPIDR_AFF0_SHIFT) & MPIDR_AFFLVL_MASK)
-#define MPIDR_AFFLVL1_VAL(mpidr) \
-		(((mpidr) >> MPIDR_AFF1_SHIFT) & MPIDR_AFFLVL_MASK)
-#define MPIDR_AFFLVL2_VAL(mpidr) \
-		(((mpidr) >> MPIDR_AFF2_SHIFT) & MPIDR_AFFLVL_MASK)
-#define MPIDR_AFFLVL3_VAL(mpidr) \
-		(((mpidr) >> MPIDR_AFF3_SHIFT) & MPIDR_AFFLVL_MASK)
+#define FF_SUSPEND_MASK            ((1 << FF_PSTATE_SHIFT) | (1 << FF_MODE_SUPPORT_SHIFT))
 
-/* ICC SGI macros */
-#define SGIR_TGT_MASK			((UINT64)0xffff)
-#define SGIR_AFF1_SHIFT			16
-#define SGIR_INTID_SHIFT		24
-#define SGIR_INTID_MASK			((UINT64)0xf)
-#define SGIR_AFF2_SHIFT			32
-#define SGIR_IRM_SHIFT			40
-#define SGIR_IRM_MASK			((UINT64)0x1)
-#define SGIR_AFF3_SHIFT			48
-#define SGIR_AFF_MASK			((UINT64)0xf)
+#define PSTATE_TYPE_SHIFT_EX      30
+#define PSTATE_TYPE_SHIFT_ORIG    16
+#define PSTATE_TYPE_MASK          1
+#define PSTATE_TYPE_STANDBY       0x0
+#define PSTATE_TYPE_POWERDOWN     0x1
 
-#define SGIR_IRM_TO_AFF			(0)
+typedef struct {
+  VOID                         *Ttbr0;
+  UINTN                        Tcr;
+  UINTN                        Mair;
+} AARCH64_AP_BUFFER;
 
-#define GICV3_SGIR_VALUE(_aff3, _aff2, _aff1, _intid, _irm, _tgt)	\
-	((((UINT64) (_aff3) & SGIR_AFF_MASK) << SGIR_AFF3_SHIFT) |	\
-	 (((UINT64) (_irm) & SGIR_IRM_MASK) << SGIR_IRM_SHIFT) |	\
-	 (((UINT64) (_aff2) & SGIR_AFF_MASK) << SGIR_AFF2_SHIFT) |	\
-	 (((_intid) & SGIR_INTID_MASK) << SGIR_INTID_SHIFT) |		\
-	 (((_aff1) & SGIR_AFF_MASK) << SGIR_AFF1_SHIFT) |		\
-	 ((_tgt) & SGIR_TGT_MASK))
+BOOLEAN   mExtendedPowerState = FALSE;
 
-void gicv3_raise_non_secure_g1_sgi(UINTN sgi_num, UINTN target)
+EFI_STATUS
+CpuMpArchInit (
+  IN UINTN        NumOfCpus
+  )
 {
-	UINT32 tgt, aff3, aff2, aff1, aff0;
-	UINT64 sgi_val;
+  ARM_SMC_ARGS  Args;
+  EFI_STATUS    Status;
+  UINTN         Index;
 
-	/* Extract affinity fields from target */
-	aff0 = MPIDR_AFFLVL0_VAL(target);
-	aff1 = MPIDR_AFFLVL1_VAL(target);
-	aff2 = MPIDR_AFFLVL2_VAL(target);
-	aff3 = MPIDR_AFFLVL3_VAL(target);
+  Status = EFI_SUCCESS;
 
-	/*
-	 * Make target list from affinity 0, and ensure GICv3 SGI can target
-	 * this PE.
-	 */
-	tgt = (1 << aff0);
+  /* Query the suspend feature flags during init steps */
+  Args.Arg0 = ARM_SMC_ID_PSCI_FEATURES;
 
-	/* Raise SGI to PE specified by its affinity */
-	sgi_val = GICV3_SGIR_VALUE(aff3, aff2, aff1, sgi_num, SGIR_IRM_TO_AFF,
-			tgt);
+  if (sizeof (Args.Arg1) == sizeof (UINT32)) {
+    Args.Arg1 = ARM_SMC_ID_PSCI_CPU_SUSPEND_AARCH32;
+  } else {
+    Args.Arg1 = ARM_SMC_ID_PSCI_CPU_SUSPEND_AARCH64;
+  }
 
-	/*
-	 * Ensure that any shared variable updates depending on out of band
-	 * interrupt trigger are observed before raising SGI.
-	 */
-	// dsbishst();
-	ArmGicV3SendNsG1Sgi(sgi_val);
-	// isb();
+  ArmCallSmc (&Args);
+
+  if (Args.Arg0 & (~FF_SUSPEND_MASK)) {
+    Status = EFI_DEVICE_ERROR;
+    DEBUG ((DEBUG_ERROR, "%a Query suspend feature flags failed - %x\n", __FUNCTION__, Args.Arg0));
+    goto Done;
+  }
+
+  mExtendedPowerState = (((Args.Arg0 >> FF_PSTATE_SHIFT) & 1) == FF_PSTATE_EXTENDED);
+
+  /* Prepare the architectural specific buffer */
+  for (Index = 0; Index < NumOfCpus; Index ++) {
+    mCommonBuffer[Index].CpuArchBuffer = AllocatePool (sizeof (AARCH64_AP_BUFFER));
+    if (mCommonBuffer[Index].CpuArchBuffer == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a Running out of memory when allocating for core %d\n", __FUNCTION__, Index));
+      Status = EFI_OUT_OF_RESOURCES;
+      goto Done;
+    }
+  }
+
+  Status = EFI_SUCCESS;
+
+Done:
+  if (EFI_ERROR (Status)) {
+    for (Index = 0; Index < NumOfCpus; Index ++) {
+      if (mCommonBuffer[Index].CpuArchBuffer != NULL) {
+        FreePool (mCommonBuffer[Index].CpuArchBuffer);
+        mCommonBuffer[Index].CpuArchBuffer = NULL;
+      }
+    }
+  }
+
+  return Status;
 }
 
 EFI_STATUS
@@ -96,11 +108,20 @@ SetupInterruptStatus (
   IN  UINTN       CpuIndex
   )
 {
+  if (mCommonBuffer[CpuIndex].CpuArchBuffer == NULL) {
+    return EFI_NOT_READY;
+  }
+
+  // Cache the TCR, MAIR and Ttbr0 values, like MP services do
+  ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Tcr    = ArmGetTCR ();
+  ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Mair   = ArmGetMAIR ();
+  ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Ttbr0  = ArmGetTTBR0BaseAddress ();
+
   // Enable gic cpu interface
   ArmGicV3EnableInterruptInterface ();
 
   // Enable the intended interrupt source
-  ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), INTERRUPT_SOURCE_NUMBER);
+  ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
 
   return EFI_SUCCESS;
 }
@@ -114,7 +135,20 @@ RestoreInterruptStatus (
   ArmGicV3DisableInterruptInterface ();
 
   // Disable the intended interrupt source
-  ArmGicDisableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), INTERRUPT_SOURCE_NUMBER);
+  ArmGicDisableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+CpuArchResumeCommon (
+  IN  UINTN       CpuIndex
+  )
+{
+  UINTN IntValue;
+
+  IntValue = ArmGicV3AcknowledgeInterrupt ();
+  ArmGicV3EndOfInterrupt (IntValue);
 
   return EFI_SUCCESS;
 }
@@ -126,7 +160,42 @@ CpuArchWakeFromSleep (
   )
 {
   // Sending SGI to the specified secondary CPU interfaces
-  gicv3_raise_non_secure_g1_sgi (INTERRUPT_SOURCE_NUMBER, CpuIndex);
+  ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, CpuIndex, PcdGet32 (PcdGicSgiIntId));
+}
+
+VOID
+ApEntryPoint (
+  VOID
+  )
+{
+  volatile MP_MANAGEMENT_METADATA   *MyBuffer;
+  UINTN                             ProcessorId;
+  EFI_STATUS                        Status;
+
+  // Upon return, first figure who am i.
+  Status = mMpServices->WhoAmI (mMpServices, &ProcessorId);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Cannot even figure who am I... Bail here - %r\n", Status));
+    goto Done;
+  }
+
+  MyBuffer = &mCommonBuffer[ProcessorId];
+
+  // Configure the MMU and caches
+  ArmSetTCR (((AARCH64_AP_BUFFER*)MyBuffer->CpuArchBuffer)->Tcr);
+  ArmSetTTBR0 (((AARCH64_AP_BUFFER*)MyBuffer->CpuArchBuffer)->Ttbr0);
+  ArmSetMAIR (((AARCH64_AP_BUFFER*)MyBuffer->CpuArchBuffer)->Mair);
+  ArmDisableAlignmentCheck ();
+  ArmEnableStackAlignmentCheck ();
+  ArmEnableInstructionCache ();
+  ArmEnableDataCache ();
+  ArmEnableMmu ();
+
+  LongJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)), 1);
+
+Done:
+  // If LongJump succeeded, we should not even get here.
+  ASSERT (FALSE);
 }
 
 EFI_STATUS
@@ -140,10 +209,31 @@ CpuArchHalt (
   return EFI_SUCCESS;
 }
 
+STATIC
 EFI_STATUS
 EFIAPI
-CpuArchClockGate (
-  IN UINTN         PowerLevel
+GetPowerType (
+  IN UINTN          PowerLevel
+  )
+{
+  UINTN PowerType;
+
+  if (mExtendedPowerState) {
+    PowerType = ((PowerLevel >> PSTATE_TYPE_SHIFT_EX) & PSTATE_TYPE_MASK);
+  } else {
+    PowerType = ((PowerLevel >> PSTATE_TYPE_SHIFT_ORIG) & PSTATE_TYPE_MASK);
+  }
+
+  return PowerType;
+}
+
+STATIC
+EFI_STATUS
+EFIAPI
+ArmPsciSuspendHelper (
+  IN UINTN          PowerLevel,
+  IN UINTN          EntryPoint, OPTIONAL
+  IN UINTN          ContextId   OPTIONAL
   )
 {
   ARM_SMC_ARGS  Args;
@@ -161,9 +251,9 @@ CpuArchClockGate (
   // Parameter for power_state
   Args.Arg1 = PowerLevel;
   // Parameter for entrypoint, only need for powerdown state
-  Args.Arg2 = 0;
+  Args.Arg2 = EntryPoint;
   // Parameter for context_id, only need for powerdown state
-  Args.Arg3 = 0;
+  Args.Arg3 = ContextId;
 
   ArmCallSmc (&Args);
 
@@ -176,9 +266,42 @@ CpuArchClockGate (
 
 EFI_STATUS
 EFIAPI
+CpuArchClockGate (
+  IN UINTN         PowerLevel
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       PowerType;
+
+  PowerType = GetPowerType (PowerLevel);
+  if (PowerType == PSTATE_TYPE_POWERDOWN) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  Status = ArmPsciSuspendHelper (PowerLevel, 0, 0);
+
+Done:
+  return Status;
+}
+
+EFI_STATUS
+EFIAPI
 CpuArchSleep (
   IN UINTN         PowerLevel
   )
 {
-  return CpuArchClockGate (PowerLevel);
+  EFI_STATUS  Status;
+  UINTN       PowerType;
+
+  PowerType = GetPowerType (PowerLevel);
+  if (PowerType == PSTATE_TYPE_STANDBY) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  Status = ArmPsciSuspendHelper (PowerLevel, (UINTN)ApEntryPoint, 0);
+
+Done:
+  return Status;
 }
