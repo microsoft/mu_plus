@@ -44,6 +44,9 @@
   UefiCpuLib
   HobLib
   DxeServicesTableLib
+  UnitTestLib
+  CpuPageTableLib
+  DxeMemoryProtectionHobLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
@@ -51,8 +54,10 @@
 
 [Protocols]
   gEfiBlockIoProtocolGuid
-  gHeapGuardDebugProtocolGuid
+  gMemoryProtectionDebugProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
+  gMemoryProtectionSpecialRegionProtocolGuid
+  gEfiShellParametersProtocolGuid
 
 [FixedPcd]
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES
