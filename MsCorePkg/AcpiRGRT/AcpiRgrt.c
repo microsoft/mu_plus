@@ -52,6 +52,8 @@ InstallAcpiTable (
   UINT32                   RgrtTableSize;
   UINT64                   OemTableId;
 
+  RgrtAcpiTable = NULL;
+
   Status = gBS->LocateProtocol (&gEfiAcpiTableProtocolGuid, NULL, (VOID **)&AcpiTable);
   if (EFI_ERROR (Status)) {
     // we are expected to be called at least once before ACPI is installed
