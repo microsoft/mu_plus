@@ -189,6 +189,10 @@
       DebugLib|MdePkg/Library/UefiDebugLibConOut/UefiDebugLibConOut.inf
   }
 
+  DfciPkg/UnitTests/JsonTest/JsonTestApp.inf
+  DfciPkg/Library/JsonLiteParser/JsonLiteParser.inf
+  DfciPkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
+
 [BuildOptions]
 #force deprecated interfaces off
   *_*_*_CC_FLAGS = -D DISABLE_NEW_DEPRECATED_INTERFACES
