@@ -689,10 +689,10 @@ MpManagementTestApp (
   AddTestCase (SuspendOperationTests, "Resume all APs from C3 should succeed", "MpManagement.ResumeC3.AllInit", ResumeAllAps, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume all APs from C3 should fail", "MpManagement.ResumeC3.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
 
-  AddTestCase (SuspendOperationTests, "Suspend to C3 on single AP should succeed", "MpManagement.SuspendC3.AllInit", SuspendSingleApToC3, PowerOnAps, NULL, NULL);
-  AddTestCase (SuspendOperationTests, "Double suspend to C3 on single AP should fail", "MpManagement.SuspendC3.AllDouble", SuspendSingleApToC3, NULL, NULL, &Context);
-  AddTestCase (SuspendOperationTests, "Resume single AP from C3 should succeed", "MpManagement.ResumeC3.AllInit", ResumeSingleAp, NULL, NULL, NULL);
-  AddTestCase (SuspendOperationTests, "Double resume single AP from C3 should fail", "MpManagement.ResumeC3.AllDouble", ResumeSingleAp, NULL, PowerOffAps, &Context);
+  AddTestCase (SuspendOperationTests, "Suspend to C3 on single AP should succeed", "MpManagement.SuspendC3.SingleInit", SuspendSingleApToC3, PowerOnSingleAp, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C3 on single AP should fail", "MpManagement.SuspendC3.SingleDouble", SuspendSingleApToC3, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume single AP from C3 should succeed", "MpManagement.ResumeC3.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double resume single AP from C3 should fail", "MpManagement.ResumeC3.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
 
   //
   // Execute the tests.
