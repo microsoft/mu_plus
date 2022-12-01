@@ -57,6 +57,7 @@
 
 [Protocols]
   gEfiMpServiceProtocolGuid     ## CONSUMES
+  gEfiLoadedImageProtocolGuid   ## CONSUMES
   gMpManagementProtocolGuid     ## PRODUCES
 
 [Depex]

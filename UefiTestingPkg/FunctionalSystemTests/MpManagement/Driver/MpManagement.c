@@ -17,6 +17,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Pi/PiMultiPhase.h>
+#include <Protocol/LoadedImage.h>
 #include <Protocol/MpService.h>
 #include <Protocol/MpManagement.h>
 
@@ -101,10 +102,13 @@ InitializeApCommonBuffer (
     (*CommonBuffer)[Index].ApBuffer     = AllocatePool ((*CommonBuffer)[Index].ApBufferSize);
     if ((*CommonBuffer)[Index].ApBuffer == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
-      break;
+      goto Done;
     }
   }
 
+  WriteBackDataCacheRange ((VOID *)(*CommonBuffer), sizeof (MP_MANAGEMENT_METADATA) * NumCpus);
+
+Done:
   if (EFI_ERROR (Status)) {
     // Free any allocated pools if init failed.
     for (Index = 0; Index < NumCpus; Index ++) {
@@ -491,9 +495,22 @@ MpManagementEntryPoint (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                Status;
+  EFI_STATUS                  Status;
+  EFI_LOADED_IMAGE_PROTOCOL   *Image;
 
-  WriteBackDataCacheRange ((VOID *)&ApFunction, 32);
+  Status = gBS->HandleProtocol (
+                  ImageHandle,
+                  &gEfiLoadedImageProtocolGuid,
+                  (VOID **)&Image
+                  );
+  ASSERT_EFI_ERROR (Status);
+
+  //
+  // Parts of the code in this driver may be executed by other cores running
+  // with the MMU off so we need to ensure that everything is clean to the
+  // point of coherency (PoC)
+  //
+  WriteBackDataCacheRange (Image->ImageBase, Image->ImageSize);
 
   Status = gBS->LocateProtocol (
                   &gEfiMpServiceProtocolGuid,
