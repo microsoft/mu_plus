@@ -557,7 +557,7 @@ InitializeTestEnvironment (
 
   Status = MpServices->WhoAmI (MpServices, &mBspIndex);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a Failed to get the number of processors!!! - %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a Failed to get the index of BSP!!! - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
