@@ -21,15 +21,5 @@ To use this feature, platforms must do the following:
 
 2. Update the platform DSC/FDF to build and include the driver:
 
-> ```dsc
-> MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf {
->   <LibraryClasses>
->     MacAddressEmulationPlatformLib|<Path to appropriate MsMacEmulationPlatformLib>
-> }
-> ```
-
 3. Update the platform FDF to include the driver in the ROM
 
-```fdf
-INF MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
-```
