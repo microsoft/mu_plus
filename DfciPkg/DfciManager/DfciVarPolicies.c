@@ -72,9 +72,9 @@ InitializeAndSetPolicyForAllDfciVariables (
   VOID
   )
 {
-  UINTN                           i;
-  EFI_STATUS                      Status;
-  EFI_EVENT                       Event;
+  UINTN       i;
+  EFI_STATUS  Status;
+  EFI_EVENT   Event;
 
   //
   // Request notification of ReadyToBoot.
