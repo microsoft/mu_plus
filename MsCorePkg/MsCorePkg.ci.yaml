@@ -25,10 +25,11 @@
             "MsWheaPkg/MsWheaPkg.dec",
             "SecurityPkg/SecurityPkg.dec",
             "UefiCpuPkg/UefiCpuPkg.dec",
-            "FmpDevicePkg/FmpDevicePkg.dec"
+            "FmpDevicePkg/FmpDevicePkg.dec",
+            "NetworkPkg/NetworkPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
-
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
