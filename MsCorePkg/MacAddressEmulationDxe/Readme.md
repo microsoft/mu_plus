@@ -1,7 +1,3 @@
-[//]:# Copyright (c) Microsoft Corporation.
-[//]:# SPDX-License-Identifier: BSD-2-Clause-Patent
-
-
 # MacAddressEmulationDxe
 
 This driver provides UEFI support for MAC Address Emulation. There are two main
@@ -16,7 +12,6 @@ settings manager that provides access to the MAC emulation setting as well as
 code that verifies the proper provisioning of the MAC address to use for
 emulation.
 
-
 # Usage
 
 To use this feature, platforms must do the following:
@@ -25,16 +20,15 @@ To use this feature, platforms must do the following:
 
 2. Update the platform DSC/FDF to build and include the driver:
 
-```dsc
-MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf {
-  <LibraryClasses>
-    MacAddressEmulationPlatformLib|<Path to appropriate MsMacEmulationPlatformLib>
-}
-```
+> ```dsc
+> MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf {
+>   <LibraryClasses>
+>     MacAddressEmulationPlatformLib|<Path to appropriate MsMacEmulationPlatformLib>
+> }
+> ```
 
 3. Update the platform FDF to include the driver in the ROM
 
 ```fdf
 INF MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
 ```
-
