@@ -34,7 +34,7 @@
   UnitTestLib
   PrintLib
 
-[Pcds]
+[Pcd]
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformC2PowerState
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformC3PowerState
 
