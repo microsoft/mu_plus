@@ -73,7 +73,7 @@ FindMatchingSnp_Asserts_WhenLocateHandleBufferFails (
 
   // Act
   // Assert
-  UT_EXPECT_ASSERT_FAILURE (FindMatchingSnp (SnpSupportsMacEmuCheck, &MacContext), NULL);
+  UT_EXPECT_ASSERT_FAILURE (FindMatchingSnp (SnpSupportsMacEmuCheck, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext), NULL);
 
   return UNIT_TEST_PASSED;
 }
