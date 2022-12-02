@@ -21,7 +21,7 @@
 /**
   @brief Performs sanity checks to ensure an snp can support mac emulation, and ensures that multiple interfaces are not programmed.
   @param[in] SnpHandle - A handle to an Snp
-  @param[in] Snp - An snp protocol associatrred with the handle provided
+  @param[in] Snp - An snp protocol associated with the handle provided
   @param[in] SnpContext - The snp context created by this driver's entry point
   @retval TRUE - the SNP supports mac emulation and can be programmed with the emulated address
   @retval FALSE - the SNP should not be programmed with the emulated address
@@ -59,7 +59,7 @@ SnpSupportsMacEmuCheck (
   }
 
   if (IsMatch && !PlatformMacEmulationSnpCheck (SnpHandle)) {
-    DEBUG ((DEBUG_WARN, "[%a]: Platform libarry reports not to support this SNP", __FUNCTION__));
+    DEBUG ((DEBUG_WARN, "[%a]: Platform library reports not to support this SNP", __FUNCTION__));
     IsMatch = FALSE;
   }
 
@@ -138,7 +138,7 @@ FindMatchingSnp (
   @param[in] Snp - Non-NULL pointer to an SNP which supports station address programming
   @param[in] Context - The snp context created by this driver's entry point
 
-  @remark  Modifes the provided SNP's station address
+  @remark  Modifies the provided SNP's station address
 **/
 VOID
 SetSnpMacViaContext (

@@ -14,7 +14,7 @@
 
   @param[out]  Address - Pointer to a buffer to receive the desired MAC address to use if emulation is enabled.
 
-  @retval  EFI_UNSUPPORTED - Feature is not enabled/supported by the platrform.
+  @retval  EFI_UNSUPPORTED - Feature is not enabled/supported by the platform.
   @retval  EFI_STATUS      - Status of other calls in the function.
 **/
 EFI_STATUS
@@ -56,7 +56,7 @@ PlatformMacEmulationSnpCheck (
   /*
         < OEM TODO >
 
-    Perform any logic necessary to determine if the controller represeted by the input handle should have the MAC
+    Perform any logic necessary to determine if the controller represented by the input handle should have the MAC
     address emulated.
 
     For example, if only a specific USB network adapter with a certain Vendor ID should be supported, the
@@ -95,7 +95,7 @@ PlatformMacEmulationEnable (
         < OEM TODO >
 
     The MacAddressEmulationDxe driver will perform a call to the UEFI's API called EFI_SIMPLE_NETWORK_PROTOCOL::StationAddress()
-    to set the requested MAC address, but if the secific network controller used by the platform requires further support, it can
+    to set the requested MAC address, but if the specific network controller used by the platform requires further support, it can
     be implemented in this function.
 
     For example, an OS driver may require a packet published to the ACPI table for authentication, new MAC address, etc.  This
