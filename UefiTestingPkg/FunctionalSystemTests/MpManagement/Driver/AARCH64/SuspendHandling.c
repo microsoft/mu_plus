@@ -15,12 +15,14 @@
 #include <Library/PrintLib.h>
 #include <Library/UefiLib.h>
 #include <Library/IoLib.h>
+#include <Library/HobLib.h>
 #include <Library/ArmGicLib.h>
 #include <Library/ArmSmcLib.h>
 
 #include <IndustryStandard/ArmStdSmc.h>
 #include <Pi/PiMultiPhase.h>
 #include <Protocol/MpService.h>
+#include <Guid/ArmMpCoreInfo.h>
 
 #include "MpManagementInternal.h"
 
@@ -46,16 +48,21 @@ typedef struct {
   UINTN                        Mair;
 } AARCH64_AP_BUFFER;
 
-BOOLEAN   mExtendedPowerState = FALSE;
+BOOLEAN         mExtendedPowerState = FALSE;
+ARM_CORE_INFO   *mCpuInfo           = NULL;
 
 EFI_STATUS
 CpuMpArchInit (
   IN UINTN        NumOfCpus
   )
 {
-  ARM_SMC_ARGS  Args;
-  EFI_STATUS    Status;
-  UINTN         Index;
+  ARM_SMC_ARGS                Args;
+  EFI_STATUS                  Status;
+  UINTN                       Index;
+  UINTN                       MaxCpus;
+  EFI_HOB_GENERIC_HEADER      *Hob;
+  VOID                        *HobData;
+  UINTN                       HobDataSize;
 
   Status = EFI_SUCCESS;
 
@@ -86,6 +93,22 @@ CpuMpArchInit (
       Status = EFI_OUT_OF_RESOURCES;
       goto Done;
     }
+  }
+
+  /* Prepare the architectural specific CPU info from the hob */
+  Hob = GetFirstGuidHob (&gArmMpCoreInfoGuid);
+  if (Hob != NULL) {
+    HobData     = GET_GUID_HOB_DATA (Hob);
+    HobDataSize = GET_GUID_HOB_DATA_SIZE (Hob);
+    mCpuInfo    = (ARM_CORE_INFO *)HobData;
+    MaxCpus     = HobDataSize / sizeof (ARM_CORE_INFO);
+  }
+
+  if (MaxCpus != NumOfCpus) {
+    DEBUG ((DEBUG_WARN, "Trying to use EFI_MP_SERVICES_PROTOCOL on a UP system"));
+    // We are not MP so nothing to do
+    Status = EFI_NOT_FOUND;
+    goto Done;
   }
 
   Status = EFI_SUCCESS;
@@ -160,7 +183,8 @@ CpuArchWakeFromSleep (
   )
 {
   // Sending SGI to the specified secondary CPU interfaces
-  ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, CpuIndex, PcdGet32 (PcdGicSgiIntId));
+  // TODO: This is essentially reverse engineering to correlate the CPU index with the MPIDRs...
+  ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
 }
 
 VOID
