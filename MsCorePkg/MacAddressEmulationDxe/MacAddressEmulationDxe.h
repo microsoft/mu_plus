@@ -55,7 +55,7 @@ BOOLEAN
 SnpSupportsMacEmuCheck (
   IN CONST EFI_HANDLE SnpHandle,
   IN CONST EFI_SIMPLE_NETWORK_PROTOCOL *Snp,
-  IN CONST VOID *SnpContext
+  IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT *SnpContext
   );
 
 /**
@@ -67,8 +67,8 @@ SnpSupportsMacEmuCheck (
 **/
 EFI_SIMPLE_NETWORK_PROTOCOL*
 FindMatchingSnp (
-  SNP_MATCH_FUNCTION MatchFunction,
-  VOID *MatchFunctionContext
+  IN SNP_MATCH_FUNCTION MatchFunction,
+  OPTIONAL IN MAC_EMULATION_SNP_NOTIFY_CONTEXT *MatchFunctionContext
   );
 
 /**

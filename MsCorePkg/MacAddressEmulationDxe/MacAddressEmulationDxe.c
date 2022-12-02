@@ -30,21 +30,18 @@ BOOLEAN
 SnpSupportsMacEmuCheck (
   IN CONST EFI_HANDLE SnpHandle,
   IN CONST EFI_SIMPLE_NETWORK_PROTOCOL *Snp,
-  IN CONST VOID *SnpContext
+  IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT *Context
   )
 {
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT* Context;
   BOOLEAN IsMatch = FALSE;
 
   DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
 
-  if (SnpHandle == NULL || Snp == NULL || SnpContext == NULL) {
+  if (SnpHandle == NULL || Snp == NULL || Context == NULL) {
     return FALSE;
   } else {
     IsMatch = TRUE;
   }
-
-  Context = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) SnpContext;
   
   if (IsMatch && Snp->Mode->State != EfiSimpleNetworkInitialized) {
     DEBUG ((DEBUG_WARN, "[%a]: SNP handle in unexpected state %d, cannot update MAC.\n", __FUNCTION__, Snp->Mode->State));
@@ -206,7 +203,7 @@ SimpleNetworkProtocolNotify (
 
   MacContext = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*)Context;
 
-  SnpToConfigureEmu = FindMatchingSnp(SnpSupportsMacEmuCheck, (VOID*) MacContext);
+  SnpToConfigureEmu = FindMatchingSnp(SnpSupportsMacEmuCheck, MacContext);
 
   SetSnpMacViaContext(SnpToConfigureEmu, MacContext);
 
