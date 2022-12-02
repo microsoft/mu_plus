@@ -200,25 +200,16 @@ FindMatchingSnpTestSetup (
   return UNIT_TEST_PASSED;
 }
 
-UNIT_TEST_STATUS
-EFIAPI
-FindMatchingSnpTestTeardown (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  return UNIT_TEST_PASSED;
-}
-
 VOID
 RegisterFindMatchingSnpTests (
   UNIT_TEST_SUITE_HANDLE  SuiteHandle
   )
 {
   // Negative Test Cases
-  AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
-  AddTestCase (SuiteHandle, "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", FindMatchingSnp_Asserts_WhenLocateHandleBufferFails, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
-  AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
+  AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull, FindMatchingSnpTestSetup, NULL, NULL);
+  AddTestCase (SuiteHandle, "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", FindMatchingSnp_Asserts_WhenLocateHandleBufferFails, FindMatchingSnpTestSetup, NULL, NULL);
+  AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported, FindMatchingSnpTestSetup, NULL, NULL);
 
   // Positive Test Cases
-  AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu", "FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu", FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
+  AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu", "FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu", FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu, FindMatchingSnpTestSetup, NULL, NULL);
 }

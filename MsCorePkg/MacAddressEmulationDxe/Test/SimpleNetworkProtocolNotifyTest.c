@@ -182,20 +182,11 @@ SimpleNetworkProtocolNotifyTestSetup (
   return UNIT_TEST_PASSED;
 }
 
-UNIT_TEST_STATUS
-EFIAPI
-SimpleNetworkProtocolNotifyTestTeardown (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  return UNIT_TEST_PASSED;
-}
-
 VOID
 RegisterSimpleNetworkProtocolNotifyTests (
   UNIT_TEST_SUITE_HANDLE  SuiteHandle
   )
 {
-  AddTestCase (SuiteHandle, "SimpleNetworkProtocolNotify_AssignsMacToFirstSupportedSnp", "SimpleNetworkProtocolNotify_AssignsMacToFirstSupportedSnp", SimpleNetworkProtocolNotify_AssignsMacToFirstSupportedSnp, SimpleNetworkProtocolNotifyTestSetup, SimpleNetworkProtocolNotifyTestTeardown, NULL);
-  AddTestCase (SuiteHandle, "SimpleNetworkProtocolNotify_AssignsMacToOnlySameSnpAsPreviously", "SimpleNetworkProtocolNotify_AssignsMacToOnlySameSnpAsPreviously", SimpleNetworkProtocolNotify_AssignsMacToOnlySameSnpAsPreviously, SimpleNetworkProtocolNotifyTestSetup, SimpleNetworkProtocolNotifyTestTeardown, NULL);
+  AddTestCase (SuiteHandle, "SimpleNetworkProtocolNotify_AssignsMacToFirstSupportedSnp", "SimpleNetworkProtocolNotify_AssignsMacToFirstSupportedSnp", SimpleNetworkProtocolNotify_AssignsMacToFirstSupportedSnp, SimpleNetworkProtocolNotifyTestSetup, NULL, NULL);
+  AddTestCase (SuiteHandle, "SimpleNetworkProtocolNotify_AssignsMacToOnlySameSnpAsPreviously", "SimpleNetworkProtocolNotify_AssignsMacToOnlySameSnpAsPreviously", SimpleNetworkProtocolNotify_AssignsMacToOnlySameSnpAsPreviously, SimpleNetworkProtocolNotifyTestSetup, NULL, NULL);
 }
