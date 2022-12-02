@@ -120,9 +120,11 @@ RegisterEntryPointTests (
   AddTestCase (SuiteHandle, "MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulationEnabled", "MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulationEnabled", MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulationEnabled, NULL, NULL, NULL);
 }
 
-  Test file for MAC Address Emulation EntryPoint.
+Test  file for MAC Address Emulation EntryPoint.
 
-  Copyright (C) Microsoft Corporation.
+  Copyright (
+  C
+  ) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -151,34 +153,34 @@ MacAddressEmulationEntry_ReturnsError_IfMacEmulationDisabled (
   )
 {
   // Arrange
-  EFI_STATUS Status;
-  EFI_MAC_ADDRESS DummyAddress = {0x0};
+  EFI_STATUS       Status;
+  EFI_MAC_ADDRESS  DummyAddress = { 0x0 };
 
-  will_return(IsMacEmulationEnabled, &DummyAddress);
-  will_return(IsMacEmulationEnabled, EFI_UNSUPPORTED);
+  will_return (IsMacEmulationEnabled, &DummyAddress);
+  will_return (IsMacEmulationEnabled, EFI_UNSUPPORTED);
 
   // Act
-  Status = MacAddressEmulationEntry(NULL, NULL);
+  Status = MacAddressEmulationEntry (NULL, NULL);
 
   // Assert
-  assert_true(EFI_ERROR(Status));
+  assert_true (EFI_ERROR (Status));
 
   return UNIT_TEST_PASSED;
 }
 
 int
 CheckEfiNamedEventListenInputs (
-  const LargestIntegralType value,
-  const LargestIntegralType check_value
+  const LargestIntegralType  value,
+  const LargestIntegralType  check_value
   )
 {
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT *Actual, *Expected;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  *Actual, *Expected;
 
-  Actual = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) value;
-  Expected = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) check_value;
+  Actual   = (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)value;
+  Expected = (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)check_value;
 
-  assert_true(Expected->Assigned == Actual->Assigned);
-  assert_memory_equal(&Actual->EmulationAddress, &Expected->EmulationAddress, NET_ETHER_ADDR_LEN);
+  assert_true (Expected->Assigned == Actual->Assigned);
+  assert_memory_equal (&Actual->EmulationAddress, &Expected->EmulationAddress, NET_ETHER_ADDR_LEN);
 
   return 1;
 }
@@ -205,38 +207,37 @@ MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulat
   )
 {
   // Arrange
-  EFI_STATUS Status;
-  EFI_MAC_ADDRESS AddressToEmulate;
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT ExpectedContext;
+  EFI_STATUS                        Status;
+  EFI_MAC_ADDRESS                   AddressToEmulate;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  ExpectedContext;
 
   ExpectedContext.Assigned = FALSE;
-  SetMem(&ExpectedContext.EmulationAddress, NET_ETHER_ADDR_LEN, 0xEE);
+  SetMem (&ExpectedContext.EmulationAddress, NET_ETHER_ADDR_LEN, 0xEE);
 
-  SetMem(&AddressToEmulate, NET_ETHER_ADDR_LEN, 0xEE);
+  SetMem (&AddressToEmulate, NET_ETHER_ADDR_LEN, 0xEE);
 
-  will_return(IsMacEmulationEnabled, &AddressToEmulate);
-  will_return(IsMacEmulationEnabled, TRUE);
+  will_return (IsMacEmulationEnabled, &AddressToEmulate);
+  will_return (IsMacEmulationEnabled, TRUE);
 
-  will_return(PlatformMacEmulationEnable, EFI_SUCCESS);
+  will_return (PlatformMacEmulationEnable, EFI_SUCCESS);
 
-  expect_check(EfiNamedEventListen, NotifyContext, CheckEfiNamedEventListenInputs, &ExpectedContext);
-  will_return(EfiNamedEventListen, EFI_SUCCESS);
+  expect_check (EfiNamedEventListen, NotifyContext, CheckEfiNamedEventListenInputs, &ExpectedContext);
+  will_return (EfiNamedEventListen, EFI_SUCCESS);
 
   // Act
-  Status = MacAddressEmulationEntry(NULL, NULL);
+  Status = MacAddressEmulationEntry (NULL, NULL);
 
   // Assert
-  assert_true(!EFI_ERROR(Status));
+  assert_true (!EFI_ERROR (Status));
 
   return UNIT_TEST_PASSED;
 }
 
 VOID
 RegisterEntryPointTests (
-  UNIT_TEST_SUITE_HANDLE SuiteHandle
+  UNIT_TEST_SUITE_HANDLE  SuiteHandle
   )
 {
   AddTestCase (SuiteHandle, "MacAddressEmulationEntry_ReturnsError_IfMacEmulationDisabled", "MacAddressEmulationEntry_ReturnsError_IfMacEmulationDisabled", MacAddressEmulationEntry_ReturnsError_IfMacEmulationDisabled, NULL, NULL, NULL);
   AddTestCase (SuiteHandle, "MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulationEnabled", "MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulationEnabled", MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulationEnabled, NULL, NULL, NULL);
-
 }
