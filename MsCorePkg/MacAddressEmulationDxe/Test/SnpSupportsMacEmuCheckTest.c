@@ -68,7 +68,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNull (
   // Arrange
   BOOLEAN                      SupportsEmu;
   EFI_HANDLE                   SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp = { };
 
   // Act
   SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, NULL);
@@ -103,7 +103,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenContextNull (
   // Arrange
   BOOLEAN     SupportsEmu;
   EFI_HANDLE  SnpHandle;
-  UINTN       MacContext;
+  UINTN       MacContext = 0;
 
   // Act
   SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, NULL, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
@@ -140,7 +140,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNotInitialized (
   EFI_HANDLE                   SnpHandle;
   EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
   EFI_SIMPLE_NETWORK_MODE      Mode;
-  UINTN                        MacContext;
+  UINTN                        MacContext = 0;
 
   Mode.State = EfiSimpleNetworkStopped;
   Snp.Mode   = &Mode;
@@ -180,7 +180,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNotEthernet (
   EFI_HANDLE                   SnpHandle;
   EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
   EFI_SIMPLE_NETWORK_MODE      Mode;
-  UINTN                        MacContext;
+  UINTN                        MacContext = 0;
 
   Mode.State  = EfiSimpleNetworkInitialized;
   Mode.IfType = (UINT8)(~NET_IFTYPE_ETHERNET);
@@ -221,7 +221,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpMacNotChangable (
   EFI_HANDLE                   SnpHandle;
   EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
   EFI_SIMPLE_NETWORK_MODE      Mode;
-  UINTN                        MacContext;
+  UINTN                        MacContext = 0;
 
   Mode.State                = EfiSimpleNetworkInitialized;
   Mode.IfType               = NET_IFTYPE_ETHERNET;
