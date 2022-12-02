@@ -32,8 +32,8 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpHandleNull (
 {
   // Arrange
   BOOLEAN                      SupportsEmu;
-  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
-  UINTN                        MacContext;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp        = { };
+  UINTN                        MacContext = 0;
 
   // Act
   SupportsEmu = SnpSupportsMacEmuCheck (NULL, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
