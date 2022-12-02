@@ -6,6 +6,7 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
+
 #ifndef _MAC_ADDRESS_EMULATION_PLATFORM_LIB_H_
 #define _MAC_ADDRESS_EMULATION_PLATFORM_LIB_H_
 
@@ -20,7 +21,7 @@
 **/
 EFI_STATUS
 IsMacEmulationEnabled (
-  OUT EFI_MAC_ADDRESS *Address
+  OUT EFI_MAC_ADDRESS  *Address
   );
 
 /**
@@ -39,7 +40,7 @@ IsMacEmulationEnabled (
 **/
 BOOLEAN
 PlatformMacEmulationSnpCheck (
-  IN  EFI_HANDLE SnpHandle
+  IN  EFI_HANDLE  SnpHandle
   );
 
 /**
@@ -53,6 +54,7 @@ PlatformMacEmulationSnpCheck (
 **/
 EFI_STATUS
 PlatformMacEmulationEnable (
-  IN  EFI_MAC_ADDRESS *Address
+  IN  EFI_MAC_ADDRESS  *Address
   );
+
 #endif // _MAC_ADDRESS_EMULATION_PLATFORM_LIB_H_

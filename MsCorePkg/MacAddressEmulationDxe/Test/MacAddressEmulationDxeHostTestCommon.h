@@ -29,19 +29,19 @@
 
 #include "../MacAddressEmulationDxe.h"
 
-extern EFI_BOOT_SERVICES mBootServices;
+extern EFI_BOOT_SERVICES  mBootServices;
 
 /**
   @brief  Stub LocateHandleBuffer function
 **/
 EFI_STATUS
-EFIAPI 
+EFIAPI
 LocateHandleBuffer (
-  IN     EFI_LOCATE_SEARCH_TYPE       SearchType,
-  IN     EFI_GUID                     *Protocol       OPTIONAL,
-  IN     VOID                         *SearchKey      OPTIONAL,
-  OUT    UINTN                        *NoHandles,
-  OUT    EFI_HANDLE                   **Buffer
+  IN     EFI_LOCATE_SEARCH_TYPE  SearchType,
+  IN     EFI_GUID                *Protocol       OPTIONAL,
+  IN     VOID                    *SearchKey      OPTIONAL,
+  OUT    UINTN                   *NoHandles,
+  OUT    EFI_HANDLE              **Buffer
   );
 
 /**
@@ -50,27 +50,27 @@ LocateHandleBuffer (
 EFI_STATUS
 EFIAPI
 HandleProtocol (
-  IN  EFI_HANDLE               Handle,
-  IN  EFI_GUID                 *Protocol,
-  OUT VOID                     **Interface
+  IN  EFI_HANDLE  Handle,
+  IN  EFI_GUID    *Protocol,
+  OUT VOID        **Interface
   );
 
 /**
   @brief  Stub RestoreTPL function
 **/
 VOID
-EFIAPI 
+EFIAPI
 RestoreTPL (
-  IN EFI_TPL      OldTpl
+  IN EFI_TPL  OldTpl
   );
 
 /**
   @brief  Stub RaiseTPL function
 **/
 EFI_TPL
-EFIAPI 
+EFIAPI
 RaiseTPL (
-  IN EFI_TPL      NewTpl
+  IN EFI_TPL  NewTpl
   );
 
 #endif // _MAC_ADDRESS_EMULATION_HOST_TEST_COMMON_H

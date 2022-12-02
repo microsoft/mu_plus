@@ -31,15 +31,15 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpHandleNull (
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  UINTN MacContext;
+  BOOLEAN                      SupportsEmu;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
+  UINTN                        MacContext;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(NULL, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (NULL, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -66,15 +66,15 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNull (
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
+  BOOLEAN                      SupportsEmu;
+  EFI_HANDLE                   SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, NULL);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, NULL);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -101,15 +101,15 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenContextNull (
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  UINTN MacContext;
+  BOOLEAN     SupportsEmu;
+  EFI_HANDLE  SnpHandle;
+  UINTN       MacContext;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, NULL, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, NULL, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -136,20 +136,20 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNotInitialized (
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  EFI_SIMPLE_NETWORK_MODE Mode;
-  UINTN MacContext;
+  BOOLEAN                      SupportsEmu;
+  EFI_HANDLE                   SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
+  EFI_SIMPLE_NETWORK_MODE      Mode;
+  UINTN                        MacContext;
 
   Mode.State = EfiSimpleNetworkStopped;
-  Snp.Mode = &Mode;
+  Snp.Mode   = &Mode;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -176,21 +176,21 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNotEthernet (
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  EFI_SIMPLE_NETWORK_MODE Mode;
-  UINTN MacContext;
+  BOOLEAN                      SupportsEmu;
+  EFI_HANDLE                   SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
+  EFI_SIMPLE_NETWORK_MODE      Mode;
+  UINTN                        MacContext;
 
-  Mode.State = EfiSimpleNetworkInitialized;
+  Mode.State  = EfiSimpleNetworkInitialized;
   Mode.IfType = (UINT8)(~NET_IFTYPE_ETHERNET);
-  Snp.Mode = &Mode;
+  Snp.Mode    = &Mode;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -217,22 +217,22 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpMacNotChangable (
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  EFI_SIMPLE_NETWORK_MODE Mode;
-  UINTN MacContext;
+  BOOLEAN                      SupportsEmu;
+  EFI_HANDLE                   SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
+  EFI_SIMPLE_NETWORK_MODE      Mode;
+  UINTN                        MacContext;
 
-  Mode.State = EfiSimpleNetworkInitialized;
-  Mode.IfType = NET_IFTYPE_ETHERNET;
+  Mode.State                = EfiSimpleNetworkInitialized;
+  Mode.IfType               = NET_IFTYPE_ETHERNET;
   Mode.MacAddressChangeable = FALSE;
-  Snp.Mode = &Mode;
+  Snp.Mode                  = &Mode;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -259,24 +259,24 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenPlatformCheckReturnsUnsupported (
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  EFI_SIMPLE_NETWORK_MODE Mode;
-  UINTN MacContext;
+  BOOLEAN                      SupportsEmu;
+  EFI_HANDLE                   SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL  Snp;
+  EFI_SIMPLE_NETWORK_MODE      Mode;
+  UINTN                        MacContext;
 
-  Mode.State = EfiSimpleNetworkInitialized;
-  Mode.IfType = NET_IFTYPE_ETHERNET;
+  Mode.State                = EfiSimpleNetworkInitialized;
+  Mode.IfType               = NET_IFTYPE_ETHERNET;
   Mode.MacAddressChangeable = TRUE;
-  Snp.Mode = &Mode;
+  Snp.Mode                  = &Mode;
 
-  will_return(PlatformMacEmulationSnpCheck, FALSE);
+  will_return (PlatformMacEmulationSnpCheck, FALSE);
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -303,28 +303,28 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenMacAlreadyAssignedToAnotherSupportedInte
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  EFI_SIMPLE_NETWORK_MODE Mode;
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT MacContext;
+  BOOLEAN                           SupportsEmu;
+  EFI_HANDLE                        SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL       Snp;
+  EFI_SIMPLE_NETWORK_MODE           Mode;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  MacContext;
 
   MacContext.Assigned = TRUE;
-  SetMem(&MacContext.PermanentAddress, NET_ETHER_ADDR_LEN, 0xBB);
+  SetMem (&MacContext.PermanentAddress, NET_ETHER_ADDR_LEN, 0xBB);
 
-  Mode.State = EfiSimpleNetworkInitialized;
-  Mode.IfType = NET_IFTYPE_ETHERNET;
+  Mode.State                = EfiSimpleNetworkInitialized;
+  Mode.IfType               = NET_IFTYPE_ETHERNET;
   Mode.MacAddressChangeable = TRUE;
-  SetMem(&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
+  SetMem (&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
   Snp.Mode = &Mode;
 
-  will_return(PlatformMacEmulationSnpCheck, TRUE);
+  will_return (PlatformMacEmulationSnpCheck, TRUE);
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == FALSE);
+  assert_true (SupportsEmu == FALSE);
 
   return UNIT_TEST_PASSED;
 }
@@ -351,26 +351,26 @@ SnpSupportsMacEmuCheck_ReturnsTrue_WhenInterfaceIsSupported_AndNoOtherInterfaceH
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  EFI_SIMPLE_NETWORK_MODE Mode;
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT MacContext;
+  BOOLEAN                           SupportsEmu;
+  EFI_HANDLE                        SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL       Snp;
+  EFI_SIMPLE_NETWORK_MODE           Mode;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  MacContext;
 
   MacContext.Assigned = FALSE;
 
-  Mode.State = EfiSimpleNetworkInitialized;
-  Mode.IfType = NET_IFTYPE_ETHERNET;
+  Mode.State                = EfiSimpleNetworkInitialized;
+  Mode.IfType               = NET_IFTYPE_ETHERNET;
   Mode.MacAddressChangeable = TRUE;
-  Snp.Mode = &Mode;
+  Snp.Mode                  = &Mode;
 
-  will_return(PlatformMacEmulationSnpCheck, TRUE);
+  will_return (PlatformMacEmulationSnpCheck, TRUE);
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == TRUE);
+  assert_true (SupportsEmu == TRUE);
 
   return UNIT_TEST_PASSED;
 }
@@ -397,35 +397,35 @@ SnpSupportsMacEmuCheck_ReturnsTrue_WhenInterfaceIsSupported_AndInterfaceMatchesP
   )
 {
   // Arrange
-  BOOLEAN SupportsEmu;
-  EFI_HANDLE SnpHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL Snp;
-  EFI_SIMPLE_NETWORK_MODE Mode;
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT MacContext;
+  BOOLEAN                           SupportsEmu;
+  EFI_HANDLE                        SnpHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL       Snp;
+  EFI_SIMPLE_NETWORK_MODE           Mode;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  MacContext;
 
   MacContext.Assigned = TRUE;
-  SetMem(&MacContext.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
+  SetMem (&MacContext.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
 
-  Mode.State = EfiSimpleNetworkInitialized;
-  Mode.IfType = NET_IFTYPE_ETHERNET;
+  Mode.State                = EfiSimpleNetworkInitialized;
+  Mode.IfType               = NET_IFTYPE_ETHERNET;
   Mode.MacAddressChangeable = TRUE;
-  SetMem(&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
+  SetMem (&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
   Snp.Mode = &Mode;
 
-  will_return(PlatformMacEmulationSnpCheck, TRUE);
+  will_return (PlatformMacEmulationSnpCheck, TRUE);
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, &MacContext);
 
   // Assert
-  assert_true(SupportsEmu == TRUE);
+  assert_true (SupportsEmu == TRUE);
 
   return UNIT_TEST_PASSED;
 }
 
 VOID
 RegisterSnpSupportsMacEmuCheckTests (
-    UNIT_TEST_SUITE_HANDLE SuiteHandle
+  UNIT_TEST_SUITE_HANDLE  SuiteHandle
   )
 {
   // Negative Test Cases

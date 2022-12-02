@@ -19,23 +19,22 @@
 **/
 EFI_STATUS
 IsMacEmulationEnabled (
-  OUT EFI_MAC_ADDRESS *Address
+  OUT EFI_MAC_ADDRESS  *Address
   )
 {
+  /*
+        < OEM TODO >
 
-/*
-      < OEM TODO >
+    Typical checks here include examining runtime scenarios such as a board SKU ID, factory provisioning data,
+    user configuration data (UEFI setup menu), etc.  If not enabled, the function should return EFI_UNSUPPORTED.
 
-  Typical checks here include examining runtime scenarios such as a board SKU ID, factory provisioning data,
-  user configuration data (UEFI setup menu), etc.  If not enabled, the function should return EFI_UNSUPPORTED.
+    If enabled, the *Address buffer needs to be updated with the desired MAC address to use with the platform
+    prior to returning EFI_SUCCESS.
 
-  If enabled, the *Address buffer needs to be updated with the desired MAC address to use with the platform
-  prior to returning EFI_SUCCESS.
-
-  This is also a good place to make sure any settings that need to be secured are done so properly.  For
-  example, if data is stored in variable services, the access policies should be implemented to make sure
-  end users can not unexpectedly enable or disable the feature.
-*/
+    This is also a good place to make sure any settings that need to be secured are done so properly.  For
+    example, if data is stored in variable services, the access policies should be implemented to make sure
+    end users can not unexpectedly enable or disable the feature.
+  */
 
   return EFI_UNSUPPORTED;
 }
@@ -51,31 +50,30 @@ IsMacEmulationEnabled (
 **/
 BOOLEAN
 PlatformMacEmulationSnpCheck (
-  IN  EFI_HANDLE SnpHandle
+  IN  EFI_HANDLE  SnpHandle
   )
 {
+  /*
+        < OEM TODO >
 
-/*
-      < OEM TODO >
+    Perform any logic necessary to determine if the controller represeted by the input handle should have the MAC
+    address emulated.
 
-  Perform any logic necessary to determine if the controller represeted by the input handle should have the MAC
-  address emulated.
+    For example, if only a specific USB network adapter with a certain Vendor ID should be supported, the
+    following pseudo code can be implemented.
 
-  For example, if only a specific USB network adapter with a certain Vendor ID should be supported, the
-  following pseudo code can be implemented.
+      // Use the SnpHandle to get the proper USB IO protocol to that device
+      SnpDevicePath = DevicePathFromHandle (SnpHandle)
+      gBS->LocateDevicePath (&gEfiUsbIoProtocolGuid, &SnpDevicePath, &UsbHandle)
+      gBS->HandleProtocol (UsbHandle, &gEfiUsbIoProtocolGuid, &UsbIo)
 
-    // Use the SnpHandle to get the proper USB IO protocol to that device
-    SnpDevicePath = DevicePathFromHandle (SnpHandle)
-    gBS->LocateDevicePath (&gEfiUsbIoProtocolGuid, &SnpDevicePath, &UsbHandle)
-    gBS->HandleProtocol (UsbHandle, &gEfiUsbIoProtocolGuid, &UsbIo)
-  
-    // Read the Vendor ID through the USB IO protocol and return if supported
-    UsbIo->UsbGetDeviceDescriptor (UsbIo, &UsbDeviceDescriptor)
-    if (UsbDeviceDescriptor.IdVendor == EXPECTED_VENDOR_ID)
-      return TRUE
-    else
-      return FALSE
-*/
+      // Read the Vendor ID through the USB IO protocol and return if supported
+      UsbIo->UsbGetDeviceDescriptor (UsbIo, &UsbDeviceDescriptor)
+      if (UsbDeviceDescriptor.IdVendor == EXPECTED_VENDOR_ID)
+        return TRUE
+      else
+        return FALSE
+  */
 
   return FALSE;
 }
@@ -90,22 +88,20 @@ PlatformMacEmulationSnpCheck (
 **/
 EFI_STATUS
 PlatformMacEmulationEnable (
-  IN  EFI_MAC_ADDRESS *Address
+  IN  EFI_MAC_ADDRESS  *Address
   )
 {
+  /*
+        < OEM TODO >
 
-/*
-      < OEM TODO >
+    The MacAddressEmulationDxe driver will perform a call to the UEFI's API called EFI_SIMPLE_NETWORK_PROTOCOL::StationAddress()
+    to set the requested MAC address, but if the secific network controller used by the platform requires further support, it can
+    be implemented in this function.
 
-  The MacAddressEmulationDxe driver will perform a call to the UEFI's API called EFI_SIMPLE_NETWORK_PROTOCOL::StationAddress()
-  to set the requested MAC address, but if the secific network controller used by the platform requires further support, it can
-  be implemented in this function.
-
-  For example, an OS driver may require a packet published to the ACPI table for authentication, new MAC address, etc.  This
-  function can be used to establish a callback when the specific ACPI table is installed and in the callback modify the table
-  with the necessary information.
-*/
+    For example, an OS driver may require a packet published to the ACPI table for authentication, new MAC address, etc.  This
+    function can be used to establish a callback when the specific ACPI table is installed and in the callback modify the table
+    with the necessary information.
+  */
 
   return EFI_SUCCESS;
 }
-

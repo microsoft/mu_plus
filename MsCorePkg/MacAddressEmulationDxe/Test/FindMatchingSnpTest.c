@@ -31,14 +31,14 @@ FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull (
   )
 {
   // Arrange
-  UINTN MacContext;
-  EFI_SIMPLE_NETWORK_PROTOCOL *SnpMatch;
+  UINTN                        MacContext;
+  EFI_SIMPLE_NETWORK_PROTOCOL  *SnpMatch;
 
   // Act
-  SnpMatch = FindMatchingSnp(NULL, &MacContext);
+  SnpMatch = FindMatchingSnp (NULL, &MacContext);
 
   // Assert
-  assert_null(SnpMatch);
+  assert_null (SnpMatch);
 
   return UNIT_TEST_PASSED;
 }
@@ -65,15 +65,15 @@ FindMatchingSnp_Asserts_WhenLocateHandleBufferFails (
   )
 {
   // Arrange
-  UINTN MacContext;
+  UINTN  MacContext;
 
-  will_return(LocateHandleBuffer, 0);
-  will_return(LocateHandleBuffer, NULL);
-  will_return(LocateHandleBuffer, EFI_ACCESS_DENIED);
+  will_return (LocateHandleBuffer, 0);
+  will_return (LocateHandleBuffer, NULL);
+  will_return (LocateHandleBuffer, EFI_ACCESS_DENIED);
 
   // Act
   // Assert
-  UT_EXPECT_ASSERT_FAILURE(FindMatchingSnp(SnpSupportsMacEmuCheck, &MacContext), NULL);
+  UT_EXPECT_ASSERT_FAILURE (FindMatchingSnp (SnpSupportsMacEmuCheck, &MacContext), NULL);
 
   return UNIT_TEST_PASSED;
 }
@@ -95,36 +95,36 @@ FindMatchingSnp_Asserts_WhenLocateHandleBufferFails (
 **/
 UNIT_TEST_STATUS
 EFIAPI
-FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported(
+FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
   // Arrange
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT MacContext;
-  EFI_HANDLE *DummyHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL ExpectedMatch;
-  EFI_SIMPLE_NETWORK_PROTOCOL *ActualMatch;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  MacContext;
+  EFI_HANDLE                        *DummyHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL       ExpectedMatch;
+  EFI_SIMPLE_NETWORK_PROTOCOL       *ActualMatch;
 
-  EFI_SIMPLE_NETWORK_MODE Mode;
+  EFI_SIMPLE_NETWORK_MODE  Mode;
 
-  Mode.State = EfiSimpleNetworkStopped;
+  Mode.State         = EfiSimpleNetworkStopped;
   ExpectedMatch.Mode = &Mode;
 
-  size_t sizeHandle = sizeof(*DummyHandle);
+  size_t  sizeHandle = sizeof (*DummyHandle);
 
-  DummyHandle = AllocateZeroPool(sizeHandle);
-  will_return(LocateHandleBuffer, 1);
-  will_return(LocateHandleBuffer, DummyHandle);
-  will_return(LocateHandleBuffer, EFI_SUCCESS);
+  DummyHandle = AllocateZeroPool (sizeHandle);
+  will_return (LocateHandleBuffer, 1);
+  will_return (LocateHandleBuffer, DummyHandle);
+  will_return (LocateHandleBuffer, EFI_SUCCESS);
 
-  will_return(HandleProtocol, &ExpectedMatch);
-  will_return(HandleProtocol, EFI_SUCCESS);
+  will_return (HandleProtocol, &ExpectedMatch);
+  will_return (HandleProtocol, EFI_SUCCESS);
 
   // Act
-  ActualMatch = FindMatchingSnp(SnpSupportsMacEmuCheck, &MacContext);
+  ActualMatch = FindMatchingSnp (SnpSupportsMacEmuCheck, &MacContext);
 
   // Assert
-  assert_null(ActualMatch);
+  assert_null (ActualMatch);
 
   return UNIT_TEST_PASSED;
 }
@@ -146,62 +146,62 @@ FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported(
 **/
 UNIT_TEST_STATUS
 EFIAPI
-FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu(
+FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
   // Arrange
-  MAC_EMULATION_SNP_NOTIFY_CONTEXT MacContext;
-  EFI_HANDLE *DummyHandle;
-  EFI_SIMPLE_NETWORK_PROTOCOL ExpectedMatch;
-  EFI_SIMPLE_NETWORK_PROTOCOL *ActualMatch;
+  MAC_EMULATION_SNP_NOTIFY_CONTEXT  MacContext;
+  EFI_HANDLE                        *DummyHandle;
+  EFI_SIMPLE_NETWORK_PROTOCOL       ExpectedMatch;
+  EFI_SIMPLE_NETWORK_PROTOCOL       *ActualMatch;
 
-  EFI_SIMPLE_NETWORK_MODE Mode;
+  EFI_SIMPLE_NETWORK_MODE  Mode;
 
   MacContext.Assigned = TRUE;
-  SetMem(&MacContext.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
+  SetMem (&MacContext.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
 
-  Mode.State = EfiSimpleNetworkInitialized;
-  Mode.IfType = NET_IFTYPE_ETHERNET;
+  Mode.State                = EfiSimpleNetworkInitialized;
+  Mode.IfType               = NET_IFTYPE_ETHERNET;
   Mode.MacAddressChangeable = TRUE;
-  SetMem(&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
+  SetMem (&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
   ExpectedMatch.Mode = &Mode;
 
-  will_return(PlatformMacEmulationSnpCheck, TRUE);
+  will_return (PlatformMacEmulationSnpCheck, TRUE);
 
-  DummyHandle = AllocateZeroPool(sizeof(*DummyHandle));
-  SetMem(DummyHandle, sizeof(*DummyHandle), 0x11);
-  will_return(LocateHandleBuffer, 2);
-  will_return(LocateHandleBuffer, DummyHandle);
-  will_return(LocateHandleBuffer, EFI_SUCCESS);
+  DummyHandle = AllocateZeroPool (sizeof (*DummyHandle));
+  SetMem (DummyHandle, sizeof (*DummyHandle), 0x11);
+  will_return (LocateHandleBuffer, 2);
+  will_return (LocateHandleBuffer, DummyHandle);
+  will_return (LocateHandleBuffer, EFI_SUCCESS);
 
-  will_return(HandleProtocol, &ExpectedMatch);
-  will_return(HandleProtocol, EFI_SUCCESS);
+  will_return (HandleProtocol, &ExpectedMatch);
+  will_return (HandleProtocol, EFI_SUCCESS);
 
   // Act
-  ActualMatch = FindMatchingSnp(SnpSupportsMacEmuCheck, &MacContext);
+  ActualMatch = FindMatchingSnp (SnpSupportsMacEmuCheck, &MacContext);
 
   // Assert
-  assert_ptr_equal(&ExpectedMatch, ActualMatch);
+  assert_ptr_equal (&ExpectedMatch, ActualMatch);
 
   return UNIT_TEST_PASSED;
 }
 
 UNIT_TEST_STATUS
-EFIAPI 
+EFIAPI
 FindMatchingSnpTestSetup (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  gBS = &mBootServices;
+  gBS                     = &mBootServices;
   gBS->LocateHandleBuffer = LocateHandleBuffer;
-  gBS->HandleProtocol = HandleProtocol;
+  gBS->HandleProtocol     = HandleProtocol;
 
   return UNIT_TEST_PASSED;
 }
 
 UNIT_TEST_STATUS
-EFIAPI 
+EFIAPI
 FindMatchingSnpTestTeardown (
   IN UNIT_TEST_CONTEXT  Context
   )
@@ -211,14 +211,14 @@ FindMatchingSnpTestTeardown (
 
 VOID
 RegisterFindMatchingSnpTests (
-    UNIT_TEST_SUITE_HANDLE SuiteHandle
+  UNIT_TEST_SUITE_HANDLE  SuiteHandle
   )
 {
   // Negative Test Cases
   AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
   AddTestCase (SuiteHandle, "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", FindMatchingSnp_Asserts_WhenLocateHandleBufferFails, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
   AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
- 
+
   // Positive Test Cases
   AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu", "FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu", FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu, FindMatchingSnpTestSetup, FindMatchingSnpTestTeardown, NULL);
 }

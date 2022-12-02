@@ -14,7 +14,7 @@
 
 VOID
 RegisterSnpSupportsMacEmuCheckTests (
-    UNIT_TEST_SUITE_HANDLE SuiteHandle
-);
+  UNIT_TEST_SUITE_HANDLE  SuiteHandle
+  );
 
 #endif // _MAC_ADDRESS_EMULATION_SNPSUPPORTSMACEMU_TEST_H

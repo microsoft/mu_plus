@@ -26,10 +26,10 @@
   ((UINT8 *)&MacAddress)[5]
 
 typedef struct {
-  VOID            *Registration;
-  BOOLEAN         Assigned;
-  EFI_MAC_ADDRESS EmulationAddress;
-  EFI_MAC_ADDRESS PermanentAddress;
+  VOID               *Registration;
+  BOOLEAN            Assigned;
+  EFI_MAC_ADDRESS    EmulationAddress;
+  EFI_MAC_ADDRESS    PermanentAddress;
 } MAC_EMULATION_SNP_NOTIFY_CONTEXT;
 
 /**
@@ -38,9 +38,9 @@ typedef struct {
 typedef
 BOOLEAN
 (*SNP_MATCH_FUNCTION)(
-  IN CONST EFI_HANDLE SnpHandle,
-  IN CONST EFI_SIMPLE_NETWORK_PROTOCOL *Snp,
-  OPTIONAL IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT *SnpContext
+  IN CONST EFI_HANDLE                                 SnpHandle,
+  IN CONST EFI_SIMPLE_NETWORK_PROTOCOL                *Snp,
+  OPTIONAL IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT  *SnpContext
   );
 
 /**
@@ -53,9 +53,9 @@ BOOLEAN
 **/
 BOOLEAN
 SnpSupportsMacEmuCheck (
-  IN CONST EFI_HANDLE SnpHandle,
-  IN CONST EFI_SIMPLE_NETWORK_PROTOCOL *Snp,
-  IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT *SnpContext
+  IN CONST EFI_HANDLE                        SnpHandle,
+  IN CONST EFI_SIMPLE_NETWORK_PROTOCOL       *Snp,
+  IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT  *SnpContext
   );
 
 /**
@@ -65,23 +65,23 @@ SnpSupportsMacEmuCheck (
   @retval  NULL - no matching SNP was found, or invalid input parameter
   @retval  NON-NULL - a pointer to the first matching SNP
 **/
-EFI_SIMPLE_NETWORK_PROTOCOL*
+EFI_SIMPLE_NETWORK_PROTOCOL *
 FindMatchingSnp (
-  IN SNP_MATCH_FUNCTION MatchFunction,
-  OPTIONAL IN MAC_EMULATION_SNP_NOTIFY_CONTEXT *MatchFunctionContext
+  IN SNP_MATCH_FUNCTION                         MatchFunction,
+  OPTIONAL IN MAC_EMULATION_SNP_NOTIFY_CONTEXT  *MatchFunctionContext
   );
 
 /**
   @brief  Sets the provided SNP's station address using the context information provided
-  @param[in] Snp - Non-NULL pointer to an SNP which supports station address programming 
+  @param[in] Snp - Non-NULL pointer to an SNP which supports station address programming
   @param[in] Context - The snp context created by this driver's entry point
 
   @remark  Modifes the provided SNP's station address
 **/
 VOID
 SetSnpMacViaContext (
-  IN EFI_SIMPLE_NETWORK_PROTOCOL* Snp,
-  IN OUT MAC_EMULATION_SNP_NOTIFY_CONTEXT *Context
+  IN EFI_SIMPLE_NETWORK_PROTOCOL           *Snp,
+  IN OUT MAC_EMULATION_SNP_NOTIFY_CONTEXT  *Context
   );
 
 /**
@@ -112,7 +112,7 @@ EFI_STATUS
 EFIAPI
 MacAddressEmulationEntry (
   IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE* SystemTable
+  IN EFI_SYSTEM_TABLE  *SystemTable
   );
 
 #endif // _MAC_ADDRESS_EMULATION_DXE_H_

@@ -14,7 +14,7 @@
 
 VOID
 RegisterFindMatchingSnpTests (
-    UNIT_TEST_SUITE_HANDLE SuiteHandle
-);
+  UNIT_TEST_SUITE_HANDLE  SuiteHandle
+  );
 
 #endif // _MAC_ADDRESS_EMULATION_FINDMATCHINGSNP_TEST_H
