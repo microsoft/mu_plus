@@ -10,12 +10,12 @@
 #ifndef _MAC_ADDRESS_EMULATION_HOST_TEST_COMMON_H
 #define _MAC_ADDRESS_EMULATION_HOST_TEST_COMMON_H
 
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <setjmp.h>
-#include <cmocka.h>
+// #include <stdio.h>
+// #include <string.h>
+// #include <stdarg.h>
+// #include <stddef.h>
+// #include <setjmp.h>
+// #include <cmocka.h>
 
 #include <Uefi.h>
 
