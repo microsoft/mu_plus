@@ -1,5 +1,5 @@
 ## @file
-# This module tests targeting logic of MfciDxe driver.
+# This module tests targeting logic of MacAddressEmulation driver.
 #
 # Copyright (c) Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent

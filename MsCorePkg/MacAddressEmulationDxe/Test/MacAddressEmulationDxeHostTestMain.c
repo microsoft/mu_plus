@@ -17,6 +17,7 @@
 #define UNIT_TEST_VERSION  "0.1"
 
 EFI_RUNTIME_SERVICES  mMockRuntime;
+EFI_BOOT_SERVICES mBootServices;
 
 EFI_STATUS
 IsMacEmulationEnabled (
@@ -28,7 +29,7 @@ IsMacEmulationEnabled (
 }
 
 BOOLEAN
-SnpSupportsMacEmulation (
+PlatformMacEmulationSnpCheck (
   IN  EFI_HANDLE SnpHandle
   )
 {

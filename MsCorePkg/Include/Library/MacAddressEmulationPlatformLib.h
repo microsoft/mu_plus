@@ -10,7 +10,7 @@
 #define _MAC_ADDRESS_EMULATION_PLATFORM_LIB_H_
 
 /**
-  Called by the MacAddressEmulationDxe driver's entry function to determine if the platform's MAC emulation is enabled.
+  Reports whether MacEmulation is enabled, and returns the address to emulate.
 
   @param[out]  Address - Pointer to a buffer to receive the emulated MAC address to use for this platform.
 
@@ -26,6 +26,11 @@ IsMacEmulationEnabled (
 /**
   Executes platform-specific logic to determine if MAC-address emulation is supported by a specific SNP controller.
 
+  Caller should ensure the following checks are true prior to programming the mac address
+  1. Snp is initialized
+  2. Snp address is programmable
+  3. Snp type is ethernet
+
   @param[in]  SnpHandle - Controller handle for which to determine support.
 
   @retval TRUE  - Device represented by SnpHandle supports MAC emulation.
@@ -33,7 +38,7 @@ IsMacEmulationEnabled (
 
 **/
 BOOLEAN
-SnpSupportsMacEmulation (
+PlatformMacEmulationSnpCheck (
   IN  EFI_HANDLE SnpHandle
   );
 

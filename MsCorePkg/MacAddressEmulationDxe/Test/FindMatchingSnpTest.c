@@ -1,6 +1,13 @@
-#include "SnpSupportsMacEmuCheckTest.h"
+/** @file
 
-EFI_BOOT_SERVICES mBootServices;
+  Test file for MAC Address Emulation FindMatchingSnp.
+
+  Copyright (C) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include "SnpSupportsMacEmuCheckTest.h"
 
 /**
   Unit test for FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull ()
@@ -160,7 +167,7 @@ FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu(
   SetMem(&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
   ExpectedMatch.Mode = &Mode;
 
-  will_return(SnpSupportsMacEmulation, TRUE);
+  will_return(PlatformMacEmulationSnpCheck, TRUE);
 
   DummyHandle = AllocateZeroPool(sizeof(*DummyHandle));
   SetMem(DummyHandle, sizeof(*DummyHandle), 0x11);

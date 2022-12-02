@@ -9,7 +9,7 @@
 
 [Defines]
   INF_VERSION                    = 1.27
-  BASE_NAME                      = MacAddressEmulationPlatformLib
+  BASE_NAME                      = MacAddressEmulationPlatformNullLib
   FILE_GUID                      = 75C79B3A-9D3A-44B5-8CA0-30ACBDF745CC
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
@@ -20,12 +20,8 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  MdeModulePkg/MdeModulePkg.dec
-  MsCorePkg/MsCorePkg.dec
 
 [LibraryClasses]
-  BaseLib
-  DebugLib
 
 [Protocols]
 

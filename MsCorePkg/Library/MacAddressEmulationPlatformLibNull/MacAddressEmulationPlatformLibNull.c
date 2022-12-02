@@ -7,11 +7,10 @@
 
 **/
 #include <Uefi.h>
-#include <Library/DebugLib.h>
-
+#include <Library/MacAddressEmulationPlatformLib.h>
 
 /**
-  Called by the MacAddressEmulationDxe driver's entry function to determine if the platform's MAC emulation is enabled.
+  Reports whether MacEmulation is enabled, and returns the address to emulate.
 
   @param[out]  Address - Pointer to a buffer to receive the desired MAC address to use if emulation is enabled.
 
@@ -51,7 +50,7 @@ IsMacEmulationEnabled (
   @retval FALSE - Device represented by SnpHandle does not support MAC emulation.
 **/
 BOOLEAN
-SnpSupportsMacEmulation (
+PlatformMacEmulationSnpCheck (
   IN  EFI_HANDLE SnpHandle
   )
 {

@@ -1,7 +1,16 @@
-#include "SnpSupportsMacEmuCheckTest.h"
+/** @file
+
+  Test file for MAC Address Emulation EntryPoint.
+
+  Copyright (C) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include "EntryPointTest.h"
 
 /**
-  Unit test for SnpSupportsMacEmuCheck_ReturnsTrue_WhenInterfaceIsSupported_AndInterfaceMatchesPreviouslyAssignedInterface ()
+  Unit test for MacAddressEmulationEntry_ReturnsError_IfMacEmulationDisabled ()
 
   @param[in]  Context    [Optional] An optional parameter that enables:
                          1) test-case reuse with varied parameters and
@@ -55,7 +64,7 @@ CheckEfiNamedEventListenInputs (
 }
 
 /**
-  Unit test for SnpSupportsMacEmuCheck_ReturnsTrue_WhenInterfaceIsSupported_AndInterfaceMatchesPreviouslyAssignedInterface ()
+  Unit test for MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulationEnabled ()
 
   @param[in]  Context    [Optional] An optional parameter that enables:
                          1) test-case reuse with varied parameters and

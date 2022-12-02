@@ -1,6 +1,13 @@
-#include "SimpleNetworkProtocolNotifyTest.h"
+/** @file
 
-EFI_BOOT_SERVICES mBootServices;
+  Test file for MAC Address Emulation SimpleNetworkProtocolNotifyTest.
+
+  Copyright (C) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+#include "SimpleNetworkProtocolNotifyTest.h"
 
 EFI_STATUS
 EFIAPI
@@ -52,7 +59,7 @@ SimpleNetworkProtocolNotify_AssignsMacToFirstSupportedSnp(
   Snp.Mode = &Mode;
   Snp.StationAddress = SetStationAddress;
 
-  will_return(SnpSupportsMacEmulation, TRUE);
+  will_return(PlatformMacEmulationSnpCheck, TRUE);
 
   DummyHandleArr = AllocateZeroPool(sizeof(EFI_HANDLE*)*2);
   EFI_HANDLE DummyHandle1 = AllocateZeroPool(sizeof(EFI_HANDLE));
@@ -132,7 +139,7 @@ SimpleNetworkProtocolNotify_AssignsMacToOnlySameSnpAsPreviously(
   will_return(HandleProtocol, &Snp2);
   will_return(HandleProtocol, EFI_SUCCESS);
 
-  will_return_always(SnpSupportsMacEmulation, TRUE);
+  will_return_always(PlatformMacEmulationSnpCheck, TRUE);
 
   DummyHandleArr = AllocateZeroPool(sizeof(EFI_HANDLE*)*2);
   EFI_HANDLE DummyHandle1 = AllocateZeroPool(sizeof(EFI_HANDLE));

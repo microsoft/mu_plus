@@ -1,3 +1,12 @@
+/** @file
+
+  Test file for MAC Address Emulation SnpSupportsMacEmuCheck.
+
+  Copyright (C) Microsoft Corporation.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
 #include "SnpSupportsMacEmuCheckTest.h"
 
 /**
@@ -261,7 +270,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenPlatformCheckReturnsUnsupported (
   Mode.MacAddressChangeable = TRUE;
   Snp.Mode = &Mode;
 
-  will_return(SnpSupportsMacEmulation, FALSE);
+  will_return(PlatformMacEmulationSnpCheck, FALSE);
 
   // Act
   SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
@@ -309,7 +318,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenMacAlreadyAssignedToAnotherSupportedInte
   SetMem(&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
   Snp.Mode = &Mode;
 
-  will_return(SnpSupportsMacEmulation, TRUE);
+  will_return(PlatformMacEmulationSnpCheck, TRUE);
 
   // Act
   SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
@@ -355,7 +364,7 @@ SnpSupportsMacEmuCheck_ReturnsTrue_WhenInterfaceIsSupported_AndNoOtherInterfaceH
   Mode.MacAddressChangeable = TRUE;
   Snp.Mode = &Mode;
 
-  will_return(SnpSupportsMacEmulation, TRUE);
+  will_return(PlatformMacEmulationSnpCheck, TRUE);
 
   // Act
   SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);
@@ -403,7 +412,7 @@ SnpSupportsMacEmuCheck_ReturnsTrue_WhenInterfaceIsSupported_AndInterfaceMatchesP
   SetMem(&Mode.PermanentAddress, NET_ETHER_ADDR_LEN, 0xAA);
   Snp.Mode = &Mode;
 
-  will_return(SnpSupportsMacEmulation, TRUE);
+  will_return(PlatformMacEmulationSnpCheck, TRUE);
 
   // Act
   SupportsEmu = SnpSupportsMacEmuCheck(&SnpHandle, &Snp, &MacContext);

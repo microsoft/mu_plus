@@ -66,6 +66,8 @@
   #
   UpdateFacsHardwareSignatureLib|Include/Library/UpdateFacsHardwareSignatureLib.h
 
+  ## @libraryclass Allows platform developers to implement platform specific MacAddressEmulation behavior
+  #
   MacAddressEmulationPlatformLib|Include/Library/MacAddressEmulationPlatformLib.h
 
 [Guids]

@@ -16,9 +16,16 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/NetLib.h>
 
-#include "Library/MacAddressEmulationPlatformLib.h"
+#include <Library/MacAddressEmulationPlatformLib.h>
 
-
+/**
+  @brief Performs sanity checks to ensure an snp can support mac emulation, and ensures that multiple interfaces are not programmed.
+  @param[in] SnpHandle - A handle to an Snp
+  @param[in] Snp - An snp protocol associatrred with the handle provided
+  @param[in] SnpContext - The snp context created by this driver's entry point
+  @retval TRUE - the SNP supports mac emulation and can be programmed with the emulated address
+  @retval FALSE - the SNP should not be programmed with the emulated address
+**/
 BOOLEAN
 SnpSupportsMacEmuCheck (
   IN CONST EFI_HANDLE SnpHandle,
@@ -29,13 +36,16 @@ SnpSupportsMacEmuCheck (
   MAC_EMULATION_SNP_NOTIFY_CONTEXT* Context;
   BOOLEAN IsMatch = FALSE;
 
-  if (SnpHandle != NULL && Snp != NULL && SnpContext != NULL) {
-    IsMatch = TRUE;
-    Context = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) SnpContext;
+  DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
+
+  if (SnpHandle == NULL || Snp == NULL || SnpContext == NULL) {
+    return FALSE;
   }
+
+  Context = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) SnpContext;
   
   if (IsMatch && Snp->Mode->State != EfiSimpleNetworkInitialized) {
-    DEBUG ((DEBUG_ERROR, "[%a]: SNP handle in unexpected state %d, cannot update MAC.\n", __FUNCTION__, Snp->Mode->State));
+    DEBUG ((DEBUG_WARN, "[%a]: SNP handle in unexpected state %d, cannot update MAC.\n", __FUNCTION__, Snp->Mode->State));
     IsMatch = FALSE;
   }
 
@@ -49,7 +59,8 @@ SnpSupportsMacEmuCheck (
     IsMatch = FALSE;
   }
 
-  if (IsMatch && !SnpSupportsMacEmulation(SnpHandle)) { 
+  if (IsMatch && !PlatformMacEmulationSnpCheck(SnpHandle)) {
+    DEBUG ((DEBUG_WARN, "[%a]: Platform libarry reports not to support this SNP", __FUNCTION__));
     IsMatch = FALSE;
   }
 
@@ -60,16 +71,22 @@ SnpSupportsMacEmuCheck (
     IsMatch = (CompareMem (&Snp->Mode->PermanentAddress, &Context->PermanentAddress, NET_ETHER_ADDR_LEN) == 0);
   }
 
+  DEBUG ((DEBUG_VERBOSE, "[%a]: End\n", __FUNCTION__));
+
   return IsMatch;
 }
 
 /**
-  
+  @brief  Iterates through all available SNPs available and finds the first instance which meets the criteria specified by match function
+  @param[in] MatchFunction - Function pointer to caller provided function which will check whether the SNP matches
+  @param[in] MatchFunctionContext - The snp context created by this driver's entry point
+  @retval  NULL - no matching SNP was found, or invalid input parameter
+  @retval  NON-NULL - a pointer to the first matching SNP
 **/
 EFI_SIMPLE_NETWORK_PROTOCOL*
 FindMatchingSnp (
   IN SNP_MATCH_FUNCTION MatchFunction,
-  OPTIONAL IN VOID *MatchFunctionContext
+  OPTIONAL IN MAC_EMULATION_SNP_NOTIFY_CONTEXT *MatchFunctionContext
   )
 {
   EFI_STATUS                        Status;
@@ -81,9 +98,13 @@ FindMatchingSnp (
   SnpInstance = NULL;
   SnpHandleBuffer = NULL;
 
+  DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
+
   if (MatchFunction != NULL) {
     Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleNetworkProtocolGuid, NULL, &HandleCount, &SnpHandleBuffer);
-    ASSERT_EFI_ERROR (Status);
+    if (EFI_ERROR(Status) && Status != EFI_NOT_FOUND) {
+      ASSERT_EFI_ERROR (Status);
+    }
     if (EFI_ERROR(Status)) {
       DEBUG ((DEBUG_ERROR, "[%a]: Unexpected error from LocateHandleBuffer. Status=%r\n", __FUNCTION__, Status));
     }
@@ -107,9 +128,18 @@ FindMatchingSnp (
     FreePool(SnpHandleBuffer);
   }
 
+  DEBUG ((DEBUG_VERBOSE, "[%a]: End\n", __FUNCTION__));
+
   return SnpInstance;
 }
 
+/**
+  @brief  Sets the provided SNP's station address using the context information provided
+  @param[in] Snp - Non-NULL pointer to an SNP which supports station address programming 
+  @param[in] Context - The snp context created by this driver's entry point
+
+  @remark  Modifes the provided SNP's station address
+**/
 VOID
 SetSnpMacViaContext (
   IN EFI_SIMPLE_NETWORK_PROTOCOL* Snp,
@@ -119,9 +149,12 @@ SetSnpMacViaContext (
   EFI_STATUS Status = EFI_NOT_STARTED;
   EFI_TPL OldTpl;
 
-  DEBUG ((DEBUG_ERROR, "[%a]: Start\n", __FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
 
   if (Snp != NULL && Context != NULL) {
+    // Raising to highest TPL is necessary to avoid any network stack callbacks
+    // such as responding to network packets while the mac address is being 
+    // configured in cases where the network stack has already been started.
     OldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
     gBS->RestoreTPL(TPL_CALLBACK);
 
@@ -139,6 +172,8 @@ SetSnpMacViaContext (
     CopyMem (&Context->PermanentAddress, &Snp->Mode->PermanentAddress, NET_ETHER_ADDR_LEN);
     Context->Assigned = TRUE;
   }
+
+  DEBUG ((DEBUG_VERBOSE, "[%a]: End\n", __FUNCTION__));
 }
 
 /**
@@ -147,8 +182,6 @@ SetSnpMacViaContext (
 
   @param[in]  Event   - The EFI_EVENT for this notify.
   @param[in]  Context - An instance of MAC_EMULATION_SNP_NOTIFY_CONTEXT.
-
-  @retval  None
 
 **/
 VOID
@@ -161,7 +194,7 @@ SimpleNetworkProtocolNotify (
   MAC_EMULATION_SNP_NOTIFY_CONTEXT  *MacContext;
   EFI_SIMPLE_NETWORK_PROTOCOL       *SnpToConfigureEmu;
 
-  DEBUG ((DEBUG_INFO, "[%a]: Start\n", __FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
   
   if (Context == NULL) {
     DEBUG ((DEBUG_ERROR, "[%a]: Context unexpectedly null.\n", __FUNCTION__));
@@ -174,6 +207,8 @@ SimpleNetworkProtocolNotify (
   SnpToConfigureEmu = FindMatchingSnp(SnpSupportsMacEmuCheck, (VOID*) MacContext);
 
   SetSnpMacViaContext(SnpToConfigureEmu, MacContext);
+
+  DEBUG ((DEBUG_VERBOSE, "[%a]: End\n", __FUNCTION__));
 }
 
 /**
