@@ -15,7 +15,7 @@
 
   @param[out]  Address - Pointer to a buffer to receive the emulated MAC address to use for this platform.
 
-  @retval  EFI_UNSUPPORTED - Feature is not enabled/supported by the platrform.
+  @retval  EFI_UNSUPPORTED - Feature is not enabled/supported by the platform.
   @retval  EFI_STATUS      - Status of other calls in the function.
 
 **/
