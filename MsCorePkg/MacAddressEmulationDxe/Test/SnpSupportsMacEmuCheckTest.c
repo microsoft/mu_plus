@@ -36,7 +36,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpHandleNull (
   UINTN                        MacContext;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck (NULL, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (NULL, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
 
   // Assert
   assert_true (SupportsEmu == FALSE);
@@ -106,7 +106,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenContextNull (
   UINTN       MacContext;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, NULL, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, NULL, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
 
   // Assert
   assert_true (SupportsEmu == FALSE);
@@ -146,7 +146,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNotInitialized (
   Snp.Mode   = &Mode;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
 
   // Assert
   assert_true (SupportsEmu == FALSE);
@@ -187,7 +187,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpNotEthernet (
   Snp.Mode    = &Mode;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
 
   // Assert
   assert_true (SupportsEmu == FALSE);
@@ -229,7 +229,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpMacNotChangable (
   Snp.Mode                  = &Mode;
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
 
   // Assert
   assert_true (SupportsEmu == FALSE);
@@ -273,7 +273,7 @@ SnpSupportsMacEmuCheck_ReturnsFalse_WhenPlatformCheckReturnsUnsupported (
   will_return (PlatformMacEmulationSnpCheck, FALSE);
 
   // Act
-  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext);
+  SupportsEmu = SnpSupportsMacEmuCheck (&SnpHandle, &Snp, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
 
   // Assert
   assert_true (SupportsEmu == FALSE);

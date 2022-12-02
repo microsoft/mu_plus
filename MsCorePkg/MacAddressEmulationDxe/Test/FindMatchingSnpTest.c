@@ -35,7 +35,7 @@ FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull (
   EFI_SIMPLE_NETWORK_PROTOCOL  *SnpMatch;
 
   // Act
-  SnpMatch = FindMatchingSnp (NULL, (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) &MacContext);
+  SnpMatch = FindMatchingSnp (NULL, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
 
   // Assert
   assert_null (SnpMatch);
