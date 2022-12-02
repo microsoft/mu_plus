@@ -39,3 +39,9 @@
   # When TRUE, the platform indicate the SMRR related is not supported.
   # When FALSE, the SMRR logic will follow the normal family/model ID identification to evaluate SMRAM regions.
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported|FALSE|BOOLEAN|0x00000001
+
+  ## Power state used for suspending a secondary core to C2 state
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC2PowerState|1|UINT64|0x00000002
+
+  ## Power state used for suspending a secondary core to C3 state
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC3PowerState|0x1010022|UINT64|0x00000003

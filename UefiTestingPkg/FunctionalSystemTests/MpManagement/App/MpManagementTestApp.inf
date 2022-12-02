@@ -34,6 +34,10 @@
   UnitTestLib
   PrintLib
 
+[Pcds]
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC2PowerState
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC3PowerState
+
 [Protocols]
   gEfiMpServiceProtocolGuid         ## CONSUMES
   gMpManagementProtocolGuid         ## CONSUMES

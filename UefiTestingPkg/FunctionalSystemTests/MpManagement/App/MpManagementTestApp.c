@@ -384,8 +384,7 @@ SuspendAllApsToC2 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  // TODO: Replace this hardcode power level to a pcd
-  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C2, 1);
+  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
 
   if (Status != EFI_INVALID_PARAMETER) {
     // If this is the first time we power them all on, it should succeed.
@@ -409,8 +408,7 @@ SuspendSingleApToC2 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  // TODO: Replace this hardcode power level to a pcd
-  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C2, 1);
+  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
 
   if (Status != EFI_INVALID_PARAMETER) {
     // If this is the first time we power them all on, it should succeed.
@@ -434,8 +432,7 @@ SuspendAllApsToC3 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  // TODO: Replace this hardcode power level to a pcd
-  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C3, 0x10002);//0x1010022);
+  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
 
   if (Status != EFI_INVALID_PARAMETER) {
     // If this is the first time we power them all on, it should succeed.
@@ -459,8 +456,7 @@ SuspendSingleApToC3 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  // TODO: Replace this hardcode power level to a pcd
-  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C3, 0x10002);//0x1010022);
+  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
 
   if (Status != EFI_INVALID_PARAMETER) {
     // If this is the first time we power them all on, it should succeed.
