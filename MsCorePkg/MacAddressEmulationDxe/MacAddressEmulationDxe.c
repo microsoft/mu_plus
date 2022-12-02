@@ -40,6 +40,8 @@ SnpSupportsMacEmuCheck (
 
   if (SnpHandle == NULL || Snp == NULL || SnpContext == NULL) {
     return FALSE;
+  } else {
+    IsMatch = TRUE;
   }
 
   Context = (MAC_EMULATION_SNP_NOTIFY_CONTEXT*) SnpContext;
