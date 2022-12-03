@@ -166,9 +166,15 @@ MpMgmtApOn (
       continue;
     }
 
+    if (mCommonBuffer[Index].ApStatus == AP_STATE_ON) {
+      DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already in ON\n", __FUNCTION__, Index));
+      Status = EFI_ALREADY_STARTED;
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus != AP_STATE_OFF) {
       DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is already started\n", __FUNCTION__, Index));
-      Status = EFI_ALREADY_STARTED;
+      Status = EFI_ABORTED;
       break;
     }
 
@@ -255,9 +261,15 @@ MpMgmtApOff (
       continue;
     }
 
+    if (mCommonBuffer[Index].ApStatus == AP_STATE_OFF) {
+      DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already in OFF state\n", __FUNCTION__, Index));
+      Status = EFI_ALREADY_STARTED;
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus != AP_STATE_ON) {
       DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in ON state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
-      Status = EFI_ALREADY_STARTED;
+      Status = EFI_ABORTED;
       break;
     }
 
@@ -356,9 +368,15 @@ MpMgmtApSuspend (
       continue;
     }
 
+    if (mCommonBuffer[Index].ApStatus == InternalApPowerState) {
+      DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already in expected state (%d)\n", __FUNCTION__, Index, InternalApPowerState));
+      Status = EFI_ALREADY_STARTED;
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus != AP_STATE_ON) {
       DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in ON state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
-      Status = EFI_ALREADY_STARTED;
+      Status = EFI_ABORTED;
       break;
     }
 
@@ -432,11 +450,17 @@ MpMgmtApResume (
       continue;
     }
 
+    if (mCommonBuffer[Index].ApStatus == AP_STATE_ON) {
+      DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already fully up\n", __FUNCTION__, Index));
+      Status = EFI_ALREADY_STARTED;
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_HALT &&
         mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_CLOCK_GATE &&
         mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_SLEEP) {
-      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in ON state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
-      Status = EFI_ALREADY_STARTED;
+      DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in expected state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
+      Status = EFI_ABORTED;
       break;
     }
 
