@@ -126,6 +126,64 @@ Done:
   return Status;
 }
 
+/**
+ * Return the base address of the GIC redistributor for the current CPU
+ *
+ * @param Revision  GIC Revision. The GIC redistributor might have a different
+ *                  granularity following the GIC revision.
+ *
+ * @retval Base address of the associated GIC Redistributor
+ */
+STATIC
+UINTN
+GicGetCpuRedistributorBase (
+  IN UINTN                  GicRedistributorBase,
+  IN ARM_GIC_ARCH_REVISION  Revision
+  )
+{
+  UINTN   MpId;
+  UINTN   CpuAffinity;
+  UINTN   Affinity;
+  UINTN   GicCpuRedistributorBase;
+  UINT64  TypeRegister;
+
+  MpId = ArmReadMpidr ();
+  // Define CPU affinity as:
+  // Affinity0[0:8], Affinity1[9:15], Affinity2[16:23], Affinity3[24:32]
+  // whereas Affinity3 is defined at [32:39] in MPIDR
+  CpuAffinity = (MpId & (ARM_CORE_AFF0 | ARM_CORE_AFF1 | ARM_CORE_AFF2)) |
+                ((MpId & ARM_CORE_AFF3) >> 8);
+
+  if (Revision < ARM_GIC_ARCH_REVISION_3) {
+    ASSERT_EFI_ERROR (EFI_UNSUPPORTED);
+    return 0;
+  }
+
+  GicCpuRedistributorBase = GicRedistributorBase;
+
+  do {
+    TypeRegister = MmioRead64 (GicCpuRedistributorBase + ARM_GICR_TYPER);
+    Affinity     = ARM_GICR_TYPER_GET_AFFINITY (TypeRegister);
+    if (Affinity == CpuAffinity) {
+      return GicCpuRedistributorBase;
+    }
+
+    // Move to the next GIC Redistributor frame.
+    // The GIC specification does not forbid a mixture of redistributors
+    // with or without support for virtual LPIs, so we test Virtual LPIs
+    // Support (VLPIS) bit for each frame to decide the granularity.
+    // Note: The assumption here is that the redistributors are adjacent
+    // for all CPUs. However this may not be the case for NUMA systems.
+    GicCpuRedistributorBase += (((ARM_GICR_TYPER_VLPIS & TypeRegister) != 0)
+                                ? SIZE_256KB
+                                : SIZE_128KB);
+  } while ((TypeRegister & ARM_GICR_TYPER_LAST) == 0);
+
+  // The Redistributor has not been found for the current CPU
+  ASSERT_EFI_ERROR (EFI_NOT_FOUND);
+  return 0;
+}
+
 EFI_STATUS
 SetupInterruptStatus (
   IN  UINTN       CpuIndex
@@ -140,11 +198,38 @@ SetupInterruptStatus (
   ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Mair   = ArmGetMAIR ();
   ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Ttbr0  = ArmGetTTBR0BaseAddress ();
 
+  // ArmWriteScr ();
+  UINTN red = GicGetCpuRedistributorBase (PcdGet64 (PcdGicRedistributorsBase), ARM_GIC_ARCH_REVISION_3);
+  MmioWrite32 (
+    red + ARM_GICR_CTLR_FRAME_SIZE + ARM_GIC_ICDISR,
+    0xffffffff
+    );
+
+  // Set Priority
+  ArmGicSetInterruptPriority (
+    PcdGet64 (PcdGicDistributorBase),
+    PcdGet64 (PcdGicRedistributorsBase),
+    PcdGet32 (PcdGicSgiIntId),
+    0xF0
+    );
+
+  // Set binary point reg to 0x7 (no preemption)
+  ArmGicV3SetBinaryPointer (0x7);
+
+  // Set priority mask reg to 0xff to allow all priorities through
+  ArmGicV3SetPriorityMask (0xff);
+
   // Enable gic cpu interface
   ArmGicV3EnableInterruptInterface ();
 
   // Enable the intended interrupt source
   ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
+
+  // Enable the GIC Distributor
+  ArmGicEnableDistributor (PcdGet64 (PcdGicDistributorBase));
+
+  ArmEnableInterrupts ();
+  ArmEnableAsynchronousAbort();
 
   return EFI_SUCCESS;
 }
@@ -159,6 +244,9 @@ RestoreInterruptStatus (
 
   // Disable the intended interrupt source
   ArmGicDisableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
+
+  // Disable the GIC Distributor
+  ArmGicDisableDistributor (PcdGet64 (PcdGicDistributorBase));
 
   return EFI_SUCCESS;
 }
@@ -230,6 +318,8 @@ CpuArchHalt (
 {
   ArmCallWFI ();
 
+
+  ASSERT (FALSE);
   return EFI_SUCCESS;
 }
 
