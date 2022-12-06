@@ -26,12 +26,17 @@
 [Sources.X64]
   X64/PagingAuditProcessor.c
 
+[Sources.AARCH64]
+  AArch64/PagingAuditProcessor.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
+  
+[Packages.AARCH64]
+  ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
   UefiDriverEntryPoint
@@ -40,9 +45,14 @@
   UefiBootServicesTableLib
   UefiLib
   PeCoffGetEntryPointLib
-  UefiCpuLib
   HobLib
   DxeServicesTableLib
+
+[LibraryClasses.AARCH64]
+  ArmLib
+
+[LibraryClasses.X64]
+  UefiCpuLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
