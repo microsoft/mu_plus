@@ -77,15 +77,15 @@ SnpSupportsMacEmuCheck (
 
 /**
   @brief  Iterates through all available SNPs available and finds the first instance which meets the criteria specified by match function
-  @param[in] MatchFunction - Function pointer to caller provided function which will check whether the SNP matches
   @param[in] MatchFunctionContext - The snp context created by this driver's entry point
   @retval  NULL - no matching SNP was found, or invalid input parameter
   @retval  NON-NULL - a pointer to the first matching SNP
+
+  @remark  typically called at TPL_NOTIFY
 **/
 EFI_SIMPLE_NETWORK_PROTOCOL *
 FindMatchingSnp (
-  IN SNP_MATCH_FUNCTION                         MatchFunction,
-  OPTIONAL IN MAC_EMULATION_SNP_NOTIFY_CONTEXT  *MatchFunctionContext
+  IN MAC_EMULATION_SNP_NOTIFY_CONTEXT  *MatchFunctionContext
   )
 {
   EFI_STATUS                   Status;
@@ -116,7 +116,7 @@ FindMatchingSnp (
     for (HandleIdx = 0; HandleIdx < HandleCount; HandleIdx++) {
       Status = gBS->HandleProtocol (SnpHandleBuffer[HandleIdx], &gEfiSimpleNetworkProtocolGuid, (VOID **)&SnpInstance);
 
-      if (!EFI_ERROR (Status) && MatchFunction (SnpHandleBuffer[HandleIdx], SnpInstance, MatchFunctionContext)) {
+      if (!EFI_ERROR (Status) && SnpSupportsMacEmuCheck (SnpHandleBuffer[HandleIdx], SnpInstance, MatchFunctionContext)) {
         break;
       } else {
         SnpInstance = NULL;
@@ -204,7 +204,7 @@ SimpleNetworkProtocolNotify (
 
   MacContext = (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)Context;
 
-  SnpToConfigureEmu = FindMatchingSnp (SnpSupportsMacEmuCheck, MacContext);
+  SnpToConfigureEmu = FindMatchingSnp (MacContext);
 
   SetSnpMacViaContext (SnpToConfigureEmu, MacContext);
 

@@ -10,40 +10,6 @@
 #include "SnpSupportsMacEmuCheckTest.h"
 
 /**
-  Unit test for FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull ()
-
-  @param[in]  Context    [Optional] An optional parameter that enables:
-                         1) test-case reuse with varied parameters and
-                         2) test-case re-entry for Target tests that need a
-                         reboot.  This parameter is a VOID* and it is the
-                         responsibility of the test author to ensure that the
-                         contents are well understood by all test cases that may
-                         consume it.
-
-  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
-                                        case was successful.
-  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
-**/
-UNIT_TEST_STATUS
-EFIAPI
-FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  // Arrange
-  UINTN                        MacContext;
-  EFI_SIMPLE_NETWORK_PROTOCOL  *SnpMatch;
-
-  // Act
-  SnpMatch = FindMatchingSnp (NULL, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext);
-
-  // Assert
-  assert_null (SnpMatch);
-
-  return UNIT_TEST_PASSED;
-}
-
-/**
   Unit test for SnpSupportsMacEmuCheck_ReturnsFalse_WhenSnpHandleNull ()
 
   @param[in]  Context    [Optional] An optional parameter that enables:
@@ -73,7 +39,7 @@ FindMatchingSnp_Asserts_WhenLocateHandleBufferFails (
 
   // Act
   // Assert
-  UT_EXPECT_ASSERT_FAILURE (FindMatchingSnp (SnpSupportsMacEmuCheck, (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext), NULL);
+  UT_EXPECT_ASSERT_FAILURE (FindMatchingSnp ((MAC_EMULATION_SNP_NOTIFY_CONTEXT *)&MacContext), NULL);
 
   return UNIT_TEST_PASSED;
 }
@@ -121,7 +87,7 @@ FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported (
   will_return (HandleProtocol, EFI_SUCCESS);
 
   // Act
-  ActualMatch = FindMatchingSnp (SnpSupportsMacEmuCheck, &MacContext);
+  ActualMatch = FindMatchingSnp (&MacContext);
 
   // Assert
   assert_null (ActualMatch);
@@ -179,7 +145,7 @@ FindMatchingSnp_ReturnsPreviouslyAssignedSnp_WhenMultipleSnpSupportMacEmu (
   will_return (HandleProtocol, EFI_SUCCESS);
 
   // Act
-  ActualMatch = FindMatchingSnp (SnpSupportsMacEmuCheck, &MacContext);
+  ActualMatch = FindMatchingSnp (&MacContext);
 
   // Assert
   assert_ptr_equal (&ExpectedMatch, ActualMatch);
@@ -206,7 +172,6 @@ RegisterFindMatchingSnpTests (
   )
 {
   // Negative Test Cases
-  AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", "FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull", FindMatchingSnp_ReturnsNull_WhenMatchFunctionNull, FindMatchingSnpTestSetup, NULL, NULL);
   AddTestCase (SuiteHandle, "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", "FindMatchingSnp_Asserts_WhenLocateHandleBufferFails", FindMatchingSnp_Asserts_WhenLocateHandleBufferFails, FindMatchingSnpTestSetup, NULL, NULL);
   AddTestCase (SuiteHandle, "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", "FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported", FindMatchingSnp_ReturnsNull_WhenNoHandlesAreSupported, FindMatchingSnpTestSetup, NULL, NULL);
 

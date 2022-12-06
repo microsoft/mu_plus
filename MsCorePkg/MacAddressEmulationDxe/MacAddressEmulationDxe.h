@@ -26,22 +26,10 @@
   ((UINT8 *)&MacAddress)[5]
 
 typedef struct {
-  VOID               *Registration;
   BOOLEAN            Assigned;
   EFI_MAC_ADDRESS    EmulationAddress;
   EFI_MAC_ADDRESS    PermanentAddress;
 } MAC_EMULATION_SNP_NOTIFY_CONTEXT;
-
-/**
-  @brief  Function signature for SNP matching to provide to other functions.
-**/
-typedef
-BOOLEAN
-(*SNP_MATCH_FUNCTION)(
-  IN CONST EFI_HANDLE                                 SnpHandle,
-  IN CONST EFI_SIMPLE_NETWORK_PROTOCOL                *Snp,
-  OPTIONAL IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT  *SnpContext
-  );
 
 /**
   @brief Performs sanity checks to ensure an snp can support mac emulation, and ensures that multiple interfaces are not programmed.
@@ -60,15 +48,13 @@ SnpSupportsMacEmuCheck (
 
 /**
   @brief  Iterates through all available SNPs available and finds the first instance which meets the criteria specified by match function
-  @param[in] MatchFunction - Function pointer to caller provided function which will check whether the SNP matches
   @param[in] MatchFunctionContext - The snp context created by this driver's entry point
   @retval  NULL - no matching SNP was found, or invalid input parameter
   @retval  NON-NULL - a pointer to the first matching SNP
 **/
 EFI_SIMPLE_NETWORK_PROTOCOL *
 FindMatchingSnp (
-  IN SNP_MATCH_FUNCTION                         MatchFunction,
-  OPTIONAL IN MAC_EMULATION_SNP_NOTIFY_CONTEXT  *MatchFunctionContext
+  IN MAC_EMULATION_SNP_NOTIFY_CONTEXT  *MatchFunctionContext
   );
 
 /**
