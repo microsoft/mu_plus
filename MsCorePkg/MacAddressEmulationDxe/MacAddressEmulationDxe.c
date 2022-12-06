@@ -184,7 +184,7 @@ SetSnpMacViaContext (
   @param[in]  Event   - The EFI_EVENT for this notify.
   @param[in]  Context - An instance of MAC_EMULATION_SNP_NOTIFY_CONTEXT.
 
-  @remark  This callback should be at least 1 level higher TPL than netork stack to ensure timely mac programming
+  @remark  This callback should be at least 1 level higher TPL than network stack to ensure timely mac programming
            or network stack start should be delayed until later.
 **/
 VOID
