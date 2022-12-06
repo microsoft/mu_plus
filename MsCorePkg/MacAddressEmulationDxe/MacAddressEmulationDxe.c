@@ -25,6 +25,8 @@
   @param[in] SnpContext - The snp context created by this driver's entry point
   @retval TRUE - the SNP supports mac emulation and can be programmed with the emulated address
   @retval FALSE - the SNP should not be programmed with the emulated address
+
+  @remark  typically called at TPL_NOTIFY
 **/
 BOOLEAN
 SnpSupportsMacEmuCheck (
@@ -102,11 +104,8 @@ FindMatchingSnp (
   if (MatchFunction != NULL) {
     Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleNetworkProtocolGuid, NULL, &HandleCount, &SnpHandleBuffer);
     if (EFI_ERROR (Status) && (Status != EFI_NOT_FOUND)) {
-      ASSERT_EFI_ERROR (Status);
-    }
-
-    if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "[%a]: Unexpected error from LocateHandleBuffer. Status=%r\n", __FUNCTION__, Status));
+      ASSERT_EFI_ERROR (Status);
     }
   } else {
     Status = EFI_INVALID_PARAMETER;
@@ -139,6 +138,7 @@ FindMatchingSnp (
   @param[in] Context - The snp context created by this driver's entry point
 
   @remark  Modifies the provided SNP's station address
+  @remark  typically called at TPL_NOTIFY
 **/
 VOID
 SetSnpMacViaContext (
@@ -152,9 +152,10 @@ SetSnpMacViaContext (
   DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
 
   if ((Snp != NULL) && (Context != NULL)) {
-    // Raising to highest TPL is necessary to avoid any network stack callbacks
-    // such as responding to network packets while the mac address is being
-    // configured in cases where the network stack has already been started.
+    // At this point the SimpleNetworkProtocolNotify puts this at TPL_NOTIFY
+    // to preempt a network stack running at TPL_CALLBACK level.
+    // But since Snp->StationAddress sets the TPL to TPL_CALLBACK we need to
+    // artificially lower to TPL_CALLBACK for this call to work as expected
     OldTpl = gBS->RaiseTPL (TPL_HIGH_LEVEL);
     gBS->RestoreTPL (TPL_CALLBACK);
 
@@ -183,6 +184,8 @@ SetSnpMacViaContext (
   @param[in]  Event   - The EFI_EVENT for this notify.
   @param[in]  Context - An instance of MAC_EMULATION_SNP_NOTIFY_CONTEXT.
 
+  @remark  This callback should be at least 1 level higher TPL than netork stack to ensure timely mac programming
+           or network stack start should be delayed until later.
 **/
 VOID
 EFIAPI
@@ -218,7 +221,6 @@ SimpleNetworkProtocolNotify (
   @param[in]  SystemTable - Pointer to the system table.
 
   @retval  EFI_STATUS code.
-
 **/
 EFI_STATUS
 EFIAPI
