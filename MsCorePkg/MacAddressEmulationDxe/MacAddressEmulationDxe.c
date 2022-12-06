@@ -101,7 +101,7 @@ FindMatchingSnp (
 
   DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
 
-  if (MatchFunction != NULL) {
+  if (MatchFunctionContext != NULL) {
     Status = gBS->LocateHandleBuffer (ByProtocol, &gEfiSimpleNetworkProtocolGuid, NULL, &HandleCount, &SnpHandleBuffer);
     if (EFI_ERROR (Status) && (Status != EFI_NOT_FOUND)) {
       DEBUG ((DEBUG_ERROR, "[%a]: Unexpected error from LocateHandleBuffer. Status=%r\n", __FUNCTION__, Status));
