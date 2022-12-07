@@ -134,7 +134,6 @@ Done:
  *
  * @retval Base address of the associated GIC Redistributor
  */
-STATIC
 UINTN
 GicGetCpuRedistributorBase (
   IN UINTN                  GicRedistributorBase,
@@ -217,7 +216,7 @@ SetupInterruptStatus (
   ArmGicV3SetBinaryPointer (0x7);
 
   // Set priority mask reg to 0xff to allow all priorities through
-  ArmGicV3SetPriorityMask (0xff);
+  ArmGicV3SetPriorityMask (0x10);
 
   // Enable gic cpu interface
   ArmGicV3EnableInterruptInterface ();
@@ -227,6 +226,9 @@ SetupInterruptStatus (
 
   // Enable the GIC Distributor
   ArmGicEnableDistributor (PcdGet64 (PcdGicDistributorBase));
+
+  UINTN IntValue = ArmGicV3AcknowledgeInterrupt ();
+  ArmGicV3EndOfInterrupt (IntValue);
 
   ArmEnableInterrupts ();
   ArmEnableAsynchronousAbort();
@@ -316,6 +318,8 @@ CpuArchHalt (
   VOID
   )
 {
+  ArmEnableInterrupts ();
+  ArmEnableAsynchronousAbort();
   ArmCallWFI ();
 
 
