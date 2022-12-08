@@ -197,20 +197,13 @@ SetupInterruptStatus (
   ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Mair   = ArmGetMAIR ();
   ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Ttbr0  = ArmGetTTBR0BaseAddress ();
 
-  // ArmWriteScr ();
-  UINTN red = GicGetCpuRedistributorBase (PcdGet64 (PcdGicRedistributorsBase), ARM_GIC_ARCH_REVISION_3);
-  MmioWrite32 (
-    red + ARM_GICR_CTLR_FRAME_SIZE + ARM_GIC_ICDISR,
-    0xffffffff
-    );
-
   // Set Priority
-  ArmGicSetInterruptPriority (
-    PcdGet64 (PcdGicDistributorBase),
-    PcdGet64 (PcdGicRedistributorsBase),
-    PcdGet32 (PcdGicSgiIntId),
-    0xF0
-    );
+  // ArmGicSetInterruptPriority (
+  //   PcdGet64 (PcdGicDistributorBase),
+  //   PcdGet64 (PcdGicRedistributorsBase),
+  //   PcdGet32 (PcdGicSgiIntId),
+  //   0xF8
+  //   );
 
   // Set binary point reg to 0x7 (no preemption)
   ArmGicV3SetBinaryPointer (0x7);
