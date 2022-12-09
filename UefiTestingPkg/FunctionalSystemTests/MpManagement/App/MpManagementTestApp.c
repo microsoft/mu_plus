@@ -338,8 +338,11 @@ SuspendAllApsToC1 (
 
   Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C1, 0);
 
-  if (Status != EFI_INVALID_PARAMETER) {
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -361,9 +364,12 @@ SuspendSingleApToC1 (
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
   Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C1, 0);
-
-  if (Status != EFI_INVALID_PARAMETER) {
+DEBUG ((DEBUG_INFO, "%a Here..%r \n", __FUNCTION__, Status));
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -386,8 +392,11 @@ SuspendAllApsToC2 (
 
   Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
 
-  if (Status != EFI_INVALID_PARAMETER) {
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -410,8 +419,11 @@ SuspendSingleApToC2 (
 
   Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
 
-  if (Status != EFI_INVALID_PARAMETER) {
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -434,8 +446,11 @@ SuspendAllApsToC3 (
 
   Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
 
-  if (Status != EFI_INVALID_PARAMETER) {
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -458,8 +473,11 @@ SuspendSingleApToC3 (
 
   Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
 
-  if (Status != EFI_INVALID_PARAMETER) {
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -482,8 +500,11 @@ ResumeAllAps (
 
   Status = mMpManagement->ApResume (mMpManagement, OPERATION_FOR_ALL_APS);
 
-  if (Status != EFI_INVALID_PARAMETER) {
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -506,8 +527,11 @@ ResumeSingleAp (
 
   Status = mMpManagement->ApResume (mMpManagement, mApDutIndex);
 
-  if (Status != EFI_INVALID_PARAMETER) {
+  if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+    // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -675,7 +699,7 @@ MpManagementTestApp (
   AddTestCase (SuspendOperationTests, "Resume all APs from C2 should succeed", "MpManagement.ResumeC2.AllInit", ResumeAllAps, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume all APs from C2 should fail", "MpManagement.ResumeC2.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
 
-  AddTestCase (SuspendOperationTests, "Suspend to C2 on single AP should succeed", "MpManagement.SuspendC2.SingleInit", SuspendSingleApToC2, PowerOnSingleAp, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Suspend to C2 on single AP should succeed", "MpManagement.SuspendC2.SingleInit", SuspendSingleApToC2, PowerOnSingleAp, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double suspend to C2 on single AP should fail", "MpManagement.SuspendC2.SingleDouble", SuspendSingleApToC2, NULL, NULL, &Context);
   AddTestCase (SuspendOperationTests, "Resume single AP from C2 should succeed", "MpManagement.ResumeC2.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume single AP from C2 should fail", "MpManagement.ResumeC2.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
