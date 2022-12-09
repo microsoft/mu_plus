@@ -18,6 +18,7 @@
 #include <Library/HobLib.h>
 #include <Library/ArmGicLib.h>
 #include <Library/ArmSmcLib.h>
+#include <Library/CpuExceptionHandlerLib.h>
 
 #include <IndustryStandard/ArmStdSmc.h>
 #include <Pi/PiMultiPhase.h>
@@ -50,6 +51,35 @@ typedef struct {
 
 BOOLEAN         mExtendedPowerState = FALSE;
 ARM_CORE_INFO   *mCpuInfo           = NULL;
+
+/**
+  EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
+
+  @param  InterruptType    Defines the type of interrupt or exception that
+                           occurred on the processor. This parameter is
+                           processor architecture specific.
+  @param  SystemContext    A pointer to the processor context when
+                           the interrupt occurred on the processor.
+
+  @return None
+
+**/
+VOID
+EFIAPI
+ApIrqInterruptHandler (
+  IN EFI_EXCEPTION_TYPE  InterruptType,
+  IN EFI_SYSTEM_CONTEXT  SystemContext
+  )
+{
+  UINTN IntValue;
+
+  IntValue = ArmGicV3AcknowledgeInterrupt ();
+  if ((IntValue) != PcdGet32 (PcdGicSgiIntId)) {
+    // Some other spurious interrupts should do not happen
+    return;
+  }
+  ArmGicV3EndOfInterrupt (IntValue);
+}
 
 EFI_STATUS
 CpuMpArchInit (
@@ -126,68 +156,13 @@ Done:
   return Status;
 }
 
-/**
- * Return the base address of the GIC redistributor for the current CPU
- *
- * @param Revision  GIC Revision. The GIC redistributor might have a different
- *                  granularity following the GIC revision.
- *
- * @retval Base address of the associated GIC Redistributor
- */
-UINTN
-GicGetCpuRedistributorBase (
-  IN UINTN                  GicRedistributorBase,
-  IN ARM_GIC_ARCH_REVISION  Revision
-  )
-{
-  UINTN   MpId;
-  UINTN   CpuAffinity;
-  UINTN   Affinity;
-  UINTN   GicCpuRedistributorBase;
-  UINT64  TypeRegister;
-
-  MpId = ArmReadMpidr ();
-  // Define CPU affinity as:
-  // Affinity0[0:8], Affinity1[9:15], Affinity2[16:23], Affinity3[24:32]
-  // whereas Affinity3 is defined at [32:39] in MPIDR
-  CpuAffinity = (MpId & (ARM_CORE_AFF0 | ARM_CORE_AFF1 | ARM_CORE_AFF2)) |
-                ((MpId & ARM_CORE_AFF3) >> 8);
-
-  if (Revision < ARM_GIC_ARCH_REVISION_3) {
-    ASSERT_EFI_ERROR (EFI_UNSUPPORTED);
-    return 0;
-  }
-
-  GicCpuRedistributorBase = GicRedistributorBase;
-
-  do {
-    TypeRegister = MmioRead64 (GicCpuRedistributorBase + ARM_GICR_TYPER);
-    Affinity     = ARM_GICR_TYPER_GET_AFFINITY (TypeRegister);
-    if (Affinity == CpuAffinity) {
-      return GicCpuRedistributorBase;
-    }
-
-    // Move to the next GIC Redistributor frame.
-    // The GIC specification does not forbid a mixture of redistributors
-    // with or without support for virtual LPIs, so we test Virtual LPIs
-    // Support (VLPIS) bit for each frame to decide the granularity.
-    // Note: The assumption here is that the redistributors are adjacent
-    // for all CPUs. However this may not be the case for NUMA systems.
-    GicCpuRedistributorBase += (((ARM_GICR_TYPER_VLPIS & TypeRegister) != 0)
-                                ? SIZE_256KB
-                                : SIZE_128KB);
-  } while ((TypeRegister & ARM_GICR_TYPER_LAST) == 0);
-
-  // The Redistributor has not been found for the current CPU
-  ASSERT_EFI_ERROR (EFI_NOT_FOUND);
-  return 0;
-}
-
 EFI_STATUS
 SetupInterruptStatus (
   IN  UINTN       CpuIndex
   )
 {
+  EFI_STATUS Status;
+
   if (mCommonBuffer[CpuIndex].CpuArchBuffer == NULL) {
     return EFI_NOT_READY;
   }
@@ -197,19 +172,14 @@ SetupInterruptStatus (
   ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Mair   = ArmGetMAIR ();
   ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Ttbr0  = ArmGetTTBR0BaseAddress ();
 
-  // Set Priority
-  // ArmGicSetInterruptPriority (
-  //   PcdGet64 (PcdGicDistributorBase),
-  //   PcdGet64 (PcdGicRedistributorsBase),
-  //   PcdGet32 (PcdGicSgiIntId),
-  //   0xF8
-  //   );
+  Status = InitializeCpuExceptionHandlers (NULL);
+  ASSERT_EFI_ERROR (Status);
 
-  // Set binary point reg to 0x7 (no preemption)
-  ArmGicV3SetBinaryPointer (0x7);
-
-  // Set priority mask reg to 0xff to allow all priorities through
-  ArmGicV3SetPriorityMask (0x10);
+  Status = RegisterCpuInterruptHandler (ARM_ARCH_EXCEPTION_IRQ, ApIrqInterruptHandler);
+  if ((Status != EFI_SUCCESS) && (Status != EFI_ALREADY_STARTED)) {
+    // We can take that the handler is already registered, but not other errors
+    ASSERT (FALSE);
+  }
 
   // Enable gic cpu interface
   ArmGicV3EnableInterruptInterface ();
@@ -217,14 +187,7 @@ SetupInterruptStatus (
   // Enable the intended interrupt source
   ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
 
-  // Enable the GIC Distributor
-  ArmGicEnableDistributor (PcdGet64 (PcdGicDistributorBase));
-
-  UINTN IntValue = ArmGicV3AcknowledgeInterrupt ();
-  ArmGicV3EndOfInterrupt (IntValue);
-
   ArmEnableInterrupts ();
-  ArmEnableAsynchronousAbort();
 
   return EFI_SUCCESS;
 }
@@ -240,9 +203,6 @@ RestoreInterruptStatus (
   // Disable the intended interrupt source
   ArmGicDisableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
 
-  // Disable the GIC Distributor
-  ArmGicDisableDistributor (PcdGet64 (PcdGicDistributorBase));
-
   return EFI_SUCCESS;
 }
 
@@ -251,11 +211,6 @@ CpuArchResumeCommon (
   IN  UINTN       CpuIndex
   )
 {
-  UINTN IntValue;
-
-  IntValue = ArmGicV3AcknowledgeInterrupt ();
-  ArmGicV3EndOfInterrupt (IntValue);
-
   return EFI_SUCCESS;
 }
 
@@ -298,6 +253,8 @@ ApEntryPoint (
   ArmEnableDataCache ();
   ArmEnableMmu ();
 
+  Status = SetupInterruptStatus (ProcessorId);
+
   LongJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)), 1);
 
 Done:
@@ -312,11 +269,9 @@ CpuArchHalt (
   )
 {
   ArmEnableInterrupts ();
-  ArmEnableAsynchronousAbort();
+
   ArmCallWFI ();
 
-
-  ASSERT (FALSE);
   return EFI_SUCCESS;
 }
 
