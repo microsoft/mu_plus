@@ -93,7 +93,7 @@ class MemoryRange(object):
         self.PageSplit = False
 
         # Check to see whether we're a type that we recognize.
-        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT", "GuardPage", "Bitwidth"):
+        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "TTEntry", "MAT", "GuardPage", "Bitwidth"):
             raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
 
         # Continue processing according to the data type.
@@ -105,6 +105,8 @@ class MemoryRange(object):
             self.LoadedImageEntryInit(int(args[0], 16), int(args[1], 16), self.RecordType)
         elif self.RecordType in ("PTEntry"):
             self.PteInit(*args)
+        elif self.RecordType in ("TTEntry"):
+            self.TteInit(*args)
         elif self.RecordType in ("GuardPage"):
             self.GuardPageInit(*args)
         elif self.RecordType in ("Bitwidth"):
@@ -198,6 +200,17 @@ class MemoryRange(object):
         self.AddressBitwidth = Bitwidth
         self.PhysicalStart = 0
         self.PhysicalSize = (1 << self.AddressBitwidth)
+    
+    def TteInit(self, PageSize, Valid, ReadWrite, Sharability, Pxn, Uxn, VA, IsTable):
+        self.PageSize = PageSize
+        self.Valid = Valid
+        self.ReadWrite = 0 if (ReadWrite == 1) else 1
+        self.Sharability = Sharability
+        self.Px = 0 if (Pxn == 1) else 1
+        self.Ux = 0 if (Uxn == 1) else 1
+        self.PhysicalStart = VA
+        self.IsTable = IsTable
+        self.PhysicalSize = self.getPageSize()
 
     #
     # Initializes page table entries
@@ -241,39 +254,72 @@ class MemoryRange(object):
         self.CalculateEnd()
 
     # Returns dict describing this object
-    def toDictionary(self):
+    def toDictionary(self, architecture):
         # Pre-process the Section Type
         # Set a reasonable default.
         section_type = "UNEXPECTED VALUE"
-        # If this range is not associated with an image, it does not have
-        # a section type.
-        if self.ImageName == None:
-            section_type = "Not Tracked"
-        else:
-            # if an image range can't be read or executed, this is almost certainly
-            # an error.
-            if self.Nx == 1 and self.ReadWrite == 0:
-                section_type = "ERROR"
-            elif self.Nx == 1:
-                section_type = "DATA"
-            elif self.ReadWrite == 0:
-                section_type = "CODE"
+        if architecture == "x86":
+            # If this range is not associated with an image, it does not have
+            # a section type.
+            if self.ImageName == None:
+                section_type = "Not Tracked"
+            else:
+                # if an image range can't be read or executed, this is almost certainly
+                # an error.
+                if self.Nx == 1 and self.ReadWrite == 0:
+                    section_type = "ERROR"
+                elif self.Nx == 1:
+                    section_type = "DATA"
+                elif self.ReadWrite == 0:
+                    section_type = "CODE"
 
-        return {
-            "Page Size" : self.getPageSizeStr(),
-            "Present" : "Yes" if (self.Present == 1) else "No",
-            "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
-            "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
-            "Privilege" : "User" if (self.UserPrivilege == 1) else "Supervisor",
-            "Start" : "0x{0:010X}".format(self.PhysicalStart),
-            "End" : "0x{0:010X}".format(self.PhysicalEnd),
-            "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
-            "Memory Type" : self.GetMemoryTypeDescription(),
-            "GCD Memory Type" : self.GetGcdTypeDescription(),
-            "Section Type" : section_type,
-            "System Memory": self.GetSystemMemoryType(),
-            "Memory Contents" : self.ImageName,
-            "Partial Page": self.PageSplit}
+            return {
+                "Page Size" : self.getPageSizeStr(),
+                "Present" : "Yes" if (self.Present == 1) else "No",
+                "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
+                "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
+                "Privilege" : "User" if (self.UserPrivilege == 1) else "Supervisor",
+                "Start" : "0x{0:010X}".format(self.PhysicalStart),
+                "End" : "0x{0:010X}".format(self.PhysicalEnd),
+                "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
+                "Memory Type" : self.GetMemoryTypeDescription(),
+                "GCD Memory Type" : self.GetGcdTypeDescription(),
+                "Section Type" : section_type,
+                "System Memory": self.GetSystemMemoryType(),
+                "Memory Contents" : self.ImageName,
+                "Partial Page": self.PageSplit}
+        elif architecture == "Arm64":
+            # If this range is not associated with an image, it does not have
+            # a section type.
+            if self.ImageName == None:
+                section_type = "Not Tracked"
+            else:
+                # if an image range can't be read or executed, this is almost certainly
+                # an error.
+                if self.Ux == 0 and self.ReadWrite == 0:
+                    section_type = "ERROR"
+                elif self.Ux == 0:
+                    section_type = "DATA"
+                elif self.ReadWrite == 0:
+                    section_type = "CODE"
+                else:
+                    section_type = "UNKNOWN"
+
+            return {
+                "Page Size" : self.getPageSizeStr(),
+                "Valid" : "Yes" if (self.Valid == 1) else "No",
+                "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
+                "UX" : "Enabled" if (self.Ux == 1) else "Disabled",
+                "PX" : "Enabled" if (self.Px == 1) else "Disabled",
+                "Start" : "0x{0:010X}".format(self.PhysicalStart),
+                "End" : "0x{0:010X}".format(self.PhysicalEnd),
+                "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
+                "Memory Type" : self.GetMemoryTypeDescription(),
+                "GCD Memory Type" : self.GetGcdTypeDescription(),
+                "Section Type" : section_type,
+                "System Memory": self.GetSystemMemoryType(),
+                "Memory Contents" : self.ImageName,
+                "Partial Page": self.PageSplit}
 
     def overlap(self, compare):
         if(self.PhysicalStart >= compare.PhysicalStart) and (self.PhysicalStart <= compare.PhysicalEnd):
@@ -317,7 +363,7 @@ class MemoryRange(object):
         next.PhysicalStart = end_of_current +1
         return next
 
-    def sameAttributes(self, compare):
+    def sameAttributes(self, compare, architecture):
         if compare is None:
             return False
 
@@ -327,19 +373,7 @@ class MemoryRange(object):
         if (self.PageSize != compare.PageSize):
             return False
 
-        if (self.ReadWrite != compare.ReadWrite):
-            return False
-
-        if (self.MustBe1 != compare.MustBe1):
-            return False
-
-        if (self.Present != compare.Present):
-            return False
-
-        if (self.Nx != compare.Nx):
-            return False
-
-        if(self.UserPrivilege != compare.UserPrivilege):
+        if (self.PageSplit or compare.PageSplit):
             return False
 
         if (self.ImageName != compare.ImageName):
@@ -357,7 +391,36 @@ class MemoryRange(object):
         if (self.Attribute != compare.Attribute):
             return False
 
-        if (self.PageSplit or compare.PageSplit):
+        if (self.ReadWrite != compare.ReadWrite):
+            return False
+
+        if architecture == "x86":
+            if (self.MustBe1 != compare.MustBe1):
+                return False
+
+            if (self.Present != compare.Present):
+                return False
+
+            if (self.Nx != compare.Nx):
+                return False
+
+            if(self.UserPrivilege != compare.UserPrivilege):
+                return False
+
+        elif architecture == "Arm64":
+            if (self.IsTable != compare.IsTable):
+                return False
+
+            if (self.Valid != compare.Valid):
+                return False
+
+            if (self.Ux != compare.Ux):
+                return False
+
+            if (self.Px != compare.Px):
+                return False
+
+        else:
             return False
 
         return True
