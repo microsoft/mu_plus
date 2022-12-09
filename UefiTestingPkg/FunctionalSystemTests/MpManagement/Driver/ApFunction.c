@@ -129,7 +129,7 @@ ApFunction (
         Status = CpuArchClockGate (MyBuffer->TargetPowerState);
         if (EFI_ERROR (Status)) {
           // if we ever return from this power level, something is off.
-          AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "CPU %ld failed to clock gate, and it is off now.\n", ProcessorId);
+          AsciiSPrint (MyBuffer->ApBuffer, MyBuffer->ApBufferSize, "CPU %ld failed to enter stand by, and it is off now.\n", ProcessorId);
           BreakLoop = TRUE;
         } else {
           // Recover from the previously saved jump buffer.

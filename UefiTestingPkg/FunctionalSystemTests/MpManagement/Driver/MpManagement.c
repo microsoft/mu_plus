@@ -31,6 +31,24 @@ UINTN                               mNumCpus        = 0;
 UINTN                               mBspIndex       = 0;
 volatile MP_MANAGEMENT_METADATA     *mCommonBuffer  = NULL;
 
+EFI_STATUS
+EFIAPI
+CpuArchHalt (
+  VOID
+  );
+
+EFI_STATUS
+EFIAPI
+CpuArchClockGate (
+  UINTN         PowerState
+  );
+
+EFI_STATUS
+EFIAPI
+CpuArchSleep (
+  UINTN         PowerState
+  );
+
 VOID
 EFIAPI
 CpuArchWakeFromSleep (
@@ -118,6 +136,69 @@ Done:
     }
   }
 
+  return Status;
+}
+
+EFI_STATUS
+EFIAPI
+MpMgmtBspSuspend (
+  IN  MP_MANAGEMENT_PROTOCOL  *This,
+  IN  AP_POWER_STATE          BspPowerState,
+  IN  UINTN                   TargetPowerLevel,  OPTIONAL
+  IN  UINTN                   TimeoutInMicroseconds
+  )
+{
+  EFI_STATUS  Status;
+
+  if (BspPowerState >= AP_POWER_NUM) {
+    DEBUG ((DEBUG_ERROR, "%a The power state is not supported %d\n", __FUNCTION__, BspPowerState));
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  // set up timer and turn off others...
+
+  switch (BspPowerState) {
+    case AP_POWER_C1:
+      DEBUG ((DEBUG_INFO, "%a See you later.\n", __FUNCTION__));
+      Status = CpuArchHalt ();
+      if (EFI_ERROR (Status)) {
+        // if we ever return from this power level, something is off.
+        DEBUG ((DEBUG_INFO, "%a failed to clock gate, and it is off now - %r.\n", __FUNCTION__, Status));
+      }
+      break;
+    case AP_POWER_C2:
+      DEBUG ((DEBUG_INFO, "%a Siesta time.\n", __FUNCTION__));
+      Status = CpuArchClockGate (TargetPowerLevel);
+      if (EFI_ERROR (Status)) {
+        // if we ever return from this power level, something is off.
+        DEBUG ((DEBUG_INFO, "%a failed to enter stand by, and it is off now - %r.\n", __FUNCTION__, Status));
+      }
+      break;
+    case AP_POWER_C3:
+      DEBUG ((DEBUG_INFO, "%a Good night.\n", __FUNCTION__));
+      // Setup a long jump buffer so that the cores can come back to the same place after resuming.
+      if (SetJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(mCommonBuffer[mBspIndex].JumpBuffer)))) {
+        Status = CpuArchSleep (TargetPowerLevel);
+        if (EFI_ERROR (Status)) {
+          // if we ever return from this power level, something is off.
+          DEBUG ((DEBUG_INFO, "%a failed to sleep, and it is off now - %r.\n", __FUNCTION__, Status));
+        } else {
+          // This does not make much sense, C3 sleep should not come back here.
+          ASSERT (FALSE);
+        }
+      } else {
+        // Got back from the C-states, do some more clean up for BSP.
+      }
+      break;
+    default:
+      ASSERT (FALSE);
+      break;
+  }
+
+  // restore other interrupts...
+
+Done:
   return Status;
 }
 
@@ -495,6 +576,7 @@ Done:
 }
 
 MP_MANAGEMENT_PROTOCOL mMpManagement = {
+  .BspSuspend = MpMgmtBspSuspend,
   .ApOn       = MpMgmtApOn,
   .ApOff      = MpMgmtApOff,
   .ApSuspend  = MpMgmtApSuspend,
