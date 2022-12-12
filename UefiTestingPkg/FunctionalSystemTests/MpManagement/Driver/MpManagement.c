@@ -31,30 +31,6 @@ UINTN                               mNumCpus        = 0;
 UINTN                               mBspIndex       = 0;
 volatile MP_MANAGEMENT_METADATA     *mCommonBuffer  = NULL;
 
-EFI_STATUS
-EFIAPI
-CpuArchHalt (
-  VOID
-  );
-
-EFI_STATUS
-EFIAPI
-CpuArchClockGate (
-  UINTN         PowerState
-  );
-
-EFI_STATUS
-EFIAPI
-CpuArchSleep (
-  UINTN         PowerState
-  );
-
-VOID
-EFIAPI
-CpuArchWakeFromSleep (
-  UINTN   CpuIndex
-  );
-
 /**
   Fetches the number of processors and which processor is the BSP.
 

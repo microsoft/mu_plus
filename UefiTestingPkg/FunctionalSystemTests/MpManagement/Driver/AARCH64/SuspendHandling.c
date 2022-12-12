@@ -18,6 +18,7 @@
 #include <Library/HobLib.h>
 #include <Library/ArmGicLib.h>
 #include <Library/ArmSmcLib.h>
+#include <Library/ArmGenericTimerCounterLib.h>
 #include <Library/CpuExceptionHandlerLib.h>
 
 #include <IndustryStandard/ArmStdSmc.h>
@@ -370,4 +371,108 @@ CpuArchSleep (
 
 Done:
   return Status;
+}
+
+EFI_STATUS
+CpuArchDisableAllInterruptsButSetupTimer (
+  IN  EFI_HANDLE  *Handle,
+  IN  UINTN       TimeoutInMicroseconds
+  )
+{
+  EFI_STATUS  Status;
+  UINTN       Index;
+  UINTN       GicNumInterrupts = 0;
+  UINT64      CounterValue;
+  UINT64      TimerTicks;
+  BOOLEAN     *InterruptStates = NULL;
+
+  if (Handle == NULL) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Done;
+  }
+
+  GicNumInterrupts = ArmGicGetMaxNumInterrupts ((UINT32)PcdGet64 (PcdGicDistributorBase));
+  InterruptStates  = AllocatePool (GicNumInterrupts);
+
+  // This capturing needs to be done at the time of use instead of module init
+  // Because other modules might have programmed interrupts in between.
+  for (Index = 0; Index < GicNumInterrupts; Index++) {
+    InterruptStates[Index] = ArmGicIsInterruptEnabled (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), Index);
+    if (InterruptStates[Index]) {
+      // Only touch the obviously enabled ones
+      // we don't see it enabled it only means UEFI does not get this signal
+      ArmGicDisableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), Index);
+    }
+  }
+
+  // Serenity, it is...
+  if (ArmIsArchTimerImplemented () == 0) {
+    DEBUG ((DEBUG_ERROR, "ARM Architectural Timer is not available in the CPU, hence can't use this Driver \n"));
+    Status = EFI_UNSUPPORTED;
+    goto Done;
+  }
+
+  // Always disable the timer
+  ArmGenericTimerDisableTimer ();
+
+  // TimerTicks  = TimerPeriod in us unit x Frequency
+  //             = (TimerPeriod in s unit x Frequency) x 10^-6
+  TimerTicks = MultU64x32 (TimeoutInMicroseconds , (UINT32)ArmGenericTimerGetTimerFreq ());
+  TimerTicks = DivU64x32 (TimerTicks, 1000000U);
+
+  // Get value of the current timer
+  CounterValue = ArmGenericTimerGetSystemCount ();
+  // Set the interrupt in Current Time + mTimerTick
+  ArmGenericTimerSetCompareVal (CounterValue + TimerTicks);
+
+  UINTN IntValue = ArmGicV3AcknowledgeInterrupt ();
+  ArmGicV3EndOfInterrupt (IntValue);
+
+  // Enable the timer
+  ArmGenericTimerEnableTimer ();
+
+  ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdArmArchTimerSecIntrNum));
+  ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdArmArchTimerIntrNum));
+  ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdArmArchTimerVirtIntrNum));
+  if (PcdGet32 (PcdArmArchTimerHypIntrNum)) {
+    ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdArmArchTimerHypIntrNum));
+  }
+
+  Status = EFI_SUCCESS;
+
+  // The timer will get caught by the original timer interrupt from the tiemr arch protocol
+Done:
+  if (EFI_ERROR (Status)) {
+    if (InterruptStates != NULL) {
+      FreePool (InterruptStates);
+    }
+  } else {
+    *Handle = InterruptStates;
+  }
+  return Status;
+}
+
+EFI_STATUS
+CpuArchRestoreAllInterrupts (
+  IN  EFI_HANDLE  Handle
+  )
+{
+  BOOLEAN     *InterruptStates = NULL;
+  UINTN       Index;
+  UINTN       GicNumInterrupts = 0;
+
+  if (Handle != NULL) {
+    InterruptStates   = Handle;
+    GicNumInterrupts  = ArmGicGetMaxNumInterrupts ((UINT32)PcdGet64 (PcdGicDistributorBase));
+    // Grandma says when you leave the room, remember to turn off the light...
+    for (Index = 0; Index < GicNumInterrupts; Index++) {
+      if (InterruptStates[Index]) {
+        // Again, only touch the obviously enabled ones
+        ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), Index);
+      }
+    }
+    FreePool (InterruptStates);
+  }
+
+  return EFI_SUCCESS;
 }

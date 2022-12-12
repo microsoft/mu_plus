@@ -66,4 +66,39 @@ CpuMpArchInit (
   IN UINTN        NumOfCpus
   );
 
+EFI_STATUS
+EFIAPI
+CpuArchHalt (
+  VOID
+  );
+
+EFI_STATUS
+EFIAPI
+CpuArchClockGate (
+  UINTN         PowerState
+  );
+
+EFI_STATUS
+EFIAPI
+CpuArchSleep (
+  UINTN         PowerState
+  );
+
+VOID
+EFIAPI
+CpuArchWakeFromSleep (
+  UINTN   CpuIndex
+  );
+
+EFI_STATUS
+CpuArchDisableAllInterruptsButSetupTimer (
+  IN  EFI_HANDLE  *Handle,
+  IN  UINTN       TimeoutInMicroseconds
+  );
+
+EFI_STATUS
+CpuArchRestoreAllInterrupts (
+  IN  EFI_HANDLE  Handle
+  );
+
 #endif  //  MP_MANAGEMENT_INTERNAL_H_
