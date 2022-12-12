@@ -125,6 +125,7 @@ MpMgmtBspSuspend (
   )
 {
   EFI_STATUS  Status;
+  EFI_HANDLE  Handle;
 
   if (BspPowerState >= AP_POWER_NUM) {
     DEBUG ((DEBUG_ERROR, "%a The power state is not supported %d\n", __FUNCTION__, BspPowerState));
@@ -133,6 +134,7 @@ MpMgmtBspSuspend (
   }
 
   // set up timer and turn off others...
+  Status = CpuArchDisableAllInterruptsButSetupTimer (&Handle, TimeoutInMicroseconds);
 
   switch (BspPowerState) {
     case AP_POWER_C1:
@@ -154,7 +156,7 @@ MpMgmtBspSuspend (
     case AP_POWER_C3:
       DEBUG ((DEBUG_INFO, "%a Good night.\n", __FUNCTION__));
       // Setup a long jump buffer so that the cores can come back to the same place after resuming.
-      if (SetJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(mCommonBuffer[mBspIndex].JumpBuffer)))) {
+      if (SetJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(mCommonBuffer[mBspIndex].JumpBuffer))) == 0) {
         Status = CpuArchSleep (TargetPowerLevel);
         if (EFI_ERROR (Status)) {
           // if we ever return from this power level, something is off.
@@ -172,9 +174,8 @@ MpMgmtBspSuspend (
       break;
   }
 
-  // restore other interrupts...
-
 Done:
+  Status = CpuArchRestoreAllInterrupts (Handle);
   return Status;
 }
 

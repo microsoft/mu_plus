@@ -50,11 +50,18 @@
   ArmGicLib
   ArmSmcLib
   HobLib
+  ArmGenericTimerCounterLib
 
 [FixedPcd.AARCH64]
   gArmTokenSpaceGuid.PcdGicDistributorBase
   gArmTokenSpaceGuid.PcdGicRedistributorsBase
   gArmTokenSpaceGuid.PcdGicSgiIntId
+
+[Pcd.AARCH64]
+  gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
+  gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
+  gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
+  gArmTokenSpaceGuid.PcdArmArchTimerHypIntrNum
 
 [Guids.AARCH64]
   gArmMpCoreInfoGuid
