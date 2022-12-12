@@ -15,6 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Library/TimerLib.h>
 #include <Protocol/MpService.h>
 #include <Protocol/MpManagement.h>
 
@@ -364,7 +365,7 @@ SuspendSingleApToC1 (
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
   Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C1, 0);
-DEBUG ((DEBUG_INFO, "%a Here..%r \n", __FUNCTION__, Status));
+
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -537,6 +538,81 @@ ResumeSingleAp (
 
   return UNIT_TEST_PASSED;
 } // ResumeSingleAp()
+
+UNIT_TEST_STATUS
+EFIAPI
+SuspendSingleBspToC1 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+  UINT64      StartTick;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  StartTick = GetPerformanceCounter ();
+
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C1, 0, 1000000);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > 1000000000);
+
+  return UNIT_TEST_PASSED;
+} // SuspendSingleBspToC1()
+
+UNIT_TEST_STATUS
+EFIAPI
+SuspendSingleBspToC2 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+  UINT64      StartTick;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  StartTick = GetPerformanceCounter ();
+
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState), 1000000);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > 1000000000);
+
+  return UNIT_TEST_PASSED;
+} // SuspendSingleBspToC2()
+
+UNIT_TEST_STATUS
+EFIAPI
+SuspendSingleBspToC3 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+  UINT64      StartTick;
+
+  if (mMpManagement == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
+
+  StartTick = GetPerformanceCounter ();
+
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState), 1000000);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > 1000000000);
+
+  return UNIT_TEST_PASSED;
+} // SuspendSingleBspToC3()
 
 /**
   This function will gather information and configure the
@@ -713,6 +789,10 @@ MpManagementTestApp (
   AddTestCase (SuspendOperationTests, "Double suspend to C3 on single AP should fail", "MpManagement.SuspendC3.SingleDouble", SuspendSingleApToC3, NULL, NULL, &Context);
   AddTestCase (SuspendOperationTests, "Resume single AP from C3 should succeed", "MpManagement.ResumeC3.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume single AP from C3 should fail", "MpManagement.ResumeC3.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
+
+  AddTestCase (SuspendOperationTests, "Suspend to C1 on BSP should succeed after a timeout", "MpManagement.SuspendC1.BSP", SuspendSingleBspToC1, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Suspend to C2 on BSP should succeed after a timeout", "MpManagement.SuspendC2.BSP", SuspendSingleBspToC2, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Suspend to C3 on BSP should succeed after a timeout", "MpManagement.SuspendC3.BSP", SuspendSingleBspToC3, NULL, NULL, NULL);
 
   //
   // Execute the tests.

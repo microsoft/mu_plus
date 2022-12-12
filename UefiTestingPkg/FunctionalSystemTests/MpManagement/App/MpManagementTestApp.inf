@@ -33,6 +33,7 @@
   DebugLib
   UnitTestLib
   PrintLib
+  TimerLib
 
 [Pcd]
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformC2PowerState
