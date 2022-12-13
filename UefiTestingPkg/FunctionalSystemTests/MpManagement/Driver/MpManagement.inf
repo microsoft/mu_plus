@@ -57,6 +57,7 @@
 [FixedPcd.AARCH64]
   gArmTokenSpaceGuid.PcdGicDistributorBase
   gArmTokenSpaceGuid.PcdGicRedistributorsBase
+  gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
   gArmTokenSpaceGuid.PcdGicSgiIntId
 
 [Pcd.AARCH64]

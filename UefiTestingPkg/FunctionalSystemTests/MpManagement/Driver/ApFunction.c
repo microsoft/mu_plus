@@ -19,22 +19,12 @@
 
 #include "MpManagementInternal.h"
 
-EFI_STATUS
-SetupInterruptStatus (
-  IN  UINTN       CpuIndex
-  );
-
-EFI_STATUS
-CpuArchResumeCommon (
-  IN  UINTN       CpuIndex
-  );
-
-EFI_STATUS
-RestoreInterruptStatus (
-  IN  UINTN       CpuIndex
-  );
-
 /** The procedure to run with the MP Services interface.
+
+  This routine manages the state machine of APs, checking
+  and acknowledging BSP commands.
+
+  The exit of this routine will leave to CPU power off.
 
   @param Arg The procedure argument.
 

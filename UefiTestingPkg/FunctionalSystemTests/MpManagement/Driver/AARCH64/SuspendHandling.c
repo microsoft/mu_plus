@@ -1,5 +1,5 @@
 /** @file
-  TODO: Populate this.
+  Architecture specific routines to support CPU suspend functionalities.
 
   Copyright (c) 2013-2020, ARM Limited and Contributors. All rights reserved.
   Copyright (c) Microsoft Corporation.
@@ -30,6 +30,7 @@
 
 #include "MpManagementInternal.h"
 
+/* Features flags for CPU SUSPEND power state parameter format. Bits [1:1] */
 #define FF_PSTATE_SHIFT           1
 #define FF_PSTATE_ORIG            0
 #define FF_PSTATE_EXTENDED        1
@@ -40,12 +41,16 @@
 
 #define FF_SUSPEND_MASK            ((1 << FF_PSTATE_SHIFT) | (1 << FF_MODE_SUPPORT_SHIFT))
 
+/* PSCI CPU_SUSPEND 'power_state' parameter specific defines */
 #define PSTATE_TYPE_SHIFT_EX      30
 #define PSTATE_TYPE_SHIFT_ORIG    16
 #define PSTATE_TYPE_MASK          1
 #define PSTATE_TYPE_STANDBY       0x0
 #define PSTATE_TYPE_POWERDOWN     0x1
 
+/*
+  Architectural metadata structure for ARM context losing resume routines.
+ */
 typedef struct {
   VOID                         *Ttbr0;
   UINTN                        Tcr;
@@ -64,9 +69,9 @@ ReadEl0Stack (
 
 BOOLEAN         mExtendedPowerState = FALSE;
 ARM_CORE_INFO   *mCpuInfo           = NULL;
-UINTN           mBspVbar               = 0;
-UINTN           mBspHcrReg             = 0;
-UINTN           mBspEl0Sp              = 0;
+UINTN           mBspVbar            = 0;
+UINTN           mBspHcrReg          = 0;
+UINTN           mBspEl0Sp           = 0;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -88,15 +93,28 @@ ApIrqInterruptHandler (
   )
 {
   UINTN IntValue;
+  UINTN InterruptId;
 
-  IntValue = ArmGicV3AcknowledgeInterrupt ();
+  IntValue = ArmGicAcknowledgeInterrupt (PcdGet64 (PcdGicInterruptInterfaceBase), &InterruptId);
   if ((IntValue) != PcdGet32 (PcdGicSgiIntId)) {
     // Some other spurious interrupts should do not happen
     return;
   }
-  ArmGicV3EndOfInterrupt (IntValue);
+
+  ArmGicEndOfInterrupt (PcdGet64 (PcdGicInterruptInterfaceBase), IntValue);
 }
 
+/**
+  Archtectural initialization routine, allowing different CPU architectures
+  to prepare their own register data buffer, data cache, etc.
+
+  @param  NumOfCpus     The number of CPUs supported on this platform.
+
+  @return EFI_SUCCESS           The routine completed successfully.
+  @return EFI_DEVICE_ERROR      The SMC feature query failed.
+  @return EFI_OUT_OF_RESOURCES  The buffer allocation failed.
+  @return EFI_NOT_FOUND         Failed to locate MP information Hob.
+**/
 EFI_STATUS
 CpuMpArchInit (
   IN UINTN        NumOfCpus
@@ -172,8 +190,18 @@ Done:
   return Status;
 }
 
+/**
+  This routine will recover BSP specific registers and states after
+  a context losing resumption.
+
+  The main goal is to make the BSP to recover to the state prior to
+  deep sleep (only timer interrupts are enabled).
+
+  @return EFI_SUCCESS           The routine always succeeds.
+**/
+STATIC
 EFI_STATUS
-RestoreBspInterrupts (
+RestoreBspStates (
   VOID
   )
 {
@@ -188,13 +216,23 @@ RestoreBspInterrupts (
   ArmGicV3SetPriorityMask (0xff);
 
   // Enable gic cpu interface
-  ArmGicV3EnableInterruptInterface ();
+  ArmGicEnableInterruptInterface (PcdGet64 (PcdGicInterruptInterfaceBase));
 
   ArmEnableInterrupts ();
 
   return EFI_SUCCESS;
 }
 
+/**
+  This routine will setup/recover the AP specific interrupt states.
+
+  The main goal is to enable the AP to accept software generated
+  interrupts sent from BSP.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return EFI_SUCCESS   The routine always succeeds.
+**/
 EFI_STATUS
 SetupInterruptStatus (
   IN  UINTN       CpuIndex
@@ -221,7 +259,7 @@ SetupInterruptStatus (
   }
 
   // Enable gic cpu interface
-  ArmGicV3EnableInterruptInterface ();
+  ArmGicEnableInterruptInterface (PcdGet64 (PcdGicInterruptInterfaceBase));
 
   // Enable the intended interrupt source
   ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
@@ -231,13 +269,21 @@ SetupInterruptStatus (
   return EFI_SUCCESS;
 }
 
+/**
+  This routine will restore the AP specific interrupt states after
+  the entire AP routine is about to be completed.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return EFI_SUCCESS   The routine always succeeds.
+**/
 EFI_STATUS
 RestoreInterruptStatus (
   IN  UINTN       CpuIndex
   )
 {
   // Disable gic cpu interface
-  ArmGicV3DisableInterruptInterface ();
+  ArmGicDisableInterruptInterface (PcdGet64 (PcdGicInterruptInterfaceBase));
 
   // Disable the intended interrupt source
   ArmGicDisableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
@@ -245,6 +291,14 @@ RestoreInterruptStatus (
   return EFI_SUCCESS;
 }
 
+/**
+  This routine will perform common architectural restores after all
+  types of suspend resumption.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return EFI_SUCCESS   The routine always succeeds.
+**/
 EFI_STATUS
 CpuArchResumeCommon (
   IN  UINTN       CpuIndex
@@ -253,6 +307,13 @@ CpuArchResumeCommon (
   return EFI_SUCCESS;
 }
 
+/**
+  This routine is invoked by BSP to wake up suspended APs.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return None.
+**/
 VOID
 EFIAPI
 CpuArchWakeFromSleep (
@@ -264,6 +325,17 @@ CpuArchWakeFromSleep (
   ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
 }
 
+/**
+  This routine is released by TF-A after waking up from context
+  losing suspend. Could be run by both BSP and APs.
+
+  After fundamental architectural hardware restoration, the system
+  should use the prepared jump buffer to return to the original
+  state machine/routine.
+
+  @return This function should not return.
+**/
+STATIC
 VOID
 ApEntryPoint (
   VOID
@@ -295,7 +367,7 @@ ApEntryPoint (
   if (ProcessorId != mBspIndex) {
     Status = SetupInterruptStatus (ProcessorId);
   } else {
-    Status = RestoreBspInterrupts ();
+    Status = RestoreBspStates ();
   }
 
   LongJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)), 1);
@@ -305,6 +377,16 @@ Done:
   ASSERT (FALSE);
 }
 
+/**
+  This routine will be used for suspending the currently running
+  processor to halt state. It could be run by both BSP and APs.
+
+  Given the state definition, this function will halt execution
+  until woken up.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 EFIAPI
 CpuArchHalt (
@@ -318,9 +400,15 @@ CpuArchHalt (
   return EFI_SUCCESS;
 }
 
+/**
+  Helper routine to extract the power type from input power level.
+
+  @param  PowerLevel    The target power level of CPU suspension.
+
+  @return One or a combination of the PSTATE_TYPE_* definitions.
+**/
 STATIC
-EFI_STATUS
-EFIAPI
+UINTN
 GetPowerType (
   IN UINTN          PowerLevel
   )
@@ -336,6 +424,17 @@ GetPowerType (
   return PowerType;
 }
 
+/**
+  Helper routine to abstract PSCI command to suspend CPUs.
+
+  @param  PowerLevel    The target power level of CPU suspension.
+  @param  EntryPoint    Optional paramater to specify jump point
+                        when system resumes from context losing suspend.
+  @param  ContextId     Optional paramater to specify context ID
+                        when system suspends using PSCI commands.
+
+  @return One or a combination of the PSTATE_TYPE_* definitions.
+**/
 STATIC
 EFI_STATUS
 EFIAPI
@@ -373,10 +472,25 @@ ArmPsciSuspendHelper (
   return Status;
 }
 
+/**
+  This routine will be used for suspending the currently running
+  processor to clock gate state. It could be run by both BSP and APs.
+
+  This architectural specific routine should validate whether the
+  power state is supported for clock gate suspension.
+
+  Given the state definition, this function will halt execution
+  until woken up.
+
+  @param  PowerState    The intended power state.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 EFIAPI
 CpuArchClockGate (
-  IN UINTN         PowerLevel
+  IN UINTN         PowerState   OPTIONAL
   )
 {
   EFI_STATUS  Status;
@@ -394,10 +508,26 @@ Done:
   return Status;
 }
 
+/**
+  This routine will be used for suspending the currently running
+  processor to sleep state. It could be run by both BSP and APs.
+
+  This architectural specific routine should validate whether the
+  power state is supported for clock gate suspension.
+
+  Given the state definition, this function will make the CPU to
+  resume without any context. The caller should handle the data
+  saving and restoration accordingly.
+
+  @param  PowerState    The intended power state.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 EFIAPI
 CpuArchSleep (
-  IN UINTN         PowerLevel
+  IN UINTN         PowerState   OPTIONAL
   )
 {
   EFI_STATUS  Status;
@@ -415,6 +545,17 @@ Done:
   return Status;
 }
 
+/**
+  This routine will be used for disabling all the current interrupts,
+  but set up timer interrup to prepare for BSP suspension. It is only
+  run by BSP.
+
+  @param  Handle        An EFI_HANDLE that is used for the BSP to
+                        manage and cache current interrupts' status.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 CpuArchDisableAllInterruptsButSetupTimer (
   IN  EFI_HANDLE  *Handle,
@@ -424,6 +565,8 @@ CpuArchDisableAllInterruptsButSetupTimer (
   EFI_STATUS  Status;
   UINTN       Index;
   UINTN       GicNumInterrupts = 0;
+  UINTN       IntValue;
+  UINTN       InterruptId;
   UINT64      CounterValue;
   UINT64      TimerTicks;
   BOOLEAN     *InterruptStates = NULL;
@@ -457,8 +600,8 @@ CpuArchDisableAllInterruptsButSetupTimer (
   }
 
   // Clear any pending interrupts after they are all disabled
-  UINTN IntValue = ArmGicV3AcknowledgeInterrupt ();
-  ArmGicV3EndOfInterrupt (IntValue);
+  IntValue = ArmGicAcknowledgeInterrupt (PcdGet64 (PcdGicInterruptInterfaceBase), &InterruptId);
+  ArmGicEndOfInterrupt (PcdGet64 (PcdGicInterruptInterfaceBase), IntValue);
 
   // Serenity, it is...
   if (ArmIsArchTimerImplemented () == 0) {
@@ -504,6 +647,17 @@ Done:
   return Status;
 }
 
+/**
+  This routine will be used for retoring all the interrupts, from
+  previously prepared EFI_HANDLE before BSP finishes timed suspension
+  routine. It is only run by BSP.
+
+  @param  Handle        An EFI_HANDLE that is used for the BSP to
+                        manage and cache current interrupts' status.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 CpuArchRestoreAllInterrupts (
   IN  EFI_HANDLE  Handle

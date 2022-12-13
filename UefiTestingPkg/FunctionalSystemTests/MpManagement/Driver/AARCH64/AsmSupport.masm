@@ -1,17 +1,8 @@
+// Assembly code support for MP management driver
 //
-// Copyright (c) 2011 - 2014 ARM LTD. All rights reserved.<BR>
-// Portion of Copyright (c) 2014 NVIDIA Corporation. All rights reserved.<BR>
-// Copyright (c) 2016 HP Development Company, L.P.
+// Copyright (c) Microsoft Corporation.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
 //
-// This program and the accompanying materials
-// are licensed and made available under the terms and conditions of the BSD License
-// which accompanies this distribution.  The full text of the license may be found at
-// http://opensource.org/licenses/bsd-license.php
-//
-// THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
-// WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
-//
-//------------------------------------------------------------------------------
 
 #include <Chipset/AArch64.h>
 
@@ -19,6 +10,10 @@
 
     EXPORT ReadEl0Stack
 
+// UINTN
+// ReadEl0Stack (
+//   VOID
+//   );
 ReadEl0Stack PROC
   mrs     x0, sp_el0
   ret

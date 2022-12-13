@@ -62,41 +62,164 @@ ApFunction (
   IN OUT VOID  *Arg
   );
 
+/**
+  Archtectural initialization routine, allowing different CPU architectures
+  to prepare their own register data buffer, data cache, etc.
+
+  @param  NumOfCpus     The number of CPUs supported on this platform.
+
+  @return EFI_SUCCESS   The routine completed successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 CpuMpArchInit (
   IN UINTN        NumOfCpus
   );
 
+/**
+  This routine will setup/recover the AP specific interrupt states.
+
+  The main goal is to enable the AP to accept software generated
+  interrupts sent from BSP.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return EFI_SUCCESS   The routine completed successfully.
+  @return Others        The routine failed during operation.
+**/
+EFI_STATUS
+SetupInterruptStatus (
+  IN  UINTN       CpuIndex
+  );
+
+/**
+  This routine will restore the AP specific interrupt states after
+  the entire AP routine is about to be completed.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return EFI_SUCCESS   The routine completed successfully.
+  @return Others        The routine failed during operation.
+**/
+EFI_STATUS
+RestoreInterruptStatus (
+  IN  UINTN       CpuIndex
+  );
+
+/**
+  This routine will perform common architectural restores after all
+  types of suspend resumption.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return EFI_SUCCESS   The routine completed successfully.
+  @return Others        The routine failed during operation.
+**/
+EFI_STATUS
+CpuArchResumeCommon (
+  IN  UINTN       CpuIndex
+  );
+
+/**
+  This routine will be used for suspending the currently running
+  processor to halt state. It could be run by both BSP and APs.
+
+  Given the state definition, this function will halt execution
+  until woken up.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 EFIAPI
 CpuArchHalt (
   VOID
   );
 
+/**
+  This routine will be used for suspending the currently running
+  processor to clock gate state. It could be run by both BSP and APs.
+
+  This architectural specific routine should validate whether the
+  power state is supported for clock gate suspension.
+
+  Given the state definition, this function will halt execution
+  until woken up.
+
+  @param  PowerState    The intended power state.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 EFIAPI
 CpuArchClockGate (
-  UINTN         PowerState
+  IN UINTN         PowerState   OPTIONAL
   );
 
+/**
+  This routine will be used for suspending the currently running
+  processor to sleep state. It could be run by both BSP and APs.
+
+  This architectural specific routine should validate whether the
+  power state is supported for clock gate suspension.
+
+  Given the state definition, this function will make the CPU to
+  resume without any context. The caller should handle the data
+  saving and restoration accordingly.
+
+  @param  PowerState    The intended power state.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 EFIAPI
 CpuArchSleep (
-  UINTN         PowerState
+  IN UINTN         PowerState   OPTIONAL
   );
 
+/**
+  This routine is invoked by BSP to wake up suspended APs.
+
+  @param  CpuIndex      The number of intended CPU to be setup.
+
+  @return None.
+**/
 VOID
 EFIAPI
 CpuArchWakeFromSleep (
   UINTN   CpuIndex
   );
 
+/**
+  This routine will be used for disabling all the current interrupts,
+  but set up timer interrup to prepare for BSP suspension. It is only
+  run by BSP.
+
+  @param  Handle        An EFI_HANDLE that is used for the BSP to
+                        manage and cache current interrupts' status.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 CpuArchDisableAllInterruptsButSetupTimer (
   IN  EFI_HANDLE  *Handle,
   IN  UINTN       TimeoutInMicroseconds
   );
 
+/**
+  This routine will be used for retoring all the interrupts, from
+  previously prepared EFI_HANDLE before BSP finishes timed suspension
+  routine. It is only run by BSP.
+
+  @param  Handle        An EFI_HANDLE that is used for the BSP to
+                        manage and cache current interrupts' status.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
 EFI_STATUS
 CpuArchRestoreAllInterrupts (
   IN  EFI_HANDLE  Handle
