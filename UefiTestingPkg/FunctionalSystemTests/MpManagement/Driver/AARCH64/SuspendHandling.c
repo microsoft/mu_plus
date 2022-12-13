@@ -20,10 +20,12 @@
 #include <Library/ArmSmcLib.h>
 #include <Library/ArmGenericTimerCounterLib.h>
 #include <Library/CpuExceptionHandlerLib.h>
+#include <Library/UefiBootServicesTableLib.h>
 
 #include <IndustryStandard/ArmStdSmc.h>
 #include <Pi/PiMultiPhase.h>
 #include <Protocol/MpService.h>
+#include <Protocol/Timer.h>
 #include <Guid/ArmMpCoreInfo.h>
 
 #include "MpManagementInternal.h"
@@ -50,8 +52,21 @@ typedef struct {
   UINTN                        Mair;
 } AARCH64_AP_BUFFER;
 
+VOID
+RegisterEl0Stack (
+  IN  VOID  *Stack
+  );
+
+UINTN
+ReadEl0Stack (
+  VOID
+  );
+
 BOOLEAN         mExtendedPowerState = FALSE;
 ARM_CORE_INFO   *mCpuInfo           = NULL;
+UINTN           mBspVbar               = 0;
+UINTN           mBspHcrReg             = 0;
+UINTN           mBspEl0Sp              = 0;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -158,6 +173,29 @@ Done:
 }
 
 EFI_STATUS
+RestoreBspInterrupts (
+  VOID
+  )
+{
+  RegisterEl0Stack ((VOID*)mBspEl0Sp);
+  ArmWriteHcr (mBspHcrReg);
+  ArmWriteVBar (mBspVbar);
+
+  // Set binary point reg to 0x7 (no preemption)
+  ArmGicV3SetBinaryPointer (0x7);
+
+  // Set priority mask reg to 0xff to allow all priorities through
+  ArmGicV3SetPriorityMask (0xff);
+
+  // Enable gic cpu interface
+  ArmGicV3EnableInterruptInterface ();
+
+  ArmEnableInterrupts ();
+
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
 SetupInterruptStatus (
   IN  UINTN       CpuIndex
   )
@@ -254,7 +292,11 @@ ApEntryPoint (
   ArmEnableDataCache ();
   ArmEnableMmu ();
 
-  Status = SetupInterruptStatus (ProcessorId);
+  if (ProcessorId != mBspIndex) {
+    Status = SetupInterruptStatus (ProcessorId);
+  } else {
+    Status = RestoreBspInterrupts ();
+  }
 
   LongJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)), 1);
 
@@ -391,6 +433,15 @@ CpuArchDisableAllInterruptsButSetupTimer (
     goto Done;
   }
 
+  // Cache the TCR, MAIR and Ttbr0 values, like MP services do
+  ((AARCH64_AP_BUFFER*)mCommonBuffer[mBspIndex].CpuArchBuffer)->Tcr    = ArmGetTCR ();
+  ((AARCH64_AP_BUFFER*)mCommonBuffer[mBspIndex].CpuArchBuffer)->Mair   = ArmGetMAIR ();
+  ((AARCH64_AP_BUFFER*)mCommonBuffer[mBspIndex].CpuArchBuffer)->Ttbr0  = ArmGetTTBR0BaseAddress ();
+
+  mBspVbar   = ArmReadVBar ();
+  mBspHcrReg = ArmReadHcr ();
+  mBspEl0Sp  = ReadEl0Stack ();
+
   GicNumInterrupts = ArmGicGetMaxNumInterrupts ((UINT32)PcdGet64 (PcdGicDistributorBase));
   InterruptStates  = AllocatePool (GicNumInterrupts);
 
@@ -404,6 +455,10 @@ CpuArchDisableAllInterruptsButSetupTimer (
       ArmGicDisableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), Index);
     }
   }
+
+  // Clear any pending interrupts after they are all disabled
+  UINTN IntValue = ArmGicV3AcknowledgeInterrupt ();
+  ArmGicV3EndOfInterrupt (IntValue);
 
   // Serenity, it is...
   if (ArmIsArchTimerImplemented () == 0) {
@@ -424,9 +479,6 @@ CpuArchDisableAllInterruptsButSetupTimer (
   CounterValue = ArmGenericTimerGetSystemCount ();
   // Set the interrupt in Current Time + mTimerTick
   ArmGenericTimerSetCompareVal (CounterValue + TimerTicks);
-
-  UINTN IntValue = ArmGicV3AcknowledgeInterrupt ();
-  ArmGicV3EndOfInterrupt (IntValue);
 
   // Enable the timer
   ArmGenericTimerEnableTimer ();
@@ -457,9 +509,12 @@ CpuArchRestoreAllInterrupts (
   IN  EFI_HANDLE  Handle
   )
 {
-  BOOLEAN     *InterruptStates = NULL;
-  UINTN       Index;
-  UINTN       GicNumInterrupts = 0;
+  BOOLEAN                 *InterruptStates = NULL;
+  UINTN                   Index;
+  UINTN                   GicNumInterrupts = 0;
+  UINT64                  TimerPeriod;
+  EFI_STATUS              Status;
+  EFI_TIMER_ARCH_PROTOCOL *TimerProtocol;
 
   if (Handle != NULL) {
     InterruptStates   = Handle;
@@ -467,12 +522,37 @@ CpuArchRestoreAllInterrupts (
     // Grandma says when you leave the room, remember to turn off the light...
     for (Index = 0; Index < GicNumInterrupts; Index++) {
       if (InterruptStates[Index]) {
-        // Again, only touch the obviously enabled ones
+        // First touch the obviously enabled ones
         ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), Index);
       }
     }
     FreePool (InterruptStates);
   }
 
-  return EFI_SUCCESS;
+  Status = gBS->LocateProtocol (
+                &gEfiTimerArchProtocolGuid,
+                NULL,
+                (VOID **)&TimerProtocol
+                );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Timer protocol is not located - %r\n", Status));
+    goto Done;
+  }
+
+  // Grab the timer protocol cached value
+  Status = TimerProtocol->GetTimerPeriod (TimerProtocol, &TimerPeriod);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Timer period is not fetched - %r\n", Status));
+    goto Done;
+  }
+
+  // And set it back, trying to make it looks like nothing ever happened...
+  Status = TimerProtocol->SetTimerPeriod (TimerProtocol, TimerPeriod);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Timer period is not recovered - %r\n", Status));
+    goto Done;
+  }
+
+Done:
+  return Status;
 }

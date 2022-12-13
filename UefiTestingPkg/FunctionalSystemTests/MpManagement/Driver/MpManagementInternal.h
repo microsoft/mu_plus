@@ -47,6 +47,7 @@ typedef struct {
 #pragma pack (pop)
 
 extern UINTN                              mNumCpus;
+extern UINTN                              mBspIndex;
 extern volatile MP_MANAGEMENT_METADATA    *mCommonBuffer;
 extern EFI_MP_SERVICES_PROTOCOL           *mMpServices;
 

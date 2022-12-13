@@ -29,6 +29,8 @@
 
 [Sources.AARCH64]
   AARCH64/SuspendHandling.c
+  AARCH64/AsmSupport.S    | GCC
+  AARCH64/AsmSupport.masm | MSFT
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -70,6 +72,9 @@
   gEfiMpServiceProtocolGuid     ## CONSUMES
   gEfiLoadedImageProtocolGuid   ## CONSUMES
   gMpManagementProtocolGuid     ## PRODUCES
+
+[Protocols]
+  gEfiTimerArchProtocolGuid     ## CONSUMES
 
 [Depex]
   gEfiMpServiceProtocolGuid
