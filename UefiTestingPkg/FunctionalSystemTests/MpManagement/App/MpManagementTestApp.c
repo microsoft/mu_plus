@@ -1,8 +1,8 @@
 /** @file
-TODO: Populate this.
+  UEFI shell unit test application for MP management driver.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
-SPDX-License-Identifier: BSD-2-Clause-Patent
+  Copyright (C) Microsoft Corporation. All rights reserved.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
@@ -24,6 +24,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_VERSION     "1.0"
 
 #define PROTOCOL_DOUBLE_CHECK     1
+#define BSP_SUSPEND_TIMER_US      1000000
+#define US_TO_NS(a)                (a * 1000)
 
 MP_MANAGEMENT_PROTOCOL  *mMpManagement  = NULL;
 UINTN                   mBspIndex       = 0;
@@ -167,6 +169,20 @@ PowerOffSingleAp (
 /// ================================================================================================
 /// ================================================================================================
 
+/**
+  Unit test for turning on a all APs.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the APs to turn on properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the APs
+                                           already being turned on and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 TurnOnAllAps (
@@ -194,6 +210,20 @@ TurnOnAllAps (
   return UNIT_TEST_PASSED;
 } // TurnOnAllAps()
 
+/**
+  Unit test for turning off a all APs.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the APs to turn off properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the APs
+                                           already being turned off and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 TurnOffAllAps (
@@ -211,7 +241,7 @@ TurnOffAllAps (
   Status = mMpManagement->ApOff (mMpManagement, OPERATION_FOR_ALL_APS);
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we power them all off, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -221,6 +251,20 @@ TurnOffAllAps (
   return UNIT_TEST_PASSED;
 } // TurnOffAllAps()
 
+/**
+  Unit test for turning on a single AP.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the single AP to turn on properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the single AP
+                                           already being turned on and return with expected error
+                                           code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 TurnOnSingleAp (
@@ -238,7 +282,7 @@ TurnOnSingleAp (
   Status = mMpManagement->ApOn (mMpManagement, mApDutIndex);
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we power a single one on, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -248,6 +292,20 @@ TurnOnSingleAp (
   return UNIT_TEST_PASSED;
 } // TurnOnSingleAp()
 
+/**
+  Unit test for turning off a single AP.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the single AP to turn off properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the single AP
+                                           already being turned off and return with expected error
+                                           code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 TurnOffSingleAp (
@@ -265,7 +323,7 @@ TurnOffSingleAp (
   Status = mMpManagement->ApOff (mMpManagement, mApDutIndex);
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we power a single one off, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -275,6 +333,16 @@ TurnOffSingleAp (
   return UNIT_TEST_PASSED;
 } // TurnOffSingleAp()
 
+/**
+  Unit test for turning on the BSP with AP interfaces.
+
+  @param[in] Context                    An optional parameter unused here
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 TurnOnBsp (
@@ -292,13 +360,23 @@ TurnOnBsp (
   Status = mMpManagement->ApOn (mMpManagement, mBspIndex);
 
   if (Status != EFI_INVALID_PARAMETER) {
-    // If this is the first time we power them all on, it should succeed.
+    // BSP is not supported under this interface
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
   return UNIT_TEST_PASSED;
 } // TurnOnBsp()
 
+/**
+  Unit test for turning off the BSP with AP interfaces.
+
+  @param[in] Context                    An optional parameter unused here
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 TurnOffBsp (
@@ -316,13 +394,27 @@ TurnOffBsp (
   Status = mMpManagement->ApOff (mMpManagement, mBspIndex);
 
   if (Status != EFI_INVALID_PARAMETER) {
-    // If this is the first time we power them all on, it should succeed.
+    // BSP is not supported under this interface
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
   return UNIT_TEST_PASSED;
 } // TurnOffBsp()
 
+/**
+  Unit test for suspending all APs to C1 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect all APs to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect all APs
+                                           already being suspended to C1 and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 SuspendAllApsToC1 (
@@ -340,7 +432,7 @@ SuspendAllApsToC1 (
   Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C1, 0);
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we suspend them to C1, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -350,6 +442,20 @@ SuspendAllApsToC1 (
   return UNIT_TEST_PASSED;
 } // SuspendAllApsToC1()
 
+/**
+  Unit test for suspending a single AP to C1 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the single AP to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the single AP
+                                           already being suspended to C1 and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 SuspendSingleApToC1 (
@@ -367,7 +473,7 @@ SuspendSingleApToC1 (
   Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C1, 0);
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we suspend it to C1, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -377,6 +483,20 @@ SuspendSingleApToC1 (
   return UNIT_TEST_PASSED;
 } // SuspendSingleApToC1()
 
+/**
+  Unit test for suspending all APs to C2 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect all APs to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect all APs
+                                           already being suspended to C2 and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 SuspendAllApsToC2 (
@@ -394,7 +514,7 @@ SuspendAllApsToC2 (
   Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we suspend them to C2, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -404,6 +524,20 @@ SuspendAllApsToC2 (
   return UNIT_TEST_PASSED;
 } // SuspendAllApsToC2()
 
+/**
+  Unit test for suspending a single AP to C2 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the single AP to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the single AP
+                                           already being suspended to C2 and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 SuspendSingleApToC2 (
@@ -421,7 +555,7 @@ SuspendSingleApToC2 (
   Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we suspend it to C2, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -431,6 +565,20 @@ SuspendSingleApToC2 (
   return UNIT_TEST_PASSED;
 } // SuspendSingleApToC2()
 
+/**
+  Unit test for suspending all APs to C3 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect all APs to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect all APs
+                                           already being suspended to C3 and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 SuspendAllApsToC3 (
@@ -448,7 +596,7 @@ SuspendAllApsToC3 (
   Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we suspend them to C3, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -458,6 +606,20 @@ SuspendAllApsToC3 (
   return UNIT_TEST_PASSED;
 } // SuspendAllApsToC3()
 
+/**
+  Unit test for suspending a single AP to C3 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the single AP to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the single AP
+                                           already being suspended to C3 and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 SuspendSingleApToC3 (
@@ -475,7 +637,7 @@ SuspendSingleApToC3 (
   Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we suspend it to C3, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -485,6 +647,20 @@ SuspendSingleApToC3 (
   return UNIT_TEST_PASSED;
 } // SuspendSingleApToC3()
 
+/**
+  Unit test for resuming all APs to on state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect all APs to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect all APs
+                                           already in on state and return with expected error
+                                           code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 ResumeAllAps (
@@ -502,7 +678,7 @@ ResumeAllAps (
   Status = mMpManagement->ApResume (mMpManagement, OPERATION_FOR_ALL_APS);
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we resume all the APs, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -512,6 +688,20 @@ ResumeAllAps (
   return UNIT_TEST_PASSED;
 } // ResumeAllAps()
 
+/**
+  Unit test for resuming a single AP to on state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect a single AP to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect a single AP
+                                           already in on state and return with expected error
+                                           code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
 ResumeSingleAp (
@@ -529,7 +719,7 @@ ResumeSingleAp (
   Status = mMpManagement->ApResume (mMpManagement, mApDutIndex);
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
-    // If this is the first time we power them all on, it should succeed.
+    // If this is the first time we resume this AP, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
   } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
@@ -539,9 +729,23 @@ ResumeSingleAp (
   return UNIT_TEST_PASSED;
 } // ResumeSingleAp()
 
+/**
+  Unit test for suspending the BSP to C1 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the BSP to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the BSP
+                                           already suspended to on state and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
-SuspendSingleBspToC1 (
+SuspendBspToC1 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -556,17 +760,31 @@ SuspendSingleBspToC1 (
 
   StartTick = GetPerformanceCounter ();
 
-  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C1, 0, 1000000);
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C1, 0, BSP_SUSPEND_TIMER_US);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
-  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > 1000000000);
+  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > US_TO_NS (BSP_SUSPEND_TIMER_US));
 
   return UNIT_TEST_PASSED;
-} // SuspendSingleBspToC1()
+} // SuspendBspToC1()
 
+/**
+  Unit test for suspending the BSP to C2 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the BSP to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the BSP
+                                           already suspended to on state and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
-SuspendSingleBspToC2 (
+SuspendBspToC2 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -581,17 +799,31 @@ SuspendSingleBspToC2 (
 
   StartTick = GetPerformanceCounter ();
 
-  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState), 1000000);
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState), BSP_SUSPEND_TIMER_US);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
-  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > 1000000000);
+  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > US_TO_NS (BSP_SUSPEND_TIMER_US));
 
   return UNIT_TEST_PASSED;
-} // SuspendSingleBspToC2()
+} // SuspendBspToC2()
 
+/**
+  Unit test for suspending the BSP to C3 state.
+
+  @param[in] Context                    An optional parameter that supports:
+                                        1) NULL input will expect the BSP to suspend properly
+                                        2) Point to PROTOCOL_DOUBLE_CHECK will expect the BSP
+                                           already suspended to on state and return with expected
+                                           error code.
+
+  @retval  UNIT_TEST_PASSED             The Unit test has completed and the test
+                                        case was successful.
+  @retval  UNIT_TEST_ERROR_TEST_FAILED  A test case assertion has failed.
+
+**/
 UNIT_TEST_STATUS
 EFIAPI
-SuspendSingleBspToC3 (
+SuspendBspToC3 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -606,13 +838,13 @@ SuspendSingleBspToC3 (
 
   StartTick = GetPerformanceCounter ();
 
-  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState), 1000000);
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState), BSP_SUSPEND_TIMER_US);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
-  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > 1000000000);
+  UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > US_TO_NS (BSP_SUSPEND_TIMER_US));
 
   return UNIT_TEST_PASSED;
-} // SuspendSingleBspToC3()
+} // SuspendBspToC3()
 
 /**
   This function will gather information and configure the
@@ -687,7 +919,7 @@ Done:
 } // InitializeTestEnvironment()
 
 /**
-  MpManagementTestApp
+  MpManagementTestApp entrypoint.
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
   @param[in] SystemTable  A pointer to the EFI System Table.
@@ -790,9 +1022,9 @@ MpManagementTestApp (
   AddTestCase (SuspendOperationTests, "Resume single AP from C3 should succeed", "MpManagement.ResumeC3.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume single AP from C3 should fail", "MpManagement.ResumeC3.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
 
-  AddTestCase (SuspendOperationTests, "Suspend to C1 on BSP should succeed after a timeout", "MpManagement.SuspendC1.BSP", SuspendSingleBspToC1, NULL, NULL, NULL);
-  AddTestCase (SuspendOperationTests, "Suspend to C2 on BSP should succeed after a timeout", "MpManagement.SuspendC2.BSP", SuspendSingleBspToC2, NULL, NULL, NULL);
-  AddTestCase (SuspendOperationTests, "Suspend to C3 on BSP should succeed after a timeout", "MpManagement.SuspendC3.BSP", SuspendSingleBspToC3, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Suspend to C1 on BSP should succeed after a timeout", "MpManagement.SuspendC1.BSP", SuspendBspToC1, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Suspend to C2 on BSP should succeed after a timeout", "MpManagement.SuspendC2.BSP", SuspendBspToC2, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Suspend to C3 on BSP should succeed after a timeout", "MpManagement.SuspendC3.BSP", SuspendBspToC3, NULL, NULL, NULL);
 
   //
   // Execute the tests.

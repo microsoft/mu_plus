@@ -1,5 +1,5 @@
 ## @file
-# TODO: Populate this.
+# UEFI shell unit test application for MP management driver.
 #
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
