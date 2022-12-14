@@ -1,0 +1,44 @@
+## @file
+# UEFI shell unit test application for MP management driver.
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010006
+  BASE_NAME                      = MpManagementTestApp
+  FILE_GUID                      = B6ED4248-1EEE-4E70-BCB2-E167E42B1230
+  MODULE_TYPE                    = UEFI_APPLICATION
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = MpManagementTestApp
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#
+
+[Sources]
+  MpManagementTestApp.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UefiTestingPkg/UefiTestingPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  UefiLib
+  UefiApplicationEntryPoint
+  DebugLib
+  UnitTestLib
+  PrintLib
+  TimerLib
+
+[Pcd]
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC2PowerState
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC3PowerState
+
+[Protocols]
+  gEfiMpServiceProtocolGuid         ## CONSUMES
+  gMpManagementProtocolGuid         ## CONSUMES
