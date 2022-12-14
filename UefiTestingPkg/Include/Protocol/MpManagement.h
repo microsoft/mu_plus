@@ -20,7 +20,7 @@
 ///
 /// Secretive combo to apply the operation to all APs.
 ///
-#define OPERATION_FOR_ALL_APS     MAX_UINTN
+#define OPERATION_FOR_ALL_APS  MAX_UINTN
 
 ///
 /// Supported processor suspension states.
@@ -65,7 +65,7 @@ EFI_STATUS
 (EFIAPI *MP_MANAGEMENT_BSP_SUSPEND)(
   IN  MP_MANAGEMENT_PROTOCOL  *This,
   IN  AP_POWER_STATE          BspPowerState,
-  IN  UINTN                   TargetPowerLevel,  OPTIONAL
+  IN  UINTN                   TargetPowerLevel, OPTIONAL
   IN  UINTN                   TimeoutInMicroseconds
   );
 
@@ -169,12 +169,12 @@ EFI_STATUS
   );
 
 struct _MP_MANAGEMENT_PROTOCOL {
-  MP_MANAGEMENT_BSP_SUSPEND   BspSuspend;
-  MP_MANAGEMENT_AP_ON         ApOn;
+  MP_MANAGEMENT_BSP_SUSPEND    BspSuspend;
+  MP_MANAGEMENT_AP_ON          ApOn;
   // MP_MANAGEMENT_AP_PROCEDURE  ApProcedure;
-  MP_MANAGEMENT_AP_OFF        ApOff;
-  MP_MANAGEMENT_AP_SUSPEND    ApSuspend;
-  MP_MANAGEMENT_AP_RESUME     ApResume;
+  MP_MANAGEMENT_AP_OFF         ApOff;
+  MP_MANAGEMENT_AP_SUSPEND     ApSuspend;
+  MP_MANAGEMENT_AP_RESUME      ApResume;
 };
 
 extern EFI_GUID  gMpManagementProtocolGuid;

@@ -31,14 +31,14 @@ typedef enum {
 /// Structure that describes information about a logical CPU.
 ///
 typedef struct {
-  UINTN                     ApStatus;       // AP_STATE
-  UINTN                     TargetStatus;       // AP_STATE
-  UINTN                     ApTask;       // AP_TASK
-  UINTN                     TargetPowerState;
-  BASE_LIBRARY_JUMP_BUFFER  JumpBuffer;
-  UINTN                     ApBufferSize;
-  VOID                      *ApBuffer;
-  VOID                      *CpuArchBuffer;
+  UINTN                       ApStatus;     // AP_STATE
+  UINTN                       TargetStatus; // AP_STATE
+  UINTN                       ApTask;       // AP_TASK
+  UINTN                       TargetPowerState;
+  BASE_LIBRARY_JUMP_BUFFER    JumpBuffer;
+  UINTN                       ApBufferSize;
+  VOID                        *ApBuffer;
+  VOID                        *CpuArchBuffer;
 } MP_MANAGEMENT_METADATA;
 
 typedef struct {
@@ -47,10 +47,10 @@ typedef struct {
 } APFUNC_ARG;
 #pragma pack (pop)
 
-extern UINTN                              mNumCpus;
-extern UINTN                              mBspIndex;
-extern volatile MP_MANAGEMENT_METADATA    *mCommonBuffer;
-extern EFI_MP_SERVICES_PROTOCOL           *mMpServices;
+extern UINTN                            mNumCpus;
+extern UINTN                            mBspIndex;
+extern volatile MP_MANAGEMENT_METADATA  *mCommonBuffer;
+extern EFI_MP_SERVICES_PROTOCOL         *mMpServices;
 
 /** The procedure to run with the MP Services interface.
 
@@ -74,7 +74,7 @@ ApFunction (
 **/
 EFI_STATUS
 CpuMpArchInit (
-  IN UINTN        NumOfCpus
+  IN UINTN  NumOfCpus
   );
 
 /**
@@ -90,7 +90,7 @@ CpuMpArchInit (
 **/
 EFI_STATUS
 SetupInterruptStatus (
-  IN  UINTN       CpuIndex
+  IN  UINTN  CpuIndex
   );
 
 /**
@@ -104,7 +104,7 @@ SetupInterruptStatus (
 **/
 EFI_STATUS
 RestoreInterruptStatus (
-  IN  UINTN       CpuIndex
+  IN  UINTN  CpuIndex
   );
 
 /**
@@ -118,7 +118,7 @@ RestoreInterruptStatus (
 **/
 EFI_STATUS
 CpuArchResumeCommon (
-  IN  UINTN       CpuIndex
+  IN  UINTN  CpuIndex
   );
 
 /**
@@ -155,7 +155,7 @@ CpuArchHalt (
 EFI_STATUS
 EFIAPI
 CpuArchClockGate (
-  IN UINTN         PowerState   OPTIONAL
+  IN UINTN  PowerState   OPTIONAL
   );
 
 /**
@@ -177,7 +177,7 @@ CpuArchClockGate (
 EFI_STATUS
 EFIAPI
 CpuArchSleep (
-  IN UINTN         PowerState   OPTIONAL
+  IN UINTN  PowerState   OPTIONAL
   );
 
 /**
@@ -190,7 +190,7 @@ CpuArchSleep (
 VOID
 EFIAPI
 CpuArchWakeFromSleep (
-  UINTN   CpuIndex
+  UINTN  CpuIndex
   );
 
 /**
@@ -226,4 +226,4 @@ CpuArchRestoreAllInterrupts (
   IN  EFI_HANDLE  Handle
   );
 
-#endif  //  MP_MANAGEMENT_INTERNAL_H_
+#endif //  MP_MANAGEMENT_INTERNAL_H_

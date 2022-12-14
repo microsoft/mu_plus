@@ -26,11 +26,11 @@
 
 #define APFUNC_BUFFER_LEN  256
 
-EFI_MP_SERVICES_PROTOCOL            *mMpServices    = NULL;
-EFI_HANDLE                          mHandle         = NULL;
-UINTN                               mNumCpus        = 0;
-UINTN                               mBspIndex       = 0;
-volatile MP_MANAGEMENT_METADATA     *mCommonBuffer  = NULL;
+EFI_MP_SERVICES_PROTOCOL         *mMpServices   = NULL;
+EFI_HANDLE                       mHandle        = NULL;
+UINTN                            mNumCpus       = 0;
+UINTN                            mBspIndex      = 0;
+volatile MP_MANAGEMENT_METADATA  *mCommonBuffer = NULL;
 
 /**
   Fetches the number of processors and which processor is the BSP.
@@ -75,8 +75,8 @@ GetProcessorInformation (
 **/
 EFI_STATUS
 InitializeApCommonBuffer (
-  IN    UINTN                    NumCpus,
-  OUT   MP_MANAGEMENT_METADATA   **CommonBuffer
+  IN    UINTN                   NumCpus,
+  OUT   MP_MANAGEMENT_METADATA  **CommonBuffer
   )
 {
   UINTN       Index;
@@ -92,7 +92,7 @@ InitializeApCommonBuffer (
   }
 
   Status = EFI_SUCCESS;
-  for (Index = 0; Index < NumCpus; Index ++) {
+  for (Index = 0; Index < NumCpus; Index++) {
     (*CommonBuffer)[Index].ApStatus     = AP_STATE_OFF;
     (*CommonBuffer)[Index].TargetStatus = AP_STATE_OFF;
     (*CommonBuffer)[Index].ApTask       = AP_TASK_IDLE;
@@ -109,7 +109,7 @@ InitializeApCommonBuffer (
 Done:
   if (EFI_ERROR (Status)) {
     // Free any allocated pools if init failed.
-    for (Index = 0; Index < NumCpus; Index ++) {
+    for (Index = 0; Index < NumCpus; Index++) {
       if ((*CommonBuffer)[Index].ApBuffer != NULL) {
         FreePool ((*CommonBuffer)[Index].ApBuffer);
       }
@@ -139,9 +139,9 @@ Done:
 EFI_STATUS
 EFIAPI
 MpMgmtBspSuspend (
-  IN  MP_MANAGEMENT_PROTOCOL  *This,
-  IN  AP_POWER_STATE          BspPowerState,
-  IN  UINTN                   TargetPowerLevel,  OPTIONAL
+  IN  MP_MANAGEMENT_PROTOCOL *This,
+  IN  AP_POWER_STATE BspPowerState,
+  IN  UINTN TargetPowerLevel, OPTIONAL
   IN  UINTN                   TimeoutInMicroseconds
   )
 {
@@ -165,6 +165,7 @@ MpMgmtBspSuspend (
         // if we ever return from this power level, something is off.
         DEBUG ((DEBUG_INFO, "%a failed to clock gate, and it is off now - %r.\n", __FUNCTION__, Status));
       }
+
       break;
     case AP_POWER_C2:
       DEBUG ((DEBUG_INFO, "%a Siesta time.\n", __FUNCTION__));
@@ -173,11 +174,12 @@ MpMgmtBspSuspend (
         // if we ever return from this power level, something is off.
         DEBUG ((DEBUG_INFO, "%a failed to enter stand by, and it is off now - %r.\n", __FUNCTION__, Status));
       }
+
       break;
     case AP_POWER_C3:
       DEBUG ((DEBUG_INFO, "%a Good night.\n", __FUNCTION__));
       // Setup a long jump buffer so that the cores can come back to the same place after resuming.
-      if (SetJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(mCommonBuffer[mBspIndex].JumpBuffer))) == 0) {
+      if (SetJump ((BASE_LIBRARY_JUMP_BUFFER *)(&(mCommonBuffer[mBspIndex].JumpBuffer))) == 0) {
         Status = CpuArchSleep (TargetPowerLevel);
         if (EFI_ERROR (Status)) {
           // if we ever return from this power level, something is off.
@@ -189,6 +191,7 @@ MpMgmtBspSuspend (
       } else {
         // Got back from the C-states, do some more clean up for BSP.
       }
+
       break;
     default:
       ASSERT (FALSE);
@@ -226,7 +229,7 @@ MpMgmtApOn (
   UINTN       EndIndex;
   UINTN       Index;
 
-  if ((ProcessorNumber == mBspIndex) || (ProcessorNumber > mNumCpus && ProcessorNumber != OPERATION_FOR_ALL_APS)) {
+  if ((ProcessorNumber == mBspIndex) || ((ProcessorNumber > mNumCpus) && (ProcessorNumber != OPERATION_FOR_ALL_APS))) {
     DEBUG ((DEBUG_ERROR, "%a The specified processor is not acceptable %d\n", __FUNCTION__, ProcessorNumber));
     Status = EFI_INVALID_PARAMETER;
     goto Done;
@@ -253,7 +256,7 @@ MpMgmtApOn (
   }
 
   Status = EFI_NOT_FOUND;
-  for (Index = StartIndex; Index <= EndIndex; Index ++) {
+  for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
       continue;
     }
@@ -271,23 +274,23 @@ MpMgmtApOn (
     }
 
     // Update the task flag to be active, AP will clear it once wake up.
-    mCommonBuffer[Index].TargetStatus  = AP_STATE_ON;
+    mCommonBuffer[Index].TargetStatus = AP_STATE_ON;
     ZeroMem (mCommonBuffer[Index].ApBuffer, mCommonBuffer[Index].ApBufferSize);
 
     // This is the flag to release the core.
-    mCommonBuffer[Index].ApTask  = AP_TASK_ACTIVE;
+    mCommonBuffer[Index].ApTask = AP_TASK_ACTIVE;
 
     Status = mMpServices->StartupThisAP (
-                 mMpServices,
-                 ApFunction,
-                 Index,
-                 NULL,
-                 1,
-                 NULL,
-                 NULL
-                 );
+                            mMpServices,
+                            ApFunction,
+                            Index,
+                            NULL,
+                            1,
+                            NULL,
+                            NULL
+                            );
     // TODO: This is not quite right. The protocol will only support blocking mode after RTB...
-    if (Status != EFI_SUCCESS && Status != EFI_TIMEOUT) {
+    if ((Status != EFI_SUCCESS) && (Status != EFI_TIMEOUT)) {
       DEBUG ((DEBUG_ERROR, "%a Failed to start processor %d: %r\n", __FUNCTION__, Index, Status));
       break;
     } else {
@@ -306,8 +309,10 @@ MpMgmtApOn (
     }
 
     // Loop till specified AP is up and running
-    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
-    DEBUG ((DEBUG_INFO, "Initial message from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {
+    }
+
+    DEBUG ((DEBUG_INFO, "Initial message from common buffer: %a\n", (CHAR8 *)mCommonBuffer[Index].ApBuffer));
   }
 
 Done:
@@ -340,7 +345,7 @@ MpMgmtApOff (
   UINTN       EndIndex;
   UINTN       Index;
 
-  if ((ProcessorNumber == mBspIndex) || (ProcessorNumber > mNumCpus && ProcessorNumber != OPERATION_FOR_ALL_APS)) {
+  if ((ProcessorNumber == mBspIndex) || ((ProcessorNumber > mNumCpus) && (ProcessorNumber != OPERATION_FOR_ALL_APS))) {
     DEBUG ((DEBUG_ERROR, "%a The specified processor is not acceptable %d\n", __FUNCTION__, ProcessorNumber));
     Status = EFI_INVALID_PARAMETER;
     goto Done;
@@ -361,7 +366,7 @@ MpMgmtApOff (
   }
 
   Status = EFI_NOT_FOUND;
-  for (Index = StartIndex; Index <= EndIndex; Index ++) {
+  for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
       continue;
     }
@@ -379,8 +384,8 @@ MpMgmtApOff (
     }
 
     // Update the task flag to be active, AP will clear it once wake up.
-    mCommonBuffer[Index].TargetStatus  = AP_STATE_OFF;
-    mCommonBuffer[Index].ApTask        = AP_TASK_ACTIVE;
+    mCommonBuffer[Index].TargetStatus = AP_STATE_OFF;
+    mCommonBuffer[Index].ApTask       = AP_TASK_ACTIVE;
 
     // At least we are successful for this AP.
     Status = EFI_SUCCESS;
@@ -397,8 +402,10 @@ MpMgmtApOff (
     }
 
     // Loop till specified AP is up and running
-    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
-    DEBUG ((DEBUG_INFO, "Last word from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {
+    }
+
+    DEBUG ((DEBUG_INFO, "Last word from common buffer: %a\n", (CHAR8 *)mCommonBuffer[Index].ApBuffer));
   }
 
   // TODO: This is not ideal, but we could have messed up with the AP status here, wait for a bit to let the timer do the cleanup
@@ -442,7 +449,7 @@ MpMgmtApSuspend (
   UINTN       Index;
   UINTN       InternalApPowerState;
 
-  if ((ProcessorNumber == mBspIndex) || (ProcessorNumber > mNumCpus && ProcessorNumber != OPERATION_FOR_ALL_APS)) {
+  if ((ProcessorNumber == mBspIndex) || ((ProcessorNumber > mNumCpus) && (ProcessorNumber != OPERATION_FOR_ALL_APS))) {
     DEBUG ((DEBUG_ERROR, "%a The specified processor is not acceptable %d\n", __FUNCTION__, ProcessorNumber));
     Status = EFI_INVALID_PARAMETER;
     goto Done;
@@ -486,7 +493,7 @@ MpMgmtApSuspend (
   }
 
   Status = EFI_NOT_FOUND;
-  for (Index = StartIndex; Index <= EndIndex; Index ++) {
+  for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
       continue;
     }
@@ -504,9 +511,9 @@ MpMgmtApSuspend (
     }
 
     // Update the task flag to be active, AP will clear it once wake up.
-    mCommonBuffer[Index].TargetStatus       = InternalApPowerState;
-    mCommonBuffer[Index].TargetPowerState   = TargetPowerLevel;
-    mCommonBuffer[Index].ApTask             = AP_TASK_ACTIVE;
+    mCommonBuffer[Index].TargetStatus     = InternalApPowerState;
+    mCommonBuffer[Index].TargetPowerState = TargetPowerLevel;
+    mCommonBuffer[Index].ApTask           = AP_TASK_ACTIVE;
 
     // At least we are successful for this AP.
     Status = EFI_SUCCESS;
@@ -523,8 +530,10 @@ MpMgmtApSuspend (
     }
 
     // Loop till specified AP is up and running
-    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
-    DEBUG ((DEBUG_INFO, "Suspend message from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {
+    }
+
+    DEBUG ((DEBUG_INFO, "Suspend message from common buffer: %a\n", (CHAR8 *)mCommonBuffer[Index].ApBuffer));
   }
 
   // TODO: This is not ideal, but we could have messed up with the AP status here, wait for a bit to let the timer do the cleanup
@@ -560,7 +569,7 @@ MpMgmtApResume (
   UINTN       EndIndex;
   UINTN       Index;
 
-  if ((ProcessorNumber == mBspIndex) || (ProcessorNumber > mNumCpus && ProcessorNumber != OPERATION_FOR_ALL_APS)) {
+  if ((ProcessorNumber == mBspIndex) || ((ProcessorNumber > mNumCpus) && (ProcessorNumber != OPERATION_FOR_ALL_APS))) {
     DEBUG ((DEBUG_ERROR, "%a The specified processor is not acceptable %d\n", __FUNCTION__, ProcessorNumber));
     Status = EFI_INVALID_PARAMETER;
     goto Done;
@@ -581,7 +590,7 @@ MpMgmtApResume (
   }
 
   Status = EFI_NOT_FOUND;
-  for (Index = StartIndex; Index <= EndIndex; Index ++) {
+  for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
       continue;
     }
@@ -592,17 +601,18 @@ MpMgmtApResume (
       continue;
     }
 
-    if (mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_HALT &&
-        mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_CLOCK_GATE &&
-        mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_SLEEP) {
+    if ((mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_HALT) &&
+        (mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_CLOCK_GATE) &&
+        (mCommonBuffer[Index].ApStatus != AP_STATE_SUSPEND_SLEEP))
+    {
       DEBUG ((DEBUG_ERROR, "%a The specified processor (%d) is not in expected state (%d)\n", __FUNCTION__, Index, mCommonBuffer[Index].ApStatus));
       Status = EFI_ABORTED;
       break;
     }
 
     // Update the task flag to be active, AP will clear it once wake up.
-    mCommonBuffer[Index].TargetStatus  = AP_STATE_RESUME;
-    mCommonBuffer[Index].ApTask        = AP_TASK_ACTIVE;
+    mCommonBuffer[Index].TargetStatus = AP_STATE_RESUME;
+    mCommonBuffer[Index].ApTask       = AP_TASK_ACTIVE;
 
     // Abstracted call to allow arch specific method to wake up this CPU
     CpuArchWakeFromSleep (Index);
@@ -622,15 +632,17 @@ MpMgmtApResume (
     }
 
     // Loop till specified AP is up and running
-    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {}
-    DEBUG ((DEBUG_INFO, "Resume message from common buffer: %a\n", (CHAR8*)mCommonBuffer[Index].ApBuffer));
+    while (mCommonBuffer[Index].ApTask != AP_TASK_IDLE) {
+    }
+
+    DEBUG ((DEBUG_INFO, "Resume message from common buffer: %a\n", (CHAR8 *)mCommonBuffer[Index].ApBuffer));
   }
 
 Done:
   return Status;
 }
 
-MP_MANAGEMENT_PROTOCOL mMpManagement = {
+MP_MANAGEMENT_PROTOCOL  mMpManagement = {
   .BspSuspend = MpMgmtBspSuspend,
   .ApOn       = MpMgmtApOn,
   .ApOff      = MpMgmtApOff,
@@ -656,8 +668,8 @@ MpManagementEntryPoint (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                  Status;
-  EFI_LOADED_IMAGE_PROTOCOL   *Image;
+  EFI_STATUS                 Status;
+  EFI_LOADED_IMAGE_PROTOCOL  *Image;
 
   Status = gBS->HandleProtocol (
                   ImageHandle,

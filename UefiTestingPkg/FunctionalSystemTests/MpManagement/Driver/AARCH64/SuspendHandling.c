@@ -31,30 +31,30 @@
 #include "MpManagementInternal.h"
 
 /* Features flags for CPU SUSPEND power state parameter format. Bits [1:1] */
-#define FF_PSTATE_SHIFT           1
-#define FF_PSTATE_ORIG            0
-#define FF_PSTATE_EXTENDED        1
+#define FF_PSTATE_SHIFT     1
+#define FF_PSTATE_ORIG      0
+#define FF_PSTATE_EXTENDED  1
 
 /* Features flags for CPU SUSPEND OS Initiated mode support. Bits [0:0] */
 #define FF_MODE_SUPPORT_SHIFT     0
 #define FF_SUPPORTS_OS_INIT_MODE  1
 
-#define FF_SUSPEND_MASK            ((1 << FF_PSTATE_SHIFT) | (1 << FF_MODE_SUPPORT_SHIFT))
+#define FF_SUSPEND_MASK  ((1 << FF_PSTATE_SHIFT) | (1 << FF_MODE_SUPPORT_SHIFT))
 
 /* PSCI CPU_SUSPEND 'power_state' parameter specific defines */
-#define PSTATE_TYPE_SHIFT_EX      30
-#define PSTATE_TYPE_SHIFT_ORIG    16
-#define PSTATE_TYPE_MASK          1
-#define PSTATE_TYPE_STANDBY       0x0
-#define PSTATE_TYPE_POWERDOWN     0x1
+#define PSTATE_TYPE_SHIFT_EX    30
+#define PSTATE_TYPE_SHIFT_ORIG  16
+#define PSTATE_TYPE_MASK        1
+#define PSTATE_TYPE_STANDBY     0x0
+#define PSTATE_TYPE_POWERDOWN   0x1
 
 /*
   Architectural metadata structure for ARM context losing resume routines.
  */
 typedef struct {
-  VOID                         *Ttbr0;
-  UINTN                        Tcr;
-  UINTN                        Mair;
+  VOID     *Ttbr0;
+  UINTN    Tcr;
+  UINTN    Mair;
 } AARCH64_AP_BUFFER;
 
 VOID
@@ -67,11 +67,11 @@ ReadEl0Stack (
   VOID
   );
 
-BOOLEAN         mExtendedPowerState = FALSE;
-ARM_CORE_INFO   *mCpuInfo           = NULL;
-UINTN           mBspVbar            = 0;
-UINTN           mBspHcrReg          = 0;
-UINTN           mBspEl0Sp           = 0;
+BOOLEAN        mExtendedPowerState = FALSE;
+ARM_CORE_INFO  *mCpuInfo           = NULL;
+UINTN          mBspVbar            = 0;
+UINTN          mBspHcrReg          = 0;
+UINTN          mBspEl0Sp           = 0;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -92,8 +92,8 @@ ApIrqInterruptHandler (
   IN EFI_SYSTEM_CONTEXT  SystemContext
   )
 {
-  UINTN IntValue;
-  UINTN InterruptId;
+  UINTN  IntValue;
+  UINTN  InterruptId;
 
   IntValue = ArmGicAcknowledgeInterrupt (PcdGet64 (PcdGicInterruptInterfaceBase), &InterruptId);
   if ((IntValue) != PcdGet32 (PcdGicSgiIntId)) {
@@ -117,16 +117,16 @@ ApIrqInterruptHandler (
 **/
 EFI_STATUS
 CpuMpArchInit (
-  IN UINTN        NumOfCpus
+  IN UINTN  NumOfCpus
   )
 {
-  ARM_SMC_ARGS                Args;
-  EFI_STATUS                  Status;
-  UINTN                       Index;
-  UINTN                       MaxCpus;
-  EFI_HOB_GENERIC_HEADER      *Hob;
-  VOID                        *HobData;
-  UINTN                       HobDataSize;
+  ARM_SMC_ARGS            Args;
+  EFI_STATUS              Status;
+  UINTN                   Index;
+  UINTN                   MaxCpus;
+  EFI_HOB_GENERIC_HEADER  *Hob;
+  VOID                    *HobData;
+  UINTN                   HobDataSize;
 
   Status = EFI_SUCCESS;
 
@@ -150,7 +150,7 @@ CpuMpArchInit (
   mExtendedPowerState = (((Args.Arg0 >> FF_PSTATE_SHIFT) & 1) == FF_PSTATE_EXTENDED);
 
   /* Prepare the architectural specific buffer */
-  for (Index = 0; Index < NumOfCpus; Index ++) {
+  for (Index = 0; Index < NumOfCpus; Index++) {
     mCommonBuffer[Index].CpuArchBuffer = AllocatePool (sizeof (AARCH64_AP_BUFFER));
     if (mCommonBuffer[Index].CpuArchBuffer == NULL) {
       DEBUG ((DEBUG_ERROR, "%a Running out of memory when allocating for core %d\n", __FUNCTION__, Index));
@@ -179,7 +179,7 @@ CpuMpArchInit (
 
 Done:
   if (EFI_ERROR (Status)) {
-    for (Index = 0; Index < NumOfCpus; Index ++) {
+    for (Index = 0; Index < NumOfCpus; Index++) {
       if (mCommonBuffer[Index].CpuArchBuffer != NULL) {
         FreePool (mCommonBuffer[Index].CpuArchBuffer);
         mCommonBuffer[Index].CpuArchBuffer = NULL;
@@ -205,7 +205,7 @@ RestoreBspStates (
   VOID
   )
 {
-  RegisterEl0Stack ((VOID*)mBspEl0Sp);
+  RegisterEl0Stack ((VOID *)mBspEl0Sp);
   ArmWriteHcr (mBspHcrReg);
   ArmWriteVBar (mBspVbar);
 
@@ -235,19 +235,19 @@ RestoreBspStates (
 **/
 EFI_STATUS
 SetupInterruptStatus (
-  IN  UINTN       CpuIndex
+  IN  UINTN  CpuIndex
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mCommonBuffer[CpuIndex].CpuArchBuffer == NULL) {
     return EFI_NOT_READY;
   }
 
   // Cache the TCR, MAIR and Ttbr0 values, like MP services do
-  ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Tcr    = ArmGetTCR ();
-  ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Mair   = ArmGetMAIR ();
-  ((AARCH64_AP_BUFFER*)mCommonBuffer[CpuIndex].CpuArchBuffer)->Ttbr0  = ArmGetTTBR0BaseAddress ();
+  ((AARCH64_AP_BUFFER *)mCommonBuffer[CpuIndex].CpuArchBuffer)->Tcr   = ArmGetTCR ();
+  ((AARCH64_AP_BUFFER *)mCommonBuffer[CpuIndex].CpuArchBuffer)->Mair  = ArmGetMAIR ();
+  ((AARCH64_AP_BUFFER *)mCommonBuffer[CpuIndex].CpuArchBuffer)->Ttbr0 = ArmGetTTBR0BaseAddress ();
 
   Status = InitializeCpuExceptionHandlers (NULL);
   ASSERT_EFI_ERROR (Status);
@@ -279,7 +279,7 @@ SetupInterruptStatus (
 **/
 EFI_STATUS
 RestoreInterruptStatus (
-  IN  UINTN       CpuIndex
+  IN  UINTN  CpuIndex
   )
 {
   // Disable gic cpu interface
@@ -301,7 +301,7 @@ RestoreInterruptStatus (
 **/
 EFI_STATUS
 CpuArchResumeCommon (
-  IN  UINTN       CpuIndex
+  IN  UINTN  CpuIndex
   )
 {
   return EFI_SUCCESS;
@@ -317,7 +317,7 @@ CpuArchResumeCommon (
 VOID
 EFIAPI
 CpuArchWakeFromSleep (
-  UINTN   CpuIndex
+  UINTN  CpuIndex
   )
 {
   // Sending SGI to the specified secondary CPU interfaces
@@ -341,9 +341,9 @@ ApEntryPoint (
   VOID
   )
 {
-  volatile MP_MANAGEMENT_METADATA   *MyBuffer;
-  UINTN                             ProcessorId;
-  EFI_STATUS                        Status;
+  volatile MP_MANAGEMENT_METADATA  *MyBuffer;
+  UINTN                            ProcessorId;
+  EFI_STATUS                       Status;
 
   // Upon return, first figure who am i.
   Status = mMpServices->WhoAmI (mMpServices, &ProcessorId);
@@ -355,9 +355,9 @@ ApEntryPoint (
   MyBuffer = &mCommonBuffer[ProcessorId];
 
   // Configure the MMU and caches
-  ArmSetTCR (((AARCH64_AP_BUFFER*)MyBuffer->CpuArchBuffer)->Tcr);
-  ArmSetTTBR0 (((AARCH64_AP_BUFFER*)MyBuffer->CpuArchBuffer)->Ttbr0);
-  ArmSetMAIR (((AARCH64_AP_BUFFER*)MyBuffer->CpuArchBuffer)->Mair);
+  ArmSetTCR (((AARCH64_AP_BUFFER *)MyBuffer->CpuArchBuffer)->Tcr);
+  ArmSetTTBR0 (((AARCH64_AP_BUFFER *)MyBuffer->CpuArchBuffer)->Ttbr0);
+  ArmSetMAIR (((AARCH64_AP_BUFFER *)MyBuffer->CpuArchBuffer)->Mair);
   ArmDisableAlignmentCheck ();
   ArmEnableStackAlignmentCheck ();
   ArmEnableInstructionCache ();
@@ -370,7 +370,7 @@ ApEntryPoint (
     Status = RestoreBspStates ();
   }
 
-  LongJump ((BASE_LIBRARY_JUMP_BUFFER*)(&(MyBuffer->JumpBuffer)), 1);
+  LongJump ((BASE_LIBRARY_JUMP_BUFFER *)(&(MyBuffer->JumpBuffer)), 1);
 
 Done:
   // If LongJump succeeded, we should not even get here.
@@ -410,10 +410,10 @@ CpuArchHalt (
 STATIC
 UINTN
 GetPowerType (
-  IN UINTN          PowerLevel
+  IN UINTN  PowerLevel
   )
 {
-  UINTN PowerType;
+  UINTN  PowerType;
 
   if (mExtendedPowerState) {
     PowerType = ((PowerLevel >> PSTATE_TYPE_SHIFT_EX) & PSTATE_TYPE_MASK);
@@ -439,8 +439,8 @@ STATIC
 EFI_STATUS
 EFIAPI
 ArmPsciSuspendHelper (
-  IN UINTN          PowerLevel,
-  IN UINTN          EntryPoint, OPTIONAL
+  IN UINTN PowerLevel,
+  IN UINTN EntryPoint, OPTIONAL
   IN UINTN          ContextId   OPTIONAL
   )
 {
@@ -493,7 +493,7 @@ ArmPsciSuspendHelper (
 EFI_STATUS
 EFIAPI
 CpuArchClockGate (
-  IN UINTN         PowerState   OPTIONAL
+  IN UINTN  PowerState   OPTIONAL
   )
 {
   EFI_STATUS  Status;
@@ -533,7 +533,7 @@ Done:
 EFI_STATUS
 EFIAPI
 CpuArchSleep (
-  IN UINTN         PowerState   OPTIONAL
+  IN UINTN  PowerState   OPTIONAL
   )
 {
   EFI_STATUS  Status;
@@ -583,9 +583,9 @@ CpuArchDisableAllInterruptsButSetupTimer (
   }
 
   // Cache the TCR, MAIR and Ttbr0 values, like MP services do
-  ((AARCH64_AP_BUFFER*)mCommonBuffer[mBspIndex].CpuArchBuffer)->Tcr    = ArmGetTCR ();
-  ((AARCH64_AP_BUFFER*)mCommonBuffer[mBspIndex].CpuArchBuffer)->Mair   = ArmGetMAIR ();
-  ((AARCH64_AP_BUFFER*)mCommonBuffer[mBspIndex].CpuArchBuffer)->Ttbr0  = ArmGetTTBR0BaseAddress ();
+  ((AARCH64_AP_BUFFER *)mCommonBuffer[mBspIndex].CpuArchBuffer)->Tcr   = ArmGetTCR ();
+  ((AARCH64_AP_BUFFER *)mCommonBuffer[mBspIndex].CpuArchBuffer)->Mair  = ArmGetMAIR ();
+  ((AARCH64_AP_BUFFER *)mCommonBuffer[mBspIndex].CpuArchBuffer)->Ttbr0 = ArmGetTTBR0BaseAddress ();
 
   mBspVbar   = ArmReadVBar ();
   mBspHcrReg = ArmReadHcr ();
@@ -621,7 +621,7 @@ CpuArchDisableAllInterruptsButSetupTimer (
 
   // TimerTicks  = TimerPeriod in us unit x Frequency
   //             = (TimerPeriod in s unit x Frequency) x 10^-6
-  TimerTicks = MultU64x32 (TimeoutInMicroseconds , (UINT32)ArmGenericTimerGetTimerFreq ());
+  TimerTicks = MultU64x32 (TimeoutInMicroseconds, (UINT32)ArmGenericTimerGetTimerFreq ());
   TimerTicks = DivU64x32 (TimerTicks, 1000000U);
 
   // Get value of the current timer
@@ -650,6 +650,7 @@ Done:
   } else {
     *Handle = InterruptStates;
   }
+
   return Status;
 }
 
@@ -669,16 +670,16 @@ CpuArchRestoreAllInterrupts (
   IN  EFI_HANDLE  Handle
   )
 {
-  BOOLEAN                 *InterruptStates = NULL;
-  UINTN                   Index;
-  UINTN                   GicNumInterrupts = 0;
-  UINT64                  TimerPeriod;
-  EFI_STATUS              Status;
-  EFI_TIMER_ARCH_PROTOCOL *TimerProtocol;
+  BOOLEAN                  *InterruptStates = NULL;
+  UINTN                    Index;
+  UINTN                    GicNumInterrupts = 0;
+  UINT64                   TimerPeriod;
+  EFI_STATUS               Status;
+  EFI_TIMER_ARCH_PROTOCOL  *TimerProtocol;
 
   if (Handle != NULL) {
-    InterruptStates   = Handle;
-    GicNumInterrupts  = ArmGicGetMaxNumInterrupts ((UINT32)PcdGet64 (PcdGicDistributorBase));
+    InterruptStates  = Handle;
+    GicNumInterrupts = ArmGicGetMaxNumInterrupts ((UINT32)PcdGet64 (PcdGicDistributorBase));
     // Grandma says when you leave the room, remember to turn off the light...
     for (Index = 0; Index < GicNumInterrupts; Index++) {
       if (InterruptStates[Index]) {
@@ -686,14 +687,15 @@ CpuArchRestoreAllInterrupts (
         ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), Index);
       }
     }
+
     FreePool (InterruptStates);
   }
 
   Status = gBS->LocateProtocol (
-                &gEfiTimerArchProtocolGuid,
-                NULL,
-                (VOID **)&TimerProtocol
-                );
+                  &gEfiTimerArchProtocolGuid,
+                  NULL,
+                  (VOID **)&TimerProtocol
+                  );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Timer protocol is not located - %r\n", Status));
     goto Done;

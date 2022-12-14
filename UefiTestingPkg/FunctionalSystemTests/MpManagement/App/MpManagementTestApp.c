@@ -23,13 +23,13 @@
 #define UNIT_TEST_APP_SHORT_NAME  "Mp_Mgmt_Test"
 #define UNIT_TEST_APP_VERSION     "1.0"
 
-#define PROTOCOL_DOUBLE_CHECK     1
-#define BSP_SUSPEND_TIMER_US      1000000
-#define US_TO_NS(a)                (a * 1000)
+#define PROTOCOL_DOUBLE_CHECK  1
+#define BSP_SUSPEND_TIMER_US   1000000
+#define US_TO_NS(a)  (a * 1000)
 
-MP_MANAGEMENT_PROTOCOL  *mMpManagement  = NULL;
-UINTN                   mBspIndex       = 0;
-UINTN                   mApDutIndex     = 0;
+MP_MANAGEMENT_PROTOCOL  *mMpManagement = NULL;
+UINTN                   mBspIndex      = 0;
+UINTN                   mApDutIndex    = 0;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -62,7 +62,7 @@ PowerOnAps (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -90,7 +90,7 @@ PowerOnSingleAp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -126,14 +126,13 @@ PowerOffAps (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   ASSERT (mMpManagement != NULL);
 
   Status = mMpManagement->ApOff (mMpManagement, OPERATION_FOR_ALL_APS);
 
   ASSERT_EFI_ERROR (Status);
-
 } // PowerOffAps ()
 
 /**
@@ -151,14 +150,13 @@ PowerOffSingleAp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   ASSERT (mMpManagement != NULL);
 
   Status = mMpManagement->ApOff (mMpManagement, mApDutIndex);
 
   ASSERT_EFI_ERROR (Status);
-
 } // PowerOffSingleAp ()
 
 /// ================================================================================================
@@ -189,7 +187,7 @@ TurnOnAllAps (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -202,7 +200,7 @@ TurnOnAllAps (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all on, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -230,7 +228,7 @@ TurnOffAllAps (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -243,7 +241,7 @@ TurnOffAllAps (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power them all off, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -271,7 +269,7 @@ TurnOnSingleAp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -284,7 +282,7 @@ TurnOnSingleAp (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power a single one on, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -312,7 +310,7 @@ TurnOffSingleAp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -325,7 +323,7 @@ TurnOffSingleAp (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we power a single one off, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -349,7 +347,7 @@ TurnOnBsp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -383,7 +381,7 @@ TurnOffBsp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -421,7 +419,7 @@ SuspendAllApsToC1 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -434,7 +432,7 @@ SuspendAllApsToC1 (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend them to C1, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -462,7 +460,7 @@ SuspendSingleApToC1 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -475,7 +473,7 @@ SuspendSingleApToC1 (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend it to C1, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -503,7 +501,7 @@ SuspendAllApsToC2 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -516,7 +514,7 @@ SuspendAllApsToC2 (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend them to C2, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -544,7 +542,7 @@ SuspendSingleApToC2 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -557,7 +555,7 @@ SuspendSingleApToC2 (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend it to C2, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -585,7 +583,7 @@ SuspendAllApsToC3 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -598,7 +596,7 @@ SuspendAllApsToC3 (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend them to C3, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -626,7 +624,7 @@ SuspendSingleApToC3 (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -639,7 +637,7 @@ SuspendSingleApToC3 (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend it to C3, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -667,7 +665,7 @@ ResumeAllAps (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -680,7 +678,7 @@ ResumeAllAps (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we resume all the APs, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -708,7 +706,7 @@ ResumeSingleAp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mMpManagement == NULL) {
     return UNIT_TEST_ERROR_TEST_FAILED;
@@ -721,7 +719,7 @@ ResumeSingleAp (
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we resume this AP, it should succeed.
     return UNIT_TEST_ERROR_TEST_FAILED;
-  } else if ((Context != NULL) && ((*(UINTN*)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
+  } else if ((Context != NULL) && ((*(UINTN *)Context) == PROTOCOL_DOUBLE_CHECK) && (Status != EFI_ALREADY_STARTED)) {
     // Otherwise, the protocol should take care of the state check.
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
@@ -865,12 +863,11 @@ InitializeTestEnvironment (
   UINTN                     NumCpus;
   UINTN                     EnabledCpus;
 
-
   Status = gBS->LocateProtocol (
-                &gEfiMpServiceProtocolGuid,
-                NULL,
-                (VOID **)&MpServices
-                );
+                  &gEfiMpServiceProtocolGuid,
+                  NULL,
+                  (VOID **)&MpServices
+                  );
   if (EFI_ERROR (Status)) {
     // If we're here, we definitely had something weird happen...
     DEBUG ((DEBUG_ERROR, "%a Failed to locate MP service protocol!!! - %r\n", __FUNCTION__, Status));
@@ -894,7 +891,8 @@ InitializeTestEnvironment (
     if (mApDutIndex != mBspIndex) {
       break;
     }
-    mApDutIndex ++;
+
+    mApDutIndex++;
   }
 
   if ((mApDutIndex >= NumCpus) || (mApDutIndex == mBspIndex)) {
