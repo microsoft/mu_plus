@@ -125,6 +125,7 @@
   UefiTestingPkg/FunctionalSystemTests/SmmPagingProtectionsTest/Smm/SmmPagingProtectionsTestSmm.inf
   UefiTestingPkg/FunctionalSystemTests/SmmPagingProtectionsTest/Smm/SmmPagingProtectionsTestStandaloneMm.inf
   UefiTestingPkg/FunctionalSystemTests/ExceptionPersistenceTestApp/ExceptionPersistenceTestApp.inf
+  UefiTestingPkg/FunctionalSystemTests/MpManagement/App/MpManagementTestApp.inf
   UefiTestingPkg/Library/PlatformSmmProtectionsTestLibNull/PlatformSmmProtectionsTestLibNull.inf
   UefiTestingPkg/PerfTests/BlockIoPerfTest/BlockIoPerfTest.inf
 
@@ -135,6 +136,11 @@
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf
+
+[Components.AARCH64]
+  # NOTE: These currently have source files that are only implemented for AACRH64.
+  #       If needed on X86, should port (and test) the functions.
+  UefiTestingPkg/FunctionalSystemTests/MpManagement/Driver/MpManagement.inf
 
 [BuildOptions]
 #force deprecated interfaces off

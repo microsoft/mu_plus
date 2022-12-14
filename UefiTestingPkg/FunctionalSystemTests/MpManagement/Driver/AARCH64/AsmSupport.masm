@@ -1,0 +1,22 @@
+// Assembly code support for MP management driver
+//
+// Copyright (c) Microsoft Corporation.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+//
+
+#include <Chipset/AArch64.h>
+
+    AREA    |.text|,ALIGN=7,CODE,READONLY
+
+    EXPORT ReadEl0Stack
+
+// UINTN
+// ReadEl0Stack (
+//   VOID
+//   );
+ReadEl0Stack PROC
+  mrs     x0, sp_el0
+  ret
+ReadEl0Stack ENDP
+
+  END
