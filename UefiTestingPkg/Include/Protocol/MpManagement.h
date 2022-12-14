@@ -1,8 +1,8 @@
 /** @file
-  When installed, the MP Services Protocol produces a collection of services
-  that are needed for MP management.
+  When installed, the MP Management Protocol produces a collection of power
+  management service to power on/off the APs and suspend/resume all cores.
 
-  Copyright (c) 2006 - 2017, Intel Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
@@ -22,6 +22,9 @@
 ///
 #define OPERATION_FOR_ALL_APS     MAX_UINTN
 
+///
+/// Supported processor suspension states.
+///
 typedef enum {
   AP_POWER_C1,
   AP_POWER_C2,
@@ -40,6 +43,23 @@ EFI_STATUS
   IN  MP_MANAGEMENT_PROTOCOL  *This
   );
 
+/**
+  A BSP invoked function to perform self suspend. A timeout period needs
+  to be provided by the called to invoke self-wakeup service.
+
+  @param This                   MP Management Protocol.
+  @param BspPowerState          The target power state the BSP should be
+                                suspended to.
+  @param TargetPowerLevel       The target power level of BSP after suspending,
+                                certain architecture could require this value
+                                to be paired with BspPowerState.
+  @param TimeoutInMicroseconds  Time out in microseconds specified when the
+                                timer should fire to wake up itself.
+
+  @return EFI_SUCCESS             The routine completed successfully.
+  @return EFI_INVALID_PARAMETER   The input power level or state is not within range.
+  @return Others                  Other failures from interrupt setup/restorations.
+**/
 typedef
 EFI_STATUS
 (EFIAPI *MP_MANAGEMENT_BSP_SUSPEND)(
@@ -49,6 +69,19 @@ EFI_STATUS
   IN  UINTN                   TimeoutInMicroseconds
   );
 
+/**
+  Function to perform AP power on.
+
+  @param This             MP Management Protocol.
+  @param ProcessorNumber  The CPU index to be powered on.
+
+  @return EFI_SUCCESS             The routine completed successfully.
+  @return EFI_INVALID_PARAMETER   The CPU index is out of range.
+  @return EFI_NOT_READY           The MP service is not initialized.
+  @return EFI_ALREADY_STARTED     The target AP is already in ON state.
+  @return EFI_ABORTED             The target AP is in unexpected states.
+  @return Others                  Other errors from MP services.
+**/
 typedef
 EFI_STATUS
 (EFIAPI *MP_MANAGEMENT_AP_ON)(
@@ -68,6 +101,19 @@ EFI_STATUS
 //   IN  VOID                    *ProcedureArgument      OPTIONAL,
 //   );
 
+/**
+  Function to perform AP power off.
+
+  @param This             MP Management Protocol.
+  @param ProcessorNumber  The CPU index to be powered off.
+
+  @return EFI_SUCCESS             The routine completed successfully.
+  @return EFI_INVALID_PARAMETER   The CPU index is out of range.
+  @return EFI_NOT_READY           The MP service is not initialized.
+  @return EFI_ALREADY_STARTED     The target AP is already in OFF state.
+  @return EFI_ABORTED             The target AP is in unexpected states.
+  @return Others                  Other errors from MP services.
+**/
 typedef
 EFI_STATUS
 (EFIAPI *MP_MANAGEMENT_AP_OFF)(
@@ -75,6 +121,24 @@ EFI_STATUS
   IN  UINTN                   ProcessorNumber
   );
 
+/**
+  Function to perform AP execution suspend.
+
+  @param This             MP Management Protocol.
+  @param ProcessorNumber  The CPU index to be powered off.
+  @param ApPowerState     The intended power state the CPU should be suspended to.
+                          The support input values are defined in AP_POWER_STATE.
+  @param TargetPowerLevel The target power level of AP when suspended, certain
+                          architecture could require this value to be paired with
+                          ApPowerState.
+
+  @return EFI_SUCCESS             The routine completed successfully.
+  @return EFI_INVALID_PARAMETER   The CPU index is out of range or power state is
+                                  not setup properly.
+  @return EFI_NOT_READY           The MP service is not initialized.
+  @return EFI_ALREADY_STARTED     The target AP is already in intended power state.
+  @return EFI_ABORTED             The target AP is in unexpected states.
+**/
 typedef
 EFI_STATUS
 (EFIAPI *MP_MANAGEMENT_AP_SUSPEND)(
@@ -84,6 +148,19 @@ EFI_STATUS
   IN  UINTN                   TargetPowerLevel  OPTIONAL
   );
 
+/**
+  Function to perform AP execution resumption.
+
+  @param This             MP Management Protocol.
+  @param ProcessorNumber  The CPU index to be powered off.
+
+  @return EFI_SUCCESS             The routine completed successfully.
+  @return EFI_INVALID_PARAMETER   The CPU index is out of range or power state is
+                                  not setup properly.
+  @return EFI_NOT_READY           The MP service is not initialized.
+  @return EFI_ALREADY_STARTED     The target AP is already in ON state.
+  @return EFI_ABORTED             The target AP is in unexpected states.
+**/
 typedef
 EFI_STATUS
 (EFIAPI *MP_MANAGEMENT_AP_RESUME)(
@@ -91,21 +168,13 @@ EFI_STATUS
   IN  UINTN                   ProcessorNumber
   );
 
-typedef
-EFI_STATUS
-(EFIAPI *MP_MANAGEMENT_CLEANUP)(
-  IN MP_MANAGEMENT_PROTOCOL  *This
-  );
-
 struct _MP_MANAGEMENT_PROTOCOL {
-  MP_MANAGEMENT_INITIALIZE    Initialize;
   MP_MANAGEMENT_BSP_SUSPEND   BspSuspend;
   MP_MANAGEMENT_AP_ON         ApOn;
   // MP_MANAGEMENT_AP_PROCEDURE  ApProcedure;
   MP_MANAGEMENT_AP_OFF        ApOff;
   MP_MANAGEMENT_AP_SUSPEND    ApSuspend;
   MP_MANAGEMENT_AP_RESUME     ApResume;
-  MP_MANAGEMENT_CLEANUP       Cleanup;
 };
 
 extern EFI_GUID  gMpManagementProtocolGuid;

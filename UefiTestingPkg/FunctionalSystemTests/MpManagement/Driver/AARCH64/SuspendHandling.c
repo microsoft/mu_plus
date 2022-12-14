@@ -479,6 +479,9 @@ ArmPsciSuspendHelper (
   This architectural specific routine should validate whether the
   power state is supported for clock gate suspension.
 
+  For ARM implementation, the input power state has to contain
+  PSTATE_TYPE_STANDBY bit for this suspension state.
+
   Given the state definition, this function will halt execution
   until woken up.
 
@@ -514,6 +517,9 @@ Done:
 
   This architectural specific routine should validate whether the
   power state is supported for clock gate suspension.
+
+  For ARM implementation, the input power state has to contain
+  PSTATE_TYPE_POWERDOWN bit for this suspension state.
 
   Given the state definition, this function will make the CPU to
   resume without any context. The caller should handle the data

@@ -1,5 +1,5 @@
 /** @file
-  TODO: Populate this.
+  Common AP state machine.
 
   Copyright (c) Microsoft Corporation.
 
