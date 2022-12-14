@@ -1,5 +1,6 @@
 /** @file
-  TODO: Populate this.
+  Internal metadata, enum and function definitions for MP management
+  protocol driver.
 
   Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent

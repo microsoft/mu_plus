@@ -1,5 +1,6 @@
 ## @file
-#  TODO: Populate this.
+#  MP management driver that supports the power management of AP on/off and
+#  suspend/resume for all cores.
 #
 #  Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.<BR>
 #  Copyright (c) Microsoft Corporation.
