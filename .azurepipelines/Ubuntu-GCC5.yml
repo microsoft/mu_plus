@@ -1,39 +1,44 @@
 ## @file
-# Azure Pipeline build file for a build using ubuntu and GCC5
+# Azure Pipeline build file for a build using Ubuntu and GCC.
+#
+# IMPORTANT: This file requires the local repo to contain a .azurepipelines/Matrix-Build-Job.yml file that
+#            performs the actual build steps for the configurations and packages supported by the repo.
+#
+# NOTE: This file is automatically synchronized from Mu DevOps. Update the original file there
+#       instead of the file in this repo.
+#
+# - Mu DevOps Repo: https://github.com/microsoft/mu_devops
+# - File Sync Settings: https://github.com/microsoft/mu_devops/blob/main/.sync/Files.yml
 #
 # Copyright (c) Microsoft Corporation.
-# Copyright (c) 2020, Hewlett Packard Enterprise Development LP. All rights reserved.<BR>
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-# MU_CHANGE [BEGIN]
-trigger:
-- dev/*
-- release/*
 
-schedules:
-- cron: "30 9 * * 0,3"  # Sun/Wed at 2:30AM Pacific
-  displayName: Sun/Wed Build
-  branches:
-    include:
-    - dev/*
-    - release/*
-  always: true          # Always build, even if no changes
+resources:
+  repositories:
+    - repository: mu_devops
+      type: github
+      endpoint: microsoft
+      name: microsoft/mu_devops
+      ref: refs/tags/v1.3.0
+  containers:
+    - container: linux-gcc
+      image: ghcr.io/tianocore/containers/fedora-35-build:2113a0e
 
-pr:
-- dev/*
-- release/*
-# MU_CHANGE [END]
+variables:
+- group: architectures-arm-64-x86-64
+- group: tool-chain-ubuntu-gcc
 
 jobs:
-- template: templates/pr-gate-build-job.yml
+- template: Matrix-Build-Job.yml
   parameters:
-    tool_chain_tag: 'GCC5'
-    vm_image: 'ubuntu-latest'
-    arch_list: "IA32,X64,ARM,AARCH64"
-    build_args: "CODE_COVERAGE=TRUE CC_HTML=TRUE" # MU_CHANGE
-    # MU_CHANGE
-    extra_steps:
+    arch_list: $(arch_list)
+    extra_build_args: CODE_COVERAGE=TRUE CC_HTML=TRUE
+    extra_install_step:
     - script: |
-              sudo apt-get install -y mingw-w64 lcov
+              sudo microdnf install --assumeyes mingw64-gcc lcov
               pip install lcov_cobertura pycobertura
       displayName: Install Windows Resource Compiler for Linux & Code Coverage Tools
+    tool_chain_tag: $(tool_chain_tag)
+    vm_image: $(vm_image)
+    container_image: linux-gcc

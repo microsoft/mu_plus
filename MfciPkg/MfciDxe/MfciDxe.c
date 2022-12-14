@@ -652,7 +652,7 @@ ValidateBlobWithXdrCertificates (
     if ((PublicKeyData + ALIGN_VALUE (PublicKeyDataLength, 4)) > PublicKeyDataXdrEnd) {
       DEBUG ((
         DEBUG_ERROR,
-        "%a - PcdMfciPkcs7CertBufferXdr size incorrect: PublicKeyData(0x%x) PublicKeyDataLength(0x%x) PublicKeyDataXdrEnd(0x%x)",
+        "%a - PcdMfciPkcs7CertBufferXdr size incorrect: PublicKeyData(0x%x) PublicKeyDataLength(0x%x) PublicKeyDataXdrEnd(0x%x)\n",
         __FUNCTION__,
         PublicKeyData,
         PublicKeyDataLength,

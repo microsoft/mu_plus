@@ -53,7 +53,7 @@
   gMuEventPreExitBootServicesGuid
 
 [Protocols]
-  gEfiResetNotificationProtocolGuid                             ## CONSUMES
+  gEdkiiPlatformSpecificResetFilterProtocolGuid                 ## CONSUMES
   gEfiSimpleFileSystemProtocolGuid                              ## CONSUMES
 
 [Pcd]

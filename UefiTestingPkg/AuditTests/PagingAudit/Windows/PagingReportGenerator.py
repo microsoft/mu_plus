@@ -138,7 +138,6 @@ class ParsingTool(object):
                         
                         if pte.GcdType is None:
                             pte.GcdType = mr.GcdType
-                            logging.info("pte.GcdType: %d"% (pte.GcdType))
                         else:
                             logging.error("Multiple memory types found for one region " + pte.pteDebugStr() +" " + mr.MemoryRangeToString())
                             self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  GCD Memory Type: %d and %d"% (pte.PhysicalStart, pte.GcdType,mr.GcdType))

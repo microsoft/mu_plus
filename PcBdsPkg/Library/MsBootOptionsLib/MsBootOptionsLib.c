@@ -30,6 +30,33 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define MS_PXE_BOOT       L"PXE Network"
 #define MS_PXE_BOOT_PARM  "PXE"
 
+typedef struct {
+  MEDIA_FW_VOL_DEVICE_PATH    FvDevPath;
+  EFI_DEVICE_PATH_PROTOCOL    EndDevPath;
+} FV_PIWG_DEVICE_PATH;
+
+FV_PIWG_DEVICE_PATH  mFvPIWGDevicePathTemplate = {
+  {
+    {
+      MEDIA_DEVICE_PATH,
+      MEDIA_PIWG_FW_VOL_DP,
+      {
+        (UINT8)(sizeof (MEDIA_FW_VOL_DEVICE_PATH)),
+        (UINT8)(sizeof (MEDIA_FW_VOL_DEVICE_PATH) >> 8)
+      }
+    },
+    { 0 }
+  },
+  {
+    END_DEVICE_PATH_TYPE,
+    END_ENTIRE_DEVICE_PATH_SUBTYPE,
+    {
+      END_DEVICE_PATH_LENGTH,
+      0
+    }
+  }
+};
+
 /**
  * Constructor
  *
@@ -303,13 +330,24 @@ CreateFvBootOption (
                    (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
                    );
   } else {
-    DevicePath = CreateShellDevicePath ();
-    if (DevicePath == NULL) {
-      return EFI_NOT_FOUND;
+    if (IsZeroGuid (PcdGetPtr (PcdShellFvGuid))) {
+      // Search all FV's for Shell.
+      DevicePath = CreateShellDevicePath ();
+      if (DevicePath == NULL) {
+        return EFI_NOT_FOUND;
+      }
+    } else {
+      // Create FV devicepath from template
+      DevicePath = (EFI_DEVICE_PATH_PROTOCOL *)AllocateCopyPool (sizeof (FV_PIWG_DEVICE_PATH), &mFvPIWGDevicePathTemplate);
+      // Update FvName to the Shell GUID from PCD if it is not ZeroGuid
+      CopyGuid (
+        &((FV_PIWG_DEVICE_PATH *)DevicePath)->FvDevPath.FvName,
+        PcdGetPtr (PcdShellFvGuid)
+        );
     }
 
     DevicePath = AppendDevicePathNode (
-                   DevicePath,
+                   (EFI_DEVICE_PATH_PROTOCOL *)DevicePath,
                    (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
                    );
   }
@@ -324,7 +362,11 @@ CreateFvBootOption (
              OptionalData,
              OptionalDataSize
              );
-  FreePool (DevicePath);
+
+  if (DevicePath != NULL) {
+    FreePool (DevicePath);
+  }
+
   return Status;
 }
 

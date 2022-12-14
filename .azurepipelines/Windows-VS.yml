@@ -1,31 +1,34 @@
 ## @file
-# Azure Pipeline build file for a build using Windows and the Visual Studio compiler
+# Azure Pipeline build file for a build using Windows and the latest Visual Studio toolchain supported.
+#
+# IMPORTANT: This file requires the local repo to contain a .azurepipelines/Matrix-Build-Job.yml file that
+#            performs the actual build steps for the configurations and packages supported by the repo.
+#
+# NOTE: This file is automatically synchronized from Mu DevOps. Update the original file there
+#       instead of the file in this repo.
+#
+# - Mu DevOps Repo: https://github.com/microsoft/mu_devops
+# - File Sync Settings: https://github.com/microsoft/mu_devops/blob/main/.sync/Files.yml
 #
 # Copyright (c) Microsoft Corporation.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-# MU_CHANGE [BEGIN]
-trigger:
-- dev/*
-- release/*
 
-schedules:
-- cron: "0 8 * * 0,3"   # Sun/Wed at 1AM Pacific
-  displayName: Sun/Wed Build
-  branches:
-    include:
-    - dev/*
-    - release/*
-  always: true          # Always build, even if no changes
+resources:
+  repositories:
+    - repository: mu_devops
+      type: github
+      endpoint: microsoft
+      name: microsoft/mu_devops
+      ref: refs/tags/v1.3.0
 
-pr:
-- dev/*
-- release/*
-# MU_CHANGE [END]
+variables:
+- group: architectures-x86-64
+- group: tool-chain-windows-visual-studio-latest
 
 jobs:
-- template: templates/pr-gate-build-job.yml
+- template: Matrix-Build-Job.yml
   parameters:
-    tool_chain_tag: 'VS2022'
-    vm_image: 'windows-2022'
-    arch_list: "IA32,X64"
+    arch_list: $(arch_list)
+    tool_chain_tag: $(tool_chain_tag)
+    vm_image: $(vm_image)
