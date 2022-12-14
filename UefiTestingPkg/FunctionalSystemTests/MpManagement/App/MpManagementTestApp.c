@@ -509,7 +509,7 @@ SuspendAllApsToC2 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
+  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C2, (UINTN)PcdGet64 (PcdPlatformC2PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend them to C2, it should succeed.
@@ -550,7 +550,7 @@ SuspendSingleApToC2 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState));
+  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C2, (UINTN)PcdGet64 (PcdPlatformC2PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend it to C2, it should succeed.
@@ -591,7 +591,7 @@ SuspendAllApsToC3 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
+  Status = mMpManagement->ApSuspend (mMpManagement, OPERATION_FOR_ALL_APS, AP_POWER_C3, (UINTN)PcdGet64 (PcdPlatformC3PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend them to C3, it should succeed.
@@ -632,7 +632,7 @@ SuspendSingleApToC3 (
 
   DEBUG ((DEBUG_INFO, "%a Entry.. \n", __FUNCTION__));
 
-  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState));
+  Status = mMpManagement->ApSuspend (mMpManagement, mApDutIndex, AP_POWER_C3, (UINTN)PcdGet64 (PcdPlatformC3PowerState));
 
   if ((Context == NULL) && EFI_ERROR (Status)) {
     // If this is the first time we suspend it to C3, it should succeed.
@@ -797,7 +797,7 @@ SuspendBspToC2 (
 
   StartTick = GetPerformanceCounter ();
 
-  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C2, PcdGet64 (PcdPlatformC2PowerState), BSP_SUSPEND_TIMER_US);
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C2, (UINTN)PcdGet64 (PcdPlatformC2PowerState), BSP_SUSPEND_TIMER_US);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > US_TO_NS (BSP_SUSPEND_TIMER_US));
@@ -836,7 +836,7 @@ SuspendBspToC3 (
 
   StartTick = GetPerformanceCounter ();
 
-  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C3, PcdGet64 (PcdPlatformC3PowerState), BSP_SUSPEND_TIMER_US);
+  Status = mMpManagement->BspSuspend (mMpManagement, AP_POWER_C3, (UINTN)PcdGet64 (PcdPlatformC3PowerState), BSP_SUSPEND_TIMER_US);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   UT_ASSERT_TRUE (GetTimeInNanoSecond (GetPerformanceCounter () - StartTick) > US_TO_NS (BSP_SUSPEND_TIMER_US));
