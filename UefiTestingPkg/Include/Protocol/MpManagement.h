@@ -37,12 +37,6 @@ typedef enum {
 ///
 typedef struct _MP_MANAGEMENT_PROTOCOL MP_MANAGEMENT_PROTOCOL;
 
-typedef
-EFI_STATUS
-(EFIAPI *MP_MANAGEMENT_INITIALIZE)(
-  IN  MP_MANAGEMENT_PROTOCOL  *This
-  );
-
 /**
   A BSP invoked function to perform self suspend. A timeout period needs
   to be provided by the called to invoke self-wakeup service.
