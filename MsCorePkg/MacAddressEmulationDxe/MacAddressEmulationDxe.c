@@ -42,7 +42,7 @@ SnpSupportsMacEmuCheck (
 
   if (Snp->Mode->State != EfiSimpleNetworkInitialized) {
     DEBUG ((DEBUG_WARN, "[%a]: SNP handle in unexpected state %d, cannot update MAC.\n", __FUNCTION__, Snp->Mode->State));
-    return FALSE
+    return FALSE;
   }
 
   if (Snp->Mode->IfType != NET_IFTYPE_ETHERNET) {
