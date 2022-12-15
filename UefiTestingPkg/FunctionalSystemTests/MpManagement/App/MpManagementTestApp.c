@@ -979,45 +979,45 @@ MpManagementTestApp (
     goto EXIT;
   }
 
-  // AddTestCase (BasicOperationTests, "Turn on all APs should succeed", "MpManagement.CpuOn.AllInit", TurnOnAllAps, NULL, NULL, NULL);
-  // AddTestCase (BasicOperationTests, "Double turn on all APs should fail", "MpManagement.CpuOn.AllDouble", TurnOnAllAps, NULL, NULL, &Context);
-  // AddTestCase (BasicOperationTests, "Turn off all APs should succeed", "MpManagement.CpuOff.AllInit", TurnOffAllAps, NULL, NULL, NULL);
-  // AddTestCase (BasicOperationTests, "Double turn off all APs should fail", "MpManagement.CpuOff.AllDouble", TurnOffAllAps, NULL, NULL, &Context);
-  // AddTestCase (BasicOperationTests, "Turn on a single AP should succeed", "MpManagement.CpuOn.ApInit", TurnOnSingleAp, NULL, NULL, NULL);
-  // AddTestCase (BasicOperationTests, "Double turn on a single AP should fail", "MpManagement.CpuOn.ApDouble", TurnOnSingleAp, NULL, NULL, &Context);
-  // AddTestCase (BasicOperationTests, "Turn off a single AP should succeed", "MpManagement.CpuOff.ApInit", TurnOffSingleAp, NULL, NULL, NULL);
-  // AddTestCase (BasicOperationTests, "Double turn off a single AP should fail", "MpManagement.CpuOff.ApDouble", TurnOffSingleAp, NULL, NULL, &Context);
-  // AddTestCase (BasicOperationTests, "Turn on BSP should fail", "MpManagement.CpuOn.Bsp", TurnOnBsp, NULL, NULL, NULL);
-  // AddTestCase (BasicOperationTests, "Turn off BSP should fail", "MpManagement.CpuOff.Bsp", TurnOffBsp, NULL, NULL, NULL);
+  AddTestCase (BasicOperationTests, "Turn on all APs should succeed", "MpManagement.CpuOn.AllInit", TurnOnAllAps, NULL, NULL, NULL);
+  AddTestCase (BasicOperationTests, "Double turn on all APs should fail", "MpManagement.CpuOn.AllDouble", TurnOnAllAps, NULL, NULL, &Context);
+  AddTestCase (BasicOperationTests, "Turn off all APs should succeed", "MpManagement.CpuOff.AllInit", TurnOffAllAps, NULL, NULL, NULL);
+  AddTestCase (BasicOperationTests, "Double turn off all APs should fail", "MpManagement.CpuOff.AllDouble", TurnOffAllAps, NULL, NULL, &Context);
+  AddTestCase (BasicOperationTests, "Turn on a single AP should succeed", "MpManagement.CpuOn.ApInit", TurnOnSingleAp, NULL, NULL, NULL);
+  AddTestCase (BasicOperationTests, "Double turn on a single AP should fail", "MpManagement.CpuOn.ApDouble", TurnOnSingleAp, NULL, NULL, &Context);
+  AddTestCase (BasicOperationTests, "Turn off a single AP should succeed", "MpManagement.CpuOff.ApInit", TurnOffSingleAp, NULL, NULL, NULL);
+  AddTestCase (BasicOperationTests, "Double turn off a single AP should fail", "MpManagement.CpuOff.ApDouble", TurnOffSingleAp, NULL, NULL, &Context);
+  AddTestCase (BasicOperationTests, "Turn on BSP should fail", "MpManagement.CpuOn.Bsp", TurnOnBsp, NULL, NULL, NULL);
+  AddTestCase (BasicOperationTests, "Turn off BSP should fail", "MpManagement.CpuOff.Bsp", TurnOffBsp, NULL, NULL, NULL);
 
-  // AddTestCase (SuspendOperationTests, "Suspend to C1 on all APs should succeed", "MpManagement.SuspendC1.AllInit", SuspendAllApsToC1, PowerOnAps, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double suspend to C1 on all APs should fail", "MpManagement.SuspendC1.AllDouble", SuspendAllApsToC1, NULL, NULL, &Context);
-  // AddTestCase (SuspendOperationTests, "Resume all APs from C1 should succeed", "MpManagement.ResumeC1.AllInit", ResumeAllAps, NULL, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double resume all APs from C1 should fail", "MpManagement.ResumeC1.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
+  AddTestCase (SuspendOperationTests, "Suspend to C1 on all APs should succeed", "MpManagement.SuspendC1.AllInit", SuspendAllApsToC1, PowerOnAps, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C1 on all APs should fail", "MpManagement.SuspendC1.AllDouble", SuspendAllApsToC1, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume all APs from C1 should succeed", "MpManagement.ResumeC1.AllInit", ResumeAllAps, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double resume all APs from C1 should fail", "MpManagement.ResumeC1.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
 
   AddTestCase (SuspendOperationTests, "Suspend to C1 on a single AP should succeed", "MpManagement.SuspendC1.SingleInit", SuspendSingleApToC1, PowerOnSingleAp, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double suspend to C1 on a single AP should fail", "MpManagement.SuspendC1.SingleDouble", SuspendSingleApToC1, NULL, NULL, &Context);
-  // AddTestCase (SuspendOperationTests, "Resume a single AP from C1 should succeed", "MpManagement.ResumeC1.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C1 on a single AP should fail", "MpManagement.SuspendC1.SingleDouble", SuspendSingleApToC1, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume a single AP from C1 should succeed", "MpManagement.ResumeC1.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume a single AP from C1 should fail", "MpManagement.ResumeC1.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
 
-  // AddTestCase (SuspendOperationTests, "Suspend to C2 on all APs should succeed", "MpManagement.SuspendC2.AllInit", SuspendAllApsToC2, PowerOnAps, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double suspend to C2 on all APs should fail", "MpManagement.SuspendC2.AllDouble", SuspendAllApsToC2, NULL, NULL, &Context);
-  // AddTestCase (SuspendOperationTests, "Resume all APs from C2 should succeed", "MpManagement.ResumeC2.AllInit", ResumeAllAps, NULL, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double resume all APs from C2 should fail", "MpManagement.ResumeC2.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
+  AddTestCase (SuspendOperationTests, "Suspend to C2 on all APs should succeed", "MpManagement.SuspendC2.AllInit", SuspendAllApsToC2, PowerOnAps, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C2 on all APs should fail", "MpManagement.SuspendC2.AllDouble", SuspendAllApsToC2, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume all APs from C2 should succeed", "MpManagement.ResumeC2.AllInit", ResumeAllAps, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double resume all APs from C2 should fail", "MpManagement.ResumeC2.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
 
   AddTestCase (SuspendOperationTests, "Suspend to C2 on single AP should succeed", "MpManagement.SuspendC2.SingleInit", SuspendSingleApToC2, PowerOnSingleAp, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double suspend to C2 on single AP should fail", "MpManagement.SuspendC2.SingleDouble", SuspendSingleApToC2, NULL, NULL, &Context);
-  // AddTestCase (SuspendOperationTests, "Resume single AP from C2 should succeed", "MpManagement.ResumeC2.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C2 on single AP should fail", "MpManagement.SuspendC2.SingleDouble", SuspendSingleApToC2, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume single AP from C2 should succeed", "MpManagement.ResumeC2.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume single AP from C2 should fail", "MpManagement.ResumeC2.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
 
-  // AddTestCase (SuspendOperationTests, "Suspend to C3 on all APs should succeed", "MpManagement.SuspendC3.AllInit", SuspendAllApsToC3, PowerOnAps, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double suspend to C3 on all APs should fail", "MpManagement.SuspendC3.AllDouble", SuspendAllApsToC3, NULL, NULL, &Context);
-  // AddTestCase (SuspendOperationTests, "Resume all APs from C3 should succeed", "MpManagement.ResumeC3.AllInit", ResumeAllAps, NULL, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double resume all APs from C3 should fail", "MpManagement.ResumeC3.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
+  AddTestCase (SuspendOperationTests, "Suspend to C3 on all APs should succeed", "MpManagement.SuspendC3.AllInit", SuspendAllApsToC3, PowerOnAps, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C3 on all APs should fail", "MpManagement.SuspendC3.AllDouble", SuspendAllApsToC3, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume all APs from C3 should succeed", "MpManagement.ResumeC3.AllInit", ResumeAllAps, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double resume all APs from C3 should fail", "MpManagement.ResumeC3.AllDouble", ResumeAllAps, NULL, PowerOffAps, &Context);
 
   AddTestCase (SuspendOperationTests, "Suspend to C3 on single AP should succeed", "MpManagement.SuspendC3.SingleInit", SuspendSingleApToC3, PowerOnSingleAp, NULL, NULL);
-  // AddTestCase (SuspendOperationTests, "Double suspend to C3 on single AP should fail", "MpManagement.SuspendC3.SingleDouble", SuspendSingleApToC3, NULL, NULL, &Context);
-  // AddTestCase (SuspendOperationTests, "Resume single AP from C3 should succeed", "MpManagement.ResumeC3.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
+  AddTestCase (SuspendOperationTests, "Double suspend to C3 on single AP should fail", "MpManagement.SuspendC3.SingleDouble", SuspendSingleApToC3, NULL, NULL, &Context);
+  AddTestCase (SuspendOperationTests, "Resume single AP from C3 should succeed", "MpManagement.ResumeC3.SingleInit", ResumeSingleAp, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Double resume single AP from C3 should fail", "MpManagement.ResumeC3.SingleDouble", ResumeSingleAp, NULL, PowerOffSingleAp, &Context);
 
   AddTestCase (SuspendOperationTests, "Suspend to C1 on BSP should succeed after a timeout", "MpManagement.SuspendC1.BSP", SuspendBspToC1, NULL, NULL, NULL);
