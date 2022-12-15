@@ -20,6 +20,10 @@
   ##
   PlatformSmmProtectionsTestLib|Include/Library/PlatformSmmProtectionsTestLib.h
 
+[Protocols]
+  ## Include/Protocol/MpManagement.h
+  gMpManagementProtocolGuid = { 0x2b0a3788, 0xe602, 0x424f, { 0xa8, 0x32, 0xa1, 0x13, 0x77, 0xa7, 0x6d, 0x73 } }
+
 [Guids]
   ##
   gUefiTestingPkgTokenSpaceGuid       = { 0xb3f4fb27, 0xf382, 0x4484, { 0x9b, 0x77, 0x22, 0x6b, 0x2b, 0x43, 0x48, 0xbb } }
@@ -35,3 +39,9 @@
   # When TRUE, the platform indicate the SMRR related is not supported.
   # When FALSE, the SMRR logic will follow the normal family/model ID identification to evaluate SMRAM regions.
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported|FALSE|BOOLEAN|0x00000001
+
+  ## Power state used for suspending a secondary core to C2 state
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC2PowerState|1|UINT64|0x00000002
+
+  ## Power state used for suspending a secondary core to C3 state
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformC3PowerState|0x1010022|UINT64|0x00000003
