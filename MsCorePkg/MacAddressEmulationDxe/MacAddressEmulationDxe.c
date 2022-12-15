@@ -36,8 +36,6 @@ SnpSupportsMacEmuCheck (
   IN CONST MAC_EMULATION_SNP_NOTIFY_CONTEXT  *Context
   )
 {
-  BOOLEAN  IsMatch = FALSE;
-
   if ((SnpHandle == NULL) || (Snp == NULL) || (Context == NULL)) {
     return FALSE;
   }
@@ -62,7 +60,7 @@ SnpSupportsMacEmuCheck (
     return FALSE;
   }
 
-  if (IsMatch && (Context->Assigned == TRUE)) {
+  if (Context->Assigned == TRUE) {
     // If emulation was already assigned, make sure that this is the same interface that was assigned previously
     // by comparing the permanent MAC address against the address cached during the first assignment (updated in
     // context below).
