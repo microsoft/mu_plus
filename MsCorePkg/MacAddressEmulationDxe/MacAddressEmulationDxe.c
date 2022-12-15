@@ -38,44 +38,41 @@ SnpSupportsMacEmuCheck (
 {
   BOOLEAN  IsMatch = FALSE;
 
-  DEBUG ((DEBUG_VERBOSE, "[%a]: Start\n", __FUNCTION__));
-
   if ((SnpHandle == NULL) || (Snp == NULL) || (Context == NULL)) {
     return FALSE;
-  } else {
-    IsMatch = TRUE;
   }
 
-  if (IsMatch && (Snp->Mode->State != EfiSimpleNetworkInitialized)) {
+  if (Snp->Mode->State != EfiSimpleNetworkInitialized) {
     DEBUG ((DEBUG_WARN, "[%a]: SNP handle in unexpected state %d, cannot update MAC.\n", __FUNCTION__, Snp->Mode->State));
-    IsMatch = FALSE;
+    return FALSE
   }
 
-  if (IsMatch && (Snp->Mode->IfType != NET_IFTYPE_ETHERNET)) {
+  if (Snp->Mode->IfType != NET_IFTYPE_ETHERNET) {
     DEBUG ((DEBUG_WARN, "[%a]: SNP interface type is not Ethernet.\n", __FUNCTION__));
-    IsMatch = FALSE;
+    return FALSE;
   }
 
-  if (IsMatch && !Snp->Mode->MacAddressChangeable) {
+  if (!Snp->Mode->MacAddressChangeable) {
     DEBUG ((DEBUG_WARN, "[%a]: SNP interface does not support MAC address programming", __FUNCTION__));
-    IsMatch = FALSE;
+    return FALSE;
   }
 
-  if (IsMatch && !PlatformMacEmulationSnpCheck (SnpHandle)) {
+  if (!PlatformMacEmulationSnpCheck (SnpHandle)) {
     DEBUG ((DEBUG_WARN, "[%a]: Platform library reports not to support this SNP", __FUNCTION__));
-    IsMatch = FALSE;
+    return FALSE;
   }
 
   if (IsMatch && (Context->Assigned == TRUE)) {
     // If emulation was already assigned, make sure that this is the same interface that was assigned previously
     // by comparing the permanent MAC address against the address cached during the first assignment (updated in
     // context below).
-    IsMatch = (CompareMem (&Snp->Mode->PermanentAddress, &Context->PermanentAddress, NET_ETHER_ADDR_LEN) == 0);
+    if (CompareMem (&Snp->Mode->PermanentAddress, &Context->PermanentAddress, NET_ETHER_ADDR_LEN) != 0) {
+      DEBUG ((DEBUG_VERBOSE, "[%a]: Another SNP was already programmed (not this one) skipping.", __FUNCTION__));
+      return FALSE;
+    }
   }
 
-  DEBUG ((DEBUG_VERBOSE, "[%a]: End\n", __FUNCTION__));
-
-  return IsMatch;
+  return TRUE;
 }
 
 /**
