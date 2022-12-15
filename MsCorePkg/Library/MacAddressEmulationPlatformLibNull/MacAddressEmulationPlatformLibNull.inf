@@ -21,10 +21,3 @@
 [Packages]
   MdePkg/MdePkg.dec
   MsCorePkg/MsCorePkg.dec
-
-[LibraryClasses]
-
-[Protocols]
-
-[Guids]
-

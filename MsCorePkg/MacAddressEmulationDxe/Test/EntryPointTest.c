@@ -34,8 +34,8 @@ MacAddressEmulationEntry_ReturnsError_IfMacEmulationDisabled (
   EFI_STATUS       Status;
   EFI_MAC_ADDRESS  DummyAddress = { 0x0 };
 
-  will_return (IsMacEmulationEnabled, &DummyAddress);
-  will_return (IsMacEmulationEnabled, EFI_UNSUPPORTED);
+  will_return (GetMacEmulationAddress, &DummyAddress);
+  will_return (GetMacEmulationAddress, EFI_UNSUPPORTED);
 
   // Act
   Status = MacAddressEmulationEntry (NULL, NULL);
@@ -94,8 +94,8 @@ MacAddressEmulationEntry_EnablesHighLevelOsDriverAndRegistersCallback_WhenEmulat
 
   SetMem (&AddressToEmulate, NET_ETHER_ADDR_LEN, 0xEE);
 
-  will_return (IsMacEmulationEnabled, &AddressToEmulate);
-  will_return (IsMacEmulationEnabled, TRUE);
+  will_return (GetMacEmulationAddress, &AddressToEmulate);
+  will_return (GetMacEmulationAddress, TRUE);
 
   will_return (PlatformMacEmulationEnable, EFI_SUCCESS);
 

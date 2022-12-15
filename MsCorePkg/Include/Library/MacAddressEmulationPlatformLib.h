@@ -20,7 +20,8 @@
 
 **/
 EFI_STATUS
-IsMacEmulationEnabled (
+EFIAPI
+GetMacEmulationAddress (
   OUT EFI_MAC_ADDRESS  *Address
   );
 
@@ -39,6 +40,7 @@ IsMacEmulationEnabled (
 
 **/
 BOOLEAN
+EFIAPI
 PlatformMacEmulationSnpCheck (
   IN  EFI_HANDLE  SnpHandle
   );
@@ -50,9 +52,11 @@ PlatformMacEmulationSnpCheck (
   @param[in]  Address - MAC Address to use for emulation
 
   @retval  EFI_STATUS
+  @retval  Other Statuses - indicate error
 
 **/
 EFI_STATUS
+EFIAPI
 PlatformMacEmulationEnable (
   IN  EFI_MAC_ADDRESS  *Address
   );

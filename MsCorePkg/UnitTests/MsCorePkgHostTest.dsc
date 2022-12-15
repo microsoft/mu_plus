@@ -7,11 +7,11 @@
 
 ################################################################################
 [Defines]
-  PLATFORM_NAME                  = MsCorePkg
+  PLATFORM_NAME                  = MsCorePkgHostTest
   PLATFORM_GUID                  = 55442A6C-2455-414D-9842-23002F5B20C7
   PLATFORM_VERSION               = 0.1
   DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/MsCorePkg
+  OUTPUT_DIRECTORY               = Build/MsCorePkg/HostTest
   SUPPORTED_ARCHITECTURES        = IA32|X64
   SKUID_IDENTIFIER               = DEFAULT
   BUILD_TARGETS                  = NOOPT

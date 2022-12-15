@@ -9,7 +9,7 @@
 
 [Defines]
   INF_VERSION                    = 1.27
-  BASE_NAME                      = MacAddressEmulation
+  BASE_NAME                      = MacAddressEmulationDxe
   FILE_GUID                      = 72AA9388-70DD-4669-8EC1-87444DD62CF3
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0

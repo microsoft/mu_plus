@@ -1,6 +1,6 @@
 # MacAddressEmulationDxe
 
-This driver provides UEFI support for MAC Address Emulation. There are two main
+This driver provides UEFI support for MAC Address Emulation.
 
 ## Feature of this driver
 
@@ -20,7 +20,7 @@ To use this feature, platforms must do the following:
 
 ### Notes on platform implementation
 
-- `IsMacEmulationEnabled` and `PlatformMacEmulationEnable` are called during driver entrypoint.
+- `GetMacEmulationAddress` and `PlatformMacEmulationEnable` are called during driver entrypoint.
 - `PlatformMacEmulationSnpCheck` is called during a callback at TPL_NOTIFY, so any code here must be aware of this
    restriction. It is not recommended to lower the TPL during this function if the network stack has already been
    started as some packets may be transmitted before the mac is programmed to the emulated address.

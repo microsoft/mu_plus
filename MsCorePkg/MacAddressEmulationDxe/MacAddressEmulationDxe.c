@@ -19,7 +19,8 @@
 #include <Library/MacAddressEmulationPlatformLib.h>
 
 /**
-  @brief Performs sanity checks to ensure an snp can support mac emulation, and ensures that multiple interfaces are not programmed.
+  Performs sanity checks to ensure an snp can support mac emulation, and ensures that multiple interfaces are not programmed.
+
   @param[in] SnpHandle - A handle to an Snp
   @param[in] Snp - An snp protocol associated with the handle provided
   @param[in] SnpContext - The snp context created by this driver's entry point
@@ -78,7 +79,8 @@ SnpSupportsMacEmuCheck (
 }
 
 /**
-  @brief  Iterates through all available SNPs available and finds the first instance which meets the criteria specified by match function
+  Iterates through all available SNPs available and finds the first instance which meets the criteria specified by match function
+
   @param[in] MatchFunctionContext - The snp context created by this driver's entry point
   @retval  NULL - no matching SNP was found, or invalid input parameter
   @retval  NON-NULL - a pointer to the first matching SNP
@@ -133,7 +135,8 @@ FindMatchingSnp (
 }
 
 /**
-  @brief  Sets the provided SNP's station address using the context information provided
+  Sets the provided SNP's station address using the context information provided
+
   @param[in] Snp - Non-NULL pointer to an SNP which supports station address programming
   @param[in] Context - The snp context created by this driver's entry point
 
@@ -234,7 +237,7 @@ MacAddressEmulationEntry (
   EFI_STATUS                        Status;
 
   // Determine general platform runtime support.  Return unsupported to fully unload driver if not enabled.
-  Status = IsMacEmulationEnabled (&Address);
+  Status = GetMacEmulationAddress (&Address);
   if (EFI_ERROR (Status)) {
     if (Status != EFI_UNSUPPORTED) {
       DEBUG ((DEBUG_ERROR, "[%a]: Failed to determine MAC Emulated Address support. Status = %r\n", __FUNCTION__, Status));
@@ -244,14 +247,14 @@ MacAddressEmulationEntry (
   }
 
   // Allocate and initialize context
-  Context = AllocateZeroPool (sizeof (MAC_EMULATION_SNP_NOTIFY_CONTEXT));
+  Context = AllocateZeroPool (sizeof (*Context));
   if (Context == NULL) {
     DEBUG ((DEBUG_ERROR, "[%a]: cannot allocate notify context\n", __FUNCTION__));
     return EFI_OUT_OF_RESOURCES;
   }
 
   Context->Assigned = FALSE;
-  CopyMem (&Context->EmulationAddress, &Address, sizeof (EFI_MAC_ADDRESS));
+  CopyMem (&Context->EmulationAddress, &Address, sizeof (Context->EmulationAddress));
 
   // Enable support for the high level OS driver to load support properly
   Status = PlatformMacEmulationEnable (&Address);

@@ -18,12 +18,12 @@
   @retval  EFI_STATUS      - Status of other calls in the function.
 **/
 EFI_STATUS
-IsMacEmulationEnabled (
+GetMacEmulationAddress (
   OUT EFI_MAC_ADDRESS  *Address
   )
 {
   /*
-        < OEM TODO >
+    <Platform implementer TODO>
 
     Typical checks here include examining runtime scenarios such as a board SKU ID, factory provisioning data,
     user configuration data (UEFI setup menu), etc.  If not enabled, the function should return EFI_UNSUPPORTED.
@@ -54,7 +54,7 @@ PlatformMacEmulationSnpCheck (
   )
 {
   /*
-        < OEM TODO >
+    <Platform implementer TODO>
 
     Perform any logic necessary to determine if the controller represented by the input handle should have the MAC
     address emulated.
@@ -85,6 +85,7 @@ PlatformMacEmulationSnpCheck (
   @param[in]  Address - MAC Address to use for emulation
 
   @retval  EFI_STATUS
+  @retval  Other Statuses - indicate error
 **/
 EFI_STATUS
 PlatformMacEmulationEnable (
@@ -92,7 +93,7 @@ PlatformMacEmulationEnable (
   )
 {
   /*
-        < OEM TODO >
+    <Platform implementer TODO>
 
     The MacAddressEmulationDxe driver will perform a call to the UEFI's API called EFI_SIMPLE_NETWORK_PROTOCOL::StationAddress()
     to set the requested MAC address, but if the specific network controller used by the platform requires further support, it can

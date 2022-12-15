@@ -20,7 +20,7 @@ EFI_RUNTIME_SERVICES  mMockRuntime;
 EFI_BOOT_SERVICES     mBootServices;
 
 EFI_STATUS
-IsMacEmulationEnabled (
+GetMacEmulationAddress (
   OUT EFI_MAC_ADDRESS  *Address
   )
 {
