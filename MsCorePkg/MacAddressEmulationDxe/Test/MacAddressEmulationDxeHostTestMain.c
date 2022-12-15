@@ -20,6 +20,7 @@ EFI_RUNTIME_SERVICES  mMockRuntime;
 EFI_BOOT_SERVICES     mBootServices;
 
 EFI_STATUS
+EFIAPI
 GetMacEmulationAddress (
   OUT EFI_MAC_ADDRESS  *Address
   )
@@ -29,6 +30,7 @@ GetMacEmulationAddress (
 }
 
 BOOLEAN
+EFIAPI
 PlatformMacEmulationSnpCheck (
   IN  EFI_HANDLE  SnpHandle
   )
@@ -37,6 +39,7 @@ PlatformMacEmulationSnpCheck (
 }
 
 EFI_STATUS
+EFIAPI
 PlatformMacEmulationEnable (
   IN  EFI_MAC_ADDRESS  *Address
   )

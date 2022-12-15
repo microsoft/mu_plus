@@ -18,6 +18,7 @@
   @retval  EFI_STATUS      - Status of other calls in the function.
 **/
 EFI_STATUS
+EFIAPI
 GetMacEmulationAddress (
   OUT EFI_MAC_ADDRESS  *Address
   )
@@ -49,6 +50,7 @@ GetMacEmulationAddress (
   @retval FALSE - Device represented by SnpHandle does not support MAC emulation.
 **/
 BOOLEAN
+EFIAPI
 PlatformMacEmulationSnpCheck (
   IN  EFI_HANDLE  SnpHandle
   )
@@ -88,6 +90,7 @@ PlatformMacEmulationSnpCheck (
   @retval  Other Statuses - indicate error
 **/
 EFI_STATUS
+EFIAPI
 PlatformMacEmulationEnable (
   IN  EFI_MAC_ADDRESS  *Address
   )
