@@ -499,13 +499,13 @@ CpuArchClockGate (
   EFI_STATUS  Status;
   UINTN       PowerType;
 
-  PowerType = GetPowerType (PowerLevel);
+  PowerType = GetPowerType (PowerState);
   if (PowerType == PSTATE_TYPE_POWERDOWN) {
     Status = EFI_INVALID_PARAMETER;
     goto Done;
   }
 
-  Status = ArmPsciSuspendHelper (PowerLevel, 0, 0);
+  Status = ArmPsciSuspendHelper (PowerState, 0, 0);
 
 Done:
   return Status;
@@ -539,13 +539,13 @@ CpuArchSleep (
   EFI_STATUS  Status;
   UINTN       PowerType;
 
-  PowerType = GetPowerType (PowerLevel);
+  PowerType = GetPowerType (PowerState);
   if (PowerType == PSTATE_TYPE_STANDBY) {
     Status = EFI_INVALID_PARAMETER;
     goto Done;
   }
 
-  Status = ArmPsciSuspendHelper (PowerLevel, (UINTN)ApEntryPoint, 0);
+  Status = ArmPsciSuspendHelper (PowerState, (UINTN)ApEntryPoint, 0);
 
 Done:
   return Status;
