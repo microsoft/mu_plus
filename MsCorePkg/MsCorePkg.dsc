@@ -91,6 +91,8 @@
   CapsulePersistenceLib|MsCorePkg/Library/BaseCapsulePersistenceLibNull/BaseCapsulePersistenceLibNull.inf
   QueueLib|MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
 
+  MacAddressEmulationPlatformLib|MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
+
 [LibraryClasses.common.UEFI_APPLICATION]
   UnitTestPersistenceLib|UnitTestFrameworkPkg/Library/UnitTestPersistenceLibSimpleFileSystem/UnitTestPersistenceLibSimpleFileSystem.inf
   UnitTestResultReportLib|XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf
@@ -214,6 +216,8 @@
       RngLib              |MdePkg/Library/BaseRngLibNull/BaseRngLibNull.inf
       BaseCryptLib        |CryptoPkg/Library/BaseCryptLibNull/BaseCryptLibNull.inf
   }
+  MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
+  MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
 
 [BuildOptions]
 #force deprecated interfaces off
