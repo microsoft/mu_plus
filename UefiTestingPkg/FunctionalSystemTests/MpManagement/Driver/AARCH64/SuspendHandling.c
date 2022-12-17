@@ -2,6 +2,7 @@
   Architecture specific routines to support CPU suspend functionalities.
 
   Copyright (c) 2013-2020, ARM Limited and Contributors. All rights reserved.
+  Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.<BR>
   Copyright (c) Microsoft Corporation.
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -48,6 +49,8 @@
 #define PSTATE_TYPE_STANDBY     0x0
 #define PSTATE_TYPE_POWERDOWN   0x1
 
+#define AP_TEMP_STACK_SIZE      EFI_PAGE_SIZE
+
 /*
   Architectural metadata structure for ARM context losing resume routines.
  */
@@ -72,6 +75,8 @@ ARM_CORE_INFO  *mCpuInfo           = NULL;
 UINTN          mBspVbar            = 0;
 UINTN          mBspHcrReg          = 0;
 UINTN          mBspEl0Sp           = 0;
+UINT64         *gApStacksBase      = NULL;
+CONST UINT64   gApStackSize        = AP_TEMP_STACK_SIZE;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -169,11 +174,24 @@ CpuMpArchInit (
   }
 
   if (MaxCpus != NumOfCpus) {
-    DEBUG ((DEBUG_WARN, "Trying to use EFI_MP_SERVICES_PROTOCOL on a UP system"));
+    DEBUG ((DEBUG_WARN, "Trying to use EFI_MP_SERVICES_PROTOCOL on a UP system\n"));
     // We are not MP so nothing to do
     Status = EFI_NOT_FOUND;
     goto Done;
   }
+
+  gApStacksBase = AllocatePages (
+                    EFI_SIZE_TO_PAGES (
+                      NumOfCpus * gApStackSize
+                      )
+                    );
+  if (gApStacksBase == NULL) {
+    DEBUG ((DEBUG_ERROR, "Unable to prepare C3 resume temporary stack for all cores.\n"));
+    // We are not MP so nothing to do
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Done;
+  }
+  WriteBackDataCacheRange (&gApStacksBase, sizeof (UINT64 *));
 
   Status = EFI_SUCCESS;
 
@@ -325,6 +343,11 @@ CpuArchWakeFromSleep (
   ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
 }
 
+VOID
+AsmApEntryPoint (
+  VOID
+  );
+
 /**
   This routine is released by TF-A after waking up from context
   losing suspend. Could be run by both BSP and APs.
@@ -335,7 +358,6 @@ CpuArchWakeFromSleep (
 
   @return This function should not return.
 **/
-STATIC
 VOID
 ApEntryPoint (
   VOID
@@ -545,7 +567,7 @@ CpuArchSleep (
     goto Done;
   }
 
-  Status = ArmPsciSuspendHelper (PowerState, (UINTN)ApEntryPoint, 0);
+  Status = ArmPsciSuspendHelper (PowerState, (UINTN)AsmApEntryPoint, 0);
 
 Done:
   return Status;
