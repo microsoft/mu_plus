@@ -44,15 +44,17 @@ ASM_PFX(AsmApEntryPoint):
 // TODO: This is, again, reverse engineering to correlate the CPU index with the MPIDRs...
 1:
   ldr x3, [x1]                // x3 = *x1
-  cmp x0, x3                  // if mpidr_el1 != mCpuInfo[x].Mpidr then loop
-  bne 1b
+  cmp x0, x3                  // if mpidr_el1 == mCpuInfo[x].Mpidr then break loop
+  beq JumpToCFunction
   add x1, x1, #40             // x1 = x1 + sizeof (ARM_CORE_INFO)
   add x2, x2, 1               // x2++
   ldr x3, mNumCpus
   ldr x3, [x3]
-  cmp x2, x3                  // check if we've reached the end of mCpuInfo
+  cmp x3, x2                  // check if we've reached the end of mCpuInfo
   bge ProcessorNotFound
+  b   1b                      // Otherwise, keep looping
 
+JumpToCFunction:
 // Calculate stack address
   // x2 contains the index for the current processor plus 1
   ldr x0, gApStacksBase
