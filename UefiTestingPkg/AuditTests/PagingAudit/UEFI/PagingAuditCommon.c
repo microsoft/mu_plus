@@ -796,7 +796,7 @@ MemoryMapDumpHandler (
       AsciiSPrint (
         TempString,
         MAX_STRING_SIZE,
-        "MemoryMap,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx\n",
+        "MemoryMap,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%x\n",
         EfiMemNext->Type,
         EfiMemNext->PhysicalStart,
         EfiMemNext->VirtualStart,
