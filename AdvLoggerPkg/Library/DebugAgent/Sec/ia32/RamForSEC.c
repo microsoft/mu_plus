@@ -248,7 +248,6 @@ FreeRamForSEC (
   UINT64                           MtrrValidBitsMask;
   UINT32                           VariableMtrrCount;
 
-  ASSERT (Address == FixedPcdGet64 (PcdAdvancedLoggerCarBase));
 
   InitializeMtrrMask (&MtrrValidBitsMask, &MtrrValidAddressMask);
 
@@ -261,7 +260,7 @@ FreeRamForSEC (
     Mask.Uint64 = AsmReadMsr64 (MSR_IA32_MTRR_PHYSMASK0 + (Index << 1));
 
     if ((Mask.Bits.V == 1) &&
-        ((Base.Uint64 && MtrrValidAddressMask) == Address))
+        ((Base.Uint64 && MtrrValidAddressMask) == FixedPcdGet64 (PcdAdvancedLoggerCarBase)))
     {
       AsmWriteMsr64 (
         MSR_IA32_MTRR_PHYSMASK0 + (Index << 1),
