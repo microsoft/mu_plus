@@ -28,6 +28,7 @@ STATIC EFI_EVENT  mExitBootServicesEvent = NULL;
 STATIC EFI_EVENT  mReadyToBootEvent      = NULL;
 UINT16            mVarNameListCount      = 0;
 CHAR16            *mVarNameList          = NULL;
+EFI_GUID          *mVarGuidList          = NULL;
 
 /**
 
@@ -48,7 +49,7 @@ SetupBert (
   EFI_STATUS    Status;
   BERT_CONTEXT  Context;
 
-  if (!mVarNameList || (mVarNameListCount == 0)) {
+  if (!mVarNameList || !mVarGuidList || (mVarNameListCount == 0)) {
     DEBUG ((DEBUG_WARN, "%a: leaving because list of entries to catalogue was empty.\n", __FUNCTION__));
     return;
   }
@@ -77,7 +78,7 @@ SetupBert (
     //
     Status = gRT->GetVariable (
                     NamePtr,
-                    &gEfiHardwareErrorVariableGuid,
+                    &mVarGuidList[Index],
                     NULL,
                     &Size,
                     NULL
@@ -98,7 +99,7 @@ SetupBert (
 
     Status = gRT->GetVariable (
                     NamePtr,
-                    &gEfiHardwareErrorVariableGuid,
+                    &mVarGuidList[Index],
                     NULL,
                     &Size,
                     Buffer
@@ -200,7 +201,19 @@ GenerateVariableList (
       goto cleanup;
     }
 
+    mVarGuidList = ReallocatePool (
+                     mVarNameListCount * sizeof (EFI_GUID),
+                     (mVarNameListCount + 1) * sizeof (EFI_GUID),
+                     mVarGuidList
+                     );
+    if (mVarGuidList == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - %d\n", __FUNCTION__, __LINE__));
+      Status = EFI_OUT_OF_RESOURCES;
+      goto cleanup;
+    }
+
     StrCpyS (&mVarNameList[mVarNameListCount * EFI_HW_ERR_REC_VAR_NAME_LEN], StrLen (Name) + 1, Name);
+    CopyMem (&mVarGuidList[mVarNameListCount], &gEfiHardwareErrorVariableGuid, sizeof (EFI_GUID));
     mVarNameListCount++;
   }
 
@@ -236,7 +249,7 @@ GenerateVariableList (
         DummyVarSize = 0;
         Status       = gRT->GetVariable (
                               CurrentName,
-                              &gEfiHardwareErrorVariableGuid,
+                              FixedPcdGetPtr (PcdBertEntriesVariableGuid),
                               NULL,
                               &DummyVarSize,
                               NULL
@@ -255,7 +268,19 @@ GenerateVariableList (
             goto cleanup;
           }
 
+          mVarGuidList = ReallocatePool (
+                           VarNameUnicodeCount * sizeof (CHAR16),
+                           VarNameUnicodeCount * sizeof (CHAR16) + CurrentSize,
+                           mVarGuidList
+                           );
+          if (mVarGuidList == NULL) {
+            DEBUG ((DEBUG_ERROR, "%a - %d\n", __FUNCTION__, __LINE__));
+            Status = EFI_OUT_OF_RESOURCES;
+            goto cleanup;
+          }
+
           StrCpyS (&mVarNameList[VarNameUnicodeCount], CurrentSize / sizeof (CHAR16), CurrentName);
+          CopyMem (&mVarGuidList[mVarNameListCount], FixedPcdGetPtr (PcdBertEntriesVariableGuid), sizeof (EFI_GUID));
           VarNameUnicodeCount += CurrentSize / sizeof (CHAR16);
           mVarNameListCount++;
         } else if (Status != EFI_NOT_FOUND) {
@@ -289,6 +314,7 @@ cleanup:
     ASSERT (FALSE);
     mVarNameListCount = 0;
     mVarNameList      = NULL;
+    mVarGuidList      = NULL;
   }
 
   DEBUG ((DEBUG_INFO, "%a found %x variables for the BERT table - %r\n", __FUNCTION__, mVarNameListCount, Status));
@@ -317,7 +343,7 @@ ClearVariables (
 
   NamePtr = mVarNameList;
   for (Index = 0; Index < mVarNameListCount; Index++) {
-    Status = gRT->SetVariable (NamePtr, &gEfiHardwareErrorVariableGuid, 0, 0, NULL);
+    Status = gRT->SetVariable (NamePtr, &mVarGuidList[Index], 0, 0, NULL);
 
     // Can't really do much if this fails
     if (EFI_ERROR (Status)) {
@@ -358,6 +384,10 @@ ExitBootServicesHandlerCallback (
 
   if (mVarNameList) {
     FreePool (mVarNameList);
+  }
+
+  if (mVarGuidList) {
+    FreePool (mVarGuidList);
   }
 
   return;

@@ -71,6 +71,11 @@
   gMsWheaPkgTokenSpaceGuid.PcdDeviceIdentifierGuid|{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}|VOID*|0x00000004
 
   # Variable names intended for extra BERT table entries, should be unicode string separated by ';'.
-  # Note: The variables for potential BERT candidate should be stored under GUID gEfiHardwareErrorVariableGuid.
-  #       If such variable exists, its content MUST comply with CPER error format.
+  # Note: The variables for potential BERT candidate should be stored under namespace GUID PcdBertEntriesVariableGuid.
+  #       If such variables exist, its content MUST comply with CPER error format.
   gMsWheaPkgTokenSpaceGuid.PcdBertEntriesVariableNames|L""|VOID*|0x00000007
+
+  # Variable Guid intended for extra BERT table entries, default to gEfiHardwareErrorVariableGuid.
+  # Variables stored with PcdBertEntriesVariableGuid as GUID and PcdBertEntriesVariableNames as names
+  # will be collected and convert into BERT table during boot table for error reporting purpose.
+  gMsWheaPkgTokenSpaceGuid.PcdBertEntriesVariableGuid|{GUID("414E6BDD-E47B-47CC-B244-BB61020CF516")}|VOID*|0x00000008
