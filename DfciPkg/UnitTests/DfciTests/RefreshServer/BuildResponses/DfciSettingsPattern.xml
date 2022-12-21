@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    @file
+
+    Sample DFCI Settings transition packet
+
+    We are not rolling the TLS Cert, but we will set the
+    TLS cert to the same one already present
+
+    Copyright (c), Microsoft Corporation
+    SPDX-License-Identifier: BSD-2-Clause-Patent
+
+ -->
+<SettingsPacket xmlns="urn:UefiSettings-Schema">
+    <CreatedBy>DFCI Tester</CreatedBy>
+    <CreatedOn>2022-12-14 15:00:00</CreatedOn>
+    <Version>2</Version>
+    <!--
+
+      Make sure you edit DfciSettingsPattern.xml and then
+      run BuildSettings.bat to generate this DfciSettings.xml
+
+      -->
+    <LowestSupportedVersion>2</LowestSupportedVersion>
+    <Settings>
+        <Setting>
+            <Id>Dfci.HttpsCert.Binary</Id>
+     <!--
+
+      Value is XYZZY in DfciSettingsPattern.xml.  the XYZZY is replaced by
+      a base64 string of the HTTPS certificate when you run BuildSettings.bat.
+
+      -->
+           <Value>
+                XYZZY
+            </Value>
+        </Setting>
+    </Settings>
+</SettingsPacket>

@@ -80,16 +80,15 @@ DumpHeaders (
     UINTN   Index;
 
     for (Index = 0; Index < Count; Index++) {
-    DEBUG ((
-      DEBUG_INFO,
-      "  %d - %a = %a\n",
-      Index + 1,
-      Headers[Index].FieldName,
-      Headers[Index].FieldValue
-      ));
-  }
-
-    );
+      DEBUG ((
+        DEBUG_INFO,
+        "  %d - %a: %a\n",
+        Index + 1,
+        Headers[Index].FieldName,
+        Headers[Index].FieldValue
+        ));
+    }
+  );
 }
 
 /**
@@ -794,7 +793,7 @@ DfciBuildRequestHeaders (
   if (0 != BodyLength) {
     HeaderCount = 5;
   } else {
-    HeaderCount = 3;
+    HeaderCount = 4;
   }
 
   RequestHeaders = AllocateZeroPool (sizeof (EFI_HTTP_HEADER) * HeaderCount);   // Allocate headers
@@ -818,6 +817,9 @@ DfciBuildRequestHeaders (
   RequestHeaders[1].FieldValue = AllocateCopyPool (AsciiStrSize (HEADER_AGENT_VALUE), HEADER_AGENT_VALUE);
   RequestHeaders[2].FieldName  = AllocateCopyPool (AsciiStrSize (HTTP_HEADER_ACCEPT), HTTP_HEADER_ACCEPT);
   RequestHeaders[2].FieldValue = AllocateCopyPool (AsciiStrSize (HEADER_ACCEPT_VALUE), HEADER_ACCEPT_VALUE);
+  RequestHeaders[3].FieldName  = AllocateCopyPool (AsciiStrSize (HTTP_HEADER_CONTENT_LENGTH), HTTP_HEADER_CONTENT_LENGTH);
+  AsciiSPrint (ContentLengthString, sizeof (ContentLengthString), "%ld", BodyLength);
+  RequestHeaders[3].FieldValue = AllocateCopyPool (AsciiStrSize (ContentLengthString), ContentLengthString);
 
   Status = HttpUrlGetHostName (Url, UrlParser, &RequestHeaders[0].FieldValue);
   if (EFI_ERROR (Status)) {
@@ -825,9 +827,6 @@ DfciBuildRequestHeaders (
   }
 
   if (0 != BodyLength) {
-    RequestHeaders[3].FieldName = AllocateCopyPool (AsciiStrSize (HTTP_HEADER_CONTENT_LENGTH), HTTP_HEADER_CONTENT_LENGTH);
-    AsciiSPrint (ContentLengthString, sizeof (ContentLengthString), "%ld", BodyLength);
-    RequestHeaders[3].FieldValue = AllocateCopyPool (AsciiStrSize (ContentLengthString), ContentLengthString);
     RequestHeaders[4].FieldName  = AllocateCopyPool (AsciiStrSize (HTTP_HEADER_CONTENT_TYPE), HTTP_HEADER_CONTENT_TYPE);
     RequestHeaders[4].FieldValue = AllocateCopyPool (AsciiStrSize (ContentType), ContentType);
   }

@@ -613,7 +613,7 @@ ProcessFunction (
     }
   } else {
     Status = EFI_INVALID_PARAMETER;
-    DEBUG ((DEBUG_ERROR, "Rqst not found int ResponseTable. Rqst=%a\n", Rqst->FieldName));
+    DEBUG ((DEBUG_ERROR, "Rqst not found in ResponseTable. Rqst=%a\n", Rqst->FieldName));
   }
 
   return Status;

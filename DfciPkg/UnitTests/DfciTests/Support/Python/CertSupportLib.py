@@ -77,4 +77,6 @@ class CertSupportLib(object):
             traceback.print_exc()
             return "Unable to read certificate"
 
+        print(thumbprint)
+
         return thumbprint

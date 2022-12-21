@@ -39,6 +39,9 @@ Set MDM CA2 cert
     Set Global Variable    ${OLD_USER_PFX}     ${CERTS_DIR}${/}MDM_Leaf.pfx
     Set Global Variable    ${OLD_USER_CERT}    ${CERTS_DIR}${/}MDM_CA.cer
 
+Set HTTPS cert
+    Set Global Variable    ${HTTPS_PEM}        ${CERTS_DIR}${/}DFCI_HTTPS.pem
+    Set Global Variable    ${HTTPS2_PEM}       ${CERTS_DIR}${/}DFCI_HTTPS2.pem
 
 Initialize Thumbprints
     [Arguments]    ${OwnerThumbprint}    ${UserThumbprint}
@@ -60,6 +63,8 @@ Initialize Thumbprints
     ...        Set MDM CA2 cert
     ...    ELSE
     ...        Set MDM CA cert
+
+    Set HTTPS cert
 
     Set Global Variable    ${ZTD_LEAF_PFX}            ${ZtdLeaf}
     Set Global Variable    ${ZTD_LEAF_CERT}           ${ZtdCert}

@@ -143,7 +143,7 @@ HasWritePermissions (
 
       // If a group permission is set, and that group denies
       // permission for this Auth, permission is denied.
-
+      DEBUG ((DEBUG_INFO, "%a: Temp Mask = %8.8x, Identity = %8.8x\n", __FUNCTION__, Temp->PMask, Properties.Identity));
       if (!(Temp->PMask & Properties.Identity)) {
         *Result = FALSE;
         return EFI_SUCCESS;

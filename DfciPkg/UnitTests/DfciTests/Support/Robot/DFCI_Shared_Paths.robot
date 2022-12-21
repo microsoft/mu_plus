@@ -78,3 +78,13 @@ ${SETTINGS_APPLY}          DfciSettingsRequest
 ${SETTINGS_RESULT}         DfciSettingsResult
 ${SETTINGS2_APPLY}         DfciSettings2Request
 ${SETTINGS2_RESULT}        DfciSettings2Result
+
+*** Keywords ***
+Make Dfci Output
+    Create Directory    ${TEST_OUTPUT}
+    Create Directory    ${TOOL_DATA_OUT_DIR}
+    Create Directory    ${TOOL_STD_OUT_DIR}
+    Create Directory    ${BOOT_LOG_OUT_DIR}
+    Empty Directory     ${TOOL_DATA_OUT_DIR}
+    Empty Directory     ${TOOL_STD_OUT_DIR}
+    Empty Directory     ${BOOT_LOG_OUT_DIR}

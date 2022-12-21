@@ -62,7 +62,7 @@ rem Certs for MDM
 
 rem Cert for HTTPS
 
-"C:\Program Files (x86)\Windows Kits\%KIT%\%VER%\x64\MakeCert.exe" -eku 1.3.6.1.5.5.7.3.1  /n "CN=mikeytbds3.eastus.cloudapp.azure.com, O=Dfci Testing, C=US" /r /h 0 -sky signature /sv DFCI_HTTPS.pvk DFCI_HTTPS.cer
+"C:\Program Files (x86)\Windows Kits\%KIT%\%VER%\x64\MakeCert.exe" -m 120 -eku 1.3.6.1.5.5.7.3.1  /n "CN=localhost, O=Dfci Testing, C=US" /r /h 0 -sky signature /sv DFCI_HTTPS.pvk DFCI_HTTPS.cer
 "C:\Program Files (x86)\Windows Kits\%KIT%\%VER%\x64\Pvk2Pfx.exe" /pvk DFCI_HTTPS.pvk /spc DFCI_HTTPS.cer /pfx DFCI_HTTPS.pfx
 
 :end

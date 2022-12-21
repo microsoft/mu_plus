@@ -9,17 +9,19 @@
 #
 # DFCI_SupportLib
 #
-import os, sys
+import os
 import xml.etree.ElementTree as ET
 import binascii
 import traceback
 import xml.dom.minidom
 import subprocess
+import configparser
+import json
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO, BytesIO
+# try:
+# from StringIO import StringIO
+# except ImportError:
+from io import StringIO, BytesIO
 
 from builtins import int
 
@@ -30,13 +32,51 @@ from Data.CertProvisioningVariable import CertProvisioningApplyVariable
 from Data.CertProvisioningVariable import CertProvisioningResultVariable
 from Data.PermissionPacketVariable import PermissionApplyVariable
 from Data.PermissionPacketVariable import PermissionResultVariable
-from Data.SecureSettingVariable    import SecureSettingsApplyVariable
-from Data.SecureSettingVariable    import SecureSettingsResultVariable
+from Data.SecureSettingVariable import SecureSettingsApplyVariable
+from Data.SecureSettingVariable import SecureSettingsResultVariable
 
 SignToolPath = None
 CertMgrPath = None
+DfciTest_Template = 'DfciTests.Template'
+DfciTest_Config = 'DfciTests.ini'
 
 class DFCI_SupportLib(object):
+
+    def get_test_config(self):
+        if not os.path.exists(DfciTest_Template):
+            raise Exception("Unable to locate test configuration template.")
+
+        config = configparser.ConfigParser()
+        config.read(DfciTest_Template)
+        template_ver = int(config["DfciConfig"]["version"])
+        update_config = True
+        if os.path.exists(DfciTest_Config):
+            config.read(DfciTest_Config)
+            current_ver = int(config["DfciConfig"]["version"])
+            if current_ver < template_ver:
+                config["DfciConfig"]["version"] = str(template_ver)
+            else:
+                update_config = False
+        if update_config:
+            with open(DfciTest_Config, 'w') as config_file:
+                config.write(config_file)
+                config_file.close()
+
+        return config
+
+    def compare_json_files(self, request_name, expected_name):
+
+        with open(request_name, "r") as request_file:
+            requested_data = json.load(request_file)
+
+        with open(expected_name, "r") as expected_file:
+            expected_data = json.load(expected_file)
+
+        is_equal = all((requested_data.get(k) == v for k, v in expected_data.items()))
+        if is_equal:
+            is_equal = all((expected_data.get(k) == v for k, v in requested_data.items()))
+        return is_equal
+
 
     def _ReturnSessionIdValue(self, InputString):
         #Session Id:       0xF08A4
@@ -653,7 +693,7 @@ class DFCI_SupportLib(object):
     # Determine if the DUT is online by pinging it
     #
     def is_device_online(self, ipaddress):
-        output = subprocess.Popen(["ping.exe", "-n", "1", ipaddress],stdout = subprocess.PIPE).communicate()[0]
+        output = subprocess.Popen(["ping.exe", "-n", "1", ipaddress], stdout=subprocess.PIPE).communicate()[0]
 
         if (b'TTL' in output):
             return True
@@ -662,8 +702,8 @@ class DFCI_SupportLib(object):
 
     def get_signtool_path(self):
         global SignToolPath
-        if SignToolPath == None:
-            SignToolPath = FindToolInWinSdk ("signtool.exe")
+        if SignToolPath is None:
+            SignToolPath = FindToolInWinSdk("signtool.exe")
 
             # check if exists
             if SignToolPath is None or not os.path.exists(SignToolPath):
@@ -674,8 +714,8 @@ class DFCI_SupportLib(object):
 
     def get_certmgr_path(self):
         global CertMgrPath
-        if CertMgrPath == None:
-            CertMgrPath = FindToolInWinSdk ("certmgr.exe")
+        if CertMgrPath is None:
+            CertMgrPath = FindToolInWinSdk("certmgr.exe")
 
             # check if exists
             if CertMgrPath is None or not os.path.exists(CertMgrPath):

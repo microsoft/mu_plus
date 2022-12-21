@@ -30,11 +30,11 @@
     <Settings>
         <Setting>
             <Id>Dfci.RecoveryBootstrapUrl.String</Id>
-            <Value>http://mikeytbds3.eastus.cloudapp.azure.com/ztd/noauth/dfci/recovery-bootstrap/</Value>
+            <Value>http://host.docker.internal.com/ztd/unauthenticated/dfci/recovery-bootstrap</Value>
         </Setting>
         <Setting>
             <Id>Dfci.RecoveryUrl.String</Id>
-            <Value>https://mikeytbds3.eastus.cloudapp.azure.com/ztd/unauth/dfci/recovery-packets/</Value>
+            <Value>https://host.docker.internal.com/ztd/unauthenticated/dfci/recovery-packets</Value>
         </Setting>
         <Setting>
             <Id>Dfci.HttpsCert.Binary</Id>

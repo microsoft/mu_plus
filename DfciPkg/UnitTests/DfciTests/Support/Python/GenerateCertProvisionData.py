@@ -463,9 +463,12 @@ def main():
         SEM.Write(of)
         of.close()
 
-        if(not SEM.VerifyComplete()):
-            logging.critical("SEM Package Not complete")
-            return -84
+        if(not options.CertFilePath) or (not os.path.isfile(options.CertFilePath)):
+            # If not unenrolling, verify completeness.  Unenroll does not have a trusted cert
+            # or a self signature.
+            if(not SEM.VerifyComplete()):
+                logging.critical("SEM Package Not complete")
+                return -84
 
     #
     # Function to print SEM
