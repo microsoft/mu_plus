@@ -129,7 +129,7 @@ GetTextStringBitmapSize (
 
   // Calculate the bounding rectangle around the text as rendered (note this it may be in multiple rows).
   //
-  for (RowIndex = 0, Width = 0, Height = 0; RowIndex < RowInfoSize; RowIndex++) {
+  for (RowIndex = 0, Width = 0, Height = 0; (UINTN)RowIndex < RowInfoSize; RowIndex++) {
     Width   = (UINT16)(Width < (UINT32)StringRowInfo[RowIndex].LineWidth ? (UINT32)StringRowInfo[RowIndex].LineWidth : Width);
     Height += (UINT16)StringRowInfo[RowIndex].LineHeight;
   }

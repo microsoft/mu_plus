@@ -74,13 +74,16 @@ PeimInitializeGuidedSectionExtract (
   //
   if ((ExtractHandlerNumber > 0) && (ExtractHandlerGuidTable != NULL)) {
     GuidPpi = (EFI_PEI_PPI_DESCRIPTOR *)AllocatePool (ExtractHandlerNumber * sizeof (EFI_PEI_PPI_DESCRIPTOR));
-    ASSERT (GuidPpi != NULL);
-    while (ExtractHandlerNumber-- > 0) {
-      GuidPpi->Flags = EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST;
-      GuidPpi->Ppi   = (VOID *)&mCustomGuidedSectionExtractionPpi;
-      GuidPpi->Guid  = &ExtractHandlerGuidTable[ExtractHandlerNumber];
-      Status         = PeiServicesInstallPpi (GuidPpi++);
-      ASSERT_EFI_ERROR (Status);
+    if (GuidPpi == NULL) {
+      ASSERT (GuidPpi != NULL);
+    } else {
+      while (ExtractHandlerNumber-- > 0) {
+        GuidPpi->Flags = EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST;
+        GuidPpi->Ppi   = (VOID *)&mCustomGuidedSectionExtractionPpi;
+        GuidPpi->Guid  = &ExtractHandlerGuidTable[ExtractHandlerNumber];
+        Status         = PeiServicesInstallPpi (GuidPpi++);
+        ASSERT_EFI_ERROR (Status);
+      }
     }
   }
 

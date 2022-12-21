@@ -281,7 +281,7 @@ PRIVATE_Init (
       SetMem32 (priv->FillData, priv->FillDataSize, priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.Color1);  // set row to Color1
 
       // setup alternate color.  Color band is width stripe_width.
-      for (int i = priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth; i < FillDataSizeInPixels; i += (priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth * 2)) {
+      for (int i = priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth; (INTN)i < FillDataSizeInPixels; i += (priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth * 2)) {
         INTN  Len = FillDataSizeInPixels - i;
         if (Len > priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth) {
           Len = (INTN)priv->Public.StyleInfo.FillTypeInfo.CheckerboardFill.CheckboardWidth;
@@ -298,7 +298,7 @@ PRIVATE_Init (
 
       // setup dot row. as row two of the filldata
       for (int i = priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares / 2;
-           i < (FillDataSizeInPixels / 2);
+           (INTN)i < (FillDataSizeInPixels / 2);
            i += (priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.SquareWidth + priv->Public.StyleInfo.FillTypeInfo.PolkaSquareFill.DistanceBetweenSquares)
            )
       {

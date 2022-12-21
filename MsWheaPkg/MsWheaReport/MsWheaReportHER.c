@@ -275,6 +275,10 @@ MsWheaAnFBuffer (
   UINT8                             *ExtraSectionData;
   MS_WHEA_ERROR_EXTRA_SECTION_DATA  *ExtraSectionPtr;
 
+  CperErrSecDscp      = NULL;
+  CperErrExtraSecDscp = NULL;
+  ExtraSectionData    = NULL;
+
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   if ((MsWheaEntryMD == NULL) || (PayloadSize == NULL)) {
@@ -326,7 +330,7 @@ MsWheaAnFBuffer (
 
   // Add all section data.
   CreateMuTelemetryData (MsWheaEntryMD, MuTelemetryData);
-  if (ExtraSectionPtr != NULL) {
+  if ((ExtraSectionData != NULL) && (ExtraSectionPtr != NULL)) {
     CopyMem (
       ExtraSectionData,
       &ExtraSectionPtr->Data,
