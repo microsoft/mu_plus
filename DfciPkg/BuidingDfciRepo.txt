@@ -1,0 +1,15 @@
+
+
+git clone https://github.com/microsoft/mu_plus.git mu_plus_git_filtered
+
+\BuildNewMain.bat
+
+xcopy \Src\FilesForDfciFeature\* . /s
+
+Add and commit these new fies
+
+cherry pick commits from devops mu_plus/personal/miketur/PrepareForRepo
+
+git push https://github.com/microsoft/mu_feature_dfci.git +release/202208:main
+
+
