@@ -58,7 +58,13 @@ class MemoryRange(object):
 
     SystemMemoryTypes = [
         "TSEG",
-        "GuardPage"
+        "GuardPage",
+        "NULL Page",
+        "Stack Guard",
+        "Stack",
+        "AP {0} Stack Guard",
+        "AP {0} Stack",
+        "AP {0} Switch Stack"
     ]
 
     PageSize = {
@@ -91,9 +97,10 @@ class MemoryRange(object):
         self.Attribute = 0
         self.AddressBitwidth = None
         self.PageSplit = False
+        self.CpuNumber = None
 
         # Check to see whether we're a type that we recognize.
-        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "TTEntry", "MAT", "GuardPage", "Bitwidth"):
+        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "TTEntry", "MAT", "GuardPage", "Bitwidth", "Stack", "StackGuard", "ApStack", "ApStackGuard", "ApSwitchStack", "Null"):
             raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
 
         # Continue processing according to the data type.
@@ -111,7 +118,12 @@ class MemoryRange(object):
             self.GuardPageInit(*args)
         elif self.RecordType in ("Bitwidth"):
             self.BitwidthInit(int(args[0], 16))
-
+        elif self.RecordType in ("Stack", "StackGuard"):
+            self.StackInit (self.RecordType, *(int(arg, 16) for arg in args))
+        elif self.RecordType in ("ApStack", "ApStackGuard", "ApSwitchStack"):
+            self.ApStackInit (self.RecordType, *(int(arg, 16) for arg in args))
+        elif self.RecordType in ("Null"):
+            self.NullInit (self.RecordType, *(int(arg, 16) for arg in args))
         self.CalculateEnd()
 
     def CalculateEnd(self):
@@ -135,10 +147,52 @@ class MemoryRange(object):
         if self.SystemMemoryType is None:
             return "None"
         try:
+            # Indices 5, 6, and 7 corrolate with a formatted string in the SystemMemoryTypes list.
+            # The formatted string includes a place for the CPU number of the memory range object, so
+            # if it is one of indices 5, 6, or 7 then return it as a formatted string with the CPU number.
+            if (self.SystemMemoryType == 5 or self.SystemMemoryType == 6 or self.SystemMemoryType == 7):
+                return MemoryRange.SystemMemoryTypes[self.SystemMemoryType].format(self.CpuNumber)
+
             return MemoryRange.SystemMemoryTypes[self.SystemMemoryType]
         except:
             raise Exception("System Memory Type is invalid %d" % self.SystemMemoryType)
 
+    def StackInit (self, SystemMemoryType, PhysicalStart, Length):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = Length
+
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "StackGuard":
+            self.SystemMemoryType = 3
+        elif SystemMemoryType == "Stack":
+            self.SystemMemoryType = 4
+        else:
+            raise Exception("System Memory Type is invalid %s" % SystemMemoryType)
+
+    def ApStackInit (self, SystemMemoryType, PhysicalStart, Length, CpuNumber):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = Length
+        self.CpuNumber = CpuNumber
+        
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "ApStackGuard":
+            self.SystemMemoryType = 5
+        elif SystemMemoryType == "ApStack":
+            self.SystemMemoryType = 6
+        elif SystemMemoryType == "ApSwitchStack":
+            self.SystemMemoryType = 7
+        else:
+            raise Exception("System Memory Type is invalid %s" % SystemMemoryType)
+    
+    def NullInit (self, SystemMemoryType, PhysicalStart):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = MemoryRange.PageSize["4k"]
+
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "Null":
+            self.SystemMemoryType = 2
+        else:
+            raise Exception("System Memory Type is invalid %s" % SystemMemoryType)
 
     #
     # Initializes memory descriptions
