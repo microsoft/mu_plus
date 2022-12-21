@@ -1,15 +1,15 @@
-import os
+import configparser
 import json
+import os
 import traceback
 
 from flask import Flask, request, send_file, jsonify
-
-Hostname = 'host.name.not.set.com'
 
 dfci_refresh_server = Flask(__name__)
 
 dfci_refresh_server.config['REQUEST_FOLDER'] = '/srv/dfci_refresh_server/src/Requests'
 dfci_refresh_server.config['RESPONSE_FOLDER'] = '/srv/dfci_refresh_server/src/Responses'
+DfciTest_Config = '/srv/dfci_refresh_server/src/DfciTests.ini'
 
 
 def compare_json_files(request_name, expected_name):
@@ -24,6 +24,16 @@ def compare_json_files(request_name, expected_name):
     if is_equal:
         is_equal = all((expected_data.get(k) == v for k, v in requested_data.items()))
     return is_equal
+
+
+def get_host_name():
+    if not os.path.exists(DfciTest_Config):
+        raise Exception("Unable to locate test configuration template.")
+
+    config = configparser.ConfigParser()
+    config.read(DfciTest_Config)
+
+    return config["DfciTest"]["server_host_name"]
 
 
 #
@@ -79,13 +89,12 @@ def return_429():
 #
 @dfci_refresh_server.route('/GetHostName')
 def gethostname():
-    global Hostname
 
     try:
         if not request.url.startswith('https://'):
             raise Exception(f'Unsupported format URL {request.url}')
 
-        r = dfci_refresh_server.make_response(Hostname)
+        r = dfci_refresh_server.make_response(get_host_name())
         r.mimetype = 'text/plain'
         r.status_code = 200
         return r
@@ -98,36 +107,11 @@ def gethostname():
 
 
 #
-# Set the host name being used for the redirection requests
-#
-@dfci_refresh_server.route('/SetHostName/<new_host_name>', methods=['POST'])
-def sethostname(new_host_name):
-    global Hostname
-
-    try:
-        if not request.url.startswith('https://'):
-            raise Exception(f'Unsupported format URL {request.url}')
-
-        Hostname = new_host_name
-        r = dfci_refresh_server.make_response('OK')
-        r.mimetype = 'text/plain'
-        r.status_code = 200
-        return r
-    except Exception:
-        msg = ''.join(traceback.format_exc())
-        r = dfci_refresh_server.make_response(msg)
-        r.mimetype = 'text/plain'
-        r.status_code = 503
-        return r
-
-
-#
 # Test recovery bootstrap InTune model.  This is an async request with the response
 # telling Dfci where to go to get the payload/
 #
 @dfci_refresh_server.route('/ztd/unauthenticated/dfci/recovery-bootstrap', methods=['POST'])
-def ztd_bootstrap_request():
-
+def recovery_bootstrap_request():
     #
     # A Ztd bootstrap request comes with a JSON Body:
     #
@@ -150,7 +134,7 @@ def ztd_bootstrap_request():
             response.status_code = 202
             #
 
-            location = 'http://' + Hostname + '/ztd/unauthenticated/dfci/recovery-bootstrap-status/request-id'
+            location = 'http://' + get_host_name() + '/ztd/unauthenticated/dfci/recovery-bootstrap-status/request-id'
             response.headers['Location'] = location
             return response
         else:
@@ -171,7 +155,7 @@ def ztd_bootstrap_request():
 # need updating.  If so, cert update packets are returned If not, returns a "NULL" response.
 #
 @dfci_refresh_server.route('/ztd/unauthenticated/dfci/recovery-bootstrap-status/request-id', methods=['GET'])
-def ztd_bootstrap_response():
+def recovery_bootstrap_status():
 
     try:
         if not request.url.startswith('http://'):
@@ -209,9 +193,7 @@ def ztd_bootstrap_response():
 # retrieve the update packets.
 #
 @dfci_refresh_server.route('/ztd/unauthenticated/dfci/recovery-packets', methods=['POST'])
-def recovery_request():
-    global Hostname
-
+def recovery_packets():
     #
     # A Recovery request comes with a JSON Body:
     #
@@ -236,7 +218,7 @@ def recovery_request():
             #
             # return a full URL with https instead of http
             response.autocorrect_location_header = False
-            location = 'https://' + Hostname + '/ztd/unauthenticated/dfci/recovery-packets-status/request-id'
+            location = 'https://' + get_host_name() + '/ztd/unauthenticated/dfci/recovery-packets-status/request-id'
             response.headers['Location'] = location
             return response
         else:
@@ -256,7 +238,7 @@ def recovery_request():
 # Recovery packet response location.  Return updated settings.
 #
 @dfci_refresh_server.route('/ztd/unauthenticated/dfci/recovery-packets-status/request-id', methods=['GET'])
-def recovery_response():
+def recovery_packets_status():
 
     try:
         if not request.url.startswith('https://'):
@@ -280,5 +262,6 @@ def recovery_response():
 
 
 if __name__ == '__main__':
+
     dfci_refresh_server.debug = True
     dfci_refresh_server.run()
