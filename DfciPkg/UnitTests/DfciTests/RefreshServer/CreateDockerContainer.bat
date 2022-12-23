@@ -1,14 +1,32 @@
 @echo off
-
+setlocal
 if not exist ..\DfciTests.ini goto error2
 
-echo Creating container dfci_server
+docker ps -a -f name=dfci_server | findstr dfci_server
+if %ERRORLEVEL% NEQ 0 goto :no_container
+
+echo The Dfci_Server container exists.
+
+:Prompt
+set /P AreYouSure=Are you sure you want to recreate the container (Y/[N])?
+if /I "%AreYouSure%" EQU "N" goto Done
+if /I "%AreYouSure%" EQU "Y" goto erase_server
+echo Invalid response %AreYouSure%
+goto Prompt
+:erase_server
+docker rm -f dfci_server
+if %ERRORLEVEL% NEQ 0 goto :error
+
+docker rmi -f dfci_server
+if %ERRORLEVEL% NEQ 0 goto :error
+
+:no_container
+echo Creating web server data
 if exist Src\ssl\NUL rmdir /s /q Src\ssl
 if exist Src\Responses rmdir /s /q Src\Responses
 if exist Src\Requests rmdir /s /q Src\Requests
 
 mkdir Src\ssl
-if %ERRORLEVEL% NEQ 0 goto :error
 
 mkdir Src\Requests
 if %ERRORLEVEL% NEQ 0 goto :error
@@ -34,21 +52,22 @@ if %ERRORLEVEL% NEQ 0 goto :error
 copy ..\DfciTests.ini Src
 if %ERRORLEVEL% NEQ 0 goto :error
 
+echo Creating dfci_server image.
 docker build . -t dfci_server
+if %ERRORLEVEL% NEQ 0 goto :error
+
+echo Creating dfci_server container.
+docker create -p 80:80 -p 443:443 --name dfci_server -it dfci_server
 if %ERRORLEVEL% NEQ 0 goto :error
 
 echo Container dfci_server created.
 echo .
-echo To stop the currently running container, press Ctrl-C in this window, or issue:
-echo docker stop dfci_server
-echo from another command prompt window
+echo To start this container in the background, issue:
+echo     docker start dfci_server
 echo .
-echo To start this container again in the future, issue:
-echo docker start -i dfci_server
-
-docker run -p 80:80 -p 443:443 --name dfci_server -it dfci_server
-if %ERRORLEVEL% NEQ 0 goto :error
-
+echo or, to start this container to see error messages:
+echo     docker start -i dfci_server
+echo .
 goto Done
 :error
 echo Error occured building docker container

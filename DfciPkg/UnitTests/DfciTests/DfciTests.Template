@@ -2,5 +2,5 @@
 version = 1
 
 [DfciTest]
-server_host_name = "host.docker.internal.com"
+server_host_name = host.docker.internal.com
 
