@@ -24,8 +24,6 @@
 
 #include "MpManagementInternal.h"
 
-#define APFUNC_BUFFER_LEN  256
-
 EFI_MP_SERVICES_PROTOCOL         *mMpServices   = NULL;
 EFI_HANDLE                       mHandle        = NULL;
 UINTN                            mNumCpus       = 0;
