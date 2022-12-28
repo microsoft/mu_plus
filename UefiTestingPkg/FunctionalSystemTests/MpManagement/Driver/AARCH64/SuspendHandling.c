@@ -105,7 +105,7 @@ ApIrqInterruptHandler (
 }
 
 /**
-  Archtectural initialization routine, allowing different CPU architectures
+  Architectural initialization routine, allowing different CPU architectures
   to prepare their own register data buffer, data cache, etc.
 
   @param  NumOfCpus     The number of CPUs supported on this platform.

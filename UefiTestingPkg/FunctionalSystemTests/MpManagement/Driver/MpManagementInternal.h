@@ -40,11 +40,6 @@ typedef struct {
   VOID                        *ApBuffer;
   VOID                        *CpuArchBuffer;
 } MP_MANAGEMENT_METADATA;
-
-typedef struct {
-  EFI_MP_SERVICES_PROTOCOL    *Mp;
-  CHAR16                      **Buffer;
-} APFUNC_ARG;
 #pragma pack (pop)
 
 extern UINTN                            mNumCpus;
@@ -64,7 +59,7 @@ ApFunction (
   );
 
 /**
-  Archtectural initialization routine, allowing different CPU architectures
+  Architectural initialization routine, allowing different CPU architectures
   to prepare their own register data buffer, data cache, etc.
 
   @param  NumOfCpus     The number of CPUs supported on this platform.
