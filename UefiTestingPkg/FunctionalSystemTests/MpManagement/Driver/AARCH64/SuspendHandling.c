@@ -49,7 +49,7 @@
 #define PSTATE_TYPE_STANDBY     0x0
 #define PSTATE_TYPE_POWERDOWN   0x1
 
-#define AP_TEMP_STACK_SIZE      EFI_PAGE_SIZE
+#define AP_TEMP_STACK_SIZE  EFI_PAGE_SIZE
 
 /*
   Architectural metadata structure for ARM context losing resume routines.
@@ -191,6 +191,7 @@ CpuMpArchInit (
     Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
+
   WriteBackDataCacheRange (&gApStacksBase, sizeof (UINT64 *));
 
   Status = EFI_SUCCESS;
