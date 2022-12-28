@@ -664,7 +664,7 @@ CpuArchDisableAllInterruptsButSetupTimer (
 
   Status = EFI_SUCCESS;
 
-  // The timer will get caught by the original timer interrupt from the tiemr arch protocol
+  // The timer will get caught by the original timer interrupt from the timer arch protocol
 Done:
   if (EFI_ERROR (Status)) {
     if (InterruptStates != NULL) {
@@ -678,7 +678,7 @@ Done:
 }
 
 /**
-  This routine will be used for retoring all the interrupts, from
+  This routine will be used for restoring all the interrupts, from
   previously prepared EFI_HANDLE before BSP finishes timed suspension
   routine. It is only run by BSP.
 

@@ -44,7 +44,7 @@ UINTN  mMemoryInfoDatabaseAllocSize = 0;
 **/
 UNIT_TEST_STATUS
 EFIAPI
-NoReadWriteExcecute (
+NoReadWriteExecute (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -268,7 +268,7 @@ DxePagingAuditTestAppEntryPoint (
       goto EXIT;
     }
 
-    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExcecute, NULL, NULL, Context);
+    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, NULL, Context);
 
     //
     // Execute the tests.

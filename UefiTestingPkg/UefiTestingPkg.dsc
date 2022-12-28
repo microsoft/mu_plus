@@ -155,7 +155,7 @@
   UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/App/MemoryProtectionTestApp.inf
 
 [Components.AARCH64]
-  # NOTE: These currently have source files that are only implemented for AACRH64.
+  # NOTE: These currently have source files that are only implemented for AARCH64.
   #       If needed on X86, should port (and test) the functions.
   UefiTestingPkg/FunctionalSystemTests/MpManagement/Driver/MpManagement.inf
 
