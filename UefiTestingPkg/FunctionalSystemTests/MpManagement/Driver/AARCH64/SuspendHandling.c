@@ -575,7 +575,7 @@ Done:
 
 /**
   This routine will be used for disabling all the current interrupts,
-  but set up timer interrup to prepare for BSP suspension. It is only
+  but set up timer interrupt to prepare for BSP suspension. It is only
   run by BSP.
 
   @param  Handle        An EFI_HANDLE that is used for the BSP to
