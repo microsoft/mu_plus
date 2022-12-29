@@ -32,5 +32,4 @@ authorityKeyIdentifier = keyid
 
 [alt_names]
 DNS.1 = localhost
-DNS.2 = host.docker.internal.com
-DNS.3 = *.eastus.cloudapp.azure.com
+DNS.2 = 192.168.1.36

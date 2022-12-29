@@ -13,7 +13,7 @@ Each Robot Framework test case collection is contained in a directory, and, as a
 
 Each test case collection is run manually in a proscribed order, and its status is verified before running the next test
 case.
-The tests must be run in order, as they alter the system state, much like the real usage of DFCI.
+The tests must be run in order, with some exceptions, as they alter the system state, much like the real usage of DFCI.
 
 ## Equipment needed
 
@@ -55,21 +55,32 @@ The HOST system requires the following software (NOTE - There are dependencies o
 
 1. A current version of Windows x86-64.
 2. The current Windows SDK, available here [Windows SDK](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk).
-3. Python x86-64 (the version tested), available here [Python 3.9.4](https://www.python.org/ftp/python/3.9.4/python-3.9.4-amd64.exe).
-4. Copy the DfciTests directory, including all of the contents of the subdirectories, onto the HOST system.
+3. Python x86-64 (the version tested), available here [Python 3.10.4](https://www.python.org/ftp/python/3.10.7/python-3.10.7-amd64.exe).
+4. Copy the DfciTests directory, including all of the contents of the subdirectories, onto the HOST system. See the file DfciPkg\UnitTests\DfciTests\CloneUnitTests.bat for a way to get the files you need from GitHub.
 5. Install the required python packages by running using the pip-requirements.txt file in the DfciTests directory:
 
 ```text
    python -m pip install --upgrade -r pip-requirements.txt
 ```
+6. Git for Windows, available here  [Git for Windows](https://gitforwindows.org/).
+7. Windows Syubsystem for Linux, install instructions here [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install).
+8. Docker Desktop, available here [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/).
 
 ## Test Cases Collections
 
 Table of DFCI Test case collections:
 
+1. Pre tests to validate the certs and the refresh server setup:
+
 | Test Case Collection | Description of Test Case |
 | ----- | ----- |
 | DFCI_CertChainingTest | Verifies that a ZeroTouch enroll actually prompts for authorization to Enroll when the enroll package is not signed by the proper key.|
+| DFCI_RefreshServer | Verifies the Refresh Server is operational before attempting the Refresh from Network EFI menu option in place of DFCI_InTuneUnenroll. |
+
+2. Testcases to validate the System Under Test:
+
+| Test Case Collection | Description of Test Case |
+| ----- | ----- |
 | DFCI_InitialState | Verifies that the firmware indicates support for DFCI and that the system is Opted In for InTune, and is not already enrolled into DFCI. |
 | DFCI_InTuneBadUpdate | Tries to apply a settings package signed with the wrong key |
 | DFCI_InTunePermissions | Applies multiple sets of permissions to an InTune Enrolled system. |
@@ -100,6 +111,9 @@ FILE FREEFORM = PCD(gZeroTouchPkgTokenSpaceGuid.PcdZeroTouchCertificateFile) {
 }
 ```
 
+## One time setuo for the tests.
+
+The test certs are no longer being included in the source tree.
 ### WARNING: Do not ship with the ZTD_Leaf.cer certificate in your firmware
 
 Be sure your production systems are using the ZtdRecovery.cer file.

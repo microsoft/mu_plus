@@ -22,6 +22,8 @@ import json
 # from StringIO import StringIO
 # except ImportError:
 from io import StringIO, BytesIO
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import load_der_public_key
 
 from builtins import int
 
@@ -723,3 +725,37 @@ class DFCI_SupportLib(object):
                                 "https://developer.microsoft.com/en-us/windows/hardware/windows-driver-kit")
 
         return CertMgrPath
+
+    def verify_identity_packet(self, cert_file, identity_file):
+        f = open(identity_file, 'rb')
+        rslt = CertProvisioningApplyVariable(f)
+
+        TrustedCertSize = rslt.TrustedCertSize
+        TrustedCert = rslt.TrustedCert
+
+        f.seek(0)
+        data_blob = f.read(22 + TrustedCertSize)
+        data_blob_size = len(data_blob)
+
+        Signature = rslt.Signature
+        SignatureSize = Signature.Hdr_dwLength
+
+        print(f'data_blob_size={data_blob_size}')
+        print(f'TrustedCertSize = {TrustedCertSize}')
+        print(f'SignatureSize = {SignatureSize}')
+        f.close()
+
+        f = open('contest', 'wb')
+        f.write(bytearray(data_blob))
+        f.close()
+
+        buffer = rslt.TestSignature.CertData
+
+        print('----')
+        print(buffer)
+        print('----')
+
+        f = open('test_signature', 'wb')
+        f.write(buffer)
+        f.close()
+        return True

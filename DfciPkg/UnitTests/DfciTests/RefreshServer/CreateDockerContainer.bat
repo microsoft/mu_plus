@@ -8,7 +8,7 @@ if %ERRORLEVEL% NEQ 0 goto :no_container
 echo The Dfci_Server container exists.
 
 :Prompt
-set /P AreYouSure=Are you sure you want to recreate the container (Y/[N])?
+set /P AreYouSure=Are you sure you want to recreate the dfci_server container (Y/[N])?
 if /I "%AreYouSure%" EQU "N" goto Done
 if /I "%AreYouSure%" EQU "Y" goto erase_server
 echo Invalid response %AreYouSure%
@@ -68,7 +68,27 @@ echo .
 echo or, to start this container to see error messages:
 echo     docker start -i dfci_server
 echo .
+echo .
+echo Choose an option to start the dfci_server:
+echo 1. Start in background
+echo 2. Start in command window
+echo 3. Do not start dfci_server
+:Prompt
+set /P ChooseStartOption=Select 1, 2, or 3
+if /I "%AreYouSure%" EQU "1" goto start_background
+if /I "%AreYouSure%" EQU "2" goto start_foreground
+if /I "%AreYouSure%" EQU "3" goto Done
+echo Invalid response %AreYouSure%
+goto Prompt
+
+:start_background
+docker start dfci_server
 goto Done
+
+:start_foreground
+docker start -i dfci_server
+goto Done
+
 :error
 echo Error occured building docker container
 goto Done
@@ -76,3 +96,4 @@ goto Done
 :error2
 echo You must create DfciTests.ini before creating your container
 :Done
+endlocal
