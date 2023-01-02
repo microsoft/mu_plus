@@ -1,6 +1,6 @@
 # @file
 #
-# Script to Generate the test certs required for testing Dfci.
+# Script to Generate the test certs required for testing DFCI.
 #
 # Copyright (c), Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -22,11 +22,11 @@ makecert_path = None
 pvk2pvx_path = None
 dpp = None
 
-Password_Dialog_None_Button_Id = 0x1f9    # Discovered using spyxx
+Password_Dialog_None_Button_Id = 0x1f9    # Discovered using SPYXX from Visual Studio.
 BM_CLICK = 0xf5  # from Windows WinUser.h
 
 
-class Dismiss_Password_Prompt(object):
+class DismissPasswordPrompt(object):
     TaskTerminated = False
 
     def __init__(self):
@@ -39,13 +39,12 @@ class Dismiss_Password_Prompt(object):
         self._SendDlgItemMessageW.restype = c_int
         self._SendDlgItemMessageW.argtypes = [c_void_p, c_int, c_int, c_void_p, c_void_p]
 
-    def FindPrompt(self):
-
+    def find_prompt(self):
         hwnd = self._FindWindowW(None, 'Create Private Key Password')
         return hwnd
 
-    def SendDlgItemMessage(self, hwnd, DlgItem, msg, wparam, lparam):
-        self._SendDlgItemMessageW(hwnd, DlgItem, msg, wparam, lparam)
+    def send_dlg_item_message(self, hwnd, dlg_item, msg, wparam, lparam):
+        self._SendDlgItemMessageW(hwnd, dlg_item, msg, wparam, lparam)
 
     def terminate_task(self):
         self.TaskTerminated = True
@@ -54,13 +53,16 @@ class Dismiss_Password_Prompt(object):
         return self.TaskTerminated
 
 
-def delete_cert_files(filemask):
+def check_for_files(filemask):
+    file_list = glob.glob(filemask)
+    return len(file_list) != 0
 
-    fileList = glob.glob(filemask)
-    # Iterate over the list of filepaths & remove each file.
-    for filePath in fileList:
-        print(filePath)
-        os.remove(filePath)
+
+def delete_cert_files(filemask):
+    file_list = glob.glob(filemask)
+    # Iterate over the list of file paths & remove each file.
+    for file_path in file_list:
+        os.remove(file_path)
 
 
 def run_makecert(name, level):
@@ -73,7 +75,7 @@ def run_makecert(name, level):
         '-m', '120',
         '-a', 'sha256',
         '-pe',
-        '-ss', 'my',
+        '-ss', 'DfciCerts',
         '-n', f'CN={name}_{level}, O=Dfci_Test_shop, C=US',
         '-sv', f'{name}_{level}.pvk',
         ]
@@ -103,14 +105,7 @@ def run_makecert(name, level):
     parameters.extend(extended_parameters)
     parameters.append(f'{name}_{level}.cer')
 
-    print(f'-------------{name} - {level}')
-
-    for i in range(0, len(parameters)):
-        if i == 0:
-            print('makecert', end=' ')
-        else:
-            print(parameters[i], end=' ')
-    print('')
+    print(f'Making cert for -----{name}_{level}')
 
     output = subprocess.run(parameters,
                             stdout=subprocess.PIPE,
@@ -125,13 +120,6 @@ def run_makecert(name, level):
         '-pfx', f'{name}_{level}.pfx'
         ]
 
-    for i in range(0, len(parameters) - 1):
-        if i == 0:
-            print('pk2pvx', end=' ')
-        else:
-            print(parameters[i], end=' ')
-    print('')
-
     output = subprocess.run(parameters,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
@@ -141,6 +129,55 @@ def run_makecert(name, level):
     return 0
 
 
+def delete_dfci_certs_from_store():
+    parameters = [
+        'powershell',
+        '-Command',
+        'get-childitem',
+        'Cert:\\CurrentUser\\DfciCerts'
+        ]
+
+    output = subprocess.run(parameters,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT)
+    if output.returncode != 0:
+        raise Exception(f'Error running powershell:{output.stdout}')
+
+    for line in output.stdout.splitlines():
+        line_segments = line.decode().split()
+        if not isinstance(line_segments, list):
+            continue
+        if len(line_segments) < 2:
+            continue
+        if len(line_segments[0]) < 40:
+            continue
+
+        hash = line_segments[0]
+
+        cert_name = 'Unknown'
+        if line_segments[1].startswith('CN='):
+            (cert_name, *others) = line_segments[1].split(',')
+            cert_name = cert_name[3:]
+
+        print(f'Deleting {cert_name} with hash {hash} from the system certificate store')
+
+        cert_location = 'Cert:\\CurrentUser\\DfciCerts\\' + hash
+
+        parameters = [
+            'powershell',
+            '-Command',
+            'Remove-Item',
+            cert_location,
+            '-DeleteKey'
+            ]
+
+        output = subprocess.run(parameters,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT)
+        if output.returncode != 0:
+            raise Exception(f'Error running powershell:{output.stdout}')
+
+
 def dismiss_password_prompt_task():
     global dpp
 
@@ -148,17 +185,17 @@ def dismiss_password_prompt_task():
         hwnd = 0
         # wait for the dialog box to pop up
         while hwnd == 0 and not dpp.is_terminated():
-            hwnd = dpp.FindPrompt()
+            hwnd = dpp.find_prompt()
             time.sleep(0.25)
         if dpp.TaskTerminated:
             break
 
-        # click the None button (Dlg Id == 0x1f9)
-        dpp._SendDlgItemMessageW(hwnd, Password_Dialog_None_Button_Id, BM_CLICK, 0, 0)
+        # click the None button (Dialog Id == 0x1f9)
+        dpp.send_dlg_item_message(hwnd, Password_Dialog_None_Button_Id, BM_CLICK, 0, 0)
 
         # Wait for the dialog box to go away
         while hwnd != 0 and not dpp.is_terminated():
-            hwnd = dpp.FindPrompt()
+            hwnd = dpp.find_prompt()
 
 
 def main():
@@ -166,12 +203,34 @@ def main():
     global pvk2pvx_path
     global dpp
 
-    dpp = Dismiss_Password_Prompt()
+    print('MakeCert will prompt for passwords.  For the test certs, a password')
+    print('is not required.  This script will dismiss the dialogs by pressing')
+    print('the No Password button automatically.')
+
+    dpp = DismissPasswordPrompt()
 
     rc = 0
     makecert_path = FindToolInWinSdk('MakeCert.exe')
     pvk2pvx_path = makecert_path.replace('MakeCert.exe', 'pvk2pfx.exe')
 
+    if (check_for_files('ZTD*') or
+        check_for_files('DDS*') or
+        check_for_files('MDM*')):
+        answer = 'x'
+
+        while (True):
+            print('\nWARNING:')
+
+            print('There are existing certs.  Are you sure you want to erase these')
+            print('certs and create new ones?')
+            answer = sys.stdin.readline().strip()
+            if answer in ['y', 'Y']:
+                break;
+            if answer in ['n', 'N']:
+                print('Makecerts aborted')
+                return 8
+
+    # Delete any current test certificates
     delete_cert_files('ZTD*')
     delete_cert_files('DDS*')
     delete_cert_files('MDM*')
@@ -200,6 +259,11 @@ def main():
     dpp.terminate_task()
 
     t1.join()
+
+    # MakeCert places the certs into the Windows CurrentUser store.  Because MakeCert
+    # was supplied with -ss DfciCerts, the certificates are stored under DfciCerts
+    # Delete the just made certs from the certificate store as they are not needed there.
+    delete_dfci_certs_from_store()
 
     return rc
 

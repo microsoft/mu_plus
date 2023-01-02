@@ -10,11 +10,10 @@ Documentation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 
 MetaData
-...     - Build a permissions packet
-...     - Send it to the system under test
-...     - Reboot the system under test to apply the permissions
-...     - Get the new "Current Permissions"
-...     - Verify the permissions are currect
+...     - Read the current identities and permissions
+...     - Verify the system is Opted In (ie Ztd key installed)
+...     - Verify no owner certificates are installed
+...     - Verify the initial permissions are correct for DFCI
 
 Library         OperatingSystem
 Library         Process
@@ -45,7 +44,7 @@ Suite Teardown    Terminate All Processes    kill=True
 #default var but should be changed on the command line
 ${IP_OF_DUT}            127.0.0.1
 ${RF_PORT}              8270
-#test output dir for data from this test run.
+#test output directory for data from this test run.
 ${TEST_OUTPUT_BASE}     ..${/}TEST_OUTPUT
 
 #Test output location
@@ -97,6 +96,7 @@ Process Initial Permission Check
 
 Get The DFCI Settings
     [Arguments]    ${nameOfTest}
+
     ${deviceIdXmlFile}=         Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_deviceIdentifier.xml
     ${currentIdXmlFile}=        Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
     ${currentPermXmlFile}=      Set Variable    ${TOOL_DATA_OUT_DIR}${/}Testcase_currentPermission.xml
@@ -110,7 +110,7 @@ Get The DFCI Settings
 
     Get and Print Current Settings     ${currentSettingsxmlFile}
 
-    [return]    ${currentIdxmlFile}
+    Set Suite Variable    ${currentIdXmlFile}
 
 
 #------------------------------------------------------------------*
@@ -126,30 +126,32 @@ Ensure Mailboxes Are Clean
     Log To Console    .
     Log To Console    ${SUITE SOURCE}
 
-
-Get the starting DFCI Settings
+Verify System Unter Test is Opted In
     [Setup]    Require test case    Ensure Mailboxes Are Clean
-    ${nameofTest}=              Set Variable    DisplaySettingsAtStart
 
-    ${currentIdXmlFile}=     Get The DFCI Settings    ${nameOfTest}
+                       Get The DFCI Settings    InitialSettings
 
-    ${OwnerThumbprint}=    Get Thumbprint Element    ${currentIdxmlFile}  Owner
-    ${UserThumbprint}=     Get Thumbprint Element    ${currentIdxmlFile}  User
-    ${User1Thumbprint}=    Get Thumbprint Element    ${currentIdxmlFile}  User1
-    ${User2Thumbprint}=    Get Thumbprint Element    ${currentIdxmlFile}  User2
-    ${ZtdThumbprint}=      Get Thumbprint Element    ${currentIdxmlFile}  ZeroTouch
+    ${ZtdThumbprint}=  Get Thumbprint Element    ${currentIdXmlFile}  ZeroTouch
+
+    Should Be True     '${ZtdThumbprint}' != 'Cert not installed'
+
+
+Check that the starting DFCI Ownership is Unenrolled
+    [Setup]    Require test case    Verify System Unter Test is Opted In
+
+    ${OwnerThumbprint}=    Get Thumbprint Element    ${currentIdXmlFile}  Owner
+    ${UserThumbprint}=     Get Thumbprint Element    ${currentIdXmlFile}  User
+    ${User1Thumbprint}=    Get Thumbprint Element    ${currentIdXmlFile}  User1
+    ${User2Thumbprint}=    Get Thumbprint Element    ${currentIdXmlFile}  User2
 
     Should Be True    '${OwnerThumbprint}' == 'Cert not installed'
     Should Be True    '${UserThumbprint}' == 'Cert not installed'
     Should Be True    '${User1Thumbprint}' == 'Cert not installed'
     Should Be True    '${User2Thumbprint}' == 'Cert not installed'
-    Log To Console    .
-    Log To Console    Verifying the system under test is Opted In for InTune
-    Should Be True    '${ZtdThumbprint}' != 'Cert not installed'
 
 
 Obtain Target Parameters From Target
-    [Setup]    Require test case    Get the starting DFCI Settings
+    [Setup]    Require test case    Check that the starting DFCI Ownership is Unenrolled
 
     ${nameofTest}=           Set Variable     GetParameters
     ${SerialNumber}=         Get System Under Test SerialNumber
@@ -164,10 +166,10 @@ Obtain Target Parameters From Target
     Verify Identity Current  ${currentXmlFile}  ${Manufacturer}  ${Model}  ${SerialNumber}
 
 
-Process Complete Testcase List
+Verify Initial Permissions
     [Setup]    Require test case    Obtain Target Parameters From Target
 
-    ${nameofTest}=           Set Variable     ProcessInitialTest
+    ${nameofTest}=           Set Variable     VerifyInitialPermissions
 
     Log To Console    Initializing testcases
     Initialize lists of tests
