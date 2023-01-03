@@ -105,7 +105,7 @@ ApIrqInterruptHandler (
 }
 
 /**
-  Archtectural initialization routine, allowing different CPU architectures
+  Architectural initialization routine, allowing different CPU architectures
   to prepare their own register data buffer, data cache, etc.
 
   @param  NumOfCpus     The number of CPUs supported on this platform.
@@ -553,7 +553,7 @@ Done:
 
 /**
   This routine will be used for disabling all the current interrupts,
-  but set up timer interrup to prepare for BSP suspension. It is only
+  but set up timer interrupt to prepare for BSP suspension. It is only
   run by BSP.
 
   @param  Handle        An EFI_HANDLE that is used for the BSP to
@@ -641,7 +641,7 @@ CpuArchDisableAllInterruptsButSetupTimer (
 
   Status = EFI_SUCCESS;
 
-  // The timer will get caught by the original timer interrupt from the tiemr arch protocol
+  // The timer will get caught by the original timer interrupt from the timer arch protocol
 Done:
   if (EFI_ERROR (Status)) {
     if (InterruptStates != NULL) {
@@ -655,7 +655,7 @@ Done:
 }
 
 /**
-  This routine will be used for retoring all the interrupts, from
+  This routine will be used for restoring all the interrupts, from
   previously prepared EFI_HANDLE before BSP finishes timed suspension
   routine. It is only run by BSP.
 

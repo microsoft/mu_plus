@@ -81,7 +81,10 @@
             "ivhds",
             "uefishelldebug",
             "mtrrcap",
-            "dmaivrs"
+            "dmaivrs",
+            "MPIDR",
+            "ICDSGIR",
+            "SMRR",
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
