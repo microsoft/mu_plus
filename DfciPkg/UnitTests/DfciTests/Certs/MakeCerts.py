@@ -6,12 +6,14 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+import argparse
 import glob
 import logging
 import os
 import subprocess
 import sys
 import time
+import traceback
 
 from ctypes import windll, c_int, c_void_p, c_wchar_p
 from threading import Thread
@@ -80,6 +82,7 @@ def run_makecert(name, level):
         '-sv', f'{name}_{level}.pvk',
         ]
 
+    parent = None
     if 'Root' in level:
         extended_parameters = [
             '-r',
@@ -87,15 +90,23 @@ def run_makecert(name, level):
             ]
 
     elif 'CA' in level:
+        parent = name + '_Root.cer'
         extended_parameters = [
             '-cy', 'authority',
             '-ic', f'{name}_Root.cer',
             '-iv', f'{name}_Root.pvk'
             ]
+
     elif 'Leaf' in level:
+        if 'Leaf2' in level:
+            full_name = name + '_CA2'
+        else:
+            full_name = name + '_CA'
+
+        parent = full_name + '.cer'
         extended_parameters = [
-            '-ic', f'{name}_CA.cer',
-            '-iv', f'{name}_CA.pvk',
+            '-ic', f'{full_name}.cer',
+            '-iv', f'{full_name}.pvk',
             '-sky', 'exchange'
             ]
     else:
@@ -105,7 +116,10 @@ def run_makecert(name, level):
     parameters.extend(extended_parameters)
     parameters.append(f'{name}_{level}.cer')
 
-    print(f'Making cert for -----{name}_{level}')
+    print(f'Making cert for {name}_{level}', end='')
+    if parent is not None:
+        print(f', parent is {parent}', end='')
+    print()
 
     output = subprocess.run(parameters,
                             stdout=subprocess.PIPE,
@@ -203,6 +217,54 @@ def main():
     global pvk2pvx_path
     global dpp
 
+    parser = argparse.ArgumentParser(description='Make DFCI Test certificates')
+
+    parser.add_argument("--DeleteCerts", action="store_true", dest="delete", help="Delete DFCI test certs and certificate store", default=False)
+    options = parser.parse_args()
+
+    ztd_files_exist = check_for_files('ZTD*')
+    dds_files_exist = check_for_files('DDS*')
+    mdm_files_exist = check_for_files('MDM*')
+
+    if options.delete:
+        if (ztd_files_exist or dds_files_exist or mdm_files_exist):
+            answer = 'x'
+            while (True):
+                print('\nWARNING:')
+                print('Are you sure you want to erase these test certificates?[Y or N]', end=' ', flush=True)
+                answer = sys.stdin.readline().strip()
+                print()
+                if answer in ['y', 'Y']:
+                    break
+
+                if answer in ['n', 'N']:
+                    print('MakeCerts aborted')
+                    return 8
+
+            # Delete any current test certificates
+            if ztd_files_exist:
+                delete_cert_files('ZTD*')
+
+            if dds_files_exist:
+                delete_cert_files('DDS*')
+
+            if mdm_files_exist:
+                delete_cert_files('MDM*')
+
+        # MakeCert, with -ss DfciCerts,  places the certs into the Windows CurrentUser\DfciCerts
+        # store.  The following will delete all certs stored in CurrentUser\DfciCerts.
+        delete_dfci_certs_from_store()
+        return 0
+
+    if (ztd_files_exist or dds_files_exist or mdm_files_exist):
+        print('\nWARNING:')
+        print('There are existing certs.  If you wish to delete these certs,')
+        print('please run:')
+        print('    MakeCerts --DeleteCerts')
+        print()
+
+        return 8
+
     print('MakeCert will prompt for passwords.  For the test certs, a password')
     print('is not required.  This script will dismiss the dialogs by pressing')
     print('the No Password button automatically.')
@@ -213,57 +275,42 @@ def main():
     makecert_path = FindToolInWinSdk('MakeCert.exe')
     pvk2pvx_path = makecert_path.replace('MakeCert.exe', 'pvk2pfx.exe')
 
-    if (check_for_files('ZTD*') or
-        check_for_files('DDS*') or
-        check_for_files('MDM*')):
-        answer = 'x'
-
-        while (True):
-            print('\nWARNING:')
-
-            print('There are existing certs.  Are you sure you want to erase these')
-            print('certs and create new ones?')
-            answer = sys.stdin.readline().strip()
-            if answer in ['y', 'Y']:
-                break;
-            if answer in ['n', 'N']:
-                print('Makecerts aborted')
-                return 8
-
-    # Delete any current test certificates
-    delete_cert_files('ZTD*')
-    delete_cert_files('DDS*')
-    delete_cert_files('MDM*')
-
     t1 = Thread(target=dismiss_password_prompt_task)
     t1.start()
 
-    run_makecert('ZTD', 'Root')
-    run_makecert('ZTD', 'CA')
-    run_makecert('ZTD', 'Leaf')
+    try:
 
-    run_makecert('DDS', 'Root')
-    run_makecert('DDS', 'CA')
-    run_makecert('DDS', 'Leaf')
+        run_makecert('ZTD', 'Root')
+        run_makecert('ZTD', 'CA')
+        run_makecert('ZTD', 'Leaf')
+        run_makecert('ZTD', 'Leaf3')
 
-    run_makecert('DDS', 'CA2')
-    run_makecert('DDS', 'Leaf2')
+        run_makecert('DDS', 'Root')
+        run_makecert('DDS', 'CA')
+        run_makecert('DDS', 'Leaf')
+        run_makecert('DDS', 'Leaf3')
 
-    run_makecert('MDM', 'Root')
-    run_makecert('MDM', 'CA')
-    run_makecert('MDM', 'Leaf')
+        run_makecert('DDS', 'CA2')
+        run_makecert('DDS', 'Leaf2')
 
-    run_makecert('MDM', 'CA2')
-    run_makecert('MDM', 'Leaf2')
+        run_makecert('MDM', 'Root')
+        run_makecert('MDM', 'CA')
+        run_makecert('MDM', 'Leaf')
+        run_makecert('MDM', 'Leaf3')
 
-    dpp.terminate_task()
+        run_makecert('MDM', 'CA2')
+        run_makecert('MDM', 'Leaf2')
+
+        dpp.terminate_task()
+
+    except KeyboardInterrupt:
+        dpp.terminate_task()
+
+    except Exception:
+        dpp.terminate_task()
+        traceback.print_exc()
 
     t1.join()
-
-    # MakeCert places the certs into the Windows CurrentUser store.  Because MakeCert
-    # was supplied with -ss DfciCerts, the certificates are stored under DfciCerts
-    # Delete the just made certs from the certificate store as they are not needed there.
-    delete_dfci_certs_from_store()
 
     return rc
 

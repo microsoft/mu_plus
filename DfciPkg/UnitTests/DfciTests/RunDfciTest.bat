@@ -9,6 +9,7 @@ rem SPDX-License-Identifier: BSD-2-Clause-Patent
 rem A few testcases do not require an IP address.
 if %2. EQU . (
   if "%1" EQU "TestCases\DFCI_RefreshServer" goto no_ip_required
+  if "%1" EQU "TestCases\DFCI_CertChainingTest" goto no_ip_required
 )
 
 rem Check if a saved IP address is present

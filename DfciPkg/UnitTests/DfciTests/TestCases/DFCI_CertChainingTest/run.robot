@@ -1,7 +1,7 @@
 *** Settings ***
 # @file
 #
-Documentation    This test suite uses verifies that the ZTD leaf cert will verify against a packet signed by the ZTD_CA.pfx.
+Documentation    This test suite verifies the different signing methods for DFCI packets.
 #
 # Copyright (c), Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -11,28 +11,22 @@ Library         Process
 
 Library         Support${/}Python${/}DFCI_SupportLib.py
 Library         Support${/}Python${/}DependencyLib.py
-Library         Remote  http://${IP_OF_DUT}:${RF_PORT}
 
 #Import the Generic Shared keywords
 Resource        Support${/}Robot${/}DFCI_Shared_Paths.robot
-Resource        Support${/}Robot${/}DFCI_Shared_Keywords.robot
+Resource        Support${/}Robot${/}DFCI_Shared_Keywords2.robot
+Resource        Support${/}Robot${/}DFCI_Shared_Paths.robot
 Resource        Support${/}Robot${/}CertSupport.robot
 
 #Import the platform specific log support
 Resource        UefiSerial_Keywords.robot
 
-# Use the following line for Python remote write to the UEFI Variables
-Resource        Support${/}Robot${/}DFCI_VariableTransport.robot
-
 Suite setup     Make Dfci Output
-Test Teardown   Terminate All Processes
+Test Teardown   Terminate All Processes    kill=True
 
 
 *** Variables ***
-#default var but should be changed on the command line
-${IP_OF_DUT}            127.0.0.1
-${RF_PORT}              8270
-#test output dir for data from this test run.
+#test output directory for data from this test run.
 ${TEST_OUTPUT_BASE}     ..${/}TEST_OUTPUT
 
 #Test output location
@@ -50,223 +44,449 @@ ${CERTS_DIR}            Certs
 
 ${TARGET_VERSION}       V2
 
-${DDS_CA_THUMBPRINT}    'Thumbprint Not Set'
-${MDM_CA_THUMBPRINT}    'Thumbprint Not Set'
-${ZTD_LEAF_THUMBPRINT}    'Thumbprint Not Set'
+${TOOL_DFCI_VERIFY}     Support${/}Tools${/}DfciVerify.exe
+
 
 *** Keywords ***
 
 
-Get The DFCI Settings
-    [Arguments]    ${nameOfTest}
-    ${deviceIdXmlFile}=         Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_deviceIdentifier.xml
-    ${currentIdXmlFile}=        Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
-    ${currentPermXmlFile}=      Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentPermission.xml
-    ${currentSettingsXmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentSettings.xml
-
-    Get and Print Device Identifier    ${deviceIdXmlFile}
-
-    Get and Print Current Identities   ${currentIdxmlFile}
-
-    Get and Print Current Permissions  ${currentPermxmlFile}
-
-    Get and Print Current Settings     ${currentSettingsxmlFile}
-
-    [return]    ${currentIdxmlFile}
-
-
 *** Test Cases ***
 
-Ensure Mailboxes Are Clean
-#Documentation Ensure all mailboxes are clear at the beginning of a test.  If there are any mailboxes that have an element, a previous test failed.
-    Verify No Mailboxes Have Data
-
-    Log To Console    .
-    Log To Console    ${SUITE SOURCE}
-
-
 Get the starting DFCI Settings
-    [Setup]    Require test case    Ensure Mailboxes Are Clean
 
-    ${nameofTest}=           Set Variable    DisplaySettingsAtStart
     ${ZtdLeafPfxFile}=       Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
-    ${ZTD_LEAF_THUMBPRINT}=    Get Thumbprint From Pfx    ${ZtdLeafPfxFile}
-
-    ${currentIdXmlFile}=     Get The DFCI Settings    ${nameOfTest}
-
-    ${OwnerThumbprint}=    Get Thumbprint Element    ${currentIdxmlFile}  Owner
-    ${UserThumbprint}=     Get Thumbprint Element    ${currentIdxmlFile}  User
-    ${ZtdThumbprint}=      Get Thumbprint Element    ${currentIdxmlFile}  ZeroTouch
-
-    Initialize Thumbprints    '${OwnerThumbprint}'    '${UserThumbprint}'
-
-    Should Be True    '${OwnerThumbprint}' == 'Cert not installed'
-    Should Be True    '${UserThumbprint}' == 'Cert not installed'
-
-    Log To Console    .
-    Log To Console    The following test insures that the test ZTD_Leaf.cer
-    Log To Console    is the cert installed.  If not, this test cannot be run.
-    Should Be True    '${ZtdThumbprint}' == ${ZTD_LEAF_THUMBPRINT}
+    ${ZTD_LEAF_THUMBPRINT}=  Get Thumbprint From Pfx    ${ZtdLeafPfxFile}
 
 
 Obtain Target Parameters From Target
     [Setup]    Require test case    Get the starting DFCI Settings
 
-    ${nameofTest}=    Set Variable     GetParameters
-    ${SerialNumber}=  Get System Under Test SerialNumber
-    ${Manufacturer}=  Get System Under Test Manufacturer
-    ${Model}=         Get System Under Test ProductName
-    @{TARGET_PARAMETERS}=    Build Target Parameters  ${TARGET_VERSION}  ${SerialNumber}  ${Manufacturer}  ${Model}
-    Set Suite Variable  @{TARGET_PARAMETERS}
-
-    ${currentXmlFile}=    Set Variable   ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_UefiDeviceId.xml
-
-    Get Device Identifier    ${currentXmlFile}
-    Verify Identity Current  ${currentXmlFile}  ${Manufacturer}  ${Model}  ${SerialNumber}
+    ${nameofTest}=         Set Variable     GetParameters
+    ${SerialNumber}=       Set Variable     1234567890
+    ${Manufacturer}=       Set Variable     DFCI_TEST_SHOP
+    ${Model}=              Set Variable     CERT_CHAIN_TEST
+    @{TARGET_PARAMETERS}=  Build Target Parameters  ${TARGET_VERSION}  ${SerialNumber}  ${Manufacturer}  ${Model}
+    Set Suite Variable     @{TARGET_PARAMETERS}
 
 
-Attempt Enroll DDS CA cert Signed by ZTD_CA to System Being Enrolled
+Build Enroll of DDS_CA cert, signed by ZTD_CA.pfx, and verify
     [Setup]    Require test case    Obtain Target Parameters From Target
 
-    ${nameofTest}=        Set Variable    DDSwithBadKey
-    ${ownerPfxFile}=      Set Variable    ${CERTS_DIR}${/}DDS_CA.pfx
-    ${ownerCertFile}=     Set Variable    ${CERTS_DIR}${/}DDS_CA.cer
-    ${signerPfxFile}=     Set Variable    ${CERTS_DIR}${/}ZTD_CA.pfx
+    ${nameofTest}=    Set Variable    DDSwithBadKey
+    ${ownerPfxFile}=  Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${ownerCerFile}=  Set Variable    ${CERTS_DIR}${/}DDS_CA.cer
+    ${signPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_CA.pfx
+    ${signCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_CA.cer
+    ${uefiPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
+    ${uefiCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.cer
+    ${altPfxFile}=    Set Variable    ${CERTS_DIR}${/}ZTD_Leaf3.pfx
+    ${altCerFile}=    Set Variable    ${CERTS_DIR}${/}ZTD_Leaf3.cer
+
+    File Should Exist  ${ownerPfxFile}
+    File Should Exist  ${ownerCerFile}
+    File Should Exist  ${signPfxFile}
+    File Should Exist  ${signCerFile}
+    File Should Exist  ${uefiPfxFile}
+    File Should Exist  ${uefiCerFile}
+    File Should Exist  ${altCerFile}
+
     ${currentIdxmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
+    ${binPackageFile}=    Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_Provision_apply.bin
+    ${applyPackageFile}=  Set Variable    ${TOOL_STD_OUT_DIR}${/}${TestName}_Provision_apply.log
 
-    Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}DDSwithBadKey.log
+    Create Dfci Provisioning Package  ${binPackageFile}  ${signPfxFile}  ${ownerPfxFile}  ${ownerCerFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Print Provisioning Package        ${binPackageFile}  ${applyPackageFile}
 
-    Process Provision Packet     ${nameofTest}  1  ${signerPfxFile}  ${ownerPfxFile}  ${ownerCertFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    #
+    # The following verification operations are expected to pass
+    #
 
-    ${OwnerCertThumbprint}=    Get Thumbprint From Pfx    ${ownerPfxFile}
-    Log To Console    .
-    Log To Console    ${OwnerCertThumbprint}
-    Log To Console    Should be prompted,  CANCEL THE PROMPT
+    # Verify that the package can be verified with the signed CA.cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    Reboot System And Wait For System Online
+    # Verify that the package can not be verified with the owner .cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    Validate Provision Status    ${nameofTest}  1  ${STATUS_ABORTED}
-    Get and Print Current Identities   ${currentIdxmlFile}
+    # Verify that the package can not be verified with the UEFI Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    ZeroTouch
-    Should Be True    '${rc}' != 'Cert not installed'
+    # Verify that the package can not be verified with the alt Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    Owner
-    Should Be True    '${rc}' == 'Cert not installed'
+    #
+    # The following verification operations are expected to fail
+    #
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    User
-    Should Be True    '${rc}' == 'Cert not installed'
+    # Verify that the package can not be verified with the signed CA.pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signPfxFile}
+    Should Be True  ${Result.rc} != 0
 
+    # Verify that the package can not be verified with the owner .pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerPfxFile}
+    Should Be True  ${Result.rc} != 0
 
-Enroll DDS CA cert Signed by ZTD_Leaf to System Being Enrolled
-    [Setup]    Require test case    Attempt Enroll DDS CA cert Signed by ZTD_CA to System Being Enrolled
+    # Verify that the package can not be verified with the UEFI leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiPfxFile}
+    Should Be True  ${Result.rc} != 0
 
-    ${nameofTest}=          Set Variable  DDSwithGoodKey
-    ${ownerCertFile}=       Set Variable  ${CERTS_DIR}${/}DDS_CA.cer
-    ${ZTDsignerPfxFile}=    Set Variable  ${CERTS_DIR}${/}ZTD_Leaf.pfx
-    ${DDSsignerPfxFile}=    Set Variable  ${CERTS_DIR}${/}DDS_Leaf.pfx
-    ${xmlPayloadFile}=      Set Variable  ${TEST_CASE_DIR}${/}DfciPermission.xml
-    ${currentIdxmlFile}=    Set Variable  ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
-    ${currentPermxmlFile}=  Set Variable  ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentPermission.xml
-
-    # The DDS Owner Enroll is signed by the ZTD_Leaf in order to have zero touch enroll
-    Process Provision Packet     ${nameofTest}  1  ${ZTDsignerPfxFile}  ${DDSsignerPfxFile}  ${ownerCertFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
-
-    # Must grant permissions to enroll the MDM.  These permissions need to be signed
-    # by the owner key, in this case DDS_Leaf
-    Process Permission Packet    ${nameofTest}  1  ${DDSsignerPfxFile}  ${xmlPayloadFile}  @{TARGET_PARAMETERS}
-
-    Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}DDSwithGoodKey.log
-
-    Reboot System And Wait For System Online
-
-    Get and Print Current Identities   ${currentIdxmlFile}
-    Get and Print Current Permissions  ${currentPermxmlFile}
-
-    Validate Provision Status    ${nameofTest}  1  ${STATUS_SUCCESS}
-    Validate Permission Status   ${nameofTest}  1  ${STATUS_SUCCESS}
-
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    ZeroTouch
-    Should Be True    '${rc}' != 'Cert not installed'
-
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    Owner
-    Should Be True    '${rc}' != 'Cert not installed'
-
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    User
-    Should Be True    '${rc}' == 'Cert not installed'
+    # Verify that the package can not be verified with the alt Leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altPfxFile}
+    Should Be True  ${Result.rc} != 0
 
 
-Enroll MDM CA cert Signed by DDS_Leaf to System Being Enrolled
-    [Setup]    Require test case    Enroll DDS CA cert Signed by ZTD_Leaf to System Being Enrolled
+Build Enroll of DDS CA cert, signed by ZTD_Leaf.pfx, and verify
+    [Setup]    Require test case    Build Enroll of DDS_CA cert, signed by ZTD_CA.pfx, and verify
 
-    ${nameofTest}=       Set Variable    MDMwithGoodKey
-    ${ownerPfxFile}=     Set Variable    ${CERTS_DIR}${/}MDM_CA.pfx
-    ${ownerCertFile}=    Set Variable    ${CERTS_DIR}${/}MDM_CA.cer
-    ${signerPfxFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${nameofTest}=    Set Variable    DDSEnroll
+    ${ownerPfxFile}=  Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${ownerCerFile}=  Set Variable    ${CERTS_DIR}${/}DDS_CA.cer
+    ${signPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
+    ${signCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.cer
+    ${uefiPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
+    ${uefiCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.cer
+    ${altPfxFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.pfx
+    ${altCerFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.cer
+
+    File Should Exist  ${ownerPfxFile}
+    File Should Exist  ${ownerCerFile}
+    File Should Exist  ${signPfxFile}
+    File Should Exist  ${signCerFile}
+    File Should Exist  ${uefiPfxFile}
+    File Should Exist  ${uefiCerFile}
+    File Should Exist  ${altPfxFile}
+    File Should Exist  ${altCerFile}
+
     ${currentIdxmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
+    ${binPackageFile}=    Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_Provision_apply.bin
+    ${applyPackageFile}=  Set Variable    ${TOOL_STD_OUT_DIR}${/}${TestName}_Provision_apply.log
 
-    Process Provision Packet     ${nameofTest}  1  ${signerPfxFile}  ${ownerPfxFile}  ${ownerCertFile}  ${USER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Create Dfci Provisioning Package  ${binPackageFile}  ${signPfxFile}  ${ownerPfxFile}  ${ownerCerFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Print Provisioning Package        ${binPackageFile}  ${applyPackageFile}
 
-    Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}MDMwithGoodKey.log
+    #
+    # The following verification operations are expected to pass
+    #
 
-    Reboot System And Wait For System Online
+    # Verify that the package can be verified with the signed CA.cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    Validate Provision Status    ${nameofTest}  1  ${STATUS_SUCCESS}
-    Get and Print Current Identities   ${currentIdxmlFile}
+    # Verify that the package can not be verified with the owner .cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    ZeroTouch
-    Should Be True    '${rc}' != 'Cert not installed'
+    # Verify that the package can not be verified with the UEFI Leaf cer file
+    #
+    # This is the standard UEFI method.  Owner Cert is the CA cert, signed by the ZTD Leaf cert.
+    # The Owner Cert will self verify its own signing, and the ZTD Leaf will be used to sign
+    # the overall packet.
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    Owner
-    Should Be True    '${rc}' != 'Cert not installed'
+    # Verify that the package can not be verified with the alt Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    User
-    Should Be True    '${rc}' != 'Cert not installed'
+    #
+    # The following verification operations are expected to fail
+    #
+
+    # Verify that the package can not be verified with the signed CA.pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the owner .pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the UEFI leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the alt Leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altPfxFile}
+    Should Be True  ${Result.rc} != 0
 
 
-Send DDS Unenroll signed by DDS_Leaf to complete UnEnroll
-    [Setup]    Require test case    Enroll MDM CA cert Signed by DDS_Leaf to System Being Enrolled
+Build Enroll of DDS CA cert, signed by DDS_Leaf.pfx, and verify
+    [Setup]    Require test case    Build Enroll of DDS CA cert, signed by ZTD_Leaf.pfx, and verify
 
-    ${nameofTest}=       Set Variable    UnEnrollDDS
-    ${ownerPfxFile}=     Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${nameofTest}=    Set Variable    DDSEnroll
+    ${ownerPfxFile}=  Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${ownerCerFile}=  Set Variable    ${CERTS_DIR}${/}DDS_CA.cer
+    ${signPfxFile}=   Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${signCerFile}=   Set Variable    ${CERTS_DIR}${/}DDS_Leaf.cer
+    ${uefiPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
+    ${uefiCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.cer
+    ${altPfxFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.pfx
+    ${altCerFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.cer
+
+    File Should Exist  ${ownerPfxFile}
+    File Should Exist  ${ownerCerFile}
+    File Should Exist  ${signPfxFile}
+    File Should Exist  ${signCerFile}
+    File Should Exist  ${uefiPfxFile}
+    File Should Exist  ${uefiCerFile}
+    File Should Exist  ${altPfxFile}
+    File Should Exist  ${altCerFile}
+
     ${currentIdxmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
+    ${binPackageFile}=    Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_Provision_apply.bin
+    ${applyPackageFile}=  Set Variable    ${TOOL_STD_OUT_DIR}${/}${TestName}_Provision_apply.log
 
-    Process UnEnroll Packet     ${nameofTest}  1  ${ownerPfxFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Create Dfci Provisioning Package  ${binPackageFile}  ${signPfxFile}  ${ownerPfxFile}  ${ownerCerFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Print Provisioning Package        ${binPackageFile}  ${applyPackageFile}
 
-    Start SerialLog     ${BOOT_LOG_OUT_DIR}${/}UnEnrollDDS.log
+    #
+    # The following verification operations are expected to pass
+    #
 
-    Reboot System And Wait For System Online
+    # Verify that the package can be verified with the signed CA.cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    Validate UnEnroll Status    ${nameofTest}  1  ${STATUS_SUCCESS}
-    Get and Print Current Identities   ${currentIdxmlFile}
+    # Verify that the package can not be verified with the owner .cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    ZeroTouch
-    Should Be True    '${rc}' != 'Cert not installed'
+    # Verify that the package can not be verified with the UEFI Leaf cer file
+    #
+    # This is the standard UEFI method.  Owner Cert is the CA cert, signed by the Leaf cert.
+    # The Owner Cert will self verify its own signing, and the Leaf will be used to sign
+    # the overall packet.
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    Owner
-    Should Be True    '${rc}' == 'Cert not installed'
+    # Verify that the package can not be verified with the alt Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altCerFile}
+    Should Be True  ${Result.rc} == 0
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    User
-    Should Be True    '${rc}' == 'Cert not installed'
+    #
+    # The following verification operations are expected to fail
+    #
+
+    # Verify that the package can not be verified with the signed CA.pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the owner .pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the UEFI leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the alt Leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altPfxFile}
+    Should Be True  ${Result.rc} != 0
 
 
-Get the ending DFCI Settings
-    ${nameofTest}=              Set Variable    DisplaySettingsAtExit
-    ${currentIdxmlFile}=        Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
-    ${currentPermxmlFile}=      Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentPermission.xml
-    ${currentSettingsxmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentSettings.xml
+Build Enroll of MDM CA cert, signed by DDS_Leaf.pfx, and verify
+    [Setup]    Require test case    Build Enroll of DDS CA cert, signed by DDS_Leaf.pfx, and verify
 
-    Get and Print Current Identities   ${currentIdxmlFile}
+    ${nameofTest}=    Set Variable    MDMEnroll
+    ${ownerPfxFile}=  Set Variable    ${CERTS_DIR}${/}MDM_CA.pfx
+    ${ownerCerFile}=  Set Variable    ${CERTS_DIR}${/}MDM_CA.cer
+    ${signPfxFile}=   Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${signCerFile}=   Set Variable    ${CERTS_DIR}${/}DDS_Leaf.cer
+    ${uefiPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
+    ${uefiCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.cer
+    ${altPfxFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.pfx
+    ${altCerFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.cer
 
-    Get and Print Current Permissions  ${currentPermxmlFile}
+    File Should Exist  ${ownerPfxFile}
+    File Should Exist  ${ownerCerFile}
+    File Should Exist  ${signPfxFile}
+    File Should Exist  ${signCerFile}
+    File Should Exist  ${uefiPfxFile}
+    File Should Exist  ${uefiCerFile}
+    File Should Exist  ${altPfxFile}
+    File Should Exist  ${altCerFile}
 
-    Get and Print Current Settings     ${currentSettingsxmlFile}
+    ${currentIdxmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
+    ${binPackageFile}=    Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_Provision_apply.bin
+    ${applyPackageFile}=  Set Variable    ${TOOL_STD_OUT_DIR}${/}${TestName}_Provision_apply.log
 
-    ${rc}=   Get Thumbprint Element    ${currentIdxmlFile}    ZeroTouch
-    Should Be True    '${rc}' == ${ZTD_LEAF_THUMBPRINT}
+    Create Dfci Provisioning Package  ${binPackageFile}  ${signPfxFile}  ${ownerPfxFile}  ${ownerCerFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Print Provisioning Package        ${binPackageFile}  ${applyPackageFile}
 
-    ${rc}=   Get Thumbprint Element    ${currentIdxmlFile}    Owner
-    Should Be True    '${rc}' == 'Cert not installed'
+    #
+    # The following verification operations are expected to pass
+    #
 
-    ${rc}=    Get Thumbprint Element    ${currentIdxmlFile}    User
-    Should Be True    '${rc}' == 'Cert not installed'
+    # Verify that the package can be verified with the signed CA.cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the owner .cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the DDS Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the alt Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    #
+    # The following verification operations are expected to fail
+    #
+
+    # Verify that the package can not be verified with the signed CA.pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the owner .pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the DDS leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the alt Leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+
+Build Enroll of MDM CA cert, signed by MDM_Leaf.pfx, and verify
+    [Setup]    Require test case    Build Enroll of MDM CA cert, signed by DDS_Leaf.pfx, and verify
+
+    ${nameofTest}=    Set Variable    MDMEnroll
+    ${ownerPfxFile}=  Set Variable    ${CERTS_DIR}${/}MDM_CA.pfx
+    ${ownerCerFile}=  Set Variable    ${CERTS_DIR}${/}MDM_CA.cer
+    ${signPfxFile}=   Set Variable    ${CERTS_DIR}${/}MDM_Leaf.pfx
+    ${signCerFile}=   Set Variable    ${CERTS_DIR}${/}MDM_Leaf.cer
+    ${uefiPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
+    ${uefiCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.cer
+    ${altPfxFile}=    Set Variable    ${CERTS_DIR}${/}MDM_Leaf3.pfx
+    ${altCerFile}=    Set Variable    ${CERTS_DIR}${/}MDM_Leaf3.cer
+
+    File Should Exist  ${ownerPfxFile}
+    File Should Exist  ${ownerCerFile}
+    File Should Exist  ${signPfxFile}
+    File Should Exist  ${signCerFile}
+    File Should Exist  ${uefiPfxFile}
+    File Should Exist  ${uefiCerFile}
+    File Should Exist  ${altPfxFile}
+    File Should Exist  ${altCerFile}
+
+    ${currentIdxmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
+    ${binPackageFile}=    Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_Provision_apply.bin
+    ${applyPackageFile}=  Set Variable    ${TOOL_STD_OUT_DIR}${/}${TestName}_Provision_apply.log
+
+    Create Dfci Provisioning Package  ${binPackageFile}  ${signPfxFile}  ${ownerPfxFile}  ${ownerCerFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Print Provisioning Package        ${binPackageFile}  ${applyPackageFile}
+
+    #
+    # The following verification operations are expected to pass
+    #
+
+    # Verify that the package can be verified with the signed CA.cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the owner .cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the DDS Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the alt Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    #
+    # The following verification operations are expected to fail
+    #
+
+    # Verify that the package can not be verified with the signed CA.pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the owner .pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the DDS leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the alt Leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+
+Build DDS Unenroll signed by DDS_Leaf.pfx, and verify
+    [Setup]    Require test case    Build Enroll of MDM CA cert, signed by MDM_Leaf.pfx, and verify
+
+    ${nameofTest}=    Set Variable    DDSUnenroll
+    ${ownerPfxFile}=  Set Variable    ${CERTS_DIR}${/}DDS_CA.pfx
+    ${ownerCerFile}=  Set Variable    ${CERTS_DIR}${/}DDS_CA.cer
+    ${signPfxFile}=   Set Variable    ${CERTS_DIR}${/}DDS_Leaf.pfx
+    ${signCerFile}=   Set Variable    ${CERTS_DIR}${/}DDS_Leaf.cer
+    ${uefiPfxFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.pfx
+    ${uefiCerFile}=   Set Variable    ${CERTS_DIR}${/}ZTD_Leaf.cer
+    ${altPfxFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.pfx
+    ${altCerFile}=    Set Variable    ${CERTS_DIR}${/}DDS_Leaf3.cer
+
+    File Should Exist  ${ownerPfxFile}
+    File Should Exist  ${ownerCerFile}
+    File Should Exist  ${signPfxFile}
+    File Should Exist  ${signCerFile}
+    File Should Exist  ${uefiPfxFile}
+    File Should Exist  ${uefiCerFile}
+    File Should Exist  ${altPfxFile}
+    File Should Exist  ${altCerFile}
+
+    ${currentIdxmlFile}=  Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_currentIdentities.xml
+    ${binPackageFile}=    Set Variable    ${TOOL_DATA_OUT_DIR}${/}${nameofTest}_Provision_apply.bin
+    ${applyPackageFile}=  Set Variable    ${TOOL_STD_OUT_DIR}${/}${nameofTest}_Provision_apply.log
+
+    Create Dfci UnEnroll Package  ${binPackageFile}  ${signPfxFile}  ${OWNER_KEY_INDEX}  @{TARGET_PARAMETERS}
+    Print Provisioning Package    ${binPackageFile}  ${applyPackageFile}
+
+    # The following verification operations are expected to pass
+
+    # Verify that the package can be verified with the signed CA.cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the owner .cer
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the UEFI Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # Verify that the package can not be verified with the alt Leaf cer file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altCerFile}
+    Should Be True  ${Result.rc} == 0
+
+    # The following verification operations are expected to fail
+
+    # Verify that the package can not be verified with the signed CA.pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${signPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the owner .pfx
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${ownerPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the UEFI leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${uefiPfxFile}
+    Should Be True  ${Result.rc} != 0
+
+    # Verify that the package can not be verified with the alt Leaf pfx file
+    ${Result}=      Run Process    ${TOOL_DFCI_VERIFY}  ${binPackageFile}  ${altPfxFile}
+    Should Be True  ${Result.rc} != 0
