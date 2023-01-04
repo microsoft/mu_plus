@@ -196,7 +196,7 @@ CpuArchSleep (
 EFI_STATUS
 EFIAPI
 CpuArchBspSleepPrep (
-  IN UINTN  PowerState,   OPTIONAL
+  IN UINTN PowerState, OPTIONAL
   IN UINTN  TimeoutInMicrosecond
   );
 

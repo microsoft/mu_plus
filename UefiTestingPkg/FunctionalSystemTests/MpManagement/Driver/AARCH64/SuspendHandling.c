@@ -71,15 +71,15 @@ ReadEl0Stack (
   VOID
   );
 
-BOOLEAN        mExtendedPowerState = FALSE;
-ARM_CORE_INFO  *mCpuInfo           = NULL;
-UINTN          mBspVbar            = 0;
-UINTN          mBspHcrReg          = 0;
-UINTN          mBspEl0Sp           = 0;
-UINT64         *gApStacksBase      = NULL;
-CONST UINT64   gApStackSize        = AP_TEMP_STACK_SIZE;
-UINT64         mWatchDogTimer      = 0;
-EFI_WATCHDOG_TIMER_ARCH_PROTOCOL *mWatchDogProtocol = NULL;
+BOOLEAN                           mExtendedPowerState = FALSE;
+ARM_CORE_INFO                     *mCpuInfo           = NULL;
+UINTN                             mBspVbar            = 0;
+UINTN                             mBspHcrReg          = 0;
+UINTN                             mBspEl0Sp           = 0;
+UINT64                            *gApStacksBase      = NULL;
+CONST UINT64                      gApStackSize        = AP_TEMP_STACK_SIZE;
+UINT64                            mWatchDogTimer      = 0;
+EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *mWatchDogProtocol  = NULL;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -227,7 +227,7 @@ RestoreBspStates (
   VOID
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mWatchDogProtocol != NULL) {
     Status = mWatchDogProtocol->SetTimerPeriod (mWatchDogProtocol, mWatchDogTimer);
@@ -613,18 +613,18 @@ Done:
 EFI_STATUS
 EFIAPI
 CpuArchBspSleepPrep (
-  IN UINTN  PowerState,   OPTIONAL
+  IN UINTN PowerState, OPTIONAL
   IN UINTN  TimeoutInMicrosecond
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   if (mWatchDogProtocol == NULL) {
     Status = gBS->LocateProtocol (
-              &gEfiWatchdogTimerArchProtocolGuid,
-              NULL,
-              (VOID **)&mWatchDogProtocol
-              );
+                    &gEfiWatchdogTimerArchProtocolGuid,
+                    NULL,
+                    (VOID **)&mWatchDogProtocol
+                    );
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "%a locating watch dog protocol failed - %r.\n", __FUNCTION__, Status));
       goto Done;
