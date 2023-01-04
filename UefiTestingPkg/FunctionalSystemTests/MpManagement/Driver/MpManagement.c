@@ -154,6 +154,10 @@ MpMgmtBspSuspend (
 
   // set up timer and turn off others...
   Status = CpuArchDisableAllInterruptsButSetupTimer (&Handle, TimeoutInMicroseconds);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a The timer setup is failed %r\n", __FUNCTION__, Status));
+    goto Done;
+  }
 
   switch (BspPowerState) {
     case AP_POWER_C1:
@@ -161,7 +165,7 @@ MpMgmtBspSuspend (
       Status = CpuArchHalt ();
       if (EFI_ERROR (Status)) {
         // if we ever return from this power level, something is off.
-        DEBUG ((DEBUG_INFO, "%a failed to clock gate, and it is off now - %r.\n", __FUNCTION__, Status));
+        DEBUG ((DEBUG_INFO, "%a failed to clock gate - %r.\n", __FUNCTION__, Status));
       }
 
       break;
@@ -170,7 +174,7 @@ MpMgmtBspSuspend (
       Status = CpuArchClockGate (TargetPowerLevel);
       if (EFI_ERROR (Status)) {
         // if we ever return from this power level, something is off.
-        DEBUG ((DEBUG_INFO, "%a failed to enter stand by, and it is off now - %r.\n", __FUNCTION__, Status));
+        DEBUG ((DEBUG_INFO, "%a failed to enter stand by - %r.\n", __FUNCTION__, Status));
       }
 
       break;
@@ -178,10 +182,18 @@ MpMgmtBspSuspend (
       DEBUG ((DEBUG_INFO, "%a Good night.\n", __FUNCTION__));
       // Setup a long jump buffer so that the cores can come back to the same place after resuming.
       if (SetJump ((BASE_LIBRARY_JUMP_BUFFER *)(&(mCommonBuffer[mBspIndex].JumpBuffer))) == 0) {
+        // This allows the program to perform extra steps for sleep specific transitioning
+        Status = CpuArchBspSleepPrep (TargetPowerLevel, TimeoutInMicroseconds);
+        if (EFI_ERROR (Status)) {
+          // failed to setup the bed, cannot sleep...
+          DEBUG ((DEBUG_INFO, "%a failed to prepare for sleeping - %r.\n", __FUNCTION__, Status));
+          break;
+        }
+
         Status = CpuArchSleep (TargetPowerLevel);
         if (EFI_ERROR (Status)) {
           // if we ever return from this power level, something is off.
-          DEBUG ((DEBUG_INFO, "%a failed to sleep, and it is off now - %r.\n", __FUNCTION__, Status));
+          DEBUG ((DEBUG_INFO, "%a failed to sleep - %r.\n", __FUNCTION__, Status));
         } else {
           // This does not make much sense, C3 sleep should not come back here.
           ASSERT (FALSE);

@@ -27,6 +27,7 @@
 #include <Pi/PiMultiPhase.h>
 #include <Protocol/MpService.h>
 #include <Protocol/Timer.h>
+#include <Protocol/WatchdogTimer.h>
 #include <Guid/ArmMpCoreInfo.h>
 
 #include "MpManagementInternal.h"
@@ -77,6 +78,8 @@ UINTN          mBspHcrReg          = 0;
 UINTN          mBspEl0Sp           = 0;
 UINT64         *gApStacksBase      = NULL;
 CONST UINT64   gApStackSize        = AP_TEMP_STACK_SIZE;
+UINT64         mWatchDogTimer      = 0;
+EFI_WATCHDOG_TIMER_ARCH_PROTOCOL *mWatchDogProtocol = NULL;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -224,6 +227,21 @@ RestoreBspStates (
   VOID
   )
 {
+  EFI_STATUS Status;
+
+  if (mWatchDogProtocol != NULL) {
+    Status = mWatchDogProtocol->SetTimerPeriod (mWatchDogProtocol, mWatchDogTimer);
+    if (EFI_ERROR (Status)) {
+      // We are basically dead here...
+      return Status;
+    }
+  }
+
+  // Clear pending watchdog interrupts before re-enabling the interface, if applicable.
+  if (ArmGicIsInterruptPending ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGenericWatchdogEl2IntrNum))) {
+    ArmGicClearPendingInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGenericWatchdogEl2IntrNum));
+  }
+
   RegisterEl0Stack ((VOID *)mBspEl0Sp);
   ArmWriteHcr (mBspHcrReg);
   ArmWriteVBar (mBspVbar);
@@ -569,6 +587,66 @@ CpuArchSleep (
   }
 
   Status = ArmPsciSuspendHelper (PowerState, (UINTN)AsmApEntryPoint, 0);
+
+Done:
+  return Status;
+}
+
+/**
+  This helper routine will be used for preparing the active BSP
+  to enter sleep state. It could be run by BSP.
+
+  This architectural specific routine should setup necessary wakeup
+  resources, if not already provided, for the CPU to wake up from
+  sleep state.
+
+  Given the state definition, this function will make the CPU to
+  resume without any context. The caller should handle the data
+  saving and restoration accordingly.
+
+  @param  PowerState              The intended power state.
+  @param  TimeoutInMicrosecond    The intended timer to wake this core.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
+EFI_STATUS
+EFIAPI
+CpuArchBspSleepPrep (
+  IN UINTN  PowerState,   OPTIONAL
+  IN UINTN  TimeoutInMicrosecond
+  )
+{
+  EFI_STATUS Status;
+
+  if (mWatchDogProtocol == NULL) {
+    Status = gBS->LocateProtocol (
+              &gEfiWatchdogTimerArchProtocolGuid,
+              NULL,
+              (VOID **)&mWatchDogProtocol
+              );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a locating watch dog protocol failed - %r.\n", __FUNCTION__, Status));
+      goto Done;
+    }
+  }
+
+  Status = mWatchDogProtocol->GetTimerPeriod (mWatchDogProtocol, &mWatchDogTimer);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a get timer period failed - %r.\n", __FUNCTION__, Status));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "%a got current timer period - %lld.\n", __FUNCTION__, mWatchDogTimer));
+  }
+
+  // Set the timeout in watch dog timer
+  Status = mWatchDogProtocol->SetTimerPeriod (mWatchDogProtocol, TimeoutInMicrosecond * 10);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a set timer period failed - %r.\n", __FUNCTION__, Status));
+    goto Done;
+  }
+
+  ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGenericWatchdogEl2IntrNum));
 
 Done:
   return Status;
