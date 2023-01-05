@@ -236,7 +236,7 @@ DxePagingAuditTestAppEntryPoint (
       goto EXIT;
     }
 
-    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, NULL, Context);
+    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, NULL, NULL);
 
     //
     // Execute the tests.
