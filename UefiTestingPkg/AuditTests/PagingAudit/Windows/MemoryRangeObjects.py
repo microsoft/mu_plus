@@ -226,20 +226,16 @@ class MemoryRange(object):
         self.Present = Present
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
-    def pteDebugStr(self):
+    def pageDebugStr(self):
         return """\n  %s
 ------------------------------------------------------------------
-    MustBe1                 : 0x%010X
-    Present                 : 0x%010X
-    ReadWrite               : 0x%010X
-    Nx                      : 0x%010X
     PhysicalStart           : 0x%010X
     PhysicalEnd             : 0x%010X
     PhysicalSize            : 0x%010X
     Number                  : 0x%010X
     Type                    : %s
     LoadedImage             : %s
-""" % (self.getPageSizeStr(), self.MustBe1, self.Present, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
+""" % (self.getPageSizeStr(), self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
 
     def getPageSize(self):
         return MemoryRange.PageSize[self.PageSize]
@@ -258,7 +254,7 @@ class MemoryRange(object):
         # Pre-process the Section Type
         # Set a reasonable default.
         section_type = "UNEXPECTED VALUE"
-        if architecture == "x86":
+        if architecture == "X64":
             # If this range is not associated with an image, it does not have
             # a section type.
             if self.ImageName == None:
@@ -288,7 +284,7 @@ class MemoryRange(object):
                 "System Memory": self.GetSystemMemoryType(),
                 "Memory Contents" : self.ImageName,
                 "Partial Page": self.PageSplit}
-        elif architecture == "Arm64":
+        elif architecture == "AARCH64":
             # If this range is not associated with an image, it does not have
             # a section type.
             if self.ImageName == None:
@@ -394,7 +390,7 @@ class MemoryRange(object):
         if (self.ReadWrite != compare.ReadWrite):
             return False
 
-        if architecture == "x86":
+        if architecture == "X64":
             if (self.MustBe1 != compare.MustBe1):
                 return False
 
@@ -407,7 +403,7 @@ class MemoryRange(object):
             if(self.UserPrivilege != compare.UserPrivilege):
                 return False
 
-        elif architecture == "Arm64":
+        elif architecture == "AARCH64":
             if (self.IsTable != compare.IsTable):
                 return False
 

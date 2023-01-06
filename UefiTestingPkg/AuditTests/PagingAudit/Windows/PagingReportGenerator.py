@@ -206,10 +206,10 @@ class ParsingTool(object):
         #
         f = open(OutputFilePath, "w")
         if self.Type == 'DXE':
-            if self.Architecture == "x86":
-                template = open(os.path.join(sp, "DxePaging_template_x86.html"), "r")
-            elif self.Architecture == "Arm64":
-                template = open(os.path.join(sp, "DxePaging_template_Arm64.html"), "r")
+            if self.Architecture == "X64":
+                template = open(os.path.join(sp, "DxePaging_template_X64.html"), "r")
+            elif self.Architecture == "AARCH64":
+                template = open(os.path.join(sp, "DxePaging_template_AArch64.html"), "r")
         else:
             template = open(os.path.join(sp, "SmmPaging_template.html"), "r")
 
@@ -232,7 +232,7 @@ def main():
     parser.add_argument('-p', "--PlatformName", dest="PlatformName", help="Name of Platform.  Will show up on report", default="Test Platform")
     parser.add_argument('-t', "--type", choices=['SMM', 'DXE'], dest="Type", help="SMM or DXE Paging Report", required=True)
     parser.add_argument("--PlatformVersion", dest="PlatformVersion", help="Version of Platform.  Will show up report", default="1.0.0")
-    parser.add_argument('-a', "--architecture", choices=['Arm64', 'x86'], dest="Architecture", help="The architecture of the pages. Can be ARM64 or x86", required=True)
+    parser.add_argument('-a', "--architecture", choices=['AARCH64', 'X64'], dest="Architecture", help="The architecture of the pages. Can be ARM64 or X64", required=True)
 
     #Turn on dubug level logging
     parser.add_argument("--debug", action="store_true", dest="debug", help="turn on debug logging level for file log",  default=False)
@@ -268,8 +268,8 @@ def main():
         logging.critical("No OutputReport Path")
         return -6
 
-    if options.Architecture == "Arm64" and options.Type == "SMM":
-        logging.critical("Arm64 does not use SMM")
+    if options.Architecture == "AARCH64" and options.Type == "SMM":
+        logging.critical("AARCH64 does not use SMM")
         return -7
 
     logging.debug("Input Folder Path is: %s" % options.InputFolder)

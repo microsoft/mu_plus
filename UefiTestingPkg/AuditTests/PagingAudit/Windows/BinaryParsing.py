@@ -45,7 +45,7 @@ def Parse4kPages(fileName, addressbits, architecture):
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
-    if (architecture == "x86"):
+    if (architecture == "X64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
                 byteZeroIndex += 8
@@ -59,7 +59,7 @@ def Parse4kPages(fileName, addressbits, architecture):
             byteZeroIndex += 8
             num += 1
             pages.append(MemoryRange("PTEntry", "4k", Present, ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
-    elif (architecture == "Arm64"):
+    elif (architecture == "AARCH64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             # check if this page is zero
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
@@ -71,7 +71,7 @@ def Parse4kPages(fileName, addressbits, architecture):
             Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
             Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x10) >> 4)
             Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
-            PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & addressbits)
+            PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
             logging.debug("4KB Page: 0x%s. Valid: %d. AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Valid, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
@@ -87,7 +87,7 @@ def Parse2mPages(fileName, addressbits, architecture):
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
-    if (architecture == "x86"):
+    if (architecture == "X64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
                 byteZeroIndex += 8
@@ -102,7 +102,7 @@ def Parse2mPages(fileName, addressbits, architecture):
             byteZeroIndex += 8
             num += 1
             pages.append(MemoryRange("PTEntry", "2m", Present, ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
-    elif (architecture == "Arm64"):
+    elif (architecture == "AARCH64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             # check if this page is zero
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
@@ -114,7 +114,7 @@ def Parse2mPages(fileName, addressbits, architecture):
             Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
             Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x10) >> 4)
             Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
-            PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & addressbits)
+            PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
             logging.debug("2MB Page: 0x%s. Valid: %d. IsTable: %d AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Valid, IsTable, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
@@ -130,7 +130,7 @@ def Parse1gPages(fileName, addressbits, architecture):
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
-    if (architecture == "x86"):
+    if (architecture == "X64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
                 byteZeroIndex += 8
@@ -145,7 +145,7 @@ def Parse1gPages(fileName, addressbits, architecture):
             byteZeroIndex += 8
             pages.append(MemoryRange("PTEntry", "1g", Present, ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
             num += 1
-    elif (architecture == "Arm64"):
+    elif (architecture == "AARCH64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             # check if this page is zero
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
@@ -157,7 +157,7 @@ def Parse1gPages(fileName, addressbits, architecture):
             Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
             Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x10) >> 4)
             Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
-            PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & addressbits)
+            PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
             logging.debug("1GB Page: 0x%s. Valid: %d. IsTable: %d AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Valid, IsTable, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
