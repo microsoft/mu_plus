@@ -38,112 +38,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define IndexToAddress(a, b, c, d)  ((UINT64) ((UINT64)a << 39) + ((UINT64)b << 30) + ((UINT64)c <<  21) + ((UINT64)d << 12))
 
-#define AMD_64_SMM_ADDR  0xC0010112
-#define AMD_64_SMM_MASK  0xC0010113
-
-#define VALID_SMRR_LOW_POS   BIT17
-#define VALID_SMRR_HIGH_POS  BIT51
-#define VALID_SMRR_BIT_MASK  (~(~(BIT51 - 1) | (BIT17 - 1)))
-
 #define TSEG_EFI_MEMORY_TYPE  (EfiMaxMemoryType + 1)
 #define NONE_GCD_MEMORY_TYPE  (EfiGcdMemoryTypeMaximum + 1)
 #define NONE_EFI_MEMORY_TYPE  (EfiMaxMemoryType + 2)
-
-#pragma pack(1)
-
-//
-// Page-Map Level-4 Offset (PML4) and
-// Page-Directory-Pointer Offset (PDPE) entries 4K & 2MB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Reserved             : 1;  // Reserved
-    UINT64    MustBeZero           : 2;  // Must Be Zero
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PageTableBaseAddress : 40; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // No Execute bit
-  } Bits;
-  UINT64    Uint64;
-} PAGE_MAP_AND_DIRECTORY_POINTER;
-
-//
-// Page Table Entry 4KB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Dirty                : 1;  // 0 = Not Dirty, 1 = written by processor on access to page
-    UINT64    PAT                  : 1;  //
-    UINT64    Global               : 1;  // 0 = Not global page, 1 = global page TLB not cleared on CR3 write
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PageTableBaseAddress : 40; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // 0 = Execute Code, 1 = No Code Execution
-  } Bits;
-  UINT64    Uint64;
-} PAGE_TABLE_4K_ENTRY;
-
-//
-// Page Table Entry 2MB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Dirty                : 1;  // 0 = Not Dirty, 1 = written by processor on access to page
-    UINT64    MustBe1              : 1;  // Must be 1
-    UINT64    Global               : 1;  // 0 = Not global page, 1 = global page TLB not cleared on CR3 write
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PAT                  : 1;  //
-    UINT64    MustBeZero           : 8;  // Must be zero;
-    UINT64    PageTableBaseAddress : 31; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // 0 = Execute Code, 1 = No Code Execution
-  } Bits;
-  UINT64    Uint64;
-} PAGE_TABLE_ENTRY;
-
-//
-// Page Table Entry 1GB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Dirty                : 1;  // 0 = Not Dirty, 1 = written by processor on access to page
-    UINT64    MustBe1              : 1;  // Must be 1
-    UINT64    Global               : 1;  // 0 = Not global page, 1 = global page TLB not cleared on CR3 write
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PAT                  : 1;  //
-    UINT64    MustBeZero           : 17; // Must be zero;
-    UINT64    PageTableBaseAddress : 22; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // 0 = Execute Code, 1 = No Code Execution
-  } Bits;
-  UINT64    Uint64;
-} PAGE_TABLE_1G_ENTRY;
-
-#pragma pack()
 
 /**
   Calculate the maximum support address.
@@ -186,17 +83,15 @@ DumpProcessorSpecificHandlers (
   );
 
 /**
-   Event notification handler. Will dump paging information to disk.
+   Dumps paging information to open EFI_FILE Fs_Handle if provided and the EFI partition otherwise.
 
-  @param[in]  Event     Event whose notification function is being invoked
-  @param[in]  Context   Pointer to the notification function's context
+  @param[in]  Fs_Handle File handle to deposit the paging audit info
 
 **/
 VOID
 EFIAPI
 DumpPagingInfo (
-  IN      EFI_EVENT  Event,
-  IN      VOID       *Context
+  IN      EFI_FILE  *Fs_Handle
   );
 
 /**
@@ -240,6 +135,55 @@ VOID
 EFIAPI
 MemoryAttributesTableDump (
   VOID
+  );
+
+/**
+  Calculate the maximum physical address bits supported.
+
+  @return the maximum support physical address bits supported.
+**/
+UINT8
+EFIAPI
+CalculateMaximumSupportAddressBits (
+  VOID
+  );
+
+/**
+  This helper function walks the page tables to retrieve:
+  - a count of each entry
+  - a count of each directory entry
+  - [optional] a flat list of each entry
+  - [optional] a flat list of each directory entry
+
+  @param[in, out]   Pte1GCount, Pte2MCount, Pte4KCount, PdeCount
+      On input, the number of entries that can fit in the corresponding buffer (if provided).
+      It is expected that this will be zero if the corresponding buffer is NULL.
+      On output, the number of entries that were encountered in the page table.
+  @param[out]       Pte1GEntries, Pte2MEntries, Pte4KEntries, PdeEntries
+      A buffer which will be filled with the entries that are encountered in the tables.
+
+  @retval     EFI_SUCCESS             All requested data has been returned.
+  @retval     EFI_INVALID_PARAMETER   One or more of the count parameter pointers is NULL.
+  @retval     EFI_INVALID_PARAMETER   Presence of buffer counts and pointers is incongruent.
+  @retval     EFI_BUFFER_TOO_SMALL    One or more of the buffers was insufficient to hold
+                                      all of the entries in the page tables. The counts
+                                      have been updated with the total number of entries
+                                      encountered.
+
+**/
+EFI_STATUS
+EFIAPI
+GetFlatPageTableData (
+  IN OUT UINTN  *Pte1GCount,
+  IN OUT UINTN  *Pte2MCount,
+  IN OUT UINTN  *Pte4KCount,
+  IN OUT UINTN  *PdeCount,
+  IN OUT UINTN  *GuardCount,
+  OUT UINT64    *Pte1GEntries,
+  OUT UINT64    *Pte2MEntries,
+  OUT UINT64    *Pte4KEntries,
+  OUT UINT64    *PdeEntries,
+  OUT UINT64    *GuardEntries
   );
 
 /**

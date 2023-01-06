@@ -14,6 +14,23 @@ UINTN  mMemoryInfoDatabaseSize      = 0;
 UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
 /**
+   Event notification handler. Will dump paging information to disk.
+
+  @param[in]  Event     Event whose notification function is being invoked
+  @param[in]  Context   Pointer to the notification function's context
+
+**/
+VOID
+EFIAPI
+DumpPagingInfoEvent (
+  IN      EFI_EVENT  Event,
+  IN      VOID       *Context
+  )
+{
+  DumpPagingInfo (NULL);
+}
+
+/**
   PagingAuditDriverEntryPoint
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
@@ -38,7 +55,7 @@ PagingAuditDriverEntryPoint (
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_CALLBACK,
-                  DumpPagingInfo,
+                  DumpPagingInfoEvent,
                   NULL,
                   &gMuEventPreExitBootServicesGuid,
                   &Event

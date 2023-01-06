@@ -198,7 +198,7 @@ GdtDumpHandler (
 **/
 STATIC
 EFI_STATUS
-GetFlatPageTableData (
+GetFlatPageTableDataSmm (
   IN OUT UINTN             *Pte1GCount,
   IN OUT UINTN             *Pte2MCount,
   IN OUT UINTN             *Pte4KCount,
@@ -364,13 +364,13 @@ GetFlatPageTableData (
   *PdeCount   = MyPdeCount;
 
   return Status;
-} // GetFlatPageTableData()
+} // GetFlatPageTableDataSmm()
 
 /**
-  This is a helper function that wraps GetFlatPageTableData(),
+  This is a helper function that wraps GetFlatPageTableDataSmm(),
   and abstracts the call->allocate->call pattern.
 
-  @params are virtually identical to GetFlatPageTableData() except:
+  @params are virtually identical to GetFlatPageTableDataSmm() except:
     - all params are OUTs
     - Entries are pointer-pointers to handle buffer allocation
 
@@ -399,7 +399,7 @@ LoadFlatPageTableData (
   *Pte2MCount = 0;
   *Pte4KCount = 0;
   *PdeCount   = 0;
-  Status      = GetFlatPageTableData (Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, NULL, NULL, NULL, NULL);
+  Status      = GetFlatPageTableDataSmm (Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, NULL, NULL, NULL, NULL);
 
   // Allocate buffers if successful.
   if (!EFI_ERROR (Status)) {
@@ -420,7 +420,7 @@ LoadFlatPageTableData (
   // If still good, grab the data.
   if (!EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a - Second call to grab the data.\n", __FUNCTION__));
-    Status = GetFlatPageTableData (
+    Status = GetFlatPageTableDataSmm (
                Pte1GCount,
                Pte2MCount,
                Pte4KCount,
