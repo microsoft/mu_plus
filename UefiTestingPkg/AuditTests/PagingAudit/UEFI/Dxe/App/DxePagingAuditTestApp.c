@@ -7,145 +7,150 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include "../../PagingAuditCommon.h"
-
-#include <Library/UnitTestLib.h>
-#include <Library/CpuPageTableLib.h>
-#include <Library/DxeMemoryProtectionHobLib.h>
-#include <Protocol/MemoryProtectionSpecialRegionProtocol.h>
 #include <Protocol/ShellParameters.h>
 #include <Protocol/Shell.h>
+#include <Protocol/SimpleFileSystem.h>
+#include <Library/FileHandleLib.h>
+
+#include "DxePagingAuditTestApp.h"
 
 #define UNIT_TEST_APP_NAME     "Paging Audit Test"
 #define UNIT_TEST_APP_VERSION  "1"
 #define MAX_CHARS_TO_READ      3
-
-// TRUE if A interval subsumes B interval
-#define CHECK_SUBSUMPTION(AStart, AEnd, BStart, BEnd) \
-  ((AStart <= BStart) && (AEnd >= BEnd))
-
-typedef struct _PAGING_AUDIT_TEST_CONTEXT {
-  IA32_MAP_ENTRY    *Entries;
-  UINTN             Count;
-} PAGING_AUDIT_TEST_CONTEXT;
 
 CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
 UINTN  mMemoryInfoDatabaseSize      = 0;
 UINTN  mMemoryInfoDatabaseAllocSize = 0;
 
 /**
-  Check the page table for Read/Write/Execute regions.
 
-  @param[in] Context            Unit test context
+ Locates and opens the SFS volume containing the application and, if successful, returns an
+ FS handle to the opened volume.
 
-  @retval UNIT_TEST_PASSED      The unit test passed
-  @retval other                 The unit test failed
+  @param    mFs_Handle       Handle to the opened volume.
+
+  @retval   EFI_SUCCESS     The FS volume was opened successfully.
+  @retval   Others          The operation failed.
 
 **/
-UNIT_TEST_STATUS
-EFIAPI
-NoReadWriteExecute (
-  IN UNIT_TEST_CONTEXT  Context
+STATIC
+EFI_STATUS
+OpenAppSFS (
+  OUT EFI_FILE  **Fs_Handle
   )
 {
-  IA32_MAP_ENTRY                             *Map                      = ((PAGING_AUDIT_TEST_CONTEXT *)Context)->Entries;
-  UINTN                                      MapCount                  = ((PAGING_AUDIT_TEST_CONTEXT *)Context)->Count;
-  UINTN                                      Index                     = 0;
-  BOOLEAN                                    FoundRWXAddress           = FALSE;
-  BOOLEAN                                    IgnoreRWXAddress          = FALSE;
-  MEMORY_PROTECTION_DEBUG_PROTOCOL           *MemoryProtectionProtocol = NULL;
-  MEMORY_PROTECTION_SPECIAL_REGION_PROTOCOL  *SpecialRegionProtocol    = NULL;
-  MEMORY_PROTECTION_SPECIAL_REGION           *SpecialRegions           = NULL;
-  UINTN                                      SpecialRegionCount        = 0;
-  UINTN                                      SpecialRegionIndex        = 0;
-  IMAGE_RANGE_DESCRIPTOR                     *NonProtectedImageList    = NULL;
-  LIST_ENTRY                                 *NonProtectedImageLink    = NULL;
-  IMAGE_RANGE_DESCRIPTOR                     *NonProtectedImage        = NULL;
+  EFI_DEVICE_PATH_PROTOCOL         *DevicePath;
+  BOOLEAN                          Found;
+  EFI_HANDLE                       Handle;
+  EFI_HANDLE                       *HandleBuffer;
+  UINTN                            Index;
+  UINTN                            NumHandles;
+  EFI_STRING                       PathNameStr;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SfProtocol;
+  EFI_STATUS                       Status;
+  EFI_FILE_PROTOCOL                *FileHandle;
+  EFI_FILE_PROTOCOL                *FileHandle2;
 
-  UT_ASSERT_NOT_EFI_ERROR (
-    gBS->LocateProtocol (
-           &gMemoryProtectionDebugProtocolGuid,
-           NULL,
-           (VOID **)&MemoryProtectionProtocol
-           )
-    );
+  Status       = EFI_SUCCESS;
+  SfProtocol   = NULL;
+  NumHandles   = 0;
+  HandleBuffer = NULL;
 
-  UT_ASSERT_NOT_EFI_ERROR (
-    MemoryProtectionProtocol->GetImageList (
-                                &NonProtectedImageList,
-                                NonProtected
-                                )
-    );
+  //
+  // Locate all handles that are using the SFS protocol.
+  //
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumHandles,
+                  &HandleBuffer
+                  );
 
-  UT_ASSERT_NOT_EFI_ERROR (
-    gBS->LocateProtocol (
-           &gMemoryProtectionSpecialRegionProtocolGuid,
-           NULL,
-           (VOID **)&SpecialRegionProtocol
-           )
-    );
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
+    goto CleanUp;
+  }
 
-  UT_ASSERT_NOT_EFI_ERROR (
-    SpecialRegionProtocol->GetSpecialRegions (
-                             &SpecialRegions,
-                             &SpecialRegionCount
-                             )
-    );
+  //
+  // Search the handles to find one that is on a GPT partition on a hard drive.
+  //
+  Found = FALSE;
+  for (Index = 0; (Index < NumHandles) && (Found == FALSE); Index += 1) {
+    DevicePath = DevicePathFromHandle (HandleBuffer[Index]);
+    if (DevicePath == NULL) {
+      continue;
+    }
 
-  for ( ; Index < MapCount; Index++) {
-    if ((Map[Index].Attribute.Bits.ReadWrite != 0) && (Map[Index].Attribute.Bits.Nx == 0)) {
-      IgnoreRWXAddress = FALSE;
-      if (NonProtectedImageList != NULL) {
-        for (NonProtectedImageLink = NonProtectedImageList->Link.ForwardLink;
-             NonProtectedImageLink != &NonProtectedImageList->Link;
-             NonProtectedImageLink = NonProtectedImageLink->ForwardLink)
-        {
-          NonProtectedImage = CR (
-                                NonProtectedImageLink,
-                                IMAGE_RANGE_DESCRIPTOR,
-                                Link,
-                                IMAGE_RANGE_DESCRIPTOR_SIGNATURE
-                                );
-          if CHECK_SUBSUMPTION (
-               NonProtectedImage->Base,
-               NonProtectedImage->Base + NonProtectedImage->Length,
-               Map[Index].LinearAddress,
-               Map[Index].LinearAddress + Map[Index].Length
-               ) {
-            IgnoreRWXAddress = TRUE;
-            break;
-          }
-        }
+    //
+    // Convert the device path to a string to print it.
+    //
+    PathNameStr = ConvertDevicePathToText (DevicePath, TRUE, TRUE);
+    DEBUG ((DEBUG_ERROR, "%a: device path %d -> %s\n", __FUNCTION__, Index, PathNameStr));
+
+    //
+    // Check if this is a block IO device path. If it is not, keep searching.
+    // This changes our locate device path variable, so we'll have to restore
+    // it afterwards.
+    //
+    Status = gBS->LocateDevicePath (
+                    &gEfiBlockIoProtocolGuid,
+                    &DevicePath,
+                    &Handle
+                    );
+
+    if (EFI_ERROR (Status) != FALSE) {
+      DEBUG ((DEBUG_ERROR, "%a: not a block IO device path\n", __FUNCTION__));
+      continue;
+    }
+
+    Status = gBS->HandleProtocol (
+                    HandleBuffer[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID **)&SfProtocol
+                    );
+
+    if (EFI_ERROR (Status) != FALSE) {
+      DEBUG ((DEBUG_ERROR, "%a: Failed to locate Simple FS protocol using the handle to fs0: %r \n", __FUNCTION__, Status));
+      goto CleanUp;
+    }
+
+    //
+    // Open the volume/partition.
+    //
+    Status = SfProtocol->OpenVolume (SfProtocol, &FileHandle);
+    if (EFI_ERROR (Status) != FALSE) {
+      DEBUG ((DEBUG_ERROR, "%a: Failed to open Simple FS volume fs0: %r \n", __FUNCTION__, Status));
+      goto CleanUp;
+    }
+
+    //
+    // Ensure the PktName file is present
+    //
+    Status = FileHandle->Open (FileHandle, &FileHandle2, L"DxePagingAuditTestApp.efi", EFI_FILE_MODE_READ, 0);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "%a: Unable to locate %s. Status: %r\n", __FUNCTION__, L"DxePagingAuditTestApp.efi", Status));
+      Status = FileHandleClose (FileHandle);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Error closing Vol Handle. Code = %r\n", __FUNCTION__, Status));
       }
 
-      if ((SpecialRegionCount > 0) && !IgnoreRWXAddress) {
-        for (SpecialRegionIndex = 0; SpecialRegionIndex < SpecialRegionCount; SpecialRegionIndex++) {
-          if (CHECK_SUBSUMPTION (
-                SpecialRegions[SpecialRegionIndex].Start,
-                SpecialRegions[SpecialRegionIndex].Start + SpecialRegions[SpecialRegionIndex].Length,
-                Map[Index].LinearAddress,
-                Map[Index].LinearAddress + Map[Index].Length
-                ) &&
-              (SpecialRegions[SpecialRegionIndex].EfiAttributes == 0))
-          {
-            IgnoreRWXAddress = TRUE;
-            break;
-          }
-        }
-      }
-
-      if (!IgnoreRWXAddress) {
-        UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
-        FoundRWXAddress = TRUE;
-      } else {
-        UT_LOG_WARNING ("Memory Range 0x%llx-0x%llx is Read/Write/Execute. This range is excepted from the test.\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
-      }
+      Status = EFI_NOT_FOUND;
+      continue;
+    } else {
+      DEBUG ((DEBUG_ERROR, "%a: Located app device path\n", __FUNCTION__));
+      Status     = FileHandleClose (FileHandle2);
+      *Fs_Handle = (EFI_FILE *)FileHandle;
+      break;
     }
   }
 
-  UT_ASSERT_FALSE (FoundRWXAddress);
+CleanUp:
+  if (HandleBuffer != NULL) {
+    FreePool (HandleBuffer);
+  }
 
-  return UNIT_TEST_PASSED;
+  return Status;
 }
 
 /**
@@ -166,16 +171,11 @@ DxePagingAuditTestAppEntryPoint (
   )
 {
   EFI_STATUS                     Status;
-  UNIT_TEST_FRAMEWORK_HANDLE     Fw   = NULL;
-  UNIT_TEST_SUITE_HANDLE         Misc = NULL;
-  PAGING_AUDIT_TEST_CONTEXT      *Context;
-  IA32_CR4                       Cr4;
-  PAGING_MODE                    PagingMode;
-  IA32_MAP_ENTRY                 *Map           = NULL;
-  UINTN                          MapCount       = 0;
-  UINTN                          PagesAllocated = 0;
-  BOOLEAN                        RunTests       = TRUE;
+  UNIT_TEST_FRAMEWORK_HANDLE     Fw       = NULL;
+  UNIT_TEST_SUITE_HANDLE         Misc     = NULL;
+  BOOLEAN                        RunTests = TRUE;
   EFI_SHELL_PARAMETERS_PROTOCOL  *ShellParams;
+  EFI_FILE                       *Fs_Handle;
 
   DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
 
@@ -197,7 +197,13 @@ DxePagingAuditTestAppEntryPoint (
     if (StrnCmp (ShellParams->Argv[1], L"-r", 4) == 0) {
       RunTests = TRUE;
     } else if (StrnCmp (ShellParams->Argv[1], L"-d", 4) == 0) {
-      DumpPagingInfo (NULL, NULL);
+      Status = OpenAppSFS (&Fs_Handle);
+
+      if (!EFI_ERROR ((Status))) {
+        DumpPagingInfo (Fs_Handle);
+      } else {
+        DumpPagingInfo (NULL);
+      }
     } else {
       if (StrnCmp (ShellParams->Argv[1], L"-h", 4) != 0) {
         DEBUG ((DEBUG_INFO, "Invalid argument!\n"));
@@ -211,13 +217,6 @@ DxePagingAuditTestAppEntryPoint (
   }
 
   if (RunTests) {
-    Context = (PAGING_AUDIT_TEST_CONTEXT *)AllocateZeroPool (sizeof (PAGING_AUDIT_TEST_CONTEXT));
-
-    if (Context == NULL) {
-      DEBUG ((DEBUG_ERROR, "Failed to allocate test context\n"));
-      goto EXIT;
-    }
-
     //
     // Start setting up the test framework for running the tests.
     //
@@ -226,37 +225,6 @@ DxePagingAuditTestAppEntryPoint (
       DEBUG ((DEBUG_ERROR, "Failed in InitUnitTestFramework. Status = %r\n", Status));
       goto EXIT;
     }
-
-    // Poll CR4 to deterimine the page table depth
-    Cr4.UintN = AsmReadCr4 ();
-
-    if (Cr4.Bits.LA57 != 0) {
-      PagingMode = Paging5Level;
-    } else {
-      PagingMode = Paging4Level;
-    }
-
-    // CR3 is the page table pointer
-    Status = PageTableParse (AsmReadCr3 (), PagingMode, NULL, &MapCount);
-
-    while (Status == RETURN_BUFFER_TOO_SMALL) {
-      if ((Map != NULL) && (PagesAllocated > 0)) {
-        FreePages (Map, PagesAllocated);
-      }
-
-      PagesAllocated = EFI_SIZE_TO_PAGES (MapCount * sizeof (IA32_MAP_ENTRY));
-      Map            = AllocatePages (PagesAllocated);
-
-      if (Map == NULL) {
-        DEBUG ((DEBUG_ERROR, "Failed to allocate page table map\n"));
-        goto EXIT;
-      }
-
-      Status = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
-    }
-
-    Context->Entries = Map;
-    Context->Count   = MapCount;
 
     //
     // Create test suite
@@ -268,7 +236,7 @@ DxePagingAuditTestAppEntryPoint (
       goto EXIT;
     }
 
-    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, NULL, Context);
+    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, NULL, NULL);
 
     //
     // Execute the tests.
@@ -278,14 +246,6 @@ EXIT:
 
     if (Fw) {
       FreeUnitTestFramework (Fw);
-    }
-
-    if ((Map != NULL) && (PagesAllocated > 0)) {
-      FreePages (Map, PagesAllocated);
-    }
-
-    if (Context != NULL) {
-      FreePool (Context);
     }
   }
 
