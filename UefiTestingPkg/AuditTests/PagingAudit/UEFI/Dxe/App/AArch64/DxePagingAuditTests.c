@@ -1,4 +1,4 @@
-/** @file -- DxePagingAuditTestsArm64.c
+/** @file -- DxePagingAuditTests.c
     ARM64 implementations for DXE paging audit tests
 
     Copyright (c) Microsoft Corporation.
