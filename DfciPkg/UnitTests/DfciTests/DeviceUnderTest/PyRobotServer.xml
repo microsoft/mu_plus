@@ -49,7 +49,7 @@ rem SPDX-License-Identifier: BSD-2-Clause-Patent
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>C:\Python39\python</Command>
+      <Command>C:\Python311\python</Command>
       <Arguments>C:\Test\PyRobotRemote.py</Arguments>
       <WorkingDirectory>C:\Test</WorkingDirectory>
     </Exec>

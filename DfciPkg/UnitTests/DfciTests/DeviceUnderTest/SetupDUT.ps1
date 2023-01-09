@@ -46,22 +46,22 @@ function MyStartProcess {
 
 $storageDir = $Env:temp
 $webclient = New-Object System.Net.WebClient
-$url = "https://www.python.org/ftp/python/3.9.4/python-3.9.4-amd64.exe"
-$file = "$storageDir\python-3.9.4-amd64.exe"
+$url = "https://www.python.org/ftp/python/3.11.0/python-3.11.0-amd64.exe"
+$file = "$storageDir\python-3.11.0-amd64.exe"
 
 Write-Host "Downloading " + $url
 $webclient.DownloadFile($url,$file)
 
-Write-Host "Installing Python39"
-$rc = MyStartProcess $File "/quiet PrependPath=1 InstallAllUsers=1 TargetDir=`"C:\Python39`" "
+Write-Host "Installing Python311"
+$rc = MyStartProcess $File "/quiet PrependPath=1 InstallAllUsers=1 TargetDir=`"C:\Python311`" "
 
 if ($rc -eq 0)
 {
     #install modules
-    MyStartProcess "C:\Python39\python.exe" "-m pip install --upgrade pip"
-    MyStartProcess "C:\Python39\python.exe" "-m pip install robotframework"
-    MyStartProcess "C:\Python39\python.exe" "-m pip install robotremoteserver"
-    MyStartProcess "C:\Python39\python.exe" "-m pip install pypiwin32"
+    MyStartProcess "C:\Python311\python.exe" "-m pip install --upgrade pip"
+    MyStartProcess "C:\Python311\python.exe" "-m pip install robotframework"
+    MyStartProcess "C:\Python311\python.exe" "-m pip install robotremoteserver"
+    MyStartProcess "C:\Python311\python.exe" "-m pip install pypiwin32"
 }
 
 ## Disable windows recovery during boot - With frequent rebooting, the OS will
@@ -79,8 +79,9 @@ Import-Module NetSecurity
 # enable ping response
 New-NetFirewallRule -Name Allow_Ping -DisplayName “Allow Ping”  -Description “Packet Internet Groper ICMPv4” -Protocol ICMPv4 -IcmpType 8 -Enabled True -Profile Any -Action Allow
 
-# allow robotserver port 8270
+# allow robotserver port 8270 and 8271
 New-NetFirewallRule -Name Allow_robotserver -DisplayName “Allow Python Robot server 8270” -Protocol TCP -LocalPort 8270 -Description “PyRobot server” -Enabled True -Profile Any -Action Allow
+New-NetFirewallRule -Name Allow_robotserver -DisplayName “Allow Python Robot server 8271” -Protocol TCP -LocalPort 8271 -Description “PyRobot server” -Enabled True -Profile Any -Action Allow
 
 ##set up task scheduler to run robot server
 Register-ScheduledTask -Xml (get-content 'PyRobotServer.xml' | out-string) -TaskName "PyRobot Server" –Force

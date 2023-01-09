@@ -3,7 +3,8 @@
 This describes the test structure for insuring DFCI operates properly.
 
 1. A Host System (HOST) to run the test cases.
-2. A Device Under Test (DUT) to be tested. with the new DFCI supported also running current Windows.
+2. A Device Under Test (DUT) to be tested, with the new DFCI supported firmware, running the current
+version of Windows.
 3. Both systems on the same network.
 
 ## Overview
@@ -31,7 +32,11 @@ See the Platforms\SimpleFTDI\ folder.
 
 Copy the files needed for the DUT.
 There is a script to help you do this.
-For example, with a removable device mounted at drive D:, issue the command:
+
+1. Mount a USB device on the HOST system (the one with the DFCI source package).
+Let's call this drive D:
+2. Change the directory on the host system to ..\DfciPkg\UnitTests\DfctTests
+3. Issue the command:
 
 ```text
 DeviceUnderTest\CollectFilesForDut.cmd D:\DfciSetup
