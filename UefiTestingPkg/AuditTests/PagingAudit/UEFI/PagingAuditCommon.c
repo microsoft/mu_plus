@@ -1319,40 +1319,48 @@ SpecialMemoryDump (
                 Link,
                 CPU_MP_DEBUG_SIGNATURE
                 );
+      StackBase   = (EFI_PHYSICAL_ADDRESS)((Entry->ApStackBuffer / EFI_PAGE_SIZE) * EFI_PAGE_SIZE);
+      StackLength = (EFI_PHYSICAL_ADDRESS)(EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (Entry->ApStackSize)));
 
-      StackBase   = (EFI_PHYSICAL_ADDRESS)Entry->ApStackBuffer;
-      StackLength = (EFI_PHYSICAL_ADDRESS)Entry->ApStackSize;
+      if (!Entry->IsSwitchStack) {
+        if (gDxeMps.CpuStackGuard == TRUE) {
+          // Capture the AP stack guard
+          AsciiSPrint (
+            TempString,
+            MAX_STRING_SIZE,
+            "ApStackGuard,0x%016lx,0x%016lx,0x%x\n",
+            StackBase,
+            EFI_PAGE_SIZE,
+            Entry->CpuNumber
+            );
+          AppendToMemoryInfoDatabase (TempString);
 
-      if ((StackLength > EFI_PAGE_SIZE) &&
-          ((StackBase & (EFI_PAGE_SIZE - 1)) == 0) &&
-          ((StackLength & (EFI_PAGE_SIZE - 1)) == 0) &&
-          (gDxeMps.CpuStackGuard == TRUE))
-      {
-        // Capture the AP stack guard
+          StackBase   += EFI_PAGE_SIZE;
+          StackLength -= EFI_PAGE_SIZE;
+        }
+
+        // Capture the AP stack
         AsciiSPrint (
           TempString,
           MAX_STRING_SIZE,
-          "ApStackGuard,0x%016lx,0x%016lx,0x%x\n",
+          "ApStack,0x%016lx,0x%016lx,0x%x\n",
           StackBase,
-          EFI_PAGE_SIZE,
+          StackLength,
           Entry->CpuNumber
           );
         AppendToMemoryInfoDatabase (TempString);
-
-        StackBase   += EFI_PAGE_SIZE;
-        StackLength -= EFI_PAGE_SIZE;
+      } else {
+        // Capture the AP switch stack
+        AsciiSPrint (
+          TempString,
+          MAX_STRING_SIZE,
+          "ApSwitchStack,0x%016lx,0x%016lx,0x%x\n",
+          StackBase,
+          StackLength,
+          Entry->CpuNumber
+          );
+        AppendToMemoryInfoDatabase (TempString);
       }
-
-      // Capture the AP stack
-      AsciiSPrint (
-        TempString,
-        MAX_STRING_SIZE,
-        "ApStack,0x%016lx,0x%016lx,0x%x\n",
-        StackBase,
-        StackLength,
-        Entry->CpuNumber
-        );
-      AppendToMemoryInfoDatabase (TempString);
     }
   }
 }
