@@ -54,6 +54,7 @@
   gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
+  gEfiHobMemoryAllocStackGuid                   ## SOMETIMES_CONSUMES   ## SystemTable
 
 [FixedPcd]
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES

@@ -1271,15 +1271,11 @@ SpecialMemoryDump (
   while ((Hob.Raw = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, Hob.Raw)) != NULL) {
     MemoryHob = Hob.MemoryAllocation;
     if (CompareGuid (&gEfiHobMemoryAllocStackGuid, &MemoryHob->AllocDescriptor.Name)) {
-      StackBase   = MemoryHob->AllocDescriptor.MemoryBaseAddress;
-      StackLength = MemoryHob->AllocDescriptor.MemoryLength;
+      StackBase   = (EFI_PHYSICAL_ADDRESS)((MemoryHob->AllocDescriptor.MemoryBaseAddress / EFI_PAGE_SIZE) * EFI_PAGE_SIZE);
+      StackLength = (EFI_PHYSICAL_ADDRESS)(EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (MemoryHob->AllocDescriptor.MemoryLength)));
 
       // Capture the stack guard
-      if ((StackLength > EFI_PAGE_SIZE) &&
-          ((StackBase & (EFI_PAGE_SIZE - 1)) == 0) &&
-          ((StackLength & (EFI_PAGE_SIZE - 1)) == 0) &&
-          (gDxeMps.CpuStackGuard == TRUE))
-      {
+      if (gDxeMps.CpuStackGuard == TRUE) {
         AsciiSPrint (
           TempString,
           MAX_STRING_SIZE,
