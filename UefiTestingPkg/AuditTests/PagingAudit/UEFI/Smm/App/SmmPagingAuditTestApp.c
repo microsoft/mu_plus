@@ -37,11 +37,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 VOID   *mPiSmmCommonCommBufferAddress = NULL;
 UINTN  mPiSmmCommonCommBufferSize;
 
-CHAR8                           *mMemoryInfoDatabaseBuffer   = NULL;
-UINTN                           mMemoryInfoDatabaseSize      = 0;
-UINTN                           mMemoryInfoDatabaseAllocSize = 0;
+CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
+UINTN  mMemoryInfoDatabaseSize      = 0;
+UINTN  mMemoryInfoDatabaseAllocSize = 0;
 // Added to satisfy gDxeMps use in PagingAuditCommon.c
-DXE_MEMORY_PROTECTION_SETTINGS  gDxeMps                      = DXE_MEMORY_PROTECTION_SETTINGS_OFF;
+DXE_MEMORY_PROTECTION_SETTINGS  gDxeMps = DXE_MEMORY_PROTECTION_SETTINGS_OFF;
 
 /**
   This helper function will call to the SMM agent to retrieve the entire contents of the
