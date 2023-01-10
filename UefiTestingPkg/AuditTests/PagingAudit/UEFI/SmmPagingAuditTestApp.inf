@@ -49,6 +49,7 @@
   gEfiBlockIoProtocolGuid
   gEfiSmmCommunicationProtocolGuid
   gMemoryProtectionDebugProtocolGuid
+  gCpuMpDebugProtocolGuid
 
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID
