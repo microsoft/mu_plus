@@ -17,11 +17,24 @@
 #define ADVANCED_LOGGER_VERSION  ADVANCED_LOGGER_HW_LVL_VER
 
 //
-// These Pcds are used to carve out a PEI memory buffer from the temporary RAM.
+// DEBUG_PKT_MODE is used by the UefiExdi debugger to split out debug messages from debugger
+// control commands.
+//
+// To enable the PKT form for data over the HdwPort, call DEBUG ((DEBUG_PKT_MODE, "oN\n")). Use
+// DEBUG ((DEBUG_PKT_MODE, "oF\n")) to turn off packet mode.  Use the exact unlikely combination
+// of debug flags defined by DEBUG_PKT_MODE, the exact length of the string. All characters for
+// *(Buffer+1) are reserved for special functions. PKT_MODE is only implemented in the UefiExdi
+// debugger implementation of AdvancedLoggerHdwPortLib.
+
+
+#define DEBUG_PKT_MODE  (DEBUG_SMI | DEBUG_DISPATCH | DEBUG_FS)
+
+//
+// These PCDs are used to carve out a PEI memory buffer from the temporary RAM.
 //
 //  PcdAdvancedLoggerBase -        NULL = UEFI starts with PEI, and SEC provides no memory log buffer
 //                              Address = UEFI starts with SEC, and SEC provided LogInfoPtr is at this address
-//  PcdAdvancedLoggerPreMemPages - Size = Pages to allocate from temporary RAM (SEC or PEI Pre-memory)
+//  PcdAdvancedLoggerPreMemPages - Size = Pages to allocate from temporary RAM (SEC or PEI PRE memory)
 //
 
 //
@@ -43,11 +56,12 @@ typedef volatile struct {
   BOOLEAN                 GoneVirtual;            // After VirtualAddressChange
   BOOLEAN                 HdwPortInitialized;     // HdwPort initialized
   BOOLEAN                 HdwPortDisabled;        // HdwPort is Disabled
-  BOOLEAN                 Reserved2[3];           //
+  BOOLEAN                 DebugPktMode;           // Output HdwPort in Pkt Mode
+  BOOLEAN                 Reserved2[2];           //
   UINT64                  TimerFrequency;         // Ticks per second for log timing
   UINT64                  TicksAtTime;            // Ticks when Time Acquired
-  EFI_TIME                Time;                   // Uefi Time Field
-  UINT32                  HwPrintLevel;           // Logging level to be printed at hw port
+  EFI_TIME                Time;                   // UEFI Time Field
+  UINT32                  HwPrintLevel;           // Logging level to be printed at hardware port
   UINT32                  Reserved3;              //
 } ADVANCED_LOGGER_INFO;
 

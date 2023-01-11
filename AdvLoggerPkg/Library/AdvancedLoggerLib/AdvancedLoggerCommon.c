@@ -13,6 +13,8 @@
 
 #include <Library/AdvancedLoggerHdwPortLib.h>
 #include <Library/BaseMemoryLib.h>
+#include <Library/DebugLib.h>  // for DEBUG_* definitions only, not for library linking as
+                               // linking to DebugLib in this module will cause recursion.
 #include <Library/PcdLib.h>
 #include <Library/SynchronizationLib.h>
 #include <Library/TimerLib.h>
@@ -131,24 +133,66 @@ AdvancedLoggerWrite (
   IN       UINTN  NumberOfBytes
   )
 {
+  UINT64                HdwPortDebugLevel;
   ADVANCED_LOGGER_INFO  *LoggerInfo;
 
-  // All messages go to the in memory log.
+  // All messages go to the in memory log, including the special DEBUG_PKT_MODE messages.
   LoggerInfo = AdvancedLoggerMemoryLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 
-  // Only selected messages go to the hdw port.
+  // Only selected messages go to the hardware port.
 
- #ifdef ADVANCED_LOGGER_SEC
   // If LoggerInfo == NULL, assume there is a HdwPort and it has not been disabled. This
   // does occur in SEC
-  if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled)) {
+ #ifdef ADVANCED_LOGGER_SEC
+  if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled))
  #else
-  if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled)) {
-    if (LoggerInfo->Version >= ADVANCED_LOGGER_HW_LVL_VER) {
-      DebugLevel = (DebugLevel & LoggerInfo->HwPrintLevel);
+  if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled))
+ #endif
+  {
+    HdwPortDebugLevel = DebugLevel;
+    if (LoggerInfo != NULL) {
+      if (LoggerInfo->Version >= ADVANCED_LOGGER_HW_LVL_VER) {
+        HdwPortDebugLevel = (HdwPortDebugLevel & LoggerInfo->HwPrintLevel);
+      }
+
+      //
+      // DEBUG_PKT_MODE is used by the UefiExdi debugger to split out debug messages from debugger
+      // control commands.
+      //
+      // To enable the PKT form for data over the HdwPort, call DEBUG ((DEBUG_PKT_MODE, "oN\n")). Use
+      // DEBUG ((DEBUG_PKT_MODE, "oF\n")) to turn off packet mode.  Use the exact unlikely combination
+      // of debug flags defined by DEBUG_PKT_MODE, the exact length of the string. All characters for
+      // Buffer[1] are reserved for special functions. PKT_MODE is only implemented in the UefiExdi
+      // debugger implementation of AdvancedLoggerHdwPortLib at this time.
+      //
+      if ((DebugLevel == DEBUG_PKT_MODE) &&
+          (Buffer != NULL) &&
+          (NumberOfBytes == 4) &&  // DebugPrint converts \n to \r\n, so length will be 4
+          (Buffer[0] == 'o') &&    // PKT command begins with 'o'
+          (Buffer[2] == '\r'))     // and check for start of new line at buffer[2]
+      {
+        switch (Buffer[1]) {       // PKT command value
+        case 'N':
+          LoggerInfo->DebugPktMode = TRUE;
+          break;
+
+        case 'F':
+          LoggerInfo->DebugPktMode = FALSE;
+          break;
+
+        default:
+          // Ignore malformed special DEBUG PKT commands
+          break;
+        }
+
+        return;
+      }
+
+      if (LoggerInfo->DebugPktMode) {
+        HdwPortDebugLevel |= HDW_PORT_PKT_MODE;   // Convert to high bit for HdwPort
+      }
     }
 
- #endif
-    AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
+    AdvancedLoggerHdwPortWrite (HdwPortDebugLevel, (UINT8 *)Buffer, NumberOfBytes);
   }
 }

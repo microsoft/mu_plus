@@ -11,6 +11,8 @@
 #ifndef __ADVANCED_LOGGER_HDW_PORT_LIB__
 #define __ADVANCED_LOGGER_HDW_PORT_LIB__
 
+#define HDW_PORT_PKT_MODE  0x1000000000000000
+
 /**
   Initialize the hardware port.
 
@@ -37,7 +39,9 @@ AdvancedLoggerHdwPortInitialize (
   If Buffer is NULL, then ASSERT().
   If NumberOfBytes is zero, then return 0.
 
-  @param  DebugLevel       DebugLevel passed in to DebugLib
+  DebugLevel is required to be 64 bit to HdwPortWrite in order to receive HDW_PORT_PKT_MODE flag.
+
+  @param  DebugLevel       Guaranteed 64 bit value of DebugLevel passed into DebugLib
   @param  Buffer           Pointer to the data buffer to be written.
   @param  NumberOfBytes    Number of bytes to written to the hardware device.
                            Pass 0 to flush hardware FIFO, if present.
@@ -50,9 +54,9 @@ AdvancedLoggerHdwPortInitialize (
 UINTN
 EFIAPI
 AdvancedLoggerHdwPortWrite (
-  IN UINTN  DebugLevel,
-  IN UINT8  *Buffer,
-  IN UINTN  NumberOfBytes
+  IN UINT64  DebugLevel,
+  IN UINT8   *Buffer,
+  IN UINTN   NumberOfBytes
   );
 
 #endif

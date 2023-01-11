@@ -37,6 +37,8 @@ AdvancedLoggerHdwPortInitialize (
   If Buffer is NULL, then ASSERT().
   If NumberOfBytes is zero, then return 0.
 
+  DebugLevel is required to be 64 bit to HdwPortWrite in order to receive HDW_PORT_PKT_MODE flag.
+
   @param  Buffer           Pointer to the data buffer to be written.
   @param  NumberOfBytes    Number of bytes to written to the hardware device.
 
@@ -48,9 +50,9 @@ AdvancedLoggerHdwPortInitialize (
 UINTN
 EFIAPI
 AdvancedLoggerHdwPortWrite (
-  IN UINTN  DebugLevel,
-  IN UINT8  *Buffer,
-  IN UINTN  NumberOfBytes
+  IN UINT64  DebugLevel,
+  IN UINT8   *Buffer,
+  IN UINTN   NumberOfBytes
   )
 {
   return NumberOfBytes;
