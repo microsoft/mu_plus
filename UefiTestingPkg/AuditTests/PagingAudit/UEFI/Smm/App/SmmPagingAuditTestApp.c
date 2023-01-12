@@ -21,6 +21,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 
 #include <Protocol/SmmCommunication.h>
+#include <Protocol/CpuMpDebug.h>
 
 #include <Register/Msr.h>
 #include <Register/Cpuid.h>
@@ -28,6 +29,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/DebugImageInfoTable.h>
 #include <Guid/MemoryAttributesTable.h>
 #include <Guid/PiSmmCommunicationRegionTable.h>
+#include <Guid/DxeMemoryProtectionSettings.h>
 
 #include "../../PagingAuditCommon.h"
 #include "../SmmPagingAuditCommon.h"
@@ -38,6 +40,8 @@ UINTN  mPiSmmCommonCommBufferSize;
 CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
 UINTN  mMemoryInfoDatabaseSize      = 0;
 UINTN  mMemoryInfoDatabaseAllocSize = 0;
+// Added to satisfy gDxeMps use in PagingAuditCommon.c
+DXE_MEMORY_PROTECTION_SETTINGS  gDxeMps = DXE_MEMORY_PROTECTION_SETTINGS_OFF;
 
 /**
   This helper function will call to the SMM agent to retrieve the entire contents of the
