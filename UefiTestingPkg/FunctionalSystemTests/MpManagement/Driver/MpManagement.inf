@@ -66,6 +66,7 @@
   gArmTokenSpaceGuid.PcdArmArchTimerIntrNum
   gArmTokenSpaceGuid.PcdArmArchTimerVirtIntrNum
   gArmTokenSpaceGuid.PcdArmArchTimerHypIntrNum
+  gArmTokenSpaceGuid.PcdGenericWatchdogEl2IntrNum
 
 [Guids.AARCH64]
   gArmMpCoreInfoGuid
@@ -75,8 +76,9 @@
   gEfiLoadedImageProtocolGuid   ## CONSUMES
   gMpManagementProtocolGuid     ## PRODUCES
 
-[Protocols]
-  gEfiTimerArchProtocolGuid     ## CONSUMES
+[Protocols.AARCH64]
+  gEfiTimerArchProtocolGuid           ## CONSUMES
+  gEfiWatchdogTimerArchProtocolGuid   ## CONSUMES
 
 [Depex]
   gEfiMpServiceProtocolGuid
