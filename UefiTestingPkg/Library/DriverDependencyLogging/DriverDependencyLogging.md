@@ -33,8 +33,8 @@
     compare to the driver's dependency expression.
 
   **Part 2:** Logging driver usage data
-    The library constuctor will also register for a callback at ready-to-boot that walks the core DXE driver's
-    linked list of all drivers dispatched during boot.  For each driver that sucessfully loaded, it publishes
+    The library constructor will also register for a callback at ready-to-boot that walks the core DXE driver's
+    linked list of all drivers dispatched during boot.  For each driver that successfully loaded, it publishes
     the driver's name, its dependency expression, and a list of protocols it located through the LocateProtocol
     function.  This data is written to the UEFI boot log and saved as volatile variable in variable services
     using name "DEPEX_LOG_v1" and namespace GUID { 0x4D2A2AEB, 0x9138, 0x44FB, { 0xB6, 0x44, 0x22, 0x17, 0x5F,
@@ -83,7 +83,7 @@
       * Errors from parsing the input file and code tree
       * GUIDs found in DEC files that had multiple assigned names
       * Warnings for drivers using a protocol without declaring it in the depex
-      * Warnings for drivers declaring a prtocol in the depex but not using it
+      * Warnings for drivers declaring a protocol in the depex but not using it
     Note:  The warnings are not definitive errors since GUIDs can be used safely without declaration in the depex
            and the depex can be used to force load ordering even if the protcol is not used in code.
 

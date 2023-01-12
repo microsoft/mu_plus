@@ -25,27 +25,26 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // WARNING - This library is tightly coupled to the MdeModulePkg Core DXE driver
 //
 #include "../Core/Dxe/DxeMain.h"
-extern EFI_BOOT_SERVICES mBootServices;
-extern LIST_ENTRY mDiscoveredList;
-//
-
+extern EFI_BOOT_SERVICES  mBootServices;
+extern LIST_ENTRY         mDiscoveredList;
 
 // Flag to halt logging of protocol usage once ready-to-boot is called
-BOOLEAN gLoggingEnabled = FALSE;
+BOOLEAN  gLoggingEnabled = FALSE;
 
 // Function pointer for the hooked EFI_BOOT_SERVICES::LocateProtocol function
-EFI_LOCATE_PROTOCOL HookedLocateProtocol = NULL;
+EFI_LOCATE_PROTOCOL  HookedLocateProtocol = NULL;
 
 // Linked list of used protocols and their originating memory address found during boot
-DL_PROTOCOL_USAGE_ENTRY *mProtocolUsageLL = NULL;
+DL_PROTOCOL_USAGE_ENTRY  *mProtocolUsageLL = NULL;
 
 // Variable service name and namespace GUID for publishing the logging data
-EFI_GUID mVsNamespaceGuid = { 0x4d2A2AEB, 0x9138, 0x44FB, { 0xB6, 0x44, 0x22, 0x17, 0x5F, 0xBB, 0xB0, 0x85 } };
-CHAR16 *mVsNameString = L"DEPEX_LOG_v1";
-
+EFI_GUID  mVsNamespaceGuid = {
+  0x4d2A2AEB, 0x9138, 0x44FB, { 0xB6, 0x44, 0x22, 0x17, 0x5F, 0xBB, 0xB0, 0x85 }
+};
+CHAR16    *mVsNameString = L"DEPEX_LOG_v1";
 
 /**
-  Builds a string based on the AsciiSPrint style input, prints it to the UEFI log, and concatinates
+  Builds a string based on the AsciiSPrint style input, prints it to the UEFI log, and concatenates
   it to the string in MsgBuffer->String, reallocating the buffer if needed.
 
   @param  MsgBuffer      Context information about the allocated buffer for storing all concatinated strings
@@ -53,26 +52,27 @@ CHAR16 *mVsNameString = L"DEPEX_LOG_v1";
 **/
 VOID
 MessageAscii (
-  MESSAGE_BUFFER *MsgBuffer,
-  CONST CHAR8 *FormatString,
-  ...)
+  MESSAGE_BUFFER  *MsgBuffer,
+  CONST CHAR8     *FormatString,
+  ...
+  )
 {
-  static BOOLEAN NewLine = TRUE;
-  VA_LIST Marker;
-  UINTN UsedSize;
-  UINTN OutSize;
-  UINTN FreeSize;
+  static BOOLEAN  NewLine = TRUE;
+  VA_LIST         Marker;
+  UINTN           UsedSize;
+  UINTN           OutSize;
+  UINTN           FreeSize;
 
   // Check the amount of free space still left in the buffer
   UsedSize = (UINTN)(MsgBuffer->CatPtr) - (UINTN)(MsgBuffer->String);
   FreeSize = MsgBuffer->BufferSize - UsedSize;
-  if (FreeSize < MESSAGE_ASCII_MAX_STRING_SIZE) {
 
-    // Realloc the buffer if insufficient room for MESSAGE_ASCII_MAX_STRING_SIZE
-    MsgBuffer->String = (CHAR8*) ReallocatePool (MsgBuffer->BufferSize, MsgBuffer->BufferSize + MESSAGE_BUFFER_REALLOC_CHUNK_SZ, MsgBuffer->String);
-    MsgBuffer->CatPtr = &(MsgBuffer->String[UsedSize]);
+  // Realloc the buffer if insufficient room for MESSAGE_ASCII_MAX_STRING_SIZE
+  if (FreeSize < MESSAGE_ASCII_MAX_STRING_SIZE) {
+    MsgBuffer->String      = (CHAR8 *)ReallocatePool (MsgBuffer->BufferSize, MsgBuffer->BufferSize + MESSAGE_BUFFER_REALLOC_CHUNK_SZ, MsgBuffer->String);
+    MsgBuffer->CatPtr      = &(MsgBuffer->String[UsedSize]);
     MsgBuffer->BufferSize += MESSAGE_BUFFER_REALLOC_CHUNK_SZ;
-    FreeSize += MESSAGE_BUFFER_REALLOC_CHUNK_SZ;
+    FreeSize              += MESSAGE_BUFFER_REALLOC_CHUNK_SZ;
   }
 
   // Format the string into the output buffer contatinating the previous string.
@@ -85,10 +85,11 @@ MessageAscii (
     DEBUG ((LOGGING_DEBUG_LEVEL, "    "));
     NewLine = FALSE;
   }
+
   DEBUG ((LOGGING_DEBUG_LEVEL, MsgBuffer->CatPtr));
 
   // If this line ends in '\n', the next call will be a new line
-  if (OutSize > 0 && MsgBuffer->CatPtr[OutSize - 1] == '\n') {
+  if ((OutSize > 0) && (MsgBuffer->CatPtr[OutSize - 1] == '\n')) {
     NewLine = TRUE;
   }
 
@@ -107,12 +108,13 @@ MessageAscii (
 VOID
 EFIAPI
 MessageName (
-  MESSAGE_BUFFER *MsgBuffer,
-  LOADED_IMAGE_PRIVATE_DATA *ImagePrivateData,
-  EFI_GUID *GuidName)
+  MESSAGE_BUFFER             *MsgBuffer,
+  LOADED_IMAGE_PRIVATE_DATA  *ImagePrivateData,
+  EFI_GUID                   *GuidName
+  )
 {
-  CHAR8 *Name;
-  CHAR8 *Ptr;
+  CHAR8  *Name;
+  CHAR8  *Ptr;
 
   // If NULL, use the driver entry GUID name
   if ((ImagePrivateData == NULL) || (ImagePrivateData->ImageContext.PdbPointer == NULL)) {
@@ -121,12 +123,13 @@ MessageName (
   }
 
   // The Pdb string is a path, move the pointer to the file name
-  Name = (CHAR8*)ImagePrivateData->ImageContext.PdbPointer;
-  Ptr = Name;
+  Name = (CHAR8 *)ImagePrivateData->ImageContext.PdbPointer;
+  Ptr  = Name;
   while (*Ptr != 0) {
-    if (*Ptr == '/' || *Ptr == '\\') {
+    if ((*Ptr == '/') || (*Ptr == '\\')) {
       Name = &(Ptr[1]);
     }
+
     Ptr++;
   }
 
@@ -148,31 +151,34 @@ MessageName (
 VOID
 EFIAPI
 MessageDepex (
-  MESSAGE_BUFFER *MsgBuffer,
-  EFI_CORE_DRIVER_ENTRY *DriverEntry)
+  MESSAGE_BUFFER         *MsgBuffer,
+  EFI_CORE_DRIVER_ENTRY  *DriverEntry
+  )
 {
-  EFI_STATUS Status;
-  UINT32 AuthStatus;
-  UINT8 *Depex = NULL;
-  UINTN DepexSize = 0;
-  UINTN x;
+  EFI_STATUS  Status;
+  UINT32      AuthStatus;
+  UINT8       *Depex    = NULL;
+  UINTN       DepexSize = 0;
+  UINTN       x;
 
   // Call the FV protocol with NULL pointer to force it to allocate
-  Status = DriverEntry->Fv->ReadSection (DriverEntry->Fv,
-                                         &(DriverEntry->FileName),
-                                         EFI_SECTION_DXE_DEPEX,
-                                         0,
-                                         (VOID**)&Depex,
-                                         &DepexSize,
-                                         &AuthStatus);
+  Status = DriverEntry->Fv->ReadSection (
+                              DriverEntry->Fv,
+                              &(DriverEntry->FileName),
+                              EFI_SECTION_DXE_DEPEX,
+                              0,
+                              (VOID **)&Depex,
+                              &DepexSize,
+                              &AuthStatus
+                              );
 
   // On error, skip writing the data
   if (!EFI_ERROR (Status)) {
-
     // Write depex as a series of hex bytes
     for (x = 0; x < DepexSize; x++) {
       MessageAscii (MsgBuffer, "%02X", Depex[x]);
     }
+
     FreePool (Depex);
   }
 }
@@ -187,15 +193,16 @@ MessageDepex (
 VOID
 EFIAPI
 MessageProtocols (
-  MESSAGE_BUFFER *MsgBuffer,
-  LOADED_IMAGE_PRIVATE_DATA *ImagePrivateData)
+  MESSAGE_BUFFER             *MsgBuffer,
+  LOADED_IMAGE_PRIVATE_DATA  *ImagePrivateData
+  )
 {
-  DL_PROTOCOL_USAGE_ENTRY **EntryPtr;
-  DL_PROTOCOL_USAGE_ENTRY *Entry;
-  BOOLEAN FirstEntry = TRUE;
+  DL_PROTOCOL_USAGE_ENTRY  **EntryPtr;
+  DL_PROTOCOL_USAGE_ENTRY  *Entry;
+  BOOLEAN                  FirstEntry = TRUE;
 
-  UINTN StartAddress = (UINTN)ImagePrivateData->ImageBasePage;
-  UINTN EndAddress = (ImagePrivateData->NumberOfPages * EFI_PAGE_SIZE) + StartAddress;
+  UINTN  StartAddress = (UINTN)ImagePrivateData->ImageBasePage;
+  UINTN  EndAddress   = (ImagePrivateData->NumberOfPages * EFI_PAGE_SIZE) + StartAddress;
 
   // Loop through protocol usage linked list
   EntryPtr = &mProtocolUsageLL;
@@ -241,24 +248,25 @@ MessageProtocols (
 VOID
 EFIAPI
 DepexDataRtbCallback (
-  EFI_EVENT Event,
-  VOID *Context)
+  EFI_EVENT  Event,
+  VOID       *Context
+  )
 {
-  LOADED_IMAGE_PRIVATE_DATA *ImagePrivateData;
-  EFI_LOADED_IMAGE_PROTOCOL *LoadedImage;
-  EFI_CORE_DRIVER_ENTRY *DriverEntry;
-  MESSAGE_BUFFER MsgBuffer;
-  LIST_ENTRY *Link;
-  EFI_STATUS Status;
+  LOADED_IMAGE_PRIVATE_DATA  *ImagePrivateData;
+  EFI_LOADED_IMAGE_PROTOCOL  *LoadedImage;
+  EFI_CORE_DRIVER_ENTRY      *DriverEntry;
+  MESSAGE_BUFFER             MsgBuffer;
+  LIST_ENTRY                 *Link;
+  EFI_STATUS                 Status;
 
   // Close event and halt logging through the hooked LocateProtocol call
   gBS->CloseEvent (Event);
   gLoggingEnabled = FALSE;
 
   // Setup a buffer to store all output data
-  MsgBuffer.String = (CHAR8*) AllocatePool (MESSAGE_BUFFER_REALLOC_CHUNK_SZ);
-  MsgBuffer.String[0] = 0x00;
-  MsgBuffer.CatPtr = MsgBuffer.String;
+  MsgBuffer.String     = (CHAR8 *)AllocatePool (MESSAGE_BUFFER_REALLOC_CHUNK_SZ);
+  MsgBuffer.String[0]  = 0x00;
+  MsgBuffer.CatPtr     = MsgBuffer.String;
   MsgBuffer.BufferSize = MESSAGE_BUFFER_REALLOC_CHUNK_SZ;
 
   // Start the output logging
@@ -267,16 +275,17 @@ DepexDataRtbCallback (
 
   // Loop through the discovered driver list
   for (Link = mDiscoveredList.ForwardLink; Link != &mDiscoveredList; Link = Link->ForwardLink) {
-
     // Get a pointer to the driver entry and private data structures
     DriverEntry = CR (Link, EFI_CORE_DRIVER_ENTRY, Link, EFI_CORE_DRIVER_ENTRY_SIGNATURE);
     if (DriverEntry == NULL) {
       continue;
     }
+
     Status = CoreHandleProtocol (DriverEntry->ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **)&LoadedImage);
-    if (EFI_ERROR (Status) || LoadedImage == NULL) {
+    if (EFI_ERROR (Status) || (LoadedImage == NULL)) {
       continue;
     }
+
     ImagePrivateData = LOADED_IMAGE_PRIVATE_DATA_FROM_THIS (LoadedImage);
 
     // Create the log line "<name>|<depex>|<guid>.<guid>.<...>.<guid(n)>"
@@ -292,11 +301,13 @@ DepexDataRtbCallback (
   MessageAscii (&MsgBuffer, DEPEX_LOG_END);
 
   // Save the collected messages to Variable Services
-  Status = gRT->SetVariable (mVsNameString,
-                             &mVsNamespaceGuid,
-                             EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             (UINTN)MsgBuffer.CatPtr - (UINTN)MsgBuffer.String,
-                             MsgBuffer.String);
+  Status = gRT->SetVariable (
+                  mVsNameString,
+                  &mVsNamespaceGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  (UINTN)MsgBuffer.CatPtr - (UINTN)MsgBuffer.String,
+                  MsgBuffer.String
+                  );
   DEBUG ((DEBUG_INFO, "[%a] Saving to Variable Services:\n", DEBUG_TAG));
   DEBUG ((DEBUG_INFO, "    Name:         \"%S\"\n", mVsNameString));
   DEBUG ((DEBUG_INFO, "    Namespace:    %g\n", &mVsNamespaceGuid));
@@ -312,9 +323,9 @@ DepexDataRtbCallback (
   if (mProtocolUsageLL != NULL) {
     DEBUG ((DEBUG_INFO, "[%a] NOTE:  These protocols were used by a driver hosting the GUID at an unrecognized memory address:\n", DEBUG_TAG));
     while (mProtocolUsageLL != NULL) {
-      DEBUG ((DEBUG_INFO, "    (%g) @ [%p]\n", &(mProtocolUsageLL->GuidName), (VOID*)(mProtocolUsageLL->GuidAddress)));
+      DEBUG ((DEBUG_INFO, "    (%g) @ [%p]\n", &(mProtocolUsageLL->GuidName), (VOID *)(mProtocolUsageLL->GuidAddress)));
       {
-        DL_PROTOCOL_USAGE_ENTRY *Next = mProtocolUsageLL->Next;
+        DL_PROTOCOL_USAGE_ENTRY  *Next = mProtocolUsageLL->Next;
         FreePool (mProtocolUsageLL);
         mProtocolUsageLL = Next;
       }
@@ -333,13 +344,13 @@ EFIAPI
 LocateProtocolHook (
   IN  EFI_GUID  *Protocol,
   IN  VOID      *Registration OPTIONAL,
-  OUT VOID      **Interface)
+  OUT VOID      **Interface
+  )
 {
-  DL_PROTOCOL_USAGE_ENTRY **EntryPtr;
+  DL_PROTOCOL_USAGE_ENTRY  **EntryPtr;
 
   // Perform logging if enabled
   if (gLoggingEnabled) {
-
     // Find the last unused pointer in the linked list or the entry where this GUID was already logged
     for (EntryPtr = &mProtocolUsageLL; *EntryPtr != NULL; EntryPtr = &((*EntryPtr)->Next)) {
       if (CompareGuid (&((*EntryPtr)->GuidName), Protocol)) {
@@ -353,17 +364,17 @@ LocateProtocolHook (
     if ((*EntryPtr) == NULL) {
       DEBUG ((DEBUG_INFO, "[%a] Logging Protocol %g\n", DEBUG_TAG, Protocol));
 
-      (*EntryPtr) = (DL_PROTOCOL_USAGE_ENTRY*) AllocatePool (sizeof (DL_PROTOCOL_USAGE_ENTRY));
+      (*EntryPtr) = (DL_PROTOCOL_USAGE_ENTRY *)AllocatePool (sizeof (DL_PROTOCOL_USAGE_ENTRY));
       ASSERT (*EntryPtr);
       if ((*EntryPtr) != NULL) {
-        (*EntryPtr)->Next = NULL;
+        (*EntryPtr)->Next        = NULL;
         (*EntryPtr)->GuidAddress = (UINTN)Protocol;
         CopyGuid (&((*EntryPtr)->GuidName), Protocol);
       }
     }
   }
 
-  // Hannd off to boot services LocateProtocol
+  // Hand off to boot services LocateProtocol
   return HookedLocateProtocol (Protocol, Registration, Interface);
 }
 
@@ -380,26 +391,28 @@ EFI_STATUS
 EFIAPI
 DriverDependencyLoggingInit (
   IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable)
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  )
 {
-  EFI_EVENT DepexDataRtbCallbackEvent = NULL;
-  EFI_STATUS Status;
+  EFI_EVENT   DepexDataRtbCallbackEvent = NULL;
+  EFI_STATUS  Status;
 
   DEBUG ((DEBUG_INFO, "[%a] Hooking LocateProtocol and registering a ready-to-boot callback\n", DEBUG_TAG));
 
   // Register for a callback at ready-to-boot
-  Status = EfiCreateEventReadyToBootEx (TPL_CALLBACK,
-                                        DepexDataRtbCallback,
-                                        NULL,
-                                        &DepexDataRtbCallbackEvent);
+  Status = EfiCreateEventReadyToBootEx (
+             TPL_CALLBACK,
+             DepexDataRtbCallback,
+             NULL,
+             &DepexDataRtbCallbackEvent
+             );
   ASSERT_EFI_ERROR (Status);
 
   // Hook the LocateProtocol call
-  HookedLocateProtocol = mBootServices.LocateProtocol;
+  HookedLocateProtocol         = mBootServices.LocateProtocol;
   mBootServices.LocateProtocol = LocateProtocolHook;
 
   // Enable logging and exit
   gLoggingEnabled = TRUE;
   return EFI_SUCCESS;
 }
-
