@@ -1,5 +1,5 @@
-/** @file -- DxePagingAuditTestsx86.c
-    x86 implementations for DXE paging audit tests
+/** @file -- DxePagingAuditTests.c
+    X64 implementations for DXE paging audit tests
 
     Copyright (c) Microsoft Corporation.
     SPDX-License-Identifier: BSD-2-Clause-Patent

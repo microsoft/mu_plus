@@ -2,6 +2,7 @@
   Architecture specific routines to support CPU suspend functionalities.
 
   Copyright (c) 2013-2020, ARM Limited and Contributors. All rights reserved.
+  Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.<BR>
   Copyright (c) Microsoft Corporation.
 
   SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -26,6 +27,7 @@
 #include <Pi/PiMultiPhase.h>
 #include <Protocol/MpService.h>
 #include <Protocol/Timer.h>
+#include <Protocol/WatchdogTimer.h>
 #include <Guid/ArmMpCoreInfo.h>
 
 #include "MpManagementInternal.h"
@@ -48,6 +50,8 @@
 #define PSTATE_TYPE_STANDBY     0x0
 #define PSTATE_TYPE_POWERDOWN   0x1
 
+#define AP_TEMP_STACK_SIZE  EFI_PAGE_SIZE
+
 /*
   Architectural metadata structure for ARM context losing resume routines.
  */
@@ -67,11 +71,15 @@ ReadEl0Stack (
   VOID
   );
 
-BOOLEAN        mExtendedPowerState = FALSE;
-ARM_CORE_INFO  *mCpuInfo           = NULL;
-UINTN          mBspVbar            = 0;
-UINTN          mBspHcrReg          = 0;
-UINTN          mBspEl0Sp           = 0;
+BOOLEAN                           mExtendedPowerState = FALSE;
+ARM_CORE_INFO                     *mCpuInfo           = NULL;
+UINTN                             mBspVbar            = 0;
+UINTN                             mBspHcrReg          = 0;
+UINTN                             mBspEl0Sp           = 0;
+UINT64                            *gApStacksBase      = NULL;
+CONST UINT64                      gApStackSize        = AP_TEMP_STACK_SIZE;
+UINT64                            mWatchDogTimer      = 0;
+EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *mWatchDogProtocol  = NULL;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -169,11 +177,25 @@ CpuMpArchInit (
   }
 
   if (MaxCpus != NumOfCpus) {
-    DEBUG ((DEBUG_WARN, "Trying to use EFI_MP_SERVICES_PROTOCOL on a UP system"));
+    DEBUG ((DEBUG_WARN, "Trying to use EFI_MP_SERVICES_PROTOCOL on a UP system\n"));
     // We are not MP so nothing to do
     Status = EFI_NOT_FOUND;
     goto Done;
   }
+
+  gApStacksBase = AllocatePages (
+                    EFI_SIZE_TO_PAGES (
+                      NumOfCpus * gApStackSize
+                      )
+                    );
+  if (gApStacksBase == NULL) {
+    DEBUG ((DEBUG_ERROR, "Unable to prepare C3 resume temporary stack for all cores.\n"));
+    // We are not MP so nothing to do
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Done;
+  }
+
+  WriteBackDataCacheRange (&gApStacksBase, sizeof (UINT64 *));
 
   Status = EFI_SUCCESS;
 
@@ -205,6 +227,21 @@ RestoreBspStates (
   VOID
   )
 {
+  EFI_STATUS  Status;
+
+  if (mWatchDogProtocol != NULL) {
+    Status = mWatchDogProtocol->SetTimerPeriod (mWatchDogProtocol, mWatchDogTimer);
+    if (EFI_ERROR (Status)) {
+      // We are basically dead here...
+      return Status;
+    }
+  }
+
+  // Clear pending watchdog interrupts before re-enabling the interface, if applicable.
+  if (ArmGicIsInterruptPending ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGenericWatchdogEl2IntrNum))) {
+    ArmGicClearPendingInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGenericWatchdogEl2IntrNum));
+  }
+
   RegisterEl0Stack ((VOID *)mBspEl0Sp);
   ArmWriteHcr (mBspHcrReg);
   ArmWriteVBar (mBspVbar);
@@ -325,6 +362,11 @@ CpuArchWakeFromSleep (
   ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
 }
 
+VOID
+AsmApEntryPoint (
+  VOID
+  );
+
 /**
   This routine is released by TF-A after waking up from context
   losing suspend. Could be run by both BSP and APs.
@@ -335,7 +377,6 @@ CpuArchWakeFromSleep (
 
   @return This function should not return.
 **/
-STATIC
 VOID
 ApEntryPoint (
   VOID
@@ -545,7 +586,67 @@ CpuArchSleep (
     goto Done;
   }
 
-  Status = ArmPsciSuspendHelper (PowerState, (UINTN)ApEntryPoint, 0);
+  Status = ArmPsciSuspendHelper (PowerState, (UINTN)AsmApEntryPoint, 0);
+
+Done:
+  return Status;
+}
+
+/**
+  This helper routine will be used for preparing the active BSP
+  to enter sleep state. It could be run by BSP.
+
+  This architectural specific routine should setup necessary wakeup
+  resources, if not already provided, for the CPU to wake up from
+  sleep state.
+
+  Given the state definition, this function will make the CPU to
+  resume without any context. The caller should handle the data
+  saving and restoration accordingly.
+
+  @param  PowerState              The intended power state.
+  @param  TimeoutInMicrosecond    The intended timer to wake this core.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
+EFI_STATUS
+EFIAPI
+CpuArchBspSleepPrep (
+  IN UINTN PowerState, OPTIONAL
+  IN UINTN  TimeoutInMicrosecond
+  )
+{
+  EFI_STATUS  Status;
+
+  if (mWatchDogProtocol == NULL) {
+    Status = gBS->LocateProtocol (
+                    &gEfiWatchdogTimerArchProtocolGuid,
+                    NULL,
+                    (VOID **)&mWatchDogProtocol
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a locating watch dog protocol failed - %r.\n", __FUNCTION__, Status));
+      goto Done;
+    }
+  }
+
+  Status = mWatchDogProtocol->GetTimerPeriod (mWatchDogProtocol, &mWatchDogTimer);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a get timer period failed - %r.\n", __FUNCTION__, Status));
+    goto Done;
+  } else {
+    DEBUG ((DEBUG_INFO, "%a got current timer period - %lld.\n", __FUNCTION__, mWatchDogTimer));
+  }
+
+  // Set the timeout in watch dog timer
+  Status = mWatchDogProtocol->SetTimerPeriod (mWatchDogProtocol, TimeoutInMicrosecond * 10);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a set timer period failed - %r.\n", __FUNCTION__, Status));
+    goto Done;
+  }
+
+  ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGenericWatchdogEl2IntrNum));
 
 Done:
   return Status;

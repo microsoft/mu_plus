@@ -13,7 +13,7 @@
 ##
 
 edk2-pytool-library==0.12.1
-edk2-pytool-extensions==0.20.1
+edk2-pytool-extensions==0.21.0
 edk2-basetools==0.1.29
 antlr4-python3-runtime==4.11.1
 regex==2022.10.31

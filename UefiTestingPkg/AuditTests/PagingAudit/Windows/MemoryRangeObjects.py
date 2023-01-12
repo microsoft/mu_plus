@@ -1,5 +1,6 @@
 import copy
 import logging
+from enum import Enum
 
 # Memory range is either a page table entry, memory map entry,
 # or a description of the memory contents.
@@ -7,6 +8,17 @@ import logging
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+
+class SystemMemoryTypes(Enum):
+    TSEG = "TSEG"
+    GuardPage = "GuardPage"
+    NullPage = "NULL Page"
+    StackGuard = "BSP Stack Guard"
+    Stack = "BSP Stack"
+    ApStackGuard = "AP {0} Stack Guard"
+    ApStack = "AP {0} Stack"
+    ApSwitchStack = "AP {0} Switch Stack"
+
 class MemoryRange(object):
     # MemmoryMap type list
     MemoryMapTypes = [
@@ -55,12 +67,6 @@ class MemoryRange(object):
         0x0000000000010000 : "EFI_MEMORY_MORE_RELIABLE"
     }
 
-
-    SystemMemoryTypes = [
-        "TSEG",
-        "GuardPage"
-    ]
-
     PageSize = {
         "1g" : 1 * 1024 * 1024 * 1024,
         "2m" : 2 * 1024 * 1024,
@@ -91,10 +97,7 @@ class MemoryRange(object):
         self.Attribute = 0
         self.AddressBitwidth = None
         self.PageSplit = False
-
-        # Check to see whether we're a type that we recognize.
-        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "TTEntry", "MAT", "GuardPage", "Bitwidth"):
-            raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
+        self.CpuNumber = None
 
         # Continue processing according to the data type.
         if self.RecordType in ("LoadedImage", "SmmLoadedImage"):
@@ -111,7 +114,14 @@ class MemoryRange(object):
             self.GuardPageInit(*args)
         elif self.RecordType in ("Bitwidth"):
             self.BitwidthInit(int(args[0], 16))
-
+        elif self.RecordType in ("Stack", "StackGuard"):
+            self.StackInit (self.RecordType, *(int(arg, 16) for arg in args))
+        elif self.RecordType in ("ApStack", "ApStackGuard", "ApSwitchStack"):
+            self.ApStackInit (self.RecordType, *(int(arg, 16) for arg in args))
+        elif self.RecordType in ("Null"):
+            self.NullInit (self.RecordType, *(int(arg, 16) for arg in args))
+        else:
+            raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
         self.CalculateEnd()
 
     def CalculateEnd(self):
@@ -135,10 +145,51 @@ class MemoryRange(object):
         if self.SystemMemoryType is None:
             return "None"
         try:
-            return MemoryRange.SystemMemoryTypes[self.SystemMemoryType]
-        except:
-            raise Exception("System Memory Type is invalid %d" % self.SystemMemoryType)
+            # Some SystemMemoryType objects correlate with a formatted string in the SystemMemoryTypes list.
+            # The formatted string includes a place for the CPU number of the memory range object.
+            if (self.SystemMemoryType == SystemMemoryTypes.ApStack or self.SystemMemoryType == SystemMemoryTypes.ApStackGuard or self.SystemMemoryType == SystemMemoryTypes.ApSwitchStack):
+                return self.SystemMemoryType.value.format(self.CpuNumber)
 
+            return self.SystemMemoryType.value
+        except:
+            raise ValueError("System Memory Type is invalid %s" % self.SystemMemoryType.value)
+
+    def StackInit (self, SystemMemoryType, PhysicalStart, Length):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = Length
+
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "StackGuard":
+            self.SystemMemoryType = SystemMemoryTypes.StackGuard
+        elif SystemMemoryType == "Stack":
+            self.SystemMemoryType = SystemMemoryTypes.Stack
+        else:
+            raise ValueError("System Memory Type is invalid %s" % SystemMemoryType)
+
+    def ApStackInit (self, SystemMemoryType, PhysicalStart, Length, CpuNumber):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = Length
+        self.CpuNumber = CpuNumber
+        
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "ApStackGuard":
+            self.SystemMemoryType = SystemMemoryTypes.ApStackGuard
+        elif SystemMemoryType == "ApStack":
+            self.SystemMemoryType = SystemMemoryTypes.ApStack
+        elif SystemMemoryType == "ApSwitchStack":
+            self.SystemMemoryType = SystemMemoryTypes.ApSwitchStack
+        else:
+            raise ValueError("System Memory Type is invalid %s" % SystemMemoryType)
+    
+    def NullInit (self, SystemMemoryType, PhysicalStart):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = MemoryRange.PageSize["4k"]
+
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "Null":
+            self.SystemMemoryType = SystemMemoryTypes.NullPage
+        else:
+            raise ValueError("System Memory Type is invalid %s" % SystemMemoryType)
 
     #
     # Initializes memory descriptions
@@ -148,7 +199,7 @@ class MemoryRange(object):
             self.MemoryType = Type
         if (Type == self.TsegEfiMemoryType):
             #set it as tseg
-            self.SystemMemoryType = 0
+            self.SystemMemoryType = SystemMemoryTypes.TSEG
         self.PhysicalStart = PhysicalStart
         self.VirtualStart = VirtualStart
         self.PhysicalSize = NumberOfPages * 4 * 1024
@@ -187,7 +238,7 @@ class MemoryRange(object):
 """ % (self.PhysicalStart, (self.PhysicalEnd), self.PhysicalSize, self.ImageName)
 
     def GuardPageInit(self, VA):
-        self.SystemMemoryType = 1
+        self.SystemMemoryType = SystemMemoryTypes.GuardPage
         self.PhysicalStart = int(VA, 16)
         self.PageSize = "4k"
         self.PhysicalSize = self.getPageSize()
