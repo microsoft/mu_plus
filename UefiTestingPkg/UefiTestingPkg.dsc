@@ -135,6 +135,7 @@
   UefiTestingPkg/FunctionalSystemTests/MemmapAndMatTestApp/MemmapAndMatTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MorLockTestApp/MorLockTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MpManagement/App/MpManagementTestApp.inf
+  UefiTestingPkg/Library/DriverDependencyLogging/DriverDependencyLogging.inf
 
 [Components.IA32, Components.X64]
   UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMAIVRSProtectionUnitTestApp.inf
