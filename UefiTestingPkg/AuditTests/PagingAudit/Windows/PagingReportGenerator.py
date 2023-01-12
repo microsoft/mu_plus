@@ -154,8 +154,17 @@ class ParsingTool(object):
                         if page.SystemMemoryType is None:
                             page.SystemMemoryType = mr.SystemMemoryType
                         else:
-                            self.ErrorMsg.append("Multiple System Memory types found for one region.  Base: 0x%X.  EFI Memory Type: %s and %s."% (page.PhysicalStart,page.SystemMemoryType, mr.SystemMemoryType))
-                            logging.error("Multiple system memory types found for one region " + page.pageDebugStr() + " " +  mr.LoadedImageEntryToString())
+                            self.ErrorMsg.append("Multiple System Memory types found for one region.  Base: 0x%X.  System Memory Type: %s and %s."% (page.PhysicalStart,page.GetSystemMemoryType(), mr.GetSystemMemoryType()))
+                            logging.error("Multiple system memory types found for one region " + page.pageDebugStr() + " " +  mr.pageDebugStr())
+                    
+                    # A CPU Number present in a memory range object implies it represents an AP stack. Capture the CPU
+                    # number for printing a CPU identifier for each AP stack.
+                    if mr.CpuNumber is not None:
+                        if page.CpuNumber is None:
+                            page.CpuNumber = mr.CpuNumber
+                        else:
+                            self.ErrorMsg.append("Multiple Cpu Numbers found for one region.  Base: 0x%X.  Cpu Numbers: %s and %s."% (page.PhysicalStart,page.CpuNumber, mr.CpuNumber))
+                            logging.error("Multiple Cpu Numbers found for one region " + page.pageDebugStr() + " " +  mr.pageDebugStr())
 
             for MatEntry in self.MemoryAttributesTable:
                 if page.overlap(MatEntry):
