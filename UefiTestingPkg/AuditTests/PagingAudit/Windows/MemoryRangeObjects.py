@@ -1,5 +1,6 @@
 import copy
 import logging
+from enum import Enum
 
 # Memory range is either a page table entry, memory map entry,
 # or a description of the memory contents.
@@ -7,6 +8,17 @@ import logging
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+
+class SystemMemoryTypes(Enum):
+    TSEG = "TSEG"
+    GuardPage = "GuardPage"
+    NullPage = "NULL Page"
+    StackGuard = "BSP Stack Guard"
+    Stack = "BSP Stack"
+    ApStackGuard = "AP {0} Stack Guard"
+    ApStack = "AP {0} Stack"
+    ApSwitchStack = "AP {0} Switch Stack"
+
 class MemoryRange(object):
     # MemmoryMap type list
     MemoryMapTypes = [
@@ -55,12 +67,6 @@ class MemoryRange(object):
         0x0000000000010000 : "EFI_MEMORY_MORE_RELIABLE"
     }
 
-
-    SystemMemoryTypes = [
-        "TSEG",
-        "GuardPage"
-    ]
-
     PageSize = {
         "1g" : 1 * 1024 * 1024 * 1024,
         "2m" : 2 * 1024 * 1024,
@@ -91,10 +97,7 @@ class MemoryRange(object):
         self.Attribute = 0
         self.AddressBitwidth = None
         self.PageSplit = False
-
-        # Check to see whether we're a type that we recognize.
-        if self.RecordType not in ("TSEG", "MemoryMap", "LoadedImage", "SmmLoadedImage", "PDE", "GDT", "IDT", "PTEntry", "MAT", "GuardPage", "Bitwidth"):
-            raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
+        self.CpuNumber = None
 
         # Continue processing according to the data type.
         if self.RecordType in ("LoadedImage", "SmmLoadedImage"):
@@ -105,11 +108,20 @@ class MemoryRange(object):
             self.LoadedImageEntryInit(int(args[0], 16), int(args[1], 16), self.RecordType)
         elif self.RecordType in ("PTEntry"):
             self.PteInit(*args)
+        elif self.RecordType in ("TTEntry"):
+            self.TteInit(*args)
         elif self.RecordType in ("GuardPage"):
             self.GuardPageInit(*args)
         elif self.RecordType in ("Bitwidth"):
             self.BitwidthInit(int(args[0], 16))
-
+        elif self.RecordType in ("Stack", "StackGuard"):
+            self.StackInit (self.RecordType, *(int(arg, 16) for arg in args))
+        elif self.RecordType in ("ApStack", "ApStackGuard", "ApSwitchStack"):
+            self.ApStackInit (self.RecordType, *(int(arg, 16) for arg in args))
+        elif self.RecordType in ("Null"):
+            self.NullInit (self.RecordType, *(int(arg, 16) for arg in args))
+        else:
+            raise RuntimeError("Unknown type '%s' found!" % self.RecordType)
         self.CalculateEnd()
 
     def CalculateEnd(self):
@@ -133,10 +145,51 @@ class MemoryRange(object):
         if self.SystemMemoryType is None:
             return "None"
         try:
-            return MemoryRange.SystemMemoryTypes[self.SystemMemoryType]
-        except:
-            raise Exception("System Memory Type is invalid %d" % self.SystemMemoryType)
+            # Some SystemMemoryType objects correlate with a formatted string in the SystemMemoryTypes list.
+            # The formatted string includes a place for the CPU number of the memory range object.
+            if (self.SystemMemoryType == SystemMemoryTypes.ApStack or self.SystemMemoryType == SystemMemoryTypes.ApStackGuard or self.SystemMemoryType == SystemMemoryTypes.ApSwitchStack):
+                return self.SystemMemoryType.value.format(self.CpuNumber)
 
+            return self.SystemMemoryType.value
+        except:
+            raise ValueError("System Memory Type is invalid %s" % self.SystemMemoryType.value)
+
+    def StackInit (self, SystemMemoryType, PhysicalStart, Length):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = Length
+
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "StackGuard":
+            self.SystemMemoryType = SystemMemoryTypes.StackGuard
+        elif SystemMemoryType == "Stack":
+            self.SystemMemoryType = SystemMemoryTypes.Stack
+        else:
+            raise ValueError("System Memory Type is invalid %s" % SystemMemoryType)
+
+    def ApStackInit (self, SystemMemoryType, PhysicalStart, Length, CpuNumber):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = Length
+        self.CpuNumber = CpuNumber
+        
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "ApStackGuard":
+            self.SystemMemoryType = SystemMemoryTypes.ApStackGuard
+        elif SystemMemoryType == "ApStack":
+            self.SystemMemoryType = SystemMemoryTypes.ApStack
+        elif SystemMemoryType == "ApSwitchStack":
+            self.SystemMemoryType = SystemMemoryTypes.ApSwitchStack
+        else:
+            raise ValueError("System Memory Type is invalid %s" % SystemMemoryType)
+    
+    def NullInit (self, SystemMemoryType, PhysicalStart):
+        self.PhysicalStart = PhysicalStart
+        self.PhysicalSize = MemoryRange.PageSize["4k"]
+
+        # Convert the system type to an index in the object list of memory types
+        if SystemMemoryType == "Null":
+            self.SystemMemoryType = SystemMemoryTypes.NullPage
+        else:
+            raise ValueError("System Memory Type is invalid %s" % SystemMemoryType)
 
     #
     # Initializes memory descriptions
@@ -146,7 +199,7 @@ class MemoryRange(object):
             self.MemoryType = Type
         if (Type == self.TsegEfiMemoryType):
             #set it as tseg
-            self.SystemMemoryType = 0
+            self.SystemMemoryType = SystemMemoryTypes.TSEG
         self.PhysicalStart = PhysicalStart
         self.VirtualStart = VirtualStart
         self.PhysicalSize = NumberOfPages * 4 * 1024
@@ -185,7 +238,7 @@ class MemoryRange(object):
 """ % (self.PhysicalStart, (self.PhysicalEnd), self.PhysicalSize, self.ImageName)
 
     def GuardPageInit(self, VA):
-        self.SystemMemoryType = 1
+        self.SystemMemoryType = SystemMemoryTypes.GuardPage
         self.PhysicalStart = int(VA, 16)
         self.PageSize = "4k"
         self.PhysicalSize = self.getPageSize()
@@ -198,6 +251,17 @@ class MemoryRange(object):
         self.AddressBitwidth = Bitwidth
         self.PhysicalStart = 0
         self.PhysicalSize = (1 << self.AddressBitwidth)
+    
+    def TteInit(self, PageSize, Valid, ReadWrite, Sharability, Pxn, Uxn, VA, IsTable):
+        self.PageSize = PageSize
+        self.Valid = Valid
+        self.ReadWrite = 0 if (ReadWrite == 1) else 1
+        self.Sharability = Sharability
+        self.Px = 0 if (Pxn == 1) else 1
+        self.Ux = 0 if (Uxn == 1) else 1
+        self.PhysicalStart = VA
+        self.IsTable = IsTable
+        self.PhysicalSize = self.getPageSize()
 
     #
     # Initializes page table entries
@@ -213,20 +277,16 @@ class MemoryRange(object):
         self.Present = Present
         if (self.PageSize == "4k") and (self.MustBe1 == 0):
             raise Exception("Data error: 4K pages must have MustBe1 be set to 1")
-    def pteDebugStr(self):
+    def pageDebugStr(self):
         return """\n  %s
 ------------------------------------------------------------------
-    MustBe1                 : 0x%010X
-    Present                 : 0x%010X
-    ReadWrite               : 0x%010X
-    Nx                      : 0x%010X
     PhysicalStart           : 0x%010X
     PhysicalEnd             : 0x%010X
     PhysicalSize            : 0x%010X
     Number                  : 0x%010X
     Type                    : %s
     LoadedImage             : %s
-""" % (self.getPageSizeStr(), self.MustBe1, self.Present, self.ReadWrite, self.Nx,  self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
+""" % (self.getPageSizeStr(), self.PhysicalStart, self.PhysicalEnd, self.PhysicalSize, self.NumberOfEntries, self.GetMemoryTypeDescription(), self.ImageName )
 
     def getPageSize(self):
         return MemoryRange.PageSize[self.PageSize]
@@ -241,39 +301,72 @@ class MemoryRange(object):
         self.CalculateEnd()
 
     # Returns dict describing this object
-    def toDictionary(self):
+    def toDictionary(self, architecture):
         # Pre-process the Section Type
         # Set a reasonable default.
         section_type = "UNEXPECTED VALUE"
-        # If this range is not associated with an image, it does not have
-        # a section type.
-        if self.ImageName == None:
-            section_type = "Not Tracked"
-        else:
-            # if an image range can't be read or executed, this is almost certainly
-            # an error.
-            if self.Nx == 1 and self.ReadWrite == 0:
-                section_type = "ERROR"
-            elif self.Nx == 1:
-                section_type = "DATA"
-            elif self.ReadWrite == 0:
-                section_type = "CODE"
+        if architecture == "X64":
+            # If this range is not associated with an image, it does not have
+            # a section type.
+            if self.ImageName == None:
+                section_type = "Not Tracked"
+            else:
+                # if an image range can't be read or executed, this is almost certainly
+                # an error.
+                if self.Nx == 1 and self.ReadWrite == 0:
+                    section_type = "ERROR"
+                elif self.Nx == 1:
+                    section_type = "DATA"
+                elif self.ReadWrite == 0:
+                    section_type = "CODE"
 
-        return {
-            "Page Size" : self.getPageSizeStr(),
-            "Present" : "Yes" if (self.Present == 1) else "No",
-            "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
-            "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
-            "Privilege" : "User" if (self.UserPrivilege == 1) else "Supervisor",
-            "Start" : "0x{0:010X}".format(self.PhysicalStart),
-            "End" : "0x{0:010X}".format(self.PhysicalEnd),
-            "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
-            "Memory Type" : self.GetMemoryTypeDescription(),
-            "GCD Memory Type" : self.GetGcdTypeDescription(),
-            "Section Type" : section_type,
-            "System Memory": self.GetSystemMemoryType(),
-            "Memory Contents" : self.ImageName,
-            "Partial Page": self.PageSplit}
+            return {
+                "Page Size" : self.getPageSizeStr(),
+                "Present" : "Yes" if (self.Present == 1) else "No",
+                "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
+                "Execute" : "Disabled" if (self.Nx == 1) else "Enabled",
+                "Privilege" : "User" if (self.UserPrivilege == 1) else "Supervisor",
+                "Start" : "0x{0:010X}".format(self.PhysicalStart),
+                "End" : "0x{0:010X}".format(self.PhysicalEnd),
+                "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
+                "Memory Type" : self.GetMemoryTypeDescription(),
+                "GCD Memory Type" : self.GetGcdTypeDescription(),
+                "Section Type" : section_type,
+                "System Memory": self.GetSystemMemoryType(),
+                "Memory Contents" : self.ImageName,
+                "Partial Page": self.PageSplit}
+        elif architecture == "AARCH64":
+            # If this range is not associated with an image, it does not have
+            # a section type.
+            if self.ImageName == None:
+                section_type = "Not Tracked"
+            else:
+                # if an image range can't be read or executed, this is almost certainly
+                # an error.
+                if self.Ux == 0 and self.ReadWrite == 0:
+                    section_type = "ERROR"
+                elif self.Ux == 0:
+                    section_type = "DATA"
+                elif self.ReadWrite == 0:
+                    section_type = "CODE"
+                else:
+                    section_type = "UNKNOWN"
+
+            return {
+                "Page Size" : self.getPageSizeStr(),
+                "Valid" : "Yes" if (self.Valid == 1) else "No",
+                "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
+                "UX" : "Enabled" if (self.Ux == 1) else "Disabled",
+                "PX" : "Enabled" if (self.Px == 1) else "Disabled",
+                "Start" : "0x{0:010X}".format(self.PhysicalStart),
+                "End" : "0x{0:010X}".format(self.PhysicalEnd),
+                "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
+                "Memory Type" : self.GetMemoryTypeDescription(),
+                "GCD Memory Type" : self.GetGcdTypeDescription(),
+                "Section Type" : section_type,
+                "System Memory": self.GetSystemMemoryType(),
+                "Memory Contents" : self.ImageName,
+                "Partial Page": self.PageSplit}
 
     def overlap(self, compare):
         if(self.PhysicalStart >= compare.PhysicalStart) and (self.PhysicalStart <= compare.PhysicalEnd):
@@ -317,7 +410,7 @@ class MemoryRange(object):
         next.PhysicalStart = end_of_current +1
         return next
 
-    def sameAttributes(self, compare):
+    def sameAttributes(self, compare, architecture):
         if compare is None:
             return False
 
@@ -327,19 +420,7 @@ class MemoryRange(object):
         if (self.PageSize != compare.PageSize):
             return False
 
-        if (self.ReadWrite != compare.ReadWrite):
-            return False
-
-        if (self.MustBe1 != compare.MustBe1):
-            return False
-
-        if (self.Present != compare.Present):
-            return False
-
-        if (self.Nx != compare.Nx):
-            return False
-
-        if(self.UserPrivilege != compare.UserPrivilege):
+        if (self.PageSplit or compare.PageSplit):
             return False
 
         if (self.ImageName != compare.ImageName):
@@ -357,7 +438,36 @@ class MemoryRange(object):
         if (self.Attribute != compare.Attribute):
             return False
 
-        if (self.PageSplit or compare.PageSplit):
+        if (self.ReadWrite != compare.ReadWrite):
+            return False
+
+        if architecture == "X64":
+            if (self.MustBe1 != compare.MustBe1):
+                return False
+
+            if (self.Present != compare.Present):
+                return False
+
+            if (self.Nx != compare.Nx):
+                return False
+
+            if(self.UserPrivilege != compare.UserPrivilege):
+                return False
+
+        elif architecture == "AARCH64":
+            if (self.IsTable != compare.IsTable):
+                return False
+
+            if (self.Valid != compare.Valid):
+                return False
+
+            if (self.Ux != compare.Ux):
+                return False
+
+            if (self.Px != compare.Px):
+                return False
+
+        else:
             return False
 
         return True

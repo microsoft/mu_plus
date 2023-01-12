@@ -14,6 +14,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Pi/PiHob.h>
 #include <Library/HobLib.h>
 #include <Library/DxeServicesTableLib.h>
+#include <Library/DxeMemoryProtectionHobLib.h>
+#include <Protocol/CpuMpDebug.h>
 
 #define NEXT_MEMORY_SPACE_DESCRIPTOR(MemoryDescriptor, Size) \
   ((EFI_GCD_MEMORY_SPACE_DESCRIPTOR *)((UINT8 *)(MemoryDescriptor) + (Size)))
@@ -83,6 +85,7 @@ OpenVolumeSFS (
   );
 
 MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol = NULL;
+CPU_MP_DEBUG_PROTOCOL             *mCpuMpDebugProtocol       = NULL;
 EFI_FILE                          *mFs_Handle;
 extern CHAR8                      *mMemoryInfoDatabaseBuffer;
 extern UINTN                      mMemoryInfoDatabaseSize;
@@ -105,6 +108,25 @@ PopulateHeapGuardDebugProtocol (
   }
 
   return gBS->LocateProtocol (&gMemoryProtectionDebugProtocolGuid, NULL, (VOID **)&mMemoryProtectionProtocol);
+}
+
+/**
+  Populates the CPU MP debug protocol global
+
+  @retval EFI_SUCCESS Protocol is already populated or was successfully populated
+  @retval other       Return value of LocateProtocol
+**/
+STATIC
+EFI_STATUS
+PopulateCpuMpDebugProtocol (
+  VOID
+  )
+{
+  if (mCpuMpDebugProtocol != NULL) {
+    return EFI_SUCCESS;
+  }
+
+  return gBS->LocateProtocol (&gCpuMpDebugProtocolGuid, NULL, (VOID **)&mCpuMpDebugProtocol);
 }
 
 /**
@@ -1217,6 +1239,128 @@ FlushAndClearMemoryInfoDatabase (
   return EFI_SUCCESS;
 } // FlushAndClearMemoryInfoDatabase()
 
+/*
+  Writes the NULL page and stack information to the memory info database
+ */
+VOID
+EFIAPI
+SpecialMemoryDump (
+  VOID
+  )
+{
+  CHAR8                      TempString[MAX_STRING_SIZE];
+  EFI_PEI_HOB_POINTERS       Hob;
+  EFI_HOB_MEMORY_ALLOCATION  *MemoryHob;
+  EFI_STATUS                 Status;
+  LIST_ENTRY                 *List;
+  CPU_MP_DEBUG_PROTOCOL      *Entry;
+  EFI_PHYSICAL_ADDRESS       StackBase;
+  UINT64                     StackLength;
+
+  // Capture the NULL address
+  AsciiSPrint (
+    TempString,
+    MAX_STRING_SIZE,
+    "Null,0x%016lx\n",
+    NULL
+    );
+  AppendToMemoryInfoDatabase (TempString);
+
+  Hob.Raw = GetHobList ();
+
+  while ((Hob.Raw = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, Hob.Raw)) != NULL) {
+    MemoryHob = Hob.MemoryAllocation;
+    if (CompareGuid (&gEfiHobMemoryAllocStackGuid, &MemoryHob->AllocDescriptor.Name)) {
+      StackBase   = (EFI_PHYSICAL_ADDRESS)((MemoryHob->AllocDescriptor.MemoryBaseAddress / EFI_PAGE_SIZE) * EFI_PAGE_SIZE);
+      StackLength = (EFI_PHYSICAL_ADDRESS)(EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (MemoryHob->AllocDescriptor.MemoryLength)));
+
+      // Capture the stack guard
+      if (gDxeMps.CpuStackGuard == TRUE) {
+        AsciiSPrint (
+          TempString,
+          MAX_STRING_SIZE,
+          "StackGuard,0x%016lx,0x%x\n",
+          StackBase,
+          EFI_PAGE_SIZE
+          );
+        AppendToMemoryInfoDatabase (TempString);
+        StackBase   += EFI_PAGE_SIZE;
+        StackLength -= EFI_PAGE_SIZE;
+      }
+
+      // Capture the stack
+      AsciiSPrint (
+        TempString,
+        MAX_STRING_SIZE,
+        "Stack,0x%016lx,0x%016lx\n",
+        StackBase,
+        StackLength
+        );
+      AppendToMemoryInfoDatabase (TempString);
+
+      break;
+    }
+
+    Hob.Raw = GET_NEXT_HOB (Hob);
+  }
+
+  Status = PopulateCpuMpDebugProtocol ();
+
+  // The protocol should only be published if CpuStackGuard is active
+  if (!EFI_ERROR (Status)) {
+    for (List = mCpuMpDebugProtocol->Link.ForwardLink; List != &mCpuMpDebugProtocol->Link; List = List->ForwardLink) {
+      Entry = CR (
+                List,
+                CPU_MP_DEBUG_PROTOCOL,
+                Link,
+                CPU_MP_DEBUG_SIGNATURE
+                );
+      StackBase   = (EFI_PHYSICAL_ADDRESS)((Entry->ApStackBuffer / EFI_PAGE_SIZE) * EFI_PAGE_SIZE);
+      StackLength = (EFI_PHYSICAL_ADDRESS)(EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (Entry->ApStackSize)));
+
+      if (!Entry->IsSwitchStack) {
+        if (gDxeMps.CpuStackGuard == TRUE) {
+          // Capture the AP stack guard
+          AsciiSPrint (
+            TempString,
+            MAX_STRING_SIZE,
+            "ApStackGuard,0x%016lx,0x%016lx,0x%x\n",
+            StackBase,
+            EFI_PAGE_SIZE,
+            Entry->CpuNumber
+            );
+          AppendToMemoryInfoDatabase (TempString);
+
+          StackBase   += EFI_PAGE_SIZE;
+          StackLength -= EFI_PAGE_SIZE;
+        }
+
+        // Capture the AP stack
+        AsciiSPrint (
+          TempString,
+          MAX_STRING_SIZE,
+          "ApStack,0x%016lx,0x%016lx,0x%x\n",
+          StackBase,
+          StackLength,
+          Entry->CpuNumber
+          );
+        AppendToMemoryInfoDatabase (TempString);
+      } else {
+        // Capture the AP switch stack
+        AsciiSPrint (
+          TempString,
+          MAX_STRING_SIZE,
+          "ApSwitchStack,0x%016lx,0x%016lx,0x%x\n",
+          StackBase,
+          StackLength,
+          Entry->CpuNumber
+          );
+        AppendToMemoryInfoDatabase (TempString);
+      }
+    }
+  }
+}
+
 /**
    Dumps paging information to open EFI_FILE Fs_Handle if provided and the EFI partition otherwise.
 
@@ -1294,6 +1438,7 @@ DumpPagingInfo (
   MemoryMapDumpHandler ();
   LoadedImageTableDump ();
   MemoryAttributesTableDump ();
+  SpecialMemoryDump ();
   FlushAndClearMemoryInfoDatabase (L"MemoryInfoDatabase");
 
 Cleanup:

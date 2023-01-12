@@ -26,7 +26,7 @@ VERSION = "0.90"
 
 class ParsingTool(object):
 
-    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type):
+    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type, Architecture):
         self.Logger = logging.getLogger("ParsingTool")
         self.MemoryAttributesTable = []
         self.MemoryRangeInfo = []
@@ -37,25 +37,26 @@ class ParsingTool(object):
         self.PlatformVersion = PlatformVersion
         self.Type = Type
         self.AddressBits = 0
+        self.Architecture = Architecture
 
     def Parse(self):
         #Get Info Files
         InfoFileList =  glob.glob(os.path.join(self.DatFolderPath, "*MemoryInfo*.dat"))
-        Pte1gbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*1G*.dat"))
-        Pte2mbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*2M*.dat"))
-        Pte4kbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*4K*.dat"))
+        Page1gbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*1G*.dat"))
+        Page2mbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*2M*.dat"))
+        Page4kbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*4K*.dat"))
         MatFileList =  glob.glob(os.path.join(self.DatFolderPath, "*MAT*.dat"))
         GuardPageFileList =  glob.glob(os.path.join(self.DatFolderPath, "*GuardPage*.dat"))
 
         logging.debug("Found %d Info Files" % len(InfoFileList))
-        logging.debug("Found %d 1gb Page Files" % len(Pte1gbFileList))
-        logging.debug("Found %d 2mb Page Files" % len(Pte2mbFileList))
-        logging.debug("Found %d 4kb Page Files" % len(Pte4kbFileList))
+        logging.debug("Found %d 1gb Page Files" % len(Page1gbFileList))
+        logging.debug("Found %d 2mb Page Files" % len(Page2mbFileList))
+        logging.debug("Found %d 4kb Page Files" % len(Page4kbFileList))
         logging.debug("Found %d MAT Files" % len(MatFileList))
         logging.debug("Found %d GuardPage Files" % len(GuardPageFileList))
 
 
-        # Parse each file, keeping PTEs and "Memory Ranges" separate
+        # Parse each file, keeping pages and "Memory Ranges" separate
         # Memory ranges are either "memory descriptions" for memory map types and TSEG
         # or "memory contents" for loaded image information or IDT/GDT
         for info in InfoFileList:
@@ -76,14 +77,14 @@ class ParsingTool(object):
             self.ErrorMsg.append("Did not find bitwidth from memory information file. Assuming 39 here and the results may not be accurate")
             self.AddressBits = (1 << 39) - 1
 
-        for pte1g in Pte1gbFileList:
-            self.PageDirectoryInfo.extend(Parse1gPages(pte1g, self.AddressBits))
+        for page1g in Page1gbFileList:
+            self.PageDirectoryInfo.extend(Parse1gPages(page1g, self.AddressBits, self.Architecture))
 
-        for pte2m in Pte2mbFileList:
-            self.PageDirectoryInfo.extend(Parse2mPages(pte2m, self.AddressBits))
+        for page2m in Page2mbFileList:
+            self.PageDirectoryInfo.extend(Parse2mPages(page2m, self.AddressBits, self.Architecture))
 
-        for pte4k in Pte4kbFileList:
-            self.PageDirectoryInfo.extend(Parse4kPages(pte4k, self.AddressBits))
+        for page4k in Page4kbFileList:
+            self.PageDirectoryInfo.extend(Parse4kPages(page4k, self.AddressBits, self.Architecture))
 
         for guardpage in GuardPageFileList:
             self.PageDirectoryInfo.extend(ParseInfoFile(guardpage))
@@ -92,7 +93,7 @@ class ParsingTool(object):
             self.MemoryAttributesTable.extend(ParseInfoFile(mat))
 
         if len(self.PageDirectoryInfo) == 0:
-            self.ErrorMsg.append("No Memory Range info found in PTE files")
+            self.ErrorMsg.append("No Memory Range info found in page files")
         else:
             # Sort in descending order
             self.PageDirectoryInfo.sort(key=operator.attrgetter('PhysicalStart'))
@@ -103,7 +104,7 @@ class ParsingTool(object):
                 if(self.PageDirectoryInfo[index].overlap(self.PageDirectoryInfo[index+1])):
                     self.ErrorMsg.append("Page Table Entry Overlap.  Index %d Overlapping %d at StartAddress 0x%X" %
                     (index, index+1, self.PageDirectoryInfo[index].PhysicalStart))
-                    logging.error("PTE overlap index %d and %d.  Base Address = 0x%x", index, index+1, self.PageDirectoryInfo[index].PhysicalStart)
+                    logging.error("Page overlap index %d and %d.  Base Address = 0x%x", index, index+1, self.PageDirectoryInfo[index].PhysicalStart)
                 index += 1
 
         if len(self.MemoryRangeInfo) == 0:
@@ -114,60 +115,69 @@ class ParsingTool(object):
         # is supported.
         index = 0
         while index < len(self.PageDirectoryInfo):
-            pte = self.PageDirectoryInfo[index]
+            page = self.PageDirectoryInfo[index]
             for mr in self.MemoryRangeInfo:
-                if pte.overlap(mr):
+                if page.overlap(mr):
                     if (mr.MemoryType is not None) or (mr.GcdType is not None):
-                        if (pte.PhysicalStart < mr.PhysicalStart):
-                            next = pte.split(mr.PhysicalStart-1)
+                        if (page.PhysicalStart < mr.PhysicalStart):
+                            next = page.split(mr.PhysicalStart-1)
                             self.PageDirectoryInfo.insert(index+1, next)
-                            # decrement the index so that we process this partial PTE again
+                            # decrement the index so that we process this partial page again
                             # because we are breaking from the MemoryRange Loop
                             index -= 1
                             break
 
-                        if (pte.PhysicalEnd > mr.PhysicalEnd):
-                            next = pte.split(mr.PhysicalEnd)
+                        if (page.PhysicalEnd > mr.PhysicalEnd):
+                            next = page.split(mr.PhysicalEnd)
                             self.PageDirectoryInfo.insert(index +1, next)
 
-                        if pte.MemoryType is None:
-                            pte.MemoryType = mr.MemoryType
+                        if page.MemoryType is None:
+                            page.MemoryType = mr.MemoryType
                         else:
-                            logging.error("Multiple memory types found for one region " + pte.pteDebugStr() +" " + mr.MemoryRangeToString())
-                            self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  EFI Memory Type: %d and %d"% (pte.PhysicalStart, pte.MemoryType,mr.MemoryType))
-                        
-                        if pte.GcdType is None:
-                            pte.GcdType = mr.GcdType
+                            logging.error("Multiple memory types found for one region " + page.pageDebugStr() +" " + mr.MemoryRangeToString())
+                            self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  EFI Memory Type: %d and %d"% (page.PhysicalStart, page.MemoryType,mr.MemoryType))
+
+                        if page.GcdType is None:
+                            page.GcdType = mr.GcdType
                         else:
-                            logging.error("Multiple memory types found for one region " + pte.pteDebugStr() +" " + mr.MemoryRangeToString())
-                            self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  GCD Memory Type: %d and %d"% (pte.PhysicalStart, pte.GcdType,mr.GcdType))
+                            logging.error("Multiple memory types found for one region " + page.pageDebugStr() +" " + mr.MemoryRangeToString())
+                            self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  GCD Memory Type: %d and %d"% (page.PhysicalStart, page.GcdType,mr.GcdType))
 
                     if mr.ImageName is not None:
-                        if pte.ImageName is None:
-                            pte.ImageName = mr.ImageName
+                        if page.ImageName is None:
+                            page.ImageName = mr.ImageName
                         else:
-                            self.ErrorMsg.append("Multiple memory contents found for one region.  Base: 0x%X.  Memory Contents: %s and %s" % (pte.PhysicalStart, pte.ImageName, mr.ImageName ))
-                            logging.error("Multiple memory contents found for one region " +pte.pteDebugStr() + " " +  mr.LoadedImageEntryToString())
+                            self.ErrorMsg.append("Multiple memory contents found for one region.  Base: 0x%X.  Memory Contents: %s and %s" % (page.PhysicalStart, page.ImageName, mr.ImageName ))
+                            logging.error("Multiple memory contents found for one region " + page.pageDebugStr() + " " +  mr.LoadedImageEntryToString())
 
                     if mr.SystemMemoryType is not None:
-                        if pte.SystemMemoryType is None:
-                            pte.SystemMemoryType = mr.SystemMemoryType
+                        if page.SystemMemoryType is None:
+                            page.SystemMemoryType = mr.SystemMemoryType
                         else:
-                            self.ErrorMsg.append("Multiple System Memory types found for one region.  Base: 0x%X.  EFI Memory Type: %s and %s."% (pte.PhysicalStart,pte.SystemMemoryType, mr.SystemMemoryType))
-                            logging.error("Multiple system memory types found for one region " +pte.pteDebugStr() + " " +  mr.LoadedImageEntryToString())
+                            self.ErrorMsg.append("Multiple System Memory types found for one region.  Base: 0x%X.  System Memory Type: %s and %s."% (page.PhysicalStart,page.GetSystemMemoryType(), mr.GetSystemMemoryType()))
+                            logging.error("Multiple system memory types found for one region " + page.pageDebugStr() + " " +  mr.pageDebugStr())
+                    
+                    # A CPU Number present in a memory range object implies it represents an AP stack. Capture the CPU
+                    # number for printing a CPU identifier for each AP stack.
+                    if mr.CpuNumber is not None:
+                        if page.CpuNumber is None:
+                            page.CpuNumber = mr.CpuNumber
+                        else:
+                            self.ErrorMsg.append("Multiple Cpu Numbers found for one region.  Base: 0x%X.  Cpu Numbers: %s and %s."% (page.PhysicalStart,page.CpuNumber, mr.CpuNumber))
+                            logging.error("Multiple Cpu Numbers found for one region " + page.pageDebugStr() + " " +  mr.pageDebugStr())
 
             for MatEntry in self.MemoryAttributesTable:
-                if pte.overlap(MatEntry):
-                    pte.Attribute = MatEntry.Attribute
+                if page.overlap(MatEntry):
+                    page.Attribute = MatEntry.Attribute
             index += 1
 
-        # Combining adjacent PTEs that have the same attributes.
+        # Combining adjacent pages that have the same attributes.
         index = 0
         while index < (len(self.PageDirectoryInfo) - 1):
-            currentPte = self.PageDirectoryInfo[index]
-            nextPte = self.PageDirectoryInfo[index + 1]
-            if currentPte.sameAttributes(nextPte):
-                currentPte.grow(nextPte)
+            currentPage = self.PageDirectoryInfo[index]
+            nextPage = self.PageDirectoryInfo[index + 1]
+            if currentPage.sameAttributes(nextPage, self.Architecture):
+                currentPage.grow(nextPage)
                 del self.PageDirectoryInfo[index + 1]
             else:
                 index += 1
@@ -187,14 +197,14 @@ class ParsingTool(object):
         }
 
         # Process all of the Page Infos and add them to the JSON.
-        pde_infos = []
-        for pde in self.PageDirectoryInfo:
-            info_dict = pde.toDictionary()
+        page_infos = []
+        for page in self.PageDirectoryInfo:
+            info_dict = page.toDictionary(self.Architecture)
             # Check for errors.
             if info_dict['Section Type'] == "ERROR":
                 self.AddErrorMsg("Page Descriptor at %s has an error parsing the Section Type." % info_dict['Start'])
-            pde_infos.append(info_dict)
-        json_dict['MemoryRanges'] = pde_infos
+            page_infos.append(info_dict)
+        json_dict['MemoryRanges'] = page_infos
 
         # Finally, add any errors and produce the JSON string.
         json_dict['errors'] = self.ErrorMsg
@@ -205,7 +215,10 @@ class ParsingTool(object):
         #
         f = open(OutputFilePath, "w")
         if self.Type == 'DXE':
-            template = open(os.path.join(sp, "DxePaging_template.html"), "r")
+            if self.Architecture == "X64":
+                template = open(os.path.join(sp, "DxePaging_template_X64.html"), "r")
+            elif self.Architecture == "AARCH64":
+                template = open(os.path.join(sp, "DxePaging_template_AArch64.html"), "r")
         else:
             template = open(os.path.join(sp, "SmmPaging_template.html"), "r")
 
@@ -228,6 +241,7 @@ def main():
     parser.add_argument('-p', "--PlatformName", dest="PlatformName", help="Name of Platform.  Will show up on report", default="Test Platform")
     parser.add_argument('-t', "--type", choices=['SMM', 'DXE'], dest="Type", help="SMM or DXE Paging Report", required=True)
     parser.add_argument("--PlatformVersion", dest="PlatformVersion", help="Version of Platform.  Will show up report", default="1.0.0")
+    parser.add_argument('-a', "--architecture", choices=['AARCH64', 'X64'], dest="Architecture", help="The architecture of the pages. Can be ARM64 or X64", required=True)
 
     #Turn on dubug level logging
     parser.add_argument("--debug", action="store_true", dest="debug", help="turn on debug logging level for file log",  default=False)
@@ -263,10 +277,14 @@ def main():
         logging.critical("No OutputReport Path")
         return -6
 
+    if options.Architecture == "AARCH64" and options.Type == "SMM":
+        logging.critical("AARCH64 does not use SMM")
+        return -7
+
     logging.debug("Input Folder Path is: %s" % options.InputFolder)
     logging.debug("Output Report is: %s" % options.OutputReport)
 
-    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type)
+    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type, options.Architecture)
     spt.Parse()
     return spt.OutputHtmlReport(VERSION, options.OutputReport)
 
