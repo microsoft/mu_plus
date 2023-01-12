@@ -176,6 +176,31 @@ CpuArchSleep (
   );
 
 /**
+  This helper routine will be used for preparing the active BSP
+  to enter sleep state. It could be run by BSP.
+
+  This architectural specific routine should setup necessary wakeup
+  resources, if not already provided, for the CPU to wake up from
+  sleep state.
+
+  Given the state definition, this function will make the CPU to
+  resume without any context. The caller should handle the data
+  saving and restoration accordingly.
+
+  @param  PowerState              The intended power state.
+  @param  TimeoutInMicrosecond    The intended timer to wake this core.
+
+  @return EFI_SUCCESS   The routine wake up successfully.
+  @return Others        The routine failed during operation.
+**/
+EFI_STATUS
+EFIAPI
+CpuArchBspSleepPrep (
+  IN UINTN PowerState, OPTIONAL
+  IN UINTN  TimeoutInMicrosecond
+  );
+
+/**
   This routine is invoked by BSP to wake up suspended APs.
 
   @param  CpuIndex      The number of intended CPU to be setup.
