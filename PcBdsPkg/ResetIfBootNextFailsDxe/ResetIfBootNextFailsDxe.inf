@@ -38,7 +38,7 @@
   UefiRuntimeServicesTableLib
 
 [Guids]
-  gMuEventPreExitBootServicesGuid     ## CONSUMES ## EVENT
+  gEfiEventPostReadyToBootGuid     ## CONSUMES ## EVENT
   ## CONSUMES
   ## Variable:L"BootNext"
   ## Variable:L"BootCurrent"
