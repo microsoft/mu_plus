@@ -76,6 +76,8 @@
 
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
+[LibraryClasses.Common.DXE_RUNTIME_DRIVER]
+  ResetSystemLib|MdeModulePkg/Library/RuntimeResetSystemLib/RuntimeResetSystemLib.inf
 [LibraryClasses.X64]
 
 !if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022

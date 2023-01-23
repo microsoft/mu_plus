@@ -194,6 +194,26 @@ ProcessPreExitBootServicesRegistration (
 }
 
 /**
+  Notification function of EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE.
+
+  This is a notification function registered on EVT_SIGNAL_VIRTUAL_ADDRESS_CHANGE event.
+  It converts pointer to new virtual address.
+
+  @param  Event        Event whose notification function is being invoked.
+  @param  Context      Pointer to the notification function's context.
+
+**/
+VOID
+EFIAPI
+ResetIfBootNextFailsAddressChangeEvent (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
+{
+  gRT->ConvertPointer (EFI_OPTIONAL_PTR, (VOID **)&mReportStatusCodeHandlerProtocol);
+}
+
+/**
   Caches the BootNext option local to this driver.
 
   The option value is saved when this function is called so it is available in case the
@@ -235,6 +255,7 @@ DxeResetIfBootNextFailsEntry (
   )
 {
   EFI_STATUS  Status;
+  EFI_EVENT   AddressChangeEvent;
 
   Status = gBS->LocateProtocol (
                   &gEfiRscHandlerProtocolGuid,
@@ -256,6 +277,16 @@ DxeResetIfBootNextFailsEntry (
 
     CacheBootNextOption ();
   }
+
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_NOTIFY,
+                  ResetIfBootNextFailsAddressChangeEvent,
+                  NULL,
+                  &gEfiEventVirtualAddressChangeGuid,
+                  &AddressChangeEvent
+                  );
+  ASSERT_EFI_ERROR (Status);
 
   return EFI_SUCCESS;
 }

@@ -11,7 +11,7 @@
   INF_VERSION                    = 0x00010017
   BASE_NAME                      = ResetIfBootNextFailsDxe
   FILE_GUID                      = 77EA9AC3-0B29-41FB-B404-DD25DBC72885
-  MODULE_TYPE                    = DXE_DRIVER
+  MODULE_TYPE                    = DXE_RUNTIME_DRIVER
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = DxeResetIfBootNextFailsEntry
 
@@ -39,6 +39,7 @@
 
 [Guids]
   gMuEventPreExitBootServicesGuid     ## CONSUMES ## EVENT
+  gEfiEventVirtualAddressChangeGuid   ## CONSUMES ## EVENT
   ## CONSUMES
   ## Variable:L"BootNext"
   ## Variable:L"BootCurrent"
