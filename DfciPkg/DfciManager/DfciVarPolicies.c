@@ -13,6 +13,56 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <DfciVariablePolicies.h>
 
+STATIC EDKII_VARIABLE_POLICY_PROTOCOL  *mVariablePolicy = NULL;
+
+/**
+ * Event callback for Ready To Boot.
+ * This is needed to lock certain variables
+ *
+ * @param Event
+ * @param Context
+ *
+ * @return VOID EFIAPI
+ */
+VOID
+EFIAPI
+ReadyToBootCallback (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
+{
+  UINTN       i;
+  EFI_STATUS  Status;
+
+  gBS->CloseEvent (Event);
+
+  if (mVariablePolicy == NULL) {
+    ASSERT (mVariablePolicy != NULL);
+    return;
+  }
+
+  //
+  // Lock most variables at ReadyToBoot
+  //
+  for (i = 0; i < ARRAY_SIZE (gReadyToBootPolicies); i++) {
+    Status = RegisterBasicVariablePolicy (
+               mVariablePolicy,
+               gReadyToBootPolicies[i].Namespace,
+               gReadyToBootPolicies[i].Name,
+               gReadyToBootPolicies[i].MinSize,
+               gReadyToBootPolicies[i].MaxSize,
+               gReadyToBootPolicies[i].AttributesMustHave,
+               gReadyToBootPolicies[i].AttributesCantHave,
+               VARIABLE_POLICY_TYPE_LOCK_NOW
+               );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a %a: - RegisterBasicVariablePolicy() ReadyToBoot[%d] returned %r!\n", _DBGMSGID_, __FUNCTION__, i, Status));
+      DEBUG ((DEBUG_ERROR, "%a %a: - Error registering %g:%s\n", _DBGMSGID_, __FUNCTION__, gReadyToBootPolicies[i].Namespace, gReadyToBootPolicies[i].Name));
+    }
+  }
+}
+
 /**
   InitializeAndSetPolicyForAllDfciVariables
 
@@ -22,37 +72,34 @@ InitializeAndSetPolicyForAllDfciVariables (
   VOID
   )
 {
-  UINTN                           i;
-  EFI_STATUS                      Status;
-  EDKII_VARIABLE_POLICY_PROTOCOL  *VariablePolicy = NULL;
+  UINTN       i;
+  EFI_STATUS  Status;
+  EFI_EVENT   Event;
 
-  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&VariablePolicy);
+  //
+  // Request notification of ReadyToBoot.
+  //
+  // NOTE: If this fails, the variables are not locked
+  //       DELAYED_PROCESSING state.
+  //
+  Status = gBS->CreateEventEx (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK - 1,  // Run this callback after all other ReadyToBoot callbacks
+                  ReadyToBootCallback,
+                  NULL,
+                  &gEfiEventReadyToBootGuid,
+                  &Event
+                  );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a %a: ReadyToBoot callback registration failed! %r\n", _DBGMSGID_, __FUNCTION__, Status));
+    // Continue with rest of variable locks if possible.
+  }
+
+  Status = gBS->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&mVariablePolicy);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a %a: - Locating Variable Policy failed - Code=%r\n", _DBGMSGID_, __FUNCTION__, Status));
     goto Done;
-  }
-
-  //
-  // Lock most variables at ReadyToBoot
-  //
-  for (i = 0; i < ARRAY_SIZE (gReadyToBootPolicies); i++) {
-    Status = RegisterVarStateVariablePolicy (
-               VariablePolicy,
-               gReadyToBootPolicies[i].Namespace,
-               gReadyToBootPolicies[i].Name,
-               gReadyToBootPolicies[i].MinSize,
-               gReadyToBootPolicies[i].MaxSize,
-               gReadyToBootPolicies[i].AttributesMustHave,
-               gReadyToBootPolicies[i].AttributesCantHave,
-               &gMuVarPolicyDxePhaseGuid,
-               READY_TO_BOOT_INDICATOR_VAR_NAME,
-               PHASE_INDICATOR_SET
-               );
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a %a: - RegisterVarStateVariablePolicy() ReadyToBoot[%d] returned %r!\n", _DBGMSGID_, __FUNCTION__, i, Status));
-      DEBUG ((DEBUG_ERROR, "%a %a: - Error registering %g:%s\n", _DBGMSGID_, __FUNCTION__, gReadyToBootPolicies[i].Namespace, gReadyToBootPolicies[i].Name));
-      goto Done;
-    }
   }
 
   //
@@ -60,7 +107,7 @@ InitializeAndSetPolicyForAllDfciVariables (
   //
   for (i = 0; i < ARRAY_SIZE (gMailBoxPolicies); i++) {
     Status = RegisterBasicVariablePolicy (
-               VariablePolicy,
+               mVariablePolicy,
                gMailBoxPolicies[i].Namespace,
                gMailBoxPolicies[i].Name,
                gMailBoxPolicies[i].MinSize,
@@ -69,10 +116,10 @@ InitializeAndSetPolicyForAllDfciVariables (
                gMailBoxPolicies[i].AttributesCantHave,
                VARIABLE_POLICY_TYPE_NO_LOCK
                );
+
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "%a %a: - RegisterBasicVariablePolicy() ReadyToBoot[%d] returned %r!\n", _DBGMSGID_, __FUNCTION__, i, Status));
       DEBUG ((DEBUG_ERROR, "%a %a: - Error registering %g:%s\n", _DBGMSGID_, __FUNCTION__, gMailBoxPolicies[i].Namespace, gMailBoxPolicies[i].Name));
-      goto Done;
     }
   }
 

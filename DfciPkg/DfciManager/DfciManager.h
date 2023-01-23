@@ -23,7 +23,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/DfciPermissionManagerVariables.h>
 #include <Guid/DfciSettingsGuid.h>
 #include <Guid/DfciSettingsManagerVariables.h>
-#include <Guid/MuVarPolicyFoundationDxe.h>
 #include <Guid/ZeroTouchVariables.h>
 
 #include <Protocol/DfciApplyPacket.h>

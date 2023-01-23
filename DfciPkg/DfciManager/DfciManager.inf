@@ -31,7 +31,6 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  MsCorePkg/MsCorePkg.dec
   DfciPkg/DfciPkg.dec
   ZeroTouchPkg/ZeroTouchPkg.dec
 
@@ -58,7 +57,7 @@
   gDfciSettingsGuid
   gDfciSettingsManagerVarNamespace
   gEfiEndOfDxeEventGroupGuid
-  gMuVarPolicyDxePhaseGuid
+  gEfiEventReadyToBootGuid
   gZeroTouchVariableGuid
 
 [Protocols]
