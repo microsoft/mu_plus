@@ -111,13 +111,13 @@ RscHandlerCallback (
 /**
   Unregister the ReportStatusCode handler.
 
-  @param[in]    Event      The Pre-Exit Boot Services event.
+  @param[in]    Event      The Exit Boot Services event.
   @param[in]    Context    A pointer to the context structure associated with the notification function.
 
 **/
 VOID
 EFIAPI
-OnPreExitBootServicesNotification (
+OnExitBootServicesNotification (
   IN EFI_EVENT  Event,
   IN VOID       *Context
   )
@@ -171,7 +171,7 @@ ProcessReportStatusCodeHandlerRegistration (
 
 **/
 EFI_STATUS
-ProcessPreExitBootServicesRegistration (
+ProcessExitBootServicesRegistration (
   VOID
   )
 {
@@ -181,13 +181,13 @@ ProcessPreExitBootServicesRegistration (
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_CALLBACK,
-                  OnPreExitBootServicesNotification,
+                  OnExitBootServicesNotification,
                   gImageHandle,
-                  &gMuEventPreExitBootServicesGuid,
+                  &gEfiEventExitBootServicesGuid,
                   &InitEvent
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[%a] - Create Event failed for PreExitBootServices - %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "[%a] - Create Event failed for ExitBootServices - %r\n", __FUNCTION__, Status));
   }
 
   return Status;
@@ -251,7 +251,7 @@ DxeResetIfBootNextFailsEntry (
   if (EFI_ERROR (Status)) {
     ASSERT_EFI_ERROR (Status);
   } else {
-    Status = ProcessPreExitBootServicesRegistration ();
+    Status = ProcessExitBootServicesRegistration ();
     ASSERT_EFI_ERROR (Status);
 
     CacheBootNextOption ();
