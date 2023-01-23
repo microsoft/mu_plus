@@ -43,7 +43,6 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MsCorePkg/MsCorePkg.dec
-  MsGraphicsPkg/MsGraphicsPkg.dec
   ZeroTouchPkg/ZeroTouchPkg.dec
 
 [LibraryClasses]
