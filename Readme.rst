@@ -34,9 +34,17 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
+- Added a DfciVarLockAuditTest
+- Replaced MuSecureBootLib and replaced it with SecureBootVariableLib
+- Added the ResetIfBootNextFailsDxe module
+- Added Dfci unsigned settings support
+- Updated Pei core instance to support fixed in RAM mode
 
 Bug Fixes-dev
 -------------
+
+- Fixed cspell errors
+- Fixed markdown lint errors
 
 Branched from 202202
 --------------------
