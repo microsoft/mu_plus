@@ -72,8 +72,10 @@ potentially cause loading issues.
          ...
        ],
        "UsedProtocols": [                                  <<< List of protocols located by the driver
-         "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
-         "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
+         {
+           "Guid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", <<< GUID used when LocateProtocol was called
+           "GuidName": "..."                               <<< Name assigned to GUID from the .DEC file scan
+         },
          ...
        ]
      }

@@ -35,7 +35,7 @@ BOOLEAN  gLoggingEnabled = FALSE;
 EFI_LOCATE_PROTOCOL  HookedLocateProtocol = NULL;
 
 // Linked list of used protocols and their originating memory address found during boot
-DL_PROTOCOL_USAGE_ENTRY  *mProtocolUsageLL = NULL;
+LIST_ENTRY  mProtocolUsageLL = INITIALIZE_LIST_HEAD_VARIABLE (mProtocolUsageLL);
 
 // Variable service name and namespace GUID for publishing the logging data
 EFI_GUID  mVsNamespaceGuid = {
@@ -197,7 +197,7 @@ MessageProtocols (
   LOADED_IMAGE_PRIVATE_DATA  *ImagePrivateData
   )
 {
-  DL_PROTOCOL_USAGE_ENTRY  **EntryPtr;
+  LIST_ENTRY               *ListPtr;
   DL_PROTOCOL_USAGE_ENTRY  *Entry;
   BOOLEAN                  FirstEntry = TRUE;
 
@@ -205,13 +205,13 @@ MessageProtocols (
   UINTN  EndAddress   = (ImagePrivateData->NumberOfPages * EFI_PAGE_SIZE) + StartAddress;
 
   // Loop through protocol usage linked list
-  EntryPtr = &mProtocolUsageLL;
-  while ((*EntryPtr) != NULL) {
-    Entry = (*EntryPtr);
+  ListPtr = GetFirstNode (&mProtocolUsageLL);
+  while (ListPtr != &mProtocolUsageLL) {
+    Entry = LIST_ENTRY_PTR_TO_USAGE_ENTRY_PTR (ListPtr);
 
     // If not in this driver's memory range, move to next entry and loop
     if ((Entry->GuidAddress < StartAddress) || (Entry->GuidAddress >= EndAddress)) {
-      (*EntryPtr) = Entry->Next;
+      ListPtr = GetNextNode (&mProtocolUsageLL, ListPtr);
       continue;
     }
 
@@ -224,7 +224,8 @@ MessageProtocols (
     }
 
     // Remove and free this entry, set EntryPtr to the next one to examine
-    (*EntryPtr) = Entry->Next;
+    ListPtr = GetNextNode (&mProtocolUsageLL, ListPtr);
+    RemoveEntryList (&(Entry->ListEntry));
     FreePool (Entry);
   }
 }
@@ -252,6 +253,7 @@ DepexDataRtbCallback (
   VOID       *Context
   )
 {
+  DL_PROTOCOL_USAGE_ENTRY    *Entry;
   LOADED_IMAGE_PRIVATE_DATA  *ImagePrivateData;
   EFI_LOADED_IMAGE_PROTOCOL  *LoadedImage;
   EFI_CORE_DRIVER_ENTRY      *DriverEntry;
@@ -275,12 +277,13 @@ DepexDataRtbCallback (
 
   // Loop through the discovered driver list
   for (Link = mDiscoveredList.ForwardLink; Link != &mDiscoveredList; Link = Link->ForwardLink) {
-    // Get a pointer to the driver entry and private data structures
+    // Pointer to the driver entry structure
     DriverEntry = CR (Link, EFI_CORE_DRIVER_ENTRY, Link, EFI_CORE_DRIVER_ENTRY_SIGNATURE);
     if (DriverEntry == NULL) {
       continue;
     }
 
+    // Pointer to the private data structures
     Status = CoreHandleProtocol (DriverEntry->ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **)&LoadedImage);
     if (EFI_ERROR (Status) || (LoadedImage == NULL)) {
       continue;
@@ -319,16 +322,14 @@ DepexDataRtbCallback (
   FreePool (MsgBuffer.String);
   ZeroMem (&MsgBuffer, sizeof (MsgBuffer));
 
-  // Warn user of any protocols not used in the above logging
-  if (mProtocolUsageLL != NULL) {
+  // Free linked list of protocols and warn user of any not used in the above logging
+  if (!IsListEmpty (&mProtocolUsageLL)) {
     DEBUG ((DEBUG_INFO, "[%a] NOTE:  These protocols were used by a driver hosting the GUID at an unrecognized memory address:\n", DEBUG_TAG));
-    while (mProtocolUsageLL != NULL) {
-      DEBUG ((DEBUG_INFO, "    (%g) @ [%p]\n", &(mProtocolUsageLL->GuidName), (VOID *)(mProtocolUsageLL->GuidAddress)));
-      {
-        DL_PROTOCOL_USAGE_ENTRY  *Next = mProtocolUsageLL->Next;
-        FreePool (mProtocolUsageLL);
-        mProtocolUsageLL = Next;
-      }
+    while (!IsListEmpty (&mProtocolUsageLL)) {
+      Entry = LIST_ENTRY_PTR_TO_USAGE_ENTRY_PTR (GetFirstNode (&mProtocolUsageLL));
+      DEBUG ((DEBUG_INFO, "    (%g) @ [%p]\n", &(Entry->GuidName), (VOID *)(Entry->GuidAddress)));
+      RemoveEntryList (&(Entry->ListEntry));
+      FreePool (Entry);
     }
   }
 }
@@ -347,30 +348,34 @@ LocateProtocolHook (
   OUT VOID      **Interface
   )
 {
-  DL_PROTOCOL_USAGE_ENTRY  **EntryPtr;
+  DL_PROTOCOL_USAGE_ENTRY  *Entry;
+  LIST_ENTRY               *ListPtr;
+  BOOLEAN                  Logged;
 
   // Perform logging if enabled
   if (gLoggingEnabled) {
-    // Find the last unused pointer in the linked list or the entry where this GUID was already logged
-    for (EntryPtr = &mProtocolUsageLL; *EntryPtr != NULL; EntryPtr = &((*EntryPtr)->Next)) {
-      if (CompareGuid (&((*EntryPtr)->GuidName), Protocol)) {
-        if ((*EntryPtr)->GuidAddress == (UINTN)Protocol) {
-          break;
-        }
+    // Determine if this GUID/memory location has already been logged
+    Logged = FALSE;
+    BASE_LIST_FOR_EACH (ListPtr, &mProtocolUsageLL) {
+      Entry = LIST_ENTRY_PTR_TO_USAGE_ENTRY_PTR (ListPtr);
+      if (CompareGuid (&(Entry->GuidName), Protocol) && (Entry->GuidAddress == (UINTN)Protocol)) {
+        Logged = TRUE;
+        break;
       }
     }
 
     // Add a new node if this GUID was not already logged
-    if ((*EntryPtr) == NULL) {
-      DEBUG ((DEBUG_INFO, "[%a] Logging Protocol %g\n", DEBUG_TAG, Protocol));
+    if (!Logged) {
+      DEBUG ((DEBUG_INFO, "[%a] Logging Protocol %g @ 0x%016lX\n", DEBUG_TAG, Protocol));
 
-      (*EntryPtr) = (DL_PROTOCOL_USAGE_ENTRY *)AllocatePool (sizeof (DL_PROTOCOL_USAGE_ENTRY));
-      ASSERT (*EntryPtr);
-      if ((*EntryPtr) != NULL) {
-        (*EntryPtr)->Next        = NULL;
-        (*EntryPtr)->GuidAddress = (UINTN)Protocol;
-        CopyGuid (&((*EntryPtr)->GuidName), Protocol);
+      Entry = (DL_PROTOCOL_USAGE_ENTRY *)AllocatePool (sizeof (DL_PROTOCOL_USAGE_ENTRY));
+      ASSERT (Entry);
+      if (Entry != NULL) {
+        Entry->GuidAddress = (UINTN)Protocol;
+        CopyGuid (&(Entry->GuidName), Protocol);
       }
+
+      InsertTailList (&mProtocolUsageLL, &(Entry->ListEntry));
     }
   }
 

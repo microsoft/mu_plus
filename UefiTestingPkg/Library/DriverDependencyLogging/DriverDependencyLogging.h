@@ -39,9 +39,10 @@ typedef struct _MESSAGE_BUFFER {
 // Structure used to store the protocols used during boot
 typedef struct _DL_PROTOCOL_USAGE_ENTRY DL_PROTOCOL_USAGE_ENTRY;
 typedef struct _DL_PROTOCOL_USAGE_ENTRY {
-  DL_PROTOCOL_USAGE_ENTRY    *Next;       // Pointer to next entry in linked list
-  EFI_GUID                   GuidName;    // GUID used in the LocateProtocol call recorded when used in case it resides in an allocated/freed buffer
-  UINTN                      GuidAddress; // Address of where the GUID resided in memory
+  LIST_ENTRY    ListEntry;    // EDK linked list entry structure
+  EFI_GUID      GuidName;     // GUID used in the LocateProtocol call recorded when used in case it resides in an allocated/freed buffer
+  UINTN         GuidAddress;  // Address of where the GUID resided in memory
 } DL_PROTOCOL_USAGE_ENTRY;
+#define LIST_ENTRY_PTR_TO_USAGE_ENTRY_PTR(le)  ((DL_PROTOCOL_USAGE_ENTRY*)le)
 
 #endif // _DRIVER_DEPENDENCY_LOGGING__H_

@@ -10,14 +10,12 @@
 #
 import sys
 import os
-import shutil
 import json
-import string
-import logging
 import argparse
 from datetime import datetime
-from UefiDecGuidParser import DecGuidParser
-from UefiDecGuidParser import InProgress
+
+# PIP Modules
+from edk2toollib.uefi.edk2.parsers.dec_parser import DecParser
 
 # Correlates Depex command codes to their respective hex values
 DEPEX_CMD_ENCODING = { "00": "BEFORE",
@@ -39,36 +37,73 @@ DEPEX_CMDS_WITH_GUIDS = [ "BEFORE", "AFTER", "PUSH", "REPLACE_TRUE" ]
 DEPEX_LOG_BEGIN = "DEPEX_LOG_v1_BEGIN"
 DEPEX_LOG_END   = "DEPEX_LOG_v1_END"
 
+# Names of output files provided in the output directory
+RESULTS_FILE_NAME        = "DispatchData - Parsing Results.txt"
+PARSING_JSON_FILE_NAME   = "DispatchData - Parsed Data.json"
+DEC_GUID_JSON_FILE_NAME  = "DispatchData - GUID Names.json"
 
 ##
-# Class to stream messages to the log file and to the console
+# Class to stream evaluation messages to a file and the console
 # 
-class DispatchDataLogger:
+class EvaluationReporting:
 
   ##
   # Initializes the class
   # 
-  # @param  FileName - Name of log file or None if a log file is not required
+  # @param   ResultsFile - Name/path of file to log all result data
   # 
-  def __init__ (self, FileName):
-    self.FileHandle = None
-    if FileName != None:
-      Name = os.path.abspath(FileName)
-      os.makedirs(os.path.split(Name)[0], exist_ok = True)
-      self.FileHandle = open(Name, 'w', encoding='utf-8')
+  def __init__ (self, ResultsFile):
+    self.WarningCount = 0
 
+    # Open results file
+    print("Saving evaluation data to results file:")
+    print("    {}\n".format(ResultsFile))
+
+    # Write header information
+    self.FileHandle = open(ResultsFile, 'w', encoding='utf-8')
+    self.FileHandle.write("Dispatch Data Parser - Evaluation Data\n")
+    self.FileHandle.write(datetime.now().strftime("%b %d, %Y - %I:%M:%S %p\n\n"))
+  
   ##
-  # Streams messages to the log file and console
+  # Report an evaluation warning
   # 
-  # @param  Message - String message to display.  If FileName was None at init, only prints to the console
-  # @param  LogFileOnly - If True, only prints to the file.  If FileName was None at init, the flag is ignored.
+  # @param  Messages -       Single string or list of strings indicating the warning
+  #                          Written to both the file and console
+  # @param  DetailFileName - Name of file to examine for more details
+  # @param  InfoList -       List of messages to describe why the warning is issued
+  #                          Written only to the file
+  #                          Each InfoList entry can be a string or list of strings
+  #                          Can be None if no extra information is necessary
   # 
-  def Write(self, Message, LogFileOnly = False):
-    if (not LogFileOnly) or (self.FileHandle == None):
-      print (Message)
-    if self.FileHandle != None:
-      self.FileHandle.write(Message + "\n")
-      self.FileHandle.flush()
+  def Warning(self, Messages, DetailFileName, InfoList):
+    if type(Messages) == str:
+      Messages = [Messages]
+    if DetailFileName != None:
+      Messages.append('See file "{}" for details'.format(DetailFileName))
+  
+    # Console Messages: First line starts with "WARNING:  " and all subsequent indent 10 spaces
+    print("WARNING:  " + Messages[0])
+    for m in Messages[1:]:
+      print("          " + m)
+    print("")
+  
+    # File Messages: First line starts with ">>> WARNING:  ", all subsequent indent 14 spaces
+    self.FileHandle.write(">>> WARNING:  " + Messages[0] + "\n")
+    for m in Messages[1:]:
+      self.FileHandle.write("              " + m + "\n")
+    self.FileHandle.write("\n")
+
+    # File InfoList: Write all data to the file with no indent formatting
+    if InfoList == None:
+      self.WarningCount += 1
+    else:
+      self.WarningCount += len(InfoList)
+      for Messages in InfoList:
+        if type(Messages) == str:
+          Messages = [Messages]
+        for m in Messages:
+          self.FileHandle.write(m + "\n")
+        self.FileHandle.write("\n")
 
 ##
 # Determine if any length string contains only hex values
@@ -112,38 +147,60 @@ def IsGuid(Str):
 # @param  ErrorLine   - The line string causing the error or None if the error is not based on a mal-formed line
 #
 def PertinentDataReadError(Message, ErrorLine = None):
-  Log.Write(">> ERROR: Failed to parse the input file")
-  Log.Write("          " + Message)
+  print('')
+  print('>>> ERROR:  Failed to parse the input file')
+  print('            ' + Message)
   if ErrorLine != None:
-    Log.Write("")
-    Log.Write('          Line Read = "{}"'.format(ErrorLine))
-    Log.Write("          Expected  = <name>|<depex>|<guid>.<guid>.< ... >.<guid>")
-    Log.Write("                      <name>  : Name of the driver in ASCII format")
-    Log.Write("                      <depex> : Dependency expression data, hex byte array using 2 chars per byte ('AABBCC...')")
-    Log.Write("                      <guid>  : Protocol(s) used by this driver ('AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE')")
-  Log.Write("")
-
-  sys.exit()
+    print('')
+    print('          Line Read = "{}"'.format(ErrorLine))
+    print('          Expected  = <name>|<depex>|<guid>.<guid>.< ... >.<guid>')
+    print('                      <name>  : Name of the driver in ASCII format')
+    print('                      <depex> : Dependency expression data, hex byte array using 2 chars per byte ("AABBCC...")')
+    print('                      <guid>  : Protocol(s) used by this driver ("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")')
+  print('')
+  sys.exit(2)
 
 ##
-# Opens the input data file, extracts/validates pertinent lines, and returns a list of dictionaries representing
-# the pertinent data.
+# Collects all pertinent UEFI boot data from the input file
 # 
-# Pertinent lines are between begin/end tags, or all of the file in a begin tag is not found.  The dictionary is
-# created based on the expected line format of "<name>|<depex>|<guid_1>.<guid_2>.< ... >.<guid_n>" and if text is
-# found to the left of the begin tag, it is assumed to be a logger tag such as a time stamp and the same number
-# of bytes for every subsequent line will be removed.
+# Pertinent lines are between begin/end tags, or all of the file in a begin tag is not found.  Each line has the
+# expected format of "<name>|<depex>|<guid_1>.<guid_2>.< ... >.<guid_n>" and if text is found to the left of the
+# begin tag, it is assumed to be a logger tag such as a time stamp and the same number of bytes for every subsequent
+# line will be removed.
 #
-# @param   InFile - Name of input file
+# @param   InputFile - Name of file containing data provided by UEFI
+# @param   GuidNames - Dictionary list of GUID names collected by CollectGuidNames()
 # 
-# @return  Dictionary List - [ { "Name": "...",
-#                                "Depex": "AA BB CC ...",
-#                                "Guids": [ "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", ... ]
-#                              },
-#                              ...
-#                            ]
-# 
-def ReadPertinentData(InFile):
+# @return  Json object containing all pertinent data properly verified and formatted
+#          Any parsing error is printed on the console and the script exits
+#          {
+#            "Name": "...",                                      <<< Name of driver in ASCII text
+#            "RawDepex": "AA BB CC...",                          <<< Binary dependency data
+#            "DepexStack": [                                     <<< Dependency data decoded into a list of commands
+#              {
+#                "Command": "AA",                                <<< Hex value of dependency command
+#                "CommandName": "...",                           <<< String representation of command
+#                "Guid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", <<< GUID associated with command
+#                "GuidName": "..."                               <<< Name assigned to GUID from the .DEC file scan
+#              },
+#              ...
+#            ],
+#            "UsedProtocols": [                                  <<< List of protocols located by the driver
+#              {
+#                "Guid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", <<< GUID used when LocateProtocol was called
+#                "GuidName": "..."                               <<< Name assigned to GUID from the .DEC file scan
+#              },
+#              ...
+#            ]
+#          }
+#
+def ReadPertinentData(InputFile, GuidNames):
+
+  # User messaging
+  print("Reading UEFI runtime dispatch data:")
+  print("    {}".format(InputFile))
+
+  # To start with, assume no tags and record all lines
   IsPertinent = True
   BeginTagCount = 0
   EndTagCount = 0
@@ -151,7 +208,7 @@ def ReadPertinentData(InFile):
   Lines = []
 
   # Collect pertinent lines first
-  FileHandle = open(os.path.abspath(InFile), 'r', encoding='utf-8')
+  FileHandle = open(InputFile, 'r', encoding='utf-8')
   Line = FileHandle.readline()
   while Line != "":
     Line = Line.rstrip('\n')
@@ -186,7 +243,7 @@ def ReadPertinentData(InFile):
 
   # Warn if multiple regions found
   if BeginTagCount > 1:
-    Log.Write("Note: Found multiple data regions in the input file, proceeding with data from the last region\n")
+    print("    Note: Multiple data regions found in the input file, proceeding with data from the last region")
 
   # Build dictionary list from line list
   DictionaryList = []
@@ -201,104 +258,154 @@ def ReadPertinentData(InFile):
     Name = Parts[0].strip()
 
     # Parts[1] is the raw depex, verify hex and convert to all upper case with spaces between bytes
-    Depex = Parts[1].strip().upper()
-    if not IsHex(Depex):
+    RawDepex = Parts[1].strip().upper()
+    if not IsHex(RawDepex):
       PertinentDataReadError("Line depex is not a two-char per byte hex value", Line)
     i = 2
-    while i < len(Depex):
-      Depex = Depex[:i] + ' ' + Depex[i:]
+    while i < len(RawDepex):
+      RawDepex = RawDepex[:i] + ' ' + RawDepex[i:]
       i += 3
 
-    # Parts[2] is a list of guids, verify guid format and convert to upper case
-    Guids = []
+    # Parts[2] is a list of used guids used by LocateProtocol(), verify format and convert to a UsedProtocols list
+    UsedProtocols = []
     Parts = Parts[2].split('.')
     for Guid in Parts:
       Guid = Guid.strip().upper()
       if Guid != "":
         if not IsGuid(Guid):
           PertinentDataReadError("Guid ({}) is not properly formatted".format(Guid), Line)
-        Guids.append(Guid)
-  
+        UsedProtocols.append({ "Guid": Guid,
+                               "Name": NameFromGuidNameList(GuidNames, Guid) })
+
     # Add to dictionary list
-    DictionaryList.append({ "Name": Name, "Depex": Depex, "Guids": Guids })
+    DictionaryList.append({ "Name":          Name,
+                            "RawDepex":      RawDepex,
+                            "DepexStack":    CreateDepexStack(RawDepex, GuidNames),
+                            "UsedProtocols": UsedProtocols })
 
   # Return requested data
+  print("")
   return DictionaryList
-  
+
 ##
-# Uses the DecGuidParser class to collect a list of GUIDs and assigned names
+# Examines all UEFI .dec files found in a directory tree to create a list of dictionary entries indicating
+# all GUIDs with related names.
 # 
-# @param   TreeDirName - Name of UEFI tree directory to scan
+# @param   UefiTreeDirectory - Name/path of UEFI tree to scan or None if scanning is not requested.
 # 
-# @return  DecGuidParser::DataList
-# 
-def CollectGuidNames(TreeDirName):
-  if TreeDirName == None:
+# @return  List of dictionary entries containing correlating a GUID to all names found
+#          {
+#            "Guid": 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE',
+#            "Info": [
+#                      {
+#                        "FileName": "<file name>",
+#                        "GuidName": "<guid name>"
+#                      },
+#                      ...
+#                    ]
+#          }
+#
+def CollectGuidNames(UefiTreeDirectory):
+  DataList = []
+
+  # Return an empty list of entries if the input file name is None
+  if UefiTreeDirectory == None:
+    print("Bypassing UEFI tree scan\n")
     return []
 
-  # Print status and start the InProgress status dots before scanning the DEC files
-  print("Scanning for DEC files", end = "")
-  Progress = InProgress()
-  try:
-    Parser = DecGuidParser(TreeDirName)
-    Progress.Halt()
-  except Exception as e:
-    Progress.Halt()
-    raise e
-  print("\n")
+  # Walk the UEFI tree building the JsonObject first
+  print("Scanning UEFI tree:")
+  print("    {}\n".format(UefiTreeDirectory))
+  for (Root, DirList, FileList) in os.walk(UefiTreeDirectory):
 
-  # Exit on any warning found during the scan
-  if len(Parser.WarningList) > 0:
-    Log.Write(">> ERROR: Failed to scan the UEFI tree")
-    Log.Write("          DEC file line(s) could not be parsed\n")
-    for w in Parser.WarningList:
-      Log.Write("          File: {}".format(w['FileName']))
-      Log.Write('          Line: "{}"\n'.format(w['Line']))
-    sys.exit()
+    # If this is the root of the UEFI tree, remove the 'build' folder and any folder starting with '.' such as '.vs' or '.git' from the directory list
+    if Root == UefiTreeDirectory:
+      NewList = []
+      for Item in DirList:
+        if Item.lower() == 'build':
+          continue
+        if Item[0] == '.':
+          continue
+        NewList.append(Item)
+      DirList = NewList
 
-  return Parser.DataList
+    # Process only the .DEC files in this directory
+    for FileName in FileList:
+      if os.path.splitext(FileName)[1].lower() != ".dec":
+        continue
+
+      # Use the edk2toollib PIP module to collect all protocol, guid, and PPI values
+      dec = DecParser()
+      dec.ParseFile(os.path.join(Root, FileName))
+      for e in (dec.Protocols + dec.PPIs + dec.Guids):
+        Guid = str(e.guid).upper()
+        GuidName = e.name
+
+        # DataList is sorted, find the index of where the new entry should reside
+        Begin = 0
+        End = len(DataList)
+        while Begin != End:
+          Idx = int((Begin + End) / 2)
+    
+          # If the GUID is already logged, update this entry's info list and return
+          if Guid == DataList[Idx]['Guid']:
+    
+            # If GuidName is already present, no updates are necessary
+            InfoList = DataList[Idx]['Info']
+            for Entry in InfoList:
+              if Entry['GuidName'] == GuidName:
+                break
+        
+            # Not present, so append a new Info entry to the DataList entry
+            InfoList.append({ "FileName": FileName, "GuidName": GuidName })
+            DataList[Idx]['Info'] = InfoList
+            break
+    
+          # Keep searching
+          if Guid < DataList[Idx]['Guid']:
+            End = Idx
+          else:
+            Begin = Idx + 1
+    
+        # If Begin == End, GUID was not yet logged and both point to the index where the new entry should reside
+        if Begin == End:
+          DataList.insert(End, { "Guid":Guid, "Info": [ { "FileName": FileName, "GuidName": GuidName } ] } )
+
+  # Return requested data
+  return DataList
 
 ##
-# Returns a string from DecGuidParser::DataList indicating the name(s) assigned to a specific GUID.  If the GUID
-# is not found, "< unknown >" is returned.  If multiple names are found, all are returned separated by ' | '.
+# Finds the requested GUID in the list provided by CollectGuidNames() and returns the names associated.  If not
+# found, "< unknown >" is returned.
 # 
-# @param   GuidNameDataList - DecGuidParser::DataList
+# @param   GuidNames - Dictionary list of GUID names collected by CollectGuidNames()
 # @param   Guid - Specific GUID to search for
 # 
 # @return  Name string
 # 
-def NameFromGuidNameList(GuidNameDataList, Guid):
-  for Entry in GuidNameDataList:
+def NameFromGuidNameList(GuidNames, Guid):
+  for Entry in GuidNames:
     if Entry['Guid'] == Guid:
-      List = []
+      Names = []
       for Info in Entry['Info']:
-        List.append(Info['GuidName'])
-      return " | ".join(List)
+        Names.append(Info['GuidName'])
+      return " | ".join(Names)
   return "< unknown >"
 
 ##
-# Converts the input item's depex data to a stack of dictionary entries
+# Converts the input dependency data to a stack of dictionary entries.  Any error in decoding will result in
+# the object's 'Name' string starting with "ERROR" followed by why the Command or Guid value are not allowed.
 #
-# @param   PertinentItem - {
-#                            "Name": "...",
-#                            "Depex": "AA BB CC ...",
-#                            "Guids": [ "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE", ... ]
-#                          }
-# @param   GuidNameDataList - DecGuidParser::DataList
+# @param   RawDepex - String containing the JSON object's RawDepex data
+# @param   GuidNames - Dictionary list of GUID names collected by CollectGuidNames()
 #
-# @return  [                                                     <- List of entries
-#            { "Command": "AA",                                  <- Byte value pulled from Item['Depex']
-#              "CommandName": "...",                             <- Human readable command name or "ERROR: ..." describing why the command could not be decoded
-#              "Guid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",   <- UEFI format GUID pulled from Item['Depex']
-#              "GuidName": "..."                                 <- Guid name found in code tree scan or "ERROR: ..." describing why the GUID could not be decoded
-#            },
-#            ...
-#          ]
-def CreateDepexStack(PertinentItem, GuidNameDataList):
+# @return  The JSON object's DepexStack entry
+# 
+def CreateDepexStack(RawDepex, GuidNames):
   Stack = []
 
   # Convert the depex to a list of byte values and walk the list
-  DepexList = PertinentItem['Depex'].split(' ')
+  DepexList = RawDepex.split(' ')
   if (len(DepexList) == 1) and (DepexList[0] == ""):
     DepexList = []
   while len(DepexList) > 0:
@@ -321,7 +428,7 @@ def CreateDepexStack(PertinentItem, GuidNameDataList):
       if len(GuidByteList) < 16:
         GuidName = "ERROR: Insufficient data in Depex to support a GUID"
       else:
-        GuidName = NameFromGuidNameList(GuidNameDataList, Guid)
+        GuidName = NameFromGuidNameList(GuidNames, Guid)
 
     # Add stack entry and break on error
     Stack.append({ "Command": Command,
@@ -335,23 +442,36 @@ def CreateDepexStack(PertinentItem, GuidNameDataList):
   return Stack
 
 ##
-# Evaluate the dependency stack to determine if the GUID not being present would block the driver from loading
+# Evaluate if the input GUID was NOT used in a LocateProtocol call
 #
-# @param   Stack - Depex stack to parse
-#                  [
-#                    {
-#                      "Command": "AA",
-#                      "CommandName": "...",
-#                      "Guid": "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE",
-#                      "GuidName": "..."
-#                    },
-#                    ...
-#                  ]
+# @param   UsedProtocols - List of protocols used by a specific driver
 # @param   Guid - Guid to evaluate
 # 
-# @return  True/False if the GUID would block the driver from loading
+# @return  True/False if the GUID was used in a LocateProtocol call
 #
-def GuidIsCoveredByDepex(Stack, Guid):
+def GuidNotUsedInLocateProtocol(UsedProtocols, Guid):
+
+  # If GUID is empty or not assigned, return False
+  if (Guid == None) or (Guid == ""):
+    return False
+
+  # Search the used protocols list
+  for Entry in UsedProtocols:
+    if Entry['Guid'] == Guid:
+      return False
+
+  # Guid is valid and was not used
+  return True
+
+##
+# Evaluate the dependency stack to determine if the GUID not being present would block the driver from loading
+#
+# @param   Stack - Stack from a specific driver's output JSON data
+# @param   Guid - Guid to evaluate
+# 
+# @return  True/False if the GUID would NOT block the driver from loading
+#
+def GuidNotCoveredByDepex(Stack, Guid):
 
   # Find where in the stack this GUID resides
   Idx = 0
@@ -360,9 +480,9 @@ def GuidIsCoveredByDepex(Stack, Guid):
       break
     Idx += 1
 
-  # Return False if not in the stack
+  # If the GUID is not in the stack, it is not covered
   if Idx == len(Stack):
-    return False
+    return True
 
   # Walk the rest of the commands to make sure the GUID is honored
   Idx += 1
@@ -380,102 +500,12 @@ def GuidIsCoveredByDepex(Stack, Guid):
     # If no GUID and push depth is 0, this command must be either AND or END
     else:
       if Stack[Idx]['CommandName'] != "END" and Stack[Idx]['CommandName'] != "AND":
-        return False
+        return True
 
     Idx += 1
 
-  # If we exited the loop, it didn't decode right, return False
+  # Exit the loop means it was decoded properly
   return False
-
-##
-# Reports all results from this script
-#
-# @param   GuidNameDataList - DecGuidParser::DataList
-# @param   JsonObject - JSON object built by this script
-#
-def PerformEvaluation(GuidNameDataList, JsonObject):
-  ProtocolErrFileCount = 0
-  DepexErrFileCount = 0
-  GuidDupCount = 0
-  InvalidDepexCount = 0
-  TotalWarningCount = 0
-
-  # Warn for all duplicated GUIDs found
-  for Entry in GuidNameDataList:
-    if len(Entry['Info']) > 1:
-      GuidDupCount += 1
-      TotalWarningCount += 1
-      Msg = ">> WARNING: DEC file GUID ({}) used with multiple names\n".format(Entry['Guid'])
-      for Info in Entry['Info']:
-        Msg += "            {} - {}\n".format(Info['GuidName'], Info['FileName'])
-      Log.Write(Msg, LogFileOnly = True)
-
-  # Individual JSON entry evaluation
-  for JsonEntry in JsonObject:
-
-    # Warn if this driver had an invalid stack and skip to next if found
-    Stack = JsonEntry['DepexStack']
-    if len(Stack) > 0 and ((Stack[-1]['CommandName'][:5] == "ERROR") or (Stack[-1]['GuidName'][:5] == "ERROR")):
-      Msg =  ">> WARNING: Invalid depex in file {}\n".format(JsonEntry['Name'])
-      Msg += "            Raw Data: {}\n".format(JsonEntry['RawDepex'])
-      Msg += "            Stack:    {}\n".format(Stack[0])
-      for s in Stack[1:]:
-        Msg += "                      {}\n".format(s)
-      Log.Write(Msg, LogFileOnly = True)
-      InvalidDepexCount += 1
-      TotalWarningCount += 1
-      continue
-
-    # Check for Protocols used without declaring in the depex
-    ProtocolErrMessage = ""
-    for Protocol in JsonEntry["UsedProtocols"]:
-      if not GuidIsCoveredByDepex(JsonEntry['DepexStack'], Protocol['Guid']):
-        if Protocol['Name'][:1] == "<":
-          ProtocolErrMessage += "                {}\n".format(Protocol['Guid'])
-        else:
-          ProtocolErrMessage += "                {}  ( {} )\n".format(Protocol['Guid'], Protocol['Name'])
-    if ProtocolErrMessage != "":
-      ProtocolErrMessage = "            Protocol GUIDs used without being declared in the depex\n" + ProtocolErrMessage
-      ProtocolErrFileCount += 1
-
-    # Check for GUIDs in depex without being used as a protocol
-    DepexErrMessage = ""
-    for DepexEntry in JsonEntry['DepexStack']:
-      if DepexEntry['Guid'] == "":
-        continue
-      if DepexEntry['GuidName'][:5] == "ERROR":
-        continue
-      if DepexEntry['Guid'] in JsonEntry["UsedProtocols"]:
-        continue
-      if Protocol['Name'][:1] == "<":
-        DepexErrMessage += "                {}\n".format(Protocol['Guid'])
-      else:
-        DepexErrMessage += "                {}  ( {} )\n".format(Protocol['Guid'], Protocol['Name'])
-    if DepexErrMessage != "":
-      DepexErrMessage = "            Protocol GUIDs declared in depex not used in driver\n" + DepexErrMessage
-      DepexErrFileCount += 1
-
-    # Message depex/protocol warnings for this driver
-    FullErrMessage = ProtocolErrMessage + DepexErrMessage
-    if FullErrMessage != "":
-      TotalWarningCount += 1
-      Log.Write(">> WARNING: {} Evaluation:".format(JsonEntry['Name']), LogFileOnly = True)
-      Log.Write(FullErrMessage, LogFileOnly = True)
-
-  # Report final evaluation status
-  Log.Write("\nEvaluation finished")
-  Log.Write("    {} drivers examined".format(len(JsonObject)))
-  Log.Write("    {} total warnings logged\n".format(TotalWarningCount))
-  if GuidDupCount > 0:
-    Log.Write("    {} warnings for GUID values found in the UEFI tree DEC files with multiple names assigned".format(GuidDupCount))
-  if InvalidDepexCount > 0:
-    Log.Write("    {} warnings for drivers found with an invalid stack\n".format(InvalidDepexCount))
-  if ProtocolErrFileCount > 0:
-    Log.Write("    {} warnings for drivers using a protocol without declaring it in the depex\n".format(ProtocolErrFileCount))
-  if DepexErrFileCount > 0:
-    Log.Write("    {} warnings for drivers declaring a protocol in the depex but not using it\n".format(DepexErrFileCount))
-  Log.Write("")
-
 
 ##
 # Main() Code
@@ -484,57 +514,119 @@ def PerformEvaluation(GuidNameDataList, JsonObject):
 # Print header and parse command line
 print("\nUEFI Runtime Dispatch Data Parser\n")
 Parser = argparse.ArgumentParser(description = 'Script to collect and report UEFI runtime dependency expression usage')
-Parser.add_argument("--Input", required = True, action = 'store', metavar="<file>", help = 'Name of input file to be scanned for dispatch data.  Can be a UEFI boot log or a dump of the data from variable services.')
-Parser.add_argument("--Output", required = False, action = 'store', metavar="<file>", help = 'Name/path of a JSON file to receive all parsed data (optional)')
-Parser.add_argument("--LogFile", required = False, action = 'store', metavar="<file>", help = 'Name/path of log file to receive results (optional)')
-Parser.add_argument("--UefiTree", required = False, action = 'store', metavar="<dir>", help = 'Name/path of a UEFI tree to be scanned to retrieve GUID names from DEC files (optional)')
+Parser.add_argument("--Input", required = True, action = 'store', metavar="<file>", help = 'Name of input file to be scanned for dispatch data.  Can be a UEFI boot log or a file containing a dump of the data from variable services.')
+Parser.add_argument("--Output", required = False, action = 'store', metavar="<dir>", help = 'Path of a directory to receive all output files. (optional)')
+Parser.add_argument("--UefiTree", required = False, action = 'store', metavar="<dir>", help = 'Path to a directory containing UEFI code to scan and collect GUID names from DEC files (optional)')
 CmdLine = Parser.parse_args()
 
-# Setup the log file if requested
-Log = DispatchDataLogger(CmdLine.LogFile)
-Log.Write("Dispatch Data Parser - Evaluation Data")
-Log.Write(datetime.now().strftime("%b %d, %Y - %I:%M:%S %p\n"))
-
-# Validate and diaplay input parameters
+# Convert input paths to absolute paths
 CmdLine.Input = os.path.abspath(CmdLine.Input)
-Log.Write("Input File:   " + str(CmdLine.Input))
-if CmdLine.Output != None:
+if CmdLine.Output == None:
+  CmdLine.Output = os.getcwd()
+else:
   CmdLine.Output = os.path.abspath(CmdLine.Output)
-  os.makedirs(os.path.split(CmdLine.Output)[0], exist_ok = True)
-Log.Write("Output File:  " + str(CmdLine.Output))
-if CmdLine.LogFile != None:
-  CmdLine.LogFile = os.path.abspath(CmdLine.LogFile)
-  os.makedirs(os.path.split(CmdLine.LogFile)[0], exist_ok = True)
-Log.Write("Log File:     " + str(CmdLine.LogFile))
+  os.makedirs(CmdLine.Output, exist_ok = True)
 if CmdLine.UefiTree != None:
   CmdLine.UefiTree = os.path.abspath(CmdLine.UefiTree)
-Log.Write("UEFI Tree:    " + str(CmdLine.UefiTree) + "\n")
+
+# Collect all GUID names from the input UEFI tree
+GuidNames = CollectGuidNames(CmdLine.UefiTree)
+
+# Save GuidNames list to a file as a JSON object
+OutFile = os.path.join(CmdLine.Output, DEC_GUID_JSON_FILE_NAME)
+print("Saving UEFI tree GUID data:")
+print("    {}\n".format(OutFile))
+JsonFile = open(OutFile, 'w', encoding='utf-8')
+JsonFile.write(json.dumps(GuidNames, indent = 2))
+JsonFile.close()
 
 # Pull the pertinent data from the input file
-PertinentData = ReadPertinentData(CmdLine.Input)
+DispatchData = ReadPertinentData(CmdLine.Input, GuidNames)
 
-# Collect GUID names if requested
-GuidNameDataList = CollectGuidNames(CmdLine.UefiTree)
+# Save the pertinent DispatchData list to a file as a JSON object
+OutFile = os.path.join(CmdLine.Output, PARSING_JSON_FILE_NAME)
+print("Recording dispatch data in JSON format:")
+print("    {}".format(OutFile))
+print("")
+JsonFile = open(OutFile, 'w', encoding='utf-8')
+JsonFile.write(json.dumps(DispatchData, indent = 2))
+JsonFile.close()
 
-# Create the JSON object by creating an entry from each item in the Pertinent data list
-JsonObject = []
-for Item in PertinentData:
-  UsedProtocols = []
-  for g in Item['Guids']:
-    UsedProtocols.append({ "Guid": g, "Name": NameFromGuidNameList(GuidNameDataList, g) })
-  JsonObject.append({ "Name":          Item['Name'],
-                      "RawDepex":      Item['Depex'],
-                      "DepexStack":    CreateDepexStack(Item, GuidNameDataList),
-                      "UsedProtocols": UsedProtocols })
+# Open the evaluation reporting class
+Report = EvaluationReporting(os.path.join(CmdLine.Output, RESULTS_FILE_NAME))
 
-# Save the new JSON object if requested
-if CmdLine.Output != None:
-  Name = os.path.abspath(CmdLine.Output)
-  os.makedirs(os.path.split(Name)[0], exist_ok = True)
-  JsonFile = open(Name, 'w', encoding='utf-8')
-  JsonFile.write(json.dumps(JsonObject, indent = 2))
-  JsonFile.close()
+# Remove DispatchData entries that have a bad depex
+Idx = 0
+while Idx < len(DispatchData):
+  if len(DispatchData[Idx]['DepexStack']) > 0:
+    LastStackEntry = DispatchData[Idx]['DepexStack'][-1]
+    if (LastStackEntry['CommandName'][:5] == "ERROR") or (LastStackEntry['GuidName'][:5] == "ERROR"):
+      DispatchData.pop(Idx)
+      Report.Warning("Driver '{}' contained an invalid dependency expression".format(DispatchData[Idx]['Name']),
+                     PARSING_JSON_FILE_NAME,
+                     None)
+      continue
+  Idx += 1
 
-# Evaluate the data found
-PerformEvaluation(GuidNameDataList, JsonObject)
+# Check for multiple names for a specific GUID value
+WarnList = []
+for Entry in GuidNames:
+  if len(Entry['Info']) > 1:
+    Lines = [
+      "    Guid: {}".format(Entry['Guid']),
+      "    FileName / GuidName:"
+    ]
+    for Info in Entry['Info']:
+      Lines.append("        {} / {}".format(Info['FileName'], Info['GuidName']))
+    WarnList.append(Lines)
+if len(WarnList) > 0:
+  Report.Warning("Found {} GUID(s) in the UEFI tree that had multiple names assigned".format(len(WarnList)),
+                 DEC_GUID_JSON_FILE_NAME,
+                 WarnList)
+
+# Check for drivers that used protocols not defined in the depex
+WarnList = []
+for Entry in DispatchData:
+  Lines = []
+  for ProtocolInfo in Entry["UsedProtocols"]:
+    if GuidNotCoveredByDepex(Entry['DepexStack'], ProtocolInfo['Guid']):
+      Lines.append("        {} ( {} )".format(ProtocolInfo['Guid'], ProtocolInfo['Name']))
+  if len(Lines) > 0:
+    WarnList.append([
+                      "    FileName: {}".format(Entry['Name']),
+                      "    Protocols used in a LocateProtocol() call, but not listed in Depex:"
+                    ] + Lines)
+if len(WarnList) > 0:
+  Report.Warning([
+                   "Found {} driver(s) that used a protocol GUID not covered by its dependency expression".format(len(WarnList)),
+                   "This may not indicate a true error due to using other protections such as a callback when installed"
+                 ],
+                 PARSING_JSON_FILE_NAME,
+                 WarnList)
+
+# Examine all drivers guids in the depex that were not located and used
+WarnList = []
+for Entry in DispatchData:
+  Lines = []
+  for StackEntry in Entry['DepexStack']:
+    if GuidNotUsedInLocateProtocol(Entry['UsedProtocols'], StackEntry['Guid']):
+      Lines.append("        {}  ( {} )".format(StackEntry['Guid'], StackEntry['GuidName']))
+  if len(Lines) > 0:
+    WarnList.append([
+                      "    FileName: {}".format(Entry['Name']),
+                      "    Protocols listed in the depex but not used in a LocateProtocol() call:"
+                    ] + Lines)
+if len(WarnList) > 0:
+  Report.Warning([
+                   "Found {} driver(s) that declared a GUID in the depex without using it in a LocateProtocol call".format(len(WarnList)),
+                   "This may not indicate a true error due to reasons such as load ordering without a need to use the protocol"
+                 ],
+                 PARSING_JSON_FILE_NAME,
+                 WarnList)
+
+# Exit with a return code of 1 if any warnings found
+print(Report.WarningCount, "Warnings found\n")
+if Report.WarningCount > 0:
+  sys.exit(1)
+sys.exit(0)
 
