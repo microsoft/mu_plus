@@ -71,7 +71,6 @@
   gEfiRngProtocolGuid  #SOMETIMES CONSUMES
   gDfciApplyIdentityProtocolGuid
   gDfciAuthenticationProtocolGuid  #produces
-  gMuPKCS7ProtocolGuid  #consumes
   gDfciSettingPermissionsProtocolGuid #sometimes consumes
   gDfciSettingAccessProtocolGuid  #sometimes consumes
 
@@ -85,5 +84,4 @@
    AND gEfiVariableArchProtocolGuid
    AND gEdkiiVariablePolicyProtocolGuid
    AND gDfciSettingPermissionsProtocolGuid
-   AND gMuPKCS7ProtocolGuid
    AND gEfiRngProtocolGuid

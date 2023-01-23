@@ -399,9 +399,8 @@ VerifySignature (
   IN  UINTN                  TrustedCertSize
   )
 {
-  EFI_STATUS         Status     = EFI_SUCCESS;
-  MU_PKCS7_PROTOCOL  *Pkcs7Prot = NULL;
-  UINTN              CertSize   = 0;
+  EFI_STATUS  Status   = EFI_SUCCESS;
+  UINTN       CertSize = 0;
 
   // Check input parameters
   if ((SignedData == NULL) || (Signature == NULL) || (TrustedCert == NULL)) {
@@ -461,14 +460,6 @@ VerifySignature (
     }
 
     CertSize = Signature->dwLength - OFFSET_OF (WIN_CERTIFICATE_UEFI_GUID, CertData);
-
-    // Get our protocol for PKCS7
-    Status = gBS->LocateProtocol (&gMuPKCS7ProtocolGuid, NULL, (VOID **)&Pkcs7Prot);
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "[AM] Failed to locate PKCS7 Support Protocol. Status = %r\n", Status));
-      Status = EFI_UNSUPPORTED;
-      goto CLEANUP;
-    }
   } else {
     DEBUG ((DEBUG_ERROR, "[AM] Incorrect Cert Type. 0x%X\n", Signature->wCertificateType));
     Status = EFI_UNSUPPORTED;
@@ -499,7 +490,12 @@ VerifySignature (
 
   WIN_CERTIFICATE_UEFI_GUID  *Cert = (WIN_CERTIFICATE_UEFI_GUID *)Signature;
 
-  Status = Pkcs7Prot->Verify (Pkcs7Prot, (UINT8 *)(&Cert->CertData), CertSize, TrustedCert, TrustedCertSize, SignedData, SignedDataSize);
+  if (Pkcs7Verify ((UINT8 *)(&Cert->CertData), CertSize, TrustedCert, TrustedCertSize, SignedData, SignedDataSize)) {
+    DEBUG ((DEBUG_INFO, "[AM] %a - Data was validated successfully.\n", __FUNCTION__));
+    Status = EFI_SUCCESS;
+  } else {
+    Status = EFI_SECURITY_VIOLATION;
+  }
 
 CLEANUP:
 
