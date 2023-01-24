@@ -101,7 +101,7 @@ RscHandlerCallback (
       (((Value & EFI_STATUS_CODE_CLASS_MASK)|(Value & EFI_STATUS_CODE_SUBCLASS_MASK)) == (EFI_SOFTWARE | EFI_SOFTWARE_DXE_BS_DRIVER)) &&
       (((Value & EFI_STATUS_CODE_OPERATION_MASK) == EFI_SW_DXE_BS_EC_BOOT_OPTION_FAILED)))
   {
-    DEBUG ((DEBUG_VERBOSE, "[%a] - Checking boot option failure reported from module {%g}.\n", __FUNCTION__, CallerId));
+    DEBUG ((DEBUG_INFO, "[%a] - Checking boot option failure reported from module {%g}.\n", __FUNCTION__, CallerId));
     ProcessLoadOptionFailure (Data);
   }
 
