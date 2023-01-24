@@ -629,4 +629,3 @@ print(Report.WarningCount, "Warnings found\n")
 if Report.WarningCount > 0:
   sys.exit(1)
 sys.exit(0)
-

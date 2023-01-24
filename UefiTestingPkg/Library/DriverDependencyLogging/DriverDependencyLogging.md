@@ -37,7 +37,7 @@ using a protocol not covered by the depex and any depex GUID not used in a locat
       Namespace GUID:  { 0x4D2A2AEB, 0x9138, 0x44FB, { 0xB6, 0x44, 0x22, 0x17, 0x5F, 0xBB, 0xB0, 0x85 }}
 
   The pertinent data is collected at ready-to-boot by walking the CoreDxe driver's linked list of dispatched drivers
-  and for each that is sucessfully loaded, a data line is created and sent to the log.
+  and for each that is successfully loaded, a data line is created and sent to the log.
 
   ```console
   DEPEX_LOG_v1_BEGIN   Tag indicating begin of pertinent data
