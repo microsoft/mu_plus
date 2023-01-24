@@ -101,7 +101,7 @@ RscHandlerCallback (
       (((Value & EFI_STATUS_CODE_CLASS_MASK)|(Value & EFI_STATUS_CODE_SUBCLASS_MASK)) == (EFI_SOFTWARE | EFI_SOFTWARE_DXE_BS_DRIVER)) &&
       (((Value & EFI_STATUS_CODE_OPERATION_MASK) == EFI_SW_DXE_BS_EC_BOOT_OPTION_FAILED)))
   {
-    DEBUG ((DEBUG_INFO, "[%a] - Checking boot option failure reported from module {%g}.\n", __FUNCTION__, CallerId));
+    DEBUG ((DEBUG_VERBOSE, "[%a] - Checking boot option failure reported from module {%g}.\n", __FUNCTION__, CallerId));
     ProcessLoadOptionFailure (Data);
   }
 
@@ -111,13 +111,13 @@ RscHandlerCallback (
 /**
   Unregister the ReportStatusCode handler.
 
-  @param[in]    Event      The Post Ready to Boot event.
+  @param[in]    Event      The Pre-Exit Boot Services event.
   @param[in]    Context    A pointer to the context structure associated with the notification function.
 
 **/
 VOID
 EFIAPI
-OnPostReadyToBootServicesNotification (
+OnPreExitBootServicesNotification (
   IN EFI_EVENT  Event,
   IN VOID       *Context
   )
@@ -171,7 +171,7 @@ ProcessReportStatusCodeHandlerRegistration (
 
 **/
 EFI_STATUS
-ProcessPostReadyToBootServicesRegistration (
+ProcessPreExitBootServicesRegistration (
   VOID
   )
 {
@@ -181,13 +181,13 @@ ProcessPostReadyToBootServicesRegistration (
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_CALLBACK,
-                  OnPostReadyToBootServicesNotification,
+                  OnPreExitBootServicesNotification,
                   gImageHandle,
-                  &gEfiEventPostReadyToBootGuid,
+                  &gMuEventPreExitBootServicesGuid,
                   &InitEvent
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "[%a] - Create Event failed for Post Ready to Boot - %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "[%a] - Create Event failed for PreExitBootServices - %r\n", __FUNCTION__, Status));
   }
 
   return Status;
@@ -251,7 +251,7 @@ DxeResetIfBootNextFailsEntry (
   if (EFI_ERROR (Status)) {
     ASSERT_EFI_ERROR (Status);
   } else {
-    Status = ProcessPostReadyToBootServicesRegistration ();
+    Status = ProcessPreExitBootServicesRegistration ();
     ASSERT_EFI_ERROR (Status);
 
     CacheBootNextOption ();
