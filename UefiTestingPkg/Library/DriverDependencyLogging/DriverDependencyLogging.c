@@ -366,7 +366,7 @@ LocateProtocolHook (
 
     // Add a new node if this GUID was not already logged
     if (!Logged) {
-      DEBUG ((DEBUG_INFO, "[%a] Logging Protocol %g @ 0x%016lX\n", DEBUG_TAG, Protocol));
+      DEBUG ((DEBUG_INFO, "[%a] Logging Protocol %g @ 0x%016lX\n", DEBUG_TAG, Protocol, (UINTN)Protocol));
 
       Entry = (DL_PROTOCOL_USAGE_ENTRY *)AllocatePool (sizeof (DL_PROTOCOL_USAGE_ENTRY));
       ASSERT (Entry);
