@@ -113,6 +113,7 @@
             "fltused",
             "Splitter's",
             "urface",
+            "IFR's",
             "brower", ## TO BE REMOVED ONCE MU_BASECORE has all spelling mistakes fixed for gEfiMdeModulePkgTokenSpaceGuid.PcdBrowerGrayOutReadOnlyMenu
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)

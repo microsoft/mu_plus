@@ -85,6 +85,10 @@
             "MPIDR",
             "ICDSGIR",
             "SMRR",
+            "IVMDs",
+            "MPIDRs",
+            "PAGESs",
+            "SMRRs"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
