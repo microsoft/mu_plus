@@ -23,7 +23,8 @@ When used with DFCI, this header file MUST be included after:
 or any other include file that includes DfciSystemSettingTypes.h.
 
 Failure to do so will cause a compile error in DfciSystemSettingTypes.h when it
-defines DFCI_SETTINT_ID_STRING.
+defines DFCI_SETTING_ID_STRING.
+
 **/
 #ifndef __DFCI_SETTING_TYPES_H__
 typedef CONST CHAR8 *DFCI_SETTING_ID_STRING;
