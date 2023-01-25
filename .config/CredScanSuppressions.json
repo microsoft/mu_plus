@@ -1,7 +1,6 @@
 {
     "suppressions": [
         {
-            "file": "DfciPkg/UnitTests/DfciTests/Certs",
             "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/CA-NotTrusted.pfx",
             "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/CA-NotTrusted.pvk",
             "file": "MfciPkg/UnitTests/MfciPolicyParsingUnitTest/data/certs/CA.pfx",
