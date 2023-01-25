@@ -109,6 +109,7 @@
 ###################################################################################################
 [Components]
   PcBdsPkg/Library/MsBootManagerSettingsDxeLib/MsBootManagerSettingsDxeLib.inf
+  PcBdsPkg/Library/BootManagerSettingsDxeLibNull/BootManagerSettingsDxeLibNull.inf
   PcBdsPkg/Library/MsBootOptionsLib/MsBootOptionsLib.inf
   PcBdsPkg/Library/MsNetworkDelayLib/MsNetworkDelayLib.inf
   PcBdsPkg/Library/MsNetworkDependencyLib/MsNetworkDependencyLib.inf
