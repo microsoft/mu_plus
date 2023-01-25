@@ -10,7 +10,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define _MS_BOOT_POLICY_H_
 
 #include <Uefi.h>
-#include <DfciSystemSettingTypes.h>
+
+#include <Settings/BootMenuSettings.h>
 
 #include <Guid/ConnectConInEvent.h>
 #include <Guid/GlobalVariable.h>
@@ -42,7 +43,5 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/MsAltBootLib.h>
-
-#include <Settings/BootMenuSettings.h>
 
 #endif
