@@ -9,7 +9,7 @@ Windows_VS2022_               |WindowsCiBuild|  |WindowsCiTest| |WindowsCiCovera
 Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverage|
 ============================= ================= =============== ===================
 
-This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
+This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu.
 
 Branch Status - release/202208
 ==============================
@@ -34,9 +34,17 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
+- Added a DfciVarLockAuditTest
+- Replaced MuSecureBootLib and replaced it with SecureBootVariableLib
+- Added the ResetIfBootNextFailsDxe module
+- Added Dfci unsigned settings support
+- Updated Pei core instance to support fixed in RAM mode
 
 Bug Fixes-dev
 -------------
+
+- Fixed cspell errors
+- Fixed markdown lint errors
 
 Branched from 202202
 --------------------
