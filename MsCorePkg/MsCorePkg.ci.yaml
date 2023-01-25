@@ -104,7 +104,9 @@
             "POLICYREAD",
             "POLICYWRITE",
             "SQRTUNSIGNED",
-            "VARPOL"
+            "VARPOL",
+            "SNP's",
+            "UEFI's"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

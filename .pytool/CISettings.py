@@ -50,7 +50,6 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
 
         return (
             "AdvLoggerPkg",
-            "DfciPkg",
             "MfciPkg",
             "HidPkg",
             "MsCorePkg",
@@ -58,8 +57,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             "MsWheaPkg",
             "PcBdsPkg",
             "UefiTestingPkg",
-            "XmlSupportPkg",
-            "ZeroTouchPkg"
+            "XmlSupportPkg"
         )
 
     def GetArchitecturesSupported(self):
