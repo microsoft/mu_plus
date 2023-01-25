@@ -8,7 +8,7 @@
 [Defines]
   EDK_RELEASE_VERSION             = 0x00020000
   INF_VERSION                     = 1.27
-  BASE_NAME                       = DeviceBootManagerLibNull
+  BASE_NAME                       = BootManagerSettingsDxeLibNull
   FILE_GUID                       = 6ac406f9-4979-42a1-b562-b7f7e7843ea6
   VERSION_STRING                  = 1.0
   MODULE_TYPE                     = DXE_DRIVER
