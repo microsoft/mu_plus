@@ -3,9 +3,13 @@
 Copyright (C) Microsoft Corporation. All rights reserved.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
-This test module is intended to be added to the Core DXE dispatcher to provide an evaluation of each DXE driver loaded
-during boot for dependency expression declaration and protocol usage.  Notification will be provided for any driver
-using a protocol not covered by the depex and any depex GUID not used in a locate protocol call.
+This test module is intended to be tightly coupled to the DxeMain driver (MdeModulePkg/Core/Dxe/DxeMain.inf) and
+provide an evaluation of dependency expression declaration and protocol usage for each DXE driver loaded during boot.
+
+Warnings provided by the tool include an invalid dependency expression stack, multiple names assigned to a specific
+GUID in .dec files, use of a protocol who's GUID is not covered by the depex, and GUIDs declared in the depex not used
+by a locate protocol call.  These warnings are checking for a specific usage of the protocols and do not cover all
+valid use case scenarios, so they should not be taken as definitive errors.
 
 ## Enabling data logging
 
@@ -16,7 +20,7 @@ using a protocol not covered by the depex and any depex GUID not used in a locat
   ```inf
   MdeModulePkg/Core/Dxe/DxeMain.inf {
     <LibraryClasses>
-      NULL|UefiTestingPkg/Library/DriverDependencyLogging/DriverDependencyLogging.inf
+      NULL|UefiTestingPkg/Library/DxeMainDependencyLoggingLib/DxeMainDependencyLoggingLib.inf
   }
   ```
 

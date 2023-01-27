@@ -1,4 +1,4 @@
-/** @file -- DriverDependencyLogging.h
+/** @file -- DxeMainDependencyLoggingLib.h
 
 This library and toolset are used with the Core DXE dispatcher to log all DXE drivers' protocol usage and
 dependency expression implementation during boot.

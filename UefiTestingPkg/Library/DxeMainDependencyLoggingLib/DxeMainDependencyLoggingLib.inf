@@ -1,4 +1,4 @@
-## @file -- DriverDependencyLogging.inf
+## @file -- DxeMainDependencyLoggingLib.inf
 #
 # This library and toolset are used with the Core DXE dispatcher to log all DXE drivers' protocol usage and
 # dependency expression implementation during boot.
@@ -10,12 +10,12 @@
 #
 [Defines]
   INF_VERSION     = 1.27
-  BASE_NAME       = DriverDependencyLoggingLib
+  BASE_NAME       = DxeMainDependencyLoggingLib
   FILE_GUID       = A5942BB5-38B0-44BB-8DF4-FB61B14DB69C
   VERSION_STRING  = 1.0
   MODULE_TYPE     = DXE_DRIVER
-  LIBRARY_CLASS   = DriverDependencyLoggingLib|DXE_DRIVER UEFI_APPLICATION DXE_RUNTIME_DRIVER UEFI_DRIVER
-  CONSTRUCTOR     = DriverDependencyLoggingInit
+  LIBRARY_CLASS   = DxeMainDependencyLoggingLib|DXE_DRIVER UEFI_APPLICATION DXE_RUNTIME_DRIVER UEFI_DRIVER
+  CONSTRUCTOR     = DxeMainDependencyLoggingLibInit
 
 [LibraryClasses]
   DebugLib
@@ -32,5 +32,5 @@
   MdeModulePkg/MdeModulePkg.dec
 
 [Sources]
-  DriverDependencyLogging.c
+  DxeMainDependencyLoggingLib.c
 

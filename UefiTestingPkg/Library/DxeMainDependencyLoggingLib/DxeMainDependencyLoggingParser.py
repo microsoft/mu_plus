@@ -1,4 +1,4 @@
-## @file -- DispatchDataParser.py
+## @file -- DxeMainDependencyLoggingParser.py
 #
 # This library and toolset are used with the Core DXE dispatcher to log all DXE drivers' protocol usage and
 # dependency expression implementation during boot.
@@ -38,9 +38,9 @@ DEPEX_LOG_BEGIN = "DEPEX_LOG_v1_BEGIN"
 DEPEX_LOG_END   = "DEPEX_LOG_v1_END"
 
 # Names of output files provided in the output directory
-RESULTS_FILE_NAME        = "DispatchData - Parsing Results.txt"
-PARSING_JSON_FILE_NAME   = "DispatchData - Parsed Data.json"
-DEC_GUID_JSON_FILE_NAME  = "DispatchData - GUID Names.json"
+RESULTS_FILE_NAME        = "DxeMainDependency - Parsing Results.txt"
+PARSING_JSON_FILE_NAME   = "DxeMainDependency - Parsed Data.json"
+DEC_GUID_JSON_FILE_NAME  = "DxeMainDependency - GUID Names.json"
 
 ##
 # Class to stream evaluation messages to a file and the console
@@ -61,7 +61,7 @@ class EvaluationReporting:
 
     # Write header information
     self.FileHandle = open(ResultsFile, 'w', encoding='utf-8')
-    self.FileHandle.write("Dispatch Data Parser - Evaluation Data\n")
+    self.FileHandle.write("DxeMain Dependency Logging Parser - Evaluation Data\n")
     self.FileHandle.write(datetime.now().strftime("%b %d, %Y - %I:%M:%S %p\n\n"))
   
   ##

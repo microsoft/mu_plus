@@ -1,4 +1,4 @@
-/** @file -- DriverDependencyLogging.c
+/** @file -- DxeMainDependencyLoggingLib.c
 
 This library and toolset are used with the Core DXE dispatcher to log all DXE drivers' protocol usage and
 dependency expression implementation during boot.
@@ -19,7 +19,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiLib.h>
-#include "DriverDependencyLogging.h"
+#include "DxeMainDependencyLoggingLib.h"
 
 //
 // WARNING - This library is tightly coupled to the MdeModulePkg Core DXE driver
@@ -80,7 +80,7 @@ MessageAscii (
   OutSize = AsciiVSPrint (MsgBuffer->CatPtr, FreeSize, FormatString, Marker);
   VA_END (Marker);
 
-  // Debug print the string.  Insert a tab if it is a new line to help distinguish it from normal UEFI logs
+  // Debug print the string, inserting a tab if it is a new line to help distinguish it from normal UEFI logs
   if (NewLine) {
     DEBUG ((LOGGING_DEBUG_LEVEL, "    "));
     NewLine = FALSE;
@@ -179,6 +179,7 @@ MessageDepex (
       MessageAscii (MsgBuffer, "%02X", Depex[x]);
     }
 
+    // Free memory provided by the ReadSection call
     FreePool (Depex);
   }
 }
@@ -394,7 +395,7 @@ LocateProtocolHook (
 **/
 EFI_STATUS
 EFIAPI
-DriverDependencyLoggingInit (
+DxeMainDependencyLoggingLibInit (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
