@@ -62,7 +62,7 @@
   ExceptionPersistenceLib|MdeModulePkg/Library/BaseExceptionPersistenceLibNull/BaseExceptionPersistenceLibNull.inf
   CpuPageTableLib|UefiCpuPkg/Library/CpuPageTableLib/CpuPageTableLib.inf
   DxeMemoryProtectionHobLib|MdeModulePkg/Library/MemoryProtectionHobLibNull/DxeMemoryProtectionHobLibNull.inf
-  DriverDependencyLoggingLib|UefiTestingPkg/Library/DriverDependencyLogging/DriverDependencyLogging.inf
+  DxeMainDependencyLoggingLib|UefiTestingPkg/Library/DxeMainDependencyLoggingLib/DxeMainDependencyLoggingLib.inf
 
 [LibraryClasses.ARM, LibraryClasses.AARCH64]
   ArmDisassemblerLib|ArmPkg/Library/ArmDisassemblerLib/ArmDisassemblerLib.inf
@@ -135,7 +135,7 @@
   UefiTestingPkg/FunctionalSystemTests/MemmapAndMatTestApp/MemmapAndMatTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MorLockTestApp/MorLockTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MpManagement/App/MpManagementTestApp.inf
-  UefiTestingPkg/Library/DriverDependencyLogging/DriverDependencyLogging.inf
+  UefiTestingPkg/Library/DxeMainDependencyLoggingLib/DxeMainDependencyLoggingLib.inf
 
 [Components.IA32, Components.X64]
   UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMAIVRSProtectionUnitTestApp.inf
