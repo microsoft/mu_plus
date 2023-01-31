@@ -29,7 +29,6 @@
   MdeModulePkg/MdeModulePkg.dec
   MsGraphicsPkg/MsGraphicsPkg.dec
   PcBdsPkg/PcBdsPkg.dec
-  DfciPkg/DfciPkg.dec
 
 [LibraryClasses]
   DevicePathLib
@@ -57,7 +56,6 @@
 [Protocols]
   gEfiSimpleFileSystemProtocolGuid
   gEfiLoadFileProtocolGuid
-  gDfciSettingAccessProtocolGuid
   gEfiLoadedImageProtocolGuid
 
 [FeaturePcd]

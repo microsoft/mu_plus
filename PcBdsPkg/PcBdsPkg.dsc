@@ -62,7 +62,7 @@
   DeviceStateLib|MdeModulePkg/Library/DeviceStateLib/DeviceStateLib.inf
   DeviceBootManagerLib|MsCorePkg/Library/DeviceBootManagerLibNull/DeviceBootManagerLibNull.inf
 
-  MsBootManagerSettingsLib|PcBdsPkg/Library/MsBootManagerSettingsDxeLib/MsBootManagerSettingsDxeLib.inf
+  MsBootManagerSettingsLib|PcBdsPkg/Library/BootManagerSettingsDxeLibNull/BootManagerSettingsDxeLibNull.inf
   MsBootOptionsLib|PcBdsPkg/Library/MsBootOptionsLib/MsBootOptionsLib.inf
   MsBootPolicyLib|PcBdsPkg/Library/MsBootPolicyLibNull/MsBootPolicyLibNull.inf
   MsNetworkDependencyLib|PcBdsPkg/Library/MsNetworkDependencyLib/MsNetworkDependencyLib.inf
@@ -108,7 +108,7 @@
 #
 ###################################################################################################
 [Components]
-  PcBdsPkg/Library/MsBootManagerSettingsDxeLib/MsBootManagerSettingsDxeLib.inf
+  PcBdsPkg/Library/BootManagerSettingsDxeLibNull/BootManagerSettingsDxeLibNull.inf
   PcBdsPkg/Library/MsBootOptionsLib/MsBootOptionsLib.inf
   PcBdsPkg/Library/MsNetworkDelayLib/MsNetworkDelayLib.inf
   PcBdsPkg/Library/MsNetworkDependencyLib/MsNetworkDependencyLib.inf
@@ -125,8 +125,6 @@
   PcBdsPkg/Library/GraphicsConsoleHelperLibNull/GraphicsConsoleHelperLibNull.inf
 
 [Components.X64]
-  PcBdsPkg/Library/DeviceBootManagerLib/DeviceBootManagerLib.inf
-  PcBdsPkg/Library/UpdateFacsHardwareSignatureLib/UpdateFacsHardwareSignatureLib.inf
   PcBdsPkg/MsBootPolicy/MsBootPolicy.inf
   PcBdsPkg/ResetIfBootNextFailsDxe/ResetIfBootNextFailsDxe.inf
 
