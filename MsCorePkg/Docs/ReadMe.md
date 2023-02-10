@@ -25,9 +25,9 @@ This package has shared drivers and libraries that are silicon and platform inde
 | **DebugPortProtocolInstallLib**           | [DebugPortProtocolInstallLib](../Library/DebugPortProtocolInstallLib/ReadMe.md) |
 | **DeviceBootManagerLibNull**              | [DeviceBootManagerLibNull](../Library/DeviceBootManagerLibNull/ReadMe.md) |
 | **DeviceSpecificBusInfoLibNull**          | [DeviceSpecificBusInfoLibNull](../Library/DeviceSpecificBusInfoLibNull/ReadMe.md) |
-| **DxeDebugLibRouter**                     | [DxeDebugLibRouter](../Library/DxeDebugLibRouter/ReadMe.md) |
+| **DxeDebugLibRouter**                     | [DxeDebugLibRouter](../Library/DxeDebugLibRouter/Feature_DebugRouting_ReadMe.md |
 | **JsonLiteParser**                        | [JsonLiteParser](../Library/JsonLiteParser/ReadMe.md) |
-| **MathLib**                               | [MathLib](../MathLib/Library/ReadMe.md) |
+| **MathLib**                               | [MathLib](../Library/MathLib/ReadMe.md) |
 | **MemoryTypeInformationChangeLib**        | [MemoryTypeInformationChangeLib](../Library/MemoryTypeInformationChangeLib/ReadMe.md) |
 | **PasswordStoreLibNull**                  | [PasswordStoreLibNull](../Library/PasswordStoreLibNull/ReadMe.md) |
 | **PeiDebugLib**                           | [PeiDebugLib](../Library/PeiDebugLib/ReadMe.md) |
@@ -44,8 +44,8 @@ Check the **UntTests** folder at the root of the package.
 
 | Library Tests          | Link to Documentation |
 | ---                    | --- |
-| **Json Test:**         | [Json Test](..\UnitTests/JsonTest/ReadMe.md) |
-| **MathLib UnitTests:** | [MathLib UnitTests](..\UnitTests/MathLibUnitTest/ReadMe.md) |
+| **Json Test:**         | [Json Test](../UnitTests/JsonTest/readme.md) |
+| **MathLib UnitTests:** | [MathLib UnitTests](../UnitTests/MathLibUnitTest/ReadMe.md) |
 
 ---
 

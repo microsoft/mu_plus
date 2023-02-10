@@ -21,7 +21,7 @@ It is significantly less configurable and is focused on reducing attack surface.
 
 Here is a flow chart that should explain the overall flow of the capsule system.
 
-!["flowchart"](Images/CapsuleFlowchart.png)
+!["flowchart"](Images/CapsuleFlowchart_mu.png)
 
 The new system stores capsules on the EFI partition of the main disk.
 While it shares many similarities to Capsule on Disk,

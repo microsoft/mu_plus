@@ -7,7 +7,7 @@ for OEM definition. Each 32-bit range is split into two 16-bit ranges, one for s
 persists across reboots for the duration a policy is installed, and one for 1-time actions that are
 triggered once at policy installation. Example actions include Microsoft-defined Secure Boot clear
 and TPM clear. An example state might be "OEM Manufacturing Mode foo", which enables modification of
-secure configuration.  
+secure configuration.
 
 [Structure Definition](../Include/MfciPolicyType.h)
 
@@ -15,7 +15,7 @@ secure configuration.
 
 An MFCI policy blob is a structure that contains the aforementioned 64-bit configuration policy,
 along with device targeting information including OEM, model, serial number, 2 OEM-defined fields,
-& a security nonce.  
+& a security nonce.
 
 To prevent tampering and provide authentication & authorization, MFCI policy blobs are digitally
 signed using the attached, embedded PKCS7 format (not the detached format as is used elsewhere in UEFI).
@@ -32,8 +32,8 @@ the task of authenticating, verifying targeting, and parsing the blobs down to t
 For the purpose of testing, a python library and commandline wrappers are provided to facilitate
 creation of unsigned MFCI policies. After the policies are created, they will still need to be signed.
 
-* <https://github.com/tianocore/edk2-pytool-library/blob/master/docs/features/windows_firmware_policy.md>
-* <https://github.com/tianocore/edk2-pytool-extensions/blob/master/docs/usability/using_firmware_policy_tool.md>
+* [Windows Firmware Policy Library](https://github.com/tianocore/edk2-pytool-library/blob/master/docs/user/features/windows_firmware_policy.md)
+* [Using the Firmware Policy Tool](https://github.com/tianocore/edk2-pytool-extensions/blob/master/docs/user/tools/using_firmware_policy_tool.md)
 
 ## Targeting Information
 
@@ -55,8 +55,8 @@ used to generate test signing keys are included in this repo for reference. Plea
 needs to include OID `1.3.6.1.5.5.7.3.3` as well as the user designed leaf EKU that is used as an
 additional test.  This second EKU must be set in pcd `PcdMfciPkcs7RequiredLeafEKU`.
 
-* [Windows Power Shell Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/CreateCertificates.ps1)
-* [Windows Batch Script](../UnitTests/MfciPolicyParsingUnitTest/data/certs/MakeChainingCerts.bat)
+* [Windows Power Shell Script to CreateCertificates](../UnitTests/MfciPolicyParsingUnitTest/data/certs/CreateCertificates.ps1)
+* [Windows Batch Script to MakeChainingCerts](../UnitTests/MfciPolicyParsingUnitTest/data/certs/MakeChainingCerts.bat)
 
 ### Example signing
 
@@ -68,13 +68,13 @@ has a .p7 extension, and this is the file that should be place into the MfciNext
 
 ```INI
     c:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17763.0\\x64\\signtool.exe
-    sign 
-    /fd SHA256 
+    sign
+    /fd SHA256
     /p7 .
     /p7co 1.2.840.113549.1.7.1
     /p7ce Embedded
     /f <pfx file of leaf key>.pfx
-    /v /debug 
+    /v /debug
     /p <password used to secure the leaf key pfx file>
     <input policy>.bin
 ```

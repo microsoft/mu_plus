@@ -58,7 +58,7 @@ must be overridden. Two other instances are available in the MfciPkg, or a custo
 
 #### Including Pkcs Certificates
 
-[Mfci Policy Blobs](Mfci_Structures.md) need to be digitally signed for the system to consume their data.  
+[Mfci Policy Blobs](Mfci_Structures.md) need to be digitally signed for the system to consume their data.
 The public portion of the Public/Private key needs to be included into for the MfciPkg to be able to verify
 policy blobs. This is done through the PCDs PcdMfciPkcs7CertBufferXdr.
 
