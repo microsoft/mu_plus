@@ -103,6 +103,9 @@ ParserLibRegisterSectionParser (
   }
 
   SectionMapType  *new =  AllocatePool (sizeof (SectionMapType));
+  if (new == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   new->Guid   = *Guid;
   new->Parser =  Ptr;

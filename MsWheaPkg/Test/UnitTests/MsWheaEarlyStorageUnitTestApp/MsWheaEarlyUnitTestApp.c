@@ -214,6 +214,8 @@ MsWheaESChecksumTest (
   MS_WHEA_EARLY_STORAGE_HEADER  *Header;
 
   Data = AllocatePool (MsWheaEarlyStorageGetMaxSize ());
+  UT_ASSERT_TRUE (Data != NULL);
+
   MsWheaEarlyStorageRead (Data, MsWheaEarlyStorageGetMaxSize (), 0);
 
   // Zero the checksum before calculation
@@ -376,14 +378,18 @@ MsWheaESFindSlotTest (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT8  Slot;
+  UINT8       Slot;
+  EFI_STATUS  Status;
 
-  MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
+  Status = MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
   MsWheaESContentChangeChecksumHelper (TestDataArray, sizeof (TestDataArray));
 
   MsWheaESReadHeader (&UnitTestHeader);
 
-  MsWheaESFindSlot (sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON), &Slot);
+  Status = MsWheaESFindSlot (sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON), &Slot);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   UT_ASSERT_EQUAL (Slot, UnitTestHeader.ActiveRange);
 
