@@ -2262,6 +2262,7 @@ RtlXmlExtentToString (
   UINT32   Character;
   BOOLEAN  fConvertReferences;
   UINT32   cbRequired = 0;
+  UINTN    TempPtrEnd;
 
   if (!pState || !pExtent || !pcbString || !pString) {
     return RtlpReportXmlError (EFI_INVALID_PARAMETER);
