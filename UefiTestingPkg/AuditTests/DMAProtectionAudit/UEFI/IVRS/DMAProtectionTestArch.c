@@ -79,6 +79,7 @@ CheckExcludedRegions (
                             );
   if (Status == EFI_BUFFER_TOO_SMALL) {
     EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocateZeroPool (EfiMemoryMapSize + 8*EfiDescriptorSize);
+    UT_ASSERT_NOT_NULL (EfiMemoryMap);
 
     Status = gBS->GetMemoryMap (
                     &EfiMemoryMapSize,

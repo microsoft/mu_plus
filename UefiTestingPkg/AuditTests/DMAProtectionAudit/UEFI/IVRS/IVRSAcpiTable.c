@@ -96,7 +96,7 @@ ProcessIvhd (
         break;
       default:
         ASSERT (FALSE);
-        break;
+        return EFI_NOT_FOUND;
     }
 
     DEBUG ((DEBUG_INFO, " S%04x B%02x D%02x F%02x\n", IvrsIvhd->PCISegmentGroup, IvrsDeviceTableEntry->DeviceID.Bits.Bus, IvrsDeviceTableEntry->DeviceID.Bits.Device, IvrsDeviceTableEntry->DeviceID.Bits.Function));
@@ -133,7 +133,11 @@ GetIvrsAcpiTableIvmd (
       case IVMD_TYPE_21H:
       case IVMD_TYPE_22H:
         // If IVMD found add to end of linked list
-        NewNode       = (IVMDListNode *)AllocateZeroPool (sizeof (IVMDListNode));
+        NewNode = (IVMDListNode *)AllocateZeroPool (sizeof (IVMDListNode));
+        if (NewNode == NULL) {
+          return NULL;
+        }
+
         NewNode->IVMD = (IVMD_Header *)IvrsHeader;
         NewNode->Next = NULL;
 
