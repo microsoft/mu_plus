@@ -1121,7 +1121,7 @@ MsWheaVariableServicesTest (
   UT_ASSERT_TRUE (MaxIndex <= MAX_UINT16);
 
   // Phase 1: Alternate write and delete HwErrRec, it should end up with out of resources
-  for (TestIndex = 0; TestIndex < (PcdGet32 (PcdFlashNvStorageVariableSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
+  for (TestIndex = 0; TestIndex < (UINT16)MaxIndex; TestIndex++) {
     DEBUG ((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
 
     Attributes = EFI_VARIABLE_NON_VOLATILE |
