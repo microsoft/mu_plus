@@ -198,10 +198,11 @@ GetDmarAcpiTableRmrr (
     switch (DmarHeader->Type) {
       case EFI_ACPI_DMAR_TYPE_RMRR:
         // If RMRR found add to end of linked list
-        NewNode       = (RMRRListNode *)AllocateZeroPool (sizeof (RMRRListNode));
+        NewNode = (RMRRListNode *)AllocateZeroPool (sizeof (RMRRListNode));
         if (NewNode == NULL) {
           return NULL;
         }
+
         NewNode->RMRR = (EFI_ACPI_DMAR_RMRR_HEADER *)DmarHeader;
         NewNode->Next = NULL;
 
