@@ -1035,14 +1035,18 @@ MsWheaStressEntries (
   UNIT_TEST_STATUS      utStatus = UNIT_TEST_RUNNING;
   EFI_STATUS            Status   = EFI_SUCCESS;
   UINT16                TestIndex;
+  UINT32                MaxIndex;
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT *)Context;
 
   DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
 
   MsWheaContext->TestId = TEST_ID_STRESS;
 
+  MaxIndex = PcdGet32 (PcdHwErrStorageSize)/UNIT_TEST_ERROR_SIZE + 1;
+  UT_ASSERT_TRUE (MaxIndex <= MAX_UINT16);
+
   // This should use up all the available space and return
-  for (TestIndex = 0; TestIndex < (PcdGet32 (PcdHwErrStorageSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
+  for (TestIndex = 0; TestIndex < (UINT16)MaxIndex; TestIndex++) {
     DEBUG ((DEBUG_INFO, "%a: Test No. %d...\n", __FUNCTION__, TestIndex));
     Status = ReportStatusCode (
                MS_WHEA_ERROR_STATUS_TYPE_FATAL,
@@ -1102,6 +1106,7 @@ MsWheaVariableServicesTest (
   UINT8                 Data[sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA)];
   UINT32                Size = sizeof (MS_WHEA_RSC_INTERNAL_ERROR_DATA);
   UINT16                TestIndex;
+  UINT32                MaxIndex;
   CHAR16                VarName[EFI_HW_ERR_REC_VAR_NAME_LEN];
   MS_WHEA_TEST_CONTEXT  *MsWheaContext = (MS_WHEA_TEST_CONTEXT *)Context;
   UINT32                Attributes;
@@ -1111,6 +1116,9 @@ MsWheaVariableServicesTest (
 
   MsWheaContext->TestId = TEST_ID_VARSEV;
   UnicodeSPrint (VarName, sizeof (VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, 0);
+
+  MaxIndex = PcdGet32 (PcdHwErrStorageSize)/UNIT_TEST_ERROR_SIZE + 1;
+  UT_ASSERT_TRUE (MaxIndex <= MAX_UINT16);
 
   // Phase 1: Alternate write and delete HwErrRec, it should end up with out of resources
   for (TestIndex = 0; TestIndex < (PcdGet32 (PcdFlashNvStorageVariableSize)/UNIT_TEST_ERROR_SIZE + 1); TestIndex++) {
