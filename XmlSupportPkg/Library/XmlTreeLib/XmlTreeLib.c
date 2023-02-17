@@ -996,7 +996,7 @@ BuildNodeList (
       //
       // See if we have a value.
       //
-      for (UINT32 i = 0; i < Next.Run.ulCharacters; i++) {
+      for (UINT64 i = 0; i < Next.Run.ulCharacters; i++) {
         if (!IsWhiteSpace (LocalHyperSpace[i])) {
           // MS_CHANGE
           NotWhiteSpace = TRUE;
