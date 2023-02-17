@@ -286,6 +286,11 @@ SortHandles (
     for (Index = 0; Index < (HandleCount - 1); Index++) {
       DevicePathA = DevicePathFromHandle (HandleBuffer[Index]);
       DevicePathB = DevicePathFromHandle (HandleBuffer[Index + 1]);
+      if ((DevicePathA == NULL) || (DevicePathB == NULL)) {
+        ASSERT (DevicePathA != NULL);
+        ASSERT (DevicePathB != NULL);
+        return;
+      }
 
       if (CompareDevicePathAgtB (DevicePathA, DevicePathB)) {
         TempHandle              = HandleBuffer[Index];
