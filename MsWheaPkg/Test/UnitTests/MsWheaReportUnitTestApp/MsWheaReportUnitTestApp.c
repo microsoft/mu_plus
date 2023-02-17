@@ -1117,7 +1117,7 @@ MsWheaVariableServicesTest (
   MsWheaContext->TestId = TEST_ID_VARSEV;
   UnicodeSPrint (VarName, sizeof (VarName), L"%s%04X", EFI_HW_ERR_REC_VAR_NAME, 0);
 
-  MaxIndex = PcdGet32 (PcdHwErrStorageSize)/UNIT_TEST_ERROR_SIZE + 1;
+  MaxIndex = (PcdGet32 (PcdHwErrStorageSize) / UNIT_TEST_ERROR_SIZE) + 1;
   UT_ASSERT_TRUE (MaxIndex <= MAX_UINT16);
 
   // Phase 1: Alternate write and delete HwErrRec, it should end up with out of resources
