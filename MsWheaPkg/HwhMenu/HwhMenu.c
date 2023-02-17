@@ -839,6 +839,9 @@ PopulateWheaErrorList (
 
     if (Status != EFI_NOT_FOUND) {
       ErrorRecordPointer = AllocatePool (Size);
+      if (ErrorRecordPointer == NULL) {
+        return EFI_OUT_OF_RESOURCES;
+      }
 
       // Populate the error record
       Status = gRT->GetVariable (

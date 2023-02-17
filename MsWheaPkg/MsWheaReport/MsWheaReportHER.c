@@ -282,6 +282,9 @@ MsWheaAnFBuffer (
     goto Cleanup;
   }
 
+  CperErrExtraSecDscp = NULL;
+  ExtraSectionData    = NULL;
+
   TotalSize = sizeof (EFI_COMMON_ERROR_RECORD_HEADER) +
               sizeof (EFI_ERROR_SECTION_DESCRIPTOR) +
               sizeof (MU_TELEMETRY_CPER_SECTION_DATA);
