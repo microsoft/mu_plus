@@ -667,7 +667,7 @@ MsWheaESProcess (
 
   // Go through normal entries
   while ((Header.ActiveRange >= sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON)) &&
-         (Index <= (Header.ActiveRange - sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON))))
+         (Index <= (UINT32)(Header.ActiveRange - sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON))))
   {
     Status = MsWheaESReadData (
                (VOID *)&mRevInfo,
