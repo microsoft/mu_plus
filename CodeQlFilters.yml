@@ -2,7 +2,7 @@
 # CodeQL Result Filters for Packages in Mu Plus
 #
 # Note: Packages that use Mu Basecore can reuse this file to quickly pick up the
-#       same filters applied to results in the Mu Basecore repo.
+#       same filters applied to results in the Mu Plus repo.
 #
 # Copyright (c) Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
