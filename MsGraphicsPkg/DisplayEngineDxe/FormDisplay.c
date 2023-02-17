@@ -2488,7 +2488,7 @@ UiDisplayMenu (
               // move old value to return value honoring the values of
               // Src and Tgt (ie MOVE)
               Jndex = 0;
-              for (Index = 0; Index < (Statement->CurrentValue.BufferLen / sizeof (UINT32)); ) {
+              for (Index = 0; Index < (UINT32)(Statement->CurrentValue.BufferLen / sizeof (UINT32)); ) {
                 if (Index == Tgt) {
                   ReturnValue[Index++] = ValueArray[Src];
                 } else if (Jndex == Src) {
