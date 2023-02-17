@@ -206,6 +206,10 @@ SimpleNetworkProtocolNotify (
   MacContext = (MAC_EMULATION_SNP_NOTIFY_CONTEXT *)Context;
 
   SnpToConfigureEmu = FindMatchingSnp (MacContext);
+  if (SnpToConfigureEmu == NULL) {
+    DEBUG ((DEBUG_ERROR, "[%a]: Returned SNP unexpectedly null.\n", __FUNCTION__));
+    return;
+  }
 
   SetSnpMacViaContext (SnpToConfigureEmu, MacContext);
 

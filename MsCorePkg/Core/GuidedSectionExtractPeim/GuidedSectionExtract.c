@@ -74,7 +74,12 @@ PeimInitializeGuidedSectionExtract (
   //
   if ((ExtractHandlerNumber > 0) && (ExtractHandlerGuidTable != NULL)) {
     GuidPpi = (EFI_PEI_PPI_DESCRIPTOR *)AllocatePool (ExtractHandlerNumber * sizeof (EFI_PEI_PPI_DESCRIPTOR));
-    ASSERT (GuidPpi != NULL);
+    if (GuidPpi == NULL) {
+      ASSERT (GuidPpi != NULL);
+      Status = EFI_OUT_OF_RESOURCES;
+      goto Exit;
+    }
+
     while (ExtractHandlerNumber-- > 0) {
       GuidPpi->Flags = EFI_PEI_PPI_DESCRIPTOR_PPI | EFI_PEI_PPI_DESCRIPTOR_TERMINATE_LIST;
       GuidPpi->Ppi   = (VOID *)&mCustomGuidedSectionExtractionPpi;
@@ -90,6 +95,7 @@ PeimInitializeGuidedSectionExtract (
   Status = PeiServicesInstallPpi (mPpiList);
   ASSERT_EFI_ERROR (Status);
 
+Exit:
   return Status;
 }
 
