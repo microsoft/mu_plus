@@ -1042,7 +1042,7 @@ MsWheaStressEntries (
 
   MsWheaContext->TestId = TEST_ID_STRESS;
 
-  MaxIndex = PcdGet32 (PcdHwErrStorageSize)/UNIT_TEST_ERROR_SIZE + 1;
+  MaxIndex = (PcdGet32 (PcdHwErrStorageSize) / UNIT_TEST_ERROR_SIZE) + 1;
   UT_ASSERT_TRUE (MaxIndex <= MAX_UINT16);
 
   // This should use up all the available space and return
