@@ -191,7 +191,7 @@ GlyphToBlt (
       // There are some padding bits in this byte. Ignore them.
       //
       Data = *(GlyphBuffer + OffsetY + Xpos);
-      for (Index = 0; Index < Cell->Width % 8 && ((UINTN)(Xpos * 8 + Index + Cell->OffsetX) < RowWidth); Index++) {
+      for (Index = 0; Index < (UINT16)(Cell->Width % 8) && ((UINTN)(Xpos * 8 + Index + Cell->OffsetX) < RowWidth); Index++) {
         if ((Data & (1 << (8 - Index - 1))) != 0) {
           BltBuffer[Ypos * ImageWidth + Xpos * 8 + Index] = Foreground;
         } else {
