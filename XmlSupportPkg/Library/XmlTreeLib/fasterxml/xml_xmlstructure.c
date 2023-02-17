@@ -2319,7 +2319,7 @@ RtlXmlExtentToString (
     //
     else if (Character < 0x110000) {
       TempPtrEnd = (UINTN)pwszWriteEnd;
-      if ((TempPtrEnd + 2 * sizeof (*pwszWriteEnd)) <= TempPtrEnd) {
+      if ((TempPtrEnd + (2 * sizeof (*pwszWriteEnd))) <= TempPtrEnd) {
         pwszWriteCursor[0] = (CHAR16)(((Character - 0x10000) / 0x400) + 0xd800);
         pwszWriteCursor[1] = (CHAR16)(((Character - 0x10000) % 0x400) + 0xdc00);
         pwszWriteCursor   += 2;
