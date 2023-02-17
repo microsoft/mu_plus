@@ -4936,7 +4936,7 @@ RtlXmlCopyStringOut (
     //
     else if (Result.Character < 0x110000) {
       TempPtrEnd = (UINTN)pwszWriteEnd;
-      if (((TempPtrEnd + 2 * sizeof (*pwszWriteEnd)) <= TempPtrEnd) && (pwszWriteCursor != NULL)) {
+      if (((TempPtrEnd + (2 * sizeof (*pwszWriteEnd))) <= TempPtrEnd) && (pwszWriteCursor != NULL)) {
         pwszWriteCursor[0] = (CHAR16)(((Result.Character - 0x10000) / 0x400) + 0xd800);
         pwszWriteCursor[1] = (CHAR16)(((Result.Character - 0x10000) % 0x400) + 0xdc00);
       }
