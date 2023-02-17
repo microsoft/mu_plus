@@ -983,7 +983,7 @@ ProcessKeyStroke (
   // Bytes 3 to n are for normal keycodes
   //
   KeyRelease = FALSE;
-  for (LastKeyCode = 0; LastKeyCode < LastReportKeyCount; LastKeyCode++) {
+  for (LastKeyCode = 0; (UINTN)LastKeyCode < LastReportKeyCount; LastKeyCode++) {
     if (!HIDKBD_VALID_KEYCODE (LastReport->KeyCode[LastKeyCode])) {
       continue;
     }
@@ -993,7 +993,7 @@ ProcessKeyStroke (
     // then it is released. Otherwise, it is not released.
     //
     KeyRelease = TRUE;
-    for (KeyCode = 0; KeyCode < CurrentReportKeyCount; KeyCode++) {
+    for (KeyCode = 0; (UINTN)KeyCode < CurrentReportKeyCount; KeyCode++) {
       if (!HIDKBD_VALID_KEYCODE (CurrentReport->KeyCode[KeyCode])) {
         continue;
       }
@@ -1033,7 +1033,7 @@ ProcessKeyStroke (
   // Handle normal key's pressing situation
   //
   KeyPress = FALSE;
-  for (KeyCode = 0; KeyCode < CurrentReportKeyCount; KeyCode++) {
+  for (KeyCode = 0; (UINTN)KeyCode < CurrentReportKeyCount; KeyCode++) {
     if (!HIDKBD_VALID_KEYCODE (CurrentReport->KeyCode[KeyCode])) {
       continue;
     }
@@ -1043,7 +1043,7 @@ ProcessKeyStroke (
     // then it is pressed. Otherwise, it is not pressed.
     //
     KeyPress = TRUE;
-    for (LastKeyCode = 0; LastKeyCode < LastReportKeyCount; LastKeyCode++) {
+    for (LastKeyCode = 0; (UINTN)LastKeyCode < LastReportKeyCount; LastKeyCode++) {
       if (!HIDKBD_VALID_KEYCODE (LastReport->KeyCode[LastKeyCode])) {
         continue;
       }
