@@ -1381,7 +1381,8 @@ ImageProtection (
 
     PagesAllocated = EFI_SIZE_TO_PAGES (MapCount * sizeof (IA32_MAP_ENTRY));
     Map            = AllocatePages (PagesAllocated);
-    Status         = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
+    UT_ASSERT_NOT_NULL (Map);
+    Status = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
   }
 
   UT_ASSERT_NOT_EFI_ERROR (Status);
@@ -1555,7 +1556,12 @@ AddUefiNxTest (
     // Set memory type according to the bitmask for Dxe NX Memory Protection Policy.
     // The test progress should start at 0.
     //
-    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    if (MemoryProtectionContext == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Allocating memory for test context failed.\n", __FUNCTION__));
+      return;
+    }
+
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
     MemoryProtectionContext->DynamicActive    = Dynamic;
@@ -1619,7 +1625,12 @@ AddUefiPoolTest (
     // Set memory type according to the Heap Guard Pool Type setting.
     // The test progress should start at 0.
     //
-    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    if (MemoryProtectionContext == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Allocating memory for test context failed.\n", __FUNCTION__));
+      return;
+    }
+
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
     MemoryProtectionContext->DynamicActive    = Dynamic;
@@ -1683,7 +1694,12 @@ AddUefiPageTest (
     // Set memory type according to the Heap Guard Page Type setting.
     // The test progress should start at 0.
     //
-    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    if (MemoryProtectionContext == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Allocating memory for test context failed.\n", __FUNCTION__));
+      return;
+    }
+
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
     MemoryProtectionContext->DynamicActive    = Dynamic;
@@ -1740,7 +1756,12 @@ AddSmmPoolTest (
     // Set memory type according to the Heap Guard Pool Type setting.
     // The test progress should start at 0.
     //
-    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    if (MemoryProtectionContext == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Allocating memory for test context failed.\n", __FUNCTION__));
+      return;
+    }
+
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
 
@@ -1796,7 +1817,12 @@ AddSmmPageTest (
     // Set memory type according to the Heap Guard Page Type setting.
     // The test progress should start at 0.
     //
-    MemoryProtectionContext                   =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    MemoryProtectionContext =  (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    if (MemoryProtectionContext == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Allocating memory for test context failed.\n", __FUNCTION__));
+      return;
+    }
+
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
 
@@ -1855,7 +1881,12 @@ MemoryProtectionTestAppEntryPoint (
   UNIT_TEST_SUITE_HANDLE          Misc         = NULL;
   MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext;
 
-  MemoryProtectionContext                = (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+  MemoryProtectionContext = (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+  if (MemoryProtectionContext == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - Allocating memory for test context failed.\n", __FUNCTION__));
+    return EFI_OUT_OF_RESOURCES;
+  }
+
   MemoryProtectionContext->DynamicActive = FALSE;
 
   DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
