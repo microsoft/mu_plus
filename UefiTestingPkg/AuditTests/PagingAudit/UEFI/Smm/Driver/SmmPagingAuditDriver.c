@@ -116,6 +116,11 @@ SmmLoadedImageTableDump (
       CommBuffer->SmmImage[DestinationIndex].ImageSize = (UINT64)(UINTN)LoadedImage->ImageSize;
 
       ImageName = PeCoffLoaderGetPdbPointer (LoadedImage->ImageBase);
+      if (ImageName == NULL) {
+        FreePool (HandleBuffer);
+        return EFI_NOT_FOUND;
+      }
+
       AsciiStrnCpyS (
         &CommBuffer->SmmImage[DestinationIndex].ImageName[0],
         MAX_IMAGE_NAME_SIZE,

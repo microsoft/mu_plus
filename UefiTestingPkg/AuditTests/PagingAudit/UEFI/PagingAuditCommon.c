@@ -756,7 +756,12 @@ MemoryMapDumpHandler (
   //
   do {
     EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocateZeroPool (EfiMemoryMapSize);
-    ASSERT (EfiMemoryMap != NULL);
+    if (EfiMemoryMap == NULL) {
+      ASSERT (EfiMemoryMap != NULL);
+      DEBUG ((DEBUG_ERROR, "%a - Unable to allocate memory for the EFI memory map.\n", __FUNCTION__));
+      return;
+    }
+
     Status = gBS->GetMemoryMap (
                     &EfiMemoryMapSize,
                     EfiMemoryMap,
