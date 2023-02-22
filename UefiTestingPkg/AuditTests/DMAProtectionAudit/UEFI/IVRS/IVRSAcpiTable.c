@@ -135,6 +135,7 @@ GetIvrsAcpiTableIvmd (
         // If IVMD found add to end of linked list
         NewNode = (IVMDListNode *)AllocateZeroPool (sizeof (IVMDListNode));
         if (NewNode == NULL) {
+          ASSERT (NewNode != NULL);
           return NULL;
         }
 

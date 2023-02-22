@@ -200,6 +200,7 @@ GetDmarAcpiTableRmrr (
         // If RMRR found add to end of linked list
         NewNode = (RMRRListNode *)AllocateZeroPool (sizeof (RMRRListNode));
         if (NewNode == NULL) {
+          ASSERT (NewNode != NULL);
           return NULL;
         }
 

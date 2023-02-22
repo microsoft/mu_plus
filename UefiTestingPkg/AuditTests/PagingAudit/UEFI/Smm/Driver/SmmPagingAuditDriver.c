@@ -117,6 +117,7 @@ SmmLoadedImageTableDump (
 
       ImageName = PeCoffLoaderGetPdbPointer (LoadedImage->ImageBase);
       if (ImageName == NULL) {
+        FreePool (HandleBuffer);
         return EFI_NOT_FOUND;
       }
 
