@@ -3,6 +3,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
+import glob
 import os
 import logging
 import sys
@@ -185,10 +186,13 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
                         "STUART_CODEQL_AUDIT_ONLY",
                         "TRUE",
                         "Set in CISettings.py")
+                    codeql_filter_files = [str(n) for n in glob.glob(
+                        os.path.join(self.GetWorkspaceRoot(),
+                            '**/CodeQlFilters.yml'),
+                        recursive=True)]
                     shell_environment.GetBuildVars().SetValue(
                         "STUART_CODEQL_FILTER_FILES",
-                        os.path.join(self.GetWorkspaceRoot(),
-                                     "CodeQlFilters.yml"),
+                        ','.join(codeql_filter_files),
                         "Set in CISettings.py")
             except NameError:
                 pass
