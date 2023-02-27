@@ -1,0 +1,58 @@
+## @file
+# Library registers an interrupt handler which catches exceptions related to memory
+# protections and turns them off for the next boot.
+#
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MemoryProtectionExceptionHandlerLib
+  FILE_GUID                      = 079cc3b7-a618-4024-8cc5-a36480df9261
+  MODULE_TYPE                    = DXE_DRIVER
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = NULL
+  CONSTRUCTOR                    = MemoryProtectionExceptionHandlerConstructor
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  MemoryProtectionExceptionHandlerLibX64.c
+  MemoryProtectionExceptionHandlerLibCommon.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  MsWheaPkg/MsWheaPkg.dec
+
+[LibraryClasses]
+  CpuExceptionHandlerLib
+  DebugLib
+  UefiBootServicesTableLib
+  DxeMemoryProtectionHobLib
+  ExceptionPersistenceLib
+  HwResetSystemLib
+  MsWheaEarlyStorageLib
+  PeCoffGetEntryPointLib
+  PcdLib
+
+[Guids]
+  gMemoryProtectionExceptionHandlerGuid               ## PRODUCES
+
+[Protocols]
+  gMemoryProtectionNonstopModeProtocolGuid            ## CONSUMES
+
+[Guids]
+  gMemoryProtectionExceptionHandlerGuid
+
+[FixedPcd]
+  gEfiMdePkgTokenSpaceGuid.PcdStackCookieExceptionVector
+
+[DEPEX]
+  TRUE

@@ -171,7 +171,8 @@
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
   MsCorePkg/AcpiRGRT/AcpiRgrt.inf
   MsCorePkg/Library/ExceptionPersistenceLibCmos/ExceptionPersistenceLibCmos.inf
-  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
+  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLibX64.inf
+  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLibAArch64.inf
   MsCorePkg/Library/DxeQueueUefiVariableLib/DxeQueueUefiVariableLib.inf
   MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
   MsCorePkg/Library/DxeCapsulePersistenceLib/DxeCapsulePersistenceLib.inf

@@ -12,9 +12,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Pi/PiStatusCode.h>
 
-#include <Protocol/DebugSupport.h>
-#include <Protocol/MemoryProtectionNonstopMode.h>
-
 #include <Library/CpuExceptionHandlerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -23,9 +20,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ResetSystemLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
-#include <Library/PcdLib.h>
-
-#define IA32_PF_EC_ID  BIT4
 
 STATIC EFI_HANDLE  mImageHandle = NULL;
 
@@ -43,73 +37,7 @@ EFIAPI
 MemoryProtectionExceptionHandler (
   IN EFI_EXCEPTION_TYPE  InterruptType,
   IN EFI_SYSTEM_CONTEXT  SystemContext
-  )
-{
-  UINTN                                    pointer;
-  MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *NonstopModeProtocol;
-  BOOLEAN                                  IgnoreNext = FALSE;
-  EFI_STATUS                               Status;
-
-  if (!EFI_ERROR (ExPersistGetIgnoreNextPageFault (&IgnoreNext)) &&
-      IgnoreNext &&
-      (InterruptType == EXCEPT_IA32_PAGE_FAULT))
-  {
-    ExPersistClearIgnoreNextPageFault ();
-    Status = gBS->LocateProtocol (&gMemoryProtectionNonstopModeProtocolGuid, NULL, (VOID **)&NonstopModeProtocol);
-    if (!EFI_ERROR (Status)) {
-      Status = NonstopModeProtocol->ClearPageFault (InterruptType, SystemContext);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "%a - Error Clearing Page Fault\n", __FUNCTION__));
-      } else {
-        DEBUG ((DEBUG_INFO, "%a - Page Fault Cleared\n", __FUNCTION__));
-      }
-
-      return;
-    }
-  }
-
-  DumpCpuContext (
-    InterruptType,
-    SystemContext
-    );
-
-  if (SystemContext.SystemContextX64 != NULL) {
-    if ((InterruptType == EXCEPT_IA32_PAGE_FAULT) &&
-        ((SystemContext.SystemContextX64->ExceptionData & IA32_PF_EC_ID) != 0))
-    {
-      // The RIP in SystemContext could not be used if it is page fault with I/D set.
-      pointer = (UINTN)SystemContext.SystemContextX64->Rsp;
-    } else {
-      pointer = (UINTN)SystemContext.SystemContextX64->Rip;
-    }
-
-    MsWheaESAddRecordV0 (
-      (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
-      (UINT64)PeCoffSearchImageBase (pointer),
-      SystemContext.SystemContextX64->Rip,
-      NULL,
-      NULL
-      );
-  } else {
-    MsWheaESAddRecordV0 (
-      (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
-      SIGNATURE_64 ('M', 'E', 'M', ' ', 'P', 'R', 'O', 'T'),
-      SIGNATURE_64 ('E', 'X', 'C', 'E', 'P', 'T', ' ', ' '),
-      NULL,
-      NULL
-      );
-  }
-
-  if (EFI_ERROR (ExPersistSetException (ExceptionPersistPageFault))) {
-    DEBUG ((
-      DEBUG_ERROR,
-      "%a - Error mark exception occurred in platform early store\n",
-      __FUNCTION__
-      ));
-  }
-
-  ResetWarm ();
-}
+  );
 
 /**
   Stack cookie failure handler which does a warm reset if stack cookie protection is active.
@@ -137,6 +65,7 @@ MemoryProtectionStackCookieFailureHandler (
   }
 }
 
+
 /**
   Registers MemoryProtectionExceptionHandler using the EFI_CPU_ARCH_PROTOCOL.
 
@@ -146,7 +75,7 @@ MemoryProtectionStackCookieFailureHandler (
 **/
 VOID
 EFIAPI
-CpuArchRegisterMemoryProtectionExceptionHandler (
+CpuArchRegisterMemoryProtectionExceptionHandlers (
   IN  EFI_EVENT  Event,
   IN  VOID       *Context
   )
@@ -216,7 +145,7 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 }
 
 /**
-  Main entry for this library.
+  Common constructor for this library.
 
   @param ImageHandle     Image handle this library.
   @param SystemTable     Pointer to SystemTable.
@@ -226,7 +155,7 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 **/
 EFI_STATUS
 EFIAPI
-MemoryProtectionExceptionHandlerConstructor (
+MemoryProtectionExceptionHandlerCommonConstructor (
   IN EFI_HANDLE        ImageHandle,
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
@@ -249,7 +178,7 @@ MemoryProtectionExceptionHandlerConstructor (
   Status = SystemTable->BootServices->CreateEvent (
                                         EVT_NOTIFY_SIGNAL,
                                         TPL_CALLBACK,
-                                        CpuArchRegisterMemoryProtectionExceptionHandler,
+                                        CpuArchRegisterMemoryProtectionExceptionHandlers,
                                         NULL,
                                         &CpuArchExHandlerCallBackEvent
                                         );

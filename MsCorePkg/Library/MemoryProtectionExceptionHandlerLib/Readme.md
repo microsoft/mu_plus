@@ -19,3 +19,5 @@ NULL|MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExcep
 
 CpuDxe is preferable because the page fault exception handler is only registered after
 gEfiCpuArchProtocolGuid has been installed.
+
+BEEBE TODO: Rewrite this doc to fit the changes

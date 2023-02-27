@@ -10,14 +10,14 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MemoryProtectionExceptionHandlerLib
-  FILE_GUID                      = 079cc3b7-a618-4024-8cc5-a36480df9261
+  FILE_GUID                      = 43261eff-8e60-454e-9703-d3ddb7c30f45
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = NULL
   CONSTRUCTOR                    = MemoryProtectionExceptionHandlerConstructor
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = AARCH64
 #
 
 [Sources]
