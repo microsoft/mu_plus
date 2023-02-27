@@ -48,9 +48,6 @@
 [Protocols]
   gMemoryProtectionNonstopModeProtocolGuid            ## CONSUMES
 
-[Guids]
-  gMemoryProtectionExceptionHandlerGuid
-
 [FixedPcd]
   gEfiMdePkgTokenSpaceGuid.PcdStackCookieExceptionVector
 

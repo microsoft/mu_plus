@@ -197,7 +197,7 @@ MemoryProtectionExceptionHandlerCommonConstructor (
       "%a: - Failed to create CpuArch Notify Event. Memory protections cannot be turned off via Page Fault handler.\n",
       __FUNCTION__
       ));
-      return EFI_ABORTED;
+    return EFI_ABORTED;
   }
 
   // NOTE: Installing an exception handler before gEfiCpuArchProtocolGuid has been produced causes

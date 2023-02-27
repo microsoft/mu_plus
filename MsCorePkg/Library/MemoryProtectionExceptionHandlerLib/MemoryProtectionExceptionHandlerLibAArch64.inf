@@ -21,7 +21,8 @@
 #
 
 [Sources]
-  MemoryProtectionExceptionHandlerLib.c
+  MemoryProtectionExceptionHandlerLibAArch64.c
+  MemoryProtectionExceptionHandlerLibCommon.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -40,15 +41,15 @@
   MsWheaEarlyStorageLib
   PeCoffGetEntryPointLib
   PcdLib
+  UefiLib
+  PrintLib
+  SerialPortLib
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## PRODUCES
 
 [Protocols]
   gMemoryProtectionNonstopModeProtocolGuid            ## CONSUMES
-
-[Guids]
-  gMemoryProtectionExceptionHandlerGuid
 
 [FixedPcd]
   gEfiMdePkgTokenSpaceGuid.PcdStackCookieExceptionVector
