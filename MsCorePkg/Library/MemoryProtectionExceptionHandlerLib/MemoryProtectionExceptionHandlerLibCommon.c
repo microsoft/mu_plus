@@ -1,7 +1,7 @@
 /**@file
 
 Library registers an interrupt handler which catches exceptions related to memory
-protections and turns them off for the next boot.
+protections and logs them in the platform's persistent storage.
 
 Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -26,7 +26,7 @@ STATIC UINTN       mMemProtExVector     = 0;
 STATIC UINTN       mStackCookieExVector = 1;
 
 /**
-  Page Fault handler which turns off memory protections and does a warm reset.
+  Fault handler which logs exceptions in the platform specific early store and does a warm reset.
 
   @param  InterruptType    Defines the type of interrupt or exception that
                            occurred on the processor.This parameter is processor architecture specific.

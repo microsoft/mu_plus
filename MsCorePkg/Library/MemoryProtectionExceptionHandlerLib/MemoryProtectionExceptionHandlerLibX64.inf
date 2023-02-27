@@ -1,6 +1,6 @@
 ## @file
 # Library registers an interrupt handler which catches exceptions related to memory
-# protections and turns them off for the next boot.
+# protections and logs them in the platform's persistent storage.
 #
 #
 # Copyright (c) Microsoft Corporation.

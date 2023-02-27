@@ -1,8 +1,10 @@
 /**@file
 
 Library registers an interrupt handler which catches exceptions related to memory
-protections and turns them off for the next boot.
+protections and logs them in the platform's persistent storage.
 
+Copyright (c) 2008 - 2010, Apple Inc. All rights reserved.<BR>
+Copyright (c) 2012 - 2021, Arm Ltd. All rights reserved.<BR>
 Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
@@ -258,8 +260,6 @@ BaseName (
 /**
   This is the default action to take on an unexpected exception
 
-  Since this is exception context don't do anything crazy like try to allocate memory.
-
   @param  ExceptionType    Type of the exception
   @param  SystemContext    Register state at the time of the Exception
 
@@ -415,7 +415,7 @@ DefaultExceptionHandler (
 }
 
 /**
-  Page Fault handler which turns off memory protections and does a warm reset.
+  Fault handler which logs exceptions in the platform specific early store and does a warm reset.
 
   @param  InterruptType    Defines the type of interrupt or exception that
                            occurred on the processor.This parameter is processor architecture specific.
