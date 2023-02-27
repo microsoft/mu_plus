@@ -13,6 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/SmmCommunication.h>
 #include <Protocol/MemoryProtectionNonstopMode.h>
 #include <Protocol/MemoryProtectionDebug.h>
+#include <Protocol/MemoryAttribute.h>
 #include <Uefi/UefiMultiPhase.h>
 #include <Pi/PiMultiPhase.h>
 
@@ -53,6 +54,7 @@ MM_MEMORY_PROTECTION_SETTINGS            mMmMps;
 DXE_MEMORY_PROTECTION_SETTINGS           mDxeMps;
 MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *mNonstopModeProtocol      = NULL;
 MEMORY_PROTECTION_DEBUG_PROTOCOL         *mMemoryProtectionProtocol = NULL;
+EFI_MEMORY_ATTRIBUTE_PROTOCOL            *mMemoryAttributeProtocol  = NULL;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -234,6 +236,25 @@ PopulateMemoryProtectionDebugProtocol (
   }
 
   return gBS->LocateProtocol (&gMemoryProtectionDebugProtocolGuid, NULL, (VOID **)&mMemoryProtectionProtocol);
+}
+
+/**
+  Populates the memory attribute protocol
+
+  @retval EFI_SUCCESS Protocol is already populated or was successfully populated
+  @retval other       Return value of LocateProtocol
+**/
+STATIC
+EFI_STATUS
+PopulateMemoryAttributeProtocol (
+  VOID
+  )
+{
+  if (mMemoryAttributeProtocol != NULL) {
+    return EFI_SUCCESS;
+  }
+
+  return gBS->LocateProtocol (&gEfiMemoryAttributeProtocolGuid, NULL, (VOID **)&mMemoryAttributeProtocol);
 }
 
 /**
@@ -598,7 +619,7 @@ ImageProtectionPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromFv) {
+  if (mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromFv || mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromUnknown) {
     return UNIT_TEST_PASSED;
   }
 
@@ -1282,24 +1303,27 @@ UefiNxProtection (
   return UNIT_TEST_PASSED;
 } // UefiNxProtection()
 
-STATIC
-EFI_STATUS
-CheckImageDescriptorRanges (
-  IN IA32_MAP_ENTRY          *Map,
-  IN UINTN                   MapCount,
-  IN IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptorHead
+UNIT_TEST_STATUS
+EFIAPI
+ImageProtection (
+  IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINTN                   CurrentMapIndex           = 0;
+  EFI_STATUS              Status;
+  IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptorHead = NULL;
   LIST_ENTRY              *ImageRangeDescriptorLink = NULL;
   IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptor     = NULL;
-  EFI_PHYSICAL_ADDRESS    Start;
-  EFI_PHYSICAL_ADDRESS    End;
-  BOOLEAN                 TestFailed = FALSE;
+  BOOLEAN                 TestFailed                = FALSE;
+  UINT64                  Attributes                = 0;
 
-  if ((ImageRangeDescriptorHead == NULL) || (MapCount == 0) || (Map == NULL)) {
-    return EFI_INVALID_PARAMETER;
+  DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
+
+  UT_ASSERT_NOT_EFI_ERROR (PopulateMemoryProtectionDebugProtocol ());
+  if (mMemoryProtectionProtocol != NULL) {
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryProtectionProtocol->GetImageList (&ImageRangeDescriptorHead, Protected));
   }
+
+  UT_ASSERT_NOT_EFI_ERROR (PopulateMemoryAttributeProtocol ());
 
   // Walk through each image
   for (ImageRangeDescriptorLink = ImageRangeDescriptorHead->Link.ForwardLink;
@@ -1313,85 +1337,39 @@ CheckImageDescriptorRanges (
                              IMAGE_RANGE_DESCRIPTOR_SIGNATURE
                              );
     if (ImageRangeDescriptor != NULL) {
-      Start = ImageRangeDescriptor->Base;
-      End   = ImageRangeDescriptor->Base + ImageRangeDescriptor->Length;
+      Status = mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, ImageRangeDescriptor->Base, ImageRangeDescriptor->Length, &Attributes);
 
-      while (CurrentMapIndex < MapCount) {
-        if ((Map[CurrentMapIndex].LinearAddress <= Start) && (Map[CurrentMapIndex].LinearAddress + Map[CurrentMapIndex].Length > Start)) {
-          if ((ImageRangeDescriptor->Type == Code) && (Map[CurrentMapIndex].Attribute.Bits.ReadWrite != 0)) {
-            TestFailed = TRUE;
-            UT_LOG_ERROR ("Memory Range 0x%llx - 0x%llx should be non-writeable!", Start, End);
-          } else if ((ImageRangeDescriptor->Type == Data) && (Map[CurrentMapIndex].Attribute.Bits.Nx != 1)) {
-            TestFailed = TRUE;
-            UT_LOG_ERROR ("Memory Range 0x%llx - 0x%llx should be non-executable!", Start, End);
-          }
-
-          if (Map[CurrentMapIndex].LinearAddress + Map[CurrentMapIndex].Length >= End) {
-            Start = End;
-            break;
-          } else {
-            Start = Map[CurrentMapIndex].LinearAddress + Map[CurrentMapIndex].Length;
-          }
-        }
-
-        CurrentMapIndex++;
+      if (EFI_ERROR (Status)) {
+        UT_LOG_ERROR (
+          "Unable to get attributes of memory range 0x%llx - 0x%llx! Status: %r",
+          ImageRangeDescriptor->Base,
+          ImageRangeDescriptor->Base + ImageRangeDescriptor->Length,
+          Status
+          );
+        TestFailed = TRUE;
+        continue;
       }
 
-      if (Start != End) {
-        UT_LOG_ERROR ("Memory Range 0x%llx - 0x%llx not found in the page table!", ImageRangeDescriptor->Base, ImageRangeDescriptor->Base + ImageRangeDescriptor->Length);
+      if ((ImageRangeDescriptor->Type == Code) && ((Attributes & EFI_MEMORY_RO) == 0)) {
         TestFailed = TRUE;
+        UT_LOG_ERROR (
+          "Memory Range 0x%llx - 0x%llx should be non-executable!",
+          ImageRangeDescriptor->Base,
+          ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
+          );
+      } else if ((ImageRangeDescriptor->Type == Data) && ((Attributes & EFI_MEMORY_XP) == 0)) {
+        TestFailed = TRUE;
+        UT_LOG_ERROR (
+          "Memory Range 0x%llx - 0x%llx should be non-writeable!",
+          ImageRangeDescriptor->Base,
+          ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
+          );
       }
     }
   }
 
   UT_ASSERT_FALSE (TestFailed);
 
-  return EFI_SUCCESS;
-}
-
-UNIT_TEST_STATUS
-EFIAPI
-ImageProtection (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  EFI_STATUS              Status;
-  IA32_MAP_ENTRY          *Map           = NULL;
-  UINTN                   MapCount       = 0;
-  UINTN                   PagesAllocated = 0;
-  IA32_CR4                Cr4;
-  PAGING_MODE             PagingMode;
-  IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptorHead = NULL;
-
-  DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
-
-  Cr4.UintN = AsmReadCr4 ();
-
-  if (Cr4.Bits.LA57 != 0) {
-    PagingMode = Paging5Level;
-  } else {
-    PagingMode = Paging4Level;
-  }
-
-  Status = PageTableParse (AsmReadCr3 (), PagingMode, NULL, &MapCount);
-  while (Status == RETURN_BUFFER_TOO_SMALL) {
-    if ((Map != NULL) && (PagesAllocated > 0)) {
-      FreePages (Map, PagesAllocated);
-    }
-
-    PagesAllocated = EFI_SIZE_TO_PAGES (MapCount * sizeof (IA32_MAP_ENTRY));
-    Map            = AllocatePages (PagesAllocated);
-    UT_ASSERT_NOT_NULL (Map);
-    Status = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
-  }
-
-  UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_NOT_EFI_ERROR (PopulateMemoryProtectionDebugProtocol ());
-  if (mMemoryProtectionProtocol != NULL) {
-    UT_ASSERT_NOT_EFI_ERROR (mMemoryProtectionProtocol->GetImageList (&ImageRangeDescriptorHead, Protected));
-  }
-
-  UT_ASSERT_NOT_EFI_ERROR (CheckImageDescriptorRanges (Map, MapCount, ImageRangeDescriptorHead));
   return UNIT_TEST_PASSED;
 }
 
