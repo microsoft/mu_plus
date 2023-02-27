@@ -21,7 +21,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
 
-STATIC EFI_HANDLE  mImageHandle = NULL;
+STATIC EFI_HANDLE  mImageHandle         = NULL;
+STATIC UINTN       mMemProtExVector     = 0;
+STATIC UINTN       mStackCookieExVector = 1;
 
 /**
   Page Fault handler which turns off memory protections and does a warm reset.
@@ -65,7 +67,6 @@ MemoryProtectionStackCookieFailureHandler (
   }
 }
 
-
 /**
   Registers MemoryProtectionExceptionHandler using the EFI_CPU_ARCH_PROTOCOL.
 
@@ -102,7 +103,7 @@ CpuArchRegisterMemoryProtectionExceptionHandlers (
 
   Status = mCpu->RegisterInterruptHandler (
                    mCpu,
-                   EXCEPT_IA32_PAGE_FAULT,
+                   mMemProtExVector,
                    MemoryProtectionExceptionHandler
                    );
 
@@ -131,7 +132,7 @@ CpuArchRegisterMemoryProtectionExceptionHandlers (
 
   Status = mCpu->RegisterInterruptHandler (
                    mCpu,
-                   PcdGet8 (PcdStackCookieExceptionVector),
+                   mStackCookieExVector,
                    MemoryProtectionStackCookieFailureHandler
                    );
 
@@ -147,24 +148,31 @@ CpuArchRegisterMemoryProtectionExceptionHandlers (
 /**
   Common constructor for this library.
 
-  @param ImageHandle     Image handle this library.
-  @param SystemTable     Pointer to SystemTable.
+  @param ImageHandle          Image handle this library.
+  @param SystemTable          Pointer to SystemTable.
+  @param MemProtExVector      Memory Protection Exception Vector.
+  @param StackCookieExVector  Stack Cookie Exception Vector.
 
-  @retval EFI_SUCCESS
+  @retval EFI_SUCCESS         Successfully registered CpuArchRegisterMemoryProtectionExceptionHandlers
+  @retval EFI_ABORTED         Failed to register CpuArchRegisterMemoryProtectionExceptionHandlers
 
 **/
 EFI_STATUS
 EFIAPI
 MemoryProtectionExceptionHandlerCommonConstructor (
   IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_SYSTEM_TABLE  *SystemTable,
+  IN  UINTN            MemProtExVector,
+  IN  UINTN            StackCookieExVector
   )
 {
   EFI_STATUS  Status;
   EFI_EVENT   CpuArchExHandlerCallBackEvent;
   VOID        *mCpuArchExHandlerRegistration = NULL;
 
-  mImageHandle = ImageHandle;
+  mImageHandle         = ImageHandle;
+  mMemProtExVector     = MemProtExVector;
+  mStackCookieExVector = StackCookieExVector;
 
   // Don't install exception handler if all memory mitigations are off
   if (!((gDxeMps.HeapGuardPolicy.Data && (gDxeMps.HeapGuardPageType.Data || gDxeMps.HeapGuardPoolType.Data)) ||
@@ -189,6 +197,7 @@ MemoryProtectionExceptionHandlerCommonConstructor (
       "%a: - Failed to create CpuArch Notify Event. Memory protections cannot be turned off via Page Fault handler.\n",
       __FUNCTION__
       ));
+      return EFI_ABORTED;
   }
 
   // NOTE: Installing an exception handler before gEfiCpuArchProtocolGuid has been produced causes

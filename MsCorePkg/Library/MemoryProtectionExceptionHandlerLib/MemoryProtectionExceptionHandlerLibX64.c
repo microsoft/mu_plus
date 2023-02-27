@@ -30,17 +30,22 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /**
   Common constructor for this library.
 
-  @param ImageHandle     Image handle this library.
-  @param SystemTable     Pointer to SystemTable.
+  @param ImageHandle          Image handle this library.
+  @param SystemTable          Pointer to SystemTable.
+  @param MemProtExVector      Memory Protection Exception Vector.
+  @param StackCookieExVector  Stack Cookie Exception Vector.
 
-  @retval EFI_SUCCESS
+  @retval EFI_SUCCESS         Successfully registered CpuArchRegisterMemoryProtectionExceptionHandlers
+  @retval EFI_ABORTED         Failed to register CpuArchRegisterMemoryProtectionExceptionHandlers
 
 **/
 EFI_STATUS
 EFIAPI
 MemoryProtectionExceptionHandlerCommonConstructor (
   IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_SYSTEM_TABLE  *SystemTable,
+  IN  UINTN            MemProtExVector,
+  IN  UINTN            StackCookieExVector
   );
 
 /**
@@ -141,7 +146,12 @@ MemoryProtectionExceptionHandlerConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  MemoryProtectionExceptionHandlerCommonConstructor (ImageHandle, SystemTable);
+  MemoryProtectionExceptionHandlerCommonConstructor (
+    ImageHandle,
+    SystemTable,
+    EXCEPT_IA32_PAGE_FAULT,
+    PcdGet8 (PcdStackCookieExceptionVector)
+    );
 
   return EFI_SUCCESS;
 }
