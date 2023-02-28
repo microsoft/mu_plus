@@ -171,8 +171,6 @@
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
   MsCorePkg/AcpiRGRT/AcpiRgrt.inf
   MsCorePkg/Library/ExceptionPersistenceLibCmos/ExceptionPersistenceLibCmos.inf
-  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLibX64.inf
-  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLibAArch64.inf
   MsCorePkg/Library/DxeQueueUefiVariableLib/DxeQueueUefiVariableLib.inf
   MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
   MsCorePkg/Library/DxeCapsulePersistenceLib/DxeCapsulePersistenceLib.inf
@@ -206,6 +204,7 @@
   MsCorePkg/CheckHardwareConnected/CheckHardwareConnected.inf
   MsCorePkg/Library/PasswordStoreLibNull/PasswordStoreLibNull.inf
   MsCorePkg/DebugFileLoggerII/Dxe/DebugFileLogger.inf
+  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLibX64.inf
   MsCorePkg/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf {
   <LibraryClasses>
     UefiRuntimeLib      |MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
@@ -219,6 +218,9 @@
   }
   MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
   MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
+
+[Components.AARCH64]
+  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLibAArch64.inf
 
 [BuildOptions]
 #force deprecated interfaces off
