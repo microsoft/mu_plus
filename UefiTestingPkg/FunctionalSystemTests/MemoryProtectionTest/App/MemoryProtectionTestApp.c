@@ -1353,14 +1353,14 @@ ImageProtection (
       if ((ImageRangeDescriptor->Type == Code) && ((Attributes & EFI_MEMORY_RO) == 0)) {
         TestFailed = TRUE;
         UT_LOG_ERROR (
-          "Memory Range 0x%llx - 0x%llx should be non-executable!",
+          "Memory Range 0x%llx - 0x%llx should be non-writeable!",
           ImageRangeDescriptor->Base,
           ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
           );
       } else if ((ImageRangeDescriptor->Type == Data) && ((Attributes & EFI_MEMORY_XP) == 0)) {
         TestFailed = TRUE;
         UT_LOG_ERROR (
-          "Memory Range 0x%llx - 0x%llx should be non-writeable!",
+          "Memory Range 0x%llx - 0x%llx should be non-executable!",
           ImageRangeDescriptor->Base,
           ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
           );
