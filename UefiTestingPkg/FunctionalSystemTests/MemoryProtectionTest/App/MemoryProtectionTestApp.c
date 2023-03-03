@@ -33,7 +33,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ResetSystemLib.h>
 #include <Library/HobLib.h>
 #include <Library/ExceptionPersistenceLib.h>
-#include <Library/CpuPageTableLib.h>
 
 #include <Guid/PiSmmCommunicationRegionTable.h>
 #include <Guid/DxeMemoryProtectionSettings.h>

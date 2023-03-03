@@ -56,7 +56,6 @@
   HwResetSystemLib
   HobLib
   ExceptionPersistenceLib
-  CpuPageTableLib
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## CONSUMES
