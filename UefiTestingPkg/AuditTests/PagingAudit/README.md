@@ -1,3 +1,5 @@
+# Paging Audit
+
 ## SMM Paging Audit
 
 SMM is a privileged mode of the IA32/X64 cpu architecture.  In this environment nearly all system state can
