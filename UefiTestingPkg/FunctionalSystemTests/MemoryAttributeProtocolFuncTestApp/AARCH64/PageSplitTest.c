@@ -9,7 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 // MdePkg is the ideal place for this test, but because the AARCH64 PageSplitTest relies on
 // ArmLib to get the translation table base address and TCR, this test is in the UefiTestingPkg to avoid
-// circular repo dependencis in Project Mu.
+// circular repo dependencies in Project Mu.
 #include <Library/ArmLib.h>
 #include "MemoryAttributeProtocolFuncTestApp.h"
 
@@ -20,7 +20,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define ROOT_TABLE_LEN(T0SZ)   (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
 
 /**
-  Get an unsplit page table entry and allocate entire region so the page
+  Get an un-split page table entry and allocate entire region so the page
   doesn't need to be split on allocation
 
   @param[out]  Address  Address of allocated 2MB page region

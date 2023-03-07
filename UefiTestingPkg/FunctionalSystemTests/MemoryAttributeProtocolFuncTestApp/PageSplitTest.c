@@ -9,7 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "MemoryAttributeProtocolFuncTestApp.h"
 
 /**
-  Get an unsplit page table entry and allocate entire region so the page
+  Get an un-split page table entry and allocate entire region so the page
   doesn't need to be split on allocation
 
   @param[out]  Address  Address of allocated 2MB page region

@@ -22,4 +22,4 @@ Tests does basic verification of the Memory Attribute Protocol
 
 MdePkg is the ideal place for this test, but because the AARCH64 PageSplitTest relies on
 ArmLib to get the translation table base address and TCR, this test is in the UefiTestingPkg to avoid
-circular repo dependencis in Project Mu.
+circular repo dependencies in Project Mu.

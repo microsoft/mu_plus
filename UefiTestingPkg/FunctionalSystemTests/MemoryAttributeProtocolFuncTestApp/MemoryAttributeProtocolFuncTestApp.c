@@ -145,7 +145,7 @@ FreePoolWithProtectionAttributesTestCase (
 }
 
 /**
-  Allocate a page, free that page, then reallocate a page specifiying the previously
+  Allocate a page, free that page, then reallocate a page specifying the previously
   allocated address to ensure that the attributes are as expected
 
   @param[in] Context      Unit test context
@@ -233,8 +233,8 @@ AllocateFreeAllocateAtAddressTestCase (
 }
 
 /**
-  Allocate an unsplit page range, clear the no-execute attribute from a subsection of that region
-  to force a split, then ensure the previously unsplit region has also had the no-execute attribute
+  Allocate an un-split page range, clear the no-execute attribute from a subsection of that region
+  to force a split, then ensure the previously un-split region has also had the no-execute attribute
   cleared.
 
   @param[in] Context      Unit test context
@@ -305,7 +305,7 @@ ProtocolExistsTestCase (
 }
 
 /**
-  Fetch the attributes, clear them, then set them back to their orignal value
+  Fetch the attributes, clear them, then set them back to their original value
 
   @param[in] Context      Unit test context
 
