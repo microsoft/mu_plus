@@ -10,19 +10,24 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MemoryProtectionExceptionHandlerLib
-  FILE_GUID                      = 43261eff-8e60-454e-9703-d3ddb7c30f45
+  FILE_GUID                      = 079cc3b7-a618-4024-8cc5-a36480df9261
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = NULL
   CONSTRUCTOR                    = MemoryProtectionExceptionHandlerConstructor
 
 #
-#  VALID_ARCHITECTURES           = AARCH64
+#  VALID_ARCHITECTURES           = X64 AARCH64
 #
 
 [Sources]
-  MemoryProtectionExceptionHandlerLibAArch64.c
   MemoryProtectionExceptionHandlerLibCommon.c
+  
+[Sources.X64]
+  MemoryProtectionExceptionHandlerLibX64.c
+
+[Sources.AARCH64]
+  MemoryProtectionExceptionHandlerLibAArch64.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -41,6 +46,8 @@
   MsWheaEarlyStorageLib
   PeCoffGetEntryPointLib
   PcdLib
+
+[LibraryClasses.AARCH64]
   UefiLib
   PrintLib
   SerialPortLib
