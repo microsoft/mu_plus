@@ -20,6 +20,6 @@ Tests does basic verification of the Memory Attribute Protocol
 * Test the freeing of pages with protection attributes
 * Test splitting pages with protection attributes
 
-MdeModulePkg is the ideal place for this test, but because the AARCH64 PageSplitTest relies on
+MdePkg is the ideal place for this test, but because the AARCH64 PageSplitTest relies on
 ArmLib to get the translation table base address and TCR, this test is in the UefiTestingPkg to avoid
 circular repo dependencis in Project Mu.

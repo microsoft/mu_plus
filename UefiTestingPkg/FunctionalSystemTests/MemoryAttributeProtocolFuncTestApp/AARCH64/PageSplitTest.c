@@ -7,7 +7,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-// MdeModulePkg is the ideal place for this test, but because the AARCH64 PageSplitTest relies on
+// MdePkg is the ideal place for this test, but because the AARCH64 PageSplitTest relies on
 // ArmLib to get the translation table base address and TCR, this test is in the UefiTestingPkg to avoid
 // circular repo dependencis in Project Mu.
 #include <Library/ArmLib.h>
