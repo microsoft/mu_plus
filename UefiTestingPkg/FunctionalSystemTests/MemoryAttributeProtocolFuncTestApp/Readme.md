@@ -17,3 +17,9 @@ Tests does basic verification of the Memory Attribute Protocol
 * Basic "good path" usage of Get/Clear/Set functions
 * Get Attributes of a newly allocated EfiLoaderCode buffer
 * Verify Attributes of running code (this test code)
+* Test the freeing of pages with protection attributes
+* Test splitting pages with protection attributes
+
+MdeModulePkg is the ideal place for this test, but because the AARCH64 PageSplitTest relies on
+ArmLib to get the translation table base address and TCR, this test is in the UefiTestingPkg to avoid
+circular repo dependencis in Project Mu.
