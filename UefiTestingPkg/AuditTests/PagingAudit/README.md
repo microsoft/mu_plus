@@ -21,7 +21,7 @@ request critical memory information including IDT, GDT, page tables, and loaded 
 
 The UEFI shell application collects system information from the DXE environment and then
 communicates to the SMM driver/handler to collect necessary info from SMM.  It then
-writes this data to files and then that content is used by the windows scripts.
+writes this data to files for parsing by Python scripts.
 
 ## DXE Paging Audit
 
