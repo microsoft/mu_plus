@@ -15,9 +15,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define TT_ADDRESS_MASK  (0xFFFFFFFFFULL << 12)
 
-#define IS_TABLE(page, level)       ((level == 3) ? FALSE : (((page) & TT_TYPE_MASK) == TT_TYPE_TABLE_ENTRY))
-#define IS_BLOCK(page, level)       ((level == 3) ? (((page) & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY_LEVEL3) : ((page & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY))
-#define ROOT_TABLE_LEN(T0SZ)        (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
+#define IS_TABLE(page, level)  ((level == 3) ? FALSE : (((page) & TT_TYPE_MASK) == TT_TYPE_TABLE_ENTRY))
+#define IS_BLOCK(page, level)  ((level == 3) ? (((page) & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY_LEVEL3) : ((page & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY))
+#define ROOT_TABLE_LEN(T0SZ)   (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
 
 /**
   Get an unsplit page table entry and allocate entire region so the page

@@ -17,9 +17,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/MemoryAttribute.h>
 
-#define PTE2MB                 0x200000
-#define PTE1GB                 0x40000000
-#define PTE512GB               0x8000000000
+#define PTE2MB    0x200000
+#define PTE1GB    0x40000000
+#define PTE512GB  0x8000000000
 
 /**
   Get an unsplit page table entry and allocate entire region so the page
