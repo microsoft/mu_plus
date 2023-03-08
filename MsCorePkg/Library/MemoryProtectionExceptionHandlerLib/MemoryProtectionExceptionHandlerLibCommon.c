@@ -1,7 +1,7 @@
 /**@file
 
 Library registers an interrupt handler which catches exceptions related to memory
-protections and turns them off for the next boot.
+protections and logs them in the platform's persistent storage.
 
 Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -12,9 +12,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Pi/PiStatusCode.h>
 
-#include <Protocol/DebugSupport.h>
-#include <Protocol/MemoryProtectionNonstopMode.h>
-
 #include <Library/CpuExceptionHandlerLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -23,14 +20,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ResetSystemLib.h>
 #include <Library/MsWheaEarlyStorageLib.h>
 #include <Library/PeCoffGetEntryPointLib.h>
-#include <Library/PcdLib.h>
 
-#define IA32_PF_EC_ID  BIT4
-
-STATIC EFI_HANDLE  mImageHandle = NULL;
+STATIC EFI_HANDLE  mImageHandle         = NULL;
+STATIC UINTN       mMemProtExVector     = 0;
+STATIC UINTN       mStackCookieExVector = 1;
 
 /**
-  Page Fault handler which turns off memory protections and does a warm reset.
+  Fault handler which logs exceptions in the platform specific early store and does a warm reset.
 
   @param  InterruptType    Defines the type of interrupt or exception that
                            occurred on the processor.This parameter is processor architecture specific.
@@ -43,73 +39,7 @@ EFIAPI
 MemoryProtectionExceptionHandler (
   IN EFI_EXCEPTION_TYPE  InterruptType,
   IN EFI_SYSTEM_CONTEXT  SystemContext
-  )
-{
-  UINTN                                    pointer;
-  MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *NonstopModeProtocol;
-  BOOLEAN                                  IgnoreNext = FALSE;
-  EFI_STATUS                               Status;
-
-  if (!EFI_ERROR (ExPersistGetIgnoreNextPageFault (&IgnoreNext)) &&
-      IgnoreNext &&
-      (InterruptType == EXCEPT_IA32_PAGE_FAULT))
-  {
-    ExPersistClearIgnoreNextPageFault ();
-    Status = gBS->LocateProtocol (&gMemoryProtectionNonstopModeProtocolGuid, NULL, (VOID **)&NonstopModeProtocol);
-    if (!EFI_ERROR (Status)) {
-      Status = NonstopModeProtocol->ClearPageFault (InterruptType, SystemContext);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "%a - Error Clearing Page Fault\n", __FUNCTION__));
-      } else {
-        DEBUG ((DEBUG_INFO, "%a - Page Fault Cleared\n", __FUNCTION__));
-      }
-
-      return;
-    }
-  }
-
-  DumpCpuContext (
-    InterruptType,
-    SystemContext
-    );
-
-  if (SystemContext.SystemContextX64 != NULL) {
-    if ((InterruptType == EXCEPT_IA32_PAGE_FAULT) &&
-        ((SystemContext.SystemContextX64->ExceptionData & IA32_PF_EC_ID) != 0))
-    {
-      // The RIP in SystemContext could not be used if it is page fault with I/D set.
-      pointer = (UINTN)SystemContext.SystemContextX64->Rsp;
-    } else {
-      pointer = (UINTN)SystemContext.SystemContextX64->Rip;
-    }
-
-    MsWheaESAddRecordV0 (
-      (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
-      (UINT64)PeCoffSearchImageBase (pointer),
-      SystemContext.SystemContextX64->Rip,
-      NULL,
-      NULL
-      );
-  } else {
-    MsWheaESAddRecordV0 (
-      (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
-      SIGNATURE_64 ('M', 'E', 'M', ' ', 'P', 'R', 'O', 'T'),
-      SIGNATURE_64 ('E', 'X', 'C', 'E', 'P', 'T', ' ', ' '),
-      NULL,
-      NULL
-      );
-  }
-
-  if (EFI_ERROR (ExPersistSetException (ExceptionPersistPageFault))) {
-    DEBUG ((
-      DEBUG_ERROR,
-      "%a - Error mark exception occurred in platform early store\n",
-      __FUNCTION__
-      ));
-  }
-
-  ResetWarm ();
-}
+  );
 
 /**
   Stack cookie failure handler which does a warm reset if stack cookie protection is active.
@@ -146,7 +76,7 @@ MemoryProtectionStackCookieFailureHandler (
 **/
 VOID
 EFIAPI
-CpuArchRegisterMemoryProtectionExceptionHandler (
+CpuArchRegisterMemoryProtectionExceptionHandlers (
   IN  EFI_EVENT  Event,
   IN  VOID       *Context
   )
@@ -173,7 +103,7 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 
   Status = mCpu->RegisterInterruptHandler (
                    mCpu,
-                   EXCEPT_IA32_PAGE_FAULT,
+                   mMemProtExVector,
                    MemoryProtectionExceptionHandler
                    );
 
@@ -202,7 +132,7 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 
   Status = mCpu->RegisterInterruptHandler (
                    mCpu,
-                   PcdGet8 (PcdStackCookieExceptionVector),
+                   mStackCookieExVector,
                    MemoryProtectionStackCookieFailureHandler
                    );
 
@@ -216,26 +146,33 @@ CpuArchRegisterMemoryProtectionExceptionHandler (
 }
 
 /**
-  Main entry for this library.
+  Common constructor for this library.
 
-  @param ImageHandle     Image handle this library.
-  @param SystemTable     Pointer to SystemTable.
+  @param ImageHandle          Image handle this library.
+  @param SystemTable          Pointer to SystemTable.
+  @param MemProtExVector      Memory Protection Exception Vector.
+  @param StackCookieExVector  Stack Cookie Exception Vector.
 
-  @retval EFI_SUCCESS
+  @retval EFI_SUCCESS         Successfully registered CpuArchRegisterMemoryProtectionExceptionHandlers
+  @retval EFI_ABORTED         Failed to register CpuArchRegisterMemoryProtectionExceptionHandlers
 
 **/
 EFI_STATUS
 EFIAPI
-MemoryProtectionExceptionHandlerConstructor (
+MemoryProtectionExceptionHandlerCommonConstructor (
   IN EFI_HANDLE        ImageHandle,
-  IN EFI_SYSTEM_TABLE  *SystemTable
+  IN EFI_SYSTEM_TABLE  *SystemTable,
+  IN  UINTN            MemProtExVector,
+  IN  UINTN            StackCookieExVector
   )
 {
   EFI_STATUS  Status;
   EFI_EVENT   CpuArchExHandlerCallBackEvent;
   VOID        *mCpuArchExHandlerRegistration = NULL;
 
-  mImageHandle = ImageHandle;
+  mImageHandle         = ImageHandle;
+  mMemProtExVector     = MemProtExVector;
+  mStackCookieExVector = StackCookieExVector;
 
   // Don't install exception handler if all memory mitigations are off
   if (!((gDxeMps.HeapGuardPolicy.Data && (gDxeMps.HeapGuardPageType.Data || gDxeMps.HeapGuardPoolType.Data)) ||
@@ -249,7 +186,7 @@ MemoryProtectionExceptionHandlerConstructor (
   Status = SystemTable->BootServices->CreateEvent (
                                         EVT_NOTIFY_SIGNAL,
                                         TPL_CALLBACK,
-                                        CpuArchRegisterMemoryProtectionExceptionHandler,
+                                        CpuArchRegisterMemoryProtectionExceptionHandlers,
                                         NULL,
                                         &CpuArchExHandlerCallBackEvent
                                         );
@@ -260,6 +197,7 @@ MemoryProtectionExceptionHandlerConstructor (
       "%a: - Failed to create CpuArch Notify Event. Memory protections cannot be turned off via Page Fault handler.\n",
       __FUNCTION__
       ));
+    return EFI_ABORTED;
   }
 
   // NOTE: Installing an exception handler before gEfiCpuArchProtocolGuid has been produced causes
