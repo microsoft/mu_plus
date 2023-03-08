@@ -171,7 +171,6 @@
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
   MsCorePkg/AcpiRGRT/AcpiRgrt.inf
   MsCorePkg/Library/ExceptionPersistenceLibCmos/ExceptionPersistenceLibCmos.inf
-  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
   MsCorePkg/Library/DxeQueueUefiVariableLib/DxeQueueUefiVariableLib.inf
   MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
   MsCorePkg/Library/DxeCapsulePersistenceLib/DxeCapsulePersistenceLib.inf
@@ -218,6 +217,9 @@
   }
   MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
   MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
+
+[Components.AARCH64, Components.AARCH64]
+  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
 
 [BuildOptions]
 #force deprecated interfaces off
