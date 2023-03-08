@@ -423,16 +423,6 @@ MemoryProtectionExceptionHandler (
 {
   UINT32  InterruptCause = 0;
 
-  DefaultExceptionHandler (InterruptType, SystemContext);
-
-  MsWheaESAddRecordV0 (
-    (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
-    (UINT64)PeCoffSearchImageBase (SystemContext.SystemContextAArch64->ELR),
-    SystemContext.SystemContextAArch64->ELR,
-    NULL,
-    NULL
-    );
-
   // Isolate the first 8 bits of the ESR to get the interrupt cause
   InterruptCause = (UINT32)SystemContext.SystemContextAArch64->ESR & 0x3f;
   if (IS_TRANSLATION_FAULT (InterruptCause) || IS_ACCESS_FLAG_FAULT (InterruptCause)) {
@@ -444,6 +434,16 @@ MemoryProtectionExceptionHandler (
         ));
     }
   }
+
+  DefaultExceptionHandler (InterruptType, SystemContext);
+
+  MsWheaESAddRecordV0 (
+    (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
+    (UINT64)PeCoffSearchImageBase (SystemContext.SystemContextAArch64->ELR),
+    SystemContext.SystemContextAArch64->ELR,
+    NULL,
+    NULL
+    );
 
   ResetWarm ();
 }
