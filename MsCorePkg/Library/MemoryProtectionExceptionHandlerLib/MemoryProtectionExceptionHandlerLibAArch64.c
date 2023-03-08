@@ -278,6 +278,14 @@ DefaultExceptionHandler (
     STATIC CHAR8 CONST  Message[] = "\nRecursive exception occurred while dumping the CPU state\n";
     SerialPortWrite ((UINT8 *)Message, sizeof Message - 1);
 
+    MsWheaESAddRecordV0 (
+      (EFI_COMPUTING_UNIT_MEMORY|EFI_CU_MEMORY_EC_UNCORRECTABLE),
+      (UINT64)PeCoffSearchImageBase (SystemContext.SystemContextAArch64->ELR),
+      SystemContext.SystemContextAArch64->ELR,
+      NULL,
+      NULL
+      );
+
     ResetWarm ();
   }
 
