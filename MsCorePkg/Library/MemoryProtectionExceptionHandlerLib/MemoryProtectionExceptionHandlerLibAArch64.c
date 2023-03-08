@@ -274,25 +274,15 @@ DefaultExceptionHandler (
   UINTN  CharCount;
   INT32  Offset;
 
-  DEBUG ((DEBUG_INFO, "%a:%d - ExceptionType: %d\n", __FUNCTION__, __LINE__, ExceptionType));
   if (mRecursiveException) {
-    STATIC CHAR8 CONST  Message[] = "\nRecursive exception occurred while dumping the CPU state\n";
-
-    SerialPortWrite ((UINT8 *)Message, sizeof Message - 1);
-    if (gST->ConOut != NULL) {
-      AsciiPrint (Message);
-    }
+    DEBUG ((DEBUG_INFO, "\nRecursive exception occurred while dumping the CPU state\n"));
 
     ResetWarm ();
   }
 
   mRecursiveException = TRUE;
 
-  CharCount = AsciiSPrint (Buffer, sizeof (Buffer), "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR);
-  SerialPortWrite ((UINT8 *)Buffer, CharCount);
-  if (gST->ConOut != NULL) {
-    AsciiPrint (Buffer);
-  }
+  DEBUG ((DEBUG_INFO, "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR));
 
   DEBUG_CODE_BEGIN ();
   CHAR8   *Pdb, *PrevPdb;
@@ -442,7 +432,8 @@ MemoryProtectionExceptionHandler (
     NULL
     );
 
-  InterruptCause = (UINT32)SystemContext.SystemContextAArch64->ESR &0x3f;
+  // Isolate the first 8 bits of the ESR to get the interrupt cause
+  InterruptCause = (UINT32)SystemContext.SystemContextAArch64->ESR & 0x3f;
   if (IS_TRANSLATION_FAULT (InterruptCause) || IS_ACCESS_FLAG_FAULT (InterruptCause)) {
     if (EFI_ERROR (ExPersistSetException (ExceptionPersistPageFault))) {
       DEBUG ((
