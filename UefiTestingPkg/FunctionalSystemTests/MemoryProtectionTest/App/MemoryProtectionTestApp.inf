@@ -40,7 +40,6 @@
   ShellPkg/ShellPkg.dec
   MsCorePkg/MsCorePkg.dec
 
-
 [LibraryClasses]
   DebugLib
   UefiApplicationEntryPoint
@@ -57,7 +56,6 @@
   HwResetSystemLib
   HobLib
   ExceptionPersistenceLib
-  CpuPageTableLib
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## CONSUMES
@@ -67,6 +65,7 @@
   gEfiCpuArchProtocolGuid                       ## CONSUMES
   gMemoryProtectionNonstopModeProtocolGuid      ## CONSUMES
   gMemoryProtectionDebugProtocolGuid            ## CONSUMES
+  gEfiMemoryAttributeProtocolGuid               ## CONSUMES
 
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid
