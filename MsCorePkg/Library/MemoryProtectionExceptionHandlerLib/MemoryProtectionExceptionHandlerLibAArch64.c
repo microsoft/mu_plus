@@ -275,14 +275,15 @@ DefaultExceptionHandler (
   INT32  Offset;
 
   if (mRecursiveException) {
-    DEBUG ((DEBUG_INFO, "\nRecursive exception occurred while dumping the CPU state\n"));
+    STATIC CHAR8 CONST  Message[] = "\nRecursive exception occurred while dumping the CPU state\n";
+    SerialPortWrite ((UINT8 *)Message, sizeof Message - 1);
 
     ResetWarm ();
   }
 
   mRecursiveException = TRUE;
-
-  DEBUG ((DEBUG_INFO, "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR));
+  CharCount           = AsciiSPrint (Buffer, sizeof (Buffer), "\n\n%a Exception at 0x%016lx\n", gExceptionTypeString[ExceptionType], SystemContext.SystemContextAArch64->ELR);
+  SerialPortWrite ((UINT8 *)Buffer, CharCount);
 
   DEBUG_CODE_BEGIN ();
   CHAR8   *Pdb, *PrevPdb;
