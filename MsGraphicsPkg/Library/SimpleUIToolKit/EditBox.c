@@ -323,7 +323,8 @@ SetCurrentTextString (
     if (UIT_EDITBOX_TYPE_PASSWORD != this->m_Type) {
       StrnCpyS (this->m_EditBoxDisplayText, sizeof (this->m_EditBoxDisplayText)/sizeof (CHAR16), NewTextString, (UIT_EDITBOX_MAX_STRING_LENGTH - 1));
     } else {
-      MaxLen = MIN(sizeof(this->m_EditBoxDisplayText), NewTextLen * sizeof (CHAR16));
+      MaxLen = MIN (sizeof (this->m_EditBoxDisplayText), NewTextLen * sizeof (CHAR16));
+
       SetMem16 (this->m_EditBoxDisplayText, MaxLen, CHAR_BULLET_UNICODE);
     }
 
