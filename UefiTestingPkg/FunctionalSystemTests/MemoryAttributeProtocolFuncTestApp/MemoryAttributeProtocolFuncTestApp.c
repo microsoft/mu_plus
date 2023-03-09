@@ -88,7 +88,7 @@ FreePagesWithProtectionAttributesTestCase (
   DEBUG ((DEBUG_INFO, "%a - Attributes for memory at base: 0x%llx 0x%llx\n", __FUNCTION__, BaseAddress, Attributes));
 
   // Free the pages
-  gBS->FreePages (BaseAddress, Length);
+  Status = gBS->FreePages (BaseAddress, Length);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   return UNIT_TEST_PASSED;
@@ -138,7 +138,7 @@ FreePoolWithProtectionAttributesTestCase (
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   // Free the pool
-  gBS->FreePool (Buffer);
+  Status = gBS->FreePool (Buffer);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   return UNIT_TEST_PASSED;
@@ -211,7 +211,7 @@ AllocateFreeAllocateAtAddressTestCase (
   }
 
   // Free the pages
-  gBS->FreePages (BaseAddress, Length);
+  Status = gBS->FreePages (BaseAddress, Length);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
   // Allocate pages at the previously allocated address
@@ -227,7 +227,8 @@ AllocateFreeAllocateAtAddressTestCase (
   UT_LOG_INFO ("%a - Attributes for memory after reallocation at base: 0x%llx 0x%llx\n", __FUNCTION__, BaseAddress, Attributes);
 
   // Free the pages
-  gBS->FreePages (BaseAddress, Length);
+  Status = gBS->FreePages (BaseAddress, Length);
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   return UNIT_TEST_PASSED;
 }
@@ -278,7 +279,8 @@ UpdateAttributesRequiresPageSplitTestCase (
   UT_ASSERT_EQUAL (GetSpitPageTableEntryNoExecute (BaseAddress), 0);
 
   // Free the pages
-  gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (PTE2MB));
+  Status = gBS->FreePages (BaseAddress, EFI_SIZE_TO_PAGES (PTE2MB));
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   return UNIT_TEST_PASSED;
 }
