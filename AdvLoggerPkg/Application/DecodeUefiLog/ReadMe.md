@@ -12,7 +12,7 @@ on memory UefiLog to a text stream and writes the decoded log to a local file.
 
 ## Usage
 
-Copy the two files, DecideUefiLog.py and UefiVariablesSupportLib.py, to the system that has
+Copy the two files, DecodeUefiLog.py and UefiVariablesSupportLib.py, to the system that has
 the Advanced Logger enabled.
 
 The simplest case:
