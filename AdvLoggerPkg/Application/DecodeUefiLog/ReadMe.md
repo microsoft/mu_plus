@@ -8,11 +8,11 @@ Advanced Logger stores the debug log file in memory, with additional data for ea
 At runtime, if the Advanced Logger is enabled, this in memory log is available through the UEFI
 Variable store.
 As the log in memory has additional metadata and alignment structure, DecodeUefiLog parses the
-on memory UefiLog to a text stream and writes the decoded log to a local file.
+in memory UefiLog to a text stream and writes the decoded log to a local file.
 
 ## Usage
 
-Copy the two files, DecideUefiLog.py and UefiVariablesSupportLib.py, to the system that has
+Copy the two files, DecodeUefiLog.py and UefiVariablesSupportLib.py, to the system that has
 the Advanced Logger enabled.
 
 The simplest case:
