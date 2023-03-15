@@ -9,6 +9,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "../../PagingAuditCommon.h"
 
+#include <Protocol/MemoryProtectionSpecialRegionProtocol.h>
+#include <Protocol/MemoryProtectionDebug.h>
 #include <Library/UnitTestLib.h>
 
 /**
@@ -24,4 +26,11 @@ UNIT_TEST_STATUS
 EFIAPI
 NoReadWriteExecute (
   IN UNIT_TEST_CONTEXT  Context
+  );
+
+// BEEBE TODO
+BOOLEAN
+CanRegionBeRWX (
+  IN UINT64  Address,
+  IN UINT64  Length
   );
