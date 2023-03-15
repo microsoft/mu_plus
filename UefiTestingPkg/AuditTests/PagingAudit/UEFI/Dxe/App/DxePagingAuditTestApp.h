@@ -28,7 +28,16 @@ NoReadWriteExecute (
   IN UNIT_TEST_CONTEXT  Context
   );
 
-// BEEBE TODO
+/**
+  Checks if a region is allowed to be read/write/execute based on the special region array
+  and non protected image list
+
+  @param[in] Address            Start address of the region
+  @param[in] Length             Length of the region
+
+  @retval TRUE                  The region is allowed to be read/write/execute
+  @retval FALSE                 The region is not allowed to be read/write/execute
+**/
 BOOLEAN
 CanRegionBeRWX (
   IN UINT64  Address,
