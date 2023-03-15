@@ -1,4 +1,4 @@
-/** @file MemoryAttributeProtocolFuncTestAppxAarch64.c
+/** @file PageSplitTest.c
 TCBZ3519
 Functionality to support MemoryAttributeProtocolFuncTestApp.c
 

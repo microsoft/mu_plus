@@ -9,7 +9,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = MemoryAttributeProtocolFuncTestApp
-  FILE_GUID                      = bb7f9547-68db-4bf0-a247-c022c6146df3
+  FILE_GUID                      = BB7F9547-68DB-4BF0-A247-C022C6146DF3
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = UefiMain

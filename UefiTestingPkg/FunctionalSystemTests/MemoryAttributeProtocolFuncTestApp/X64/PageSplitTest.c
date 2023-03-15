@@ -1,6 +1,6 @@
 /** @file PageSplitTest.c
 TCBZ3519
-Functionality to support MemoryAttributeProtocolFuncTestApp.c
+Functionality to support PageSplitTest.c
 
 Copyright (c) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
