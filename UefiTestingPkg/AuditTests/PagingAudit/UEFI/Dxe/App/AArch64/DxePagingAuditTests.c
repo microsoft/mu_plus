@@ -15,6 +15,9 @@
 #define IS_BLOCK(page, level)  ((level == 3) ? (((page) & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY_LEVEL3) : ((page & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY))
 #define ROOT_TABLE_LEN(T0SZ)   (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
 #define IS_VALID  0x1
+#define IS_READ_WRITE(page)  (((page & TT_AP_RW_RW) != 0) || ((page & TT_AP_MASK) == 0))
+#define IS_EXECUTABLE(page)  ((page & TT_UXN_MASK) == 0)
+#define IS_ACCESSIBLE(page)  ((page & TT_AF) != 0)
 
 /**
   Check the page table for Read/Write/Execute regions.
@@ -31,24 +34,18 @@ NoReadWriteExecute (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT64      *Pml0;
-  UINT64      *Pte1G;
-  UINT64      *Pte2M;
-  UINT64      *Pte4K;
-  BOOLEAN     FoundRWXAddress;
-  UINT64      Index3;
-  UINT64      Index2;
-  UINT64      Index1;
-  UINT64      Index0;
-  UINT64      RootEntryCount;
-  UINT64      Address;
-  EFI_STATUS  Status;
+  UINT64   *Pml0;
+  UINT64   *Pte1G;
+  UINT64   *Pte2M;
+  UINT64   *Pte4K;
+  BOOLEAN  FoundRWXAddress;
+  UINT64   Index3;
+  UINT64   Index2;
+  UINT64   Index1;
+  UINT64   Index0;
+  UINT64   RootEntryCount;
+  UINT64   Address;
 
-  Index3          = 0;
-  Index2          = 0;
-  Index1          = 0;
-  Index0          = 0;
-  RootEntryCount  = 0;
   FoundRWXAddress = FALSE;
 
   Pml0           = (UINT64 *)ArmGetTTBR0BaseAddress ();
@@ -98,9 +95,9 @@ NoReadWriteExecute (
               }
 
               // This is a block
-              if ((Pte4K[Index3] & TT_AP_RW_RW || Pte4K[Index3] & TT_AP_NO_RW) && // Read/Write
-                  (!(Pte4K[Index3] & TT_UXN_MASK)) &&                             // Execute
-                  (!(Pte4K[Index3] & TT_AF)))                                     // Access Flag (0 for guard pages)
+              if (IS_READ_WRITE (Pte4K[Index3]) &&     // Read/Write
+                  IS_EXECUTABLE (Pte4K[Index3]) &&     // Execute
+                  IS_ACCESSIBLE (Pte4K[Index3]))       // Access Flag (0 for guard pages)
               {
                 Address = IndexToAddress (Index0, Index1, Index2, Index3);
 
@@ -114,9 +111,9 @@ NoReadWriteExecute (
             }
           } else {
             // This is an block
-            if ((Pte2M[Index2] & TT_AP_RW_RW || Pte2M[Index2] & TT_AP_NO_RW) && // Read/Write
-                (!(Pte2M[Index2] & TT_UXN_MASK)) &&                             // Execute
-                (!(Pte2M[Index2] & TT_AF)))                                     // Access Flag (0 for guard pages)
+            if (IS_READ_WRITE (Pte2M[Index2]) &&   // Read/Write
+                IS_EXECUTABLE (Pte2M[Index2]) &&   // Execute
+                IS_ACCESSIBLE (Pte2M[Index2]))     // Access Flag (0 for guard pages)
             {
               Address = IndexToAddress (Index0, Index1, Index2, Index3);
 
@@ -131,9 +128,9 @@ NoReadWriteExecute (
         }
       } else {
         // This is an block
-        if ((Pte1G[Index1] & TT_AP_RW_RW || Pte1G[Index1] & TT_AP_NO_RW) && // Read/Write
-            (!(Pte1G[Index1] & TT_UXN_MASK)) &&                             // Execute
-            (!(Pte1G[Index1] & TT_AF)))                                     // Access Flag (0 for guard pages)
+        if (IS_READ_WRITE (Pte1G[Index1]) &&     // Read/Write
+            IS_EXECUTABLE (Pte1G[Index1]) &&     // Execute
+            IS_ACCESSIBLE (Pte1G[Index1]))       // Access Flag (0 for guard pages)
         {
           Address = IndexToAddress (Index0, Index1, Index2, Index3);
 
