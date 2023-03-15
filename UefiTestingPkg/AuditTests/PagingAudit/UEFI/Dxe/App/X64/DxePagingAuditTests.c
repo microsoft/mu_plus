@@ -26,19 +26,19 @@ NoReadWriteExecute (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  IA32_MAP_ENTRY                             *Map;
-  UINTN                                      MapCount;
-  UINTN                                      Index;
-  BOOLEAN                                    FoundRWXAddress;
-  IA32_CR4                                   Cr4;
-  PAGING_MODE                                PagingMode;
-  UINTN                                      PagesAllocated = 0;
-  EFI_STATUS                                 Status;
+  IA32_MAP_ENTRY  *Map;
+  UINTN           MapCount;
+  UINTN           Index;
+  BOOLEAN         FoundRWXAddress;
+  IA32_CR4        Cr4;
+  PAGING_MODE     PagingMode;
+  UINTN           PagesAllocated = 0;
+  EFI_STATUS      Status;
 
-  Map                      = NULL;
-  MapCount                 = 0;
-  Index                    = 0;
-  FoundRWXAddress          = FALSE;
+  Map             = NULL;
+  MapCount        = 0;
+  Index           = 0;
+  FoundRWXAddress = FALSE;
 
   // Poll CR4 to deterimine the page table depth
   Cr4.UintN = AsmReadCr4 ();
