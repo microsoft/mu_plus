@@ -16,7 +16,7 @@
 #define ROOT_TABLE_LEN(T0SZ)   (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
 #define IS_VALID  0x1
 #define IS_READ_WRITE(page)  (((page & TT_AP_RW_RW) != 0) || ((page & TT_AP_MASK) == 0))
-#define IS_EXECUTABLE(page)  ((page & TT_UXN_MASK) == 0)
+#define IS_EXECUTABLE(page)  ((page & TT_UXN_MASK) == 0 || (page & TT_PXN_MASK) == 0)
 #define IS_ACCESSIBLE(page)  ((page & TT_AF) != 0)
 
 /**
