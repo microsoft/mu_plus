@@ -643,7 +643,7 @@ UiAddMenuOption (
     MenuOption = AllocateZeroPool (sizeof (UI_MENU_OPTION));
     // MU_CHANGE [BEGIN] - CodeQL change
     if (MenuOption == NULL) {
-      ASSERT (MenuOption);
+      ASSERT (MenuOption != NULL);
       return;
     }
 
