@@ -155,7 +155,8 @@ WaitForEventInternal (
           PowerCaption = HiiGetString (mSWMHiiHandle, STRING_TOKEN (STR_POWER_TIMEOUT_CAPTION), NULL);
           // MU_CHANGE [BEGIN] - CodeQL change
           if ((PowerTitle == NULL) || (PowerBody == NULL) || (PowerCaption == NULL)) {
-            DEBUG ((DEBUG_ERROR, "Error getting POWER OFF dialog strings. Code = %r\n", Status));
+            DEBUG ((DEBUG_ERROR, "Error getting POWER OFF dialog strings.\n"));
+            Status = EFI_INVALID_PARAMETER;
             goto Exit;
           }
 
