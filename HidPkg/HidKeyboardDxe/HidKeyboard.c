@@ -580,7 +580,14 @@ SetKeyboardLayoutEvent (
   //
   ReleaseKeyboardLayoutResources (HidKeyboardDevice);
   HidKeyboardDevice->KeyConvertionTable = AllocateZeroPool ((NUMBER_OF_VALID_HID_KEYCODE)*sizeof (EFI_KEY_DESCRIPTOR));
-  ASSERT (HidKeyboardDevice->KeyConvertionTable != NULL);
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (HidKeyboardDevice->KeyConvertionTable == NULL) {
+    ASSERT (HidKeyboardDevice->KeyConvertionTable != NULL);
+    FreePool (KeyboardLayout);
+    return;
+  }
+
+  // MU_CHANGE [END] - CodeQL change
 
   //
   // Traverse the list of key descriptors following the header of EFI_HII_KEYBOARD_LAYOUT
@@ -610,7 +617,15 @@ SetKeyboardLayoutEvent (
     //
     if (TempKey.Modifier == EFI_NS_KEY_MODIFIER) {
       HidNsKey = AllocateZeroPool (sizeof (HID_NS_KEY));
-      ASSERT (HidNsKey != NULL);
+      // MU_CHANGE [BEGIN] - CodeQL change
+      if (HidNsKey == NULL) {
+        ASSERT (HidNsKey != NULL);
+        ReleaseKeyboardLayoutResources (HidKeyboardDevice);
+        FreePool (KeyboardLayout);
+        return;
+      }
+
+      // MU_CHANGE [END] - CodeQL change
 
       //
       // Search for sequential children physical key definitions
