@@ -1,6 +1,6 @@
 ## @file
 # Library registers an interrupt handler which catches exceptions related to memory
-# protections and turns them off for the next boot.
+# protections and logs them in the platform's persistent storage.
 #
 #
 # Copyright (c) Microsoft Corporation.
@@ -17,11 +17,17 @@
   CONSTRUCTOR                    = MemoryProtectionExceptionHandlerConstructor
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = X64 AARCH64
 #
 
 [Sources]
-  MemoryProtectionExceptionHandlerLib.c
+  MemoryProtectionExceptionHandlerLibCommon.c
+  
+[Sources.X64]
+  MemoryProtectionExceptionHandlerLibX64.c
+
+[Sources.AARCH64]
+  MemoryProtectionExceptionHandlerLibAArch64.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -41,14 +47,16 @@
   PeCoffGetEntryPointLib
   PcdLib
 
+[LibraryClasses.AARCH64]
+  UefiLib
+  PrintLib
+  SerialPortLib
+
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## PRODUCES
 
 [Protocols]
   gMemoryProtectionNonstopModeProtocolGuid            ## CONSUMES
-
-[Guids]
-  gMemoryProtectionExceptionHandlerGuid
 
 [FixedPcd]
   gEfiMdePkgTokenSpaceGuid.PcdStackCookieExceptionVector
