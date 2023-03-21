@@ -364,6 +364,13 @@ PolynomialDivision (
 
   sizeofnumbers = DividendCount + RemainderCount;
   TempRemainder = AllocateZeroPool (sizeofnumbers);
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (TempRemainder == NULL) {
+    ASSERT (TempRemainder != NULL);
+    return;
+  }
+
+  // MU_CHANGE [END] - CodeQL change
 
   for (i = 0; i < DividendCount; i++) {
     TempRemainder[i] = Dividend[i];
