@@ -408,6 +408,7 @@ Cleanup:
 Clear all the HwErrRec entries on flash.
 
 @retval EFI_SUCCESS                     Entry addition is successful.
+@retval EFI_OUT_OF_RESOURCES            Failed to allocate // MU_CHANGE - CodeQL change
 @retval Others                          See GetVariable/SetVariable for more details
 
 **/
