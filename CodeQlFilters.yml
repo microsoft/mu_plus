@@ -10,6 +10,8 @@
 
 {
   "Filters": [
-    "-HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.c:SM02298"
+    "-AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.c:SM02311",
+    "-HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.c:SM02298",
+    "-MsCorePkg/Library/PlatformBootManagerLib/BdsPlatform.c:SM02311",
   ]
 }
