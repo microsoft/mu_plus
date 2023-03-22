@@ -408,6 +408,7 @@ Cleanup:
 Clear all the HwErrRec entries on flash.
 
 @retval EFI_SUCCESS                     Entry addition is successful.
+@retval EFI_OUT_OF_RESOURCES            Failed to allocate // MU_CHANGE - CodeQL change
 @retval Others                          See GetVariable/SetVariable for more details
 
 **/
@@ -429,6 +430,12 @@ MsWheaClearAllEntries (
 
   NameSize = sizeof (CHAR16);
   Name     = AllocateZeroPool (NameSize);
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (Name == NULL) {
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  // MU_CHANGE [END] - CodeQL change
 
   while (TRUE) {
     // Get the next name out of the system
