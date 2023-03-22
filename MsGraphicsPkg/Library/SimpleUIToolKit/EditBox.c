@@ -306,8 +306,9 @@ SetCurrentTextString (
   IN        CHAR16   *NewTextString
   )
 {
-  BOOLEAN  RenderRequired = FALSE;
   UINT32   NewTextLen;
+  UINT32   MaxLen;
+  BOOLEAN  RenderRequired = FALSE;
 
   NewTextLen = (UINT32)StrnLenS (NewTextString, (UIT_EDITBOX_MAX_STRING_LENGTH - 1));
   // Return a pointer to the editbox string to the caller.
@@ -319,6 +320,14 @@ SetCurrentTextString (
   } else {
     RenderRequired = 0 != StrnCmp (this->m_EditBoxText, NewTextString, UIT_EDITBOX_MAX_STRING_LENGTH - 1);
     StrnCpyS (this->m_EditBoxText, sizeof (this->m_EditBoxText)/sizeof (CHAR16), NewTextString, (UIT_EDITBOX_MAX_STRING_LENGTH - 1));
+    if (UIT_EDITBOX_TYPE_PASSWORD != this->m_Type) {
+      StrnCpyS (this->m_EditBoxDisplayText, sizeof (this->m_EditBoxDisplayText)/sizeof (CHAR16), NewTextString, (UIT_EDITBOX_MAX_STRING_LENGTH - 1));
+    } else {
+      MaxLen = MIN (sizeof (this->m_EditBoxDisplayText), NewTextLen * sizeof (CHAR16));
+
+      SetMem16 (this->m_EditBoxDisplayText, MaxLen, CHAR_BULLET_UNICODE);
+    }
+
     this->m_CurrentPosition = NewTextLen;
   }
 

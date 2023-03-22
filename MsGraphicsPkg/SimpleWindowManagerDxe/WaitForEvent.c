@@ -153,14 +153,22 @@ WaitForEventInternal (
           PowerTitle   = HiiGetString (mSWMHiiHandle, STRING_TOKEN (STR_POWER_TIMEOUT_TITLE), NULL);
           PowerBody    = HiiGetString (mSWMHiiHandle, STRING_TOKEN (STR_POWER_TIMEOUT_BODY), NULL);
           PowerCaption = HiiGetString (mSWMHiiHandle, STRING_TOKEN (STR_POWER_TIMEOUT_CAPTION), NULL);
-          Status       = SwmDialogsMessageBox (
-                           PowerTitle,                               // Dialog body title.
-                           PowerBody,                                // Dialog body text.
-                           PowerCaption,                             // Dialog caption text.
-                           SWM_MB_CANCEL | SWM_MB_STYLE_ALERT2,      // Show Cancel and enforce Timeout
-                           EFI_TIMER_PERIOD_SECONDS (PcdGet16 (PcdPowerOffHold)),
-                           &SwmResult
-                           );                                         // Return result.
+          // MU_CHANGE [BEGIN] - CodeQL change
+          if ((PowerTitle == NULL) || (PowerBody == NULL) || (PowerCaption == NULL)) {
+            DEBUG ((DEBUG_ERROR, "Error getting POWER OFF dialog strings.\n"));
+            Status = EFI_INVALID_PARAMETER;
+            goto Exit;
+          }
+
+          // MU_CHANGE [END] - CodeQL change
+          Status = SwmDialogsMessageBox (
+                     PowerTitle,                                     // Dialog body title.
+                     PowerBody,                                      // Dialog body text.
+                     PowerCaption,                                   // Dialog caption text.
+                     SWM_MB_CANCEL | SWM_MB_STYLE_ALERT2,            // Show Cancel and enforce Timeout
+                     EFI_TIMER_PERIOD_SECONDS (PcdGet16 (PcdPowerOffHold)),
+                     &SwmResult
+                     );                                               // Return result.
           if (!EFI_ERROR (Status)) {
             if (SwmResult == SWM_MB_TIMEOUT) {
               DEBUG ((DEBUG_ERROR, "Shutting down system due to Power Off Delay timer.\n"));

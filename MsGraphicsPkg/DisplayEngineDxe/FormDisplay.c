@@ -320,8 +320,13 @@ GetWidth (
     TextOp = (EFI_IFR_TEXT *)Statement->OpCode;
     if (TextOp->TextTwo != 0) {
       String = GetToken (TextOp->TextTwo, gFormData->HiiHandle);
-      Size   = StrLen (String);
-      FreePool (String);
+      // MU_CHANGE [BEGIN] - CodeQL change
+      if (String != NULL) {
+        Size = StrLen (String);
+        FreePool (String);
+      }
+
+      // MU_CHANGE [END] - CodeQL change
     }
   }
 
@@ -636,8 +641,13 @@ UiAddMenuOption (
 
   for (Index = 0; Index < Count; Index++) {
     MenuOption = AllocateZeroPool (sizeof (UI_MENU_OPTION));
-    ASSERT (MenuOption);
+    // MU_CHANGE [BEGIN] - CodeQL change
+    if (MenuOption == NULL) {
+      ASSERT (MenuOption != NULL);
+      return;
+    }
 
+    // MU_CHANGE [END] - CodeQL change
     MenuOption->Signature       = UI_MENU_OPTION_SIGNATURE;
     MenuOption->Description     = GetToken (PromptId, gFormData->HiiHandle);
     MenuOption->Handle          = gFormData->HiiHandle;
@@ -2471,7 +2481,13 @@ UiDisplayMenu (
               // Process the current order.
               //
               ReturnValue = AllocateZeroPool (Statement->CurrentValue.BufferLen);
-              ASSERT (ReturnValue != NULL);
+              // MU_CHANGE [BEGIN] - CodeQL change
+              if (ReturnValue == NULL) {
+                ASSERT (ReturnValue != NULL);
+                return EFI_OUT_OF_RESOURCES;
+              }
+
+              // MU_CHANGE [END] - CodeQL change
               ValueArray = (UINT32 *)Statement->CurrentValue.Buffer;
 
               Src = ReturnData.SelectedCell;
@@ -2636,6 +2652,12 @@ BrowserStatusProcess (
 
   if (StringToken != 0) {
     ErrorInfo = GetToken (StringToken, gFormData->HiiHandle);
+    // MU_CHANGE [BEGIN] - CodeQL change
+    if (ErrorInfo == NULL) {
+      ErrorInfo = gBrowserError;
+    }
+
+    // MU_CHANGE [END] - CodeQL change
   } else if (gFormData->ErrorString != NULL) {
     //
     // Only used to compatible with old setup browser.

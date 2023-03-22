@@ -263,7 +263,13 @@ AdjustOptionOrder (
   // Prepare HiiValue array
   //
   HiiValueArray = AllocateZeroPool (*PopUpMenuLines * sizeof (EFI_HII_VALUE));
-  ASSERT (HiiValueArray != NULL);
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (HiiValueArray == NULL) {
+    ASSERT (HiiValueArray != NULL);
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  // MU_CHANGE [END] - CodeQL change
 
   for (Index = 0; Index < *PopUpMenuLines; Index++) {
     HiiValueArray[Index].Type      = ValueType;

@@ -7,20 +7,177 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
+#include "DxePagingAuditTestApp.h"
+
 #include <Protocol/ShellParameters.h>
 #include <Protocol/Shell.h>
 #include <Protocol/SimpleFileSystem.h>
 #include <Library/FileHandleLib.h>
-
-#include "DxePagingAuditTestApp.h"
+#include <Library/DxeServicesTableLib.h>
 
 #define UNIT_TEST_APP_NAME     "Paging Audit Test"
 #define UNIT_TEST_APP_VERSION  "1"
 #define MAX_CHARS_TO_READ      3
 
-CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
-UINTN  mMemoryInfoDatabaseSize      = 0;
-UINTN  mMemoryInfoDatabaseAllocSize = 0;
+// TRUE if A interval subsumes B interval
+#define CHECK_SUBSUMPTION(AStart, AEnd, BStart, BEnd) \
+  ((AStart <= BStart) && (AEnd >= BEnd))
+
+CHAR8                             *mMemoryInfoDatabaseBuffer   = NULL;
+UINTN                             mMemoryInfoDatabaseSize      = 0;
+UINTN                             mMemoryInfoDatabaseAllocSize = 0;
+MEMORY_PROTECTION_SPECIAL_REGION  *mSpecialRegions             = NULL;
+IMAGE_RANGE_DESCRIPTOR            *mNonProtectedImageList      = NULL;
+UINTN                             mSpecialRegionCount          = 0;
+EFI_GCD_MEMORY_SPACE_DESCRIPTOR   *mMemorySpaceMap             = NULL;
+UINTN                             mMemorySpaceMapCount         = 0;
+
+/**
+  Populates the non protected image list global
+**/
+VOID
+GetNonProtectedImageList (
+  VOID
+  )
+{
+  EFI_STATUS                        Status;
+  MEMORY_PROTECTION_DEBUG_PROTOCOL  *MemoryProtectionProtocol;
+
+  MemoryProtectionProtocol = NULL;
+
+  if (mNonProtectedImageList != NULL) {
+    return;
+  }
+
+  Status = gBS->LocateProtocol (
+                  &gMemoryProtectionDebugProtocolGuid,
+                  NULL,
+                  (VOID **)&MemoryProtectionProtocol
+                  );
+
+  if (!EFI_ERROR (Status)) {
+    Status = MemoryProtectionProtocol->GetImageList (
+                                         &mNonProtectedImageList,
+                                         NonProtected
+                                         );
+  }
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d - Unable to fetch non-protected image list\n", __FUNCTION__, __LINE__));
+    mNonProtectedImageList = NULL;
+  }
+}
+
+/**
+  Populates the special region array global
+**/
+VOID
+GetSpecialRegions (
+  VOID
+  )
+{
+  EFI_STATUS                                 Status;
+  MEMORY_PROTECTION_SPECIAL_REGION_PROTOCOL  *SpecialRegionProtocol;
+
+  SpecialRegionProtocol = NULL;
+
+  if (mSpecialRegions != NULL) {
+    return;
+  }
+
+  Status = gBS->LocateProtocol (
+                  &gMemoryProtectionSpecialRegionProtocolGuid,
+                  NULL,
+                  (VOID **)&SpecialRegionProtocol
+                  );
+
+  if (!EFI_ERROR (Status)) {
+    Status = SpecialRegionProtocol->GetSpecialRegions (
+                                      &mSpecialRegions,
+                                      &mSpecialRegionCount
+                                      );
+  }
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a:%d - Unable to fetch special region list\n", __FUNCTION__, __LINE__));
+    mNonProtectedImageList = NULL;
+  }
+}
+
+/**
+  Checks if a region is allowed to be read/write/execute based on the special region array
+  and non protected image list
+
+  @param[in] Address            Start address of the region
+  @param[in] Length             Length of the region
+
+  @retval TRUE                  The region is allowed to be read/write/execute
+  @retval FALSE                 The region is not allowed to be read/write/execute
+**/
+BOOLEAN
+CanRegionBeRWX (
+  IN UINT64  Address,
+  IN UINT64  Length
+  )
+{
+  LIST_ENTRY              *NonProtectedImageLink;
+  IMAGE_RANGE_DESCRIPTOR  *NonProtectedImage;
+  UINTN                   SpecialRegionIndex, MemorySpaceMapIndex;
+
+  if ((mNonProtectedImageList == NULL) && (mSpecialRegions == NULL)) {
+    return FALSE;
+  }
+
+  if (mSpecialRegions != NULL) {
+    for (SpecialRegionIndex = 0; SpecialRegionIndex < mSpecialRegionCount; SpecialRegionIndex++) {
+      if (CHECK_SUBSUMPTION (
+            mSpecialRegions[SpecialRegionIndex].Start,
+            mSpecialRegions[SpecialRegionIndex].Start + mSpecialRegions[SpecialRegionIndex].Length,
+            Address,
+            Address + Length
+            ) &&
+          (mSpecialRegions[SpecialRegionIndex].EfiAttributes == 0))
+      {
+        return TRUE;
+      }
+    }
+  }
+
+  if (mNonProtectedImageList != NULL) {
+    for (NonProtectedImageLink = mNonProtectedImageList->Link.ForwardLink;
+         NonProtectedImageLink != &mNonProtectedImageList->Link;
+         NonProtectedImageLink = NonProtectedImageLink->ForwardLink)
+    {
+      NonProtectedImage = CR (NonProtectedImageLink, IMAGE_RANGE_DESCRIPTOR, Link, IMAGE_RANGE_DESCRIPTOR_SIGNATURE);
+      if (CHECK_SUBSUMPTION (
+            NonProtectedImage->Base,
+            NonProtectedImage->Base + NonProtectedImage->Length,
+            Address,
+            Address + Length
+            ))
+      {
+        return TRUE;
+      }
+    }
+  }
+
+  if (mMemorySpaceMap != NULL) {
+    for (MemorySpaceMapIndex = 0; MemorySpaceMapIndex < mMemorySpaceMapCount; MemorySpaceMapIndex++) {
+      if (CHECK_SUBSUMPTION (
+            mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress,
+            mMemorySpaceMap[MemorySpaceMapIndex].BaseAddress + mMemorySpaceMap[MemorySpaceMapIndex].Length,
+            Address,
+            Address + Length
+            ) &&
+          (mMemorySpaceMap[MemorySpaceMapIndex].GcdMemoryType == EfiGcdMemoryTypeNonExistent))
+      {
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
 
 /**
 
@@ -234,6 +391,14 @@ DxePagingAuditTestAppEntryPoint (
     if (Misc == NULL) {
       DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TestSuite\n"));
       goto EXIT;
+    }
+
+    GetSpecialRegions ();
+    GetNonProtectedImageList ();
+    Status = gDS->GetMemorySpaceMap (&mMemorySpaceMapCount, &mMemorySpaceMap);
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Unable to fetch the GCD memory map. Test results may be inaccurate. Status: %r\n", __FUNCTION__, Status));
     }
 
     AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, NULL, NULL);

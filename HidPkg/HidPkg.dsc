@@ -38,6 +38,7 @@
 
   HiiLib                      |MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   UefiHiiServicesLib          |MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
+  SafeIntLib                  |MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf # MU_CHANGE - CodeQL change
 
 [LibraryClasses.X64]
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
