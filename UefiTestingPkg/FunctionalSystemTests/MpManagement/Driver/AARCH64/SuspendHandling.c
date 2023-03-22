@@ -586,6 +586,9 @@ CpuArchSleep (
     goto Done;
   }
 
+  ArmDisableMmu ();
+  ArmCleanInvalidateDataCache ();
+
   Status = ArmPsciSuspendHelper (PowerState, (UINTN)AsmApEntryPoint, 0);
 
 Done:
