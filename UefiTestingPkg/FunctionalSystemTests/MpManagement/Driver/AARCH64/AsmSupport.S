@@ -58,7 +58,7 @@ JumpToCFunction:
   // x2 contains the index for the current processor
   ldr x0, gApStacksBase
   ldr x1, gApStackSize
-  add x2, x2, 1               // x2 = ProcessorIndex + 1
+  add x2, x2, 1               // x2 = ProcessorIndex + 1, preemptively adding 1 so that the calculated sp will be at the bottom of the stack.
   mul x3, x2, x1              // x3 = (ProcessorIndex + 1) * gApStackSize
   add sp, x0, x3              // sp = gApStacksBase + x3
   mov x29, xzr
