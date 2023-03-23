@@ -1,0 +1,17 @@
+## @file
+# CodeQL Result Filters for Packages in Mu Plus
+#
+# Note: Packages that use Mu Basecore can reuse this file to quickly pick up the
+#       same filters applied to results in the Mu Plus repo.
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+{
+  "Filters": [
+    "-AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.c:SM02311",
+    "-HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.c:SM02298",
+    "-MsCorePkg/Library/PlatformBootManagerLib/BdsPlatform.c:SM02311",
+  ]
+}

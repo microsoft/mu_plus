@@ -457,7 +457,11 @@ TSEGDumpHandler (
     }
 
     TempBuffer = AllocatePool (NumberOfTseg * sizeof (EFI_PHYSICAL_ADDRESS));
-    ASSERT (TempBuffer != NULL);
+    if (TempBuffer == NULL) {
+      ASSERT (TempBuffer != NULL);
+      DEBUG ((DEBUG_ERROR, "%a Failed to allocate memory for TSEG ranges!\n", __FUNCTION__));
+      return EFI_OUT_OF_RESOURCES;
+    }
 
     RecordIndex             = 0;
     TempBuffer[RecordIndex] = SmrrBase;

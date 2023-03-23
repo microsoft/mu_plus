@@ -148,6 +148,15 @@ CreateDialogControls (
       goto Exit;
   }
 
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (Button1Text == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SWM]: Failed to load Button1 text.\r\n"));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto Exit;
+  }
+
+  // MU_CHANGE [END] - CodeQL change
+
   // Determine the longest button string for button sizing considerations.
   //
   LongestButtonText = Button1Text;

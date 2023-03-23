@@ -100,7 +100,7 @@
 
 [LibraryClasses.X64]
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
-!if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
+!if $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
   # Provide StackCookie support lib so that we can link to /GS exports for VS builds
   NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
@@ -134,6 +134,7 @@
   UefiTestingPkg/FunctionalSystemTests/MemmapAndMatTestApp/MemmapAndMatTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MorLockTestApp/MorLockTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MpManagement/App/MpManagementTestApp.inf
+  UefiTestingPkg/FunctionalSystemTests/MemoryAttributeProtocolFuncTestApp/MemoryAttributeProtocolFuncTestApp.inf
 
 [Components.IA32, Components.X64]
   UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMAIVRSProtectionUnitTestApp.inf

@@ -244,7 +244,7 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
       LastChar = '\0';
       while ((LineEntry->ResidualLen > 0) &&
              (LastChar != '\n') &&
-             (TargetLen < (mMaxMessageSize - 2)))
+             (TargetLen < (UINT16)(mMaxMessageSize - 2)))
       {
         LastChar     = *LineEntry->ResidualChar++;
         *TargetPtr++ = LastChar;

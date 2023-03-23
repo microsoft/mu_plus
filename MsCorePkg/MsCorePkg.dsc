@@ -106,7 +106,7 @@
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/SecPeiCpuExceptionHandlerLib.inf
 
 [LibraryClasses.X64]
-!if $(TOOL_CHAIN_TAG) == VS2017 or $(TOOL_CHAIN_TAG) == VS2015 or $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
+!if $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
   # Provide StackCookie support lib so that we can link to /GS exports for VS builds
   NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
   BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
@@ -171,7 +171,6 @@
   MsCorePkg/MuVarPolicyFoundationDxe/MuVarPolicyFoundationDxe.inf
   MsCorePkg/AcpiRGRT/AcpiRgrt.inf
   MsCorePkg/Library/ExceptionPersistenceLibCmos/ExceptionPersistenceLibCmos.inf
-  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
   MsCorePkg/Library/DxeQueueUefiVariableLib/DxeQueueUefiVariableLib.inf
   MsCorePkg/Library/BaseQueueLibNull/BaseQueueLibNull.inf
   MsCorePkg/Library/DxeCapsulePersistenceLib/DxeCapsulePersistenceLib.inf
@@ -218,6 +217,9 @@
   }
   MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
   MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
+
+[Components.AARCH64, Components.AARCH64]
+  MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
 
 [BuildOptions]
 #force deprecated interfaces off

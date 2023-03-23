@@ -580,7 +580,14 @@ SetKeyboardLayoutEvent (
   //
   ReleaseKeyboardLayoutResources (HidKeyboardDevice);
   HidKeyboardDevice->KeyConvertionTable = AllocateZeroPool ((NUMBER_OF_VALID_HID_KEYCODE)*sizeof (EFI_KEY_DESCRIPTOR));
-  ASSERT (HidKeyboardDevice->KeyConvertionTable != NULL);
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (HidKeyboardDevice->KeyConvertionTable == NULL) {
+    ASSERT (HidKeyboardDevice->KeyConvertionTable != NULL);
+    FreePool (KeyboardLayout);
+    return;
+  }
+
+  // MU_CHANGE [END] - CodeQL change
 
   //
   // Traverse the list of key descriptors following the header of EFI_HII_KEYBOARD_LAYOUT
@@ -610,7 +617,15 @@ SetKeyboardLayoutEvent (
     //
     if (TempKey.Modifier == EFI_NS_KEY_MODIFIER) {
       HidNsKey = AllocateZeroPool (sizeof (HID_NS_KEY));
-      ASSERT (HidNsKey != NULL);
+      // MU_CHANGE [BEGIN] - CodeQL change
+      if (HidNsKey == NULL) {
+        ASSERT (HidNsKey != NULL);
+        ReleaseKeyboardLayoutResources (HidKeyboardDevice);
+        FreePool (KeyboardLayout);
+        return;
+      }
+
+      // MU_CHANGE [END] - CodeQL change
 
       //
       // Search for sequential children physical key definitions
@@ -983,7 +998,7 @@ ProcessKeyStroke (
   // Bytes 3 to n are for normal keycodes
   //
   KeyRelease = FALSE;
-  for (LastKeyCode = 0; LastKeyCode < LastReportKeyCount; LastKeyCode++) {
+  for (LastKeyCode = 0; (UINTN)LastKeyCode < LastReportKeyCount; LastKeyCode++) {
     if (!HIDKBD_VALID_KEYCODE (LastReport->KeyCode[LastKeyCode])) {
       continue;
     }
@@ -993,7 +1008,7 @@ ProcessKeyStroke (
     // then it is released. Otherwise, it is not released.
     //
     KeyRelease = TRUE;
-    for (KeyCode = 0; KeyCode < CurrentReportKeyCount; KeyCode++) {
+    for (KeyCode = 0; (UINTN)KeyCode < CurrentReportKeyCount; KeyCode++) {
       if (!HIDKBD_VALID_KEYCODE (CurrentReport->KeyCode[KeyCode])) {
         continue;
       }
@@ -1033,7 +1048,7 @@ ProcessKeyStroke (
   // Handle normal key's pressing situation
   //
   KeyPress = FALSE;
-  for (KeyCode = 0; KeyCode < CurrentReportKeyCount; KeyCode++) {
+  for (KeyCode = 0; (UINTN)KeyCode < CurrentReportKeyCount; KeyCode++) {
     if (!HIDKBD_VALID_KEYCODE (CurrentReport->KeyCode[KeyCode])) {
       continue;
     }
@@ -1043,7 +1058,7 @@ ProcessKeyStroke (
     // then it is pressed. Otherwise, it is not pressed.
     //
     KeyPress = TRUE;
-    for (LastKeyCode = 0; LastKeyCode < LastReportKeyCount; LastKeyCode++) {
+    for (LastKeyCode = 0; (UINTN)LastKeyCode < LastReportKeyCount; LastKeyCode++) {
       if (!HIDKBD_VALID_KEYCODE (LastReport->KeyCode[LastKeyCode])) {
         continue;
       }
