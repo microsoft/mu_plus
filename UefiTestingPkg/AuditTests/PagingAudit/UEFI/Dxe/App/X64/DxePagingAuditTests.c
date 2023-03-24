@@ -6,7 +6,7 @@
 
 **/
 
-#include <Library/CpuPageTableLib.h>
+#include "../../../X64/PagingAuditX64.h"
 #include "../DxePagingAuditTestApp.h"
 
 /**
@@ -24,51 +24,83 @@ NoReadWriteExecute (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  IA32_MAP_ENTRY  *Map;
-  UINTN           MapCount;
-  UINTN           Index;
-  BOOLEAN         FoundRWXAddress;
-  IA32_CR4        Cr4;
-  PAGING_MODE     PagingMode;
-  UINTN           PagesAllocated = 0;
-  EFI_STATUS      Status;
+  UINT64   *Pml4;
+  UINT64   *Pte1G;
+  UINT64   *Pte2M;
+  UINT64   *Pte4K;
+  UINTN    Index1;
+  UINTN    Index2;
+  UINTN    Index3;
+  UINTN    Index4;
+  UINT64   Address;
+  BOOLEAN  FoundRWXAddress;
 
-  Map             = NULL;
-  MapCount        = 0;
-  Index           = 0;
   FoundRWXAddress = FALSE;
+  Pml4            = (UINT64 *)AsmReadCr3 ();
 
-  // Poll CR4 to deterimine the page table depth
-  Cr4.UintN = AsmReadCr4 ();
-
-  if (Cr4.Bits.LA57 != 0) {
-    PagingMode = Paging5Level;
-  } else {
-    PagingMode = Paging4Level;
-  }
-
-  // CR3 is the page table pointer
-  Status = PageTableParse (AsmReadCr3 (), PagingMode, NULL, &MapCount);
-
-  while (Status == RETURN_BUFFER_TOO_SMALL) {
-    if ((Map != NULL) && (PagesAllocated > 0)) {
-      gBS->FreePages ((EFI_PHYSICAL_ADDRESS)(UINTN)Map, PagesAllocated);
+  for (Index1 = 0; Index1 < 0x200; Index1++) {
+    Index2 = 0;
+    Index3 = 0;
+    Index4 = 0;
+    if ((Pml4[Index1] & X64_PAGE_TABLE_PRESENT) == 0) {
+      continue;
     }
 
-    PagesAllocated = EFI_SIZE_TO_PAGES (MapCount * sizeof (IA32_MAP_ENTRY));
-    Status         = gBS->AllocatePages (AllocateAnyPages, EfiBootServicesData, PagesAllocated, (EFI_PHYSICAL_ADDRESS *)(UINTN)&Map);
+    Pte1G = (UINT64 *)(UINTN)(Pml4[Index1] & X64_PAGE_TABLE_ADDRESS_MASK);
 
-    UT_ASSERT_NOT_EFI_ERROR (Status);
-    Status = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
-  }
+    for (Index2 = 0; Index2 < 0x200; Index2++) {
+      Index3 = 0;
+      Index4 = 0;
+      if (!X64_IS_PRESENT (Pte1G[Index2])) {
+        continue;
+      }
 
-  for ( ; Index < MapCount; Index++) {
-    if ((Map[Index].Attribute.Bits.ReadWrite != 0) && (Map[Index].Attribute.Bits.Nx == 0)) {
-      if (!CanRegionBeRWX (Map[Index].LinearAddress, Map[Index].Length)) {
-        UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
-        FoundRWXAddress = TRUE;
+      if (X64_IS_LEAF (Pte1G[Index2])) {
+        Address = IndexToAddress (Index1, Index2, Index3, Index4);
+        if (X64_IS_READ_WRITE (Pte1G[Index2]) && X64_IS_EXECUTABLE (Pte1G[Index2])) {
+          if (!CanRegionBeRWX (Address, SIZE_1GB)) {
+            UT_LOG_ERROR ("Memory Range 0x%016lx-0x%016lx is Read/Write/Execute\n", Address, Address + SIZE_1GB);
+            DEBUG ((DEBUG_INFO, "Memory Range 0x%016lx-0x%016lx is Read/Write/Execute\n", Address, Address + SIZE_1GB));
+            FoundRWXAddress = TRUE;
+          }
+        }
       } else {
-        UT_LOG_WARNING ("Memory Range 0x%llx-0x%llx is Read/Write/Execute. This range is excepted from the test.\n", Map[Index].LinearAddress, Map[Index].LinearAddress + Map[Index].Length);
+        Pte2M = (UINT64 *)(UINTN)(Pte1G[Index2] & X64_PAGE_TABLE_ADDRESS_MASK);
+
+        for (Index3 = 0; Index3 < 0x200; Index3++) {
+          Index4 = 0;
+          if (!X64_IS_PRESENT (Pte2M[Index3])) {
+            continue;
+          }
+
+          if (X64_IS_LEAF (Pte2M[Index3])) {
+            Address = IndexToAddress (Index1, Index2, Index3, Index4);
+            if (X64_IS_READ_WRITE (Pte2M[Index3]) && X64_IS_EXECUTABLE (Pte2M[Index3])) {
+              if (!CanRegionBeRWX (Address, SIZE_2MB)) {
+                UT_LOG_ERROR ("Memory Range 0x%016lx-0x%016lx is Read/Write/Execute\n", Address, Address + SIZE_2MB);
+                DEBUG ((DEBUG_INFO, "Memory Range 0x%016lx-0x%016lx is Read/Write/Execute\n", Address, Address + SIZE_2MB));
+                FoundRWXAddress = TRUE;
+              }
+            }
+          } else {
+            Pte4K = (UINT64 *)(UINTN)(Pte2M[Index3] & X64_PAGE_TABLE_ADDRESS_MASK);
+
+            for (Index4 = 0; Index4 < 0x200; Index4++) {
+              if (!X64_IS_PRESENT (Pte4K[Index4])) {
+                continue;
+              }
+
+              Address = IndexToAddress (Index1, Index2, Index3, Index4);
+              if (X64_IS_READ_WRITE (Pte4K[Index4]) && X64_IS_EXECUTABLE (Pte4K[Index4])) {
+                if (!CanRegionBeRWX (Address, SIZE_4KB)) {
+                  UT_LOG_ERROR ("Memory Range 0x%016lx-0x%016lx is Read/Write/Execute\n", Address, Address + SIZE_4KB);
+                  DEBUG ((DEBUG_INFO, "Memory Range 0x%016lx-0x%016lx is Read/Write/Execute\n", Address, Address + SIZE_4KB));
+                  FoundRWXAddress = TRUE;
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

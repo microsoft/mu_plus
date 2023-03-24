@@ -60,7 +60,6 @@
 
 [LibraryClasses.X64]
   UefiCpuLib
-  CpuPageTableLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

@@ -21,98 +21,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define VALID_SMRR_HIGH_POS  BIT51
 #define VALID_SMRR_BIT_MASK  (~(~(BIT51 - 1) | (BIT17 - 1)))
 
-//
-// Page-Map Level-4 Offset (PML4) and
-// Page-Directory-Pointer Offset (PDPE) entries 4K & 2MB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Reserved             : 1;  // Reserved
-    UINT64    MustBeZero           : 2;  // Must Be Zero
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PageTableBaseAddress : 40; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // No Execute bit
-  } Bits;
-  UINT64    Uint64;
-} PAGE_MAP_AND_DIRECTORY_POINTER;
-
-//
-// Page Table Entry 4KB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Dirty                : 1;  // 0 = Not Dirty, 1 = written by processor on access to page
-    UINT64    PAT                  : 1;  //
-    UINT64    Global               : 1;  // 0 = Not global page, 1 = global page TLB not cleared on CR3 write
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PageTableBaseAddress : 40; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // 0 = Execute Code, 1 = No Code Execution
-  } Bits;
-  UINT64    Uint64;
-} PAGE_TABLE_4K_ENTRY;
-
-//
-// Page Table Entry 2MB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Dirty                : 1;  // 0 = Not Dirty, 1 = written by processor on access to page
-    UINT64    MustBe1              : 1;  // Must be 1
-    UINT64    Global               : 1;  // 0 = Not global page, 1 = global page TLB not cleared on CR3 write
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PAT                  : 1;  //
-    UINT64    MustBeZero           : 8;  // Must be zero;
-    UINT64    PageTableBaseAddress : 31; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // 0 = Execute Code, 1 = No Code Execution
-  } Bits;
-  UINT64    Uint64;
-} PAGE_TABLE_ENTRY;
-
-//
-// Page Table Entry 1GB
-//
-typedef union {
-  struct {
-    UINT64    Present              : 1;  // 0 = Not present in memory, 1 = Present in memory
-    UINT64    ReadWrite            : 1;  // 0 = Read-Only, 1= Read/Write
-    UINT64    UserSupervisor       : 1;  // 0 = Supervisor, 1=User
-    UINT64    WriteThrough         : 1;  // 0 = Write-Back caching, 1=Write-Through caching
-    UINT64    CacheDisabled        : 1;  // 0 = Cached, 1=Non-Cached
-    UINT64    Accessed             : 1;  // 0 = Not accessed, 1 = Accessed (set by CPU)
-    UINT64    Dirty                : 1;  // 0 = Not Dirty, 1 = written by processor on access to page
-    UINT64    MustBe1              : 1;  // Must be 1
-    UINT64    Global               : 1;  // 0 = Not global page, 1 = global page TLB not cleared on CR3 write
-    UINT64    Available            : 3;  // Available for use by system software
-    UINT64    PAT                  : 1;  //
-    UINT64    MustBeZero           : 17; // Must be zero;
-    UINT64    PageTableBaseAddress : 22; // Page Table Base Address
-    UINT64    AvailableHigh        : 11; // Available for use by system software
-    UINT64    Nx                   : 1;  // 0 = Execute Code, 1 = No Code Execution
-  } Bits;
-  UINT64    Uint64;
-} PAGE_TABLE_1G_ENTRY;
-
 /**
   Calculate the maximum physical address bits supported.
 
@@ -550,30 +458,25 @@ GetFlatPageTableData (
   OUT UINT64    *GuardEntries
   )
 {
-  EFI_STATUS                      Status = EFI_SUCCESS;
-  PAGE_MAP_AND_DIRECTORY_POINTER  *Work;
-  PAGE_MAP_AND_DIRECTORY_POINTER  *Pml4;
-  PAGE_TABLE_1G_ENTRY             *Pte1G;
-  PAGE_TABLE_ENTRY                *Pte2M;
-  PAGE_TABLE_4K_ENTRY             *Pte4K;
-  UINTN                           Index1;
-  UINTN                           Index2;
-  UINTN                           Index3;
-  UINTN                           Index4;
-  UINTN                           MyGuardCount        = 0;
-  UINTN                           MyPdeCount          = 0;
-  UINTN                           My4KCount           = 0;
-  UINTN                           My2MCount           = 0;
-  UINTN                           My1GCount           = 0;
-  UINTN                           NumPage4KNotPresent = 0;
-  UINTN                           NumPage2MNotPresent = 0;
-  UINTN                           NumPage1GNotPresent = 0;
-  UINT64                          Address;
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINT64      *Pml4;
+  UINT64      *Pte1G;
+  UINT64      *Pte2M;
+  UINT64      *Pte4K;
+  UINTN       Index1;
+  UINTN       Index2;
+  UINTN       Index3;
+  UINTN       Index4;
+  UINTN       MyGuardCount        = 0;
+  UINTN       MyPdeCount          = 0;
+  UINTN       My4KCount           = 0;
+  UINTN       My2MCount           = 0;
+  UINTN       My1GCount           = 0;
+  UINTN       NumPage4KNotPresent = 0;
+  UINTN       NumPage2MNotPresent = 0;
+  UINTN       NumPage1GNotPresent = 0;
+  UINT64      Address;
 
-  //
-  // First, fail fast if some of the parameters don't look right.
-  //
-  // ALL count parameters should be provided.
   if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (PdeCount == NULL) || (GuardCount == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
@@ -587,72 +490,51 @@ GetFlatPageTableData (
     return EFI_INVALID_PARAMETER;
   }
 
-  //
-  // Alright, let's get to work.
-  //
-  Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *)AsmReadCr3 ();
-  // Increase the count.
-  // If we have room for more PDE Entries, add one.
+  Pml4 = (UINT64 *)AsmReadCr3 ();
   MyPdeCount++;
   if (MyPdeCount <= *PdeCount) {
     PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pml4;
   }
 
   for (Index4 = 0x0; Index4 < 0x200; Index4++) {
-    if (!Pml4[Index4].Bits.Present) {
+    if (!X64_IS_PRESENT (Pml4[Index4])) {
       continue;
     }
 
-    Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
-    // Increase the count.
-    // If we have room for more PDE Entries, add one.
+    Pte1G = (UINT64 *)(UINTN)(Pml4[Index4] & X64_PAGE_TABLE_ADDRESS_MASK);
     MyPdeCount++;
     if (MyPdeCount <= *PdeCount) {
       PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte1G;
     }
 
     for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
-      if (!Pte1G[Index3].Bits.Present) {
+      if (!X64_IS_PRESENT (Pte1G[Index3])) {
         NumPage1GNotPresent++;
         continue;
       }
 
-      //
-      // MustBe1 is the bit that indicates whether the pointer is a directory
-      // pointer or a page table entry.
-      //
-      if (!(Pte1G[Index3].Bits.MustBe1)) {
-        //
-        // We have to cast 1G and 2M directories to this to
-        // get all of their address bits.
-        //
-        Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
-        Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
-        // Increase the count.
-        // If we have room for more PDE Entries, add one.
+      if (!X64_IS_LEAF (Pte1G[Index3])) {
+        Pte2M = (UINT64 *)(UINTN)(Pte1G[Index3] & X64_PAGE_TABLE_ADDRESS_MASK);
         MyPdeCount++;
         if (MyPdeCount <= *PdeCount) {
           PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte2M;
         }
 
         for (Index2 = 0x0; Index2 < 0x200; Index2++ ) {
-          if (!Pte2M[Index2].Bits.Present) {
+          if (!X64_IS_PRESENT (Pte2M[Index2])) {
             NumPage2MNotPresent++;
             continue;
           }
 
-          if (!(Pte2M[Index2].Bits.MustBe1)) {
-            Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
-            Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
-            // Increase the count.
-            // If we have room for more PDE Entries, add one.
+          if (!X64_IS_LEAF (Pte2M[Index2])) {
+            Pte4K = (UINT64 *)(UINTN)(Pte2M[Index2] & X64_PAGE_TABLE_ADDRESS_MASK);
             MyPdeCount++;
             if (MyPdeCount <= *PdeCount) {
               PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte4K;
             }
 
             for (Index1 = 0x0; Index1 < 0x200; Index1++ ) {
-              if (!Pte4K[Index1].Bits.Present) {
+              if (!X64_IS_PRESENT (Pte4K[Index1])) {
                 NumPage4KNotPresent++;
                 Address = IndexToAddress (Index4, Index3, Index2, Index1);
                 if (IsGuardPage (Address)) {
@@ -665,28 +547,22 @@ GetFlatPageTableData (
                 }
               }
 
-              // Increase the count.
-              // If we have room for more Page Table entries, add one.
               My4KCount++;
               if (My4KCount <= *Pte4KCount) {
-                Pte4KEntries[My4KCount-1] = Pte4K[Index1].Uint64;
+                Pte4KEntries[My4KCount-1] = Pte4K[Index1];
               }
             }
           } else {
-            // Increase the count.
-            // If we have room for more Page Table entries, add one.
             My2MCount++;
             if (My2MCount <= *Pte2MCount) {
-              Pte2MEntries[My2MCount-1] = Pte2M[Index2].Uint64;
+              Pte2MEntries[My2MCount-1] = Pte2M[Index2];
             }
           }
         }
       } else {
-        // Increase the count.
-        // If we have room for more Page Table entries, add one.
         My1GCount++;
         if (My1GCount <= *Pte1GCount) {
-          Pte1GEntries[My1GCount-1] = Pte1G[Index3].Uint64;
+          Pte1GEntries[My1GCount-1] = Pte1G[Index3];
         }
       }
     }
@@ -698,10 +574,7 @@ GetFlatPageTableData (
   DEBUG ((DEBUG_ERROR, "Number of   1G Pages active  = %d - NotPresent = %d\n", My1GCount, NumPage1GNotPresent));
   DEBUG ((DEBUG_ERROR, "Number of   Guard Pages active  = %d\n", MyGuardCount));
 
-  //
-  // determine whether any of the buffers were too small.
-  // Only matters if a given buffer was provided.
-  //
+  // Determine if any provided buffers are too small.
   if (((Pte1GEntries != NULL) && (*Pte1GCount < My1GCount)) || ((Pte2MEntries != NULL) && (*Pte2MCount < My2MCount)) ||
       ((Pte4KEntries != NULL) && (*Pte4KCount < My4KCount)) || ((PdeEntries != NULL) && (*PdeCount < MyPdeCount)) ||
       ((GuardEntries != NULL) && (*GuardCount < MyGuardCount)))
@@ -709,9 +582,7 @@ GetFlatPageTableData (
     Status = EFI_BUFFER_TOO_SMALL;
   }
 
-  //
   // Update all the return pointers.
-  //
   *Pte1GCount = My1GCount;
   *Pte2MCount = My2MCount;
   *Pte4KCount = My4KCount;
@@ -719,7 +590,7 @@ GetFlatPageTableData (
   *GuardCount = MyGuardCount;
 
   return Status;
-} // GetFlatPageTableData()
+}
 
 /**
    Dump platform specific handler. Created handler(s) need to be compliant with
