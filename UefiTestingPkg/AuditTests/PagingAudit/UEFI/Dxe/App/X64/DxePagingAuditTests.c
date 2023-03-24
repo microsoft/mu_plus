@@ -54,13 +54,13 @@ NoReadWriteExecute (
 
   while (Status == RETURN_BUFFER_TOO_SMALL) {
     if ((Map != NULL) && (PagesAllocated > 0)) {
-      FreePages (Map, PagesAllocated);
+      gBS->FreePages ((EFI_PHYSICAL_ADDRESS)(UINTN)Map, PagesAllocated);
     }
 
     PagesAllocated = EFI_SIZE_TO_PAGES (MapCount * sizeof (IA32_MAP_ENTRY));
-    Map            = AllocatePages (PagesAllocated);
+    Status         = gBS->AllocatePages (AllocateAnyPages, EfiBootServicesData, PagesAllocated, (EFI_PHYSICAL_ADDRESS *)(UINTN)&Map);
 
-    UT_ASSERT_NOT_NULL (Map);
+    UT_ASSERT_NOT_EFI_ERROR (Status);
     Status = PageTableParse (AsmReadCr3 (), PagingMode, Map, &MapCount);
   }
 

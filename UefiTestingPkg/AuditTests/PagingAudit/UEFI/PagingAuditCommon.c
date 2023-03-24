@@ -167,20 +167,17 @@ AppendToMemoryInfoDatabase (
   // Subtract 1 because we only need a single NULL terminator.
   NewDatabaseSize = NewStringSize + mMemoryInfoDatabaseSize;
   if (NewDatabaseSize > mMemoryInfoDatabaseAllocSize) {
-    NewDatabaseBuffer = ReallocatePool (
-                          mMemoryInfoDatabaseAllocSize,
-                          mMemoryInfoDatabaseAllocSize + MEM_INFO_DATABASE_REALLOC_CHUNK,
-                          mMemoryInfoDatabaseBuffer
-                          );
-    // If we failed, don't change anything.
-    if (NewDatabaseBuffer == NULL) {
-      Status = EFI_OUT_OF_RESOURCES;
+    Status = gBS->AllocatePool (EfiBootServicesData, mMemoryInfoDatabaseAllocSize + MEM_INFO_DATABASE_REALLOC_CHUNK, (VOID **)&NewDatabaseBuffer);
+    if (EFI_ERROR (Status)) {
+      return Status;
     }
+
+    CopyMem (NewDatabaseBuffer, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
+    gBS->FreePool (mMemoryInfoDatabaseBuffer);
+
     // Otherwise, updated the pointers and sizes.
-    else {
-      mMemoryInfoDatabaseBuffer     = NewDatabaseBuffer;
-      mMemoryInfoDatabaseAllocSize += MEM_INFO_DATABASE_REALLOC_CHUNK;
-    }
+    mMemoryInfoDatabaseBuffer     = NewDatabaseBuffer;
+    mMemoryInfoDatabaseAllocSize += MEM_INFO_DATABASE_REALLOC_CHUNK;
   }
 
   // If we're still good, copy the new string to the end of
@@ -342,8 +339,8 @@ MemoryAttributesTableDump (
   FormattedStringSize = AsciiSPrint (TempString, MAX_STRING_SIZE, MatFormatString, 0, 0, 0, 0, 0, NONE_GCD_MEMORY_TYPE);
   // Make sure to add space for the NULL terminator at the end.
   BufferSize = (EntryCount * FormattedStringSize) + sizeof (CHAR8);
-  Buffer     = AllocatePool (BufferSize);
-  if (!Buffer) {
+  Status     = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **)&Buffer);
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed to allocate buffer for data dump!\n", __FUNCTION__));
     return;
   }
@@ -375,7 +372,7 @@ MemoryAttributesTableDump (
   // NOTE: Don't need to save the NULL terminator.
   WriteBufferToFile (L"MAT", Buffer, BufferSize-1);
 
-  FreePool (Buffer);
+  gBS->FreePool (Buffer);
 }
 
 /**
@@ -484,14 +481,14 @@ MergeMemorySpaceMap (
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *NewMemoryMap = NULL;
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *NewMemoryMapStart;
   UINTN                            Index = 0;
+  EFI_STATUS                       Status;
 
   if ((MemorySpaceMap == NULL) || (*MemorySpaceMap == NULL) || (NumberOfDescriptors == NULL) || (*NumberOfDescriptors <= 1)) {
     return EFI_INVALID_PARAMETER;
   }
 
-  NewMemoryMap = AllocatePool (*NumberOfDescriptors * sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR));
-
-  if (NewMemoryMap == NULL) {
+  Status = gBS->AllocatePool (EfiBootServicesData, *NumberOfDescriptors * sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR), (VOID **)&NewMemoryMap);
+  if (EFI_ERROR (Status)) {
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -515,9 +512,16 @@ MergeMemorySpaceMap (
 
   *NumberOfDescriptors = NewMemoryMap - NewMemoryMapStart;
 
-  FreePool (*MemorySpaceMap);
-  *MemorySpaceMap = AllocateCopyPool (*NumberOfDescriptors * sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR), NewMemoryMapStart);
-  FreePool (NewMemoryMapStart);
+  gBS->FreePool (*MemorySpaceMap);
+  Status = gBS->AllocatePool (EfiBootServicesData, *NumberOfDescriptors * sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR), (VOID **)MemorySpaceMap);
+
+  if (EFI_ERROR (Status)) {
+    gBS->FreePool (NewMemoryMapStart);
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  CopyMem (*MemorySpaceMap, NewMemoryMapStart, *NumberOfDescriptors * sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR));
+  gBS->FreePool (NewMemoryMapStart);
 
   if (*MemorySpaceMap == NULL ) {
     return EFI_OUT_OF_RESOURCES;
@@ -556,6 +560,7 @@ FillInMemoryMap (
 {
   EFI_MEMORY_DESCRIPTOR  *OldMemoryMapCurrent, *OldMemoryMapEnd, *NewMemoryMapStart, *NewMemoryMapCurrent;
   EFI_PHYSICAL_ADDRESS   LastEntryEnd, NextEntryStart;
+  EFI_STATUS             Status;
 
   if ((MemoryMap == NULL) || (*MemoryMap == NULL) || (MemoryMapSize == NULL) || (*MemoryMapSize == 0) || (DescriptorSize == 0)) {
     return EFI_INVALID_PARAMETER;
@@ -564,9 +569,9 @@ FillInMemoryMap (
   NewMemoryMapStart = NULL;
 
   // Double the size of the memory map for the worst case of every entry being non-contiguous
-  NewMemoryMapStart = AllocatePool ((*MemoryMapSize * 2) + (DescriptorSize * 2));
+  Status = gBS->AllocatePool (EfiBootServicesData, (*MemoryMapSize * 2) + (DescriptorSize * 2), (VOID **)&NewMemoryMapStart);
 
-  if (NewMemoryMapStart == NULL) {
+  if (EFI_ERROR (Status)) {
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -620,18 +625,19 @@ FillInMemoryMap (
   }
 
   // Re-use this stack variable as an intermediate to ensure we can allocate a buffer before updating the old memory map
-  OldMemoryMapCurrent = AllocateCopyPool ((UINTN)((UINT8 *)NewMemoryMapCurrent - (UINT8 *)NewMemoryMapStart), NewMemoryMapStart);
-
-  if (OldMemoryMapCurrent == NULL ) {
-    FreePool (NewMemoryMapStart);
+  Status = gBS->AllocatePool (EfiBootServicesData, (UINTN)((UINT8 *)NewMemoryMapCurrent - (UINT8 *)NewMemoryMapStart), (VOID **)&OldMemoryMapCurrent);
+  if (!EFI_ERROR (Status)) {
+    CopyMem (OldMemoryMapCurrent, NewMemoryMapStart, (UINTN)((UINT8 *)NewMemoryMapCurrent - (UINT8 *)NewMemoryMapStart));
+  } else {
+    gBS->FreePool (NewMemoryMapStart);
     return EFI_OUT_OF_RESOURCES;
   }
 
-  FreePool (*MemoryMap);
+  gBS->FreePool (*MemoryMap);
   *MemoryMap = OldMemoryMapCurrent;
 
   *MemoryMapSize = (UINTN)((UINT8 *)NewMemoryMapCurrent - (UINT8 *)NewMemoryMapStart);
-  FreePool (NewMemoryMapStart);
+  gBS->FreePool (NewMemoryMapStart);
 
   return EFI_SUCCESS;
 }
@@ -752,15 +758,17 @@ MemoryMapDumpHandler (
                             &EfiDescriptorVersion
                             );
   //
-  // Loop to allocate space for the memory map and then copy it in.
+  // Loop to fetch the EFI memory map.
   //
   do {
-    EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocateZeroPool (EfiMemoryMapSize);
-    if (EfiMemoryMap == NULL) {
+    Status = gBS->AllocatePool (EfiBootServicesData, EfiMemoryMapSize, (VOID **)&EfiMemoryMap);
+    if (EFI_ERROR (Status)) {
       ASSERT (EfiMemoryMap != NULL);
       DEBUG ((DEBUG_ERROR, "%a - Unable to allocate memory for the EFI memory map.\n", __FUNCTION__));
       return;
     }
+
+    ZeroMem (EfiMemoryMap, EfiMemoryMapSize);
 
     Status = gBS->GetMemoryMap (
                     &EfiMemoryMapSize,
@@ -770,7 +778,7 @@ MemoryMapDumpHandler (
                     &EfiDescriptorVersion
                     );
     if (EFI_ERROR (Status)) {
-      FreePool (EfiMemoryMap);
+      gBS->FreePool (EfiMemoryMap);
     }
   } while (Status == EFI_BUFFER_TOO_SMALL);
 
@@ -846,11 +854,11 @@ MemoryMapDumpHandler (
 
 Done:
   if (EfiMemoryMap != NULL) {
-    FreePool (EfiMemoryMap);
+    gBS->FreePool (EfiMemoryMap);
   }
 
   if (MemorySpaceMap != NULL) {
-    FreePool (MemorySpaceMap);
+    gBS->FreePool (MemorySpaceMap);
   }
 }
 
@@ -1074,7 +1082,7 @@ OpenVolumeSFS (
 
 CleanUp:
   if (HandleBuffer != NULL) {
-    FreePool (HandleBuffer);
+    gBS->FreePool (HandleBuffer);
   }
 
   return Status;
@@ -1112,15 +1120,19 @@ LoadFlatPageTableData (
 
   // Allocate buffers if successful.
   if (!EFI_ERROR (Status)) {
-    *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (UINT64));
-    *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (UINT64));
-    *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (UINT64));
-    *PdeEntries   = AllocateZeroPool (*PdeCount * sizeof (UINT64));
-    *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
+    Status = gBS->AllocatePool (EfiBootServicesData, (*Pte1GCount) * sizeof (UINT64), (VOID **)Pte1GEntries);
+    Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*Pte2MCount) * sizeof (UINT64), (VOID **)Pte2MEntries);
+    Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*Pte4KCount) * sizeof (UINT64), (VOID **)Pte4KEntries);
+    Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*PdeCount) * sizeof (UINT64), (VOID **)PdeEntries);
+    Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*GuardCount) * sizeof (UINT64), (VOID **)GuardEntries);
 
     // Check for errors.
-    if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL) || (*PdeEntries == NULL) || (*GuardEntries == NULL)) {
-      Status = EFI_OUT_OF_RESOURCES;
+    if (!EFI_ERROR (Status)) {
+      ZeroMem (*Pte1GEntries, (*Pte1GCount) * sizeof (UINT64));
+      ZeroMem (*Pte2MEntries, (*Pte2MCount) * sizeof (UINT64));
+      ZeroMem (*Pte4KEntries, (*Pte4KCount) * sizeof (UINT64));
+      ZeroMem (*PdeEntries, (*PdeCount) * sizeof (UINT64));
+      ZeroMem (*GuardEntries, (*GuardCount) * sizeof (UINT64));
     }
   }
 
@@ -1141,11 +1153,11 @@ LoadFlatPageTableData (
                );
     if (Status == EFI_BUFFER_TOO_SMALL) {
       DEBUG ((DEBUG_ERROR, "%a Second GetFlatPageTableData call returned - %r\n", __FUNCTION__, Status));
-      FreePool (*Pte1GEntries);
-      FreePool (*Pte2MEntries);
-      FreePool (*Pte4KEntries);
-      FreePool (*PdeEntries);
-      FreePool (*GuardEntries);
+      gBS->FreePool (*Pte1GEntries);
+      gBS->FreePool (*Pte2MEntries);
+      gBS->FreePool (*Pte4KEntries);
+      gBS->FreePool (*PdeEntries);
+      gBS->FreePool (*GuardEntries);
 
       (*Pte1GCount) += 15;
       (*Pte2MCount) += 15;
@@ -1153,51 +1165,60 @@ LoadFlatPageTableData (
       (*PdeCount)   += 15;
       (*GuardCount) += 15;
 
-      *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (UINT64));
-      *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (UINT64));
-      *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (UINT64));
-      *PdeEntries   = AllocateZeroPool (*PdeCount * sizeof (UINT64));
-      *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
+      Status = gBS->AllocatePool (EfiBootServicesData, (*Pte1GCount) * sizeof (UINT64), (VOID **)Pte1GEntries);
+      Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*Pte2MCount) * sizeof (UINT64), (VOID **)Pte2MEntries);
+      Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*Pte4KCount) * sizeof (UINT64), (VOID **)Pte4KEntries);
+      Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*PdeCount) * sizeof (UINT64), (VOID **)PdeEntries);
+      Status = EFI_ERROR (Status) ? Status : gBS->AllocatePool (EfiBootServicesData, (*GuardCount) * sizeof (UINT64), (VOID **)GuardEntries);
 
-      Status = GetFlatPageTableData (
-                 Pte1GCount,
-                 Pte2MCount,
-                 Pte4KCount,
-                 PdeCount,
-                 GuardCount,
-                 *Pte1GEntries,
-                 *Pte2MEntries,
-                 *Pte4KEntries,
-                 *PdeEntries,
-                 *GuardEntries
-                 );
+      // Check for errors.
+      if (!EFI_ERROR (Status)) {
+        ZeroMem (*Pte1GEntries, (*Pte1GCount) * sizeof (UINT64));
+        ZeroMem (*Pte2MEntries, (*Pte2MCount) * sizeof (UINT64));
+        ZeroMem (*Pte4KEntries, (*Pte4KCount) * sizeof (UINT64));
+        ZeroMem (*PdeEntries, (*PdeCount) * sizeof (UINT64));
+        ZeroMem (*GuardEntries, (*GuardCount) * sizeof (UINT64));
+
+        Status = GetFlatPageTableData (
+                   Pte1GCount,
+                   Pte2MCount,
+                   Pte4KCount,
+                   PdeCount,
+                   GuardCount,
+                   *Pte1GEntries,
+                   *Pte2MEntries,
+                   *Pte4KEntries,
+                   *PdeEntries,
+                   *GuardEntries
+                   );
+      }
     }
   }
 
   // If an error occurred, bail and free.
   if (EFI_ERROR (Status)) {
     if (*Pte1GEntries != NULL) {
-      FreePool (*Pte1GEntries);
+      gBS->FreePool (*Pte1GEntries);
       *Pte1GEntries = NULL;
     }
 
     if (*Pte2MEntries != NULL) {
-      FreePool (*Pte2MEntries);
+      gBS->FreePool (*Pte2MEntries);
       *Pte2MEntries = NULL;
     }
 
     if (*Pte4KEntries != NULL) {
-      FreePool (*Pte4KEntries);
+      gBS->FreePool (*Pte4KEntries);
       *Pte4KEntries = NULL;
     }
 
     if (*PdeEntries != NULL) {
-      FreePool (*PdeEntries);
+      gBS->FreePool (*PdeEntries);
       *PdeEntries = NULL;
     }
 
     if (*GuardEntries != NULL) {
-      FreePool (*GuardEntries);
+      gBS->FreePool (*GuardEntries);
       *GuardEntries = NULL;
     }
 
@@ -1234,7 +1255,7 @@ FlushAndClearMemoryInfoDatabase (
 
   // If we have a database, free it, and reset all counters.
   if (mMemoryInfoDatabaseBuffer != NULL) {
-    FreePool (mMemoryInfoDatabaseBuffer);
+    gBS->FreePool (mMemoryInfoDatabaseBuffer);
     mMemoryInfoDatabaseBuffer = NULL;
   }
 
@@ -1448,22 +1469,22 @@ DumpPagingInfo (
 
 Cleanup:
   if (Pte1GEntries != NULL) {
-    FreePool (Pte1GEntries);
+    gBS->FreePool (Pte1GEntries);
   }
 
   if (Pte2MEntries != NULL) {
-    FreePool (Pte2MEntries);
+    gBS->FreePool (Pte2MEntries);
   }
 
   if (Pte4KEntries != NULL) {
-    FreePool (Pte4KEntries);
+    gBS->FreePool (Pte4KEntries);
   }
 
   if (PdeEntries != NULL) {
-    FreePool (PdeEntries);
+    gBS->FreePool (PdeEntries);
   }
 
   if (GuardEntries != NULL) {
-    FreePool (GuardEntries);
+    gBS->FreePool (GuardEntries);
   }
 }

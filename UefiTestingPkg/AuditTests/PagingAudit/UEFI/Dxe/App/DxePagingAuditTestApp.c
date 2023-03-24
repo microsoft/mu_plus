@@ -304,7 +304,7 @@ OpenAppSFS (
 
 CleanUp:
   if (HandleBuffer != NULL) {
-    FreePool (HandleBuffer);
+    gBS->FreePool (HandleBuffer);
   }
 
   return Status;

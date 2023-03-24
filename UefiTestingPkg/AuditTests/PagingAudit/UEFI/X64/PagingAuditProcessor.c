@@ -456,9 +456,9 @@ TSEGDumpHandler (
       }
     }
 
-    TempBuffer = AllocatePool (NumberOfTseg * sizeof (EFI_PHYSICAL_ADDRESS));
-    if (TempBuffer == NULL) {
-      ASSERT (TempBuffer != NULL);
+    Status = gBS->AllocatePool (EfiBootServicesData, NumberOfTseg * sizeof (EFI_PHYSICAL_ADDRESS), (VOID **)&TempBuffer);
+    if (EFI_ERROR (Status)) {
+      ASSERT (!EFI_ERROR (Status));
       DEBUG ((DEBUG_ERROR, "%a Failed to allocate memory for TSEG ranges!\n", __FUNCTION__));
       return EFI_OUT_OF_RESOURCES;
     }
@@ -506,7 +506,7 @@ TSEGDumpHandler (
     }
 
     if (TempBuffer != NULL) {
-      FreePool (TempBuffer);
+      gBS->FreePool (TempBuffer);
     }
   }
 
