@@ -25,9 +25,11 @@
 
 [Sources.X64]
   X64/PagingAuditProcessor.c
+  X64/PagingAuditX64.h
 
 [Sources.AARCH64]
   AArch64/PagingAuditProcessor.c
+  AArch64/PagingAuditAArch64.h
 
 [Packages]
   MdePkg/MdePkg.dec

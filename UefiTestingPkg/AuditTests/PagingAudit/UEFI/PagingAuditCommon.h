@@ -24,8 +24,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DevicePathLib.h>
 
 #include <Protocol/SimpleFileSystem.h>
-#include <Register/Cpuid.h>
-#include <Register/Amd/Cpuid.h>
 
 #include <Guid/EventGroup.h>
 #include <Guid/DebugImageInfoTable.h>

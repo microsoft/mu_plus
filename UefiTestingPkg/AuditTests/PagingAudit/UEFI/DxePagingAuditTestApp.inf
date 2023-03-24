@@ -25,12 +25,14 @@
 
 [Sources.X64]
   X64/PagingAuditProcessor.c
+  X64/PagingAuditX64.h
   Dxe/App/X64/DxePagingAuditTests.c
 
 [Sources.AARCH64]
   AArch64/PagingAuditProcessor.c
+  AArch64/PagingAuditAArch64.h
   Dxe/App/AArch64/DxePagingAuditTests.c
-  
+
 [Packages.AARCH64]
   ArmPkg/ArmPkg.dec
 

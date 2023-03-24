@@ -7,16 +7,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include <Library/ArmLib.h>
 #include "../PagingAuditCommon.h"
-
-extern MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol;
-
-#define TT_ADDRESS_MASK  (0xFFFFFFFFFULL << 12)
-
-#define IS_TABLE(page, level)  ((level == 3) ? FALSE : (((page) & TT_TYPE_MASK) == TT_TYPE_TABLE_ENTRY))
-#define IS_BLOCK(page, level)  ((level == 3) ? (((page) & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY_LEVEL3) : ((page & TT_TYPE_MASK) == TT_TYPE_BLOCK_ENTRY))
-#define ROOT_TABLE_LEN(T0SZ)   (TT_ENTRY_COUNT >> ((T0SZ) - 16) % 9)
+#include "PagingAuditAArch64.h"
 
 /**
   This helper function walks the page tables to retrieve:
@@ -92,7 +84,7 @@ GetFlatPageTableData (
   }
 
   Pml0           = (UINT64 *)ArmGetTTBR0BaseAddress ();
-  RootEntryCount = ROOT_TABLE_LEN (ArmGetTCR () & TCR_T0SZ_MASK);
+  RootEntryCount = AARCH64_ROOT_TABLE_LEN (ArmGetTCR () & TCR_T0SZ_MASK);
   MyPdeCount++;
   if (MyPdeCount <= *PdeCount) {
     PdeEntries[MyPdeCount-1] = (UINT64)Pml0;
@@ -102,11 +94,11 @@ GetFlatPageTableData (
     Index1 = 0;
     Index2 = 0;
     Index3 = 0;
-    if (!IS_TABLE (Pml0[Index0], 0)) {
+    if (!AARCH64_IS_TABLE (Pml0[Index0], 0)) {
       continue;
     }
 
-    Pte1G = (UINT64 *)(Pml0[Index0] & TT_ADDRESS_MASK);
+    Pte1G = (UINT64 *)(Pml0[Index0] & AARCH64_ADDRESS_MASK);
 
     MyPdeCount++;
     if (MyPdeCount <= *PdeCount) {
@@ -122,8 +114,8 @@ GetFlatPageTableData (
         Valid = FALSE;
       }
 
-      if (!IS_BLOCK (Pte1G[Index1], 1) && Valid) {
-        Pte2M = (UINT64 *)(Pte1G[Index1] & TT_ADDRESS_MASK);
+      if (!AARCH64_IS_BLOCK (Pte1G[Index1], 1) && Valid) {
+        Pte2M = (UINT64 *)(Pte1G[Index1] & AARCH64_ADDRESS_MASK);
 
         MyPdeCount++;
         if (MyPdeCount <= *PdeCount) {
@@ -138,8 +130,8 @@ GetFlatPageTableData (
             Valid = FALSE;
           }
 
-          if (!IS_BLOCK (Pte2M[Index2], 2) && Valid) {
-            Pte4K = (UINT64 *)(Pte2M[Index2] & TT_ADDRESS_MASK);
+          if (!AARCH64_IS_BLOCK (Pte2M[Index2], 2) && Valid) {
+            Pte4K = (UINT64 *)(Pte2M[Index2] & AARCH64_ADDRESS_MASK);
             MyPdeCount++;
 
             if (MyPdeCount <= *PdeCount) {
@@ -147,7 +139,7 @@ GetFlatPageTableData (
             }
 
             for (Index3 = 0x0; Index3 < TT_ENTRY_COUNT; Index3++ ) {
-              if (!IS_BLOCK (Pte4K[Index3], 3)) {
+              if (!AARCH64_IS_BLOCK (Pte4K[Index3], 3)) {
                 NumPage4KNotPresent++;
                 Address = IndexToAddress (Index0, Index1, Index2, Index3);
                 if (IsGuardPage (Address)) {
