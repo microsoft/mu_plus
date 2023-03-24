@@ -150,7 +150,7 @@ GetFlatPageTableData (
               if (!IS_BLOCK (Pte4K[Index3], 3)) {
                 NumPage4KNotPresent++;
                 Address = IndexToAddress (Index0, Index1, Index2, Index3);
-                if ((mMemoryProtectionProtocol != NULL) && (mMemoryProtectionProtocol->IsGuardPage (Address))) {
+                if (IsGuardPage (Address)) {
                   MyGuardCount++;
                   if (MyGuardCount <= *GuardCount) {
                     GuardEntries[MyGuardCount - 1] = Address;

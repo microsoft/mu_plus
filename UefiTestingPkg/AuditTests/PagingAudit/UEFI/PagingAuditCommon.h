@@ -21,13 +21,13 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
-#include <Guid/EventGroup.h>
+#include <Library/DevicePathLib.h>
+
 #include <Protocol/SimpleFileSystem.h>
-#include <Protocol/MemoryProtectionDebug.h>
 #include <Register/Cpuid.h>
 #include <Register/Amd/Cpuid.h>
 
-#include <Library/DevicePathLib.h>
+#include <Guid/EventGroup.h>
 #include <Guid/DebugImageInfoTable.h>
 #include <Guid/MemoryAttributesTable.h>
 
@@ -36,6 +36,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define    MAX_STRING_SIZE                    0x1000
 
 #define IndexToAddress(a, b, c, d)  ((UINT64) ((UINT64)a << 39) + ((UINT64)b << 30) + ((UINT64)c <<  21) + ((UINT64)d << 12))
+
+// TRUE if A interval subsumes B interval
+#define CHECK_SUBSUMPTION(AStart, AEnd, BStart, BEnd) \
+  ((AStart <= BStart) && (AEnd >= BEnd))
 
 #define TSEG_EFI_MEMORY_TYPE  (EfiMaxMemoryType + 1)
 #define NONE_GCD_MEMORY_TYPE  (EfiGcdMemoryTypeMaximum + 1)
@@ -198,6 +202,82 @@ EFI_STATUS
 EFIAPI
 FlushAndClearMemoryInfoDatabase (
   IN CONST CHAR16  *FileName
+  );
+
+/**
+  Populates the heap guard protocol global
+
+  @retval EFI_SUCCESS Protocol is already populated or was successfully populated
+  @retval other       Return value of LocateProtocol
+**/
+EFI_STATUS
+PopulateHeapGuardDebugProtocol (
+  VOID
+  );
+
+/**
+  Populates the CPU MP debug protocol global
+
+  @retval EFI_SUCCESS Protocol is already populated or was successfully populated
+  @retval other       Return value of LocateProtocol
+**/
+EFI_STATUS
+PopulateCpuMpDebugProtocol (
+  VOID
+  );
+
+/*
+  Writes the NULL page and stack information to the memory info database
+ */
+VOID
+ProjectMuSpecialMemoryDump (
+  VOID
+  );
+
+/**
+  Populates the non protected image list global
+
+  @retval EFI_SUCCESS            The non-protected image list was populated
+  @retval EFI_INVALID_PARAMETER  The non-protected image list was already populated
+  @retval other                  The non-protected image list was not populated
+**/
+EFI_STATUS
+GetNonProtectedImageList (
+  VOID
+  );
+
+/**
+  Populates the special region array global
+**/
+EFI_STATUS
+GetSpecialRegions (
+  VOID
+  );
+
+/**
+  Checks if the address is a guard page.
+
+  @param[in] Address            Address to check
+
+  @retval TRUE                  The address is a guard page
+  @retval FALSE                 The address is not a guard page
+**/
+BOOLEAN
+IsGuardPage (
+  IN UINT64  Address
+  );
+
+/**
+  In processors implementing the AMD64 architecture, SMBASE relocation is always supported.
+  However, there are some virtual platforms that does not really support them. This PCD check
+  is to allow these virtual platforms to skip the SMRR check.
+
+  @retval TRUE                  Skip the SMRR check
+  @retval FALSE                 Do not skip the SMRR check
+**/
+BOOLEAN
+SkipSmrr (
+  VOID
   );
 
 #endif // _PAGING_AUDIT_COMMON_H_

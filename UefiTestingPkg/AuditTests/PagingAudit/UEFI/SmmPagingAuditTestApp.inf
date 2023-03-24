@@ -21,6 +21,7 @@
   Smm/SmmPagingAuditCommon.h
   PagingAuditCommon.c
   PagingAuditCommon.h
+  Dxe/App/ProjectMuFunctionalityNull.c
 
 [Sources.X64]
   X64/PagingAuditProcessor.c
@@ -56,6 +57,3 @@
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
   gEfiHobMemoryAllocStackGuid                   ## SOMETIMES_CONSUMES   ## SystemTable
-
-[FixedPcd]
-  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES

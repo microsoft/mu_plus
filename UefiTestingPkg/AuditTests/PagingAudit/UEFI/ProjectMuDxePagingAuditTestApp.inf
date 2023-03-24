@@ -1,76 +1,79 @@
-## @file DxePagingAuditDriver.inf
-# This DXE Driver writes page table and memory map information to SFS when triggered
-# by an event.
+## @file DxePagingAuditTestApp.inf
+# This Shell App writes page table and memory map information to SFS.
 #
 ##
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# SPDX-License-Identifier: BSD-2-Clause-Patent
+# Copyright (c) Microsoft Corporation.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = DxePagingAuditDriver
-  FILE_GUID           = 8C8CEAB1-6062-4777-BD21-7A1C034EF034
+  BASE_NAME           = DxePagingAuditTestApp
+  FILE_GUID           = 39D7EF60-4569-41FB-9139-09A10DDF9150
   VERSION_STRING      = 1.0
-  MODULE_TYPE         = DXE_DRIVER
-  ENTRY_POINT         = PagingAuditDriverEntryPoint
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = DxePagingAuditTestAppEntryPoint
 
 
 [Sources]
-  Dxe/Driver/DxePagingAuditDriver.c
+  Dxe/App/DxePagingAuditTestApp.c
+  Dxe/App/DxePagingAuditTestApp.h
   PagingAuditCommon.c
   PagingAuditCommon.h
   Dxe/App/ProjectMuFunctionality.c
 
 [Sources.X64]
   X64/PagingAuditProcessor.c
+  Dxe/App/X64/DxePagingAuditTests.c
 
 [Sources.AARCH64]
   AArch64/PagingAuditProcessor.c
+  Dxe/App/AArch64/DxePagingAuditTests.c
+
+[Packages.AARCH64]
+  ArmPkg/ArmPkg.dec
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
+  ShellPkg/ShellPkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
-  
-[Packages.AARCH64]
-  ArmPkg/ArmPkg.dec
 
 [LibraryClasses]
-  UefiDriverEntryPoint
   PrintLib
   DebugLib
   UefiBootServicesTableLib
   UefiLib
   PeCoffGetEntryPointLib
+  UefiApplicationEntryPoint
+  ShellLib
   HobLib
   DxeServicesTableLib
+  UnitTestLib
   DxeMemoryProtectionHobLib
+  FileHandleLib
 
 [LibraryClasses.AARCH64]
   ArmLib
 
 [LibraryClasses.X64]
   UefiCpuLib
+  CpuPageTableLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
-  gMuEventPreExitBootServicesGuid
-  gEfiHobMemoryAllocStackGuid                   ## SOMETIMES_CONSUMES   ## SystemTable
+  gEfiHobMemoryAllocStackGuid                   ## SOMETIMES_CONSUMES ## SystemTable
 
 [Protocols]
   gEfiBlockIoProtocolGuid
-  gMemoryProtectionDebugProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
-  gCpuMpDebugProtocolGuid
-  gMemoryProtectionSpecialRegionProtocolGuid
+  gEfiShellParametersProtocolGuid
   gMemoryProtectionDebugProtocolGuid
+  gMemoryProtectionSpecialRegionProtocolGuid
+  gCpuMpDebugProtocolGuid
 
 [FixedPcd]
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES
-
-[Depex]
-  gEfiSimpleFileSystemProtocolGuid

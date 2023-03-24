@@ -21,6 +21,7 @@
   Dxe/App/DxePagingAuditTestApp.h
   PagingAuditCommon.c
   PagingAuditCommon.h
+  Dxe/App/ProjectMuFunctionalityNull.c
 
 [Sources.X64]
   X64/PagingAuditProcessor.c
@@ -38,7 +39,6 @@
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
   ShellPkg/ShellPkg.dec
-  UefiTestingPkg/UefiTestingPkg.dec
 
 [LibraryClasses]
   PrintLib
@@ -51,7 +51,6 @@
   HobLib
   DxeServicesTableLib
   UnitTestLib
-  DxeMemoryProtectionHobLib
   FileHandleLib
 
 [LibraryClasses.AARCH64]
@@ -68,11 +67,5 @@
 
 [Protocols]
   gEfiBlockIoProtocolGuid
-  gMemoryProtectionDebugProtocolGuid
   gEfiSimpleFileSystemProtocolGuid
-  gMemoryProtectionSpecialRegionProtocolGuid
   gEfiShellParametersProtocolGuid
-  gCpuMpDebugProtocolGuid
-
-[FixedPcd]
-  gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES

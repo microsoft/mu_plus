@@ -150,8 +150,6 @@
 [Components.X64]
   # NOTE: These currently have source files that are only implemented for X64.
   #       If needed on IA32, should port the functions.
-  UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
-  UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/App/MemoryProtectionTestApp.inf
 
@@ -159,6 +157,11 @@
   # NOTE: These currently have source files that are only implemented for AARCH64.
   #       If needed on X86, should port (and test) the functions.
   UefiTestingPkg/FunctionalSystemTests/MpManagement/Driver/MpManagement.inf
+
+[Components.X64, Components.AARCH64]
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf
+  UefiTestingPkg/AuditTests/PagingAudit/UEFI/ProjectMuDxePagingAuditTestApp.inf
 
 [BuildOptions]
 #force deprecated interfaces off

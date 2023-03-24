@@ -7,8 +7,6 @@
 **/
 
 #include <Library/CpuPageTableLib.h>
-#include <Library/DxeMemoryProtectionHobLib.h>
-
 #include "../DxePagingAuditTestApp.h"
 
 /**

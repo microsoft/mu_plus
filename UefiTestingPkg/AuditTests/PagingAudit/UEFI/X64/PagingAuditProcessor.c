@@ -20,8 +20,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define VALID_SMRR_HIGH_POS  BIT51
 #define VALID_SMRR_BIT_MASK  (~(~(BIT51 - 1) | (BIT17 - 1)))
 
-extern MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol;
-
 //
 // Page-Map Level-4 Offset (PML4) and
 // Page-Directory-Pointer Offset (PDPE) entries 4K & 2MB
@@ -278,7 +276,7 @@ LookupSmrrIntel (
   // However, there are some virtual platforms that does not really support them. This PCD check
   // is to allow these virtual platforms to skip the SMRR check.
   //
-  if (FixedPcdGetBool (PcdPlatformSmrrUnsupported)) {
+  if (SkipSmrr ()) {
     Status = EFI_UNSUPPORTED;
   }
 
@@ -337,7 +335,7 @@ LookupSmrrAMD (
   // However, there are some virtual platforms that does not really support them. This PCD check
   // is to allow these virtual platforms to skip the SMRR check.
   //
-  if (FixedPcdGetBool (PcdPlatformSmrrUnsupported)) {
+  if (SkipSmrr ()) {
     Status = EFI_UNSUPPORTED;
   } else {
     Status = EFI_SUCCESS;
@@ -656,7 +654,7 @@ GetFlatPageTableData (
               if (!Pte4K[Index1].Bits.Present) {
                 NumPage4KNotPresent++;
                 Address = IndexToAddress (Index4, Index3, Index2, Index1);
-                if ((mMemoryProtectionProtocol != NULL) && (mMemoryProtectionProtocol->IsGuardPage (Address))) {
+                if (IsGuardPage (Address)) {
                   MyGuardCount++;
                   if (MyGuardCount <= *GuardCount) {
                     GuardEntries[MyGuardCount - 1] = Address;
