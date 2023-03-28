@@ -77,3 +77,4 @@
 [BuildOptions]
   GCC:*_CLANG40WIN_AARCH64_CC_FLAGS = -Wno-infinite-recursion
   MSFT:*_*_*_CC_FLAGS  = /wd4054 /wd4055 /wd4717
+  GCC:*_GCC5_X64_CC_FLAGS = -O0 # Optimization can cause an invalid opcode exception on GCC5 builds
