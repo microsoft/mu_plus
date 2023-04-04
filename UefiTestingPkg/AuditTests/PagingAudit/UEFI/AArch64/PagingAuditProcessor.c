@@ -147,17 +147,19 @@ GetFlatPageTableData (
             }
 
             for (Index3 = 0x0; Index3 < TT_ENTRY_COUNT; Index3++ ) {
+              Address = IndexToAddress (Index0, Index1, Index2, Index3);
+              if ((mMemoryProtectionProtocol != NULL) && (mMemoryProtectionProtocol->IsGuardPage (Address)) && ((Pte4K[Index3] & TT_AF) == 0)) {
+                MyGuardCount++;
+                if (MyGuardCount <= *GuardCount) {
+                  GuardEntries[MyGuardCount - 1] = Address;
+                }
+
+                continue;
+              }
+
               if (!IS_BLOCK (Pte4K[Index3], 3)) {
                 NumPage4KNotPresent++;
-                Address = IndexToAddress (Index0, Index1, Index2, Index3);
-                if ((mMemoryProtectionProtocol != NULL) && (mMemoryProtectionProtocol->IsGuardPage (Address))) {
-                  MyGuardCount++;
-                  if (MyGuardCount <= *GuardCount) {
-                    GuardEntries[MyGuardCount - 1] = Address;
-                  }
-
-                  continue;
-                }
+                continue;
               }
 
               My4KCount++;
