@@ -52,8 +52,8 @@
                         </div>
                         <p></p>
                         <div class="input-group">
-                            <span class="input-group-addon" id="basic-addon2">Valid Attribute</span>
-                            <select id="ValidFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon2"></select>
+                            <span class="input-group-addon" id="basic-addon2">Access Flag Attribute</span>
+                            <select id="AccessFlagFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon2"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
@@ -119,7 +119,7 @@
                             <th>End Address</th>
                             <th>Page Size</th>
                             <th># of Pages</th>
-                            <th>Valid</th>
+                            <th>Access Flag</th>
                             <th>Read/Write</th>
                             <th>UX</th>
                             <th>PX</th>
@@ -291,7 +291,7 @@
                         "targets": [3],
                     },
                     {
-                        "data": "Valid",
+                        "data": "Access Flag",
                         "targets": [4],
                     },
                     {
@@ -367,7 +367,7 @@
 
                     this.api().column(4).every( function() {
                         var column = this;
-                        var select = $("#ValidFilter").on( 'change', function () {     
+                        var select = $("#AccessFlagFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
@@ -513,18 +513,18 @@
             var SavedFilters = [];
             SavedFilters.push({"Name": "RW+X", "Description": "No memory range should have page attributes that allow read, write, and execute", 
                 "Filter": function(mrObject) {
-                    if( (mrObject["UX"] === "Enabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Valid"] === "Yes")) {
+                    if( (mrObject["UX"] === "Enabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Access Flag"] === "Yes")) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("UxnFilter", ["Enabled"]))
+                    if(!SetMultiselectTo("UxFilter", ["Enabled"]))
                     {
                         return false
                     }
-                    if(!SetMultiselectTo("ValidFilter", ["Yes"]))
+                    if(!SetMultiselectTo("AccessFlagFilter", ["Yes"]))
                     {
                         return false
                     }
@@ -540,7 +540,7 @@
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("UxnFilter", ["Disabled"]))
+                    if(!SetMultiselectTo("UxFilter", ["Disabled"]))
                     {
                         return false;
                     }

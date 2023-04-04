@@ -55,6 +55,7 @@ class ParsingTool(object):
         logging.debug("Found %d MAT Files" % len(MatFileList))
         logging.debug("Found %d GuardPage Files" % len(GuardPageFileList))
 
+        SetArchitecture(self.Architecture)
 
         # Parse each file, keeping pages and "Memory Ranges" separate
         # Memory ranges are either "memory descriptions" for memory map types and TSEG
@@ -176,6 +177,10 @@ class ParsingTool(object):
         while index < (len(self.PageDirectoryInfo) - 1):
             currentPage = self.PageDirectoryInfo[index]
             nextPage = self.PageDirectoryInfo[index + 1]
+            # Skip guard pages
+            if currentPage.SystemMemoryType == SystemMemoryTypes.GuardPage or nextPage.SystemMemoryType == SystemMemoryTypes.GuardPage:
+                index += 1
+                continue
             if currentPage.sameAttributes(nextPage, self.Architecture):
                 currentPage.grow(nextPage)
                 del self.PageDirectoryInfo[index + 1]
