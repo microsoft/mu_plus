@@ -69,8 +69,8 @@ def Parse4kPages(fileName, addressbits, architecture):
             IsTable = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             AccessPermisions = (((ByteArray[byteZeroIndex + 0] & 0xC0) >> 6))
             Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
-            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x10) >> 4)
-            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
             PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
             logging.debug("4KB Page: 0x%s. Valid: %d. AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Valid, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
@@ -112,8 +112,8 @@ def Parse2mPages(fileName, addressbits, architecture):
             IsTable = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             AccessPermisions = (((ByteArray[byteZeroIndex + 0] & 0xC0) >> 6))
             Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
-            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x10) >> 4)
-            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
             PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
             logging.debug("2MB Page: 0x%s. Valid: %d. IsTable: %d AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Valid, IsTable, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
@@ -155,8 +155,8 @@ def Parse1gPages(fileName, addressbits, architecture):
             IsTable = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             AccessPermisions = (((ByteArray[byteZeroIndex + 0] & 0xC0) >> 6))
             Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
-            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x10) >> 4)
-            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
             PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
             logging.debug("1GB Page: 0x%s. Valid: %d. IsTable: %d AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Valid, IsTable, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
