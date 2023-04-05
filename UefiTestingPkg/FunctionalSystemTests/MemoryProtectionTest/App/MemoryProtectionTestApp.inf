@@ -81,4 +81,4 @@
   # due to the instruction "ud2" being inserted by the compiler after a NULL pointer dereference.
   # Removing optimization prevents the invalid opcode instruction from being inserted and enables
   # the interrupt handler to clear the fault and return to the test.
-  GCC:*_GCC5_X64_CC_FLAGS = -O0
+  GCC:DEBUG_GCC5_X64_CC_FLAGS = -O0
