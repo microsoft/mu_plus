@@ -77,4 +77,8 @@
 [BuildOptions]
   GCC:*_CLANG40WIN_AARCH64_CC_FLAGS = -Wno-infinite-recursion
   MSFT:*_*_*_CC_FLAGS  = /wd4054 /wd4055 /wd4717
-  GCC:*_GCC5_X64_CC_FLAGS = -O0 # Optimization can cause an invalid opcode exception on GCC5 builds
+  # An invalid opcode exception can be triggered during the NULL detection test on GCC5 builds
+  # due to the instruction "ud2" being inserted by the compiler after a NULL pointer dereference.
+  # Removing optimization prevents the invalid opcode instruction from being inserted and enables
+  # the interrupt handler to clear the fault and return to the test.
+  GCC:*_GCC5_X64_CC_FLAGS = -O0
