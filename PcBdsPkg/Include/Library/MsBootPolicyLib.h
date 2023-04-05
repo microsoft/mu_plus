@@ -15,6 +15,10 @@ typedef enum {
   MsBootPXE6,
   MsBootHDD,
   MsBootUSB
+  MsBootNvme,
+  MsBootOdd,
+  MsBootSd,
+  MsBootRamDisk
 } BOOT_SEQUENCE;
 
 /**
