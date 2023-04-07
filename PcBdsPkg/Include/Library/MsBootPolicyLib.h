@@ -14,7 +14,7 @@ typedef enum {
   MsBootPXE4,
   MsBootPXE6,
   MsBootHDD,
-  MsBootUSB
+  MsBootUSB,
   MsBootNvme,
   MsBootOdd,
   MsBootSd,
