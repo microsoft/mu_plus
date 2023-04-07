@@ -9,16 +9,25 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #ifndef _MS_BOOT_POLICY_LIB_H_
 #define _MS_BOOT_POLICY_LIB_H_
 
+/**
+ * BOOT_SEQUENCE types are used to describe classes of devices.  The identifiers are used in
+ * boot policy applications to create boot sequences for the EFI_LOAD_OPTIONS. An example
+ * application is at PcsBdsPkg/MsBootPolicy.
+ *
+ * Boot Policy Applications can be created to meet a platform's requirements. The PcBdsPkg
+ * example aplication impelements USB, PXE and HDD boot sequences, in addition to a default
+ * sequences of HDD, USB, PXE.
+**/
 typedef enum {
-  MsBootDone,
-  MsBootPXE4,
-  MsBootPXE6,
-  MsBootHDD,
-  MsBootUSB,
-  MsBootNvme,
-  MsBootOdd,
-  MsBootSd,
-  MsBootRamDisk
+  MsBootDone,       /// Boot Sequence terminator, used to exit boot application
+  MsBootPXE4,       /// Boot devices that support IPV4 PXE
+  MsBootPXE6,       /// Boot devices supporting IPV6 PXE
+  MsBootHDD,        /// Hard Drive type boot devices
+  MsBootUSB,        /// Boot Devices containing a Usb Device
+  MsBootNVME,       /// Nvme boot devices
+  MsBootODD,        /// Optical Disk drive devices
+  MsBootSD,         /// Sd/Emmc type devices
+  MsBootRAMDISK     /// Ram Disk devices
 } BOOT_SEQUENCE;
 
 /**
