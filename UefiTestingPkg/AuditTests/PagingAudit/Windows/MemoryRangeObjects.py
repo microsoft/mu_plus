@@ -9,6 +9,12 @@ from enum import Enum
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 
+ParsingArchitecture = ""
+
+def SetArchitecture(arch):
+    global ParsingArchitecture
+    ParsingArchitecture = arch
+
 class SystemMemoryTypes(Enum):
     TSEG = "TSEG"
     GuardPage = "GuardPage"
@@ -242,19 +248,25 @@ class MemoryRange(object):
         self.PhysicalStart = int(VA, 16)
         self.PageSize = "4k"
         self.PhysicalSize = self.getPageSize()
-        self.ReadWrite = 0
-        self.UserPrivilege = 1
-        self.Nx = 0
-        self.Present = 0
+        if ParsingArchitecture == "AARCH64":
+            self.AccessFlag = 0
+            self.ReadWrite = 0
+            self.Ux = 0
+            self.Px = 0
+        else:
+            self.ReadWrite = 0
+            self.UserPrivilege = 1
+            self.Nx = 0
+            self.Present = 0
 
     def BitwidthInit(self, Bitwidth):
         self.AddressBitwidth = Bitwidth
         self.PhysicalStart = 0
         self.PhysicalSize = (1 << self.AddressBitwidth)
     
-    def TteInit(self, PageSize, Valid, ReadWrite, Sharability, Pxn, Uxn, VA, IsTable):
+    def TteInit(self, PageSize, AccessFlag, ReadWrite, Sharability, Pxn, Uxn, VA, IsTable):
         self.PageSize = PageSize
-        self.Valid = Valid
+        self.AccessFlag = AccessFlag
         self.ReadWrite = 0 if (ReadWrite == 1) else 1
         self.Sharability = Sharability
         self.Px = 0 if (Pxn == 1) else 1
@@ -354,7 +366,7 @@ class MemoryRange(object):
 
             return {
                 "Page Size" : self.getPageSizeStr(),
-                "Valid" : "Yes" if (self.Valid == 1) else "No",
+                "Access Flag" : "Yes" if (self.AccessFlag == 1) else "No",
                 "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
                 "UX" : "Enabled" if (self.Ux == 1) else "Disabled",
                 "PX" : "Enabled" if (self.Px == 1) else "Disabled",
@@ -458,7 +470,7 @@ class MemoryRange(object):
             if (self.IsTable != compare.IsTable):
                 return False
 
-            if (self.Valid != compare.Valid):
+            if (self.AccessFlag != compare.AccessFlag):
                 return False
 
             if (self.Ux != compare.Ux):
