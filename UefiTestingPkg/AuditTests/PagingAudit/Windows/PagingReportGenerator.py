@@ -119,7 +119,7 @@ class ParsingTool(object):
             page = self.PageDirectoryInfo[index]
             for mr in self.MemoryRangeInfo:
                 if page.overlap(mr):
-                    if (mr.MemoryType is not None) or (mr.GcdType is not None):
+                    if (mr.MemoryType is not None) or (mr.GcdType is not None) or (mr.ImageName is not None) or (mr.SystemMemoryType is not None):
                         if (page.PhysicalStart < mr.PhysicalStart):
                             next = page.split(mr.PhysicalStart-1)
                             self.PageDirectoryInfo.insert(index+1, next)
@@ -132,31 +132,33 @@ class ParsingTool(object):
                             next = page.split(mr.PhysicalEnd)
                             self.PageDirectoryInfo.insert(index +1, next)
 
-                        if page.MemoryType is None:
-                            page.MemoryType = mr.MemoryType
-                        else:
-                            logging.error("Multiple memory types found for one region " + page.pageDebugStr() +" " + mr.MemoryRangeToString())
-                            self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  EFI Memory Type: %d and %d"% (page.PhysicalStart, page.MemoryType,mr.MemoryType))
+                        if mr.MemoryType is not None:
+                            if page.MemoryType is None or page.MemoryType == mr.MemoryType:
+                                page.MemoryType = mr.MemoryType
+                            else:
+                                logging.error("Multiple memory types found for one region " + page.pageDebugStr() +" " + mr.MemoryRangeToString())
+                                self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  EFI Memory Type: %d and %d"% (page.PhysicalStart, page.MemoryType,mr.MemoryType))
 
-                        if page.GcdType is None:
-                            page.GcdType = mr.GcdType
-                        else:
-                            logging.error("Multiple memory types found for one region " + page.pageDebugStr() +" " + mr.MemoryRangeToString())
-                            self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  GCD Memory Type: %d and %d"% (page.PhysicalStart, page.GcdType,mr.GcdType))
+                        if mr.GcdType is not None:
+                            if page.GcdType is None or page.GcdType == mr.GcdType:
+                                page.GcdType = mr.GcdType
+                            else:
+                                logging.error("Multiple memory types found for one region " + page.pageDebugStr() +" " + mr.MemoryRangeToString())
+                                self.ErrorMsg.append("Multiple memory types found for one region.  Base: 0x%X.  GCD Memory Type: %d and %d"% (page.PhysicalStart, page.GcdType,mr.GcdType))
 
-                    if mr.ImageName is not None:
-                        if page.ImageName is None:
-                            page.ImageName = mr.ImageName
-                        else:
-                            self.ErrorMsg.append("Multiple memory contents found for one region.  Base: 0x%X.  Memory Contents: %s and %s" % (page.PhysicalStart, page.ImageName, mr.ImageName ))
-                            logging.error("Multiple memory contents found for one region " + page.pageDebugStr() + " " +  mr.LoadedImageEntryToString())
+                        if mr.ImageName is not None:
+                            if page.ImageName is None:
+                                page.ImageName = mr.ImageName
+                            else:
+                                self.ErrorMsg.append("Multiple memory contents found for one region.  Base: 0x%X.  Memory Contents: %s and %s" % (page.PhysicalStart, page.ImageName, mr.ImageName ))
+                                logging.error("Multiple memory contents found for one region " + page.pageDebugStr() + " " +  mr.LoadedImageEntryToString())
 
-                    if mr.SystemMemoryType is not None:
-                        if page.SystemMemoryType is None:
-                            page.SystemMemoryType = mr.SystemMemoryType
-                        else:
-                            self.ErrorMsg.append("Multiple System Memory types found for one region.  Base: 0x%X.  System Memory Type: %s and %s."% (page.PhysicalStart,page.GetSystemMemoryType(), mr.GetSystemMemoryType()))
-                            logging.error("Multiple system memory types found for one region " + page.pageDebugStr() + " " +  mr.pageDebugStr())
+                        if mr.SystemMemoryType is not None:
+                            if page.SystemMemoryType is None:
+                                page.SystemMemoryType = mr.SystemMemoryType
+                            else:
+                                self.ErrorMsg.append("Multiple System Memory types found for one region.  Base: 0x%X.  System Memory Type: %s and %s."% (page.PhysicalStart,page.GetSystemMemoryType(), mr.GetSystemMemoryType()))
+                                logging.error("Multiple system memory types found for one region " + page.pageDebugStr() + " " +  mr.pageDebugStr())
                     
                     # A CPU Number present in a memory range object implies it represents an AP stack. Capture the CPU
                     # number for printing a CPU identifier for each AP stack.
