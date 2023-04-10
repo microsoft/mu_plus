@@ -42,7 +42,7 @@ PerformPciChecks (
   UINTN  Fun;
   UINTN  NumDevices;
   UINTN  AdditionalData1;
-  UINTN  Index;
+  UINTN  ProtocolIndex;
   UINTN  DeviceIndex;
 
   Devices      = NULL;
@@ -64,8 +64,8 @@ PerformPciChecks (
     goto Cleanup;
   }
 
-  for (Index = 0; Index < ProtocolCount; Index++) {
-    Status = ProtocolList[Index]->GetLocation (ProtocolList[Index], &Seg, &Bus, &Dev, &Fun);
+  for (ProtocolIndex = 0; ProtocolIndex < ProtocolCount; ProtocolIndex++) {
+    Status = ProtocolList[ProtocolIndex]->GetLocation (ProtocolList[ProtocolIndex], &Seg, &Bus, &Dev, &Fun);
     if (EFI_ERROR (Status)) {
       continue;
     }
@@ -78,62 +78,66 @@ PerformPciChecks (
           (Fun == Devices[DeviceIndex].FunctionNumber))
       {
         DeviceCheckResult[DeviceIndex].DevicePresent = TRUE;
+        if (Devices[DeviceIndex].MinimumLinkSpeed != Ignore) {
+          Status = GetPciExpressDeviceLinkSpeed (ProtocolList[ProtocolIndex], &DeviceLinkSpeed);
+          if (EFI_ERROR (Status)) {
+            DeviceCheckResult[DeviceIndex].LinkSpeedResult.ActualSpeed = Unknown;
+          } else {
+            DeviceCheckResult[DeviceIndex].LinkSpeedResult.ActualSpeed = DeviceLinkSpeed;
+          }
+        }
       }
     }
   }
 
-  for (Index = 0; Index < NumDevices; Index++) {
+  for (DeviceIndex = 0; DeviceIndex < NumDevices; DeviceIndex++) {
     // Get the BDF for AdditionalData1 to be used in potential telemetry calls
     AdditionalData1 = PCI_ECAM_ADDRESS (
-                        Devices[Index].BusNumber,
-                        Devices[Index].DeviceNumber,
-                        Devices[Index].FunctionNumber,
+                        Devices[DeviceIndex].BusNumber,
+                        Devices[DeviceIndex].DeviceNumber,
+                        Devices[DeviceIndex].FunctionNumber,
                         0
                         );
 
-    if (Devices[Index].MinimumLinkSpeed != Ignore) {
-      Status = GetPciExpressDeviceLinkSpeed (ProtocolList[Index], &DeviceLinkSpeed);
-      if (EFI_ERROR (Status)) {
-        DeviceCheckResult[Index].LinkSpeedResult.ActualSpeed = Unknown;
-
+    if (Devices[DeviceIndex].MinimumLinkSpeed != Ignore) {
+      if (DeviceCheckResult[DeviceIndex].LinkSpeedResult.ActualSpeed == Unknown) {
         // Log to telemetry that an error prevented an unignored link speed from being read
         LogTelemetry (
-          Devices[Index].IsFatal,
+          Devices[DeviceIndex].IsFatal,
           NULL,
           (EFI_IO_BUS_PCI | EFI_IOB_EC_CONTROLLER_ERROR),
           &gDeviceSpecificBusInfoLibTelemetryGuid,
           NULL,
           AdditionalData1,
-          *((UINT64 *)Devices[Index].DeviceName)
+          *((UINT64 *)Devices[DeviceIndex].DeviceName)
           );
       } else {
-        DeviceCheckResult[Index].LinkSpeedResult.ActualSpeed = DeviceLinkSpeed;
-        if ((Devices[Index].MinimumLinkSpeed <= DeviceLinkSpeed) && (DeviceLinkSpeed != Unknown)) {
-          DeviceCheckResult[Index].LinkSpeedResult.MinimumSatisfied = TRUE;
+        if (Devices[DeviceIndex].MinimumLinkSpeed <= DeviceCheckResult[DeviceIndex].LinkSpeedResult.ActualSpeed) {
+          DeviceCheckResult[DeviceIndex].LinkSpeedResult.MinimumSatisfied = TRUE;
         } else {
           // Log to telemetry that a specified minimum link speed was not satisfied
           LogTelemetry (
-            Devices[Index].IsFatal,
+            Devices[DeviceIndex].IsFatal,
             NULL,
             (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_SUPPORTED),
             &gDeviceSpecificBusInfoLibTelemetryGuid,
             NULL,
             AdditionalData1,
-            *((UINT64 *)Devices[Index].DeviceName)
+            *((UINT64 *)Devices[DeviceIndex].DeviceName)
             );
         }
       }
     }
 
-    if (DeviceCheckResult[Index].DevicePresent == FALSE) {
+    if (DeviceCheckResult[DeviceIndex].DevicePresent == FALSE) {
       LogTelemetry (
-        Devices[Index].IsFatal,
+        Devices[DeviceIndex].IsFatal,
         NULL,
         (EFI_IO_BUS_PCI | EFI_IOB_EC_NOT_DETECTED),
         &gDeviceSpecificBusInfoLibTelemetryGuid,
         NULL,
         AdditionalData1,
-        *((UINT64 *)Devices[Index].DeviceName)
+        *((UINT64 *)Devices[DeviceIndex].DeviceName)
         );
     }
   }
