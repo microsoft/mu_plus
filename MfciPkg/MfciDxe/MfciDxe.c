@@ -883,8 +883,9 @@ VerifyPolicyAndChange (
              CurrentNonce,
              &BlobPolicy
              );
-
-  BlobPolicy &= ~MFCI_POLICY_VALUE_ACTIONS_MASK; // clear the action bits as they would have been processed upon installation
+  if (!EFI_ERROR (Status)) {
+    BlobPolicy &= ~MFCI_POLICY_VALUE_ACTIONS_MASK; // clear the action bits as they would have been processed upon installation
+  }
 
   if (EFI_ERROR (Status) ||
       (BlobPolicy != mCurrentPolicy))
