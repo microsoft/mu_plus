@@ -85,8 +85,7 @@ MsWheaESWriteHeader (
 
 VOID
 MsWheaESContentChangeChecksumHelper (
-  UINT16  *Buffer,
-  UINTN   Length
+  UINTN  Length
   );
 
 VOID
@@ -331,7 +330,7 @@ MsWheaESContentUpdateTest (
   UINT8  Data;
 
   MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
-  MsWheaESContentChangeChecksumHelper (TestDataArray, sizeof (TestDataArray));
+  MsWheaESContentChangeChecksumHelper (sizeof (TestDataArray));
 
   MsWheaESReadHeader (&UnitTestHeader);
 
@@ -384,7 +383,7 @@ MsWheaESFindSlotTest (
   Status = MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
-  MsWheaESContentChangeChecksumHelper (TestDataArray, sizeof (TestDataArray));
+  MsWheaESContentChangeChecksumHelper (sizeof (TestDataArray));
 
   MsWheaESReadHeader (&UnitTestHeader);
 

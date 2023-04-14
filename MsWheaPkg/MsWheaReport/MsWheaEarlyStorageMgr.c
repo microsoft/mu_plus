@@ -219,8 +219,7 @@ header accordingly.
 STATIC
 VOID
 MsWheaESContentChangeChecksumHelper (
-  UINT16  *Buffer,
-  UINTN   Length
+  UINTN  Length
   )
 {
   UINT16                        Sum16;
@@ -229,17 +228,9 @@ MsWheaESContentChangeChecksumHelper (
   DEBUG ((DEBUG_INFO, "Calculate sum content helper...\n"));
 
   MsWheaESReadHeader (&Header);
-  Sum16 = (UINT16)(0x10000 - Header.Checksum);
-
-  // Update length field of header, update checksum accordingly
-  Sum16               = (Sum16 - (UINT16)(Header.ActiveRange & MAX_UINT16) - (UINT16)((Header.ActiveRange >> 16) & MAX_UINT16));
   Header.ActiveRange += (UINT32)Length;
-  Sum16               = (Sum16 + (UINT16)(Header.ActiveRange & MAX_UINT16) + (UINT16)((Header.ActiveRange >> 16) & MAX_UINT16));
-
-  // Calculate updated chunk only
-  Sum16           = Sum16 + CalculateSum16 (Buffer, Length);
-  Header.Checksum = (UINT16)(0x10000 - Sum16);
-
+  MsWheaESCalculateChecksum16 (&Header, &Sum16);
+  Header.Checksum = Sum16;
   MsWheaESWriteHeader (&Header);
 }
 
@@ -401,7 +392,7 @@ MsWheaESV0InfoStore (
     goto Cleanup;
   }
 
-  MsWheaESContentChangeChecksumHelper ((UINT16 *)&WheaV0, sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0));
+  MsWheaESContentChangeChecksumHelper (sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_V0));
 
 Cleanup:
   return Status;
