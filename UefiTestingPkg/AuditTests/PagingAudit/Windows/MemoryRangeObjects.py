@@ -220,12 +220,9 @@ class MemoryRange(object):
     Type                    : %s
     PhysicalStart           : 0x%010X
     PhysicalEnd             : 0x%010X
-    VirtualStart            : 0x%010X
-    NumberOfPages           : 0x%010X
     Attribute               : 0x%010X
     PhysicalSize            : 0x%010X
-    GcdType                 : 0x%010X
-""" % (self.GetMemoryTypeDescription(), self.PhysicalStart, self.PhysicalEnd, self.VirtualStart, self.NumberOfPages, self.Attribute, self.PhysicalSize, self.GcdType)
+""" % (self.GetMemoryTypeDescription(), self.PhysicalStart, self.PhysicalEnd, self.Attribute, self.PhysicalSize)
 
     #
     # intitalizes memory contents description
