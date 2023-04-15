@@ -25,6 +25,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define A_IS_BETWEEN_B_AND_C(A, B, C) \
   (((B) < (A)) && ((A) < (C)))
 
+#define A_B_OVERLAPS_C_D(A, B, C, D) \
+  (((B) >= (C)) && ((D) >= (A)))
+
 typedef struct _MEM_MAP_META {
   UINTN    MapSize;
   UINTN    EntrySize;
@@ -360,9 +363,7 @@ EntriesInASingleMapShouldNotOverlapAtAll (
       RightEnd        = RightDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (RightDescriptor->NumberOfPages) - 1;
 
       // Actually compare the data.
-      if (A_IS_BETWEEN_B_AND_C (RightDescriptor->PhysicalStart, LeftDescriptor->PhysicalStart, LeftEnd) ||
-          A_IS_BETWEEN_B_AND_C (LeftDescriptor->PhysicalStart, RightDescriptor->PhysicalStart, RightEnd))
-      {
+      if (A_B_OVERLAPS_C_D (LeftDescriptor->PhysicalStart, LeftEnd, RightDescriptor->PhysicalStart, RightEnd)) {
         DumpDescriptor (DEBUG_VERBOSE, L"[LeftDescriptor]", LeftDescriptor);
         DumpDescriptor (DEBUG_VERBOSE, L"[RightDescriptor]", RightDescriptor);
         Status = UNIT_TEST_ERROR_TEST_FAILED;
