@@ -128,7 +128,8 @@ InternalGetPerformanceCounter (
   UINT64           TimeInMs;
   UINT64           TimeInNs;
   UINT64           Frequency;
-  STATIC   UINT64  Ticks = 0;
+  UINT32           Remainder = 0;
+  STATIC   UINT64  Ticks     = 0;
 
   if (Ticks != 0) {
     return Ticks;
@@ -171,7 +172,7 @@ InternalGetPerformanceCounter (
   //
   // Do multiply first, then divide, to keep as many bits as possible
   //
-  Ticks    = DivU64x32 (MultU64x64 (TimeInMs, Frequency), 1000u);
+  Ticks    = DivU64x32Remainder (MultU64x64 (TimeInMs, Frequency), 1000u, &Remainder) + Remainder;
   TimeInNs = GetTimeInNanoSecond (Ticks);
 
   UT_ASSERT_TRUE (TimeInMs == (TimeInNs / 1000000u));
