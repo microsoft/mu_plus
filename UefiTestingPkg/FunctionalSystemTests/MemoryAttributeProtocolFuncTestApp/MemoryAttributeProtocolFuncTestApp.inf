@@ -1,4 +1,4 @@
-﻿## @file
+## @file
 # TCBZ3519
 # Uefi Shell based Application that unit tests the Memory Attribute Protocol.
 #
@@ -39,7 +39,7 @@
   UnitTestLib
   UefiBootServicesTableLib
   DebugLib
-  
+
 [LibraryClasses.AARCH64]
   ArmLib
 
