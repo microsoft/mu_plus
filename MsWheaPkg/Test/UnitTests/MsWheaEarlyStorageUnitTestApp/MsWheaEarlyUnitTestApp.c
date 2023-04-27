@@ -85,8 +85,7 @@ MsWheaESWriteHeader (
 
 VOID
 MsWheaESContentChangeChecksumHelper (
-  UINT16  *Buffer,
-  UINTN   Length
+  UINTN  Length
   );
 
 VOID
@@ -331,7 +330,7 @@ MsWheaESContentUpdateTest (
   UINT8  Data;
 
   MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
-  MsWheaESContentChangeChecksumHelper (TestDataArray, sizeof (TestDataArray));
+  MsWheaESContentChangeChecksumHelper (sizeof (TestDataArray));
 
   MsWheaESReadHeader (&UnitTestHeader);
 
@@ -384,7 +383,7 @@ MsWheaESFindSlotTest (
   Status = MsWheaESWriteData (TestDataArray, sizeof (TestDataArray), 0);
   UT_ASSERT_NOT_EFI_ERROR (Status);
 
-  MsWheaESContentChangeChecksumHelper (TestDataArray, sizeof (TestDataArray));
+  MsWheaESContentChangeChecksumHelper (sizeof (TestDataArray));
 
   MsWheaESReadHeader (&UnitTestHeader);
 
@@ -536,6 +535,13 @@ MsWheaEarlyUnitTestAppEntryPoint (
 
   DEBUG ((DEBUG_ERROR, "%a %a v%a\n", __FUNCTION__, UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
+  // Only run the following tests if the early storage region can store at least one entry.
+  // If the region is too small, log an error to alert the tester to the issue.
+  if (MsWheaESGetMaxDataCount () < sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON)) {
+    UT_LOG_ERROR ("Early storage capacity is not large enough to fit an early storage entry! Skipping tests.\n");
+    return EFI_SUCCESS;
+  }
+
   // Start setting up the test framework for running the tests.
   Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
   if (EFI_ERROR (Status) != FALSE) {
@@ -622,15 +628,18 @@ MsWheaEarlyUnitTestAppEntryPoint (
     NULL
     );
 
-  AddTestCase (
-    Misc,
-    "MsWhea ES store entry",
-    "MsWhea.Miscellaneous.MsWheaESStoreEntryTest",
-    MsWheaESStoreEntryTest,
-    MsWheaESVerify,
-    MsWheaESCleanUp,
-    NULL
-    );
+  // Only run the following test if the early storage capacity is large enough
+  if (MsWheaESGetMaxDataCount () >= (sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON) * 2)) {
+    AddTestCase (
+      Misc,
+      "MsWhea ES store entry",
+      "MsWhea.Miscellaneous.MsWheaESStoreEntryTest",
+      MsWheaESStoreEntryTest,
+      MsWheaESVerify,
+      MsWheaESCleanUp,
+      NULL
+      );
+  }
 
   AddTestCase (
     Misc,
