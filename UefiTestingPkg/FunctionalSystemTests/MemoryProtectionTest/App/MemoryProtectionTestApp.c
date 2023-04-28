@@ -14,6 +14,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/MemoryProtectionNonstopMode.h>
 #include <Protocol/MemoryProtectionDebug.h>
 #include <Protocol/MemoryAttribute.h>
+#include <Protocol/CpuMpDebug.h>
+#include <Protocol/ShellParameters.h>
 #include <Uefi/UefiMultiPhase.h>
 #include <Pi/PiMultiPhase.h>
 
@@ -41,10 +43,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include "../MemoryProtectionTestCommon.h"
 #include "UefiHardwareNxProtectionStub.h"
 
-#define UNIT_TEST_APP_NAME     "Heap Guard Test"
-#define UNIT_TEST_APP_VERSION  "0.5"
+#define UNIT_TEST_APP_NAME                 "Memory Protection Test"
+#define UNIT_TEST_APP_VERSION              "2.0"
+#define UNIT_TEST_WARM_RESET_STRING        L"--Reset"
+#define UNIT_TEST_MEMORY_ATTRIBUTE_STRING  L"--MemoryAttribute"
+#define UNIT_TEST_CLEAR_FAULTS_STRING      L"--ClearFaults"
 
 #define DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE  512
+#define ALIGN_ADDRESS(Address)  (((Address) / EFI_PAGE_SIZE) * EFI_PAGE_SIZE)
 
 VOID                                     *mPiSmmCommonCommBufferAddress = NULL;
 UINTN                                    mPiSmmCommonCommBufferSize;
@@ -54,6 +60,7 @@ DXE_MEMORY_PROTECTION_SETTINGS           mDxeMps;
 MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *mNonstopModeProtocol      = NULL;
 MEMORY_PROTECTION_DEBUG_PROTOCOL         *mMemoryProtectionProtocol = NULL;
 EFI_MEMORY_ATTRIBUTE_PROTOCOL            *mMemoryAttributeProtocol  = NULL;
+CPU_MP_DEBUG_PROTOCOL                    *mCpuMpDebugProtocol       = NULL;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -254,6 +261,25 @@ PopulateMemoryAttributeProtocol (
   }
 
   return gBS->LocateProtocol (&gEfiMemoryAttributeProtocolGuid, NULL, (VOID **)&mMemoryAttributeProtocol);
+}
+
+/**
+  Populates the CPU MP debug protocol global
+
+  @retval EFI_SUCCESS Protocol is already populated or was successfully populated
+  @retval other       Return value of LocateProtocol
+**/
+STATIC
+EFI_STATUS
+PopulateCpuMpDebugProtocol (
+  VOID
+  )
+{
+  if (mCpuMpDebugProtocol != NULL) {
+    return EFI_SUCCESS;
+  }
+
+  return gBS->LocateProtocol (&gCpuMpDebugProtocolGuid, NULL, (VOID **)&mCpuMpDebugProtocol);
 }
 
 /**
@@ -618,7 +644,10 @@ ImageProtectionPreReq (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromFv || mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromUnknown) {
+  if (((mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromFv != 0) || (mDxeMps.ImageProtectionPolicy.Fields.ProtectImageFromUnknown != 0)) &&
+      (!EFI_ERROR (PopulateMemoryAttributeProtocol ())) &&
+      (!EFI_ERROR (PopulateMemoryProtectionDebugProtocol ())))
+  {
     return UNIT_TEST_PASSED;
   }
 
@@ -861,13 +890,27 @@ UefiPageGuard (
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
   EFI_PHYSICAL_ADDRESS            ptr;
   EFI_STATUS                      Status;
+  UINT64                          Attributes;
 
   DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]));
 
-  if (MemoryProtectionContext.DynamicActive) {
-    if (mNonstopModeProtocol == NULL) {
-      UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
+  if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestMemoryAttributeProtocol) {
+    UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
+
+    Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
+    if (EFI_ERROR (Status)) {
+      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
+      return UNIT_TEST_SKIPPED;
     }
+
+    Attributes = 0;
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, ALIGN_ADDRESS (ptr) - EFI_PAGE_SIZE, EFI_PAGE_SIZE, &Attributes));
+    UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
+    Attributes = 0;
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, ALIGN_ADDRESS (ptr) + EFI_PAGE_SIZE, EFI_PAGE_SIZE, &Attributes));
+    UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
+    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
 
     Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
     if (EFI_ERROR (Status)) {
@@ -897,58 +940,59 @@ UefiPageGuard (
     }
 
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
+    if (MemoryProtectionContext.TestProgress < 2) {
+      //
+      // Context.TestProgress indicates progress within this specific test.
+      // 0 - Just started.
+      // 1 - Completed head guard test.
+      // 2 - Completed tail guard test.
+      //
+      // We need to indicate we are working on the next part of the test and save our progress.
+      //
+      MemoryProtectionContext.TestProgress++;
+      SetBootNextDevice ();
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    return UNIT_TEST_PASSED;
-  }
+      Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
 
-  if (MemoryProtectionContext.TestProgress < 2) {
-    //
-    // Context.TestProgress indicates progress within this specific test.
-    // 0 - Just started.
-    // 1 - Completed head guard test.
-    // 2 - Completed tail guard test.
-    //
-    // We need to indicate we are working on the next part of the test and save our progress.
-    //
-    MemoryProtectionContext.TestProgress++;
-    SetBootNextDevice ();
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+      if (EFI_ERROR (Status)) {
+        UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
+        return UNIT_TEST_SKIPPED;
+      } else if (MemoryProtectionContext.TestProgress == 1) {
+        DEBUG ((DEBUG_ERROR, "%a - Allocated page at 0x%p\n", __FUNCTION__, ptr));
 
-    Status = gBS->AllocatePages (AllocateAnyPages, (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, 1, (EFI_PHYSICAL_ADDRESS *)&ptr);
+        // Hit the head guard page
+        HeadPageTest ((UINT64 *)(UINTN)ptr);
 
-    if (EFI_ERROR (Status)) {
-      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
-      return UNIT_TEST_SKIPPED;
-    } else if (MemoryProtectionContext.TestProgress == 1) {
-      DEBUG ((DEBUG_ERROR, "%a - Allocated page at 0x%p\n", __FUNCTION__, ptr));
+        //
+        // Anything executing past this point indicates a failure.
+        //
+        UT_LOG_ERROR ("Head guard page failed: %p", ptr);
+      } else {
+        DEBUG ((DEBUG_ERROR, "%a - Allocated page at 0x%p\n", __FUNCTION__, ptr));
 
-      // Hit the head guard page
-      HeadPageTest ((UINT64 *)(UINTN)ptr);
+        // Hit the tail guard page
+        TailPageTest ((UINT64 *)(UINTN)ptr);
+
+        //
+        // Anything executing past this point indicates a failure.
+        //
+        UT_LOG_ERROR ("Tail guard page failed: %p", ptr);
+      }
 
       //
-      // Anything executing past this point indicates a failure.
+      // Reset test progress so failure gets recorded.
       //
-      UT_LOG_ERROR ("Head guard page failed: %p", ptr);
-    } else {
-      DEBUG ((DEBUG_ERROR, "%a - Allocated page at 0x%p\n", __FUNCTION__, ptr));
-
-      // Hit the tail guard page
-      TailPageTest ((UINT64 *)(UINTN)ptr);
-
-      //
-      // Anything executing past this point indicates a failure.
-      //
-      UT_LOG_ERROR ("Tail guard page failed: %p", ptr);
+      MemoryProtectionContext.TestProgress = 0;
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     }
 
-    //
-    // Reset test progress so failure gets recorded.
-    //
-    MemoryProtectionContext.TestProgress = 0;
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 2);
+  } else {
+    UT_LOG_ERROR ("Invalid testing method specified: %d\n", MemoryProtectionContext.TestingMethod);
+    return UNIT_TEST_ERROR_TEST_FAILED;
   }
-
-  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 2);
 
   return UNIT_TEST_PASSED;
 } // UefiPageGuard()
@@ -964,14 +1008,48 @@ UefiPoolGuard (
   EFI_STATUS                      Status;
   UINTN                           AllocationSize;
   UINT8                           Index = 0;
+  UINT64                          Attributes;
+  EFI_PHYSICAL_ADDRESS            PoolGuard;
 
   DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]));
 
-  if (MemoryProtectionContext.DynamicActive) {
-    if (mNonstopModeProtocol == NULL) {
-      UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
-    }
+  if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestMemoryAttributeProtocol) {
+    UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
 
+    for (Index = 0; Index < NUM_POOL_SIZES; Index++) {
+      //
+      // Context.TestProgress indicates progress within this specific test.
+      // The test progressively allocates larger areas to test the guard on.
+      // These areas are defined in Pool.c as the 13 different sized chunks that are available
+      // for pool allocation.
+      //
+      // We need to indicate we are working on the next part of the test and save our progress.
+      //
+      AllocationSize = mPoolSizeTable[Index];
+
+      //
+      // Memory type rHardwareNxProtections to the bitmask for the PcdHeapGuardPoolType,
+      // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
+      //
+      Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
+
+      if (EFI_ERROR (Status)) {
+        UT_LOG_WARNING ("Memory allocation failed for type %a of size %x - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], AllocationSize, Status);
+        return UNIT_TEST_SKIPPED;
+      }
+
+      Attributes = 0;
+      if (mDxeMps.HeapGuardPolicy.Fields.Direction == HEAP_GUARD_ALIGNED_TO_TAIL) {
+        PoolGuard = ALIGN_ADDRESS (((UINTN)ptr) + AllocationSize + (EFI_PAGE_SIZE - 1));
+      } else {
+        PoolGuard = ALIGN_ADDRESS (((UINTN)ptr) - (EFI_PAGE_SIZE - 1));
+      }
+
+      UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, PoolGuard, EFI_PAGE_SIZE, &Attributes));
+      UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
+    }
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
+    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
     for (Index = 0; Index < NUM_POOL_SIZES; Index++) {
       UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
@@ -1001,46 +1079,47 @@ UefiPoolGuard (
       UT_ASSERT_FALSE (GetIgnoreNextEx ());
       UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
     }
-
-    return UNIT_TEST_PASSED;
-  }
-
-  if (MemoryProtectionContext.TestProgress < NUM_POOL_SIZES) {
-    //
-    // Context.TestProgress indicates progress within this specific test.
-    // The test progressively allocates larger areas to test the guard on.
-    // These areas are defined in Pool.c as the 13 different sized chunks that are available
-    // for pool allocation.
-    //
-    // We need to indicate we are working on the next part of the test and save our progress.
-    //
-    AllocationSize = mPoolSizeTable[MemoryProtectionContext.TestProgress];
-    MemoryProtectionContext.TestProgress++;
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-    SetBootNextDevice ();
-
-    //
-    // Memory type rHardwareNxProtections to the bitmask for the PcdHeapGuardPoolType,
-    // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
-    //
-    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
-
-    if (EFI_ERROR (Status)) {
-      UT_LOG_WARNING ("Memory allocation failed for type %a of size %x - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], AllocationSize, Status);
-      return UNIT_TEST_SKIPPED;
-    } else {
-      PoolTest ((UINT64 *)ptr, AllocationSize);
-
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
+    if (MemoryProtectionContext.TestProgress < NUM_POOL_SIZES) {
       //
-      // At this point, the test has failed. Reset test progress so failure gets recorded.
+      // Context.TestProgress indicates progress within this specific test.
+      // The test progressively allocates larger areas to test the guard on.
+      // These areas are defined in Pool.c as the 13 different sized chunks that are available
+      // for pool allocation.
       //
-      MemoryProtectionContext.TestProgress = 0;
+      // We need to indicate we are working on the next part of the test and save our progress.
+      //
+      AllocationSize = mPoolSizeTable[MemoryProtectionContext.TestProgress];
+      MemoryProtectionContext.TestProgress++;
       SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-      UT_LOG_ERROR ("Pool guard failed: %p", ptr);
-    }
-  }
+      SetBootNextDevice ();
 
-  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == NUM_POOL_SIZES);
+      //
+      // Memory type rHardwareNxProtections to the bitmask for the PcdHeapGuardPoolType,
+      // we need to RShift 1 to get it to reflect the correct EFI_MEMORY_TYPE.
+      //
+      Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, AllocationSize, (VOID **)&ptr);
+
+      if (EFI_ERROR (Status)) {
+        UT_LOG_WARNING ("Memory allocation failed for type %a of size %x - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], AllocationSize, Status);
+        return UNIT_TEST_SKIPPED;
+      } else {
+        PoolTest ((UINT64 *)ptr, AllocationSize);
+
+        //
+        // At this point, the test has failed. Reset test progress so failure gets recorded.
+        //
+        MemoryProtectionContext.TestProgress = 0;
+        SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+        UT_LOG_ERROR ("Pool guard failed: %p", ptr);
+      }
+    }
+
+    UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == NUM_POOL_SIZES);
+  } else {
+    UT_LOG_ERROR ("Invalid testing method specified: %d\n", MemoryProtectionContext.TestingMethod);
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
 
   return UNIT_TEST_PASSED;
 } // UefiPoolGuard()
@@ -1052,45 +1131,89 @@ UefiCpuStackGuard (
   )
 {
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  EFI_PHYSICAL_ADDRESS            StackBase;
+  EFI_PEI_HOB_POINTERS            Hob;
+  EFI_HOB_MEMORY_ALLOCATION       *MemoryHob;
+  UINT64                          Attributes;
+  LIST_ENTRY                      *List;
+  CPU_MP_DEBUG_PROTOCOL           *Entry;
 
   DEBUG ((DEBUG_INFO, "%a - Testing CPU Stack Guard\n", __FUNCTION__));
 
-  if (MemoryProtectionContext.DynamicActive) {
-    if (mNonstopModeProtocol == NULL) {
-      UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
+  if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestMemoryAttributeProtocol) {
+    UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
+
+    StackBase = 0;
+    Hob.Raw   = GetHobList ();
+    while ((Hob.Raw = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, Hob.Raw)) != NULL) {
+      MemoryHob = Hob.MemoryAllocation;
+      if (CompareGuid (&gEfiHobMemoryAllocStackGuid, &MemoryHob->AllocDescriptor.Name)) {
+        StackBase = MemoryHob->AllocDescriptor.MemoryBaseAddress;
+        UT_ASSERT_EQUAL (StackBase & EFI_PAGE_MASK, 0);
+        break;
+      }
+
+      Hob.Raw = GET_NEXT_HOB (Hob);
     }
 
+    UT_ASSERT_NOT_EQUAL (StackBase, 0);
+    Attributes = 0;
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, StackBase, EFI_PAGE_SIZE, &Attributes));
+    UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
+
+    if ((mCpuMpDebugProtocol != NULL) || !EFI_ERROR (PopulateCpuMpDebugProtocol ())) {
+      for (List = mCpuMpDebugProtocol->Link.ForwardLink; List != &mCpuMpDebugProtocol->Link; List = List->ForwardLink) {
+        Entry = CR (
+                  List,
+                  CPU_MP_DEBUG_PROTOCOL,
+                  Link,
+                  CPU_MP_DEBUG_SIGNATURE
+                  );
+
+        if (Entry->IsSwitchStack) {
+          continue;
+        }
+
+        StackBase  = ALIGN_ADDRESS (Entry->ApStackBuffer);
+        Attributes = 0;
+        UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, StackBase, EFI_PAGE_SIZE, &Attributes));
+        UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
+      }
+    }
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
+    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
     UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
     RecursionDynamic (1);
 
     UT_ASSERT_FALSE (GetIgnoreNextEx ());
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
+    if (MemoryProtectionContext.TestProgress < 1) {
+      //
+      // Context.TestProgress 0 indicates the test hasn't started yet.
+      //
+      // We need to indicate we are working on the test and save our progress.
+      //
+      MemoryProtectionContext.TestProgress++;
+      SetBootNextDevice ();
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    return UNIT_TEST_PASSED;
+      Recursion (1);
+
+      //
+      // At this point, the test has failed. Reset test progress so failure gets recorded.
+      //
+      MemoryProtectionContext.TestProgress = 0;
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+      UT_LOG_ERROR ("System was expected to reboot, but didn't.");
+    }
+
+    UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
+  } else {
+    UT_LOG_ERROR ("Invalid testing method specified: %d\n", MemoryProtectionContext.TestingMethod);
+    return UNIT_TEST_ERROR_TEST_FAILED;
   }
-
-  if (MemoryProtectionContext.TestProgress < 1) {
-    //
-    // Context.TestProgress 0 indicates the test hasn't started yet.
-    //
-    // We need to indicate we are working on the test and save our progress.
-    //
-    MemoryProtectionContext.TestProgress++;
-    SetBootNextDevice ();
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-
-    Recursion (1);
-
-    //
-    // At this point, the test has failed. Reset test progress so failure gets recorded.
-    //
-    MemoryProtectionContext.TestProgress = 0;
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-    UT_LOG_ERROR ("System was expected to reboot, but didn't.");
-  }
-
-  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // UefiCpuStackGuard()
@@ -1104,13 +1227,17 @@ UefiNullPointerDetection (
 {
   UINT8                           Index;
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
+  UINT64                          Attributes;
 
   DEBUG ((DEBUG_INFO, "%a - Testing NULL Pointer Detection\n", __FUNCTION__));
 
-  if (MemoryProtectionContext.DynamicActive) {
-    if (mNonstopModeProtocol == NULL) {
-      UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
-    }
+  if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestMemoryAttributeProtocol) {
+    UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
+
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, (UINTN)NULL, EFI_PAGE_SIZE, &Attributes));
+    UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
+    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
 
     for (Index = 0; Index < 2; Index++) {
       UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
@@ -1136,42 +1263,43 @@ UefiNullPointerDetection (
     }
 
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
+    if (MemoryProtectionContext.TestProgress < 2) {
+      //
+      // Context.TestProgress indicates progress within this specific test.
+      // 0 - Just started.
+      // 1 - Completed NULL pointer read test.
+      // 2 - Completed NULL pointer write test.
+      //
+      // We need to indicate we are working on the next part of the test and save our progress.
+      //
+      MemoryProtectionContext.TestProgress++;
+      SetBootNextDevice ();
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    return UNIT_TEST_PASSED;
-  }
+      if (MemoryProtectionContext.TestProgress == 1) {
+        if (mFw->Title == NULL) {
+          DEBUG ((DEBUG_ERROR, "%a - Should have failed \n", __FUNCTION__));
+        }
 
-  if (MemoryProtectionContext.TestProgress < 2) {
-    //
-    // Context.TestProgress indicates progress within this specific test.
-    // 0 - Just started.
-    // 1 - Completed NULL pointer read test.
-    // 2 - Completed NULL pointer write test.
-    //
-    // We need to indicate we are working on the next part of the test and save our progress.
-    //
-    MemoryProtectionContext.TestProgress++;
-    SetBootNextDevice ();
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-
-    if (MemoryProtectionContext.TestProgress == 1) {
-      if (mFw->Title == NULL) {
-        DEBUG ((DEBUG_ERROR, "%a - Should have failed \n", __FUNCTION__));
+        UT_LOG_ERROR ("Failed NULL pointer read test.");
+      } else {
+        mFw->Title = "Title";
+        UT_LOG_ERROR ("Failed NULL pointer write test.");
       }
 
-      UT_LOG_ERROR ("Failed NULL pointer read test.");
-    } else {
-      mFw->Title = "Title";
-      UT_LOG_ERROR ("Failed NULL pointer write test.");
+      //
+      // At this point, the test has failed. Reset test progress so failure gets recorded.
+      //
+      MemoryProtectionContext.TestProgress = 0;
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
     }
 
-    //
-    // At this point, the test has failed. Reset test progress so failure gets recorded.
-    //
-    MemoryProtectionContext.TestProgress = 0;
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+    UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 2);
+  } else {
+    UT_LOG_ERROR ("Invalid testing method specified: %d\n", MemoryProtectionContext.TestingMethod);
+    return UNIT_TEST_ERROR_TEST_FAILED;
   }
-
-  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 2);
 
   return UNIT_TEST_PASSED;
 } // UefiNullPointerDetection()
@@ -1185,13 +1313,18 @@ UefiNxStackGuard (
   MEMORY_PROTECTION_TEST_CONTEXT  MemoryProtectionContext = (*(MEMORY_PROTECTION_TEST_CONTEXT *)Context);
   UINT8                           CodeRegionToCopyTo[DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE];
   UINT8                           *CodeRegionToCopyFrom = (UINT8 *)DummyFunctionForCodeSelfTest;
+  UINT64                          Attributes;
 
   DEBUG ((DEBUG_INFO, "%a - NX Stack Guard\n", __FUNCTION__));
 
-  if (MemoryProtectionContext.DynamicActive) {
-    if (mNonstopModeProtocol == NULL) {
-      UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
-    }
+  if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestMemoryAttributeProtocol) {
+    UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
+
+    Attributes = 0;
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, ALIGN_ADDRESS ((UINTN)&Attributes), EFI_PAGE_SIZE, &Attributes));
+    UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_XP, 0);
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
+    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
 
     UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
 
@@ -1200,32 +1333,33 @@ UefiNxStackGuard (
 
     UT_ASSERT_FALSE (GetIgnoreNextEx ());
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
+    if (MemoryProtectionContext.TestProgress < 1) {
+      //
+      // Context.TestProgress 0 indicates the test hasn't started yet.
+      //
+      // We need to indicate we are working on the test and save our progress.
+      //
+      MemoryProtectionContext.TestProgress++;
+      SetBootNextDevice ();
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    return UNIT_TEST_PASSED;
+      CopyMem (CodeRegionToCopyTo, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
+      ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
+
+      //
+      // At this point, the test has failed. Reset test progress so failure gets recorded.
+      //
+      MemoryProtectionContext.TestProgress = 0;
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+      UT_LOG_ERROR ("NX Stack Guard Test failed.");
+    }
+
+    UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
+  } else {
+    UT_LOG_ERROR ("Invalid testing method specified: %d\n", MemoryProtectionContext.TestingMethod);
+    return UNIT_TEST_ERROR_TEST_FAILED;
   }
-
-  if (MemoryProtectionContext.TestProgress < 1) {
-    //
-    // Context.TestProgress 0 indicates the test hasn't started yet.
-    //
-    // We need to indicate we are working on the test and save our progress.
-    //
-    MemoryProtectionContext.TestProgress++;
-    SetBootNextDevice ();
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-
-    CopyMem (CodeRegionToCopyTo, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
-    ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
-
-    //
-    // At this point, the test has failed. Reset test progress so failure gets recorded.
-    //
-    MemoryProtectionContext.TestProgress = 0;
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-    UT_LOG_ERROR ("NX Stack Guard Test failed.");
-  }
-
-  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // UefiNxStackGuard()
@@ -1240,13 +1374,26 @@ UefiNxProtection (
   UINT64                          *ptr;
   EFI_STATUS                      Status;
   UINT8                           *CodeRegionToCopyFrom = (UINT8 *)DummyFunctionForCodeSelfTest;
+  UINT64                          Attributes;
 
   DEBUG ((DEBUG_INFO, "%a - Testing Type: %a\n", __FUNCTION__, MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]));
 
-  if (MemoryProtectionContext.DynamicActive) {
-    if (mNonstopModeProtocol == NULL) {
-      UT_ASSERT_NOT_EFI_ERROR (GetNonstopProtocol ());
+  if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestMemoryAttributeProtocol) {
+    UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
+
+    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
+
+    if (EFI_ERROR (Status)) {
+      UT_LOG_ERROR ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
+      return UNIT_TEST_SKIPPED;
     }
+
+    Attributes = 0;
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryAttributeProtocol->GetMemoryAttributes (mMemoryAttributeProtocol, ALIGN_ADDRESS ((UINTN)ptr), EFI_PAGE_SIZE, &Attributes));
+    FreePool (ptr);
+    UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_XP, 0);
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
+    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
 
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
     UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
@@ -1265,39 +1412,40 @@ UefiNxProtection (
 
     UT_ASSERT_FALSE (GetIgnoreNextEx ());
     UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
+  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
+    if (MemoryProtectionContext.TestProgress < 1) {
+      //
+      // Context.TestProgress 0 indicates the test hasn't started yet.
+      //
+      // We need to indicate we are working on the test and save our progress.
+      //
+      MemoryProtectionContext.TestProgress++;
+      SetBootNextDevice ();
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
 
-    return UNIT_TEST_PASSED;
-  }
+      Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
 
-  if (MemoryProtectionContext.TestProgress < 1) {
-    //
-    // Context.TestProgress 0 indicates the test hasn't started yet.
-    //
-    // We need to indicate we are working on the test and save our progress.
-    //
-    MemoryProtectionContext.TestProgress++;
-    SetBootNextDevice ();
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+      if (EFI_ERROR (Status)) {
+        UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
+        return UNIT_TEST_SKIPPED;
+      } else {
+        CopyMem (ptr, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
+        ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)ptr)();
+      }
 
-    Status = gBS->AllocatePool ((EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType, EFI_PAGE_SIZE, (VOID **)&ptr);
-
-    if (EFI_ERROR (Status)) {
-      UT_LOG_WARNING ("Memory allocation failed for type %a - %r\n", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType], Status);
-      return UNIT_TEST_SKIPPED;
-    } else {
-      CopyMem (ptr, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
-      ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)ptr)();
+      //
+      // At this point, the test has failed. Reset test progress so failure gets recorded.
+      //
+      MemoryProtectionContext.TestProgress = 0;
+      SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
+      UT_LOG_ERROR ("NX Test failed.");
     }
 
-    //
-    // At this point, the test has failed. Reset test progress so failure gets recorded.
-    //
-    MemoryProtectionContext.TestProgress = 0;
-    SaveFrameworkState (&MemoryProtectionContext, sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
-    UT_LOG_ERROR ("NX Test failed.");
+    UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
+  } else {
+    UT_LOG_ERROR ("Invalid testing method specified: %d\n", MemoryProtectionContext.TestingMethod);
+    return UNIT_TEST_ERROR_TEST_FAILED;
   }
-
-  UT_ASSERT_TRUE (MemoryProtectionContext.TestProgress == 1);
 
   return UNIT_TEST_PASSED;
 } // UefiNxProtection()
@@ -1317,12 +1465,9 @@ ImageProtection (
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
 
-  UT_ASSERT_NOT_EFI_ERROR (PopulateMemoryProtectionDebugProtocol ());
-  if (mMemoryProtectionProtocol != NULL) {
-    UT_ASSERT_NOT_EFI_ERROR (mMemoryProtectionProtocol->GetImageList (&ImageRangeDescriptorHead, Protected));
-  }
-
-  UT_ASSERT_NOT_EFI_ERROR (PopulateMemoryAttributeProtocol ());
+  UT_ASSERT_NOT_NULL (mMemoryProtectionProtocol);
+  UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
+  UT_ASSERT_NOT_EFI_ERROR (mMemoryProtectionProtocol->GetImageList (&ImageRangeDescriptorHead, Protected));
 
   // Walk through each image
   for (ImageRangeDescriptorLink = ImageRangeDescriptorHead->Link.ForwardLink;
@@ -1506,7 +1651,8 @@ SmmNullPointerDetection (
 /// ================================================================================================
 VOID
 AddUefiNxTest (
-  UNIT_TEST_SUITE_HANDLE  TestSuite
+  UNIT_TEST_SUITE_HANDLE            TestSuite,
+  MEMORY_PROTECTION_TESTING_METHOD  TestingMethod
   )
 {
   MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
@@ -1517,13 +1663,8 @@ AddUefiNxTest (
   CHAR8                           *TestDescription  = NULL;
   UINTN                           TestNameSize;
   UINTN                           TestDescriptionSize;
-  BOOLEAN                         Dynamic = FALSE;
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
-
-  if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ()) && !EFI_ERROR (GetNonstopProtocol ())) {
-    Dynamic = TRUE;
-  }
 
   //
   // Need to generate a test case for each type of memory.
@@ -1541,7 +1682,7 @@ AddUefiNxTest (
 
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
-    MemoryProtectionContext->DynamicActive    = Dynamic;
+    MemoryProtectionContext->TestingMethod    = TestingMethod;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = AllocateZeroPool (TestNameSize);
@@ -1575,7 +1716,8 @@ AddUefiNxTest (
 
 VOID
 AddUefiPoolTest (
-  UNIT_TEST_SUITE_HANDLE  TestSuite
+  UNIT_TEST_SUITE_HANDLE            TestSuite,
+  MEMORY_PROTECTION_TESTING_METHOD  TestingMethod
   )
 {
   MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
@@ -1586,13 +1728,8 @@ AddUefiPoolTest (
   CHAR8                           *TestDescription  = NULL;
   UINTN                           TestNameSize;
   UINTN                           TestDescriptionSize;
-  BOOLEAN                         Dynamic = FALSE;
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
-
-  if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ()) && !EFI_ERROR (GetNonstopProtocol ())) {
-    Dynamic = TRUE;
-  }
 
   //
   // Need to generate a test case for each type of memory.
@@ -1610,7 +1747,7 @@ AddUefiPoolTest (
 
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
-    MemoryProtectionContext->DynamicActive    = Dynamic;
+    MemoryProtectionContext->TestingMethod    = TestingMethod;
 
     //
     // Name of the test is Security.PoolGuard.Uefi + Memory Type Name (from MEMORY_TYPES)
@@ -1644,7 +1781,8 @@ AddUefiPoolTest (
 
 VOID
 AddUefiPageTest (
-  UNIT_TEST_SUITE_HANDLE  TestSuite
+  UNIT_TEST_SUITE_HANDLE            TestSuite,
+  MEMORY_PROTECTION_TESTING_METHOD  TestingMethod
   )
 {
   MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext = NULL;
@@ -1655,13 +1793,8 @@ AddUefiPageTest (
   CHAR8                           *TestDescription  = NULL;
   UINTN                           TestNameSize;
   UINTN                           TestDescriptionSize;
-  BOOLEAN                         Dynamic = FALSE;
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
-
-  if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ()) && !EFI_ERROR (GetNonstopProtocol ())) {
-    Dynamic = TRUE;
-  }
 
   //
   // Need to generate a test case for each type of memory.
@@ -1679,7 +1812,7 @@ AddUefiPageTest (
 
     MemoryProtectionContext->TargetMemoryType = Index;
     MemoryProtectionContext->GuardAlignment   = mDxeMps.HeapGuardPolicy.Fields.Direction;
-    MemoryProtectionContext->DynamicActive    = Dynamic;
+    MemoryProtectionContext->TestingMethod    = TestingMethod;
 
     TestNameSize = sizeof (CHAR8) * (1 + AsciiStrnLenS (NameStub, UNIT_TEST_MAX_STRING_LENGTH) + AsciiStrnLenS (MEMORY_TYPES[Index], UNIT_TEST_MAX_STRING_LENGTH));
     TestName     = (CHAR8 *)AllocateZeroPool (TestNameSize);
@@ -1833,6 +1966,86 @@ AddSmmPageTest (
   }
 } // AddSmmPageTest()
 
+STATIC
+EFI_STATUS
+DetermineTestMethod (
+  IN  MEMORY_PROTECTION_TESTING_METHOD  PreferredTestingMethod,
+  OUT MEMORY_PROTECTION_TESTING_METHOD  *TestingMethod
+  )
+{
+  MEMORY_PROTECTION_TESTING_METHOD  DeterminedTestingMethod = MemoryProtectionTestMax;
+
+  switch (PreferredTestingMethod) {
+    default:
+    case MemoryProtectionTestMax:
+    case MemoryProtectionTestMemoryAttributeProtocol:
+      // Check if the Memory Attribute Protocol is installed
+      if (!EFI_ERROR (PopulateMemoryAttributeProtocol ())) {
+        DeterminedTestingMethod = MemoryProtectionTestMemoryAttributeProtocol;
+        break;
+      }
+
+    case MemoryProtectionTestClearFaults:
+      // Check if the Project Mu page fault handler is installed. This handler will warm-reset on page faults
+      // unless the Nonstop Protocol is installed to clear intentional page faults.
+      if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ())) {
+        // Clear the memory protection early store in case a fault was previously tripped and was not cleared
+        ExPersistClearAll ();
+
+        // Check if a read/write to the early store works and the Nonstop Protocol is installed
+        if (!EFI_ERROR (ExPersistSetIgnoreNextPageFault ()) &&
+            !EFI_ERROR (ExPersistClearIgnoreNextPageFault ()) &&
+            !EFI_ERROR (GetNonstopProtocol ()))
+        {
+          DeterminedTestingMethod = MemoryProtectionTestClearFaults;
+          break;
+        }
+      }
+
+    case MemoryProtectionTestReset:
+      // Uninstall the existing page fault handler
+      mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, NULL);
+
+      // Install an interrupt handler to reboot on page faults.
+      if (!EFI_ERROR (mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, InterruptHandler))) {
+        DeterminedTestingMethod = MemoryProtectionTestReset;
+        break;
+      }
+  }
+
+  if (DeterminedTestingMethod == MemoryProtectionTestMax) {
+    DEBUG ((DEBUG_ERROR, "Could not find a suitable testing method.\n"));
+    return EFI_UNSUPPORTED;
+  }
+
+  if ((PreferredTestingMethod != MemoryProtectionTestMax) && (PreferredTestingMethod != DeterminedTestingMethod)) {
+    DEBUG ((DEBUG_ERROR, "Could not use desired testing method.\n"));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  switch (DeterminedTestingMethod) {
+    case MemoryProtectionTestReset:
+      DEBUG ((DEBUG_INFO, "Testing with a reset after each protection violation.\n"));
+      break;
+
+    case MemoryProtectionTestMemoryAttributeProtocol:
+      DEBUG ((DEBUG_INFO, "Testing with the Memory Attribute Protocol.\n"));
+      break;
+
+    case MemoryProtectionTestClearFaults:
+      DEBUG ((DEBUG_INFO, "Testing with the Nonstop Protocol.\n"));
+      break;
+
+    default:
+      // Should never get here
+      DEBUG ((DEBUG_ERROR, "Invalid testing method.\n"));
+      return EFI_INVALID_PARAMETER;
+  }
+
+  *TestingMethod = DeterminedTestingMethod;
+  return EFI_SUCCESS;
+}
+
 /**
   MemoryProtectionTestAppEntryPoint
 
@@ -1850,13 +2063,20 @@ MemoryProtectionTestAppEntryPoint (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS                      Status;
-  UNIT_TEST_FRAMEWORK_HANDLE      Fw           = NULL;
-  UNIT_TEST_SUITE_HANDLE          PageGuard    = NULL;
-  UNIT_TEST_SUITE_HANDLE          PoolGuard    = NULL;
-  UNIT_TEST_SUITE_HANDLE          NxProtection = NULL;
-  UNIT_TEST_SUITE_HANDLE          Misc         = NULL;
-  MEMORY_PROTECTION_TEST_CONTEXT  *MemoryProtectionContext;
+  EFI_STATUS                        Status;
+  UNIT_TEST_FRAMEWORK_HANDLE        Fw           = NULL;
+  UNIT_TEST_SUITE_HANDLE            PageGuard    = NULL;
+  UNIT_TEST_SUITE_HANDLE            PoolGuard    = NULL;
+  UNIT_TEST_SUITE_HANDLE            NxProtection = NULL;
+  UNIT_TEST_SUITE_HANDLE            Misc         = NULL;
+  MEMORY_PROTECTION_TEST_CONTEXT    *MemoryProtectionContext;
+  MEMORY_PROTECTION_TESTING_METHOD  TestingMethod;
+  MEMORY_PROTECTION_TESTING_METHOD  PreferredTestingMethod;
+  EFI_SHELL_PARAMETERS_PROTOCOL     *ShellParams;
+
+  DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
+
+  DEBUG ((DEBUG_ERROR, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
 
   MemoryProtectionContext = (MEMORY_PROTECTION_TEST_CONTEXT *)AllocateZeroPool (sizeof (MEMORY_PROTECTION_TEST_CONTEXT));
   if (MemoryProtectionContext == NULL) {
@@ -1864,11 +2084,16 @@ MemoryProtectionTestAppEntryPoint (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  MemoryProtectionContext->DynamicActive = FALSE;
+  Status = gBS->HandleProtocol (
+                  gImageHandle,
+                  &gEfiShellParametersProtocolGuid,
+                  (VOID **)&ShellParams
+                  );
 
-  DEBUG ((DEBUG_ERROR, "%a()\n", __FUNCTION__));
-
-  DEBUG ((DEBUG_ERROR, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Could not retrieve command line args!\n", __FUNCTION__));
+    goto EXIT;
+  }
 
   LocateSmmCommonCommBuffer ();
 
@@ -1904,43 +2129,45 @@ MemoryProtectionTestAppEntryPoint (
   CreateUnitTestSuite (&NxProtection, Fw, "NX Protection Tests", "Security.NxProtection", NULL, NULL);
 
   if ((PageGuard == NULL) || (PoolGuard == NULL) || (NxProtection == NULL) || (Misc == NULL)) {
-    DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TestSuite\n"));
+    DEBUG ((DEBUG_ERROR, "%a - Failed in CreateUnitTestSuite for TestSuite\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
 
-  // Check if the Project Mu page fault handler is installed. This handler will warm-reset on page faults
-  // unless the Nonstop Protocol is installed to clear intentional page faults.
-  if (!EFI_ERROR (CheckMemoryProtectionExceptionHandlerInstallation ())) {
-    // Clear the memory protection early store in case a fault was previously tripped and was not cleared
-    ExPersistClearAll ();
+  PreferredTestingMethod = MemoryProtectionTestMax;
 
-    // Check if the nonstop protocol is active
-    if (!EFI_ERROR (GetNonstopProtocol ())) {
-      MemoryProtectionContext->DynamicActive = TRUE;
+  if (ShellParams->Argc > 1) {
+    if (StrnCmp (ShellParams->Argv[1], UNIT_TEST_WARM_RESET_STRING, StrLen (UNIT_TEST_WARM_RESET_STRING)) == 0) {
+      PreferredTestingMethod = MemoryProtectionTestReset;
+    } else if (StrnCmp (ShellParams->Argv[1], UNIT_TEST_MEMORY_ATTRIBUTE_STRING, StrLen (UNIT_TEST_MEMORY_ATTRIBUTE_STRING)) == 0) {
+      PreferredTestingMethod = MemoryProtectionTestMemoryAttributeProtocol;
+    } else if (StrnCmp (ShellParams->Argv[1], UNIT_TEST_CLEAR_FAULTS_STRING, StrLen (UNIT_TEST_CLEAR_FAULTS_STRING)) == 0) {
+      PreferredTestingMethod = MemoryProtectionTestClearFaults;
     } else {
-      DEBUG ((
-        DEBUG_WARN,
-        "MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL is not installed! Note that using "
-        "the protocol with this test can reduce execution time by over 98%%.\n"
-        ));
-    }
-  } else {
-    // Uninstall the existing page fault handler
-    mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, NULL);
+      if (StrnCmp (ShellParams->Argv[1], L"-h", 4) != 0) {
+        DEBUG ((DEBUG_INFO, "Invalid argument!\n\n"));
+      }
 
-    // Install an interrupt handler to reboot on page faults.
-    if (EFI_ERROR (mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, InterruptHandler))) {
-      DEBUG ((DEBUG_ERROR, "Failed to install interrupt handler. Status = %r\n", Status));
+      DEBUG ((DEBUG_INFO, "--Reset : Attempt to run the test by violating memory protections and performing a warm reset on faults.\n"));
+      DEBUG ((DEBUG_INFO, "--MemoryAttribute : Attempt to run the test by using the memory attribute protocol to check attributes.\n"));
+      DEBUG ((DEBUG_INFO, "--ClearFaults : Attempt to run the test by violating memory protections and expecting the exception handler to clear the faults.\n"));
+
+      Status = EFI_ABORTED;
       goto EXIT;
     }
   }
 
-  AddUefiPoolTest (PoolGuard);
-  AddUefiPageTest (PageGuard);
+  if (EFI_ERROR (DetermineTestMethod (PreferredTestingMethod, &TestingMethod))) {
+    goto EXIT;
+  }
+
+  MemoryProtectionContext->TestingMethod = TestingMethod;
+
+  AddUefiPoolTest (PoolGuard, TestingMethod);
+  AddUefiPageTest (PageGuard, TestingMethod);
   AddSmmPageTest (PageGuard);
   AddSmmPoolTest (PoolGuard);
-  AddUefiNxTest (NxProtection);
+  AddUefiNxTest (NxProtection, TestingMethod);
 
   AddTestCase (Misc, "Null pointer access should trigger a page fault", "Security.HeapGuardMisc.UefiNullPointerDetection", UefiNullPointerDetection, UefiNullPointerPreReq, NULL, MemoryProtectionContext);
   AddTestCase (Misc, "Null pointer access in SMM should trigger a page fault", "Security.HeapGuardMisc.SmmNullPointerDetection", SmmNullPointerDetection, SmmNullPointerPreReq, NULL, MemoryProtectionContext);
@@ -1958,6 +2185,10 @@ EXIT:
 
   if (Fw) {
     FreeUnitTestFramework (Fw);
+  }
+
+  if (MemoryProtectionContext) {
+    FreePool (MemoryProtectionContext);
   }
 
   return Status;

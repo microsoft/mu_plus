@@ -59,6 +59,7 @@
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## CONSUMES
+  gEfiHobMemoryAllocStackGuid                         ## CONSUMES
 
 [Protocols]
   gEfiSmmCommunicationProtocolGuid
@@ -66,6 +67,7 @@
   gMemoryProtectionNonstopModeProtocolGuid      ## CONSUMES
   gMemoryProtectionDebugProtocolGuid            ## CONSUMES
   gEfiMemoryAttributeProtocolGuid               ## CONSUMES
+  gCpuMpDebugProtocolGuid                       ## CONSUMES
 
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid
