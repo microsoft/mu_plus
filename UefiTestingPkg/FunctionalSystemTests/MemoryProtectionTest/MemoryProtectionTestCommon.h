@@ -14,11 +14,30 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 CHAR8  *MEMORY_TYPES[] = { "ReservedMemoryType", "LoaderCode", "LoaderData", "BootServicesCode", "BootServicesData", "RuntimeServicesCode", "RuntimeServicesData", "ConventionalMemory", "UnusableMemory", "ACPIReclaimMemory", "ACPIMemoryNVS", "MemoryMappedIO", "MemoryMappedIOPortSpace", "PalCode", "PersistentMemory" };
 
+////
+// Reset:                   Test will be run by violating the memory protection policy with the expectation that the system
+//                          will reboot each time. The test will take roughly 45 minutes to run with a strict protection policy.
+//
+// ClearFaults:             Test will be run by violating the memory protection policy with the expectation that the exception
+//                          handler will clear the faulting page(s) and allow the test to continue. The test will take roughly
+//                          5 seconds to run with a strict protection policy.
+//
+// MemoryAttributeProtocol: The protection policy will be validated by using the Memory Attribute Protocol to
+//                          get the memory attributes of the page(s) which are expected to be protected. The test will take roughly
+//                          5 seconds to run with a strict protection policy.
+////
+typedef enum {
+  MemoryProtectionTestReset,
+  MemoryProtectionTestClearFaults,
+  MemoryProtectionTestMemoryAttributeProtocol,
+  MemoryProtectionTestMax
+} MEMORY_PROTECTION_TESTING_METHOD;
+
 typedef struct _MEMORY_PROTECTION_TEST_CONTEXT {
-  UINT64     TargetMemoryType;
-  UINT64     TestProgress;
-  UINT8      GuardAlignment;
-  BOOLEAN    DynamicActive;
+  UINT64                              TargetMemoryType;
+  UINT64                              TestProgress;
+  UINT8                               GuardAlignment;
+  MEMORY_PROTECTION_TESTING_METHOD    TestingMethod;
 } MEMORY_PROTECTION_TEST_CONTEXT;
 
 #define MEMORY_PROTECTION_TEST_POOL          1
