@@ -19,8 +19,9 @@ the attributes using the memory attribute protocol. The test has a few methods o
 This method is the slowest, reaching upwards of 45 minutes with a strict protection policy
 (benchmarked on a Q35 DEBUG build). The test will intentionally cause faults for each
 protection policy and use a custom installed fault handler for IA32_PAGE_FAULT exceptions
-which simply performs a warm reset on a fault. This method can be run on either X64
-or ARM64 platforms.
+which simply performs a warm reset on a fault. This method can be run on x86 based platforms.
+Currently, the test doesn't install a synchronous handler for initiating a reset on ARM
+platforms.
 
 ## Testing by Clearing Faults
 
@@ -35,8 +36,9 @@ This method takes less than 5 seconds to run. Instead of intentionally causing f
 this method checks the attributes of the region which should fault against the expected
 protection attributes. For example, instead of intentionally causing a stack overflow to
 check the stack guard, the test will find the stack base and check that the attributes
-are EFI_MEMORY_RP using the Memory Attribute Protocol. This method can be run on either
-X64 or ARM64 platforms.
+are EFI_MEMORY_RP using the Memory Attribute Protocol (because the page at the stack base
+is a guard page marked EFI_MEMORY_RP). This method can be run on either X64 or
+ARM64 platforms.
 
 ## Running the Test
 
