@@ -538,7 +538,7 @@ MsWheaEarlyUnitTestAppEntryPoint (
   // Only run the following tests if the early storage region can store at least one entry.
   // If the region is too small, log an error to alert the tester to the issue.
   if (MsWheaESGetMaxDataCount () < sizeof (MS_WHEA_EARLY_STORAGE_ENTRY_COMMON)) {
-    UT_LOG_ERROR ("Early storage capacity is not large enough to fit an early storage entry! Skipping tests.\n");
+    DEBUG ((DEBUG_ERROR, "%a Early storage region is too small to store a single entry. Skipping tests.\n", __FUNCTION__));
     return EFI_SUCCESS;
   }
 
