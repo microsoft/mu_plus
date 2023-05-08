@@ -1,0 +1,74 @@
+## @file
+# Sets variable policy for Boot Manager load options that are not required to be supported
+# per the UEFI Specification.
+#
+# This includes:
+#   1. DriverOrder / Driver####
+#   2. PlatformRecovery####
+#   3. SysPrepOrder / SysPrep####
+#
+# The UEFI Specification states the following about support for these variables:
+#
+# """
+# If a platform permits the installation of Load Option Variables, (Boot####, or Driver####, or SysPrep####), the
+# platform must support and recognize all defined values for Attributes within the variable and report these
+# capabilities in BootOptionSupport. If a platform supports installation of Load Option Variables of type Driver####,
+# all installed Driver#### variables must be processed and the indicated driver loaded and initialized during every
+# boot. And all installed SysPrep#### options must be processed prior to processing Boot#### options.
+# """
+#
+# Any platform that uses this driver essentially "locks out" these variables from being created and supported
+# by BDS on that platform. Therefore, the following capability bit must not be set in L"BootSuppport" to comply with
+# the UEFI Specification (`EFI_BOOT_OPTION_SUPPORT_VARIABLE_NAME`): BIT4 - `EFI_BOOT_OPTION_SUPPORT_SYSPREP`.
+#
+# Since PlatformRecovery#### variables can be set during boot, this driver checks if such variables were set prior to
+# the driver called being executed and deletes the variables and then sets the variable policy. This is to ensure
+# consistent behavior where the variable cannot be set regardless of whether the SetVariable() invocation occurred
+# prior or post this driver code executing during boot.
+#
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION         = 0x00010005
+  BASE_NAME           = LoadOptionVariablePolicyDxe
+  FILE_GUID           = 47F4201B-6DE1-4A65-B922-5E026E0FF436
+  MODULE_TYPE         = DXE_DRIVER
+  VERSION_STRING      = 1.0
+  ENTRY_POINT         = LoadOptionVariablePolicyDxeEntry
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#
+
+[Sources]
+  LoadOptionVariablePolicyDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiRuntimeServicesTableLib
+  UefiDriverEntryPoint
+  VariablePolicyHelperLib
+
+[Guids]
+  gEfiGlobalVariableGuid
+
+[Protocols]
+  gEdkiiVariablePolicyProtocolGuid
+
+[Depex]
+  gEfiVariableArchProtocolGuid        AND
+  gEfiVariableWriteArchProtocolGuid   AND
+  gEdkiiVariablePolicyProtocolGuid
