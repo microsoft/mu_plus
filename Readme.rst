@@ -34,12 +34,17 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
-- Incomplete
+- Refactored memory test app
+- Added AARCH64 RWX Test to the DxePagingAuditApp
+- Added MemoryAttributeProtocolFuncTestApp
+- Pkg refactors to remove unnecessary libraries
+- Added Image Protection Test
+- Updated Stack Cookie implementation
 
 Bug Fixes-dev
 -------------
 
-- Incomplete
+- Fixed memory map overlap check in MemmapAndMatTestApp
 
 Branched from 202208
 --------------------
