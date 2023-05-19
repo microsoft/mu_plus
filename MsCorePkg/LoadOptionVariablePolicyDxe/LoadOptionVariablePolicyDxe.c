@@ -106,6 +106,7 @@ GetNextVariableNameWithDynamicReallocation (
     *VariableNameBufferSize = sizeof (CHAR16) * 256;
     *VariableName           = AllocateZeroPool (*VariableNameBufferSize);
     if (*VariableName == NULL) {
+      *VariableNameBufferSize = 0;
       return EFI_OUT_OF_RESOURCES;
     }
 
