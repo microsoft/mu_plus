@@ -18,7 +18,7 @@
 # """
 #
 # Any platform that uses this driver essentially "locks out" these variables from being created and supported
-# by BDS on that platform. Therefore, the following capability bit must not be set in L"BootSuppport" to comply with
+# by BDS on that platform. Therefore, the following capability bit must not be set in L"BootSupport" to comply with
 # the UEFI Specification (`EFI_BOOT_OPTION_SUPPORT_VARIABLE_NAME`): BIT4 - `EFI_BOOT_OPTION_SUPPORT_SYSPREP`.
 #
 # Since PlatformRecovery#### variables can be set during boot, this driver checks if such variables were set prior to
@@ -31,7 +31,7 @@
 ##
 
 [Defines]
-  INF_VERSION         = 0x00010005
+  INF_VERSION         = 0x0001001B
   BASE_NAME           = LoadOptionVariablePolicyDxe
   FILE_GUID           = 47F4201B-6DE1-4A65-B922-5E026E0FF436
   MODULE_TYPE         = DXE_DRIVER
