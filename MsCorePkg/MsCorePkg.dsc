@@ -164,6 +164,7 @@
 ###################################################################################################
 
 [Components]
+  MsCorePkg/LoadOptionVariablePolicyDxe/LoadOptionVariablePolicyDxe.inf
   MsCorePkg/Library/MathLib/MathLib.inf
   MsCorePkg/Library/MemoryTypeInformationChangeLib/MemoryTypeInformationChangeLib.inf
   MsCorePkg/Library/TpmSgNvIndexLib/TpmSgNvIndexLib.inf
