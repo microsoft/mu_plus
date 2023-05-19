@@ -357,7 +357,6 @@ MpMgmtApOn (
     }
 
     if (!IsProcessorEnabled (mMpServices, Index)) {
-      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
       continue;
     }
 
@@ -460,7 +459,6 @@ MpMgmtApOff (
     }
 
     if (!IsProcessorEnabled (mMpServices, Index)) {
-      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
       continue;
     }
 
@@ -598,7 +596,6 @@ MpMgmtApSuspend (
     }
 
     if (!IsProcessorEnabled (mMpServices, Index)) {
-      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
       continue;
     }
 
@@ -710,7 +707,6 @@ MpMgmtApResume (
     }
 
     if (!IsProcessorEnabled (mMpServices, Index)) {
-      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
       continue;
     }
 
