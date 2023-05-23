@@ -27,10 +27,10 @@
 #define BSP_SUSPEND_TIMER_US   1000000
 #define US_TO_NS(a)  (a * 1000)
 
-MP_MANAGEMENT_PROTOCOL    *mMpManagement  = NULL;
-EFI_MP_SERVICES_PROTOCOL  *mMpServices    = NULL;
-UINTN                     mBspIndex       = 0;
-UINTN                     mApDutIndex     = 0;
+MP_MANAGEMENT_PROTOCOL    *mMpManagement = NULL;
+EFI_MP_SERVICES_PROTOCOL  *mMpServices   = NULL;
+UINTN                     mBspIndex      = 0;
+UINTN                     mApDutIndex    = 0;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -910,9 +910,9 @@ InitializeTestEnvironment (
   VOID
   )
 {
-  EFI_STATUS                Status;
-  UINTN                     NumCpus;
-  UINTN                     EnabledCpus;
+  EFI_STATUS  Status;
+  UINTN       NumCpus;
+  UINTN       EnabledCpus;
 
   Status = gBS->LocateProtocol (
                   &gEfiMpServiceProtocolGuid,

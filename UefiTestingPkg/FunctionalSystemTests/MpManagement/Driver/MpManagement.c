@@ -80,8 +80,8 @@ IsProcessorEnabled (
   UINTN                         CpuIndex
   )
 {
-  EFI_PROCESSOR_INFORMATION CpuInfo;
-  EFI_STATUS                Status;
+  EFI_PROCESSOR_INFORMATION  CpuInfo;
+  EFI_STATUS                 Status;
 
   if (Mp == NULL) {
     DEBUG ((DEBUG_ERROR, "%a Input protocol is NULL\n", __FUNCTION__));
