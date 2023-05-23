@@ -42,7 +42,7 @@ volatile MP_MANAGEMENT_METADATA  *mCommonBuffer = NULL;
 **/
 STATIC
 EFI_STATUS
-GetProcessorInformation (
+GetMpInformation (
   IN  EFI_MP_SERVICES_PROTOCOL  *Mp,
   OUT UINTN                     *NumProcessors,
   OUT UINTN                     *BspIndex
@@ -62,6 +62,39 @@ GetProcessorInformation (
   }
 
   return EFI_SUCCESS;
+}
+
+/**
+  Helper function to query if a processor is enabled.
+
+  @param Mp             MP Services Protocol.
+  @param CpuIndex       Index of processor that is of interest.
+
+  @return TRUE   The processor is enabled.
+  @return FALSE  The processor is disabled.
+**/
+STATIC
+BOOLEAN
+IsProcessorEnabled (
+  IN  EFI_MP_SERVICES_PROTOCOL  *Mp,
+  UINTN                         CpuIndex
+  )
+{
+  EFI_PROCESSOR_INFORMATION  CpuInfo;
+  EFI_STATUS                 Status;
+
+  if (Mp == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a Input protocol is NULL\n", __FUNCTION__));
+    return FALSE;
+  }
+
+  Status = Mp->GetProcessorInfo (Mp, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __FUNCTION__, CpuIndex, Status));
+    return FALSE;
+  }
+
+  return ((CpuInfo.StatusFlag & PROCESSOR_ENABLED_BIT) != 0);
 }
 
 /** Initialize the common buffer for all APs.
@@ -271,6 +304,11 @@ MpMgmtApOn (
       continue;
     }
 
+    if (!IsProcessorEnabled (mMpServices, Index)) {
+      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus == AP_STATE_ON) {
       DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already in ON\n", __FUNCTION__, Index));
       Status = EFI_ALREADY_STARTED;
@@ -315,6 +353,10 @@ MpMgmtApOn (
   // If successful, print the hellow world (blocking) from the APs.
   for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
+      continue;
+    }
+
+    if (!IsProcessorEnabled (mMpServices, Index)) {
       continue;
     }
 
@@ -381,6 +423,11 @@ MpMgmtApOff (
       continue;
     }
 
+    if (!IsProcessorEnabled (mMpServices, Index)) {
+      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus == AP_STATE_OFF) {
       DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already in OFF state\n", __FUNCTION__, Index));
       Status = EFI_ALREADY_STARTED;
@@ -408,6 +455,10 @@ MpMgmtApOff (
   // If successful, print the hellow world (blocking) from the APs.
   for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
+      continue;
+    }
+
+    if (!IsProcessorEnabled (mMpServices, Index)) {
       continue;
     }
 
@@ -508,6 +559,11 @@ MpMgmtApSuspend (
       continue;
     }
 
+    if (!IsProcessorEnabled (mMpServices, Index)) {
+      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus == InternalApPowerState) {
       DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already in expected state (%d)\n", __FUNCTION__, Index, InternalApPowerState));
       Status = EFI_ALREADY_STARTED;
@@ -536,6 +592,10 @@ MpMgmtApSuspend (
   // If successful, print the hellow world (blocking) from the APs.
   for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
+      continue;
+    }
+
+    if (!IsProcessorEnabled (mMpServices, Index)) {
       continue;
     }
 
@@ -605,6 +665,11 @@ MpMgmtApResume (
       continue;
     }
 
+    if (!IsProcessorEnabled (mMpServices, Index)) {
+      DEBUG ((DEBUG_INFO, "%a Processor (%d) disabled, skipping processing\n", __FUNCTION__, Index));
+      continue;
+    }
+
     if (mCommonBuffer[Index].ApStatus == AP_STATE_ON) {
       DEBUG ((DEBUG_WARN, "%a The specified processor (%d) is already fully up\n", __FUNCTION__, Index));
       Status = EFI_ALREADY_STARTED;
@@ -638,6 +703,10 @@ MpMgmtApResume (
   // If successful, print the hellow world (blocking) from the APs.
   for (Index = StartIndex; Index <= EndIndex; Index++) {
     if (Index == mBspIndex) {
+      continue;
+    }
+
+    if (!IsProcessorEnabled (mMpServices, Index)) {
       continue;
     }
 
@@ -705,7 +774,7 @@ MpManagementEntryPoint (
     goto Done;
   }
 
-  Status = GetProcessorInformation (mMpServices, &mNumCpus, &mBspIndex);
+  Status = GetMpInformation (mMpServices, &mNumCpus, &mBspIndex);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Error: Failed to fetch processor information.\n"));
     goto Done;
