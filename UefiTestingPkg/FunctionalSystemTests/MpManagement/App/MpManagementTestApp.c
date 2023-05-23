@@ -27,9 +27,10 @@
 #define BSP_SUSPEND_TIMER_US   1000000
 #define US_TO_NS(a)  (a * 1000)
 
-MP_MANAGEMENT_PROTOCOL  *mMpManagement = NULL;
-UINTN                   mBspIndex      = 0;
-UINTN                   mApDutIndex    = 0;
+MP_MANAGEMENT_PROTOCOL    *mMpManagement = NULL;
+EFI_MP_SERVICES_PROTOCOL  *mMpServices   = NULL;
+UINTN                     mBspIndex      = 0;
+UINTN                     mApDutIndex    = 0;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -102,6 +103,57 @@ PowerOnSingleAp (
 
   return UNIT_TEST_PASSED;
 } // PowerOnSingleAp ()
+
+/**
+  Disable a single AP before we test anything on it.
+
+  @param[in] Context                  Test context applied for this test case
+
+  @retval UNIT_TEST_PASSED            The entry point executed successfully.
+  @retval UNIT_TEST_ERROR_TEST_FAILED Null pointer detected.
+
+**/
+UNIT_TEST_STATUS
+EFIAPI
+DisableSingleAp (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+
+  if (mMpServices == NULL) {
+    return UNIT_TEST_ERROR_TEST_FAILED;
+  }
+
+  Status = mMpServices->EnableDisableAP (mMpServices, mApDutIndex, FALSE, NULL);
+
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+
+  return UNIT_TEST_PASSED;
+} // DisableSingleAp ()
+
+/**
+  Enable a single AP after we test on it.
+
+  @param[in] Context                  Test context applied for this test case
+**/
+VOID
+EFIAPI
+EnableSingleAp (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+
+  if (mMpServices == NULL) {
+    ASSERT (FALSE);
+    return;
+  }
+
+  Status = mMpServices->EnableDisableAP (mMpServices, mApDutIndex, TRUE, NULL);
+
+  ASSERT_EFI_ERROR (Status);
+} // EnableSingleAp ()
 
 /// ================================================================================================
 /// ================================================================================================
@@ -858,15 +910,14 @@ InitializeTestEnvironment (
   VOID
   )
 {
-  EFI_STATUS                Status;
-  EFI_MP_SERVICES_PROTOCOL  *MpServices;
-  UINTN                     NumCpus;
-  UINTN                     EnabledCpus;
+  EFI_STATUS  Status;
+  UINTN       NumCpus;
+  UINTN       EnabledCpus;
 
   Status = gBS->LocateProtocol (
                   &gEfiMpServiceProtocolGuid,
                   NULL,
-                  (VOID **)&MpServices
+                  (VOID **)&mMpServices
                   );
   if (EFI_ERROR (Status)) {
     // If we're here, we definitely had something weird happen...
@@ -874,13 +925,13 @@ InitializeTestEnvironment (
     goto Done;
   }
 
-  Status = MpServices->GetNumberOfProcessors (MpServices, &NumCpus, &EnabledCpus);
+  Status = mMpServices->GetNumberOfProcessors (mMpServices, &NumCpus, &EnabledCpus);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed to get the number of processors!!! - %r\n", __FUNCTION__, Status));
     goto Done;
   }
 
-  Status = MpServices->WhoAmI (MpServices, &mBspIndex);
+  Status = mMpServices->WhoAmI (mMpServices, &mBspIndex);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed to get the index of BSP!!! - %r\n", __FUNCTION__, Status));
     goto Done;
@@ -937,6 +988,7 @@ MpManagementTestApp (
   UNIT_TEST_FRAMEWORK_HANDLE  Fw = NULL;
   UNIT_TEST_SUITE_HANDLE      BasicOperationTests;
   UNIT_TEST_SUITE_HANDLE      SuspendOperationTests;
+  UNIT_TEST_SUITE_HANDLE      DisabledApTests;
   UINTN                       Context = PROTOCOL_DOUBLE_CHECK;
 
   DEBUG ((DEBUG_INFO, "%a v%a\n", UNIT_TEST_APP_NAME, UNIT_TEST_APP_VERSION));
@@ -975,6 +1027,16 @@ MpManagementTestApp (
   Status = CreateUnitTestSuite (&SuspendOperationTests, Fw, "Suspend Operation Tests", "MpManagement.Suspend", NULL, NULL);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for SuspendOperationTests\n"));
+    Status = EFI_OUT_OF_RESOURCES;
+    goto EXIT;
+  }
+
+  //
+  // Populate the DisabledApTests Unit Test Suite.
+  //
+  Status = CreateUnitTestSuite (&DisabledApTests, Fw, "Disabled AP Operation Tests", "MpManagement.DisabledAp", NULL, NULL);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for DisabledApTests\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto EXIT;
   }
@@ -1023,6 +1085,15 @@ MpManagementTestApp (
   AddTestCase (SuspendOperationTests, "Suspend to C1 on BSP should succeed after a timeout", "MpManagement.SuspendC1.BSP", SuspendBspToC1, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Suspend to C2 on BSP should succeed after a timeout", "MpManagement.SuspendC2.BSP", SuspendBspToC2, NULL, NULL, NULL);
   AddTestCase (SuspendOperationTests, "Suspend to C3 on BSP should succeed after a timeout", "MpManagement.SuspendC3.BSP", SuspendBspToC3, NULL, NULL, NULL);
+
+  AddTestCase (DisabledApTests, "Disable one AP then turn on all should succeed", "MpManagement.DisabledAp.TurnOnAll", TurnOnAllAps, DisableSingleAp, NULL, NULL);
+  AddTestCase (DisabledApTests, "Suspend all to C1 with one AP disabled should succeed", "MpManagement.DisabledAp.SuspendAllC1", SuspendAllApsToC1, NULL, NULL, NULL);
+  AddTestCase (DisabledApTests, "Resume all from C1 with one AP disabled should succeed", "MpManagement.DisabledAp.ResumeAllC1", ResumeAllAps, NULL, NULL, NULL);
+  AddTestCase (DisabledApTests, "Suspend all to C2 with one AP disabled should succeed", "MpManagement.DisabledAp.SuspendAllC2", SuspendAllApsToC2, NULL, NULL, NULL);
+  AddTestCase (DisabledApTests, "Resume all from C2 with one AP disabled should succeed", "MpManagement.DisabledAp.ResumeAllC2", ResumeAllAps, NULL, NULL, NULL);
+  AddTestCase (DisabledApTests, "Suspend to C3 on BSP should succeed after a timeout", "MpManagement.DisabledAp.SuspendAllC3", SuspendAllApsToC3, NULL, NULL, NULL);
+  AddTestCase (DisabledApTests, "Resume all from C3 with one AP disabled should succeed", "MpManagement.DisabledAp.ResumeAllC3", ResumeAllAps, NULL, NULL, NULL);
+  AddTestCase (DisabledApTests, "Turn off all with one AP disabled should succeed", "MpManagement.DisabledAp.TurnOffAll", TurnOffAllAps, NULL, EnableSingleAp, NULL);
 
   //
   // Execute the tests.
