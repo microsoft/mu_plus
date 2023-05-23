@@ -88,7 +88,7 @@ IsProcessorEnabled (
     return FALSE;
   }
 
-  Status = mMpServices->GetProcessorInfo (mMpServices, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
+  Status = Mp->GetProcessorInfo (Mp, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __FUNCTION__, CpuIndex, Status));
     return FALSE;
