@@ -33,22 +33,18 @@ extends:
         Pkgs: 'XmlSupportPkg,MfciPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
-        SelfHostAgent: false
       TARGET_GRAPHICS:
         Pkgs: 'MsGraphicsPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
-        SelfHostAgent: false
       TARGET_CORE:
         Pkgs: 'MsCorePkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
-        SelfHostAgent: false
       TARGET_TEST_PCBDS_LOG_WHEA_HID:
         Pkgs: 'UefiTestingPkg,PcBdsPkg,AdvLoggerPkg,MsWheaPkg,HidPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
-        SelfHostAgent: false
       TARGET_MFCI_XML_ARM:
         Pkgs: 'XmlSupportPkg,MfciPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
