@@ -1,5 +1,5 @@
 ## @file
-# Azure Pipeline build file for a build using Windows and Visual Studio.
+# Azure Pipeline build file for a build using mu_devops.
 #
 # NOTE: This file is automatically synchronized from Mu DevOps. Update the original file there
 #       instead of the file in this repo.
@@ -83,6 +83,6 @@ jobs:
     tool_chain_tag: $(tool_chain_tag)
     vm_image: $(vm_image)
     container_build: ${{ parameters.container_build }}
-    linux_container_image: ghcr.io/tianocore/containers/fedora-37-build:3b3eb8f
+    linux_container_image: ghcr.io/microsoft/mu_devops/ubuntu-22-build:4a1f8d3
 
 - ${{ parameters.extra_jobs }}
