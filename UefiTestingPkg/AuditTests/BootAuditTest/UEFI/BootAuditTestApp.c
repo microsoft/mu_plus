@@ -84,6 +84,7 @@ GetDevicePathOfThisApp (
   SfProtocol   = NULL;
   NumHandles   = 0;
   HandleBuffer = NULL;
+  DevicePath   = NULL;
 
   // Locate all handles using the SFS protocol.
   Status = gBS->LocateHandleBuffer (
