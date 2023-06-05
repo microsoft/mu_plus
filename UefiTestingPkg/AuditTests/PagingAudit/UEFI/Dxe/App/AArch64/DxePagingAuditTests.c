@@ -104,8 +104,6 @@ NoReadWriteExecute (
                 if (!CanRegionBeRWX (Address, SIZE_4KB)) {
                   UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Address, Address + SIZE_4KB);
                   FoundRWXAddress = TRUE;
-                } else {
-                  UT_LOG_WARNING ("Memory Range 0x%llx-0x%llx is Read/Write/Execute. This range is excepted from the test.\n", Address, Address + SIZE_4KB);
                 }
               }
             }
@@ -120,8 +118,6 @@ NoReadWriteExecute (
               if (!CanRegionBeRWX (Address, SIZE_2MB)) {
                 UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Address, Address + SIZE_2MB);
                 FoundRWXAddress = TRUE;
-              } else {
-                UT_LOG_WARNING ("Memory Range 0x%llx-0x%llx is Read/Write/Execute. This range is excepted from the test.\n", Address, Address + SIZE_2MB);
               }
             }
           }
@@ -137,8 +133,6 @@ NoReadWriteExecute (
           if (!CanRegionBeRWX (Address, SIZE_1GB)) {
             UT_LOG_ERROR ("Memory Range 0x%llx-0x%llx is Read/Write/Execute\n", Address, Address + SIZE_1GB);
             FoundRWXAddress = TRUE;
-          } else {
-            UT_LOG_WARNING ("Memory Range 0x%llx-0x%llx is Read/Write/Execute. This range is excepted from the test.\n", Address, Address + SIZE_1GB);
           }
         }
       }
