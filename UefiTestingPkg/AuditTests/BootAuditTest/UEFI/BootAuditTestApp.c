@@ -31,28 +31,140 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
 #include <Library/UnitTestLib.h>
+#include <Library/DevicePathLib.h>
+#include <Library/UefiBootManagerLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/FileHandleLib.h>
 
-#define UNIT_TEST_APP_NAME     "BootAuditTestApp"
-#define UNIT_TEST_APP_VERSION  "1.0"
+#define UNIT_TEST_APP_NAME      "BootAuditTestApp"
+#define UNIT_TEST_APP_FILENAME  L"BootAuditTestApp.efi"
+#define UNIT_TEST_APP_VERSION   "1.0"
 
 typedef struct {
-  CHAR16        *TestName;
-  UINT32        Attributes;
-  CHAR16        *VariableDeleteName;
-  EFI_STATUS    ExpectedStatus1a;
-  EFI_STATUS    ExpectedStatus1b;
-  EFI_STATUS    ExpectedStatus2;
+  CHAR16                               *TestName;
+  UINT32                               Attributes;
+  CHAR16                               *VariableDeleteName;
+  EFI_STATUS                           ExpectedStatus1a;
+  EFI_STATUS                           ExpectedStatus1b;
+  EFI_STATUS                           ExpectedStatus2;
+  EFI_BOOT_MANAGER_LOAD_OPTION_TYPE    OptionType;
 } BASIC_TEST_CONTEXT;
 
 // *----------------------------------------------------------------------------------*
 // * Test Contexts                                                                    *
 // *----------------------------------------------------------------------------------*
-static BASIC_TEST_CONTEXT  mTest1 = { EFI_OS_INDICATIONS_SUPPORT_VARIABLE_NAME, EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_SUCCESS, 0, EFI_WRITE_PROTECTED };
-static BASIC_TEST_CONTEXT  mTest2 = { EFI_SYS_PREP_ORDER_VARIABLE_NAME, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED };
-static BASIC_TEST_CONTEXT  mTest3 = { L"SysPrep0001", EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED };
-static BASIC_TEST_CONTEXT  mTest4 = { L"PlatformRecovery0001", EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED };
-static BASIC_TEST_CONTEXT  mTest5 = { EFI_DRIVER_ORDER_VARIABLE_NAME, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED };
-static BASIC_TEST_CONTEXT  mTest6 = { L"Driver0001", EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED };
+STATIC BASIC_TEST_CONTEXT        mTest1       = { EFI_OS_INDICATIONS_SUPPORT_VARIABLE_NAME, EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_SUCCESS, 0, EFI_WRITE_PROTECTED, LoadOptionTypeMax };
+STATIC BASIC_TEST_CONTEXT        mTest2       = { EFI_SYS_PREP_ORDER_VARIABLE_NAME, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED, LoadOptionTypeMax };
+STATIC BASIC_TEST_CONTEXT        mTest3       = { EFI_DRIVER_ORDER_VARIABLE_NAME, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED, LoadOptionTypeMax };
+STATIC BASIC_TEST_CONTEXT        mTest4       = { L"SysPrep0001", EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED, LoadOptionTypeSysPrep };
+STATIC BASIC_TEST_CONTEXT        mTest5       = { L"PlatformRecovery0001", EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED, LoadOptionTypePlatformRecovery };
+STATIC BASIC_TEST_CONTEXT        mTest6       = { L"Driver0001", EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, NULL, EFI_NOT_FOUND, 0, EFI_WRITE_PROTECTED, LoadOptionTypeDriver };
+STATIC EFI_DEVICE_PATH_PROTOCOL  *mDevicePath = NULL;
+
+/**
+  Get the device path of the volume containing this application.
+**/
+STATIC
+VOID
+GetDevicePathOfThisApp (
+  VOID
+  )
+{
+  EFI_DEVICE_PATH_PROTOCOL         *DevicePath;
+  EFI_HANDLE                       Handle;
+  EFI_HANDLE                       *HandleBuffer;
+  UINTN                            Index;
+  UINTN                            NumHandles;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL  *SfProtocol;
+  EFI_STATUS                       Status;
+  EFI_FILE_PROTOCOL                *FileHandle;
+  EFI_FILE_PROTOCOL                *FileHandle2;
+
+  Status       = EFI_SUCCESS;
+  SfProtocol   = NULL;
+  NumHandles   = 0;
+  HandleBuffer = NULL;
+
+  // Locate all handles using the SFS protocol.
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  NULL,
+                  &NumHandles,
+                  &HandleBuffer
+                  );
+
+  if (EFI_ERROR (Status) != FALSE) {
+    DEBUG ((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
+    goto CleanUp;
+  }
+
+  // Search the handles to find one that is on a GPT partition.
+  for (Index = 0; Index < NumHandles; Index += 1) {
+    DevicePath = DevicePathFromHandle (HandleBuffer[Index]);
+    if (DevicePath == NULL) {
+      continue;
+    }
+
+    // Check if this is a block IO device path.
+    Status = gBS->LocateDevicePath (
+                    &gEfiBlockIoProtocolGuid,
+                    &DevicePath,
+                    &Handle
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DevicePath = NULL;
+      continue;
+    }
+
+    Status = gBS->HandleProtocol (
+                    HandleBuffer[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID **)&SfProtocol
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DevicePath = NULL;
+      continue;
+    }
+
+    // Open the volume.
+    Status = SfProtocol->OpenVolume (SfProtocol, &FileHandle);
+    if (EFI_ERROR (Status)) {
+      DevicePath = NULL;
+      continue;
+    }
+
+    // Check if this app is present.
+    Status = FileHandle->Open (FileHandle, &FileHandle2, UNIT_TEST_APP_FILENAME, EFI_FILE_MODE_READ, 0);
+    if (EFI_ERROR (Status)) {
+      Status = FileHandleClose (FileHandle);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Error closing Vol Handle: %r\n", __FUNCTION__, Status));
+      }
+
+      DevicePath = NULL;
+      continue;
+    } else {
+      Status = FileHandleClose (FileHandle2);
+      if (EFI_ERROR (Status)) {
+        DEBUG ((DEBUG_ERROR, "%a: Error closing Vol Handle: %r\n", __FUNCTION__, Status));
+      }
+
+      break;
+    }
+  }
+
+CleanUp:
+  if (HandleBuffer != NULL) {
+    FreePool (HandleBuffer);
+  }
+
+  if (DevicePath != NULL) {
+    mDevicePath = DevicePath;
+  }
+}
 
 /*
     CleanUpTestContext
@@ -89,7 +201,7 @@ CleanUpTestContext (
     OsIndicationsSupport testing
 
 */
-static
+STATIC
 UNIT_TEST_STATUS
 EFIAPI
 OsIndicationsSupportTest (
@@ -147,18 +259,19 @@ OsIndicationsSupportTest (
     SysPrep testing
 
 */
-static
+STATIC
 UNIT_TEST_STATUS
 EFIAPI
 VariableLockedTestTest (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  BASIC_TEST_CONTEXT  *Btc;
-  EFI_STATUS          Status;
-  UINTN               DataSize;
-  UINT32              Attributes;
-  UINT64              Data = 0x1122334455667788;
+  BASIC_TEST_CONTEXT            *Btc;
+  EFI_STATUS                    Status;
+  UINTN                         DataSize;
+  UINT32                        Attributes;
+  UINT64                        Data = 0x1122334455667788;
+  EFI_BOOT_MANAGER_LOAD_OPTION  Option;
 
   Btc = (BASIC_TEST_CONTEXT *)Context;
 
@@ -173,6 +286,31 @@ VariableLockedTestTest (
 
   UT_LOG_INFO ("\nGetVariable of %s.  Return code %r, expected %r\n", Btc->TestName, Status, Btc->ExpectedStatus1a);
   UT_ASSERT_STATUS_EQUAL (Status, Btc->ExpectedStatus1a);
+
+  if (Btc->OptionType < LoadOptionTypeMax) {
+    if (mDevicePath == NULL) {
+      UT_LOG_ERROR ("Could not locate device path of the volume containing this application\n");
+      UT_ASSERT_NOT_NULL (mDevicePath);
+    }
+
+    Status = EfiBootManagerInitializeLoadOption (
+               &Option,
+               1,
+               Btc->OptionType,
+               0,
+               L"Load Option Variable",
+               mDevicePath,
+               NULL,
+               0
+               );
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+
+    Status = EfiBootManagerLoadOptionToVariable (&Option);
+    UT_LOG_INFO ("\nEfiBootManagerLoadOptionToVariable of %s.  Return code %r, expected %r\n", Btc->TestName, Status, Btc->ExpectedStatus2);
+    UT_ASSERT_STATUS_EQUAL (Status, Btc->ExpectedStatus2);
+
+    return UNIT_TEST_PASSED;
+  }
 
   DataSize = sizeof (Data);
 
@@ -240,10 +378,13 @@ BootAuditTestAppEntry (
   // -----------Suite-----------Description-------------Class-------------------Test Function-------------Pre---Clean-Context
   AddTestCase (BootAuditTests, "OsIndicationsSupport", "OsIndicationsSupport", OsIndicationsSupportTest, NULL, CleanUpTestContext, &mTest1);
   AddTestCase (BootAuditTests, "SysPrepOrder", "Sysprep", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest2);
-  AddTestCase (BootAuditTests, "SysPrep0001", "Sysprep", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest3);
-  AddTestCase (BootAuditTests, "PlatformRecovery0001", "PlatformRecovery", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest4);
-  AddTestCase (BootAuditTests, "DriverOrder", "Driver", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest5);
+  AddTestCase (BootAuditTests, "DriverOrder", "Driver", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest3);
+  AddTestCase (BootAuditTests, "SysPrep0001", "Sysprep", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest4);
+  AddTestCase (BootAuditTests, "PlatformRecovery0001", "PlatformRecovery", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest5);
   AddTestCase (BootAuditTests, "Driver0001", "Driver", VariableLockedTestTest, NULL, CleanUpTestContext, &mTest6);
+
+  // Store the device path associated with this app in a global for use when setting SysPrep0001, PlatformRecovery0001, and Driver0001.
+  GetDevicePathOfThisApp ();
 
   //
   // Execute the tests.

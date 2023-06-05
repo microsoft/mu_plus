@@ -38,3 +38,11 @@
   UefiLib
   UefiRuntimeServicesTableLib
   UnitTestLib
+  DevicePathLib
+  UefiBootManagerLib
+  UefiBootServicesTableLib
+  FileHandleLib
+
+[Protocols]
+  gEfiBlockIoProtocolGuid
+  gEfiSimpleFileSystemProtocolGuid
