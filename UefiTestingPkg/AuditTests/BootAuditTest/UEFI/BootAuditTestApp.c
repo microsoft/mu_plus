@@ -38,7 +38,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #define UNIT_TEST_APP_NAME      "BootAuditTestApp"
 #define UNIT_TEST_APP_FILENAME  L"BootAuditTestApp.efi"
-#define UNIT_TEST_APP_VERSION   "1.0"
+#define UNIT_TEST_APP_VERSION   "1.1"
 
 typedef struct {
   CHAR16                               *TestName;
@@ -95,7 +95,7 @@ GetDevicePathOfThisApp (
                   &HandleBuffer
                   );
 
-  if (EFI_ERROR (Status) != FALSE) {
+  if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: failed to locate all handles using the Simple FS protocol (%r)\n", __FUNCTION__, Status));
     goto CleanUp;
   }
@@ -168,11 +168,10 @@ CleanUp:
 }
 
 /*
-    CleanUpTestContext
+  CleanUpTestContext
 
-    Cleans up after a test case.  Free any allocated buffers if a test
-    takes the error exit.
-
+  Cleans up after a test case.  Free any allocated buffers if a test
+  takes the error exit.
 */
 STATIC
 VOID
@@ -199,8 +198,7 @@ CleanUpTestContext (
 }
 
 /*
-    OsIndicationsSupport testing
-
+  OsIndicationsSupport testing
 */
 STATIC
 UNIT_TEST_STATUS
@@ -257,8 +255,7 @@ OsIndicationsSupportTest (
 }
 
 /*
-    SysPrep testing
-
+  SysPrep testing
 */
 STATIC
 UNIT_TEST_STATUS

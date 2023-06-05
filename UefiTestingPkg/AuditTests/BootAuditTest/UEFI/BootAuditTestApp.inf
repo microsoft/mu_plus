@@ -33,15 +33,15 @@
   BaseLib
   BaseMemoryLib
   DebugLib
+  DevicePathLib
+  FileHandleLib
   PrintLib
   UefiApplicationEntryPoint
+  UefiBootManagerLib
+  UefiBootServicesTableLib
   UefiLib
   UefiRuntimeServicesTableLib
   UnitTestLib
-  DevicePathLib
-  UefiBootManagerLib
-  UefiBootServicesTableLib
-  FileHandleLib
 
 [Protocols]
   gEfiBlockIoProtocolGuid
