@@ -236,34 +236,24 @@ PlatformBootManagerBeforeConsole (
     FreePool (ConsoleOut);
   }
 
-  //
-  // Fill ConIn/ConOut in Full Configuration boot mode
-  //
-  DEBUG ((DEBUG_INFO, "%a - %x\n", __FUNCTION__, mBootMode));
-  if ((mBootMode == BOOT_WITH_FULL_CONFIGURATION) ||
-      (mBootMode == BOOT_WITH_DEFAULT_SETTINGS) ||
-      (mBootMode == BOOT_WITH_FULL_CONFIGURATION_PLUS_DIAGNOSTICS) ||
-      (mBootMode == BOOT_IN_RECOVERY_MODE))
-  {
-    if (PlatformConsoles != NULL) {
-      while ((*PlatformConsoles).DevicePath != NULL) {
-        //
-        // Update the console variable with the connect type
-        //
-        if (((*PlatformConsoles).ConnectType & CONSOLE_IN) == CONSOLE_IN) {
-          EfiBootManagerUpdateConsoleVariable (ConIn, (*PlatformConsoles).DevicePath, NULL);
-        }
-
-        if (((*PlatformConsoles).ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
-          EfiBootManagerUpdateConsoleVariable (ConOut, (*PlatformConsoles).DevicePath, NULL);
-        }
-
-        if (((*PlatformConsoles).ConnectType & STD_ERROR) == STD_ERROR) {
-          EfiBootManagerUpdateConsoleVariable (ErrOut, (*PlatformConsoles).DevicePath, NULL);
-        }
-
-        PlatformConsoles++;
+  if (PlatformConsoles != NULL) {
+    while ((*PlatformConsoles).DevicePath != NULL) {
+      //
+      // Update the console variable with the connect type
+      //
+      if (((*PlatformConsoles).ConnectType & CONSOLE_IN) == CONSOLE_IN) {
+        EfiBootManagerUpdateConsoleVariable (ConIn, (*PlatformConsoles).DevicePath, NULL);
       }
+
+      if (((*PlatformConsoles).ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
+        EfiBootManagerUpdateConsoleVariable (ConOut, (*PlatformConsoles).DevicePath, NULL);
+      }
+
+      if (((*PlatformConsoles).ConnectType & STD_ERROR) == STD_ERROR) {
+        EfiBootManagerUpdateConsoleVariable (ErrOut, (*PlatformConsoles).DevicePath, NULL);
+      }
+
+      PlatformConsoles++;
     }
   }
 
