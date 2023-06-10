@@ -237,20 +237,20 @@ PlatformBootManagerBeforeConsole (
   }
 
   if (PlatformConsoles != NULL) {
-    while ((*PlatformConsoles).DevicePath != NULL) {
+    while (PlatformConsoles->DevicePath != NULL) {
       //
       // Update the console variable with the connect type
       //
-      if (((*PlatformConsoles).ConnectType & CONSOLE_IN) == CONSOLE_IN) {
-        EfiBootManagerUpdateConsoleVariable (ConIn, (*PlatformConsoles).DevicePath, NULL);
+      if ((PlatformConsoles->ConnectType & CONSOLE_IN) == CONSOLE_IN) {
+        EfiBootManagerUpdateConsoleVariable (ConIn, PlatformConsoles->DevicePath, NULL);
       }
 
-      if (((*PlatformConsoles).ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
-        EfiBootManagerUpdateConsoleVariable (ConOut, (*PlatformConsoles).DevicePath, NULL);
+      if ((PlatformConsoles->ConnectType & CONSOLE_OUT) == CONSOLE_OUT) {
+        EfiBootManagerUpdateConsoleVariable (ConOut, PlatformConsoles->DevicePath, NULL);
       }
 
-      if (((*PlatformConsoles).ConnectType & STD_ERROR) == STD_ERROR) {
-        EfiBootManagerUpdateConsoleVariable (ErrOut, (*PlatformConsoles).DevicePath, NULL);
+      if ((PlatformConsoles->ConnectType & STD_ERROR) == STD_ERROR) {
+        EfiBootManagerUpdateConsoleVariable (ErrOut, PlatformConsoles->DevicePath, NULL);
       }
 
       PlatformConsoles++;
