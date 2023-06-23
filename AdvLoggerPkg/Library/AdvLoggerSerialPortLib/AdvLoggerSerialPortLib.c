@@ -17,6 +17,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Library/AdvancedLoggerLib.h>
 
+#include <Library/SerialPortLib.h>
+
 /**
   Initialize the serial device hardware.
 

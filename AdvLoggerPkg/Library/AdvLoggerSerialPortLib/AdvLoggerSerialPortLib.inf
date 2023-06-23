@@ -14,7 +14,7 @@
   FILE_GUID                      = 2532f02a-a36a-451a-84f4-9e94c2256a83
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = AdvLoggerSerialPortLib
+  LIBRARY_CLASS                  = SerialPortLib
 
 #
 #  VALID_ARCHITECTURES           = X64 AARCH64
@@ -29,10 +29,3 @@
 
 [LibraryClasses]
    AdvancedLoggerLib
-
-[Protocols]
-
-[Pcd]
-
-[Depex]
-  TRUE
