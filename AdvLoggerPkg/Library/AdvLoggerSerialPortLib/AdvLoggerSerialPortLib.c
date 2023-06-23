@@ -13,8 +13,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <AdvancedLoggerInternal.h>
 
-#include <Protocol/SerialIo.h>
-
 #include <Library/AdvancedLoggerLib.h>
 
 #include <Library/SerialPortLib.h>
