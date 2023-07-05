@@ -5,6 +5,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 {
+    "PrEval": {
+        "DscPath": "MsCorePkg.dsc",
+    },
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
         "DscPath": "MsCorePkg.dsc"

@@ -5,6 +5,9 @@
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
 {
+    "PrEval": {
+        "DscPath": "HidPkg.dsc",
+    },
     ## options defined ci/Plugin/CompilerPlugin
     "CompilerPlugin": {
         "DscPath": "HidPkg.dsc"
