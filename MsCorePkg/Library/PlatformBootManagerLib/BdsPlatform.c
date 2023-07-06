@@ -388,6 +388,14 @@ PlatformBootManagerAfterConsole (
     case BOOT_ON_FLASH_UPDATE:
       EfiBootManagerConnectAll ();
       DEBUG ((DEBUG_INFO, "[%a] - signalling capsules are ready for processing\n", __FUNCTION__));
+      DEBUG ((DEBUG_INFO, "[%a] - Deleting Memory Type Information variable for capsule update\n", __FUNCTION__));
+      Status = gRT->SetVariable (
+                    EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
+                    &gEfiMemoryTypeInformationGuid,
+                    EFI_VARIABLE_NON_VOLATILE  | EFI_VARIABLE_BOOTSERVICE_ACCESS,
+                    0,
+                    NULL
+                    );
       EfiEventGroupSignal (&gMuReadyToProcessCapsulesNotifyGuid);
       Status = ProcessCapsules ();
 

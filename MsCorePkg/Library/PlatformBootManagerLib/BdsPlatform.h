@@ -22,6 +22,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Guid/CapsuleVendor.h>
 
+#include <Guid/MemoryTypeInformation.h>
 #include <Guid/EventGroup.h>
 #include <Guid/GlobalVariable.h>
 #include <Guid/MemoryOverwriteControl.h>
