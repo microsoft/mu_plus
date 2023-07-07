@@ -349,8 +349,8 @@ PlatformBootManagerAfterConsole (
   )
 {
   EFI_STATUS  Status;
-  UINTN       VariableSize;
   UINT32      Attributes;
+  UINTN       VariableSize = 0;
 
   //  EFI_INPUT_KEY                 Key;
 
@@ -398,7 +398,7 @@ PlatformBootManagerAfterConsole (
                       &VariableSize,
                       NULL
                       );
-      if (!EFI_ERROR (Status) || (Status == EFI_BUFFER_TOO_SMALL)) {
+      if (Status == EFI_BUFFER_TOO_SMALL) {
         Status = gRT->SetVariable (
                         EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
                         &gEfiMemoryTypeInformationGuid,
