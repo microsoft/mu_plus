@@ -349,6 +349,8 @@ PlatformBootManagerAfterConsole (
   )
 {
   EFI_STATUS  Status;
+  UINT32      Attributes;
+  UINTN       VariableSize = 0;
 
   //  EFI_INPUT_KEY                 Key;
 
@@ -388,6 +390,25 @@ PlatformBootManagerAfterConsole (
     case BOOT_ON_FLASH_UPDATE:
       EfiBootManagerConnectAll ();
       DEBUG ((DEBUG_INFO, "[%a] - signalling capsules are ready for processing\n", __FUNCTION__));
+      DEBUG ((DEBUG_INFO, "[%a] - Deleting Memory Type Information variable for capsule update\n", __FUNCTION__));
+      Status = gRT->GetVariable (
+                      EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
+                      &gEfiMemoryTypeInformationGuid,
+                      &Attributes,
+                      &VariableSize,
+                      NULL
+                      );
+      if (Status == EFI_BUFFER_TOO_SMALL) {
+        Status = gRT->SetVariable (
+                        EFI_MEMORY_TYPE_INFORMATION_VARIABLE_NAME,
+                        &gEfiMemoryTypeInformationGuid,
+                        Attributes,
+                        0,
+                        NULL
+                        );
+        ASSERT_EFI_ERROR (Status);
+      }
+
       EfiEventGroupSignal (&gMuReadyToProcessCapsulesNotifyGuid);
       Status = ProcessCapsules ();
 
