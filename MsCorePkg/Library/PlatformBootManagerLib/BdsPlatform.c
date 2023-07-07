@@ -350,7 +350,7 @@ PlatformBootManagerAfterConsole (
 {
   EFI_STATUS  Status;
   UINTN       VariableSize;
-  UINT32      Attributes,
+  UINT32      Attributes;
 
   //  EFI_INPUT_KEY                 Key;
 
