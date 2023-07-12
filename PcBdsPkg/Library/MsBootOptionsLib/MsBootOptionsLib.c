@@ -410,12 +410,10 @@ RegisterFvBootOption (
   if (!EFI_ERROR (Status)) {
     BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
 
-    // MU_CHANGE [BEGIN] - CodeQL change
     if (BootOptions == NULL) {
       ASSERT (BootOptions != NULL);
-      return NULL;
+      return 100;  //Temporary value.  Will be changed
     }
-    // MU_CHANGE [END] - CodeQL change
 
     OptionIndex = EfiBootManagerFindLoadOption (&NewOption, BootOptions, BootOptionCount);
     if (OptionIndex == -1) {

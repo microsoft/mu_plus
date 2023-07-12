@@ -224,7 +224,9 @@ MsWheaESContentChangeChecksumHelper (
 {
   UINT16                        Sum16;
   MS_WHEA_EARLY_STORAGE_HEADER  Header;
+  // MU_CHANGE [BEGIN] - CodeQL change
   EFI_STATUS                    Status;
+  // MU_CHANGE [END] - CodeQL change
 
   DEBUG ((DEBUG_INFO, "Calculate sum content helper...\n"));
 
@@ -233,7 +235,7 @@ MsWheaESContentChangeChecksumHelper (
   MsWheaESCalculateChecksum16 (&Header, &Sum16);
   // MU_CHANGE [BEGIN] - CodeQL change
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Checksum calculator failed - %r...", Status));
+    DEBUG ((DEBUG_ERROR, "WHEA Early Storage Checksum calculation failed - %r...", Status));
     ASSERT_EFI_ERROR (Status);
     return;
   }
