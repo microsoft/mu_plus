@@ -438,6 +438,12 @@ RegisterFvBootOption (
     // ensure the boot option for INTERNAL SHELL is deleted.
     if (0 == StrCmp (INTERNAL_UEFI_SHELL_NAME, Description)) {
       BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
+
+      if (BootOptions == NULL) {
+        ASSERT (BootOptions != NULL);
+        return 100;  //Temporary value.  Will be changed
+      }
+
       for (i = 0; i < BootOptionCount; i++) {
         if (0 == StrCmp (INTERNAL_UEFI_SHELL_NAME, BootOptions[i].Description)) {
           EfiBootManagerDeleteLoadOptionVariable (BootOptions[i].OptionNumber, LoadOptionTypeBoot);
