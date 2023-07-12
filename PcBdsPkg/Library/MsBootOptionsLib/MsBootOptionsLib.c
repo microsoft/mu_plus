@@ -334,6 +334,10 @@ CreateFvBootOption (
                    DevicePathFromHandle (LoadedImage->DeviceHandle),
                    (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
                    );
+    if (DevicePath == NULL) {
+      ASSERT (DevicePath != NULL);
+      return EFI_OUT_OF_RESOURCES;
+    }
   } else {
     if (IsZeroGuid (PcdGetPtr (PcdShellFvGuid))) {
       // Search all FV's for Shell.
@@ -355,6 +359,10 @@ CreateFvBootOption (
                    (EFI_DEVICE_PATH_PROTOCOL *)DevicePath,
                    (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
                    );
+    if (DevicePath == NULL) {
+      ASSERT (DevicePath != NULL);
+      return EFI_OUT_OF_RESOURCES;
+    }
   }
 
   Status = EfiBootManagerInitializeLoadOption (
