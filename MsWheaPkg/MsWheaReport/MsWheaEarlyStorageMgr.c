@@ -232,7 +232,7 @@ MsWheaESContentChangeChecksumHelper (
 
   MsWheaESReadHeader (&Header);
   Header.ActiveRange += (UINT32)Length;
-  MsWheaESCalculateChecksum16 (&Header, &Sum16);
+  Status = MsWheaESCalculateChecksum16 (&Header, &Sum16);
   // MU_CHANGE [BEGIN] - CodeQL change
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "WHEA Early Storage Checksum calculation failed - %r...", Status));
