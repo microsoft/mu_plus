@@ -118,7 +118,12 @@ BuildFwLoadOption (
                  DevicePathFromHandle (LoadedImage->DeviceHandle),
                  (EFI_DEVICE_PATH_PROTOCOL *)&FileNode
                  );
-  ASSERT (DevicePath != NULL);
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (DevicePath == NULL) {
+    ASSERT (DevicePath != NULL);
+    return EFI_NOT_FOUND;
+  }
+  // MU_CHANGE [END] - CodeQL change
 
   Status = EfiBootManagerInitializeLoadOption (
              BootOption,
@@ -404,6 +409,13 @@ RegisterFvBootOption (
   Status                 = CreateFvBootOption (FileGuid, Description, &NewOption, Attributes, OptionalData, OptionalDataSize);
   if (!EFI_ERROR (Status)) {
     BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
+
+    // MU_CHANGE [BEGIN] - CodeQL change
+    if (BootOptions == NULL) {
+      ASSERT (BootOptions != NULL);
+      return NULL;
+    }
+    // MU_CHANGE [END] - CodeQL change
 
     OptionIndex = EfiBootManagerFindLoadOption (&NewOption, BootOptions, BootOptionCount);
     if (OptionIndex == -1) {

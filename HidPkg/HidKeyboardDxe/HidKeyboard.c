@@ -666,6 +666,16 @@ SetKeyboardLayoutEvent (
   //
   TableEntry    = GetKeyDescriptor (HidKeyboardDevice, 0x58);
   KeyDescriptor = GetKeyDescriptor (HidKeyboardDevice, 0x28);
+
+  // MU_CHANGE [BEGIN] - CodeQL change
+  if (TableEntry == NULL || KeyDescriptor == NULL) {
+    ASSERT (TableEntry != NULL);
+    ASSERT (KeyDescriptor != NULL);
+    FreePool (KeyboardLayout);
+    return;
+  }
+  // MU_CHANGE [END] - CodeQL change
+
   CopyMem (TableEntry, KeyDescriptor, sizeof (EFI_KEY_DESCRIPTOR));
 
   FreePool (KeyboardLayout);
