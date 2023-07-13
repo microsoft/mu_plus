@@ -387,12 +387,12 @@ CreateFvBootOption (
 /**
  * Register a boot option
  *
- * @param FileGuid
- * @param Description
- * @param Position
- * @param Attributes
- * @param OptionalData
- * @param OptionalDataSize
+ * @param FileGuid          The guid associated with the boot option.
+ * @param Description       Description of the boot option.
+ * @param Position          The position of the load option to put in the ****Order variable.
+ * @param Attributes        The attributes of the boot option.
+ * @param OptionalData      Optional data of the boot option.
+ * @param OptionalDataSize  Size of the optional data of the boot option.
  *
  * @return UINTN      If a value is returned that is smaller
  *                    than MAX_UINTN we registered successfully.
