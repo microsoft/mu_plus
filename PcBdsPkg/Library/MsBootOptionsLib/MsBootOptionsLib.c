@@ -123,6 +123,7 @@ BuildFwLoadOption (
     ASSERT (DevicePath != NULL);
     return EFI_NOT_FOUND;
   }
+
   // MU_CHANGE [END] - CodeQL change
 
   Status = EfiBootManagerInitializeLoadOption (
@@ -393,7 +394,10 @@ CreateFvBootOption (
  * @param OptionalData
  * @param OptionalDataSize
  *
- * @return UINTN
+ * @return UINTN      If a value is returned that is smaller
+ *                    than MAX_UINTN we registered successfully.
+ * @return MAX_UINTN  We were unable to get Load Options and failed
+ *                    to register the boot option.
  */
 static
 UINTN
@@ -420,7 +424,7 @@ RegisterFvBootOption (
 
     if (BootOptions == NULL) {
       ASSERT (BootOptions != NULL);
-      return 100;  //Temporary value.  Will be changed
+      return MAX_UINTN;
     }
 
     OptionIndex = EfiBootManagerFindLoadOption (&NewOption, BootOptions, BootOptionCount);
@@ -449,7 +453,7 @@ RegisterFvBootOption (
 
       if (BootOptions == NULL) {
         ASSERT (BootOptions != NULL);
-        return 100;  //Temporary value.  Will be changed
+        return MAX_UINTN;
       }
 
       for (i = 0; i < BootOptionCount; i++) {
@@ -480,11 +484,31 @@ MsBootOptionsLibRegisterDefaultBootOptions (
   )
 {
   DEBUG ((DEBUG_INFO, "%a\n", __FUNCTION__));
+  UINTN  BootOption;
 
-  RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_SDD_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_SDD_BOOT_PARM, sizeof (MS_SDD_BOOT_PARM));
-  RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_USB_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_USB_BOOT_PARM, sizeof (MS_USB_BOOT_PARM));
-  RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_PXE_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_PXE_BOOT_PARM, sizeof (MS_PXE_BOOT_PARM));
-  RegisterFvBootOption (PcdGetPtr (PcdShellFile), INTERNAL_UEFI_SHELL_NAME, (UINTN)-1, LOAD_OPTION_ACTIVE, NULL, 0);
+  BootOption = RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_SDD_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_SDD_BOOT_PARM, sizeof (MS_SDD_BOOT_PARM));
+  if (BootOption == MAX_UINTN) {
+    DEBUG ((DEBUG_ERROR, "Failed to register Boot Option.  Description: %s\n", MS_SDD_BOOT));
+    ASSERT (BootOption != MAX_UINTN);
+  }
+
+  BootOption = RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_USB_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_USB_BOOT_PARM, sizeof (MS_USB_BOOT_PARM));
+  if (BootOption == MAX_UINTN) {
+    DEBUG ((DEBUG_ERROR, "Failed to register Boot Option.  Description: %s\n", MS_USB_BOOT));
+    ASSERT (BootOption != MAX_UINTN);
+  }
+
+  BootOption = RegisterFvBootOption (&gMsBootPolicyFileGuid, MS_PXE_BOOT, (UINTN)-1, LOAD_OPTION_ACTIVE, (UINT8 *)MS_PXE_BOOT_PARM, sizeof (MS_PXE_BOOT_PARM));
+  if (BootOption == MAX_UINTN) {
+    DEBUG ((DEBUG_ERROR, "Failed to register Boot Option.  Description: %s\n", MS_PXE_BOOT));
+    ASSERT (BootOption != MAX_UINTN);
+  }
+
+  BootOption = RegisterFvBootOption (PcdGetPtr (PcdShellFile), INTERNAL_UEFI_SHELL_NAME, (UINTN)-1, LOAD_OPTION_ACTIVE, NULL, 0);
+  if (BootOption == MAX_UINTN) {
+    DEBUG ((DEBUG_ERROR, "Failed to register Boot Option.  Description: %s\n", INTERNAL_UEFI_SHELL_NAME));
+    ASSERT (BootOption != MAX_UINTN);
+  }
 }
 
 /**
