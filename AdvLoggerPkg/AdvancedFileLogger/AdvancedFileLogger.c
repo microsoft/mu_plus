@@ -16,6 +16,9 @@ VOID        *mFileSystemRegistration = NULL;
 LIST_ENTRY  mLoggingDeviceHead       = INITIALIZE_LIST_HEAD_VARIABLE (mLoggingDeviceHead);
 UINT32      mWritingSemaphore        = 0;
 
+EFI_EVENT  mReadyToBootEvent      = NULL;
+EFI_EVENT  mExitBootServicesEvent = NULL;
+
 /**
     WriteLogFiles
 
@@ -94,6 +97,10 @@ OnResetNotification (
   } else {
     DEBUG ((DEBUG_ERROR, "Unable to write log at reset\n"));
   }
+
+  // Close ready to boot and exit boot services event.
+  gBS->CloseEvent (mReadyToBootEvent);
+  gBS->CloseEvent (mExitBootServicesEvent);
 
   return;
 }
@@ -507,7 +514,6 @@ ProcessReadyToBootRegistration (
   VOID
   )
 {
-  EFI_EVENT   InitEvent;
   EFI_STATUS  Status;
   UINT8       FlushFlags;
 
@@ -524,7 +530,7 @@ ProcessReadyToBootRegistration (
                     OnReadyToBootNotification,
                     gImageHandle,
                     &gEfiEventReadyToBootGuid,
-                    &InitEvent
+                    &mReadyToBootEvent
                     );
 
     if (EFI_ERROR (Status)) {
@@ -551,7 +557,6 @@ ProcessPreExitBootServicesRegistration (
   VOID
   )
 {
-  EFI_EVENT   InitEvent;
   EFI_STATUS  Status;
   UINT8       FlushFlags;
 
@@ -568,7 +573,7 @@ ProcessPreExitBootServicesRegistration (
                     OnPreExitBootServicesNotification,
                     gImageHandle,
                     &gMuEventPreExitBootServicesGuid,
-                    &InitEvent
+                    &mExitBootServicesEvent
                     );
 
     if (EFI_ERROR (Status)) {
