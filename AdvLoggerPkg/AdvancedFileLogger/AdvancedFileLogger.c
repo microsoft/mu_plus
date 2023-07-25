@@ -553,21 +553,27 @@ ProcessPreExitBootServicesRegistration (
 {
   EFI_EVENT   InitEvent;
   EFI_STATUS  Status;
+  UINT8       FlushFlags;
 
-  //
-  // Register notify function for writing the log files.
-  //
-  Status = gBS->CreateEventEx (
-                  EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
-                  OnPreExitBootServicesNotification,
-                  gImageHandle,
-                  &gMuEventPreExitBootServicesGuid,
-                  &InitEvent
-                  );
+  FlushFlags = FixedPcdGet8 (PcdAdvancedFileLoggerFlush);
 
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+  Status = EFI_SUCCESS;
+  if (FlushFlags & ADV_PCD_FLUSH_TO_MEDIA_FLAGS_EXIT_BOOT_SERVICES) {
+    //
+    // Register notify function for writing the log files.
+    //
+    Status = gBS->CreateEventEx (
+                    EVT_NOTIFY_SIGNAL,
+                    TPL_CALLBACK,
+                    OnPreExitBootServicesNotification,
+                    gImageHandle,
+                    &gMuEventPreExitBootServicesGuid,
+                    &InitEvent
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+    }
   }
 
   return Status;
