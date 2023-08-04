@@ -395,7 +395,7 @@ CreateFvBootOption (
  * @param OptionalDataSize  Size of the optional data of the boot option.
  *
  * @return UINTN      If boot option number of the registered boot option
- * 
+ *
  */
 static
 UINTN
@@ -421,7 +421,7 @@ RegisterFvBootOption (
     BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
 
     if (BootOptions == NULL) {
-      //ASSERT (BootOptions != NULL);
+      // ASSERT (BootOptions != NULL);
       DEBUG ((DEBUG_INFO, "No boot options found. Proceeding to add boot options.\n"));
     }
 
@@ -450,7 +450,7 @@ RegisterFvBootOption (
       BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
 
       if (BootOptions == NULL) {
-        //ASSERT (BootOptions != NULL);
+        // ASSERT (BootOptions != NULL);
         DEBUG ((DEBUG_INFO, "No boot options found. Skipping deletion.\n"));
       }
 
