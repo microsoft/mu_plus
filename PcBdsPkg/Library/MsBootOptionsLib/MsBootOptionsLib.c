@@ -421,7 +421,6 @@ RegisterFvBootOption (
     BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
 
     if (BootOptions == NULL) {
-      // ASSERT (BootOptions != NULL);
       DEBUG ((DEBUG_INFO, "No boot options found. Proceeding to add boot options.\n"));
     }
 
@@ -450,7 +449,6 @@ RegisterFvBootOption (
       BootOptions = EfiBootManagerGetLoadOptions (&BootOptionCount, LoadOptionTypeBoot);
 
       if (BootOptions == NULL) {
-        // ASSERT (BootOptions != NULL);
         DEBUG ((DEBUG_INFO, "No boot options found. Skipping deletion.\n"));
       }
 
