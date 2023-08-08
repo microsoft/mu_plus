@@ -15,7 +15,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
  * application is at PcsBdsPkg/MsBootPolicy.
  *
  * Boot Policy Applications can be created to meet a platform's requirements. The PcBdsPkg
- * example aplication impelements USB, PXE and HDD boot sequences, in addition to a default
+ * example application impelements USB, PXE and HDD boot sequences, in addition to a default
  * sequences of HDD, USB, PXE.
 **/
 typedef enum {
