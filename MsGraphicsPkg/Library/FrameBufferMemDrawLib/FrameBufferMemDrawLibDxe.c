@@ -22,7 +22,6 @@ STATIC EFI_GRAPHICS_OUTPUT_PROTOCOL  *mGraphicsOutput = NULL;
  Get Graphics Information
 */
 EFI_STATUS
-EFIAPI
 GetGraphicsInfo (
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE  **Mode
   )
