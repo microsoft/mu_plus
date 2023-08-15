@@ -1,0 +1,112 @@
+## @file
+# CI configuration for TpmTestingPkg
+#
+# Copyright (c) Microsoft Corporation.
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+{
+    "PrEval": {
+        "DscPath": "TpmTestingPkg.dsc",
+    },
+
+    ## options defined .pytool/Plugin/LicenseCheck
+    "LicenseCheck": {
+        "skip": True,
+        "IgnoreFiles": []
+    },
+
+    "EccCheck": {
+        ## Exception sample looks like below:
+        ## "ExceptionList": [
+        ##     "<ErrorID>", "<KeyWord>"
+        ## ]
+        "ExceptionList": [],
+        ## Both file path and directory path are accepted.
+        "IgnoreFiles": []
+    },
+
+    ## options defined .pytool/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "TpmTestingPkg.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestCompilerPlugin
+    # "HostUnitTestCompilerPlugin": {
+    #     "DscPath": "Test/TpmTestingPkg.dsc"
+    # },
+
+    ## options defined .pytool/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined .pytool/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "CryptoPkg/CryptoPkg.dec",
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec",
+            "SecurityPkg/SecurityPkg.dec",
+            "TpmTestingPkg/TpmTestingPkg.dec",
+        ],
+        # For host based unit tests
+        "AcceptableDependencies-HOST_APPLICATION":[
+        ],
+        # For UEFI shell based apps
+        "AcceptableDependencies-UEFI_APPLICATION":[],
+        "IgnoreInf": []
+    },
+
+    ## options defined .pytool/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "TpmTestingPkg.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    # "HostUnitTestDscCompleteCheck": {
+    #     "IgnoreInf": [""],
+    #     "DscPath": "Test/TpmTestingPkgHostTest.dsc"
+    # },
+
+    ## options defined .pytool/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": ["**/Overrides"],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined .pytool/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined .pytool/Plugin/SpellCheck
+    "SpellCheck": {
+        "AuditOnly": False,          # fails test but run in AuditOnly mode to collect log
+        "IgnoreStandardPaths": [     # standard Plugin defined paths that should be ignore
+        ],
+        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
+        ],
+        "ExtendWords": [             # words to extend to the dictionary for this package
+          "certn",
+          "lfanew",
+          "mytpm",
+          "pcrindex",
+          "preos",
+          "swtpm",
+          "tpmrpl",
+          "tpmstate"
+        ],
+        "AdditionalIncludePaths": [] # additional paths to spell check relative to package root (wildcards supported)
+    },
+
+    ## options defined .pytool/Plugin/MarkdownLintCheck
+    "MarkdownLintCheck": {
+        "IgnoreFiles": []            # package root relative file, folder, or glob pattern to ignore
+    }
+}

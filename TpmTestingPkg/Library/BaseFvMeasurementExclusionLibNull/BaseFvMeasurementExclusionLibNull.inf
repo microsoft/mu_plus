@@ -1,0 +1,30 @@
+## @file
+# Firmware Volume Measurement NULL library instance.
+#
+# Copyright (c) Microsoft Corporation.
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION           = 0x00010005
+  BASE_NAME             = BaseFvMeasurementExclusionLibNull
+  FILE_GUID             = 104D6CF7-B500-44A5-8EC6-4055FE6A0F8F
+  MODULE_TYPE           = BASE
+  VERSION_STRING        = 1.0
+  LIBRARY_CLASS         = FvMeasurementExclusionLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 ARM AARCH64
+#
+
+[Packages]
+  MdePkg/MdePkg.dec
+  SecurityPkg/SecurityPkg.dec
+  TpmTestingPkg/TpmTestingPkg.dec
+
+[Sources]
+  BaseFvMeasurementExclusionLibNull.c
