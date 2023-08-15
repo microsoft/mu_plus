@@ -1,0 +1,36 @@
+### @file
+# TPM Replay DXE Module - Applies custom TPM measurements for testing technologies dependent
+# on measured boot.
+#
+# This module is intended to be as standalone as possible and have the minimum
+# platform integration overhead and impact to simulate TPM PCR measurements made
+# during firmware.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Paten
+#
+###
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = TpmReplayDxe
+  FILE_GUID           = EA2508F3-B704-4021-A02A-B7A21292248A
+  VERSION_STRING      = 1.0
+  MODULE_TYPE         = DXE_DRIVER
+  ENTRY_POINT         = TpmReplayDxeEntryPoint
+
+[LibraryClasses]
+  UefiDriverEntryPoint
+
+[Packages]
+  MdePkg/MdePkg.dec
+
+[Sources]
+  TpmReplayDxe.c
+
+[Protocols]
+  gEfiTcg2ProtocolGuid              ## CONSUMES
+
+[Depex]
+  gEfiTcg2ProtocolGuid

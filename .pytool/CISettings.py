@@ -77,6 +77,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             "MsGraphicsPkg",
             "MsWheaPkg",
             "PcBdsPkg",
+            "TpmTestingPkg",
             "UefiTestingPkg",
             "XmlSupportPkg"
         )

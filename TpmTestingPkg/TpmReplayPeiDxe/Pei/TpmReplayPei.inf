@@ -1,0 +1,81 @@
+## @file
+# TPM Replay PEI Module - Applies custom TPM measurements for testing technologies dependent
+# on measured boot.
+#
+# This module is intended to be as standalone as possible and have the minimum
+# platform integration overhead and impact to simulate TPM PCR measurements made
+# during firmware.
+#
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION         = 0x00010005
+  BASE_NAME           = TpmReplayPei
+  FILE_GUID           = 7C135C97-8F2B-44F3-A773-32D78E8FCFE3
+  MODULE_TYPE         = PEIM
+  VERSION_STRING      = 1.0
+  ENTRY_POINT         = TpmReplayPeiEntryPoint
+
+[Sources]
+  ../TpmReplayEventLog.h
+  ../TpmReplayReportingManager.c
+  ../TpmReplayReportingManager.h
+  ../TpmReplayTcg.c
+  ../TpmReplayTcg.h
+  ../TpmReplayTcgRegs.h
+  ../InputChannel/TpmReplayFfsFilePei.c
+  ../InputChannel/TpmReplayInputChannel.c
+  ../InputChannel/TpmReplayInputChannel.h
+  ../InputChannel/TpmReplayInputChannelInternal.h
+  ../InputChannel/TpmReplayUefiVariable.c
+  ../InputChannel/TpmReplayUefiVariablePei.c
+  TpmReplayPei.c
+  TpmReplayPei.h
+  TpmReplayPeiPlatformFvExclusion.c
+  TpmReplayPeiPlatformFvExclusion.h
+  TpmReplayPeiPreMem.c
+  TpmReplayPeiTpmInitialized.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  SecurityPkg/SecurityPkg.dec
+  TpmTestingPkg/TpmTestingPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  FvMeasurementExclusionLib
+  HobLib
+  IoLib
+  MemoryAllocationLib
+  PcdLib
+  PeimEntryPoint
+  PeiServicesLib
+  ReportStatusCodeLib
+  Tpm2CommandLib
+
+[Guids]
+  gTcgEvent2EntryHobGuid                                        ## PRODUCES ## HOB
+  gTpm2StartupLocalityHobGuid                                   ## PRODUCES ## HOB
+  gTpmErrorHobGuid                                              ## PRODUCES ## HOB
+  gTpmReplayConfigHobGuid                                       ## PRODUCES ## HOB
+  gTpmReplayVendorGuid                                          ## CONSUMES ## GUID ## Variable
+
+[Pcd]
+  gEfiSecurityPkgTokenSpaceGuid.PcdStatusCodeSubClassTpmDevice  ## PRODUCES ## STATUS_CODE
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpm2HashMask                 ## CONSUMES
+  gEfiSecurityPkgTokenSpaceGuid.PcdTpmBaseAddress               ## CONSUMES # TODO: Consider removing later
+
+[Ppis]
+  gEfiPeiFirmwareVolumeInfoMeasurementExcludedPpiGuid           ## SOMETIMES_PRODUCES
+  gEfiPeiReadOnlyVariable2PpiGuid                               ## CONSUMES
+  gPeiTpmInitializationDonePpiGuid                              ## CONSUMES ## NOTIFY
+
+[Depex]
+  TRUE
+

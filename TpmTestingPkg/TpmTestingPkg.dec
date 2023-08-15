@@ -1,0 +1,38 @@
+## @file
+# Build declaration file for TpmTestingPkg
+#
+# This package contains support for the TPM testing code.
+#
+# Copyright (C) Microsoft Corporation.
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  DEC_SPECIFICATION = 0x00010017
+  PACKAGE_NAME      = TpmTestingPkg
+  PACKAGE_VERSION   = 0.1
+  PACKAGE_GUID      = 6AABEC91-0FD2-4490-A7CB-09D2110E964A
+
+[Includes]
+  Include
+
+[LibraryClasses]
+  FvMeasurementExclusionLib|Include/Library/FvMeasurementExclusionLib.h
+
+[Guids]
+  ## Tokenspace GUID for TPM Testing Package PCDs
+  #  {55366AB2-704E-4BC0-960C-A579B88B4165}
+  #
+  gTpmTestingPkgTokenSpaceGuid = {0x55366ab2, 0x704e, 0x4bc0, {0x96, 0x0c, 0xa5, 0x79, 0xb8, 0x8b, 0x41, 0x65}}
+
+  ## TPM Replay Vendor GUID
+  #  {C6D186FF-D248-48F3-BB9A-D91103BBDD63}
+  #
+  gTpmReplayVendorGuid = {0xc6d186ff, 0xd248, 0x48f3, {0xbb, 0x9a, 0xd9, 0x11, 0x03, 0xbb, 0xdd, 0x63}}
+
+  ## TPM Replay Config HOB GUID
+  #  {4E1CE377-01DC-4BED-AD1F-986C4FBB9526}
+  #
+  gTpmReplayConfigHobGuid = {0x4e1ce377, 0x01dc, 0x4bed, {0xad, 0x1f, 0x98, 0x6c, 0x4f, 0xbb, 0x95, 0x26}}
