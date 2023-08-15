@@ -33,16 +33,16 @@ extends:
         Pkgs: 'XmlSupportPkg,MfciPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
-      TARGET_GRAPHICS:
-        Pkgs: 'MsGraphicsPkg'
+      TARGET_GRAPHICS_WHEA_HID:
+        Pkgs: 'MsGraphicsPkg,MsWheaPkg,HidPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
       TARGET_CORE:
         Pkgs: 'MsCorePkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
-      TARGET_TEST_PCBDS_LOG_WHEA_HID:
-        Pkgs: 'UefiTestingPkg,PcBdsPkg,AdvLoggerPkg,MsWheaPkg,HidPkg'
+      TARGET_TEST_PCBDS_LOG:
+        Pkgs: 'TpmTestingPkg,UefiTestingPkg,PcBdsPkg,AdvLoggerPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
       TARGET_MFCI_XML_ARM:
@@ -50,8 +50,8 @@ extends:
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
         SelfHostAgent: true
-      TARGET_GRAPHICS_ARM:
-        Pkgs: 'MsGraphicsPkg'
+      TARGET_GRAPHICS_WHEA_HID_ARM:
+        Pkgs: 'MsGraphicsPkg,MsWheaPkg,HidPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
         SelfHostAgent: true
@@ -60,8 +60,8 @@ extends:
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
         SelfHostAgent: true
-      TARGET_TEST_PCBDS_LOG_WHEA_HID_ARM:
-        Pkgs: 'UefiTestingPkg,PcBdsPkg,AdvLoggerPkg,MsWheaPkg,HidPkg'
+      TARGET_TEST_PCBDS_LOG_ARM:
+        Pkgs: 'TpmTestingPkg,UefiTestingPkg,PcBdsPkg,AdvLoggerPkg'
         Targets: 'DEBUG,RELEASE,NO-TARGET,NOOPT'
         ArchList: $(arch_list)
         SelfHostAgent: true
