@@ -1,0 +1,425 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TPM Replay Event Log",
+  "description": "Information that maps to a TPM event log.",
+  "type": "object",
+  "properties": {
+    "events": {
+      "type": "array",
+      "description": "An array of event objects in the TPM event log.",
+      "examples": [
+        {
+          "events": [
+            {
+              "type": "EV_S_CRTM_VERSION",
+              "description": "Descriptions are optional. Hash the UTF-8 string with SHA256 in PCR0.",
+              "pcr": 0,
+              "hash": [
+                "sha256"
+              ],
+              "data": {
+                "type": "string",
+                "value": "Example event data\n"
+              }
+            }
+          ]
+        },
+        {
+          "events": [
+            {
+              "type": "EV_S_CRTM_VERSION",
+              "description": "Descriptions are optional. Hash the UTF-16 string with null character data with SHA256 & SHA384 in PCR0.",
+              "pcr": 0,
+              "hash": [
+                "sha256",
+                "sha384"
+              ],
+              "data": {
+                "type": "string",
+                "encoding": "utf-16",
+                "include_null_char": true,
+                "value": "More example data\n"
+              }
+            }
+          ]
+        },
+        {
+          "events": [
+            {
+              "type": "EV_S_CRTM_VERSION",
+              "description": "Descriptions are optional. Use a pre-hash SHA256 value. Event data is a UTF-16 string without a null character.",
+              "pcr": 0,
+              "prehash": {
+                "sha256": "0xF97326281EABD9A5B64DD757540355165D4BED9A35B13126ED36D3A9F28A10AB"
+              },
+              "data": {
+                "type": "string",
+                "encoding": "utf-16",
+                "value": "Some more example data\n"
+              }
+            }
+          ]
+        },
+        {
+          "events": [
+            {
+              "type": "EV_NO_ACTION",
+              "description": "Descriptions are optional. Hash the base64 data with SHA256 and SHA394 in PCR6.",
+              "pcr": 6,
+              "hash": [
+                "sha256",
+                "sha384"
+              ],
+              "data": {
+                "type": "base64",
+                "value": "U2FtcGxlIGV2ZW50AA==\n"
+              }
+            }
+          ]
+        }
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "The Event Log type. See the TCG PC Client Platform Firmware Profile Specification for details.",
+            "oneOf": [
+              {
+                "type": "string",
+                "const": "EV_POST_CODE",
+                "description": "PCR[0] only. Typically used to log BIOS POST code, embedded SMM code, ACPI flash data, BIS code, or manufacturer-controlled embedded option ROMs as a binary image."
+              },
+              {
+                "type": "string",
+                "const": "EV_NO_ACTION",
+                "description": "PCRs[0,6]. Used for informative data that is not extended into a PCR."
+              },
+              {
+                "type": "string",
+                "const": "EV_SEPARATOR",
+                "description": "PCRs[0,1,2,3,4,5,6,7]. Used to mark an error or pre-OS to OS transition."
+              },
+              {
+                "type": "string",
+                "const": "EV_ACTION",
+                "description": "PCRs[1,2,3,4,5,6]. Signifies that a certain action measured as a string has been performed."
+              },
+              {
+                "type": "string",
+                "const": "EV_EVENT_TAG",
+                "description": "Defined for Host OS and SW usage. An event tag indicating a particular type or category of event."
+              },
+              {
+                "type": "string",
+                "const": "EV_S_CRTM_CONTENTS",
+                "description": "PCR[0] only. The contents of the Core Root of Trust for Measurement (CRTM)."
+              },
+              {
+                "type": "string",
+                "const": "EV_S_CRTM_VERSION",
+                "description": "PCR[0] only. The version of the Core Root of Trust for Measurement (CRTM)."
+              },
+              {
+                "type": "string",
+                "const": "EV_CPU_MICROCODE",
+                "description": "PCR[1] only. CPU microcode."
+              },
+              {
+                "type": "string",
+                "const": "EV_PLATFORM_CONFIG_FLAGS",
+                "description": "PCR[1] only. Flags indicating the configuration of the platform."
+              },
+              {
+                "type": "string",
+                "const": "EV_TABLE_OF_DEVICES",
+                "description": "PCR[1] only. List or table of devices present in the system."
+              },
+              {
+                "type": "string",
+                "const": "EV_COMPACT_HASH",
+                "description": "Used for PCRs other than [0,1,2,3]. A compact representation of a hash value."
+              },
+              {
+                "type": "string",
+                "const": "EV_IPL",
+                "description": "Deprecated. Initial Program Load event, often related to the boot process."
+              },
+              {
+                "type": "string",
+                "const": "EV_IPL_PARTITION_DATA",
+                "description": "Deprecated. Data related to an Initial Program Load (IPL) partition."
+              },
+              {
+                "type": "string",
+                "const": "EV_NONHOST_CODE",
+                "description": "PCRs[0,2]. Code that is not part of the host system, such as firmware or embedded code."
+              },
+              {
+                "type": "string",
+                "const": "EV_NONHOST_CONFIG",
+                "description": "PCRs[1,3]. Configuration data for non-host code."
+              },
+              {
+                "type": "string",
+                "const": "EV_NONHOST_INFO",
+                "description": "PCR[0] only. Information or metadata about non-host code."
+              },
+              {
+                "type": "string",
+                "const": "EV_OMIT_BOOT_DEVICE_EVENTS",
+                "description": "PCR[4] only. Indicator that events from boot devices are omitted."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_EVENT_BASE",
+                "description": "Base value for all UEFI platform event types."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_VARIABLE_DRIVER_CONFIG",
+                "description": "PCRs[1,3,5,7]. Used to measure configuration for UEFI variables."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_VARIABLE_BOOT",
+                "description": "PCR[1] only. Deprecated. Measures a UEFI boot variable."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_BOOT_SERVICES_APPLICATION",
+                "description": "PCRs[2,4] only. Contains the tagged hash of the normalized code from the loaded UEFI application."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_BOOT_SERVICES_DRIVER",
+                "description": "PCRs[0,2] only. Contains the tagged hash of the normalized code from the loaded UEFI Boot Services driver."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_RUNTIME_SERVICES_DRIVER",
+                "description": "PCRs[0,2] only. Contains the tagged hash of the normalized code from the loaded UEFI Runtime Services driver."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_GPT_EVENT",
+                "description": "PCR[5] only. Measures information about the UEFI GUID Partition Table (GPT)."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_ACTION",
+                "description": "PCRs[1,2,3,4,5,6,7]. An EFI event related to a specific action taken by the EFI firmware."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_PLATFORM_FIRMWARE_BLOB",
+                "description": "PCRs[0,2,4]. Deprecated. An EFI event related to a platform firmware blob."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_HANDOFF_TABLES",
+                "description": "PCR[1] only. Deprecated. An EFI event related to handoff tables between different components."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_PLATFORM_FIRMWARE_BLOB2",
+                "description": "PCRs[0,2,4]. Measures information about non-PE/COFF images. Allows for non-PE/COFF images in PCR[2] or PCR[4]."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_HANDOFF_TABLES2",
+                "description": "PCR[1] only. System configuration tables referenced by entries in UEFI_HANDOFF_TABLE_POINTERS2 for each PCR bank.."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_VARIABLE_BOOT2",
+                "description": "PCR[1] only. Used to measure configuration for UEFI variables including the UEFI Boot#### variables and the BootOrder variable."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_HCRTM_EVENT",
+                "description": "PCR[0] only. Records an event for the digest extended to PCR[0] as part of an H-CRTM event."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_VARIABLE_AUTHORITY",
+                "description": "PCR[7] only. Describes the Secure Boot UEFI variables. Digest fields contain the tagged hash of the UEFI_SIGNATURE_DATA value from UEFI_SIGNATURE_LIST used to validate the loaded image for each PCR bank."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_SPDM_FIRMWARE_BLOB",
+                "description": "PCR[2] only. Records an extended digest for the embedded firmware of a device that supports SPDT GET_MEASUREMENTS functionality."
+              },
+              {
+                "type": "string",
+                "const": "EV_EFI_SPDM_FIRMWARE_CONFIG",
+                "description": "PCR[3] only. Records an extended digest of the configuration of embedded firmware for an add-in device that supports SPDM GET_MEASUREMENTS functionality."
+              }
+            ]
+          },
+          "pcr": {
+            "type": "integer",
+            "description": "The PCR index for this event. PCRs 0-7 are allowed.",
+            "minimum": 0,
+            "maximum": 7
+          },
+          "description": {
+            "type": "string",
+            "description": "An optional informational comment about this event entry. Only used for documentation in this file."
+          },
+          "data": {
+            "type": "object",
+            "description": "Information about the event data.",
+            "properties": {
+              "type": {
+                "description": "The event data type. Strings and base64 encoded values are allowed.",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "description": "A string value.",
+                    "const": "string"
+                  },
+                  {
+                    "type": "string",
+                    "description": "A base64 encoded value. This should be used for binary data.",
+                    "examples": [
+                      "To encode the bytes `0000`, the following Python code can be used to generate the base64 encoded string value. `import base64\n\nbase64.b64encode(b'\\x00\\x00\\x00\\x00').decode('utf-8')`"
+                    ],
+                    "const": "base64"
+                  }
+                ]
+              },
+              "include_null_char": {
+                "type": "boolean",
+                "description": "Optional. Indicates a null character should be appended to the string. Default: false",
+                "default": false
+              },
+              "encoding": {
+                "type": "string",
+                "description": "Optional. Specifies the encoding to use for the data string. Default: utf-8",
+                "enum": [
+                  "utf-8",
+                  "utf-16"
+                ],
+                "default": "utf-8"
+              },
+              "value": {
+                "type": "string",
+                "description": "The actual event data in string (or base64) representation."
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "value"
+            ],
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "string"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "include_null_char": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "encoding": {
+                  "type": "string",
+                  "enum": [
+                    "utf-8",
+                    "utf-16"
+                  ],
+                  "default": "utf-8"
+                }
+              }
+            },
+            "else": {
+              "not": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "encoding"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "include_null_char"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "prehash": {
+            "type": "object",
+            "description": "Specifies the pre-hashed values for chosen (and supported) algorithms.",
+            "properties": {
+              "sha1": {
+                "type": "string",
+                "minLength": 34,
+                "maxLength": 34,
+                "description": "Must be a SHA-1 length string that begins with '0x'.",
+                "pattern": "^0x[A-Fa-f0-9]+$"
+              },
+              "sha256": {
+                "type": "string",
+                "minLength": 66,
+                "maxLength": 66,
+                "description": "Must be a SHA-2 length string that begins with '0x'.",
+                "pattern": "^0x[A-Fa-f0-9]+$"
+              },
+              "sha384": {
+                "type": "string",
+                "minLength": 98,
+                "maxLength": 98,
+                "description": "Must be a SHA-3 length string that begins with '0x'.",
+                "pattern": "^0x[A-Fa-f0-9]+$"
+              }
+            },
+            "minProperties": 1,
+            "additionalProperties": false
+          },
+          "hash": {
+            "type": "array",
+            "description": "An array of algorithms that should be used to hash the given event data.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "sha1",
+                "sha256",
+                "sha384"
+              ],
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "additionalProperties": false
+          }
+        },
+        "anyOf": [
+          {
+            "required": [
+              "hash"
+            ]
+          },
+          {
+            "required": [
+              "prehash"
+            ]
+          }
+        ],
+        "required": [
+          "type",
+          "pcr",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "events"
+  ],
+  "additionalProperties": false
+}
