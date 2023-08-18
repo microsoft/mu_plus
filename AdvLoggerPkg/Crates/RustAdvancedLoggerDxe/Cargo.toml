@@ -1,0 +1,13 @@
+[package]
+name = "RustAdvancedLoggerDxe"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "rust_advanced_logger_dxe"
+path = "src/lib.rs"
+
+[dependencies]
+r-efi = {workspace=true}
+spin = {workspace=true}
