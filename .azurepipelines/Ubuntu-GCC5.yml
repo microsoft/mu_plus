@@ -27,6 +27,7 @@ extends:
     do_non_ci_setup: true
     do_pr_eval: true
     container_build: true
+    rust_build: true
     os_type: Linux
     build_matrix:
       TARGET_MFCI_XML:
