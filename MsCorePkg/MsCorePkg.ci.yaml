@@ -112,5 +112,12 @@
             "UEFI's"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+    },
+
+    "RustHostUnitTestPlugin": {
+        "Coverage": .75,
+        "CoverageOverrides": {
+            "RustBootServicesAllocatorDxe": 0.03
+        }
     }
 }
