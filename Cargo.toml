@@ -2,12 +2,12 @@
 
 # Add packages that generate binaries here
 members = [
-    "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe",
 ]
 
 # Add packages that generate libraries here
 [workspace.dependencies]
 RustAdvancedLoggerDxe = {path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe"}
+RustBootServicesAllocatorDxe = {path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe"}
 
 r-efi = "4.0.0"
 spin = "0.5.2"
