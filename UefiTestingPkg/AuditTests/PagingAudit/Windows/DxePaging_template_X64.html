@@ -513,22 +513,25 @@
             var SavedFilters = [];
             SavedFilters.push({"Name": "RW+X", "Description": "No memory range should have page attributes that allow read, write, and execute", 
                 "Filter": function(mrObject) {
-                    if( (mrObject["Execute"] === "Enabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Present"] === "Yes")) {
+                    if( (mrObject["Execute"] === "Enabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Present"] === "Yes") && (mrObject["GCD Memory Type"] !== "EfiGcdMemoryTypeNonExistent")) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("ExecuteFilter", ["Enabled"]))
-                    {
-                        return false
-                    }
-                    if(!SetMultiselectTo("PresentFilter", ["Yes"]))
-                    {
-                        return false
-                    }
-                    return SetMultiselectTo("RWFilter", ["Enabled"]);
+                    SetMultiselectTo("ExecuteFilter", ["Enabled"])
+                    SetMultiselectTo("PresentFilter", ["Yes"])
+                    SetMultiselectTo("RWFilter", ["Enabled"])
+                    SetMultiselectTo("MemorySpaceTypeFilter",
+                        ["EfiGcdMemoryTypeReserved",
+                        "EfiGcdMemoryTypeSystemMemory",
+                        "EfiGcdMemoryTypeMemoryMappedIo",
+                        "EfiGcdMemoryTypePersistent",
+                        "EfiGcdMemoryTypePersistentMemory",
+                        "EfiGcdMemoryTypeMoreReliable",
+                        "EfiGcdMemoryTypeMaximum"])
+                    return true;
                 } //end of configuring filter inputs
             });
 
@@ -540,15 +543,9 @@
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("ExecuteFilter", ["Disabled"]))
-                    {
-                        return false;
-                    }
-                    if(!SetMultiselectTo("SectionFilter", ["DATA"]))
-                    {
-                        return false;
-                    }
-                    return SetMultiselectTo("MemoryTypeFilter", ["EfiRuntimeServicesCode"]);
+                    SetMultiselectTo("ExecuteFilter", ["Disabled"])
+                    SetMultiselectTo("SectionFilter", ["DATA"])
+                    return true;
                 } //end of configuring filter inputs
             });
 
@@ -560,14 +557,8 @@
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("RWFilter", ["Enabled"]))
-                    {
-                        return false;
-                    }
-                    if(!SetMultiselectTo("SectionFilter", ["CODE"]))
-                    {
-                        return false;
-                    }
+                    SetMultiselectTo("RWFilter", ["Enabled"])
+                    SetMultiselectTo("SectionFilter", ["CODE"])
                     return true;
                 } //end of configuring filter inputs
             });
