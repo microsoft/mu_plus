@@ -85,8 +85,7 @@
 
 [Components]
   TpmTestingPkg/Library/BaseFvMeasurementExclusionLibNull/BaseFvMeasurementExclusionLibNull.inf
-  TpmTestingPkg/TpmReplayPeiDxe/Dxe/TpmReplayDxe.inf
-  TpmTestingPkg/TpmReplayPeiDxe/Pei/TpmReplayPei.inf
+  TpmTestingPkg/TpmReplayPei/Pei/TpmReplayPei.inf
 
   #
   # Overrides
