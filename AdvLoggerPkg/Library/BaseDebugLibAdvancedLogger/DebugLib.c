@@ -171,7 +171,7 @@ DebugPrintMarker (
   //
   // Send the print string to the Advanced Logger
   //
-  AdvancedLoggerWrite (ErrorLevel, Buffer, AsciiStrLen (Buffer));
+  AdvancedLoggerWrite (ErrorLevel, Buffer, AsciiStrnLenS (Buffer, sizeof (Buffer)));
 }
 
 /**
