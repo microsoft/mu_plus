@@ -71,9 +71,9 @@ DebugAssert (
 
   // Check to make sure the file name is valid and at least two characters long (which would be just the extension)
   if ((FileName != NULL) &&
-      (AsciiStrLen (FileName) >= 2))
+      (AsciiStrnLenS (FileName, sizeof (Buffer)) >= 2))
   {
-    FileNameLength = AsciiStrLen (FileName) - (2 * sizeof (CHAR8)); // We don't care about the extension
+    FileNameLength = AsciiStrnLenS (FileName, sizeof (Buffer)) - (2 * sizeof (CHAR8)); // We don't care about the extension
   }
 
   // END LOGTELEMETRY
@@ -86,7 +86,7 @@ DebugAssert (
   //
   // Send the print string to the Logging device device
   //
-  AdvancedLoggerWrite (DEBUG_ERROR, Buffer, AsciiStrLen (Buffer));
+  AdvancedLoggerWrite (DEBUG_ERROR, Buffer, AsciiStrnLenS (Buffer, sizeof (Buffer)));
 
   //
   // Generate a Breakpoint, DeadLoop, or Telemetry based on PCD settings

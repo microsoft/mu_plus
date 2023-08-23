@@ -63,7 +63,7 @@ DebugAssert (
   //
   // Send the print string to the Logging device device
   //
-  AdvancedLoggerWrite (DEBUG_ERROR, Buffer, AsciiStrLen (Buffer));
+  AdvancedLoggerWrite (DEBUG_ERROR, Buffer, AsciiStrnLenS (Buffer, sizeof (Buffer)));
 
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
     CpuBreakpoint ();
