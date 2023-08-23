@@ -57,18 +57,13 @@
                         </div>
                         <p></p>
                         <div class="input-group">
-                                <span class="input-group-addon" id="basic-addon2">UX Attribute</span>
-                                <select id="UxFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon2"></select>
+                                <span class="input-group-addon" id="basic-addon2">Execute Attribute</span>
+                                <select id="ExecuteFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon2"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
                                 <span class="input-group-addon" id="basic-addon3">Read/Write Attribute</span>
                                 <select id="RWFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon3"></select>
-                        </div>
-                        <p></p>
-                        <div class="input-group">
-                                <span class="input-group-addon" id="basic-addon8">PX Attribute</span>
-                                <select id="PxFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon8"></select>
                         </div>
                         <p></p>
                         <p>
@@ -121,8 +116,7 @@
                             <th># of Pages</th>
                             <th>Access Flag</th>
                             <th>Read/Write</th>
-                            <th>UX</th>
-                            <th>PX</th>
+                            <th>Execute</th>
                             <th>UEFI Memory Type</th>
                             <th>GCD Memory Type</th>
                             <th>Section Type</th>
@@ -299,35 +293,31 @@
                         "targets": [5],
                     },
                     {
-                        "data": "UX",
+                        "data": "Execute",
                         "targets": [6],
                     },
                     {
-                        "data": "PX",
-                        "targets": [7],
-                    },
-                    {
                         "data": "Memory Type",
-                        "targets": [8],
+                        "targets": [7],
                         "defaultContent": "None"
                     },
                     {
                         "data": "GCD Memory Type",
-                        "targets": [9],
+                        "targets": [8],
                         "defaultContent": "None"
                     },
                     {
                         "data": "Section Type",
-                        "targets": [10]
+                        "targets": [9]
                     },
                     {
                         "data": "System Memory",
-                        "targets": [11],
+                        "targets": [10],
                         "defaultContent": "SYSTEM"
                     },
                     {
                         "data": "Memory Contents",
-                        "targets": [12],
+                        "targets": [11],
                         "defaultContent": "Nothing Found"
                     }
                 ], //end of column def
@@ -350,7 +340,7 @@
 
                     this.api().column(6).every( function() {
                         var column = this;
-                        var select = $("#UxFilter").on( 'change', function () {     
+                        var select = $("#ExecuteFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
                              column
@@ -399,19 +389,7 @@
                         });
                     }); //column 5 - RW attribute
                     
-                    this.api().column(7).every( function() {
-                        var column = this;
-                        var select = $("#PxFilter").on( 'change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column.search(SearchRegex, true, false).draw();
-                        }); // on change
-
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 7 - Privilege (User / Supervisor)
-
-                    this.api().column(10).every( function() {
+                    this.api().column(9).every( function() {
                         var column = this;
                         var select = $("#SectionFilter").on( 'change', function () {
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -423,7 +401,7 @@
                         });
                     }); //column 10 - Section Type for code/data sections
 
-                    this.api().column(8).every( function() {
+                    this.api().column(7).every( function() {
                         var column = this;
                         var select = $("#MemoryTypeFilter").on( 'change', function () { 
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -438,7 +416,7 @@
                         });
                     }); //column 8 - Memory Type
 
-                    this.api().column(9).every( function() {
+                    this.api().column(8).every( function() {
                         var column = this;
                         var select = $("#MemorySpaceTypeFilter").on( 'change', function () { 
                             var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
@@ -453,7 +431,7 @@
                         });
                     }); //column 9 - GCD Memory Type
 
-                    this.api().column(11).every( function() {
+                    this.api().column(10).every( function() {
                         var column = this;
                         var select = $("#SpecialMemoryRegionsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -471,7 +449,7 @@
                     }); //column 11 - special Memory Type
                     
 
-                    this.api().column(12).every( function() {
+                    this.api().column(11).every( function() {
                         var column = this;
                         var select = $("#MemoryContentsFilter").on( 'change', function () {     
                             //var SelectedValues = $(this).val() || [];
@@ -497,8 +475,7 @@
             {"Page Size": "4k", 
             "Present": "Yes",
             "Read/Write": "Enabled", 
-            "Execute": "Disabled", 
-            "Privilege": "User"
+            "Execute": "UX/PX",
             "Start": "0x0000058000", 
             "End": "0x0000058FFF", 
             "Number of Entries": 1, 
@@ -513,42 +490,39 @@
             var SavedFilters = [];
             SavedFilters.push({"Name": "RW+X", "Description": "No memory range should have page attributes that allow read, write, and execute", 
                 "Filter": function(mrObject) {
-                    if( (mrObject["UX"] === "Enabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Access Flag"] === "Yes")) {
+                    if( (mrObject["Execute"] !== "Disabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Access Flag"] === "Yes") && (mrObject["GCD Memory Type"] !== "EfiGcdMemoryTypeNonExistent")) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("UxFilter", ["Enabled"]))
-                    {
-                        return false
-                    }
-                    if(!SetMultiselectTo("AccessFlagFilter", ["Yes"]))
-                    {
-                        return false
-                    }
-                    return SetMultiselectTo("RWFilter", ["Enabled"]);
+                    SetMultiselectTo("ExecuteFilter", ["UX", "PX", "UX/PX"])
+                    SetMultiselectTo("AccessFlagFilter", ["Yes"])
+                    SetMultiselectTo("RWFilter", ["Enabled"])
+                    SetMultiselectTo("MemorySpaceTypeFilter",
+                        ["EfiGcdMemoryTypeReserved",
+                        "EfiGcdMemoryTypeSystemMemory",
+                        "EfiGcdMemoryTypeMemoryMappedIo",
+                        "EfiGcdMemoryTypePersistent",
+                        "EfiGcdMemoryTypePersistentMemory",
+                        "EfiGcdMemoryTypeMoreReliable",
+                        "EfiGcdMemoryTypeMaximum"])
+                    return true;
                 } //end of configuring filter inputs
             });
 
             SavedFilters.push({"Name": "Data Sections are No-Execute", "Description": "Image data sections should be no-execute", "Filter": function(mrObject) {
-                    if((mrObject["UX"] === "Enabled") && (mrObject["Section Type"] === "DATA")) {
+                    if((mrObject["Execute"] !== "Disabled") && (mrObject["Section Type"] === "DATA")) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("UxFilter", ["Disabled"]))
-                    {
-                        return false;
-                    }
-                    if(!SetMultiselectTo("SectionFilter", ["DATA"]))
-                    {
-                        return false;
-                    }
-                    return SetMultiselectTo("MemoryTypeFilter", ["EfiRuntimeServicesCode"]);
+                    SetMultiselectTo("ExecuteFilter", ["UX", "PX", "UX/PX"])
+                    SetMultiselectTo("SectionFilter", ["DATA"])
+                    return true;
                 } //end of configuring filter inputs
             });
 
@@ -560,14 +534,8 @@
                 }, //end of Filter function
                 "ConfigureFilter":function() {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("RWFilter", ["Enabled"]))
-                    {
-                        return false;
-                    }
-                    if(!SetMultiselectTo("SectionFilter", ["CODE"]))
-                    {
-                        return false;
-                    }
+                    SetMultiselectTo("RWFilter", ["Enabled"])
+                    SetMultiselectTo("SectionFilter", ["CODE"])
                     return true;
                 } //end of configuring filter inputs
             });

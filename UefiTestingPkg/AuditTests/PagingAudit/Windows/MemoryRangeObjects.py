@@ -361,12 +361,20 @@ class MemoryRange(object):
                 else:
                     section_type = "UNKNOWN"
 
+            # Check the execution setting
+            ExecuteString = "Disabled"
+            if (self.Ux and self.Px):
+                ExecuteString = "UX/PX"
+            elif (self.Ux):
+                ExecuteString = "UX"
+            elif (self.Px):
+                ExecuteString = "PX"
+
             return {
                 "Page Size" : self.getPageSizeStr(),
                 "Access Flag" : "Yes" if (self.AccessFlag == 1) else "No",
                 "Read/Write" : "Enabled" if (self.ReadWrite == 1) else "Disabled",
-                "UX" : "Enabled" if (self.Ux == 1) else "Disabled",
-                "PX" : "Enabled" if (self.Px == 1) else "Disabled",
+                "Execute" : ExecuteString,
                 "Start" : "0x{0:010X}".format(self.PhysicalStart),
                 "End" : "0x{0:010X}".format(self.PhysicalEnd),
                 "Number of Entries" : self.NumberOfEntries if (not self.PageSplit) else str(self.NumberOfEntries) + " (p)" ,
