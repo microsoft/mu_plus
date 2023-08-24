@@ -94,6 +94,7 @@
         ],
         "ExtendWords": [             # words to extend to the dictionary for this package
           "certn",
+          "hcrtm",
           "lfanew",
           "mytpm",
           "pcrindex",
