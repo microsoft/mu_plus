@@ -19,8 +19,8 @@ variables:
 - group: tool-chain-windows-visual-studio-latest
 - name: System.Debug
   value: true
-- name: system.pullRequest.isFork
-  value: false
+- name: System.Debug
+  value: true
 
 extends:
   template: MuDevOpsWrapper.yml
