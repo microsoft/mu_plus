@@ -19,8 +19,6 @@ variables:
 - group: tool-chain-windows-visual-studio-latest
 - name: System.Debug
   value: true
-- name: System.Debug
-  value: true
 
 extends:
   template: MuDevOpsWrapper.yml
