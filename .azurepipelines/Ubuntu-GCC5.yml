@@ -19,8 +19,6 @@ variables:
 - group: tool-chain-ubuntu-gcc
 - name: System.Debug
   value: true
-- name: system.pullRequest.isFork
-  value: false
 
 extends:
   template: MuDevOpsWrapper.yml
