@@ -8,6 +8,7 @@ import struct
 from ctypes import *
 from collections import namedtuple
 from MemoryRangeObjects import *
+import Globals
 import logging
 import csv
 
@@ -38,14 +39,32 @@ def ParseInfoFile(fileName):
     logging.debug("%d entries found in file %s" % (len(MemoryRanges), fileName))
     return MemoryRanges
 
+def ParsePlatforminfofile(fileName):
+    logging.debug("-- Processing file '%s'..." % fileName)
+    byte_list = ParseFileToBytes(fileName)
+    byte_content = bytes(byte_list)
+    data = byte_content.decode('ascii')
+    database_reader = csv.reader(data.splitlines())
+    for row in database_reader:
+        if row[0] == "Architecture":
+            Globals.ParsingArchitecture = row[1]
+        elif row[0] == "ExecutionLevel":
+            Globals.ExecutionLevel = row[1]
+        elif row[0] == "Bitwidth":
+            Globals.Bitwidth = int(row[1])
+        elif row[0] == "Phase":
+            Globals.Phase = row[1]
+        else:
+            logging.error("Unknown key found in PlatformInfo.dat: %s" % row[0])
 
-def Parse4kPages(fileName, addressbits, architecture):
+def Parse4kPages(fileName):
     num = 0
     pages = []
+    addressbits = (1 << Globals.Bitwidth) - 1
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
-    if (architecture == "X64"):
+    if (Globals.ParsingArchitecture == "X64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
                 byteZeroIndex += 8
@@ -59,7 +78,7 @@ def Parse4kPages(fileName, addressbits, architecture):
             byteZeroIndex += 8
             num += 1
             pages.append(MemoryRange("PTEntry", "4k", Present, ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
-    elif (architecture == "AARCH64"):
+    elif (Globals.ParsingArchitecture == "AARCH64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             # check if this page is zero
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
@@ -81,13 +100,14 @@ def Parse4kPages(fileName, addressbits, architecture):
     return pages
 
 
-def Parse2mPages(fileName, addressbits, architecture):
+def Parse2mPages(fileName):
     num = 0
     pages = []
+    addressbits = (1 << Globals.Bitwidth) - 1
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
-    if (architecture == "X64"):
+    if (Globals.ParsingArchitecture == "X64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
                 byteZeroIndex += 8
@@ -102,7 +122,7 @@ def Parse2mPages(fileName, addressbits, architecture):
             byteZeroIndex += 8
             num += 1
             pages.append(MemoryRange("PTEntry", "2m", Present, ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
-    elif (architecture == "AARCH64"):
+    elif (Globals.ParsingArchitecture == "AARCH64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             # check if this page is zero
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
@@ -124,13 +144,14 @@ def Parse2mPages(fileName, addressbits, architecture):
     return pages
 
 
-def Parse1gPages(fileName, addressbits, architecture):
+def Parse1gPages(fileName):
     num = 0
     pages = []
+    addressbits = (1 << Globals.Bitwidth) - 1
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
-    if (architecture == "X64"):
+    if (Globals.ParsingArchitecture == "X64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):
                 byteZeroIndex += 8
@@ -145,7 +166,7 @@ def Parse1gPages(fileName, addressbits, architecture):
             byteZeroIndex += 8
             pages.append(MemoryRange("PTEntry", "1g", Present, ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
             num += 1
-    elif (architecture == "AARCH64"):
+    elif (Globals.ParsingArchitecture == "AARCH64"):
         while (byteZeroIndex + 7) < len(ByteArray):
             # check if this page is zero
             if 0 == (ByteArray[byteZeroIndex + 0] + ByteArray[byteZeroIndex + 1] + ByteArray[byteZeroIndex + 2] + ByteArray[byteZeroIndex + 3] + ByteArray[byteZeroIndex + 4] + ByteArray[byteZeroIndex + 5] + ByteArray[byteZeroIndex + 6] + ByteArray[byteZeroIndex + 7]):

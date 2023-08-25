@@ -240,3 +240,42 @@ DumpProcessorSpecificHandlers (
 {
   return;
 }
+
+/**
+  Dumps platorm info required to correctly parse the pages (architecture,
+  execution level, etc.)
+**/
+VOID
+EFIAPI
+DumpPlatforminfo (
+  VOID
+  )
+{
+  CHAR8  TempString[MAX_STRING_SIZE];
+  UINTN  ExecutionLevel;
+  CHAR8  *ElString;
+  UINTN  StringIndex;
+
+  ExecutionLevel = ArmReadCurrentEL ();
+
+  if (ExecutionLevel == AARCH64_EL1) {
+    ElString = "EL1";
+  } else if (ExecutionLevel == AARCH64_EL2) {
+    ElString = "EL2";
+  } else if (ExecutionLevel == AARCH64_EL3) {
+    ElString = "EL3";
+  } else {
+    ElString = "Unknown";
+  }
+
+  // Dump the execution level of UEFI
+  StringIndex = AsciiSPrint (
+                  &TempString[0],
+                  MAX_STRING_SIZE,
+                  "Architecture,AARCH64\nBitwidth,%d\nPhase,DXE\nExecutionLevel,%a\n",
+                  CalculateMaximumSupportAddressBits (),
+                  ElString
+                  );
+
+  WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
+}
