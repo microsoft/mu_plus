@@ -12,6 +12,7 @@ import datetime
 import os
 import sys
 import argparse
+import Globals
 
 #Add script dir to path for import
 sp = os.path.dirname(os.path.realpath(sys.argv[0]))
@@ -26,7 +27,7 @@ VERSION = "0.90"
 
 class ParsingTool(object):
 
-    def __init__(self, DatFolderPath, PlatformName, PlatformVersion, Type, Architecture):
+    def __init__(self, DatFolderPath, PlatformName, PlatformVersion):
         self.Logger = logging.getLogger("ParsingTool")
         self.MemoryAttributesTable = []
         self.MemoryRangeInfo = []
@@ -35,9 +36,7 @@ class ParsingTool(object):
         self.ErrorMsg = []
         self.PlatformName = PlatformName
         self.PlatformVersion = PlatformVersion
-        self.Type = Type
         self.AddressBits = 0
-        self.Architecture = Architecture
 
     def Parse(self):
         #Get Info Files
@@ -47,6 +46,7 @@ class ParsingTool(object):
         Page4kbFileList =  glob.glob(os.path.join(self.DatFolderPath, "*4K*.dat"))
         MatFileList =  glob.glob(os.path.join(self.DatFolderPath, "*MAT*.dat"))
         GuardPageFileList =  glob.glob(os.path.join(self.DatFolderPath, "*GuardPage*.dat"))
+        PlatformInfoFileList = glob.glob(os.path.join(self.DatFolderPath, "*PlatformInfo*.dat"))
 
         logging.debug("Found %d Info Files" % len(InfoFileList))
         logging.debug("Found %d 1gb Page Files" % len(Page1gbFileList))
@@ -54,8 +54,23 @@ class ParsingTool(object):
         logging.debug("Found %d 4kb Page Files" % len(Page4kbFileList))
         logging.debug("Found %d MAT Files" % len(MatFileList))
         logging.debug("Found %d GuardPage Files" % len(GuardPageFileList))
+        logging.debug("Found %d Platform Info Files" % len(PlatformInfoFileList))
 
-        SetArchitecture(self.Architecture)
+        for info in PlatformInfoFileList:
+            ParsePlatforminfofile(info)
+
+        if Globals.ParsingArchitecture == "":
+            raise Exception("Architecture not Identified in PlatformInfo.dat")
+        elif Globals.ParsingArchitecture == "AARCH64" and Globals.ExecutionLevel == "":
+            logging.error("Architecture is AARCH64 but Execution Level wasn't specified. Assuming EL2")
+            Globals.ExecutionLevel = "EL2"
+        
+        if Globals.Phase == "":
+            logging.error("Phase wasn't specified in PlatformInfo.dat. Assuming DXE")
+            Globals.Phase = "DXE"
+        
+        if Globals.Bitwidth <= 0 or Globals.Bitwidth >= 64:
+            raise Exception("Bitwidth wasn't specified in PlatformInfo.dat or was invalid.")
 
         # Parse each file, keeping pages and "Memory Ranges" separate
         # Memory ranges are either "memory descriptions" for memory map types and TSEG
@@ -63,29 +78,14 @@ class ParsingTool(object):
         for info in InfoFileList:
             self.MemoryRangeInfo.extend(ParseInfoFile(info))
 
-        for mr in self.MemoryRangeInfo:
-            if mr.AddressBitwidth is not None:
-                if self.AddressBits == 0:
-                    self.AddressBits = (1 << mr.AddressBitwidth) - 1
-                    self.MemoryRangeInfo.remove(mr)
-                elif self.AddressBits != (1 << mr.AddressBitwidth) - 1:
-                    self.ErrorMsg.append("Bitwidth discrepancy, %d and %d.  Should not proceed with mixed bitwidth files in the same folder", self.AddressBits, (1 << mr.AddressBitwidth) - 1)
-                    logging.error("Bitwidth discrepancy, %d and %d.  Should not proceed with mixed bitwidth files in the same folder", self.AddressBits, (1 << mr.AddressBitwidth) - 1)
-                else:
-                    self.MemoryRangeInfo.remove(mr)
-
-        if self.AddressBits == 0:
-            self.ErrorMsg.append("Did not find bitwidth from memory information file. Assuming 39 here and the results may not be accurate")
-            self.AddressBits = (1 << 39) - 1
-
         for page1g in Page1gbFileList:
-            self.PageDirectoryInfo.extend(Parse1gPages(page1g, self.AddressBits, self.Architecture))
+            self.PageDirectoryInfo.extend(Parse1gPages(page1g))
 
         for page2m in Page2mbFileList:
-            self.PageDirectoryInfo.extend(Parse2mPages(page2m, self.AddressBits, self.Architecture))
+            self.PageDirectoryInfo.extend(Parse2mPages(page2m))
 
         for page4k in Page4kbFileList:
-            self.PageDirectoryInfo.extend(Parse4kPages(page4k, self.AddressBits, self.Architecture))
+            self.PageDirectoryInfo.extend(Parse4kPages(page4k))
 
         for guardpage in GuardPageFileList:
             self.PageDirectoryInfo.extend(ParseInfoFile(guardpage))
@@ -183,7 +183,7 @@ class ParsingTool(object):
             if currentPage.SystemMemoryType == SystemMemoryTypes.GuardPage or nextPage.SystemMemoryType == SystemMemoryTypes.GuardPage:
                 index += 1
                 continue
-            if currentPage.sameAttributes(nextPage, self.Architecture):
+            if currentPage.sameAttributes(nextPage):
                 currentPage.grow(nextPage)
                 del self.PageDirectoryInfo[index + 1]
             else:
@@ -206,7 +206,7 @@ class ParsingTool(object):
         # Process all of the Page Infos and add them to the JSON.
         page_infos = []
         for page in self.PageDirectoryInfo:
-            info_dict = page.toDictionary(self.Architecture)
+            info_dict = page.toDictionary()
             # Check for errors.
             if info_dict['Section Type'] == "ERROR":
                 self.AddErrorMsg("Page Descriptor at %s has an error parsing the Section Type." % info_dict['Start'])
@@ -221,10 +221,10 @@ class ParsingTool(object):
         # Open template and replace placeholder with json
         #
         f = open(OutputFilePath, "w")
-        if self.Type == 'DXE':
-            if self.Architecture == "X64":
+        if Globals.Phase == 'DXE':
+            if Globals.ParsingArchitecture == "X64":
                 template = open(os.path.join(sp, "DxePaging_template_X64.html"), "r")
-            elif self.Architecture == "AARCH64":
+            elif Globals.ParsingArchitecture == "AARCH64":
                 template = open(os.path.join(sp, "DxePaging_template_AArch64.html"), "r")
         else:
             template = open(os.path.join(sp, "SmmPaging_template.html"), "r")
@@ -246,9 +246,7 @@ def main():
     parser.add_argument('-i', "--InputFolderPath", dest="InputFolder", help="Path to folder containing the DAT files from the UEFI shell tool (default is CWD)", default=os.getcwd())
     parser.add_argument('-o', "--OutputReport", dest="OutputReport", help="Path to output html report (default is report.html)", default=os.path.join(os.getcwd(), "report.html"))
     parser.add_argument('-p', "--PlatformName", dest="PlatformName", help="Name of Platform.  Will show up on report", default="Test Platform")
-    parser.add_argument('-t', "--type", choices=['SMM', 'DXE'], dest="Type", help="SMM or DXE Paging Report", required=True)
     parser.add_argument("--PlatformVersion", dest="PlatformVersion", help="Version of Platform.  Will show up report", default="1.0.0")
-    parser.add_argument('-a', "--architecture", choices=['AARCH64', 'X64'], dest="Architecture", help="The architecture of the pages. Can be ARM64 or X64", required=True)
 
     #Turn on dubug level logging
     parser.add_argument("--debug", action="store_true", dest="debug", help="turn on debug logging level for file log",  default=False)
@@ -284,14 +282,10 @@ def main():
         logging.critical("No OutputReport Path")
         return -6
 
-    if options.Architecture == "AARCH64" and options.Type == "SMM":
-        logging.critical("AARCH64 does not use SMM")
-        return -7
-
     logging.debug("Input Folder Path is: %s" % options.InputFolder)
     logging.debug("Output Report is: %s" % options.OutputReport)
 
-    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion, options.Type, options.Architecture)
+    spt = ParsingTool(options.InputFolder, options.PlatformName, options.PlatformVersion)
     spt.Parse()
     return spt.OutputHtmlReport(VERSION, options.OutputReport)
 

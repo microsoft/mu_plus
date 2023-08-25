@@ -1,5 +1,6 @@
 import copy
 import logging
+import Globals
 from enum import Enum
 
 # Memory range is either a page table entry, memory map entry,
@@ -8,8 +9,6 @@ from enum import Enum
 # Copyright (C) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
-
-ParsingArchitecture = ""
 
 def SetArchitecture(arch):
     global ParsingArchitecture
@@ -101,7 +100,6 @@ class MemoryRange(object):
         self.NumberOfEntries = 1
         self.Found = False
         self.Attribute = 0
-        self.AddressBitwidth = None
         self.PageSplit = False
         self.CpuNumber = None
 
@@ -118,8 +116,6 @@ class MemoryRange(object):
             self.TteInit(*args)
         elif self.RecordType in ("GuardPage"):
             self.GuardPageInit(*args)
-        elif self.RecordType in ("Bitwidth"):
-            self.BitwidthInit(int(args[0], 16))
         elif self.RecordType in ("Stack", "StackGuard"):
             self.StackInit (self.RecordType, *(int(arg, 16) for arg in args))
         elif self.RecordType in ("ApStack", "ApStackGuard", "ApSwitchStack"):
@@ -245,7 +241,7 @@ class MemoryRange(object):
         self.PhysicalStart = int(VA, 16)
         self.PageSize = "4k"
         self.PhysicalSize = self.getPageSize()
-        if ParsingArchitecture == "AARCH64":
+        if Globals.ParsingArchitecture == "AARCH64":
             self.AccessFlag = 0
             self.ReadWrite = 0
             self.Ux = 0
@@ -256,11 +252,6 @@ class MemoryRange(object):
             self.Nx = 0
             self.Present = 0
 
-    def BitwidthInit(self, Bitwidth):
-        self.AddressBitwidth = Bitwidth
-        self.PhysicalStart = 0
-        self.PhysicalSize = (1 << self.AddressBitwidth)
-    
     def TteInit(self, PageSize, AccessFlag, ReadWrite, Sharability, Pxn, Uxn, VA, IsTable):
         self.PageSize = PageSize
         self.AccessFlag = AccessFlag
@@ -310,11 +301,11 @@ class MemoryRange(object):
         self.CalculateEnd()
 
     # Returns dict describing this object
-    def toDictionary(self, architecture):
+    def toDictionary(self):
         # Pre-process the Section Type
         # Set a reasonable default.
         section_type = "UNEXPECTED VALUE"
-        if architecture == "X64":
+        if Globals.ParsingArchitecture == "X64":
             # If this range is not associated with an image, it does not have
             # a section type.
             if self.ImageName == None:
@@ -344,7 +335,7 @@ class MemoryRange(object):
                 "System Memory": self.GetSystemMemoryType(),
                 "Memory Contents" : self.ImageName,
                 "Partial Page": self.PageSplit}
-        elif architecture == "AARCH64":
+        elif Globals.ParsingArchitecture == "AARCH64":
             # If this range is not associated with an image, it does not have
             # a section type.
             if self.ImageName == None:
@@ -427,7 +418,7 @@ class MemoryRange(object):
         next.PhysicalStart = end_of_current +1
         return next
 
-    def sameAttributes(self, compare, architecture):
+    def sameAttributes(self, compare):
         if compare is None:
             return False
 
@@ -458,7 +449,7 @@ class MemoryRange(object):
         if (self.ReadWrite != compare.ReadWrite):
             return False
 
-        if architecture == "X64":
+        if Globals.ParsingArchitecture == "X64":
             if (self.MustBe1 != compare.MustBe1):
                 return False
 
@@ -471,7 +462,7 @@ class MemoryRange(object):
             if(self.UserPrivilege != compare.UserPrivilege):
                 return False
 
-        elif architecture == "AARCH64":
+        elif Globals.ParsingArchitecture == "AARCH64":
             if (self.IsTable != compare.IsTable):
                 return False
 

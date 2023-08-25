@@ -138,17 +138,6 @@ MemoryAttributesTableDump (
   );
 
 /**
-  Calculate the maximum physical address bits supported.
-
-  @return the maximum support physical address bits supported.
-**/
-UINT8
-EFIAPI
-CalculateMaximumSupportAddressBits (
-  VOID
-  );
-
-/**
   This helper function walks the page tables to retrieve:
   - a count of each entry
   - a count of each directory entry
@@ -199,6 +188,16 @@ EFI_STATUS
 EFIAPI
 FlushAndClearMemoryInfoDatabase (
   IN CONST CHAR16  *FileName
+  );
+
+/**
+  Dumps platorm info required to correctly parse the pages (architecture,
+  execution level, etc.)
+**/
+VOID
+EFIAPI
+DumpPlatforminfo (
+  VOID
   );
 
 #endif // _PAGING_AUDIT_COMMON_H_

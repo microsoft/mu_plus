@@ -74,5 +74,8 @@
   gEfiShellParametersProtocolGuid
   gCpuMpDebugProtocolGuid
 
+[Protocols.X64]
+  gEfiSmmBase2ProtocolGuid
+
 [FixedPcd]
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported  ## SOMETIMES_CONSUMES

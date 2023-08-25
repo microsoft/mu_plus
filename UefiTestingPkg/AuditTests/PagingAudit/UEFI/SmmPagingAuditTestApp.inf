@@ -51,6 +51,9 @@
   gMemoryProtectionDebugProtocolGuid
   gCpuMpDebugProtocolGuid
 
+[Protocols.X64]
+  gEfiSmmBase2ProtocolGuid
+
 [Guids]
   gEdkiiPiSmmCommunicationRegionTableGuid       ## SOMETIMES_CONSUMES ## GUID
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

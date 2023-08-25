@@ -715,7 +715,6 @@ MemoryMapDumpHandler (
   EFI_MEMORY_DESCRIPTOR            *EfiMemoryMapEnd;
   EFI_MEMORY_DESCRIPTOR            *EfiMemNext;
   CHAR8                            TempString[MAX_STRING_SIZE];
-  UINT8                            MaxPhysicalAddressWidth;
   UINTN                            NumberOfDescriptors;
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemorySpaceMap = NULL;
   EFI_GCD_MEMORY_TYPE              MemorySpaceType;
@@ -726,18 +725,6 @@ MemoryMapDumpHandler (
   if (EFI_ERROR (PopulateHeapGuardDebugProtocol ())) {
     DEBUG ((DEBUG_ERROR, "%a - Error finding heap guard debug protocol\n", __FUNCTION__));
   }
-
-  //
-  // Add remaining misc data to the database.
-  //
-  MaxPhysicalAddressWidth = CalculateMaximumSupportAddressBits ();
-  AsciiSPrint (
-    &TempString[0],
-    MAX_STRING_SIZE,
-    "Bitwidth,0x%02x\n",
-    MaxPhysicalAddressWidth
-    );
-  AppendToMemoryInfoDatabase (&TempString[0]);
 
   //
   // Get the EFI memory map.
@@ -1445,6 +1432,7 @@ DumpPagingInfo (
   MemoryAttributesTableDump ();
   SpecialMemoryDump ();
   FlushAndClearMemoryInfoDatabase (L"MemoryInfoDatabase");
+  DumpPlatforminfo ();
 
 Cleanup:
   if (Pte1GEntries != NULL) {
