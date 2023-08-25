@@ -18,6 +18,10 @@ variables:
 - group: architectures-arm-64-x86-64
 - group: tool-chain-ubuntu-gcc
 
+env:
+  system.pullRequest.isFork: False
+  System.Debug: True
+
 extends:
   template: MuDevOpsWrapper.yml
   parameters:
