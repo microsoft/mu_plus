@@ -1,7 +1,7 @@
 ============================================================
 Advanced Logger Package
 ============================================================
-
+File Changes
 Summary
 =======
 The AdvanceLoggerPackage provide in memory logging for UEFI post logging, and, if equipped, SMM
