@@ -354,12 +354,16 @@ class MemoryRange(object):
 
             # Check the execution setting
             ExecuteString = "Disabled"
-            if (self.Ux and self.Px):
-                ExecuteString = "UX/PX"
-            elif (self.Ux):
-                ExecuteString = "UX"
-            elif (self.Px):
-                ExecuteString = "PX"
+            if (Globals.ExecutionLevel == "EL2" or Globals.ExecutionLevel == "EL3"):
+                if (self.Ux):
+                    ExecuteString = "Enabled"
+            else:
+                if (self.Ux and self.Px):
+                    ExecuteString = "UX/PX"
+                elif (self.Ux):
+                    ExecuteString = "UX"
+                elif (self.Px):
+                    ExecuteString = "PX"
 
             return {
                 "Page Size" : self.getPageSizeStr(),
