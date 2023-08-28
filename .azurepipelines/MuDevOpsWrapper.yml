@@ -17,7 +17,7 @@ resources:
       type: github
       endpoint: microsoft
       name: microsoft/mu_devops
-      ref: refs/tags/v6.0.0
+      ref: refs/tags/v6.0.1
 
 parameters:
 - name: do_ci_build
@@ -98,6 +98,7 @@ jobs:
     displayName: Workspace Cargo Commands
 
     container:
+
       image: ghcr.io/microsoft/mu_devops/ubuntu-22-build:9ab29bc
       options: --user root --name mu_devops_build_container --security-opt seccomp=unconfined
 
@@ -108,3 +109,4 @@ jobs:
     - template: Steps/RustCargoSteps.yml@mu_devops
 
 - ${{ parameters.extra_jobs }}
+
