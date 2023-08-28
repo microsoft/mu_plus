@@ -1,0 +1,20 @@
+### @file
+# Hello World DXE Rust driver.
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+###
+
+[Defines]
+  INF_VERSION     = 1.27
+  BASE_NAME       = HelloWorldRustDxe
+  FILE_GUID       = A14E35E2-BB32-4446-8622-C1874B8284E4
+  MODULE_TYPE     = DXE_DRIVER
+  RUST_MODULE     = TRUE
+
+[Sources]
+  Cargo.toml
+
+[Depex]
+  TRUE

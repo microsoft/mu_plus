@@ -179,6 +179,7 @@
   MsCorePkg/Library/BaseIsCapsuleSupportedLibNull/BaseIsCapsuleSupportedLibNull.inf
   MsCorePkg/Library/SecureBootKeyStoreLibNull/SecureBootKeyStoreLibNull.inf
   MsCorePkg/Library/MuSecureBootKeySelectorLib/MuSecureBootKeySelectorLib.inf
+  MsCorePkg/HelloWorldRustDxe/HelloWorldRustDxe.inf
 
 [Components.IA32]
   MsCorePkg/Core/GuidedSectionExtractPeim/GuidedSectionExtract.inf
