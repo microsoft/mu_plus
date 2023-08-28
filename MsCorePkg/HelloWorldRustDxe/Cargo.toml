@@ -1,0 +1,14 @@
+[package]
+name = "HelloWorldRustDxe"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "HelloWorldRustDxe"
+path = "src/main.rs"
+test = false
+
+[dependencies]
+r-efi = {workspace=true}
+RustAdvancedLoggerDxe = {workspace=true}
+RustBootServicesAllocatorDxe = {workspace=true}
