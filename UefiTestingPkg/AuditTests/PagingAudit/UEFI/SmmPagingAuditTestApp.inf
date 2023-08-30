@@ -40,7 +40,7 @@
   UefiBootServicesTableLib
   UefiLib
   CpuExceptionHandlerLib
-  UefiCpuLib
+  CpuLib
   HobLib
   PeCoffGetEntryPointLib
   DxeServicesTableLib

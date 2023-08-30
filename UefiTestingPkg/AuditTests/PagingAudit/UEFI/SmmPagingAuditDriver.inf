@@ -41,14 +41,14 @@
   DebugLib
   SmmMemLib
   BaseMemoryLib
-  PeCoffGetEntryPointLib 
+  PeCoffGetEntryPointLib
   BaseLib
   BaseMemoryLib
   DebugLib
   HobLib
   UefiLib
   PcdLib
-  UefiCpuLib
+  CpuLib
   DxeServicesTableLib
 
 [Depex]
