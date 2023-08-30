@@ -9,7 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "../PagingAuditCommon.h"
 #include <Register/Msr.h>
-#include <Library/UefiCpuLib.h>
+#include <Library/CpuLib.h>
 #include <Pi/PiHob.h>
 #include <Library/HobLib.h>
 #include <Protocol/SmmBase2.h>

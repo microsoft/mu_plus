@@ -34,7 +34,7 @@
   MdeModulePkg/MdeModulePkg.dec
   UefiCpuPkg/UefiCpuPkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
-  
+
 [Packages.AARCH64]
   ArmPkg/ArmPkg.dec
 
@@ -53,7 +53,7 @@
   ArmLib
 
 [LibraryClasses.X64]
-  UefiCpuLib
+  CpuLib
 
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID

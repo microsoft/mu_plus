@@ -29,7 +29,7 @@
 [Sources.AARCH64]
   AArch64/PagingAuditProcessor.c
   Dxe/App/AArch64/DxePagingAuditTests.c
-  
+
 [Packages.AARCH64]
   ArmPkg/ArmPkg.dec
 
@@ -58,7 +58,7 @@
   ArmLib
 
 [LibraryClasses.X64]
-  UefiCpuLib
+  CpuLib
   CpuPageTableLib
 
 [Guids]
