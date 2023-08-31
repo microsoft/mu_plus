@@ -1,8 +1,13 @@
 ## @file
 # CodeQL Result Filters for Packages in Mu Plus
 #
-# Note: Packages that use Mu Basecore can reuse this file to quickly pick up the
-#       same filters applied to results in the Mu Plus repo.
+# Note:
+#   1. Packages that use Mu Plus can reuse this file to quickly pick up the
+#      same filters applied to results in the Mu Plus repo.
+#   2. It is recommended paths begin with `**/` in filter files residing in repos that
+#      are used as dependencies by other repos (e.g. Common/MU). That way the filter
+#      will apply both in Mu Plus directly and regardless of where Mu Plus is
+#      located within a downstream repos directory hierarchy.
 #
 # Copyright (c) Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -10,8 +15,8 @@
 
 {
   "Filters": [
-    "-AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.c:SM02311",
-    "-HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.c:SM02298",
-    "-MsCorePkg/Library/PlatformBootManagerLib/BdsPlatform.c:SM02311",
+    "-**/AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.c:SM02311",
+    "-**/HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.c:SM02298",
+    "-**/MsCorePkg/Library/PlatformBootManagerLib/BdsPlatform.c:SM02311",
   ]
 }
