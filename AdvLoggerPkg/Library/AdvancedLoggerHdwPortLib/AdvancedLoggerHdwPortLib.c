@@ -58,12 +58,5 @@ AdvancedLoggerHdwPortWrite (
   IN UINTN  NumberOfBytes
   )
 {
-  UINTN  NumberReturned;
-
-  NumberReturned = NumberOfBytes;
-  if (DebugLevel & PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
-    NumberReturned = SerialPortWrite (Buffer, NumberOfBytes);
-  }
-
-  return NumberReturned;
+  return SerialPortWrite (Buffer, NumberOfBytes);
 }

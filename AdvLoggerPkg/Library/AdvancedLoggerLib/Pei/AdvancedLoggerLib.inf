@@ -36,3 +36,4 @@
   gAdvancedLoggerPpiGuid                                    ## CONSUMES
 
 [Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel       ## SOMETIMES_CONSUMES
