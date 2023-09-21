@@ -777,5 +777,5 @@ DumpPlatforminfo (
                   CalculateMaximumSupportAddressBits ()
                   );
 
-  WriteBufferToFile (L"PlatformInfo", TempString, StringIndex + 1);
+  WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
 }
