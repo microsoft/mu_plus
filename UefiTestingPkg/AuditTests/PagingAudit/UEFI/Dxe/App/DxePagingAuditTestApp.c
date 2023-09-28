@@ -7,13 +7,18 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
-#include "DxePagingAuditTestApp.h"
+#include "../../PagingAuditCommon.h"
 
 #include <Protocol/ShellParameters.h>
 #include <Protocol/Shell.h>
 #include <Protocol/SimpleFileSystem.h>
+#include <Protocol/MemoryProtectionSpecialRegionProtocol.h>
+#include <Protocol/MemoryProtectionDebug.h>
+
 #include <Library/FileHandleLib.h>
 #include <Library/DxeServicesTableLib.h>
+#include <Library/FlatPageTableLib.h>
+#include <Library/UnitTestLib.h>
 
 #define UNIT_TEST_APP_NAME     "Paging Audit Test"
 #define UNIT_TEST_APP_VERSION  "1"
@@ -31,6 +36,67 @@ IMAGE_RANGE_DESCRIPTOR            *mNonProtectedImageList      = NULL;
 UINTN                             mSpecialRegionCount          = 0;
 EFI_GCD_MEMORY_SPACE_DESCRIPTOR   *mMemorySpaceMap             = NULL;
 UINTN                             mMemorySpaceMapCount         = 0;
+PAGE_MAP                          mMap                         = { 0 };
+
+/**
+  Frees the entries in the mMap global.
+
+  @param[in] Context  Unit test context.
+**/
+STATIC
+VOID
+EFIAPI
+FreePageTableMap (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  if (mMap.Entries != NULL) {
+    FreePages (mMap.Entries, mMap.EntryPagesAllocated);
+  }
+}
+
+/**
+  Populate the global flat page table map.
+
+  @param[in] Context            Unit test context.
+
+  @retval EFI_SUCCESS           The page table is parsed successfully.
+  @retval EFI_OUT_OF_RESOURCES  Failed to allocate memory for the page table map.
+  @retval EFI_INVALID_PARAMETER An error occurred while parsing the page table.
+**/
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+PopulatePageTableMap (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+
+  Status = CreateFlatPageTable (&mMap);
+
+  while (Status == RETURN_BUFFER_TOO_SMALL) {
+    if ((mMap.Entries != NULL) && (mMap.EntryPagesAllocated > 0)) {
+      FreePages (mMap.Entries, mMap.EntryPagesAllocated);
+    }
+
+    mMap.EntryPagesAllocated = EFI_SIZE_TO_PAGES (mMap.EntryCount * sizeof (PAGE_MAP_ENTRY));
+    mMap.Entries             = AllocatePages (mMap.EntryPagesAllocated);
+
+    if (mMap.Entries == NULL) {
+      UT_LOG_ERROR ("Failed to allocate %d pages for page table map!\n", mMap.EntryPagesAllocated);
+      return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
+    }
+
+    Status = CreateFlatPageTable (&mMap);
+  }
+
+  if ((Status != EFI_SUCCESS) && (mMap.Entries != NULL)) {
+    FreePageTableMap (Context);
+  }
+
+  return Status == EFI_SUCCESS ? UNIT_TEST_PASSED : UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
+}
 
 /**
   Populates the non protected image list global
@@ -114,6 +180,7 @@ GetSpecialRegions (
   @retval TRUE                  The region is allowed to be read/write/execute
   @retval FALSE                 The region is not allowed to be read/write/execute
 **/
+STATIC
 BOOLEAN
 CanRegionBeRWX (
   IN UINT64  Address,
@@ -177,6 +244,51 @@ CanRegionBeRWX (
   }
 
   return FALSE;
+}
+
+/**
+  Check the page table for Read/Write/Execute regions.
+
+  @param[in] Context            Unit test context
+
+  @retval UNIT_TEST_PASSED      The unit test passed
+  @retval other                 The unit test failed
+
+**/
+UNIT_TEST_STATUS
+EFIAPI
+NoReadWriteExecute (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  UINTN    Index;
+  BOOLEAN  FoundRWXAddress;
+
+  UT_ASSERT_NOT_NULL (mMap.Entries);
+  UT_ASSERT_NOT_EQUAL (mMap.EntryCount, 0);
+
+  Index           = 0;
+  FoundRWXAddress = FALSE;
+
+  for ( ; Index < mMap.EntryCount; Index++) {
+    if (IsPageExecutable (mMap.Entries[Index].PageEntry) &&
+        IsPageReadable (mMap.Entries[Index].PageEntry) &&
+        IsPageWritable (mMap.Entries[Index].PageEntry))
+    {
+      if (!CanRegionBeRWX (mMap.Entries[Index].LinearAddress, mMap.Entries[Index].Length)) {
+        UT_LOG_ERROR (
+          "Memory Range 0x%llx-0x%llx is Read/Write/Execute\n",
+          mMap.Entries[Index].LinearAddress,
+          mMap.Entries[Index].LinearAddress + mMap.Entries[Index].Length
+          );
+        FoundRWXAddress = TRUE;
+      }
+    }
+  }
+
+  UT_ASSERT_FALSE (FoundRWXAddress);
+
+  return UNIT_TEST_PASSED;
 }
 
 /**
@@ -401,7 +513,7 @@ DxePagingAuditTestAppEntryPoint (
       DEBUG ((DEBUG_ERROR, "%a - Unable to fetch the GCD memory map. Test results may be inaccurate. Status: %r\n", __FUNCTION__, Status));
     }
 
-    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, NULL, NULL);
+    AddTestCase (Misc, "No pages can be read,write,execute", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, PopulatePageTableMap, FreePageTableMap, NULL);
 
     //
     // Execute the tests.
