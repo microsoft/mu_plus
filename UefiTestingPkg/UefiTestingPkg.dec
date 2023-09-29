@@ -20,6 +20,11 @@
   ##
   PlatformSmmProtectionsTestLib|Include/Library/PlatformSmmProtectionsTestLib.h
 
+  ## @libraryclass Provides a way to parse the page/translation table
+  ##               entries into a flat map.
+  ##
+  FlatPageTableLib|Include/Library/FlatPageTableLib.h
+
 [Protocols]
   ## Include/Protocol/MpManagement.h
   gMpManagementProtocolGuid = { 0x2b0a3788, 0xe602, 0x424f, { 0xa8, 0x32, 0xa1, 0x13, 0x77, 0xa7, 0x6d, 0x73 } }
