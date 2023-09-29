@@ -738,7 +738,7 @@ DumpProcessorSpecificHandlers (
 }
 
 /**
-  Dumps platorm info required to correctly parse the pages (architecture,
+  Dumps platform info required to correctly parse the pages (architecture,
   execution level, etc.)
 **/
 VOID
