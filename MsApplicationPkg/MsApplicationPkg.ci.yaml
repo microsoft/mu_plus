@@ -1,0 +1,108 @@
+##
+# CI configuration for MsApplicationPkg
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+{
+    "PrEval": {
+        "DscPath": "MsApplicationPkg.dsc",
+    },
+    ## options defined ci/Plugin/CompilerPlugin
+    "CompilerPlugin": {
+        "DscPath": "MsApplicationPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/CharEncodingCheck
+    "CharEncodingCheck": {
+        "IgnoreFiles": []
+    },
+
+    ## options defined ci/Plugin/DependencyCheck
+    "DependencyCheck": {
+        "AcceptableDependencies": [
+            "MdePkg/MdePkg.dec",
+            "MdeModulePkg/MdeModulePkg.dec"
+        ],
+        "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "AcceptableDependencies-UEFI_APPLICATION": [
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
+        ],
+        "IgnoreInf": []
+    },
+
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+    },
+
+    ## options defined ci/Plugin/DscCompleteCheck
+    "DscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "MsApplicationPkg.dsc"
+    },
+
+    ## options defined ci/Plugin/GuidCheck
+    "GuidCheck": {
+        "IgnoreGuidName": [],
+        "IgnoreGuidValue": [],
+        "IgnoreFoldersAndFiles": [],
+        "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/LibraryClassCheck
+    "LibraryClassCheck": {
+        "IgnoreLibraryClass": [],
+        "IgnoreHeaderFile": []
+    },
+
+    ## options defined ci/Plugin/SpellCheck
+    "SpellCheck": {
+        "IgnoreStandardPaths": [     # Standard Plugin defined paths that should be ignore
+        ],
+        "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
+            SecureBootRecovery/RecoveryPayload.h
+        ],
+        "ExtendWords": [           # words to extend to the dictionary for this package
+            "checksumed",
+            "FVDXE",
+            "CMIIT",
+            "JASTST",
+            "mountvol",
+            "EKU's",
+            "bootable",
+            "MSCHANGE",
+            "UNRECOVERED",
+            "hibit",
+            "XIPFLAGS",
+            "mstrict",
+            "mgeneral",
+            "frontpage",
+            "mitigations",
+            "AUTHREAD",
+            "OWNERREAD",
+            "BREAKASSERT",
+            "CARDBUS",
+            "PCIEXP",
+            "DEADLOOP",
+            "DEBUGPORT",
+            "EXTENDMEM",
+            "FILELOGGING",
+            "Indexfor",
+            "PLATFORMCREATE",
+            "POLICYREAD",
+            "POLICYWRITE",
+            "SQRTUNSIGNED",
+            "VARPOL",
+            "SNP's",
+            "UEFI's"
+        ],
+        "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+    }
+}

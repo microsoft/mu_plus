@@ -73,6 +73,7 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             "AdvLoggerPkg",
             "MfciPkg",
             "HidPkg",
+            "MsApplicationPkg",
             "MsCorePkg",
             "MsGraphicsPkg",
             "MsWheaPkg",
