@@ -26,9 +26,9 @@ This EFI application is used to transition a system from the 2011 certificates t
 ## Build
 
 ```pwsh
-stuart_ci_setup -c .pytool/CISettings.py BUILD_MODULE=MsApplicationPkg/SecureBootRecovery/SecureBootRecovery.inf -p MsApplicationPkg
-stuart_update -c .pytool/CISettings.py BUILD_MODULE=MsApplicationPkg/SecureBootRecovery/SecureBootRecovery.inf -p MsApplicationPkg
-stuart_ci_build -c .pytool/CISettings.py BUILD_MODULE=MsApplicationPkg/SecureBootRecovery/SecureBootRecovery.inf -p MsApplicationPkg
+stuart_ci_setup -c .pytool/CISettings.py BUILDMODULE=MsApplicationPkg/SecureBootRecovery/SecureBootRecovery.inf -p MsApplicationPkg
+stuart_update -c .pytool/CISettings.py BUILDMODULE=MsApplicationPkg/SecureBootRecovery/SecureBootRecovery.inf -p MsApplicationPkg
+stuart_ci_build -c .pytool/CISettings.py BUILDMODULE=MsApplicationPkg/SecureBootRecovery/SecureBootRecovery.inf -p MsApplicationPkg
 ```
 
 ## Update the payload
