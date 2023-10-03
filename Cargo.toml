@@ -2,7 +2,8 @@
 
 # Add packages that generate binaries here
 members = [
-  "MsCorePkg/HelloWorldRustDxe",
+  "HidPkg/Crates/HidIo",
+  "MsCorePkg/HelloWorldRustDxe"
 ]
 
 # Add packages that generate libraries here
