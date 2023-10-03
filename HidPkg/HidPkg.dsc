@@ -55,6 +55,7 @@
   HidPkg/HidMouseAbsolutePointerDxe/HidMouseAbsolutePointerDxe.inf
   HidPkg/UsbKbHidDxe/UsbKbHidDxe.inf
   HidPkg/UsbMouseHidDxe/UsbMouseHidDxe.inf
+  HidPkg/UsbHidDxe/UsbHidDxe.inf
 
 [BuildOptions]
 #force deprecated interfaces off
