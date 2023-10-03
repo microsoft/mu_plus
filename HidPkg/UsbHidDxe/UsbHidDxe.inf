@@ -1,0 +1,42 @@
+## @file
+# USB HID Driver that manages USB HID devices and produces the HidIo protocol.
+#
+# USB HID Driver consumes USB I/O Protocol and Device Path Protocol, and produces
+# the HidIo protocol on USB HID devices.
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.27
+  BASE_NAME                      = UsbHidDxe
+  MODULE_UNI_FILE                = UsbHidDxe.uni
+  FILE_GUID                      = 68EFF987-4871-4174-88CF-9877A0B1DBD3
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+  ENTRY_POINT                    = UsbHidEntryPoint
+
+[Sources]
+  UsbHidDxe.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  HidPkg/HidPkg.dec
+
+[LibraryClasses]
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiLib
+  UefiUsbLib
+
+[Protocols]
+  gHidIoProtocolGuid
+  gEfiUsbIoProtocolGuid
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue  ## CONSUMES
