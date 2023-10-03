@@ -2,6 +2,7 @@
 
 # Add packages that generate binaries here
 members = [
+  "HidPkg/Crates/AbsolutePointer",
   "HidPkg/Crates/HidIo",
   "MsCorePkg/HelloWorldRustDxe"
 ]
