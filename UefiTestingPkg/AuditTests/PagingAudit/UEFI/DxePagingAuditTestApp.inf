@@ -51,6 +51,7 @@
   DxeMemoryProtectionHobLib
   FileHandleLib
   FlatPageTableLib
+  SafeIntLib
 
 [LibraryClasses.AARCH64]
   ArmLib
@@ -71,6 +72,8 @@
   gMemoryProtectionSpecialRegionProtocolGuid
   gEfiShellParametersProtocolGuid
   gCpuMpDebugProtocolGuid
+  gEfiMemoryAttributeProtocolGuid
+  gEfiLoadedImageProtocolGuid
 
 [Protocols.X64]
   gEfiSmmBase2ProtocolGuid
