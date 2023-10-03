@@ -4,6 +4,7 @@
 members = [
   "HidPkg/Crates/AbsolutePointer",
   "HidPkg/Crates/HidIo",
+  "HidPkg/UefiHidDxe",
   "MsCorePkg/HelloWorldRustDxe"
 ]
 
@@ -11,6 +12,12 @@ members = [
 [workspace.dependencies]
 RustAdvancedLoggerDxe = {path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe"}
 RustBootServicesAllocatorDxe = {path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe"}
+HidIo = {path = "HidPkg/Crates/HidIo"}
+AbsolutePointer = {path = "HidPkg/Crates/AbsolutePointer"}
+
+hidparser = {git = "https://github.com/microsoft/mu_rust_hid.git", branch = "main"}
 
 r-efi = "4.0.0"
+rustversion = "1.0.14"
 spin = "0.9.8"
+memoffset = "0.9.0"

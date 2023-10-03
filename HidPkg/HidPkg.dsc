@@ -56,6 +56,7 @@
   HidPkg/UsbKbHidDxe/UsbKbHidDxe.inf
   HidPkg/UsbMouseHidDxe/UsbMouseHidDxe.inf
   HidPkg/UsbHidDxe/UsbHidDxe.inf
+  HidPkg/UefiHidDxe/UefiHidDxe.inf
 
 [BuildOptions]
 #force deprecated interfaces off
