@@ -134,7 +134,8 @@
                     </div>
                     <div class="col-xs-3">
                         <header>Actions</header>
-                        Filters: <button id="ClearAllFilter" class="btn btn-danger">Clear All</button>
+                        <button id="ClearAllFilter" class="btn btn-danger">Clear All</button>
+                        <button id="toggleLogic" class="btn btn-danger">Filter Logic: AND</button>
                         <p></p>
                     </div>
                 </div>
@@ -310,6 +311,18 @@
                 $('button#ClearPageFilter').click();
             });
 
+            var currentLogic = "AND";
+
+            $(document).on("click", "#toggleLogic", function () {
+                if (currentLogic === "AND") {
+                    currentLogic = "OR";
+                    $(this).text("Filter Logic: OR");
+                } else {
+                    currentLogic = "AND";
+                    $(this).text("Filter Logic: AND");
+                }
+                applyFilter(currentLogic);
+            });
 
             //table for modules
             var mTable = $('table#MemoryRanges').dataTable({
@@ -378,166 +391,140 @@
                     }
                 ], //end of column def
                 initComplete: function () {
-                    //Setup the filters
-                    this.api().column(2).every(function () {
+                    var tableApi = this.api();
+
+                    tableApi.columns().every(function () {
                         var column = this;
-                        var select = $("#PageSizeFilter").on('change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
+                        var select;
 
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 2 - Page Size
-
-                    this.api().column(6).every(function () {
-                        var column = this;
-                        var select = $("#ExecuteFilter").on('change', function () {
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 6 - execute Attribute
-
-                    this.api().column(4).every(function () {
-                        var column = this;
-                        var select = $("#PresentFilter").on('change', function () {
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 4 - Present Attribute
-
-                    this.api().column(5).every(function () {
-                        var column = this;
-                        var select = $("#RWFilter").on('change', function () {
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 5 - RW attribute
-
-                    this.api().column(7).every(function () {
-                        var column = this;
-                        var select = $("#PrivilegeFilter").on('change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column.search(SearchRegex, true, false).draw();
-                        }); // on change
+                        switch (column.index()) {
+                            case 2:
+                                select = $("#PageSizeFilter");
+                                break;
+                            case 4:
+                                select = $("#PresentFilter");
+                                break;
+                            case 6:
+                                select = $("#ExecuteFilter");
+                                break;
+                            case 5:
+                                select = $("#RWFilter");
+                                break;
+                            case 7:
+                                select = $("#PrivilegeFilter");
+                                break;
+                            case 8:
+                                select = $("#MemoryTypeFilter");
+                                break;
+                            case 9:
+                                select = $("#MemorySpaceTypeFilter");
+                                break;
+                            case 10:
+                                select = $("#SectionFilter");
+                                break;
+                            case 11:
+                                select = $("#SpecialMemoryRegionsFilter");
+                                break;
+                            case 12:
+                                select = $("#MemoryContentsFilter");
+                                break;
+                            default:
+                                console.log("Unhandled column index in init:", column.index());
+                                return;
+                        }
 
                         column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 7 - Privilege (User / Supervisor)
-
-                    this.api().column(10).every(function () {
-                        var column = this;
-                        var select = $("#SectionFilter").on('change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column.search(SearchRegex, true, false).draw();
-                        }); // on change
-
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 10 - Section Type for code/data sections
-
-                    this.api().column(8).every(function () {
-                        var column = this;
-                        var select = $("#MemoryTypeFilter").on('change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 8 - Memory Type
-
-                    this.api().column(9).every(function () {
-                        var column = this;
-                        var select = $("#MemorySpaceTypeFilter").on('change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 9 - GCD Memory Type
-
-                    this.api().column(11).every(function () {
-                        var column = this;
-                        var select = $("#SpecialMemoryRegionsFilter").on('change', function () {
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>')
-                        });
-                    }); //column 11 - special Memory Type
-
-
-                    this.api().column(12).every(function () {
-                        var column = this;
-                        var select = $("#MemoryContentsFilter").on('change', function () {
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-
-                        //populate with options
-                        column.data().unique().sort().each(function (d, j) {
-                            if (d === null) {
-                                d = "Nothing Found";  //this must align with the default content
+                            if (d !== null) {
+                                select.append('<option value="' + d + '">' + d + '</option>');
                             }
-                            select.append('<option value="' + d + '">' + d + '</option>')
                         });
-                    }); //column 12 - Memory Contents
-                } //end init complete func
-            }) //end of modules table 
+                    });
+
+                    $(".selectpicker").on("change", function () {
+                        applyFilter(currentLogic);
+                    });
+                }
+            })
+
+            var columnKeyMapping = {
+                "Page Size": "PageSize",
+                "Present": "Present",
+                "Read/Write": "RW",
+                "Execute": "Execute",
+                "Privilege": "Privilege",
+                "UEFI Memory Type": "MemoryType",
+                "GCD Memory Type": "MemorySpaceType",
+                "Section Type": "SectionType",
+                "Special Memory Usage": "SpecialMemoryRegions",
+                "UEFI Memory Contents": "MemoryContents"
+            };
+
+            function applyFilter(logic) {
+                $.fn.dataTable.ext.search = [];
+
+                var selectedValues = {
+                    PageSize: $("#PageSizeFilter").val(),
+                    Execute: $("#ExecuteFilter").val(),
+                    Present: $("#PresentFilter").val(),
+                    RW: $("#RWFilter").val(),
+                    Privilege: $("#PrivilegeFilter").val(),
+                    MemoryType: $("#MemoryTypeFilter").val(),
+                    MemorySpaceType: $("#MemorySpaceTypeFilter").val(),
+                    SpecialMemoryRegions: $("#SpecialMemoryRegionsFilter").val(),
+                    MemoryContents: $("#MemoryContentsFilter").val(),
+                    SectionType: $("#SectionFilter").val()
+                }
+
+                // Check if filters are selected
+                var noFiltersSelected = Object.values(selectedValues).every(arr => arr.length === 0);
+                if (noFiltersSelected) {
+                    mTable.api().search('').columns().search('').draw();
+                    return;
+                }
+
+                var searchRegexes = {
+                    PageSize: CreateRegexForSearchMultiselect(selectedValues.PageSize),
+                    Execute: CreateRegexForSearchMultiselect(selectedValues.Execute),
+                    Present: CreateRegexForSearchMultiselect(selectedValues.Present),
+                    RW: CreateRegexForSearchMultiselect(selectedValues.RW),
+                    Privilege: CreateRegexForSearchMultiselect(selectedValues.Privilege),
+                    MemoryType: CreateRegexForSearchMultiselect(selectedValues.MemoryType),
+                    MemorySpaceType: CreateRegexForSearchMultiselect(selectedValues.MemorySpaceType),
+                    SpecialMemoryRegions: CreateRegexForSearchMultiselect(selectedValues.SpecialMemoryRegions),
+                    MemoryContents: CreateRegexForSearchMultiselect(selectedValues.MemoryContents),
+                    SectionType: CreateRegexForSearchMultiselect(selectedValues.SectionType)
+                };
+
+                if (logic === "AND") {
+                    mTable.api().columns().every(function () {
+                        var columnTitle = this.header().textContent.trim();
+                        var searchKey = columnKeyMapping[columnTitle];
+                        if (searchRegexes[searchKey]) {
+                            this.search(searchRegexes[searchKey], true, false);
+                        } else {
+                            this.search('');
+                        }
+                    });
+                } else if (logic === "OR") {
+                    mTable.api().columns().search('');
+
+                    // Push our custom search function
+                    $.fn.dataTable.ext.search.push(function (settings, searchData, index, rowData, counter) {
+                        for (var key in columnKeyMapping) {
+                            var columnTitle = key;
+                            var searchKey = columnKeyMapping[columnTitle];
+                            var regexStr = searchRegexes[searchKey];
+                            var regex = new RegExp(regexStr);
+                            if (regexStr && regex.test(searchData[settings.aoColumns.findIndex(col => col.sTitle === columnTitle)])) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+
+                }
+                mTable.api().draw();
+            }
 
             /** Memory Range JSON looks like: 
             {"Page Size": "4k", 
@@ -666,19 +653,12 @@
 
         function CreateRegexForSearchMultiselect(mylist) {
             var re = '';
-            // console.log(mylist);
             mylist.forEach(function (v, i, a) {
                 if (i > 0) {
                     re += "|";
-                } else {
-                    re += "("
                 }
-                re += '^' + $.fn.dataTable.util.escapeRegex(v) + '?';
+                re += '^' + $.fn.dataTable.util.escapeRegex(v) + '$';
             });
-            if (re !== '') {
-                re += ")"
-            }
-            // console.log(re);
             return re;
         }
 
