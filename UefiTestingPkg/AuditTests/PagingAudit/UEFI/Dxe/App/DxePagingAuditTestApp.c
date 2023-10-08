@@ -137,8 +137,6 @@ FreePageTableMap (
 /**
   Populate the global flat page table map.
 
-  @param[in] Context            Unit test context.
-
   @retval EFI_SUCCESS           The page table is parsed successfully.
   @retval EFI_OUT_OF_RESOURCES  Failed to allocate memory for the page table map.
   @retval EFI_INVALID_PARAMETER An error occurred while parsing the page table.
@@ -168,7 +166,7 @@ PopulatePageTableMap (
 
     if (mMap.Entries == NULL) {
       UT_LOG_ERROR ("Failed to allocate %d pages for page table map!\n", mMap.EntryPagesAllocated);
-      return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
+      return EFI_OUT_OF_RESOURCES;
     }
 
     Status = CreateFlatPageTable (&mMap);
@@ -214,6 +212,9 @@ FreeNonProtectedImageList (
 
 /**
   Populates the mNonProtectedImageList global
+
+  @retval EFI_SUCCESS   The non-protected image list is populated successfully.
+  @retval other         An error occurred while populating the non-protected image list.
 **/
 STATIC
 EFI_STATUS
