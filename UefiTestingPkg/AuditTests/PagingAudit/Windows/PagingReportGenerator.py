@@ -230,8 +230,13 @@ class ParsingTool(object):
             template = open(os.path.join(sp, "SmmPaging_template.html"), "r")
 
         for line in template.readlines():
-            if "%TO_BE_FILLED_IN_BY_PYTHON_SCRIPT%" in line:
-                line = line.replace("%TO_BE_FILLED_IN_BY_PYTHON_SCRIPT%", js)
+            if "% TO_BE_FILLED_IN_BY_PYTHON_SCRIPT %" in line:
+                line = line.replace("% TO_BE_FILLED_IN_BY_PYTHON_SCRIPT %", js)
+            if "% IS_MEMORY_ATTRIBUTE_PROTOCOL_PRESENT %" in line:
+                if Globals.MemoryAttributeProtocolPresent != "":
+                    line = line.replace("% IS_MEMORY_ATTRIBUTE_PROTOCOL_PRESENT %", "\"" + Globals.MemoryAttributeProtocolPresent + "\"")
+                else:
+                    line = line.replace("% IS_MEMORY_ATTRIBUTE_PROTOCOL_PRESENT %", "\"FALSE\"")
             f.write(line)
         template.close()
         f.close()

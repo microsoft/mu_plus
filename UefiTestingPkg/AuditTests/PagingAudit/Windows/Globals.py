@@ -8,3 +8,4 @@ ParsingArchitecture = ""
 ExecutionLevel = ""
 Phase = ""
 Bitwidth = 0
+MemoryAttributeProtocolPresent = ""
