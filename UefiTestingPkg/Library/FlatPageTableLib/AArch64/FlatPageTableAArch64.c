@@ -314,6 +314,7 @@ CreateFlatPageTable (
     );
 
   if (LocalEntryCount > Map->EntryCount) {
+    Map->EntryCount = LocalEntryCount;
     return EFI_BUFFER_TOO_SMALL;
   }
 
