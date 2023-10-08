@@ -76,7 +76,6 @@ GetFlatPageTableData (
   UINTN       NumPage1GNotPresent = 0;
   UINT64      RootEntryCount      = 0;
   UINT64      Address;
-  BOOLEAN     Valid;
 
   //  Count parameters should be provided.
   if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (PdeCount == NULL) || (GuardCount == NULL)) {
@@ -117,13 +116,12 @@ GetFlatPageTableData (
     for (Index1 = 0x0; Index1 < TT_ENTRY_COUNT; Index1++ ) {
       Index2 = 0;
       Index3 = 0;
-      Valid  = TRUE;
       if ((Pte1G[Index1] & 0x1) == 0) {
         NumPage1GNotPresent++;
-        Valid = FALSE;
+        continue;
       }
 
-      if (!IS_BLOCK (Pte1G[Index1], 1) && Valid) {
+      if (!IS_BLOCK (Pte1G[Index1], 1)) {
         Pte2M = (UINT64 *)(Pte1G[Index1] & TT_ADDRESS_MASK);
 
         MyPdeCount++;
@@ -133,13 +131,12 @@ GetFlatPageTableData (
 
         for (Index2 = 0x0; Index2 < TT_ENTRY_COUNT; Index2++ ) {
           Index3 = 0;
-          Valid  = TRUE;
           if ((Pte2M[Index2] & 0x1) == 0) {
             NumPage2MNotPresent++;
-            Valid = FALSE;
+            continue;
           }
 
-          if (!IS_BLOCK (Pte2M[Index2], 2) && Valid) {
+          if (!IS_BLOCK (Pte2M[Index2], 2)) {
             Pte4K = (UINT64 *)(Pte2M[Index2] & TT_ADDRESS_MASK);
             MyPdeCount++;
 
