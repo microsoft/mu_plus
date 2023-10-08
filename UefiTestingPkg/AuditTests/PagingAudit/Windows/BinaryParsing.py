@@ -54,6 +54,8 @@ def ParsePlatforminfofile(fileName):
             Globals.Bitwidth = int(row[1])
         elif row[0] == "Phase":
             Globals.Phase = row[1]
+        elif row[0] == "MemoryAttributeProtocolPresent":
+            Globals.MemoryAttributeProtocolPresent = row[1]
         else:
             logging.error("Unknown key found in PlatformInfo.dat: %s" % row[0])
 

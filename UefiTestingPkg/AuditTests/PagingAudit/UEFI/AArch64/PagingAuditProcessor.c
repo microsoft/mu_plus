@@ -8,6 +8,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/ArmLib.h>
+#include <Protocol/MemoryAttribute.h>
 #include "../PagingAuditCommon.h"
 
 extern MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol;
@@ -251,10 +252,11 @@ DumpPlatforminfo (
   VOID
   )
 {
-  CHAR8  TempString[MAX_STRING_SIZE];
-  UINTN  ExecutionLevel;
-  CHAR8  *ElString;
-  UINTN  StringIndex;
+  CHAR8                          TempString[MAX_STRING_SIZE];
+  UINTN                          ExecutionLevel;
+  CHAR8                          *ElString;
+  UINTN                          StringIndex;
+  EFI_MEMORY_ATTRIBUTE_PROTOCOL  *MemoryAttributeProtocol;
 
   ExecutionLevel = ArmReadCurrentEL ();
 
@@ -268,13 +270,17 @@ DumpPlatforminfo (
     ElString = "Unknown";
   }
 
+  MemoryAttributeProtocol = NULL;
+  gBS->LocateProtocol (&gEfiMemoryAttributeProtocolGuid, NULL, (VOID **)&MemoryAttributeProtocol);
+
   // Dump the execution level of UEFI
   StringIndex = AsciiSPrint (
                   &TempString[0],
                   MAX_STRING_SIZE,
-                  "Architecture,AARCH64\nBitwidth,%d\nPhase,DXE\nExecutionLevel,%a\n",
+                  "Architecture,AARCH64\nBitwidth,%d\nPhase,DXE\nExecutionLevel,%a\nMemoryAttributeProtocolPresent,%a\n",
                   CalculateMaximumSupportAddressBits (),
-                  ElString
+                  ElString,
+                  (MemoryAttributeProtocol == NULL) ?  "FALSE" : "TRUE"
                   );
 
   WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
