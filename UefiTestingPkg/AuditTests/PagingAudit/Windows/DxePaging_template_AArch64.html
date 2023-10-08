@@ -524,17 +524,33 @@
              **/
             var SavedFilters = [];
             SavedFilters.push({
-                "Name": "RW+X",
-                "Description": "No memory range should have page attributes that allow read, write, and execute",
+                "Name": "NULL Page Check",
+                "Description": "NULL page should be EFI_MEMORY_RP",
                 "Filter": function (mrObject) {
-                    if ((mrObject["Execute"] !== "Disabled") && (mrObject["Read/Write"] === "Enabled") && (mrObject["Access Flag"] === "Yes") && (mrObject["GCD Memory Type"] !== "EfiGcdMemoryTypeNonExistent")) {
-                        return true;
-                    }
-                    return false;
+                    var isTargetType = mrObject["System Memory"] === "NULL Page";
+                    var hasInvalidAttributes = mrObject["Access Flag"] !== "No";
+                    return isTargetType && hasInvalidAttributes;
                 }, //end of Filter function
                 "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    SetMultiselectTo("ExecuteFilter", ["UX", "PX", "UX/PX", "Enabled"])
+                    SetMultiselectTo("SpecialMemoryRegionsFilter", ["NULL Page"]);
+                    return true;
+                } //end of configuring filter inputs
+            });
+
+            SavedFilters.push({
+                "Name": "RW+X",
+                "Description": "No memory range should have page attributes that allow read, write, and execute",
+                "Filter": function (mrObject) {
+                    isTargetType = (mrObject["GCD Memory Type"] !== "EfiGcdMemoryTypeNonExistent");
+                    hasInvalidAttributes = (mrObject["Execute"] === "Enabled") &&
+                        (mrObject["Read/Write"] === "Enabled") &&
+                        (mrObject["Access Flag"] === "Yes");
+                    return isTargetType && hasInvalidAttributes;
+                },
+                "ConfigureFilter": function () {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    SetMultiselectTo("ExecuteFilter", ["Enabled"])
                     SetMultiselectTo("AccessFlagFilter", ["Yes"])
                     SetMultiselectTo("RWFilter", ["Enabled"])
                     SetMultiselectTo("MemorySpaceTypeFilter",
@@ -553,14 +569,13 @@
                 "Name": "Data Sections are No-Execute",
                 "Description": "Image data sections should be no-execute",
                 "Filter": function (mrObject) {
-                    if ((mrObject["Execute"] !== "Disabled") && (mrObject["Section Type"] === "DATA")) {
-                        return true;
-                    }
-                    return false;
+                    isTargetType = (mrObject["Section Type"] === "DATA");
+                    hasInvalidAttributes = (mrObject["Execute"] === "Enabled");
+                    return isTargetType && hasInvalidAttributes;
                 }, //end of Filter function
                 "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    SetMultiselectTo("ExecuteFilter", ["UX", "PX", "UX/PX", "Enabled"])
+                    SetMultiselectTo("ExecuteFilter", ["Disabled"])
                     SetMultiselectTo("SectionFilter", ["DATA"])
                     return true;
                 } //end of configuring filter inputs
@@ -570,15 +585,66 @@
                 "Name": "Code Sections are Read-Only",
                 "Description": "Image code sections should be read-only",
                 "Filter": function (mrObject) {
-                    if ((mrObject["Read/Write"] === "Enabled") && (mrObject["Section Type"] === "CODE")) {
-                        return true;
-                    }
-                    return false;
+                    isTargetType = (mrObject["Section Type"] === "CODE");
+                    hasInvalidAttributes = (mrObject["Read/Write"] === "Enabled");
+                    return isTargetType && hasInvalidAttributes;
                 }, //end of Filter function
                 "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click();  //clear the filters
                     SetMultiselectTo("RWFilter", ["Enabled"])
                     SetMultiselectTo("SectionFilter", ["CODE"])
+                    return true;
+                } //end of configuring filter inputs
+            });
+
+            SavedFilters.push({
+                "Name": "MMIO Execute Check",
+                "Description": "MMIO ranges should be non executable",
+                "Filter": function (mrObject) {
+                    var isTargetType = (mrObject["GCD Memory Type"] === "EfiGcdMemoryTypeMemoryMappedIo") ||
+                        (mrObject["Memory Type"] === "EfiMemoryMappedIO");
+                    var hasInvalidAttributes = (mrObject["Execute"] !== "Disabled") &&
+                        (mrObject["Access Flag"] !== "No");
+                    return isTargetType && hasInvalidAttributes;
+                }, //end of Filter function
+                "ConfigureFilter": function () {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    SetMultiselectTo("MemorySpaceTypeFilter", ["EfiGcdMemoryTypeMemoryMappedIo"]);
+                    SetMultiselectTo("MemoryTypeFilter", ["EfiMemoryMappedIO"]);
+                    SetMultiselectTo("ExecuteFilter", ["Enabled"]);
+                    SetMultiselectTo("AccessFlagFilter", ["Yes"]);
+                    return true;
+                } //end of configuring filter inputs
+            });
+
+            SavedFilters.push({
+                "Name": "Free Memory Check",
+                "Description": "Free EFI memory should not be readable",
+                "Filter": function (mrObject) {
+                    var isTargetType = mrObject["Memory Type"] === "EfiConventionalMemory";
+                    var hasInvalidAttributes = mrObject["Access Flag"] !== "No";
+                    return isTargetType && hasInvalidAttributes;
+                }, //end of Filter function
+                "ConfigureFilter": function () {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    SetMultiselectTo("MemoryTypeFilter", ["EfiConventionalMemory"]);
+                    SetMultiselectTo("AccessFlagFilter", ["Yes"]);
+                    return true;
+                } //end of configuring filter inputs
+            });
+
+            SavedFilters.push({
+                "Name": "Check Memory Not in EFI Memory Map is Inaccessible",
+                "Description": "Memory not in the EFI memory map should cause a fault if accessed",
+                "Filter": function (mrObject) {
+                    var isTargetType = mrObject["Memory Type"] === "None";
+                    var hasInvalidAttributes = mrObject["Access Flag"] !== "No";
+                    return isTargetType && hasInvalidAttributes;
+                }, //end of Filter function
+                "ConfigureFilter": function () {
+                    $("button#ClearAllFilter").click();  //clear the filters
+                    SetMultiselectTo("MemoryTypeFilter", ["None"]);
+                    SetMultiselectTo("AccessFlagFilter", ["Yes"]);
                     return true;
                 } //end of configuring filter inputs
             });
@@ -607,6 +673,16 @@
                     b.appendTo("div#TestStatusListWrapper");
                 }
             });
+
+            var testName = "Memory Attribute Protocol is Installed";
+            var testDescription = "Checks if the platform produces the memory attribute protocol";
+            if (IsMemoryAttributeProtocolPresent === "TRUE") {
+                var b = $("<div class='TestStatus bg-success'><h4>" + testName + "</h4><p>Description:" + testDescription + "<br />Status: Success</p></div>");
+                b.appendTo("div#TestStatusListWrapper");
+            } else {
+                var b = $("<div class='TestStatus bg-danger'><h4>" + testName + "</h4><p>Description:" + testDescription + "<br />Status: Failed</p></div>");
+                b.appendTo("div#TestStatusListWrapper");
+            }
 
             $('div#tabs-3 select.selectpicker').selectpicker("refresh").change();
 
@@ -672,7 +748,6 @@
             @ret boolean status of setting all requested values
         **/
         function SetMultiselectTo(selectName, listOfValuesSelected) {
-            //var allOptions = $("select#" + selectName +" > option").map(function() { return $(this).val(); }).get(); //create array
             $.each($("select#" + selectName + " option"), function (i, v) {
                 var index = listOfValuesSelected.indexOf($(v).text());
                 if (index > -1) {
@@ -685,9 +760,6 @@
             });
             $("select#" + selectName).change();
             $("select#" + selectName).selectpicker('refresh');
-            listOfValuesSelected.forEach(function (v, i, a) {
-                AddAlert("Can't set " + selectName + " value to " + v, "warning");
-            });
             return (listOfValuesSelected.length === 0);
         }
 
