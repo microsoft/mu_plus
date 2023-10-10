@@ -252,11 +252,11 @@ class MemoryRange(object):
             self.Nx = 0
             self.Present = 0
 
-    def TteInit(self, PageSize, AccessFlag, ReadWrite, Sharability, Pxn, Uxn, VA, IsTable):
+    def TteInit(self, PageSize, AccessFlag, ReadWrite, Shareability, Pxn, Uxn, VA, IsTable):
         self.PageSize = PageSize
         self.AccessFlag = AccessFlag
         self.ReadWrite = 0 if (ReadWrite == 1) else 1
-        self.Sharability = Sharability
+        self.Shareability = Shareability
         self.Px = 0 if (Pxn == 1) else 1
         self.Ux = 0 if (Uxn == 1) else 1
         self.PhysicalStart = VA

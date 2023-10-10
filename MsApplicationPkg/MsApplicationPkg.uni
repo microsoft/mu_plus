@@ -1,0 +1,14 @@
+// /** @file
+// This package provides production independent applications for the UEFI
+// Firmware. That do not depend on the shell or any other UEFI application.
+// This is targetted at promoting to open source and should be aligned with
+// Tianocore standards
+//
+// Copyright (C) Microsoft Corporation. All rights reserved.
+// SPDX-License-Identifier: BSD-2-Clause-Patent
+// **/
+
+
+#string STR_PACKAGE_ABSTRACT            #language en-US "This Package provides all applications for MsApplication."
+
+#string STR_PACKAGE_DESCRIPTION         #language en-US "MsApplication is open source independent applications used by Microsoft"
