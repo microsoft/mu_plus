@@ -142,13 +142,24 @@ AdvancedLoggerWrite (
   // If LoggerInfo == NULL, assume there is a HdwPort and it has not been disabled. This
   // does occur in SEC
   if ((LoggerInfo == NULL) || (!LoggerInfo->HdwPortDisabled)) {
+    if (DebugLevel & PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
+      AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
+    }
+  }
+
  #else
   if ((LoggerInfo != NULL) && (!LoggerInfo->HdwPortDisabled)) {
+    // if we are at a high enough version to support HW_LVL logging, only call the HdwPortWrite if this DebugLevel
+    // is asked to be logged
+    // if we are at an older version, check the PCD to see if we should log this message
     if (LoggerInfo->Version >= ADVANCED_LOGGER_HW_LVL_VER) {
-      DebugLevel = (DebugLevel & LoggerInfo->HwPrintLevel);
+      if (DebugLevel & LoggerInfo->HwPrintLevel) {
+        AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
+      }
+    } else if (DebugLevel & PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
+      AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
     }
+  }
 
  #endif
-    AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
-  }
 }
