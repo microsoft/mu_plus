@@ -218,6 +218,10 @@ $VariablePrefix = "m${TestGroup}Intermediate0"
 $IntermediateParams = GetIntermediateCertificateParams $KeyLength $CommonName "Intermediate0" $RootCert.Cert
 $Intermediate0 = GenerateCertificate $IntermediateParams $VariableName $VariablePrefix
 
+$VariablePrefix = "m${TestGroup}Intermediate1"
+$IntermediateParams = GetIntermediateCertificateParams $KeyLength $CommonName "Intermediate1" $Intermediate0.Cert
+$Intermediate1 = GenerateCertificate $IntermediateParams $VariableName $VariablePrefix
+
 # =============================================================================
 #  Generates signature signed by one 4k end entity certificate
 # 1 Additional Certficiate(s)
@@ -228,8 +232,9 @@ $VariableData =  "Signed By Signer 1 certificate and intermediate certificate"
 # Variable Prefix must be different
 $VariablePrefix = "mSigner1${TestGroup}"
 
-$EndEntityParams = GetEndEntityCertificateParams $KeyLength $CommonName "Signer1" $Intermediate2.Cert
+$EndEntityParams = GetEndEntityCertificateParams $KeyLength $CommonName "Signer1" $Intermediate0.Cert
 $IntialCertificate = GenerateCertificate $EndEntityParams $VariableName $VariablePrefix
+
 $ret = GenerateTestData $VariableName $VariablePrefix $VariableData @($IntialCertificate.CertInfo, $Intermediate0.CertInfo) $null @()
 if (!$ret) {
     Exit
@@ -245,9 +250,9 @@ $VariableData =  "Signed By Signer 2 certificate and intermediate certificate"
 # Variable Prefix must be different
 $VariablePrefix = "mSigner2${TestGroup}"
 
-$EndEntityParams = GetEndEntityCertificateParams $KeyLength $CommonName "Signer2" $Intermediate2.Cert
+$EndEntityParams = GetEndEntityCertificateParams $KeyLength $CommonName "Signer2" $Intermediate0.Cert
 $ReplacementCertificate = GenerateCertificate $EndEntityParams $VariableName $VariablePrefix
-$ret = GenerateTestData $VariableName $VariablePrefix $VariableData @($ReplacementCertificate.CertInfo, $Intermediate0.CertInfo) $null @()
+$ret = GenerateTestData $VariableName $VariablePrefix $VariableData @($ReplacementCertificate.CertInfo, $Intermediate1.CertInfo) $null @()
 if (!$ret) {
     Exit
 }

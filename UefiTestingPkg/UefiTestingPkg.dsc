@@ -103,6 +103,8 @@
   PciLib|MdePkg/Library/BasePciLibCf8/BasePciLibCf8.inf
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciSegmentLib|MdePkg/Library/BasePciSegmentLibPci/BasePciSegmentLibPci.inf
+  MemoryAllocationLib           |MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
+
 
 [LibraryClasses.X64]
   RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
@@ -141,6 +143,7 @@
   UefiTestingPkg/FunctionalSystemTests/MorLockTestApp/MorLockTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MpManagement/App/MpManagementTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MemoryAttributeProtocolFuncTestApp/MemoryAttributeProtocolFuncTestApp.inf
+  UefiTestingPkg/AuditTests/AuthenticatedVariablesAudit/UEFIBasicUsageTests/AuthenticatedVariablesBasicTest.inf
 
 [Components.IA32, Components.X64]
   UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMAIVRSProtectionUnitTestApp.inf
@@ -152,6 +155,7 @@
   UefiTestingPkg/FunctionalSystemTests/SmmPagingProtectionsTest/Smm/SmmPagingProtectionsTestStandaloneMm.inf
   UefiTestingPkg/Library/PlatformSmmProtectionsTestLibNull/PlatformSmmProtectionsTestLibNull.inf
   UefiTestingPkg/PerfTests/BlockIoPerfTest/BlockIoPerfTest.inf
+  
 
 [Components.X64]
   # NOTE: These currently have source files that are only implemented for X64.
