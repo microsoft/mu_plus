@@ -26,4 +26,4 @@ extern UINT8  mSigner1MultipleSignersSupportMockVarEmpty[4256];
 extern UINT8  mSigner2MultipleSignersSupportMockVar[4309];
 extern UINT8  mSigner2MultipleSignersSupportMockVarExpected[60];
 extern UINT8  mSigner2MultipleSignersSupportMockVarEmpty[4250];
-#endif AUTH_DATA_H_
+#endif // AUTH_DATA_H_

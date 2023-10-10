@@ -45,4 +45,4 @@ extern UINT8 mPreventRollbackFutureVariableMockVar[2211];
 extern UINT8 mPreventRollbackFutureVariableMockVarExpected[76];
 
 extern UINT8 mPreventRollbackFutureVariableMockVarEmpty[2136];
-#endif AUTH_DATA_H_
+#endif // AUTH_DATA_H_
