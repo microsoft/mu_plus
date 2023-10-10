@@ -1,0 +1,42 @@
+## @file
+# Secure Boot Keys Audit built for execution in UEFI Shell.
+#
+# Copyright (c) Microsoft Corporation.<BR>
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION    = 0x00010006
+  BASE_NAME      = AuthenticatedVariablesBasicTest
+  FILE_GUID      = 9E8F461A-17E1-4312-B49C-E66F0A88EA8B
+  MODULE_TYPE    = UEFI_APPLICATION
+  VERSION_STRING = 1.0
+  ENTRY_POINT    = AuthenticatedVariablesBasicTestMain
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+[Guids]
+  gUefiTestingPkgTokenSpaceGuid ## Consumes
+
+[Sources]
+  AuthenticatedVariablesBasicTest.c
+  AuthData.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiTestingPkg/UefiTestingPkg.dec
+
+[LibraryClasses]
+  UefiApplicationEntryPoint
+  BaseLib
+  DebugLib
+  UnitTestLib
+  PrintLib
+  MemoryAllocationLib
+
+[Pcd]
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask
