@@ -37,7 +37,8 @@
   SynchronizationLib
 
 [Pcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## SOMETIMES_CONSUMES
 
 [Depex]
   TRUE
