@@ -248,8 +248,9 @@ The v3 data header supports a new field of hardware debugging level to support s
 during boot time.
 
 All debug prints will be filtered by multiple build time flags, such as `PcdDebugPrintErrorLevel`, `MDEPKG_NDEBUG`, etc.
-These prints that passes such filters will be logged to memory, and then fed to the hardware port library to be checked
+Prints that pass such filters will be logged to memory, and then fed to the hardware port library to be checked
 against the hardware print level. A full data flow chart is shown below:
+
 
 ![Debug Logging Level Filters](debug_log_level.png)
 
