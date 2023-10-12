@@ -251,7 +251,6 @@ All debug prints will be filtered by multiple build time flags, such as `PcdDebu
 Prints that pass such filters will be logged to memory, and then fed to the hardware port library to be checked
 against the hardware print level. A full data flow chart is shown below:
 
-
 ![Debug Logging Level Filters](debug_log_level.png)
 
 The default value will be initialized to the value of `PcdAdvancedLoggerHdwPortDebugPrintErrorLevel` in the PEI core,
