@@ -723,7 +723,6 @@ ReadDescriptors (
 
   Status = UsbGetFullHidDescriptor (UsbHidDevice->UsbIo, UsbHidDevice->InterfaceDescriptor.InterfaceNumber, &UsbHidDevice->HidDescriptor);
   if (EFI_ERROR (Status)) {
-    ASSERT_EFI_ERROR (Status);
     goto ErrorExit;
   }
 
@@ -895,7 +894,6 @@ UsbHidDriverBindingStart (
 
   Status = ReadDescriptors (UsbHidDevice);
   if (EFI_ERROR (Status)) {
-    ASSERT_EFI_ERROR (Status);
     goto ErrorExit;
   }
 
