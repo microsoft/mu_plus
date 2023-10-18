@@ -35,8 +35,9 @@
   UefiUsbLib
 
 [Protocols]
-  gHidIoProtocolGuid
-  gEfiUsbIoProtocolGuid
+  gHidIoProtocolGuid    ## PRODUCES
+  gEfiUsbIoProtocolGuid ## CONSUMES
 
 [Pcd]
-  gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue  ## CONSUMES
+  gEfiMdePkgTokenSpaceGuid.PcdUsbTransferTimeoutValue
+  gHidPkgTokenSpaceGuid.PcdExcludedHidDevices

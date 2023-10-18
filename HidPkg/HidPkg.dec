@@ -35,6 +35,13 @@
   gHidKeyboardLayoutPackageGuid      = {0x57adcfa9, 0xc08a, 0x40b9, {0x86, 0x87, 0x65, 0xe2, 0xec, 0xe0, 0xe5, 0xe1}}
   gHidKeyboardLayoutKeyGuid          = {0xdcafaba8, 0xcde5, 0x40a1, {0x9a, 0xd3, 0x48, 0x76, 0x44, 0x71, 0x7e, 0x47}}
 
+[PcdsFixedAtBuild, PcdsPatchableInModule]
+  ## List of {InterfaceClass, InterfaceSubClass, InterfaceProtocol} tuples that should be excluded from being managed by
+  # the UsbHidDxe driver. The list is terminated by a record of all zeros.
+  # For example, to exclude USB keyboards, this would be set to {0x3, 0x1, 0x1, 0x0, 0x0, 0x0}
+  # @Prompt Exclude devices from UsbHidDxe management.
+  gHidPkgTokenSpaceGuid.PcdExcludedHidDevices|{0x0, 0x0, 0x0}|VOID*|0x00010100
+
 [PcdsFeatureFlag]
   ## Indicates if HID KeyBoard Driver disables the default keyboard layout.
   #  The default keyboard layout serves as the backup when no keyboard layout can be retrieved
