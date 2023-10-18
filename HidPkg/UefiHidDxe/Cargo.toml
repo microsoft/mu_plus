@@ -14,7 +14,6 @@ path = "src/main.rs"
 test = false
 
 [dependencies]
-AbsolutePointer = {workspace=true}
 HidIo = {workspace=true}
 hidparser = {workspace=true}
 memoffset = {workspace=true}
