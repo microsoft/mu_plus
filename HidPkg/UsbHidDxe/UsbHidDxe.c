@@ -30,6 +30,17 @@
 #define SUBCLASS_BOOT      1
 #define PROTOCOL_KEYBOARD  1
 
+//
+// A common header for usb standard descriptor.
+// Each stand descriptor has a length and type.
+//
+#pragma pack(1)
+typedef struct {
+  UINT8    Len;
+  UINT8    Type;
+} USB_DESC_HEAD;
+#pragma pack()
+
 #define USB_HID_DEV_SIGNATURE  SIGNATURE_32('U','H','I','D')
 
 typedef struct {
@@ -583,10 +594,10 @@ IsUsbHid (
 }
 
 /**
-  Retrieves the full HID descriptor for the given device.
+  Retrieves the full HID descriptor for the given interface.
 
   @param  UsbIo                 UsbIo interface used to read the HID descriptor
-  @param  Interface             Interface identifier.
+  @param  InterfaceDescriptor   InterfaceDescriptor to retrieve HID descriptor for.
   @param  HidDescriptor         Receives a pointer to a freshly allocated buffer containing the HID descriptor. Caller
                                 is required to free.
 
@@ -595,84 +606,95 @@ IsUsbHid (
 **/
 EFI_STATUS
 UsbGetFullHidDescriptor (
-  IN  EFI_USB_IO_PROTOCOL     *UsbIo,
-  IN  UINT8                   Interface,
-  OUT EFI_USB_HID_DESCRIPTOR  **HidDescriptor
+  IN  EFI_USB_IO_PROTOCOL           *UsbIo,
+  IN  EFI_USB_INTERFACE_DESCRIPTOR  *InterfaceDescriptor,
+  OUT EFI_USB_HID_DESCRIPTOR        **HidDescriptor
   )
 {
-  UINT32                  Status;
-  EFI_STATUS              Result;
-  EFI_USB_DEVICE_REQUEST  Request;
-  EFI_USB_HID_DESCRIPTOR  *TempDescriptor;
+  EFI_STATUS                 Status;
+  EFI_USB_CONFIG_DESCRIPTOR  ConfigDesc;
+  VOID                       *DescriptorBuffer;
+  UINT32                     TransferResult;
+  USB_DESC_HEAD              *DescriptorHeader;
+  UINT16                     DescriptorCursor;
+  EFI_USB_HID_DESCRIPTOR     *DiscoveredHidDescriptor;
 
-  // HID descriptor is variable length.
-  // First read enough of the descriptor to determine the full length.
-  TempDescriptor = AllocatePool (sizeof (EFI_USB_HID_DESCRIPTOR));
-  if (TempDescriptor == NULL) {
+  if ((UsbIo == NULL) || (InterfaceDescriptor == NULL) || (HidDescriptor == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  // Note: while the USB Device Class Definition for HID spec 1.11 specifies support for retrieving the HID descriptor
+  // using a class-specifc Get_Descriptor request, not all devices support this. So read the entire configuration
+  // descriptor instead, and parse it for the HID descriptor.
+
+  Status = UsbIo->UsbGetConfigDescriptor (UsbIo, &ConfigDesc);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  DescriptorBuffer = AllocateZeroPool (ConfigDesc.TotalLength);
+  if (DescriptorBuffer == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Request.RequestType = USB_HID_GET_DESCRIPTOR_REQ_TYPE;
-  Request.Request     = USB_REQ_GET_DESCRIPTOR;
-  Request.Value       = (UINT16)(USB_DESC_TYPE_HID << 8);
-  Request.Index       = Interface;
-  Request.Length      = (UINT16)sizeof (EFI_USB_HID_DESCRIPTOR);
-
-  Result = UsbIo->UsbControlTransfer (
-                    UsbIo,
-                    &Request,
-                    EfiUsbDataIn,
-                    PcdGet32 (PcdUsbTransferTimeoutValue),
-                    TempDescriptor,
-                    sizeof (EFI_USB_HID_DESCRIPTOR),
-                    &Status
-                    );
-  if (EFI_ERROR (Result)) {
-    DEBUG ((DEBUG_WARN, "[%a] unexpected failure reading HID descriptor: %r, Status: 0x%x\n", __FUNCTION__, Result, Status));
-    goto ErrorExit;
+  // Issuing Get_Descriptor(Configuration) request with total length returns the Configuration descriptor, all Interface
+  // descriptors, all Endpoint descriptors, and the HID descriptor for each interface.
+  Status = UsbGetDescriptor (
+             UsbIo,
+             (UINT16)((USB_DESC_TYPE_CONFIG << 8) | (ConfigDesc.ConfigurationValue - 1)),
+             0,
+             ConfigDesc.TotalLength,
+             DescriptorBuffer,
+             &TransferResult
+             );
+  if (EFI_ERROR (Status)) {
+    FreePool (DescriptorBuffer);
+    return Status;
   }
 
-  // If the whole descriptor was read (i.e. there is only one HID class descriptor), then just return.
-  if (TempDescriptor->Length == sizeof (EFI_USB_HID_DESCRIPTOR)) {
-    *HidDescriptor = TempDescriptor;
-    return EFI_SUCCESS;
+  // Locate the HID descriptor within the overall configuration descriptor buffer. The HID descriptor will immediately
+  // follow the interface descriptor. Refer to USB HID 1.11 section 7.1.
+  DiscoveredHidDescriptor = NULL;
+  DescriptorCursor        = 0;
+  DescriptorHeader        = (USB_DESC_HEAD *)DescriptorBuffer;
+  while (DescriptorCursor < ConfigDesc.TotalLength) {
+    if (DescriptorHeader->Type == USB_DESC_TYPE_INTERFACE) {
+      if ((((USB_INTERFACE_DESCRIPTOR *)DescriptorHeader)->InterfaceNumber == InterfaceDescriptor->InterfaceNumber) &&
+          (((USB_INTERFACE_DESCRIPTOR *)DescriptorHeader)->AlternateSetting == InterfaceDescriptor->AlternateSetting))
+      {
+        // The HID descriptor must immediately follow the interface descriptor.
+        DescriptorHeader = (USB_DESC_HEAD *)((UINT8 *)DescriptorBuffer + DescriptorCursor + DescriptorHeader->Len);
+        if (DescriptorHeader->Type == USB_DESC_TYPE_HID) {
+          // found the HID descriptor.
+          DiscoveredHidDescriptor = (EFI_USB_HID_DESCRIPTOR *)DescriptorHeader;
+        }
+
+        // If the HID descriptor exists, it must be at this point in the structure. So whether it was found or not,
+        // further searching is not required and the loop can be broken here.
+        break;
+      }
+    }
+
+    // move to next descriptor
+    DescriptorCursor += DescriptorHeader->Len;
+    DescriptorHeader  = (USB_DESC_HEAD *)((UINT8 *)DescriptorBuffer + DescriptorCursor);
   }
 
-  // If the descriptor is somehow _less_ in size than expected, bail out with an error.
-  if (TempDescriptor->Length < sizeof (EFI_USB_HID_DESCRIPTOR)) {
-    DEBUG ((DEBUG_ERROR, "[%a]Invalid sizeof (EFI_USB_HID_DESCRIPTOR): %d\n", __FUNCTION__, sizeof (EFI_USB_HID_DESCRIPTOR)));
-    Result = EFI_DEVICE_ERROR;
-    goto ErrorExit;
+  // if HID descriptor not found, free and return.
+  if (DiscoveredHidDescriptor == NULL) {
+    FreePool (DescriptorBuffer);
+    return EFI_UNSUPPORTED;
   }
 
-  // If there is more than one HID class descriptor, allocate and re-read the whole descriptor.
-  TempDescriptor = ReallocatePool (sizeof (EFI_USB_HID_DESCRIPTOR), TempDescriptor->Length, TempDescriptor);
-  if (TempDescriptor == NULL) {
+  // if found, copy it and return.
+  *HidDescriptor = AllocateCopyPool (DiscoveredHidDescriptor->Length, DiscoveredHidDescriptor);
+  FreePool (DescriptorBuffer);
+
+  if (*HidDescriptor == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Request.Length = (UINT16)TempDescriptor->Length;
-  Result         = UsbIo->UsbControlTransfer (
-                            UsbIo,
-                            &Request,
-                            EfiUsbDataIn,
-                            PcdGet32 (PcdUsbTransferTimeoutValue),
-                            *HidDescriptor,
-                            TempDescriptor->Length,
-                            &Status
-                            );
-
-  if (!EFI_ERROR (Result)) {
-    *HidDescriptor = TempDescriptor;
-    return EFI_SUCCESS;
-  }
-
-ErrorExit:
-  if (EFI_ERROR (Result) && (TempDescriptor != NULL)) {
-    FreePool (TempDescriptor);
-  }
-
-  return Result;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -692,6 +714,8 @@ ReadDescriptors (
   UINT8                        Index;
   EFI_USB_ENDPOINT_DESCRIPTOR  EndpointDescriptor;
 
+  DEBUG ((DEBUG_INFO, "[%a:%d] getting descriptors.\n", __FUNCTION__, __LINE__));
+
   ZeroMem (&UsbHidDevice->IntInEndpointDescriptor, sizeof (UsbHidDevice->IntInEndpointDescriptor));
 
   Status = UsbHidDevice->UsbIo->UsbGetInterfaceDescriptor (UsbHidDevice->UsbIo, &UsbHidDevice->InterfaceDescriptor);
@@ -699,6 +723,16 @@ ReadDescriptors (
     ASSERT_EFI_ERROR (Status);
     goto ErrorExit;
   }
+
+  DEBUG ((
+    DEBUG_INFO,
+    "[%a:%d] interface class: 0x%x, subclass: 0x%x, protocol: 0x%x.\n",
+    __FUNCTION__,
+    __LINE__,
+    UsbHidDevice->InterfaceDescriptor.InterfaceClass,
+    UsbHidDevice->InterfaceDescriptor.InterfaceSubClass,
+    UsbHidDevice->InterfaceDescriptor.InterfaceProtocol
+    ));
 
   for (Index = 0; Index < UsbHidDevice->InterfaceDescriptor.NumEndpoints; Index++) {
     Status = UsbHidDevice->UsbIo->UsbGetEndpointDescriptor (UsbHidDevice->UsbIo, Index, &EndpointDescriptor);
@@ -721,7 +755,7 @@ ReadDescriptors (
     goto ErrorExit;
   }
 
-  Status = UsbGetFullHidDescriptor (UsbHidDevice->UsbIo, UsbHidDevice->InterfaceDescriptor.InterfaceNumber, &UsbHidDevice->HidDescriptor);
+  Status = UsbGetFullHidDescriptor (UsbHidDevice->UsbIo, &UsbHidDevice->InterfaceDescriptor, &UsbHidDevice->HidDescriptor);
   if (EFI_ERROR (Status)) {
     goto ErrorExit;
   }
