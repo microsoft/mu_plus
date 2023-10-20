@@ -6,7 +6,6 @@ edition = "2021"
 [[bin]]
 name = "HelloWorldRustDxe"
 path = "src/main.rs"
-test = false
 
 [dependencies]
 r-efi = {workspace=true}
