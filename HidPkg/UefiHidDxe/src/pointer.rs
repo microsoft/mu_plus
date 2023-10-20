@@ -18,7 +18,7 @@ use hidparser::{
   ReportDescriptor, ReportField, VariableField,
 };
 use memoffset::{offset_of, raw_field};
-use r_efi::{efi, protocols::driver_binding, system};
+use r_efi::{efi, protocols::absolute_pointer, protocols::driver_binding, system};
 use rust_advanced_logger_dxe::{debugln, DEBUG_INFO, DEBUG_WARN};
 
 use crate::{hid::HidContext, BOOT_SERVICES};
@@ -53,10 +53,9 @@ struct PointerReportData {
 /// Context structure used to track data for this pointer device.
 /// Safety: this structure is shared across FFI boundaries, and pointer arithmetic is used on its contents, so it must
 /// remain #[repr(C)], and Rust aliasing and concurrency rules must be manually enforced.
-#[derive(Debug)]
 #[repr(C)]
 pub struct PointerContext {
-  absolute_pointer: absolute_pointer::protocol::Protocol,
+  absolute_pointer: absolute_pointer::Protocol,
   pub handler: PointerHandler,
   controller: efi::Handle,
   hid_context: *mut HidContext,
@@ -69,7 +68,7 @@ pub struct PointerHandler {
   supported_usages: BTreeSet<Usage>,
   report_id_present: bool,
   state_changed: bool,
-  current_state: absolute_pointer::protocol::AbsolutePointerState,
+  current_state: absolute_pointer::State,
 }
 
 impl PointerHandler {
@@ -156,7 +155,7 @@ impl PointerHandler {
     // Create pointer context. This context is shared across FFI boundary, so use Box::into_raw.
     // After creation, the only way to access the context (including the handler instance) is via a raw pointer.
     let context_ptr = Box::into_raw(Box::new(PointerContext {
-      absolute_pointer: absolute_pointer::protocol::Protocol {
+      absolute_pointer: absolute_pointer::Protocol {
         reset: absolute_pointer_reset,
         get_state: absolute_pointer_get_state,
         mode: Box::into_raw(Box::new(self.initialize_mode())),
@@ -189,7 +188,7 @@ impl PointerHandler {
     let absolute_pointer_ptr = raw_field!(context_ptr, PointerContext, absolute_pointer);
     let status = (boot_services.install_protocol_interface)(
       core::ptr::addr_of_mut!(controller),
-      &absolute_pointer::protocol::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
+      &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
       efi::NATIVE_INTERFACE,
       absolute_pointer_ptr as *mut c_void,
     );
@@ -203,8 +202,8 @@ impl PointerHandler {
   }
 
   // Initializes the absolute_pointer mode structure.
-  fn initialize_mode(&self) -> absolute_pointer::protocol::AbsolutePointerMode {
-    let mut mode: absolute_pointer::protocol::AbsolutePointerMode = Default::default();
+  fn initialize_mode(&self) -> absolute_pointer::Mode {
+    let mut mode: absolute_pointer::Mode = Default::default();
 
     if self.supported_usages.contains(&Usage::from(GENERIC_DESKTOP_X)) {
       mode.absolute_max_x = AXIS_RESOLUTION;
@@ -358,7 +357,7 @@ impl PointerHandler {
     // uninstall absolute pointer protocol
     let status = (boot_services.uninstall_protocol_interface)(
       unsafe { (*pointer_context).controller },
-      &absolute_pointer::protocol::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
+      &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
       absolute_pointer_ptr as *mut c_void,
     );
     if status.is_error() {
@@ -421,10 +420,10 @@ pub fn attempt_to_retrieve_hid_context(
   // Caller should have ensured this, so just expect on failure.
   let boot_services = unsafe { BOOT_SERVICES.as_mut().expect("BOOT_SERVICES not properly initialized") };
 
-  let mut absolute_pointer_ptr: *mut absolute_pointer::protocol::Protocol = core::ptr::null_mut();
+  let mut absolute_pointer_ptr: *mut absolute_pointer::Protocol = core::ptr::null_mut();
   let status = (boot_services.open_protocol)(
     controller,
-    &absolute_pointer::protocol::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
+    &absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
     core::ptr::addr_of_mut!(absolute_pointer_ptr) as *mut *mut c_void,
     driver_binding.driver_binding_handle,
     controller,
@@ -463,7 +462,7 @@ extern "efiapi" fn wait_for_pointer(event: efi::Event, context: *mut c_void) {
 
 // resets the pointer state - part of the absolute pointer interface.
 extern "efiapi" fn absolute_pointer_reset(
-  this: *const absolute_pointer::protocol::Protocol,
+  this: *mut absolute_pointer::Protocol,
   _extended_verification: bool,
 ) -> efi::Status {
   if this.is_null() {
@@ -492,8 +491,8 @@ extern "efiapi" fn absolute_pointer_reset(
 // returns the current pointer state in the `state` buffer provided by the caller - part of the absolute pointer
 // interface.
 extern "efiapi" fn absolute_pointer_get_state(
-  this: *const absolute_pointer::protocol::Protocol,
-  state: *mut absolute_pointer::protocol::AbsolutePointerState,
+  this: *mut absolute_pointer::Protocol,
+  state: *mut absolute_pointer::State,
 ) -> efi::Status {
   if this.is_null() || state.is_null() {
     return efi::Status::INVALID_PARAMETER;
