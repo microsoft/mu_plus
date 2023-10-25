@@ -38,7 +38,12 @@
 [PcdsFixedAtBuild, PcdsPatchableInModule]
   ## List of {InterfaceClass, InterfaceSubClass, InterfaceProtocol} tuples that should be excluded from being managed by
   # the UsbHidDxe driver. The list is terminated by a record of all zeros.
-  # For example, to exclude USB keyboards, this would be set to {0x3, 0x1, 0x1, 0x0, 0x0, 0x0}
+  # Only interface class 3 (HID) is supported; other interface classes are ignored regardless of this list.
+  # SubClass and Protocol are defined by the USB HID 1.11 spec, section 4.2 and 4.3 respectively.
+  # - SubClass may be 0 - No Subclass, or 1 - Boot Interface Subclass.
+  # - If SubClass is 0, Protocol must be 0.
+  # - If SubClass is 1, Protocol must be 1 - Keyboard, or 2 - Mouse.
+  # For example, to exclude USB Boot Interface Keyboards, this would be set to {0x3, 0x1, 0x1, 0x0, 0x0, 0x0}
   # @Prompt Exclude devices from UsbHidDxe management.
   gHidPkgTokenSpaceGuid.PcdExcludedHidDevices|{0x0, 0x0, 0x0}|VOID*|0x00010100
 
