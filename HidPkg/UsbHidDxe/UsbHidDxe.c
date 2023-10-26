@@ -26,9 +26,7 @@
 
 #include <IndustryStandard/Usb.h>
 
-#define CLASS_HID          3
-#define SUBCLASS_BOOT      1
-#define PROTOCOL_KEYBOARD  1
+#define CLASS_HID  3
 
 //
 // A common header for usb standard descriptor.
@@ -567,6 +565,9 @@ IsUsbHid (
 {
   EFI_STATUS                    Status;
   EFI_USB_INTERFACE_DESCRIPTOR  InterfaceDescriptor;
+  UINTN                         ExcludeListSize;
+  UINTN                         ExcludeListIndex;
+  UINT8                         *ExcludeList;
 
   //
   // Get the default interface descriptor
@@ -580,17 +581,33 @@ IsUsbHid (
     return FALSE;
   }
 
-  // Note: for now we exclude keyboards as they are not yet supported by
-  // UefiHidDxe. ADO #3570600 covers implementing keyboard support.
-  if ((InterfaceDescriptor.InterfaceClass == CLASS_HID) &&
-      (InterfaceDescriptor.InterfaceSubClass == SUBCLASS_BOOT) &&
-      (InterfaceDescriptor.InterfaceProtocol == PROTOCOL_KEYBOARD)
-      )
-  {
+  if (InterfaceDescriptor.InterfaceClass != CLASS_HID) {
     return FALSE;
   }
 
-  return (InterfaceDescriptor.InterfaceClass == CLASS_HID);
+  ExcludeListSize  = PcdGetSize (PcdExcludedHidDevices);
+  ExcludeList      = (UINT8 *)PcdGetPtr (PcdExcludedHidDevices);
+  ExcludeListIndex = 0;
+
+  for (ExcludeListIndex = 0; ExcludeListIndex + 2 < ExcludeListSize; ExcludeListIndex += 3) {
+    if ((ExcludeList[ExcludeListIndex] == 0) &&
+        (ExcludeList[ExcludeListIndex + 1] == 0) &&
+        (ExcludeList[ExcludeListIndex + 2] == 0))
+    {
+      // end of exclude list, and haven't found exclusion - device is supported.
+      break;
+    }
+
+    if ((ExcludeList[ExcludeListIndex] == InterfaceDescriptor.InterfaceClass) &&
+        (ExcludeList[ExcludeListIndex + 1] == InterfaceDescriptor.InterfaceSubClass) &&
+        (ExcludeList[ExcludeListIndex + 2] == InterfaceDescriptor.InterfaceProtocol))
+    {
+      // current entry matches an exclude list element - device not supported.
+      return FALSE;
+    }
+  }
+
+  return TRUE;
 }
 
 /**
