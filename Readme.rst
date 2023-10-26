@@ -11,19 +11,19 @@ Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverag
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu.
 
-Branch Status - release/202302
+Branch Status - release/202308
 ==============================
 
 :Status:
   In Development
 
 :Entered Development:
-  May 2023
+  Oct 2023
 
 :Anticipated Stabilization:
-  Aug 2023
+  Feb 2024
 
-Branch Changes - release/202302
+Branch Changes - release/202308
 ===============================
 
 Breaking Changes-dev
@@ -34,22 +34,17 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
-- Refactored memory test app
-- Added AARCH64 RWX Test to the DxePagingAuditApp
-- Added MemoryAttributeProtocolFuncTestApp
-- Pkg refactors to remove unnecessary libraries
-- Added Image Protection Test
-- Updated Stack Cookie implementation
+- Incomplete
 
 Bug Fixes-dev
 -------------
 
-- Fixed memory map overlap check in MemmapAndMatTestApp
+- Incomplete
 
-Branched from 202208
+Branched from 202302
 --------------------
 
-Original sync Commit: b9335ebbc2bb143ffe5f6f941a806482aedd0a98
+Original sync Commit: dc3ab8ba5e3c5403ae6644f68d0474ba0d1b190c
 
 
 Code of Conduct
@@ -79,12 +74,12 @@ Copyright & License
 
 .. CoreCI
 
-.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202302
-.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202302
+.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202308
+.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202308
 .. |WindowsCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/49.svg
 .. |WindowsCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
 
-.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202302
-.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202302
+.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202308
+.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202308
 .. |UbuntuCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/50.svg
 .. |UbuntuCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
