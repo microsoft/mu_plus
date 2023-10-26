@@ -34,12 +34,20 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
-- Incomplete
+- Added logic to delete the memory type information variable on a capsule update
+- Reworked TpmTestingPkg
+- Added rust infrastructure files
+- Added rust HID driver
+- Added FlatPageTableLib and now use it for DxePagingAudit
+- Totally reformat the paging audit tests
 
 Bug Fixes-dev
 -------------
 
-- Incomplete
+- Fixed AdvLoggerSErialPortLibClass
+- Close ReadyToBoot and ExitBootServices events if a reset is notified
+- Fixed a function declaration mismatch in MsGraphicsPkg/FrameBufferMemDrawLib
+- Fixed off by one error when creating X64 PlatformInfo.dat during a paging audit
 
 Branched from 202302
 --------------------
