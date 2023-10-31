@@ -1,0 +1,15 @@
+[package]
+name = "HiiKeyboardLayout"
+version = "0.1.0"
+edition = "2021"
+
+
+[lib]
+name = "hii_keyboard_layout"
+path = "src/lib.rs"
+
+[dependencies]
+r-efi = {workspace=true}
+scroll = {workspace=true}
+num-traits = {workspace=true}
+num-derive = {workspace=true}
