@@ -192,7 +192,8 @@ OnRealTimeClockArchNotification (
   if (mLoggerInfo != NULL) {
     Status = SystemTable->RuntimeServices->GetTime ((EFI_TIME *)&mLoggerInfo->Time, NULL);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_INFO, "%a: error getting real time. Code=%r\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: error getting real time. Code=%r\n", __func__, Status));
+
     } else {
       mLoggerInfo->TicksAtTime = GetPerformanceCounter ();
     }
