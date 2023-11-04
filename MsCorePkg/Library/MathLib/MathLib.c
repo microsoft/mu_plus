@@ -218,7 +218,7 @@ sqrt_d (
   IN CONST double  input
   )
 {
-  UINT64  firstGuess = (UINT64)input;
+  UINT32  firstGuess = (UINT32)input;
   double  x          = 0;
   double  prevX      = -1;
 
