@@ -1,0 +1,24 @@
+## @file
+# A null instance of the Input Channel Library.
+#
+# Copyright (c) Microsoft Corporation.
+#
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION           = 0x00010005
+  BASE_NAME             = BaseInputChannelLibNull
+  FILE_GUID             = F35B1671-08BC-4231-9CEB-A08E809E32FF
+  MODULE_TYPE           = BASE
+  VERSION_STRING        = 1.0
+  LIBRARY_CLASS         = InputChannelLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  SecurityPkg/SecurityPkg.dec
+  TpmTestingPkg/TpmTestingPkg.dec
+
+[Sources]
+  BaseInputChannelLibNull.c
