@@ -8,10 +8,10 @@
 **/
 
 #include <PiPei.h>
+#include <Guid/TpmReplayEventLog.h>
 #include <Library/DebugLib.h>
 #include <Library/PeiServicesLib.h>
 
-#include "../TpmReplayEventLog.h"
 #include "TpmReplayInputChannelInternal.h"
 
 /**

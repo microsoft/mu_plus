@@ -10,7 +10,7 @@
 #ifndef TPM_REPLAY_INPUT_CHANNEL_INTERNAL_H_
 #define TPM_REPLAY_INPUT_CHANNEL_INTERNAL_H_
 
-#include "../TpmReplayEventLog.h"
+#include <Guid/TpmReplayEventLog.h>
 
 /**
   Retrieves a TPM Replay Event Log from a FFS file.
