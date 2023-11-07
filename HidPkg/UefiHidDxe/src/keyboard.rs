@@ -228,7 +228,8 @@ impl KeyboardHandler {
     hid_context: *mut HidContext,
   ) -> Result<*mut KeyboardContext, efi::Status> {
     // retrieve a reference to boot services.
-    // Safety: BOOT_SERVICES must ahve been initialized to point to the UEFI Boot Services table.
+    // Safety: BOOT_SERVICES must have been initialized to point to the UEFI Boot Services table.
+
     // Caller should have ensured this, so just expect on failure.
     let boot_services = unsafe { BOOT_SERVICES.as_mut().expect("BOOT_SERVICES not properly initialized") };
 
