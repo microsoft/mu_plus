@@ -43,6 +43,7 @@ The following libraries are used with AdvancedLogger:
 | AdvancedLoggerLib          | One per module type - used to provide access to the in memory log buffer |
 | AdvLoggerSmmAccessLib      | Used to intercept GetVariable in order to provide an OS utility the ability to read the log |
 | BaseDebugLibAdvancedLogger | Basic Dxe etc DebugLib |
+| BasePanicLibAdvancedLogger | Basic PanicLib that applies to all PI boot phases that AdvancedLoggerLib supports. |
 | DebugAgent                 | Used to intercept SEC initialization |
 | PeiDebugLibAdvancedLogger  | Basic Pei DebugLib |
 | AdvancedLoggerHdwPortLib   | Hook for a hardware port to capture debug messages as they are written to the log. |
@@ -267,5 +268,5 @@ result in hardware printing not functional.
 
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.  
+Copyright (C) Microsoft Corporation. All rights reserved. \
 SPDX-License-Identifier: BSD-2-Clause-Patent
