@@ -16,6 +16,7 @@ test = false
 [dependencies]
 HidIo = {workspace=true}
 hidparser = {workspace=true}
+HiiKeyboardLayout = {workspace=true}
 memoffset = {workspace=true}
 r-efi = {workspace=true}
 rustversion = {workspace=true}
