@@ -20,6 +20,7 @@
 
 [LibraryClasses]
   FvMeasurementExclusionLib|Include/Library/FvMeasurementExclusionLib.h
+  InputChannelLib|Include/Library/InputChannelLib.h
 
 [Guids]
   ## Tokenspace GUID for TPM Testing Package PCDs

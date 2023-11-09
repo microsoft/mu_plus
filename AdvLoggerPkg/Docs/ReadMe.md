@@ -43,6 +43,7 @@ The following libraries are used with AdvancedLogger:
 | AdvancedLoggerLib          | One per module type - used to provide access to the in memory log buffer |
 | AdvLoggerSmmAccessLib      | Used to intercept GetVariable in order to provide an OS utility the ability to read the log |
 | BaseDebugLibAdvancedLogger | Basic Dxe etc DebugLib |
+| BasePanicLibAdvancedLogger | Basic PanicLib that applies to all PI boot phases that AdvancedLoggerLib supports. |
 | DebugAgent                 | Used to intercept SEC initialization |
 | PeiDebugLibAdvancedLogger  | Basic Pei DebugLib |
 | AdvancedLoggerHdwPortLib   | Hook for a hardware port to capture debug messages as they are written to the log. |
@@ -256,6 +257,12 @@ If reading of the log fails, please verify that the `AdvLoggerAccessLib` instanc
 The v3 data header supports a new field of hardware debugging level to support setting the serial print configurable
 during boot time.
 
+All debug prints will be filtered by multiple build time flags, such as `PcdDebugPrintErrorLevel`, `MDEPKG_NDEBUG`, etc.
+Prints that pass such filters will be logged to memory, and then fed to the hardware port library to be checked
+against the hardware print level. A full data flow chart is shown below:
+
+![Debug Logging Level Filters](debug_log_level.png)
+
 The default value will be initialized to the value of `PcdAdvancedLoggerHdwPortDebugPrintErrorLevel` in the PEI core,
 DXE core, or MM core, whichever comes first during the boot process.
 
@@ -270,5 +277,5 @@ result in hardware printing not functional.
 
 ## Copyright
 
-Copyright (C) Microsoft Corporation. All rights reserved.  
+Copyright (C) Microsoft Corporation. All rights reserved. \
 SPDX-License-Identifier: BSD-2-Clause-Patent

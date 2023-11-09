@@ -23,6 +23,7 @@
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   FvMeasurementExclusionLib|TpmTestingPkg/Library/BaseFvMeasurementExclusionLibNull/BaseFvMeasurementExclusionLibNull.inf
+  InputChannelLib|TpmTestingPkg/Library/BaseInputChannelLibNull/BaseInputChannelLibNull.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
@@ -85,6 +86,7 @@
 
 [Components]
   TpmTestingPkg/Library/BaseFvMeasurementExclusionLibNull/BaseFvMeasurementExclusionLibNull.inf
+  TpmTestingPkg/Library/BaseInputChannelLibNull/BaseInputChannelLibNull.inf
   TpmTestingPkg/TpmReplayPei/Pei/TpmReplayPei.inf
 
   #

@@ -40,5 +40,8 @@
 [Guids]
   gAdvancedLoggerHobGuid
 
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel       ## SOMETIMES_CONSUMES
+
 [Depex]
   TRUE

@@ -37,3 +37,4 @@
   gEfiDebugPortProtocolGuid                                 ## CONSUMES
 
 [Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel       ## SOMETIMES_CONSUMES

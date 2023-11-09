@@ -1,0 +1,36 @@
+## @file  MsApplicationPkg.dec
+# This package provides production standalone applications for the UEFI
+# Firmware. That do not depend on the shell or any other UEFI application.
+# This is targetted at promoting to open source and should be aligned with
+# Tianocore standards
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  DEC_SPECIFICATION              = 0x00010005
+  PACKAGE_NAME                   = MsApplicationPkg
+  PACKAGE_UNI_FILE               = MsApplicationPkg.uni
+  PACKAGE_GUID                   = 738E75C6-4EEE-4F63-A30D-8EEB08B1DE04
+  PACKAGE_VERSION                = .10
+
+
+[Includes]
+
+[LibraryClasses]
+
+[Guids]
+  #  {2714338E-616A-4AC1-8F3E-B58F078D6E35}
+  gMsApplicationPkgTokenSpaceGuid = { 0x2714338e, 0x616a, 0x4ac1, { 0x8f, 0x3e, 0xb5, 0x8f, 0x7, 0x8d, 0x6e, 0x35 }}
+
+[Protocols]
+
+[PcdsFeatureFlag]
+
+[PcdsFixedAtBuild]
+
+[PcdsDynamic, PcdsDynamicEx]
+
+[UserExtensions.TianoCore."ExtraFiles"]
+  MsApplicationPkgExtra.uni
