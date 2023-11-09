@@ -245,7 +245,6 @@ and the follow change is needed in the .fdf:
 ## Advanced Logger Retrieval From Windows
 
 The Advanced Logger can be retrieved from Windows using the [DecodeUefiLog](../Application/DecodeUefiLog/ReadMe.md)
-
 python utility. The utility runs under windows and retrieves the log through the `AdvLoggerAccessLib` instance
 provided by the platform.
 
