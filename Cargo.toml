@@ -1,10 +1,12 @@
 [workspace]
+resolver = "2"
 
 # Add packages that generate binaries here
 members = [
   "HidPkg/Crates/HidIo",
   "HidPkg/Crates/HiiKeyboardLayout",
   "HidPkg/UefiHidDxe",
+  "HidPkg/UefiHidDxeV2",
   "MsCorePkg/HelloWorldRustDxe"
 ]
 
@@ -16,10 +18,10 @@ HidIo = {path = "HidPkg/Crates/HidIo"}
 hidparser = {git = "https://github.com/microsoft/mu_rust_hid.git", branch = "main"}
 HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
 
+memoffset = "0.9.0"
+num-traits = { version = "0.2", default-features = false}
+num-derive = { version = "0.4", default-features = false}
 r-efi = "4.3.0"
 rustversion = "1.0.14"
 spin = "0.9.8"
-memoffset = "0.9.0"
 scroll = { version = "0.11", default-features = false, features = ["derive"]}
-num-traits = { version = "0.2", default-features = false}
-num-derive = { version = "0.4", default-features = false}
