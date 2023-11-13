@@ -26,6 +26,8 @@ from edk2toollib.tpm.tpm2_defs import TPM_ALG_SHA256
 from tcg_platform import (
     PCR_0,
     PCR_7,
+    TcgEfiSpecIdEvent,
+    TcgPcrEvent,
     TcgPcrEvent2,
     TpmlDigestValues,
     TpmtHa,
@@ -156,6 +158,64 @@ class CalculatedPcrState(object):
             binary_data[CalculatedPcrState._hdr_struct_size :]
         )
         return cls(pcr_index, digests=digest_values)
+
+
+class CryptoAgileEventLog(object):
+    # struct {
+    #   TCG_PCClientPCREvent SpecIdEvent;               // TCG_EfiSpecIDEvent
+    #   TCG_PCR_EVENT2       LogEvents[EventLogCount];
+    # } CRYPTO_AGILE_EVENT_LOG
+    def __init__(self, binary_data: bytes):
+        """Class constructor method.
+
+        Args:
+            binary_data (bytes): Binary data containing the log.
+        """
+        self._event_log = []
+        self.tcg_pcr_event = TcgPcrEvent.from_binary(binary_data)
+
+        offset = self.tcg_pcr_event.get_size()
+        while offset < len(binary_data):
+            event = TcgPcrEvent2.from_binary(binary_data[offset:])
+            offset += event.get_size()
+            self._event_log.append(event)
+
+    def __str__(self) -> str:
+        """Returns a string of this object.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        spec_id_event = TcgEfiSpecIdEvent.from_binary(self.tcg_pcr_event.event)
+
+        debug_str = "CRYPTO_AGILE_EVENT_LOG\n"
+        debug_str += str(self.tcg_pcr_event)
+        debug_str += str(spec_id_event)
+        for event in self._event_log:
+            debug_str += str(event)
+        return debug_str
+
+    def get_size(self) -> int:
+        """Returns the object size.
+
+        Returns:
+            int: The size in bytes.
+        """
+        result = self.tcg_pcr_event.get_size()
+        for event in self._event_log:
+            result += event.get_size()
+        return result
+
+    def encode(self) -> bytes:
+        """Encodes the object.
+
+        Returns:
+            bytes: A byte representation of the object.
+        """
+        result = self.tcg_pcr_event.encode()
+        for event in self._event_log:
+            result += event.encode()
+        return result
 
 
 class TpmReplayEventLog(object):
@@ -447,6 +507,12 @@ def _build_tpm_replay_event_log_from_yaml(
             prehashed (bool, optional): Whether the digest is prehashed.
               Defaults to False.
         """
+        if pcr > 7:
+            logging.debug(
+                "Skipping calculation of a PCR state greater than 7 " f"({pcr})."
+            )
+            return
+
         logging.debug(
             f"    PCR[{pcr}]: Adding {ALG_FROM_VALUE[alg]} digest {str(digest)}."
         )
@@ -495,13 +561,13 @@ def _build_tpm_replay_event_log_from_yaml(
     return replay_event_log
 
 
-def _build_yaml_from_tpm_replay_event_log(
+def _build_yaml_from_event_log(
     event_log: TpmReplayEventLog,
 ) -> Dict[str, List[Union[str, "Dict"]]]:
     """Builds the YAML represenation of a binary event log.
 
     Args:
-        event_log (TpmReplayEventlog): A TPM Replay Event Log object.
+        event_log (EventLog): An Event Log object.
 
     Returns:
         Dict[str, List[Union[str, 'Dict']]]: A dictionary that contains either
@@ -550,7 +616,7 @@ def _build_yaml_from_tpm_replay_event_log(
             event_data["data"]["value"] = event_value.decode("utf-16")
         else:
             event_data["data"]["type"] = "base64"
-            event_data["data"]["value"] = base64.b64encode(event_value)
+            event_data["data"]["value"] = base64.b64encode(event_value).decode("utf-8")
 
         logging.debug(f"    {event_data['data']['type']} event detected.")
 
@@ -742,13 +808,24 @@ def _begin() -> int:
 
         desc_path = PurePath(args.input_desc_file)
         with open(desc_path, "r") as idf:
-            if desc_path.suffix.lower() in ['.yaml', '.yml']:
+            if desc_path.suffix.lower() in [".yaml", ".yml"]:
                 file_data = yaml.safe_load(idf)
             else:
                 file_data = json.load(idf)
 
         start_time = timeit.default_timer()
-        jsonschema.validate(instance=file_data, schema=json_schema)
+        try:
+            jsonschema.validate(instance=file_data, schema=json_schema)
+        except jsonschema.ValidationError as e:
+            # Allow PCRs greater than 7 on input.
+            if (
+                "pcr" in e.schema_path
+                and e.validator == "maximum"
+                and e.validator_value == 7
+            ):
+                pass
+            else:
+                raise e
         end_time = timeit.default_timer() - start_time
         logging.debug(f"{PERF} JSON schema validation took {end_time:.2f} seconds.")
 
@@ -771,10 +848,30 @@ def _begin() -> int:
             binary_data = log_file.read()
 
         start_time = timeit.default_timer()
-        log = TpmReplayEventLog(binary_data)
-        data = _build_yaml_from_tpm_replay_event_log(log)
+        if binary_data[:8] == b"_TPMRPL_":
+            logging.debug("Input: Binary log file recognized as a TPM Replay log.")
+            log = TpmReplayEventLog(binary_data)
+        else:
+            logging.debug("Input: Binary log file recognized as a Crypto Agile log.")
+            log = CryptoAgileEventLog(binary_data)
+
+        data = _build_yaml_from_event_log(log)
         json_obj = json.loads(json.dumps(data))
-        jsonschema.validate(instance=json_obj, schema=json_schema)
+        try:
+            jsonschema.validate(instance=json_obj, schema=json_schema)
+        except jsonschema.ValidationError as e:
+            # Allow PCRs greater than 0 if converting a log other than the TPM
+            # Replay event log since it will contain all PCR values not only
+            # UEFI firmware produced values.
+            if (
+                "pcr" in e.schema_path
+                and e.validator == "maximum"
+                and e.validator_value == 7
+                and isinstance(log, CryptoAgileEventLog)
+            ):
+                pass
+            else:
+                raise e
         yaml_data = yaml.dump(
             json_obj, default_flow_style=False, indent=2, sort_keys=False
         )
