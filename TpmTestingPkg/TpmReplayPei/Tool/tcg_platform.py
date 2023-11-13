@@ -471,6 +471,335 @@ class TpmlDigestValues(object):
             digest.extend_data(data)
 
 
+class TcgEfiSpecIdAlgorithmSize(object):
+    """TCG EFI Specification ID Algorithm Size structure."""
+
+    # typedef struct {
+    #   UINT16    algorithmId;  // TCG defined hashing algorithm ID.
+    #   UINT16    digestSize;
+    # } TCG_EfiSpecIdEventAlgorithmSize;
+    _hdr_struct_format = "<HH"
+    _hdr_struct_size = struct.calcsize(_hdr_struct_format)
+
+    def __init__(self, algorithm_id: int, digest_size: int):
+        """Class constructor method.
+
+        Args:
+            algorithm_id (int): Algorithm ID.
+            digest_size (int): Algorith digest size in bytes.
+        """
+        self.algorithm_id = algorithm_id
+        self.digest_size = digest_size
+
+    def __str__(self) -> str:
+        """Returns a string of this object.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        debug_str = "\n\tTCG_EFI_SPEC_ID_ALGORITHM_SIZE\n"
+        debug_str += "\t\tAlgorithm ID    = 0x%02x\n" % self.algorithm_id
+        debug_str += "\t\tDigest Size     = 0x%02X\n" % self.digest_size
+        return debug_str
+
+    def get_size(self) -> int:
+        """Returns the object size.
+
+        Returns:
+            int: The size in bytes.
+        """
+        return self._hdr_struct_size
+
+    def encode(self) -> bytes:
+        """Encodes the object.
+
+        Returns:
+            bytes: A byte representation of the object.
+        """
+        return struct.pack(self._hdr_struct_format, self.algorithm_id, self.digest_size)
+
+    @classmethod
+    def from_binary(cls, binary_data: bytes) -> TcgEfiSpecIdAlgorithmSize:
+        """Returns a new instance from a object byte representation.
+
+        Args:
+            binary_data (bytes): Byte representation of the object.
+
+        Returns:
+            TcgEfiSpecIdAlgorithmSize: A TcgEfiSpecIdAlgorithmSize instance.
+        """
+        algorithm_id, digest_size = struct.unpack_from(
+            TcgEfiSpecIdAlgorithmSize._hdr_struct_format, binary_data
+        )
+        return cls(algorithm_id, digest_size)
+
+
+class TcgEfiSpecIdEvent(object):
+    """TCG EFI Specification ID structure."""
+
+    _hdr_struct_format_1 = "<16sIBBBBI"
+    _hdr_struct_format_2 = "<B"
+    _hdr_struct_size = struct.calcsize(_hdr_struct_format_1) + struct.calcsize(
+        _hdr_struct_format_2
+    )
+
+    def __init__(
+        self,
+        signature: bytes,
+        platform_class: int,
+        spec_version_minor: int,
+        spec_version_major: int,
+        spec_errata: int,
+        uintn_size: int,
+        number_of_algorithms: int,
+        digest_sizes: Iterable[TcgEfiSpecIdAlgorithmSize],
+        vendor_info_size: int,
+        vendor_info: bytes,
+    ):
+        """Class constructor method.
+
+        Args:
+            signature (bytes): b"Spec ID Event03"
+            platform_class (int): Platform class
+            spec_version_minor (int): PC Client PFP Spec minor version
+            spec_version_major (int): PC Client PFP Spec major version
+            spec_errata (int): PC Client PFP Spc Revision number
+            uintn_size (int): UINTN field size
+            number_of_algorithms (int): Number of hash algorithms present.
+            digest_sizes (Iterable[TcgEfiSpecIdAlgorithmSize]): Algorithm ID
+                and corresponding digest size in bytes.
+            vendor_info_size (int): Size in bytes of the vendor info present.
+            vendor_info (bytes): Custom data provided by the platform firmware.
+        """
+        self.signature = signature
+        self.platform_class = platform_class
+        self.spec_version_minor = spec_version_minor
+        self.spec_version_major = spec_version_major
+        self.spec_errata = spec_errata
+        self.uintn_size = uintn_size
+        self.number_of_algorithms = number_of_algorithms
+        self.digest_sizes = digest_sizes
+        self.vendor_info_size = vendor_info_size
+        self.vendor_info = vendor_info
+
+    def __str__(self) -> str:
+        """Returns a string of this object.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        debug_str = "\n\tTCG_EFI_SPEC_ID_EVENT\n"
+        debug_str += "\t\tSignature    = %s\n" % self.signature
+        debug_str += "\t\tPlatform Class   = 0x%04X\n" % self.platform_class
+        debug_str += (
+            "\t\tSpec Version   = %02d.%02d\n" % self.spec_version_major,
+            self.spec_version_minor,
+        )
+        debug_str += "\t\tSpec Errata   = %02d\n" % self.spec_errata
+        debug_str += "\t\tUINTN Size   = 0x%04x\n" % self.uintn_size
+        debug_str += "\t\tAlgorithm Count   = 0x%04x\n" % self.number_of_algorithms
+        for digest_size in self.digest_sizes:
+            debug_str += str(digest_size)
+        debug_str += "\tTCG_EFI_SPEC_ID_EVENT (cont.)\n"
+        debug_str += "\t\tVendor Info Size   = 0x%02x\n" % len(self.vendor_info_size)
+        debug_str += "\t\tVendor Info:\n"
+        debug_str += "\t\t0x%x\n" % self.vendor_info
+        return debug_str
+
+    def _get_size_total_digest_sizes(self) -> int:
+        """Returns the total size of all digest size structures.
+
+        Returns:
+            int: The size in bytes.
+        """
+        return sum([s.get_size() for s in self.digest_sizes])
+
+    def get_size(self) -> int:
+        """Returns the object size.
+
+        Returns:
+            int: The size in bytes.
+        """
+        return (
+            self._hdr_struct_size
+            + self._get_size_total_digest_sizes()
+            + self.vendor_info_size
+        )
+
+    def _get_encode_total_digest_sizes(self) -> bytes:
+        """Returns the total encoding of all digest size structures.
+
+        Returns:
+            bytes: A byte representation of all digest size structures.
+        """
+        final_digest_size = bytearray()
+        for size in self.digest_sizes:
+            final_digest_size += size.encode()
+        return final_digest_size
+
+    def encode(self) -> bytes:
+        """Encodes the object.
+
+        Returns:
+            bytes: A byte representation of the object.
+        """
+        initial_header = struct.pack(
+            self._hdr_struct_format_1,
+            self.signature,
+            self.platform_class,
+            self.spec_version_major,
+            self.spec_version_minor,
+            self.spec_errata,
+            self.uintn_size,
+            self.number_of_algorithms,
+        )
+        final_header = struct.pack(self._hdr_struct_format_2, self.vendor_info_size)
+        return (
+            initial_header
+            + self._get_encode_total_digest_sizes()
+            + final_header
+            + self.vendor_info
+        )
+
+    @classmethod
+    def from_binary(cls, binary_data: bytes) -> TcgEfiSpecIdEvent:
+        """Returns a new instance from a object byte representation.
+
+        Args:
+            binary_data (bytes): Byte representation of the object.
+
+        Returns:
+            TcgEfiSpecIdEvent: A TcgEfiSpecIdEvent instance.
+        """
+        (
+            signature,
+            platform_class,
+            spec_version_minor,
+            spec_version_major,
+            spec_errata,
+            uintn_size,
+            number_of_algorithms,
+        ) = struct.unpack_from(TcgEfiSpecIdEvent._hdr_struct_format_1, binary_data)
+        offset = struct.calcsize(TcgEfiSpecIdEvent._hdr_struct_format_1)
+
+        digest_sizes = []
+        for alg in range(number_of_algorithms):
+            digest_sizes.append(
+                TcgEfiSpecIdAlgorithmSize.from_binary(binary_data[offset:])
+            )
+            offset += digest_sizes[alg].get_size()
+
+        vendor_info_size, *_ = struct.unpack_from(
+            TcgEfiSpecIdEvent._hdr_struct_format_2, binary_data, offset
+        )
+        offset += struct.calcsize(TcgEfiSpecIdEvent._hdr_struct_format_2)
+        vendor_info = binary_data[offset : offset + vendor_info_size]
+        return cls(
+            signature,
+            platform_class,
+            spec_version_minor,
+            spec_version_major,
+            spec_errata,
+            uintn_size,
+            number_of_algorithms,
+            digest_sizes,
+            vendor_info_size,
+            vendor_info,
+        )
+
+
+class TcgPcrEvent(object):
+    """TCG PCR Event structure."""
+
+    # typedef struct tdTCG_PCR_EVENT {
+    #   TCG_PCRINDEX     PCRIndex;
+    #   TCG_EVENTTYPE    EventType;
+    #   TCG_DIGEST       Digest;        // SHA1 Length = 160-bit (20 bytes)
+    #   UINT32           EventSize;
+    #   UINT8            Event[1];
+    # } TCG_PCR_EVENT;
+    _hdr_struct_format = "<II20sI"
+    _hdr_struct_size = struct.calcsize(_hdr_struct_format)
+
+    def __init__(
+        self,
+        pcr_index: int = 0,
+        event_type: int = 0,
+        digest: bytes = None,
+        event: TcgEfiSpecIdEvent = None,
+    ):
+        """Class constructor method.
+
+        Args:
+            pcr_index (int, optional): PCR index. Defaults to 0.
+            event_type (int, optional): Event type. Defaults to 0.
+            digest (bytes, optional): Event digest. Defaults to None.
+            event (bytes, optional): Event data. Defaults to None.
+        """
+        self.pcr_index = pcr_index
+        self.event_type = event_type
+        self.digest = digest
+        self.event = event
+
+    def __str__(self) -> str:
+        """Returns a string of this object.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        debug_str = "\n\tTCG_PCR_EVENT\n"
+        debug_str += "\t\tPCR Index    = 0x%04X\n" % self.pcr_index
+        debug_str += "\t\tEvent Type   = 0x%04X\n" % self.event_type
+        debug_str += "\t\nDigest: 0x%x\n" % self.digest.decode("utf-8")
+        debug_str += "\t\tEvent Size   = 0x%08X\n" % len(self.event)
+        debug_str += "\t\tEvent        =\n"
+        debug_str += "\t\t%s\n" % str(self.event)
+        return debug_str
+
+    def get_size(self) -> int:
+        """Returns the object size.
+
+        Returns:
+            int: The size in bytes.
+        """
+        return self._hdr_struct_size + self.event.get_size()
+
+    def encode(self) -> bytes:
+        """Encodes the object.
+
+        Returns:
+            bytes: A byte representation of the object.
+        """
+        return (
+            struct.pack(
+                self._hdr_struct_format,
+                self.pcr_index,
+                self.event_type,
+                self.digest,
+                self.event.get_size(),
+            )
+            + self.event.encode()
+        )
+
+    @classmethod
+    def from_binary(cls, binary_data: bytes) -> TcgPcrEvent:
+        """Returns a new instance from a object byte representation.
+
+        Args:
+            binary_data (bytes): Byte representation of the object.
+
+        Returns:
+            TcgPcrEvent: A TcgPcrEvent instance.
+        """
+        pcr_index, event_type, digest, _ = struct.unpack_from(
+            TcgPcrEvent._hdr_struct_format, binary_data
+        )
+        event = TcgEfiSpecIdEvent.from_binary(
+            binary_data[TcgPcrEvent._hdr_struct_size :]
+        )
+        return cls(pcr_index, event_type, digest, event)
+
+
 class TcgPcrEvent2(object):
     # typedef struct tdTCG_PCR_EVENT2_HDR{
     #     TCG_PCRINDEX        PCRIndex
