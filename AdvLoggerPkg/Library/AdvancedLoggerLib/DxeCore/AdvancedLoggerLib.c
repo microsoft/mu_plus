@@ -365,7 +365,7 @@ DxeCoreAdvancedLoggerLibConstructor (
       LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
       LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
       LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
-      mMaxAddress               = PA_FROM_PTR (LoggerInfo) + LoggerInfo->LogBufferSize;
+      mMaxAddress               = LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize;
       mBufferSize               = LoggerInfo->LogBufferSize;
     } else {
       DEBUG ((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));
