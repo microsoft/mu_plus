@@ -15,6 +15,7 @@
 #include <PiPei.h>
 
 #include <Guid/TcgEventHob.h>
+#include <Guid/TpmReplayEventLog.h>
 #include <IndustryStandard/Tpm2Acpi.h>          // For locality code
 #include <IndustryStandard/TpmPtp.h>            // For locality code
 #include <Library/BaseLib.h>
@@ -32,7 +33,6 @@
 
 #include <TpmReplayConfig.h>
 #include "../InputChannel/TpmReplayInputChannel.h"
-#include "../TpmReplayEventLog.h"
 #include "../TpmReplayReportingManager.h"
 #include "../TpmReplayTcg.h"
 #include "../TpmReplayTcgRegs.h"

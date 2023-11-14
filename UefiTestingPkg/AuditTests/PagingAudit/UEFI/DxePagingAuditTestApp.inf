@@ -18,17 +18,14 @@
 
 [Sources]
   Dxe/App/DxePagingAuditTestApp.c
-  Dxe/App/DxePagingAuditTestApp.h
   PagingAuditCommon.c
   PagingAuditCommon.h
 
 [Sources.X64]
   X64/PagingAuditProcessor.c
-  Dxe/App/X64/DxePagingAuditTests.c
 
 [Sources.AARCH64]
   AArch64/PagingAuditProcessor.c
-  Dxe/App/AArch64/DxePagingAuditTests.c
 
 [Packages.AARCH64]
   ArmPkg/ArmPkg.dec
@@ -53,6 +50,8 @@
   UnitTestLib
   DxeMemoryProtectionHobLib
   FileHandleLib
+  FlatPageTableLib
+  SafeIntLib
 
 [LibraryClasses.AARCH64]
   ArmLib
@@ -73,6 +72,8 @@
   gMemoryProtectionSpecialRegionProtocolGuid
   gEfiShellParametersProtocolGuid
   gCpuMpDebugProtocolGuid
+  gEfiMemoryAttributeProtocolGuid
+  gEfiLoadedImageProtocolGuid
 
 [Protocols.X64]
   gEfiSmmBase2ProtocolGuid

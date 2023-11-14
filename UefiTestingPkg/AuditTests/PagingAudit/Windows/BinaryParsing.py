@@ -54,6 +54,8 @@ def ParsePlatforminfofile(fileName):
             Globals.Bitwidth = int(row[1])
         elif row[0] == "Phase":
             Globals.Phase = row[1]
+        elif row[0] == "MemoryAttributeProtocolPresent":
+            Globals.MemoryAttributeProtocolPresent = row[1]
         else:
             logging.error("Unknown key found in PlatformInfo.dat: %s" % row[0])
 
@@ -87,14 +89,14 @@ def Parse4kPages(fileName):
             AccessFlag = ((ByteArray[byteZeroIndex + 1] & 0x4) >> 2)
             IsTable = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             AccessPermisions = (((ByteArray[byteZeroIndex + 0] & 0xC0) >> 6))
-            Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
-            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
-            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
+            Shareability = ((ByteArray[byteZeroIndex + 1] & 0x3))
+            Pxn = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Uxn = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
             PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
-            logging.debug("4KB Page: 0x%s. Access Flag: %d. AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), AccessFlag, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
+            logging.debug("4KB Page: 0x%s. Access Flag: %d. AccessPermissions: %d. Shareability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), AccessFlag, AccessPermisions, Shareability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
-            pages.append(MemoryRange("TTEntry", "4k", AccessFlag, (AccessPermisions & 0x2) >> 1, Sharability, Pxn, Uxn, PageTableBaseAddress, IsTable))
+            pages.append(MemoryRange("TTEntry", "4k", AccessFlag, (AccessPermisions & 0x2) >> 1, Shareability, Pxn, Uxn, PageTableBaseAddress, IsTable))
 
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
@@ -131,14 +133,14 @@ def Parse2mPages(fileName):
             AccessFlag = ((ByteArray[byteZeroIndex + 1] & 0x4) >> 2)
             IsTable = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             AccessPermisions = (((ByteArray[byteZeroIndex + 0] & 0xC0) >> 6))
-            Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
-            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
-            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
+            Shareability = ((ByteArray[byteZeroIndex + 1] & 0x3))
+            Pxn = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Uxn = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
             PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
-            logging.debug("2MB Page: 0x%s. Access Flag: %d. IsTable: %d AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), AccessFlag, IsTable, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
+            logging.debug("2MB Page: 0x%s. Access Flag: %d. IsTable: %d AccessPermissions: %d. Shareability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), AccessFlag, IsTable, AccessPermisions, Shareability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
-            pages.append(MemoryRange("TTEntry", "2m", AccessFlag, (AccessPermisions & 0x2) >> 1, Sharability, Pxn, Uxn, PageTableBaseAddress, IsTable))
+            pages.append(MemoryRange("TTEntry", "2m", AccessFlag, (AccessPermisions & 0x2) >> 1, Shareability, Pxn, Uxn, PageTableBaseAddress, IsTable))
 
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
@@ -175,14 +177,14 @@ def Parse1gPages(fileName):
             AccessFlag = ((ByteArray[byteZeroIndex + 1] & 0x4) >> 2)
             IsTable = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             AccessPermisions = (((ByteArray[byteZeroIndex + 0] & 0xC0) >> 6))
-            Sharability = ((ByteArray[byteZeroIndex + 1] & 0x3))
-            Pxn         = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
-            Uxn         = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
+            Shareability = ((ByteArray[byteZeroIndex + 1] & 0x3))
+            Pxn = ((ByteArray[byteZeroIndex + 6] & 0x20) >> 5)
+            Uxn = ((ByteArray[byteZeroIndex + 6] & 0x40) >> 6)
             PageTableBaseAddress = (int.from_bytes(ByteArray[byteZeroIndex: byteZeroIndex + 8], 'little')) & (0xFFFFFFFFF << 12)
-            logging.debug("1GB Page: 0x%s. Access Flag: %d. IsTable: %d AccessPermissions: %d. Sharability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), AccessFlag, IsTable, AccessPermisions, Sharability, Pxn, Uxn, hex(PageTableBaseAddress)))
+            logging.debug("1GB Page: 0x%s. Access Flag: %d. IsTable: %d AccessPermissions: %d. Shareability: %d. Pxn: %d. Uxn: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), AccessFlag, IsTable, AccessPermisions, Shareability, Pxn, Uxn, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
-            pages.append(MemoryRange("TTEntry", "1g", AccessFlag, (AccessPermisions & 0x2) >> 1, Sharability, Pxn, Uxn, PageTableBaseAddress, IsTable))
+            pages.append(MemoryRange("TTEntry", "1g", AccessFlag, (AccessPermisions & 0x2) >> 1, Shareability, Pxn, Uxn, PageTableBaseAddress, IsTable))
 
     logging.debug("%d entries found in file %s" % (num, fileName))
     return pages
