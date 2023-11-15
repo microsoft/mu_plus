@@ -34,19 +34,14 @@
 use core::{
   alloc::{GlobalAlloc, Layout},
   ffi::c_void,
+  sync::atomic::AtomicPtr,
 };
 
-use r_efi::{
-  efi::{BootServices, Status},
-  system::BOOT_SERVICES_DATA,
-};
+use r_efi::efi;
 
 /// Static GLOBAL_ALLOCATOR instance that is marked with the `#[global_allocator]` attribute.
-///
-/// See [`core::alloc::GlobalAlloc`] for more details on rust global allocators. This allocator must be initialized
-/// before use, see [`SpinLockedAllocator::init()`].
 #[cfg_attr(not(test), global_allocator)]
-pub static GLOBAL_ALLOCATOR: SpinLockedAllocator = SpinLockedAllocator::new();
+pub static GLOBAL_ALLOCATOR: BootServicesAllocator = BootServicesAllocator::new();
 
 const ALLOC_TRACKER_SIG: u32 = 0x706F6F6C; //arbitrary sig
 
@@ -56,35 +51,26 @@ struct AllocationTracker {
   orig_ptr: *mut c_void,
 }
 
-// Private unlocked allocator implementation. The public locked allocator delegates to this implementation.
-struct BootServicesAllocator {
-  boot_services: Option<*mut BootServices>,
+/// Boot services allocator implementation. Must be initialized with a boot_services pointer before use,
+/// see [`BootServicesAllocator::init()`].
+pub struct BootServicesAllocator {
+  boot_services: AtomicPtr<efi::BootServices>,
 }
 
 impl BootServicesAllocator {
   // Create a new instance. const fn to allow static initialization.
   const fn new() -> Self {
-    BootServicesAllocator { boot_services: None }
-  }
-
-  // initialize the allocator by providing a pointer to the global boot services table.
-  fn init(&mut self, boot_services: *mut BootServices) {
-    self.boot_services = Some(boot_services);
+    BootServicesAllocator { boot_services: AtomicPtr::new(core::ptr::null_mut()) }
   }
 
   // implement allocation using EFI boot services AllocatePool() call.
-  fn boot_services_alloc(&self, layout: Layout) -> *mut u8 {
-    //bail early if not initialized.
-    let Some(bs_ptr) = self.boot_services else { return core::ptr::null_mut() };
-
-    let bs = unsafe { bs_ptr.as_mut().expect("Boot Services pointer is null.") };
-
+  fn boot_services_alloc(&self, layout: Layout, boot_services: &efi::BootServices) -> *mut u8 {
     match layout.align() {
       0..=8 => {
         //allocate the pointer directly since UEFI pool allocations are 8-byte aligned already.
         let mut ptr: *mut c_void = core::ptr::null_mut();
-        match (bs.allocate_pool)(BOOT_SERVICES_DATA, layout.size(), core::ptr::addr_of_mut!(ptr)) {
-          Status::SUCCESS => ptr as *mut u8,
+        match (boot_services.allocate_pool)(efi::BOOT_SERVICES_DATA, layout.size(), core::ptr::addr_of_mut!(ptr)) {
+          efi::Status::SUCCESS => ptr as *mut u8,
           _ => core::ptr::null_mut(),
         }
       }
@@ -98,8 +84,12 @@ impl BootServicesAllocator {
         let expanded_size = expanded_layout.size() + expanded_layout.align();
 
         let mut orig_ptr: *mut c_void = core::ptr::null_mut();
-        let final_ptr = match (bs.allocate_pool)(BOOT_SERVICES_DATA, expanded_size, core::ptr::addr_of_mut!(orig_ptr)) {
-          Status::SUCCESS => orig_ptr as *mut u8,
+        let final_ptr = match (boot_services.allocate_pool)(
+          efi::BOOT_SERVICES_DATA,
+          expanded_size,
+          core::ptr::addr_of_mut!(orig_ptr),
+        ) {
+          efi::Status::SUCCESS => orig_ptr as *mut u8,
           _ => return core::ptr::null_mut(),
         };
 
@@ -120,16 +110,11 @@ impl BootServicesAllocator {
   }
 
   // implement dealloc (free) using EFI boot services FreePool() call.
-  fn boot_services_dealloc(&self, ptr: *mut u8, layout: Layout) {
-    //bail early if not initialized.
-    let Some(bs_ptr) = self.boot_services else { return };
-
-    let bs = unsafe { bs_ptr.as_mut().expect("Boot Services pointer is null.") };
-
+  fn boot_services_dealloc(&self, boot_services: &efi::BootServices, ptr: *mut u8, layout: Layout) {
     match layout.align() {
       0..=8 => {
         //pointer was allocated directly, so free it directly.
-        let _ = (bs.free_pool)(ptr as *mut c_void);
+        let _ = (boot_services.free_pool)(ptr as *mut c_void);
       }
       _ => {
         //pointer was potentially adjusted for alignment. Recover tracking structure to retrieve the original
@@ -142,47 +127,39 @@ impl BootServicesAllocator {
           ptr.add(tracking_offset).cast::<AllocationTracker>().as_mut().expect("tracking pointer is invalid")
         };
         debug_assert_eq!(tracker.signature, ALLOC_TRACKER_SIG);
-        let _ = (bs.free_pool)(tracker.orig_ptr);
+        let _ = (boot_services.free_pool)(tracker.orig_ptr);
       }
+    }
+  }
+
+  /// initializes the allocator instance with a pointer to the UEFI Boot Services table.
+  pub fn init(&self, boot_services: *mut efi::BootServices) {
+    self.boot_services.store(boot_services, core::sync::atomic::Ordering::SeqCst);
+  }
+}
+
+unsafe impl GlobalAlloc for BootServicesAllocator {
+  unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+    let bs_ptr = self.boot_services.load(core::sync::atomic::Ordering::SeqCst);
+    if let Some(boot_services) = unsafe { bs_ptr.as_ref() } {
+      self.boot_services_alloc(layout, boot_services)
+    } else {
+      panic!("Attempted allocation on uninitialized allocator")
+    }
+  }
+
+  unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+    let bs_ptr = self.boot_services.load(core::sync::atomic::Ordering::SeqCst);
+    if let Some(boot_services) = unsafe { bs_ptr.as_ref() } {
+      self.boot_services_dealloc(boot_services, ptr, layout)
+    } else {
+      panic!("Attempted deallocation on uninitialized allocator")
     }
   }
 }
 
-/// A spin-locked allocator implementation.
-///
-/// Provides a locked allocator instance (using [`spin::Mutex`]) that is suitable for use as a
-/// [`core::alloc::GlobalAlloc`].
-pub struct SpinLockedAllocator {
-  inner: spin::Mutex<BootServicesAllocator>,
-}
-
-impl SpinLockedAllocator {
-  // Create a new instance. const fn to allow static initialization.
-  const fn new() -> Self {
-    SpinLockedAllocator { inner: spin::Mutex::new(BootServicesAllocator::new()) }
-  }
-
-  /// Initialize the allocator.
-  ///
-  /// This routine initializes the allocator by providing a pointer to the global EFI Boot Services table that will
-  /// supply pointers to the AllocatePool() and FreePool() primitives that implement memory allocation.
-  pub fn init(&self, boot_services: *mut BootServices) {
-    self.inner.lock().init(boot_services);
-  }
-}
-
-unsafe impl GlobalAlloc for SpinLockedAllocator {
-  unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-    self.inner.lock().boot_services_alloc(layout)
-  }
-
-  unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-    self.inner.lock().boot_services_dealloc(ptr, layout)
-  }
-}
-
-unsafe impl Sync for SpinLockedAllocator {}
-unsafe impl Send for SpinLockedAllocator {}
+unsafe impl Sync for BootServicesAllocator {}
+unsafe impl Send for BootServicesAllocator {}
 
 #[cfg(test)]
 mod tests {
@@ -195,22 +172,19 @@ mod tests {
   };
   use std::alloc::System;
 
-  use r_efi::{
-    efi::Status,
-    system::{BootServices, BOOT_SERVICES_DATA},
-  };
+  use r_efi::efi;
   use std::collections::BTreeMap;
 
-  use crate::{AllocationTracker, SpinLockedAllocator, ALLOC_TRACKER_SIG};
+  use crate::{AllocationTracker, BootServicesAllocator, ALLOC_TRACKER_SIG};
 
   static ALLOCATION_TRACKER: spin::Mutex<BTreeMap<usize, Layout>> = spin::Mutex::new(BTreeMap::new());
 
   extern "efiapi" fn mock_allocate_pool(
-    pool_type: r_efi::system::MemoryType,
+    pool_type: efi::MemoryType,
     size: usize,
     buffer: *mut *mut c_void,
-  ) -> Status {
-    assert_eq!(pool_type, BOOT_SERVICES_DATA);
+  ) -> efi::Status {
+    assert_eq!(pool_type, efi::BOOT_SERVICES_DATA);
 
     unsafe {
       let layout = Layout::from_size_align(size, 8).unwrap();
@@ -220,29 +194,37 @@ mod tests {
       assert!(existing_key.is_none());
     }
 
-    Status::SUCCESS
+    efi::Status::SUCCESS
   }
 
-  extern "efiapi" fn mock_free_pool(buffer: *mut c_void) -> Status {
+  extern "efiapi" fn mock_free_pool(buffer: *mut c_void) -> efi::Status {
     let layout = ALLOCATION_TRACKER.lock().remove(&(buffer as usize)).expect("freeing an un-allocated pointer");
     unsafe {
       System.dealloc(buffer as *mut u8, layout);
     }
 
-    Status::SUCCESS
+    efi::Status::SUCCESS
   }
 
-  fn mock_boot_services() -> BootServices {
+  extern "efiapi" fn mock_raise_tpl(_new_tpl: efi::Tpl) -> efi::Tpl {
+    efi::TPL_APPLICATION
+  }
+
+  extern "efiapi" fn mock_restore_tpl(_new_tpl: efi::Tpl) {}
+
+  fn mock_boot_services() -> efi::BootServices {
     let boot_services = MaybeUninit::zeroed();
-    let mut boot_services: BootServices = unsafe { boot_services.assume_init() };
+    let mut boot_services: efi::BootServices = unsafe { boot_services.assume_init() };
     boot_services.allocate_pool = mock_allocate_pool;
     boot_services.free_pool = mock_free_pool;
+    boot_services.raise_tpl = mock_raise_tpl;
+    boot_services.restore_tpl = mock_restore_tpl;
     boot_services
   }
 
   #[test]
   fn basic_alloc_and_dealloc() {
-    static ALLOCATOR: SpinLockedAllocator = SpinLockedAllocator::new();
+    static ALLOCATOR: BootServicesAllocator = BootServicesAllocator::new();
     ALLOCATOR.init(&mut mock_boot_services());
 
     let layout = Layout::from_size_align(0x40, 0x8).unwrap();
@@ -256,7 +238,7 @@ mod tests {
 
   #[test]
   fn big_alignment_should_allocate_tracking_structure() {
-    static ALLOCATOR: SpinLockedAllocator = SpinLockedAllocator::new();
+    static ALLOCATOR: BootServicesAllocator = BootServicesAllocator::new();
     ALLOCATOR.init(&mut mock_boot_services());
 
     let layout = Layout::from_size_align(0x40, 0x1000).unwrap();
