@@ -17,7 +17,7 @@ use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_WARN};
 use crate::{keyboard, keyboard::KeyboardContext, pointer, pointer::PointerContext, BOOT_SERVICES};
 
 pub struct HidContext {
-  hid_io: *mut hid_io::protocol::Protocol,
+  pub hid_io: *mut hid_io::protocol::Protocol,
   pub keyboard_context: *mut KeyboardContext,
   pub pointer_context: *mut PointerContext,
 }

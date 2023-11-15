@@ -20,7 +20,6 @@
   ENTRY_POINT         = TpmReplayPeiEntryPoint
 
 [Sources]
-  ../TpmReplayEventLog.h
   ../TpmReplayReportingManager.c
   ../TpmReplayReportingManager.h
   ../TpmReplayTcg.c
@@ -51,6 +50,7 @@
   DebugLib
   FvMeasurementExclusionLib
   HobLib
+  InputChannelLib
   IoLib
   MemoryAllocationLib
   PcdLib

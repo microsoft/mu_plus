@@ -13,8 +13,8 @@ members = [
 RustAdvancedLoggerDxe = {path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe"}
 RustBootServicesAllocatorDxe = {path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe"}
 HidIo = {path = "HidPkg/Crates/HidIo"}
-
 hidparser = {git = "https://github.com/microsoft/mu_rust_hid.git", branch = "main"}
+HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
 
 r-efi = "4.3.0"
 rustversion = "1.0.14"
