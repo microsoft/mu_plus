@@ -26,7 +26,12 @@
 
 #include <IndustryStandard/Usb.h>
 
-#define CLASS_HID  3
+#define CLASS_HID      3
+#define SUBCLASS_BOOT  1
+
+// Refer to USB HID 1.11, section 7.2.6.
+#define BOOT_PROTOCOL    0
+#define REPORT_PROTOCOL  1
 
 //
 // A common header for usb standard descriptor.
@@ -731,7 +736,7 @@ ReadDescriptors (
   UINT8                        Index;
   EFI_USB_ENDPOINT_DESCRIPTOR  EndpointDescriptor;
 
-  DEBUG ((DEBUG_INFO, "[%a:%d] getting descriptors.\n", __FUNCTION__, __LINE__));
+  DEBUG ((DEBUG_VERBOSE, "[%a:%d] getting descriptors.\n", __FUNCTION__, __LINE__));
 
   ZeroMem (&UsbHidDevice->IntInEndpointDescriptor, sizeof (UsbHidDevice->IntInEndpointDescriptor));
 
@@ -742,7 +747,7 @@ ReadDescriptors (
   }
 
   DEBUG ((
-    DEBUG_INFO,
+    DEBUG_VERBOSE,
     "[%a:%d] interface class: 0x%x, subclass: 0x%x, protocol: 0x%x.\n",
     __FUNCTION__,
     __LINE__,
@@ -946,6 +951,20 @@ UsbHidDriverBindingStart (
   Status = ReadDescriptors (UsbHidDevice);
   if (EFI_ERROR (Status)) {
     goto ErrorExit;
+  }
+
+  // Some boot devices send a report descriptor for the "non-boot" reports they support
+  // but then send boot reports unless they are explicitly configured for report mode.
+  // So explicitly set the device to report mode if it is a boot device.
+  if (UsbHidDevice->InterfaceDescriptor.InterfaceSubClass == SUBCLASS_BOOT) {
+    Status = UsbSetProtocolRequest (
+               UsbHidDevice->UsbIo,
+               UsbHidDevice->InterfaceDescriptor.InterfaceNumber,
+               REPORT_PROTOCOL
+               );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_WARN, "[%a] failed to set report protocol on device: %r\n", __FUNCTION__, Status));
+    }
   }
 
   Status = gBS->InstallProtocolInterface (
