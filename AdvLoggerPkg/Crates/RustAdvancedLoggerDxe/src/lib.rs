@@ -195,6 +195,19 @@ macro_rules! debugln {
     ($level:expr, $fmt:expr, $($arg:tt)*) => ($crate::debug!($level, concat!($fmt, "\n"), $($arg)*));
 }
 
+/// Yields a &'static str that is the name of the containing function.
+#[macro_export]
+macro_rules! function {
+  () => {{
+    fn f() {}
+    fn type_name_of<T>(_: T) -> &'static str {
+      core::any::type_name::<T>()
+    }
+    let name = type_name_of(f);
+    name.strip_suffix("::f").unwrap()
+  }};
+}
+
 #[cfg(test)]
 mod tests {
   extern crate std;
