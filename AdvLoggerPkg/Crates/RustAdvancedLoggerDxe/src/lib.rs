@@ -137,38 +137,78 @@ pub fn _log(level: usize, args: fmt::Arguments) {
   LOGGER.log(level, args)
 }
 
-/// Prints to the AdvancedLogger log at the specified level.
-///
-/// This macro uses the same syntax as rust std [`std::println!`] macro, with the addition of a level argument that
-/// indicates what debug level the output is to be written at.
-///
-/// See [`std::fmt`] for details on format strings.
-///
-/// ```no_run
-/// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
-/// use r_efi::efi::Status;
-/// pub extern "efiapi" fn efi_main(
-///    _image_handle: *const core::ffi::c_void,
-///    _system_table: *const r_efi::system::SystemTable,
-///  ) -> u64 {
-///
-///    //Initialize debug logging - no output without this.
-///    init_debug(unsafe { (*_system_table).boot_services});
-///
-///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
-///    debug!(DEBUG_INFO, "Better add our own newline.\n");
-///
-///    Status::SUCCESS.as_usize() as u64
-/// }
-/// ```
-#[macro_export]
-macro_rules! debug {
-    ($level:expr, $($arg:tt)*) => {
-        $crate::_log($level, format_args!($($arg)*))
-    }
+#[cfg(not(feature = "std"))]
+mod no_std_debug {
+  /// Prints to the AdvancedLogger log at the specified level.
+  ///
+  /// This macro uses the same syntax as rust std [`std::println!`] macro, with the addition of a level argument that
+  /// indicates what debug level the output is to be written at.
+  ///
+  /// See [`std::fmt`] for details on format strings.
+  ///
+  /// ```no_run
+  /// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
+  /// use r_efi::efi::Status;
+  /// pub extern "efiapi" fn efi_main(
+  ///    _image_handle: *const core::ffi::c_void,
+  ///    _system_table: *const r_efi::system::SystemTable,
+  ///  ) -> u64 {
+  ///
+  ///    //Initialize debug logging - no output without this.
+  ///    init_debug(unsafe { (*_system_table).boot_services});
+  ///
+  ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
+  ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
+  ///
+  ///    Status::SUCCESS.as_usize() as u64
+  /// }
+  /// ```
+  #[macro_export]
+  macro_rules! debug {
+      ($level:expr, $($arg:tt)*) => {
+          $crate::_log($level, format_args!($($arg)*))
+      }
+  }
 }
 
-/// Prints to the AdvancedLogger log at the specified level with a newline.
+#[cfg(feature = "std")]
+mod std_debug {
+  extern crate std;
+
+  /// Prints to the console log.
+  ///
+  /// This macro uses the same syntax as rust std [`std::println!`] macro, with the addition of a level argument that
+  /// indicates what debug level the output is to be written at.
+  ///
+  /// See [`std::fmt`] for details on format strings.
+  ///
+  /// ```no_run
+  /// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
+  /// use r_efi::efi::Status;
+  /// pub extern "efiapi" fn efi_main(
+  ///    _image_handle: *const core::ffi::c_void,
+  ///    _system_table: *const r_efi::system::SystemTable,
+  ///  ) -> u64 {
+  ///
+  ///    //Initialize debug logging - no output without this.
+  ///    init_debug(unsafe { (*_system_table).boot_services});
+  ///
+  ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
+  ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
+  ///
+  ///    Status::SUCCESS.as_usize() as u64
+  /// }
+  /// ```
+  #[macro_export]
+  macro_rules! debug {
+      ($level:expr, $($arg:tt)*) => {
+          let _ = $level;
+          print!($($arg)*)
+      }
+  }
+}
+
+/// Prints to the log with a newline.
 ///
 /// Equivalent to the [`debug!`] macro except that a newline is appended to the format string.
 ///
