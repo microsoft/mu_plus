@@ -35,6 +35,7 @@ extern crate std; //allow rustdoc links to reference std (e.g. println docs belo
 use core::{
   ffi::c_void,
   fmt::{self, Write},
+  sync::atomic::{AtomicPtr, Ordering},
 };
 use r_efi::{
   efi::{Guid, Status},
@@ -42,7 +43,7 @@ use r_efi::{
 };
 
 //Global static logger instance - this is a singleton.
-static LOGGER: LockedAdvancedLogger = LockedAdvancedLogger::new();
+static LOGGER: AdvancedLogger = AdvancedLogger::new();
 
 /// Standard UEFI DEBUG_INIT level.
 pub const DEBUG_INIT: usize = 0x00000001;
@@ -71,17 +72,17 @@ struct AdvancedLoggerProtocol {
 // Private un-synchronized AdvancedLogger wrapper. Provides implementation of fmt::Write for AdvancedLogger.
 #[derive(Debug)]
 struct AdvancedLogger {
-  protocol: Option<*mut AdvancedLoggerProtocol>,
-  level: usize,
+  protocol: AtomicPtr<AdvancedLoggerProtocol>,
 }
+
 impl AdvancedLogger {
   // creates a new AdvancedLogger
   const fn new() -> Self {
-    AdvancedLogger { protocol: None, level: DEBUG_INFO }
+    AdvancedLogger { protocol: AtomicPtr::new(core::ptr::null_mut()) }
   }
 
   // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
-  fn init(&mut self, bs: *mut BootServices) {
+  fn init(&self, bs: *mut BootServices) {
     let boot_services = unsafe { bs.as_mut().expect("Boot Services Pointer is NULL") };
     let mut ptr: *mut c_void = core::ptr::null_mut();
     let status = (boot_services.locate_protocol)(
@@ -90,58 +91,40 @@ impl AdvancedLogger {
       core::ptr::addr_of_mut!(ptr),
     );
     match status {
-      Status::SUCCESS => self.protocol = Some(ptr as *mut AdvancedLoggerProtocol),
-      _ => self.protocol = None,
+      Status::SUCCESS => self.protocol.store(ptr as *mut AdvancedLoggerProtocol, Ordering::SeqCst),
+      _ => self.protocol.store(core::ptr::null_mut(), Ordering::SeqCst),
     }
   }
 
   // log the debug output in `args` at the given log level.
-  fn log(&mut self, level: usize, args: fmt::Arguments) {
-    self.level = level;
-    self.write_fmt(args).expect("Printing to log failed.");
-  }
-}
-
-impl fmt::Write for AdvancedLogger {
-  fn write_str(&mut self, s: &str) -> fmt::Result {
-    let Some(logger) = self.protocol else { return Err(fmt::Error) };
-    let logger = unsafe { logger.as_mut().expect("advanced logger protocol is null") };
-    (logger.write_log)(self.protocol.unwrap(), self.level, s.as_ptr(), s.as_bytes().len());
-    Ok(())
-  }
-}
-
-// private locked wrapper type to provide thread-safety for AdvancedLogger.
-#[derive(Debug)]
-struct LockedAdvancedLogger {
-  inner: spin::Mutex<AdvancedLogger>,
-}
-
-impl LockedAdvancedLogger {
-  // creates a new LockedAdvancedLogger instance.
-  const fn new() -> Self {
-    LockedAdvancedLogger { inner: spin::Mutex::new(AdvancedLogger::new()) }
-  }
-
-  // initializes an advanced logger instance. Typically only called once, but if called more than once will re-init
-  // logger by re-acquiring a pointer to the advanced logger protocol.
-  fn init(&self, bs: *mut BootServices) {
-    self.inner.lock().init(bs);
-  }
-
-  // Log the debug output in `args` at the given log level.
   fn log(&self, level: usize, args: fmt::Arguments) {
-    // Note: tasks at higher TPL may interrupt logging of tasks at lower TPL. This could cause deadlock here, if the
-    // lower TPL thread is holding the lock and is interrupted at a higher TPL. For now, use try_lock() to avoid
-    // deadlock here. This has the downside of potentially dropping messages at higher TPL.
-    if let Some(mut logger) = self.inner.try_lock() {
-      logger.log(level, args)
+    let logger_ptr = self.protocol.load(Ordering::SeqCst);
+    if let Some(protocol) = unsafe { logger_ptr.as_mut() } {
+      let mut log_transaction = LogTransactor { protocol, level };
+      log_transaction.write_fmt(args).expect("Printing to log failed.");
     }
   }
 }
 
-unsafe impl Sync for LockedAdvancedLogger {}
-unsafe impl Send for LockedAdvancedLogger {}
+unsafe impl Sync for AdvancedLogger {}
+unsafe impl Send for AdvancedLogger {}
+
+struct LogTransactor<'a> {
+  protocol: &'a mut AdvancedLoggerProtocol,
+  level: usize,
+}
+
+impl<'a> fmt::Write for LogTransactor<'a> {
+  fn write_str(&mut self, s: &str) -> fmt::Result {
+    (self.protocol.write_log)(
+      self.protocol as *const AdvancedLoggerProtocol,
+      self.level,
+      s.as_ptr(),
+      s.as_bytes().len(),
+    );
+    Ok(())
+  }
+}
 
 /// Initializes the logging subsystem. The `debug` and `debugln` macros may be called before calling this function, but
 /// output is discarded if the logger has not yet been initialized via this routine.
@@ -216,10 +199,10 @@ macro_rules! debugln {
 mod tests {
   extern crate std;
   use crate::{
-    init_debug, AdvancedLoggerProtocol, LockedAdvancedLogger, ADVANCED_LOGGER_PROTOCOL_GUID, DEBUG_ERROR, DEBUG_INFO,
+    debug, init_debug, AdvancedLogger, AdvancedLoggerProtocol, ADVANCED_LOGGER_PROTOCOL_GUID, DEBUG_ERROR, DEBUG_INFO,
     DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
   };
-  use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts};
+  use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts, sync::atomic::Ordering};
   use r_efi::{
     efi::{Guid, Status},
     system::BootServices,
@@ -277,14 +260,13 @@ mod tests {
   #[test]
   fn init_should_initialize_logger() {
     let mut boot_services = mock_boot_services();
-    static TEST_LOGGER: LockedAdvancedLogger = LockedAdvancedLogger::new();
+    static TEST_LOGGER: AdvancedLogger = AdvancedLogger::new();
     TEST_LOGGER.init(&mut boot_services);
 
     assert_eq!(
-      TEST_LOGGER.inner.lock().protocol.unwrap() as *const AdvancedLoggerProtocol,
+      TEST_LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocol,
       &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocol
     );
-    assert_eq!(TEST_LOGGER.inner.lock().level, DEBUG_INFO);
   }
 
   #[test]
@@ -293,10 +275,9 @@ mod tests {
     init_debug(&mut boot_services);
 
     assert_eq!(
-      LOGGER.inner.lock().protocol.unwrap() as *const AdvancedLoggerProtocol,
+      LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocol,
       &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocol
     );
-    assert_eq!(LOGGER.inner.lock().level, DEBUG_INFO);
 
     debugln!(DEBUG_INIT, "This is a DEBUG_INIT test.");
     debugln!(DEBUG_WARN, "This is a {:} test.", "DEBUG_WARN");
