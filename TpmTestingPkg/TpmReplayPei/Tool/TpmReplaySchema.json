@@ -285,6 +285,11 @@
                       "To encode the bytes `0000`, the following Python code can be used to generate the base64 encoded string value. `import base64\n\nbase64.b64encode(b'\\x00\\x00\\x00\\x00').decode('utf-8')`"
                     ],
                     "const": "base64"
+                  },
+                  {
+                    "type": "string",
+                    "description": "UEFI variable data.",
+                    "const": "variable"
                   }
                 ]
               },
@@ -305,6 +310,24 @@
               "value": {
                 "type": "string",
                 "description": "The actual event data in string (or base64) representation."
+              },
+              "variable_name": {
+                "type": "string",
+                "description": "The UEFI variable name (vendor GUID in this case).",
+                "pattern": "^\\{0x[0-9A-Fa-f]{8}, 0x[0-9A-Fa-f]{4}, 0x[0-9A-Fa-f]{4}, \\{(0x[0-9A-Fa-f]{2}, ){7}0x[0-9A-Fa-f]{2}\\}\\}$",
+                "default": "\"{0xD719B2CB, 0x3D3A, 0x4596, {0xA3, 0xBC, 0xDA, 0xD0, 0x0E, 0x67, 0x65, 0x6F}}\""
+              },
+              "variable_unicode_name_length": {
+                "type": "integer",
+                "description": "The number of characters in the variable name."
+              },
+              "variable_data_length": {
+                "type": "integer",
+                "description": "The size of the variable data in bytes."
+              },
+              "variable_unicode_name": {
+                "type": "string",
+                "description": "The UTF-16 UEFI variable name value."
               }
             },
             "additionalProperties": false,
@@ -312,45 +335,101 @@
               "type",
               "value"
             ],
-            "if": {
-              "properties": {
-                "type": {
-                  "const": "string"
-                }
-              }
-            },
-            "then": {
-              "properties": {
-                "include_null_char": {
-                  "type": "boolean",
-                  "default": false
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "string"
+                    }
+                  }
                 },
-                "encoding": {
-                  "type": "string",
-                  "enum": [
-                    "utf-8",
-                    "utf-16"
-                  ],
-                  "default": "utf-8"
-                }
-              }
-            },
-            "else": {
-              "not": {
-                "anyOf": [
-                  {
-                    "required": [
-                      "encoding"
-                    ]
-                  },
-                  {
-                    "required": [
-                      "include_null_char"
+                "then": {
+                  "properties": {
+                    "include_null_char": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "encoding": {
+                      "type": "string",
+                      "enum": [
+                        "utf-8",
+                        "utf-16"
+                      ],
+                      "default": "utf-8"
+                    }
+                  }
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "encoding"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "include_null_char"
+                        ]
+                      }
                     ]
                   }
-                ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "variable"
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "variable_name": {
+                      "type": "string",
+                      "default": "\"{0xD719B2CB, 0x3D3A, 0x4596, {0xA3, 0xBC, 0xDA, 0xD0, 0x0E, 0x67, 0x65, 0x6F}}\""
+                    },
+                    "variable_unicode_name_length": {
+                      "type": "integer"
+                    },
+                    "variable_data_length": {
+                      "type": "integer"
+                    },
+                    "variable_unicode_name": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {
+                        "required": [
+                          "variable_name"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "variable_unicode_name_length"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "variable_data_length"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "variable_unicode_name"
+                        ]
+                      }
+                    ]
+                  }
+                }
               }
-            }
+            ]
           },
           "prehash": {
             "type": "object",

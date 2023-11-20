@@ -18,7 +18,7 @@ from edk2toollib.tpm.tpm2_defs import (
     TPM_ALG_SHA384,
     TPM_ALG_SHA512,
 )
-from typing import Dict, Iterable
+from typing import Dict, Iterable, Tuple
 
 SHA1_DIGEST_SIZE = 0x14
 SHA256_DIGEST_SIZE = 0x20
@@ -469,6 +469,121 @@ class TpmlDigestValues(object):
     def extend_data(self, data):
         for digest in self.digests.values():
             digest.extend_data(data)
+
+
+class TcgUefiVariableData(object):
+    """TCG UEFI Variable data structure."""
+
+    # typedef struct tdUEFI_VARIABLE_DATA {
+    #   EFI_GUID    VariableName;
+    #   UINT64      UnicodeNameLength;
+    #   UINT64      VariableDataLength;
+    #   CHAR16      UnicodeName[1];
+    #   INT8        VariableData[1];
+    # } UEFI_VARIABLE_DATA;
+    _var_guid_format = "<IHH8B"
+    _var_len_format = "<QQ"
+    _hdr_struct_format = f"<{_var_guid_format[1:]}{_var_len_format[1:]}"
+    _hdr_struct_size = struct.calcsize(_hdr_struct_format)
+
+    def __init__(
+        self,
+        variable_name: Tuple[int],
+        unicode_name_length: int,
+        variable_data_length: int,
+        unicode_name: str,
+        variable_data: bytes,
+    ):
+        self.variable_name = variable_name
+        self.unicode_name_length = unicode_name_length
+        self.variable_data_length = variable_data_length
+        self.unicode_name = unicode_name
+        self.variable_data = variable_data
+
+    @property
+    def guid(self) -> str:
+        return (
+            "{{0x{:08X}, 0x{:04X}, 0x{:04X}, {{0x{:02X}, 0x{:02X}, "
+            "0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}, "
+            "0x{:02X}}}}}".format(*self.variable_name)
+        )
+
+    def __str__(self) -> str:
+        """Returns a string of this object.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        debug_str = "\n\tTCG_UEFI_VARIABLE_DATA\n"
+        debug_str += "\t\tVariable Name (GUID)    = %s\n" % self.guid
+        debug_str += (
+            "\t\tUnicode Name Length     = 0x%016X\n" % self.unicode_name_length
+        )
+        debug_str += (
+            "\t\tVariable Data Length    = 0x%016X\n" % self.variable_data_length
+        )
+        debug_str += "\t\tUnicode Name            = %s\n" % self.unicode_name
+        debug_str += "\t\tVariable Data:\n\n"
+        debug_str += str(self.variable_data)
+
+        return debug_str
+
+    def get_size(self) -> int:
+        """Returns the object size.
+
+        Returns:
+            int: The size in bytes.
+        """
+        return (
+            self._hdr_struct_size
+            + self.unicode_name_length * 2
+            + self.variable_data_length
+        )
+
+    def encode(self) -> bytes:
+        """Encodes the object.
+
+        Returns:
+            bytes: A byte representation of the object.
+        """
+        guid = struct.pack(self._var_guid_format, *self.variable_name)
+        lengths = struct.pack(
+            self._var_len_format, self.unicode_name_length, self.variable_data_length
+        )
+        return (
+            guid + lengths + self.unicode_name.encode("utf-16le") + self.variable_data
+        )
+
+    @classmethod
+    def from_binary(cls, binary_data: bytes) -> TcgUefiVariableData:
+        """Returns a new instance from a object byte representation.
+
+        Args:
+            binary_data (bytes): Byte representation of the object.
+
+        Returns:
+            TcgUefiVariableData: A TcgUefiVariableData instance.
+        """
+        variable_name = struct.unpack_from(
+            TcgUefiVariableData._var_guid_format, binary_data
+        )
+        offset = struct.calcsize(TcgUefiVariableData._var_guid_format)
+        unicode_name_length, variable_data_length = struct.unpack_from(
+            TcgUefiVariableData._var_len_format, binary_data, offset
+        )
+        offset += struct.calcsize(TcgUefiVariableData._var_len_format)
+        unicode_name = binary_data[offset : offset + unicode_name_length * 2].decode(
+            "utf-16le"
+        )
+        offset += unicode_name_length * 2
+        variable_data = binary_data[offset:]
+        return cls(
+            variable_name,
+            unicode_name_length,
+            variable_data_length,
+            unicode_name,
+            variable_data,
+        )
 
 
 class TcgEfiSpecIdAlgorithmSize(object):
