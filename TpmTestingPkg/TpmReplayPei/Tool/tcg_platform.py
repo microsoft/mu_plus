@@ -517,6 +517,21 @@ class TcgUefiVariableData(object):
         Returns:
             str: The string representation of this object.
         """
+
+        def _print_hex_data(data: bytes):
+            bytes_per_line = 16
+
+            data_str = ""
+            for i in range(0, len(data), bytes_per_line):
+                line_bytes = data[i : i + bytes_per_line]
+                hex_line = " ".join(f"{byte:02X}" for byte in line_bytes)
+                ascii_line = "".join(
+                    chr(byte) if 32 <= byte <= 126 else "." for byte in line_bytes
+                )
+                data_str += f"\t\t\t{i:08X}  {hex_line.ljust(47)}  " f"{ascii_line}\n"
+
+            return data_str
+
         debug_str = "\n\tTCG_UEFI_VARIABLE_DATA\n"
         debug_str += "\t\tVariable Name (GUID)    = %s\n" % self.guid
         debug_str += (
@@ -526,8 +541,8 @@ class TcgUefiVariableData(object):
             "\t\tVariable Data Length    = 0x%016X\n" % self.variable_data_length
         )
         debug_str += "\t\tUnicode Name            = %s\n" % self.unicode_name
-        debug_str += "\t\tVariable Data:\n\n"
-        debug_str += str(self.variable_data)
+        debug_str += "\t\tVariable Data:\n"
+        debug_str += _print_hex_data(self.variable_data)
 
         return debug_str
 
