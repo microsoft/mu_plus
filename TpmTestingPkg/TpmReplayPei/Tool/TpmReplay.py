@@ -48,6 +48,10 @@ PROGRAM_NAME = "TPM Replay"
 # Logging constants
 PERF = "[PERF]"
 
+# Global logger instance
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 class ExitCode(IntEnum):
     SUCCESS = 0
@@ -404,7 +408,7 @@ def _get_event(
     Returns:
         TcgPcrEvent2: A TCG PCR Event 2 event.
     """
-    logging.debug(f" PCR[{pcr}]: Adding event {event}.")
+    logger.debug(f" PCR[{pcr}]: Adding event {event}.")
 
     new_event = tcg.TcgPcrEvent2(hash_algs)
     new_event.pcr_index = pcr
@@ -431,7 +435,7 @@ def _get_event_pre_hashed_data(
     Returns:
         _type_: _description_
     """
-    logging.debug(f"  PCR[{pcr}]: Adding event {event}.")
+    logger.debug(f"  PCR[{pcr}]: Adding event {event}.")
 
     new_event = tcg.TcgPcrEvent2([*algs_and_hash])
     new_event.pcr_index = pcr
@@ -523,13 +527,13 @@ def _build_tpm_replay_event_log_from_yaml(
               Defaults to False.
         """
         if pcr > 7:
-            logging.debug(
+            logger.debug(
                 "Skipping calculation of a PCR state greater than 7 " f"({pcr})."
             )
             return
 
-        logging.debug(
-            f"    PCR[{pcr}]: Adding {ALG_FROM_VALUE[alg]} digest {str(digest)}."
+        logger.debug(
+            f"    PCR[{pcr}]: Adding {ALG_FROM_VALUE[alg]} digest " f"{str(digest)}."
         )
 
         if pcr_state[pcr] is None:
@@ -543,7 +547,7 @@ def _build_tpm_replay_event_log_from_yaml(
         else:
             pcr_state[pcr][alg].extend_data(digest)
 
-    logging.debug("Processing events...")
+    logger.debug("Processing events...")
     for event in yaml_data["events"]:
         data = _process_event_data(event["data"])
 
@@ -561,13 +565,13 @@ def _build_tpm_replay_event_log_from_yaml(
 
         replay_event_log._event_log.append(new_event)
 
-    logging.debug("Assembling final PCR states...")
+    logger.debug("Assembling final PCR states...")
     for pcr_index, pcr_digests in pcr_state.items():
         tpml_digest_values = TpmlDigestValues()
         if pcr_digests is not None:
-            logging.debug(f"  PCR[{pcr_index}]:.")
+            logger.debug(f"  PCR[{pcr_index}]:.")
             for alg, digest in pcr_digests.items():
-                logging.debug(f"    {ALG_FROM_VALUE[alg]} present.")
+                logger.debug(f"    {ALG_FROM_VALUE[alg]} present.")
                 tpml_digest_values.digests[alg] = digest
             calc_pcr_state = CalculatedPcrState(pcr_index)
             calc_pcr_state.digest_values = tpml_digest_values
@@ -593,17 +597,17 @@ def _build_yaml_from_event_log(
 
     yaml_data = {"events": []}
 
-    logging.debug("Processing events...")
+    logger.debug("Processing events...")
     for event in event_log._event_log:
         event_data = {}
         event_data["type"] = EVENT_FROM_VALUE[event.event_type]
         event_data["pcr"] = event.pcr_index
         event_data["prehash"] = {}
 
-        logging.debug(f"  PCR[{event_data['pcr']}]: {event_data['type']}:")
+        logger.debug(f"  PCR[{event_data['pcr']}]: {event_data['type']}:")
 
         for alg, digest in event.digest_values.digests.items():
-            logging.debug(f"    {ALG_FROM_VALUE[alg]} present.")
+            logger.debug(f"    {ALG_FROM_VALUE[alg]} present.")
             event_data["prehash"][ALG_FROM_VALUE[alg]] = "0x" + "".join(
                 [f"{b:02x}" for b in digest.hash_digest]
             )
@@ -656,7 +660,7 @@ def _build_yaml_from_event_log(
                     "utf-8"
                 )
 
-        logging.debug(f"    {event_data['data']['type']} event detected.")
+        logger.debug(f"    {event_data['data']['type']} event detected.")
 
         yaml_data["events"].append(event_data)
 
@@ -694,14 +698,11 @@ def _begin() -> int:
         """Replaces print when quiet is requested to prevent printing messages."""
         pass
 
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-
     stdout_logger_handler = logging.StreamHandler(sys.stdout)
     stdout_logger_handler.set_name("stdout_logger_handler")
     stdout_logger_handler.setLevel(logging.INFO)
     stdout_logger_handler.setFormatter(logging.Formatter("%(message)s"))
-    root_logger.addHandler(stdout_logger_handler)
+    logger.addHandler(stdout_logger_handler)
 
     parser = argparse.ArgumentParser(
         prog=PROGRAM_NAME,
@@ -834,15 +835,15 @@ def _begin() -> int:
             )
 
         file_logger_handler.setFormatter(file_logger_formatter)
-        root_logger.addHandler(file_logger_handler)
+        logger.addHandler(file_logger_handler)
 
-    logging.info(PROGRAM_NAME + "\n")
+    logger.info(PROGRAM_NAME + "\n")
 
     with open("TpmReplaySchema.json", "r") as s:
         json_schema = json.load(s)
 
     if args.input_desc_file:
-        logging.info(f"Reading input description file {args.input_desc_file}")
+        logger.info(f"Reading input description file {args.input_desc_file}")
 
         desc_path = PurePath(args.input_desc_file)
         with open(desc_path, "r") as idf:
@@ -865,32 +866,32 @@ def _begin() -> int:
             else:
                 raise e
         end_time = timeit.default_timer() - start_time
-        logging.debug(f"{PERF} JSON schema validation took {end_time:.2f} seconds.")
+        logger.debug(f"{PERF} JSON schema validation took {end_time:.2f} seconds.")
 
         start_time = timeit.default_timer()
         log = _build_tpm_replay_event_log_from_yaml(file_data)
         end_time = timeit.default_timer() - start_time
-        logging.debug(
+        logger.debug(
             f"{PERF} Total event log creation time: " f"{end_time:.2f} seconds."
         )
 
         with open(args.output_file, "wb") as output_replay_event_log:
             output_replay_event_log.write(log.encode())
 
-        logging.info(f"Output: Binary file {args.output_file}")
+        logger.info(f"Output: Binary file {args.output_file}")
 
     elif args.input_event_log_file:
-        logging.info(f"Reading input binary file {args.input_event_log_file}")
+        logger.info(f"Reading input binary file {args.input_event_log_file}")
 
         with open(args.input_event_log_file, "rb") as log_file:
             binary_data = log_file.read()
 
         start_time = timeit.default_timer()
         if binary_data[:8] == b"_TPMRPL_":
-            logging.debug("Input: Binary log file recognized as a TPM Replay log.")
+            logger.debug("Input: Binary log file recognized as a TPM Replay log.")
             log = TpmReplayEventLog(binary_data)
         else:
-            logging.debug("Input: Binary log file recognized as a Crypto Agile log.")
+            logger.debug("Input: Binary log file recognized as a Crypto Agile log.")
             log = CryptoAgileEventLog(binary_data)
 
         data = _build_yaml_from_event_log(log)
@@ -914,7 +915,7 @@ def _begin() -> int:
             json_obj, default_flow_style=False, indent=2, sort_keys=False
         )
         end_time = timeit.default_timer() - start_time
-        logging.debug(
+        logger.debug(
             f"{PERF} Total time spent converting the binary to YAML: "
             f"{end_time:.2f} seconds."
         )
@@ -922,14 +923,14 @@ def _begin() -> int:
         with open(args.output_file, "w") as output_yaml_file:
             output_yaml_file.write(yaml_data)
 
-        logging.info(f"Output: YAML file {args.output_file}")
+        logger.info(f"Output: YAML file {args.output_file}")
 
     if args.output_report:
         report_path = PurePath(args.output_file)
         report_path = report_path.parent / (report_path.name + "-report.txt")
         with open(report_path, "w") as report_file:
             report_file.write(str(log))
-        logging.info(f"Output: Report file {report_path}")
+        logger.info(f"Output: Report file {report_path}")
 
     return ExitCode.SUCCESS
 
@@ -941,8 +942,8 @@ if __name__ == "__main__":
     try:
         sys.exit(min(_begin(), ExitCode.GENERAL_ERROR))
     except KeyboardInterrupt:
-        logging.warning("Exiting due to keyboard interrupt.")
+        logger.warning("Exiting due to keyboard interrupt.")
         sys.exit(ExitCode.KBD_INTERRUPT)
     except FileExistsError as e:
-        logging.critical(f"Input file {e.args[0]} does not exist.")
+        logger.critical(f"Input file {e.args[0]} does not exist.")
         sys.exit(ExitCode.FILE_NOT_FOUND)
