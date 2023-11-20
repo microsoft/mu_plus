@@ -16,6 +16,7 @@ import json
 import jsonschema
 import logging
 import os
+import re
 import struct
 import sys
 import tcg_platform as tcg
@@ -29,6 +30,7 @@ from tcg_platform import (
     TcgEfiSpecIdEvent,
     TcgPcrEvent,
     TcgPcrEvent2,
+    TcgUefiVariableData,
     TpmlDigestValues,
     TpmtHa,
     VALUE_FROM_ALG,
@@ -476,6 +478,19 @@ def _process_event_data(event_data: Dict[str, str]) -> bytes:
             )
     elif event_data["type"] == "base64":
         data = base64.b64decode(event_data["value"])
+    elif event_data["type"] == "variable":
+        var_name = tuple(
+            int(x, 0)
+            for x in re.findall(r"0x[0-9A-Fa-f]+", event_data["variable_name"])
+        )
+        tcg_var = TcgUefiVariableData(
+            var_name,
+            event_data["variable_unicode_name_length"],
+            event_data["variable_data_length"],
+            event_data["variable_unicode_name"],
+            base64.b64decode(event_data["value"]),
+        )
+        data = tcg_var.encode()
 
     return data
 
@@ -574,6 +589,8 @@ def _build_yaml_from_event_log(
         a string or additional nested dictionaries.
 
     """
+    import tcg_platform
+
     yaml_data = {"events": []}
 
     logging.debug("Processing events...")
@@ -592,31 +609,52 @@ def _build_yaml_from_event_log(
             )
 
         event_data["data"] = {}
-        char_result = chardet.detect(event.event)
 
-        if char_result["encoding"] == "ascii" and all(
-            event.event[i] == 0 for i in range(1, len(event.event), 2)
+        if event.event_type in (
+            tcg_platform.EV_EFI_VARIABLE_DRIVER_CONFIG,
+            tcg_platform.EV_EFI_VARIABLE_BOOT,
+            tcg_platform.EV_EFI_VARIABLE_BOOT2,
+            tcg_platform.EV_EFI_VARIABLE_AUTHORITY,
         ):
-            char_result["encoding"] = "utf-16le"
-
-        event_value = event.event
-        if char_result["encoding"] == "ascii" or char_result["encoding"] == "utf-8":
-            event_data["data"]["type"] = "string"
-            event_data["data"]["encoding"] = "utf-8"
-            if event_value[-1:] == b"\0":
-                event_value = event_value[:-1]
-                event_data["data"]["include_null_char"] = True
-            event_data["data"]["value"] = event_value.decode("utf-8")
-        elif char_result["encoding"] == "utf-16le":
-            event_data["data"]["type"] = "string"
-            event_data["data"]["encoding"] = "utf-16"
-            if event_value[-2:] == b"\x00\x00":
-                event_value = event_value[:-2]
-                event_data["data"]["include_null_char"] = True
-            event_data["data"]["value"] = event_value.decode("utf-16")
+            event_data["data"]["type"] = "variable"
+            tcg_var = TcgUefiVariableData.from_binary(event.event)
+            event_data["data"]["variable_name"] = tcg_var.guid
+            event_data["data"][
+                "variable_unicode_name_length"
+            ] = tcg_var.unicode_name_length
+            event_data["data"]["variable_data_length"] = tcg_var.variable_data_length
+            event_data["data"]["variable_unicode_name"] = tcg_var.unicode_name
+            event_data["data"]["value"] = base64.b64encode(
+                tcg_var.variable_data
+            ).decode("utf-8")
         else:
-            event_data["data"]["type"] = "base64"
-            event_data["data"]["value"] = base64.b64encode(event_value).decode("utf-8")
+            char_result = chardet.detect(event.event)
+
+            if char_result["encoding"] == "ascii" and all(
+                event.event[i] == 0 for i in range(1, len(event.event), 2)
+            ):
+                char_result["encoding"] = "utf-16le"
+
+            event_value = event.event
+            if char_result["encoding"] == "ascii" or char_result["encoding"] == "utf-8":
+                event_data["data"]["type"] = "string"
+                event_data["data"]["encoding"] = "utf-8"
+                if event_value[-1:] == b"\0":
+                    event_value = event_value[:-1]
+                    event_data["data"]["include_null_char"] = True
+                event_data["data"]["value"] = event_value.decode("utf-8")
+            elif char_result["encoding"] == "utf-16le":
+                event_data["data"]["type"] = "string"
+                event_data["data"]["encoding"] = "utf-16"
+                if event_value[-2:] == b"\x00\x00":
+                    event_value = event_value[:-2]
+                    event_data["data"]["include_null_char"] = True
+                event_data["data"]["value"] = event_value.decode("utf-16")
+            else:
+                event_data["data"]["type"] = "base64"
+                event_data["data"]["value"] = base64.b64encode(event_value).decode(
+                    "utf-8"
+                )
 
         logging.debug(f"    {event_data['data']['type']} event detected.")
 
