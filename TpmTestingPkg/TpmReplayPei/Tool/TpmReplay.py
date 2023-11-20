@@ -631,6 +631,9 @@ def _build_yaml_from_event_log(
             event_data["data"]["value"] = base64.b64encode(
                 tcg_var.variable_data
             ).decode("utf-8")
+
+            logger.debug(f"    {event_data['data']['type']} event detected.")
+            logger.debug(f"      {str(tcg_var)}")
         else:
             char_result = chardet.detect(event.event)
 
@@ -660,7 +663,7 @@ def _build_yaml_from_event_log(
                     "utf-8"
                 )
 
-        logger.debug(f"    {event_data['data']['type']} event detected.")
+            logger.debug(f"    {event_data['data']['type']} event detected.")
 
         yaml_data["events"].append(event_data)
 
