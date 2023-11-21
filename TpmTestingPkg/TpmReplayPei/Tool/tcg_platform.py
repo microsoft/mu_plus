@@ -151,6 +151,7 @@ def _get_hasher_for_alg(alg: int) -> object:
         Hash object: A hashlib Hash object.
     """
     valid_algs = {
+        TPM_ALG_SHA1: hashlib.sha1(),
         TPM_ALG_SHA256: hashlib.sha256(),
         TPM_ALG_SHA384: hashlib.sha384(),
         TPM_ALG_SHA512: hashlib.sha512(),
@@ -320,6 +321,8 @@ class TpmtHa_Test(unittest.TestCase):
         self.assertEqual(len(test.HashDigest), SHA384_DIGEST_SIZE)
         test = TpmtHa(digest=None, alg=TPM_ALG_SHA256)
         self.assertEqual(len(test.HashDigest), SHA256_DIGEST_SIZE)
+        test = TpmtHa(digest=None, alg=TPM_ALG_SHA1)
+        self.assertEqual(len(test.HashDigest), SHA1_DIGEST_SIZE)
 
         with self.assertRaises(ValueError):
             test = TpmtHa(alg=0x00)

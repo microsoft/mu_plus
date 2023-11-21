@@ -437,8 +437,8 @@
             "properties": {
               "sha1": {
                 "type": "string",
-                "minLength": 34,
-                "maxLength": 34,
+                "minLength": 42,
+                "maxLength": 42,
                 "description": "Must be a SHA-1 length string that begins with '0x'.",
                 "pattern": "^0x[A-Fa-f0-9]+$"
               },
