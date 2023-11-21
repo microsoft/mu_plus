@@ -312,4 +312,7 @@ capabilities:
 - Creation of the binary file needed by firmware for TPM replay from a JSON or YAML file that describes the
   measurements to perform.
 - Creation of a YAML file from a given binary that describes the measurements in the binary event log.
-- Generation of a text report detailing the measurements in a given binary or YAML file.
+- Generation of a text report detailing the measurements in a given binary or YAML file (i.e. `-l` and `-v` options).
+- Breakdown of UEFI variable data in events that represent UEFI variables.
+- Decoding of "crypto agile event logs" as described in the TCG PC Client Platform Firmware Profile Specification.
+  This includes the log produced by Windows (usually present in the `C:\Windows\Logs\MeasuredBoot` directory).
