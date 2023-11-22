@@ -34,7 +34,11 @@
 # Library Class section - list of all Library Classes needed by this Platform.
 #
 ################################################################################
-!include MdePkg/MdeLibs.dsc.inc
+[LibraryClasses]
+  ArmTrngLib|MdePkg/Library/BaseArmTrngLibNull/BaseArmTrngLibNull.inf
+  RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
+  CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
+  SmmCpuRendezvousLib|MdePkg/Library/SmmCpuRendezvousLibNull/SmmCpuRendezvousLibNull.inf
 
 [LibraryClasses.X64]
   TimerLib|MdePkg/Library/BaseTimerLibNullTemplate/BaseTimerLibNullTemplate.inf
