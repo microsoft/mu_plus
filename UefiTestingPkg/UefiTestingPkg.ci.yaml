@@ -92,7 +92,8 @@
             "MPIDRs",
             "PAGESs",
             "SMRRs",
-            "unsplit"
+            "unsplit",
+            "lfanew", # PE/COFF
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

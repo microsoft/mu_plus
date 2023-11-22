@@ -1,5 +1,5 @@
 ## @file
-#  Advanced Logger Access library.
+#  Advanced Logger Hardware Port Library.
 #
 #  Copyright (c) Microsoft Corporation.
 #
@@ -29,11 +29,6 @@
 
 [LibraryClasses]
   SerialPortLib
-
-[Protocols]
-
-[Pcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel       ## CONSUMES
 
 [Depex]
   TRUE

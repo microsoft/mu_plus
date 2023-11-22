@@ -131,7 +131,12 @@ impl LockedAdvancedLogger {
 
   // Log the debug output in `args` at the given log level.
   fn log(&self, level: usize, args: fmt::Arguments) {
-    self.inner.lock().log(level, args)
+    // Note: tasks at higher TPL may interrupt logging of tasks at lower TPL. This could cause deadlock here, if the
+    // lower TPL thread is holding the lock and is interrupted at a higher TPL. For now, use try_lock() to avoid
+    // deadlock here. This has the downside of potentially dropping messages at higher TPL.
+    if let Some(mut logger) = self.inner.try_lock() {
+      logger.log(level, args)
+    }
   }
 }
 

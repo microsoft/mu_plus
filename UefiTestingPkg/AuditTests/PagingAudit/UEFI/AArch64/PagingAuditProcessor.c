@@ -8,6 +8,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/ArmLib.h>
+#include <Protocol/MemoryAttribute.h>
 #include "../PagingAuditCommon.h"
 
 extern MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol;
@@ -75,7 +76,6 @@ GetFlatPageTableData (
   UINTN       NumPage1GNotPresent = 0;
   UINT64      RootEntryCount      = 0;
   UINT64      Address;
-  BOOLEAN     Valid;
 
   //  Count parameters should be provided.
   if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (PdeCount == NULL) || (GuardCount == NULL)) {
@@ -116,13 +116,12 @@ GetFlatPageTableData (
     for (Index1 = 0x0; Index1 < TT_ENTRY_COUNT; Index1++ ) {
       Index2 = 0;
       Index3 = 0;
-      Valid  = TRUE;
       if ((Pte1G[Index1] & 0x1) == 0) {
         NumPage1GNotPresent++;
-        Valid = FALSE;
+        continue;
       }
 
-      if (!IS_BLOCK (Pte1G[Index1], 1) && Valid) {
+      if (!IS_BLOCK (Pte1G[Index1], 1)) {
         Pte2M = (UINT64 *)(Pte1G[Index1] & TT_ADDRESS_MASK);
 
         MyPdeCount++;
@@ -132,13 +131,12 @@ GetFlatPageTableData (
 
         for (Index2 = 0x0; Index2 < TT_ENTRY_COUNT; Index2++ ) {
           Index3 = 0;
-          Valid  = TRUE;
           if ((Pte2M[Index2] & 0x1) == 0) {
             NumPage2MNotPresent++;
-            Valid = FALSE;
+            continue;
           }
 
-          if (!IS_BLOCK (Pte2M[Index2], 2) && Valid) {
+          if (!IS_BLOCK (Pte2M[Index2], 2)) {
             Pte4K = (UINT64 *)(Pte2M[Index2] & TT_ADDRESS_MASK);
             MyPdeCount++;
 
@@ -242,7 +240,7 @@ DumpProcessorSpecificHandlers (
 }
 
 /**
-  Dumps platorm info required to correctly parse the pages (architecture,
+  Dumps platform info required to correctly parse the pages (architecture,
   execution level, etc.)
 **/
 VOID
@@ -251,10 +249,11 @@ DumpPlatforminfo (
   VOID
   )
 {
-  CHAR8  TempString[MAX_STRING_SIZE];
-  UINTN  ExecutionLevel;
-  CHAR8  *ElString;
-  UINTN  StringIndex;
+  CHAR8                          TempString[MAX_STRING_SIZE];
+  UINTN                          ExecutionLevel;
+  CHAR8                          *ElString;
+  UINTN                          StringIndex;
+  EFI_MEMORY_ATTRIBUTE_PROTOCOL  *MemoryAttributeProtocol;
 
   ExecutionLevel = ArmReadCurrentEL ();
 
@@ -268,13 +267,18 @@ DumpPlatforminfo (
     ElString = "Unknown";
   }
 
+  if (EFI_ERROR (gBS->LocateProtocol (&gEfiMemoryAttributeProtocolGuid, NULL, (VOID **)&MemoryAttributeProtocol))) {
+    MemoryAttributeProtocol = NULL;
+  }
+
   // Dump the execution level of UEFI
   StringIndex = AsciiSPrint (
                   &TempString[0],
                   MAX_STRING_SIZE,
-                  "Architecture,AARCH64\nBitwidth,%d\nPhase,DXE\nExecutionLevel,%a\n",
+                  "Architecture,AARCH64\nBitwidth,%d\nPhase,DXE\nExecutionLevel,%a\nMemoryAttributeProtocolPresent,%a\n",
                   CalculateMaximumSupportAddressBits (),
-                  ElString
+                  ElString,
+                  (MemoryAttributeProtocol == NULL) ?  "FALSE" : "TRUE"
                   );
 
   WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);

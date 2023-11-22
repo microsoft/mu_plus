@@ -1,0 +1,31 @@
+## @file
+#  An instance of the Panic Library that outputs to advanced logger.
+#
+#  Copyright (c) Microsoft Corporation. All rights reserved.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION       = 0x00010005
+  BASE_NAME         = BasePanicLibAdvancedLogger
+  FILE_GUID         = 536D781D-A6A6-4831-AAB8-1E391DA2DD06
+  MODULE_TYPE       = BASE
+  VERSION_STRING    = 1.0
+  LIBRARY_CLASS     = PanicLib
+
+#
+#  VALID_ARCHITECTURES  = ANY
+#
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerLib
+  BaseLib
+  PrintLib
+
+[Sources]
+  BasePanicLibAdvancedLogger.c

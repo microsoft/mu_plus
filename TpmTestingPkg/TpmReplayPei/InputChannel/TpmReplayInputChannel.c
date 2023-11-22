@@ -8,9 +8,10 @@
 **/
 
 #include <Uefi.h>
+#include <Guid/TpmReplayEventLog.h>
 #include <Library/DebugLib.h>
+#include <Library/InputChannelLib.h>
 
-#include "../TpmReplayEventLog.h"
 #include "TpmReplayInputChannel.h"
 #include "TpmReplayInputChannelInternal.h"
 
@@ -48,10 +49,20 @@ GetReplayEventLog (
     goto Done;
   }
 
-  // Second priority: FFS in the FW image
+  // Second priority: Custom interface
+  Status = GetReplayEventLogFromCustomInterface (&ReplayEventLogData, &ReplayEventLogDataSize);
+  if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "[%a] - Using TPM replay event log from a custom interface.\n", __func__));
+    goto Done;
+  } else if (EFI_ERROR (Status) && ((Status != EFI_UNSUPPORTED) && (Status != EFI_NOT_FOUND))) {
+    DEBUG ((DEBUG_ERROR, "[%a] - TPM replay event log from custom interface failed - %r.\n", __func__, Status));
+  }
+
+  // Third priority: FFS in the FW image
   Status = GetTpmReplayEventLogFfsFile (&ReplayEventLogData, &ReplayEventLogDataSize);
   ASSERT (Status == EFI_SUCCESS || Status == EFI_NOT_FOUND);
   if (!EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "[%a] - Using TPM replay event log from the firmware flash image.\n", __func__));
     goto Done;
   }
 

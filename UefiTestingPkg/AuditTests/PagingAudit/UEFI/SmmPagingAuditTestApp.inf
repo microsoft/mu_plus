@@ -50,6 +50,7 @@
   gEfiSmmCommunicationProtocolGuid
   gMemoryProtectionDebugProtocolGuid
   gCpuMpDebugProtocolGuid
+  gEfiMemoryAttributeProtocolGuid
 
 [Protocols.X64]
   gEfiSmmBase2ProtocolGuid

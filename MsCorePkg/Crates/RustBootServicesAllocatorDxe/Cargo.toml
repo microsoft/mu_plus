@@ -9,4 +9,6 @@ path = "src/lib.rs"
 
 [dependencies]
 r-efi = {workspace=true}
+
+[dev-dependencies]
 spin = {workspace=true}

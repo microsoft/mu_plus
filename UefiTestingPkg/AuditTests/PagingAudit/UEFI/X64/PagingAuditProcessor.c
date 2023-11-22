@@ -13,6 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Pi/PiHob.h>
 #include <Library/HobLib.h>
 #include <Protocol/SmmBase2.h>
+#include <Protocol/MemoryAttribute.h>
 
 #define AMD_64_SMM_ADDR  0xC0010112
 #define AMD_64_SMM_MASK  0xC0010113
@@ -738,7 +739,7 @@ DumpProcessorSpecificHandlers (
 }
 
 /**
-  Dumps platorm info required to correctly parse the pages (architecture,
+  Dumps platform info required to correctly parse the pages (architecture,
   execution level, etc.)
 **/
 VOID
@@ -747,11 +748,12 @@ DumpPlatforminfo (
   VOID
   )
 {
-  CHAR8                   TempString[MAX_STRING_SIZE];
-  UINTN                   StringIndex;
-  EFI_SMM_BASE2_PROTOCOL  *mSmmBase2;
-  BOOLEAN                 InSmm;
-  CHAR8                   *PhaseString;
+  CHAR8                          TempString[MAX_STRING_SIZE];
+  UINTN                          StringIndex;
+  EFI_SMM_BASE2_PROTOCOL         *mSmmBase2;
+  BOOLEAN                        InSmm;
+  CHAR8                          *PhaseString;
+  EFI_MEMORY_ATTRIBUTE_PROTOCOL  *MemoryAttributeProtocol;
 
   InSmm     = FALSE;
   mSmmBase2 = NULL;
@@ -769,12 +771,17 @@ DumpPlatforminfo (
     PhaseString = "DXE";
   }
 
+  if (EFI_ERROR (gBS->LocateProtocol (&gEfiMemoryAttributeProtocolGuid, NULL, (VOID **)&MemoryAttributeProtocol))) {
+    MemoryAttributeProtocol = NULL;
+  }
+
   StringIndex = AsciiSPrint (
                   &TempString[0],
                   MAX_STRING_SIZE,
-                  "Architecture,X64\nPhase,%a\nBitwidth,%d\n",
+                  "Architecture,X64\nPhase,%a\nBitwidth,%d\nMemoryAttributeProtocolPresent,%a\n",
                   PhaseString,
-                  CalculateMaximumSupportAddressBits ()
+                  CalculateMaximumSupportAddressBits (),
+                  (MemoryAttributeProtocol == NULL) ?  "FALSE" : "TRUE"
                   );
 
   WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
