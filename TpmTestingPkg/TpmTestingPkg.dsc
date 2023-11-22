@@ -75,14 +75,10 @@
 #
 # Stack cookie related libraries
 #
-!if $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
-[LibraryClasses.X64, LibraryClasses.IA32]
-  # Link to /GS exports on MSVC
-  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 [LibraryClasses.X64]
-  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-!endif
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
+  NULL|MdePkg/Library/StackCheckLib/StackCheckLib.inf
+  StackCheckFailureLib|MdePkg/Library/StackCheckFailureLibNull/StackCheckFailureLibNull.inf
 
 [Components]
   TpmTestingPkg/Library/BaseFvMeasurementExclusionLibNull/BaseFvMeasurementExclusionLibNull.inf
