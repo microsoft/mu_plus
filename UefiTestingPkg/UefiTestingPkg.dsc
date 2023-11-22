@@ -105,16 +105,6 @@
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciSegmentLib|MdePkg/Library/BasePciSegmentLibPci/BasePciSegmentLibPci.inf
 
-[LibraryClasses.X64]
-  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
-!if $(TOOL_CHAIN_TAG) == VS2019 or $(TOOL_CHAIN_TAG) == VS2022
-  # Provide StackCookie support lib so that we can link to /GS exports for VS builds
-  NULL|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibRng/BaseBinSecurityLibRng.inf
-!else
-  BaseBinSecurityLib|MdePkg/Library/BaseBinSecurityLibNull/BaseBinSecurityLibNull.inf
-!endif
-
 ###############################################################
 #
 # Components Section - list of the modules and components that will be processed by compilation
