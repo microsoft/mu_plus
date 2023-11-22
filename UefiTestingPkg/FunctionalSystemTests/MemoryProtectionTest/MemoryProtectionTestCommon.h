@@ -16,7 +16,7 @@ CHAR8  *MEMORY_TYPES[] = {
   "ReservedMemoryType",      "LoaderCode",          "LoaderData",          "BootServicesCode",
   "BootServicesData",        "RuntimeServicesCode", "RuntimeServicesData", "ConventionalMemory",
   "UnusableMemory",          "ACPIReclaimMemory",   "ACPIMemoryNVS",       "MemoryMappedIO",
-  "MemoryMappedIOPortSpace", "PalCode",             "PersistentMemory"
+  "MemoryMappedIOPortSpace", "PalCode",             "PersistentMemory",    "EfiUnacceptedMemoryType"
 };
 
 ////
