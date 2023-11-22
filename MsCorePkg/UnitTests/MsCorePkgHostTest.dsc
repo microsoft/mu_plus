@@ -28,9 +28,11 @@
 # Library Class section - list of all Library Classes needed by this Platform.
 #
 ################################################################################
-!include MdePkg/MdeLibs.dsc.inc
-
 [LibraryClasses]
+  ArmTrngLib|MdePkg/Library/BaseArmTrngLibNull/BaseArmTrngLibNull.inf
+  RegisterFilterLib|MdePkg/Library/RegisterFilterLibNull/RegisterFilterLibNull.inf
+  CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
+  SmmCpuRendezvousLib|MdePkg/Library/SmmCpuRendezvousLibNull/SmmCpuRendezvousLibNull.inf
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
   UefiRuntimeServicesTableLib|MfciPkg/UnitTests/Library/MockUefiRuntimeServicesTableLib/MockUefiRuntimeServicesTableLib.inf
