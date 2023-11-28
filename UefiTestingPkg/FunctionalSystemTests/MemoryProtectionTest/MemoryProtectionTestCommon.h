@@ -16,8 +16,10 @@ CHAR8  *MEMORY_TYPES[] = {
   "ReservedMemoryType",      "LoaderCode",          "LoaderData",          "BootServicesCode",
   "BootServicesData",        "RuntimeServicesCode", "RuntimeServicesData", "ConventionalMemory",
   "UnusableMemory",          "ACPIReclaimMemory",   "ACPIMemoryNVS",       "MemoryMappedIO",
-  "MemoryMappedIOPortSpace", "PalCode",             "PersistentMemory"
+  "MemoryMappedIOPortSpace", "PalCode",             "PersistentMemory",    "EfiUnacceptedMemoryType"
 };
+
+STATIC_ASSERT (EfiMaxMemoryType == ARRAY_SIZE (MEMORY_TYPES), "MEMORY_TYPES array size does not match EfiMaxMemoryType");
 
 ////
 // Reset:                   Test will be run by violating the memory protection policy with the expectation that the system
