@@ -19,6 +19,8 @@ CHAR8  *MEMORY_TYPES[] = {
   "MemoryMappedIOPortSpace", "PalCode",             "PersistentMemory",    "EfiUnacceptedMemoryType"
 };
 
+STATIC_ASSERT (EfiMaxMemoryType == ARRAY_SIZE (MEMORY_TYPES), "MEMORY_TYPES array size does not match EfiMaxMemoryType");
+
 ////
 // Reset:                   Test will be run by violating the memory protection policy with the expectation that the system
 //                          will reboot each time. The test will take roughly 45 minutes to run with a strict protection policy.
