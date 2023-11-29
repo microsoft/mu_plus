@@ -1,0 +1,38 @@
+
+## @file
+# A library for drawing directly to the FrameBuffer memory region
+#
+# Copyright (C) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+
+[Defines]
+  INF_VERSION    = 0x00010017
+  BASE_NAME      = FrameBufferMemDrawLibPei
+  FILE_GUID      = 23E999E3-B231-4076-8791-DA5151BB3DC4
+  VERSION_STRING = 1.0
+  MODULE_TYPE    = PEIM
+  LIBRARY_CLASS  = FrameBufferMemDrawLib
+
+[LibraryClasses]
+  DebugLib
+  FrameBufferBltLib
+  MemoryAllocationLib
+  PeiServicesLib
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsGraphicsPkg/MsGraphicsPkg.dec
+
+[Sources]
+  FrameBufferMemDrawLib.c
+  FrameBufferMemDrawLibPeim.c
+  FrameBufferMemDrawLib.h
+
+[Ppis]
+  gEfiPeiGraphicsPpiGuid
+
+[Depex]
+  gEfiPeiGraphicsPpiGuid

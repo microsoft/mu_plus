@@ -9,10 +9,10 @@
 
 [Defines]
   INF_VERSION    = 0x00010017
-  BASE_NAME      = FrameBufferMemDrawLib
+  BASE_NAME      = FrameBufferMemDrawLibDxe
   FILE_GUID      = 75561EAF-4537-4FA8-B65B-40E652602A8B
   VERSION_STRING = 1.0
-  MODULE_TYPE    = BASE
+  MODULE_TYPE    = DXE_DRIVER
   LIBRARY_CLASS  = FrameBufferMemDrawLib
   DESTRUCTOR     = FrameBufferMemDrawLibDestructor
 
@@ -21,6 +21,7 @@
   DebugLib
   FrameBufferBltLib
   MemoryAllocationLib
+  UefiBootServicesTableLib
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -29,30 +30,11 @@
 
 [Sources]
   FrameBufferMemDrawLib.c
-
-##
-## IA32 Version
-##
-[Sources.IA32]
-  FrameBufferMemDrawLibPeim.c
-
-[LibraryClasses.IA32]
-  PeiServicesLib
-
-[Ppis.IA32]
-  gEfiPeiGraphicsPpiGuid
-
-[Depex.IA32]
-  gEfiPeiGraphicsPpiGuid                        ## CONSUMES
-
-##
-## X64, AARCH64 Versions
-##
-[Sources.X64, Sources.AARCH64]
   FrameBufferMemDrawLibDxe.c
+  FrameBufferMemDrawLib.h
 
-[LibraryClasses.X64, LibraryClasses.X64]
-  UefiBootServicesTableLib
-
-[Protocols.X64, Protocols.AARCH64]
+[Protocols]
   gEfiGraphicsOutputProtocolGuid                ## SOMETIMES_CONSUMES
+
+[Depex]
+  TRUE

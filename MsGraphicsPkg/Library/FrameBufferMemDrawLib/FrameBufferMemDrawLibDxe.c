@@ -8,13 +8,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Base.h>
 #include <Uefi.h>
-#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Protocol/GraphicsOutput.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/FrameBufferMemDrawLib.h>
-#include <Library/FrameBufferBltLib.h>
 
 STATIC EFI_GRAPHICS_OUTPUT_PROTOCOL  *mGraphicsOutput = NULL;
 
