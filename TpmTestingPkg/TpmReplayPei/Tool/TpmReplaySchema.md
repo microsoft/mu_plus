@@ -91,7 +91,7 @@ Information about the event data.
 
 #### `data` - `type` (String)
 
-The event data type. Either a string or a base64 encoded value.
+The event data type. Either a string, a base64 encoded value, or UEFI variable data.
 
 - **For Strings**:
 
@@ -101,6 +101,16 @@ The event data type. Either a string or a base64 encoded value.
     either `"utf-8"` or `"utf-16"`.
 
 - **For Base64**: Base64 encoded values should be used for binary data.
+
+- **For UEFI variables**:
+
+  - `variable_name`: (Required, String) The UEFI vendor GUID (name in TCG specifications). In the following format:
+      `{0xD719B2CB, 0x3D3A, 0x4596, {0xA3, 0xBC, 0xDA, 0xD0, 0x0E, 0x67, 0x65, 0x6F}}`
+  - `variable_unicode_name_length`: (Required, Integer) The number of Unicode characters in the
+    `variable_unicode_name` value.
+  - `variable_data_length`: (Required, Integer) The size in bytes of the data in the `value` data.
+  - `variable_unicode_name`: (Required, String) The UEFI variable name string (actual variable name). This is passed
+    as a normal string and converted to UTF-16 during encoding in the script.
 
 - **Required**: Yes
 

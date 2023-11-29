@@ -117,6 +117,8 @@ GetDxeMemoryTypeSettingFromBitfield (
       return HeapGuardMemoryType.Fields.EfiPalCode;
     case EfiPersistentMemory:
       return HeapGuardMemoryType.Fields.EfiPersistentMemory;
+    case EfiUnacceptedMemoryType:
+      return HeapGuardMemoryType.Fields.EfiUnacceptedMemoryType;
     default:
       return FALSE;
   }
@@ -169,6 +171,8 @@ GetMmMemoryTypeSettingFromBitfield (
       return HeapGuardMemoryType.Fields.EfiPalCode;
     case EfiPersistentMemory:
       return HeapGuardMemoryType.Fields.EfiPersistentMemory;
+    case EfiUnacceptedMemoryType:
+      return HeapGuardMemoryType.Fields.EfiUnacceptedMemoryType;
     default:
       return FALSE;
   }
@@ -704,7 +708,8 @@ UefiNxProtectionPreReq (
 
   // Skip memory types which cannot be allocated
   if ((MemoryProtectionContext.TargetMemoryType == EfiConventionalMemory) ||
-      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory))
+      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory)   ||
+      (MemoryProtectionContext.TargetMemoryType == EfiUnacceptedMemoryType))
   {
     UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -747,7 +752,8 @@ UefiPageGuardPreReq (
 
   // Skip memory types which cannot be allocated
   if ((MemoryProtectionContext.TargetMemoryType == EfiConventionalMemory) ||
-      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory))
+      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory)   ||
+      (MemoryProtectionContext.TargetMemoryType == EfiUnacceptedMemoryType))
   {
     UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -784,7 +790,8 @@ UefiPoolGuardPreReq (
 
   // Skip memory types which cannot be allocated
   if ((MemoryProtectionContext.TargetMemoryType == EfiConventionalMemory) ||
-      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory))
+      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory)   ||
+      (MemoryProtectionContext.TargetMemoryType == EfiUnacceptedMemoryType))
   {
     UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -865,7 +872,8 @@ SmmPageGuardPreReq (
 
   // Skip memory types which cannot be allocated
   if ((MemoryProtectionContext.TargetMemoryType == EfiConventionalMemory) ||
-      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory))
+      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory)   ||
+      (MemoryProtectionContext.TargetMemoryType == EfiUnacceptedMemoryType))
   {
     UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;
@@ -902,7 +910,8 @@ SmmPoolGuardPreReq (
 
   // Skip memory types which cannot be allocated
   if ((MemoryProtectionContext.TargetMemoryType == EfiConventionalMemory) ||
-      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory))
+      (MemoryProtectionContext.TargetMemoryType == EfiPersistentMemory)   ||
+      (MemoryProtectionContext.TargetMemoryType == EfiUnacceptedMemoryType))
   {
     UT_LOG_WARNING ("Skipping test of memory type %a -- memory type cannot be allocated", MEMORY_TYPES[MemoryProtectionContext.TargetMemoryType]);
     return UNIT_TEST_SKIPPED;

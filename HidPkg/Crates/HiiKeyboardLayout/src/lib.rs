@@ -42,6 +42,10 @@ use r_efi::{
 };
 use scroll::{ctx, Pread, Pwrite};
 
+/// GUID for default keyboard layout.
+pub const DEFAULT_KEYBOARD_LAYOUT_GUID: efi::Guid =
+  efi::Guid::from_fields(0x3a4d7a7c, 0x18a, 0x4b42, 0x81, 0xb3, &[0xdc, 0x10, 0xe3, 0xb5, 0x91, 0xbd]);
+
 /// HII Keyboard Package List
 /// Refer to UEFI spec version 2.10 section 33.3.1.2 which defines the generic header structure. This implementation
 /// only supports HII Keyboard Packages; other HII package types (or mixes) are not supported.
@@ -465,7 +469,7 @@ macro_rules! key_descriptor {
 #[rustfmt::skip]
 pub fn get_default_keyboard_layout() -> HiiKeyboardLayout {
   HiiKeyboardLayout {
-    guid: efi::Guid::from_fields(0x3a4d7a7c, 0x18a, 0x4b42, 0x81, 0xb3, &[0xdc, 0x10, 0xe3, 0xb5, 0x91, 0xbd]),
+    guid: DEFAULT_KEYBOARD_LAYOUT_GUID,
     keys: vec![
       key!(EfiKey::C1,          'a',    'A',    '\0',   '\0',   NULL_MODIFIER,                AFFECTED_BY_STANDARD_SHIFT | AFFECTED_BY_CAPS_LOCK),
       key!(EfiKey::B5,          'b',    'B',    '\0',   '\0',   NULL_MODIFIER,                AFFECTED_BY_STANDARD_SHIFT | AFFECTED_BY_CAPS_LOCK),

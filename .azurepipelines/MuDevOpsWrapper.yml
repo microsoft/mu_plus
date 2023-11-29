@@ -1,6 +1,8 @@
 ## @file
 # Azure Pipeline build file for a build using mu_devops.
 #
+# To upload coverage results, set `coverage_upload_target` to `ado` or `codecov`.
+#
 # NOTE: This file is automatically synchronized from Mu DevOps. Update the original file there
 #       instead of the file in this repo.
 #
@@ -17,7 +19,7 @@ resources:
       type: github
       endpoint: microsoft
       name: microsoft/mu_devops
-      ref: refs/tags/v7.0.1
+      ref: refs/tags/v9.0.1
 
 parameters:
 - name: do_ci_build

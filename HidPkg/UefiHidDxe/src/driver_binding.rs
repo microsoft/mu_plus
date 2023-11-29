@@ -32,7 +32,7 @@ pub fn initialize_driver_binding(image_handle: efi::Handle) -> Result<(), efi::S
     stop: uefi_hid_driver_binding_stop,
     version: 1,
     image_handle: driver_binding_handle,
-    driver_binding_handle: driver_binding_handle,
+    driver_binding_handle,
   }));
 
   let status = (boot_services.install_protocol_interface)(
@@ -43,6 +43,7 @@ pub fn initialize_driver_binding(image_handle: efi::Handle) -> Result<(), efi::S
   );
 
   if status.is_error() {
+    drop(unsafe { Box::from_raw(driver_binding_ptr) });
     return Err(status);
   }
 

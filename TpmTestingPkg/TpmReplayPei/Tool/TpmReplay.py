@@ -16,6 +16,7 @@ import json
 import jsonschema
 import logging
 import os
+import re
 import struct
 import sys
 import tcg_platform as tcg
@@ -26,7 +27,10 @@ from edk2toollib.tpm.tpm2_defs import TPM_ALG_SHA256
 from tcg_platform import (
     PCR_0,
     PCR_7,
+    TcgEfiSpecIdEvent,
+    TcgPcrEvent,
     TcgPcrEvent2,
+    TcgUefiVariableData,
     TpmlDigestValues,
     TpmtHa,
     VALUE_FROM_ALG,
@@ -43,6 +47,10 @@ PROGRAM_NAME = "TPM Replay"
 
 # Logging constants
 PERF = "[PERF]"
+
+# Global logger instance
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class ExitCode(IntEnum):
@@ -156,6 +164,64 @@ class CalculatedPcrState(object):
             binary_data[CalculatedPcrState._hdr_struct_size :]
         )
         return cls(pcr_index, digests=digest_values)
+
+
+class CryptoAgileEventLog(object):
+    # struct {
+    #   TCG_PCClientPCREvent SpecIdEvent;               // TCG_EfiSpecIDEvent
+    #   TCG_PCR_EVENT2       LogEvents[EventLogCount];
+    # } CRYPTO_AGILE_EVENT_LOG
+    def __init__(self, binary_data: bytes):
+        """Class constructor method.
+
+        Args:
+            binary_data (bytes): Binary data containing the log.
+        """
+        self._event_log = []
+        self.tcg_pcr_event = TcgPcrEvent.from_binary(binary_data)
+
+        offset = self.tcg_pcr_event.get_size()
+        while offset < len(binary_data):
+            event = TcgPcrEvent2.from_binary(binary_data[offset:])
+            offset += event.get_size()
+            self._event_log.append(event)
+
+    def __str__(self) -> str:
+        """Returns a string of this object.
+
+        Returns:
+            str: The string representation of this object.
+        """
+        spec_id_event = TcgEfiSpecIdEvent.from_binary(self.tcg_pcr_event.event)
+
+        debug_str = "CRYPTO_AGILE_EVENT_LOG\n"
+        debug_str += str(self.tcg_pcr_event)
+        debug_str += str(spec_id_event)
+        for event in self._event_log:
+            debug_str += str(event)
+        return debug_str
+
+    def get_size(self) -> int:
+        """Returns the object size.
+
+        Returns:
+            int: The size in bytes.
+        """
+        result = self.tcg_pcr_event.get_size()
+        for event in self._event_log:
+            result += event.get_size()
+        return result
+
+    def encode(self) -> bytes:
+        """Encodes the object.
+
+        Returns:
+            bytes: A byte representation of the object.
+        """
+        result = self.tcg_pcr_event.encode()
+        for event in self._event_log:
+            result += event.encode()
+        return result
 
 
 class TpmReplayEventLog(object):
@@ -342,7 +408,7 @@ def _get_event(
     Returns:
         TcgPcrEvent2: A TCG PCR Event 2 event.
     """
-    logging.debug(f" PCR[{pcr}]: Adding event {event}.")
+    logger.debug(f" PCR[{pcr}]: Adding event {event}.")
 
     new_event = tcg.TcgPcrEvent2(hash_algs)
     new_event.pcr_index = pcr
@@ -369,7 +435,7 @@ def _get_event_pre_hashed_data(
     Returns:
         _type_: _description_
     """
-    logging.debug(f"  PCR[{pcr}]: Adding event {event}.")
+    logger.debug(f"  PCR[{pcr}]: Adding event {event}.")
 
     new_event = tcg.TcgPcrEvent2([*algs_and_hash])
     new_event.pcr_index = pcr
@@ -416,6 +482,19 @@ def _process_event_data(event_data: Dict[str, str]) -> bytes:
             )
     elif event_data["type"] == "base64":
         data = base64.b64decode(event_data["value"])
+    elif event_data["type"] == "variable":
+        var_name = tuple(
+            int(x, 0)
+            for x in re.findall(r"0x[0-9A-Fa-f]+", event_data["variable_name"])
+        )
+        tcg_var = TcgUefiVariableData(
+            var_name,
+            event_data["variable_unicode_name_length"],
+            event_data["variable_data_length"],
+            event_data["variable_unicode_name"],
+            base64.b64decode(event_data["value"]),
+        )
+        data = tcg_var.encode()
 
     return data
 
@@ -447,8 +526,14 @@ def _build_tpm_replay_event_log_from_yaml(
             prehashed (bool, optional): Whether the digest is prehashed.
               Defaults to False.
         """
-        logging.debug(
-            f"    PCR[{pcr}]: Adding {ALG_FROM_VALUE[alg]} digest {str(digest)}."
+        if pcr > 7:
+            logger.debug(
+                "Skipping calculation of a PCR state greater than 7 " f"({pcr})."
+            )
+            return
+
+        logger.debug(
+            f"    PCR[{pcr}]: Adding {ALG_FROM_VALUE[alg]} digest " f"{str(digest)}."
         )
 
         if pcr_state[pcr] is None:
@@ -462,7 +547,7 @@ def _build_tpm_replay_event_log_from_yaml(
         else:
             pcr_state[pcr][alg].extend_data(digest)
 
-    logging.debug("Processing events...")
+    logger.debug("Processing events...")
     for event in yaml_data["events"]:
         data = _process_event_data(event["data"])
 
@@ -480,13 +565,13 @@ def _build_tpm_replay_event_log_from_yaml(
 
         replay_event_log._event_log.append(new_event)
 
-    logging.debug("Assembling final PCR states...")
+    logger.debug("Assembling final PCR states...")
     for pcr_index, pcr_digests in pcr_state.items():
         tpml_digest_values = TpmlDigestValues()
         if pcr_digests is not None:
-            logging.debug(f"  PCR[{pcr_index}]:.")
+            logger.debug(f"  PCR[{pcr_index}]:.")
             for alg, digest in pcr_digests.items():
-                logging.debug(f"    {ALG_FROM_VALUE[alg]} present.")
+                logger.debug(f"    {ALG_FROM_VALUE[alg]} present.")
                 tpml_digest_values.digests[alg] = digest
             calc_pcr_state = CalculatedPcrState(pcr_index)
             calc_pcr_state.digest_values = tpml_digest_values
@@ -495,64 +580,90 @@ def _build_tpm_replay_event_log_from_yaml(
     return replay_event_log
 
 
-def _build_yaml_from_tpm_replay_event_log(
+def _build_yaml_from_event_log(
     event_log: TpmReplayEventLog,
 ) -> Dict[str, List[Union[str, "Dict"]]]:
     """Builds the YAML represenation of a binary event log.
 
     Args:
-        event_log (TpmReplayEventlog): A TPM Replay Event Log object.
+        event_log (EventLog): An Event Log object.
 
     Returns:
         Dict[str, List[Union[str, 'Dict']]]: A dictionary that contains either
         a string or additional nested dictionaries.
 
     """
+    import tcg_platform
+
     yaml_data = {"events": []}
 
-    logging.debug("Processing events...")
+    logger.debug("Processing events...")
     for event in event_log._event_log:
         event_data = {}
         event_data["type"] = EVENT_FROM_VALUE[event.event_type]
         event_data["pcr"] = event.pcr_index
         event_data["prehash"] = {}
 
-        logging.debug(f"  PCR[{event_data['pcr']}]: {event_data['type']}:")
+        logger.debug(f"  PCR[{event_data['pcr']}]: {event_data['type']}:")
 
         for alg, digest in event.digest_values.digests.items():
-            logging.debug(f"    {ALG_FROM_VALUE[alg]} present.")
+            logger.debug(f"    {ALG_FROM_VALUE[alg]} present.")
             event_data["prehash"][ALG_FROM_VALUE[alg]] = "0x" + "".join(
                 [f"{b:02x}" for b in digest.hash_digest]
             )
 
         event_data["data"] = {}
-        char_result = chardet.detect(event.event)
 
-        if char_result["encoding"] == "ascii" and all(
-            event.event[i] == 0 for i in range(1, len(event.event), 2)
+        if event.event_type in (
+            tcg_platform.EV_EFI_VARIABLE_DRIVER_CONFIG,
+            tcg_platform.EV_EFI_VARIABLE_BOOT,
+            tcg_platform.EV_EFI_VARIABLE_BOOT2,
+            tcg_platform.EV_EFI_VARIABLE_AUTHORITY,
         ):
-            char_result["encoding"] = "utf-16le"
+            event_data["data"]["type"] = "variable"
+            tcg_var = TcgUefiVariableData.from_binary(event.event)
+            event_data["data"]["variable_name"] = tcg_var.guid
+            event_data["data"][
+                "variable_unicode_name_length"
+            ] = tcg_var.unicode_name_length
+            event_data["data"]["variable_data_length"] = tcg_var.variable_data_length
+            event_data["data"]["variable_unicode_name"] = tcg_var.unicode_name
+            event_data["data"]["value"] = base64.b64encode(
+                tcg_var.variable_data
+            ).decode("utf-8")
 
-        event_value = event.event
-        if char_result["encoding"] == "ascii" or char_result["encoding"] == "utf-8":
-            event_data["data"]["type"] = "string"
-            event_data["data"]["encoding"] = "utf-8"
-            if event_value[-1:] == b"\0":
-                event_value = event_value[:-1]
-                event_data["data"]["include_null_char"] = True
-            event_data["data"]["value"] = event_value.decode("utf-8")
-        elif char_result["encoding"] == "utf-16le":
-            event_data["data"]["type"] = "string"
-            event_data["data"]["encoding"] = "utf-16"
-            if event_value[-2:] == b"\x00\x00":
-                event_value = event_value[:-2]
-                event_data["data"]["include_null_char"] = True
-            event_data["data"]["value"] = event_value.decode("utf-16")
+            logger.debug(f"    {event_data['data']['type']} event detected.")
+            logger.debug(f"      {str(tcg_var)}")
         else:
-            event_data["data"]["type"] = "base64"
-            event_data["data"]["value"] = base64.b64encode(event_value)
+            char_result = chardet.detect(event.event)
 
-        logging.debug(f"    {event_data['data']['type']} event detected.")
+            if char_result["encoding"] == "ascii" and all(
+                event.event[i] == 0 for i in range(1, len(event.event), 2)
+            ):
+                char_result["encoding"] = "utf-16le"
+
+            event_value = event.event
+            if char_result["encoding"] == "ascii" or char_result["encoding"] == "utf-8":
+                event_data["data"]["type"] = "string"
+                event_data["data"]["encoding"] = "utf-8"
+                if event_value[-1:] == b"\0":
+                    event_value = event_value[:-1]
+                    event_data["data"]["include_null_char"] = True
+                event_data["data"]["value"] = event_value.decode("utf-8")
+            elif char_result["encoding"] == "utf-16le":
+                event_data["data"]["type"] = "string"
+                event_data["data"]["encoding"] = "utf-16"
+                if event_value[-2:] == b"\x00\x00":
+                    event_value = event_value[:-2]
+                    event_data["data"]["include_null_char"] = True
+                event_data["data"]["value"] = event_value.decode("utf-16")
+            else:
+                event_data["data"]["type"] = "base64"
+                event_data["data"]["value"] = base64.b64encode(event_value).decode(
+                    "utf-8"
+                )
+
+            logger.debug(f"    {event_data['data']['type']} event detected.")
 
         yaml_data["events"].append(event_data)
 
@@ -590,14 +701,11 @@ def _begin() -> int:
         """Replaces print when quiet is requested to prevent printing messages."""
         pass
 
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-
     stdout_logger_handler = logging.StreamHandler(sys.stdout)
     stdout_logger_handler.set_name("stdout_logger_handler")
     stdout_logger_handler.setLevel(logging.INFO)
     stdout_logger_handler.setFormatter(logging.Formatter("%(message)s"))
-    root_logger.addHandler(stdout_logger_handler)
+    logger.addHandler(stdout_logger_handler)
 
     parser = argparse.ArgumentParser(
         prog=PROGRAM_NAME,
@@ -730,56 +838,87 @@ def _begin() -> int:
             )
 
         file_logger_handler.setFormatter(file_logger_formatter)
-        root_logger.addHandler(file_logger_handler)
+        logger.addHandler(file_logger_handler)
 
-    logging.info(PROGRAM_NAME + "\n")
+    logger.info(PROGRAM_NAME + "\n")
 
     with open("TpmReplaySchema.json", "r") as s:
         json_schema = json.load(s)
 
     if args.input_desc_file:
-        logging.info(f"Reading input description file {args.input_desc_file}")
+        logger.info(f"Reading input description file {args.input_desc_file}")
 
         desc_path = PurePath(args.input_desc_file)
         with open(desc_path, "r") as idf:
-            if desc_path.suffix.lower() in ['.yaml', '.yml']:
+            if desc_path.suffix.lower() in [".yaml", ".yml"]:
                 file_data = yaml.safe_load(idf)
             else:
                 file_data = json.load(idf)
 
         start_time = timeit.default_timer()
-        jsonschema.validate(instance=file_data, schema=json_schema)
+        try:
+            jsonschema.validate(instance=file_data, schema=json_schema)
+        except jsonschema.ValidationError as e:
+            # Allow PCRs greater than 7 on input.
+            if (
+                "pcr" in e.schema_path
+                and e.validator == "maximum"
+                and e.validator_value == 7
+            ):
+                pass
+            else:
+                raise e
         end_time = timeit.default_timer() - start_time
-        logging.debug(f"{PERF} JSON schema validation took {end_time:.2f} seconds.")
+        logger.debug(f"{PERF} JSON schema validation took {end_time:.2f} seconds.")
 
         start_time = timeit.default_timer()
         log = _build_tpm_replay_event_log_from_yaml(file_data)
         end_time = timeit.default_timer() - start_time
-        logging.debug(
+        logger.debug(
             f"{PERF} Total event log creation time: " f"{end_time:.2f} seconds."
         )
 
         with open(args.output_file, "wb") as output_replay_event_log:
             output_replay_event_log.write(log.encode())
 
-        logging.info(f"Output: Binary file {args.output_file}")
+        logger.info(f"Output: Binary file {args.output_file}")
 
     elif args.input_event_log_file:
-        logging.info(f"Reading input binary file {args.input_event_log_file}")
+        logger.info(f"Reading input binary file {args.input_event_log_file}")
 
         with open(args.input_event_log_file, "rb") as log_file:
             binary_data = log_file.read()
 
         start_time = timeit.default_timer()
-        log = TpmReplayEventLog(binary_data)
-        data = _build_yaml_from_tpm_replay_event_log(log)
+        if binary_data[:8] == b"_TPMRPL_":
+            logger.debug("Input: Binary log file recognized as a TPM Replay log.")
+            log = TpmReplayEventLog(binary_data)
+        else:
+            logger.debug("Input: Binary log file recognized as a Crypto Agile log.")
+            log = CryptoAgileEventLog(binary_data)
+
+        data = _build_yaml_from_event_log(log)
         json_obj = json.loads(json.dumps(data))
-        jsonschema.validate(instance=json_obj, schema=json_schema)
+        try:
+            jsonschema.validate(instance=json_obj, schema=json_schema)
+        except jsonschema.ValidationError as e:
+            # Allow PCRs greater than 0 if converting a log other than the TPM
+            # Replay event log since it will contain all PCR values not only
+            # UEFI firmware produced values.
+            if (
+                "pcr" in e.schema_path
+                and e.validator == "maximum"
+                and e.validator_value == 7
+                and isinstance(log, CryptoAgileEventLog)
+            ):
+                pass
+            else:
+                raise e
         yaml_data = yaml.dump(
             json_obj, default_flow_style=False, indent=2, sort_keys=False
         )
         end_time = timeit.default_timer() - start_time
-        logging.debug(
+        logger.debug(
             f"{PERF} Total time spent converting the binary to YAML: "
             f"{end_time:.2f} seconds."
         )
@@ -787,14 +926,14 @@ def _begin() -> int:
         with open(args.output_file, "w") as output_yaml_file:
             output_yaml_file.write(yaml_data)
 
-        logging.info(f"Output: YAML file {args.output_file}")
+        logger.info(f"Output: YAML file {args.output_file}")
 
     if args.output_report:
         report_path = PurePath(args.output_file)
         report_path = report_path.parent / (report_path.name + "-report.txt")
         with open(report_path, "w") as report_file:
             report_file.write(str(log))
-        logging.info(f"Output: Report file {report_path}")
+        logger.info(f"Output: Report file {report_path}")
 
     return ExitCode.SUCCESS
 
@@ -806,8 +945,8 @@ if __name__ == "__main__":
     try:
         sys.exit(min(_begin(), ExitCode.GENERAL_ERROR))
     except KeyboardInterrupt:
-        logging.warning("Exiting due to keyboard interrupt.")
+        logger.warning("Exiting due to keyboard interrupt.")
         sys.exit(ExitCode.KBD_INTERRUPT)
     except FileExistsError as e:
-        logging.critical(f"Input file {e.args[0]} does not exist.")
+        logger.critical(f"Input file {e.args[0]} does not exist.")
         sys.exit(ExitCode.FILE_NOT_FOUND)

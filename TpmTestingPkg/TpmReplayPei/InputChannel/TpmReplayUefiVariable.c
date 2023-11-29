@@ -8,12 +8,12 @@
 **/
 
 #include <PiPei.h>
+#include <Guid/TpmReplayEventLog.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PeiServicesLib.h>
 #include <Ppi/ReadOnlyVariable2.h>
 
-#include "../TpmReplayEventLog.h"
 #include "TpmReplayInputChannelInternal.h"
 
 /**

@@ -189,11 +189,13 @@ OnRealTimeClockArchNotification (
 
   SystemTable->BootServices->CloseEvent (Event);
 
-  Status = SystemTable->RuntimeServices->GetTime ((EFI_TIME *)&mLoggerInfo->Time, NULL);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a: error getting real time. Code=%r\n", __FUNCTION__, Status));
-  } else {
-    mLoggerInfo->TicksAtTime = GetPerformanceCounter ();
+  if (mLoggerInfo != NULL) {
+    Status = SystemTable->RuntimeServices->GetTime ((EFI_TIME *)&mLoggerInfo->Time, NULL);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a: error getting real time. Code=%r\n", __func__, Status));
+    } else {
+      mLoggerInfo->TicksAtTime = GetPerformanceCounter ();
+    }
   }
 
   return;
@@ -365,7 +367,7 @@ DxeCoreAdvancedLoggerLibConstructor (
       LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
       LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
       LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
-      mMaxAddress               = PA_FROM_PTR (LoggerInfo) + LoggerInfo->LogBufferSize;
+      mMaxAddress               = LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize;
       mBufferSize               = LoggerInfo->LogBufferSize;
     } else {
       DEBUG ((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));
