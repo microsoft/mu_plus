@@ -12,10 +12,8 @@
   BASE_NAME      = FrameBufferMemDrawLib
   FILE_GUID      = 75561EAF-4537-4FA8-B65B-40E652602A8B
   VERSION_STRING = 1.0
-  MODULE_TYPE    = BASE
+  MODULE_TYPE    = PEIM
   LIBRARY_CLASS  = FrameBufferMemDrawLib
-  DESTRUCTOR     = FrameBufferMemDrawLibDestructor
-
 
 [LibraryClasses]
   DebugLib
@@ -27,32 +25,19 @@
   MdeModulePkg/MdeModulePkg.dec
   MsGraphicsPkg/MsGraphicsPkg.dec
 
+##
+## PEIM Version
+##
 [Sources]
   FrameBufferMemDrawLib.c
-
-##
-## IA32 Version
-##
-[Sources.IA32]
   FrameBufferMemDrawLibPeim.c
 
-[LibraryClasses.IA32]
+[LibraryClasses]
   PeiServicesLib
 
-[Ppis.IA32]
+[Ppis]
   gEfiPeiGraphicsPpiGuid
 
-[Depex.IA32]
-  gEfiPeiGraphicsPpiGuid                        ## CONSUMES
+[Depex]
+  gEfiPeiGraphicsPpiGuid
 
-##
-## X64, AARCH64 Versions
-##
-[Sources.X64, Sources.AARCH64]
-  FrameBufferMemDrawLibDxe.c
-
-[LibraryClasses.X64, LibraryClasses.X64]
-  UefiBootServicesTableLib
-
-[Protocols.X64, Protocols.AARCH64]
-  gEfiGraphicsOutputProtocolGuid                ## SOMETIMES_CONSUMES

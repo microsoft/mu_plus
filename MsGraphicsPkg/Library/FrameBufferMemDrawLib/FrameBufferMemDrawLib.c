@@ -200,6 +200,8 @@ MemFillOnFrameBuffer (
 EFI_STATUS
 EFIAPI
 FrameBufferMemDrawLibDestructor (
+  IN    EFI_HANDLE        ImageHandle,
+  IN    EFI_SYSTEM_TABLE  *SystemTable
   )
 {
   // Free the buffer if we no longer need it
