@@ -10,8 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Ppi/Graphics.h>
 
-#include <Protocol/GraphicsOutput.h>
-
 #include <Library/DebugLib.h>
 #include <Library/PeiServicesLib.h>
 

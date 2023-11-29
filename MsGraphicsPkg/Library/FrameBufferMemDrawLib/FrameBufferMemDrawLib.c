@@ -8,10 +8,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Base.h>
 #include <Uefi.h>
-#include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
-#include <Library/UefiBootServicesTableLib.h>
-#include <Protocol/GraphicsOutput.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/FrameBufferMemDrawLib.h>
 #include <Library/FrameBufferBltLib.h>
@@ -200,6 +197,8 @@ MemFillOnFrameBuffer (
 EFI_STATUS
 EFIAPI
 FrameBufferMemDrawLibDestructor (
+  IN    EFI_HANDLE        ImageHandle,
+  IN    EFI_SYSTEM_TABLE  *SystemTable
   )
 {
   // Free the buffer if we no longer need it

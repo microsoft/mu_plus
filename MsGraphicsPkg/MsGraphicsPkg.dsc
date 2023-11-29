@@ -118,7 +118,7 @@
   MsGraphicsPkg/Library/MsUiThemeLib/Dxe/MsUiThemeLib.inf
   MsGraphicsPkg/Library/MsUiThemeLib/Pei/MsUiThemeLib.inf
   MsGraphicsPkg/Library/MsColorTableLib/MsColorTableLib.inf
-  MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLib.inf
+  MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLibDxe.inf
   MsGraphicsPkg/Library/SwmDialogsLib/SwmDialogs.inf
   MsGraphicsPkg/Library/BootGraphicsLib/BootGraphicsLib.inf
   MsGraphicsPkg/Library/BootGraphicsLibNull/BootGraphicsLib.inf
@@ -134,6 +134,7 @@
   MsGraphicsPkg/MsEarlyGraphics/Pei/MsEarlyGraphics.inf
   MsGraphicsPkg/MsUiTheme/Pei/MsUiThemePpi.inf
   MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Pei/MsEarlyGraphicsLibNull.inf
+  MsGraphicsPkg/Library/FrameBufferMemDrawLib/FrameBufferMemDrawLibPei.inf
 
 [Components.X64, Components.AARCH64]
   MsGraphicsPkg/Library/MsEarlyGraphicsLibNull/Dxe/MsEarlyGraphicsLibNull.inf
