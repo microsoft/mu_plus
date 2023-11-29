@@ -9,7 +9,7 @@
 
 [Defines]
   INF_VERSION    = 0x00010017
-  BASE_NAME      = FrameBufferMemDrawLib
+  BASE_NAME      = FrameBufferMemDrawLibDxe
   FILE_GUID      = 75561EAF-4537-4FA8-B65B-40E652602A8B
   VERSION_STRING = 1.0
   MODULE_TYPE    = DXE_DRIVER
@@ -21,6 +21,7 @@
   DebugLib
   FrameBufferBltLib
   MemoryAllocationLib
+  UefiBootServicesTableLib
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -30,9 +31,7 @@
 [Sources]
   FrameBufferMemDrawLib.c
   FrameBufferMemDrawLibDxe.c
-
-[LibraryClasses]
-  UefiBootServicesTableLib
+  FrameBufferMemDrawLib.h
 
 [Protocols]
   gEfiGraphicsOutputProtocolGuid                ## SOMETIMES_CONSUMES

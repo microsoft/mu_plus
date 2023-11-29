@@ -9,7 +9,7 @@
 
 [Defines]
   INF_VERSION    = 0x00010017
-  BASE_NAME      = FrameBufferMemDrawLib
+  BASE_NAME      = FrameBufferMemDrawLibPei
   FILE_GUID      = 23E999E3-B231-4076-8791-DA5151BB3DC4
   VERSION_STRING = 1.0
   MODULE_TYPE    = PEIM
@@ -19,25 +19,20 @@
   DebugLib
   FrameBufferBltLib
   MemoryAllocationLib
+  PeiServicesLib
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MsGraphicsPkg/MsGraphicsPkg.dec
 
-##
-## PEIM Version
-##
 [Sources]
   FrameBufferMemDrawLib.c
   FrameBufferMemDrawLibPeim.c
-
-[LibraryClasses]
-  PeiServicesLib
+  FrameBufferMemDrawLib.h
 
 [Ppis]
   gEfiPeiGraphicsPpiGuid
 
 [Depex]
   gEfiPeiGraphicsPpiGuid
-
