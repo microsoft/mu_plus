@@ -29,7 +29,7 @@
 //!
 #![no_std]
 
-#[cfg(doc)]
+#[cfg(any(doc, feature = "std"))]
 extern crate std; //allow rustdoc links to reference std (e.g. println docs below).
 
 use core::{
@@ -173,8 +173,6 @@ mod no_std_debug {
 
 #[cfg(feature = "std")]
 mod std_debug {
-  extern crate std;
-
   /// Prints to the console log.
   ///
   /// This macro uses the same syntax as rust std [`std::println!`] macro, with the addition of a level argument that
@@ -203,7 +201,7 @@ mod std_debug {
   macro_rules! debug {
       ($level:expr, $($arg:tt)*) => {
           let _ = $level;
-          print!($($arg)*)
+          std::print!($($arg)*)
       }
   }
 }
