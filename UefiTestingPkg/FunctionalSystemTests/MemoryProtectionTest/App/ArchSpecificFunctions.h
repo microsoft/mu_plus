@@ -1,4 +1,4 @@
-/** @file -- UefiHardwareNxProtectionStub.h
+/** @file -- ArchSpecificFunctions.h
 Shared definition of the method between x64 and ARM.
 
 Copyright (C) Microsoft Corporation. All rights reserved.

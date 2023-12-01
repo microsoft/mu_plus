@@ -24,10 +24,10 @@
   MemoryProtectionTestApp.c
 
 [Sources.X64]
-  X64/X86Functions.c
+  X64/X64Functions.c
 
-[Sources.ARM, Sources.AARCH64]
-  Arm/AArchFunctions.c
+[Sources.AARCH64]
+  AArch64/AArch64Functions.c
 
 [Packages]
   MdePkg/MdePkg.dec
