@@ -9,7 +9,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include <Uefi.h>
 
-#include <Protocol/Cpu.h>
+#include <Protocol/DebugSupport.h>
 #include <Protocol/SmmCommunication.h>
 #include <Protocol/MemoryProtectionNonstopMode.h>
 #include <Protocol/MemoryProtectionDebug.h>
@@ -31,8 +31,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UnitTestBootLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
-#include <Register/ArchitecturalMsr.h>
-#include <Library/ResetSystemLib.h>
 #include <Library/HobLib.h>
 #include <Library/ExceptionPersistenceLib.h>
 
@@ -41,7 +39,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/MmMemoryProtectionSettings.h>
 
 #include "../MemoryProtectionTestCommon.h"
-#include "UefiHardwareNxProtectionStub.h"
+#include "ArchSpecificFunctions.h"
 
 #define UNIT_TEST_APP_NAME                 "Memory Protection Test"
 #define UNIT_TEST_APP_VERSION              "2.0"
@@ -56,7 +54,6 @@ UINTN                                    mPiSmmCommonCommBufferSize;
 MM_MEMORY_PROTECTION_SETTINGS            mMmMps;
 DXE_MEMORY_PROTECTION_SETTINGS           mDxeMps;
 VOID                                     *mPiSmmCommonCommBufferAddress = NULL;
-EFI_CPU_ARCH_PROTOCOL                    *mCpu                          = NULL;
 MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *mNonstopModeProtocol          = NULL;
 MEMORY_PROTECTION_DEBUG_PROTOCOL         *mMemoryProtectionProtocol     = NULL;
 EFI_MEMORY_ATTRIBUTE_PROTOCOL            *mMemoryAttributeProtocol      = NULL;
@@ -284,27 +281,6 @@ PopulateCpuMpDebugProtocol (
   }
 
   return gBS->LocateProtocol (&gCpuMpDebugProtocolGuid, NULL, (VOID **)&mCpuMpDebugProtocol);
-}
-
-/**
-  Resets the system on interrupt
-
-  @param  InterruptType    Defines the type of interrupt or exception that
-                           occurred on the processor.This parameter is processor architecture specific.
-  @param  SystemContext    A pointer to the processor context when
-                           the interrupt occurred on the processor.
-**/
-VOID
-EFIAPI
-InterruptHandler (
-  IN EFI_EXCEPTION_TYPE  InterruptType,
-  IN EFI_SYSTEM_CONTEXT  SystemContext
-  )
-{
-  // Avoid using runtime services to reset the system because doing so will raise the TPL level
-  // when it is already on TPL_HIGH. HwResetSystemLib is used here instead to perform a bare-metal reset
-  // and sidestep this issue.
-  ResetWarm ();
 }
 
 /**
@@ -2475,11 +2451,7 @@ DetermineTestMethod (
       }
 
     case MemoryProtectionTestReset:
-      // Uninstall the existing page fault handler
-      mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, NULL);
-
-      // Install an interrupt handler to reboot on page faults.
-      if (!EFI_ERROR (mCpu->RegisterInterruptHandler (mCpu, EXCEPT_IA32_PAGE_FAULT, InterruptHandler))) {
+      if (!EFI_ERROR (RegisterMemoryProtectionTestAppInterruptHandler ())) {
         DeterminedTestingMethod = MemoryProtectionTestReset;
         break;
       }
@@ -2580,13 +2552,6 @@ MemoryProtectionTestAppEntryPoint (
 
   Status = FetchMemoryProtectionHobEntries ();
   ASSERT_EFI_ERROR (Status);
-
-  // Find the CPU Architecture Protocol
-  Status = gBS->LocateProtocol (&gEfiCpuArchProtocolGuid, NULL, (VOID **)&mCpu);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed to locate gEfiCpuArchProtocolGuid. Status = %r\n", Status));
-    goto EXIT;
-  }
 
   // Set up the test framework for running the tests.
   Status = InitUnitTestFramework (&Fw, UNIT_TEST_APP_NAME, gEfiCallerBaseName, UNIT_TEST_APP_VERSION);
