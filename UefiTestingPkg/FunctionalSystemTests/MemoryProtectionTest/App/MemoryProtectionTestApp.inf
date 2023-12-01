@@ -24,13 +24,10 @@
   MemoryProtectionTestApp.c
 
 [Sources.X64]
-  X64/UefiHardwareNxProtection.c
+  X64/X86Functions.c
 
-[Sources.ARM]
-  Arm/UefiHardwareNxProtection.c
-
-[Sources.AARCH64]
-  Arm/UefiHardwareNxProtection.c
+[Sources.ARM, Sources.AARCH64]
+  Arm/AArchFunctions.c
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -52,10 +49,11 @@
   BaseLib
   ShellLib
   UefiLib
-  CpuExceptionHandlerLib
-  HwResetSystemLib
   HobLib
   ExceptionPersistenceLib
+
+[LibraryClasses.X64]
+  HwResetSystemLib
 
 [Guids]
   gMemoryProtectionExceptionHandlerGuid               ## CONSUMES
