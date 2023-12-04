@@ -156,7 +156,6 @@
   # Empty by default
   gMsCorePkgTokenSpaceGuid.PcdDefaultKek | { 0x0 }|VOID*|0x40000021
 
-
 [PcdsDynamic, PcdsDynamicEx]
   gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask|0x00000000|UINT32|0x00010178
 
