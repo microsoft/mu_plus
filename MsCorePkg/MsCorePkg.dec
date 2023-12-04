@@ -136,6 +136,27 @@
   ## Default: 1024 * 4KiB = 4MB
   gMsCorePkgTokenSpaceGuid.PcdDebugFileLoggerAllocatedPages|1024|UINT32|0x4000001C
 
+  ## Pcd for setting the default PK for a platform
+  # {8aa203e8-3a28-456f-ae5f-0f4d1cdc0cb0}
+  gMsCorePkgTokenSpaceGuid.PcdDefaultPk |{ 0x0 }|VOID*|0x4000001D
+  
+  ## Pcd for setting the default DB for a platform
+  # {05e985b9-ca1e-4b4e-bdb4-061698880be6}
+  gMsCorePkgTokenSpaceGuid.PcdDefaultDb |{ 0x0 }|VOID*|0x4000001E
+  
+  ## Pcd for setting the default 3rd party db for a platform
+  # {4873ccd3-f14e-431e-afd0-b2a018402ac6}
+  gMsCorePkgTokenSpaceGuid.PcdDefault3PDb | { 0x0 }|VOID*|0x4000001F
+  
+  ## Pcd for setting the default Dbx for a platform
+  # {3aa3be5b-a121-4b40-92b6-cb8f4cf5c56a}
+  gMsCorePkgTokenSpaceGuid.PcdDefaultDbx | { 0x0 }|VOID*|0x40000020
+  
+  ## Pcd for setting the default KEK for a platform
+  # {69c3f8a1-cdb1-4653-a2fd-97bffccc0af8}
+  gMsCorePkgTokenSpaceGuid.PcdDefaultKek | { 0x0 }|VOID*|0x40000021
+
+
 [PcdsDynamic, PcdsDynamicEx]
   gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask|0x00000000|UINT32|0x00010178
 
