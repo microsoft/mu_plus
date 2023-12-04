@@ -8,20 +8,13 @@
 
 #include <Uefi.h>
 #include <UefiSecureBoot.h>
-#include <Guid/ImageAuthentication.h>
-#include <Library/SecureBootVariableLib.h>
 
-#include <Library/DebugLib.h>
-#include <Library/MemoryAllocationLib.h>
+#include <Guid/ImageAuthentication.h>
+
+#include <Library/SecureBootVariableLib.h>
 #include <Library/PcdLib.h>
 
-#define PLATFORM_SECURE_BOOT_KEY_COUNT  2
-
-SECURE_BOOT_PAYLOAD_INFO  *gSecureBootPayload     = NULL;
-UINT8                     gSecureBootPayloadCount = 0;
-
-UINT8                     mSecureBootPayloadCount                            = PLATFORM_SECURE_BOOT_KEY_COUNT;
-SECURE_BOOT_PAYLOAD_INFO  mSecureBootPayload[PLATFORM_SECURE_BOOT_KEY_COUNT] = {
+SECURE_BOOT_PAYLOAD_INFO  mSecureBootPayload[] = {
   {
     .SecureBootKeyName = L"Microsoft Only",
     .KekPtr            = (CONST UINT8 *)FixedPcdGetPtr (PcdDefaultKek),
@@ -62,7 +55,6 @@ SECURE_BOOT_PAYLOAD_INFO  mSecureBootPayload[PLATFORM_SECURE_BOOT_KEY_COUNT] = {
 
   @retval     EFI_SUCCESS             The Keys are properly fetched.
   @retval     EFI_INVALID_PARAMETER   Inputs have NULL pointers.
-  @retval     Others                  Something went wrong. Investigate further.
 **/
 EFI_STATUS
 EFIAPI
@@ -75,26 +67,8 @@ GetPlatformKeyStore (
     return EFI_INVALID_PARAMETER;
   }
 
-  *Keys     = gSecureBootPayload;
-  *KeyCount = gSecureBootPayloadCount;
-
-  return EFI_SUCCESS;
-}
-
-/**
-  The constructor gets the secure boot platform keys populated.
-
-  @retval EFI_SUCCESS     The constructor always returns EFI_SUCCESS.
-
-**/
-EFI_STATUS
-EFIAPI
-SecureBootKeyStoreLibConstructor (
-  VOID
-  )
-{
-  gSecureBootPayload      = mSecureBootPayload;
-  gSecureBootPayloadCount = mSecureBootPayloadCount;
+  *Keys     = mSecureBootPayload;
+  *KeyCount = ARRAY_SIZE (mSecureBootPayload);
 
   return EFI_SUCCESS;
 }
