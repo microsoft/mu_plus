@@ -168,6 +168,7 @@
   MsCorePkg/Library/DxeIsCapsuleSupportedLib/DxeIsCapsuleSupportedLib.inf
   MsCorePkg/Library/BaseIsCapsuleSupportedLibNull/BaseIsCapsuleSupportedLibNull.inf
   MsCorePkg/Library/SecureBootKeyStoreLibNull/SecureBootKeyStoreLibNull.inf
+  MsCorePkg/Library/BaseSecureBootKeyStoreLib/BaseSecureBootKeyStoreLib.inf
   MsCorePkg/Library/MuSecureBootKeySelectorLib/MuSecureBootKeySelectorLib.inf
   MsCorePkg/HelloWorldRustDxe/HelloWorldRustDxe.inf
 

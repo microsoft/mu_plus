@@ -136,6 +136,26 @@
   ## Default: 1024 * 4KiB = 4MB
   gMsCorePkgTokenSpaceGuid.PcdDebugFileLoggerAllocatedPages|1024|UINT32|0x4000001C
 
+  ## Pcd value representing the Pk for a platform
+  # Empty by default. Platform required to set this value to enable setting default secureboot variables.
+  gMsCorePkgTokenSpaceGuid.PcdDefaultPk |{ 0x0 }|VOID*|0x4000001D
+  
+  ## Pcd value representing the Db for a platform
+  # Empty by default. Platform required to set this value to enable setting default secureboot variables.
+  gMsCorePkgTokenSpaceGuid.PcdDefaultDb |{ 0x0 }|VOID*|0x4000001E
+  
+  ## Pcd value representing the 3PDb for a platform
+  # Empty by default. Platform required to set this value to enable setting default secureboot variables.
+  gMsCorePkgTokenSpaceGuid.PcdDefault3PDb | { 0x0 }|VOID*|0x4000001F
+  
+  ## Pcd value representing the Dbx for a platform
+  # Empty by default. Platform required to set this value to enable setting default secureboot variables.
+  gMsCorePkgTokenSpaceGuid.PcdDefaultDbx | { 0x0 }|VOID*|0x40000020
+  
+  ## Pcd value representing the Kek for a platform
+  # Empty by default. Platform required to set this value to enable setting default secureboot variables.
+  gMsCorePkgTokenSpaceGuid.PcdDefaultKek | { 0x0 }|VOID*|0x40000021
+
 [PcdsDynamic, PcdsDynamicEx]
   gMsCorePkgTokenSpaceGuid.PcdDeviceStateBitmask|0x00000000|UINT32|0x00010178
 
