@@ -659,7 +659,7 @@
                 "Description": "Memory not in the EFI memory map should cause a fault if accessed",
                 "Filter": function (mrObject) {
                     var isTargetType = mrObject["Memory Type"] === "None";
-                    var hasInvalidAttributes = mrObject["Present"] !== "Yes";
+                    var hasInvalidAttributes = mrObject["Present"] !== "No";
                     return isTargetType && hasInvalidAttributes;
                 }, //end of Filter function
                 "ConfigureFilter": function () {
