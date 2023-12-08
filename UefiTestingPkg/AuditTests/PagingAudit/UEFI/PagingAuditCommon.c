@@ -387,8 +387,8 @@ MemoryAttributesTableDump (
   @param[in]        DescriptorSize  Size, in bytes, of each descriptor region in the array
                                     NOTE: This is not sizeof (EFI_MEMORY_DESCRIPTOR)
 **/
-STATIC
 VOID
+EFIAPI
 SortMemoryMap (
   IN OUT EFI_MEMORY_DESCRIPTOR  *MemoryMap,
   IN UINTN                      MemoryMapSize,
@@ -428,8 +428,8 @@ SortMemoryMap (
   @param[in]        MemoryMapSize   Size, in bytes, of the MemoryMap buffer
   @param[in]        DescriptorSize  Size, in bytes, of an individual EFI_GCD_MEMORY_SPACE_DESCRIPTOR
 **/
-STATIC
 VOID
+EFIAPI
 SortMemorySpaceMap (
   IN OUT EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemoryMap,
   IN UINTN                                MemoryMapSize,

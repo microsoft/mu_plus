@@ -200,4 +200,36 @@ DumpPlatforminfo (
   VOID
   );
 
+/**
+  Sort memory map entries based upon PhysicalStart, from low to high.
+
+  @param[in, out]   MemoryMap       A pointer to the buffer in which firmware places
+                                    the current memory map
+  @param[in]        MemoryMapSize   Size, in bytes, of the MemoryMap buffer
+  @param[in]        DescriptorSize  Size, in bytes, of each descriptor region in the array
+                                    NOTE: This is not sizeof (EFI_MEMORY_DESCRIPTOR)
+**/
+VOID
+EFIAPI
+SortMemoryMap (
+  IN OUT EFI_MEMORY_DESCRIPTOR  *MemoryMap,
+  IN UINTN                      MemoryMapSize,
+  IN UINTN                      DescriptorSize
+  );
+
+/**
+  Sort memory map entries based upon PhysicalStart, from low to high.
+
+  @param[in, out]   MemoryMap       A pointer to the buffer containing the current memory map
+  @param[in]        MemoryMapSize   Size, in bytes, of the MemoryMap buffer
+  @param[in]        DescriptorSize  Size, in bytes, of an individual EFI_GCD_MEMORY_SPACE_DESCRIPTOR
+**/
+VOID
+EFIAPI
+SortMemorySpaceMap (
+  IN OUT EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemoryMap,
+  IN UINTN                                MemoryMapSize,
+  IN UINTN                                DescriptorSize
+  );
+
 #endif // _PAGING_AUDIT_COMMON_H_
