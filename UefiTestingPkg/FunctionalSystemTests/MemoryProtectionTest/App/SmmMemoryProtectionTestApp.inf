@@ -1,0 +1,81 @@
+## @file SmmMemoryProtectionTestApp.inf
+#
+# Tests for page guard, pool guard, NX protections, and null pointer detection.
+##
+# Copyright (C) Microsoft Corporation. All rights reserved.
+## SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION         = 0x00010017
+  BASE_NAME           = SmmMemoryProtectionTestApp
+  FILE_GUID           = 64A62B1B-8487-466C-82BC-73EC289910A0
+  VERSION_STRING      = 3.0
+  MODULE_TYPE         = UEFI_APPLICATION
+  ENTRY_POINT         = SmmMemoryProtectionTestAppEntryPoint
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = X64
+#
+
+[Sources]
+  SmmMemoryProtectionTestApp.c
+
+[Sources.X64]
+  X64/X64Functions.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UefiCpuPkg/UefiCpuPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  ShellPkg/ShellPkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  DebugLib
+  UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UnitTestLib
+  UnitTestPersistenceLib
+  UnitTestBootLib
+  PrintLib
+  MemoryAllocationLib
+  BaseLib
+  ShellLib
+  UefiLib
+  HobLib
+  ExceptionPersistenceLib
+
+[LibraryClasses.X64]
+  HwResetSystemLib
+
+[Guids]
+  gMemoryProtectionExceptionHandlerGuid               ## CONSUMES
+  gEfiHobMemoryAllocStackGuid                         ## CONSUMES
+
+[Protocols]
+  gEfiSmmCommunicationProtocolGuid
+  gEfiCpuArchProtocolGuid                       ## CONSUMES
+  gMemoryProtectionNonstopModeProtocolGuid      ## CONSUMES
+  gMemoryProtectionDebugProtocolGuid            ## CONSUMES
+  gEfiMemoryAttributeProtocolGuid               ## CONSUMES
+  gCpuMpDebugProtocolGuid                       ## CONSUMES
+
+[Guids]
+  gEdkiiPiSmmCommunicationRegionTableGuid
+  gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
+  gEfiMemoryAttributesTableGuid
+  gMmMemoryProtectionSettingsGuid
+  gDxeMemoryProtectionSettingsGuid
+
+[BuildOptions]
+  GCC:*_CLANG40WIN_AARCH64_CC_FLAGS = -Wno-infinite-recursion
+  MSFT:*_*_*_CC_FLAGS  = /wd4054 /wd4055 /wd4717
+  # An invalid opcode exception can be triggered during the NULL detection test on GCC5 builds
+  # due to the instruction "ud2" being inserted by the compiler after a NULL pointer dereference.
+  # Removing optimization prevents the invalid opcode instruction from being inserted and enables
+  # the interrupt handler to clear the fault and return to the test.
+  GCC:*_GCC5_X64_CC_FLAGS = -O0
