@@ -1211,6 +1211,7 @@ ImageCodeSectionsRoDataSectionsXp (
   BOOLEAN                              TestFailure;
   UINT64                               SectionStart;
   UINT64                               SectionEnd;
+  CHAR8                                *PdbFileName;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1243,6 +1244,17 @@ ImageCodeSectionsRoDataSectionsXp (
     }
 
     // Check PE/COFF image
+    PdbFileName = PeCoffLoaderGetPdbPointer (LoadedImage->ImageBase);
+    if (PdbFileName == NULL) {
+      DEBUG ((
+        DEBUG_WARN,
+        "%a Could not get name of image loaded at 0x%llx - 0x%llx...\n",
+        __func__,
+        (UINTN)LoadedImage->ImageBase,
+        (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
+        ));
+    }
+
     DosHdr             = (EFI_IMAGE_DOS_HEADER *)(UINTN)LoadedImage->ImageBase;
     PeCoffHeaderOffset = 0;
     if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
@@ -1260,7 +1272,8 @@ ImageCodeSectionsRoDataSectionsXp (
 
     if (!IsLoadedImageSectionAligned (SectionAlignment, LoadedImage->ImageCodeType)) {
       UT_LOG_ERROR (
-        "Image 0x%llx - 0x%llx is not aligned\n",
+        "Image %a: 0x%llx - 0x%llx is not aligned\n",
+        PdbFileName,
         (UINTN)LoadedImage->ImageBase,
         (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
         );
@@ -1287,7 +1300,8 @@ ImageCodeSectionsRoDataSectionsXp (
             (EFI_IMAGE_SCN_CNT_INITIALIZED_DATA || EFI_IMAGE_SCN_CNT_UNINITIALIZED_DATA)) != 0))
       {
         UT_LOG_ERROR (
-          "Image Section 0x%llx-0x%llx contains code and data\n",
+          "Image %a: Section 0x%llx-0x%llx contains code and data\n",
+          PdbFileName,
           SectionStart,
           SectionEnd
           );
@@ -1313,7 +1327,8 @@ ImageCodeSectionsRoDataSectionsXp (
       {
         if ((Attributes & EFI_MEMORY_RO) == 0) {
           UT_LOG_ERROR (
-            "Image Section 0x%llx-0x%llx is not EFI_MEMORY_RO\n",
+            "Image %a: Section 0x%llx-0x%llx is not EFI_MEMORY_RO\n",
+            PdbFileName,
             SectionStart,
             SectionEnd
             );
@@ -1322,7 +1337,8 @@ ImageCodeSectionsRoDataSectionsXp (
       } else {
         if ((Attributes & EFI_MEMORY_XP) == 0) {
           UT_LOG_ERROR (
-            "Image Section 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
+            "Image %a: Section 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
+            PdbFileName,
             SectionStart,
             SectionEnd
             );
@@ -1377,7 +1393,7 @@ BspStackIsXpAndHasGuardPage (
       StackBase   = (EFI_PHYSICAL_ADDRESS)((MemoryHob->AllocDescriptor.MemoryBaseAddress / EFI_PAGE_SIZE) * EFI_PAGE_SIZE);
       StackLength = (EFI_PHYSICAL_ADDRESS)(EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (MemoryHob->AllocDescriptor.MemoryLength)));
 
-      UT_LOG_INFO ("BSP stack located at 0x%llx - 0x%llx", StackBase, StackBase + StackLength);
+      UT_LOG_INFO ("BSP stack located at 0x%llx - 0x%llx\n", StackBase, StackBase + StackLength);
 
       Attributes = 0;
       Status     = GetRegionCommonAccessAttributes (
@@ -1545,7 +1561,7 @@ DxePagingAuditTestAppEntryPoint (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a Could not retrieve command line args!\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a Could not retrieve command line args!\n", __FUNCTION__));
     return EFI_PROTOCOL_ERROR;
   }
 
@@ -1563,13 +1579,13 @@ DxePagingAuditTestAppEntryPoint (
       }
     } else {
       if (StrnCmp (ShellParams->Argv[1], L"-h", MAX_CHARS_TO_READ) != 0) {
-        DEBUG ((DEBUG_INFO, "Invalid argument!\n"));
+        DEBUG ((DEBUG_ERROR, "Invalid argument!\n"));
       }
 
-      DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
-      DEBUG ((DEBUG_INFO, "-d : Dump the page table files\n"));
-      DEBUG ((DEBUG_INFO, "-r : Run the application tests\n"));
-      DEBUG ((DEBUG_INFO, "NOTE: Combined flags (i.e. -rd) is not supported\n"));
+      Print (L"-h : Print available flags\n");
+      Print (L"-d : Dump the page table files\n");
+      Print (L"-r : Run the application tests\n");
+      Print (L"NOTE: Combined flags (i.e. -rd) is not supported\n");
     }
   }
 
