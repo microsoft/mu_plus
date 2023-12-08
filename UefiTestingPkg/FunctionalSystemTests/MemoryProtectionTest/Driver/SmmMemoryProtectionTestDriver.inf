@@ -9,7 +9,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = SmmMemoryProtectionTestDriver
-  FILE_GUID                      = 4AFD1797-7010-493F-B4E2-2EE6A2AFF4CB
+  FILE_GUID                      = 4531C1F1-8358-42D8-8EB3-FD12622F63ED
   MODULE_TYPE                    = DXE_SMM_DRIVER
   VERSION_STRING                 = 1.0
   PI_SPECIFICATION_VERSION       = 0x0001000A
