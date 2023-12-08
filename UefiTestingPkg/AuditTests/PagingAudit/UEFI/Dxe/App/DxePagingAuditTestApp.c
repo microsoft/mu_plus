@@ -1246,11 +1246,13 @@ ImageCodeSectionsRoDataSectionsXp (
     // Check PE/COFF image
     PdbFileName = PeCoffLoaderGetPdbPointer (LoadedImage->ImageBase);
     if (PdbFileName == NULL) {
-      DEBUG ((DEBUG_WARN, "%a Could not get name of image loaded at 0x%llx - 0x%llx...\n",
-      __func__,
-      (UINTN)LoadedImage->ImageBase,
-      (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
-      ));
+      DEBUG ((
+        DEBUG_WARN,
+        "%a Could not get name of image loaded at 0x%llx - 0x%llx...\n",
+        __func__,
+        (UINTN)LoadedImage->ImageBase,
+        (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
+        ));
     }
 
     DosHdr             = (EFI_IMAGE_DOS_HEADER *)(UINTN)LoadedImage->ImageBase;
