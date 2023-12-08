@@ -353,6 +353,8 @@ PopulateMemorySpaceMap (
     mMemorySpaceMap = NULL;
   }
 
+  SortMemorySpaceMap (mMemorySpaceMap, mMemorySpaceMapCount, sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR));
+
   return Status;
 }
 
@@ -423,6 +425,8 @@ PopulateEfiMemoryMap (
       FreePool (mEfiMemoryMap);
     }
   } while (Status == EFI_BUFFER_TOO_SMALL);
+
+  SortMemoryMap (mEfiMemoryMap, mEfiMemoryMapSize, mEfiMemoryMapDescriptorSize);
 
   return Status;
 }
@@ -1473,13 +1477,12 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
 {
   UINT64                 StartOfAddressSpace;
   UINT64                 EndOfAddressSpace;
-  UINT64                 StartOfEfiMemoryMap;
-  UINT64                 EndOfEfiMemoryMap;
-  EFI_MEMORY_DESCRIPTOR  *FinalEfiMemoryMapDescriptor;
-  UINTN                  Index;
+  EFI_MEMORY_DESCRIPTOR  *EndOfEfiMemoryMap;
+  EFI_MEMORY_DESCRIPTOR  *CurrentEfiMemoryMapEntry;
   BOOLEAN                TestFailure;
-  UINT64                 StartOfMapEntry;
-  UINT64                 EndOfMapEntry;
+  EFI_PHYSICAL_ADDRESS   LastMemoryMapEntryEnd;
+  UINT64                 Attributes;
+  EFI_STATUS             Status;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1491,34 +1494,74 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   UT_ASSERT_NOT_NULL (mMap.Entries);
 
   StartOfAddressSpace = mMemorySpaceMap[0].BaseAddress;
-  EndOfAddressSpace   = mMemorySpaceMap[mMemorySpaceMapCount - 1].BaseAddress + mMemorySpaceMap[mMemorySpaceMapCount - 1].Length;
-  TestFailure         = FALSE;
+  EndOfAddressSpace   = mMemorySpaceMap[mMemorySpaceMapCount - 1].BaseAddress +
+                        mMemorySpaceMap[mMemorySpaceMapCount - 1].Length;
+  TestFailure              = FALSE;
+  EndOfEfiMemoryMap        = (EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)mEfiMemoryMap + mEfiMemoryMapSize));
+  CurrentEfiMemoryMapEntry = mEfiMemoryMap;
 
-  StartOfEfiMemoryMap         = mEfiMemoryMap->PhysicalStart;
-  FinalEfiMemoryMapDescriptor = (EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)mEfiMemoryMap + mEfiMemoryMapSize) - mEfiMemoryMapDescriptorSize);
-  EndOfEfiMemoryMap           = FinalEfiMemoryMapDescriptor->PhysicalStart + (FinalEfiMemoryMapDescriptor->NumberOfPages * EFI_PAGE_SIZE);
+  if (CurrentEfiMemoryMapEntry->PhysicalStart > StartOfAddressSpace) {
+    Attributes = 0;
+    Status     = GetRegionCommonAccessAttributes (
+                   &mMap,
+                   StartOfAddressSpace,
+                   CurrentEfiMemoryMapEntry->PhysicalStart - StartOfAddressSpace,
+                   &Attributes
+                   );
 
-  for (Index = 0; Index < mMap.EntryCount; Index++) {
-    StartOfMapEntry = mMap.Entries[Index].LinearAddress;
-    EndOfMapEntry   = mMap.Entries[Index].LinearAddress + mMap.Entries[Index].Length;
-    if (CHECK_OVERLAP (StartOfMapEntry, EndOfMapEntry, StartOfAddressSpace, StartOfEfiMemoryMap)) {
-      if (IsPageReadable (mMap.Entries[Index].PageEntry)) {
+    if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
+      UT_LOG_ERROR (
+        "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
+        StartOfAddressSpace,
+        CurrentEfiMemoryMapEntry->PhysicalStart
+        );
+      TestFailure = TRUE;
+    }
+  }
+
+  LastMemoryMapEntryEnd = CurrentEfiMemoryMapEntry->PhysicalStart +
+                          (CurrentEfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE);
+  CurrentEfiMemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (CurrentEfiMemoryMapEntry, mEfiMemoryMapDescriptorSize);
+
+  while ((UINTN)CurrentEfiMemoryMapEntry < (UINTN)EndOfEfiMemoryMap) {
+    if (CurrentEfiMemoryMapEntry->PhysicalStart > LastMemoryMapEntryEnd) {
+      Attributes = 0;
+      Status     = GetRegionCommonAccessAttributes (
+                     &mMap,
+                     LastMemoryMapEntryEnd,
+                     CurrentEfiMemoryMapEntry->PhysicalStart - LastMemoryMapEntryEnd,
+                     &Attributes
+                     );
+      if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
         UT_LOG_ERROR (
-          "Memory Range 0x%llx-0x%llx is accessible\n",
-          StartOfMapEntry,
-          EndOfMapEntry
+          "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
+          LastMemoryMapEntryEnd,
+          CurrentEfiMemoryMapEntry->PhysicalStart
           );
         TestFailure = TRUE;
       }
-    } else if (CHECK_OVERLAP (StartOfMapEntry, EndOfMapEntry, EndOfEfiMemoryMap, EndOfAddressSpace)) {
-      if (IsPageReadable (mMap.Entries[Index].PageEntry)) {
-        UT_LOG_ERROR (
-          "Memory Range 0x%llx-0x%llx is accessible\n",
-          StartOfMapEntry,
-          EndOfMapEntry
-          );
-        TestFailure = TRUE;
-      }
+    }
+
+    LastMemoryMapEntryEnd = CurrentEfiMemoryMapEntry->PhysicalStart +
+                            (CurrentEfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE);
+    CurrentEfiMemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (CurrentEfiMemoryMapEntry, mEfiMemoryMapDescriptorSize);
+  }
+
+  if (LastMemoryMapEntryEnd < EndOfAddressSpace) {
+    Attributes = 0;
+    Status     = GetRegionCommonAccessAttributes (
+                   &mMap,
+                   LastMemoryMapEntryEnd,
+                   EndOfAddressSpace - LastMemoryMapEntryEnd,
+                   &Attributes
+                   );
+    if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
+      UT_LOG_ERROR (
+        "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
+        LastMemoryMapEntryEnd,
+        EndOfAddressSpace
+        );
+      TestFailure = TRUE;
     }
   }
 
