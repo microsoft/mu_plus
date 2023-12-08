@@ -1,6 +1,6 @@
-## @file MemoryProtectionTestApp.inf
+## @file SmmMemoryProtectionTestApp.inf
 #
-# Tests for page guard, pool guard, NX protections, stack guard, and null pointer detection.
+# Tests for page guard, pool guard, NX protections, and null pointer detection.
 ##
 # Copyright (C) Microsoft Corporation. All rights reserved.
 ## SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -8,26 +8,23 @@
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = MemoryProtectionTestApp
-  FILE_GUID           = 0C187938-97DE-4B98-AFBB-A71C43A55F0E
-  VERSION_STRING      = 1.0
+  BASE_NAME           = SmmMemoryProtectionTestApp
+  FILE_GUID           = 64A62B1B-8487-466C-82BC-73EC289910A0
+  VERSION_STRING      = 3.0
   MODULE_TYPE         = UEFI_APPLICATION
-  ENTRY_POINT         = MemoryProtectionTestAppEntryPoint
+  ENTRY_POINT         = SmmMemoryProtectionTestAppEntryPoint
 
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = X64
 #
 
 [Sources]
-  MemoryProtectionTestApp.c
+  SmmMemoryProtectionTestApp.c
 
 [Sources.X64]
   X64/X64Functions.c
-
-[Sources.AARCH64]
-  AArch64/AArch64Functions.c
 
 [Packages]
   MdePkg/MdePkg.dec

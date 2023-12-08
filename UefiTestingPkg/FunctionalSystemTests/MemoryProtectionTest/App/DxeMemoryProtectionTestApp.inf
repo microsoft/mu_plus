@@ -1,4 +1,4 @@
-## @file MemoryProtectionTestApp.inf
+## @file DxeMemoryProtectionTestApp.inf
 #
 # Tests for page guard, pool guard, NX protections, stack guard, and null pointer detection.
 ##
@@ -8,20 +8,20 @@
 
 [Defines]
   INF_VERSION         = 0x00010017
-  BASE_NAME           = MemoryProtectionTestApp
-  FILE_GUID           = 0C187938-97DE-4B98-AFBB-A71C43A55F0E
-  VERSION_STRING      = 1.0
+  BASE_NAME           = DxeMemoryProtectionTestApp
+  FILE_GUID           = 28C4CBBB-188F-460A-944A-DBE4A19D279E
+  VERSION_STRING      = 3.0
   MODULE_TYPE         = UEFI_APPLICATION
   ENTRY_POINT         = MemoryProtectionTestAppEntryPoint
 
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32 X64
+#  VALID_ARCHITECTURES           = X64 AARCH64
 #
 
 [Sources]
-  MemoryProtectionTestApp.c
+  DxeMemoryProtectionTestApp.c
 
 [Sources.X64]
   X64/X64Functions.c
@@ -60,7 +60,6 @@
   gEfiHobMemoryAllocStackGuid                         ## CONSUMES
 
 [Protocols]
-  gEfiSmmCommunicationProtocolGuid
   gEfiCpuArchProtocolGuid                       ## CONSUMES
   gMemoryProtectionNonstopModeProtocolGuid      ## CONSUMES
   gMemoryProtectionDebugProtocolGuid            ## CONSUMES
@@ -68,10 +67,8 @@
   gCpuMpDebugProtocolGuid                       ## CONSUMES
 
 [Guids]
-  gEdkiiPiSmmCommunicationRegionTableGuid
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
-  gMmMemoryProtectionSettingsGuid
   gDxeMemoryProtectionSettingsGuid
 
 [BuildOptions]
