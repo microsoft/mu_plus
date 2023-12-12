@@ -610,12 +610,14 @@ AdvancedFileLoggerEntry (
   // Step 0. Check advanced file logger policy, default to enabled.
 
   Status = GetPolicy (&gAdvancedFileLoggerPolicyGuid, NULL, (VOID *)&AdvFileLoggerPolicy, &PolicySize);
-  if (!EFI_ERROR (Status)) {
+  if (EFI_ERROR (Status)) {
     // If we fail to get policy, default to enabled.
     DEBUG ((DEBUG_WARN, "%a: Unable to get file logger - %r defaulting to enabled!\n", __func__, Status));
   } else if (AdvFileLoggerPolicy.FileLoggerEnable == FALSE) {
     DEBUG ((DEBUG_INFO, "%a: File logger disabled in policy, exiting.\n", __func__));
     return EFI_SUCCESS;
+  } else {
+    DEBUG ((DEBUG_INFO, "%a: File logger enabled in policy.\n", __func__));
   }
 
   //

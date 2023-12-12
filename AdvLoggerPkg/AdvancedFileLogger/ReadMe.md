@@ -6,7 +6,7 @@ The Advanced File Logger monitors for file systems mounted during boot.
 When an eligible file system is detected, the log is flushed to the file system.
 The log is flushed if the system is reset during POST, and at Exit Boot Services.
 
-An eligible file system is one with a Logs directory in the root of the file system.
+An eligible file system is one with a `UefiLogs` directory in the root of the file system.
 If no log files are present, the Advanced File Logger will create a log index file which
 contains the index of the last log file written, and nine log files each PcdAdvancedLoggerPages in size.
 These files are pre allocated at one time to reduce interference with other users of the filesystem.
@@ -36,7 +36,7 @@ The Advanced File Logger can be configured to enforce the storing of memory logs
 
 ### Advanced file logger enlightenment
 
-The Advanced File Logger can be set to store memory logs with a `Logs` directory in the ESP partition.
+The Advanced File Logger can be set to store memory logs with a `UefiLogs` directory in the ESP partition.
 Without such a directory **AND** the enforcement is not enabled, the Advanced File Logger will not store
 memory logs.
 
@@ -58,7 +58,7 @@ Note: The above enablement, enforcement and enlightenment are in serial, the gen
   if (Enable) {
     if (PcdGet (PcdAdvancedFileLoggerForceEnable)) {
       StoreLogs = TRUE;
-    } else if (DirectoryExists (L"Logs")) {
+    } else if (DirectoryExists (L"UefiLogs")) {
       StoreLogs = TRUE;
     } else {
       StoreLogs = FALSE;
@@ -67,7 +67,8 @@ Note: The above enablement, enforcement and enlightenment are in serial, the gen
 
   if (StoreLogs) {
     // Store logs
-    StoreLogs ("Logs/Log#.txt");
+    // The UEFI_Index.txt file will indicate the last log file written
+    StoreLogs ("UefiLogs/Log#.txt");
   }
 ```
 
