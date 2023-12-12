@@ -12,6 +12,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
+#ifndef DEVICE_SPECIFIC_BUS_INFO_LIB_H_
+#define DEVICE_SPECIFIC_BUS_INFO_LIB_H_
+
 typedef enum {
   Ignore,     // Do not check link speed
   Gen1,       // 2.5 GT/s
@@ -72,3 +75,5 @@ ProcessPciDeviceResults (
   IN  UINTN                    ResultCount,
   IN  DEVICE_PCI_CHECK_RESULT  *Results
   );
+
+#endif
