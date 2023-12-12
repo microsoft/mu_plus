@@ -25,6 +25,61 @@ and the follow change is needed in the .fdf:
   INF AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 ```
 
+## Configurability
+
+This section describes the configurabilities of the Advanced File Logger driver.
+
+### Advanced file logger enforcement
+
+The Advanced File Logger can be configured to enforce the storing of memory logs when setting `PcdAdvancedFileLoggerForceEnable` to `TRUE`.
+
+### Advanced file logger enlightenment
+
+The Advanced File Logger can be set to store memory logs with a `Logs` directory in the ESP partition.
+Without such a directory **AND** the enforcement is not enabled, the Advanced File Logger will not store
+memory logs.
+
+### Advanced file logger enablement through Policy
+
+The Advanced File Logger can be configured to be enabled through policy service by producing a policy under[`gAdvancedFileLoggerPolicyGuid`](../Include/Guid/AdvancedFileLoggerPolicy.h)
+and setting the `FileLoggerEnable` field to `TRUE`. For the sake of backwards compatibility, if a platform does not
+produce such policy or not support policy services at all, the Advanced File Logger will default to be enabled.
+
+Note: The above enablement, enforcement and enlightenment are in serial, the general pseudo code is as follows:
+
+```c
+  if (PolicyNotFound) {
+    Enabled = TRUE;
+  } else {
+    Enabled = Policy.FileLoggerEnable;
+  }
+
+  if (Enable) {
+    if (PcdGet (PcdAdvancedFileLoggerForceEnable)) {
+      StoreLogs = TRUE;
+    } else if (DirectoryExists (L"Logs")) {
+      StoreLogs = TRUE;
+    } else {
+      StoreLogs = FALSE;
+    }
+  }
+
+  if (StoreLogs) {
+    // Store logs
+    StoreLogs ("Logs/Log#.txt");
+  }
+```
+
+### Advanced file logger Flush events
+
+The advanced file logger can be flushed or configured to flush on the following events:
+
+| Event | Description |
+| --- | --- |
+| `gEfiEventReadyToBootGuid` | By setting `BIT0` of `PcdAdvancedFileLoggerFlush`, logger will flushed to ESP at "Ready To Boot" event |
+| `gEfiEventExitBootServicesGuid` | By setting `BIT1` of `PcdAdvancedFileLoggerFlush`, logger will flushed to ESP at "Exit Boot Services" event |
+| System Reset | This will always be enabled as long as the system supports `gEdkiiPlatformSpecificResetFilterProtocolGuid` |
+
 ---
 
 ## Copyright
