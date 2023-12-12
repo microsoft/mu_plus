@@ -87,6 +87,9 @@
 
 [LibraryClasses.common.DXE_CORE]
 
+[LibraryClasses.common.DXE_DRIVER]
+  PolicyLib|PolicyServicePkg/Library/DxePolicyLib/DxePolicyLib.inf
+
 [LibraryClasses.common.DXE_SMM_DRIVER]
   AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Smm/AdvancedLoggerLib.inf
   SmmServicesTableLib|MdePkg/Library/SmmServicesTableLib/SmmServicesTableLib.inf
