@@ -176,20 +176,6 @@ Cleanup:
 
 /**
 
-This routine clears all bytes in Data region
-
-**/
-STATIC
-VOID
-MsWheaCMOSStoreClearAll (
-  VOID
-  )
-{
-  __MsWheaCMOSRawClear (MsWheaEarlyStorageGetMaxSize (), MS_WHEA_EARLY_STORAGE_OFFSET);
-}
-
-/**
-
 This routine returns the maximum number of bytes that can be stored in the early storage area.
 
 @retval Count    The maximum number of bytes that can be stored in the MS WHEA store.
