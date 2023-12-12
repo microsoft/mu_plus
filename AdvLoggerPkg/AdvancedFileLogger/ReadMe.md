@@ -25,13 +25,14 @@ and the follow change is needed in the .fdf:
   INF AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
 ```
 
-## Configurability
+## Driver Usage Configuration
 
-This section describes the configurabilities of the Advanced File Logger driver.
+This section describes the configuration options of the Advanced File Logger driver.
 
 ### Advanced file logger enforcement
 
-The Advanced File Logger can be configured to enforce the storing of memory logs when setting `PcdAdvancedFileLoggerForceEnable` to `TRUE`.
+The Advanced File Logger can be configured to enforce the storing of memory logs when setting
+`PcdAdvancedFileLoggerForceEnable` to `TRUE`.
 
 ### Advanced file logger enlightenment
 

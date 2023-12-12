@@ -26,7 +26,7 @@
             "MdeModulePkg/MdeModulePkg.dec",
             "AdvLoggerPkg/AdvLoggerPkg.dec",
             "MsWheaPkg/MsWheaPkg.dec",
-            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec",
+            "PolicyServicePkg/PolicyServicePkg.dec",
             "ShellPkg/ShellPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
