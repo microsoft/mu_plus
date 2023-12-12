@@ -9,6 +9,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
 
+#ifndef PLATFORM_ID_PARSER_H_
+#define PLATFORM_ID_PARSER_H_
+
 /**
  *  Parses the Platform/Source ID
  *
@@ -20,3 +23,5 @@ VOID
 ParseSourceID (
   IN CONST EFI_GUID  *SourceID
   );
+
+#endif
