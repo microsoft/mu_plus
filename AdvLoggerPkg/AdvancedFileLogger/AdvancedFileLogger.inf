@@ -30,6 +30,7 @@
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   AdvLoggerPkg/AdvLoggerPkg.dec
+  PolicyServicePkg/PolicyServicePkg.dec
 
 [LibraryClasses]
   AdvancedLoggerAccessLib
@@ -46,11 +47,13 @@
   TimerLib
   UefiDriverEntryPoint
   UefiRuntimeServicesTableLib
+  PolicyLib
 
 [Guids]
   gAdvancedFileLoggerWriteLogFiles
   gEfiEventReadyToBootGuid
   gMuEventPreExitBootServicesGuid
+  gAdvancedFileLoggerPolicyGuid
 
 [Protocols]
   gEdkiiPlatformSpecificResetFilterProtocolGuid                 ## CONSUMES

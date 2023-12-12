@@ -15,6 +15,7 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Guid/EventGroup.h>
+#include <Guid/AdvancedFileLoggerPolicy.h>
 
 #include <Protocol/AdvancedLogger.h>
 #include <Protocol/DevicePath.h>
@@ -34,6 +35,7 @@
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/PolicyLib.h>
 
 #define LOG_DEVICE_SIGNATURE  SIGNATURE_32('D','L','o','g')
 
