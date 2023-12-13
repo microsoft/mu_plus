@@ -105,6 +105,15 @@ CreateFlatPageTable (
   );
 
 /**
+  Dumps the contents of the input PAGE_MAP to the debug log.
+**/
+VOID
+EFIAPI
+DumpPageMap (
+  IN PAGE_MAP  *Map
+  );
+
+/**
   Checks the input flat page/translation table for the input region and converts the associated
   table entries to EFI access attributes (EFI_MEMORY_XP, EFI_MEMORY_RO, EFI_MEMORY_RP). If the
   access attributes vary across the region, EFI_NO_MAPPING is returned.
