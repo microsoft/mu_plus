@@ -22,6 +22,36 @@
   (BStart <= AStart && BEnd > AStart)))
 
 /**
+  Dumps the contents of the input PAGE_MAP to the debug log.
+**/
+VOID
+EFIAPI
+DumpPageMap (
+  IN PAGE_MAP  *Map
+  )
+{
+  UINTN   Index;
+  UINT64  Attributes;
+
+  DEBUG ((DEBUG_INFO, "Page Map: %p\n", Map));
+  DEBUG ((DEBUG_INFO, "  EntryCount: %d\n", Map->EntryCount));
+  DEBUG ((DEBUG_INFO, "  Entries:\n"));
+  for (Index = 0; Index < Map->EntryCount; Index++) {
+    Attributes  = IsPageExecutable (Map->Entries[Index].PageEntry) ? 0 : EFI_MEMORY_XP;
+    Attributes |= IsPageWritable (Map->Entries[Index].PageEntry) ? 0 : EFI_MEMORY_RO;
+    Attributes |= IsPageReadable (Map->Entries[Index].PageEntry) ? 0 : EFI_MEMORY_RP;
+    DEBUG ((
+      DEBUG_INFO,
+      "    %d: %p-%p. Attributes: 0x%llx\n",
+      Index,
+      Map->Entries[Index].LinearAddress,
+      Map->Entries[Index].LinearAddress + Map->Entries[Index].Length - 1,
+      Attributes
+      ));
+  }
+}
+
+/**
   Checks the input flat page/translation table for the input region and converts the associated
   table entries to EFI access attributes (EFI_MEMORY_XP, EFI_MEMORY_RO, EFI_MEMORY_RP). If the
   access attributes vary across the region, EFI_NOT_FOUND is returned.
