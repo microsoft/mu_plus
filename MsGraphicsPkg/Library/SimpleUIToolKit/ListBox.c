@@ -946,7 +946,7 @@ Ctor (
 
   // Iterate through cell list and compute bounding rectangle, checkbox bounding rectangle (optional) and string bitmap rectangle.
   //
-  for (Index = 0; CellData[Index].CellText != NULL && Index < this->m_NumberOfCells; Index++) {
+  for (Index = 0; Index < this->m_NumberOfCells && CellData[Index].CellText != NULL; Index++) {
     this->m_pCells[Index].OriginalOrder    = Index;
     this->m_pCells[Index].pCellText        = AllocateCopyPool (StrSize (CellData[Index].CellText), CellData[Index].CellText);
     this->m_pCells[Index].CheckboxSelected = CellData[Index].CheckBoxSelected;
