@@ -1,0 +1,33 @@
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+[package]
+name = "UefiHidDxeV2"
+version = "0.1.0"
+edition = "2021"
+authors = ["Microsoft"]
+
+[lib]
+name = "uefi_hid_dxe_v2"
+path = "src/lib.rs"
+
+[[bin]]
+name = "UefiHidDxeV2"
+path = "src/main.rs"
+
+[dependencies]
+HidIo = {workspace=true}
+hidparser = {workspace=true}
+HiiKeyboardLayout = {workspace=true}
+r-efi = {workspace=true}
+rustversion = {workspace=true}
+RustAdvancedLoggerDxe = {workspace=true}
+scroll = {workspace=true}
+
+[target.'cfg(target_os = "uefi")'.dependencies]
+RustBootServicesAllocatorDxe = {workspace=true}
+
+[dev-dependencies]
+mockall = "0.11.4"
+RustAdvancedLoggerDxe = {workspace=true, features=["std"]}
