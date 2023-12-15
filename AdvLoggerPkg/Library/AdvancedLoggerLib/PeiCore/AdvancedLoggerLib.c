@@ -436,9 +436,39 @@ AdvancedLoggerGetLoggerInfo (
 
   PeiCoreInstance = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
   LoggerInfo      = ALI_FROM_PA (PeiCoreInstance->PlatformBlob);
-  if (LoggerInfo != NULL) {
+  if ((LoggerInfo != NULL) && (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE)) {
     // Logger Info was saved from an earlier call - Return LoggerInfo.
     return LoggerInfo;
+  }
+
+  // In the time between PeiCore TemporaryRamDonePpi->TemporaryRamDone
+  // and gEfiPeiMemoryDiscoveredPpiGuid being installed, CAR (and PlatformBlob)
+  // may become invalid due to CAR relocations. Check if gAdvancedLoggerHobGuid
+  // already exists, but that the CAR pointers are no longer valid and update
+  // pointers
+  GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
+  if (GuidHob != NULL) {
+    EFI_PEI_HOB_POINTERS  Hob;
+    Hob.Raw = GetHobList ();
+    while ((Hob.Raw = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, Hob.Raw)) != NULL) {
+      // Go through Allocation Hobs, attempting to find an allocation that matches
+      //  the expected Advanced Logger Signature
+      LoggerInfo = ALI_FROM_PA (Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress);
+      if (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE) {
+        // Update the PlatformBlob pointer to point to the allocation that was relocated to
+        // real memory
+        (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
+
+        // return the pointer
+        return LoggerInfo;
+      }
+
+      Hob.Raw = GET_NEXT_HOB (Hob);
+    }
+
+    // Nothing valid was found, ensure LoggerInfo is still NULL to not interfere with fallthrough
+    // in next code section.
+    LoggerInfo = NULL;
   }
 
   //
