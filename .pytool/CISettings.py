@@ -219,22 +219,22 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             {
                 "Path": "MU_BASECORE",
                 "Url": "https://github.com/microsoft/mu_basecore.git",
-                "Branch": "personal/klautner/rebase/2308_Staging"
+                "Branch": "personal/klautner/rebase/2308_Staging_2"
             },
             {
                 "Path": "Silicon/Arm/MU_TIANO",
                 "Url": "https://github.com/Microsoft/mu_silicon_arm_tiano.git",
-                "Branch": "personal/klautner/rebase/2308_Staging"
+                "Branch": "personal/klautner/rebase/2308_Staging_2"
             },
             {
                 "Path": "Silicon/Intel/MU_TIANO",
                 "Url": "https://github.com/Microsoft/mu_silicon_intel_tiano.git",
-                "Branch": "personal/klautner/rebase/2308_Staging"
+                "Branch": "personal/klautner/rebase/2308_Staging_2"
             },
             {
                 "Path": "Common/MU_TIANO",
                 "Url": "https://github.com/Microsoft/mu_tiano_plus.git",
-                "Branch": "personal/klautner/rebase/2308_Staging"
+                "Branch": "personal/klautner/rebase/2308_Staging_2"
             }
         ]
 
