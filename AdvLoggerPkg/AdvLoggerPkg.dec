@@ -113,6 +113,21 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
 
+  ## Advanced Logger message prefix for applicable module types. The prefix will be
+  #  added to the beginning of each message string in the memory log.
+  #
+  #  Note: The prefix will be materialized in the memory region and thus consume extra bytes,
+  #        platforms using this PCD should proceed with discretion.
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageBaseArmPrefix|""|VOID*|0x000101A0
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageDxeCorePrefix|""|VOID*|0x000101A1
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageMmCorePrefix|""|VOID*|0x000101A2
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageMmCoreArmPrefix|""|VOID*|0x000101A3
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessagePei64Prefix|""|VOID*|0x000101A4
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessagePeiCorePrefix|""|VOID*|0x000101A5
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageRuntimePrefix|""|VOID*|0x000101A6
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageSecPrefix|""|VOID*|0x000101A7
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageSmmCorePrefix|""|VOID*|0x000101A8
 
 [UserExtensions.TianoCore."ExtraFiles"]
   AdvLoggerPkgExtra.uni

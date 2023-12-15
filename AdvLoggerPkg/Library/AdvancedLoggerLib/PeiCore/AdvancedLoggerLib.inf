@@ -60,4 +60,4 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageBaseArmPrefix         ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessagePeiCorePrefix         ## CONSUMES
