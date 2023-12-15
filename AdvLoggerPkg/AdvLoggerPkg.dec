@@ -113,8 +113,8 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
 
-  ## Advanced Logger message prefix for applicable module types. The prefix will be
-  #  added to the beginning of each message string in the memory log.
+  ## ASCII advanced Logger message prefix for applicable module types. The prefix
+  #  will be added to the beginning of each message string in the memory log.
   #
   #  Note: The prefix will be materialized in the memory region and thus consume extra bytes,
   #        platforms using this PCD should proceed with discretion.
