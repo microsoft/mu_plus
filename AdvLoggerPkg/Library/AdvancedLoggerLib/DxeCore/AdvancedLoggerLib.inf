@@ -57,6 +57,7 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageBaseArmPrefix
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator
