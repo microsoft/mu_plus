@@ -609,6 +609,6 @@ AdvancedLoggerGetStringPrefix (
     return NULL;
   }
 
-  *MessagePrefixSize = FixedPcdGetSize (PcdAdvancedLoggerMessagePeiCorePrefixSize) - 1;
+  *MessagePrefixSize = FixedPcdGetSize (PcdAdvancedLoggerMessagePeiCorePrefix) - 1;
   return (CHAR8*)FixedPcdGetPtr (PcdAdvancedLoggerMessagePeiCorePrefix);
 }
