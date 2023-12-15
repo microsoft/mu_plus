@@ -50,6 +50,8 @@ AdvancedLoggerMemoryLoggerWrite (
   UINTN                          EntrySize;
   UINTN                          UsedSize;
   ADVANCED_LOGGER_MESSAGE_ENTRY  *Entry;
+  CONST CHAR8                    *MessagePrefix;
+  UINTN                          MessagePrefixSize;
 
   if ((NumberOfBytes == 0) || (Buffer == NULL)) {
     return NULL;
@@ -62,6 +64,12 @@ AdvancedLoggerMemoryLoggerWrite (
   LoggerInfo = AdvancedLoggerGetLoggerInfo ();
 
   if (LoggerInfo != NULL) {
+    MessagePrefix = AdvancedLoggerGetStringPrefix (&MessagePrefixSize);
+    if ((MessagePrefix == NULL) || (MessagePrefixSize == 0)) {
+      MessagePrefix     = NULL;
+      MessagePrefixSize = 0;
+    }
+    NumberOfBytes += MessagePrefixSize;
     EntrySize = MESSAGE_ENTRY_SIZE (NumberOfBytes);
     do {
       CurrentBuffer = LoggerInfo->LogCurrent;
@@ -100,7 +108,10 @@ AdvancedLoggerMemoryLoggerWrite (
     // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
     Entry->DebugLevel = (UINT32)DebugLevel;
     Entry->MessageLen = (UINT16)NumberOfBytes;
-    CopyMem (Entry->MessageText, Buffer, NumberOfBytes);
+    if (MessagePrefixSize > 0) {
+      CopyMem (Entry->MessageText, MessagePrefix, MessagePrefixSize);
+    }
+    CopyMem (Entry->MessageText + MessagePrefixSize, Buffer, NumberOfBytes - MessagePrefixSize);
     Entry->Signature = MESSAGE_ENTRY_SIGNATURE;
   }
 
