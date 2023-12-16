@@ -69,8 +69,9 @@ AdvancedLoggerMemoryLoggerWrite (
       MessagePrefix     = NULL;
       MessagePrefixSize = 0;
     }
+
     NumberOfBytes += MessagePrefixSize;
-    EntrySize = MESSAGE_ENTRY_SIZE (NumberOfBytes);
+    EntrySize      = MESSAGE_ENTRY_SIZE (NumberOfBytes);
     do {
       CurrentBuffer = LoggerInfo->LogCurrent;
       UsedSize      = (UINTN)(CurrentBuffer - LoggerInfo->LogBuffer);
@@ -111,6 +112,7 @@ AdvancedLoggerMemoryLoggerWrite (
     if (MessagePrefixSize > 0) {
       CopyMem (Entry->MessageText, MessagePrefix, MessagePrefixSize);
     }
+
     CopyMem (Entry->MessageText + MessagePrefixSize, Buffer, NumberOfBytes - MessagePrefixSize);
     Entry->Signature = MESSAGE_ENTRY_SIGNATURE;
   }

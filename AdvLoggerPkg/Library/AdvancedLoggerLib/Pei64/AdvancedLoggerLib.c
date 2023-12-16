@@ -62,7 +62,7 @@ AdvancedLoggerGetLoggerInfo (
 
   @return       Pointer to the prefix string. NULL if no prefix is available.
 **/
-CONST CHAR8*
+CONST CHAR8 *
 EFIAPI
 AdvancedLoggerGetStringPrefix (
   IN UINTN  *MessagePrefixSize
@@ -73,5 +73,5 @@ AdvancedLoggerGetStringPrefix (
   }
 
   *MessagePrefixSize = FixedPcdGetSize (PcdAdvancedLoggerMessagePei64Prefix) - 1;
-  return (CHAR8*)FixedPcdGetPtr (PcdAdvancedLoggerMessagePei64Prefix);
+  return (CHAR8 *)FixedPcdGetPtr (PcdAdvancedLoggerMessagePei64Prefix);
 }
