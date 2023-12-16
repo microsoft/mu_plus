@@ -450,14 +450,18 @@ AdvancedLoggerGetLoggerInfo (
   if (GuidHob != NULL) {
     EFI_PEI_HOB_POINTERS  Hob;
     Hob.Raw = GetHobList ();
+    LogPtr  = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
+
     while ((Hob.Raw = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, Hob.Raw)) != NULL) {
       // Go through Allocation Hobs, attempting to find an allocation that matches
       //  the expected Advanced Logger Signature
       LoggerInfo = ALI_FROM_PA (Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress);
       if (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE) {
-        // Update the PlatformBlob pointer to point to the allocation that was relocated to
-        // real memory
+        // Update the PlatformBlob pointer to point to the relocated buffer
         (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
+
+        // Update the GuidHob pointer to the relocated memory buffer
+        LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
 
         // return the pointer
         return LoggerInfo;
