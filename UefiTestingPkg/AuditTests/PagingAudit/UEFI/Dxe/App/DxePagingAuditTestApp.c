@@ -135,11 +135,10 @@ FreePageTableMap (
 }
 
 /**
-  Populate the global flat page table map.
+  Populates the Page Table Map
 
-  @retval EFI_SUCCESS           The page table is parsed successfully.
-  @retval EFI_OUT_OF_RESOURCES  Failed to allocate memory for the page table map.
-  @retval EFI_INVALID_PARAMETER An error occurred while parsing the page table.
+  @retval EFI_SUCCESS   The page table map is fetched successfully.
+  @retval other         An error occurred while fetching the page table map.
 **/
 STATIC
 EFI_STATUS
@@ -149,34 +148,57 @@ PopulatePageTableMap (
 {
   EFI_STATUS  Status;
 
-  if (mMap.Entries != NULL) {
-    return EFI_SUCCESS;
+  if ((mMap.Entries == NULL) || (mMap.EntryCount == 0)) {
+    return EFI_INVALID_PARAMETER;
   }
 
-  Status = CreateFlatPageTable (&mMap);
+  ZeroMem (mMap.Entries, mMap.EntryPagesAllocated * EFI_PAGE_SIZE);
+  mMap.EntryCount = (mMap.EntryPagesAllocated * EFI_PAGE_SIZE) / sizeof (PAGE_MAP_ENTRY);
+  Status          = CreateFlatPageTable (&mMap);
 
-  while (Status == EFI_BUFFER_TOO_SMALL) {
-    if ((mMap.Entries != NULL) && (mMap.EntryPagesAllocated > 0)) {
-      FreePages (mMap.Entries, mMap.EntryPagesAllocated);
-      mMap.Entries = NULL;
-    }
+  return Status;
+}
 
+/**
+  Checks the allocation size of the global page map buffer and reallocates it to be 20% larger
+  if it is too small to hold the flat page table.
+
+  @retval EFI_SUCCESS   Global buffer is large enough or was reallocated.
+  @retval other         An error occurred while validating the global buffer.
+**/
+STATIC
+EFI_STATUS
+ValidatePageTableMapSize (
+  VOID
+  )
+{
+  PAGE_MAP    Map;
+  EFI_STATUS  Status;
+
+  Map.Entries             = NULL;
+  Map.EntryCount          = 0;
+  Map.EntryPagesAllocated = 0;
+
+  Status = CreateFlatPageTable (&Map);
+
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    UT_LOG_ERROR ("Failed to get the required page table map size!\n");
+    return EFI_ABORTED;
+  }
+
+  Map.EntryPagesAllocated = EFI_SIZE_TO_PAGES (Map.EntryCount * sizeof (PAGE_MAP_ENTRY));
+  if (Map.EntryPagesAllocated >= mMap.EntryPagesAllocated) {
+    FreePageTableMap ();
+    mMap.EntryCount          = Map.EntryCount + (Map.EntryCount / 5); // Increase size by 20%
     mMap.EntryPagesAllocated = EFI_SIZE_TO_PAGES (mMap.EntryCount * sizeof (PAGE_MAP_ENTRY));
     mMap.Entries             = AllocatePages (mMap.EntryPagesAllocated);
-
     if (mMap.Entries == NULL) {
       UT_LOG_ERROR ("Failed to allocate %d pages for page table map!\n", mMap.EntryPagesAllocated);
       return EFI_OUT_OF_RESOURCES;
     }
-
-    Status = CreateFlatPageTable (&mMap);
   }
 
-  if ((Status != EFI_SUCCESS) && (mMap.Entries != NULL)) {
-    FreePageTableMap ();
-  }
-
-  return Status;
+  return EFI_SUCCESS;
 }
 
 /**
@@ -312,7 +334,7 @@ PopulateSpecialRegions (
 }
 
 /**
-  Frees the mMemorySpaceMap global
+  Frees the memory space map global
 **/
 STATIC
 VOID
@@ -359,7 +381,7 @@ PopulateMemorySpaceMap (
 }
 
 /**
-  Frees the memory space map global
+  Frees the EFI memory map global
 **/
 STATIC
 VOID
@@ -377,10 +399,10 @@ FreeEfiMemoryMap (
 }
 
 /**
-  Populates the memory space map global
+  Populates the EFI memory map global.
 
-  @retval EFI_SUCCESS   The memory space map is populated successfully.
-  @retval other         An error occurred while populating the memory space map.
+  @retval EFI_SUCCESS   The EFI memory map is populated successfully.
+  @retval other         An error occurred while populating the EFI memory map.
 **/
 STATIC
 EFI_STATUS
@@ -392,9 +414,10 @@ PopulateEfiMemoryMap (
   UINT32      EfiDescriptorVersion;
   EFI_STATUS  Status;
 
-  // Get the EFI memory map.
-  mEfiMemoryMapSize           = 0;
-  mEfiMemoryMap               = NULL;
+  if ((mEfiMemoryMap == NULL) || (mEfiMemoryMapSize == 0)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   mEfiMemoryMapDescriptorSize = 0;
 
   Status = gBS->GetMemoryMap (
@@ -405,30 +428,61 @@ PopulateEfiMemoryMap (
                   &EfiDescriptorVersion
                   );
 
-  // Loop to allocate space for the memory map and then copy it in.
-  do {
-    mEfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocateZeroPool (mEfiMemoryMapSize);
-    if (mEfiMemoryMap == NULL) {
-      ASSERT (mEfiMemoryMap != NULL);
-      DEBUG ((DEBUG_ERROR, "%a - Unable to allocate memory for the EFI memory map.\n", __FUNCTION__));
-      return EFI_OUT_OF_RESOURCES;
-    }
-
-    Status = gBS->GetMemoryMap (
-                    &mEfiMemoryMapSize,
-                    mEfiMemoryMap,
-                    &EfiMapKey,
-                    &mEfiMemoryMapDescriptorSize,
-                    &EfiDescriptorVersion
-                    );
-    if (EFI_ERROR (Status)) {
-      FreePool (mEfiMemoryMap);
-    }
-  } while (Status == EFI_BUFFER_TOO_SMALL);
-
   SortMemoryMap (mEfiMemoryMap, mEfiMemoryMapSize, mEfiMemoryMapDescriptorSize);
 
   return Status;
+}
+
+/**
+  Checks the allocation size of the global EFI memory map buffer and reallocates it to be 20%
+  larger if it is too small to hold the EFI memory map.
+
+  @retval EFI_SUCCESS   Global buffer is large enough or was reallocated.
+  @retval other         An error occurred while validating the global buffer.
+**/
+STATIC
+EFI_STATUS
+ValidateEfiMemoryMapSize (
+  VOID
+  )
+{
+  EFI_MEMORY_DESCRIPTOR  *EfiMemoryMap;
+  UINTN                  EfiMemoryMapSize;
+  UINTN                  EfiMemoryMapDescriptorSize;
+  UINTN                  EfiMapKey;
+  UINT32                 EfiDescriptorVersion;
+  EFI_STATUS             Status;
+
+  EfiMemoryMapSize           = 0;
+  EfiMemoryMap               = NULL;
+  EfiMemoryMapDescriptorSize = 0;
+  EfiMapKey                  = 0;
+  EfiDescriptorVersion       = 0;
+
+  Status = gBS->GetMemoryMap (
+                  &EfiMemoryMapSize,
+                  EfiMemoryMap,
+                  &EfiMapKey,
+                  &EfiMemoryMapDescriptorSize,
+                  &EfiDescriptorVersion
+                  );
+
+  if (Status != EFI_BUFFER_TOO_SMALL) {
+    UT_LOG_ERROR ("Failed to get the required EFI memory map size!\n");
+    return EFI_ABORTED;
+  }
+
+  if (EfiMemoryMapSize >= mEfiMemoryMapSize) {
+    FreeEfiMemoryMap ();
+    mEfiMemoryMapSize = EfiMemoryMapSize + (EfiMemoryMapSize / 5); // Increase size by 20%
+    mEfiMemoryMap     = AllocatePool (mEfiMemoryMapSize);
+    if (mEfiMemoryMap == NULL) {
+      UT_LOG_ERROR ("Failed to allocate %d bytes for EFI memory map!\n", mEfiMemoryMapSize);
+      return EFI_OUT_OF_RESOURCES;
+    }
+  }
+
+  return EFI_SUCCESS;
 }
 
 /**
@@ -532,10 +586,6 @@ GeneralTestCleanup (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (mMap.Entries != NULL) {
-    FreePageTableMap ();
-  }
-
   if (mSpecialRegions != NULL) {
     FreeSpecialRegions ();
   }
@@ -546,10 +596,6 @@ GeneralTestCleanup (
 
   if (mMemorySpaceMap != NULL) {
     FreeMemorySpaceMap ();
-  }
-
-  if (mEfiMemoryMap != NULL) {
-    FreeEfiMemoryMap ();
   }
 }
 
@@ -790,10 +836,10 @@ NoReadWriteExecute (
 
   PopulateSpecialRegions ();
   PopulateNonProtectedImageList ();
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulateMemorySpaceMap ());
   UT_ASSERT_NOT_NULL (mMemorySpaceMap);
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-  UT_ASSERT_NOT_NULL (mMap.Entries);
 
   Index       = 0;
   TestFailure = FALSE;
@@ -842,10 +888,10 @@ UnallocatedMemoryIsRP (
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
+  UT_ASSERT_NOT_EFI_ERROR (ValidateEfiMemoryMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulateEfiMemoryMap ());
-  UT_ASSERT_NOT_NULL (mEfiMemoryMap);
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-  UT_ASSERT_NOT_NULL (mMap.Entries);
 
   TestFailure = FALSE;
 
@@ -963,67 +1009,63 @@ AllocatedPagesAndPoolsAreProtected (
     }
   }
 
-  Status = PopulatePageTableMap ();
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
+  UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
 
-  if (!EFI_ERROR (Status) && (mMap.Entries != NULL)) {
-    for (Index = 0; Index < EfiMaxMemoryType; Index++) {
-      if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory)) {
-        Attributes = 0;
-        Status     = GetRegionCommonAccessAttributes (
-                       &mMap,
-                       (UINT64)PageAllocations[Index],
-                       EFI_PAGE_SIZE,
-                       &Attributes
-                       );
-        if (Status != EFI_NOT_FOUND) {
-          if (EFI_ERROR (Status)) {
-            UT_LOG_ERROR (
-              "Failed to get attributes for range 0x%llx - 0x%llx\n",
-              PageAllocations[Index],
-              PageAllocations[Index] + EFI_PAGE_SIZE
-              );
-            TestFailure = TRUE;
-          }
-
-          if (Attributes == 0) {
-            UT_LOG_ERROR (
-              "Page range 0x%llx - 0x%llx has no restrictive access attributes\n",
-              PageAllocations[Index],
-              PageAllocations[Index] + EFI_PAGE_SIZE
-              );
-            TestFailure = TRUE;
-          }
+  for (Index = 0; Index < EfiMaxMemoryType; Index++) {
+    if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory)) {
+      Attributes = 0;
+      Status     = GetRegionCommonAccessAttributes (
+                     &mMap,
+                     (UINT64)PageAllocations[Index],
+                     EFI_PAGE_SIZE,
+                     &Attributes
+                     );
+      if (Status != EFI_NOT_FOUND) {
+        if (EFI_ERROR (Status)) {
+          UT_LOG_ERROR (
+            "Failed to get attributes for range 0x%llx - 0x%llx\n",
+            PageAllocations[Index],
+            PageAllocations[Index] + EFI_PAGE_SIZE
+            );
+          TestFailure = TRUE;
         }
 
-        Attributes = 0;
-        Status     = GetRegionCommonAccessAttributes (
-                       &mMap,
-                       ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]),
-                       EFI_PAGE_SIZE,
-                       &Attributes
-                       );
-        if ((Status != EFI_NOT_FOUND)) {
-          if (EFI_ERROR (Status)) {
-            UT_LOG_ERROR (
-              "Failed to get attributes for range 0x%llx - 0x%llx\n",
-              ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]),
-              ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]) + EFI_PAGE_SIZE
-              );
-            TestFailure = TRUE;
-          } else if (Attributes == 0) {
-            UT_LOG_ERROR (
-              "Pool range 0x%llx - 0x%llx has no restrictive access attributes\n",
-              PoolAllocations[Index],
-              PoolAllocations[Index] + sizeof (UINT64)
-              );
-            TestFailure = TRUE;
-          }
+        if (Attributes == 0) {
+          UT_LOG_ERROR (
+            "Page range 0x%llx - 0x%llx has no restrictive access attributes\n",
+            PageAllocations[Index],
+            PageAllocations[Index] + EFI_PAGE_SIZE
+            );
+          TestFailure = TRUE;
+        }
+      }
+
+      Attributes = 0;
+      Status     = GetRegionCommonAccessAttributes (
+                     &mMap,
+                     ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]),
+                     EFI_PAGE_SIZE,
+                     &Attributes
+                     );
+      if ((Status != EFI_NOT_FOUND)) {
+        if (EFI_ERROR (Status)) {
+          UT_LOG_ERROR (
+            "Failed to get attributes for range 0x%llx - 0x%llx\n",
+            ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]),
+            ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]) + EFI_PAGE_SIZE
+            );
+          TestFailure = TRUE;
+        } else if (Attributes == 0) {
+          UT_LOG_ERROR (
+            "Pool range 0x%llx - 0x%llx has no restrictive access attributes\n",
+            PoolAllocations[Index],
+            PoolAllocations[Index] + sizeof (UINT64)
+            );
+          TestFailure = TRUE;
         }
       }
     }
-  } else {
-    UT_LOG_ERROR ("Failed to populate page table map\n");
-    TestFailure = TRUE;
   }
 
   for (Index = 0; Index < EfiMaxMemoryType; Index++) {
@@ -1061,9 +1103,8 @@ NullCheck (
   EFI_STATUS  Status;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
-
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-  UT_ASSERT_NOT_NULL (mMap.Entries);
 
   Attributes = 0;
   Status     = GetRegionCommonAccessAttributes (&mMap, 0, EFI_PAGE_SIZE, &Attributes);
@@ -1103,13 +1144,12 @@ MmioIsXp (
   UINTN                  Index;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
-
-  UT_ASSERT_NOT_EFI_ERROR (PopulateEfiMemoryMap ());
-  UT_ASSERT_NOT_NULL (mEfiMemoryMap);
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
+  UT_ASSERT_NOT_EFI_ERROR (ValidateEfiMemoryMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulateMemorySpaceMap ());
   UT_ASSERT_NOT_NULL (mMemorySpaceMap);
+  UT_ASSERT_NOT_EFI_ERROR (PopulateEfiMemoryMap ());
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-  UT_ASSERT_NOT_NULL (mMap.Entries);
 
   TestFailure = FALSE;
 
@@ -1219,8 +1259,8 @@ ImageCodeSectionsRoDataSectionsXp (
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-  UT_ASSERT_NOT_NULL (mMap.Entries);
 
   TestFailure = FALSE;
 
@@ -1385,8 +1425,8 @@ BspStackIsXpAndHasGuardPage (
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-  UT_ASSERT_NOT_NULL (mMap.Entries);
 
   Hob.Raw     = GetHobList ();
   TestFailure = FALSE;
@@ -1486,12 +1526,12 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
-  UT_ASSERT_NOT_EFI_ERROR (PopulateEfiMemoryMap ());
-  UT_ASSERT_NOT_NULL (mEfiMemoryMap);
+  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
+  UT_ASSERT_NOT_EFI_ERROR (ValidateEfiMemoryMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulateMemorySpaceMap ());
   UT_ASSERT_NOT_NULL (mMemorySpaceMap);
+  UT_ASSERT_NOT_EFI_ERROR (PopulateEfiMemoryMap ());
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-  UT_ASSERT_NOT_NULL (mMap.Entries);
 
   StartOfAddressSpace = mMemorySpaceMap[0].BaseAddress;
   EndOfAddressSpace   = mMemorySpaceMap[mMemorySpaceMapCount - 1].BaseAddress +
@@ -1675,6 +1715,14 @@ DxePagingAuditTestAppEntryPoint (
 EXIT:
   if (Fw != NULL) {
     FreeUnitTestFramework (Fw);
+  }
+
+  if (mMap.Entries != NULL) {
+    FreePageTableMap ();
+  }
+
+  if (mEfiMemoryMap != NULL) {
+    FreeEfiMemoryMap ();
   }
 
   return EFI_SUCCESS;
