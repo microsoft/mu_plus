@@ -486,89 +486,6 @@ ValidateEfiMemoryMapSize (
 }
 
 /**
-  Checks the input flat page/translation table for the input region and converts the associated
-  table entries to EFI access attributes.
-
-  @param[in]  Map                 Pointer to the PAGE_MAP struct to be parsed
-  @param[in]  Address             Start address of the region
-  @param[in]  Length              Length of the region
-  @param[out] Attributes          EFI Attributes of the region
-
-  @retval EFI_SUCCESS             The output Attributes is valid
-  @retval EFI_INVALID_PARAMETER   The flat translation table has not been built or
-                                  Attributes was NULL or Length was 0
-  @retval EFI_NOT_FOUND           The input region could not be found.
-**/
-EFI_STATUS
-EFIAPI
-GetRegionCommonAccessAttributes (
-  IN PAGE_MAP  *Map,
-  IN UINT64    Address,
-  IN UINT64    Length,
-  OUT UINT64   *Attributes
-  )
-{
-  UINTN    Index;
-  UINT64   EntryStartAddress;
-  UINT64   EntryEndAddress;
-  UINT64   InputEndAddress;
-  BOOLEAN  FoundRange;
-
-  if ((Map->Entries == NULL) || (Map->EntryCount == 0) || (Attributes == NULL) || (Length == 0)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  FoundRange      = FALSE;
-  Index           = 0;
-  InputEndAddress = 0;
-
-  if (EFI_ERROR (SafeUint64Add (Address, Length - 1, &InputEndAddress))) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  do {
-    EntryStartAddress = Map->Entries[Index].LinearAddress;
-    if (EFI_ERROR (
-          SafeUint64Add (
-            Map->Entries[Index].LinearAddress,
-            Map->Entries[Index].Length - 1,
-            &EntryEndAddress
-            )
-          ))
-    {
-      return EFI_ABORTED;
-    }
-
-    if (CHECK_OVERLAP (Address, InputEndAddress, EntryStartAddress, EntryEndAddress)) {
-      if (!FoundRange) {
-        *Attributes = EFI_MEMORY_ACCESS_MASK;
-        FoundRange  = TRUE;
-      }
-
-      if (IsPageExecutable (Map->Entries[Index].PageEntry)) {
-        *Attributes &= ~EFI_MEMORY_XP;
-      }
-
-      if (IsPageWritable (Map->Entries[Index].PageEntry)) {
-        *Attributes &= ~EFI_MEMORY_RO;
-      }
-
-      if (IsPageReadable (Map->Entries[Index].PageEntry)) {
-        *Attributes &= ~EFI_MEMORY_RP;
-      }
-
-      Address = EntryEndAddress + 1;
-    }
-
-    if (EntryEndAddress >= InputEndAddress) {
-      break;
-    }
-  } while (++Index < Map->EntryCount);
-
-  return FoundRange ? EFI_SUCCESS : EFI_NOT_FOUND;
-}
-
-/**
   Checks the input flat page/translation table for the input region and validates
   the attributes match the input attributes.
 
@@ -998,8 +915,6 @@ UnallocatedMemoryIsRP (
   BOOLEAN                TestFailure;
   EFI_MEMORY_DESCRIPTOR  *EfiMemoryMapEntry;
   EFI_MEMORY_DESCRIPTOR  *EfiMemoryMapEnd;
-  UINTN                  Attributes;
-  EFI_STATUS             Status;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1015,29 +930,17 @@ UnallocatedMemoryIsRP (
 
   while (EfiMemoryMapEntry < EfiMemoryMapEnd) {
     if (EfiMemoryMapEntry->Type == EfiConventionalMemory) {
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     EfiMemoryMapEntry->PhysicalStart,
-                     EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE,
-                     &Attributes
-                     );
-      if (Status != EFI_NOT_FOUND) {
-        if (EFI_ERROR (Status)) {
-          UT_LOG_ERROR (
-            "Failed to get attributes for range 0x%llx - 0x%llx\n",
-            EfiMemoryMapEntry->PhysicalStart,
-            EfiMemoryMapEntry->PhysicalStart + (EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE)
-            );
-          TestFailure = TRUE;
-        } else if ((Attributes & EFI_MEMORY_RP) == 0) {
-          UT_LOG_ERROR (
-            "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
-            EfiMemoryMapEntry->PhysicalStart,
-            EfiMemoryMapEntry->PhysicalStart + (EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE)
-            );
-          TestFailure = TRUE;
-        }
+      if (!ValidateRegionAttributes (
+             &mMap,
+             EfiMemoryMapEntry->PhysicalStart,
+             (EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE),
+             EFI_MEMORY_RP,
+             TRUE,
+             TRUE,
+             TRUE
+             ))
+      {
+        TestFailure = TRUE;
       }
     }
 
@@ -1095,12 +998,10 @@ AllocatedPagesAndPoolsAreProtected (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT64      Attributes;
-  UINTN       Index;
-  EFI_STATUS  Status;
-  BOOLEAN     TestFailure;
-  UINTN       *PageAllocations[EfiMaxMemoryType];
-  UINTN       *PoolAllocations[EfiMaxMemoryType];
+  UINTN    Index;
+  BOOLEAN  TestFailure;
+  UINTN    *PageAllocations[EfiMaxMemoryType];
+  UINTN    *PoolAllocations[EfiMaxMemoryType];
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1109,7 +1010,7 @@ AllocatedPagesAndPoolsAreProtected (
   ZeroMem (PoolAllocations, sizeof (PoolAllocations));
 
   for (Index = 0; Index < EfiMaxMemoryType; Index++) {
-    if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory)) {
+    if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory) && (Index != EfiUnacceptedMemoryType)) {
       PageAllocations[Index] = AllocatePages (1);
       if (PageAllocations[Index] == NULL) {
         UT_LOG_ERROR ("Failed to allocate one page for memory type %d\n", Index);
@@ -1128,57 +1029,31 @@ AllocatedPagesAndPoolsAreProtected (
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
 
   for (Index = 0; Index < EfiMaxMemoryType; Index++) {
-    if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory)) {
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     (UINT64)PageAllocations[Index],
-                     EFI_PAGE_SIZE,
-                     &Attributes
-                     );
-      if (Status != EFI_NOT_FOUND) {
-        if (EFI_ERROR (Status)) {
-          UT_LOG_ERROR (
-            "Failed to get attributes for range 0x%llx - 0x%llx\n",
-            PageAllocations[Index],
-            PageAllocations[Index] + EFI_PAGE_SIZE
-            );
-          TestFailure = TRUE;
-        }
-
-        if (Attributes == 0) {
-          UT_LOG_ERROR (
-            "Page range 0x%llx - 0x%llx has no restrictive access attributes\n",
-            PageAllocations[Index],
-            PageAllocations[Index] + EFI_PAGE_SIZE
-            );
-          TestFailure = TRUE;
-        }
+    if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory) && (Index != EfiUnacceptedMemoryType)) {
+      if (!ValidateRegionAttributes (
+             &mMap,
+             (UINT64)PageAllocations[Index],
+             EFI_PAGE_SIZE,
+             EFI_MEMORY_RP | EFI_MEMORY_RO | EFI_MEMORY_XP,
+             TRUE,
+             FALSE,
+             TRUE
+             ))
+      {
+        TestFailure = TRUE;
       }
 
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]),
-                     EFI_PAGE_SIZE,
-                     &Attributes
-                     );
-      if ((Status != EFI_NOT_FOUND)) {
-        if (EFI_ERROR (Status)) {
-          UT_LOG_ERROR (
-            "Failed to get attributes for range 0x%llx - 0x%llx\n",
-            ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]),
-            ALIGN_ADDRESS ((UINTN)PoolAllocations[Index]) + EFI_PAGE_SIZE
-            );
-          TestFailure = TRUE;
-        } else if (Attributes == 0) {
-          UT_LOG_ERROR (
-            "Pool range 0x%llx - 0x%llx has no restrictive access attributes\n",
-            PoolAllocations[Index],
-            PoolAllocations[Index] + sizeof (UINT64)
-            );
-          TestFailure = TRUE;
-        }
+      if (!ValidateRegionAttributes (
+             &mMap,
+             (UINT64)PoolAllocations[Index],
+             8,
+             EFI_MEMORY_RP | EFI_MEMORY_RO | EFI_MEMORY_XP,
+             TRUE,
+             FALSE,
+             TRUE
+             ))
+      {
+        TestFailure = TRUE;
       }
     }
   }
@@ -1214,23 +1089,21 @@ NullCheck (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  UINT64      Attributes;
-  EFI_STATUS  Status;
-
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
   UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
 
-  Attributes = 0;
-  Status     = GetRegionCommonAccessAttributes (&mMap, 0, EFI_PAGE_SIZE, &Attributes);
-
-  if ((Status != EFI_NOT_FOUND)) {
-    if (EFI_ERROR (Status)) {
-      UT_ASSERT_NOT_EFI_ERROR (Status);
-    } else {
-      UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
-    }
-  }
+  UT_ASSERT_TRUE (
+    ValidateRegionAttributes (
+      &mMap,
+      0,
+      EFI_PAGE_SIZE,
+      EFI_MEMORY_RP,
+      TRUE,
+      TRUE,
+      TRUE
+      )
+    );
 
   return UNIT_TEST_PASSED;
 }
@@ -1253,9 +1126,7 @@ MmioIsXp (
 {
   EFI_MEMORY_DESCRIPTOR  *EfiMemoryMapEntry;
   EFI_MEMORY_DESCRIPTOR  *EfiMemoryMapEnd;
-  UINT64                 Attributes;
   BOOLEAN                TestFailure;
-  EFI_STATUS             Status;
   UINTN                  Index;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
@@ -1273,30 +1144,17 @@ MmioIsXp (
 
   while (EfiMemoryMapEntry < EfiMemoryMapEnd) {
     if (EfiMemoryMapEntry->Type == EfiMemoryMappedIO) {
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     EfiMemoryMapEntry->PhysicalStart,
-                     EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE,
-                     &Attributes
-                     );
-
-      if (Status != EFI_NOT_FOUND) {
-        if (EFI_ERROR (Status)) {
-          UT_LOG_ERROR (
-            "Failed to get attributes for range 0x%llx - 0x%llx\n",
-            EfiMemoryMapEntry->PhysicalStart,
-            EfiMemoryMapEntry->PhysicalStart + (EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE)
-            );
-          TestFailure = TRUE;
-        } else if ((Attributes & EFI_MEMORY_XP) == 0) {
-          UT_LOG_ERROR (
-            "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
-            EfiMemoryMapEntry->PhysicalStart,
-            EfiMemoryMapEntry->PhysicalStart + (EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE)
-            );
-          TestFailure = TRUE;
-        }
+      if (!ValidateRegionAttributes (
+             &mMap,
+             EfiMemoryMapEntry->PhysicalStart,
+             (EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE),
+             EFI_MEMORY_XP | EFI_MEMORY_RP,
+             TRUE,
+             TRUE,
+             TRUE
+             ))
+      {
+        TestFailure = TRUE;
       }
     }
 
@@ -1305,30 +1163,17 @@ MmioIsXp (
 
   for (Index = 0; Index < mMemorySpaceMapCount; Index++) {
     if (mMemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo) {
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     mMemorySpaceMap[Index].BaseAddress,
-                     mMemorySpaceMap[Index].Length,
-                     &Attributes
-                     );
-
-      if (Status != EFI_NOT_FOUND) {
-        if (EFI_ERROR (Status)) {
-          UT_LOG_ERROR (
-            "Failed to get attributes for range 0x%llx - 0x%llx\n",
-            mMemorySpaceMap[Index].BaseAddress,
-            mMemorySpaceMap[Index].BaseAddress + mMemorySpaceMap[Index].Length
-            );
-          TestFailure = TRUE;
-        } else if ((Attributes & EFI_MEMORY_XP) == 0) {
-          UT_LOG_ERROR (
-            "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
-            mMemorySpaceMap[Index].BaseAddress,
-            mMemorySpaceMap[Index].BaseAddress + mMemorySpaceMap[Index].Length
-            );
-          TestFailure = TRUE;
-        }
+      if (!ValidateRegionAttributes (
+             &mMap,
+             mMemorySpaceMap[Index].BaseAddress,
+             mMemorySpaceMap[Index].Length,
+             EFI_MEMORY_XP | EFI_MEMORY_RP,
+             TRUE,
+             TRUE,
+             TRUE
+             ))
+      {
+        TestFailure = TRUE;
       }
     }
   }
@@ -1366,7 +1211,6 @@ ImageCodeSectionsRoDataSectionsXp (
   EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION  Hdr;
   UINT32                               SectionAlignment;
   EFI_IMAGE_SECTION_HEADER             *Section;
-  UINT64                               Attributes;
   BOOLEAN                              TestFailure;
   UINT64                               SectionStart;
   UINT64                               SectionEnd;
@@ -1449,7 +1293,6 @@ ImageCodeSectionsRoDataSectionsXp (
                                            );
 
     for (Index2 = 0; Index2 < Hdr.Pe32->FileHeader.NumberOfSections; Index2++) {
-      Attributes   = 0;
       SectionStart = (UINT64)LoadedImage->ImageBase + Section[Index2].VirtualAddress;
       SectionEnd   = SectionStart + ALIGN_VALUE (Section[Index2].SizeOfRawData, SectionAlignment);
 
@@ -1465,26 +1308,19 @@ ImageCodeSectionsRoDataSectionsXp (
           SectionEnd
           );
         TestFailure = TRUE;
-      }
-
-      Status = GetRegionCommonAccessAttributes (
-                 &mMap,
-                 SectionStart,
-                 SectionEnd - SectionStart,
-                 &Attributes
-                 );
-
-      if (EFI_ERROR (Status)) {
-        TestFailure = TRUE;
-        UT_LOG_ERROR (
-          "Failed to get attributes for memory range 0x%llx-0x%llx\n",
-          SectionStart,
-          SectionEnd
-          );
       } else if ((Section[Index2].Characteristics &
                   (EFI_IMAGE_SCN_MEM_WRITE | EFI_IMAGE_SCN_MEM_EXECUTE)) == EFI_IMAGE_SCN_MEM_EXECUTE)
       {
-        if ((Attributes & EFI_MEMORY_RO) == 0) {
+        if (!ValidateRegionAttributes (
+               &mMap,
+               SectionStart,
+               SectionEnd - SectionStart,
+               EFI_MEMORY_RO,
+               FALSE,
+               FALSE,
+               FALSE
+               ))
+        {
           UT_LOG_ERROR (
             "Image %a: Section 0x%llx-0x%llx is not EFI_MEMORY_RO\n",
             PdbFileName,
@@ -1494,7 +1330,16 @@ ImageCodeSectionsRoDataSectionsXp (
           TestFailure = TRUE;
         }
       } else {
-        if ((Attributes & EFI_MEMORY_XP) == 0) {
+        if (!ValidateRegionAttributes (
+               &mMap,
+               SectionStart,
+               SectionEnd - SectionStart,
+               EFI_MEMORY_XP,
+               FALSE,
+               FALSE,
+               FALSE
+               ))
+        {
           UT_LOG_ERROR (
             "Image %a: Section 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
             PdbFileName,
@@ -1535,8 +1380,6 @@ BspStackIsXpAndHasGuardPage (
   BOOLEAN                    TestFailure;
   EFI_PHYSICAL_ADDRESS       StackBase;
   UINT64                     StackLength;
-  UINT64                     Attributes;
-  EFI_STATUS                 Status;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1554,49 +1397,36 @@ BspStackIsXpAndHasGuardPage (
 
       UT_LOG_INFO ("BSP stack located at 0x%llx - 0x%llx\n", StackBase, StackBase + StackLength);
 
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     StackBase,
-                     EFI_PAGE_SIZE,
-                     &Attributes
-                     );
-      if ((Status != EFI_NOT_FOUND)) {
-        if (EFI_ERROR (Status)) {
-          UT_LOG_ERROR (
-            "Failed to get attributes for memory range 0x%llx-0x%llx\n",
-            StackBase,
-            StackBase + EFI_PAGE_SIZE
-            );
-          TestFailure = TRUE;
-        } else if (((Attributes & EFI_MEMORY_RP) == 0)) {
-          UT_LOG_ERROR (
-            "Stack 0x%llx-0x%llx does not have an EFI_MEMORY_RP page to catch overflow\n",
-            StackBase,
-            StackBase + EFI_PAGE_SIZE
-            );
-          TestFailure = TRUE;
-        }
-      }
-
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     StackBase + EFI_PAGE_SIZE,
-                     StackLength - EFI_PAGE_SIZE,
-                     &Attributes
-                     );
-
-      if (EFI_ERROR (Status)) {
+      if (!ValidateRegionAttributes (
+             &mMap,
+             StackBase,
+             EFI_PAGE_SIZE,
+             EFI_MEMORY_RP,
+             TRUE,
+             TRUE,
+             FALSE
+             ))
+      {
         UT_LOG_ERROR (
-          "Failed to get attributes for memory range 0x%llx-0x%llx\n",
-          StackBase + EFI_PAGE_SIZE,
-          StackBase + StackLength
+          "Stack 0x%llx-0x%llx does not have an EFI_MEMORY_RP page to catch overflow\n",
+          StackBase,
+          StackBase + EFI_PAGE_SIZE
           );
         TestFailure = TRUE;
-      } else if ((Attributes & EFI_MEMORY_XP) == 0) {
+      }
+
+      if (!ValidateRegionAttributes (
+             &mMap,
+             StackBase + EFI_PAGE_SIZE,
+             StackLength - EFI_PAGE_SIZE,
+             EFI_MEMORY_XP,
+             TRUE,
+             FALSE,
+             FALSE
+             ))
+      {
         UT_LOG_ERROR (
-          "Stack 0x%llx-0x%llx is executable\n",
+          "Stack 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
           StackBase + EFI_PAGE_SIZE,
           StackBase + StackLength
           );
@@ -1636,8 +1466,6 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   EFI_MEMORY_DESCRIPTOR  *CurrentEfiMemoryMapEntry;
   BOOLEAN                TestFailure;
   EFI_PHYSICAL_ADDRESS   LastMemoryMapEntryEnd;
-  UINT64                 Attributes;
-  EFI_STATUS             Status;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1656,20 +1484,16 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   CurrentEfiMemoryMapEntry = mEfiMemoryMap;
 
   if (CurrentEfiMemoryMapEntry->PhysicalStart > StartOfAddressSpace) {
-    Attributes = 0;
-    Status     = GetRegionCommonAccessAttributes (
-                   &mMap,
-                   StartOfAddressSpace,
-                   CurrentEfiMemoryMapEntry->PhysicalStart - StartOfAddressSpace,
-                   &Attributes
-                   );
-
-    if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
-      UT_LOG_ERROR (
-        "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
-        StartOfAddressSpace,
-        CurrentEfiMemoryMapEntry->PhysicalStart
-        );
+    if (!ValidateRegionAttributes (
+           &mMap,
+           StartOfAddressSpace,
+           CurrentEfiMemoryMapEntry->PhysicalStart - StartOfAddressSpace,
+           EFI_MEMORY_RP,
+           TRUE,
+           TRUE,
+           TRUE
+           ))
+    {
       TestFailure = TRUE;
     }
   }
@@ -1680,19 +1504,16 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
 
   while ((UINTN)CurrentEfiMemoryMapEntry < (UINTN)EndOfEfiMemoryMap) {
     if (CurrentEfiMemoryMapEntry->PhysicalStart > LastMemoryMapEntryEnd) {
-      Attributes = 0;
-      Status     = GetRegionCommonAccessAttributes (
-                     &mMap,
-                     LastMemoryMapEntryEnd,
-                     CurrentEfiMemoryMapEntry->PhysicalStart - LastMemoryMapEntryEnd,
-                     &Attributes
-                     );
-      if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
-        UT_LOG_ERROR (
-          "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
-          LastMemoryMapEntryEnd,
-          CurrentEfiMemoryMapEntry->PhysicalStart
-          );
+      if (!ValidateRegionAttributes (
+             &mMap,
+             LastMemoryMapEntryEnd,
+             CurrentEfiMemoryMapEntry->PhysicalStart - LastMemoryMapEntryEnd,
+             EFI_MEMORY_RP,
+             TRUE,
+             TRUE,
+             TRUE
+             ))
+      {
         TestFailure = TRUE;
       }
     }
@@ -1703,19 +1524,16 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   }
 
   if (LastMemoryMapEntryEnd < EndOfAddressSpace) {
-    Attributes = 0;
-    Status     = GetRegionCommonAccessAttributes (
-                   &mMap,
-                   LastMemoryMapEntryEnd,
-                   EndOfAddressSpace - LastMemoryMapEntryEnd,
-                   &Attributes
-                   );
-    if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
-      UT_LOG_ERROR (
-        "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
-        LastMemoryMapEntryEnd,
-        EndOfAddressSpace
-        );
+    if (!ValidateRegionAttributes (
+           &mMap,
+           LastMemoryMapEntryEnd,
+           EndOfAddressSpace - LastMemoryMapEntryEnd,
+           EFI_MEMORY_RP,
+           TRUE,
+           TRUE,
+           TRUE
+           ))
+    {
       TestFailure = TRUE;
     }
   }
