@@ -568,6 +568,121 @@ GetRegionCommonAccessAttributes (
   return FoundRange ? EFI_SUCCESS : EFI_NOT_FOUND;
 }
 
+/**
+  Checks the input flat page/translation table for the input region and validates
+  the attributes match the input attributes.
+
+  @param[in]  Map                   Pointer to the PAGE_MAP struct to be parsed
+  @param[in]  Address               Start address of the region
+  @param[in]  Length                Length of the region
+  @param[in]  RequiredAttributes    The required EFI Attributes of the region
+  @param[in]  MatchAnyAttribute     If TRUE, the region must contain at least one of the
+                                    required attributes. If FALSE, the region must contain
+                                    all of the required attributes.
+  @param[in]  AllowUnmappedRegions  If TRUE, unmapped regions are excepted from the check.
+  @param[in]  LogAttributeMismatch  If TRUE, log the attribute mismatch via DEBUG().
+
+  @retval TRUE                   The region has the required attributes
+  @retval FALSE                  The region does not have the required attributes
+**/
+STATIC
+BOOLEAN
+ValidateRegionAttributes (
+  IN PAGE_MAP  *Map,
+  IN UINT64    Address,
+  IN UINT64    Length,
+  IN UINT64    RequiredAttributes,
+  IN BOOLEAN   MatchAnyAttribute,
+  IN BOOLEAN   AllowUnmappedRegions,
+  IN BOOLEAN   LogAttributeMismatch
+  )
+{
+  UINT64      RegionAttributes;
+  UINT64      CheckedLength;
+  EFI_STATUS  Status;
+  BOOLEAN     AttributesMatch;
+
+  AttributesMatch = TRUE;
+
+  do {
+    RegionAttributes = 0;
+    CheckedLength    = 0;
+    Status           = GetRegionAccessAttributes (
+                         Map,
+                         Address,
+                         Length,
+                         &RegionAttributes,
+                         &CheckedLength
+                         );
+
+    // If the region was completely or partially matched, check the returned attributes against the
+    // expected attributes
+    if ((Status == EFI_SUCCESS) || (Status == EFI_NOT_FOUND)) {
+      if (((!MatchAnyAttribute && ((RegionAttributes & RequiredAttributes) != RequiredAttributes)) ||
+           (MatchAnyAttribute && ((RegionAttributes & RequiredAttributes) == 0))))
+      {
+        if (LogAttributeMismatch) {
+          UT_LOG_ERROR (
+            "Region 0x%llx-0x%llx does not %a%a%a%a\n",
+            Address,
+            Address + CheckedLength,
+            MatchAnyAttribute ? "contain a superset of the following attribute(s): " : "match exactly the following attribute(s): ",
+            ((RequiredAttributes & EFI_MEMORY_RP) != 0) ? "EFI_MEMORY_RP " : "",
+            ((RequiredAttributes & EFI_MEMORY_RO) != 0) ? "EFI_MEMORY_RO " : "",
+            ((RequiredAttributes & EFI_MEMORY_XP) != 0) ? "EFI_MEMORY_XP " : ""
+            );
+        }
+
+        AttributesMatch = FALSE;
+      }
+    }
+    // If the region was not found, check if unmapped regions are OK
+    else if (Status == EFI_NO_MAPPING) {
+      if (!AllowUnmappedRegions) {
+        if (LogAttributeMismatch) {
+          UT_LOG_ERROR (
+            "Region 0x%llx-0x%llx is not mapped\n",
+            Address,
+            Address + CheckedLength
+            );
+        }
+
+        AttributesMatch = FALSE;
+      }
+    }
+    // If an unexpected status was returned, break out of the loop and return failure
+    else {
+      UT_LOG_INFO (
+        "Failed to get attributes for Address: 0x%llx, Length: 0x%llx. Status: %r\n",
+        Address,
+        Length,
+        Status
+        );
+      AttributesMatch = FALSE;
+      break;
+    }
+
+    if (CheckedLength == 0) {
+      UT_LOG_INFO (
+        "Unexpected error occurred when parsing the page table for 0x%llx-0x%llx!\n",
+        Address,
+        Address + Length
+        );
+
+      AttributesMatch = FALSE;
+      break;
+    }
+
+    if (EFI_ERROR (SafeUint64Add (Address, CheckedLength, &Address))) {
+      break;
+    }
+
+    Length -= CheckedLength;
+  } while (Length > 0);
+
+  return AttributesMatch;
+}
+
 // ----------------------
 //    CLEANUP FUNCTION
 // ----------------------
