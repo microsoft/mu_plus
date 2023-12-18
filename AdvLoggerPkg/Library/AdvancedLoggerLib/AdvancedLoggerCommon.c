@@ -65,7 +65,7 @@ AdvancedLoggerMemoryLoggerWrite (
 
   if (LoggerInfo != NULL) {
     MessagePrefix     = (CHAR8 *)FixedPcdGetPtr (PcdAdvancedLoggerMessagePrefix);
-    MessagePrefixSize = FixedPcdGetSize (PcdAdvancedLoggerMessageBaseArmPrefix);
+    MessagePrefixSize = FixedPcdGetSize (PcdAdvancedLoggerMessagePrefix);
 
     if ((MessagePrefix == NULL) || (MessagePrefixSize <= 1) || (MessagePrefix[MessagePrefixSize - 1] != '\0')) {
       // Do not take null pointers, strings with only a null terminator, or string without terminator
@@ -73,7 +73,7 @@ AdvancedLoggerMemoryLoggerWrite (
       MessagePrefixSize = 0;
     } else {
       // Remove the null terminator from the size
-      MessagePrefixSize --;
+      MessagePrefixSize--;
     }
 
     NumberOfBytes += MessagePrefixSize;

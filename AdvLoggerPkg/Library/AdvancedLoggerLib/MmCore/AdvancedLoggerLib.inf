@@ -42,7 +42,7 @@
 
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel       ## SOMETIMES_CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessageMmCorePrefix              ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessagePrefix                     ## CONSUMES
 
 [Depex]
   TRUE
