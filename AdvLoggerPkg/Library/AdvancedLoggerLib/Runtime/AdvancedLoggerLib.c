@@ -113,30 +113,6 @@ AdvancedLoggerGetLoggerInfo (
 }
 
 /**
-  Helper function to return the string prefix for each message.
-  This function is intended to be used to distinguish between
-  various types of modules.
-
-  @param[out]   MessagePrefixSize  The size of the prefix string in bytes,
-                excluding NULL terminator.
-
-  @return       Pointer to the prefix string. NULL if no prefix is available.
-**/
-CONST CHAR8 *
-EFIAPI
-AdvancedLoggerGetStringPrefix (
-  IN UINTN  *MessagePrefixSize
-  )
-{
-  if (MessagePrefixSize == NULL) {
-    return NULL;
-  }
-
-  *MessagePrefixSize = FixedPcdGetSize (PcdAdvancedLoggerMessageRuntimePrefix) - 1;
-  return (CHAR8 *)FixedPcdGetPtr (PcdAdvancedLoggerMessageRuntimePrefix);
-}
-
-/**
     Inform all instances of Advanced Logger that ExitBoot Services has occurred.
 
     @param    Event           Not Used.
