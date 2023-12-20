@@ -63,7 +63,7 @@ __MsWheaCMOSRawRead (
 
   for (i = 0; i < Size; i++) {
     mIndex = Offset + i;
-    if ((mIndex >= 0) && (mIndex <= 127)) {
+    if (mIndex <= 127) {
       IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, mIndex);
       mBuf[i] = IoRead8 (PCAT_RTC_LO_DATA_PORT);
     } else {
@@ -114,7 +114,7 @@ __MsWheaCMOSRawWrite (
 
   for (i = 0; i < Size; i++) {
     mIndex = Offset + i;
-    if ((mIndex >= 0) && (mIndex <= 127)) {
+    if (mIndex <= 127) {
       IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, mIndex);
       IoWrite8 (PCAT_RTC_LO_DATA_PORT, mBuf[i]);
     } else {
@@ -160,7 +160,7 @@ __MsWheaCMOSRawClear (
 
   for (i = 0; i < Size; i++) {
     mIndex = Offset + i;
-    if ((mIndex >= 0) && (mIndex <= 127)) {
+    if (mIndex <= 127) {
       IoWrite8 (PCAT_RTC_LO_ADDRESS_PORT, mIndex);
       IoWrite8 (PCAT_RTC_LO_DATA_PORT, PcdGet8 (PcdMsWheaEarlyStorageDefaultValue));
     } else {
@@ -172,20 +172,6 @@ __MsWheaCMOSRawClear (
   Status = EFI_SUCCESS;
 Cleanup:
   return Status;
-}
-
-/**
-
-This routine clears all bytes in Data region
-
-**/
-STATIC
-VOID
-MsWheaCMOSStoreClearAll (
-  VOID
-  )
-{
-  __MsWheaCMOSRawClear (MsWheaEarlyStorageGetMaxSize (), MS_WHEA_EARLY_STORAGE_OFFSET);
 }
 
 /**

@@ -142,17 +142,17 @@ OnResetNotificationProtocolInstalled (
     //
     // Register our reset notification request
     //
-    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __func__));
     Status = ResetNotificationProtocol->RegisterResetNotify (ResetNotificationProtocol, OnResetNotification);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __func__, Status));
     }
 
     if (Event != NULL) {
       gBS->CloseEvent (Event);
     }
   } else {
-    DEBUG ((DEBUG_ERROR, "%a: Unable to locate Reset Notification Protocol.\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: Unable to locate Reset Notification Protocol.\n", __func__));
   }
 
   return;
@@ -183,7 +183,7 @@ RegisterLogDevice (
   LogDevice = (LOG_DEVICE *)AllocateZeroPool (sizeof (LOG_DEVICE));
   ASSERT (LogDevice);
   if (NULL == LogDevice) {
-    DEBUG ((DEBUG_ERROR, "%a: Out of memory:\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: Out of memory:\n", __func__));
     return;
   }
 
@@ -233,7 +233,7 @@ OnFileSystemNotification (
   EFI_HANDLE  *HandleBuffer;
   EFI_STATUS  Status;
 
-  DEBUG ((DEBUG_INFO, "%a: Entry...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: Entry...\n", __func__));
 
   for ( ; ;) {
     //
@@ -256,7 +256,7 @@ OnFileSystemNotification (
     // Spec says we only get one at a time using ByRegisterNotify
     ASSERT (HandleCount == 1);
 
-    DEBUG ((DEBUG_INFO, "%a: processing a potential log device on handle %p\n", __FUNCTION__, HandleBuffer[0]));
+    DEBUG ((DEBUG_INFO, "%a: processing a potential log device on handle %p\n", __func__, HandleBuffer[0]));
 
     RegisterLogDevice (HandleBuffer[0]);
 
@@ -363,7 +363,7 @@ ProcessFileSystemRegistration (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: failed to create callback event (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: failed to create callback event (%r)\n", __func__, Status));
     goto Cleanup;
   }
 
@@ -374,7 +374,7 @@ ProcessFileSystemRegistration (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: failed to register for file system notifications (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: failed to register for file system notifications (%r)\n", __func__, Status));
     gBS->CloseEvent (FileSystemCallBackEvent);
     goto Cleanup;
   }
@@ -424,13 +424,13 @@ ProcessResetEventRegistration (
     //
     // Register our reset notification request
     //
-    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Located Reset notification protocol. Registering handler\n", __func__));
     Status = ResetNotificationProtocol->RegisterResetNotify (ResetNotificationProtocol, OnResetNotification);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: failed to register Reset Notification handler (%r)\n", __func__, Status));
     }
   } else {
-    DEBUG ((DEBUG_INFO, "%a: Reset Notification protocol not installed. Registering for notification\n", __FUNCTION__));
+    DEBUG ((DEBUG_INFO, "%a: Reset Notification protocol not installed. Registering for notification\n", __func__));
     Status = gBS->CreateEvent (
                     EVT_NOTIFY_SIGNAL,
                     TPL_CALLBACK,
@@ -440,7 +440,7 @@ ProcessResetEventRegistration (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: failed to create Reset Protocol protocol callback event (%r)\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: failed to create Reset Protocol protocol callback event (%r)\n", __func__, Status));
     } else {
       Status = gBS->RegisterProtocolNotify (
                       &gEdkiiPlatformSpecificResetFilterProtocolGuid,
@@ -449,7 +449,7 @@ ProcessResetEventRegistration (
                       );
 
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "%a: failed to register for Reset Protocol notification (%r)\n", __FUNCTION__, Status));
+        DEBUG ((DEBUG_ERROR, "%a: failed to register for Reset Protocol notification (%r)\n", __func__, Status));
         gBS->CloseEvent (ResetNotificationEvent);
       }
     }
@@ -491,7 +491,7 @@ ProcessSyncRequestRegistration (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for file logger write. Code = %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for file logger write. Code = %r\n", __func__, Status));
   }
 
   return Status;
@@ -534,7 +534,7 @@ ProcessReadyToBootRegistration (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ReadyToBoot. Code = %r\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ReadyToBoot. Code = %r\n", __func__, Status));
     }
   }
 
@@ -577,7 +577,7 @@ ProcessPreExitBootServicesRegistration (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a - Create Event Ex for ExitBootServices. Code = %r\n", __func__, Status));
     }
   }
 
@@ -601,9 +601,24 @@ AdvancedFileLoggerEntry (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS                   Status;
+  ADVANCED_FILE_LOGGER_POLICY  AdvFileLoggerPolicy;
+  UINT16                       PolicySize = ADVANCED_FILE_LOGGER_POLICY_SIZE;
 
-  DEBUG ((DEBUG_INFO, "%a: enter...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter...\n", __func__));
+
+  // Step 0. Check advanced file logger policy, default to enabled.
+
+  Status = GetPolicy (&gAdvancedFileLoggerPolicyGuid, NULL, (VOID *)&AdvFileLoggerPolicy, &PolicySize);
+  if (EFI_ERROR (Status)) {
+    // If we fail to get policy, default to enabled.
+    DEBUG ((DEBUG_WARN, "%a: Unable to get file logger - %r defaulting to enabled!\n", __func__, Status));
+  } else if (AdvFileLoggerPolicy.FileLoggerEnable == FALSE) {
+    DEBUG ((DEBUG_INFO, "%a: File logger disabled in policy, exiting.\n", __func__));
+    return EFI_SUCCESS;
+  } else {
+    DEBUG ((DEBUG_INFO, "%a: File logger enabled in policy.\n", __func__));
+  }
 
   //
   // Step 1. Register for file system notifications
@@ -645,9 +660,9 @@ AdvancedFileLoggerEntry (
 Exit:
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: Leaving, code = %r\n", __func__, Status));
   } else {
-    DEBUG ((DEBUG_INFO, "%a: Leaving, code = %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_INFO, "%a: Leaving, code = %r\n", __func__, Status));
   }
 
   // Always return EFI_SUCCESS.  This means any partial registration of functions

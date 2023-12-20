@@ -16,6 +16,7 @@ pub mod protocol {
   pub const GUID: Guid =
     Guid::from_fields(0x3ea93936, 0x6bf4, 0x49d6, 0xaa, 0x50, &[0xd9, 0xf5, 0xb9, 0xad, 0x8c, 0xff]);
 
+  #[derive(Debug, PartialEq, Eq, Clone, Copy)]
   #[repr(C)]
   pub enum HidReportType {
     InputReport = 1,

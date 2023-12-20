@@ -353,6 +353,8 @@ PopulateMemorySpaceMap (
     mMemorySpaceMap = NULL;
   }
 
+  SortMemorySpaceMap (mMemorySpaceMap, mMemorySpaceMapCount, sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR));
+
   return Status;
 }
 
@@ -423,6 +425,8 @@ PopulateEfiMemoryMap (
       FreePool (mEfiMemoryMap);
     }
   } while (Status == EFI_BUFFER_TOO_SMALL);
+
+  SortMemoryMap (mEfiMemoryMap, mEfiMemoryMapSize, mEfiMemoryMapDescriptorSize);
 
   return Status;
 }
@@ -1211,6 +1215,7 @@ ImageCodeSectionsRoDataSectionsXp (
   BOOLEAN                              TestFailure;
   UINT64                               SectionStart;
   UINT64                               SectionEnd;
+  CHAR8                                *PdbFileName;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1243,6 +1248,17 @@ ImageCodeSectionsRoDataSectionsXp (
     }
 
     // Check PE/COFF image
+    PdbFileName = PeCoffLoaderGetPdbPointer (LoadedImage->ImageBase);
+    if (PdbFileName == NULL) {
+      DEBUG ((
+        DEBUG_WARN,
+        "%a Could not get name of image loaded at 0x%llx - 0x%llx...\n",
+        __func__,
+        (UINTN)LoadedImage->ImageBase,
+        (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
+        ));
+    }
+
     DosHdr             = (EFI_IMAGE_DOS_HEADER *)(UINTN)LoadedImage->ImageBase;
     PeCoffHeaderOffset = 0;
     if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
@@ -1260,7 +1276,8 @@ ImageCodeSectionsRoDataSectionsXp (
 
     if (!IsLoadedImageSectionAligned (SectionAlignment, LoadedImage->ImageCodeType)) {
       UT_LOG_ERROR (
-        "Image 0x%llx - 0x%llx is not aligned\n",
+        "Image %a: 0x%llx - 0x%llx is not aligned\n",
+        PdbFileName,
         (UINTN)LoadedImage->ImageBase,
         (UINTN)LoadedImage->ImageBase + LoadedImage->ImageSize
         );
@@ -1287,7 +1304,8 @@ ImageCodeSectionsRoDataSectionsXp (
             (EFI_IMAGE_SCN_CNT_INITIALIZED_DATA || EFI_IMAGE_SCN_CNT_UNINITIALIZED_DATA)) != 0))
       {
         UT_LOG_ERROR (
-          "Image Section 0x%llx-0x%llx contains code and data\n",
+          "Image %a: Section 0x%llx-0x%llx contains code and data\n",
+          PdbFileName,
           SectionStart,
           SectionEnd
           );
@@ -1313,7 +1331,8 @@ ImageCodeSectionsRoDataSectionsXp (
       {
         if ((Attributes & EFI_MEMORY_RO) == 0) {
           UT_LOG_ERROR (
-            "Image Section 0x%llx-0x%llx is not EFI_MEMORY_RO\n",
+            "Image %a: Section 0x%llx-0x%llx is not EFI_MEMORY_RO\n",
+            PdbFileName,
             SectionStart,
             SectionEnd
             );
@@ -1322,7 +1341,8 @@ ImageCodeSectionsRoDataSectionsXp (
       } else {
         if ((Attributes & EFI_MEMORY_XP) == 0) {
           UT_LOG_ERROR (
-            "Image Section 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
+            "Image %a: Section 0x%llx-0x%llx is not EFI_MEMORY_XP\n",
+            PdbFileName,
             SectionStart,
             SectionEnd
             );
@@ -1377,7 +1397,7 @@ BspStackIsXpAndHasGuardPage (
       StackBase   = (EFI_PHYSICAL_ADDRESS)((MemoryHob->AllocDescriptor.MemoryBaseAddress / EFI_PAGE_SIZE) * EFI_PAGE_SIZE);
       StackLength = (EFI_PHYSICAL_ADDRESS)(EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (MemoryHob->AllocDescriptor.MemoryLength)));
 
-      UT_LOG_INFO ("BSP stack located at 0x%llx - 0x%llx", StackBase, StackBase + StackLength);
+      UT_LOG_INFO ("BSP stack located at 0x%llx - 0x%llx\n", StackBase, StackBase + StackLength);
 
       Attributes = 0;
       Status     = GetRegionCommonAccessAttributes (
@@ -1457,13 +1477,12 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
 {
   UINT64                 StartOfAddressSpace;
   UINT64                 EndOfAddressSpace;
-  UINT64                 StartOfEfiMemoryMap;
-  UINT64                 EndOfEfiMemoryMap;
-  EFI_MEMORY_DESCRIPTOR  *FinalEfiMemoryMapDescriptor;
-  UINTN                  Index;
+  EFI_MEMORY_DESCRIPTOR  *EndOfEfiMemoryMap;
+  EFI_MEMORY_DESCRIPTOR  *CurrentEfiMemoryMapEntry;
   BOOLEAN                TestFailure;
-  UINT64                 StartOfMapEntry;
-  UINT64                 EndOfMapEntry;
+  EFI_PHYSICAL_ADDRESS   LastMemoryMapEntryEnd;
+  UINT64                 Attributes;
+  EFI_STATUS             Status;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1475,34 +1494,74 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   UT_ASSERT_NOT_NULL (mMap.Entries);
 
   StartOfAddressSpace = mMemorySpaceMap[0].BaseAddress;
-  EndOfAddressSpace   = mMemorySpaceMap[mMemorySpaceMapCount - 1].BaseAddress + mMemorySpaceMap[mMemorySpaceMapCount - 1].Length;
-  TestFailure         = FALSE;
+  EndOfAddressSpace   = mMemorySpaceMap[mMemorySpaceMapCount - 1].BaseAddress +
+                        mMemorySpaceMap[mMemorySpaceMapCount - 1].Length;
+  TestFailure              = FALSE;
+  EndOfEfiMemoryMap        = (EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)mEfiMemoryMap + mEfiMemoryMapSize));
+  CurrentEfiMemoryMapEntry = mEfiMemoryMap;
 
-  StartOfEfiMemoryMap         = mEfiMemoryMap->PhysicalStart;
-  FinalEfiMemoryMapDescriptor = (EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)mEfiMemoryMap + mEfiMemoryMapSize) - mEfiMemoryMapDescriptorSize);
-  EndOfEfiMemoryMap           = FinalEfiMemoryMapDescriptor->PhysicalStart + (FinalEfiMemoryMapDescriptor->NumberOfPages * EFI_PAGE_SIZE);
+  if (CurrentEfiMemoryMapEntry->PhysicalStart > StartOfAddressSpace) {
+    Attributes = 0;
+    Status     = GetRegionCommonAccessAttributes (
+                   &mMap,
+                   StartOfAddressSpace,
+                   CurrentEfiMemoryMapEntry->PhysicalStart - StartOfAddressSpace,
+                   &Attributes
+                   );
 
-  for (Index = 0; Index < mMap.EntryCount; Index++) {
-    StartOfMapEntry = mMap.Entries[Index].LinearAddress;
-    EndOfMapEntry   = mMap.Entries[Index].LinearAddress + mMap.Entries[Index].Length;
-    if (CHECK_OVERLAP (StartOfMapEntry, EndOfMapEntry, StartOfAddressSpace, StartOfEfiMemoryMap)) {
-      if (IsPageReadable (mMap.Entries[Index].PageEntry)) {
+    if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
+      UT_LOG_ERROR (
+        "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
+        StartOfAddressSpace,
+        CurrentEfiMemoryMapEntry->PhysicalStart
+        );
+      TestFailure = TRUE;
+    }
+  }
+
+  LastMemoryMapEntryEnd = CurrentEfiMemoryMapEntry->PhysicalStart +
+                          (CurrentEfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE);
+  CurrentEfiMemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (CurrentEfiMemoryMapEntry, mEfiMemoryMapDescriptorSize);
+
+  while ((UINTN)CurrentEfiMemoryMapEntry < (UINTN)EndOfEfiMemoryMap) {
+    if (CurrentEfiMemoryMapEntry->PhysicalStart > LastMemoryMapEntryEnd) {
+      Attributes = 0;
+      Status     = GetRegionCommonAccessAttributes (
+                     &mMap,
+                     LastMemoryMapEntryEnd,
+                     CurrentEfiMemoryMapEntry->PhysicalStart - LastMemoryMapEntryEnd,
+                     &Attributes
+                     );
+      if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
         UT_LOG_ERROR (
-          "Memory Range 0x%llx-0x%llx is accessible\n",
-          StartOfMapEntry,
-          EndOfMapEntry
+          "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
+          LastMemoryMapEntryEnd,
+          CurrentEfiMemoryMapEntry->PhysicalStart
           );
         TestFailure = TRUE;
       }
-    } else if (CHECK_OVERLAP (StartOfMapEntry, EndOfMapEntry, EndOfEfiMemoryMap, EndOfAddressSpace)) {
-      if (IsPageReadable (mMap.Entries[Index].PageEntry)) {
-        UT_LOG_ERROR (
-          "Memory Range 0x%llx-0x%llx is accessible\n",
-          StartOfMapEntry,
-          EndOfMapEntry
-          );
-        TestFailure = TRUE;
-      }
+    }
+
+    LastMemoryMapEntryEnd = CurrentEfiMemoryMapEntry->PhysicalStart +
+                            (CurrentEfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE);
+    CurrentEfiMemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (CurrentEfiMemoryMapEntry, mEfiMemoryMapDescriptorSize);
+  }
+
+  if (LastMemoryMapEntryEnd < EndOfAddressSpace) {
+    Attributes = 0;
+    Status     = GetRegionCommonAccessAttributes (
+                   &mMap,
+                   LastMemoryMapEntryEnd,
+                   EndOfAddressSpace - LastMemoryMapEntryEnd,
+                   &Attributes
+                   );
+    if ((Status != EFI_NOT_FOUND) && ((Attributes & EFI_MEMORY_RP) == 0)) {
+      UT_LOG_ERROR (
+        "Memory Range 0x%llx-0x%llx is not EFI_MEMORY_RP\n",
+        LastMemoryMapEntryEnd,
+        EndOfAddressSpace
+        );
+      TestFailure = TRUE;
     }
   }
 
@@ -1545,7 +1604,7 @@ DxePagingAuditTestAppEntryPoint (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a Could not retrieve command line args!\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a Could not retrieve command line args!\n", __FUNCTION__));
     return EFI_PROTOCOL_ERROR;
   }
 
@@ -1563,13 +1622,13 @@ DxePagingAuditTestAppEntryPoint (
       }
     } else {
       if (StrnCmp (ShellParams->Argv[1], L"-h", MAX_CHARS_TO_READ) != 0) {
-        DEBUG ((DEBUG_INFO, "Invalid argument!\n"));
+        DEBUG ((DEBUG_ERROR, "Invalid argument!\n"));
       }
 
-      DEBUG ((DEBUG_INFO, "-h : Print available flags\n"));
-      DEBUG ((DEBUG_INFO, "-d : Dump the page table files\n"));
-      DEBUG ((DEBUG_INFO, "-r : Run the application tests\n"));
-      DEBUG ((DEBUG_INFO, "NOTE: Combined flags (i.e. -rd) is not supported\n"));
+      Print (L"-h : Print available flags\n");
+      Print (L"-d : Dump the page table files\n");
+      Print (L"-r : Run the application tests\n");
+      Print (L"NOTE: Combined flags (i.e. -rd) is not supported\n");
     }
   }
 

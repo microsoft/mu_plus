@@ -1,0 +1,22 @@
+### @file
+#
+# UEFI HID - this driver consumes lower-level HID device support via the HidIo
+# protocol abstraction and produces the UEFI spec input protocols for console support.
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+###
+
+[Defines]
+  INF_VERSION               = 1.27
+  BASE_NAME                 = UefiHidDxeV2
+  FILE_GUID                 = 0DB81E33-8EF5-487E-8C24-FE4B6DF08503
+  MODULE_TYPE               = DXE_DRIVER
+  RUST_MODULE               = TRUE
+
+[Sources]
+  Cargo.toml
+
+[Depex]
+  TRUE
