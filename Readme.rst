@@ -34,12 +34,18 @@ Breaking Changes-dev
 Main Changes-dev
 ----------------
 
-- Incomplete
+- Added HiiKeyboardLayout crate to support UEFI keyboard layouts
+- Added Hid KeyboardSupport for UefiHidDxe
+- Rework of TpmReplay
+- Separated FrameBufferMemDrawLib into DXE and PEI instances
+- Added SecureBootKeyStoreLib library implementation
+- Split memory protection test app into DXE and SMM versions
 
 Bug Fixes-dev
 -------------
 
-- Incomplete
+- Fixed logic related to the DXE_CORE advanced logger
+- Fixed AdvLogger rust deadlock
 
 Branched from 202308
 --------------------
