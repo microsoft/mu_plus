@@ -11,48 +11,40 @@ Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverag
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu.
 
-Branch Status - release/202308
+Branch Status - release/202311
 ==============================
 
 :Status:
   In Development
 
 :Entered Development:
-  Oct 2023
+  Dec 2023
 
 :Anticipated Stabilization:
   Feb 2024
 
-Branch Changes - release/202308
+Branch Changes - release/202311
 ===============================
 
 Breaking Changes-dev
 --------------------
 
-- None
+- Incomplete
 
 Main Changes-dev
 ----------------
 
-- Added logic to delete the memory type information variable on a capsule update
-- Reworked TpmTestingPkg
-- Added rust infrastructure files
-- Added rust HID driver
-- Added FlatPageTableLib and now use it for DxePagingAudit
-- Totally reformat the paging audit tests
+- Incomplete
 
 Bug Fixes-dev
 -------------
 
-- Fixed AdvLoggerSErialPortLibClass
-- Close ReadyToBoot and ExitBootServices events if a reset is notified
-- Fixed a function declaration mismatch in MsGraphicsPkg/FrameBufferMemDrawLib
-- Fixed off by one error when creating X64 PlatformInfo.dat during a paging audit
+- Incomplete
 
-Branched from 202302
+Branched from 202308
 --------------------
 
-Original sync Commit: dc3ab8ba5e3c5403ae6644f68d0474ba0d1b190c
+Original sync Commit: 61103c3af347f488431507491350b681dd1b462f
 
 
 Code of Conduct
@@ -82,12 +74,12 @@ Copyright & License
 
 .. CoreCI
 
-.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202308
-.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202308
+.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202311
+.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202311
 .. |WindowsCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/49.svg
 .. |WindowsCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
 
-.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202308
-.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202308
+.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202311
+.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202311
 .. |UbuntuCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/50.svg
 .. |UbuntuCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
