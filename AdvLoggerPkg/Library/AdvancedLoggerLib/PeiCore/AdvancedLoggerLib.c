@@ -391,6 +391,38 @@ UpdateSecLoggerInfo (
 }
 
 /**
+  RecoverLogBufferFromHobs
+
+  Search the HOBs for a memory allocation with a valid logger
+  signature, and return it if found.
+
+**/
+STATIC
+ADVANCED_LOGGER_INFO *
+RecoverLogBufferFromHobs (
+  VOID
+  )
+{
+  ADVANCED_LOGGER_INFO  *LoggerInfo;
+  EFI_PEI_HOB_POINTERS  Hob;
+
+  Hob.Raw = GetHobList ();
+
+  while ((Hob.Raw = GetNextHob (EFI_HOB_TYPE_MEMORY_ALLOCATION, Hob.Raw)) != NULL) {
+    // Go through Allocation Hobs, attempting to find an allocation that matches
+    //  the expected Advanced Logger Signature
+    LoggerInfo = ALI_FROM_PA (Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress);
+    if (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE) {
+      return LoggerInfo;
+    }
+
+    Hob.Raw = GET_NEXT_HOB (Hob);
+  }
+
+  return NULL;
+}
+
+/**
   Get the Logger Information block
 
   If the PeiCore ADVANCED_LOGGER_INFO block has not been created, create the a new one. Then
@@ -436,9 +468,25 @@ AdvancedLoggerGetLoggerInfo (
 
   PeiCoreInstance = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
   LoggerInfo      = ALI_FROM_PA (PeiCoreInstance->PlatformBlob);
-  if (LoggerInfo != NULL) {
+  if ((LoggerInfo != NULL) && (LoggerInfo->Signature == ADVANCED_LOGGER_SIGNATURE)) {
     // Logger Info was saved from an earlier call - Return LoggerInfo.
     return LoggerInfo;
+  }
+
+  // If the fast methods of locating logger info have failed, check the
+  //  Hob list to see if a allocation hob exists with valid logger info.
+  //  This is specific to the PeiCore being the start of advanced logger support
+  GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
+  if (GuidHob != NULL) {
+    LoggerInfo = RecoverLogBufferFromHobs ();
+    if (LoggerInfo != NULL) {
+      LogPtr                                                       = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
+      (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
+      LogPtr->LogBuffer                                            = PA_FROM_PTR (LoggerInfo);
+
+      // return the pointer
+      return LoggerInfo;
+    }
   }
 
   //
