@@ -40,18 +40,18 @@ AdvancedLoggerMemoryLoggerWrite (
   IN       UINTN  NumberOfBytes
   )
 {
-  ADVANCED_LOGGER_INFO           *LoggerInfo;
-  EFI_PHYSICAL_ADDRESS           CurrentBuffer;
-  EFI_PHYSICAL_ADDRESS           NewBuffer;
-  EFI_PHYSICAL_ADDRESS           OldValue;
-  UINT32                         OldSize;
-  UINT32                         NewSize;
-  UINT32                         CurrentSize;
-  UINTN                          EntrySize;
-  UINTN                          UsedSize;
-  ADVANCED_LOGGER_MESSAGE_ENTRY  *Entry;
-  CONST CHAR8                    *MessagePrefix;
-  UINTN                          MessagePrefixSize;
+  ADVANCED_LOGGER_INFO              *LoggerInfo;
+  EFI_PHYSICAL_ADDRESS              CurrentBuffer;
+  EFI_PHYSICAL_ADDRESS              NewBuffer;
+  EFI_PHYSICAL_ADDRESS              OldValue;
+  UINT32                            OldSize;
+  UINT32                            NewSize;
+  UINT32                            CurrentSize;
+  UINTN                             EntrySize;
+  UINTN                             UsedSize;
+  ADVANCED_LOGGER_MESSAGE_ENTRY_V2  *Entry;
+  CONST CHAR8                       *MessagePrefix;
+  UINTN                             MessagePrefixSize;
 
   if ((NumberOfBytes == 0) || (Buffer == NULL)) {
     return NULL;
@@ -108,19 +108,21 @@ AdvancedLoggerMemoryLoggerWrite (
                     );
     } while (OldValue != CurrentBuffer);
 
-    Entry            = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (CurrentBuffer);
+    Entry            = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
+    Entry->Version   = ADVANCED_LOGGER_MSG_HDR_VER;
     Entry->TimeStamp = GetPerformanceCounter ();    // AdvancedLoggerGetTimeStamp();
 
     // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
     // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
-    Entry->DebugLevel = (UINT32)DebugLevel;
-    Entry->MessageLen = (UINT16)NumberOfBytes;
+    Entry->DebugLevel     = (UINT32)DebugLevel;
+    Entry->MessageOffset  = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
+    Entry->MessageLen     = (UINT16)NumberOfBytes;
     if (MessagePrefixSize > 0) {
       CopyMem (Entry->MessageText, MessagePrefix, MessagePrefixSize);
     }
 
     CopyMem (Entry->MessageText + MessagePrefixSize, Buffer, NumberOfBytes - MessagePrefixSize);
-    Entry->Signature = MESSAGE_ENTRY_SIGNATURE;
+    Entry->Signature = MESSAGE_ENTRY_SIGNATURE_V2;
   }
 
   return LoggerInfo;

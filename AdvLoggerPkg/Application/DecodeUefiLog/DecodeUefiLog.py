@@ -199,6 +199,21 @@ class AdvLogParser ():
     #
     MESSAGE_ENTRY_SIZE = 18
     MAX_MESSAGE_SIZE = 512
+    # ---------------------------------------------------------------------- #
+    #
+    #
+    # typedef struct {
+    #     UINT32    Signature;                          // Signature
+    #     UINT16    Version;                            // Version of advanced logger message structure
+    #     UINT32    DebugLevel;                         // Debug Level
+    #     UINT64    TimeStamp;                          // Time stamp
+    #     UINT16    MessageLen;                         // Number of bytes in Message
+    #     UINT16    MessageOffset;                      // Offset of Message from start of structure,
+    #                                                   //   used to calculate the address of the Message
+    #     CHAR8     MessageText[];                      // Message Text
+    # } ADVANCED_LOGGER_MESSAGE_ENTRY_V2;
+    #
+    # TODO: KQ: tbd
     #
     # The dictionary entries for MessageLineEntry is based on the UEFI structure above.
     #
