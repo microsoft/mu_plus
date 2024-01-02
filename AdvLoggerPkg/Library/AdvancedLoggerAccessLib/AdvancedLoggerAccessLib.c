@@ -22,10 +22,10 @@
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-STATIC  ADVANCED_LOGGER_INFO           *mLoggerInfo    = NULL;
-STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mLowAddress    = NULL;
-STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mHighAddress   = NULL;
-STATIC  UINT16                         mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
+STATIC  ADVANCED_LOGGER_INFO  *mLoggerInfo    = NULL;
+STATIC  VOID                  *mLowAddress    = NULL;
+STATIC  VOID                  *mHighAddress   = NULL;
+STATIC  UINT16                mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
 
 #define ADV_TIME_STAMP_FORMAT  "%2.2d:%2.2d:%2.2d.%3.3d : "
 #define ADV_TIME_STAMP_RESULT  "hh:mm:ss:ttt : "
@@ -112,7 +112,8 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
   IN  ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY  *BlockEntry
   )
 {
-  ADVANCED_LOGGER_MESSAGE_ENTRY  *LogEntry;
+  ADVANCED_LOGGER_MESSAGE_ENTRY     *LogEntry   = NULL;
+  ADVANCED_LOGGER_MESSAGE_ENTRY_V2  *LogEntryV2 = NULL;
 
   if (mLoggerInfo == NULL) {
     return EFI_NOT_STARTED;
@@ -128,42 +129,84 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
 
   if (BlockEntry->Message == NULL) {
     LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
+    if (LogEntry->Signature == MESSAGE_ENTRY_SIGNATURE_V2) {
+      // This is actually a v2 entry.
+      LogEntryV2 = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)LogEntry;
+    }
   } else {
     LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)MESSAGE_ENTRY_FROM_MSG (BlockEntry->Message);
     if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
-      DEBUG ((DEBUG_ERROR, "Resume LogEntry invalid signature at %p\n", LogEntry));
-      DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
+      // If this is not a v1 entry, this might be a v2 entry.
+      LogEntryV2 = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)MESSAGE_ENTRY_FROM_MSG_V2 (BlockEntry->Message, BlockEntry->MessageOffset);
+      if (LogEntryV2->Signature != MESSAGE_ENTRY_SIGNATURE_V2) {
+        DEBUG ((DEBUG_ERROR, "Resume LogEntry invalid signature at %p or %p\n", LogEntry, LogEntryV2));
+        DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
+        return EFI_INVALID_PARAMETER;
+      }
+    }
+
+    if (LogEntryV2) {
+      LogEntryV2 = NEXT_LOG_ENTRY_V2 (LogEntryV2);
+    } else {
+      LogEntry = NEXT_LOG_ENTRY (LogEntry);
+    }
+  }
+
+  if (LogEntryV2 == NULL) {
+    // Validate that LogEntry points within the proper Memory Log region
+    // in memory log buffer
+    if ((LogEntry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (LogEntry, 8)) || // Insure pointer is on boundary
+        (LogEntry < mLowAddress) ||                                                   // and within the log region
+        (LogEntry > mHighAddress))
+    {
+      DEBUG ((DEBUG_ERROR, "Invalid Address for LogEntry %p. Low=%p, High=%p\n", LogEntry, mLowAddress, mHighAddress));
       return EFI_INVALID_PARAMETER;
     }
 
-    LogEntry = NEXT_LOG_ENTRY (LogEntry);
-  }
+    if (LogEntry >= (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogCurrent)) {
+      return EFI_END_OF_FILE;
+    }
 
-  // Validate that LogEntry points within the proper Memory Log region
-  // in memory log buffer
-  if ((LogEntry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (LogEntry, 8)) || // Insure pointer is on boundary
-      (LogEntry < mLowAddress) ||                                                   // and within the log region
-      (LogEntry > mHighAddress))
-  {
-    DEBUG ((DEBUG_ERROR, "Invalid Address for LogEntry %p. Low=%p, High=%p\n", LogEntry, mLowAddress, mHighAddress));
-    return EFI_INVALID_PARAMETER;
-  }
+    if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
+      DEBUG ((DEBUG_ERROR, "Next LogEntry invalid signature at %p, Last=%p\n", LogEntry, BlockEntry->Message));
+      DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)BlockEntry->Message - 128, 256, "");
+      DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
+      return EFI_COMPROMISED_DATA;
+    }
 
-  if (LogEntry >= (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogCurrent)) {
-    return EFI_END_OF_FILE;
-  }
+    BlockEntry->TimeStamp  = LogEntry->TimeStamp;
+    BlockEntry->DebugLevel = LogEntry->DebugLevel;
+    BlockEntry->Message    = LogEntry->MessageText;
+    BlockEntry->MessageLen = LogEntry->MessageLen;
+  } else {
+    // Validate that LogEntryV2 points within the proper Memory Log region
+    // in memory log buffer
+    if ((LogEntryV2 != (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)ALIGN_POINTER (LogEntryV2, 8)) || // Insure pointer is on boundary
+        (LogEntryV2 < mLowAddress) ||                                                   // and within the log region
+        (LogEntryV2 > mHighAddress))
+    {
+      DEBUG ((DEBUG_ERROR, "Invalid Address for LogEntryV2 %p. Low=%p, High=%p\n", LogEntryV2, mLowAddress, mHighAddress));
+      return EFI_INVALID_PARAMETER;
+    }
 
-  if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
-    DEBUG ((DEBUG_ERROR, "Next LogEntry invalid signature at %p, Last=%p\n", LogEntry, BlockEntry->Message));
-    DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)BlockEntry->Message - 128, 256, "");
-    DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
-    return EFI_COMPROMISED_DATA;
-  }
+    if (LogEntryV2 >= (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (mLoggerInfo->LogCurrent)) {
+      return EFI_END_OF_FILE;
+    }
 
-  BlockEntry->TimeStamp  = LogEntry->TimeStamp;
-  BlockEntry->DebugLevel = LogEntry->DebugLevel;
-  BlockEntry->Message    = LogEntry->MessageText;
-  BlockEntry->MessageLen = LogEntry->MessageLen;
+    if (LogEntryV2->Signature != MESSAGE_ENTRY_SIGNATURE_V2) {
+      DEBUG ((DEBUG_ERROR, "Next LogEntryV2 invalid signature at %p, Last=%p\n", LogEntryV2, BlockEntry->Message));
+      DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)BlockEntry->Message - 128, 256, "");
+      DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntryV2 - 128, 256, "");
+      return EFI_COMPROMISED_DATA;
+    }
+
+    BlockEntry->TimeStamp     = LogEntryV2->TimeStamp;
+    BlockEntry->DebugLevel    = LogEntryV2->DebugLevel;
+    BlockEntry->Message       = LogEntryV2->MessageText;
+    BlockEntry->MessageLen    = LogEntryV2->MessageLen;
+    BlockEntry->MessageOffset = LogEntryV2->MessageOffset;
+    BlockEntry->Phase         = LogEntryV2->Phase;
+  }
 
   return EFI_SUCCESS;
 }
@@ -340,8 +383,8 @@ AdvancedLoggerAccessLibUnitTestInitialize (
 
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-    mLowAddress  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
-    mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
+    mLowAddress  = PTR_FROM_PA (mLoggerInfo->LogBuffer);
+    mHighAddress = PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
   }
 
   return Status;
@@ -367,8 +410,8 @@ AdvancedLoggerAccessLibConstructor (
                   );
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-    mLowAddress  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
-    mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
+    mLowAddress  = PTR_FROM_PA (mLoggerInfo->LogBuffer);
+    mHighAddress = PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
 
     // Leave this debug message as ERROR.
 

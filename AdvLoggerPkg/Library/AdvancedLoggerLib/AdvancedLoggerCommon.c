@@ -108,9 +108,10 @@ AdvancedLoggerMemoryLoggerWrite (
                     );
     } while (OldValue != CurrentBuffer);
 
-    Entry            = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
-    Entry->Version   = ADVANCED_LOGGER_MSG_HDR_VER;
-    Entry->TimeStamp = GetPerformanceCounter ();    // AdvancedLoggerGetTimeStamp();
+    Entry               = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
+    Entry->MajorVersion = ADVANCED_LOGGER_MSG_MAJ_VER;
+    Entry->MinorVersion = ADVANCED_LOGGER_MSG_MIN_VER;
+    Entry->TimeStamp    = GetPerformanceCounter ();    // AdvancedLoggerGetTimeStamp();
 
     // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
     // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
