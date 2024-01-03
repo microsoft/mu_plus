@@ -48,7 +48,6 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerMessagePrefix
 
 [Depex]
   TRUE

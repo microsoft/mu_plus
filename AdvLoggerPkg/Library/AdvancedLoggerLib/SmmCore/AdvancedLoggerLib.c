@@ -180,6 +180,23 @@ AdvancedLoggerGetLoggerInfo (
 }
 
 /**
+  Helper function to return the log phase for each message.
+
+  This function is intended to be used to distinguish between
+  various types of modules.
+
+  @return       Phase of current advanced logger instance.
+**/
+UINT16
+EFIAPI
+AdvancedLoggerGetPhase (
+  VOID
+  )
+{
+  return ADVANCED_LOGGER_PHASE_SMM_CORE;
+}
+
+/**
   The constructor function initializes Logger Information pointer to ensure that the
   pointer is initialized in DXE - either by the constructor, or the first DEBUG message.
   It is also responsible for publishing the Smm Advanced Logger protocol for SMM drivers.

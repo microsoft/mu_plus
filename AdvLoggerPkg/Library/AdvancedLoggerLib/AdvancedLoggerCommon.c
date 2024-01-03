@@ -50,8 +50,6 @@ AdvancedLoggerMemoryLoggerWrite (
   UINTN                             EntrySize;
   UINTN                             UsedSize;
   ADVANCED_LOGGER_MESSAGE_ENTRY_V2  *Entry;
-  CONST CHAR8                       *MessagePrefix;
-  UINTN                             MessagePrefixSize;
 
   if ((NumberOfBytes == 0) || (Buffer == NULL)) {
     return NULL;
@@ -64,20 +62,7 @@ AdvancedLoggerMemoryLoggerWrite (
   LoggerInfo = AdvancedLoggerGetLoggerInfo ();
 
   if (LoggerInfo != NULL) {
-    MessagePrefix     = (CHAR8 *)FixedPcdGetPtr (PcdAdvancedLoggerMessagePrefix);
-    MessagePrefixSize = FixedPcdGetSize (PcdAdvancedLoggerMessagePrefix);
-
-    if ((MessagePrefix == NULL) || (MessagePrefixSize <= 1) || (MessagePrefix[MessagePrefixSize - 1] != '\0')) {
-      // Do not take null pointers, strings with only a null terminator, or string without terminator
-      MessagePrefix     = NULL;
-      MessagePrefixSize = 0;
-    } else {
-      // Remove the null terminator from the size
-      MessagePrefixSize--;
-    }
-
-    NumberOfBytes += MessagePrefixSize;
-    EntrySize      = MESSAGE_ENTRY_SIZE (NumberOfBytes);
+    EntrySize = MESSAGE_ENTRY_SIZE_V2 (OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText), NumberOfBytes);
     do {
       CurrentBuffer = LoggerInfo->LogCurrent;
       UsedSize      = (UINTN)(CurrentBuffer - LoggerInfo->LogBuffer);
@@ -112,17 +97,14 @@ AdvancedLoggerMemoryLoggerWrite (
     Entry->MajorVersion = ADVANCED_LOGGER_MSG_MAJ_VER;
     Entry->MinorVersion = ADVANCED_LOGGER_MSG_MIN_VER;
     Entry->TimeStamp    = GetPerformanceCounter ();    // AdvancedLoggerGetTimeStamp();
+    Entry->Phase        = AdvancedLoggerGetPhase ();
 
     // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
     // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
     Entry->DebugLevel     = (UINT32)DebugLevel;
     Entry->MessageOffset  = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
     Entry->MessageLen     = (UINT16)NumberOfBytes;
-    if (MessagePrefixSize > 0) {
-      CopyMem (Entry->MessageText, MessagePrefix, MessagePrefixSize);
-    }
-
-    CopyMem (Entry->MessageText + MessagePrefixSize, Buffer, NumberOfBytes - MessagePrefixSize);
+    CopyMem (Entry->MessageText, Buffer, NumberOfBytes);
     Entry->Signature = MESSAGE_ENTRY_SIGNATURE_V2;
   }
 
