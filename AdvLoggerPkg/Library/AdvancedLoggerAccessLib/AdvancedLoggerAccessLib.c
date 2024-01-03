@@ -22,10 +22,10 @@
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-STATIC  ADVANCED_LOGGER_INFO  *mLoggerInfo    = NULL;
-STATIC  EFI_PHYSICAL_ADDRESS  mLowAddress     = 0;
-STATIC  EFI_PHYSICAL_ADDRESS  mHighAddress    = 0;
-STATIC  UINT16                mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
+STATIC  ADVANCED_LOGGER_INFO  *mLoggerInfo                                  = NULL;
+STATIC  EFI_PHYSICAL_ADDRESS  mLowAddress                                   = 0;
+STATIC  EFI_PHYSICAL_ADDRESS  mHighAddress                                  = 0;
+STATIC  UINT16                mMaxMessageSize                               = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
 CONST   CHAR8                 *AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_CNT] = {
   "[UNSPECIFIED] ",
   "[SEC] ",
@@ -207,7 +207,7 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
     // Validate that LogEntry points within the proper Memory Log region
     // in memory log buffer
     if ((LogEntry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (LogEntry, 8)) || // Insure pointer is on boundary
-        (PA_FROM_PTR (LogEntry) < mLowAddress) ||                                                   // and within the log region
+        (PA_FROM_PTR (LogEntry) < mLowAddress) ||                                     // and within the log region
         (PA_FROM_PTR (LogEntry) > mHighAddress))
     {
       DEBUG ((DEBUG_ERROR, "Invalid Address for LogEntry %p. Low=%p, High=%p\n", LogEntry, mLowAddress, mHighAddress));
@@ -233,7 +233,7 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
     // Validate that LogEntryV2 points within the proper Memory Log region
     // in memory log buffer
     if ((LogEntryV2 != (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)ALIGN_POINTER (LogEntryV2, 8)) || // Insure pointer is on boundary
-        (PA_FROM_PTR (LogEntryV2) < mLowAddress) ||                                                   // and within the log region
+        (PA_FROM_PTR (LogEntryV2) < mLowAddress) ||                                          // and within the log region
         (PA_FROM_PTR (LogEntryV2) > mHighAddress))
     {
       DEBUG ((DEBUG_ERROR, "Invalid Address for LogEntryV2 %p. Low=%p, High=%p\n", LogEntryV2, mLowAddress, mHighAddress));
@@ -396,8 +396,9 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
       if (PhaseStringLen != CurrPhaseStringLen) {
         // Adjust the TargetPtr to point to the end of the PhaseString
         PhaseStringLen = CurrPhaseStringLen;
-        TargetPtr = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen];
+        TargetPtr      = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen];
       }
+
       CopyMem (LineBuffer + sizeof (TimeStampString) - sizeof (CHAR8), PhaseString, PhaseStringLen);
     }
   } while (!EFI_ERROR (Status));

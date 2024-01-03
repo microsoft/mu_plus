@@ -101,9 +101,9 @@ AdvancedLoggerMemoryLoggerWrite (
 
     // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
     // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
-    Entry->DebugLevel     = (UINT32)DebugLevel;
-    Entry->MessageOffset  = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
-    Entry->MessageLen     = (UINT16)NumberOfBytes;
+    Entry->DebugLevel    = (UINT32)DebugLevel;
+    Entry->MessageOffset = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
+    Entry->MessageLen    = (UINT16)NumberOfBytes;
     CopyMem (Entry->MessageText, Buffer, NumberOfBytes);
     Entry->Signature = MESSAGE_ENTRY_SIGNATURE_V2;
   }
