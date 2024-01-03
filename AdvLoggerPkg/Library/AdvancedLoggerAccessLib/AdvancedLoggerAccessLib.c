@@ -112,7 +112,6 @@ FormatTimeStamp (
 
   @retval Number of characters printed
 */
-volatile BOOLEAN loop = TRUE;
 STATIC
 UINT16
 FormatPhasePrefix (
@@ -122,8 +121,6 @@ FormatPhasePrefix (
   )
 {
   UINTN  PhaseStringLen;
-
-  // while (loop) {}
 
   if (Phase == ADVANCED_LOGGER_PHASE_UNSPECIFIED) {
     // This might be a legacy message
