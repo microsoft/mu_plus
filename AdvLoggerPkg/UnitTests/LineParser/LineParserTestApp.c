@@ -477,8 +477,6 @@ InitializeInMemoryLogV2 (
 }
 
 
-volatile BOOLEAN loop = FALSE;
-
 /*
     Initialize the v1 and v2 mixed test in memory log
 

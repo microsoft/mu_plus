@@ -157,7 +157,6 @@ FormatPhasePrefix (
                                  valid to check for more messages.
 
 **/
-volatile BOOLEAN loop = TRUE;
 EFI_STATUS
 EFIAPI
 AdvancedLoggerAccessLibGetNextMessageBlock (
