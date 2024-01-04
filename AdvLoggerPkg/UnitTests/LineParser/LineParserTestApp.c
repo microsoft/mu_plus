@@ -79,6 +79,27 @@ CHAR8  Line17[] = "09:06:45.012 : ents a combination of video output devices, th
 CHAR8  Line18[] = "09:06:45.012 :  by this service is the subset of modes supported by the graphics controll\n";
 CHAR8  Line19[] = "09:06:45.012 : er and the all of the video output devices represented by the handle.\n";
 
+CHAR8  Line00V2[] = "09:06:45.012 : [DXE] First normal test line\n";
+CHAR8  Line01V2[] = "09:06:45.012 : [DXE] The QueryMode() function returns information for an available graphics mod\n";
+CHAR8  Line02V2[] = "09:06:45.012 : [DXE] e that the graphics device and the set of active video output devices supp\n";
+CHAR8  Line03V2[] = "09:06:45.012 : [DXE] orts.\n";
+CHAR8  Line04V2[] = "09:06:45.012 : [DXE] If ModeNumber is not between 0 and MaxMode - 1, then EFI_INVALID_PARAMETER\n";
+CHAR8  Line05V2[] = "09:06:45.012 : [DXE]  is returned.\n";
+CHAR8  Line06V2[] = "09:06:45.012 : [DXE] MaxMode is available from the Mode structure of the EFI_GRAPHICS_OUTPUT_PR\n";
+CHAR8  Line07V2[] = "09:06:45.012 : [DXE] OTOCOL.\n";
+CHAR8  Line08V2[] = "09:06:45.012 : [DXE] The size of the Info structure should never be assumed and the value of Si\n";
+CHAR8  Line09V2[] = "09:06:45.012 : [DXE] zeOfInfo is the only valid way to know the size of Info.\n";
+CHAR8  Line10V2[] = "09:06:45.012 : [DXE] \n";
+CHAR8  Line11V2[] = "09:06:45.012 : [DXE] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8  Line12V2[] = "09:06:45.012 : [DXE] ents a single video output device, then the set of modes returned by this \n";
+CHAR8  Line13V2[] = "09:06:45.012 : [DXE] service is the subset of modes supported by both the graphics controller a\n";
+CHAR8  Line14V2[] = "09:06:45.012 : [DXE] nd the video output device.\n";
+CHAR8  Line15V2[] = "09:06:45.012 : [DXE] \n";
+CHAR8  Line16V2[] = "09:06:45.012 : [DXE] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8  Line17V2[] = "09:06:45.012 : [DXE] ents a combination of video output devices, then the set of modes returned\n";
+CHAR8  Line18V2[] = "09:06:45.012 : [DXE]  by this service is the subset of modes supported by the graphics controll\n";
+CHAR8  Line19V2[] = "09:06:45.012 : [DXE] er and the all of the video output devices represented by the handle.\n";
+
 /* spell-checker: enable */
 
 STATIC ADVANCED_LOGGER_INFO  mLoggerInfo = {
@@ -227,6 +248,57 @@ InternalTestLoggerWrite (
   return UNIT_TEST_PASSED;
 }
 
+UNIT_TEST_STATUS
+EFIAPI
+InternalTestLoggerWriteV2 (
+  IN  UINTN        DebugLevel,
+  IN  CONST CHAR8  *Buffer,
+  IN  UINTN        NumberOfBytes
+  )
+{
+  EFI_PHYSICAL_ADDRESS              CurrentBuffer;
+  ADVANCED_LOGGER_MESSAGE_ENTRY_V2  *Entry;
+  UINTN                             EntrySize;
+  ADVANCED_LOGGER_INFO              *LoggerInfo;
+
+  UT_ASSERT_FALSE ((NumberOfBytes == 0) || (Buffer == NULL));
+
+  UT_ASSERT_FALSE (NumberOfBytes > MAX_UINT16);
+
+  LoggerInfo    = &mLoggerInfo;
+  EntrySize     = MESSAGE_ENTRY_SIZE_V2 (OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText), NumberOfBytes);
+  CurrentBuffer = LoggerInfo->LogCurrent;
+
+  UT_ASSERT_TRUE (
+    (LoggerInfo->LogBufferSize -
+     ((UINTN)(CurrentBuffer - LoggerInfo->LogBuffer))) > NumberOfBytes
+    );
+
+  LoggerInfo->LogCurrent = PA_FROM_PTR ((CHAR8_FROM_PA (LoggerInfo->LogCurrent) + EntrySize));
+  Entry                  = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
+  if ((Entry != (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)ALIGN_POINTER (Entry, 8)) ||                  // Insure pointer is on boundary
+      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (LoggerInfo->LogBuffer)) ||       // and within the log region
+      (Entry >  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize)))
+  {
+    UT_ASSERT_TRUE (FALSE);
+  }
+
+  Entry->MajorVersion = ADVANCED_LOGGER_MSG_MAJ_VER;
+  Entry->MinorVersion = ADVANCED_LOGGER_MSG_MIN_VER;
+  Entry->TimeStamp    = InternalGetPerformanceCounter ();
+  Entry->Phase        = ADVANCED_LOGGER_PHASE_DXE;
+
+  // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
+  // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
+  Entry->DebugLevel     = (UINT32)DebugLevel;
+  Entry->MessageLen     = (UINT16)NumberOfBytes;
+  Entry->MessageOffset  = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
+  CopyMem (Entry->MessageText, Buffer, NumberOfBytes);
+  Entry->Signature = MESSAGE_ENTRY_SIGNATURE_V2;
+
+  return UNIT_TEST_PASSED;
+}
+
 typedef struct {
   CHAR8         *IdString;
   CHAR8         *ExpectedLine;
@@ -258,6 +330,27 @@ STATIC BASIC_TEST_CONTEXT  mTest17 = { "Basic tests", Line17, NULL, EFI_SUCCESS 
 STATIC BASIC_TEST_CONTEXT  mTest18 = { "Basic tests", Line18, NULL, EFI_SUCCESS };
 STATIC BASIC_TEST_CONTEXT  mTest19 = { "Basic tests", Line19, NULL, EFI_SUCCESS };
 STATIC BASIC_TEST_CONTEXT  mTest20 = { "End Of File", NULL, NULL, EFI_END_OF_FILE };
+
+STATIC BASIC_TEST_CONTEXT  mTest00V2 = { "Basic tests", Line00V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest01V2 = { "Basic tests", Line01V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest02V2 = { "Basic tests", Line02V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest03V2 = { "Basic tests", Line03V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest04V2 = { "Basic tests", Line04V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest05V2 = { "Basic tests", Line05V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest06V2 = { "Basic tests", Line06V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest07V2 = { "Basic tests", Line07V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest08V2 = { "Basic tests", Line08V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest09V2 = { "Basic tests", Line09V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest10V2 = { "Basic tests", Line10V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest11V2 = { "Basic tests", Line11V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest12V2 = { "Basic tests", Line12V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest13V2 = { "Basic tests", Line13V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest14V2 = { "Basic tests", Line14V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest15V2 = { "Basic tests", Line15V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest16V2 = { "Basic tests", Line16V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest17V2 = { "Basic tests", Line17V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest18V2 = { "Basic tests", Line18V2, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest19V2 = { "Basic tests", Line19V2, NULL, EFI_SUCCESS };
 
 /// ================================================================================================
 /// ================================================================================================
@@ -341,6 +434,103 @@ InitializeInMemoryLog (
 }
 
 /*
+    Initialize the v2 test in memory log
+
+*/
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+InitializeInMemoryLogV2 (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  UINTN             i;
+  EFI_STATUS        Status;
+  UNIT_TEST_STATUS  UnitTestStatus;
+
+  if (mLoggerInfo.LogBuffer != 0LL) {
+    FreePages ((VOID *)mLoggerInfo.LogBuffer, IN_MEMORY_PAGES);
+    mLoggerInfo.LogBuffer = 0LL;
+  }
+
+  // Repopulate the content with v2 messages
+  mLoggerInfo.LogBuffer     = (EFI_PHYSICAL_ADDRESS)AllocatePages (IN_MEMORY_PAGES);
+  mLoggerInfo.LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES;
+  mLoggerInfo.LogCurrent    = mLoggerInfo.LogBuffer;
+
+  ZeroMem (&mMessageEntry, sizeof (mMessageEntry));
+
+  for (i = 0; i < ARRAY_SIZE (InternalMemoryLog); i++) {
+    UnitTestStatus = InternalTestLoggerWriteV2 (
+                       (i % 5) == 0 ? DEBUG_INFO : DEBUG_ERROR,
+                       InternalMemoryLog[i],
+                       AsciiStrLen (InternalMemoryLog[i])
+                       );
+    UT_ASSERT_TRUE (UnitTestStatus == UNIT_TEST_PASSED);
+  }
+
+  mLoggerProtocol.LoggerInfo = &mLoggerInfo;
+  Status                     = AdvancedLoggerAccessLibUnitTestInitialize (&mLoggerProtocol.AdvLoggerProtocol, ADV_LOG_MAX_SIZE);
+  UT_ASSERT_NOT_EFI_ERROR (Status)
+
+  return UNIT_TEST_PASSED;
+}
+
+
+volatile BOOLEAN loop = FALSE;
+
+/*
+    Initialize the v1 and v2 mixed test in memory log
+
+*/
+STATIC
+UNIT_TEST_STATUS
+EFIAPI
+InitializeInMemoryLogV2Hybrid (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  UINTN             i;
+  EFI_STATUS        Status;
+  UNIT_TEST_STATUS  UnitTestStatus;
+
+  if (mLoggerInfo.LogBuffer != 0LL) {
+    FreePages ((VOID *)mLoggerInfo.LogBuffer, IN_MEMORY_PAGES);
+    mLoggerInfo.LogBuffer = 0LL;
+  }
+
+  mLoggerInfo.LogBuffer     = (EFI_PHYSICAL_ADDRESS)AllocatePages (IN_MEMORY_PAGES);
+  mLoggerInfo.LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES;
+  mLoggerInfo.LogCurrent    = mLoggerInfo.LogBuffer;
+
+  ZeroMem (&mMessageEntry, sizeof (mMessageEntry));
+
+  for (i = 0; i < 8; i++) {
+    UnitTestStatus = InternalTestLoggerWrite (
+                       (i % 5) == 0 ? DEBUG_INFO : DEBUG_ERROR,
+                       InternalMemoryLog[i],
+                       AsciiStrLen (InternalMemoryLog[i])
+                       );
+    UT_ASSERT_TRUE (UnitTestStatus == UNIT_TEST_PASSED);
+  }
+
+  for (; i < ARRAY_SIZE (InternalMemoryLog); i++) {
+    UnitTestStatus = InternalTestLoggerWriteV2 (
+                       ((i) % 5) == 0 ? DEBUG_INFO : DEBUG_ERROR,
+                       InternalMemoryLog[i],
+                       AsciiStrLen (InternalMemoryLog[i])
+                       );
+    UT_ASSERT_TRUE (UnitTestStatus == UNIT_TEST_PASSED);
+  }
+
+  mLoggerProtocol.LoggerInfo = &mLoggerInfo;
+  Status                     = AdvancedLoggerAccessLibUnitTestInitialize (&mLoggerProtocol.AdvLoggerProtocol, ADV_LOG_MAX_SIZE);
+  UT_ASSERT_NOT_EFI_ERROR (Status)
+
+  return UNIT_TEST_PASSED;
+}
+
+/*
     Basic Tests
 
     Validates that the DEBUG print blocks are returned as null terminated lines.
@@ -358,6 +548,8 @@ BasicTests (
   Btc = (BASIC_TEST_CONTEXT *)Context;
 
   Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mMessageEntry);
+
+  while (loop) {}
 
   UT_ASSERT_STATUS_EQUAL (Status, Btc->ExpectedStatus);
   UT_ASSERT_NOT_NULL (mMessageEntry.Message);
@@ -466,6 +658,7 @@ LineParserTestAppEntry (
     goto EXIT;
   }
 
+  // Start with legacy message entry tests
   // -----------Suite------------Description-------Class---------Test Function-Pre---Clean-Context
   AddTestCase (LineParserTests, "Init", "SelfInit", InitializeInMemoryLog, NULL, NULL, NULL);
   AddTestCase (LineParserTests, "Basic check", "BasicCheck", BasicTests, NULL, CleanUpTestContext, &mTest00);
@@ -490,6 +683,54 @@ LineParserTestAppEntry (
   AddTestCase (LineParserTests, "Line check 19", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest19);
   AddTestCase (LineParserTests, "Check EOF", "SelfCheck", EOFTest, NULL, CleanUpTestContext, &mTest20);
 
+  // Followed by V2 message entry tests
+  AddTestCase (LineParserTests, "Init V2", "SelfInit", InitializeInMemoryLogV2, NULL, NULL, NULL);
+  AddTestCase (LineParserTests, "Basic check V2", "BasicCheck", BasicTests, NULL, CleanUpTestContext, &mTest00V2);
+  AddTestCase (LineParserTests, "Line check  1 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest01V2);
+  AddTestCase (LineParserTests, "Line check  2 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest02V2);
+  AddTestCase (LineParserTests, "Line check  3 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest03V2);
+  AddTestCase (LineParserTests, "Line check  4 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest04V2);
+  AddTestCase (LineParserTests, "Line check  5 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest05V2);
+  AddTestCase (LineParserTests, "Line check  6 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest06V2);
+  AddTestCase (LineParserTests, "Line check  7 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest07V2);
+  AddTestCase (LineParserTests, "Line check  8 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest08V2);
+  AddTestCase (LineParserTests, "Line check  9 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest09V2);
+  AddTestCase (LineParserTests, "Line check 10 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest10V2);
+  AddTestCase (LineParserTests, "Line check 11 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest11V2);
+  AddTestCase (LineParserTests, "Line check 12 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest12V2);
+  AddTestCase (LineParserTests, "Line check 13 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest13V2);
+  AddTestCase (LineParserTests, "Line check 14 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest14V2);
+  AddTestCase (LineParserTests, "Line check 15 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest15V2);
+  AddTestCase (LineParserTests, "Line check 16 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest16V2);
+  AddTestCase (LineParserTests, "Line check 17 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest17V2);
+  AddTestCase (LineParserTests, "Line check 18 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest18V2);
+  AddTestCase (LineParserTests, "Line check 19 V2", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest19V2);
+  AddTestCase (LineParserTests, "Check EOF V2", "SelfCheck", EOFTest, NULL, CleanUpTestContext, &mTest20);
+
+  // End with hybrid message entry tests
+  AddTestCase (LineParserTests, "Init V2 Hybrid", "SelfInit", InitializeInMemoryLogV2Hybrid, NULL, NULL, NULL);
+  AddTestCase (LineParserTests, "Basic check V2 Hybrid", "BasicCheck", BasicTests, NULL, CleanUpTestContext, &mTest00);
+  AddTestCase (LineParserTests, "Line check  1 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest01);
+  AddTestCase (LineParserTests, "Line check  2 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest02);
+  AddTestCase (LineParserTests, "Line check  3 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest03);
+  AddTestCase (LineParserTests, "Line check  4 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest04);
+  AddTestCase (LineParserTests, "Line check  5 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest05);
+  AddTestCase (LineParserTests, "Line check  6 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest06);
+  AddTestCase (LineParserTests, "Line check  7 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest07);
+  AddTestCase (LineParserTests, "Line check  8 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest08);
+  AddTestCase (LineParserTests, "Line check  9 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest09);
+  AddTestCase (LineParserTests, "Line check 10 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest10V2);
+  AddTestCase (LineParserTests, "Line check 11 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest11V2);
+  AddTestCase (LineParserTests, "Line check 12 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest12V2);
+  AddTestCase (LineParserTests, "Line check 13 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest13V2);
+  AddTestCase (LineParserTests, "Line check 14 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest14V2);
+  AddTestCase (LineParserTests, "Line check 15 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest15V2);
+  AddTestCase (LineParserTests, "Line check 16 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest16V2);
+  AddTestCase (LineParserTests, "Line check 17 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest17V2);
+  AddTestCase (LineParserTests, "Line check 18 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest18V2);
+  AddTestCase (LineParserTests, "Line check 19 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest19V2);
+  AddTestCase (LineParserTests, "Check EOF V2 Hybrid", "SelfCheck", EOFTest, NULL, CleanUpTestContext, &mTest20);
+
   //
   // Execute the tests.
   //
@@ -498,11 +739,6 @@ LineParserTestAppEntry (
 EXIT:
   if (Fw) {
     FreeUnitTestFramework (Fw);
-  }
-
-  if (mLoggerInfo.LogBuffer != 0LL) {
-    FreePages ((VOID *)mLoggerInfo.LogBuffer, IN_MEMORY_PAGES);
-    mLoggerInfo.LogBuffer = 0LL;
   }
 
   return Status;
