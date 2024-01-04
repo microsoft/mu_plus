@@ -717,7 +717,7 @@ LineParserTestAppEntry (
   AddTestCase (LineParserTests, "Line check  7 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest07);
   AddTestCase (LineParserTests, "Line check  8 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest08);
   AddTestCase (LineParserTests, "Line check  9 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest09);
-  AddTestCase (LineParserTests, "Line check 10 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest10V2);
+  AddTestCase (LineParserTests, "Line check 10 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest10);
   AddTestCase (LineParserTests, "Line check 11 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest11V2);
   AddTestCase (LineParserTests, "Line check 12 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest12V2);
   AddTestCase (LineParserTests, "Line check 13 V2 Hybrid", "SelfCheck", BasicTests, NULL, CleanUpTestContext, &mTest13V2);
