@@ -206,7 +206,7 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
   // At this point, if LogEntryV2 is not NULL, it points to the next entry to be read.
   // Otherwise LogEntry will contain the next entry. So we simplify the logic by only
   // always start from LogEntry. However, note that regardless of how we inherit the pointer
-  // it has the possibilty of pointing to a different version of structure than the one
+  // it has the possibility of pointing to a different version of structure than the one
   // we just looked at. So we need to validate the structure before we can use it.
   if (LogEntryV2 != NULL) {
     LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)LogEntryV2;
@@ -227,13 +227,13 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
   }
 
   if (LogEntry->Signature == MESSAGE_ENTRY_SIGNATURE) {
-    BlockEntry->TimeStamp     = LogEntry->TimeStamp;
-    BlockEntry->DebugLevel    = LogEntry->DebugLevel;
-    BlockEntry->Message       = LogEntry->MessageText;
-    BlockEntry->MessageLen    = LogEntry->MessageLen;
-    BlockEntry->Phase         = ADVANCED_LOGGER_PHASE_UNSPECIFIED;
+    BlockEntry->TimeStamp  = LogEntry->TimeStamp;
+    BlockEntry->DebugLevel = LogEntry->DebugLevel;
+    BlockEntry->Message    = LogEntry->MessageText;
+    BlockEntry->MessageLen = LogEntry->MessageLen;
+    BlockEntry->Phase      = ADVANCED_LOGGER_PHASE_UNSPECIFIED;
   } else if (LogEntry->Signature == MESSAGE_ENTRY_SIGNATURE_V2) {
-    LogEntryV2 = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)LogEntry;
+    LogEntryV2                = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)LogEntry;
     BlockEntry->TimeStamp     = LogEntryV2->TimeStamp;
     BlockEntry->DebugLevel    = LogEntryV2->DebugLevel;
     BlockEntry->Message       = LogEntryV2->MessageText;

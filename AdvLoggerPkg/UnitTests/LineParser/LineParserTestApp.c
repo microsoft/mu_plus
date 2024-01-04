@@ -290,9 +290,9 @@ InternalTestLoggerWriteV2 (
 
   // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
   // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
-  Entry->DebugLevel     = (UINT32)DebugLevel;
-  Entry->MessageLen     = (UINT16)NumberOfBytes;
-  Entry->MessageOffset  = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
+  Entry->DebugLevel    = (UINT32)DebugLevel;
+  Entry->MessageLen    = (UINT16)NumberOfBytes;
+  Entry->MessageOffset = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
   CopyMem (Entry->MessageText, Buffer, NumberOfBytes);
   Entry->Signature = MESSAGE_ENTRY_SIGNATURE_V2;
 
@@ -476,7 +476,6 @@ InitializeInMemoryLogV2 (
   return UNIT_TEST_PASSED;
 }
 
-
 /*
     Initialize the v1 and v2 mixed test in memory log
 
@@ -512,7 +511,7 @@ InitializeInMemoryLogV2Hybrid (
     UT_ASSERT_TRUE (UnitTestStatus == UNIT_TEST_PASSED);
   }
 
-  for (; i < ARRAY_SIZE (InternalMemoryLog); i++) {
+  for ( ; i < ARRAY_SIZE (InternalMemoryLog); i++) {
     UnitTestStatus = InternalTestLoggerWriteV2 (
                        ((i) % 5) == 0 ? DEBUG_INFO : DEBUG_ERROR,
                        InternalMemoryLog[i],
