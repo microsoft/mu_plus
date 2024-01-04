@@ -547,8 +547,6 @@ BasicTests (
 
   Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mMessageEntry);
 
-  while (loop) {}
-
   UT_ASSERT_STATUS_EQUAL (Status, Btc->ExpectedStatus);
   UT_ASSERT_NOT_NULL (mMessageEntry.Message);
   UT_LOG_INFO ("\nReturn Length=%d\n", mMessageEntry.MessageLen);
