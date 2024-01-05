@@ -1215,9 +1215,7 @@ FlushAndClearMemoryInfoDatabase (
   )
 {
   // If we have database contents, flush them to the file.
-  if (mMemoryInfoDatabaseSize > 0) {
-    WriteBufferToFile (FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
-  }
+  WriteBufferToFile (FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
 
   // If we have a database, free it, and reset all counters.
   if (mMemoryInfoDatabaseBuffer != NULL) {
