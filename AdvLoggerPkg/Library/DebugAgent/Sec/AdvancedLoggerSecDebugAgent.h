@@ -57,7 +57,7 @@ UINT32 *
 EFIAPI
 AsmRepLodsd (
   IN UINT32  *Address,
-  IN UINT32  Length
+  IN UINTN   Length
   );
 
 #endif // __ADVANCED_LOGGER_SEC_DEBUGAGENT_H__
