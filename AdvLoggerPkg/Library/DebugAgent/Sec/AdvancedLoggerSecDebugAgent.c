@@ -91,7 +91,7 @@ InitializeDebugAgent (
     // |                   |
     // |-------------------|---->  TempRamBase
 
-    ASSERT (SecCoreData->PeiTemporaryRamBase == (VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase));
+    ASSERT (SecCoreData->PeiTemporaryRamBase == (VOID *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase));
 
     LogPtr = (ADVANCED_LOGGER_PTR *)SecCoreData->PeiTemporaryRamBase;
 
@@ -128,7 +128,7 @@ InitializeDebugAgent (
       ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
       LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
       LoggerInfo->Version            = ADVANCED_LOGGER_VERSION;
-      LoggerInfo->LogBufferSize      = LogBufferSize - sizeof (ADVANCED_LOGGER_INFO);
+      LoggerInfo->LogBufferSize      = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
       LoggerInfo->LogBuffer          = PA_FROM_PTR ((LoggerInfo + 1));
       LoggerInfo->LogCurrent         = LoggerInfo->LogBuffer;
       LoggerInfo->HdwPortInitialized = TRUE;
@@ -222,7 +222,7 @@ InitializeDebugAgent (
 
           // Update the SEC pointer and free the RamForSEC buffer.
           //
-          LogPtrSec    = (ADVANCED_LOGGER_PTR *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
+          LogPtrSec    = (ADVANCED_LOGGER_PTR *)(VOID *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
           SecLogBuffer = LogPtrSec->LogBuffer;
 
           // Update Sec LogPtr to point to NewLogBuffer

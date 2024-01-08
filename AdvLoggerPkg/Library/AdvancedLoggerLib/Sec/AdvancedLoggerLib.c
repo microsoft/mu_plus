@@ -29,7 +29,7 @@ AdvancedLoggerLibConstructor (
 
   // Initialize the fixed memory LogPtr structure to no address, with a signature.
 
-  LogPtr = (ADVANCED_LOGGER_PTR *)FixedPcdGet64 (PcdAdvancedLoggerBase);
+  LogPtr = (ADVANCED_LOGGER_PTR *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
   if (LogPtr != NULL) {
     LogPtr->LogBuffer = 0ULL;
     LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
@@ -60,7 +60,7 @@ AdvancedLoggerGetLoggerInfo (
   // the Pcd is expected to be set properly for the platform.
 
   LoggerInfoSec = NULL;
-  LogPtr        = (ADVANCED_LOGGER_PTR *)FixedPcdGet64 (PcdAdvancedLoggerBase);
+  LogPtr        = (ADVANCED_LOGGER_PTR *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
 
   if ((LogPtr != NULL) &&
       (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
