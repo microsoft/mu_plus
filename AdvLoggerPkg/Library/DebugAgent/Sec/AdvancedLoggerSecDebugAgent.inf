@@ -22,15 +22,18 @@
 #
 # The following information is for reference only and not required by the build tools.
 #
-#  VALID_ARCHITECTURES           = IA32
+#  VALID_ARCHITECTURES           = IA32 X64
 #
 
 [Sources]
   AdvancedLoggerSecDebugAgent.c
+  RamForSEC.c
 
-[Sources.Ia32]
-  ia32/RamForSEC.c
+[Sources.IA32]
   ia32/AsmRepLodsd.nasm
+
+[Sources.X64]
+  X64/AsmRepLodsd.nasm
 
 [Packages]
   MdePkg/MdePkg.dec
