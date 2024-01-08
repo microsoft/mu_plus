@@ -1215,9 +1215,7 @@ FlushAndClearMemoryInfoDatabase (
   )
 {
   // If we have database contents, flush them to the file.
-  if (mMemoryInfoDatabaseSize > 0) {
-    WriteBufferToFile (FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
-  }
+  WriteBufferToFile (FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
 
   // If we have a database, free it, and reset all counters.
   if (mMemoryInfoDatabaseBuffer != NULL) {
@@ -1281,14 +1279,16 @@ SpecialMemoryDump (
       }
 
       // Capture the stack
-      AsciiSPrint (
-        TempString,
-        MAX_STRING_SIZE,
-        "Stack,0x%016lx,0x%016lx\n",
-        StackBase,
-        StackLength
-        );
-      AppendToMemoryInfoDatabase (TempString);
+      if (StackLength > 0) {
+        AsciiSPrint (
+          TempString,
+          MAX_STRING_SIZE,
+          "Stack,0x%016lx,0x%016lx\n",
+          StackBase,
+          StackLength
+          );
+        AppendToMemoryInfoDatabase (TempString);
+      }
 
       break;
     }
@@ -1328,26 +1328,30 @@ SpecialMemoryDump (
         }
 
         // Capture the AP stack
-        AsciiSPrint (
-          TempString,
-          MAX_STRING_SIZE,
-          "ApStack,0x%016lx,0x%016lx,0x%x\n",
-          StackBase,
-          StackLength,
-          Entry->CpuNumber
-          );
-        AppendToMemoryInfoDatabase (TempString);
+        if (StackLength > 0) {
+          AsciiSPrint (
+            TempString,
+            MAX_STRING_SIZE,
+            "ApStack,0x%016lx,0x%016lx,0x%x\n",
+            StackBase,
+            StackLength,
+            Entry->CpuNumber
+            );
+          AppendToMemoryInfoDatabase (TempString);
+        }
       } else {
         // Capture the AP switch stack
-        AsciiSPrint (
-          TempString,
-          MAX_STRING_SIZE,
-          "ApSwitchStack,0x%016lx,0x%016lx,0x%x\n",
-          StackBase,
-          StackLength,
-          Entry->CpuNumber
-          );
-        AppendToMemoryInfoDatabase (TempString);
+        if (StackLength > 0) {
+          AsciiSPrint (
+            TempString,
+            MAX_STRING_SIZE,
+            "ApSwitchStack,0x%016lx,0x%016lx,0x%x\n",
+            StackBase,
+            StackLength,
+            Entry->CpuNumber
+            );
+          AppendToMemoryInfoDatabase (TempString);
+        }
       }
     }
   }
