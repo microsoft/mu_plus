@@ -186,6 +186,11 @@ class AdvLogParser ():
     V3_LOGGER_INFO_SIZE = 80
     V3_LOGGER_INFO_VERSION = 3
 
+    # V4 and V3 are the same definition, just an indicator for single firmware systems that
+    # starting from V4, all the message will have v2 message entry format.
+    V4_LOGGER_INFO_SIZE = V3_LOGGER_INFO_SIZE
+    V4_LOGGER_INFO_VERSION = 4
+
     # ---------------------------------------------------------------------- #
     #
     #
@@ -332,7 +337,7 @@ class AdvLogParser ():
             if InFile.tell() != (self.V1_LOGGER_INFO_SIZE):
                 raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
-        elif Version == self.V2_LOGGER_INFO_VERSION or Version == self.V3_LOGGER_INFO_VERSION:
+        elif Version == self.V2_LOGGER_INFO_VERSION or Version == self.V3_LOGGER_INFO_VERSION or Version == self.V4_LOGGER_INFO_VERSION:
             Size = self.V2_LOGGER_INFO_SIZE if Version == self.V2_LOGGER_INFO_VERSION else self.V3_LOGGER_INFO_SIZE
             BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + Size
             LoggerInfo["LogBuffer"] = Size
@@ -362,7 +367,7 @@ class AdvLogParser ():
             InFile.read(1)                 # skip Pad2 field
 
             # If at v3, there will be 8 bytes for print level and pads, which we do not care.
-            if Version == self.V3_LOGGER_INFO_VERSION:
+            if Version == self.V3_LOGGER_INFO_VERSION or Version == self.V4_LOGGER_INFO_VERSION:
                 InFile.read(4)
                 InFile.read(4)
 
