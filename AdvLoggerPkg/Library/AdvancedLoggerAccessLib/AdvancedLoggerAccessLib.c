@@ -22,13 +22,28 @@
 #include <Library/TimerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-STATIC  ADVANCED_LOGGER_INFO           *mLoggerInfo    = NULL;
-STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mLowAddress    = NULL;
-STATIC  ADVANCED_LOGGER_MESSAGE_ENTRY  *mHighAddress   = NULL;
-STATIC  UINT16                         mMaxMessageSize = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
+STATIC  ADVANCED_LOGGER_INFO  *mLoggerInfo                                  = NULL;
+STATIC  EFI_PHYSICAL_ADDRESS  mLowAddress                                   = 0;
+STATIC  EFI_PHYSICAL_ADDRESS  mHighAddress                                  = 0;
+STATIC  UINT16                mMaxMessageSize                               = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
+CONST   CHAR8                 *AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_CNT] = {
+  "[UNSPECIFIED] ",
+  "[SEC] ",
+  "[PEI] ",
+  "[PEI64] ",
+  "[DXE] ",
+  "[RUNTIME] ",
+  "[MM_CORE] ",
+  "[MM] ",
+  "[SMM_CORE] ",
+  "[SMM] ",
+  "[TFA] ",
+};
 
 #define ADV_TIME_STAMP_FORMAT  "%2.2d:%2.2d:%2.2d.%3.3d : "
 #define ADV_TIME_STAMP_RESULT  "hh:mm:ss:ttt : "
+#define ADV_PHASE_ERR_FORMAT   "[%04X] "
+#define ADV_PHASE_MAX_SIZE     32
 
 /**
 
@@ -86,6 +101,42 @@ FormatTimeStamp (
 }
 
 /**
+  FormatPhasePrefix
+
+  Adds a phase indicator to the message being returned.  If phase is recognized and specified,
+  returns the phase prefix in from the AdvMsgEntryPrefix, otherwise raw phase value is returned.
+
+  @param  MessageBuffer
+  @param  MessageBufferSize
+  @param  Phase
+
+  @retval Number of characters printed
+*/
+STATIC
+UINT16
+FormatPhasePrefix (
+  IN CHAR8   *MessageBuffer,
+  IN UINTN   MessageBufferSize,
+  IN UINT16  Phase
+  )
+{
+  UINTN  PhaseStringLen;
+
+  if (Phase == ADVANCED_LOGGER_PHASE_UNSPECIFIED) {
+    // This might be a legacy message
+    PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, "");
+  } else if (Phase < ADVANCED_LOGGER_PHASE_CNT) {
+    // Normal message we recognize
+    PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, AdvMsgEntryPrefix[Phase]);
+  } else {
+    // Unrecognized phase, just print the raw value
+    PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, ADV_PHASE_ERR_FORMAT, Phase);
+  }
+
+  return (UINT16)PhaseStringLen;
+}
+
+/**
   Get Next Message Block.
 
   Get the next content of a message from the in memory buffer.
@@ -112,7 +163,8 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
   IN  ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY  *BlockEntry
   )
 {
-  ADVANCED_LOGGER_MESSAGE_ENTRY  *LogEntry;
+  ADVANCED_LOGGER_MESSAGE_ENTRY     *LogEntry   = NULL;
+  ADVANCED_LOGGER_MESSAGE_ENTRY_V2  *LogEntryV2 = NULL;
 
   if (mLoggerInfo == NULL) {
     return EFI_NOT_STARTED;
@@ -128,22 +180,44 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
 
   if (BlockEntry->Message == NULL) {
     LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
+    if (LogEntry->Signature == MESSAGE_ENTRY_SIGNATURE_V2) {
+      // This is actually a v2 entry.
+      LogEntryV2 = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)LogEntry;
+    }
   } else {
     LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)MESSAGE_ENTRY_FROM_MSG (BlockEntry->Message);
     if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
-      DEBUG ((DEBUG_ERROR, "Resume LogEntry invalid signature at %p\n", LogEntry));
-      DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
-      return EFI_INVALID_PARAMETER;
+      // If this is not a v1 entry, this might be a v2 entry.
+      LogEntryV2 = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)MESSAGE_ENTRY_FROM_MSG_V2 (BlockEntry->Message, BlockEntry->MessageOffset);
+      if (LogEntryV2->Signature != MESSAGE_ENTRY_SIGNATURE_V2) {
+        DEBUG ((DEBUG_ERROR, "Resume LogEntry invalid signature at %p or %p\n", LogEntry, LogEntryV2));
+        DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
+        return EFI_INVALID_PARAMETER;
+      }
     }
 
-    LogEntry = NEXT_LOG_ENTRY (LogEntry);
+    if (LogEntryV2) {
+      LogEntryV2 = NEXT_LOG_ENTRY_V2 (LogEntryV2);
+    } else {
+      LogEntry = NEXT_LOG_ENTRY (LogEntry);
+    }
+  }
+
+  // At this point, if LogEntryV2 is not NULL, it points to the next entry to be read.
+  // Otherwise LogEntry will contain the next entry. So we simplify the logic by only
+  // using LogEntry and overwriting it to use the LogEntryV2 data as necessary. However,
+  // note that regardless of how we inherit the pointer it has the possibility of
+  // pointing to a different version of structure than the one we just looked at. So
+  // we need to validate the structure before we can use it.
+  if (LogEntryV2 != NULL) {
+    LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)LogEntryV2;
   }
 
   // Validate that LogEntry points within the proper Memory Log region
   // in memory log buffer
   if ((LogEntry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (LogEntry, 8)) || // Insure pointer is on boundary
-      (LogEntry < mLowAddress) ||                                                   // and within the log region
-      (LogEntry > mHighAddress))
+      (PA_FROM_PTR (LogEntry) < mLowAddress) ||                                     // and within the log region
+      (PA_FROM_PTR (LogEntry) > mHighAddress))
   {
     DEBUG ((DEBUG_ERROR, "Invalid Address for LogEntry %p. Low=%p, High=%p\n", LogEntry, mLowAddress, mHighAddress));
     return EFI_INVALID_PARAMETER;
@@ -153,17 +227,26 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
     return EFI_END_OF_FILE;
   }
 
-  if (LogEntry->Signature != MESSAGE_ENTRY_SIGNATURE) {
+  if (LogEntry->Signature == MESSAGE_ENTRY_SIGNATURE) {
+    BlockEntry->TimeStamp  = LogEntry->TimeStamp;
+    BlockEntry->DebugLevel = LogEntry->DebugLevel;
+    BlockEntry->Message    = LogEntry->MessageText;
+    BlockEntry->MessageLen = LogEntry->MessageLen;
+    BlockEntry->Phase      = ADVANCED_LOGGER_PHASE_UNSPECIFIED;
+  } else if (LogEntry->Signature == MESSAGE_ENTRY_SIGNATURE_V2) {
+    LogEntryV2                = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)LogEntry;
+    BlockEntry->TimeStamp     = LogEntryV2->TimeStamp;
+    BlockEntry->DebugLevel    = LogEntryV2->DebugLevel;
+    BlockEntry->Message       = LogEntryV2->MessageText;
+    BlockEntry->MessageLen    = LogEntryV2->MessageLen;
+    BlockEntry->MessageOffset = LogEntryV2->MessageOffset;
+    BlockEntry->Phase         = LogEntryV2->Phase;
+  } else {
     DEBUG ((DEBUG_ERROR, "Next LogEntry invalid signature at %p, Last=%p\n", LogEntry, BlockEntry->Message));
     DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)BlockEntry->Message - 128, 256, "");
     DUMP_HEX (DEBUG_INFO, 0, (CHAR8 *)LogEntry - 128, 256, "");
     return EFI_COMPROMISED_DATA;
   }
-
-  BlockEntry->TimeStamp  = LogEntry->TimeStamp;
-  BlockEntry->DebugLevel = LogEntry->DebugLevel;
-  BlockEntry->Message    = LogEntry->MessageText;
-  BlockEntry->MessageLen = LogEntry->MessageLen;
 
   return EFI_SUCCESS;
 }
@@ -201,7 +284,10 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   EFI_STATUS  Status;
   CHAR8       *TargetPtr;
   UINT16      TargetLen;
-  CHAR8       TimeStampString[] = { ADV_TIME_STAMP_RESULT };
+  UINT16      PhaseStringLen;
+  UINT16      CurrPhaseStringLen;
+  CHAR8       TimeStampString[]               = { ADV_TIME_STAMP_RESULT };
+  CHAR8       PhaseString[ADV_PHASE_MAX_SIZE] = { 0 };
 
   if (LineEntry == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -212,7 +298,7 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   // reuse the previous LineBuffer
   //
   if (LineEntry->Message == NULL) {
-    LineBuffer = AllocatePool (mMaxMessageSize+sizeof (TimeStampString));
+    LineBuffer = AllocatePool (mMaxMessageSize + sizeof (TimeStampString) + ADV_PHASE_MAX_SIZE);
     if (LineBuffer == NULL) {
       return EFI_OUT_OF_RESOURCES;
     }
@@ -227,13 +313,15 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   // the first '\n' are left in the ResidualMemoryBuffer for use on the next call to
   // GetNextLine.
 
-  // In case this is a restart of the same Message, initialize the time stamp.
+  // In case this is a restart of the same Message, initialize the time stamp and prefix.
   if (LineEntry->BlockEntry.Message != NULL) {
     FormatTimeStamp (TimeStampString, sizeof (TimeStampString), LineEntry->BlockEntry.TimeStamp);
     CopyMem (LineBuffer, TimeStampString, sizeof (TimeStampString) - sizeof (CHAR8));
+    PhaseStringLen = FormatPhasePrefix (PhaseString, sizeof (PhaseString), LineEntry->BlockEntry.Phase);
+    CopyMem (LineBuffer + sizeof (TimeStampString) - sizeof (CHAR8), PhaseString, PhaseStringLen);
   }
 
-  TargetPtr = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8)];
+  TargetPtr = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen];
   TargetLen = 0;
   Status    = EFI_SUCCESS;
 
@@ -289,13 +377,22 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
       LineEntry->ResidualLen  = LineEntry->BlockEntry.MessageLen;
       FormatTimeStamp (TimeStampString, sizeof (TimeStampString), LineEntry->BlockEntry.TimeStamp);
       CopyMem (LineBuffer, TimeStampString, sizeof (TimeStampString) - sizeof (CHAR8));
+      CurrPhaseStringLen = FormatPhasePrefix (PhaseString, sizeof (PhaseString), LineEntry->BlockEntry.Phase);
+      if (PhaseStringLen != CurrPhaseStringLen) {
+        // Adjust the TargetPtr to point to the end of the PhaseString
+        PhaseStringLen = CurrPhaseStringLen;
+        TargetPtr      = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen];
+      }
+
+      CopyMem (LineBuffer + sizeof (TimeStampString) - sizeof (CHAR8), PhaseString, PhaseStringLen);
     }
   } while (!EFI_ERROR (Status));
 
   if (!EFI_ERROR (Status)) {
-    LineEntry->MessageLen = TargetLen + sizeof (TimeStampString) - sizeof (CHAR8);
+    LineEntry->MessageLen = TargetLen + sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen;
     LineEntry->TimeStamp  = LineEntry->BlockEntry.TimeStamp;
     LineEntry->DebugLevel = LineEntry->BlockEntry.DebugLevel;
+    LineEntry->Phase      = LineEntry->BlockEntry.Phase;
   }
 
   return Status;
@@ -340,8 +437,8 @@ AdvancedLoggerAccessLibUnitTestInitialize (
 
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-    mLowAddress  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
-    mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
+    mLowAddress  = mLoggerInfo->LogBuffer;
+    mHighAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
   }
 
   return Status;
@@ -367,12 +464,12 @@ AdvancedLoggerAccessLibConstructor (
                   );
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-    mLowAddress  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
-    mHighAddress = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize);
+    mLowAddress  = mLoggerInfo->LogBuffer;
+    mHighAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
 
     // Leave this debug message as ERROR.
 
-    DEBUG ((DEBUG_ERROR, "Advanced Logger Info = %p, Max = %p\n", mLoggerInfo, mHighAddress));
+    DEBUG ((DEBUG_ERROR, "Advanced Logger Info = %p, Min = %p, Max = %p\n", mLoggerInfo, mLowAddress, mHighAddress));
   }
 
   // Don't fail module load...
