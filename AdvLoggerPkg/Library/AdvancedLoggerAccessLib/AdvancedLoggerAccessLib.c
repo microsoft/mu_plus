@@ -205,9 +205,10 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
 
   // At this point, if LogEntryV2 is not NULL, it points to the next entry to be read.
   // Otherwise LogEntry will contain the next entry. So we simplify the logic by only
-  // always start from LogEntry. However, note that regardless of how we inherit the pointer
-  // it has the possibility of pointing to a different version of structure than the one
-  // we just looked at. So we need to validate the structure before we can use it.
+  // using LogEntry and overwriting it to use the LogEntryV2 data as necessary. However,
+  // note that regardless of how we inherit the pointer it has the possibility of
+  // pointing to a different version of structure than the one we just looked at. So
+  // we need to validate the structure before we can use it.
   if (LogEntryV2 != NULL) {
     LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)LogEntryV2;
   }
