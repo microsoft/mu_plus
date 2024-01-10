@@ -150,8 +150,6 @@
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
-  UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/App/MemoryProtectionTestApp.inf # DEPRECATED
-  UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/Smm/MemoryProtectionTestSmm.inf # DEPRECATED
   UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/App/SmmMemoryProtectionTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/App/DxeMemoryProtectionTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MemoryProtectionTest/Driver/SmmMemoryProtectionTestDriver.inf
