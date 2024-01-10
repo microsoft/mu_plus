@@ -186,6 +186,11 @@ class AdvLogParser ():
     V3_LOGGER_INFO_SIZE = 80
     V3_LOGGER_INFO_VERSION = 3
 
+    # V4 and V3 are the same definition, just an indicator for single firmware systems that
+    # starting from V4, all the message will have v2 message entry format.
+    V4_LOGGER_INFO_SIZE = V3_LOGGER_INFO_SIZE
+    V4_LOGGER_INFO_VERSION = 4
+
     # ---------------------------------------------------------------------- #
     #
     #
@@ -199,6 +204,42 @@ class AdvLogParser ():
     #
     MESSAGE_ENTRY_SIZE = 18
     MAX_MESSAGE_SIZE = 512
+    # ---------------------------------------------------------------------- #
+    #
+    #
+    # typedef struct {
+    #   UINT32    Signature;                            // Signature
+    #   UINT8     MajorVersion;                         // Major version of advanced logger message structure
+    #   UINT8     MinorVersion;                         // Minor version of advanced logger message structure
+    #   UINT32    DebugLevel;                           // Debug Level
+    #   UINT64    TimeStamp;                            // Time stamp
+    #   UINT16    Phase;                                // Boot phase that produced this message entry
+    #   UINT16    MessageLen;                           // Number of bytes in Message
+    #   UINT16    MessageOffset;                        // Offset of Message from start of structure,
+    #                                                   // used to calculate the address of the Message
+    #   CHAR8     MessageText[];                        // Message Text
+    # } ADVANCED_LOGGER_MESSAGE_ENTRY_V2;
+    #
+    #
+    MESSAGE_ENTRY_SIZE_V2 = 24
+    ADVANCED_LOGGER_PHASE_UNSPECIFIED = 0
+    ADVANCED_LOGGER_PHASE_SEC = 1
+    ADVANCED_LOGGER_PHASE_PEI = 2
+    ADVANCED_LOGGER_PHASE_PEI64 = 3
+    ADVANCED_LOGGER_PHASE_DXE = 4
+    ADVANCED_LOGGER_PHASE_RUNTIME = 5
+    ADVANCED_LOGGER_PHASE_MM_CORE = 6
+    ADVANCED_LOGGER_PHASE_MM = 7
+    ADVANCED_LOGGER_PHASE_SMM_CORE = 8
+    ADVANCED_LOGGER_PHASE_SMM = 9
+    ADVANCED_LOGGER_PHASE_TFA = 10
+    ADVANCED_LOGGER_PHASE_CNT = 11
+    PHASE_STRING_LIST = ["[UNSPECIFIED] ", "[SEC] ", "[PEI] ", "[PEI64] ",
+                         "[DXE] ", "[RUNTIME] ", "[MM_CORE] ", "[MM] ",
+                         "[SMM_CORE] ", "[SMM] ", "[TFA] "]
+    #
+    # ---------------------------------------------------------------------- #
+    #
     #
     # The dictionary entries for MessageLineEntry is based on the UEFI structure above.
     #
@@ -296,7 +337,7 @@ class AdvLogParser ():
             if InFile.tell() != (self.V1_LOGGER_INFO_SIZE):
                 raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 
-        elif Version == self.V2_LOGGER_INFO_VERSION or Version == self.V3_LOGGER_INFO_VERSION:
+        elif Version == self.V2_LOGGER_INFO_VERSION or Version == self.V3_LOGGER_INFO_VERSION or Version == self.V4_LOGGER_INFO_VERSION:
             Size = self.V2_LOGGER_INFO_SIZE if Version == self.V2_LOGGER_INFO_VERSION else self.V3_LOGGER_INFO_SIZE
             BaseAddress = struct.unpack("=Q", InFile.read(8))[0] + Size
             LoggerInfo["LogBuffer"] = Size
@@ -326,7 +367,7 @@ class AdvLogParser ():
             InFile.read(1)                 # skip Pad2 field
 
             # If at v3, there will be 8 bytes for print level and pads, which we do not care.
-            if Version == self.V3_LOGGER_INFO_VERSION:
+            if Version == self.V3_LOGGER_INFO_VERSION or Version == self.V4_LOGGER_INFO_VERSION:
                 InFile.read(4)
                 InFile.read(4)
 
@@ -360,12 +401,28 @@ class AdvLogParser ():
         MessageEntry = {}
 
         InFile = LoggerInfo["InFile"]
-
+        EntryStart = InFile.tell()
         MessageEntry["Signature"] = InFile.read(4).decode('utf-8', 'replace')
-        MessageEntry["DebugLevel"] = struct.unpack("=I", InFile.read(4))[0]
-        MessageEntry["TimeStamp"] = struct.unpack("=Q", InFile.read(8))[0]
-        MessageEntry["MessageLen"] = struct.unpack("=H", InFile.read(2))[0]
-        MessageEntry["MessageText"] = InFile.read(MessageEntry["MessageLen"]).decode('utf-8', 'replace')
+
+        if (MessageEntry["Signature"] == 'ALMS'):
+            MessageEntry["DebugLevel"] = struct.unpack("=I", InFile.read(4))[0]
+            MessageEntry["TimeStamp"] = struct.unpack("=Q", InFile.read(8))[0]
+            MessageEntry["MessageLen"] = struct.unpack("=H", InFile.read(2))[0]
+            MessageEntry["MessageText"] = InFile.read(MessageEntry["MessageLen"]).decode('utf-8', 'replace')
+            MessageEntry["Phase"] = self.ADVANCED_LOGGER_PHASE_UNSPECIFIED
+        elif (MessageEntry["Signature"] == 'ALM2'):
+            MessageEntry["MajorVersion"] = struct.unpack("=B", InFile.read(1))[0]
+            MessageEntry["MinorVersion"] = struct.unpack("=B", InFile.read(1))[0]
+            MessageEntry["DebugLevel"] = struct.unpack("=I", InFile.read(4))[0]
+            MessageEntry["TimeStamp"] = struct.unpack("=Q", InFile.read(8))[0]
+            MessageEntry["Phase"] = struct.unpack("=H", InFile.read(2))[0]
+            MessageEntry["MessageLen"] = struct.unpack("=H", InFile.read(2))[0]
+            MessageEntry["MessageOffset"] = struct.unpack("=H", InFile.read(2))[0]
+            # Offset is from the start of the structure, so we do that from the beginning of this file
+            InFile.seek(EntryStart + MessageEntry["MessageOffset"])
+            MessageEntry["MessageText"] = InFile.read(MessageEntry["MessageLen"]).decode('utf-8', 'replace')
+        else:
+            raise Exception("Message Block has wrong signature at offset 0x%X" % InFile.tell())
 
         Skip = InFile.tell()
         Norm = int((int((Skip + 7) / 8)) * 8)
@@ -374,7 +431,10 @@ class AdvLogParser ():
             InFile.read(Skip)
 
         NextMessage = InFile.tell()
-        NextMessageLen = self.MESSAGE_ENTRY_SIZE + int(int((MessageEntry["MessageLen"] + 7) / 8) * 8)
+        if MessageEntry["Signature"] == 'ALMS':
+            NextMessageLen = self.MESSAGE_ENTRY_SIZE + int(int((MessageEntry["MessageLen"] + 7) / 8) * 8)
+        elif MessageEntry["Signature"] == 'ALM2':
+            NextMessageLen = MessageEntry["MessageOffset"] + int(int((MessageEntry["MessageLen"] + 7) / 8) * 8)
         NextMessage = NextMessage + NextMessageLen
 
         return (MessageEntry, NextMessage)
@@ -401,14 +461,15 @@ class AdvLogParser ():
 
         (MessageEntry, NextMessage) = self._ReadMessageEntry(LoggerInfo)
 
-        if MessageEntry["Signature"] != 'ALMS':
-            print("Log signature was incorrect.  Should be 'ALMS', was '%s'" % MessageEntry["Signature"])
+        if MessageEntry["Signature"] != 'ALMS' and MessageEntry["Signature"] != 'ALM2':
+            print("Log signature was incorrect.  Should be either 'ALMS' or 'ALM2', was '%s'" % MessageEntry["Signature"])
             raise Exception("Message Block has wrong signature at offset 0x%X" % InFile.tell())
 
         MessageBlock["Message"] = MessageEntry["MessageText"]
         MessageBlock["DebugLevel"] = MessageEntry["DebugLevel"]
         MessageBlock["MessageLen"] = MessageEntry["MessageLen"]
         MessageBlock["TimeStamp"] = MessageEntry["TimeStamp"]
+        MessageBlock["Phase"] = MessageEntry["Phase"]
 
         return (self.SUCCESS, MessageBlock)
 
@@ -476,6 +537,7 @@ class AdvLogParser ():
                 AccessMessageLineEntry["ResidualChar"] = AccessMessageBlock["Message"]
                 AccessMessageLineEntry["TimeStamp"] = AccessMessageBlock["TimeStamp"]
                 AccessMessageLineEntry["DebugLevel"] = AccessMessageBlock["DebugLevel"]
+                AccessMessageLineEntry["Phase"] = AccessMessageBlock["Phase"]
 
         return (Status, AccessMessageLineEntry)
 
@@ -516,6 +578,18 @@ class AdvLogParser ():
         return Timestamp
 
     #
+    #   Get the formatted phase string
+    #
+    def _GetPhaseString(self, Phase):
+        if Phase >= self.ADVANCED_LOGGER_PHASE_CNT:
+            PhaseString = f"[{Phase:04}] "
+        elif Phase <= self.ADVANCED_LOGGER_PHASE_UNSPECIFIED:
+            PhaseString = ""
+        else:
+            PhaseString = self.PHASE_STRING_LIST[Phase]
+        return PhaseString
+
+    #
     #   Get all of the formated message lines
     #
     def _GetLines(self, lines, LoggerInfo):
@@ -533,7 +607,8 @@ class AdvLogParser ():
 
             if CurrentLine >= StartLine:
                 Ticks = MessageLine["TimeStamp"]
-                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + MessageLine["Message"].rstrip("\r\n")
+                PhaseString = self._GetPhaseString(MessageLine["Phase"])
+                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + PhaseString + MessageLine["Message"].rstrip("\r\n")
                 lines.append(NewLine + '\n')
 
             CurrentLine += 1

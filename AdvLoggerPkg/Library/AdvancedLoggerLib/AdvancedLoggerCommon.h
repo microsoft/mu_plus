@@ -44,4 +44,18 @@ AdvancedLoggerGetLoggerInfo (
   VOID
   );
 
+/**
+  Helper function to return the log phase for each message.
+
+  This function is intended to be used to distinguish between
+  various types of modules.
+
+  @return       Phase of current advanced logger instance.
+**/
+UINT16
+EFIAPI
+AdvancedLoggerGetPhase (
+  VOID
+  );
+
 #endif // __ADVANCED_LOGGER_COMMON_H__

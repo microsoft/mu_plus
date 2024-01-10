@@ -11,10 +11,25 @@
 #ifndef __ADVANCED_LOGGER_INTERNAL_H__
 #define __ADVANCED_LOGGER_INTERNAL_H__
 
-#define ADVANCED_LOGGER_SIGNATURE   SIGNATURE_32('A','L','O','G')
-#define ADVANCED_LOGGER_HW_LVL_VER  3
+#define ADVANCED_LOGGER_SIGNATURE    SIGNATURE_32('A','L','O','G')
+#define ADVANCED_LOGGER_HW_LVL_VER   4
+#define ADVANCED_LOGGER_MSG_MAJ_VER  2
+#define ADVANCED_LOGGER_MSG_MIN_VER  0
 
 #define ADVANCED_LOGGER_VERSION  ADVANCED_LOGGER_HW_LVL_VER
+
+#define ADVANCED_LOGGER_PHASE_UNSPECIFIED  0
+#define ADVANCED_LOGGER_PHASE_SEC          1
+#define ADVANCED_LOGGER_PHASE_PEI          2
+#define ADVANCED_LOGGER_PHASE_PEI64        3
+#define ADVANCED_LOGGER_PHASE_DXE          4
+#define ADVANCED_LOGGER_PHASE_RUNTIME      5
+#define ADVANCED_LOGGER_PHASE_MM_CORE      6
+#define ADVANCED_LOGGER_PHASE_MM           7
+#define ADVANCED_LOGGER_PHASE_SMM_CORE     8
+#define ADVANCED_LOGGER_PHASE_SMM          9
+#define ADVANCED_LOGGER_PHASE_TFA          10
+#define ADVANCED_LOGGER_PHASE_CNT          11
 
 //
 // These Pcds are used to carve out a PEI memory buffer from the temporary RAM.
@@ -59,13 +74,30 @@ typedef struct {
   CHAR8     MessageText[];                        // Message Text
 } ADVANCED_LOGGER_MESSAGE_ENTRY;
 
-#define MESSAGE_ENTRY_SIZE(LenOfMessage)  (ALIGN_VALUE(sizeof(ADVANCED_LOGGER_MESSAGE_ENTRY) + LenOfMessage ,8))
+typedef struct {
+  UINT32    Signature;                            // Signature
+  UINT8     MajorVersion;                         // Major version of advanced logger message structure
+  UINT8     MinorVersion;                         // Minor version of advanced logger message structure
+  UINT32    DebugLevel;                           // Debug Level
+  UINT64    TimeStamp;                            // Time stamp
+  UINT16    Phase;                                // Boot phase that produced this message entry
+  UINT16    MessageLen;                           // Number of bytes in Message
+  UINT16    MessageOffset;                        // Offset of Message from start of structure,
+                                                  // used to calculate the address of the Message
+  CHAR8     MessageText[];                        // Message Text
+} ADVANCED_LOGGER_MESSAGE_ENTRY_V2;
 
-#define NEXT_LOG_ENTRY(LogEntry)  ((ADVANCED_LOGGER_MESSAGE_ENTRY *) ((UINTN) LogEntry + MESSAGE_ENTRY_SIZE(LogEntry->MessageLen)))
+#define MESSAGE_ENTRY_SIZE(LenOfMessage)                 (ALIGN_VALUE(sizeof(ADVANCED_LOGGER_MESSAGE_ENTRY) + LenOfMessage ,8))
+#define MESSAGE_ENTRY_SIZE_V2(LenOfEntry, LenOfMessage)  (ALIGN_VALUE(LenOfEntry + LenOfMessage ,8))
 
-#define MESSAGE_ENTRY_SIGNATURE  SIGNATURE_32('A','L','M','S')
+#define NEXT_LOG_ENTRY(LogEntry)       ((ADVANCED_LOGGER_MESSAGE_ENTRY *)((UINTN)LogEntry + MESSAGE_ENTRY_SIZE(LogEntry->MessageLen)))
+#define NEXT_LOG_ENTRY_V2(LogEntryV2)  ((ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)((UINTN)LogEntryV2 + MESSAGE_ENTRY_SIZE_V2(LogEntryV2->MessageOffset, LogEntryV2->MessageLen)))
 
-#define MESSAGE_ENTRY_FROM_MSG(a)  BASE_CR (a, ADVANCED_LOGGER_MESSAGE_ENTRY, MessageText)
+#define MESSAGE_ENTRY_SIGNATURE     SIGNATURE_32('A','L','M','S')
+#define MESSAGE_ENTRY_SIGNATURE_V2  SIGNATURE_32('A','L','M','2')
+
+#define MESSAGE_ENTRY_FROM_MSG(a)             BASE_CR (a, ADVANCED_LOGGER_MESSAGE_ENTRY, MessageText)
+#define MESSAGE_ENTRY_FROM_MSG_V2(a, offset)  ((UINTN)a - offset)
 
 //
 //  Insure the size of is a multiple of 8 bytes

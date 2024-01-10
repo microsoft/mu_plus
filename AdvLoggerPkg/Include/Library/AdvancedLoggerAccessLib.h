@@ -41,13 +41,14 @@ MAX MESSAGE size.
 typedef struct {
   // Message is IN/OUT. On the first input, it must be NULL.  On subsequent
   // calls, the previously returned pointer to know where to get the next
-  // message.  Message is a pointer into the physical memory buffer, and it NOT
+  // message.  Message is a pointer into the physical memory buffer, and is NOT
   // properly terminated.
   CONST CHAR8    *Message;                  // NULL (first), Pointer to Current  Message Text
   UINT32         DebugLevel;                // DEBUG Message Level
   UINT16         MessageLen;                // Number of bytes in Message
-  UINT16         Reserved;
+  UINT16         Phase;                     // Boot phase that produced this message entry
   UINT64         TimeStamp;                 // Time stamp
+  UINT16         MessageOffset;             // Offset of Message in the physical memory buffer
 } ADVANCED_LOGGER_ACCESS_MESSAGE_BLOCK_ENTRY;
 
 typedef struct {
@@ -56,11 +57,12 @@ typedef struct {
   // formatting a line.  Message will point to a properly NULL terminated ASCII STRING.
 
   // BlockEntry is used to manage the current place in the physical memory buffer.
-  CHAR8                                         *Message;   // Pointer to Message Text
-  UINT32                                        DebugLevel; // DEBUG Message Level
-  UINT16                                        MessageLen; // Number of bytes in Message
-  UINT16                                        Reserved;
-  UINT64                                        TimeStamp; // Time stamp
+  CHAR8                                         *Message;       // Pointer to Message Text
+  UINT32                                        DebugLevel;     // DEBUG Message Level
+  UINT16                                        MessageLen;     // Number of bytes in Message
+  UINT16                                        Phase;          // Boot phase that produced this message entry
+  UINT64                                        TimeStamp;      // Time stamp
+  UINT16                                        MessageOffset;  // Offset of Message in the physical memory buffer
 
   // The following are private members for GetNextBlock.  Initialize these
   // members to NULL and 0 respectively.
