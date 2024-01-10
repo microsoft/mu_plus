@@ -1299,7 +1299,7 @@ ImageCodeSectionsRoDataSectionsXp (
       // Check if the section contains code and data
       if (((Section[Index2].Characteristics & EFI_IMAGE_SCN_CNT_CODE) != 0) &&
           ((Section[Index2].Characteristics &
-            (EFI_IMAGE_SCN_CNT_INITIALIZED_DATA || EFI_IMAGE_SCN_CNT_UNINITIALIZED_DATA)) != 0))
+            (EFI_IMAGE_SCN_CNT_INITIALIZED_DATA | EFI_IMAGE_SCN_CNT_UNINITIALIZED_DATA)) != 0))
       {
         UT_LOG_ERROR (
           "Image %a: Section 0x%llx-0x%llx contains code and data\n",

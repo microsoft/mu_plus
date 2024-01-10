@@ -336,7 +336,7 @@ IsPageWritable (
   IN UINT64  Page
   )
 {
-  return ((Page & TT_AP_RW_RW) != 0) || ((Page & TT_AP_MASK) == 0);
+  return ((Page & TT_AP_MASK) == TT_AP_RW_RW) || ((Page & TT_AP_MASK) == TT_AP_NO_RW);
 }
 
 /**
