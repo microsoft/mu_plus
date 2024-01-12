@@ -69,10 +69,10 @@ AdvancedLoggerMemoryLoggerWrite (
       if ((UsedSize >= LoggerInfo->LogBufferSize) ||
           ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize))
       {
-        if (FeaturePcdGet (PcdAdvancedLoggerAutoClearEnable)) {
+        if (FeaturePcdGet (PcdAdvancedLoggerAutoClearEnable) && (LoggerInfo->AtRuntime)) {
           do {
             //
-            // Clear the current cursor when auto clear is enabled on buffer full.
+            // Clear the current cursor when auto clear is enabled on buffer full during runtime.
             //
             CurrentBuffer = LoggerInfo->LogCurrent;
 
