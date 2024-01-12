@@ -69,20 +69,42 @@ AdvancedLoggerMemoryLoggerWrite (
       if ((UsedSize >= LoggerInfo->LogBufferSize) ||
           ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize))
       {
-        //
-        // Update the number of bytes of log that have not been captured
-        //
-        do {
-          CurrentSize = LoggerInfo->DiscardedSize;
-          NewSize     = CurrentSize + (UINT32)NumberOfBytes;
-          OldSize     = InterlockedCompareExchange32 (
-                          (UINT32 *)&LoggerInfo->DiscardedSize,
-                          (UINT32)CurrentSize,
-                          (UINT32)NewSize
-                          );
-        } while (OldSize != CurrentSize);
+        if (FeaturePcdGet (PcdAdvancedLoggerAutoClearEnable)) {
+          do {
+            //
+            // Clear the current cursor when auto clear is enabled on buffer full.
+            //
+            CurrentBuffer = LoggerInfo->LogCurrent;
 
-        return LoggerInfo;
+            NewBuffer     = LoggerInfo->LogBuffer;
+            OldValue      = InterlockedCompareExchange64 (
+                              (UINT64 *)&LoggerInfo->LogCurrent,
+                              (UINT64)CurrentBuffer,
+                              (UINT64)NewBuffer
+                              );
+          } while (OldValue != CurrentBuffer);
+
+          // Now that we have a buffer that starts from the beginning, proceed to log the current message, from the beginning.
+          // Note that in this case, if there are other threads in the middle of logging a message, they will write to the lala
+          // land where we will just drop the content.
+          // If there is another clearing attempt on the other thread, i.e. through the clear variable command, the later clear
+          // will take effect and the log entry together with that clear will be dropped.
+        } else {
+          //
+          // Update the number of bytes of log that have not been captured
+          //
+          do {
+            CurrentSize = LoggerInfo->DiscardedSize;
+            NewSize     = CurrentSize + (UINT32)NumberOfBytes;
+            OldSize     = InterlockedCompareExchange32 (
+                            (UINT32 *)&LoggerInfo->DiscardedSize,
+                            (UINT32)CurrentSize,
+                            (UINT32)NewSize
+                            );
+          } while (OldSize != CurrentSize);
+
+          return LoggerInfo;
+        }
       }
 
       NewBuffer = PA_FROM_PTR ((CHAR8_FROM_PA (CurrentBuffer) + EntrySize));

@@ -43,6 +43,7 @@
 
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoClearEnable
 
 [FixedPcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase

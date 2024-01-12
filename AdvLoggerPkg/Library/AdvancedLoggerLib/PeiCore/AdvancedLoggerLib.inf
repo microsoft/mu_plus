@@ -54,6 +54,7 @@
 [FeaturePcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPeiInRAM                     ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM                   ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoClearEnable
 
 [FixedPcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES

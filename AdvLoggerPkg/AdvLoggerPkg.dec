@@ -81,6 +81,10 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE|BOOLEAN|0x00010184
 
+  ## PcdAdvancedFileLoggerForceEnable - Forces the creation of the Logs subdirectory on non USB devices
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoClearEnable|FALSE|BOOLEAN|0x00010188
+
 
 [PcdsFixedAtBuild]
   ## Advanced Logger Base - NULL = UEFI starts with PEI or DXE, and there is no SEC, or SEC
