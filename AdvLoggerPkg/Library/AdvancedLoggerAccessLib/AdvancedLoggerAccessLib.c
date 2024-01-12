@@ -314,6 +314,7 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   // GetNextLine.
 
   // In case this is a restart of the same Message, initialize the time stamp and prefix.
+  PhaseStringLen = 0;
   if (LineEntry->BlockEntry.Message != NULL) {
     FormatTimeStamp (TimeStampString, sizeof (TimeStampString), LineEntry->BlockEntry.TimeStamp);
     CopyMem (LineBuffer, TimeStampString, sizeof (TimeStampString) - sizeof (CHAR8));
