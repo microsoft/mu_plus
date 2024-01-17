@@ -43,4 +43,5 @@
   UefiLib
   UnitTestLib
 
-[Guids]
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoClearEnable
