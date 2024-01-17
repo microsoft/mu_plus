@@ -22,7 +22,6 @@
 #include <Library/PcdLib.h>
 #include <Library/SafeIntLib.h>
 #include <Library/UefiBootServicesTableLib.h>
-#include <Library/SynchronizationLib.h>
 
 STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo        = NULL;
 STATIC UINT32                mBufferSize         = 0;
