@@ -81,6 +81,11 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE|BOOLEAN|0x00010184
 
+  ## PcdAdvancedLoggerAutoWrapEnable - Automatically wrap around the LogCurrent cursor when it reaches the end
+  # of the log. This feature only activates at runtime (after exit boot service event).
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable|FALSE|BOOLEAN|0x00010188
+
 
 [PcdsFixedAtBuild]
   ## Advanced Logger Base - NULL = UEFI starts with PEI or DXE, and there is no SEC, or SEC

@@ -69,20 +69,44 @@ AdvancedLoggerMemoryLoggerWrite (
       if ((UsedSize >= LoggerInfo->LogBufferSize) ||
           ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize))
       {
-        //
-        // Update the number of bytes of log that have not been captured
-        //
-        do {
-          CurrentSize = LoggerInfo->DiscardedSize;
-          NewSize     = CurrentSize + (UINT32)NumberOfBytes;
-          OldSize     = InterlockedCompareExchange32 (
-                          (UINT32 *)&LoggerInfo->DiscardedSize,
-                          (UINT32)CurrentSize,
-                          (UINT32)NewSize
-                          );
-        } while (OldSize != CurrentSize);
+        if (FeaturePcdGet (PcdAdvancedLoggerAutoWrapEnable) && (LoggerInfo->AtRuntime)) {
+          //
+          // Wrap around the current cursor when auto wrap is enabled on buffer full during runtime.
+          //
+          NewBuffer = LoggerInfo->LogBuffer;
+          OldValue  = InterlockedCompareExchange64 (
+                        (UINT64 *)&LoggerInfo->LogCurrent,
+                        (UINT64)CurrentBuffer,
+                        (UINT64)NewBuffer
+                        );
+          if (OldValue != CurrentBuffer) {
+            //
+            // Another thread has updated the buffer, we should retry the logging.
+            //
+            continue;
+          }
 
-        return LoggerInfo;
+          // Now that we have a buffer that starts from the beginning, proceed to log the current message, from the beginning.
+          // Note that in this case, if there are other threads in the middle of logging a message, they will continue to write
+          // to the end of the buffer as it fits.
+          // If there is another clearing attempt on the other thread, i.e. another thread also try to fill up the buffer, the
+          // first clear will take effect and the other log entries will fail to update and proceed with a normal retry.
+        } else {
+          //
+          // Update the number of bytes of log that have not been captured
+          //
+          do {
+            CurrentSize = LoggerInfo->DiscardedSize;
+            NewSize     = CurrentSize + (UINT32)NumberOfBytes;
+            OldSize     = InterlockedCompareExchange32 (
+                            (UINT32 *)&LoggerInfo->DiscardedSize,
+                            (UINT32)CurrentSize,
+                            (UINT32)NewSize
+                            );
+          } while (OldSize != CurrentSize);
+
+          return LoggerInfo;
+        }
       }
 
       NewBuffer = PA_FROM_PTR ((CHAR8_FROM_PA (CurrentBuffer) + EntrySize));

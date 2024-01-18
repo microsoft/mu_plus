@@ -151,6 +151,7 @@
   AdvLoggerPkg/Library/AssertLib/AssertLib.inf
   AdvLoggerPkg/Library/AssertTelemetryLib/AssertLib.inf
   AdvLoggerPkg/UnitTests/LineParser/LineParserTestApp.inf
+  AdvLoggerPkg/UnitTests/AdvancedLoggerWrapper/AdvancedLoggerWrapperTestApp.inf
 
 [BuildOptions]
 #force deprecated interfaces off
