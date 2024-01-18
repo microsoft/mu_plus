@@ -40,5 +40,8 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## SOMETIMES_CONSUMES
 
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
+
 [Depex]
   TRUE
