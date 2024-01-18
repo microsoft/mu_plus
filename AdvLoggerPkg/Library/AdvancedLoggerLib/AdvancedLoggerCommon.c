@@ -69,26 +69,28 @@ AdvancedLoggerMemoryLoggerWrite (
       if ((UsedSize >= LoggerInfo->LogBufferSize) ||
           ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize))
       {
-        if (FeaturePcdGet (PcdAdvancedLoggerAutoClearEnable) && (LoggerInfo->AtRuntime)) {
-          do {
+        if (FeaturePcdGet (PcdAdvancedLoggerAutoWrapEnable) && (LoggerInfo->AtRuntime)) {
+          //
+          // Wrap around the current cursor when auto wrap is enabled on buffer full during runtime.
+          //
+          NewBuffer = LoggerInfo->LogBuffer;
+          OldValue  = InterlockedCompareExchange64 (
+                        (UINT64 *)&LoggerInfo->LogCurrent,
+                        (UINT64)CurrentBuffer,
+                        (UINT64)NewBuffer
+                        );
+          if (OldValue != CurrentBuffer) {
             //
-            // Clear the current cursor when auto clear is enabled on buffer full during runtime.
+            // Another thread has updated the buffer, we should retry the logging.
             //
-            CurrentBuffer = LoggerInfo->LogCurrent;
-
-            NewBuffer     = LoggerInfo->LogBuffer;
-            OldValue      = InterlockedCompareExchange64 (
-                              (UINT64 *)&LoggerInfo->LogCurrent,
-                              (UINT64)CurrentBuffer,
-                              (UINT64)NewBuffer
-                              );
-          } while (OldValue != CurrentBuffer);
+            continue;
+          }
 
           // Now that we have a buffer that starts from the beginning, proceed to log the current message, from the beginning.
-          // Note that in this case, if there are other threads in the middle of logging a message, they will write to the lala
-          // land where we will just drop the content.
-          // If there is another clearing attempt on the other thread, i.e. through the clear variable command, the later clear
-          // will take effect and the log entry together with that clear will be dropped.
+          // Note that in this case, if there are other threads in the middle of logging a message, they will continue to write
+          // to the end of the buffer as it fits.
+          // If there is another clearing attempt on the other thread, i.e. another thread also try to fill up the buffer, the
+          // first clear will take effect and the other log entries will fail to update and proceed with a normal retry.
         } else {
           //
           // Update the number of bytes of log that have not been captured

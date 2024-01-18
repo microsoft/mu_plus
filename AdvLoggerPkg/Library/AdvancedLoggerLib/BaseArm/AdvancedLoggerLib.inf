@@ -41,7 +41,7 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## SOMETIMES_CONSUMES
 
 [FeaturePcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoClearEnable
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
 
 [Depex]
   TRUE

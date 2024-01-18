@@ -81,9 +81,9 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE|BOOLEAN|0x00010184
 
-  ## PcdAdvancedFileLoggerForceEnable - Forces the creation of the Logs subdirectory on non USB devices
+  ## PcdAdvancedLoggerAutoWrapEnable - Automatically wrap around the LogCurrent cursor when it reaches the end of the log
   #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoClearEnable|FALSE|BOOLEAN|0x00010188
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable|FALSE|BOOLEAN|0x00010188
 
 
 [PcdsFixedAtBuild]

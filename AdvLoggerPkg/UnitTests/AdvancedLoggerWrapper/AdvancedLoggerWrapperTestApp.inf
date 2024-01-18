@@ -11,7 +11,7 @@
 [Defines]
   INF_VERSION                    = 1.26
   BASE_NAME                      = AdvancedLoggerWrapperTestApp
-  FILE_GUID                      = a329c87c-4dd2-4a56-87a9-dd9c9d35395d
+  FILE_GUID                      = F4CFDDDD-AD19-457F-B1C0-79229D265593
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = AdvancedLoggerWrapperTestAppEntry
@@ -35,6 +35,7 @@
 
 [LibraryClasses]
   AdvancedLoggerAccessLib
+  AdvancedLoggerLib
   BaseLib
   BaseMemoryLib
   DebugLib
@@ -45,4 +46,4 @@
   UnitTestLib
 
 [FeaturePcd]
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoClearEnable
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable

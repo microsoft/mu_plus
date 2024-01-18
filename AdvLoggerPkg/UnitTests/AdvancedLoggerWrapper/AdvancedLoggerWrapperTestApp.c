@@ -27,12 +27,12 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/AdvancedLoggerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 
-#define UNIT_TEST_APP_NAME        "AdvancedLoggerWrapper Library test cases"
-#define UNIT_TEST_APP_VERSION     "1.0"
-#define ADV_TIME_STAMP_PREFIX     "hh:mm:ss:ttt : "
-#define ADV_TIME_STAMP_PREFIX_LEN (sizeof (ADV_TIME_STAMP_PREFIX) - sizeof (CHAR8))
-#define ADV_TIME_TEST_STR         "Test"
-#define ADV_WRAP_TEST_STR         "DEADBEEF\n"
+#define UNIT_TEST_APP_NAME         "AdvancedLoggerWrapper Library test cases"
+#define UNIT_TEST_APP_VERSION      "1.0"
+#define ADV_TIME_STAMP_PREFIX      "hh:mm:ss:ttt : "
+#define ADV_TIME_STAMP_PREFIX_LEN  (sizeof (ADV_TIME_STAMP_PREFIX) - sizeof (CHAR8))
+#define ADV_TIME_TEST_STR          "Test"
+#define ADV_WRAP_TEST_STR          "DEADBEEF\n"
 
 // The following text represents the output lines from the line parser given the above input
 
@@ -44,8 +44,8 @@ extern CONST   CHAR8  *AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_CNT];
 
 ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  mMessageEntry;
 ADVANCED_LOGGER_INFO                       *mLoggerInfo;
-EFI_PHYSICAL_ADDRESS                       mMaxAddress  = 0;
-UINT32                                     mBufferSize  = 0;
+EFI_PHYSICAL_ADDRESS                       mMaxAddress          = 0;
+UINT32                                     mBufferSize          = 0;
 EFI_MP_SERVICES_PROTOCOL                   *mMpServicesProtocol = NULL;
 
 typedef struct {
@@ -59,7 +59,7 @@ typedef struct {
 // * Test Contexts                                                                    *
 // *----------------------------------------------------------------------------------*
 STATIC BASIC_TEST_CONTEXT  mTest00 = { "Basic tests", Line00, NULL, EFI_SUCCESS };
-STATIC BASIC_TEST_CONTEXT  mTest01 = { "Basic tests", Line01, NULL, EFI_SUCCESS };
+STATIC BASIC_TEST_CONTEXT  mTest01 = { "Basic tests in MP", Line01, NULL, EFI_SUCCESS };
 
 /// ================================================================================================
 /// ================================================================================================
@@ -164,7 +164,7 @@ InitializeInMemoryLog (
   }
 
   // Make sure the wrapper feature is enabled.
-  if (!FeaturePcdGet (PcdAdvancedLoggerAutoClearEnable)) {
+  if (!FeaturePcdGet (PcdAdvancedLoggerAutoWrapEnable)) {
     return UNIT_TEST_ERROR_TEST_FAILED;
   }
 
@@ -245,7 +245,6 @@ TestCursorWrapping (
 
   UT_ASSERT_EQUAL (mMessageEntry.MessageLen, AsciiStrLen (Btc->ExpectedLine));
 
-
   Btc->MemoryToFree = mMessageEntry.Message;
 
   return UNIT_TEST_PASSED;
@@ -263,9 +262,9 @@ ApProcedure (
   IN OUT VOID  *Buffer
   )
 {
-  UINTN Index;
-  UINTN Size;
-  CHAR8 AsciiBuffer[8 + sizeof (ADV_WRAP_TEST_STR)];
+  UINTN  Index;
+  UINTN  Size;
+  CHAR8  AsciiBuffer[8 + sizeof (ADV_WRAP_TEST_STR)];
 
   // First figure out the current MP index
   mMpServicesProtocol->WhoAmI (mMpServicesProtocol, &Index);
@@ -320,14 +319,14 @@ TestCursorWrappingMP (
   }
 
   Status = mMpServicesProtocol->StartupAllAPs (
-                         mMpServicesProtocol,
-                         (EFI_AP_PROCEDURE)ApProcedure,
-                         FALSE,
-                         NULL,
-                         0,
-                         NULL,
-                         NULL
-                         );
+                                  mMpServicesProtocol,
+                                  (EFI_AP_PROCEDURE)ApProcedure,
+                                  FALSE,
+                                  NULL,
+                                  0,
+                                  NULL,
+                                  NULL
+                                  );
   if (EFI_ERROR (Status)) {
     UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
     goto Done;
@@ -359,7 +358,7 @@ TestCursorWrappingMP (
     }
 
     // HACKHACK: Bypass the potential print out from MpLib
-    if ((Index == 0) && AsciiStrStr (mMessageEntry.Message, "5-Level Paging") != NULL) {
+    if ((Index == 0) && (AsciiStrStr (mMessageEntry.Message, "5-Level Paging") != NULL)) {
       Index--;
       continue;
     }
@@ -379,21 +378,26 @@ TestCursorWrappingMP (
 
     // The following verifies that the string content matches expectation and is NULL terminated, timestamp is not compared.
     PrefixSize = AsciiStrLen (AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_DXE]);
-    UT_ASSERT_MEM_EQUAL (&mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN],
-    AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_DXE],
-    PrefixSize);
+    UT_ASSERT_MEM_EQUAL (
+      &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN],
+      AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_DXE],
+      PrefixSize
+      );
 
     // The following verifies that the string content is NULL terminated and matches expectation.
-    UT_ASSERT_MEM_EQUAL (&mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8],
-    ADV_WRAP_TEST_STR,
-    sizeof (ADV_WRAP_TEST_STR)
-    );
+    UT_ASSERT_MEM_EQUAL (
+      &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8],
+      ADV_WRAP_TEST_STR,
+      sizeof (ADV_WRAP_TEST_STR)
+      );
 
     // Now check the index
     EndPointer = &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + sizeof (ADV_WRAP_TEST_STR) + 8 - 1];
-    Status = AsciiStrHexToUintnS (&mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + sizeof (ADV_WRAP_TEST_STR) - 1],
-    &EndPointer,
-    &StrIndex);
+    Status     = AsciiStrHexToUintnS (
+                   &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + sizeof (ADV_WRAP_TEST_STR) - 1],
+                   &EndPointer,
+                   &StrIndex
+                   );
     if (EFI_ERROR (Status)) {
       UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
       goto Done;
@@ -418,7 +422,6 @@ TestCursorWrappingMP (
     UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
     goto Done;
   }
-
 
 Done:
   if (TempCache != NULL) {
