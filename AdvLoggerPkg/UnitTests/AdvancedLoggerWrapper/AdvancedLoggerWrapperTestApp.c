@@ -423,6 +423,8 @@ TestCursorWrappingMP (
     goto Done;
   }
 
+  UtStatus = UNIT_TEST_PASSED;
+
 Done:
   if (TempCache != NULL) {
     FreePool (TempCache);
@@ -430,7 +432,7 @@ Done:
 
   Btc->MemoryToFree = mMessageEntry.Message;
 
-  return UNIT_TEST_PASSED;
+  return UtStatus;
 }
 
 /// ================================================================================================
