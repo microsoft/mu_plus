@@ -598,6 +598,13 @@ class AdvLogParser ():
         CurrentLine = LoggerInfo["CurrentLine"]
         StartLine = LoggerInfo["StartLine"]
 
+        if LoggerInfo["Version"] == self.V4_LOGGER_INFO_VERSION:
+            # There is a potential that we may have enabled auto wrap.
+            # If so, we need to find the first legible line. Given that
+            # we read the logger information from the head of the buffer,
+            # we can start from this cursor as an acceptable estiamte.
+            
+
         while (Status == self.SUCCESS):
             (Status, MessageLine) = self._GetNextFormattedLine(MessageLine, LoggerInfo)
             if Status != self.SUCCESS:
