@@ -456,8 +456,9 @@ class AdvLogParser ():
         if LoggerInfo["LogBuffer"] == LoggerInfo["LogCurrent"]:
             return (self.END_OF_FILE, MessageBlock)
 
-        if InFile.tell() >= LoggerInfo["LogCurrent"]:
-            return (self.END_OF_FILE, MessageBlock)
+        # if InFile.tell() >= LoggerInfo["LogCurrent"]:
+        #     print ("here 1")
+        #     return (self.END_OF_FILE, MessageBlock)
 
         (MessageEntry, NextMessage) = self._ReadMessageEntry(LoggerInfo)
 
@@ -603,7 +604,18 @@ class AdvLogParser ():
             # If so, we need to find the first legible line. Given that
             # we read the logger information from the head of the buffer,
             # we can start from this cursor as an acceptable estiamte.
-            
+            LogStart = LoggerInfo["LogCurrent"]
+            InFile = LoggerInfo["InFile"]
+            CurrentStart = InFile.tell()
+            print (f"CurrentStart = {CurrentStart}")
+            InFile.seek(LogStart)
+            LogStream = InFile.read()
+            LogStart = LogStream.find(b'ALM2')
+            if LogStart == -1:
+                print("DecodeUefiLog unable to find ALM2 signature. Using the beginning as start")
+                LogStart = 0
+            # We found the first legible line, so we can start from here.
+            LoggerInfo["InFile"].seek(LoggerInfo["LogCurrent"] + LogStart)
 
         while (Status == self.SUCCESS):
             (Status, MessageLine) = self._GetNextFormattedLine(MessageLine, LoggerInfo)
