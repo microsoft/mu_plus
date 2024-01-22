@@ -16,14 +16,7 @@ from edk2toolext.invocables.edk2_pr_eval import PrEvalSettingsManager
 from edk2toollib.utility_functions import GetHostInfo
 from pathlib import Path
 
-try:
-    # May not be present until submodules are populated
-    root = Path(__file__).parent.parent.resolve()
-    sys.path.append(str(root/'MU_BASECORE'/'.pytool'/'Plugin'/'CodeQL'/'integration'))
-    import stuart_codeql as codeql_helpers
-except ImportError:
-    pass
-
+from edk2toolext import codeql as codeql_helpers
 
 class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsManager, SetupSettingsManager, PrEvalSettingsManager):
 
