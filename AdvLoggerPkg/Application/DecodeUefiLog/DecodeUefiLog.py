@@ -422,7 +422,7 @@ class AdvLogParser ():
             InFile.seek(EntryStart + MessageEntry["MessageOffset"])
             MessageEntry["MessageText"] = InFile.read(MessageEntry["MessageLen"]).decode('utf-8', 'replace')
         else:
-            raise Exception("Message Block has wrong signature at offset 0x%X" % InFile.tell())
+            return (None, None)
 
         Skip = InFile.tell()
         Norm = int((int((Skip + 7) / 8)) * 8)
@@ -603,36 +603,119 @@ class AdvLogParser ():
             # There is a potential that we may have enabled auto wrap.
             # If so, we need to find the first legible line. Given that
             # we read the logger information from the head of the buffer,
-            # we can start from this cursor as an acceptable estiamte.
-            LogStart = LoggerInfo["LogCurrent"]
-            InFile = LoggerInfo["InFile"]
-            CurrentStart = InFile.tell()
-            print (f"CurrentStart = {CurrentStart}")
-            InFile.seek(LogStart)
-            LogStream = InFile.read()
-            LogStart = LogStream.find(b'ALM2')
-            if LogStart == -1:
-                print("DecodeUefiLog unable to find ALM2 signature. Using the beginning as start")
-                LogStart = 0
-            # We found the first legible line, so we can start from here.
-            LoggerInfo["InFile"].seek(LoggerInfo["LogCurrent"] + LogStart)
+            # we can start from this cursor as an acceptable estiamted
+            # start.
+            OriginalOffset = LoggerInfo["InFile"].tell()
+            StartOffset = LoggerInfo["LogCurrent"]
+            while True:
+                LoggerInfo["InFile"].seek(StartOffset)
+                CurrentOffset = StartOffset
+                ThisIsGood = True
+                # We need to verify that from this point on, we have at least
+                # one chunk of eligible entries. If not, we need to move along
+                # the pointer.
+                while CurrentOffset < LoggerInfo["LogBufferSize"] and\
+                        CurrentOffset < StartOffset + self.MAX_MESSAGE_SIZE:
+                    (MessageEntry, _) = self._ReadMessageEntry(LoggerInfo)
+                    CurrentOffset = LoggerInfo["InFile"].tell()
+                    if MessageEntry is None:
+                        ThisIsGood = False
+                        break
 
-        while (Status == self.SUCCESS):
-            (Status, MessageLine) = self._GetNextFormattedLine(MessageLine, LoggerInfo)
-            if Status != self.SUCCESS:
-                if Status != self.END_OF_FILE:
-                    print(f"Error {Status} from GetNextFormattedLine")
-                break
+                if ThisIsGood:
+                    LoggerInfo["InFile"].seek(StartOffset)
+                    break
+                else:
+                    # We found the first legible line, so we can start from here.
+                    LogStream = LoggerInfo["InFile"].read()
+                    StartOffset = LogStream.find(b'ALM2')
+                    if StartOffset == -1:
+                        StartOffset = LogStream.find(b'ALMS')
+                        if StartOffset == -1:
+                            print("DecodeUefiLog unable to find ALM* signature. Using the beginning as start")
+                            StartOffset = OriginalOffset
+                            break
+                        else:
+                            StartOffset += CurrentOffset
+                    else:
+                        StartOffset += CurrentOffset
 
-            if CurrentLine >= StartLine:
-                Ticks = MessageLine["TimeStamp"]
-                PhaseString = self._GetPhaseString(MessageLine["Phase"])
-                NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + PhaseString + MessageLine["Message"].rstrip("\r\n")
-                lines.append(NewLine + '\n')
+            # By the time we are here, we LoggerInfo["InFile"] pointing at the first StartOffset.
+            MessageEntries = []
+            if StartOffset != OriginalOffset:
+                MaximumOffset = LoggerInfo["LogBufferSize"]
+                NeedWrap = True
+            else:
+                # To be honest, there might be some prints that we missed during
+                # querying the logger buffer. We can deal with this nuance later.
+                MaximumOffset = LoggerInfo["LogCurrent"]
+                NeedWrap = False
 
-            CurrentLine += 1
+            # Ok, let's go
+            CurrentOffset = StartOffset
+            while CurrentOffset < MaximumOffset:
+                (MessageEntry, _) = self._ReadMessageEntry(LoggerInfo)
+                CurrentOffset = LoggerInfo["InFile"].tell()
+                if MessageEntry is None:
+                    break
+                MessageEntries.append(MessageEntry)
 
-        LoggerInfo["CurrentLine"] = CurrentLine
+            # If we need to wrap, we need to start from the beginning.
+            if NeedWrap:
+                CurrentOffset = OriginalOffset
+                MaximumOffset = LoggerInfo["LogCurrent"]
+                LoggerInfo["InFile"].seek(CurrentOffset)
+                while CurrentOffset < MaximumOffset:
+                    (MessageEntry, _) = self._ReadMessageEntry(LoggerInfo)
+                    CurrentOffset = LoggerInfo["InFile"].tell()
+                    if MessageEntry is None:
+                        break
+                    MessageEntries.append(MessageEntry)
+
+            # Now we have all the message entries, let's format them
+            # into lines.
+            for i in range(len(MessageEntries)):
+                if MessageEntries[i] is None:
+                    continue
+
+                Ticks = MessageEntries[i]["TimeStamp"]
+                PhaseString = self._GetPhaseString(MessageEntries[i]["Phase"])
+                line = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + PhaseString
+                j = i
+                tempEntry = MessageEntries[i]
+                while j < len(MessageEntries):
+                    # We will keep globbering the message until we see a new line of the same phase.
+                    if MessageEntries[j] is not None and MessageEntries[j]["Phase"] == tempEntry["Phase"]:
+                        line += MessageEntries[j]["MessageText"]
+                        MessageEntries[j] = None
+                        if line.endswith('\n'):
+                            # Finally a line break, we are done.
+                            break
+                    j += 1
+
+                # Regardless of whether we have a line break or not, we need to move the cursor
+                lines.append(line.rstrip("\r\n") + '\n')
+
+                CurrentLine += 1
+
+            LoggerInfo["CurrentLine"] = CurrentLine
+        else:
+            while (Status == self.SUCCESS):
+                (Status, MessageLine) = self._GetNextFormattedLine(MessageLine, LoggerInfo)
+                if Status != self.SUCCESS:
+                    if Status != self.END_OF_FILE:
+                        print(f"Error {Status} from GetNextFormattedLine")
+                    break
+
+                if CurrentLine >= StartLine:
+                    Ticks = MessageLine["TimeStamp"]
+                    PhaseString = self._GetPhaseString(MessageLine["Phase"])
+                    NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + PhaseString + MessageLine["Message"].rstrip("\r\n")
+                    lines.append(NewLine + '\n')
+
+                CurrentLine += 1
+
+            LoggerInfo["CurrentLine"] = CurrentLine
 
         return lines
 
