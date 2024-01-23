@@ -25,19 +25,18 @@
 ; UINT32 *
 ; EFIAPI
 ; AsmRepLodsd (
-;   IN UINT32  *Address,
-;   IN UINTN   Length
+;   IN UINT32  *Address,      // rcx
+;   IN UINTN   Length         // rdx
 ;   );
 ;------------------------------------------------------------------------------
 global ASM_PFX(AsmRepLodsd)
 ASM_PFX(AsmRepLodsd):
-    push    esi
-    mov     esi, [esp + 8]
-    mov     ecx, [esp + 12]
-    shr     ecx, 2
-    cld
-    rep     lodsd
-    mov     eax, esi
-    pop     esi
+     push    rsi
+     xchg    rcx, rdx
+     mov     rsi, rdx
+     shr     rcx, 2
+     cld
+     rep     lodsd
+     mov     rax, rsi
+     pop     rsi
     ret
-

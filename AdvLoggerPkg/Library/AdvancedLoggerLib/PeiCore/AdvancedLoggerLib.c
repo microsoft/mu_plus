@@ -338,7 +338,7 @@ GetSecLoggerInfo (
   // trimmed to be a pointer the size of the actual platform - and the Pcd is expected
   // to be set accordingly.
   LoggerInfoSec = NULL;
-  LogPtr        = (ADVANCED_LOGGER_PTR *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
+  LogPtr        = (ADVANCED_LOGGER_PTR *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
   if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
     if ((LogPtr != NULL) &&
         (LogPtr->Signature == ADVANCED_LOGGER_PTR_SIGNATURE) &&
@@ -384,7 +384,7 @@ UpdateSecLoggerInfo (
   // The PCD AdvancedLoggerBase MAY be a 64 bit address.  However, it is
   // trimmed to be a pointer the size of the actual platform - and the Pcd is expected
   // to be set accordingly.
-  LogPtr = (ADVANCED_LOGGER_PTR *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
+  LogPtr = (ADVANCED_LOGGER_PTR *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
   if (LogPtr != NULL) {
     LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
   }
@@ -530,7 +530,7 @@ AdvancedLoggerGetLoggerInfo (
         LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
         LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
         LoggerInfo->LogBuffer     = PA_FROM_PTR (LoggerInfo + 1);
-        LoggerInfo->LogBufferSize = BufferSize - sizeof (ADVANCED_LOGGER_INFO);
+        LoggerInfo->LogBufferSize = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
         LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
         LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
         AdvancedLoggerHdwPortInitialize ();
