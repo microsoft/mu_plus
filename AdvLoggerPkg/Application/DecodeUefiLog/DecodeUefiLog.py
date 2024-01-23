@@ -456,10 +456,6 @@ class AdvLogParser ():
         if LoggerInfo["LogBuffer"] == LoggerInfo["LogCurrent"]:
             return (self.END_OF_FILE, MessageBlock)
 
-        # if InFile.tell() >= LoggerInfo["LogCurrent"]:
-        #     print ("here 1")
-        #     return (self.END_OF_FILE, MessageBlock)
-
         (MessageEntry, NextMessage) = self._ReadMessageEntry(LoggerInfo)
 
         if MessageEntry["Signature"] != 'ALMS' and MessageEntry["Signature"] != 'ALM2':
