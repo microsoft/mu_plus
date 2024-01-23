@@ -295,16 +295,16 @@ TestCursorWrappingMP (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  BASIC_TEST_CONTEXT  *Btc;
-  EFI_STATUS          Status;
-  UINTN               Index;
-  UINTN               StrIndex;
-  UINTN               NumberOfProcessors;
-  UINTN               EnabledProcessors;
-  UINT8               *TempCache = NULL;
-  UNIT_TEST_STATUS    UtStatus;
-  UINTN               PrefixSize;
-  CHAR8               *EndPointer;
+  BASIC_TEST_CONTEXT        *Btc;
+  EFI_STATUS                Status;
+  UINTN                     Index;
+  UINTN                     StrIndex;
+  UINTN                     NumberOfProcessors;
+  UINTN                     EnabledProcessors;
+  UINT8                     *TempCache = NULL;
+  UINTN                     PrefixSize;
+  CHAR8                     EndChar;
+  EFI_PROCESSOR_INFORMATION CpuInfo;
 
   Btc = (BASIC_TEST_CONTEXT *)Context;
 
@@ -313,10 +313,7 @@ TestCursorWrappingMP (
     AdvancedLoggerWrite (DEBUG_ERROR, ADV_TIME_TEST_STR, sizeof (ADV_TIME_TEST_STR));
   }
 
-  if (mMpServicesProtocol == NULL) {
-    UtStatus = UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
-    goto Done;
-  }
+  UT_ASSERT_NOT_NULL (mMpServicesProtocol);
 
   Status = mMpServicesProtocol->StartupAllAPs (
                                   mMpServicesProtocol,
@@ -327,35 +324,32 @@ TestCursorWrappingMP (
                                   NULL,
                                   NULL
                                   );
-  if (EFI_ERROR (Status)) {
-    UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    goto Done;
-  }
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   // BSP needs to run the procedure as well...
   ApProcedure (NULL);
 
   Status = mMpServicesProtocol->GetNumberOfProcessors (mMpServicesProtocol, &NumberOfProcessors, &EnabledProcessors);
-  if (EFI_ERROR (Status)) {
-    UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    goto Done;
-  }
+  UT_ASSERT_NOT_EFI_ERROR (Status);
 
   TempCache = AllocatePool (NumberOfProcessors * sizeof (UINT8));
-  if (TempCache == NULL) {
-    UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    goto Done;
-  }
+  UT_ASSERT_NOT_NULL (TempCache);
 
   // Initialize the cache to 0xFF
-  SetMem (TempCache, NumberOfProcessors * sizeof (UINT8), 0xFF);
-
   for (Index = 0; Index < NumberOfProcessors; Index++) {
-    Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mMessageEntry);
-    if (EFI_ERROR (Status)) {
-      UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-      goto Done;
+    Status = mMpServicesProtocol->GetProcessorInfo (mMpServicesProtocol, CPU_V2_EXTENDED_TOPOLOGY | Index, &CpuInfo);
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+
+    if (CpuInfo.StatusFlag & PROCESSOR_ENABLED_BIT) {
+      TempCache[Index] = 0xFF;
+    } else {
+      TempCache[Index] = 0;
     }
+  }
+
+  for (Index = 0; Index < EnabledProcessors; Index++) {
+    Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mMessageEntry);
+    UT_ASSERT_TRUE ((Status == EFI_SUCCESS) || (Status == EFI_END_OF_FILE));
 
     // HACKHACK: Bypass the potential print out from MpLib
     if ((Index == 0) && (AsciiStrStr (mMessageEntry.Message, "5-Level Paging") != NULL)) {
@@ -365,9 +359,7 @@ TestCursorWrappingMP (
 
     UT_ASSERT_NOT_NULL (mMessageEntry.Message);
     UT_LOG_INFO ("\nReturn Length=%d\n", mMessageEntry.MessageLen);
-    UT_LOG_INFO ("\n = %a =\n", mMessageEntry.Message);
     UT_LOG_INFO ("\nExpected Length=%d\n", AsciiStrLen (Btc->ExpectedLine));
-    UT_LOG_INFO ("\n = %a =\n", Btc->ExpectedLine);
 
     if (mMessageEntry.MessageLen != AsciiStrLen (Btc->ExpectedLine)) {
       DUMP_HEX (DEBUG_ERROR, 0, mMessageEntry.Message, mMessageEntry.MessageLen, "Actual   - ");
@@ -392,47 +384,31 @@ TestCursorWrappingMP (
       );
 
     // Now check the index
-    EndPointer = &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + sizeof (ADV_WRAP_TEST_STR) + 8 - 1];
+    EndChar = mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8];
+    mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8] = '\0';
     Status     = AsciiStrHexToUintnS (
-                   &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + sizeof (ADV_WRAP_TEST_STR) - 1],
-                   &EndPointer,
+                   &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize],
+                   NULL,
                    &StrIndex
                    );
-    if (EFI_ERROR (Status)) {
-      UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-      goto Done;
-    }
+    UT_ASSERT_NOT_EFI_ERROR (Status);
+    mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8] = EndChar;
 
-    if (StrIndex >= NumberOfProcessors) {
-      // Index is out of range
-      UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-      goto Done;
-    }
+    UT_ASSERT_TRUE (StrIndex < NumberOfProcessors);
 
-    if (TempCache[StrIndex] == 0) {
-      // Printed this index already
-      UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-      goto Done;
-    } else {
-      TempCache[StrIndex] = 0;
-    }
+    UT_ASSERT_TRUE (TempCache[StrIndex] == 0xFF);
+    TempCache[StrIndex] = 0;
   }
 
-  if (!IsZeroBuffer (TempCache, NumberOfProcessors * sizeof (UINT8))) {
-    UtStatus = UNIT_TEST_ERROR_TEST_FAILED;
-    goto Done;
-  }
+  UT_ASSERT_TRUE (IsZeroBuffer (TempCache, NumberOfProcessors * sizeof (UINT8)));
 
-  UtStatus = UNIT_TEST_PASSED;
-
-Done:
   if (TempCache != NULL) {
     FreePool (TempCache);
   }
 
   Btc->MemoryToFree = mMessageEntry.Message;
 
-  return UtStatus;
+  return UNIT_TEST_PASSED;
 }
 
 /// ================================================================================================
