@@ -11,14 +11,27 @@
 #include <Guid/ImageAuthentication.h>
 #include <Guid/VariableFormat.h>
 #include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
 
 #include "RecoveryPayload.h"
 
+//
 // 10 seconds in microseconds
+//
 #define STALL_10_SECONDS  10000000
 
+//
+// The size of an EFI_STATUS in bytes
+//
 #define STATUS_SIZE         (sizeof(EFI_STATUS) * 2)
 #define STATUS_STRING_SIZE  (STATUS_SIZE + sizeof(L"\0"))
+
+//
+// The system table pointers
+//
+EFI_SYSTEM_TABLE      *mST = NULL;
+EFI_RUNTIME_SERVICES  *mRT = NULL;
+EFI_BOOT_SERVICES     *mBS = NULL;
 
 /**
  * Converts an EFI_STATUS to a hex string
@@ -49,6 +62,23 @@ StatusToHexString (
 }
 
 /**
+ * Prints an error message to the console
+ * @param[in] Message     The message to print
+ * @param[in] Status      The EFI_STATUS to print
+*/
+VOID
+PrintError (
+  CHAR16      *Message,
+  EFI_STATUS  Status
+  )
+{
+  mST->ConOut->OutputString (mST->ConOut, Message);
+  mST->ConOut->OutputString (mST->ConOut, L"Error: 0x");
+  mST->ConOut->OutputString (mST->ConOut, StatusToHexString (Status));
+  mST->ConOut->OutputString (mST->ConOut, L"\r\n");
+}
+
+/**
   The user Entry Point for Application. The user code starts with this function
   as the real entry point for the application.
 
@@ -69,7 +99,11 @@ UefiMain (
 {
   EFI_STATUS  Status;
   UINT32      Attributes;
+  UINTN       DbSize;
+  BOOLEAN     IsFound;
 
+  IsFound    = FALSE;
+  DbSize     = 0;
   Attributes = VARIABLE_ATTRIBUTE_NV_BS_RT_AT | EFI_VARIABLE_APPEND_WRITE;
 
   //
@@ -95,52 +129,53 @@ UefiMain (
     goto Exit;
   }
 
+  // Save off the system table pointers
+  mST = SystemTable;
+  mBS = SystemTable->BootServices;
+  mRT = SystemTable->RuntimeServices;
+
   //
   // Start informing the user of what is happening
   //
-  SystemTable->ConOut->ClearScreen (SystemTable->ConOut);
-  SystemTable->ConOut->OutputString (SystemTable->ConOut, L"\r\nAttempting to update the system's secureboot certificates\r\n");
-  SystemTable->ConOut->OutputString (SystemTable->ConOut, L"Learn more about this tool at https://aka.ms/securebootrecovery\r\n");
+  mST->ConOut->ClearScreen (mST->ConOut);
+  mST->ConOut->OutputString (mST->ConOut, L"\r\nAttempting to update the system's secureboot certificates\r\n");
+  mST->ConOut->OutputString (mST->ConOut, L"Learn more about this tool at https://aka.ms/securebootrecovery\r\n");
 
   //
   // Perform the append operation
   //
-  Status = SystemTable->RuntimeServices->SetVariable (
-                                           L"db",
-                                           &gEfiImageSecurityDatabaseGuid,
-                                           Attributes,
-                                           sizeof (mDbUpdate),
-                                           mDbUpdate
-                                           );
+  Status = mRT->SetVariable (
+                  L"db",
+                  &gEfiImageSecurityDatabaseGuid,
+                  Attributes,
+                  sizeof (mDbUpdate),
+                  mDbUpdate
+                  );
   if (EFI_ERROR (Status)) {
     //
     // On failure, inform the user and reboot
     // Likely this will continue to fail on reboot, the user will hopefully go to https://aka.ms/securebootrecovery to learn more
     //
-    SystemTable->ConOut->OutputString (SystemTable->ConOut, L"\r\nFailed to update the system's secureboot keys\r\n");
-    SystemTable->ConOut->OutputString (SystemTable->ConOut, L"Error: 0x");
-    SystemTable->ConOut->OutputString (SystemTable->ConOut, StatusToHexString (Status));
-    SystemTable->ConOut->OutputString (SystemTable->ConOut, L"\r\n");
-
+    PrintError (L"\r\nFailed to update the system to the 2023 Secure Boot Certificate\r\n", Status);
     goto Reboot;
   }
 
   //
   // Otherwise the system took the update, so let's inform the user
   //
-  SystemTable->ConOut->OutputString (SystemTable->ConOut, L"\r\nSuccessfully updated the system's secureboot keys\r\n");
+  mST->ConOut->OutputString (mST->ConOut, L"\r\nSuccessfully updated the system's secureboot keys\r\n");
 
 Reboot:
 
   //
   //  Stall for 10 seconds to give the user a chance to read the message
   //
-  SystemTable->BootServices->Stall (STALL_10_SECONDS);
+  mBS->Stall (STALL_10_SECONDS);
 
   //
   // Reset the system
   //
-  SystemTable->RuntimeServices->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
+  mRT->ResetSystem (EfiResetCold, EFI_SUCCESS, 0, NULL);
 
 Exit:
   //
@@ -150,15 +185,12 @@ Exit:
   //
   // let's atleast try to print an error to the console
   //
-  SystemTable->ConOut->OutputString (SystemTable->ConOut, L"Exiting unexpectedly!\r\n");
-  SystemTable->ConOut->OutputString (SystemTable->ConOut, L"Error: 0x");
-  SystemTable->ConOut->OutputString (SystemTable->ConOut, StatusToHexString (Status));
-  SystemTable->ConOut->OutputString (SystemTable->ConOut, L"\r\n");
+  PrintError (L"Exiting unexpectedly!\r\n", Status);
 
   //
   // Stall for 10 seconds to give the user a chance to read the error message
   //
-  SystemTable->BootServices->Stall (STALL_10_SECONDS);
+  mBS->Stall (STALL_10_SECONDS);
 
   return Status;
 }
