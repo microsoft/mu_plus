@@ -165,7 +165,7 @@ InitializeInMemoryLog (
 
   // Make sure the wrapper feature is enabled.
   if (!FeaturePcdGet (PcdAdvancedLoggerAutoWrapEnable)) {
-    return UNIT_TEST_ERROR_TEST_FAILED;
+    return UNIT_TEST_ERROR_PREREQUISITE_NOT_MET;
   }
 
   //
@@ -185,6 +185,7 @@ InitializeInMemoryLog (
 
     if (!ValidateInfoBlock ()) {
       mLoggerInfo = NULL;
+      UT_ASSERT_TRUE (FALSE);
     }
 
     // This is to bypass the restriction on runtime check.
@@ -219,6 +220,8 @@ TestCursorWrapping (
   EFI_STATUS          Status;
 
   Btc = (BASIC_TEST_CONTEXT *)Context;
+
+  UT_ASSERT_TRUE (mLoggerInfo != NULL);
 
   // First fill in the buffer
   while (mLoggerInfo->LogCurrent + MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_TIME_TEST_STR)) < mMaxAddress) {
@@ -307,6 +310,8 @@ TestCursorWrappingMP (
   EFI_PROCESSOR_INFORMATION CpuInfo;
 
   Btc = (BASIC_TEST_CONTEXT *)Context;
+
+  UT_ASSERT_TRUE (mLoggerInfo != NULL);
 
   // First fill in the buffer
   while (mLoggerInfo->LogCurrent + MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_TIME_TEST_STR)) < mMaxAddress) {
