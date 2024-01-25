@@ -637,7 +637,8 @@ class AdvLogParser ():
                     else:
                         StartOffset += CurrentOffset
 
-            # By the time we are here, we LoggerInfo["InFile"] pointing at the first StartOffset.
+            # By the time we are here, we have LoggerInfo["InFile"] pointing at the first StartOffset.
+
             MessageEntries = []
             if StartOffset != OriginalOffset:
                 MaximumOffset = LoggerInfo["LogBufferSize"]
