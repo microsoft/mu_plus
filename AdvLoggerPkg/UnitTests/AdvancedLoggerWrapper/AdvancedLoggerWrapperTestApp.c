@@ -404,6 +404,8 @@ TestCursorWrappingMP (
                &StrIndex
                );
     UT_ASSERT_NOT_EFI_ERROR (Status);
+
+    // Now we can set the char back to what it was
     mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8] = EndChar;
 
     UT_ASSERT_TRUE (StrIndex < NumberOfProcessors);
