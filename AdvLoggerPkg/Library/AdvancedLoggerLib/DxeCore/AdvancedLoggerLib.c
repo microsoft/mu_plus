@@ -388,6 +388,7 @@ DxeCoreAdvancedLoggerLibConstructor (
         AdvancedLoggerHdwPortInitialize ();
         LoggerInfo->HdwPortInitialized = TRUE;
       }
+
       mMaxAddress = LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize;
       mBufferSize = LoggerInfo->LogBufferSize;
     } else {
