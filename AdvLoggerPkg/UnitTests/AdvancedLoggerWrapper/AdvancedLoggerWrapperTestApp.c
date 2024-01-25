@@ -298,16 +298,16 @@ TestCursorWrappingMP (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  BASIC_TEST_CONTEXT        *Btc;
-  EFI_STATUS                Status;
-  UINTN                     Index;
-  UINTN                     StrIndex;
-  UINTN                     NumberOfProcessors;
-  UINTN                     EnabledProcessors;
-  UINT8                     *TempCache = NULL;
-  UINTN                     PrefixSize;
-  CHAR8                     EndChar;
-  EFI_PROCESSOR_INFORMATION CpuInfo;
+  BASIC_TEST_CONTEXT         *Btc;
+  EFI_STATUS                 Status;
+  UINTN                      Index;
+  UINTN                      StrIndex;
+  UINTN                      NumberOfProcessors;
+  UINTN                      EnabledProcessors;
+  UINT8                      *TempCache = NULL;
+  UINTN                      PrefixSize;
+  CHAR8                      EndChar;
+  EFI_PROCESSOR_INFORMATION  CpuInfo;
 
   Btc = (BASIC_TEST_CONTEXT *)Context;
 
@@ -389,13 +389,13 @@ TestCursorWrappingMP (
       );
 
     // Now check the index
-    EndChar = mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8];
+    EndChar                                                           = mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8];
     mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8] = '\0';
-    Status     = AsciiStrHexToUintnS (
-                   &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize],
-                   NULL,
-                   &StrIndex
-                   );
+    Status                                                            = AsciiStrHexToUintnS (
+                                                                          &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize],
+                                                                          NULL,
+                                                                          &StrIndex
+                                                                          );
     UT_ASSERT_NOT_EFI_ERROR (Status);
     mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8] = EndChar;
 
