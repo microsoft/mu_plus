@@ -185,7 +185,8 @@ InitializeInMemoryLog (
 
     if (!ValidateInfoBlock ()) {
       mLoggerInfo = NULL;
-      UT_ASSERT_TRUE (FALSE);
+      UT_ASSERT_NOT_NULL (mLoggerInfo);
+
     }
 
     // This is to bypass the restriction on runtime check.
