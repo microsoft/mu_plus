@@ -599,7 +599,8 @@ class AdvLogParser ():
             # There is a potential that we may have enabled auto wrap.
             # If so, we need to find the first legible line. Given that
             # we read the logger information from the head of the buffer,
-            # we can start from this cursor as an acceptable estiamted
+            # we can start from this cursor as an acceptable estimated
+
             # start.
             OriginalOffset = LoggerInfo["InFile"].tell()
             StartOffset = LoggerInfo["LogCurrent"]
