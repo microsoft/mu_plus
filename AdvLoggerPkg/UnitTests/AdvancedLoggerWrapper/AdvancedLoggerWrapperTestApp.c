@@ -389,13 +389,18 @@ TestCursorWrappingMP (
       );
 
     // Now check the index
-    EndChar                                                           = mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8];
+    // First cache the current value at the end of target sequence
+    EndChar = mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8];
+
+    // Then set that char to NULL
     mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8] = '\0';
-    Status                                                            = AsciiStrHexToUintnS (
-                                                                          &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize],
-                                                                          NULL,
-                                                                          &StrIndex
-                                                                          );
+
+    // Then convert the string to a number
+    Status = AsciiStrHexToUintnS (
+               &mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize],
+               NULL,
+               &StrIndex
+               );
     UT_ASSERT_NOT_EFI_ERROR (Status);
     mMessageEntry.Message[ADV_TIME_STAMP_PREFIX_LEN + PrefixSize + 8] = EndChar;
 
