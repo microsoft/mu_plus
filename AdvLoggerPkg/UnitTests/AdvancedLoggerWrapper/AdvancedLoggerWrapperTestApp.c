@@ -312,7 +312,8 @@ TestCursorWrappingMP (
 
   Btc = (BASIC_TEST_CONTEXT *)Context;
 
-  UT_ASSERT_TRUE (mLoggerInfo != NULL);
+  UT_ASSERT_NOT_NULL (mLoggerInfo);
+
 
   // First fill in the buffer
   while (mLoggerInfo->LogCurrent + MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_TIME_TEST_STR)) < mMaxAddress) {
