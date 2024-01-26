@@ -154,7 +154,7 @@ AdvLoggerAccessInit (
   V2 ...
   ...
 
-  Vxx - returns the last few bytes of the log
+  Vxx - returns the last few bytes of the logging area
   Vxx+1 = returns EFI_NOT_FOUND.
 
 
@@ -221,7 +221,7 @@ AdvLoggerAccessGetVariable (
   }
 
   LogBufferStart  = (UINT8 *)mLoggerInfo;
-  LogBufferEnd    = (UINT8 *)PTR_FROM_PA (mLoggerInfo->LogCurrent);
+  LogBufferEnd    = (UINT8 *)PTR_FROM_PA (mMaxAddress);
   LogBufferStart += (BlockNumber * mLoggerTransferSize);
 
   if (LogBufferStart >= LogBufferEnd) {
