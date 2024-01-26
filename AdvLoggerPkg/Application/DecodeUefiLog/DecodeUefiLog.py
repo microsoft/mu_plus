@@ -711,7 +711,7 @@ class AdvLogParser ():
                 MessageEntries.extend(entries)
 
         # Experimental: Try to creep through from here to the StartOffset,
-        # but we bail at the first failure.
+        # or until the end of this log, but we bail at the first failure.
         CurrentOffset = LoggerInfo["LogCurrent"]
         if NeedWrap:
             # This means the start is in the middle of the buffer.
