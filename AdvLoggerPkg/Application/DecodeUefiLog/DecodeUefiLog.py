@@ -8,6 +8,7 @@
 import struct
 import argparse
 import tempfile
+import traceback
 
 from win32com.shell import shell
 
@@ -454,6 +455,9 @@ class AdvLogParser ():
 
         InFile = LoggerInfo["InFile"]
         if LoggerInfo["LogBuffer"] == LoggerInfo["LogCurrent"]:
+            return (self.END_OF_FILE, MessageBlock)
+
+        if InFile.tell() >= LoggerInfo["LogCurrent"]:
             return (self.END_OF_FILE, MessageBlock)
 
         (MessageEntry, NextMessage) = self._ReadMessageEntry(LoggerInfo)
