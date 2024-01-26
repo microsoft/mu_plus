@@ -154,7 +154,7 @@ AdvLoggerAccessInit (
   V2 ...
   ...
 
-  Vxx - returns the last few bytes of the log
+  Vxx - returns the last few bytes of the logging area
   Vxx+1 = returns EFI_NOT_FOUND.
 
 
