@@ -671,6 +671,7 @@ class AdvLogParser ():
                     (MessageEntry, _) = self._ReadMessageEntry(LoggerInfo)
                     CurrentOffset = LoggerInfo["InFile"].tell()
                     if MessageEntry is None:
+                        print(f"Warning at {CurrentOffset}: MessageEntry is None!!!")
                         break
                     MessageEntries.append(MessageEntry)
 
