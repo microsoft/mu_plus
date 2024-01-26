@@ -221,7 +221,7 @@ AdvLoggerAccessGetVariable (
   }
 
   LogBufferStart  = (UINT8 *)mLoggerInfo;
-  LogBufferEnd    = (UINT8 *)PTR_FROM_PA (mLoggerInfo->LogCurrent);
+  LogBufferEnd    = (UINT8 *)PTR_FROM_PA (mMaxAddress);
   LogBufferStart += (BlockNumber * mLoggerTransferSize);
 
   if (LogBufferStart >= LogBufferEnd) {
