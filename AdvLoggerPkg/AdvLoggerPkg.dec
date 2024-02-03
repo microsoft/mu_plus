@@ -50,6 +50,13 @@
   #
   gAdvancedFileLoggerPolicyGuid = { 0x6c3fd4f1, 0xb596, 0x438e, { 0x8a, 0xb8, 0x53, 0xf1, 0xc, 0x9c, 0x27, 0x74 } }
 
+  ## GUID for specifying Advanced logger pre-DXE logs
+  # Platforms which don't use a Pre-DXE AdvancedLoggerLib instance but still produce logging
+  # can use this GUID to publish the location of the logs so they can be written to the advanced
+  # logger buffer created in early DXE.
+  #
+  gAdvancedLoggerPreDxeLogsGuid = { 0x751fc006, 0x5804, 0x440d, { 0x8b, 0x15, 0x61, 0x8c, 0xf6, 0x56, 0xae, 0x76 } }
+
 [Ppis]
   ## Advanced Logger Ppi - Communication from PEIM to PEI_CORE library implementation
   #

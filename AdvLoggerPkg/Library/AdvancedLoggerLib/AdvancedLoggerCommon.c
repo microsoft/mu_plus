@@ -31,7 +31,6 @@
   @retval LoggerInfo       Returns the logger info block. Returns NULL if it cannot
                            be located. This occurs prior to SEC completion.
 **/
-STATIC
 ADVANCED_LOGGER_INFO *
 EFIAPI
 AdvancedLoggerMemoryLoggerWrite (

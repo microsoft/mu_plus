@@ -46,6 +46,7 @@
 [Guids]
   gAdvancedLoggerHobGuid
   gEfiEndOfDxeEventGroupGuid
+  gAdvancedLoggerPreDxeLogsGuid
 
 [Protocols]
   gAdvancedLoggerProtocolGuid                                               ## PRODUCES
