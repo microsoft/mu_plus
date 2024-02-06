@@ -28,10 +28,11 @@
 
 [LibraryClasses]
   UefiApplicationEntryPoint
-
+  
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
 
 [Guids]
   gEfiImageSecurityDatabaseGuid        ## CONSUMES
+  gEfiCertX509Guid                     ## CONSUMES
