@@ -36,7 +36,7 @@
   BaseMemoryLib
   DebugLib
   SynchronizationLib
-  ArmMmuLib
+  MmuLib
 
 [Guids]
   gAdvancedLoggerHobGuid
