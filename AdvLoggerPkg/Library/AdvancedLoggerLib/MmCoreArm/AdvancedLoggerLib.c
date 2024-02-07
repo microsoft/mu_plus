@@ -114,12 +114,20 @@ AdvancedLoggerGetLoggerInfo (
     // If this is the first time for MM core to get here, the memory attributes of this module
     // may not be fully set yet. Thus set the memory for global variables attributes to RW first.
     Address = ALIGN_VALUE ((EFI_PHYSICAL_ADDRESS)(UINTN)&mInitialized - EFI_PAGE_SIZE + 1, EFI_PAGE_SIZE);
-    Status  = ArmSetMemoryRegionNoExec (Address, EFI_PAGE_SIZE);
-    Status  = ArmClearMemoryRegionReadOnly (Address, EFI_PAGE_SIZE);
+    Status  = ArmSetMemoryAttributes (
+                Address,
+                EFI_PAGE_SIZE,
+                EFI_MEMORY_XP,
+                EFI_MEMORY_ACCESS_MASK
+                );
 
     Address = ALIGN_VALUE ((EFI_PHYSICAL_ADDRESS)(UINTN)&mLoggerInfo - EFI_PAGE_SIZE + 1, EFI_PAGE_SIZE);
-    Status  = ArmSetMemoryRegionNoExec (Address, EFI_PAGE_SIZE);
-    Status  = ArmClearMemoryRegionReadOnly (Address, EFI_PAGE_SIZE);
+    Status  = ArmSetMemoryAttributes (
+                Address,
+                EFI_PAGE_SIZE,
+                EFI_MEMORY_XP,
+                EFI_MEMORY_ACCESS_MASK
+                );
 
     mInitialized = TRUE;            // Only allow initialization once
     mLoggerInfo  = (ADVANCED_LOGGER_INFO *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
