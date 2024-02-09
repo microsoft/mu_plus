@@ -95,7 +95,7 @@ AdvancedLoggerGetLoggerInfo (
   if ((LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize) >
       (FixedPcdGet32 (PcdAdvancedLoggerPages) * EFI_PAGE_SIZE))
   {
-    return FALSE;
+    return NULL;
   }
 
   // Ensure the current pointer does not overrun.
