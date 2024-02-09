@@ -39,8 +39,8 @@
   PcdAdvancedLoggerCarBase     -- NOT USED, leave at default
   PcdAdvancedLoggerPreMemPages -- NOT USED, leave at default
 
-  NOTE:  A debug statement here will cause recursion. Ensure that the recursion will be
-         a straight path just to return the existing mLoggerInfo.
+  NOTE:  A debug statement here will cause recursion. Avoid debug statements
+         or calls to external functions that may contain debug prints.
 
   @param       - None
 
