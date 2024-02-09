@@ -66,12 +66,6 @@ AdvancedLoggerGetLoggerInfo (
     return NULL;
   }
 
-  // Initialize HdwPrintLevel if needed.
-  HwPrintLevel = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
-  if (LoggerInfo->HwPrintLevel != HwPrintLevel) {
-    LoggerInfo->HwPrintLevel = HwPrintLevel;
-  }
-
   //
   // The pointers LogBuffer and LogCurrent, and LogBufferSize, could be written
   // to by untrusted code.  Here, we check that the pointers are within the
@@ -90,14 +84,14 @@ AdvancedLoggerGetLoggerInfo (
   }
 
   // Make sure the size of the buffer does not overrun it's fixed size.
-  if ((LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize) >
+  MaxAddress = LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize;
+  if ((MaxAddress - PA_FROM_PTR (LoggerInfo)) >
       (FixedPcdGet32 (PcdAdvancedLoggerPages) * EFI_PAGE_SIZE))
   {
     return NULL;
   }
 
   // Ensure the current pointer does not overrun.
-  MaxAddress = LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize;
   if ((LoggerInfo->LogCurrent > MaxAddress) ||
       (LoggerInfo->LogCurrent < LoggerInfo->LogBuffer))
   {
