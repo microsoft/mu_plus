@@ -18,8 +18,6 @@
 
 #include "../AdvancedLoggerCommon.h"
 
-#define ADV_LOGGER_MIN_SIZE  (65536)
-
 //
 // NO GLOBALS! This routine may run before data sections are writable, and so
 // cannot presume globals will be available.
