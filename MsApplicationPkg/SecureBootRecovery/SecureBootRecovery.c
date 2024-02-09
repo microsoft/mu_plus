@@ -14,7 +14,6 @@
 #include <Library/BaseMemoryLib.h>
 
 #include "RecoveryPayload.h"
-#include "TargetCertificate.h"
 
 //
 // 10 seconds in microseconds
@@ -94,9 +93,10 @@ PrintError (
 **/
 EFI_STATUS
 IsCertificateInDB (
-  IN EFI_SYSTEM_TABLE    *SystemTable,
-  IN  CERTIFICATE_ENTRY  *Certificate,
-  OUT BOOLEAN            *IsFound
+  IN EFI_SYSTEM_TABLE  *SystemTable,
+  IN  UINT8            *TargetCert,
+  IN  UINTN            TargetCertSize,
+  OUT BOOLEAN          *IsFound
   )
 {
   EFI_STATUS  Status;
@@ -115,7 +115,7 @@ IsCertificateInDB (
   DbSize     = 0;
   Attributes = VARIABLE_ATTRIBUTE_NV_BS_RT_AT | EFI_VARIABLE_APPEND_WRITE;
 
-  if ((Certificate == NULL) || (IsFound == NULL)) {
+  if ((TargetCert == NULL) || (IsFound == NULL)) {
     Status = EFI_INVALID_PARAMETER;
     goto Exit;
   }
@@ -233,24 +233,12 @@ IsCertificateInDB (
         CertSize = CertList->SignatureSize - sizeof (EFI_GUID);
 
         //
-        // First lets ensure that the size of the certificate is at least as large as the certificate we are looking for
-        // Each offset in the certficate entry plus the size of the string must be less than the size of the certificate
+        // If the certificate is the same size as the target certificate and the contents are the same, we found it
         //
-        if (((Certificate->OrganizationOffset + Certificate->OrganizationLength) <= CertSize) &&
-            ((Certificate->CommonNameOffset + Certificate->CommonNameLength) <= CertSize) &&
-            ((Certificate->SignatureOffset + sizeof (Certificate->Signature)) <= CertSize))
-        {
-          //
-          // If the certificate is the one we are looking for, return EFI_SUCCESS
-          //
-          if ((CompareMem (Cert + Certificate->OrganizationOffset, Certificate->Organization, Certificate->OrganizationLength) == 0) &&
-              (CompareMem (Cert + Certificate->CommonNameOffset, Certificate->CommonName, Certificate->CommonNameLength) == 0) &&
-              (CompareMem (Cert + Certificate->SignatureOffset, Certificate->Signature, sizeof (Certificate->Signature)) == 0))
-          {
-            Status   = EFI_SUCCESS;
-            *IsFound = TRUE;
-            goto Exit;
-          }
+        if ((TargetCertSize == CertSize) && (CompareMem (Cert, TargetCert, CertSize) == 0)) {
+          Status   = EFI_SUCCESS;
+          *IsFound = TRUE;
+          goto Exit;
         }
       }
     }
@@ -342,7 +330,7 @@ UefiMain (
   //
   // Determine if the system is in a state we can safely use or if the system is already up to date
   //
-  Status = IsCertificateInDB (SystemTable, &mTargetCertificate, &IsFound);
+  Status = IsCertificateInDB (SystemTable, mTargetCertificate, sizeof (mTargetCertificate), &IsFound);
   if ((Status == EFI_SUCCESS) && IsFound) {
     //
     // If the 2023 certificate is already in the DB, inform the user and reboot
