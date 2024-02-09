@@ -15,7 +15,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/SynchronizationLib.h>
-#include <Library/ArmMmuLib.h>
+#include <Library/MmuLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
@@ -114,12 +114,16 @@ AdvancedLoggerGetLoggerInfo (
     // If this is the first time for MM core to get here, the memory attributes of this module
     // may not be fully set yet. Thus set the memory for global variables attributes to RW first.
     Address = ALIGN_VALUE ((EFI_PHYSICAL_ADDRESS)(UINTN)&mInitialized - EFI_PAGE_SIZE + 1, EFI_PAGE_SIZE);
-    Status  = ArmSetMemoryRegionNoExec (Address, EFI_PAGE_SIZE);
-    Status  = ArmClearMemoryRegionReadOnly (Address, EFI_PAGE_SIZE);
+    Status  = MmuSetAttributes (Address, EFI_PAGE_SIZE, EFI_MEMORY_XP);
+    ASSERT_EFI_ERROR (Status);
+    Status = MmuClearAttributes (Address, EFI_PAGE_SIZE, EFI_MEMORY_RO);
+    ASSERT_EFI_ERROR (Status);
 
     Address = ALIGN_VALUE ((EFI_PHYSICAL_ADDRESS)(UINTN)&mLoggerInfo - EFI_PAGE_SIZE + 1, EFI_PAGE_SIZE);
-    Status  = ArmSetMemoryRegionNoExec (Address, EFI_PAGE_SIZE);
-    Status  = ArmClearMemoryRegionReadOnly (Address, EFI_PAGE_SIZE);
+    Status  = MmuSetAttributes (Address, EFI_PAGE_SIZE, EFI_MEMORY_XP);
+    ASSERT_EFI_ERROR (Status);
+    Status = MmuClearAttributes (Address, EFI_PAGE_SIZE, EFI_MEMORY_RO);
+    ASSERT_EFI_ERROR (Status);
 
     mInitialized = TRUE;            // Only allow initialization once
     mLoggerInfo  = (ADVANCED_LOGGER_INFO *)(VOID *)FixedPcdGet64 (PcdAdvancedLoggerBase);
