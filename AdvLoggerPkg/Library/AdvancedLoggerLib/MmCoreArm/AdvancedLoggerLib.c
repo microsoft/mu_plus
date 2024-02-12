@@ -54,7 +54,6 @@ AdvancedLoggerGetLoggerInfo (
 {
   ADVANCED_LOGGER_INFO  *LoggerInfo;
   EFI_PHYSICAL_ADDRESS  MaxAddress;
-  UINT32                HwPrintLevel;
 
   ASSERT (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM));
   if (!FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
