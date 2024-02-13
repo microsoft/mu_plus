@@ -6,15 +6,13 @@
 import glob
 import os
 import logging
-import sys
 from edk2toolext.environment import shell_environment
 from edk2toolext.invocables.edk2_ci_build import CiBuildSettingsManager
 from edk2toolext.invocables.edk2_ci_setup import CiSetupSettingsManager
-from edk2toolext.invocables.edk2_setup import SetupSettingsManager, RequiredSubmodule
+from edk2toolext.invocables.edk2_setup import SetupSettingsManager
 from edk2toolext.invocables.edk2_update import UpdateSettingsManager
 from edk2toolext.invocables.edk2_pr_eval import PrEvalSettingsManager
 from edk2toollib.utility_functions import GetHostInfo
-from pathlib import Path
 
 from edk2toolext import codeql as codeql_helpers
 
@@ -26,18 +24,12 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
         self.ActualArchitectures = []
         self.ActualToolChainTag = ""
         self.ActualScopes = None
-        # In tree BaseTools are required for Rust build support so enable
-        # it by default.
-        self.UseBuiltInBaseTools = False
 
     # ####################################################################################### #
     #                             Extra CmdLine configuration                                 #
     # ####################################################################################### #
 
     def AddCommandLineOptions(self, parserObj):
-        group = parserObj.add_mutually_exclusive_group()
-        group.add_argument("-force_piptools", "--fpt", dest="force_piptools", action="store_true", default=False, help="Force the system to use pip tools")
-
         try:
             codeql_helpers.add_command_line_option(parserObj)
         except NameError:
@@ -45,10 +37,6 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
 
     def RetrieveCommandLineOptions(self, args):
         super().RetrieveCommandLineOptions(args)
-
-        if args.force_piptools:
-            self.UseBuiltInBaseTools = True
-
         try:
             self.codeql = codeql_helpers.is_codeql_enabled_on_command_line(args)
         except NameError:
@@ -148,12 +136,6 @@ class Settings(CiSetupSettingsManager, CiBuildSettingsManager, UpdateSettingsMan
             self.ActualToolChainTag = shell_environment.GetBuildVars().GetValue("TOOL_CHAIN_TAG", "")
 
             is_linux = GetHostInfo().os.upper() == "LINUX"
-
-            if self.UseBuiltInBaseTools == True:
-                scopes += ('pipbuild-unix',) if is_linux else ('pipbuild-win',)
-                logging.warning("Using Pip Tools based BaseTools")
-            else:
-                logging.info("Using in-tree BaseTools")
 
             if is_linux and self.ActualToolChainTag.upper().startswith("GCC"):
                 if "AARCH64" in self.ActualArchitectures:
