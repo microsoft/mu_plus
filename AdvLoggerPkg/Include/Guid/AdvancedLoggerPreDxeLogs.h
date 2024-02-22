@@ -10,6 +10,9 @@
 #ifndef __ADVANCED_LOGGER_PRE_DXE_LOGS_H__
 #define __ADVANCED_LOGGER_PRE_DXE_LOGS_H__
 
+// The region specified by this HOB entry should contain raw log output.
+// The Advanced Logger library will serialize the contents of the buffer
+// when adding it to the advanced logger output.
 typedef struct _ADVANCED_LOGGER_PRE_DXE_LOGS_HOB {
   UINT32    Signature;
   UINT64    BaseAddress;
