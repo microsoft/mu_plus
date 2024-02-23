@@ -159,17 +159,23 @@ jobs:
         import requests
 
         GITHUB_REPO = "sagiegurari/cargo-make"
-        API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+        api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/tags/0.37.9"
 
-        # Default value in case getting latest fails, cache will fall
-        # back on this version.
-        latest_cargo_make_version = "0.36.13"
-        response = requests.get(API_URL)
+        response = requests.get(api_url)
+        if response.status_code == 200:
+          build_release_id = response.json()["id"]
+        else:
+          print("::error title=GitHub Release Error!::Failed to get cargo-make release ID!")
+          sys.exit(1)
 
+        api_url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/{build_release_id}"
+
+        response = requests.get(api_url)
         if response.status_code == 200:
           latest_cargo_make_version = response.json()["tag_name"]
         else:
-          print("::error title=GitHub Release Error!::Failed to get latest cargo-make version!")
+          print("::error title=GitHub Release Error!::Failed to get cargo-make!")
+          sys.exit(1)
 
         cache_key = f'cargo-make-{latest_cargo_make_version}'
 
