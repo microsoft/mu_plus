@@ -31,6 +31,7 @@ Handler function that validates input arguments, and create a hob list entry for
 **/
 STATIC
 EFI_STATUS
+EFIAPI
 MsWheaReportHandlerPei (
   IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
   )
@@ -95,6 +96,7 @@ for further processing.
 **/
 STATIC
 EFI_STATUS
+EFIAPI
 MsWheaRscHandlerPei (
   IN CONST EFI_PEI_SERVICES      **PeiServices,
   IN EFI_STATUS_CODE_TYPE        CodeType,
