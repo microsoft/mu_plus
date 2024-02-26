@@ -7,9 +7,10 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef __ADVANCED_LOGGER_PRE_DXE_LOGS_H__
-#define __ADVANCED_LOGGER_PRE_DXE_LOGS_H__
+#ifndef ADVANCED_LOGGER_PRE_DXE_LOGS_H_
+#define ADVANCED_LOGGER_PRE_DXE_LOGS_H_
 
+#pragma pack(1)
 // The region specified by this HOB entry should contain raw log output.
 // The Advanced Logger library will serialize the contents of the buffer
 // when adding it to the advanced logger output.
@@ -18,6 +19,7 @@ typedef struct _ADVANCED_LOGGER_PRE_DXE_LOGS_HOB {
   UINT64    BaseAddress;
   UINT64    LengthInBytes;
 } ADVANCED_LOGGER_PRE_DXE_LOGS_HOB;
+#pragma pack()
 
 #define ADVANCED_LOGGER_PRE_DXE_LOGS_GUID \
 { \

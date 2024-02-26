@@ -368,7 +368,7 @@ DxeCoreAdvancedLoggerLibConstructor (
 {
   ADVANCED_LOGGER_INFO              *LoggerInfo;
   EFI_STATUS                        Status;
-  ADVANCED_LOGGER_PRE_DXE_LOGS_HOB  PreDxeLogs;
+  ADVANCED_LOGGER_PRE_DXE_LOGS_HOB  *PreDxeLogs;
   EFI_HOB_GUID_TYPE                 *PreDxeLogsHobEntry;
 
   LoggerInfo = AdvancedLoggerGetLoggerInfo ();      // Sets mLoggerInfo if Logger Information block found in HOB.
@@ -407,11 +407,11 @@ DxeCoreAdvancedLoggerLibConstructor (
     PreDxeLogsHobEntry = GetFirstGuidHob (&gAdvancedLoggerPreDxeLogsGuid);
 
     if (PreDxeLogsHobEntry != NULL) {
-      PreDxeLogs = *(ADVANCED_LOGGER_PRE_DXE_LOGS_HOB *)GET_GUID_HOB_DATA (PreDxeLogsHobEntry);
-      if (PreDxeLogs.Signature != ADVANCED_LOGGER_PRE_DXE_LOGS_SIGNATURE) {
-        ASSERT (PreDxeLogs.Signature == ADVANCED_LOGGER_PRE_DXE_LOGS_SIGNATURE);
+      PreDxeLogs = (ADVANCED_LOGGER_PRE_DXE_LOGS_HOB *)GET_GUID_HOB_DATA (PreDxeLogsHobEntry);
+      if (PreDxeLogs->Signature != ADVANCED_LOGGER_PRE_DXE_LOGS_SIGNATURE) {
+        ASSERT (PreDxeLogs->Signature == ADVANCED_LOGGER_PRE_DXE_LOGS_SIGNATURE);
       } else {
-        AdvancedLoggerMemoryLoggerWrite (DEBUG_INFO, (CONST CHAR8 *)(UINTN)PreDxeLogs.BaseAddress, PreDxeLogs.LengthInBytes);
+        AdvancedLoggerMemoryLoggerWrite (DEBUG_INFO, (CONST CHAR8 *)(UINTN)PreDxeLogs->BaseAddress, PreDxeLogs->LengthInBytes);
       }
     }
 
