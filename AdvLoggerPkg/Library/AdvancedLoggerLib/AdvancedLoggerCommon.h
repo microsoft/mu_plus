@@ -58,4 +58,24 @@ AdvancedLoggerGetPhase (
   VOID
   );
 
+/**
+  Write data from buffer into the in memory logging buffer.
+
+  Writes NumberOfBytes data bytes from Buffer to the logging buffer.
+
+  @param  DebugLevel       Debug level of the message
+  @param  Buffer           Pointer to the data buffer to be written.
+  @param  NumberOfBytes    Number of bytes to be written to the Advanced Logger log.
+
+  @retval LoggerInfo       Returns the logger info block. Returns NULL if it cannot
+                           be located. This occurs prior to SEC completion.
+**/
+ADVANCED_LOGGER_INFO *
+EFIAPI
+AdvancedLoggerMemoryLoggerWrite (
+  IN       UINTN  DebugLevel,
+  IN CONST CHAR8  *Buffer,
+  IN       UINTN  NumberOfBytes
+  );
+
 #endif // __ADVANCED_LOGGER_COMMON_H__

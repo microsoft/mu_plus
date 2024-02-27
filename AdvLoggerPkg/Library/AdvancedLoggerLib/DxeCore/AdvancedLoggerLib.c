@@ -11,6 +11,7 @@
 #include <AdvancedLoggerInternal.h>
 
 #include <Protocol/AdvancedLogger.h>
+#include <Guid/AdvancedLoggerPreDxeLogs.h>
 #include <Protocol/VariablePolicy.h>
 #include <AdvancedLoggerInternalProtocol.h>
 
@@ -365,8 +366,10 @@ DxeCoreAdvancedLoggerLibConstructor (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  ADVANCED_LOGGER_INFO  *LoggerInfo;
-  EFI_STATUS            Status;
+  ADVANCED_LOGGER_INFO              *LoggerInfo;
+  EFI_STATUS                        Status;
+  ADVANCED_LOGGER_PRE_DXE_LOGS_HOB  *PreDxeLogs;
+  EFI_HOB_GUID_TYPE                 *PreDxeLogsHobEntry;
 
   LoggerInfo = AdvancedLoggerGetLoggerInfo ();      // Sets mLoggerInfo if Logger Information block found in HOB.
 
@@ -400,12 +403,24 @@ DxeCoreAdvancedLoggerLibConstructor (
   if (LoggerInfo != NULL) {
     mAdvLoggerProtocol.LoggerInfo = LoggerInfo;
     mLoggerInfo->TimerFrequency   = GetPerformanceCounterProperties (NULL, NULL);
-    Status                        = SystemTable->BootServices->InstallProtocolInterface (
-                                                                 &ImageHandle,
-                                                                 &gAdvancedLoggerProtocolGuid,
-                                                                 EFI_NATIVE_INTERFACE,
-                                                                 &mAdvLoggerProtocol.AdvLoggerProtocol
-                                                                 );
+
+    PreDxeLogsHobEntry = GetFirstGuidHob (&gAdvancedLoggerPreDxeLogsGuid);
+
+    if (PreDxeLogsHobEntry != NULL) {
+      PreDxeLogs = (ADVANCED_LOGGER_PRE_DXE_LOGS_HOB *)GET_GUID_HOB_DATA (PreDxeLogsHobEntry);
+      if (PreDxeLogs->Signature != ADVANCED_LOGGER_PRE_DXE_LOGS_SIGNATURE) {
+        ASSERT (PreDxeLogs->Signature == ADVANCED_LOGGER_PRE_DXE_LOGS_SIGNATURE);
+      } else {
+        AdvancedLoggerMemoryLoggerWrite (DEBUG_INFO, (CONST CHAR8 *)(UINTN)PreDxeLogs->BaseAddress, PreDxeLogs->LengthInBytes);
+      }
+    }
+
+    Status = SystemTable->BootServices->InstallProtocolInterface (
+                                          &ImageHandle,
+                                          &gAdvancedLoggerProtocolGuid,
+                                          EFI_NATIVE_INTERFACE,
+                                          &mAdvLoggerProtocol.AdvLoggerProtocol
+                                          );
 
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "%a: Error installing protocol - %r\n", __FUNCTION__, Status));
