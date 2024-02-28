@@ -520,13 +520,12 @@ TSEGDumpHandler (
   - a count of each entry
   - a count of each directory entry
   - [optional] a flat list of each entry
-  - [optional] a flat list of each directory entry
 
-  @param[in, out]   Pte1GCount, Pte2MCount, Pte4KCount, PdeCount
+  @param[in, out]   Pte1GCount, Pte2MCount, Pte4KCount
       On input, the number of entries that can fit in the corresponding buffer (if provided).
       It is expected that this will be zero if the corresponding buffer is NULL.
       On output, the number of entries that were encountered in the page table.
-  @param[out]       Pte1GEntries, Pte2MEntries, Pte4KEntries, PdeEntries
+  @param[out]       Pte1GEntries, Pte2MEntries, Pte4KEntries
       A buffer which will be filled with the entries that are encountered in the tables.
 
   @retval     EFI_SUCCESS             All requested data has been returned.
@@ -544,12 +543,10 @@ GetFlatPageTableData (
   IN OUT UINTN  *Pte1GCount,
   IN OUT UINTN  *Pte2MCount,
   IN OUT UINTN  *Pte4KCount,
-  IN OUT UINTN  *PdeCount,
   IN OUT UINTN  *GuardCount,
   OUT UINT64    *Pte1GEntries,
   OUT UINT64    *Pte2MEntries,
   OUT UINT64    *Pte4KEntries,
-  OUT UINT64    *PdeEntries,
   OUT UINT64    *GuardEntries
   )
 {
@@ -564,7 +561,6 @@ GetFlatPageTableData (
   UINTN                           Index3;
   UINTN                           Index4;
   UINTN                           MyGuardCount        = 0;
-  UINTN                           MyPdeCount          = 0;
   UINTN                           My4KCount           = 0;
   UINTN                           My2MCount           = 0;
   UINTN                           My1GCount           = 0;
@@ -577,15 +573,14 @@ GetFlatPageTableData (
   // First, fail fast if some of the parameters don't look right.
   //
   // ALL count parameters should be provided.
-  if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (PdeCount == NULL) || (GuardCount == NULL)) {
+  if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (GuardCount == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
   // If a count is greater than 0, the corresponding buffer pointer MUST be provided.
   // It will be assumed that all buffers have space for any corresponding count.
   if (((*Pte1GCount > 0) && (Pte1GEntries == NULL)) || ((*Pte2MCount > 0) && (Pte2MEntries == NULL)) ||
-      ((*Pte4KCount > 0) && (Pte4KEntries == NULL)) || ((*PdeCount > 0) && (PdeEntries == NULL)) ||
-      ((*GuardCount > 0) && (GuardEntries == NULL)))
+      ((*Pte4KCount > 0) && (Pte4KEntries == NULL)) || ((*GuardCount > 0) && (GuardEntries == NULL)))
   {
     return EFI_INVALID_PARAMETER;
   }
@@ -594,12 +589,6 @@ GetFlatPageTableData (
   // Alright, let's get to work.
   //
   Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *)AsmReadCr3 ();
-  // Increase the count.
-  // If we have room for more PDE Entries, add one.
-  MyPdeCount++;
-  if (MyPdeCount <= *PdeCount) {
-    PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pml4;
-  }
 
   for (Index4 = 0x0; Index4 < 0x200; Index4++) {
     if (!Pml4[Index4].Bits.Present) {
@@ -607,12 +596,6 @@ GetFlatPageTableData (
     }
 
     Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
-    // Increase the count.
-    // If we have room for more PDE Entries, add one.
-    MyPdeCount++;
-    if (MyPdeCount <= *PdeCount) {
-      PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte1G;
-    }
 
     for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
       if (!Pte1G[Index3].Bits.Present) {
@@ -631,12 +614,6 @@ GetFlatPageTableData (
         //
         Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
         Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
-        // Increase the count.
-        // If we have room for more PDE Entries, add one.
-        MyPdeCount++;
-        if (MyPdeCount <= *PdeCount) {
-          PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte2M;
-        }
 
         for (Index2 = 0x0; Index2 < 0x200; Index2++ ) {
           if (!Pte2M[Index2].Bits.Present) {
@@ -647,12 +624,6 @@ GetFlatPageTableData (
           if (!(Pte2M[Index2].Bits.MustBe1)) {
             Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
             Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
-            // Increase the count.
-            // If we have room for more PDE Entries, add one.
-            MyPdeCount++;
-            if (MyPdeCount <= *PdeCount) {
-              PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte4K;
-            }
 
             for (Index1 = 0x0; Index1 < 0x200; Index1++ ) {
               if (!Pte4K[Index1].Bits.Present) {
@@ -695,7 +666,6 @@ GetFlatPageTableData (
     }
   }
 
-  DEBUG ((DEBUG_ERROR, "Pages used for Page Tables   = %d\n", MyPdeCount));
   DEBUG ((DEBUG_ERROR, "Number of   4K Pages active  = %d - NotPresent = %d\n", My4KCount, NumPage4KNotPresent));
   DEBUG ((DEBUG_ERROR, "Number of   2M Pages active  = %d - NotPresent = %d\n", My2MCount, NumPage2MNotPresent));
   DEBUG ((DEBUG_ERROR, "Number of   1G Pages active  = %d - NotPresent = %d\n", My1GCount, NumPage1GNotPresent));
@@ -706,8 +676,7 @@ GetFlatPageTableData (
   // Only matters if a given buffer was provided.
   //
   if (((Pte1GEntries != NULL) && (*Pte1GCount < My1GCount)) || ((Pte2MEntries != NULL) && (*Pte2MCount < My2MCount)) ||
-      ((Pte4KEntries != NULL) && (*Pte4KCount < My4KCount)) || ((PdeEntries != NULL) && (*PdeCount < MyPdeCount)) ||
-      ((GuardEntries != NULL) && (*GuardCount < MyGuardCount)))
+      ((Pte4KEntries != NULL) && (*Pte4KCount < My4KCount)) || ((GuardEntries != NULL) && (*GuardCount < MyGuardCount)))
   {
     Status = EFI_BUFFER_TOO_SMALL;
   }
@@ -718,7 +687,6 @@ GetFlatPageTableData (
   *Pte1GCount = My1GCount;
   *Pte2MCount = My2MCount;
   *Pte4KCount = My4KCount;
-  *PdeCount   = MyPdeCount;
   *GuardCount = MyGuardCount;
 
   return Status;
