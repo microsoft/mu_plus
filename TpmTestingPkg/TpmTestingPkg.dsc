@@ -77,7 +77,7 @@
 # Stack cookie related libraries
 #
 [LibraryClasses.X64]
-  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.information
+  RngLib|MdePkg/Library/BaseRngLib/BaseRngLib.inf
 
 [Components]
   TpmTestingPkg/Library/BaseFvMeasurementExclusionLibNull/BaseFvMeasurementExclusionLibNull.inf
