@@ -293,105 +293,6 @@ Cleanup:
 } // SmmPageTableEntriesDump()
 
 /**
-  This helper function will call to the SMM agent to retrieve all the Page Table Directory entries.
-  It will then dump those tables to a file.
-
-  Will do nothing if all inputs are not provided.
-
-  @param[in]  SmmCommunication    A pointer to the SmmCommunication protocol.
-  @param[in]  CommBufferBase      A pointer to the base of the buffer that should be used
-                                  for SMM communication.
-  @param[in]  CommBufferSize      The size of the buffer.
-
-**/
-STATIC
-VOID
-SmmPdeEntriesDump (
-  IN EFI_SMM_COMMUNICATION_PROTOCOL  *SmmCommunication,
-  IN VOID                            *CommBufferBase,
-  IN UINTN                           CommBufferSize
-  )
-{
-  EFI_STATUS                            Status;
-  EFI_SMM_COMMUNICATE_HEADER            *CommHeader;
-  SMM_PAGE_AUDIT_COMM_HEADER            *AuditCommHeader;
-  SMM_PAGE_AUDIT_PDE_ENTRY_COMM_BUFFER  *AuditCommData;
-  UINTN                                 MinBufferSize, BufferSize;
-  UINTN                                 Index;
-  CHAR8                                 TempString[MAX_STRING_SIZE];
-
-  DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
-
-  //
-  // Check to make sure we have what we need.
-  //
-  MinBufferSize = OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data) +
-                  sizeof (SMM_PAGE_AUDIT_COMM_HEADER) +
-                  sizeof (SMM_PAGE_AUDIT_PDE_ENTRY_COMM_BUFFER);
-  if ((SmmCommunication == NULL) || (CommBufferBase == NULL) || (CommBufferSize < MinBufferSize)) {
-    DEBUG ((DEBUG_ERROR, "%a - Bad parameters. This shouldn't happen.\n", __FUNCTION__));
-    return;
-  }
-
-  //
-  // Prep the buffer for sending the required commands to SMM.
-  //
-  ZeroMem (CommBufferBase, CommBufferSize);
-  CommHeader      = CommBufferBase;
-  AuditCommHeader = (VOID *)((UINTN)CommHeader + OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data));
-  AuditCommData   = (VOID *)((UINTN)AuditCommHeader + sizeof (SMM_PAGE_AUDIT_COMM_HEADER));
-  CopyGuid (&CommHeader->HeaderGuid, &gSmmPagingAuditSmiHandlerGuid);
-  CommHeader->MessageLength = MinBufferSize - OFFSET_OF (EFI_SMM_COMMUNICATE_HEADER, Data);
-
-  AuditCommHeader->RequestType  = SMM_PAGE_AUDIT_PDE_REQUEST;
-  AuditCommHeader->RequestIndex = 0;
-
-  //
-  // Repeatedly call to SMM and copy the data, if present.
-  //
-  do {
-    AuditCommData->HasMore = FALSE;
-    BufferSize             = CommBufferSize;
-
-    //
-    // Signal trip to SMM.
-    //
-    Status = SmmCommunication->Communicate (
-                                 SmmCommunication,
-                                 CommBufferBase,
-                                 &BufferSize
-                                 );
-    if (EFI_ERROR (Status)) {
-      AsciiSPrint (
-        &TempString[0],
-        MAX_STRING_SIZE,
-        "%a: Error %r from Communicate\n",
-        __FUNCTION__,
-        Status
-        );
-    }
-
-    //
-    // Get the data out of the comm buffer.
-    //
-    for (Index = 0; Index < AuditCommData->PdeCount; Index++) {
-      AsciiSPrint (
-        &TempString[0],
-        MAX_STRING_SIZE,
-        "PDE,0x%lx,0x%lx\n",
-        AuditCommData->Pde[Index],
-        512
-        );                // 512 is the size of a Page Directory
-      AppendToMemoryInfoDatabase (&TempString[0]);
-    }
-
-    AuditCommHeader->RequestIndex++;
-  } while (AuditCommData->HasMore);
-
-  return;
-} // SmmPdeEntriesDump()
-
-/**
   This helper function actually sends the requested communication
   to the SMM driver.
 
@@ -448,7 +349,6 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
   // Call all related handlers.
   //
   SmmPageTableEntriesDump (SmmCommunication, mPiSmmCommonCommBufferAddress, mPiSmmCommonCommBufferSize);
-  SmmPdeEntriesDump (SmmCommunication, mPiSmmCommonCommBufferAddress, mPiSmmCommonCommBufferSize);
   SmmLoadedImageTableDump (SmmCommunication, mPiSmmCommonCommBufferAddress, mPiSmmCommonCommBufferSize);
 
   //

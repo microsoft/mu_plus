@@ -1072,12 +1072,10 @@ LoadFlatPageTableData (
   OUT UINTN   *Pte1GCount,
   OUT UINTN   *Pte2MCount,
   OUT UINTN   *Pte4KCount,
-  OUT UINTN   *PdeCount,
   OUT UINTN   *GuardCount,
   OUT UINT64  **Pte1GEntries,
   OUT UINT64  **Pte2MEntries,
   OUT UINT64  **Pte4KEntries,
-  OUT UINT64  **PdeEntries,
   OUT UINT64  **GuardEntries
   )
 {
@@ -1088,25 +1086,22 @@ LoadFlatPageTableData (
   *Pte1GCount = 0;
   *Pte2MCount = 0;
   *Pte4KCount = 0;
-  *PdeCount   = 0;
   *GuardCount = 0;
-  Status      = GetFlatPageTableData (Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, GuardCount, NULL, NULL, NULL, NULL, NULL);
+  Status      = GetFlatPageTableData (Pte1GCount, Pte2MCount, Pte4KCount, GuardCount, NULL, NULL, NULL, NULL);
 
   (*Pte1GCount) += 15;
   (*Pte2MCount) += 15;
   (*Pte4KCount) += 15;
-  (*PdeCount)   += 15;
 
   // Allocate buffers if successful.
   if (!EFI_ERROR (Status)) {
     *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (UINT64));
     *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (UINT64));
     *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (UINT64));
-    *PdeEntries   = AllocateZeroPool (*PdeCount * sizeof (UINT64));
     *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
 
     // Check for errors.
-    if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL) || (*PdeEntries == NULL) || (*GuardEntries == NULL)) {
+    if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL) || (*GuardEntries == NULL)) {
       Status = EFI_OUT_OF_RESOURCES;
     }
   }
@@ -1118,12 +1113,10 @@ LoadFlatPageTableData (
                Pte1GCount,
                Pte2MCount,
                Pte4KCount,
-               PdeCount,
                GuardCount,
                *Pte1GEntries,
                *Pte2MEntries,
                *Pte4KEntries,
-               *PdeEntries,
                *GuardEntries
                );
     if (Status == EFI_BUFFER_TOO_SMALL) {
@@ -1131,31 +1124,26 @@ LoadFlatPageTableData (
       FreePool (*Pte1GEntries);
       FreePool (*Pte2MEntries);
       FreePool (*Pte4KEntries);
-      FreePool (*PdeEntries);
       FreePool (*GuardEntries);
 
       (*Pte1GCount) += 15;
       (*Pte2MCount) += 15;
       (*Pte4KCount) += 15;
-      (*PdeCount)   += 15;
       (*GuardCount) += 15;
 
       *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (UINT64));
       *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (UINT64));
       *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (UINT64));
-      *PdeEntries   = AllocateZeroPool (*PdeCount * sizeof (UINT64));
       *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
 
       Status = GetFlatPageTableData (
                  Pte1GCount,
                  Pte2MCount,
                  Pte4KCount,
-                 PdeCount,
                  GuardCount,
                  *Pte1GEntries,
                  *Pte2MEntries,
                  *Pte4KEntries,
-                 *PdeEntries,
                  *GuardEntries
                  );
     }
@@ -1178,11 +1166,6 @@ LoadFlatPageTableData (
       *Pte4KEntries = NULL;
     }
 
-    if (*PdeEntries != NULL) {
-      FreePool (*PdeEntries);
-      *PdeEntries = NULL;
-    }
-
     if (*GuardEntries != NULL) {
       FreePool (*GuardEntries);
       *GuardEntries = NULL;
@@ -1191,7 +1174,6 @@ LoadFlatPageTableData (
     *Pte1GCount = 0;
     *Pte2MCount = 0;
     *Pte4KCount = 0;
-    *PdeCount   = 0;
     *GuardCount = 0;
   }
 
@@ -1373,12 +1355,10 @@ DumpPagingInfo (
   UINTN       Pte1GCount    = 0;
   UINTN       Pte2MCount    = 0;
   UINTN       Pte4KCount    = 0;
-  UINTN       PdeCount      = 0;
   UINTN       GuardCount    = 0;
   UINT64      *Pte1GEntries = NULL;
   UINT64      *Pte2MEntries = NULL;
   UINT64      *Pte4KEntries = NULL;
-  UINT64      *PdeEntries   = NULL;
   UINT64      *GuardEntries = NULL;
   CHAR8       TempString[MAX_STRING_SIZE];
 
@@ -1400,19 +1380,16 @@ DumpPagingInfo (
         &Pte1GCount,
         &Pte2MCount,
         &Pte4KCount,
-        &PdeCount,
         &GuardCount,
         &Pte1GEntries,
         &Pte2MEntries,
         &Pte4KEntries,
-        &PdeEntries,
         &GuardEntries
         ))
   {
     CreateAndWriteFileSFS (mFs_Handle, L"1G.dat", Pte1GCount * sizeof (UINT64), Pte1GEntries);
     CreateAndWriteFileSFS (mFs_Handle, L"2M.dat", Pte2MCount * sizeof (UINT64), Pte2MEntries);
     CreateAndWriteFileSFS (mFs_Handle, L"4K.dat", Pte4KCount * sizeof (UINT64), Pte4KEntries);
-    CreateAndWriteFileSFS (mFs_Handle, L"PDE.dat", PdeCount * sizeof (UINT64), PdeEntries);
 
     // Only populate guard pages when function call is successful
     for (UINT64 i = 0; i < GuardCount; i++) {
@@ -1430,7 +1407,6 @@ DumpPagingInfo (
   }
 
   FlushAndClearMemoryInfoDatabase (L"GuardPage");
-  DumpProcessorSpecificHandlers ();
   MemoryMapDumpHandler ();
   LoadedImageTableDump ();
   MemoryAttributesTableDump ();
@@ -1449,10 +1425,6 @@ Cleanup:
 
   if (Pte4KEntries != NULL) {
     FreePool (Pte4KEntries);
-  }
-
-  if (PdeEntries != NULL) {
-    FreePool (PdeEntries);
   }
 
   if (GuardEntries != NULL) {

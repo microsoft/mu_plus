@@ -185,11 +185,11 @@ GdtDumpHandler (
   - [optional] a flat list of each entry
   - [optional] a flat list of each directory entry
 
-  @param[in, out]   Pte1GCount, Pte2MCount, Pte4KCount, PdeCount
+  @param[in, out]   Pte1GCount, Pte2MCount, Pte4KCount
       On input, the number of entries that can fit in the corresponding buffer (if provided).
       It is expected that this will be zero if the corresponding buffer is NULL.
       On output, the number of entries that were encountered in the page table.
-  @param[out]       Pte1GEntries, Pte2MEntries, Pte4KEntries, PdeEntries
+  @param[out]       Pte1GEntries, Pte2MEntries, Pte4KEntries
       A buffer which will be filled with the entries that are encountered in the tables.
 
   @retval     EFI_SUCCESS             All requested data has been returned.
@@ -207,11 +207,9 @@ GetFlatPageTableDataSmm (
   IN OUT UINTN             *Pte1GCount,
   IN OUT UINTN             *Pte2MCount,
   IN OUT UINTN             *Pte4KCount,
-  IN OUT UINTN             *PdeCount,
   OUT PAGE_TABLE_1G_ENTRY  *Pte1GEntries,
   OUT PAGE_TABLE_ENTRY     *Pte2MEntries,
-  OUT PAGE_TABLE_4K_ENTRY  *Pte4KEntries,
-  OUT UINT64               *PdeEntries
+  OUT PAGE_TABLE_4K_ENTRY  *Pte4KEntries
   )
 {
   EFI_STATUS                      Status = EFI_SUCCESS;
@@ -224,7 +222,6 @@ GetFlatPageTableDataSmm (
   UINTN                           Index2;
   UINTN                           Index3;
   UINTN                           Index4;
-  UINTN                           MyPdeCount          = 0;
   UINTN                           My4KCount           = 0;
   UINTN                           My2MCount           = 0;
   UINTN                           My1GCount           = 0;
@@ -236,14 +233,14 @@ GetFlatPageTableDataSmm (
   // First, fail fast if some of the parameters don't look right.
   //
   // ALL count parameters should be provided.
-  if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (PdeCount == NULL)) {
+  if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
 
   // If a count is greater than 0, the corresponding buffer pointer MUST be provided.
   // It will be assumed that all buffers have space for any corresponding count.
   if (((*Pte1GCount > 0) && (Pte1GEntries == NULL)) || ((*Pte2MCount > 0) && (Pte2MEntries == NULL)) ||
-      ((*Pte4KCount > 0) && (Pte4KEntries == NULL)) || ((*PdeCount > 0) && (PdeEntries == NULL)))
+      ((*Pte4KCount > 0) && (Pte4KEntries == NULL)))
   {
     return EFI_INVALID_PARAMETER;
   }
@@ -252,12 +249,6 @@ GetFlatPageTableDataSmm (
   // Alright, let's get to work.
   //
   Pml4 = (PAGE_MAP_AND_DIRECTORY_POINTER *)AsmReadCr3 ();
-  // Increase the count.
-  // If we have room for more PDE Entries, add one.
-  MyPdeCount++;
-  if (MyPdeCount <= *PdeCount) {
-    PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pml4;
-  }
 
   for (Index4 = 0x0; Index4 < 0x200; Index4++) {
     if (!Pml4[Index4].Bits.Present) {
@@ -265,12 +256,6 @@ GetFlatPageTableDataSmm (
     }
 
     Pte1G = (PAGE_TABLE_1G_ENTRY *)(UINTN)(Pml4[Index4].Bits.PageTableBaseAddress << 12);
-    // Increase the count.
-    // If we have room for more PDE Entries, add one.
-    MyPdeCount++;
-    if (MyPdeCount <= *PdeCount) {
-      PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte1G;
-    }
 
     for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
       if (!Pte1G[Index3].Bits.Present) {
@@ -289,12 +274,6 @@ GetFlatPageTableDataSmm (
         //
         Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte1G;
         Pte2M = (PAGE_TABLE_ENTRY *)(UINTN)(Work[Index3].Bits.PageTableBaseAddress << 12);
-        // Increase the count.
-        // If we have room for more PDE Entries, add one.
-        MyPdeCount++;
-        if (MyPdeCount <= *PdeCount) {
-          PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte2M;
-        }
 
         for (Index2 = 0x0; Index2 < 0x200; Index2++ ) {
           if (!Pte2M[Index2].Bits.Present) {
@@ -305,12 +284,6 @@ GetFlatPageTableDataSmm (
           if (!(Pte2M[Index2].Bits.MustBe1)) {
             Work  = (PAGE_MAP_AND_DIRECTORY_POINTER *)Pte2M;
             Pte4K = (PAGE_TABLE_4K_ENTRY *)(UINTN)(Work[Index2].Bits.PageTableBaseAddress << 12);
-            // Increase the count.
-            // If we have room for more PDE Entries, add one.
-            MyPdeCount++;
-            if (MyPdeCount <= *PdeCount) {
-              PdeEntries[MyPdeCount-1] = (UINT64)(UINTN)Pte4K;
-            }
 
             for (Index1 = 0x0; Index1 < 0x200; Index1++ ) {
               if (!Pte4K[Index1].Bits.Present) {
@@ -345,7 +318,6 @@ GetFlatPageTableDataSmm (
     }
   }
 
-  DEBUG ((DEBUG_INFO, "Pages used for Page Tables   = %d\n", MyPdeCount));
   DEBUG ((DEBUG_INFO, "Number of   4K Pages active  = %d - NotPresent = %d\n", My4KCount, NumPage4KNotPresent));
   DEBUG ((DEBUG_INFO, "Number of   2M Pages active  = %d - NotPresent = %d\n", My2MCount, NumPage2MNotPresent));
   DEBUG ((DEBUG_INFO, "Number of   1G Pages active  = %d - NotPresent = %d\n", My1GCount, NumPage1GNotPresent));
@@ -355,7 +327,7 @@ GetFlatPageTableDataSmm (
   // Only matters if a given buffer was provided.
   //
   if (((Pte1GEntries != NULL) && (*Pte1GCount < My1GCount)) || ((Pte2MEntries != NULL) && (*Pte2MCount < My2MCount)) ||
-      ((Pte4KEntries != NULL) && (*Pte4KCount < My4KCount)) || ((PdeEntries != NULL) && (*PdeCount < MyPdeCount)))
+      ((Pte4KEntries != NULL) && (*Pte4KCount < My4KCount)))
   {
     Status = EFI_BUFFER_TOO_SMALL;
   }
@@ -366,7 +338,6 @@ GetFlatPageTableDataSmm (
   *Pte1GCount = My1GCount;
   *Pte2MCount = My2MCount;
   *Pte4KCount = My4KCount;
-  *PdeCount   = MyPdeCount;
 
   return Status;
 } // GetFlatPageTableDataSmm()
@@ -389,11 +360,9 @@ LoadFlatPageTableData (
   OUT UINTN                *Pte1GCount,
   OUT UINTN                *Pte2MCount,
   OUT UINTN                *Pte4KCount,
-  OUT UINTN                *PdeCount,
   OUT PAGE_TABLE_1G_ENTRY  **Pte1GEntries,
   OUT PAGE_TABLE_ENTRY     **Pte2MEntries,
-  OUT PAGE_TABLE_4K_ENTRY  **Pte4KEntries,
-  OUT UINT64               **PdeEntries
+  OUT PAGE_TABLE_4K_ENTRY  **Pte4KEntries
   )
 {
   EFI_STATUS  Status;
@@ -403,18 +372,16 @@ LoadFlatPageTableData (
   *Pte1GCount = 0;
   *Pte2MCount = 0;
   *Pte4KCount = 0;
-  *PdeCount   = 0;
-  Status      = GetFlatPageTableDataSmm (Pte1GCount, Pte2MCount, Pte4KCount, PdeCount, NULL, NULL, NULL, NULL);
+  Status      = GetFlatPageTableDataSmm (Pte1GCount, Pte2MCount, Pte4KCount, NULL, NULL, NULL);
 
   // Allocate buffers if successful.
   if (!EFI_ERROR (Status)) {
     *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (PAGE_TABLE_1G_ENTRY));
     *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (PAGE_TABLE_ENTRY));
     *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (PAGE_TABLE_4K_ENTRY));
-    *PdeEntries   = AllocateZeroPool (*PdeCount * sizeof (UINT64));
 
     // Check for errors.
-    if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL) || (*PdeEntries == NULL)) {
+    if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL)) {
       DEBUG ((DEBUG_ERROR, "%a - Ran out of resource during allocation.\n", __FUNCTION__));
       Status = EFI_OUT_OF_RESOURCES;
     }
@@ -429,11 +396,9 @@ LoadFlatPageTableData (
                Pte1GCount,
                Pte2MCount,
                Pte4KCount,
-               PdeCount,
                *Pte1GEntries,
                *Pte2MEntries,
-               *Pte4KEntries,
-               *PdeEntries
+               *Pte4KEntries
                );
   }
 
@@ -454,15 +419,9 @@ LoadFlatPageTableData (
       *Pte4KEntries = NULL;
     }
 
-    if (*PdeEntries != NULL) {
-      FreePool (*PdeEntries);
-      *PdeEntries = NULL;
-    }
-
     *Pte1GCount = 0;
     *Pte2MCount = 0;
     *Pte4KCount = 0;
-    *PdeCount   = 0;
   }
 
   return !EFI_ERROR (Status);
@@ -498,11 +457,9 @@ SmmPagingAuditHandler (
   static UINTN                Pte1GCount          = 0;
   static UINTN                Pte2MCount          = 0;
   static UINTN                Pte4KCount          = 0;
-  static UINTN                PdeCount            = 0;
   static PAGE_TABLE_1G_ENTRY  *Pte1GEntries       = NULL;
   static PAGE_TABLE_ENTRY     *Pte2MEntries       = NULL;
   static PAGE_TABLE_4K_ENTRY  *Pte4KEntries       = NULL;
-  static UINT64               *PdeEntries         = NULL;
 
   DEBUG ((DEBUG_VERBOSE, "%a()\n", __FUNCTION__));
 
@@ -538,19 +495,15 @@ SmmPagingAuditHandler (
   //
   // If this call will need cached data, load that now.
   //
-  if ((AuditCommBuffer->Header.RequestType == SMM_PAGE_AUDIT_TABLE_REQUEST) ||
-      (AuditCommBuffer->Header.RequestType == SMM_PAGE_AUDIT_PDE_REQUEST))
-  {
+  if (AuditCommBuffer->Header.RequestType == SMM_PAGE_AUDIT_TABLE_REQUEST) {
     if (!PageTableDataLoaded) {
       PageTableDataLoaded = LoadFlatPageTableData (
                               &Pte1GCount,
                               &Pte2MCount,
                               &Pte4KCount,
-                              &PdeCount,
                               &Pte1GEntries,
                               &Pte2MEntries,
-                              &Pte4KEntries,
-                              &PdeEntries
+                              &Pte4KEntries
                               );
     }
 
@@ -609,25 +562,6 @@ SmmPagingAuditHandler (
 
       break;
 
-    case SMM_PAGE_AUDIT_PDE_REQUEST:
-      DEBUG ((DEBUG_INFO, "%a - Getting page directories.\n", __FUNCTION__));
-      // Init defaults.
-      ZeroMem (&AuditCommBuffer->Data.PdeEntry, sizeof (AuditCommBuffer->Data.PdeEntry));
-      // Copy PDE Entries.
-      StartIndex = AuditCommBuffer->Header.RequestIndex * BUFFER_COUNT_PDE;
-      if (StartIndex < PdeCount) {
-        CopyCount = MIN ((PdeCount - StartIndex), BUFFER_COUNT_PDE);
-        CopyMem (&AuditCommBuffer->Data.PdeEntry.Pde, &PdeEntries[StartIndex], CopyCount * sizeof (UINT64));
-        AuditCommBuffer->Data.PdeEntry.PdeCount = CopyCount;
-        // Check for more room.
-        StartIndex = ((AuditCommBuffer->Header.RequestIndex + 1) * BUFFER_COUNT_PDE);
-        if (StartIndex < PdeCount) {
-          AuditCommBuffer->Data.PdeEntry.HasMore = TRUE;
-        }
-      }
-
-      break;
-
     case SMM_PAGE_AUDIT_MISC_DATA_REQUEST:
       DEBUG ((DEBUG_INFO, "%a - Getting misc info run #%d\n", __FUNCTION__, AuditCommBuffer->Header.RequestIndex));
       IdtDumpHandler (&AuditCommBuffer->Data.MiscData);
@@ -643,13 +577,10 @@ SmmPagingAuditHandler (
       FreePool (Pte2MEntries);
       Pte2MEntries = NULL;
       FreePool (Pte4KEntries);
-      Pte4KEntries = NULL;
-      FreePool (PdeEntries);
-      PdeEntries          = NULL;
+      Pte4KEntries        = NULL;
       Pte1GCount          = 0;
       Pte2MCount          = 0;
       Pte4KCount          = 0;
-      PdeCount            = 0;
       PageTableDataLoaded = FALSE;
       break;
 

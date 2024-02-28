@@ -166,12 +166,10 @@ GetFlatPageTableData (
   IN OUT UINTN  *Pte1GCount,
   IN OUT UINTN  *Pte2MCount,
   IN OUT UINTN  *Pte4KCount,
-  IN OUT UINTN  *PdeCount,
   IN OUT UINTN  *GuardCount,
   OUT UINT64    *Pte1GEntries,
   OUT UINT64    *Pte2MEntries,
   OUT UINT64    *Pte4KEntries,
-  OUT UINT64    *PdeEntries,
   OUT UINT64    *GuardEntries
   );
 
