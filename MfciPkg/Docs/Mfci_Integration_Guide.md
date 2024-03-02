@@ -94,6 +94,8 @@ When using `!include MfciPkg/MfciPkg.dsc.inc`, please ensure the platform pcds f
 
 * Variable Policy
   * Variable policy is used to protect MFCI's security data (UEFI variables) from malicious tampering
+* MsCorePkg's [MuVarPolicyFoundationDxe](../../MsCorePkg/MuVarPolicyFoundationDxe/Feature_MuVarPolicyFoundationDxe_Readme.md)
+  * Variable policy phase notification support is required to secure some of the MFCI variables.
 * EDK2's SecureBootVariableLib, specifically:
   * ```DeleteSecureBootVariables()```
 * EDK2's BaseCryptLib, specifically:
