@@ -35,3 +35,4 @@
 
 [Guids]
   gEfiImageSecurityDatabaseGuid        ## CONSUMES
+  gEfiCertX509Guid                     ## CONSUMES
