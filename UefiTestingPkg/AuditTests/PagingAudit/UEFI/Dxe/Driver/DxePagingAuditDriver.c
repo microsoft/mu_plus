@@ -9,10 +9,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 #include "../../PagingAuditCommon.h"
 
-CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
-UINTN  mMemoryInfoDatabaseSize      = 0;
-UINTN  mMemoryInfoDatabaseAllocSize = 0;
-
 /**
    Event notification handler. Will dump paging information to disk.
 
