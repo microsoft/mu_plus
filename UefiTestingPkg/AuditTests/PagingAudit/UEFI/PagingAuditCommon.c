@@ -30,6 +30,31 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   ((EFI_MEMORY_DESCRIPTOR*)Entry)->Type           = NONE_EFI_MEMORY_TYPE;               \
   ((EFI_MEMORY_DESCRIPTOR*)Entry)->VirtualStart   = 0
 
+typedef enum {
+  Entry1g = 0,
+  Entry2m,
+  Entry4k,
+  EntryGuard,
+  EntryMax
+} ENTRY;
+
+UINT64  *mPteEntries[4]    = { NULL, NULL, NULL, NULL };
+CHAR16  *mPteFileNames[4]  = { L"1G", L"2M", L"4K", L"GuardPage" };
+UINTN   mPteCounts[4]      = { 0, 0, 0, 0 };
+UINTN   mPteBufferSizes[4] = { 0, 0, 0, 0 };
+
+EFI_MEMORY_DESCRIPTOR  *mMemoryMap          = NULL;
+UINTN                  mMemoryMapSize       = 0;
+UINTN                  mMemoryMapBufferSize = 0;
+
+EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *mEfiMemorySpaceMap              = NULL;
+UINTN                            mNumEfiMemorySpaceMapDescriptors = 0;
+UINTN                            mEfiMemorySpaceMapDescriptorSize = 0;
+
+CHAR8  *mGuardPageBuffer    = NULL;
+UINTN  mGuardPageStringSize = 0;
+UINTN  mGuardPageAllocSize  = 0;
+
 MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol = NULL;
 CPU_MP_DEBUG_PROTOCOL             *mCpuMpDebugProtocol       = NULL;
 EFI_FILE                          *mFs_Handle                = NULL;
@@ -132,68 +157,78 @@ PopulateCpuMpDebugProtocol (
 
 /**
   This helper function writes a string entry to the memory info database buffer.
-  If string would exceed current buffer allocation, it will realloc.
 
-  NOTE: The buffer tracks its size. It does not work with NULL terminators.
-
-  @param[in]  DatabaseString    A pointer to a CHAR8 string that should be
-                                added to the database.
+  @param[in]  DatabaseString    The string to be added to the memory info database.
+  @param[in]  AllowAllocation   If TRUE, then this function will allocate memory for the
+                                database buffer if it is not large enough to hold the input
+                                string. If FALSE, then this function will return an error
+                                if the database buffer is not large enough to hold the input
+                                string.
 
   @retval     EFI_SUCCESS           String was successfully added.
-  @retval     EFI_OUT_OF_RESOURCES  Buffer could not be grown to accommodate string.
-                                    String has not been added.
-
+  @retval     EFI_OUT_OF_RESOURCES  AllowAllocation is TRUE but the call to allocate memory
+                                    failed.
+  @retval     EFI_BUFFER_TOO_SMALL  The database buffer is not large enough to hold the input
+                                    string and AllowAllocation is FALSE.
+  @retval     EFI_NOT_STARTED       The memory info database buffer has not been allocated
+                                    and AllowAllocation is FALSE.
 **/
 EFI_STATUS
 EFIAPI
 AppendToMemoryInfoDatabase (
-  IN CONST CHAR8  *DatabaseString
+  IN CONST CHAR8  *DatabaseString,
+  IN BOOLEAN      AllowAllocation
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
   UINTN       NewStringSize, NewDatabaseSize;
   CHAR8       *NewDatabaseBuffer;
 
-  // If the incoming string is NULL or empty, get out of here.
   if ((DatabaseString == NULL) || (DatabaseString[0] == '\0')) {
     return EFI_SUCCESS;
   }
 
-  // Determine the length of the incoming string.
-  // NOTE: This size includes the NULL terminator.
-  NewStringSize = AsciiStrnSizeS (DatabaseString, MEM_INFO_DATABASE_MAX_STRING_SIZE);
-  NewStringSize = NewStringSize - sizeof (CHAR8);    // Remove NULL.
-
-  // If we need more space, realloc now.
-  // Subtract 1 because we only need a single NULL terminator.
-  NewDatabaseSize = NewStringSize + mMemoryInfoDatabaseSize;
-  if (NewDatabaseSize > mMemoryInfoDatabaseAllocSize) {
-    NewDatabaseBuffer = ReallocatePool (
-                          mMemoryInfoDatabaseAllocSize,
-                          mMemoryInfoDatabaseAllocSize + MEM_INFO_DATABASE_REALLOC_CHUNK,
-                          mMemoryInfoDatabaseBuffer
-                          );
-    // If we failed, don't change anything.
-    if (NewDatabaseBuffer == NULL) {
-      Status = EFI_OUT_OF_RESOURCES;
-    }
-    // Otherwise, updated the pointers and sizes.
-    else {
-      mMemoryInfoDatabaseBuffer     = NewDatabaseBuffer;
-      mMemoryInfoDatabaseAllocSize += MEM_INFO_DATABASE_REALLOC_CHUNK;
+  if (mMemoryInfoDatabaseBuffer == NULL) {
+    if (AllowAllocation) {
+      mMemoryInfoDatabaseBuffer    = AllocatePool (MEM_INFO_DATABASE_REALLOC_CHUNK);
+      mMemoryInfoDatabaseAllocSize = MEM_INFO_DATABASE_REALLOC_CHUNK;
+    } else {
+      return EFI_NOT_STARTED;
     }
   }
 
-  // If we're still good, copy the new string to the end of
-  // the buffer and update the size.
+  // Determine the length of the incoming string.
+  // NOTE: This size includes the NULL terminator.
+  NewStringSize   = AsciiStrnSizeS (DatabaseString, MEM_INFO_DATABASE_MAX_STRING_SIZE);
+  NewStringSize   = NewStringSize - sizeof (CHAR8);  // Remove NULL.
+  NewDatabaseSize = NewStringSize + mMemoryInfoDatabaseSize;
+  if (NewDatabaseSize > mMemoryInfoDatabaseAllocSize) {
+    if (AllowAllocation) {
+      NewDatabaseBuffer = ReallocatePool (
+                            mMemoryInfoDatabaseAllocSize,
+                            mMemoryInfoDatabaseAllocSize + MEM_INFO_DATABASE_REALLOC_CHUNK,
+                            mMemoryInfoDatabaseBuffer
+                            );
+
+      if (NewDatabaseBuffer == NULL) {
+        Status = EFI_OUT_OF_RESOURCES;
+      } else {
+        mMemoryInfoDatabaseBuffer     = NewDatabaseBuffer;
+        mMemoryInfoDatabaseAllocSize += MEM_INFO_DATABASE_REALLOC_CHUNK;
+      }
+    } else {
+      Status = EFI_BUFFER_TOO_SMALL;
+    }
+  }
+
+  // Copy the new string to the end of the buffer and update the size.
   if (!EFI_ERROR (Status)) {
-    // Subtract 1 to remove the previous NULL terminator.
     CopyMem (&mMemoryInfoDatabaseBuffer[mMemoryInfoDatabaseSize], DatabaseString, NewStringSize);
     mMemoryInfoDatabaseSize = NewDatabaseSize;
   }
 
   return Status;
-} // AppendToMemoryInfoDatabase()
+}
 
 /**
   Creates a new file and writes the contents of the caller's data buffer to the file.
@@ -217,6 +252,10 @@ CreateAndWriteFileSFS (
 {
   EFI_STATUS  Status      = EFI_SUCCESS;
   EFI_FILE    *FileHandle = NULL;
+
+  if ((Fs_Handle == NULL) || (FileName == NULL) || (Data == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
 
   DEBUG ((DEBUG_ERROR, "%a: Creating file: %s \n", __FUNCTION__, FileName));
 
@@ -262,14 +301,18 @@ CleanUp:
 }
 
 /**
- * @brief      Writes a buffer to file.
- *
- * @param      FileName     The name of the file being written to.
- * @param      Buffer       The buffer to write to file.
- * @param[in]  BufferSize   Size of the buffer.
- * @param[in]  WriteCount   Number to append to the end of the file.
- */
-VOID
+  Writes the input buffer to a .dat file with the input file name.
+
+  @param[in]     FileName     The name of the file being written to.
+  @param[in]     Buffer       The buffer to write to file.
+  @param[in]     BufferSize   Size of the buffer.
+
+  @retval        EFI_SUCCESS            The file was successfully written.
+  @retval        EFI_INVALID_PARAMETER  One or more input parameters were invalid.
+  @retval        EFI_ABORTED            An error occurred while opening the SFS volume.
+  @retval        Others                 The return value of CreateAndWriteFileSFS()
+**/
+EFI_STATUS
 EFIAPI
 WriteBufferToFile (
   IN CONST CHAR16  *FileName,
@@ -280,11 +323,15 @@ WriteBufferToFile (
   EFI_STATUS  Status;
   CHAR16      FileNameAndExt[MAX_STRING_SIZE];
 
+  if ((FileName == NULL) || (Buffer == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   if (mFs_Handle == NULL) {
     Status = OpenVolumeSFS (&mFs_Handle);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
-      return;
+      DEBUG ((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __func__, Status));
+      return EFI_ABORTED;
     }
   }
 
@@ -293,13 +340,20 @@ WriteBufferToFile (
   UnicodeSPrint (FileNameAndExt, MAX_STRING_SIZE, L"%s.dat", FileName);
 
   Status = CreateAndWriteFileSFS (mFs_Handle, FileNameAndExt, BufferSize, Buffer);
-  DEBUG ((DEBUG_ERROR, "%a Writing file %s - %r\n", __FUNCTION__, FileNameAndExt, Status));
+  DEBUG ((DEBUG_ERROR, "%a Writing file %s - %r\n", __func__, FileNameAndExt, Status));
+
+  return Status;
 }
 
 /**
- * @brief      Writes the MemoryAttributesTable to a file.
- */
-VOID
+  Writes the memory attributes table to MAT.dat.
+
+  @retval EFI_SUCCESS           The MAT.dat was successfully written.
+  @retval EFI_OUT_OF_RESOURCES  Failed to allocate memory.
+  @retval EFI_ABORTED           Failed to fetch the MAT or open the SFS volume.
+  @retval Others                The return value of CreateAndWriteFileSFS()
+**/
+EFI_STATUS
 EFIAPI
 MemoryAttributesTableDump (
   VOID
@@ -326,7 +380,7 @@ MemoryAttributesTableDump (
 
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a Failed to retrieve MAT %r\n", __FUNCTION__, Status));
-    return;
+    return EFI_ABORTED;
   }
 
   // MAT should now be at the pointer.
@@ -346,7 +400,7 @@ MemoryAttributesTableDump (
   Buffer     = AllocatePool (BufferSize);
   if (!Buffer) {
     DEBUG ((DEBUG_ERROR, "%a Failed to allocate buffer for data dump!\n", __FUNCTION__));
-    return;
+    return EFI_OUT_OF_RESOURCES;
   }
 
   //
@@ -374,9 +428,10 @@ MemoryAttributesTableDump (
   // Finally, write the strings to the dump file.
   //
   // NOTE: Don't need to save the NULL terminator.
-  WriteBufferToFile (L"MAT", Buffer, BufferSize-1);
+  Status = WriteBufferToFile (L"MAT", Buffer, BufferSize-1);
 
   FreePool (Buffer);
+  return Status;
 }
 
 /**
@@ -464,72 +519,10 @@ SortMemorySpaceMap (
 }
 
 /**
-  Merges contiguous entries with the same GCD type
-
-  @param[in, out]  NumberOfDescriptors IN:  Pointer to the number of descriptors of the input allocated memory map
-                                       OUT: Value at pointer updated to the number of descriptors of the merged memory map
-  @param[in, out]  MemorySpaceMap      IN:  Pointer to a valid EFI memory map. The memory map at the pointer will be freed
-                                       OUT: Pointer to a merged memory map
-
-  @retval EFI_SUCCESS           Successfully merged entries
-  @retval EFI_OUT_OF_RECOURCES  Failed to allocate pools
-  @retval EFI_INVALID_PARAMETER MemorySpaceMap or NumberOfDescriptors was NULL
-**/
-STATIC
-EFI_STATUS
-MergeMemorySpaceMap (
-  IN OUT UINTN                            *NumberOfDescriptors,
-  IN OUT EFI_GCD_MEMORY_SPACE_DESCRIPTOR  **MemorySpaceMap
-  )
-{
-  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *NewMemoryMap = NULL;
-  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *NewMemoryMapStart;
-  UINTN                            Index = 0;
-
-  if ((MemorySpaceMap == NULL) || (*MemorySpaceMap == NULL) || (NumberOfDescriptors == NULL) || (*NumberOfDescriptors <= 1)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  NewMemoryMap = AllocatePool (*NumberOfDescriptors * sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR));
-
-  if (NewMemoryMap == NULL) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  NewMemoryMapStart = NewMemoryMap;
-
-  while (Index < *NumberOfDescriptors) {
-    CopyMem (NewMemoryMap, &((*MemorySpaceMap)[Index]), sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR));
-    while (Index + 1 < *NumberOfDescriptors) {
-      if ((NewMemoryMap->GcdMemoryType == ((*MemorySpaceMap)[Index + 1].GcdMemoryType)) &&
-          ((NewMemoryMap->BaseAddress + NewMemoryMap->Length) == (*MemorySpaceMap)[Index + 1].BaseAddress))
-      {
-        NewMemoryMap->Length += (*MemorySpaceMap)[++Index].Length;
-      } else {
-        break;
-      }
-    }
-
-    NewMemoryMap++;
-    Index++;
-  }
-
-  *NumberOfDescriptors = NewMemoryMap - NewMemoryMapStart;
-
-  FreePool (*MemorySpaceMap);
-  *MemorySpaceMap = AllocateCopyPool (*NumberOfDescriptors * sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR), NewMemoryMapStart);
-  FreePool (NewMemoryMapStart);
-
-  if (*MemorySpaceMap == NULL ) {
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
   Updates the memory map to contain contiguous entries from StartOfAddressSpace to
-  max(EndOfAddressSpace, address + length of the final memory map entry)
+  max(EndOfAddressSpace, address + length of the final memory map entry). If DetermineSize
+  is TRUE, then this function will just determine the required buffer size for the output
+  memory map.
 
   @param[in, out] MemoryMapSize         Size, in bytes, of MemoryMap
   @param[in, out] MemoryMap             IN:  Pointer to the EFI memory map which will have all gaps filled. The
@@ -537,102 +530,127 @@ MergeMemorySpaceMap (
                                         OUT: Pointer to the pointer to a SORTED memory map
   @param[in]      DescriptorSize        Size, in bytes, of each descriptor region in the array. NOTE: This is not
                                         sizeof (EFI_MEMORY_DESCRIPTOR).
+  @param[in]      InsertionPoint        Pointer to where new memory map entries should
+                                        be inserted. This insertion point should be between MemoryMap
+                                        and MemoryMap + MemoryMapBufferSize. If this is NULL, then
+                                        DetermineSize must be TRUE.
   @param[in]      StartOfAddressSpace   Starting address from which there should be contiguous entries
   @param[in]      EndOfAddressSpace     Ending address at which the memory map should at least reach
+  @param[in]      DetermineSize         If TRUE, then this function will only determine the required
+                                        buffer size for the output memory map. If FALSE, then this
+                                        function will fill in the memory map
 
-  @retval EFI_SUCCESS                   Successfully merged entries
-  @retval EFI_OUT_OF_RECOURCES          Failed to allocate pools
-  @retval EFI_INVALID_PARAMETER         MemoryMap == NULL, *MemoryMap == NULL, *MemoryMapSize == 0, or
-                                        DescriptorSize == 0
+  @retval EFI_SUCCESS                   Successfully filled in the memory map
+  @retval EFI_INVALID_PARAMETER         An input parameter was invalid.
 **/
-STATIC
 EFI_STATUS
 FillInMemoryMap (
-  IN OUT UINTN                  *MemoryMapSize,
-  IN OUT EFI_MEMORY_DESCRIPTOR  **MemoryMap,
-  IN     UINTN                  DescriptorSize,
-  IN     EFI_PHYSICAL_ADDRESS   StartOfAddressSpace,
-  IN     EFI_PHYSICAL_ADDRESS   EndOfAddressSpace
+  IN OUT    UINTN                  *MemoryMapSize,
+  IN OUT    EFI_MEMORY_DESCRIPTOR  *MemoryMap,
+  IN        UINTN                  MemoryMapBufferSize,
+  IN        UINTN                  DescriptorSize,
+  IN        EFI_MEMORY_DESCRIPTOR  *InsertionPoint,
+  IN        EFI_PHYSICAL_ADDRESS   StartOfAddressSpace,
+  IN        EFI_PHYSICAL_ADDRESS   EndOfAddressSpace,
+  IN OUT    BOOLEAN                DetermineSize
   )
 {
-  EFI_MEMORY_DESCRIPTOR  *OldMemoryMapCurrent, *OldMemoryMapEnd, *NewMemoryMapStart, *NewMemoryMapCurrent;
+  EFI_MEMORY_DESCRIPTOR  *MemoryMapCurrent, *MemoryMapEnd;
   EFI_PHYSICAL_ADDRESS   LastEntryEnd, NextEntryStart;
+  UINTN                  AdditionalEntriesCount;
 
-  if ((MemoryMap == NULL) || (*MemoryMap == NULL) || (MemoryMapSize == NULL) || (*MemoryMapSize == 0) || (DescriptorSize == 0)) {
+  if ((MemoryMap == NULL) ||
+      (MemoryMapSize == NULL) ||
+      (!DetermineSize && (InsertionPoint == NULL)))
+  {
+    DEBUG ((DEBUG_ERROR, "%a - Function had NULL input(s)!\n", __func__));
     return EFI_INVALID_PARAMETER;
   }
 
-  NewMemoryMapStart = NULL;
-
-  // Double the size of the memory map for the worst case of every entry being non-contiguous
-  NewMemoryMapStart = AllocatePool ((*MemoryMapSize * 2) + (DescriptorSize * 2));
-
-  if (NewMemoryMapStart == NULL) {
-    return EFI_OUT_OF_RESOURCES;
+  if ((*MemoryMapSize == 0)) {
+    DEBUG ((DEBUG_ERROR, "%a - MemoryMapSize is zero!\n", __func__));
+    return EFI_INVALID_PARAMETER;
   }
 
-  NewMemoryMapCurrent = NewMemoryMapStart;
-  OldMemoryMapCurrent = *MemoryMap;
-  OldMemoryMapEnd     = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)*MemoryMap + *MemoryMapSize);
+  if ((!DetermineSize) &&
+      !(((UINTN)MemoryMap < (UINTN)InsertionPoint) &&
+        ((UINTN)InsertionPoint >= (UINTN)MemoryMap + *MemoryMapSize) &&
+        ((UINTN)InsertionPoint < (UINTN)MemoryMap + MemoryMapBufferSize)))
+  {
+    DEBUG ((DEBUG_ERROR, "%a - Input InsertionPoint is Invalid!\n", __func__));
+    return EFI_INVALID_PARAMETER;
+  }
+
+  SortMemoryMap (MemoryMap, *MemoryMapSize, DescriptorSize);
+  if ((InsertionPoint != NULL) && !DetermineSize) {
+    ZeroMem (InsertionPoint, MemoryMapBufferSize - *MemoryMapSize);
+  }
+
+  AdditionalEntriesCount = 0;
+  MemoryMapCurrent       = MemoryMap;
+  MemoryMapEnd           = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)MemoryMap + *MemoryMapSize);
 
   // Check if we need to insert a new entry at the start of the memory map
-  if (OldMemoryMapCurrent->PhysicalStart > StartOfAddressSpace) {
-    FILL_MEMORY_DESCRIPTOR_ENTRY (
-      NewMemoryMapCurrent,
-      StartOfAddressSpace,
-      EfiSizeToPages (OldMemoryMapCurrent->PhysicalStart - StartOfAddressSpace)
-      );
+  if (MemoryMapCurrent->PhysicalStart > StartOfAddressSpace) {
+    if (!DetermineSize) {
+      FILL_MEMORY_DESCRIPTOR_ENTRY (
+        InsertionPoint,
+        StartOfAddressSpace,
+        EfiSizeToPages (MemoryMapCurrent->PhysicalStart - StartOfAddressSpace)
+        );
 
-    NewMemoryMapCurrent = NEXT_MEMORY_DESCRIPTOR (NewMemoryMapCurrent, DescriptorSize);
+      InsertionPoint = NEXT_MEMORY_DESCRIPTOR (InsertionPoint, DescriptorSize);
+    } else {
+      AdditionalEntriesCount++;
+    }
   }
 
-  while (OldMemoryMapCurrent < OldMemoryMapEnd) {
-    CopyMem (NewMemoryMapCurrent, OldMemoryMapCurrent, DescriptorSize);
-    if (NEXT_MEMORY_DESCRIPTOR (OldMemoryMapCurrent, DescriptorSize) < OldMemoryMapEnd) {
-      LastEntryEnd   = NewMemoryMapCurrent->PhysicalStart + EfiPagesToSize (NewMemoryMapCurrent->NumberOfPages);
-      NextEntryStart = NEXT_MEMORY_DESCRIPTOR (OldMemoryMapCurrent, DescriptorSize)->PhysicalStart;
+  while (MemoryMapCurrent < MemoryMapEnd) {
+    if (NEXT_MEMORY_DESCRIPTOR (MemoryMapCurrent, DescriptorSize) < MemoryMapEnd) {
+      LastEntryEnd   = MemoryMapCurrent->PhysicalStart + EfiPagesToSize (MemoryMapCurrent->NumberOfPages);
+      NextEntryStart = NEXT_MEMORY_DESCRIPTOR (MemoryMapCurrent, DescriptorSize)->PhysicalStart;
       // Check for a gap in the memory map
-      if (NextEntryStart != LastEntryEnd) {
-        NewMemoryMapCurrent = NEXT_MEMORY_DESCRIPTOR (NewMemoryMapCurrent, DescriptorSize);
-        FILL_MEMORY_DESCRIPTOR_ENTRY (
-          NewMemoryMapCurrent,
-          LastEntryEnd,
-          EfiSizeToPages (NextEntryStart - LastEntryEnd)
-          );
+      if (NextEntryStart > LastEntryEnd) {
+        // Fill in missing region based on the GCD Memory Map
+        if (!DetermineSize) {
+          FILL_MEMORY_DESCRIPTOR_ENTRY (
+            InsertionPoint,
+            LastEntryEnd,
+            EfiSizeToPages (NextEntryStart - LastEntryEnd)
+            );
+          InsertionPoint = NEXT_MEMORY_DESCRIPTOR (InsertionPoint, DescriptorSize);
+        } else {
+          AdditionalEntriesCount++;
+        }
       }
     }
 
-    NewMemoryMapCurrent = NEXT_MEMORY_DESCRIPTOR (NewMemoryMapCurrent, DescriptorSize);
-    OldMemoryMapCurrent = NEXT_MEMORY_DESCRIPTOR (OldMemoryMapCurrent, DescriptorSize);
+    MemoryMapCurrent = NEXT_MEMORY_DESCRIPTOR (MemoryMapCurrent, DescriptorSize);
   }
 
-  LastEntryEnd = PREVIOUS_MEMORY_DESCRIPTOR (NewMemoryMapCurrent, DescriptorSize)->PhysicalStart +
-                 EfiPagesToSize (PREVIOUS_MEMORY_DESCRIPTOR (NewMemoryMapCurrent, DescriptorSize)->NumberOfPages);
+  LastEntryEnd = PREVIOUS_MEMORY_DESCRIPTOR (MemoryMapCurrent, DescriptorSize)->PhysicalStart +
+                 EfiPagesToSize (PREVIOUS_MEMORY_DESCRIPTOR (MemoryMapCurrent, DescriptorSize)->NumberOfPages);
 
   // Check if we need to insert a new entry at the end of the memory map
   if (EndOfAddressSpace > LastEntryEnd) {
-    FILL_MEMORY_DESCRIPTOR_ENTRY (
-      NewMemoryMapCurrent,
-      LastEntryEnd,
-      EfiSizeToPages (EndOfAddressSpace - LastEntryEnd)
-      );
-
-    NewMemoryMapCurrent = NEXT_MEMORY_DESCRIPTOR (NewMemoryMapCurrent, DescriptorSize);
+    if (!DetermineSize) {
+      FILL_MEMORY_DESCRIPTOR_ENTRY (
+        InsertionPoint,
+        LastEntryEnd,
+        EfiSizeToPages (EndOfAddressSpace - LastEntryEnd)
+        );
+      InsertionPoint = NEXT_MEMORY_DESCRIPTOR (InsertionPoint, DescriptorSize);
+    } else {
+      AdditionalEntriesCount++;
+    }
   }
 
-  // Re-use this stack variable as an intermediate to ensure we can allocate a buffer before updating the old memory map
-  OldMemoryMapCurrent = AllocateCopyPool ((UINTN)((UINT8 *)NewMemoryMapCurrent - (UINT8 *)NewMemoryMapStart), NewMemoryMapStart);
-
-  if (OldMemoryMapCurrent == NULL ) {
-    FreePool (NewMemoryMapStart);
-    return EFI_OUT_OF_RESOURCES;
+  if (DetermineSize) {
+    *MemoryMapSize = *MemoryMapSize + (AdditionalEntriesCount * DescriptorSize);
+  } else {
+    *MemoryMapSize = (UINTN)InsertionPoint - (UINTN)MemoryMap;
+    SortMemoryMap (MemoryMap, *MemoryMapSize, DescriptorSize);
   }
-
-  FreePool (*MemoryMap);
-  *MemoryMap = OldMemoryMapCurrent;
-
-  *MemoryMapSize = (UINTN)((UINT8 *)NewMemoryMapCurrent - (UINT8 *)NewMemoryMapStart);
-  FreePool (NewMemoryMapStart);
 
   return EFI_SUCCESS;
 }
@@ -648,7 +666,7 @@ FillInMemoryMap (
   @param[out] Type                  The GCD memory type which applies to
                                     PhyscialStart + NumberOfPages - <remaining uncovered pages>
 
-  @return Remaining pages not covered by a GCD Memory region
+  @retval Remaining pages not covered by a GCD Memory region
 **/
 STATIC
 UINT64
@@ -699,156 +717,332 @@ GetOverlappingMemorySpaceRegion (
 }
 
 /**
- * @brief      Writes the UEFI memory map to file.
- */
-VOID
+  Allocate memory to hold the hybrid EFI/GCD memory map.
+
+  @retval EFI_SUCCESS           Memory was successfully allocated.
+  @retval EFI_OUT_OF_RESOURCES  Memory could not be allocated.
+  @retval Others                The return status of a boot services or DXE services call.
+**/
+EFI_STATUS
 EFIAPI
-MemoryMapDumpHandler (
+AllocateMemoryMapBuffer (
   VOID
   )
 {
-  EFI_STATUS                       Status;
-  UINTN                            EfiMemoryMapSize;
-  UINTN                            EfiMapKey;
-  UINTN                            EfiDescriptorSize;
-  UINT32                           EfiDescriptorVersion;
-  EFI_MEMORY_DESCRIPTOR            *EfiMemoryMap;
-  EFI_MEMORY_DESCRIPTOR            *EfiMemoryMapEnd;
-  EFI_MEMORY_DESCRIPTOR            *EfiMemNext;
-  CHAR8                            TempString[MAX_STRING_SIZE];
-  UINTN                            NumberOfDescriptors;
-  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemorySpaceMap = NULL;
-  EFI_GCD_MEMORY_TYPE              MemorySpaceType;
-  UINT64                           RemainingPages;
+  EFI_STATUS  Status;
+  UINTN       MapKey;
+  UINTN       MemoryMapDescriptorSize;
+  UINT32      DescriptorVersion;
 
-  DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
+  // GetMemorySpaceMap() will allocate memory
+  Status = gDS->GetMemorySpaceMap (&mNumEfiMemorySpaceMapDescriptors, &mEfiMemorySpaceMap);
 
-  if (EFI_ERROR (PopulateHeapGuardDebugProtocol ())) {
-    DEBUG ((DEBUG_ERROR, "%a - Error finding heap guard debug protocol\n", __FUNCTION__));
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto FailureFreeMem;
   }
 
-  //
-  // Get the EFI memory map.
-  //
-  EfiMemoryMapSize = 0;
-  EfiMemoryMap     = NULL;
-  Status           = gBS->GetMemoryMap (
-                            &EfiMemoryMapSize,
-                            EfiMemoryMap,
-                            &EfiMapKey,
-                            &EfiDescriptorSize,
-                            &EfiDescriptorVersion
-                            );
-  //
-  // Loop to allocate space for the memory map and then copy it in.
-  //
+  mEfiMemorySpaceMapDescriptorSize = sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR);
+  SortMemorySpaceMap (mEfiMemorySpaceMap, mNumEfiMemorySpaceMapDescriptors * mEfiMemorySpaceMapDescriptorSize, mEfiMemorySpaceMapDescriptorSize);
+
+  mMemoryMapSize = 0;
+  Status         = gBS->GetMemoryMap (
+                          &mMemoryMapSize,
+                          mMemoryMap,
+                          &MapKey,
+                          &MemoryMapDescriptorSize,
+                          &DescriptorVersion
+                          );
+  ASSERT (Status == EFI_BUFFER_TOO_SMALL);
+
   do {
-    EfiMemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocateZeroPool (EfiMemoryMapSize);
-    if (EfiMemoryMap == NULL) {
-      ASSERT (EfiMemoryMap != NULL);
-      DEBUG ((DEBUG_ERROR, "%a - Unable to allocate memory for the EFI memory map.\n", __FUNCTION__));
-      return;
+    mMemoryMap = (EFI_MEMORY_DESCRIPTOR *)AllocatePool (mMemoryMapSize);
+    if (mMemoryMap == NULL) {
+      Status = EFI_OUT_OF_RESOURCES;
+      ASSERT_EFI_ERROR (Status);
+      goto FailureFreeMem;
     }
 
     Status = gBS->GetMemoryMap (
-                    &EfiMemoryMapSize,
-                    EfiMemoryMap,
-                    &EfiMapKey,
-                    &EfiDescriptorSize,
-                    &EfiDescriptorVersion
+                    &mMemoryMapSize,
+                    mMemoryMap,
+                    &MapKey,
+                    &MemoryMapDescriptorSize,
+                    &DescriptorVersion
                     );
     if (EFI_ERROR (Status)) {
-      FreePool (EfiMemoryMap);
+      FreePool (mMemoryMap);
     }
   } while (Status == EFI_BUFFER_TOO_SMALL);
 
-  if (!EFI_ERROR (Status)) {
-    Status = gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto FailureFreeMem;
+  }
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a - Unable to fetch memory space map. Status; %r\n", __FUNCTION__, Status));
-      goto Done;
+  // Determine how large the filled in memory map will be.
+  Status = FillInMemoryMap (
+             &mMemoryMapSize,
+             mMemoryMap,
+             mMemoryMapSize,
+             MemoryMapDescriptorSize,
+             NULL,
+             mEfiMemorySpaceMap->BaseAddress,
+             mEfiMemorySpaceMap[mNumEfiMemorySpaceMapDescriptors - 1].BaseAddress + mEfiMemorySpaceMap[mNumEfiMemorySpaceMapDescriptors - 1].Length,
+             TRUE
+             );
+
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    goto FailureFreeMem;
+  }
+
+  // mMemoryMapSize now contains the size of the filled in memory map. Increase
+  // it by 20% to account for any additional entries that may be required after
+  // other buffers are allocated.
+  mMemoryMapSize      += (mMemoryMapSize / 5);
+  mMemoryMapBufferSize = mMemoryMapSize;
+  FreePool (mMemoryMap);
+  mMemoryMap = AllocateZeroPool (mMemoryMapBufferSize);
+
+  if (mMemoryMap == NULL) {
+    ASSERT (mMemoryMap != NULL);
+    Status = EFI_OUT_OF_RESOURCES;
+    goto FailureFreeMem;
+  }
+
+  return Status;
+
+FailureFreeMem:
+  if (mMemoryMap != NULL) {
+    FreePool (mMemoryMap);
+  }
+
+  if (mEfiMemorySpaceMap != NULL) {
+    FreePool (mEfiMemorySpaceMap);
+  }
+
+  return Status;
+}
+
+/**
+  Dumps the memory map to the memory info database string. If DetermineStrSize is
+  TRUE, then this function will add the required string size to the global
+  mMemoryInfoDatabaseAllocSize.
+
+  @param[in]  AllowAllocation   If TRUE, then this function will allocate memory for the
+                                database buffer if it is not large enough to hold the input
+                                string. If FALSE, then this function will return an error
+                                if the database buffer is not large enough to hold the input
+                                string.
+  @param[out] StringLength      The length of the string that was or would have been written
+                                to the memory info database buffer.
+
+  @retval     EFI_SUCCESS             The platform specific info was successfully dumped to
+                                      the memory info database buffer.
+  @retval     EFI_OUT_OF_RESOURCES    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_NOT_STARTED         The memory info database buffer has not been allocated.
+  @retval     EFI_BUFFER_TOO_SMALL    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_INVALID_PARAMETER   StringLength is NULL.
+**/
+EFI_STATUS
+EFIAPI
+MemoryMapDumpHandler (
+  IN  BOOLEAN  AllowAllocation,
+  OUT UINTN    *StringLength
+  )
+{
+  EFI_STATUS             Status;
+  UINTN                  MapKey;
+  UINTN                  MemoryMapDescriptorSize;
+  UINT32                 DescriptorVersion;
+  CHAR8                  TempString[MAX_STRING_SIZE];
+  EFI_GCD_MEMORY_TYPE    MemorySpaceType;
+  UINT64                 RemainingPages;
+  EFI_MEMORY_DESCRIPTOR  *MemoryMapEnd;
+  EFI_MEMORY_DESCRIPTOR  *MemoryMapNext;
+
+  if ((mMemoryMap == NULL) || (mMemoryMapBufferSize == 0) ||
+      (mEfiMemorySpaceMap == NULL) || (StringLength == NULL))
+  {
+    ASSERT (mMemoryMap != NULL);
+    ASSERT (mMemoryMapBufferSize != 0);
+    ASSERT (mEfiMemorySpaceMap != NULL);
+    ASSERT (StringLength != NULL);
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *StringLength = 0;
+
+  if (EFI_ERROR (PopulateHeapGuardDebugProtocol ())) {
+    DEBUG ((DEBUG_ERROR, "%a - Error finding heap guard debug protocol\n", __func__));
+  }
+
+  mMemoryMapSize = mMemoryMapBufferSize;
+  Status         = gBS->GetMemoryMap (
+                          &mMemoryMapSize,
+                          mMemoryMap,
+                          &MapKey,
+                          &MemoryMapDescriptorSize,
+                          &DescriptorVersion
+                          );
+
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    Status = EFI_ABORTED;
+    goto Failure;
+  }
+
+  // Fill gaps in the memory map
+  Status = FillInMemoryMap (
+             &mMemoryMapSize,
+             mMemoryMap,
+             mMemoryMapBufferSize,
+             MemoryMapDescriptorSize,
+             (EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)mMemoryMap) + mMemoryMapSize),
+             mEfiMemorySpaceMap->BaseAddress,
+             mEfiMemorySpaceMap[mNumEfiMemorySpaceMapDescriptors - 1].BaseAddress + mEfiMemorySpaceMap[mNumEfiMemorySpaceMapDescriptors - 1].Length,
+             FALSE
+             );
+
+  if (EFI_ERROR (Status)) {
+    ASSERT_EFI_ERROR (Status);
+    Status = EFI_ABORTED;
+    goto Failure;
+  }
+
+  MemoryMapEnd  = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mMemoryMap + mMemoryMapSize);
+  MemoryMapNext = mMemoryMap;
+
+  while (MemoryMapNext < MemoryMapEnd) {
+    RemainingPages = GetOverlappingMemorySpaceRegion (
+                       mEfiMemorySpaceMap,
+                       mNumEfiMemorySpaceMapDescriptors,
+                       MemoryMapNext->PhysicalStart,
+                       MemoryMapNext->NumberOfPages,
+                       &MemorySpaceType
+                       );
+
+    AsciiSPrint (
+      TempString,
+      MAX_STRING_SIZE,
+      "MemoryMap,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%x\n",
+      MemoryMapNext->Type,
+      MemoryMapNext->PhysicalStart,
+      MemoryMapNext->VirtualStart,
+      MemoryMapNext->NumberOfPages - RemainingPages,
+      MemoryMapNext->Attribute,
+      MemorySpaceType
+      );
+    *StringLength += AsciiStrLen (TempString);
+    Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
+
+    if (RemainingPages > 0) {
+      MemoryMapNext->PhysicalStart += EfiPagesToSize (MemoryMapNext->NumberOfPages - RemainingPages);
+      MemoryMapNext->NumberOfPages  = RemainingPages;
+      if (MemoryMapNext->VirtualStart > 0) {
+        MemoryMapNext->VirtualStart += EfiPagesToSize (MemoryMapNext->NumberOfPages - RemainingPages);
+      }
+    } else {
+      MemoryMapNext = NEXT_MEMORY_DESCRIPTOR (MemoryMapNext, MemoryMapDescriptorSize);
     }
+  }
 
-    SortMemorySpaceMap (MemorySpaceMap, NumberOfDescriptors, sizeof (EFI_GCD_MEMORY_SPACE_DESCRIPTOR));
-    Status = MergeMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
+  return Status;
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_WARN, "%a - Unable to merge memory space map entries. Status: %r\n", __FUNCTION__, Status));
-    }
+Failure:
+  if (mMemoryMap != NULL) {
+    ZeroMem (mMemoryMap, mMemoryMapBufferSize);
+  }
 
-    SortMemoryMap (EfiMemoryMap, EfiMemoryMapSize, EfiDescriptorSize);
+  return Status;
+}
 
-    Status = FillInMemoryMap (
-               &EfiMemoryMapSize,
-               &EfiMemoryMap,
-               EfiDescriptorSize,
-               MemorySpaceMap->BaseAddress,
-               MemorySpaceMap[NumberOfDescriptors - 1].BaseAddress + MemorySpaceMap[NumberOfDescriptors - 1].Length
-               );
+/**
+  Dumps the guard page entries to the memory info database string. If DetermineStrSize is TRUE,
+  then this function will add the required string size to the global mMemoryInfoDatabaseAllocSize.
 
-    if (EFI_ERROR (Status)) {
-      DEBUG ((
-        DEBUG_INFO,
-        "%a - Error filling in gaps in memory map - the output data may not be complete. Status: %r\n",
-        __FUNCTION__,
-        Status
-        ));
-    }
+  @param[in]  GuardPageEntries  The buffer containing the guard page entries
+  @param[in]  GuardPageCount    The number of guard page entries in the buffer
+  @param[in]  DetermineStrSize  If TRUE, then this function will only determine the required
+                                buffer size for the output and add it to mMemoryInfoDatabaseAllocSize.
 
-    EfiMemoryMapEnd = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)EfiMemoryMap + EfiMemoryMapSize);
-    EfiMemNext      = EfiMemoryMap;
+  @retval EFI_SUCCESS           Guard page entries were successfully dumped or the alloc size was calculated.
+  @retval EFI_INVALID_PARAMETER GuardPageEntries was NULL.
+  @retval EFI_OUT_OF_RESOURCES  The size of the database buffer was not large enough to hold the guard page entries.
+**/
+EFI_STATUS
+GuardPageDump (
+  IN UINT64   *GuardPageEntries,
+  IN UINTN    GuardPageCount,
+  IN BOOLEAN  DetermineStrSize
+  )
+{
+  UINTN       Index;
+  EFI_STATUS  Status;
+  CHAR8       TempString[MAX_STRING_SIZE];
 
-    while (EfiMemNext < EfiMemoryMapEnd) {
-      RemainingPages = GetOverlappingMemorySpaceRegion (
-                         MemorySpaceMap,
-                         NumberOfDescriptors,
-                         EfiMemNext->PhysicalStart,
-                         EfiMemNext->NumberOfPages,
-                         &MemorySpaceType
-                         );
+  Status = EFI_SUCCESS;
 
-      AsciiSPrint (
-        TempString,
-        MAX_STRING_SIZE,
-        "MemoryMap,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%016lx,0x%x\n",
-        EfiMemNext->Type,
-        EfiMemNext->PhysicalStart,
-        EfiMemNext->VirtualStart,
-        EfiMemNext->NumberOfPages - RemainingPages,
-        EfiMemNext->Attribute,
-        MemorySpaceType
-        );
-      AppendToMemoryInfoDatabase (TempString);
-      if (RemainingPages > 0) {
-        EfiMemNext->PhysicalStart += EfiPagesToSize (EfiMemNext->NumberOfPages - RemainingPages);
-        EfiMemNext->NumberOfPages  = RemainingPages;
-        if (EfiMemNext->VirtualStart > 0) {
-          EfiMemNext->VirtualStart += EfiPagesToSize (EfiMemNext->NumberOfPages - RemainingPages);
-        }
-      } else {
-        EfiMemNext = NEXT_MEMORY_DESCRIPTOR (EfiMemNext, EfiDescriptorSize);
+  if (!DetermineStrSize && (GuardPageEntries == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  for (Index = 0; Index < GuardPageCount; Index++) {
+    if (DetermineStrSize) {
+      mGuardPageAllocSize += AsciiSPrint (
+                               TempString,
+                               MAX_STRING_SIZE,
+                               "GuardPage,0x%016lx\n",
+                               0x0
+                               );
+    } else {
+      mGuardPageStringSize += AsciiSPrint (
+                                (CHAR8 *)(mGuardPageBuffer + mGuardPageStringSize),
+                                MAX_STRING_SIZE,
+                                "GuardPage,0x%016lx\n",
+                                GuardPageEntries[Index]
+                                );
+      if (mGuardPageStringSize > mGuardPageAllocSize) {
+        Status = EFI_OUT_OF_RESOURCES;
+        ASSERT_EFI_ERROR (Status);
+        return Status;
       }
     }
   }
 
-Done:
-  if (EfiMemoryMap != NULL) {
-    FreePool (EfiMemoryMap);
-  }
-
-  if (MemorySpaceMap != NULL) {
-    FreePool (MemorySpaceMap);
-  }
+  return Status;
 }
 
 /**
- * @brief      Writes the name, base, and limit of each image in the image table to a file.
- */
-VOID
+  Dumps the loaded image information to the memory info database string.
+  If DetermineStrSize is TRUE, then this function will add the required
+  string size to the global mMemoryInfoDatabaseAllocSize.
+
+  @param[in]  AllowAllocation   If TRUE, then this function will allocate memory for the
+                                database buffer if it is not large enough to hold the input
+                                string. If FALSE, then this function will return an error
+                                if the database buffer is not large enough to hold the input
+                                string.
+  @param[out] StringLength      The length of the string that was or would have been written
+                                to the memory info database buffer.
+
+  @retval     EFI_SUCCESS             The platform specific info was successfully dumped to
+                                      the memory info database buffer.
+  @retval     EFI_OUT_OF_RESOURCES    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_NOT_STARTED         The memory info database buffer has not been allocated.
+  @retval     EFI_BUFFER_TOO_SMALL    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_INVALID_PARAMETER   StringLength is NULL.
+**/
+EFI_STATUS
 EFIAPI
 LoadedImageTableDump (
-  VOID
+  IN  BOOLEAN  AllowAllocation,
+  OUT UINTN    *StringLength
   )
 {
   EFI_STATUS                         Status;
@@ -865,13 +1059,19 @@ LoadedImageTableDump (
 
   DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
 
+  if (StringLength == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *StringLength = 0;
+
   //
   // locate DebugImageInfoTable
   //
   Status = EfiGetSystemConfigurationTable (&gEfiDebugImageInfoTableGuid, (VOID **)&TableHeader);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "Failed to retrieve loaded image table %r", Status));
-    return;
+    return EFI_ABORTED;
   }
 
   Table     = TableHeader->EfiDebugImageInfoTable;
@@ -903,19 +1103,22 @@ LoadedImageTableDump (
       ImageSize,
       PdbFileName
       );
-    AppendToMemoryInfoDatabase (TempString);
+
+    *StringLength += AsciiStrLen (TempString);
+    Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
   }
+
+  return Status;
 }
 
 /**
 
   Opens the SFS volume and if successful, returns a FS handle to the opened volume.
 
-  @param    mFs_Handle       Handle to the opened volume.
+  @param[out]   Fs_Handle       Handle to the opened volume.
 
-  @retval   EFI_SUCCESS     The FS volume was opened successfully.
-  @retval   Others          The operation failed.
-
+  @retval       EFI_SUCCESS     The FS volume was opened successfully.
+  @retval       Others          The operation failed.
 **/
 EFI_STATUS
 OpenVolumeSFS (
@@ -1068,48 +1271,91 @@ CleanUp:
   return Status;
 }
 
-BOOLEAN
+/**
+  Parse the page/translation table entries.
+
+  @param[out]   Pte1GCount      The number of 1G page table entries
+  @param[out]   Pte2MCount      The number of 2M page table entries
+  @param[out]   Pte4KCount      The number of 4K page table entries
+  @param[out]   GuardCount      The number of guard page entries
+  @param[out]   Pte1GEntries    The 1G page table entries
+  @param[out]   Pte2MEntries    The 2M page table entries
+  @param[out]   Pte4KEntries    The 4K page table entries
+  @param[out]   GuardEntries    The guard page entries
+  @param[in]    AllocateBuffers If TRUE, this routine will allocate buffers to hold
+                                the tables. If FALSE, this routine will populate the
+                                input buffers with the page data.
+**/
+EFI_STATUS
 LoadFlatPageTableData (
-  OUT UINTN   *Pte1GCount,
-  OUT UINTN   *Pte2MCount,
-  OUT UINTN   *Pte4KCount,
-  OUT UINTN   *GuardCount,
-  OUT UINT64  **Pte1GEntries,
-  OUT UINT64  **Pte2MEntries,
-  OUT UINT64  **Pte4KEntries,
-  OUT UINT64  **GuardEntries
+  OUT UINTN    *Pte1GCount,
+  OUT UINTN    *Pte2MCount,
+  OUT UINTN    *Pte4KCount,
+  OUT UINTN    *GuardCount,
+  OUT UINT64   **Pte1GEntries,
+  OUT UINT64   **Pte2MEntries,
+  OUT UINT64   **Pte4KEntries,
+  OUT UINT64   **GuardEntries,
+  IN  BOOLEAN  AllocateBuffers
   )
 {
   EFI_STATUS  Status = EFI_SUCCESS;
 
-  // Run once to get counts.
-  DEBUG ((DEBUG_ERROR, "%a - First call to determine required buffer sizes.\n", __FUNCTION__));
-  *Pte1GCount = 0;
-  *Pte2MCount = 0;
-  *Pte4KCount = 0;
-  *GuardCount = 0;
-  Status      = GetFlatPageTableData (Pte1GCount, Pte2MCount, Pte4KCount, GuardCount, NULL, NULL, NULL, NULL);
+  if (AllocateBuffers) {
+    *Pte1GCount = 0;
+    *Pte2MCount = 0;
+    *Pte4KCount = 0;
+    *GuardCount = 0;
+    Status      = GetFlatPageTableData (Pte1GCount, Pte2MCount, Pte4KCount, GuardCount, NULL, NULL, NULL, NULL);
 
-  (*Pte1GCount) += 15;
-  (*Pte2MCount) += 15;
-  (*Pte4KCount) += 15;
+    // Allocate buffers if successful.
+    if (!EFI_ERROR (Status)) {
+      // Increase by 20% or at least 15 entries
+      (*Pte1GCount) += (*Pte1GCount / 5) < 15 ? 15 : (*Pte1GCount / 5);
+      (*Pte2MCount) += (*Pte2MCount / 5) < 15 ? 15 : (*Pte2MCount / 5);
+      (*Pte4KCount) += (*Pte4KCount / 5) < 15 ? 15 : (*Pte4KCount / 5);
 
-  // Allocate buffers if successful.
-  if (!EFI_ERROR (Status)) {
-    *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (UINT64));
-    *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (UINT64));
-    *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (UINT64));
-    *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
+      if (*GuardCount != 0) {
+        (*GuardCount) += (*GuardCount / 5) < 15 ? 15 : (*GuardCount / 5);
+      }
 
-    // Check for errors.
-    if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL) || (*GuardEntries == NULL)) {
-      Status = EFI_OUT_OF_RESOURCES;
+      *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (UINT64));
+      *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (UINT64));
+      *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (UINT64));
+      *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
+
+      // Check for errors.
+      if ((*Pte1GEntries == NULL) || (*Pte2MEntries == NULL) || (*Pte4KEntries == NULL) || (*GuardEntries == NULL)) {
+        // If all the buffers could not be allocated, free the ones which were and return an error status
+        if (*Pte1GEntries != NULL) {
+          FreePool (*Pte1GEntries);
+          *Pte1GEntries = NULL;
+        }
+
+        if (*Pte2MEntries != NULL) {
+          FreePool (*Pte2MEntries);
+          *Pte2MEntries = NULL;
+        }
+
+        if (*Pte4KEntries != NULL) {
+          FreePool (*Pte4KEntries);
+          *Pte4KEntries = NULL;
+        }
+
+        if (*GuardEntries != NULL) {
+          FreePool (*GuardEntries);
+          *GuardEntries = NULL;
+        }
+
+        *Pte1GCount = 0;
+        *Pte2MCount = 0;
+        *Pte4KCount = 0;
+        *GuardCount = 0;
+      } else {
+        Status = EFI_SUCCESS;
+      }
     }
-  }
-
-  // If still good, grab the data.
-  if (!EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a - Second call to grab the data.\n", __FUNCTION__));
+  } else {
     Status = GetFlatPageTableData (
                Pte1GCount,
                Pte2MCount,
@@ -1120,105 +1366,25 @@ LoadFlatPageTableData (
                *Pte4KEntries,
                *GuardEntries
                );
-    if (Status == EFI_BUFFER_TOO_SMALL) {
-      DEBUG ((DEBUG_ERROR, "%a Second GetFlatPageTableData call returned - %r\n", __FUNCTION__, Status));
-      FreePool (*Pte1GEntries);
-      FreePool (*Pte2MEntries);
-      FreePool (*Pte4KEntries);
-      FreePool (*GuardEntries);
-
-      (*Pte1GCount) += 15;
-      (*Pte2MCount) += 15;
-      (*Pte4KCount) += 15;
-      (*GuardCount) += 15;
-
-      *Pte1GEntries = AllocateZeroPool (*Pte1GCount * sizeof (UINT64));
-      *Pte2MEntries = AllocateZeroPool (*Pte2MCount * sizeof (UINT64));
-      *Pte4KEntries = AllocateZeroPool (*Pte4KCount * sizeof (UINT64));
-      *GuardEntries = AllocateZeroPool (*GuardCount * sizeof (UINT64));
-
-      Status = GetFlatPageTableData (
-                 Pte1GCount,
-                 Pte2MCount,
-                 Pte4KCount,
-                 GuardCount,
-                 *Pte1GEntries,
-                 *Pte2MEntries,
-                 *Pte4KEntries,
-                 *GuardEntries
-                 );
-    }
   }
 
-  // If an error occurred, bail and free.
-  if (EFI_ERROR (Status)) {
-    if (*Pte1GEntries != NULL) {
-      FreePool (*Pte1GEntries);
-      *Pte1GEntries = NULL;
-    }
-
-    if (*Pte2MEntries != NULL) {
-      FreePool (*Pte2MEntries);
-      *Pte2MEntries = NULL;
-    }
-
-    if (*Pte4KEntries != NULL) {
-      FreePool (*Pte4KEntries);
-      *Pte4KEntries = NULL;
-    }
-
-    if (*GuardEntries != NULL) {
-      FreePool (*GuardEntries);
-      *GuardEntries = NULL;
-    }
-
-    *Pte1GCount = 0;
-    *Pte2MCount = 0;
-    *Pte4KCount = 0;
-    *GuardCount = 0;
-  }
-
-  DEBUG ((DEBUG_ERROR, "%a - Exit... - %r\n", __FUNCTION__, Status));
-  return !EFI_ERROR (Status);
+  return Status;
 }
 
 /**
-  This helper function will flush the MemoryInfoDatabase to its corresponding
-  file and free all resources currently associated with it.
+  Writes the NULL page and stack information to the memory info database.
 
-  @param[in]  FileName    Name of the file to be flushed to.
+  @param[in] DetermineStrSize   If TRUE, then this function will only determine the required
+                                buffer size for the output and add it to mMemoryInfoDatabaseAllocSize.
 
-  @retval     EFI_SUCCESS     Database has been flushed to file.
-
+  @retval EFI_SUCCESS           The NULL page and stack information was successfully written or the alloc size was calculated.
+  @retval EFI_OUT_OF_RESOURCES  The size of the database buffer was not large enough to hold the special memory data.
 **/
 EFI_STATUS
 EFIAPI
-FlushAndClearMemoryInfoDatabase (
-  IN CONST CHAR16  *FileName
-  )
-{
-  // If we have database contents, flush them to the file.
-  WriteBufferToFile (FileName, mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
-
-  // If we have a database, free it, and reset all counters.
-  if (mMemoryInfoDatabaseBuffer != NULL) {
-    FreePool (mMemoryInfoDatabaseBuffer);
-    mMemoryInfoDatabaseBuffer = NULL;
-  }
-
-  mMemoryInfoDatabaseAllocSize = 0;
-  mMemoryInfoDatabaseSize      = 0;
-
-  return EFI_SUCCESS;
-} // FlushAndClearMemoryInfoDatabase()
-
-/*
-  Writes the NULL page and stack information to the memory info database
- */
-VOID
-EFIAPI
 SpecialMemoryDump (
-  VOID
+  IN  BOOLEAN  AllowAllocation,
+  OUT UINTN    *StringLength
   )
 {
   CHAR8                      TempString[MAX_STRING_SIZE];
@@ -1230,6 +1396,12 @@ SpecialMemoryDump (
   EFI_PHYSICAL_ADDRESS       StackBase;
   UINT64                     StackLength;
 
+  if (StringLength == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *StringLength = 0;
+
   // Capture the NULL address
   AsciiSPrint (
     TempString,
@@ -1237,7 +1409,9 @@ SpecialMemoryDump (
     "Null,0x%016lx\n",
     NULL
     );
-  AppendToMemoryInfoDatabase (TempString);
+
+  *StringLength += AsciiStrLen (TempString);
+  Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
 
   Hob.Raw = GetHobList ();
 
@@ -1256,9 +1430,10 @@ SpecialMemoryDump (
           StackBase,
           EFI_PAGE_SIZE
           );
-        AppendToMemoryInfoDatabase (TempString);
-        StackBase   += EFI_PAGE_SIZE;
-        StackLength -= EFI_PAGE_SIZE;
+        *StringLength += AsciiStrLen (TempString);
+        Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
+        StackBase     += EFI_PAGE_SIZE;
+        StackLength   -= EFI_PAGE_SIZE;
       }
 
       // Capture the stack
@@ -1270,7 +1445,8 @@ SpecialMemoryDump (
           StackBase,
           StackLength
           );
-        AppendToMemoryInfoDatabase (TempString);
+        *StringLength += AsciiStrLen (TempString);
+        Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
       }
 
       break;
@@ -1304,10 +1480,10 @@ SpecialMemoryDump (
             EFI_PAGE_SIZE,
             Entry->CpuNumber
             );
-          AppendToMemoryInfoDatabase (TempString);
-
-          StackBase   += EFI_PAGE_SIZE;
-          StackLength -= EFI_PAGE_SIZE;
+          *StringLength += AsciiStrLen (TempString);
+          Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
+          StackBase     += EFI_PAGE_SIZE;
+          StackLength   -= EFI_PAGE_SIZE;
         }
 
         // Capture the AP stack
@@ -1320,7 +1496,8 @@ SpecialMemoryDump (
             StackLength,
             Entry->CpuNumber
             );
-          AppendToMemoryInfoDatabase (TempString);
+          *StringLength += AsciiStrLen (TempString);
+          Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
         }
       } else {
         // Capture the AP switch stack
@@ -1333,18 +1510,20 @@ SpecialMemoryDump (
             StackLength,
             Entry->CpuNumber
             );
-          AppendToMemoryInfoDatabase (TempString);
+          *StringLength += AsciiStrLen (TempString);
+          Status         = AppendToMemoryInfoDatabase (TempString, AllowAllocation);
         }
       }
     }
   }
+
+  return EFI_SUCCESS;
 }
 
 /**
    Dumps paging information to open EFI_FILE Fs_Handle if provided and the EFI partition otherwise.
 
   @param[in]  Fs_Handle File handle to deposit the paging audit info
-
 **/
 VOID
 EFIAPI
@@ -1352,19 +1531,12 @@ DumpPagingInfo (
   IN      EFI_FILE  *Fs_Handle
   )
 {
-  EFI_STATUS  Status        = EFI_SUCCESS;
-  UINTN       Pte1GCount    = 0;
-  UINTN       Pte2MCount    = 0;
-  UINTN       Pte4KCount    = 0;
-  UINTN       GuardCount    = 0;
-  UINT64      *Pte1GEntries = NULL;
-  UINT64      *Pte2MEntries = NULL;
-  UINT64      *Pte4KEntries = NULL;
-  UINT64      *GuardEntries = NULL;
-  CHAR8       TempString[MAX_STRING_SIZE];
+  EFI_STATUS  Status = EFI_SUCCESS;
+  UINTN       Index;
+  UINTN       StringLength;
 
   if (EFI_ERROR (PopulateHeapGuardDebugProtocol ())) {
-    DEBUG ((DEBUG_ERROR, "%a - Error finding heap guard debug protocol\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a - Error finding heap guard debug protocol\n", __func__));
   }
 
   if (Fs_Handle != NULL) {
@@ -1372,63 +1544,259 @@ DumpPagingInfo (
   } else {
     Status = OpenVolumeSFS (&mFs_Handle);
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a error opening sfs volume - %r\n", __FUNCTION__, Status));
+      ASSERT_EFI_ERROR (Status);
+      DEBUG ((DEBUG_ERROR, "%a - error opening sfs volume - %r\n", __func__, Status));
       return;
     }
   }
 
-  if (LoadFlatPageTableData (
-        &Pte1GCount,
-        &Pte2MCount,
-        &Pte4KCount,
-        &GuardCount,
-        &Pte1GEntries,
-        &Pte2MEntries,
-        &Pte4KEntries,
-        &GuardEntries
-        ))
-  {
-    CreateAndWriteFileSFS (mFs_Handle, L"1G.dat", Pte1GCount * sizeof (UINT64), Pte1GEntries);
-    CreateAndWriteFileSFS (mFs_Handle, L"2M.dat", Pte2MCount * sizeof (UINT64), Pte2MEntries);
-    CreateAndWriteFileSFS (mFs_Handle, L"4K.dat", Pte4KCount * sizeof (UINT64), Pte4KEntries);
+  // Dump the platform info file
+  Status = DumpPlatforminfo ();
 
-    // Only populate guard pages when function call is successful
-    for (UINT64 i = 0; i < GuardCount; i++) {
-      AsciiSPrint (
-        TempString,
-        MAX_STRING_SIZE,
-        "GuardPage,0x%016lx\n",
-        GuardEntries[i]
-        );
-      AppendToMemoryInfoDatabase (TempString);
-    }
-  } else {
-    DEBUG ((DEBUG_ERROR, "%a - LoadFlatPageTableData returned with failure, bail from here!\n", __FUNCTION__));
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error dumping platform info\n", __func__));
+  }
+
+  // Dump the memory attributes table file
+  Status = MemoryAttributesTableDump ();
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error dumping memory attributes table\n", __func__));
+  }
+
+  // Allocate buffers for the page table entries
+  Status = LoadFlatPageTableData (
+             &mPteCounts[Entry1g],
+             &mPteCounts[Entry2m],
+             &mPteCounts[Entry4k],
+             &mPteCounts[EntryGuard],
+             &mPteEntries[Entry1g],
+             &mPteEntries[Entry2m],
+             &mPteEntries[Entry4k],
+             &mPteEntries[EntryGuard],
+             TRUE
+             );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error allocating buffers for page table entries\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    return;
+  }
+
+  // Allocate buffers for the memory map
+  Status = AllocateMemoryMapBuffer ();
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error allocating buffer for the memory map\n", __func__));
+    ASSERT_EFI_ERROR (Status);
     goto Cleanup;
   }
 
-  FlushAndClearMemoryInfoDatabase (L"GuardPage");
-  MemoryMapDumpHandler ();
-  LoadedImageTableDump ();
-  MemoryAttributesTableDump ();
-  SpecialMemoryDump ();
-  FlushAndClearMemoryInfoDatabase (L"MemoryInfoDatabase");
-  DumpPlatforminfo ();
+  StringLength = 0;
+
+  // Calculate the string size of the hybrid GCD and EFI memory map
+  Status = MemoryMapDumpHandler (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status) && (Status != EFI_NOT_STARTED)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error tabulating required string size for the memory map in the memory info database\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  mMemoryInfoDatabaseAllocSize += StringLength;
+  StringLength                  = 0;
+
+  // Calculate the string size of the Loaded Image Table
+  Status = LoadedImageTableDump (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status) && (Status != EFI_NOT_STARTED)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error tabulating required string size for the loaded image info in the memory info database\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  mMemoryInfoDatabaseAllocSize += StringLength;
+  StringLength                  = 0;
+
+  // Calculate the string size of the special memory info (i.e. NULL, stack, etc.)
+  Status = SpecialMemoryDump (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status) && (Status != EFI_NOT_STARTED)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error tabulating required string size for special memory info in the memory info database\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  mMemoryInfoDatabaseAllocSize += StringLength;
+  StringLength                  = 0;
+
+  // Calculate the string size of the processor specific data
+  Status = DumpProcessorSpecificHandlers (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status) && (Status != EFI_NOT_STARTED) && (Status != EFI_UNSUPPORTED)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error tabulating required string size for processor specific data\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  mMemoryInfoDatabaseAllocSize += StringLength;
+  StringLength                  = 0;
+
+  // Allocate the memory info database buffer with 20% extra space
+  mMemoryInfoDatabaseBuffer = AllocateZeroPool (mMemoryInfoDatabaseAllocSize + (mMemoryInfoDatabaseAllocSize / 5));
+
+  if (mMemoryInfoDatabaseBuffer == NULL) {
+    DEBUG ((DEBUG_ERROR, "%a - Error allocating memory info database buffer\n", __func__));
+    ASSERT (mMemoryInfoDatabaseBuffer != NULL);
+    goto Cleanup;
+  }
+
+  if (mPteCounts[EntryGuard] > 0) {
+    // Calculate the string size of the guard page entries
+    Status = GuardPageDump (mPteEntries[EntryGuard], mPteCounts[EntryGuard], TRUE);
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Error tabulating required string size for the guard page info file\n", __func__));
+      ASSERT_EFI_ERROR (Status);
+      goto Cleanup;
+    }
+
+    // Allocate the guard page database buffer with 20% extra space
+    mGuardPageBuffer = AllocateZeroPool (mGuardPageAllocSize + (mGuardPageAllocSize / 5));
+
+    if (mGuardPageBuffer == NULL) {
+      DEBUG ((DEBUG_ERROR, "%a - Error allocating buffer for the guard page string\n", __func__));
+      ASSERT (mGuardPageBuffer != NULL);
+      goto Cleanup;
+    }
+  }
+
+  // Dump the the memory map
+  Status = MemoryMapDumpHandler (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error dumping the hybrid EFI/GCD memory map to the memory info database buffer\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  // Dump the Loaded Image Table
+  Status = LoadedImageTableDump (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error dumping loaded image table to the memory info database buffer\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  // Dump any special memory
+  Status = SpecialMemoryDump (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error dumping special memory info to the memory info database buffer\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  // Dump the processor specific data
+  Status = DumpProcessorSpecificHandlers (FALSE, &StringLength);
+
+  if (EFI_ERROR (Status) && (Status != EFI_UNSUPPORTED)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error dumping processor specific data to the memory info database buffer\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  // Get the page table entries
+  Status = LoadFlatPageTableData (
+             &mPteCounts[Entry1g],
+             &mPteCounts[Entry2m],
+             &mPteCounts[Entry4k],
+             &mPteCounts[EntryGuard],
+             &mPteEntries[Entry1g],
+             &mPteEntries[Entry2m],
+             &mPteEntries[Entry4k],
+             &mPteEntries[EntryGuard],
+             FALSE
+             );
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Error collecting page table data\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+    goto Cleanup;
+  }
+
+  if (mPteCounts[EntryGuard] > 0) {
+    // Dump the guard page entries as ASCII to the guard page string buffer
+    Status = GuardPageDump (mPteEntries[EntryGuard], mPteCounts[EntryGuard], FALSE);
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Error dumping guard page entries to the guard page info file\n", __func__));
+      ASSERT_EFI_ERROR (Status);
+      goto Cleanup;
+    }
+  }
+
+  Status = WriteBufferToFile (L"MemoryInfoDatabase", mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
+
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a - Failed to write MemoryInfoDatabase.dat!\n", __func__));
+    ASSERT_EFI_ERROR (Status);
+  }
+
+  // Write the page table entries to the file buffer
+  for (Index = 0; Index < EntryGuard; Index++) {
+    Status = WriteBufferToFile (mPteFileNames[Index], mPteEntries[Index], mPteCounts[Index] * sizeof (UINT64));
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Error creating %s!\n", __func__, mPteFileNames[EntryGuard]));
+      ASSERT_EFI_ERROR (Status);
+    }
+  }
+
+  if (mGuardPageBuffer != NULL) {
+    Status = WriteBufferToFile (mPteFileNames[EntryGuard], mGuardPageBuffer, mGuardPageStringSize);
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Error creating %s!\n", __func__, mPteFileNames[EntryGuard]));
+      ASSERT_EFI_ERROR (Status);
+    }
+  }
 
 Cleanup:
-  if (Pte1GEntries != NULL) {
-    FreePool (Pte1GEntries);
+  // Free the page table buffers
+  for (Index = 0; Index < EntryMax; Index++) {
+    if (mPteEntries[Index] != NULL) {
+      FreePool (mPteEntries[Index]);
+      mPteCounts[Index] = 0;
+    }
   }
 
-  if (Pte2MEntries != NULL) {
-    FreePool (Pte2MEntries);
+  if (Fs_Handle == NULL) {
+    if (mFs_Handle != NULL) {
+      mFs_Handle->Close (mFs_Handle);
+      mFs_Handle = NULL;
+    }
   }
 
-  if (Pte4KEntries != NULL) {
-    FreePool (Pte4KEntries);
+  if (mMemoryInfoDatabaseBuffer != NULL) {
+    FreePool (mMemoryInfoDatabaseBuffer);
+    mMemoryInfoDatabaseBuffer    = NULL;
+    mMemoryInfoDatabaseAllocSize = 0;
+    mMemoryInfoDatabaseSize      = 0;
   }
 
-  if (GuardEntries != NULL) {
-    FreePool (GuardEntries);
+  if (mMemoryMap != NULL) {
+    FreePool (mMemoryMap);
+    mMemoryMap           = NULL;
+    mMemoryMapBufferSize = 0;
+    mMemoryMapSize       = 0;
+  }
+
+  if (mEfiMemorySpaceMap != NULL) {
+    FreePool (mEfiMemorySpaceMap);
+    mEfiMemorySpaceMap               = NULL;
+    mNumEfiMemorySpaceMapDescriptors = 0;
+    mEfiMemorySpaceMapDescriptorSize = 0;
   }
 }

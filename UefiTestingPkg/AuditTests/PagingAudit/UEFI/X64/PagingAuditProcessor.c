@@ -351,7 +351,8 @@ LookupSmrrAMD (
 STATIC
 EFI_STATUS
 TSEGDumpHandler (
-  VOID
+  IN  BOOLEAN  AllowAllocation,
+  OUT UINTN    *StringLength
   )
 {
   UINT32                mSmrrPhysBaseMsr;
@@ -373,6 +374,11 @@ TSEGDumpHandler (
 
   DEBUG ((DEBUG_INFO, "%a()\n", __FUNCTION__));
 
+  if (StringLength == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  *StringLength        = 0;
   MtrrValidBitsMask    = 0;
   MtrrValidAddressMask = 0;
 
@@ -413,7 +419,8 @@ TSEGDumpHandler (
       0,
       NONE_GCD_MEMORY_TYPE
       );
-    AppendToMemoryInfoDatabase (TempString);
+    *StringLength += AsciiStrLen (TempString);
+    AppendToMemoryInfoDatabase (TempString, AllowAllocation);
   } else {
     Status = LookupSmrrAMD (&mSmrrPhysBaseMsr, &mSmrrPhysMaskMsr);
     if (EFI_ERROR (Status)) {
@@ -479,7 +486,8 @@ TSEGDumpHandler (
       0,
       NONE_GCD_MEMORY_TYPE
       );
-    AppendToMemoryInfoDatabase (TempString);
+    *StringLength += AsciiStrLen (TempString);
+    AppendToMemoryInfoDatabase (TempString, AllowAllocation);
 
     for (BitIndex = LowBitPosition + 1; BitIndex <= (UINTN)HighBitPosition; BitIndex++) {
       if ((((UINT64)BIT0<<BitIndex) & SmrrMask) == 0) {
@@ -500,7 +508,8 @@ TSEGDumpHandler (
             0,
             NONE_GCD_MEMORY_TYPE
             );
-          AppendToMemoryInfoDatabase (TempString);
+          *StringLength += AsciiStrLen (TempString);
+          AppendToMemoryInfoDatabase (TempString, AllowAllocation);
         }
 
         RecordIndex <<= 1;
@@ -695,22 +704,45 @@ GetFlatPageTableData (
 /**
    Dump platform specific handler. Created handler(s) need to be compliant with
    Windows\PagingReportGenerator.py, i.e. TSEG.
+
+  @param[in]  AllowAllocation   If TRUE, then this function will allocate memory for the
+                                database buffer if it is not large enough to hold the input
+                                string. If FALSE, then this function will return an error
+                                if the database buffer is not large enough to hold the input
+                                string.
+  @param[out] StringLength      The length of the string that was or would have been written
+                                to the memory info database buffer.
+
+  @retval     EFI_SUCCESS             The platform specific info was successfully dumped to
+                                      the memory info database buffer.
+  @retval     EFI_OUT_OF_RESOURCES    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_NOT_STARTED         The memory info database buffer has not been allocated.
+  @retval     EFI_BUFFER_TOO_SMALL    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_INVALID_PARAMETER   StringLength is NULL.
 **/
-VOID
+EFI_STATUS
 EFIAPI
 DumpProcessorSpecificHandlers (
-  VOID
+  IN  BOOLEAN  AllowAllocation,
+  OUT UINTN    *StringLength
   )
 {
   // Dump TSEG Handlers for x64 platforms
-  TSEGDumpHandler ();
+  return TSEGDumpHandler (AllowAllocation, StringLength);
 }
 
 /**
   Dumps platform info required to correctly parse the pages (architecture,
   execution level, etc.)
+
+  @retval EFI_SUCCESS           The platform info was successfully dumped to the associated
+                                data file.
+  @retval        EFI_ABORTED            An error occurred while opening the SFS volume.
+  @retval        Others                 The return value of CreateAndWriteFileSFS()
 **/
-VOID
+EFI_STATUS
 EFIAPI
 DumpPlatforminfo (
   VOID
@@ -752,5 +784,5 @@ DumpPlatforminfo (
                   (MemoryAttributeProtocol == NULL) ?  "FALSE" : "TRUE"
                   );
 
-  WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
+  return WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
 }
