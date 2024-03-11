@@ -202,21 +202,44 @@ CalculateMaximumSupportAddressBits (
 /**
    Dump platform specific handler. Created handler(s) need to be compliant with
    Windows\PagingReportGenerator.py, i.e. TSEG.
+
+  @param[in]  AllowAllocation   If TRUE, then this function will allocate memory for the
+                                database buffer if it is not large enough to hold the input
+                                string. If FALSE, then this function will return an error
+                                if the database buffer is not large enough to hold the input
+                                string.
+  @param[out] StringLength      The length of the string that was or would have been written
+                                to the memory info database buffer.
+
+  @retval     EFI_SUCCESS             The platform specific info was successfully dumped to
+                                      the memory info database buffer.
+  @retval     EFI_OUT_OF_RESOURCES    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_NOT_STARTED         The memory info database buffer has not been allocated.
+  @retval     EFI_BUFFER_TOO_SMALL    The database buffer is not large enough to hold the
+                                      platform specific info and AllowAllocation is FALSE.
+  @retval     EFI_INVALID_PARAMETER   StringLength is NULL.
 **/
-VOID
+EFI_STATUS
 EFIAPI
 DumpProcessorSpecificHandlers (
-  VOID
+  IN  BOOLEAN  AllowAllocation,
+  OUT UINTN    *StringLength
   )
 {
-  return;
+  return EFI_SUCCESS;
 }
 
 /**
   Dumps platform info required to correctly parse the pages (architecture,
   execution level, etc.)
+
+  @retval EFI_SUCCESS           The platform info was successfully dumped to the associated
+                                data file.
+  @retval        EFI_ABORTED            An error occurred while opening the SFS volume.
+  @retval        Others                 The return value of CreateAndWriteFileSFS()
 **/
-VOID
+EFI_STATUS
 EFIAPI
 DumpPlatforminfo (
   VOID
@@ -254,5 +277,5 @@ DumpPlatforminfo (
                   (MemoryAttributeProtocol == NULL) ?  "FALSE" : "TRUE"
                   );
 
-  WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
+  return WriteBufferToFile (L"PlatformInfo", TempString, StringIndex);
 }

@@ -40,6 +40,9 @@ UINTN  mPiSmmCommonCommBufferSize;
 // Added to satisfy gDxeMps use in PagingAuditCommon.c
 DXE_MEMORY_PROTECTION_SETTINGS  gDxeMps = DXE_MEMORY_PROTECTION_SETTINGS_OFF;
 
+extern CHAR8  *mMemoryInfoDatabaseBuffer;
+extern UINTN  mMemoryInfoDatabaseSize;
+
 /**
   This helper function will call to the SMM agent to retrieve the entire contents of the
   SMM Loaded Image protocol list. It will then dump this data to the Memory Info Database.
@@ -131,7 +134,7 @@ SmmLoadedImageTableDump (
         AuditCommData->SmmImage[Index].ImageSize,
         &AuditCommData->SmmImage[Index].ImageName[0]
         );
-      AppendToMemoryInfoDatabase (&TempString[0]);
+      AppendToMemoryInfoDatabase (&TempString[0], TRUE);
     }
 
     AuditCommHeader->RequestIndex++;
@@ -384,7 +387,7 @@ SmmMemoryProtectionsDxeToSmmCommunicate (
     AuditCommData->Idtr.Base,
     (UINT64)AuditCommData->Idtr.Limit
     );
-  AppendToMemoryInfoDatabase (&TempString[0]);
+  AppendToMemoryInfoDatabase (&TempString[0], TRUE);
 
   //
   // Clean up the SMM cache.
@@ -472,9 +475,12 @@ SmmPagingAuditTestAppEntryPoint (
   IN     EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  DumpProcessorSpecificHandlers ();
-  MemoryMapDumpHandler ();
-  LoadedImageTableDump ();
+  UINTN  StringLength;
+
+  DumpProcessorSpecificHandlers (TRUE, &StringLength);
+  AllocateMemoryMapBuffer ();
+  MemoryMapDumpHandler (TRUE, &StringLength);
+  LoadedImageTableDump (TRUE, &StringLength);
   MemoryAttributesTableDump ();
 
   if (EFI_ERROR (LocateSmmCommonCommBuffer ())) {
@@ -484,7 +490,7 @@ SmmPagingAuditTestAppEntryPoint (
 
   SmmMemoryProtectionsDxeToSmmCommunicate ();
 
-  FlushAndClearMemoryInfoDatabase (L"MemoryInfoDatabase");
+  WriteBufferToFile (L"MemoryInfoDatabase", mMemoryInfoDatabaseBuffer, mMemoryInfoDatabaseSize);
 
   DEBUG ((DEBUG_INFO, "%a the app's done!\n", __FUNCTION__));
 
