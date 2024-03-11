@@ -30,6 +30,14 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
   ((EFI_MEMORY_DESCRIPTOR*)Entry)->Type           = NONE_EFI_MEMORY_TYPE;               \
   ((EFI_MEMORY_DESCRIPTOR*)Entry)->VirtualStart   = 0
 
+MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol = NULL;
+CPU_MP_DEBUG_PROTOCOL             *mCpuMpDebugProtocol       = NULL;
+EFI_FILE                          *mFs_Handle                = NULL;
+
+CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
+UINTN  mMemoryInfoDatabaseSize      = 0;
+UINTN  mMemoryInfoDatabaseAllocSize = 0;
+
 /**
   Converts a number of EFI_PAGEs to a size in bytes.
 
@@ -83,13 +91,6 @@ EFI_STATUS
 OpenVolumeSFS (
   OUT EFI_FILE  **Fs_Handle
   );
-
-MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol = NULL;
-CPU_MP_DEBUG_PROTOCOL             *mCpuMpDebugProtocol       = NULL;
-EFI_FILE                          *mFs_Handle;
-extern CHAR8                      *mMemoryInfoDatabaseBuffer;
-extern UINTN                      mMemoryInfoDatabaseSize;
-extern UINTN                      mMemoryInfoDatabaseAllocSize;
 
 /**
   Populates the heap guard protocol global

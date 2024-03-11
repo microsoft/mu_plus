@@ -40,11 +40,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // Aligns the input address down to the nearest page boundary
 #define ALIGN_ADDRESS(Address)  ((Address / EFI_PAGE_SIZE) * EFI_PAGE_SIZE)
 
-// Globals required to create the memory info database
-CHAR8  *mMemoryInfoDatabaseBuffer   = NULL;
-UINTN  mMemoryInfoDatabaseSize      = 0;
-UINTN  mMemoryInfoDatabaseAllocSize = 0;
-
 // Globals for memory protection special regions
 MEMORY_PROTECTION_SPECIAL_REGION  *mSpecialRegions    = NULL;
 UINTN                             mSpecialRegionCount = 0;
