@@ -1,14 +1,19 @@
 ﻿<!doctype html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible">
-    <title>Smm Paging Analysis</title>
+    <title>DXE Paging Analysis</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"> 
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css" integrity="sha384-DgpuBgmxMoEJnP/pccStiQeTHwqKcsuL22TmqYVw43N/k83XfGNmU+tKpz9+5Zpz" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css" integrity="sha384-u4bCcN0S9upsb7D8S4IKXV9qmKh7bJrJbKa+jqcIPwQsk/dV+QHB/JyI/BXR3pNo" crossorigin="anonymous"> 
-   <style>
+    <link rel="stylesheet" href="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap.min.css"
+        integrity="sha384-DgpuBgmxMoEJnP/pccStiQeTHwqKcsuL22TmqYVw43N/k83XfGNmU+tKpz9+5Zpz" crossorigin="anonymous">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/css/bootstrap-select.min.css"
+        integrity="sha384-u4bCcN0S9upsb7D8S4IKXV9qmKh7bJrJbKa+jqcIPwQsk/dV+QHB/JyI/BXR3pNo" crossorigin="anonymous">
+    <style>
         div.attribution {
             border: 1px solid #ddd;
             background-color: #bbb;
@@ -21,9 +26,10 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container-fluid">
-        <h1>Smm Paging Analysis</h1>
+        <h1>DXE Paging Analysis</h1>
         <ul class="nav nav-tabs">
             <li class="active"><a data-toggle="tab" href="#tabs-1">Basic Info</a></li>
             <li><a data-toggle="tab" href="#tabs-2">Results</a></li>
@@ -48,22 +54,37 @@
                         <header>Page Filter</header>
                         <div class="input-group">
                             <span class="input-group-addon" id="basic-addon1">Page Size</span>
-                            <select id="PageSizeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon1"></select>
+                            <select id="PageSizeFilter" class="form-control selectpicker" title="No Filter Active."
+                                data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2"
+                                multiple aria-describedby="basic-addon1"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
-                                <span class="input-group-addon" id="basic-addon2">Execute Attribute</span>
-                                <select id="ExecuteFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon2"></select>
+                            <span class="input-group-addon" id="basic-addon2">Present Attribute</span>
+                            <select id="PresentFilter" class="form-control selectpicker" title="No Filter Active."
+                                data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2"
+                                multiple aria-describedby="basic-addon2"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
-                                <span class="input-group-addon" id="basic-addon3">Read/Write Attribute</span>
-                                <select id="RWFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon3"></select>
+                            <span class="input-group-addon" id="basic-addon2">Execute Attribute</span>
+                            <select id="ExecuteFilter" class="form-control selectpicker" title="No Filter Active."
+                                data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2"
+                                multiple aria-describedby="basic-addon2"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
-                                <span class="input-group-addon" id="basic-addon8">Privilege Level</span>
-                                <select id="PrivilegeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon8"></select>
+                            <span class="input-group-addon" id="basic-addon3">Read/Write Attribute</span>
+                            <select id="RWFilter" class="form-control selectpicker" title="No Filter Active."
+                                data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2"
+                                multiple aria-describedby="basic-addon3"></select>
+                        </div>
+                        <p></p>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon8">Privilege Level</span>
+                            <select id="PrivilegeFilter" class="form-control selectpicker" title="No Filter Active."
+                                data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2"
+                                multiple aria-describedby="basic-addon8"></select>
                         </div>
                         <p></p>
                         <p>
@@ -74,22 +95,37 @@
                         <header>Memory Range Filter</header>
                         <div class="input-group">
                             <span class="input-group-addon" id="basic-addon4">UEFI Memory Type</span>
-                            <select id="MemoryTypeFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon4"></select>
+                            <select id="MemoryTypeFilter" class="form-control selectpicker" title="No Filter Active."
+                                data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2"
+                                multiple aria-describedby="basic-addon4"></select>
+                        </div>
+                        <p></p>
+                        <div class="input-group">
+                            <span class="input-group-addon" id="basic-addon4">GCD Memory Type</span>
+                            <select id="MemorySpaceTypeFilter" class="form-control selectpicker"
+                                title="No Filter Active." data-style="btn-primary" data-actions-box="true"
+                                data-selected-text-format="count > 2" multiple aria-describedby="basic-addon4"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
                             <span class="input-group-addon" id="basic-addon6">Special Memory Regions</span>
-                            <select id="SpecialMemoryRegionsFilter" class="form-control selectpicker" data-actions-box="true" data-selected-text-format="count > 2" title="No Filter Active." data-style="btn-primary" multiple aria-describedby="basic-addon6"></select>
+                            <select id="SpecialMemoryRegionsFilter" class="form-control selectpicker"
+                                data-actions-box="true" data-selected-text-format="count > 2" title="No Filter Active."
+                                data-style="btn-primary" multiple aria-describedby="basic-addon6"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
                             <span class="input-group-addon" id="basic-addon5">Memory Contents</span>
-                            <select id="MemoryContentsFilter" class="form-control selectpicker" data-actions-box="true" data-selected-text-format="count > 2" title="No Filter Active." data-style="btn-primary" multiple aria-describedby="basic-addon5"></select>
+                            <select id="MemoryContentsFilter" class="form-control selectpicker" data-actions-box="true"
+                                data-selected-text-format="count > 2" title="No Filter Active." data-style="btn-primary"
+                                multiple aria-describedby="basic-addon5"></select>
                         </div>
                         <p></p>
                         <div class="input-group">
-                                <span class="input-group-addon" id="basic-addon7">Section Type</span>
-                                <select id="SectionFilter" class="form-control selectpicker" title="No Filter Active." data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2" multiple aria-describedby="basic-addon7"></select>
+                            <span class="input-group-addon" id="basic-addon7">Section Type</span>
+                            <select id="SectionFilter" class="form-control selectpicker" title="No Filter Active."
+                                data-style="btn-primary" data-actions-box="true" data-selected-text-format="count > 2"
+                                multiple aria-describedby="basic-addon7"></select>
                         </div>
                         <p></p>
                         <p>
@@ -98,7 +134,8 @@
                     </div>
                     <div class="col-xs-3">
                         <header>Actions</header>
-                        Filters: <button id="ClearAllFilter" class="btn btn-danger">Clear All</button>
+                        <button id="ClearAllFilter" class="btn btn-danger">Clear All</button>
+                        <button id="toggleLogic" class="btn btn-danger">Filter Logic: AND</button>
                         <p></p>
                     </div>
                 </div>
@@ -109,10 +146,12 @@
                             <th>End Address</th>
                             <th>Page Size</th>
                             <th># of Pages</th>
+                            <th>Present</th>
                             <th>Read/Write</th>
                             <th>Execute</th>
                             <th>Privilege</th>
                             <th>UEFI Memory Type</th>
+                            <th>GCD Memory Type</th>
                             <th>Section Type</th>
                             <th>Special Memory Usage</th>
                             <th>UEFI Memory Contents</th>
@@ -139,18 +178,24 @@
                     <div class="col-xs-7">
                         <p></p>
                         <p>
-                            SMM Paging Analysis Template Version: <span id="TemplateVersion">1.00</span><br />
-                            SMM Paging Analysis Tool Version: <span id='ToolVersion'></span><br />
+                            DXE Paging Analysis Template Version: <span id="TemplateVersion">1.00</span><br />
+                            DXE Paging Analysis Tool Version: <span id='ToolVersion'></span><br />
                         </p>
                         <h3>License</h3>
                         <hr />
                         <div id="ToolLicenseContent">
                             <p>
-                                <span class="copyright">Copyright (C) Microsoft Corporation. All rights reserved.</span><br />
+                                <span class="copyright">Copyright (C) Microsoft Corporation. All rights
+                                    reserved.</span><br />
                                 <span class="license">
-                                    All rights reserved. Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:<br>
-                                    1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.<br>
-                                    2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.<br><br>
+                                    All rights reserved. Redistribution and use in source and binary forms, with or
+                                    without modification, are permitted provided that the following conditions are
+                                    met:<br>
+                                    1. Redistributions of source code must retain the above copyright notice, this list
+                                    of conditions and the following disclaimer.<br>
+                                    2. Redistributions in binary form must reproduce the above copyright notice, this
+                                    list of conditions and the following disclaimer in the documentation and/or other
+                                    materials provided with the distribution.<br><br>
 
                                     THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
                                     ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -175,16 +220,29 @@
     </div>
 
     <script>
-        var EmbeddedJd = %TO_BE_FILLED_IN_BY_PYTHON_SCRIPT%;
+        var EmbeddedJd = % TO_BE_FILLED_IN_BY_PYTHON_SCRIPT %;
+        var IsMemoryAttributeProtocolPresent = % IS_MEMORY_ATTRIBUTE_PROTOCOL_PRESENT %;
     </script>
 
     <!-- Javascript libraries -->
-    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js" integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f" crossorigin="anonymous"></script> 
-    <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js" integrity="sha384-NHtbx1Hf6ctHNdZmU28YfhGjB63gcU1YU64ttM+c0RxMKNBj67j+N/axpqTfdffo" crossorigin="anonymous"></script> 
-    <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script> 
-    <script src="https://cdn.datatables.net/1.10.15/js/dataTables.bootstrap.min.js" integrity="sha384-7PXRkl4YJnEpP8uU4ev9652TTZSxrqC8uOpcV1ftVEC7LVyLZqqDUAaq+Y+lGgr9" crossorigin="anonymous"></script> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js" integrity="sha384-7RnKw5sMIle5aza0DbXRxSFziONgSQKq4/v0JGJnfrCIMWMyasw3n7w2IW4HK7Ss" crossorigin="anonymous"></script> 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-growl/1.0.0/jquery.bootstrap-growl.min.js" integrity="sha384-HitlARW+6c0IF2m5pcwV3x64ooKVvQsiTuCxKU9cRKVOVrYNopTqkeEoXclgAWqE" crossorigin="anonymous"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"
+        integrity="sha384-xBuQ/xzmlsLoJpyjoggmTEz8OWUFM0/RC5BsqQBDX2v5cMvDHcMakNTNrHIW2I5f"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.15/js/jquery.dataTables.min.js"
+        integrity="sha384-NHtbx1Hf6ctHNdZmU28YfhGjB63gcU1YU64ttM+c0RxMKNBj67j+N/axpqTfdffo"
+        crossorigin="anonymous"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/bootstrap/3.3.7/bootstrap.min.js"
+        integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/1.10.15/js/dataTables.bootstrap.min.js"
+        integrity="sha384-7PXRkl4YJnEpP8uU4ev9652TTZSxrqC8uOpcV1ftVEC7LVyLZqqDUAaq+Y+lGgr9"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js"
+        integrity="sha384-7RnKw5sMIle5aza0DbXRxSFziONgSQKq4/v0JGJnfrCIMWMyasw3n7w2IW4HK7Ss"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-growl/1.0.0/jquery.bootstrap-growl.min.js"
+        integrity="sha384-HitlARW+6c0IF2m5pcwV3x64ooKVvQsiTuCxKU9cRKVOVrYNopTqkeEoXclgAWqE"
+        crossorigin="anonymous"></script>
     <!-- Add javascript here -->
     <script>
         var DATA_TABLE_OFFSET = 500;
@@ -204,7 +262,7 @@
             //Write out errors or warnings in the data processing
             //
             EmbeddedJd.errors.forEach(function (element, index, array) {
-                $("table#ParsingErrors tbody").append("<tr><td>" + element +"</td></tr>");
+                $("table#ParsingErrors tbody").append("<tr><td>" + element + "</td></tr>");
             });  //end forEach
             var errorTable = $('table#ParsingErrors').dataTable({
                 "paginate": false,
@@ -220,7 +278,7 @@
                 $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
             });
 
-         
+
             //
             // Create Attribution List for all external libraries used
             //
@@ -234,7 +292,7 @@
                 $("<div class='attribution'><h4>" + element.Title + "</h4><p>Version: <span class='version'>" + element.Version + "</span><br /><span class='copyright'>" +
                     element.Copyright + "</span><br />License: <a class='license' href='" + element.LicenseLink + "'>" + element.LicenseType + "</a></p></div>").appendTo("div#AttributionListWrapper");
             });
-           
+
             // filter
             $('button#ClearPageFilter').click(function () {
                 $("div#PageAttributeFilterWrapper select.selectpicker").selectpicker('deselectAll');
@@ -250,16 +308,29 @@
 
             $('button#ClearAllFilter').click(function () {
                 $('button#ClearMemoryFilter').click();
-                $('button#ClearPageFilter').click();    
+                $('button#ClearPageFilter').click();
             });
 
+            var currentLogic = "AND";
 
-             //table for modules
-             var mTable = $('table#MemoryRanges').dataTable({
+            $(document).on("click", "#toggleLogic", function () {
+                if (currentLogic === "AND") {
+                    currentLogic = "OR";
+                    $(this).text("Filter Logic: OR");
+                } else {
+                    currentLogic = "AND";
+                    $(this).text("Filter Logic: AND");
+                }
+                applyFilter(currentLogic);
+            });
+
+            //table for modules
+            var mTable = $('table#MemoryRanges').dataTable({
                 "aaData": EmbeddedJd.MemoryRanges,
                 "paginate": false,
                 "autoWidth": false,
                 "scrollY": ($(window).height() - DATA_TABLE_OFFSET) + "px",
+                "scrollX": true,
                 "sorting": [[0, "asc"]],
                 "columnDefs": [
                     {
@@ -279,248 +350,270 @@
                         "targets": [3],
                     },
                     {
-                        "data": "Read/Write",
+                        "data": "Present",
                         "targets": [4],
                     },
                     {
-                        "data": "Execute",
+                        "data": "Read/Write",
                         "targets": [5],
                     },
                     {
-                        "data": "Privilege",
+                        "data": "Execute",
                         "targets": [6],
                     },
                     {
-                        "data": "Memory Type",
+                        "data": "Privilege",
                         "targets": [7],
+                    },
+                    {
+                        "data": "Memory Type",
+                        "targets": [8],
+                        "defaultContent": "None"
+                    },
+                    {
+                        "data": "GCD Memory Type",
+                        "targets": [9],
                         "defaultContent": "None"
                     },
                     {
                         "data": "Section Type",
-                        "targets": [8]
+                        "targets": [10]
                     },
                     {
                         "data": "System Memory",
-                        "targets": [9],
+                        "targets": [11],
                         "defaultContent": "SYSTEM"
                     },
                     {
                         "data": "Memory Contents",
-                        "targets": [10],
+                        "targets": [12],
                         "defaultContent": "Nothing Found"
                     }
                 ], //end of column def
                 initComplete: function () {
-                    //Setup the filters
-                    this.api().column(2).every( function() {
-                        var column = this;
-                        var select = $("#PageSizeFilter").on( 'change', function () { 
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                             column
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-                        
-                        //populate with options
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 2 - Page Size
+                    var tableApi = this.api();
 
-                    this.api().column(5).every( function() {
+                    tableApi.columns().every(function () {
                         var column = this;
-                        var select = $("#ExecuteFilter").on( 'change', function () {     
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                             column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-                        
-                        //populate with options
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 5 - execute Attribute
+                        var select;
 
-                    this.api().column(4).every( function() {
-                        var column = this;
-                        var select = $("#RWFilter").on( 'change', function () {     
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                             column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-                        
-                        //populate with options
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 4 - RW attribute
-                    
-                    this.api().column(6).every( function() {
-                        var column = this;
-                        var select = $("#PrivilegeFilter").on( 'change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column.search(SearchRegex, true, false).draw();
-                        }); // on change
+                        switch (column.index()) {
+                            case 2:
+                                select = $("#PageSizeFilter");
+                                break;
+                            case 4:
+                                select = $("#PresentFilter");
+                                break;
+                            case 6:
+                                select = $("#ExecuteFilter");
+                                break;
+                            case 5:
+                                select = $("#RWFilter");
+                                break;
+                            case 7:
+                                select = $("#PrivilegeFilter");
+                                break;
+                            case 8:
+                                select = $("#MemoryTypeFilter");
+                                break;
+                            case 9:
+                                select = $("#MemorySpaceTypeFilter");
+                                break;
+                            case 10:
+                                select = $("#SectionFilter");
+                                break;
+                            case 11:
+                                select = $("#SpecialMemoryRegionsFilter");
+                                break;
+                            case 12:
+                                select = $("#MemoryContentsFilter");
+                                break;
+                            default:
+                                console.log("Unhandled column index in init:", column.index());
+                                return;
+                        }
 
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 6 - Privilege (User / Supervisor)
-
-                    this.api().column(8).every( function() {
-                        var column = this;
-                        var select = $("#SectionFilter").on( 'change', function () {
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                            column.search(SearchRegex, true, false).draw();
-                        }); // on change
-
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 8 - Section Type for code/data sections
-
-                    this.api().column(7).every( function() {
-                        var column = this;
-                        var select = $("#MemoryTypeFilter").on( 'change', function () { 
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                             column
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-                        
-                        //populate with options
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 7 - Memory Type
-
-                    this.api().column(9).every( function() {
-                        var column = this;
-                        var select = $("#SpecialMemoryRegionsFilter").on( 'change', function () {     
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                             column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-                        
-                        //populate with options
-                        column.data().unique().sort().each( function ( d, j ) {
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 9 - special Memory Type
-                    
-
-                    this.api().column(10).every( function() {
-                        var column = this;
-                        var select = $("#MemoryContentsFilter").on( 'change', function () {     
-                            //var SelectedValues = $(this).val() || [];
-                            var SearchRegex = CreateRegexForSearchMultiselect($(this).val());
-                             column
-                                //.search( val ? '^'+val+'$' : '', true, false )
-                                .search(SearchRegex, true, false)
-                                .draw();
-                        }); // on change
-                        
-                        //populate with options
-                        column.data().unique().sort().each( function ( d, j ) {
-                            if(d === null) {
-                                d = "Nothing Found";  //this must align with the default content
+                        column.data().unique().sort().each(function (d, j) {
+                            if (d !== null) {
+                                select.append('<option value="' + d + '">' + d + '</option>');
                             }
-                            select.append( '<option value="'+d+'">'+d+'</option>' )
-                        });
-                    }); //column 10 - Memory Contents
-                } //end init complete func
-            }) //end of modules table 
+                        });
+                    });
+
+                    $(".selectpicker").on("change", function () {
+                        applyFilter(currentLogic);
+                    });
+                }
+            })
+
+            var columnKeyMapping = {
+                "Page Size": "PageSize",
+                "Present": "Present",
+                "Read/Write": "RW",
+                "Execute": "Execute",
+                "Privilege": "Privilege",
+                "UEFI Memory Type": "MemoryType",
+                "GCD Memory Type": "MemorySpaceType",
+                "Section Type": "SectionType",
+                "Special Memory Usage": "SpecialMemoryRegions",
+                "UEFI Memory Contents": "MemoryContents"
+            };
+
+            function applyFilter(logic) {
+                $.fn.dataTable.ext.search = [];
+
+                var selectedValues = {
+                    PageSize: $("#PageSizeFilter").val(),
+                    Execute: $("#ExecuteFilter").val(),
+                    Present: $("#PresentFilter").val(),
+                    RW: $("#RWFilter").val(),
+                    Privilege: $("#PrivilegeFilter").val(),
+                    MemoryType: $("#MemoryTypeFilter").val(),
+                    MemorySpaceType: $("#MemorySpaceTypeFilter").val(),
+                    SpecialMemoryRegions: $("#SpecialMemoryRegionsFilter").val(),
+                    MemoryContents: $("#MemoryContentsFilter").val(),
+                    SectionType: $("#SectionFilter").val()
+                }
+
+                // Check if filters are selected
+                var noFiltersSelected = Object.values(selectedValues).every(arr => arr.length === 0);
+                if (noFiltersSelected) {
+                    mTable.api().search('').columns().search('').draw();
+                    return;
+                }
+
+                var searchRegexes = {
+                    PageSize: CreateRegexForSearchMultiselect(selectedValues.PageSize),
+                    Execute: CreateRegexForSearchMultiselect(selectedValues.Execute),
+                    Present: CreateRegexForSearchMultiselect(selectedValues.Present),
+                    RW: CreateRegexForSearchMultiselect(selectedValues.RW),
+                    Privilege: CreateRegexForSearchMultiselect(selectedValues.Privilege),
+                    MemoryType: CreateRegexForSearchMultiselect(selectedValues.MemoryType),
+                    MemorySpaceType: CreateRegexForSearchMultiselect(selectedValues.MemorySpaceType),
+                    SpecialMemoryRegions: CreateRegexForSearchMultiselect(selectedValues.SpecialMemoryRegions),
+                    MemoryContents: CreateRegexForSearchMultiselect(selectedValues.MemoryContents),
+                    SectionType: CreateRegexForSearchMultiselect(selectedValues.SectionType)
+                };
+
+                if (logic === "AND") {
+                    mTable.api().columns().every(function () {
+                        var columnTitle = this.header().textContent.trim();
+                        var searchKey = columnKeyMapping[columnTitle];
+                        if (searchRegexes[searchKey]) {
+                            this.search(searchRegexes[searchKey], true, false);
+                        } else {
+                            this.search('');
+                        }
+                    });
+                } else if (logic === "OR") {
+                    mTable.api().columns().search('');
+
+                    // Push our custom search function
+                    $.fn.dataTable.ext.search.push(function (settings, searchData, index, rowData, counter) {
+                        for (var key in columnKeyMapping) {
+                            var columnTitle = key;
+                            var searchKey = columnKeyMapping[columnTitle];
+                            var regexStr = searchRegexes[searchKey];
+                            var regex = new RegExp(regexStr);
+                            if (regexStr && regex.test(searchData[settings.aoColumns.findIndex(col => col.sTitle === columnTitle)])) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+
+                }
+                mTable.api().draw();
+            }
 
             /** Memory Range JSON looks like: 
             {"Page Size": "4k", 
+            "Present": "Yes",
             "Read/Write": "Enabled", 
             "Execute": "Disabled", 
+            "Privilege": "User"
             "Start": "0x0000058000", 
             "End": "0x0000058FFF", 
             "Number of Entries": 1, 
             "Memory Type": "EfiReservedMemoryType", 
+            "GCD Memory Type": "EfiGcdMemoryTypeReserved"
             "Attributes": "EFI_MEMORY_RO, EFI_MEMORY_RUNTIME"
-            "System Memory": "hy"
-            "Memory Contents": null}
+            "System Memory": "None"
+            "Memory Contents": null,
+            "Partial Page": False
+            }
             **/
             var SavedFilters = [];
-            SavedFilters.push({"Name": "RW+X", "Description": "No memory range should have page attributes that allow read, write, and execute", 
-                "Filter": function(mrObject) {
-                    if( (mrObject["Read/Write"] === "Enabled") && (mrObject["Read/Write"] === mrObject["Execute"]) ) {
+            SavedFilters.push({
+                "Name": "RW+X", "Description": "No memory range should have page attributes that allow read, write, and execute",
+                "Filter": function (mrObject) {
+                    if ((mrObject["Read/Write"] === "Enabled") && (mrObject["Read/Write"] === mrObject["Execute"])) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
-                "ConfigureFilter":function() {
+                "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("ExecuteFilter", ["Enabled"]))
-                    {
+                    if (!SetMultiselectTo("ExecuteFilter", ["Enabled"])) {
                         return false
                     }
                     return SetMultiselectTo("RWFilter", ["Enabled"]);
                 } //end of configuring filter inputs
             });
-            SavedFilters.push({"Name": "TSEG is Reserved", "Description": "TSEG should be marked as EFI Reserved Memory", "Filter": function(mrObject) {
-                    if( (mrObject["System Memory"] === "TSEG") && (mrObject["Memory Type"] !== "EfiReservedMemoryType") ) {
+            SavedFilters.push({
+                "Name": "TSEG is Reserved", "Description": "TSEG should be marked as EFI Reserved Memory", "Filter": function (mrObject) {
+                    if ((mrObject["System Memory"] === "TSEG") && (mrObject["Memory Type"] !== "EfiReservedMemoryType")) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
-                "ConfigureFilter":function() {
+                "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click(); //clear the filters
                     SetMultiselectToAllExcept("MemoryTypeFilter", ["EfiReservedMemoryType"]);
                     return SetMultiselectTo("SpecialMemoryRegionsFilter", ["TSEG"]);
                 } //end of configuring filter inputs
             });
 
-            SavedFilters.push({"Name": "Conventional Memory Mapped", "Description": "For OS security EfiConventionalMemory should not be mapped for SMM usage.", "Filter": function(mrObject) {
-                    if( mrObject["Memory Type"] === "EfiConventionalMemory") {
+            SavedFilters.push({
+                "Name": "Conventional Memory Mapped", "Description": "For OS security EfiConventionalMemory should not be mapped for SMM usage.", "Filter": function (mrObject) {
+                    if (mrObject["Memory Type"] === "EfiConventionalMemory") {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
-                "ConfigureFilter":function() {
+                "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click();  //clear the filters
                     return SetMultiselectTo("MemoryTypeFilter", ["EfiConventionalMemory"]);
                 } //end of configuring filter inputs
             });
 
-            SavedFilters.push({"Name": "Only TSEG is executable", "Description": "In SMM the only memory that should be executable is within TSEG", "Filter": function(mrObject) {
-                    if((mrObject["Execute"] === "Enabled") && (mrObject["System Memory"] !== "TSEG")) {
+            SavedFilters.push({
+                "Name": "Only TSEG is executable", "Description": "In SMM the only memory that should be executable is within TSEG", "Filter": function (mrObject) {
+                    if ((mrObject["Execute"] === "Enabled") && (mrObject["System Memory"] !== "TSEG")) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
-                "ConfigureFilter":function() {
+                "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click();  //clear the filters
                     SetMultiselectToAllExcept("SpecialMemoryRegionsFilter", ["TSEG"]);
                     return SetMultiselectTo("ExecuteFilter", ["Enabled"]);
                 } //end of configuring filter inputs
             });
 
-            SavedFilters.push({"Name": "Runtime Code RO", "Description": "Runtime code should be read-only or non-executable in SMM", "Filter": function(mrObject) {
-                    if((mrObject["Read/Write"] === "Enabled") && (mrObject["Memory Type"] === "EfiRuntimeServicesCode") && (mrObject["Section Type"] == "CODE")) {
+            SavedFilters.push({
+                "Name": "Runtime Code RO", "Description": "Runtime code should be read-only or non-executable in SMM", "Filter": function (mrObject) {
+                    if ((mrObject["Read/Write"] === "Enabled") && (mrObject["Memory Type"] === "EfiRuntimeServicesCode") && (mrObject["Section Type"] == "CODE")) {
                         return true;
                     }
                     return false;
                 }, //end of Filter function
-                "ConfigureFilter":function() {
+                "ConfigureFilter": function () {
                     $("button#ClearAllFilter").click();  //clear the filters
-                    if(!SetMultiselectTo("RWFilter", ["Enabled"]))
-                    {
+                    if (!SetMultiselectTo("RWFilter", ["Enabled"])) {
                         return false;
                     }
-                    if(!SetMultiselectTo("SectionFilter", ["CODE"]))
-                    {
+                    if (!SetMultiselectTo("SectionFilter", ["CODE"])) {
                         return false;
                     }
                     return SetMultiselectTo("MemoryTypeFilter", ["EfiRuntimeServicesCode"]);
@@ -530,23 +623,23 @@
             //Add more Test Filters here
 
             //Fill in the test results tab
-            SavedFilters.forEach(function(TestObject) {
+            SavedFilters.forEach(function (TestObject) {
                 var FailedCount = EmbeddedJd.MemoryRanges.filter(TestObject.Filter);
-                if(FailedCount == 0) {
+                if (FailedCount == 0) {
                     var b = $("<div class='TestStatus bg-success'><h4>" + TestObject.Name + "</h4><p>Description:" + TestObject.Description + "<br />Status: Success</p></div>");
                     b.appendTo("div#TestStatusListWrapper");
- 
+
                 } else {
                     var b = $("<div class='TestStatus bg-danger'><h4>" + TestObject.Name + "</h4><p>Description:" + TestObject.Description + "<br />Status: Failed (" + FailedCount.length + ")</p></div>");
                     //Create a button that configures the filter for this test result
                     var a = $('<button type="button" class="btn btn-danger">Set This As Filter For List</button>');
-                    a.click(function() {
-                        if(TestObject.ConfigureFilter()) {
+                    a.click(function () {
+                        if (TestObject.ConfigureFilter()) {
                             AddAlert(TestObject.Name + " Filter applied Successfully", "success");
                         } else {
                             AddAlert(TestObject.Name + " Filter failed", "danger");
-                        } 
-                        $('a[href="#tabs-3"]').tab('show'); 
+                        }
+                        $('a[href="#tabs-3"]').tab('show');
                     });
                     a.appendTo(b);
                     $('<p></p>').appendTo(b);
@@ -557,11 +650,11 @@
             $('div#tabs-3 select.selectpicker').selectpicker("refresh").change();
 
             //Show warning if there are parsing errors
-            if(EmbeddedJd.errors.length > 0) {
+            if (EmbeddedJd.errors.length > 0) {
                 $.bootstrapGrowl("Data Parsing Errors identified.  Please look at Parsing Errors tab as Results and Memory Data might not be accurate.", {
                     ele: 'body', // which element to append to
                     type: 'danger', // (null, 'info', 'danger', 'success')
-                    offset: {from: 'top', amount: 20}, // 'top', or 'bottom'
+                    offset: { from: 'top', amount: 20 }, // 'top', or 'bottom'
                     align: 'right', // ('left', 'right', or 'center')
                     width: 'auto', // (integer, or 'auto')
                     delay: 3600000, // Time while the message will be displayed.  1 hour
@@ -573,7 +666,7 @@
         //
         //To handle scroll tables adjust the height based on the window height.
         //
-        $(window).resize(function() {
+        $(window).resize(function () {
             var newHd = $(window).height() - DATA_TABLE_OFFSET;
             var newParsingHeight = $(window).height() - PARSING_TOOL_TABLE_OFFSET;
             $("#MemoryRanges_wrapper .dataTables_scrollBody").height(newHd);
@@ -581,21 +674,14 @@
             $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
         });
 
-        function CreateRegexForSearchMultiselect(mylist){
+        function CreateRegexForSearchMultiselect(mylist) {
             var re = '';
-            // console.log(mylist);
-            mylist.forEach(function(v,i,a) {
-                if(i > 0) {
+            mylist.forEach(function (v, i, a) {
+                if (i > 0) {
                     re += "|";
-                } else {
-                    re += "("
                 }
-                re += '^' + $.fn.dataTable.util.escapeRegex(v) + '?';
+                re += '^' + $.fn.dataTable.util.escapeRegex(v) + '$';
             });
-            if(re !== '') {
-                re += ")"
-            }
-            // console.log(re);
             return re;
         }
 
@@ -605,12 +691,11 @@
         @param selectName: id of the select element to set
         @param listOfValuesNotSelected: array of values to not select
         **/
-        function SetMultiselectToAllExcept(selectName, listOfValuesNotSelected )
-        {
+        function SetMultiselectToAllExcept(selectName, listOfValuesNotSelected) {
             var all = [];
             //get all options except reserved
-            $.each($("select#" + selectName +" option"), function(i,v) {
-                if(!listOfValuesNotSelected.includes($(v).val())){
+            $.each($("select#" + selectName + " option"), function (i, v) {
+                if (!listOfValuesNotSelected.includes($(v).val())) {
                     all.push($(v).val());
                 }
             });
@@ -625,45 +710,41 @@
             @param listOfValuesSelected: array of values to select
             @ret boolean status of setting all requested values
         **/
-        function SetMultiselectTo(selectName, listOfValuesSelected)
-        {
+        function SetMultiselectTo(selectName, listOfValuesSelected) {
             //var allOptions = $("select#" + selectName +" > option").map(function() { return $(this).val(); }).get(); //create array
-            $.each($("select#" + selectName +" option"), function(i,v) {
+            $.each($("select#" + selectName + " option"), function (i, v) {
                 var index = listOfValuesSelected.indexOf($(v).text());
-                if(index > -1){
+                if (index > -1) {
                     $(v).prop('selected', true);
                     listOfValuesSelected.splice(index, 1);  //remove from array so we can check at the end
                 }
-                else
-                {
+                else {
                     $(v).prop('selected', false);
                 }
             });
             $("select#" + selectName).change();
             $("select#" + selectName).selectpicker('refresh');
-            listOfValuesSelected.forEach(function(v, i, a) {
-                AddAlert("Can't set " + selectName + " value to " + v, "warning");
-            });
-            return (listOfValuesSelected.length === 0); 
+            return (listOfValuesSelected.length === 0);
         }
 
         /**
         Add dismissable alert for user
         **/
-        function AddAlert(msg, level="danger"){
+        function AddAlert(msg, level = "danger") {
             $.bootstrapGrowl(msg, {
                 ele: 'body', // which element to append to
                 type: level, // (null, 'info', 'danger', 'success')
-                offset: {from: 'top', amount: 20}, // 'top', or 'bottom'
+                offset: { from: 'top', amount: 20 }, // 'top', or 'bottom'
                 align: 'right', // ('left', 'right', or 'center')
                 width: 'auto', // (integer, or 'auto')
                 delay: 10000, // Time while the message will be displayed.
                 allow_dismiss: true, // If true then will display a cross to close the popup.
                 stackup_spacing: 10 // spacing between consecutively stacked growls.
             });
-                
+
         }
 
     </script>
 </body>
+
 </html>

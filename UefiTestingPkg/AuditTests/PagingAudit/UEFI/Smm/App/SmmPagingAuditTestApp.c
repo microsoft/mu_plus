@@ -477,6 +477,7 @@ SmmPagingAuditTestAppEntryPoint (
 {
   UINTN  StringLength;
 
+  DumpPlatforminfo ();
   DumpProcessorSpecificHandlers (TRUE, &StringLength);
   AllocateMemoryMapBuffer ();
   MemoryMapDumpHandler (TRUE, &StringLength);
