@@ -311,10 +311,11 @@ class MemoryRange(object):
             if self.ImageName == None:
                 section_type = "Not Tracked"
             else:
-                # if an image range can't be read or executed, this is almost certainly
-                # an error.
                 if self.Nx == 1 and self.ReadWrite == 0:
-                    section_type = "ERROR"
+                    if ("GDT" in self.ImageName or "IDT" in self.ImageName):
+                        section_type = "Descriptor Table"
+                    else:
+                        section_type = "ERROR"
                 elif self.Nx == 1:
                     section_type = "DATA"
                 elif self.ReadWrite == 0:
