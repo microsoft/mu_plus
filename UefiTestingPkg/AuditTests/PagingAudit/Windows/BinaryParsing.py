@@ -62,7 +62,6 @@ def ParsePlatforminfofile(fileName):
 def Parse4kPages(fileName):
     num = 0
     pages = []
-    addressbits = (1 << Globals.Bitwidth) - 1
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
@@ -74,9 +73,9 @@ def Parse4kPages(fileName):
             Present = ((ByteArray[byteZeroIndex + 0] & 0x1))
             ReadWrite = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
-            PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4)) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36) << 12) & addressbits)
+            PageTableBaseAddress = ((((ByteArray[byteZeroIndex + 1] & 0xF0) >> 4) + (ByteArray[byteZeroIndex + 2] << 4) + (ByteArray[byteZeroIndex + 3] << 12) + (ByteArray[byteZeroIndex + 4] << 20) + (ByteArray[byteZeroIndex + 5] << 28) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 36)) << 12)
             Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
-
+            logging.debug("4KB Page: 0x%s. Present: %d. ReadWrite: %d. User: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Present, ReadWrite, User, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
             pages.append(MemoryRange("PTEntry", "4k", Present, ReadWrite, Nx, 1, User, (PageTableBaseAddress)))
@@ -105,7 +104,6 @@ def Parse4kPages(fileName):
 def Parse2mPages(fileName):
     num = 0
     pages = []
-    addressbits = (1 << Globals.Bitwidth) - 1
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
@@ -118,9 +116,9 @@ def Parse2mPages(fileName):
             ReadWrite = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             MustBe1 = ((ByteArray[byteZeroIndex + 0] & 0x80) >> 7)
             User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
-            PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 2] & 0xE0) >> 5)) + (ByteArray[byteZeroIndex + 3] << 3) + (ByteArray[byteZeroIndex + 4] << 11) + (ByteArray[byteZeroIndex + 5] << 19) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 27) << 21) & addressbits)
+            PageTableBaseAddress = ((((ByteArray[byteZeroIndex + 2] & 0xE0) >> 5) + (ByteArray[byteZeroIndex + 3] << 3) + (ByteArray[byteZeroIndex + 4] << 11) + (ByteArray[byteZeroIndex + 5] << 19) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 27)) << 21)
             Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
-
+            logging.debug("2MB Page: 0x%s. Present: %d. ReadWrite: %d. MustBe1: %d. User: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Present, ReadWrite, MustBe1, User, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             num += 1
             pages.append(MemoryRange("PTEntry", "2m", Present, ReadWrite, Nx, MustBe1, User, (PageTableBaseAddress)))
@@ -149,7 +147,6 @@ def Parse2mPages(fileName):
 def Parse1gPages(fileName):
     num = 0
     pages = []
-    addressbits = (1 << Globals.Bitwidth) - 1
     logging.debug("-- Processing file '%s'..." % fileName)
     ByteArray = ParseFileToBytes(fileName)
     byteZeroIndex = 0
@@ -162,9 +159,9 @@ def Parse1gPages(fileName):
             ReadWrite = ((ByteArray[byteZeroIndex + 0] & 0x2) >> 1)
             MustBe1 = ((ByteArray[byteZeroIndex + 0] & 0x80) >> 7)
             User = ((ByteArray[byteZeroIndex + 0] & 0x4) >> 2)
-            PageTableBaseAddress = (((((ByteArray[byteZeroIndex + 3] & 0xC0) >> 6)) + (ByteArray[byteZeroIndex + 4] << 2) + (ByteArray[byteZeroIndex + 5] << 10) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 18) << 30) & addressbits) # shift and address bits
+            PageTableBaseAddress = ((((ByteArray[byteZeroIndex + 3] & 0xC0) >> 6) + (ByteArray[byteZeroIndex + 4] << 2) + (ByteArray[byteZeroIndex + 5] << 10) + ((ByteArray[byteZeroIndex + 6] & 0xF) << 18)) << 30) # shift and address bits
             Nx = ((ByteArray[byteZeroIndex + 7] & 0x80) >> 7)
-
+            logging.debug("1GB Page: 0x%s. Present: %d. ReadWrite: %d. MustBe1: %d. User: %d. PageTableBaseAddress: %s" % (BytesToHexString(ByteArray[byteZeroIndex : byteZeroIndex + 8]), Present, ReadWrite, MustBe1, User, hex(PageTableBaseAddress)))
             byteZeroIndex += 8
             pages.append(MemoryRange("PTEntry", "1g", Present, ReadWrite, Nx, MustBe1, User, PageTableBaseAddress))
             num += 1
