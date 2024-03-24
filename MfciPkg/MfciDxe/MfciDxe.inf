@@ -56,7 +56,6 @@
 
 [Protocols]
   gMfciProtocolGuid                     ## PRODUCES CONSUMES
-
   gEdkiiVariablePolicyProtocolGuid      ## CONSUMES
 
 [Protocols.common.Private]
