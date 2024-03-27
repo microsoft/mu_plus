@@ -1,4 +1,11 @@
-﻿#include "main.h"
+﻿/** @file
+main.cpp
+
+Copyright (C) Microsoft Corporation. 
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+#include "main.h"
 #include <Windows.h>
 #include <shellapi.h>
 #include <stdio.h>

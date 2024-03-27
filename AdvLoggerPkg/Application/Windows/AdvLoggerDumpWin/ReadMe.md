@@ -37,5 +37,5 @@ AdvLoggerDumpWin.exe
 The program creates a new log file `new_logfile.bin` in the current directory.
 
 ## Copyright
-Copyright (C) Microsoft Corporation. All rights reserved.  
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
