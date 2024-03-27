@@ -33,7 +33,7 @@ use crate::{
   keyboard::key_queue::OrdKeyData,
 };
 
-use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_WARN};
+use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN};
 
 // usages supported by this module
 const KEYBOARD_MODIFIER_USAGE_MIN: u32 = 0x000700E0;
@@ -555,7 +555,18 @@ impl HidReportReceiver for KeyboardHidHandler {
 
       if let Some(report_data) = self.input_reports.get(&report_id).cloned() {
         if report.len() != report_data.report_size {
-          break 'report_processing;
+          //Some devices report extra bytes in their reports. Warn about this, but try and process anyway.
+          debugln!(
+            DEBUG_VERBOSE,
+            "{:?}:{:?} unexpected report length for report_id: {:?}. expected {:?}, actual {:?}",
+            function!(),
+            line!(),
+            report_id,
+            report_data.report_size,
+            report.len()
+          );
+          debugln!(DEBUG_VERBOSE, "report: {:x?}", report);
+          //break 'report_processing;
         }
 
         //reset currently active keys to empty set.

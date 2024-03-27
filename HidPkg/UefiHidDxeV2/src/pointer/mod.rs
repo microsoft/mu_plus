@@ -21,7 +21,7 @@ use hidparser::{
 };
 use r_efi::{efi, protocols};
 
-use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR};
+use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_VERBOSE};
 
 use crate::{
   boot_services::UefiBootServices,
@@ -262,7 +262,18 @@ impl HidReportReceiver for PointerHidHandler {
 
       if let Some(report_data) = self.input_reports.get(&report_id).cloned() {
         if report.len() != report_data.report_size {
-          break 'report_processing;
+          //Some devices report extra bytes in their reports. Warn about this, but try and process anyway.
+          debugln!(
+            DEBUG_VERBOSE,
+            "{:?}:{:?} unexpected report length for report_id: {:?}. expected {:?}, actual {:?}",
+            function!(),
+            line!(),
+            report_id,
+            report_data.report_size,
+            report.len()
+          );
+          debugln!(DEBUG_VERBOSE, "report: {:x?}", report);
+          //break 'report_processing;
         }
 
         // hand the report data to the handler for each relevant field for field-specific processing.
