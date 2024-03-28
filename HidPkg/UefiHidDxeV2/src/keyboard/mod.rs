@@ -389,8 +389,8 @@ impl KeyboardHidHandler {
   fn initialize_keyboard_layout(&mut self) -> Result<(), efi::Status> {
     self.install_layout_change_event()?;
 
-    //signal event to pick up any existing layout
-    self.boot_services.signal_event(self.layout_change_event);
+    //fake signal event to pick up any existing layout
+    on_layout_update(self.layout_change_event, self.layout_context as *mut c_void);
 
     //install a default layout if no layout is installed.
     if self.key_queue.get_layout().is_none() {
