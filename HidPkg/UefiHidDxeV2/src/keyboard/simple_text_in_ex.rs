@@ -599,6 +599,7 @@ mod test {
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
     boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
 
     let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
 
@@ -742,6 +743,7 @@ mod test {
       CONTEXT_PTR.store(interface, core::sync::atomic::Ordering::SeqCst);
       efi::Status::SUCCESS
     });
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
 
     // used in set state
     boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
@@ -827,6 +829,7 @@ mod test {
       CONTEXT_PTR.store(interface, core::sync::atomic::Ordering::SeqCst);
       efi::Status::SUCCESS
     });
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
 
     // used in read key stroke
     boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
@@ -967,6 +970,8 @@ mod test {
       }
       efi::Status::SUCCESS
     });
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
+
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
     boot_services.expect_restore_tpl().returning(|_| ());

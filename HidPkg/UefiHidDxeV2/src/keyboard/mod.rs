@@ -839,8 +839,11 @@ mod test {
     boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
     boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+    boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
+    boot_services.expect_restore_tpl().returning(|_| ());
 
     let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
     let mut hid_io = MockHidIo::new();
@@ -859,6 +862,7 @@ mod test {
     boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
     boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
@@ -992,6 +996,47 @@ mod test {
       efi::Status::SUCCESS
     }
 
+    const TEST_KEYBOARD_GUID: efi::Guid =
+      efi::Guid::from_fields(0xf1796c10, 0xdafb, 0x4989, 0xa0, 0x82, &[0x75, 0xe9, 0x65, 0x76, 0xbe, 0x52]);
+
+    static mut TEST_KEYBOARD_LAYOUT: HiiKeyboardLayout =
+      HiiKeyboardLayout { keys: Vec::new(), guid: TEST_KEYBOARD_GUID, descriptions: Vec::new() };
+    unsafe {
+      //make a test keyboard layout that is different than the default.
+      TEST_KEYBOARD_LAYOUT = hii_keyboard_layout::get_default_keyboard_layout();
+      TEST_KEYBOARD_LAYOUT.guid = TEST_KEYBOARD_GUID;
+      TEST_KEYBOARD_LAYOUT.keys.pop();
+      TEST_KEYBOARD_LAYOUT.keys.pop();
+      TEST_KEYBOARD_LAYOUT.keys.pop();
+      TEST_KEYBOARD_LAYOUT.descriptions[0].description = "Test Keyboard Layout".to_string();
+      TEST_KEYBOARD_LAYOUT.descriptions[0].language = "ts-TS".to_string();
+    }
+
+    extern "efiapi" fn get_keyboard_layout(
+      _this: *const protocols::hii_database::Protocol,
+      _key_guid: *const efi::Guid,
+      keyboard_layout_length: *mut u16,
+      keyboard_layout_ptr: *mut protocols::hii_database::KeyboardLayout,
+    ) -> efi::Status {
+      let mut keyboard_layout_buffer = vec![0u8; 4096];
+      let buffer_size = keyboard_layout_buffer.pwrite(unsafe { &TEST_KEYBOARD_LAYOUT }, 0).unwrap();
+      keyboard_layout_buffer.resize(buffer_size, 0);
+      unsafe {
+        if keyboard_layout_length.read() < buffer_size as u16 {
+          keyboard_layout_length.write(buffer_size as u16);
+          return efi::Status::BUFFER_TOO_SMALL;
+        } else {
+          if keyboard_layout_ptr.is_null() {
+            panic!("bad keyboard pointer)");
+          }
+          keyboard_layout_length.write(buffer_size as u16);
+          let slice = from_raw_parts_mut(keyboard_layout_ptr as *mut u8, buffer_size);
+          slice.copy_from_slice(&keyboard_layout_buffer);
+          return efi::Status::SUCCESS;
+        }
+      }
+    }
+
     extern "efiapi" fn set_keyboard_layout(
       _this: *const protocols::hii_database::Protocol,
       _key_guid: *mut efi::Guid,
@@ -1000,47 +1045,6 @@ mod test {
       boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
       boot_services.expect_restore_tpl().returning(|_| ());
       boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
-
-      const TEST_KEYBOARD_GUID: efi::Guid =
-        efi::Guid::from_fields(0xf1796c10, 0xdafb, 0x4989, 0xa0, 0x82, &[0x75, 0xe9, 0x65, 0x76, 0xbe, 0x52]);
-
-      static mut TEST_KEYBOARD_LAYOUT: HiiKeyboardLayout =
-        HiiKeyboardLayout { keys: Vec::new(), guid: TEST_KEYBOARD_GUID, descriptions: Vec::new() };
-      unsafe {
-        //make a test keyboard layout that is different than the default.
-        TEST_KEYBOARD_LAYOUT = hii_keyboard_layout::get_default_keyboard_layout();
-        TEST_KEYBOARD_LAYOUT.guid = TEST_KEYBOARD_GUID;
-        TEST_KEYBOARD_LAYOUT.keys.pop();
-        TEST_KEYBOARD_LAYOUT.keys.pop();
-        TEST_KEYBOARD_LAYOUT.keys.pop();
-        TEST_KEYBOARD_LAYOUT.descriptions[0].description = "Test Keyboard Layout".to_string();
-        TEST_KEYBOARD_LAYOUT.descriptions[0].language = "ts-TS".to_string();
-      }
-
-      extern "efiapi" fn get_keyboard_layout(
-        _this: *const protocols::hii_database::Protocol,
-        _key_guid: *const efi::Guid,
-        keyboard_layout_length: *mut u16,
-        keyboard_layout_ptr: *mut protocols::hii_database::KeyboardLayout,
-      ) -> efi::Status {
-        let mut keyboard_layout_buffer = vec![0u8; 4096];
-        let buffer_size = keyboard_layout_buffer.pwrite(unsafe { &TEST_KEYBOARD_LAYOUT }, 0).unwrap();
-        keyboard_layout_buffer.resize(buffer_size, 0);
-        unsafe {
-          if keyboard_layout_length.read() < buffer_size as u16 {
-            keyboard_layout_length.write(buffer_size as u16);
-            return efi::Status::BUFFER_TOO_SMALL;
-          } else {
-            if keyboard_layout_ptr.is_null() {
-              panic!("bad keyboard pointer)");
-            }
-            keyboard_layout_length.write(buffer_size as u16);
-            let slice = from_raw_parts_mut(keyboard_layout_ptr as *mut u8, buffer_size);
-            slice.copy_from_slice(&keyboard_layout_buffer);
-            return efi::Status::SUCCESS;
-          }
-        }
-      }
 
       boot_services.expect_locate_protocol().returning(|protocol, _, interface| {
         unsafe {
@@ -1073,6 +1077,7 @@ mod test {
             let mut hii_database = hii_database.assume_init();
             hii_database.new_package_list = new_package_list;
             hii_database.set_keyboard_layout = set_keyboard_layout;
+            hii_database.get_keyboard_layout = get_keyboard_layout;
 
             interface.write(Box::into_raw(Box::new(hii_database)) as *mut c_void);
           }
@@ -1100,6 +1105,7 @@ mod test {
     boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
     boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
@@ -1148,6 +1154,7 @@ mod test {
     boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
     boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
@@ -1211,6 +1218,7 @@ mod test {
     boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_install_protocol_interface().returning(|_, _, _, _| efi::Status::SUCCESS);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
     boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_raise_tpl().returning(|_| efi::TPL_APPLICATION);
