@@ -600,7 +600,7 @@ mod test {
   }
 
   #[test]
-  fn bad_reports_should_be_ignored() {
+  fn bad_reports_should_be_processed_with_best_effort() {
     let boot_services = create_fake_static_boot_service();
     static mut ABS_PTR_INTERFACE: *mut c_void = core::ptr::null_mut();
 
@@ -661,19 +661,19 @@ mod test {
     pointer_handler.receive_report(report, &hid_io);
 
     assert_eq!(pointer_handler.current_state.active_buttons, 0);
-    assert_eq!(pointer_handler.current_state.current_x, CENTER);
-    assert_eq!(pointer_handler.current_state.current_y, CENTER);
-    assert_eq!(pointer_handler.current_state.current_z, 0);
-    assert_eq!(pointer_handler.state_changed, false);
+    assert_eq!(pointer_handler.current_state.current_x, 0);
+    assert_eq!(pointer_handler.current_state.current_y, 4);
+    assert_eq!(pointer_handler.current_state.current_z, 4);
+    assert_eq!(pointer_handler.state_changed, true);
 
     //report too short
     let report: &[u8] = &[0x00, 0x10, 0x00, 0x10, 0x00, 0x10];
     pointer_handler.receive_report(report, &hid_io);
 
     assert_eq!(pointer_handler.current_state.active_buttons, 0);
-    assert_eq!(pointer_handler.current_state.current_x, CENTER);
-    assert_eq!(pointer_handler.current_state.current_y, CENTER);
-    assert_eq!(pointer_handler.current_state.current_z, 0);
-    assert_eq!(pointer_handler.state_changed, false);
+    assert_eq!(pointer_handler.current_state.current_x, 4);
+    assert_eq!(pointer_handler.current_state.current_y, 4);
+    assert_eq!(pointer_handler.current_state.current_z, 4);
+    assert_eq!(pointer_handler.state_changed, true);
   }
 }
