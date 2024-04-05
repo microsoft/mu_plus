@@ -484,6 +484,9 @@ AdvancedLoggerGetLoggerInfo (
       (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
       LogPtr->LogBuffer                                            = PA_FROM_PTR (LoggerInfo);
 
+      LoggerInfo->LogCurrent = PA_FROM_PTR (LoggerInfo + 1) + LoggerInfo->LogCurrent - LoggerInfo->LogBuffer;
+      LoggerInfo->LogBuffer  = PA_FROM_PTR (LoggerInfo + 1);
+
       // return the pointer
       return LoggerInfo;
     }
