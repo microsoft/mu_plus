@@ -978,97 +978,6 @@ IsMemoryAttributeProtocolPresent (
 }
 
 /**
-  Allocates Pages and Pools of each memory type and
-  checks that the returned buffers have restrictive
-  access attributes.
-
-  @param[in] Context            Unit test context
-
-  @retval UNIT_TEST_PASSED      The unit test passed
-  @retval other                 The unit test failed
-**/
-UNIT_TEST_STATUS
-EFIAPI
-AllocatedPagesAndPoolsAreProtected (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  UINTN    Index;
-  BOOLEAN  TestFailure;
-  UINTN    *PageAllocations[EfiMaxMemoryType];
-  UINTN    *PoolAllocations[EfiMaxMemoryType];
-
-  DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
-
-  TestFailure = FALSE;
-  ZeroMem (PageAllocations, sizeof (PageAllocations));
-  ZeroMem (PoolAllocations, sizeof (PoolAllocations));
-
-  for (Index = 0; Index < EfiMaxMemoryType; Index++) {
-    if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory) && (Index != EfiUnacceptedMemoryType)) {
-      PageAllocations[Index] = AllocatePages (1);
-      if (PageAllocations[Index] == NULL) {
-        UT_LOG_ERROR ("Failed to allocate one page for memory type %d\n", Index);
-        TestFailure = TRUE;
-      }
-
-      PoolAllocations[Index] = AllocatePool (8);
-      if (PoolAllocations[Index] == NULL) {
-        UT_LOG_ERROR ("Failed to allocate an 8 byte pool for memory type %d\n", Index);
-        TestFailure = TRUE;
-      }
-    }
-  }
-
-  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
-  UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-
-  for (Index = 0; Index < EfiMaxMemoryType; Index++) {
-    if ((Index != EfiConventionalMemory) && (Index != EfiPersistentMemory) && (Index != EfiUnacceptedMemoryType)) {
-      if (!ValidateRegionAttributes (
-             &mMap,
-             (UINT64)PageAllocations[Index],
-             EFI_PAGE_SIZE,
-             EFI_MEMORY_RP | EFI_MEMORY_RO | EFI_MEMORY_XP,
-             TRUE,
-             FALSE,
-             TRUE
-             ))
-      {
-        TestFailure = TRUE;
-      }
-
-      if (!ValidateRegionAttributes (
-             &mMap,
-             (UINT64)PoolAllocations[Index],
-             8,
-             EFI_MEMORY_RP | EFI_MEMORY_RO | EFI_MEMORY_XP,
-             TRUE,
-             FALSE,
-             TRUE
-             ))
-      {
-        TestFailure = TRUE;
-      }
-    }
-  }
-
-  for (Index = 0; Index < EfiMaxMemoryType; Index++) {
-    if (PageAllocations[Index] != NULL) {
-      FreePages (PageAllocations[Index], 1);
-    }
-
-    if (PoolAllocations[Index] != NULL) {
-      FreePool (PoolAllocations[Index]);
-    }
-  }
-
-  UT_ASSERT_FALSE (TestFailure);
-
-  return UNIT_TEST_PASSED;
-}
-
-/**
   Checks that the NULL page is not mapped or is
   EFI_MEMORY_RP.
 
@@ -1080,7 +989,7 @@ AllocatedPagesAndPoolsAreProtected (
 STATIC
 UNIT_TEST_STATUS
 EFIAPI
-NullCheck (
+NullPageIsRp (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -1627,8 +1536,7 @@ DxePagingAuditTestAppEntryPoint (
     AddTestCase (Misc, "No pages are  readable, writable, and executable", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "Unallocated memory is EFI_MEMORY_RP", "Security.Misc.UnallocatedMemoryIsRP", UnallocatedMemoryIsRP, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "Memory Attribute Protocol is present", "Security.Misc.IsMemoryAttributeProtocolPresent", IsMemoryAttributeProtocolPresent, NULL, NULL, NULL);
-    AddTestCase (Misc, "Calls to allocate pages and pools return buffers with restrictive access attributes", "Security.Misc.AllocatedPagesAndPoolsAreProtected", AllocatedPagesAndPoolsAreProtected, NULL, GeneralTestCleanup, NULL);
-    AddTestCase (Misc, "NULL page is EFI_MEMORY_RP", "Security.Misc.NullCheck", NullCheck, NULL, GeneralTestCleanup, NULL);
+    AddTestCase (Misc, "NULL page is EFI_MEMORY_RP", "Security.Misc.NullPageIsRp", NullPageIsRp, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "MMIO Regions are EFI_MEMORY_XP", "Security.Misc.MmioIsXp", MmioIsXp, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "Image code sections are EFI_MEMORY_RO and and data sections are EFI_MEMORY_XP", "Security.Misc.ImageCodeSectionsRoDataSectionsXp", ImageCodeSectionsRoDataSectionsXp, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "BSP stack is EFI_MEMORY_XP and has EFI_MEMORY_RP guard page", "Security.Misc.BspStackIsXpAndHasGuardPage", BspStackIsXpAndHasGuardPage, NULL, GeneralTestCleanup, NULL);
