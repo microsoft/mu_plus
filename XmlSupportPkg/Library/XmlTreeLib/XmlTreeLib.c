@@ -877,14 +877,15 @@ BuildNodeList (
     //
     Status = RtlXmlNextToken (&State, &Next, FALSE);
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "Failed to get the next token, Status = 0x%x\n", Status));
+      DEBUG ((EFI_D_ERROR, "Failed to get the next token, Status = %r\n", Status)); // MS_CHANGE
       goto Exit;
     } else if (Next.fError) {
       //
       // Errors in parse, such as bad characters, come out here in the
       // fError member
       //
-      DEBUG ((EFI_D_ERROR, "Error during tokenization, Status = 0x%x\n", Next.fError));
+      DEBUG ((EFI_D_ERROR, "Error during tokenization, Next.fError = %d\n", Next.fError)); // MS_CHANGE
+      Status = EFI_ABORTED;                                                                // MS_CHANGE
       goto Exit;
     }
 
@@ -1071,7 +1072,7 @@ BuildNodeList (
       //
       Status = AddAttributeToNode (CurrentNode, AttributeName, AttributeValue);
       if (EFI_ERROR (Status)) {
-        DEBUG ((EFI_D_ERROR, "ERROR:  AddAttributeToNode() failed, Status = 0x%x\n", Status));
+        DEBUG ((EFI_D_ERROR, "ERROR:  AddAttributeToNode() failed, Status = %r\n", Status));  // MS_CHANGE
         goto Exit;
       }
     } else if (Next.State == XTSS_ENDELEMENT_NAME) {
@@ -1105,6 +1106,20 @@ BuildNodeList (
       //
       if (CurrentNode) {
         CurrentNode = CurrentNode->ParentNode;
+        // MS_CHANGE  [begin]
+        //
+        // Topmost node, ignore tailing characters
+        //
+        // DONE-CCC:
+        //   See also,  TODO-AAA and TODO-BBB in `xml_fasterxml.c`
+        //
+        DEBUG ((DEBUG_VERBOSE, "New CurrentNode, %p\n", CurrentNode));
+        if (CurrentNode == NULL) {
+          DEBUG ((DEBUG_VERBOSE, "At the end of the Root node\n"));
+          break;
+        }
+
+        // MS_CHANGE  [end]
       }
     } else if (Next.State == XTSS_ELEMENT_CLOSE_EMPTY) {
       DEBUG ((DEBUG_VERBOSE, "XTSS_ELEMENT_CLOSE_EMPTY, empty close\n"));
@@ -1115,6 +1130,19 @@ BuildNodeList (
       //
       if (CurrentNode) {
         CurrentNode = CurrentNode->ParentNode;
+        DEBUG ((DEBUG_VERBOSE, "New CurrentNode, %p\n", CurrentNode));
+
+        // MS_CHANGE  [begin]
+        //
+        // DONE-CCC-2:
+        //
+        DEBUG ((DEBUG_VERBOSE, "New CurrentNode, %p\n", CurrentNode));
+        if (CurrentNode == NULL) {
+          DEBUG ((DEBUG_VERBOSE, "At the end of the Root node\n"));
+          break;
+        }
+
+        // MS_CHANGE  [end]
       }
     }
 

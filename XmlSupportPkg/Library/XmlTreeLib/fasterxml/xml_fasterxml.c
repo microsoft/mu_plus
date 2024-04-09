@@ -2700,6 +2700,22 @@ RtlXmlNextToken (
         pToken->fError = TRUE;
         return success;
       }
+      // MS_CHANGE
+      //
+      // TODO-BBB:  See TODO-AAA
+      //
+      // if (pRawToken->TokenName == NTXML_RAWTOKEN_ERROR) {
+      //   pToken->fError = TRUE;
+      //   success = EFI_ABORTED;
+      //   return success;
+      // }
+      //
+      // Why TODO?
+      //   If we turn on this, we will be endless on other place..
+      //
+      // Work around?
+      //   See DONE-CCC in `XmlTreeLib.c`
+      //
 
       cbTotalTokenLength = pRawToken->Run.cbData;
 
@@ -2945,6 +2961,14 @@ RtlXmlNextToken (
                     );
 
         cbTotalTokenLength = pRawToken->Run.cbData;
+
+        // MS_CHANGE
+        //
+        // TODO-AAA: 
+        //  if we encounter a NTXML_RAWTOKEN_ERROR, 
+        //    we will run into endless XTSS_STREAM_HYPERSPACE
+        //
+        // DEBUG ((DEBUG_VERBOSE, "pRawToken->TokenName = %d\n", pRawToken->TokenName));
 
         NextState = XTSS_STREAM_HYPERSPACE;
       }
