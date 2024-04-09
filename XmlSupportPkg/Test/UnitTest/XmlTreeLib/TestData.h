@@ -45,6 +45,7 @@ typedef struct {
 CONST CHAR8  VerySimpleElementsOnly1[] =
   "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
   "<RootNode>"
+  "abcd-1"
   "</RootNode>";
 
 CONST CHAR8  VerySimpleElementsOnly2[] =
@@ -54,16 +55,33 @@ CONST CHAR8  VerySimpleElementsOnly2[] =
 CONST CHAR8  VerySimpleElementsOnly3[] =
   "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
   "<RootNode>"
+  "abcd-3"
   "</RootNode>\r\n\xcd\xcd";
 
 CONST CHAR8  VerySimpleElementsOnly4[] =
   "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
   "<RootNode/>\r\n\xcd\xcd";
 
+CONST CHAR8  VerySimpleElementsOnly5[] =
+  "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+  "<RootNode>"
+  "abcd-5"
+  "</RootNode>"
+  "<RootNode2>"
+  "xyz-5"
+  "</RootNode2>";
+
+CONST CHAR8  VerySimpleElementsOnly6[] =
+  "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+  "<RootNode/>"
+  "<RootNode2/>";
+
 XmlTestContext  VerySimpleElementsOnly1Context = { 1, 0, 1, 0, VerySimpleElementsOnly1, NULL, NULL };
 XmlTestContext  VerySimpleElementsOnly2Context = { 1, 0, 1, 0, VerySimpleElementsOnly2, NULL, NULL };
 XmlTestContext  VerySimpleElementsOnly3Context = { 1, 0, 1, 0, VerySimpleElementsOnly3, NULL, NULL };
 XmlTestContext  VerySimpleElementsOnly4Context = { 1, 0, 1, 0, VerySimpleElementsOnly4, NULL, NULL };
+XmlTestContext  VerySimpleElementsOnly5Context = { 1, 0, 1, 0, VerySimpleElementsOnly5, NULL, NULL };
+XmlTestContext  VerySimpleElementsOnly6Context = { 1, 0, 1, 0, VerySimpleElementsOnly6, NULL, NULL };
 
 CONST CHAR8  SimpleElementsOnly[] =
   "<?xml version=\"1.0\" encoding=\"utf-8\"?>"

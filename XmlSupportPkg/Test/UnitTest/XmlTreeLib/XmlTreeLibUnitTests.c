@@ -525,6 +525,9 @@ UnitTestingEntry (
   AddTestCase (InputTestSuite, "Parse Valid XML with a very simple empty tag root", "ValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &VerySimpleElementsOnly2Context);
   AddTestCase (InputTestSuite, "Parse Valid XML with a very simple root, tailing with uninitialized memory", "ValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &VerySimpleElementsOnly3Context);
   AddTestCase (InputTestSuite, "Parse Valid XML with a very simple empty tag root, tailing with uninitialized memory", "ValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &VerySimpleElementsOnly4Context);
+  AddTestCase (InputTestSuite, "Parse Valid XML with two very simple roots, report only first root", "ValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &VerySimpleElementsOnly5Context);
+  AddTestCase (InputTestSuite, "Parse Valid XML with two very simple empty tag roots, report only first root", "ValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &VerySimpleElementsOnly6Context);
+
   AddTestCase (InputTestSuite, "Parse Valid XML with simple elements 3 layers", "ValidElements", ParseValidXml, NULL, CleanUpXmlTestContext, &SimpleElementsOnlyContext);
   AddTestCase (InputTestSuite, "Parse Valid XML with 2 elements and 2 attributes", "ValidElementsAndAttributes", ParseValidXml, NULL, CleanUpXmlTestContext, &SimpleElementsAttributesContext);
   AddTestCase (InputTestSuite, "Parse Invalid XML string containing an attribute with invalid xml chars", "NonXmlEncodedAttribute", ParseValidXml, NULL, CleanUpXmlTestContext, &NonEncodedXmlAttribute1Context);
