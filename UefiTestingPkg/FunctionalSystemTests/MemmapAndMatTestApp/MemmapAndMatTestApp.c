@@ -35,7 +35,7 @@ typedef struct _MEM_MAP_META {
   VOID     *Map;
 } MEM_MAP_META;
 
-MEM_MAP_META  mLegacyMapMeta;
+MEM_MAP_META  mEfiMemoryMapMeta;
 MEM_MAP_META  mMatMapMeta;
 
 /// ================================================================================================
@@ -78,7 +78,7 @@ MemoryMapShouldHaveFewEntries (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  return (mLegacyMapMeta.EntryCount <= 500) ?
+  return (mEfiMemoryMapMeta.EntryCount <= 500) ?
          UNIT_TEST_PASSED :
          UNIT_TEST_ERROR_TEST_FAILED;
 } // MemoryMapShouldHaveFewEntries()
@@ -89,27 +89,27 @@ ListsShouldHaveTheSameDescriptorSize (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  return (mLegacyMapMeta.EntrySize == mMatMapMeta.EntrySize) ?
+  return (mEfiMemoryMapMeta.EntrySize == mMatMapMeta.EntrySize) ?
          UNIT_TEST_PASSED :
          UNIT_TEST_ERROR_TEST_FAILED;
 } // ListsShouldHaveTheSameDescriptorSize()
 
 UNIT_TEST_STATUS
 EFIAPI
-LegacyMapSizeShouldBeAMultipleOfDescriptorSize (
+EfiMemoryMapSizeShouldBeAMultipleOfDescriptorSize (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
   UNIT_TEST_STATUS  Status = UNIT_TEST_PASSED;
 
-  if (((mLegacyMapMeta.MapSize / mLegacyMapMeta.EntrySize) != mLegacyMapMeta.EntryCount) ||
-      ((mLegacyMapMeta.MapSize % mLegacyMapMeta.EntrySize) != 0))
+  if (((mEfiMemoryMapMeta.MapSize / mEfiMemoryMapMeta.EntrySize) != mEfiMemoryMapMeta.EntryCount) ||
+      ((mEfiMemoryMapMeta.MapSize % mEfiMemoryMapMeta.EntrySize) != 0))
   {
     Status = UNIT_TEST_ERROR_TEST_FAILED;
   }
 
   return Status;
-} // LegacyMapSizeShouldBeAMultipleOfDescriptorSize()
+} // EfiMemoryMapSizeShouldBeAMultipleOfDescriptorSize()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -130,7 +130,7 @@ MatMapSizeShouldBeAMultipleOfDescriptorSize (
 
 UNIT_TEST_STATUS
 EFIAPI
-NoLegacyMapEntriesShouldHaveZeroSize (
+NoEfiMemoryMapEntriesShouldHaveZeroSize (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -138,8 +138,8 @@ NoLegacyMapEntriesShouldHaveZeroSize (
   UINTN                  Index;
   EFI_MEMORY_DESCRIPTOR  *Descriptor;
 
-  for (Index = 0; Index < mLegacyMapMeta.EntryCount; Index++) {
-    Descriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mLegacyMapMeta.Map + (Index * mLegacyMapMeta.EntrySize));
+  for (Index = 0; Index < mEfiMemoryMapMeta.EntryCount; Index++) {
+    Descriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mEfiMemoryMapMeta.Map + (Index * mEfiMemoryMapMeta.EntrySize));
     if (Descriptor->NumberOfPages == 0) {
       Status = UNIT_TEST_ERROR_TEST_FAILED;
       break;
@@ -147,7 +147,7 @@ NoLegacyMapEntriesShouldHaveZeroSize (
   }
 
   return Status;
-} // NoLegacyMapEntriesShouldHaveZeroSize()
+} // NoEfiMemoryMapEntriesShouldHaveZeroSize()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -172,7 +172,7 @@ NoMatMapEntriesShouldHaveZeroSize (
 
 UNIT_TEST_STATUS
 EFIAPI
-AllLegacyMapEntriesShouldBeAligned (
+AllEfiMemoryMapEntriesShouldBeAligned (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -180,8 +180,8 @@ AllLegacyMapEntriesShouldBeAligned (
   UINTN                  Index;
   EFI_MEMORY_DESCRIPTOR  *Descriptor;
 
-  for (Index = 0; Index < mLegacyMapMeta.EntryCount; Index++) {
-    Descriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mLegacyMapMeta.Map + (Index * mLegacyMapMeta.EntrySize));
+  for (Index = 0; Index < mEfiMemoryMapMeta.EntryCount; Index++) {
+    Descriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mEfiMemoryMapMeta.Map + (Index * mEfiMemoryMapMeta.EntrySize));
     if (((Descriptor->PhysicalStart & EFI_PAGE_MASK) != 0) ||
         ((Descriptor->VirtualStart & EFI_PAGE_MASK) != 0))
     {
@@ -206,7 +206,7 @@ AllLegacyMapEntriesShouldBeAligned (
   }
 
   return Status;
-} // AllLegacyMapEntriesShouldBeAligned()
+} // AllEfiMemoryMapEntriesShouldBeAligned()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -369,12 +369,12 @@ EntriesInASingleMapShouldNotOverlapAtAll (
 
 UNIT_TEST_STATUS
 EFIAPI
-EntriesInLegacyMapShouldNotOverlapAtAll (
+EntriesInEfiMemoryMapShouldNotOverlapAtAll (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  return EntriesInASingleMapShouldNotOverlapAtAll (&mLegacyMapMeta);
-} // EntriesInLegacyMapShouldNotOverlapAtAll()
+  return EntriesInASingleMapShouldNotOverlapAtAll (&mEfiMemoryMapMeta);
+} // EntriesInEfiMemoryMapShouldNotOverlapAtAll()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -392,14 +392,14 @@ EntriesBetweenListsShouldNotOverlapBoundaries (
   )
 {
   UNIT_TEST_STATUS       Status = UNIT_TEST_PASSED;
-  UINTN                  LegacyIndex, MatIndex;
-  EFI_PHYSICAL_ADDRESS   LegacyEnd, MatEnd;
-  EFI_MEMORY_DESCRIPTOR  *LegacyDescriptor, *MatDescriptor;
+  UINTN                  EfiMemoryIndex, MatIndex;
+  EFI_PHYSICAL_ADDRESS   EfiMemoryEnd, MatEnd;
+  EFI_MEMORY_DESCRIPTOR  *EfiMemoryDescriptor, *MatDescriptor;
 
   // Create an outer loop for the first list.
-  for (LegacyIndex = 0; LegacyIndex < mLegacyMapMeta.EntryCount; LegacyIndex++) {
-    LegacyDescriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mLegacyMapMeta.Map + (LegacyIndex * mLegacyMapMeta.EntrySize));
-    LegacyEnd        = LegacyDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (LegacyDescriptor->NumberOfPages) - 1;
+  for (EfiMemoryIndex = 0; EfiMemoryIndex < mEfiMemoryMapMeta.EntryCount; EfiMemoryIndex++) {
+    EfiMemoryDescriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mEfiMemoryMapMeta.Map + (EfiMemoryIndex * mEfiMemoryMapMeta.EntrySize));
+    EfiMemoryEnd        = EfiMemoryDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (EfiMemoryDescriptor->NumberOfPages) - 1;
 
     // Create an inner loop for the second list.
     for (MatIndex = 0; MatIndex < mMatMapMeta.EntryCount; MatIndex++) {
@@ -420,12 +420,12 @@ EntriesBetweenListsShouldNotOverlapBoundaries (
       //                  |         |
       //                  |---------|
       //
-      if ((A_IS_BETWEEN_B_AND_C (MatDescriptor->PhysicalStart, LegacyDescriptor->PhysicalStart, LegacyEnd) && (MatEnd > LegacyEnd)) ||
-          (A_IS_BETWEEN_B_AND_C (LegacyDescriptor->PhysicalStart, MatDescriptor->PhysicalStart, MatEnd) && (LegacyEnd > MatEnd)))
+      if ((A_IS_BETWEEN_B_AND_C (MatDescriptor->PhysicalStart, EfiMemoryDescriptor->PhysicalStart, EfiMemoryEnd) && (MatEnd > EfiMemoryEnd)) ||
+          (A_IS_BETWEEN_B_AND_C (EfiMemoryDescriptor->PhysicalStart, MatDescriptor->PhysicalStart, MatEnd) && (EfiMemoryEnd > MatEnd)))
       {
         DEBUG ((DEBUG_VERBOSE, "%a - Overlap between MemoryMaps!\n", __FUNCTION__));
         DumpDescriptor (DEBUG_VERBOSE, L"[MatDescriptor]", MatDescriptor);
-        DumpDescriptor (DEBUG_VERBOSE, L"[LegacyDescriptor]", LegacyDescriptor);
+        DumpDescriptor (DEBUG_VERBOSE, L"[EfiMemoryDescriptor]", EfiMemoryDescriptor);
         Status = UNIT_TEST_ERROR_TEST_FAILED;
         break;
       }
@@ -442,9 +442,9 @@ AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap (
   )
 {
   UNIT_TEST_STATUS       Status = UNIT_TEST_PASSED;
-  UINTN                  MatIndex, LegacyIndex;
-  EFI_PHYSICAL_ADDRESS   MatEnd, LegacyEnd;
-  EFI_MEMORY_DESCRIPTOR  *MatDescriptor, *LegacyDescriptor;
+  UINTN                  MatIndex, EfiMemoryIndex;
+  EFI_PHYSICAL_ADDRESS   MatEnd, EfiMemoryEnd;
+  EFI_MEMORY_DESCRIPTOR  *MatDescriptor, *EfiMemoryDescriptor;
   BOOLEAN                MatchFound;
 
   // Create an outer loop for the first list.
@@ -456,22 +456,22 @@ AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap (
     MatchFound = FALSE;
 
     // Create an inner loop for the second list.
-    for (LegacyIndex = 0; LegacyIndex < mLegacyMapMeta.EntryCount && !MatchFound; LegacyIndex++) {
-      LegacyDescriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mLegacyMapMeta.Map + (LegacyIndex * mLegacyMapMeta.EntrySize));
-      LegacyEnd        = LegacyDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (LegacyDescriptor->NumberOfPages) - 1;
+    for (EfiMemoryIndex = 0; EfiMemoryIndex < mEfiMemoryMapMeta.EntryCount && !MatchFound; EfiMemoryIndex++) {
+      EfiMemoryDescriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mEfiMemoryMapMeta.Map + (EfiMemoryIndex * mEfiMemoryMapMeta.EntrySize));
+      EfiMemoryEnd        = EfiMemoryDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (EfiMemoryDescriptor->NumberOfPages) - 1;
 
       //
-      // Determine whether this MAT entry lies entirely within this Legacy entry.
+      // Determine whether this MAT entry lies entirely within this EfiMemory entry.
       // An entry lies within if:
       //    - It starts at the same address or starts within AND
       //    - It ends at the same address or ends within.
       //
-      if ((A_IS_BETWEEN_B_AND_C (MatDescriptor->PhysicalStart, LegacyDescriptor->PhysicalStart, LegacyEnd) ||
-           (MatDescriptor->PhysicalStart == LegacyDescriptor->PhysicalStart)) &&
-          (A_IS_BETWEEN_B_AND_C (MatEnd, LegacyDescriptor->PhysicalStart, LegacyEnd) || (MatEnd == LegacyEnd)))
+      if ((A_IS_BETWEEN_B_AND_C (MatDescriptor->PhysicalStart, EfiMemoryDescriptor->PhysicalStart, EfiMemoryEnd) ||
+           (MatDescriptor->PhysicalStart == EfiMemoryDescriptor->PhysicalStart)) &&
+          (A_IS_BETWEEN_B_AND_C (MatEnd, EfiMemoryDescriptor->PhysicalStart, EfiMemoryEnd) || (MatEnd == EfiMemoryEnd)))
       {
         // Now, make sure that the type matches.
-        if (MatDescriptor->Type == LegacyDescriptor->Type) {
+        if (MatDescriptor->Type == EfiMemoryDescriptor->Type) {
           MatchFound = TRUE;
         }
       }
@@ -479,7 +479,7 @@ AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap (
 
     // If a match was not found for this MAT entry, we have a problem.
     if (!MatchFound) {
-      DEBUG ((DEBUG_VERBOSE, "%a - MAT entry not found in Legacy MemoryMap!\n", __FUNCTION__));
+      DEBUG ((DEBUG_VERBOSE, "%a - MAT entry not found in EfiMemory MemoryMap!\n", __FUNCTION__));
       DumpDescriptor (DEBUG_VERBOSE, NULL, MatDescriptor);
       Status = UNIT_TEST_ERROR_TEST_FAILED;
       break;
@@ -496,19 +496,19 @@ AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat (
   )
 {
   UNIT_TEST_STATUS       Status = UNIT_TEST_PASSED;
-  UINTN                  LegacyIndex, MatIndex;
-  EFI_PHYSICAL_ADDRESS   LegacyEnd, MatEnd;
-  EFI_MEMORY_DESCRIPTOR  *LegacyDescriptor, *MatDescriptor;
+  UINTN                  EfiMemoryIndex, MatIndex;
+  EFI_PHYSICAL_ADDRESS   EfiMemoryEnd, MatEnd;
+  EFI_MEMORY_DESCRIPTOR  *EfiMemoryDescriptor, *MatDescriptor;
   EFI_PHYSICAL_ADDRESS   CurrentEntryProgress;
   BOOLEAN                EntryComplete;
 
   // Create an outer loop for the first list.
-  for (LegacyIndex = 0; LegacyIndex < mLegacyMapMeta.EntryCount; LegacyIndex++) {
-    LegacyDescriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mLegacyMapMeta.Map + (LegacyIndex * mLegacyMapMeta.EntrySize));
-    LegacyEnd        = LegacyDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (LegacyDescriptor->NumberOfPages) - 1;
+  for (EfiMemoryIndex = 0; EfiMemoryIndex < mEfiMemoryMapMeta.EntryCount; EfiMemoryIndex++) {
+    EfiMemoryDescriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mEfiMemoryMapMeta.Map + (EfiMemoryIndex * mEfiMemoryMapMeta.EntrySize));
+    EfiMemoryEnd        = EfiMemoryDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (EfiMemoryDescriptor->NumberOfPages) - 1;
 
     // If this entry is not EfiRuntimeServicesCode or EfiRuntimeServicesData, we don't care.
-    if ((LegacyDescriptor->Type != EfiRuntimeServicesCode) && (LegacyDescriptor->Type != EfiRuntimeServicesData)) {
+    if ((EfiMemoryDescriptor->Type != EfiRuntimeServicesCode) && (EfiMemoryDescriptor->Type != EfiRuntimeServicesData)) {
       continue;   // Just keep looping over other entries.
     }
 
@@ -519,7 +519,7 @@ AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat (
     // Since there's a prerequisite on the MAT entries being in ascending order, we can be confident
     // that a bottom-up approach will work.
     //
-    CurrentEntryProgress = LegacyDescriptor->PhysicalStart;
+    CurrentEntryProgress = EfiMemoryDescriptor->PhysicalStart;
     EntryComplete        = FALSE;
 
     // Create an inner loop for the second list.
@@ -528,7 +528,7 @@ AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat (
       MatEnd        = MatDescriptor->PhysicalStart + EFI_PAGES_TO_SIZE (MatDescriptor->NumberOfPages) - 1;
 
       // If this entry doesn't match the type we're looking for, then it's of no interest.
-      if (LegacyDescriptor->Type != MatDescriptor->Type) {
+      if (EfiMemoryDescriptor->Type != MatDescriptor->Type) {
         continue;
       }
 
@@ -543,7 +543,7 @@ AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat (
       }
 
       // If the progress has now covered the entire entry, we're good.
-      if (CurrentEntryProgress > LegacyEnd) {
+      if (CurrentEntryProgress > EfiMemoryEnd) {
         EntryComplete = TRUE;
         break;
       }
@@ -551,8 +551,8 @@ AllMemmapRuntimeCodeAndDataEntriesMustBeEntirelyDescribedByMat (
 
     // If we never completed this entry, we're borked.
     if (!EntryComplete) {
-      DEBUG ((DEBUG_VERBOSE, "%a - Legacy MemoryMap entry not covered by MAT entries!\n", __FUNCTION__));
-      DumpDescriptor (DEBUG_VERBOSE, NULL, LegacyDescriptor);
+      DEBUG ((DEBUG_VERBOSE, "%a - EfiMemory MemoryMap entry not covered by MAT entries!\n", __FUNCTION__));
+      DumpDescriptor (DEBUG_VERBOSE, NULL, EfiMemoryDescriptor);
       Status = UNIT_TEST_ERROR_TEST_FAILED;
       break;
     }
@@ -585,41 +585,41 @@ InitializeTestEnvironment (
 {
   EFI_STATUS                   Status;
   EFI_MEMORY_ATTRIBUTES_TABLE  *MatMap;
-  EFI_MEMORY_DESCRIPTOR        *LegacyMap = NULL;
+  EFI_MEMORY_DESCRIPTOR        *EfiMemoryMap = NULL;
   UINTN                        MapSize, DescriptorSize;
 
   //
   // Make sure that the structures are clear.
   //
-  ZeroMem (&mLegacyMapMeta, sizeof (mLegacyMapMeta));
+  ZeroMem (&mEfiMemoryMapMeta, sizeof (mEfiMemoryMapMeta));
   ZeroMem (&mMatMapMeta, sizeof (mMatMapMeta));
 
   //
   // Grab the legacy MemoryMap...
   //
   MapSize = 0;
-  Status  = gBS->GetMemoryMap (&MapSize, LegacyMap, NULL, &DescriptorSize, NULL);
+  Status  = gBS->GetMemoryMap (&MapSize, EfiMemoryMap, NULL, &DescriptorSize, NULL);
   if ((Status != EFI_BUFFER_TOO_SMALL) || !MapSize) {
     // If we're here, we had something weird happen.
     // By passing a size of 0, it should have returned EFI_BUFFER_TOO_SMALL.
     return EFI_UNSUPPORTED;
   }
 
-  LegacyMap = AllocateZeroPool (MapSize);
-  if (!LegacyMap) {
+  EfiMemoryMap = AllocateZeroPool (MapSize);
+  if (!EfiMemoryMap) {
     return EFI_OUT_OF_RESOURCES;
   }
 
-  Status = gBS->GetMemoryMap (&MapSize, LegacyMap, NULL, &DescriptorSize, NULL);
+  Status = gBS->GetMemoryMap (&MapSize, EfiMemoryMap, NULL, &DescriptorSize, NULL);
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
   // MemoryMap data should now be in the structure.
-  mLegacyMapMeta.MapSize    = MapSize;
-  mLegacyMapMeta.EntrySize  = DescriptorSize;
-  mLegacyMapMeta.EntryCount = (MapSize / DescriptorSize);
-  mLegacyMapMeta.Map        = (VOID *)LegacyMap;      // This should be freed at some point.
+  mEfiMemoryMapMeta.MapSize    = MapSize;
+  mEfiMemoryMapMeta.EntrySize  = DescriptorSize;
+  mEfiMemoryMapMeta.EntryCount = (MapSize / DescriptorSize);
+  mEfiMemoryMapMeta.Map        = (VOID *)EfiMemoryMap;      // This should be freed at some point.
 
   //
   // Grab the MAT memory map...
@@ -691,11 +691,11 @@ MemmapAndMatTestApp (
 
   AddTestCase (TableStructureTests, "Memory Maps should not have more than 500 entries", "Security.MAT.NumEntries", MemoryMapShouldHaveFewEntries, NULL, NULL, NULL);
   AddTestCase (TableStructureTests, "Memory Maps should have the same Descriptor size", "Security.MAT.DescriptorSize", ListsShouldHaveTheSameDescriptorSize, NULL, NULL, NULL);
-  AddTestCase (TableStructureTests, "Standard MemoryMap size should be a multiple of the Descriptor size", "Security.MAT.MemMapSize", LegacyMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
+  AddTestCase (TableStructureTests, "Standard MemoryMap size should be a multiple of the Descriptor size", "Security.MAT.MemMapSize", EfiMemoryMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
   AddTestCase (TableStructureTests, "MAT size should be a multiple of the Descriptor size", "Security.MAT.Size", MatMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
-  AddTestCase (TableStructureTests, "No standard MemoryMap entries should have a 0 size", "Security.MAT.MemMapZeroSizeEntries", NoLegacyMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
+  AddTestCase (TableStructureTests, "No standard MemoryMap entries should have a 0 size", "Security.MAT.MemMapZeroSizeEntries", NoEfiMemoryMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
   AddTestCase (TableStructureTests, "No MAT entries should have a 0 size", "Security.MAT.MatZeroSizeEntries", NoMatMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
-  AddTestCase (TableStructureTests, "All standard MemoryMap entries should be page aligned", "Security.MAT.MemMapAlignment", AllLegacyMapEntriesShouldBeAligned, NULL, NULL, NULL);
+  AddTestCase (TableStructureTests, "All standard MemoryMap entries should be page aligned", "Security.MAT.MemMapAlignment", AllEfiMemoryMapEntriesShouldBeAligned, NULL, NULL, NULL);
 
   //
   // Populate the MatTableContentTests Unit Test Suite.
@@ -723,7 +723,7 @@ MemmapAndMatTestApp (
     goto EXIT;
   }
 
-  AddTestCase (TableEntryRangeTests, "Entries in standard MemoryMap should not overlap each other at all", "Security.MAT.MemMapEntryOverlap", EntriesInLegacyMapShouldNotOverlapAtAll, NULL, NULL, NULL);
+  AddTestCase (TableEntryRangeTests, "Entries in standard MemoryMap should not overlap each other at all", "Security.MAT.MemMapEntryOverlap", EntriesInEfiMemoryMapShouldNotOverlapAtAll, NULL, NULL, NULL);
   AddTestCase (TableEntryRangeTests, "Entries in MAT should not overlap each other at all", "Security.MAT.MatEntryOverlap", EntriesInMatMapShouldNotOverlapAtAll, NULL, NULL, NULL);
   AddTestCase (TableEntryRangeTests, "Entries in one list should not overlap any of the boundaries of entries in the other", "Security.MAT.EntryOverlap", EntriesBetweenListsShouldNotOverlapBoundaries, NULL, NULL, NULL);
   AddTestCase (TableEntryRangeTests, "All MAT entries should lie entirely within a standard MemoryMap entry of the same type", "Security.MAT.EntriesWithinMemMap", AllEntriesInMatShouldLieWithinAMatchingEntryInMemmap, NULL, NULL, NULL);
@@ -745,9 +745,9 @@ MemmapAndMatTestApp (
   Status = RunAllTestSuites (Fw);
 
 EXIT:
-  // Need to free the memory that was allocated for the Legacy Mem Map.
-  if (mLegacyMapMeta.Map) {
-    FreePool (mLegacyMapMeta.Map);
+  // Need to free the memory that was allocated for the EfiMemory Mem Map.
+  if (mEfiMemoryMapMeta.Map) {
+    FreePool (mEfiMemoryMapMeta.Map);
   }
 
   if (Fw) {
