@@ -172,7 +172,7 @@ NoMatMapEntriesShouldHaveZeroSize (
 
 UNIT_TEST_STATUS
 EFIAPI
-AllLegacyMapEntriesShouldBePageAligned (
+AllLegacyMapEntriesShouldBeAligned (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -188,33 +188,25 @@ AllLegacyMapEntriesShouldBePageAligned (
       Status = UNIT_TEST_ERROR_TEST_FAILED;
       break;
     }
-  }
 
-  return Status;
-} // AllLegacyMapEntriesShouldBePageAligned()
-
-UNIT_TEST_STATUS
-EFIAPI
-AllMatMapEntriesShouldBePageAligned (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  UNIT_TEST_STATUS       Status = UNIT_TEST_PASSED;
-  UINTN                  Index;
-  EFI_MEMORY_DESCRIPTOR  *Descriptor;
-
-  for (Index = 0; Index < mMatMapMeta.EntryCount; Index++) {
-    Descriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mMatMapMeta.Map + (Index * mMatMapMeta.EntrySize));
-    if (((Descriptor->PhysicalStart & EFI_PAGE_MASK) != 0) ||
-        ((Descriptor->VirtualStart & EFI_PAGE_MASK) != 0))
+    // per the UEFI spec, these types need to have
+    // RUNTIME_PAGE_ALLOCATION_GRANULARITY
+    if ((Descriptor->Type == EfiRuntimeServicesCode) ||
+        (Descriptor->Type == EfiRuntimeServicesData) ||
+        (Descriptor->Type == EfiACPIMemoryNVS) ||
+        (Descriptor->Type == EfiReservedMemoryType))
     {
-      Status = UNIT_TEST_ERROR_TEST_FAILED;
-      break;
+      if (((Descriptor->PhysicalStart & (RUNTIME_PAGE_ALLOCATION_GRANULARITY - 1)) != 0) ||
+          ((Descriptor->VirtualStart & (RUNTIME_PAGE_ALLOCATION_GRANULARITY - 1)) != 0))
+      {
+        Status = UNIT_TEST_ERROR_TEST_FAILED;
+        break;
+      }
     }
   }
 
   return Status;
-} // AllMatMapEntriesShouldBePageAligned()
+} // AllLegacyMapEntriesShouldBeAligned()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -289,21 +281,20 @@ AllMatEntriesShouldHaveNxOrRoAttribute (
 
 UNIT_TEST_STATUS
 EFIAPI
-AllMatEntriesShouldBe4kAligned (
+AllMatEntriesShouldBeRuntimePageGranularityAligned (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
   UNIT_TEST_STATUS       Status = UNIT_TEST_PASSED;
   UINTN                  Index;
   EFI_MEMORY_DESCRIPTOR  *Descriptor;
-  EFI_PHYSICAL_ADDRESS   FourKPage = (1024 * 4) - 1;
 
   for (Index = 0; Index < mMatMapMeta.EntryCount; Index++) {
     Descriptor = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mMatMapMeta.Map + (Index * mMatMapMeta.EntrySize));
 
-    // Make sure that all MAT entries are 4k aligned.
-    if (((Descriptor->PhysicalStart & FourKPage) != 0) ||
-        ((Descriptor->VirtualStart & FourKPage) != 0))
+    // Make sure that all MAT entries are RUNTIME_PAGE_ALLOCATION_GRANULARITY aligned.
+    if (((Descriptor->PhysicalStart & (RUNTIME_PAGE_ALLOCATION_GRANULARITY - 1)) != 0) ||
+        ((Descriptor->VirtualStart & (RUNTIME_PAGE_ALLOCATION_GRANULARITY - 1)) != 0))
     {
       Status = UNIT_TEST_ERROR_TEST_FAILED;
       break;
@@ -704,8 +695,7 @@ MemmapAndMatTestApp (
   AddTestCase (TableStructureTests, "MAT size should be a multiple of the Descriptor size", "Security.MAT.Size", MatMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
   AddTestCase (TableStructureTests, "No standard MemoryMap entries should have a 0 size", "Security.MAT.MemMapZeroSizeEntries", NoLegacyMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
   AddTestCase (TableStructureTests, "No MAT entries should have a 0 size", "Security.MAT.MatZeroSizeEntries", NoMatMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
-  AddTestCase (TableStructureTests, "All standard MemoryMap entries should be page aligned", "Security.MAT.MemMapAlignment", AllLegacyMapEntriesShouldBePageAligned, NULL, NULL, NULL);
-  AddTestCase (TableStructureTests, "All MAT entries should be page aligned", "Security.MAT.MatPageAligned", AllMatMapEntriesShouldBePageAligned, NULL, NULL, NULL);
+  AddTestCase (TableStructureTests, "All standard MemoryMap entries should be page aligned", "Security.MAT.MemMapAlignment", AllLegacyMapEntriesShouldBeAligned, NULL, NULL, NULL);
 
   //
   // Populate the MatTableContentTests Unit Test Suite.
@@ -720,7 +710,7 @@ MemmapAndMatTestApp (
   AddTestCase (MatTableContentTests, "MAT entries should be EfiRuntimeServicesCode or EfiRuntimeServicesData", "Security.MAT.RtMemoryType", AllMatEntriesShouldBeCertainTypes, NULL, NULL, NULL);
   AddTestCase (MatTableContentTests, "MAT entries should all have the Runtime attribute", "Security.MAT.RtAttributes", AllMatEntriesShouldHaveRuntimeAttribute, NULL, NULL, NULL);
   AddTestCase (MatTableContentTests, "All MAT entries should have the XP or RO attribute", "Security.MAT.XPorRO", AllMatEntriesShouldHaveNxOrRoAttribute, NULL, NULL, NULL);
-  AddTestCase (MatTableContentTests, "All MAT entries should be aligned on a 4k boundary", "Security.MAT.4kAlign", AllMatEntriesShouldBe4kAligned, NULL, NULL, NULL);
+  AddTestCase (MatTableContentTests, "All MAT entries should be aligned on a 4k boundary", "Security.MAT.4kAlign", AllMatEntriesShouldBeRuntimePageGranularityAligned, NULL, NULL, NULL);
   AddTestCase (MatTableContentTests, "All MAT entries must appear in ascending order by physical start address", "Security.MAT.EntryOrder", AllMatEntriesMustBeInAscendingOrder, NULL, NULL, NULL);
 
   //
