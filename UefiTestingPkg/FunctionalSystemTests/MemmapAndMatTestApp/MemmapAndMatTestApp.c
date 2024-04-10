@@ -695,7 +695,7 @@ MemmapAndMatTestApp (
   AddTestCase (TableStructureTests, "MAT size should be a multiple of the Descriptor size", "Security.MAT.Size", MatMapSizeShouldBeAMultipleOfDescriptorSize, NULL, NULL, NULL);
   AddTestCase (TableStructureTests, "No standard MemoryMap entries should have a 0 size", "Security.MAT.MemMapZeroSizeEntries", NoEfiMemoryMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
   AddTestCase (TableStructureTests, "No MAT entries should have a 0 size", "Security.MAT.MatZeroSizeEntries", NoMatMapEntriesShouldHaveZeroSize, NULL, NULL, NULL);
-  AddTestCase (TableStructureTests, "All standard MemoryMap entries should be page aligned", "Security.MAT.MemMapAlignment", AllEfiMemoryMapEntriesShouldBeAligned, NULL, NULL, NULL);
+  AddTestCase (TableStructureTests, "All standard MemoryMap entries should be correctly aligned", "Security.MAT.MemMapAlignment", AllEfiMemoryMapEntriesShouldBeAligned, NULL, NULL, NULL);
 
   //
   // Populate the MatTableContentTests Unit Test Suite.
@@ -710,7 +710,7 @@ MemmapAndMatTestApp (
   AddTestCase (MatTableContentTests, "MAT entries should be EfiRuntimeServicesCode or EfiRuntimeServicesData", "Security.MAT.RtMemoryType", AllMatEntriesShouldBeCertainTypes, NULL, NULL, NULL);
   AddTestCase (MatTableContentTests, "MAT entries should all have the Runtime attribute", "Security.MAT.RtAttributes", AllMatEntriesShouldHaveRuntimeAttribute, NULL, NULL, NULL);
   AddTestCase (MatTableContentTests, "All MAT entries should have the XP or RO attribute", "Security.MAT.XPorRO", AllMatEntriesShouldHaveNxOrRoAttribute, NULL, NULL, NULL);
-  AddTestCase (MatTableContentTests, "All MAT entries should be aligned on a 4k boundary", "Security.MAT.4kAlign", AllMatEntriesShouldBeRuntimePageGranularityAligned, NULL, NULL, NULL);
+  AddTestCase (MatTableContentTests, "All MAT entries should be aligned on a RUNTIME_PAGE_ALLOCATION_GRANULARITY boundary", "Security.MAT.4kAlign", AllMatEntriesShouldBeRuntimePageGranularityAligned, NULL, NULL, NULL);
   AddTestCase (MatTableContentTests, "All MAT entries must appear in ascending order by physical start address", "Security.MAT.EntryOrder", AllMatEntriesMustBeInAscendingOrder, NULL, NULL, NULL);
 
   //
