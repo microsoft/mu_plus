@@ -31,4 +31,4 @@
   GoogleTestLib
 
 [BuildOptions]
-  MSFT:*_*_*_CC_FLAGS = /EHs /bigobj
+  MSFT:*_*_*_CC_FLAGS = /EHs
