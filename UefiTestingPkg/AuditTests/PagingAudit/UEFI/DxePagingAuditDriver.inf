@@ -58,7 +58,7 @@
 [Guids]
   gEfiDebugImageInfoTableGuid                   ## SOMETIMES_CONSUMES ## GUID
   gEfiMemoryAttributesTableGuid
-  gMuEventPreExitBootServicesGuid
+  gEfiEventBeforeExitBootServicesGuid
   gEfiHobMemoryAllocStackGuid                   ## SOMETIMES_CONSUMES   ## SystemTable
 
 [Protocols]
