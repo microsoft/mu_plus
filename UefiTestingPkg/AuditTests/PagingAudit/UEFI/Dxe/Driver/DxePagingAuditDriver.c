@@ -53,7 +53,7 @@ PagingAuditDriverEntryPoint (
                   TPL_CALLBACK,
                   DumpPagingInfoEvent,
                   NULL,
-                  &gMuEventPreExitBootServicesGuid,
+                  &gEfiEventBeforeExitBootServicesGuid,
                   &Event
                   );
   DEBUG ((DEBUG_ERROR, "%a leave - %r\n", __FUNCTION__, Status));

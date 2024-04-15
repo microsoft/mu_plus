@@ -1,5 +1,85 @@
 # Paging Audit
 
+## Contents
+
+- [Paging Audit](#paging-audit)
+  - [Contents](#contents)
+  - [DXE Paging Audit](#dxe-paging-audit)
+    - [DXE Driver](#dxe-driver)
+    - [DXE Shell App](#dxe-shell-app)
+      - [Mode 1: Shell-Based Unit Test](#mode-1-shell-based-unit-test)
+      - [Mode 2: Paging Audit Collection Tool](#mode-2-paging-audit-collection-tool)
+  - [SMM Paging Audit](#smm-paging-audit)
+    - [SMM Driver](#smm-driver)
+    - [SMM Shell App](#smm-shell-app)
+  - [Parsing the Paging Data](#parsing-the-paging-data)
+  - [Platform Configuration](#platform-configuration)
+    - [SMM Paging Audit Configuration](#smm-paging-audit-configuration)
+    - [DXE Paging Audit Driver Configuration](#dxe-paging-audit-driver-configuration)
+    - [DXE Paging Audit App Configuration](#dxe-paging-audit-app-configuration)
+  - [Copyright](#copyright)
+
+## DXE Paging Audit
+
+The DXE paging audit is a tool to analyze the page/translation tables of the platform to check
+compliance with
+[Enhanced Memory Protection](https://microsoft.github.io/mu/WhatAndWhy/enhancedmemoryprotection/),
+debug paging related issues, and understand the memory layout of the platform. The DXE version
+of the audit operates only on the page/translation tables of the DXE environment and not the
+tables used in SMM.
+
+### DXE Driver
+
+The DXE Driver registers an event to be notified on Mu Pre Exit Boot Services (to change this,
+replace gEfiEventBeforeExitBootServicesGuid with a different event GUID), which will then trigger
+the paging information collection. The driver will then save the collected information to
+an available simple file system. The driver version of the DXE paging audit should be used
+when the intent is to capture a snapshot of the page/translation table data at an arbitrary
+point in boot.
+
+### DXE Shell App
+
+The DXE version of UEFI shell app has two modes of operation and **does not require**
+**the DXE driver**.
+
+#### Mode 1: Shell-Based Unit Test
+
+Calling the app in the following way:
+
+`DxePagingAuditTestApp.efi`  
+OR  
+`DxePagingAuditTestApp.efi -r`
+
+Will run the app as a shell-based unit test. The following tests will be run and the
+results will be saved to an XML file in the same file system as the app (or the next
+available writable simple file system):
+
+- **NoReadWriteExecute:** Checks if the page/translation table has any readable, writable,
+and executable regions.  
+- **UnallocatedMemoryIsRP:** Checks that all EfiConventionalMemory is EFI_MEMORY_RP or
+is not mapped.  
+- **IsMemoryAttributeProtocolPresent:** Checks if the EFI Memory Attribute Protocol
+is installed.  
+- **NullPageIsRp:** Checks if page 0 is EFI_MEMORY_RP or is not mapped.  
+- **MmioIsXp:** Checks that MMIO regions in the EFI memory map are EFI_MEMORY_XP.  
+- **ImageCodeSectionsRoDataSectionsXp:** Checks that loaded image sections containing
+code are EFI_MEMORY_RO and sections containing data are EFI_MEMORY_XP.  
+- **BspStackIsXpAndHasGuardPage:** Checks that the stack is EFI_MEMORY_XP and has an
+EFI_MEMORY_RP page at the base to catch overflow.  
+- **MemoryOutsideEfiMemoryMapIsInaccessible:** Checks that memory ranges not in
+the EFI memory map EFI_MEMORY_RP or is not mapped.
+
+#### Mode 2: Paging Audit Collection Tool
+
+Calling the app in the following way:
+
+`DxePagingAuditTestApp.efi -d`
+
+Will collect paging information and save the data in the same file system as
+the app (or the next available writable simple file system). See the
+[Parsing the Paging Data](#parsing-the-paging-data) for instructions on parsing
+the collected data.
+
 ## SMM Paging Audit
 
 SMM is a privileged mode of the IA32/X64 cpu architecture.  In this environment nearly all system state can
@@ -23,46 +103,44 @@ The UEFI shell application collects system information from the DXE environment 
 communicates to the SMM driver/handler to collect necessary info from SMM.  It then
 writes this data to files for parsing by Python scripts.
 
-## DXE Paging Audit
+## Parsing the Paging Data
 
-The DXE version of the paging audit and driver have overlapping purpose. Both are capable of
-inspecting the page/translation tables to collect all leaf entries for parsing using
-Windows\PagingReportGenerator.py and both are compatible with X64 and AARCH64 architectures.
+The Python Windows\PagingReportGenerator.py script will parse the *.dat files into
+a human-readable HTML report file to inspect
+the page table at the collection point. The Results tab of the HTML shows the results of testing
+the parsed data against the tests run in the shell app, and each failed test presents a filter
+button to show the regions of memory which do not pass the test.
 
-### DXE Driver
+Run the following command for help with the script:
 
-The DXE Driver registers an event to be notified on Mu Pre Exit Boot Services (to change this,
-replace gMuEventPreExitBootServicesGuid with a different event GUID), which will then trigger
-the paging information collection. The driver will then save the collected information to
-an available simple file system. The driver version of the DXE paging audit should be used
-when the intent is to capture a snapshot of the page/translation table at a point in boot at
-which the shell app cannot be run.
+`PagingReportGenerator.py -h`
 
-### DXE Version App
+The script is run with the following command:
 
-The DXE version of UEFI shell app has two modes of operation and **does not require the DXE driver**.
-Calling the app without any parameters will run it as a unit test with the only current test being
-to check every leaf entry in the page/translation table to ensure that no page is Read/Write/Execute.
-Calling the app with the '-d' parameter will collect paging information and attempt to save it to the
-same file system containing the app. If it cannot save to the app's file system, it will save to the
-first available simple file system.
+```cmd
+PagingReportGenerator.py -i <input directory> -o <output report> [-p <platform name>] [--PlatformVersion <platform version>] [-l <filename>] [--debug]
+```
 
-## Python Script
+**Required Input Parameters:**  
+  `-i <input directory>`: The directory containing the *.dat files to be parsed.  
+  `-o <output report>`: The name of the HTML report file to be generated.
 
-The Python script will parse the *.dat files into a human-readable HTML report file to inspect
-the page table at the collection point. The Results tab of the HTML checks the data against our suggested
-rules to act as a barometer for the security of the target system.
+**Optional Input Parameters:**  
+  `-p <platform name>`: The name of the platform the data was collected on.  
+  `--PlatformVersion <platform version>`: The version of the platform the data was collected on.  
+  `-l <filename>`: The name of the log file to be generated.  
+  `--debug`: Set logging level to DEBUG (will be INFO by default).
 
-## Usage
+## Platform Configuration
 
-### SMM Paging Audit Usage
+### SMM Paging Audit Configuration
 
 ```text
-[PcdsFixedAtBuild.X64]
+[PcdsFixedAtBuild]
   # Optional: Virtual platforms that do not support SMRRs can add below change to skip the auditing related to SMRR
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported|TRUE
 
-[Components.X64]
+[Components]
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditDriver.inf
   UefiTestingPkg/AuditTests/PagingAudit/UEFI/SmmPagingAuditTestApp.inf
 ```
@@ -78,18 +156,16 @@ to a USB key. Boot the target system running the new firmware to the shell and r
 a set of *.dat files on an available simple file system on the target system. Run the Python script on the data
 to create the HTML report.
 
-### DXE Paging Audit Usage
-
-#### DXE Paging Audit Driver
+### DXE Paging Audit Driver Configuration
 
 Add the following to the platform DSC file:
 
 ```text
-[PcdsFixedAtBuild.X64]
+[PcdsFixedAtBuild]
     # Optional: Virtual platforms that do not support SMRRs can add below change to skip the auditing related to SMRR
     gUefiTestingPkgTokenSpaceGuid.PcdPlatformSmrrUnsupported|TRUE
 
-[Components.X64]
+[Components]
     UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditDriver.inf
 ```
 
@@ -111,12 +187,12 @@ Example if the paging audit files are on FS1 and the USB/virtual drive FS0:
 copy FS1:\*.dat FS0:\
 ```
 
-#### DXE Paging Audit App
+### DXE Paging Audit App Configuration
 
 Add the following entry to platform dsc file and compile the new firmware image:
 
 ```text
-[Components.X64]
+[Components]
     UefiTestingPkg/AuditTests/PagingAudit/UEFI/DxePagingAuditTestApp.inf
 ```
 
@@ -131,15 +207,6 @@ FS0:\DxePagingAuditTestApp.efi
 ```
 
 the USB/virtual drive FS0
-
-### Parsing the .dat files
-
-Run the Python Windows\PagingReportGenerator.py script against the collected .dat files. Use the following
-command for detailed script instruction:
-
-```cmd
-PagingReportGenerator.py -h
-```
 
 ## Copyright
 
