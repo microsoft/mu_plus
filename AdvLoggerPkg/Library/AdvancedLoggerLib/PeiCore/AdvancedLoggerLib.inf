@@ -46,6 +46,8 @@
 [Guids]
   gAdvancedLoggerHobGuid
   gEfiFirmwareFileSystem2Guid
+  gAdvancedLoggerInterimHobGuid
+  gAdvancedLoggerInterimBufHobGuid
 
 [Ppis]
   gAdvancedLoggerPpiGuid                                                    ## PRODUCES
