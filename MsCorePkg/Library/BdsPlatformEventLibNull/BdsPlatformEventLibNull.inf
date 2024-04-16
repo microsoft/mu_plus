@@ -1,0 +1,34 @@
+/** @file
+  *This file include the platform specific event hooks which can be customized by IBV/OEM.
+
+  Copyright (C) Microsoft Corporation. All rights reserved.
+  SPDX-License-Identifier: BSD-2-Clause-Patent
+
+**/
+
+
+[Defines]
+INF_VERSION                    = 0x00010018
+BASE_NAME                      = BdsPlatformEventLibNull
+FILE_GUID                      = 55000994-06FB-43AB-A648-CD9CB2A7B273
+VERSION_STRING                 = 1.0
+MODULE_TYPE                    = DXE_DRIVER
+UEFI_SPECIFICATION_VERSION     = 2.7
+LIBRARY_CLASS                  = BdsPlatformEventLib|DXE_DRIVER
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64 EBC
+#
+
+[Sources]
+  BdsPlatformEventLibNull.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+
+[LibraryClasses]
+  BaseLib

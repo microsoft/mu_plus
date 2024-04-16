@@ -90,6 +90,8 @@
 
   MacAddressEmulationPlatformLib|MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
 
+  BdsPlatformEventLib|MsCorePkg/Library/BdsPlatformEventLibNull/BdsPlatformEventLibNull.inf
+
 [LibraryClasses.common.UEFI_APPLICATION]
   UnitTestPersistenceLib|UnitTestFrameworkPkg/Library/UnitTestPersistenceLibSimpleFileSystem/UnitTestPersistenceLibSimpleFileSystem.inf
   UnitTestResultReportLib|XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf

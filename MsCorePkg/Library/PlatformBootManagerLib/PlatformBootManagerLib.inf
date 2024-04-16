@@ -51,6 +51,7 @@ CONSTRUCTOR                    = PlatformBootManagerEntry
   UefiBootServicesTableLib
   UefiLib
   UefiRuntimeServicesTableLib
+  BdsPlatformEventLib # MS_CHANGE
 
 [Protocols]
   gEfiPciRootBridgeIoProtocolGuid     ## CONSUMES
