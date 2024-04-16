@@ -510,6 +510,7 @@ AdvancedLoggerGetLoggerInfo (
     if (EFI_ERROR (Status)) {
       return NULL;
     }
+
     LoggerInfo = (ADVANCED_LOGGER_INFO *)GET_GUID_HOB_DATA (GuidHobInterimBuf);
     BufferSize = sizeof (ADVANCED_LOGGER_INFO) + ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
     ZeroMem ((VOID *)LoggerInfo, BufferSize);
