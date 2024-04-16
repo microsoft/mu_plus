@@ -527,6 +527,7 @@ AdvancedLoggerGetLoggerInfo (
                );
     CopyGuid (&GuidHobInterim->Name, &gAdvancedLoggerInterimHobGuid);
   }
+
   //
   // No Logger Info - this must be the time to allocate a new LoggerInfo and save
   // the pointer in the PeiCoreInstance.
@@ -597,6 +598,7 @@ AdvancedLoggerGetLoggerInfo (
       if ((LoggerInfoSec != NULL) && !(LoggerInfoSec->InPermanentRAM)) {
         UpdateSecLoggerInfo (LoggerInfo);
       }
+
       //
       // Check to see if we have anything in the interim buffer
       //
@@ -606,10 +608,11 @@ AdvancedLoggerGetLoggerInfo (
         // If we have an interim buffer, copy it to the new buffer
         //
         LoggerInfo = (ADVANCED_LOGGER_INFO *)GET_GUID_HOB_DATA (GuidHobInterimBuf);
-        LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)(UINTN)LoggerInfo->LogBuffer;
+        LogEntry   = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)(UINTN)LoggerInfo->LogBuffer;
         AdvancedLoggerMemoryLoggerWrite (LogEntry->DebugLevel, LogEntry->MessageText, LogEntry->MessageLen);
         GuidHobInterimBuf = GetNextGuidHob (&gAdvancedLoggerInterimHobGuid, GuidHobInterimBuf);
       }
+
       //
       // Publish the Advanced Logger Ppi
       //
