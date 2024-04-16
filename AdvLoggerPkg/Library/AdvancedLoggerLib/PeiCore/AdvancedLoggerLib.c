@@ -507,7 +507,11 @@ AdvancedLoggerGetLoggerInfo (
                (UINT16)(sizeof (EFI_HOB_GUID_TYPE) + sizeof (ADVANCED_LOGGER_INFO) + ADVANCED_LOGGER_MAX_MESSAGE_SIZE),
                (VOID **)&GuidHobInterimBuf
                );
+    if (EFI_ERROR (Status)) {
+      return NULL;
+    }
     LoggerInfo = (ADVANCED_LOGGER_INFO *)GET_GUID_HOB_DATA (GuidHobInterimBuf);
+    BufferSize = sizeof (ADVANCED_LOGGER_INFO) + ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
     ZeroMem ((VOID *)LoggerInfo, BufferSize);
     LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
     LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
