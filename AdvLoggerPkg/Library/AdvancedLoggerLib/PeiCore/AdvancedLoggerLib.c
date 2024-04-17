@@ -560,8 +560,7 @@ AdvancedLoggerGetLoggerInfo (
         Type  =  EfiReservedMemoryType;
       } else {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
-        // This is to workaround the interim blackout window before the memory is discovered.
-        // The permanent buffer will be allocated in the memory discovered callback.
+        // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
         Type  =  EfiBootServicesData;
       }
 
