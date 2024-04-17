@@ -561,7 +561,7 @@ AdvancedLoggerGetLoggerInfo (
       } else {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
         // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
-        Type  =  EfiBootServicesData;
+        Type =  EfiBootServicesData;
       }
 
       BufferSize = EFI_PAGES_TO_SIZE (Pages);
