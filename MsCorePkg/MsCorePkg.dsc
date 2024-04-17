@@ -208,6 +208,7 @@
   }
   MsCorePkg/MacAddressEmulationDxe/MacAddressEmulationDxe.inf
   MsCorePkg/Library/MacAddressEmulationPlatformLibNull/MacAddressEmulationPlatformLibNull.inf
+  MsCorePkg/Library/BdsPlatformEventLibNull/BdsPlatformEventLibNull.inf
 
 [Components.AARCH64, Components.AARCH64]
   MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
