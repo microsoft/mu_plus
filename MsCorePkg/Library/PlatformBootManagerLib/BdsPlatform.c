@@ -41,14 +41,14 @@ ExitPmAuth (
 
   DEBUG ((DEBUG_INFO, "ExitPmAuth ()- Start\n"));
 
-  BeforeEndOfDxeEventHook (); // MS_CHANGE
+  BeforeEndOfDxeEventHook ();
 
   //
   // Since PI1.2.1, we need signal EndOfDxe as ExitPmAuth
   //
   EfiEventGroupSignal (&gEfiEndOfDxeEventGroupGuid);
 
-  AfterEndOfDxeEventHook (); // MS_CHANGE
+  AfterEndOfDxeEventHook ();
 
   DEBUG ((DEBUG_INFO, "All EndOfDxe callbacks have returned successfully\n"));
 
@@ -272,7 +272,7 @@ PlatformBootManagerBeforeConsole (
   //
   EfiBootManagerDispatchDeferredImages ();
 
-  AfterDispatchDeferredImagesHook (); // MS_CHANGE
+  AfterDispatchDeferredImagesHook ();
 }
 
 VOID
