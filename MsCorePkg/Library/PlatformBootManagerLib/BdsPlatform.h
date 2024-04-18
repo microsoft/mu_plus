@@ -43,7 +43,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/DeviceBootManagerLib.h>
 #include <Library/HobLib.h>
 #include <Library/PerformanceLib.h>
-#include <Library/BdsPlatformEventLib.h> // MS_CHANGE
+#include <Library/BdsPlatformEventLib.h>
 
 #include <IndustryStandard/Pci30.h>
 
