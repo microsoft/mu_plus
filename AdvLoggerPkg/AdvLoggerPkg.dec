@@ -57,6 +57,16 @@
   #
   gAdvancedLoggerPreDxeLogsGuid = { 0x751fc006, 0x5804, 0x440d, { 0x8b, 0x15, 0x61, 0x8c, 0xf6, 0x56, 0xae, 0x76 } }
 
+  ## GUID for specifying Advanced logger interim hob, which is used to indicate whether the logger in the
+  # interim phase of logger buffer being initialized.
+  #
+  gAdvancedLoggerInterimHobGuid = { 0x36587034, 0xfcde, 0x45b4, { 0x9a, 0x2b, 0xd5, 0xc4, 0xc1, 0x39, 0x96, 0x5a } }
+
+  ## GUID for specifying Advanced logger interim buffer hob, which is used to carry interim log entries during the
+  # interim phase of being initialized.
+  #
+  gAdvancedLoggerInterimBufHobGuid = { 0x4c4f8c0b, 0xbe54, 0x49b3, { 0xba, 0x54, 0x33, 0xbf, 0x14, 0x47, 0x75, 0x24 } }
+
 [Ppis]
   ## Advanced Logger Ppi - Communication from PEIM to PEI_CORE library implementation
   #

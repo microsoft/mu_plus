@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AdvLoggerDumpWin", "AdvLoggerDumpWin\AdvLoggerDumpWin.vcxproj", "{F983380B-B6C4-44EE-8835-0137E0876321}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Debug|ARM64.Build.0 = Debug|ARM64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Debug|x64.ActiveCfg = Debug|x64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Debug|x64.Build.0 = Debug|x64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Debug|x86.ActiveCfg = Debug|Win32
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Debug|x86.Build.0 = Debug|Win32
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Release|ARM64.ActiveCfg = Release|ARM64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Release|ARM64.Build.0 = Release|ARM64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Release|x64.ActiveCfg = Release|x64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Release|x64.Build.0 = Release|x64
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Release|x86.ActiveCfg = Release|Win32
+		{F983380B-B6C4-44EE-8835-0137E0876321}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {514003CD-1327-488E-9C4E-8761C728A1E3}
+	EndGlobalSection
+EndGlobal

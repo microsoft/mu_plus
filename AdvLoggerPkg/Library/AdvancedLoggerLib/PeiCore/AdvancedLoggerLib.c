@@ -9,7 +9,10 @@
 #include <Base.h>
 #include <Uefi.h>
 
+#include <Protocol/AdvancedLogger.h>
 #include <AdvancedLoggerInternal.h>
+#include <AdvancedLoggerInternalProtocol.h>
+#include <Library/AdvancedLoggerAccessLib.h>
 
 /**
   Including the PeiMain.h from PeiCore in order to access the Platform Blob data member.
@@ -440,16 +443,20 @@ AdvancedLoggerGetLoggerInfo (
   VOID
   )
 {
-  UINTN                   BufferSize;
-  EFI_HOB_GUID_TYPE       *GuidHob;
-  PEI_CORE_INSTANCE       *PeiCoreInstance;
-  ADVANCED_LOGGER_INFO    *LoggerInfo;
-  ADVANCED_LOGGER_INFO    *LoggerInfoSec;
-  ADVANCED_LOGGER_PTR     *LogPtr;
-  EFI_PHYSICAL_ADDRESS    NewLoggerInfo;
-  UINTN                   Pages;
-  CONST EFI_PEI_SERVICES  **PeiServices;
-  EFI_STATUS              Status;
+  UINTN                             BufferSize;
+  EFI_HOB_GUID_TYPE                 *GuidHob;
+  EFI_HOB_GUID_TYPE                 *GuidHobInterim;
+  EFI_HOB_GUID_TYPE                 *GuidHobInterimBuf;
+  PEI_CORE_INSTANCE                 *PeiCoreInstance;
+  ADVANCED_LOGGER_INFO              *LoggerInfo;
+  ADVANCED_LOGGER_INFO              *LoggerInfoSec;
+  ADVANCED_LOGGER_PTR               *LogPtr;
+  EFI_PHYSICAL_ADDRESS              NewLoggerInfo;
+  UINTN                             Pages;
+  CONST EFI_PEI_SERVICES            **PeiServices;
+  EFI_STATUS                        Status;
+  EFI_MEMORY_TYPE                   Type;
+  ADVANCED_LOGGER_MESSAGE_ENTRY_V2  *LogEntry;
 
   // Try to do the minimum work at the start of this function as this
   // is called quite often.
@@ -484,9 +491,46 @@ AdvancedLoggerGetLoggerInfo (
       (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
       LogPtr->LogBuffer                                            = PA_FROM_PTR (LoggerInfo);
 
+      LoggerInfo->LogCurrent = PA_FROM_PTR (LoggerInfo + 1) + LoggerInfo->LogCurrent - LoggerInfo->LogBuffer;
+      LoggerInfo->LogBuffer  = PA_FROM_PTR (LoggerInfo + 1);
+
       // return the pointer
       return LoggerInfo;
     }
+  }
+
+  GuidHobInterim = GetFirstGuidHob (&gAdvancedLoggerInterimHobGuid);
+  if (GuidHobInterim != NULL) {
+    // In the middle of initialization, save the log to the interim hobs
+    Status = PeiServicesCreateHob (
+               EFI_HOB_TYPE_GUID_EXTENSION,
+               (UINT16)(sizeof (EFI_HOB_GUID_TYPE) + sizeof (ADVANCED_LOGGER_INFO) + ADVANCED_LOGGER_MAX_MESSAGE_SIZE),
+               (VOID **)&GuidHobInterimBuf
+               );
+    if (EFI_ERROR (Status)) {
+      return NULL;
+    }
+
+    LoggerInfo = (ADVANCED_LOGGER_INFO *)GET_GUID_HOB_DATA (GuidHobInterimBuf);
+    BufferSize = sizeof (ADVANCED_LOGGER_INFO) + ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
+    ZeroMem ((VOID *)LoggerInfo, BufferSize);
+    LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
+    LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
+    LoggerInfo->LogBuffer     = PA_FROM_PTR (LoggerInfo + 1);
+    LoggerInfo->LogBufferSize = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
+    LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
+    LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
+    AdvancedLoggerHdwPortInitialize ();
+    CopyGuid (&GuidHobInterimBuf->Name, &gAdvancedLoggerInterimBufHobGuid);
+    LoggerInfo->HdwPortInitialized = TRUE;
+    return LoggerInfo;
+  } else {
+    Status = PeiServicesCreateHob (
+               EFI_HOB_TYPE_GUID_EXTENSION,
+               (UINT16)(sizeof (EFI_HOB_GUID_TYPE)),
+               (VOID **)&GuidHobInterim
+               );
+    CopyGuid (&GuidHobInterim->Name, &gAdvancedLoggerInterimHobGuid);
   }
 
   //
@@ -513,14 +557,17 @@ AdvancedLoggerGetLoggerInfo (
 
       if (FeaturePcdGet (PcdAdvancedLoggerPeiInRAM)) {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPages);
+        Type  =  EfiReservedMemoryType;
       } else {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
+        // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
+        Type =  EfiBootServicesData;
       }
 
       BufferSize = EFI_PAGES_TO_SIZE (Pages);
 
       Status = PeiServicesAllocatePages (
-                 EfiReservedMemoryType,
+                 Type,
                  Pages,
                  &NewLoggerInfo
                  );
@@ -556,6 +603,20 @@ AdvancedLoggerGetLoggerInfo (
       // PEI Core version of LoggerInfo
       if ((LoggerInfoSec != NULL) && !(LoggerInfoSec->InPermanentRAM)) {
         UpdateSecLoggerInfo (LoggerInfo);
+      }
+
+      //
+      // Check to see if we have anything in the interim buffer
+      //
+      GuidHobInterimBuf = GetFirstGuidHob (&gAdvancedLoggerInterimBufHobGuid);
+      while (GuidHobInterimBuf != NULL) {
+        //
+        // If we have an interim buffer, copy it to the new buffer
+        //
+        LoggerInfo = (ADVANCED_LOGGER_INFO *)GET_GUID_HOB_DATA (GuidHobInterimBuf);
+        LogEntry   = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)(UINTN)LoggerInfo->LogBuffer;
+        AdvancedLoggerMemoryLoggerWrite (LogEntry->DebugLevel, LogEntry->MessageText, LogEntry->MessageLen);
+        GuidHobInterimBuf = GetNextGuidHob (&gAdvancedLoggerInterimHobGuid, GuidHobInterimBuf);
       }
 
       //
