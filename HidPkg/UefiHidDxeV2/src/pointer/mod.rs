@@ -21,7 +21,7 @@ use hidparser::{
 };
 use r_efi::{efi, protocols};
 
-use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR};
+use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_VERBOSE};
 
 use crate::{
   boot_services::UefiBootServices,
@@ -262,7 +262,18 @@ impl HidReportReceiver for PointerHidHandler {
 
       if let Some(report_data) = self.input_reports.get(&report_id).cloned() {
         if report.len() != report_data.report_size {
-          break 'report_processing;
+          //Some devices report extra bytes in their reports. Warn about this, but try and process anyway.
+          debugln!(
+            DEBUG_VERBOSE,
+            "{:?}:{:?} unexpected report length for report_id: {:?}. expected {:?}, actual {:?}",
+            function!(),
+            line!(),
+            report_id,
+            report_data.report_size,
+            report.len()
+          );
+          debugln!(DEBUG_VERBOSE, "report: {:x?}", report);
+          //break 'report_processing;
         }
 
         // hand the report data to the handler for each relevant field for field-specific processing.
@@ -589,7 +600,7 @@ mod test {
   }
 
   #[test]
-  fn bad_reports_should_be_ignored() {
+  fn bad_reports_should_be_processed_with_best_effort() {
     let boot_services = create_fake_static_boot_service();
     static mut ABS_PTR_INTERFACE: *mut c_void = core::ptr::null_mut();
 
@@ -650,19 +661,19 @@ mod test {
     pointer_handler.receive_report(report, &hid_io);
 
     assert_eq!(pointer_handler.current_state.active_buttons, 0);
-    assert_eq!(pointer_handler.current_state.current_x, CENTER);
-    assert_eq!(pointer_handler.current_state.current_y, CENTER);
-    assert_eq!(pointer_handler.current_state.current_z, 0);
-    assert_eq!(pointer_handler.state_changed, false);
+    assert_eq!(pointer_handler.current_state.current_x, 0);
+    assert_eq!(pointer_handler.current_state.current_y, 4);
+    assert_eq!(pointer_handler.current_state.current_z, 4);
+    assert_eq!(pointer_handler.state_changed, true);
 
     //report too short
     let report: &[u8] = &[0x00, 0x10, 0x00, 0x10, 0x00, 0x10];
     pointer_handler.receive_report(report, &hid_io);
 
     assert_eq!(pointer_handler.current_state.active_buttons, 0);
-    assert_eq!(pointer_handler.current_state.current_x, CENTER);
-    assert_eq!(pointer_handler.current_state.current_y, CENTER);
-    assert_eq!(pointer_handler.current_state.current_z, 0);
-    assert_eq!(pointer_handler.state_changed, false);
+    assert_eq!(pointer_handler.current_state.current_x, 4);
+    assert_eq!(pointer_handler.current_state.current_y, 4);
+    assert_eq!(pointer_handler.current_state.current_z, 4);
+    assert_eq!(pointer_handler.state_changed, true);
   }
 }

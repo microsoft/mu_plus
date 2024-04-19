@@ -461,6 +461,7 @@ mod test {
     boot_services.expect_create_event_ex().returning(|_, _, _, _, _, _| efi::Status::SUCCESS);
     boot_services.expect_signal_event().returning(|_| efi::Status::SUCCESS);
     boot_services.expect_open_protocol().returning(|_, _, _, _, _, _| efi::Status::NOT_FOUND);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
 
     let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
 
@@ -586,6 +587,7 @@ mod test {
 
     // used in install
     boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
+    boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
     boot_services.expect_install_protocol_interface().returning(|_, protocol, _, interface| {
       if unsafe { *protocol } == protocols::simple_text_input::PROTOCOL_GUID {
         CONTEXT_PTR.store(interface, core::sync::atomic::Ordering::SeqCst);
