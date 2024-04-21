@@ -96,12 +96,12 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mLoggerInfo->LogBuffer != PA_FROM_PTR (mLoggerInfo + 1)) {
+  if (mLoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (mLoggerInfo)) {
     return FALSE;
   }
 
-  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  if ((PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress) ||
+      (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
   }
@@ -179,7 +179,7 @@ InitializeInMemoryLog (
   if (!EFI_ERROR (Status)) {
     mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
     if (mLoggerInfo != NULL) {
-      mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+      mMaxAddress = TOTAL_LOG_SIZE_WITH_ALI (mLoggerInfo);
       mBufferSize = mLoggerInfo->LogBufferSize;
     }
 
@@ -224,7 +224,7 @@ TestCursorWrapping (
   UT_ASSERT_TRUE (mLoggerInfo != NULL);
 
   // First fill in the buffer
-  while (mLoggerInfo->LogCurrent + MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_TIME_TEST_STR)) < mMaxAddress) {
+  while (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo) + MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_TIME_TEST_STR))) < mMaxAddress) {
     AdvancedLoggerWrite (DEBUG_ERROR, ADV_TIME_TEST_STR, sizeof (ADV_TIME_TEST_STR));
   }
 
@@ -233,7 +233,7 @@ TestCursorWrapping (
 
   Status = AdvancedLoggerAccessLibGetNextFormattedLine (&mMessageEntry);
 
-  UT_ASSERT_STATUS_EQUAL (mLoggerInfo->LogCurrent - mLoggerInfo->LogBuffer, MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_WRAP_TEST_STR)));
+  UT_ASSERT_STATUS_EQUAL (mLoggerInfo->LogCurrentOffset - mLoggerInfo->LogBufferOffset, MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_WRAP_TEST_STR)));
   UT_ASSERT_STATUS_EQUAL (Status, Btc->ExpectedStatus);
   UT_ASSERT_NOT_NULL (mMessageEntry.Message);
   UT_LOG_INFO ("\nReturn Length=%d\n", mMessageEntry.MessageLen);
@@ -314,7 +314,7 @@ TestCursorWrappingMP (
   UT_ASSERT_NOT_NULL ((VOID *)mLoggerInfo);
 
   // First fill in the buffer
-  while (mLoggerInfo->LogCurrent + MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_TIME_TEST_STR)) < mMaxAddress) {
+  while (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo) + MESSAGE_ENTRY_SIZE_V2 (sizeof (ADVANCED_LOGGER_MESSAGE_ENTRY_V2), sizeof (ADV_TIME_TEST_STR))) < mMaxAddress) {
     AdvancedLoggerWrite (DEBUG_ERROR, ADV_TIME_TEST_STR, sizeof (ADV_TIME_TEST_STR));
   }
 

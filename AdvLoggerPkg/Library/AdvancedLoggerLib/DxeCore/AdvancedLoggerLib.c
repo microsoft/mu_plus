@@ -78,9 +78,9 @@ AdvancedLoggerWriteProtocol (
 /**
     ValidateInfoBlock
 
-    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.  The
-    pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here, we check that
-    the pointers are within the allocated LoggerInfo space, and that LogBufferSize, which is used in multiple places
+    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.
+    LogBufferOffset, LogCurrentOffset, and LogBufferSize could be written to by untrusted code.  Here, we check that
+    the offsets are within the allocated LoggerInfo space, and that LogBufferSize, which is used in multiple places
     to see if a new message will fit into the log buffer, is valid.
 
     @param          NONE
@@ -103,12 +103,12 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mLoggerInfo->LogBuffer != PA_FROM_PTR (mLoggerInfo + 1)) {
+  if (mLoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (mLoggerInfo)) {
     return FALSE;
   }
 
-  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  if (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress ||
+      (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
   }
@@ -155,7 +155,7 @@ AdvancedLoggerGetLoggerInfo (
     }
 
     if (mLoggerInfo != NULL) {
-      mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+      mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
       mBufferSize = mLoggerInfo->LogBufferSize;
     }
   }
@@ -383,16 +383,16 @@ DxeCoreAdvancedLoggerLibConstructor (
       ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
       LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
       LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
-      LoggerInfo->LogBuffer     = PA_FROM_PTR (LoggerInfo + 1);
+      LoggerInfo->LogBufferOffset     = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
       LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
-      LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
+      LoggerInfo->LogCurrentOffset    = LoggerInfo->LogBufferOffset;
       LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
       if (LoggerInfo->HdwPortInitialized == FALSE) {
         AdvancedLoggerHdwPortInitialize ();
         LoggerInfo->HdwPortInitialized = TRUE;
       }
 
-      mMaxAddress = LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize;
+      mMaxAddress = TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo);
       mBufferSize = LoggerInfo->LogBufferSize;
     } else {
       DEBUG ((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));

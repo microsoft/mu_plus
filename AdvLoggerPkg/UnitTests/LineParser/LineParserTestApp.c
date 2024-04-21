@@ -102,17 +102,7 @@ CHAR8  Line19V2[] = "09:06:45.012 : [DXE] er and the all of the video output dev
 
 /* spell-checker: enable */
 
-STATIC ADVANCED_LOGGER_INFO  mLoggerInfo = {
-  ADVANCED_LOGGER_SIGNATURE,
-  0,
-  0,
-  0,
-  0,
-  TRUE,
-  TRUE,
-  FALSE,
-  FALSE
-};
+STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo = NULL;
 
 VOID
 EFIAPI
@@ -218,20 +208,20 @@ InternalTestLoggerWrite (
 
   UT_ASSERT_FALSE (NumberOfBytes > MAX_UINT16);
 
-  LoggerInfo    = &mLoggerInfo;
+  LoggerInfo    = mLoggerInfo;
   EntrySize     = MESSAGE_ENTRY_SIZE (NumberOfBytes);
-  CurrentBuffer = LoggerInfo->LogCurrent;
+  CurrentBuffer = PA_FROM_PTR (LOG_CURRENT_FROM_ALI (LoggerInfo));
 
   UT_ASSERT_TRUE (
     (LoggerInfo->LogBufferSize -
-     ((UINTN)(CurrentBuffer - LoggerInfo->LogBuffer))) > NumberOfBytes
+     ((UINTN)(LoggerInfo->LogCurrentOffset - LoggerInfo->LogBufferOffset))) > NumberOfBytes
     );
 
-  LoggerInfo->LogCurrent = PA_FROM_PTR ((CHAR8_FROM_PA (LoggerInfo->LogCurrent) + EntrySize));
+  LoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset + (UINT32)EntrySize;
   Entry                  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (CurrentBuffer);
   if ((Entry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (Entry, 8)) ||                  // Insure pointer is on boundary
-      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (LoggerInfo->LogBuffer)) ||       // and within the log region
-      (Entry >  (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize)))
+      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (LOG_BUFFER_FROM_ALI (LoggerInfo))) ||       // and within the log region
+      (Entry >  (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA ((UINT8 *)LoggerInfo + TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo))))
   {
     UT_ASSERT_TRUE (FALSE);
   }
@@ -265,20 +255,20 @@ InternalTestLoggerWriteV2 (
 
   UT_ASSERT_FALSE (NumberOfBytes > MAX_UINT16);
 
-  LoggerInfo    = &mLoggerInfo;
+  LoggerInfo    = mLoggerInfo;
   EntrySize     = MESSAGE_ENTRY_SIZE_V2 (OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText), NumberOfBytes);
-  CurrentBuffer = LoggerInfo->LogCurrent;
+  CurrentBuffer = PA_FROM_PTR (LOG_CURRENT_FROM_ALI (LoggerInfo));
 
   UT_ASSERT_TRUE (
     (LoggerInfo->LogBufferSize -
-     ((UINTN)(CurrentBuffer - LoggerInfo->LogBuffer))) > NumberOfBytes
+     ((UINTN)(LoggerInfo->LogCurrentOffset - LoggerInfo->LogBufferOffset))) > NumberOfBytes
     );
 
-  LoggerInfo->LogCurrent = PA_FROM_PTR ((CHAR8_FROM_PA (LoggerInfo->LogCurrent) + EntrySize));
+  LoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset + (UINT32)EntrySize;
   Entry                  = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
   if ((Entry != (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)ALIGN_POINTER (Entry, 8)) ||                  // Insure pointer is on boundary
-      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (LoggerInfo->LogBuffer)) ||       // and within the log region
-      (Entry >  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize)))
+      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (LOG_BUFFER_FROM_ALI (LoggerInfo))) ||       // and within the log region
+      (Entry >  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA ((UINT8 *)LoggerInfo + TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo))))
   {
     UT_ASSERT_TRUE (FALSE);
   }
@@ -407,15 +397,22 @@ InitializeInMemoryLog (
   EFI_STATUS        Status;
   UNIT_TEST_STATUS  UnitTestStatus;
 
-  if (mLoggerInfo.LogBuffer != 0LL) {
+  if (mLoggerInfo != NULL) {
     return UNIT_TEST_PASSED;
   }
 
   #define IN_MEMORY_PAGES  32// 1 MB test memory log
 
-  mLoggerInfo.LogBuffer     = (EFI_PHYSICAL_ADDRESS)AllocatePages (IN_MEMORY_PAGES);
-  mLoggerInfo.LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES;
-  mLoggerInfo.LogCurrent    = mLoggerInfo.LogBuffer;
+  mLoggerInfo     = AllocatePages (IN_MEMORY_PAGES);
+  if (mLoggerInfo == NULL) {
+    UT_ASSERT_TRUE (FALSE);
+  }
+  mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
+  mLoggerInfo->GoneVirtual = FALSE;
+  mLoggerInfo->AtRuntime = FALSE;
+  mLoggerInfo->LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
+  mLoggerInfo->LogBufferOffset = sizeof (*mLoggerInfo);
+  mLoggerInfo->LogCurrentOffset    = mLoggerInfo->LogBufferOffset;
 
   for (i = 0; i < ARRAY_SIZE (InternalMemoryLog); i++) {
     UnitTestStatus = InternalTestLoggerWrite (
@@ -426,7 +423,7 @@ InitializeInMemoryLog (
     UT_ASSERT_TRUE (UnitTestStatus == UNIT_TEST_PASSED);
   }
 
-  mLoggerProtocol.LoggerInfo = &mLoggerInfo;
+  mLoggerProtocol.LoggerInfo = mLoggerInfo;
   Status                     = AdvancedLoggerAccessLibUnitTestInitialize (&mLoggerProtocol.AdvLoggerProtocol, ADV_LOG_MAX_SIZE);
   UT_ASSERT_NOT_EFI_ERROR (Status)
 
@@ -448,15 +445,22 @@ InitializeInMemoryLogV2 (
   EFI_STATUS        Status;
   UNIT_TEST_STATUS  UnitTestStatus;
 
-  if (mLoggerInfo.LogBuffer != 0LL) {
-    FreePages ((VOID *)mLoggerInfo.LogBuffer, IN_MEMORY_PAGES);
-    mLoggerInfo.LogBuffer = 0LL;
+  if (mLoggerInfo != NULL) {
+    FreePages ((VOID *)mLoggerInfo, IN_MEMORY_PAGES);
+    mLoggerInfo = NULL;
   }
 
   // Repopulate the content with v2 messages
-  mLoggerInfo.LogBuffer     = (EFI_PHYSICAL_ADDRESS)AllocatePages (IN_MEMORY_PAGES);
-  mLoggerInfo.LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES;
-  mLoggerInfo.LogCurrent    = mLoggerInfo.LogBuffer;
+  mLoggerInfo     = AllocatePages (IN_MEMORY_PAGES);
+  if (mLoggerInfo == NULL) {
+    UT_ASSERT_TRUE (FALSE);
+  }
+  mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
+  mLoggerInfo->GoneVirtual = FALSE;
+  mLoggerInfo->AtRuntime = FALSE; 
+  mLoggerInfo->LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
+  mLoggerInfo->LogBufferOffset = sizeof (*mLoggerInfo);
+  mLoggerInfo->LogCurrentOffset    = mLoggerInfo->LogBufferOffset;
 
   ZeroMem (&mMessageEntry, sizeof (mMessageEntry));
 
@@ -469,7 +473,7 @@ InitializeInMemoryLogV2 (
     UT_ASSERT_TRUE (UnitTestStatus == UNIT_TEST_PASSED);
   }
 
-  mLoggerProtocol.LoggerInfo = &mLoggerInfo;
+  mLoggerProtocol.LoggerInfo = mLoggerInfo;
   Status                     = AdvancedLoggerAccessLibUnitTestInitialize (&mLoggerProtocol.AdvLoggerProtocol, ADV_LOG_MAX_SIZE);
   UT_ASSERT_NOT_EFI_ERROR (Status)
 
@@ -491,14 +495,21 @@ InitializeInMemoryLogV2Hybrid (
   EFI_STATUS        Status;
   UNIT_TEST_STATUS  UnitTestStatus;
 
-  if (mLoggerInfo.LogBuffer != 0LL) {
-    FreePages ((VOID *)mLoggerInfo.LogBuffer, IN_MEMORY_PAGES);
-    mLoggerInfo.LogBuffer = 0LL;
+  if (mLoggerInfo != NULL) {
+    FreePages ((VOID *)mLoggerInfo, IN_MEMORY_PAGES);
+    mLoggerInfo = NULL;
   }
 
-  mLoggerInfo.LogBuffer     = (EFI_PHYSICAL_ADDRESS)AllocatePages (IN_MEMORY_PAGES);
-  mLoggerInfo.LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES;
-  mLoggerInfo.LogCurrent    = mLoggerInfo.LogBuffer;
+  mLoggerInfo     = AllocatePages (IN_MEMORY_PAGES);
+  if (mLoggerInfo == NULL) {
+    UT_ASSERT_TRUE (FALSE);
+  }
+  mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
+  mLoggerInfo->GoneVirtual = FALSE;
+  mLoggerInfo->AtRuntime = FALSE; 
+  mLoggerInfo->LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
+  mLoggerInfo->LogBufferOffset = sizeof (*mLoggerInfo);
+  mLoggerInfo->LogCurrentOffset    = mLoggerInfo->LogBufferOffset;
 
   ZeroMem (&mMessageEntry, sizeof (mMessageEntry));
 
@@ -520,7 +531,7 @@ InitializeInMemoryLogV2Hybrid (
     UT_ASSERT_TRUE (UnitTestStatus == UNIT_TEST_PASSED);
   }
 
-  mLoggerProtocol.LoggerInfo = &mLoggerInfo;
+  mLoggerProtocol.LoggerInfo = mLoggerInfo;
   Status                     = AdvancedLoggerAccessLibUnitTestInitialize (&mLoggerProtocol.AdvLoggerProtocol, ADV_LOG_MAX_SIZE);
   UT_ASSERT_NOT_EFI_ERROR (Status)
 

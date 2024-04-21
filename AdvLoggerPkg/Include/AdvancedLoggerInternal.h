@@ -12,7 +12,7 @@
 #define __ADVANCED_LOGGER_INTERNAL_H__
 
 #define ADVANCED_LOGGER_SIGNATURE    SIGNATURE_32('A','L','O','G')
-#define ADVANCED_LOGGER_HW_LVL_VER   4
+#define ADVANCED_LOGGER_HW_LVL_VER   5
 #define ADVANCED_LOGGER_MSG_MAJ_VER  2
 #define ADVANCED_LOGGER_MSG_MIN_VER  0
 
@@ -46,24 +46,25 @@
 #pragma pack (push, 1)
 
 typedef volatile struct {
-  UINT32                  Signature;              // Signature 'ALOG'
-  UINT16                  Version;                // Current Version
-  UINT16                  Reserved;               // Reserved for future
-  EFI_PHYSICAL_ADDRESS    LogBuffer;              // Fixed pointer to start of log
-  EFI_PHYSICAL_ADDRESS    LogCurrent;             // Where to store next log entry.
-  UINT32                  DiscardedSize;          // Number of bytes of messages missed
-  UINT32                  LogBufferSize;          // Size of allocated buffer
-  BOOLEAN                 InPermanentRAM;         // Log in permanent RAM
-  BOOLEAN                 AtRuntime;              // After ExitBootServices
-  BOOLEAN                 GoneVirtual;            // After VirtualAddressChange
-  BOOLEAN                 HdwPortInitialized;     // HdwPort initialized
-  BOOLEAN                 HdwPortDisabled;        // HdwPort is Disabled
-  BOOLEAN                 Reserved2[3];           //
-  UINT64                  TimerFrequency;         // Ticks per second for log timing
-  UINT64                  TicksAtTime;            // Ticks when Time Acquired
-  EFI_TIME                Time;                   // Uefi Time Field
-  UINT32                  HwPrintLevel;           // Logging level to be printed at hw port
-  UINT32                  Reserved3;              //
+  UINT32      Signature;                          // Signature 'ALOG'
+  UINT16      Version;                            // Current Version
+  UINT16      Reserved[3];                        // Reserved for future
+  UINT32      LogBufferOffset;                    // Offset from LoggerInfo to start of log, expected to be the size of this structure 8 byte aligned
+  UINT32      Reserved4;
+  UINT32      LogCurrentOffset;                   // Offset from LoggerInfo to where to store next log entry.
+  UINT32      DiscardedSize;                      // Number of bytes of messages missed
+  UINT32      LogBufferSize;                      // Size of allocated buffer
+  BOOLEAN     InPermanentRAM;                     // Log in permanent RAM
+  BOOLEAN     AtRuntime;                          // After ExitBootServices
+  BOOLEAN     GoneVirtual;                        // After VirtualAddressChange
+  BOOLEAN     HdwPortInitialized;                 // HdwPort initialized
+  BOOLEAN     HdwPortDisabled;                    // HdwPort is Disabled
+  BOOLEAN     Reserved2[3];                       //
+  UINT64      TimerFrequency;                     // Ticks per second for log timing
+  UINT64      TicksAtTime;                        // Ticks when Time Acquired
+  EFI_TIME    Time;                               // Uefi Time Field
+  UINT32      HwPrintLevel;                       // Logging level to be printed at hw port
+  UINT32      Reserved3;                          //
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {
@@ -87,8 +88,8 @@ typedef struct {
   CHAR8     MessageText[];                        // Message Text
 } ADVANCED_LOGGER_MESSAGE_ENTRY_V2;
 
-#define MESSAGE_ENTRY_SIZE(LenOfMessage)                 (ALIGN_VALUE(sizeof(ADVANCED_LOGGER_MESSAGE_ENTRY) + LenOfMessage ,8))
-#define MESSAGE_ENTRY_SIZE_V2(LenOfEntry, LenOfMessage)  (ALIGN_VALUE(LenOfEntry + LenOfMessage ,8))
+#define MESSAGE_ENTRY_SIZE(LenOfMessage)                 (ALIGN_VALUE(sizeof(ADVANCED_LOGGER_MESSAGE_ENTRY) + LenOfMessage, 8))
+#define MESSAGE_ENTRY_SIZE_V2(LenOfEntry, LenOfMessage)  (ALIGN_VALUE(LenOfEntry + LenOfMessage, 8))
 
 #define NEXT_LOG_ENTRY(LogEntry)       ((ADVANCED_LOGGER_MESSAGE_ENTRY *)((UINTN)LogEntry + MESSAGE_ENTRY_SIZE(LogEntry->MessageLen)))
 #define NEXT_LOG_ENTRY_V2(LogEntryV2)  ((ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)((UINTN)LogEntryV2 + MESSAGE_ENTRY_SIZE_V2(LogEntryV2->MessageOffset, LogEntryV2->MessageLen)))
@@ -115,6 +116,13 @@ STATIC_ASSERT (sizeof (ADVANCED_LOGGER_INFO) % 8 == 0, "Logger Info Misaligned")
 
 #define PA_FROM_PTR(Address)  ((EFI_PHYSICAL_ADDRESS) (UINTN) (Address))
 #define PTR_FROM_PA(Address)  ((VOID *) (UINTN) (Address))
+
+#define LOG_BUFFER_FROM_ALI(LoggerInfo)         ((UINT8 *)LoggerInfo + LoggerInfo->LogBufferOffset)
+#define LOG_CURRENT_FROM_ALI(LoggerInfo)        ((UINT8 *)LoggerInfo + LoggerInfo->LogCurrentOffset)
+#define USED_LOG_SIZE(LoggerInfo)               (LoggerInfo->LogCurrentOffset < LoggerInfo->LogBufferOffset ? 0 : LoggerInfo->LogCurrentOffset - LoggerInfo->LogBufferOffset)
+#define TOTAL_LOG_SIZE_WITH_ALI(LoggerInfo)     (LoggerInfo->LogBufferOffset + LoggerInfo->LogBufferSize)
+#define LOG_MAX_ADDRESS(LoggerInfo)             (PA_FROM_PTR ((UINT8 *)LoggerInfo + TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo)))
+#define EXPECTED_LOG_BUFFER_OFFSET(LoggerInfo)  (ALIGN_VALUE (sizeof (*LoggerInfo), 8))// 8 byte align the log buffer offset
 
 //
 // Log Buffer Base PCD points to this structure.  This is also the structure of the

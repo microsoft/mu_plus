@@ -174,12 +174,12 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (mLoggerInfo->LogCurrent == mLoggerInfo->LogBuffer) {
+  if (mLoggerInfo->LogCurrentOffset == mLoggerInfo->LogBufferOffset) {
     return EFI_END_OF_FILE;
   }
 
   if (BlockEntry->Message == NULL) {
-    LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogBuffer);
+    LogEntry = (ADVANCED_LOGGER_MESSAGE_ENTRY *)LOG_BUFFER_FROM_ALI (mLoggerInfo);
     if (LogEntry->Signature == MESSAGE_ENTRY_SIGNATURE_V2) {
       // This is actually a v2 entry.
       LogEntryV2 = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)LogEntry;
@@ -223,7 +223,7 @@ AdvancedLoggerAccessLibGetNextMessageBlock (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (LogEntry >= (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (mLoggerInfo->LogCurrent)) {
+  if (LogEntry >= (ADVANCED_LOGGER_MESSAGE_ENTRY *)LOG_CURRENT_FROM_ALI (mLoggerInfo)) {
     return EFI_END_OF_FILE;
   }
 
@@ -438,8 +438,8 @@ AdvancedLoggerAccessLibUnitTestInitialize (
 
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-    mLowAddress  = mLoggerInfo->LogBuffer;
-    mHighAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+    mLowAddress  = PA_FROM_PTR (LOG_BUFFER_FROM_ALI (mLoggerInfo));
+    mHighAddress = PA_FROM_PTR (TOTAL_LOG_SIZE_WITH_ALI (mLoggerInfo));
   }
 
   return Status;
@@ -465,8 +465,8 @@ AdvancedLoggerAccessLibConstructor (
                   );
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-    mLowAddress  = mLoggerInfo->LogBuffer;
-    mHighAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+    mLowAddress  = PA_FROM_PTR (LOG_BUFFER_FROM_ALI (mLoggerInfo));
+    mHighAddress = PA_FROM_PTR (TOTAL_LOG_SIZE_WITH_ALI (mLoggerInfo));
 
     // Leave this debug message as ERROR.
 

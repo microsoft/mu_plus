@@ -70,9 +70,9 @@ AdvancedLoggerWriteProtocol (
 /**
     CheckAddress
 
-    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.  The
-    pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by un trusted code.  Here, we check that
-    the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which is used in multiple places
+    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.
+    LogBuffer, LogCurrentOffset, and LogBufferSize could be written to by un trusted code.  Here, we check that
+    the offsets are within the allocated mLoggerInfo space, and that LogBufferSize, which is used in multiple places
     to see if a new message will fit into the log buffer, is valid.
 
     @param          NONE
@@ -95,12 +95,12 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR (mLoggerInfo + 1))) {
+  if (mLoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (mLoggerInfo)) {
     return FALSE;
   }
 
-  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  if (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress ||
+      (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
   }
@@ -148,7 +148,7 @@ SmmInitializeLoggerInfo (
       mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
       ASSERT (mLoggerInfo != NULL);
       if (mLoggerInfo != NULL) {
-        mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+        mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
       }
     }
 

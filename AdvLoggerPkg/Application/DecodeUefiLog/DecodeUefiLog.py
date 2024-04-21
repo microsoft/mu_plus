@@ -193,6 +193,30 @@ class AdvLogParser ():
     V4_LOGGER_INFO_SIZE = V3_LOGGER_INFO_SIZE
     V4_LOGGER_INFO_VERSION = 4
 
+    # typedef volatile struct {
+    # UINT32      Signature;                          // Signature 'ALOG'
+    # UINT16      Version;                            // Current Version
+    # UINT16      Reserved[3];                        // Reserved for future
+    # UINT32      LogBufferOffset;                    // Offset from LoggerInfo to start of log, expected to be the size of this structure, 8 byte aligned
+    # UINT32      Reserved4;
+    # UINT32      LogCurrentOffset;                   // Offset from LoggerInfo to where to store next log entry.
+    # UINT32      DiscardedSize;                      // Number of bytes of messages missed
+    # UINT32      LogBufferSize;                      // Size of allocated buffer
+    # BOOLEAN     InPermanentRAM;                     // Log in permanent RAM
+    # BOOLEAN     AtRuntime;                          // After ExitBootServices
+    # BOOLEAN     GoneVirtual;                        // After VirtualAddressChange
+    # BOOLEAN     HdwPortInitialized;                 // HdwPort initialized
+    # BOOLEAN     HdwPortDisabled;                    // HdwPort is Disabled
+    # BOOLEAN     Reserved2[3];                       //
+    # UINT64      TimerFrequency;                     // Ticks per second for log timing
+    # UINT64      TicksAtTime;                        // Ticks when Time Acquired
+    # EFI_TIME    Time;                               // Uefi Time Field
+    # UINT32      HwPrintLevel;                       // Logging level to be printed at hw port
+    # UINT32      Reserved3;                          //
+    # } ADVANCED_LOGGER_INFO;
+    V5_LOGGER_INFO_SIZE = 80
+    V5_LOGGER_INFO_VERSION = 5
+
     # ---------------------------------------------------------------------- #
     #
     #
@@ -376,6 +400,54 @@ class AdvLogParser ():
             self._Compute_Basetime(LoggerInfo)
 
             LoggerInfo["LogCurrent"] += Size
+            if InFile.tell() != (Size):
+                raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
+
+        elif Version == self.V5_LOGGER_INFO_VERSION:
+            InFile.read(4)  # skip over rest of reserved section
+            Size = self.V5_LOGGER_INFO_SIZE
+            # we no longer have this field in the struct but for compatibility can calculate it
+            # to be used
+            LoggerInfo["LogBuffer"] = Size
+            # this is only used to calculate LogCurrent as an offset, but V5 uses
+            # LogCurrentOffset already, so we do this just to share the common code
+            BaseAddress = 0
+            LoggerInfo["LogBufferOffset"] = struct.unpack("=I", InFile.read(4))[0]
+            InFile.read(4)  # skip over reserved4 field
+            LoggerInfo["LogCurrentOffset"] = struct.unpack("=I", InFile.read(4))[0]
+            # we don't have this field anymore, but to share the common code we
+            # can calculate it
+            LoggerInfo["LogCurrent"] = LoggerInfo["LogCurrentOffset"]
+            LoggerInfo["DiscardedSize"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["LogBufferSize"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["InPermanentRAM"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["AtRuntime"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["GoneVirtual"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["HdwInitialized"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["HdwDisabled"] = struct.unpack("=B", InFile.read(1))[0]
+            InFile.read(3)                 # skip reserved2 field
+            LoggerInfo["Frequency"] = struct.unpack("=Q", InFile.read(8))[0]
+            LoggerInfo["TicksAtTime"] = struct.unpack("=Q", InFile.read(8))[0]
+
+            # Reading in the EFI_TIME structure
+            LoggerInfo["Year"] = struct.unpack("=H", InFile.read(2))[0]
+            LoggerInfo["Month"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Day"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Hour"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Minute"] = struct.unpack("=B", InFile.read(1))[0]
+            LoggerInfo["Second"] = struct.unpack("=B", InFile.read(1))[0]
+            InFile.read(1)                 # skip Pad1 field
+            LoggerInfo["Nanosecond"] = struct.unpack("=I", InFile.read(4))[0]
+            LoggerInfo["TimeZone"] = struct.unpack("=H", InFile.read(2))[0]
+            LoggerInfo["DayLight"] = struct.unpack("=B", InFile.read(1))[0]
+            InFile.read(1)                 # skip Pad2 field
+
+            # If at v3, there will be 8 bytes for print level and pads, which we do not care.
+            InFile.read(4)
+            InFile.read(4)
+
+            self._Compute_Basetime(LoggerInfo)
+
             if InFile.tell() != (Size):
                 raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
 

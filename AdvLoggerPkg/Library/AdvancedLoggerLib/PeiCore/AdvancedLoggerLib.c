@@ -185,7 +185,6 @@ InstallPermanentMemoryBuffer (
   IN VOID                       *Ppi
   )
 {
-  UINTN                 CurrentLogOffset;
   UINTN                 DebugLevel;
   EFI_HOB_GUID_TYPE     *GuidHob;
   ADVANCED_LOGGER_INFO  *LoggerInfo;
@@ -208,27 +207,26 @@ InstallPermanentMemoryBuffer (
       // Must be PeiCore allocated small memory buffer
       //
       Status = PeiServicesAllocatePages (
-                 EfiReservedMemoryType,
+                 EfiRuntimeServicesData,
                  FixedPcdGet32 (PcdAdvancedLoggerPages),
                  &NewLogBuffer
                  );
       if (!EFI_ERROR (Status)) {
         NewLoggerInfo = ALI_FROM_PA (NewLogBuffer);
         CopyMem ((VOID *)NewLoggerInfo, (VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
-        CurrentLogOffset         = (UINTN)(LoggerInfo->LogCurrent - LoggerInfo->LogBuffer);
-        NewLoggerInfo->LogBuffer = PA_FROM_PTR ((CHAR8 *)(NewLoggerInfo + 1));
+        NewLoggerInfo->LogBufferOffset = EXPECTED_LOG_BUFFER_OFFSET (NewLoggerInfo);
 
-        if (CurrentLogOffset > 0) {
+        if (LoggerInfo->LogCurrentOffset > 0) {
           CopyMem (
-            PTR_FROM_PA (NewLoggerInfo->LogBuffer),
-            PTR_FROM_PA (LoggerInfo->LogBuffer),
-            (CurrentLogOffset)
+            LOG_BUFFER_FROM_ALI (NewLoggerInfo),
+            LOG_BUFFER_FROM_ALI (LoggerInfo),
+            USED_LOG_SIZE (LoggerInfo)
             );
         }
 
-        NewLoggerInfo->LogBufferSize  = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
-        NewLoggerInfo->LogCurrent     = PA_FROM_PTR (CHAR8_FROM_PA (NewLoggerInfo->LogBuffer) + CurrentLogOffset);
-        NewLoggerInfo->InPermanentRAM = TRUE;
+        NewLoggerInfo->LogBufferSize    = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
+        NewLoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset;
+        NewLoggerInfo->InPermanentRAM   = TRUE;
 
         PeiCoreInstance               = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
         PeiCoreInstance->PlatformBlob = PA_FROM_PTR (NewLoggerInfo);
@@ -261,11 +259,11 @@ InstallPermanentMemoryBuffer (
 
         DEBUG ((
           DebugLevel,
-          "%a: - New Info=%p, Buffer=%lx, Current=%lx, Size=%d, Discarded=%d\n",
+          "%a: - New Info=%p, Buffer Offset=%x, Current Offset=%x, Size=%d, Discarded=%d\n",
           __FUNCTION__,
           NewLoggerInfo,
-          NewLoggerInfo->LogBuffer,
-          NewLoggerInfo->LogCurrent,
+          NewLoggerInfo->LogBufferOffset,
+          NewLoggerInfo->LogCurrentOffset,
           NewLoggerInfo->LogBufferSize,
           NewLoggerInfo->DiscardedSize
           ));
@@ -279,8 +277,8 @@ InstallPermanentMemoryBuffer (
 /**
   Validate Info Blocks
 
-  The address of the ADVANCE_LOGGER_INFO block pointer is captured during the first debug print.  The
-  pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here,
+  The address of the ADVANCE_LOGGER_INFO block pointer is captured during the first debug print.
+  Offsets LogBufferOffset, LogCurrentOffset, and LogBufferSize, could be written to by untrusted code.  Here,
   we check that the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which
   is used in multiple places to see if a new message will fit into the log buffer, is valid.
 
@@ -304,12 +302,12 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (LoggerInfo->LogBuffer != (PA_FROM_PTR (LoggerInfo + 1))) {
+  if (LoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo)) {
     return FALSE;
   }
 
-  if ((LoggerInfo->LogCurrent > LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize) ||
-      (LoggerInfo->LogCurrent < LoggerInfo->LogBuffer))
+  if ((LoggerInfo->LogCurrentOffset > TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo)) ||
+      (LoggerInfo->LogCurrentOffset < LoggerInfo->LogBufferOffset))
   {
     return FALSE;
   }
@@ -491,8 +489,8 @@ AdvancedLoggerGetLoggerInfo (
       (PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices))->PlatformBlob = PA_FROM_PTR (LoggerInfo);
       LogPtr->LogBuffer                                            = PA_FROM_PTR (LoggerInfo);
 
-      LoggerInfo->LogCurrent = PA_FROM_PTR (LoggerInfo + 1) + LoggerInfo->LogCurrent - LoggerInfo->LogBuffer;
-      LoggerInfo->LogBuffer  = PA_FROM_PTR (LoggerInfo + 1);
+      LoggerInfo->LogCurrentOffset = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo) + USED_LOG_SIZE (LoggerInfo);
+      LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
 
       // return the pointer
       return LoggerInfo;
@@ -516,9 +514,9 @@ AdvancedLoggerGetLoggerInfo (
     ZeroMem ((VOID *)LoggerInfo, BufferSize);
     LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
     LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
-    LoggerInfo->LogBuffer     = PA_FROM_PTR (LoggerInfo + 1);
+    LoggerInfo->LogBufferOffset     = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
     LoggerInfo->LogBufferSize = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
-    LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
+    LoggerInfo->LogCurrentOffset    = LoggerInfo->LogBufferOffset;
     LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
     AdvancedLoggerHdwPortInitialize ();
     CopyGuid (&GuidHobInterimBuf->Name, &gAdvancedLoggerInterimBufHobGuid);
@@ -557,7 +555,7 @@ AdvancedLoggerGetLoggerInfo (
 
       if (FeaturePcdGet (PcdAdvancedLoggerPeiInRAM)) {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPages);
-        Type  =  EfiReservedMemoryType;
+        Type  =  EfiRuntimeServicesData;
       } else {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
         // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
@@ -574,12 +572,12 @@ AdvancedLoggerGetLoggerInfo (
       if (!EFI_ERROR (Status)) {
         LoggerInfo = ALI_FROM_PA (NewLoggerInfo);
         ZeroMem ((VOID *)LoggerInfo, BufferSize);
-        LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
-        LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
-        LoggerInfo->LogBuffer     = PA_FROM_PTR (LoggerInfo + 1);
-        LoggerInfo->LogBufferSize = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
-        LoggerInfo->LogCurrent    = LoggerInfo->LogBuffer;
-        LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
+        LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+        LoggerInfo->Version          = ADVANCED_LOGGER_VERSION;
+        LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+        LoggerInfo->LogBufferSize    = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
+        LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;
+        LoggerInfo->HwPrintLevel     = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
         AdvancedLoggerHdwPortInitialize ();
         LoggerInfo->HdwPortInitialized = TRUE;
       }
@@ -614,7 +612,7 @@ AdvancedLoggerGetLoggerInfo (
         // If we have an interim buffer, copy it to the new buffer
         //
         LoggerInfo = (ADVANCED_LOGGER_INFO *)GET_GUID_HOB_DATA (GuidHobInterimBuf);
-        LogEntry   = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)(UINTN)LoggerInfo->LogBuffer;
+        LogEntry   = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)LOG_BUFFER_FROM_ALI (LoggerInfo);
         AdvancedLoggerMemoryLoggerWrite (LogEntry->DebugLevel, LogEntry->MessageText, LogEntry->MessageLen);
         GuidHobInterimBuf = GetNextGuidHob (&gAdvancedLoggerInterimHobGuid, GuidHobInterimBuf);
       }

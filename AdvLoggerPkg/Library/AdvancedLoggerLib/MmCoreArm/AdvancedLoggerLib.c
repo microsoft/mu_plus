@@ -66,8 +66,8 @@ AdvancedLoggerGetLoggerInfo (
   }
 
   //
-  // The pointers LogBuffer and LogCurrent, and LogBufferSize, could be written
-  // to by untrusted code.  Here, we check that the pointers are within the
+  // LogBuffer and LogCurrent, and LogBufferSize, could be written
+  // to by untrusted code.  Here, we check that the offsets are within the
   // allocated LoggerInfo space, and that LogBufferSize, which is used in
   // multiple places to see if a new message will fit into the log buffer, is
   // valid.
@@ -78,12 +78,12 @@ AdvancedLoggerGetLoggerInfo (
   }
 
   // Ensure the start of the log is in the correct location.
-  if (LoggerInfo->LogBuffer != (PA_FROM_PTR (LoggerInfo + 1))) {
+  if (LoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo)) {
     return NULL;
   }
 
   // Make sure the size of the buffer does not overrun it's fixed size.
-  MaxAddress = LoggerInfo->LogBuffer + LoggerInfo->LogBufferSize;
+  MaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
   if ((MaxAddress - PA_FROM_PTR (LoggerInfo)) >
       (FixedPcdGet32 (PcdAdvancedLoggerPages) * EFI_PAGE_SIZE))
   {
@@ -91,8 +91,8 @@ AdvancedLoggerGetLoggerInfo (
   }
 
   // Ensure the current pointer does not overrun.
-  if ((LoggerInfo->LogCurrent > MaxAddress) ||
-      (LoggerInfo->LogCurrent < LoggerInfo->LogBuffer))
+  if ((LOG_CURRENT_FROM_ALI (LoggerInfo) > MaxAddress) ||
+      (LoggerInfo->LogCurrentOffset < LoggerInfo->LogBufferOffset))
   {
     return NULL;
   }
