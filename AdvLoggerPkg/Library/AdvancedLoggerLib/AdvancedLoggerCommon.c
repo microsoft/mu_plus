@@ -40,9 +40,9 @@ AdvancedLoggerMemoryLoggerWrite (
   )
 {
   ADVANCED_LOGGER_INFO              *LoggerInfo;
-  EFI_PHYSICAL_ADDRESS              CurrentBuffer;
-  EFI_PHYSICAL_ADDRESS              NewBuffer;
-  EFI_PHYSICAL_ADDRESS              OldValue;
+  UINT32                            CurrentBuffer;
+  UINT32                            NewBuffer;
+  UINT32                            OldValue;
   UINT32                            OldSize;
   UINT32                            NewSize;
   UINT32                            CurrentSize;
@@ -63,8 +63,8 @@ AdvancedLoggerMemoryLoggerWrite (
   if (LoggerInfo != NULL) {
     EntrySize = MESSAGE_ENTRY_SIZE_V2 (OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText), NumberOfBytes);
     do {
-      CurrentBuffer = LoggerInfo->LogCurrent;
-      UsedSize      = (UINTN)(CurrentBuffer - LoggerInfo->LogBuffer);
+      CurrentBuffer = LoggerInfo->LogCurrentOffset;
+      UsedSize      = USED_LOG_SIZE (LoggerInfo);
       if ((UsedSize >= LoggerInfo->LogBufferSize) ||
           ((LoggerInfo->LogBufferSize - UsedSize) < EntrySize))
       {
@@ -72,11 +72,11 @@ AdvancedLoggerMemoryLoggerWrite (
           //
           // Wrap around the current cursor when auto wrap is enabled on buffer full during runtime.
           //
-          NewBuffer = LoggerInfo->LogBuffer;
-          OldValue  = InterlockedCompareExchange64 (
-                        (UINT64 *)&LoggerInfo->LogCurrent,
-                        (UINT64)CurrentBuffer,
-                        (UINT64)NewBuffer
+          NewBuffer = LoggerInfo->LogBufferOffset;
+          OldValue  = InterlockedCompareExchange32 (
+                        &LoggerInfo->LogCurrentOffset,
+                        CurrentBuffer,
+                        NewBuffer
                         );
           if (OldValue != CurrentBuffer) {
             //
@@ -108,15 +108,16 @@ AdvancedLoggerMemoryLoggerWrite (
         }
       }
 
-      NewBuffer = PA_FROM_PTR ((CHAR8_FROM_PA (CurrentBuffer) + EntrySize));
-      OldValue  = InterlockedCompareExchange64 (
-                    (UINT64 *)&LoggerInfo->LogCurrent,
-                    (UINT64)CurrentBuffer,
-                    (UINT64)NewBuffer
+      // EntrySize is contained within a UINT32, this is safe to do
+      NewBuffer = (UINT32)(CurrentBuffer + EntrySize);
+      OldValue  = InterlockedCompareExchange32 (
+                    &LoggerInfo->LogCurrentOffset,
+                    CurrentBuffer,
+                    NewBuffer
                     );
     } while (OldValue != CurrentBuffer);
 
-    Entry               = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
+    Entry               = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)((UINT8 *)LoggerInfo + CurrentBuffer);
     Entry->MajorVersion = ADVANCED_LOGGER_MSG_MAJ_VER;
     Entry->MinorVersion = ADVANCED_LOGGER_MSG_MIN_VER;
     Entry->TimeStamp    = GetPerformanceCounter ();    // AdvancedLoggerGetTimeStamp();

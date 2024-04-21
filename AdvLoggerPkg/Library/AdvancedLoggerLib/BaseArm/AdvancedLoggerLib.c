@@ -24,9 +24,9 @@ STATIC BOOLEAN               mInitialized = FALSE;
 /**
   Validate Info Blocks
 
-  The address of the ADVANCE_LOGGER_INFO block pointer is captured during the first DEBUG print.  The
-  pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here,
-  we check that the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which
+  The address of the ADVANCE_LOGGER_INFO block pointer is captured during the first DEBUG print.
+  LogBufferOffset, LogCurrentOffset, and LogBufferSize could be written to by untrusted code.  Here,
+  we check that the offsets are within the allocated mLoggerInfo space, and that LogBufferSize, which
   is used in multiple places to see if a new message will fit into the log buffer, is valid.
 
   @param          NONE
@@ -49,12 +49,12 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR (mLoggerInfo + 1))) {
+  if (mLoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (mLoggerInfo)) {
     return FALSE;
   }
 
-  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  if (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress) ||
+      (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
   }
@@ -105,7 +105,7 @@ AdvancedLoggerGetLoggerInfo (
       return NULL;
     }
 
-    mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+    mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
     mBufferSize = mLoggerInfo->LogBufferSize;
   }
 

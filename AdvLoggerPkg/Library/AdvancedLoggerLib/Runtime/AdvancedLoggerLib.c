@@ -16,6 +16,7 @@
 #include <AdvancedLoggerInternalProtocol.h>
 
 #include <Library/DebugLib.h>
+#include <Library/BaseLib.h>
 
 #include "../AdvancedLoggerCommon.h"
 
@@ -28,8 +29,8 @@ STATIC EFI_EVENT             mExitBootServicesEvent = NULL;
 /**
     CheckAddress
 
-    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.  The
-    pointers LogBuffer and LogCurrent, and LogBufferSize, could be written to by untrusted code.  Here, we check that
+    The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.
+    LogBufferOffset and LogCurrentOffset, and LogBufferSize could be written to by untrusted code.  Here, we check that
     the pointers are within the allocated mLoggerInfo space, and that LogBufferSize, which is used in multiple places
     to see if a new message will fit into the log buffer, is valid.
 
@@ -53,12 +54,12 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR (mLoggerInfo + 1))) {
+  if (mLoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (mLoggerInfo)) {
     return FALSE;
   }
 
-  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  if (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress ||
+      (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
   }
@@ -100,7 +101,7 @@ AdvancedLoggerGetLoggerInfo (
       mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
 
       if (mLoggerInfo != NULL) {
-        mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+        mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
       }
     }
   }

@@ -49,12 +49,12 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (mLoggerInfo->LogBuffer != (PA_FROM_PTR (mLoggerInfo + 1))) {
+  if (mLoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (mLoggerInfo)) {
     return FALSE;
   }
 
-  if ((mLoggerInfo->LogCurrent > mMaxAddress) ||
-      (mLoggerInfo->LogCurrent < mLoggerInfo->LogBuffer))
+  if (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress ||
+      (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
   }
@@ -103,7 +103,7 @@ AdvancedLoggerGetLoggerInfo (
       LogPtr      = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
       mLoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
       if (mLoggerInfo != NULL) {
-        mMaxAddress = mLoggerInfo->LogBuffer + mLoggerInfo->LogBufferSize;
+        mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
       }
 
       //

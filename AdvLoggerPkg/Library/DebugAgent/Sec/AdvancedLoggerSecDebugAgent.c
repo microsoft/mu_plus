@@ -55,7 +55,6 @@ InitializeDebugAgent (
   IN DEBUG_AGENT_CONTINUE  Function  OPTIONAL
   )
 {
-  UINTN                   BufferSize;
   EFI_PHYSICAL_ADDRESS    CarBase;
   UINTN                   DebugLevel;
   EFI_HOB_GUID_TYPE       *GuidHob;
@@ -129,8 +128,8 @@ InitializeDebugAgent (
       LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
       LoggerInfo->Version            = ADVANCED_LOGGER_VERSION;
       LoggerInfo->LogBufferSize      = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
-      LoggerInfo->LogBuffer          = PA_FROM_PTR ((LoggerInfo + 1));
-      LoggerInfo->LogCurrent         = LoggerInfo->LogBuffer;
+      LoggerInfo->LogBufferOffset          = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+      LoggerInfo->LogCurrentOffset         = LoggerInfo->LogBufferOffset;
       LoggerInfo->HdwPortInitialized = TRUE;
       LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
       LogPtr->LogBuffer              = NewLogBuffer; // Set physical address of Logger Memory at TemporaryRamBase
@@ -184,31 +183,30 @@ InitializeDebugAgent (
         if (!EFI_ERROR (Status)) {
           DEBUG ((
             DEBUG_INFO,
-            "%a: - Old Info=%p Buffer=%LX, Current=%LX, Size=%d, Used=%d\n",
+            "%a: - Old Info=%p Buffer Offset=%X, Current Offset=%X, Size=%d, Used=%d\n",
             __FUNCTION__,
             LoggerInfo,
-            LoggerInfo->LogBuffer,
-            LoggerInfo->LogCurrent,
+            LoggerInfo->LogBufferOffset,
+            LoggerInfo->LogCurrentOffset,
             LoggerInfo->LogBufferSize,
-            LoggerInfo->LogCurrent - LoggerInfo->LogBuffer
+            USED_LOG_SIZE (LoggerInfo)
             ));
 
-          BufferSize    = (UINTN)(LoggerInfo->LogCurrent - LoggerInfo->LogBuffer);
           NewLoggerInfo = ALI_FROM_PA (NewLogBuffer);
           CopyMem ((VOID *)NewLoggerInfo, (VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
-          NewLoggerInfo->LogBuffer = PA_FROM_PTR ((NewLoggerInfo + 1));
-          TargetLog                = CHAR8_FROM_PA (NewLoggerInfo->LogBuffer);
+          NewLoggerInfo->LogBufferOffset = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+          TargetLog                = CHAR8_FROM_PA (LOG_BUFFER_FROM_ALI (NewLoggerInfo));
 
-          if (BufferSize > 0) {
+          if (LoggerInfo->LogCurrentOffset > 0) {
             CopyMem (
               TargetLog,
-              CHAR8_FROM_PA (LoggerInfo->LogBuffer),
-              (BufferSize)
+              CHAR8_FROM_PA (LOG_BUFFER_FROM_ALI (LoggerInfo)),
+              USED_LOG_SIZE (LoggerInfo)
               );
           }
 
           NewLoggerInfo->LogBufferSize  = (EFI_PAGE_SIZE * FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
-          NewLoggerInfo->LogCurrent     = PA_FROM_PTR (TargetLog + BufferSize);
+          NewLoggerInfo->LogCurrentOffset     = LoggerInfo->LogCurrentOffset;
           NewLoggerInfo->InPermanentRAM = TRUE;
 
           PeiServices                   = GetPeiServicesTablePointer ();
@@ -247,11 +245,11 @@ InitializeDebugAgent (
 
           DEBUG ((
             DebugLevel,
-            "%a: - New Info=%p, Buffer=%LX, Current=%LX, Size=%d, Discarded=%d\n",
+            "%a: - New Info=%p, Buffer=%X, Current=%X, Size=%d, Discarded=%d\n",
             __FUNCTION__,
             NewLoggerInfo,
-            NewLoggerInfo->LogBuffer,
-            NewLoggerInfo->LogCurrent,
+            NewLoggerInfo->LogBufferOffset,
+            NewLoggerInfo->LogCurrentOffset,
             NewLoggerInfo->LogBufferSize,
             NewLoggerInfo->DiscardedSize
             ));
