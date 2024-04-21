@@ -245,12 +245,60 @@ and the follow change is needed in the .fdf:
 
 ## Advanced Logger Retrieval From Windows
 
-The Advanced Logger can be retrieved from Windows using the [DecodeUefiLog](../Application/DecodeUefiLog/ReadMe.md)
+### GetVariable Interface
+
+The Advanced Logger log can be retrieved from Windows using the [DecodeUefiLog](../Application/DecodeUefiLog/ReadMe.md)
 python utility. The utility runs under windows and retrieves the log through the `AdvLoggerAccessLib` instance
 provided by the platform.
 
 If reading of the log fails, please verify that the `AdvLoggerAccessLib` instance in the platform is either the
 `AdvLoggerMmAccessLib` or the `AdvLoggerSmmAccessLib` and not the NULL instance provided by MdeModulePkg.
+
+### PRM Interface
+
+The Advanced Logger log can also be retrieved from the [Advanced Logger PRM](../AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.c).
+The advantage of the PRM over the GetVariable interface is that it avoids SMM and/or Trust Zone, depending on
+architecture. This means all the cores do not need to quiesce to fetch the log. In addition, the PRM interface is
+independently serviceable from the OS.
+
+To include the PRM in your FW, add the following to your DSC:
+
+```inf
+# PRM Configuration Driver
+  PrmPkg/PrmConfigDxe/PrmConfigDxe.inf {
+    <LibraryClasses>
+      NULL|AdvLoggerPkg/AdvLoggerOsConnectorPrm/Library/AdvLoggerOsConnectorPrmConfigLib/AdvLoggerOsConnectorPrmConfigLib.inf
+  }
+
+  # PRM Module Loader Driver
+  PrmPkg/PrmLoaderDxe/PrmLoaderDxe.inf
+
+  # PRM SSDT Installation Driver
+  PrmPkg/PrmSsdtInstallDxe/PrmSsdtInstallDxe.inf
+
+  # Adv Logger PRM Module
+  AdvLoggerPkg/AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.inf
+```
+
+And the following to your FDF:
+
+```inf
+# PRM Configuration Driver
+INF PrmPkg/PrmConfigDxe/PrmConfigDxe.inf
+
+# Adv Logger PRM Module
+INF AdvLoggerPkg/AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.inf
+
+# PRM Module Loader Driver
+INF PrmPkg/PrmLoaderDxe/PrmLoaderDxe.inf
+
+# PRM SSDT Installation Driver
+INF PrmPkg/PrmSsdtInstallDxe/PrmSsdtInstallDxe.inf
+```
+
+The PRM log can be fetched via an OS driver. See the [Windows sample](../Application/Windows/PrmFuncSample/README.md).
+
+See [PrmPkg](https://github.com/microsoft/mu_tiano_plus/blob/HEAD/PrmPkg/Readme.md) for more details.
 
 ## Hardware Logging Level
 

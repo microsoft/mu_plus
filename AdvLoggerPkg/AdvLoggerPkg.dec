@@ -98,7 +98,7 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedFileLoggerForceEnable|TRUE|BOOLEAN|0x00010184
 
-  ## PcdAdvancedLoggerAutoWrapEnable - Automatically wrap around the LogCurrent cursor when it reaches the end
+  ## PcdAdvancedLoggerAutoWrapEnable - Automatically wrap around the LogCurrentOffset cursor when it reaches the end
   # of the log. This feature only activates at runtime (after exit boot service event).
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable|FALSE|BOOLEAN|0x00010188

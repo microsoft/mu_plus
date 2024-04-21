@@ -1,0 +1,42 @@
+## @file
+#  AdvancedLogger OS Connector PRM Driver
+#
+#  This driver gives an interface to OS components to fetch/clear the AdvancedLogger memory log.
+#
+#  Copyright (c) Microsoft Corporation
+#  SPDX-License-Identifier: BSD-2-Clause-Patent 
+##
+
+[Defines]
+  INF_VERSION         = 1.17
+  BASE_NAME           = AdvLoggerOsConnectorPrm
+  FILE_GUID           = B4DFA4A2-EAD0-4F55-998B-EA5BE68F73FD
+  MODULE_TYPE         = DXE_RUNTIME_DRIVER
+  VERSION_STRING      = 1.0
+  ENTRY_POINT         = AdvLoggerOsConnectorPrmEntry
+
+[Sources]
+  AdvLoggerOsConnectorPrm.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  PrmPkg/PrmPkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  PrintLib
+  UefiDriverEntryPoint
+  UefiLib
+  BaseMemoryLib
+
+[Depex]
+  TRUE
+
+[BuildOptions.common]
+  MSFT:*_*_*_DLINK_FLAGS  = /DLL /SUBSYSTEM:CONSOLE /VERSION:1.0
+  MSFT:*_*_*_GENFW_FLAGS = --keepoptionalheader
+
+  GCC:*_*_AARCH64_GENFW_FLAGS = --keepoptionalheader --prm
+  GCC:*_*_AARCH64_DLINK_FLAGS = -Wl,--no-gc-sections -Wl,--require-defined=PrmModuleExportDescriptor -Wl,--require-defined=CheckStaticDataBufferPrmHandler

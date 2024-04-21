@@ -15,7 +15,7 @@
 
     ## options defined ci/Plugin/CharEncodingCheck
     "CharEncodingCheck": {
-        "IgnoreFiles": []
+        "IgnoreFiles": ["Application/Windows/PrmFuncSample/PrmFunc/prmfuncsample.inf"]
     },
 
     ## options defined ci/Plugin/DependencyCheck
@@ -27,9 +27,11 @@
             "AdvLoggerPkg/AdvLoggerPkg.dec",
             "MsWheaPkg/MsWheaPkg.dec",
             "PolicyServicePkg/PolicyServicePkg.dec",
-            "ShellPkg/ShellPkg.dec"
+            "ShellPkg/ShellPkg.dec",
+            "PrmPkg/PrmPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
+            "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
         ],
         "AcceptableDependencies-UEFI_APPLICATION": [
         ],
@@ -46,8 +48,19 @@
     "GuidCheck": {
         "IgnoreGuidName": [],
         "IgnoreGuidValue": [],
-        "IgnoreFoldersAndFiles": [],
+        "IgnoreFoldersAndFiles": ["**/Application/Windows/PrmFuncSample/PrmFunc/prmfuncsample.inf"],
         "IgnoreDuplicates": []
+    },
+
+    ## options defined ci/Plugin/HostUnitTestCompilerPlugin
+    "HostUnitTestCompilerPlugin": {
+        "DscPath": "Test/AdvLoggerHostTest.dsc"
+    },
+
+    ## options defined .pytool/Plugin/HostUnitTestDscCompleteCheck
+    "HostUnitTestDscCompleteCheck": {
+        "IgnoreInf": [],
+        "DscPath": "Test/AdvLoggerHostTest.dsc"
     },
 
     ## options defined ci/Plugin/LibraryClassCheck
@@ -59,7 +72,7 @@
     ## options defined ci/Plugin/SpellCheck
     "SpellCheck": {
         "AuditOnly": False,           # Fails test but run in AuditOnly mode to collect log
-        "IgnoreFiles": [],            # use gitignore syntax to ignore errors in matching files
+        "IgnoreFiles": ["Application/Windows/PrmFuncSample/**"],            # use gitignore syntax to ignore errors in matching files
         "IgnoreStandardPaths": [],    # Standard Plugin defined paths that should be ignore
         "AdditionalIncludePaths": [], # Additional paths to spell check (wildcards supported)
         "ExtendWords": [
