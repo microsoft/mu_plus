@@ -1,0 +1,44 @@
+## @file AdvLoggerPrmConfigLibGoogleTest.inf
+#
+# This unit tests the AdvLoggerOsConnectorPrmConfigLib
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION     = 0x00010005
+  BASE_NAME       = AdvLoggerPrmConfigLibGoogleTest
+  FILE_GUID       = 2BEEEDEF-618B-44E3-A051-87DC43C5689E
+  MODULE_TYPE     = HOST_APPLICATION
+  VERSION_STRING  = 1.0
+
+[Sources]
+  AdvLoggerPrmConfigLibGoogleTest.cpp
+  ../AdvLoggerOsConnectorPrmConfigLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+  PrmPkg/PrmPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  GoogleTestLib
+  UefiRuntimeLib
+  UefiBootServicesTableLib
+
+# Library Instance Reqs
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages
+
+[Guids]
+  gEfiEventVirtualAddressChangeGuid
+
+[Protocols]
+  gPrmConfigProtocolGuid
+  gAdvancedLoggerProtocolGuid
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS = /std:c++latest

@@ -1,0 +1,47 @@
+## @file AdvLoggerOsConnectorPrmConfigLib.inf
+#  AdvLoggerOsConnector PRM Configuration Library Instance
+#
+#  This PRM configuration library instance is responsible for passing the AdvLogger in-memory log to the OsConnector PRM
+#
+#  Copyright (c) Microsoft Corporation
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION         = 1.17
+  BASE_NAME           = AdvLoggerOsConnectorPrmConfigLib
+  FILE_GUID           = 635DD215-6053-4ECA-887C-1E9BCFD60736
+  MODULE_TYPE         = DXE_RUNTIME_DRIVER
+  VERSION_STRING      = 1.0
+  LIBRARY_CLASS       = NULL|DXE_RUNTIME_DRIVER
+  CONSTRUCTOR         = AdvLoggerOsConnectorPrmConfigLibConstructor
+
+[Sources]
+  AdvLoggerOsConnectorPrmConfigLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  PrmPkg/PrmPkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[Guids]
+  gEfiEventVirtualAddressChangeGuid
+
+[Protocols]
+  gPrmConfigProtocolGuid
+  gAdvancedLoggerProtocolGuid
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  DebugLib
+  MemoryAllocationLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  UefiRuntimeLib
+  DxeServicesTableLib
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages

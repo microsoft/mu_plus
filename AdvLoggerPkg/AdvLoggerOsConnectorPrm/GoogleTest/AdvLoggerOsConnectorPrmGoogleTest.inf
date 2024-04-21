@@ -1,0 +1,31 @@
+## @file AdvLoggerOsConnectorPrmGoogleTest.inf
+#
+# This unit tests the AdvLoggerOsConnectorPrm Module
+#
+# Copyright (c) Microsoft Corporation
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+  INF_VERSION     = 0x00010005
+  BASE_NAME       = AdvLoggerOsConnectorPrmGoogleTest
+  FILE_GUID       = 7027B281-BE64-4D83-9667-3CE9B041E2B2
+  MODULE_TYPE     = HOST_APPLICATION
+  VERSION_STRING  = 1.0
+
+[Sources]
+  AdvLoggerOsConnectorPrmGoogleTest.cpp
+  ../AdvLoggerOsConnectorPrm.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+  PrmPkg/PrmPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  GoogleTestLib
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS = /std:c++latest

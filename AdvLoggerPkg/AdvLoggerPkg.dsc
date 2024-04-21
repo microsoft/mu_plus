@@ -115,6 +115,8 @@
 [Components]
   AdvLoggerPkg/Library/BaseDebugLibAdvancedLogger/BaseDebugLibAdvancedLogger.inf
   AdvLoggerPkg/Library/BasePanicLibAdvancedLogger/BasePanicLibAdvancedLogger.inf
+  AdvLoggerPkg/AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.inf
+  AdvLoggerPkg/AdvLoggerOsConnectorPrm/Library/AdvLoggerOsConnectorPrmConfigLib/AdvLoggerOsConnectorPrmConfigLib.inf
 
 [Components.IA32]
   AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf
