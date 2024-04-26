@@ -31,9 +31,9 @@
 
 #include "MfciDxe.h"
 
-/**
- * the following helps iterate over the functions and set the corresponding target variable names
- */
+//
+// The following helps iterate over the functions and set the corresponding target variable names.
+//
 
 // define a structure that pairs up the function pointer with the UEFI variable name
 typedef struct {
