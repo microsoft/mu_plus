@@ -21,6 +21,7 @@
 
 #define ID_NOT_FOUND  "Not Found"
 
+// populate the array of structures that pair up the functions with variable names
 CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[] = {
   { MfciIdSupportGetManufacturer, MFCI_MANUFACTURER_VARIABLE_NAME },
   { MfciIdSupportGetProductName,  MFCI_PRODUCT_VARIABLE_NAME      },
