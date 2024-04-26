@@ -20,7 +20,6 @@
 [Sources]
   MfciMultipleCertsHostTest.c
   ../MfciDxe.c
-  ../MfciTargeting.c
 
 [Packages]
   MdePkg/MdePkg.dec
