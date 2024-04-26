@@ -130,4 +130,16 @@ MfciIdSupportGetOem2 (
   OUT UINTN   *Oem2Size  OPTIONAL
   );
 
+//
+// The following helps iterate over the functions and set the corresponding target variable names.
+//
+
+// define a structure that pairs up the function pointer with the UEFI variable name
+typedef struct {
+  MFCI_DEVICE_ID_FN    DeviceIdFn;
+  CHAR16               *DeviceIdVarName;
+} MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP;
+
+extern CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[];
+
 #endif //MFCI_DEVICE_ID_SUPPORT_LIB_H_
