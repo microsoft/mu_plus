@@ -8,48 +8,45 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef __MFCI_DEVICE_ID_SUPPORT_LIB_H__
-#define __MFCI_DEVICE_ID_SUPPORT_LIB_H__
+#ifndef MFCI_DEVICE_ID_SUPPORT_LIB_H_
+#define MFCI_DEVICE_ID_SUPPORT_LIB_H_
 
 #include <MfciVariables.h>
 
-// define a generic function prototype shared by all library functions
-
 /**
- * Get a device-unique targeting value
- *
- * @param[out] String   Device targeting value, a UTF-16 little endian string.
- *                      Includes a wide NULL terminator.
- *                      Refer to MfciPkg/Include/MfciVariables.h for more details.
- *
- * @param[out] StringSize  (OPTIONAL) String size in bytes including the wide NULL terminator.
- *                         NULL may be supplied if the size is not requested (it is NULL terminated after all)
- *
- * It is the callers responsibility to free the String buffer returned using FreePool()
- *
- * @return EFI_STATUS
- *
- * @retval EFI_UNSUPPORTED         Likely using the NULL library instance
- * @retval EFI_SUCCESS             Successfully retrieved the string and length
- */
+  Function pointer definition to get a device-unique targeting value.
+  It is the callers responsibility to free the String buffer returned using FreePool().
 
+  @param[out] String      Device targeting value, a UTF-16 little endian string.
+                          Includes a wide NULL terminator.
+                          Refer to MfciPkg/Include/MfciVariables.h for more details.
+  @param[out] StringSize  (OPTIONAL) String size in bytes including the wide NULL terminator.
+                          NULL may be supplied if the size is not requested (it is NULL terminated after all)
+
+  @retval EFI_UNSUPPORTED       Likely using the NULL library instance.
+  @retval EFI_SUCCESS           Successfully retrieved the string and length.
+  @retval EFI_OUT_OF_RESOURCES  There is not enough memory to allocate the string.
+  @retval EFI_INVALID_PARAMETER The String is NULL.
+**/
 typedef
 EFI_STATUS
 (EFIAPI *MFCI_DEVICE_ID_FN)(
   OUT CHAR16 **String,
-  OUT UINTN *StringSize
+  OUT UINTN *StringSize OPTIONAL
   );
 
 /**
- * Get the Manufacturer Name
- *
- * @param[out] Manufacturer
- * @param[out] ManufacturerSize
- *
- * It is the callers responsibility to free the buffer returned using FreePool()
- *
- * @return EFI_STATUS
- */
+  Function that returns Manufacturer Name of the device and string size upon on return.
+  It is the callers responsibility to free the buffer returned using FreePool().
+
+  @param[out] Manufacturer      The Manufacturer string to be returned.
+  @param[out] ManufacturerSize  The size of the Manufacturer string.
+
+  @retval EFI_SUCCESS           The Manufacturer string was successfully returned.
+  @retval EFI_UNSUPPORTED       The function is not supported.
+  @retval EFI_INVALID_PARAMETER The Manufacturer is NULL.
+  @retval EFI_OUT_OF_RESOURCES  There is not enough memory to allocate the Manufacturer string.
+**/
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetManufacturer (
@@ -58,16 +55,17 @@ MfciIdSupportGetManufacturer (
   );
 
 /**
- *
- * Get the Product Name
- *
- * @param[out] ProductName
- * @param[out] ProductNameSize
- *
- * It is the callers responsibility to free the buffer returned using FreePool()
- *
- * @return EFI_STATUS
- */
+  Function that returns the Product Name string and size upon on return.
+  It is the callers responsibility to free the buffer returned using FreePool().
+
+  @param[out] ProductName     The ProductName string to be returned.
+  @param[out] ProductNameSize The size of the ProductName string.
+
+  @retval EFI_SUCCESS           The ProductName string was successfully returned.
+  @retval EFI_UNSUPPORTED       The function is not supported.
+  @retval EFI_INVALID_PARAMETER The ProductName is NULL.
+  @retval EFI_OUT_OF_RESOURCES  There is not enough memory to allocate the ProductName string.
+**/
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetProductName (
@@ -76,15 +74,17 @@ MfciIdSupportGetProductName (
   );
 
 /**
- * Get the SerialNumber
- *
- * @param[out] SerialNumber
- * @param[out] SerialNumberSize
- *
- * It is the callers responsibility to free the buffer returned using FreePool()
- *
- * @return EFI_STATUS
- */
+  Function that returns the SerialNumber string and size upon on return.
+  It is the callers responsibility to free the buffer returned using FreePool().
+
+  @param[out] SerialNumber
+  @param[out] SerialNumberSize
+
+  @retval EFI_SUCCESS           The ProductName string was successfully returned.
+  @retval EFI_UNSUPPORTED       The function is not supported.
+  @retval EFI_INVALID_PARAMETER The ProductName is NULL.
+  @retval EFI_OUT_OF_RESOURCES  There is not enough memory to allocate the ProductName string.
+**/
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetSerialNumber (
@@ -93,15 +93,17 @@ MfciIdSupportGetSerialNumber (
   );
 
 /**
- * Get OEM1
- *
- * @param[out] Oem1
- * @param[out] Oem1Size
- *
- * It is the callers responsibility to free the buffer returned using FreePool()
- *
- * @return EFI_STATUS
- */
+  Function that returns the Oem1 string and size upon on return.
+  It is the callers responsibility to free the buffer returned using FreePool().
+
+  @param[out] Oem1      The OEM1 string to be returned.
+  @param[out] Oem1Size  The size of the OEM1 string.
+
+  @retval EFI_SUCCESS           The OEM1 string was successfully returned.
+  @retval EFI_UNSUPPORTED       The function is not supported.
+  @retval EFI_INVALID_PARAMETER The Oem1 is NULL.
+  @retval EFI_OUT_OF_RESOURCES  There is not enough memory to allocate the OEM1 string.
+**/
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem1 (
@@ -110,15 +112,17 @@ MfciIdSupportGetOem1 (
   );
 
 /**
- * Get OEM2
- *
- * @param[out] Oem2
- * @param[out] Oem2Size
- *
- * It is the callers responsibility to free the buffer returned using FreePool()
- *
- * @return EFI_STATUS
- */
+  Function that returns the Oem2 string and size upon on return.
+  It is the callers responsibility to free the buffer returned using FreePool().
+
+  @param[out] Oem2      The OEM2 string to be returned.
+  @param[out] Oem2Size  The size of the OEM2 string.
+
+  @retval EFI_SUCCESS           The OEM2 string was successfully returned.
+  @retval EFI_UNSUPPORTED       The function is not supported.
+  @retval EFI_INVALID_PARAMETER The Oem2 is NULL.
+  @retval EFI_OUT_OF_RESOURCES  There is not enough memory to allocate the OEM2 string.
+**/
 EFI_STATUS
 EFIAPI
 MfciIdSupportGetOem2 (
@@ -126,24 +130,4 @@ MfciIdSupportGetOem2 (
   OUT UINTN   *Oem2Size  OPTIONAL
   );
 
-/**
- * the following helps iterate over the functions and set the corresponding target variable names
- */
-
-// define a structure that pairs up the function pointer with the UEFI variable name
-typedef struct {
-  MFCI_DEVICE_ID_FN    DeviceIdFn;
-  CHAR16               *DeviceIdVarName;
-} MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP;
-
-// populate the array of structures that pair up the functions with variable names
-#define MFCI_TARGET_VAR_COUNT  5
-STATIC CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT] = {
-  { MfciIdSupportGetManufacturer, MFCI_MANUFACTURER_VARIABLE_NAME },
-  { MfciIdSupportGetProductName,  MFCI_PRODUCT_VARIABLE_NAME      },
-  { MfciIdSupportGetSerialNumber, MFCI_SERIALNUMBER_VARIABLE_NAME },
-  { MfciIdSupportGetOem1,         MFCI_OEM_01_VARIABLE_NAME       },
-  { MfciIdSupportGetOem2,         MFCI_OEM_02_VARIABLE_NAME       }
-};
-
-#endif //__MFCI_DEVICE_ID_SUPPORT_LIB_H__
+#endif //MFCI_DEVICE_ID_SUPPORT_LIB_H_

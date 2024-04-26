@@ -31,6 +31,27 @@
 
 #include "MfciDxe.h"
 
+/**
+ * the following helps iterate over the functions and set the corresponding target variable names
+ */
+
+// define a structure that pairs up the function pointer with the UEFI variable name
+typedef struct {
+  MFCI_DEVICE_ID_FN    DeviceIdFn;
+  CHAR16               *DeviceIdVarName;
+} MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP;
+
+// populate the array of structures that pair up the functions with variable names
+#define MFCI_TARGET_VAR_COUNT  5
+
+STATIC CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT] = {
+  { MfciIdSupportGetManufacturer, MFCI_MANUFACTURER_VARIABLE_NAME },
+  { MfciIdSupportGetProductName,  MFCI_PRODUCT_VARIABLE_NAME      },
+  { MfciIdSupportGetSerialNumber, MFCI_SERIALNUMBER_VARIABLE_NAME },
+  { MfciIdSupportGetOem1,         MFCI_OEM_01_VARIABLE_NAME       },
+  { MfciIdSupportGetOem2,         MFCI_OEM_02_VARIABLE_NAME       }
+};
+
 MFCI_POLICY_TYPE  mCurrentPolicy;
 BOOLEAN           mVarPolicyRegistered;
 
