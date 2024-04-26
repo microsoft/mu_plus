@@ -21,6 +21,16 @@
 
 #include "MfciDxe.h"
 
+CONST CHAR16  gPolicyTargetFieldVarNames[TARGET_POLICY_COUNT][MFCI_VAR_NAME_MAX_LENGTH] = {
+  MFCI_MANUFACTURER_VARIABLE_NAME,
+  MFCI_PRODUCT_VARIABLE_NAME,
+  MFCI_SERIALNUMBER_VARIABLE_NAME,
+  MFCI_OEM_01_VARIABLE_NAME,
+  MFCI_OEM_02_VARIABLE_NAME
+  // the platform has 2 nonce variables, one for verifying the current policy, another for verifying a next policy
+  // this complexity is handled elsewhere
+};
+
 STATIC
 EFI_STATUS
 GetOemField (

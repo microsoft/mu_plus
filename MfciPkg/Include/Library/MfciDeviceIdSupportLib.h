@@ -140,6 +140,9 @@ typedef struct {
   CHAR16               *DeviceIdVarName;
 } MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP;
 
-extern CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[];
+// populate the array of structures that pair up the functions with variable names
+#define MFCI_TARGET_VAR_COUNT  5
+
+extern CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT];
 
 #endif //MFCI_DEVICE_ID_SUPPORT_LIB_H_

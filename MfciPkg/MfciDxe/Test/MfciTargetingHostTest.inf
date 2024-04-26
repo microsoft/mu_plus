@@ -18,12 +18,15 @@
 
 [Sources]
   MfciTargetingHostTest.c
+  ../MfciDxe.c
   ../MfciTargeting.c
   ../../Private/Library/MfciPolicyParsingLib/MfciPolicyParsingLib.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
+  PcBdsPkg/PcBdsPkg.dec
   MfciPkg/MfciPkg.dec
   CryptoPkg/CryptoPkg.dec
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
@@ -50,3 +53,7 @@
 
 [Guids]
   gMfciVendorGuid                     ## CONSUMES
+  gMuVarPolicyDxePhaseGuid            ## CONSUMES
+  gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES
+  gMfciPolicyChangeResetGuid          ## CONSUMES
+  gMsStartOfBdsNotifyGuid             ## CONSUMES

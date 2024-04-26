@@ -22,7 +22,7 @@
 #define ID_NOT_FOUND  "Not Found"
 
 // populate the array of structures that pair up the functions with variable names
-CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[] = {
+CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT] = {
   { MfciIdSupportGetManufacturer, MFCI_MANUFACTURER_VARIABLE_NAME },
   { MfciIdSupportGetProductName,  MFCI_PRODUCT_VARIABLE_NAME      },
   { MfciIdSupportGetSerialNumber, MFCI_SERIALNUMBER_VARIABLE_NAME },
