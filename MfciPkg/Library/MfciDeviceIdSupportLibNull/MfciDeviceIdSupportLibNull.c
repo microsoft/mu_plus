@@ -13,6 +13,8 @@
 #include <Library/BaseLib.h>
 #include <Library/DebugLib.h>
 
+CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT] = { 0 };
+
 /**
  * Get the Manufacturer Name
  *

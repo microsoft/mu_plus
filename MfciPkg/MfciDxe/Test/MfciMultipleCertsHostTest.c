@@ -45,6 +45,8 @@
 #define UNIT_TEST_NAME     "Mfci Multiple Certificates Host Test"
 #define UNIT_TEST_VERSION  "0.1"
 
+CONST CHAR16  gPolicyTargetFieldVarNames[TARGET_POLICY_COUNT][MFCI_VAR_NAME_MAX_LENGTH] = { 0 };
+
 BOOLEAN
 EFIAPI
 GetRandomNumber64 (

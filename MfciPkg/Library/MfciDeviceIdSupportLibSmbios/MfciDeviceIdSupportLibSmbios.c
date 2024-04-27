@@ -21,6 +21,15 @@
 
 #define ID_NOT_FOUND  "Not Found"
 
+// populate the array of structures that pair up the functions with variable names
+CONST MFCI_DEVICE_ID_FN_TO_VAR_NAME_MAP  gDeviceIdFnToTargetVarNameMap[MFCI_TARGET_VAR_COUNT] = {
+  { MfciIdSupportGetManufacturer, MFCI_MANUFACTURER_VARIABLE_NAME },
+  { MfciIdSupportGetProductName,  MFCI_PRODUCT_VARIABLE_NAME      },
+  { MfciIdSupportGetSerialNumber, MFCI_SERIALNUMBER_VARIABLE_NAME },
+  { MfciIdSupportGetOem1,         MFCI_OEM_01_VARIABLE_NAME       },
+  { MfciIdSupportGetOem2,         MFCI_OEM_02_VARIABLE_NAME       }
+};
+
 // Note: This protocol will guarantee to be met by the Depex and located at the
 // constructor of this library, thus no null-pointer check in library code flow.
 EFI_SMBIOS_PROTOCOL  *mSmbiosProtocol;

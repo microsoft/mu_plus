@@ -21,11 +21,15 @@
 
 [Sources]
   MfciPolicyParsingUnitTestApp.c
+  ../../MfciDxe/MfciTargeting.c
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   MfciPkg/MfciPkg.dec
+
+[Guids]
+  gMfciVendorGuid   ## CONSUMES
 
 [Pcd]
   gMfciPkgTokenSpaceGuid.PcdMfciPkcs7CertBufferXdr    ## CONSUMES

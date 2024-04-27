@@ -46,28 +46,13 @@ typedef enum {
 /**
   The strings of the names in the MFCI Policy name/value pairs
 **/
-STATIC CONST CHAR16  gPolicyBlobFieldName[MFCI_POLICY_FIELD_COUNT][MFCI_POLICY_FIELD_MAX_LEN] = {
-  L"Target\\Manufacturer",
-  L"Target\\Product",
-  L"Target\\SerialNumber",
-  L"Target\\OEM_01",
-  L"Target\\OEM_02",
-  L"Target\\Nonce", // this is nonce targeted by the binary policy blob
-  L"UEFI\\Policy"
-};
+extern CONST CHAR16  gPolicyBlobFieldName[MFCI_POLICY_FIELD_COUNT][MFCI_POLICY_FIELD_MAX_LEN];
 
 /**
   A helper that maps static MFCI Policy targeting fields to their corresponding UEFI variable names
 **/
 #define TARGET_POLICY_COUNT  5
-STATIC CONST CHAR16  gPolicyTargetFieldVarNames[TARGET_POLICY_COUNT][MFCI_VAR_NAME_MAX_LENGTH] = {
-  MFCI_MANUFACTURER_VARIABLE_NAME,
-  MFCI_PRODUCT_VARIABLE_NAME,
-  MFCI_SERIALNUMBER_VARIABLE_NAME,
-  MFCI_OEM_01_VARIABLE_NAME,
-  MFCI_OEM_02_VARIABLE_NAME
-  // the platform has 2 nonce variables, one for verifying the current policy, another for verifying a next policy
-  // this complexity is handled elsewhere
-};
+
+extern CONST CHAR16  gPolicyTargetFieldVarNames[TARGET_POLICY_COUNT][MFCI_VAR_NAME_MAX_LENGTH];
 
 #endif //__MFCI_POLICY_FIELDS_H__
