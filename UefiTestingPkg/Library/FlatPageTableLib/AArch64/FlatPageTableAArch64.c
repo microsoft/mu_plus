@@ -73,6 +73,20 @@ typedef union {
 
 STATIC BOOLEAN  mHierarchicalControlEnabled = FALSE;
 
+#if !defined (__clang__) && !defined (__GNUC__)
+
+/**
+  Reads the ID_AA64MMFR1_EL1 special register.
+
+  @retval The UINT64 value of the ID_AA64MMFR1_EL1 special register.
+**/
+UINT64
+Asm_Read_ID_AA64MMFR1_EL1 (
+  VOID
+  );
+
+#else
+
 /**
   Reads the ID_AA64MMFR1_EL1 special register.
 
@@ -89,6 +103,8 @@ Asm_Read_ID_AA64MMFR1_EL1 (
 
   return value;
 }
+
+#endif
 
 /**
   Checks the ID_AA64MMFR1_EL1 and TCR special registers to see if hierarchical control is enabled.
