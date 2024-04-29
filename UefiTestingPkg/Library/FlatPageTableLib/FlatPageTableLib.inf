@@ -32,6 +32,7 @@
 
 [Sources.AARCH64]
   AArch64/FlatPageTableAArch64.c
+  AArch64/ReadMmfr1.nasm | MSFT
 
 [Packages]
   MdePkg/MdePkg.dec
