@@ -12,7 +12,7 @@ to generate a policy.
 
 ## Usage
 
-Copy the two files, DecodeUefiLog.py and UefiVaiableSupport folder to the Mfci enabled
+Copy the two files, DecodeUefiLog.py and UefiVariableSupport folder to the Mfci enabled
 system.
 
 The simplest case:
@@ -45,7 +45,7 @@ Retrieve the information necessary to generate a Mfci Policy:
   Target\OEM_02 = ""
 ```
 
-Apply a new Mfci Policy to the sytem, to be processed on reboot.
+Apply a new Mfci Policy to the system, to be processed on reboot.
 
 ```.sh
   py -3 MfciPolicy.py -a PolicyBlob.bin.p7

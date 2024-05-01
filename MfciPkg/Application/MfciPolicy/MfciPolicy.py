@@ -13,14 +13,11 @@ import argparse
 import ctypes
 from UefiVariableSupport.UefiVariablesSupportLib import UefiVariable
 
-gMfciVendorGuid = "EBA1A9D2-BF4D-4736-B680-B36AFB4DD65B"
-
-CurrentPolicyBlob = "CurrentMfciPolicyBlob"
-CurrentMfciPolicy = "CurrentMfciPolicy"
-NextPolicyBlob = "NextMfciPolicyBlob"
-
-MfciPolicyInfo = ["CurrentMfciPolicyNonce", "NextMfciPolicyNonce", "Target\\Manufacturer", "Target\\Product", "Target\\SerialNumber", "Target\\OEM_01", "Target\\OEM_02"]
-
+MFCI_VENDOR_GUID = "EBA1A9D2-BF4D-4736-B680-B36AFB4DD65B"
+CURRENT_POLICY_BLOB = "CurrentMfciPolicyBlob"
+CURRENT_MFCI_POLICY = "CurrentMfciPolicy"
+NEXT_MFCI_POLICY_BLOB = "NextMfciPolicyBlob"
+MFCI_POLICY_INFO_VARIABLES = ["CurrentMfciPolicyNonce", "NextMfciPolicyNonce", "Target\\Manufacturer", "Target\\Product", "Target\\SerialNumber", "Target\\OEM_01", "Target\\OEM_02"]
 
 def option_parser():
     parser = argparse.ArgumentParser()
@@ -79,8 +76,8 @@ def option_parser():
 def get_system_info():
     UefiVar = UefiVariable()
 
-    for Variable in MfciPolicyInfo:
-        (errorcode, data, errorstring) = UefiVar.GetUefiVar(Variable, gMfciVendorGuid)
+    for Variable in MFCI_POLICY_INFO_VARIABLES:
+        (errorcode, data, errorstring) = UefiVar.GetUefiVar(Variable, MFCI_VENDOR_GUID)
         if errorcode != 0:
             logging.critical(f"Failed to get policy variable {Variable}")
         else:
@@ -88,43 +85,40 @@ def get_system_info():
                 print(f" {Variable} = {hex(int.from_bytes(data, byteorder='little', signed=False))}")
             else:
                 print(f" {Variable} = \"{data.decode("utf16")[0:-1]}\"")
-
     return
 
 
 def get_current_mfci_policy():
     UefiVar = UefiVariable()
 
-    (errorcode, data, errorstring) = UefiVar.GetUefiVar(CurrentMfciPolicy, gMfciVendorGuid)
+    (errorcode, data, errorstring) = UefiVar.GetUefiVar(CURRENT_MFCI_POLICY, MFCI_VENDOR_GUID)
     if errorcode == 0:
         result = hex(int.from_bytes(data, byteorder="little", signed=False))
         logging.info(f" Current MFCI Policy is {result}")
-        print(f"{CurrentMfciPolicy} is {result}")
+        print(f"{CURRENT_MFCI_POLICY} is {result}")
     else:
-        logging.critical(f"Failed to get {CurrentMfciPolicy}")
+        logging.critical(f"Failed to get {CURRENT_MFCI_POLICY}")
     return
 
 
 def delete_current_mfci_policy():
     UefiVar = UefiVariable()
 
-    (errorcode, data, errorstring) = UefiVar.SetUefiVar(CurrentPolicyBlob, gMfciVendorGuid, None, 3)
+    (errorcode, data, errorstring) = UefiVar.SetUefiVar(CURRENT_POLICY_BLOB, MFCI_VENDOR_GUID, None, 3)
     if errorcode == 0:
-        logging.info(f"Failed to Delete {CurrentPolicyBlob}\n {errorcode}{errorstring}")
-        print(f"Failed to delete {CurrentPolicyBlob}")
+        logging.info(f"Failed to Delete {CURRENT_POLICY_BLOB}\n {errorcode}{errorstring}")
+        print(f"Failed to delete {CURRENT_POLICY_BLOB}")
     else:
-        logging.info(f"{CurrentPolicyBlob} was deleted")
-        print(f"{CurrentPolicyBlob} was deleted")
+        logging.info(f"{CURRENT_POLICY_BLOB} was deleted")
+        print(f"{CURRENT_POLICY_BLOB} was deleted")
         
-    (errorcode, data, errorstring) = UefiVar.SetUefiVar(NextPolicyBlob, gMfciVendorGuid, None, 3)
+    (errorcode, data, errorstring) = UefiVar.SetUefiVar(NEXT_MFCI_POLICY_BLOB, MFCI_VENDOR_GUID, None, 3)
     if errorcode == 0:
-        logging.info(f"Failed to Delete {NextPolicyBlob}\n {errorcode}{errorstring}")
-        print(f"Failed to delete {NextPolicyBlob}")
+        logging.info(f"Failed to Delete {NEXT_MFCI_POLICY_BLOB}\n {errorcode}{errorstring}")
+        print(f"Failed to delete {NEXT_MFCI_POLICY_BLOB}")
     else:
-        logging.info(f"{NextPolicyBlob} was deleted")
-        print(f"{NextPolicyBlob} was deleted")
-        
-        
+        logging.info(f"{NEXT_MFCI_POLICY_BLOB} was deleted")
+        print(f"{NEXT_MFCI_POLICY_BLOB} was deleted")
     return
 
 
@@ -134,21 +128,21 @@ def set_next_mfci_policy(policy):
         var = file.read()
         UefiVar = UefiVariable()
 
-        (errorcode, data, errorstring) = UefiVar.SetUefiVar(NextPolicyBlob, gMfciVendorGuid, var, 3)
+        (errorcode, data, errorstring) = UefiVar.SetUefiVar(NEXT_MFCI_POLICY_BLOB, MFCI_VENDOR_GUID, var, 3)
         if errorcode == 0:
             logging.info("Next Policy failed: {errorstring}")
         else:
             logging.info("Next Policy was set")
-            print(f"{NextPolicyBlob} was set")
+            print(f"{NEXT_MFCI_POLICY_BLOB} was set")
     return
 
 def get_next_mfci_policy():
     UefiVar = UefiVariable()
 
-    (errorcode, data, errorstring) = UefiVar.GetUefiVar(NextPolicyBlob, gMfciVendorGuid)
+    (errorcode, data, errorstring) = UefiVar.GetUefiVar(NEXT_MFCI_POLICY_BLOB, MFCI_VENDOR_GUID)
     if errorcode != 0:
         logging.info("No Next Mfci Policy Set")
-        print(f"No variable {NextPolicyBlob} found")
+        print(f"No variable {NEXT_MFCI_POLICY_BLOB} found")
     else:
         logging.info(f"{data}")
         print(f"{data}")
@@ -162,28 +156,27 @@ def main():
 
     if arguments.getsysteminfo:
         get_system_info()
-        return
+        return 0
 
     elif arguments.retrievepolicy:
         get_current_mfci_policy()
-        return
+        return 0
 
     elif arguments.deletepolicy:
         delete_current_mfci_policy()
-        return
+        return 0
 
     elif arguments.policyblob != "":
         if not os.path.isfile(arguments.policyblob):
             logging.critical(f"File {arguments.policyblob} does not exist")
-            return
+            return 0
 
         set_next_mfci_policy(arguments.policyblob)
-        return
+        return 0
 
     elif arguments.retrievenextpolicy:
         get_next_mfci_policy()
-        return
-
+        return 0
     return 0
 
 
