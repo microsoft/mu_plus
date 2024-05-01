@@ -71,7 +71,7 @@ class UefiVariable(object):
                 c_int,
                 c_int,
             ]
-        except:
+        except Exception:
             logging.warn(
                 "G[S]etFirmwareEnvironmentVariableW function doesn't seem to exist"
             )
