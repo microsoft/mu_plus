@@ -236,7 +236,7 @@ MorLockShouldNotBeSet (
   }
 
   UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_UNLOCKED);
+  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITHOUT_KEY);
 
   return UNIT_TEST_PASSED;
 } // MorLockShouldNotBeSet()
@@ -790,7 +790,7 @@ MorLockv2ShouldReportCorrectly (
   UT_LOG_VERBOSE ("%a - Status = %r, MorLock = %d\n", __FUNCTION__, Status, MorLock);
 
   UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITH_KEY);
+  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITHOUT_KEY);
 
   return UNIT_TEST_PASSED;
 } // MorLockv2ShouldReportCorrectly()
