@@ -179,7 +179,7 @@ InitializeInMemoryLog (
   if (!EFI_ERROR (Status)) {
     mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
     if (mLoggerInfo != NULL) {
-      mMaxAddress = TOTAL_LOG_SIZE_WITH_ALI (mLoggerInfo);
+      mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
       mBufferSize = mLoggerInfo->LogBufferSize;
     }
 

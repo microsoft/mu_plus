@@ -392,7 +392,7 @@ DxeCoreAdvancedLoggerLibConstructor (
         LoggerInfo->HdwPortInitialized = TRUE;
       }
 
-      mMaxAddress = TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo);
+      mMaxAddress = LOG_MAX_ADDRESS (LoggerInfo);
       mBufferSize = LoggerInfo->LogBufferSize;
     } else {
       DEBUG ((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));
