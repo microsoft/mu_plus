@@ -119,12 +119,13 @@ AdvancedLoggerMemoryLoggerWrite (
     Entry               = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
     Entry->MajorVersion = ADVANCED_LOGGER_MSG_MAJ_VER;
     Entry->MinorVersion = ADVANCED_LOGGER_MSG_MIN_VER;
-    Entry->TimeStamp    = GetPerformanceCounter ();    // AdvancedLoggerGetTimeStamp();
+    UINT64 test = GetPerformanceCounter();
+    CopyMem (&Entry->TimeStamp, &test, sizeof (UINT64));    // AdvancedLoggerGetTimeStamp();
     Entry->Phase        = AdvancedLoggerGetPhase ();
 
     // DebugLevel is defined as a UINTN, so it is 32 bits in PEI and 64 bits in DXE.
     // However, the DEBUG_* values and the PcdFixedDebugPrintErrorLevel are only 32 bits.
-    Entry->DebugLevel    = (UINT32)DebugLevel;
+    CopyMem (&Entry->DebugLevel, &DebugLevel, sizeof (UINT32));
     Entry->MessageOffset = OFFSET_OF (ADVANCED_LOGGER_MESSAGE_ENTRY_V2, MessageText);
     Entry->MessageLen    = (UINT16)NumberOfBytes;
     CopyMem (Entry->MessageText, Buffer, NumberOfBytes);
