@@ -439,7 +439,7 @@ AdvancedLoggerAccessLibUnitTestInitialize (
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
     mLowAddress  = PA_FROM_PTR (LOG_BUFFER_FROM_ALI (mLoggerInfo));
-    mHighAddress = PA_FROM_PTR (TOTAL_LOG_SIZE_WITH_ALI (mLoggerInfo));
+    mHighAddress = PA_FROM_PTR (LOG_MAX_ADDRESS (mLoggerInfo));
   }
 
   return Status;
@@ -466,7 +466,7 @@ AdvancedLoggerAccessLibConstructor (
   if (!EFI_ERROR (Status)) {
     mLoggerInfo  = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
     mLowAddress  = PA_FROM_PTR (LOG_BUFFER_FROM_ALI (mLoggerInfo));
-    mHighAddress = PA_FROM_PTR (TOTAL_LOG_SIZE_WITH_ALI (mLoggerInfo));
+    mHighAddress = PA_FROM_PTR (LOG_MAX_ADDRESS (mLoggerInfo));
 
     // Leave this debug message as ERROR.
 
