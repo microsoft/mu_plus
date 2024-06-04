@@ -776,7 +776,28 @@ MorLockv2ShouldBeLockable (
 
 UNIT_TEST_STATUS
 EFIAPI
-MorLockv2ShouldReportCorrectly (
+MorLockv2LockedWithoutKeyShouldReportCorrectly (
+  IN UNIT_TEST_CONTEXT  Context
+  )
+{
+  EFI_STATUS  Status;
+  UINT8       MorLock;
+
+  UT_LOG_VERBOSE ("%a()\n", __FUNCTION__);
+
+  Status = GetMorLockVariable (&MorLock);
+
+  UT_LOG_VERBOSE ("%a - Status = %r, MorLock = %d\n", __FUNCTION__, Status, MorLock);
+
+  UT_ASSERT_NOT_EFI_ERROR (Status);
+  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITHOUT_KEY);
+
+  return UNIT_TEST_PASSED;
+} // MorLockv2LockedWithoutKeyShouldReportCorrectly()
+
+UNIT_TEST_STATUS
+EFIAPI
+MorLockv2LockedWithKeyShouldReportCorrectly (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
@@ -793,7 +814,7 @@ MorLockv2ShouldReportCorrectly (
   UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITH_KEY);
 
   return UNIT_TEST_PASSED;
-} // MorLockv2ShouldReportCorrectly()
+} // MorLockv2LockedWithKeyShouldReportCorrectly()
 
 UNIT_TEST_STATUS
 EFIAPI
@@ -1040,7 +1061,7 @@ MorLockv2ShouldNotClearWithWrongKey (
   // Verify that mode is still enabled.
   Status = GetMorLockVariable (&MorLock);
   UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITH_KEY);
+  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITHOUT_KEY);
 
   return UNIT_TEST_PASSED;
 } // MorLockv2ShouldNotClearWithWrongKey()
@@ -1181,7 +1202,7 @@ MorLockv2ShouldSetClearSet (
   // Verify that mode is still enabled.
   Status = GetMorLockVariable (&MorLock);
   UT_ASSERT_NOT_EFI_ERROR (Status);
-  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITH_KEY);
+  UT_ASSERT_EQUAL (MorLock, MOR_LOCK_DATA_LOCKED_WITHOUT_KEY);
 
   return UNIT_TEST_PASSED;
 } // MorLockv2ShouldSetClearSet()
@@ -1296,14 +1317,14 @@ MorLockTestApp (
   //       reboots. So let's say this is for efficiency.
   //
   AddTestCase (MorLockV2Tests, "Should be able to set the v2 MORLock", "Security.MOR.LockV2.SetLock", MorLockv2ShouldBeLockable, MorLockShouldNotBeSet, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "Should report version correctly when locked with MORLock v2", "Security.MOR.LockV2.LockVersion", MorLockv2ShouldReportCorrectly, NULL, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "Should only return one byte when reading MORLock v2", "Security.MOR.LockV2.LockSize", MorLockv2ShouldOnlyReturnOneByte, MorLockv2ShouldReportCorrectly, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "Should not return the key contents when locked with MORLock v2", "Security.MOR.LockV2.LockDataProtection", MorLockv2ShouldNotReturnKey, MorLockv2ShouldReportCorrectly, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "Should not be able to change the MOR control when locked with MORLock v2", "Security.MOR.LockV2.Lock", MorControlShouldNotChange, MorLockv2ShouldReportCorrectly, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "Should not be able to change the key when locked with MORLock v2", "Security.MOR.LockV2.LockImmutable", MorLockv2ShouldNotChangeWhenLocked, MorLockv2ShouldReportCorrectly, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "Should not be able to change to MORLock v1 when locked with MORLock v2", "Security.MOR.LockV2.ChangeToV1Lock", MorLockv2ShouldNotChangeTov1, MorLockv2ShouldReportCorrectly, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "Should not be able to delete the MORLock when locked with MORLock v2", "Security.MOR.LockV2.LockDelete", MorLockv2ShouldNotBeDeleteable, MorLockv2ShouldReportCorrectly, NULL, NULL);
-  AddTestCase (MorLockV2Tests, "MORLock v2 should clear after reboot", "Security.MOR.MorLockV2.ClearOnReboot", MorLockShouldClearAfterReboot, MorLockv2ShouldReportCorrectly, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "Should report version correctly when locked with MORLock v2", "Security.MOR.LockV2.LockVersion", MorLockv2LockedWithKeyShouldReportCorrectly, NULL, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "Should only return one byte when reading MORLock v2", "Security.MOR.LockV2.LockSize", MorLockv2ShouldOnlyReturnOneByte, MorLockv2LockedWithKeyShouldReportCorrectly, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "Should not return the key contents when locked with MORLock v2", "Security.MOR.LockV2.LockDataProtection", MorLockv2ShouldNotReturnKey, MorLockv2LockedWithKeyShouldReportCorrectly, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "Should not be able to change the MOR control when locked with MORLock v2", "Security.MOR.LockV2.Lock", MorControlShouldNotChange, MorLockv2LockedWithKeyShouldReportCorrectly, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "Should not be able to change the key when locked with MORLock v2", "Security.MOR.LockV2.LockImmutable", MorLockv2ShouldNotChangeWhenLocked, MorLockv2LockedWithKeyShouldReportCorrectly, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "Should not be able to change to MORLock v1 when locked with MORLock v2", "Security.MOR.LockV2.ChangeToV1Lock", MorLockv2ShouldNotChangeTov1, MorLockv2LockedWithoutKeyShouldReportCorrectly, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "Should not be able to delete the MORLock when locked with MORLock v2", "Security.MOR.LockV2.LockDelete", MorLockv2ShouldNotBeDeleteable, MorLockv2LockedWithoutKeyShouldReportCorrectly, NULL, NULL);
+  AddTestCase (MorLockV2Tests, "MORLock v2 should clear after reboot", "Security.MOR.MorLockV2.ClearOnReboot", MorLockShouldClearAfterReboot, MorLockv2LockedWithoutKeyShouldReportCorrectly, NULL, NULL);
   //
   // End of tests that assume precedence.
   // From here on, each test is isolated and will clean up after itself.
