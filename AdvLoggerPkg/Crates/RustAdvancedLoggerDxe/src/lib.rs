@@ -35,6 +35,7 @@ extern crate std; //allow rustdoc links to reference std (e.g. println docs belo
 use core::{
   ffi::c_void,
   fmt::{self, Write},
+  ptr,
   sync::atomic::{AtomicPtr, Ordering},
 };
 use r_efi::{
@@ -78,21 +79,21 @@ struct AdvancedLogger {
 impl AdvancedLogger {
   // creates a new AdvancedLogger
   const fn new() -> Self {
-    AdvancedLogger { protocol: AtomicPtr::new(core::ptr::null_mut()) }
+    AdvancedLogger { protocol: AtomicPtr::new(ptr::null_mut()) }
   }
 
   // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
   fn init(&self, bs: *mut BootServices) {
     let boot_services = unsafe { bs.as_mut().expect("Boot Services Pointer is NULL") };
-    let mut ptr: *mut c_void = core::ptr::null_mut();
+    let mut ptr: *mut c_void = ptr::null_mut();
     let status = (boot_services.locate_protocol)(
       &ADVANCED_LOGGER_PROTOCOL_GUID as *const Guid as *mut Guid,
-      core::ptr::null_mut(),
-      core::ptr::addr_of_mut!(ptr),
+      ptr::null_mut(),
+      ptr::addr_of_mut!(ptr),
     );
     match status {
       Status::SUCCESS => self.protocol.store(ptr as *mut AdvancedLoggerProtocol, Ordering::SeqCst),
-      _ => self.protocol.store(core::ptr::null_mut(), Ordering::SeqCst),
+      _ => self.protocol.store(ptr::null_mut(), Ordering::SeqCst),
     }
   }
 
@@ -105,9 +106,6 @@ impl AdvancedLogger {
     }
   }
 }
-
-unsafe impl Sync for AdvancedLogger {}
-unsafe impl Send for AdvancedLogger {}
 
 struct LogTransactor<'a> {
   protocol: &'a mut AdvancedLoggerProtocol,
