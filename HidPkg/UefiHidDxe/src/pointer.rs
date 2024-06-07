@@ -18,7 +18,11 @@ use hidparser::{
   ReportDescriptor, ReportField, VariableField,
 };
 use memoffset::{offset_of, raw_field};
-use r_efi::{efi, protocols::absolute_pointer, protocols::driver_binding, system};
+use r_efi::{
+  efi,
+  protocols::{absolute_pointer, driver_binding},
+  system,
+};
 use rust_advanced_logger_dxe::{debugln, DEBUG_INFO, DEBUG_WARN};
 
 use crate::{hid::HidContext, BOOT_SERVICES};

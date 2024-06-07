@@ -84,7 +84,7 @@ impl AdvancedLogger {
 
   // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
   fn init(&self, bs: *mut BootServices) {
-    assert!(bs.is_null(), "BootServices should not be NULL");
+    assert!(!bs.is_null(), "BootServices should not be NULL");
     let boot_services = unsafe { &mut ptr::read(bs) };
 
     let mut ptr: *mut c_void = ptr::null_mut();
