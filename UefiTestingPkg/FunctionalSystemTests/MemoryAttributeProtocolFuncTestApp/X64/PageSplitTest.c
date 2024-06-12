@@ -38,14 +38,14 @@ GetUnsplitPageTableEntry (
   L4Table = (UINT64 *)AsmReadCr3 ();
 
   for (Index4 = 0x0; Index4 < 0x200; Index4++) {
-    if (!L4Table[Index4] & PAGE_TABLE_PRESENT_BIT) {
+    if (!(L4Table[Index4] & PAGE_TABLE_PRESENT_BIT)) {
       continue;
     }
 
     L3Table = (UINT64 *)(L4Table[Index4] & PAGE_TABLE_BASE_ADDRESS);
 
     for (Index3 = 0x0; Index3 < 0x200; Index3++ ) {
-      if (!L3Table[Index3] & PAGE_TABLE_PRESENT_BIT) {
+      if (!(L3Table[Index3] & PAGE_TABLE_PRESENT_BIT)) {
         continue;
       }
 

@@ -150,6 +150,7 @@ AdvLoggerOsConnectorPrmConfigLibConstructor (
       __func__
       ));
     ASSERT (FixedPcdGet32 (PcdAdvancedLoggerPages) >= sizeof (ADVANCED_LOGGER_INFO));
+    Status = EFI_BAD_BUFFER_SIZE;
     goto Done;
   }
 
@@ -161,6 +162,7 @@ AdvLoggerOsConnectorPrmConfigLibConstructor (
   mStaticDataBuffer = AllocateRuntimeZeroPool (DataBufferLength);
   if (mStaticDataBuffer == NULL) {
     DEBUG ((DEBUG_ERROR, "%a Failed to allocate static buffer\n", __func__));
+    Status = EFI_OUT_OF_RESOURCES;
     goto Done;
   }
 

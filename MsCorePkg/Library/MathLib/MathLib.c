@@ -149,7 +149,7 @@ bsr64 (
   )
 {
  #if __GNUC__ > 3 // if we are using GCC take advantage of their builtins
-  return 64 - __builtin_clzl (value);
+  return 64 - __builtin_clzll (value);
 
  #elif _MSC_VER > 1500 // if we are using MS VS compiler 15 or greater
   unsigned long  result;
