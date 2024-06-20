@@ -85,24 +85,10 @@ UnitTestSetVariable (
   IN  VOID      *Data
   );
 
-EFI_STATUS
-EFIAPI
-UnitTestLocateProtocol (
-  IN  EFI_GUID  *Protocol,
-  IN  VOID      *Registration  OPTIONAL,
-  OUT VOID      **Interface
-  );
-
 EFI_RUNTIME_SERVICES  mMockRuntime = {
   .GetVariable = UnitTestGetVariable,
   .SetVariable = UnitTestSetVariable,
 };
-
-EFI_BOOT_SERVICES  mBootSvc = {
-  .LocateProtocol = UnitTestLocateProtocol
-};
-
-EFI_BOOT_SERVICES  *gBS = &mBootSvc;
 
 extern BOOLEAN  mVarPolicyRegistered;
 
@@ -180,17 +166,6 @@ MFCI_UT_VERIFY_CONTEXT  mMfciVerifyContext05 = {
     .Nonce    = MFCI_TEST_NONCE_TARGET,
   }
 };
-
-EFI_STATUS
-EFIAPI
-UnitTestLocateProtocol (
-  IN  EFI_GUID  *Protocol,
-  IN  VOID      *Registration  OPTIONAL,
-  OUT VOID      **Interface
-  )
-{
-  return EFI_SUCCESS;
-}
 
 /**
 A mocked version of GetVariable.
