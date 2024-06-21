@@ -35,9 +35,10 @@ const GENERIC_DESKTOP_X: u32 = 0x00010030;
 const GENERIC_DESKTOP_Y: u32 = 0x00010031;
 const GENERIC_DESKTOP_Z: u32 = 0x00010032;
 const GENERIC_DESKTOP_WHEEL: u32 = 0x00010038;
-const BUTTON_PAGE: u16 = 0x0009;
 const BUTTON_MIN: u32 = 0x00090001;
 const BUTTON_MAX: u32 = 0x00090020; //Per spec, the Absolute Pointer protocol supports a 32-bit button state field.
+const DIGITIZER_SWITCH_MIN: u32 = 0x000d0042;
+const DIGITIZER_SWITCH_MAX: u32 = 0x000d0046;
 
 // number of points on the X/Y axis for this implementation.
 const AXIS_RESOLUTION: u64 = 1024;
@@ -127,6 +128,11 @@ impl PointerHidHandler {
               report_data.relevant_fields.push(field_handler);
               self.supported_usages.insert(field.usage);
             }
+            DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX => {
+              let field_handler = ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
+              report_data.relevant_fields.push(field_handler);
+              self.supported_usages.insert(field.usage);
+            }
             _ => (), //other usages irrelevant
           }
         }
@@ -197,15 +203,15 @@ impl PointerHidHandler {
 
   // handles button inputs
   fn button_handler(&mut self, field: VariableField, report: &[u8]) {
-    let shift: u32 = field.usage.into();
-    if !(BUTTON_MIN..=BUTTON_MAX).contains(&shift) {
-      return;
-    }
+    let shift = match field.usage.into() {
+      x @ BUTTON_MIN..=BUTTON_MAX => x - BUTTON_MIN,
+      x @ DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX => x - DIGITIZER_SWITCH_MIN,
+      _ => return,
+    };
 
     if let Some(button_value) = field.field_value(report) {
       let button_value = button_value as u32;
 
-      let shift = shift - BUTTON_MIN;
       if shift > u32::BITS {
         return;
       }

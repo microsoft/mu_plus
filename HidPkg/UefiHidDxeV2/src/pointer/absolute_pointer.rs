@@ -16,7 +16,7 @@ use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_INFO, DEBUG_WARN};
 
 use crate::boot_services::UefiBootServices;
 
-use super::PointerHidHandler;
+use super::{PointerHidHandler, BUTTON_MAX, BUTTON_MIN, DIGITIZER_SWITCH_MAX, DIGITIZER_SWITCH_MIN};
 
 // FFI context
 // Safety: a pointer to PointerHidHandler is included in the context so that it can be reclaimed in the absolute_pointer
@@ -129,7 +129,11 @@ impl PointerContext {
       debugln!(DEBUG_INFO, "No z-axis usages found in the report descriptor.");
     }
 
-    let button_count = pointer_handler.supported_usages.iter().filter(|x| x.page() == super::BUTTON_PAGE).count();
+    let button_count = pointer_handler
+      .supported_usages
+      .iter()
+      .filter(|x| matches!((**x).into(), BUTTON_MIN..=BUTTON_MAX | DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX))
+      .count();
 
     if button_count > 1 {
       mode.attributes |= 0x01; // alternate button exists.

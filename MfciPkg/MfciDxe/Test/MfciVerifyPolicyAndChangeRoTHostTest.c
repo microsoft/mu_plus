@@ -52,8 +52,6 @@ EFI_RUNTIME_SERVICES  mMockRuntime = {
   .SetVariable = UnitTestSetVariable,
 };
 
-EFI_BOOT_SERVICES  *gBS = NULL;
-
 extern MFCI_POLICY_TYPE  mCurrentPolicy;
 extern BOOLEAN           mVarPolicyRegistered;
 
