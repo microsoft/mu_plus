@@ -279,7 +279,7 @@ DrawRectangleOutline (
              0,
              0,
              OrigX,
-             (OrigY + Height - LineWidth),
+             (OrigY + Height - LineWidth - 1),
              Width,
              LineWidth,
              0
@@ -306,7 +306,7 @@ DrawRectangleOutline (
              EfiBltVideoFill,
              0,
              0,
-             (OrigX + Width - LineWidth),
+             (OrigX + Width - LineWidth - 1),
              OrigY,
              LineWidth,
              Height,

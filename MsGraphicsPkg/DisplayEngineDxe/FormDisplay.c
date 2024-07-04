@@ -923,8 +923,8 @@ CreateFormControls (
   //
   FormRect.Left   = mMasterFrameWidth;
   FormRect.Top    = mTitleBarHeight;
-  FormRect.Right  = mGop->Mode->Info->HorizontalResolution;
-  FormRect.Bottom = mGop->Mode->Info->VerticalResolution;
+  FormRect.Right  = mGop->Mode->Info->HorizontalResolution - 1;
+  FormRect.Bottom = mGop->Mode->Info->VerticalResolution - 1;
 
   // Create a canvas for rendering the HII form.
   //
@@ -947,10 +947,10 @@ CreateFormControls (
 
   // Set a starting position within the canvas for rendering UI controls.
   //
-  UINT32  OrigX             = (mMasterFrameWidth + ((mMasterFrameWidth * FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT) / 100));
-  UINT32  OrigY             = (mTitleBarHeight + ((mMasterFrameHeight * FP_FCANVAS_BORDER_PAD_HEIGHT_PERCENT) / 100));
-  UINT32  CanvasRightLimit  = (mGop->Mode->Info->HorizontalResolution - ((mMasterFrameWidth * FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT) / 100));
-  UINT32  CanvasBottomLimit = (mGop->Mode->Info->VerticalResolution - ((mMasterFrameHeight * FP_FCANVAS_BORDER_PAD_HEIGHT_PERCENT) / 100));
+  UINT32  OrigX             = (FormRect.Left + ((mMasterFrameWidth * FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT) / 100));
+  UINT32  OrigY             = (FormRect.Top + ((mMasterFrameHeight * FP_FCANVAS_BORDER_PAD_HEIGHT_PERCENT) / 100));
+  UINT32  CanvasRightLimit  = (FormRect.Right - ((mMasterFrameWidth * FP_FCANVAS_BORDER_PAD_WIDTH_PERCENT) / 100));
+  UINT32  CanvasBottomLimit = (FormRect.Bottom - ((mMasterFrameHeight * FP_FCANVAS_BORDER_PAD_HEIGHT_PERCENT) / 100));
 
   // Walk through the list of processed HII opcodes and create custom UI controls for each element.
   //
@@ -1055,7 +1055,7 @@ CreateFormControls (
           GridRect.Left   = OrigX;
           GridRect.Top    = OrigY;
           GridRect.Right  = CanvasRightLimit;
-          GridRect.Bottom = OrigY + (MaxRows * GridCellHeight);
+          GridRect.Bottom = OrigY + (MaxRows * GridCellHeight) - 1;
 
           // Create a grid for aligning UI controls.
           //
@@ -1093,7 +1093,7 @@ CreateFormControls (
                             &ControlRect
                             );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top);
+          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
 
           // Indicate that the grid now has scope.  Until the Grid End OpCode is encountered, all
           // controls added from this point forward will be added to the grid.
@@ -1226,7 +1226,7 @@ CreateFormControls (
 
             // Move the next control's origin down the page by the height of the current control.
             //
-            OrigY += (ControlRect.Bottom - ControlRect.Top);
+            OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
           }
         }
 
@@ -1330,7 +1330,7 @@ CreateFormControls (
 
           // Move the next control's origin down the page by the height of the current control.
           //
-          OrigY += (ControlRect.Bottom - ControlRect.Top);
+          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
         }
 
         break;
@@ -1350,8 +1350,8 @@ CreateFormControls (
         // UINT32                  LabelWidth  = (GridScope ?  : (CanvasRightLimit - LabelX));
         // UINT32                  LabelHeight = (GridScope ?  : (CanvasBottomLimit - LabelY));
         // TODO
-        UINT32  LabelWidth  = (CanvasRightLimit - LabelX);
-        UINT32  LabelHeight = (CanvasBottomLimit - LabelY);
+        UINT32  LabelWidth  = (CanvasRightLimit - LabelX + 1);
+        UINT32  LabelHeight = (CanvasBottomLimit - LabelY + 1);
         UINT32  ListWidth;
         Label   *L;
 
@@ -1415,7 +1415,7 @@ CreateFormControls (
 
           // Move the next control's origin down the page by the height of the current control.
           //
-          OrigY          += (ControlRect.Bottom - ControlRect.Top) + 40;        // TODO - appropriate buffer between listbox label and listbox?
+          OrigY          += (ControlRect.Bottom - ControlRect.Top + 1) + 40;        // TODO - appropriate buffer between listbox label and listbox?
           MenuOption->Row = OrigY;
         }
 
@@ -1550,7 +1550,7 @@ CreateFormControls (
                      &ControlRect
                      );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top);
+          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
         }
 
         break;
@@ -1561,8 +1561,8 @@ CreateFormControls (
         UINT32          LabelX      = (GridScope ? 0 : (UINT32)MenuOption->Col);
         UINT32          LabelY      = (GridScope ? 0 : (UINT32)MenuOption->Row);
         EFI_IFR_STRING  *String     = (EFI_IFR_STRING *)Statement->OpCode;
-        UINT32          LabelWidth  = (CanvasRightLimit - LabelX);
-        UINT32          LabelHeight = (CanvasBottomLimit - LabelY);
+        UINT32          LabelWidth  = (CanvasRightLimit - LabelX + 1);
+        UINT32          LabelHeight = (CanvasBottomLimit - LabelY + 1);
 
         Label  *L = new_Label (
                       LabelX,
@@ -1615,7 +1615,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY          += (ControlRect.Bottom - ControlRect.Top);
+          OrigY          += (ControlRect.Bottom - ControlRect.Top + 1);
           MenuOption->Row = OrigY;
         }
 
@@ -1686,7 +1686,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top);
+          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
         }
 
         if (String->Question.Flags & EFI_IFR_FLAG_READ_ONLY) {
@@ -1703,8 +1703,8 @@ CreateFormControls (
         // UINT32                  LabelWidth  = (GridScope ?  : (CanvasRightLimit - LabelX));
         // UINT32                  LabelHeight = (GridScope ?  : (CanvasBottomLimit - LabelY));
         // TODO
-        UINT32  LabelWidth  = (CanvasRightLimit - LabelX);
-        UINT32  LabelHeight = (CanvasBottomLimit - LabelY);
+        UINT32  LabelWidth  = (CanvasRightLimit - LabelX + 1);
+        UINT32  LabelHeight = (CanvasBottomLimit - LabelY + 1);
 
         EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *TextColor = &gMsColorTable.LabelTextNormalColor;        // DCR (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &gMsColorTable.LabelTextLargeColor : &gMsColorTable.LabelTextNormalColor;
 
@@ -1770,7 +1770,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top);
+          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
         }
 
         break;
@@ -1783,8 +1783,8 @@ CreateFormControls (
         // UINT32                  LabelWidth  = (GridScope ?  : (CanvasRightLimit - LabelX));
         // UINT32                  LabelHeight = (GridScope ?  : (CanvasBottomLimit - LabelY));
         // TODO
-        UINT32  LabelWidth  = (CanvasRightLimit - LabelX);
-        UINT32  LabelHeight = (CanvasBottomLimit - LabelY);
+        UINT32  LabelWidth  = (CanvasRightLimit - LabelX + 1);
+        UINT32  LabelHeight = (CanvasBottomLimit - LabelY + 1);
 
         Label  *L = new_Label (
                       LabelX,
@@ -1837,7 +1837,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY          += (ControlRect.Bottom - ControlRect.Top);
+          OrigY          += (ControlRect.Bottom - ControlRect.Top + 1);
           MenuOption->Row = OrigY;
         }
 
@@ -1914,7 +1914,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top);
+          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
         }
 
         break;

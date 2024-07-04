@@ -114,8 +114,8 @@ DrawElongatedCircle (
     Xarc = sqrt_d ((double)((HalfHeight * HalfHeight) - (Step * Step)));           // Not sure why '^' doesn't work.
 
     Xstart = (OrigX - (UINT32)Xarc);
-    Xend   = (OrigX + Width + (UINT32)Xarc);
-    Length = (Xend - Xstart);
+    Xend   = (OrigX + Width + (UINT32)Xarc - 1);
+    Length = (Xend - Xstart + 1);
 
     Y1 = (OrigY + HalfHeight - Step);
     Y2 = (OrigY + HalfHeight + Step);
@@ -667,7 +667,7 @@ Draw (
       this->m_pToggleSwitch->State = NORMAL;            // Indicate not selected at this time.
       // Calculate whether switch should be turned on or off.
       //
-      if (pInputState->State.TouchState.CurrentX < (pRect->Left + ((pRect->Right - pRect->Left) / 2))) {
+      if (pInputState->State.TouchState.CurrentX < (pRect->Left + ((pRect->Right - pRect->Left + 1) / 2))) {
         if (TRUE == this->m_CurrentState) {
           this->m_pToggleSwitch->State = SELECT;                // Mouse button isn't pressed and switch will move On -> Off - select.
           Context                      = this->m_pSelectionContext;

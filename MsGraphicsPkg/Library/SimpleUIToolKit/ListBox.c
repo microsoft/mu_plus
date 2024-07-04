@@ -208,9 +208,9 @@ RenderCellTrashcan (
   pBltBuffer->Image.Screen = mUITGop;
 
   Left = this->m_pCells[CellIndex].CellTrashcanBounds.Left +
-         (this->m_pCells[CellIndex].CellTrashcanBounds.Right - this->m_pCells[CellIndex].CellTrashcanBounds.Left -  MsUiGetLargeFontHeight ()) / 2;
+         (this->m_pCells[CellIndex].CellTrashcanBounds.Right - this->m_pCells[CellIndex].CellTrashcanBounds.Left + 1 -  MsUiGetLargeFontWidth ()) / 2;
   Top = this->m_pCells[CellIndex].CellTrashcanBounds.Top +
-        (this->m_pCells[CellIndex].CellTrashcanBounds.Bottom - this->m_pCells[CellIndex].CellTrashcanBounds.Top -  MsUiGetLargeFontHeight ()) / 2;
+        (this->m_pCells[CellIndex].CellTrashcanBounds.Bottom - this->m_pCells[CellIndex].CellTrashcanBounds.Top + 1 -  MsUiGetLargeFontHeight ()) / 2;
 
   Status = mUITSWM->StringToWindow (
                       mUITSWM,
@@ -931,7 +931,7 @@ Ctor (
   this->m_ListBoxBounds.Left   = CellBox.Left;
   this->m_ListBoxBounds.Top    = CellBox.Top;
   this->m_ListBoxBounds.Right  = CellBox.Right;
-  this->m_ListBoxBounds.Bottom = (CellBox.Top + ((CellBox.Bottom - CellBox.Top + 1) * this->m_NumberOfCells));
+  this->m_ListBoxBounds.Bottom = (CellBox.Top + ((CellBox.Bottom - CellBox.Top + 1) * this->m_NumberOfCells) - 1);
 
   this->m_pCells = AllocateZeroPool (this->m_NumberOfCells * sizeof (CellDisplayInfo));
   ASSERT (NULL != this->m_pCells);
@@ -962,7 +962,7 @@ Ctor (
       CopyMem (&this->m_pCells[Index].CellCheckBoxBounds, CellBounds, sizeof (SWM_RECT));
 
       CheckBoxHitAreaWidth                           = (CellBounds->Bottom - CellBounds->Top + 1);
-      this->m_pCells[Index].CellCheckBoxBounds.Right = (CellBounds->Left + CheckBoxHitAreaWidth);
+      this->m_pCells[Index].CellCheckBoxBounds.Right = (CellBounds->Left + CheckBoxHitAreaWidth - 1);
     }
 
     // If this is a checkbox type ListBox, compute the checkbox bounding rectangle.
@@ -973,7 +973,7 @@ Ctor (
       CopyMem (&this->m_pCells[Index].CellTrashcanBounds, CellBounds, sizeof (SWM_RECT));
 
       TrashcanHitAreaWidth                          = (CellBounds->Bottom - CellBounds->Top + 1);
-      this->m_pCells[Index].CellTrashcanBounds.Left = (CellBounds->Right - TrashcanHitAreaWidth);
+      this->m_pCells[Index].CellTrashcanBounds.Left = (CellBounds->Right - TrashcanHitAreaWidth + 1);
     }
 
     // Calculate cell text bounding rectangle (cell text should be vertically centered in the cell, accounting for the maximum font glyph descent).  Also,

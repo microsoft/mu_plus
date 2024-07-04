@@ -194,8 +194,8 @@ CreateDialogControls (
   CaptionLabel = new_Label (
                    ControlOrigX,
                    ControlOrigY,
-                   (DialogBounds.Right - ControlOrigX - ((DialogWidth * SWM_PWD_DIALOG_CAPTION_X_PERCENT) / 100)),
-                   (DialogBounds.Bottom - ControlOrigY),                  // In theory we could take up the entire dialog.
+                   (DialogBounds.Right - ControlOrigX + 1 - ((DialogWidth * SWM_PWD_DIALOG_CAPTION_X_PERCENT) / 100)),
+                   (DialogBounds.Bottom - ControlOrigY + 1),                  // In theory we could take up the entire dialog.
                    &FontInfo,
                    &DialogTheme.DialogTextColor,
                    &DialogTheme.DialogBackGroundColor,
@@ -235,8 +235,8 @@ CreateDialogControls (
   BodyLabel = new_Label (
                 ControlOrigX,
                 ControlOrigY,
-                (DialogBounds.Right - ControlOrigX - ((DialogWidth * SWM_PWD_DIALOG_RIGHT_PADDING_PERCENT) / 100)),
-                (DialogBounds.Bottom - ControlOrigY),                  // In theory we could take up the entire dialog.
+                (DialogBounds.Right - ControlOrigX + 1 - ((DialogWidth * SWM_PWD_DIALOG_RIGHT_PADDING_PERCENT) / 100)),
+                (DialogBounds.Bottom - ControlOrigY + 1),                  // In theory we could take up the entire dialog.
                 &FontInfo,
                 &DialogTheme.DialogTextColor,
                 &DialogTheme.DialogBackGroundColor,
@@ -605,7 +605,7 @@ DrawDialogFrame (
           FrameRect.Left,
           FrameRect.Top,
           (FrameRect.Right - FrameRect.Left + 1),
-          (CanvasRect.Top - FrameRect.Top + 1),
+          (CanvasRect.Top - FrameRect.Top),
           0
           );
 
@@ -618,7 +618,7 @@ DrawDialogFrame (
           0,
           FrameRect.Left,
           CanvasRect.Top,
-          (CanvasRect.Left - FrameRect.Left + 1),
+          (CanvasRect.Left - FrameRect.Left),
           (FrameRect.Bottom - CanvasRect.Top + 1),
           0
           );
@@ -630,9 +630,9 @@ DrawDialogFrame (
           EfiBltVideoFill,
           0,
           0,
-          CanvasRect.Right,
+          CanvasRect.Right + 1,
           CanvasRect.Top,
-          (FrameRect.Right - CanvasRect.Right + 1),
+          (FrameRect.Right - CanvasRect.Right),
           (FrameRect.Bottom - CanvasRect.Top + 1),
           0
           );
@@ -645,9 +645,9 @@ DrawDialogFrame (
           0,
           0,
           CanvasRect.Left,
-          CanvasRect.Bottom,
+          CanvasRect.Bottom + 1,
           (CanvasRect.Right - CanvasRect.Left + 1),
-          (FrameRect.Bottom - CanvasRect.Bottom + 1),
+          (FrameRect.Bottom - CanvasRect.Bottom),
           0
           );
 

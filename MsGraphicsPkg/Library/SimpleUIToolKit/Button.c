@@ -81,7 +81,7 @@ RenderButton (
   // Compute button width and height.
   //
   Width  = (this->m_pButton->ButtonBounds.Right - this->m_pButton->ButtonBounds.Left + 1);
-  Height = (this->m_pButton->ButtonBounds.Bottom - this->m_pButton->ButtonBounds.Top) + 1;
+  Height = (this->m_pButton->ButtonBounds.Bottom - this->m_pButton->ButtonBounds.Top + 1);
 
   // Draw the button's - outer rectangle first.
   //
@@ -186,13 +186,13 @@ SetControlBounds (
   // Translate (and possibly resize) button text bounding box.
   //
   SWM_RECT  *TextRect  = &this->m_pButton->ButtonTextBounds;
-  UINT32    TextWidth  = (TextRect->Right - TextRect->Left);
-  UINT32    TextHeight = (TextRect->Bottom - TextRect->Top);
+  UINT32    TextWidth  = (TextRect->Right - TextRect->Left + 1);
+  UINT32    TextHeight = (TextRect->Bottom - TextRect->Top + 1);
 
   Bounds.Left  += TextOffsetX;
   Bounds.Top   += TextOffsetY;
-  Bounds.Right  = ((Bounds.Left + TextWidth) < Bounds.Right ? (Bounds.Right + TextWidth) : Bounds.Right);
-  Bounds.Bottom = ((Bounds.Top + TextHeight) < Bounds.Bottom ? (Bounds.Top + TextHeight) : Bounds.Bottom);
+  Bounds.Right  = ((Bounds.Left + TextWidth - 1) < Bounds.Right ? (Bounds.Right + TextWidth - 1) : Bounds.Right);
+  Bounds.Bottom = ((Bounds.Top + TextHeight - 1) < Bounds.Bottom ? (Bounds.Top + TextHeight - 1) : Bounds.Bottom);
 
   CopyMem (&this->m_pButton->ButtonTextBounds, &Bounds, sizeof (SWM_RECT));
 
@@ -428,9 +428,9 @@ Ctor (
   UINT32  StringHeight = (this->m_pButton->ButtonTextBounds.Bottom - this->m_pButton->ButtonTextBounds.Top + 1);
 
   this->m_pButton->ButtonTextBounds.Left   += ((ButtonWidth / 2) - (StringWidth / 2));
-  this->m_pButton->ButtonTextBounds.Right  += ((ButtonWidth / 2) - (StringWidth / 2));
+  this->m_pButton->ButtonTextBounds.Right  += ((ButtonWidth / 2) - (StringWidth / 2) - 1);
   this->m_pButton->ButtonTextBounds.Top    += ((ButtonHeight / 2) - ((StringHeight - MaxGlyphDescent) / 2));
-  this->m_pButton->ButtonTextBounds.Bottom += ((ButtonHeight / 2) - ((StringHeight - MaxGlyphDescent) / 2));
+  this->m_pButton->ButtonTextBounds.Bottom += ((ButtonHeight / 2) - ((StringHeight - MaxGlyphDescent) / 2) - 1);
 
   // Configure button state.
   //

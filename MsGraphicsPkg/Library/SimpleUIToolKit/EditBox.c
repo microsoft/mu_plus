@@ -161,8 +161,8 @@ RenderEditBox (
     DrawRectangleOutline (
       this->m_EditBoxBounds.Left,
       this->m_EditBoxBounds.Top,
-      this->m_EditBoxBounds.Right - this->m_EditBoxBounds.Left - 1,
-      this->m_EditBoxBounds.Bottom - this->m_EditBoxBounds.Top - 1,
+      this->m_EditBoxBounds.Right - this->m_EditBoxBounds.Left + 1,
+      this->m_EditBoxBounds.Bottom - this->m_EditBoxBounds.Top + 1,
       UIT_E_HIGHLIGHT_RING_WIDTH,
       &gMsColorTable.EditBoxHighlightBoundColor
       );
@@ -210,8 +210,8 @@ SetControlBounds (
 
   Bounds.Left  += TextOffsetX;
   Bounds.Top   += TextOffsetY;
-  Bounds.Right  = ((Bounds.Left + TextWidth) < Bounds.Right ? (Bounds.Right + TextWidth) : Bounds.Right);
-  Bounds.Bottom = ((Bounds.Top + TextHeight) < Bounds.Bottom ? (Bounds.Top + TextHeight) : Bounds.Bottom);
+  Bounds.Right  = ((Bounds.Left + TextWidth - 1) < Bounds.Right ? (Bounds.Right + TextWidth - 1) : Bounds.Right);
+  Bounds.Bottom = ((Bounds.Top + TextHeight - 1) < Bounds.Bottom ? (Bounds.Top + TextHeight - 1) : Bounds.Bottom);
 
   CopyMem (&this->m_EditBoxTextBounds, &Bounds, sizeof (SWM_RECT));
 
@@ -660,8 +660,8 @@ Ctor (
 
   this->m_EditBoxBounds.Left   = OrigX;
   this->m_EditBoxBounds.Top    = OrigY;
-  this->m_EditBoxBounds.Right  = (OrigX + TextWidth + (UIT_EDITBOX_HORIZONTAL_PADDING * 2));            // At beginning and end of editbox text.
-  this->m_EditBoxBounds.Bottom = (OrigY + TextHeight + (UIT_EDITBOX_VERTICAL_PADDING * 2));             // At top and bottom of editbox text.
+  this->m_EditBoxBounds.Right  = (OrigX + TextWidth + (UIT_EDITBOX_HORIZONTAL_PADDING * 2) - 1);            // At beginning and end of editbox text.
+  this->m_EditBoxBounds.Bottom = (OrigY + TextHeight + (UIT_EDITBOX_VERTICAL_PADDING * 2) - 1);             // At top and bottom of editbox text.
 
   // Compute EditBox text bounding rectangle (based on max display string length).
   //
