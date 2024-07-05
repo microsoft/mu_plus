@@ -12,6 +12,7 @@
   MODULE_TYPE                    = UEFI_APPLICATION
   VERSION_STRING                 = 1.0
   ENTRY_POINT                    = EntryPoint
+  UEFI_HII_RESOURCE_SECTION      = TRUE
 
 #
 # The following information is for reference only and not required by the build tools.
@@ -21,7 +22,9 @@
 
 [Sources]
   LogDumper.c
+  LogDumperCommon.c
   LogDumper.h
+  LogDumper.uni
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -34,6 +37,9 @@
 
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize
+
+[Protocols]
+  gEfiHiiPackageListProtocolGuid                  ## CONSUMES
 
 [LibraryClasses]
   AdvancedLoggerAccessLib
