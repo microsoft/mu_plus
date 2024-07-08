@@ -8,7 +8,7 @@
 
 [Defines]
   INF_VERSION                    = 0x00010006
-  BASE_NAME                      = AdvancedLogDumperDyanmicCommand
+  BASE_NAME                      = AdvancedLogDumperDynamicCommand
   FILE_GUID                      = DFC593A6-7236-46F8-AB79-751D259D17D3
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
