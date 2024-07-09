@@ -3,7 +3,7 @@ LogDumper.c
 
 This application will dump the AdvancedLog to a file.
 
-Copyright (C) Microsoft Corporation. All rights reserved.
+Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
