@@ -1,5 +1,5 @@
 /** @file
-LogDumper.c
+LogDumperDynamicCommand.c
 
 This application will dump the AdvancedLog to a file.
 

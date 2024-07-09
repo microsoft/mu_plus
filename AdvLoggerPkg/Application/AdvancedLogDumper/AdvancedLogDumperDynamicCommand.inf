@@ -23,7 +23,7 @@
 #
 
 [Sources]
-  LogDumperDynamiCommand.c
+  LogDumperDynamicCommand.c
   LogDumperCommon.c
   LogDumper.h
   LogDumper.uni
