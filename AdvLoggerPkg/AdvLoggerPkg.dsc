@@ -63,12 +63,12 @@
   NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
 
   ShellLib|ShellPkg/Library/UefiShellLib/UefiShellLib.inf
+  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
   AdvancedLoggerAccessLib|AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
 
 [LibraryClasses.common.UEFI_APPLICATION]
   UnitTestPersistenceLib|UnitTestFrameworkPkg/Library/UnitTestPersistenceLibSimpleFileSystem/UnitTestPersistenceLibSimpleFileSystem.inf
   UnitTestResultReportLib|XmlSupportPkg/Library/UnitTestResultReportJUnitFormatLib/UnitTestResultReportLib.inf
-  FileHandleLib|MdePkg/Library/UefiFileHandleLib/UefiFileHandleLib.inf
 
 [LibraryClasses.X64]
   SynchronizationLib|MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
@@ -118,10 +118,6 @@
   AdvLoggerPkg/Library/BasePanicLibAdvancedLogger/BasePanicLibAdvancedLogger.inf
   AdvLoggerPkg/AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.inf
   AdvLoggerPkg/AdvLoggerOsConnectorPrm/Library/AdvLoggerOsConnectorPrmConfigLib/AdvLoggerOsConnectorPrmConfigLib.inf
-  AdvLoggerPkg/Application/AdvancedLogDumper/AdvancedLogDumperDynamicCommand.inf {
-   <PcdsFixedAtBuild>
-      gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|FALSE
-  } 
 
 [Components.IA32]
   AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf
@@ -157,6 +153,11 @@
   AdvLoggerPkg/Library/AssertTelemetryLib/AssertLib.inf
   AdvLoggerPkg/UnitTests/LineParser/LineParserTestApp.inf
   AdvLoggerPkg/UnitTests/AdvancedLoggerWrapper/AdvancedLoggerWrapperTestApp.inf
+  AdvLoggerPkg/Application/AdvancedLogDumper/AdvancedLogDumperDynamicCommand.inf {
+   <PcdsFixedAtBuild>
+      gEfiShellPkgTokenSpaceGuid.PcdShellLibAutoInitialize|FALSE
+  }
+
 
 [BuildOptions]
 #force deprecated interfaces off
