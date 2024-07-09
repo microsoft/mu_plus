@@ -36,7 +36,6 @@ extern EFI_HII_HANDLE                             gAdvLogHiiHandle;
   @retval EFI_INVALID_PARAMETER The FileHandle was bad or null
   @retval Others                Errors passed from GetVariable or ShellWriteFile
  */
-
 EFI_STATUS
 EFIAPI
 RawDumpToFile (
