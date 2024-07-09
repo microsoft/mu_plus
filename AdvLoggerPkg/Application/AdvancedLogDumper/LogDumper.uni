@@ -6,8 +6,6 @@ String definitions for AdvancedLogDumper command
 Copyright (C) Microsoft Corporation.
 SPDX-License-Identifier: BSD-2-Clause-Patent
 
-
-
 /=#
 
 #langdef   en-US "english"
@@ -18,5 +16,3 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 "  -h  Print this Help\n"
 "  -r  Dump the raw Advanced Logger binary data\n"
 "  -v  Print verbose messages\n"
-
-
