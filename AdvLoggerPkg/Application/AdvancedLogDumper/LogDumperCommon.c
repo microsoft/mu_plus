@@ -25,15 +25,18 @@ STATIC ADVANCED_LOGGER_ACCESS_MESSAGE_LINE_ENTRY  mAccessEntry = { 0 };
 extern EFI_HII_HANDLE                             gAdvLogHiiHandle;
 
 /**
- * Requests the Advanced Logger variables and dumps the raw file to a file
- * @param[in] FileHandle         The handle of the file we want to write to
- * @param[in] Verbose            Whether debugging statements should be written out to console
- * @retval EFI_SUCCESS           We were able to write to the file
- * @retval EFI_OUT_OF_RESOURCES  We failed to allocate a buffer
- * @retval EFI_NOT_FOUND         If AdvLogger didn't create a buffer or isn't installed
- * @retval EFI_INVALID_PARAMETER The FileHandle was bad or null
- * @retval Others                Errors passed from GetVariable or ShellWriteFile
+  Requests the Advanced Logger variables and dumps the raw file to a file
+
+  @param[in] FileHandle         The handle of the file we want to write to
+  @param[in] Verbose            Whether debugging statements should be written out to console
+
+  @retval EFI_SUCCESS           We were able to write to the file
+  @retval EFI_OUT_OF_RESOURCES  We failed to allocate a buffer
+  @retval EFI_NOT_FOUND         If AdvLogger didn't create a buffer or isn't installed
+  @retval EFI_INVALID_PARAMETER The FileHandle was bad or null
+  @retval Others                Errors passed from GetVariable or ShellWriteFile
  */
+
 EFI_STATUS
 EFIAPI
 RawDumpToFile (
