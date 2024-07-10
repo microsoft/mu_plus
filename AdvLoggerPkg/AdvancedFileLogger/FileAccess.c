@@ -24,43 +24,6 @@ STATIC DEBUG_LOG_FILE_INFO  mLogFiles[] = {
 #define DEBUG_LOG_FILE_COUNT  ARRAY_SIZE(mLogFiles)
 
 /**
-  CheckIfNVME
-
-  Checks if the device path is an NVME device path.
-
-  @param Handle     Handle with Device Path protocol
-
-  @retval  TRUE     Device is NVME
-  @retval  FALSE    Device is NOT NVME or Unable to get Device Path.
-
-  **/
-STATIC
-BOOLEAN
-CheckIfNVME (
-  IN EFI_HANDLE  Handle
-  )
-{
-  EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
-
-  DevicePath = DevicePathFromHandle (Handle);
-  if (DevicePath == NULL) {
-    return FALSE;
-  }
-
-  while (!IsDevicePathEnd (DevicePath)) {
-    if ((MESSAGING_DEVICE_PATH == DevicePathType (DevicePath)) &&
-        (MSG_NVME_NAMESPACE_DP == DevicePathSubType (DevicePath)))
-    {
-      return TRUE;
-    }
-
-    DevicePath = NextDevicePathNode (DevicePath);
-  }
-
-  return FALSE;
-}
-
-/**
   VolumeFromFileSystemHandle
 
   LogDevice->Handle must have a FileSystemProtocol on it.  Get the FileSystemProtocol
@@ -141,13 +104,6 @@ VolumeFromFileSystemHandle (
                      );
 
   if (EFI_ERROR (Status)) {
-    // Logs directory doesn't exist.  If NVME, allow forced logging
-    if (!CheckIfNVME (LogDevice->Handle)) {
-      DEBUG ((DEBUG_INFO, "Logs directory not found on device.  No logging.\n"));
-      Volume->Close (Volume);
-      return NULL;
-    }
-
     // Logs directory doesn't exist, see if we can create the Logs directory.
     if (!FeaturePcdGet (PcdAdvancedFileLoggerForceEnable)) {
       DEBUG ((DEBUG_INFO, "Creating the Logs directory is not allowed.\n"));
