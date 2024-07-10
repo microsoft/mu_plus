@@ -1,5 +1,6 @@
 ## @file
-# EFI Shell app that dumps the advanced logger to a bin file or a text file
+# UEFI driver that adds the AdvLogDump command support to UEFI Shell
+# The command helps to dump the advanced logger to a bin file or a text file
 #
 # Copyright (c) Microsoft Corporation
 # SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -7,11 +8,12 @@
 
 [Defines]
   INF_VERSION                    = 0x00010006
-  BASE_NAME                      = AdvancedLogDumper
-  FILE_GUID                      = 08891c80-1658-443a-bcb2-a0b5e5783ec7
-  MODULE_TYPE                    = UEFI_APPLICATION
+  BASE_NAME                      = AdvancedLogDumperDynamicCommand
+  FILE_GUID                      = DFC593A6-7236-46F8-AB79-751D259D17D3
+  MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = EntryPoint
+  ENTRY_POINT                    = AdvancedLogDumperEntryPoint
+  UNLOAD_IMAGE                   = AdvancedLogDumperUnload
   UEFI_HII_RESOURCE_SECTION      = TRUE
 
 #
@@ -21,7 +23,7 @@
 #
 
 [Sources]
-  LogDumper.c
+  LogDumperDynamicCommand.c
   LogDumperCommon.c
   LogDumper.h
   LogDumper.uni
@@ -38,9 +40,6 @@
 [Pcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize
 
-[Protocols]
-  gEfiHiiPackageListProtocolGuid                  ## CONSUMES
-
 [LibraryClasses]
   AdvancedLoggerAccessLib
   DebugLib
@@ -48,6 +47,15 @@
   PcdLib
   PrintLib
   ShellLib
-  UefiApplicationEntryPoint
   UefiLib
   UefiRuntimeServicesTableLib
+  UefiBootServicesTableLib
+  UefiDriverEntryPoint
+  HiiLib
+
+[Protocols]
+  gEfiHiiPackageListProtocolGuid                  ## CONSUMES
+  gEfiShellDynamicCommandProtocolGuid             ## PRODUCES
+
+[Depex]
+  TRUE

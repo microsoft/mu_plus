@@ -26,5 +26,20 @@
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/UefiHiiServicesLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/HiiLib.h>
+
+EFI_STATUS
+EFIAPI
+AdvLogDumperInternalWorker (
+  IN EFI_HANDLE        ImageHandle,
+  IN EFI_SYSTEM_TABLE  *SystemTable
+  );
+
+EFI_HII_HANDLE
+InitializeHiiPackage (
+  EFI_HANDLE  ImageHandle
+  );
 
 #endif // __LOG_DUMPER_H__
