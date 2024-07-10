@@ -155,6 +155,8 @@ typedef struct {
 //
 #define ADVANCED_LOGGER_LOCATOR_NAME  L"AdvLoggerLocator"
 
+#define ERROR_IDENTIFIER  "[LOG_ERROR]"
+
 extern EFI_GUID  gAdvancedLoggerHobGuid;
 
 #endif // __ADVANCED_LOGGER_INTERNAL_H__

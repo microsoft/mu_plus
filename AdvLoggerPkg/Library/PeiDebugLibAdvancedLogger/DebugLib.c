@@ -69,6 +69,10 @@ DebugVPrint (
              (VOID **)&AdvLoggerPpi
              );
   if (Status == EFI_SUCCESS) {
+    if (ErrorLevel == DEBUG_ERROR) {
+      AdvLoggerPpi->AdvancedLoggerPrintPpi (ErrorLevel, ERROR_IDENTIFIER, VaListMarker);
+    }
+
     AdvLoggerPpi->AdvancedLoggerPrintPpi (ErrorLevel, Format, VaListMarker);
   }
 }
