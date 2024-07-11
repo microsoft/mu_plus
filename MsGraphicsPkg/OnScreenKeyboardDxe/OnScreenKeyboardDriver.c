@@ -1070,10 +1070,13 @@ GetKeyboardIconBoundingRect (
       break;
   }
 
-  pRect->Left   = IconOrigX;
-  pRect->Top    = IconOrigY;
-  pRect->Right  = (IconOrigX + IconWidth  - 1);
-  pRect->Bottom = (IconOrigY + IconHeight - 1);
+  SWM_RECT_INIT2 (
+    *pRect,
+    IconOrigX,
+    IconOrigY,
+    IconWidth,
+    IconHeight
+    );
 
   return;
 }
@@ -1091,10 +1094,13 @@ GetKeyboardBoundingRect (
   OUT SWM_RECT  *pRect
   )
 {
-  pRect->Left   = (UINT32)mOSK.KeyboardRectXformed.topL.pt.x;
-  pRect->Top    = (UINT32)mOSK.KeyboardRectXformed.topL.pt.y;
-  pRect->Right  = (UINT32)mOSK.KeyboardRectXformed.topR.pt.x;
-  pRect->Bottom = (UINT32)mOSK.KeyboardRectXformed.botL.pt.y;
+  SWM_RECT_INIT (
+    *pRect,
+    (UINT32)mOSK.KeyboardRectXformed.topL.pt.x,
+    (UINT32)mOSK.KeyboardRectXformed.topL.pt.y,
+    (UINT32)mOSK.KeyboardRectXformed.topR.pt.x,
+    (UINT32)mOSK.KeyboardRectXformed.botL.pt.y
+    );
 
   return;
 }
@@ -1136,8 +1142,8 @@ RenderKeyboard (
   // Determine the keyboard outer bounding rectangle
   //
   GetKeyboardBoundingRect (&Rect);
-  KeyboardWidth  = (Rect.Right - Rect.Left + 1);
-  KeyboardHeight = (Rect.Bottom - Rect.Top + 1);
+  KeyboardWidth  = SWM_RECT_WIDTH (Rect);
+  KeyboardHeight = SWM_RECT_HEIGHT (Rect);
 
   // If the keyboard hasn't (visually) changed, we can just blt the captured buffer for better performance
   //
@@ -1175,7 +1181,7 @@ RenderKeyboard (
                     Rect.Left,
                     Rect.Top,
                     KeyboardWidth,
-                    (Rect.Bottom - Rect.Top + 1),
+                    SWM_RECT_HEIGHT (Rect),
                     KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
                     );
 
@@ -1260,8 +1266,8 @@ RenderKeyboard (
       continue;
     }
 
-    KeyWidth  = (mOSK.KeyList[Count].KeyDisplayHitRect.Right  - mOSK.KeyList[Count].KeyDisplayHitRect.Left + 1);
-    KeyHeight = (mOSK.KeyList[Count].KeyDisplayHitRect.Bottom - mOSK.KeyList[Count].KeyDisplayHitRect.Top + 1);
+    KeyWidth  = SWM_RECT_WIDTH (mOSK.KeyList[Count].KeyDisplayHitRect);
+    KeyHeight = SWM_RECT_HEIGHT (mOSK.KeyList[Count].KeyDisplayHitRect);
     KeyOrigX  =  mOSK.KeyList[Count].KeyDisplayHitRect.Left;
     KeyOrigY  =  mOSK.KeyList[Count].KeyDisplayHitRect.Top;
 
@@ -1532,8 +1538,8 @@ SetKeyboardPosition (
   // Get current keyboard location and size
   //
   GetKeyboardBoundingRect (&Rect);
-  KeyboardWidth  = (Rect.Right - Rect.Left + 1);
-  KeyboardHeight = (Rect.Bottom - Rect.Top + 1);
+  KeyboardWidth  = SWM_RECT_WIDTH (Rect);
+  KeyboardHeight = SWM_RECT_HEIGHT (Rect);
 
   // Save keyboard position for later use.
   //
@@ -3171,10 +3177,13 @@ OSKDriverInit (
 
   // Full screen.
   //
-  FrameRect.Left   = 0;
-  FrameRect.Top    = 0;
-  FrameRect.Right  = mGop->Mode->Info->HorizontalResolution - 1;
-  FrameRect.Bottom = mGop->Mode->Info->VerticalResolution - 1;
+  SWM_RECT_INIT2 (
+    FrameRect,
+    0,
+    0,
+    mGop->Mode->Info->HorizontalResolution,
+    mGop->Mode->Info->VerticalResolution
+    );
 
   // Register with the Simple Window Manager to get pointer input events.
   //

@@ -208,9 +208,9 @@ RenderCellTrashcan (
   pBltBuffer->Image.Screen = mUITGop;
 
   Left = this->m_pCells[CellIndex].CellTrashcanBounds.Left +
-         (this->m_pCells[CellIndex].CellTrashcanBounds.Right - this->m_pCells[CellIndex].CellTrashcanBounds.Left + 1 -  MsUiGetLargeFontWidth ()) / 2;
+         (SWM_RECT_WIDTH (this->m_pCells[CellIndex].CellTrashcanBounds) -  MsUiGetLargeFontWidth ()) / 2;
   Top = this->m_pCells[CellIndex].CellTrashcanBounds.Top +
-        (this->m_pCells[CellIndex].CellTrashcanBounds.Bottom - this->m_pCells[CellIndex].CellTrashcanBounds.Top + 1 -  MsUiGetLargeFontHeight ()) / 2;
+        (SWM_RECT_HEIGHT (this->m_pCells[CellIndex].CellTrashcanBounds) -  MsUiGetLargeFontHeight ()) / 2;
 
   Status = mUITSWM->StringToWindow (
                       mUITSWM,
@@ -337,8 +337,8 @@ RenderCell (
   CopyMem (&StringInfo->BackgroundColor, pFillColor, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   // Render cell background.
   //
-  UINT32  CellWidth  = (pCell->CellBounds.Right - pCell->CellBounds.Left + 1);
-  UINT32  CellHeight = (pCell->CellBounds.Bottom - pCell->CellBounds.Top + 1);
+  UINT32  CellWidth  = SWM_RECT_WIDTH (pCell->CellBounds);
+  UINT32  CellHeight = SWM_RECT_HEIGHT (pCell->CellBounds);
 
   mUITSWM->BltWindow (
              mUITSWM,
@@ -359,8 +359,8 @@ RenderCell (
   //
   pCellRingColor = (CellIndex == this->m_HighlightedCell ? &gMsColorTable.ListBoxHighlightBoundColor : pFillColor);
 
-  CellWidth  = (pCell->CellBounds.Right - pCell->CellBounds.Left -(2 * UIT_LB_OUTER_BORDER_WIDTH)+ 1);
-  CellHeight = (pCell->CellBounds.Bottom - pCell->CellBounds.Top -(2 * UIT_LB_OUTER_BORDER_WIDTH)+ 1);
+  CellWidth  = (SWM_RECT_WIDTH (pCell->CellBounds) - (2 * UIT_LB_OUTER_BORDER_WIDTH));
+  CellHeight = (SWM_RECT_HEIGHT (pCell->CellBounds) - (2 * UIT_LB_OUTER_BORDER_WIDTH));
 
   DrawRectangleOutline (
     (pCell->CellBounds.Left + UIT_LB_OUTER_BORDER_WIDTH),
@@ -374,11 +374,11 @@ RenderCell (
   // If the listbox was created with the checkbox option flag, draw a checkbox.
   //
   if ((this->m_Flags & UIT_LISTBOX_FLAGS_CHECKBOX) == UIT_LISTBOX_FLAGS_CHECKBOX) {
-    UINT32  CheckBoxHitAreaHeight = (pCell->CellCheckBoxBounds.Bottom - pCell->CellCheckBoxBounds.Top + 1);
+    UINT32  CheckBoxHitAreaHeight = SWM_RECT_HEIGHT (pCell->CellCheckBoxBounds);
     UINT32  CheckBoxHeight        = (CheckBoxHitAreaHeight / 3);        // TODO - 1/3 the height of a listbox cell?
     UINT32  CheckBoxWidth         = CheckBoxHeight;
-    UINT32  CheckBoxOrigY         = (pCell->CellCheckBoxBounds.Top +  (CheckBoxHitAreaHeight / 2) - (CheckBoxHeight / 2));
-    UINT32  CheckBoxOrigX         = (pCell->CellCheckBoxBounds.Left + (CheckBoxHitAreaHeight / 2) - (CheckBoxHeight / 2));
+    UINT32  CheckBoxOrigY         = (pCell->CellCheckBoxBounds.Top +  ((CheckBoxHitAreaHeight - CheckBoxHeight) / 2));
+    UINT32  CheckBoxOrigX         = (pCell->CellCheckBoxBounds.Left + ((CheckBoxHitAreaHeight - CheckBoxHeight) / 2));
 
     RenderCellCheckBox (
       this,
@@ -928,10 +928,13 @@ Ctor (
   for (this->m_NumberOfCells = 0; CellData[this->m_NumberOfCells].CellText != NULL; this->m_NumberOfCells++) {
   }
 
-  this->m_ListBoxBounds.Left   = CellBox.Left;
-  this->m_ListBoxBounds.Top    = CellBox.Top;
-  this->m_ListBoxBounds.Right  = CellBox.Right;
-  this->m_ListBoxBounds.Bottom = (CellBox.Top + ((CellBox.Bottom - CellBox.Top + 1) * this->m_NumberOfCells) - 1);
+  SWM_RECT_INIT2 (
+    this->m_ListBoxBounds,
+    CellBox.Left,
+    CellBox.Top,
+    SWM_RECT_WIDTH (CellBox),
+    (SWM_RECT_HEIGHT (CellBox) * this->m_NumberOfCells)
+    );
 
   this->m_pCells = AllocateZeroPool (this->m_NumberOfCells * sizeof (CellDisplayInfo));
   ASSERT (NULL != this->m_pCells);
@@ -959,10 +962,15 @@ Ctor (
     if (UIT_LISTBOX_FLAGS_CHECKBOX == (this->m_Flags & UIT_LISTBOX_FLAGS_CHECKBOX)) {
       SWM_RECT  *CellBounds = &this->m_pCells[Index].CellBounds;
 
-      CopyMem (&this->m_pCells[Index].CellCheckBoxBounds, CellBounds, sizeof (SWM_RECT));
+      CheckBoxHitAreaWidth = SWM_RECT_HEIGHT (*CellBounds);
 
-      CheckBoxHitAreaWidth                           = (CellBounds->Bottom - CellBounds->Top + 1);
-      this->m_pCells[Index].CellCheckBoxBounds.Right = (CellBounds->Left + CheckBoxHitAreaWidth - 1);
+      SWM_RECT_INIT2 (
+        this->m_pCells[Index].CellCheckBoxBounds,
+        CellBounds->Left,
+        CellBounds->Top,
+        CheckBoxHitAreaWidth,
+        SWM_RECT_HEIGHT (*CellBounds)
+        );
     }
 
     // If this is a checkbox type ListBox, compute the checkbox bounding rectangle.
@@ -970,10 +978,15 @@ Ctor (
     if (UIT_LISTBOX_FLAGS_ALLOW_DELETE == (this->m_Flags & UIT_LISTBOX_FLAGS_ALLOW_DELETE)) {
       SWM_RECT  *CellBounds = &this->m_pCells[Index].CellBounds;
 
-      CopyMem (&this->m_pCells[Index].CellTrashcanBounds, CellBounds, sizeof (SWM_RECT));
+      TrashcanHitAreaWidth = SWM_RECT_HEIGHT (*CellBounds);
 
-      TrashcanHitAreaWidth                          = (CellBounds->Bottom - CellBounds->Top + 1);
-      this->m_pCells[Index].CellTrashcanBounds.Left = (CellBounds->Right - TrashcanHitAreaWidth + 1);
+      SWM_RECT_INIT2 (
+        this->m_pCells[Index].CellTrashcanBounds,
+        CellBounds->Left,
+        CellBounds->Top,
+        CheckBoxHitAreaWidth,
+        SWM_RECT_HEIGHT (*CellBounds)
+        );
     }
 
     // Calculate cell text bounding rectangle (cell text should be vertically centered in the cell, accounting for the maximum font glyph descent).  Also,
@@ -997,18 +1010,22 @@ Ctor (
       &MaxGlyphDescent
       );
 
-    UINT32  CellHeight   = (this->m_pCells[Index].CellBounds.Bottom - this->m_pCells[Index].CellBounds.Top + 1);
-    UINT32  StringWidth  = (this->m_pCells[Index].CellTextBounds.Right - this->m_pCells[Index].CellTextBounds.Left + 1);
-    UINT32  StringHeight = (this->m_pCells[Index].CellTextBounds.Bottom - this->m_pCells[Index].CellTextBounds.Top + 1);
+    UINT32  CellHeight   = SWM_RECT_HEIGHT (this->m_pCells[Index].CellBounds);
+    UINT32  StringWidth  = SWM_RECT_WIDTH (this->m_pCells[Index].CellTextBounds);
+    UINT32  StringHeight = SWM_RECT_HEIGHT (this->m_pCells[Index].CellTextBounds);
 
-    this->m_pCells[Index].CellTextBounds.Right  = (this->m_pCells[Index].CellTextBounds.Left + StringWidth - 1);
-    this->m_pCells[Index].CellTextBounds.Top   += ((CellHeight / 2) - (StringHeight / 2) + MaxGlyphDescent);
-    this->m_pCells[Index].CellTextBounds.Bottom = (this->m_pCells[Index].CellTextBounds.Top + StringHeight + MaxGlyphDescent - 1);
+    SWM_RECT_INIT2 (
+      this->m_pCells[Index].CellTextBounds,
+      this->m_pCells[Index].CellTextBounds.Left,
+      this->m_pCells[Index].CellTextBounds.Top + (((CellHeight - StringHeight) / 2) + MaxGlyphDescent),
+      StringWidth,
+      StringHeight + MaxGlyphDescent
+      );
 
     // Increment to the next cell position.
     //
-    Rect.Top    += (CellBox.Bottom - CellBox.Top + 1);
-    Rect.Bottom += (CellBox.Bottom - CellBox.Top + 1);
+    Rect.Top    += SWM_RECT_HEIGHT (CellBox);
+    Rect.Bottom += SWM_RECT_HEIGHT (CellBox);
   }
 
   // Member Variables
@@ -1098,10 +1115,13 @@ new_ListBox (
     LB->Ctor      = &Ctor;
     LB->Base.Dtor = &Dtor;
 
-    Rect.Left   = OrigX;
-    Rect.Right  = (OrigX + CellWidth - 1);
-    Rect.Top    = OrigY;
-    Rect.Bottom = (OrigY + CellHeight - 1);
+    SWM_RECT_INIT2 (
+      Rect,
+      OrigX,
+      OrigY,
+      CellWidth,
+      CellHeight
+      );
 
     LB->Ctor (
           LB,

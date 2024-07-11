@@ -921,10 +921,13 @@ CreateFormControls (
 
   // Define a canvas bounding rectangle that fills the form window.
   //
-  FormRect.Left   = mMasterFrameWidth;
-  FormRect.Top    = mTitleBarHeight;
-  FormRect.Right  = mGop->Mode->Info->HorizontalResolution - 1;
-  FormRect.Bottom = mGop->Mode->Info->VerticalResolution - 1;
+  SWM_RECT_INIT2 (
+    FormRect,
+    mMasterFrameWidth,
+    mTitleBarHeight,
+    mGop->Mode->Info->HorizontalResolution - mMasterFrameWidth,
+    mGop->Mode->Info->VerticalResolution - mTitleBarHeight
+    );
 
   // Create a canvas for rendering the HII form.
   //
@@ -1052,10 +1055,13 @@ CreateFormControls (
 
           // Calculate the correct size for the grid.
           //
-          GridRect.Left   = OrigX;
-          GridRect.Top    = OrigY;
-          GridRect.Right  = CanvasRightLimit;
-          GridRect.Bottom = OrigY + (MaxRows * GridCellHeight) - 1;
+          SWM_RECT_INIT (
+            GridRect,
+            OrigX,
+            OrigY,
+            CanvasRightLimit,
+            OrigY + (MaxRows * GridCellHeight) - 1
+            );
 
           // Create a grid for aligning UI controls.
           //
@@ -1093,7 +1099,7 @@ CreateFormControls (
                             &ControlRect
                             );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY += SWM_RECT_HEIGHT (ControlRect);
 
           // Indicate that the grid now has scope.  Until the Grid End OpCode is encountered, all
           // controls added from this point forward will be added to the grid.
@@ -1226,7 +1232,7 @@ CreateFormControls (
 
             // Move the next control's origin down the page by the height of the current control.
             //
-            OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
+            OrigY += SWM_RECT_HEIGHT (ControlRect);
           }
         }
 
@@ -1330,7 +1336,7 @@ CreateFormControls (
 
           // Move the next control's origin down the page by the height of the current control.
           //
-          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY += SWM_RECT_HEIGHT (ControlRect);
         }
 
         break;
@@ -1345,27 +1351,29 @@ CreateFormControls (
         UIT_LB_CELLDATA          *OptionList;
         UINT32                   Flags = 0;
 
-        UINT32  LabelX = (GridScope ? 0 : (UINT32)MenuOption->Col);
-        UINT32  LabelY = (GridScope ? 0 : (UINT32)MenuOption->Row);
-        // UINT32                  LabelWidth  = (GridScope ?  : (CanvasRightLimit - LabelX));
-        // UINT32                  LabelHeight = (GridScope ?  : (CanvasBottomLimit - LabelY));
-        // TODO
-        UINT32  LabelWidth  = (CanvasRightLimit - LabelX + 1);
-        UINT32  LabelHeight = (CanvasBottomLimit - LabelY + 1);
         UINT32  ListWidth;
         Label   *L;
 
         EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *TextColor = &gMsColorTable.LabelTextNormalColor;
+        SWM_RECT                       LabelRect;
+
+        SWM_RECT_INIT (
+          LabelRect,
+          (GridScope ? 0 : (UINT32)MenuOption->Col),
+          (GridScope ? 0 : (UINT32)MenuOption->Row),
+          CanvasRightLimit,
+          CanvasBottomLimit
+          );
 
         if (MenuOption->GrayOut) {
           TextColor = &gMsColorTable.LabelTextGrayoutColor;
         }
 
         L = new_Label (
-              LabelX,
-              LabelY,
-              LabelWidth,
-              LabelHeight,
+              LabelRect.Left,
+              LabelRect.Top,
+              SWM_RECT_WIDTH (LabelRect),
+              SWM_RECT_HEIGHT (LabelRect),
               &FontInfo,
               TextColor,                               // Foreground (text) color.
               &gMsColorTable.LabelTextBackgroundColor, // Background color.
@@ -1415,7 +1423,7 @@ CreateFormControls (
 
           // Move the next control's origin down the page by the height of the current control.
           //
-          OrigY          += (ControlRect.Bottom - ControlRect.Top + 1) + 40;        // TODO - appropriate buffer between listbox label and listbox?
+          OrigY          += SWM_RECT_HEIGHT (ControlRect) + 40;        // TODO - appropriate buffer between listbox label and listbox?
           MenuOption->Row = OrigY;
         }
 
@@ -1550,7 +1558,7 @@ CreateFormControls (
                      &ControlRect
                      );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY += SWM_RECT_HEIGHT (ControlRect);
         }
 
         break;
@@ -1558,17 +1566,22 @@ CreateFormControls (
 
       case EFI_IFR_STRING_OP:       // StringOp
       {
-        UINT32          LabelX      = (GridScope ? 0 : (UINT32)MenuOption->Col);
-        UINT32          LabelY      = (GridScope ? 0 : (UINT32)MenuOption->Row);
-        EFI_IFR_STRING  *String     = (EFI_IFR_STRING *)Statement->OpCode;
-        UINT32          LabelWidth  = (CanvasRightLimit - LabelX + 1);
-        UINT32          LabelHeight = (CanvasBottomLimit - LabelY + 1);
+        EFI_IFR_STRING  *String = (EFI_IFR_STRING *)Statement->OpCode;
+        SWM_RECT        LabelRect;
+
+        SWM_RECT_INIT (
+          LabelRect,
+          (GridScope ? 0 : (UINT32)MenuOption->Col),
+          (GridScope ? 0 : (UINT32)MenuOption->Row),
+          CanvasRightLimit,
+          CanvasBottomLimit
+          );
 
         Label  *L = new_Label (
-                      LabelX,
-                      LabelY,
-                      LabelWidth,
-                      LabelHeight,
+                      LabelRect.Left,
+                      LabelRect.Top,
+                      SWM_RECT_WIDTH (LabelRect),
+                      SWM_RECT_HEIGHT (LabelRect),
                       &FontInfo,
                       ((MsUiGetLargeFontHeight () == FontInfo.FontSize) ? &gMsColorTable.LabelTextLargeColor : &gMsColorTable.LabelTextNormalColor), // TODO - Foreground (text) color.
                       &gMsColorTable.LabelTextBackgroundColor,                                                                                       // Background color.
@@ -1615,7 +1628,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY          += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY          += SWM_RECT_HEIGHT (ControlRect);
           MenuOption->Row = OrigY;
         }
 
@@ -1686,7 +1699,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY += SWM_RECT_HEIGHT (ControlRect);
         }
 
         if (String->Question.Flags & EFI_IFR_FLAG_READ_ONLY) {
@@ -1698,15 +1711,16 @@ CreateFormControls (
 
       case EFI_IFR_TEXT_OP:         // Text.
       {
-        UINT32  LabelX = (GridScope ? 0 : (UINT32)MenuOption->Col);
-        UINT32  LabelY = (GridScope ? 0 : (UINT32)MenuOption->Row);
-        // UINT32                  LabelWidth  = (GridScope ?  : (CanvasRightLimit - LabelX));
-        // UINT32                  LabelHeight = (GridScope ?  : (CanvasBottomLimit - LabelY));
-        // TODO
-        UINT32  LabelWidth  = (CanvasRightLimit - LabelX + 1);
-        UINT32  LabelHeight = (CanvasBottomLimit - LabelY + 1);
-
         EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *TextColor = &gMsColorTable.LabelTextNormalColor;        // DCR (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &gMsColorTable.LabelTextLargeColor : &gMsColorTable.LabelTextNormalColor;
+        SWM_RECT                       LabelRect;
+
+        SWM_RECT_INIT (
+          LabelRect,
+          (GridScope ? 0 : (UINT32)MenuOption->Col),
+          (GridScope ? 0 : (UINT32)MenuOption->Row),
+          CanvasRightLimit,
+          CanvasBottomLimit
+          );
 
         if (0 == StrnCmp (Description, L"\\fc!Red!", 8)) {
           Description += StrLen (L"\\fc!Red!");
@@ -1718,10 +1732,10 @@ CreateFormControls (
         }
 
         Label  *L = new_Label (
-                      LabelX,
-                      LabelY,
-                      LabelWidth,
-                      LabelHeight,
+                      LabelRect.Left,
+                      LabelRect.Top,
+                      SWM_RECT_WIDTH (LabelRect),
+                      SWM_RECT_HEIGHT (LabelRect),
                       &FontInfo,
                       TextColor,                               // TODO - Foreground (text) color.
                       &gMsColorTable.LabelTextBackgroundColor, // Background color.
@@ -1770,7 +1784,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY += SWM_RECT_HEIGHT (ControlRect);
         }
 
         break;
@@ -1778,19 +1792,21 @@ CreateFormControls (
 
       case EFI_IFR_CHECKBOX_OP:     // Checkbox.
       {
-        UINT32  LabelX = (GridScope ? 0 : (UINT32)MenuOption->Col);
-        UINT32  LabelY = (GridScope ? 0 : (UINT32)MenuOption->Row);
-        // UINT32                  LabelWidth  = (GridScope ?  : (CanvasRightLimit - LabelX));
-        // UINT32                  LabelHeight = (GridScope ?  : (CanvasBottomLimit - LabelY));
-        // TODO
-        UINT32  LabelWidth  = (CanvasRightLimit - LabelX + 1);
-        UINT32  LabelHeight = (CanvasBottomLimit - LabelY + 1);
+        SWM_RECT  LabelRect;
+
+        SWM_RECT_INIT (
+          LabelRect,
+          (GridScope ? 0 : (UINT32)MenuOption->Col),
+          (GridScope ? 0 : (UINT32)MenuOption->Row),
+          CanvasRightLimit,
+          CanvasBottomLimit
+          );
 
         Label  *L = new_Label (
-                      LabelX,
-                      LabelY,
-                      LabelWidth,
-                      LabelHeight,
+                      LabelRect.Left,
+                      LabelRect.Top,
+                      SWM_RECT_WIDTH (LabelRect),
+                      SWM_RECT_HEIGHT (LabelRect),
                       &FontInfo,
                       (MsUiGetLargeFontHeight () == FontInfo.FontSize ? &gMsColorTable.LabelTextLargeColor : &gMsColorTable.LabelTextNormalColor), // TODO - Foreground (text) color.
                       &gMsColorTable.LabelTextBackgroundColor,                                                                                     // Background color.
@@ -1837,7 +1853,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY          += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY          += SWM_RECT_HEIGHT (ControlRect);
           MenuOption->Row = OrigY;
         }
 
@@ -1914,7 +1930,7 @@ CreateFormControls (
                     &ControlRect
                     );
 
-          OrigY += (ControlRect.Bottom - ControlRect.Top + 1);
+          OrigY += SWM_RECT_HEIGHT (ControlRect);
         }
 
         break;
@@ -2912,10 +2928,13 @@ RegisterWithSimpleWindowManager (
 
   // Default to registering full screen support.
   //
-  FrameRect.Left   = 0;
-  FrameRect.Top    = 0;
-  FrameRect.Right  = (mGop->Mode->Info->HorizontalResolution - 1);
-  FrameRect.Bottom = (mGop->Mode->Info->VerticalResolution - 1);
+  SWM_RECT_INIT (
+    FrameRect,
+    0,
+    0,
+    (mGop->Mode->Info->HorizontalResolution - 1),
+    (mGop->Mode->Info->VerticalResolution - 1)
+    );
 
   //
   // Register with the Simple Window Manager.

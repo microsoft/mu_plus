@@ -80,8 +80,8 @@ RenderButton (
 
   // Compute button width and height.
   //
-  Width  = (this->m_pButton->ButtonBounds.Right - this->m_pButton->ButtonBounds.Left + 1);
-  Height = (this->m_pButton->ButtonBounds.Bottom - this->m_pButton->ButtonBounds.Top + 1);
+  Width  = SWM_RECT_WIDTH (this->m_pButton->ButtonBounds);
+  Height = SWM_RECT_HEIGHT (this->m_pButton->ButtonBounds);
 
   // Draw the button's - outer rectangle first.
   //
@@ -185,14 +185,18 @@ SetControlBounds (
 
   // Translate (and possibly resize) button text bounding box.
   //
-  SWM_RECT  *TextRect  = &this->m_pButton->ButtonTextBounds;
-  UINT32    TextWidth  = (TextRect->Right - TextRect->Left + 1);
-  UINT32    TextHeight = (TextRect->Bottom - TextRect->Top + 1);
+  UINT32  TextWidth    = SWM_RECT_WIDTH (this->m_pButton->ButtonTextBounds);
+  UINT32  TextHeight   = SWM_RECT_HEIGHT (this->m_pButton->ButtonTextBounds);
+  UINT32  ButtonWidth  = SWM_RECT_WIDTH (this->m_pButton->ButtonBounds);
+  UINT32  ButtonHeight = SWM_RECT_HEIGHT (this->m_pButton->ButtonBounds);
 
-  Bounds.Left  += TextOffsetX;
-  Bounds.Top   += TextOffsetY;
-  Bounds.Right  = ((Bounds.Left + TextWidth - 1) < Bounds.Right ? (Bounds.Right + TextWidth - 1) : Bounds.Right);
-  Bounds.Bottom = ((Bounds.Top + TextHeight - 1) < Bounds.Bottom ? (Bounds.Top + TextHeight - 1) : Bounds.Bottom);
+  SWM_RECT_INIT2 (
+    Bounds,
+    this->m_pButton->ButtonBounds.Left + TextOffsetX,
+    this->m_pButton->ButtonBounds.Top + TextOffsetY,
+    ((TextWidth < (ButtonWidth - TextOffsetX)) ? TextWidth : (ButtonWidth - TextOffsetX)),
+    ((TextHeight < (ButtonHeight - TextOffsetY)) ? TextHeight : (ButtonHeight - TextOffsetY))
+    );
 
   CopyMem (&this->m_pButton->ButtonTextBounds, &Bounds, sizeof (SWM_RECT));
 
@@ -422,15 +426,15 @@ Ctor (
     goto Exit;
   }
 
-  UINT32  ButtonWidth  = (this->m_pButton->ButtonBounds.Right - this->m_pButton->ButtonBounds.Left + 1);
-  UINT32  ButtonHeight = (this->m_pButton->ButtonBounds.Bottom - this->m_pButton->ButtonBounds.Top + 1);
-  UINT32  StringWidth  = (this->m_pButton->ButtonTextBounds.Right - this->m_pButton->ButtonTextBounds.Left + 1);
-  UINT32  StringHeight = (this->m_pButton->ButtonTextBounds.Bottom - this->m_pButton->ButtonTextBounds.Top + 1);
+  UINT32  ButtonWidth  = SWM_RECT_WIDTH (this->m_pButton->ButtonBounds);
+  UINT32  ButtonHeight = SWM_RECT_HEIGHT (this->m_pButton->ButtonBounds);
+  UINT32  StringWidth  = SWM_RECT_WIDTH (this->m_pButton->ButtonTextBounds);
+  UINT32  StringHeight = SWM_RECT_HEIGHT (this->m_pButton->ButtonTextBounds);
 
-  this->m_pButton->ButtonTextBounds.Left   += ((ButtonWidth / 2) - (StringWidth / 2));
-  this->m_pButton->ButtonTextBounds.Right  += ((ButtonWidth / 2) - (StringWidth / 2) - 1);
-  this->m_pButton->ButtonTextBounds.Top    += ((ButtonHeight / 2) - ((StringHeight - MaxGlyphDescent) / 2));
-  this->m_pButton->ButtonTextBounds.Bottom += ((ButtonHeight / 2) - ((StringHeight - MaxGlyphDescent) / 2) - 1);
+  this->m_pButton->ButtonTextBounds.Left   += ((ButtonWidth - StringWidth) / 2);
+  this->m_pButton->ButtonTextBounds.Right  += ((ButtonWidth - StringWidth) / 2);
+  this->m_pButton->ButtonTextBounds.Top    += ((ButtonHeight - (StringHeight - MaxGlyphDescent)) / 2);
+  this->m_pButton->ButtonTextBounds.Bottom += ((ButtonHeight - (StringHeight - MaxGlyphDescent)) / 2);
 
   // Configure button state.
   //
@@ -516,15 +520,6 @@ new_Button (
     B->Ctor      = &Ctor;
     B->Base.Dtor = &Dtor;
 
-    // Set origin corners.
-    Rect.Left = OrigX;
-    Rect.Top  = OrigY;
-
-    // Adjust for width, if provided.
-    Rect.Right = (ButtonWidth != SUI_BUTTON_AUTO_SIZE) ? (OrigX + ButtonWidth - 1) : OrigX;
-    // Adjust for height, if provided.
-    Rect.Bottom = (ButtonHeight != SUI_BUTTON_AUTO_SIZE) ? (OrigY + ButtonHeight - 1) : OrigY;
-
     // If either of the dimensions should be set automatically,
     // determine the text dimensions.
     // We have to do this here because the constructor consumes a RECT, not width or height.
@@ -547,9 +542,17 @@ new_Button (
         return NULL;
       }
 
-      Rect.Right  = Rect.Left + (TempRect.Right - TempRect.Left) + SUI_BUTTON_HIGHLIGHT_X_PAD;          // Add px to allow space for the "Tab highlight".
-      Rect.Bottom = Rect.Top + (TempRect.Bottom - TempRect.Top) + SUI_BUTTON_HIGHLIGHT_Y_PAD;           // Add px to allow space for the "Tab highlight".
+      ButtonWidth  = SWM_RECT_WIDTH (TempRect) + SUI_BUTTON_HIGHLIGHT_X_PAD;          // Add px to allow space for the "Tab highlight".
+      ButtonHeight = SWM_RECT_HEIGHT (TempRect) + SUI_BUTTON_HIGHLIGHT_Y_PAD;         // Add px to allow space for the "Tab highlight".
     }
+
+    SWM_RECT_INIT2 (
+      Rect,
+      OrigX,
+      OrigY,
+      ButtonWidth,
+      ButtonHeight
+      );
 
     B->Ctor (
          B,
