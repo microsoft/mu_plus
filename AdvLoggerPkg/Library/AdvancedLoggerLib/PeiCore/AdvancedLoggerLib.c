@@ -450,6 +450,7 @@ AdvancedLoggerGetLoggerInfo (
   UINTN                   Pages;
   CONST EFI_PEI_SERVICES  **PeiServices;
   EFI_STATUS              Status;
+  EFI_MEMORY_TYPE         Type;
 
   // Try to do the minimum work at the start of this function as this
   // is called quite often.
@@ -513,14 +514,17 @@ AdvancedLoggerGetLoggerInfo (
 
       if (FeaturePcdGet (PcdAdvancedLoggerPeiInRAM)) {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPages);
+        Type  =  EfiRuntimeServicesData;
       } else {
         Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
+        // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
+        Type =  EfiBootServicesData;
       }
 
       BufferSize = EFI_PAGES_TO_SIZE (Pages);
 
       Status = PeiServicesAllocatePages (
-                 EfiReservedMemoryType,
+                 Type,
                  Pages,
                  &NewLoggerInfo
                  );
