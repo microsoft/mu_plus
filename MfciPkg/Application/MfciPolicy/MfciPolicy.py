@@ -84,7 +84,7 @@ def get_system_info():
             if Variable == "NextMfciPolicyNonce" or Variable == "CurrentMfciPolicyNonce":
                 print(f" {Variable} = {hex(int.from_bytes(data, byteorder='little', signed=False))}")
             else:
-                print(f" {Variable} = \"{data.decode("utf16")[0:-1]}\"")
+                print(f" {Variable} = \"{data.decode('utf16')[0:-1]}\"")
     return
 
 
