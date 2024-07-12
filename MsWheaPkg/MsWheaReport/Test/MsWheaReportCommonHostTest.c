@@ -757,8 +757,8 @@ UefiTestMain (
     goto EXIT;
   }
 
-  AddTestCase (ReportRouterDataSuite, "ReportHwErrRecRouter should populate the extra WHEA data", "PopulateExtraData", ReportRouterPopulateWheaExtraData, NULL, NULL, NULL);
-  AddTestCase (ReportRouterDataSuite, "ReportHwErrRecRouter should not populate the extra WHEA data in invalid phases", "SkipEsPhases", ReportRouterSkipExtraDataInInvalidPhases, NULL, NULL, NULL);
+  AddTestCase (ReportRouterExtraDataSuite, "ReportHwErrRecRouter should populate the extra WHEA data", "PopulateExtraData", ReportRouterPopulateWheaExtraData, NULL, NULL, NULL);
+  AddTestCase (ReportRouterExtraDataSuite, "ReportHwErrRecRouter should not populate the extra WHEA data in invalid phases", "SkipEsPhases", ReportRouterSkipExtraDataInInvalidPhases, NULL, NULL, NULL);
 
   //
   // Execute the tests.
