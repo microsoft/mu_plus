@@ -24,8 +24,6 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugPrintErrorLevelLib.h>
 
-#define ERROR_IDENTIFIER_LENGTH  11
-
 /**
   Prints a debug message to the debug output device if the specified
   error level is enabled.
@@ -168,10 +166,6 @@ DebugPrintMarker (
     AsciiVSPrint (Buffer, sizeof (Buffer), Format, VaListMarker);
   } else {
     AsciiBSPrint (Buffer, sizeof (Buffer), Format, BaseListMarker);
-  }
-
-  if (ErrorLevel == DEBUG_ERROR) {
-    AdvancedLoggerWrite (ErrorLevel, ERROR_IDENTIFIER, ERROR_IDENTIFIER_LENGTH);
   }
 
   //

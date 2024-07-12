@@ -263,6 +263,59 @@ class AdvLogParser ():
     PHASE_STRING_LIST = ["[UNSPECIFIED] ", "[SEC] ", "[PEI] ", "[PEI64] ",
                          "[DXE] ", "[RUNTIME] ", "[MM_CORE] ", "[MM] ",
                          "[SMM_CORE] ", "[SMM] ", "[TFA] "]
+
+    # Debug levels from MU_BASECORE\MdePkg\Include\Library\DebugLib.h
+    # //
+    # // Declare bits for PcdDebugPrintErrorLevel and the ErrorLevel parameter of DebugPrint()
+    # //
+    # #define DEBUG_INIT      0x00000001       // Initialization
+    # #define DEBUG_WARN      0x00000002       // Warnings
+    # #define DEBUG_LOAD      0x00000004       // Load events
+    # #define DEBUG_FS        0x00000008       // EFI File system
+    # #define DEBUG_POOL      0x00000010       // Alloc & Free (pool)
+    # #define DEBUG_PAGE      0x00000020       // Alloc & Free (page)
+    # #define DEBUG_INFO      0x00000040       // Informational debug messages
+    # #define DEBUG_DISPATCH  0x00000080       // PEI/DXE/SMM Dispatchers
+    # #define DEBUG_VARIABLE  0x00000100       // Variable
+    # #define DEBUG_SMI       0x00000200       // MS_CHANGE_141550: Added for SMI audting options.
+    # #define DEBUG_BM        0x00000400       // Boot Manager
+    # #define DEBUG_BLKIO     0x00001000       // BlkIo Driver
+    # #define DEBUG_NET       0x00004000       // Network Io Driver
+    # #define DEBUG_UNDI      0x00010000       // UNDI Driver
+    # #define DEBUG_LOADFILE  0x00020000       // LoadFile
+    # #define DEBUG_EVENT     0x00080000       // Event messages
+    # #define DEBUG_GCD       0x00100000       // Global Coherency Database changes
+    # #define DEBUG_CACHE     0x00200000       // Memory range cachability changes
+    # #define DEBUG_VERBOSE   0x00400000       // Detailed debug messages that may
+    #                                         // significantly impact boot performance
+    # #define DEBUG_MANAGEABILITY  0x00800000  // Detailed debug and payload message of manageability
+    #                                         // related modules, such Redfish, IPMI, MCTP and etc.
+    # #define DEBUG_ERROR  0x80000000          // Error
+
+    debug_levels_dict = {
+        0x00000001: "[DEBUG_INIT]",
+        0x00000002: "[DEBUG_WARN]",
+        0x00000004: "[DEBUG_LOAD]",
+        0x00000008: "[DEBUG_FS]",
+        0x00000010: "[DEBUG_POOL]",
+        0x00000020: "[DEBUG_PAGE]",
+        0x00000040: "[DEBUG_INFO]",
+        0x00000080: "[DEBUG_DISPATCH]",
+        0x00000100: "[DEBUG_VARIABLE]",
+        0x00000200: "[DEBUG_SMI]",
+        0x00000400: "[DEBUG_BM]",
+        0x00001000: "[DEBUG_BLKIO]",
+        0x00004000: "[DEBUG_NET]",
+        0x00010000: "[DEBUG_UNDI]",
+        0x00020000: "[DEBUG_LOADFILE]",
+        0x00080000: "[DEBUG_EVENT]",
+        0x00100000: "[DEBUG_GCD]",
+        0x00200000: "[DEBUG_CACHE]",
+        0x00400000: "[DEBUG_VERBOSE]",
+        0x00800000: "[DEBUG_MANAGEABILITY]",
+        0x80000000: "[DEBUG_ERROR]"
+    }
+
     #
     # ---------------------------------------------------------------------- #
     #
@@ -662,6 +715,16 @@ class AdvLogParser ():
         else:
             PhaseString = self.PHASE_STRING_LIST[Phase]
         return PhaseString
+    
+    #
+    #   Get the formatted DEBUG level string
+    #
+    def _GetDebugLevelString(self, DebugLevel):
+        if DebugLevel in list(self.debug_levels_dict.keys()):
+            DebugLevelString = self.debug_levels_dict[DebugLevel]
+        else:
+            DebugLevelString = ""
+        return DebugLevelString
 
     #
     #   This helper function will help to identify the
@@ -873,7 +936,8 @@ class AdvLogParser ():
                 if CurrentLine >= StartLine:
                     Ticks = MessageLine["TimeStamp"]
                     PhaseString = self._GetPhaseString(MessageLine["Phase"])
-                    NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + PhaseString + MessageLine["Message"].rstrip("\r\n")
+                    DebugLevelString = self._GetDebugLevelString(MessageLine["DebugLevel"])
+                    NewLine = self._GetTimeStamp(Ticks, LoggerInfo["Frequency"], LoggerInfo["BaseTime"]) + PhaseString + DebugLevelString + MessageLine["Message"].rstrip("\r\n")
                     lines.append(NewLine + '\n')
 
                 CurrentLine += 1
