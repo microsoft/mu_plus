@@ -2928,12 +2928,12 @@ RegisterWithSimpleWindowManager (
 
   // Default to registering full screen support.
   //
-  SWM_RECT_INIT (
+  SWM_RECT_INIT2 (
     FrameRect,
     0,
     0,
-    (mGop->Mode->Info->HorizontalResolution - 1),
-    (mGop->Mode->Info->VerticalResolution - 1)
+    mGop->Mode->Info->HorizontalResolution,
+    mGop->Mode->Info->VerticalResolution
     );
 
   //
