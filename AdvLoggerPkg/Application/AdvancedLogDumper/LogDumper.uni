@@ -1,0 +1,18 @@
+/** @file
+AdvancedLogDumper.uni
+
+String definitions for AdvancedLogDumper command
+
+Copyright (C) Microsoft Corporation.
+SPDX-License-Identifier: BSD-2-Clause-Patent
+
+/=#
+
+#langdef   en-US "english"
+
+
+#string STR_ADV_LOG_HELP          #language en-US " "
+"\nAdvLogDump -o OutputFileName] [-h] [-r] [-v]\n"
+"  -h  Print this Help\n"
+"  -r  Dump the raw Advanced Logger binary data\n"
+"  -v  Print verbose messages\n"
