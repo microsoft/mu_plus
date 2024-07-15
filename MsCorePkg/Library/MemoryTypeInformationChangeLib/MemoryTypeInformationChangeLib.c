@@ -30,12 +30,12 @@ ReportMemoryTypeInformationChange (
 {
   //
   // This telemetry event is logged by a lib linked to BdsDxe, thus a EFI_SOFTWARE_DXE_BS_DRIVER
-  // subclass; the class EFI_SW_EC_MEMORY_TYPE_INFORMATION_CHANGE is custom for this event.
+  // subclass; the class EFI_SW_EC_ILLEGAL_SOFTWARE_STATE is used to indicate an illegal change in memory
   //
   return LogTelemetry (
            FALSE,
            NULL,
-           (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_EC_MEMORY_TYPE_INFORMATION_CHANGE),
+           (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_EC_ILLEGAL_SOFTWARE_STATE),
            NULL,
            NULL,
            Type,
