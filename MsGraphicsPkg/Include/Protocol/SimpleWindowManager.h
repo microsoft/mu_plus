@@ -80,7 +80,7 @@ do { \
 
 // Get width of the Rect
 //
-#define SWM_RECT_WIDTH(Rect)   ((Rect).Right - (Rect).Left + 1)
+#define SWM_RECT_WIDTH(Rect)  ((Rect).Right - (Rect).Left + 1)
 
 // Get height of the Rect
 //

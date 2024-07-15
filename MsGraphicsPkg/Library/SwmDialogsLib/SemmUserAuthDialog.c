@@ -1004,7 +1004,7 @@ ProcessDialogInput (
       // Calculate the vertical delta needed to center the dialog between the top of the screen and the OSK, shift everything up by that amount.  The OSK
       // is docked, centered, at the bottom of the screen.
       //
-      UINT32  VertOffset = (FrameRect.Top - ((OSKRect.Top / 2) - (SWM_RECT_HEIGHT(FrameRect) / 2)));
+      UINT32  VertOffset = (FrameRect.Top - ((OSKRect.Top / 2) - (SWM_RECT_HEIGHT (FrameRect) / 2)));
 
       FrameRect.Top     -= VertOffset;
       FrameRect.Bottom  -= VertOffset;
