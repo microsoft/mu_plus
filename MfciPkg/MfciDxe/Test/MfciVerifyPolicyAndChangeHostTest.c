@@ -799,7 +799,6 @@ UefiTestMain (
 {
   EFI_STATUS                  Status;
   UNIT_TEST_FRAMEWORK_HANDLE  Framework;
-  UNIT_TEST_SUITE_HANDLE      TargetVerifyPhaseSuite;
   UNIT_TEST_SUITE_HANDLE      VerifyAndChangePhaseSuite;
 
   Framework = NULL;
@@ -816,16 +815,6 @@ UefiTestMain (
   }
 
   // The blob parsing part is tested in MfciPolicyParsingUnitTest, so will not go through those here.
-
-  //
-  // Populate the TargetVerifyPhaseSuite Unit Test Suite.
-  //
-  Status = CreateUnitTestSuite (&TargetVerifyPhaseSuite, Framework, "TargetVerifyPhase", "ReportRouter.Phase", NULL, NULL);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Failed in CreateUnitTestSuite for TargetVerifyPhaseSuite\n"));
-    Status = EFI_OUT_OF_RESOURCES;
-    goto EXIT;
-  }
 
   //
   // Populate the VerifyAndChangePhaseSuite Unit Test Suite.
