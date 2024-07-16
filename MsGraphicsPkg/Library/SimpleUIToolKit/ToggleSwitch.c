@@ -114,8 +114,8 @@ DrawElongatedCircle (
     Xarc = sqrt_d ((double)((HalfHeight * HalfHeight) - (Step * Step)));           // Not sure why '^' doesn't work.
 
     Xstart = (OrigX - (UINT32)Xarc);
-    Xend   = (OrigX + Width + (UINT32)Xarc);
-    Length = (Xend - Xstart);
+    Xend   = (OrigX + Width + (UINT32)Xarc - 1);
+    Length = (Xend - Xstart + 1);
 
     Y1 = (OrigY + HalfHeight - Step);
     Y2 = (OrigY + HalfHeight + Step);
@@ -153,8 +153,8 @@ CreateToggleSwitchBitmaps (
 
   // Calculate the width and height of the bitmaps, leaving room for the keyboard TAB highlight ring.
   //
-  Width      = (this->m_pToggleSwitch->ToggleSwitchBounds.Right  - this->m_pToggleSwitch->ToggleSwitchBounds.Left + 1);
-  Height     = (this->m_pToggleSwitch->ToggleSwitchBounds.Bottom - this->m_pToggleSwitch->ToggleSwitchBounds.Top + 1);
+  Width      = SWM_RECT_WIDTH (this->m_pToggleSwitch->ToggleSwitchBounds);
+  Height     = SWM_RECT_HEIGHT (this->m_pToggleSwitch->ToggleSwitchBounds);
   BitmapSize = (Width * Height * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
   // Save width and height for later.
@@ -480,7 +480,7 @@ RenderToggleSwitch (
   }
 
   SWM_RECT  *pRect      = &this->m_pToggleSwitch->ToggleSwitchBounds;
-  UINTN     SwitchOrigY = (pRect->Top + ((pRect->Bottom - pRect->Top + 1) / 2) - ((StringRect.Bottom - StringRect.Top + 1) / 2));
+  UINTN     SwitchOrigY = (pRect->Top + ((SWM_RECT_HEIGHT (*pRect) - SWM_RECT_HEIGHT (StringRect)) / 2));
 
   mUITSWM->StringToWindow (
              mUITSWM,
@@ -667,7 +667,7 @@ Draw (
       this->m_pToggleSwitch->State = NORMAL;            // Indicate not selected at this time.
       // Calculate whether switch should be turned on or off.
       //
-      if (pInputState->State.TouchState.CurrentX < (pRect->Left + ((pRect->Right - pRect->Left) / 2))) {
+      if (pInputState->State.TouchState.CurrentX < (pRect->Left + (SWM_RECT_WIDTH (*pRect) / 2))) {
         if (TRUE == this->m_CurrentState) {
           this->m_pToggleSwitch->State = SELECT;                // Mouse button isn't pressed and switch will move On -> Off - select.
           Context                      = this->m_pSelectionContext;
@@ -845,10 +845,13 @@ new_ToggleSwitch (
     S->Ctor      = &Ctor;
     S->Base.Dtor = &Dtor;
 
-    Rect.Left   = OrigX;
-    Rect.Right  = (OrigX + ToggleSwitchWidth - 1);
-    Rect.Top    = OrigY;
-    Rect.Bottom = (OrigY + ToggleSwitchHeight - 1);
+    SWM_RECT_INIT2 (
+      Rect,
+      OrigX,
+      OrigY,
+      ToggleSwitchWidth,
+      ToggleSwitchHeight
+      );
 
     S->Ctor (
          S,

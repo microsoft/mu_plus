@@ -46,8 +46,8 @@ GetTextStringBitmapSize (
   // Calculate maximum width and height allowed by the specified bounding rectangle.
   //
   if (TRUE == BoundsLimit) {
-    Width  = (UINT16)(Bounds->Right - Bounds->Left + 1);
-    Height = (UINT16)(Bounds->Bottom - Bounds->Top + 1);
+    Width  = (UINT16)SWM_RECT_WIDTH (*Bounds);
+    Height = (UINT16)SWM_RECT_HEIGHT (*Bounds);
   } else {
     // Caller hasn't provided any boundary to enforce.  Assume we have the whole screen.
     //

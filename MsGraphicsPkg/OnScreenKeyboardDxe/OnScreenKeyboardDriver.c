@@ -392,7 +392,7 @@ AllocateBackBuffers (
   }
 
   mOSK.KeyboardMaxWidth  = Width;
-  mOSK.KeyboardMaxHeight = (UINTN)((mOSK.KeyboardRectOriginal.botR.pt.y / mOSK.KeyboardRectOriginal.botR.pt.x) * (float)Width);
+  mOSK.KeyboardMaxHeight = (UINTN)(((mOSK.KeyboardRectOriginal.botR.pt.y + 1) / (mOSK.KeyboardRectOriginal.botR.pt.x + 1)) * (float)Width);
 
   // Allocate back buffer and capture buffer.
   //
@@ -835,18 +835,18 @@ InitializeKeyboardGeometry (
     mOSK.KeyRectOriginal[KeyCount].topL.pt.z    = 0.0;
     mOSK.KeyRectOriginal[KeyCount].topL.pt.rsvd = 1.0;
 
-    mOSK.KeyRectOriginal[KeyCount].topR.pt.x    = (KeyOrigX + KeyWidth);
+    mOSK.KeyRectOriginal[KeyCount].topR.pt.x    = (KeyOrigX + KeyWidth - 1);
     mOSK.KeyRectOriginal[KeyCount].topR.pt.y    = KeyOrigY;
     mOSK.KeyRectOriginal[KeyCount].topR.pt.z    = 0.0;
     mOSK.KeyRectOriginal[KeyCount].topR.pt.rsvd = 1.0;
 
     mOSK.KeyRectOriginal[KeyCount].botL.pt.x    = KeyOrigX;
-    mOSK.KeyRectOriginal[KeyCount].botL.pt.y    = (KeyOrigY + KeyHeight);
+    mOSK.KeyRectOriginal[KeyCount].botL.pt.y    = (KeyOrigY + KeyHeight - 1);
     mOSK.KeyRectOriginal[KeyCount].botL.pt.z    = 0.0;
     mOSK.KeyRectOriginal[KeyCount].botL.pt.rsvd = 1.0;
 
-    mOSK.KeyRectOriginal[KeyCount].botR.pt.x    = (KeyOrigX + KeyWidth);
-    mOSK.KeyRectOriginal[KeyCount].botR.pt.y    = (KeyOrigY + KeyHeight);
+    mOSK.KeyRectOriginal[KeyCount].botR.pt.x    = (KeyOrigX + KeyWidth - 1);
+    mOSK.KeyRectOriginal[KeyCount].botR.pt.y    = (KeyOrigY + KeyHeight - 1);
     mOSK.KeyRectOriginal[KeyCount].botR.pt.z    = 0.0;
     mOSK.KeyRectOriginal[KeyCount].botR.pt.rsvd = 1.0;
 
@@ -875,18 +875,18 @@ InitializeKeyboardGeometry (
   mOSK.KeyboardRectOriginal.topL.pt.z    = 0.0;
   mOSK.KeyboardRectOriginal.topL.pt.rsvd = 1.0;
 
-  mOSK.KeyboardRectOriginal.topR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH));
+  mOSK.KeyboardRectOriginal.topR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH) - 1);
   mOSK.KeyboardRectOriginal.topR.pt.y    = 0.0;
   mOSK.KeyboardRectOriginal.topR.pt.z    = 0.0;
   mOSK.KeyboardRectOriginal.topR.pt.rsvd = 1.0;
 
   mOSK.KeyboardRectOriginal.botL.pt.x    = 0.0;
-  mOSK.KeyboardRectOriginal.botL.pt.y    = (KeyOrigY + KeyHeight + KeySpacing);
+  mOSK.KeyboardRectOriginal.botL.pt.y    = (KeyOrigY + KeyHeight + KeySpacing - 1);
   mOSK.KeyboardRectOriginal.botL.pt.z    = 0.0;
   mOSK.KeyboardRectOriginal.botL.pt.rsvd = 1.0;
 
-  mOSK.KeyboardRectOriginal.botR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH));
-  mOSK.KeyboardRectOriginal.botR.pt.y    = (KeyOrigY + KeyHeight + KeySpacing);
+  mOSK.KeyboardRectOriginal.botR.pt.x    = (KeyOrigX - KeySpacing + (RIGHT_SPACING_PERCENT * STANDARD_KEY_WIDTH) - 1);
+  mOSK.KeyboardRectOriginal.botR.pt.y    = (KeyOrigY + KeyHeight + KeySpacing - 1);
   mOSK.KeyboardRectOriginal.botR.pt.z    = 0.0;
   mOSK.KeyboardRectOriginal.botR.pt.rsvd = 1.0;
 
@@ -1070,10 +1070,13 @@ GetKeyboardIconBoundingRect (
       break;
   }
 
-  pRect->Left   = IconOrigX;
-  pRect->Top    = IconOrigY;
-  pRect->Right  = (IconOrigX + IconWidth  - 1);
-  pRect->Bottom = (IconOrigY + IconHeight - 1);
+  SWM_RECT_INIT2 (
+    *pRect,
+    IconOrigX,
+    IconOrigY,
+    IconWidth,
+    IconHeight
+    );
 
   return;
 }
@@ -1091,10 +1094,13 @@ GetKeyboardBoundingRect (
   OUT SWM_RECT  *pRect
   )
 {
-  pRect->Left   = (UINT32)mOSK.KeyboardRectXformed.topL.pt.x;
-  pRect->Top    = (UINT32)mOSK.KeyboardRectXformed.topL.pt.y;
-  pRect->Right  = (UINT32)mOSK.KeyboardRectXformed.topR.pt.x;
-  pRect->Bottom = (UINT32)mOSK.KeyboardRectXformed.botL.pt.y;
+  SWM_RECT_INIT (
+    *pRect,
+    (UINT32)mOSK.KeyboardRectXformed.topL.pt.x,
+    (UINT32)mOSK.KeyboardRectXformed.topL.pt.y,
+    (UINT32)mOSK.KeyboardRectXformed.topR.pt.x,
+    (UINT32)mOSK.KeyboardRectXformed.botL.pt.y
+    );
 
   return;
 }
@@ -1136,8 +1142,8 @@ RenderKeyboard (
   // Determine the keyboard outer bounding rectangle
   //
   GetKeyboardBoundingRect (&Rect);
-  KeyboardWidth  = (Rect.Right - Rect.Left + 1);
-  KeyboardHeight = (Rect.Bottom - Rect.Top + 1);
+  KeyboardWidth  = SWM_RECT_WIDTH (Rect);
+  KeyboardHeight = SWM_RECT_HEIGHT (Rect);
 
   // If the keyboard hasn't (visually) changed, we can just blt the captured buffer for better performance
   //
@@ -1175,7 +1181,7 @@ RenderKeyboard (
                     Rect.Left,
                     Rect.Top,
                     KeyboardWidth,
-                    (Rect.Bottom - Rect.Top + 1),
+                    SWM_RECT_HEIGHT (Rect),
                     KeyboardWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
                     );
 
@@ -1260,8 +1266,8 @@ RenderKeyboard (
       continue;
     }
 
-    KeyWidth  = (mOSK.KeyList[Count].KeyDisplayHitRect.Right  - mOSK.KeyList[Count].KeyDisplayHitRect.Left);
-    KeyHeight = (mOSK.KeyList[Count].KeyDisplayHitRect.Bottom - mOSK.KeyList[Count].KeyDisplayHitRect.Top);
+    KeyWidth  = SWM_RECT_WIDTH (mOSK.KeyList[Count].KeyDisplayHitRect);
+    KeyHeight = SWM_RECT_HEIGHT (mOSK.KeyList[Count].KeyDisplayHitRect);
     KeyOrigX  =  mOSK.KeyList[Count].KeyDisplayHitRect.Left;
     KeyOrigY  =  mOSK.KeyList[Count].KeyDisplayHitRect.Top;
 
@@ -1431,13 +1437,13 @@ TranslateKeyboardLocation (
   GetKeyboardBoundingRect (&Rect);
   if (((INTN)Rect.Left + (INTN)dx) < 0) {
     dx = (float)Rect.Left;                                                  // Limit at current position
-  } else if ((UINTN)((INTN)(Rect.Right) + (INTN)dx) >= ScreenWidth) {
+  } else if ((UINTN)((INTN)(Rect.Right) + (INTN)dx) >= (ScreenWidth - 1)) {
     dx = (float)((INTN)(ScreenWidth - 1) - (INTN)(Rect.Right));             // Limit at screen width
   }
 
   if (((INTN)Rect.Top + (INTN)dy) < 0) {
     dy = (float)Rect.Top;                                                   // Limit at current position
-  } else if ((UINTN)((INTN)(Rect.Bottom) + (INTN)dy) >= ScreenHeight) {
+  } else if ((UINTN)((INTN)(Rect.Bottom) + (INTN)dy) >= (ScreenHeight - 1)) {
     dy = (float)((INTN)(ScreenHeight - 1) - (INTN)(Rect.Bottom));           // Limit at screen height
   }
 
@@ -1532,8 +1538,8 @@ SetKeyboardPosition (
   // Get current keyboard location and size
   //
   GetKeyboardBoundingRect (&Rect);
-  KeyboardWidth  = (Rect.Right - Rect.Left + 1);
-  KeyboardHeight = (Rect.Bottom - Rect.Top + 1);
+  KeyboardWidth  = SWM_RECT_WIDTH (Rect);
+  KeyboardHeight = SWM_RECT_HEIGHT (Rect);
 
   // Save keyboard position for later use.
   //
@@ -1758,8 +1764,8 @@ SetKeyboardSize (
 
   UINTN  ScreenWidth    = (UINTN)mGop->Mode->Info->HorizontalResolution;
   UINTN  ScreenHeight   = (UINTN)mGop->Mode->Info->VerticalResolution;
-  UINTN  KeyboardWidth  = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x);
-  UINTN  KeyboardHeight = (UINTN)(mOSK.KeyboardRectOriginal.botL.pt.y - mOSK.KeyboardRectOriginal.topL.pt.y);
+  UINTN  KeyboardWidth  = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x + 1);
+  UINTN  KeyboardHeight = (UINTN)(mOSK.KeyboardRectOriginal.botL.pt.y - mOSK.KeyboardRectOriginal.topL.pt.y + 1);
 
   // Compute the maximum keyboard size scale factor based on screen dimensions
   //
@@ -2157,9 +2163,9 @@ CheckForDockingButtonHit (
   )
 {
   UINTN  ButtonLeft   = ((UINTN)mOSK.DockingButtonXformed.pt.x - (mOSK.KeyboardDockButton.Width  / 2));
-  UINTN  ButtonRight  = ((UINTN)mOSK.DockingButtonXformed.pt.x + (mOSK.KeyboardDockButton.Width  / 2));
+  UINTN  ButtonRight  = ((UINTN)mOSK.DockingButtonXformed.pt.x + (mOSK.KeyboardDockButton.Width  / 2) - 1);
   UINTN  ButtonTop    = ((UINTN)mOSK.DockingButtonXformed.pt.y - (mOSK.KeyboardDockButton.Height / 2));
-  UINTN  ButtonBottom = ((UINTN)mOSK.DockingButtonXformed.pt.y + (mOSK.KeyboardDockButton.Height / 2));
+  UINTN  ButtonBottom = ((UINTN)mOSK.DockingButtonXformed.pt.y + (mOSK.KeyboardDockButton.Height / 2) - 1);
 
   // If the button isn't being displayed, it shouldn't be selectable.
   //
@@ -2187,9 +2193,9 @@ CheckForCloseButtonHit (
   )
 {
   UINTN  ButtonLeft   = ((UINTN)mOSK.CloseButtonXformed.pt.x - (mOSK.KeyboardCloseButton.Width  / 2));
-  UINTN  ButtonRight  = ((UINTN)mOSK.CloseButtonXformed.pt.x + (mOSK.KeyboardCloseButton.Width  / 2));
+  UINTN  ButtonRight  = ((UINTN)mOSK.CloseButtonXformed.pt.x + (mOSK.KeyboardCloseButton.Width  / 2) - 1);
   UINTN  ButtonTop    = ((UINTN)mOSK.CloseButtonXformed.pt.y - (mOSK.KeyboardCloseButton.Height / 2));
-  UINTN  ButtonBottom = ((UINTN)mOSK.CloseButtonXformed.pt.y + (mOSK.KeyboardCloseButton.Height / 2));
+  UINTN  ButtonBottom = ((UINTN)mOSK.CloseButtonXformed.pt.y + (mOSK.KeyboardCloseButton.Height / 2) - 1);
 
   // If the button isn't being displayed, it shouldn't be selectable.
   //
@@ -2375,7 +2381,7 @@ RotateKeyboard (
 
   UINTN  ScreenWidth   = (UINTN)mGop->Mode->Info->HorizontalResolution;
   UINTN  ScreenHeight  = (UINTN)mGop->Mode->Info->VerticalResolution;
-  UINTN  KeyboardWidth = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x);
+  UINTN  KeyboardWidth = (UINTN)(mOSK.KeyboardRectOriginal.topR.pt.x - mOSK.KeyboardRectOriginal.topL.pt.x + 1);
 
   // Save keyboard angle for later.
   //
@@ -3171,10 +3177,13 @@ OSKDriverInit (
 
   // Full screen.
   //
-  FrameRect.Left   = 0;
-  FrameRect.Top    = 0;
-  FrameRect.Right  = mGop->Mode->Info->HorizontalResolution;
-  FrameRect.Bottom = mGop->Mode->Info->VerticalResolution;
+  SWM_RECT_INIT2 (
+    FrameRect,
+    0,
+    0,
+    mGop->Mode->Info->HorizontalResolution,
+    mGop->Mode->Info->VerticalResolution
+    );
 
   // Register with the Simple Window Manager to get pointer input events.
   //

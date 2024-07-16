@@ -46,8 +46,8 @@ RenderProgressBar (
 
   // Compute progres bar width and height.
   //
-  Width  = (this->m_pProgressBar->ProgressBarBoundsCurrent.Right  - this->m_pProgressBar->ProgressBarBoundsCurrent.Left + 1);
-  Height = (this->m_pProgressBar->ProgressBarBoundsCurrent.Bottom - this->m_pProgressBar->ProgressBarBoundsCurrent.Top + 1);
+  Width  = SWM_RECT_WIDTH (this->m_pProgressBar->ProgressBarBoundsCurrent);
+  Height = SWM_RECT_HEIGHT (this->m_pProgressBar->ProgressBarBoundsCurrent);
 
   // Draw the progress bar background first.
   //
@@ -68,7 +68,7 @@ RenderProgressBar (
   // Draw the progress bar color next.
   //
 
-  Width = (((this->m_pProgressBar->ProgressBarBoundsCurrent.Right  - this->m_pProgressBar->ProgressBarBoundsCurrent.Left + 1) * this->m_BarPercent) / 100);
+  Width = ((SWM_RECT_WIDTH (this->m_pProgressBar->ProgressBarBoundsCurrent) * this->m_BarPercent) / 100);
 
   mUITSWM->BltWindow (
              mUITSWM,
@@ -261,10 +261,13 @@ new_ProgressBar (
     P->Ctor      = &Ctor;
     P->Base.Dtor = &Dtor;
 
-    Rect.Left   = OrigX;
-    Rect.Right  = (OrigX + ProgressBarWidth - 1);
-    Rect.Top    = OrigY;
-    Rect.Bottom = (OrigY + ProgressBarHeight - 1);
+    SWM_RECT_INIT2 (
+      Rect,
+      OrigX,
+      OrigY,
+      ProgressBarWidth,
+      ProgressBarHeight
+      );
 
     P->Ctor (
          P,
