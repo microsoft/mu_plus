@@ -18,8 +18,8 @@ RenderBitmap (
   IN Bitmap  *this
   )
 {
-  UINT32  Width  = (this->m_BitmapBounds.Right - this->m_BitmapBounds.Left + 1);
-  UINT32  Height = (this->m_BitmapBounds.Bottom - this->m_BitmapBounds.Top + 1);
+  UINT32  Width  = SWM_RECT_WIDTH (this->m_BitmapBounds);
+  UINT32  Height = SWM_RECT_HEIGHT (this->m_BitmapBounds);
 
   // Draw the bitmap.
   //
@@ -132,8 +132,8 @@ Ctor (
   IN SWM_RECT                       BitmapBounds
   )
 {
-  UINT32  Width  = (BitmapBounds.Right - BitmapBounds.Left + 1);
-  UINT32  Height = (BitmapBounds.Bottom - BitmapBounds.Top + 1);
+  UINT32  Width  = SWM_RECT_WIDTH (BitmapBounds);
+  UINT32  Height = SWM_RECT_HEIGHT (BitmapBounds);
   UINT32  BitmapSize;
 
   // Capture the bounding box of the bitmap.
@@ -211,10 +211,13 @@ new_Bitmap (
     B->Ctor      = &Ctor;
     B->Base.Dtor = &Dtor;
 
-    Rect.Left   = OrigX;
-    Rect.Right  = (OrigX + BitmapWidth - 1);
-    Rect.Top    = OrigY;
-    Rect.Bottom = (OrigY + BitmapHeight - 1);
+    SWM_RECT_INIT2 (
+      Rect,
+      OrigX,
+      OrigY,
+      BitmapWidth,
+      BitmapHeight
+      );
 
     B->Ctor (
          B,

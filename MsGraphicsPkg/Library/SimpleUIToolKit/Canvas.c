@@ -57,16 +57,16 @@ SetControlBounds (
   )
 {
   EFI_STATUS                Status         = EFI_SUCCESS;
-  UINT32                    NewWidth       = (Rect.Right - Rect.Left + 1);
-  UINT32                    NewHeight      = (Rect.Bottom - Rect.Top + 1);
+  UINT32                    NewWidth       = SWM_RECT_WIDTH (Rect);
+  UINT32                    NewHeight      = SWM_RECT_HEIGHT (Rect);
   UIT_CANVAS_CHILD_CONTROL  *pChildControl = this->m_pControls;
   ControlBase               *pControlBase;
   SWM_RECT                  ControlRect;
 
   // We don't support shrinking the canvas - only repositioning.
   //
-  if ((NewWidth != (this->m_CanvasBounds.Right - this->m_CanvasBounds.Left + 1)) ||
-      (NewHeight != (this->m_CanvasBounds.Bottom - this->m_CanvasBounds.Top + 1)))
+  if ((NewWidth != SWM_RECT_WIDTH (this->m_CanvasBounds)) ||
+      (NewHeight != SWM_RECT_HEIGHT (this->m_CanvasBounds)))
   {
     DEBUG ((DEBUG_ERROR, "ERROR [SUIT]: Not able to resize canvas.\r\n"));
     Status = EFI_UNSUPPORTED;
@@ -519,8 +519,8 @@ ClearCanvas (
   while (NULL != pChildControl) {
     pChildControlRect = &pChildControl->ChildBounds;
 
-    FillWidth  = (pChildControlRect->Right - pChildControlRect->Left + 1);
-    FillHeight = (pChildControlRect->Bottom - pChildControlRect->Top + 1);
+    FillWidth  = SWM_RECT_WIDTH (*pChildControlRect);
+    FillHeight = SWM_RECT_HEIGHT (*pChildControlRect);
 
     mUITSWM->BltWindow (
                mUITSWM,

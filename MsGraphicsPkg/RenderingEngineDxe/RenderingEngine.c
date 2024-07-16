@@ -234,10 +234,13 @@ SREBlt (
 
   // Current blit operation bounding rectangle.
   //
-  BltRect.Left   = (UINT32)(DestinationX);
-  BltRect.Top    = (UINT32)(DestinationY);
-  BltRect.Right  = (UINT32)(DestinationX + Width  - 1);
-  BltRect.Bottom = (UINT32)(DestinationY + Height - 1);
+  SWM_RECT_INIT2 (
+    BltRect,
+    (UINT32)DestinationX,
+    (UINT32)DestinationY,
+    (UINT32)Width,
+    (UINT32)Height
+    );
 
   // Raise the TPL to avoid interrupting rendering and framebuffer capture.
   //
@@ -245,10 +248,13 @@ SREBlt (
 
   // Current mouse pointer bounding rectangle.
   //
-  PointerRect.Left   = (UINT32)(mSRE.MousePointerOrigX);
-  PointerRect.Top    = (UINT32)(mSRE.MousePointerOrigY);
-  PointerRect.Right  = (UINT32)(mSRE.MousePointerOrigX + mSRE.MousePointerWidth  - 1);
-  PointerRect.Bottom = (UINT32)(mSRE.MousePointerOrigY + mSRE.MousePointerHeight - 1);
+  SWM_RECT_INIT2 (
+    PointerRect,
+    (UINT32)mSRE.MousePointerOrigX,
+    (UINT32)mSRE.MousePointerOrigY,
+    (UINT32)mSRE.MousePointerWidth,
+    (UINT32)mSRE.MousePointerHeight
+    );
 
   // If the blit intersects with the mouse, we need to temporarily hide the mouse pointer.
   //
@@ -268,8 +274,8 @@ SREBlt (
         (FALSE == Surface->BlittingSurface) &&
         ((TRUE  == RectsOverlap (Surface->FrameRect, BltRect)) || (Surface->FrameChecksum != CalculateSurfaceFrameChecksum (Surface))))
     {
-      FrameWidth  = (Surface->FrameRect.Right - Surface->FrameRect.Left + 1);
-      FrameHeight = (Surface->FrameRect.Bottom - Surface->FrameRect.Top + 1);
+      FrameWidth  = SWM_RECT_WIDTH (Surface->FrameRect);
+      FrameHeight = SWM_RECT_HEIGHT (Surface->FrameRect);
 
       // Remember that we need to notify the client to redraw.
       //
@@ -334,8 +340,8 @@ SREBlt (
       if ((FALSE == Surface->BlittingSurface) &&
           (TRUE  == RectsOverlap (Surface->FrameRect, BltRect)))
       {
-        FrameWidth  = (Surface->FrameRect.Right - Surface->FrameRect.Left + 1);
-        FrameHeight = (Surface->FrameRect.Bottom - Surface->FrameRect.Top + 1);
+        FrameWidth  = SWM_RECT_WIDTH (Surface->FrameRect);
+        FrameHeight = SWM_RECT_HEIGHT (Surface->FrameRect);
 
         // Save the contents of the framebuffer to this capture buffer.
         //
@@ -618,8 +624,8 @@ CalculateSurfaceFrameChecksum (
   IN  SRE_SURFACE_LIST  *Surface
   )
 {
-  UINT32                         Width  = (Surface->FrameRect.Right - Surface->FrameRect.Left + 1);
-  UINT32                         Height = (Surface->FrameRect.Bottom - Surface->FrameRect.Top + 1);
+  UINT32                         Width  = SWM_RECT_WIDTH (Surface->FrameRect);
+  UINT32                         Height = SWM_RECT_HEIGHT (Surface->FrameRect);
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL  *SurfaceOrigin;
   UINT32                         Offset;
   UINT32                         Checksum = 0;
@@ -739,8 +745,8 @@ SRECreateSurface (
 
   // Allocate storage for the backing buffer.
   //
-  UINT32  Width  = (FrameRect.Right - FrameRect.Left + 1);
-  UINT32  Height = (FrameRect.Bottom - FrameRect.Top + 1);
+  UINT32  Width  = SWM_RECT_WIDTH (FrameRect);
+  UINT32  Height = SWM_RECT_HEIGHT (FrameRect);
 
   // Allocate a capture buffer for the surface.
   //
@@ -835,8 +841,8 @@ SREResizeSurface (
         // If the surface is active, restore the backing buffer before resizing.
         //
         if (TRUE == Surface->Active) {
-          Width  = (Surface->FrameRect.Right - Surface->FrameRect.Left + 1);
-          Height = (Surface->FrameRect.Bottom - Surface->FrameRect.Top + 1);
+          Width  = SWM_RECT_WIDTH (Surface->FrameRect);
+          Height = SWM_RECT_HEIGHT (Surface->FrameRect);
 
           // Restore the contents to the framebuffer.
           //
@@ -864,8 +870,8 @@ SREResizeSurface (
 
       // Allocate storage for the backing buffer.
       //
-      Width                   = (FrameRect->Right - FrameRect->Left + 1);
-      Height                  = (FrameRect->Bottom - FrameRect->Top + 1);
+      Width                   = SWM_RECT_WIDTH (*FrameRect);
+      Height                  = SWM_RECT_HEIGHT (*FrameRect);
       Surface->pCaptureBuffer = AllocatePool (Width * Height * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
       ASSERT (NULL != Surface->pCaptureBuffer);
@@ -968,8 +974,8 @@ SREActivateSurface (
     if (Surface->ImageHandle == ImageHandle) {
       Surface->Active = MakeActive;
 
-      FrameWidth  = (Surface->FrameRect.Right - Surface->FrameRect.Left + 1);
-      FrameHeight = (Surface->FrameRect.Bottom - Surface->FrameRect.Top + 1);
+      FrameWidth  = SWM_RECT_WIDTH (Surface->FrameRect);
+      FrameHeight = SWM_RECT_HEIGHT (Surface->FrameRect);
 
       if (TRUE == MakeActive) {
         Surface->PreviousActive = ActiveSurface;

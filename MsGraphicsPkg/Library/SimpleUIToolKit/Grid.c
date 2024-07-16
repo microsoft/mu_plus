@@ -125,13 +125,19 @@ AddControl (
   // control's size so it doesn't flow into the neighbors cell.
   //
   SWM_RECT  NewBounds;
-  UINT32    CellOrigX      = (this->m_GridBounds.Left + (Column * this->m_GridCellWidth));
-  UINT32    CellOrigY      = (this->m_GridBounds.Top + (Row * this->m_GridCellHeight));
-  UINT32    CellEndX       = (CellOrigX + this->m_GridCellWidth - 1);
-  UINT32    CellEndY       = (CellOrigY + this->m_GridCellHeight - 1);
-  UINT32    ControlWidth   = (ControlBounds.Right - ControlBounds.Left + 1);
-  UINT32    ControlHeight  = (ControlBounds.Bottom - ControlBounds.Top + 1);
+
+  UINT32    ControlWidth   = SWM_RECT_WIDTH (ControlBounds);
+  UINT32    ControlHeight  = SWM_RECT_HEIGHT (ControlBounds);
   UINT32    VerticalAdjust = (this->m_GridCellHeight - ControlHeight) / 2;
+  SWM_RECT  CellRect;
+
+  SWM_RECT_INIT2 (
+    CellRect,
+    (this->m_GridBounds.Left + (Column * this->m_GridCellWidth)),
+    (this->m_GridBounds.Top + (Row * this->m_GridCellHeight)),
+    this->m_GridCellWidth,
+    this->m_GridCellHeight
+    );
 
   if (ControlHeight > this->m_GridCellHeight) {
     DEBUG ((DEBUG_ERROR, "ERROR [Grid]: Found Grid element larger than specified height. GridH=%d,ElemetH=%d.\r\n", this->m_GridCellHeight, ControlHeight));
@@ -139,19 +145,22 @@ AddControl (
     this->m_GridCellHeight = ControlHeight;
   }
 
-  NewBounds.Left   = (CellOrigX + ControlBounds.Left);
-  NewBounds.Top    = (CellOrigY + ControlBounds.Top + VerticalAdjust);
-  NewBounds.Right  = (0 != ControlWidth  ? (NewBounds.Left + ControlWidth - 1) : NewBounds.Left);
-  NewBounds.Bottom = (0 != ControlHeight ? (NewBounds.Top + ControlHeight - 1) : NewBounds.Top);
+  SWM_RECT_INIT2 (
+    NewBounds,
+    (CellRect.Left + ControlBounds.Left),
+    (CellRect.Top + ControlBounds.Top + VerticalAdjust),
+    ControlWidth,
+    ControlHeight
+    );
 
   // If the child control is larger than the grid cell size and the truncate flag is set, limit the size to the cell size.
   //
-  if ((NewBounds.Right > CellEndX) && (TRUE == this->m_TruncateControl)) {
-    NewBounds.Right = CellEndX;
+  if ((NewBounds.Right > CellRect.Right) && (TRUE == this->m_TruncateControl)) {
+    NewBounds.Right = CellRect.Right;
   }
 
-  if ((NewBounds.Bottom > CellEndY) && (TRUE == this->m_TruncateControl)) {
-    NewBounds.Bottom = CellEndY;
+  if ((NewBounds.Bottom > CellRect.Bottom) && (TRUE == this->m_TruncateControl)) {
+    NewBounds.Bottom = CellRect.Bottom;
   }
 
   // Reposition the child control by moving it to the grid-specified cell location and offset.
@@ -310,8 +319,8 @@ Ctor (
 
   // Compute grid cell size based on overall side and number of rows & columns.
   //
-  this->m_GridCellWidth     = ((GridBounds.Right - GridBounds.Left + 1) / Columns);
-  this->m_GridCellHeight    = ((GridBounds.Bottom - GridBounds.Top + 1) / Rows);
+  this->m_GridCellWidth     = (SWM_RECT_WIDTH (GridBounds) / Columns);
+  this->m_GridCellHeight    = (SWM_RECT_HEIGHT (GridBounds) / Rows);
   this->m_GridInitialHeight = this->m_GridCellHeight;
 
   // No child controls yet.

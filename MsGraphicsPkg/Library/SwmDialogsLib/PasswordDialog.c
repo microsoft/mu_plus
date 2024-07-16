@@ -152,8 +152,8 @@ CreateDialogControls (
   EFI_STATUS     Status       = EFI_SUCCESS;
   UINT32         DialogOrigX  = DialogBounds.Left;
   UINT32         DialogOrigY  = DialogBounds.Top;
-  UINT32         DialogWidth  = (DialogBounds.Right - DialogBounds.Left + 1);
-  UINT32         DialogHeight = (DialogBounds.Bottom - DialogBounds.Top + 1);
+  UINT32         DialogWidth  = SWM_RECT_WIDTH (DialogBounds);
+  UINT32         DialogHeight = SWM_RECT_HEIGHT (DialogBounds);
   SWM_RECT       StringRect;
   SWM_RECT       ControlBounds;
   UINT32         ControlOrigX, ControlOrigY;
@@ -183,6 +183,14 @@ CreateDialogControls (
   ControlOrigX = (DialogOrigX + ((DialogWidth  * SWM_PWD_DIALOG_CAPTION_X_PERCENT) / 100));
   ControlOrigY = (DialogOrigY + ((DialogHeight * SWM_PWD_DIALOG_CAPTION_Y_PERCENT) / 100));
 
+  SWM_RECT_INIT (
+    ControlBounds,
+    ControlOrigX,
+    ControlOrigY,
+    DialogBounds.Right,
+    DialogBounds.Bottom
+    );
+
   // Select an appropriate font and colors for the caption text (larger font than the body).
   //
   FontInfo.FontSize    = SWM_PWD_CUSTOM_FONT_CAPTION_HEIGHT;
@@ -194,8 +202,8 @@ CreateDialogControls (
   CaptionLabel = new_Label (
                    ControlOrigX,
                    ControlOrigY,
-                   (DialogBounds.Right - ControlOrigX - ((DialogWidth * SWM_PWD_DIALOG_CAPTION_X_PERCENT) / 100)),
-                   (DialogBounds.Bottom - ControlOrigY),                  // In theory we could take up the entire dialog.
+                   (SWM_RECT_WIDTH (ControlBounds) - ((DialogWidth * SWM_PWD_DIALOG_CAPTION_X_PERCENT) / 100)),
+                   SWM_RECT_HEIGHT (ControlBounds),                  // In theory we could take up the entire dialog.
                    &FontInfo,
                    &DialogTheme.DialogTextColor,
                    &DialogTheme.DialogBackGroundColor,
@@ -223,7 +231,15 @@ CreateDialogControls (
 
   // Calculate the appropriate place to put the dialog's body text.
   //
-  ControlOrigY += ((ControlBounds.Bottom - ControlBounds.Top + 1) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
+  ControlOrigY += (SWM_RECT_HEIGHT (ControlBounds) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
+
+  SWM_RECT_INIT (
+    ControlBounds,
+    ControlOrigX,
+    ControlOrigY,
+    DialogBounds.Right,
+    DialogBounds.Bottom
+    );
 
   // Select an appropriate font and colors for the body text.
   //
@@ -235,8 +251,8 @@ CreateDialogControls (
   BodyLabel = new_Label (
                 ControlOrigX,
                 ControlOrigY,
-                (DialogBounds.Right - ControlOrigX - ((DialogWidth * SWM_PWD_DIALOG_RIGHT_PADDING_PERCENT) / 100)),
-                (DialogBounds.Bottom - ControlOrigY),                  // In theory we could take up the entire dialog.
+                (SWM_RECT_WIDTH (ControlBounds) - ((DialogWidth * SWM_PWD_DIALOG_RIGHT_PADDING_PERCENT) / 100)),
+                SWM_RECT_HEIGHT (ControlBounds),                  // In theory we could take up the entire dialog.
                 &FontInfo,
                 &DialogTheme.DialogTextColor,
                 &DialogTheme.DialogBackGroundColor,
@@ -264,7 +280,7 @@ CreateDialogControls (
 
   // Calculate the appropriate place to put the dialog's password editbox.
   //
-  ControlOrigY += ((ControlBounds.Bottom - ControlBounds.Top + 1) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
+  ControlOrigY += (SWM_RECT_HEIGHT (ControlBounds) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
 
   // Select an appropriate font and colors for the body text.
   //
@@ -312,7 +328,7 @@ CreateDialogControls (
                            &ControlBounds
                            );
 
-      ControlOrigY += ((ControlBounds.Bottom - ControlBounds.Top + 1) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
+      ControlOrigY += (SWM_RECT_HEIGHT (ControlBounds) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
 
       // Create the editbox for new password confirmation input.
       //
@@ -350,7 +366,7 @@ CreateDialogControls (
                                   &ControlBounds
                                   );
 
-      ControlOrigY += ((ControlBounds.Bottom - ControlBounds.Top + 1) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
+      ControlOrigY += (SWM_RECT_HEIGHT (ControlBounds) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
       break;
     }
     case SWM_PWD_TYPE_ALERT_PASSWORD:
@@ -396,7 +412,7 @@ CreateDialogControls (
                                &ControlBounds
                                );
 
-      ControlOrigY += ((ControlBounds.Bottom - ControlBounds.Top + 1) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
+      ControlOrigY += (SWM_RECT_HEIGHT (ControlBounds) + SWM_PWD_DIALOG_CONTROL_VERTICAL_PAD_PX);
       break;
     }
   }
@@ -457,7 +473,7 @@ CreateDialogControls (
 
   // Calculate the position and size of the first button.
   //
-  ControlWidth  = (StringRect.Right - StringRect.Left + 1) + (SWM_PWD_DIALOG_BUTTONTEXT_PADDING_PX * 2);
+  ControlWidth  = SWM_RECT_WIDTH (StringRect) + (SWM_PWD_DIALOG_BUTTONTEXT_PADDING_PX * 2);
   ControlHeight =  (ControlWidth / SWM_PWD_DIALOG_BUTTON_ASPECT_RATIO);
   // Calculate the total width of the buttons plus the padding in between them
   TotalControlWidth = ControlWidth * (200 + SWM_PWD_DIALOG_BUTTON_SPACE_PERCENT) / 100;                                                   // the control width is 2 buttons + 30% spacing
@@ -592,64 +608,31 @@ DrawDialogFrame (
   EFI_STATUS             Status = EFI_SUCCESS;
   EFI_FONT_DISPLAY_INFO  StringInfo;
   EFI_IMAGE_OUTPUT       *pBltBuffer;
+  SWM_RECT               Rect[4];
+  INTN                   Index;
 
   // For performance reasons, drawing the frame as four individual (small) rectangles is faster than a single large rectangle.
   //
-  this->BltWindow (
-          this,                                       // Top
-          gImageHandle,
-          &DialogTheme.DialogFrameColor,
-          EfiBltVideoFill,
-          0,
-          0,
-          FrameRect.Left,
-          FrameRect.Top,
-          (FrameRect.Right - FrameRect.Left + 1),
-          (CanvasRect.Top - FrameRect.Top + 1),
-          0
-          );
+  SWM_RECT_INIT (Rect[0], FrameRect.Left, FrameRect.Top, FrameRect.Right, CanvasRect.Top);       // Top
+  SWM_RECT_INIT (Rect[1], FrameRect.Left, CanvasRect.Top, CanvasRect.Left, CanvasRect.Bottom);   // Left
+  SWM_RECT_INIT (Rect[2], CanvasRect.Right, CanvasRect.Top, FrameRect.Right, CanvasRect.Bottom); // Right
+  SWM_RECT_INIT (Rect[3], FrameRect.Left, CanvasRect.Bottom, FrameRect.Right, FrameRect.Bottom); // Bottom
 
-  this->BltWindow (
-          this,                                       // Left
-          gImageHandle,
-          &DialogTheme.DialogFrameColor,
-          EfiBltVideoFill,
-          0,
-          0,
-          FrameRect.Left,
-          CanvasRect.Top,
-          (CanvasRect.Left - FrameRect.Left + 1),
-          (FrameRect.Bottom - CanvasRect.Top + 1),
-          0
-          );
-
-  this->BltWindow (
-          this,                                       // Right
-          gImageHandle,
-          &DialogTheme.DialogFrameColor,
-          EfiBltVideoFill,
-          0,
-          0,
-          CanvasRect.Right,
-          CanvasRect.Top,
-          (FrameRect.Right - CanvasRect.Right + 1),
-          (FrameRect.Bottom - CanvasRect.Top + 1),
-          0
-          );
-
-  this->BltWindow (
-          this,                                       // Bottom
-          gImageHandle,
-          &DialogTheme.DialogFrameColor,
-          EfiBltVideoFill,
-          0,
-          0,
-          CanvasRect.Left,
-          CanvasRect.Bottom,
-          (CanvasRect.Right - CanvasRect.Left + 1),
-          (FrameRect.Bottom - CanvasRect.Bottom + 1),
-          0
-          );
+  for (Index = 0; Index < 4; Index++) {
+    this->BltWindow (
+            this,
+            gImageHandle,
+            &DialogTheme.DialogFrameColor,
+            EfiBltVideoFill,
+            0,
+            0,
+            Rect[Index].Left,
+            Rect[Index].Top,
+            SWM_RECT_WIDTH (Rect[Index]),
+            SWM_RECT_HEIGHT (Rect[Index]),
+            0
+            );
+  }
 
   // For performance reasons, the canvas has been designed not to paint the entire dialog background.  Instead it only knows how to clear
   // current child control bounding rectanges.  So we fill in the entire dialog background once, here.
@@ -663,8 +646,8 @@ DrawDialogFrame (
           0,
           CanvasRect.Left,
           CanvasRect.Top,
-          (CanvasRect.Right - CanvasRect.Left + 1),
-          (CanvasRect.Bottom - CanvasRect.Top + 1),
+          SWM_RECT_WIDTH (CanvasRect),
+          SWM_RECT_HEIGHT (CanvasRect),
           0
           );
 
@@ -714,8 +697,8 @@ DrawDialogFrame (
 
   // Render the string to the screen, vertically centered.
   //
-  UINT32  FrameWidth     = (FrameRect.Right - FrameRect.Left + 1);
-  UINT32  TitleBarHeight = (CanvasRect.Top - FrameRect.Top + 1);
+  UINT32  FrameWidth     = SWM_RECT_WIDTH (FrameRect);
+  UINT32  TitleBarHeight = (CanvasRect.Top - FrameRect.Top);
 
   this->StringToWindow (
           this,
@@ -727,7 +710,7 @@ DrawDialogFrame (
           &StringInfo,
           &pBltBuffer,
           (FrameRect.Left + ((FrameWidth * SWM_PWD_DIALOG_TITLEBAR_TEXT_X_PERCENT) / 100)),
-          (FrameRect.Top  + ((TitleBarHeight / 2) - ((StringRect.Bottom - StringRect.Top + 1) / 2)) + MaxDescent),                  // Vertically center in the titlebar.
+          (FrameRect.Top  + ((TitleBarHeight - SWM_RECT_HEIGHT (StringRect)) / 2) + MaxDescent),                  // Vertically center in the titlebar.
           NULL,
           NULL,
           NULL
@@ -772,15 +755,18 @@ CreatePasswordDialog (
   )
 {
   EFI_STATUS  Status       = EFI_SUCCESS;
-  UINT32      DialogHeight = (FrameRect.Bottom - FrameRect.Top + 1);
+  UINT32      DialogHeight = SWM_RECT_HEIGHT (FrameRect);
   SWM_RECT    CanvasRect;
 
   // Since we have a dialog titlebar and frame, the actual canvas area of the dialog is smaller.
   //
-  CanvasRect.Left   = (FrameRect.Left + SWM_PWD_DIALOG_FRAME_WIDTH_PX);
-  CanvasRect.Top    = (FrameRect.Top  + ((DialogHeight * SWM_PWD_DIALOG_TITLEBAR_HEIGHT_PERCENT) / 100));
-  CanvasRect.Right  = (FrameRect.Right - SWM_PWD_DIALOG_FRAME_WIDTH_PX);
-  CanvasRect.Bottom = (FrameRect.Bottom - SWM_PWD_DIALOG_FRAME_WIDTH_PX);
+  SWM_RECT_INIT (
+    CanvasRect,
+    (FrameRect.Left + SWM_PWD_DIALOG_FRAME_WIDTH_PX),
+    (FrameRect.Top  + ((DialogHeight * SWM_PWD_DIALOG_TITLEBAR_HEIGHT_PERCENT) / 100)),
+    (FrameRect.Right - SWM_PWD_DIALOG_FRAME_WIDTH_PX),
+    (FrameRect.Bottom - SWM_PWD_DIALOG_FRAME_WIDTH_PX)
+    );
 
   // Create a canvas and all of the child controls that make up the Password Dialog.
   //
@@ -902,7 +888,7 @@ ProcessDialogInput (
       // Calculate the vertical delta needed to center the dialog between the top of the screen and the OSK, shift everything up by that amount.  The OSK
       // is docked, centered, at the bottom of the screen.
       //
-      UINT32  VertOffset = (FrameRect.Top - ((OSKRect.Top / 2) - ((FrameRect.Bottom - FrameRect.Top + 1) / 2)));
+      UINT32  VertOffset = (FrameRect.Top - ((OSKRect.Top / 2) - (SWM_RECT_HEIGHT (FrameRect) / 2)));
 
       FrameRect.Top     -= VertOffset;
       FrameRect.Bottom  -= VertOffset;
@@ -1239,10 +1225,13 @@ PasswordDialogInternal (
   // need to share screen real estate and therefore cooperate for pointer event input.  When the OSK is displayed, the
   // password dialog will be shifted up vertically to make room.
   //
-  FrameRect.Left   = DialogOrigX;
-  FrameRect.Top    = DialogOrigY;
-  FrameRect.Right  = (DialogOrigX + DialogWidth - 1);
-  FrameRect.Bottom = (DialogOrigY + DialogHeight - 1);
+  SWM_RECT_INIT2 (
+    FrameRect,
+    DialogOrigX,
+    DialogOrigY,
+    DialogWidth,
+    DialogHeight
+    );
 
   // Locate the on-screen keyboard (OSK) protocol.  It may be used for input on a touch-only device.
   //

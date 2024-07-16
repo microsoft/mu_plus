@@ -334,10 +334,13 @@ new_Label (
     L->Ctor      = &Ctor;
     L->Base.Dtor = &Dtor;
 
-    Rect.Left   = OrigX;
-    Rect.Right  = (OrigX + LabelWidth - 1);
-    Rect.Top    = OrigY;
-    Rect.Bottom = (OrigY + LabelHeight - 1);
+    SWM_RECT_INIT2 (
+      Rect,
+      OrigX,
+      OrigY,
+      LabelWidth,
+      LabelHeight
+      );
 
     L->Ctor (
          L,

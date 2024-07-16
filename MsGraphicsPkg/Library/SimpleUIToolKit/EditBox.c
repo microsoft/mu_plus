@@ -81,8 +81,8 @@ RenderEditBox (
 
   // Compute editbox width and height.
   //
-  Width  = (this->m_EditBoxBounds.Right  - this->m_EditBoxBounds.Left + 1);
-  Height = (this->m_EditBoxBounds.Bottom - this->m_EditBoxBounds.Top + 1);
+  Width  = SWM_RECT_WIDTH (this->m_EditBoxBounds);
+  Height = SWM_RECT_HEIGHT (this->m_EditBoxBounds);
 
   // Draw the editbox background first.
   //
@@ -161,8 +161,8 @@ RenderEditBox (
     DrawRectangleOutline (
       this->m_EditBoxBounds.Left,
       this->m_EditBoxBounds.Top,
-      this->m_EditBoxBounds.Right - this->m_EditBoxBounds.Left - 1,
-      this->m_EditBoxBounds.Bottom - this->m_EditBoxBounds.Top - 1,
+      SWM_RECT_WIDTH (this->m_EditBoxBounds),
+      SWM_RECT_HEIGHT (this->m_EditBoxBounds),
       UIT_E_HIGHLIGHT_RING_WIDTH,
       &gMsColorTable.EditBoxHighlightBoundColor
       );
@@ -204,19 +204,23 @@ SetControlBounds (
 
   // Translate (and possibly resize) the editbox text bounding box.
   //
-  SWM_RECT  *TextRect  = &this->m_EditBoxTextBounds;
-  UINT32    TextWidth  = (TextRect->Right - TextRect->Left + 1);
-  UINT32    TextHeight = (TextRect->Bottom - TextRect->Top + 1);
+  UINT32  TextWidth     = SWM_RECT_WIDTH (this->m_EditBoxTextBounds);
+  UINT32  TextHeight    = SWM_RECT_HEIGHT (this->m_EditBoxTextBounds);
+  UINT32  EditBoxWidth  = SWM_RECT_WIDTH (this->m_EditBoxBounds);
+  UINT32  EditBoxHeight = SWM_RECT_HEIGHT (this->m_EditBoxBounds);
 
-  Bounds.Left  += TextOffsetX;
-  Bounds.Top   += TextOffsetY;
-  Bounds.Right  = ((Bounds.Left + TextWidth) < Bounds.Right ? (Bounds.Right + TextWidth) : Bounds.Right);
-  Bounds.Bottom = ((Bounds.Top + TextHeight) < Bounds.Bottom ? (Bounds.Top + TextHeight) : Bounds.Bottom);
+  SWM_RECT_INIT2 (
+    Bounds,
+    this->m_EditBoxBounds.Left + TextOffsetX,
+    this->m_EditBoxBounds.Top + TextOffsetY,
+    ((TextWidth < (EditBoxWidth - TextOffsetX)) ? TextWidth : (EditBoxWidth - TextOffsetX)),
+    ((TextHeight < (EditBoxHeight - TextOffsetY)) ? TextHeight : (EditBoxHeight - TextOffsetY))
+    );
 
   CopyMem (&this->m_EditBoxTextBounds, &Bounds, sizeof (SWM_RECT));
 
-  // MaxDisplay Characters =  ((width of the full edibox) +  (AvgCharWidth -1 ) - (left and right padding)) / AvgCharWidth
-  this->m_MaxDisplayChars = (this->m_EditBoxBounds.Right - this->m_EditBoxBounds.Left + 1 + this->m_CharWidth - 1 - (2 * UIT_EDITBOX_HORIZONTAL_PADDING)) / this->m_CharWidth;
+  // MaxDisplay Characters =  ((width of the full edibox) +  (AvgCharWidth -1) - (left and right padding)) / AvgCharWidth
+  this->m_MaxDisplayChars = (EditBoxWidth + (this->m_CharWidth - 1) - (2 * UIT_EDITBOX_HORIZONTAL_PADDING)) / this->m_CharWidth;
 
   return Status;
 }
@@ -653,22 +657,28 @@ Ctor (
 
   this->m_EditBoxText[0] = L'\0';
 
-  TextWidth  = (TextRect.Right - TextRect.Left + 1);
-  TextHeight = (TextRect.Bottom - TextRect.Top + 1);
+  TextWidth  = SWM_RECT_WIDTH (TextRect);
+  TextHeight = SWM_RECT_HEIGHT (TextRect);
 
   this->m_CharWidth = TextWidth / MaxDisplayChars;      // Average width of one 'W'
 
-  this->m_EditBoxBounds.Left   = OrigX;
-  this->m_EditBoxBounds.Top    = OrigY;
-  this->m_EditBoxBounds.Right  = (OrigX + TextWidth + (UIT_EDITBOX_HORIZONTAL_PADDING * 2));            // At beginning and end of editbox text.
-  this->m_EditBoxBounds.Bottom = (OrigY + TextHeight + (UIT_EDITBOX_VERTICAL_PADDING * 2));             // At top and bottom of editbox text.
+  SWM_RECT_INIT2 (
+    this->m_EditBoxBounds,
+    OrigX,
+    OrigY,
+    TextWidth + (UIT_EDITBOX_HORIZONTAL_PADDING * 2),
+    TextHeight + (UIT_EDITBOX_VERTICAL_PADDING * 2)
+    );
 
   // Compute EditBox text bounding rectangle (based on max display string length).
   //
-  this->m_EditBoxTextBounds.Left   = (OrigX + UIT_EDITBOX_HORIZONTAL_PADDING);
-  this->m_EditBoxTextBounds.Top    = (OrigY + UIT_EDITBOX_VERTICAL_PADDING);
-  this->m_EditBoxTextBounds.Right  = (this->m_EditBoxBounds.Right - UIT_EDITBOX_HORIZONTAL_PADDING);
-  this->m_EditBoxTextBounds.Bottom = (this->m_EditBoxBounds.Bottom - UIT_EDITBOX_VERTICAL_PADDING);
+  SWM_RECT_INIT2 (
+    this->m_EditBoxTextBounds,
+    OrigX + UIT_EDITBOX_HORIZONTAL_PADDING,
+    OrigY + UIT_EDITBOX_VERTICAL_PADDING,
+    TextWidth,
+    TextHeight
+    );
 
   // Configure EditBox state.
   //
