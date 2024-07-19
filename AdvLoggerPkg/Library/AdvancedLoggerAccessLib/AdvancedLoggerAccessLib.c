@@ -40,10 +40,42 @@ CONST   CHAR8                 *AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_CNT] = {
   "[TFA] ",
 };
 
-#define ADV_TIME_STAMP_FORMAT  "%2.2d:%2.2d:%2.2d.%3.3d : "
-#define ADV_TIME_STAMP_RESULT  "hh:mm:ss:ttt : "
-#define ADV_PHASE_ERR_FORMAT   "[%04X] "
-#define ADV_PHASE_MAX_SIZE     32
+// Define a structure to hold debug flag information
+typedef struct {
+  const char    *name;
+  UINT32        value;
+} DebugLevel;
+
+// Create an array of DebugLevel structures
+DebugLevel  debug_levels[] = {
+  { "[DEBUG_INIT] ",          0x00000001 },
+  { "[DEBUG_WARN] ",          0x00000002 },
+  { "[DEBUG_LOAD] ",          0x00000004 },
+  { "[DEBUG_FS] ",            0x00000008 },
+  { "[DEBUG_POOL] ",          0x00000010 },
+  { "[DEBUG_PAGE] ",          0x00000020 },
+  { "[DEBUG_INFO] ",          0x00000040 },
+  { "[DEBUG_DISPATCH] ",      0x00000080 },
+  { "[DEBUG_VARIABLE] ",      0x00000100 },
+  { "[DEBUG_SMI] ",           0x00000200 },
+  { "[DEBUG_BM] ",            0x00000400 },
+  { "[DEBUG_BLKIO] ",         0x00001000 },
+  { "[DEBUG_NET] ",           0x00004000 },
+  { "[DEBUG_UNDI] ",          0x00010000 },
+  { "[DEBUG_LOADFILE] ",      0x00020000 },
+  { "[DEBUG_EVENT] ",         0x00080000 },
+  { "[DEBUG_GCD] ",           0x00100000 },
+  { "[DEBUG_CACHE] ",         0x00200000 },
+  { "[DEBUG_VERBOSE] ",       0x00400000 },
+  { "[DEBUG_MANAGEABILITY] ", 0x00800000 },
+  { "[DEBUG_ERROR] ",         0x80000000 }
+};
+
+#define ADV_TIME_STAMP_FORMAT     "%2.2d:%2.2d:%2.2d.%3.3d : "
+#define ADV_TIME_STAMP_RESULT     "hh:mm:ss:ttt : "
+#define ADV_PHASE_ERR_FORMAT      "[%04X] "
+#define ADV_PHASE_MAX_SIZE        32
+#define ADV_DEBUG_LEVEL_MAX_SIZE  32
 
 /**
 
@@ -134,6 +166,40 @@ FormatPhasePrefix (
   }
 
   return (UINT16)PhaseStringLen;
+}
+
+/**
+  FormatDebugLevelPrefix
+
+  Adds a debug level indicator to the message being returned.  If debug level is recognized and specified,
+  returns the debug_level prefix in from the AdvMsgEntryPrefix, otherwise raw debug level value is returned.
+
+  @param  MessageBuffer
+  @param  MessageBufferSize
+  @param  Phase
+
+  @retval Number of characters printed
+*/
+STATIC
+UINT16
+FormatDebugLevelPrefix (
+  IN CHAR8   *MessageBuffer,
+  IN UINTN   MessageBufferSize,
+  IN UINT32  DebugLevel
+  )
+{
+  UINTN  DebugLevelStringLen;
+
+  // Add the matched debug level
+  for (UINT8 i = 0; i < sizeof (debug_levels) / sizeof (debug_levels[0]); i++) {
+    if (DebugLevel == debug_levels[i].value) {
+      DebugLevelStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, debug_levels[i].name);
+      return (UINT16)DebugLevelStringLen;
+    }
+  }
+
+  // If this is not a known debug level, just don't print it out and return 0
+  return 0;
 }
 
 /**
@@ -286,8 +352,11 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   UINT16      TargetLen;
   UINT16      PhaseStringLen;
   UINT16      CurrPhaseStringLen;
-  CHAR8       TimeStampString[]               = { ADV_TIME_STAMP_RESULT };
-  CHAR8       PhaseString[ADV_PHASE_MAX_SIZE] = { 0 };
+  UINT16      DebugLevelStringLen;
+  UINT16      CurrDebugLevelStringLen;
+  CHAR8       TimeStampString[]                          = { ADV_TIME_STAMP_RESULT };
+  CHAR8       PhaseString[ADV_PHASE_MAX_SIZE]            = { 0 };
+  CHAR8       DebugLevelString[ADV_DEBUG_LEVEL_MAX_SIZE] = { 0 };
 
   if (LineEntry == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -314,15 +383,18 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   // GetNextLine.
 
   // In case this is a restart of the same Message, initialize the time stamp and prefix.
-  PhaseStringLen = 0;
+  PhaseStringLen      = 0;
+  DebugLevelStringLen = 0;
   if (LineEntry->BlockEntry.Message != NULL) {
     FormatTimeStamp (TimeStampString, sizeof (TimeStampString), LineEntry->BlockEntry.TimeStamp);
     CopyMem (LineBuffer, TimeStampString, sizeof (TimeStampString) - sizeof (CHAR8));
     PhaseStringLen = FormatPhasePrefix (PhaseString, sizeof (PhaseString), LineEntry->BlockEntry.Phase);
     CopyMem (LineBuffer + sizeof (TimeStampString) - sizeof (CHAR8), PhaseString, PhaseStringLen);
+    DebugLevelStringLen = FormatDebugLevelPrefix (DebugLevelString, sizeof (DebugLevelString), LineEntry->BlockEntry.DebugLevel);
+    CopyMem (LineBuffer + sizeof (TimeStampString) + PhaseStringLen - sizeof (CHAR8), DebugLevelString, DebugLevelStringLen);
   }
 
-  TargetPtr = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen];
+  TargetPtr = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen + DebugLevelStringLen];
   TargetLen = 0;
   Status    = EFI_SUCCESS;
 
@@ -380,17 +452,25 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
       CopyMem (LineBuffer, TimeStampString, sizeof (TimeStampString) - sizeof (CHAR8));
       CurrPhaseStringLen = FormatPhasePrefix (PhaseString, sizeof (PhaseString), LineEntry->BlockEntry.Phase);
       if (PhaseStringLen != CurrPhaseStringLen) {
-        // Adjust the TargetPtr to point to the end of the PhaseString
+        // Update the PhaseStringLen
         PhaseStringLen = CurrPhaseStringLen;
-        TargetPtr      = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen];
       }
 
       CopyMem (LineBuffer + sizeof (TimeStampString) - sizeof (CHAR8), PhaseString, PhaseStringLen);
+
+      CurrDebugLevelStringLen = FormatDebugLevelPrefix (DebugLevelString, sizeof (DebugLevelString), LineEntry->BlockEntry.DebugLevel);
+      if (DebugLevelStringLen != CurrDebugLevelStringLen) {
+        // Adjust the TargetPtr to point to the end of the DebugLevelString
+        DebugLevelStringLen = CurrDebugLevelStringLen;
+        TargetPtr           = &LineBuffer[sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen + DebugLevelStringLen];
+      }
+
+      CopyMem (LineBuffer + sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen, DebugLevelString, DebugLevelStringLen);
     }
   } while (!EFI_ERROR (Status));
 
   if (!EFI_ERROR (Status)) {
-    LineEntry->MessageLen = TargetLen + sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen;
+    LineEntry->MessageLen = TargetLen + sizeof (TimeStampString) - sizeof (CHAR8) + PhaseStringLen + DebugLevelStringLen;
     LineEntry->TimeStamp  = LineEntry->BlockEntry.TimeStamp;
     LineEntry->DebugLevel = LineEntry->BlockEntry.DebugLevel;
     LineEntry->Phase      = LineEntry->BlockEntry.Phase;
