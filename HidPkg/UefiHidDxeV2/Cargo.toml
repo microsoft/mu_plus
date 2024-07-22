@@ -29,5 +29,5 @@ scroll = {workspace=true}
 RustBootServicesAllocatorDxe = {workspace=true}
 
 [dev-dependencies]
-mockall = "0.12.0"
+mockall = "0.13.0"
 RustAdvancedLoggerDxe = {workspace=true, features=["std"]}
