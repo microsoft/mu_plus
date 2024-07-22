@@ -33,22 +33,22 @@ static mut RUNTIME_SERVICES: *mut system::RuntimeServices = core::ptr::null_mut(
 
 #[no_mangle]
 pub extern "efiapi" fn efi_main(image_handle: efi::Handle, system_table: *const system::SystemTable) -> efi::Status {
-  // Safety: This block is unsafe because it assumes that system_table and (*system_table).boot_services are correct,
-  // and because it mutates/accesses the global BOOT_SERVICES static.
-  unsafe {
-    BOOT_SERVICES = (*system_table).boot_services;
-    RUNTIME_SERVICES = (*system_table).runtime_services;
-    GLOBAL_ALLOCATOR.init(BOOT_SERVICES);
-    init_debug(BOOT_SERVICES);
-  }
+    // Safety: This block is unsafe because it assumes that system_table and (*system_table).boot_services are correct,
+    // and because it mutates/accesses the global BOOT_SERVICES static.
+    unsafe {
+        BOOT_SERVICES = (*system_table).boot_services;
+        RUNTIME_SERVICES = (*system_table).runtime_services;
+        GLOBAL_ALLOCATOR.init(BOOT_SERVICES);
+        init_debug(BOOT_SERVICES);
+    }
 
-  let status = initialize_driver_binding(image_handle);
+    let status = initialize_driver_binding(image_handle);
 
-  if status.is_err() {
-    debugln!(DEBUG_ERROR, "[UefiHidMain]: failed to initialize driver binding.\n");
-  }
+    if status.is_err() {
+        debugln!(DEBUG_ERROR, "[UefiHidMain]: failed to initialize driver binding.\n");
+    }
 
-  efi::Status::SUCCESS
+    efi::Status::SUCCESS
 }
 
 //Workaround for https://github.com/rust-lang/rust/issues/98254
@@ -58,6 +58,6 @@ pub extern "efiapi" fn __chkstk() {}
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-  debugln!(DEBUG_ERROR, "Panic: {:?}", info);
-  loop {}
+    debugln!(DEBUG_ERROR, "Panic: {:?}", info);
+    loop {}
 }
