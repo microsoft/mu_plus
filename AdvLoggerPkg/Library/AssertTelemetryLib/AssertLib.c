@@ -110,7 +110,7 @@ DebugAssert (
     LogTelemetry (
       TRUE,
       NULL,
-      (EFI_SOFTWARE_UNSPECIFIED | EFI_SW_EC_RELEASE_ASSERT),
+      (EFI_SOFTWARE_UNSPECIFIED | EFI_SW_EC_ILLEGAL_SOFTWARE_STATE),
       NULL,
       NULL,
       Data1,
