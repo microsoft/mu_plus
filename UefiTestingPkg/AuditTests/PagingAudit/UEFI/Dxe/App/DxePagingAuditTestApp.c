@@ -1370,6 +1370,7 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   EFI_MEMORY_DESCRIPTOR  *CurrentEfiMemoryMapEntry;
   BOOLEAN                TestFailure;
   EFI_PHYSICAL_ADDRESS   LastMemoryMapEntryEnd;
+  EFI_STATUS             Status;
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
@@ -1388,16 +1389,18 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   CurrentEfiMemoryMapEntry = mEfiMemoryMap;
 
   if (CurrentEfiMemoryMapEntry->PhysicalStart > StartOfAddressSpace) {
-    if (!ValidateRegionAttributes (
-           &mMap,
-           StartOfAddressSpace,
-           CurrentEfiMemoryMapEntry->PhysicalStart - StartOfAddressSpace,
-           EFI_MEMORY_RP,
-           TRUE,
-           TRUE,
-           TRUE
-           ))
-    {
+    Status = ValidateRegionAttributes (
+               &mMap,
+               StartOfAddressSpace,
+               CurrentEfiMemoryMapEntry->PhysicalStart - StartOfAddressSpace,
+               EFI_MEMORY_RP,
+               TRUE,
+               TRUE,
+               TRUE
+               );
+
+    // Inaccessible could mean EFI_MEMORY_RP or completely unmapped in page table
+    if (EFI_ERROR (Status) && (Status != EFI_NO_MAPPING)) {
       TestFailure = TRUE;
     }
   }
@@ -1408,16 +1411,18 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
 
   while ((UINTN)CurrentEfiMemoryMapEntry < (UINTN)EndOfEfiMemoryMap) {
     if (CurrentEfiMemoryMapEntry->PhysicalStart > LastMemoryMapEntryEnd) {
-      if (!ValidateRegionAttributes (
-             &mMap,
-             LastMemoryMapEntryEnd,
-             CurrentEfiMemoryMapEntry->PhysicalStart - LastMemoryMapEntryEnd,
-             EFI_MEMORY_RP,
-             TRUE,
-             TRUE,
-             TRUE
-             ))
-      {
+      Status = ValidateRegionAttributes (
+                 &mMap,
+                 LastMemoryMapEntryEnd,
+                 CurrentEfiMemoryMapEntry->PhysicalStart - LastMemoryMapEntryEnd,
+                 EFI_MEMORY_RP,
+                 TRUE,
+                 TRUE,
+                 TRUE
+                 );
+
+      // Inaccessible could mean EFI_MEMORY_RP or completely unmapped in page table
+      if (EFI_ERROR (Status) && (Status != EFI_NO_MAPPING)) {
         TestFailure = TRUE;
       }
     }
@@ -1428,16 +1433,18 @@ MemoryOutsideEfiMemoryMapIsInaccessible (
   }
 
   if (LastMemoryMapEntryEnd < EndOfAddressSpace) {
-    if (!ValidateRegionAttributes (
-           &mMap,
-           LastMemoryMapEntryEnd,
-           EndOfAddressSpace - LastMemoryMapEntryEnd,
-           EFI_MEMORY_RP,
-           TRUE,
-           TRUE,
-           TRUE
-           ))
-    {
+    Status = ValidateRegionAttributes (
+               &mMap,
+               LastMemoryMapEntryEnd,
+               EndOfAddressSpace - LastMemoryMapEntryEnd,
+               EFI_MEMORY_RP,
+               TRUE,
+               TRUE,
+               TRUE
+               );
+
+    // Inaccessible could mean EFI_MEMORY_RP or completely unmapped in page table
+    if (EFI_ERROR (Status) && (Status != EFI_NO_MAPPING)) {
       TestFailure = TRUE;
     }
   }
