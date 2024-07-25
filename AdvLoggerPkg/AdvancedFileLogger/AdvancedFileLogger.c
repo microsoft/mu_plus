@@ -327,6 +327,7 @@ OnPreExitBootServicesNotification (
   )
 {
   WriteLogFiles ();
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -572,7 +573,7 @@ ProcessPreExitBootServicesRegistration (
                     TPL_CALLBACK,
                     OnPreExitBootServicesNotification,
                     gImageHandle,
-                    &gMuEventPreExitBootServicesGuid,
+                    &gEfiEventBeforeExitBootServicesGuid,
                     &mExitBootServicesEvent
                     );
 

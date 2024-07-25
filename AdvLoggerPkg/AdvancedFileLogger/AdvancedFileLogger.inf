@@ -52,7 +52,7 @@
 [Guids]
   gAdvancedFileLoggerWriteLogFiles
   gEfiEventReadyToBootGuid
-  gMuEventPreExitBootServicesGuid
+  gEfiEventBeforeExitBootServicesGuid
   gAdvancedFileLoggerPolicyGuid
 
 [Protocols]
