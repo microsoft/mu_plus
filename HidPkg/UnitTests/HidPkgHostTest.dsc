@@ -27,7 +27,7 @@
 [Components]
   HidPkg/HidMouseAbsolutePointerDxe/UnitTest/HidMouseAbsolutePointerHostTest.inf {
     <LibraryClasses>
-      UefiLib|MdePkg/Test/Library/StubUefiLib/StubUefiLib.inf
+      UefiLib|MdePkg/Test/Mock/Library/Stub/StubUefiLib/StubUefiLib.inf
       UefiBootServicesTableLib|MdePkg/Library/UefiBootServicesTableLib/UefiBootServicesTableLib.inf
     <PcdsFixedAtBuild>
       #Turn off Halt on Assert and Print Assert so that libraries can
