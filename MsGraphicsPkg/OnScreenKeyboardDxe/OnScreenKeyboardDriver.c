@@ -3262,6 +3262,7 @@ OnPreExitBootServicesNotification (
 {
   ShowKeyboardIcon (FALSE);
   ShowKeyboard (FALSE);
+  gBS->CloseEvent (Event);
 }
 
 EFI_STATUS
@@ -3394,7 +3395,7 @@ OSKDriverEntryPoint (
                   TPL_CALLBACK,
                   OnPreExitBootServicesNotification,
                   gImageHandle,
-                  &gMuEventPreExitBootServicesGuid,
+                  &gEfiEventBeforeExitBootServicesGuid,
                   &InitEvent
                   );
 

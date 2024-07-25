@@ -47,7 +47,7 @@
 [Guids]
   gEfiConsoleInDeviceGuid
   gOSKDevicePathGuid
-  gMuEventPreExitBootServicesGuid
+  gEfiEventBeforeExitBootServicesGuid
 
 
 [Protocols]

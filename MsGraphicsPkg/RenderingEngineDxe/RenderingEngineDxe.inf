@@ -43,7 +43,7 @@
   gEfiGraphicsOutputProtocolGuid      # PRODUCES
 
 [Guids]
-  gMuEventPreExitBootServicesGuid
+  gEfiEventBeforeExitBootServicesGuid
 
 [Pcd]
   gMsGraphicsPkgTokenSpaceGuid.PcdMsGopOverrideProtocolGuid

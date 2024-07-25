@@ -1478,6 +1478,7 @@ OnPreExitBootServicesNotification (
   )
 {
   mPreExitBootServices = TRUE;
+  gBS->CloseEvent (Event);
 }
 
 /**
@@ -1527,7 +1528,7 @@ DriverInit (
                   TPL_NOTIFY,
                   OnPreExitBootServicesNotification,
                   gImageHandle,
-                  &gMuEventPreExitBootServicesGuid,
+                  &gEfiEventBeforeExitBootServicesGuid,
                   &InitEvent
                   );
 
