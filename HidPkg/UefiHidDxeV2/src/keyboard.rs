@@ -13,27 +13,27 @@ mod key_queue;
 mod simple_text_in;
 mod simple_text_in_ex;
 
-use core::ffi::c_void;
-
 use alloc::{
     boxed::Box,
     collections::{BTreeMap, BTreeSet},
     vec,
     vec::Vec,
 };
+use core::{ffi::c_void, ptr};
+
+use r_efi::{efi, hii, protocols};
+
 use hidparser::{
     report_data_types::{ReportId, Usage},
     ArrayField, ReportDescriptor, ReportField, VariableField,
 };
-use r_efi::{efi, hii, protocols};
+use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN};
 
 use crate::{
     boot_services::UefiBootServices,
     hid_io::{HidIo, HidReportReceiver},
     keyboard::key_queue::OrdKeyData,
 };
-
-use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN};
 
 // usages supported by this module
 const KEYBOARD_MODIFIER_USAGE_MIN: u32 = 0x000700E0;
@@ -182,10 +182,7 @@ impl KeyboardHidHandler {
                 Err(efi::Status::DEVICE_ERROR)?;
             }
 
-            report_builder.report_size = report.size_in_bits / 8;
-            if (report.size_in_bits % 8) != 0 {
-                report_builder.report_size += 1;
-            }
+            report_builder.report_size = usize::div_ceil(report.size_in_bits, 8);
 
             for field in &report.fields {
                 match field {
@@ -219,10 +216,8 @@ impl KeyboardHidHandler {
     // Helper routine to handle variable keyboard input report fields
     fn handle_variable_key(&mut self, field: VariableField, report: &[u8]) {
         match field.field_value(report) {
-            Some(x) if x != 0 => {
-                self.current_keys.insert(field.usage);
-            }
-            None | Some(_) => (),
+            Some(x) if x != 0 => _ = self.current_keys.insert(field.usage),
+            _ => (),
         }
     }
 
@@ -244,7 +239,7 @@ impl KeyboardHidHandler {
                     self.current_keys.insert(Usage::from(usage));
                 }
             }
-            None | Some(_) => (),
+            _ => (),
         }
     }
 
@@ -262,7 +257,7 @@ impl KeyboardHidHandler {
     // LEDs.
     fn generate_led_output_reports(&mut self) -> Vec<(Option<ReportId>, Vec<u8>)> {
         let mut output_vec = Vec::new();
-        let current_leds: BTreeSet<Usage> = self.key_queue.get_active_leds().iter().cloned().collect();
+        let current_leds: BTreeSet<Usage> = self.key_queue.active_leds().iter().cloned().collect();
         if current_leds != self.led_state {
             self.led_state = current_leds;
             for output_builder in self.output_builders.clone() {
@@ -292,14 +287,14 @@ impl KeyboardHidHandler {
         let context = LayoutChangeContext { boot_services: self.boot_services, keyboard_handler: self as *mut Self };
         let context_ptr = Box::into_raw(Box::new(context));
 
-        let mut layout_change_event: efi::Event = core::ptr::null_mut();
+        let mut layout_change_event: efi::Event = ptr::null_mut();
         let status = self.boot_services.create_event_ex(
             efi::EVT_NOTIFY_SIGNAL,
             efi::TPL_NOTIFY,
             Some(on_layout_update),
             context_ptr as *mut c_void,
             &protocols::hii_database::SET_KEYBOARD_LAYOUT_EVENT_GUID,
-            core::ptr::addr_of_mut!(layout_change_event),
+            ptr::addr_of_mut!(layout_change_event),
         );
         if status.is_error() {
             Err(status)?;
@@ -322,26 +317,26 @@ impl KeyboardHidHandler {
                 //instance. Leaking context allows context usage in the callback should it fire.
                 debugln!(DEBUG_ERROR, "Failed to close layout_change_event event, status: {:x?}", status);
                 unsafe {
-                    (*self.layout_context).keyboard_handler = core::ptr::null_mut();
+                    (*self.layout_context).keyboard_handler = ptr::null_mut();
                 }
                 return Err(status);
             }
             // safe to drop layout change context.
             drop(unsafe { Box::from_raw(self.layout_context) });
-            self.layout_context = core::ptr::null_mut();
-            self.layout_change_event = core::ptr::null_mut();
+            self.layout_context = ptr::null_mut();
+            self.layout_change_event = ptr::null_mut();
         }
         Ok(())
     }
 
     // Installs a default keyboard layout.
     fn install_default_layout(&mut self) -> Result<(), efi::Status> {
-        let mut hii_database_protocol_ptr: *mut protocols::hii_database::Protocol = core::ptr::null_mut();
+        let mut hii_database_protocol_ptr: *mut protocols::hii_database::Protocol = ptr::null_mut();
 
         let status = self.boot_services.locate_protocol(
             &protocols::hii_database::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-            core::ptr::null_mut(),
-            core::ptr::addr_of_mut!(hii_database_protocol_ptr) as *mut *mut c_void,
+            ptr::null_mut(),
+            ptr::addr_of_mut!(hii_database_protocol_ptr) as *mut *mut c_void,
         );
         if status.is_error() {
             debugln!(
@@ -356,12 +351,12 @@ impl KeyboardHidHandler {
             hii_database_protocol_ptr.as_mut().expect("Bad pointer returned from successful locate protocol.")
         };
 
-        let mut hii_handle: hii::Handle = core::ptr::null_mut();
+        let mut hii_handle: hii::Handle = ptr::null_mut();
         let status = (hii_database_protocol.new_package_list)(
             hii_database_protocol_ptr,
             hii_keyboard_layout::get_default_keyboard_pkg_list_buffer().as_ptr() as *const hii::PackageListHeader,
-            core::ptr::null_mut(),
-            core::ptr::addr_of_mut!(hii_handle),
+            ptr::null_mut(),
+            ptr::addr_of_mut!(hii_handle),
         );
 
         if status.is_error() {
@@ -377,7 +372,6 @@ impl KeyboardHidHandler {
             hii_database_protocol_ptr,
             &hii_keyboard_layout::DEFAULT_KEYBOARD_LAYOUT_GUID as *const efi::Guid as *mut efi::Guid,
         );
-
         if status.is_error() {
             debugln!(DEBUG_ERROR, "keyboard::install_default_layout: Failed to set keyboard layout: {:x?}", status);
             Err(status)?;
@@ -394,7 +388,7 @@ impl KeyboardHidHandler {
         on_layout_update(self.layout_change_event, self.layout_context as *mut c_void);
 
         //install a default layout if no layout is installed.
-        if self.key_queue.get_layout().is_none() {
+        if self.key_queue.layout().is_none() {
             self.install_default_layout()?;
         }
         Ok(())
@@ -483,7 +477,7 @@ impl KeyboardHidHandler {
 
     /// Returns the set of keys that have pending callbacks, along with the vector of callback functions associated with
     /// each key.
-    pub fn get_pending_callbacks(
+    pub fn pending_callbacks(
         &mut self,
     ) -> (Option<protocols::simple_text_input_ex::KeyData>, Vec<protocols::simple_text_input_ex::KeyNotifyFunction>)
     {
@@ -501,12 +495,12 @@ impl KeyboardHidHandler {
     }
 
     /// Returns the agent associated with this KeyboardHidHandler
-    pub fn get_agent(&self) -> efi::Handle {
+    pub fn agent(&self) -> efi::Handle {
         self.agent
     }
 
     /// Returns the controller associated with this KeyboardHidHandler.
-    pub fn get_controller(&self) -> Option<efi::Handle> {
+    pub fn controller(&self) -> Option<efi::Handle> {
         self.controller
     }
 
@@ -529,11 +523,8 @@ impl HidReportReceiver for KeyboardHidHandler {
     fn initialize(&mut self, controller: efi::Handle, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         let descriptor = hid_io.get_report_descriptor()?;
         self.process_descriptor(descriptor)?;
-
         self.install_protocol_interfaces(controller)?;
-
         self.initialize_keyboard_layout()?;
-
         Ok(())
     }
 
@@ -568,7 +559,6 @@ impl HidReportReceiver for KeyboardHidHandler {
                         report.len()
                     );
                     debugln!(DEBUG_VERBOSE, "report: {:x?}", report);
-                    //break 'report_processing;
                 }
 
                 //reset currently active keys to empty set.
@@ -632,7 +622,6 @@ impl HidReportReceiver for KeyboardHidHandler {
             let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
             if let Err(result) = result {
                 debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
-                let _ = result;
             }
         }
     }
@@ -641,17 +630,17 @@ impl HidReportReceiver for KeyboardHidHandler {
 impl Drop for KeyboardHidHandler {
     fn drop(&mut self) {
         if let Some(controller) = self.controller {
-            let status = simple_text_in::SimpleTextInFfi::uninstall(self.boot_services, self.agent, controller);
-            if status.is_err() {
+            if let Err(status) = simple_text_in::SimpleTextInFfi::uninstall(self.boot_services, self.agent, controller)
+            {
                 debugln!(DEBUG_ERROR, "KeyboardHidHandler::drop: Failed to uninstall simple_text_in: {:?}", status);
             }
-            let status = simple_text_in_ex::SimpleTextInExFfi::uninstall(self.boot_services, self.agent, controller);
-            if status.is_err() {
+            if let Err(status) =
+                simple_text_in_ex::SimpleTextInExFfi::uninstall(self.boot_services, self.agent, controller)
+            {
                 debugln!(DEBUG_ERROR, "KeyboardHidHandler::drop: Failed to uninstall simple_text_in: {:?}", status);
             }
         }
-        let status = self.uninstall_layout_change_event();
-        if status.is_err() {
+        if let Err(status) = self.uninstall_layout_change_event() {
             debugln!(DEBUG_ERROR, "KeyboardHidHandler::drop: Failed to close layout_change_event: {:?}", status);
         }
     }
@@ -670,11 +659,11 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
 
         let keyboard_handler = unsafe { context.keyboard_handler.as_mut() }.expect("bad keyboard handler");
 
-        let mut hii_database_protocol_ptr: *mut protocols::hii_database::Protocol = core::ptr::null_mut();
+        let mut hii_database_protocol_ptr: *mut protocols::hii_database::Protocol = ptr::null_mut();
         let status = context.boot_services.locate_protocol(
             &protocols::hii_database::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-            core::ptr::null_mut(),
-            core::ptr::addr_of_mut!(hii_database_protocol_ptr) as *mut *mut c_void,
+            ptr::null_mut(),
+            ptr::addr_of_mut!(hii_database_protocol_ptr) as *mut *mut c_void,
         );
 
         if status.is_error() {
@@ -690,9 +679,9 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
         let mut layout_buffer_len: u16 = 0;
         match (hii_database_protocol.get_keyboard_layout)(
             hii_database_protocol_ptr,
-            core::ptr::null_mut(),
+            ptr::null_mut(),
             &mut layout_buffer_len as *mut u16,
-            core::ptr::null_mut(),
+            ptr::null_mut(),
         ) {
             efi::Status::NOT_FOUND => break 'layout_processing,
             status if status != efi::Status::BUFFER_TOO_SMALL => {
@@ -710,7 +699,7 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
         let mut keyboard_layout_buffer = vec![0u8; layout_buffer_len as usize];
         let status = (hii_database_protocol.get_keyboard_layout)(
             hii_database_protocol_ptr,
-            core::ptr::null_mut(),
+            ptr::null_mut(),
             &mut layout_buffer_len as *mut u16,
             keyboard_layout_buffer.as_mut_ptr() as *mut protocols::hii_database::KeyboardLayout<0>,
         );
@@ -1213,8 +1202,8 @@ mod test {
                 | protocols::simple_text_input_ex::CAPS_LOCK_ACTIVE
         );
 
-        assert_eq!(keyboard_handler.get_controller(), keyboard_handler.controller);
-        assert_eq!(keyboard_handler.get_agent(), keyboard_handler.agent);
+        assert_eq!(keyboard_handler.controller(), keyboard_handler.controller);
+        assert_eq!(keyboard_handler.agent(), keyboard_handler.agent);
     }
 
     #[test]
@@ -1295,7 +1284,7 @@ mod test {
 
         key_data.key_state.key_shift_state = protocols::simple_text_input_ex::SHIFT_STATE_VALID;
         key_data.key_state.key_toggle_state = protocols::simple_text_input_ex::TOGGLE_STATE_VALID;
-        let (callback_key_data, callbacks) = keyboard_handler.get_pending_callbacks();
+        let (callback_key_data, callbacks) = keyboard_handler.pending_callbacks();
         assert_eq!(OrdKeyData(key_data), OrdKeyData(callback_key_data.unwrap()));
         assert!(callbacks.contains(
             &(mock_key_notify_callback
@@ -1306,7 +1295,7 @@ mod test {
                 as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status)
         ));
 
-        let (callback_key_data, callbacks) = keyboard_handler.get_pending_callbacks();
+        let (callback_key_data, callbacks) = keyboard_handler.pending_callbacks();
         assert!(callback_key_data.is_none());
         assert!(callbacks.is_empty());
 
@@ -1320,7 +1309,7 @@ mod test {
         keyboard_handler.receive_report(report, &hid_io);
 
         loop {
-            let (callback_key_data, callbacks) = keyboard_handler.get_pending_callbacks();
+            let (callback_key_data, callbacks) = keyboard_handler.pending_callbacks();
             if let Some(callback_key_data) = callback_key_data {
                 match callback_key_data.key.unicode_char {
                     char if char == 'a' as u16 || char == 'c' as u16 => {
@@ -1347,7 +1336,7 @@ mod test {
         let report: &[u8] = &[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         keyboard_handler.receive_report(report, &hid_io);
 
-        let (callback_key_data, callbacks) = keyboard_handler.get_pending_callbacks();
+        let (callback_key_data, callbacks) = keyboard_handler.pending_callbacks();
         assert!(callback_key_data.is_none());
         assert!(callbacks.is_empty());
     }

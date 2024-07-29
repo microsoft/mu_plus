@@ -9,19 +9,17 @@
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
 
-use core::sync::atomic::Ordering;
-
 use alloc::{
     collections::{BTreeSet, VecDeque},
     vec::Vec,
 };
+use core::{ops::Deref, sync::atomic::Ordering};
 use hidparser::report_data_types::Usage;
-use hii_keyboard_layout::{EfiKey, HiiKey, HiiKeyDescriptor, HiiKeyboardLayout, HiiNsKeyDescriptor};
+use hii_keyboard_layout::{EfiKey, HiiKey, HiiKeyboardLayout, HiiNsKeyDescriptor};
 use r_efi::{
     efi,
     protocols::{self, hii_database::*, simple_text_input::InputKey, simple_text_input_ex::*},
 };
-
 use rust_advanced_logger_dxe::{debugln, DEBUG_WARN};
 
 use crate::RUNTIME_SERVICES;
@@ -31,7 +29,8 @@ use crate::RUNTIME_SERVICES;
 const KEYBOARD_MODIFIERS: &[u16] = &[
   LEFT_CONTROL_MODIFIER, RIGHT_CONTROL_MODIFIER, LEFT_SHIFT_MODIFIER, RIGHT_SHIFT_MODIFIER, LEFT_ALT_MODIFIER,
   RIGHT_ALT_MODIFIER, LEFT_LOGO_MODIFIER, RIGHT_LOGO_MODIFIER, MENU_MODIFIER, PRINT_MODIFIER, SYS_REQUEST_MODIFIER,
-  ALT_GR_MODIFIER];
+  ALT_GR_MODIFIER,
+];
 
 // The set of HID usages that represent modifier keys that toggle state (as opposed to remain active while pressed).
 const TOGGLE_MODIFIERS: &[u16] = &[NUM_LOCK_MODIFIER, CAPS_LOCK_MODIFIER, SCROLL_LOCK_MODIFIER];
@@ -41,34 +40,42 @@ const CTRL_MODIFIERS: &[u16] = &[LEFT_CONTROL_MODIFIER, RIGHT_CONTROL_MODIFIER];
 const SHIFT_MODIFIERS: &[u16] = &[LEFT_SHIFT_MODIFIER, RIGHT_SHIFT_MODIFIER];
 const ALT_MODIFIERS: &[u16] = &[LEFT_ALT_MODIFIER, RIGHT_ALT_MODIFIER];
 
-// Defines whether a key stroke represents a key being pressed (KeyDown) or released (KeyUp)
+/// Defines whether a key stroke represents a key being pressed (KeyDown) or released (KeyUp)
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum KeyAction {
-    // Key is being pressed
-    KeyUp,
-    // Key is being released
+    /// Key is being pressed
     KeyDown,
+    /// Key is being released
+    KeyUp,
 }
 
-// A wrapper for the KeyData type that allows definition of the Ord trait and additional registration matching logic.
+/// A wrapper for the KeyData type that allows definition of the Ord trait and additional registration matching logic.
 #[derive(Debug, Clone)]
 pub(crate) struct OrdKeyData(pub protocols::simple_text_input_ex::KeyData);
 
+impl Deref for OrdKeyData {
+    type Target = protocols::simple_text_input_ex::KeyData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 impl Ord for OrdKeyData {
     fn cmp(&self, other: &Self) -> core::cmp::Ordering {
-        let e = self.0.key.unicode_char.cmp(&other.0.key.unicode_char);
+        let e = self.key.unicode_char.cmp(&other.key.unicode_char);
         if !e.is_eq() {
             return e;
         }
-        let e = self.0.key.scan_code.cmp(&other.0.key.scan_code);
+        let e = self.key.scan_code.cmp(&other.key.scan_code);
         if !e.is_eq() {
             return e;
         }
-        let e = self.0.key_state.key_shift_state.cmp(&other.0.key_state.key_shift_state);
+        let e = self.key_state.key_shift_state.cmp(&other.key_state.key_shift_state);
         if !e.is_eq() {
             return e;
         }
-        self.0.key_state.key_toggle_state.cmp(&other.0.key_state.key_toggle_state)
+        self.key_state.key_toggle_state.cmp(&other.key_state.key_toggle_state)
     }
 }
 
@@ -91,14 +98,14 @@ impl OrdKeyData {
     // allows for some degree of wildcard matching. Refer to UEFI spec 2.10 section 12.2.5.
     pub(crate) fn matches_registered_key(&self, registration: &Self) -> bool {
         // assign names here for brevity below.
-        let self_char = self.0.key.unicode_char;
-        let self_scan = self.0.key.scan_code;
-        let self_shift = self.0.key_state.key_shift_state;
-        let self_toggle = self.0.key_state.key_toggle_state;
-        let register_char = registration.0.key.unicode_char;
-        let register_scan = registration.0.key.scan_code;
-        let register_shift = registration.0.key_state.key_shift_state;
-        let register_toggle = registration.0.key_state.key_toggle_state;
+        let self_char = self.key.unicode_char;
+        let self_scan = self.key.scan_code;
+        let self_shift = self.key_state.key_shift_state;
+        let self_toggle = self.key_state.key_toggle_state;
+        let register_char = registration.key.unicode_char;
+        let register_scan = registration.key.scan_code;
+        let register_shift = registration.key_state.key_shift_state;
+        let register_toggle = registration.key_state.key_toggle_state;
 
         //char and scan must match (per the reference implementation in the EDK2 C code).
         if !(register_char == self_char && register_scan == self_scan) {
@@ -136,7 +143,7 @@ impl KeyQueue {
         if extended_reset {
             self.active_modifiers.clear();
         } else {
-            let active_leds = self.get_active_led_modifiers();
+            let active_leds = self.active_led_modifiers();
             self.active_modifiers.retain(|x| active_leds.contains(x));
         }
         self.active_ns_key = None;
@@ -159,7 +166,7 @@ impl KeyQueue {
 
         // Check if it is a dependent key of a currently active "non-spacing" (ns) key.
         // Non-spacing key handling is described in UEFI spec 2.10 section 33.2.4.3.
-        let mut current_descriptor: Option<HiiKeyDescriptor> = None;
+        let mut current_descriptor = None;
         if let Some(ref ns_key) = self.active_ns_key {
             for descriptor in &ns_key.dependent_keys {
                 if descriptor.key == efi_key {
@@ -176,37 +183,32 @@ impl KeyQueue {
         if current_descriptor.is_none() {
             for key in &active_layout.keys {
                 match key {
-                    HiiKey::Key(descriptor) => {
-                        if descriptor.key == efi_key {
-                            current_descriptor = Some(*descriptor);
-                            break;
-                        }
+                    HiiKey::Key(descriptor) if descriptor.key == efi_key => {
+                        current_descriptor = Some(*descriptor);
+                        break;
                     }
-                    HiiKey::NsKey(ns_descriptor) => {
-                        if ns_descriptor.descriptor.key == efi_key {
-                            // if it is an ns_key, set it as the active ns key, and no further processing is needed.
-                            self.active_ns_key = Some(ns_descriptor.clone());
-                            return;
-                        }
+                    HiiKey::NsKey(ns_descriptor) if ns_descriptor.descriptor.key == efi_key => {
+                        // if it is an ns_key, set it as the active ns key, and no further processing is needed.
+                        self.active_ns_key = Some(ns_descriptor.clone());
+                        return;
                     }
+                    _ => continue,
                 }
             }
         }
 
-        if current_descriptor.is_none() {
+        let Some(current_descriptor) = current_descriptor else {
             return; //could not find descriptor, nothing to do.
-        }
-
-        let current_descriptor = current_descriptor.unwrap();
+        };
 
         //handle modifiers that are active as long as they are pressed
         if KEYBOARD_MODIFIERS.contains(&current_descriptor.modifier) {
             match action {
-                KeyAction::KeyUp => {
-                    self.active_modifiers.remove(&current_descriptor.modifier);
-                }
                 KeyAction::KeyDown => {
                     self.active_modifiers.insert(current_descriptor.modifier);
+                }
+                KeyAction::KeyUp => {
+                    self.active_modifiers.remove(&current_descriptor.modifier);
                 }
             }
         }
@@ -401,16 +403,16 @@ impl KeyQueue {
         self.partial_key_support_active = (toggle_state & KEY_STATE_EXPOSED) != 0;
     }
 
-    fn get_active_led_modifiers(&self) -> Vec<u16> {
+    fn active_led_modifiers(&self) -> Vec<u16> {
         self.active_modifiers.iter().cloned().filter(|x| modifier_to_led_usage(*x).is_some()).collect()
     }
     // Returns a vector of HID usages corresponding to the active LEDs based on the active modifier state.
-    pub(crate) fn get_active_leds(&self) -> Vec<Usage> {
+    pub(crate) fn active_leds(&self) -> Vec<Usage> {
         self.active_modifiers.iter().cloned().filter_map(modifier_to_led_usage).collect()
     }
 
     // Returns the current keyboard layout that the KeyQueue is using.
-    pub(crate) fn get_layout(&self) -> Option<HiiKeyboardLayout> {
+    pub(crate) fn layout(&self) -> Option<HiiKeyboardLayout> {
         self.layout.clone()
     }
 

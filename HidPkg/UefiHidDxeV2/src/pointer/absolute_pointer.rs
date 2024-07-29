@@ -8,15 +8,15 @@
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
 use alloc::boxed::Box;
-use core::ffi::c_void;
+use core::{ffi::c_void, ptr};
+
+use r_efi::{efi, protocols};
 
 use hidparser::report_data_types::Usage;
-use r_efi::{efi, protocols};
 use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_INFO, DEBUG_WARN};
 
-use crate::boot_services::UefiBootServices;
-
 use super::{PointerHidHandler, BUTTON_MAX, BUTTON_MIN, DIGITIZER_SWITCH_MAX, DIGITIZER_SWITCH_MIN};
+use crate::boot_services::UefiBootServices;
 
 // FFI context
 // Safety: a pointer to PointerHidHandler is included in the context so that it can be reclaimed in the absolute_pointer
@@ -57,7 +57,7 @@ impl PointerContext {
                 reset: Self::absolute_pointer_reset,
                 get_state: Self::absolute_pointer_get_state,
                 mode: Box::into_raw(Box::new(Self::initialize_mode(pointer_handler))),
-                wait_for_input: core::ptr::null_mut(),
+                wait_for_input: ptr::null_mut(),
             },
             boot_services,
             pointer_handler: pointer_handler as *mut PointerHidHandler,
@@ -66,13 +66,13 @@ impl PointerContext {
         let absolute_pointer_ptr = Box::into_raw(Box::new(pointer_ctx));
 
         // create event for wait_for_input.
-        let mut wait_for_pointer_input_event: efi::Event = core::ptr::null_mut();
+        let mut wait_for_pointer_input_event: efi::Event = ptr::null_mut();
         let status = boot_services.create_event(
             efi::EVT_NOTIFY_WAIT,
             efi::TPL_NOTIFY,
             Some(Self::wait_for_pointer),
             absolute_pointer_ptr as *mut c_void,
-            core::ptr::addr_of_mut!(wait_for_pointer_input_event),
+            ptr::addr_of_mut!(wait_for_pointer_input_event),
         );
         if status.is_error() {
             drop(unsafe { Box::from_raw(absolute_pointer_ptr) });
@@ -84,7 +84,7 @@ impl PointerContext {
         // install the absolute_pointer protocol.
         let mut controller = controller;
         let status = boot_services.install_protocol_interface(
-            core::ptr::addr_of_mut!(controller),
+            ptr::addr_of_mut!(controller),
             &protocols::absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
             efi::NATIVE_INTERFACE,
             absolute_pointer_ptr as *mut c_void,
@@ -148,11 +148,11 @@ impl PointerContext {
         agent: efi::Handle,
         controller: efi::Handle,
     ) -> Result<(), efi::Status> {
-        let mut absolute_pointer_ptr: *mut PointerContext = core::ptr::null_mut();
+        let mut absolute_pointer_ptr: *mut PointerContext = ptr::null_mut();
         let status = boot_services.open_protocol(
             controller,
             &protocols::absolute_pointer::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-            core::ptr::addr_of_mut!(absolute_pointer_ptr) as *mut *mut c_void,
+            ptr::addr_of_mut!(absolute_pointer_ptr) as *mut *mut c_void,
             agent,
             controller,
             efi::OPEN_PROTOCOL_GET_PROTOCOL,
@@ -177,7 +177,7 @@ impl PointerContext {
             debugln!(DEBUG_ERROR, "Failed to uninstall absolute_pointer interface, status: {:x?}", status);
 
             unsafe {
-                (*absolute_pointer_ptr).pointer_handler = core::ptr::null_mut();
+                (*absolute_pointer_ptr).pointer_handler = ptr::null_mut();
             }
             //return without tearing down the context.
             return Err(status);
@@ -193,7 +193,7 @@ impl PointerContext {
             //and return error based on observing pointer_handler is null.
             debugln!(DEBUG_ERROR, "Failed to close absolute_pointer.wait_for_input event, status: {:x?}", status);
             unsafe {
-                (*absolute_pointer_ptr).pointer_handler = core::ptr::null_mut();
+                (*absolute_pointer_ptr).pointer_handler = ptr::null_mut();
             }
             return Err(status);
         }
@@ -290,18 +290,14 @@ impl PointerContext {
 
 #[cfg(test)]
 mod test {
-
-    use core::ffi::c_void;
-
-    use r_efi::{efi, protocols};
-
     use super::*;
-
     use crate::{
         boot_services::MockUefiBootServices,
         hid_io::{HidReportReceiver, MockHidIo},
         pointer::CENTER,
     };
+    use core::ffi::c_void;
+    use r_efi::{efi, protocols};
 
     static MOUSE_REPORT_DESCRIPTOR: &[u8] = &[
         0x05, 0x01, // USAGE_PAGE (Generic Desktop)
@@ -349,14 +345,14 @@ mod test {
         const CONTROLLER_HANDLE: efi::Handle = 0x02 as efi::Handle;
         const POINTER_EVENT: efi::Event = 0x03 as efi::Event;
 
-        static mut ABS_PTR_INTERFACE: *mut c_void = core::ptr::null_mut();
-        static mut EVENT_CONTEXT: *mut c_void = core::ptr::null_mut();
+        static mut ABS_PTR_INTERFACE: *mut c_void = ptr::null_mut();
+        static mut EVENT_CONTEXT: *mut c_void = ptr::null_mut();
         static mut EVENT_SIGNALED: bool = false;
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
             assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
-            assert_ne!(context, core::ptr::null_mut());
+            assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
                 event_ptr.write(POINTER_EVENT);
@@ -428,13 +424,13 @@ mod test {
         const CONTROLLER_HANDLE: efi::Handle = 0x02 as efi::Handle;
         const EVENT_HANDLE: efi::Handle = 0x03 as efi::Handle;
 
-        static mut ABS_PTR_INTERFACE: *mut c_void = core::ptr::null_mut();
-        static mut EVENT_CONTEXT: *mut c_void = core::ptr::null_mut();
+        static mut ABS_PTR_INTERFACE: *mut c_void = ptr::null_mut();
+        static mut EVENT_CONTEXT: *mut c_void = ptr::null_mut();
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
             assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
-            assert_ne!(context, core::ptr::null_mut());
+            assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
                 event_ptr.write(EVENT_HANDLE);
@@ -513,13 +509,13 @@ mod test {
         const CONTROLLER_HANDLE: efi::Handle = 0x02 as efi::Handle;
         const EVENT_HANDLE: efi::Handle = 0x03 as efi::Handle;
 
-        static mut ABS_PTR_INTERFACE: *mut c_void = core::ptr::null_mut();
-        static mut EVENT_CONTEXT: *mut c_void = core::ptr::null_mut();
+        static mut ABS_PTR_INTERFACE: *mut c_void = ptr::null_mut();
+        static mut EVENT_CONTEXT: *mut c_void = ptr::null_mut();
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
             assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
-            assert_ne!(context, core::ptr::null_mut());
+            assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
                 event_ptr.write(EVENT_HANDLE);
