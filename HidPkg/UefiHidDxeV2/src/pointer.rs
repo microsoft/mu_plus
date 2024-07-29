@@ -15,20 +15,20 @@ use alloc::{
     collections::{BTreeMap, BTreeSet},
     vec::Vec,
 };
+
+use r_efi::{efi, protocols};
+
 use hidparser::{
     report_data_types::{ReportId, Usage},
     ReportDescriptor, ReportField, VariableField,
 };
-use r_efi::{efi, protocols};
-
 use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_VERBOSE};
 
+use self::absolute_pointer::PointerContext;
 use crate::{
     boot_services::UefiBootServices,
     hid_io::{HidIo, HidReportReceiver},
 };
-
-use self::absolute_pointer::PointerContext;
 
 // Usages supported by this module.
 const GENERIC_DESKTOP_X: u32 = 0x00010030;
@@ -147,7 +147,6 @@ impl PointerHidHandler {
                 self.input_reports.insert(report_data.report_id, report_data);
             }
         }
-
         if !self.input_reports.is_empty() {
             Ok(())
         } else {
