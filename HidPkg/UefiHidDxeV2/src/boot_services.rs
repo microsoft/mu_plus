@@ -11,6 +11,7 @@
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
 use core::{ffi::c_void, fmt::Debug, sync::atomic::AtomicPtr};
+
 #[cfg(test)]
 use mockall::automock;
 use r_efi::efi;

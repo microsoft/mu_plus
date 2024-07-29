@@ -10,17 +10,16 @@
 //!
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
-use core::{ffi::c_void, slice::from_raw_parts_mut};
-
 use alloc::{boxed::Box, vec};
-
-use hid_io::protocol::HidReportType;
-use hidparser::ReportDescriptor;
-use r_efi::efi;
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
+use core::{ffi::c_void, ptr, slice::from_raw_parts_mut};
 
 #[cfg(test)]
 use mockall::automock;
+use r_efi::efi;
+
+use hid_io::protocol::HidReportType;
+use hidparser::ReportDescriptor;
+use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
 
 use crate::boot_services::UefiBootServices;
 
@@ -97,7 +96,7 @@ impl UefiHidIo {
         controller: efi::Handle,
         owned: bool,
     ) -> Result<Self, efi::Status> {
-        let mut hid_io_ptr: *mut hid_io::protocol::Protocol = core::ptr::null_mut();
+        let mut hid_io_ptr: *mut hid_io::protocol::Protocol = ptr::null_mut();
 
         let attributes = {
             if owned {
@@ -110,7 +109,7 @@ impl UefiHidIo {
         let status = boot_services.open_protocol(
             controller,
             &hid_io::protocol::GUID as *const efi::Guid as *mut efi::Guid,
-            core::ptr::addr_of_mut!(hid_io_ptr) as *mut *mut c_void,
+            ptr::addr_of_mut!(hid_io_ptr) as *mut *mut c_void,
             agent,
             controller,
             attributes,
@@ -158,8 +157,8 @@ impl HidIo for UefiHidIo {
         let mut report_descriptor_size: usize = 0;
         match (self.hid_io.get_report_descriptor)(
             self.hid_io,
-            core::ptr::addr_of_mut!(report_descriptor_size),
-            core::ptr::null_mut(),
+            ptr::addr_of_mut!(report_descriptor_size),
+            ptr::null_mut(),
         ) {
             efi::Status::BUFFER_TOO_SMALL => (),
             efi::Status::SUCCESS => return Err(efi::Status::DEVICE_ERROR),
@@ -171,7 +170,7 @@ impl HidIo for UefiHidIo {
 
         match (self.hid_io.get_report_descriptor)(
             self.hid_io,
-            core::ptr::addr_of_mut!(report_descriptor_size),
+            ptr::addr_of_mut!(report_descriptor_size),
             report_descriptor_buffer_ptr as *mut c_void,
         ) {
             efi::Status::SUCCESS => (),
@@ -227,6 +226,7 @@ impl HidIo for UefiHidIo {
 mod test {
     use core::{
         ffi::c_void,
+        ptr,
         slice::{from_raw_parts, from_raw_parts_mut},
     };
 
@@ -270,7 +270,7 @@ mod test {
             report_descriptor_size: *mut usize,
             report_descriptor_buffer: *mut c_void,
         ) -> efi::Status {
-            assert_ne!(this, core::ptr::null());
+            assert_ne!(this, ptr::null());
             unsafe {
                 if *report_descriptor_size < MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR.len() {
                     *report_descriptor_size = MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR.len();
@@ -301,10 +301,10 @@ mod test {
             report_buffer_size: usize,
             report_buffer: *mut c_void,
         ) -> efi::Status {
-            assert_ne!(this, core::ptr::null());
+            assert_ne!(this, ptr::null());
             assert_eq!(report_type, hid_io::protocol::HidReportType::OutputReport);
             assert_ne!(report_buffer_size, 0);
-            assert_ne!(report_buffer, core::ptr::null_mut());
+            assert_ne!(report_buffer, ptr::null_mut());
 
             let report_slice = unsafe { from_raw_parts(report_buffer as *mut u8, report_buffer_size) };
 
@@ -326,8 +326,8 @@ mod test {
             callback: hid_io::protocol::HidIoReportCallback,
             context: *mut c_void,
         ) -> efi::Status {
-            assert_ne!(this, core::ptr::null());
-            assert_ne!(context, core::ptr::null_mut());
+            assert_ne!(this, ptr::null());
+            assert_ne!(context, ptr::null_mut());
             assert!(callback == UefiHidIo::report_callback);
 
             callback(TEST_REPORT0.len() as u16, TEST_REPORT0.as_ptr() as *mut c_void, context);
@@ -339,7 +339,7 @@ mod test {
             this: *const hid_io::protocol::Protocol,
             callback: hid_io::protocol::HidIoReportCallback,
         ) -> efi::Status {
-            assert_ne!(this, core::ptr::null());
+            assert_ne!(this, ptr::null());
             assert!(callback == UefiHidIo::report_callback);
             efi::Status::SUCCESS
         }
@@ -362,7 +362,7 @@ mod test {
         boot_services.expect_open_protocol().returning(|handle, protocol, interface, agent, controller, attributes| {
             assert_eq!(handle, 0x1234 as efi::Handle);
             assert_eq!(unsafe { *protocol }, hid_io::protocol::GUID);
-            assert_ne!(interface, core::ptr::null_mut());
+            assert_ne!(interface, ptr::null_mut());
             assert_eq!(agent, 0x4321 as efi::Handle);
             assert_eq!(controller, 0x1234 as efi::Handle);
             assert_eq!(attributes, efi::OPEN_PROTOCOL_BY_DRIVER);

@@ -15,9 +15,8 @@
 #[cfg(target_os = "uefi")]
 mod uefi_entry {
     extern crate alloc;
-    use core::{panic::PanicInfo, sync::atomic::Ordering};
-
     use alloc::{boxed::Box, vec::Vec};
+    use core::{panic::PanicInfo, sync::atomic::Ordering};
 
     use r_efi::{efi, system};
 
