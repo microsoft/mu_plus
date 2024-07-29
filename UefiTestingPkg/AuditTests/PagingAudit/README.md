@@ -66,8 +66,6 @@ is installed.
 code are EFI_MEMORY_RO and sections containing data are EFI_MEMORY_XP.  
 - **BspStackIsXpAndHasGuardPage:** Checks that the stack is EFI_MEMORY_XP and has an
 EFI_MEMORY_RP page at the base to catch overflow.  
-- **MemoryOutsideEfiMemoryMapIsInaccessible:** Checks that memory ranges not in
-the EFI memory map EFI_MEMORY_RP or is not mapped.
 
 #### Mode 2: Paging Audit Collection Tool
 
