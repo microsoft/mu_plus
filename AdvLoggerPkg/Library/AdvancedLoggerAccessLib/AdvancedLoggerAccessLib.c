@@ -40,14 +40,14 @@ CONST   CHAR8                 *AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_CNT] = {
   "[TFA] ",
 };
 
-// Define a structure to hold debug flag information
+// Define a structure to hold debug level information
 typedef struct {
-  const char    *name;
-  UINT32        value;
-} DebugLevel;
+  CONST CHAR8    *Name;
+  UINT32         Value;
+} DEBUG_LEVEL;
 
 // Create an array of DebugLevel structures
-DebugLevel  debug_levels[] = {
+DEBUG_LEVEL  DebugLevels[] = {
   { "[DEBUG_INIT] ",          0x00000001 },
   { "[DEBUG_WARN] ",          0x00000002 },
   { "[DEBUG_LOAD] ",          0x00000004 },
@@ -71,11 +71,11 @@ DebugLevel  debug_levels[] = {
   { "[DEBUG_ERROR] ",         0x80000000 }
 };
 
-#define ADV_TIME_STAMP_FORMAT     "%2.2d:%2.2d:%2.2d.%3.3d : "
-#define ADV_TIME_STAMP_RESULT     "hh:mm:ss:ttt : "
-#define ADV_PHASE_ERR_FORMAT      "[%04X] "
-#define ADV_PHASE_MAX_SIZE        32
-#define ADV_DEBUG_LEVEL_MAX_SIZE  32
+#define ADV_LOG_TIME_STAMP_FORMAT     "%2.2d:%2.2d:%2.2d.%3.3d : "
+#define ADV_LOG_TIME_STAMP_RESULT     "hh:mm:ss:ttt : "
+#define ADV_LOG_PHASE_ERR_FORMAT      "[%04X] "
+#define ADV_LOG_PHASE_MAX_SIZE        32
+#define ADV_LOG_DEBUG_LEVEL_MAX_SIZE  32
 
 /**
 
@@ -120,21 +120,20 @@ FormatTimeStamp (
   TimeStampLen = AsciiSPrint (
                    MessageBuffer,
                    MessageBufferSize,
-                   ADV_TIME_STAMP_FORMAT,
+                   ADV_LOG_TIME_STAMP_FORMAT,
                    Hours,
                    Minutes,
                    Seconds,
                    Milliseconds
                    );
 
-  ASSERT (TimeStampLen == AsciiStrLen (ADV_TIME_STAMP_RESULT));
+  ASSERT (TimeStampLen == AsciiStrLen (ADV_LOG_TIME_STAMP_RESULT));
 
   return (UINT16)TimeStampLen;
+
 }
 
 /**
-  FormatPhasePrefix
-
   Adds a phase indicator to the message being returned.  If phase is recognized and specified,
   returns the phase prefix in from the AdvMsgEntryPrefix, otherwise raw phase value is returned.
 
@@ -162,21 +161,19 @@ FormatPhasePrefix (
     PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, AdvMsgEntryPrefix[Phase]);
   } else {
     // Unrecognized phase, just print the raw value
-    PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, ADV_PHASE_ERR_FORMAT, Phase);
+    PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, ADV_LOG_PHASE_ERR_FORMAT, Phase);
   }
 
   return (UINT16)PhaseStringLen;
 }
 
 /**
-  FormatDebugLevelPrefix
-
   Adds a debug level indicator to the message being returned.  If debug level is recognized and specified,
   returns the debug_level prefix in from the AdvMsgEntryPrefix, otherwise raw debug level value is returned.
 
   @param  MessageBuffer
   @param  MessageBufferSize
-  @param  Phase
+  @param  DebugLevel
 
   @retval Number of characters printed
 */
@@ -189,11 +186,12 @@ FormatDebugLevelPrefix (
   )
 {
   UINTN  DebugLevelStringLen;
+  UINTN  Index;
 
-  // Add the matched debug level
-  for (UINT8 i = 0; i < sizeof (debug_levels) / sizeof (debug_levels[0]); i++) {
-    if (DebugLevel == debug_levels[i].value) {
-      DebugLevelStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, debug_levels[i].name);
+  // Print the debug flags
+  for (Index = 0; Index < ARRAY_SIZE (DebugLevels); Index++) {
+    if ( (DebugLevel & DebugLevels[Index].Value) == DebugLevels[Index].Value) {
+      DebugLevelStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, DebugLevels[Index].Name);
       return (UINT16)DebugLevelStringLen;
     }
   }
@@ -354,9 +352,9 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   UINT16      CurrPhaseStringLen;
   UINT16      DebugLevelStringLen;
   UINT16      CurrDebugLevelStringLen;
-  CHAR8       TimeStampString[]                          = { ADV_TIME_STAMP_RESULT };
-  CHAR8       PhaseString[ADV_PHASE_MAX_SIZE]            = { 0 };
-  CHAR8       DebugLevelString[ADV_DEBUG_LEVEL_MAX_SIZE] = { 0 };
+  CHAR8       TimeStampString[]                              = { ADV_LOG_TIME_STAMP_RESULT };
+  CHAR8       PhaseString[ADV_LOG_PHASE_MAX_SIZE]            = { 0 };
+  CHAR8       DebugLevelString[ADV_LOG_DEBUG_LEVEL_MAX_SIZE] = { 0 };
 
   if (LineEntry == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -367,7 +365,7 @@ AdvancedLoggerAccessLibGetNextFormattedLine (
   // reuse the previous LineBuffer
   //
   if (LineEntry->Message == NULL) {
-    LineBuffer = AllocatePool (mMaxMessageSize + sizeof (TimeStampString) + ADV_PHASE_MAX_SIZE);
+    LineBuffer = AllocatePool (mMaxMessageSize + sizeof (TimeStampString) + ADV_LOG_PHASE_MAX_SIZE);
     if (LineBuffer == NULL) {
       return EFI_OUT_OF_RESOURCES;
     }
