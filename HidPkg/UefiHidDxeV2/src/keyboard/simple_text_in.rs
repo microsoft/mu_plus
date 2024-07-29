@@ -9,7 +9,7 @@
 //!
 
 use alloc::boxed::Box;
-use core::ffi::c_void;
+use core::{ffi::c_void, ptr};
 
 use r_efi::{efi, protocols};
 use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
@@ -51,7 +51,7 @@ impl SimpleTextInFfi {
             simple_text_in: protocols::simple_text_input::Protocol {
                 reset: Self::simple_text_in_reset,
                 read_key_stroke: Self::simple_text_in_read_key_stroke,
-                wait_for_key: core::ptr::null_mut(),
+                wait_for_key: ptr::null_mut(),
             },
             boot_services,
             keyboard_handler: keyboard_handler as *mut KeyboardHidHandler,
@@ -60,13 +60,13 @@ impl SimpleTextInFfi {
         let simple_text_in_ptr = Box::into_raw(Box::new(simple_text_in_ctx));
 
         //create event for wait_for_key
-        let mut wait_for_key_event: efi::Event = core::ptr::null_mut();
+        let mut wait_for_key_event: efi::Event = ptr::null_mut();
         let status = boot_services.create_event(
             efi::EVT_NOTIFY_WAIT,
             efi::TPL_NOTIFY,
             Some(Self::simple_text_in_wait_for_key),
             simple_text_in_ptr as *mut c_void,
-            core::ptr::addr_of_mut!(wait_for_key_event),
+            ptr::addr_of_mut!(wait_for_key_event),
         );
         if status.is_error() {
             drop(unsafe { Box::from_raw(simple_text_in_ptr) });
@@ -78,7 +78,7 @@ impl SimpleTextInFfi {
         //install the simple_text_in protocol
         let mut controller = controller;
         let status = boot_services.install_protocol_interface(
-            core::ptr::addr_of_mut!(controller),
+            ptr::addr_of_mut!(controller),
             &protocols::simple_text_input::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
             efi::NATIVE_INTERFACE,
             simple_text_in_ptr as *mut c_void,
@@ -101,11 +101,11 @@ impl SimpleTextInFfi {
     ) -> Result<(), efi::Status> {
         //Controller is set - that means initialize() was called, and there is potential state exposed thru FFI that needs
         //to be cleaned up.
-        let mut simple_text_in_ptr: *mut SimpleTextInFfi = core::ptr::null_mut();
+        let mut simple_text_in_ptr: *mut SimpleTextInFfi = ptr::null_mut();
         let status = boot_services.open_protocol(
             controller,
             &protocols::simple_text_input::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
-            core::ptr::addr_of_mut!(simple_text_in_ptr) as *mut *mut c_void,
+            ptr::addr_of_mut!(simple_text_in_ptr) as *mut *mut c_void,
             agent,
             controller,
             efi::OPEN_PROTOCOL_GET_PROTOCOL,
@@ -130,7 +130,7 @@ impl SimpleTextInFfi {
             debugln!(DEBUG_ERROR, "Failed to uninstall simple_text_in interface, status: {:x?}", status);
 
             unsafe {
-                (*simple_text_in_ptr).keyboard_handler = core::ptr::null_mut();
+                (*simple_text_in_ptr).keyboard_handler = ptr::null_mut();
             }
             //return without tearing down the context.
             return Err(status);
@@ -146,7 +146,7 @@ impl SimpleTextInFfi {
             //and return error based on observing keyboard_handler is null.
             debugln!(DEBUG_ERROR, "Failed to close simple_text_in_ptr.wait_for_key event, status: {:x?}", status);
             unsafe {
-                (*simple_text_in_ptr).keyboard_handler = core::ptr::null_mut();
+                (*simple_text_in_ptr).keyboard_handler = ptr::null_mut();
             }
             return Err(status);
         }
@@ -170,8 +170,8 @@ impl SimpleTextInFfi {
             let keyboard_handler = unsafe { context.keyboard_handler.as_mut() };
             if let Some(keyboard_handler) = keyboard_handler {
                 //reset requires an instance of hid_io to allow for LED updating, so use UefiHidIoFactory to build one.
-                if let Some(controller) = keyboard_handler.get_controller() {
-                    let hid_io = UefiHidIoFactory::new(context.boot_services, keyboard_handler.get_agent())
+                if let Some(controller) = keyboard_handler.controller() {
+                    let hid_io = UefiHidIoFactory::new(context.boot_services, keyboard_handler.agent())
                         .new_hid_io(controller, false);
                     if let Ok(hid_io) = hid_io {
                         if let Err(err) = keyboard_handler.reset(hid_io.as_ref(), extended_verification.into()) {
@@ -268,7 +268,8 @@ mod test {
     use core::{
         ffi::c_void,
         mem::MaybeUninit,
-        sync::atomic::{AtomicBool, AtomicPtr},
+        ptr,
+        sync::atomic::{AtomicBool, AtomicPtr, Ordering},
     };
 
     use crate::{
@@ -339,13 +340,13 @@ mod test {
 
     #[test]
     fn uninstall_should_uninstall_simple_text_in_interface() {
-        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(core::ptr::null_mut());
+        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
         let boot_services = create_fake_static_boot_service();
 
         // used in install
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, interface| {
-            CONTEXT_PTR.store(interface, core::sync::atomic::Ordering::SeqCst);
+            CONTEXT_PTR.store(interface, Ordering::SeqCst);
             efi::Status::SUCCESS
         });
 
@@ -353,14 +354,14 @@ mod test {
         boot_services.expect_open_protocol().returning(|_, protocol, interface, _, _, _| {
             unsafe {
                 assert_eq!(protocol.read(), protocols::simple_text_input::PROTOCOL_GUID);
-                interface.write(CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst));
+                interface.write(CONTEXT_PTR.load(Ordering::SeqCst));
             }
             efi::Status::SUCCESS
         });
         boot_services.expect_uninstall_protocol_interface().returning(|_, protocol, interface| {
             unsafe {
                 assert_eq!(protocol.read(), protocols::simple_text_input::PROTOCOL_GUID);
-                assert_eq!(interface, CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst));
+                assert_eq!(interface, CONTEXT_PTR.load(Ordering::SeqCst));
             }
             efi::Status::SUCCESS
         });
@@ -369,20 +370,20 @@ mod test {
         let mut keyboard_handler = KeyboardHidHandler::new(boot_services, 1 as efi::Handle);
 
         SimpleTextInFfi::install(boot_services, 2 as efi::Handle, &mut keyboard_handler).unwrap();
-        assert_ne!(CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst), core::ptr::null_mut());
+        assert_ne!(CONTEXT_PTR.load(Ordering::SeqCst), ptr::null_mut());
 
         SimpleTextInFfi::uninstall(boot_services, 1 as efi::Handle, 2 as efi::Handle).unwrap();
     }
 
     #[test]
     fn reset_should_invoke_reset() {
-        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(core::ptr::null_mut());
+        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
         let boot_services = create_fake_static_boot_service();
 
         // used in install
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, interface| {
-            CONTEXT_PTR.store(interface, core::sync::atomic::Ordering::SeqCst);
+            CONTEXT_PTR.store(interface, Ordering::SeqCst);
             efi::Status::SUCCESS
         });
 
@@ -422,7 +423,7 @@ mod test {
         boot_services.expect_uninstall_protocol_interface().returning(|_, protocol, interface| {
             unsafe {
                 assert_eq!(protocol.read(), protocols::simple_text_input::PROTOCOL_GUID);
-                assert_eq!(interface, CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst));
+                assert_eq!(interface, CONTEXT_PTR.load(Ordering::SeqCst));
             }
             efi::Status::SUCCESS
         });
@@ -432,10 +433,9 @@ mod test {
         keyboard_handler.set_controller(Some(2 as efi::Handle));
 
         SimpleTextInFfi::install(boot_services, 2 as efi::Handle, &mut keyboard_handler).unwrap();
-        assert_ne!(CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst), core::ptr::null_mut());
+        assert_ne!(CONTEXT_PTR.load(Ordering::SeqCst), ptr::null_mut());
 
-        let this =
-            CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst) as *mut protocols::simple_text_input::Protocol;
+        let this = CONTEXT_PTR.load(Ordering::SeqCst) as *mut protocols::simple_text_input::Protocol;
         SimpleTextInFfi::simple_text_in_reset(this, efi::Boolean::FALSE);
 
         // avoid keyboard drop uninstall flows
@@ -444,13 +444,13 @@ mod test {
 
     #[test]
     fn read_key_stroke_should_read_keystrokes() {
-        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(core::ptr::null_mut());
+        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
         let boot_services = create_fake_static_boot_service();
 
         // used in install
         boot_services.expect_create_event().returning(|_, _, _, _, _| efi::Status::SUCCESS);
         boot_services.expect_install_protocol_interface().returning(|_, _, _, interface| {
-            CONTEXT_PTR.store(interface, core::sync::atomic::Ordering::SeqCst);
+            CONTEXT_PTR.store(interface, Ordering::SeqCst);
             efi::Status::SUCCESS
         });
 
@@ -475,7 +475,7 @@ mod test {
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
 
         SimpleTextInFfi::install(boot_services, 2 as efi::Handle, &mut keyboard_handler).unwrap();
-        assert_ne!(CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst), core::ptr::null_mut());
+        assert_ne!(CONTEXT_PTR.load(Ordering::SeqCst), ptr::null_mut());
 
         let report: &[u8] = &[0x00, 0x00, 0x04, 0x05, 0x06, 0x00, 0x00, 0x00];
         keyboard_handler.receive_report(report, &hid_io);
@@ -484,8 +484,7 @@ mod test {
         keyboard_handler.receive_report(report, &hid_io);
 
         //read with simple_text_in
-        let this =
-            CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst) as *mut protocols::simple_text_input::Protocol;
+        let this = CONTEXT_PTR.load(Ordering::SeqCst) as *mut protocols::simple_text_input::Protocol;
         let mut input_key: protocols::simple_text_input::InputKey = Default::default();
 
         let status = SimpleTextInFfi::simple_text_in_read_key_stroke(
@@ -582,7 +581,7 @@ mod test {
 
     #[test]
     fn wait_for_key_should_wait_for_key() {
-        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(core::ptr::null_mut());
+        static CONTEXT_PTR: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
         static RECEIVED_EVENT: AtomicBool = AtomicBool::new(false);
 
         let boot_services = create_fake_static_boot_service();
@@ -592,7 +591,7 @@ mod test {
         boot_services.expect_locate_protocol().returning(|_, _, _| efi::Status::NOT_FOUND);
         boot_services.expect_install_protocol_interface().returning(|_, protocol, _, interface| {
             if unsafe { *protocol } == protocols::simple_text_input::PROTOCOL_GUID {
-                CONTEXT_PTR.store(interface, core::sync::atomic::Ordering::SeqCst);
+                CONTEXT_PTR.store(interface, Ordering::SeqCst);
             }
             efi::Status::SUCCESS
         });
@@ -601,7 +600,7 @@ mod test {
         boot_services.expect_restore_tpl().returning(|_| ());
 
         boot_services.expect_signal_event().returning(|_| {
-            RECEIVED_EVENT.store(true, core::sync::atomic::Ordering::SeqCst);
+            RECEIVED_EVENT.store(true, Ordering::SeqCst);
             efi::Status::SUCCESS
         });
 
@@ -616,12 +615,9 @@ mod test {
         keyboard_handler.set_controller(Some(2 as efi::Handle));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
 
-        RECEIVED_EVENT.store(false, core::sync::atomic::Ordering::SeqCst);
-        SimpleTextInFfi::simple_text_in_wait_for_key(
-            3 as efi::Event,
-            CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst),
-        );
-        assert!(!RECEIVED_EVENT.load(core::sync::atomic::Ordering::SeqCst));
+        RECEIVED_EVENT.store(false, Ordering::SeqCst);
+        SimpleTextInFfi::simple_text_in_wait_for_key(3 as efi::Event, CONTEXT_PTR.load(Ordering::SeqCst));
+        assert!(!RECEIVED_EVENT.load(Ordering::SeqCst));
 
         // press the a key
         let report: &[u8] = &[0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00];
@@ -631,11 +627,8 @@ mod test {
         let report: &[u8] = &[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00];
         keyboard_handler.receive_report(report, &hid_io);
 
-        SimpleTextInFfi::simple_text_in_wait_for_key(
-            3 as efi::Event,
-            CONTEXT_PTR.load(core::sync::atomic::Ordering::SeqCst),
-        );
-        assert!(RECEIVED_EVENT.load(core::sync::atomic::Ordering::SeqCst));
+        SimpleTextInFfi::simple_text_in_wait_for_key(3 as efi::Event, CONTEXT_PTR.load(Ordering::SeqCst));
+        assert!(RECEIVED_EVENT.load(Ordering::SeqCst));
 
         // avoid keyboard drop uninstall flows
         keyboard_handler.set_controller(None);

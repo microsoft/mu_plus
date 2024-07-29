@@ -41,21 +41,19 @@
 //!
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
+use alloc::{boxed::Box, vec::Vec};
 use core::ffi::c_void;
+
+#[cfg(test)]
+use mockall::automock;
+use r_efi::efi;
+use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
 
 use crate::{
     boot_services::UefiBootServices,
     driver_binding::DriverBinding,
     hid_io::{HidIo, HidIoFactory, HidReportReceiver},
 };
-
-use alloc::{boxed::Box, vec::Vec};
-
-use r_efi::efi;
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
-
-#[cfg(test)]
-use mockall::automock;
 
 /// This trait defines an abstraction for getting a list of receivers for HID reports.
 ///
