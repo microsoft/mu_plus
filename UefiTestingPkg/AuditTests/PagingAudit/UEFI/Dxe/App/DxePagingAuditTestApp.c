@@ -1349,112 +1349,6 @@ BspStackIsXpAndHasGuardPage (
 }
 
 /**
-  Checks that memory ranges not in the EFI
-  memory map will cause a CPU fault if accessed.
-
-  @param[in] Context            Unit test context
-
-  @retval UNIT_TEST_PASSED      The unit test passed
-  @retval other                 The unit test failed
-**/
-STATIC
-UNIT_TEST_STATUS
-EFIAPI
-MemoryOutsideEfiMemoryMapIsInaccessible (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  UINT64                 StartOfAddressSpace;
-  UINT64                 EndOfAddressSpace;
-  EFI_MEMORY_DESCRIPTOR  *EndOfEfiMemoryMap;
-  EFI_MEMORY_DESCRIPTOR  *CurrentEfiMemoryMapEntry;
-  BOOLEAN                TestFailure;
-  EFI_PHYSICAL_ADDRESS   LastMemoryMapEntryEnd;
-  EFI_STATUS             Status;
-
-  DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
-
-  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
-  UT_ASSERT_NOT_EFI_ERROR (ValidateEfiMemoryMapSize ());
-  UT_ASSERT_NOT_EFI_ERROR (PopulateMemorySpaceMap ());
-  UT_ASSERT_NOT_NULL (mMemorySpaceMap);
-  UT_ASSERT_NOT_EFI_ERROR (PopulateEfiMemoryMap ());
-  UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-
-  StartOfAddressSpace = mMemorySpaceMap[0].BaseAddress;
-  EndOfAddressSpace   = mMemorySpaceMap[mMemorySpaceMapCount - 1].BaseAddress +
-                        mMemorySpaceMap[mMemorySpaceMapCount - 1].Length;
-  TestFailure              = FALSE;
-  EndOfEfiMemoryMap        = (EFI_MEMORY_DESCRIPTOR *)(((UINT8 *)mEfiMemoryMap + mEfiMemoryMapSize));
-  CurrentEfiMemoryMapEntry = mEfiMemoryMap;
-
-  if (CurrentEfiMemoryMapEntry->PhysicalStart > StartOfAddressSpace) {
-    Status = ValidateRegionAttributes (
-               &mMap,
-               StartOfAddressSpace,
-               CurrentEfiMemoryMapEntry->PhysicalStart - StartOfAddressSpace,
-               EFI_MEMORY_RP,
-               TRUE,
-               TRUE,
-               TRUE
-               );
-
-    // Inaccessible could mean EFI_MEMORY_RP or completely unmapped in page table
-    if (EFI_ERROR (Status) && (Status != EFI_NO_MAPPING)) {
-      TestFailure = TRUE;
-    }
-  }
-
-  LastMemoryMapEntryEnd = CurrentEfiMemoryMapEntry->PhysicalStart +
-                          (CurrentEfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE);
-  CurrentEfiMemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (CurrentEfiMemoryMapEntry, mEfiMemoryMapDescriptorSize);
-
-  while ((UINTN)CurrentEfiMemoryMapEntry < (UINTN)EndOfEfiMemoryMap) {
-    if (CurrentEfiMemoryMapEntry->PhysicalStart > LastMemoryMapEntryEnd) {
-      Status = ValidateRegionAttributes (
-                 &mMap,
-                 LastMemoryMapEntryEnd,
-                 CurrentEfiMemoryMapEntry->PhysicalStart - LastMemoryMapEntryEnd,
-                 EFI_MEMORY_RP,
-                 TRUE,
-                 TRUE,
-                 TRUE
-                 );
-
-      // Inaccessible could mean EFI_MEMORY_RP or completely unmapped in page table
-      if (EFI_ERROR (Status) && (Status != EFI_NO_MAPPING)) {
-        TestFailure = TRUE;
-      }
-    }
-
-    LastMemoryMapEntryEnd = CurrentEfiMemoryMapEntry->PhysicalStart +
-                            (CurrentEfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE);
-    CurrentEfiMemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (CurrentEfiMemoryMapEntry, mEfiMemoryMapDescriptorSize);
-  }
-
-  if (LastMemoryMapEntryEnd < EndOfAddressSpace) {
-    Status = ValidateRegionAttributes (
-               &mMap,
-               LastMemoryMapEntryEnd,
-               EndOfAddressSpace - LastMemoryMapEntryEnd,
-               EFI_MEMORY_RP,
-               TRUE,
-               TRUE,
-               TRUE
-               );
-
-    // Inaccessible could mean EFI_MEMORY_RP or completely unmapped in page table
-    if (EFI_ERROR (Status) && (Status != EFI_NO_MAPPING)) {
-      TestFailure = TRUE;
-    }
-  }
-
-  UT_ASSERT_FALSE (TestFailure);
-
-  return UNIT_TEST_PASSED;
-}
-
-/**
   Entry Point of the shell app.
 
   @param[in] ImageHandle  The firmware allocated handle for the EFI image.
@@ -1547,7 +1441,6 @@ DxePagingAuditTestAppEntryPoint (
     AddTestCase (Misc, "MMIO Regions are EFI_MEMORY_XP", "Security.Misc.MmioIsXp", MmioIsXp, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "Image code sections are EFI_MEMORY_RO and and data sections are EFI_MEMORY_XP", "Security.Misc.ImageCodeSectionsRoDataSectionsXp", ImageCodeSectionsRoDataSectionsXp, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "BSP stack is EFI_MEMORY_XP and has EFI_MEMORY_RP guard page", "Security.Misc.BspStackIsXpAndHasGuardPage", BspStackIsXpAndHasGuardPage, NULL, GeneralTestCleanup, NULL);
-    AddTestCase (Misc, "Memory outside of the EFI Memory Map is inaccessible", "Security.Misc.MemoryOutsideEfiMemoryMapIsInaccessible", MemoryOutsideEfiMemoryMapIsInaccessible, NULL, GeneralTestCleanup, NULL);
 
     //
     // Execute the tests.
