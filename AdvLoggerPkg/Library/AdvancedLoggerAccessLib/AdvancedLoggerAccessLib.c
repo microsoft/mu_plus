@@ -185,6 +185,10 @@ FormatDebugLevelPrefix (
   IN UINT32  DebugLevel
   )
 {
+  if (MessageBuffer == NULL || MessageBufferSize == 0) {
+    return 0;
+  }
+
   UINTN  DebugLevelStringLen;
   UINTN  Index;
 
