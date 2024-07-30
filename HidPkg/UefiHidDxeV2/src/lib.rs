@@ -30,12 +30,14 @@ pub mod hid_io;
 pub mod keyboard;
 pub mod pointer;
 
-use boot_services::StandardUefiBootServices;
-use core::sync::atomic::AtomicPtr;
+use core::{ptr, sync::atomic::AtomicPtr};
+
 use r_efi::efi;
+
+use boot_services::StandardUefiBootServices;
 
 /// Global instance of UEFI Boot Services.
 pub static BOOT_SERVICES: StandardUefiBootServices = StandardUefiBootServices::new();
 
 /// Global instance of UEFI Runtime Services.
-pub static RUNTIME_SERVICES: AtomicPtr<efi::RuntimeServices> = AtomicPtr::new(core::ptr::null_mut());
+pub static RUNTIME_SERVICES: AtomicPtr<efi::RuntimeServices> = AtomicPtr::new(ptr::null_mut());
