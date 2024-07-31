@@ -260,9 +260,9 @@ class AdvLogParser ():
     ADVANCED_LOGGER_PHASE_SMM = 9
     ADVANCED_LOGGER_PHASE_TFA = 10
     ADVANCED_LOGGER_PHASE_CNT = 11
-    PHASE_STRING_LIST = ["[UNSPECIFIED] ", "[SEC] ", "[PEI] ", "[PEI64] ",
-                         "[DXE] ", "[RUNTIME] ", "[MM_CORE] ", "[MM] ",
-                         "[SMM_CORE] ", "[SMM] ", "[TFA] "]
+    PHASE_STRING_LIST = ["[UNSPECIFIED]", "[SEC]", "[PEI]", "[PEI64]",
+                         "[DXE]", "[RUNTIME]", "[MM_CORE]", "[MM]",
+                         "[SMM_CORE]", "[SMM]", "[TFA]"]
 
     # Debug levels from MU_BASECORE\MdePkg\Include\Library\DebugLib.h
     # //
@@ -293,27 +293,27 @@ class AdvLogParser ():
     # #define DEBUG_ERROR  0x80000000          // Error
 
     debug_levels_dict = {
-        0x00000001: "[DEBUG_INIT] ",
-        0x00000002: "[DEBUG_WARN] ",
-        0x00000004: "[DEBUG_LOAD] ",
-        0x00000008: "[DEBUG_FS] ",
-        0x00000010: "[DEBUG_POOL] ",
-        0x00000020: "[DEBUG_PAGE] ",
-        0x00000040: "[DEBUG_INFO] ",
-        0x00000080: "[DEBUG_DISPATCH] ",
-        0x00000100: "[DEBUG_VARIABLE] ",
-        0x00000200: "[DEBUG_SMI] ",
-        0x00000400: "[DEBUG_BM] ",
-        0x00001000: "[DEBUG_BLKIO] ",
-        0x00004000: "[DEBUG_NET] ",
-        0x00010000: "[DEBUG_UNDI] ",
-        0x00020000: "[DEBUG_LOADFILE] ",
-        0x00080000: "[DEBUG_EVENT] ",
-        0x00100000: "[DEBUG_GCD] ",
-        0x00200000: "[DEBUG_CACHE] ",
-        0x00400000: "[DEBUG_VERBOSE] ",
-        0x00800000: "[DEBUG_MANAGEABILITY] ",
-        0x80000000: "[DEBUG_ERROR] "
+        0x00000001: "[INIT]",
+        0x00000002: "[WARN]",
+        0x00000004: "[LOAD]",
+        0x00000008: "[FS]",
+        0x00000010: "[POOL]",
+        0x00000020: "[PAGE]",
+        0x00000040: "[INFO]",
+        0x00000080: "[DISPATCH]",
+        0x00000100: "[VARIABLE]",
+        0x00000200: "[SMI]",
+        0x00000400: "[BM]",
+        0x00001000: "[BLKIO]",
+        0x00004000: "[NET]",
+        0x00010000: "[UNDI]",
+        0x00020000: "[LOADFILE]",
+        0x00080000: "[EVENT]",
+        0x00100000: "[GCD]",
+        0x00200000: "[CACHE]",
+        0x00400000: "[VERBOSE]",
+        0x00800000: "[MANAGEABILITY]",
+        0x80000000: "[ERROR]"
     }
 
     #
@@ -713,7 +713,8 @@ class AdvLogParser ():
         elif Phase <= self.ADVANCED_LOGGER_PHASE_UNSPECIFIED:
             PhaseString = ""
         else:
-            PhaseString = self.PHASE_STRING_LIST[Phase]
+            # Add an extra space for readability
+            PhaseString = self.PHASE_STRING_LIST[Phase] + ' '
         return PhaseString
     
     #
@@ -721,7 +722,8 @@ class AdvLogParser ():
     #
     def _GetDebugLevelString(self, DebugLevel):
         if DebugLevel in list(self.debug_levels_dict.keys()):
-            DebugLevelString = self.debug_levels_dict[DebugLevel]
+            # Add an extra space for readability
+            DebugLevelString = self.debug_levels_dict[DebugLevel] + ' '
         else:
             DebugLevelString = ""
         return DebugLevelString

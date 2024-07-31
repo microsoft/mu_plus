@@ -48,27 +48,27 @@ typedef struct {
 
 // Create an array of DebugLevel structures
 DEBUG_LEVEL  DebugLevels[] = {
-  { "[DEBUG_INIT]",          0x00000001 },
-  { "[DEBUG_WARN]",          0x00000002 },
-  { "[DEBUG_LOAD]",          0x00000004 },
-  { "[DEBUG_FS]",            0x00000008 },
-  { "[DEBUG_POOL]",          0x00000010 },
-  { "[DEBUG_PAGE]",          0x00000020 },
-  { "[DEBUG_INFO]",          0x00000040 },
-  { "[DEBUG_DISPATCH]",      0x00000080 },
-  { "[DEBUG_VARIABLE]",      0x00000100 },
-  { "[DEBUG_SMI]",           0x00000200 },
-  { "[DEBUG_BM]",            0x00000400 },
-  { "[DEBUG_BLKIO]",         0x00001000 },
-  { "[DEBUG_NET]",           0x00004000 },
-  { "[DEBUG_UNDI]",          0x00010000 },
-  { "[DEBUG_LOADFILE]",      0x00020000 },
-  { "[DEBUG_EVENT]",         0x00080000 },
-  { "[DEBUG_GCD]",           0x00100000 },
-  { "[DEBUG_CACHE]",         0x00200000 },
-  { "[DEBUG_VERBOSE]",       0x00400000 },
-  { "[DEBUG_MANAGEABILITY]", 0x00800000 },
-  { "[DEBUG_ERROR]",         0x80000000 }
+  { "[INIT]",          0x00000001 },
+  { "[WARN]",          0x00000002 },
+  { "[LOAD]",          0x00000004 },
+  { "[FS]",            0x00000008 },
+  { "[POOL]",          0x00000010 },
+  { "[PAGE]",          0x00000020 },
+  { "[INFO]",          0x00000040 },
+  { "[DISPATCH]",      0x00000080 },
+  { "[VARIABLE]",      0x00000100 },
+  { "[SMI]",           0x00000200 },
+  { "[BM]",            0x00000400 },
+  { "[BLKIO]",         0x00001000 },
+  { "[NET]",           0x00004000 },
+  { "[UNDI]",          0x00010000 },
+  { "[LOADFILE]",      0x00020000 },
+  { "[EVENT]",         0x00080000 },
+  { "[GCD]",           0x00100000 },
+  { "[CACHE]",         0x00200000 },
+  { "[VERBOSE]",       0x00400000 },
+  { "[MANAGEABILITY]", 0x00800000 },
+  { "[ERROR]",         0x80000000 }
 };
 
 #define ADV_LOG_TIME_STAMP_FORMAT     "%2.2d:%2.2d:%2.2d.%3.3d : "
