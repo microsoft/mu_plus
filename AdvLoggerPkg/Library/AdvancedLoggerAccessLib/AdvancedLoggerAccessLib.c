@@ -27,17 +27,17 @@ STATIC  EFI_PHYSICAL_ADDRESS  mLowAddress                                   = 0;
 STATIC  EFI_PHYSICAL_ADDRESS  mHighAddress                                  = 0;
 STATIC  UINT16                mMaxMessageSize                               = ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
 CONST   CHAR8                 *AdvMsgEntryPrefix[ADVANCED_LOGGER_PHASE_CNT] = {
-  "[UNSPECIFIED] ",
-  "[SEC] ",
-  "[PEI] ",
-  "[PEI64] ",
-  "[DXE] ",
-  "[RUNTIME] ",
-  "[MM_CORE] ",
-  "[MM] ",
-  "[SMM_CORE] ",
-  "[SMM] ",
-  "[TFA] ",
+  "[UNSPECIFIED]",
+  "[SEC]",
+  "[PEI]",
+  "[PEI64]",
+  "[DXE]",
+  "[RUNTIME]",
+  "[MM_CORE]",
+  "[MM]",
+  "[SMM_CORE]",
+  "[SMM]",
+  "[TFA]",
 };
 
 // Define a structure to hold debug level information
@@ -48,27 +48,27 @@ typedef struct {
 
 // Create an array of DebugLevel structures
 DEBUG_LEVEL  DebugLevels[] = {
-  { "[DEBUG_INIT] ",          0x00000001 },
-  { "[DEBUG_WARN] ",          0x00000002 },
-  { "[DEBUG_LOAD] ",          0x00000004 },
-  { "[DEBUG_FS] ",            0x00000008 },
-  { "[DEBUG_POOL] ",          0x00000010 },
-  { "[DEBUG_PAGE] ",          0x00000020 },
-  { "[DEBUG_INFO] ",          0x00000040 },
-  { "[DEBUG_DISPATCH] ",      0x00000080 },
-  { "[DEBUG_VARIABLE] ",      0x00000100 },
-  { "[DEBUG_SMI] ",           0x00000200 },
-  { "[DEBUG_BM] ",            0x00000400 },
-  { "[DEBUG_BLKIO] ",         0x00001000 },
-  { "[DEBUG_NET] ",           0x00004000 },
-  { "[DEBUG_UNDI] ",          0x00010000 },
-  { "[DEBUG_LOADFILE] ",      0x00020000 },
-  { "[DEBUG_EVENT] ",         0x00080000 },
-  { "[DEBUG_GCD] ",           0x00100000 },
-  { "[DEBUG_CACHE] ",         0x00200000 },
-  { "[DEBUG_VERBOSE] ",       0x00400000 },
-  { "[DEBUG_MANAGEABILITY] ", 0x00800000 },
-  { "[DEBUG_ERROR] ",         0x80000000 }
+  { "[DEBUG_INIT]",          0x00000001 },
+  { "[DEBUG_WARN]",          0x00000002 },
+  { "[DEBUG_LOAD]",          0x00000004 },
+  { "[DEBUG_FS]",            0x00000008 },
+  { "[DEBUG_POOL]",          0x00000010 },
+  { "[DEBUG_PAGE]",          0x00000020 },
+  { "[DEBUG_INFO]",          0x00000040 },
+  { "[DEBUG_DISPATCH]",      0x00000080 },
+  { "[DEBUG_VARIABLE]",      0x00000100 },
+  { "[DEBUG_SMI]",           0x00000200 },
+  { "[DEBUG_BM]",            0x00000400 },
+  { "[DEBUG_BLKIO]",         0x00001000 },
+  { "[DEBUG_NET]",           0x00004000 },
+  { "[DEBUG_UNDI]",          0x00010000 },
+  { "[DEBUG_LOADFILE]",      0x00020000 },
+  { "[DEBUG_EVENT]",         0x00080000 },
+  { "[DEBUG_GCD]",           0x00100000 },
+  { "[DEBUG_CACHE]",         0x00200000 },
+  { "[DEBUG_VERBOSE]",       0x00400000 },
+  { "[DEBUG_MANAGEABILITY]", 0x00800000 },
+  { "[DEBUG_ERROR]",         0x80000000 }
 };
 
 #define ADV_LOG_TIME_STAMP_FORMAT     "%2.2d:%2.2d:%2.2d.%3.3d : "
@@ -130,7 +130,6 @@ FormatTimeStamp (
   ASSERT (TimeStampLen == AsciiStrLen (ADV_LOG_TIME_STAMP_RESULT));
 
   return (UINT16)TimeStampLen;
-
 }
 
 /**
@@ -159,6 +158,12 @@ FormatPhasePrefix (
   } else if (Phase < ADVANCED_LOGGER_PHASE_CNT) {
     // Normal message we recognize
     PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, AdvMsgEntryPrefix[Phase]);
+    // Verify string length and add an extra space for readability
+    if (PhaseStringLen < MessageBufferSize - 1) {
+      MessageBuffer[PhaseStringLen]     = ' ';
+      MessageBuffer[PhaseStringLen + 1] = '\0';
+      PhaseStringLen++;
+    }
   } else {
     // Unrecognized phase, just print the raw value
     PhaseStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, ADV_LOG_PHASE_ERR_FORMAT, Phase);
@@ -185,7 +190,7 @@ FormatDebugLevelPrefix (
   IN UINT32  DebugLevel
   )
 {
-  if (MessageBuffer == NULL || MessageBufferSize == 0) {
+  if ((MessageBuffer == NULL) || (MessageBufferSize == 0)) {
     return 0;
   }
 
@@ -194,8 +199,15 @@ FormatDebugLevelPrefix (
 
   // Print the debug flags
   for (Index = 0; Index < ARRAY_SIZE (DebugLevels); Index++) {
-    if ( (DebugLevel & DebugLevels[Index].Value) == DebugLevels[Index].Value) {
+    if ((DebugLevel & DebugLevels[Index].Value) == DebugLevels[Index].Value) {
       DebugLevelStringLen = AsciiSPrint (MessageBuffer, MessageBufferSize, DebugLevels[Index].Name);
+      // Verify string length and add an extra space for readability
+      if (DebugLevelStringLen < MessageBufferSize - 1) {
+        MessageBuffer[DebugLevelStringLen]     = ' ';
+        MessageBuffer[DebugLevelStringLen + 1] = '\0';
+        DebugLevelStringLen++;
+      }
+
       return (UINT16)DebugLevelStringLen;
     }
   }
