@@ -553,14 +553,9 @@ AdvancedLoggerGetLoggerInfo (
       // Memory Discovered Ppi.  At that time, the full in memory log buffer is allocated.
       //
 
-      if (FeaturePcdGet (PcdAdvancedLoggerPeiInRAM)) {
-        Pages =  FixedPcdGet32 (PcdAdvancedLoggerPages);
-        Type  =  EfiRuntimeServicesData;
-      } else {
-        Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
-        // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
-        Type =  EfiBootServicesData;
-      }
+      Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
+      // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
+      Type =  EfiBootServicesData;
 
       BufferSize = EFI_PAGES_TO_SIZE (Pages);
 
@@ -623,17 +618,7 @@ AdvancedLoggerGetLoggerInfo (
       Status = PeiServicesInstallPpi (mAdvancedLoggerPpiList);
       ASSERT_EFI_ERROR (Status);
 
-      if (FeaturePcdGet (PcdAdvancedLoggerPeiInRAM)) {
-        LoggerInfo->InPermanentRAM = TRUE;
-        Status                     = MmUnblockMemoryRequest (NewLoggerInfo, Pages);
-        if (EFI_ERROR (Status)) {
-          if (Status != EFI_UNSUPPORTED) {
-            DEBUG ((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
-          }
-        } else {
-          DEBUG ((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
-        }
-      } else if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+      if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
         DEBUG ((DEBUG_INFO, "%a: Standalone MM Hob of fixed data published\n", __FUNCTION__));
       } else {
         PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
