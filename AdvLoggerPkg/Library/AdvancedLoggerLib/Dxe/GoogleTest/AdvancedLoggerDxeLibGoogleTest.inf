@@ -1,0 +1,45 @@
+## @file AdvancedLoggerDxeLibGoogleTest.inf
+#
+#  Google Test for DXE instance of the Advanced Logger library.
+#
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+INF_VERSION    = 1.26
+BASE_NAME      = AdvancedLoggerDxeLibGoogleTest
+FILE_GUID      = E6C75458-9408-42F5-BF84-CAF9C6D0751B
+MODULE_TYPE    = HOST_APPLICATION
+VERSION_STRING = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  ../AdvancedLoggerLib.c # Source for extern mInitialized
+  AdvancedLoggerDxeLibGoogleTest.cpp
+  ../../../../Test/Mock/Library/GoogleTest/Protocol/MockAdvancedLogger.cpp
+  # MdePkg/Test/Mock/Library/GoogleTest/Protocol/MockDebugPort.cpp # Waiting on MockDebugPort
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  UnitTestLib
+  UefiBootServicesTableLib
+
+[Protocols]
+  gAdvancedLoggerProtocolGuid   ## CONSUMES
+  gEfiDebugPortProtocolGuid     ## SOMETIMES_CONSUMES
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## SOMETIMES_CONSUMES
