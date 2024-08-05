@@ -453,7 +453,6 @@ AdvancedLoggerGetLoggerInfo (
   UINTN                             Pages;
   CONST EFI_PEI_SERVICES            **PeiServices;
   EFI_STATUS                        Status;
-  EFI_MEMORY_TYPE                   Type;
   ADVANCED_LOGGER_MESSAGE_ENTRY_V2  *LogEntry;
 
   // Try to do the minimum work at the start of this function as this
@@ -554,13 +553,11 @@ AdvancedLoggerGetLoggerInfo (
       //
 
       Pages =  FixedPcdGet32 (PcdAdvancedLoggerPreMemPages);
-      // This is to avoid the interim buffer being allocated to consume 64KB on ARM64 platforms.
-      Type =  EfiBootServicesData;
 
       BufferSize = EFI_PAGES_TO_SIZE (Pages);
 
       Status = PeiServicesAllocatePages (
-                 Type,
+                 EfiBootServicesData,
                  Pages,
                  &NewLoggerInfo
                  );
