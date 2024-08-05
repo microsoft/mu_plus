@@ -27,7 +27,6 @@ PCD's used by Advanced Logger
 |PcdAdvancedLoggerForceEnable             | The default operation is to check if a Logs directory is present in the root of the filesystem.  If the UefiLogs directory is present, logging is enabled. When PcdAdvancedLoggerForceEnable is TRUE, and the device is not a USB device, a UefiLogs directory will be created and logging is enabled.  When logging is enabled, the proper log files will be created if not already preset.|
 |PcdAdvancedLoggerFixedInRAM              | For systems that have a fixed memory buffer prior to UEFI. The full in memory log buffer is assumed.|
 |PcdAdvancedHdwLoggerDebugPrintErrorLevel | The standard debug flags filter which log messages are produced.  This PCD allow a subset of log messages to be forwarded to the Hdw Port Lib.|
-|PcdAdvancedHdwLoggerDisable              | Specifies when to disable writing to the Hdw Port.|
 |PcdAdvancedLoggerPreMemPages             | Amount of temporary RAM used for the debug log.|
 |PcdAdvancedLoggerPages                   | Amount of system RAM used for the debug log|
 |PcdAdvancedLoggerLocator                 | When enabled, the AdvLogger creates a variable "AdvLoggerLocator" with the address of the LoggerInfo buffer|
