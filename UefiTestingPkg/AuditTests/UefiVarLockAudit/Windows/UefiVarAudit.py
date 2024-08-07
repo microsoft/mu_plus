@@ -8,17 +8,14 @@
 ##
 
 
-import os, sys
+import os
+import sys
 import argparse
 import logging
 import datetime
-import struct
-import hashlib
-import shutil
-import time
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element
-from UefiVariablesSupportLib import UefiVariable
+from edk2toollib.os.uefivariablesupport import UefiVariable
 
 #
 #main script function
@@ -72,13 +69,13 @@ def main():
     for var in XmlRoot.findall("Variable"):
         name = var.get("Name")
         guid = var.get("Guid")
-        (ReadStatus, Data, ReadErrorString) = Uefi.GetUefiVar(name, guid)
-        (WriteSuccess, ErrorCode, WriteErrorString)= Uefi.SetUefiVar(name, guid)
+        (ReadStatus, Data) = Uefi.GetUefiVar(name, guid)
+        (WriteSuccess, ErrorCode)= Uefi.SetUefiVar(name, guid)
         if(WriteSuccess != 0):
             logging.info("Must Restore Var %s:%s" % (name, guid))
-            (RestoreSuccess, RestoreEC, RestoreErrorString) = Uefi.SetUefiVar(name, guid, Data)
+            (RestoreSuccess, RestoreEC) = Uefi.SetUefiVar(name, guid, Data)
             if (RestoreSuccess == 0):
-                logging.critical("Restoring failed for Var %s:%s  0x%X  ErrorCode: 0x%X %s" % (name, guid, RestoreSuccess, RestoreEC, RestoreErrorString))
+                logging.critical("Restoring failed for Var %s:%s  0x%X  ErrorCode: 0x%X %s" % (name, guid, RestoreSuccess, RestoreEC))
         #append
         #<FromOs>
         #<ReadStatus>0x0 Success</ReadStatus>
@@ -87,11 +84,7 @@ def main():
         rs = Element("ReadStatus")
         ws = Element("WriteStatus")
         rs.text = "0x%lX" % (ReadStatus)
-        if(ReadErrorString is not None):
-            rs.text = rs.text + " %s" % ReadErrorString
         ws.text = "0x%lX" % ErrorCode
-        if(WriteErrorString is not None):
-            ws.text = ws.text + " %s" % WriteErrorString
         ele.append(rs)
         ele.append(ws)
         var.append(ele)
