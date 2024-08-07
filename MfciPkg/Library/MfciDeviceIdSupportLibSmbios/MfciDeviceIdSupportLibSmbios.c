@@ -72,7 +72,7 @@ GetOptionalStringByIndex (
     // Meet the end of strings set but Index is non-zero, or
     // found an empty string, or Index passed in was 0
     //
-    DEBUG ((DEBUG_ERROR, "SMBIOS string not found, returning \"%s\"\n", ID_NOT_FOUND));
+    DEBUG ((DEBUG_ERROR, "SMBIOS string not found, returning \"%a\"\n", ID_NOT_FOUND));
     StrSize  = sizeof (ID_NOT_FOUND);
     WhichStr = ID_NOT_FOUND;
   } else {
