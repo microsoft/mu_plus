@@ -12,8 +12,7 @@ import traceback
 import copy
 
 from win32com.shell import shell
-
-from UefiVariablesSupportLib import UefiVariable
+from edk2toollib.os.uefivariablesupport import UefiVariable
 
 
 class AdvLogParser ():
@@ -1003,7 +1002,7 @@ def ReadLogFromUefiInterface():
 
     while rc == 0:
         VariableName = 'V'+str(Index)
-        (rc, var, errorstring) = UefiVar.GetUefiVar(VariableName, 'a021bf2b-34ed-4a98-859c-420ef94f3e94')
+        (rc, var) = UefiVar.GetUefiVar(VariableName, 'a021bf2b-34ed-4a98-859c-420ef94f3e94')
         if (rc == 0):
             Index += 1
             InFile.write(var)
@@ -1060,7 +1059,7 @@ def main():
             CountOfLines = len(lines)
             print(f"{CountOfLines} lines written to {options.OutFilePath}")
 
-    except Exception as ex:
+    except Exception:
         print("Error processing log output.")
         traceback.print_exc()
 
@@ -1072,7 +1071,7 @@ def main():
             RawFile.close()
             print("RawFile complete")
 
-    except Exception as ex:
+    except Exception:
         print("Error processing raw file output.")
         traceback.print_exc()
 
