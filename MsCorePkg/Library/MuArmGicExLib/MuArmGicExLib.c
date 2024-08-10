@@ -3,7 +3,10 @@
 
   This library implements the extended interfaces for the Arm GIC.
 
+  Copyright (c) 2014, ARM Limited. All rights reserved.
+  Copyright (c) Microsoft Corporation.
 
+  SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
 #include <Library/ArmLib.h>
