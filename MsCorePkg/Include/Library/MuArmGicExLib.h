@@ -17,8 +17,8 @@
 
 #include <Library/ArmGicLib.h>
 
-#define ARM_GICR_ISPENDR    0x0200      // Interrupt Set-Pending Registers
-#define ARM_GICR_ICPENDR    0x0280      // Interrupt Clear-Pending Registers
+#define ARM_GICR_ISPENDR  0x0200        // Interrupt Set-Pending Registers
+#define ARM_GICR_ICPENDR  0x0280        // Interrupt Clear-Pending Registers
 
 /* ICC SGI macros */
 #define SGIR_TGT_MASK     ((UINT64)0xffff)
