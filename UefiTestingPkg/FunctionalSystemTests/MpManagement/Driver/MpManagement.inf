@@ -54,6 +54,7 @@
   ArmSmcLib
   HobLib
   ArmGenericTimerCounterLib
+  MuArmGicExLib
 
 [FixedPcd.AARCH64]
   gArmTokenSpaceGuid.PcdGicDistributorBase
