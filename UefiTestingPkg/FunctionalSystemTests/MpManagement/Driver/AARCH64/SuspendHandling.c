@@ -359,7 +359,6 @@ CpuArchWakeFromSleep (
   )
 {
   // Sending SGI to the specified secondary CPU interfaces
-  // TODO: This is essentially reverse engineering to correlate the CPU index with the MPIDRs...
   ArmGicSendSgiToEx (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
 }
 
