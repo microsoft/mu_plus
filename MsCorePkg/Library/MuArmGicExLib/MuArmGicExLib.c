@@ -13,8 +13,6 @@
 #include <Library/ArmGicLib.h>
 #include <Library/MuArmGicExLib.h>
 
-#include "MuArmGicExLibInternal.h"
-
 #define ISPENDR_ADDRESS(base, offset)  ((base) +\
           ARM_GICR_CTLR_FRAME_SIZE + ARM_GICR_ISPENDR + 4 * (offset))
 
