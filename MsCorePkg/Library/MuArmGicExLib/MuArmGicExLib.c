@@ -19,13 +19,14 @@
           ARM_GICR_CTLR_FRAME_SIZE + ARM_GICR_ICPENDR + 4 * (offset))
 
 /**
- * Return the base address of the GIC redistributor for the current CPU
- *
- * @param Revision  GIC Revision. The GIC redistributor might have a different
- *                  granularity following the GIC revision.
- *
- * @retval Base address of the associated GIC Redistributor
- */
+  Return the base address of the GIC redistributor for the current CPU
+
+  @param[in] GicRedistributorBase The base address of the GIC Distributor.
+  @param[in] Revision             GIC Revision. The GIC redistributor might have a different
+                                  granularity following the GIC revision.
+
+  @retval Base address of the associated GIC Redistributor
+**/
 STATIC
 UINTN
 GicGetCpuRedistributorBase (
