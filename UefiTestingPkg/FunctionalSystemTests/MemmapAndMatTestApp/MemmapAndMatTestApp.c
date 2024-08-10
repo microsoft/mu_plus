@@ -605,8 +605,6 @@ InitializeTestEnvironment (
     return EFI_UNSUPPORTED;
   }
 
-  // Allocate extra memory in case this allocation caused the memory to change.
-  MapSize     += SIZE_1KB;
   EfiMemoryMap = AllocateZeroPool (MapSize);
   if (!EfiMemoryMap) {
     return EFI_OUT_OF_RESOURCES;
