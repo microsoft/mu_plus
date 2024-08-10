@@ -70,6 +70,9 @@
   #
   MacAddressEmulationPlatformLib|Include/Library/MacAddressEmulationPlatformLib.h
 
+  ## @libraryclass Provides extended support for the Arm GIC interface
+  MuArmGicExLib|Include/Library/MuArmGicExLib.h
+
 [Guids]
   #  {a2966407-1f6b-4c86-b21e-fcc474c6f28e}
   gMsCorePkgTokenSpaceGuid = { 0xa2966407, 0x1f6b, 0x4c86, { 0xb2, 0x1e, 0xfc, 0xc4, 0x74, 0xc6, 0xf2, 0x8e }}

@@ -1,0 +1,43 @@
+#/* @file
+#
+#  Library implementation for the extended Arm GIC interface that shady ArmPkg does not want to host.
+#
+#  Copyright (c) 2011-2018, ARM Limited. All rights reserved.
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#*/
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = MuArmGicExLib
+  FILE_GUID                      = 6801C482-11C5-408B-98E8-95546D671E1A
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = MuArmGicExLib
+
+#
+#  VALID_ARCHITECTURES           = AARCH64
+#
+
+[Sources]
+  MuArmGicExLib.c
+
+[Sources.AARCH64]
+  AArch64/MuArmGicEx.S      | GCC   # MU_CHANGE - ARM64 VS change
+  AArch64/MuArmGicEx.masm   | MSFT  # MU_CHANGE - ARM64 VS change
+
+[LibraryClasses]
+  ArmLib
+  DebugLib
+  IoLib
+  ArmGicArchLib
+  ArmGicLib
+
+[Packages]
+  ArmPkg/ArmPkg.dec
+  MdePkg/MdePkg.dec
+
+[FeaturePcd]
+  gArmTokenSpaceGuid.PcdArmGicV3WithV2Legacy
