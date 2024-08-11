@@ -38,6 +38,7 @@
 [Packages]
   ArmPkg/ArmPkg.dec
   MdePkg/MdePkg.dec
+  MsCorePkg/MsCorePkg.dec
 
 [FeaturePcd]
   gArmTokenSpaceGuid.PcdArmGicV3WithV2Legacy
