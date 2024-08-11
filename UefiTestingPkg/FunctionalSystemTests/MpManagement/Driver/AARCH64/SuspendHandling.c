@@ -18,6 +18,7 @@
 #include <Library/IoLib.h>
 #include <Library/HobLib.h>
 #include <Library/ArmGicLib.h>
+#include <Library/MuArmGicExLib.h>
 #include <Library/ArmSmcLib.h>
 #include <Library/ArmGenericTimerCounterLib.h>
 #include <Library/CpuExceptionHandlerLib.h>
@@ -358,8 +359,7 @@ CpuArchWakeFromSleep (
   )
 {
   // Sending SGI to the specified secondary CPU interfaces
-  // TODO: This is essentially reverse engineering to correlate the CPU index with the MPIDRs...
-  ArmGicSendSgiTo (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
+  ArmGicSendSgiToEx (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
 }
 
 VOID
