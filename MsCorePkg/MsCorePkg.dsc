@@ -209,6 +209,7 @@
 
 [Components.AARCH64, Components.AARCH64]
   MsCorePkg/Library/MemoryProtectionExceptionHandlerLib/MemoryProtectionExceptionHandlerLib.inf
+  MsCorePkg/Library/MuArmGicExLib/MuArmGicExLib.inf
 
 [BuildOptions]
 #force deprecated interfaces off

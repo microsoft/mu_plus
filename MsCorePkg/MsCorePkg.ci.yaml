@@ -29,7 +29,8 @@
             "SecurityPkg/SecurityPkg.dec",
             "UefiCpuPkg/UefiCpuPkg.dec",
             "FmpDevicePkg/FmpDevicePkg.dec",
-            "NetworkPkg/NetworkPkg.dec"
+            "NetworkPkg/NetworkPkg.dec",
+            "ArmPkg/ArmPkg.dec"
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
             "UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec"
@@ -110,7 +111,17 @@
             "VARPOL",
             "SNP's",
             "UEFI's",
-            "clzll"
+            "clzll",
+            "icdicpr",
+            "icdsgir",
+            "icdspr",
+            "icpendr",
+            "intid",
+            "ishst",
+            "ispendr",
+            "mpidr",
+            "typer",
+            "vlpis"
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     },

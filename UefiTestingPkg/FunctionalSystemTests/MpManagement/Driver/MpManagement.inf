@@ -36,6 +36,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
 
 [Packages.AARCH64]
@@ -54,6 +55,7 @@
   ArmSmcLib
   HobLib
   ArmGenericTimerCounterLib
+  MuArmGicExLib
 
 [FixedPcd.AARCH64]
   gArmTokenSpaceGuid.PcdGicDistributorBase
