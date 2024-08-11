@@ -36,6 +36,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  MsCorePkg/MsCorePkg.dec
   UefiTestingPkg/UefiTestingPkg.dec
 
 [Packages.AARCH64]

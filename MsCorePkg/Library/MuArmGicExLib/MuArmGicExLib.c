@@ -9,9 +9,22 @@
   SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
+#include <Library/IoLib.h>
+#include <Library/DebugLib.h>
 #include <Library/ArmLib.h>
 #include <Library/ArmGicLib.h>
 #include <Library/MuArmGicExLib.h>
+
+// In GICv3, there are 2 x 64KB frames:
+// Redistributor control frame + SGI Control & Generation frame
+#define GIC_V3_REDISTRIBUTOR_GRANULARITY  (ARM_GICR_CTLR_FRAME_SIZE           \
+                                           + ARM_GICR_SGI_PPI_FRAME_SIZE)
+
+// In GICv4, there are 2 additional 64KB frames:
+// VLPI frame + Reserved page frame
+#define GIC_V4_REDISTRIBUTOR_GRANULARITY  (GIC_V3_REDISTRIBUTOR_GRANULARITY   \
+                                           + ARM_GICR_SGI_VLPI_FRAME_SIZE     \
+                                           + ARM_GICR_SGI_RESERVED_FRAME_SIZE)
 
 #define ISPENDR_ADDRESS(base, offset)  ((base) +\
           ARM_GICR_CTLR_FRAME_SIZE + ARM_GICR_ISPENDR + 4 * (offset))
@@ -76,6 +89,19 @@ GicGetCpuRedistributorBase (
   // The Redistributor has not been found for the current CPU
   ASSERT_EFI_ERROR (EFI_NOT_FOUND);
   return 0;
+}
+
+/**
+ *
+ * Return whether the Source interrupt index refers to a shared interrupt (SPI)
+ */
+STATIC
+BOOLEAN
+SourceIsSpi (
+  IN UINTN  Source
+  )
+{
+  return Source >= 32 && Source < 1020;
 }
 
 /**
