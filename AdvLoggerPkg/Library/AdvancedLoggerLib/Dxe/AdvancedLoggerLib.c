@@ -66,6 +66,17 @@ AdvancedLoggerWrite (
                     NULL,
                     (VOID **)&mLoggerProtocol
                     );
+
+    if (!EFI_ERROR (Status)) {
+      if ((mLoggerProtocol->Signature != ADVANCED_LOGGER_PROTOCOL_SIGNATURE) ||
+          (mLoggerProtocol->Version != ADVANCED_LOGGER_PROTOCOL_VERSION))
+      {
+        ASSERT (mLoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+        ASSERT (mLoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+        Status = EFI_NOT_FOUND;
+      }
+    }
+
     if (EFI_ERROR (Status)) {
       mLoggerProtocol = NULL;
       Status          = gBS->LocateProtocol (
@@ -76,9 +87,6 @@ AdvancedLoggerWrite (
       if (EFI_ERROR (Status)) {
         mDebugPortProtocol = NULL;
       }
-    } else {
-      ASSERT (mLoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
-      ASSERT (mLoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
     }
   }
 
