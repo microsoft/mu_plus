@@ -9,49 +9,40 @@ Windows_VS2022_               |WindowsCiBuild|  |WindowsCiTest| |WindowsCiCovera
 Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverage|
 ============================= ================= =============== ===================
 
-This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu.
+This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
 
-Branch Status - release/202311
+Branch Status - release/202405
 ==============================
 
 :Status:
   In Development
 
 :Entered Development:
-  Dec 2023
+  2023/11/24
 
 :Anticipated Stabilization:
-  Feb 2024
+  Nov 2024
 
-Branch Changes - release/202311
+Branch Changes - release/202405
 ===============================
+
+202405 is a larger deviation than previous releases. As part of upstreaming changes to EDK2, the commits were reviewed, squashed, and some were dropped.
+Due to these changes, there maybe more work minor work required to bring an existing platforms up to 202405 compatibility. 
 
 Breaking Changes-dev
 --------------------
-
-- Incomplete
+- Nothing
 
 Main Changes-dev
 ----------------
+- AdvancedFileLogger triggers on gEfiEventBeforeExitBootServicesGuid due to removal of gMuEventPreExitBootServicesGuid.
+- OnScreenKeyboard triggers on gEfiEventBeforeExitBootServicesGuid due to removal of gMuEventPreExitBootServicesGuid.
+- RenderingEngine triggers on gEfiEventBeforeExitBootServicesGuid due to removal of gMuEventPreExitBootServicesGuid.
+- MsCorePkg/Library/MuArmGicExLib/MuArmGicExLib.inf exists to contain the functionality previously in ArmPkg/Drivers/ArmGic/ArmGicLib.inf.
 
-- Added HiiKeyboardLayout crate to support UEFI keyboard layouts
-- Added Hid KeyboardSupport for UefiHidDxe
-- Rework of TpmReplay
-- Separated FrameBufferMemDrawLib into DXE and PEI instances
-- Added SecureBootKeyStoreLib library implementation
-- Split memory protection test app into DXE and SMM versions
-
-Bug Fixes-dev
--------------
-
-- Fixed logic related to the DXE_CORE advanced logger
-- Fixed AdvLogger rust deadlock
-
-Branched from 202308
---------------------
-
-Original sync Commit: 61103c3af347f488431507491350b681dd1b462f
-
+Platform Integration Reference
+----------------
+Reference platforms which consume release/202405 are available in [mu_tiano_platforms](https://github.com/microsoft/mu_tiano_platforms).
 
 Code of Conduct
 ===============
@@ -80,12 +71,12 @@ Copyright & License
 
 .. CoreCI
 
-.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202311
-.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202311
+.. _Windows_VS2022: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=49&&branchName=release%2F202405
+.. |WindowsCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20VS2022?branchName=release%2F202405
 .. |WindowsCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/49.svg
 .. |WindowsCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
 
-.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202311
-.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202311
+.. _Ubuntu_GCC5: https://dev.azure.com/projectmu/mu/_build/latest?definitionId=50&&branchName=release%2F202405
+.. |UbuntuCiBuild| image:: https://dev.azure.com/projectmu/mu/_apis/build/status/CI/Mu%20Plus%20CI%20Ubuntu%20GCC5?branchName=release%2F202405
 .. |UbuntuCiTest| image:: https://img.shields.io/azure-devops/tests/projectmu/mu/50.svg
 .. |UbuntuCiCoverage| image:: https://img.shields.io/badge/coverage-coming_soon-blue
