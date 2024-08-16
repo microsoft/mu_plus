@@ -18,7 +18,7 @@ Branch Status - release/202405
   In Development
 
 :Entered Development:
-  2023/11/24
+  2023/11/24 (Date Edk2 started accepting changes which were not in a previous release)
 
 :Anticipated Stabilization:
   Nov 2024
@@ -27,7 +27,7 @@ Branch Changes - release/202405
 ===============================
 
 202405 is a larger deviation than previous releases. As part of upstreaming changes to EDK2, the commits were reviewed, squashed, and some were dropped.
-Due to these changes, there maybe more work minor work required to bring an existing platforms up to 202405 compatibility. 
+Due to these changes, there may be more work required to bring an existing platform up to 202405 compatibility. 
 
 Breaking Changes-dev
 --------------------
@@ -41,7 +41,7 @@ Main Changes-dev
 - MsCorePkg/Library/MuArmGicExLib/MuArmGicExLib.inf exists to contain the functionality previously in ArmPkg/Drivers/ArmGic/ArmGicLib.inf.
 
 Platform Integration Reference
-----------------
+------------------------------
 Reference platforms which consume release/202405 are available in [mu_tiano_platforms](https://github.com/microsoft/mu_tiano_platforms).
 
 Code of Conduct
@@ -62,7 +62,7 @@ Please open any issues in the Project Mu GitHub tracker and read https://microso
 Copyright & License
 ===================
 
-| Copyright (C) Microsoft Corporation
+| Copyright (c) Microsoft Corporation
 | SPDX-License-Identifier: BSD-2-Clause-Patent
 
 .. ===================================================================
