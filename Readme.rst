@@ -9,7 +9,7 @@ Windows_VS2022_               |WindowsCiBuild|  |WindowsCiTest| |WindowsCiCovera
 Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverage|
 ============================= ================= =============== ===================
 
-This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu
+This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu.
 
 Branch Status - release/202405
 ==============================
