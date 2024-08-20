@@ -23,7 +23,6 @@ VERSION_STRING = 1.0
 [Sources]
   ../AdvancedLoggerLib.c # Source for extern mInitialized
   AdvancedLoggerDxeLibGoogleTest.cpp
-  ../../../../Test/Mock/Library/GoogleTest/Protocol/MockAdvancedLogger.cpp
   # MdePkg/Test/Mock/Library/GoogleTest/Protocol/MockDebugPort.cpp # Waiting on MockDebugPort
 
 [Packages]
