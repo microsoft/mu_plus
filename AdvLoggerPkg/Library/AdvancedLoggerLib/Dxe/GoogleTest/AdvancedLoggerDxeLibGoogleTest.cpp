@@ -151,6 +151,7 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerNullProtocol) {
 /* Passing an invalid buffer - should be caught/handled by the protocol */
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteInvalidBuffer) {
   Buffer = nullptr;
+  UINTN  numBytesZero = 0;
 
   EXPECT_CALL (
     gBSMock,
@@ -172,7 +173,7 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteInvalidBuffer) {
     gAL_AdvancedLoggerWriteProtocol (
       Pointer (gALProtocol),
       Eq (DebugLevel),
-      BufferEq (Buffer, 0),
+      BufferEq (Buffer, numBytesZero),
       Eq (NumberOfBytes)
       )
     )
@@ -218,7 +219,8 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteZeroBytes) {
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytesZero);
 }
 
-/* Passing a mismatched signature. Asserts are disabled so execution will continue */
+/* Waiting on edk2 PR to add DebugPortProtocolMock
+// Passing a mismatched signature. Asserts are disabled so execution will continue
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteFailMismatchedSignature) {
   gALProtocol->Signature = SIGNATURE_32 ('T', 'E', 'S', 'T');
 
@@ -238,20 +240,20 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteFailMismatchedSignature) {
        );
 
   EXPECT_CALL (
-    AdvLoggerProtocolMock,
-    gAL_AdvancedLoggerWriteProtocol (
-      Pointer (gALProtocol),
-      Eq (DebugLevel),
-      BufferEq (Buffer, NumberOfBytes),
-      Eq (NumberOfBytes)
+    gBSMock,
+    gBS_LocateProtocol (
+      BufferEq (&gEfiDebugPortProtocolGuid, sizeof (EFI_GUID)),
+      Eq (nullptr), // Registration Key
+      NotNull ()    // Protocol Pointer OUT
       )
     )
     .WillOnce (
-       Return ()
+       Return (EFI_SUCCESS)
        );
 
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 }
+*/
 
 /* Waiting on edk2 PR to add DebugPortProtocolMock
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerProtocolInvalidParam) {
