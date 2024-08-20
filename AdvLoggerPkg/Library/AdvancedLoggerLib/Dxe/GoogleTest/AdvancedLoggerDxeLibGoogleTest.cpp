@@ -31,8 +31,8 @@ using namespace testing;
 **/
 class AdvancedLoggerWriteTest : public Test {
 protected:
-  MockUefiBootServicesTableLib gBSMock;
-  MockAdvancedLogger AdvLoggerProtocolMock;
+  StrictMock<MockUefiBootServicesTableLib> gBSMock;
+  StrictMock<MockAdvancedLogger> AdvLoggerProtocolMock;
   UINTN DebugLevel;
   CHAR8 *Buffer;
   UINTN NumberOfBytes;
@@ -52,7 +52,6 @@ protected:
     mInitialized           = FALSE;
     gALProtocol->Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE;
     gALProtocol->Version   = ADVANCED_LOGGER_PROTOCOL_VERSION;
-    mInitialized           = FALSE;
   }
 };
 

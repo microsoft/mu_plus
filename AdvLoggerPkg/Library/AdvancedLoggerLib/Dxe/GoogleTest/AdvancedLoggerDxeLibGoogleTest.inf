@@ -8,11 +8,11 @@
 ##
 
 [Defines]
-INF_VERSION    = 1.26
-BASE_NAME      = AdvancedLoggerDxeLibGoogleTest
-FILE_GUID      = E6C75458-9408-42F5-BF84-CAF9C6D0751B
-MODULE_TYPE    = HOST_APPLICATION
-VERSION_STRING = 1.0
+  INF_VERSION    = 1.26
+  BASE_NAME      = AdvancedLoggerDxeLibGoogleTest
+  FILE_GUID      = E6C75458-9408-42F5-BF84-CAF9C6D0751B
+  MODULE_TYPE    = HOST_APPLICATION
+  VERSION_STRING = 1.0
 
 #
 # The following information is for reference only and not required by the build tools.

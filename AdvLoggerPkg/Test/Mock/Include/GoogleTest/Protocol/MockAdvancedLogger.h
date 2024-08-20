@@ -1,12 +1,12 @@
-/** @file    MockAdvancedLogger.h
+/** @file MockAdvancedLogger.h
     This file declares a mock of the Advanced Logger Protocol.
 
     Copyright (c) Microsoft Corporation.
     SPDX-License-Identifier: BSD-2-Clause-Patent
 **/
 
-#ifndef MOCK_ADVANCED_LOGGER_LIB_H_
-#define MOCK_ADVANCED_LOGGER_LIB_H_
+#ifndef MOCK_ADVANCED_LOGGER_PROTOCOL_H_
+#define MOCK_ADVANCED_LOGGER_PROTOCOL_H_
 
 #include <Library/GoogleTestLib.h>
 #include <Library/FunctionMockLib.h>
@@ -29,10 +29,6 @@ struct MockAdvancedLogger {
     );
 };
 
-extern "C" {
-  extern ADVANCED_LOGGER_PROTOCOL  *gALProtocol;
-}
-
 //
 // Mock function definitions in header file to prevent need of cpp file and
 // make it easier to consume in tests.
@@ -52,4 +48,4 @@ extern "C" {
   ADVANCED_LOGGER_PROTOCOL  *gALProtocol = &advancedLoggerInstance;
 }
 
-#endif // MOCK_ADVANCED_LOGGER_LIB_H_
+#endif // MOCK_ADVANCED_LOGGER_PROTOCOL_H_
