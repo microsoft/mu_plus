@@ -11,7 +11,7 @@
   PLATFORM_GUID                  = 1BF313CF-F093-42A9-8676-3445F2544295
   PLATFORM_VERSION               = 0.1
   DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/AdvLoggerPkg
+  OUTPUT_DIRECTORY               = Build/AdvLoggerPkg/HostTest
   SUPPORTED_ARCHITECTURES        = IA32|X64
   SKUID_IDENTIFIER               = DEFAULT
   BUILD_TARGETS                  = NOOPT
@@ -29,6 +29,7 @@
   UefiLib|MdePkg/Library/UefiLib/UefiLib.inf
   DevicePathLib|MdePkg/Library/UefiDevicePathLib/UefiDevicePathLib.inf
   UefiRuntimeServicesTableLib|MdePkg/Library/UefiRuntimeServicesTableLib/UefiRuntimeServicesTableLib.inf
+  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
 
   #
   # Mocked Libs
@@ -43,5 +44,9 @@
 #
 ################################################################################
 [Components]
+  #
+  # Build HOST_APPLICATIONs that test AdvLoggerPkg
+  #
   AdvLoggerPkg/AdvLoggerOsConnectorPrm/Library/AdvLoggerOsConnectorPrmConfigLib/GoogleTest/AdvLoggerPrmConfigLibGoogleTest.inf
   AdvLoggerPkg/AdvLoggerOsConnectorPrm/GoogleTest/AdvLoggerOsConnectorPrmGoogleTest.inf
+  AdvLoggerPkg/Library/AdvancedLoggerLib/Dxe/GoogleTest/AdvancedLoggerDxeLibGoogleTest.inf
