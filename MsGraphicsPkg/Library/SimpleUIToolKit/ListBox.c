@@ -982,9 +982,9 @@ Ctor (
 
       SWM_RECT_INIT2 (
         this->m_pCells[Index].CellTrashcanBounds,
-        CellBounds->Left,
+        CellBounds->Right - TrashcanHitAreaWidth,
         CellBounds->Top,
-        CheckBoxHitAreaWidth,
+        TrashcanHitAreaWidth,
         SWM_RECT_HEIGHT (*CellBounds)
         );
     }
