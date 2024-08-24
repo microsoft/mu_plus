@@ -21,7 +21,7 @@ HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
 memoffset = "0.9.0"
 num-traits = { version = "0.2", default-features = false}
 num-derive = { version = "0.4", default-features = false}
-r-efi = "4.3.0"
+r-efi = "5.0.0"
 rustversion = "1.0.14"
 spin = "0.9.8"
 scroll = { version = "0.12", default-features = false, features = ["derive"]}
