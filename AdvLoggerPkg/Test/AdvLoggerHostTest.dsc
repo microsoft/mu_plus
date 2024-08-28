@@ -55,3 +55,4 @@
       AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf
       PeiServicesLib|MdePkg/Test/Mock/Library/GoogleTest/MockPeiServicesLib/MockPeiServicesLib.inf
   }
+  AdvLoggerPkg/Library/AdvancedLoggerLib/DxeCore/GoogleTest/AdvancedLoggerDxeCoreGoogleTest.inf

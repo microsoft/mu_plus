@@ -1,0 +1,53 @@
+## @file AdvancedLoggerDxeCoreGoogleTest.inf
+#
+#  DXE_CORE instance of the Advanced Logger library.
+#
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.29
+  BASE_NAME                      = DxeCoreAdvancedLoggerLib
+  FILE_GUID                      = 01D768B5-B788-4253-86AD-B0524563BABC
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvancedLoggerDxeCoreGoogleTest.cpp
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerLib
+  UnitTestLib
+
+[Guids]
+  gAdvancedLoggerHobGuid
+  gEfiEndOfDxeEventGroupGuid
+  gAdvancedLoggerPreDxeLogsGuid
+
+[Protocols]
+  gAdvancedLoggerProtocolGuid                                               ## CONSUMES
+  gEdkiiVariablePolicyProtocolGuid                                          ## CONSUMES
+  gEfiRealTimeClockArchProtocolGuid                                         ## CONSUMES
+  gEfiVariableWriteArchProtocolGuid                                         ## CONSUMES
+
+[FixedPcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel
+
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
