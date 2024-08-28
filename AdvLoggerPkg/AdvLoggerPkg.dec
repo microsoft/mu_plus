@@ -85,11 +85,6 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM|FALSE|BOOLEAN|0x00010189
 
-  ## PcdAdvancedLoggerPeiInRAM - Tells the PEI Advanced Logger that this PEI can allocate memory
-  #                              and there is no need for a temporary memory buffer
-  #
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPeiInRAM|FALSE|BOOLEAN|0x00010185
-
   ## PcdAdvancedLoggerLocator - Tells the Advanced Logger to publish a variable with the logger info block address
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator|FALSE|BOOLEAN|0x00010186

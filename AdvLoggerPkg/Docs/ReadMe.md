@@ -14,7 +14,7 @@ The following configurations are supported:
 | ---      | --- |
 | DXE Only | Uses DxeCore, DxeRuntime, and Dxe AdvancedLoggerLib libraries for logging from start of DXE CORE through Exit Boot Services.  Accepts the PEI Advanced Logger Hob if one is generated.  Produces the AdvancedLogger protocol. |
 | DXE+SMM  | Requires DXE modules above, and adds the Smm AdvancedLoggerLib library.  Collects SMM generated messages in the in memory log. |
-| PEI      | Uses PeiCore and Pei AdvancedLoggerLib libraries.  Creates the Advanced Logger Hob if PcdAdvancedLoggerPeiInRAM is set. |
+| PEI      | Uses PeiCore and Pei AdvancedLoggerLib libraries. |
 | SEC      | Uses the Sec Advanced Logger Library. SEC requires a fixed load address, so it piggy backs on the Temporary RAM PCD information.  Produces a Fixed Address temporary RAM log.  When memory is added, the Sec Advanced Logger library converts the Temporary RAM logging information to the PEI Advanced Logger Hob. |
 | PEI64    | Uses Pei64 Advanced Logger Library. Requires the SEC fixed address temporary log information in order to log Pei64 bit DEBUG messages. |
 | MM       | Standalone MM - Loads during PEI phase. |
@@ -25,7 +25,6 @@ PCD's used by Advanced Logger
 | PCD                                     | Function of the PCD|
 | ---                                     | --- |
 |PcdAdvancedLoggerForceEnable             | The default operation is to check if a Logs directory is present in the root of the filesystem.  If the UefiLogs directory is present, logging is enabled. When PcdAdvancedLoggerForceEnable is TRUE, and the device is not a USB device, a UefiLogs directory will be created and logging is enabled.  When logging is enabled, the proper log files will be created if not already preset.|
-|PcdAdvancedLoggerPeiInRAM                | For systems that have memory at PeiCore entry. The full in memory log buffer if PcdAdvancedLoggerPages is allocated in the Pei Core constructor and PcdAdvancedLoggerPreMemPages is ignored.|
 |PcdAdvancedLoggerFixedInRAM              | For systems that have a fixed memory buffer prior to UEFI. The full in memory log buffer is assumed.|
 |PcdAdvancedHdwLoggerDebugPrintErrorLevel | The standard debug flags filter which log messages are produced.  This PCD allow a subset of log messages to be forwarded to the Hdw Port Lib.|
 |PcdAdvancedLoggerPreMemPages             | Amount of temporary RAM used for the debug log.|

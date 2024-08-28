@@ -31,7 +31,6 @@
 
   The following PCD settings are assumed:
 
-  PcdAdvancedLoggerPeiInRAM    -- TRUE
   PcdAdvancedLoggerBase        -- NOT NULL and pointer to memory to be used
   PcdAdvancedLoggerPages       -- > 64KB of pages
   PcdAdvancedLoggerCarBase     -- NOT USED, leave at default
