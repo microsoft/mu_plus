@@ -28,7 +28,6 @@ PCD's used by Advanced Logger
 |PcdAdvancedLoggerPeiInRAM                | For systems that have memory at PeiCore entry. The full in memory log buffer if PcdAdvancedLoggerPages is allocated in the Pei Core constructor and PcdAdvancedLoggerPreMemPages is ignored.|
 |PcdAdvancedLoggerFixedInRAM              | For systems that have a fixed memory buffer prior to UEFI. The full in memory log buffer is assumed.|
 |PcdAdvancedHdwLoggerDebugPrintErrorLevel | The standard debug flags filter which log messages are produced.  This PCD allow a subset of log messages to be forwarded to the Hdw Port Lib.|
-|PcdAdvancedHdwLoggerDisable              | Specifies when to disable writing to the Hdw Port.|
 |PcdAdvancedLoggerPreMemPages             | Amount of temporary RAM used for the debug log.|
 |PcdAdvancedLoggerPages                   | Amount of system RAM used for the debug log|
 |PcdAdvancedLoggerLocator                 | When enabled, the AdvLogger creates a variable "AdvLoggerLocator" with the address of the LoggerInfo buffer|
