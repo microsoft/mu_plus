@@ -43,8 +43,15 @@ AdvancedLoggerWrite (
              );
 
   if (Status == EFI_SUCCESS) {
-    ASSERT (AdvancedLoggerPpi->Signature == ADVANCED_LOGGER_PPI_SIGNATURE);
-    ASSERT (AdvancedLoggerPpi->Version == ADVANCED_LOGGER_PPI_VERSION);
+    if ((AdvancedLoggerPpi->Signature != ADVANCED_LOGGER_PPI_SIGNATURE) ||
+        (AdvancedLoggerPpi->Version != ADVANCED_LOGGER_PPI_VERSION))
+    {
+      ASSERT (AdvancedLoggerPpi->Signature == ADVANCED_LOGGER_PPI_SIGNATURE);
+      ASSERT (AdvancedLoggerPpi->Version == ADVANCED_LOGGER_PPI_VERSION);
+
+      // Signature/Version mismatch, don't attempt to use the PPI.
+      return;
+    }
 
     AdvancedLoggerPpi->AdvancedLoggerWritePpi (ErrorLevel, Buffer, NumberOfBytes);
   }
