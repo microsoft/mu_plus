@@ -1,6 +1,6 @@
 /** @file AdvancedLoggerPeiLibGoogleTest.cpp
 
-    This file contains the unit tests for the Advanced Logger DXE Library.
+    This file contains the unit tests for the Advanced Logger PEI Library.
 
     Copyright (c) Microsoft Corporation.
     SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -48,7 +48,7 @@ protected:
   }
 };
 
-TEST_F (AdvancedLoggerWriteTestPei, PpiNotFounfFailure) {
+TEST_F (AdvancedLoggerWriteTestPei, PpiNotFoundFailure) {
   // Expect the locate PPI call to fail
   EXPECT_CALL (
     PeiServicesMock,
@@ -175,12 +175,14 @@ TEST_F (AdvancedLoggerWriteTestPei, AdvLoggerWriteZeroBytes) {
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytesZero);
 }
 
-/* Passing a mismatched signature. Asserts are disabled so execution will continue */
+/* Passing a mismatched signature. Asserts are disabled so execution will continue.
+   Expecting the write function to exit gracefully and not call gAL_AdvancedLoggerWritePpi
+ */
 TEST_F (AdvancedLoggerWriteTestPei, AdvLoggerWriteFailMismatchedSignature) {
-  // Expect the call to LocatePpi to return success, "found" AdvancedLoggerPpi (mocked)
   gALPpi->Signature = SIGNATURE_32 ('T', 'E', 'S', 'T');
   gALPpi->Version   = ADVANCED_LOGGER_PPI_VERSION + 1;
 
+  // Expect the call to LocatePpi to return success, "found" AdvancedLoggerPpi (mocked)
   EXPECT_CALL (
     PeiServicesMock,
     PeiServicesLocatePpi (
@@ -195,22 +197,6 @@ TEST_F (AdvancedLoggerWriteTestPei, AdvLoggerWriteFailMismatchedSignature) {
          SetArgPointee<3>(ByRef (gALPpi)),
          Return (EFI_SUCCESS)
          )
-       );
-
-  // TODO - why do we still expect a call to AdvancedLoggerWritePpi? shouldn't we exit?
-  // Or are we expecting the call to AdvancedLoggerWritePpi to check the signature and fail?
-
-  // Expect the call to AdvancedLoggerWritePpi
-  EXPECT_CALL (
-    AdvancedLoggerPpiMock,
-    gAL_AdvancedLoggerWritePpi (
-      Eq (DebugLevel),
-      BufferEq (Buffer, NumberOfBytes),
-      Eq (NumberOfBytes)
-      )
-    )
-    .WillOnce (
-       Return ()
        );
 
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
