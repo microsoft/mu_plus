@@ -20,16 +20,27 @@
 
 [Sources]
   AdvancedLoggerDxeCoreGoogleTest.cpp
+  ../../AdvancedLoggerCommon.c
+  ../AdvancedLoggerLib.c # Source for externs
 
 [Packages]
   MdePkg/MdePkg.dec
-  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
   MdeModulePkg/MdeModulePkg.dec
   AdvLoggerPkg/AdvLoggerPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
 
 [LibraryClasses]
-  AdvancedLoggerLib
-  UnitTestLib
+  GoogleTestLib
+  BaseLib
+  DebugLib
+  AdvancedLoggerHdwPortLib
+  # BaseMemoryLib
+  HobLib
+  # MemoryAllocationLib
+  PcdLib
+  SynchronizationLib
+  TimerLib
+  VariablePolicyHelperLib
 
 [Guids]
   gAdvancedLoggerHobGuid
@@ -51,3 +62,7 @@
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerLocator
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
+
+[BuildOptions]
+  # MSFT:*_*_*_CC_FLAGS = /std:c++latest
+  # MSFT:*_*_*_CC_FLAGS = /EHsc

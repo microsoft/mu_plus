@@ -6,7 +6,8 @@
 
 **/
 
-#include <Base.h>
+#include <Uefi.h>
+#include <PiDxe.h>
 
 #include <AdvancedLoggerInternal.h>
 
