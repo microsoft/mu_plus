@@ -27,9 +27,6 @@
   MdeModulePkg/MdeModulePkg.dec
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
   MsCorePkg/MsCorePkg.dec
-  PcBdsPkg/PcBdsPkg.dec
-  BdsPkg/BdsPkg.dec
-
 [LibraryClasses]
   GoogleTestLib
 
