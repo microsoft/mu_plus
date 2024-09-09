@@ -9,27 +9,24 @@
 #include <Library/GoogleTestLib.h>
 #include <Library/FunctionMockLib.h>
 #include <GoogleTest/Library/MockMemoryAllocationLib.h>
-#include <GoogleTest/Protocol/MockAdvancedLogger.h>
 #include <GoogleTest/Library/MockHobLib.h>
+#include <GoogleTest/Library/MockAdvancedLoggerHdwPortLib.h>
+#include <GoogleTest/Protocol/MockAdvancedLogger.h>
 
 extern "C" {
   #include <Uefi.h>
   #include <Library/BaseLib.h>
   #include <Library/DebugLib.h>
-
   #include <AdvancedLoggerInternal.h>
   #include <Protocol/AdvancedLogger.h>
   #include <Guid/AdvancedLoggerPreDxeLogs.h>
   #include <Protocol/VariablePolicy.h>          // to mock (MU_BASECORE MdeModulePkg)
   #include <AdvancedLoggerInternalProtocol.h>
-
-  #include <Library/AdvancedLoggerHdwPortLib.h> // to mock or NULL lib? (MU_PLUS)
   #include <Library/BaseMemoryLib.h>            // to mock (MU_BASECORE MdePkg)
   #include <Library/PcdLib.h>                   // to mock OR  NULL lib? (MU_BASECORE MdePkg)
   #include <Library/SynchronizationLib.h>       // to mock (MU_BASECORE MdePkg)
   #include <Library/TimerLib.h>                 // to mock (MU_BASECORE MdePkg)
   #include <Library/VariablePolicyHelperLib.h>  // to mock (MU_BASECORE MdeModulePkg)
-
   #include "../../AdvancedLoggerCommon.h"
 
   extern ADVANCED_LOGGER_INFO  *mLoggerInfo;
@@ -58,6 +55,8 @@ protected:
   EFI_SYSTEM_TABLE SystemTable;
   BOOLEAN status;
   ADVANCED_LOGGER_INFO testLoggerInfo;
+  // StrictMock<MockHobLib> gHobLib;
+  // StrictMock<MockAdvancedLoggerHdwPortLib> gALHdwPortLib;
 
   void
   SetUp (
@@ -65,15 +64,16 @@ protected:
   {
     CHAR8  OutputBuf[] = "MyUnitTestLog";
 
-    NumberOfBytes = sizeof (OutputBuf);
-    Buffer        = OutputBuf;
-    DebugLevel    = DEBUG_ERROR;
-    mInitialized  = FALSE;
+    NumberOfBytes                   = sizeof (OutputBuf);
+    Buffer                          = OutputBuf;
+    DebugLevel                      = DEBUG_ERROR;
+    mInitialized                    = FALSE;
     ImageHandle                     = (EFI_HANDLE)0x12345678;
     testLoggerInfo.Signature        = ADVANCED_LOGGER_SIGNATURE;
     testLoggerInfo.Version          = ADVANCED_LOGGER_VERSION;
     testLoggerInfo.LogBufferOffset  = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
     testLoggerInfo.LogCurrentOffset = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
+    mLoggerInfo                     = NULL;
   }
 };
 
@@ -81,9 +81,8 @@ protected:
 // Test ValidateInfoBlock
 //
 TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoFail) {
-  // NULL Info block
-  mLoggerInfo = NULL;
-  status      = ValidateInfoBlock ();
+  // NULL LoggerInfo
+  status = ValidateInfoBlock ();
   EXPECT_EQ (status, FALSE);
 
   // Invalid Signature
@@ -114,13 +113,78 @@ TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoFail) {
   EXPECT_EQ (status, FALSE);
 }
 
-/* Commented out, need mock libraries to be implemented.
-// Test AdvancedLoggerGetLoggerInfo
-TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoSuccess) {
-  mLoggerInfo = AdvancedLoggerGetLoggerInfo ();
+// Test AdvancedLoggerGetLoggerInfo when the logger info is already initialized
+// and is currently valid.
+TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoAlreadyInitializedValid) {
+  mInitialized = TRUE;
+  mLoggerInfo  = &testLoggerInfo;
+
+  ADVANCED_LOGGER_INFO  *LocalLoggerInfo = AdvancedLoggerGetLoggerInfo ();
+
+  EXPECT_EQ (LocalLoggerInfo, mLoggerInfo);
 }
 
-// Test DxeCore Advanced Logger initialization
+// Test AdvancedLoggerGetLoggerInfo when the logger info is already initialized
+// and is currently INVALID.
+TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoAlreadyInitializedInvalid) {
+  mInitialized           = TRUE;
+  mLoggerInfo            = &testLoggerInfo;
+  mLoggerInfo->Signature = SIGNATURE_32 ('T', 'E', 'S', 'T');
+
+  ADVANCED_LOGGER_INFO  *LocalLoggerInfo = AdvancedLoggerGetLoggerInfo ();
+
+  EXPECT_EQ (LocalLoggerInfo, nullptr);
+}
+
+/*/* Commented out, need mock libraries to be implemented.
+// Test AdvancedLoggerGetLoggerInfo NULL HOB
+TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoNullHob) {
+  // PcdAdvancedLoggerFixedInRAM is FALSE, so expect to get the logger info from the HOB
+  // GetFirstGuidHob and GetNextGuidHob are not mocked
+  EXPECT_CALL (
+    gHobLib,
+    GetFirstGuidHob (
+      BufferEq (&gAdvancedLoggerHobGuid, sizeof (EFI_GUID))
+      )
+    )
+    .WillOnce (
+       Return (NULL)
+       );
+
+  mLoggerInfo = AdvancedLoggerGetLoggerInfo ();
+
+  EXPECT_EQ (mLoggerInfo, nullptr);
+}
+
+// Test AdvancedLoggerGetLoggerInfo Success
+TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoSuccess) {
+  EXPECT_CALL (
+    gHobLib,
+    GetFirstGuidHob (
+      BufferEq (&gAdvancedLoggerHobGuid, sizeof (EFI_GUID))
+      )
+    )
+    .WillOnce (
+       Return (NULL) // Need to mock the HOB to return a valid logger info
+
+       );
+
+  EXPECT_CALL (
+    gALHdwPortLib,
+    AdvancedLoggerHdwPortInitialize ()
+    )
+    .WillOnce (
+       Return (EFI_SUCCESS)
+       );
+
+  mLoggerInfo = AdvancedLoggerGetLoggerInfo ();
+  EXPECT_NE (mLoggerInfo, nullptr);
+
+  // expect mLoggerInfo->Signature to be ADVANCED_LOGGER_SIGNATURE
+  // expect mMAXAddress to be 0x1000
+}
+
+// Test DxeCore Advanced Logger constructor
 TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerContructorSuccess) {
   DxeCoreAdvancedLoggerLibConstructor (ImageHandle, SystemTable);
 }
