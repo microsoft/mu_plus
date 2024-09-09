@@ -7,32 +7,31 @@
 **/
 
 #include <Library/GoogleTestLib.h>
-// #include <Library/FunctionMockLib.h>
-// #include <GoogleTest/Library/MockMemoryAllocationLib.h>
-// #include <GoogleTest/Protocol/MockAdvancedLogger.h>
+#include <Library/FunctionMockLib.h>
+#include <GoogleTest/Library/MockMemoryAllocationLib.h>
+#include <GoogleTest/Protocol/MockAdvancedLogger.h>
+#include <GoogleTest/Library/MockHobLib.h>
 
 extern "C" {
-  #include <Uefi.h> // should include basetype and base
+  #include <Uefi.h>
   #include <Library/BaseLib.h>
   #include <Library/DebugLib.h>
 
   #include <AdvancedLoggerInternal.h>
   #include <Protocol/AdvancedLogger.h>
   #include <Guid/AdvancedLoggerPreDxeLogs.h>
-  #include <Protocol/VariablePolicy.h> // to mock
+  #include <Protocol/VariablePolicy.h>          // to mock (MU_BASECORE MdeModulePkg)
   #include <AdvancedLoggerInternalProtocol.h>
 
-  #include <Library/AdvancedLoggerHdwPortLib.h> // to mock
-  #include <Library/BaseMemoryLib.h>            // to mock
-  //#include <Library/HobLib.h>                   // to mock
-  #include <Library/PcdLib.h>                   // to mock
-  #include <Library/SynchronizationLib.h>       // to mock
-  #include <Library/TimerLib.h>                 // to mock
-  #include <Library/VariablePolicyHelperLib.h>  // to mock
+  #include <Library/AdvancedLoggerHdwPortLib.h> // to mock or NULL lib? (MU_PLUS)
+  #include <Library/BaseMemoryLib.h>            // to mock (MU_BASECORE MdePkg)
+  #include <Library/PcdLib.h>                   // to mock OR  NULL lib? (MU_BASECORE MdePkg)
+  #include <Library/SynchronizationLib.h>       // to mock (MU_BASECORE MdePkg)
+  #include <Library/TimerLib.h>                 // to mock (MU_BASECORE MdePkg)
+  #include <Library/VariablePolicyHelperLib.h>  // to mock (MU_BASECORE MdeModulePkg)
 
   #include "../../AdvancedLoggerCommon.h"
 
-  // extern ADVANCED_LOGGER_PROTOCOL  *mLoggerProtocol;
   extern ADVANCED_LOGGER_INFO  *mLoggerInfo;
   extern UINT32                mBufferSize;
   extern EFI_PHYSICAL_ADDRESS  mMaxAddress;
@@ -52,7 +51,6 @@ using namespace testing;
 **/
 class AdvancedLoggerDxeCoreTest : public Test {
 protected:
-  // StrictMock<MockAdvancedLogger> AdvLoggerProtocolMock;
   UINTN DebugLevel;
   CHAR8 *Buffer;
   UINTN NumberOfBytes;
@@ -71,8 +69,6 @@ protected:
     Buffer        = OutputBuf;
     DebugLevel    = DEBUG_ERROR;
     mInitialized  = FALSE;
-    // gALProtocol->Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE;
-    // gALProtocol->Version   = ADVANCED_LOGGER_PROTOCOL_VERSION;
     ImageHandle                     = (EFI_HANDLE)0x12345678;
     testLoggerInfo.Signature        = ADVANCED_LOGGER_SIGNATURE;
     testLoggerInfo.Version          = ADVANCED_LOGGER_VERSION;
@@ -97,7 +93,7 @@ TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoFail) {
   EXPECT_EQ (status, FALSE);
   mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
 
-  // TODO Mismatched Version is okay?
+  // Mismatched Version is okay? Wouldn't expect mismatched version with valid signature?
 
   // Invalid Buffer Offset
   mLoggerInfo->LogBufferOffset = (UINT32)0;
@@ -118,19 +114,18 @@ TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoFail) {
   EXPECT_EQ (status, FALSE);
 }
 
-/* TODO need to mock PCD library, and more
+/* Commented out, need mock libraries to be implemented.
 // Test AdvancedLoggerGetLoggerInfo
 TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerGetInfoSuccess) {
-  loggerInfo = AdvancedLoggerGetLoggerInfo ();
+  mLoggerInfo = AdvancedLoggerGetLoggerInfo ();
 }
-*/
 
-/* TODO need to test AdvancedLoggerGetLoggerInfo
 // Test DxeCore Advanced Logger initialization
 TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerContructorSuccess) {
   DxeCoreAdvancedLoggerLibConstructor (ImageHandle, SystemTable);
 }
 */
+
 int
 main (
   int   argc,
