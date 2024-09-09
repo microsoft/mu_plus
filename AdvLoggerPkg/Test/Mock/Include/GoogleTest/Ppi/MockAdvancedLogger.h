@@ -29,14 +29,6 @@ struct MockAdvancedLoggerPpi {
 
   MOCK_FUNCTION_DECLARATION (
     VOID,
-    gAL_AdvancedLoggerPrintPpi,
-    (IN        UINTN    ErrorLevel,
-     IN  CONST CHAR8    *Format,
-     IN        VA_LIST  VaListMarker)
-    );
-
-  MOCK_FUNCTION_DECLARATION (
-    VOID,
     gAL_AdvancedLoggerAssertPpi,
     (IN CONST CHAR8    *FileName,
      IN       UINTN    LineNumber,
@@ -51,8 +43,22 @@ struct MockAdvancedLoggerPpi {
 //
 MOCK_INTERFACE_DEFINITION (MockAdvancedLoggerPpi);
 MOCK_FUNCTION_DEFINITION (MockAdvancedLoggerPpi, gAL_AdvancedLoggerWritePpi, 3, EFIAPI);
-MOCK_FUNCTION_DEFINITION (MockAdvancedLoggerPpi, gAL_AdvancedLoggerPrintPpi, 3, EFIAPI);
+// MOCK_FUNCTION_DEFINITION (MockAdvancedLoggerPpi, gAL_AdvancedLoggerPrintPpi, 3, EFIAPI);
 MOCK_FUNCTION_DEFINITION (MockAdvancedLoggerPpi, gAL_AdvancedLoggerAssertPpi, 3, EFIAPI);
+
+// Mock function definition for gAL_AdvancedLoggerPrintPpi to use C standard VA_LIST
+extern "C" {
+  VOID
+  EFIAPI
+  gAL_AdvancedLoggerPrintPpi (
+    IN        UINTN    ErrorLevel,
+    IN  CONST CHAR8    *Format,
+    IN        VA_LIST  VaListMarker
+    )
+  {
+    return;
+  }
+}
 
 ADVANCED_LOGGER_PPI  advancedLoggerPpiInstance = {
   ADVANCED_LOGGER_PPI_SIGNATURE, // UINT32
