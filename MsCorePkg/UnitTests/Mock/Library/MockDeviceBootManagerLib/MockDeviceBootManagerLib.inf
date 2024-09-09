@@ -1,0 +1,34 @@
+## @file MockDeviceBootManagerLib.inf
+# Google Test mocks for DeviceBootManagerLib.
+#
+# Copyright (c) Microsoft Corporation.
+# Your use of this software is governed by the terms of the Microsoft agreement under which you obtained the software.
+##
+
+[Defines]
+  INF_VERSION    = 0x00010005
+  BASE_NAME      = MockDeviceBootManagerLib
+  FILE_GUID      = A19D9B27-21EB-4DCF-A084-0326C2EB0E58
+  MODULE_TYPE    = HOST_APPLICATION
+  VERSION_STRING = 1.0
+  LIBRARY_CLASS  = DeviceBootManagerLib
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  MockDeviceBootManagerLib.cpp
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  MsCorePkg/MsCorePkg.dec
+[LibraryClasses]
+  GoogleTestLib
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS = /EHsc

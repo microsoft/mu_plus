@@ -18,6 +18,7 @@
 
 [Includes]
   Include
+  UnitTests/Mock/Include
 
 [LibraryClasses]
 
