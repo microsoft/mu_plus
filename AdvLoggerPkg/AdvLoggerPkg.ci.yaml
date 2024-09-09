@@ -89,7 +89,9 @@
           DEBUGAGENT,
           POSTMEM,
           MMARM,
-          BLKIO
+          BLKIO,
+          dlink,
+          uintn
         ]
     },
 
