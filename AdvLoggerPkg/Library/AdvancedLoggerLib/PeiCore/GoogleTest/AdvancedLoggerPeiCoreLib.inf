@@ -1,0 +1,61 @@
+## @file AdvancedLoggerPeiCoreLib.inf
+#
+#  Description
+#
+##
+
+[Defines]
+INF_VERSION    = 1.26
+BASE_NAME      = AdvancedLoggerPeiCoreLibGoogleTest
+FILE_GUID      = 93D8CDB3-9ADA-47A1-BE2C-C449E68D205E
+MODULE_TYPE    = HOST_APPLICATION
+VERSION_STRING = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvancedLoggerPeiCoreLibGoogleTest.cpp
+
+[Packages]
+  MdePkg/MdePkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+  AdvancedLoggerPkg/AdvancedLoggerPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  UnitTestLib
+  AdvancedLoggerHdwPortLib
+  BaseMemoryLib
+  HobLib
+  MemoryAllocationLib
+  MmUnblockMemoryLib
+  PcdLib
+  PeiServicesLib
+  PeiServicesTablePointerLib
+  SynchronizationLib
+  TimerLib
+
+[Guids]
+  gAdvancedLoggerHobGuid
+  gEfiFirmwareFileSystem2Guid
+  gAdvancedLoggerInterimHobGuid
+  gAdvancedLoggerInterimBufHobGuid
+
+[Ppis]
+  gAdvancedLoggerPpiGuid                                                    ## CONSUMES
+  gEfiPeiMemoryDiscoveredPpiGuid                                            ## CONSUMES
+
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM                   ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
+
+[FixedPcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES
