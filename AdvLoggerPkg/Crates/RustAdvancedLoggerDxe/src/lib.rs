@@ -33,15 +33,14 @@
 extern crate std; //allow rustdoc links to reference std (e.g. println docs below).
 
 use core::{
-    ffi::c_void,
     fmt::{self, Write},
+    ops::Deref,
     ptr,
     sync::atomic::{AtomicPtr, Ordering},
 };
-use r_efi::{
-    efi::{Guid, Status},
-    system::BootServices,
-};
+use r_efi::efi::Guid;
+
+use mu_rust_helpers::boot_services::{protocol_handler::Protocol, BootServices, StandardBootServices};
 
 //Global static logger instance - this is a singleton.
 static LOGGER: AdvancedLogger = AdvancedLogger::new();
@@ -61,19 +60,38 @@ pub const DEBUG_ERROR: usize = 0x80000000;
 const ADVANCED_LOGGER_PROTOCOL_GUID: Guid =
     Guid::from_fields(0x434f695c, 0xef26, 0x4a12, 0x9e, 0xba, &[0xdd, 0xef, 0x00, 0x97, 0x49, 0x7c]);
 
-type AdvancedLoggerWriteProtocol = extern "efiapi" fn(*const AdvancedLoggerProtocol, usize, *const u8, usize);
+type AdvancedLoggerWriteProtocol = extern "efiapi" fn(*const AdvancedLoggerProtocolInterface, usize, *const u8, usize);
+
+const ADVANCED_LOGGER_PROTOCOL: AdvancedLoggerProtocol = AdvancedLoggerProtocol {};
 
 #[repr(C)]
-struct AdvancedLoggerProtocol {
+pub struct AdvancedLoggerProtocolInterface {
     signature: u32,
     version: u32,
     write_log: AdvancedLoggerWriteProtocol,
 }
 
+impl Deref for AdvancedLoggerProtocol {
+    type Target = Guid;
+
+    fn deref(&self) -> &Self::Target {
+        self.protocol_guid()
+    }
+}
+
+pub struct AdvancedLoggerProtocol;
+
+unsafe impl Protocol for AdvancedLoggerProtocol {
+    type Interface = AdvancedLoggerProtocolInterface;
+    fn protocol_guid(&self) -> &'static Guid {
+        &ADVANCED_LOGGER_PROTOCOL_GUID
+    }
+}
+
 // Private un-synchronized AdvancedLogger wrapper. Provides implementation of fmt::Write for AdvancedLogger.
 #[derive(Debug)]
 struct AdvancedLogger {
-    protocol: AtomicPtr<AdvancedLoggerProtocol>,
+    protocol: AtomicPtr<AdvancedLoggerProtocolInterface>,
 }
 
 impl AdvancedLogger {
@@ -83,22 +101,13 @@ impl AdvancedLogger {
     }
 
     // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
-    fn init(&self, bs: *mut BootServices) {
-        assert!(!bs.is_null(), "BootServices should not be NULL");
-        let boot_services = unsafe { &mut ptr::read(bs) };
+    fn init(&self, boot_services: &StandardBootServices) {
+        let protocol_ptr = match boot_services.locate_protocol(&ADVANCED_LOGGER_PROTOCOL, None) {
+            Ok(interface) => interface as *mut AdvancedLoggerProtocolInterface,
+            Err(_status) => ptr::null_mut(),
+        };
 
-        let mut ptr: *mut c_void = ptr::null_mut();
-
-        let status = (boot_services.locate_protocol)(
-            &ADVANCED_LOGGER_PROTOCOL_GUID as *const _ as *mut _,
-            ptr::null_mut(),
-            ptr::addr_of_mut!(ptr),
-        );
-
-        self.protocol.store(
-            if status == Status::SUCCESS { ptr as *mut AdvancedLoggerProtocol } else { ptr::null_mut() },
-            Ordering::SeqCst,
-        )
+        self.protocol.store(protocol_ptr, Ordering::SeqCst)
     }
 
     // log the debug output in `args` at the given log level.
@@ -112,14 +121,14 @@ impl AdvancedLogger {
 }
 
 struct LogTransactor<'a> {
-    protocol: &'a mut AdvancedLoggerProtocol,
+    protocol: &'a mut AdvancedLoggerProtocolInterface,
     level: usize,
 }
 
 impl<'a> fmt::Write for LogTransactor<'a> {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         (self.protocol.write_log)(
-            self.protocol as *const AdvancedLoggerProtocol,
+            self.protocol as *const AdvancedLoggerProtocolInterface,
             self.level,
             s.as_ptr(),
             s.as_bytes().len(),
@@ -130,7 +139,7 @@ impl<'a> fmt::Write for LogTransactor<'a> {
 
 /// Initializes the logging subsystem. The `debug` and `debugln` macros may be called before calling this function, but
 /// output is discarded if the logger has not yet been initialized via this routine.
-pub fn init_debug(bs: *mut BootServices) {
+pub fn init_debug(bs: &StandardBootServices) {
     LOGGER.init(bs);
 }
 
@@ -252,9 +261,10 @@ macro_rules! function {
 mod tests {
     extern crate std;
     use crate::{
-        debug, init_debug, AdvancedLogger, AdvancedLoggerProtocol, ADVANCED_LOGGER_PROTOCOL_GUID, DEBUG_ERROR,
+        debug, init_debug, AdvancedLogger, AdvancedLoggerProtocolInterface, ADVANCED_LOGGER_PROTOCOL_GUID, DEBUG_ERROR,
         DEBUG_INFO, DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
     };
+    use boot_services::StandardBootServices;
     use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts, sync::atomic::Ordering};
     use r_efi::{
         efi::{Guid, Status},
@@ -262,16 +272,16 @@ mod tests {
     };
     use std::{println, str};
 
-    static ADVANCED_LOGGER_INSTANCE: AdvancedLoggerProtocol =
-        AdvancedLoggerProtocol { signature: 0, version: 0, write_log: mock_advanced_logger_write };
+    static ADVANCED_LOGGER_INSTANCE: AdvancedLoggerProtocolInterface =
+        AdvancedLoggerProtocolInterface { signature: 0, version: 0, write_log: mock_advanced_logger_write };
 
     extern "efiapi" fn mock_advanced_logger_write(
-        this: *const AdvancedLoggerProtocol,
+        this: *const AdvancedLoggerProtocolInterface,
         error_level: usize,
         buffer: *const u8,
         buffer_size: usize,
     ) {
-        assert_eq!(this, &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocol);
+        assert_eq!(this, &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface);
         //to avoid dealing with complicated mock state, we assume that tests will produce the same output string:
         //"This is a <x> test.\n", where <x> depends on the debug level (e.g. "DEBUG_INFO"). In addition,
         //the string might be built with multiple calls to write, so we just check that it is a substring
@@ -298,7 +308,7 @@ mod tests {
         assert_eq!(protocol, &ADVANCED_LOGGER_PROTOCOL_GUID);
         assert!(!interface.is_null());
         unsafe {
-            interface.write(&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocol as *mut c_void);
+            interface.write(&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface as *mut c_void);
         }
         Status::SUCCESS
     }
@@ -312,24 +322,26 @@ mod tests {
 
     #[test]
     fn init_should_initialize_logger() {
-        let mut boot_services = mock_boot_services();
+        let mut _boot_services = mock_boot_services();
+        let boot_services = StandardBootServices::new(&_boot_services);
         static TEST_LOGGER: AdvancedLogger = AdvancedLogger::new();
-        TEST_LOGGER.init(&mut boot_services);
+        TEST_LOGGER.init(&boot_services);
 
         assert_eq!(
-            TEST_LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocol,
-            &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocol
+            TEST_LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocolInterface,
+            &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
         );
     }
 
     #[test]
     fn debug_macro_should_log_things() {
-        let mut boot_services = mock_boot_services();
-        init_debug(&mut boot_services);
+        let mut _boot_services = mock_boot_services();
+        let boot_services = StandardBootServices::new(&_boot_services);
+        init_debug(&boot_services);
 
         assert_eq!(
-            LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocol,
-            &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocol
+            LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocolInterface,
+            &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
         );
 
         debugln!(DEBUG_INIT, "This is a DEBUG_INIT test.");
