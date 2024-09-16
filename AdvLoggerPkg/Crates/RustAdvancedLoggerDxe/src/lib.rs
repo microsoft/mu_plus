@@ -7,13 +7,17 @@
 //! ```no_run
 //! use rust_advanced_logger_dxe::{init_debug, debugln, DEBUG_INFO};
 //! use r_efi::efi::Status;
+//! use mu_rust_helpers::boot_services::StandardBootServices;
 //! pub extern "efiapi" fn efi_main(
 //!    _image_handle: *const core::ffi::c_void,
 //!    _system_table: *const r_efi::system::SystemTable,
 //!  ) -> u64 {
 //!
+//!    let _boot_services = unsafe { &*((*_system_table).boot_services)};
+//!    let boot_services = StandardBootServices::new(&_boot_services);
+//!
 //!    //Initialize debug logging - no output without this.
-//!    init_debug(unsafe { (*_system_table).boot_services});
+//!    init_debug(&boot_services);
 //!
 //!    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 //!
@@ -160,13 +164,17 @@ mod no_std_debug {
     /// ```no_run
     /// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
     /// use r_efi::efi::Status;
+    /// use mu_rust_helpers::boot_services::StandardBootServices;
     /// pub extern "efiapi" fn efi_main(
     ///    _image_handle: *const core::ffi::c_void,
     ///    _system_table: *const r_efi::system::SystemTable,
     ///  ) -> u64 {
     ///
+    ///    let _boot_services = unsafe { &*((*_system_table).boot_services)};
+    ///    let boot_services = StandardBootServices::new(&_boot_services);
+    ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(unsafe { (*_system_table).boot_services});
+    ///    init_debug(&boot_services);
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -194,13 +202,17 @@ mod std_debug {
     /// ```no_run
     /// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
     /// use r_efi::efi::Status;
+    /// use mu_rust_helpers::boot_services::StandardBootServices;
     /// pub extern "efiapi" fn efi_main(
     ///    _image_handle: *const core::ffi::c_void,
     ///    _system_table: *const r_efi::system::SystemTable,
     ///  ) -> u64 {
     ///
+    ///    let _boot_services = unsafe { &*((*_system_table).boot_services)};
+    ///    let boot_services = StandardBootServices::new(&_boot_services);
+    ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(unsafe { (*_system_table).boot_services});
+    ///    init_debug(&boot_services);
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -224,13 +236,17 @@ mod std_debug {
 /// ```no_run
 /// use rust_advanced_logger_dxe::{init_debug, debugln, DEBUG_INFO};
 /// use r_efi::efi::Status;
+/// use mu_rust_helpers::boot_services::StandardBootServices;
 /// pub extern "efiapi" fn efi_main(
 ///    _image_handle: *const core::ffi::c_void,
 ///    _system_table: *const r_efi::system::SystemTable,
 ///  ) -> u64 {
 ///
+///    let _boot_services = unsafe { &*((*_system_table).boot_services)};
+///    let boot_services = StandardBootServices::new(&_boot_services);
+///
 ///    //Initialize debug logging - no output without this.
-///    init_debug(unsafe { (*_system_table).boot_services});
+///    init_debug(&boot_services);
 ///
 ///    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 ///
