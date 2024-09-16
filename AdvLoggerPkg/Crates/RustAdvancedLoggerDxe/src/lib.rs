@@ -69,7 +69,7 @@ type AdvancedLoggerWriteProtocol = extern "efiapi" fn(*const AdvancedLoggerProto
 const ADVANCED_LOGGER_PROTOCOL: AdvancedLoggerProtocol = AdvancedLoggerProtocol {};
 
 #[repr(C)]
-pub struct AdvancedLoggerProtocolInterface {
+struct AdvancedLoggerProtocolInterface {
     signature: u32,
     version: u32,
     write_log: AdvancedLoggerWriteProtocol,
@@ -83,7 +83,7 @@ impl Deref for AdvancedLoggerProtocol {
     }
 }
 
-pub struct AdvancedLoggerProtocol;
+struct AdvancedLoggerProtocol;
 
 unsafe impl Protocol for AdvancedLoggerProtocol {
     type Interface = AdvancedLoggerProtocolInterface;
