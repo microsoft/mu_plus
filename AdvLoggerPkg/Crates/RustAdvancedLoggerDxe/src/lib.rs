@@ -264,7 +264,7 @@ mod tests {
         debug, init_debug, AdvancedLogger, AdvancedLoggerProtocolInterface, ADVANCED_LOGGER_PROTOCOL_GUID, DEBUG_ERROR,
         DEBUG_INFO, DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
     };
-    use boot_services::StandardBootServices;
+    use mu_rust_helpers::boot_services::StandardBootServices;
     use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts, sync::atomic::Ordering};
     use r_efi::{
         efi::{Guid, Status},
