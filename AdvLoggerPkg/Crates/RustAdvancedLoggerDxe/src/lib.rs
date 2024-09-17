@@ -71,20 +71,20 @@ struct AdvancedLoggerProtocolInterface {
     write_log: AdvancedLoggerWriteProtocol,
 }
 
-impl Deref for AdvancedLoggerProtocol {
-    type Target = efi::Guid;
-
-    fn deref(&self) -> &Self::Target {
-        self.protocol_guid()
-    }
-}
-
 struct AdvancedLoggerProtocol;
 
 unsafe impl Protocol for AdvancedLoggerProtocol {
     type Interface = AdvancedLoggerProtocolInterface;
     fn protocol_guid(&self) -> &'static efi::Guid {
         &ADVANCED_LOGGER_PROTOCOL_GUID
+    }
+}
+
+impl Deref for AdvancedLoggerProtocol {
+    type Target = efi::Guid;
+
+    fn deref(&self) -> &Self::Target {
+        self.protocol_guid()
     }
 }
 
