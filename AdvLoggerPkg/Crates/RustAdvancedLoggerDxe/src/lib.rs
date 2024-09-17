@@ -13,11 +13,10 @@
 //!    _system_table: *const r_efi::system::SystemTable,
 //!  ) -> u64 {
 //!
-//!    let _boot_services = unsafe { &*((*_system_table).boot_services)};
-//!    let boot_services = StandardBootServices::new(&_boot_services);
+//!    let mut boot_services = unsafe { (*_system_table).boot_services};
 //!
 //!    //Initialize debug logging - no output without this.
-//!    init_debug(&boot_services);
+//!    init_debug(boot_services);
 //!
 //!    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 //!
@@ -42,7 +41,7 @@ use core::{
     ptr,
     sync::atomic::{AtomicPtr, Ordering},
 };
-use r_efi::efi::Guid;
+use r_efi::{efi::Guid, system::BootServices as RawBootServices};
 
 use mu_rust_helpers::boot_services::{protocol_handler::Protocol, BootServices, StandardBootServices};
 
@@ -105,7 +104,8 @@ impl AdvancedLogger {
     }
 
     // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
-    fn init(&self, boot_services: &StandardBootServices) {
+    fn init(&self, bs: *mut RawBootServices) {
+        let boot_services = unsafe { StandardBootServices::new(&*bs) };
         let protocol_ptr = match boot_services.locate_protocol(&ADVANCED_LOGGER_PROTOCOL, None) {
             Ok(interface) => interface as *mut AdvancedLoggerProtocolInterface,
             Err(_status) => ptr::null_mut(),
@@ -143,7 +143,7 @@ impl<'a> fmt::Write for LogTransactor<'a> {
 
 /// Initializes the logging subsystem. The `debug` and `debugln` macros may be called before calling this function, but
 /// output is discarded if the logger has not yet been initialized via this routine.
-pub fn init_debug(bs: &StandardBootServices) {
+pub fn init_debug(bs: *mut RawBootServices) {
     LOGGER.init(bs);
 }
 
@@ -170,11 +170,10 @@ mod no_std_debug {
     ///    _system_table: *const r_efi::system::SystemTable,
     ///  ) -> u64 {
     ///
-    ///    let _boot_services = unsafe { &*((*_system_table).boot_services)};
-    ///    let boot_services = StandardBootServices::new(&_boot_services);
+    ///    let mut boot_services = unsafe { (*_system_table).boot_services};
     ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(&boot_services);
+    ///    init_debug(boot_services);
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -208,11 +207,10 @@ mod std_debug {
     ///    _system_table: *const r_efi::system::SystemTable,
     ///  ) -> u64 {
     ///
-    ///    let _boot_services = unsafe { &*((*_system_table).boot_services)};
-    ///    let boot_services = StandardBootServices::new(&_boot_services);
+    ///    let mut boot_services = unsafe { (*_system_table).boot_services};
     ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(&boot_services);
+    ///    init_debug(boot_services);
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -242,11 +240,10 @@ mod std_debug {
 ///    _system_table: *const r_efi::system::SystemTable,
 ///  ) -> u64 {
 ///
-///    let _boot_services = unsafe { &*((*_system_table).boot_services)};
-///    let boot_services = StandardBootServices::new(&_boot_services);
+///    let mut boot_services = unsafe { (*_system_table).boot_services};
 ///
 ///    //Initialize debug logging - no output without this.
-///    init_debug(&boot_services);
+///    init_debug(boot_services);
 ///
 ///    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 ///
@@ -280,7 +277,6 @@ mod tests {
         debug, init_debug, AdvancedLogger, AdvancedLoggerProtocolInterface, ADVANCED_LOGGER_PROTOCOL_GUID, DEBUG_ERROR,
         DEBUG_INFO, DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
     };
-    use mu_rust_helpers::boot_services::StandardBootServices;
     use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts, sync::atomic::Ordering};
     use r_efi::{
         efi::{Guid, Status},
@@ -338,10 +334,9 @@ mod tests {
 
     #[test]
     fn init_should_initialize_logger() {
-        let mut _boot_services = mock_boot_services();
-        let boot_services = StandardBootServices::new(&_boot_services);
+        let mut boot_services = mock_boot_services();
         static TEST_LOGGER: AdvancedLogger = AdvancedLogger::new();
-        TEST_LOGGER.init(&boot_services);
+        TEST_LOGGER.init(&mut boot_services);
 
         assert_eq!(
             TEST_LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocolInterface,
@@ -351,9 +346,8 @@ mod tests {
 
     #[test]
     fn debug_macro_should_log_things() {
-        let mut _boot_services = mock_boot_services();
-        let boot_services = StandardBootServices::new(&_boot_services);
-        init_debug(&boot_services);
+        let mut boot_services = mock_boot_services();
+        init_debug(&mut boot_services);
 
         assert_eq!(
             LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocolInterface,
