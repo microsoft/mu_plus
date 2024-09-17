@@ -7,7 +7,6 @@
 //! ```no_run
 //! use rust_advanced_logger_dxe::{init_debug, debugln, DEBUG_INFO};
 //! use r_efi::efi::Status;
-//! use mu_rust_helpers::boot_services::StandardBootServices;
 //! pub extern "efiapi" fn efi_main(
 //!    _image_handle: *const core::ffi::c_void,
 //!    _system_table: *const r_efi::system::SystemTable,
@@ -41,7 +40,7 @@ use core::{
     ptr,
     sync::atomic::{AtomicPtr, Ordering},
 };
-use r_efi::{efi::Guid, system::BootServices as RawBootServices};
+use r_efi::efi;
 
 use mu_rust_helpers::boot_services::{protocol_handler::Protocol, BootServices, StandardBootServices};
 
@@ -60,8 +59,8 @@ pub const DEBUG_VERBOSE: usize = 0x00400000;
 pub const DEBUG_ERROR: usize = 0x80000000;
 
 // AdvancedLogger protocol definition. Mirrors C definition in AdvLoggerPkg/Include/Protocol/AdvancedLogger.h
-const ADVANCED_LOGGER_PROTOCOL_GUID: Guid =
-    Guid::from_fields(0x434f695c, 0xef26, 0x4a12, 0x9e, 0xba, &[0xdd, 0xef, 0x00, 0x97, 0x49, 0x7c]);
+const ADVANCED_LOGGER_PROTOCOL_GUID: efi::Guid =
+    efi::Guid::from_fields(0x434f695c, 0xef26, 0x4a12, 0x9e, 0xba, &[0xdd, 0xef, 0x00, 0x97, 0x49, 0x7c]);
 
 type AdvancedLoggerWriteProtocol = extern "efiapi" fn(*const AdvancedLoggerProtocolInterface, usize, *const u8, usize);
 
@@ -75,7 +74,7 @@ struct AdvancedLoggerProtocolInterface {
 }
 
 impl Deref for AdvancedLoggerProtocol {
-    type Target = Guid;
+    type Target = efi::Guid;
 
     fn deref(&self) -> &Self::Target {
         self.protocol_guid()
@@ -86,7 +85,7 @@ struct AdvancedLoggerProtocol;
 
 unsafe impl Protocol for AdvancedLoggerProtocol {
     type Interface = AdvancedLoggerProtocolInterface;
-    fn protocol_guid(&self) -> &'static Guid {
+    fn protocol_guid(&self) -> &'static efi::Guid {
         &ADVANCED_LOGGER_PROTOCOL_GUID
     }
 }
@@ -104,8 +103,7 @@ impl AdvancedLogger {
     }
 
     // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
-    fn init(&self, bs: *mut RawBootServices) {
-        let boot_services = unsafe { StandardBootServices::new(&*bs) };
+    fn init(&self, boot_services: &impl BootServices) {
         let protocol_ptr = match boot_services.locate_protocol(&ADVANCED_LOGGER_PROTOCOL, None) {
             Ok(interface) => interface as *mut AdvancedLoggerProtocolInterface,
             Err(_status) => ptr::null_mut(),
@@ -143,8 +141,9 @@ impl<'a> fmt::Write for LogTransactor<'a> {
 
 /// Initializes the logging subsystem. The `debug` and `debugln` macros may be called before calling this function, but
 /// output is discarded if the logger has not yet been initialized via this routine.
-pub fn init_debug(bs: *mut RawBootServices) {
-    LOGGER.init(bs);
+pub fn init_debug(bs: *mut efi::BootServices) {
+    let boot_services = unsafe { StandardBootServices::new(&*bs)};
+    LOGGER.init(&boot_services);
 }
 
 #[doc(hidden)]
@@ -164,7 +163,6 @@ mod no_std_debug {
     /// ```no_run
     /// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
     /// use r_efi::efi::Status;
-    /// use mu_rust_helpers::boot_services::StandardBootServices;
     /// pub extern "efiapi" fn efi_main(
     ///    _image_handle: *const core::ffi::c_void,
     ///    _system_table: *const r_efi::system::SystemTable,
@@ -201,7 +199,6 @@ mod std_debug {
     /// ```no_run
     /// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
     /// use r_efi::efi::Status;
-    /// use mu_rust_helpers::boot_services::StandardBootServices;
     /// pub extern "efiapi" fn efi_main(
     ///    _image_handle: *const core::ffi::c_void,
     ///    _system_table: *const r_efi::system::SystemTable,
@@ -234,7 +231,6 @@ mod std_debug {
 /// ```no_run
 /// use rust_advanced_logger_dxe::{init_debug, debugln, DEBUG_INFO};
 /// use r_efi::efi::Status;
-/// use mu_rust_helpers::boot_services::StandardBootServices;
 /// pub extern "efiapi" fn efi_main(
 ///    _image_handle: *const core::ffi::c_void,
 ///    _system_table: *const r_efi::system::SystemTable,
@@ -278,9 +274,10 @@ mod tests {
         DEBUG_INFO, DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
     };
     use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts, sync::atomic::Ordering};
+    use mu_rust_helpers::boot_services;
     use r_efi::{
-        efi::{Guid, Status},
-        system::BootServices,
+        efi,
+        system,
     };
     use std::{println, str};
 
@@ -312,31 +309,32 @@ mod tests {
     }
 
     extern "efiapi" fn mock_locate_protocol(
-        protocol: *mut Guid,
+        protocol: *mut efi::Guid,
         _registration: *mut c_void,
         interface: *mut *mut c_void,
-    ) -> Status {
+    ) -> efi::Status {
         let protocol = unsafe { protocol.as_mut().unwrap() };
         assert_eq!(protocol, &ADVANCED_LOGGER_PROTOCOL_GUID);
         assert!(!interface.is_null());
         unsafe {
             interface.write(&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface as *mut c_void);
         }
-        Status::SUCCESS
+        efi::Status::SUCCESS
     }
 
-    fn mock_boot_services() -> BootServices {
+    fn mock_boot_services() -> system::BootServices {
         let boot_services = MaybeUninit::zeroed();
-        let mut boot_services: BootServices = unsafe { boot_services.assume_init() };
+        let mut boot_services: system::BootServices = unsafe { boot_services.assume_init() };
         boot_services.locate_protocol = mock_locate_protocol;
         boot_services
     }
 
     #[test]
     fn init_should_initialize_logger() {
-        let mut boot_services = mock_boot_services();
+        let bs = mock_boot_services();
         static TEST_LOGGER: AdvancedLogger = AdvancedLogger::new();
-        TEST_LOGGER.init(&mut boot_services);
+        let boot_services = boot_services::StandardBootServices::new(&bs);
+        TEST_LOGGER.init(&boot_services);
 
         assert_eq!(
             TEST_LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocolInterface,
