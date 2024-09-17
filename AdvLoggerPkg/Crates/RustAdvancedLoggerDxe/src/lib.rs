@@ -12,10 +12,8 @@
 //!    _system_table: *const r_efi::system::SystemTable,
 //!  ) -> u64 {
 //!
-//!    let mut boot_services = unsafe { (*_system_table).boot_services};
-//!
 //!    //Initialize debug logging - no output without this.
-//!    init_debug(boot_services);
+//!    init_debug(unsafe { (*_system_table).boot_services});
 //!
 //!    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 //!
@@ -168,10 +166,8 @@ mod no_std_debug {
     ///    _system_table: *const r_efi::system::SystemTable,
     ///  ) -> u64 {
     ///
-    ///    let mut boot_services = unsafe { (*_system_table).boot_services};
-    ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(boot_services);
+    ///    init_debug(unsafe { (*_system_table).boot_services});
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -204,10 +200,8 @@ mod std_debug {
     ///    _system_table: *const r_efi::system::SystemTable,
     ///  ) -> u64 {
     ///
-    ///    let mut boot_services = unsafe { (*_system_table).boot_services};
-    ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(boot_services);
+    ///    init_debug(unsafe { (*_system_table).boot_services});
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -236,10 +230,8 @@ mod std_debug {
 ///    _system_table: *const r_efi::system::SystemTable,
 ///  ) -> u64 {
 ///
-///    let mut boot_services = unsafe { (*_system_table).boot_services};
-///
 ///    //Initialize debug logging - no output without this.
-///    init_debug(boot_services);
+///    init_debug(unsafe { (*_system_table).boot_services});
 ///
 ///    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 ///
@@ -275,10 +267,7 @@ mod tests {
     };
     use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts, sync::atomic::Ordering};
     use mu_rust_helpers::boot_services;
-    use r_efi::{
-        efi,
-        system,
-    };
+    use r_efi::efi;
     use std::{println, str};
 
     static ADVANCED_LOGGER_INSTANCE: AdvancedLoggerProtocolInterface =
@@ -322,9 +311,9 @@ mod tests {
         efi::Status::SUCCESS
     }
 
-    fn mock_boot_services() -> system::BootServices {
+    fn mock_boot_services() -> efi::BootServices {
         let boot_services = MaybeUninit::zeroed();
-        let mut boot_services: system::BootServices = unsafe { boot_services.assume_init() };
+        let mut boot_services: efi::BootServices = unsafe { boot_services.assume_init() };
         boot_services.locate_protocol = mock_locate_protocol;
         boot_services
     }
