@@ -9,8 +9,11 @@ name = "rust_advanced_logger_dxe"
 path = "src/lib.rs"
 
 [dependencies]
-r-efi = {workspace=true}
-mu_rust_helpers = {workspace=true}
+r-efi = { workspace = true }
+boot_services = { workspace = true }
+
+[dev-dependencies]
+boot_services = { workspace = true, features = ["mockall"] }
 
 [features]
 std = []
