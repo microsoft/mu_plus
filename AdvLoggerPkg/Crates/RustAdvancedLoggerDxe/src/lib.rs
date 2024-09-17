@@ -40,7 +40,7 @@ use core::{
 };
 use r_efi::efi;
 
-use boot_services::{protocol_handler::Protocol, BootServices, StandardBootServices};
+use boot_services::{self, protocol_handler::Protocol};
 
 //Global static logger instance - this is a singleton.
 static LOGGER: AdvancedLogger = AdvancedLogger::new();
@@ -101,8 +101,8 @@ impl AdvancedLogger {
     }
 
     // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
-    fn init(&self, boot_services: &impl BootServices) {
-        let protocol_ptr = match boot_services.locate_protocol(&ADVANCED_LOGGER_PROTOCOL, None) {
+    fn init(&self, boot_services_impl: &impl boot_services::BootServices) {
+        let protocol_ptr = match boot_services_impl.locate_protocol(&ADVANCED_LOGGER_PROTOCOL, None) {
             Ok(interface) => interface as *mut AdvancedLoggerProtocolInterface,
             Err(_status) => ptr::null_mut(),
         };
@@ -139,9 +139,9 @@ impl<'a> fmt::Write for LogTransactor<'a> {
 
 /// Initializes the logging subsystem. The `debug` and `debugln` macros may be called before calling this function, but
 /// output is discarded if the logger has not yet been initialized via this routine.
-pub fn init_debug(bs: *mut efi::BootServices) {
-    let boot_services = unsafe { StandardBootServices::new(&*bs) };
-    LOGGER.init(&boot_services);
+pub fn init_debug(efi_boot_services: *mut efi::BootServices) {
+    let standard_boot_services = unsafe { boot_services::StandardBootServices::new(&*efi_boot_services) };
+    LOGGER.init(&standard_boot_services);
 }
 
 #[doc(hidden)]
@@ -262,10 +262,10 @@ macro_rules! function {
 mod tests {
     extern crate std;
     use crate::{
-        debug, AdvancedLogger, AdvancedLoggerProtocol, AdvancedLoggerProtocolInterface,
-        DEBUG_ERROR, DEBUG_INFO, DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
+        debug, AdvancedLogger, AdvancedLoggerProtocol, AdvancedLoggerProtocolInterface, DEBUG_ERROR, DEBUG_INFO,
+        DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
     };
-    use boot_services::{self, MockBootServices};
+    use boot_services;
     use core::{slice::from_raw_parts, sync::atomic::Ordering};
     use std::{println, str};
 
@@ -298,8 +298,8 @@ mod tests {
 
     #[test]
     fn init_should_initialize_logger() {
-        let mut boot_services = MockBootServices::new();
-        boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
+        let mut mock_boot_services = boot_services::MockBootServices::new();
+        mock_boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
             assert_eq!(registration, None);
             Ok((&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
                 as *mut AdvancedLoggerProtocolInterface)
@@ -307,7 +307,7 @@ mod tests {
                 .unwrap())
         });
         static TEST_LOGGER: AdvancedLogger = AdvancedLogger::new();
-        TEST_LOGGER.init(&boot_services);
+        TEST_LOGGER.init(&mock_boot_services);
         assert_eq!(
             TEST_LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocolInterface,
             &ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
@@ -316,15 +316,15 @@ mod tests {
 
     #[test]
     fn debug_macro_should_log_things() {
-        let mut boot_services = MockBootServices::new();
-        boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
+        let mut mock_boot_services = boot_services::MockBootServices::new();
+        mock_boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
             assert_eq!(registration, None);
             Ok((&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
                 as *mut AdvancedLoggerProtocolInterface)
                 .as_mut()
                 .unwrap())
         });
-        LOGGER.init(&boot_services);
+        LOGGER.init(&mock_boot_services);
 
         assert_eq!(
             LOGGER.protocol.load(Ordering::SeqCst) as *const AdvancedLoggerProtocolInterface,
