@@ -1,0 +1,45 @@
+## @file AdvancedLoggerMmCoreGoogleTest.inf
+#
+#  Unit test for MM_CORE instance of the Advanced Logger library.
+#
+#  Copyright (c) Microsoft Corporation.
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.29
+  BASE_NAME                      = AdvancedLoggerMmCoreGoogleTest
+  FILE_GUID                      = 4161C933-AEFC-43A5-8D5F-F1E9E9586A03
+  MODULE_TYPE                    = HOST_APPLICATION
+  VERSION_STRING                 = 1.0
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvancedLoggerMmCoreGoogleTest.cpp
+  ../AdvancedLoggerLib.c # Resolve function ValidateInfoBlock()
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  UnitTestLib
+  AdvancedLoggerHdwPortLib
+  HobLib
+  SynchronizationLib
+
+[Guids]
+  gAdvancedLoggerHobGuid
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel       ## CONSUMES
+
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
