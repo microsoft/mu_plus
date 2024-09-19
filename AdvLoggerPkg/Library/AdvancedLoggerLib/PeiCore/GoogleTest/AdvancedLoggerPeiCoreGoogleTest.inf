@@ -1,12 +1,12 @@
-## @file AdvancedLoggerPeiCoreLib.inf
+## @file AdvancedLoggerPeiCoreGoogleTest.inf
 #
-#  Description
+#  Unit test for PEI_CORE instance of the Advanced Logger library.
 #
 ##
 
 [Defines]
 INF_VERSION    = 1.26
-BASE_NAME      = AdvancedLoggerPeiCoreLibGoogleTest
+BASE_NAME      = AdvancedLoggerPeiCoreGoogleTest
 FILE_GUID      = 93D8CDB3-9ADA-47A1-BE2C-C449E68D205E
 MODULE_TYPE    = HOST_APPLICATION
 VERSION_STRING = 1.0
@@ -18,12 +18,15 @@ VERSION_STRING = 1.0
 #
 
 [Sources]
-  AdvancedLoggerPeiCoreLibGoogleTest.cpp
+  AdvancedLoggerPeiCoreGoogleTest.cpp
+  ../AdvancedLoggerLib.c # Resolve static function ValidateInfoBlock()
+  ../../AdvancedLoggerCommon.c # Resolve AdvancedLoggerWrite
 
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
   UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
-  AdvancedLoggerPkg/AdvancedLoggerPkg.dec
 
 [LibraryClasses]
   BaseLib

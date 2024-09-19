@@ -1,4 +1,4 @@
-/** @file AdvancedLoggerPeiCoreLib.cpp
+/** @file AdvancedLoggerPeiCoreGoogleTest.cpp
 
     This file contains the unit tests for the Advanced Logger PEI Core Library.
 
@@ -20,19 +20,25 @@ extern "C" {
   #include <Library/DebugLib.h>
   #include <AdvancedLoggerInternal.h>
   #include <Protocol/AdvancedLogger.h>
-  #include <Protocol/VariablePolicy.h>          // to mock (MU_BASECORE MdeModulePkg)
+  #include <Protocol/VariablePolicy.h>         // to mock (MU_BASECORE MdeModulePkg)
   #include <AdvancedLoggerInternalProtocol.h>
-  #include <Library/BaseMemoryLib.h>            // to mock (MU_BASECORE MdePkg)
-  #include <Library/PcdLib.h>                   // to mock OR  NULL lib? (MU_BASECORE MdePkg)
-  #include <Library/SynchronizationLib.h>       // to mock (MU_BASECORE MdePkg)
-  #include <Library/TimerLib.h>                 // to mock (MU_BASECORE MdePkg)
-  #include <Library/VariablePolicyHelperLib.h>  // to mock (MU_BASECORE MdeModulePkg)
+  #include <Library/BaseMemoryLib.h>           // to mock (MU_BASECORE MdePkg)
+  #include <Library/PcdLib.h>                  // to mock (MU_BASECORE MdePkg)
+  #include <Library/SynchronizationLib.h>      // to mock (MU_BASECORE MdePkg)
+  #include <Library/TimerLib.h>                // to mock (MU_BASECORE MdePkg)
+  #include <Library/VariablePolicyHelperLib.h> // to mock (MU_BASECORE MdeModulePkg)
   #include "../../AdvancedLoggerCommon.h"
 
   #include <Core/Pei/PeiMain.h>
   #include <Library/MmUnblockMemoryLib.h>
   #include <Library/PeiServicesTablePointerLib.h> // to mock (MU_BASECORE MdePkg)
   #include <Library/PrintLib.h>
+
+  // Static function declaration
+  BOOLEAN
+  ValidateInfoBlock (
+    IN  ADVANCED_LOGGER_INFO  *LoggerInfo
+    );
 }
 
 using namespace testing;
@@ -42,8 +48,9 @@ using namespace testing;
 **/
 class AdvancedLoggerPeiCoreTest : public Test {
 protected:
+  ADVANCED_LOGGER_INFO *mLoggerInfo;
+  CHAR8 SourceBuf[4096];
   UINTN DebugLevel;
-  CHAR8 *Buffer;
   UINTN NumberOfBytes;
   EFI_HANDLE ImageHandle;
   EFI_SYSTEM_TABLE SystemTable;
@@ -56,51 +63,48 @@ protected:
   SetUp (
     ) override
   {
-    CHAR8  OutputBuf[] = "MyUnitTestLog";
-
-    NumberOfBytes                   = sizeof (OutputBuf);
-    Buffer                          = OutputBuf;
+    mLoggerInfo                     = NULL;
+    NumberOfBytes                   = sizeof (SourceBuf);
     DebugLevel                      = DEBUG_ERROR;
     ImageHandle                     = (EFI_HANDLE)0x12345678;
     testLoggerInfo.Signature        = ADVANCED_LOGGER_SIGNATURE;
     testLoggerInfo.Version          = ADVANCED_LOGGER_VERSION;
     testLoggerInfo.LogBufferOffset  = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
     testLoggerInfo.LogCurrentOffset = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
+    ZeroMem (SourceBuf, NumberOfBytes);
+    CopyMem (SourceBuf, "MyUnitTest", 11);
   }
 };
 
 //
 // Test ValidateInfoBlock
 //
-TEST_F (AdvancedLoggerPeiCoreTest, AdvLoggerGetInfoFail) {
+TEST_F (AdvancedLoggerPeiCoreTest, AdvLoggerValidateInfoBlock) {
   // NULL LoggerInfo
-  status = ValidateInfoBlock ();
+  status = ValidateInfoBlock (mLoggerInfo);
   EXPECT_EQ (status, FALSE);
 
+  mLoggerInfo = &testLoggerInfo;
+
+  // Success
+  status = ValidateInfoBlock (mLoggerInfo);
+  EXPECT_EQ (status, TRUE);
+
   // Invalid Signature
-  mLoggerInfo            = &testLoggerInfo;
   mLoggerInfo->Signature = SIGNATURE_32 ('T', 'E', 'S', 'T');
-  status                 = ValidateInfoBlock ();
+  status                 = ValidateInfoBlock (mLoggerInfo);
   EXPECT_EQ (status, FALSE);
   mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
 
-  // Mismatched Version is okay? Wouldn't expect mismatched version with valid signature?
-
   // Invalid Buffer Offset
   mLoggerInfo->LogBufferOffset = (UINT32)0;
-  status                       = ValidateInfoBlock ();
+  status                       = ValidateInfoBlock (mLoggerInfo);
   EXPECT_EQ (status, FALSE);
   mLoggerInfo->LogBufferOffset = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
 
   // Invalid Current Offset
   mLoggerInfo->LogCurrentOffset = (UINT32)0;
-  status                        = ValidateInfoBlock ();
-  EXPECT_EQ (status, FALSE);
-  mLoggerInfo->LogCurrentOffset = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
-
-  // Invalid Buffer Offset
-  mLoggerInfo->LogBufferOffset = (UINT32)0;
-  status                       = ValidateInfoBlock ();
+  status                        = ValidateInfoBlock (mLoggerInfo);
   EXPECT_EQ (status, FALSE);
 }
 
