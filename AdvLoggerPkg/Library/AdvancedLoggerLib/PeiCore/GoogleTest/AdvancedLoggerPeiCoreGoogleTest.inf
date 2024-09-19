@@ -1,0 +1,64 @@
+## @file AdvancedLoggerPeiCoreGoogleTest.inf
+#
+#  Unit test for PEI_CORE instance of the Advanced Logger library.
+#
+##
+
+[Defines]
+INF_VERSION    = 1.26
+BASE_NAME      = AdvancedLoggerPeiCoreGoogleTest
+FILE_GUID      = 93D8CDB3-9ADA-47A1-BE2C-C449E68D205E
+MODULE_TYPE    = HOST_APPLICATION
+VERSION_STRING = 1.0
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  AdvancedLoggerPeiCoreGoogleTest.cpp
+  ../AdvancedLoggerLib.c # Resolve static function ValidateInfoBlock()
+  ../../AdvancedLoggerCommon.c # Resolve AdvancedLoggerWrite
+
+[Packages]
+  MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+  UnitTestFrameworkPkg/UnitTestFrameworkPkg.dec
+
+[LibraryClasses]
+  BaseLib
+  DebugLib
+  UnitTestLib
+  AdvancedLoggerHdwPortLib
+  BaseMemoryLib
+  HobLib
+  MemoryAllocationLib
+  MmUnblockMemoryLib
+  PcdLib
+  PeiServicesLib
+  PeiServicesTablePointerLib
+  SynchronizationLib
+  TimerLib
+
+[Guids]
+  gAdvancedLoggerHobGuid
+  gEfiFirmwareFileSystem2Guid
+  gAdvancedLoggerInterimHobGuid
+  gAdvancedLoggerInterimBufHobGuid
+
+[Ppis]
+  gAdvancedLoggerPpiGuid                                                    ## CONSUMES
+  gEfiPeiMemoryDiscoveredPpiGuid                                            ## CONSUMES
+
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerFixedInRAM                   ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
+
+[FixedPcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES
