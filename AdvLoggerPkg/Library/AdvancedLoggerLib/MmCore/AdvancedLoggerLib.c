@@ -7,7 +7,7 @@
 **/
 
 #include <PiDxe.h>
-
+#include <PiMm.h>
 #include <AdvancedLoggerInternal.h>
 
 #include <Library/AdvancedLoggerLib.h>
@@ -20,6 +20,7 @@
 STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo = NULL;
 STATIC UINT32                mBufferSize  = 0;
 STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress  = 0;
+STATIC BOOLEAN               mInitialized = FALSE;
 
 /**
   Validate Info Blocks
@@ -49,11 +50,15 @@ ValidateInfoBlock (
     return FALSE;
   }
 
+  if(mLoggerInfo->Version != ADVANCED_LOGGER_VERSION) {
+    return FALSE;
+  }
+
   if (mLoggerInfo->LogBufferOffset != EXPECTED_LOG_BUFFER_OFFSET (mLoggerInfo)) {
     return FALSE;
   }
 
-  if (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress ||
+  if ((PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress) ||
       (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
@@ -88,34 +93,33 @@ AdvancedLoggerGetLoggerInfo (
 {
   EFI_HOB_GUID_TYPE    *GuidHob;
   ADVANCED_LOGGER_PTR  *LogPtr;
-  STATIC BOOLEAN       Initialized = FALSE;
 
-  if (!Initialized) {
-    Initialized = TRUE;   // Only one attempt at getting the logger info block.
+  if (!mInitialized) {
+    mInitialized = TRUE;   // Only one attempt at getting the logger info block.
 
     //
     // Locate the Logger Information block.
     //
-    GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
+    GuidHob = (EFI_HOB_GUID_TYPE *)GetFirstGuidHob (&gAdvancedLoggerHobGuid);
     if (GuidHob == NULL) {
-      DEBUG ((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n", __FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "MmCore %a: Advanced Logger Hob not found\n", __func__));
     } else {
       LogPtr      = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
       mLoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
       if (mLoggerInfo != NULL) {
         mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
+        DEBUG ((DEBUG_INFO, "MmCore %a: LoggerInfo=%p\n", __func__, mLoggerInfo));
       }
-
-      //
-      // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
-      //
-      DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
     }
+
+    //
+    // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
+    //
   }
 
   if (((mLoggerInfo) != NULL) && !ValidateInfoBlock ()) {
     mLoggerInfo = NULL;
-    DEBUG ((DEBUG_ERROR, "%a: LoggerInfo marked invalid\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "MmCore %a: LoggerInfo marked invalid\n", __func__));
   }
 
   return mLoggerInfo;
