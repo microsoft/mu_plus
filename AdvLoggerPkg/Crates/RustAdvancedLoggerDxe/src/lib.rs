@@ -103,7 +103,8 @@ impl AdvancedLogger {
     // initialize the AdvancedLogger by acquiring a pointer to the AdvancedLogger protocol.
     fn init(&self, boot_services_impl: &impl boot_services::BootServices) {
         let protocol_ptr = match boot_services_impl.locate_protocol(&ADVANCED_LOGGER_PROTOCOL, None) {
-            Ok(interface) => interface as *mut AdvancedLoggerProtocolInterface,
+            Ok(Some(interface)) => interface as *mut AdvancedLoggerProtocolInterface,
+            Ok(None) => ptr::null_mut(),
             Err(_status) => ptr::null_mut(),
         };
 
@@ -301,10 +302,12 @@ mod tests {
         let mut mock_boot_services = boot_services::MockBootServices::new();
         mock_boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
             assert_eq!(registration, None);
-            Ok((&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
-                as *mut AdvancedLoggerProtocolInterface)
-                .as_mut()
-                .unwrap())
+            Ok(Some(
+                (&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
+                    as *mut AdvancedLoggerProtocolInterface)
+                    .as_mut()
+                    .unwrap(),
+            ))
         });
         static TEST_LOGGER: AdvancedLogger = AdvancedLogger::new();
         TEST_LOGGER.init(&mock_boot_services);
@@ -319,10 +322,12 @@ mod tests {
         let mut mock_boot_services = boot_services::MockBootServices::new();
         mock_boot_services.expect_locate_protocol().returning(|_: &AdvancedLoggerProtocol, registration| unsafe {
             assert_eq!(registration, None);
-            Ok((&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
-                as *mut AdvancedLoggerProtocolInterface)
-                .as_mut()
-                .unwrap())
+            Ok(Some(
+                (&ADVANCED_LOGGER_INSTANCE as *const AdvancedLoggerProtocolInterface
+                    as *mut AdvancedLoggerProtocolInterface)
+                    .as_mut()
+                    .unwrap(),
+            ))
         });
         LOGGER.init(&mock_boot_services);
 
