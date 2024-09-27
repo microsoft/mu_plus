@@ -511,12 +511,12 @@ AdvancedLoggerGetLoggerInfo (
     LoggerInfo = (ADVANCED_LOGGER_INFO *)GET_GUID_HOB_DATA (GuidHobInterimBuf);
     BufferSize = sizeof (ADVANCED_LOGGER_INFO) + ADVANCED_LOGGER_MAX_MESSAGE_SIZE;
     ZeroMem ((VOID *)LoggerInfo, BufferSize);
-    LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
-    LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
-    LoggerInfo->LogBufferOffset     = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
-    LoggerInfo->LogBufferSize = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
-    LoggerInfo->LogCurrentOffset    = LoggerInfo->LogBufferOffset;
-    LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
+    LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+    LoggerInfo->Version          = ADVANCED_LOGGER_VERSION;
+    LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+    LoggerInfo->LogBufferSize    = (UINT32)(BufferSize - sizeof (ADVANCED_LOGGER_INFO));
+    LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;
+    LoggerInfo->HwPrintLevel     = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
     AdvancedLoggerHdwPortInitialize ();
     CopyGuid (&GuidHobInterimBuf->Name, &gAdvancedLoggerInterimBufHobGuid);
     LoggerInfo->HdwPortInitialized = TRUE;
