@@ -189,7 +189,6 @@ TEST_F (AdvancedLoggerDxeCoreTest, AdvLoggerContructorSuccess) {
   DxeCoreAdvancedLoggerLibConstructor (ImageHandle, SystemTable);
 }
 */
-
 int
 main (
   int   argc,

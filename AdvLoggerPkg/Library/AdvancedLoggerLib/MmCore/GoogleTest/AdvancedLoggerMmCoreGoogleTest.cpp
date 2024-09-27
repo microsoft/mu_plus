@@ -78,7 +78,7 @@ TEST_F (AdvancedLoggerMmCoreTest, AdvLoggerGetInfoFail) {
   mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
 
   // Invalid Version
-  mLoggerInfo->Version = (UINT32) ADVANCED_LOGGER_VERSION + 1;
+  mLoggerInfo->Version = (UINT32)ADVANCED_LOGGER_VERSION + 1;
   Status               = ValidateInfoBlock ();
   EXPECT_EQ (Status, FALSE);
   mLoggerInfo->Version = ADVANCED_LOGGER_VERSION;

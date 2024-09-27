@@ -50,7 +50,7 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if(mLoggerInfo->Version != ADVANCED_LOGGER_VERSION) {
+  if (mLoggerInfo->Version != ADVANCED_LOGGER_VERSION) {
     return FALSE;
   }
 
