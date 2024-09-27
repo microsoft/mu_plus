@@ -107,7 +107,7 @@ ValidateInfoBlock (
     return FALSE;
   }
 
-  if (PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress ||
+  if ((PA_FROM_PTR (LOG_CURRENT_FROM_ALI (mLoggerInfo)) > mMaxAddress) ||
       (mLoggerInfo->LogCurrentOffset < mLoggerInfo->LogBufferOffset))
   {
     return FALSE;
@@ -381,12 +381,12 @@ DxeCoreAdvancedLoggerLibConstructor (
     LoggerInfo = (ADVANCED_LOGGER_INFO *)AllocateReservedPages (FixedPcdGet32 (PcdAdvancedLoggerPages));
     if (LoggerInfo != NULL) {
       ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
-      LoggerInfo->Signature     = ADVANCED_LOGGER_SIGNATURE;
-      LoggerInfo->Version       = ADVANCED_LOGGER_VERSION;
-      LoggerInfo->LogBufferOffset     = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
-      LoggerInfo->LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
-      LoggerInfo->LogCurrentOffset    = LoggerInfo->LogBufferOffset;
-      LoggerInfo->HwPrintLevel  = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
+      LoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+      LoggerInfo->Version          = ADVANCED_LOGGER_VERSION;
+      LoggerInfo->LogBufferOffset  = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+      LoggerInfo->LogBufferSize    = EFI_PAGES_TO_SIZE (FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
+      LoggerInfo->LogCurrentOffset = LoggerInfo->LogBufferOffset;
+      LoggerInfo->HwPrintLevel     = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
       if (LoggerInfo->HdwPortInitialized == FALSE) {
         AdvancedLoggerHdwPortInitialize ();
         LoggerInfo->HdwPortInitialized = TRUE;

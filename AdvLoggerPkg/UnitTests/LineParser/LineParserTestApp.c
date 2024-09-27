@@ -218,9 +218,9 @@ InternalTestLoggerWrite (
     );
 
   LoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset + (UINT32)EntrySize;
-  Entry                  = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (CurrentBuffer);
-  if ((Entry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (Entry, 8)) ||                  // Insure pointer is on boundary
-      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (LOG_BUFFER_FROM_ALI (LoggerInfo))) ||       // and within the log region
+  Entry                        = (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (CurrentBuffer);
+  if ((Entry != (ADVANCED_LOGGER_MESSAGE_ENTRY *)ALIGN_POINTER (Entry, 8)) ||                       // Insure pointer is on boundary
+      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA (LOG_BUFFER_FROM_ALI (LoggerInfo))) || // and within the log region
       (Entry >  (ADVANCED_LOGGER_MESSAGE_ENTRY *)PTR_FROM_PA ((UINT8 *)LoggerInfo + TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo))))
   {
     UT_ASSERT_TRUE (FALSE);
@@ -265,9 +265,9 @@ InternalTestLoggerWriteV2 (
     );
 
   LoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset + (UINT32)EntrySize;
-  Entry                  = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
-  if ((Entry != (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)ALIGN_POINTER (Entry, 8)) ||                  // Insure pointer is on boundary
-      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (LOG_BUFFER_FROM_ALI (LoggerInfo))) ||       // and within the log region
+  Entry                        = (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (CurrentBuffer);
+  if ((Entry != (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)ALIGN_POINTER (Entry, 8)) ||                       // Insure pointer is on boundary
+      (Entry <  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA (LOG_BUFFER_FROM_ALI (LoggerInfo))) || // and within the log region
       (Entry >  (ADVANCED_LOGGER_MESSAGE_ENTRY_V2 *)PTR_FROM_PA ((UINT8 *)LoggerInfo + TOTAL_LOG_SIZE_WITH_ALI (LoggerInfo))))
   {
     UT_ASSERT_TRUE (FALSE);
@@ -403,16 +403,17 @@ InitializeInMemoryLog (
 
   #define IN_MEMORY_PAGES  32// 1 MB test memory log
 
-  mLoggerInfo     = AllocatePages (IN_MEMORY_PAGES);
+  mLoggerInfo = AllocatePages (IN_MEMORY_PAGES);
   if (mLoggerInfo == NULL) {
     UT_ASSERT_TRUE (FALSE);
   }
-  mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
-  mLoggerInfo->GoneVirtual = FALSE;
-  mLoggerInfo->AtRuntime = FALSE;
-  mLoggerInfo->LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
-  mLoggerInfo->LogBufferOffset = sizeof (*mLoggerInfo);
-  mLoggerInfo->LogCurrentOffset    = mLoggerInfo->LogBufferOffset;
+
+  mLoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+  mLoggerInfo->GoneVirtual      = FALSE;
+  mLoggerInfo->AtRuntime        = FALSE;
+  mLoggerInfo->LogBufferSize    = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
+  mLoggerInfo->LogBufferOffset  = sizeof (*mLoggerInfo);
+  mLoggerInfo->LogCurrentOffset = mLoggerInfo->LogBufferOffset;
 
   for (i = 0; i < ARRAY_SIZE (InternalMemoryLog); i++) {
     UnitTestStatus = InternalTestLoggerWrite (
@@ -451,16 +452,17 @@ InitializeInMemoryLogV2 (
   }
 
   // Repopulate the content with v2 messages
-  mLoggerInfo     = AllocatePages (IN_MEMORY_PAGES);
+  mLoggerInfo = AllocatePages (IN_MEMORY_PAGES);
   if (mLoggerInfo == NULL) {
     UT_ASSERT_TRUE (FALSE);
   }
-  mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
-  mLoggerInfo->GoneVirtual = FALSE;
-  mLoggerInfo->AtRuntime = FALSE; 
-  mLoggerInfo->LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
-  mLoggerInfo->LogBufferOffset = sizeof (*mLoggerInfo);
-  mLoggerInfo->LogCurrentOffset    = mLoggerInfo->LogBufferOffset;
+
+  mLoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+  mLoggerInfo->GoneVirtual      = FALSE;
+  mLoggerInfo->AtRuntime        = FALSE;
+  mLoggerInfo->LogBufferSize    = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
+  mLoggerInfo->LogBufferOffset  = sizeof (*mLoggerInfo);
+  mLoggerInfo->LogCurrentOffset = mLoggerInfo->LogBufferOffset;
 
   ZeroMem (&mMessageEntry, sizeof (mMessageEntry));
 
@@ -500,16 +502,17 @@ InitializeInMemoryLogV2Hybrid (
     mLoggerInfo = NULL;
   }
 
-  mLoggerInfo     = AllocatePages (IN_MEMORY_PAGES);
+  mLoggerInfo = AllocatePages (IN_MEMORY_PAGES);
   if (mLoggerInfo == NULL) {
     UT_ASSERT_TRUE (FALSE);
   }
-  mLoggerInfo->Signature = ADVANCED_LOGGER_SIGNATURE;
-  mLoggerInfo->GoneVirtual = FALSE;
-  mLoggerInfo->AtRuntime = FALSE; 
-  mLoggerInfo->LogBufferSize = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
-  mLoggerInfo->LogBufferOffset = sizeof (*mLoggerInfo);
-  mLoggerInfo->LogCurrentOffset    = mLoggerInfo->LogBufferOffset;
+
+  mLoggerInfo->Signature        = ADVANCED_LOGGER_SIGNATURE;
+  mLoggerInfo->GoneVirtual      = FALSE;
+  mLoggerInfo->AtRuntime        = FALSE;
+  mLoggerInfo->LogBufferSize    = EFI_PAGE_SIZE * IN_MEMORY_PAGES - sizeof (*mLoggerInfo);
+  mLoggerInfo->LogBufferOffset  = sizeof (*mLoggerInfo);
+  mLoggerInfo->LogCurrentOffset = mLoggerInfo->LogBufferOffset;
 
   ZeroMem (&mMessageEntry, sizeof (mMessageEntry));
 
