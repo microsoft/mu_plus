@@ -82,7 +82,7 @@ AdvancedLoggerGetLoggerInfo (
   }
 
   // Make sure the size of the buffer does not overrun it's fixed size.
-  MaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
+  MaxAddress = LOG_MAX_ADDRESS (LoggerInfo);
   if ((MaxAddress - PA_FROM_PTR (LoggerInfo)) >
       (FixedPcdGet32 (PcdAdvancedLoggerPages) * EFI_PAGE_SIZE))
   {
@@ -90,7 +90,7 @@ AdvancedLoggerGetLoggerInfo (
   }
 
   // Ensure the current pointer does not overrun.
-  if ((LOG_CURRENT_FROM_ALI (LoggerInfo) > MaxAddress) ||
+  if ((*LOG_CURRENT_FROM_ALI (LoggerInfo) > MaxAddress) ||
       (LoggerInfo->LogCurrentOffset < LoggerInfo->LogBufferOffset))
   {
     return NULL;

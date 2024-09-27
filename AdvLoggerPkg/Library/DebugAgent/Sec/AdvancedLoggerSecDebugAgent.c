@@ -128,8 +128,8 @@ InitializeDebugAgent (
       LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
       LoggerInfo->Version            = ADVANCED_LOGGER_VERSION;
       LoggerInfo->LogBufferSize      = (UINT32)(LogBufferSize - sizeof (ADVANCED_LOGGER_INFO));
-      LoggerInfo->LogBufferOffset          = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
-      LoggerInfo->LogCurrentOffset         = LoggerInfo->LogBufferOffset;
+      LoggerInfo->LogBufferOffset    = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
+      LoggerInfo->LogCurrentOffset   = LoggerInfo->LogBufferOffset;
       LoggerInfo->HdwPortInitialized = TRUE;
       LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
       LogPtr->LogBuffer              = NewLogBuffer; // Set physical address of Logger Memory at TemporaryRamBase
@@ -195,7 +195,7 @@ InitializeDebugAgent (
           NewLoggerInfo = ALI_FROM_PA (NewLogBuffer);
           CopyMem ((VOID *)NewLoggerInfo, (VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
           NewLoggerInfo->LogBufferOffset = EXPECTED_LOG_BUFFER_OFFSET (LoggerInfo);
-          TargetLog                = CHAR8_FROM_PA (LOG_BUFFER_FROM_ALI (NewLoggerInfo));
+          TargetLog                      = CHAR8_FROM_PA (LOG_BUFFER_FROM_ALI (NewLoggerInfo));
 
           if (LoggerInfo->LogCurrentOffset > 0) {
             CopyMem (
@@ -205,9 +205,9 @@ InitializeDebugAgent (
               );
           }
 
-          NewLoggerInfo->LogBufferSize  = (EFI_PAGE_SIZE * FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
-          NewLoggerInfo->LogCurrentOffset     = LoggerInfo->LogCurrentOffset;
-          NewLoggerInfo->InPermanentRAM = TRUE;
+          NewLoggerInfo->LogBufferSize    = (EFI_PAGE_SIZE * FixedPcdGet32 (PcdAdvancedLoggerPages)) - sizeof (ADVANCED_LOGGER_INFO);
+          NewLoggerInfo->LogCurrentOffset = LoggerInfo->LogCurrentOffset;
+          NewLoggerInfo->InPermanentRAM   = TRUE;
 
           PeiServices                   = GetPeiServicesTablePointer ();
           PeiCoreInstance               = PEI_CORE_INSTANCE_FROM_PS_THIS (PeiServices);
