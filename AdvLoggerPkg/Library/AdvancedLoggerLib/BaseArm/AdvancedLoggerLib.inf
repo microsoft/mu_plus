@@ -14,11 +14,11 @@
   FILE_GUID                      = 916f2e2d-1f55-4ca4-b229-18487e94c747
   MODULE_TYPE                    = BASE
   VERSION_STRING                 = 1.0
-  LIBRARY_CLASS                  = AdvancedLoggerLib
+  LIBRARY_CLASS                  = AdvancedLoggerLib | MM_STANDALONE
   PI_SPECIFICATION_VERSION       = 0x00010032
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#  VALID_ARCHITECTURES           = AARCH64
 #
 
 [Sources]

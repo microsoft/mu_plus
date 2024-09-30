@@ -1,7 +1,7 @@
 /** @file
-  MM_CORE Arm implementation of Advanced Logger Library.
+  Standalone MM Arm implementation of Advanced Logger Library.
 
-  Copyright (c) Microsoft Corporation. All rights reserved.<BR>
+  Copyright (c) Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
