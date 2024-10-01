@@ -27,7 +27,8 @@ use hidparser::{
     report_data_types::{ReportId, Usage},
     ArrayField, ReportDescriptor, ReportField, VariableField,
 };
-use rust_advanced_logger_dxe::{debugln, function, DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN};
+use mu_rust_helpers::function;
+use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN};
 
 use crate::{
     boot_services::UefiBootServices,
