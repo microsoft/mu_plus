@@ -728,7 +728,7 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
 #[cfg(test)]
 mod test {
 
-    use core::{ffi::c_void, mem::MaybeUninit, slice::from_raw_parts_mut};
+    use core::{ffi::c_void, mem::MaybeUninit, ptr, slice::from_raw_parts_mut};
 
     use hii_keyboard_layout::HiiKeyboardLayout;
     use r_efi::{efi, hii, protocols};
@@ -1012,7 +1012,8 @@ mod test {
             keyboard_layout_ptr: *mut protocols::hii_database::KeyboardLayout,
         ) -> efi::Status {
             let mut keyboard_layout_buffer = vec![0u8; 4096];
-            let buffer_size = keyboard_layout_buffer.pwrite(unsafe { &TEST_KEYBOARD_LAYOUT }, 0).unwrap();
+            let buffer_size =
+                keyboard_layout_buffer.pwrite(&unsafe { (*ptr::addr_of!(TEST_KEYBOARD_LAYOUT)).clone() }, 0).unwrap();
             keyboard_layout_buffer.resize(buffer_size, 0);
             unsafe {
                 if keyboard_layout_length.read() < buffer_size as u16 {
