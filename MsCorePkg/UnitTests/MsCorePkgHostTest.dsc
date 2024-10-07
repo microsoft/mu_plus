@@ -46,7 +46,7 @@
 [Components]
     MsCorePkg/MacAddressEmulationDxe/Test/MacAddressEmulationDxeHostTest.inf
 
-    MsCorePkg/UnitTests/Mock/Library/MockDeviceBootManagerLib/MockDeviceBootManagerLib.inf
+    MsCorePkg/Test/Mock/Library/GoogleTest/MockDeviceBootManagerLib/MockDeviceBootManagerLib.inf
 
 [BuildOptions]
   *_*_*_CC_FLAGS            = -D DISABLE_NEW_DEPRECATED_INTERFACES
