@@ -104,7 +104,7 @@ def get_current_mfci_policy():
 def delete_current_mfci_policy():
     UefiVar = UefiVariable()
 
-    (errorcode, data) = UefiVar.SetUefiVar(CURRENT_POLICY_BLOB, MFCI_VENDOR_GUID, None, 3)
+    errorcode = UefiVar.SetUefiVar(CURRENT_POLICY_BLOB, MFCI_VENDOR_GUID, None, 3)
     if errorcode == 0:
         logging.info(f"Failed to Delete {CURRENT_POLICY_BLOB}\n {errorcode}")
         print(f"Failed to delete {CURRENT_POLICY_BLOB}")
@@ -112,7 +112,7 @@ def delete_current_mfci_policy():
         logging.info(f"{CURRENT_POLICY_BLOB} was deleted")
         print(f"{CURRENT_POLICY_BLOB} was deleted")
         
-    (errorcode, data) = UefiVar.SetUefiVar(NEXT_MFCI_POLICY_BLOB, MFCI_VENDOR_GUID, None, 3)
+    errorcode = UefiVar.SetUefiVar(NEXT_MFCI_POLICY_BLOB, MFCI_VENDOR_GUID, None, 3)
     if errorcode == 0:
         logging.info(f"Failed to Delete {NEXT_MFCI_POLICY_BLOB}\n {errorcode}")
         print(f"Failed to delete {NEXT_MFCI_POLICY_BLOB}")
@@ -128,7 +128,7 @@ def set_next_mfci_policy(policy):
         var = file.read()
         UefiVar = UefiVariable()
 
-        (errorcode, data) = UefiVar.SetUefiVar(NEXT_MFCI_POLICY_BLOB, MFCI_VENDOR_GUID, var, 3)
+        errorcode = UefiVar.SetUefiVar(NEXT_MFCI_POLICY_BLOB, MFCI_VENDOR_GUID, var, 3)
         if errorcode == 0:
             logging.info("Next Policy failed: {errorcode}")
         else:
