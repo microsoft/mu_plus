@@ -1012,7 +1012,7 @@ mod test {
             keyboard_layout_ptr: *mut protocols::hii_database::KeyboardLayout,
         ) -> efi::Status {
             let mut keyboard_layout_buffer = vec![0u8; 4096];
-            let buffer_size = keyboard_layout_buffer.pwrite(unsafe { &TEST_KEYBOARD_LAYOUT }, 0).unwrap();
+            let buffer_size = keyboard_layout_buffer.pwrite(unsafe { ptr::addr_of!(TEST_KEYBOARD_LAYOUT) }, 0).unwrap();
             keyboard_layout_buffer.resize(buffer_size, 0);
             unsafe {
                 if keyboard_layout_length.read() < buffer_size as u16 {
