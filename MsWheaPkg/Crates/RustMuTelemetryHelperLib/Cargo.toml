@@ -1,0 +1,24 @@
+[package]
+name = "RustMuTelemetryHelperLib"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rust_mu_telemetry_helper_lib"
+path = "src/lib.rs"
+
+[dependencies]
+boot_services = { workspace = true }
+mu_pi = { workspace = true }
+mu_rust_helpers = { workspace = true }
+r-efi = { workspace = true }
+RustAdvancedLoggerDxe = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+boot_services = { workspace = true, features = ["mockall"] }
+RustAdvancedLoggerDxe = { workspace = true, features = ["std"] }
+mockall = { version = "0.13.0" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }

@@ -19,6 +19,7 @@ hidparser = {git = "https://github.com/microsoft/mu_rust_hid.git", branch = "mai
 HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
 mu_rust_helpers = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.1.0" }
 boot_services = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.2.1" }
+RustMuTelemetryHelperLib = {path = "MsWheaPkg/Crates/RustMuTelemetryHelperLib"}
 
 memoffset = "0.9.0"
 num-traits = { version = "0.2", default-features = false}
@@ -27,3 +28,4 @@ r-efi = "5.0.0"
 rustversion = "1.0.14"
 spin = "0.9.8"
 scroll = { version = "0.12", default-features = false, features = ["derive"]}
+uuid = { version = "1.10.0", default-features = false}
