@@ -2,6 +2,7 @@ extern crate alloc;
 
 use core::{mem, ops::Deref, slice};
 
+use alloc::vec::Vec;
 use boot_services::{protocol_handler::Protocol, BootServices};
 use mu_pi::protocols::status_code;
 use mu_pi::protocols::status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue};
