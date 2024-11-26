@@ -12,7 +12,6 @@ boot_services = { workspace = true }
 mu_pi = { workspace = true }
 mu_rust_helpers = { workspace = true }
 r-efi = { workspace = true }
-uuid = { workspace = true }
 
 [dev-dependencies]
 boot_services = { workspace = true, features = ["mockall"] }

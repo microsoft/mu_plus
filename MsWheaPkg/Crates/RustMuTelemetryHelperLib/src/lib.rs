@@ -42,7 +42,6 @@ use mu_pi::status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR};
 use mu_rust_helpers::{guid, guid::guid};
 use r_efi::efi;
 use status_code_runtime::{ReportStatusCode, StatusCodeRuntimeProtocol};
-use uuid::uuid;
 
 static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
@@ -160,7 +159,6 @@ mod test {
     use mu_pi::protocols::status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue};
     use mu_rust_helpers::guid::guid;
     use r_efi::efi;
-    use uuid::uuid;
 
     use crate::{
         log_telemetry_internal, status_code_runtime::StatusCodeRuntimeProtocol, MsWheaRscInternalErrorData,
