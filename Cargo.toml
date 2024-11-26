@@ -7,7 +7,8 @@ members = [
   "HidPkg/Crates/HiiKeyboardLayout",
   "HidPkg/UefiHidDxe",
   "HidPkg/UefiHidDxeV2",
-  "MsCorePkg/HelloWorldRustDxe"
+  "MsCorePkg/HelloWorldRustDxe",
+  "MsWheaPkg/Crates/RustMuTelemetryHelperLib"
 ]
 
 # Add packages that generate libraries here
@@ -17,6 +18,7 @@ RustBootServicesAllocatorDxe = {path = "MsCorePkg/Crates/RustBootServicesAllocat
 HidIo = {path = "HidPkg/Crates/HidIo"}
 hidparser = {git = "https://github.com/microsoft/mu_rust_hid.git", branch = "main"}
 HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
+mu_pi = {git = "https://github.com/microsoft/mu_rust_pi.git", tag = "v5.1.0"}
 mu_rust_helpers = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.1.0" }
 boot_services = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.2.1" }
 RustMuTelemetryHelperLib = {path = "MsWheaPkg/Crates/RustMuTelemetryHelperLib"}

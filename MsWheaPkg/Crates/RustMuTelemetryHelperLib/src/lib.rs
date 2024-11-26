@@ -36,13 +36,10 @@
 
 mod status_code_runtime;
 
+use boot_services::{BootServices, StandardBootServices};
 use mu_pi::protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue};
 use mu_pi::status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR};
-use mu_rust_helpers::{
-    boot_services::{BootServices, StandardBootServices},
-    guid,
-    guid::guid,
-};
+use mu_rust_helpers::{guid, guid::guid};
 use r_efi::efi;
 use status_code_runtime::{ReportStatusCode, StatusCodeRuntimeProtocol};
 use uuid::uuid;
