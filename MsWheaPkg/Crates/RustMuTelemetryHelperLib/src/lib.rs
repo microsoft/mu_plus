@@ -177,11 +177,14 @@ mod test {
         caller_id: *const efi::Guid,     // Optional
         _data: *const EfiStatusCodeData, // Optional
     ) -> efi::Status {
-        assert_eq!(r#type, MS_WHEA_ERROR_STATUS_TYPE_FATAL);
         assert_eq!(value, MOCK_STATUS_CODE_VALUE);
         assert_eq!(instance, 0);
         assert_eq!(unsafe { *caller_id }, MOCK_CALLER_ID);
-        efi::Status::SUCCESS
+        if r#type == MS_WHEA_ERROR_STATUS_TYPE_FATAL {
+            efi::Status::SUCCESS
+        } else {
+            efi::Status::INVALID_PARAMETER
+        }
     }
 
     static MOCK_STATUS_CODE_RUNTIME_INTERFACE: status_code::Protocol =
@@ -217,6 +220,43 @@ mod test {
                 Some(&MOCK_CALLER_ID),
                 Some(&guid!("e0e1e2e3-e4e5-e6e7-e8e9-eaebecedeeef")),
                 Some(&guid!("f0f1f2f3-f4f5-f6f7-f8f9-fafbfcfdfeff"))
+            )
+        );
+        assert_eq!(
+            Err(efi::Status::INVALID_PARAMETER),
+            log_telemetry_internal(
+                &mock_boot_services,
+                false,
+                MOCK_STATUS_CODE_VALUE,
+                0xb0b1b2b3b4b5b6b7,
+                0xc0c1c2c3c4c5c6c7,
+                Some(&MOCK_CALLER_ID),
+                None,
+                None
+            )
+        );
+    }
+
+    #[test]
+    fn test_protocol_not_found() {
+        let mut mock_boot_services: MockBootServices = MockBootServices::new();
+
+        mock_boot_services.expect_locate_protocol().returning(|_: &StatusCodeRuntimeProtocol, registration| {
+            assert_eq!(registration, None);
+            //Simulate "marker protocol" without an Interface
+            Ok(None)
+        });
+        assert_eq!(
+            Err(efi::Status::NOT_FOUND),
+            log_telemetry_internal(
+                &mock_boot_services,
+                false,
+                MOCK_STATUS_CODE_VALUE,
+                0xb0b1b2b3b4b5b6b7,
+                0xc0c1c2c3c4c5c6c7,
+                Some(&MOCK_CALLER_ID),
+                None,
+                None
             )
         );
     }
