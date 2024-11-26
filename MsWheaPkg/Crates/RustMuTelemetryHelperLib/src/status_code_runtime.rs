@@ -7,7 +7,6 @@ use mu_pi::protocols::status_code;
 use mu_pi::protocols::status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue};
 use mu_rust_helpers::guid;
 use r_efi::efi;
-use rust_advanced_logger_dxe::{debugln, DEBUG_INFO};
 
 pub struct StatusCodeRuntimeProtocol;
 
@@ -70,8 +69,6 @@ impl ReportStatusCode for StatusCodeRuntimeProtocol {
         let data_ptr: *mut EfiStatusCodeData = data_buffer.as_mut_ptr() as *mut EfiStatusCodeData;
 
         let caller_id = caller_id.or(Some(&guid::CALLER_ID)).unwrap();
-
-        debugln!(DEBUG_INFO, "[RustStatusCodeRuntime] caller_id: {}", guid::guid_fmt!(caller_id));
 
         let status =
             (protocol.unwrap().report_status_code)(status_code_type, status_code_value, instance, caller_id, data_ptr);

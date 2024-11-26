@@ -6,18 +6,20 @@
 //!
 //! ```no_run
 //! use rust_mu_telemetry_helper_lib::{init_telemetry, log_telemetry};
-//! use r_efi::efi;
+//! use r_efi::{efi, system};
 //! pub extern "efiapi" fn efi_main(
 //!     _image_handle: efi::Handle,
 //!     system_table: *const system::SystemTable,
 //!  ) -> efi::Status {
 //!
 //!    //Initialize Boot Services
-//!    init_telemetry((*system_table).boot_services.as_ref().unwrap());
-//!
-//!    if (some_failure) {
-//!        let _ = log_telemetry(false, 0xA1A2A3A4, 0xB1B2B3B4B5B6B7B8, 0xC1C2C3C4C5C6C7C8, None, None, None);
+//!    unsafe {
+//!        init_telemetry((*system_table).boot_services.as_ref().unwrap());
 //!    }
+//!
+//!    //if (some_failure) {
+//!        let _ = log_telemetry(false, 0xA1A2A3A4, 0xB1B2B3B4B5B6B7B8, 0xC1C2C3C4C5C6C7C8, None, None, None);
+//!    //}
 //!
 //!    efi::Status::SUCCESS
 //! }
@@ -25,7 +27,8 @@
 //!
 //! ## License
 //!
-//! Copyright (C) Microsoft Corporation. All rights reserved.
+//! Copyright (C) Microsoft Corporation.
+
 //!
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
@@ -158,15 +161,13 @@ mod test {
     use boot_services::MockBootServices;
     use mu_pi::protocols::status_code;
     use mu_pi::protocols::status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue};
-    use mu_rust_helpers::guid::{guid, guid_fmt};
+    use mu_rust_helpers::guid::guid;
     use r_efi::efi;
-    use rust_advanced_logger_dxe::{debugln, DEBUG_INFO};
     use uuid::uuid;
 
     use crate::{
-        log_telemetry_internal,
-        status_code_runtime::StatusCodeRuntimeProtocol,
-        MsWheaRscInternalErrorData, MS_WHEA_ERROR_STATUS_TYPE_FATAL,
+        log_telemetry_internal, status_code_runtime::StatusCodeRuntimeProtocol, MsWheaRscInternalErrorData,
+        MS_WHEA_ERROR_STATUS_TYPE_FATAL,
     };
     use core::mem::size_of;
 
@@ -185,12 +186,11 @@ mod test {
         assert_eq!(value, MOCK_STATUS_CODE_VALUE);
         assert_eq!(instance, 0);
         assert_eq!(unsafe { *caller_id }, MOCK_CALLER_ID);
-        debugln!(DEBUG_INFO, "[MockStatusCodeRuntime] caller_id: {}", guid_fmt!(unsafe { *caller_id }));
         efi::Status::SUCCESS
     }
 
     static MOCK_STATUS_CODE_RUNTIME_INTERFACE: status_code::Protocol =
-    status_code::Protocol { report_status_code: mock_report_status_code };
+        status_code::Protocol { report_status_code: mock_report_status_code };
 
     #[test]
     fn try_log_telemetry() {
@@ -199,8 +199,7 @@ mod test {
         mock_boot_services.expect_locate_protocol().returning(|_: &StatusCodeRuntimeProtocol, registration| unsafe {
             assert_eq!(registration, None);
             Ok(Some(
-                (&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol
-                    as *mut status_code::Protocol)
+                (&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol as *mut status_code::Protocol)
                     .as_mut()
                     .unwrap(),
             ))
