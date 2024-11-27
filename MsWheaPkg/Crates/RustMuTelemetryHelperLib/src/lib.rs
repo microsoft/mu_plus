@@ -57,10 +57,10 @@ const MS_WHEA_ERROR_STATUS_TYPE_FATAL: EfiStatusCodeType = EFI_ERROR_MAJOR | EFI
 
  A Buffer of this format should be passed to ReportStatusCodeWithExtendedData
 
- LibraryID:         GUID of the library reporting the error. If not from a library use zero guid
- IhvSharingGuid:    GUID of the partner to share this with. If none use zero guid
- AdditionalInfo1:   64 bit value used for caller to include necessary interrogative information
- AdditionalInfo2:   64 bit value used for caller to include necessary interrogative information
+ library_id:        GUID of the library reporting the error. If not from a library use zero guid
+ ihv_sharing_guid:  GUID of the partner to share this with. If none use zero guid
+ additional_info1:  64 bit value used for caller to include necessary interrogative information
+ additional_info2:  64 bit value used for caller to include necessary interrogative information
 **/
 // #pragma pack(1)
 // typedef struct {
@@ -75,24 +75,25 @@ const MS_WHEA_ERROR_STATUS_TYPE_FATAL: EfiStatusCodeType = EFI_ERROR_MAJOR | EFI
 struct MsWheaRscInternalErrorData {
     library_id: efi::Guid,
     ihv_sharing_guid: efi::Guid,
-    additional_info_1: u64,
-    additional_info_2: u64,
+    additional_info1: u64,
+    additional_info2: u64,
 }
 
 /// Log telemetry
 ///
-///   @param[in]  ClassId       An EFI_STATUS_CODE_VALUE representing the event that has occurred. This
+///   @param[in]  is_fatal      This should be set to TRUE if the event will prevent a successful boot.
+///   @param[in]  class_id      An EFI_STATUS_CODE_VALUE representing the event that has occurred. This
 ///                             value will occupy the same space as EventId from LogCriticalEvent(), and
 ///                             should be unique enough to identify a module or region of code.
-///   @param[in]  ExtraData1    [Optional] This should be data specific to the cause. Ideally, used to contain contextual
+///   @param[in]  extra_data1   [Optional] This should be data specific to the cause. Ideally, used to contain contextual
 ///                             or runtime data related to the event (e.g. register contents, failure codes, etc.).
 ///                             It will be persisted.
-///   @param[in]  ExtraData2    [Optional] Another UINT64 similar to ExtraData1.
-///   @param[in]  ComponentId   [Optional] This identifier should uniquely identify the module that is emitting this
+///   @param[in]  extra_data2   [Optional] Another UINT64 similar to ExtraData1.
+///   @param[in]  component_id  [Optional] This identifier should uniquely identify the module that is emitting this
 ///                             event. When this is passed in as NULL, report status code will automatically populate
 ///                             this field with gEfiCallerIdGuid.
-///   @param[in]  LibraryId     This should identify the library that is emitting this event.
-///   @param[in]  IhvId         This should identify the Ihv related to this event if applicable. For example,
+///   @param[in]  library_id    This should identify the library that is emitting this event.
+///   @param[in]  ihv_id        This should identify the Ihv related to this event if applicable. For example,
 ///                             this would typically be used for TPM and SOC specific events.
 #[cfg(not(tarpaulin_include))]
 pub fn log_telemetry(
@@ -132,8 +133,8 @@ fn log_telemetry_internal<B: BootServices>(
     let error_data = MsWheaRscInternalErrorData {
         library_id: *library_id.unwrap_or(&guid::ZERO),
         ihv_sharing_guid: *ihv_id.unwrap_or(&guid::ZERO),
-        additional_info_1: extra_data1,
-        additional_info_2: extra_data2,
+        additional_info1: extra_data1,
+        additional_info2: extra_data2,
     };
 
     StatusCodeRuntimeProtocol::report_status_code(
