@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "rust_mu_telemetry_helper_lib"
+name = "mu_telemetry_helper_lib"
 path = "src/lib.rs"
 
 [dependencies]

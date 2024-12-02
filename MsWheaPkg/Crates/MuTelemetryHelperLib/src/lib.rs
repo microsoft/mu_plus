@@ -5,7 +5,7 @@
 //! ## Examples and Usage
 //!
 //! ```no_run
-//! use rust_mu_telemetry_helper_lib::{init_telemetry, log_telemetry};
+//! use mu_telemetry_helper_lib::{init_telemetry, log_telemetry};
 //! use r_efi::{efi, system};
 //! pub extern "efiapi" fn efi_main(
 //!     _image_handle: efi::Handle,
