@@ -4,8 +4,10 @@ use core::{mem, ops::Deref, slice};
 
 use alloc::vec::Vec;
 use boot_services::{protocol_handler::Protocol, BootServices};
-use mu_pi::protocols::status_code;
-use mu_pi::protocols::status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue};
+use mu_pi::protocols::{
+    status_code,
+    status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue},
+};
 use mu_rust_helpers::guid;
 use r_efi::efi;
 

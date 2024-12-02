@@ -37,8 +37,10 @@
 mod status_code_runtime;
 
 use boot_services::{BootServices, StandardBootServices};
-use mu_pi::protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue};
-use mu_pi::status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR};
+use mu_pi::{
+    protocols::status_code::{EfiStatusCodeType, EfiStatusCodeValue},
+    status_code::{EFI_ERROR_CODE, EFI_ERROR_MAJOR, EFI_ERROR_MINOR},
+};
 use mu_rust_helpers::{guid, guid::guid};
 use r_efi::efi;
 use status_code_runtime::{ReportStatusCode, StatusCodeRuntimeProtocol};
@@ -156,8 +158,10 @@ pub fn init_telemetry(efi_boot_services: &efi::BootServices) {
 #[cfg(test)]
 mod test {
     use boot_services::MockBootServices;
-    use mu_pi::protocols::status_code;
-    use mu_pi::protocols::status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue};
+    use mu_pi::protocols::{
+        status_code,
+        status_code::{EfiStatusCodeData, EfiStatusCodeType, EfiStatusCodeValue},
+    };
     use mu_rust_helpers::guid::guid;
     use r_efi::efi;
 
