@@ -8,7 +8,7 @@ members = [
   "HidPkg/UefiHidDxe",
   "HidPkg/UefiHidDxeV2",
   "MsCorePkg/HelloWorldRustDxe",
-  "MsWheaPkg/Crates/RustMuTelemetryHelperLib"
+  "MsWheaPkg/Crates/MuTelemetryHelperLib"
 ]
 
 # Add packages that generate libraries here
@@ -21,7 +21,7 @@ HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
 mu_pi = {git = "https://github.com/microsoft/mu_rust_pi.git", tag = "v5.1.0"}
 mu_rust_helpers = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.2.1" }
 boot_services = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.2.1" }
-RustMuTelemetryHelperLib = {path = "MsWheaPkg/Crates/RustMuTelemetryHelperLib"}
+MuTelemetryHelperLib = {path = "MsWheaPkg/Crates/MuTelemetryHelperLib"}
 
 memoffset = "0.9.0"
 num-traits = { version = "0.2", default-features = false}
