@@ -29,7 +29,7 @@ EntryPoint (
   )
 {
   gAdvLogHiiHandle = InitializeHiiPackage (ImageHandle);
-  if (gAdvLogHiiHandle) {
+  if (gAdvLogHiiHandle == NULL) {
     return EFI_ABORTED;
   }
 
