@@ -56,10 +56,7 @@ impl ReportStatusCode for StatusCodeRuntimeProtocol {
         data_type: efi::Guid,
         data: T,
     ) -> Result<(), efi::Status> {
-        let protocol = boot_services.locate_protocol(&StatusCodeRuntimeProtocol, None)?;
-        if protocol.is_none() {
-            return Err(efi::Status::NOT_FOUND);
-        }
+        let protocol = unsafe { boot_services.locate_protocol(&StatusCodeRuntimeProtocol, None)? };
 
         let header_size = mem::size_of::<EfiStatusCodeData>();
         let data_size = mem::size_of::<T>();
@@ -73,8 +70,7 @@ impl ReportStatusCode for StatusCodeRuntimeProtocol {
 
         let caller_id = caller_id.or(Some(&guid::CALLER_ID)).unwrap();
 
-        let status =
-            (protocol.unwrap().report_status_code)(status_code_type, status_code_value, instance, caller_id, data_ptr);
+        let status = (protocol.report_status_code)(status_code_type, status_code_value, instance, caller_id, data_ptr);
 
         if status.is_error() {
             Err(status)

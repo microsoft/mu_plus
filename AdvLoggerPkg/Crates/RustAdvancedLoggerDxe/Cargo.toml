@@ -10,10 +10,10 @@ path = "src/lib.rs"
 
 [dependencies]
 r-efi = { workspace = true }
-boot_services = { workspace = true }
+mu_uefi_boot_services = { workspace = true }
 
 [dev-dependencies]
-boot_services = { workspace = true, features = ["mockall"] }
+mu_uefi_boot_services = { workspace = true, features = ["mockall"] }
 
 [features]
 std = []

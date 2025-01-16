@@ -86,8 +86,15 @@
             "PREVERR",
             "malformatted",
             "Subcomponent",
-            
+
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
+    },
+
+    "RustHostUnitTestPlugin": {
+        "Coverage": .75,
+        "CoverageOverrides": {
+            "MuTelemetryHelperLib": 0.7
+        }
     }
 }

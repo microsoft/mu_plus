@@ -13,15 +13,15 @@ members = [
 
 # Add packages that generate libraries here
 [workspace.dependencies]
+HidIo = {path = "HidPkg/Crates/HidIo"}
+hidparser = {version = "1"}
+HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
+mu_pi = {version = "5"}
+mu_rust_helpers = { version = "2" }
+MuTelemetryHelperLib = {path = "MsWheaPkg/Crates/MuTelemetryHelperLib"}
 RustAdvancedLoggerDxe = {path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe"}
 RustBootServicesAllocatorDxe = {path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe"}
-HidIo = {path = "HidPkg/Crates/HidIo"}
-hidparser = {git = "https://github.com/microsoft/mu_rust_hid.git", branch = "main"}
-HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
-mu_pi = {git = "https://github.com/microsoft/mu_rust_pi.git", tag = "v5.1.0"}
-mu_rust_helpers = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.2.1" }
-boot_services = { git = "https://github.com/microsoft/mu_rust_helpers.git", tag = "v1.2.1" }
-MuTelemetryHelperLib = {path = "MsWheaPkg/Crates/MuTelemetryHelperLib"}
+mu_uefi_boot_services = { version = "2" }
 
 memoffset = "0.9.0"
 num-traits = { version = "0.2", default-features = false}

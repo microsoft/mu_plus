@@ -8,14 +8,14 @@ name = "mu_telemetry_helper_lib"
 path = "src/lib.rs"
 
 [dependencies]
-boot_services = { workspace = true }
 mu_pi = { workspace = true }
 mu_rust_helpers = { workspace = true }
 r-efi = { workspace = true }
+mu_uefi_boot_services = { workspace = true }
 
 [dev-dependencies]
-boot_services = { workspace = true, features = ["mockall"] }
 mockall = { version = "0.13.0" }
+mu_uefi_boot_services = { workspace = true, features = ["mockall"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }

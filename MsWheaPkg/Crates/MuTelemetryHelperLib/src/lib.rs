@@ -201,11 +201,9 @@ mod test {
 
         mock_boot_services.expect_locate_protocol().returning(|_: &StatusCodeRuntimeProtocol, registration| unsafe {
             assert_eq!(registration, None);
-            Ok(Some(
-                (&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol as *mut status_code::Protocol)
-                    .as_mut()
-                    .unwrap(),
-            ))
+            Ok((&MOCK_STATUS_CODE_RUNTIME_INTERFACE as *const status_code::Protocol as *mut status_code::Protocol)
+                .as_mut()
+                .unwrap())
         });
 
         // Test sizes of "repr(C)" structs
@@ -249,7 +247,7 @@ mod test {
         mock_boot_services.expect_locate_protocol().returning(|_: &StatusCodeRuntimeProtocol, registration| {
             assert_eq!(registration, None);
             //Simulate "marker protocol" without an Interface
-            Ok(None)
+            Err(efi::Status::NOT_FOUND)
         });
         assert_eq!(
             Err(efi::Status::NOT_FOUND),
