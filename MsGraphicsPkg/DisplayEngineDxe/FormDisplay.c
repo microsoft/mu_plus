@@ -2187,7 +2187,7 @@ UiDisplayMenu (
 
     // Check whether the event should be forwarded to the Master Frame instead of the form canvas.
     //
-    if (((SWM_INPUT_TYPE_TOUCH == InputState.InputType) && (InputState.State.TouchState.CurrentX < mMasterFrameWidth)) ||
+    if (((SWM_INPUT_TYPE_TOUCH == InputState.InputType) && (FALSE == FormHasKeyFocus) && (InputState.State.TouchState.CurrentX < mMasterFrameWidth)) ||
         ((SWM_INPUT_TYPE_KEY == InputState.InputType) && (FALSE == FormHasKeyFocus) && (CHAR_TAB != InputState.State.KeyState.Key.UnicodeChar)))
     {
       // If we're displaying the Top Menu highlight and the TAB or SHIFT+TAB is pressed, toggle the tab order highlight state.
@@ -2196,6 +2196,8 @@ UiDisplayMenu (
       //
       if (SWM_INPUT_TYPE_TOUCH == InputState.InputType) {
         MasterFrameSharedState->ShowTopMenuHighlight = FALSE;
+      } else if (SWM_INPUT_TYPE_KEY == InputState.InputType) {
+        MasterFrameSharedState->ShowTopMenuHighlight = TRUE;
       }
 
       gUserInput->Action = BROWSER_ACTION_FORM_EXIT;
@@ -2292,9 +2294,24 @@ UiDisplayMenu (
       {
         if (InputState.State.TouchState.CurrentX >= mMasterFrameWidth) {
           FormHasKeyFocus = TRUE;
+        } else {
+          FormHasKeyFocus = FALSE;
         }
 
         MasterFrameSharedState->ShowTopMenuHighlight = FALSE;
+
+        gUserInput->Action = BROWSER_ACTION_FORM_EXIT;
+
+        // Signal to the Top Menu to refresh to show the highlight.
+        //
+        MasterFrameSharedState->NotificationType = REDRAW;
+        CopyMem (&MasterFrameSharedState->InputState, &InputState, sizeof (SWM_INPUT_STATE));
+
+        // Signal FP that there's data for it to process.
+        //
+        gBS->SignalEvent (mMasterFrameNotifyEvent);
+
+        break;
       }
 
       default:
