@@ -29,7 +29,6 @@
   UefiRuntimeLib|MdePkg/Library/UefiRuntimeLib/UefiRuntimeLib.inf
   XmlTreeLib|XmlSupportPkg/Library/XmlTreeLib/XmlTreeLib.inf
   XmlTreeQueryLib|XmlSupportPkg/Library/XmlTreeQueryLib/XmlTreeQueryLib.inf
-  NULL|MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
 
 [Components]
   XmlSupportPkg/Library/XmlTreeLib/XmlTreeLib.inf
