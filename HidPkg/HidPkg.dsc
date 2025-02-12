@@ -39,7 +39,6 @@
   HiiLib                      |MdeModulePkg/Library/UefiHiiLib/UefiHiiLib.inf
   UefiHiiServicesLib          |MdeModulePkg/Library/UefiHiiServicesLib/UefiHiiServicesLib.inf
   SafeIntLib                  |MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf # MU_CHANGE - CodeQL change
-  NULL                        |MdePkg/Library/StackCheckLibNull/StackCheckLibNull.inf
 
 [Components.X64]
   HidPkg/HidKeyboardDxe/HidKeyboardDxe.inf
