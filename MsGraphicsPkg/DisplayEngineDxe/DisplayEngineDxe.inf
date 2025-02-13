@@ -7,8 +7,7 @@
 #
 ##
 
-#Override : 00000002 | MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf | a3e75c5e3cb70580751814df534c1755 | 2023-10-26T19-21-17 | e77aa3b4b2bb9854c8ec3ec931b97428fe86315e
-
+#Override : 00000002 | MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf | dc0c8c4002e568b56b511922443545f8 | 2025-02-12T04-14-49 | 81e778fe4164c0d1bd06614ba6acf28799457f4f
 
 [Defines]
   INF_VERSION                    = 0x00010005
