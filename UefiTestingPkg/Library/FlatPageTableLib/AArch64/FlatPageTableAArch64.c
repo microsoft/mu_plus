@@ -8,7 +8,7 @@
 
 #include <Uefi.h>
 #include <Library/ArmLib.h>
-#include <Chipset/AArch64Mmu.h>
+#include <AArch64/AArch64.h>
 #include <Library/DebugLib.h>
 #include <Library/FlatPageTableLib.h>
 

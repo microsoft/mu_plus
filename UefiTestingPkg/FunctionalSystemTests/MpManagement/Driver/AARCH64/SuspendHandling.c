@@ -359,7 +359,7 @@ CpuArchWakeFromSleep (
   )
 {
   // Sending SGI to the specified secondary CPU interfaces
-  ArmGicSendSgiToEx (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, PcdGet32 (PcdGicSgiIntId));
+  ArmGicSendSgiToEx (PcdGet64 (PcdGicDistributorBase), ARM_GIC_ICDSGIR_FILTER_TARGETLIST, mCpuInfo[CpuIndex].Mpidr, (UINT8)PcdGet32 (PcdGicSgiIntId));
 }
 
 VOID
@@ -587,7 +587,9 @@ CpuArchSleep (
   }
 
   ArmDisableMmu ();
-  ArmCleanInvalidateDataCache ();
+  // Removed in EDK2 2024.09.12 (https://github.com/tianocore/edk2/pull/6194)
+  // Removed call for 202411 tree
+  // ArmCleanInvalidateDataCache ();
 
   Status = ArmPsciSuspendHelper (PowerState, (UINTN)AsmApEntryPoint, 0);
 
