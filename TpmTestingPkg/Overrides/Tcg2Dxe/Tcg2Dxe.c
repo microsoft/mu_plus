@@ -2516,10 +2516,12 @@ MeasureSecureBootPolicy (
     return;
   }
 
-  if (PcdGetBool (PcdFirmwareDebuggerInitialized)) {
-    Status = MeasureLaunchOfFirmwareDebugger ();
-    DEBUG ((DEBUG_INFO, "MeasureLaunchOfFirmwareDebugger - %r\n", Status));
-  }
+  // MU_CHANGE [BEGIN] - Remove PcdFirmwareDebuggerInitialized
+  // if (PcdGetBool (PcdFirmwareDebuggerInitialized)) {
+  //  Status = MeasureLaunchOfFirmwareDebugger ();
+  //  DEBUG ((DEBUG_INFO, "MeasureLaunchOfFirmwareDebugger - %r\n", Status));
+  // }
+  // MU_CHANGE [END]
 
   Status = MeasureAllSecureVariables ();
   DEBUG ((DEBUG_INFO, "MeasureAllSecureVariables - %r\n", Status));
