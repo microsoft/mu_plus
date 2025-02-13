@@ -33,6 +33,7 @@
 [LibraryClasses]
   BaseLib
   DebugLib
+  GoogleTestLib
   UnitTestLib
   UefiBootServicesTableLib
 
