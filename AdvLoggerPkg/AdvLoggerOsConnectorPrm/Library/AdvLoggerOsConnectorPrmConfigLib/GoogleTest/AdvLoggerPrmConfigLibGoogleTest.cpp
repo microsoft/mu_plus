@@ -74,21 +74,26 @@ protected:
   Unit test for AdvLoggerOsConnectorPrmVirtualAddressCallback.
 **/
 TEST_F (AdvLoggerPrmConfigLibTest, AdvLoggerOsConnectorPrmVirtualAddressCallbackTests) {
-  PRM_DATA_BUFFER             StaticDataBuffer;
-  ADV_LOGGER_PRM_DATA_BUFFER  *DataBuf         = (ADV_LOGGER_PRM_DATA_BUFFER *)&StaticDataBuffer.Data;
+  UINT8                       StaticBuffer[0x1000];
+  PRM_DATA_BUFFER             *StaticDataBuffer;
+  ADV_LOGGER_PRM_DATA_BUFFER  *DataBuf;
   VOID                        **VirtualPointer = (VOID **)0xFFFFEEEEDDDDCCCC;
   UINT64                      DummyPtr         = 0xDEADBEEFDEADBEEF;
 
-  StaticDataBuffer.Header.Signature = PRM_DATA_BUFFER_HEADER_SIGNATURE;
-  StaticDataBuffer.Header.Length    = sizeof (PRM_DATA_BUFFER_HEADER) + sizeof (ADV_LOGGER_PRM_DATA_BUFFER);
+  StaticDataBuffer                   = (PRM_DATA_BUFFER *)&StaticBuffer;
+  StaticDataBuffer->Header.Signature = PRM_DATA_BUFFER_HEADER_SIGNATURE;
+  StaticDataBuffer->Header.Length    = sizeof (PRM_DATA_BUFFER_HEADER) + sizeof (ADV_LOGGER_PRM_DATA_BUFFER);
 
+  DataBuf = (ADV_LOGGER_PRM_DATA_BUFFER *)StaticDataBuffer->Data;
+
+  DEBUG ((DEBUG_INFO, "AdvLoggerOsConnectorPrmVirtualAddressCallbackTests\n"));
   // Test a NULL static data buffer
   mStaticDataBuffer = NULL;
   AdvLoggerOsConnectorPrmVirtualAddressCallback (NULL, NULL);
   EXPECT_EQ (mStaticDataBuffer, (PRM_DATA_BUFFER *)NULL);
 
   // set mStaticDataBuffer to our copy
-  mStaticDataBuffer = &StaticDataBuffer;
+  mStaticDataBuffer = StaticDataBuffer;
 
   // test a successful pointer conversion
   DataBuf->LoggerInfo         = (ADVANCED_LOGGER_INFO *)DummyPtr;

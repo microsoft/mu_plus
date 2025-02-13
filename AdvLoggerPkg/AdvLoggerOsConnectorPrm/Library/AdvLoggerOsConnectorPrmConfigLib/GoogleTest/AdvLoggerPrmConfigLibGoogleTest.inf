@@ -41,4 +41,3 @@
   gAdvancedLoggerProtocolGuid
 
 [BuildOptions]
-  MSFT:*_*_*_CC_FLAGS = /std:c++latest
