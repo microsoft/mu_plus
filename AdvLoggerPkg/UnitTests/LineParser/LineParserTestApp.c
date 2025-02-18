@@ -51,54 +51,54 @@ CHAR8  *InternalMemoryLog[] = {
   "\nIf the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle ",
   "that represents a combination of video output devices, then the set ",
   "of modes returned by this service is the subset of modes ",
-  "supported by the graphics controller and the all of the video output ",
+  "supported by the graphics controller and all of the video output ",
   "devices represented by the handle.\n"
 };
 
 // The following text represents the output lines from the line parser given the above input
 
 /* spell-checker: disable */
-CHAR8  Line00[] = "09:06:45.012 : First normal test line\n";
-CHAR8  Line01[] = "09:06:45.012 : The QueryMode() function returns information for an available graphics mod\n";
-CHAR8  Line02[] = "09:06:45.012 : e that the graphics device and the set of active video output devices supp\n";
-CHAR8  Line03[] = "09:06:45.012 : orts.\n";
-CHAR8  Line04[] = "09:06:45.012 : If ModeNumber is not between 0 and MaxMode - 1, then EFI_INVALID_PARAMETER\n";
-CHAR8  Line05[] = "09:06:45.012 :  is returned.\n";
-CHAR8  Line06[] = "09:06:45.012 : MaxMode is available from the Mode structure of the EFI_GRAPHICS_OUTPUT_PR\n";
-CHAR8  Line07[] = "09:06:45.012 : OTOCOL.\n";
-CHAR8  Line08[] = "09:06:45.012 : The size of the Info structure should never be assumed and the value of Si\n";
-CHAR8  Line09[] = "09:06:45.012 : zeOfInfo is the only valid way to know the size of Info.\n";
-CHAR8  Line10[] = "09:06:45.012 : \n";
-CHAR8  Line11[] = "09:06:45.012 : If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
-CHAR8  Line12[] = "09:06:45.012 : ents a single video output device, then the set of modes returned by this \n";
-CHAR8  Line13[] = "09:06:45.012 : service is the subset of modes supported by both the graphics controller a\n";
-CHAR8  Line14[] = "09:06:45.012 : nd the video output device.\n";
-CHAR8  Line15[] = "09:06:45.012 : \n";
-CHAR8  Line16[] = "09:06:45.012 : If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
-CHAR8  Line17[] = "09:06:45.012 : ents a combination of video output devices, then the set of modes returned\n";
-CHAR8  Line18[] = "09:06:45.012 :  by this service is the subset of modes supported by the graphics controll\n";
-CHAR8  Line19[] = "09:06:45.012 : er and the all of the video output devices represented by the handle.\n";
+CHAR8  Line00[] = "09:06:45.012 : [INFO] First normal test line\n";
+CHAR8  Line01[] = "09:06:45.012 : [ERR ] The QueryMode() function returns information for an available graphics mod\n";
+CHAR8  Line02[] = "09:06:45.012 : [ERR ] e that the graphics device and the set of active video output devices supp\n";
+CHAR8  Line03[] = "09:06:45.012 : [ERR ] orts.\n";
+CHAR8  Line04[] = "09:06:45.012 : [ERR ] If ModeNumber is not between 0 and MaxMode - 1, then EFI_INVALID_PARAMETER\n";
+CHAR8  Line05[] = "09:06:45.012 : [ERR ]  is returned.\n";
+CHAR8  Line06[] = "09:06:45.012 : [INFO] MaxMode is available from the Mode structure of the EFI_GRAPHICS_OUTPUT_PR\n";
+CHAR8  Line07[] = "09:06:45.012 : [INFO] OTOCOL.\n";
+CHAR8  Line08[] = "09:06:45.012 : [ERR ] The size of the Info structure should never be assumed and the value of Si\n";
+CHAR8  Line09[] = "09:06:45.012 : [ERR ] zeOfInfo is the only valid way to know the size of Info.\n";
+CHAR8  Line10[] = "09:06:45.012 : [ERR ] \n";
+CHAR8  Line11[] = "09:06:45.012 : [ERR ] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8  Line12[] = "09:06:45.012 : [INFO] ents a single video output device, then the set of modes returned by this \n";
+CHAR8  Line13[] = "09:06:45.012 : [ERR ] service is the subset of modes supported by both the graphics controller a\n";
+CHAR8  Line14[] = "09:06:45.012 : [ERR ] nd the video output device.\n";
+CHAR8  Line15[] = "09:06:45.012 : [ERR ] \n";
+CHAR8  Line16[] = "09:06:45.012 : [ERR ] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8  Line17[] = "09:06:45.012 : [ERR ] ents a combination of video output devices, then the set of modes returned\n";
+CHAR8  Line18[] = "09:06:45.012 : [INFO]  by this service is the subset of modes supported by the graphics controll\n";
+CHAR8  Line19[] = "09:06:45.012 : [ERR ] er and all of the video output devices represented by the handle.\n";
 
-CHAR8  Line00V2[] = "09:06:45.012 : [DXE] First normal test line\n";
-CHAR8  Line01V2[] = "09:06:45.012 : [DXE] The QueryMode() function returns information for an available graphics mod\n";
-CHAR8  Line02V2[] = "09:06:45.012 : [DXE] e that the graphics device and the set of active video output devices supp\n";
-CHAR8  Line03V2[] = "09:06:45.012 : [DXE] orts.\n";
-CHAR8  Line04V2[] = "09:06:45.012 : [DXE] If ModeNumber is not between 0 and MaxMode - 1, then EFI_INVALID_PARAMETER\n";
-CHAR8  Line05V2[] = "09:06:45.012 : [DXE]  is returned.\n";
-CHAR8  Line06V2[] = "09:06:45.012 : [DXE] MaxMode is available from the Mode structure of the EFI_GRAPHICS_OUTPUT_PR\n";
-CHAR8  Line07V2[] = "09:06:45.012 : [DXE] OTOCOL.\n";
-CHAR8  Line08V2[] = "09:06:45.012 : [DXE] The size of the Info structure should never be assumed and the value of Si\n";
-CHAR8  Line09V2[] = "09:06:45.012 : [DXE] zeOfInfo is the only valid way to know the size of Info.\n";
-CHAR8  Line10V2[] = "09:06:45.012 : [DXE] \n";
-CHAR8  Line11V2[] = "09:06:45.012 : [DXE] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
-CHAR8  Line12V2[] = "09:06:45.012 : [DXE] ents a single video output device, then the set of modes returned by this \n";
-CHAR8  Line13V2[] = "09:06:45.012 : [DXE] service is the subset of modes supported by both the graphics controller a\n";
-CHAR8  Line14V2[] = "09:06:45.012 : [DXE] nd the video output device.\n";
-CHAR8  Line15V2[] = "09:06:45.012 : [DXE] \n";
-CHAR8  Line16V2[] = "09:06:45.012 : [DXE] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
-CHAR8  Line17V2[] = "09:06:45.012 : [DXE] ents a combination of video output devices, then the set of modes returned\n";
-CHAR8  Line18V2[] = "09:06:45.012 : [DXE]  by this service is the subset of modes supported by the graphics controll\n";
-CHAR8  Line19V2[] = "09:06:45.012 : [DXE] er and the all of the video output devices represented by the handle.\n";
+CHAR8  Line00V2[] = "09:06:45.012 : [DXE  ] [INFO] First normal test line\n";
+CHAR8  Line01V2[] = "09:06:45.012 : [DXE  ] [ERR ] The QueryMode() function returns information for an available graphics mod\n";
+CHAR8  Line02V2[] = "09:06:45.012 : [DXE  ] [ERR ] e that the graphics device and the set of active video output devices supp\n";
+CHAR8  Line03V2[] = "09:06:45.012 : [DXE  ] [ERR ] orts.\n";
+CHAR8  Line04V2[] = "09:06:45.012 : [DXE  ] [ERR ] If ModeNumber is not between 0 and MaxMode - 1, then EFI_INVALID_PARAMETER\n";
+CHAR8  Line05V2[] = "09:06:45.012 : [DXE  ] [ERR ]  is returned.\n";
+CHAR8  Line06V2[] = "09:06:45.012 : [DXE  ] [INFO] MaxMode is available from the Mode structure of the EFI_GRAPHICS_OUTPUT_PR\n";
+CHAR8  Line07V2[] = "09:06:45.012 : [DXE  ] [INFO] OTOCOL.\n";
+CHAR8  Line08V2[] = "09:06:45.012 : [DXE  ] [ERR ] The size of the Info structure should never be assumed and the value of Si\n";
+CHAR8  Line09V2[] = "09:06:45.012 : [DXE  ] [ERR ] zeOfInfo is the only valid way to know the size of Info.\n";
+CHAR8  Line10V2[] = "09:06:45.012 : [DXE  ] [ERR ] \n";
+CHAR8  Line11V2[] = "09:06:45.012 : [DXE  ] [ERR ] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8  Line12V2[] = "09:06:45.012 : [DXE  ] [INFO] ents a single video output device, then the set of modes returned by this \n";
+CHAR8  Line13V2[] = "09:06:45.012 : [DXE  ] [ERR ] service is the subset of modes supported by both the graphics controller a\n";
+CHAR8  Line14V2[] = "09:06:45.012 : [DXE  ] [ERR ] nd the video output device.\n";
+CHAR8  Line15V2[] = "09:06:45.012 : [DXE  ] [ERR ] \n";
+CHAR8  Line16V2[] = "09:06:45.012 : [DXE  ] [ERR ] If the EFI_GRAPHICS_OUTPUT_PROTOCOL is installed on the handle that repres\n";
+CHAR8  Line17V2[] = "09:06:45.012 : [DXE  ] [ERR ] ents a combination of video output devices, then the set of modes returned\n";
+CHAR8  Line18V2[] = "09:06:45.012 : [DXE  ] [INFO]  by this service is the subset of modes supported by the graphics controll\n";
+CHAR8  Line19V2[] = "09:06:45.012 : [DXE  ] [ERR ] er and all of the video output devices represented by the handle.\n";
 
 /* spell-checker: enable */
 
