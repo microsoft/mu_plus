@@ -1038,7 +1038,7 @@ def main():
     parser.add_argument("-s",  "--StartLine", dest="StartLine", default=0, type=int,
                         help="Print starting at StartLine")
     parser.add_argument("-size",  "--FileSize", dest="FileSize", default=0, type=int,
-                        help="Output Separate LogFile by KB Size")
+                        help="[-o option] Output Separate LogFile by KB Size")
 
     options = parser.parse_args()
 
@@ -1090,6 +1090,8 @@ def main():
 
                 OutFile.close()
                 print(f"{CountOfLines} lines written to {SeparatedFilePath}")
+        elif options.FileSize != 0:
+            print("Warning: No OutFilePath found. -size is OutFile option.")
 
     except Exception:
         print("Error processing log output.")
@@ -1109,7 +1111,10 @@ def main():
 
     InFile.close()
 
-    print("Log complete")
+    if options.OutFilePath is None and options.RawFilePath is None:
+        print("No output FilePath found.")
+    else:
+        print("Log complete")
 
 
 # --------------------------------------------------------------------------- #

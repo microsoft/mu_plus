@@ -39,7 +39,7 @@ Decode a raw file into a text file:
   DecodeUefiLog -l RawLog.bin -o NewLogFIle.txt
 ```
 
-Decode lines and separate to multiple files by Kb size -size:
+[-o Option] Decode lines and separate to multiple files by Kb size -size:
 
 ```.sh
   DecodeUefiLog -size 30 -o NewLogFile.txt
