@@ -1066,14 +1066,16 @@ def main():
                 SeparatedFilePath:str = options.OutFilePath
                 FilePathPart = os.path.splitext(SeparatedFilePath)
                 MaxSize = options.FileSize * 1024
-                CurrentFileSize = 0
-                SeparateFileIndex = 1
-                CountOfLines = 0
-                SeparatedFilePath = FilePathPart[0] + '_' + str(SeparateFileIndex) + FilePathPart[1]
-                OutFile = open(SeparatedFilePath, "w", newline=None)
 
-                for LineIndex in lines:
-                    CurrentLineSize = len(LineIndex.encode('utf-8')) + 1
+                for LineIndex, LineStr in enumerate(lines):
+                    if LineIndex == 0:
+                        CurrentFileSize = 0
+                        SeparateFileIndex = 1
+                        CountOfLines = 0
+                        SeparatedFilePath = FilePathPart[0] + '_' + str(SeparateFileIndex) + FilePathPart[1]
+                        OutFile = open(SeparatedFilePath, "w", newline=None)
+
+                    CurrentLineSize = len(LineStr.encode('utf-8')) + 1
                     if CurrentFileSize + CurrentLineSize > MaxSize:
                         OutFile.close()
                         print(f"{CountOfLines} lines written to {SeparatedFilePath}")
@@ -1081,10 +1083,10 @@ def main():
                         SeparateFileIndex += 1
                         SeparatedFilePath = FilePathPart[0] + '_' + str(SeparateFileIndex) + FilePathPart[1]
                         OutFile = open(SeparatedFilePath, "w", newline=None)
-                        OutFile.writelines(LineIndex)
+                        OutFile.writelines(LineStr)
                         CurrentFileSize = CurrentLineSize
                     else:
-                        OutFile.writelines(LineIndex)
+                        OutFile.writelines(LineStr)
                         CountOfLines += 1
                         CurrentFileSize += CurrentLineSize
 
