@@ -91,7 +91,11 @@
           MMARM,
           BLKIO,
           dlink,
-          uintn
+          uintn,
+          mcore,
+          rtdxe,
+          smmcr,
+          unspd,
         ]
     },
 
