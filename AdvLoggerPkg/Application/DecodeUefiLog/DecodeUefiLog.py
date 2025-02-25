@@ -1065,7 +1065,7 @@ def main():
             else:
                 SeparatedFilePath:str = options.OutFilePath
                 FilePathPart = os.path.splitext(SeparatedFilePath)
-                MaxSize = options.FileSize * 1000
+                MaxSize = options.FileSize * 1024
                 CurrentFileSize = 0
                 SeparateFileIndex = 1
                 CountOfLines = 0
@@ -1073,7 +1073,7 @@ def main():
                 OutFile = open(SeparatedFilePath, "w", newline=None)
 
                 for LineIndex in lines:
-                    CurrentLineSize = len(LineIndex.encode('utf-8'))
+                    CurrentLineSize = len(LineIndex.encode('utf-8')) + 1
                     if CurrentFileSize + CurrentLineSize > MaxSize:
                         OutFile.close()
                         print(f"{CountOfLines} lines written to {SeparatedFilePath}")
