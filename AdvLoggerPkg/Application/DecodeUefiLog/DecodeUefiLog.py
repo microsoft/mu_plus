@@ -10,6 +10,7 @@ import argparse
 import tempfile
 import traceback
 import copy
+import os
 
 from win32com.shell import shell
 from edk2toollib.os.uefivariablesupport import UefiVariable
@@ -1036,6 +1037,8 @@ def main():
                         help="Path to binary Output LogFile")
     parser.add_argument("-s",  "--StartLine", dest="StartLine", default=0, type=int,
                         help="Print starting at StartLine")
+    parser.add_argument("-size",  "--FileSize", dest="FileSize", default=0, type=int,
+                        help="[-o option] Output Separate LogFile by KB Size")
 
     options = parser.parse_args()
 
@@ -1053,11 +1056,44 @@ def main():
         lines = advlog.ProcessMessages(InFile, options.StartLine)
 
         if options.OutFilePath is not None:
-            OutFile = open(options.OutFilePath, "w", newline=None)
-            OutFile.writelines(lines)
-            OutFile.close()
-            CountOfLines = len(lines)
-            print(f"{CountOfLines} lines written to {options.OutFilePath}")
+            if options.FileSize == 0:
+                OutFile = open(options.OutFilePath, "w", newline=None)
+                OutFile.writelines(lines)
+                OutFile.close()
+                CountOfLines = len(lines)
+                print(f"{CountOfLines} lines written to {options.OutFilePath}")
+            else:
+                SeparatedFilePath:str = options.OutFilePath
+                FilePathPart = os.path.splitext(SeparatedFilePath)
+                MaxSize = options.FileSize * 1024
+
+                for LineIndex, LineStr in enumerate(lines):
+                    if LineIndex == 0:
+                        CurrentFileSize = 0
+                        SeparateFileIndex = 1
+                        CountOfLines = 0
+                        SeparatedFilePath = FilePathPart[0] + '_' + str(SeparateFileIndex) + FilePathPart[1]
+                        OutFile = open(SeparatedFilePath, "w", newline=None)
+
+                    CurrentLineSize = len(LineStr.encode('utf-8')) + 1
+                    if CurrentFileSize + CurrentLineSize > MaxSize:
+                        OutFile.close()
+                        print(f"{CountOfLines} lines written to {SeparatedFilePath}")
+                        CountOfLines = 1
+                        SeparateFileIndex += 1
+                        SeparatedFilePath = FilePathPart[0] + '_' + str(SeparateFileIndex) + FilePathPart[1]
+                        OutFile = open(SeparatedFilePath, "w", newline=None)
+                        OutFile.writelines(LineStr)
+                        CurrentFileSize = CurrentLineSize
+                    else:
+                        OutFile.writelines(LineStr)
+                        CountOfLines += 1
+                        CurrentFileSize += CurrentLineSize
+
+                OutFile.close()
+                print(f"{CountOfLines} lines written to {SeparatedFilePath}")
+        elif options.FileSize != 0:
+            print("Warning: No OutFilePath found. -size is OutFile option.")
 
     except Exception:
         print("Error processing log output.")
@@ -1077,7 +1113,10 @@ def main():
 
     InFile.close()
 
-    print("Log complete")
+    if options.OutFilePath is None and options.RawFilePath is None:
+        print("No output FilePath found.")
+    else:
+        print("Log complete")
 
 
 # --------------------------------------------------------------------------- #
