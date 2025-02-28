@@ -113,6 +113,8 @@ impl SimpleTextInExFfi {
             return Err(status);
         }
 
+        keyboard_handler.key_notify_event = key_notify_event;
+
         Ok(())
     }
 
@@ -849,10 +851,11 @@ mod test {
 
         keyboard_handler.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
-        keyboard_handler.set_notify_event(NOTIFY_EVENT);
 
         SimpleTextInExFfi::install(boot_services, 2 as efi::Handle, &mut keyboard_handler).unwrap();
         assert_ne!(CONTEXT_PTR.load(Ordering::SeqCst), ptr::null_mut());
+
+        keyboard_handler.set_notify_event(NOTIFY_EVENT);
 
         extern "efiapi" fn key_notify_callback_a(
             key_data: *mut protocols::simple_text_input_ex::KeyData,
