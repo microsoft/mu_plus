@@ -35,7 +35,6 @@ use crate::{
 pub struct SimpleTextInExFfi {
     simple_text_in_ex: protocols::simple_text_input_ex::Protocol,
     boot_services: &'static dyn UefiBootServices,
-    key_notify_event: efi::Event,
     keyboard_handler: *mut KeyboardHidHandler,
 }
 
@@ -57,7 +56,6 @@ impl SimpleTextInExFfi {
                 unregister_key_notify: Self::simple_text_in_ex_unregister_key_notify,
             },
             boot_services,
-            key_notify_event: ptr::null_mut(),
             keyboard_handler: keyboard_handler as *mut KeyboardHidHandler,
         };
 
@@ -94,8 +92,6 @@ impl SimpleTextInExFfi {
             let _ = boot_services.close_event(wait_for_key_event);
             drop(unsafe { Box::from_raw(simple_text_in_ex_ptr) });
         }
-
-        unsafe { (*simple_text_in_ex_ptr).key_notify_event = key_notify_event };
 
         //install the simple_text_in_ex protocol
         let mut controller = controller;
@@ -176,8 +172,14 @@ impl SimpleTextInExFfi {
             return Err(status);
         }
 
-        let key_notify_event: efi::Handle = unsafe { (*simple_text_in_ex_ptr).key_notify_event };
-        let status = boot_services.close_event(key_notify_event);
+        let status = 'uninstall_processing: {
+            let Some(keyboard_handler) = (unsafe { (*simple_text_in_ex_ptr).keyboard_handler.as_mut() }) else {
+                break 'uninstall_processing efi::Status::DEVICE_ERROR;
+            };
+            let key_notify_event = keyboard_handler.key_notify_event;
+            keyboard_handler.key_notify_event = ptr::null_mut();
+            boot_services.close_event(key_notify_event)
+        };
         if status.is_error() {
             //An error here means the event was not closed, so in theory the notification_callback on it could still be
             //fired.
