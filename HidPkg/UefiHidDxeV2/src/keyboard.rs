@@ -530,7 +530,6 @@ impl HidReportReceiver for KeyboardHidHandler {
     fn initialize(&mut self, controller: efi::Handle, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         let descriptor = hid_io.get_report_descriptor()?;
         self.process_descriptor(descriptor)?;
-        self.update_leds(hid_io)?;
         self.reset(hid_io, true)?;
         self.install_protocol_interfaces(controller)?;
         self.initialize_keyboard_layout()?;
