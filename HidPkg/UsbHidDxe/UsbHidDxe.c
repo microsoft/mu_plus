@@ -697,6 +697,12 @@ UsbGetFullHidDescriptor (
       }
     }
 
+    // Check if the descriptor length is 0
+    if (DescriptorHeader->Len == 0) {
+      DEBUG ((DEBUG_ERROR, "[%a] Descriptor length is 0\n", __func__));
+      break;
+    }
+
     // move to next descriptor
     DescriptorCursor += DescriptorHeader->Len;
     DescriptorHeader  = (USB_DESC_HEAD *)((UINT8 *)DescriptorBuffer + DescriptorCursor);
