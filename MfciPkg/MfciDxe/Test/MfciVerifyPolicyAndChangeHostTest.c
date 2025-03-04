@@ -228,7 +228,7 @@ UnitTestGetVariable (
   }
 
   if (!EFI_ERROR (ReturnStatus)) {
-    CopyMem (Data, ReturnVal, *DataSize);
+    CopyMem (Data, ReturnVal, Size);
     *DataSize = Size;
   }
 
