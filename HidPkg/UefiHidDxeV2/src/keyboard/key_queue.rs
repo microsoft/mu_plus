@@ -376,7 +376,7 @@ impl KeyQueue {
 
     // returns a copy of the key at the front of the notify queue
     pub(crate) fn peek_notify_key(&self) -> Option<KeyData> {
-        self.key_queue.front().cloned()
+        self.notified_key_queue.front().cloned()
     }
 
     // set the key toggle state. This allows control of scroll/caps/num locks, as well as whether partial key state is

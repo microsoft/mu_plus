@@ -259,15 +259,13 @@ impl KeyboardHidHandler {
     fn generate_led_output_reports(&mut self) -> Vec<(Option<ReportId>, Vec<u8>)> {
         let mut output_vec = Vec::new();
         let current_leds: BTreeSet<Usage> = self.key_queue.active_leds().iter().cloned().collect();
-        if current_leds != self.led_state {
-            self.led_state = current_leds;
-            for output_builder in self.output_builders.clone() {
-                let mut report_buffer = vec![0u8; output_builder.report_size];
-                for field_builder in &output_builder.relevant_variable_fields {
-                    (field_builder.field_builder)(self, field_builder.field.clone(), report_buffer.as_mut_slice());
-                }
-                output_vec.push((output_builder.report_id, report_buffer));
+        self.led_state = current_leds;
+        for output_builder in self.output_builders.clone() {
+            let mut report_buffer = vec![0u8; output_builder.report_size];
+            for field_builder in &output_builder.relevant_variable_fields {
+                (field_builder.field_builder)(self, field_builder.field.clone(), report_buffer.as_mut_slice());
             }
+            output_vec.push((output_builder.report_id, report_buffer));
         }
         output_vec
     }
@@ -402,13 +400,22 @@ impl KeyboardHidHandler {
         self.current_keys.clear();
         self.key_queue.reset(extended_verification);
         if extended_verification {
-            self.update_leds(hid_io)?;
+            self.send_led_reports(hid_io)?;
         }
         Ok(())
     }
 
     /// Called to send LED state to the device if there has been a change in LEDs.
     pub fn update_leds(&mut self, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
+        let current_leds: BTreeSet<Usage> = self.key_queue.active_leds().iter().cloned().collect();
+        if current_leds != self.led_state {
+            self.send_led_reports(hid_io)?;
+        }
+        Ok(())
+    }
+
+    /// Called to send LED state to the device.
+    pub fn send_led_reports(&mut self, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         for (id, output_report) in self.generate_led_output_reports() {
             let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
             if let Err(result) = result {
@@ -437,7 +444,6 @@ impl KeyboardHidHandler {
     /// Sets the current key state.
     pub fn set_key_toggle_state(&mut self, toggle_state: u8) {
         self.key_queue.set_key_toggle_state(toggle_state);
-        self.generate_led_output_reports();
     }
 
     /// Registers a new key notify callback function to be invoked on the specified `key_data` press.
@@ -524,8 +530,6 @@ impl HidReportReceiver for KeyboardHidHandler {
     fn initialize(&mut self, controller: efi::Handle, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         let descriptor = hid_io.get_report_descriptor()?;
         self.process_descriptor(descriptor)?;
-        // Set the key toggle state here so that the subsequent reset() can send the LED state to the device.
-        self.set_key_toggle_state(protocols::simple_text_input_ex::CAPS_LOCK_ACTIVE);
         self.reset(hid_io, true)?;
         self.install_protocol_interfaces(controller)?;
         self.initialize_keyboard_layout()?;
