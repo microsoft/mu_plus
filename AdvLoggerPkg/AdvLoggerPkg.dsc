@@ -110,8 +110,6 @@
 [Components]
   AdvLoggerPkg/Library/BaseDebugLibAdvancedLogger/BaseDebugLibAdvancedLogger.inf
   AdvLoggerPkg/Library/BasePanicLibAdvancedLogger/BasePanicLibAdvancedLogger.inf
-  AdvLoggerPkg/AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.inf
-  AdvLoggerPkg/AdvLoggerOsConnectorPrm/Library/AdvLoggerOsConnectorPrmConfigLib/AdvLoggerOsConnectorPrmConfigLib.inf
 
 [Components.IA32]
   AdvLoggerPkg/Library/AdvancedLoggerLib/Pei/AdvancedLoggerLib.inf
@@ -131,10 +129,14 @@
   AdvLoggerPkg/Library/AdvancedLoggerLib/SmmCore/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvLoggerSmmAccessLib/AdvLoggerSmmAccessLib.inf
   AdvLoggerPkg/Library/AdvLoggerMmAccessLib/AdvLoggerMmAccessLib.inf
+  AdvLoggerPkg/AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.inf
+  AdvLoggerPkg/AdvLoggerOsConnectorPrm/Library/AdvLoggerOsConnectorPrmConfigLib/AdvLoggerOsConnectorPrmConfigLib.inf
 
 [Components.AARCH64]
   AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
   AdvLoggerPkg/Library/AdvancedLoggerLib/MmCoreArm/AdvancedLoggerLib.inf
+  AdvLoggerPkg/AdvLoggerOsConnectorPrm/AdvLoggerOsConnectorPrm.inf
+  AdvLoggerPkg/AdvLoggerOsConnectorPrm/Library/AdvLoggerOsConnectorPrmConfigLib/AdvLoggerOsConnectorPrmConfigLib.inf
 
 [Components.X64, Components.AARCH64]
   AdvLoggerPkg/AdvancedFileLogger/AdvancedFileLogger.inf
