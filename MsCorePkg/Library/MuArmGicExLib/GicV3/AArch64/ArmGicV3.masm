@@ -1,0 +1,122 @@
+//
+//  Copyright (c) 2014, ARM Limited. All rights reserved.
+//
+//  This program and the accompanying materials are licensed and made available
+//  under the terms and conditions of the BSD License which accompanies this
+//  distribution. The full text of the license may be found at
+//  http://opensource.org/licenses/bsd-license.php
+//
+//  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+//
+//
+
+#include <AsmMacroLib.h>
+
+    AREA    |.text|,ALIGN=3,CODE,READONLY
+
+    EXPORT ArmGicV3GetControlSystemRegisterEnable
+    EXPORT ArmGicV3SetControlSystemRegisterEnable
+    EXPORT ArmGicV3EnableInterruptInterface
+    EXPORT ArmGicV3DisableInterruptInterface
+    EXPORT ArmGicV3EndOfInterrupt
+    EXPORT ArmGicV3AcknowledgeInterrupt
+    EXPORT ArmGicV3SetPriorityMask
+    EXPORT ArmGicV3SetBinaryPointer
+
+//UINT32
+//EFIAPI
+//ArmGicV3GetControlSystemRegisterEnable (
+//  VOID
+//  );
+ArmGicV3GetControlSystemRegisterEnable PROC
+        EL1_OR_EL2_OR_EL3(x1)
+1
+    mrs x0, ICC_SRE_EL1
+        b       %f4
+2
+    mrs x0, ICC_SRE_EL2
+        b       %f4
+3
+    mrs x0, ICC_SRE_EL3
+4
+    ret
+ArmGicV3GetControlSystemRegisterEnable ENDP
+
+//VOID
+//EFIAPI
+//ArmGicV3SetControlSystemRegisterEnable (
+//  IN UINT32         ControlSystemRegisterEnable
+//  );
+ArmGicV3SetControlSystemRegisterEnable PROC
+        EL1_OR_EL2_OR_EL3(x1)
+1
+    msr ICC_SRE_EL1, x0
+        b       %f4
+2
+    msr ICC_SRE_EL2, x0
+        b       %f4
+3
+    msr ICC_SRE_EL3, x0
+4
+    isb sy
+        ret
+ArmGicV3SetControlSystemRegisterEnable ENDP
+
+//VOID
+//ArmGicV3EnableInterruptInterface (
+//  VOID
+//  );
+ArmGicV3EnableInterruptInterface PROC
+        mov     x0, #1
+        msr     ICC_IGRPEN1_EL1, x0
+        ret
+ArmGicV3EnableInterruptInterface ENDP
+
+//VOID
+//ArmGicV3DisableInterruptInterface (
+//  VOID
+//  );
+ArmGicV3DisableInterruptInterface PROC
+        mov     x0, #0
+        msr     ICC_IGRPEN1_EL1, x0
+        ret
+ArmGicV3DisableInterruptInterface ENDP
+
+//VOID
+//ArmGicV3EndOfInterrupt (
+//  IN UINTN          InterruptId
+//  );
+ArmGicV3EndOfInterrupt PROC
+        msr     ICC_EOIR1_EL1, x0
+        ret
+ArmGicV3EndOfInterrupt ENDP
+
+//UINTN
+//ArmGicV3AcknowledgeInterrupt (
+//  VOID
+//  );
+ArmGicV3AcknowledgeInterrupt PROC
+        mrs     x0, ICC_IAR1_EL1
+        ret
+ArmGicV3AcknowledgeInterrupt ENDP
+
+//VOID
+//ArmGicV3SetPriorityMask (
+//  IN UINTN          Priority
+//  );
+ArmGicV3SetPriorityMask PROC
+        msr     ICC_PMR_EL1, x0
+        ret
+ArmGicV3SetPriorityMask ENDP
+
+//VOID
+//ArmGicV3SetBinaryPointer (
+//  IN UINTN          BinaryPoint
+//  );
+ArmGicV3SetBinaryPointer PROC
+        msr     ICC_BPR1_EL1, x0
+        ret
+ArmGicV3SetBinaryPointer ENDP
+
+    END

@@ -121,7 +121,21 @@
             "ispendr",
             "mpidr",
             "typer",
-            "vlpis"
+            "vlpis",
+            # ArmGicLib
+            "ackintid",
+            "icciar",
+            "iccicr",
+            "icciidr",
+            "iccpmr",
+            "icdicer",
+            "icdictr",
+            "icdiser",
+            "icenabler",
+            "igrpen",
+            "ipriority",
+            "isenabler",
+            "irouter",
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     },

@@ -130,7 +130,6 @@ ArmGicSetPendingInterrupt (
 
   Revision = ArmGicGetSupportedArchRevision ();
   if ((Revision == ARM_GIC_ARCH_REVISION_2) ||
-      FeaturePcdGet (PcdArmGicV3WithV2Legacy) ||
       SourceIsSpi (Source))
   {
     // Write set-pending register
@@ -182,7 +181,6 @@ ArmGicClearPendingInterrupt (
 
   Revision = ArmGicGetSupportedArchRevision ();
   if ((Revision == ARM_GIC_ARCH_REVISION_2) ||
-      FeaturePcdGet (PcdArmGicV3WithV2Legacy) ||
       SourceIsSpi (Source))
   {
     // Write clear-enable register
@@ -237,7 +235,6 @@ ArmGicIsInterruptPending (
 
   Revision = ArmGicGetSupportedArchRevision ();
   if ((Revision == ARM_GIC_ARCH_REVISION_2) ||
-      FeaturePcdGet (PcdArmGicV3WithV2Legacy) ||
       SourceIsSpi (Source))
   {
     Interrupts = MmioRead32 (

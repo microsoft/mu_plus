@@ -23,17 +23,28 @@
 
 [Sources]
   MuArmGicExLib.c
+  
+  GicV2/ArmGicV2Lib.c
+  GicV2/ArmGicV2NonSecLib.c
+
+  ArmGicArchLib.c
+  ArmGicLib.c
 
 [Sources.AARCH64]
-  AArch64/MuArmGicEx.S      | GCC   # MU_CHANGE - ARM64 VS change
-  AArch64/MuArmGicEx.masm   | MSFT  # MU_CHANGE - ARM64 VS change
+  GicV3/AArch64/ArmGicV3.masm | MSFT
+  GicV3/AArch64/ArmGicV3.S    | GCC
+
+  AArch64/MuArmGicEx.S      | GCC
+  AArch64/MuArmGicEx.masm   | MSFT
+
+
+[Sources.ARM]
+  GicV3/Arm/ArmGicV3.S | GCC
 
 [LibraryClasses]
   ArmLib
   DebugLib
   IoLib
-  ArmGicArchLib
-  ArmGicLib
 
 [Packages]
   ArmPkg/ArmPkg.dec
@@ -41,4 +52,4 @@
   MsCorePkg/MsCorePkg.dec
 
 [FeaturePcd]
-  gArmTokenSpaceGuid.PcdArmGicV3WithV2Legacy
+#  gArmTokenSpaceGuid.PcdArmGicV3WithV2Legacy
