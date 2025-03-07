@@ -11,34 +11,42 @@ Ubuntu_GCC5_                  |UbuntuCiBuild|   |UbuntuCiTest|  |UbuntuCiCoverag
 
 This repository is part of Project Mu.  Please see Project Mu for details https://microsoft.github.io/mu.
 
-Branch Status - release/202405
+Branch Status - release/202502
 ==============================
 
 :Status:
   In Development
 
 :Entered Development:
-  2023/11/24 (Date Edk2 started accepting changes which were not in a previous release)
+  2025/02/21 (Date Edk2 started accepting changes which were not in a previous release)
 
 :Anticipated Stabilization:
-  Nov 2024
+  May 2025
 
-Branch Changes - release/202405
+Branch Changes - release/202502
 ===============================
-
-202405 is a larger deviation than previous releases. As part of upstreaming changes to EDK2, the commits were reviewed, squashed, and some were dropped.
-Due to these changes, there may be more work required to bring an existing platform up to 202405 compatibility. 
 
 Breaking Changes-dev
 --------------------
-- Nothing
 
 Main Changes-dev
 ----------------
-- AdvancedFileLogger triggers on gEfiEventBeforeExitBootServicesGuid due to removal of gMuEventPreExitBootServicesGuid.
-- OnScreenKeyboard triggers on gEfiEventBeforeExitBootServicesGuid due to removal of gMuEventPreExitBootServicesGuid.
-- RenderingEngine triggers on gEfiEventBeforeExitBootServicesGuid due to removal of gMuEventPreExitBootServicesGuid.
-- MsCorePkg/Library/MuArmGicExLib/MuArmGicExLib.inf exists to contain the functionality previously in ArmPkg/Drivers/ArmGic/ArmGicLib.inf.
+- AdvLoggerPkg: AdvLoggerPrmConfigLibGoogleTest buffer overun fixed. Discovered from UnitTestFrameworkPkgHost.dsc.inf enabling address sanitization.
+- AdvLoggerPkg: AdvLoggerPrmConfigLibGoogleTest buffer overun fixed. Discovered from UnitTestFrameworkPkgHost.dsc.inf enabling address sanitization.
+- HidPkg: HidPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
+- MfciPkg: MfciPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
+- MfciPkg: MfciPkg.dsc no longer includes VsIntrinsicLib as it has been removed in basecore.
+- MfciPkg: Fixed MfciTargetingHostTest and MfciVerifyPolicyAndChangeHostTest copy length errors discovered by UnitTestFrameworkPkgHost.dsc.inf enabling address sanitization.
+- MsApplicationPkg: MsApplicationPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
+- MsCorePkg: MsCorePkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
+- MsCorePkg: MsCorePkg.dsc no longer includes no longer includes VsIntrinsicLib as it has been removed in basecore.
+- MsGraphicsPkg: MsGraphicsPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
+- MsWheaPkg: MsWheaPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
+- PcBdsPkg: PcBdsPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2.
+- TpmTestingPkg: Tcg2Dxe has been updated to match latest mu_tiano_plus changes. 
+- TpmTestingPkg: TpmTestingPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2. Uses MdeLibs.dsc.inc.
+- UefiTestingPkg: UefiTestingPkg.dsc no longer includes VsInstrinsicLib or StackCheckLib.
+
 
 Platform Integration Reference
 ------------------------------
