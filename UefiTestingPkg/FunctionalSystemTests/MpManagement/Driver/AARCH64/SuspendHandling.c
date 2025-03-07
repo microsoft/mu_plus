@@ -30,7 +30,7 @@
 #include <Protocol/Timer.h>
 #include <Protocol/WatchdogTimer.h>
 #include <Guid/ArmMpCoreInfo.h>
-
+#include <Library/MuArmGicExLib.h>
 #include "MpManagementInternal.h"
 
 /* Features flags for CPU SUSPEND power state parameter format. Bits [1:1] */

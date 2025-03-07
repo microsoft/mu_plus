@@ -5,10 +5,19 @@
 //
 
 #include <AArch64/AArch64.h>
+#include <AsmMacroLib.h>
+#include <IndustryStandard/ArmStdSmc.h>
 
     AREA    |.text|,ALIGN=7,CODE,READONLY
 
+    EXTERN ApEntryPoint
+    EXTERN mCpuInfo
+    EXTERN gApStacksBase
+    EXTERN mNumCpus
+    EXTERN gApStackSize
+
     EXPORT ReadEl0Stack
+    EXPORT AsmApEntryPoint
 
 // UINTN
 // ReadEl0Stack (
@@ -18,5 +27,55 @@ ReadEl0Stack PROC
   mrs     x0, sp_el0
   ret
 ReadEl0Stack ENDP
+
+
+
+// Entry-point for the AP
+// VOID
+// AsmApEntryPoint (
+//   VOID
+//   );
+AsmApEntryPoint PROC
+    MRS     x0, mpidr_el1
+    // Mask the non-affinity bits
+    BIC     x0, x0, 0x00ff000000
+    AND     x0, x0, 0xffffffffff
+    LDR     x1, =mCpuInfo            // x1 = mCpuInfo
+    MOV     x2, 0                    // x2 = processor index
+
+// TODO: This is, again, reverse engineering to correlate the CPU index with the MPIDRs...
+Loop
+    LDR     x3, [x1]                // x3 = *x1
+    CMP     x0, x3                  // if mpidr_el1 == mCpuInfo[x].Mpidr then break loop
+    BEQ     JumpToCFunction
+    ADD     x1, x1, #40             // x1 = x1 + sizeof (ARM_CORE_INFO)
+    ADD     x2, x2, 1               // x2++
+    LDR     x3, =mNumCpus
+    LDR     x3, [x3]
+    CMP     x2, x3                  // check if x2 >= x3, we've reached the end of mCpuInfo
+    BGE     ProcessorNotFound
+    B       Loop                    // Otherwise, keep looping
+
+JumpToCFunction
+    // Calculate stack address
+    // x2 contains the index for the current processor
+    LDR     x0, =gApStacksBase
+    LDR     x0, [x0]
+    LDR     x1, =gApStackSize
+    LDR     x1, [x1]
+    ADD     x2, x2, 1               // x2 = ProcessorIndex + 1, preemptively adding 1 so that the calculated sp will be at the bottom of the stack.
+    MUL     x3, x2, x1              // x3 = (ProcessorIndex + 1) * gApStackSize
+    ADD     sp, x0, x3              // sp = gApStacksBase + x3
+    MOV     x29, xzr
+    BL      ApEntryPoint            // doesn't return
+
+ProcessorNotFound
+    // Turn off the processor
+    MOVZ w0, (ARM_SMC_ID_PSCI_CPU_OFF & 0xFFFF)          ; Move the lower 16 bits
+    MOVK w0, ((ARM_SMC_ID_PSCI_CPU_OFF >> 16) & 0xFFFF), LSL #16 ; Move the 
+
+    SMC     #0
+    RET
+AsmApEntryPoint ENDP
 
   END

@@ -6,7 +6,7 @@
 //
 
 #include <Chipset/AArch64.h>
-#include <AsmMacroIoLibV8.h>
+#include <AsmMacroLib.h>
 #include <IndustryStandard/ArmStdSmc.h>
 
 GCC_ASM_IMPORT(ApEntryPoint)

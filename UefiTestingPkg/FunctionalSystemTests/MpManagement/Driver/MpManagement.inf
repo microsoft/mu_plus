@@ -51,7 +51,6 @@
 
 [LibraryClasses.AARCH64]
   ArmLib
-  ArmGicLib
   ArmSmcLib
   HobLib
   ArmGenericTimerCounterLib
