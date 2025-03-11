@@ -455,7 +455,9 @@ DelayedRecoveryHandler (
                                OnReportInterruptComplete,
                                UsbHidDev
                                );
-  ASSERT_EFI_ERROR (Status);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "USB [%a] failed to re-submit async transfer: %r\n", __func__, Status));
+  }
 }
 
 /**
