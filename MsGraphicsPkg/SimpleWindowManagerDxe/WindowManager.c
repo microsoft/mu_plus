@@ -953,6 +953,11 @@ CheckWatchListCallback (
         //
         AbsolutePointerMaxX = pList->AbsolutePointer->Mode->AbsoluteMaxX;
         AbsolutePointerMaxY = pList->AbsolutePointer->Mode->AbsoluteMaxY;
+        if ((AbsolutePointerMaxX == 0) || (AbsolutePointerMaxY == 0)) {
+          // Incorrect Absolute Pointer Mode, skip this pointer event
+          //
+          continue;
+        }
 
         // Get screen coordinate space maximums.
         //
