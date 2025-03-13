@@ -1,0 +1,41 @@
+[Defines]
+    INF_VERSION                    = 0x0001001B
+    BASE_NAME                      = MemoryPerformanceProfiler
+    FILE_GUID                      = D7EE92AC-4AD0-43E5-94C7-1ECAFF503334
+    MODULE_TYPE                    = UEFI_APPLICATION
+    VERSION_STRING                 = 1.0
+    ENTRY_POINT                    = UefiMain
+
+#
+# The following information is for reference only and not required by the build tools.
+#
+#  VALID_ARCHITECTURES           = X64 AARCH64 ARM IA32
+#
+
+[Sources]
+    MemoryPerformanceProfiler.c
+    MemoryPatterns.h
+    MemoryPatterns.c
+    AllocatePagePerformance.c
+    AllocatePagePerformance.h
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    UefiTestingPkg/UefiTestingPkg.dec
+
+[LibraryClasses]
+    UefiBootServicesTableLib
+    UefiRuntimeServicesTableLib
+    UefiLib
+    DebugLib
+    BaseLib
+    MemoryAllocationLib
+    UnitTestLib
+    PerformanceLib
+    UefiApplicationEntryPoint
+    TimerLib
+    PrintLib
+
+[Protocols]
+    gEfiSimpleTextInProtocolGuid

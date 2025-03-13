@@ -130,6 +130,7 @@
   UefiTestingPkg/FunctionalSystemTests/MorLockTestApp/MorLockTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MpManagement/App/MpManagementTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MemoryAttributeProtocolFuncTestApp/MemoryAttributeProtocolFuncTestApp.inf
+  UefiTestingPkg/FunctionalSystemTests/MemoryPerformanceProfiler/MemoryPerformanceProfiler.inf
   UefiTestingPkg/Library/FlatPageTableLib/FlatPageTableLib.inf
 
 [Components.IA32, Components.X64]
