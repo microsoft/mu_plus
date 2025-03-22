@@ -57,13 +57,12 @@ protected:
   ADVANCED_LOGGER_INFO testLoggerInfo;
   // StrictMock<MockHobLib> gHobLib;
   // StrictMock<MockAdvancedLoggerHdwPortLib> gALHdwPortLib;
+  CHAR8 OutputBuf[100];
 
   void
   SetUp (
     ) override
   {
-    CHAR8  OutputBuf[] = "MyUnitTestLog";
-
     NumberOfBytes                   = sizeof (OutputBuf);
     Buffer                          = OutputBuf;
     DebugLevel                      = DEBUG_ERROR;
@@ -74,6 +73,7 @@ protected:
     testLoggerInfo.LogBufferOffset  = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
     testLoggerInfo.LogCurrentOffset = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
     mLoggerInfo                     = NULL;
+    snprintf (Buffer, sizeof (OutputBuf), "MyUnitTestLog");
   }
 };
 
