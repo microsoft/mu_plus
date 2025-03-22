@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 
-#include <Chipset/AArch64.h>
+#include <AArch64/AArch64.h>
 #include <AsmMacroLib.h>
 #include <IndustryStandard/ArmStdSmc.h>
 
