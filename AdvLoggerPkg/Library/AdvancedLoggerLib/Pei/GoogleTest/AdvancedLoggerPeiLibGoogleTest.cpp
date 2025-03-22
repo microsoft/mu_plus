@@ -32,19 +32,19 @@ protected:
   UINTN Instance;
   CHAR8 *Buffer;
   UINTN NumberOfBytes;
+  CHAR8 OutputBuf[100];
 
   void
   SetUp (
     ) override
   {
-    CHAR8  OutputBuf[] = "MyUnitTestLog";
-
     NumberOfBytes     = sizeof (OutputBuf);
     Buffer            = OutputBuf;
     DebugLevel        = DEBUG_ERROR;
     Instance          = 0;
     gALPpi->Signature = ADVANCED_LOGGER_PPI_SIGNATURE;
     gALPpi->Version   = ADVANCED_LOGGER_PPI_VERSION;
+    snprintf (Buffer, sizeof (OutputBuf), "MyUnitTestLog");
   }
 };
 

@@ -39,19 +39,19 @@ protected:
   EFI_GUID gMockAdvLoggerProtocolGuid =
   { 0x434f695c, 0xef26, 0x4a12, { 0x9e, 0xba, 0xdd, 0xef, 0x00, 0x97, 0x49, 0x7c }
   };
+  CHAR8 OutputBuf[100];
 
   void
   SetUp (
     ) override
   {
-    CHAR8  OutputBuf[] = "MyUnitTestLog";
-
     NumberOfBytes          = sizeof (OutputBuf);
     Buffer                 = OutputBuf;
     DebugLevel             = DEBUG_ERROR;
     mInitialized           = FALSE;
     gALProtocol->Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE;
     gALProtocol->Version   = ADVANCED_LOGGER_PROTOCOL_VERSION;
+    snprintf (Buffer, sizeof (OutputBuf), "MyUnitTestLog");
   }
 };
 
