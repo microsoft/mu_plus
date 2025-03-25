@@ -149,6 +149,7 @@ OpenVolumeSFS (
   Status = UefiGetSfsProtocolHandle (&SfsProtocol);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a: Failed to find Simple Filesystem Protocol: %r \n", __FUNCTION__, Status));
+    return Status;
   }
 
   // Open the volume/partition.
