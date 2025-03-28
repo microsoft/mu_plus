@@ -21,7 +21,7 @@
 **/
 EFI_STATUS
 EFIAPI
-AlignedAllocatePool (
+BlocksOfPoolsAllocatePool (
   UINT32           AllocationSize,
   UINTN            AllocationsCount,
   EFI_MEMORY_TYPE  MemoryType
@@ -41,7 +41,7 @@ AlignedAllocatePool (
 **/
 EFI_STATUS
 EFIAPI
-AlignedAllocatePages (
+BlocksOfPagesAllocatePages (
   UINTN              PagesCount,
   UINTN              AllocationsCount,
   EFI_ALLOCATE_TYPE  AllocateType,

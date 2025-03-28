@@ -17,7 +17,7 @@
 **/
 EFI_STATUS
 EFIAPI
-AlignedAllocatePool (
+BlocksOfPoolsAllocatePool (
   UINT32           AllocationSize,
   UINTN            AllocationsCount,
   EFI_MEMORY_TYPE  MemoryType
@@ -30,6 +30,7 @@ AlignedAllocatePool (
   VOID  **PointerArray;
 
   // Allocate an array of pointers to hold the allocated memory blocks
+
 
   PointerArray = AllocatePool (AllocationsCount * sizeof (VOID *));
   if (PointerArray == NULL) {
@@ -77,7 +78,7 @@ AlignedAllocatePool (
 **/
 EFI_STATUS
 EFIAPI
-AlignedAllocatePages (
+BlocksOfPagesAllocatePages (
   UINTN              PagesCount,
   UINTN              AllocationsCount,
   EFI_ALLOCATE_TYPE  AllocateType,
@@ -97,14 +98,12 @@ AlignedAllocatePages (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  // Initialize the pointer array to NULL
-  for (Index = 0; Index < AllocationsCount; Index++) {
-    PointerArray[Index] = NULL;
-  }
-
   // allocate memory blocks and store the pointers in the array
   for (Index = 0; Index < AllocationsCount; Index++) {
     // Allocate memory
+
+    PointerArray[Index] = NULL;
+
     Status = gBS->AllocatePages (AllocateType, MemoryType, PagesCount, (EFI_PHYSICAL_ADDRESS *)&Memory);
     if (EFI_ERROR (Status)) {
       FreePool (PointerArray); // Free the pointer array before returning

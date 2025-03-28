@@ -39,3 +39,4 @@
 
 [Protocols]
     gEfiSimpleTextInProtocolGuid
+    gEfiSimpleFileSystemProtocolGuid
