@@ -17,7 +17,7 @@ HidIo = {path = "HidPkg/Crates/HidIo"}
 hidparser = {version = "1"}
 HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
 mu_pi = {version = "5"}
-mu_rust_helpers = { version = "2" }
+mu_rust_helpers = { version = "3" }
 MuTelemetryHelperLib = {path = "MsWheaPkg/Crates/MuTelemetryHelperLib"}
 RustAdvancedLoggerDxe = {path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe"}
 RustBootServicesAllocatorDxe = {path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe"}
