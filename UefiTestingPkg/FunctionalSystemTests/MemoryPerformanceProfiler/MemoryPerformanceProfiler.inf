@@ -36,6 +36,7 @@
     UefiApplicationEntryPoint
     TimerLib
     PrintLib
+    BaseMemoryLib
 
 [Protocols]
     gEfiSimpleTextInProtocolGuid
