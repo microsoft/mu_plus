@@ -33,11 +33,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Generate Token
+      id: app-token
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ vars.MU_ACCESS_APP_ID }}
+        private-key: ${{ secrets.MU_ACCESS_APP_PRIVATE_KEY }}
+
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.CHERRY_PICK_TOKEN }}
+        token: ${{ steps.app-token.outputs.token }}
 
     - name: Determine Contribution Info
       id: backport_info
@@ -229,5 +236,5 @@ jobs:
         -H "Content-Type: application/json" \
         -d "{\"title\":\"$PR_TITLE\",\"body\":\"$PR_BODY\",\"head\":\"$PR_BRANCH\",\"base\":\"$BASE_BRANCH\",\"labels\":[\"type:release-merge-conflict\"]}"
       env:
-        CHERRY_PICK_TOKEN: ${{ secrets.CHERRY_PICK_TOKEN }}
+        CHERRY_PICK_TOKEN: ${{ steps.app-token.outputs.token }}
 
