@@ -10,16 +10,8 @@
 #ifndef MU_SB_KEY_SELECTOR_LIB_H_
 #define MU_SB_KEY_SELECTOR_LIB_H_
 
-//
-// This means the key does not match anything from key store
-#define MU_SB_CONFIG_UNKNOWN  (MAX_UINT8 - 1)
-//
-// This means the key does not match anything from key store but does match
-// a Microsoft Serviced Key
-#define MU_SB_CONFIG_MS_SERVICED_KEY  (MAX_UINT8 - 2)
-//
-// This means the key store is not available
-#define MU_SB_CONFIG_NONE  (MAX_UINT8)
+#define MU_SB_CONFIG_UNKNOWN  MAX_UINT8 - 1 // This means the key does not match anything from key store
+#define MU_SB_CONFIG_NONE     MAX_UINT8
 
 /**
   Query the index of the actively used Secure Boot keys corresponds to the Secure Boot key store, if it
@@ -46,7 +38,7 @@ GetCurrentSecureBootConfig (
 EFI_STATUS
 EFIAPI
 SetSecureBootConfig (
-  IN UINT8  Index
+  IN  UINT8  Index
   );
 
-#endif // MU_SB_KEY_SELECTOR_LIB_H_
+#endif //MU_SB_KEY_SELECTOR_LIB_H_

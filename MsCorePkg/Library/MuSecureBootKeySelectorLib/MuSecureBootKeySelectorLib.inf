@@ -37,13 +37,10 @@
 [Protocols]
   gEfiRealTimeClockArchProtocolGuid             # SOMETIMES_CONSUMES
   gEdkiiVariablePolicyProtocolGuid              # CONSUMES
-  gEfiHash2ProtocolGuid                         ## BY_START
-  gEfiHash2ServiceBindingProtocolGuid           ## BY_START
 
 [Guids]
   gEfiGlobalVariableGuid         # CONSUMES
   gEfiImageSecurityDatabaseGuid  # CONSUMES
-  gEfiHashAlgorithmSha256Guid    # CONSUMES
-  
+
 [Depex]
   gEdkiiVariablePolicyProtocolGuid
