@@ -24,7 +24,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/MpService.h>
 #include <Protocol/VariableWrite.h>
 #include <Protocol/Tcg2Protocol.h>
-#include <Protocol/MuTcg2Protocol.h> // MU_CHANGE - Add a new protocol to support Log-only events.
 #include <Protocol/TrEEProtocol.h>
 #include <Protocol/ResetNotification.h>
 
@@ -55,6 +54,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // MU_CHANGE [BEGIN] - TPM Replay Feature
 
 #include <TpmReplayConfig.h>
+#include <Library/Tcg2InitEventLib.h>
 
 TPM_REPLAY_CONFIG  mTpmReplayConfig;
 
@@ -174,82 +174,6 @@ InternalDumpData (
   for (Index = 0; Index < Size; Index++) {
     DEBUG ((DEBUG_INFO, "%02x", (UINTN)Data[Index]));
   }
-}
-
-/**
-
-  This function initialize TCG_PCR_EVENT2_HDR for EV_NO_ACTION Event Type other than EFI Specification ID event
-  The behavior is defined by TCG PC Client PFP Spec. Section 9.3.4 EV_NO_ACTION Event Types
-
-  @param[in, out]   NoActionEvent  Event Header of EV_NO_ACTION Event
-  @param[in]        EventSize      Event Size of the EV_NO_ACTION Event
-
-**/
-VOID
-InitNoActionEvent (
-  IN OUT TCG_PCR_EVENT2_HDR  *NoActionEvent,
-  IN UINT32                  EventSize
-  )
-{
-  UINT32         DigestListCount;
-  TPMI_ALG_HASH  HashAlgId;
-  UINT8          *DigestBuffer;
-
-  DigestBuffer    = (UINT8 *)NoActionEvent->Digests.digests;
-  DigestListCount = 0;
-
-  NoActionEvent->PCRIndex  = 0;
-  NoActionEvent->EventType = EV_NO_ACTION;
-
-  //
-  // Set Hash count & hashAlg accordingly, while Digest.digests[n].digest to all 0
-  //
-  ZeroMem (&NoActionEvent->Digests, sizeof (NoActionEvent->Digests));
-
-  if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA1) != 0) {
-    HashAlgId = TPM_ALG_SHA1;
-    CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
-    DigestListCount++;
-  }
-
-  if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA256) != 0) {
-    HashAlgId = TPM_ALG_SHA256;
-    CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
-    DigestListCount++;
-  }
-
-  if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA384) != 0) {
-    HashAlgId = TPM_ALG_SHA384;
-    CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
-    DigestListCount++;
-  }
-
-  if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SHA512) != 0) {
-    HashAlgId = TPM_ALG_SHA512;
-    CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
-    DigestListCount++;
-  }
-
-  if ((mTcgDxeData.BsCap.ActivePcrBanks & EFI_TCG2_BOOT_HASH_ALG_SM3_256) != 0) {
-    HashAlgId = TPM_ALG_SM3_256;
-    CopyMem (DigestBuffer, &HashAlgId, sizeof (TPMI_ALG_HASH));
-    DigestBuffer += sizeof (TPMI_ALG_HASH) + GetHashSizeFromAlgo (HashAlgId);
-    DigestListCount++;
-  }
-
-  //
-  // Set Digests Count
-  //
-  WriteUnaligned32 ((UINT32 *)&NoActionEvent->Digests.count, DigestListCount);
-
-  //
-  // Set Event Size
-  //
-  WriteUnaligned32 ((UINT32 *)DigestBuffer, EventSize);
 }
 
 /**
@@ -1247,7 +1171,7 @@ TcgDxeHashLogExtendEvent (
     // Do not do TPM extend for EV_NO_ACTION
     //
     Status = EFI_SUCCESS;
-    InitNoActionEvent (&NoActionEvent, NewEventHdr->EventSize);
+    InitNoActionEvent (&NoActionEvent, NewEventHdr->EventSize, mTcgDxeData.BsCap.ActivePcrBanks);
     if ((Flags & EFI_TCG2_EXTEND_ONLY) == 0) {
       Status = TcgDxeLogHashEvent (&(NoActionEvent.Digests), NewEventHdr, NewEventData);
     }
@@ -1375,11 +1299,9 @@ Tcg2HashLogExtendEvent (
   return Status;
 }
 
-// MU_CHANGE - START - Add a new protocol to support Log-only events.
-
 /**
-  The EFI_MU_TCG2_PROTOCOL MuLogEvent function call provides callers with
-  an interface for only logging events without hashing data nor extending anything to the TPM.
+  Provides callers with an interface for only logging events without hashing 
+  data nor extending anything to the TPM.
 
   @param[in]  This               Indicates the calling context
   @param[in]  DigestList         Pointer to a list of digest values.
@@ -1393,7 +1315,7 @@ Tcg2HashLogExtendEvent (
 EFI_STATUS
 EFIAPI
 Tcg2LogEvent (
-  IN MU_TCG2_PROTOCOL    *This,
+  IN EFI_TCG2_PROTOCOL   *This,
   IN TPML_DIGEST_VALUES  *DigestList,
   IN EFI_TCG2_EVENT      *Event
   )
@@ -1401,7 +1323,7 @@ Tcg2LogEvent (
   EFI_STATUS         Status;
   TCG_PCR_EVENT_HDR  NewEventHdr;
 
-  DEBUG ((DEBUG_VERBOSE, "%a - Entry\n", __FUNCTION__));
+  DEBUG ((DEBUG_VERBOSE, "Tcg2LogEvent ...\n"));
 
   if ((This == NULL) || (Event == NULL) || (DigestList == NULL)) {
     return EFI_INVALID_PARAMETER;
@@ -1425,11 +1347,9 @@ Tcg2LogEvent (
 
   Status = TcgDxeLogHashEvent (DigestList, &NewEventHdr, Event->Event);
 
-  DEBUG ((DEBUG_VERBOSE, "%a - Exit. Status = %r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_VERBOSE, "Tcg2LogEvent - %r\n", Status));
   return Status;
 }
-
-// MU_CHANGE - END - Add a new protocol to support Log-only events.
 
 /**
   This service enables the sending of commands to the TPM.
@@ -1597,17 +1517,11 @@ Tcg2GetResultOfSetActivePcrBanks (
   }
 }
 
-// MU_CHANGE - START - Add a new protocol to support Log-only events.
-MU_TCG2_PROTOCOL  mMuTcg2Protocol = {
-  MU_TCG2_PROTOCOL_VERSION,
-  Tcg2LogEvent
-};
-// MU_CHANGE - END - Add a new protocol to support Log-only events.
-
 EFI_TCG2_PROTOCOL  mTcg2Protocol = {
   Tcg2GetCapability,
   Tcg2GetEventLog,
   Tcg2HashLogExtendEvent,
+  Tcg2LogEvent,
   Tcg2SubmitCommand,
   Tcg2GetActivePCRBanks,
   Tcg2SetActivePCRBanks,
@@ -1787,7 +1701,7 @@ SetupEventLog (
         //
         GuidHob.Guid = GetFirstGuidHob (&gTcg800155PlatformIdEventHobGuid);
         while (GuidHob.Guid != NULL) {
-          InitNoActionEvent (&NoActionEvent, GET_GUID_HOB_DATA_SIZE (GuidHob.Guid));
+          InitNoActionEvent (&NoActionEvent, GET_GUID_HOB_DATA_SIZE (GuidHob.Guid), mTcgDxeData.BsCap.ActivePcrBanks);
 
           Status = TcgDxeLogEvent (
                      mTcg2EventInfo[Index].LogFormat,
@@ -1816,7 +1730,7 @@ SetupEventLog (
           //
           // Initialize StartupLocalityEvent
           //
-          InitNoActionEvent (&NoActionEvent, sizeof (StartupLocalityEvent));
+          InitNoActionEvent (&NoActionEvent, sizeof (StartupLocalityEvent), mTcgDxeData.BsCap.ActivePcrBanks);
 
           //
           // Log EfiStartupLocalityEvent as the second Event
@@ -2825,8 +2739,6 @@ InstallTcg2 (
                   &Handle,
                   &gEfiTcg2ProtocolGuid,
                   &mTcg2Protocol,
-                  &gMuTcg2ProtocolExGuid,
-                  &mMuTcg2Protocol,                         // MU_CHANGE - Add a new protocol to support Log-only events.
                   NULL
                   );
   return Status;
