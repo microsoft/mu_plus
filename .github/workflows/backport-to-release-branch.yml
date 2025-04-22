@@ -1,5 +1,12 @@
 # This workflow moves marked commits from a development branch to a release branch.
 #
+# This workflow requires a GitHub App with the following permissions:
+# - Read and write access to repository contents
+# - Read and write access to pull requests
+#
+# The GitHub App ID and private key should be stored in the repository as a variable named `MU_ACCESS_APP_ID` and a
+# secret named `MU_ACCESS_APP_PRIVATE_KEY` respectively.
+#
 # Each commit in the development branch is cherry-picked to the release branch if the commit originates from a merged
 # PR that is marked for backport.
 #
