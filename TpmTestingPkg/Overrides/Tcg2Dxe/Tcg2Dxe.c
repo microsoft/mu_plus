@@ -54,6 +54,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 // MU_CHANGE [BEGIN] - TPM Replay Feature
 
+#include <Library/Tpm2DebugLib.h> // MU_CHANGE - Use Tpm2DebugLib
 #include <TpmReplayConfig.h>
 
 TPM_REPLAY_CONFIG  mTpmReplayConfig;
@@ -155,26 +156,28 @@ MeasurePeImageAndExtend (
   OUT TPML_DIGEST_VALUES    *DigestList
   );
 
-/**
+// MU_CHANGE BEGIN: Move to Tpm2DebugLib
+// /**
 
-  This function dump raw data.
+//   This function dump raw data.
 
-  @param  Data  raw data
-  @param  Size  raw data size
+//   @param  Data  raw data
+//   @param  Size  raw data size
 
-**/
-VOID
-InternalDumpData (
-  IN UINT8  *Data,
-  IN UINTN  Size
-  )
-{
-  UINTN  Index;
+// **/
+// VOID
+// InternalDumpData (
+//   IN UINT8  *Data,
+//   IN UINTN  Size
+//   )
+// {
+//   UINTN  Index;
 
-  for (Index = 0; Index < Size; Index++) {
-    DEBUG ((DEBUG_INFO, "%02x", (UINTN)Data[Index]));
-  }
-}
+//   for (Index = 0; Index < Size; Index++) {
+//     DEBUG ((DEBUG_INFO, "%02x", (UINTN)Data[Index]));
+//   }
+// }
+// MU_CHANGE END: Move to Tpm2DebugLib
 
 /**
 
@@ -252,40 +255,42 @@ InitNoActionEvent (
   WriteUnaligned32 ((UINT32 *)DigestBuffer, EventSize);
 }
 
-/**
+// MU_CHANGE BEGIN: Move to Tpm2DebugLib
+// /**
 
-  This function dump raw data with colume format.
+//   This function dump raw data with colume format.
 
-  @param  Data  raw data
-  @param  Size  raw data size
+//   @param  Data  raw data
+//   @param  Size  raw data size
 
-**/
-VOID
-InternalDumpHex (
-  IN UINT8  *Data,
-  IN UINTN  Size
-  )
-{
-  UINTN  Index;
-  UINTN  Count;
-  UINTN  Left;
+// **/
+// VOID
+// InternalDumpHex (
+//   IN UINT8  *Data,
+//   IN UINTN  Size
+//   )
+// {
+//   UINTN  Index;
+//   UINTN  Count;
+//   UINTN  Left;
 
-  #define COLUME_SIZE  (16 * 2)
+//   #define COLUME_SIZE  (16 * 2)
 
-  Count = Size / COLUME_SIZE;
-  Left  = Size % COLUME_SIZE;
-  for (Index = 0; Index < Count; Index++) {
-    DEBUG ((DEBUG_INFO, "%04x: ", Index * COLUME_SIZE));
-    InternalDumpData (Data + Index * COLUME_SIZE, COLUME_SIZE);
-    DEBUG ((DEBUG_INFO, "\n"));
-  }
+//   Count = Size / COLUME_SIZE;
+//   Left  = Size % COLUME_SIZE;
+//   for (Index = 0; Index < Count; Index++) {
+//     DEBUG ((DEBUG_INFO, "%04x: ", Index * COLUME_SIZE));
+//     InternalDumpData (Data + Index * COLUME_SIZE, COLUME_SIZE);
+//     DEBUG ((DEBUG_INFO, "\n"));
+//   }
 
-  if (Left != 0) {
-    DEBUG ((DEBUG_INFO, "%04x: ", Index * COLUME_SIZE));
-    InternalDumpData (Data + Index * COLUME_SIZE, Left);
-    DEBUG ((DEBUG_INFO, "\n"));
-  }
-}
+//   if (Left != 0) {
+//     DEBUG ((DEBUG_INFO, "%04x: ", Index * COLUME_SIZE));
+//     InternalDumpData (Data + Index * COLUME_SIZE, Left);
+//     DEBUG ((DEBUG_INFO, "\n"));
+//   }
+// }
+// MU_CHANGE END: Move to Tpm2DebugLib
 
 /**
   Get All processors EFI_CPU_LOCATION in system. LocationBuf is allocated inside the function
@@ -431,78 +436,80 @@ Tcg2GetCapability (
   return EFI_SUCCESS;
 }
 
-/**
-  This function dump PCR event.
+// MU_CHANGE BEGIN: Move to Tpm2DebugLib
+// /**
+//   This function dump PCR event.
 
-  @param[in]  EventHdr     TCG PCR event structure.
-**/
-VOID
-DumpEvent (
-  IN TCG_PCR_EVENT_HDR  *EventHdr
-  )
-{
-  UINTN  Index;
+//   @param[in]  EventHdr     TCG PCR event structure.
+// **/
+// VOID
+// DumpEvent (
+//   IN TCG_PCR_EVENT_HDR  *EventHdr
+//   )
+// {
+//   UINTN  Index;
 
-  DEBUG ((DEBUG_INFO, "  Event:\n"));
-  DEBUG ((DEBUG_INFO, "    PCRIndex  - %d\n", EventHdr->PCRIndex));
-  DEBUG ((DEBUG_INFO, "    EventType - 0x%08x\n", EventHdr->EventType));
-  DEBUG ((DEBUG_INFO, "    Digest    - "));
-  for (Index = 0; Index < sizeof (TCG_DIGEST); Index++) {
-    DEBUG ((DEBUG_INFO, "%02x ", EventHdr->Digest.digest[Index]));
-  }
+//   DEBUG ((DEBUG_INFO, "  Event:\n"));
+//   DEBUG ((DEBUG_INFO, "    PCRIndex  - %d\n", EventHdr->PCRIndex));
+//   DEBUG ((DEBUG_INFO, "    EventType - 0x%08x\n", EventHdr->EventType));
+//   DEBUG ((DEBUG_INFO, "    Digest    - "));
+//   for (Index = 0; Index < sizeof (TCG_DIGEST); Index++) {
+//     DEBUG ((DEBUG_INFO, "%02x ", EventHdr->Digest.digest[Index]));
+//   }
 
-  DEBUG ((DEBUG_INFO, "\n"));
-  DEBUG ((DEBUG_INFO, "    EventSize - 0x%08x\n", EventHdr->EventSize));
-  InternalDumpHex ((UINT8 *)(EventHdr + 1), EventHdr->EventSize);
-}
+//   DEBUG ((DEBUG_INFO, "\n"));
+//   DEBUG ((DEBUG_INFO, "    EventSize - 0x%08x\n", EventHdr->EventSize));
+//   InternalDumpHex ((UINT8 *)(EventHdr + 1), EventHdr->EventSize);
+// }
 
-/**
-  This function dump TCG_EfiSpecIDEventStruct.
+// /**
+//   This function dump TCG_EfiSpecIDEventStruct.
 
-  @param[in]  TcgEfiSpecIdEventStruct     A pointer to TCG_EfiSpecIDEventStruct.
-**/
-VOID
-DumpTcgEfiSpecIdEventStruct (
-  IN TCG_EfiSpecIDEventStruct  *TcgEfiSpecIdEventStruct
-  )
-{
-  TCG_EfiSpecIdEventAlgorithmSize  *DigestSize;
-  UINTN                            Index;
-  UINT8                            *VendorInfoSize;
-  UINT8                            *VendorInfo;
-  UINT32                           NumberOfAlgorithms;
+//   @param[in]  TcgEfiSpecIdEventStruct     A pointer to TCG_EfiSpecIDEventStruct.
+// **/
+// VOID
+// DumpTcgEfiSpecIdEventStruct (
+//   IN TCG_EfiSpecIDEventStruct  *TcgEfiSpecIdEventStruct
+//   )
+// {
+//   TCG_EfiSpecIdEventAlgorithmSize  *DigestSize;
+//   UINTN                            Index;
+//   UINT8                            *VendorInfoSize;
+//   UINT8                            *VendorInfo;
+//   UINT32                           NumberOfAlgorithms;
 
-  DEBUG ((DEBUG_INFO, "  TCG_EfiSpecIDEventStruct:\n"));
-  DEBUG ((DEBUG_INFO, "    signature          - '"));
-  for (Index = 0; Index < sizeof (TcgEfiSpecIdEventStruct->signature); Index++) {
-    DEBUG ((DEBUG_INFO, "%c", TcgEfiSpecIdEventStruct->signature[Index]));
-  }
+//   DEBUG ((DEBUG_INFO, "  TCG_EfiSpecIDEventStruct:\n"));
+//   DEBUG ((DEBUG_INFO, "    signature          - '"));
+//   for (Index = 0; Index < sizeof (TcgEfiSpecIdEventStruct->signature); Index++) {
+//     DEBUG ((DEBUG_INFO, "%c", TcgEfiSpecIdEventStruct->signature[Index]));
+//   }
 
-  DEBUG ((DEBUG_INFO, "'\n"));
-  DEBUG ((DEBUG_INFO, "    platformClass      - 0x%08x\n", TcgEfiSpecIdEventStruct->platformClass));
-  DEBUG ((DEBUG_INFO, "    specVersion        - %d.%d%d\n", TcgEfiSpecIdEventStruct->specVersionMajor, TcgEfiSpecIdEventStruct->specVersionMinor, TcgEfiSpecIdEventStruct->specErrata));
-  DEBUG ((DEBUG_INFO, "    uintnSize          - 0x%02x\n", TcgEfiSpecIdEventStruct->uintnSize));
+//   DEBUG ((DEBUG_INFO, "'\n"));
+//   DEBUG ((DEBUG_INFO, "    platformClass      - 0x%08x\n", TcgEfiSpecIdEventStruct->platformClass));
+//   DEBUG ((DEBUG_INFO, "    specVersion        - %d.%d%d\n", TcgEfiSpecIdEventStruct->specVersionMajor, TcgEfiSpecIdEventStruct->specVersionMinor, TcgEfiSpecIdEventStruct->specErrata));
+//   DEBUG ((DEBUG_INFO, "    uintnSize          - 0x%02x\n", TcgEfiSpecIdEventStruct->uintnSize));
 
-  CopyMem (&NumberOfAlgorithms, TcgEfiSpecIdEventStruct + 1, sizeof (NumberOfAlgorithms));
-  DEBUG ((DEBUG_INFO, "    NumberOfAlgorithms - 0x%08x\n", NumberOfAlgorithms));
+//   CopyMem (&NumberOfAlgorithms, TcgEfiSpecIdEventStruct + 1, sizeof (NumberOfAlgorithms));
+//   DEBUG ((DEBUG_INFO, "    NumberOfAlgorithms - 0x%08x\n", NumberOfAlgorithms));
 
-  DigestSize = (TCG_EfiSpecIdEventAlgorithmSize *)((UINT8 *)TcgEfiSpecIdEventStruct + sizeof (*TcgEfiSpecIdEventStruct) + sizeof (NumberOfAlgorithms));
-  for (Index = 0; Index < NumberOfAlgorithms; Index++) {
-    DEBUG ((DEBUG_INFO, "    digest(%d)\n", Index));
-    DEBUG ((DEBUG_INFO, "      algorithmId      - 0x%04x\n", DigestSize[Index].algorithmId));
-    DEBUG ((DEBUG_INFO, "      digestSize       - 0x%04x\n", DigestSize[Index].digestSize));
-  }
+//   DigestSize = (TCG_EfiSpecIdEventAlgorithmSize *)((UINT8 *)TcgEfiSpecIdEventStruct + sizeof (*TcgEfiSpecIdEventStruct) + sizeof (NumberOfAlgorithms));
+//   for (Index = 0; Index < NumberOfAlgorithms; Index++) {
+//     DEBUG ((DEBUG_INFO, "    digest(%d)\n", Index));
+//     DEBUG ((DEBUG_INFO, "      algorithmId      - 0x%04x\n", DigestSize[Index].algorithmId));
+//     DEBUG ((DEBUG_INFO, "      digestSize       - 0x%04x\n", DigestSize[Index].digestSize));
+//   }
 
-  VendorInfoSize = (UINT8 *)&DigestSize[NumberOfAlgorithms];
-  DEBUG ((DEBUG_INFO, "    VendorInfoSize     - 0x%02x\n", *VendorInfoSize));
-  VendorInfo = VendorInfoSize + 1;
-  DEBUG ((DEBUG_INFO, "    VendorInfo         - "));
-  for (Index = 0; Index < *VendorInfoSize; Index++) {
-    DEBUG ((DEBUG_INFO, "%02x ", VendorInfo[Index]));
-  }
+//   VendorInfoSize = (UINT8 *)&DigestSize[NumberOfAlgorithms];
+//   DEBUG ((DEBUG_INFO, "    VendorInfoSize     - 0x%02x\n", *VendorInfoSize));
+//   VendorInfo = VendorInfoSize + 1;
+//   DEBUG ((DEBUG_INFO, "    VendorInfo         - "));
+//   for (Index = 0; Index < *VendorInfoSize; Index++) {
+//     DEBUG ((DEBUG_INFO, "%02x ", VendorInfo[Index]));
+//   }
 
-  DEBUG ((DEBUG_INFO, "\n"));
-}
+//   DEBUG ((DEBUG_INFO, "\n"));
+// }
+// MU_CHANGE END: Move to Tpm2DebugLib
 
 /**
   This function get size of TCG_EfiSpecIDEventStruct.
@@ -525,184 +532,185 @@ GetTcgEfiSpecIdEventStructSize (
   return sizeof (TCG_EfiSpecIDEventStruct) + sizeof (UINT32) + (NumberOfAlgorithms * sizeof (TCG_EfiSpecIdEventAlgorithmSize)) + sizeof (UINT8) + (*VendorInfoSize);
 }
 
-/**
-  This function dump PCR event 2.
+// MU_CHANGE [BEGIN] - Move to Tpm2DebugLib
+// /**
+//   This function dump PCR event 2.
 
-  @param[in]  TcgPcrEvent2     TCG PCR event 2 structure.
-**/
-VOID
-DumpEvent2 (
-  IN TCG_PCR_EVENT2  *TcgPcrEvent2
-  )
-{
-  UINTN          Index;
-  UINT32         DigestIndex;
-  UINT32         DigestCount;
-  TPMI_ALG_HASH  HashAlgo;
-  UINT32         DigestSize;
-  UINT8          *DigestBuffer;
-  UINT32         EventSize;
-  UINT8          *EventBuffer;
+//   @param[in]  TcgPcrEvent2     TCG PCR event 2 structure.
+// **/
+// VOID
+// DumpEvent2 (
+//   IN TCG_PCR_EVENT2  *TcgPcrEvent2
+//   )
+// {
+//   UINTN          Index;
+//   UINT32         DigestIndex;
+//   UINT32         DigestCount;
+//   TPMI_ALG_HASH  HashAlgo;
+//   UINT32         DigestSize;
+//   UINT8          *DigestBuffer;
+//   UINT32         EventSize;
+//   UINT8          *EventBuffer;
 
-  DEBUG ((DEBUG_INFO, "  Event:\n"));
-  DEBUG ((DEBUG_INFO, "    PCRIndex  - %d\n", TcgPcrEvent2->PCRIndex));
-  DEBUG ((DEBUG_INFO, "    EventType - 0x%08x\n", TcgPcrEvent2->EventType));
+//   DEBUG ((DEBUG_INFO, "  Event:\n"));
+//   DEBUG ((DEBUG_INFO, "    PCRIndex  - %d\n", TcgPcrEvent2->PCRIndex));
+//   DEBUG ((DEBUG_INFO, "    EventType - 0x%08x\n", TcgPcrEvent2->EventType));
 
-  DEBUG ((DEBUG_INFO, "    DigestCount: 0x%08x\n", TcgPcrEvent2->Digest.count));
+//   DEBUG ((DEBUG_INFO, "    DigestCount: 0x%08x\n", TcgPcrEvent2->Digest.count));
 
-  DigestCount  = TcgPcrEvent2->Digest.count;
-  HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
-  DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
-  for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
-    DEBUG ((DEBUG_INFO, "      HashAlgo : 0x%04x\n", HashAlgo));
-    DEBUG ((DEBUG_INFO, "      Digest(%d): ", DigestIndex));
-    DigestSize = GetHashSizeFromAlgo (HashAlgo);
-    for (Index = 0; Index < DigestSize; Index++) {
-      DEBUG ((DEBUG_INFO, "%02x ", DigestBuffer[Index]));
-    }
+//   DigestCount  = TcgPcrEvent2->Digest.count;
+//   HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
+//   DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
+//   for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
+//     DEBUG ((DEBUG_INFO, "      HashAlgo : 0x%04x\n", HashAlgo));
+//     DEBUG ((DEBUG_INFO, "      Digest(%d): ", DigestIndex));
+//     DigestSize = GetHashSizeFromAlgo (HashAlgo);
+//     for (Index = 0; Index < DigestSize; Index++) {
+//       DEBUG ((DEBUG_INFO, "%02x ", DigestBuffer[Index]));
+//     }
 
-    DEBUG ((DEBUG_INFO, "\n"));
-    //
-    // Prepare next
-    //
-    CopyMem (&HashAlgo, DigestBuffer + DigestSize, sizeof (TPMI_ALG_HASH));
-    DigestBuffer = DigestBuffer + DigestSize + sizeof (TPMI_ALG_HASH);
-  }
+//     DEBUG ((DEBUG_INFO, "\n"));
+//     //
+//     // Prepare next
+//     //
+//     CopyMem (&HashAlgo, DigestBuffer + DigestSize, sizeof (TPMI_ALG_HASH));
+//     DigestBuffer = DigestBuffer + DigestSize + sizeof (TPMI_ALG_HASH);
+//   }
 
-  DEBUG ((DEBUG_INFO, "\n"));
-  DigestBuffer = DigestBuffer - sizeof (TPMI_ALG_HASH);
+//   DEBUG ((DEBUG_INFO, "\n"));
+//   DigestBuffer = DigestBuffer - sizeof (TPMI_ALG_HASH);
 
-  CopyMem (&EventSize, DigestBuffer, sizeof (TcgPcrEvent2->EventSize));
-  DEBUG ((DEBUG_INFO, "    EventSize - 0x%08x\n", EventSize));
-  EventBuffer = DigestBuffer + sizeof (TcgPcrEvent2->EventSize);
-  InternalDumpHex (EventBuffer, EventSize);
-}
+//   CopyMem (&EventSize, DigestBuffer, sizeof (TcgPcrEvent2->EventSize));
+//   DEBUG ((DEBUG_INFO, "    EventSize - 0x%08x\n", EventSize));
+//   EventBuffer = DigestBuffer + sizeof (TcgPcrEvent2->EventSize);
+//   InternalDumpHex (EventBuffer, EventSize);
+// }
 
-/**
-  This function returns size of TCG PCR event 2.
+// /**
+//   This function returns size of TCG PCR event 2.
 
-  @param[in]  TcgPcrEvent2     TCG PCR event 2 structure.
+//   @param[in]  TcgPcrEvent2     TCG PCR event 2 structure.
 
-  @return size of TCG PCR event 2.
-**/
-UINTN
-GetPcrEvent2Size (
-  IN TCG_PCR_EVENT2  *TcgPcrEvent2
-  )
-{
-  UINT32         DigestIndex;
-  UINT32         DigestCount;
-  TPMI_ALG_HASH  HashAlgo;
-  UINT32         DigestSize;
-  UINT8          *DigestBuffer;
-  UINT32         EventSize;
-  UINT8          *EventBuffer;
+//   @return size of TCG PCR event 2.
+// **/
+// UINTN
+// GetPcrEvent2Size (
+//   IN TCG_PCR_EVENT2  *TcgPcrEvent2
+//   )
+// {
+//   UINT32         DigestIndex;
+//   UINT32         DigestCount;
+//   TPMI_ALG_HASH  HashAlgo;
+//   UINT32         DigestSize;
+//   UINT8          *DigestBuffer;
+//   UINT32         EventSize;
+//   UINT8          *EventBuffer;
 
-  DigestCount  = TcgPcrEvent2->Digest.count;
-  HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
-  DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
-  for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
-    DigestSize = GetHashSizeFromAlgo (HashAlgo);
-    //
-    // Prepare next
-    //
-    CopyMem (&HashAlgo, DigestBuffer + DigestSize, sizeof (TPMI_ALG_HASH));
-    DigestBuffer = DigestBuffer + DigestSize + sizeof (TPMI_ALG_HASH);
-  }
+//   DigestCount  = TcgPcrEvent2->Digest.count;
+//   HashAlgo     = TcgPcrEvent2->Digest.digests[0].hashAlg;
+//   DigestBuffer = (UINT8 *)&TcgPcrEvent2->Digest.digests[0].digest;
+//   for (DigestIndex = 0; DigestIndex < DigestCount; DigestIndex++) {
+//     DigestSize = GetHashSizeFromAlgo (HashAlgo);
+//     //
+//     // Prepare next
+//     //
+//     CopyMem (&HashAlgo, DigestBuffer + DigestSize, sizeof (TPMI_ALG_HASH));
+//     DigestBuffer = DigestBuffer + DigestSize + sizeof (TPMI_ALG_HASH);
+//   }
 
-  DigestBuffer = DigestBuffer - sizeof (TPMI_ALG_HASH);
+//   DigestBuffer = DigestBuffer - sizeof (TPMI_ALG_HASH);
 
-  CopyMem (&EventSize, DigestBuffer, sizeof (TcgPcrEvent2->EventSize));
-  EventBuffer = DigestBuffer + sizeof (TcgPcrEvent2->EventSize);
+//   CopyMem (&EventSize, DigestBuffer, sizeof (TcgPcrEvent2->EventSize));
+//   EventBuffer = DigestBuffer + sizeof (TcgPcrEvent2->EventSize);
 
-  return (UINTN)EventBuffer + EventSize - (UINTN)TcgPcrEvent2;
-}
+//   return (UINTN)EventBuffer + EventSize - (UINTN)TcgPcrEvent2;
+// }
 
-/**
-  This function dump event log.
+// /**
+//   This function dump event log.
 
-  @param[in]  EventLogFormat     The type of the event log for which the information is requested.
-  @param[in]  EventLogLocation   A pointer to the memory address of the event log.
-  @param[in]  EventLogLastEntry  If the Event Log contains more than one entry, this is a pointer to the
-                                 address of the start of the last entry in the event log in memory.
-  @param[in]  FinalEventsTable   A pointer to the memory address of the final event table.
-**/
-VOID
-DumpEventLog (
-  IN EFI_TCG2_EVENT_LOG_FORMAT    EventLogFormat,
-  IN EFI_PHYSICAL_ADDRESS         EventLogLocation,
-  IN EFI_PHYSICAL_ADDRESS         EventLogLastEntry,
-  IN EFI_TCG2_FINAL_EVENTS_TABLE  *FinalEventsTable
-  )
-{
-  TCG_PCR_EVENT_HDR         *EventHdr;
-  TCG_PCR_EVENT2            *TcgPcrEvent2;
-  TCG_EfiSpecIDEventStruct  *TcgEfiSpecIdEventStruct;
-  UINT64                    NumberOfEvents; // MU_CHANGE: CodeQL
+//   @param[in]  EventLogFormat     The type of the event log for which the information is requested.
+//   @param[in]  EventLogLocation   A pointer to the memory address of the event log.
+//   @param[in]  EventLogLastEntry  If the Event Log contains more than one entry, this is a pointer to the
+//                                  address of the start of the last entry in the event log in memory.
+//   @param[in]  FinalEventsTable   A pointer to the memory address of the final event table.
+// **/
+// VOID
+// DumpEventLog (
+//   IN EFI_TCG2_EVENT_LOG_FORMAT    EventLogFormat,
+//   IN EFI_PHYSICAL_ADDRESS         EventLogLocation,
+//   IN EFI_PHYSICAL_ADDRESS         EventLogLastEntry,
+//   IN EFI_TCG2_FINAL_EVENTS_TABLE  *FinalEventsTable
+//   )
+// {
+//   TCG_PCR_EVENT_HDR         *EventHdr;
+//   TCG_PCR_EVENT2            *TcgPcrEvent2;
+//   TCG_EfiSpecIDEventStruct  *TcgEfiSpecIdEventStruct;
+//   UINT64                    NumberOfEvents; // MU_CHANGE - CodeQL Change - comparison-with-wider-type
 
-  DEBUG ((DEBUG_INFO, "EventLogFormat: (0x%x)\n", EventLogFormat));
+//   DEBUG ((DEBUG_INFO, "EventLogFormat: (0x%x)\n", EventLogFormat));
 
-  switch (EventLogFormat) {
-    case EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2:
-      EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)EventLogLocation;
-      // MU_CHANGE: CodeQL
-      while ((EFI_PHYSICAL_ADDRESS)(UINTN)EventHdr <= EventLogLastEntry) {
-        DumpEvent (EventHdr);
-        EventHdr = (TCG_PCR_EVENT_HDR *)((UINTN)EventHdr + sizeof (TCG_PCR_EVENT_HDR) + EventHdr->EventSize);
-      }
+//   switch (EventLogFormat) {
+//     case EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2:
+//       EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)EventLogLocation;
+//       while ((EFI_PHYSICAL_ADDRESS)(UINTN)EventHdr <= EventLogLastEntry) {
+//         // MU_CHANGE - CodeQL Change
+//         DumpEvent (EventHdr);
+//         EventHdr = (TCG_PCR_EVENT_HDR *)((UINTN)EventHdr + sizeof (TCG_PCR_EVENT_HDR) + EventHdr->EventSize);
+//       }
 
-      if (FinalEventsTable == NULL) {
-        DEBUG ((DEBUG_INFO, "FinalEventsTable: NOT FOUND\n"));
-      } else {
-        DEBUG ((DEBUG_INFO, "FinalEventsTable:    (0x%x)\n", FinalEventsTable));
-        DEBUG ((DEBUG_INFO, "  Version:           (0x%x)\n", FinalEventsTable->Version));
-        DEBUG ((DEBUG_INFO, "  NumberOfEvents:    (0x%x)\n", FinalEventsTable->NumberOfEvents));
+//       if (FinalEventsTable == NULL) {
+//         DEBUG ((DEBUG_INFO, "FinalEventsTable: NOT FOUND\n"));
+//       } else {
+//         DEBUG ((DEBUG_INFO, "FinalEventsTable:    (0x%x)\n", FinalEventsTable));
+//         DEBUG ((DEBUG_INFO, "  Version:           (0x%x)\n", FinalEventsTable->Version));
+//         DEBUG ((DEBUG_INFO, "  NumberOfEvents:    (0x%x)\n", FinalEventsTable->NumberOfEvents));
 
-        EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)(FinalEventsTable + 1);
-        for (NumberOfEvents = 0; NumberOfEvents < FinalEventsTable->NumberOfEvents; NumberOfEvents++) {
-          DumpEvent (EventHdr);
-          EventHdr = (TCG_PCR_EVENT_HDR *)((UINTN)EventHdr + sizeof (TCG_PCR_EVENT_HDR) + EventHdr->EventSize);
-        }
-      }
+//         EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)(FinalEventsTable + 1);
+//         for (NumberOfEvents = 0; NumberOfEvents < FinalEventsTable->NumberOfEvents; NumberOfEvents++) {
+//           DumpEvent (EventHdr);
+//           EventHdr = (TCG_PCR_EVENT_HDR *)((UINTN)EventHdr + sizeof (TCG_PCR_EVENT_HDR) + EventHdr->EventSize);
+//         }
+//       }
 
-      break;
-    case EFI_TCG2_EVENT_LOG_FORMAT_TCG_2:
-      //
-      // Dump first event
-      //
-      EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)EventLogLocation;
-      DumpEvent (EventHdr);
+//       break;
+//     case EFI_TCG2_EVENT_LOG_FORMAT_TCG_2:
+//       //
+//       // Dump first event
+//       //
+//       EventHdr = (TCG_PCR_EVENT_HDR *)(UINTN)EventLogLocation;
+//       DumpEvent (EventHdr);
 
-      TcgEfiSpecIdEventStruct = (TCG_EfiSpecIDEventStruct *)(EventHdr + 1);
-      DumpTcgEfiSpecIdEventStruct (TcgEfiSpecIdEventStruct);
+//       TcgEfiSpecIdEventStruct = (TCG_EfiSpecIDEventStruct *)(EventHdr + 1);
+//       DumpTcgEfiSpecIdEventStruct (TcgEfiSpecIdEventStruct);
 
-      TcgPcrEvent2 = (TCG_PCR_EVENT2 *)((UINTN)TcgEfiSpecIdEventStruct + GetTcgEfiSpecIdEventStructSize (TcgEfiSpecIdEventStruct));
-      // MU_CHANGE: CodeQL
-      while ((EFI_PHYSICAL_ADDRESS)(UINTN)TcgPcrEvent2 <= EventLogLastEntry) {
-        DumpEvent2 (TcgPcrEvent2);
-        TcgPcrEvent2 = (TCG_PCR_EVENT2 *)((UINTN)TcgPcrEvent2 + GetPcrEvent2Size (TcgPcrEvent2));
-      }
+//       TcgPcrEvent2 = (TCG_PCR_EVENT2 *)((UINTN)TcgEfiSpecIdEventStruct + GetTcgEfiSpecIdEventStructSize (TcgEfiSpecIdEventStruct));
+//       while ((EFI_PHYSICAL_ADDRESS)(UINTN)TcgPcrEvent2 <= EventLogLastEntry) {
+//         // MU_CHANGE -  CodeQL
+//         DumpEvent2 (TcgPcrEvent2);
+//         TcgPcrEvent2 = (TCG_PCR_EVENT2 *)((UINTN)TcgPcrEvent2 + GetPcrEvent2Size (TcgPcrEvent2));
+//       }
 
-      if (FinalEventsTable == NULL) {
-        DEBUG ((DEBUG_INFO, "FinalEventsTable: NOT FOUND\n"));
-      } else {
-        DEBUG ((DEBUG_INFO, "FinalEventsTable:    (0x%x)\n", FinalEventsTable));
-        DEBUG ((DEBUG_INFO, "  Version:           (0x%x)\n", FinalEventsTable->Version));
-        DEBUG ((DEBUG_INFO, "  NumberOfEvents:    (0x%x)\n", FinalEventsTable->NumberOfEvents));
+//       if (FinalEventsTable == NULL) {
+//         DEBUG ((DEBUG_INFO, "FinalEventsTable: NOT FOUND\n"));
+//       } else {
+//         DEBUG ((DEBUG_INFO, "FinalEventsTable:    (0x%x)\n", FinalEventsTable));
+//         DEBUG ((DEBUG_INFO, "  Version:           (0x%x)\n", FinalEventsTable->Version));
+//         DEBUG ((DEBUG_INFO, "  NumberOfEvents:    (0x%x)\n", FinalEventsTable->NumberOfEvents));
 
-        TcgPcrEvent2 = (TCG_PCR_EVENT2 *)(UINTN)(FinalEventsTable + 1);
-        // MU_CHANGE: CodeQL
-        for (NumberOfEvents = 0; NumberOfEvents < FinalEventsTable->NumberOfEvents; NumberOfEvents++) {
-          DumpEvent2 (TcgPcrEvent2);
-          TcgPcrEvent2 = (TCG_PCR_EVENT2 *)((UINTN)TcgPcrEvent2 + GetPcrEvent2Size (TcgPcrEvent2));
-        }
-      }
+//         TcgPcrEvent2 = (TCG_PCR_EVENT2 *)(UINTN)(FinalEventsTable + 1);
+//         for (NumberOfEvents = 0; NumberOfEvents < FinalEventsTable->NumberOfEvents; NumberOfEvents++) {
+//           DumpEvent2 (TcgPcrEvent2);
+//           TcgPcrEvent2 = (TCG_PCR_EVENT2 *)((UINTN)TcgPcrEvent2 + GetPcrEvent2Size (TcgPcrEvent2));
+//         }
+//       }
 
-      break;
-  }
+//       break;
+//   }
 
-  return;
-}
+//   return;
+// }
+// MU_CHANGE END: Move to Tpm2DebugLib
 
 /**
   The EFI_TCG2_PROTOCOL Get Event Log function call allows a caller to
