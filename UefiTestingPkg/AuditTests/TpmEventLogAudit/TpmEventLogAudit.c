@@ -155,7 +155,7 @@ GetPcrEvent2Size (
   @param[in]  FinalEventsTable   A pointer to the memory address of the final event table.
 **/
 EFI_STATUS
-DumpEventLog (
+TpmAuditDumpEventLog  (
   IN EFI_TCG2_EVENT_LOG_FORMAT    EventLogFormat,
   IN EFI_PHYSICAL_ADDRESS         EventLogLocation,
   IN EFI_PHYSICAL_ADDRESS         EventLogLastEntry,
@@ -332,7 +332,7 @@ UefiTestApp (
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_ERROR, "Failed to retrieve the event log.  %r\n", Status));
     } else {
-      Status = DumpEventLog (RequestedFormat, EventLogLocation, EventLogLastEntry, NULL);
+      Status = TpmAuditDumpEventLog (RequestedFormat, EventLogLocation, EventLogLastEntry, NULL);
     }
   }
 
