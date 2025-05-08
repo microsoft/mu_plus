@@ -222,8 +222,6 @@ OutputUnitTestFrameworkReport (
     }
 
     SuiteNode = New_TestSuiteNodeInList (Doc, SuiteName, SuitePackage, Id);
-    FreePool (SuiteName);
-    FreePool (SuitePackage);
     if (SuiteNode == NULL) {
       DEBUG ((DEBUG_ERROR, "%a Failed to create new test suite\n", __FUNCTION__));
       Status = EFI_DEVICE_ERROR;
@@ -262,18 +260,6 @@ OutputUnitTestFrameworkReport (
 
       // TODO:  need to handle timing.  Right now its hard coded to 1 second.
       New_TestCaseInSuite (SuiteNode, Name, ClassName, 1, Log, FailureMsg, GetStringForFailureType (Test->UT.FailureType), Skipped);
-
-      if (Name != NULL) {
-        FreePool (Name);
-      }
-
-      if (Log != NULL) {
-        FreePool (Log);
-      }
-
-      if (ClassName != NULL) {
-        FreePool (ClassName);
-      }
     } // End Test iteration
 
     Status = AddTestSuiteStats (SuiteNode, TotalTests, TotalFailures, TotalSkips, TotalErrors);
