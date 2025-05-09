@@ -355,21 +355,26 @@ FindRule (
   OUT        POLICY_VALUE_HEADER  **Value
   )
 {
-  UINT16  RulesCount       = Policy->RulesCount;
-  UINTN   RulesSize        = RulesCount * sizeof (RULE);
-  UINTN   ValueTableOffset = sizeof (MfciPolicyBlob) + RulesSize;
-  CHAR16  LocalString[POLICY_STRING_MAX_LENGTH];
-  CHAR16  *SubKeyExpected;
-  CHAR16  *ValueNameExpected;
+  EFI_STATUS  Status;
+  UINT16      RulesCount       = Policy->RulesCount;
+  UINTN       RulesSize        = RulesCount * sizeof (RULE);
+  UINTN       ValueTableOffset = sizeof (MfciPolicyBlob) + RulesSize;
+  CHAR16      LocalString[POLICY_STRING_MAX_LENGTH];
+  CHAR16      *SubKeyExpected;
+  CHAR16      *ValueNameExpected;
 
   if ((Policy == NULL) || (MfciPolicyName == NULL) || (Value == NULL)) {
     DEBUG ((DEBUG_ERROR, "Policy is NULL, Name is NULL, or Value is NULL\n"));
     return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((DEBUG_VERBOSE, "Searching for: '%s'\n", MfciPolicyName));
+  Status = StrCpyS (LocalString, sizeof (LocalString), MfciPolicyName);
+  if (EFI_ERROR (Status)) {
+    return EFI_COMPROMISED_DATA;
+  }
 
-  StrCpyS (LocalString, sizeof (LocalString), MfciPolicyName);
+  DEBUG ((DEBUG_VERBOSE, "Searching for: '%s'\n", LocalString));
+
   SplitPolicyName (LocalString, &SubKeyExpected, &ValueNameExpected);
   DEBUG ((DEBUG_VERBOSE, "Split SubKeyName '%s' & ValueName '%s'\n", SubKeyExpected, ValueNameExpected));
 
@@ -378,10 +383,10 @@ FindRule (
 
   for (UINT16 i = 0; i < RulesCount; i++) {
     RULE  *Rule = &Rules[i];
-    DEBUG ((DEBUG_VERBOSE, "Rule #: %d  Rule* 0x%p\n", i, Rule));
+    DEBUG ((DEBUG_VERBOSE, "Rule #: %u  Rule* 0x%p\n", i, Rule));
 
     if (Rule->RootKey != UEFI_POLICIES_ROOT_KEY) {
-      DEBUG ((DEBUG_ERROR, "Incorrect Root Key found: %x\n", Rule->RootKey));
+      DEBUG ((DEBUG_ERROR, "Incorrect Root Key found: 0x%x\n", Rule->RootKey));
       continue;
     }
 
