@@ -388,7 +388,6 @@ FindRule (
     POLICY_STRING  *PolicyString = (POLICY_STRING *)(ValueTable + Rule->OffsetToSubKeyName);
     CONST CHAR16   *SubKeyName   = PolicyString->String;
     CONST UINT16   SubKeyLength  = PolicyString->StringLength / sizeof (CHAR16);
-    DEBUG ((DEBUG_VERBOSE, "SubKeyLength and Name are %d and '%s'\n", SubKeyLength, SubKeyName));
     if (0 != StrnCmp (SubKeyExpected, SubKeyName, SubKeyLength)) {
       continue;
     }
