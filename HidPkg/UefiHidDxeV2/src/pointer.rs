@@ -110,34 +110,49 @@ impl PointerHidHandler {
                 if let ReportField::Variable(field) = field {
                     match field.usage.into() {
                         GENERIC_DESKTOP_X => {
-                            let field_handler =
-                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::x_axis_handler };
-                            report_data.relevant_fields.push(field_handler);
-                            self.supported_usages.insert(field.usage);
+                            if self.supported_usages.insert(field.usage) {
+                                let field_handler =
+                                    ReportFieldWithHandler { field: field.clone(), report_handler: Self::x_axis_handler };
+                                report_data.relevant_fields.push(field_handler);
+                            } else {
+                                debugln!(DEBUG_VERBOSE, "usage 0x{:X} not inserted, duplicated", field.usage.id());
+                            }
                         }
                         GENERIC_DESKTOP_Y => {
-                            let field_handler =
-                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::y_axis_handler };
-                            report_data.relevant_fields.push(field_handler);
-                            self.supported_usages.insert(field.usage);
+                            if self.supported_usages.insert(field.usage) {
+                                let field_handler =
+                                    ReportFieldWithHandler { field: field.clone(), report_handler: Self::y_axis_handler };
+                                report_data.relevant_fields.push(field_handler);
+                            } else {
+                                debugln!(DEBUG_VERBOSE, "usage 0x{:X} not inserted, duplicated", field.usage.id());
+                            }
                         }
                         GENERIC_DESKTOP_Z | GENERIC_DESKTOP_WHEEL => {
-                            let field_handler =
-                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::z_axis_handler };
-                            report_data.relevant_fields.push(field_handler);
-                            self.supported_usages.insert(field.usage);
+                            if self.supported_usages.insert(field.usage) {
+                                let field_handler =
+                                    ReportFieldWithHandler { field: field.clone(), report_handler: Self::z_axis_handler };
+                                report_data.relevant_fields.push(field_handler);
+                            } else {
+                                debugln!(DEBUG_VERBOSE, "usage 0x{:X} not inserted, duplicated", field.usage.id());
+                            }
                         }
                         BUTTON_MIN..=BUTTON_MAX => {
-                            let field_handler =
-                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
-                            report_data.relevant_fields.push(field_handler);
-                            self.supported_usages.insert(field.usage);
+                            if self.supported_usages.insert(field.usage) {
+                                let field_handler =
+                                    ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
+                                report_data.relevant_fields.push(field_handler);
+                            } else {
+                                debugln!(DEBUG_VERBOSE, "usage 0x{:X} not inserted, duplicated", field.usage.id());
+                            }
                         }
                         DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX => {
-                            let field_handler =
-                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
-                            report_data.relevant_fields.push(field_handler);
-                            self.supported_usages.insert(field.usage);
+                            if self.supported_usages.insert(field.usage) {
+                                let field_handler =
+                                    ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
+                                report_data.relevant_fields.push(field_handler);
+                            } else {
+                                debugln!(DEBUG_VERBOSE, "usage 0x{:X} not inserted, duplicated", field.usage.id());
+                            }
                         }
                         _ => (), //other usages irrelevant
                     }
