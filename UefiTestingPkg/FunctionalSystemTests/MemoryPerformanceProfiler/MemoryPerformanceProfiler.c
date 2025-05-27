@@ -13,14 +13,22 @@
 #define ONE_GIGABYTE           (1024 * 1024 * 1024)
 #define ONE_GIGABYTE_IN_PAGES  (ONE_GIGABYTE / EFI_PAGE_SIZE)
 
+typedef
+EFI_STATUS
+(EFIAPI *ALLOCATE_ANY_PAGES_FUNC)(
+  VOID
+  );
+
+typedef
+EFI_STATUS
+(EFIAPI *ALLOCATE_BY_ADDRESS_FUNC)(
+  EFI_PHYSICAL_ADDRESS  StartAddress
+  );
+
 typedef struct {
-  UINT64    RequiredMemoryInGB;
-  EFI_STATUS            (*AllocateAnyPagesFunc)(
-    VOID
-    );
-  EFI_STATUS            (*AllocateByAddressFunc)(
-    EFI_PHYSICAL_ADDRESS
-    );
+  UINT64                      RequiredMemoryInGB;
+  ALLOCATE_ANY_PAGES_FUNC     AllocateAnyPagesFunc;
+  ALLOCATE_BY_ADDRESS_FUNC    AllocateByAddressFunc;
 } AllocatePageTests;
 
 VOID
@@ -293,16 +301,16 @@ RecordMemoryMap (
 EFI_STATUS
 EFIAPI
 RunStressTest (
-  UINT64                   RequiredMemoryInGB,
-  EFI_STATUS            (  *AllocateAnyPagesFunc )(VOID),
-  EFI_STATUS            (  *AllocateByAddressFunc )(EFI_PHYSICAL_ADDRESS),
-  UINT64                   AvailableMemory
+  UINT64                    RequiredMemoryInGB,
+  ALLOCATE_ANY_PAGES_FUNC   AllocateAnyPagesFunc,
+  ALLOCATE_BY_ADDRESS_FUNC  AllocateByAddressFunc,
+  UINT64                    AvailableMemory
   )
 {
   EFI_STATUS            Status;
-  UINTN                 Start;
-  UINTN                 End;
-  UINTN                 ElapsedTime;
+  UINT64                Start;
+  UINT64                End;
+  UINT64                ElapsedTime;
   EFI_PHYSICAL_ADDRESS  FreeAddress;
   UINT64                PagesPerGB;
 
