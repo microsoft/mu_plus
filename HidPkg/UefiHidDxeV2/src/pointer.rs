@@ -40,6 +40,7 @@ const BUTTON_MIN: u32 = 0x00090001;
 const BUTTON_MAX: u32 = 0x00090020; //Per spec, the Absolute Pointer protocol supports a 32-bit button state field.
 const DIGITIZER_SWITCH_MIN: u32 = 0x000d0042;
 const DIGITIZER_SWITCH_MAX: u32 = 0x000d0046;
+const DIGITIZER_CONTACT_COUNT: u32 = 0x000d0054;
 
 // number of points on the X/Y axis for this implementation.
 const AXIS_RESOLUTION: u64 = 1024;
@@ -60,6 +61,16 @@ struct PointerReportData {
     relevant_fields: Vec<ReportFieldWithHandler>,
 }
 
+// Defines counters for determining how many pointers need to be handled
+#[derive(Debug, Default, Clone)]
+struct UsageUpdateCounter {
+    x: u8,
+    y: u8,
+    z: u8,
+    button: u8,
+    switch: u8,
+}
+
 /// Pointer HID Handler
 pub struct PointerHidHandler {
     boot_services: &'static dyn UefiBootServices,
@@ -70,6 +81,7 @@ pub struct PointerHidHandler {
     report_id_present: bool,
     state_changed: bool,
     current_state: protocols::absolute_pointer::State,
+    contact_count: u8,
 }
 
 impl PointerHidHandler {
@@ -84,6 +96,7 @@ impl PointerHidHandler {
             report_id_present: false,
             state_changed: false,
             current_state: Default::default(),
+            contact_count: 0xFF, // If HID device's report doesn't contain the contact count usage(ex: mouse), leave it as 0xFF
         };
         handler.reset_state();
         handler
@@ -109,35 +122,50 @@ impl PointerHidHandler {
             for field in &report.fields {
                 if let ReportField::Variable(field) = field {
                     match field.usage.into() {
+                        DIGITIZER_CONTACT_COUNT => {
+                            let field_handler = ReportFieldWithHandler {
+                                field: field.clone(),
+                                report_handler: Self::contact_count_handler,
+                            };
+                            // Always check the Contact Count(if exist) first before handling any input pointer data
+                            report_data.relevant_fields.insert(0, field_handler);
+                            self.supported_usages.insert(field.usage);
+                            debugln!(DEBUG_VERBOSE, "usage 0x{:X} inserted", field.usage.id());
+                        }
                         GENERIC_DESKTOP_X => {
                             let field_handler =
                                 ReportFieldWithHandler { field: field.clone(), report_handler: Self::x_axis_handler };
                             report_data.relevant_fields.push(field_handler);
                             self.supported_usages.insert(field.usage);
+                            debugln!(DEBUG_VERBOSE, "usage 0x{:X} inserted", field.usage.id());
                         }
                         GENERIC_DESKTOP_Y => {
                             let field_handler =
                                 ReportFieldWithHandler { field: field.clone(), report_handler: Self::y_axis_handler };
                             report_data.relevant_fields.push(field_handler);
                             self.supported_usages.insert(field.usage);
+                            debugln!(DEBUG_VERBOSE, "usage 0x{:X} inserted", field.usage.id());
                         }
                         GENERIC_DESKTOP_Z | GENERIC_DESKTOP_WHEEL => {
                             let field_handler =
                                 ReportFieldWithHandler { field: field.clone(), report_handler: Self::z_axis_handler };
                             report_data.relevant_fields.push(field_handler);
                             self.supported_usages.insert(field.usage);
+                            debugln!(DEBUG_VERBOSE, "usage 0x{:X} inserted", field.usage.id());
                         }
                         BUTTON_MIN..=BUTTON_MAX => {
                             let field_handler =
                                 ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
                             report_data.relevant_fields.push(field_handler);
                             self.supported_usages.insert(field.usage);
+                            debugln!(DEBUG_VERBOSE, "usage 0x{:X} inserted", field.usage.id());
                         }
                         DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX => {
                             let field_handler =
                                 ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
                             report_data.relevant_fields.push(field_handler);
                             self.supported_usages.insert(field.usage);
+                            debugln!(DEBUG_VERBOSE, "usage 0x{:X} inserted", field.usage.id());
                         }
                         _ => (), //other usages irrelevant
                     }
@@ -233,12 +261,21 @@ impl PointerHidHandler {
         }
     }
 
+    // Get the contact count
+    fn contact_count_handler(&mut self, field: VariableField, report: &[u8]) {
+        if let Some(contact_count) = field.field_value(report) {
+            debugln!(DEBUG_VERBOSE, "contact_count: {}", contact_count);
+            self.contact_count = contact_count as u8;
+        }
+    }
+
     fn reset_state(&mut self) {
         self.current_state = Default::default();
         // initialize pointer to center of screen
         self.current_state.current_x = CENTER;
         self.current_state.current_y = CENTER;
         self.state_changed = false;
+        self.contact_count = 0xFF;
     }
 }
 
@@ -272,6 +309,9 @@ impl HidReportReceiver for PointerHidHandler {
             }
 
             if let Some(report_data) = self.input_reports.get(&report_id).cloned() {
+                // reset all counters of contact count for a new input report
+                let mut counters = UsageUpdateCounter::default();
+
                 if report.len() != report_data.report_size {
                     //Some devices report extra bytes in their reports. Warn about this, but try and process anyway.
                     debugln!(
@@ -289,7 +329,48 @@ impl HidReportReceiver for PointerHidHandler {
 
                 // hand the report data to the handler for each relevant field for field-specific processing.
                 for field in report_data.relevant_fields {
-                    (field.report_handler)(self, field.field, report);
+                    match field.field.usage.into() {
+                        DIGITIZER_CONTACT_COUNT => {
+                            debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                            (field.report_handler)(self, field.field, report);
+                        }
+                        GENERIC_DESKTOP_X => {
+                            if counters.x < self.contact_count {
+                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                                (field.report_handler)(self, field.field, report);
+                                counters.x += 1;
+                            }
+                        }
+                        GENERIC_DESKTOP_Y => {
+                            if counters.y < self.contact_count {
+                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                                (field.report_handler)(self, field.field, report);
+                                counters.y += 1;
+                            }
+                        }
+                        GENERIC_DESKTOP_Z | GENERIC_DESKTOP_WHEEL => {
+                            if counters.z < self.contact_count {
+                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                                (field.report_handler)(self, field.field, report);
+                                counters.z += 1;
+                            }
+                        }
+                        BUTTON_MIN..=BUTTON_MAX => {
+                            if counters.button < self.contact_count {
+                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                                (field.report_handler)(self, field.field, report);
+                                counters.button += 1;
+                            }
+                        }
+                        DIGITIZER_SWITCH_MIN..=DIGITIZER_SWITCH_MAX => {
+                            if counters.switch < self.contact_count {
+                                debugln!(DEBUG_VERBOSE, "handler for usage 0x{:X}", field.field.usage.id());
+                                (field.report_handler)(self, field.field, report);
+                                counters.switch += 1;
+                            }
+                        }
+                        _ => (), //other usages irrelevant
+                    }
                 }
             }
         }
