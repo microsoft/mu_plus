@@ -264,7 +264,7 @@ impl PointerHidHandler {
     // Get the contact count
     fn contact_count_handler(&mut self, field: VariableField, report: &[u8]) {
         if let Some(contact_count) = field.field_value(report) {
-            debugln!(DEBUG_ERROR, "contact_count: {}", contact_count);
+            debugln!(DEBUG_VERBOSE, "contact_count: {}", contact_count);
             self.contact_count = contact_count as u8;
         }
     }
