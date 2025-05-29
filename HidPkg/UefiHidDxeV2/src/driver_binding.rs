@@ -111,7 +111,7 @@ impl UefiDriverBinding {
     /// uefi_binding must be the same pointer returned from [`Self::install`].
     pub unsafe fn uninstall(uefi_binding: *mut UefiDriverBinding) -> Result<Self, efi::Status> {
         let ptr = uefi_binding;
-        let binding = Box::from_raw(uefi_binding);
+        let binding = unsafe { Box::from_raw(uefi_binding) };
         let status = binding.boot_services.uninstall_protocol_interface(
             binding.uefi_binding.driver_binding_handle,
             &protocols::driver_binding::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,

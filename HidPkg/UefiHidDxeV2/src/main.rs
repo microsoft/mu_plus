@@ -48,7 +48,7 @@ mod uefi_entry {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "efiapi" fn efi_main(
         image_handle: efi::Handle,
         system_table: *const system::SystemTable,
