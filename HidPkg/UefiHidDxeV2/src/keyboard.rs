@@ -456,7 +456,7 @@ impl KeyboardHidHandler {
     ) -> usize {
         let key_data = OrdKeyData(key_data);
         for (handle, entry) in &self.notification_callbacks {
-            if entry.0 == key_data && entry.1 == key_notification_function {
+            if entry.0 == key_data && ptr::fn_addr_eq(entry.1, key_notification_function) {
                 //this callback already exists for this key, so return the current handle.
                 return *handle;
             }
