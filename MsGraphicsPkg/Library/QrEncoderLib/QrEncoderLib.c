@@ -372,12 +372,10 @@ PolynomialDivision (
 
   // MU_CHANGE [END] - CodeQL change
 
-  for (i = 0; i < DividendCount; i++) {
-    TempRemainder[i] = Dividend[i];
-  }
+  CopyMem (TempRemainder, Dividend, DividendCount);
 
   if (gFlags & QR_FLAGS_DEBUG_POLYDIVIDE) {
-    DEBUG ((DEBUG_INFO, "MsgPly %3d   ", i));
+    DEBUG ((DEBUG_INFO, "MsgPly %3d   ", DividendCount));
     for (j = 0; j < sizeofnumbers; j++) {
       DEBUG ((DEBUG_INFO, " %3d,", TempRemainder[j]));
     }
