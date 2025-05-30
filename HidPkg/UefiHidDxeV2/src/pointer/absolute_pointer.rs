@@ -13,9 +13,9 @@ use core::{ffi::c_void, ptr};
 use r_efi::{efi, protocols};
 
 use hidparser::report_data_types::Usage;
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_INFO, DEBUG_WARN};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_INFO, DEBUG_WARN, debugln};
 
-use super::{PointerHidHandler, BUTTON_MAX, BUTTON_MIN, DIGITIZER_SWITCH_MAX, DIGITIZER_SWITCH_MIN};
+use super::{BUTTON_MAX, BUTTON_MIN, DIGITIZER_SWITCH_MAX, DIGITIZER_SWITCH_MIN, PointerHidHandler};
 use crate::boot_services::UefiBootServices;
 
 // FFI context

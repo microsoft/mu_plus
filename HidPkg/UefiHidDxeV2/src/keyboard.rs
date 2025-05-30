@@ -24,11 +24,11 @@ use core::{ffi::c_void, ptr};
 use r_efi::{efi, hii, protocols};
 
 use hidparser::{
-    report_data_types::{ReportId, Usage},
     ArrayField, ReportDescriptor, ReportField, VariableField,
+    report_data_types::{ReportId, Usage},
 };
 use mu_rust_helpers::function;
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN, debugln};
 
 use crate::{
     boot_services::UefiBootServices,
@@ -339,10 +339,10 @@ impl KeyboardHidHandler {
         );
         if status.is_error() {
             debugln!(
-        DEBUG_ERROR,
-        "keyboard::install_default_layout: Could not locate hii_database protocol to install keyboard layout: {:x?}",
-        status
-      );
+                DEBUG_ERROR,
+                "keyboard::install_default_layout: Could not locate hii_database protocol to install keyboard layout: {:x?}",
+                status
+            );
             Err(status)?;
         }
 
@@ -744,7 +744,7 @@ mod test {
     use crate::{
         boot_services::MockUefiBootServices,
         hid_io::{HidReportReceiver, MockHidIo},
-        keyboard::{key_queue::OrdKeyData, on_layout_update, KeyboardHidHandler, LayoutChangeContext},
+        keyboard::{KeyboardHidHandler, LayoutChangeContext, key_queue::OrdKeyData, on_layout_update},
     };
 
     static BOOT_KEYBOARD_REPORT_DESCRIPTOR: &[u8] = &[

@@ -99,11 +99,7 @@ impl UefiDriverBinding {
             efi::NATIVE_INTERFACE,
             uefi_driver_binding_mgr_ptr as *mut c_void,
         );
-        if status.is_error() {
-            Err(status)
-        } else {
-            Ok(uefi_driver_binding_mgr_ptr)
-        }
+        if status.is_error() { Err(status) } else { Ok(uefi_driver_binding_mgr_ptr) }
     }
 
     /// Uninstalls the binding from the UEFI core.
@@ -117,11 +113,7 @@ impl UefiDriverBinding {
             &protocols::driver_binding::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
             ptr as *mut c_void,
         );
-        if status.is_error() {
-            Err(status)
-        } else {
-            Ok(*binding)
-        }
+        if status.is_error() { Err(status) } else { Ok(*binding) }
     }
 
     // Driver Binding Supported FFI function
