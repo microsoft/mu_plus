@@ -740,6 +740,7 @@ mod test {
     use hii_keyboard_layout::HiiKeyboardLayout;
     use r_efi::{efi, hii, protocols};
     use scroll::Pwrite;
+    use std::sync::Mutex;
 
     use crate::{
         boot_services::MockUefiBootServices,
@@ -1002,18 +1003,21 @@ mod test {
         const TEST_KEYBOARD_GUID: efi::Guid =
             efi::Guid::from_fields(0xf1796c10, 0xdafb, 0x4989, 0xa0, 0x82, &[0x75, 0xe9, 0x65, 0x76, 0xbe, 0x52]);
 
-        static mut TEST_KEYBOARD_LAYOUT: HiiKeyboardLayout =
-            HiiKeyboardLayout { keys: Vec::new(), guid: TEST_KEYBOARD_GUID, descriptions: Vec::new() };
-        unsafe {
-            //make a test keyboard layout that is different than the default.
-            TEST_KEYBOARD_LAYOUT = hii_keyboard_layout::get_default_keyboard_layout();
-            TEST_KEYBOARD_LAYOUT.guid = TEST_KEYBOARD_GUID;
-            TEST_KEYBOARD_LAYOUT.keys.pop();
-            TEST_KEYBOARD_LAYOUT.keys.pop();
-            TEST_KEYBOARD_LAYOUT.keys.pop();
-            TEST_KEYBOARD_LAYOUT.descriptions[0].description = "Test Keyboard Layout".to_string();
-            TEST_KEYBOARD_LAYOUT.descriptions[0].language = "ts-TS".to_string();
-        }
+        static TEST_KEYBOARD_LAYOUT: Mutex<HiiKeyboardLayout> =
+            Mutex::new(HiiKeyboardLayout { keys: Vec::new(), guid: TEST_KEYBOARD_GUID, descriptions: Vec::new() });
+
+        //make a test keyboard layout that is different than the default.
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().keys = hii_keyboard_layout::get_default_keyboard_layout().keys.clone();
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().descriptions = hii_keyboard_layout::get_default_keyboard_layout().descriptions.clone();
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().guid = hii_keyboard_layout::DEFAULT_KEYBOARD_LAYOUT_GUID;
+
+        // modify the default layout to make sure it is not the same as the default.
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().guid = TEST_KEYBOARD_GUID;
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().keys.pop();
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().keys.pop();
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().keys.pop();
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().descriptions[0].description = "Test Keyboard Layout".to_string();
+        TEST_KEYBOARD_LAYOUT.lock().unwrap().descriptions[0].language = "ts-TS".to_string();
 
         extern "efiapi" fn get_keyboard_layout(
             _this: *const protocols::hii_database::Protocol,
@@ -1023,7 +1027,7 @@ mod test {
         ) -> efi::Status {
             let mut keyboard_layout_buffer = vec![0u8; 4096];
             let buffer_size =
-                keyboard_layout_buffer.pwrite(&unsafe { (*ptr::addr_of!(TEST_KEYBOARD_LAYOUT)).clone() }, 0).unwrap();
+                keyboard_layout_buffer.pwrite(&unsafe { (*ptr::addr_of!(TEST_KEYBOARD_LAYOUT)).lock().unwrap().clone() }, 0).unwrap();
             keyboard_layout_buffer.resize(buffer_size, 0);
             unsafe {
                 if keyboard_layout_length.read() < buffer_size as u16 {
@@ -1281,15 +1285,15 @@ mod test {
         assert_eq!(keyboard_handler.notification_callbacks.len(), 4);
         key_data.key.unicode_char = 'a' as u16;
         assert_eq!(keyboard_handler.notification_callbacks.get(&1).unwrap().0, OrdKeyData(key_data));
-        assert!(keyboard_handler.notification_callbacks.get(&1).unwrap().1 == mock_key_notify_callback);
+        assert!(ptr::fn_addr_eq(keyboard_handler.notification_callbacks.get(&1).unwrap().1, mock_key_notify_callback as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status));
         key_data.key.unicode_char = 'b' as u16;
         assert_eq!(keyboard_handler.notification_callbacks.get(&2).unwrap().0, OrdKeyData(key_data));
-        assert!(keyboard_handler.notification_callbacks.get(&2).unwrap().1 == mock_key_notify_callback);
+        assert!(ptr::fn_addr_eq(keyboard_handler.notification_callbacks.get(&2).unwrap().1, mock_key_notify_callback as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status));
         key_data.key.unicode_char = 'c' as u16;
         assert_eq!(keyboard_handler.notification_callbacks.get(&3).unwrap().0, OrdKeyData(key_data));
-        assert!(keyboard_handler.notification_callbacks.get(&3).unwrap().1 == mock_key_notify_callback);
+        assert!(ptr::fn_addr_eq(keyboard_handler.notification_callbacks.get(&3).unwrap().1, mock_key_notify_callback as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status));
         assert_eq!(keyboard_handler.notification_callbacks.get(&4).unwrap().0, OrdKeyData(key_data));
-        assert!(keyboard_handler.notification_callbacks.get(&4).unwrap().1 == mock_key_notify_callback2);
+        assert!(ptr::fn_addr_eq(keyboard_handler.notification_callbacks.get(&4).unwrap().1, mock_key_notify_callback2 as extern "efiapi" fn(*mut protocols::simple_text_input_ex::KeyData) -> efi::Status));
 
         //press and release 'c' key
         let report: &[u8] = &[0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00];

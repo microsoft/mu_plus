@@ -351,7 +351,12 @@ mod test {
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
-            assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
+            if wait_for_ptr.is_none() {
+                // This is a test, so we expect the wait_for_pointer function to be set.
+                panic!("wait_for_pointer function should be set");
+            } else {
+                assert!(ptr::fn_addr_eq(wait_for_ptr.unwrap(), PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)));
+            }
             assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
@@ -429,7 +434,12 @@ mod test {
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
-            assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
+            if wait_for_ptr.is_none() {
+                // This is a test, so we expect the wait_for_pointer function to be set.
+                panic!("wait_for_pointer function should be set");
+            } else {
+                assert!(ptr::fn_addr_eq(wait_for_ptr.unwrap(), PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)));
+            }
             assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
@@ -514,7 +524,12 @@ mod test {
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
-            assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
+            if wait_for_ptr.is_none() {
+                // This is a test, so we expect the wait_for_pointer function to be set.
+                panic!("wait_for_pointer function should be set");
+            } else {
+                assert!(ptr::fn_addr_eq(wait_for_ptr.unwrap(), PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)));
+            }
             assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
