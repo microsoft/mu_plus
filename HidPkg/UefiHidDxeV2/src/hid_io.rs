@@ -322,7 +322,10 @@ mod test {
         ) -> efi::Status {
             assert_ne!(this, ptr::null());
             assert_ne!(context, ptr::null_mut());
-            assert!(ptr::fn_addr_eq(callback, UefiHidIo::report_callback as extern "efiapi" fn(u16, *mut c_void, *mut c_void)));
+            assert!(ptr::fn_addr_eq(
+                callback,
+                UefiHidIo::report_callback as extern "efiapi" fn(u16, *mut c_void, *mut c_void)
+            ));
 
             callback(TEST_REPORT0.len() as u16, TEST_REPORT0.as_ptr() as *mut c_void, context);
 
@@ -334,7 +337,10 @@ mod test {
             callback: hid_io::protocol::HidIoReportCallback,
         ) -> efi::Status {
             assert_ne!(this, ptr::null());
-            assert!(ptr::fn_addr_eq(callback, UefiHidIo::report_callback as extern "efiapi" fn(u16, *mut c_void, *mut c_void)));
+            assert!(ptr::fn_addr_eq(
+                callback,
+                UefiHidIo::report_callback as extern "efiapi" fn(u16, *mut c_void, *mut c_void)
+            ));
             efi::Status::SUCCESS
         }
 

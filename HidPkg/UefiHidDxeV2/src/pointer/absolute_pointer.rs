@@ -355,7 +355,10 @@ mod test {
                 // This is a test, so we expect the wait_for_pointer function to be set.
                 panic!("wait_for_pointer function should be set");
             } else {
-                assert!(ptr::fn_addr_eq(wait_for_ptr.unwrap(), PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)));
+                assert!(ptr::fn_addr_eq(
+                    wait_for_ptr.unwrap(),
+                    PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)
+                ));
             }
             assert_ne!(context, ptr::null_mut());
             unsafe {
@@ -438,7 +441,10 @@ mod test {
                 // This is a test, so we expect the wait_for_pointer function to be set.
                 panic!("wait_for_pointer function should be set");
             } else {
-                assert!(ptr::fn_addr_eq(wait_for_ptr.unwrap(), PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)));
+                assert!(ptr::fn_addr_eq(
+                    wait_for_ptr.unwrap(),
+                    PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)
+                ));
             }
             assert_ne!(context, ptr::null_mut());
             unsafe {
@@ -528,7 +534,10 @@ mod test {
                 // This is a test, so we expect the wait_for_pointer function to be set.
                 panic!("wait_for_pointer function should be set");
             } else {
-                assert!(ptr::fn_addr_eq(wait_for_ptr.unwrap(), PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)));
+                assert!(ptr::fn_addr_eq(
+                    wait_for_ptr.unwrap(),
+                    PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)
+                ));
             }
             assert_ne!(context, ptr::null_mut());
             unsafe {
