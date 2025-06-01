@@ -20,16 +20,16 @@ mod uefi_entry {
 
     use r_efi::{efi, system};
 
-    use rust_advanced_logger_dxe::{debugln, init_debug, DEBUG_ERROR};
+    use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln, init_debug};
     use rust_boot_services_allocator_dxe::GLOBAL_ALLOCATOR;
     use uefi_hid_dxe_v2::{
+        BOOT_SERVICES, RUNTIME_SERVICES,
         boot_services::UefiBootServices,
         driver_binding::UefiDriverBinding,
         hid::{HidFactory, HidReceiverFactory},
         hid_io::{HidReportReceiver, UefiHidIoFactory},
         keyboard::KeyboardHidHandler,
         pointer::PointerHidHandler,
-        BOOT_SERVICES, RUNTIME_SERVICES,
     };
 
     struct UefiReceivers {
@@ -48,7 +48,7 @@ mod uefi_entry {
         }
     }
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "efiapi" fn efi_main(
         image_handle: efi::Handle,
         system_table: *const system::SystemTable,

@@ -99,11 +99,7 @@ impl UefiDriverBinding {
             efi::NATIVE_INTERFACE,
             uefi_driver_binding_mgr_ptr as *mut c_void,
         );
-        if status.is_error() {
-            Err(status)
-        } else {
-            Ok(uefi_driver_binding_mgr_ptr)
-        }
+        if status.is_error() { Err(status) } else { Ok(uefi_driver_binding_mgr_ptr) }
     }
 
     /// Uninstalls the binding from the UEFI core.
@@ -111,17 +107,13 @@ impl UefiDriverBinding {
     /// uefi_binding must be the same pointer returned from [`Self::install`].
     pub unsafe fn uninstall(uefi_binding: *mut UefiDriverBinding) -> Result<Self, efi::Status> {
         let ptr = uefi_binding;
-        let binding = Box::from_raw(uefi_binding);
+        let binding = unsafe { Box::from_raw(uefi_binding) };
         let status = binding.boot_services.uninstall_protocol_interface(
             binding.uefi_binding.driver_binding_handle,
             &protocols::driver_binding::PROTOCOL_GUID as *const efi::Guid as *mut efi::Guid,
             ptr as *mut c_void,
         );
-        if status.is_error() {
-            Err(status)
-        } else {
-            Ok(*binding)
-        }
+        if status.is_error() { Err(status) } else { Ok(*binding) }
     }
 
     // Driver Binding Supported FFI function
@@ -171,6 +163,9 @@ impl UefiDriverBinding {
 #[cfg(test)]
 mod test {
 
+    use core::ffi::c_void;
+    use core::ptr;
+
     use super::{MockDriverBinding, UefiDriverBinding};
     use crate::boot_services::MockUefiBootServices;
     use r_efi::{efi, protocols};
@@ -191,9 +186,34 @@ mod test {
         let handle = 0x1234 as efi::Handle;
         let driver_binding = UefiDriverBinding::new(boot_services, Box::new(binding), handle);
 
-        assert!(driver_binding.uefi_binding.supported == UefiDriverBinding::driver_binding_supported);
-        assert!(driver_binding.uefi_binding.start == UefiDriverBinding::driver_binding_start);
-        assert!(driver_binding.uefi_binding.stop == UefiDriverBinding::driver_binding_stop);
+        assert!(ptr::fn_addr_eq(
+            driver_binding.uefi_binding.supported,
+            UefiDriverBinding::driver_binding_supported
+                as extern "efiapi" fn(
+                    *mut protocols::driver_binding::Protocol,
+                    *mut c_void,
+                    *mut protocols::device_path::Protocol,
+                ) -> efi::Status
+        ));
+        assert!(ptr::fn_addr_eq(
+            driver_binding.uefi_binding.start,
+            UefiDriverBinding::driver_binding_start
+                as extern "efiapi" fn(
+                    *mut protocols::driver_binding::Protocol,
+                    *mut c_void,
+                    *mut protocols::device_path::Protocol,
+                ) -> efi::Status
+        ));
+        assert!(ptr::fn_addr_eq(
+            driver_binding.uefi_binding.stop,
+            UefiDriverBinding::driver_binding_stop
+                as extern "efiapi" fn(
+                    *mut protocols::driver_binding::Protocol,
+                    *mut c_void,
+                    usize,
+                    *mut *mut c_void,
+                ) -> efi::Status
+        ));
         assert_eq!(driver_binding.uefi_binding.version, 1);
         assert_eq!(driver_binding.uefi_binding.image_handle, handle);
         assert_eq!(driver_binding.uefi_binding.driver_binding_handle, handle);
@@ -262,9 +282,34 @@ mod test {
 
         let driver_binding = unsafe { UefiDriverBinding::uninstall(binding_ptr) }.unwrap();
 
-        assert!(driver_binding.uefi_binding.supported == UefiDriverBinding::driver_binding_supported);
-        assert!(driver_binding.uefi_binding.start == UefiDriverBinding::driver_binding_start);
-        assert!(driver_binding.uefi_binding.stop == UefiDriverBinding::driver_binding_stop);
+        assert!(ptr::fn_addr_eq(
+            driver_binding.uefi_binding.supported,
+            UefiDriverBinding::driver_binding_supported
+                as extern "efiapi" fn(
+                    *mut protocols::driver_binding::Protocol,
+                    *mut c_void,
+                    *mut protocols::device_path::Protocol,
+                ) -> efi::Status
+        ));
+        assert!(ptr::fn_addr_eq(
+            driver_binding.uefi_binding.start,
+            UefiDriverBinding::driver_binding_start
+                as extern "efiapi" fn(
+                    *mut protocols::driver_binding::Protocol,
+                    *mut c_void,
+                    *mut protocols::device_path::Protocol,
+                ) -> efi::Status
+        ));
+        assert!(ptr::fn_addr_eq(
+            driver_binding.uefi_binding.stop,
+            UefiDriverBinding::driver_binding_stop
+                as extern "efiapi" fn(
+                    *mut protocols::driver_binding::Protocol,
+                    *mut c_void,
+                    usize,
+                    *mut *mut c_void,
+                ) -> efi::Status
+        ));
         assert_eq!(driver_binding.uefi_binding.version, 1);
         assert_eq!(driver_binding.uefi_binding.image_handle, handle);
         assert_eq!(driver_binding.uefi_binding.driver_binding_handle, handle);
