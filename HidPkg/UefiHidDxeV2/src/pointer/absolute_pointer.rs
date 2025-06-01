@@ -13,9 +13,9 @@ use core::{ffi::c_void, ptr};
 use r_efi::{efi, protocols};
 
 use hidparser::report_data_types::Usage;
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_INFO, DEBUG_WARN};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_INFO, DEBUG_WARN, debugln};
 
-use super::{PointerHidHandler, BUTTON_MAX, BUTTON_MIN, DIGITIZER_SWITCH_MAX, DIGITIZER_SWITCH_MIN};
+use super::{BUTTON_MAX, BUTTON_MIN, DIGITIZER_SWITCH_MAX, DIGITIZER_SWITCH_MIN, PointerHidHandler};
 use crate::boot_services::UefiBootServices;
 
 // FFI context
@@ -351,7 +351,15 @@ mod test {
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
-            assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
+            if wait_for_ptr.is_none() {
+                // This is a test, so we expect the wait_for_pointer function to be set.
+                panic!("wait_for_pointer function should be set");
+            } else {
+                assert!(ptr::fn_addr_eq(
+                    wait_for_ptr.unwrap(),
+                    PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)
+                ));
+            }
             assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
@@ -429,7 +437,15 @@ mod test {
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
-            assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
+            if wait_for_ptr.is_none() {
+                // This is a test, so we expect the wait_for_pointer function to be set.
+                panic!("wait_for_pointer function should be set");
+            } else {
+                assert!(ptr::fn_addr_eq(
+                    wait_for_ptr.unwrap(),
+                    PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)
+                ));
+            }
             assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
@@ -514,7 +530,15 @@ mod test {
 
         // expected on PointerHidHandler::initialize().
         boot_services.expect_create_event().returning(|_, _, wait_for_ptr, context, event_ptr| {
-            assert!(wait_for_ptr == Some(PointerContext::wait_for_pointer));
+            if wait_for_ptr.is_none() {
+                // This is a test, so we expect the wait_for_pointer function to be set.
+                panic!("wait_for_pointer function should be set");
+            } else {
+                assert!(ptr::fn_addr_eq(
+                    wait_for_ptr.unwrap(),
+                    PointerContext::wait_for_pointer as extern "efiapi" fn(efi::Event, *mut c_void)
+                ));
+            }
             assert_ne!(context, ptr::null_mut());
             unsafe {
                 EVENT_CONTEXT = context;
