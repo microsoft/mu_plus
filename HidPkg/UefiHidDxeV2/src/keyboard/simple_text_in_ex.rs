@@ -11,7 +11,7 @@ use alloc::{boxed::Box, vec::Vec};
 use core::{ffi::c_void, ptr};
 
 use r_efi::{efi, protocols};
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln};
 
 use crate::{
     boot_services::UefiBootServices,
