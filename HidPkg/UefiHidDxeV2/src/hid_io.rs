@@ -19,7 +19,7 @@ use r_efi::efi;
 
 use hid_io::protocol::HidReportType;
 use hidparser::ReportDescriptor;
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln};
 
 use crate::boot_services::UefiBootServices;
 
@@ -98,13 +98,7 @@ impl UefiHidIo {
     ) -> Result<Self, efi::Status> {
         let mut hid_io_ptr: *mut hid_io::protocol::Protocol = ptr::null_mut();
 
-        let attributes = {
-            if owned {
-                efi::OPEN_PROTOCOL_BY_DRIVER
-            } else {
-                efi::OPEN_PROTOCOL_GET_PROTOCOL
-            }
-        };
+        let attributes = { if owned { efi::OPEN_PROTOCOL_BY_DRIVER } else { efi::OPEN_PROTOCOL_GET_PROTOCOL } };
 
         let status = boot_services.open_protocol(
             controller,
@@ -328,7 +322,10 @@ mod test {
         ) -> efi::Status {
             assert_ne!(this, ptr::null());
             assert_ne!(context, ptr::null_mut());
-            assert!(callback == UefiHidIo::report_callback);
+            assert!(ptr::fn_addr_eq(
+                callback,
+                UefiHidIo::report_callback as extern "efiapi" fn(u16, *mut c_void, *mut c_void)
+            ));
 
             callback(TEST_REPORT0.len() as u16, TEST_REPORT0.as_ptr() as *mut c_void, context);
 
@@ -340,7 +337,10 @@ mod test {
             callback: hid_io::protocol::HidIoReportCallback,
         ) -> efi::Status {
             assert_ne!(this, ptr::null());
-            assert!(callback == UefiHidIo::report_callback);
+            assert!(ptr::fn_addr_eq(
+                callback,
+                UefiHidIo::report_callback as extern "efiapi" fn(u16, *mut c_void, *mut c_void)
+            ));
             efi::Status::SUCCESS
         }
 

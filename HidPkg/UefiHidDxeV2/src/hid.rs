@@ -47,7 +47,7 @@ use core::ffi::c_void;
 #[cfg(test)]
 use mockall::automock;
 use r_efi::efi;
-use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln};
 
 use crate::{
     boot_services::UefiBootServices,
