@@ -20,7 +20,7 @@ use r_efi::{
     efi,
     protocols::{self, hii_database::*, simple_text_input::InputKey, simple_text_input_ex::*},
 };
-use rust_advanced_logger_dxe::{debugln, DEBUG_WARN};
+use rust_advanced_logger_dxe::{DEBUG_WARN, debugln};
 
 use crate::RUNTIME_SERVICES;
 
