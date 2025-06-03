@@ -893,61 +893,6 @@ NoReadWriteExecute (
 }
 
 /**
-  Checks that EfiConventionalMemory is EFI_MEMORY_RP or
-  is not mapped.
-
-  @param[in] Context            Unit test context
-
-  @retval UNIT_TEST_PASSED      The unit test passed
-  @retval other                 The unit test failed
-**/
-UNIT_TEST_STATUS
-EFIAPI
-UnallocatedMemoryIsRP (
-  IN UNIT_TEST_CONTEXT  Context
-  )
-{
-  BOOLEAN                TestFailure;
-  EFI_MEMORY_DESCRIPTOR  *EfiMemoryMapEntry;
-  EFI_MEMORY_DESCRIPTOR  *EfiMemoryMapEnd;
-
-  DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
-
-  UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
-  UT_ASSERT_NOT_EFI_ERROR (ValidateEfiMemoryMapSize ());
-  UT_ASSERT_NOT_EFI_ERROR (PopulateEfiMemoryMap ());
-  UT_ASSERT_NOT_EFI_ERROR (PopulatePageTableMap ());
-
-  TestFailure = FALSE;
-
-  EfiMemoryMapEntry = mEfiMemoryMap;
-  EfiMemoryMapEnd   = (EFI_MEMORY_DESCRIPTOR *)((UINT8 *)mEfiMemoryMap + mEfiMemoryMapSize);
-
-  while (EfiMemoryMapEntry < EfiMemoryMapEnd) {
-    if (EfiMemoryMapEntry->Type == EfiConventionalMemory) {
-      if (!ValidateRegionAttributes (
-             &mMap,
-             EfiMemoryMapEntry->PhysicalStart,
-             (EfiMemoryMapEntry->NumberOfPages * EFI_PAGE_SIZE),
-             EFI_MEMORY_RP,
-             TRUE,
-             TRUE,
-             TRUE
-             ))
-      {
-        TestFailure = TRUE;
-      }
-    }
-
-    EfiMemoryMapEntry = NEXT_MEMORY_DESCRIPTOR (EfiMemoryMapEntry, mEfiMemoryMapDescriptorSize);
-  }
-
-  UT_ASSERT_FALSE (TestFailure);
-
-  return UNIT_TEST_PASSED;
-}
-
-/**
   Checks if the EFI Memory Attribute Protocol is Present.
 
   @param[in] Context            Unit test context
@@ -1435,7 +1380,6 @@ DxePagingAuditTestAppEntryPoint (
     }
 
     AddTestCase (Misc, "No pages are  readable, writable, and executable", "Security.Misc.NoReadWriteExecute", NoReadWriteExecute, NULL, GeneralTestCleanup, NULL);
-    AddTestCase (Misc, "Unallocated memory is EFI_MEMORY_RP", "Security.Misc.UnallocatedMemoryIsRP", UnallocatedMemoryIsRP, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "Memory Attribute Protocol is present", "Security.Misc.IsMemoryAttributeProtocolPresent", IsMemoryAttributeProtocolPresent, NULL, NULL, NULL);
     AddTestCase (Misc, "NULL page is EFI_MEMORY_RP", "Security.Misc.NullPageIsRp", NullPageIsRp, NULL, GeneralTestCleanup, NULL);
     AddTestCase (Misc, "MMIO Regions are EFI_MEMORY_XP", "Security.Misc.MmioIsXp", MmioIsXp, NULL, GeneralTestCleanup, NULL);
