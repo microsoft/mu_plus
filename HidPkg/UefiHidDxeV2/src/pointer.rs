@@ -108,6 +108,12 @@ impl PointerHidHandler {
 
             for field in &report.fields {
                 if let ReportField::Variable(field) = field {
+                    if self.supported_usages.contains(&field.usage) {
+                        // already processed this usage, skip.
+                        // As we only support single touch.
+                        continue;
+                    }
+
                     match field.usage.into() {
                         GENERIC_DESKTOP_X => {
                             let field_handler =
