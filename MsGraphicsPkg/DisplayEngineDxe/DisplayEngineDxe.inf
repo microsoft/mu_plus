@@ -7,9 +7,6 @@
 #
 ##
 
-#Override : 00000002 | MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf | 95f81e8ce741d001db004b3e4e23c3ee | 2025-05-27T14-42-25 | 281ea9326bd55d467527b79d80a7e1664a10fb6c
-
-
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = DisplayEngine
