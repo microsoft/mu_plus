@@ -201,12 +201,16 @@ jobs:
           print(f'cargo_make_version={latest_cargo_make_version}', file=fh)
 
 
-    - name: Attempt to Load cargo-make From Cache
+    # - name: Attempt to Load cargo-make From Cache
+    #   id: cargo_make_cache
+    #   uses: actions/cache@v4
+    #   with:
+    #     path: ${{ steps.get_cargo_tool_details.outputs.cargo_bin_path }}
+    #     key: ${{ steps.get_cargo_tool_details.outputs.cargo_make_cache_key }}
+
+    - name: Force cargo-make cache miss
       id: cargo_make_cache
-      uses: actions/cache@v4
-      with:
-        path: ${{ steps.get_cargo_tool_details.outputs.cargo_bin_path }}
-        key: ${{ steps.get_cargo_tool_details.outputs.cargo_make_cache_key }}
+      run: echo "cache-hit=false" >> $GITHUB_OUTPUT
 
     - name: Download cargo-make
       if: steps.cargo_make_cache.outputs.cache-hit != 'true'
