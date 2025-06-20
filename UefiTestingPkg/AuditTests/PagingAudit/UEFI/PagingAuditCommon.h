@@ -32,7 +32,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Guid/DebugImageInfoTable.h>
 #include <Guid/MemoryAttributesTable.h>
 
-#define    MEM_INFO_DATABASE_REALLOC_CHUNK    0x1000
+#define    MEM_INFO_DATABASE_REALLOC_CHUNK    0x10000
 #define    MEM_INFO_DATABASE_MAX_STRING_SIZE  0x400
 #define    MAX_STRING_SIZE                    0x1000
 
