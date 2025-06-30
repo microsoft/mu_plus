@@ -62,6 +62,7 @@
   gArmTokenSpaceGuid.PcdGicRedistributorsBase
   gArmTokenSpaceGuid.PcdGicInterruptInterfaceBase
   gArmTokenSpaceGuid.PcdGicSgiIntId
+  gUefiTestingPkgTokenSpaceGuid.PcdPlatformGICOffset
 
 [Pcd.AARCH64]
   gArmTokenSpaceGuid.PcdArmArchTimerSecIntrNum
