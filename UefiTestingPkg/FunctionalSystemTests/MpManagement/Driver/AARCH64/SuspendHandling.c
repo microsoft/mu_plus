@@ -276,7 +276,7 @@ SetupInterruptStatus (
   IN  UINTN  CpuIndex
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS                 Status;
   EFI_PROCESSOR_INFORMATION  CpuInfo;
 
   if (mCommonBuffer[CpuIndex].CpuArchBuffer == NULL) {
@@ -308,9 +308,11 @@ SetupInterruptStatus (
     return Status;
   }
 
-  ArmGicEnableInterrupt ((UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64(PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
-                         (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64(PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
-                         PcdGet32 (PcdGicSgiIntId));
+  ArmGicEnableInterrupt (
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    PcdGet32 (PcdGicSgiIntId)
+    );
 
   ArmEnableInterrupts ();
 
@@ -330,7 +332,7 @@ RestoreInterruptStatus (
   IN  UINTN  CpuIndex
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS                 Status;
   EFI_PROCESSOR_INFORMATION  CpuInfo;
 
   // Disable gic cpu interface
@@ -344,9 +346,11 @@ RestoreInterruptStatus (
     return Status;
   }
 
-  ArmGicDisableInterrupt ((UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64(PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
-                          (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64(PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
-                          PcdGet32 (PcdGicSgiIntId));
+  ArmGicDisableInterrupt (
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    PcdGet32 (PcdGicSgiIntId)
+    );
 
   return EFI_SUCCESS;
 }
