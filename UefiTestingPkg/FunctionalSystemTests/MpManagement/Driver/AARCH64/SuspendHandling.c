@@ -276,7 +276,8 @@ SetupInterruptStatus (
   IN  UINTN  CpuIndex
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS                 Status;
+  EFI_PROCESSOR_INFORMATION  CpuInfo;
 
   if (mCommonBuffer[CpuIndex].CpuArchBuffer == NULL) {
     return EFI_NOT_READY;
@@ -300,7 +301,18 @@ SetupInterruptStatus (
   ArmGicEnableInterruptInterface (PcdGet64 (PcdGicInterruptInterfaceBase));
 
   // Enable the intended interrupt source
-  ArmGicEnableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
+  Status = mMpServices->GetProcessorInfo (mMpServices, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __FUNCTION__, CpuIndex, Status));
+    ASSERT (FALSE);
+    return Status;
+  }
+
+  ArmGicEnableInterrupt (
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    PcdGet32 (PcdGicSgiIntId)
+    );
 
   ArmEnableInterrupts ();
 
@@ -320,11 +332,25 @@ RestoreInterruptStatus (
   IN  UINTN  CpuIndex
   )
 {
+  EFI_STATUS                 Status;
+  EFI_PROCESSOR_INFORMATION  CpuInfo;
+
   // Disable gic cpu interface
   ArmGicDisableInterruptInterface (PcdGet64 (PcdGicInterruptInterfaceBase));
 
   // Disable the intended interrupt source
-  ArmGicDisableInterrupt ((UINT32)PcdGet64 (PcdGicDistributorBase), (UINT32)PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGicSgiIntId));
+  Status = mMpServices->GetProcessorInfo (mMpServices, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __FUNCTION__, CpuIndex, Status));
+    ASSERT (FALSE);
+    return Status;
+  }
+
+  ArmGicDisableInterrupt (
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    PcdGet32 (PcdGicSgiIntId)
+    );
 
   return EFI_SUCCESS;
 }
