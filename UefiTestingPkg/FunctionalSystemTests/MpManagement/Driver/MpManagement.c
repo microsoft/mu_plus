@@ -798,7 +798,7 @@ MpManagementEntryPoint (
                   &mMpManagement
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "Error: Failed to fetch processor information.\n"));
+    DEBUG ((DEBUG_ERROR, "Error: Failed to Install Protocol Interface.\n"));
     goto Done;
   }
 
