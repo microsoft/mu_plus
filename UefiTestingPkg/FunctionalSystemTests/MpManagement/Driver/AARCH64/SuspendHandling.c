@@ -303,7 +303,7 @@ SetupInterruptStatus (
   // Enable the intended interrupt source
   Status = mMpServices->GetProcessorInfo (mMpServices, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __FUNCTION__, CpuIndex, Status));
+    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __func__, CpuIndex, Status));
     ASSERT (FALSE);
     return Status;
   }
@@ -341,7 +341,7 @@ RestoreInterruptStatus (
   // Disable the intended interrupt source
   Status = mMpServices->GetProcessorInfo (mMpServices, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __FUNCTION__, CpuIndex, Status));
+    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __func__, CpuIndex, Status));
     ASSERT (FALSE);
     return Status;
   }
