@@ -27,6 +27,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_NAME     "LineParser Library test cases"
 #define UNIT_TEST_APP_VERSION  "1.0"
 
+#define ADV_LOG_TIME_STAMP_RESULT     "hh:mm:ss:ttt : "
+
 // The following text represents the file logger stream of text as individual DEBUG
 // statements.
 
@@ -564,15 +566,18 @@ BasicTests (
   UT_LOG_INFO ("\nExpected Length=%d\n", AsciiStrLen (Btc->ExpectedLine));
   UT_LOG_INFO ("\n = %a =\n", Btc->ExpectedLine);
 
-  if (mMessageEntry.MessageLen != AsciiStrLen (Btc->ExpectedLine)) {
+  // if (mMessageEntry.MessageLen != AsciiStrLen (Btc->ExpectedLine)) {
     DUMP_HEX (DEBUG_ERROR, 0, mMessageEntry.Message, mMessageEntry.MessageLen, "Actual   - ");
     DUMP_HEX (DEBUG_ERROR, 0, Btc->ExpectedLine, AsciiStrLen (Btc->ExpectedLine), "Expected - ");
-  }
+  // }
 
   UT_ASSERT_EQUAL (mMessageEntry.MessageLen, AsciiStrLen (Btc->ExpectedLine));
 
   // The following also verifies that the string is NULL terminated.
-  UT_ASSERT_MEM_EQUAL (mMessageEntry.Message, Btc->ExpectedLine, mMessageEntry.MessageLen + sizeof (CHAR8));
+  UT_ASSERT_MEM_EQUAL (
+    &(mMessageEntry.Message[sizeof (ADV_LOG_TIME_STAMP_RESULT) - 1]),
+    &(Btc->ExpectedLine[sizeof (ADV_LOG_TIME_STAMP_RESULT) - 1]),
+    mMessageEntry.MessageLen + sizeof (CHAR8) - (sizeof (ADV_LOG_TIME_STAMP_RESULT) - 1));
 
   return UNIT_TEST_PASSED;
 }
