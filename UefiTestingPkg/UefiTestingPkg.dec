@@ -52,5 +52,12 @@
   gUefiTestingPkgTokenSpaceGuid.PcdPlatformC3PowerState|0x1010022|UINT64|0x00000003
 
   ## Platforms with multiple die(s) can have same GIC base address but with an added offset address for each die.
-  ## This offset address values can be added to base GIC address to reach die-specific address.
-  gUefiTestingPkgTokenSpaceGuid.PcdPlatformGICOffset|0x0|UINT64|0x00000004
+  ## This offset address values can be added to base GIC address to reach die-specific GIC address.
+  ## Assumptions:
+  ## 1. Each GIC is tied to ExtendedInformation.Location2.Package field of EFI_PROCESSOR_INFORMATION which is expected
+  ## to have die location of individual cores
+  ## 2. The GIC address are linearly spaced out, meaning, if GIC address in Die0 is x, then
+  ## GIC address for Die 1 : ((offset*1) + x) and
+  ## GIC address for Die 2 : ((offset*2) + x) and so on.
+  ## If these assumption don't apply to your platform, redeclaration of the PCD can break functionality
+  gUefiTestingPkgTokenSpaceGuid.PcdGicPerPackageOffset|0x0|UINT64|0x00000004

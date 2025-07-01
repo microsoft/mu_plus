@@ -267,6 +267,14 @@ RestoreBspStates (
   The main goal is to enable the AP to accept software generated
   interrupts sent from BSP.
 
+  PcdGicPerPackageOffset usage assumptions::
+  1. Each GIC is tied to ExtendedInformation.Location2.Package field of EFI_PROCESSOR_INFORMATION which is expected
+  to have die location of individual cores
+  2. The GIC address are linearly spaced out, meaning, if GIC address in Die0 is x, then
+  GIC address for Die 1 : ((offset*1) + x) and
+  GIC address for Die 2 : ((offset*2) + x) and so on.
+  If these assumption don't apply to your platform, redeclaration of the PCD can break functionality
+
   @param  CpuIndex      The number of intended CPU to be setup.
 
   @return EFI_SUCCESS   The routine always succeeds.
@@ -309,8 +317,8 @@ SetupInterruptStatus (
   }
 
   ArmGicEnableInterrupt (
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
     PcdGet32 (PcdGicSgiIntId)
     );
 
@@ -322,6 +330,14 @@ SetupInterruptStatus (
 /**
   This routine will restore the AP specific interrupt states after
   the entire AP routine is about to be completed.
+
+  PcdGicPerPackageOffset usage assumptions::
+  1. Each GIC is tied to ExtendedInformation.Location2.Package field of EFI_PROCESSOR_INFORMATION which is expected
+  to have die location of individual cores
+  2. The GIC address are linearly spaced out, meaning, if GIC address in Die0 is x, then
+  GIC address for Die 1 : ((offset*1) + x) and
+  GIC address for Die 2 : ((offset*2) + x) and so on.
+  If these assumption don't apply to your platform, redeclaration of the PCD can break functionality
 
   @param  CpuIndex      The number of intended CPU to be setup.
 
@@ -347,8 +363,8 @@ RestoreInterruptStatus (
   }
 
   ArmGicDisableInterrupt (
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicDistributorBase)), \
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdPlatformGICOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
     PcdGet32 (PcdGicSgiIntId)
     );
 
