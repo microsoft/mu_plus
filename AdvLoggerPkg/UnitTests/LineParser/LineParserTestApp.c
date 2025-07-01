@@ -27,6 +27,9 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define UNIT_TEST_APP_NAME     "LineParser Library test cases"
 #define UNIT_TEST_APP_VERSION  "1.0"
 
+#define ADV_LOG_TIME_STAMP_RESULT      "hh:mm:ss:ttt : "
+#define ADV_LOG_TIME_STAMP_RESULT_LEN  (sizeof (ADV_LOG_TIME_STAMP_RESULT) - 1)
+
 // The following text represents the file logger stream of text as individual DEBUG
 // statements.
 
@@ -572,7 +575,11 @@ BasicTests (
   UT_ASSERT_EQUAL (mMessageEntry.MessageLen, AsciiStrLen (Btc->ExpectedLine));
 
   // The following also verifies that the string is NULL terminated.
-  UT_ASSERT_MEM_EQUAL (mMessageEntry.Message, Btc->ExpectedLine, mMessageEntry.MessageLen + sizeof (CHAR8));
+  UT_ASSERT_MEM_EQUAL (
+    &(mMessageEntry.Message[ADV_LOG_TIME_STAMP_RESULT_LEN]),
+    &(Btc->ExpectedLine[ADV_LOG_TIME_STAMP_RESULT_LEN]),
+    mMessageEntry.MessageLen + sizeof (CHAR8) - ADV_LOG_TIME_STAMP_RESULT_LEN
+    );
 
   return UNIT_TEST_PASSED;
 }
