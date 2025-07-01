@@ -578,7 +578,8 @@ BasicTests (
   UT_ASSERT_MEM_EQUAL (
     &(mMessageEntry.Message[ADV_LOG_TIME_STAMP_RESULT_SIZE]),
     &(Btc->ExpectedLine[ADV_LOG_TIME_STAMP_RESULT_SIZE]),
-    mMessageEntry.MessageLen + sizeof (CHAR8) - ADV_LOG_TIME_STAMP_RESULT_SIZE);
+    mMessageEntry.MessageLen + sizeof (CHAR8) - ADV_LOG_TIME_STAMP_RESULT_SIZE
+    );
 
   return UNIT_TEST_PASSED;
 }
