@@ -24,9 +24,11 @@
   BaseMemoryLib|MdePkg/Library/BaseMemoryLibRepStr/BaseMemoryLibRepStr.inf
   CpuLib|MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+  DeviceStateLib|MdeModulePkg/Library/DeviceStateLib/DeviceStateLib.inf
   FvMeasurementExclusionLib|TpmTestingPkg/Library/BaseFvMeasurementExclusionLibNull/BaseFvMeasurementExclusionLibNull.inf
   InputChannelLib|TpmTestingPkg/Library/BaseInputChannelLibNull/BaseInputChannelLibNull.inf
   IoLib|MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+  PanicLib|MdePkg/Library/BasePanicLibNull/BasePanicLibNull.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
   PciLib|MdePkg/Library/BasePciLibPciExpress/BasePciLibPciExpress.inf

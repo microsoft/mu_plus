@@ -67,12 +67,15 @@
   ReportStatusCodeLib
   Tcg2PhysicalPresenceLib
   PeCoffLib
-## MS_CHANGE_23086
-## MSChange [BEGIN] - Add the OemTpm2InitLib
+## MU_CHANGE_23086
+## MU_CHANGE [BEGIN] - Add the OemTpm2InitLib
   OemTpm2InitLib
-## MSChange [END]
+## MU_CHANGE [END]
   PcdLib  # MU_CHANGE
-  Tpm2DebugLib
+  ## MU_CHANGE [BEGIN] - Measure Firmware Debugger Enabled
+  DeviceStateLib
+  PanicLib
+  ## MU_CHANGE [END]
 
 [Guids]
   ## SOMETIMES_CONSUMES     ## Variable:L"SecureBoot"
@@ -96,6 +99,7 @@
   gTcgEvent2EntryHobGuid                             ## SOMETIMES_CONSUMES  ## HOB
   gTpm2StartupLocalityHobGuid                        ## SOMETIMES_CONSUMES  ## HOB
   gTcg800155PlatformIdEventHobGuid                   ## SOMETIMES_CONSUMES  ## HOB
+  gEfiDeviceSignatureDatabaseGuid
 
 [Protocols]
   gEfiTcg2ProtocolGuid                               ## PRODUCES
@@ -107,7 +111,7 @@
 
 [Pcd]
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmPlatformClass                         ## SOMETIMES_CONSUMES
-  #gEfiSecurityPkgTokenSpaceGuid.PcdFirmwareDebuggerInitialized              ## SOMETIMES_CONSUMES
+  # gEfiSecurityPkgTokenSpaceGuid.PcdFirmwareDebuggerInitialized            ## SOMETIMES_CONSUMES # MU_CHANGE - Remove PCD
   gEfiSecurityPkgTokenSpaceGuid.PcdTpmInstanceGuid                          ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdStatusCodeSubClassTpmDevice              ## SOMETIMES_CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.PcdTcg2HashAlgorithmBitmap                  ## CONSUMES
@@ -118,6 +122,7 @@
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2AcpiTableLaml                        ## PRODUCES
   gEfiSecurityPkgTokenSpaceGuid.PcdTpm2AcpiTableLasa                        ## PRODUCES
   gEfiMdeModulePkgTokenSpaceGuid.PcdTcgPfpMeasurementRevision               ## CONSUMES
+  gEfiMdeModulePkgTokenSpaceGuid.PcdEnableSpdmDeviceAuthentication          ## CONSUMES
   gEfiSecurityPkgTokenSpaceGuid.TcgMeasureBootStringsInPcr4                 ## CONSUMES # MU_CHANGE
 
 [Depex]

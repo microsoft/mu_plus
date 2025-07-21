@@ -629,28 +629,28 @@ HashPeImageByType (
 {
   UINT8  Index;
 
-  for (Index = 0; Index < HASHALG_MAX; Index++) {
+  //
+  // Check the Hash algorithm in PE/COFF Authenticode.
+  //    According to PKCS#7 Definition:
+  //        SignedData ::= SEQUENCE {
+  //            version Version,
+  //            digestAlgorithms DigestAlgorithmIdentifiers,
+  //            contentInfo ContentInfo,
+  //            .... }
+  //    The DigestAlgorithmIdentifiers can be used to determine the hash algorithm in PE/COFF hashing
+  //    This field has the fixed offset (+32) in final Authenticode ASN.1 data.
+  //    Fixed offset (+32) is calculated based on two bytes of length encoding.
+  if ((AuthDataSize > 1) && ((*(AuthData + 1) & TWO_BYTE_ENCODE) != TWO_BYTE_ENCODE)) {
     //
-    // Check the Hash algorithm in PE/COFF Authenticode.
-    //    According to PKCS#7 Definition:
-    //        SignedData ::= SEQUENCE {
-    //            version Version,
-    //            digestAlgorithms DigestAlgorithmIdentifiers,
-    //            contentInfo ContentInfo,
-    //            .... }
-    //    The DigestAlgorithmIdentifiers can be used to determine the hash algorithm in PE/COFF hashing
-    //    This field has the fixed offset (+32) in final Authenticode ASN.1 data.
-    //    Fixed offset (+32) is calculated based on two bytes of length encoding.
     //
-    if ((*(AuthData + 1) & TWO_BYTE_ENCODE) != TWO_BYTE_ENCODE) {
-      //
-      // Only support two bytes of Long Form of Length Encoding.
-      //
-      continue;
-    }
+    // Only support two bytes of Long Form of Length Encoding.
+    //
+    return EFI_BAD_BUFFER_SIZE;
+  }
 
+  for (Index = 0; Index < HASHALG_MAX; Index++) {
     if (AuthDataSize < 32 + mHash[Index].OidLength) {
-      return EFI_UNSUPPORTED;
+      continue;
     }
 
     if (CompareMem (AuthData + 32, mHash[Index].OidValue, mHash[Index].OidLength) == 0) {
@@ -1681,7 +1681,8 @@ DxeImageVerificationHandler (
   EFI_IMAGE_EXECUTION_ACTION    Action;
   WIN_CERTIFICATE               *WinCertificate;
   UINT32                        Policy;
-  UINT8                         *SecureBoot;
+  UINT8                         SecureBoot;
+  UINTN                         SecureBootSize;
   PE_COFF_LOADER_IMAGE_CONTEXT  ImageContext;
   UINT32                        NumberOfRvaAndSizes;
   WIN_CERTIFICATE_EFI_PKCS      *PkcsCertData;
@@ -1696,7 +1697,11 @@ DxeImageVerificationHandler (
   RETURN_STATUS                 PeCoffStatus;
   EFI_STATUS                    HashStatus;
   EFI_STATUS                    DbStatus;
+  EFI_STATUS                    VarStatus;
+  UINT32                        VarAttr;
   BOOLEAN                       IsFound;
+  UINT8                         HashAlg;
+  BOOLEAN                       IsFoundInDatabase;
 
   SignatureList     = NULL;
   SignatureListSize = 0;
@@ -1706,6 +1711,7 @@ DxeImageVerificationHandler (
   Action            = EFI_IMAGE_EXECUTION_AUTH_UNTESTED;
   IsVerified        = FALSE;
   IsFound           = FALSE;
+  IsFoundInDatabase = FALSE;
 
   //
   // Check the image type and get policy setting.
@@ -1752,23 +1758,25 @@ DxeImageVerificationHandler (
     CpuDeadLoop ();
   }
 
-  GetEfiGlobalVariable2 (EFI_SECURE_BOOT_MODE_NAME, (VOID **)&SecureBoot, NULL);
+  SecureBootSize = sizeof (SecureBoot);
+  VarStatus      = gRT->GetVariable (EFI_SECURE_BOOT_MODE_NAME, &gEfiGlobalVariableGuid, &VarAttr, &SecureBootSize, &SecureBoot);
   //
   // Skip verification if SecureBoot variable doesn't exist.
   //
-  if (SecureBoot == NULL) {
+  if (VarStatus == EFI_NOT_FOUND) {
     return EFI_SUCCESS;
   }
 
   //
   // Skip verification if SecureBoot is disabled but not AuditMode
   //
-  if (*SecureBoot == SECURE_BOOT_MODE_DISABLE) {
-    FreePool (SecureBoot);
+  if ((VarStatus == EFI_SUCCESS) &&
+      (VarAttr == (EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                   EFI_VARIABLE_RUNTIME_ACCESS)) &&
+      (SecureBoot == SECURE_BOOT_MODE_DISABLE))
+  {
     return EFI_SUCCESS;
   }
-
-  FreePool (SecureBoot);
 
   //
   // Read the Dos header.
@@ -1845,37 +1853,48 @@ DxeImageVerificationHandler (
     // This image is not signed. The SHA256 hash value of the image must match a record in the security database "db",
     // and not be reflected in the security data base "dbx".
     //
-    if (!HashPeImage (HASHALG_SHA256)) {
-      DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Failed to hash this image using %s.\n", mHashTypeStr));
-      goto Failed;
+    HashAlg = sizeof (mHash) / sizeof (HASH_TABLE);
+    while (HashAlg > 0) {
+      HashAlg--;
+      if ((mHash[HashAlg].GetContextSize == NULL) || (mHash[HashAlg].HashInit == NULL) || (mHash[HashAlg].HashUpdate == NULL) || (mHash[HashAlg].HashFinal == NULL)) {
+        continue;
+      }
+
+      if (!HashPeImage (HashAlg)) {
+        continue;
+      }
+
+      DbStatus = IsSignatureFoundInDatabase (
+                   EFI_IMAGE_SECURITY_DATABASE1,
+                   mImageDigest,
+                   &mCertType,
+                   mImageDigestSize,
+                   &IsFound
+                   );
+      if (EFI_ERROR (DbStatus) || IsFound) {
+        //
+        // Image Hash is in forbidden database (DBX).
+        //
+        DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Image is not signed and %s hash of image is forbidden by DBX.\n", mHashTypeStr));
+        goto Failed;
+      }
+
+      DbStatus = IsSignatureFoundInDatabase (
+                   EFI_IMAGE_SECURITY_DATABASE,
+                   mImageDigest,
+                   &mCertType,
+                   mImageDigestSize,
+                   &IsFound
+                   );
+      if (!EFI_ERROR (DbStatus) && IsFound) {
+        //
+        // Image Hash is in allowed database (DB).
+        //
+        IsFoundInDatabase = TRUE;
+      }
     }
 
-    DbStatus = IsSignatureFoundInDatabase (
-                 EFI_IMAGE_SECURITY_DATABASE1,
-                 mImageDigest,
-                 &mCertType,
-                 mImageDigestSize,
-                 &IsFound
-                 );
-    if (EFI_ERROR (DbStatus) || IsFound) {
-      //
-      // Image Hash is in forbidden database (DBX).
-      //
-      DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Image is not signed and %s hash of image is forbidden by DBX.\n", mHashTypeStr));
-      goto Failed;
-    }
-
-    DbStatus = IsSignatureFoundInDatabase (
-                 EFI_IMAGE_SECURITY_DATABASE,
-                 mImageDigest,
-                 &mCertType,
-                 mImageDigestSize,
-                 &IsFound
-                 );
-    if (!EFI_ERROR (DbStatus) && IsFound) {
-      //
-      // Image Hash is in allowed database (DB).
-      //
+    if (IsFoundInDatabase) {
       return EFI_SUCCESS;
     }
 
@@ -1998,6 +2017,7 @@ DxeImageVerificationHandler (
       if (!EFI_ERROR (DbStatus) && IsFound) {
         IsVerified = TRUE;
       } else {
+        Action = EFI_IMAGE_EXECUTION_AUTH_SIG_NOT_FOUND;
         DEBUG ((DEBUG_INFO, "DxeImageVerificationLib: Image is signed but signature is not allowed by DB and %s hash of image is not found in DB/DBX.\n", mHashTypeStr));
       }
     }
