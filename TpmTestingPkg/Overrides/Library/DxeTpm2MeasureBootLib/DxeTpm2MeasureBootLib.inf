@@ -37,6 +37,8 @@
 
 [Sources]
   DxeTpm2MeasureBootLib.c
+  DxeTpm2MeasureBootLibSanitization.c
+  DxeTpm2MeasureBootLibSanitization.h
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -47,6 +49,7 @@
 
 [LibraryClasses]
   BaseMemoryLib
+  SafeIntLib
   DebugLib
   MemoryAllocationLib
   DevicePathLib
@@ -60,7 +63,7 @@
 [Guids]
   gTpmReplayConfigHobGuid               # MU_CHANGE - TPM Replay Feature
   gMeasuredFvHobGuid                    ## SOMETIMES_CONSUMES ## HOB
-  gExcludedFvHobGuid                    ## SOMETIMES_CONSUMES ## HOB  # MsChange
+  gExcludedFvHobGuid                    ## SOMETIMES_CONSUMES ## HOB  # MU_CHANGE
 
 [Protocols]
   gEfiTcg2ProtocolGuid                  ## SOMETIMES_CONSUMES
