@@ -79,20 +79,6 @@ GopRegisteredCallback (
   }
 
   //
-  // Uninstall Graphics Output Protocol on this handle.
-  //
-  Status = gBS->UninstallMultipleProtocolInterfaces (
-                  Handles[0],
-                  &gEfiGraphicsOutputProtocolGuid,
-                  (VOID *)pGop,
-                  NULL
-                  );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [GOP]: Unable to uninstall %g protocol - code=%r\n", &gEfiGraphicsOutputProtocolGuid, Status));
-    goto Exit;
-  }
-
-  //
   // Now, install Graphics Output Override Protocol on this handle.
   //
   Status = gBS->InstallProtocolInterface (
@@ -103,6 +89,20 @@ GopRegisteredCallback (
                   );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "ERROR [GOP]: Unable to install %g protocol - code=%r\n", mMsGopOverrideProtocolGuid, Status));
+    goto Exit;
+  }
+
+  //
+  // Uninstall Graphics Output Protocol on this handle.
+  //
+  Status = gBS->UninstallMultipleProtocolInterfaces (
+                  Handles[0],
+                  &gEfiGraphicsOutputProtocolGuid,
+                  (VOID *)pGop,
+                  NULL
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "ERROR [GOP]: Unable to uninstall %g protocol - code=%r\n", &gEfiGraphicsOutputProtocolGuid, Status));
     goto Exit;
   }
 
