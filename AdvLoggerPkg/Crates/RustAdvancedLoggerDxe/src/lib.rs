@@ -169,7 +169,7 @@ mod no_std_debug {
     ///  ) -> u64 {
     ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(unsafe { (*_system_table).boot_services});
+    ///    unsafe { init_debug((*_system_table).boot_services) };
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
