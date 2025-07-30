@@ -29,7 +29,8 @@ mod uefi_entry {
         _system_table: *const r_efi::system::SystemTable,
     ) -> u64 {
         rust_boot_services_allocator_dxe::GLOBAL_ALLOCATOR.init(unsafe { (*_system_table).boot_services });
-        init_debug(unsafe { (*_system_table).boot_services });
+        //SAFETY: boot_services pointer is a valid BootServices pointer from a trusted source.
+        unsafe { init_debug(unsafe { (*_system_table).boot_services }) };
 
         debugln!(DEBUG_INFO, "Hello, World. This is Rust in UEFI.");
 

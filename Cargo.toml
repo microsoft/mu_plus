@@ -8,25 +8,25 @@ members = [
   "HidPkg/UefiHidDxe",
   "HidPkg/UefiHidDxeV2",
   "MsCorePkg/HelloWorldRustDxe",
-  "MsWheaPkg/Crates/MuTelemetryHelperLib"
+  "MsWheaPkg/Crates/MuTelemetryHelperLib",
 ]
 
 # Add packages that generate libraries here
 [workspace.dependencies]
-HidIo = {path = "HidPkg/Crates/HidIo"}
-hidparser = {version = "1"}
-HiiKeyboardLayout = {path = "HidPkg/Crates/HiiKeyboardLayout"}
-mu_pi = {version = "5"}
+HidIo = { path = "HidPkg/Crates/HidIo" }
+hidparser = { version = "1" }
+HiiKeyboardLayout = { path = "HidPkg/Crates/HiiKeyboardLayout" }
+mu_pi = { version = "5" }
 mu_rust_helpers = { version = "3" }
-MuTelemetryHelperLib = {path = "MsWheaPkg/Crates/MuTelemetryHelperLib"}
-RustAdvancedLoggerDxe = {path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe"}
-RustBootServicesAllocatorDxe = {path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe"}
+MuTelemetryHelperLib = { path = "MsWheaPkg/Crates/MuTelemetryHelperLib" }
+RustAdvancedLoggerDxe = { path = "AdvLoggerPkg/Crates/RustAdvancedLoggerDxe" }
+RustBootServicesAllocatorDxe = { path = "MsCorePkg/Crates/RustBootServicesAllocatorDxe" }
 mu_uefi_boot_services = { version = "2" }
 
 memoffset = "0.9.0"
-num-traits = { version = "0.2", default-features = false}
-num-derive = { version = "0.4", default-features = false}
+num-traits = { version = "0.2", default-features = false }
+num-derive = { version = "0.4", default-features = false }
 r-efi = "5.0.0"
 rustversion = "1.0.14"
 spin = "0.10.0"
-scroll = { version = "0.13", default-features = false, features = ["derive"]}
+scroll = { version = "0.13", default-features = false, features = ["derive"] }
