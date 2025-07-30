@@ -830,7 +830,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&MOUSE_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(MOUSE_REPORT_DESCRIPTOR).unwrap()));
 
         assert_eq!(keyboard_handler.initialize(2 as efi::Handle, &hid_io), Err(efi::Status::UNSUPPORTED));
     }
@@ -852,7 +852,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
 
@@ -876,7 +876,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
@@ -1034,7 +1034,7 @@ mod test {
             unsafe {
                 if keyboard_layout_length.read() < buffer_size as u16 {
                     keyboard_layout_length.write(buffer_size as u16);
-                    return efi::Status::BUFFER_TOO_SMALL;
+                    efi::Status::BUFFER_TOO_SMALL
                 } else {
                     if keyboard_layout_ptr.is_null() {
                         panic!("bad keyboard pointer)");
@@ -1042,7 +1042,7 @@ mod test {
                     keyboard_layout_length.write(buffer_size as u16);
                     let slice = from_raw_parts_mut(keyboard_layout_ptr as *mut u8, buffer_size);
                     slice.copy_from_slice(&keyboard_layout_buffer);
-                    return efi::Status::SUCCESS;
+                    efi::Status::SUCCESS
                 }
             }
         }
@@ -1073,7 +1073,7 @@ mod test {
                 efi::Status::SUCCESS
             });
 
-            let context = LayoutChangeContext { boot_services: boot_services, keyboard_handler: unsafe { HANDLER } };
+            let context = LayoutChangeContext { boot_services, keyboard_handler: unsafe { HANDLER } };
             on_layout_update(
                 3 as efi::Event,
                 &context as *const LayoutChangeContext as *mut LayoutChangeContext as *mut c_void,
@@ -1107,7 +1107,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         assert_eq!(keyboard_handler.initialize(2 as efi::Handle, &hid_io), Ok(()));
     }
@@ -1128,7 +1128,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
 
@@ -1178,7 +1178,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
@@ -1243,7 +1243,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.key_queue.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
@@ -1263,23 +1263,23 @@ mod test {
         let mut key_data: protocols::simple_text_input_ex::KeyData = Default::default();
 
         key_data.key.unicode_char = 'a' as u16;
-        let handle = keyboard_handler.insert_key_notify_callback(key_data.clone(), mock_key_notify_callback);
+        let handle = keyboard_handler.insert_key_notify_callback(key_data, mock_key_notify_callback);
         assert_eq!(handle, 1);
 
         key_data.key.unicode_char = 'b' as u16;
-        let handle = keyboard_handler.insert_key_notify_callback(key_data.clone(), mock_key_notify_callback);
+        let handle = keyboard_handler.insert_key_notify_callback(key_data, mock_key_notify_callback);
         assert_eq!(handle, 2);
 
         key_data.key.unicode_char = 'c' as u16;
-        let handle = keyboard_handler.insert_key_notify_callback(key_data.clone(), mock_key_notify_callback);
+        let handle = keyboard_handler.insert_key_notify_callback(key_data, mock_key_notify_callback);
         assert_eq!(handle, 3);
         //insert a second callback function tied to same key
-        let handle = keyboard_handler.insert_key_notify_callback(key_data.clone(), mock_key_notify_callback2);
+        let handle = keyboard_handler.insert_key_notify_callback(key_data, mock_key_notify_callback2);
         assert_eq!(handle, 4);
 
         //insert a key_data/callback pair that is already present.
         key_data.key.unicode_char = 'a' as u16;
-        let handle = keyboard_handler.insert_key_notify_callback(key_data.clone(), mock_key_notify_callback);
+        let handle = keyboard_handler.insert_key_notify_callback(key_data, mock_key_notify_callback);
         assert_eq!(handle, 1);
 
         //check state after adding callbacks.

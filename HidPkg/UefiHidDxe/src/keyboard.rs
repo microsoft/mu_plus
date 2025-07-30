@@ -8,7 +8,7 @@
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
 
-use core::ffi::c_void;
+use core::{ffi::c_void, ptr};
 
 use alloc::{
     boxed::Box,
@@ -839,7 +839,7 @@ extern "efiapi" fn simple_text_in_ex_register_key_notify(
     let key_data = OrdKeyData(*unsafe { key_data_ptr.as_mut().expect("Bad key_data_ptr") });
 
     for (handle, entry) in &keyboard_context.handler.notification_callbacks {
-        if entry.0 == key_data && entry.1 == key_notification_function {
+        if entry.0 == key_data && ptr::fn_addr_eq(entry.1, key_notification_function) {
             //if callback already exists, just return current handle
             unsafe { notify_handle.write(*handle as *mut c_void) };
             return efi::Status::SUCCESS;

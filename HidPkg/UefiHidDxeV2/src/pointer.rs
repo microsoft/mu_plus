@@ -492,7 +492,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = 0x2 as efi::Handle;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Err(efi::Status::UNSUPPORTED));
@@ -523,7 +523,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&MOUSE_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(MOUSE_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = 0x2 as efi::Handle;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Ok(()));
@@ -560,7 +560,6 @@ mod test {
 
         boot_services.expect_restore_tpl().returning(|new_tpl| {
             assert_eq!(new_tpl, efi::TPL_APPLICATION);
-            ()
         });
 
         let agent = 0x1 as efi::Handle;
@@ -568,7 +567,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&MOUSE_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(MOUSE_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = 0x2 as efi::Handle;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Ok(()));
@@ -577,7 +576,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER);
         assert_eq!(pointer_handler.current_state.current_y, CENTER);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
 
         //click two buttons and move the cursor (+32,+32)
         let report: &[u8] = &[0x05, 0x20, 0x20, 0];
@@ -587,7 +586,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER + 32);
         assert_eq!(pointer_handler.current_state.current_y, CENTER + 32);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, true);
+        assert!(pointer_handler.state_changed);
 
         //un-click and move the cursor (+32,-16) and wheel(+32).
         let report: &[u8] = &[0x00, 0x20, 0xF0, 0x20]; //0xF0 = -16.
@@ -656,7 +655,6 @@ mod test {
 
         boot_services.expect_restore_tpl().returning(|new_tpl| {
             assert_eq!(new_tpl, efi::TPL_APPLICATION);
-            ()
         });
 
         let agent = 0x1 as efi::Handle;
@@ -664,7 +662,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&ABS_POINTER_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(ABS_POINTER_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = 0x2 as efi::Handle;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Ok(()));
@@ -673,7 +671,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER);
         assert_eq!(pointer_handler.current_state.current_y, CENTER);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
 
         //click two buttons and move the cursor (1024, 1024).
         let report: &[u8] = &[0x05, 0x00, 0x04, 0x00, 0x04, 0x00, 0x00];
@@ -684,7 +682,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, 256);
         assert_eq!(pointer_handler.current_state.current_y, 256);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, true);
+        assert!(pointer_handler.state_changed);
     }
 
     #[test]
@@ -715,7 +713,6 @@ mod test {
 
         boot_services.expect_restore_tpl().returning(|new_tpl| {
             assert_eq!(new_tpl, efi::TPL_APPLICATION);
-            ()
         });
 
         let agent = 0x1 as efi::Handle;
@@ -723,7 +720,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&ABS_POINTER_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(ABS_POINTER_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = 0x2 as efi::Handle;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Ok(()));
@@ -732,7 +729,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER);
         assert_eq!(pointer_handler.current_state.current_y, CENTER);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
 
         //move the cursor (4096, 4096, 0) - changed fields are out of range
         let report: &[u8] = &[0x00, 0x00, 0x10, 0x00, 0x10, 0x00, 0x00];
@@ -742,7 +739,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER);
         assert_eq!(pointer_handler.current_state.current_y, CENTER);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
 
         //report too long
         let report: &[u8] = &[0x00, 0x00, 0x00, 0x10, 0x00, 0x10, 0x00, 0x10];
@@ -752,7 +749,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, 0);
         assert_eq!(pointer_handler.current_state.current_y, 4);
         assert_eq!(pointer_handler.current_state.current_z, 4);
-        assert_eq!(pointer_handler.state_changed, true);
+        assert!(pointer_handler.state_changed);
 
         //report too short
         let report: &[u8] = &[0x00, 0x10, 0x00, 0x10, 0x00, 0x10];
@@ -762,6 +759,6 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, 4);
         assert_eq!(pointer_handler.current_state.current_y, 4);
         assert_eq!(pointer_handler.current_state.current_z, 4);
-        assert_eq!(pointer_handler.state_changed, true);
+        assert!(pointer_handler.state_changed);
     }
 }

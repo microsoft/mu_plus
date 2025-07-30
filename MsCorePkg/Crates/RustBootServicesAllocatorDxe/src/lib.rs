@@ -29,7 +29,6 @@
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
 #![no_std]
-#![feature(allocator_api)]
 
 use core::{
     alloc::{GlobalAlloc, Layout},
