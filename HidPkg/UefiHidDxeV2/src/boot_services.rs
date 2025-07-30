@@ -96,6 +96,7 @@ pub struct StandardUefiBootServices {
 impl StandardUefiBootServices {
     /// Creates a new StandardUefiBootServices.
     /// Note: attempts to use methods on this instance will panic until [`Self::initialize`] is called.
+    #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
         Self { boot_services: AtomicPtr::new(core::ptr::null_mut()) }
     }

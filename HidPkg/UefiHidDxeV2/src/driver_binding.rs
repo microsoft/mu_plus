@@ -163,8 +163,7 @@ impl UefiDriverBinding {
 #[cfg(test)]
 mod test {
 
-    use core::ffi::c_void;
-    use core::ptr;
+    use core::{ffi::c_void, ptr};
 
     use super::{MockDriverBinding, UefiDriverBinding};
     use crate::boot_services::MockUefiBootServices;

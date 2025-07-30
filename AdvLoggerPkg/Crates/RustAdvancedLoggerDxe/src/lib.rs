@@ -13,7 +13,7 @@
 //!  ) -> u64 {
 //!
 //!    //Initialize debug logging - no output without this.
-//!    init_debug(unsafe { (*_system_table).boot_services});
+//!    unsafe { init_debug(unsafe { (*_system_table).boot_services}) };
 //!
 //!    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 //!
@@ -125,13 +125,13 @@ struct LogTransactor<'a> {
     level: usize,
 }
 
-impl<'a> fmt::Write for LogTransactor<'a> {
+impl fmt::Write for LogTransactor<'_> {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         (self.protocol.write_log)(
             self.protocol as *const AdvancedLoggerProtocolInterface,
             self.level,
             s.as_ptr(),
-            s.as_bytes().len(),
+            s.len(),
         );
         Ok(())
     }
@@ -139,7 +139,9 @@ impl<'a> fmt::Write for LogTransactor<'a> {
 
 /// Initializes the logging subsystem. The `debug` and `debugln` macros may be called before calling this function, but
 /// output is discarded if the logger has not yet been initialized via this routine.
-pub fn init_debug(efi_boot_services: *mut efi::BootServices) {
+/// # Safety
+/// Parameter `efi_boot_services` should be a valid pointer of [`efi::BootServices`] with a static lifetime.
+pub unsafe fn init_debug(efi_boot_services: *mut efi::BootServices) {
     let standard_boot_services = unsafe { boot_services::StandardBootServices::new(&*efi_boot_services) };
     LOGGER.init(&standard_boot_services);
 }
@@ -167,7 +169,7 @@ mod no_std_debug {
     ///  ) -> u64 {
     ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(unsafe { (*_system_table).boot_services});
+    ///    unsafe { init_debug((*_system_table).boot_services) };
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -201,7 +203,7 @@ mod std_debug {
     ///  ) -> u64 {
     ///
     ///    //Initialize debug logging - no output without this.
-    ///    init_debug(unsafe { (*_system_table).boot_services});
+    ///    unsafe { init_debug(unsafe { (*_system_table).boot_services}) };
     ///
     ///    debug!(DEBUG_INFO, "Hello, World. This is {:} in {:}. ", "rust", "UEFI");
     ///    debug!(DEBUG_INFO, "Better add our own newline.\n");
@@ -231,7 +233,7 @@ mod std_debug {
 ///  ) -> u64 {
 ///
 ///    //Initialize debug logging - no output without this.
-///    init_debug(unsafe { (*_system_table).boot_services});
+///    unsafe { init_debug(unsafe { (*_system_table).boot_services}) };
 ///
 ///    debugln!(DEBUG_INFO, "Hello, World. This is {:} in {:}.", "rust", "UEFI");
 ///
@@ -252,7 +254,6 @@ mod tests {
         debug, AdvancedLogger, AdvancedLoggerProtocol, AdvancedLoggerProtocolInterface, DEBUG_ERROR, DEBUG_INFO,
         DEBUG_INIT, DEBUG_VERBOSE, DEBUG_WARN, LOGGER,
     };
-    use boot_services;
     use core::{slice::from_raw_parts, sync::atomic::Ordering};
     use std::{println, str};
 

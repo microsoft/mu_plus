@@ -603,7 +603,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
@@ -783,7 +783,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
@@ -849,7 +849,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.initialize(2 as efi::Handle, &hid_io).unwrap();
@@ -989,7 +989,7 @@ mod test {
         hid_io.expect_set_output_report().returning(|_, _| Ok(()));
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap()));
 
         keyboard_handler.set_layout(Some(hii_keyboard_layout::get_default_keyboard_layout()));
         keyboard_handler.set_controller(Some(2 as efi::Handle));
