@@ -389,7 +389,6 @@ mod test {
 
         boot_services.expect_restore_tpl().returning(|new_tpl| {
             assert_eq!(new_tpl, efi::TPL_APPLICATION);
-            ()
         });
 
         boot_services.expect_signal_event().returning(|event| {
@@ -403,7 +402,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&MOUSE_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(MOUSE_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = CONTROLLER_HANDLE;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Ok(()));
@@ -414,7 +413,7 @@ mod test {
         // no pointer state change - should not signal event.
         PointerContext::wait_for_pointer(POINTER_EVENT, unsafe { EVENT_CONTEXT });
 
-        assert_eq!(unsafe { EVENT_SIGNALED }, false);
+        assert!(!unsafe { EVENT_SIGNALED });
 
         //click two buttons and move the cursor (+32,+32)
         let report: &[u8] = &[0x05, 0x20, 0x20, 0];
@@ -422,7 +421,7 @@ mod test {
 
         // pointer state change in place - should signal event.
         PointerContext::wait_for_pointer(POINTER_EVENT, unsafe { EVENT_CONTEXT });
-        assert_eq!(unsafe { EVENT_SIGNALED }, true);
+        assert!(unsafe { EVENT_SIGNALED });
     }
 
     #[test]
@@ -475,7 +474,6 @@ mod test {
 
         boot_services.expect_restore_tpl().returning(|new_tpl| {
             assert_eq!(new_tpl, efi::TPL_APPLICATION);
-            ()
         });
 
         let agent = AGENT_HANDLE;
@@ -483,7 +481,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&MOUSE_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(MOUSE_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = CONTROLLER_HANDLE;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Ok(()));
@@ -492,7 +490,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER);
         assert_eq!(pointer_handler.current_state.current_y, CENTER);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
 
         //click two buttons and move the cursor (+32,+32,+32)
         let report: &[u8] = &[0x05, 0x20, 0x20, 0x20];
@@ -502,7 +500,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER + 0x20);
         assert_eq!(pointer_handler.current_state.current_y, CENTER + 0x20);
         assert_eq!(pointer_handler.current_state.current_z, 0x20);
-        assert_eq!(pointer_handler.state_changed, true);
+        assert!(pointer_handler.state_changed);
 
         //reset state
         let status = PointerContext::absolute_pointer_reset(
@@ -515,7 +513,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER);
         assert_eq!(pointer_handler.current_state.current_y, CENTER);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
     }
 
     #[test]
@@ -568,7 +566,6 @@ mod test {
 
         boot_services.expect_restore_tpl().returning(|new_tpl| {
             assert_eq!(new_tpl, efi::TPL_APPLICATION);
-            ()
         });
 
         let agent = AGENT_HANDLE;
@@ -576,7 +573,7 @@ mod test {
         let mut hid_io = MockHidIo::new();
         hid_io
             .expect_get_report_descriptor()
-            .returning(|| Ok(hidparser::parse_report_descriptor(&MOUSE_REPORT_DESCRIPTOR).unwrap()));
+            .returning(|| Ok(hidparser::parse_report_descriptor(MOUSE_REPORT_DESCRIPTOR).unwrap()));
 
         let controller = CONTROLLER_HANDLE;
         assert_eq!(pointer_handler.initialize(controller, &hid_io), Ok(()));
@@ -585,7 +582,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER);
         assert_eq!(pointer_handler.current_state.current_y, CENTER);
         assert_eq!(pointer_handler.current_state.current_z, 0);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
 
         //click two buttons and move the cursor (+32,+32,+32)
         let report: &[u8] = &[0x05, 0x20, 0x20, 0x20];
@@ -595,7 +592,7 @@ mod test {
         assert_eq!(pointer_handler.current_state.current_x, CENTER + 0x20);
         assert_eq!(pointer_handler.current_state.current_y, CENTER + 0x20);
         assert_eq!(pointer_handler.current_state.current_z, 0x20);
-        assert_eq!(pointer_handler.state_changed, true);
+        assert!(pointer_handler.state_changed);
 
         let mut absolute_pointer_state: protocols::absolute_pointer::State = Default::default();
         let status = PointerContext::absolute_pointer_get_state(
@@ -608,7 +605,7 @@ mod test {
         assert_eq!(absolute_pointer_state.current_y, pointer_handler.current_state.current_y);
         assert_eq!(absolute_pointer_state.current_z, pointer_handler.current_state.current_z);
         assert_eq!(absolute_pointer_state.active_buttons, pointer_handler.current_state.active_buttons);
-        assert_eq!(pointer_handler.state_changed, false);
+        assert!(!pointer_handler.state_changed);
 
         //if get_state is attempted when there are no changes to state, it should return NOT_READY.
         let mut absolute_pointer_state: protocols::absolute_pointer::State = Default::default();
