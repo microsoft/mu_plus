@@ -1,0 +1,54 @@
+# This workflow validates that TODO....
+#
+# NOTE: This file is automatically synchronized from Mu DevOps. Update the original file there
+#       instead of the file in this repo.
+#
+# - Mu DevOps Repo: https://github.com/microsoft/mu_devops
+# - File Sync Settings: https://github.com/microsoft/mu_devops/blob/main/.sync/Files.yml
+#
+# Copyright (c) Microsoft Corporation.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+
+name: Validate rust code.
+
+on:
+  pull_request_target:
+    types:
+      - edited
+      - opened
+      - reopened
+      - synchronize
+
+jobs:
+  rust_ci:
+    name: Rust CI
+    
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ✅ Checkout Repository ✅
+        uses: actions/checkout@v4
+ 
+      - name: 🛠️ Download Rust Tools 🛠️
+        uses: microsoft/mu_devops/.github/actions/rust-tool-cache@main
+      
+      - name: Run cargo-fmt
+        run: cargo fmt --all --check
+        env:
+          RUSTC_BOOTSTRAP: 1
+
+      - name: 📎 Run cargo-clippy 📎
+        run: cargo clippy --all-targets --all-features -- -D warnings
+        env:
+          RUSTC_BOOTSTRAP: 1
+          - name: 🧪 Run Tests 🧪
+        run: cargo make coverage
+
+      - name: Test Documentation
+        run: cargo test --doc
+        env:
+          RUSTC_BOOTSTRAP: 1
+
+      - name: Build documentation
+        run: cargo make doc
