@@ -268,12 +268,12 @@ mod test {
             unsafe {
                 if *report_descriptor_size < MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR.len() {
                     *report_descriptor_size = MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR.len();
-                    return efi::Status::BUFFER_TOO_SMALL;
+                    efi::Status::BUFFER_TOO_SMALL
                 } else {
                     *report_descriptor_size = MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR.len();
                     let slice = from_raw_parts_mut(report_descriptor_buffer as *mut u8, *report_descriptor_size);
                     slice.copy_from_slice(MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR);
-                    return efi::Status::SUCCESS;
+                    efi::Status::SUCCESS
                 }
             }
         }
@@ -402,7 +402,7 @@ mod test {
 
         let uefi_hid_io = UefiHidIo::new(boot_services, agent, controller, true).unwrap();
         let descriptor = uefi_hid_io.get_report_descriptor().unwrap();
-        assert_eq!(descriptor, hidparser::parse_report_descriptor(&MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap());
+        assert_eq!(descriptor, hidparser::parse_report_descriptor(MINIMAL_BOOT_KEYBOARD_REPORT_DESCRIPTOR).unwrap());
         drop(uefi_hid_io);
     }
     #[test]
@@ -421,9 +421,9 @@ mod test {
 
         let uefi_hid_io = UefiHidIo::new(boot_services, agent, controller, true).unwrap();
 
-        uefi_hid_io.set_output_report(None, &TEST_REPORT0).unwrap();
-        uefi_hid_io.set_output_report(Some(1), &TEST_REPORT1).unwrap();
-        assert_eq!(uefi_hid_io.set_output_report(Some(2), &TEST_REPORT0), Err(efi::Status::UNSUPPORTED));
+        uefi_hid_io.set_output_report(None, TEST_REPORT0).unwrap();
+        uefi_hid_io.set_output_report(Some(1), TEST_REPORT1).unwrap();
+        assert_eq!(uefi_hid_io.set_output_report(Some(2), TEST_REPORT0), Err(efi::Status::UNSUPPORTED));
 
         drop(uefi_hid_io);
     }
