@@ -73,4 +73,5 @@
 
 [Depex]
   gEfiMmRscHandlerProtocolGuid AND
-  gEfiVariableWriteArchProtocolGuid
+  gEfiVariableWriteArchProtocolGuid AND
+  gEfiSmmVariableProtocolGuid
