@@ -2872,6 +2872,10 @@ OSKReadKeyStrokeEx (
   OUT EFI_KEY_DATA                       *pKey
   )
 {
+  if (pKey == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   ZeroMem (pKey, sizeof (EFI_KEY_DATA));
 
   pKey->KeyState.KeyShiftState  = EFI_SHIFT_STATE_VALID;
