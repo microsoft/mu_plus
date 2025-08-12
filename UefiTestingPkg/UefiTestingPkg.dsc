@@ -131,6 +131,7 @@
   UefiTestingPkg/FunctionalSystemTests/MpManagement/App/MpManagementTestApp.inf
   UefiTestingPkg/FunctionalSystemTests/MemoryAttributeProtocolFuncTestApp/MemoryAttributeProtocolFuncTestApp.inf
   UefiTestingPkg/Library/FlatPageTableLib/FlatPageTableLib.inf
+  UefiTestingPkg/PerfTests/FbptDump/FbptDump.inf
 
 [Components.IA32, Components.X64]
   UefiTestingPkg/AuditTests/DMAProtectionAudit/UEFI/DMAIVRSProtectionUnitTestApp.inf
