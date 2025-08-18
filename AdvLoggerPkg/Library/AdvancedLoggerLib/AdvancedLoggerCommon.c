@@ -19,6 +19,46 @@
 
 #include "../AdvancedLoggerCommon.h"
 
+#define SERIAL_NOT_IN_USE  ((UINT16)0)
+#define SERIAL_IN_USE      ((UINT16)1)
+
+/**
+  Acquires a spin lock for the hardware port by attempting to atomically set the
+  HwPortSpinLock field in the ADVANCED_LOGGER_INFO structure. The function loops
+  until it successfully acquires the lock.
+
+  @param[in, out]  Info  Pointer to the ADVANCED_LOGGER_INFO structure containing
+                         the spin lock to acquire.
+**/
+STATIC
+VOID
+AcquireHwPortSpinLock (
+  ADVANCED_LOGGER_INFO  *Info
+  )
+{
+  UINT16  OldState;
+
+  do {
+    OldState = InterlockedCompareExchange16 (&(Info->HwPortSpinLock), SERIAL_NOT_IN_USE, SERIAL_IN_USE);
+  } while (SERIAL_IN_USE == OldState);
+}
+
+/**
+  Releases the hardware port spin lock by setting the HwPortSpinLock field in the
+  ADVANCED_LOGGER_INFO structure to 0, indicating the lock is available.
+
+  @param[in, out]  Info  Pointer to the ADVANCED_LOGGER_INFO structure containing
+                         the spin lock to release.
+**/
+STATIC
+VOID
+ReleaseHwPortSpinLock (
+  ADVANCED_LOGGER_INFO  *Info
+  )
+{
+  Info->HwPortSpinLock = SERIAL_NOT_IN_USE;
+}
+
 /**
   Write data from buffer into the in memory logging buffer.
 
@@ -182,10 +222,14 @@ AdvancedLoggerWrite (
     // if we are at an older version, check the PCD to see if we should log this message
     if (LoggerInfo->Version >= ADVANCED_LOGGER_HW_LVL_VER) {
       if (DebugLevel & LoggerInfo->HwPrintLevel) {
+        AcquireHwPortSpinLock (LoggerInfo);
         AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
+        ReleaseHwPortSpinLock (LoggerInfo);
       }
     } else if (DebugLevel & PcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel)) {
+      AcquireHwPortSpinLock (LoggerInfo);
       AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
+      ReleaseHwPortSpinLock (LoggerInfo);
     }
   }
 

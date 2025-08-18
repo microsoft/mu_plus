@@ -48,7 +48,8 @@
 typedef volatile struct {
   UINT32      Signature;                          // Signature 'ALOG'
   UINT16      Version;                            // Current Version
-  UINT16      Reserved[3];                        // Reserved for future
+  UINT16      HwPortSpinLock;                     // Lock used to prevent concurrent access to HwSerialPort.
+  UINT16      Reserved[2];                        // Reserved for future
   UINT32      LogBufferOffset;                    // Offset from LoggerInfo to start of log, expected to be the size of this structure 8 byte aligned
   UINT32      Reserved4;
   UINT32      LogCurrentOffset;                   // Offset from LoggerInfo to where to store next log entry.
