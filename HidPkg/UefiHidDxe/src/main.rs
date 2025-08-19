@@ -14,8 +14,6 @@
 
 extern crate alloc;
 
-use core::panic::PanicInfo;
-
 use driver_binding::initialize_driver_binding;
 use r_efi::{efi, system};
 
@@ -31,6 +29,7 @@ mod pointer;
 static mut BOOT_SERVICES: *mut system::BootServices = core::ptr::null_mut();
 static mut RUNTIME_SERVICES: *mut system::RuntimeServices = core::ptr::null_mut();
 
+#[allow(clippy::not_unsafe_ptr_arg_deref)]
 #[no_mangle]
 pub extern "efiapi" fn efi_main(image_handle: efi::Handle, system_table: *const system::SystemTable) -> efi::Status {
     // Safety: This block is unsafe because it assumes that system_table and (*system_table).boot_services are correct,
@@ -56,8 +55,9 @@ pub extern "efiapi" fn efi_main(image_handle: efi::Handle, system_table: *const 
 #[no_mangle]
 pub extern "efiapi" fn __chkstk() {}
 
+#[cfg(target_os = "uefi")]
 #[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
+fn panic(info: &core::panic::PanicInfo) -> ! {
     debugln!(DEBUG_ERROR, "Panic: {:?}", info);
     loop {}
 }

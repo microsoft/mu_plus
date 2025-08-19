@@ -1,5 +1,6 @@
 [toolchain]
 channel = "1.85.0"
+components = ["rust-src", "clippy", "rustfmt", "rust-docs"]
 
 [tools]
 cargo-make = "0.37.24"
