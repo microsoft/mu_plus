@@ -1,0 +1,135 @@
+## @file
+# Azure Pipelines step to run common Rust steps.
+#
+# Cargo should be installed on the system prior to invoking this template.
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+# NOTE: Because this pipeline YAML file is a Nunjucks template, the pipeline syntax of `{{}}` will conflict with
+#       Nunjucks style. Surround pipeline YAML code that uses `{{}}` within `raw` and `endraw` tags
+#       to allow it to pass through Nunjucks processing.
+
+
+steps:
+
+# Note: This uses a local lookup table as opposed to `rustc -vV` since this is a Rust setup
+#       template that tries to minimize assumptions about Rust tools already on a system.
+- task: PythonScript@0
+  displayName: Get Host Rust Target Triple
+  inputs:
+    scriptSource: inline
+    workingDirectory: $(Agent.BuildDirectory)
+    script: |
+      import os
+      import platform
+
+      system = platform.system()
+      arch = platform.machine()
+
+      rust_targets = {
+          ('Windows', 'x86_64'): 'x86_64-pc-windows-msvc',
+          ('Windows', 'AMD64'): 'x86_64-pc-windows-msvc',
+          ('Windows', 'i386'): 'i686-pc-windows-msvc',
+          ('Windows', 'i686'): 'i686-pc-windows-msvc',
+          ('Linux', 'x86_64'): 'x86_64-unknown-linux-gnu',
+          ('Linux', 'AMD64'): 'x86_64-unknown-linux-gnu',
+          ('Linux', 'aarch64'): 'aarch64-unknown-linux-gnu',
+          ('Linux', 'i386'): 'i686-unknown-linux-gnu',
+          ('Linux', 'i686'): 'i686-unknown-linux-gnu',
+      }
+
+      print(f'System type = {system}')
+      print(f'Architecture = {arch}')
+
+      try:
+          print(f'##vso[task.setvariable variable=rust_target_triple]{rust_targets[(system, arch)]}')
+      except KeyError:
+          print(f'##[error]Unsupported Host Combination! OS = {system}. Architecture = {arch}.')
+          print(f'##vso[task.complete result=Failed;]Unsupported Host Combination! OS = {system}. Architecture = {arch}.')
+
+- script: |
+    python -c "import os; print('##vso[task.setvariable variable=cargoBinPath]{}'.format(os.path.join(os.environ['USERPROFILE'], '.cargo', 'bin')))"
+  displayName: Get Cargo bin Path (Windows)
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+- script: |
+    python -c "import os; print('##vso[task.setvariable variable=cargoBinPath]/.cargo/bin')"
+  displayName: Get Cargo bin Path (Linux)
+  condition: eq(variables['Agent.OS'], 'Linux')
+
+- task: CmdLine@2
+  displayName: Setup Cargo Dir Permissions (Linux)
+  target: host
+  inputs:
+    script: |
+      /usr/bin/docker exec mu_devops_build_container chown -R vsts_azpcontainer:docker_azpcontainer /.cargo
+      /usr/bin/docker exec mu_devops_build_container chmod -R ug+rw /.cargo
+      /usr/bin/docker exec mu_devops_build_container chown -R vsts_azpcontainer:docker_azpcontainer /.rustup
+      /usr/bin/docker exec mu_devops_build_container chmod -R ug+rw /.rustup
+  condition: eq(variables['Agent.OS'], 'Linux')
+
+#
+# Linux will use a container image pre-loaded with the designated Rust version. Windows does not use a container
+# image, but will have a VM image with a very recent version of Rust installed. This step installs the same toolchain
+# version used in the Linux container for consistency between the two. The cargo-make and cargo-tarpaulin versions
+# placed in the container image are the latest at the time the image is built. That should be equal to or less than
+# the latest version available when the pipeline is run. Get the latest available in the cache pipelines and use
+# those on both Linux and Windows agents for consistency in the pipeline runs.
+#
+- script: |
+    rustup install --no-self-update 1.85.0
+  displayName: Install Rust 1.85.0 (Windows)
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+- script: |
+    rustup default 1.85.0
+  displayName: Set Rust 1.85.0 (Windows)
+  condition: eq(variables['Agent.OS'], 'Windows_NT')
+
+- script: pip install requests --upgrade
+  displayName: Install and Upgrade requests PIP Module
+  condition: succeeded()
+
+- template: DownloadAzurePipelineArtifact.yml
+  parameters:
+    task_display_name: Download Cargo Binstall (Windows)
+    artifact_name: Binaries
+    azure_pipeline_def_id: 169
+    file_pattern: "**/cargo-binstall.exe"
+    target_dir: "$(cargoBinPath)"
+    target_os: "Windows_NT"
+    work_dir: "$(Agent.TempDirectory)"
+
+- template: DownloadAzurePipelineArtifact.yml
+  parameters:
+    task_display_name: Download Cargo Binstall (Linux)
+    artifact_name: Binaries
+    azure_pipeline_def_id: 169
+    file_pattern: "**/cargo-binstall"
+    target_dir: "$(Agent.TempDirectory)"
+    target_os: "Linux"
+    work_dir: "$(Agent.TempDirectory)"
+
+- script: |
+    cp $AGENT_TEMPDIRECTORY/cargo-binstall /.cargo/bin
+  displayName: Copy cargo-binstall
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+
+- script: |
+    sudo chmod +x /.cargo/bin/cargo-binstall
+  displayName: Make cargo-binstall executable
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+
+- script: |
+    cargo binstall -y cargo-make --version 0.37.24
+  displayName: Install cargo-make
+
+- script: |
+    cargo binstall -y cargo-tarpaulin --version 0.31.5
+  displayName: Install cargo-tarpaulin
+
+- script: rustup component add rustfmt rust-src --toolchain 1.85.0-$(rust_target_triple)
+  displayName: rustup add rust-src
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
