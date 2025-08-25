@@ -15,6 +15,7 @@ use r_efi::{
     efi,
     protocols::{device_path, driver_binding},
 };
+
 use rust_advanced_logger_dxe::{debugln, DEBUG_ERROR, DEBUG_INFO};
 
 use crate::{hid, BOOT_SERVICES};
