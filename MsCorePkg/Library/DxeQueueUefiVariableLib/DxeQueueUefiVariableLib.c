@@ -126,26 +126,20 @@ GetNextQueueVariableName (
   UINTN       CurrentVariableSize;
   CHAR16      *VariableName;
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
-
   if (VariableNamePtr == NULL) {
     return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   VariableName = *VariableNamePtr;
   // if they passed us a pointer to a null, allocate with the default size
   if (VariableName == NULL) {
     CurrentVariableSize = 60;
     VariableName        = AllocateZeroPool (CurrentVariableSize);
-    DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   } else {
-    DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
     CurrentVariableSize = *VariableNameSize;
   }
 
   if (VariableName == NULL) {
-    DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -165,14 +159,13 @@ GetNextQueueVariableName (
 
     // check if we have a variable
     if (!EFI_ERROR (Status) && CompareGuid (VariableGuid, DesiredVariableGuid)) {
-      DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
       break;
     }
   }
 
   *VariableNameSize = CurrentVariableSize;
   *VariableNamePtr  = VariableName;
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
   return Status;
 }
 

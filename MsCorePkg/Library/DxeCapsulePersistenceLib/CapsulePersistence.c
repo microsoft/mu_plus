@@ -830,7 +830,7 @@ InternalPersistCapsuleImageAcrossReset (
 
   FileSystemHandle = NULL;
   FileHandle       = NULL;
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
+
   // Open the file system if it isn't already opened
   Status = OpenVolumeSFS (&FileSystemHandle);
   if (EFI_ERROR (Status)) {
@@ -838,7 +838,6 @@ InternalPersistCapsuleImageAcrossReset (
     goto Cleanup;
   }
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Check to make sure we have enough free space
   CapsuleSize = CapsuleHeader->CapsuleImageSize;
   Status      = IsThereEnoughFreeSpaceOnDisk (FileSystemHandle, CapsuleSize);
@@ -847,7 +846,6 @@ InternalPersistCapsuleImageAcrossReset (
     goto Cleanup;
   }
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // get the id for the capsule
   Status = FindNextFreeCapsuleID (FileSystemHandle, &CapsuleId);
   if (EFI_ERROR (Status)) {
@@ -855,7 +853,6 @@ InternalPersistCapsuleImageAcrossReset (
     goto Cleanup;
   }
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Get the hash of the Capsule to save into the system
   Status = CalculateCapsuleHash (CapsuleHeader, &CapsuleHash);
   if (EFI_ERROR (Status)) {
@@ -863,7 +860,6 @@ InternalPersistCapsuleImageAcrossReset (
     goto Cleanup;
   }
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Create the file on the disk to store the capsule
   Status = CreateCapsuleFileOnFileSystem (FileSystemHandle, &FileHandle, CapsuleId);
   if (EFI_ERROR (Status)) {
@@ -871,7 +867,6 @@ InternalPersistCapsuleImageAcrossReset (
     goto Cleanup;
   }
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   // Write the capsule to the disk with the file handle we created
   Status = FileHandle->Write (FileHandle, &CapsuleSize, CapsuleHeader);
   if (EFI_ERROR (Status)) {
@@ -879,14 +874,12 @@ InternalPersistCapsuleImageAcrossReset (
     goto Cleanup;
   }
 
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   if (CapsuleIdentifier != NULL) {
     CapsuleIdentifier->CapsuleHash = CapsuleHash;
     CapsuleIdentifier->CapsuleId   = CapsuleId;
   }
 
 Cleanup:
-  DEBUG ((DEBUG_INFO, "%a:%d - \n", __FUNCTION__, __LINE__));
   if (FileHandle != NULL) {
     FileHandle->Close (FileHandle);
   }
