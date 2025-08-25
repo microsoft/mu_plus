@@ -68,7 +68,7 @@ impl ReportStatusCode for StatusCodeRuntimeProtocol {
 
         let data_ptr: *mut EfiStatusCodeData = data_buffer.as_mut_ptr() as *mut EfiStatusCodeData;
 
-        let caller_id = caller_id.or(Some(&guid::CALLER_ID)).unwrap();
+        let caller_id = caller_id.unwrap_or(&guid::CALLER_ID);
 
         let status = (protocol.report_status_code)(status_code_type, status_code_value, instance, caller_id, data_ptr);
 

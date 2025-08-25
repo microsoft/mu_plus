@@ -72,7 +72,6 @@ const MS_WHEA_ERROR_STATUS_TYPE_FATAL: EfiStatusCodeType = EFI_ERROR_MAJOR | EFI
 //     UINT64      AdditionalInfo2;
 //   } MS_WHEA_RSC_INTERNAL_ERROR_DATA;
 // #pragma pack()
-
 #[repr(C)]
 struct MsWheaRscInternalErrorData {
     library_id: efi::Guid,
@@ -83,19 +82,19 @@ struct MsWheaRscInternalErrorData {
 
 /// Log telemetry
 ///
-///   @param[in]  is_fatal      This should be set to TRUE if the event will prevent a successful boot.
-///   @param[in]  class_id      An EFI_STATUS_CODE_VALUE representing the event that has occurred. This
+///   @param\[in\]  is_fatal      This should be set to TRUE if the event will prevent a successful boot.
+///   @param\[in\]  class_id      An EFI_STATUS_CODE_VALUE representing the event that has occurred. This
 ///                             value will occupy the same space as EventId from LogCriticalEvent(), and
 ///                             should be unique enough to identify a module or region of code.
-///   @param[in]  extra_data1   [Optional] This should be data specific to the cause. Ideally, used to contain contextual
+///   @param\[in\]  extra_data1   \[Optional\] This should be data specific to the cause. Ideally, used to contain contextual
 ///                             or runtime data related to the event (e.g. register contents, failure codes, etc.).
 ///                             It will be persisted.
-///   @param[in]  extra_data2   [Optional] Another UINT64 similar to ExtraData1.
-///   @param[in]  component_id  [Optional] This identifier should uniquely identify the module that is emitting this
+///   @param\[in\]  extra_data2   \[Optional\] Another UINT64 similar to ExtraData1.
+///   @param\[in\]  component_id  \[Optional\] This identifier should uniquely identify the module that is emitting this
 ///                             event. When this is passed in as NULL, report status code will automatically populate
 ///                             this field with gEfiCallerIdGuid.
-///   @param[in]  library_id    This should identify the library that is emitting this event.
-///   @param[in]  ihv_id        This should identify the Ihv related to this event if applicable. For example,
+///   @param\[in\]  library_id    This should identify the library that is emitting this event.
+///   @param\[in\]  ihv_id        This should identify the Ihv related to this event if applicable. For example,
 ///                             this would typically be used for TPM and SOC specific events.
 #[cfg(not(tarpaulin_include))]
 pub fn log_telemetry(
@@ -119,6 +118,7 @@ pub fn log_telemetry(
     )
 }
 
+#[allow(clippy::too_many_arguments)]
 fn log_telemetry_internal<B: BootServices>(
     boot_services: &B,
     is_fatal: bool,
