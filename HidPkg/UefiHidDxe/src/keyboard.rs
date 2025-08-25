@@ -166,7 +166,7 @@ impl KeyboardHandler {
                     ReportField::Padding(_) => (), // padding irrelevant.
                 }
             }
-            if report_data.relevant_variable_fields.len() > 0 || report_data.relevant_array_fields.len() > 0 {
+            if !report_data.relevant_variable_fields.is_empty() || !report_data.relevant_array_fields.is_empty() {
                 handler.input_reports.insert(report_data.report_id, report_data);
             }
         }
@@ -203,12 +203,12 @@ impl KeyboardHandler {
           ReportField::Padding(_) => (), // padding fields irrelevant.
         }
             }
-            if report_builder.relevant_variable_fields.len() > 0 {
+            if !report_builder.relevant_variable_fields.is_empty() {
                 handler.output_builders.push(report_builder);
             }
         }
 
-        if handler.input_reports.len() > 0 || handler.output_builders.len() > 0 {
+        if !handler.input_reports.is_empty() || !handler.output_builders.is_empty() {
             Ok(handler)
         } else {
             Err(efi::Status::UNSUPPORTED)
@@ -405,7 +405,7 @@ impl KeyboardHandler {
                     if index <= range_size {
                         x.range().nth(index)
                     } else {
-                        index = index - range_size as usize;
+                        index -= range_size;
                         None
                     }
                 });
@@ -419,7 +419,7 @@ impl KeyboardHandler {
 
     // process the given input report buffer and handle input from it.
     pub fn process_input_report(&mut self, report_buffer: &[u8]) {
-        if report_buffer.len() == 0 {
+        if report_buffer.is_empty() {
             return;
         }
 
@@ -429,7 +429,7 @@ impl KeyboardHandler {
             false => (None, &report_buffer[0..]),
         };
 
-        if report.len() == 0 {
+        if report.is_empty() {
             return;
         }
 
@@ -596,9 +596,9 @@ pub fn attempt_to_retrieve_hid_context(
             let context_ptr =
                 unsafe { (simple_text_in_ptr as *mut u8).sub(offset_of!(KeyboardContext, simple_text_in)) }
                     as *mut KeyboardContext;
-            return Ok(unsafe { (*context_ptr).hid_context });
+            Ok(unsafe { (*context_ptr).hid_context })
         }
-        err => return Err(err),
+        err => Err(err),
     }
 }
 
@@ -784,8 +784,7 @@ extern "efiapi" fn simple_text_in_ex_read_key_stroke(
         unsafe { key_data.write(key) };
         efi::Status::SUCCESS
     } else {
-        let mut key: KeyData = Default::default();
-        key.key_state = keyboard_context.handler.key_queue.init_key_state();
+        let key = KeyData { key_state: keyboard_context.handler.key_queue.init_key_state(), ..Default::default() };
         unsafe { key_data.write(key) };
         efi::Status::NOT_READY
     }
@@ -1027,7 +1026,6 @@ extern "efiapi" fn on_layout_update(_event: efi::Event, context: *mut c_void) {
         }
         Err(_) => {
             debugln!(DEBUG_WARN, "keyboard::on_layout_update: Could not parse keyboard layout buffer.");
-            return;
         }
     }
 }

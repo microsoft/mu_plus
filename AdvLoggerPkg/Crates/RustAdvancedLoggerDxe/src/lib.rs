@@ -27,9 +27,10 @@
 //!
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
-#![no_std]
 
-#[cfg(any(doc, feature = "std"))]
+#![cfg_attr(not(test), no_std)]
+
+#[cfg(doc)]
 extern crate std; //allow rustdoc links to reference std (e.g. println docs below).
 
 use core::{
@@ -149,14 +150,14 @@ pub fn _log(level: usize, args: fmt::Arguments) {
     LOGGER.log(level, args)
 }
 
-#[cfg(not(feature = "std"))]
+#[cfg(not(test))]
 mod no_std_debug {
     /// Prints to the AdvancedLogger log at the specified level.
     ///
-    /// This macro uses the same syntax as rust std [`std::println!`] macro, with the addition of a level argument that
+    /// This macro uses the same syntax as rust std `https://doc.rust-lang.org/std/macro.println.html` macro in std, with the addition of a level argument that
     /// indicates what debug level the output is to be written at.
     ///
-    /// See [`std::fmt`] for details on format strings.
+    /// See `https://doc.rust-lang.org/std/fmt/index.html` for details on format strings.
     ///
     /// ```no_run
     /// use rust_advanced_logger_dxe::{init_debug, debug, DEBUG_INFO};
@@ -183,7 +184,7 @@ mod no_std_debug {
   }
 }
 
-#[cfg(feature = "std")]
+#[cfg(test)]
 mod std_debug {
     /// Prints to the console log.
     ///
