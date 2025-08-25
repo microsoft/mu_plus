@@ -19,7 +19,7 @@ resources:
       type: github
       endpoint: microsoft
       name: microsoft/mu_devops
-      ref: rust_updates_471
+      ref: v16.0.0
 
 parameters:
 - name: do_ci_build
