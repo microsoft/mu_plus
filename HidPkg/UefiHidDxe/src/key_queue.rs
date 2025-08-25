@@ -65,7 +65,7 @@ impl Ord for OrdKeyData {
         if !e.is_eq() {
             return e;
         }
-        return self.0.key_state.key_toggle_state.cmp(&other.0.key_state.key_toggle_state);
+        self.0.key_state.key_toggle_state.cmp(&other.0.key_state.key_toggle_state)
     }
 }
 
@@ -111,7 +111,7 @@ impl OrdKeyData {
         if !(register_toggle == 0 || register_toggle == self_toggle) {
             return false;
         }
-        return true;
+        true
     }
 }
 
@@ -316,15 +316,13 @@ impl KeyQueue {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     // Creates a KeyState instance initialized based on the current modifier state.
     pub(crate) fn init_key_state(&self) -> KeyState {
-        let mut key_state: KeyState = Default::default();
-
-        key_state.key_shift_state = SHIFT_STATE_VALID;
-        key_state.key_toggle_state = TOGGLE_STATE_VALID | KEY_STATE_EXPOSED;
+        let mut key_state =
+            KeyState { key_shift_state: SHIFT_STATE_VALID, key_toggle_state: TOGGLE_STATE_VALID | KEY_STATE_EXPOSED };
 
         let key_shift_state = &mut key_state.key_shift_state;
         let key_toggle_state = &mut key_state.key_toggle_state;
@@ -396,7 +394,7 @@ impl KeyQueue {
 
     // Returns a vector of HID usages corresponding to the active LEDs based on the active modifier state.
     pub(crate) fn get_active_leds(&self) -> Vec<Usage> {
-        self.active_modifiers.iter().cloned().filter_map(|x| modifer_to_led_usage(x)).collect()
+        self.active_modifiers.iter().cloned().filter_map(modifer_to_led_usage).collect()
     }
 
     // Returns the current keyboard layout that the KeyQueue is using.

@@ -143,12 +143,12 @@ impl PointerHandler {
                 }
             }
 
-            if report_data.relevant_fields.len() > 0 {
+            if !report_data.relevant_fields.is_empty() {
                 handler.input_reports.insert(report_data.report_id, report_data);
             }
         }
 
-        if handler.input_reports.len() > 0 {
+        if !handler.input_reports.is_empty() {
             Ok(handler)
         } else {
             debugln!(DEBUG_INFO, "No relevant fields for handler: {:#?}", handler);
@@ -177,8 +177,8 @@ impl PointerHandler {
                 wait_for_input: core::ptr::null_mut(),
             },
             handler: self,
-            controller: controller,
-            hid_context: hid_context,
+            controller,
+            hid_context,
         }));
 
         let context = unsafe { context_ptr.as_mut().expect("freshly boxed context pointer is null.") };
@@ -241,7 +241,7 @@ impl PointerHandler {
             mode.absolute_min_z = 0;
             //TODO: Z-axis is interpreted as pressure data. This is for compat with reference implementation in C, but
             //could consider e.g. looking for actual digitizer tip pressure usages or something.
-            mode.attributes = mode.attributes | 0x02;
+            mode.attributes |= 0x02;
         } else {
             debugln!(DEBUG_INFO, "No z-axis usages found in the report descriptor.");
         }
@@ -249,7 +249,7 @@ impl PointerHandler {
         let button_count = self.supported_usages.iter().filter(|x| x.page() == BUTTON_PAGE).count();
 
         if button_count > 1 {
-            mode.attributes = mode.attributes | 0x01; // alternate button exists.
+            mode.attributes |= 0x01 // alternate button exists.
         }
 
         mode
@@ -261,7 +261,7 @@ impl PointerHandler {
         if field.attributes.relative {
             //for relative, just update and clamp the current state.
             let new_value = current_value as i64 + field.field_value(report)?;
-            return Some(new_value.clamp(0, AXIS_RESOLUTION as i64) as u64);
+            Some(new_value.clamp(0, AXIS_RESOLUTION as i64) as u64)
         } else {
             //for absolute, project onto 0..AXIS_RESOLUTION
             let mut new_value = field.field_value(report)?;
@@ -272,7 +272,7 @@ impl PointerHandler {
             //scale to AXIS_RESOLUTION
             new_value = (new_value * AXIS_RESOLUTION as i64 * 1000) / (field.field_range()? as i64 * 1000);
 
-            return Some(new_value.clamp(0, AXIS_RESOLUTION as i64) as u64);
+            Some(new_value.clamp(0, AXIS_RESOLUTION as i64) as u64)
         }
     }
 
@@ -303,7 +303,7 @@ impl PointerHandler {
     // handles button inputs
     fn button_handler(&mut self, field: VariableField, report: &[u8]) {
         let shift: u32 = field.usage.into();
-        if (shift < BUTTON_MIN) || (shift > BUTTON_MAX) {
+        if !(BUTTON_MIN..=BUTTON_MAX).contains(&shift) {
             return;
         }
 
@@ -326,7 +326,7 @@ impl PointerHandler {
 
     /// Processes the given input report buffer and handles input from it.
     pub fn process_input_report(&mut self, report_buffer: &[u8]) {
-        if report_buffer.len() == 0 {
+        if report_buffer.is_empty() {
             return;
         }
 
@@ -336,7 +336,7 @@ impl PointerHandler {
             false => (None, &report_buffer[0..]),
         };
 
-        if report.len() == 0 {
+        if report.is_empty() {
             return;
         }
 
@@ -454,9 +454,9 @@ pub fn attempt_to_retrieve_hid_context(
             let context_ptr =
                 unsafe { (absolute_pointer_ptr as *mut u8).sub(offset_of!(PointerContext, absolute_pointer)) }
                     as *mut PointerContext;
-            return Ok(unsafe { (*context_ptr).hid_context });
+            Ok(unsafe { (*context_ptr).hid_context })
         }
-        err => return Err(err),
+        err => Err(err),
     }
 }
 

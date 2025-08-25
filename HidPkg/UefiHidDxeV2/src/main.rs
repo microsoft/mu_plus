@@ -41,10 +41,11 @@ mod uefi_entry {
             &self,
             _controller: efi::Handle,
         ) -> Result<Vec<Box<dyn HidReportReceiver>>, efi::Status> {
-            let mut receivers: Vec<Box<dyn HidReportReceiver>> = Vec::new();
-            receivers.push(Box::new(PointerHidHandler::new(self.boot_services, self.agent)));
-            receivers.push(Box::new(KeyboardHidHandler::new(self.boot_services, self.agent)));
-            Ok(receivers)
+            Ok([
+                Box::new(PointerHidHandler::new(self.boot_services, self.agent)) as Box<dyn HidReportReceiver>,
+                Box::new(KeyboardHidHandler::new(self.boot_services, self.agent)) as Box<dyn HidReportReceiver>,
+            ]
+            .into())
         }
     }
 

@@ -9,11 +9,10 @@
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
 
-#![no_std]
 #![allow(non_snake_case)]
 // UEFI requires "no_main" and a panic handler. To facilitate unit tests, gate "no_main", UEFI entry point, and panic
 // handler behind target_os configuration.
-#![cfg_attr(target_os = "uefi", no_main)]
+#![cfg_attr(target_os = "uefi", no_main, no_std)]
 #[cfg(target_os = "uefi")]
 mod uefi_entry {
     extern crate alloc;
@@ -30,7 +29,7 @@ mod uefi_entry {
     ) -> u64 {
         rust_boot_services_allocator_dxe::GLOBAL_ALLOCATOR.init(unsafe { (*_system_table).boot_services });
         //SAFETY: boot_services pointer is a valid BootServices pointer from a trusted source.
-        unsafe { init_debug(unsafe { (*_system_table).boot_services }) };
+        unsafe { init_debug((*_system_table).boot_services) };
 
         debugln!(DEBUG_INFO, "Hello, World. This is Rust in UEFI.");
 
