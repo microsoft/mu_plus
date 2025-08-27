@@ -57,6 +57,7 @@
   PeimEntryPoint
   PeiServicesLib
   ReportStatusCodeLib
+  Tpm2CommandLib
   Tpm2HelpLib
 
 [Guids]
