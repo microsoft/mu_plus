@@ -28,6 +28,7 @@
 #include <Library/ReportStatusCodeLib.h>
 #include <Library/Tpm2CommandLib.h>
 #include <Library/Tpm2DeviceLib.h>
+#include <Library/Tpm2HelpLib.h>
 #include <Ppi/TpmInitialized.h>
 #include <Protocol/Tcg2Protocol.h>              // For macro definitions in the header file
 
