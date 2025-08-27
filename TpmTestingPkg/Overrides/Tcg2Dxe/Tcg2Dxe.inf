@@ -73,6 +73,7 @@
 ## MSChange [END]
   PcdLib  # MU_CHANGE
   Tpm2DebugLib
+  Tpm2HelpLib # MU_CHANGE
 
 [Guids]
   ## SOMETIMES_CONSUMES     ## Variable:L"SecureBoot"
