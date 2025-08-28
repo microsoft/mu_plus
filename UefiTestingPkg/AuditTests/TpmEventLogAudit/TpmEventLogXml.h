@@ -20,7 +20,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/XmlTreeLib.h>
 #include <Library/XmlTreeQueryLib.h>
 #include <Library/ShellLib.h>
-#include <Library/Tpm2CommandLib.h>
+#include <Library/Tpm2HelpLib.h>
 #include <IndustryStandard/UefiTcgPlatform.h>
 
 /**
