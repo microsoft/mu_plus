@@ -30,10 +30,9 @@ pub mod protocol {
     ///
     /// * `this` - A pointer to the HidIo Instance
     /// * `report_descriptor_size` - On input, the size of the buffer allocated to hold the descriptor. On output, the
-    ///                              actual size of the descriptor. May be set to zero to query the required size for the
-    ///                              descriptor.
+    ///   actual size of the descriptor. May be set to zero to query the required size for the descriptor.
     /// * `report_descriptor_buffer` - A pointer to the buffer to hold the descriptor. May be NULL if ReportDescriptorSize
-    ///                                is zero.
+    ///   is zero.
     /// # Return values
     /// * `Status::SUCCESS` - Report descriptor successfully returned.
     /// * `Status::BUFFER_TOO_SMALL` - The provided buffer is not large enough to hold the descriptor.
@@ -53,7 +52,7 @@ pub mod protocol {
     ///
     /// * `this` - A pointer to the HidIo Instance
     /// * `report_id` - Specifies which report to return if the device supports multiple input reports. Set to zero if
-    ///                 ReportId is not present.
+    ///   ReportId is not present.
     /// * `report_type` - Indicates the type of report type to retrieve. 1-Input, 3-Feature.
     /// * `report_buffer_size` - Indicates the size of the provided buffer to receive the report.
     /// * `report_buffer` - Pointer to the buffer to receive the report.
@@ -78,7 +77,7 @@ pub mod protocol {
     ///
     /// * `this` - A pointer to the HidIo Instance
     /// * `report_id` - Specifies which report to send if the device supports multiple input reports. Set to zero if
-    ///                 ReportId is not present.
+    ///   ReportId is not present.
     /// * `report_type` - Indicates the type of report type to retrieve. 2-Output, 3-Feature.
     /// * `report_buffer_size` - Indicates the size of the provided buffer holding the report to send.
     /// * `report_buffer` - Pointer to the buffer holding the report to send.

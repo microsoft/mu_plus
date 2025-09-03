@@ -942,7 +942,7 @@ mod test {
         KEY2_NOTIFIED.store(false, Ordering::SeqCst);
 
         //remove the 'a'-only callback
-        let status = SimpleTextInExFfi::simple_text_in_ex_unregister_key_notify(this, 1 as *mut c_void);
+        let status = SimpleTextInExFfi::simple_text_in_ex_unregister_key_notify(this, ptr::dangling_mut());
         assert_eq!(status, efi::Status::SUCCESS);
 
         //send 'a'

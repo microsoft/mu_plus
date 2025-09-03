@@ -202,31 +202,31 @@ impl PointerHidHandler {
 
     // handles x_axis inputs
     fn x_axis_handler(&mut self, field: VariableField, report: &[u8]) {
-        if let Some(x_value) = Self::resolve_axis(self.current_state.current_x, field, report) {
-            if self.current_state.current_x != x_value {
-                self.current_state.current_x = x_value;
-                self.state_changed = true;
-            }
+        if let Some(x_value) = Self::resolve_axis(self.current_state.current_x, field, report)
+            && self.current_state.current_x != x_value
+        {
+            self.current_state.current_x = x_value;
+            self.state_changed = true;
         }
     }
 
     // handles y_axis inputs
     fn y_axis_handler(&mut self, field: VariableField, report: &[u8]) {
-        if let Some(y_value) = Self::resolve_axis(self.current_state.current_y, field, report) {
-            if self.current_state.current_y != y_value {
-                self.current_state.current_y = y_value;
-                self.state_changed = true;
-            }
+        if let Some(y_value) = Self::resolve_axis(self.current_state.current_y, field, report)
+            && self.current_state.current_y != y_value
+        {
+            self.current_state.current_y = y_value;
+            self.state_changed = true;
         }
     }
 
     // handles z_axis inputs
     fn z_axis_handler(&mut self, field: VariableField, report: &[u8]) {
-        if let Some(z_value) = Self::resolve_axis(self.current_state.current_z, field, report) {
-            if self.current_state.current_z != z_value {
-                self.current_state.current_z = z_value;
-                self.state_changed = true;
-            }
+        if let Some(z_value) = Self::resolve_axis(self.current_state.current_z, field, report)
+            && self.current_state.current_z != z_value
+        {
+            self.current_state.current_z = z_value;
+            self.state_changed = true;
         }
     }
 
