@@ -10,7 +10,7 @@ TARGET_TRIPLE = { source = "${ARCH}", mapping = { "X64" = "x86_64-unknown-uefi",
 CARGO_FEATURES_FLAG = {value = "--features ${FEATURES}", condition = {env_set = ["FEATURES"], env_true = ["FEATURES"]}}
 BUILD_FLAGS = "--profile ${RUSTC_PROFILE} --target ${TARGET_TRIPLE} -Zbuild-std=core,compiler_builtins,alloc -Zbuild-std-features=compiler-builtins-mem -Zunstable-options --timings=html"
 TEST_FLAGS = { value = "", condition = { env_not_set = ["TEST_FLAGS"] } }
-COV_FLAGS = { value = "--out html --exclude-files **/tests/*", condition = { env_not_set = ["COV_FLAGS"] } }
+COV_FLAGS = { value = "--out html --out xml --exclude-files **/tests/*", condition = { env_not_set = ["COV_FLAGS"] } }
 
 [env.development]
 RUSTC_PROFILE = "dev"
@@ -75,6 +75,23 @@ command = "cargo"
 args = ["check", "@@split(INDIVIDUAL_PACKAGE_TARGETS, )", "@@split(BUILD_FLAGS, )", "--message-format=json"]
 dependencies = ["individual-package-targets"]
 
+[tasks.doc]
+description = "Builds all rust documentation in the workspace. Example `cargo make doc`"
+command = "cargo"
+args = ["doc", "@@split(INDIVIDUAL_PACKAGE_TARGETS, )"]
+
+[tasks.doc-open]
+description = "Builds all rust documentation in the workspace and opens the documentation. Example `cargo make doc-open`"
+clear = true
+command = "cargo"
+args = ["doc", "@@split(INDIVIDUAL_PACKAGE_TARGETS, )", "--open"]
+
+[tasks.fmt]
+description = "Run cargo format."
+clear = true
+command = "cargo"
+args = ["fmt", "--all"]
+
 [tasks.test]
 description = "Builds all rust tests in the workspace. Example `cargo make test`"
 clear = true
@@ -94,3 +111,14 @@ description = "Run cargo clippy."
 clear = true
 command = "cargo"
 args = ["clippy", "--all-targets", "--", "-D", "warnings"]
+
+[tasks.all]
+description = "Run all tasks for PR readiness."
+dependencies = [
+    "clippy",
+    "fmt",
+    "build",
+    "test",
+    "coverage",
+    "doc",
+]

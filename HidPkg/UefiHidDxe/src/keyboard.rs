@@ -142,14 +142,11 @@ impl KeyboardHandler {
                 match field {
                     //Variable fields (typically used for modifier Usages)
                     ReportField::Variable(field) => {
-                        match field.usage.into() {
-                            KEYBOARD_MODIFIER_USAGE_MIN..=KEYBOARD_MODIFIER_USAGE_MAX => {
-                                report_data.relevant_variable_fields.push(ReportFieldWithHandler::<VariableField> {
-                                    field: field.clone(),
-                                    report_handler: Self::handle_variable_key,
-                                })
-                            }
-                            _ => (), // other usages irrelevant.
+                        if let KEYBOARD_MODIFIER_USAGE_MIN..=KEYBOARD_MODIFIER_USAGE_MAX = field.usage.into() {
+                            report_data.relevant_variable_fields.push(ReportFieldWithHandler::<VariableField> {
+                                field: field.clone(),
+                                report_handler: Self::handle_variable_key,
+                            })
                         }
                     }
                     //Array fields (typically used for key strokes)
@@ -193,16 +190,13 @@ impl KeyboardHandler {
                 match field {
           //Variable fields in output reports (typically used for LEDs).
           ReportField::Variable(field) => {
-            match field.usage.into() {
-              LED_USAGE_MIN..=LED_USAGE_MAX => {
-                report_builder.relevant_variable_fields.push(
-                  ReportFieldBuilder {
-                    field: field.clone(),
-                    field_builder: Self::build_led_report
-                  }
-                )
-              },
-              _=> (), //other usages irrelevant.
+            if let LED_USAGE_MIN..=LED_USAGE_MAX = field.usage.into() {
+              report_builder.relevant_variable_fields.push(
+                ReportFieldBuilder {
+                  field: field.clone(),
+                  field_builder: Self::build_led_report
+                }
+              );
             }
           },
           ReportField::Array(_) | // No support for array field report outputs; could be added if required.

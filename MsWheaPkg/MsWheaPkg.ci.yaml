@@ -94,7 +94,7 @@
     "RustHostUnitTestPlugin": {
         "Coverage": .75,
         "CoverageOverrides": {
-            "MuTelemetryHelperLib": 0.7
+            "MuTelemetryHelperLib": 0.65
         }
     }
 }

@@ -97,49 +97,38 @@ impl PointerHandler {
             }
 
             for field in &report.fields {
-                match field {
-                    ReportField::Variable(field) => {
-                        match field.usage.into() {
-                            GENERIC_DESKTOP_X => {
-                                let field_handler = ReportFieldWithHandler {
-                                    field: field.clone(),
-                                    report_handler: Self::x_axis_handler,
-                                };
-                                report_data.relevant_fields.push(field_handler);
-                                handler.supported_usages.insert(field.usage);
-                                //debugln!(DEBUG_INFO, "x-axis field {:#?}", field);
-                            }
-                            GENERIC_DESKTOP_Y => {
-                                let field_handler = ReportFieldWithHandler {
-                                    field: field.clone(),
-                                    report_handler: Self::y_axis_handler,
-                                };
-                                report_data.relevant_fields.push(field_handler);
-                                handler.supported_usages.insert(field.usage);
-                                //debugln!(DEBUG_INFO, "y-axis field {:#?}", field);
-                            }
-                            GENERIC_DESKTOP_Z | GENERIC_DESKTOP_WHEEL => {
-                                let field_handler = ReportFieldWithHandler {
-                                    field: field.clone(),
-                                    report_handler: Self::z_axis_handler,
-                                };
-                                report_data.relevant_fields.push(field_handler);
-                                handler.supported_usages.insert(field.usage);
-                                //debugln!(DEBUG_INFO, "z-axis field {:#?}", field);
-                            }
-                            BUTTON_MIN..=BUTTON_MAX => {
-                                let field_handler = ReportFieldWithHandler {
-                                    field: field.clone(),
-                                    report_handler: Self::button_handler,
-                                };
-                                report_data.relevant_fields.push(field_handler);
-                                handler.supported_usages.insert(field.usage);
-                                //debugln!(DEBUG_INFO, "button field {:#?}", field);
-                            }
-                            _ => (), //other usages irrelevant
+                if let ReportField::Variable(field) = field {
+                    match field.usage.into() {
+                        GENERIC_DESKTOP_X => {
+                            let field_handler =
+                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::x_axis_handler };
+                            report_data.relevant_fields.push(field_handler);
+                            handler.supported_usages.insert(field.usage);
+                            //debugln!(DEBUG_INFO, "x-axis field {:#?}", field);
                         }
+                        GENERIC_DESKTOP_Y => {
+                            let field_handler =
+                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::y_axis_handler };
+                            report_data.relevant_fields.push(field_handler);
+                            handler.supported_usages.insert(field.usage);
+                            //debugln!(DEBUG_INFO, "y-axis field {:#?}", field);
+                        }
+                        GENERIC_DESKTOP_Z | GENERIC_DESKTOP_WHEEL => {
+                            let field_handler =
+                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::z_axis_handler };
+                            report_data.relevant_fields.push(field_handler);
+                            handler.supported_usages.insert(field.usage);
+                            //debugln!(DEBUG_INFO, "z-axis field {:#?}", field);
+                        }
+                        BUTTON_MIN..=BUTTON_MAX => {
+                            let field_handler =
+                                ReportFieldWithHandler { field: field.clone(), report_handler: Self::button_handler };
+                            report_data.relevant_fields.push(field_handler);
+                            handler.supported_usages.insert(field.usage);
+                            //debugln!(DEBUG_INFO, "button field {:#?}", field);
+                        }
+                        _ => (), //other usages irrelevant
                     }
-                    _ => (), // other field types irrelevant
                 }
             }
 
