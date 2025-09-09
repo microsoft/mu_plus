@@ -244,8 +244,9 @@ RestoreBspStates (
   }
 
   RegisterEl0Stack ((VOID *)mBspEl0Sp);
-  ArmWriteHcr (mBspHcrReg);
+
   ArmWriteVBar (mBspVbar);
+  ArmWriteHcr (mBspHcrReg);
 
   // Set binary point reg to 0x7 (no preemption)
   ArmGicV3SetBinaryPointer (0x7);
