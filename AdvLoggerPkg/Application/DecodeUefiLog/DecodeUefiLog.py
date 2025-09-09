@@ -716,7 +716,7 @@ class AdvLogParser ():
             # Add an extra space for readability
             PhaseString = self.PHASE_STRING_LIST[Phase] + ' '
         return PhaseString
-    
+
     #
     #   Get the formatted debug level string
     #
@@ -1057,7 +1057,7 @@ def main():
 
         if options.OutFilePath is not None:
             if options.FileSize == 0:
-                OutFile = open(options.OutFilePath, "w", newline=None)
+                OutFile = open(options.OutFilePath, "w", newline=None, encoding='utf-8')
                 OutFile.writelines(lines)
                 OutFile.close()
                 CountOfLines = len(lines)
@@ -1073,7 +1073,7 @@ def main():
                         SeparateFileIndex = 1
                         CountOfLines = 0
                         SeparatedFilePath = FilePathPart[0] + '_' + str(SeparateFileIndex) + FilePathPart[1]
-                        OutFile = open(SeparatedFilePath, "w", newline=None)
+                        OutFile = open(SeparatedFilePath, "w", newline=None, encoding='utf-8')
 
                     CurrentLineSize = len(LineStr.encode('utf-8')) + 1
                     if CurrentFileSize + CurrentLineSize > MaxSize:
