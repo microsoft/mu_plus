@@ -285,8 +285,9 @@ SetupInterruptStatus (
   IN  UINTN  CpuIndex
   )
 {
-  EFI_STATUS                 Status;
-  EFI_PROCESSOR_INFORMATION  CpuInfo;
+  EFI_STATUS  Status;
+  UINT64      Mpidr;
+  UINT64      Package;
 
   if (mCommonBuffer[CpuIndex].CpuArchBuffer == NULL) {
     return EFI_NOT_READY;
@@ -310,16 +311,16 @@ SetupInterruptStatus (
   ArmGicEnableInterruptInterface (PcdGet64 (PcdGicInterruptInterfaceBase));
 
   // Enable the intended interrupt source
-  Status = mMpServices->GetProcessorInfo (mMpServices, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __func__, CpuIndex, Status));
-    ASSERT (FALSE);
-    return Status;
+  Mpidr = mCpuInfo[CpuIndex].Mpidr;
+  if ((Mpidr & MPIDR_MT_BIT) > 0) {
+    Package = GET_MPIDR_AFF3 (Mpidr);
+  } else {
+    Package = GET_MPIDR_AFF2 (Mpidr);
   }
 
   ArmGicEnableInterrupt (
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicDistributorBase)), \
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    (UINT64)((Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
     PcdGet32 (PcdGicSgiIntId)
     );
 
@@ -349,23 +350,24 @@ RestoreInterruptStatus (
   IN  UINTN  CpuIndex
   )
 {
-  EFI_STATUS                 Status;
-  EFI_PROCESSOR_INFORMATION  CpuInfo;
+  UINT64  Mpidr;
+  UINT64  Package;
 
   // Disable gic cpu interface
   ArmGicDisableInterruptInterface (PcdGet64 (PcdGicInterruptInterfaceBase));
 
   // Disable the intended interrupt source
-  Status = mMpServices->GetProcessorInfo (mMpServices, CPU_V2_EXTENDED_TOPOLOGY | CpuIndex, &CpuInfo);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a Cannot get information for specified processor (%d) - %r\n", __func__, CpuIndex, Status));
-    ASSERT (FALSE);
-    return Status;
+  Mpidr = mCpuInfo[CpuIndex].Mpidr;
+
+  if ((Mpidr & MPIDR_MT_BIT) > 0) {
+    Package = GET_MPIDR_AFF3 (Mpidr);
+  } else {
+    Package = GET_MPIDR_AFF2 (Mpidr);
   }
 
   ArmGicDisableInterrupt (
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicDistributorBase)), \
-    (UINT64)((CpuInfo.ExtendedInformation.Location2.Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
+    (UINT64)((Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicDistributorBase)), \
+    (UINT64)((Package * PcdGet64 (PcdGicPerPackageOffset)) + PcdGet64 (PcdGicRedistributorsBase)), \
     PcdGet32 (PcdGicSgiIntId)
     );
 
