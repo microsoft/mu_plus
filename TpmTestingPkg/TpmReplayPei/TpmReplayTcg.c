@@ -18,7 +18,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
-#include <Library/Tpm2HelpLib.h>
+#include <Library/Tpm2CommandLib.h>
 
 /**
   Unpacks TPM digest values.
