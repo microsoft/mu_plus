@@ -13,7 +13,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/UefiApplicationEntryPoint.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/BaseMemoryLib.h>
-#include <Library/Tpm2HelpLib.h>
+#include <Library/Tpm2CommandLib.h>
 #include <Protocol/Tcg2Protocol.h>
 #include <IndustryStandard/UefiTcgPlatform.h>
 #include "TpmEventLogXml.h"

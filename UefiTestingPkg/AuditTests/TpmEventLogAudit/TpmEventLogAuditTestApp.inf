@@ -29,7 +29,7 @@
   ShellLib
   UefiBootServicesTableLib
   BaseMemoryLib
-  Tpm2HelpLib
+  Tpm2CommandLib
   XmlTreeLib
   XmlTreeQueryLib
 
