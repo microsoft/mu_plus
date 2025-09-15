@@ -22,7 +22,6 @@ hidparser = {workspace=true}
 HiiKeyboardLayout = {workspace=true}
 mu_rust_helpers = {workspace=true}
 r-efi = {workspace=true}
-rustversion = {workspace=true}
 RustAdvancedLoggerDxe = {workspace=true}
 scroll = {workspace=true}
 
