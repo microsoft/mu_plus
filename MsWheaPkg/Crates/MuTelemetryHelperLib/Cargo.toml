@@ -19,3 +19,6 @@ mu_uefi_boot_services = { workspace = true, features = ["mockall"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(tarpaulin_include)'] }
+
+[package.metadata.cargo-machete]
+ignored = ["mockall"]
