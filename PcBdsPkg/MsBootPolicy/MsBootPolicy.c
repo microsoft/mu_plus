@@ -29,6 +29,10 @@ static BOOT_SEQUENCE  mSddBootSequence[] = {
   MsBootHDD,
   MsBootDone
 };
+static BOOT_SEQUENCE  mRecoveryBootSequence[] = {
+  MsBootHDD,
+  MsBootDone
+};
 
 // Device Path filter routines
 typedef
@@ -314,7 +318,8 @@ SortHandles (
 EFI_STATUS
 SelectAndBootDevice (
   EFI_GUID        *ByGuid,
-  FILTER_ROUTINE  ByFilter
+  FILTER_ROUTINE  ByFilter,
+  BOOT_SEQUENCE   *BootSequence
   )
 {
   EFI_STATUS                    Status;
@@ -360,6 +365,14 @@ SelectAndBootDevice (
     if (TmpStr == NULL) {
       DEBUG ((DEBUG_ERROR, "ConvertDevicePathToText(%p) FAILED ", DevicePath));
       continue;
+    }
+
+    if (BootSequence == mRecoveryBootSequence) {
+      if (StrnCmp (TmpStr, L"PciRoot(0x0)/Pci(0x2,0x0)/NVMe(0x1,00-00-00-00-00-00-00-00)/HD(4,GPT,DF96A4A8-C106-4AC7-AED1-B16460C41EBB)", 106) != 0) {
+        DEBUG ((DEBUG_INFO, "Skipping non-recovery device %s\n", TmpStr));
+        FreePool (TmpStr);
+        continue;
+      }
     }
 
     DEBUG ((DEBUG_INFO, "Selecting device %s", TmpStr));
@@ -621,6 +634,9 @@ MsBootPolicyEntry (
     case 'S':       // "SDD"
       BootSequence = mSddBootSequence;
       break;
+    case 'V':           // "RECOVERY"
+      BootSequence = mRecoveryBootSequence;
+      break;
     case 'M':      // "MS" Default of SDD->USB->PXE  , "MA" Default of USB->PXE->SDD
     default:       // Try the default boot option is the parameter is messed up
       AltBootRequest = ('A' == *(Parameters + 1));
@@ -645,7 +661,7 @@ MsBootPolicyEntry (
     switch (BootSequence[Index]) {
       case MsBootPXE4:
         StartNetworking ();
-        Status = SelectAndBootDevice (&gEfiLoadFileProtocolGuid, FilterOnlyIPv4);
+        Status = SelectAndBootDevice (&gEfiLoadFileProtocolGuid, FilterOnlyIPv4, BootSequence);
         break;
       case MsBootPXE6:
         Status = GetBootManagerSetting (
@@ -658,7 +674,7 @@ MsBootPolicyEntry (
 
         if (EnableIPv6) {
           StartNetworking ();
-          Status = SelectAndBootDevice (&gEfiLoadFileProtocolGuid, FilterOnlyIPv6);
+          Status = SelectAndBootDevice (&gEfiLoadFileProtocolGuid, FilterOnlyIPv6, BootSequence);
         } else {
           Status = EFI_DEVICE_ERROR;
         }
@@ -670,7 +686,7 @@ MsBootPolicyEntry (
           DEBUG ((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
         }
 
-        Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB);
+        Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterNoUSB, BootSequence);
         break;
       case MsBootUSB:
         GraphicStatus = SetGraphicsConsoleMode (GCM_NATIVE_RES);
@@ -678,14 +694,14 @@ MsBootPolicyEntry (
           DEBUG ((DEBUG_ERROR, "%a Unable to set console mode - %r\n", __FUNCTION__, GraphicStatus));
         }
 
-        Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterOnlyUSB);
+        Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterOnlyUSB, BootSequence);
         if (Status == EFI_NOT_FOUND) {
           DEBUG ((DEBUG_WARN, "USB boot desired, but no USB devices found on first attempt\n"));
           // attempting USB boot but no USB devices were found.
           // USB enumeration through (crappy, slow) hubs may take a while, especially in
           // debug builds. wait a number of seconds and try one more time.
           PauseToLetUsbDrivesEnumerateThroughHubs ();
-          Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterOnlyUSB);
+          Status = SelectAndBootDevice (&gEfiSimpleFileSystemProtocolGuid, FilterOnlyUSB, BootSequence);
           if (EFI_ERROR (Status)) {
             DEBUG ((DEBUG_WARN, "Second chance USB boot failed! Status = %r\n", Status));
           }
