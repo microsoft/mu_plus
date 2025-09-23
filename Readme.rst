@@ -46,7 +46,7 @@ Main Changes-dev
 - TpmTestingPkg: Tcg2Dxe has been updated to match latest mu_tiano_plus changes. 
 - TpmTestingPkg: TpmTestingPkg.dsc no longer includes StackCheckLib as a NULL library due to upstreaming stack check to Edk2. Uses MdeLibs.dsc.inc.
 - UefiTestingPkg: UefiTestingPkg.dsc no longer includes VsInstrinsicLib or StackCheckLib.
-
+- Test change
 
 Platform Integration Reference
 ------------------------------
