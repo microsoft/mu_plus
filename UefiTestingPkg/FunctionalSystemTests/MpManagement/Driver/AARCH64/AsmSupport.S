@@ -44,6 +44,7 @@ ASM_PFX(AsmApEntryPoint):
 // TODO: This is, again, reverse engineering to correlate the CPU index with the MPIDRs...
 1:
   ldr x3, [x1]                // x3 = *x1
+  bic x3, x3, 0x00ff000000    // Mask the non-affinity bits
   cmp x0, x3                  // if mpidr_el1 == mCpuInfo[x].Mpidr then break loop
   beq JumpToCFunction
   add x1, x1, #40             // x1 = x1 + sizeof (ARM_CORE_INFO)
