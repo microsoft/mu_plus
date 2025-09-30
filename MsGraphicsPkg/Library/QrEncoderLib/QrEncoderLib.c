@@ -411,9 +411,10 @@ PolynomialDivision (
     DEBUG ((DEBUG_INFO, "Result - "));
   }
 
-  for (j = 0; j < RemainderCount; j++) {
-    Remainder[j] = TempRemainder[j+DividendCount];     // Copy remainder
-    if (gFlags & QR_FLAGS_DEBUG_POLYDIVIDE) {
+  CopyMem (Remainder, &TempRemainder[DividendCount], RemainderCount * sizeof (TempRemainder[0]));
+
+  if (gFlags & QR_FLAGS_DEBUG_POLYDIVIDE) {
+    for (j = 0; j < RemainderCount; j++) {
       DEBUG ((DEBUG_INFO, " %3d,", Remainder[j]));
     }
   }
