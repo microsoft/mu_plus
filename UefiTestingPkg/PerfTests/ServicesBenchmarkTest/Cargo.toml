@@ -1,0 +1,29 @@
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+[package]
+name = "ServicesBenchmarkTest"
+version = "0.0.1"
+edition = "2024"
+authors = ["Microsoft"]
+
+[lib]
+name = "services_benchmark_test"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ServicesBenchmarkTest"
+path = "src/main.rs"
+
+[dependencies]
+mu_rust_helpers = {workspace=true}
+r-efi = {workspace=true}
+RustAdvancedLoggerDxe = {workspace=true}
+patina_sdk = { version = "4", registry = "patina-fw" }
+
+[target.'cfg(target_os = "uefi")'.dependencies]
+RustBootServicesAllocatorDxe = {workspace=true}
+
+[dev-dependencies]
+mockall = "0.13.0"
