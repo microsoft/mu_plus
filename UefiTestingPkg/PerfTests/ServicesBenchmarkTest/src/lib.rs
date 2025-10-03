@@ -31,11 +31,12 @@ use crate::measure::BENCH_FNS;
 pub static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
 pub fn bench_start() {
-    for bf in BENCH_FNS {
-        let cycles = measure::measure_single_fn(bf);
+    for (bf, num_calls) in BENCH_FNS {
+        let cycles = measure::measure_single_fn(bf, num_calls);
         debugln!(DEBUG_ERROR, "Cycles: {}", cycles); // sherry: this shoudl be logged to a file
     }
 }
 
 mod bench_fn;
+mod error;
 mod measure;
