@@ -667,8 +667,7 @@ ValidateBlobWithXdrCertificates (
       break;
     }
 
-    PublicKeyDataCurrent = PublicKeyData + PublicKeyDataLength;
-    PublicKeyDataCurrent = (UINT8 *)ALIGN_POINTER (PublicKeyDataCurrent, sizeof (UINT32));
+    PublicKeyDataCurrent += ALIGN_VALUE (PublicKeyDataLength, 4);
   }
 
   // above is inspired/borrowed from FmpDxe.c
