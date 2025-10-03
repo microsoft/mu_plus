@@ -18,6 +18,7 @@ path = "src/main.rs"
 
 [dependencies]
 mu_rust_helpers = {workspace=true}
+mu_uefi_perf_timer = { workspace=true }
 r-efi = {workspace=true}
 RustAdvancedLoggerDxe = {workspace=true}
 patina_sdk = { version = "4", registry = "patina-fw" }
