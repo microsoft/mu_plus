@@ -1,0 +1,23 @@
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+[package]
+name = "TempTest"
+version = "0.0.1"
+edition = "2024"
+authors = ["Microsoft"]
+
+[[bin]]
+name = "TempTest"
+path = "src/main.rs"
+
+[dependencies]
+r-efi = {workspace=true}
+patina_sdk = { version = "4", registry = "patina-fw" }
+
+[target.'cfg(target_os = "uefi")'.dependencies]
+RustBootServicesAllocatorDxe = {workspace=true}
+
+[dev-dependencies]
+mockall = "0.13.0"

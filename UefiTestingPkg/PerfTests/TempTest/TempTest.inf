@@ -1,0 +1,21 @@
+### @file
+#
+# sherry write something here
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+###
+
+[Defines]
+  INF_VERSION               = 1.27
+  BASE_NAME                 = TempTest
+  FILE_GUID                 = F559C5FB-EAAD-4C91-8FE7-2181D155DA07
+  MODULE_TYPE               = UEFI_APPLICATION
+  RUST_MODULE               = TRUE
+
+[Sources]
+  Cargo.toml
+
+[Depex]
+  TRUE

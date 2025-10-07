@@ -12,14 +12,18 @@
 #![cfg_attr(target_os = "uefi", no_main)]
 #![allow(non_snake_case)]
 
+use patina_sdk::boot_services::StandardBootServices;
+
+/// Global instance of UEFI Boot Services.
+pub static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
+
 #[cfg(target_os = "uefi")]
 mod uefi_entry {
-    extern crate alloc;
+    use crate::BOOT_SERVICES;
     use core::panic::PanicInfo;
+    use patina_sdk::boot_services::BootServices;
     use r_efi::{efi, system};
-    use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln, init_debug};
     use rust_boot_services_allocator_dxe::GLOBAL_ALLOCATOR;
-    use services_benchmark_test::{BOOT_SERVICES, bench_start};
 
     #[unsafe(no_mangle)]
     pub extern "efiapi" fn efi_main(
@@ -30,18 +34,14 @@ mod uefi_entry {
         // and because it mutates/accesses the global BOOT_SERVICES static.
         unsafe {
             BOOT_SERVICES.init(&*((*system_table).boot_services));
-            GLOBAL_ALLOCATOR.init((*system_table).boot_services);
-            init_debug((*system_table).boot_services);
         }
 
-        bench_start(image_handle);
-
+        BOOT_SERVICES.exit(image_handle, efi::Status::SUCCESS, None);
         efi::Status::SUCCESS
     }
 
     #[panic_handler]
     fn panic(info: &PanicInfo) -> ! {
-        debugln!(DEBUG_ERROR, "Panic: {:?}", info);
         loop {}
     }
 }
