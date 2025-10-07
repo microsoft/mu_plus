@@ -22,19 +22,53 @@
 #![cfg_attr(target_os = "uefi", no_std)]
 
 extern crate alloc;
+use core::fmt::Write;
+
 use patina_sdk::boot_services::StandardBootServices;
-use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln};
+use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_INFO, debugln};
 
 use crate::measure::BENCH_FNS;
+use alloc::string::String;
 
 /// Global instance of UEFI Boot Services.
 pub static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
+// sherry: current idea is to collect everything then dump it in a single go to shell using debugln!?
 pub fn bench_start() {
+    debugln!(DEBUG_INFO, "Starting Services Benchmark Test...");
+
+    let mut output_buf = String::new();
+
+    // Write fixed-width markdown table
+    // SHERRY: figure out how to fix write issues
+    writeln!(
+        &mut output_buf,
+        "| {:<24} | {:>14} | {:>12} | {:>15} |",
+        "Name", "Total cycles", "Total calls", "Cycles/op"
+    );
+    writeln!(&mut output_buf, "|{:-<26}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-");
+
     for (bf, num_calls) in BENCH_FNS {
-        let cycles = measure::measure_single_fn(bf, num_calls);
-        debugln!(DEBUG_ERROR, "Cycles: {}", cycles); // sherry: this shoudl be logged to a file
+        let (bench_name, bench_func) = (bf.name, bf.func);
+        let cycles_res = bench_func(num_calls);
+        match cycles_res {
+            Ok(cycles) => {
+                writeln!(
+                    &mut output_buf,
+                    "| {:<24} | {:>14} | {:>12} | {:>15} |",
+                    bench_name,
+                    cycles,
+                    num_calls,
+                    cycles / num_calls as u64
+                );
+            }
+            Err(e) => {
+                debugln!(DEBUG_ERROR, "Benchmark {} failed: {:?}", bench_name, e);
+            }
+        }
     }
+
+    debugln!(DEBUG_INFO, "{}", output_buf);
 }
 
 mod bench_fn;
