@@ -3,9 +3,10 @@ use r_efi::efi;
 
 use crate::{
     bench_fn::{
-        bench_allocate_pages, bench_allocate_pool, bench_check_event, bench_close_event, bench_connect_controller,
-        bench_copy_mem, bench_create_event, bench_free_pages, bench_free_pool, bench_get_memory_map, bench_load_image,
-        bench_set_mem, bench_signal_event, bench_start_image_and_exit,
+        bench_allocate_pages, bench_allocate_pool, bench_calculate_crc32, bench_check_event, bench_close_event,
+        bench_connect_controller, bench_copy_mem, bench_create_event, bench_free_pages, bench_free_pool,
+        bench_get_memory_map, bench_install_configuration_table, bench_load_image, bench_set_mem, bench_signal_event,
+        bench_start_image_and_exit,
     },
     error::BenchError,
 };
@@ -20,7 +21,7 @@ pub(crate) struct BenchFnWrapper {
     pub(crate) name: &'static str,
 }
 
-pub static BENCH_FNS: [(BenchFnWrapper, usize); 14] = [
+pub static BENCH_FNS: [(BenchFnWrapper, usize); 16] = [
     /* CONTROLLER SERVICES */
     (BenchFnWrapper { func: bench_connect_controller, name: "connect_controller" }, 100),
     /* EVENT SERVICES */
@@ -39,4 +40,7 @@ pub static BENCH_FNS: [(BenchFnWrapper, usize); 14] = [
     (BenchFnWrapper { func: bench_copy_mem, name: "copy_mem" }, 1), // i don't see these two being called much so probably not useful to bench
     (BenchFnWrapper { func: bench_set_mem, name: "set_mem" }, 1),
     (BenchFnWrapper { func: bench_get_memory_map, name: "get_memory_map" }, 10),
+    /* MISC SERVICES */
+    (BenchFnWrapper { func: bench_calculate_crc32, name: "calculate_crc32" }, 100),
+    (BenchFnWrapper { func: bench_install_configuration_table, name: "install_configuration_table" }, 10),
 ];

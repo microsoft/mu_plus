@@ -15,22 +15,80 @@ use uuid::Uuid;
 use crate::{BOOT_SERVICES, error::BenchError};
 use alloc::boxed::Box;
 
-pub(crate) fn bench_connect_controller(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
-    let mut controller_handle = core::ptr::null_mut();
-    let handles = BOOT_SERVICES.locate_handle_buffer(HandleSearchType::AllHandle).unwrap();
-    // Iterate until we find one that works
-    for &h in handles.iter() {
-        unsafe {
-            let res = BOOT_SERVICES.connect_controller(h, vec![], core::ptr::null_mut(), true);
-            if res.is_ok() {
-                controller_handle = h;
-                break;
-            }
-        }
+const TEST_GUID: efi::Guid =
+    efi::Guid::from_fields(0x12345678, 0x1234, 0x5678, 0x9a, 0xbc, &[0xde, 0xf0, 0x12, 0x34, 0x56, 0x78]);
+
+pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    extern "efiapi" fn mock_supported(
+        _this: *mut efi::protocols::driver_binding::Protocol,
+        _controller_handle: efi::Handle,
+        _remaining_device_path: *mut efi::protocols::device_path::Protocol,
+    ) -> efi::Status {
+        efi::Status::SUCCESS
     }
 
-    if controller_handle.is_null() {
-        return Err(BenchError::InvalidData("No controller handle found to connect to."));
+    extern "efiapi" fn mock_start(
+        _this: *mut efi::protocols::driver_binding::Protocol,
+        _controller_handle: efi::Handle,
+        _remaining_device_path: *mut efi::protocols::device_path::Protocol,
+    ) -> efi::Status {
+        efi::Status::SUCCESS
+    }
+
+    extern "efiapi" fn mock_stop(
+        _this: *mut efi::protocols::driver_binding::Protocol,
+        _controller_handle: efi::Handle,
+        _num_children: usize,
+        _child_handle_buffer: *mut efi::Handle,
+    ) -> efi::Status {
+        efi::Status::SUCCESS
+    }
+
+    let controller_handle = unsafe {
+        BOOT_SERVICES
+            .install_protocol_interface_unchecked(
+                None,
+                &efi::protocols::device_path::PROTOCOL_GUID,
+                0x1111 as *mut core::ffi::c_void,
+            )
+            .map_err(|e| BenchError::InvalidData("Failed to install controller protocol interface."))
+    }?;
+    let driver_handle = unsafe {
+        BOOT_SERVICES
+            .install_protocol_interface_unchecked(
+                None,
+                &efi::protocols::device_path::PROTOCOL_GUID,
+                0x2222 as *mut core::ffi::c_void,
+            )
+            .map_err(|e| BenchError::InvalidData("Failed to install driver protocol interface."))
+    }?;
+
+    let image_handle = unsafe {
+        BOOT_SERVICES.install_protocol_interface_unchecked(
+            None,
+            &TEST_GUID,
+            core::ptr::null_mut(), // Dummy protocol data for test
+        )
+    }
+    .map_err(|e| BenchError::InvalidData("Failed to install driver binding protocol."))?;
+    let binding = Box::new(efi::protocols::driver_binding::Protocol {
+        version: 10,
+        supported: mock_supported,
+        start: mock_start,
+        stop: mock_stop,
+        driver_binding_handle: driver_handle,
+        image_handle,
+    });
+    let binding_ptr = Box::into_raw(binding) as *mut core::ffi::c_void;
+
+    unsafe {
+        BOOT_SERVICES
+            .install_protocol_interface_unchecked(
+                Some(driver_handle),
+                &efi::protocols::driver_binding::PROTOCOL_GUID,
+                binding_ptr,
+            )
+            .map_err(|e| BenchError::InvalidData("Failed to install driver binding protocol."))?;
     }
 
     let mut tot_cycles = 0;
@@ -38,12 +96,16 @@ pub(crate) fn bench_connect_controller(handle: efi::Handle, num_calls: usize) ->
         let start = Arch::cpu_count();
         unsafe {
             BOOT_SERVICES
-                .connect_controller(controller_handle, vec![], core::ptr::null_mut(), true)
-                .map_err(|e| BenchError::BenchFnFailure("connect_controller failed."))
-        }?;
+                .connect_controller(controller_handle, vec![driver_handle], core::ptr::null_mut(), false)
+                .map_err(|e| BenchError::InvalidData("Failed to connect controller."))?;
+        }
         let end = Arch::cpu_count();
         tot_cycles += end - start;
+        BOOT_SERVICES
+            .disconnect_controller(controller_handle, None, None)
+            .map_err(|_| BenchError::InvalidData("Failed to disconnect controller."))?;
     }
+
     Ok(tot_cycles)
 }
 
@@ -276,3 +338,50 @@ pub(crate) fn bench_get_memory_map(_handle: efi::Handle, num_calls: usize) -> Re
     }
     Ok(tot_cycles)
 }
+
+pub(crate) fn bench_calculate_crc32(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    let data: [u8; 128] = [0; 128];
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        let _crc = unsafe {
+            BOOT_SERVICES.calculate_crc_32(&data).map_err(|e| BenchError::InvalidData("Failed to calculate CRC32."))
+        }?;
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_install_configuration_table(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    let table: u64 = 0xDEADBEEF;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        unsafe {
+            BOOT_SERVICES
+                .install_configuration_table(&TEST_GUID, &table as *const u64 as *mut c_void)
+                .map_err(|e| BenchError::InvalidData("Failed to install configuration table."))?;
+        }
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+    Ok(tot_cycles)
+}
+
+// pub(crate) fn bench_close_protocol(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+//     let mut tot_cycles = 0;
+//     let agent_handle = handle;
+//     let controller_handle = handle;
+//     for _ in 0..num_calls {
+//         let start = Arch::cpu_count();
+//         unsafe {
+//             BOOT_SERVICES
+//                 .close_protocol(handle, protocol, agent_handle, controller_handle)
+//                 .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+//         }
+//         let end = Arch::cpu_count();
+//         tot_cycles += end - start;
+//     }
+//     Ok(tot_cycles)
+// }
