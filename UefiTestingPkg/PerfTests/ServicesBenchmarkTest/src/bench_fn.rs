@@ -15,8 +15,10 @@ use uuid::Uuid;
 use crate::{BOOT_SERVICES, error::BenchError};
 use alloc::boxed::Box;
 
-const TEST_GUID: efi::Guid =
+const TEST_GUID1: efi::Guid =
     efi::Guid::from_fields(0x12345678, 0x1234, 0x5678, 0x9a, 0xbc, &[0xde, 0xf0, 0x12, 0x34, 0x56, 0x78]);
+const TEST_GUID2: efi::Guid =
+    efi::Guid::from_fields(0x87654321, 0x4321, 0x8765, 0xba, 0x98, &[0x76, 0x54, 0x32, 0x10, 0xfe, 0xdc]);
 
 pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
     extern "efiapi" fn mock_supported(
@@ -46,11 +48,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
 
     let controller_handle = unsafe {
         BOOT_SERVICES
-            .install_protocol_interface_unchecked(
-                None,
-                &efi::protocols::device_path::PROTOCOL_GUID,
-                0x1111 as *mut core::ffi::c_void,
-            )
+            .install_protocol_interface_unchecked(None, &TEST_GUID1, 0x1111 as *mut core::ffi::c_void)
             .map_err(|e| BenchError::InvalidData("Failed to install controller protocol interface."))
     }?;
     let driver_handle = unsafe {
@@ -66,7 +64,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
     let image_handle = unsafe {
         BOOT_SERVICES.install_protocol_interface_unchecked(
             None,
-            &TEST_GUID,
+            &TEST_GUID2,
             core::ptr::null_mut(), // Dummy protocol data for test
         )
     }
@@ -360,7 +358,7 @@ pub(crate) fn bench_install_configuration_table(_handle: efi::Handle, num_calls:
         let start = Arch::cpu_count();
         unsafe {
             BOOT_SERVICES
-                .install_configuration_table(&TEST_GUID, &table as *const u64 as *mut c_void)
+                .install_configuration_table(&TEST_GUID1, &table as *const u64 as *mut c_void)
                 .map_err(|e| BenchError::InvalidData("Failed to install configuration table."))?;
         }
         let end = Arch::cpu_count();
@@ -369,19 +367,103 @@ pub(crate) fn bench_install_configuration_table(_handle: efi::Handle, num_calls:
     Ok(tot_cycles)
 }
 
-// pub(crate) fn bench_close_protocol(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
-//     let mut tot_cycles = 0;
-//     let agent_handle = handle;
-//     let controller_handle = handle;
-//     for _ in 0..num_calls {
-//         let start = Arch::cpu_count();
-//         unsafe {
-//             BOOT_SERVICES
-//                 .close_protocol(handle, protocol, agent_handle, controller_handle)
-//                 .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
-//         }
-//         let end = Arch::cpu_count();
-//         tot_cycles += end - start;
-//     }
-//     Ok(tot_cycles)
-// }
+pub(crate) fn bench_install_protocol_interface(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        unsafe {
+            BOOT_SERVICES
+                .install_protocol_interface_unchecked(None, &TEST_GUID1, ptr::null_mut())
+                .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+        }
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_open_protocol(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    let interface1: *mut c_void = 0x1234 as *mut c_void;
+    let agent_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+    let controller_handle =
+        unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+            .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+    let protocol_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        unsafe {
+            BOOT_SERVICES
+                .open_protocol_unchecked(
+                    protocol_handle,
+                    &TEST_GUID1,
+                    agent_handle,
+                    controller_handle,
+                    efi::OPEN_PROTOCOL_BY_DRIVER,
+                )
+                .map_err(|e| BenchError::InvalidData("Failed to open protocol."))?;
+        }
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+
+        BOOT_SERVICES
+            .close_protocol(protocol_handle, &TEST_GUID1, agent_handle, controller_handle)
+            .map_err(|_| BenchError::InvalidData("Failed to close protocol."))?;
+    }
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_close_protocol(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    let interface1: *mut c_void = 0x1234 as *mut c_void;
+    let agent_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+    let controller_handle =
+        unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+            .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+    let protocol_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+    for _ in 0..num_calls {
+        unsafe {
+            BOOT_SERVICES
+                .open_protocol_unchecked(
+                    protocol_handle,
+                    &TEST_GUID1,
+                    agent_handle,
+                    controller_handle,
+                    efi::OPEN_PROTOCOL_BY_DRIVER,
+                )
+                .map_err(|e| BenchError::InvalidData("Failed to open protocol."))?;
+        }
+
+        let start = Arch::cpu_count();
+        BOOT_SERVICES
+            .close_protocol(protocol_handle, &TEST_GUID1, agent_handle, controller_handle)
+            .map_err(|_| BenchError::InvalidData("Failed to close protocol."))?;
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_handle_protocol(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    let interface1: *mut c_void = 0x1234 as *mut c_void;
+    let protocol_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+
+        unsafe {
+            BOOT_SERVICES
+                .handle_protocol_unchecked(protocol_handle, &TEST_GUID1)
+                .map_err(|e| BenchError::InvalidData("Failed to open protocol."))?;
+        }
+
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+    Ok(tot_cycles)
+}

@@ -44,10 +44,10 @@ pub fn bench_start(handle: efi::Handle) {
     // SHERRY: figure out how to fix write issues
     writeln!(
         &mut output_buf,
-        "| {:<24} | {:>14} | {:>12} | {:>15} |",
+        "| {:<30} | {:>14} | {:>12} | {:>15} |",
         "Name", "Total cycles", "Total calls", "Cycles/op"
     );
-    writeln!(&mut output_buf, "|{:-<26}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-");
+    writeln!(&mut output_buf, "|{:-<28}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-");
 
     for (bf, num_calls) in BENCH_FNS {
         let (bench_name, bench_func) = (bf.name, bf.func);
@@ -56,7 +56,7 @@ pub fn bench_start(handle: efi::Handle) {
             Ok(cycles) => {
                 writeln!(
                     &mut output_buf,
-                    "| {:<24} | {:>14} | {:>12} | {:>15} |",
+                    "| {:<30} | {:>14} | {:>12} | {:>15} |",
                     bench_name,
                     cycles,
                     num_calls,
