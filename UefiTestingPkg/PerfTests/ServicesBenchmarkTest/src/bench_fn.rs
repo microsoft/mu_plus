@@ -170,7 +170,6 @@ pub(crate) fn bench_close_event(_handle: efi::Handle, num_calls: usize) -> Resul
             )
         }
         .map_err(|e| BenchError::InvalidData("Failed to create event."))?;
-
         let start = Arch::cpu_count();
         BOOT_SERVICES.close_event(event_handle).map_err(|e| BenchError::InvalidData("Failed to close event."))?;
         let end = Arch::cpu_count();
@@ -465,5 +464,33 @@ pub(crate) fn bench_handle_protocol(handle: efi::Handle, num_calls: usize) -> Re
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_locate_device_path(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let loaded_image_protocol = unsafe {
+        BOOT_SERVICES
+            .handle_protocol::<efi::protocols::loaded_image::Protocol>(handle)
+            .map_err(|_| BenchError::InvalidData("Failed to get loaded image protocol."))?
+    };
+    let mut device_path_protocol = unsafe {
+        BOOT_SERVICES
+            .handle_protocol::<efi::protocols::device_path::Protocol>(loaded_image_protocol.device_handle)
+            .map_err(|_| BenchError::InvalidData("Failed to get device path protocol."))?
+    };
+
+    let mut tot_cycles = 0;
+    for _ in 0..num_calls {
+        let mut device_path_ptr = device_path_protocol as *mut efi::protocols::device_path::Protocol;
+        let start = Arch::cpu_count();
+        unsafe {
+            BOOT_SERVICES
+                .locate_device_path(&efi::protocols::device_path::PROTOCOL_GUID, &mut device_path_ptr as *mut _)
+                .map_err(|e| BenchError::InvalidData("Failed to locate device path."))
+        }?;
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+
     Ok(tot_cycles)
 }

@@ -34,7 +34,7 @@ mod uefi_entry {
             init_debug((*system_table).boot_services);
         }
 
-        bench_start(image_handle);
+        bench_start(image_handle, system_table);
 
         efi::Status::SUCCESS
     }

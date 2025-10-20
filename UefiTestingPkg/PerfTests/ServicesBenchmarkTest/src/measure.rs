@@ -4,9 +4,10 @@ use r_efi::efi;
 use crate::{
     bench_fn::{
         bench_allocate_pages, bench_allocate_pool, bench_calculate_crc32, bench_check_event, bench_close_event,
-        bench_connect_controller, bench_copy_mem, bench_create_event, bench_free_pages, bench_free_pool,
-        bench_get_memory_map, bench_install_configuration_table, bench_install_protocol_interface, bench_load_image,
-        bench_open_protocol, bench_set_mem, bench_signal_event, bench_start_image_and_exit,
+        bench_close_protocol, bench_connect_controller, bench_copy_mem, bench_create_event, bench_free_pages,
+        bench_free_pool, bench_get_memory_map, bench_handle_protocol, bench_install_configuration_table,
+        bench_install_protocol_interface, bench_load_image, bench_locate_device_path, bench_open_protocol,
+        bench_set_mem, bench_signal_event, bench_start_image_and_exit,
     },
     error::BenchError,
 };
@@ -21,7 +22,7 @@ pub(crate) struct BenchFnWrapper {
     pub(crate) name: &'static str,
 }
 
-pub static BENCH_FNS: [(BenchFnWrapper, usize); 18] = [
+pub static BENCH_FNS: [(BenchFnWrapper, usize); 21] = [
     /* CONTROLLER SERVICES */
     (BenchFnWrapper { func: bench_connect_controller, name: "connect_controller" }, 100),
     /* EVENT SERVICES */
@@ -46,4 +47,7 @@ pub static BENCH_FNS: [(BenchFnWrapper, usize); 18] = [
     /* PROTOCOL SERVICES */
     (BenchFnWrapper { func: bench_install_protocol_interface, name: "install_protocol_interface" }, 100),
     (BenchFnWrapper { func: bench_open_protocol, name: "open_protocol" }, 10_000),
+    (BenchFnWrapper { func: bench_handle_protocol, name: "handle_protocol" }, 10_000),
+    (BenchFnWrapper { func: bench_close_protocol, name: "close_protocol" }, 100),
+    (BenchFnWrapper { func: bench_locate_device_path, name: "locate_device_path" }, 100),
 ];

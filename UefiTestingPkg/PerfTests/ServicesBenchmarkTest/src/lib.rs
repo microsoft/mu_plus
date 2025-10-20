@@ -22,10 +22,11 @@
 #![cfg_attr(target_os = "uefi", no_std)]
 
 extern crate alloc;
+use alloc::vec::Vec;
 use core::fmt::Write;
 
 use patina_sdk::boot_services::StandardBootServices;
-use r_efi::efi;
+use r_efi::{efi, system};
 use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_INFO, debugln};
 
 use crate::measure::BENCH_FNS;
@@ -35,7 +36,7 @@ use alloc::string::String;
 pub static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
 // sherry: current idea is to collect everything then dump it in a single go to shell using debugln!?
-pub fn bench_start(handle: efi::Handle) {
+pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) {
     debugln!(DEBUG_INFO, "Starting Services Benchmark Test...");
 
     let mut output_buf = String::new();
@@ -46,8 +47,9 @@ pub fn bench_start(handle: efi::Handle) {
         &mut output_buf,
         "| {:<30} | {:>14} | {:>12} | {:>15} |",
         "Name", "Total cycles", "Total calls", "Cycles/op"
-    );
-    writeln!(&mut output_buf, "|{:-<28}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-");
+    )
+    .unwrap();
+    writeln!(&mut output_buf, "|{:-<28}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-").unwrap();
 
     for (bf, num_calls) in BENCH_FNS {
         let (bench_name, bench_func) = (bf.name, bf.func);
@@ -61,7 +63,8 @@ pub fn bench_start(handle: efi::Handle) {
                     cycles,
                     num_calls,
                     cycles / num_calls as u64
-                );
+                )
+                .unwrap();
             }
             Err(e) => {
                 debugln!(DEBUG_ERROR, "Benchmark {} failed: {:?}", bench_name, e);
@@ -70,6 +73,14 @@ pub fn bench_start(handle: efi::Handle) {
     }
 
     debugln!(DEBUG_INFO, "{}", output_buf);
+    unsafe { print_to_console(st, &output_buf.as_str()) };
+}
+
+pub unsafe fn print_to_console(system_table: *const system::SystemTable, message: &str) {
+    let con_out = (*system_table).con_out;
+    // UEFI expects UCS-2 (UTF-16), not UTF-8.
+    let mut wide: Vec<u16> = message.encode_utf16().chain(core::iter::once(0)).collect();
+    ((*con_out).output_string)(con_out, wide.as_mut_ptr());
 }
 
 mod bench_fn;
