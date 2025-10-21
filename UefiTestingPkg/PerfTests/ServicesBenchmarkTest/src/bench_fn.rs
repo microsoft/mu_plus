@@ -494,3 +494,143 @@ pub(crate) fn bench_locate_device_path(handle: efi::Handle, num_calls: usize) ->
 
     Ok(tot_cycles)
 }
+
+pub(crate) fn bench_open_protocol_information(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        let _info = BOOT_SERVICES
+            .open_protocol_information(handle, &efi::protocols::loaded_image::PROTOCOL_GUID)
+            .map_err(|e| BenchError::InvalidData("Failed to get open protocol information."))?;
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_protocols_per_handle(handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        let _protocols = BOOT_SERVICES
+            .protocols_per_handle(handle)
+            .map_err(|e| BenchError::InvalidData("Failed to get protocols per handle."))?;
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_register_protocol_notify(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    extern "efiapi" fn mock_notify(_ptr: *mut c_void, _data: *mut i32) {}
+
+    let mut tot_cycles = 0;
+    for _ in 0..num_calls {
+        let event = unsafe {
+            BOOT_SERVICES
+                .create_event_unchecked::<i32>(
+                    EventType::NOTIFY_SIGNAL,
+                    Tpl::NOTIFY,
+                    Some(mock_notify),
+                    &mut 0 as *mut i32,
+                )
+                .map_err(|e| {
+                    debugln!(DEBUG_ERROR, "{:?}", e);
+                    BenchError::InvalidData("Failed to create valid event.")
+                })
+        }?;
+        let start = Arch::cpu_count();
+        BOOT_SERVICES
+            .register_protocol_notify(&efi::protocols::loaded_image::PROTOCOL_GUID, event)
+            .map_err(|e| BenchError::InvalidData("Failed to register protocol notify."))?;
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_reinstall_protocol_interface(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    let mut prev_interface: *mut c_void = 0x1234 as *mut c_void;
+    let mut new_interface = 0x5678 as *mut c_void;
+    let protocol_handle =
+        unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, prev_interface) }.map_err(
+            |e| {
+                debugln!(DEBUG_ERROR, "{:?}", e);
+                BenchError::InvalidData("Failed to install dummy protocol.")
+            },
+        )?;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        unsafe {
+            BOOT_SERVICES
+                .reinstall_protocol_interface_unchecked(protocol_handle, &TEST_GUID1, prev_interface, new_interface)
+                .map_err(|e| {
+                    debugln!(DEBUG_ERROR, "{:?}", e);
+                    BenchError::InvalidData("Failed to reinstall protocol interface.")
+                })?;
+        }
+        prev_interface = new_interface;
+        new_interface = 0x5678 as *mut c_void;
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_uninstall_protocol_interface(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    let interface1: *mut c_void = 0x1234 as *mut c_void;
+    let mut protocol_handle =
+        unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
+            .map_err(|e| BenchError::InvalidData("Failed to install dummy protocol."))?;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        unsafe {
+            BOOT_SERVICES
+                .uninstall_protocol_interface_unchecked(protocol_handle, &TEST_GUID1, interface1)
+                .map_err(|e| BenchError::InvalidData("Failed to uninstall protocol interface."))?;
+        }
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+
+        // Reinstall for next iteration
+        unsafe {
+            protocol_handle = BOOT_SERVICES
+                .install_protocol_interface_unchecked(None, &TEST_GUID1, interface1)
+                .map_err(|e| BenchError::InvalidData("Failed to install a new dummy protocol."))?;
+        }
+    }
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_raise_tpl(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    for _ in 0..num_calls {
+        let start = Arch::cpu_count();
+        let old_tpl = BOOT_SERVICES.raise_tpl(Tpl::NOTIFY);
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+
+        BOOT_SERVICES.restore_tpl(old_tpl);
+    }
+
+    Ok(tot_cycles)
+}
+
+pub(crate) fn bench_restore_tpl(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+    let mut tot_cycles = 0;
+    for _ in 0..num_calls {
+        let old_tpl = BOOT_SERVICES.raise_tpl(Tpl::NOTIFY);
+
+        let start = Arch::cpu_count();
+        BOOT_SERVICES.restore_tpl(old_tpl);
+        let end = Arch::cpu_count();
+        tot_cycles += end - start;
+    }
+
+    Ok(tot_cycles)
+}

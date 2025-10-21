@@ -68,6 +68,7 @@ pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) {
             }
             Err(e) => {
                 debugln!(DEBUG_ERROR, "Benchmark {} failed: {:?}", bench_name, e);
+                panic!();
             }
         }
     }

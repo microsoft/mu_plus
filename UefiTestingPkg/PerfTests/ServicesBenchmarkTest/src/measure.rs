@@ -1,4 +1,3 @@
-use mu_rust_helpers::perf_timer::{Arch, ArchFunctionality};
 use r_efi::efi;
 
 use crate::{
@@ -7,7 +6,9 @@ use crate::{
         bench_close_protocol, bench_connect_controller, bench_copy_mem, bench_create_event, bench_free_pages,
         bench_free_pool, bench_get_memory_map, bench_handle_protocol, bench_install_configuration_table,
         bench_install_protocol_interface, bench_load_image, bench_locate_device_path, bench_open_protocol,
-        bench_set_mem, bench_signal_event, bench_start_image_and_exit,
+        bench_open_protocol_information, bench_protocols_per_handle, bench_raise_tpl, bench_register_protocol_notify,
+        bench_reinstall_protocol_interface, bench_restore_tpl, bench_set_mem, bench_signal_event,
+        bench_start_image_and_exit, bench_uninstall_protocol_interface,
     },
     error::BenchError,
 };
@@ -22,7 +23,7 @@ pub(crate) struct BenchFnWrapper {
     pub(crate) name: &'static str,
 }
 
-pub static BENCH_FNS: [(BenchFnWrapper, usize); 21] = [
+pub static BENCH_FNS: [(BenchFnWrapper, usize); 28] = [
     /* CONTROLLER SERVICES */
     (BenchFnWrapper { func: bench_connect_controller, name: "connect_controller" }, 100),
     /* EVENT SERVICES */
@@ -50,4 +51,11 @@ pub static BENCH_FNS: [(BenchFnWrapper, usize); 21] = [
     (BenchFnWrapper { func: bench_handle_protocol, name: "handle_protocol" }, 10_000),
     (BenchFnWrapper { func: bench_close_protocol, name: "close_protocol" }, 100),
     (BenchFnWrapper { func: bench_locate_device_path, name: "locate_device_path" }, 100),
+    (BenchFnWrapper { func: bench_open_protocol_information, name: "open_protocol_information" }, 100),
+    (BenchFnWrapper { func: bench_protocols_per_handle, name: "protocols_per_handle" }, 100),
+    (BenchFnWrapper { func: bench_register_protocol_notify, name: "register_protocol_notify" }, 10),
+    (BenchFnWrapper { func: bench_reinstall_protocol_interface, name: "reinstall_protocol_interface" }, 100),
+    (BenchFnWrapper { func: bench_uninstall_protocol_interface, name: "uninstall_protocol_interface" }, 10),
+    (BenchFnWrapper { func: bench_raise_tpl, name: "raise_tpl" }, 1_000_000),
+    (BenchFnWrapper { func: bench_restore_tpl, name: "restore_tpl" }, 1_000_000),
 ];
