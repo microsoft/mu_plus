@@ -104,6 +104,24 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
             .map_err(|_| BenchError::InvalidData("Failed to disconnect controller."))?;
     }
 
+    // // Uninstall protocols to prevent issues.
+    // let driver_handle = unsafe {
+    //     BOOT_SERVICES
+    //         .install_protocol_interface_unchecked(
+    //             None,
+    //             &efi::protocols::device_path::PROTOCOL_GUID,
+    //             0x2222 as *mut core::ffi::c_void,
+    //         )
+    //         .map_err(|e| BenchError::InvalidData("Failed to install driver protocol interface."))
+    // }?;
+    unsafe {
+        BOOT_SERVICES.uninstall_protocol_interface_unchecked(
+            driver_handle,
+            &efi::protocols::device_path::PROTOCOL_GUID,
+            0x2222 as *mut core::ffi::c_void,
+        )
+    };
+
     Ok(tot_cycles)
 }
 
