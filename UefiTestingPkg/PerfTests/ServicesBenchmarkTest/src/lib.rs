@@ -29,27 +29,26 @@ use patina_sdk::boot_services::StandardBootServices;
 use r_efi::{efi, system};
 use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_INFO, debugln};
 
-use crate::measure::BENCH_FNS;
+use crate::{error::BenchError, measure::BENCH_FNS};
 use alloc::string::String;
 
 /// Global instance of UEFI Boot Services.
 pub static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();
 
-// sherry: current idea is to collect everything then dump it in a single go to shell using debugln!?
-pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) {
+pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) -> Result<(), BenchError> {
     debugln!(DEBUG_INFO, "Starting Services Benchmark Test...");
 
     let mut output_buf = String::new();
 
     // Write fixed-width markdown table
-    // SHERRY: figure out how to fix write issues
     writeln!(
         &mut output_buf,
         "| {:<30} | {:>14} | {:>12} | {:>15} |",
         "Name", "Total cycles", "Total calls", "Cycles/op"
     )
-    .unwrap();
-    writeln!(&mut output_buf, "|{:-<28}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-").unwrap();
+    .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
+    writeln!(&mut output_buf, "|{:-<28}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-")
+        .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
 
     for (bf, num_calls) in BENCH_FNS {
         let (bench_name, bench_func) = (bf.name, bf.func);
@@ -64,24 +63,31 @@ pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) {
                     num_calls,
                     cycles / num_calls as u64
                 )
-                .unwrap();
+                .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
             }
             Err(e) => {
                 debugln!(DEBUG_ERROR, "Benchmark {} failed: {:?}", bench_name, e);
-                panic!();
+                debug_assert!(false);
             }
         }
     }
 
     debugln!(DEBUG_INFO, "{}", output_buf);
+    // SAFETY: `st` is a valid pointer to SystemTable provided by UEFI firmware in `efi_main`.
     unsafe { print_to_console(st, &output_buf.as_str()) };
+
+    Ok(())
 }
 
+/// Print a message to the UEFI console output.
+/// SAFETY: Caller must ensure that `system_table` is a valid pointer to a SystemTable.
 pub unsafe fn print_to_console(system_table: *const system::SystemTable, message: &str) {
-    let con_out = (*system_table).con_out;
+    // SAFETY: `system_table` is validated by the caller.
+    let con_out = (unsafe { &*system_table }).con_out;
     // UEFI expects UCS-2 (UTF-16), not UTF-8.
     let mut wide: Vec<u16> = message.encode_utf16().chain(core::iter::once(0)).collect();
-    ((*con_out).output_string)(con_out, wide.as_mut_ptr());
+    // SAFETY: `system_table` is valid, so `con_out` is valid.
+    ((unsafe { &*con_out }).output_string)(con_out, wide.as_mut_ptr());
 }
 
 mod bench_fn;
