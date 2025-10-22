@@ -1,5 +1,22 @@
+use core::fmt;
+
+use r_efi::efi;
+
 #[derive(Debug)]
 pub enum BenchError {
-    InvalidData(&'static str),
-    BenchFnFailure(&'static str),
+    BenchSetupFailure(&'static str, efi::Status),
+    BenchFailure(&'static str, efi::Status),
+    BenchCleanupFailure(&'static str, efi::Status),
+}
+
+impl fmt::Display for BenchError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BenchError::BenchSetupFailure(msg, status)
+            | BenchError::BenchFailure(msg, status)
+            | BenchError::BenchCleanupFailure(msg, status) => {
+                write!(f, "{} with error {:?}", msg, status)
+            }
+        }
+    }
 }

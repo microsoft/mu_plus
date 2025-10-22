@@ -1,16 +1,13 @@
-use core::{ffi::c_void, num, ptr, str::FromStr};
+use core::{ffi::c_void, ptr};
 
 use alloc::vec;
 use patina_sdk::{
     base::UEFI_PAGE_SIZE,
-    boot_services::{
-        BootServices, allocation::MemoryType, event::EventType, protocol_handler::HandleSearchType, tpl::Tpl,
-    },
+    boot_services::{BootServices, allocation::MemoryType, event::EventType, tpl::Tpl},
 };
 use perf_timer::{Arch, ArchFunctionality};
-use r_efi::efi::{self, BOOT_SERVICES_CODE};
+use r_efi::efi::{self};
 use rust_advanced_logger_dxe::{DEBUG_ERROR, debugln};
-use uuid::Uuid;
 
 use crate::{BOOT_SERVICES, error::BenchError};
 use alloc::boxed::Box;
@@ -49,7 +46,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
     let controller_handle = unsafe {
         BOOT_SERVICES
             .install_protocol_interface_unchecked(None, &TEST_GUID1, 0x1111 as *mut core::ffi::c_void)
-            .map_err(|e| BenchError::InvalidData("Failed to install controller protocol interface."))
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to install protocol interface for controller", e))
     }?;
     let driver_handle = unsafe {
         BOOT_SERVICES
@@ -58,7 +55,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
                 &efi::protocols::device_path::PROTOCOL_GUID,
                 0x2222 as *mut core::ffi::c_void,
             )
-            .map_err(|e| BenchError::InvalidData("Failed to install driver protocol interface."))
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to install protocol interface for driver", e))
     }?;
 
     let image_handle = unsafe {
@@ -68,7 +65,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
             core::ptr::null_mut(), // Dummy protocol data for test
         )
     }
-    .map_err(|e| BenchError::InvalidData("Failed to install driver binding protocol."))?;
+    .map_err(|e| BenchError::BenchSetupFailure("Failed to install protocol interface for image", e))?;
     let binding = Box::new(efi::protocols::driver_binding::Protocol {
         version: 10,
         supported: mock_supported,
@@ -86,7 +83,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
                 &efi::protocols::driver_binding::PROTOCOL_GUID,
                 binding_ptr,
             )
-            .map_err(|e| BenchError::InvalidData("Failed to install driver binding protocol."))?;
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to install protocol interface for driver binding", e))?;
     }
 
     let mut tot_cycles = 0;
@@ -95,25 +92,16 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
         unsafe {
             BOOT_SERVICES
                 .connect_controller(controller_handle, vec![driver_handle], core::ptr::null_mut(), false)
-                .map_err(|e| BenchError::InvalidData("Failed to connect controller."))?;
+                .map_err(|e| BenchError::BenchFailure("Failed to connect controller", e))?;
         }
         let end = Arch::cpu_count();
         tot_cycles += end - start;
         BOOT_SERVICES
             .disconnect_controller(controller_handle, None, None)
-            .map_err(|_| BenchError::InvalidData("Failed to disconnect controller."))?;
+            .map_err(|e| BenchError::BenchCleanupFailure("Failed to disconnect controller", e))?;
     }
 
-    // // Uninstall protocols to prevent issues.
-    // let driver_handle = unsafe {
-    //     BOOT_SERVICES
-    //         .install_protocol_interface_unchecked(
-    //             None,
-    //             &efi::protocols::device_path::PROTOCOL_GUID,
-    //             0x2222 as *mut core::ffi::c_void,
-    //         )
-    //         .map_err(|e| BenchError::InvalidData("Failed to install driver protocol interface."))
-    // }?;
+    // Uninstall protocols to prevent side effects.
     unsafe {
         BOOT_SERVICES.uninstall_protocol_interface_unchecked(
             driver_handle,
@@ -137,18 +125,19 @@ pub(crate) fn bench_check_event(_handle: efi::Handle, num_calls: usize) -> Resul
                 ptr::null_mut(),
             )
         }
-        .map_err(|e| {
-            debugln!(DEBUG_ERROR, "{:?}", e);
-            BenchError::InvalidData("Failed to create event.")
-        })?;
-        BOOT_SERVICES.signal_event(event_handle).map_err(|e| BenchError::InvalidData("Failed to signal event."))?;
+        .map_err(|e| BenchError::BenchSetupFailure("Failed to create event", e))?;
+        BOOT_SERVICES
+            .signal_event(event_handle)
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to signal event", e))?;
 
         let start = Arch::cpu_count();
-        BOOT_SERVICES.check_event(event_handle).map_err(|e| BenchError::BenchFnFailure("check_event failed."))?;
+        BOOT_SERVICES.check_event(event_handle).map_err(|e| BenchError::BenchFailure("check_event failed", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
 
-        BOOT_SERVICES.close_event(event_handle).map_err(|e| BenchError::InvalidData("Failed to close event."))?;
+        BOOT_SERVICES
+            .close_event(event_handle)
+            .map_err(|e| BenchError::BenchCleanupFailure("Failed to close event", e))?;
     }
     Ok(tot_cycles)
 }
@@ -166,11 +155,13 @@ pub(crate) fn bench_create_event(_handle: efi::Handle, num_calls: usize) -> Resu
                 ptr::null_mut(),
             )
         }
-        .map_err(|e| BenchError::InvalidData("Failed to create event."))?;
+        .map_err(|e| BenchError::BenchFailure("Failed to create event", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
 
-        BOOT_SERVICES.close_event(event_handle).map_err(|e| BenchError::InvalidData("Failed to close event."))?;
+        BOOT_SERVICES
+            .close_event(event_handle)
+            .map_err(|e| BenchError::BenchCleanupFailure("Failed to close event", e))?;
     }
     Ok(tot_cycles)
 }
@@ -187,9 +178,9 @@ pub(crate) fn bench_close_event(_handle: efi::Handle, num_calls: usize) -> Resul
                 ptr::null_mut(),
             )
         }
-        .map_err(|e| BenchError::InvalidData("Failed to create event."))?;
+        .map_err(|e| BenchError::BenchSetupFailure("Failed to create event", e))?;
         let start = Arch::cpu_count();
-        BOOT_SERVICES.close_event(event_handle).map_err(|e| BenchError::InvalidData("Failed to close event."))?;
+        BOOT_SERVICES.close_event(event_handle).map_err(|e| BenchError::BenchFailure("Failed to close event", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -208,31 +199,34 @@ pub(crate) fn bench_signal_event(_handle: efi::Handle, num_calls: usize) -> Resu
                 ptr::null_mut(),
             )
         }
-        .map_err(|e| BenchError::InvalidData("Failed to create event."))?;
+        .map_err(|e| BenchError::BenchSetupFailure("Failed to create evente", e))?;
 
         let start = Arch::cpu_count();
-        BOOT_SERVICES.signal_event(event_handle).map_err(|e| BenchError::InvalidData("Failed to signal event."))?;
+        BOOT_SERVICES.signal_event(event_handle).map_err(|e| BenchError::BenchFailure("Failed to signal event", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
 
-        BOOT_SERVICES.close_event(event_handle).map_err(|e| BenchError::InvalidData("Failed to close event."))?;
+        BOOT_SERVICES
+            .close_event(event_handle)
+            .map_err(|e| BenchError::BenchCleanupFailure("Failed to close event", e))?;
     }
     Ok(tot_cycles)
 }
 
-// This is hard to bench seperately
+///  `start_image` is diffcult to bench individually.
+/// The image `TempTest.efi` is a no-op image that exits immediately.
 pub(crate) fn bench_start_image_and_exit(parent_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
     let mut tot_cycles = 0;
     for _ in 0..num_calls {
         let image_bytes = include_bytes!("../resources/TempTest.efi");
         let loaded_image_handle = BOOT_SERVICES
             .load_image(false, parent_handle, core::ptr::null_mut(), Some(image_bytes))
-            .map_err(|e| BenchError::InvalidData("Failed to load image."))?;
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to load image", e))?;
 
         let start = Arch::cpu_count();
         BOOT_SERVICES
             .start_image(loaded_image_handle)
-            .map_err(|e| BenchError::InvalidData("Failed to start image."))?;
+            .map_err(|e| BenchError::BenchFailure("Failed to start image", e.0))?;
         let end = Arch::cpu_count();
 
         tot_cycles += end - start;
@@ -245,9 +239,9 @@ pub(crate) fn bench_load_image(parent_handle: efi::Handle, num_calls: usize) -> 
     for _ in 0..num_calls {
         let image_bytes = include_bytes!("../resources/TempTest.efi");
         let start = Arch::cpu_count();
-        let loaded_image_handle = BOOT_SERVICES
+        let _loaded_image_handle = BOOT_SERVICES
             .load_image(false, parent_handle, core::ptr::null_mut(), Some(image_bytes))
-            .map_err(|e| BenchError::InvalidData("Failed to load image."))?;
+            .map_err(|e| BenchError::BenchFailure("Failed to load image", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -260,11 +254,11 @@ pub(crate) fn bench_allocate_pages(_handle: efi::Handle, num_calls: usize) -> Re
         let start = Arch::cpu_count();
         let pages = BOOT_SERVICES
             .allocate_pages(patina_sdk::boot_services::allocation::AllocType::AnyPage, MemoryType::ACPI_MEMORY_NVS, 1)
-            .map_err(|e| BenchError::InvalidData("Failed to allocate pages."))?;
+            .map_err(|e| BenchError::BenchFailure("Failed to allocate pages", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
 
-        BOOT_SERVICES.free_pages(pages, 1).map_err(|e| BenchError::InvalidData("Failed to free pages."))?;
+        BOOT_SERVICES.free_pages(pages, 1).map_err(|e| BenchError::BenchCleanupFailure("Failed to free pages", e))?;
     }
     Ok(tot_cycles)
 }
@@ -275,11 +269,11 @@ pub(crate) fn bench_allocate_pool(_handle: efi::Handle, num_calls: usize) -> Res
         let start = Arch::cpu_count();
         let pool = BOOT_SERVICES
             .allocate_pool(MemoryType::ACPI_MEMORY_NVS, UEFI_PAGE_SIZE / 4)
-            .map_err(|e| BenchError::InvalidData("Failed to allocate pool."))?;
+            .map_err(|e| BenchError::BenchFailure("Failed to allocate pool", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
 
-        BOOT_SERVICES.free_pool(pool).map_err(|e| BenchError::InvalidData("Failed to free pool."))?;
+        BOOT_SERVICES.free_pool(pool).map_err(|e| BenchError::BenchCleanupFailure("Failed to free pool", e))?;
     }
     Ok(tot_cycles)
 }
@@ -289,10 +283,10 @@ pub(crate) fn bench_free_pages(_handle: efi::Handle, num_calls: usize) -> Result
     for _ in 0..num_calls {
         let pages = BOOT_SERVICES
             .allocate_pages(patina_sdk::boot_services::allocation::AllocType::AnyPage, MemoryType::ACPI_MEMORY_NVS, 1)
-            .map_err(|e| BenchError::InvalidData("Failed to allocate pages."))?;
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to allocate pages", e))?;
 
         let start = Arch::cpu_count();
-        BOOT_SERVICES.free_pages(pages, 1).map_err(|e| BenchError::InvalidData("Failed to free pages."))?;
+        BOOT_SERVICES.free_pages(pages, 1).map_err(|e| BenchError::BenchFailure("Failed to free pages", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -304,10 +298,10 @@ pub(crate) fn bench_free_pool(_handle: efi::Handle, num_calls: usize) -> Result<
     for _ in 0..num_calls {
         let pool = BOOT_SERVICES
             .allocate_pool(MemoryType::ACPI_MEMORY_NVS, UEFI_PAGE_SIZE / 4)
-            .map_err(|e| BenchError::InvalidData("Failed to allocate pool."))?;
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to allocate pool", e))?;
 
         let start = Arch::cpu_count();
-        BOOT_SERVICES.free_pool(pool).map_err(|e| BenchError::InvalidData("Failed to free pool."))?;
+        BOOT_SERVICES.free_pool(pool).map_err(|e| BenchError::BenchFailure("Failed to free pool", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -320,9 +314,7 @@ pub(crate) fn bench_copy_mem(_handle: efi::Handle, num_calls: usize) -> Result<u
     let mut dst: u64 = 1234;
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
-        unsafe {
-            BOOT_SERVICES.copy_mem::<u64>(&mut dst, &src);
-        }
+        BOOT_SERVICES.copy_mem::<u64>(&mut dst, &src);
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -334,9 +326,7 @@ pub(crate) fn bench_set_mem(_handle: efi::Handle, num_calls: usize) -> Result<u6
     let mut dst: [u8; 128] = [0; 128];
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
-        unsafe {
-            BOOT_SERVICES.set_mem(&mut dst, 1);
-        }
+        BOOT_SERVICES.set_mem(&mut dst, 1);
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -347,7 +337,7 @@ pub(crate) fn bench_get_memory_map(_handle: efi::Handle, num_calls: usize) -> Re
     let mut tot_cycles = 0;
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
-        BOOT_SERVICES.get_memory_map().map_err(|e| BenchError::InvalidData("Failed to get memory map."))?;
+        BOOT_SERVICES.get_memory_map().map_err(|e| BenchError::BenchFailure("Failed to get memory map", e.0))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -359,9 +349,9 @@ pub(crate) fn bench_calculate_crc32(_handle: efi::Handle, num_calls: usize) -> R
     let data: [u8; 128] = [0; 128];
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
-        let _crc = unsafe {
-            BOOT_SERVICES.calculate_crc_32(&data).map_err(|e| BenchError::InvalidData("Failed to calculate CRC32."))
-        }?;
+        let _crc = BOOT_SERVICES
+            .calculate_crc_32(&data)
+            .map_err(|e| BenchError::BenchFailure("Failed to calculate CRC32", e))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -376,7 +366,7 @@ pub(crate) fn bench_install_configuration_table(_handle: efi::Handle, num_calls:
         unsafe {
             BOOT_SERVICES
                 .install_configuration_table(&TEST_GUID1, &table as *const u64 as *mut c_void)
-                .map_err(|e| BenchError::InvalidData("Failed to install configuration table."))?;
+                .map_err(|e| BenchError::BenchFailure("Failed to install configuration table", e))?;
         }
         let end = Arch::cpu_count();
         tot_cycles += end - start;
@@ -386,15 +376,21 @@ pub(crate) fn bench_install_configuration_table(_handle: efi::Handle, num_calls:
 
 pub(crate) fn bench_install_protocol_interface(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
     let mut tot_cycles = 0;
+    let protocol_interface = 0x1234 as *mut c_void;
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
-        unsafe {
+        let protocol_handle = unsafe {
             BOOT_SERVICES
-                .install_protocol_interface_unchecked(None, &TEST_GUID1, ptr::null_mut())
-                .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
-        }
+                .install_protocol_interface_unchecked(None, &TEST_GUID1, protocol_interface)
+                .map_err(|e| BenchError::BenchFailure("Failed to install protocol", e))?
+        };
         let end = Arch::cpu_count();
         tot_cycles += end - start;
+        unsafe {
+            BOOT_SERVICES
+                .uninstall_protocol_interface_unchecked(protocol_handle, &TEST_GUID1, protocol_interface)
+                .map_err(|e| BenchError::BenchCleanupFailure("Failed to uninstall protocol", e))?;
+        };
     }
     Ok(tot_cycles)
 }
@@ -403,12 +399,12 @@ pub(crate) fn bench_open_protocol(handle: efi::Handle, num_calls: usize) -> Resu
     let mut tot_cycles = 0;
     let interface1: *mut c_void = 0x1234 as *mut c_void;
     let agent_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+        .map_err(|e| BenchError::BenchSetupFailure("Failed to install agent protocol", e))?;
     let controller_handle =
         unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-            .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+            .map_err(|e| BenchError::BenchSetupFailure("Failed to install controller protocol", e))?;
     let protocol_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+        .map_err(|e| BenchError::BenchSetupFailure("Failed to install protocol", e))?;
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
         unsafe {
@@ -420,14 +416,14 @@ pub(crate) fn bench_open_protocol(handle: efi::Handle, num_calls: usize) -> Resu
                     controller_handle,
                     efi::OPEN_PROTOCOL_BY_DRIVER,
                 )
-                .map_err(|e| BenchError::InvalidData("Failed to open protocol."))?;
+                .map_err(|e| BenchError::BenchFailure("Failed to open protocol", e))?;
         }
         let end = Arch::cpu_count();
         tot_cycles += end - start;
 
         BOOT_SERVICES
             .close_protocol(protocol_handle, &TEST_GUID1, agent_handle, controller_handle)
-            .map_err(|_| BenchError::InvalidData("Failed to close protocol."))?;
+            .map_err(|e| BenchError::BenchCleanupFailure("Failed to close protocol", e))?;
     }
     Ok(tot_cycles)
 }
@@ -436,12 +432,12 @@ pub(crate) fn bench_close_protocol(handle: efi::Handle, num_calls: usize) -> Res
     let mut tot_cycles = 0;
     let interface1: *mut c_void = 0x1234 as *mut c_void;
     let agent_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+        .map_err(|_| BenchError::InvalidData("Failed to close protocol."))?;
     let controller_handle =
         unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-            .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+            .map_err(|_| BenchError::InvalidData("Failed to close protocol."))?;
     let protocol_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+        .map_err(|_| BenchError::InvalidData("Failed to close protocol."))?;
     for _ in 0..num_calls {
         unsafe {
             BOOT_SERVICES
@@ -452,7 +448,7 @@ pub(crate) fn bench_close_protocol(handle: efi::Handle, num_calls: usize) -> Res
                     controller_handle,
                     efi::OPEN_PROTOCOL_BY_DRIVER,
                 )
-                .map_err(|e| BenchError::InvalidData("Failed to open protocol."))?;
+                .map_err(|_| BenchError::InvalidData("Failed to open protocol."))?;
         }
 
         let start = Arch::cpu_count();
@@ -469,14 +465,14 @@ pub(crate) fn bench_handle_protocol(handle: efi::Handle, num_calls: usize) -> Re
     let mut tot_cycles = 0;
     let interface1: *mut c_void = 0x1234 as *mut c_void;
     let protocol_handle = unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-        .map_err(|e| BenchError::InvalidData("Failed to close protocol."))?;
+        .map_err(|_| BenchError::InvalidData("Failed to close protocol."))?;
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
 
         unsafe {
             BOOT_SERVICES
                 .handle_protocol_unchecked(protocol_handle, &TEST_GUID1)
-                .map_err(|e| BenchError::InvalidData("Failed to open protocol."))?;
+                .map_err(|_| BenchError::InvalidData("Failed to open protocol."))?;
         }
 
         let end = Arch::cpu_count();
@@ -504,7 +500,7 @@ pub(crate) fn bench_locate_device_path(handle: efi::Handle, num_calls: usize) ->
         unsafe {
             BOOT_SERVICES
                 .locate_device_path(&efi::protocols::device_path::PROTOCOL_GUID, &mut device_path_ptr as *mut _)
-                .map_err(|e| BenchError::InvalidData("Failed to locate device path."))
+                .map_err(|_| BenchError::InvalidData("Failed to locate device path."))
         }?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
@@ -519,7 +515,7 @@ pub(crate) fn bench_open_protocol_information(handle: efi::Handle, num_calls: us
         let start = Arch::cpu_count();
         let _info = BOOT_SERVICES
             .open_protocol_information(handle, &efi::protocols::loaded_image::PROTOCOL_GUID)
-            .map_err(|e| BenchError::InvalidData("Failed to get open protocol information."))?;
+            .map_err(|_| BenchError::InvalidData("Failed to get open protocol information."))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -533,7 +529,7 @@ pub(crate) fn bench_protocols_per_handle(handle: efi::Handle, num_calls: usize) 
         let start = Arch::cpu_count();
         let _protocols = BOOT_SERVICES
             .protocols_per_handle(handle)
-            .map_err(|e| BenchError::InvalidData("Failed to get protocols per handle."))?;
+            .map_err(|_| BenchError::InvalidData("Failed to get protocols per handle."))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -554,15 +550,12 @@ pub(crate) fn bench_register_protocol_notify(_handle: efi::Handle, num_calls: us
                     Some(mock_notify),
                     &mut 0 as *mut i32,
                 )
-                .map_err(|e| {
-                    debugln!(DEBUG_ERROR, "{:?}", e);
-                    BenchError::InvalidData("Failed to create valid event.")
-                })
+                .map_err(|e| BenchError::InvalidData("Failed to create valid event."))
         }?;
         let start = Arch::cpu_count();
         BOOT_SERVICES
             .register_protocol_notify(&efi::protocols::loaded_image::PROTOCOL_GUID, event)
-            .map_err(|e| BenchError::InvalidData("Failed to register protocol notify."))?;
+            .map_err(|_| BenchError::InvalidData("Failed to register protocol notify."))?;
         let end = Arch::cpu_count();
         tot_cycles += end - start;
     }
@@ -586,7 +579,7 @@ pub(crate) fn bench_reinstall_protocol_interface(_handle: efi::Handle, num_calls
         unsafe {
             BOOT_SERVICES
                 .reinstall_protocol_interface_unchecked(protocol_handle, &TEST_GUID1, prev_interface, new_interface)
-                .map_err(|e| {
+                .map_err(|_| {
                     debugln!(DEBUG_ERROR, "{:?}", e);
                     BenchError::InvalidData("Failed to reinstall protocol interface.")
                 })?;
@@ -604,13 +597,13 @@ pub(crate) fn bench_uninstall_protocol_interface(_handle: efi::Handle, num_calls
     let interface1: *mut c_void = 0x1234 as *mut c_void;
     let mut protocol_handle =
         unsafe { BOOT_SERVICES.install_protocol_interface_unchecked(None, &TEST_GUID1, interface1) }
-            .map_err(|e| BenchError::InvalidData("Failed to install dummy protocol."))?;
+            .map_err(|_| BenchError::InvalidData("Failed to install dummy protocol."))?;
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
         unsafe {
             BOOT_SERVICES
                 .uninstall_protocol_interface_unchecked(protocol_handle, &TEST_GUID1, interface1)
-                .map_err(|e| BenchError::InvalidData("Failed to uninstall protocol interface."))?;
+                .map_err(|_| BenchError::InvalidData("Failed to uninstall protocol interface."))?;
         }
         let end = Arch::cpu_count();
         tot_cycles += end - start;
@@ -619,7 +612,7 @@ pub(crate) fn bench_uninstall_protocol_interface(_handle: efi::Handle, num_calls
         unsafe {
             protocol_handle = BOOT_SERVICES
                 .install_protocol_interface_unchecked(None, &TEST_GUID1, interface1)
-                .map_err(|e| BenchError::InvalidData("Failed to install a new dummy protocol."))?;
+                .map_err(|_| BenchError::InvalidData("Failed to install a new dummy protocol."))?;
         }
     }
     Ok(tot_cycles)
