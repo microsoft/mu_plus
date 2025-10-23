@@ -19,7 +19,7 @@ resources:
       type: github
       endpoint: microsoft
       name: microsoft/mu_devops
-      ref: refs/tags/v17.0.1
+      ref: refs/tags/v18.0.0
 
 parameters:
 - name: do_ci_build
@@ -118,4 +118,3 @@ jobs:
         container_build: true
 
 - ${{ parameters.extra_jobs }}
-

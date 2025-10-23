@@ -29,12 +29,10 @@ on:
     branches:
       - main
       - release/*
-      - dev/*
   pull_request:
     branches:
       - main
       - release/*
-      - dev/*
     paths-ignore:
       - '!**.c'
       - '!**.h'
@@ -489,7 +487,7 @@ jobs:
         if-no-files-found: warn
 
     - name: Upload CodeQL Results (SARIF) To GitHub Code Scanning
-      uses: github/codeql-action/upload-sarif@v3
+      uses: github/codeql-action/upload-sarif@v4
       with:
         # Path to SARIF file relative to the root of the repository.
         sarif_file: ${{ steps.env_data.outputs.sarif_file_path }}
