@@ -1,4 +1,4 @@
-use core::{ffi::c_void, ptr};
+use core::{ffi::c_void, ptr, usize};
 
 use alloc::vec;
 use mu_rust_helpers::perf_timer::{Arch, ArchFunctionality as _};
@@ -7,6 +7,7 @@ use patina_sdk::{
     boot_services::{BootServices, allocation::MemoryType, event::EventType, tpl::Tpl},
 };
 use r_efi::efi::{self};
+use rolling_stats::Stats;
 
 use crate::{BOOT_SERVICES, error::BenchError};
 use alloc::boxed::Box;
@@ -16,7 +17,7 @@ const TEST_GUID1: efi::Guid =
 const TEST_GUID2: efi::Guid =
     efi::Guid::from_fields(0x87654321, 0x4321, 0x8765, 0xba, 0x98, &[0x76, 0x54, 0x32, 0x10, 0xfe, 0xdc]);
 
-pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {
+pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -> Result<Stats<f64>, BenchError> {
     extern "efiapi" fn mock_supported(
         _this: *mut efi::protocols::driver_binding::Protocol,
         _controller_handle: efi::Handle,
@@ -85,7 +86,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
             .map_err(|e| BenchError::BenchSetupFailure("Failed to install protocol interface for driver binding", e))?;
     }
 
-    let mut tot_cycles = 0;
+    let mut stats: Stats<f64> = Stats::new();
     for _ in 0..num_calls {
         let start = Arch::cpu_count();
         unsafe {
@@ -94,7 +95,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
                 .map_err(|e| BenchError::BenchFailure("Failed to connect controller", e))?;
         }
         let end = Arch::cpu_count();
-        tot_cycles += end - start;
+        stats.update((end - start) as f64);
         BOOT_SERVICES
             .disconnect_controller(controller_handle, None, None)
             .map_err(|e| BenchError::BenchCleanupFailure("Failed to disconnect controller", e))?;
@@ -111,7 +112,7 @@ pub(crate) fn bench_connect_controller(_handle: efi::Handle, num_calls: usize) -
             .map_err(|e| BenchError::BenchCleanupFailure("Failed to uninstall protocol interfacee", e))?
     };
 
-    Ok(tot_cycles)
+    Ok(stats)
 }
 
 pub(crate) fn bench_check_event(_handle: efi::Handle, num_calls: usize) -> Result<u64, BenchError> {

@@ -22,7 +22,7 @@ r-efi = {workspace=true}
 RustAdvancedLoggerDxe = {workspace=true}
 patina_sdk = { version = "4", registry = "patina-fw" }
 uuid = { version = "1.8", default-features = false }
-ta-statistics = "*"
+rolling-stats = "0.8.0"
 
 [target.'cfg(target_os = "uefi")'.dependencies]
 RustBootServicesAllocatorDxe = {workspace=true}

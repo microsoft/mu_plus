@@ -1,4 +1,5 @@
 use r_efi::efi;
+use rolling_stats::Stats;
 
 use crate::{
     bench_fn::{
@@ -15,7 +16,7 @@ use crate::{
 
 // A BenchFn returns total cycles for one call
 // Takes in number of calls to make to measured fn
-type BenchFn = fn(efi::Handle, usize) -> Result<u64, BenchError>;
+type BenchFn = fn(efi::Handle, usize) -> Result<Stats<f64>, BenchError>;
 
 #[derive(Copy, Clone)]
 pub(crate) struct BenchFnWrapper {
