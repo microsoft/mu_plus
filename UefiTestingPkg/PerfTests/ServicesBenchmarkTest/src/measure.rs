@@ -39,8 +39,8 @@ pub static BENCH_FNS: [(BenchFnWrapper, usize); 28] = [
     (BenchFnWrapper { func: bench_allocate_pool, name: "allocate_pool" }, 10_000),
     (BenchFnWrapper { func: bench_free_pages, name: "free_pages" }, 100),
     (BenchFnWrapper { func: bench_free_pool, name: "free_pool" }, 10_000),
-    (BenchFnWrapper { func: bench_copy_mem, name: "copy_mem" }, 1), // i don't see these two being called much so probably not useful to bench
-    (BenchFnWrapper { func: bench_set_mem, name: "set_mem" }, 1),
+    (BenchFnWrapper { func: bench_copy_mem, name: "copy_mem" }, 10),
+    (BenchFnWrapper { func: bench_set_mem, name: "set_mem" }, 10),
     (BenchFnWrapper { func: bench_get_memory_map, name: "get_memory_map" }, 10),
     /* MISC SERVICES */
     (BenchFnWrapper { func: bench_calculate_crc32, name: "calculate_crc32" }, 100),

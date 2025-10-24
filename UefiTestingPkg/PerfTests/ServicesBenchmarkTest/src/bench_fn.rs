@@ -1,11 +1,11 @@
 use core::{ffi::c_void, ptr};
 
 use alloc::vec;
+use mu_rust_helpers::perf_timer::{Arch, ArchFunctionality as _};
 use patina_sdk::{
     base::UEFI_PAGE_SIZE,
     boot_services::{BootServices, allocation::MemoryType, event::EventType, tpl::Tpl},
 };
-use perf_timer::{Arch, ArchFunctionality};
 use r_efi::efi::{self};
 
 use crate::{BOOT_SERVICES, error::BenchError};

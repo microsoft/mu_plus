@@ -24,6 +24,7 @@
 extern crate alloc;
 use alloc::vec::Vec;
 use core::fmt::Write;
+use mu_rust_helpers::perf_timer::{Arch, ArchFunctionality as _};
 
 use patina_sdk::boot_services::StandardBootServices;
 use r_efi::{efi, system};
@@ -40,28 +41,32 @@ pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) -> Resul
 
     let mut output_buf = String::new();
 
-    // Write fixed-width markdown table
+    // Write fixed-width markdown table.
     writeln!(
         &mut output_buf,
-        "| {:<30} | {:>14} | {:>12} | {:>15} |",
-        "Name", "Total cycles", "Total calls", "Cycles/op"
+        "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15} |",
+        "Name", "Total cycles", "Total calls", "Cycles/op", "Total time (ms)"
     )
     .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
-    writeln!(&mut output_buf, "|{:-<28}|{:-<16}|{:-<14}|{:-<17}|", "-", "-", "-", "-")
+    writeln!(&mut output_buf, "|{:-<34}|{:-<16}|{:-<14}|{:-<17}|{:-<17}|", "-", "-", "-", "-", "-")
         .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
 
     for (bf, num_calls) in BENCH_FNS {
+        // Run a few warmup iterations. (10% of the benchmark iterations).
+        (bf.func)(handle, num_calls / 10)?;
+
         let (bench_name, bench_func) = (bf.name, bf.func);
         let cycles_res = bench_func(handle, num_calls);
         match cycles_res {
             Ok(cycles) => {
                 writeln!(
                     &mut output_buf,
-                    "| {:<30} | {:>14} | {:>12} | {:>15} |",
+                    "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15} |",
                     bench_name,
                     cycles,
                     num_calls,
-                    cycles / num_calls as u64
+                    cycles / num_calls as u64,
+                    cycles / (Arch::perf_frequency() as u64 / 1_000_000),
                 )
                 .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
             }

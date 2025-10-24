@@ -9,6 +9,8 @@ members = [
   "HidPkg/UefiHidDxeV2",
   "MsCorePkg/HelloWorldRustDxe",
   "MsWheaPkg/Crates/MuTelemetryHelperLib",
+  "UefiTestingPkg/PerfTests/ServicesBenchmarkTest",
+  "UefiTestingPkg/PerfTests/TempTest",
 ]
 
 # Add packages that generate libraries here
