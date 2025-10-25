@@ -73,18 +73,18 @@ pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) -> Resul
         match cycles_res {
             Ok(cycles) => {
                 // Calculate total time in milliseconds. Formula: ms = cycles / (cycles / s) * 1000.
-                let total_time_ms = (cycles.count as f64) / (Arch::perf_frequency() as f64) / 1000.0;
+                let total_time_ms = (cycles.count as f64) / (Arch::perf_frequency() as f64) * 1000.0;
                 writeln!(
                     &mut output_buf,
                     "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15.3} | {:>12} | {:>12} | {:>12.2} |",
                     bench_name,
-                    cycles.count,
+                    cycles.count as usize, // Format as usize for better readability. Partial cycles don't really matter.
                     num_calls,
                     cycles.mean,
                     total_time_ms,
                     cycles.min,
                     cycles.max,
-                    cycles.std_dev,
+                    cycles.std_dev as usize, // Format as usize for better readability. Partial cycles don't really matter.
                 )
                 .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
             }
