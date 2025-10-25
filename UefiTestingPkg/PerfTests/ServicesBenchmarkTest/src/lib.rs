@@ -41,15 +41,28 @@ pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) -> Resul
 
     let mut output_buf = String::new();
 
-    // Write fixed-width markdown table.
+    // Writes fixed-width markdown table.
+    // Column headers.
     writeln!(
         &mut output_buf,
-        "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15} |",
-        "Name", "Total cycles", "Total calls", "Cycles/op", "Total time (ms)"
+        "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15} | {:>12} | {:>12} | {:>12} |",
+        "Name",
+        "Total cycles",
+        "Total calls",
+        "Cycles/op",
+        "Total time (ms)",
+        "Min cycles",
+        "Max cycles",
+        "SD [cycles]"
     )
     .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
-    writeln!(&mut output_buf, "|{:-<34}|{:-<16}|{:-<14}|{:-<17}|{:-<17}|", "-", "-", "-", "-", "-")
-        .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
+    // Column seperators.
+    writeln!(
+        &mut output_buf,
+        "| {:-<32} | {:-<14} | {:-<12} | {:-<15} | {:-<15} | {:-<12} | {:-<12} | {:-<12} |",
+        "-", "-", "-", "-", "-", "-", "-", "-"
+    )
+    .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
 
     for (bf, num_calls) in BENCH_FNS {
         // Run a few warmup iterations. (10% of the benchmark iterations).
@@ -59,14 +72,19 @@ pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) -> Resul
         let cycles_res = bench_func(handle, num_calls);
         match cycles_res {
             Ok(cycles) => {
+                // Calculate total time in milliseconds. Formula: ms = cycles / (cycles / s) * 1000.
+                let total_time_ms = (cycles.count as f64) / (Arch::perf_frequency() as f64) / 1000.0;
                 writeln!(
                     &mut output_buf,
-                    "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15} |",
+                    "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15.3} | {:>12} | {:>12} | {:>12.2} |",
                     bench_name,
-                    cycles,
+                    cycles.count,
                     num_calls,
-                    cycles / num_calls as u64,
-                    cycles / (Arch::perf_frequency() as u64 / 1_000_000),
+                    cycles.mean,
+                    total_time_ms,
+                    cycles.min,
+                    cycles.max,
+                    cycles.std_dev,
                 )
                 .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
             }
