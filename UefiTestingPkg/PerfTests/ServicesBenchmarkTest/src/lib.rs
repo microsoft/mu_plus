@@ -26,7 +26,7 @@ use alloc::vec::Vec;
 use core::fmt::Write;
 use mu_rust_helpers::perf_timer::{Arch, ArchFunctionality as _};
 
-use patina_sdk::boot_services::StandardBootServices;
+use patina::boot_services::StandardBootServices;
 use r_efi::{efi, system};
 use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_INFO, debugln};
 
@@ -86,11 +86,25 @@ pub fn bench_start(handle: efi::Handle, st: *const system::SystemTable) -> Resul
                     cycles.max,
                     cycles.std_dev as usize, // Format as usize for better readability. Partial cycles don't really matter.
                 )
-                .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
+                .map_err(|e| BenchError::WriteFailure("Write table data failed", e))?;
             }
             Err(e) => {
                 debugln!(DEBUG_ERROR, "Benchmark {} failed: {:?}", bench_name, e);
                 debug_assert!(false);
+                // In case of failure write 0s and note failure.
+                writeln!(
+                    &mut output_buf,
+                    "| {:<32} | {:>14} | {:>12} | {:>15} | {:>15.3} | {:>12} | {:>12} | {:>12.2} |",
+                    bench_name.to_string() + " (Failed)",
+                    0,
+                    0,
+                    0,
+                    0.0,
+                    0,
+                    0,
+                    0
+                )
+                .map_err(|e| BenchError::WriteFailure("Write table header failed", e))?;
             }
         }
     }
@@ -113,6 +127,6 @@ pub unsafe fn print_to_console(system_table: *const system::SystemTable, message
     ((unsafe { &*con_out }).output_string)(con_out, wide.as_mut_ptr());
 }
 
-mod bench_fn;
+mod bench;
 mod error;
 mod measure;

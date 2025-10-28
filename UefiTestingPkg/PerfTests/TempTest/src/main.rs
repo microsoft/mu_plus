@@ -12,7 +12,7 @@
 #![cfg_attr(target_os = "uefi", no_main)]
 #![allow(non_snake_case)]
 
-use patina_sdk::boot_services::StandardBootServices;
+use patina::boot_services::StandardBootServices;
 
 /// Global instance of UEFI Boot Services.
 pub static BOOT_SERVICES: StandardBootServices = StandardBootServices::new_uninit();

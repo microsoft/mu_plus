@@ -14,7 +14,7 @@ path = "src/main.rs"
 
 [dependencies]
 r-efi = {workspace=true}
-patina_sdk = { version = "4", registry = "patina-fw" }
+patina = {version = "13"}
 
 [target.'cfg(target_os = "uefi")'.dependencies]
 RustBootServicesAllocatorDxe = {workspace=true}

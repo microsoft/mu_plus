@@ -20,8 +20,8 @@ path = "src/main.rs"
 mu_rust_helpers = {workspace=true}
 r-efi = {workspace=true}
 RustAdvancedLoggerDxe = {workspace=true}
-patina_sdk = { version = "4", registry = "patina-fw" }
-uuid = { version = "1.8", default-features = false }
+patina = {version = "13"}
+uuid = {version = "1.8", default-features = false}
 rolling-stats = "0.8.0"
 
 [target.'cfg(target_os = "uefi")'.dependencies]
