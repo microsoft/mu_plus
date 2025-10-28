@@ -1,24 +1,25 @@
-//! UefiHidDxe - Human Interface Device support.
+//! Services Benchmark Test Library
 //!
-//! This crate provides a UEFI driver to support HID devices. At present, it has
-//! support for pointer and keyboard devices. Devices are supported in Report
-//! mode (as opposed to Boot mode) and the report descriptor is used to
-//! inform the parsing of arbitrary input reports from the device.
+//! This crate provides a set of benchmarks for measuring the performance of various UEFI services.
+//! It is intended to be run in a UEFI environment to collect timing and call statistics for selected
+//! UEFI service functions. The results are output in a markdown-formatted table for easy analysis.
 //!
 //! ## Usage
 //!
-//! To use this crate, a device must expose an instance of the HidIo protocol:
-//! <https://github.com/microsoft/mu_plus/blob/14c187b8ac4858d154612cd67a96820f78fe5584/HidPkg/Include/Protocol/HidIo.h>
+//! Invoke the `bench_start` function from your UEFI application or test harness, passing the UEFI
+//! image handle and system table. The library will execute a set of predefined benchmarks and print
+//! the results to the UEFI console.
 //!
-//! This driver will use that interface to query device report descriptors and
-//! instantiate handling for keyboard, pointer, or both as appropriate.
+//! ## Output
+//! 
+//! The benchmark results include the name of each tested service, total cycles consumed, number of calls,
+//! and average cycles per operation.
 //!
 //! ## License
 //!
 //! Copyright (c) Microsoft Corporation. All rights reserved.
 //!
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
-//!
 #![cfg_attr(target_os = "uefi", no_std)]
 
 extern crate alloc;
