@@ -1,6 +1,6 @@
 ### @file
 #
-# sherry write something here
+# Compiles a test efi for benchmarking.
 #
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # SPDX-License-Identifier: BSD-2-Clause-Patent

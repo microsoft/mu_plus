@@ -8,7 +8,6 @@ rustflags = [
 rustflags = [
     "-C", "link-arg=/base:0x0",
     "-C", "link-arg=/subsystem:efi_boot_service_driver",
-    "-C", "link-arg=/subsystem:efi_application",
 ]
 
 [target.aarch64-unknown-uefi]
