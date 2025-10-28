@@ -1,6 +1,6 @@
-//! HID input driver for UEFI
+//! Temporary test application for benchmarking UEFI boot services.
 //!
-//! This crate provides input handlers for HID 1.1 compliant keyboards and pointers.
+//! This crate is used for performance testing and does not implement any HID input handling.
 //!
 //! ## License
 //!
