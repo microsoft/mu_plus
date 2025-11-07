@@ -138,6 +138,38 @@ impl fmt::Write for LogTransactor<'_> {
     }
 }
 
+// Adapter to route log crate output to AdvancedLogger
+struct LogCrateAdapter;
+
+static LOG_CRATE_ADAPTER: LogCrateAdapter = LogCrateAdapter;
+
+impl log::Log for LogCrateAdapter {
+    fn enabled(&self, _metadata: &log::Metadata) -> bool {
+        // Always enabled - let AdvancedLogger decide
+        true
+    }
+
+    fn log(&self, record: &log::Record) {
+        if self.enabled(record.metadata()) {
+            // Map log crate levels to UEFI debug levels
+            let level = match record.level() {
+                log::Level::Error => DEBUG_ERROR,
+                log::Level::Warn => DEBUG_WARN,
+                log::Level::Info => DEBUG_INFO,
+                log::Level::Debug => DEBUG_VERBOSE,
+                log::Level::Trace => DEBUG_VERBOSE,
+            };
+
+            // Format: [LEVEL] target: message (with newline)
+            LOGGER.log(level, format_args!("[{}] {}: {}\n", record.level(), record.target(), record.args()));
+        }
+    }
+
+    fn flush(&self) {
+        // No-op for AdvancedLogger
+    }
+}
+
 /// Initializes the logging subsystem. The `debug` and `debugln` macros may be called before calling this function, but
 /// output is discarded if the logger has not yet been initialized via this routine.
 /// # Safety
@@ -145,6 +177,10 @@ impl fmt::Write for LogTransactor<'_> {
 pub unsafe fn init_debug(efi_boot_services: *mut efi::BootServices) {
     let standard_boot_services = unsafe { boot_services::StandardBootServices::new(&*efi_boot_services) };
     LOGGER.init(&standard_boot_services);
+
+    // Also set up the standard log crate to route to AdvancedLogger
+    let _ = log::set_logger(&LOG_CRATE_ADAPTER);
+    log::set_max_level(log::LevelFilter::Trace);
 }
 
 #[doc(hidden)]
