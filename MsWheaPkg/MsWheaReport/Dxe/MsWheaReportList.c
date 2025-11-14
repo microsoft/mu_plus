@@ -28,8 +28,10 @@ CreateNewEntry (
   IN MS_WHEA_ERROR_ENTRY_MD  *MsWheaEntryMD
   )
 {
-  MS_WHEA_LIST_ENTRY  *MsWheaListEntry = NULL;
-  UINT32              Index            = 0;
+  MS_WHEA_LIST_ENTRY                *MsWheaListEntry   = NULL;
+  MS_WHEA_ERROR_ENTRY_MD            *TempMsWheaEntryMD = NULL;
+  MS_WHEA_ERROR_EXTRA_SECTION_DATA  *ExtraSectionPtr   = NULL;
+  UINT32                            Index              = 0;
 
   // Input argument sanity check
   if (MsWheaEntryMD == NULL) {
@@ -53,6 +55,15 @@ CreateNewEntry (
   // Copy linked list and payload
   Index = 0;
   CopyMem (&((UINT8 *)MsWheaListEntry->PayloadPtr)[Index], MsWheaEntryMD, sizeof (MS_WHEA_ERROR_ENTRY_MD));
+
+  TempMsWheaEntryMD = (MS_WHEA_ERROR_ENTRY_MD *)MsWheaListEntry->PayloadPtr;
+  ExtraSectionPtr   = (MS_WHEA_ERROR_EXTRA_SECTION_DATA *)(UINTN)(MsWheaEntryMD->ExtraSection);
+  if (ExtraSectionPtr != NULL) {
+    TempMsWheaEntryMD->ExtraSection = (EFI_PHYSICAL_ADDRESS)(UINTN)AllocateCopyPool (
+                                                                     sizeof (MS_WHEA_ERROR_EXTRA_SECTION_DATA) + ExtraSectionPtr->DataSize,
+                                                                     ExtraSectionPtr
+                                                                     );
+  }
 
   Index                                                               += sizeof (MS_WHEA_ERROR_ENTRY_MD);
   ((MS_WHEA_ERROR_ENTRY_MD *)MsWheaListEntry->PayloadPtr)->PayloadSize = Index;
