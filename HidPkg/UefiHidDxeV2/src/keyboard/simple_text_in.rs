@@ -177,7 +177,7 @@ impl SimpleTextInFfi {
                     let hid_io = UefiHidIoFactory::new(context.boot_services, keyboard_handler.agent())
                         .new_hid_io(controller, false);
                     if let Ok(hid_io) = hid_io {
-                        if let Err(err) = keyboard_handler.reset(hid_io.as_ref(), extended_verification.into()) {
+                        if let Err(err) = keyboard_handler.reset(extended_verification.into()) {
                             status = err;
                         } else {
                             if extended_verification.into() {

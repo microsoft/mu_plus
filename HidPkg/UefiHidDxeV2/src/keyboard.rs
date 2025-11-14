@@ -415,7 +415,7 @@ impl KeyboardHidHandler {
 
     /// Resets the keyboard driver state. Clears any pending key state. `extended verification` will also reset toggle
     /// state.
-    pub fn reset(&mut self, _hid_io: &dyn HidIo, extended_verification: bool) -> Result<(), efi::Status> {
+    pub fn reset(&mut self, extended_verification: bool) -> Result<(), efi::Status> {
         self.last_keys.clear();
         self.current_keys.clear();
         self.key_queue.reset(extended_verification);
@@ -548,7 +548,7 @@ impl HidReportReceiver for KeyboardHidHandler {
     fn initialize(&mut self, controller: efi::Handle, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         let descriptor = hid_io.get_report_descriptor()?;
         self.process_descriptor(descriptor)?;
-        self.reset(hid_io, true)?;
+        self.reset(true)?;
         self.install_protocol_interfaces(controller)?;
         self.initialize_keyboard_layout()?;
         Ok(())
@@ -1159,9 +1159,7 @@ mod test {
         let prev_led_state = keyboard_handler.led_state.clone();
         assert!(!keyboard_handler.last_keys.is_empty());
 
-        let hid_io = MockHidIo::new();
-
-        keyboard_handler.reset(&hid_io, false).unwrap();
+        keyboard_handler.reset(false).unwrap();
         assert!(keyboard_handler.key_queue.peek_key().is_none());
         assert!(keyboard_handler.last_keys.is_empty());
         assert_eq!(keyboard_handler.led_state, prev_led_state);
@@ -1172,7 +1170,7 @@ mod test {
             Ok(())
         });
 
-        keyboard_handler.reset(&hid_io, true).unwrap();
+        keyboard_handler.reset(true).unwrap();
         assert!(keyboard_handler.led_state.is_empty());
     }
 

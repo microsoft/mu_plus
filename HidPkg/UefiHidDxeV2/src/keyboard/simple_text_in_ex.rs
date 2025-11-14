@@ -223,7 +223,7 @@ impl SimpleTextInExFfi {
             else {
                 break 'reset_processing efi::Status::DEVICE_ERROR;
             };
-            if let Err(err) = keyboard_handler.reset(hid_io.as_ref(), extended_verification.into()) {
+            if let Err(err) = keyboard_handler.reset(extended_verification.into()) {
                 break 'reset_processing err;
             };
             if extended_verification.into() {
