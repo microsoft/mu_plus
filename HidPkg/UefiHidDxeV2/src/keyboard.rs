@@ -437,11 +437,10 @@ impl KeyboardHidHandler {
     /// Called to send LED state to the device.
     pub fn send_led_reports(&mut self, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         let output_reports = self.generate_led_output_reports();
-        if let Err(result) = self.send_output_reports(hid_io, output_reports) {
-            debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
-            return Err(result);
-        }
-        Ok(())
+        self.send_output_reports(hid_io, output_reports).map_err(|err| {
+            debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", err);
+            err
+        })
     }
 
     /// Returns a clone of the keystroke at the front of the keystroke queue.
