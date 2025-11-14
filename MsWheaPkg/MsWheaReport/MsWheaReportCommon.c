@@ -158,8 +158,11 @@ ReportHwErrRecRouter (
   }
 
 Cleanup:
-  if (ExtraData != NULL) {
-    FreePool (ExtraData);
+  if (EFI_ERROR (Status)) {
+    // Only free the ExtraData when there is any error.
+    if (ExtraData != NULL) {
+      FreePool (ExtraData);
+    }
   }
 
   return Status;
