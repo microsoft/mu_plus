@@ -393,7 +393,7 @@ impl KeyboardHidHandler {
         Ok(())
     }
 
-    /// Called to send HID reports to the device.
+    // Called to send HID reports to the device.
     fn send_output_reports(
         &mut self,
         hid_io: &dyn HidIo,
