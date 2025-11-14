@@ -193,6 +193,7 @@ impl SimpleTextInFfi {
             }
         }
         context.boot_services.restore_tpl(old_tpl);
+        // Avoid sending output reports at the higher TPL
         if let (Some(keyboard_handler), Some(hid_io)) = (keyboard_handler_ref, hid_io_ref) {
             status = keyboard_handler
                 .send_output_reports(hid_io.as_ref(), output_reports)
