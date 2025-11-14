@@ -8,7 +8,7 @@
 //! SPDX-License-Identifier: BSD-2-Clause-Patent
 //!
 
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec::Vec};
 use core::{ffi::c_void, ptr};
 
 use r_efi::{efi, protocols};
@@ -165,6 +165,9 @@ impl SimpleTextInFfi {
         }
         let context = unsafe { (this as *mut SimpleTextInFfi).as_mut() }.expect("bad pointer");
         let old_tpl = context.boot_services.raise_tpl(efi::TPL_NOTIFY);
+        let mut output_reports = Vec::new();
+        let mut keyboard_handler_ref = None;
+        let mut hid_io_ref = None;
         let mut status = efi::Status::DEVICE_ERROR;
         '_reset_processing: {
             let keyboard_handler = unsafe { context.keyboard_handler.as_mut() };
@@ -177,6 +180,12 @@ impl SimpleTextInFfi {
                         if let Err(err) = keyboard_handler.reset(hid_io.as_ref(), extended_verification.into()) {
                             status = err;
                         } else {
+                            if extended_verification.into() {
+                                // update keyboard leds
+                                output_reports = keyboard_handler.generate_led_output_reports();
+                                keyboard_handler_ref = Some(keyboard_handler);
+                                hid_io_ref = Some(hid_io);
+                            }
                             status = efi::Status::SUCCESS;
                         }
                     }
@@ -184,6 +193,12 @@ impl SimpleTextInFfi {
             }
         }
         context.boot_services.restore_tpl(old_tpl);
+        if let (Some(keyboard_handler), Some(hid_io)) = (keyboard_handler_ref, hid_io_ref) {
+            status = keyboard_handler
+                .send_output_reports(hid_io.as_ref(), output_reports)
+                .err()
+                .unwrap_or(efi::Status::SUCCESS);
+        }
         status
     }
 

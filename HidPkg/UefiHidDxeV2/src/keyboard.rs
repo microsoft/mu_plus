@@ -393,15 +393,32 @@ impl KeyboardHidHandler {
         Ok(())
     }
 
+    /// Called to send HID reports to the device.
+    fn send_output_reports(
+        &mut self,
+        hid_io: &dyn HidIo,
+        output_reports: Vec<(Option<ReportId>, Vec<u8>)>,
+    ) -> Result<(), efi::Status> {
+        for (id, output_report) in output_reports {
+            let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
+            if let Err(result) = result {
+                debugln!(
+                    DEBUG_ERROR,
+                    "KeyboardHidHandler:set_output_report: unexpected error sending output report: {:?}",
+                    result
+                );
+                return Err(result);
+            }
+        }
+        Ok(())
+    }
+
     /// Resets the keyboard driver state. Clears any pending key state. `extended verification` will also reset toggle
     /// state.
-    pub fn reset(&mut self, hid_io: &dyn HidIo, extended_verification: bool) -> Result<(), efi::Status> {
+    pub fn reset(&mut self, _hid_io: &dyn HidIo, extended_verification: bool) -> Result<(), efi::Status> {
         self.last_keys.clear();
         self.current_keys.clear();
         self.key_queue.reset(extended_verification);
-        if extended_verification {
-            self.send_led_reports(hid_io)?;
-        }
         Ok(())
     }
 
@@ -416,12 +433,10 @@ impl KeyboardHidHandler {
 
     /// Called to send LED state to the device.
     pub fn send_led_reports(&mut self, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
-        for (id, output_report) in self.generate_led_output_reports() {
-            let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
-            if let Err(result) = result {
-                debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
-                return Err(result);
-            }
+        let output_reports = self.generate_led_output_reports();
+        if let Err(result) = self.send_output_reports(hid_io, output_reports) {
+            debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
+            return Err(result);
         }
         Ok(())
     }
@@ -626,11 +641,8 @@ impl HidReportReceiver for KeyboardHidHandler {
         self.boot_services.restore_tpl(old_tpl);
 
         // if any output reports, send them after releasing handler.
-        for (id, output_report) in output_reports {
-            let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
-            if let Err(result) = result {
-                debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
-            }
+        if let Err(result) = self.send_output_reports(hid_io, output_reports) {
+            debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
         }
     }
 }
