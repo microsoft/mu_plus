@@ -419,6 +419,9 @@ impl KeyboardHidHandler {
         self.last_keys.clear();
         self.current_keys.clear();
         self.key_queue.reset(extended_verification);
+        if extended_verification {
+            self.led_state.clear();
+        }
         Ok(())
     }
 
