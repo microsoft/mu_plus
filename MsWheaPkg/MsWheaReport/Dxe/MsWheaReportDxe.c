@@ -360,6 +360,11 @@ MsWheaProcList (
 
       if (EFI_ERROR (Status) != FALSE) {
         DEBUG ((DEBUG_ERROR, "%a: Linked list entry process failed %r\n", __FUNCTION__, Status));
+      } else {
+        // Clean up the extra section after processing
+        if (MsWheaEntryMD->ExtraSection != 0) {
+          FreePool ((VOID *)(UINTN)(MsWheaEntryMD->ExtraSection));
+        }
       }
     }
 
