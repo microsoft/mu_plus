@@ -208,20 +208,40 @@ impl SimpleTextInExFfi {
         }
         let context = unsafe { (this as *mut SimpleTextInExFfi).as_mut() }.expect("bad pointer");
         let old_tpl = context.boot_services.raise_tpl(efi::TPL_NOTIFY);
-        let status = 'reset_processing: {
+        let mut output_reports = Vec::new();
+        let mut keyboard_handler_ref = None;
+        let mut hid_io_ref = None;
+        let mut status = 'reset_processing: {
             let Some(keyboard_handler) = (unsafe { context.keyboard_handler.as_mut() }) else {
                 break 'reset_processing efi::Status::DEVICE_ERROR;
             };
             let Some(controller) = keyboard_handler.controller() else {
                 break 'reset_processing efi::Status::DEVICE_ERROR;
             };
-            UefiHidIoFactory::new(context.boot_services, keyboard_handler.agent())
-                .new_hid_io(controller, false)
-                .and_then(|hid_io| keyboard_handler.reset(hid_io.as_ref(), extended_verification.into()))
-                .err()
-                .unwrap_or(efi::Status::SUCCESS)
+            let Ok(hid_io) =
+                UefiHidIoFactory::new(context.boot_services, keyboard_handler.agent()).new_hid_io(controller, false)
+            else {
+                break 'reset_processing efi::Status::DEVICE_ERROR;
+            };
+            if let Err(err) = keyboard_handler.reset(extended_verification.into()) {
+                break 'reset_processing err;
+            };
+            if extended_verification.into() {
+                // update keyboard leds
+                output_reports = keyboard_handler.generate_led_output_reports();
+                keyboard_handler_ref = Some(keyboard_handler);
+                hid_io_ref = Some(hid_io);
+            }
+            efi::Status::SUCCESS
         };
         context.boot_services.restore_tpl(old_tpl);
+        // Avoid sending output reports at the higher TPL
+        if let (Some(keyboard_handler), Some(hid_io)) = (keyboard_handler_ref, hid_io_ref) {
+            status = keyboard_handler
+                .send_output_reports(hid_io.as_ref(), output_reports)
+                .err()
+                .unwrap_or(efi::Status::SUCCESS);
+        }
         status
     }
 
@@ -266,7 +286,10 @@ impl SimpleTextInExFfi {
         }
         let context = unsafe { (this as *mut SimpleTextInExFfi).as_mut() }.expect("bad pointer");
         let old_tpl = context.boot_services.raise_tpl(efi::TPL_NOTIFY);
-        let status = 'set_state_processing: {
+        let mut output_reports = Vec::new();
+        let mut keyboard_handler_ref = None;
+        let mut hid_io_ref = None;
+        let mut status = 'set_state_processing: {
             let Some(keyboard_handler) = (unsafe { context.keyboard_handler.as_mut() }) else {
                 break 'set_state_processing efi::Status::DEVICE_ERROR;
             };
@@ -279,9 +302,19 @@ impl SimpleTextInExFfi {
                 break 'set_state_processing efi::Status::DEVICE_ERROR;
             };
             keyboard_handler.set_key_toggle_state(unsafe { key_toggle_state.read() });
-            keyboard_handler.update_leds(hid_io.as_ref()).err().unwrap_or(efi::Status::SUCCESS)
+            output_reports = keyboard_handler.generate_led_output_reports();
+            keyboard_handler_ref = Some(keyboard_handler);
+            hid_io_ref = Some(hid_io);
+            efi::Status::SUCCESS
         };
         context.boot_services.restore_tpl(old_tpl);
+        // Avoid sending output reports at the higher TPL
+        if let (Some(keyboard_handler), Some(hid_io)) = (keyboard_handler_ref, hid_io_ref) {
+            status = keyboard_handler
+                .send_output_reports(hid_io.as_ref(), output_reports)
+                .err()
+                .unwrap_or(efi::Status::SUCCESS);
+        }
         status
     }
 

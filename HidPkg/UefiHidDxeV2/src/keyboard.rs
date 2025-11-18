@@ -393,14 +393,34 @@ impl KeyboardHidHandler {
         Ok(())
     }
 
+    // Called to send HID reports to the device.
+    fn send_output_reports(
+        &mut self,
+        hid_io: &dyn HidIo,
+        output_reports: Vec<(Option<ReportId>, Vec<u8>)>,
+    ) -> Result<(), efi::Status> {
+        for (id, output_report) in output_reports {
+            let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
+            if let Err(result) = result {
+                debugln!(
+                    DEBUG_ERROR,
+                    "KeyboardHidHandler:set_output_report: unexpected error sending output report: {:?}",
+                    result
+                );
+                return Err(result);
+            }
+        }
+        Ok(())
+    }
+
     /// Resets the keyboard driver state. Clears any pending key state. `extended verification` will also reset toggle
     /// state.
-    pub fn reset(&mut self, hid_io: &dyn HidIo, extended_verification: bool) -> Result<(), efi::Status> {
+    pub fn reset(&mut self, extended_verification: bool) -> Result<(), efi::Status> {
         self.last_keys.clear();
         self.current_keys.clear();
         self.key_queue.reset(extended_verification);
         if extended_verification {
-            self.send_led_reports(hid_io)?;
+            self.led_state.clear();
         }
         Ok(())
     }
@@ -416,14 +436,10 @@ impl KeyboardHidHandler {
 
     /// Called to send LED state to the device.
     pub fn send_led_reports(&mut self, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
-        for (id, output_report) in self.generate_led_output_reports() {
-            let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
-            if let Err(result) = result {
-                debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
-                return Err(result);
-            }
-        }
-        Ok(())
+        let output_reports = self.generate_led_output_reports();
+        self.send_output_reports(hid_io, output_reports).inspect_err(|&err| {
+            debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", err);
+        })
     }
 
     /// Returns a clone of the keystroke at the front of the keystroke queue.
@@ -530,7 +546,7 @@ impl HidReportReceiver for KeyboardHidHandler {
     fn initialize(&mut self, controller: efi::Handle, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         let descriptor = hid_io.get_report_descriptor()?;
         self.process_descriptor(descriptor)?;
-        self.reset(hid_io, true)?;
+        self.reset(true)?;
         self.install_protocol_interfaces(controller)?;
         self.initialize_keyboard_layout()?;
         Ok(())
@@ -626,11 +642,8 @@ impl HidReportReceiver for KeyboardHidHandler {
         self.boot_services.restore_tpl(old_tpl);
 
         // if any output reports, send them after releasing handler.
-        for (id, output_report) in output_reports {
-            let result = hid_io.set_output_report(id.map(|x| u32::from(x) as u8), &output_report);
-            if let Err(result) = result {
-                debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
-            }
+        if let Err(result) = self.send_output_reports(hid_io, output_reports) {
+            debugln!(DEBUG_ERROR, "unexpected error sending output report: {:?}", result);
         }
     }
 }
@@ -1144,9 +1157,7 @@ mod test {
         let prev_led_state = keyboard_handler.led_state.clone();
         assert!(!keyboard_handler.last_keys.is_empty());
 
-        let hid_io = MockHidIo::new();
-
-        keyboard_handler.reset(&hid_io, false).unwrap();
+        keyboard_handler.reset(false).unwrap();
         assert!(keyboard_handler.key_queue.peek_key().is_none());
         assert!(keyboard_handler.last_keys.is_empty());
         assert_eq!(keyboard_handler.led_state, prev_led_state);
@@ -1157,7 +1168,7 @@ mod test {
             Ok(())
         });
 
-        keyboard_handler.reset(&hid_io, true).unwrap();
+        keyboard_handler.reset(true).unwrap();
         assert!(keyboard_handler.led_state.is_empty());
     }
 
