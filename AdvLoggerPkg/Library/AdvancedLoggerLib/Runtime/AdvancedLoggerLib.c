@@ -20,11 +20,13 @@
 
 #include "../AdvancedLoggerCommon.h"
 
-STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo           = NULL;
-STATIC UINT32                mBufferSize            = 0;
-STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress            = 0;
-STATIC EFI_BOOT_SERVICES     *mBS                   = NULL;
-STATIC EFI_EVENT             mExitBootServicesEvent = NULL;
+STATIC ADVANCED_LOGGER_INFO  *mLoggerInfo                 = NULL;
+STATIC UINT32                mBufferSize                  = 0;
+STATIC EFI_PHYSICAL_ADDRESS  mMaxAddress                  = 0;
+STATIC EFI_BOOT_SERVICES     *mBS                         = NULL;
+STATIC EFI_EVENT             mExitBootServicesEvent       = NULL;
+STATIC EFI_EVENT             mAdvancedLoggerProtocolEvent = NULL;
+STATIC VOID                  *mAdvancedLoggerProtocolReg  = NULL;
 
 /**
     CheckAddress
@@ -76,8 +78,60 @@ ValidateInfoBlock (
 }
 
 /**
+  Update cached logger info from the first Advanced Logger Protocol instance found.
+
+  @retval EFI_SUCCESS           Logger info successfully updated.
+  @retval EFI_NOT_FOUND         The advanced logger protocol was not found.
+  @retval EFI_INVALID_PARAMETER Invalid protocol signature or version.
+
+**/
+STATIC
+EFI_STATUS
+UpdateLoggerInfoFromProtocol (
+  VOID
+  )
+{
+  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
+  EFI_STATUS                Status;
+
+  if (mBS == NULL) {
+    return EFI_NOT_READY;
+  }
+
+  Status = mBS->LocateProtocol (
+                  &gAdvancedLoggerProtocolGuid,
+                  NULL,
+                  (VOID **)&LoggerProtocol
+                  );
+  if (EFI_ERROR (Status) || (LoggerProtocol == NULL)) {
+    return EFI_NOT_FOUND;
+  }
+
+  ASSERT (LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
+  ASSERT (LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
+
+  if ((LoggerProtocol->Signature != ADVANCED_LOGGER_PROTOCOL_SIGNATURE) ||
+      (LoggerProtocol->Version != ADVANCED_LOGGER_PROTOCOL_VERSION))
+  {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
+
+  if (mLoggerInfo != NULL) {
+    mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
+    // Force the buffer size to be reevaluated
+    mBufferSize = 0;
+  }
+
+  return EFI_SUCCESS;
+}
+
+/**
     Get the Logger Information block
 
+    @return   A pointer to the active advanced logger info structure or NULL if the structure is
+              invalid.
  **/
 ADVANCED_LOGGER_INFO *
 EFIAPI
@@ -85,25 +139,8 @@ AdvancedLoggerGetLoggerInfo (
   VOID
   )
 {
-  ADVANCED_LOGGER_PROTOCOL  *LoggerProtocol;
-  EFI_STATUS                Status;
-
-  if ((mLoggerInfo == NULL) && (mBS != NULL)) {
-    Status = mBS->LocateProtocol (
-                    &gAdvancedLoggerProtocolGuid,
-                    NULL,
-                    (VOID **)&LoggerProtocol
-                    );
-    if (!EFI_ERROR (Status) && (LoggerProtocol != NULL)) {
-      ASSERT (LoggerProtocol->Signature == ADVANCED_LOGGER_PROTOCOL_SIGNATURE);
-      ASSERT (LoggerProtocol->Version == ADVANCED_LOGGER_PROTOCOL_VERSION);
-
-      mLoggerInfo = LOGGER_INFO_FROM_PROTOCOL (LoggerProtocol);
-
-      if (mLoggerInfo != NULL) {
-        mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
-      }
-    }
+  if (mLoggerInfo == NULL) {
+    UpdateLoggerInfoFromProtocol ();
   }
 
   if (!ValidateInfoBlock ()) {
@@ -128,6 +165,25 @@ AdvancedLoggerGetPhase (
   )
 {
   return ADVANCED_LOGGER_PHASE_RUNTIME;
+}
+
+/**
+  Notification function for Advanced Logger Protocol installation.
+
+  This function is called when the Advanced Logger Protocol is installed or reinstalled
+  (e.g., during buffer migration). It updates the globally cached logger to the new logger buffer.
+
+  @param[in]  Event    Event whose notification function is being invoked.
+  @param[in]  Context  Pointer to the notification function's context.
+**/
+VOID
+EFIAPI
+OnAdvancedLoggerProtocolNotification (
+  IN EFI_EVENT  Event,
+  IN VOID       *Context
+  )
+{
+  UpdateLoggerInfoFromProtocol ();
 }
 
 /**
@@ -177,9 +233,34 @@ DxeRuntimeAdvancedLoggerLibConstructor (
   mBS = SystemTable->BootServices;
   AdvancedLoggerGetLoggerInfo ();
 
-  ASSERT (mLoggerInfo != NULL);
+  //
+  // Register a notification function for Advanced Logger Protocol installation.
+  //
+  Status = mBS->CreateEvent (
+                  EVT_NOTIFY_SIGNAL,
+                  TPL_CALLBACK,
+                  OnAdvancedLoggerProtocolNotification,
+                  NULL,
+                  &mAdvancedLoggerProtocolEvent
+                  );
 
-  if (mLoggerInfo != 0) {
+  if (!EFI_ERROR (Status)) {
+    Status = mBS->RegisterProtocolNotify (
+                    &gAdvancedLoggerProtocolGuid,
+                    mAdvancedLoggerProtocolEvent,
+                    &mAdvancedLoggerProtocolReg
+                    );
+
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a - Register Protocol Notify failed. Code = %r\n", __func__, Status));
+      mBS->CloseEvent (mAdvancedLoggerProtocolEvent);
+      mAdvancedLoggerProtocolEvent = NULL;
+    }
+  } else {
+    DEBUG ((DEBUG_ERROR, "%a - Create Event for Protocol Notify failed. Code = %r\n", __func__, Status));
+  }
+
+  if (mLoggerInfo != NULL) {
     //
     // Register notify function for ExitBootServices.
     //
@@ -192,7 +273,7 @@ DxeRuntimeAdvancedLoggerLibConstructor (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a - Create Event for Address Change failed. Code = %r\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a - Create Event for Exit Boot Services failed. Code = %r\n", __FUNCTION__, Status));
     }
   }
 
@@ -217,6 +298,10 @@ DxeRuntimeAdvancedLoggerLibDestructor (
 {
   if (mExitBootServicesEvent != NULL) {
     mBS->CloseEvent (mExitBootServicesEvent);
+  }
+
+  if (mAdvancedLoggerProtocolEvent != NULL) {
+    mBS->CloseEvent (mAdvancedLoggerProtocolEvent);
   }
 
   return EFI_SUCCESS;

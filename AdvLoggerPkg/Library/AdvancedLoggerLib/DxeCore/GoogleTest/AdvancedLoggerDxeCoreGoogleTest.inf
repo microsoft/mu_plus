@@ -36,6 +36,7 @@
   AdvancedLoggerHdwPortLib
   # BaseMemoryLib
   HobLib
+  MmUnblockMemoryLib
   # MemoryAllocationLib
   PcdLib
   SynchronizationLib
