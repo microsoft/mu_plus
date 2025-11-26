@@ -38,6 +38,7 @@
   DebugLib
   HobLib
   MemoryAllocationLib
+  MmUnblockMemoryLib
   PcdLib
   SynchronizationLib
   TimerLib

@@ -176,6 +176,10 @@ AdvancedLoggerGetLoggerInfo (
 {
   SmmInitializeLoggerInfo ();
 
+  if ((mLoggerInfo != NULL) && AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+    DEBUG ((DEBUG_INFO, "MmCore %a: Logger Update. LoggerInfo=%p\n", __func__, mLoggerInfo));
+  }
+
   return mLoggerInfo;
 }
 

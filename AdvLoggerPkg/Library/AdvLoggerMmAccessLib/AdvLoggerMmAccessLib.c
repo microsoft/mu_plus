@@ -30,6 +30,69 @@ STATIC UINTN                 mLoggerTransferSize = 0;
 extern UINTN                 mVariableBufferPayloadSize;
 
 /**
+  Follow the logger info redirection chain and update the provided logger info pointer.
+
+  @param[in,out]  LoggerInfo    Pointer to a logger info pointer to update.
+  @param[out]     MaxAddress    Optional pointer to update with the max address of the current logger.
+  @param[out]     BufferSize    Optional pointer to update with the buffer size of the current logger.
+
+  @retval         TRUE          A new logger was found and LoggerInfo was updated to the new address.
+  @retval         FALSE         A new logger was not found and no modification was made to LoggerInfo.
+**/
+STATIC
+BOOLEAN
+AdvancedLoggerCheckForNewerLogger (
+  IN OUT ADVANCED_LOGGER_INFO  **LoggerInfo,
+  OUT    EFI_PHYSICAL_ADDRESS  *MaxAddress  OPTIONAL,
+  OUT    UINT32                *BufferSize  OPTIONAL
+  )
+{
+  ADVANCED_LOGGER_INFO  *CurrentLoggerInfo;
+  ADVANCED_LOGGER_INFO  *NextLoggerInfo;
+  UINTN                 Depth;
+
+  if ((LoggerInfo == NULL) || (*LoggerInfo == NULL)) {
+    return FALSE;
+  }
+
+  CurrentLoggerInfo = *LoggerInfo;
+  Depth             = 0;
+
+  // Follow the chain to find the current logger
+  while ((CurrentLoggerInfo->NewLoggerInfoAddress != 0) && (Depth < ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH)) {
+    NextLoggerInfo = ALI_FROM_PA (CurrentLoggerInfo->NewLoggerInfoAddress);
+
+    if (NextLoggerInfo->Signature != ADVANCED_LOGGER_SIGNATURE) {
+      return FALSE;
+    }
+
+    CurrentLoggerInfo = NextLoggerInfo;
+    Depth++;
+  }
+
+  if (Depth >= ADVANCED_LOGGER_MAX_LOGGER_CHAIN_DEPTH) {
+    return FALSE;
+  }
+
+  // Update if we found a newer logger
+  if (CurrentLoggerInfo != *LoggerInfo) {
+    *LoggerInfo = CurrentLoggerInfo;
+
+    if (MaxAddress != NULL) {
+      *MaxAddress = LOG_MAX_ADDRESS (CurrentLoggerInfo);
+    }
+
+    if (BufferSize != NULL) {
+      *BufferSize = CurrentLoggerInfo->LogBufferSize;
+    }
+
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
     CheckAddress
 
     The address of the ADVANCE_LOGGER_INFO block pointer is captured before END_OF_DXE.
@@ -110,6 +173,12 @@ AdvLoggerAccessInit (
 
   if (mLoggerInfo != NULL) {
     mMaxAddress = LOG_MAX_ADDRESS (mLoggerInfo);
+  }
+
+  if ((mLoggerInfo != NULL) && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
+    }
   }
 
   //
@@ -194,6 +263,12 @@ AdvLoggerAccessGetVariable (
   UINT8       *LogBufferEnd;
   UINTN       LogBufferSize;
 
+  if ((mLoggerInfo != NULL) && !mLoggerInfo->AtRuntime && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated during access. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
+    }
+  }
+
   if ((!ValidateInfoBlock ()) || (mLoggerTransferSize == 0)) {
     return EFI_UNSUPPORTED;
   }
@@ -260,6 +335,12 @@ AdvLoggerAccessAtRuntime (
   VOID
   )
 {
+  if ((mLoggerInfo != NULL) && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    if (AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize)) {
+      DEBUG ((DEBUG_INFO, "%a: Logger buffer migrated at ExitBootServices. LoggerInfo=%p\n", __FUNCTION__, mLoggerInfo));
+    }
+  }
+
   if (mLoggerInfo != NULL) {
     mLoggerInfo->AtRuntime = TRUE;
   }

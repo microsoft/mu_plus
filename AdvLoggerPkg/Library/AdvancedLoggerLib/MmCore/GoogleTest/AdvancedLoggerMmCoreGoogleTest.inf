@@ -20,6 +20,7 @@
 
 [Sources]
   AdvancedLoggerMmCoreGoogleTest.cpp
+  ../../AdvancedLoggerCommon.c
   ../AdvancedLoggerLib.c # Resolve function ValidateInfoBlock()
 
 [Packages]
