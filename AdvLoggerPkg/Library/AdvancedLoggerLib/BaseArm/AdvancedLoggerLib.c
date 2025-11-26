@@ -111,6 +111,8 @@ AdvancedLoggerGetLoggerInfo (
   if (((mLoggerInfo) != NULL) && !ValidateInfoBlock ()) {
     mLoggerInfo = NULL;
     DEBUG ((DEBUG_ERROR, "%a: LoggerInfo marked invalid\n", __FUNCTION__));
+  } else if ((mLoggerInfo != NULL) && !FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
+    AdvancedLoggerCheckForNewerLogger (&mLoggerInfo, &mMaxAddress, &mBufferSize);
   }
 
   return mLoggerInfo;

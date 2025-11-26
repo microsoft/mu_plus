@@ -28,7 +28,7 @@
 // Version 2: New backward incompatible V2 structure (ADVANCED_LOGGER_MESSAGE_ENTRY_V2
 //
 #define ADVANCED_LOGGER_MSG_MAJ_VER  2
-#define ADVANCED_LOGGER_MSG_MIN_VER  0
+#define ADVANCED_LOGGER_MSG_MIN_VER  1
 
 #define ADVANCED_LOGGER_VERSION  ADVANCED_LOGGER_HW_LVL_VER
 
@@ -60,25 +60,26 @@
 #pragma pack (push, 1)
 
 typedef volatile struct {
-  UINT32      Signature;                          // Signature 'ALOG'
-  UINT16      Version;                            // Current Version
-  UINT16      Reserved[3];                        // Reserved for future
-  UINT32      LogBufferOffset;                    // Offset from LoggerInfo to start of log, expected to be the size of this structure 8 byte aligned
-  UINT32      Reserved4;
-  UINT32      LogCurrentOffset;                   // Offset from LoggerInfo to where to store next log entry.
-  UINT32      DiscardedSize;                      // Number of bytes of messages missed
-  UINT32      LogBufferSize;                      // Size of allocated buffer
-  BOOLEAN     InPermanentRAM;                     // Log in permanent RAM
-  BOOLEAN     AtRuntime;                          // After ExitBootServices
-  BOOLEAN     GoneVirtual;                        // After VirtualAddressChange
-  BOOLEAN     HdwPortInitialized;                 // HdwPort initialized
-  BOOLEAN     HdwPortDisabled;                    // HdwPort is Disabled
-  BOOLEAN     Reserved2[3];                       //
-  UINT64      TimerFrequency;                     // Ticks per second for log timing
-  UINT64      TicksAtTime;                        // Ticks when Time Acquired
-  EFI_TIME    Time;                               // Uefi Time Field
-  UINT32      HwPrintLevel;                       // Logging level to be printed at hw port
-  UINT32      Reserved3;                          //
+  UINT32                  Signature;              // Signature 'ALOG'
+  UINT16                  Version;                // Current Version
+  UINT16                  Reserved[3];            // Reserved for future
+  UINT32                  LogBufferOffset;        // Offset from LoggerInfo to start of log, expected to be the size of this structure 8 byte aligned
+  UINT32                  Reserved4;
+  UINT32                  LogCurrentOffset;       // Offset from LoggerInfo to where to store next log entry.
+  UINT32                  DiscardedSize;          // Number of bytes of messages missed
+  UINT32                  LogBufferSize;          // Size of allocated buffer
+  BOOLEAN                 InPermanentRAM;         // Log in permanent RAM
+  BOOLEAN                 AtRuntime;              // After ExitBootServices
+  BOOLEAN                 GoneVirtual;            // After VirtualAddressChange
+  BOOLEAN                 HdwPortInitialized;     // HdwPort initialized
+  BOOLEAN                 HdwPortDisabled;        // HdwPort is Disabled
+  BOOLEAN                 Reserved2[3];           //
+  UINT64                  TimerFrequency;         // Ticks per second for log timing
+  UINT64                  TicksAtTime;            // Ticks when Time Acquired
+  EFI_TIME                Time;                   // Uefi Time Field
+  UINT32                  HwPrintLevel;           // Logging level to be printed at hw port
+  UINT32                  Reserved3;              //
+  EFI_PHYSICAL_ADDRESS    NewLoggerInfoAddress;   // If non-zero, this field holds the address of new logger info that should be used
 } ADVANCED_LOGGER_INFO;
 
 typedef struct {
