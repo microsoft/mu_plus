@@ -47,6 +47,13 @@ CheckExcludedRegions (
   UINT32                 EfiDescriptorVersion;
   IVMDListNode           *Head;
   IVMDListNode           *Current;
+  UINTN                  MemoryTypesIndex;
+  BOOLEAN                IsAllowed;
+  UINTN                  AllowedMemoryTypesCount;
+
+  EFI_MEMORY_TYPE  AllowedMemoryTypes[] = { EfiReservedMemoryType, EfiACPIMemoryNVS };
+
+  AllowedMemoryTypesCount = sizeof (AllowedMemoryTypes) / sizeof (AllowedMemoryTypes[0]);
 
   //
   // Step 1: Get IVRS Table
@@ -106,9 +113,17 @@ CheckExcludedRegions (
     if (  (EfiMemNext->PhysicalStart <= Current->IVMD->IVMDStartAddress)
        && ((EfiMemNext->PhysicalStart + EFI_PAGE_SIZE * EfiMemNext->NumberOfPages) >= (Current->IVMD->IVMDStartAddress + Current->IVMD->IVMDMemoryBlockLength)))
     {
-      // Verify memory range is marked as reserved
-      UT_ASSERT_EQUAL (EfiMemNext->Type, EfiACPIMemoryNVS);
-      UT_LOG_INFO ("IVMDs between %X and %X found with type EfiACPIMemoryNVS\n", Current->IVMD->IVMDStartAddress, Current->IVMD->IVMDStartAddress + Current->IVMD->IVMDMemoryBlockLength);
+      // Verify memory range type is in the allow list
+      IsAllowed = FALSE;
+      for (MemoryTypesIndex = 0; MemoryTypesIndex < AllowedMemoryTypesCount; MemoryTypesIndex++) {
+        if (EfiMemNext->Type == (UINT32)AllowedMemoryTypes[MemoryTypesIndex]) {
+          IsAllowed = TRUE;
+          break;
+        }
+      }
+
+      UT_ASSERT_TRUE (IsAllowed);
+      UT_LOG_INFO ("IVMDs between %X and %X found with type %d\n", Current->IVMD->IVMDStartAddress, Current->IVMD->IVMDStartAddress + Current->IVMD->IVMDMemoryBlockLength, EfiMemNext->Type);
 
       // Move on to next IVMD and start search at beginning of memory map again
       EfiMemNext = EfiMemoryMap;
