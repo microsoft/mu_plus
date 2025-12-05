@@ -57,7 +57,7 @@ SmmInitializeLoggerInfo (
     // If mSmmLoggerProtocol is NULL at this point, there is no Advanced Logger for SMM modules.
     //
 
-    DEBUG ((DEBUG_INFO, "%a: SmmLoggerProtocol=%p, code=%r\n", __FUNCTION__, mSmmLoggerProtocol, Status));
+    DEBUG ((DEBUG_INFO, "%a: SmmLoggerProtocol=%p, code=%r\n", __func__, mSmmLoggerProtocol, Status));
   }
 }
 

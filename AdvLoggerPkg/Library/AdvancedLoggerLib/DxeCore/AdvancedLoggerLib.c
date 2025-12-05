@@ -209,7 +209,7 @@ OnRealTimeClockArchNotification (
 
   SystemTable = (EFI_SYSTEM_TABLE *)Context;
 
-  DEBUG ((DEBUG_INFO, "%a: getting real time\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: getting real time\n", __func__));
 
   SystemTable->BootServices->CloseEvent (Event);
 
@@ -243,7 +243,7 @@ OnVariableWriteNotification (
 
   SystemTable = (EFI_SYSTEM_TABLE *)Context;
 
-  DEBUG ((DEBUG_INFO, "%a: writing locator variable\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: writing locator variable\n", __func__));
 
   SystemTable->RuntimeServices->SetVariable (
                                   ADVANCED_LOGGER_LOCATOR_NAME,
@@ -278,11 +278,11 @@ OnVariablePolicyProtocolNotification (
 
   SystemTable = (EFI_SYSTEM_TABLE *)Context;
 
-  DEBUG ((DEBUG_INFO, "%a: writing locator variable policy\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: writing locator variable policy\n", __func__));
 
   Status = SystemTable->BootServices->LocateProtocol (&gEdkiiVariablePolicyProtocolGuid, NULL, (VOID **)&VariablePolicy);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: - Locating Variable Policy failed - Code=%r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: - Locating Variable Policy failed - Code=%r\n", __func__, Status));
     ASSERT_EFI_ERROR (Status);
     return;
   }
@@ -298,7 +298,7 @@ OnVariablePolicyProtocolNotification (
              VARIABLE_POLICY_TYPE_LOCK_ON_CREATE               // Will act as LOCK now if already created
              );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: - Error registering AdvancedLoggerLocator - Code=%r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: - Error registering AdvancedLoggerLocator - Code=%r\n", __func__, Status));
     ASSERT_EFI_ERROR (Status);
   }
 
@@ -330,7 +330,7 @@ ProcessProtocolRegistration (
   //
   // Register for protocol notification.
   //
-  DEBUG ((DEBUG_INFO, "%a: Registering for %g\n", __FUNCTION__, ProtocolGuid));
+  DEBUG ((DEBUG_INFO, "%a: Registering for %g\n", __func__, ProtocolGuid));
   Status = SystemTable->BootServices->CreateEvent (
                                         EVT_NOTIFY_SIGNAL,
                                         TPL_CALLBACK,
@@ -340,7 +340,7 @@ ProcessProtocolRegistration (
                                         );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: failed to create notification callback event (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: failed to create notification callback event (%r)\n", __func__, Status));
     goto Cleanup;
   }
 
@@ -351,7 +351,7 @@ ProcessProtocolRegistration (
                                         );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a: failed to register for notification (%r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_ERROR, "%a: failed to register for notification (%r)\n", __func__, Status));
     SystemTable->BootServices->CloseEvent (ProtocolEvent);
     goto Cleanup;
   }
@@ -597,7 +597,7 @@ DxeCoreAdvancedLoggerLibConstructor (
       mMaxAddress = LOG_MAX_ADDRESS (LoggerInfo);
       mBufferSize = LoggerInfo->LogBufferSize;
     } else {
-      DEBUG ((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __FUNCTION__));
+      DEBUG ((DEBUG_ERROR, "%a: Error allocating Advanced Logger Buffer\n", __func__));
     }
   }
 
@@ -629,7 +629,7 @@ DxeCoreAdvancedLoggerLibConstructor (
                                           );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a: Error installing protocol - %r\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a: Error installing protocol - %r\n", __func__, Status));
       // If the protocol doesn't install, don't fail.
     }
 
@@ -651,12 +651,12 @@ DxeCoreAdvancedLoggerLibConstructor (
                                             &EndOfDxeEvent
                                             );
       if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "%a: Failed to create End of DXE event - %r\n", __FUNCTION__, Status));
+        DEBUG ((DEBUG_ERROR, "%a: Failed to create End of DXE event - %r\n", __func__, Status));
       }
     }
   }
 
-  DEBUG ((DEBUG_INFO, "%a Initialized. mLoggerInfo = %p, Container=%p\n", __FUNCTION__, mLoggerInfo, &mAdvLoggerProtocol));
+  DEBUG ((DEBUG_INFO, "%a Initialized. mLoggerInfo = %p, Container=%p\n", __func__, mLoggerInfo, &mAdvLoggerProtocol));
 
   ProcessProtocolRegistration (
     SystemTable,

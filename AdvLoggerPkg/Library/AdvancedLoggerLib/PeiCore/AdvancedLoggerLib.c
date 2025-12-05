@@ -195,10 +195,10 @@ InstallPermanentMemoryBuffer (
   PEI_CORE_INSTANCE     *PeiCoreInstance;
   EFI_STATUS            Status;
 
-  DEBUG ((DEBUG_INFO, "%a: Find PeiCore HOB for Install Permanent Buffer...\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: Find PeiCore HOB for Install Permanent Buffer...\n", __func__));
   GuidHob = GetFirstGuidHob (&gAdvancedLoggerHobGuid);
   if (GuidHob == NULL) {
-    DEBUG ((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n", __FUNCTION__));
+    DEBUG ((DEBUG_ERROR, "%a: Advanced Logger Hob not found\n", __func__));
   } else {
     LogPtr     = (ADVANCED_LOGGER_PTR *)GET_GUID_HOB_DATA (GuidHob);
     LoggerInfo = ALI_FROM_PA (LogPtr->LogBuffer);
@@ -240,10 +240,10 @@ InstallPermanentMemoryBuffer (
         Status = MmUnblockMemoryRequest (NewLogBuffer, FixedPcdGet32 (PcdAdvancedLoggerPages));
         if (EFI_ERROR (Status)) {
           if (Status != EFI_UNSUPPORTED) {
-            DEBUG ((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __FUNCTION__, Status));
+            DEBUG ((DEBUG_ERROR, "%a: Unable to notify StandaloneMM. Code=%r\n", __func__, Status));
           }
         } else {
-          DEBUG ((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __FUNCTION__));
+          DEBUG ((DEBUG_INFO, "%a: StandaloneMM Hob data published\n", __func__));
         }
 
         PeiServicesFreePages (
@@ -260,7 +260,7 @@ InstallPermanentMemoryBuffer (
         DEBUG ((
           DebugLevel,
           "%a: - New Info=%p, Buffer Offset=%x, Current Offset=%x, Size=%d, Discarded=%d\n",
-          __FUNCTION__,
+          __func__,
           NewLoggerInfo,
           NewLoggerInfo->LogBufferOffset,
           NewLoggerInfo->LogCurrentOffset,
@@ -616,7 +616,7 @@ AdvancedLoggerGetLoggerInfo (
       ASSERT_EFI_ERROR (Status);
 
       if (FeaturePcdGet (PcdAdvancedLoggerFixedInRAM)) {
-        DEBUG ((DEBUG_INFO, "%a: Standalone MM Hob of fixed data published\n", __FUNCTION__));
+        DEBUG ((DEBUG_INFO, "%a: Standalone MM Hob of fixed data published\n", __func__));
       } else {
         PeiServicesNotifyPpi (mMemoryDiscoveredNotifyList);
       }
