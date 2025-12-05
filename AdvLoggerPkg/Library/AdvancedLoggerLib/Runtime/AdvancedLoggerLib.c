@@ -273,7 +273,7 @@ DxeRuntimeAdvancedLoggerLibConstructor (
                     );
 
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a - Create Event for Exit Boot Services failed. Code = %r\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a - Create Event for Exit Boot Services failed. Code = %r\n", __func__, Status));
     }
   }
 
