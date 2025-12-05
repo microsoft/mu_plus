@@ -156,7 +156,7 @@ SmmInitializeLoggerInfo (
     // If mLoggerInfo is NULL at this point, there is no Advanced Logger.
     //
 
-    DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+    DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __func__, mLoggerInfo, Status));
   }
 
   if (!ValidateInfoBlock ()) {
@@ -239,7 +239,7 @@ SmmCoreAdvancedLoggerLibConstructor (
                     &mAdvLoggerProtocol.AdvLoggerProtocol
                     );
 
-  DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __FUNCTION__, mLoggerInfo, Status));
+  DEBUG ((DEBUG_INFO, "%a: LoggerInfo=%p, Code=%r\n", __func__, mLoggerInfo, Status));
   ASSERT_EFI_ERROR (Status);
 
   return EFI_SUCCESS;
