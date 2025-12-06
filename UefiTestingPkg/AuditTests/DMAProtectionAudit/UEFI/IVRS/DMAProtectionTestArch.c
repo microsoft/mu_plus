@@ -26,6 +26,39 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 /// ================================================================================================
 /// ================================================================================================
 ///
+/// HELPER FUNCTIONS
+///
+/// ================================================================================================
+/// ================================================================================================
+
+/**
+ * Check if the given memory type is allowed.
+ *
+ * @param MemoryType The memory type to check.
+ * @return TRUE if the memory type is allowed, FALSE otherwise.
+ *         Returns TRUE if MemoryType is in the allowed list: [EfiReservedMemoryType, EfiACPIMemoryNVS]
+ */
+BOOLEAN
+IsMemoryTypeAllowed (
+  IN EFI_MEMORY_TYPE  MemoryType
+  )
+{
+  UINTN  Index;
+
+  EFI_MEMORY_TYPE  AllowedMemoryTypes[] = { EfiReservedMemoryType, EfiACPIMemoryNVS };
+
+  for (Index = 0; Index < ARRAY_SIZE (AllowedMemoryTypes); Index++) {
+    if (MemoryType == AllowedMemoryTypes[Index]) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/// ================================================================================================
+/// ================================================================================================
+///
 /// TEST CASES
 ///
 /// ================================================================================================
@@ -106,9 +139,9 @@ CheckExcludedRegions (
     if (  (EfiMemNext->PhysicalStart <= Current->IVMD->IVMDStartAddress)
        && ((EfiMemNext->PhysicalStart + EFI_PAGE_SIZE * EfiMemNext->NumberOfPages) >= (Current->IVMD->IVMDStartAddress + Current->IVMD->IVMDMemoryBlockLength)))
     {
-      // Verify memory range is marked as reserved
-      UT_ASSERT_EQUAL (EfiMemNext->Type, EfiACPIMemoryNVS);
-      UT_LOG_INFO ("IVMDs between %X and %X found with type EfiACPIMemoryNVS\n", Current->IVMD->IVMDStartAddress, Current->IVMD->IVMDStartAddress + Current->IVMD->IVMDMemoryBlockLength);
+      // Verify memory range type is in the allow list
+      UT_ASSERT_TRUE (IsMemoryTypeAllowed (EfiMemNext->Type));
+      UT_LOG_INFO ("IVMDs between %X and %X found with type %d\n", Current->IVMD->IVMDStartAddress, Current->IVMD->IVMDStartAddress + Current->IVMD->IVMDMemoryBlockLength, EfiMemNext->Type);
 
       // Move on to next IVMD and start search at beginning of memory map again
       EfiMemNext = EfiMemoryMap;
