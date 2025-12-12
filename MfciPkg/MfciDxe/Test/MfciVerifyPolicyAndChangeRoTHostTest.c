@@ -54,6 +54,7 @@ EFI_RUNTIME_SERVICES  mMockRuntime = {
 
 extern MFCI_POLICY_TYPE  mCurrentPolicy;
 extern BOOLEAN           mVarPolicyRegistered;
+BOOLEAN                  mSystemResetCalled;
 
 EFI_STATUS
 EFIAPI
@@ -83,6 +84,28 @@ NotifyMfciPolicyChange (
   return (EFI_STATUS)mock ();
 }
 
+VOID
+EFIAPI
+ResetSystemWithSubtype (
+  IN EFI_RESET_TYPE  ResetType,
+  IN CONST  GUID     *ResetSubtype
+  )
+{
+  check_expected (ResetType);
+  check_expected_ptr (ResetSubtype);
+  mSystemResetCalled = TRUE;
+  return;
+}
+
+VOID
+EFIAPI
+CpuDeadLoop (
+  VOID
+  )
+{
+  return;
+}
+
 EFI_STATUS
 EFIAPI
 InitPublicInterface (
@@ -100,6 +123,7 @@ VerifyPrerequisite (
 {
   mCurrentPolicy       = CUSTOMER_STATE;
   mVarPolicyRegistered = TRUE;
+  mSystemResetCalled   = FALSE;
   return UNIT_TEST_PASSED;
 }
 
@@ -111,6 +135,7 @@ VerifyCleanup (
 {
   mCurrentPolicy       = CUSTOMER_STATE;
   mVarPolicyRegistered = FALSE;
+  mSystemResetCalled   = FALSE;
 }
 
 VOID
@@ -127,8 +152,7 @@ UnitTestVerifyAndChangeNormal (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  BASE_LIBRARY_JUMP_BUFFER  JumpBuf;
-  MFCI_POLICY_TYPE          Policy = STD_ACTION_TPM_CLEAR;
+  MFCI_POLICY_TYPE  Policy = STD_ACTION_TPM_CLEAR;
 
   will_return (MfciRetrieveTargetPolicy, STD_ACTION_TPM_CLEAR);
   will_return (MfciRetrieveTargetPolicy, EFI_SUCCESS);
@@ -143,11 +167,9 @@ UnitTestVerifyAndChangeNormal (
 
   expect_value (ResetSystemWithSubtype, ResetType, EfiResetCold);
   expect_value (ResetSystemWithSubtype, ResetSubtype, &gMfciPolicyChangeResetGuid);
-  will_return (ResetSystemWithSubtype, &JumpBuf);
 
-  if (!SetJump (&JumpBuf)) {
-    VerifyPolicyAndChange (NULL, NULL);
-  }
+  VerifyPolicyAndChange (NULL, NULL);
+  UT_ASSERT_TRUE (mSystemResetCalled)
 
   return UNIT_TEST_PASSED;
 }
@@ -203,8 +225,7 @@ UnitTestVerifyAndChangeTargetPolicyFailedNonCustomer (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  BASE_LIBRARY_JUMP_BUFFER  JumpBuf;
-  MFCI_POLICY_TYPE          Policy = CUSTOMER_STATE;
+  MFCI_POLICY_TYPE  Policy = CUSTOMER_STATE;
 
   mCurrentPolicy = STD_ACTION_TPM_CLEAR;
 
@@ -221,11 +242,9 @@ UnitTestVerifyAndChangeTargetPolicyFailedNonCustomer (
 
   expect_value (ResetSystemWithSubtype, ResetType, EfiResetCold);
   expect_value (ResetSystemWithSubtype, ResetSubtype, &gMfciPolicyChangeResetGuid);
-  will_return (ResetSystemWithSubtype, &JumpBuf);
 
-  if (!SetJump (&JumpBuf)) {
-    VerifyPolicyAndChange (NULL, NULL);
-  }
+  VerifyPolicyAndChange (NULL, NULL);
+  UT_ASSERT_TRUE (mSystemResetCalled)
 
   return UNIT_TEST_PASSED;
 }

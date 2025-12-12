@@ -38,7 +38,6 @@
   VariablePolicyHelperLib
   MfciRetrievePolicyLib
   MfciRetrieveTargetPolicyLib
-  ResetUtilityLib
   UefiRuntimeServicesTableLib
   MuTelemetryHelperLib
 
@@ -58,3 +57,8 @@
   gMuVarPolicyWriteOnceStateVarGuid   ## CONSUMES ## GUID ## Variable namespace
   gMfciPolicyChangeResetGuid          ## CONSUMES
   gMfciHobGuid                        ## CONSUMES
+
+[BuildOptions]
+  MSFT:*_*_*_CC_FLAGS = /DCpuDeadLoop=MockCpuDeadLoop
+  GCC:*_*_*_CC_FLAGS = -D CpuDeadLoop=MockCpuDeadLoop
+  
