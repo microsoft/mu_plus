@@ -240,6 +240,7 @@ VerifyPolicyAndChange (
   // Step 5: reboot!
   ResetSystemWithSubtype (EfiResetCold, &gMfciPolicyChangeResetGuid);
   CpuDeadLoop ();
+  return;
 
 Exit:
   // Non-change: trigger the variable policies
