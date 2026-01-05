@@ -16,6 +16,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/PcdLib.h>
 #include <Library/DebugLib.h>
+#include <Library/HobLib.h>
 #include <Library/SynchronizationLib.h>
 
 #include "../AdvancedLoggerCommon.h"
@@ -32,10 +33,9 @@ AdvancedLoggerLibConstructor (
   // Initialize the fixed memory LogPtr structure to no address, with a signature.
   UINTN LogBufferSize;
   LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet64 (PcdAdvancedLoggerPages));
-  
-  LogPtr = (ADVANCED_LOGGER_PTR *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
-  if (LogPtr != NULL) {
-    LoggerInfo = ALI_FROM_PA (LogPtr);
+
+  LoggerInfo = ALI_FROM_PA (FixedPcdGet64 (PcdAdvancedLoggerBase));
+  if (LoggerInfo != NULL) {
     ZeroMem ((VOID *)LoggerInfo, sizeof (ADVANCED_LOGGER_INFO));
     LoggerInfo->Signature          = ADVANCED_LOGGER_SIGNATURE;
     LoggerInfo->Version            = ADVANCED_LOGGER_VERSION;
@@ -54,6 +54,11 @@ AdvancedLoggerLibConstructor (
     DEBUG ((DEBUG_INFO, "  LogBufferOffset:    0x%08X\n", LoggerInfo->LogBufferOffset));
     DEBUG ((DEBUG_INFO, "  LogCurrentOffset:   0x%08X\n", LoggerInfo->LogCurrentOffset));
     DEBUG ((DEBUG_INFO, "  LogBufferSize:      0x%08X\n", LoggerInfo->LogBufferSize));
+
+    // Create the hob here so that DXE or PEI core can find it.
+    LogPtr = BuildGuidHob (&gAdvancedLoggerHobGuid, sizeof (ADVANCED_LOGGER_INFO));
+    LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
+    LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
   }
 
   return EFI_SUCCESS;

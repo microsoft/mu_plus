@@ -41,6 +41,9 @@
   SynchronizationLib
   TimerLib
 
+[Guids]
+  gAdvancedLoggerHobGuid
+
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
