@@ -47,7 +47,7 @@
 
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
-  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
+
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES
 
