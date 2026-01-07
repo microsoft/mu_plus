@@ -13,7 +13,8 @@
 [Defines]
   INF_VERSION                    = 1.26
   BASE_NAME                      = SecAdvancedLoggerLib
-  FILE_GUID                      = 93E4B7CC-1200-4450-B90E-A790F7AD9E8E
+  MODULE_UNI_FILE                = SecAdvancedLoggerLib.uni
+  FILE_GUID                      = 9c8dbd99-26f5-492e-a972-3a68ebfa0487
   MODULE_TYPE                    = SEC
   VERSION_STRING                 = 1.0
   LIBRARY_CLASS                  = AdvancedLoggerLib
@@ -42,6 +43,7 @@
 
 [Pcd]
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPreMemPages                  ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES
 
