@@ -7,8 +7,7 @@
 
 **/
 
-#include <Base.h>
-#include <Uefi.h>
+#include <Uefi/UefiBaseType.h>
 
 #include <AdvancedLoggerInternal.h>
 
@@ -57,7 +56,7 @@ AdvancedLoggerLibConstructor (
     DEBUG ((DEBUG_INFO, "  LogCurrentOffset:   0x%08X\n", LoggerInfo->LogCurrentOffset));
     DEBUG ((DEBUG_INFO, "  LogBufferSize:      0x%08X\n", LoggerInfo->LogBufferSize));
 
-    // Create the hob here so that DXE or PEI core can find it.
+    // Create the hob here so that DXE core can find it.
     LogPtr = BuildGuidHob (&gAdvancedLoggerHobGuid, sizeof (ADVANCED_LOGGER_INFO));
     LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
     LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
