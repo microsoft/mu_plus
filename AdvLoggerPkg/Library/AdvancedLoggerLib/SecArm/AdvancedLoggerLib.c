@@ -1,7 +1,8 @@
 /** @file
   SEC implementation of the Advanced Logger library.
 
-  Copyright (c) Microsoft Corporation. All rights reserved.
+  Copyright (c) Microsoft Corporation.
+
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
 **/
@@ -46,7 +47,8 @@ AdvancedLoggerLibConstructor (
     LoggerInfo->HwPrintLevel       = FixedPcdGet32 (PcdAdvancedLoggerHdwPortDebugPrintErrorLevel);
     LoggerInfo->InPermanentRAM     = TRUE;
     AdvancedLoggerHdwPortInitialize ();
-    DEBUG ((DEBUG_INFO, "%a: Advanced Logger initialized at fixed RAM address %p\n", __FUNCTION__, LoggerInfo));
+    DEBUG ((DEBUG_INFO, "%a: Advanced Logger initialized at fixed RAM address %p\n", __func__, LoggerInfo));
+
     // Dump the header contents for debug
     DEBUG ((DEBUG_INFO, "%a: Logger Info Header:\n", __FUNCTION__));
     DEBUG ((DEBUG_INFO, "  Signature:          0x%08X\n", LoggerInfo->Signature));

@@ -2,7 +2,7 @@
 #  Instance of Debug Library for in memory logger.
 #  It uses Print Library to produce formatted output strings.
 #
-#  Copyright (c) 2006 - 2018, Intel Corporation. All rights reserved.
+
 #  Copyright (c) Microsoft Corporation.
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
@@ -21,7 +21,8 @@
   CONSTRUCTOR                    = AdvancedLoggerLibConstructor
 
 #
-#  VALID_ARCHITECTURES           = IA32 X64 AARCH64
+#  VALID_ARCHITECTURES           = AARCH64
+
 #
 
 [Sources]
