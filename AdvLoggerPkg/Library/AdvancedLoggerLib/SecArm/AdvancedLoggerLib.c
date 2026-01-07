@@ -1,5 +1,5 @@
 /** @file
-  SEC implementation of the Advanced Logger library.
+  SEC implementation of the Advanced Logger library for Aarch64 platforms.
 
   Copyright (c) Microsoft Corporation.
 
