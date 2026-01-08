@@ -1,0 +1,55 @@
+## @file
+#  Instance of Advanced Logger Library for SEC phase on Aarch64 platforms.
+#
+
+#  Copyright (c) Microsoft Corporation.
+#
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+#
+##
+
+[Defines]
+  INF_VERSION                    = 1.26
+  BASE_NAME                      = SecAdvancedLoggerLib
+  FILE_GUID                      = 7AFA2BF4-E211-49B0-8FD1-DBE81D6ACEE0
+  MODULE_TYPE                    = SEC
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = AdvancedLoggerLib
+  CONSTRUCTOR                    = AdvancedLoggerLibConstructor
+
+#
+#  VALID_ARCHITECTURES           = AARCH64
+
+#
+
+[Sources]
+  AdvancedLoggerLib.c
+  ../AdvancedLoggerCommon.h
+  ../AdvancedLoggerCommon.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  AdvLoggerPkg/AdvLoggerPkg.dec
+
+[LibraryClasses]
+  AdvancedLoggerHdwPortLib
+  BaseLib
+  BaseMemoryLib
+  PcdLib
+  SynchronizationLib
+  TimerLib
+
+[Guids]
+  gAdvancedLoggerHobGuid
+
+[Pcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerBase                         ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerPages                        ## CONSUMES
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel  ## CONSUMES
+
+[FeaturePcd]
+  gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerAutoWrapEnable
+
+[BuildOptions]
+  *_*_*_CC_FLAGS  = -D ADVANCED_LOGGER_SEC=1
