@@ -147,8 +147,11 @@ PEI components in the ARM with Security Processor configuration.
   AdvancedLoggerAccessLib|AdvLoggerPkg/Library/AdvancedLoggerAccessLib/AdvancedLoggerAccessLib.inf
 
 [LibraryClasses.common.SEC]
+!if $(PEILESS_SEC) == TRUE
+  AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/PeilessArm/AdvancedLoggerLib.inf
+!else
   AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/BaseArm/AdvancedLoggerLib.inf
-  AssertLib|AdvLoggerPkg/Library/AssertLib/AssertLib.inf
+!endif
 
 [LibraryClasses.common.PEI_CORE]
   AdvancedLoggerLib|AdvLoggerPkg/Library/AdvancedLoggerLib/PeiCore/AdvancedLoggerLib.inf
