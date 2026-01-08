@@ -27,11 +27,12 @@ AdvancedLoggerLibConstructor (
   VOID
   )
 {
-  ADVANCED_LOGGER_PTR  *LogPtr;
-  ADVANCED_LOGGER_INFO    *LoggerInfo;
+  ADVANCED_LOGGER_PTR   *LogPtr;
+  ADVANCED_LOGGER_INFO  *LoggerInfo;
 
   // Initialize the fixed memory LogPtr structure to no address, with a signature.
-  UINTN LogBufferSize;
+  UINTN  LogBufferSize;
+
   LogBufferSize = EFI_PAGES_TO_SIZE (FixedPcdGet64 (PcdAdvancedLoggerPages));
 
   LoggerInfo = ALI_FROM_PA (FixedPcdGet64 (PcdAdvancedLoggerBase));
@@ -57,7 +58,7 @@ AdvancedLoggerLibConstructor (
     DEBUG ((DEBUG_INFO, "  LogBufferSize:      0x%08X\n", LoggerInfo->LogBufferSize));
 
     // Create the hob here so that DXE core can find it.
-    LogPtr = BuildGuidHob (&gAdvancedLoggerHobGuid, sizeof (ADVANCED_LOGGER_INFO));
+    LogPtr            = BuildGuidHob (&gAdvancedLoggerHobGuid, sizeof (ADVANCED_LOGGER_INFO));
     LogPtr->Signature = ADVANCED_LOGGER_PTR_SIGNATURE;
     LogPtr->LogBuffer = PA_FROM_PTR (LoggerInfo);
   }
