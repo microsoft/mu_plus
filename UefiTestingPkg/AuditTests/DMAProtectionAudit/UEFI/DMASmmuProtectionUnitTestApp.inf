@@ -47,6 +47,7 @@
   DebugLib
   UnitTestLib
   UnitTestBootLib
+  UnitTestPersistenceLib
   IoLib
   MemoryAllocationLib
   ShellLib

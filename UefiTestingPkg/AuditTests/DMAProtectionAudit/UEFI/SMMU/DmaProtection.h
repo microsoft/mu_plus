@@ -30,8 +30,8 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 // SMMUv3 CR0 Register Bits
 //
 #define SMMU_CR0_SMMUEN   BIT0  // SMMU Enable bit
-#define SMMU_CR0_CMDQEN   BIT1  // Command Queue Enable bit
 #define SMMU_CR0_EVTQEN   BIT2  // Event Queue Enable bit
+#define SMMU_CR0_CMDQEN   BIT3  // Command Queue Enable bit
 
 //
 // STRTAB_BASE lower bits mask (bits [5:0] are reserved/config)
