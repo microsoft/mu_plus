@@ -11,8 +11,22 @@
 #ifndef __ADVANCED_LOGGER_INTERNAL_H__
 #define __ADVANCED_LOGGER_INTERNAL_H__
 
-#define ADVANCED_LOGGER_SIGNATURE    SIGNATURE_32('A','L','O','G')
-#define ADVANCED_LOGGER_HW_LVL_VER   5
+#define ADVANCED_LOGGER_SIGNATURE  SIGNATURE_32('A','L','O','G')
+
+//
+// Advanced Logger Hardware Port Level Support Version
+//
+// Writing to hardware port based on message DebugLevel is supported
+// (AdvancedLoggerHdwPortWrite()).
+//
+#define ADVANCED_LOGGER_HW_LVL_VER  5
+
+//
+// Advanced Logger Message structure versions
+//
+// Version 1: Original structure (ADVANCED_LOGGER_MESSAGE_ENTRY)
+// Version 2: New backward incompatible V2 structure (ADVANCED_LOGGER_MESSAGE_ENTRY_V2
+//
 #define ADVANCED_LOGGER_MSG_MAJ_VER  2
 #define ADVANCED_LOGGER_MSG_MIN_VER  0
 
