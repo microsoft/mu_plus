@@ -1,6 +1,5 @@
 ## @file
-#  Instance of Debug Library for in memory logger.
-#  It uses Print Library to produce formatted output strings.
+#  Instance of Advanced Logger Library for SEC phase on Aarch64 platforms.
 #
 
 #  Copyright (c) Microsoft Corporation.

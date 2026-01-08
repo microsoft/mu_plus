@@ -81,10 +81,6 @@ AdvancedLoggerGetLoggerInfo (
   // The SEC implementation requires a priori knowledge of an address in the heap to
   // use for the Logger Info block.
 
-  // The PCD AdvancedLoggerBase MAY be a 64 bit address.  However, it is
-  // trimmed to be a pointer the size of the actual platform SEC pointer - and
-  // the Pcd is expected to be set properly for the platform.
-
   LoggerInfoSec = NULL;
   LogPtr        = (ADVANCED_LOGGER_PTR *)(UINTN)FixedPcdGet64 (PcdAdvancedLoggerBase);
 
