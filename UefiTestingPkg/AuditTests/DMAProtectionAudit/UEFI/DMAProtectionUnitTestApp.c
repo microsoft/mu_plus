@@ -317,8 +317,10 @@ CheckBMETeardown (
     for (i = 0; i < (PreVarSize)/(sizeof (BOOLEAN)); i++) {
       // BME Enabled before exit boot services
       UT_LOG_INFO (PreBuffer[i] ? "Pre-EBS BME %d: True\n" : "Pre-EBS BME %d: False\n", i);
+      DEBUG ((DEBUG_INFO, PreBuffer[i] ? "%a: Pre-EBS BME %d: True\n" : "%a: Pre-EBS BME %d: False\n", __func__, i));
       // BME Disabled after exit boot services
       UT_LOG_INFO (PostBuffer[i] ? "Post-EBS BME %d: True\n" : "Post-EBS BME %d: False\n", i);
+      DEBUG ((DEBUG_INFO, PostBuffer[i] ? "%a: Post-EBS BME %d: True\n" : "%a: Post-EBS BME %d: False\n", __func__, i));
       UT_ASSERT_FALSE (PostBuffer[i]);
     }
 
@@ -347,6 +349,9 @@ CheckBMETeardown (
                     NULL
                     );
   }
+
+  UT_LOG_INFO ("PASSED: BME test.\n");
+  DEBUG ((DEBUG_INFO, "PASSED: BME test.\n"));
 
   return UNIT_TEST_PASSED;
 } // CheckBMETeardown()
@@ -418,8 +423,8 @@ DMAProtectionUnitTestApp (
   }
 
   AddTestCase (IommuTests, "All Hardware Definition Units Have IOMMU Enabled", "IOMMU.StatusRegister", CheckIOMMUEnabled, NULL, NULL, NULL);
-  AddTestCase (IommuTests, "BME Teardown at ExitBootServices", "IOMMU.BMETeardown", CheckBMETeardown, NULL, NULL, BMEContext);
   AddTestCase (IommuTests, "Verify excluded ranges are marked reserved", "IOMMU.ExcludedRangeTest", CheckExcludedRegions, NULL, NULL, NULL);
+  AddTestCase (IommuTests, "BME Teardown at ExitBootServices", "IOMMU.BMETeardown", CheckBMETeardown, NULL, NULL, BMEContext);
 
   //
   // Execute the tests.

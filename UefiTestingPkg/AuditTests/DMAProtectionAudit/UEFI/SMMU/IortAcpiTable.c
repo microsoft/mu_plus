@@ -80,12 +80,13 @@ ParseIortAcpiTableSmmu (
     if (Node->Type == EFI_ACPI_IORT_TYPE_SMMUv3) {
       LocalSmmuCount++;
     }
+
     Node = (EFI_ACPI_6_0_IO_REMAPPING_NODE *)((UINT8 *)Node + Node->Length);
   }
 
   if (LocalSmmuCount == 0) {
     DEBUG ((DEBUG_ERROR, "%a: No SMMUv3 nodes found\n", __func__));
-    *SmmuCount = 0;
+    *SmmuCount         = 0;
     *SmmuBaseAddresses = NULL;
     return EFI_NOT_FOUND;
   }
@@ -94,26 +95,26 @@ ParseIortAcpiTableSmmu (
   LocalSmmuBaseAddresses = AllocateZeroPool (LocalSmmuCount * sizeof (UINT64));
   if (LocalSmmuBaseAddresses == NULL) {
     DEBUG ((DEBUG_ERROR, "%a: Failed to allocate memory for SMMU base addresses\n", __func__));
-    *SmmuCount = 0;
+    *SmmuCount         = 0;
     *SmmuBaseAddresses = NULL;
     return EFI_OUT_OF_RESOURCES;
   }
 
   // Second pass: collect base addresses
-  Node = (EFI_ACPI_6_0_IO_REMAPPING_NODE *)((UINT8 *)Iort + Iort->NodeOffset);
+  Node      = (EFI_ACPI_6_0_IO_REMAPPING_NODE *)((UINT8 *)Iort + Iort->NodeOffset);
   SmmuIndex = 0;
 
   for (Count = 0; Count < Iort->NumNodes; Count++) {
     if (Node->Type == EFI_ACPI_IORT_TYPE_SMMUv3) {
-      SmmuNode = (EFI_ACPI_6_0_IO_REMAPPING_SMMU3_NODE *)Node;
+      SmmuNode                          = (EFI_ACPI_6_0_IO_REMAPPING_SMMU3_NODE *)Node;
       LocalSmmuBaseAddresses[SmmuIndex] = SmmuNode->Base;
-      DEBUG ((DEBUG_INFO, "%a: Found SMMUv3 at base 0x%lX\n", __func__, SmmuNode->Base));
       SmmuIndex++;
     }
+
     Node = (EFI_ACPI_6_0_IO_REMAPPING_NODE *)((UINT8 *)Node + Node->Length);
   }
 
-  *SmmuCount = LocalSmmuCount;
+  *SmmuCount         = LocalSmmuCount;
   *SmmuBaseAddresses = LocalSmmuBaseAddresses;
 
   return EFI_SUCCESS;
@@ -131,21 +132,21 @@ ParseIortAcpiTableSmmu (
 
   @retval Pointer to head of linked list of RMR entries, or NULL if none found.
 **/
-RMRListNode*
+RMRListNode *
 EFIAPI
 GetIortAcpiTableRmrList (
   IN EFI_ACPI_DESCRIPTION_HEADER  *IortTable
   )
 {
-  EFI_ACPI_6_0_IO_REMAPPING_TABLE          *Iort;
-  EFI_ACPI_6_0_IO_REMAPPING_NODE           *Node;
-  EFI_ACPI_6_0_IO_REMAPPING_RMR_NODE       *RmrNode;
-  EFI_ACPI_6_0_IO_REMAPPING_MEM_RANGE_DESC *MemRangeDesc;
-  RMRListNode                              *Head;
-  RMRListNode                              *Current;
-  RMRListNode                              *NewNode;
-  UINT32                                   Count;
-  UINT32                                   MemRangeIndex;
+  EFI_ACPI_6_0_IO_REMAPPING_TABLE           *Iort;
+  EFI_ACPI_6_0_IO_REMAPPING_NODE            *Node;
+  EFI_ACPI_6_0_IO_REMAPPING_RMR_NODE        *RmrNode;
+  EFI_ACPI_6_0_IO_REMAPPING_MEM_RANGE_DESC  *MemRangeDesc;
+  RMRListNode                               *Head;
+  RMRListNode                               *Current;
+  RMRListNode                               *NewNode;
+  UINT32                                    Count;
+  UINT32                                    MemRangeIndex;
 
   if (IortTable == NULL) {
     DEBUG ((DEBUG_ERROR, "%a: IORT table not available\n", __func__));
@@ -162,8 +163,6 @@ GetIortAcpiTableRmrList (
   for (Count = 0; Count < Iort->NumNodes; Count++) {
     if (Node->Type == EFI_ACPI_IORT_TYPE_RMR) {
       RmrNode = (EFI_ACPI_6_0_IO_REMAPPING_RMR_NODE *)Node;
-      DEBUG ((DEBUG_INFO, "%a: Found RMR node with %d memory range descriptors\n",
-                 __func__, RmrNode->NumMemRangeDesc));
 
       // Get pointer to memory range descriptor array
       // MemRangeDescRef is offset from the start of the RMR node
@@ -183,9 +182,6 @@ GetIortAcpiTableRmrList (
           NewNode->BaseAddress = MemRangeDesc[MemRangeIndex].Base;
           NewNode->Length      = MemRangeDesc[MemRangeIndex].Length;
           NewNode->Next        = NULL;
-
-          DEBUG ((DEBUG_INFO, "%a: Adding RMR range Base=0x%lX, Length=0x%lX\n",
-                    __func__, NewNode->BaseAddress, NewNode->Length));
 
           // Add to linked list
           if (Head == NULL) {

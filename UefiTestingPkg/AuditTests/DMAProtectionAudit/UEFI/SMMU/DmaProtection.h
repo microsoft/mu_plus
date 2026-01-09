@@ -21,17 +21,17 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 //
 // SMMUv3 Register Offsets
 //
-#define SMMU_CR0            0x0020
-#define SMMU_CR0ACK         0x0024
-#define SMMU_GERROR         0x0060
-#define SMMU_STRTAB_BASE    0x0080
+#define SMMU_CR0          0x0020
+#define SMMU_CR0ACK       0x0024
+#define SMMU_GERROR       0x0060
+#define SMMU_STRTAB_BASE  0x0080
 
 //
 // SMMUv3 CR0 Register Bits
 //
-#define SMMU_CR0_SMMUEN   BIT0  // SMMU Enable bit
-#define SMMU_CR0_EVTQEN   BIT2  // Event Queue Enable bit
-#define SMMU_CR0_CMDQEN   BIT3  // Command Queue Enable bit
+#define SMMU_CR0_SMMUEN  BIT0   // SMMU Enable bit
+#define SMMU_CR0_EVTQEN  BIT2   // Event Queue Enable bit
+#define SMMU_CR0_CMDQEN  BIT3   // Command Queue Enable bit
 
 //
 // STRTAB_BASE lower bits mask (bits [5:0] are reserved/config)
@@ -94,7 +94,7 @@ ParseIortAcpiTableSmmu (
 
   @retval Pointer to head of linked list of RMR entries, or NULL if none found.
 **/
-RMRListNode*
+RMRListNode *
 EFIAPI
 GetIortAcpiTableRmrList (
   IN EFI_ACPI_DESCRIPTION_HEADER  *IortTable
