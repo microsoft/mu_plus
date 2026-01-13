@@ -606,6 +606,10 @@ class AdvLogParser ():
 
         (MessageEntry, NextMessage) = self._ReadMessageEntry(LoggerInfo)
 
+        if MessageEntry is None:
+            print("Invalid message signature at offset 0x%x" % InFile.tell())
+            raise Exception("Message block has the wrong signature at offset 0x%x" % InFile.tell())
+
         if MessageEntry["Signature"] != 'ALMS' and MessageEntry["Signature"] != 'ALM2':
             print("Log signature was incorrect.  Should be either 'ALMS' or 'ALM2', was '%s'" % MessageEntry["Signature"])
             raise Exception("Message Block has wrong signature at offset 0x%X" % InFile.tell())
