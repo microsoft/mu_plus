@@ -51,6 +51,7 @@
   UefiRuntimeServicesTableLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
+  UefiHiiServicesLib
   HiiLib
 
 [Protocols]

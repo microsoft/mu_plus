@@ -44,10 +44,13 @@
 [LibraryClasses]
   AdvancedLoggerAccessLib
   DebugLib
+  HiiLib
   MemoryAllocationLib
   PcdLib
   PrintLib
   ShellLib
   UefiApplicationEntryPoint
+  UefiBootServicesTableLib
+  UefiHiiServicesLib
   UefiLib
   UefiRuntimeServicesTableLib
