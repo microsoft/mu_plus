@@ -213,8 +213,10 @@ class AdvLogParser ():
     # EFI_TIME    Time;                               // Uefi Time Field
     # UINT32      HwPrintLevel;                       // Logging level to be printed at hw port
     # UINT32      Reserved3;                          //
+    # EFI_PHYSICAL_ADDRESS    NewLoggerInfoAddress;   // If non-zero, this field holds the address of new logger info (added in later V5 revision, may not be present in older logs)
     # } ADVANCED_LOGGER_INFO;
     V5_LOGGER_INFO_SIZE = 80
+    V5_LOGGER_INFO_SIZE_WITH_NEW_ADDRESS = 88
     V5_LOGGER_INFO_VERSION = 5
 
     # ---------------------------------------------------------------------- #
@@ -458,14 +460,24 @@ class AdvLogParser ():
 
         elif Version == self.V5_LOGGER_INFO_VERSION:
             InFile.read(4)  # skip over rest of reserved section
-            Size = self.V5_LOGGER_INFO_SIZE
+            # V5 can be either 80 bytes or 88 bytes (minor version 1 update with NewLoggerInfoAddress)
+            BaseAddress = 0
+            LoggerInfo["LogBufferOffset"] = struct.unpack("=I", InFile.read(4))[0]
+            Size = LoggerInfo["LogBufferOffset"]
+
+            # Determine if this has the NewLoggerInfoAddress field based on structure size
+            if Size == self.V5_LOGGER_INFO_SIZE:
+                HasNewLoggerInfoAddress = False
+            elif Size == self.V5_LOGGER_INFO_SIZE_WITH_NEW_ADDRESS:
+                HasNewLoggerInfoAddress = True
+            else:
+                raise Exception('Error initializing logger info. Unexpected V5 structure size: %d' % Size)
+
             # we no longer have this field in the struct but for compatibility can calculate it
             # to be used
             LoggerInfo["LogBuffer"] = Size
             # this is only used to calculate LogCurrent as an offset, but V5 uses
             # LogCurrentOffset already, so we do this just to share the common code
-            BaseAddress = 0
-            LoggerInfo["LogBufferOffset"] = struct.unpack("=I", InFile.read(4))[0]
             InFile.read(4)  # skip over reserved4 field
             LoggerInfo["LogCurrentOffset"] = struct.unpack("=I", InFile.read(4))[0]
             # we don't have this field anymore, but to share the common code we
@@ -499,10 +511,16 @@ class AdvLogParser ():
             InFile.read(4)
             InFile.read(4)
 
+            # Read NewLoggerInfoAddress if present (88-byte V5 format)
+            if HasNewLoggerInfoAddress:
+                LoggerInfo["NewLoggerInfoAddress"] = struct.unpack("=Q", InFile.read(8))[0]
+            else:
+                LoggerInfo["NewLoggerInfoAddress"] = 0
+
             self._Compute_Basetime(LoggerInfo)
 
             if InFile.tell() != (Size):
-                raise Exception('Error initializing logger info. AmountRead: %d' % InFile.tell())
+                raise Exception('Error initializing logger info. AmountRead: %d, Expected: %d' % (InFile.tell(), Size))
 
         else:
             raise Exception('Error initializing logger info. Unsupported version: 0x%X' % LoggerInfo["Version"])
