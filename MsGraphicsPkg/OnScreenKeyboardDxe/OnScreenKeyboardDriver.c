@@ -213,7 +213,7 @@ OSKDriverBindingStart (
                   EFI_OPEN_PROTOCOL_BY_DRIVER
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "INFO [OSK]: Device Path already opened (%r).\r\n", Status));
+    DEBUG ((DEBUG_INFO, "[OSK]: Device Path already opened (%r).\r\n", Status));
     return Status;
   }
 
@@ -227,7 +227,7 @@ OSKDriverBindingStart (
 
   if (EFI_ERROR (Status)) {
     mSWMProtocol = NULL;
-    DEBUG ((DEBUG_WARN, "ERROR [OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
+    DEBUG ((DEBUG_WARN, "[OSK]: Failed to find Simple Window Manager protocol (%r).\r\n", Status));
     goto ErrorExit;
   }
 
@@ -241,14 +241,14 @@ OSKDriverBindingStart (
 
   if (EFI_ERROR (Status)) {
     mGop = NULL;
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to find GOP protocol (%r).\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to find GOP protocol (%r).\r\n", Status));
     goto ErrorExit;
   }
 
   // Initialize OSK
   Status = OSKDriverInit ();
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Init OSK Failed (%r).\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Init OSK Failed (%r).\r\n", Status));
 
     if (mKeyRepeatTimerEvent != NULL) {
       // you would be here if the driver init failed
@@ -282,7 +282,7 @@ OSKDriverBindingStart (
   }
 
   // everything successful
-  DEBUG ((DEBUG_INFO, "INFO [OSK]: Init OSK Successful (%r).\r\n", Status));
+  DEBUG ((DEBUG_INFO, "[OSK]: Init OSK Successful (%r).\r\n", Status));
   goto Exit;
 
 ErrorExit:
@@ -322,7 +322,7 @@ OSKDriverBindingStop (
 {
   EFI_STATUS  Status;
 
-  DEBUG ((DEBUG_INFO, "INFO [OSK]: DriverBindingStop. \r\n"));
+  DEBUG ((DEBUG_INFO, "[OSK]: DriverBindingStop. \r\n"));
   Status = gBS->UninstallMultipleProtocolInterfaces (
                   ControllerHandle,
                   &gEfiSimpleTextInProtocolGuid,
@@ -616,7 +616,7 @@ HandleDisplayModeChange (
   BOOLEAN     bShowKeyboard     = mOSK.bDisplayKeyboard;
   SWM_RECT    Rect;
 
-  DEBUG ((DEBUG_INFO, "INFO [OSK]: Display mode change detected (Old=%dx%d  New=%dx%d).\r\n", mOSK.ScreenResolutionWidth, mOSK.ScreenResolutionHeight, ScreenWidth, ScreenHeight));
+  DEBUG ((DEBUG_INFO, "[OSK]: Display mode change detected (Old=%dx%d  New=%dx%d).\r\n", mOSK.ScreenResolutionWidth, mOSK.ScreenResolutionHeight, ScreenWidth, ScreenHeight));
 
   AllocateBackBuffers ();
 
@@ -1514,14 +1514,14 @@ SetKeyboardPosition (
   EFI_STATUS  Status = EFI_SUCCESS;
 
   if (mGop == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, GOP not yet initialized %x %x\n", Position, DockedState));
+    DEBUG ((DEBUG_ERROR, "[OSK] Cannot set keyboardposition, GOP not yet initialized %x %x\n", Position, DockedState));
     mOSK.KeyboardPosition = Position;
     mOSK.DockedState      = DockedState;
     goto Exit;
   }
 
   if (mSWMProtocol == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] Cannot set keyboardposition, SWM protocol not yet initialized %x %x\n", Position, DockedState));
+    DEBUG ((DEBUG_ERROR, "[OSK] Cannot set keyboardposition, SWM protocol not yet initialized %x %x\n", Position, DockedState));
     mOSK.KeyboardPosition = Position;
     mOSK.DockedState      = DockedState;
     goto Exit;
@@ -1751,13 +1751,13 @@ SetKeyboardSize (
   SWM_RECT    Rect;
 
   if (mGop == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] GOP not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
+    DEBUG ((DEBUG_ERROR, "[OSK] GOP not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
     mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
     goto Exit;
   }
 
   if (mSWMProtocol == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] SWM protocol not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
+    DEBUG ((DEBUG_ERROR, "[OSK] SWM protocol not yet initialized. Cannot set the keyboard size. Default size will be retained \n"));
     mOSK.PercentOfScreenWidth = PercentOfScreenWidth;
     goto Exit;
   }
@@ -1857,7 +1857,7 @@ GetKeyboardMode (
     *ModeBitfield |= OSK_MODE_SELF_REFRESH;
   }
 
-  DEBUG ((DEBUG_INFO, "INFO [OSK]: Retrieved keyboard mode 0x%08x.  Status = %r\r\n", *ModeBitfield, Status));
+  DEBUG ((DEBUG_INFO, "[OSK]: Retrieved keyboard mode 0x%08x.  Status = %r\r\n", *ModeBitfield, Status));
 
   return Status;
 }
@@ -1885,7 +1885,7 @@ SetKeyboardMode (
   //
   mOSK.bKeyboardSelfRefresh = ((ModeBitfield & OSK_MODE_SELF_REFRESH) ? TRUE : FALSE);
 
-  DEBUG ((DEBUG_INFO, "INFO [OSK]: Set keyboard mode 0x%08x.  Status = %r\r\n", ModeBitfield, Status));
+  DEBUG ((DEBUG_INFO, "[OSK]: Set keyboard mode 0x%08x.  Status = %r\r\n", ModeBitfield, Status));
   // Disable the key repeat timer
   //
   gBS->SetTimer (
@@ -1941,7 +1941,7 @@ ShowKeyboard (
   }
 
   if (mSWMProtocol == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboard mode 0x%08x.\n", bShowKeyboard));
+    DEBUG ((DEBUG_ERROR, "[OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboard mode 0x%08x.\n", bShowKeyboard));
     mOSK.bDisplayKeyboard = bShowKeyboard;
     goto Exit;
   }
@@ -2002,13 +2002,13 @@ ShowKeyboardIcon (
   EFI_STATUS  Status = EFI_SUCCESS;
 
   if (mGop == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x\n", bShowKeyboardIcon));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Cannot change ShowKeyboardIcon. GOP not found 0x%08x\n", bShowKeyboardIcon));
     mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
     goto Exit;
   }
 
   if (mSWMProtocol == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboardIcon 0x%08x\n", bShowKeyboardIcon));
+    DEBUG ((DEBUG_ERROR, "[OSK]: SWM protocol not yet initialized. Cannot change ShowKeyboardIcon 0x%08x\n", bShowKeyboardIcon));
     mOSK.bDisplayKeyboardIcon = bShowKeyboardIcon;
     goto Exit;
   }
@@ -2374,7 +2374,7 @@ RotateKeyboard (
   float       Zang        = 0.0;
 
   if (mGop == NULL) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] Failed to find GOP protocol \n"));
+    DEBUG ((DEBUG_ERROR, "[OSK] Failed to find GOP protocol \n"));
     mOSK.KeyboardAngle = Angle;
     goto Exit;
   }
@@ -2472,7 +2472,7 @@ InsertKeyPressIntoQueue (
   // If queue input and output positions collide, there is a buffer overflow
   //
   if ((mOSK.QueueInputPosition == mOSK.QueueOutputPosition) && (FALSE == mOSK.bQueueEmpty)) {
-    DEBUG ((DEBUG_INFO, "INFO [OSK]: Key press input queue overflow!\r\n"));
+    DEBUG ((DEBUG_INFO, "[OSK]: Key press input queue overflow!\r\n"));
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -2712,7 +2712,7 @@ KeyboardInputHandler (
         goto Exit;
       }
 
-      DEBUG ((DEBUG_INFO, "INFO [OSK]: Keyboard dock-undock button selected.\r\n"));
+      DEBUG ((DEBUG_INFO, "[OSK]: Keyboard dock-undock button selected.\r\n"));
 
       //
       // Docking/Undocking button was selected - toggle docked state.
@@ -2725,7 +2725,7 @@ KeyboardInputHandler (
     //
     // Close button was selected - dismiss the keyboard...
     //
-    DEBUG ((DEBUG_INFO, "INFO [OSK]: Keyboard close button selected.\r\n"));
+    DEBUG ((DEBUG_INFO, "[OSK]: Keyboard close button selected.\r\n"));
 
     // Hide the keyboard and show the keyboard icon
     //
@@ -2763,7 +2763,7 @@ KeyboardInputHandler (
                         );
 
         if (EFI_ERROR (Status)) {
-          DEBUG ((DEBUG_WARN, "WARN [OSK]: Failed to start key repeat timer.  Status = %r\r\n", Status));
+          DEBUG ((DEBUG_WARN, "[OSK]: Failed to start key repeat timer.  Status = %r\r\n", Status));
         }
       }
     } else {
@@ -2839,7 +2839,7 @@ OSKReadKeyStroke (
   // on the event to signal that there is one.
   //
   if ((FALSE == mOSK.bDisplayKeyboardIcon) && (FALSE == mOSK.bDisplayKeyboard) && (TRUE == mOSK.bKeyboardIconAutoEnable)) {
-    DEBUG ((DEBUG_INFO, "INFO [OSK]: OSKReadKeyStroke: Auto-activating the keyboard icon.\r\n"));
+    DEBUG ((DEBUG_INFO, "[OSK]: OSKReadKeyStroke: Auto-activating the keyboard icon.\r\n"));
 
     // Display the keyboard icon.  Assume the keyboard and icon positions, sizes, and states have already been configured.
     //
@@ -2930,7 +2930,7 @@ OSKWaitForKey (
   // on the event to signal that there is one.
   //
   if ((FALSE == mOSK.bDisplayKeyboardIcon) && (FALSE == mOSK.bDisplayKeyboard) && (TRUE == mOSK.bKeyboardIconAutoEnable)) {
-    DEBUG ((DEBUG_INFO, "INFO [OSK]: OSKWaitForKey: Auto-activating the keyboard icon.\r\n"));
+    DEBUG ((DEBUG_INFO, "[OSK]: OSKWaitForKey: Auto-activating the keyboard icon.\r\n"));
 
     // Display the keyboard icon.  Assume the keyboard and icon positions, sizes, and states have already been configured.
     //
@@ -2987,7 +2987,7 @@ OSKKeyRepeatCallback (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_WARN, "WARN [OSK]: Failed to update key repeat timer interval.  Status = %r\r\n", Status));
+    DEBUG ((DEBUG_WARN, "[OSK]: Failed to update key repeat timer interval.  Status = %r\r\n", Status));
   }
 }
 
@@ -3044,7 +3044,7 @@ OSKProcessPointerCallback (
     return FALSE;
   }
 
-  DEBUG ((DEBUG_INFO, "INFO [OSK]: Keyboard icon selected.\r\n"));
+  DEBUG ((DEBUG_INFO, "[OSK]: Keyboard icon selected.\r\n"));
 
   // Determine the keyboard outer bounding rectangle
   //
@@ -3145,7 +3145,7 @@ OSKDriverInit (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
     goto Exit;
   }
 
@@ -3160,7 +3160,7 @@ OSKDriverInit (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to create key repeat timer event.  Status = %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to create key repeat timer event.  Status = %r\r\n", Status));
     goto Exit;
   }
 
@@ -3175,7 +3175,7 @@ OSKDriverInit (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to create display mode timer callback event.  Status = %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to create display mode timer callback event.  Status = %r\r\n", Status));
     goto Exit;
   }
 
@@ -3204,7 +3204,7 @@ OSKDriverInit (
 
   ASSERT_EFI_ERROR (Status);
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to register with the Simple Window Manager.  Status = %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to register with the Simple Window Manager.  Status = %r\r\n", Status));
     goto Exit;
   }
 
@@ -3213,7 +3213,7 @@ OSKDriverInit (
   Status = InitializeKeyboardGeometry ();
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to initialize keyboard geometry.  Status = %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to initialize keyboard geometry.  Status = %r\r\n", Status));
     goto Exit;
   }
 
@@ -3238,7 +3238,7 @@ OSKDriverInit (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK]: Failed to start keyboard/icon refresh timer.  Status = %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK]: Failed to start keyboard/icon refresh timer.  Status = %r\r\n", Status));
     goto Exit;
   }
 
@@ -3341,7 +3341,7 @@ OSKDriverEntryPoint (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to initialize Simple Text Input protocol wait event, Status: %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK] - Failed to initialize Simple Text Input protocol wait event, Status: %r\r\n", Status));
     goto Exit;
   }
 
@@ -3354,7 +3354,7 @@ OSKDriverEntryPoint (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to initialize Simple Text Input Extended protocol wait event, Status: %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK] - Failed to initialize Simple Text Input Extended protocol wait event, Status: %r\r\n", Status));
     goto Exit;
   }
 
@@ -3381,7 +3381,7 @@ OSKDriverEntryPoint (
   ASSERT_EFI_ERROR (Status);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "ERROR [OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
+    DEBUG ((DEBUG_ERROR, "[OSK] - Failed to install OSK protocol, Status: %r\r\n", Status));
     goto Exit;
   }
 
