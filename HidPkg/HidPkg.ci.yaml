@@ -69,7 +69,8 @@
         ],
         "IgnoreFiles": [             # use gitignore syntax to ignore errors in matching files
         ],
-        "ExtendWords": [           # words to extend to the dictionary for this package
+        "ExtendWords": [            # words to extend to the dictionary for this package
+            "Resrvd",
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }
