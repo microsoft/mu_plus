@@ -19,9 +19,6 @@ extern "C" {
   #include <AdvancedLoggerInternal.h>
   #include <Protocol/DebugPort.h> // Waiting on mu_basecre DebugPortProtocol mock
   #include "../../AdvancedLoggerCommon.h"
-
-  extern ADVANCED_LOGGER_PROTOCOL  *mLoggerProtocol;
-  extern BOOLEAN                   mInitialized;
 }
 
 using namespace testing;
@@ -48,7 +45,6 @@ protected:
     NumberOfBytes          = sizeof (OutputBuf);
     Buffer                 = OutputBuf;
     DebugLevel             = DEBUG_ERROR;
-    mInitialized           = FALSE;
     gALProtocol->Signature = ADVANCED_LOGGER_PROTOCOL_SIGNATURE;
     gALProtocol->Version   = ADVANCED_LOGGER_PROTOCOL_VERSION;
     snprintf (Buffer, sizeof (OutputBuf), "MyUnitTestLog");
@@ -91,20 +87,6 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteMultiple) {
   //
   // First call to AdvancedLoggerWrite
   //
-  EXPECT_CALL (
-    gBSMock,
-    gBS_LocateProtocol (
-      BufferEq (&gAdvancedLoggerProtocolGuid, sizeof (EFI_GUID)),
-      Eq (nullptr), // Registration Key
-      NotNull ()    // Protocol Pointer OUT
-      )
-    )
-    .WillOnce (
-       DoAll (
-         SetArgPointee<2> (ByRef (gALProtocol)),
-         Return (EFI_SUCCESS)
-         )
-       );
 
   EXPECT_CALL (
     AdvLoggerProtocolMock,
@@ -140,32 +122,10 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteMultiple) {
   AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
 }
 
-/* Call AdvancedLoggerWrite after initializaiton but the protocol is NULL */
-TEST_F (AdvancedLoggerWriteTest, AdvLoggerNullProtocol) {
-  mInitialized    = TRUE;
-  mLoggerProtocol = nullptr;
-  AdvancedLoggerWrite (DebugLevel, Buffer, NumberOfBytes);
-}
-
 /* Passing an invalid buffer - should be caught/handled by the protocol */
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteInvalidBuffer) {
   Buffer = nullptr;
   UINTN  numBytesZero = 0;
-
-  EXPECT_CALL (
-    gBSMock,
-    gBS_LocateProtocol (
-      BufferEq (&gAdvancedLoggerProtocolGuid, sizeof (EFI_GUID)),
-      Eq (nullptr), // Registration Key
-      NotNull ()    // Protocol Pointer OUT
-      )
-    )
-    .WillOnce (
-       DoAll (
-         SetArgPointee<2> (ByRef (gALProtocol)),
-         Return (EFI_SUCCESS)
-         )
-       );
 
   EXPECT_CALL (
     AdvLoggerProtocolMock,
@@ -186,21 +146,6 @@ TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteInvalidBuffer) {
 /* Attempting to write 0 bytes - should be caught/handled by the protocol */
 TEST_F (AdvancedLoggerWriteTest, AdvLoggerWriteZeroBytes) {
   UINTN  NumberOfBytesZero = 0;
-
-  EXPECT_CALL (
-    gBSMock,
-    gBS_LocateProtocol (
-      BufferEq (&gAdvancedLoggerProtocolGuid, sizeof (EFI_GUID)),
-      Eq (nullptr), // Registration Key
-      NotNull ()    // Protocol Pointer OUT
-      )
-    )
-    .WillOnce (
-       DoAll (
-         SetArgPointee<2> (ByRef (gALProtocol)),
-         Return (EFI_SUCCESS)
-         )
-       );
 
   EXPECT_CALL (
     AdvLoggerProtocolMock,
