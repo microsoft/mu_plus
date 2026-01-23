@@ -416,7 +416,7 @@ HIDKeyboardReset (
 
   @retval EFI_SUCCESS          The keystroke information was returned.
   @retval EFI_NOT_READY        There was no keystroke data availiable.
-  @retval EFI_DEVICE_ERROR     The keydtroke information was not returned due to
+  @retval EFI_DEVICE_ERROR     The keystroke information was not returned due to
                                hardware errors.
 
 **/
