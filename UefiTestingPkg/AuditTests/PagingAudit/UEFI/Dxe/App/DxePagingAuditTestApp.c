@@ -12,7 +12,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Protocol/ShellParameters.h>
 #include <Protocol/Shell.h>
 #include <Protocol/SimpleFileSystem.h>
-#include <Protocol/MemoryProtectionSpecialRegionProtocol.h>
 #include <Protocol/MemoryProtectionDebug.h>
 #include <Protocol/MemoryAttribute.h>
 
@@ -39,10 +38,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 
 // Aligns the input address down to the nearest page boundary
 #define ALIGN_ADDRESS(Address)  ((Address / EFI_PAGE_SIZE) * EFI_PAGE_SIZE)
-
-// Globals for memory protection special regions
-MEMORY_PROTECTION_SPECIAL_REGION  *mSpecialRegions    = NULL;
-UINTN                             mSpecialRegionCount = 0;
 
 // Global for the non-protected image list
 IMAGE_RANGE_DESCRIPTOR  *mNonProtectedImageList = NULL;
@@ -264,65 +259,6 @@ PopulateNonProtectedImageList (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a:%d - Unable to fetch non-protected image list\n", __FUNCTION__, __LINE__));
     mNonProtectedImageList = NULL;
-  }
-
-  return Status;
-}
-
-/**
-  Frees the mSpecialRegions global
-**/
-STATIC
-VOID
-FreeSpecialRegions (
-  VOID
-  )
-{
-  if (mSpecialRegions != NULL) {
-    FreePool (mSpecialRegions);
-    mSpecialRegions = NULL;
-  }
-
-  mSpecialRegionCount = 0;
-}
-
-/**
-  Populates the special region array global
-
-  @retval EFI_SUCCESS   The special region array is populated successfully.
-  @retval other         An error occurred while populating the special region array.
-**/
-STATIC
-EFI_STATUS
-PopulateSpecialRegions (
-  VOID
-  )
-{
-  EFI_STATUS                                 Status;
-  MEMORY_PROTECTION_SPECIAL_REGION_PROTOCOL  *SpecialRegionProtocol;
-
-  SpecialRegionProtocol = NULL;
-
-  if (mSpecialRegions != NULL) {
-    return EFI_SUCCESS;
-  }
-
-  Status = gBS->LocateProtocol (
-                  &gMemoryProtectionSpecialRegionProtocolGuid,
-                  NULL,
-                  (VOID **)&SpecialRegionProtocol
-                  );
-
-  if (!EFI_ERROR (Status)) {
-    Status = SpecialRegionProtocol->GetSpecialRegions (
-                                      &mSpecialRegions,
-                                      &mSpecialRegionCount
-                                      );
-  }
-
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_ERROR, "%a:%d - Unable to fetch special region list\n", __FUNCTION__, __LINE__));
-    mSpecialRegions = NULL;
   }
 
   return Status;
@@ -613,10 +549,6 @@ GeneralTestCleanup (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  if (mSpecialRegions != NULL) {
-    FreeSpecialRegions ();
-  }
-
   if (mNonProtectedImageList != NULL) {
     FreeNonProtectedImageList ();
   }
@@ -631,8 +563,7 @@ GeneralTestCleanup (
 // ---------------------------------
 
 /**
-  Checks if a region is allowed to be read/write/execute based on the special region array
-  and non protected image list
+  Checks if a region is allowed to be read/write/execute based on the non protected image list
 
   @param[in] Address            Start address of the region
   @param[in] Length             Length of the region
@@ -649,25 +580,10 @@ CanRegionBeRWX (
 {
   LIST_ENTRY              *NonProtectedImageLink;
   IMAGE_RANGE_DESCRIPTOR  *NonProtectedImage;
-  UINTN                   SpecialRegionIndex, MemorySpaceMapIndex;
+  UINTN                   MemorySpaceMapIndex;
 
-  if ((mNonProtectedImageList == NULL) && (mSpecialRegions == NULL)) {
+  if (mNonProtectedImageList == NULL) {
     return FALSE;
-  }
-
-  if (mSpecialRegions != NULL) {
-    for (SpecialRegionIndex = 0; SpecialRegionIndex < mSpecialRegionCount; SpecialRegionIndex++) {
-      if (CHECK_SUBSUMPTION (
-            mSpecialRegions[SpecialRegionIndex].Start,
-            mSpecialRegions[SpecialRegionIndex].Start + mSpecialRegions[SpecialRegionIndex].Length,
-            Address,
-            Address + Length
-            ) &&
-          (mSpecialRegions[SpecialRegionIndex].EfiAttributes == 0))
-      {
-        return TRUE;
-      }
-    }
   }
 
   if (mNonProtectedImageList != NULL) {
@@ -861,7 +777,6 @@ NoReadWriteExecute (
 
   DEBUG ((DEBUG_INFO, "%a Enter...\n", __FUNCTION__));
 
-  PopulateSpecialRegions ();
   PopulateNonProtectedImageList ();
   UT_ASSERT_NOT_EFI_ERROR (ValidatePageTableMapSize ());
   UT_ASSERT_NOT_EFI_ERROR (PopulateMemorySpaceMap ());
