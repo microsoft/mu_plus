@@ -74,17 +74,7 @@ MemoryProtectionExceptionHandler (
       (InterruptType == EXCEPT_IA32_PAGE_FAULT))
   {
     ExPersistClearIgnoreNextPageFault ();
-    Status = gBS->LocateProtocol (&gMemoryProtectionNonstopModeProtocolGuid, NULL, (VOID **)&NonstopModeProtocol);
-    if (!EFI_ERROR (Status)) {
-      Status = NonstopModeProtocol->ClearPageFault (InterruptType, SystemContext);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_ERROR, "%a - Error Clearing Page Fault\n", __FUNCTION__));
-      } else {
-        DEBUG ((DEBUG_INFO, "%a - Page Fault Cleared\n", __FUNCTION__));
-      }
-
-      return;
-    }
+    return;
   }
 
   DumpCpuContext (

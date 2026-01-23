@@ -136,6 +136,7 @@
             "ipriority",
             "isenabler",
             "irouter",
+            "uintn",
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     },
