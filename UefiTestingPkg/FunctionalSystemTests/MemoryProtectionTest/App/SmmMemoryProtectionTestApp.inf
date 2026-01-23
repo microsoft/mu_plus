@@ -59,7 +59,6 @@
 [Protocols]
   gEfiSmmCommunicationProtocolGuid
   gEfiCpuArchProtocolGuid                       ## CONSUMES
-  gMemoryProtectionNonstopModeProtocolGuid      ## CONSUMES
   gMemoryProtectionDebugProtocolGuid            ## CONSUMES
   gEfiMemoryAttributeProtocolGuid               ## CONSUMES
   gCpuMpDebugProtocolGuid                       ## CONSUMES

@@ -10,7 +10,6 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Uefi.h>
 
 #include <Protocol/DebugSupport.h>
-#include <Protocol/MemoryProtectionNonstopMode.h>
 #include <Protocol/MemoryProtectionDebug.h>
 #include <Protocol/MemoryAttribute.h>
 #include <Protocol/CpuMpDebug.h>
@@ -47,11 +46,10 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #define DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE  512
 #define ALIGN_ADDRESS(Address)  (((Address) / EFI_PAGE_SIZE) * EFI_PAGE_SIZE)
 
-DXE_MEMORY_PROTECTION_SETTINGS           mDxeMps;
-MEMORY_PROTECTION_NONSTOP_MODE_PROTOCOL  *mNonstopModeProtocol      = NULL;
-MEMORY_PROTECTION_DEBUG_PROTOCOL         *mMemoryProtectionProtocol = NULL;
-EFI_MEMORY_ATTRIBUTE_PROTOCOL            *mMemoryAttributeProtocol  = NULL;
-CPU_MP_DEBUG_PROTOCOL                    *mCpuMpDebugProtocol       = NULL;
+DXE_MEMORY_PROTECTION_SETTINGS    mDxeMps;
+MEMORY_PROTECTION_DEBUG_PROTOCOL  *mMemoryProtectionProtocol = NULL;
+EFI_MEMORY_ATTRIBUTE_PROTOCOL     *mMemoryAttributeProtocol  = NULL;
+CPU_MP_DEBUG_PROTOCOL             *mCpuMpDebugProtocol       = NULL;
 
 /// ================================================================================================
 /// ================================================================================================
@@ -205,25 +203,6 @@ PopulateCpuMpDebugProtocol (
   }
 
   return gBS->LocateProtocol (&gCpuMpDebugProtocolGuid, NULL, (VOID **)&mCpuMpDebugProtocol);
-}
-
-/**
-  This helper function returns EFI_SUCCESS if the Nonstop protocol is installed.
-
-  @retval     EFI_SUCCESS         Nonstop protocol installed
-  @retval     other               retval of LocateProtocol()
-**/
-STATIC
-EFI_STATUS
-GetNonstopProtocol (
-  VOID
-  )
-{
-  if (mNonstopModeProtocol != NULL) {
-    return EFI_SUCCESS;
-  }
-
-  return gBS->LocateProtocol (&gMemoryProtectionNonstopModeProtocolGuid, NULL, (VOID **)&mNonstopModeProtocol);
 }
 
 /**
@@ -717,48 +696,6 @@ UefiPageGuard (
       );
     UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
 
-    // Test by intentionally causing and clearing faults
-  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
-    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
-    // Allocate a page of the target memory type
-    gBS->AllocatePages (
-           AllocateAnyPages,
-           (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType,
-           1,
-           (EFI_PHYSICAL_ADDRESS *)&ptr
-           );
-    UT_ASSERT_NOT_EQUAL (ptr, (EFI_PHYSICAL_ADDRESS)(UINTN)NULL);
-
-    // Set the IgnoreNextPageFault flag
-    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-    // Write to the head guard page
-    HeadPageTest ((UINT64 *)(UINTN)ptr);
-
-    // Check that the IgnoreNextPageFault flag was cleared
-    if (GetIgnoreNextEx ()) {
-      UT_LOG_ERROR ("Head guard page failed: %p\n", ptr);
-      UT_ASSERT_FALSE (GetIgnoreNextEx ());
-    }
-
-    // Reset the page attributes of the faulted page(s) to their original attributes.
-    UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-    // Write to the tail guard page
-    TailPageTest ((UINT64 *)(UINTN)ptr);
-
-    // Check that the IgnoreNextPageFault flag was cleared
-    if (GetIgnoreNextEx ()) {
-      UT_LOG_ERROR ("Tail guard page failed: %p\n", ptr);
-      UT_ASSERT_FALSE (GetIgnoreNextEx ());
-    }
-
-    // Reset the page attributes of the faulted page(s) to their original attributes.
-    UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-
-    FreePages ((VOID *)(UINTN)ptr, 1);
-
     // Test by intentionally causing faults and resetting the system
   } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
     if (MemoryProtectionContext.TestProgress < 2) {
@@ -901,33 +838,6 @@ UefiPoolGuard (
 
       // Check that the guard page has the EFI_MEMORY_RP attribute set.
       UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
-    }
-
-    // Test by intentionally causing and clearing faults
-  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
-    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
-
-    // Test each pool size in the pool size table.
-    for (Index = 0; Index < ARRAY_SIZE (mPoolSizeTable); Index++) {
-      // Set the IgnoreNextPageFault flag.
-      UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-      AllocationSize = mPoolSizeTable[Index];
-
-      gBS->AllocatePool (
-             (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType,
-             AllocationSize,
-             (VOID **)&ptr
-             );
-      UT_ASSERT_NOT_NULL (ptr);
-
-      // Check the head OR tail guard page depending on the heap guard direction.
-      PoolTest ((UINT64 *)ptr, AllocationSize);
-
-      // Check that the IgnoreNextPageFault flag was cleared.
-      UT_ASSERT_FALSE (GetIgnoreNextEx ());
-      // Reset the attributes of the faulting page(s) to their original attributes.
-      UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
     }
 
     // Test by intentionally causing faults and resetting the system.
@@ -1089,24 +999,6 @@ UefiCpuStackGuard (
       }
     }
 
-    // Test by intentionally causing and clearing faults.
-  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
-    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
-    // Set the IgnoreNextPageFault flag.
-    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-    // Overflow the stack, checking at each level of recursion if the IgnoreNextPageFault
-    // flag is still set.
-    RecursionDynamic (1);
-
-    // If the IgnoreNextPageFault flag is still set, the test failed. It's unlikely that
-    // we'd reach this point in the test if the flag is still set as it implies that the
-    // interrupt handler did not clear the stack overflow.
-    UT_ASSERT_FALSE (GetIgnoreNextEx ());
-
-    // Reset the page attributes to their original attributes.
-    UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-
     // Test by intentionally causing a fault and resetting the system.
   } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
     if (MemoryProtectionContext.TestProgress < 1) {
@@ -1193,42 +1085,6 @@ UefiNullPointerDetection (
                                   )
       );
     UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_RP, 0);
-
-    // Test by intentionally causing and clearing faults.
-  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
-    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
-
-    // Set the IgnoreNextPageFault flag.
-    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-    // Read from NULL.
-    if (mFw->Title == NULL) {
-      DEBUG ((DEBUG_INFO, "NULL pointer read test complete\n"));
-    }
-
-    // If the IgnoreNextPageFault flag is still set, the read test failed.
-    if (GetIgnoreNextEx ()) {
-      UT_LOG_ERROR ("Failed NULL pointer read test.\n");
-      UT_ASSERT_FALSE (GetIgnoreNextEx ());
-    }
-
-    // Reset the page attributes to their original attributes.
-    UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-
-    // Set the IgnoreNextPageFault flag.
-    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-    // Write to NULL.
-    mFw->Title = "Title";
-
-    // If the IgnoreNextPageFault flag is still set, the write test failed.
-    if (GetIgnoreNextEx ()) {
-      UT_LOG_ERROR ("Failed NULL pointer write test.\n");
-      UT_ASSERT_FALSE (GetIgnoreNextEx ());
-    }
-
-    // Reset the page attributes to their original attributes.
-    UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
 
     // Test by intentionally causing a fault and resetting the system.
   } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
@@ -1332,24 +1188,6 @@ UefiNxStackGuard (
     // Verify the page containing Attributes is non-executable.
     UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_XP, 0);
 
-    // Test by intentionally causing and clearing faults.
-  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
-    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
-
-    // Set the IgnoreNextPageFault flag.
-    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-    // Copy the dummy function to a stack variable and execute it.
-    CopyMem (CodeRegionToCopyTo, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
-    ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)CodeRegionToCopyTo)();
-
-    // If the IgnoreNextPageFault flag is still set, the interrupt handler was not invoked or did not handle
-    // the flag properly.
-    UT_ASSERT_FALSE (GetIgnoreNextEx ());
-
-    // Reset the page attributes to their original attributes.
-    UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
-
     // Test by intentionally causing a fault and resetting the system.
   } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
     if (MemoryProtectionContext.TestProgress < 1) {
@@ -1446,33 +1284,6 @@ UefiNxProtection (
       );
     FreePool (ptr);
     UT_ASSERT_NOT_EQUAL (Attributes & EFI_MEMORY_XP, 0);
-
-    // Test by intentionally causing and clearing faults.
-  } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestClearFaults) {
-    UT_ASSERT_NOT_NULL (mNonstopModeProtocol);
-
-    // Set the IgnoreNextPageFault flag.
-    UT_ASSERT_NOT_EFI_ERROR (ExPersistSetIgnoreNextPageFault ());
-
-    // Allocate a page of memory of the type specified in Context.
-    gBS->AllocatePool (
-           (EFI_MEMORY_TYPE)MemoryProtectionContext.TargetMemoryType,
-           EFI_PAGE_SIZE,
-           (VOID **)&ptr
-           );
-    UT_ASSERT_NOT_NULL (ptr);
-
-    // Copy the dummy function to the allocated buffer and execute it.
-    CopyMem (ptr, CodeRegionToCopyFrom, DUMMY_FUNCTION_FOR_CODE_SELF_TEST_GENERIC_SIZE);
-    ((DUMMY_VOID_FUNCTION_FOR_DATA_TEST)ptr)();
-
-    FreePool (ptr);
-
-    // Verify the IgnoreNextPageFault flag was cleared.
-    UT_ASSERT_FALSE (GetIgnoreNextEx ());
-
-    // Reset the page attributes to their original attributes.
-    UT_ASSERT_NOT_EFI_ERROR (mNonstopModeProtocol->ResetPageAttributes ());
 
     // Test by intentionally causing a fault and resetting the system.
   } else if (MemoryProtectionContext.TestingMethod == MemoryProtectionTestReset) {
@@ -1869,8 +1680,7 @@ DetermineTestMethod (
 
         // Check if a read/write to the early store works and the Nonstop Protocol is installed
         if (!EFI_ERROR (ExPersistSetIgnoreNextPageFault ()) &&
-            !EFI_ERROR (ExPersistClearIgnoreNextPageFault ()) &&
-            !EFI_ERROR (GetNonstopProtocol ()))
+            !EFI_ERROR (ExPersistClearIgnoreNextPageFault ()))
         {
           DeterminedTestingMethod = MemoryProtectionTestClearFaults;
           break;
