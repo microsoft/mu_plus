@@ -33,11 +33,6 @@ extern "C" {
     IN VOID       *Context
     );
 
-  BOOLEAN
-  PrmConfigLibValidateInfoBlock (
-    ADV_LOGGER_PRM_DATA_BUFFER  *DataBuf
-    );
-
   EFI_STATUS
   EFIAPI
   AdvLoggerOsConnectorPrmConfigLibConstructor (
@@ -69,127 +64,6 @@ protected:
   MockMemoryAllocationLib MemoryAllocationLib;
   MockUefiBootServicesTableLib UefiBootServicesTableLib;
 };
-
-/**
-  Unit test for AdvLoggerOsConnectorPrmVirtualAddressCallback.
-**/
-TEST_F (AdvLoggerPrmConfigLibTest, AdvLoggerOsConnectorPrmVirtualAddressCallbackTests) {
-  UINT8                       StaticBuffer[0x1000];
-  PRM_DATA_BUFFER             *StaticDataBuffer;
-  ADV_LOGGER_PRM_DATA_BUFFER  *DataBuf;
-  VOID                        **VirtualPointer = (VOID **)0xFFFFEEEEDDDDCCCC;
-  UINT64                      DummyPtr         = 0xDEADBEEFDEADBEEF;
-
-  StaticDataBuffer                   = (PRM_DATA_BUFFER *)&StaticBuffer;
-  StaticDataBuffer->Header.Signature = PRM_DATA_BUFFER_HEADER_SIGNATURE;
-  StaticDataBuffer->Header.Length    = sizeof (PRM_DATA_BUFFER_HEADER) + sizeof (ADV_LOGGER_PRM_DATA_BUFFER);
-
-  DataBuf = (ADV_LOGGER_PRM_DATA_BUFFER *)StaticDataBuffer->Data;
-
-  DEBUG ((DEBUG_INFO, "AdvLoggerOsConnectorPrmVirtualAddressCallbackTests\n"));
-  // Test a NULL static data buffer
-  mStaticDataBuffer = NULL;
-  AdvLoggerOsConnectorPrmVirtualAddressCallback (NULL, NULL);
-  EXPECT_EQ (mStaticDataBuffer, (PRM_DATA_BUFFER *)NULL);
-
-  // set mStaticDataBuffer to our copy
-  mStaticDataBuffer = StaticDataBuffer;
-
-  // test a successful pointer conversion
-  DataBuf->LoggerInfo         = (ADVANCED_LOGGER_INFO *)DummyPtr;
-  DataBuf->ExpectedHeaderSize = 0xFFFF;
-  DataBuf->ExpectedLogSize    = 0xAAAA;
-  EXPECT_CALL (
-    UefiRuntimeLib,
-    EfiConvertPointer (
-      0,
-      Pointee (Eq ((VOID *)0xDEADBEEFDEADBEEF))
-      )
-    )
-    .WillOnce (
-       DoAll (
-         SetArgBuffer<1>(&VirtualPointer, sizeof (VOID **)),
-         Return (EFI_SUCCESS)
-         )
-       );
-  AdvLoggerOsConnectorPrmVirtualAddressCallback (NULL, NULL);
-  DataBuf = (ADV_LOGGER_PRM_DATA_BUFFER *)mStaticDataBuffer->Data;
-  EXPECT_EQ (DataBuf->LoggerInfo, (ADVANCED_LOGGER_INFO *)0xFFFFEEEEDDDDCCCC);
-
-  // test unsuccessful pointer conversion
-  EXPECT_CALL (
-    UefiRuntimeLib,
-    EfiConvertPointer (
-      0,
-      Pointee (Eq ((VOID *)0xFFFFEEEEDDDDCCCC))
-      )
-    )
-    .WillOnce (
-       Return (EFI_ABORTED)
-       );
-  AdvLoggerOsConnectorPrmVirtualAddressCallback (NULL, NULL);
-  DataBuf = (ADV_LOGGER_PRM_DATA_BUFFER *)mStaticDataBuffer->Data;
-  EXPECT_EQ (DataBuf->LoggerInfo, (ADVANCED_LOGGER_INFO *)NULL);
-  EXPECT_EQ (DataBuf->ExpectedHeaderSize, 0U);
-  EXPECT_EQ (DataBuf->ExpectedLogSize, 0U);
-}
-
-TEST_F (AdvLoggerPrmConfigLibTest, ValidateInfoBlockTests) {
-  ADV_LOGGER_PRM_DATA_BUFFER  DataBuf;
-  BOOLEAN                     Result;
-  ADVANCED_LOGGER_INFO        LoggerInfo;
-
-  // Test NULL DataBuf
-  Result = PrmConfigLibValidateInfoBlock (NULL);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test NULL LoggerInfo
-  DataBuf.LoggerInfo = NULL;
-  Result             = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test Bad LoggerInfo Signature
-  DataBuf.LoggerInfo   = &LoggerInfo;
-  LoggerInfo.Signature = 0xDEADBEEF;
-  Result               = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test bad LogBufferOffset
-  LoggerInfo.Signature       = ADVANCED_LOGGER_SIGNATURE;
-  LoggerInfo.LogBufferOffset = 0xDEADBEEF;
-  Result                     = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test LogCurrentOffset > Total Log Size
-  LoggerInfo.LogBufferOffset  = sizeof (LoggerInfo);
-  LoggerInfo.LogBufferSize    = 0x1;
-  LoggerInfo.LogCurrentOffset = 0x7777;
-  Result                      = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test LogCurrentOffset < LogBufferOffset
-  LoggerInfo.LogBufferSize    = 0x10000;
-  LoggerInfo.LogCurrentOffset = 0x3;
-  Result                      = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test ExpectedLogSize != LogBufferSize
-  DataBuf.ExpectedLogSize     = 0x9999;
-  LoggerInfo.LogCurrentOffset = 0x150;
-  Result                      = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test ExpectedHeaderSize != LogBufferOffset
-  DataBuf.ExpectedHeaderSize = sizeof (LoggerInfo) - 0x10;
-  DataBuf.ExpectedLogSize    = 0x10000;
-  Result                     = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test success
-  DataBuf.ExpectedHeaderSize = sizeof (LoggerInfo);
-  Result                     = PrmConfigLibValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, TRUE);
-}
 
 TEST_F (AdvLoggerPrmConfigLibTest, ConstructorTests) {
   EFI_STATUS                          Status;

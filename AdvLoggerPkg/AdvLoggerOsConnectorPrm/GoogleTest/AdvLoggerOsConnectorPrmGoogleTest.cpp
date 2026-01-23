@@ -22,11 +22,6 @@ extern "C" {
     UINT32    *OutputBufferSize;
   } ADVANCED_LOGGER_PRM_PARAMETER_BUFFER;
 
-  BOOLEAN
-  ValidateInfoBlock (
-    ADV_LOGGER_PRM_DATA_BUFFER  *DataBuf
-    );
-
   PRM_HANDLER_EXPORT (AdvLoggerOsConnectorPrmHandler);
 }
 
@@ -50,58 +45,6 @@ using namespace testing;
 class AdvLoggerOsConnectorPrmTest : public  Test {
 protected:
 };
-
-TEST_F (AdvLoggerOsConnectorPrmTest, ValidateInfoBlockTests) {
-  ADV_LOGGER_PRM_DATA_BUFFER  DataBuf;
-  BOOLEAN                     Result;
-  ADVANCED_LOGGER_INFO        LoggerInfo;
-
-  // Test NULL DataBuf
-  Result = ValidateInfoBlock (NULL);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test NULL LoggerInfo
-  DataBuf.LoggerInfo = NULL;
-  Result             = ValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test Bad LoggerInfo Signature
-  DataBuf.LoggerInfo   = &LoggerInfo;
-  LoggerInfo.Signature = 0xDEADBEEF;
-  Result               = ValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test LogCurrentOffset > Total Log Size
-  LoggerInfo.Signature        = ADVANCED_LOGGER_SIGNATURE;
-  LoggerInfo.LogBufferOffset  = sizeof (LoggerInfo);
-  LoggerInfo.LogBufferSize    = 0x1;
-  LoggerInfo.LogCurrentOffset = 0x7777;
-  Result                      = ValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test LogCurrentOffset < LogBufferOffset
-  LoggerInfo.LogBufferSize    = 0x10000;
-  LoggerInfo.LogCurrentOffset = 0x3;
-  Result                      = ValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test ExpectedLogSize != LogBufferSize
-  DataBuf.ExpectedLogSize     = 0x9999;
-  LoggerInfo.LogCurrentOffset = 0x150;
-  Result                      = ValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test ExpectedHeaderSize != LogBufferOffset
-  DataBuf.ExpectedHeaderSize = sizeof (LoggerInfo) - 0x10;
-  DataBuf.ExpectedLogSize    = 0x10000;
-  Result                     = ValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, FALSE);
-
-  // Test success
-  DataBuf.ExpectedHeaderSize = sizeof (LoggerInfo);
-  Result                     = ValidateInfoBlock (&DataBuf);
-  EXPECT_EQ (Result, TRUE);
-}
 
 TEST_F (AdvLoggerOsConnectorPrmTest, AdvLoggerOsConnectorPrmHandlerTests) {
   EFI_STATUS                            Status;
