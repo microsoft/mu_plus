@@ -96,6 +96,10 @@ DrawMousePointer (
   EFI_STATUS  Status = EFI_SUCCESS;
   UINTN       Index;
 
+  if (mParentGop == NULL) {
+    return EFI_NOT_READY;
+  }
+
   // Restore the location where the mouse pointer currently resides with the original screen content.
   //
   if (TRUE == mSRE.ShowingMousePointer) {
@@ -231,6 +235,10 @@ SREBlt (
   SWM_RECT          PointerRect;
   UINT32            FrameWidth, FrameHeight;
   BOOLEAN           MousePointerState = mSRE.ShowingMousePointer;
+
+  if (mParentGop == NULL) {
+    return EFI_NOT_READY;
+  }
 
   // Current blit operation bounding rectangle.
   //
@@ -395,6 +403,10 @@ SREQueryMode (
   OUT EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  **Info
   )
 {
+  if (mParentGop == NULL) {
+    return EFI_NOT_READY;
+  }
+
   return mParentGop->QueryMode (
                        mParentGop,
                        ModeNumber,
@@ -413,6 +425,10 @@ SRESetMode (
 {
   EFI_STATUS  Status;
   EFI_TPL     PreviousTPL;
+
+  if (mParentGop == NULL) {
+    return EFI_NOT_READY;
+  }
 
   // Raise the TPL to avoid getting interrupted while we access shared data structures.
   //
@@ -630,6 +646,10 @@ CalculateSurfaceFrameChecksum (
   UINT32                         Offset;
   UINT32                         Checksum = 0;
 
+  if (mParentGop == NULL) {
+    return 0;
+  }
+
   // Sample top edge.
   //
   SurfaceOrigin = ((EFI_GRAPHICS_OUTPUT_BLT_PIXEL *)mParentGop->Mode->FrameBufferBase + (Surface->FrameRect.Top * mParentGop->Mode->Info->PixelsPerScanLine) + Surface->FrameRect.Left);
@@ -817,6 +837,10 @@ SREResizeSurface (
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Resizing surface (ImageHandle=0x%x).\r\n", (UINTN)ImageHandle));
 
+  if (mParentGop == NULL) {
+    return EFI_NOT_READY;
+  }
+
   // Raise the TPL to avoid getting interrupted while we access shared data structures.
   //
   EFI_TPL  PreviousTPL = gBS->RaiseTPL (TPL_NOTIFY);
@@ -940,6 +964,10 @@ SREActivateSurface (
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL  BlackPixel        = { 0, 0, 0, 0 };
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Setting surface active (ImageHandle=0x%x, MakeActive=%s).\r\n", (UINTN)ImageHandle, (TRUE == MakeActive ? L"TRUE" : L"FALSE")));
+
+  if (mParentGop == NULL) {
+    return EFI_NOT_READY;
+  }
 
   // Raise the TPL to avoid getting interrupted while we access shared data structures.
   //
@@ -1205,6 +1233,11 @@ InitializeRenderingEngine (
   EFI_STATUS  Status = EFI_SUCCESS;
 
   DEBUG ((DEBUG_INFO, "INFO [SRE]: Initializing the Rendering Engine.\r\n"));
+
+  if (mParentGop == NULL) {
+    DEBUG ((DEBUG_ERROR, "ERROR [SRE]: Parent GOP is NULL during initialization.\r\n"));
+    return EFI_NOT_READY;
+  }
 
   // Configure initial Rendering Engine context.
   //
