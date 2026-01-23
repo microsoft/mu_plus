@@ -772,7 +772,7 @@ ProcessPostReadyToBootRegistration (
                   TPL_CALLBACK,
                   OnPostReadyToBootNotification,
                   gImageHandle,
-                  &gEfiEventPostReadyToBootGuid,
+                  &gEfiEventAfterReadyToBootGuid,
                   &InitEvent
                   );
 
