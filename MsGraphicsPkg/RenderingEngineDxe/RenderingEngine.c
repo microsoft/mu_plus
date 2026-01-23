@@ -1399,8 +1399,8 @@ SREDriverStart (
                   mMsGopOverrideProtocolGuid,
                   (VOID **)&mParentGop,
                   This->DriverBindingHandle,
-                  NULL,
-                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                  Controller,
+                  EFI_OPEN_PROTOCOL_BY_DRIVER
                   );
 
   if (EFI_ERROR (Status)) {
@@ -1455,11 +1455,11 @@ SREDriverStop (
   // Uninstall protocol interfaces.
   //
   Status = gBS->UninstallMultipleProtocolInterfaces (
-                  mImageHandle,
+                  mSREGopHandle,
                   &gEfiGraphicsOutputProtocolGuid,
-                  (VOID **)&mSRE.Gop,
+                  &mSRE.Gop,
                   &gMsSREProtocolGuid,
-                  (VOID **)&mSRE.SREProtocol,
+                  &mSRE.SREProtocol,
                   NULL
                   );
 
