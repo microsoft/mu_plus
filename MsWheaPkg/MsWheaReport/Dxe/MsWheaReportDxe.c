@@ -211,11 +211,11 @@ MsWheaReportHandlerDxe (
   if (ReadyToWriteVariable ()) {
     // Variable service is ready, store to HwErrRecXXXX
     Status = MsWheaReportHERAdd (MsWheaEntryMD);
-    DEBUG ((DEBUG_INFO, "%a: error record written to flash - %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_INFO, "%a: Telemetry record written to flash - %r\n", __FUNCTION__, Status));
   } else {
     // Add to linked list, similar to hob list
     Status = MsWheaAddReportEvent (&mMsWheaEntryList, MsWheaEntryMD);
-    DEBUG ((DEBUG_INFO, "%a: error record added to linked list - %r\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_INFO, "%a: Telemetry record added to linked list - %r\n", __FUNCTION__, Status));
   }
 
 Cleanup:
