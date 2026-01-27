@@ -171,7 +171,7 @@ MsWheaReportHandlerMm (
 
   // Variable service is ready, store to HwErrRecXXXX
   Status = MsWheaReportHERAdd (MsWheaEntryMD);
-  DEBUG ((DEBUG_INFO, "%a: error record written to flash - %r\n", __FUNCTION__, Status));
+  DEBUG ((DEBUG_INFO, "%a: Telemetry record written to flash - %r\n", __FUNCTION__, Status));
 
 Cleanup:
   return Status;
