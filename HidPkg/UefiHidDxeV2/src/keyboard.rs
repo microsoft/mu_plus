@@ -19,9 +19,18 @@ use alloc::{
     vec,
     vec::Vec,
 };
+use core::sync::atomic::Ordering;
 use core::{ffi::c_void, ptr};
 
-use r_efi::{efi, hii, protocols};
+use r_efi::{
+    efi, hii,
+    protocols::{
+        self,
+        simple_text_input_ex::{
+            LEFT_ALT_PRESSED, LEFT_CONTROL_PRESSED, RIGHT_ALT_PRESSED, RIGHT_CONTROL_PRESSED, SHIFT_STATE_VALID,
+        },
+    },
+};
 
 use hidparser::{
     ArrayField, ReportDescriptor, ReportField, VariableField,
@@ -31,6 +40,7 @@ use mu_rust_helpers::function;
 use rust_advanced_logger_dxe::{DEBUG_ERROR, DEBUG_VERBOSE, DEBUG_WARN, debugln};
 
 use crate::{
+    RUNTIME_SERVICES,
     boot_services::UefiBootServices,
     hid_io::{HidIo, HidReportReceiver},
     keyboard::key_queue::OrdKeyData,
@@ -542,6 +552,39 @@ impl KeyboardHidHandler {
     }
 }
 
+// Notification function called when Ctrl-Alt-Delete is pressed.
+extern "efiapi" fn reset_notification_function(key_data: *mut protocols::simple_text_input_ex::KeyData) -> efi::Status {
+    // Any DEL key press will trigger this callback; check that it is qualified with a CTRL-ALT state.
+    // This is done here to allow for easier checking for arbitrary CTRL-ALT presses (left or right) rather than
+    // registering a separate callback for each possible combination.
+
+    if key_data.is_null() {
+        return efi::Status::INVALID_PARAMETER;
+    }
+
+    // SAFETY: null-checked above, using read_unaligned to avoid any alignment issues.
+    let key_data = unsafe { key_data.read_unaligned() };
+    if key_data.key.scan_code != key_queue::SCAN_DELETE {
+        return efi::Status::SUCCESS; // No delete
+    }
+
+    // Check that DEL is qualified with valid CTRL-ALT state.
+    if key_data.key_state.key_shift_state & SHIFT_STATE_VALID == 0
+        || key_data.key_state.key_shift_state & (LEFT_CONTROL_PRESSED | RIGHT_CONTROL_PRESSED) == 0
+        || key_data.key_state.key_shift_state & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED) == 0
+    {
+        // DEL pressed without valid CTRL-ALT qualification, so do not reset.
+        return efi::Status::SUCCESS;
+    }
+
+    //DEL scan code received with shift state indicating CTRL-ALT also pressed.
+    debugln!(DEBUG_WARN, "Ctrl-Alt-Del pressed, resetting system.");
+    if let Some(runtime_services) = unsafe { RUNTIME_SERVICES.load(Ordering::SeqCst).as_mut() } {
+        (runtime_services.reset_system)(efi::RESET_COLD, efi::Status::SUCCESS, 0, core::ptr::null_mut());
+    }
+    panic!("Reset failed.");
+}
+
 impl HidReportReceiver for KeyboardHidHandler {
     fn initialize(&mut self, controller: efi::Handle, hid_io: &dyn HidIo) -> Result<(), efi::Status> {
         let descriptor = hid_io.get_report_descriptor()?;
@@ -549,6 +592,16 @@ impl HidReportReceiver for KeyboardHidHandler {
         self.reset(true)?;
         self.install_protocol_interfaces(controller)?;
         self.initialize_keyboard_layout()?;
+
+        // Register a Ctrl-Alt-Delete handler to reset the system. Register only for DEL scan code; CTRL-ALT
+        // shift state will be qualified in the callback.
+        let reset_key_data = protocols::simple_text_input_ex::KeyData {
+            key: protocols::simple_text_input::InputKey { scan_code: key_queue::SCAN_DELETE, unicode_char: 0 },
+            key_state: protocols::simple_text_input_ex::KeyState { key_toggle_state: 0, key_shift_state: 0 },
+        };
+
+        let _ = self.insert_key_notify_callback(reset_key_data, reset_notification_function);
+
         Ok(())
     }
 
