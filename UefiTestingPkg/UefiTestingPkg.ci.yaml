@@ -31,6 +31,7 @@
             "StandaloneMmPkg/StandaloneMmPkg.dec",
             "ArmPkg/ArmPkg.dec",
             "MsCorePkg/MsCorePkg.dec",
+            EmbeddedPkg/EmbeddedPkg.dec,
             "IntelSiliconPkg/IntelSiliconPkg.dec" #this is bad layering.  Need to fix.
         ],
         "AcceptableDependencies-HOST_APPLICATION":[ # for host based unit tests
