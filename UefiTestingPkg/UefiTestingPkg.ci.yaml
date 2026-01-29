@@ -95,6 +95,8 @@
             "SMRRs",
             "unsplit",
             "lfanew", # PE/COFF
+            "intid",
+            "irouter",
         ],
         "AdditionalIncludePaths": [] # Additional paths to spell check relative to package root (wildcards supported)
     }

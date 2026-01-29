@@ -720,10 +720,10 @@ CpuArchBspSleepPrep (
 
   // Watchdog interrupt is level and active high
   Status = mInterruptProtocol->SetTriggerType (
-                  mInterruptProtocol,
-                  PcdGet32 (PcdGenericWatchdogEl2IntrNum),
-                  EFI_HARDWARE_INTERRUPT2_TRIGGER_LEVEL_HIGH
-                  );
+                                 mInterruptProtocol,
+                                 PcdGet32 (PcdGenericWatchdogEl2IntrNum),
+                                 EFI_HARDWARE_INTERRUPT2_TRIGGER_LEVEL_HIGH
+                                 );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a setting trigger type failed - %r.\n", __FUNCTION__, Status));
     goto Done;
