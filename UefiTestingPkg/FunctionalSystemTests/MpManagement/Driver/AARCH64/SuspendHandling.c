@@ -31,6 +31,8 @@
 #include <Protocol/WatchdogTimer.h>
 #include <Guid/ArmMpCoreInfo.h>
 #include <Library/MuArmGicExLib.h>
+#include <Protocol/HardwareInterrupt2.h>
+
 #include "MpManagementInternal.h"
 
 /* Features flags for CPU SUSPEND power state parameter format. Bits [1:1] */
@@ -52,6 +54,10 @@
 #define PSTATE_TYPE_POWERDOWN   0x1
 
 #define AP_TEMP_STACK_SIZE  EFI_PAGE_SIZE
+
+/* GIC specific information */
+#define FIRST_SPI_INTID                  32
+#define GIC_IROUTER_REGISTER_SIZE_BYTES  8
 
 /*
   Architectural metadata structure for ARM context losing resume routines.
@@ -81,6 +87,7 @@ UINT64                            *gApStacksBase      = NULL;
 CONST UINT64                      gApStackSize        = AP_TEMP_STACK_SIZE;
 UINT64                            mWatchDogTimer      = 0;
 EFI_WATCHDOG_TIMER_ARCH_PROTOCOL  *mWatchDogProtocol  = NULL;
+EFI_HARDWARE_INTERRUPT2_PROTOCOL  *mInterruptProtocol = NULL;
 
 /**
   EFI_CPU_INTERRUPT_HANDLER that is called when a processor interrupt occurs.
@@ -667,6 +674,8 @@ CpuArchBspSleepPrep (
   IN UINTN  TimeoutInMicrosecond
   )
 {
+  UINT64      MpId;
+  UINT64      CpuTarget;
   EFI_STATUS  Status;
 
   if (mWatchDogProtocol == NULL) {
@@ -676,7 +685,7 @@ CpuArchBspSleepPrep (
                     (VOID **)&mWatchDogProtocol
                     );
     if (EFI_ERROR (Status)) {
-      DEBUG ((DEBUG_ERROR, "%a locating watch dog protocol failed - %r.\n", __FUNCTION__, Status));
+      DEBUG ((DEBUG_ERROR, "%a locating watchdog protocol failed - %r.\n", __FUNCTION__, Status));
       goto Done;
     }
   }
@@ -689,13 +698,50 @@ CpuArchBspSleepPrep (
     DEBUG ((DEBUG_INFO, "%a got current timer period - %lld.\n", __FUNCTION__, mWatchDogTimer));
   }
 
-  // Set the timeout in watch dog timer
+  // Set the timeout in watchdog timer
   Status = mWatchDogProtocol->SetTimerPeriod (mWatchDogProtocol, TimeoutInMicrosecond * 10);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_ERROR, "%a set timer period failed - %r.\n", __FUNCTION__, Status));
     goto Done;
   }
 
+  // Get the hardware interrupt protocol
+  if (mInterruptProtocol == NULL) {
+    Status = gBS->LocateProtocol (
+                    &gHardwareInterrupt2ProtocolGuid,
+                    NULL,
+                    (VOID **)&mInterruptProtocol
+                    );
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_ERROR, "%a locating hardware interrupt protocol failed - %r.\n", __FUNCTION__, Status));
+      goto Done;
+    }
+  }
+
+  // Watchdog interrupt is level and active high
+  Status = mInterruptProtocol->SetTriggerType (
+                  mInterruptProtocol,
+                  PcdGet32 (PcdGenericWatchdogEl2IntrNum),
+                  EFI_HARDWARE_INTERRUPT2_TRIGGER_LEVEL_HIGH
+                  );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_ERROR, "%a setting trigger type failed - %r.\n", __FUNCTION__, Status));
+    goto Done;
+  }
+
+  // All cores will power off so we need affinity routing instead of IRM.
+  // The receiving core for the interrupt will be the bsp.
+  MpId      = ArmReadMpidr ();
+  CpuTarget = MpId &
+              (ARM_CORE_AFF0 | ARM_CORE_AFF1 | ARM_CORE_AFF2 | ARM_CORE_AFF3);
+  MmioWrite64 (
+    PcdGet64 (PcdGicDistributorBase) +
+    ARM_GICD_IROUTER +
+    ((PcdGet32 (PcdGenericWatchdogEl2IntrNum) - FIRST_SPI_INTID) * GIC_IROUTER_REGISTER_SIZE_BYTES),
+    CpuTarget
+    );
+
+  // Enable the watchdog interrupt
   ArmGicEnableInterrupt (PcdGet64 (PcdGicDistributorBase), PcdGet64 (PcdGicRedistributorsBase), PcdGet32 (PcdGenericWatchdogEl2IntrNum));
 
 Done:
