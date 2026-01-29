@@ -18,6 +18,7 @@
 #include <Library/DebugLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PrintLib.h>
+#include <Library/SerialPortLib.h>
 
 //
 // Define the maximum debug and assert message length that this library supports
@@ -64,6 +65,10 @@ DebugAssert (
   // Send the print string to the Logging device device
   //
   AdvancedLoggerWrite (DEBUG_ERROR, Buffer, AsciiStrnLenS (Buffer, sizeof (Buffer)));
+
+  if (PcdGetBool(PcdAlwaysPrintAssertMsgToSerialPort)) {
+    SerialPortWrite(Buffer, AsciiStrnLenS (Buffer, sizeof (Buffer)));
+  }
 
   if ((PcdGet8 (PcdDebugPropertyMask) & DEBUG_PROPERTY_ASSERT_BREAKPOINT_ENABLED) != 0) {
     CpuBreakpoint ();

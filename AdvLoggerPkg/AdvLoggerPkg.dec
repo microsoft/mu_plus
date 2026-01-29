@@ -131,6 +131,12 @@
   #
   gAdvLoggerPkgTokenSpaceGuid.PcdAdvancedLoggerHdwPortDebugPrintErrorLevel|0xFFFFFFFF|UINT32|0x00010180
 
+  ## Always Print Assert Message to Serial Port
+  #
+  # Enable AssertLib to print ASSERT message to serial port in addition of AdvLogger
+  #
+  gAdvLoggerPkgTokenSpaceGuid.PcdAlwaysPrintAssertMsgToSerialPort|FALSE|BOOLEAN|0x00010199
+
 
 [UserExtensions.TianoCore."ExtraFiles"]
   AdvLoggerPkgExtra.uni
