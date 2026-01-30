@@ -28,7 +28,7 @@ EntryPoint (
   IN EFI_SYSTEM_TABLE  *SystemTable
   )
 {
-  EFI_STATUS Status;
+  EFI_STATUS  Status;
 
   gAdvLogHiiHandle = InitializeHiiPackage (ImageHandle);
   if (gAdvLogHiiHandle == NULL) {
