@@ -763,6 +763,10 @@ AllocateMemoryMapBuffer (
       goto FailureFreeMem;
     }
 
+    // ensure we store the unmerged buffer size as that is the required size.
+    // Add some padding.
+    mMemoryMapBufferSize = mMemoryMapSize + (mMemoryMapSize / 5);
+
     Status = gBS->GetMemoryMap (
                     &mMemoryMapSize,
                     mMemoryMap,
@@ -797,11 +801,6 @@ AllocateMemoryMapBuffer (
     goto FailureFreeMem;
   }
 
-  // mMemoryMapSize now contains the size of the filled in memory map. Increase
-  // it by 20% to account for any additional entries that may be required after
-  // other buffers are allocated.
-  mMemoryMapSize      += (mMemoryMapSize / 5);
-  mMemoryMapBufferSize = mMemoryMapSize;
   FreePool (mMemoryMap);
   mMemoryMap = AllocateZeroPool (mMemoryMapBufferSize);
 
