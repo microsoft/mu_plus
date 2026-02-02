@@ -34,6 +34,11 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
 #include <Library/ExceptionPersistenceLib.h>
 
 #include <Guid/DxeMemoryProtectionSettings.h>
+#include <Guid/DebugImageInfoTable.h>
+
+#include <IndustryStandard/PeImage.h>
+
+#include <Library/PeCoffGetEntryPointLib.h>
 
 #include "../MemoryProtectionTestCommon.h"
 #include "ArchSpecificFunctions.h"
@@ -1531,88 +1536,219 @@ ImageProtection (
   IN UNIT_TEST_CONTEXT  Context
   )
 {
-  EFI_STATUS              Status;
-  IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptorHead = NULL;
-  LIST_ENTRY              *ImageRangeDescriptorLink = NULL;
-  IMAGE_RANGE_DESCRIPTOR  *ImageRangeDescriptor     = NULL;
-  BOOLEAN                 TestFailed                = FALSE;
-  UINT64                  Attributes                = 0;
+  EFI_STATUS                           Status;
+  IMAGE_RANGE_DESCRIPTOR               *ImageRangeDescriptorHead = NULL;
+  LIST_ENTRY                           *ImageRangeDescriptorLink = NULL;
+  IMAGE_RANGE_DESCRIPTOR               *ImageRangeDescriptor     = NULL;
+  BOOLEAN                              TestFailed                = FALSE;
+  UINT64                               Attributes                = 0;
+  EFI_DEBUG_IMAGE_INFO_TABLE_HEADER    *DebugTableHeader;
+  EFI_DEBUG_IMAGE_INFO                 *DebugTable;
+  UINTN                                Entry;
+  EFI_LOADED_IMAGE_PROTOCOL            *LoadedImage;
+  EFI_IMAGE_DOS_HEADER                 *DosHdr;
+  UINT32                               PeCoffHeaderOffset;
+  EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION  Hdr;
+  EFI_IMAGE_SECTION_HEADER             *Section;
+  UINT32                               SectionAlignment;
+  UINTN                                SectionIndex;
+  UINT64                               SectionStart;
+  UINT64                               SectionEnd;
+  CHAR8                                *PdbFileName;
 
   DEBUG ((DEBUG_INFO, "%a() - Enter\n", __FUNCTION__));
 
-  // Ensure the Memory Protection Protocol and Memory Attribute Protocol are available.
-  UT_ASSERT_NOT_NULL (mMemoryProtectionProtocol);
   UT_ASSERT_NOT_NULL (mMemoryAttributeProtocol);
 
   // Use the Memory Protection Protocol to get a list of protected images. Each descriptor in the
   // output list will be a code or data section of a protected image.
-  UT_ASSERT_NOT_EFI_ERROR (mMemoryProtectionProtocol->GetImageList (&ImageRangeDescriptorHead, Protected));
+  if (mMemoryProtectionProtocol != NULL) {
+    UT_ASSERT_NOT_EFI_ERROR (mMemoryProtectionProtocol->GetImageList (&ImageRangeDescriptorHead, Protected));
 
-  // Walk through each image
-  for (ImageRangeDescriptorLink = ImageRangeDescriptorHead->Link.ForwardLink;
-       ImageRangeDescriptorLink != &ImageRangeDescriptorHead->Link;
-       ImageRangeDescriptorLink = ImageRangeDescriptorLink->ForwardLink)
-  {
-    ImageRangeDescriptor = CR (
-                             ImageRangeDescriptorLink,
-                             IMAGE_RANGE_DESCRIPTOR,
-                             Link,
-                             IMAGE_RANGE_DESCRIPTOR_SIGNATURE
-                             );
-    if (ImageRangeDescriptor != NULL) {
-      // Get the attributes of the image range.
-      Status = mMemoryAttributeProtocol->GetMemoryAttributes (
-                                           mMemoryAttributeProtocol,
-                                           ImageRangeDescriptor->Base,
-                                           ImageRangeDescriptor->Length,
-                                           &Attributes
-                                           );
+    // Walk through each image
+    for (ImageRangeDescriptorLink = ImageRangeDescriptorHead->Link.ForwardLink;
+         ImageRangeDescriptorLink != &ImageRangeDescriptorHead->Link;
+         ImageRangeDescriptorLink = ImageRangeDescriptorLink->ForwardLink)
+    {
+      ImageRangeDescriptor = CR (
+                               ImageRangeDescriptorLink,
+                               IMAGE_RANGE_DESCRIPTOR,
+                               Link,
+                               IMAGE_RANGE_DESCRIPTOR_SIGNATURE
+                               );
+      if (ImageRangeDescriptor != NULL) {
+        // Get the attributes of the image range.
+        Status = mMemoryAttributeProtocol->GetMemoryAttributes (
+                                             mMemoryAttributeProtocol,
+                                             ImageRangeDescriptor->Base,
+                                             ImageRangeDescriptor->Length,
+                                             &Attributes
+                                             );
 
-      if (EFI_ERROR (Status)) {
-        UT_LOG_ERROR (
-          "Unable to get attributes of memory range 0x%llx - 0x%llx! Status: %r\n",
-          ImageRangeDescriptor->Base,
-          ImageRangeDescriptor->Base + ImageRangeDescriptor->Length,
-          Status
-          );
-        TestFailed = TRUE;
+        if (EFI_ERROR (Status)) {
+          UT_LOG_ERROR (
+            "Unable to get attributes of memory range 0x%llx - 0x%llx! Status: %r\n",
+            ImageRangeDescriptor->Base,
+            ImageRangeDescriptor->Base + ImageRangeDescriptor->Length,
+            Status
+            );
+          TestFailed = TRUE;
+          continue;
+        }
+
+        // Check that the code sections have the EFI_MEMORY_RO attribute and the data sections have
+        // the EFI_MEMORY_XP attribute.
+        if ((ImageRangeDescriptor->Type == Code) && ((Attributes & EFI_MEMORY_RO) == 0)) {
+          TestFailed = TRUE;
+          UT_LOG_ERROR (
+            "Memory Range 0x%llx - 0x%llx should be non-writeable!\n",
+            ImageRangeDescriptor->Base,
+            ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
+            );
+        } else if ((ImageRangeDescriptor->Type == Data) && ((Attributes & EFI_MEMORY_XP) == 0)) {
+          TestFailed = TRUE;
+          UT_LOG_ERROR (
+            "Memory Range 0x%llx - 0x%llx should be non-executable!\n",
+            ImageRangeDescriptor->Base,
+            ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
+            );
+        }
+      }
+    }
+
+    // Free the list of image range descriptors.
+    while (!IsListEmpty (&ImageRangeDescriptorHead->Link)) {
+      ImageRangeDescriptor = CR (
+                               ImageRangeDescriptorHead->Link.ForwardLink,
+                               IMAGE_RANGE_DESCRIPTOR,
+                               Link,
+                               IMAGE_RANGE_DESCRIPTOR_SIGNATURE
+                               );
+
+      RemoveEntryList (&ImageRangeDescriptor->Link);
+      FreePool (ImageRangeDescriptor);
+    }
+
+    FreePool (ImageRangeDescriptorHead);
+  } else {
+    // if the Mu protocol isn't produced, walk the debug image info table
+    // and verify section attributes directly
+    Status = EfiGetSystemConfigurationTable (&gEfiDebugImageInfoTableGuid, (VOID **)&DebugTableHeader);
+    if (EFI_ERROR (Status) || (DebugTableHeader == NULL)) {
+      UT_LOG_ERROR ("Unable to get Debug Image Info Table\n");
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
+    DebugTable = DebugTableHeader->EfiDebugImageInfoTable;
+    if (DebugTable == NULL) {
+      UT_LOG_ERROR ("Debug Image Info Table is NULL\n");
+      return UNIT_TEST_ERROR_TEST_FAILED;
+    }
+
+    for (Entry = 0; Entry < DebugTableHeader->TableSize; Entry++, DebugTable++) {
+      if (DebugTable->NormalImage == NULL) {
         continue;
       }
 
-      // Check that the code sections have the EFI_MEMORY_RO attribute and the data sections have
-      // the EFI_MEMORY_XP attribute.
-      if ((ImageRangeDescriptor->Type == Code) && ((Attributes & EFI_MEMORY_RO) == 0)) {
-        TestFailed = TRUE;
-        UT_LOG_ERROR (
-          "Memory Range 0x%llx - 0x%llx should be non-writeable!\n",
-          ImageRangeDescriptor->Base,
-          ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
-          );
-      } else if ((ImageRangeDescriptor->Type == Data) && ((Attributes & EFI_MEMORY_XP) == 0)) {
-        TestFailed = TRUE;
-        UT_LOG_ERROR (
-          "Memory Range 0x%llx - 0x%llx should be non-executable!\n",
-          ImageRangeDescriptor->Base,
-          ImageRangeDescriptor->Base + ImageRangeDescriptor->Length
-          );
+      if ((DebugTable->NormalImage->ImageInfoType != EFI_DEBUG_IMAGE_INFO_TYPE_NORMAL) ||
+          (DebugTable->NormalImage->LoadedImageProtocolInstance == NULL))
+      {
+        continue;
+      }
+
+      LoadedImage = DebugTable->NormalImage->LoadedImageProtocolInstance;
+      PdbFileName = PeCoffLoaderGetPdbPointer (LoadedImage->ImageBase);
+
+      // Parse PE/COFF header
+      DosHdr             = (EFI_IMAGE_DOS_HEADER *)(UINTN)LoadedImage->ImageBase;
+      PeCoffHeaderOffset = 0;
+      if (DosHdr->e_magic == EFI_IMAGE_DOS_SIGNATURE) {
+        PeCoffHeaderOffset = DosHdr->e_lfanew;
+      }
+
+      Hdr.Pe32 = (EFI_IMAGE_NT_HEADERS32 *)((UINT8 *)(UINTN)LoadedImage->ImageBase + PeCoffHeaderOffset);
+
+      // Get SectionAlignment
+      if (Hdr.Pe32->OptionalHeader.Magic == EFI_IMAGE_NT_OPTIONAL_HDR32_MAGIC) {
+        SectionAlignment = Hdr.Pe32->OptionalHeader.SectionAlignment;
+      } else {
+        SectionAlignment = Hdr.Pe32Plus->OptionalHeader.SectionAlignment;
+      }
+
+      // Get pointer to first section header
+      Section = (EFI_IMAGE_SECTION_HEADER *)(
+                                             (UINT8 *)(UINTN)LoadedImage->ImageBase +
+                                             PeCoffHeaderOffset +
+                                             sizeof (UINT32) +
+                                             sizeof (EFI_IMAGE_FILE_HEADER) +
+                                             Hdr.Pe32->FileHeader.SizeOfOptionalHeader
+                                             );
+
+      // Walk through each section
+      for (SectionIndex = 0; SectionIndex < Hdr.Pe32->FileHeader.NumberOfSections; SectionIndex++) {
+        SectionStart = (UINT64)(UINTN)LoadedImage->ImageBase + Section[SectionIndex].VirtualAddress;
+        SectionEnd   = SectionStart + ALIGN_VALUE (Section[SectionIndex].Misc.VirtualSize, SectionAlignment);
+
+        Attributes = 0;
+        Status     = mMemoryAttributeProtocol->GetMemoryAttributes (
+                                                 mMemoryAttributeProtocol,
+                                                 SectionStart,
+                                                 SectionEnd - SectionStart,
+                                                 &Attributes
+                                                 );
+        if (EFI_ERROR (Status)) {
+          UT_LOG_WARNING (
+            "Unable to get attributes for image %a section %.8a (0x%llx - 0x%llx): %r\n",
+            PdbFileName != NULL ? PdbFileName : "Unknown",
+            Section[SectionIndex].Name,
+            SectionStart,
+            SectionEnd,
+            Status
+            );
+          continue;
+        }
+
+        // Code sections should be RO+X (i.e., EFI_MEMORY_RO set, EFI_MEMORY_XP not set)
+        if ((Section[SectionIndex].Characteristics & EFI_IMAGE_SCN_CNT_CODE) != 0) {
+          // Check that code section is read-only (RO)
+          if ((Attributes & EFI_MEMORY_RO) == 0) {
+            UT_LOG_ERROR (
+              "Image %a: Code section %.8a (0x%llx - 0x%llx) is not read-only!\n",
+              PdbFileName != NULL ? PdbFileName : "Unknown",
+              Section[SectionIndex].Name,
+              SectionStart,
+              SectionEnd
+              );
+            TestFailed = TRUE;
+          }
+
+          // Check that code section is executable (XP bit NOT set)
+          if ((Attributes & EFI_MEMORY_XP) != 0) {
+            UT_LOG_ERROR (
+              "Image %a: Code section %.8a (0x%llx - 0x%llx) is non-executable!\n",
+              PdbFileName != NULL ? PdbFileName : "Unknown",
+              Section[SectionIndex].Name,
+              SectionStart,
+              SectionEnd
+              );
+            TestFailed = TRUE;
+          }
+        } else {
+          // Data sections should be non-executable (EFI_MEMORY_XP set)
+          if ((Attributes & EFI_MEMORY_XP) == 0) {
+            UT_LOG_ERROR (
+              "Image %a: Data section %.8a (0x%llx - 0x%llx) is executable!\n",
+              PdbFileName != NULL ? PdbFileName : "Unknown",
+              Section[SectionIndex].Name,
+              SectionStart,
+              SectionEnd
+              );
+            TestFailed = TRUE;
+          }
+        }
       }
     }
   }
-
-  // Free the list of image range descriptors.
-  while (!IsListEmpty (&ImageRangeDescriptorHead->Link)) {
-    ImageRangeDescriptor = CR (
-                             ImageRangeDescriptorHead->Link.ForwardLink,
-                             IMAGE_RANGE_DESCRIPTOR,
-                             Link,
-                             IMAGE_RANGE_DESCRIPTOR_SIGNATURE
-                             );
-
-    RemoveEntryList (&ImageRangeDescriptor->Link);
-    FreePool (ImageRangeDescriptor);
-  }
-
-  FreePool (ImageRangeDescriptorHead);
 
   // If TestFailed is TRUE, the test has failed.
   UT_ASSERT_FALSE (TestFailed);
