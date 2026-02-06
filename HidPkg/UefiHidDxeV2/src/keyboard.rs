@@ -579,7 +579,7 @@ extern "efiapi" fn reset_notification_function(key_data: *mut protocols::simple_
 
     //DEL scan code received with shift state indicating CTRL-ALT also pressed.
     debugln!(DEBUG_WARN, "Ctrl-Alt-Del pressed, resetting system.");
-    if let Some(runtime_services) = unsafe { RUNTIME_SERVICES.load(Ordering::SeqCst).as_mut() } {
+    if let Some(runtime_services) = unsafe { RUNTIME_SERVICES.load(Ordering::SeqCst).as_ref() } {
         (runtime_services.reset_system)(efi::RESET_COLD, efi::Status::SUCCESS, 0, core::ptr::null_mut());
     }
     panic!("Reset failed.");
