@@ -68,7 +68,7 @@ protected:
     DebugLevel                      = DEBUG_ERROR;
     ImageHandle                     = (EFI_HANDLE)0x12345678;
     testLoggerInfo.Signature        = ADVANCED_LOGGER_SIGNATURE;
-    testLoggerInfo.Version          = ADVANCED_LOGGER_VERSION;
+    testLoggerInfo.Version          = ADVANCED_LOGGER_INFO_VER;
     testLoggerInfo.LogBufferOffset  = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
     testLoggerInfo.LogCurrentOffset = (ALIGN_VALUE (sizeof (testLoggerInfo), 8));
     ZeroMem (SourceBuf, NumberOfBytes);
