@@ -16,7 +16,7 @@
 //
 // Advanced Logger Information Structure Version
 //
-#define ADVANCED_LOGGER_INFO_VER  5
+#define ADVANCED_LOGGER_INFO_VER  6
 
 //
 // The Advanced Logger Information Structure Version that supports HW_LVL logging
