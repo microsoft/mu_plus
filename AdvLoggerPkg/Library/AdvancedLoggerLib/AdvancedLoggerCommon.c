@@ -277,7 +277,7 @@ AdvancedLoggerWrite (
     // if we are at a high enough version to support HW_LVL logging, only call the HdwPortWrite if this DebugLevel
     // is asked to be logged
     // if we are at an older version, check the PCD to see if we should log this message
-    if (LoggerInfo->Version >= ADVANCED_LOGGER_HW_LVL_VER) {
+    if (LoggerInfo->Version >= ADVANCED_LOGGER_INFO_HW_LVL_SUPPORTED_VER) {
       if (DebugLevel & LoggerInfo->HwPrintLevel) {
         AdvancedLoggerHdwPortWrite (DebugLevel, (UINT8 *)Buffer, NumberOfBytes);
       }
