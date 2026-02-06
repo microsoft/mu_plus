@@ -72,6 +72,9 @@ GetFlatPageTableData (
   UINTN       NumPage1GNotPresent = 0;
   UINT64      RootEntryCount      = 0;
   UINT64      Address;
+  BOOLEAN     SelfMapped;
+
+  SelfMapped = FALSE;
 
   //  Count parameters should be provided.
   if ((Pte1GCount == NULL) || (Pte2MCount == NULL) || (Pte4KCount == NULL) || (GuardCount == NULL)) {
@@ -89,15 +92,27 @@ GetFlatPageTableData (
   Pml0           = (UINT64 *)ArmGetTTBR0BaseAddress ();
   RootEntryCount = ROOT_TABLE_LEN (ArmGetTCR () & TCR_T0SZ_MASK);
 
+  //
+  // Check for the self-map entry as the last entry
+  //
+  if ((Pml0[0x1FF] & TT_ADDRESS_MASK) == (UINT64)Pml0) {
+    SelfMapped = TRUE;
+    Pml0       = (UINT64 *)0xFFFFFFFFF000;
+  }
+
   for (Index0 = 0x0; Index0 < RootEntryCount; Index0++) {
     Index1 = 0;
     Index2 = 0;
     Index3 = 0;
-    if (!IS_TABLE (Pml0[Index0], 0)) {
+    if (!IS_TABLE (Pml0[Index0], 0) || (SelfMapped && ((Index0 == 0x1FF) || (Index0 == 0x1FE)))) {
       continue;
     }
 
-    Pte1G = (UINT64 *)(Pml0[Index0] & TT_ADDRESS_MASK);
+    if (SelfMapped) {
+      Pte1G = (UINT64 *)((0xFFFFFFE00000 + SIZE_4KB * Index0));
+    } else {
+      Pte1G = (UINT64 *)(Pml0[Index0] & TT_ADDRESS_MASK);
+    }
 
     for (Index1 = 0x0; Index1 < TT_ENTRY_COUNT; Index1++ ) {
       Index2 = 0;
@@ -108,7 +123,13 @@ GetFlatPageTableData (
       }
 
       if (!IS_BLOCK (Pte1G[Index1], 1)) {
-        Pte2M = (UINT64 *)(Pte1G[Index1] & TT_ADDRESS_MASK);
+        if (SelfMapped) {
+          Pte2M = (UINT64 *)(0xFFFFC0000000 +
+                             SIZE_2MB * Index0 +
+                             SIZE_4KB * Index1);
+        } else {
+          Pte2M = (UINT64 *)(Pte1G[Index1] & TT_ADDRESS_MASK);
+        }
 
         for (Index2 = 0x0; Index2 < TT_ENTRY_COUNT; Index2++ ) {
           Index3 = 0;
@@ -118,7 +139,15 @@ GetFlatPageTableData (
           }
 
           if (!IS_BLOCK (Pte2M[Index2], 2)) {
-            Pte4K = (UINT64 *)(Pte2M[Index2] & TT_ADDRESS_MASK);
+            if (SelfMapped) {
+              Pte4K = (UINT64 *)(0xFF8000000000 +
+                                 SIZE_1GB * Index0 +
+                                 SIZE_2MB * Index1 +
+                                 SIZE_4KB * Index2
+                                 );
+            } else {
+              Pte4K = (UINT64 *)(Pte2M[Index2] & TT_ADDRESS_MASK);
+            }
 
             for (Index3 = 0x0; Index3 < TT_ENTRY_COUNT; Index3++ ) {
               Address = IndexToAddress (Index0, Index1, Index2, Index3);
