@@ -914,6 +914,8 @@ mod test {
 
         let mut key_data: protocols::simple_text_input_ex::KeyData = Default::default();
         key_data.key.unicode_char = 'a' as u16;
+
+        let mut existing_notify_handles = Vec::new();
         let mut notify_handle = ptr::null_mut();
 
         let status = SimpleTextInExFfi::simple_text_in_ex_register_key_notify(
@@ -923,7 +925,8 @@ mod test {
             ptr::addr_of_mut!(notify_handle),
         );
         assert_eq!(status, efi::Status::SUCCESS);
-        assert_eq!(notify_handle as usize, 1);
+        assert_ne!(notify_handle as usize, 0);
+        existing_notify_handles.push(notify_handle);
 
         notify_handle = ptr::null_mut();
         let status = SimpleTextInExFfi::simple_text_in_ex_register_key_notify(
@@ -933,7 +936,9 @@ mod test {
             ptr::addr_of_mut!(notify_handle),
         );
         assert_eq!(status, efi::Status::SUCCESS);
-        assert_eq!(notify_handle as usize, 2);
+        assert_ne!(notify_handle as usize, 0);
+        assert!(!existing_notify_handles.contains(&notify_handle));
+        existing_notify_handles.push(notify_handle);
 
         notify_handle = ptr::null_mut();
         key_data.key.unicode_char = 'b' as u16;
@@ -944,7 +949,9 @@ mod test {
             ptr::addr_of_mut!(notify_handle),
         );
         assert_eq!(status, efi::Status::SUCCESS);
-        assert_eq!(notify_handle as usize, 3);
+        assert_ne!(notify_handle as usize, 0);
+        assert!(!existing_notify_handles.contains(&notify_handle));
+        existing_notify_handles.push(notify_handle);
 
         //send 'b'
         let report: &[u8] = &[0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00];
@@ -975,7 +982,7 @@ mod test {
         KEY2_NOTIFIED.store(false, Ordering::SeqCst);
 
         //remove the 'a'-only callback
-        let status = SimpleTextInExFfi::simple_text_in_ex_unregister_key_notify(this, ptr::dangling_mut());
+        let status = SimpleTextInExFfi::simple_text_in_ex_unregister_key_notify(this, existing_notify_handles[0]);
         assert_eq!(status, efi::Status::SUCCESS);
 
         //send 'a'
