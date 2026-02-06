@@ -694,8 +694,11 @@ class AdvLogParser ():
     #   Convert Ticks to approximate time based of Frequency setting
     #
     def _GetTimeInNanoSecond(self, Ticks, Frequency):
-        Nanosecond = int((Ticks / Frequency) * 1000000000)
-
+        if Frequency != 0:
+            Nanosecond = int((Ticks / Frequency) * 1000000000)
+        else:
+            Nanosecond = 0
+            
         return Nanosecond
 
     #
